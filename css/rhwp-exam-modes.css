@@ -95,6 +95,7 @@
 #rhwp-exam-workspace .exam-q { flex: 1; min-width: 0; height: 28px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
 #rhwp-exam-workspace .exam-q:hover { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-q b { color: var(--ds-ink, #e6edf3); font-weight: 600; }
+#rhwp-exam-workspace .exam-qgroup { color: var(--ds-ink-3, #7d8590); font-size: 11px; font-weight: 500; }
 #rhwp-exam-workspace .exam-qmove { flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-3, #7d8590); cursor: pointer; }
 #rhwp-exam-workspace .exam-qmove:hover:not(:disabled) { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-qmove:disabled { opacity: .3; cursor: default; }

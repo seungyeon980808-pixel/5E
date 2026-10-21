@@ -260,6 +260,17 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:3,charOffset:0});`);
     await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score=""]').click(); await h.idle(page);
     assert.equal((await inPage(page, `return text();`))[3], '2. 다음 중 옳은 것은?');
+    // 19) 묶음 문항 [1~2]: 머리·지문은 묶음 첫 문항에 붙고(앞 문항과 바꿔도 따라가지 않음), 묶음 문항은 ↑↓가 막히고, 번호를 다시 매기면 [a~b] 범위도 따라간다.
+    await inPage(page, `reset('1. 첫 문항\\n[2~3] 다음 글을 읽고 물음에 답하시오.\\n지문\\n2. 둘째\\n3. 셋째\\n4. 넷째\\n5. 다섯째');`);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 5 && document.querySelector('.exam-qgroup'));
+    const blocks = await inPage(page, `const {questionBlocks}=await import('/js/rhwp-exam-layout-tools.js');return questionBlocks(d).map(q=>[q.number,q.start,q.head,q.end,!!q.group]);`);
+    assert.deepEqual(blocks, [[1, 0, 0, 1, false], [2, 1, 3, 4, true], [3, 4, 4, 5, true], [4, 5, 5, 6, false], [5, 6, 6, 7, false]]);
+    for (const [at, disabled] of [['0:1', true], ['1:-1', true], ['2:1', true], ['3:-1', true], ['3:1', false]]) assert.equal(await page.locator(`[data-exam-qmove="${at}"]`).isDisabled(), disabled, at);
+    await page.locator('[data-exam-qdel="0"]').click(); await page.getByRole('button', { name: '지우기', exact: true }).click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['[1~2] 다음 글을 읽고 물음에 답하시오.', '지문', '1. 둘째', '2. 셋째', '3. 넷째', '4. 다섯째']);
+    const variant = await inPage(page, `const W=await import('/js/rhwp-exam-worksheet.js');let k=0;const r=W.makeVariant(b,()=>(k++%2)?0:.99);const c=new d.constructor(r.bytes);try{c.convertToEditable?.();return [r.mapping.map(m=>m.original),[...Array(c.getParagraphCount(0)).keys()].map(p=>c.getTextRange(0,p,0,c.getParagraphLength(0,p)))];}finally{c.free();}`);
+    assert.deepEqual(variant[0], [1, 2, 4, 3]);
+    assert.deepEqual(variant[1], ['[1~2] 다음 글을 읽고 물음에 답하시오.', '지문', '1. 둘째', '2. 셋째', '3. 다섯째', '4. 넷째']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

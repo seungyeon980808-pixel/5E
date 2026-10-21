@@ -124,25 +124,36 @@ const paragraphText = (doc, sec, para) => {
 };
 
 // 본문 문단 머리의 「3.」 같은 문항 번호를 1부터 차례로 다시 매긴다(표·머리말 안은 건드리지 않음).
-export function renumberQuestions(bridge) {
-  const { doc } = requireDocument(bridge);
-  const found = [];
+// 번호 다시 매기기 계획: 문단 머리 「n.」 번호와, 묶음 문항 머리 「[a~b]」의 범위(뒤따르는 첫 문항 번호부터 같은 개수).
+export const GROUP_HEAD = /^(\s*)\[(\d{1,3})\s*([~～∼\-–])\s*(\d{1,3})\]/;
+function numberingPlan(doc) {
+  const found = [], groups = [];
+  let pending = null, n = 0;
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
     for (let para = 0; para < doc.getParagraphCount(sec); para++) {
-      const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(paragraphText(doc, sec, para));
-      if (m) found.push({ sec, para, offset: m[1].length, digits: m[2] });
+      const text = paragraphText(doc, sec, para), g = GROUP_HEAD.exec(text);
+      if (g) { pending = { sec, para, offset: g[1].length, length: g[0].length - g[1].length, sep: g[3], count: Math.max(1, Number(g[4]) - Number(g[2]) + 1), old: g[0].slice(g[1].length) }; continue; }
+      const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(text); if (!m) continue;
+      found.push({ sec, para, offset: m[1].length, digits: m[2], next: String(++n) });
+      if (pending) { const want = `[${n}${pending.sep}${n + pending.count - 1}]`; if (want !== pending.old) groups.push({ ...pending, want }); pending = null; }
     }
-  if (!found.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
-  const changes = found.map((f, i) => ({ ...f, next: String(i + 1) })).filter(f => f.next !== f.digits);
-  if (!changes.length) return 0;
+  return { found, changes: found.filter(f => f.next !== f.digits), groups };
+}
+function applyNumbering(doc, plan) {
+  for (const f of plan.changes) { doc.deleteText(f.sec, f.para, f.offset, f.digits.length); doc.insertText(f.sec, f.para, f.offset, f.next); }
+  for (const g of plan.groups) { doc.deleteText(g.sec, g.para, g.offset, g.length); doc.insertText(g.sec, g.para, g.offset, g.want); }
+}
+export function renumberQuestions(bridge) {
+  const { doc } = requireDocument(bridge);
+  const plan = numberingPlan(doc);
+  if (!plan.found.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
+  const changes = plan.changes;
+  if (!changes.length && !plan.groups.length) return 0;
   bridge.transaction('renumber-questions', () => {
-    for (const f of changes) {
-      doc.deleteText(f.sec, f.para, f.offset, f.digits.length);
-      doc.insertText(f.sec, f.para, f.offset, f.next);
-    }
+    applyNumbering(doc, plan);
     return true;
   });
-  return changes.length;
+  return changes.length + plan.groups.length;
 }
 
 // 커서 근처의 선지(①~⑤)를 1열(줄마다)·3열(①②③ / ④⑤)·5열(한 줄)로 다시 놓는다. 팔레트의 선지 조판과 같은 방식(테두리 없는 표).
@@ -265,10 +276,21 @@ export function checkLayout(bridge) {
 export { mm, read };
 
 // ── 문항 묶음: 「1.」로 시작하는 본문 문단부터 다음 번호 문단 앞까지 ──
+// 묶음 문항: 「[1~2] 다음 글을 읽고 …」 머리와 지문은 앞 문항이 아니라 묶음 첫 문항 쪽에 붙인다(start=머리, head=번호 문단).
+// 묶음에 든 문항은 group={head, from, to}를 가진다 — 순서 바꾸기는 묶음을 깨므로 막는다.
 export function questionBlocks(doc, sec = 0) {
   const count = doc.getParagraphCount(sec), starts = [];
-  for (let p = 0; p < count; p++) { const m = /^\s*(\d{1,3})\./.exec(paragraphText(doc, sec, p)); if (m) starts.push({ start: p, number: Number(m[1]) }); }
-  return starts.map((s, i) => ({ ...s, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: paragraphText(doc, sec, s.start).replace(/^\s*\d{1,3}\.\s*/, '').slice(0, 40) }));
+  let pending = null, group = null;
+  for (let p = 0; p < count; p++) {
+    const text = paragraphText(doc, sec, p), g = GROUP_HEAD.exec(text);
+    if (g) { pending = { head: p, from: Number(g[2]), to: Number(g[4]) }; continue; }
+    const m = /^\s*(\d{1,3})\./.exec(text); if (!m) continue;
+    const number = Number(m[1]);
+    if (pending) { group = { ...pending, to: number + (pending.to - pending.from) }; starts.push({ start: pending.head, head: p, number, group }); pending = null; continue; }
+    if (group && number > group.to) group = null;
+    starts.push({ start: p, head: p, number, ...(group ? { group } : {}) });
+  }
+  return starts.map((s, i) => ({ ...s, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: paragraphText(doc, sec, s.head).replace(/^\s*\d{1,3}\.\s*/, '').slice(0, 40) }));
 }
 
 // 모든 구역의 문항(학교 시험지는 보통 1쪽 머리 구역 + 2단 본문 구역). index는 문서 전체 순서.
@@ -286,6 +308,7 @@ export function moveQuestion(bridge, index, direction) {
   const a = direction < 0 ? index - 1 : index;
   if (!all[a] || !all[a + 1]) throw new Error(direction < 0 ? '맨 위 문항입니다.' : '맨 아래 문항입니다.');
   if (all[a].sec !== all[a + 1].sec) throw new Error('구역(쪽 설정)이 다른 문항끼리는 순서를 바꿀 수 없습니다.');
+  if (all[a].group || all[a + 1].group) throw new Error('묶음 문항([1~2] 같은)은 지문과 함께 있어야 해서 순서를 바꿀 수 없습니다.');
   const sec = all[a].sec, blocks = questionBlocks(doc, sec), local = localIndex(all, a);
   bridge.transaction('move-question', () => swapAdjacentQuestions(doc, sec, blocks, local));
   try { renumberQuestions(bridge); } catch {}
@@ -310,14 +333,9 @@ export function swapAdjacentQuestions(doc, sec, blocks, a) {
 }
 // 문서 손잡이만으로 번호 다시 매기기(복사본용).
 export function renumberDocument(doc) {
-  let n = 0;
-  for (let sec = 0; sec < doc.getSectionCount(); sec++)
-    for (let para = 0; para < doc.getParagraphCount(sec); para++) {
-      const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(paragraphText(doc, sec, para)); if (!m) continue;
-      const next = String(++n); if (next === m[2]) continue;
-      doc.deleteText(sec, para, m[1].length, m[2].length); doc.insertText(sec, para, m[1].length, next);
-    }
-  return n;
+  const plan = numberingPlan(doc);
+  applyNumbering(doc, plan);
+  return plan.found.length;
 }
 function checkedResult(value) { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '문항을 옮기지 못했습니다.'); return r; }
 
@@ -357,7 +375,8 @@ export function duplicateQuestion(bridge, index) {
     let end = q.end;
     const last = end === doc.getParagraphCount(sec);
     if (last) parse(doc.splitParagraph(sec, end - 1, doc.getParagraphLength(sec, end - 1)));
-    checkedResult(doc.copySelection(sec, q.start, 0, end, 0));
+    // 묶음 첫 문항은 묶음 머리·지문 없이 문항만 복제한다.
+    checkedResult(doc.copySelection(sec, q.head, 0, end, 0));
     checkedResult(doc.pasteInternal(sec, end, 0));
     if (last) { const n = doc.getParagraphCount(sec); if (n > 1 && !doc.getParagraphLength(sec, n - 1)) doc.mergeParagraph(sec, n - 1); }
     return true;
@@ -370,8 +389,10 @@ export function deleteQuestion(bridge, index) {
   const { doc } = requireDocument(bridge), q = allQuestionBlocks(doc)[index], sec = q?.sec;
   if (!q) throw new Error('문항을 찾지 못했습니다.');
   bridge.transaction('delete-question', () => {
-    if (q.end < doc.getParagraphCount(sec)) checkedResult(doc.deleteRange(sec, q.start, 0, q.end, 0));
-    else if (q.start > 0) checkedResult(doc.deleteRange(sec, q.start - 1, doc.getParagraphLength(sec, q.start - 1), q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
+    // 묶음 첫 문항을 지울 때도 묶음 머리·지문은 남긴다(다른 문항이 쓴다).
+    const from = q.group ? q.head : q.start;
+    if (q.end < doc.getParagraphCount(sec)) checkedResult(doc.deleteRange(sec, from, 0, q.end, 0));
+    else if (from > 0) checkedResult(doc.deleteRange(sec, from - 1, doc.getParagraphLength(sec, from - 1), q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
     else checkedResult(doc.deleteRange(sec, 0, 0, q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
     return true;
   });

@@ -224,10 +224,10 @@ export function setQuestionScore(bridge, score) {
   if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
   const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
   bridge.transaction('question-score', () => {
-    for (let p = q.start; p < q.end; p++) for (const m of [...textOf(p).matchAll(SCORE_MARK)].reverse()) doc.deleteText(sec, p, m.index, m[0].length);
+    for (let p = q.head; p < q.end; p++) for (const m of [...textOf(p).matchAll(SCORE_MARK)].reverse()) doc.deleteText(sec, p, m.index, m[0].length);
     if (score != null) {
-      let target = q.start;
-      for (let p = q.start; p < q.end; p++) if (/\?\s*$/.test(textOf(p))) target = p;
+      let target = q.head;
+      for (let p = q.head; p < q.end; p++) if (/\?\s*$/.test(textOf(p))) target = p;
       const text = textOf(target), trimmed = text.replace(/\s+$/, '');
       if (trimmed.length < text.length) doc.deleteText(sec, target, trimmed.length, text.length - trimmed.length);
       doc.insertText(sec, target, trimmed.length, ` [${score}점]`);
@@ -385,11 +385,15 @@ export function makeVariant(bridge, random = Math.random) {
   // 문항이 가장 많은 구역(보통 2단 본문)만 섞는다 — 머리 구역의 안내문은 그대로.
   let mainSec = 0; for (let s = 1; s < doc.getSectionCount(); s++) if (questionBlocks(doc, s).length > questionBlocks(doc, mainSec).length) mainSec = s;
   const first = questionBlocks(doc, mainSec);
-  if (first.length < 2) throw new Error('번호가 붙은 문항이 둘 이상 있어야 섞을 수 있습니다.');
+  // 묶음 문항([1~2])은 제자리에 두고, 그 사이사이 이어진 낱개 문항끼리만 섞는다.
+  const segments = []; let run = [];
+  first.forEach((b, i) => { if (b.group) { if (run.length) segments.push(run); run = []; } else run.push(i); });
+  if (run.length) segments.push(run);
+  if (!segments.some(seg => seg.length > 1)) throw new Error('섞을 수 있는 낱개 문항이 둘 이상 이어져 있어야 합니다(묶음 문항은 제자리).');
   // 원래 자리와 다른 순서가 나올 때까지 섞는다(문항이 둘이면 서로 바꾼다).
   const order = first.map((_, i) => i);
   for (let tries = 0; tries < 20 && order.every((v, i) => v === i); tries++)
-    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    for (const seg of segments) for (let k = seg.length - 1; k > 0; k--) { const j = Math.floor(random() * (k + 1)); [order[seg[k]], order[seg[j]]] = [order[seg[j]], order[seg[k]]]; }
   const Document = doc.constructor, copy = new Document(doc.exportHwpx());
   try {
     // 인접 바꾸기로 목표 순서를 만든다(선택 정렬). current[k] = 지금 k번째 자리에 있는 원래 문항.
