@@ -361,31 +361,56 @@ export function unifyQuestionFonts(bridge) {
 }
 
 // 정답 넣기: 커서가 있는 선택형 문항 끝에 「[정답] ③」 줄을 넣거나 바꾼다(mark=null이면 그 줄을 지움). 빨간 글씨, 학생용에서는 빠진다.
+// 문항 하나의 [정답] 줄을 넣기·바꾸기·지우기(문서 손잡이, 편집 묶음 안에서 부른다).
+function writeAnswer(doc, sec, q, mark) {
+  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  let line = -1; for (let p = q.head; p < q.end; p++) if (ANSWER_LINE.test(textOf(p))) { line = p; break; }
+  const text = mark ? `[정답] ${mark}` : '';
+  if (line >= 0 && !mark) {
+    if (line > 0) parse(doc.deleteParagraph(sec, line)); else doc.deleteText(sec, 0, 0, doc.getParagraphLength(sec, 0));
+  } else if (line >= 0) {
+    doc.deleteText(sec, line, 0, doc.getParagraphLength(sec, line)); doc.insertText(sec, line, 0, text);
+    doc.applyCharFormat(sec, line, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
+  } else if (mark) {
+    // 문항 마지막 문단 뒤에 새 줄(빈 줄이 끝에 있으면 그 줄을 쓴다).
+    let p = q.end - 1;
+    if (doc.getParagraphLength(sec, p) || p === q.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+    doc.insertText(sec, p, 0, text);
+    doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
+  }
+}
 export function setQuestionAnswer(bridge, mark) {
   const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
   const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
   const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
   if (!q) throw new Error('정답을 넣을 문항 안에 커서를 두세요.');
   if (q.essay) throw new Error('서술형은 「[정답]」 대신 「[채점 기준]」 상자나 평가 기준표를 쓰세요.');
-  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-  let line = -1; for (let p = q.head; p < q.end; p++) if (ANSWER_LINE.test(textOf(p))) { line = p; break; }
-  const text = mark ? `[정답] ${mark}` : '';
-  bridge.transaction('question-answer', () => {
-    if (line >= 0 && !mark) {
-      if (line > 0) parse(doc.deleteParagraph(sec, line)); else doc.deleteText(sec, 0, 0, doc.getParagraphLength(sec, 0));
-    } else if (line >= 0) {
-      doc.deleteText(sec, line, 0, doc.getParagraphLength(sec, line)); doc.insertText(sec, line, 0, text);
-      doc.applyCharFormat(sec, line, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
-    } else if (mark) {
-      // 문항 마지막 문단 뒤에 새 줄(빈 줄이 끝에 있으면 그 줄을 쓴다).
-      let p = q.end - 1;
-      if (doc.getParagraphLength(sec, p) || p === q.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
-      doc.insertText(sec, p, 0, text);
-      doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
-    }
+  bridge.transaction('question-answer', () => { writeAnswer(doc, sec, q, mark); return true; });
+  return { label: q.label, mark };
+}
+// 정답 한 번에: 「31425 24153」·「3,1,4」·「③①④」처럼 쓴 정답을 선택형 문항 차례대로 넣는다(띄어쓰기·쉼표는 무시).
+// 정답이 문항보다 적으면 앞 문항부터 그만큼만, 많으면 오류. {count, total}
+export function parseAnswerList(text) {
+  const marks = [];
+  for (const c of String(text || '').replace(/[\s,./·]+/g, '')) {
+    const i = '12345'.indexOf(c) >= 0 ? '12345'.indexOf(c) : MARKS.indexOf(c);
+    if (i < 0) throw new Error(`「${c}」를 정답으로 읽지 못했습니다. 1~5나 ①~⑤로 쓰세요.`);
+    marks.push(MARKS[i]);
+  }
+  return marks;
+}
+export function setAllAnswers(bridge, text) {
+  requireInput(bridge);
+  const marks = parseAnswerList(text); if (!marks.length) throw new Error('정답을 쓰세요. 예: 31425 24153');
+  const doc = bridge.wasm.borrowDocumentHandle(), total = allQuestionBlocks(doc).filter(q => !q.essay).length;
+  if (marks.length > total) throw new Error(`정답이 ${marks.length}개인데 선택형 문항은 ${total}개입니다.`);
+  bridge.transaction('all-answers', () => {
+    // 줄을 넣으면 뒤 문항 자리가 밀리므로 뒤에서부터 넣는다.
+    const targets = allQuestionBlocks(doc).filter(q => !q.essay).slice(0, marks.length).map((q, i) => ({ q, mark: marks[i] }));
+    for (const { q, mark } of targets.reverse()) writeAnswer(doc, q.sec, questionBlocks(doc, q.sec).find(b => b.head === q.head) || q, mark);
     return true;
   });
-  return { label: q.label, mark };
+  return { count: marks.length, total };
 }
 
 // 해설 줄: 커서 문항 끝에 「[해설] 」 줄을 만들고(이미 있으면 그 줄로) 커서를 그 끝에 둔다. 학생용에서 빠지고 정답·해설지에 모인다.
