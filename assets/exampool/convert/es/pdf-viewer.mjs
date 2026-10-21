@@ -42,7 +42,8 @@ function trimDocumentCache() {
     if (documentCache.size <= 4) break;
     if (documentUsers.get(name)) continue;
     documentCache.delete(name); byteCache.delete(name);
-    void promise.then(doc => doc.destroy()).catch(() => {});
+    // pdf.js 6.3.289의 문서 객체에는 destroy()가 없어(오류는 삼켜짐) 문서와 Web Worker가 쌓였다(M30). 불러오기 작업을 끝낸다.
+    void promise.then(doc => doc.loadingTask.destroy()).catch(() => {});
   }
 }
 function acquirePdf(name) {

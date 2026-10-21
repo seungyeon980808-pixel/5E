@@ -35,13 +35,23 @@ function openFile(path,{sha=''}={}){
   if(p){docs.delete(path);docs.set(path,p);return p;}
   p=fileBytes(path,sha).then(async bytes=>{const own=sha?sha.slice(0,16):await hex(bytes.slice(0));const doc=await (await loadPdfjs()).getDocument({data:new Uint8Array(bytes),...OPTIONS}).promise;return {doc,sha:own,fp:doc.fingerprints?.[0]||''};});
   docs.set(path,p);p.catch(()=>{if(docs.get(path)===p)docs.delete(path);});
-  while(docs.size>3){// 메모리: 열어 둔 PDF는 3개까지(교과서 하나가 130MB를 넘는다 — Safari가 메모리 부족으로 창을 다시 읽던 것)
-const [k,v]=docs.entries().next().value;docs.delete(k);v.then(r=>r.doc.destroy()).catch(()=>{});}
+  trimDocs();
   return p;
 }
-const openDoc=path=>openFile(path).then(r=>r.doc);
+// 메모리: 열어 둔 PDF는 3개까지(교과서 하나가 130MB를 넘는다 — Safari가 메모리 부족으로 창을 다시 읽던 것).
+// 예전에는 받는 중·그리는 중인 문서까지 닫으려 했고(M20), 닫는 함수(doc.destroy)가 pdf.js 6.3.289에 없어 실제로는 하나도 닫히지 않았다(M30).
+// 지금 쓰는 곳이 없는 오래된 문서만, 불러오기 작업(loadingTask)째 닫는다. 쓰는 중이면 다 쓴 뒤 다시 정리한다.
+const users=new Map();
+function trimDocs(){
+  for(const [k,v] of docs){if(docs.size<=3)break;if(users.get(k))continue;docs.delete(k);v.then(r=>r.doc.loadingTask.destroy()).catch(()=>{});}
+}
+async function withFile(path,opts,use){
+  users.set(path,(users.get(path)||0)+1);
+  try{return await use(await openFile(path,opts));}
+  finally{const n=(users.get(path)||1)-1;if(n)users.set(path,n);else users.delete(path);trimDocs();}
+}
 export const pdfHref=(path,page)=>{try{return driveLink(path)+(page?`#page=${page}`:'');}catch{return '';}};
-export async function pageCount(path){return (await openDoc(path)).numPages;}
+export async function pageCount(path){return withFile(path,{},r=>r.doc.numPages);}
 
 // 글자 폭 비율(글꼴이 달라도 한글·숫자·영문의 상대 폭은 비슷하다) — 한 줄 글자 묶음 안에서 낱말 위치를 나눌 때 쓴다.
 let measure=null;
@@ -85,8 +95,9 @@ export function questionRect(content,vp1,box){
   return [Math.max(bx0,Math.min(...used.map(l=>l.x))-4),top,Math.min(bx1-4,Math.max(...used.map(l=>l.x+l.w))+14),bottom];
 }
 // 문항 그림(+형광펜). 형광펜을 원하는데 칠할 자리가 없으면 null(카드는 원래 그림을 그대로 쓴다).
-async function drawQuestion(item,words,needMarks){
-  const doc=await openDoc(item.publicPath),page=await doc.getPage(item.page),scale=3,vp=page.getViewport({scale}),content=await page.getTextContent();
+function drawQuestion(item,words,needMarks){return withFile(item.publicPath,{},({doc})=>drawQuestionIn(doc,item,words,needMarks));}
+async function drawQuestionIn(doc,item,words,needMarks){
+  const page=await doc.getPage(item.page),scale=3,vp=page.getViewport({scale}),content=await page.getTextContent();
   const r=questionRect(content,page.getViewport({scale:1}),item.box)||item.box,pad=6,x0=r[0]-pad,y0=r[1]-pad,x1=r[2]+pad,y1=r[3]+pad;
   const marks=words.length?findMarks(content,vp,words).filter(m=>m.x>=x0*scale-2&&m.x+m.w<=x1*scale+2&&m.y>=y0*scale-4&&m.y+m.h<=y1*scale+4):[];
   if(needMarks&&!marks.length)return null;
@@ -109,8 +120,9 @@ export function croppedQuestion(item,words=[]){return cached(JSON.stringify([ite
 
 // 쪽 한 장(폭 cssWidth에 맞춤, 화면 배율 반영) + 형광펜 + 끌어서 고를 수 있는 글자 층(시안 31).
 // marks: 다시 열 때 칠할 근거 자리 [{x,y,w,h}](쪽 비율 0~1). 돌려주는 sha·fp는 근거에 남길 원본 지문.
-export async function renderPage(path,pageNo,words,cssWidth,{sha:known='',saved=[]}={}){
-  const {doc,sha,fp}=await openFile(path,{sha:known}),page=await doc.getPage(pageNo),base=page.getViewport({scale:1});
+export function renderPage(path,pageNo,words,cssWidth,{sha:known='',saved=[]}={}){return withFile(path,{sha:known},file=>renderPageIn(file,pageNo,words,cssWidth,saved));}
+async function renderPageIn({doc,sha,fp},pageNo,words,cssWidth,saved){
+  const page=await doc.getPage(pageNo),base=page.getViewport({scale:1});
   const scale=Math.min(4,cssWidth/base.width*Math.min(window.devicePixelRatio||1,2)),vp=page.getViewport({scale});
   const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
   const g=c.getContext('2d',{alpha:false});g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
