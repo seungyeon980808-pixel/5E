@@ -4,7 +4,8 @@ import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
-import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
+// ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
+const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
@@ -691,7 +692,7 @@ export function installExamModes(panel, services) {
   // ── ExamPool 시험지 열기 ──
   let examPoolData = null;
   async function openExamPool(anchor) {
-    const { data, exams } = await listExamPoolExams();
+    const { data, exams } = await (await examPoolOpen()).listExamPoolExams();
     examPoolData = data;
     pop.dataset.kind = 'exampool';
     pop.className = 'exam-pop exam-exampoolpop';
@@ -707,7 +708,7 @@ export function installExamModes(panel, services) {
     const id = pick.dataset.examPool; closePop();
     void run(async () => {
       const b = bridgeOrThrow(), Document = b.wasm.borrowDocumentHandle().constructor;
-      const { bytes, title } = await buildExamPoolHwpx(Document, examPoolData, id);
+      const { bytes, title } = await (await examPoolOpen()).buildExamPoolHwpx(Document, examPoolData, id);
       await services.loadExam(bytes, title);
       message(`ExamPool 시험지 「${title}」를 열었습니다. 인쇄 전 「점검」으로 확인하세요.`);
     });
