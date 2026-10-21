@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -396,6 +396,7 @@ export function installExamModes(panel, services) {
   }
   pop.addEventListener('click', event => {
     if (event.target.closest('[data-exam-keepwhole]')) { closePop(); void run(async () => { const { moved, left } = keepQuestionsWhole(bridgeOrThrow()); message(`문항 ${moved}개를 다음 단(쪽)으로 넘겼습니다.${left ? ` 단보다 긴 문항 ${left}개는 그대로 두었습니다.` : ''}`); }); return; }
+    if (event.target.closest('[data-exam-fixfont]')) { closePop(); void run(async () => message(`문항 ${unifyQuestionFonts(bridgeOrThrow())}개의 글꼴·크기를 대부분 문항에 맞췄습니다.`)); return; }
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
@@ -427,12 +428,19 @@ export function installExamModes(panel, services) {
 
   // ── 점검 창 ──
   let lastIssues = [];
+  // 점검 결과에 맞는 「한 번에 고치기」 단추들
+  const FIXES = [
+    [/단 폭보다 넓습니다/, '<button type="button" data-exam-fixwide>넓은 그림·표 모두 단 폭에 맞추기</button>'],
+    [/경계에서 나뉩니다/, '<button type="button" data-exam-keepwhole>나뉜 문항 다음 단으로 넘기기</button>'],
+    [/글꼴이 다릅니다/, '<button type="button" data-exam-fixfont>문항 글꼴 맞추기</button>'],
+  ];
+  const fixButtons = issues => { const html = FIXES.filter(([re]) => issues.some(issue => re.test(issue.text))).map(([, button]) => button).join(''); return html ? `<div class="exam-form-actions">${html}</div>` : ''; };
   function openCheck(anchor) {
     { const b = bridgeOrThrow(), d = b.wasm.borrowDocumentHandle(); lastIssues = [...checkLayout(b), ...extraChecks(d), ...splitQuestions(d)]; }
     pop.className = 'exam-pop exam-checkpop';
     pop.innerHTML = `<div class="exam-pop-head">조판 점검 <small>${lastIssues.length ? `${lastIssues.length}곳 · 누르면 그 자리로` : '고칠 곳이 없습니다'}</small></div>
       ${lastIssues.length ? `<ol class="exam-checklist">${lastIssues.map((issue, i) => `<li><button type="button" data-exam-jump="${i}" ${issue.at ? '' : 'disabled'}>${esc(issue.text)}</button></li>`).join('')}</ol>` : '<p class="exam-pop-empty">넓은 그림·표, 흐린 그림, 채우지 않은 빈칸, 문항 번호 빠짐·겹침을 살폈습니다.</p>'}
-      ${lastIssues.some(issue => /단 폭보다 넓습니다/.test(issue.text) || /경계에서 나뉩니다/.test(issue.text)) ? `<div class="exam-form-actions">${lastIssues.some(issue => /단 폭보다 넓습니다/.test(issue.text)) ? '<button type="button" data-exam-fixwide>넓은 그림·표 모두 단 폭에 맞추기</button>' : ''}${lastIssues.some(issue => /경계에서 나뉩니다/.test(issue.text)) ? '<button type="button" data-exam-keepwhole>나뉜 문항 다음 단으로 넘기기</button>' : ''}</div>` : ''}
+      ${fixButtons(lastIssues)}
       <div class="exam-pop-foot">Esc로 닫기</div>`;
     place(anchor);
   }

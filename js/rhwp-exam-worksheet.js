@@ -241,6 +241,39 @@ export function setQuestionScore(bridge, score) {
   return { number: q.number, total: Math.round(total * 10) / 10, count };
 }
 
+// 글꼴 맞추기: 문항 첫 줄 글꼴·크기가 대부분과 다른 문항(다른 곳에서 복사해 온 문항)을 대부분 쪽으로 맞춘다.
+// 그 문항의 본문 문단 글꼴을 바꾸고, 크기는 첫 줄과 같은 크기였던 글자만 바꾼다(작게 둔 〈보기〉·선지 크기는 그대로). 고친 문항 수.
+export function unifyQuestionFonts(bridge) {
+  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle(), wasm = bridge.wasm, blocks = [];
+  const keyOf = c => `${c.fontFamily}|${c.fontSize}`;
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
+    const len = doc.getParagraphLength(sec, q.head); if (!len) continue;
+    blocks.push({ ...q, sec, first: parse(doc.getCharPropertiesAt(sec, q.head, Math.min(len - 1, 3))) });
+  }
+  if (blocks.length < 2) throw new Error('문항이 둘 이상 있어야 글꼴을 맞출 수 있습니다.');
+  const count = new Map(); for (const b of blocks) count.set(keyOf(b.first), (count.get(keyOf(b.first)) || 0) + 1);
+  const [majorKey] = [...count].sort((a, b) => b[1] - a[1])[0], [family, size] = [majorKey.split('|')[0], Number(majorKey.split('|')[1])];
+  const odd = blocks.filter(b => keyOf(b.first) !== majorKey);
+  if (!odd.length) return 0;
+  bridge.transaction('unify-question-fonts', () => {
+    for (const b of odd) for (let p = b.start; p < b.end; p++) {
+      const len = doc.getParagraphLength(b.sec, p); if (!len) continue;
+      if (b.first.fontSize !== size) {
+        let from = -1;
+        for (let o = 0; o <= len; o++) {
+          const same = o < len && parse(wasm.getCharPropertiesAt(b.sec, p, o)).fontSize === b.first.fontSize;
+          if (same && from < 0) from = o;
+          if (!same && from >= 0) { doc.applyCharFormat(b.sec, p, from, o, JSON.stringify({ fontSize: size })); from = -1; }
+        }
+      }
+      doc.applyCharFormat(b.sec, p, 0, len, JSON.stringify({ fontFamily: family }));
+    }
+    return true;
+  });
+  input.updateCaret?.();
+  return odd.length;
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();

@@ -295,6 +295,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const scripted = await inPage(page, `const at=(p,o)=>{const c=w.getCharPropertiesAt(0,p,o);return c.subscript?'_':c.superscript?'^':'.';};
       const ion=text().findIndex(t=>t.startsWith('이온'));return [[5,6,7,8,9].map(o=>at(0,o)).join(''),[3,4,5,6,7].map(o=>at(ion,o)).join('')];`);
     assert.deepEqual(scripted, ['._...', '..^^.']);
+    // 22) 점검 「문항 글꼴 맞추기」: 다른 글꼴·크기로 붙여 온 문항을 대부분 문항에 맞추고, 일부러 작게 둔 줄의 크기는 그대로.
+    await inPage(page, `reset('1. 가\\n2. 나\\n3. 다른 글꼴\\nㄱ. 작은 보기');for(let p=0;p<4;p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontFamily:'함초롬바탕',fontSize:1000}));
+      d.applyCharFormat(0,2,0,d.getParagraphLength(0,2),JSON.stringify({fontFamily:'함초롬돋움',fontSize:1200}));d.applyCharFormat(0,3,0,d.getParagraphLength(0,3),JSON.stringify({fontFamily:'함초롬돋움',fontSize:900}));b.deps.eventBus.emit('document-changed');`);
+    await page.locator('[data-exam-fx="check"]').click();
+    assert.match(await page.locator('.exam-checklist').textContent(), /글꼴이 다릅니다/);
+    await page.locator('[data-exam-fixfont]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /문항 1개의 글꼴/);
+    assert.deepEqual(await inPage(page, `return [2,3].map(p=>{const c=w.getCharPropertiesAt(0,p,1);return [c.fontFamily,c.fontSize];});`), [['함초롬바탕', 1000], ['함초롬바탕', 900]]);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
