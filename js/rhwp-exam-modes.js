@@ -2,7 +2,7 @@
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole } from './rhwp-exam-layout-tools.js';
+import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame } from './rhwp-exam-worksheet.js';
@@ -430,16 +430,16 @@ export function installExamModes(panel, services) {
   function renderOutline() {
     const b = getBridge(); if (!b?.input || panel.hidden) return;
     let blocks = [];
-    try { blocks = questionBlocks(b.wasm.borrowDocumentHandle()); } catch { return; }
+    try { blocks = allQuestionBlocks(b.wasm.borrowDocumentHandle()); } catch { return; }
     outline.hidden = !blocks.length;
-    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.number}. ${q.preview}`)}"><b>${q.number}.</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.number}번 위로" ${i ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.number}번 아래로" ${i < blocks.length - 1 ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.number}번 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.number}번 지우기">×</button></li>`).join('')}</ol>`;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.number}. ${q.preview}`)}"><b>${q.number}.</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.number}번 위로" ${i && blocks[i - 1].sec === q.sec ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.number}번 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.number}번 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.number}번 지우기">×</button></li>`).join('')}</ol>`;
   }
   const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
   outline.addEventListener('click', event => {
     const dup = event.target.closest('[data-exam-qdup]'), del = event.target.closest('[data-exam-qdel]');
     if (dup) { void run(async () => { duplicateQuestion(bridgeOrThrow(), Number(dup.dataset.examQdup)); renderOutline(); message('문항을 바로 뒤에 복제하고 번호를 다시 매겼습니다.'); }); return; }
     if (del) {
-      const i = Number(del.dataset.examQdel), q = questionBlocks(bridgeOrThrow().wasm.borrowDocumentHandle())[i];
+      const i = Number(del.dataset.examQdel), q = allQuestionBlocks(bridgeOrThrow().wasm.borrowDocumentHandle())[i];
       void (async () => {
         if (!q || !await showConfirm(`${q.number}번 문항을 통째로 지울까요?\n되돌리기(⌘Z)로 되살릴 수 있습니다.`, { title: '문항 지우기', okText: '지우기', cancelText: '그대로 두기' })) return;
         await run(async () => { deleteQuestion(bridgeOrThrow(), i); renderOutline(); message(`${q.number}번 문항을 지우고 번호를 다시 매겼습니다.`); });
@@ -448,8 +448,8 @@ export function installExamModes(panel, services) {
     }
     const go = event.target.closest('[data-exam-q]'), move = event.target.closest('[data-exam-qmove]:not([data-exam-qdup]):not([data-exam-qdel])');
     if (go) void run(async () => {
-      const b = bridgeOrThrow(), q = questionBlocks(b.wasm.borrowDocumentHandle())[Number(go.dataset.examQ)]; if (!q) return;
-      b.input.cursor.moveTo({ sectionIndex: 0, paragraphIndex: q.start, charOffset: 0 }); b.input.updateCaret?.(); refocus();
+      const b = bridgeOrThrow(), q = allQuestionBlocks(b.wasm.borrowDocumentHandle())[Number(go.dataset.examQ)]; if (!q) return;
+      b.input.cursor.moveTo({ sectionIndex: q.sec, paragraphIndex: q.start, charOffset: 0 }); b.input.updateCaret?.(); refocus();
     });
     if (move) void run(async () => {
       const [i, dir] = move.dataset.examQmove.split(':').map(Number), b = bridgeOrThrow();

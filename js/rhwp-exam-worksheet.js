@@ -331,7 +331,10 @@ export function setPaper(bridge, name) {
 // 나형 만들기: 문항 순서를 섞은 사본(번호 다시 매김)과 「나형 번호 → 가형 번호」 대응. 지금 문서는 그대로.
 export function makeVariant(bridge, random = Math.random) {
   requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), first = questionBlocks(doc);
+  const doc = bridge.wasm.borrowDocumentHandle();
+  // 문항이 가장 많은 구역(보통 2단 본문)만 섞는다 — 머리 구역의 안내문은 그대로.
+  let mainSec = 0; for (let s = 1; s < doc.getSectionCount(); s++) if (questionBlocks(doc, s).length > questionBlocks(doc, mainSec).length) mainSec = s;
+  const first = questionBlocks(doc, mainSec);
   if (first.length < 2) throw new Error('번호가 붙은 문항이 둘 이상 있어야 섞을 수 있습니다.');
   // 원래 자리와 다른 순서가 나올 때까지 섞는다(문항이 둘이면 서로 바꾼다).
   const order = first.map((_, i) => i);
@@ -343,7 +346,7 @@ export function makeVariant(bridge, random = Math.random) {
     const current = first.map((_, i) => i);
     for (let target = 0; target < order.length; target++) {
       let at = current.indexOf(order[target]);
-      while (at > target) { swapAdjacentQuestions(copy, 0, questionBlocks(copy), at - 1); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
+      while (at > target) { swapAdjacentQuestions(copy, mainSec, questionBlocks(copy, mainSec), at - 1); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
     }
     renumberDocument(copy);
     return { bytes: copy.exportHwpx(), mapping: order.map((orig, i) => ({ variant: i + 1, original: first[orig].number })) };

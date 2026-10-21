@@ -231,6 +231,33 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.match(await page.locator('#exam-status').textContent(), /문항 1개를 다음 단/);
     assert.deepEqual(await inPage(page, `return text();`), beforeWhole, 'no text or empty line added');
     assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
+
+    // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
+    const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
+      reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
+      const enc=new TextEncoder(),dec=new TextDecoder(),xml=t=>new DOMParser().parseFromString(dec.decode(t),'application/xml'),ser=x=>enc.encode(new XMLSerializer().serializeToString(x));
+      first['Contents/section1.xml']=second['Contents/section0.xml'];
+      const meta=xml(first['Contents/header.xml']);meta.documentElement.setAttribute('secCnt','2');first['Contents/header.xml']=ser(meta);
+      const c=xml(first['Contents/content.hpf']),man=c.getElementsByTagNameNS('*','manifest')[0],spine=c.getElementsByTagNameNS('*','spine')[0];
+      const it=c.createElementNS(man.namespaceURI,'opf:item');it.setAttribute('id','section1');it.setAttribute('href','Contents/section1.xml');it.setAttribute('media-type','application/xml');man.append(it);
+      const ref=c.createElementNS(spine.namespaceURI,'opf:itemref');ref.setAttribute('idref','section1');ref.setAttribute('linear','yes');spine.append(ref);first['Contents/content.hpf']=ser(c);
+      return [...zipSync(first)];`);
+    const twoFile = require('node:path').join(require('node:os').tmpdir(), `5e-two-sections-${name}.hwpx`);
+    require('node:fs').writeFileSync(twoFile, Buffer.from(twoSections)); t.after(() => require('node:fs').rmSync(twoFile, { force: true }));
+    await h.nativeOpen(page, twoFile);
+    const allText = `const all=[];for(let s=0;s<d.getSectionCount();s++)for(let p=0;p<d.getParagraphCount(s);p++)all.push(s+':'+d.getTextRange(s,p,0,d.getParagraphLength(s,p)));return all;`;
+    assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 나', '1:나나', '1:3. 다']);
+    await inPage(page, `d.setColumnDef(1,2,0,true,2268);b.deps.eventBus.emit('document-changed');`);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 3);
+    assert.equal(await page.locator('[data-exam-qmove="0:1"]').isDisabled(), true, 'no move across sections');
+    assert.equal(await page.locator('[data-exam-qmove="1:-1"]').isDisabled(), true);
+    await page.locator('[data-exam-qmove="1:1"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 다', '1:3. 나', '1:나나']);
+    await page.locator('[data-exam-q="2"]').click(); await h.idle(page);
+    assert.equal(await inPage(page, `return b.input.cursor.getPosition().sectionIndex;`), 1);
+    await page.locator('[data-exam-qdup="2"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 다', '1:3. 나', '1:나나', '1:4. 나', '1:나나']);
+    assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });
