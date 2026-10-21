@@ -545,6 +545,19 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 2);
     await page.locator('[data-exam-qmove="1:-1"]').click(); await h.idle(page);
     assert.deepEqual([await inPage(page, `return ${cellOf(0, 0)}+' '+${cellOf(0, 1)};`), await inPage(page, `return ${cellOf(1, 0)}+' '+${cellOf(1, 1)};`)], ['1. 옳은 것은? (4점)', '2. 다음 중 옳지 않은 것은? (5점)']);
+    // 46) 문항을 그림으로(더 보기): 커서 문항 영역만 3배 PNG로, [정답] 줄은 빼고. 그림에 글자가 실제로 그려졌는지 픽셀로 본다.
+    await inPage(page, `reset('1. 첫째 문항의 발문은 이것이다.\\n① 가 ② 나 ③ 다 ④ 라 ⑤ 마\\n[정답] ③\\n2. 둘째');d.setColumnDef(0,1,0,true,0);b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:2});`);
+    const region = await inPage(page, `const T=await import('/js/rhwp-exam-layout-tools.js');const q=T.allQuestionBlocks(d)[0];return [T.questionRegion(d,q),T.questionRegion(d,{...q,end:q.end}).h];`);
+    await page.locator('[data-exam-ftab="item"]').click();
+    const imgDownload = page.waitForEvent('download');
+    await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morelist button', { hasText: '문항을 그림으로' }).click();
+    const imgFile = await imgDownload; await h.idle(page);
+    assert.match(imgFile.suggestedFilename().normalize('NFC'), /1번\.png$/);
+    const png = require('node:fs').readFileSync(await imgFile.path());
+    const [pw, ph] = [png.readUInt32BE(16), png.readUInt32BE(20)];
+    assert.ok(pw > 1000 && ph > 60 && ph < pw / 3, JSON.stringify([pw, ph, region]));
+    const ink = await page.evaluate(async b64 => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const px = g.getImageData(0, 0, c.width, c.height).data; let dark = 0; for (let i = 0; i < px.length; i += 4) if (px[i] < 100) dark++; return dark; }, png.toString('base64'));
+    assert.ok(ink > 500, `text pixels ${ink}`);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

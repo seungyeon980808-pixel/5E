@@ -635,3 +635,24 @@ export function insertChoiceCombo(bridge, index) {
   relayoutChoices(bridge, 5);
   return line;
 }
+
+// 문항을 그림으로: 문항이 처음 놓인 쪽·단에서 그 문항 글·표·그림·수식이 차지한 영역(px, 쪽 원점). 교사용 줄([정답]·[해설] 등)은 뺀다.
+// {page, x, y, w, h} — 문항이 다음 단·쪽으로 이어지면 첫 단만.
+const TEACHER_LINE = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|출처|메모|성취기준|난이도|내용\s*영역)|(?:정답|해설|풀이)\s*[:：])/;
+export function questionRegion(doc, q) {
+  const sec = q.sec ?? 0, keep = new Set();
+  for (let p = q.start; p < q.end; p++) if (!TEACHER_LINE.test(paragraphText(doc, sec, p))) keep.add(p);
+  try { doc.flushDeferredPagination?.(); } catch {}
+  for (let pg = 0; pg < doc.pageCount(); pg++) {
+    const info = parse(doc.getPageInfo(pg)), boxes = [];
+    for (const r of parse(doc.getPageTextLayout(pg)).runs || []) if (r.secIdx === sec && !r.cellPath?.length && keep.has(r.paraIdx) && String(r.text || '').trim()) boxes.push({ x: r.x, y: r.y, w: r.w, h: r.h });
+    for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if ((c.secIdx ?? sec) === sec && !c.cellPath?.length && !Number.isInteger(c.cellIdx) && keep.has(c.paraIdx) && Number.isFinite(c.y)) boxes.push({ x: c.x, y: c.y, w: c.w, h: c.h });
+    if (!boxes.length) continue;
+    const cols = info.columns?.length ? info.columns : [{ x: info.bodyLeft, width: info.bodyRight - info.bodyLeft }];
+    const colOf = x => { const i = cols.findIndex(c => x < c.x + c.width + 4); return i < 0 ? cols.length - 1 : i; };
+    const first = boxes.reduce((a, b) => (colOf(a.x) < colOf(b.x) || (colOf(a.x) === colOf(b.x) && a.y <= b.y) ? a : b)), col = cols[colOf(first.x)];
+    const inCol = boxes.filter(b => colOf(b.x) === colOf(first.x)), top = Math.min(...inCol.map(b => b.y)), bottom = Math.max(...inCol.map(b => b.y + b.h));
+    return { page: pg, x: col.x - 4, y: top - 6, w: col.width + 8, h: bottom - top + 12, width: info.width, height: info.height };
+  }
+  return null;
+}
