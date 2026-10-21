@@ -3,7 +3,7 @@
 import { insertTable } from './hwp-palette/native.js';
 import { qrPng } from './qr-encode.js';
 import { unitGapIssues } from './rhwp-exam-science-text.js';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks } from './rhwp-exam-layout-tools.js';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
@@ -178,7 +178,13 @@ export function studentCopy(bridge) {
       if (p > 0) parse(copy.deleteParagraph(sec, p));
       else { const n = copy.getParagraphLength(sec, 0); if (n) copy.deleteText(sec, 0, 0, n); }
     }
-    return { bytes: copy.exportHwpx(), count: blanks.length, removed: teacher.length, answers: blanks.map(b => b.text) };
+    // 교사용 줄이 빠지면 쪽 배치가 달라진다 — 교사용에서 맞춰 둔 판(나뉜 문항 없음, 단 채우기)을 학생용에서도 다시 맞춘다.
+    let relaid = 0, refilled = false;
+    if (teacher.length) {
+      if (!splitQuestions(doc).length && splitQuestions(copy).length) relaid = keepQuestionsWholeDoc(copy).moved;
+      if (looksColumnFilled(doc)) { fillColumnsDoc(copy); refilled = true; }
+    }
+    return { bytes: copy.exportHwpx(), count: blanks.length, removed: teacher.length, relaid, refilled, answers: blanks.map(b => b.text) };
   } finally { copy.free(); }
 }
 

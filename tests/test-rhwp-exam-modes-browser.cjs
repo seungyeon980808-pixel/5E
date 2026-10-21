@@ -490,6 +490,15 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const choiceChecks = (await page.locator('.exam-checklist li').allTextContents()).filter(t => t.includes('선지 번호'));
     assert.deepEqual(choiceChecks, ['1번 선지 번호가 차례대로가 아닙니다(①②③③⑤).', '3번 선지 번호가 차례대로가 아닙니다(①②③⑤).']);
     await page.keyboard.press('Escape');
+    // 42) 학생용 사본의 판 다시 맞추기: 교사용은 2번이 2단 맨 위에서 시작하지만, [해설] 두 줄이 빠지면 2번이 단 경계에 걸린다 → 학생용에서 다음 단으로 넘긴다.
+    const relay = await inPage(page, `const fmt=()=>{for(let p=0;p<d.getParagraphCount(0);p++){d.applyParaFormat(0,p,JSON.stringify({lineSpacing:160,spacingBefore:0,spacingAfter:0}));d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000,bold:false,textColor:'#000000',spacings:[0,0,0,0,0,0,0]}));}};
+      reset(Array.from({length:120},(_,i)=>'가 '+i).join('\\n'));d.setColumnDef(0,2,0,true,2268);fmt();
+      const runs=JSON.parse(d.getPageTextLayout(0)).runs.filter(r=>!r.cellPath?.length),left=Math.min(...runs.map(r=>r.x)),L=new Set(runs.filter(r=>r.x<left+50).map(r=>r.paraIdx)).size;
+      reset(['1. 첫째',...Array.from({length:L-3},(_,i)=>'가 '+i),'[해설] 하나','[해설] 둘','2. 둘째','나 1','나 2'].join('\\n'));d.setColumnDef(0,2,0,true,2268);fmt();b.deps.eventBus.emit('document-changed');
+      const W=await import('/js/rhwp-exam-worksheet.js'),T=await import('/js/rhwp-exam-layout-tools.js');const before=T.splitQuestions(d).length;
+      const r=W.studentCopy(b),x=new d.constructor(r.bytes);try{x.convertToEditable?.();return {L,before,relaid:r.relaid,after:T.splitQuestions(x).length};}finally{x.free();}`);
+    assert.ok(relay.L > 10, JSON.stringify(relay));
+    assert.deepEqual([relay.before, relay.relaid, relay.after], [0, 1, 0], JSON.stringify(relay));
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

@@ -456,6 +456,12 @@ export function keepQuestionsWhole(bridge) {
   });
   return { moved, left };
 }
+// 문서 손잡이만 쓰는 「나뉜 문항 넘기기」(학생용 사본에도 쓴다). {moved, left}
+export function keepQuestionsWholeDoc(doc) {
+  let moved = 0, left = 0;
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) { const r = keepSectionWhole(doc, sec); moved += r.moved; left += r.left; }
+  return { moved, left };
+}
 function keepSectionWhole(doc, sec) {
   const columns = Math.max(1, parse(doc.getColumnDef(sec))?.columnCount || 1);
   let moved = 0;
@@ -483,10 +489,16 @@ function keepSectionWhole(doc, sec) {
 // 단을 넘긴 문항이 있는 단은 건드리지 않는다. 문단 위 간격 값은 1pt=200, 화면 1px=0.75pt=150.
 export function fillColumns(bridge) {
   const { doc } = requireDocument(bridge);
+  if (allQuestionBlocks(doc).length < 2) throw new Error('번호가 붙은 문항이 둘 이상 있어야 단을 채울 수 있습니다.');
+  let result = { changed: 0, columns: 0 };
+  bridge.transaction('fill-columns', () => { result = fillColumnsDoc(doc); return true; });
+  return result;
+}
+// 문서 손잡이만 쓰는 단 채우기(학생용 사본에도 쓴다).
+export function fillColumnsDoc(doc) {
   const all = allQuestionBlocks(doc);
-  if (all.length < 2) throw new Error('번호가 붙은 문항이 둘 이상 있어야 단을 채울 수 있습니다.');
   let changed = 0, columnsFilled = 0;
-  bridge.transaction('fill-columns', () => {
+  {
     for (let sec = 0; sec < doc.getSectionCount(); sec++) {
       const blocks = all.filter(b => b.sec === sec); if (blocks.length < 2) continue;
       const base = 0;
@@ -525,9 +537,16 @@ export function fillColumns(bridge) {
         for (const p of plans) for (const b of p.starts) { doc.applyParaFormat(sec, b.start, JSON.stringify({ spacingBefore: base })); changed--; }
       } else columnsFilled += plans.length;
     }
-    return true;
-  });
+  }
   return { changed, columns: columnsFilled };
+}
+// 단 채우기를 쓴 문서인지 어림: 같은 구역 문항 위 간격이 두 가지 넘게 다르면(단마다 다른 간격) 채운 것으로 본다.
+export function looksColumnFilled(doc) {
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) {
+    const values = new Set(questionBlocks(doc, sec).slice(1).map(b => { try { return Math.round(parse(doc.getParaPropertiesAt?.(sec, b.start) ?? '{}')?.spacingBefore || 0); } catch { return 0; } }));
+    if (values.size > 1) return true;
+  }
+  return false;
 }
 
 // 조합 선지: 〈보기〉 ㄱㄴㄷ·학생 A B C를 「있는 대로 고른」 문항에서 흔히 쓰는 다섯 조합. 커서 문단 뒤에 넣고 5열로 놓는다.

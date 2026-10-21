@@ -188,9 +188,9 @@ export function installExamModes(panel, services) {
       refocus();
     },
     studentCopy(b) {
-      const { bytes, count, removed } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
+      const { bytes, count, removed, relaid, refilled } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`${[count ? `빈칸 ${count}개를 비우고` : '', removed ? `[정답]·[해설] 줄 ${removed}개를 뺀` : ''].filter(Boolean).join(' ').replace(/비우고$/, '비운')} 학생용 사본을 내려받습니다(${name}). 지금 문서는 그대로입니다.`);
+      message(`${[count ? `빈칸 ${count}개를 비우고` : '', removed ? `[정답]·[해설] 줄 ${removed}개를 뺀` : ''].filter(Boolean).join(' ').replace(/비우고$/, '비운')} 학생용 사본을 내려받습니다(${name})${refilled || relaid ? ` — 줄이 빠진 만큼 ${[refilled ? '단을 다시 채우고' : '', relaid ? `나뉜 문항 ${relaid}개를 넘겼습니다` : ''].filter(Boolean).join(' ').replace(/채우고$/, '채웠습니다')}` : ''}. 지금 문서는 그대로입니다.`);
     },
     answerKey(b) {
       const { bytes, count } = answerKeyCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-정답지.hwpx`;
