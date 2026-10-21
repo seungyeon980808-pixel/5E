@@ -848,6 +848,12 @@
       "findingIds": [
         "HWPPALETTE-RHWP-SUBDOCUMENTS"
       ]
+    },
+    {
+      "path": "tests/test-qr-encode.mjs",
+      "findingIds": [
+        "HWP-QR-ENCODE"
+      ]
     }
   ],
   "browser": [

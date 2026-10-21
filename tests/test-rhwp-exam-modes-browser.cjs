@@ -271,6 +271,21 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const variant = await inPage(page, `const W=await import('/js/rhwp-exam-worksheet.js');let k=0;const r=W.makeVariant(b,()=>(k++%2)?0:.99);const c=new d.constructor(r.bytes);try{c.convertToEditable?.();return [r.mapping.map(m=>m.original),[...Array(c.getParagraphCount(0)).keys()].map(p=>c.getTextRange(0,p,0,c.getParagraphLength(0,p)))];}finally{c.free();}`);
     assert.deepEqual(variant[0], [1, 2, 4, 3]);
     assert.deepEqual(variant[1], ['[1~2] 다음 글을 읽고 물음에 답하시오.', '지문', '1. 둘째', '2. 셋째', '3. 다섯째', '4. 넷째']);
+    // 20) QR 코드: 주소를 쓰고 크기를 고르면 커서 문단 뒤에 테두리 없는 1×2 칸(왼쪽 QR 그림 25mm, 오른쪽 안내 글·주소). 같은 주소면 같은 그림.
+    await inPage(page, `reset('학습지');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '영상·자료 주소를 QR 코드로').click();
+    await page.locator('[data-exam-qr-size="25"]').click();
+    assert.match(await page.locator('#exam-status').textContent(), /주소를 쓰세요/);
+    await page.locator('[data-exam-qr="url"]').fill('https://youtu.be/5e-science'); await page.locator('[data-exam-qr="label"]').fill('실험 영상 보기');
+    await page.locator('[data-exam-qr-size="25"]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /QR 코드\(「실험 영상 보기」\)/);
+    const qr = await tables();
+    assert.equal(qr.length, 1); assert.deepEqual([qr[0].dims.rowCount, qr[0].dims.colCount], [1, 2]);
+    const qrCell = await inPage(page, `const c=JSON.parse(d.getPageControlLayout(0)).controls,t=c.find(x=>x.type==='table'),img=c.find(x=>x.type==='image'&&x.cellPath?.length);
+      const ci=t.controlIdx??t.ci;
+      return {img:img&&[img.cellPath[0].cellIndex,Math.round(img.w/96*25.4)],border:JSON.parse(d.getCellProperties(0,t.paraIdx,ci,0)).borderLeft.type,
+        text:[...Array(d.getCellParagraphCount(0,t.paraIdx,ci,1)).keys()].map(p=>d.getTextInCell(0,t.paraIdx,ci,1,p,0,d.getCellParagraphLength(0,t.paraIdx,ci,1,p)))};`);
+    assert.deepEqual(qrCell.img, [0, 25]); assert.equal(qrCell.border, 0); assert.deepEqual(qrCell.text, ['실험 영상 보기', 'https://youtu.be/5e-science']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

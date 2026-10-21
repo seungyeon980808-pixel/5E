@@ -1,6 +1,7 @@
 // 학습지·시험지 만들기 도구(10-21 밤). 빈칸 학습지(표시 → 학생용 사본·정답 모음), 시험지 머리 양식, 정답표 칸, 문항 간격 일괄.
 // 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 학생용 사본은 지금 문서를 건드리지 않고 복사본에서 만든다.
 import { insertTable } from './hwp-palette/native.js';
+import { qrPng } from './qr-encode.js';
 import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
@@ -277,7 +278,7 @@ function tableAfterCursor(bridge, doc, rows, cols, grid, options) {
   parse(doc.splitParagraph(sec, para, doc.getParagraphLength(sec, para)));
   const before = new Set();
   const tablesIn = p => { const out = []; for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && c.secIdx === sec && c.paraIdx === p && !(c.cellPath || []).length) out.push(c.controlIdx ?? c.ci); return out; };
-  insertTable(doc, { sectionIndex: sec, paragraphIndex: para + 1, charOffset: 0 }, rows, cols, grid, new Map(), options);
+  insertTable(doc, { sectionIndex: sec, paragraphIndex: para + 1, charOffset: 0 }, rows, cols, grid, options.assets || new Map(), options);
   for (let p = para + 1; p < doc.getParagraphCount(sec); p++) { const found = tablesIn(p).filter(ci => !before.has(`${p}:${ci}`)); if (found.length) return { sec, para: p, ci: found[0] }; }
   throw new Error('표를 넣었지만 위치를 찾지 못했습니다.');
 }
@@ -295,6 +296,26 @@ export function insertBox(bridge, title = '개념 정리') {
     return true;
   });
   return title;
+}
+// QR 코드: 커서 문단 뒤에 테두리 없는 1×2 칸 — 왼쪽 QR 그림(sizeMm), 오른쪽 안내 글과 주소. 주소는 그대로 QR에 담는다.
+export async function insertQrCode(bridge, { url, label = '', sizeMm = 25 } = {}) {
+  requireInput(bridge);
+  const text = String(url || '').trim();
+  if (!text) throw new Error('QR 코드에 넣을 주소(또는 글)를 쓰세요.');
+  if (!(sizeMm >= 15 && sizeMm <= 60)) throw new Error('QR 코드 크기는 15~60mm로 고르세요.');
+  const png = await qrPng(text, { ecc: 'M', cell: 8 });
+  const doc = bridge.wasm.borrowDocumentHandle(), wasm = bridge.wasm;
+  const assets = new Map([['qr', { bytes: png.bytes, widthMm: sizeMm, heightMm: sizeMm, width: png.width, height: png.height, extension: 'png', name: 'qr.png' }]]);
+  const shown = text.length > 70 ? `${text.slice(0, 67)}…` : text, title = String(label || '').trim() || '스캔해서 보기';
+  bridge.transaction('insert-qr', () => {
+    const width = columnWidth(doc), left = Math.min(width - mmUnits(30), mmUnits(sizeMm + 5));
+    const t = tableAfterCursor(bridge, doc, 1, 2, [[[{ image: 'qr' }], { kind: 'multiline', lines: [title, shown] }]], { width, border: 'None', assets });
+    const cells = [0, 1].map(c => parse(wasm.getCellProperties(t.sec, t.para, t.ci, c)).width);
+    parse(wasm.resizeTableCells(t.sec, t.para, t.ci, [{ cellIdx: 0, widthDelta: left - cells[0] }, { cellIdx: 1, widthDelta: (width - left) - cells[1] }]));
+    doc.applyCharFormatInCell(t.sec, t.para, t.ci, 1, 0, 0, [...title].length, JSON.stringify({ bold: true }));
+    return true;
+  });
+  return { version: png.version, title };
 }
 // 서술형 답란: 아래 줄만 있는 칸 n줄(줄 간격 10mm).
 export function insertAnswerLines(bridge, lines = 5) {

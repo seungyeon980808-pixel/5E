@@ -5,7 +5,7 @@ import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-contr
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -81,6 +81,7 @@ function focusTabs(ctx) {
       ['학습지 틀', '제목·이름 칸·학습 목표·활동 1·활동 2·정리 상자를 문서 끝에 한 번에 넣기', doc(b => ctx.message(`학습지 틀(상자 ${insertWorksheetFrame(b, ctx.documentTitle())}개)을 넣었습니다. 칸마다 내용을 쓰세요.`))],
       ['상자', '개념 정리·탐구 활동·생각해 보기·주의 상자(제목 줄 음영)를 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
       ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
+      ['QR 코드', '영상·자료 주소를 QR 코드로 커서 문단 뒤에 넣기(왼쪽 QR, 오른쪽 안내 글)', (_, button) => ctx.openPicker(button, 'qr')],
       ['평가 기준표', '평가 요소 | 상 | 중 | 하 표를 커서 문단 뒤에 넣기', doc(b => ctx.message(`평가 기준표(${insertRubric(b)}줄)를 넣었습니다.`))],
     ],
     layout: [
@@ -370,6 +371,11 @@ export function installExamModes(panel, services) {
     } else if (kind === 'paper') {
       pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
         <div class="exam-morelist">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
+    } else if (kind === 'qr') {
+      pop.innerHTML = `<div class="exam-pop-head">QR 코드 <small>커서 문단 뒤에 넣음</small></div>
+        <label class="exam-field"><span>주소</span><input data-exam-qr="url" placeholder="https://" inputmode="url" autocomplete="off" spellcheck="false"></label>
+        <label class="exam-field"><span>안내 글</span><input data-exam-qr="label" placeholder="예: 실험 영상 보기"></label>
+        <div class="exam-morelist">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>`;
     } else if (kind === 'score') {
       pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
         <div class="exam-morelist">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
@@ -391,6 +397,12 @@ export function installExamModes(panel, services) {
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
+    const qrSize = event.target.closest('[data-exam-qr-size]');
+    if (qrSize) {
+      const value = name => pop.querySelector(`[data-exam-qr="${name}"]`)?.value || '', form = { url: value('url'), label: value('label'), sizeMm: Number(qrSize.dataset.examQrSize) };
+      if (!form.url.trim()) { pop.querySelector('[data-exam-qr="url"]')?.focus(); message('QR 코드에 넣을 주소를 쓰세요.', true); return; }
+      closePop(); void run(async () => { const r = await insertQrCode(bridgeOrThrow(), form); message(`QR 코드(「${r.title}」)를 넣었습니다. 휴대폰 카메라로 비춰 확인해 보세요.`); }); return;
+    }
     const score = event.target.closest('[data-exam-score]');
     if (score) { const value = score.dataset.examScore === '' ? null : Number(score.dataset.examScore); closePop(); void run(async () => { const r = setQuestionScore(bridgeOrThrow(), value); message(`${r.number}번 ${value == null ? '배점을 지웠습니다' : `${value}점`} — 배점 ${r.count}곳 합계 ${r.total}점${r.count && r.total !== 100 ? ' (100점 아님)' : ''}`); refocus(); }); return; }
     const pagenum = event.target.closest('[data-exam-pagenum]');
