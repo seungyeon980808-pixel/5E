@@ -291,6 +291,10 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
       return {img:img&&[img.cellPath[0].cellIndex,Math.round(img.w/96*25.4)],border:JSON.parse(d.getCellProperties(0,t.paraIdx,ci,0)).borderLeft.type,
         text:[...Array(d.getCellParagraphCount(0,t.paraIdx,ci,1)).keys()].map(p=>d.getTextInCell(0,t.paraIdx,ci,1,p,0,d.getCellParagraphLength(0,t.paraIdx,ci,1,p)))};`);
     assert.deepEqual(qrCell.img, [0, 25]); assert.equal(qrCell.border, 0); assert.deepEqual(qrCell.text, ['실험 영상 보기', 'https://youtu.be/5e-science']);
+    await inPage(page, `reset('1. 가\\n[정답] ③\\n2. 나\\n[정답] ①');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:3,charOffset:0});`);
+    await button(page, '영상·자료 주소를 QR 코드로').click(); await page.locator('[data-exam-qr-answers]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /정답 2개를 담은 QR/);
+    assert.ok((await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length);return [0,1].map(p=>d.getTextInCell(0,t.paraIdx,t.controlIdx,1,p,0,d.getCellParagraphLength(0,t.paraIdx,t.controlIdx,1,p)));`))[1] === '1-③ 2-①');
     // 21) 첨자 자동: 본문과 표 칸의 화학식·이온·단위에 첨자 모양만 입히고 글자는 그대로.
     await inPage(page, `reset('반응식 2H2 + O2 → 2H2O\\n이온 Fe3+ 와 SO42-');const r=JSON.parse(d.createTable(0,1,0,1,1));d.insertTextInCell(0,r.paraIdx,r.controlIdx,0,0,0,'가속도 2 m/s2');b.deps.eventBus.emit('document-changed');window.__t=r;`);
     const plain = await inPage(page, `return text();`);

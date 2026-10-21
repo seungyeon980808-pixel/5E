@@ -424,7 +424,9 @@ export function installExamModes(panel, services) {
       pop.innerHTML = `<div class="exam-pop-head">QR 코드 <small>커서 문단 뒤에 넣음</small></div>
         <label class="exam-field"><span>주소</span><input data-exam-qr="url" placeholder="https://" inputmode="url" autocomplete="off" spellcheck="false"></label>
         <label class="exam-field"><span>안내 글</span><input data-exam-qr="label" placeholder="예: 실험 영상 보기"></label>
-        <div class="exam-morelist">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>`;
+        <div class="exam-morelist">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>
+        <div class="exam-pop-head exam-pop-sub">정답 QR <small>문항 안 [정답]을 「1-③ 2-①」로 담아 학생이 스스로 채점</small></div>
+        <div class="exam-morelist"><button type="button" data-exam-qr-answers>정답을 QR로 넣기</button></div>`;
     } else if (kind === 'frame') {
       pop.innerHTML = `<div class="exam-pop-head">학습지 틀 <small>문서 끝에 넣음 · 제목은 문서 이름</small></div>
         <div class="exam-stemlist">${Object.entries(WORKSHEET_FRAMES).map(([k, [, name, parts]]) => `<button type="button" data-exam-frame="${k}"><b>${esc(name)}</b> — ${esc(parts.map(x => x[0].replace(/ \(.*\)$/, '')).join(' · '))}</button>`).join('')}</div>`;
@@ -468,6 +470,14 @@ export function installExamModes(panel, services) {
     if (combo) { const i = Number(combo.dataset.examCombo); closePop(); void run(async () => { insertChoiceCombo(bridgeOrThrow(), i); refocus(); }); return; }
     const variant = event.target.closest('[data-exam-variant]');
     if (variant) { const choices = variant.dataset.examVariant === 'choices'; closePop(); void run(async () => ctx.variant(bridgeOrThrow(), choices)); return; }
+    if (event.target.closest('[data-exam-qr-answers]')) {
+      closePop(); void run(async () => {
+        const b = bridgeOrThrow(), answers = [...questionAnswers(b.wasm.borrowDocumentHandle())].sort((x, y) => x[0] - y[0]);
+        if (!answers.length) throw new Error('문항 안에 「[정답] ③」이 없습니다. 문항 → 정답으로 먼저 적으세요.');
+        const r = await insertQrCode(b, { url: answers.map(([n, a]) => `${n}-${a}`).join(' '), label: `정답 확인 (${answers.length}문항)`, sizeMm: 25 });
+        message(`정답 ${answers.length}개를 담은 QR(「${r.title}」)를 넣었습니다.`);
+      }); return;
+    }
     const qrSize = event.target.closest('[data-exam-qr-size]');
     if (qrSize) {
       const value = name => pop.querySelector(`[data-exam-qr="${name}"]`)?.value || '', form = { url: value('url'), label: value('label'), sizeMm: Number(qrSize.dataset.examQrSize) };

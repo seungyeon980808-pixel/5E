@@ -128,3 +128,4 @@
 #rhwp-exam-workspace .is-hint { box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); animation: exam-hint 1.6s ease; }
 @keyframes exam-hint { 0%, 60% { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); } }
 @media (prefers-reduced-motion: reduce) { #rhwp-exam-workspace .is-hint { animation: none; } }
+#rhwp-exam-workspace .exam-pop-sub { margin-top: 10px; }
