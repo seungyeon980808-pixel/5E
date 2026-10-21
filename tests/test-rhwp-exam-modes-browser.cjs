@@ -108,6 +108,34 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
     await page.locator('[data-exam-action="undo"]').click(); await h.idle(page);
     assert.deepEqual((await inPage(page, `return text();`)).map(s => s.slice(0, 2)), ['5.', '9.']);
+
+    // 8) 학습지: 빈칸 표시 → 학생용 사본(지금 문서는 그대로) → 정답 모아 넣기, 시험지 머리, 정답표 칸, 문항 간격, 배점 합계 점검.
+    await inPage(page, `reset('1. 식물은 광합성으로 포도당을 만든다. [3점]\\n2. 엽록체에서 일어난다. [4점]');`);
+    await page.locator('[data-exam-ftab="sheet"]').click();
+    for (const [para, from, to] of [[0, 7, 10], [1, 3, 6]]) {
+      await inPage(page, `b.input.cursor.selectRange({sectionIndex:0,paragraphIndex:arg[0],charOffset:arg[1]},{sectionIndex:0,paragraphIndex:arg[0],charOffset:arg[2]});`, [para, from, to]);
+      await button(page, '고른 낱말을 빈칸으로').click(); await h.idle(page);
+    }
+    const download = page.waitForEvent('download');
+    await button(page, '빈칸을 「').click(); const file = await download;
+    assert.match(file.suggestedFilename().normalize("NFC"), /학생용\.hwpx$/);
+    const student = await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const D=d.constructor,x=new D(studentCopy(b).bytes);try{return [0,1].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`);
+    assert.match(student[0], /^1\. 식물은 \(\u3000+\)으로/); assert.match(student[1], /^2\. \(\u3000+\)에서/);
+    assert.deepEqual((await inPage(page, `return text();`)).slice(0, 2), ['1. 식물은 광합성으로 포도당을 만든다. [3점]', '2. 엽록체에서 일어난다. [4점]'], 'teacher copy keeps answers');
+    await button(page, '빈칸 정답을').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return text();`)).at(-1), '[빈칸 정답] 1. 광합성   2. 엽록체');
+    await button(page, '문서 맨 앞에 제목').click();
+    await page.locator('[data-exam-form="subject"]').fill('통합과학'); await page.locator('[data-exam-form="grade"]').fill('1');
+    await page.locator('[data-exam-form-submit]').click(); await h.idle(page);
+    assert.match((await inPage(page, `return text();`))[0], /— 통합과학$/);
+    await button(page, '찾은 문항 번호로').click(); await h.idle(page);
+    assert.equal((await tables()).length, 2, 'header table + answer grid');
+    await button(page, '두 번째 문항부터').click(); await page.locator('[data-exam-spacing="14"]').click(); await h.idle(page);
+    const second = await inPage(page, `for(let p=0;p<d.getParagraphCount(0);p++){const t=d.getTextRange(0,p,0,d.getParagraphLength(0,p));if(t.startsWith('2.'))return Math.round(w.getParaPropertiesAt(0,p).spacingBefore*75/100)*100;}`);
+    assert.equal(second, 2800, '14pt');
+    await page.locator('[data-exam-fx="check"]').click(); await page.locator('.exam-checkpop').waitFor();
+    assert.ok((await page.locator('.exam-checklist button').allTextContents()).some(s => s.includes('배점 합계가 7점')));
+    await page.keyboard.press('Escape');
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });

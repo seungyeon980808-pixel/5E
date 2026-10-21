@@ -3,6 +3,7 @@
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout } from './rhwp-exam-layout-tools.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -65,6 +66,16 @@ function focusTabs(ctx) {
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
       ['마크다운', '마크다운 → 한글 문항 (팔레트)', tool('convert')], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', tool('exam_excel')],
     ],
+    sheet: [
+      ['빈칸 표시', '고른 낱말을 빈칸으로 표시(연한 파랑·밑줄) — 학생용에서 「(　　　)」로 바뀜', doc(b => markBlank(b, true))],
+      ['표시 지우기', '고른 부분의 빈칸 표시 지우기', doc(b => markBlank(b, false))],
+      ['학생용 내려받기', '빈칸을 「(　　　)」로 바꾼 학생용 HWPX 사본 내려받기(지금 문서는 그대로)', doc(b => ctx.studentCopy(b))],
+      ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
+      ['시험지 머리', '문서 맨 앞에 제목 줄과 학년·반·번호·이름 칸 넣기', (_, button) => ctx.openHeaderForm(button)],
+      ['정답표 칸', '찾은 문항 번호로 「번호/정답」 표를 문서 끝에 넣기(정답은 비워 둠)', doc(b => ctx.message(`문항 ${insertAnswerGrid(b)}개의 정답표 칸을 넣었습니다.`))],
+      ['문항 간격', '두 번째 문항부터 문항 위 간격을 한꺼번에 맞추기', (_, button) => ctx.openSpacingForm(button)], '|',
+      ['인쇄', '인쇄 창 열기', cmd('file:print')], ['PDF로 저장', 'PDF로 저장', cmd('file:print-to-pdf')],
+    ],
   };
 }
 
@@ -86,6 +97,8 @@ const MORE = {
     ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum'], ['전체 쪽 수', '지금 자리에 전체 쪽 수 넣기', 'page:insert-field-totalpage'],
     ['각주', '각주 넣기', 'insert:footnote'], ['미주', '미주 넣기', 'insert:endnote'], ['글상자', '글상자 넣기', 'insert:textbox'],
     ['단 설정', '단 수·간격 설정', 'page:col-settings'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['문자표 전체', '한글 문자표 창', 'insert:symbols']],
+  sheet: [['쪽 테두리', '쪽 테두리·배경', 'page:page-border'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['단 설정', '단 수·간격 설정', 'page:col-settings'],
+    ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum']],
 };
 
 export function installExamModes(panel, services) {
@@ -105,7 +118,7 @@ export function installExamModes(panel, services) {
   // ── 집중 도구 줄 ──
   const bar = document.createElement('div');
   bar.className = 'exam-focusbar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', '집중 편집 도구');
-  bar.innerHTML = `<span class="exam-ftabs" role="tablist">${[['text', '글자·문단'], ['table', '표'], ['pic', '그림'], ['item', '문항']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
+  bar.innerHTML = `<span class="exam-ftabs" role="tablist">${[['text', '글자·문단'], ['table', '표'], ['pic', '그림'], ['item', '문항'], ['sheet', '학습지']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
     <span class="exam-fdiv"></span><div class="exam-fgroup"></div>
     <div class="exam-fright"><span class="exam-fdiv"></span>
       <button type="button" class="exam-fx big" data-exam-fx="symbols" title="특수기호 창: 기출 3년 빈도로 고른 첫 줄 16칸 + 묶음 탭">Ω 기호</button>
@@ -149,6 +162,13 @@ export function installExamModes(panel, services) {
       message(`${name === 'spacingBefore' ? '문단 위' : '문단 아래'} 간격 ${pt}pt`);
       refocus();
     },
+    studentCopy(b) {
+      const { bytes, count } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
+      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
+      message(`빈칸 ${count}개를 비운 학생용 사본을 내려받습니다(${name}). 지금 문서는 그대로입니다.`);
+    },
+    openHeaderForm: anchor => openForm(anchor, 'header'),
+    openSpacingForm: anchor => openForm(anchor, 'spacing'),
     insertText(text) {
       const palette = services.palette;
       if (palette?.native) return palette.native.insertChar(text, palette.native.capture());
@@ -267,7 +287,7 @@ export function installExamModes(panel, services) {
       void run(async () => { const b = bridgeOrThrow(); b.input.cursor.moveTo(issue.at); b.input.updateCaret?.(); refocus(); });
     }
   });
-  pop.addEventListener('mousedown', event => event.preventDefault()); // 누를 때 문서 커서를 잃지 않게
+  pop.addEventListener('mousedown', event => { if (!event.target.closest('input,select,textarea')) event.preventDefault(); }); // 누를 때 문서 커서를 잃지 않게(입력 칸은 예외)
 
   // ── 더 보기 창 ──
   function openMore(anchor) {
@@ -284,10 +304,42 @@ export function installExamModes(panel, services) {
     return ctx.command(action);
   }
 
+  // ── 작은 입력 창(시험지 머리·문항 간격) ──
+  const HEADER_KEY = '5e.hwp.examHeader';
+  function openForm(anchor, kind) {
+    if (!pop.hidden && pop.dataset.kind === kind) { closePop(); return; }
+    pop.dataset.kind = kind;
+    pop.className = 'exam-pop exam-formpop';
+    if (kind === 'header') {
+      let saved = {}; try { saved = JSON.parse(localStorage.getItem(HEADER_KEY) || '{}'); } catch {}
+      pop.innerHTML = `<div class="exam-pop-head">시험지 머리 <small>문서 맨 앞에 넣음 · 다음에도 기억</small></div>
+        <label class="exam-field"><span>시험 이름</span><input data-exam-form="title" value="${esc(saved.title || '2026학년도 1학기 중간고사')}"></label>
+        <label class="exam-field"><span>과목</span><input data-exam-form="subject" value="${esc(saved.subject || '')}" placeholder="예: 통합과학"></label>
+        <label class="exam-field"><span>학년</span><input data-exam-form="grade" value="${esc(saved.grade || '')}" placeholder="예: 1" inputmode="numeric"></label>
+        <div class="exam-form-actions"><button type="button" data-exam-form-submit>넣기</button></div>`;
+    } else {
+      pop.innerHTML = `<div class="exam-pop-head">문항 간격 <small>두 번째 문항부터 문항 위 간격</small></div>
+        <div class="exam-morelist">${[6, 10, 14, 20, 28].map(pt => `<button type="button" data-exam-spacing="${pt}">${pt}pt</button>`).join('')}</div>`;
+    }
+    place(anchor);
+    pop.querySelector('input')?.focus();
+  }
+  pop.addEventListener('click', event => {
+    const spacing = event.target.closest('[data-exam-spacing]');
+    if (spacing) { const pt = Number(spacing.dataset.examSpacing); closePop(); void run(async () => message(`문항 ${setQuestionSpacing(bridgeOrThrow(), pt)}곳의 위 간격을 ${pt}pt로 맞췄습니다.`)); return; }
+    if (event.target.closest('[data-exam-form-submit]')) {
+      const value = name => pop.querySelector(`[data-exam-form="${name}"]`)?.value || '';
+      const form = { title: value('title'), subject: value('subject'), grade: value('grade') };
+      try { localStorage.setItem(HEADER_KEY, JSON.stringify(form)); } catch {}
+      closePop(); void run(async () => message(`시험지 머리 「${insertExamHeader(bridgeOrThrow(), form)}」를 넣었습니다.`));
+    }
+  });
+  pop.addEventListener('keydown', event => { if (event.key === 'Enter' && event.target.matches('[data-exam-form]') && !event.isComposing) { event.preventDefault(); pop.querySelector('[data-exam-form-submit]')?.click(); } });
+
   // ── 점검 창 ──
   let lastIssues = [];
   function openCheck(anchor) {
-    lastIssues = checkLayout(bridgeOrThrow());
+    { const b = bridgeOrThrow(); lastIssues = [...checkLayout(b), ...extraChecks(b.wasm.borrowDocumentHandle())]; }
     pop.className = 'exam-pop exam-checkpop';
     pop.innerHTML = `<div class="exam-pop-head">조판 점검 <small>${lastIssues.length ? `${lastIssues.length}곳 · 누르면 그 자리로` : '고칠 곳이 없습니다'}</small></div>
       ${lastIssues.length ? `<ol class="exam-checklist">${lastIssues.map((issue, i) => `<li><button type="button" data-exam-jump="${i}" ${issue.at ? '' : 'disabled'}>${esc(issue.text)}</button></li>`).join('')}</ol>` : '<p class="exam-pop-empty">넓은 그림·표, 흐린 그림, 채우지 않은 빈칸, 문항 번호 빠짐·겹침을 살폈습니다.</p>'}

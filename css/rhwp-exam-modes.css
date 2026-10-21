@@ -79,3 +79,9 @@
 #rhwp-exam-workspace .exam-morelist button:hover { color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-soft-line, #6ba4f8); }
 /* 집중 모드: 왼쪽 칸에 팔레트(문항 틀·물감)가 들어가므로 팔레트 설계 폭 232px로 넓힌다. 좁은 화면은 그대로 */
 @media (min-width: 901px) { #rhwp-exam-workspace[data-tool-mode="focus"] .exam-sidebar { width: 232px; } }
+
+#rhwp-exam-workspace .exam-formpop { width: 320px; }
+#rhwp-exam-workspace .exam-field { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12.5px; }
+#rhwp-exam-workspace .exam-field input { height: 28px; padding: 0 8px; border: 0; border-radius: 6px; background: var(--ds-bar, #0d1117); color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); font: inherit; }
+#rhwp-exam-workspace .exam-form-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+#rhwp-exam-workspace .exam-form-actions button { height: 28px; padding: 0 14px; border: 0; border-radius: 6px; background: var(--ds-selected, #1f2a3a); color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); font: inherit; cursor: pointer; }
