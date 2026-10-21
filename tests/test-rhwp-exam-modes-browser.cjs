@@ -434,6 +434,24 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await button(page, '커서 문항 끝에 「[해설]').click(); await h.idle(page);
     assert.equal((await inPage(page, `return text();`)).length, 4, 'no second line');
     assert.deepEqual(await inPage(page, `const p=b.input.cursor.getPosition();return [p.paragraphIndex,p.charOffset];`), [2, 7]);
+    // 37) 선지 섞기 — 5열 선지 표: 칸 글을 섞고 ①부터 다시, [정답]을 따라 고침. ㄱㄴㄷ 조합 표는 그대로.
+    const tableVariant = await inPage(page, `reset('1. 첫째\\n① 가 ② 나 ③ 다 ④ 라 ⑤ 마\\n[정답] ②\\n2. 둘째\\n① ㄱ ② ㄷ ③ ㄱ, ㄴ ④ ㄴ, ㄷ ⑤ ㄱ, ㄴ, ㄷ');d.setColumnDef(0,1,0,true,0);
+      for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({bold:false,textColor:'#000000',subscript:false,superscript:false}));
+      const L=await import('/js/rhwp-exam-layout-tools.js'),W=await import('/js/rhwp-exam-worksheet.js');
+      b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:4,charOffset:0});L.relayoutChoices(b,5);
+      b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});L.relayoutChoices(b,5);
+      const seq=[.1,.9,.3,.7,.5,.2,.8,.4];let k=0;const r=W.makeVariant(b,()=>seq[k++%seq.length],{choices:true});
+      const c=new d.constructor(r.bytes);try{c.convertToEditable?.();
+        const tables=JSON.parse(c.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length).map(t=>{const ci=t.controlIdx??t.ci;return [t.paraIdx,[0,1,2,3,4].map(cell=>c.getTextInCell(0,t.paraIdx,ci,cell,0,0,c.getCellParagraphLength(0,t.paraIdx,ci,cell,0)))];});
+        return {shuffled:r.shuffled,mapping:r.mapping,text:[...Array(c.getParagraphCount(0)).keys()].map(p=>c.getTextRange(0,p,0,c.getParagraphLength(0,p))),tables};}finally{c.free();}`);
+    assert.equal(tableVariant.shuffled, 1, JSON.stringify(tableVariant));
+    const [combo5, plain5] = tableVariant.tables.map(t => t[1]).sort((a, b) => (a[0].includes('ㄱ') ? -1 : 1));
+    assert.deepEqual(combo5, ['① ㄱ', '② ㄷ', '③ ㄱ, ㄴ', '④ ㄴ, ㄷ', '⑤ ㄱ, ㄴ, ㄷ']);
+    assert.deepEqual(plain5.map(t => t[0]), ['①', '②', '③', '④', '⑤']);
+    assert.notDeepEqual(plain5.map(t => t.slice(2)), ['가', '나', '다', '라', '마']);
+    assert.deepEqual(plain5.map(t => t.slice(2)).sort(), ['가', '나', '다', '라', '마']);
+    const tableAnswer = tableVariant.mapping.find(m => m.original === 1).answer;
+    assert.equal(plain5.find(t => t[0] === tableAnswer).slice(2), '나', JSON.stringify(tableVariant));
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

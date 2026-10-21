@@ -179,7 +179,9 @@ export function relayoutChoices(bridge, columns) {
     block = { kind: 'table', sec: pos.sectionIndex, para: pos.parentParaIndex, ci: pos.controlIndex, texts };
   } else {
     // 본문 문단: 커서 문단부터 위아래로 ①~⑤가 든 문단을 모은다.
-    const sec = pos.sectionIndex, has = p => p >= 0 && p < doc.getParagraphCount(sec) && /[①②③④⑤]/.test(paragraphText(doc, sec, p));
+    // 「[정답] ②」「해설: ③」 같은 교사용 줄은 선지가 아니다(선지 바로 아래에 붙는 일이 많다).
+    const teacherLine = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이)|(?:정답|해설|풀이)\s*[:：])/;
+    const sec = pos.sectionIndex, has = p => p >= 0 && p < doc.getParagraphCount(sec) && /[①②③④⑤]/.test(paragraphText(doc, sec, p)) && !teacherLine.test(paragraphText(doc, sec, p));
     if (!has(pos.paragraphIndex)) throw new Error('선지(①~⑤)가 있는 줄이나 선지 표를 누르세요.');
     let first = pos.paragraphIndex, last = pos.paragraphIndex;
     while (has(first - 1)) first--;

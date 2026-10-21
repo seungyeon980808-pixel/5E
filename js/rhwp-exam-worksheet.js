@@ -589,30 +589,19 @@ export function makeVariant(bridge, random = Math.random, { choices = false } = 
     return { bytes: copy.exportHwpx(), shuffled, mapping: order.map((orig, i) => ({ variant: final[i]?.number ?? i + 1, original: first[orig].number, answer: answers.get(final[i]?.number) || '' })) };
   } finally { copy.free(); }
 }
-// 선지 섞기(나형 사본에만): 「①…」「②…」처럼 선지가 한 문단에 하나씩 이어진 문항만 문단째 섞고(서식 그대로), 번호 기호를 ①부터 다시 붙인다.
-// 문항 안 「[정답] ③」도 바뀐 자리로 고친다. 한 줄에 선지 여럿(3열·5열·ㄱㄴㄷ 조합)인 문항은 그대로 둔다. 섞은 문항 수.
+// 선지 섞기(나형 사본에만): 한 문단에 하나씩인 선지는 문단째(서식 그대로), 3열·5열 선지 표는 칸 글을 섞고 ①부터 다시 붙인다.
+// 문항 안 「[정답] ③」도 바뀐 자리로 고친다. ㄱㄴㄷ·A B C 조합 선지(차례가 관례)와 첨자 등 서식이 섞인 표 칸은 그대로 둔다. 섞은 문항 수.
 const MARKS = '①②③④⑤';
 function shuffleChoices(doc, sec, random) {
   const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
   const markAt = p => { const t = textOf(p), i = t.search(/\S/); return i < 0 ? null : { i, mark: t[i], rest: t.slice(i + 1) }; };
-  let count = 0;
-  for (let k = 0; k < questionBlocks(doc, sec).length; k++) {
-    const b = questionBlocks(doc, sec)[k];
-    let from = -1;
-    for (let p = b.head + 1; p < b.end; p++) if (markAt(p)?.mark === MARKS[0]) { from = p; break; }
-    if (from < 0) continue;
-    let n = 0;
-    while (n < MARKS.length && from + n < b.end) { const m = markAt(from + n); if (m?.mark !== MARKS[n] || /[①-⑤]/.test(m.rest)) break; n++; }
-    if (n < 3 || (from + n < b.end && /^[①-⑤]/.test(markAt(from + n)?.mark || ''))) continue;
+  const randomPerm = n => {
     const perm = [...Array(n).keys()];
     for (let tries = 0; tries < 20 && perm.every((v, i) => v === i); tries++) for (let i = n - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
-    if (perm.every((v, i) => v === i)) continue;
-    const current = [...Array(n).keys()];
-    for (let target = 0; target < n; target++) {
-      let at = current.indexOf(perm[target]);
-      while (at > target) { swapAdjacentQuestions(doc, sec, [{ start: from + at - 1, end: from + at }, { start: from + at, end: from + at + 1 }], 0); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
-    }
-    for (let i = 0; i < n; i++) { const m = markAt(from + i); if (m.mark !== MARKS[i]) { doc.deleteText(sec, from + i, m.i, 1); doc.insertText(sec, from + i, m.i, MARKS[i]); } }
+    return perm.every((v, i) => v === i) ? null : perm;
+  };
+  // 문항 안 「[정답] ③」을 섞인 자리로 고친다.
+  const fixAnswer = (k, perm, n) => {
     const after = questionBlocks(doc, sec)[k];
     for (let p = after.head; p < after.end; p++) {
       const t = textOf(p), m = ANSWER_LINE.exec(t); if (!m) continue;
@@ -620,7 +609,58 @@ function shuffleChoices(doc, sec, random) {
       if (m[1].search(/[①-⑤]/) >= 0 && old >= 0 && old < n) { doc.deleteText(sec, p, at, 1); doc.insertText(sec, p, at, MARKS[perm.indexOf(old)]); }
       break;
     }
-    count++;
+  };
+  // 문단마다 본문 표(한 겹) — 표 칸 글만 바꾸므로 문단 번호는 그대로다.
+  const tablesAt = new Map();
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || [])
+    if (c.type === 'table' && (c.secIdx ?? 0) === sec && !c.cellPath?.length) { const list = tablesAt.get(c.paraIdx) || []; const ci = c.controlIdx ?? c.ci; if (!list.includes(ci)) list.push(ci); tablesAt.set(c.paraIdx, list); }
+  const COMBO = /^[ㄱ-ㅎA-E](?:\s*,\s*[ㄱ-ㅎA-E])*$/;
+  // 3열·5열 선지 표: 칸마다 「①…」 하나, 순서대로, 나머지 칸은 비고, 칸 안 글자 모양이 한 가지(첨자 등이 섞이면 글만 바꿀 수 없어 건너뜀).
+  const tableChoices = (p, ci) => {
+    const cells = parse(doc.getTableDimensions(sec, p, ci)).cellCount, choice = [];
+    for (let cell = 0; cell < cells; cell++) {
+      if (doc.getCellParagraphCount(sec, p, ci, cell) !== 1) return null;
+      const len = doc.getCellParagraphLength(sec, p, ci, cell, 0), t = String(doc.getTextInCell(sec, p, ci, cell, 0, 0, len)).trim();
+      if (!t) continue;
+      if (t[0] !== MARKS[choice.length] || /[①-⑤]/.test(t.slice(1))) return null;
+      const shape = parse(doc.getCellCharPropertiesAt(sec, p, ci, cell, 0, 0)).charShapeId;
+      for (let o = 1; o < len; o++) if (parse(doc.getCellCharPropertiesAt(sec, p, ci, cell, 0, o)).charShapeId !== shape) return null;
+      choice.push({ cell, len, content: t.slice(1).trim() });
+    }
+    return choice.length >= 3 && !choice.every(c => COMBO.test(c.content)) ? choice : null;
+  };
+  let count = 0;
+  for (let k = 0; k < questionBlocks(doc, sec).length; k++) {
+    const b = questionBlocks(doc, sec)[k];
+    let from = -1;
+    for (let p = b.head + 1; p < b.end; p++) if (markAt(p)?.mark === MARKS[0]) { from = p; break; }
+    if (from >= 0) {
+      // 한 문단에 선지 하나씩: 문단째 옮긴다(서식 그대로).
+      let n = 0;
+      while (n < MARKS.length && from + n < b.end) { const m = markAt(from + n); if (m?.mark !== MARKS[n] || /[①-⑤]/.test(m.rest)) break; n++; }
+      if (n < 3 || (from + n < b.end && /^[①-⑤]/.test(markAt(from + n)?.mark || ''))) continue;
+      if ([...Array(n).keys()].every(i => COMBO.test(markAt(from + i).rest.trim()))) continue;
+      const perm = randomPerm(n); if (!perm) continue;
+      const current = [...Array(n).keys()];
+      for (let target = 0; target < n; target++) {
+        let at = current.indexOf(perm[target]);
+        while (at > target) { swapAdjacentQuestions(doc, sec, [{ start: from + at - 1, end: from + at }, { start: from + at, end: from + at + 1 }], 0); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
+      }
+      for (let i = 0; i < n; i++) { const m = markAt(from + i); if (m.mark !== MARKS[i]) { doc.deleteText(sec, from + i, m.i, 1); doc.insertText(sec, from + i, m.i, MARKS[i]); } }
+      fixAnswer(k, perm, n); count++;
+      continue;
+    }
+    // 선지 표: 칸 글을 섞어 다시 쓴다.
+    let found = null;
+    for (let p = b.head; p < b.end && !found; p++) for (const ci of tablesAt.get(p) || []) { const c = tableChoices(p, ci); if (c) { found = { p, ci, choice: c }; break; } }
+    if (!found) continue;
+    const n = found.choice.length, perm = randomPerm(n); if (!perm) continue;
+    found.choice.forEach((c, i) => {
+      const text = `${MARKS[i]} ${found.choice[perm[i]].content}`;
+      doc.deleteTextInCell(sec, found.p, found.ci, c.cell, 0, 0, c.len);
+      doc.insertTextInCell(sec, found.p, found.ci, c.cell, 0, 0, text);
+    });
+    fixAnswer(k, perm, n); count++;
   }
   return count;
 }
