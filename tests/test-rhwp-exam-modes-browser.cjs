@@ -558,6 +558,12 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.ok(pw > 1000 && ph > 60 && ph < pw / 3, JSON.stringify([pw, ph, region]));
     const ink = await page.evaluate(async b64 => { const img = new Image(); img.src = 'data:image/png;base64,' + b64; await img.decode(); const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const px = g.getImageData(0, 0, c.width, c.height).data; let dark = 0; for (let i = 0; i < px.length; i += 4) if (px[i] < 100) dark++; return dark; }, png.toString('base64'));
     assert.ok(ink > 500, `text pixels ${ink}`);
+    const zipDownload = page.waitForEvent('download');
+    await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morelist button', { hasText: '모든 문항 그림' }).click();
+    const zipFile = await zipDownload; await h.idle(page);
+    assert.match(zipFile.suggestedFilename().normalize('NFC'), /문항그림\.zip$/);
+    const zipNames = await page.evaluate(async b64 => { const { unzipSync } = await import('/vendor/fflate/index.js'); return Object.keys(unzipSync(Uint8Array.from(atob(b64), c => c.charCodeAt(0)))); }, require('node:fs').readFileSync(await zipFile.path()).toString('base64'));
+    assert.deepEqual(zipNames.map(n => n.normalize('NFC')), ['01-1번.png', '02-2번.png']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

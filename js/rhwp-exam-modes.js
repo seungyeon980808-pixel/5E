@@ -118,7 +118,7 @@ const MORE = {
     ['표 왼쪽으로', '표를 왼쪽으로', 'table-align-left'], ['표 오른쪽으로', '표를 오른쪽으로', 'table-align-right']],
   pic: [['캡션 넣기', '그림 아래 캡션 넣기', 'insert:caption-bottom'], ['캡션 없애기', '캡션 없애기', 'insert:caption-none'],
     ['그림 지우기', '고른 그림 지우기', 'insert:picture-delete'], ['좌우 뒤집기', '그림 좌우 뒤집기', 'insert:flip-horz'], ['오른쪽으로 90°', '그림 오른쪽으로 돌리기', 'insert:rotate-cw']],
-  item: [['문항을 그림으로', '커서가 있는 문항을 고해상도 PNG로 내려받기(PPT·학습 앱에 붙이기, [정답]·[해설] 줄은 빼고)', 'x:question-image'], ['마크다운 → 문항', '마크다운 → 한글 문항 (팔레트)', 'tool:convert'], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', 'tool:exam_excel'], ['단 나누기', '단 나누기 (Ctrl+Shift+Enter)', 'page:column-break'], ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['머리말·꼬리말 닫기', '머리말·꼬리말 편집 마치기', 'page:headerfooter-close'],
+  item: [['문항을 그림으로', '커서가 있는 문항을 고해상도 PNG로 내려받기(PPT·학습 앱에 붙이기, [정답]·[해설] 줄은 빼고)', 'x:question-image'], ['모든 문항 그림(zip)', '문항마다 PNG 한 장씩 zip으로 내려받기(복습 PPT·문제 은행용)', 'x:all-question-images'], ['마크다운 → 문항', '마크다운 → 한글 문항 (팔레트)', 'tool:convert'], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', 'tool:exam_excel'], ['단 나누기', '단 나누기 (Ctrl+Shift+Enter)', 'page:column-break'], ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['머리말·꼬리말 닫기', '머리말·꼬리말 편집 마치기', 'page:headerfooter-close'],
     ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum'], ['전체 쪽 수', '지금 자리에 전체 쪽 수 넣기', 'page:insert-field-totalpage'],
     ['각주', '각주 넣기', 'insert:footnote'], ['미주', '미주 넣기', 'insert:endnote'], ['글상자', '글상자 넣기', 'insert:textbox'],
     ['단 설정', '단 수·간격 설정', 'page:col-settings'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['문자표 전체', '한글 문자표 창', 'insert:symbols']],
@@ -166,6 +166,18 @@ export function installExamModes(panel, services) {
   const bridgeOrThrow = () => { const b = getBridge(); if (!b?.input) throw new Error('시험지 편집기를 준비하는 중입니다. 잠시 뒤 다시 누르세요.'); return b; };
   const studio = () => getBridge()?.editor?.element?.contentDocument || null;
   const refocus = () => { try { getBridge()?.input?.focus?.(); } catch {} };
+  const documentBase = () => (services.documentName?.() || '문항').replace(/[\\/:*?"<>|]/g, '_');
+  // 문항 하나를 그림으로(쪽 그림은 pages에 담아 다시 쓴다). {blob, width, height} 또는 null
+  async function questionShot(b, d, q, pages) {
+    const region = questionRegion(d, q); if (!region) return null;
+    const host = b.editor?.element?.contentDocument || document, scale = 3;
+    if (!pages.has(region.page)) { const page = host.createElement('canvas'); b.wasm.renderPageToCanvas(region.page, page, scale); pages.set(region.page, page); }
+    const page = pages.get(region.page), out = document.createElement('canvas'), k = page.width / region.width;
+    out.width = Math.round(region.w * k); out.height = Math.round(region.h * k);
+    const g = out.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, out.height);
+    g.drawImage(page, Math.round(region.x * k), Math.round(region.y * k), out.width, out.height, 0, 0, out.width, out.height);
+    return { blob: await new Promise(resolve => out.toBlob(resolve, 'image/png')), width: out.width, height: out.height };
+  }
   const ctx = {
     palette: services.palette, actions: services.actions, message, refocus,
     openPictureSettings: anchor => services.openPictureSettings(anchor),
@@ -202,17 +214,19 @@ export function installExamModes(panel, services) {
       const d = b.wasm.borrowDocumentHandle(), at = b.input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
       const q = allQuestionBlocks(d).find(x => x.sec === sec && x.start <= para && para < x.end);
       if (!q) throw new Error('그림으로 만들 문항 안에 커서를 두세요.');
-      const region = questionRegion(d, q); if (!region) throw new Error('문항이 놓인 자리를 찾지 못했습니다.');
-      const host = b.editor?.element?.contentDocument || document, scale = 3, page = host.createElement('canvas');
-      b.wasm.renderPageToCanvas(region.page, page, scale);
-      const out = document.createElement('canvas'), k = page.width / region.width;
-      out.width = Math.round(region.w * k); out.height = Math.round(region.h * k);
-      const g = out.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, out.height);
-      g.drawImage(page, Math.round(region.x * k), Math.round(region.y * k), out.width, out.height, 0, 0, out.width, out.height);
-      const blob = await new Promise(resolve => out.toBlob(resolve, 'image/png'));
-      const base = (services.documentName?.() || '문항').replace(/[\\/:*?"<>|]/g, '_');
-      services.download(blob, `${base}-${q.label.replace(/\s+/g, '')}.png`);
-      message(`${q.label}을 그림(${out.width}×${out.height})으로 내려받습니다.`);
+      const shot = await questionShot(b, d, q, new Map());
+      services.download(shot.blob, `${documentBase()}-${q.label.replace(/\s+/g, '')}.png`);
+      message(`${q.label}을 그림(${shot.width}×${shot.height})으로 내려받습니다.`);
+    },
+    // 모든 문항을 그림으로: 문항별 PNG를 zip 하나로(쪽은 한 번씩만 그린다).
+    async allQuestionImages(b) {
+      const d = b.wasm.borrowDocumentHandle(), blocks = allQuestionBlocks(d);
+      if (!blocks.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
+      const { zipSync } = await import('../vendor/fflate/index.js'), pages = new Map(), files = {};
+      let n = 0;
+      for (const q of blocks) { const shot = await questionShot(b, d, q, pages); if (shot) files[`${String(++n).padStart(2, '0')}-${q.label.replace(/\s+/g, '')}.png`] = new Uint8Array(await shot.blob.arrayBuffer()); }
+      services.download(new Blob([zipSync(files, { level: 0 })], { type: 'application/zip' }), `${documentBase()}-문항그림.zip`);
+      message(`문항 ${Object.keys(files).length}개를 그림으로 묶어 내려받습니다.`);
     },
     explanations(b) {
       const base = (services.documentName?.() || '시험').replace(/[\\/:*?"<>|]/g, '_'), { bytes, count, explained } = explanationCopy(b, base === '새 시험지' ? '시험' : base);
@@ -379,6 +393,7 @@ export function installExamModes(panel, services) {
   function runMore(action) {
     if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'x:question-image') return ctx.questionImage(bridgeOrThrow());
+    if (action === 'x:all-question-images') return ctx.allQuestionImages(bridgeOrThrow());
     if (action === 'table-align-left' || action === 'table-align-right') return ctx.withBridge(b => applyTableAlignment(b, action.slice(12)));
     return ctx.command(action);
   }
