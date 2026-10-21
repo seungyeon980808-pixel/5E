@@ -812,6 +812,12 @@
       "findingIds": [
         "H12-EXAM-LABEL-ORDER"
       ]
+    },
+    {
+      "path": "tests/test-project-exampool-link.mjs",
+      "findingIds": [
+        "M44-EXAMPOOL-LINK-LOAD"
+      ]
     }
   ],
   "browser": [

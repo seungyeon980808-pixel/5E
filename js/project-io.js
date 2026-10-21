@@ -315,6 +315,9 @@ function sanitizeMeta(meta) {
     ...(meta?.examLink && /^[a-zA-Z0-9_-]{1,80}$/.test(meta.examLink.tabId) && /^[a-zA-Z0-9_-]{1,80}$/.test(meta.examLink.assetId)
       ? {examLink:{tabId:meta.examLink.tabId,assetId:meta.examLink.assetId}} : {}),
     ...(/^[a-zA-Z0-9_-]{1,80}$/.test(meta?.examRevisionId || '') ? {examRevisionId:meta.examRevisionId} : {}),
+    // 5E_exam 문항과 이어진 그림 페이지. 불러올 때 지우면 「5E 원본 편집」이 연결을 못 찾아 옛 원본으로 페이지를 또 만든다(M44).
+    ...(/^[a-zA-Z0-9_-]{1,80}$/.test(meta?.exampoolLink?.questionId || '') && /^[a-zA-Z0-9_-]{1,80}$/.test(meta.exampoolLink.assetId || '')
+      ? {exampoolLink:{questionId:meta.exampoolLink.questionId,assetId:meta.exampoolLink.assetId}} : {}),
   };
   if(result.examLink){
     // The ordinary drawing migration must retain exam export/layout drafts.
