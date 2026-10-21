@@ -364,7 +364,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     // 29) 이원목적분류표: 문항 번호·배점·정답을 채운 새 한글 파일(머리 줄·합계 줄), 지금 문서는 그대로.
     await inPage(page, `reset('1. 가는? [2점]\\n[정답] ③\\n[성취기준] [10통과1-01]\\n[난이도] 중\\n2. 나는? [3점]\\n3. 다는?\\n정답: ⑤\\n[출처] 2023 모의');`);
     await page.locator('[data-exam-ftab="layout"]').click();
-    const bpDownload = page.waitForEvent('download'); await button(page, '문항 번호·배점·정답을 채운').click(); const bpFile = await bpDownload; await h.idle(page);
+    const bpDownload = page.waitForEvent('download'); await button(page, '이원목적분류표:').click(); const bpFile = await bpDownload; await h.idle(page);
     assert.match(bpFile.suggestedFilename().normalize('NFC'), /이원목적분류표\.hwpx$/);
     assert.match(await page.locator('#exam-status').textContent(), /문항 3개\(배점 합계 5점\)/);
     const bp = await inPage(page, `const {blueprintCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(blueprintCopy(b,'1학기 중간').bytes);try{x.convertToEditable?.();
