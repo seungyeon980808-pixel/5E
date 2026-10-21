@@ -248,6 +248,18 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.equal(filled.pages, 1);
     await button(page, '단마다 남는 빈 공간').click(); await h.idle(page);
     assert.deepEqual((await inPage(page, gaps)).sp, filled.sp, 'same result when pressed again');
+    // 18) 배점: 커서 문항의 발문 끝(「?」 문단)에 넣고, 다시 고르면 바꾸고(겹치지 않음), 합계를 알린다.
+    await inPage(page, `reset('1. 그림은 실험이다.\\n이에 대한 설명으로 옳은 것은?\\n① ㄱ ② ㄴ\\n2. 다음 중 옳은 것은? [2점]');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:2,charOffset:1});`);
+    await page.locator('[data-exam-ftab="item"]').click();
+    await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score="3"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 그림은 실험이다.', '이에 대한 설명으로 옳은 것은? [3점]', '① ㄱ ② ㄴ', '2. 다음 중 옳은 것은? [2점]']);
+    assert.match(await page.locator('#exam-status').textContent(), /1번 3점 — 배점 2곳 합계 5점/);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score="2.5"]').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return text();`))[1], '이에 대한 설명으로 옳은 것은? [2.5점]');
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:3,charOffset:0});`);
+    await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score=""]').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return text();`))[3], '2. 다음 중 옳은 것은?');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

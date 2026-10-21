@@ -213,6 +213,33 @@ export function setQuestionSpacing(bridge, pt) {
   return targets.length - 1;
 }
 
+// 배점: 커서가 있는 문항의 [n점]을 넣거나 바꾼다(score=null이면 지움). 자리는 발문 끝(「?」로 끝나는 마지막 문단), 없으면 문항 첫 문단 끝.
+// {number, total, count} — total은 문서 전체 배점 합계.
+export const SCORE_CHOICES = [2, 2.5, 3, 3.5, 4, 5];
+const SCORE_MARK = /\s?\[\d+(?:\.\d+)?\s*점\]/g;
+export function setQuestionScore(bridge, score) {
+  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
+  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
+  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
+  if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
+  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  bridge.transaction('question-score', () => {
+    for (let p = q.start; p < q.end; p++) for (const m of [...textOf(p).matchAll(SCORE_MARK)].reverse()) doc.deleteText(sec, p, m.index, m[0].length);
+    if (score != null) {
+      let target = q.start;
+      for (let p = q.start; p < q.end; p++) if (/\?\s*$/.test(textOf(p))) target = p;
+      const text = textOf(target), trimmed = text.replace(/\s+$/, '');
+      if (trimmed.length < text.length) doc.deleteText(sec, target, trimmed.length, text.length - trimmed.length);
+      doc.insertText(sec, target, trimmed.length, ` [${score}점]`);
+    }
+    return true;
+  });
+  let total = 0, count = 0;
+  for (let s = 0; s < doc.getSectionCount(); s++) for (let p = 0; p < doc.getParagraphCount(s); p++)
+    for (const m of String(doc.getTextRange(s, p, 0, doc.getParagraphLength(s, p))).matchAll(/\[(\d+(?:\.\d+)?)\s*점\]/g)) { total += Number(m[1]); count++; }
+  return { number: q.number, total: Math.round(total * 10) / 10, count };
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();

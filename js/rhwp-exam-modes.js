@@ -5,7 +5,7 @@ import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-contr
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -67,7 +67,7 @@ function focusTabs(ctx) {
       ['보기 내어쓰기', '「ㄱ. 」 뒤에 커서를 두고 누르면 둘째 줄을 글자에 맞춰 내어 씀', doc(b => { if (!applyHangingIndent(b)) throw new Error('「ㄱ. 」 바로 뒤에 커서를 두고 누르세요.'); })], '|',
       ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
-      ['[3점]', '배점 [3점] 넣기', () => ctx.insertText(' [3점]')],
+      ['배점', '커서가 있는 문항의 배점 [n점] 넣기·바꾸기(발문 끝) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')], ['단 나누기', '단 나누기', cmd('page:column-break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
       ['마크다운', '마크다운 → 한글 문항 (팔레트)', tool('convert')], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', tool('exam_excel')],
@@ -370,6 +370,9 @@ export function installExamModes(panel, services) {
     } else if (kind === 'paper') {
       pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
         <div class="exam-morelist">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
+    } else if (kind === 'score') {
+      pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
+        <div class="exam-morelist">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
     } else if (kind === 'pagenum') {
       pop.innerHTML = `<div class="exam-pop-head">쪽 번호 <small>모든 쪽 아래 가운데</small></div>
         <div class="exam-morelist">${Object.entries(PAGE_NUMBER_STYLES).map(([k, t]) => `<button type="button" data-exam-pagenum="${k}">${esc(t)}</button>`).join('')}</div>`;
@@ -388,6 +391,8 @@ export function installExamModes(panel, services) {
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
+    const score = event.target.closest('[data-exam-score]');
+    if (score) { const value = score.dataset.examScore === '' ? null : Number(score.dataset.examScore); closePop(); void run(async () => { const r = setQuestionScore(bridgeOrThrow(), value); message(`${r.number}번 ${value == null ? '배점을 지웠습니다' : `${value}점`} — 배점 ${r.count}곳 합계 ${r.total}점${r.count && r.total !== 100 ? ' (100점 아님)' : ''}`); refocus(); }); return; }
     const pagenum = event.target.closest('[data-exam-pagenum]');
     if (pagenum) { const style = pagenum.dataset.examPagenum; closePop(); void run(async () => message(`모든 쪽 아래에 쪽 번호(${insertPageNumbers(bridgeOrThrow(), style)})를 넣었습니다.`)); return; }
     const paper = event.target.closest('[data-exam-paper]');
