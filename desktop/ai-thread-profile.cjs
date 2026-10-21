@@ -22,7 +22,9 @@ function buildEphemeralThreadStartParams({ purpose = "image", model = null, serv
       selectedCapabilityRoots: [],
     };
   }
-  if (purpose !== "scene") return base;
+  // 출제 대화(chat) 등 나머지도 도구 없이 시작한다 — 읽기 전용 샌드박스도 홈 폴더 읽기는 되므로, 불러온 문항·PDF 글에 숨은 지시가
+  // ~/.codex·~/.ssh 같은 파일을 읽어 답에 섞게 할 수 있었다(R2). 출제 대화는 문항·근거를 메시지로만 받는다.
+  if (purpose !== "scene") return { ...base, environments: [], selectedCapabilityRoots: [] };
   return {
     ...base,
     baseInstructions: SCENE_BASE_INSTRUCTIONS,

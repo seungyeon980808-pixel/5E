@@ -88,9 +88,15 @@ test("isolation arrays are independent for every ephemeral request", () => {
   }
 });
 
-test("unrecognized purposes retain the existing base profile behavior", () => {
-  assert.deepEqual(buildEphemeralThreadStartParams({ purpose: "other" }), {
-    ...BASE,
-    serviceName: "5e-image-render",
-  });
+// R2(10-21): 출제 대화(chat)와 알 수 없는 용도도 도구 없이 시작한다 — 읽기 전용 샌드박스도 홈 폴더는 읽을 수 있어서,
+// 불러온 문항·PDF에 숨은 지시가 파일을 읽어 답에 섞게 할 수 있었다.
+test("chat and unrecognized purposes start without tools or capability roots", () => {
+  for (const purpose of ["chat", "other"]) {
+    assert.deepEqual(buildEphemeralThreadStartParams({ purpose }), {
+      ...BASE,
+      serviceName: "5e-image-render",
+      environments: [],
+      selectedCapabilityRoots: [],
+    });
+  }
 });

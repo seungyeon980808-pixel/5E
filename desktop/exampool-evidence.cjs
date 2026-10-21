@@ -13,8 +13,8 @@ const PYTHONS=[path.join(os.homedir(),'.local/share/mise/installs/python/latest/
 function locate(env=process.env){
   let db=env.FIVE_E_EVIDENCE_DB||'',tool=env.FIVE_E_EVIDENCE_TOOL||'',cfg={};
   try{cfg=JSON.parse(fs.readFileSync(path.join(os.homedir(),'.codex/skills/exam-item-authoring/references/local-database.json'),'utf8'));}catch{}
-  // 공유 폴더에 둔 DB는 같은 폴더의 scripts/ 검색 도구를 먼저 쓴다(다른 기기에서도 같은 도구).
-  if(db&&!tool){const near=path.join(path.dirname(db),'scripts/search_evidence.py');if(fs.existsSync(near))tool=near;}
+  // 공유 폴더(드라이브)에 둔 DB 옆의 scripts/ 검색 도구를 자동으로 고르지 않는다 — 폴더 편집 권한이 있는 사람이 그 파이썬 파일을 바꾸면
+  // 이 맥에서 코드가 실행됐다(R1). 검색 도구는 FIVE_E_EVIDENCE_TOOL이나 이 맥의 스킬 설정(query_tool)으로만 정한다. 공유 폴더에는 DB만 둔다.
   db||=cfg.database||'';tool||=cfg.query_tool||'';
   const python=env.FIVE_E_EVIDENCE_PYTHON||[...PYTHONS,cfg.query_python].find(p=>p&&fs.existsSync(p))||'python3';
   return {db,tool,python,available:Boolean(db&&tool&&fs.existsSync(db)&&fs.existsSync(tool))};
