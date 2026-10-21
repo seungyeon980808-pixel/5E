@@ -136,6 +136,21 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fx="check"]').click(); await page.locator('.exam-checkpop').waitFor();
     assert.ok((await page.locator('.exam-checklist button').allTextContents()).some(s => s.includes('배점 합계가 7점')));
     await page.keyboard.press('Escape');
+
+    // 9) 왼쪽 문항 목록: 마지막 문항 위로·첫 문항 아래로(번호 다시 매김), 누르면 그 문항으로. 쪽 경계에서 나뉜 문항 점검.
+    await inPage(page, `reset('1. 첫 문항\\n가나\\n2. 둘째 문항\\n다라\\n3. 셋째 문항');`);
+    await page.locator('.exam-q').nth(2).waitFor();
+    await page.locator('[data-exam-qmove="2:-1"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 첫 문항', '가나', '2. 셋째 문항', '3. 둘째 문항', '다라']);
+    await page.locator('[data-exam-qmove="0:1"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 셋째 문항', '2. 첫 문항', '가나', '3. 둘째 문항', '다라']);
+    await page.waitForFunction(() => document.querySelector('.exam-q')?.textContent.includes('셋째'));
+    await page.locator('.exam-q').nth(2).click(); await h.idle(page);
+    assert.equal(await inPage(page, `return b.input.getCursorPosition().paragraphIndex;`), 3);
+    await inPage(page, `reset(['1. 짧은 문항', '2. 긴 문항', ...Array.from({length:70},(_,i)=>'줄 '+i)].join('\\n'));`);
+    await page.locator('[data-exam-fx="check"]').click(); await page.locator('.exam-checkpop').waitFor();
+    assert.ok((await page.locator('.exam-checklist button').allTextContents()).some(s => /2번 문항이 쪽.*경계에서 나뉩니다/.test(s)));
+    await page.keyboard.press('Escape');
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });

@@ -263,3 +263,59 @@ export function checkLayout(bridge) {
 }
 
 export { mm, read };
+
+// ── 문항 묶음: 「1.」로 시작하는 본문 문단부터 다음 번호 문단 앞까지 ──
+export function questionBlocks(doc, sec = 0) {
+  const count = doc.getParagraphCount(sec), starts = [];
+  for (let p = 0; p < count; p++) { const m = /^\s*(\d{1,3})\./.exec(paragraphText(doc, sec, p)); if (m) starts.push({ start: p, number: Number(m[1]) }); }
+  return starts.map((s, i) => ({ ...s, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: paragraphText(doc, sec, s.start).replace(/^\s*\d{1,3}\.\s*/, '').slice(0, 40) }));
+}
+
+// 문항 순서 바꾸기: index번째 문항을 위(-1)·아래(+1) 문항과 바꾼 뒤 번호를 다시 매긴다. 서식·표·그림은 내부 복사로 그대로 옮긴다.
+export function moveQuestion(bridge, index, direction) {
+  const { doc } = requireDocument(bridge), sec = 0, blocks = questionBlocks(doc, sec);
+  const a = direction < 0 ? index - 1 : index;
+  if (!blocks[a] || !blocks[a + 1]) throw new Error(direction < 0 ? '맨 위 문항입니다.' : '맨 아래 문항입니다.');
+  bridge.transaction('move-question', () => {
+    let { start: bs, end: be } = blocks[a + 1];
+    const last = be === doc.getParagraphCount(sec);
+    // 마지막 문항은 뒤에 문단 나눔이 없어 붙여 넣으면 앞 문항 첫 줄과 합쳐진다 — 빈 문단을 하나 덧대 옮긴 뒤 지운다.
+    if (last) parse(doc.splitParagraph(sec, be - 1, doc.getParagraphLength(sec, be - 1))); // 덧댄 빈 문단(번호 be)의 맨 앞까지가 옮길 범위
+    checkedResult(doc.copySelection(sec, bs, 0, be, 0));
+    checkedResult(doc.deleteRange(sec, bs, 0, be, 0));
+    checkedResult(doc.pasteInternal(sec, blocks[a].start, 0));
+    if (last) {
+      const n = doc.getParagraphCount(sec);
+      if (n > 1 && !doc.getParagraphLength(sec, n - 1)) doc.mergeParagraph(sec, n - 1);
+    }
+    return true;
+  });
+  try { renumberQuestions(bridge); } catch {}
+  return a + (direction < 0 ? 0 : 1);
+}
+function checkedResult(value) { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '문항을 옮기지 못했습니다.'); return r; }
+
+// 쪽·단 경계에서 나뉜 문항 찾기: 문항 묶음의 글이 두 쪽(또는 두 단)에 걸치면 알린다.
+export function splitQuestions(doc, sec = 0) {
+  const blocks = questionBlocks(doc, sec); if (!blocks.length) return [];
+  const columns = Math.max(1, parse(doc.getColumnDef(sec))?.columnCount || 1), page = parse(doc.getPageDef(sec));
+  const where = new Map();
+  // 글자 위치(x, px)는 쪽 원점 기준이 아니다 — 쪽마다 가장 왼쪽 글자를 첫 단 시작으로 보고 단 폭(px = HWPUNIT/75)으로 나눈다.
+  const columnPx = (page.width - page.marginLeft - page.marginRight) / columns / 75;
+  for (let pg = 0; pg < doc.pageCount(); pg++) {
+    const runs = (parse(doc.getPageTextLayout(pg)).runs || []).filter(r => r.secIdx === sec && !r.cellPath?.length && String(r.text || '').trim());
+    const left = Math.min(...runs.map(r => r.x));
+    for (const r of runs) {
+    const col = columns > 1 ? Math.min(columns - 1, Math.max(0, Math.floor((r.x - left) / columnPx))) : 0;
+    if (!where.has(r.paraIdx)) where.set(r.paraIdx, new Set());
+    where.get(r.paraIdx).add(`${pg}:${Number.isFinite(col) ? col : 0}`);
+    }
+  }
+  const issues = [];
+  for (const b of blocks) {
+    const spots = new Set();
+    for (let p = b.start; p < b.end; p++) for (const s of where.get(p) || []) spots.add(s);
+    if (spots.size > 1) issues.push({ text: `${b.number}번 문항이 ${columns > 1 ? '쪽·단' : '쪽'} 경계에서 나뉩니다(${[...spots].map(s => { const [pg, c] = s.split(':'); return columns > 1 ? `${+pg + 1}쪽 ${+c + 1}단` : `${+pg + 1}쪽`; }).join(' → ')}).`, at: { sectionIndex: sec, paragraphIndex: b.start, charOffset: 0 } });
+  }
+  return issues;
+}

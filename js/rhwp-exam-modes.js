@@ -2,7 +2,7 @@
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout } from './rhwp-exam-layout-tools.js';
+import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions } from './rhwp-exam-layout-tools.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
@@ -339,7 +339,7 @@ export function installExamModes(panel, services) {
   // ── 점검 창 ──
   let lastIssues = [];
   function openCheck(anchor) {
-    { const b = bridgeOrThrow(); lastIssues = [...checkLayout(b), ...extraChecks(b.wasm.borrowDocumentHandle())]; }
+    { const b = bridgeOrThrow(), d = b.wasm.borrowDocumentHandle(); lastIssues = [...checkLayout(b), ...extraChecks(d), ...splitQuestions(d)]; }
     pop.className = 'exam-pop exam-checkpop';
     pop.innerHTML = `<div class="exam-pop-head">조판 점검 <small>${lastIssues.length ? `${lastIssues.length}곳 · 누르면 그 자리로` : '고칠 곳이 없습니다'}</small></div>
       ${lastIssues.length ? `<ol class="exam-checklist">${lastIssues.map((issue, i) => `<li><button type="button" data-exam-jump="${i}" ${issue.at ? '' : 'disabled'}>${esc(issue.text)}</button></li>`).join('')}</ol>` : '<p class="exam-pop-empty">넓은 그림·표, 흐린 그림, 채우지 않은 빈칸, 문항 번호 빠짐·겹침을 살폈습니다.</p>'}
@@ -356,6 +356,34 @@ export function installExamModes(panel, services) {
     else if (kind === 'capture') { closePop(); services.palette?.tool('capture'); }
   });
   document.addEventListener('mousedown', event => { if (!pop.hidden && !event.target.closest('.exam-pop,[data-exam-fx]')) closePop(); }, true);
+
+  // ── 왼쪽 칸 문항 목록: 누르면 그 문항으로, ↑↓로 순서 바꾸기(번호는 다시 매김) ──
+  const outline = document.createElement('section');
+  outline.className = 'exam-outline'; outline.setAttribute('aria-label', '문항 목록');
+  const figuresHeading = [...panel.querySelectorAll('.exam-sidebar h2')].find(h => h.textContent.includes('문서의 그림'));
+  (figuresHeading || panel.querySelector('.exam-sidebar')).before?.(outline);
+  let outlineTimer = 0;
+  function renderOutline() {
+    const b = getBridge(); if (!b?.input || panel.hidden) return;
+    let blocks = [];
+    try { blocks = questionBlocks(b.wasm.borrowDocumentHandle()); } catch { return; }
+    outline.hidden = !blocks.length;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.number}. ${q.preview}`)}"><b>${q.number}.</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.number}번 위로" ${i ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.number}번 아래로" ${i < blocks.length - 1 ? '' : 'disabled'}>↓</button></li>`).join('')}</ol>`;
+  }
+  const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
+  outline.addEventListener('click', event => {
+    const go = event.target.closest('[data-exam-q]'), move = event.target.closest('[data-exam-qmove]');
+    if (go) void run(async () => {
+      const b = bridgeOrThrow(), q = questionBlocks(b.wasm.borrowDocumentHandle())[Number(go.dataset.examQ)]; if (!q) return;
+      b.input.cursor.moveTo({ sectionIndex: 0, paragraphIndex: q.start, charOffset: 0 }); b.input.updateCaret?.(); refocus();
+    });
+    if (move) void run(async () => {
+      const [i, dir] = move.dataset.examQmove.split(':').map(Number), b = bridgeOrThrow();
+      const at = moveQuestion(b, i, dir); renderOutline();
+      outline.querySelector(`[data-exam-qmove="${at}:${dir}"]`)?.focus();
+      message(`문항 순서를 바꾸고 번호를 다시 매겼습니다.`);
+    });
+  });
 
   // ── 모드 적용 ──
   function applyStudioChrome() {
@@ -381,6 +409,7 @@ export function installExamModes(panel, services) {
     closePop();
     applyStudioChrome();
     clearInterval(syncTimer);
+    scheduleOutline();
     if (mode === 'focus') { renderTab(); syncTimer = setInterval(() => { if (!panel.hidden) syncControls(); }, 600); }
     if (announce) message(mode === 'basic' ? '기본 모드: 한글 리본 그대로(모든 기능)' : mode === 'focus' ? '집중 모드: 시험지·학습지에 필요한 도구 + 팔레트' : '없음: 도구 없이 종이만 · 「도구 보기」나 ⌘⌥2로 돌아옴');
   }
@@ -403,7 +432,13 @@ export function installExamModes(panel, services) {
     attach() {
       const doc = studio(); if (!doc) return;
       applyStudioChrome();
-      if (doc !== boundDoc) { boundDoc = doc; doc.addEventListener('keydown', modeKey, true); doc.addEventListener('keydown', escKey, true); }
+      if (doc !== boundDoc) {
+        boundDoc = doc; doc.addEventListener('keydown', modeKey, true); doc.addEventListener('keydown', escKey, true);
+        getBridge()?.deps?.eventBus?.on?.('document-changed', scheduleOutline);
+        // 사파리는 이레 동안 안 쓴 사이트 저장소를 지울 수 있다 — 자동 저장·팔레트를 지키려고 계속 보관을 한 번 부탁한다.
+        try { void navigator.storage?.persist?.(); } catch {}
+      }
+      renderOutline();
       syncControls(true);
     },
   };
