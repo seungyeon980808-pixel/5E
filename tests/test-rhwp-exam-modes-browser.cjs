@@ -499,6 +499,13 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
       const r=W.studentCopy(b),x=new d.constructor(r.bytes);try{x.convertToEditable?.();return {L,before,relaid:r.relaid,after:T.splitQuestions(x).length};}finally{x.free();}`);
     assert.ok(relay.L > 10, JSON.stringify(relay));
     assert.deepEqual([relay.before, relay.relaid, relay.after], [0, 1, 0], JSON.stringify(relay));
+    // 43) 점검 「부정 표현에 밑줄」: 「?」로 끝나는 발문의 않은·아닌 것에 밑줄, 선지·지문은 그대로.
+    await inPage(page, `reset('1. 이에 대한 설명으로 옳지 않은 것은? [2점]\\n① 변하지 않은 것\\n2. 산이 아닌 것은?\\n3. 옳은 것은?');for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({underline:false}));b.deps.eventBus.emit('document-changed');`);
+    await page.locator('[data-exam-fx="check"]').click();
+    assert.equal((await page.locator('.exam-checklist li').allTextContents()).filter(t => t.includes('부정 표현')).length, 2);
+    await page.locator('[data-exam-fixneg]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /부정 표현 2곳에 밑줄/);
+    assert.deepEqual(await inPage(page, `const u=(p,o)=>w.getCharPropertiesAt(0,p,o).underline?'_':'.';return [[16,17,18,19].map(o=>u(0,o)).join(''),[5,6].map(o=>u(1,o)).join(''),[5,6,7,8].map(o=>u(2,o)).join('')];`), ['.__.', '..', '.__.']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

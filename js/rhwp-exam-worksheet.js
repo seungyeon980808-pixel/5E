@@ -415,6 +415,29 @@ export function fitEquationSizes(bridge) {
   return list.length;
 }
 
+// 부정 표현 밑줄(평가원 발문 규칙): 「?」로 끝나는 발문의 「않은·아닌·없는·틀린 것」에서 부정어에 밑줄. [{sec, para, start, end, word, label}] — 밑줄이 없는 것만.
+const NEGATIVE = /(않은|아닌|없는|틀린)(?=\s*것)/g;
+export function negativeWordIssues(doc) {
+  const out = [];
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec))
+    for (let p = q.head; p < q.end; p++) {
+      const t = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+      if (!/\?\s*(?:\[\d+(?:\.\d+)?\s*점\])?\s*$/.test(t) || TEACHER_ONLY.test(t)) continue;
+      for (const m of t.matchAll(NEGATIVE)) {
+        let all = true; for (let o = m.index; o < m.index + m[0].length && all; o++) all = parse(doc.getCharPropertiesAt(sec, p, o)).underline === true;
+        if (!all) out.push({ sec, para: p, start: m.index, end: m.index + m[0].length, word: m[0], label: q.label });
+      }
+    }
+  return out;
+}
+export function underlineNegativeWords(bridge) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), list = negativeWordIssues(doc);
+  if (!list.length) return 0;
+  bridge.transaction('negative-underline', () => { for (const w of list) doc.applyCharFormat(w.sec, w.para, w.start, w.end, JSON.stringify({ underline: true })); return true; });
+  return list.length;
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();
@@ -474,6 +497,7 @@ export function extraChecks(doc) {
     }
     if (marks && marks !== MARKS) issues.push({ text: `${q.label} 선지 번호가 차례대로가 아닙니다(${marks}).`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
   }
+  for (const w of negativeWordIssues(doc)) issues.push({ text: `${w.label} 발문의 부정 표현 「${w.word}」에 밑줄이 없습니다(평가원 발문 규칙).`, at: { sectionIndex: w.sec, paragraphIndex: w.para, charOffset: w.start } });
   const gaps = unitGapIssues(doc), gapCount = gaps.reduce((n, g) => n + g.at.length, 0);
   if (gapCount) { const g = gaps[0], at = g.at[0], sample = g.text.slice(Math.max(0, at - 3), at + 3).trim(); issues.push({ text: `숫자와 단위 사이 띄어쓰기가 빠진 곳이 ${gapCount}곳 있습니다(예: ${sample} → 평가원 표기는 「10 m」).`, at: g.where.kind === 'body' ? { sectionIndex: g.where.sec, paragraphIndex: g.where.p, charOffset: at } : null }); }
   const equations = equationSizeIssues(doc);
