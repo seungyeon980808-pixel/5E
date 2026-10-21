@@ -4,6 +4,7 @@ import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
@@ -477,9 +478,35 @@ export function installExamModes(panel, services) {
   const escKey = event => { if (event.key === 'Escape' && !pop.hidden) { event.preventDefault(); event.stopImmediatePropagation(); closePop(); } };
   document.addEventListener('keydown', modeKey, true);
   document.addEventListener('keydown', escKey, true);
+  // ── ExamPool 시험지 열기 ──
+  let examPoolData = null;
+  async function openExamPool(anchor) {
+    const { data, exams } = await listExamPoolExams();
+    examPoolData = data;
+    pop.dataset.kind = 'exampool';
+    pop.className = 'exam-pop exam-exampoolpop';
+    pop.innerHTML = `<div class="exam-pop-head">ExamPool 시험지 열기 <small>${exams.length ? '고르면 지금 문서를 자동 저장한 뒤 엽니다' : ''}</small></div>
+      ${exams.length ? `<div class="exam-stemlist">${exams.map(e => `<button type="button" data-exam-pool="${esc(e.id)}" ${e.missing || e.mixed ? 'aria-disabled="true"' : ''}><b>${esc(e.title)}</b> · ${e.count}문항${e.missing ? ` · 조판 저장 안 한 문항 ${e.missing}개(ExamPool에서 먼저 저장)` : e.mixed ? ' · 용지가 섞임' : ''}</button>`).join('')}</div>`
+        : '<p class="exam-pop-empty">ExamPool에 문항을 넣은 시험지가 없습니다. 맨 위 「exam」에서 시험지를 만든 뒤 다시 여세요.</p>'}
+      <div class="exam-pop-foot">Esc로 닫기</div>`;
+    place(anchor || bar);
+  }
+  pop.addEventListener('click', event => {
+    const pick = event.target.closest('[data-exam-pool]'); if (!pick) return;
+    if (pick.getAttribute('aria-disabled') === 'true') { message('이 시험지는 아직 열 수 없습니다. ExamPool에서 문항마다 「조판 저장」을 한 뒤 다시 여세요.', true); return; }
+    const id = pick.dataset.examPool; closePop();
+    void run(async () => {
+      const b = bridgeOrThrow(), Document = b.wasm.borrowDocumentHandle().constructor;
+      const { bytes, title } = await buildExamPoolHwpx(Document, examPoolData, id);
+      await services.loadExam(bytes, title);
+      message(`ExamPool 시험지 「${title}」를 열었습니다. 인쇄 전 「점검」으로 확인하세요.`);
+    });
+  });
+
   let boundDoc = null;
   setMode(mode, { announce: false });
   return {
+    openExamPool,
     get mode() { return mode; },
     setMode,
     // 편집기가 준비되거나 다시 만들어지면 스튜디오 쪽 모양·단축키를 다시 붙인다.

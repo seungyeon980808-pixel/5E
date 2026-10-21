@@ -300,6 +300,14 @@ h.withServer(async origin => {
       await sheet.click('[data-exam-act="send"]');
       await page.waitForFunction(()=>document.querySelector('#exampool-sheet-workspace')?.hidden===true&&!document.querySelector('#rhwp-exam-workspace')?.hidden,null,{timeout:60000});
       assert.match(await page.locator('#exam-name').inputValue(),/새 시험지/,'the exam opens under its own name');
+      // 10-21: 5E_hwp 「파일 → ExamPool 시험지 열기」로 같은 시험지를 바로 열면 보낸 것과 같은 글이 나온다.
+      const docText=()=>page.evaluate(()=>{const b=window.fiveEHwpPalette.native.bridge(),d=b.wasm.borrowDocumentHandle();return [...Array(d.getParagraphCount(0)).keys()].map(p=>d.getTextRange(0,p,0,d.getParagraphLength(0,p))).join('\n');});
+      const sent=await docText();
+      await page.click('[data-exam-menu="file"]');await page.click('[data-exam-action="open-exampool"]');
+      await page.locator('.exam-exampoolpop [data-exam-pool]').first().click();
+      await page.waitForFunction(()=>/ExamPool 시험지 「/.test(document.querySelector('#exam-status')?.textContent||''),null,{timeout:60000});
+      assert.equal(await docText(),sent,'opening from the HWP file menu gives the same exam as sending it');
+      assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'false');
       await page.click('[data-exam-action="close"]');await page.locator('.app-switch-image [data-app-switch="exam"]').click();await sheet.waitForSelector('#examd-view:not([hidden])');
 
       // 출제 대화(대역 하네스 · 실제 AI 아님): 요청 묶음 → 변경안 보관 → 「적용」→ 버전 기록, 대기 중 직접 수정한 응답은 지난 변경안.

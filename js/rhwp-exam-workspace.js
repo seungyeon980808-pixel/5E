@@ -57,6 +57,7 @@ export function initRhwpExamWorkspace(state, services) {
             <button type="button" role="menuitem" data-exam-action="new">새 시험지</button>
             <button type="button" role="menuitem" data-exam-action="open-hwp">한글 파일 열기…</button>
             <button type="button" role="menuitem" data-exam-action="open-project">프로젝트 열기… (.5e)</button>
+            <button type="button" role="menuitem" data-exam-action="open-exampool">ExamPool 시험지 열기…</button>
             <button type="button" role="menuitem" data-exam-action="open-png">그림 원본 열기</button>
             <div class="exam-menu-divider" role="separator"></div>
             <button type="button" role="menuitem" data-exam-action="save">프로젝트 저장 (.5e)</button>
@@ -97,7 +98,7 @@ export function initRhwpExamWorkspace(state, services) {
   window.fiveEHwpPalette = palette; // 화면 색(graphite-shell)의 window.fiveEPalette와 이름이 겹쳐 덮어쓰이던 것을 피함
   // 도구 모드 3개(기본·집중·없음)와 집중 도구 줄. 동작(actions)·그림 설정은 아래에서 정의되므로 누를 때 찾는다.
   const toolModes = installExamModes(panel, { getBridge:() => bridge, palette, message:(...args) => message(...args), run:task => run(task),
-    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), openPictureSettings:anchor => openPictureSettings(anchor) });
+    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), loadExam:async(bytes,title) => { if (bridge?.input) await stableSave(); await loadDocument(new Uint8Array(bytes),`${String(title||'시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`); }, openPictureSettings:anchor => openPictureSettings(anchor) });
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
@@ -1058,6 +1059,8 @@ export function initRhwpExamWorkspace(state, services) {
     'structure-lock':() => { const locked=!bridge.tableLayoutLocked;bridge.setTableLayoutLocked(locked);panel.querySelector('[data-exam-action="structure-lock"]').setAttribute('aria-pressed',String(locked));message(locked?'구조 잠금 · 글만 고칠 수 있습니다. 표·그림의 크기나 틀은 잠금을 풀고 바꾸세요.':'구조 잠금 풀림 · 표·그림의 크기와 틀을 고칠 수 있습니다.'); },
     'open-hwp':() => panel.querySelector('#exam-hwp-file').click(),
     'open-project':() => panel.querySelector('#exam-project-file').click(),
+    // ExamPool에 만들어 둔 시험지를 골라 바로 연다(ExamPool 「한글로 보내기」와 같은 조판).
+    'open-exampool':() => toolModes.openExamPool(panel.querySelector('[data-exam-menu="file"]')),
     'export-hwpx':() => exportDocument('hwpx'),
     'export-hwp':() => exportDocument('hwp'),
     'export-png':async () => {
