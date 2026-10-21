@@ -194,9 +194,16 @@ export function createCardEditor(root,api){
       if(panels.rightOpen){const n=Math.max(300,Math.round(avail*rw/(c0+rw)));scaleR=rw/n;rw=n;}else{const n=Math.max(240,Math.round(avail*lw/(c0+lw)));scaleL=lw/n;lw=n;}}
     root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');}
   let scaleL=1,scaleR=1;
+  // 카드 전체 다시 그리기(탭 전환·AI 그림 도착·진행 메시지)가 입력 중인 칸의 초점과 커서를 날렸다(M18). 같은 문항이면 되돌린다.
+  const FOCUS_KEYS=['cvf','cvline','i','cvchoice','cvct'];
+  // AI 입력창 초안은 문항마다 따로 둔다. 예전에는 카드를 다시 그릴 때마다 새 입력창이 비어 초안이 지워졌다(M18).
+  const aiDrafts=new Map();
+  function focusKey(n){if(!n||!root.contains(n)||!n.matches?.('input,textarea'))return null;if(n.id)return {sel:'#'+CSS.escape(n.id)};
+    const attrs=FOCUS_KEYS.filter(k=>n.dataset[k]!==undefined).map(k=>`[data-${k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())}="${CSS.escape(n.dataset[k])}"]`);return attrs.length?{sel:n.tagName.toLowerCase()+attrs.join('')}:null;}
   function render(){shapeOpen=false;
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
+    const active=document.activeElement,focused=same?focusKey(active):null,caret=focused?[active.selectionStart,active.selectionEnd]:null;
     api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람을 원래 자리로 돌려놓는다(같이 지워지지 않게).
     // 기준·자료는 검색어를 범위마다 따로 기억한다(한쪽 검색어가 다른 쪽 목록을 거르지 않게).
     if(['standards','references'].includes(panels.tab)){const src=document.querySelector('#source-search');if(src)src.value=srcQuery[panels.tab]||'';}
@@ -213,6 +220,7 @@ export function createCardEditor(root,api){
     fitAll();taWatch();
     root.querySelector('.cv-qtab[aria-current="true"]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     root.querySelectorAll('.cv-writer textarea').forEach(fit);
+    if(focused){const n=root.querySelector(focused.sel);if(n&&document.activeElement!==n){n.focus({preventScroll:true});try{if(caret[0]!=null)n.setSelectionRange(caret[0],caret[1]);}catch{}}}
   }
   // 가운데 보기 전환: 한글 조판에서 나가면 한글 창을 닫는다(조판 저장은 창의 「조판 저장」으로).
   function setView(v){panels.view=v==='hwp'?'card':v;render();anim(root.querySelector('.cv-center .cv-page,.cv-center .cv-writer'),'ep-swap');}
@@ -489,7 +497,7 @@ export function createCardEditor(root,api){
   }
   function renderAi(){
     const body=root.querySelector('[data-cvbody="ai"]'),x=q();if(!body||!x)return;
-    const log=x.reviews||[],typing=document.activeElement?.id==='cv-ai-input',draft=root.querySelector('#cv-ai-input')?.value||'',pending=api.aiPending?.(x);
+    const log=x.reviews||[],typing=document.activeElement?.id==='cv-ai-input',draft=aiDrafts.get(x.id)??root.querySelector('#cv-ai-input')?.value??'',pending=api.aiPending?.(x);
     body.innerHTML=`<div class="ai-scope" title="${E(x.number||'')}번 문항과 함께 설계·수정·검토합니다 · 변경안은 「적용」을 눌러야 문항에 들어갑니다"><b>${E(x.number||'')}번 문항</b>과 함께 설계·수정·검토합니다 · 변경안은 「적용」을 눌러야 문항에 들어갑니다</div>
       ${authoringStrip(x)}
       <div class="chat">${log.length?log.map((m,i)=>aiMessage(x,m,i)).join(''):'<p class="ai-empty">만들 문항을 말하거나(예: 두 물체의 운동을 비교하는 수능형 문항, 속도–시간 그래프, 계산보다 조건 해석) 「검토해 줘」를 보내세요.</p>'}${pending?`<div class="msg ai pending">${E(pending.text||'AI가 답을 쓰는 중…')} <span class="au-elapsed" data-since="${E(pending.since||'')}"></span> <button type="button" class="mini" data-cv="ai-cancel">취소</button></div>`:''}</div>
@@ -516,6 +524,7 @@ export function createCardEditor(root,api){
   root.addEventListener('input',e=>{
     const t=e.target,x=q();if(!x)return;
     if(t.matches('textarea'))fit(t);
+    if(t.id==='cv-ai-input'){aiDrafts.set(x.id,t.value);return;}
     if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else writeField(x,f,t.value);});return;}
     if(t.dataset.cvline){const key=t.dataset.cvline,b=x.blocks.find(v=>v.kind===key),i=Number(t.dataset.i);edit(key,()=>{b.lines[i].text=t.value;});return;}
     if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
@@ -606,7 +615,7 @@ export function createCardEditor(root,api){
     if(d.cv==='typeset'){api.typeset();return;}
     if(d.cv==='review'){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();api.ai(x,{kind:'review',text:'검토해 줘'});return;}
     if(d.aiQuick){const kind=d.aiQuick==='검토해 줘'?'review':d.aiQuick==='새 문항 초안'?'draft':'chat';api.ai(x,{kind,text:d.aiQuick==='새 문항 초안'?'지금까지 정한 요구사항으로 새 문항 초안을 만들어 줘. 정하지 않은 것은 가정으로 남겨 줘.':d.aiQuick});return;}
-    if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;input.value='';api.ai(x,{kind:/^검토/.test(text)?'review':'chat',text});return;}
+    if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;input.value='';aiDrafts.delete(x.id);api.ai(x,{kind:/^검토/.test(text)?'review':'chat',text});return;}
     if(d.cv==='ai-cancel'){api.cancelAi?.(x);return;}
     if(d.cv==='ai-login'){api.login?.();return;}
     if(d.cvprop){api.proposal?.(x,d.cvprop,d.act);return;}

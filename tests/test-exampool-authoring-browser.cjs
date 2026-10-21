@@ -65,6 +65,9 @@ h.withServer(async origin=>{
       await sheet.fill('#cv-ask','교사가 방금 고친 발문');await sheet.click('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(400);
       assert.equal(dialogs.length,1,'applying right after a teacher edit asks first');assert.match(dialogs[0],/지난 버전/);
       assert.equal(await sheet.locator('#cv-ask').inputValue(),'교사가 방금 고친 발문','declining keeps the teacher text');
+      // 4-2) M18: 탭을 바꿔 카드를 다시 그려도 AI 입력창에 쓰던 초안은 남는다.
+      await sheet.fill('#cv-ai-input','쓰다 만 요청');await sheet.click('#card-view [data-cvright="paper"]');await sheet.click('#card-view [data-cvright="ai"]');await sheet.waitForSelector('#cv-ai-input');
+      assert.equal(await sheet.locator('#cv-ai-input').inputValue(),'쓰다 만 요청','the AI draft survives a full card re-render');await sheet.fill('#cv-ai-input','');
       // 5) 기다리는 동안 문항을 지우면 답을 버린다.
       await send('검토해 줘');
       const count=await sheet.evaluate(()=>document.querySelectorAll('[data-open-card]').length);
