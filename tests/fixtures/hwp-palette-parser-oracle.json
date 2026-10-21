@@ -1,0 +1,6778 @@
+[
+  {
+    "fn": "build_segments",
+    "args": [
+      "가",
+      {}
+    ],
+    "result": [
+      {
+        "text": "가",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "나",
+      {}
+    ],
+    "result": [
+      {
+        "text": "나",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1x2\\\n가&나",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "가",
+              "나"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "가",
+      {}
+    ],
+    "result": [
+      {
+        "text": "가",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "나",
+      {}
+    ],
+    "result": [
+      {
+        "text": "나",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1×2\\\n가&나",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "가",
+              "나"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 5,
+            "file": "a.hwp"
+          }
+        ],
+        "도장": [
+          "템플릿",
+          {
+            "name": "도장",
+            "label": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "인",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 5,
+            "file": "a.hwp"
+          }
+        ],
+        "도장": [
+          "템플릿",
+          {
+            "name": "도장",
+            "label": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "인",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당\n\\도장\\\n인",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 5,
+            "file": "a.hwp"
+          }
+        ],
+        "도장": [
+          "템플릿",
+          {
+            "name": "도장",
+            "label": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 5,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ],
+        [
+          "template",
+          {
+            "name": "도장",
+            "label": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          },
+          [
+            "인"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "1",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "2",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "2",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "다음 칸",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "다음 칸",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{\\표3*2\\\n1&2\n}\n다음 칸",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                {
+                  "kind": "table",
+                  "rows": 3,
+                  "cols": 2,
+                  "grid": [
+                    [
+                      "1",
+                      "2"
+                    ]
+                  ]
+                }
+              ]
+            },
+            "다음 칸"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\학교\\ 과학실",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ],
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "대왕중 과학실",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ],
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{주의}",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ],
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "주의",
+        "style": {
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{\\학교\\ 과학실\n\\굵게{주의}}",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ],
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                "대왕중 과학실",
+                [
+                  {
+                    "text": "주의",
+                    "style": {
+                      "굵게": true
+                    }
+                  }
+                ]
+              ]
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "[실험 결과]",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "[실험 결과]",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "1",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "2",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "2",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "3",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "3",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "4",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "4",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "5",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "5",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "6",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "6",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "7",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "7",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "8",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "8",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "9",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "9",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{[실험 결과]\n\\표3*3\\\n1&2&3\n4&5&6\n7&8&9\n}",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                "[실험 결과]",
+                {
+                  "kind": "table",
+                  "rows": 3,
+                  "cols": 3,
+                  "grid": [
+                    [
+                      "1",
+                      "2",
+                      "3"
+                    ],
+                    [
+                      "4",
+                      "5",
+                      "6"
+                    ],
+                    [
+                      "7",
+                      "8",
+                      "9"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "가",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "가",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "나",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "나",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{가\n나",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                "가",
+                "나"
+              ]
+            }
+          ]
+        ]
+      ],
+      [
+        "덩어리를 닫는 } 가 없습니다 — { 로 시작했으면 } 로 닫아주세요"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\없는거\\",
+      {}
+    ],
+    "result": [
+      {
+        "text": "\\없는거\\",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\없는거\\",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "\\없는거\\"
+        ]
+      ],
+      [
+        "등록되지 않은 라벨: \\없는거\\ (라이브러리·내장 문자·사진 폴더 어디에도 없습니다)"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\표2*2\\",
+      {
+        "표2*2": [
+          "문자",
+          {
+            "name": "표2*2",
+            "label": "표2*2",
+            "text": "내가 정한 것"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "내가 정한 것",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표2*2\\",
+      {
+        "표2*2": [
+          "문자",
+          {
+            "name": "표2*2",
+            "label": "표2*2",
+            "text": "내가 정한 것"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "내가 정한 것"
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\학교\\",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "대왕중",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "뒤",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "뒤",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1*2\\\n\\학교\\&뒤",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "대왕중",
+              "뒤"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "앞 \\인사말\\ 뒤",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "앞 안녕하세요 뒤",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "앞 \\인사말\\ 뒤",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "앞 안녕하세요 뒤"
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "부장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "부장",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당\n\n부장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          },
+          [
+            "담당",
+            "부장"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\학교\\ 교장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ],
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중학교"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "대왕중학교 교장",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n\\학교\\ 교장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ],
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중학교"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "대왕중학교 교장"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "앞 \\표지\\ 뒤",
+      {
+        "표지": [
+          "양식",
+          {
+            "name": "표지",
+            "label": "표지",
+            "slot_count": 1,
+            "file": "c.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "앞 \\표지\\ 뒤",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "앞 \\표지\\ 뒤",
+      {
+        "표지": [
+          "양식",
+          {
+            "name": "표지",
+            "label": "표지",
+            "slot_count": 1,
+            "file": "c.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "앞 \\표지\\ 뒤"
+        ]
+      ],
+      [
+        "양식 라벨은 한 줄에 단독으로 써주세요: \\표지\\"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1번 문제",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "1번 문제",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\수능양식\\\n\\문제1\\\n1번 문제",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "form",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          },
+          []
+        ],
+        [
+          "template",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "1번 문제"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "제4교시",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "제4교시",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1번 문제",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "1번 문제",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\수능양식\\\n-\n제4교시\n\\문제1\\\n1번 문제",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "form",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          },
+          [
+            null,
+            "제4교시"
+          ]
+        ],
+        [
+          "template",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "1번 문제"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "물리학Ⅰ",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "물리학Ⅰ",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "제4교시",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "제4교시",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1번 문제",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "1번 문제",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "남는 줄",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "남는 줄",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\수능양식\\\n물리학Ⅰ\n제4교시\n\\문제1\\\n1번 문제\n남는 줄",
+      {
+        "수능양식": [
+          "양식",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          }
+        ],
+        "문제1": [
+          "템플릿",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "form",
+          {
+            "name": "수능양식",
+            "label": "수능양식",
+            "slot_count": 2,
+            "file": "c.hwp"
+          },
+          [
+            "물리학Ⅰ",
+            "제4교시"
+          ]
+        ],
+        [
+          "template",
+          {
+            "name": "문제1",
+            "label": "문제1",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "1번 문제"
+          ]
+        ],
+        [
+          "line",
+          "남는 줄"
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "제목",
+      {
+        "표지": [
+          "양식",
+          {
+            "name": "표지",
+            "label": "표지",
+            "slot_count": 1,
+            "file": "c.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "제목",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표지\\\n제목",
+      {
+        "표지": [
+          "양식",
+          {
+            "name": "표지",
+            "label": "표지",
+            "slot_count": 1,
+            "file": "c.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "form",
+          {
+            "name": "표지",
+            "label": "표지",
+            "slot_count": 1,
+            "file": "c.hwp"
+          },
+          [
+            "제목"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\r\n담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\r담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "(가) 준비한다.",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "(가) 준비한다.",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "(나) 측정한다.",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "(나) 측정한다.",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "(다) 기록한다.",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "(다) 기록한다.",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "다음 칸",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "다음 칸",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{(가) 준비한다.\n(나) 측정한다.\n(다) 기록한다.}\n다음 칸",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 2,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                "(가) 준비한다.",
+                "(나) 측정한다.",
+                "(다) 기록한다."
+              ]
+            },
+            "다음 칸"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "가",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "가",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "나",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "나",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{\n가\n나\n}",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                "가",
+                "나"
+              ]
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "앞 \\결재란\\ 뒤",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "앞 \\결재란\\ 뒤",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "앞 \\결재란\\ 뒤",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "앞 \\결재란\\ 뒤"
+        ]
+      ],
+      [
+        "템플릿 라벨은 한 줄에 단독으로 써주세요: \\결재란\\"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "부장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "부장",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "그 다음 줄",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "그 다음 줄",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당\n부장\n그 다음 줄",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          },
+          [
+            "담당",
+            "부장"
+          ]
+        ],
+        [
+          "line",
+          "그 다음 줄"
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1",
+      {}
+    ],
+    "result": [
+      {
+        "text": "1",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "2",
+      {}
+    ],
+    "result": [
+      {
+        "text": "2",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "3",
+      {}
+    ],
+    "result": [
+      {
+        "text": "3",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "4",
+      {}
+    ],
+    "result": [
+      {
+        "text": "4",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1*2\\\n1&2\n\\표1*2\\\n3&4",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "1",
+              "2"
+            ]
+          ]
+        ],
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "3",
+              "4"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1",
+      {}
+    ],
+    "result": [
+      {
+        "text": "1",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "3",
+      {}
+    ],
+    "result": [
+      {
+        "text": "3",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1*3\\\n1&-&3",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          3,
+          [
+            [
+              "1",
+              null,
+              "3"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\학교\\",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "대왕중",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{중요}",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "중요",
+        "style": {
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1*2\\\n\\학교\\&\\굵게{중요}",
+      {
+        "학교": [
+          "문자",
+          {
+            "name": "학교",
+            "label": "학교",
+            "text": "대왕중"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "대왕중",
+              [
+                {
+                  "text": "중요",
+                  "style": {
+                    "굵게": true
+                  }
+                }
+              ]
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "A&B",
+      {}
+    ],
+    "result": [
+      {
+        "text": "A&B",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "C",
+      {}
+    ],
+    "result": [
+      {
+        "text": "C",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표1*2\\\nA&&B&C",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          1,
+          2,
+          [
+            [
+              "A&B",
+              "C"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표999*999\\",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "\\표999*999\\"
+        ]
+      ],
+      [
+        "표 크기가 범위를 벗어났습니다: 999x999 (1~50 사이여야 합니다)"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1",
+      {}
+    ],
+    "result": [
+      {
+        "text": "1",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "2",
+      {}
+    ],
+    "result": [
+      {
+        "text": "2",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표3*2\\\n1&2",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          3,
+          2,
+          [
+            [
+              "1",
+              "2"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "1",
+      {}
+    ],
+    "result": [
+      {
+        "text": "1",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "2",
+      {}
+    ],
+    "result": [
+      {
+        "text": "2",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "3",
+      {}
+    ],
+    "result": [
+      {
+        "text": "3",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "4",
+      {}
+    ],
+    "result": [
+      {
+        "text": "4",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "5",
+      {}
+    ],
+    "result": [
+      {
+        "text": "5",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "6",
+      {}
+    ],
+    "result": [
+      {
+        "text": "6",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "7",
+      {}
+    ],
+    "result": [
+      {
+        "text": "7",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "8",
+      {}
+    ],
+    "result": [
+      {
+        "text": "8",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "9",
+      {}
+    ],
+    "result": [
+      {
+        "text": "9",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\표3*3\\\n1&2&3\n4&5&6\n7&8&9",
+      {}
+    ],
+    "result": [
+      [
+        [
+          "table",
+          3,
+          3,
+          [
+            [
+              "1",
+              "2",
+              "3"
+            ],
+            [
+              "4",
+              "5",
+              "6"
+            ],
+            [
+              "7",
+              "8",
+              "9"
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "부장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "부장",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n-\n부장",
+      {
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          },
+          [
+            null,
+            "부장"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "한 줄",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "한 줄",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\문항\\\n{한 줄}",
+      {
+        "문항": [
+          "템플릿",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "문항",
+            "label": "문항",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            {
+              "kind": "multiline",
+              "lines": [
+                "한 줄"
+              ]
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "발문: 다음 중 옳은 것은?\n질문: 이유를 쓰시오.\n선지5:\n①가\n②나\n③다\n④라\n⑤마\n"
+    ],
+    "result": {
+      "num": "",
+      "stem": "다음 중 옳은 것은?",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "이유를 쓰시오.",
+      "bogi": [],
+      "choices": [
+        "가",
+        "나",
+        "다",
+        "라",
+        "마"
+      ],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "발 문: 문제"
+    ],
+    "result": {
+      "num": "",
+      "stem": "문제",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "자 료: 내용"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "내용",
+      "material_type": "basic",
+      "material_flag": true,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "보기:\nㄱ:첫째\nㄴ:둘째"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [
+        "첫째",
+        "둘째"
+      ],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "사진자료:"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "photo",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "실험자료:"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "experiment",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "선지1:\n가"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [
+        "가"
+      ],
+      "choices_type": "1"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "선지3:\n가"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [
+        "가"
+      ],
+      "choices_type": "3"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "선지:\n①첫째\n둘째"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [
+        "첫째",
+        "둘째"
+      ],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "발문: 첫 줄\n이어지는 줄"
+    ],
+    "result": {
+      "num": "",
+      "stem": "첫 줄 이어지는 줄",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "자료: 첫 줄\n둘째 줄"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "첫 줄\n둘째 줄",
+      "material_type": "basic",
+      "material_flag": true,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\인사말\\ \\실험사진1\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "안녕하세요 ",
+        "style": null
+      },
+      {
+        "text": "",
+        "style": null,
+        "image": "C:\\photos\\실험사진1.png"
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\인사말\\ \\실험사진1\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "안녕하세요 ",
+              "style": null
+            },
+            {
+              "text": "",
+              "style": null,
+              "image": "C:\\photos\\실험사진1.png"
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\없는것\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "\\없는것\\",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당\n\\없는것\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ],
+        [
+          "line",
+          "\\없는것\\"
+        ]
+      ],
+      [
+        "등록되지 않은 라벨: \\없는것\\ (라이브러리·내장 문자·사진 폴더 어디에도 없습니다)"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "이름 \\실험사진1\\ 옆",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "이름 ",
+        "style": null
+      },
+      {
+        "text": "",
+        "style": null,
+        "image": "C:\\photos\\실험사진1.png"
+      },
+      {
+        "text": " 옆",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n이름 \\실험사진1\\ 옆",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            [
+              {
+                "text": "이름 ",
+                "style": null
+              },
+              {
+                "text": "",
+                "style": null,
+                "image": "C:\\photos\\실험사진1.png"
+              },
+              {
+                "text": " 옆",
+                "style": null
+              }
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\실험사진1\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "",
+        "style": null,
+        "image": "C:\\photos\\실험사진1.png"
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당\n\\실험사진1\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "slot_count": 2,
+            "file": "a.hwp"
+          },
+          [
+            "담당",
+            [
+              {
+                "text": "",
+                "style": null,
+                "image": "C:\\photos\\실험사진1.png"
+              }
+            ]
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "앞 \\실험사진1\\ 뒤",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "앞 ",
+        "style": null
+      },
+      {
+        "text": "",
+        "style": null,
+        "image": "C:\\photos\\실험사진1.png"
+      },
+      {
+        "text": " 뒤",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "앞 \\실험사진1\\ 뒤",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "앞 ",
+              "style": null
+            },
+            {
+              "text": "",
+              "style": null,
+              "image": "C:\\photos\\실험사진1.png"
+            },
+            {
+              "text": " 뒤",
+              "style": null
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\실험사진1\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "",
+        "style": null,
+        "image": "C:\\photos\\실험사진1.png"
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\실험사진1\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "",
+              "style": null,
+              "image": "C:\\photos\\실험사진1.png"
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{제목 \\실험사진1\\}",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "제목 ",
+        "style": {
+          "굵게": true
+        }
+      },
+      {
+        "text": "",
+        "style": {
+          "굵게": true
+        },
+        "image": "C:\\photos\\실험사진1.png"
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게{제목 \\실험사진1\\}",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "제목 ",
+              "style": {
+                "굵게": true
+              }
+            },
+            {
+              "text": "",
+              "style": {
+                "굵게": true
+              },
+              "image": "C:\\photos\\실험사진1.png"
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\없는것\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "\\없는것\\",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\없는것\\",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "\\없는것\\"
+        ]
+      ],
+      [
+        "등록되지 않은 라벨: \\없는것\\ (라이브러리·내장 문자·사진 폴더 어디에도 없습니다)"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          }
+        ],
+        "도장": [
+          "템플릿",
+          {
+            "name": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "인",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          }
+        ],
+        "도장": [
+          "템플릿",
+          {
+            "name": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "인",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당\n\\도장\\\n인",
+      {
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "굵게": [
+          "서식",
+          {
+            "name": "굵게",
+            "label": "굵게",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "실험사진1": [
+          "사진",
+          {
+            "name": "실험사진1",
+            "path": "C:\\photos\\실험사진1.png"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          }
+        ],
+        "도장": [
+          "템플릿",
+          {
+            "name": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "slot_count": 3,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ],
+        [
+          "template",
+          {
+            "name": "도장",
+            "slot_count": 1,
+            "file": "b.hwp"
+          },
+          [
+            "인"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "발문: 문제"
+    ],
+    "result": {
+      "num": "",
+      "stem": "문제",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "그냥 문장"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": false,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "parse",
+    "args": [
+      "자료:"
+    ],
+    "result": {
+      "num": "",
+      "stem": "",
+      "material": "",
+      "material_type": "basic",
+      "material_flag": true,
+      "question": "",
+      "bogi": [],
+      "choices": [],
+      "choices_type": "5"
+    }
+  },
+  {
+    "fn": "split_selection_units",
+    "args": [
+      "가\t\t나\n\n다"
+    ],
+    "result": [
+      "가",
+      "나",
+      "다"
+    ]
+  },
+  {
+    "fn": "split_selection_units",
+    "args": [
+      ""
+    ],
+    "result": []
+  },
+  {
+    "fn": "split_selection_units",
+    "args": [
+      null
+    ],
+    "result": []
+  },
+  {
+    "fn": "split_selection_units",
+    "args": [
+      "\\문제2-1\\\t\\문제2-2\\"
+    ],
+    "result": [
+      "\\문제2-1\\",
+      "\\문제2-2\\"
+    ]
+  },
+  {
+    "fn": "split_selection_units",
+    "args": [
+      "첫 줄\n둘째 줄"
+    ],
+    "result": [
+      "첫 줄",
+      "둘째 줄"
+    ]
+  },
+  {
+    "fn": "split_selection_units",
+    "args": [
+      "가\t나\r\n다\t라"
+    ],
+    "result": [
+      "가",
+      "나",
+      "다",
+      "라"
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "다음 중 \\굵게{옳지 않은} 것은?",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "다음 중 ",
+        "style": null
+      },
+      {
+        "text": "옳지 않은",
+        "style": {
+          "굵게": true
+        }
+      },
+      {
+        "text": " 것은?",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "다음 중 \\굵게{옳지 않은} 것은?",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "다음 중 ",
+              "style": null
+            },
+            {
+              "text": "옳지 않은",
+              "style": {
+                "굵게": true
+              }
+            },
+            {
+              "text": " 것은?",
+              "style": null
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{안녕 \\인사말\\ 님}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "안녕 안녕하세요 님",
+        "style": {
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게{안녕 \\인사말\\ 님}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "안녕 안녕하세요 님",
+              "style": {
+                "굵게": true
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{준비물은 \\ 입니다}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "준비물은 \\ 입니다",
+        "style": {
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게{준비물은 \\ 입니다}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "준비물은 \\ 입니다",
+              "style": {
+                "굵게": true
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{안 닫음",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "안 닫음",
+        "style": {
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게{안 닫음",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "안 닫음",
+              "style": {
+                "굵게": true
+              }
+            }
+          ]
+        ]
+      ],
+      [
+        "서식을 닫는 } 가 없습니다"
+      ]
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "내강조",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기15",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 15.0
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\내강조\\크기15{내용}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "내용",
+        "style": {
+          "굵게": true,
+          "크기": 15.0
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\내강조\\크기15{내용}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "내용",
+              "style": {
+                "굵게": true,
+                "크기": 15.0
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "기울임",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "기울임": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기15",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 15.0
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게\\기울임\\크기15{나는 이제 할 수 있는게 없다.}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "나는 이제 할 수 있는게 없다.",
+        "style": {
+          "굵게": true,
+          "기울임": true,
+          "크기": 15.0
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게\\기울임\\크기15{나는 이제 할 수 있는게 없다.}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "나는 이제 할 수 있는게 없다.",
+              "style": {
+                "굵게": true,
+                "기울임": true,
+                "크기": 15.0
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "없는것",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": null
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\없는것{내용}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "\\없는것{내용}",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\없는것{내용}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "\\없는것{내용}"
+        ]
+      ],
+      [
+        "모르는 서식입니다: \\없는것  (등록한 서식 라벨이거나 굵게·기울임·밑줄·숫자·색·글꼴이어야 합니다)"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\내강조\\",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "\\내강조\\",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\내강조\\",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "\\내강조\\"
+        ]
+      ],
+      [
+        "서식은 적용할 내용이 필요합니다: \\내강조{내용} 처럼 써주세요"
+      ]
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "그냥 문장",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "그냥 문장",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "그냥 문장",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "그냥 문장"
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기15",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 15.0
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게\\크기15{x}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "x",
+        "style": {
+          "굵게": true,
+          "크기": 15.0
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게\\크기15{x}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "x",
+              "style": {
+                "굵게": true,
+                "크기": 15.0
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기15",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 15.0
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\크기15\\굵게{x}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "x",
+        "style": {
+          "크기": 15.0,
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\크기15\\굵게{x}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "x",
+              "style": {
+                "크기": 15.0,
+                "굵게": true
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기10",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 10.0
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기20",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 20.0
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\크기10{가 \\크기20{나}}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "가 ",
+        "style": {
+          "크기": 10.0
+        }
+      },
+      {
+        "text": "나",
+        "style": {
+          "크기": 20.0
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\크기10{가 \\크기20{나}}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "가 ",
+              "style": {
+                "크기": 10.0
+              }
+            },
+            {
+              "text": "나",
+              "style": {
+                "크기": 20.0
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "경로는 C:\\\\폴더 입니다",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "경로는 C:\\폴더 입니다",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "경로는 C:\\\\폴더 입니다",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "line",
+          "경로는 C:\\폴더 입니다"
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "기울임",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": {
+      "기울임": true
+    }
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "\\굵게{가 \\기울임{나} 다}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "가 ",
+        "style": {
+          "굵게": true
+        }
+      },
+      {
+        "text": "나",
+        "style": {
+          "굵게": true,
+          "기울임": true
+        }
+      },
+      {
+        "text": " 다",
+        "style": {
+          "굵게": true
+        }
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\굵게{가 \\기울임{나} 다}",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "rich_line",
+          [
+            {
+              "text": "가 ",
+              "style": {
+                "굵게": true
+              }
+            },
+            {
+              "text": "나",
+              "style": {
+                "굵게": true,
+                "기울임": true
+              }
+            },
+            {
+              "text": " 다",
+              "style": {
+                "굵게": true
+              }
+            }
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "build_segments",
+    "args": [
+      "담당",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      {
+        "text": "담당",
+        "style": null
+      }
+    ]
+  },
+  {
+    "fn": "build_library_plan",
+    "args": [
+      "\\결재란\\\n담당",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true
+            }
+          }
+        ],
+        "인사말": [
+          "문자",
+          {
+            "name": "인사말",
+            "label": "인사말",
+            "text": "안녕하세요"
+          }
+        ],
+        "결재란": [
+          "템플릿",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          }
+        ]
+      }
+    ],
+    "result": [
+      [
+        [
+          "template",
+          {
+            "name": "결재란",
+            "label": "결재란",
+            "slot_count": 1,
+            "file": "a.hwp"
+          },
+          [
+            "담당"
+          ]
+        ]
+      ],
+      []
+    ]
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "함초롱",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": null
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "내강조",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true,
+      "글자색": 255
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "15",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 15.0
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "10.5",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 10.5
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "글꼴나눔고딕",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "글꼴": "나눔고딕"
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "가운데정렬",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": null
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "색빨강",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "글자색": 255
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "색#0000FF",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "글자색": 16711680
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "함초롬바탕",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "글꼴": "함초롬바탕"
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "크기15",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "크기": 15.0
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "자간-5",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "자간": -5
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "굵게",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "굵게": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "기울임",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "기울임": true
+    }
+  },
+  {
+    "fn": "resolve_style_token",
+    "args": [
+      "밑줄",
+      {
+        "내강조": [
+          "서식",
+          {
+            "name": "내강조",
+            "label": "내강조",
+            "fields": {
+              "굵게": true,
+              "글자색": 255
+            }
+          }
+        ]
+      }
+    ],
+    "result": {
+      "밑줄": true
+    }
+  }
+]

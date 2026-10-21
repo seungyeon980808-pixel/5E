@@ -836,6 +836,18 @@
       "findingIds": [
         "M25-AUTHORING-EVIDENCE-STAGE"
       ]
+    },
+    {
+      "path": "tests/test-hwp-palette.mjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-PORT"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-history.mjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-SUBDOCUMENTS"
+      ]
     }
   ],
   "browser": [
@@ -2221,6 +2233,24 @@
       "path": "tests/test-exampool-unload-save-browser.cjs",
       "findingIds": [
         "M14-EXAMPOOL-UNLOAD-SAVE"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-browser.cjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-PORT"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-features-browser.cjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-PORT"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-subdocuments-browser.cjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-SUBDOCUMENTS"
       ]
     }
   ],

@@ -1,3 +1,4 @@
+import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-hwppalette-rhwp';
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
 import { appSwitchHtml } from './app-switch.js?v=1021-fix';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
@@ -84,6 +85,15 @@ export function initRhwpExamWorkspace(state, services) {
   if (window.fiveEExam) {
     panel.querySelector('[data-exam-action="open-png"]').hidden = true;
   }
+  const palette = initPaletteWorkspace(panel, {
+    getBridge:() => bridge,run,notify:(...args)=>message(...args),download,
+    withBusy:async task => { if (busy) throw new Error('진행 중인 작업이 끝난 뒤 다시 실행해주세요.');setBusy(true);try{return await task();}finally{setBusy(false);} },
+    replaceDocument:async(bytes,name,anchor)=>{if(palette.contentEditing)throw new Error('조각 편집을 저장하거나 돌아간 뒤 새 양식을 열어주세요.');await stableSave();await loadDocument(bytes,`${safeName(name)}.hwpx`);if(anchor&&!anchor.hf)bridge.input.cursor.moveTo(anchor);},
+    beginContentEdit:async(bytes,name)=>{if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');const previous=new Uint8Array(await (await stableSave()).arrayBuffer());await loadDocument(bytes,`${safeName(name)}.hwpx`);return async()=>{await stableSave();await loadProject(previous);};},
+  });
+  // A small public capability surface also makes standalone port regressions
+  // exercise the same instances the user operates.
+  window.fiveEPalette = palette;
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
@@ -217,7 +227,7 @@ export function initRhwpExamWorkspace(state, services) {
       button.setAttribute('aria-current',String(figure ? figure.id===selected : selectedKey===pictureKey(ref)));
       button.title = `${name} · 선택 / 더블클릭하여 라벨 편집`;
       if (!thumbnails.has(id)) {
-        const bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+        const bytes = bridge.pictureBytes(ref);
         thumbnails.set(id,URL.createObjectURL(new Blob([bytes],{type:'image/png'})));
       }
       const image = document.createElement('img'); image.src = thumbnails.get(id); image.alt = ''; image.className = 'exam-figure-thumbnail';
@@ -238,7 +248,7 @@ export function initRhwpExamWorkspace(state, services) {
     refreshFigureNames();
     for (const {id,ref} of bridge.documentPictures()) {
       const figure = figures.get(id); if (!figure) continue;
-      const bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+      const bytes = bridge.pictureBytes(ref);
       const embedded = readEditablePng(bytes,prepareLoadedProject);
       if (!embedded || (embedded.name === figure.name && embedded.source.pages[0]?.name === figure.name && (!embedded.context?.ai || embedded.context.ai.snapshot.tabs[0].title === figure.name))) continue;
       const data = new Uint8Array(bytes), view = new DataView(data.buffer,data.byteOffset,data.byteLength);
@@ -462,7 +472,7 @@ export function initRhwpExamWorkspace(state, services) {
       for (const picture of bridge.documentPictures()) {
         let figure = figures.get(picture.id);
         if (!figure) {
-          const ref = picture.ref, bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+          const ref = picture.ref, bytes = bridge.pictureBytes(ref);
           const recovered = readEditablePng(bytes,prepareLoadedProject); if (!recovered) continue;
           figure = normalizeExamFigure(recovered); figures.set(figure.id,figure);
           if (picture.id !== figure.id) {const image = await imageFor(figure.source,figure);bridge.writeFigure(ref,image,figure.id);}
@@ -753,8 +763,8 @@ export function initRhwpExamWorkspace(state, services) {
   async function registerPicture(ref, mode = 'original') {
     if (figures.size>=500) throw new Error('그림과 수정 이력은 500개까지 보관합니다. 새 프로젝트로 나눠주세요.');
     const generation=bridge.generation,props=clone(bridge.properties(ref));
-    const raw=new Uint8Array(bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath||[])));
-    const mime=bridge.wasm.getControlImageMime(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath||[])) || 'image/png';
+    const raw=new Uint8Array(bridge.pictureBytes(ref));
+    const mime=bridge.pictureMime(ref) || 'image/png';
     let blob=new Blob([raw],{type:mime}), image;
     try {image=await decodePicture(blob);}
     catch {
@@ -934,6 +944,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
 
   async function importFile(file) {
+    if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');
     if (file.size>EXAM_PROJECT_MAX_BYTES) throw new Error('최대 128 MiB 파일을 열 수 있습니다.');
     const bytes=new Uint8Array(await file.arrayBuffer());
     await stableSave();
@@ -996,6 +1007,7 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.watchView(()=>{if(!inlineSession&&!editing)syncPictureControls();});
     bridge.deps.eventBus.on('picture-object-selection-changed',scheduleFigures);
     await bridge.newDocument();documentGeneration=bridge.generation;
+    await palette.attach();
     restoredDraft = await readExamDraft().catch(() => null);
     initializing = false;
     savedToken = token();
@@ -1045,7 +1057,7 @@ export function initRhwpExamWorkspace(state, services) {
     'export-png':async () => {
       const figure = figures.get(bridge.selectedFigureId()); if (!figure) throw new Error('시험지에서 저장할 그림을 먼저 선택해주세요.');
       flushFigureNames();
-      const ref = bridge.findFigure(figure.id), bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+      const ref = bridge.findFigure(figure.id), bytes = bridge.pictureBytes(ref);
       download(new Blob([bytes], {type:'image/png'}), `${safeName(figure.name)}.png`);
       message('편집 원본을 포함한 PNG 다운로드를 시작했습니다.');
     },
@@ -1142,6 +1154,10 @@ export function initRhwpExamWorkspace(state, services) {
     const button = event.target.closest('[data-exam-action]');
     if (button && !button.disabled) {
       const action=button.dataset.examAction;
+      if(palette.contentEditing&&['close','new','open-hwp','open-project','demo','restore'].includes(action)){
+        message('조각 편집을 저장하거나 돌아간 뒤 실행해주세요.',true);
+        return;
+      }
       closeMenus();
       void run(() => actions[action]?.()).then(()=>{
         // The opener becomes focusable after run releases its busy state.

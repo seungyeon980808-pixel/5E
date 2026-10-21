@@ -6,6 +6,7 @@ import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1014-comp
 import { installDocumentShortcuts } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { setTableLayoutLocked } from './rhwp-exam-layout-lock.js?v=1021-fix';
 import {exportCompatibleHwp,exportVerifiedHwpx} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
+import { installDocumentHistory, nativePictureBytes, withHeaderFooterPicture, nativePicturePaint } from './hwp-palette/subdocuments.js';
 
 export const FIGURE_PREFIX = '5e-exam:';
 const HWP_UNITS_PER_MM = 7200 / 25.4;
@@ -64,6 +65,7 @@ export class RhwpExamBridge {
     installDocumentShortcuts(this);
     installTableShortcuts(this);
     this.revision = 0;
+    this.documentHistory = typeof this.deps.wasm.borrowDocumentHandle === 'function' ? installDocumentHistory(this.deps.wasm) : null;
     this.onDocumentChanged = () => { this.revision++; this.onChange?.(); };
     this.deps.eventBus.on('document-changed', this.onDocumentChanged);
     // Page-local text edits do not always emit document-changed.
@@ -299,7 +301,7 @@ export class RhwpExamBridge {
         const layout = JSON.parse(staged.getPageControlLayout(page));
         for (const control of layout.controls || []) {
           if (control.type !== 'image') continue;
-          const image = staged.getControlImageData(control.secIdx,control.paraIdx,JSON.stringify(control.cellPath || []),control.controlIdx);
+          const image = nativePictureBytes(staged,pictureRef(control,page));
           const figure = readEditablePng(image,this.validateSource);
           if (!figure) continue;
           const previous = figures.get(figure.id);
@@ -411,6 +413,7 @@ export class RhwpExamBridge {
   }
 
   properties(ref) {
+    if (ref.headerFooter && ref.cellPath?.length) return withHeaderFooterPicture(this.wasm.borrowDocumentHandle(),ref,(stage,p)=>decoded(stage.document.getCellPicturePropertiesByPath(p.sectionIndex,p.parentParaIndex,JSON.stringify(p.cellPath),p.pictureControlIndex ?? ref.ci)));
     if (ref.headerFooter) return this.wasm.getHeaderFooterPictureProperties(ref.sec, ref.headerFooter.outerParaIdx, ref.headerFooter.outerControlIdx, ref.ppi, ref.ci);
     if (ref.cellPath?.length) return this.wasm.getCellPicturePropertiesByPath(ref.sec, ref.ppi, ref.cellPath, ref.ci);
     return this.wasm.getPictureProperties(ref.sec, ref.ppi, ref.ci);
@@ -469,7 +472,30 @@ export class RhwpExamBridge {
   }
 
   findFigure(id) {
-    return this.documentPictures().find(picture => picture.id === id)?.ref || null;
+    // 본문 그림은 목록에서 바로 찾고, 머리말·꼬리말 등 목록에 없는 그림은 팔레트 이식의 깊은 찾기로 찾는다.
+    const listed = this.documentPictures().find(picture => picture.id === id)?.ref;
+    if (listed) return listed;
+    for (let page = 0; page < this.wasm.pageCount; page++) {
+      const layout = this.wasm.getPageControlLayout(page);
+      const visit = value => {
+        if (!value || typeof value !== 'object') return null;
+        const sec = value.sectionIndex ?? value.secIdx ?? value.section_idx ?? value.sec;
+        const ppi = value.paragraphIndex ?? value.paraIdx ?? value.parentParaIdx ?? value.paraIndex ?? value.ppi;
+        const ci = value.controlIndex ?? value.controlIdx ?? value.ci;
+        if ([sec, ppi, ci].every(Number.isSafeInteger)) {
+          const ref = { sec, ppi, ci, type:'image', pageIndex:page, ...(value.cellPath ? {cellPath:value.cellPath} : {}), ...(value.headerFooter ? {headerFooter:value.headerFooter} : {}) };
+          if (this.figureId(ref) === id) return ref;
+        }
+        for (const child of Object.values(value)) {
+          const found = Array.isArray(child) ? child.map(visit).find(Boolean) : visit(child);
+          if (found) return found;
+        }
+        return null;
+      };
+      const found = visit(layout);
+      if (found) return found;
+    }
+    return null;
   }
 
   replaceFigure(id, image, nextId = id, selectedRef = null, region = null) {
@@ -488,13 +514,18 @@ export class RhwpExamBridge {
   }
 
   setProperties(ref,props) {
+    if(ref.headerFooter && ref.cellPath?.length)return withHeaderFooterPicture(this.wasm.borrowDocumentHandle(),ref,(stage,p)=>{
+      const result=decoded(stage.document.setCellPicturePropertiesByPath(p.sectionIndex,p.parentParaIndex,JSON.stringify(p.cellPath),p.pictureControlIndex ?? ref.ci,JSON.stringify(props)));
+      if(result?.ok===false)throw new Error('그림 서식을 적용하지 못했습니다.');
+      this.documentHistory.adopt(stage.finish().document);return result;
+    });
     if(ref.headerFooter)return this.wasm.setHeaderFooterPictureProperties(ref.sec,ref.headerFooter.outerParaIdx,ref.headerFooter.outerControlIdx,ref.ppi,ref.ci,props);
     return ref.cellPath?.length ? this.wasm.setCellPicturePropertiesByPath(ref.sec,ref.ppi,ref.cellPath,ref.ci,props) : this.wasm.setPictureProperties(ref.sec,ref.ppi,ref.ci,props);
   }
   pictureRasterSize(ref, op) {
     // Linked display images are PNGs. Read the header without decoding a
     // hidden/virtualized page; a rendered foreign image can supply its size.
-    const bytes=new Uint8Array(this.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || [])));
+    const bytes=new Uint8Array(this.pictureBytes(ref));
     const signature=[137,80,78,71,13,10,26,10];
     if (bytes.length>=24 && signature.every((value,index)=>bytes[index]===value) &&
         [73,72,68,82].every((value,index)=>bytes[index+12]===value)) {
@@ -557,6 +588,16 @@ export class RhwpExamBridge {
     // Ceiling covers non-/75 extents. Actual PNG resolution comes from bytes.
     const width=source.nativeSize ? Math.ceil(source.w/75) : image.pixelWidth;
     const height=source.nativeSize ? Math.ceil(source.h/75) : image.pixelHeight;
+    if (ref.headerFooter) return withHeaderFooterPicture(this.wasm.borrowDocumentHandle(),ref,(stage,p)=>{
+      const doc=stage.document, para=p.parentParaIndex ?? p.paragraphIndex;
+      const result=decoded(doc.assignPictureImage(p.sectionIndex,para,JSON.stringify(p.cellPath || []),p.pictureControlIndex ?? ref.ci,image.bytes,width,height,'png'));
+      if (!result?.ok) throw new Error('시험지 그림을 교체하지 못했습니다.');
+      const props=JSON.stringify({description:FIGURE_PREFIX+id});
+      if(p.cellPath?.length)doc.setCellPicturePropertiesByPath(p.sectionIndex,para,JSON.stringify(p.cellPath),p.pictureControlIndex ?? ref.ci,props);
+      else doc.setPictureProperties(p.sectionIndex,para,ref.ci,props);
+      this.documentHistory.adopt(stage.finish().document);
+      return result;
+    });
     const result = decoded(this.wasm.assignPictureImage(ref.sec,ref.ppi,JSON.stringify(ref.cellPath || []),ref.ci,image.bytes,width,height,'png'));
     if (!result?.ok) throw new Error('시험지 그림을 교체하지 못했습니다.');
     this.setProperties(ref,{description:FIGURE_PREFIX + id});
@@ -568,10 +609,10 @@ export class RhwpExamBridge {
     for (let page = 0; page < this.wasm.pageCount; page++) {
       for (const control of this.wasm.getPageControlLayout(page).controls || []) {
         if (control.type !== 'image') continue;
-        const ref = {sec:control.secIdx,ppi:control.paraIdx,ci:control.controlIdx,type:'image',...(control.cellPath ? {cellPath:control.cellPath} : {})};
-        const key = JSON.stringify(ref);
+        const ref = pictureRef(control,page);
+        const key = JSON.stringify({...ref,pageIndex:undefined});
         if (seen.has(key)) continue; seen.add(key);
-        const bytes = this.wasm.getControlImageData(ref.sec, ref.ppi, ref.ci, JSON.stringify(ref.cellPath || []));
+        const bytes = this.pictureBytes(ref);
         const figure = readEditablePng(bytes, validateSource);
         if (figure) {
           const existing = figures.get(figure.id);
@@ -585,12 +626,19 @@ export class RhwpExamBridge {
     if (reconnect.length) this.transaction('recover-figure-links', () => {
       for (const {ref,id} of reconnect) {
         const props = {description:FIGURE_PREFIX + id};
-        if (ref.cellPath?.length) this.wasm.setCellPicturePropertiesByPath(ref.sec, ref.ppi, ref.cellPath, ref.ci, props);
-        else this.wasm.setPictureProperties(ref.sec, ref.ppi, ref.ci, props);
+        this.setProperties(ref,props);
       }
       return true;
     });
     return figures;
+  }
+  pictureBytes(ref) {
+    return ref.headerFooter ? nativePictureBytes(this.wasm.borrowDocumentHandle(),ref) :
+      this.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+  }
+  pictureMime(ref) {
+    if(ref.headerFooter)return nativePicturePaint(this.wasm.borrowDocumentHandle(),ref).mime;
+    return this.wasm.getControlImageMime(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
   }
 
   // The pinned Studio rounds control layout to 0.1px. Paint ops preserve the
