@@ -162,7 +162,7 @@ export function renumberQuestions(bridge) {
 
 // 커서 근처의 선지(①~⑤)를 1열(줄마다)·3열(①②③ / ④⑤)·5열(한 줄)로 다시 놓는다. 팔레트의 선지 조판과 같은 방식(테두리 없는 표).
 export function relayoutChoices(bridge, columns) {
-  if (![1, 3, 5].includes(columns)) throw new Error('선지는 1열·3열·5열로 놓을 수 있습니다.');
+  if (![1, 3, 5, 'auto'].includes(columns)) throw new Error('선지는 1열·3열·5열로 놓을 수 있습니다.');
   const { input, wasm, doc } = requireDocument(bridge);
   const pos = input.getCursorPosition();
   if (pos.cellPath?.length > 1) throw new Error('표 안 표의 선지는 바꿀 수 없습니다.');
@@ -197,6 +197,7 @@ export function relayoutChoices(bridge, columns) {
   if (/[^\S ]/.test(joined.replace(/\t/g, ' ')) && /￼/.test(joined)) throw new Error('수식·그림이 든 선지는 아직 배열을 바꿀 수 없습니다.');
   const labelled = options.map((s, i) => `${CIRCLED[i]} ${s}`);
   const width = columnWidth(doc, block.sec);
+  if (columns === 'auto') columns = autoChoiceColumns(labelled, width);
   bridge.transaction('relayout-choices', () => {
     let at;
     if (block.kind === 'table') {
@@ -230,7 +231,16 @@ export function relayoutChoices(bridge, columns) {
     }
     return true;
   });
-  return true;
+  return columns;
+}
+// 선지 길이로 열 수 고르기: 가장 긴 선지가 한 칸(단 폭 ÷ 열 수)에 한 줄로 들어가는 가장 많은 열(5 → 3 → 1).
+// 글자 폭은 10pt 기준 한글·전각 3.6mm, 영문·숫자·기호 2mm, 칸 여백 4mm로 어림한다.
+export function autoChoiceColumns(labelled, widthHwp) {
+  const widthMm = widthHwp / 7200 * 25.4;
+  const need = text => [...text].reduce((mm, c) => mm + (/[\u0000-\u00ff]/.test(c) ? 2 : 3.6), 0) + 4;
+  const longest = Math.max(...labelled.map(need));
+  for (const cols of [5, 3]) if (longest <= widthMm / cols) return cols;
+  return 1;
 }
 
 // 인쇄 전 조판 점검. 고칠 자리를 [{text, at}]로 돌려준다(at이 있으면 누르면 그 자리로 간다).

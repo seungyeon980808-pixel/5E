@@ -66,13 +66,12 @@ function focusTabs(ctx) {
       ['발문', '자주 쓰는 발문 넣기(평가원 과학탐구 꼴)', (_, button) => ctx.openPicker(button, 'stem')],
       ['〈보기〉', '〈보기〉 상자 넣기(마크다운 창에 틀을 채워 둠)', tool('markdown', '보기:\nㄱ: \nㄴ: \nㄷ: ')],
       ['내어쓰기', '〈보기〉 「ㄱ. 」 뒤에 커서를 두고 누르면 둘째 줄을 글자에 맞춰 내어 씀', doc(b => { if (!applyHangingIndent(b)) throw new Error('「ㄱ. 」 바로 뒤에 커서를 두고 누르세요.'); })], '|',
-      ['ㄱㄴㄷ 선지', '〈보기〉 ㄱㄴㄷ·학생 A B C 조합 선지 다섯 개를 커서 줄 뒤에 5열로 넣기', (_, button) => ctx.openPicker(button, 'combo')], ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
+      ['ㄱㄴㄷ 선지', '〈보기〉 ㄱㄴㄷ·학생 A B C 조합 선지 다섯 개를 커서 줄 뒤에 5열로 넣기', (_, button) => ctx.openPicker(button, 'combo')], ['선지 자동', '선지 길이를 보고 5열·3열·1열 중 한 줄에 들어가는 배열로', doc(b => ctx.message(`선지를 ${relayoutChoices(b, 'auto')}열로 놓았습니다.`))], ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
       ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
       ['배점', '커서가 있는 문항의 배점 [n점] 넣기·바꾸기(발문 끝) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
-      ['마크다운', '마크다운 → 한글 문항 (팔레트)', tool('convert')], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', tool('exam_excel')],
     ],
     sheet: [
       ['빈칸 표시', '고른 낱말을 빈칸으로 표시(연한 파랑·밑줄) — 학생용에서 「(　　　)」로 바뀜', doc(b => markBlank(b, true))],
@@ -117,7 +116,7 @@ const MORE = {
     ['표 왼쪽으로', '표를 왼쪽으로', 'table-align-left'], ['표 오른쪽으로', '표를 오른쪽으로', 'table-align-right']],
   pic: [['캡션 넣기', '그림 아래 캡션 넣기', 'insert:caption-bottom'], ['캡션 없애기', '캡션 없애기', 'insert:caption-none'],
     ['그림 지우기', '고른 그림 지우기', 'insert:picture-delete'], ['좌우 뒤집기', '그림 좌우 뒤집기', 'insert:flip-horz'], ['오른쪽으로 90°', '그림 오른쪽으로 돌리기', 'insert:rotate-cw']],
-  item: [['단 나누기', '단 나누기 (Ctrl+Shift+Enter)', 'page:column-break'], ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['머리말·꼬리말 닫기', '머리말·꼬리말 편집 마치기', 'page:headerfooter-close'],
+  item: [['마크다운 → 문항', '마크다운 → 한글 문항 (팔레트)', 'tool:convert'], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', 'tool:exam_excel'], ['단 나누기', '단 나누기 (Ctrl+Shift+Enter)', 'page:column-break'], ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['머리말·꼬리말 닫기', '머리말·꼬리말 편집 마치기', 'page:headerfooter-close'],
     ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum'], ['전체 쪽 수', '지금 자리에 전체 쪽 수 넣기', 'page:insert-field-totalpage'],
     ['각주', '각주 넣기', 'insert:footnote'], ['미주', '미주 넣기', 'insert:endnote'], ['글상자', '글상자 넣기', 'insert:textbox'],
     ['단 설정', '단 수·간격 설정', 'page:col-settings'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['문자표 전체', '한글 문자표 창', 'insert:symbols']],
@@ -354,6 +353,7 @@ export function installExamModes(panel, services) {
     place(anchor);
   }
   function runMore(action) {
+    if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'table-align-left' || action === 'table-align-right') return ctx.withBridge(b => applyTableAlignment(b, action.slice(12)));
     return ctx.command(action);
   }

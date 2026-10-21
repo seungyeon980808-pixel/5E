@@ -406,6 +406,17 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
     await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer=""]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '2. 나', '[정답] ①']);
+    // 34) 선지 자동(1단 문서): 짧으면 5열, 중간이면 3열, 길면 1열. 2단이면 같은 선지도 칸이 좁아 더 적은 열이 된다.
+    await page.locator('[data-exam-ftab="item"]').click();
+    for (const [choices, want] of [['① ㄱ ② ㄴ ③ ㄷ ④ ㄹ ⑤ ㅁ', 5], ['① 산소의 양이 늘어난다 ② 질소의 양이 줄어든다 ③ 변화가 없다 ④ 모두 늘어난다 ⑤ 모두 줄어든다', 3], ['① 물체에 작용하는 알짜힘의 크기는 시간에 따라 증가한다 ② 나 ③ 다 ④ 라 ⑤ 마', 1]]) {
+      await inPage(page, `reset('1. 발문\\n'+arg);d.setColumnDef(0,1,0,true,0);b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});`, choices);
+      await button(page, '선지 길이를 보고').click(); await h.idle(page);
+      assert.match(await page.locator('#exam-status').textContent(), new RegExp(`선지를 ${want}열로`), choices);
+    }
+    // 더 보기의 팔레트 도구(마크다운 → 문항)도 오류 없이 연다.
+    await page.locator('.exam-fgroup [data-exam-fi]').last().click();
+    await page.locator('.exam-morelist button', { hasText: '마크다운 → 문항' }).click(); await h.idle(page);
+    assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
