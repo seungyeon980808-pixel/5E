@@ -107,7 +107,7 @@ function focusTabs(ctx) {
 
 // 「⋯ 더 보기」: 자주 쓰지 않지만 한글 리본을 켜지 않고도 닿아야 하는 것(기능 목록의 ○ 항목).
 const MORE = {
-  sheet: [['찾아 바꾸기', '찾아 바꾸기 (Ctrl+H)', 'edit:find-replace'], ['문자표 전체', '한글 문자표 창', 'insert:symbols'], ['글상자', '글상자 넣기', 'insert:textbox'], ['각주', '각주 넣기', 'insert:footnote']],
+  sheet: [['학생용(㉠㉡ 빈칸)', '빈칸을 「( ㉠ )」처럼 이름 붙은 빈칸으로 바꾼 학생용 사본(정답 대응은 알림에)', 'x:student-labeled'], ['찾아 바꾸기', '찾아 바꾸기 (Ctrl+H)', 'edit:find-replace'], ['문자표 전체', '한글 문자표 창', 'insert:symbols'], ['글상자', '글상자 넣기', 'insert:textbox'], ['각주', '각주 넣기', 'insert:footnote']],
   text: [['장평 −', '장평 줄이기 (Alt+Shift+J)', 'format:char-ratio-decrease'], ['장평 +', '장평 늘리기 (Alt+Shift+K)', 'format:char-ratio-increase'], ['글자 모양 창', '글자 모양 전체 설정(글자색·테두리 등) (Alt+L)', 'format:char-shape'], ['문단 모양 창', '문단 모양 전체 설정 (Alt+T)', 'format:para-shape'],
     ['문단 번호', '문단 번호 켜기·끄기', 'format:toggle-numbering'], ['글머리표', '글머리표 켜기·끄기', 'format:toggle-bullet'],
     ['왼쪽 여백 +1pt', '왼쪽 여백 늘이기 (Ctrl+Alt+F6)', 'para:left-increase'], ['왼쪽 여백 −1pt', '왼쪽 여백 줄이기 (Ctrl+Alt+F5)', 'para:left-decrease'],
@@ -201,10 +201,10 @@ export function installExamModes(panel, services) {
       message(`${name === 'spacingBefore' ? '문단 위' : '문단 아래'} 간격 ${pt}pt`);
       refocus();
     },
-    studentCopy(b) {
-      const { bytes, count, removed, relaid, refilled } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
+    studentCopy(b, labeled = false) {
+      const { bytes, count, removed, relaid, refilled, labels } = studentCopy(b, { labeled }), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`${[count ? `빈칸 ${count}개를 비우고` : '', removed ? `[정답]·[해설] 줄 ${removed}개를 뺀` : ''].filter(Boolean).join(' ').replace(/비우고$/, '비운')} 학생용 사본을 내려받습니다(${name})${refilled || relaid ? ` — 줄이 빠진 만큼 ${[refilled ? '단을 다시 채우고' : '', relaid ? `나뉜 문항 ${relaid}개를 넘겼습니다` : ''].filter(Boolean).join(' ').replace(/채우고$/, '채웠습니다')}` : ''}. 지금 문서는 그대로입니다.`);
+      message(`${[count ? `빈칸 ${count}개를 비우고` : '', removed ? `[정답]·[해설] 줄 ${removed}개를 뺀` : ''].filter(Boolean).join(' ').replace(/비우고$/, '비운')} 학생용 사본을 내려받습니다(${name})${refilled || relaid ? ` — 줄이 빠진 만큼 ${[refilled ? '단을 다시 채우고' : '', relaid ? `나뉜 문항 ${relaid}개를 넘겼습니다` : ''].filter(Boolean).join(' ').replace(/채우고$/, '채웠습니다')}` : ''}. 지금 문서는 그대로입니다.${labels ? ` 빈칸 정답: ${labels.join(', ')}` : ''}`);
     },
     answerKey(b) {
       const { bytes, count } = answerKeyCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-정답지.hwpx`;
@@ -395,6 +395,7 @@ export function installExamModes(panel, services) {
   function runMore(action) {
     if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'x:question-image') return ctx.questionImage(bridgeOrThrow());
+    if (action === 'x:student-labeled') return ctx.studentCopy(bridgeOrThrow(), true);
     if (action === 'x:all-question-images') return ctx.allQuestionImages(bridgeOrThrow());
     if (action === 'x:pick-questions') return openForm(bar.querySelector('.exam-fgroup [data-exam-fi]:last-child') || bar, 'pick');
     if (action === 'table-align-left' || action === 'table-align-right') return ctx.withBridge(b => applyTableAlignment(b, action.slice(12)));

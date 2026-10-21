@@ -151,7 +151,9 @@ function hasTopTable(doc, sec, para) {
   for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && !c.cellPath?.length && (c.secIdx ?? 0) === sec && c.paraIdx === para) return true;
   return false;
 }
-export function studentCopy(bridge) {
+// labeled: 빈칸을 「( ㉠ )」처럼 이름 붙은 빈칸으로(시험지 「빈칸 ㉠에 들어갈 말은?」 꼴).
+export const BLANK_LABELS = '㉠㉡㉢㉣㉤㉥㉦㉧㉨㉩㉪㉫㉬㉭';
+export function studentCopy(bridge, { labeled = false } = {}) {
   requireInput(bridge);
   const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc), teacher = [];
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
@@ -166,7 +168,9 @@ export function studentCopy(bridge) {
   const Document = doc.constructor, copy = new Document(doc.exportHwpx());
   try {
     // 같은 문단 안에서는 뒤에서부터 바꿔야 앞 구간 위치가 그대로다.
-    for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, blankText(blank.text));
+    if (labeled && blanks.length > BLANK_LABELS.length) throw new Error(`이름 붙은 빈칸은 ${BLANK_LABELS.length}개까지입니다(지금 ${blanks.length}개).`);
+    blanks.forEach((blank, i) => { blank.label = BLANK_LABELS[i]; });
+    for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, labeled ? blankText(blank.text).replace(/^\(　/, `(　${blank.label}`) : blankText(blank.text));
     // 교사용 줄은 뒤에서부터 문단째 뺀다(0번 문단은 구역 설정을 품어 글만 지운다).
     for (const { sec, p, gridAfter } of [...teacher].reverse()) {
       if (gridAfter) {
@@ -184,7 +188,7 @@ export function studentCopy(bridge) {
       if (!splitQuestions(doc).length && splitQuestions(copy).length) relaid = keepQuestionsWholeDoc(copy).moved;
       if (looksColumnFilled(doc)) { fillColumnsDoc(copy); refilled = true; }
     }
-    return { bytes: copy.exportHwpx(), count: blanks.length, removed: teacher.length, relaid, refilled, answers: blanks.map(b => b.text) };
+    return { bytes: copy.exportHwpx(), count: blanks.length, removed: teacher.length, relaid, refilled, answers: blanks.map(b => b.text), labels: labeled ? blanks.map(b => `${b.label} ${b.text.trim()}`) : null };
   } finally { copy.free(); }
 }
 

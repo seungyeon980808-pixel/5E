@@ -350,6 +350,10 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '문서의 굵은 낱말을').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /굵은 낱말 2개/);
     assert.deepEqual(await inPage(page, `const {collectBlanks}=await import('/js/rhwp-exam-worksheet.js');return collectBlanks(d).map(x=>[x.where.para,x.start,x.text]);`), [[1, 3, '수소'], [1, 7, '산소']]);
+    const labeledDownload = page.waitForEvent('download');
+    await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morelist button', { hasText: '학생용(㉠㉡ 빈칸)' }).click(); await labeledDownload; await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /빈칸 정답: ㉠ 수소, ㉡ 산소/);
+    assert.match(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b,{labeled:true}).bytes);try{return x.getTextRange(0,1,0,x.getParagraphLength(0,1));}finally{x.free();}`), /^물은 \(　㉠　+\)와 \(　㉡　+\)로 이루어진/);
     // 27) ㄱㄴㄷ 조합 선지: 발문 줄 뒤에 다섯 조합을 5열 선지 표로.
     await inPage(page, `reset('1. 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
     await page.locator('[data-exam-ftab="item"]').click(); await button(page, '〈보기〉 ㄱㄴㄷ').click(); await page.locator('[data-exam-combo="0"]').click(); await h.idle(page);
