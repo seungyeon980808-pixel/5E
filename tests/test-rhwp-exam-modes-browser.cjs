@@ -275,6 +275,16 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 다', '1:3. 나', '1:나나', '1:4. 나', '1:나나']);
     assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
 
+
+    // 17) 쪽 번호: 모든 구역 꼬리말에 넣고, 다시 고르면 모양만 바뀐다(겹치지 않음). 그려진 쪽에 실제 숫자가 찍힌다.
+    const footers = `return [...Array(d.getSectionCount()).keys()].map(s=>JSON.parse(d.getHeaderFooter(s,false,0)).text);`;
+    await page.locator('[data-exam-ftab="layout"]').click(); await button(page, '모든 쪽 아래 가운데에 쪽 번호').click(); await page.locator('[data-exam-pagenum="dash"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, footers), ['- \u0015 -', '- \u0015 -']);
+    await button(page, '모든 쪽 아래 가운데에 쪽 번호').click(); await page.locator('[data-exam-pagenum="dashTotal"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, footers), ['- \u0015 / \u0016 -', '- \u0015 / \u0016 -']);
+    const drawn = await inPage(page, `const n=d.pageCount(),svg=String(d.renderPageSvg(n-1));return [n,[...svg.matchAll(/<text[^>]*>([^<]*)<\\/text>/g)].map(m=>m[1]).slice(-5).join('')];`);
+    assert.equal(drawn[1], `-${drawn[0]}/${drawn[0]}-`);
+    for (const format of ['exportHwpx', 'exportHwp']) assert.equal(await inPage(page, `const c=new d.constructor(d[arg]());try{c.convertToEditable?.();const n=c.pageCount();return [...String(c.renderPageSvg(n-1)).matchAll(/<text[^>]*>([^<]*)<\\/text>/g)].map(m=>m[1]).slice(-5).join('')===\`-\${n}/\${n}-\`;}finally{c.free();}`, format), true, `page numbers kept after ${format}`);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });

@@ -5,7 +5,7 @@ import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-contr
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -90,6 +90,7 @@ function focusTabs(ctx) {
       ['단 채우기', '단마다 남는 빈 공간을 그 단 문항 사이에 고르게 나누기(풀이 공간 맞추기, 다시 눌러도 같음)', doc(b => { const r = fillColumns(b); ctx.message(r.columns ? `단 ${r.columns}곳의 문항 사이 빈 공간을 고르게 나눴습니다.` : '나눌 빈 공간이 있는 단이 없습니다(단마다 문항이 둘 이상이어야 합니다).'); })], '|',
       ['1단', '모든 쪽을 1단으로', doc(b => ctx.message(`${setColumns(b, 1)}단으로 바꿨습니다.`))], ['2단', '모든 쪽을 2단으로(단 사이 8mm) — 시험지 기본', doc(b => ctx.message(`${setColumns(b, 2)}단으로 바꿨습니다.`))],
       ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
+      ['쪽 번호', '모든 쪽 아래 가운데에 쪽 번호(- 1 -, 1 / 4 …) — 다시 누르면 모양만 바뀜', (_, button) => ctx.openPicker(button, 'pagenum')],
       ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김) + 교사용 문서 끝에 대응표', doc(b => ctx.variant(b))], '|',
       ['인쇄', '인쇄 창 열기', cmd('file:print')], ['PDF로 저장', 'PDF로 저장', cmd('file:print-to-pdf')],
     ],
@@ -369,6 +370,9 @@ export function installExamModes(panel, services) {
     } else if (kind === 'paper') {
       pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
         <div class="exam-morelist">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
+    } else if (kind === 'pagenum') {
+      pop.innerHTML = `<div class="exam-pop-head">쪽 번호 <small>모든 쪽 아래 가운데</small></div>
+        <div class="exam-morelist">${Object.entries(PAGE_NUMBER_STYLES).map(([k, t]) => `<button type="button" data-exam-pagenum="${k}">${esc(t)}</button>`).join('')}</div>`;
     } else if (kind === 'lines') {
       pop.innerHTML = `<div class="exam-pop-head">서술형 답란 <small>줄 수</small></div>
         <div class="exam-morelist">${[3, 5, 8].map(n => `<button type="button" data-exam-lines="${n}">${n}줄</button>`).join('')}</div>`;
@@ -384,6 +388,8 @@ export function installExamModes(panel, services) {
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
+    const pagenum = event.target.closest('[data-exam-pagenum]');
+    if (pagenum) { const style = pagenum.dataset.examPagenum; closePop(); void run(async () => message(`모든 쪽 아래에 쪽 번호(${insertPageNumbers(bridgeOrThrow(), style)})를 넣었습니다.`)); return; }
     const paper = event.target.closest('[data-exam-paper]');
     if (paper) { const name = paper.dataset.examPaper; closePop(); void run(async () => message(`용지를 ${setPaper(bridgeOrThrow(), name)}로 바꿨습니다.`)); return; }
     const box = event.target.closest('[data-exam-box]'), lineCount = event.target.closest('[data-exam-lines]');

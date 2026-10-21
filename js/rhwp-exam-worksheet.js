@@ -328,6 +328,29 @@ export function setPaper(bridge, name) {
   });
   return name;
 }
+// 쪽 번호: 모든 구역 꼬리말(양 쪽)을 가운데 쪽 번호로 다시 만든 뒤 모양을 붙인다. 다시 눌러도 같은 꼬리말.
+// 꼬리말 필드 1=쪽 번호, 2=총 쪽수(엔진 마당 2번이 「가운데 쪽 번호」).
+export const PAGE_NUMBER_STYLES = { dash: '- 1 -', total: '1 / 4', dashTotal: '- 1 / 4 -' };
+export function insertPageNumbers(bridge, style = 'dash') {
+  requireInput(bridge);
+  if (!PAGE_NUMBER_STYLES[style]) throw new Error('쪽 번호 모양을 다시 고르세요.');
+  const doc = bridge.wasm.borrowDocumentHandle();
+  const ok = value => { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '꼬리말을 만들지 못했습니다.'); return r; };
+  bridge.transaction('page-numbers', () => {
+    for (let sec = 0; sec < doc.getSectionCount(); sec++) {
+      ok(doc.applyHfTemplate(sec, false, 0, 2));
+      const text = String(parse(doc.getHeaderFooter(sec, false, 0)).text || ''), at = text.indexOf('\u0015');
+      if (at < 0) throw new Error('쪽 번호 칸을 만들지 못했습니다.');
+      const dash = style !== 'total';
+      if (dash) ok(doc.insertTextInHeaderFooter(sec, false, 0, 0, at, '- '));
+      let end = at + (dash ? 3 : 1);
+      if (style !== 'dash') { ok(doc.insertTextInHeaderFooter(sec, false, 0, 0, end, ' / ')); end += 3; ok(doc.insertFieldInHf(sec, false, 0, 0, end, 2)); end += 1; }
+      if (dash) ok(doc.insertTextInHeaderFooter(sec, false, 0, 0, end, ' -'));
+    }
+    return true;
+  });
+  return PAGE_NUMBER_STYLES[style];
+}
 // 나형 만들기: 문항 순서를 섞은 사본(번호 다시 매김)과 「나형 번호 → 가형 번호」 대응. 지금 문서는 그대로.
 export function makeVariant(bridge, random = Math.random) {
   requireInput(bridge);
