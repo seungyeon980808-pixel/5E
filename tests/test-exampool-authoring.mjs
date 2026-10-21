@@ -80,6 +80,10 @@ test('응답 계약: JSON 꺼내기·형식 검사·초안을 실제 칸으로',
   const l2='line:'+question.blocks.find(b=>b.kind==='bogi').lines[1].id;for(const t of ['초안 ㄴ','보기 ㄴ','(ㄴ)','ㄴ.'])assert.equal(resolveTarget(question,t),l2,t);
   assert.equal(resolveTarget(question,'3번'),'choice:'+question.choices[2].id);assert.equal(resolveTarget(question,'선지 ③'),'choice:'+question.choices[2].id);
   assert.match(applyChanges(q,[{path:'answer',value:7}]).errors[0].message,/1~5/);
+  // M22: 순서가 뒤섞인 합답형 선지를 쓰면 관례 순서로 다시 놓이고, 정답은 AI가 고른 그 조합을 따라가야 한다.
+  const mixed=applyChanges(q,draftToChanges(q,{choices:['ㄱ, ㄴ','ㄱ','ㄴ','ㄷ','ㄱ, ㄴ, ㄷ'],answer:1}));assert.deepEqual(mixed.errors,[]);
+  assert.deepEqual(mixed.question.choices.map(c=>c.text),['ㄱ','ㄴ','ㄷ','ㄱ, ㄴ','ㄱ, ㄴ, ㄷ']);assert.equal(mixed.question.choices[mixed.question.answer].text,'ㄱ, ㄴ');
+  const later=applyChanges(q,[{path:'answer',value:1},{path:'choices',value:'ㄱ, ㄴ\nㄱ\nㄴ\nㄷ\nㄱ, ㄴ, ㄷ'}]);assert.equal(later.question.choices[later.question.answer].text,'ㄱ, ㄴ','정답이 먼저 와도 같은 조합');
 });
 test('정답 구조: 누락·중복 조합, 정답 불일치, 부정 발문',()=>{
   const q=mechanics();assert.equal(checkAnswerStructure(q,solved).ok,true);

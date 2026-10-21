@@ -75,13 +75,17 @@ export function draftToChanges(q,d){
 // 변경안을 문항 사본에 적용한다(원본은 그대로). 칸 쓰기는 시트와 같은 writeField를 쓴다.
 export function applyChanges(q,changes){
   const next=clone(q),applied=[],errors=[];
+  // 합답형 선지는 쓰는 순간 관례 순서로 다시 놓인다. 같은 변경안의 정답 번호는 AI가 쓴 순서 기준이라 옮긴 자리로 바꿔 줘야 한다(M22).
+  let choiceMoves=null;
   for(const c of changes){
     try{
       if(c.path==='type')writeField(next,'type',c.value);
-      else if(['ask','passage','intent','standardCode','choices','bogi'].includes(c.path)&&c.line===undefined&&c.index===undefined&&c.id===undefined)writeField(next,c.path,String(c.value??''));
+      else if(['ask','passage','intent','standardCode','choices','bogi'].includes(c.path)&&c.line===undefined&&c.index===undefined&&c.id===undefined){
+        const before=next.choices.map(x=>x.id);writeField(next,c.path,String(c.value??''));
+        if(c.path==='choices')choiceMoves=before.map(id=>next.choices.findIndex(x=>x.id===id));}
       else if(c.path==='points')writeField(next,'points',String(c.value));
       else if(c.path==='explanation'||c.path==='modelAnswer')next[c.path]=String(c.value??'');
-      else if(c.path==='answer'){const n=Number(c.value);if(next.type==='서술형'){next.modelAnswer=String(c.value);}else{if(!Number.isInteger(n)||n<1||n>5)throw Error('정답은 1~5입니다.');next.answer=n-1;}}
+      else if(c.path==='answer'){const n=Number(c.value);if(next.type==='서술형'){next.modelAnswer=String(c.value);}else{if(!Number.isInteger(n)||n<1||n>5)throw Error('정답은 1~5입니다.');next.answer=choiceMoves?.[n-1]>=0?choiceMoves[n-1]:n-1;}}
       else if(c.path==='choice'||c.path==='choices'){const i=c.id?next.choices.findIndex(x=>x.id===c.id):Number(c.index??c.line);if(!next.choices[i])throw Error('선지 위치를 찾지 못했습니다.');next.choices[i].text=String(c.value??'');}
       else if(c.path==='bogi'){const b=next.blocks.find(b=>b.kind==='bogi');if(!b)throw Error('보기가 없는 문항입니다.');
         if(c.op==='add'){writeField(next,'bogi',[fieldValue(next,'bogi'),String(c.value)].filter(Boolean).join('\n'));}
