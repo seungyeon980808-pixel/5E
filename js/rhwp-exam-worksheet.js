@@ -2,7 +2,7 @@
 // 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 학생용 사본은 지금 문서를 건드리지 않고 복사본에서 만든다.
 import { insertTable } from './hwp-palette/native.js';
 import { qrPng } from './qr-encode.js';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument } from './rhwp-exam-layout-tools.js';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
@@ -144,8 +144,8 @@ export function shadeHeaderRow(bridge, color = '#eef2f7') {
 }
 
 // 학생용 사본: 지금 문서를 복사해 빈칸 표시 낱말을 「(　　　)」로 바꾼 HWPX 바이트. 지금 문서는 그대로다.
-// 교사만 보는 줄: 「[정답] …」「정답: …」「[해설]」「[풀이]」「[채점 기준]」「[교사용]」, 이 도구가 붙인 「[빈칸 정답]」「[나형 대응]」.
-export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|빈칸 정답|나형 대응)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
+// 교사만 보는 줄: 「[정답] …」「정답: …」「[해설]」「[풀이]」「[채점 기준]」「[교사용]」「[출처]」「[메모]」, 이 도구가 붙인 「[빈칸 정답]」「[나형 대응]」.
+export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|출처|메모|빈칸 정답|나형 대응|나형 정답)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
 function hasTopTable(doc, sec, para) {
   for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && !c.cellPath?.length && (c.secIdx ?? 0) === sec && c.paraIdx === para) return true;
   return false;
@@ -605,4 +605,50 @@ export function insertWorksheetFrame(bridge, title = '', kind = 'lesson') {
     return true;
   });
   return sections.length;
+}
+
+// 이원목적분류표: 문항마다 번호·배점([n점])·정답([정답] ③)을 채운 표를 새 한글 문서로(내용 영역·성취기준·난이도는 비워 둠).
+// 지금 문서는 그대로. {bytes, count, total}
+export const BLUEPRINT_HEAD = ['문항', '내용 영역', '성취기준', '난이도', '배점', '정답', '비고'];
+const BLUEPRINT_RATIO = [8, 18, 40, 9, 8, 8, 9];
+export function blueprintCopy(bridge, title = '시험') {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), blocks = allQuestionBlocks(doc);
+  if (!blocks.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
+  const answers = questionAnswers(doc), rows = [BLUEPRINT_HEAD];
+  let total = 0;
+  for (const q of blocks) {
+    let score = '';
+    for (let p = q.head; p < q.end && !score; p++) { const m = /\[(\d+(?:\.\d+)?)\s*점\]/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) score = m[1]; }
+    total += Number(score) || 0;
+    rows.push([String(q.number), '', '', '', score, answers.get(q.number) || '', '']);
+  }
+  rows.push(['합계', '', '', '', String(Math.round(total * 10) / 10), '', '']);
+  const Document = doc.constructor, out = Document.createEmpty();
+  try {
+    out.createBlankDocument();
+    const name = `${String(title || '시험').trim()} 이원목적분류표`;
+    out.insertText(0, 0, 0, name);
+    out.applyCharFormat(0, 0, 0, [...name].length, JSON.stringify({ bold: true, fontSize: 1500 }));
+    out.applyParaFormat(0, 0, JSON.stringify({ alignment: 'center' }));
+    parse(out.splitParagraph(0, 0, out.getParagraphLength(0, 0)));
+    const width = columnWidth(out, 0), cols = BLUEPRINT_HEAD.length;
+    insertTable(out, { sectionIndex: 0, paragraphIndex: 1, charOffset: 0 }, rows.length, cols, rows, new Map(), { width, border: 'Solid' });
+    let t = null;
+    for (let pg = 0; pg < out.pageCount() && !t; pg++) t = (parse(out.getPageControlLayout(pg)).controls || []).find(c => c.type === 'table' && !c.cellPath?.length) || null;
+    if (t) {
+      const ci = t.controlIdx ?? t.ci, sum = BLUEPRINT_RATIO.reduce((a, b) => a + b, 0), changes = [];
+      for (let r = 0; r < rows.length; r++) for (let c = 0; c < cols; c++) {
+        const cell = r * cols + c, now = parse(out.getCellProperties(0, t.paraIdx, ci, cell)).width;
+        changes.push({ cellIdx: cell, widthDelta: Math.round(width * BLUEPRINT_RATIO[c] / sum) - now });
+      }
+      if (out.resizeTableCells) parse(out.resizeTableCells(0, t.paraIdx, ci, JSON.stringify(changes)));
+      for (const r of [0, rows.length - 1]) for (let c = 0; c < cols; c++) {
+        out.setCellProperties(0, t.paraIdx, ci, r * cols + c, JSON.stringify({ fillType: 'solid', fillColor: '#eef2f7' }));
+        const len = out.getCellParagraphLength(0, t.paraIdx, ci, r * cols + c, 0);
+        if (len) out.applyCharFormatInCell(0, t.paraIdx, ci, r * cols + c, 0, 0, len, JSON.stringify({ bold: true }));
+      }
+    }
+    return { bytes: out.exportHwpx(), count: blocks.length, total: Math.round(total * 10) / 10 };
+  } finally { out.free(); }
 }

@@ -352,6 +352,21 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '제목·이름 칸과 상자').click(); await page.locator('[data-exam-frame="lab"]').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /실험 보고서 틀\(상자 6개\)/);
     assert.equal((await tables()).length, 7);
+    // 29) 이원목적분류표: 문항 번호·배점·정답을 채운 새 한글 파일(머리 줄·합계 줄), 지금 문서는 그대로.
+    await inPage(page, `reset('1. 가는? [2점]\\n[정답] ③\\n2. 나는? [3점]\\n3. 다는?\\n정답: ⑤\\n[출처] 2023 모의');`);
+    await page.locator('[data-exam-ftab="layout"]').click();
+    const bpDownload = page.waitForEvent('download'); await button(page, '문항 번호·배점·정답을 채운').click(); const bpFile = await bpDownload; await h.idle(page);
+    assert.match(bpFile.suggestedFilename().normalize('NFC'), /이원목적분류표\.hwpx$/);
+    assert.match(await page.locator('#exam-status').textContent(), /문항 3개\(배점 합계 5점\)/);
+    const bp = await inPage(page, `const {blueprintCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(blueprintCopy(b,'1학기 중간').bytes);try{x.convertToEditable?.();
+      const t=JSON.parse(x.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length),ci=t.controlIdx??t.ci,cell=c=>x.getTextInCell(0,t.paraIdx,ci,c,0,0,x.getCellParagraphLength(0,t.paraIdx,ci,c,0));
+      return [x.getTextRange(0,0,0,x.getParagraphLength(0,0)),JSON.parse(x.getTableDimensions(0,t.paraIdx,ci)),[...Array(35).keys()].map(cell),[0,2].map(c=>JSON.parse(x.getCellProperties(0,t.paraIdx,ci,c)).width)];}finally{x.free();}`);
+    assert.equal(bp[0], '1학기 중간 이원목적분류표');
+    assert.deepEqual([bp[1].rowCount, bp[1].colCount], [5, 7]);
+    assert.deepEqual(bp[2], ['문항', '내용 영역', '성취기준', '난이도', '배점', '정답', '비고', '1', '', '', '', '2', '③', '', '2', '', '', '', '3', '', '', '3', '', '', '', '', '⑤', '', '합계', '', '', '', '5', '', '']);
+    assert.ok(bp[3][1] > bp[3][0] * 3, 'standard column is wide');
+    assert.equal((await inPage(page, `return text();`)).length, 6);
+    assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`), ['1. 가는? [2점]', '2. 나는? [3점]', '3. 다는?']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
