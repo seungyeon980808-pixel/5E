@@ -482,6 +482,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.match(await page.locator('#exam-status').textContent(), /3곳을 띄어 썼습니다/);
     assert.ok((await inPage(page, `return text();`)).includes('1. 높이 10 m에서 2 kg 물체, 2s 오비탈'));
     assert.equal(await inPage(page, `const t=window.__u;return d.getTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,d.getCellParagraphLength(0,t.paraIdx,t.controlIdx,0,0));`), '질량 5 g');
+    // 41) 점검: 선지 번호가 겹치거나 빠진 문항(본문 줄·선지 표), [정답] 줄은 세지 않음.
+    await inPage(page, `reset('1. 가\\n① 가 ② 나 ③ 다 ③ 라 ⑤ 마\\n2. 나\\n① 가 ② 나 ③ 다 ④ 라 ⑤ 마\\n[정답] ②\\n3. 다\\n① 가 ② 나 ③ 다 ④ 라 ⑤ 마');const L=await import('/js/rhwp-exam-layout-tools.js');
+      b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:6,charOffset:0});L.relayoutChoices(b,5);
+      const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table');d.deleteTextInCell(0,t.paraIdx,t.controlIdx,3,0,0,1);b.deps.eventBus.emit('document-changed');`);
+    await page.locator('[data-exam-fx="check"]').click();
+    const choiceChecks = (await page.locator('.exam-checklist li').allTextContents()).filter(t => t.includes('선지 번호'));
+    assert.deepEqual(choiceChecks, ['1번 선지 번호가 차례대로가 아닙니다(①②③③⑤).', '3번 선지 번호가 차례대로가 아닙니다(①②③⑤).']);
+    await page.keyboard.press('Escape');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

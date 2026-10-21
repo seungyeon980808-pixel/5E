@@ -448,6 +448,26 @@ export function extraChecks(doc) {
       from = i;
     }
   }
+  // 선지 번호: 선택형 문항의 ①~⑤가 차례대로 한 번씩인지(본문 줄과 선지 표 칸, 교사용 줄은 빼고).
+  const tableTexts = new Map();
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
+    if (c.type !== 'table' || c.cellPath?.length) continue;
+    const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, key = `${sec}:${c.paraIdx}`, done = `${key}:${ci}`;
+    if (tableTexts.has(done)) continue; tableTexts.set(done, true);
+    let text = ''; const cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
+    for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++) text += String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp)));
+    tableTexts.set(key, (tableTexts.get(key) || '') + text);
+  }
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
+    if (q.essay) continue;
+    let marks = '';
+    for (let p = q.head; p < q.end; p++) {
+      const t = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+      if (!TEACHER_ONLY.test(t)) marks += (t.match(/[①-⑤]/g) || []).join('');
+      const inTable = tableTexts.get(`${sec}:${p}`); if (typeof inTable === 'string') marks += (inTable.match(/[①-⑤]/g) || []).join('');
+    }
+    if (marks && marks !== MARKS) issues.push({ text: `${q.label} 선지 번호가 차례대로가 아닙니다(${marks}).`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
+  }
   const gaps = unitGapIssues(doc), gapCount = gaps.reduce((n, g) => n + g.at.length, 0);
   if (gapCount) { const g = gaps[0], at = g.at[0], sample = g.text.slice(Math.max(0, at - 3), at + 3).trim(); issues.push({ text: `숫자와 단위 사이 띄어쓰기가 빠진 곳이 ${gapCount}곳 있습니다(예: ${sample} → 평가원 표기는 「10 m」).`, at: g.where.kind === 'body' ? { sectionIndex: g.where.sec, paragraphIndex: g.where.p, charOffset: at } : null }); }
   const equations = equationSizeIssues(doc);
