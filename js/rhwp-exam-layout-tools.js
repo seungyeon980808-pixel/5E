@@ -334,3 +334,59 @@ export function splitQuestions(doc, sec = 0) {
   }
   return issues;
 }
+
+// 문항 복제: index번째 문항을 바로 뒤에 한 벌 더 넣고 번호를 다시 매긴다.
+export function duplicateQuestion(bridge, index) {
+  const { doc } = requireDocument(bridge), sec = 0, blocks = questionBlocks(doc, sec), q = blocks[index];
+  if (!q) throw new Error('문항을 찾지 못했습니다.');
+  bridge.transaction('duplicate-question', () => {
+    let end = q.end;
+    const last = end === doc.getParagraphCount(sec);
+    if (last) parse(doc.splitParagraph(sec, end - 1, doc.getParagraphLength(sec, end - 1)));
+    checkedResult(doc.copySelection(sec, q.start, 0, end, 0));
+    checkedResult(doc.pasteInternal(sec, end, 0));
+    if (last) { const n = doc.getParagraphCount(sec); if (n > 1 && !doc.getParagraphLength(sec, n - 1)) doc.mergeParagraph(sec, n - 1); }
+    return true;
+  });
+  try { renumberQuestions(bridge); } catch {}
+  return index + 1;
+}
+// 문항 지우기: index번째 문항 묶음을 통째로 지우고 번호를 다시 매긴다.
+export function deleteQuestion(bridge, index) {
+  const { doc } = requireDocument(bridge), sec = 0, blocks = questionBlocks(doc, sec), q = blocks[index];
+  if (!q) throw new Error('문항을 찾지 못했습니다.');
+  bridge.transaction('delete-question', () => {
+    if (q.end < doc.getParagraphCount(sec)) checkedResult(doc.deleteRange(sec, q.start, 0, q.end, 0));
+    else if (q.start > 0) checkedResult(doc.deleteRange(sec, q.start - 1, doc.getParagraphLength(sec, q.start - 1), q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
+    else checkedResult(doc.deleteRange(sec, 0, 0, q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
+    return true;
+  });
+  try { renumberQuestions(bridge); } catch {}
+  return q.number;
+}
+// 넓은 그림·표 모두 단 폭에 맞추기(본문 그림은 비율 유지, 표는 칸 비율 유지). 고친 수를 돌려준다.
+export function fitWideObjects(bridge) {
+  const { wasm, doc } = requireDocument(bridge), width = columnWidth(doc, 0);
+  const pictures = [], tables = [];
+  for (const { ref } of bridge.documentPictures()) {
+    if (ref.headerFooter || ref.cellPath?.length) continue;
+    try { const p = bridge.properties(ref); if (p.width > width + 30) pictures.push({ ref, p }); } catch {}
+  }
+  for (let page = 0; page < doc.pageCount(); page++) for (const c of parse(doc.getPageControlLayout(page)).controls || []) {
+    if (c.type !== 'table' || c.cellPath?.length) continue;
+    const ci = c.controlIdx ?? c.ci, key = `${c.secIdx}:${c.paraIdx}:${ci}`;
+    if (tables.some(t => t.key === key)) continue;
+    try { const t = parse(doc.getTableProperties(c.secIdx, c.paraIdx, ci)); if (t.tableWidth > width + 30) tables.push({ key, sec: c.secIdx, para: c.paraIdx, ci, t }); } catch {}
+  }
+  if (!pictures.length && !tables.length) return 0;
+  bridge.transaction('fit-wide-objects', () => {
+    for (const { ref, p } of pictures) { const w = width - (p.outerMarginLeft || 0) - (p.outerMarginRight || 0); bridge.setProperties(ref, { width: w, height: Math.round(p.height * w / p.width) }); }
+    for (const { sec, para, ci, t } of tables) {
+      const target = width - (t.outerLeft || 0) - (t.outerRight || 0), scale = target / t.tableWidth, count = parse(wasm.getTableDimensions(sec, para, ci)).cellCount, changes = [];
+      for (let cellIdx = 0; cellIdx < count; cellIdx++) { const cell = parse(wasm.getCellProperties(sec, para, ci, cellIdx)); changes.push({ cellIdx, widthDelta: Math.round(cell.width * scale) - cell.width }); }
+      checkedResult(wasm.resizeTableCells(sec, para, ci, changes));
+    }
+    return true;
+  });
+  return pictures.length + tables.length;
+}

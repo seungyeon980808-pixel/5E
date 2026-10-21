@@ -360,3 +360,32 @@ export function appendVariantMapping(bridge, mapping) {
   });
   return line;
 }
+
+// 학습지 틀: 제목·「학년 반 번 이름」 칸·학습 목표·활동 1·활동 2·정리를 문서 끝에 한 번에.
+export function insertWorksheetFrame(bridge, title = '학습지') {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), sec = doc.getSectionCount() - 1, width = columnWidth(doc, sec);
+  const sections = [['학습 목표', '#eef2f7', 14], ['활동 1', '#eef6ee', 45], ['활동 2', '#eef6ee', 45], ['정리', '#fbf3e4', 30]];
+  bridge.transaction('worksheet-frame', () => {
+    const last = doc.getParagraphCount(sec) - 1, startEmpty = doc.getParagraphCount(sec) === 1 && !doc.getParagraphLength(sec, 0);
+    let p = startEmpty ? 0 : (parse(doc.splitParagraph(sec, last, doc.getParagraphLength(sec, last))), last + 1);
+    doc.insertText(sec, p, 0, title);
+    doc.applyCharFormat(sec, p, 0, [...title].length, JSON.stringify({ bold: true, fontSize: 1600 }));
+    doc.applyParaFormat(sec, p, JSON.stringify({ alignment: 'center' }));
+    parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++;
+    insertTable(doc, { sectionIndex: sec, paragraphIndex: p, charOffset: 0 }, 1, 4, [['   학년', '   반', '   번', '이름:']], new Map(), { width, border: 'Solid' });
+    for (const [label, shade, height] of sections) {
+      p = doc.getParagraphCount(sec) - 1;
+      if (doc.getParagraphLength(sec, p)) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+      insertTable(doc, { sectionIndex: sec, paragraphIndex: p, charOffset: 0 }, 2, 1, [[label], ['']], new Map(), { width, border: 'Solid', heights: [mmUnits(7), mmUnits(height)] });
+      const controls = []; for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && c.secIdx === sec && c.paraIdx === p && !(c.cellPath || []).length) controls.push(c.controlIdx ?? c.ci);
+      const ci = controls.at(-1);
+      if (ci !== undefined) {
+        doc.setCellProperties(sec, p, ci, 0, JSON.stringify({ fillType: 'solid', fillColor: shade }));
+        doc.applyCharFormatInCell(sec, p, ci, 0, 0, 0, [...label].length, JSON.stringify({ bold: true }));
+      }
+    }
+    return true;
+  });
+  return sections.length;
+}

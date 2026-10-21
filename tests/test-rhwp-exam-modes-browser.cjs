@@ -196,6 +196,27 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="table"]').click(); await button(page, '커서가 있는 표의 첫 줄').click(); await h.idle(page);
     const fills = await inPage(page, `const r=window.__t;return [0,1,2,3].map(c=>JSON.parse(d.getCellProperties(0,r.paraIdx,r.controlIdx,c)).fillType);`);
     assert.deepEqual(fills, ['solid', 'solid', 'none', 'none']);
+
+    // 13) 문항 복제·지우기(확인 창), 넓은 그림을 점검 창에서 한 번에 맞추기, 학습지 틀.
+    await inPage(page, `reset('1. 가\\n가가\\n2. 나');`);
+    await page.locator('[data-exam-qdup="0"]').waitFor(); await page.locator('[data-exam-qdup="0"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 가', '가가', '3. 나']);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 3);
+    await page.locator('[data-exam-qdel="1"]').click();
+    await page.getByRole('button', { name: '지우기', exact: true }).click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 나']);
+    await inPage(page, `reset('');const N=await import('/js/hwp-palette/native.js');
+      const cv=document.createElement('canvas');cv.width=800;cv.height=300;cv.getContext('2d').fillRect(0,0,800,300);
+      const bytes=new Uint8Array(await (await new Promise(r=>cv.toBlob(r,'image/png'))).arrayBuffer());
+      b.transaction('wide',()=>{N.insertValue(d,{sectionIndex:0,paragraphIndex:0,charOffset:0},[{image:'w'}],new Map([['w',{bytes,widthMm:120,heightMm:45,width:800,height:300,extension:'png',name:'w.png'}]]));return true;});
+      const ref=b.documentPictures()[0].ref;b.setProperties(ref,{width:Math.round(250*7200/25.4),height:Math.round(94*7200/25.4)});b.deps.eventBus.emit('document-changed');`);
+    await page.locator('[data-exam-fx="check"]').click(); await page.locator('[data-exam-fixwide]').click(); await h.idle(page);
+    const fitted = await inPage(page, `const {columnWidth}=await import('/js/rhwp-exam-layout-tools.js');return [b.properties(b.documentPictures()[0].ref).width,columnWidth(d,0)];`);
+    assert.ok(fitted[0] <= fitted[1], JSON.stringify(fitted));
+    await inPage(page, `reset('');`);
+    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '제목·이름 칸·학습 목표').click(); await h.idle(page);
+    const frame = await tables();
+    assert.deepEqual(frame.map(t => [t.dims.rowCount, t.dims.colCount]), [[1, 4], [2, 1], [2, 1], [2, 1], [2, 1]]);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });
