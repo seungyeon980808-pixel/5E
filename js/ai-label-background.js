@@ -53,9 +53,17 @@ export async function resolveImageLabelBackground({ contract, candidates = [], c
     if (hit?.hit) { try { await cache.delete?.(contract.key); } catch {} }
   }
   if (pending.has(contract.key)) {
-    const saved = await waitForBackground(pending.get(contract.key), signal);
-    cancelled(signal);
-    return { ...saved, reused: 'concurrent' };
+    const shared = pending.get(contract.key);
+    try {
+      const saved = await waitForBackground(shared, signal);
+      cancelled(signal);
+      return { ...saved, reused: 'concurrent' };
+    } catch (error) {
+      // 같이 기다리던 생성은 먼저 시작한 작업대의 취소 신호를 따른다. 그쪽이 취소했다고 내 작업까지 끝내면 안 된다(M39).
+      if (error?.name !== 'AbortError' || signal?.aborted) throw error;
+      if (pending.get(contract.key) === shared) pending.delete(contract.key);
+      return resolveImageLabelBackground({ contract, candidates: [], cache: null, signal, generate });
+    }
   }
   const work = (async () => {
     cancelled(signal);

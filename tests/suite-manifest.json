@@ -818,6 +818,12 @@
       "findingIds": [
         "M44-EXAMPOOL-LINK-LOAD"
       ]
+    },
+    {
+      "path": "tests/test-ai-label-background-cancel.mjs",
+      "findingIds": [
+        "M39-SHARED-CANCEL"
+      ]
     }
   ],
   "browser": [
