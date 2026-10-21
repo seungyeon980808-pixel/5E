@@ -2210,6 +2210,12 @@
         "APP-SWITCH-BUSY-HWP",
         "APP-SWITCH-QUEUE"
       ]
+    },
+    {
+      "path": "tests/test-exampool-unload-save-browser.cjs",
+      "findingIds": [
+        "M14-EXAMPOOL-UNLOAD-SAVE"
+      ]
     }
   ],
   "deferred": [

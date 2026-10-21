@@ -68,9 +68,17 @@ function remember({validated=false}={}){
   if(!validated)try{validate(data);}catch(e){status(e.message,true);return;}
   // 저장은 입력이 멈춘 뒤 0.3초에 한 번(클릭·입력하는 순간 문항 전체를 저장소에 쓰느라 화면이 멈추지 않게). 창을 닫으면 바로 저장.
   if($('#status').dataset.error!=='true')status('저장 중…');clearTimeout(saveTimer);saveTimer=setTimeout(flushSave,300);}// 빨간 오류 안내는 저장 안내가 덮지 않는다
-let saveTimer=0;window.addEventListener('pagehide',()=>{if(saveTimer){clearTimeout(saveTimer);flushSave();}});
-function flushSave(){saveTimer=0;
-  const stamp=++saveStamp;saveQueue=saveQueue.catch(()=>{}).then(()=>new Promise((resolve,reject)=>{
+// 창을 닫거나 새로고침하면 보통 저장(IndexedDB)은 끝나지 못해 닫기 직전 0.3초의 입력이 사라졌다(M14, 크롬·사파리 모두 재현.
+// 닫는 순간 연 IndexedDB 쓰기도 커밋되지 않는다). 닫을 때는 바로 써지는 localStorage에 아직 저장 안 된 문항만 남기고,
+// 다음에 열 때 그 사이 다른 창이 저장하지 않았으면(판 번호가 그대로면) 이어 받는다. 4 MB를 넘으면(그림이 큰 문항) 남기지 않는다.
+const UNLOAD_KEY=CHANNEL+'5e-exampool-unload';let dirtyIds=new Set(),dirtyAll=false;
+function markDirty(only){if(only)dirtyIds.add(only.id);else dirtyAll=true;}
+let saveTimer=0;window.addEventListener('pagehide',()=>{if(!saveTimer)return;clearTimeout(saveTimer);
+  if(!saveBlocked&&!demo)try{const json=JSON.stringify({base:revision,at:Date.now(),...(dirtyAll?{all:data}:{questions:data.questions.filter(q=>dirtyIds.has(q.id))})});
+    if(json.length<4e6)localStorage.setItem(UNLOAD_KEY,json);}catch{}
+  flushSave({now:true});});
+function flushSave({now=false}={}){saveTimer=0;
+  const stamp=++saveStamp,run=()=>new Promise((resolve,reject)=>{
     if(stamp!==saveStamp){resolve();return;}
     if(!database||saveBlocked){reject(Error('자동 저장을 사용할 수 없습니다. 엑셀로 내려받아 보관하세요.'));return;}
     // 다른 창 저장 확인은 작은 판 번호('rev')만 읽는다(예전엔 저장마다 문항 전체(그림 포함 수십 MB)를 읽어 풀었다). 'rev'가 없는 예전 저장은 문항에서 읽는다.
@@ -78,11 +86,13 @@ function flushSave(){saveTimer=0;
     const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('rev');let failure;
     const write=stored=>{if((stored||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');store.put(revision+1,'rev');};
     r.onsuccess=()=>{if(r.result!==undefined){write(r.result);return;}const d=store.get('draft');d.onsuccess=()=>write(d.result?._revision);};
-    tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
-  }));void saveQueue.then(()=>{if(stamp===saveStamp&&$('#status').dataset.error!=='true')status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
+    tx.oncomplete=()=>{revision++;if(stamp===saveStamp&&!saveTimer){dirtyIds.clear();dirtyAll=false;}resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
+  });
+  if(now){const direct=run();saveQueue=saveQueue.then(()=>direct,()=>direct);}else saveQueue=saveQueue.catch(()=>{}).then(run);
+  void saveQueue.then(()=>{if(stamp===saveStamp&&$('#status').dataset.error!=='true')status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
-  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();markDirty(only&&data.questions.includes(only)?only:null);demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
@@ -91,7 +101,13 @@ async function boot(){try{
     if(available.some(d=>d.name===CHANNEL+'5e-exampool-sheet-concept')){const oldDB=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+'5e-exampool-sheet-concept');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{raw=await new Promise((resolve,reject)=>{const r=oldDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});copied=!!raw;}finally{oldDB.close();}}
     if(!raw&&available.some(d=>d.name===CHANNEL+'5e-exampool')){const {listQuestions,listResources}=await import('../../../js/exampool-store.js?v=1013-exampool'),qs=await listQuestions(),docs=await listResources();if(qs.length){raw={format:FORMAT,questions:qs.map(fromLegacy),documents:docs.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))};copied=true;}}
   }
-  if(raw){revision=copied?0:raw._revision||0;data=migrate(raw);if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
+  // 닫기 직전에 남긴 내용(M14). 그 뒤로 저장된 적이 없을 때만(판 번호가 같을 때만) 이어 받는다.
+  let resumed=false;if(!demo){let unload=null;try{unload=JSON.parse(localStorage.getItem(UNLOAD_KEY)||'null');localStorage.removeItem(UNLOAD_KEY);}catch{}
+    if(unload&&!copied&&unload.base===(raw?._revision||0)){
+      if(unload.all?.format)raw={...unload.all,_revision:raw?._revision||0};
+      else if(raw&&Array.isArray(unload.questions)&&unload.questions.length){const byId=new Map(unload.questions.map(q=>[q.id,q]));raw={...raw,questions:raw.questions.map(q=>byId.get(q.id)||q)};}
+      resumed=raw!==null&&raw!==undefined;}}
+  if(raw){revision=copied?0:raw._revision||0;data=migrate(raw);if(resumed)remember();if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
   else if(demo){data=validate(await(await fetch(new URL('./examples.json',import.meta.url))).json());remember();}
   current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else if(first){view.name='exam';view.examId=first.id;}else view.name='library';}renderAll();if(raw)status('저장한 문항을 열었습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
 }catch(e){// 열지 못한 이유는 사라지지 않게 둔다 — 6초 뒤 지워지면 빈 보관함만 남아 저장이 없어진 것처럼 보인다.
