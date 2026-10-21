@@ -353,7 +353,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.match(await page.locator('#exam-status').textContent(), /실험 보고서 틀\(상자 6개\)/);
     assert.equal((await tables()).length, 7);
     // 29) 이원목적분류표: 문항 번호·배점·정답을 채운 새 한글 파일(머리 줄·합계 줄), 지금 문서는 그대로.
-    await inPage(page, `reset('1. 가는? [2점]\\n[정답] ③\\n2. 나는? [3점]\\n3. 다는?\\n정답: ⑤\\n[출처] 2023 모의');`);
+    await inPage(page, `reset('1. 가는? [2점]\\n[정답] ③\\n[성취기준] [10통과1-01]\\n[난이도] 중\\n2. 나는? [3점]\\n3. 다는?\\n정답: ⑤\\n[출처] 2023 모의');`);
     await page.locator('[data-exam-ftab="layout"]').click();
     const bpDownload = page.waitForEvent('download'); await button(page, '문항 번호·배점·정답을 채운').click(); const bpFile = await bpDownload; await h.idle(page);
     assert.match(bpFile.suggestedFilename().normalize('NFC'), /이원목적분류표\.hwpx$/);
@@ -363,9 +363,9 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
       return [x.getTextRange(0,0,0,x.getParagraphLength(0,0)),JSON.parse(x.getTableDimensions(0,t.paraIdx,ci)),[...Array(35).keys()].map(cell),[0,2].map(c=>JSON.parse(x.getCellProperties(0,t.paraIdx,ci,c)).width)];}finally{x.free();}`);
     assert.equal(bp[0], '1학기 중간 이원목적분류표');
     assert.deepEqual([bp[1].rowCount, bp[1].colCount], [5, 7]);
-    assert.deepEqual(bp[2], ['문항', '내용 영역', '성취기준', '난이도', '배점', '정답', '비고', '1', '', '', '', '2', '③', '', '2', '', '', '', '3', '', '', '3', '', '', '', '', '⑤', '', '합계', '', '', '', '5', '', '']);
+    assert.deepEqual(bp[2], ['문항', '내용 영역', '성취기준', '난이도', '배점', '정답', '비고', '1', '', '[10통과1-01]', '중', '2', '③', '', '2', '', '', '', '3', '', '', '3', '', '', '', '', '⑤', '', '합계', '', '', '', '5', '', '']);
     assert.ok(bp[3][1] > bp[3][0] * 3, 'standard column is wide');
-    assert.equal((await inPage(page, `return text();`)).length, 6);
+    assert.equal((await inPage(page, `return text();`)).length, 8);
     assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`), ['1. 가는? [2점]', '2. 나는? [3점]', '3. 다는?']);
     // 30) 서술형: 「[서술형 3]」「서술형 5.」를 따로 문항으로 보고(앞 선택형에 붙지 않음), 번호를 따로 매기고, 선택형과는 순서를 바꾸지 않는다.
     await inPage(page, `reset('1. 가\\n2. 나\\n[서술형 3] 서술 하나\\n답란\\n서술형 5. 서술 둘');`);

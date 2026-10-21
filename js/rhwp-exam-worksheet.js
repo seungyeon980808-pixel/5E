@@ -145,7 +145,7 @@ export function shadeHeaderRow(bridge, color = '#eef2f7') {
 
 // 학생용 사본: 지금 문서를 복사해 빈칸 표시 낱말을 「(　　　)」로 바꾼 HWPX 바이트. 지금 문서는 그대로다.
 // 교사만 보는 줄: 「[정답] …」「정답: …」「[해설]」「[풀이]」「[채점 기준]」「[교사용]」「[출처]」「[메모]」, 이 도구가 붙인 「[빈칸 정답]」「[나형 대응]」.
-export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|출처|메모|빈칸 정답|나형 대응|나형 정답)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
+export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|출처|메모|성취기준|난이도|내용\s*영역|빈칸 정답|나형 대응|나형 정답)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
 function hasTopTable(doc, sec, para) {
   for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && !c.cellPath?.length && (c.secIdx ?? 0) === sec && c.paraIdx === para) return true;
   return false;
@@ -716,7 +716,7 @@ export function insertWorksheetFrame(bridge, title = '', kind = 'lesson') {
   return sections.length;
 }
 
-// 이원목적분류표: 문항마다 번호·배점([n점])·정답([정답] ③)을 채운 표를 새 한글 문서로(내용 영역·성취기준·난이도는 비워 둠).
+// 이원목적분류표: 문항마다 번호·배점([n점])·정답([정답] ③)과, 문항 안에 적어 둔 [내용 영역]·[성취기준]·[난이도]를 채운 표를 새 한글 문서로.
 // 지금 문서는 그대로. {bytes, count, total}
 export const BLUEPRINT_HEAD = ['문항', '내용 영역', '성취기준', '난이도', '배점', '정답', '비고'];
 const BLUEPRINT_RATIO = [8, 18, 40, 9, 8, 8, 9];
@@ -730,7 +730,10 @@ export function blueprintCopy(bridge, title = '시험') {
     let score = '';
     for (let p = q.head; p < q.end && !score; p++) { const m = /\[(\d+(?:\.\d+)?)\s*점\]/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) score = m[1]; }
     total += Number(score) || 0;
-    rows.push([q.essay ? q.label : String(q.number), '', '', '', score, q.essay ? '' : (answers.get(q.number) || ''), '']);
+    // 문항 안 「[내용 영역] …」「[성취기준] …」「[난이도] 상·중·하」 줄이 있으면 채운다(학생용에서는 빠지는 교사용 줄).
+    const meta = {};
+    for (let p = q.head; p < q.end; p++) { const m = /^\s*[\[【]\s*(내용\s*영역|성취기준|난이도)\s*[\]】]\s*(.*)$/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) meta[m[1].replace(/\s+/g, '')] = m[2].trim(); }
+    rows.push([q.essay ? q.label : String(q.number), meta['내용영역'] || '', meta['성취기준'] || '', meta['난이도'] || '', score, q.essay ? '' : (answers.get(q.number) || ''), '']);
   }
   rows.push(['합계', '', '', '', String(Math.round(total * 10) / 10), '', '']);
   const Document = doc.constructor, out = Document.createEmpty();
