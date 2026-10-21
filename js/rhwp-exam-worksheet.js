@@ -295,36 +295,60 @@ export const SCORE_CHOICES = [2, 2.5, 3, 3.5, 4, 5];
 const SCORE_MARK = /\s?[\[(]\d+(?:\.\d+)?\s*점[\])]/g;
 export const SCORE_VALUE = /[\[(](\d+(?:\.\d+)?)\s*점[\])]/;
 const SCORE_VALUES = new RegExp(SCORE_VALUE.source, 'g');
-export function setQuestionScore(bridge, score) {
-  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
-  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
-  const tables = topTables(doc), q = questionBlocks(doc, sec, tables).find(b => b.start <= para && para < b.end);
-  if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
+// 문서에서 더 많이 쓴 배점 괄호 모양(평가원 [3점] / 학교 (3점)) — 둥근 괄호면 true.
+function prefersRoundScore(doc) {
+  let round = 0, square = 0;
+  for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) m[0][0] === '(' ? round++ : square++;
+  return round > square;
+}
+// 문항 하나의 배점 표시를 지우고(score=null) 또는 바꿔 넣는다(편집 묶음 안에서). paren=true면 「(3점)」.
+function writeScore(doc, sec, q, score, tables, paren = null) {
   const lines = blockLines(doc, sec, q, tables).filter(l => !TEACHER_ONLY.test(l.text));
-  // 괄호 모양: 이 문항에 있던 모양, 없으면 문서에서 더 많이 쓴 모양(평가원 [3점] / 학교 (3점)).
-  let paren = null, round = 0, square = 0;
-  for (const l of lines) { const m = SCORE_VALUE.exec(l.text); if (m) { paren = m[0][0] === '('; break; } }
-  if (paren === null) {
-    for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) m[0][0] === '(' ? round++ : square++;
-    paren = round > square;
-  }
   // 넣을 자리: 「?」로 끝나는 마지막 줄(배점 표시를 뺀 글 기준), 없으면 표 문항은 발문 칸(둘째 칸), 글 문항은 번호 줄.
   const bare = t => t.replace(SCORE_MARK, '');
   let target = lines.filter(l => /\?\s*$/.test(bare(l.text))).at(-1)?.where;
   if (!target) target = q.cell ? { kind: 'cell', sec, p: q.head, ci: q.cell.ci, cell: 1, cp: 0 } : { kind: 'body', sec, p: q.head };
   const lineText = w => (w.kind === 'body' ? String(doc.getTextRange(sec, w.p, 0, doc.getParagraphLength(sec, w.p))) : String(doc.getTextInCell(sec, w.p, w.ci, w.cell, w.cp, 0, doc.getCellParagraphLength(sec, w.p, w.ci, w.cell, w.cp))));
-  bridge.transaction('question-score', () => {
-    for (const l of lines) for (const m of [...lineText(l.where).matchAll(SCORE_MARK)].reverse()) editLine(doc, l.where, m.index, m[0].length);
-    if (score != null) {
-      const text = lineText(target), trimmed = text.replace(/\s+$/, '');
-      if (trimmed.length < text.length) editLine(doc, target, trimmed.length, text.length - trimmed.length);
-      editLine(doc, target, trimmed.length, 0, paren ? ` (${score}점)` : ` [${score}점]`);
+  for (const l of lines) for (const m of [...lineText(l.where).matchAll(SCORE_MARK)].reverse()) editLine(doc, l.where, m.index, m[0].length);
+  if (score == null) return;
+  const text = lineText(target), trimmed = text.replace(/\s+$/, '');
+  if (trimmed.length < text.length) editLine(doc, target, trimmed.length, text.length - trimmed.length);
+  editLine(doc, target, trimmed.length, 0, paren ? ` (${score}점)` : ` [${score}점]`);
+}
+function scoreTotal(doc) {
+  let total = 0, count = 0;
+  for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) { total += Number(m[1]); count++; }
+  return { total: Math.round(total * 10) / 10, count };
+}
+export function setQuestionScore(bridge, score) {
+  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
+  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
+  const tables = topTables(doc), q = questionBlocks(doc, sec, tables).find(b => b.start <= para && para < b.end);
+  if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
+  const own = blockLines(doc, sec, q, tables).map(l => SCORE_VALUE.exec(l.text)).find(Boolean);
+  const paren = own ? own[0][0] === '(' : prefersRoundScore(doc);
+  bridge.transaction('question-score', () => { writeScore(doc, sec, q, score, tables, paren); return true; });
+  return { number: q.number, label: q.label, ...scoreTotal(doc) };
+}
+// 배점 한 번에: 「2 3 3 2.5」처럼 쓴 배점을 문항 차례대로(서술형 포함). 적으면 앞 문항부터 그만큼만. {count, total(합계)}
+export function setAllScores(bridge, text) {
+  requireInput(bridge);
+  const values = String(text || '').split(/[\s,/]+/).filter(Boolean).map(v => { const n = Number(v); if (!(n > 0 && n <= 100)) throw new Error(`「${v}」를 배점으로 읽지 못했습니다. 예: 2 3 3 2.5`); return n; });
+  if (!values.length) throw new Error('배점을 쓰세요. 예: 2 3 3 2.5');
+  const doc = bridge.wasm.borrowDocumentHandle(), count = allQuestionBlocks(doc).length;
+  if (values.length > count) throw new Error(`배점이 ${values.length}개인데 문항은 ${count}개입니다.`);
+  const paren = prefersRoundScore(doc);
+  bridge.transaction('all-scores', () => {
+    const targets = allQuestionBlocks(doc).slice(0, values.length).map((q, i) => ({ q, score: values[i] }));
+    for (const { q, score } of targets.reverse()) {
+      // 그 문항에 있던 괄호 모양을 따르고, 없으면 문서에서 더 많이 쓴 모양.
+      const tables = topTables(doc), cur = questionBlocks(doc, q.sec, tables).find(b => b.head === q.head) || q;
+      const own = blockLines(doc, q.sec, cur, tables).map(l => SCORE_VALUE.exec(l.text)).find(Boolean);
+      writeScore(doc, q.sec, cur, score, tables, own ? own[0][0] === '(' : paren);
     }
     return true;
   });
-  let total = 0, count = 0;
-  for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) { total += Number(m[1]); count++; }
-  return { number: q.number, label: q.label, total: Math.round(total * 10) / 10, count };
+  return { count: values.length, questions: count, ...scoreTotal(doc), paren };
 }
 
 // 글꼴 맞추기: 문항 첫 줄 글꼴·크기가 대부분과 다른 문항(다른 곳에서 복사해 온 문항)을 대부분 쪽으로 맞춘다.

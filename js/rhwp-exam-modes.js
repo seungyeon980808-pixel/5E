@@ -7,7 +7,7 @@ import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
 const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset, setAllAnswers } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset, setAllAnswers, setAllScores } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -463,7 +463,10 @@ export function installExamModes(panel, services) {
         <div class="exam-form-actions"><button type="button" data-exam-allanswers-submit>모두 넣기</button></div>`;
     } else if (kind === 'score') {
       pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
-        <div class="exam-morelist exam-four">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
+        <div class="exam-morelist exam-four">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>
+        <div class="exam-pop-head exam-pop-sub">배점 한 번에 <small>문항 차례대로(서술형 포함) · 예: 2 3 3 2.5</small></div>
+        <label class="exam-field"><span>배점</span><input data-exam-allscores placeholder="2 3 3 2.5" inputmode="decimal" autocomplete="off"></label>
+        <div class="exam-form-actions"><button type="button" data-exam-allscores-submit>모두 넣기</button></div>`;
     } else if (kind === 'pagenum') {
       let savedHeader = {}; try { savedHeader = JSON.parse(localStorage.getItem(HEADER_KEY) || '{}'); } catch {}
       pop.innerHTML = `<div class="exam-pop-head">쪽 번호 <small>모든 쪽 아래 가운데</small></div>
@@ -522,6 +525,7 @@ export function installExamModes(panel, services) {
       try { localStorage.setItem('5e.hwp.questionMeta', JSON.stringify({ area: values.area, standard: values.standard })); } catch {}
       closePop(); void run(async () => { message(`${setQuestionMeta(bridgeOrThrow(), values)} 분류 정보를 적었습니다.`); refocus(); }); return;
     }
+    if (event.target.closest('[data-exam-allscores-submit]')) { const text = pop.querySelector('[data-exam-allscores]')?.value || ''; closePop(); void run(async () => { const r = setAllScores(bridgeOrThrow(), text); message(`${r.questions}문항 중 ${r.count}문항에 배점을 넣었습니다 — 배점 합계 ${r.total}점${r.total !== 100 ? ' (100점 아님)' : ''}`); }); return; }
     if (event.target.closest('[data-exam-allanswers-submit]')) { const text = pop.querySelector('[data-exam-allanswers]')?.value || ''; closePop(); void run(async () => { const r = setAllAnswers(bridgeOrThrow(), text); renderOutline(); message(`선택형 ${r.total}문항 중 ${r.count}문항에 정답을 넣었습니다.`); }); return; }
     const answer = event.target.closest('[data-exam-answer]');
     if (answer) { const mark = answer.dataset.examAnswer || null; closePop(); void run(async () => { const r = setQuestionAnswer(bridgeOrThrow(), mark); renderOutline(); message(`${r.label} 정답${mark ? `을 ${mark}로 적었습니다` : ' 줄을 지웠습니다'}.`); refocus(); }); return; }
@@ -549,7 +553,7 @@ export function installExamModes(panel, services) {
   // 입력 칸에서 Enter = 그 창의 넣기 단추(한글 조합 중에는 무시).
   pop.addEventListener('keydown', event => {
     if (event.key !== 'Enter' || event.isComposing || event.target.tagName !== 'INPUT') return;
-    const submit = pop.querySelector('[data-exam-form-submit],[data-exam-pick-submit],[data-exam-meta-submit],[data-exam-runhead-submit],[data-exam-allanswers-submit],[data-exam-qr-size="25"]');
+    const submit = pop.querySelector('[data-exam-form-submit],[data-exam-pick-submit],[data-exam-meta-submit],[data-exam-runhead-submit],[data-exam-allanswers-submit],[data-exam-allscores-submit],[data-exam-qr-size="25"]');
     if (submit) { event.preventDefault(); submit.click(); }
   });
 

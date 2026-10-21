@@ -655,6 +655,12 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-allanswers]').fill('3 2 ④'); await page.locator('[data-exam-allanswers]').press('Enter'); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /선택형 3문항 중 3문항에 정답/);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '2. 나', '[정답] ②', '[서술형 1] 쓰', '3. 다', '[정답] ④']);
+    // 55) 배점 한 번에: 「2 3.5 4」 → 문항 차례대로(서술형 포함) 넣거나 바꾸고, 문항에 있던 괄호 모양을 따른다.
+    await inPage(page, `reset('1. 가는?\\n2. 나는? (3점)\\n[서술형 1] 쓰시오.');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서가 있는 문항의 배점').click();
+    await page.locator('[data-exam-allscores]').fill('2 3.5 4'); await page.locator('[data-exam-allscores]').press('Enter'); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /3문항 중 3문항에 배점.*합계 9\.5점/);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가는? (2점)', '2. 나는? (3.5점)', '[서술형 1] 쓰시오. (4점)']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
