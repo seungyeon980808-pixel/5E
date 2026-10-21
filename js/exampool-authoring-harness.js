@@ -31,7 +31,8 @@ function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent}={}){
     const off=bridge.onEvent?.(message=>{const event=parseAiEvent(message);if(event.kind==='ignore')return;if(!turnId){buffered.push(event);return;}handle(event);});
     const abort=()=>{void bridge.interrupt?.().catch(()=>{});finish(Object.assign(Error('출제 요청을 취소했습니다.'),{cancelled:true}));};
     const timer=setTimeout(()=>{void bridge.interrupt?.().catch(()=>{});finish(Error('AI 응답이 너무 오래 걸려 중단했습니다.'));},timeout);
-    if(signal?.aborted){abort();return;}signal?.addEventListener('abort',abort,{once:true});
+    // 이미 취소된 요청은 차례를 보내지 않았으니 중단 요청도 보내지 않는다. 보내면 같은 문항의 새 요청을 끊었다(M25 나).
+    if(signal?.aborted){finish(Object.assign(Error('출제 요청을 취소했습니다.'),{cancelled:true}));return;}signal?.addEventListener('abort',abort,{once:true});
     bridge.send(payload).then(r=>{onSent?.(r);turnId=r?.turnId||null;for(const e of buffered.splice(0))handle(e);}).catch(error=>finish(error));
   });
 }
@@ -47,7 +48,7 @@ export function createAuthoringHarness({base=()=>window.fiveEDesktop||window.fiv
       const figures=(packet.figures||[]).filter(f=>/^data:image\/(png|jpeg|webp);base64,/.test(f.data||'')).slice(0,6);
       var attachments=figures.map((f,i)=>({id:'figure-'+i,name:`${f.label||'그림'}.png`,data:f.data}));
       var figuresSeen=Boolean(packet.figureCount)&&figures.length===packet.figureCount;
-      for(let round=1,retried=false;round<=MAX_EVIDENCE_ROUNDS+1;){
+      for(let round=1,retried=false,emptyRetried=false;round<=MAX_EVIDENCE_ROUNDS+1;){
         const text=buildAuthoringPrompt(packet,{evidence:found,round,errors});
         onProgress?.({stage:'turn',round});const t0=Date.now(),raw=await turn(bridge,{purpose:'chat',text,attachments,...selection,conversationId:null},{signal:controller.signal,onSent:r=>{if(r?.droppedAttachments)figuresSeen=false;}});
         const parsed=parseAuthoringResponse(raw);attempts.push({round,ms:Date.now()-t0,ok:parsed.ok,errors:parsed.errors||[]});log({round,ok:parsed.ok});
@@ -58,8 +59,9 @@ export function createAuthoringHarness({base=()=>window.fiveEDesktop||window.fiv
         let added=0;onProgress?.({stage:'evidence',round,count:asks.length});
         for(const ask of asks){const result=await evidence({kind:ask.kind,terms:String(ask.query).split(/[,·/]/).map(s=>s.trim()).filter(Boolean).slice(0,4),edition:ask.edition,sentence:ask.query,limit:4});
           found.push({kind:ask.kind,query:ask.query,marker:true,available:result.available,warning:result.warning});for(const e of result.results||[])if(!found.some(f=>f.ref===e.ref)){found.push(e);added++;}}
-        // 검색에서 새 근거가 없으면 다시 묻지 않는다(같은 답을 다시 쓰게 될 뿐). 근거는 미확보로 남는다.
-        if(!added)break;
+        // 검색에서 새 근거가 없으면, 「근거 확인 후 드리겠습니다」 같은 첫 답이 최종 답이 되지 않게 한 번만 다시 묻는다(M25 가).
+        // 다시 쓸 때는 찾지 못한 검색이 표시되어 근거 없이 최종 답을 쓴다. 두 번째도 새 근거가 없으면 멈춘다(근거는 미확보로 남는다).
+        if(!added){if(emptyRetried)break;emptyRetried=true;}
         round++;onProgress?.({stage:'rewrite',round});
       }
       const evidenceResults=found.filter(f=>f.ref);

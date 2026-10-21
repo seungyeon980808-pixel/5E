@@ -830,6 +830,12 @@
       "findingIds": [
         "M2-DRAFT-EXPORT-FALLBACK"
       ]
+    },
+    {
+      "path": "tests/test-exampool-authoring-harness.mjs",
+      "findingIds": [
+        "M25-AUTHORING-EVIDENCE-STAGE"
+      ]
     }
   ],
   "browser": [

@@ -58,7 +58,8 @@ export function buildAuthoringPrompt(packet,{evidence=[],round=1,errors=[]}={}){
     `[현재 문항 · 버전 ${a.revision??0}]\n${describeQuestion(packet.question)}`,
     packet.figures?.length?`[첨부한 실제 그림] 문항에 들어 있는 그림을 순서대로 첨부했다: ${packet.figures.map((f,i)=>`${i+1}. ${f.label}`).join(', ')}. 그림 검토(figure 축)는 이 실제 그림을 읽고 판단한다.`:(packet.figureCount?'':'[실제 그림] 이 문항에는 아직 실제 그림이 없다. figure 축은 unverified로 둔다.'),
     packet.conversation?.length?`[최근 대화]\n${packet.conversation.map(m=>`${m.role==='me'?'교사':'AI'}: ${String(m.text).slice(0,1500)}`).join('\n')}`:'',
-    evidence.length?`[근거 검색 결과 · 후보일 뿐, ref로만 인용]\n${evidence.map(e=>`ref=${e.ref} · ${e.kind} · ${e.title}${e.page?` · ${e.page}쪽`:''}${e.edition?` · ${e.edition} 개정`:''}\n  ${e.quote}${e.note?`\n  주의: ${e.note}`:''}`).join('\n')}`:(round>1?'[근거 검색 결과] 요청한 검색에서 결과가 없었습니다. 근거는 미확보로 두세요.':''),
+    // 검색 표시(marker, ref 없음)는 결과가 아니다. 섞어 넣으면 「ref=undefined」 줄이 생기고 「결과가 없었습니다」 안내가 빠졌다(M25).
+    (evidence=evidence.filter(e=>e.ref)).length?`[근거 검색 결과 · 후보일 뿐, ref로만 인용]\n${evidence.map(e=>`ref=${e.ref} · ${e.kind} · ${e.title}${e.page?` · ${e.page}쪽`:''}${e.edition?` · ${e.edition} 개정`:''}\n  ${e.quote}${e.note?`\n  주의: ${e.note}`:''}`).join('\n')}`:(round>1?'[근거 검색 결과] 요청한 검색에서 결과가 없었습니다. 근거는 미확보로 두세요.':''),
     errors.length?`[앞선 응답의 형식 오류 — 고쳐서 다시 출력]\n${errors.map(e=>'- '+e).join('\n')}`:'',
     `[교사 요청]\n${packet.text}`,
   ];
