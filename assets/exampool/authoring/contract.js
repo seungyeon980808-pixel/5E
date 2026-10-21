@@ -33,8 +33,9 @@ export function validateResponse(v){
   }
   if(v.solve!==undefined&&v.solve!==null){const s=v.solve;if(!Array.isArray(s.statements)||s.statements.length>30||!s.statements.every(x=>x&&str(String(x.target??''),40)&&typeof x.truth==='boolean'))err('solve.statements는 [{target, truth}] 목록이어야 합니다.');if(s.answer!==undefined&&s.answer!==null&&!(Number.isInteger(s.answer)&&s.answer>=1&&s.answer<=5))err('solve.answer는 1~5입니다.');}
   if(v.review!==undefined&&v.review!==null){const a=v.review.axes||{};for(const k of Object.keys(a))if(!AXES.includes(k)||!['pass','issue','unverified'].includes(a[k]?.status))err('review.axes는 curriculum·scope·answer·figure와 pass·issue·unverified만 씁니다.');
-    if(v.review.items!==undefined&&(!Array.isArray(v.review.items)||v.review.items.length>40))err('review.items를 확인하세요.');}
-  if(v.figures!==undefined&&(!Array.isArray(v.figures)||v.figures.length>6||!v.figures.every(f=>f&&['graph','image'].includes(f.kind)&&str(f.description,3000))))err('figures는 kind(graph|image)와 description이 필요합니다.');
+    if(v.review.items!==undefined&&(!Array.isArray(v.review.items)||v.review.items.length>40||!v.review.items.every(it=>it&&typeof it==='object'&&!Array.isArray(it))))err('review.items를 확인하세요.');}
+  if(v.figures!==undefined&&(!Array.isArray(v.figures)||v.figures.length>6||!v.figures.every(f=>f&&['graph','image'].includes(f.kind)&&str(f.description,3000)
+    &&(f.mustNot===undefined||Array.isArray(f.mustNot)&&f.mustNot.every(x=>str(x,600)))&&(f.slot===undefined||str(f.slot,80)))))err('figures는 kind(graph|image)와 description이 필요하고, mustNot은 글 목록이어야 합니다.');
   if(v.evidenceRequests!==undefined&&(!Array.isArray(v.evidenceRequests)||v.evidenceRequests.length>4||!v.evidenceRequests.every(r=>r&&['curriculum','claim','past','textbook'].includes(r.kind)&&str(r.query,300))))err('evidenceRequests를 확인하세요(종류 curriculum·claim·past·textbook, 최대 4개).');
   if(v.evidenceUsed!==undefined&&(!Array.isArray(v.evidenceUsed)||v.evidenceUsed.length>40||!v.evidenceUsed.every(e=>e&&str(String(e.ref??''),200)&&JUDGEMENTS.includes(e.judgement))))err('evidenceUsed의 판정을 확인하세요.');
   if(v.issues!==undefined&&(!Array.isArray(v.issues)||v.issues.length>20||!v.issues.every(x=>str(typeof x==='string'?x:x?.text,1000))))err('issues를 확인하세요.');

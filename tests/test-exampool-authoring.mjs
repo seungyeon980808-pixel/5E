@@ -69,6 +69,9 @@ test('늦은 응답·중복·삭제·취소는 현재 문항을 덮어쓰지 않
 test('응답 계약: JSON 꺼내기·형식 검사·초안을 실제 칸으로',()=>{
   assert.deepEqual(extractJson('설명입니다.\n```json\n{"reply":"네 {괄호}","x":1}\n```'),{reply:'네 {괄호}',x:1});
   assert.equal(parseAuthoringResponse('그냥 글').ok,false);
+  // M24: 형식 검사를 통과한 답이 화면 반영에서 예외를 내면 답 전체가 사라졌다 → 반영에서 터질 모양은 검사에서 막는다.
+  for(const bad of ['{"reply":"r","figures":[{"kind":"graph","description":"d","mustNot":"x"}]}','{"reply":"r","review":{"items":[null]}}','{"reply":"r","figures":[{"kind":"image","description":"d","slot":3}]}'])assert.equal(parseAuthoringResponse(bad).ok,false,bad);
+  assert.equal(parseAuthoringResponse('{"reply":"r","figures":[{"kind":"graph","description":"d","mustNot":["x"],"slot":"그림1"}],"review":{"items":[{"target":"ask"}]}}').ok,true);
   const bad=parseAuthoringResponse('{"reply":"r","review":{"axes":{"answer":{"status":"maybe"}}}}');assert.equal(bad.ok,false);
   const q=newQuestion('1','합답형','글·수식');
   const changes=draftToChanges(q,{passage:'지문',ask:'옳은 것만을 <보기>에서 있는 대로 고른 것은?',bogi:['ㄱ. 가','ㄴ. 나','ㄷ. 다'],choices:['ㄱ','ㄷ','ㄱㄴ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ'],answer:3,explanation:'해설'});

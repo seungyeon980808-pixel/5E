@@ -690,7 +690,7 @@ async function receiveAuthor(m){
   const {response,evidence=[],searches=[],meta={}}=m.result||{};
   if(!response){mutate(()=>{q.reviews.push({role:'ai',text:'AI 답을 읽지 못했습니다.',at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
   const evidenceMap=new Map(evidence.map(e=>[e.ref,{kind:{curriculum:'curriculum',past:'past',claim:'paper',textbook:'textbook'}[e.kind]||'other',title:String(e.title||'').slice(0,600),ref:e.ref,quote:String(e.quote||'').slice(0,6000),page:Number.isInteger(e.page)&&e.page>0?e.page:null,sha256:/^[a-f0-9]{64}$/.test(e.sha256||'')?e.sha256:null,bbox:Array.isArray(e.bbox)&&e.bbox.length===4&&e.bbox.every(Number.isFinite)?e.bbox:null}]));
-  mutate(()=>{
+  const reflected=mutate(()=>{
     const stale=verdict==='stale',msg={role:'ai',text:String(response.reply||'').slice(0,20000),at:nowIso(),requestId:req.requestId,kind:req.kind,
       questions:(response.questions||[]).map(String).slice(0,3),figures:(response.figures||[]).slice(0,6).map(f=>({kind:f.kind,slot:String(f.slot||'new').slice(0,80),description:String(f.description).slice(0,3000),mustNot:(f.mustNot||[]).map(String).slice(0,6)})),
       items:(response.review?.items||[]).slice(0,30).map(it=>({field:String(it.target||''),text:[it.problem,it.fix&&`→ ${it.fix}`].filter(Boolean).join(' ').slice(0,2000),severity:it.severity})),
@@ -707,6 +707,10 @@ async function receiveAuthor(m){
     (q.reviews ||= []).push(msg);if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);
     if(req.kind==='review'&&(q.workflow||'draft')==='draft')q.workflow='review';
   },{render:false});
+  // 반영 중 예외가 나면 mutate가 통째로 되돌려 답이 흔적 없이 사라졌다(M24). 답 글만이라도 대화에 남기고 이유를 알린다.
+  // 되돌리기로 문항 객체가 바뀌었을 수 있어 다시 찾는다.
+  if(!reflected)mutate(()=>{const live=data.questions.find(x=>x.id===req.qid);if(!live)return;(live.reviews ||= []).push({role:'ai',text:String(response.reply||'').slice(0,20000)||'AI 답을 반영하지 못했습니다.',at:nowIso(),requestId:req.requestId,kind:req.kind,error:true,
+    notes:['답의 일부 형식이 맞지 않아 변경안·검토 결과는 반영하지 못했습니다. 같은 요청을 한 번 더 보내 주세요.']});},{render:false});
   cardEditor.refreshAi?.();
 }
 // ── 그림·그래프: AI가 쓴 제작 명세로 기존 엔진을 불러 문항의 그림 칸에 넣는다 ──
