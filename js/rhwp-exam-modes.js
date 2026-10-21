@@ -94,7 +94,7 @@ function focusTabs(ctx) {
       ['1단', '모든 쪽을 1단으로', doc(b => ctx.message(`${setColumns(b, 1)}단으로 바꿨습니다.`))], ['2단', '모든 쪽을 2단으로(단 사이 8mm) — 시험지 기본', doc(b => ctx.message(`${setColumns(b, 2)}단으로 바꿨습니다.`))],
       ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
       ['쪽 번호', '모든 쪽 아래 가운데에 쪽 번호(- 1 -, 1 / 4 …) — 다시 누르면 모양만 바뀜', (_, button) => ctx.openPicker(button, 'pagenum')],
-      ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김) + 교사용 문서 끝에 대응표', doc(b => ctx.variant(b))], '|',
+      ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김, 선지까지 섞기 고를 수 있음) + 교사용 문서 끝에 대응표·나형 정답', (_, button) => ctx.openPicker(button, 'variant')], '|',
       ['인쇄', '인쇄 창 열기', cmd('file:print')], ['PDF로 저장', 'PDF로 저장', cmd('file:print-to-pdf')],
     ],
   };
@@ -194,10 +194,10 @@ export function installExamModes(panel, services) {
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
       message(`빈칸 ${count}개에 정답을 채운 정답지를 내려받습니다(${name}).`);
     },
-    variant(b) {
-      const { bytes, mapping } = makeVariant(b), name = `${(services.documentName?.() || '시험지').replace(/[\\/:*?"<>|]/g, '_')}-나형.hwpx`;
+    variant(b, choices = false) {
+      const { bytes, mapping, shuffled } = makeVariant(b, Math.random, { choices }), name = `${(services.documentName?.() || '시험지').replace(/[\\/:*?"<>|]/g, '_')}-나형.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`나형을 내려받습니다(${name}). 교사용 문서 끝에 대응표를 넣었습니다: ${appendVariantMapping(b, mapping)}`);
+      message(`나형을 내려받습니다(${name})${choices ? ` — 선지도 섞은 문항 ${shuffled}개` : ''}. 교사용 문서 끝에 대응표를 넣었습니다: ${appendVariantMapping(b, mapping)}`);
     },
     documentTitle: () => { const n = services.documentName?.() || ''; return n && n !== '새 시험지' ? n : '학습지'; },
     openHeaderForm: anchor => openForm(anchor, 'header'),
@@ -378,6 +378,9 @@ export function installExamModes(panel, services) {
         <label class="exam-field"><span>주소</span><input data-exam-qr="url" placeholder="https://" inputmode="url" autocomplete="off" spellcheck="false"></label>
         <label class="exam-field"><span>안내 글</span><input data-exam-qr="label" placeholder="예: 실험 영상 보기"></label>
         <div class="exam-morelist">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>`;
+    } else if (kind === 'variant') {
+      pop.innerHTML = `<div class="exam-pop-head">가·나형 <small>나형 사본 내려받기 · 지금 문서는 대응표만 붙음</small></div>
+        <div class="exam-morelist"><button type="button" data-exam-variant="order">문항 순서만 섞기</button><button type="button" data-exam-variant="choices" title="선지가 한 줄에 하나씩인 문항만 선지 순서도 섞고, 문항 안 「[정답] ③」을 따라 고침">문항+선지 순서 섞기</button></div>`;
     } else if (kind === 'score') {
       pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
         <div class="exam-morelist">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
@@ -400,6 +403,8 @@ export function installExamModes(panel, services) {
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
+    const variant = event.target.closest('[data-exam-variant]');
+    if (variant) { const choices = variant.dataset.examVariant === 'choices'; closePop(); void run(async () => ctx.variant(bridgeOrThrow(), choices)); return; }
     const qrSize = event.target.closest('[data-exam-qr-size]');
     if (qrSize) {
       const value = name => pop.querySelector(`[data-exam-qr="${name}"]`)?.value || '', form = { url: value('url'), label: value('label'), sizeMm: Number(qrSize.dataset.examQrSize) };

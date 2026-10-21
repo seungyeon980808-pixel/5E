@@ -177,7 +177,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await button(page, '용지 크기').click(); await page.locator('[data-exam-paper="B4"]').click(); await h.idle(page);
     assert.equal((await inPage(page, `return JSON.parse(d.getPageDef(0));`)).width, Math.round(257 * 7200 / 25.4));
     const variantDownload = page.waitForEvent('download');
-    await button(page, '문항 순서를 섞은').click(); const variantFile = await variantDownload; await h.idle(page);
+    await button(page, '문항 순서를 섞은').click(); await page.locator('[data-exam-variant="order"]').click(); const variantFile = await variantDownload; await h.idle(page);
     assert.match(variantFile.suggestedFilename().normalize('NFC'), /나형\.hwpx$/);
     const teacher = await inPage(page, `return text();`);
     assert.deepEqual(teacher.slice(0, 6), ['1. 가', '가가', '2. 나', '3. 다', '다다', '4. 라'], 'teacher order is unchanged');
@@ -310,6 +310,31 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.match(await page.locator('#exam-status').textContent(), /\[정답\]·\[해설\] 줄 3개를 뺀 학생용/);
     assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`), ['1. 문항', '2. 문항', '정답은 ③이다']);
     assert.equal((await inPage(page, `return text();`)).length, 6, 'teacher document unchanged');
+    // 24) 가·나형 「문항+선지 순서 섞기」: 한 줄에 하나씩인 선지만 문단째 섞고 ①부터 다시 붙이며, [정답]을 따라 고친다. 한 줄 선지는 그대로. 교사용 끝에 나형 정답.
+    await inPage(page, `reset('1. 첫째\\n① 가\\n② 나\\n③ 다\\n④ 라\\n⑤ 마\\n[정답] ③\\n2. 둘째\\n① ㄱ ② ㄴ ③ ㄷ\\n[정답] ②');`);
+    const shuffledChoices = await inPage(page, `const W=await import('/js/rhwp-exam-worksheet.js');const seq=[.1,.9,.3,.7,.5,.2,.8];let k=0;const r=W.makeVariant(b,()=>seq[k++%seq.length],{choices:true});
+      const c=new d.constructor(r.bytes);try{c.convertToEditable?.();return {shuffled:r.shuffled,mapping:r.mapping,text:[...Array(c.getParagraphCount(0)).keys()].map(p=>c.getTextRange(0,p,0,c.getParagraphLength(0,p)))};}finally{c.free();}`);
+    assert.equal(shuffledChoices.shuffled, 1);
+    const vt = shuffledChoices.text, q2 = vt.indexOf('2. 첫째');
+    assert.deepEqual(vt.slice(0, 3), ['1. 둘째', '① ㄱ ② ㄴ ③ ㄷ', '[정답] ②']);
+    const choiceLines = vt.slice(q2 + 1, q2 + 6);
+    assert.deepEqual(choiceLines.map(t => t[0]), ['①', '②', '③', '④', '⑤']);
+    assert.deepEqual(choiceLines.map(t => t.slice(2)).sort(), ['가', '나', '다', '라', '마']);
+    assert.notDeepEqual(choiceLines.map(t => t.slice(2)), ['가', '나', '다', '라', '마']);
+    const newAnswer = vt[q2 + 6].slice(-1);
+    assert.equal(choiceLines.find(t => t[0] === newAnswer).slice(2), '다', 'answer follows the moved choice');
+    assert.deepEqual(shuffledChoices.mapping, [{ variant: 1, original: 2, answer: '②' }, { variant: 2, original: 1, answer: newAnswer }]);
+    await page.locator('[data-exam-ftab="layout"]').click();
+    const bothDownload = page.waitForEvent('download'); await button(page, '문항 순서를 섞은').click(); await page.locator('[data-exam-variant="choices"]').click(); await bothDownload; await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /선지도 섞은 문항 1개/);
+    assert.match((await inPage(page, `return text();`)).at(-1), /^\[나형 정답\] 1-② {2}2-[①-⑤]$/);
+    // 25) 정답표 칸은 문항 안 「[정답] ③」으로 정답 줄을 채우고, 학생용 사본은 그 정답표와 [정답] 줄을 모두 뺀다.
+    await inPage(page, `reset('1. 가\\n[정답] ③\\n2. 나\\n정답: ①');`);
+    await button(page, '찾은 문항 번호로').click(); await h.idle(page);
+    const filledGrid = await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length),ci=t.controlIdx??t.ci;
+      return [0,1,10,11,12].map(c=>d.getTextInCell(0,t.paraIdx,ci,c,0,0,d.getCellParagraphLength(0,t.paraIdx,ci,c,0)));`);
+    assert.deepEqual(filledGrid, ['1', '2', '③', '①', '']);
+    assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [[...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p))),JSON.parse(x.getPageControlLayout(0)).controls.filter(c=>c.type==='table').length];}finally{x.free();}`), [['1. 가', '2. 나'], 0]);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

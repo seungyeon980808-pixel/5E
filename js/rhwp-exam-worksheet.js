@@ -125,18 +125,34 @@ export function shadeHeaderRow(bridge, color = '#eef2f7') {
 // 학생용 사본: 지금 문서를 복사해 빈칸 표시 낱말을 「(　　　)」로 바꾼 HWPX 바이트. 지금 문서는 그대로다.
 // 교사만 보는 줄: 「[정답] …」「정답: …」「[해설]」「[풀이]」「[채점 기준]」「[교사용]」, 이 도구가 붙인 「[빈칸 정답]」「[나형 대응]」.
 export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|빈칸 정답|나형 대응)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
+function hasTopTable(doc, sec, para) {
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && !c.cellPath?.length && (c.secIdx ?? 0) === sec && c.paraIdx === para) return true;
+  return false;
+}
 export function studentCopy(bridge) {
   requireInput(bridge);
   const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc), teacher = [];
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
-    for (let p = 0; p < doc.getParagraphCount(sec); p++) if (TEACHER_ONLY.test(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))))) teacher.push({ sec, p });
+    for (let p = 0; p < doc.getParagraphCount(sec); p++) {
+      const text = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+      if (!TEACHER_ONLY.test(text)) continue;
+      // 「정답표 칸」이 넣은 「[정답]」 머리 바로 다음 문단의 표(정답표)도 함께 뺀다.
+      const gridAfter = /^\s*\[정답\]\s*$/.test(text) && p + 1 < doc.getParagraphCount(sec) && hasTopTable(doc, sec, p + 1);
+      teacher.push({ sec, p, gridAfter });
+    }
   if (!blanks.length && !teacher.length) throw new Error('빈칸으로 표시한 낱말이나 「[정답]·[해설]」 줄이 없습니다. 낱말을 고르고 「빈칸 표시」를 누르세요.');
   const Document = doc.constructor, copy = new Document(doc.exportHwpx());
   try {
     // 같은 문단 안에서는 뒤에서부터 바꿔야 앞 구간 위치가 그대로다.
     for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, blankText(blank.text));
     // 교사용 줄은 뒤에서부터 문단째 뺀다(0번 문단은 구역 설정을 품어 글만 지운다).
-    for (const { sec, p } of [...teacher].reverse()) {
+    for (const { sec, p, gridAfter } of [...teacher].reverse()) {
+      if (gridAfter) {
+        // 정답표를 문서 끝에 넣을 때 생긴 표 뒤 빈 문단도 함께 뺀다.
+        const n = copy.getParagraphCount(sec);
+        if (p + 2 === n - 1 && !copy.getParagraphLength(sec, p + 2)) parse(copy.deleteParagraph(sec, p + 2));
+        parse(copy.deleteParagraph(sec, p + 1));
+      }
       if (p > 0) parse(copy.deleteParagraph(sec, p));
       else { const n = copy.getParagraphLength(sec, 0); if (n) copy.deleteText(sec, 0, 0, n); }
     }
@@ -179,6 +195,17 @@ export function insertExamHeader(bridge, { title = '', subject = '', grade = '' 
 }
 
 // 정답표 칸: 문서에서 찾은 문항 번호(1., 2., …)로 「번호/정답」 두 줄 표를 문서 끝에 넣는다. 정답은 비워 둔다.
+// 문항마다 적어 둔 정답: 문항 안의 「[정답] ③」「정답: ③」 줄. Map(번호 → 정답 글).
+const ANSWER_LINE = /^\s*(?:[\[【]\s*정답\s*[\]】]|정답\s*[:：])\s*(\S.*)$/;
+export function questionAnswers(doc) {
+  const out = new Map();
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec))
+    for (let p = q.head; p < q.end; p++) {
+      const m = ANSWER_LINE.exec(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
+      if (m) { out.set(q.number, m[1].trim()); break; }
+    }
+  return out;
+}
 export function insertAnswerGrid(bridge) {
   requireInput(bridge);
   const doc = bridge.wasm.borrowDocumentHandle(), numbers = [];
@@ -189,10 +216,11 @@ export function insertAnswerGrid(bridge) {
     }
   if (!numbers.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
   const sec = doc.getSectionCount() - 1, last = doc.getParagraphCount(sec) - 1, width = columnWidth(doc, sec);
-  const perRow = 10, rows = [];
+  // 문항 안에 「[정답] ③」을 적어 두었으면 정답 줄을 채운다.
+  const answers = questionAnswers(doc), perRow = 10, rows = [];
   for (let i = 0; i < numbers.length; i += perRow) {
     const chunk = numbers.slice(i, i + perRow);
-    rows.push([...chunk.map(String), ...Array(perRow - chunk.length).fill('')], Array(perRow).fill(''));
+    rows.push([...chunk.map(String), ...Array(perRow - chunk.length).fill('')], [...chunk.map(n => answers.get(n) || ''), ...Array(perRow - chunk.length).fill('')]);
   }
   bridge.transaction('answer-grid', () => {
     const end = doc.getParagraphLength(sec, last);
@@ -442,7 +470,7 @@ export function insertPageNumbers(bridge, style = 'dash') {
   return PAGE_NUMBER_STYLES[style];
 }
 // 나형 만들기: 문항 순서를 섞은 사본(번호 다시 매김)과 「나형 번호 → 가형 번호」 대응. 지금 문서는 그대로.
-export function makeVariant(bridge, random = Math.random) {
+export function makeVariant(bridge, random = Math.random, { choices = false } = {}) {
   requireInput(bridge);
   const doc = bridge.wasm.borrowDocumentHandle();
   // 문항이 가장 많은 구역(보통 2단 본문)만 섞는다 — 머리 구역의 안내문은 그대로.
@@ -466,19 +494,59 @@ export function makeVariant(bridge, random = Math.random) {
       while (at > target) { swapAdjacentQuestions(copy, mainSec, questionBlocks(copy, mainSec), at - 1); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
     }
     renumberDocument(copy);
-    return { bytes: copy.exportHwpx(), mapping: order.map((orig, i) => ({ variant: i + 1, original: first[orig].number })) };
+    const shuffled = choices ? shuffleChoices(copy, mainSec, random) : 0;
+    const final = questionBlocks(copy, mainSec), answers = questionAnswers(copy);
+    return { bytes: copy.exportHwpx(), shuffled, mapping: order.map((orig, i) => ({ variant: final[i]?.number ?? i + 1, original: first[orig].number, answer: answers.get(final[i]?.number) || '' })) };
   } finally { copy.free(); }
+}
+// 선지 섞기(나형 사본에만): 「①…」「②…」처럼 선지가 한 문단에 하나씩 이어진 문항만 문단째 섞고(서식 그대로), 번호 기호를 ①부터 다시 붙인다.
+// 문항 안 「[정답] ③」도 바뀐 자리로 고친다. 한 줄에 선지 여럿(3열·5열·ㄱㄴㄷ 조합)인 문항은 그대로 둔다. 섞은 문항 수.
+const MARKS = '①②③④⑤';
+function shuffleChoices(doc, sec, random) {
+  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  const markAt = p => { const t = textOf(p), i = t.search(/\S/); return i < 0 ? null : { i, mark: t[i], rest: t.slice(i + 1) }; };
+  let count = 0;
+  for (let k = 0; k < questionBlocks(doc, sec).length; k++) {
+    const b = questionBlocks(doc, sec)[k];
+    let from = -1;
+    for (let p = b.head + 1; p < b.end; p++) if (markAt(p)?.mark === MARKS[0]) { from = p; break; }
+    if (from < 0) continue;
+    let n = 0;
+    while (n < MARKS.length && from + n < b.end) { const m = markAt(from + n); if (m?.mark !== MARKS[n] || /[①-⑤]/.test(m.rest)) break; n++; }
+    if (n < 3 || (from + n < b.end && /^[①-⑤]/.test(markAt(from + n)?.mark || ''))) continue;
+    const perm = [...Array(n).keys()];
+    for (let tries = 0; tries < 20 && perm.every((v, i) => v === i); tries++) for (let i = n - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    if (perm.every((v, i) => v === i)) continue;
+    const current = [...Array(n).keys()];
+    for (let target = 0; target < n; target++) {
+      let at = current.indexOf(perm[target]);
+      while (at > target) { swapAdjacentQuestions(doc, sec, [{ start: from + at - 1, end: from + at }, { start: from + at, end: from + at + 1 }], 0); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
+    }
+    for (let i = 0; i < n; i++) { const m = markAt(from + i); if (m.mark !== MARKS[i]) { doc.deleteText(sec, from + i, m.i, 1); doc.insertText(sec, from + i, m.i, MARKS[i]); } }
+    const after = questionBlocks(doc, sec)[k];
+    for (let p = after.head; p < after.end; p++) {
+      const t = textOf(p), m = ANSWER_LINE.exec(t); if (!m) continue;
+      const at = t.length - m[1].length + m[1].search(/[①-⑤]/), old = MARKS.indexOf(t[at]);
+      if (m[1].search(/[①-⑤]/) >= 0 && old >= 0 && old < n) { doc.deleteText(sec, p, at, 1); doc.insertText(sec, p, at, MARKS[perm.indexOf(old)]); }
+      break;
+    }
+    count++;
+  }
+  return count;
 }
 // 교사용 문서 끝에 「[나형 대응] 나1=가3 …」을 붙인다.
 export function appendVariantMapping(bridge, mapping) {
   const doc = bridge.wasm.borrowDocumentHandle(), sec = doc.getSectionCount() - 1, last = doc.getParagraphCount(sec) - 1;
   const line = `[나형 대응] ${mapping.map(m => `나${m.variant}=가${m.original}`).join('  ')}`;
+  // 문항 안에 정답을 적어 두었으면 나형 정답도 한 줄 더(선지를 섞었으면 바뀐 번호).
+  const key = mapping.some(m => m.answer) ? `[나형 정답] ${mapping.map(m => `${m.variant}-${m.answer || '?'}`).join('  ')}` : '';
   bridge.transaction('variant-mapping', () => {
     parse(doc.splitParagraph(sec, last, doc.getParagraphLength(sec, last)));
     doc.insertText(sec, last + 1, 0, line);
+    if (key) { parse(doc.splitParagraph(sec, last + 1, [...line].length)); doc.insertText(sec, last + 2, 0, key); }
     return true;
   });
-  return line;
+  return key ? `${line} / ${key}` : line;
 }
 
 // 학습지 틀: 제목·「학년 반 번 이름」 칸·학습 목표·활동 1·활동 2·정리를 문서 끝에 한 번에.
