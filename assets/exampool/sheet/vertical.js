@@ -54,6 +54,8 @@ export function writeField(q,key,value,{clear=false}={}){
     q.choices.forEach((c,i)=>{const text=stripChoiceLabel(lines[i]||'');c.text=c.figure?text.replace(/ ?\[그림\]$/,''):text;});// 읽기 칸이 붙인 「 [그림]」 표시는 글로 저장하지 않는다(M15)
     if(q.style==='조합'){q.choices.forEach(c=>c.text=normalizeCombo(c.text));const o=orderCombos(q.choices,q.answer);q.choices=o.choices;q.answer=o.answer;}
   }else if(key==='bogi'){
+    // 보기 묶음이 둘 이상이면 읽기 칸은 모든 줄을 이어 보여 주는데, 쓰기는 첫 묶음에 다 넣어 줄이 겹쳤다(점검 하). 과정·대화와 같이 막는다.
+    if(q.blocks.filter(b=>b.kind==='bogi').length>1){if(value===fieldValue(q,'bogi'))return;throw Error('같은 종류 구성이 여러 개인 문항은 구성 시트·한글 창에서 고치세요.');}
     let b=q.blocks.find(b=>b.kind==='bogi');if(!b){b=block('bogi');q.blocks.push(b);}
     const lines=value?value.split(/\r?\n/):[];if(lines.length>30)throw Error('보기는 30개까지 입력하세요.');
     b.lines=lines.map((text,i)=>({...b.lines[i]||{id:crypto.randomUUID(),label:['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ'][i]||String(i+1)},text:stripBogiLabel(text)}));

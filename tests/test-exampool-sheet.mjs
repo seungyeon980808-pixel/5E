@@ -130,3 +130,13 @@ test('엑셀에서 근거가 걸린 줄을 지워도 불러오기가 실패하�
   assert.equal(bq.references.find(r => r.quote === '인용').target, 'question');
   assert.match(back.warnings.join(' '), /7번 문항: 지운 줄·칸에 걸린 근거 1개/);
 });
+
+test('보기 묶음이 둘인 문항은 보기 칸에서 고쳐도 줄이 겹치지 않는다(점검 하)', async () => {
+  const {writeField, fieldValue} = await import('../assets/exampool/sheet/vertical.js');
+  const q = newQuestion('1'); writeField(q, 'bogi', 'ㄱ. 가\nㄴ. 나');
+  const second = block('bogi'); second.lines = [{id: 'x1', label: 'ㄱ', text: '다'}]; q.blocks.push(second);
+  const before = fieldValue(q, 'bogi');
+  writeField(q, 'bogi', before);
+  assert.deepEqual(q.blocks.filter(b => b.kind === 'bogi').map(b => b.lines.length), [2, 1]);
+  assert.throws(() => writeField(q, 'bogi', before + '\n라'), /여러 개/);
+});
