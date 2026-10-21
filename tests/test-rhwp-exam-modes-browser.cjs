@@ -674,6 +674,10 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(await inPage(page, `return text();`), ['1. 나', '2. 다', '3. 가', '가가', '4. 라']);
     await inPage(page, `b.input.performUndo();b.deps.eventBus.emit('document-changed');`); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 나', '3. 다', '4. 라']);
+    await page.waitForFunction(() => document.querySelector('.exam-q')?.textContent.includes('가'));
+    await page.locator('[data-exam-q="3"]').focus(); await page.keyboard.press('Alt+ArrowUp'); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 나', '3. 라', '4. 다']);
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset.examQ), '2');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

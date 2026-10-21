@@ -637,7 +637,7 @@ export function installExamModes(panel, services) {
     let answers = new Map();
     try { const d = b.wasm.borrowDocumentHandle(); blocks = allQuestionBlocks(d); answers = questionAnswers(d); } catch { return; }
     outline.hidden = !blocks.length;
-    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" draggable="${q.group ? 'false' : 'true'}" title="${esc(`${q.label} ${q.preview} — 끌어서 다른 자리로 옮기기`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button>${!q.essay && answers.get(q.number) ? `<span class="exam-qans" title="정답">${esc(answers.get(q.number).slice(0, 2))}</span>` : ''}<button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" draggable="${q.group ? 'false' : 'true'}" title="${esc(`${q.label} ${q.preview} — 끌어서 옮기기 · ⌥↑↓로 순서 바꾸기`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button>${!q.essay && answers.get(q.number) ? `<span class="exam-qans" title="정답">${esc(answers.get(q.number).slice(0, 2))}</span>` : ''}<button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
   }
   const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
   outline.addEventListener('click', event => {
@@ -664,6 +664,14 @@ export function installExamModes(panel, services) {
     });
   });
 
+  // 문항 목록 키보드: 문항 줄에서 Alt(⌥)+↑/↓로 순서 바꾸기(초점은 옮긴 문항을 따라간다).
+  outline.addEventListener('keydown', event => {
+    const item = event.target.closest?.('[data-exam-q]');
+    if (!item || !event.altKey || event.metaKey || event.ctrlKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+    event.preventDefault(); event.stopPropagation();
+    const i = Number(item.dataset.examQ), dir = event.key === 'ArrowUp' ? -1 : 1;
+    void run(async () => { const at = moveQuestion(bridgeOrThrow(), i, dir); renderOutline(); outline.querySelector(`[data-exam-q="${at}"]`)?.focus(); message('문항 순서를 바꾸고 번호를 다시 매겼습니다.'); });
+  });
   // 문항 목록 끌어 옮기기: 문항 줄을 끌어 다른 문항 줄에 놓으면 그 자리로(번호 다시, 되돌리기 한 번).
   let dragFrom = -1;
   outline.addEventListener('dragstart', event => {
