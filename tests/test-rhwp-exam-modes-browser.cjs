@@ -6,8 +6,8 @@ const h = require('./helpers/rhwp-exam.cjs');
 // 문서 손잡이·스튜디오 입력·현재 문단 글자를 페이지 안에서 꺼내는 도우미.
 const prelude = `const b=window.fiveEHwpPalette.native.bridge(),d=b.wasm.borrowDocumentHandle(),w=b.wasm;
 const text=()=>[...Array(d.getParagraphCount(0)).keys()].map(p=>d.getTextRange(0,p,0,d.getParagraphLength(0,p)));
-const reset=s=>{const top=JSON.parse(d.getPageControlLayout(0)).controls.filter(c=>!(c.cellPath||[]).length&&['table','image'].includes(c.type)).sort((a,b)=>b.paraIdx-a.paraIdx||(b.controlIdx??b.ci)-(a.controlIdx??a.ci));
-  for(const c of top){if(c.type==='table')d.deleteTableControl(0,c.paraIdx,c.controlIdx??c.ci);else d.deletePictureControl(0,c.paraIdx,c.controlIdx??c.ci);}
+const reset=s=>{const top=JSON.parse(d.getPageControlLayout(0)).controls.filter(c=>!(c.cellPath||[]).length&&!Number.isInteger(c.cellIdx)&&['table','image','equation'].includes(c.type)).sort((a,b)=>b.paraIdx-a.paraIdx||(b.controlIdx??b.ci)-(a.controlIdx??a.ci));
+  for(const c of top){if(c.type==='table')d.deleteTableControl(0,c.paraIdx,c.controlIdx??c.ci);else if(c.type==='equation')d.deleteEquationControl(0,c.paraIdx,c.controlIdx??c.ci);else d.deletePictureControl(0,c.paraIdx,c.controlIdx??c.ci);}
   while(d.getParagraphCount(0)>1)d.mergeParagraph(0,1);const n=d.getParagraphLength(0,0);if(n)d.deleteText(0,0,0,n);const lines=s.split('\\n');d.insertText(0,0,0,lines[0]);
   for(let i=1;i<lines.length;i++){d.splitParagraph(0,i-1,d.getParagraphLength(0,i-1));d.insertText(0,i,0,lines[i]);}b.deps.eventBus.emit('document-changed');};`;
 const inPage = (page, body, arg) => page.evaluate(new Function('arg', `return (async()=>{${prelude}${body}})()`), arg);
@@ -641,6 +641,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(items.map(x => x.slice(2)).sort(), ['H2O', '가', '나', '다', '마']);
     assert.equal(inline.sub, true, 'subscript kept');
     assert.equal(items.find(x => x[0] === inline.ans.slice(-1)).slice(2), 'H2O', 'answer follows H2O');
+    // 53) 수식이 든 선지: 1·3·5열 바꾸기는 멈추고 알리며(수식이 떨어지지 않게), 가·나형 선지 섞기는 그 문항만 그대로 둔다.
+    const eqGuard = await inPage(page, `reset('1. 첫째\\n① 가\\t② \\t③ 다\\t④ 라\\t⑤ 마\\n2. 둘째\\n① 바\\t② 사\\t③ 아\\t④ 자\\t⑤ 차');d.insertEquation(0,1,6,'a over b',1000,0);b.deps.eventBus.emit('document-changed');
+      const L=await import('/js/rhwp-exam-layout-tools.js'),W=await import('/js/rhwp-exam-worksheet.js');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});
+      let err='';try{L.relayoutChoices(b,1);}catch(e){err=e.message;}
+      const r=W.makeVariant(b,Math.random,{choices:true});return {err,shuffled:r.shuffled,eq:JSON.parse(d.getPageControlLayout(0)).controls.filter(c=>c.type==='equation').length,line:text()[1]};`);
+    assert.match(eqGuard.err, /수식·그림이 든 선지는/);
+    assert.equal(eqGuard.shuffled, 1, JSON.stringify(eqGuard));
+    assert.equal(eqGuard.eq, 1);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

@@ -157,6 +157,15 @@ export function blockLines(doc, sec, q, tables = topTables(doc)) {
   }
   return out;
 }
+// 수식·그림 개체가 든 자리인지: 본문 문단들(paras) 또는 그 문단의 표(ci) 안. 개체는 글 위치에 잡히지 않아 글만 옮기면 떨어져 남는다.
+export function hasInlineObjects(doc, sec, paras, ci = null) {
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
+    if ((c.secIdx ?? 0) !== sec || !['equation', 'image', 'shape'].includes(c.type) || !paras.includes(c.paraIdx)) continue;
+    const inCell = Number.isInteger(c.cellIdx) || c.cellPath?.length;
+    if (ci === null ? !inCell : inCell && (c.cellPath?.[0]?.controlIndex ?? ci) === ci) return true;
+  }
+  return false;
+}
 // 줄 하나 고치기(본문·표 칸 공통)
 export function editLine(doc, where, start, removeLength, insert = '') {
   if (where.kind === 'body') { if (removeLength) doc.deleteText(where.sec, where.p, start, removeLength); if (insert) doc.insertText(where.sec, where.p, start, insert); }
@@ -251,6 +260,8 @@ export function relayoutChoices(bridge, columns) {
   const options = joined.split(/(?=[①②③④⑤])/).map(s => s.trim()).filter(s => /^[①②③④⑤]/.test(s)).map(s => s.replace(/^[①②③④⑤]\s*/, '').replace(/\t+/g, ' ').trim());
   if (options.length !== 5) throw new Error(`선지 다섯 개를 찾지 못했습니다(찾은 수 ${options.length}).`);
   if (/[^\S ]/.test(joined.replace(/\t/g, ' ')) && /￼/.test(joined)) throw new Error('수식·그림이 든 선지는 아직 배열을 바꿀 수 없습니다.');
+  if (block.kind === 'table' ? hasInlineObjects(doc, block.sec, [block.para], block.ci) : hasInlineObjects(doc, block.sec, Array.from({ length: block.last - block.first + 1 }, (_, i) => block.first + i)))
+    throw new Error('수식·그림이 든 선지는 아직 배열을 바꿀 수 없습니다(수식이 선지에서 떨어지지 않게 막음).');
   const labelled = options.map((s, i) => `${CIRCLED[i]} ${s}`);
   const width = columnWidth(doc, block.sec);
   if (columns === 'auto') columns = autoChoiceColumns(labelled, width);

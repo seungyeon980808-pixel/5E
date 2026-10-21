@@ -3,7 +3,7 @@
 import { insertTable } from './hwp-palette/native.js';
 import { qrPng } from './qr-encode.js';
 import { unitGapIssues } from './rhwp-exam-science-text.js';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps } from './rhwp-exam-layout-tools.js';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps, hasInlineObjects } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
@@ -842,6 +842,7 @@ function shuffleChoices(doc, sec, random, choose = null) {
       };
       const first = segments(), n = first.length;
       if (n < 3 || first.some((sg, i) => sg.mark !== MARKS[i])) continue;
+      if (hasInlineObjects(doc, sec, paras)) continue; // 수식·그림이 든 한 줄 선지는 글 위치로 옮길 수 없어 그대로 둔다
       if (first.every(sg => COMBO.test(textOf(sg.p).slice(sg.start, sg.end).trim()))) continue;
       const perm = pick(k, n); if (!perm) continue;
       const swap = (a, b) => {
@@ -879,7 +880,7 @@ function shuffleChoices(doc, sec, random, choose = null) {
     // 선지 표: 칸 글을 섞어 다시 쓴다.
     let found = null;
     for (let p = b.head; p < b.end && !found; p++) for (const ci of tablesAt.get(p) || []) { const c = tableChoices(p, ci); if (c) { found = { p, ci, choice: c }; break; } }
-    if (!found) continue;
+    if (!found || hasInlineObjects(doc, sec, [found.p], found.ci)) continue;
     const n = found.choice.length, perm = pick(k, n); if (!perm) continue;
     // 칸 내용(번호 기호 뒤)을 서식째 맞바꾼다 — 첨자·수식 같은 글자 모양을 지키려고 글을 다시 쓰지 않고 내부 복사로 옮긴다.
     const { p: tp, ci: tci } = found, len = cell => doc.getCellParagraphLength(sec, tp, tci, cell, 0);
