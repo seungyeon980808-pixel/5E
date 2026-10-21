@@ -52,10 +52,26 @@ export function taskHasReviewNotice(tab) {
     && !previous.some(item => item.id === latest.id);
 }
 
-export function recoverTaskWorkspaceSnapshot(value) {
+// dropInvalid: 시작할 때 저장소에서 되살리는 경우만. 후보 하나가 검사에 걸리면 예전에는 전체 복원이 실패하고
+// 빈 작업대가 저장돼 모든 작업이 덮어써졌다(M43). 걸린 후보만 빼고 droppedCandidates에 원본째 담아 돌려준다.
+// 파일에서 여는 경우(기본값)는 지금처럼 하나라도 틀리면 거부한다.
+export function recoverTaskWorkspaceSnapshot(value, { dropInvalid = false } = {}) {
   if (!value || !Array.isArray(value.tabs)) return null;
+  const droppedCandidates = [];
+  if (dropInvalid) {
+    value = { ...value, tabs: value.tabs.map(tab => {
+      if (!tab || typeof tab.id !== 'string') return tab;
+      const next = { ...tab };
+      for (const key of ['attachments', 'generated']) if (Array.isArray(tab[key])) next[key] = tab[key].filter(item => {
+        try { validateWorkspaceCandidates({ tabs: [{ id: tab.id, [key]: [item] }] }); return true; }
+        catch (error) { droppedCandidates.push({ tabId: tab.id, key, item, reason: String(error?.message || error) }); return false; }
+      });
+      return next;
+    }) };
+  }
   validateWorkspaceCandidates(value);
   const recovered = structuredClone(value);
+  if (droppedCandidates.length) Object.defineProperty(recovered, 'droppedCandidates', { value: droppedCandidates, enumerable: false });
   recovered.tabs = recovered.tabs.filter(tab => tab && typeof tab.id === 'string').map(tab => {
     const generated = Array.isArray(tab.generated) ? tab.generated : [];
     const selected = generated.some(item => item?.id === tab.selectedCandidateId)

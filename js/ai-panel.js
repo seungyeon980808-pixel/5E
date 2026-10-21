@@ -4903,14 +4903,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   };
 
-  // 실행마다 번호를 매긴다. 취소한 이전 라벨 변환이 늦게 끝나면 새 실행의 진행 표시·작업 중 표시를 꺼 버렸다(M42).
-  let submitSerial = 0;
   const submit = async (type, options = {}) => {
     if (panel.dataset.aiSharingMode === 'view') return;
     if (type === 'image' && (isGraphWorkflow(conversionKind) || isGraphWorkflow(options.runInputSnapshot?.conversionKind))) return runGraphRestore(options);
     if (busy || preflightRun) return;
     if (!desktop) return refresh();
-    const runSerial = ++submitSerial;
+    // 실행마다 번호를 매긴다. 취소한 이전 라벨 변환이 늦게 끝나면 새 실행의 진행 표시·작업 중 표시를 꺼 버렸다(M42).
+    const runSerial = submit.serial = (submit.serial || 0) + 1;
     const preflight = {};
     const originatingTaskId = activeTaskTabId;
     const activeInput = type === "chat" ? chatInput : input;
@@ -4990,7 +4989,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         const labelWorkflowRequest = [discussionContext, entered].filter(Boolean).join('\n\n');
         await runImageLabelConversion({ runInput, request: labelWorkflowRequest, generationInstructions: labelWorkflowRequest, options, originatingTaskId });
       } catch (error) {
-        if (!disposed && activeTaskTabId === originatingTaskId && runSerial === submitSerial) {
+        if (!disposed && activeTaskTabId === originatingTaskId && runSerial === submit.serial) {
           const notice = taskTabs.get(originatingTaskId)?.generationNotice === 'review';
           const cancelled = error.name === 'AbortError';
           requestPhase(cancelled ? 'cancelled' : notice ? 'completed' : 'failed'); setGenerating(false); setBusy(false);
@@ -6898,7 +6897,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     syncLiteModeUi(); refreshOutputPreviews(); restartSelectedAutomaticSeparation('view-mode-changed');
   },{signal:lifecycle.signal});
   if (!taskTabs.size) createTaskTab();
-  workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'));if(disposed)return;if(Array.isArray(recovered?.tabs)){if(recovered.sharingMode)panel.dataset.aiSharingMode=recovered.sharingMode;taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){if(!disposed)addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
+  workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'),{dropInvalid:true});if(disposed)return;
+  // 검사에 걸린 후보는 빼고 원본째 따로 보관한다(M43) — 예전에는 하나 때문에 전체 복원이 실패하고 빈 작업대가 덮어썼다.
+  if(recovered?.droppedCandidates?.length){try{await taskStore.put({key:`workspace-dropped-${Date.now()}`,at:new Date().toISOString(),dropped:recovered.droppedCandidates});}catch{}
+    addLog(`이전 이미지 작업 중 후보 ${recovered.droppedCandidates.length}개를 읽지 못해 빼고 열었습니다. 원본은 따로 보관했습니다.`);}if(Array.isArray(recovered?.tabs)){if(recovered.sharingMode)panel.dataset.aiSharingMode=recovered.sharingMode;taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){if(!disposed)addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
     reviewModelSelect.replaceChildren(new Option(modelSelect.value, modelSelect.value));
     reviewModelSelect.value = modelSelect.value;

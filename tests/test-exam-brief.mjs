@@ -71,3 +71,14 @@ test('recovered early brief output drops accidental source-label authority while
   assert.equal(early.imageLabelWorkflow, workflow, 'snapshot does not mutate the live candidate');
   assert.deepEqual(snapshotImageItem({ ...early, examBriefProfile: undefined }).imageLabelWorkflow, workflow);
 });
+
+test('시작 복원은 검사에 걸린 후보만 빼고 나머지 작업을 살린다(M43)', () => {
+  const good = { id: 'c1', name: '좋은 후보', data: 'data:image/png;base64,AAAA' };
+  const bad = { id: 'c2', name: '나쁜 후보', data: 'data:image/png;base64,AAAA', labelPlan: ['배열이면 안 됨'] };
+  const value = { tabs: [{ id: 't1', generated: [good, bad] }, { id: 't2', generated: [good] }] };
+  assert.throws(() => recoverTaskWorkspaceSnapshot(value), '파일에서 열 때는 지금처럼 거부');
+  const restored = recoverTaskWorkspaceSnapshot(value, { dropInvalid: true });
+  assert.deepEqual(restored.tabs.map(tab => tab.generated.map(item => item.id)), [['c1'], ['c1']]);
+  assert.equal(restored.droppedCandidates.length, 1);
+  assert.equal(restored.droppedCandidates[0].item.id, 'c2');
+});
