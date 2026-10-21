@@ -57,6 +57,14 @@ h.withServer(async origin=>{
       await page.evaluate(()=>window.__answer.resolve({response:{reply:'한 번만',review:{axes:{answer:{status:'unverified'}}}},evidence:[],meta:{live:false}}));
       await sheet.waitForSelector('#card-view .msg.ai >> text=한 번만');
       assert.equal(await sheet.locator('#card-view .msg.ai >> text=한 번만').count(),1);
+      // 4-1) M26: 변경안이 온 뒤 교사가 고치고 0.6초 안에 「적용」을 눌러도, 확인 없이 덮어쓰지 않는다.
+      await send('발문 고쳐 줘');
+      await page.evaluate(()=>window.__answer.resolve({response:{reply:'변경안입니다',proposal:{summary:'발문 변경',changes:[{path:'ask',value:'AI가 고친 발문'}]}},evidence:[],meta:{live:false}}));
+      await sheet.waitForSelector('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(900);
+      const dialogs=[];page.on('dialog',d=>{dialogs.push(d.message());void d.dismiss();});
+      await sheet.fill('#cv-ask','교사가 방금 고친 발문');await sheet.click('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(400);
+      assert.equal(dialogs.length,1,'applying right after a teacher edit asks first');assert.match(dialogs[0],/지난 버전/);
+      assert.equal(await sheet.locator('#cv-ask').inputValue(),'교사가 방금 고친 발문','declining keeps the teacher text');
       // 5) 기다리는 동안 문항을 지우면 답을 버린다.
       await send('검토해 줘');
       const count=await sheet.evaluate(()=>document.querySelectorAll('[data-open-card]').length);

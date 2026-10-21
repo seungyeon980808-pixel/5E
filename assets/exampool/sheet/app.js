@@ -776,15 +776,20 @@ async function receiveFigure(m){
 }
 async function sha256Text(text){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(v=>v.toString(16).padStart(2,'0')).join('');}
 const figurePending=q=>[...figureRequests.values()].find(r=>r.qid===q.id)||null;
-function decideProposal(q,id,action,{force=false}={}){
+async function decideProposal(q,id,action,{force=false}={}){
   if(action==='reject'){mutate(()=>{rejectProposal(q,id);},{render:false});cardEditor.refreshAi?.();return;}
-  const p=q.authoring?.proposals.find(x=>x.id===id);if(!p)return;
-  if(p.state!=='current'&&!force&&!confirm('이 변경안은 지난 버전을 기준으로 만들어졌습니다. 지금 내용 위에 적용할까요?'))return;
+  let p=q.authoring?.proposals.find(x=>x.id===id);if(!p)return;
+  // 버전 표시(state)는 입력이 멈춘 뒤 0.6초에 갱신된다. 그 틈에 교사가 고친 내용을 확인 없이 덮어쓰고, 옛 버전 검토를 새 버전 검토로
+  // 기록했다(M26). 적용 직전에 지금 내용의 버전을 직접 계산해 비교한다.
+  let stale=p.state!=='current';
+  if(!stale){const {version}=await reviewVersion(q);stale=version!==q.authoring?.contentHash;}
+  if(stale&&!force&&!confirm('이 변경안은 지난 버전을 기준으로 만들어졌습니다. 지금 내용 위에 적용할까요?'))return;
+  q=data.questions.find(x=>x.id===q.id);p=q?.authoring?.proposals.find(x=>x.id===id);if(!p)return;
   let applied=null;const ok=mutate(()=>{applied=applyProposal(q,id,{force:true});});
   if(ok){status(`AI 변경안을 적용했습니다${applied.errors.length?` · 적용 못 한 변경 ${applied.errors.length}개: ${applied.errors[0].message}`:''} · 되돌리기(⌘Z)로 취소할 수 있습니다.`);
     void syncAuthoring(q.id,{by:'ai',summary:'AI 변경안: '+p.summary.slice(0,200)}).then(()=>{
       // 변경안을 만든 검토는 '변경안 그대로' 적용했을 때만 새 버전의 검토로 남긴다(일부만 적용됐거나 지난 변경안이면 남기지 않음).
-      const live=data.questions.find(x=>x.id===q.id);if(!live||!p.review||applied.errors.length||p.state!=='current')return;
+      const live=data.questions.find(x=>x.id===q.id);if(!live||!p.review||applied.errors.length||stale)return;
       mutate(()=>{recordReview(live,{review:p.review.review,solve:p.review.solve,evidenceUsed:p.review.evidenceUsed},{evidence:new Map(p.review.evidence||[])});},{render:false});cardEditor.refreshAi?.();});}
 }
 function revertAuthoring(q,revision){
