@@ -1283,6 +1283,8 @@ export function initRhwpExamWorkspace(state, services) {
   });
   // 그림 화면 아래 막대의 「한글에 넣기」 단추는 10-21 사용자 결정으로 없앴다(입구는 맨 위 줄 「hwp」 하나).
   // 지금 그림에서 영역을 골라 넣는 동작은 5E_hwp 집중 도구 줄 「그림 → 그림 화면에서 넣기」와 다른 창의 보내기 요청(5e:exam-send-canvas)으로 한다.
+  // 초기화가 여기까지 끝났다는 표시(예전에는 이 자리에서 붙던 아래 막대 단추가 그 신호였다 — 검사 도우미 ready가 기다린다).
+  panel.dataset.examReady = 'true';
   // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
   // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
   window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;void run(open);});

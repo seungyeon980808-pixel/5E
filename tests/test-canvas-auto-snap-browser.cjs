@@ -19,7 +19,7 @@ async function fixture(t, engine) {
   t.after(async () => { await browser.close(); server.closeAllConnections(); await new Promise(r => server.close(r)); });
   await page.addInitScript(() => { localStorage.setItem('5e.tutorial.bannerSeen', 'true'); localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true'); });
   await page.goto(`http://127.0.0.1:${server.address().port}/?mode=pro&mobile=0&exam=0`, {waitUntil:'networkidle'});
-  await page.waitForSelector('#rhwp-exam-workspace',{state:'attached'});
+  await page.waitForSelector('#rhwp-exam-workspace[data-exam-ready="true"]',{state:'attached'});
   return page;
 }
 async function seed(page, objects) {
@@ -56,7 +56,7 @@ for (const engine of ['chromium','webkit']) {
     assert.deepEqual(await snapshot(),locked);
     await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="free"]').click();
     await pan();await page.waitForFunction(y=>window.__snapState.get().viewBox.y!==y,locked.y);
-    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace',{state:'attached'});
+    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace[data-exam-ready="true"]',{state:'attached'});
     assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
   });
   test(`${engine}: automatic alignment can be disabled without changing artwork, survives reload and supports undo`, async t => {
@@ -64,7 +64,7 @@ for (const engine of ['chromium','webkit']) {
     assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
     await page.locator('#auto-snap-btn').click();
     assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'true');
-    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace',{state:'attached'});
+    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace[data-exam-ready="true"]',{state:'attached'});
     assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'true');
     const objects=[{id:'moving',type:'rect',x:-20,y:-10,w:10,h:10,layerId:1,strokeWidth:.2,fill:'#ff0000'}, {id:'fixed',type:'rect',x:15,y:15,w:10,h:10,layerId:1,strokeWidth:.2,fill:'#0000ff'}];
     await seed(page, objects);
@@ -78,7 +78,7 @@ for (const engine of ['chromium','webkit']) {
     assert.deepEqual(await page.evaluate(()=>window.__snapState.get().objects),objects);
     moved=await drag(page,{x:-15,y:-5},{x:19,y:-5});
     assert.ok(Math.abs(moved[0].x-14)<.05,JSON.stringify(moved[0]));
-    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace',{state:'attached'});
+    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace[data-exam-ready="true"]',{state:'attached'});
     assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
     await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'true');
   });

@@ -76,7 +76,7 @@ async function ready(page) {
  const runtime={mainUrl,stateUrl:entry.protocol==='file:'?stateUrl:new URL('/js/state.js'+moduleQuery,entry).href};
  const scripts=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(node=>node.src).filter(url=>new URL(url).pathname.endsWith('/main.js')));
  assert.deepEqual(scripts,[mainUrl],'native entry must load the canonical main from this candidate');
- await page.locator('#rhwp-exam-workspace').waitFor({state:'attached',timeout:60000});
+ await page.locator('#rhwp-exam-workspace[data-exam-ready="true"]').waitFor({state:'attached',timeout:60000});
  const skip=page.getByRole('button',{name:'건너뛰기',exact:true});if(await skip.isVisible())await skip.click();
  if(await page.locator('#rhwp-exam-workspace').isVisible())await h.idle(page);
  const parsed=entry.protocol==='file:'?await parsedFileRuntime(page,runtime):null;

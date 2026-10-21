@@ -125,7 +125,7 @@ async function withServer(run, { isolated = false } = {}) {
 }
 async function ready(page) {
   // 10-21: 그림 화면 아래 막대 「한글에 넣기」(#exam-send)를 없앴다. 조판 창이 만들어지면 준비된 것.
-  await page.waitForSelector('#rhwp-exam-workspace',{state:'attached',timeout:60000});
+  await page.waitForSelector('#rhwp-exam-workspace[data-exam-ready="true"]',{state:'attached',timeout:60000});
   const skip=page.getByRole('button',{name:'건너뛰기',exact:true});if(await skip.isVisible())await skip.click();
   if(await page.locator('#rhwp-exam-workspace').isVisible())await idle(page);
   assertLoadedRuntime(runtimes.get(page),resources.get(page));
