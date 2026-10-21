@@ -115,6 +115,12 @@ export function fromLegacy(v) {
   q.references=(v.references||[]).map(ref=>({target:ref.field||'question',label:ref.title,quote:ref.quote,documentId:ref.resourceId,page:ref.page}));normalizeReferences(q);return q;
 }
 function normalizeReferences(q){for(const ref of q.references){const choice=ref.target.match(/^choice-([0-4])$/),bogi=ref.target.match(/^bogi-([0-2])$/);if(choice)ref.target=q.choices[Number(choice[1])].id;if(bogi)ref.target=q.blocks.find(b=>b.kind==='bogi')?.lines[Number(bogi[1])]?.id||'question';if(ref.target==='bogi')ref.target=q.blocks.find(b=>b.kind==='bogi')?.id||'question';if(ref.target==='passage')ref.target=q.blocks.find(b=>b.kind==='text')?.id||'question';}}
+// 엑셀에서 줄·행을 지우면 그 줄에 걸린 근거가 갈 곳을 잃어 불러오기 전체가 실패했다(M12). 근거는 버리지 않고 문항 전체로 옮긴다.
+export function reattachReferences(q){
+  const ids=new Set([...q.blocks.map(b=>b.id),...q.blocks.flatMap(b=>b.lines?.map(l=>l.id)||[]),...q.choices.map(c=>c.id)]);let moved=0;
+  for(const r of q.references||[])if(r.target!=='question'&&!ids.has(r.target)&&!/^choice-[0-4]$|^bogi-[0-2]$|^passage$|^ask$|^bogi$/.test(r.target)){r.target='question';moved++;}
+  return moved;
+}
 export function targetDisplay(q,target){if(target==='question'||target==='ask')return '문항';const b=q.blocks.find(b=>b.id===target);if(b)return b.label;for(const b of q.blocks){const l=b.lines?.find(l=>l.id===target);if(l)return b.label+' '+l.label;}const at=q.choices.findIndex(c=>c.id===target);return at>=0?'선지 '+'①②③④⑤'[at]:'문항';}
 // 그림 data URL 형식 검사는 그림마다 한 번만(같은 그림 객체·같은 data면 통과로 기억). 키 입력마다 문항 전체를 검사하는데,
 // 그림 15개(약 18MB)면 이 정규식만 키 하나에 100ms 넘게 걸려 카드 입력이 버벅였다.

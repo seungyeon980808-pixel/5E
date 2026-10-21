@@ -1,4 +1,4 @@
-import {FORMAT,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,validate,migrate,syncForm} from './model.js';
+import {FORMAT,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,validate,migrate,syncForm,reattachReferences} from './model.js';
 import {checkXlsxSize,parseWorkbook as parseLegacy} from './legacy-io.js';
 import {ROWS,fieldValue,writeField} from './vertical.js';
 import {formatSize,formatGap,formatRatio,parseSize,parseGap,parseRatio,parseAlign,parseChoiceLayout} from './placement.js';
@@ -62,6 +62,14 @@ export function project(XLSX,data) {
   const json=JSON.stringify(pack),chunks=[];for(let i=0;i<json.length;){let end=Math.min(i+30000,json.length);if(end<json.length&&/[\uD800-\uDBFF]/.test(json[end-1]))end--;chunks.push([json.slice(i,end)]);i=end;}
   sheet(XLSX,wb,'_구조',[[FORMAT],...chunks],[30],0);wb.Workbook={Sheets:wb.SheetNames.map(name=>({name,Hidden:name==='_구조'?1:0}))};
   return {wb,pack,images};
+}
+// 엑셀에 칸이 없는 출제 기록(조판 저장·AI 대화·출제 이력·단계). 「같은 문항은 업데이트」로 불러오면 내보낸 때의 값으로
+// 되돌아가, 내보낸 뒤에 한 조판·대화·이력이 말없이 사라졌다(M11). 지금 화면의 문항 값을 그대로 둔다.
+export const APP_ONLY_KEYS=['typeset','reviews','authoring','workflow'];
+export function keepAppOnly(next,current){
+  if(!current)return next;
+  for(const key of APP_ONLY_KEYS){if(current[key]===undefined)delete next[key];else next[key]=clone(current[key]);}
+  return next;
 }
 export async function exportExcel(XLSX,JSZip,data) {
   const {wb,pack,images}=project(XLSX,data),zip=await JSZip.loadAsync(XLSX.write(wb,{bookType:'xlsx',type:'array',cellStyles:true}));
@@ -171,7 +179,11 @@ export async function importExcel(XLSX,JSZip,buffer) {
   // 시트에서 지운 문항은 시험지 구성에서도 뺀다.
   const qids=new Set(questions.map(q=>q.id));
   const exams=(Array.isArray(pack.exams)?pack.exams:[]).map(e=>({...e,items:(e.items||[]).filter(id=>qids.has(id))}));
-  return {...validate({format:FORMAT,questions,documents}),exams,backedIds:[...old.keys()],warnings:[]};
+  const warnings=[],bundle={format:FORMAT,questions,documents};
+  for(const q of questions){const moved=reattachReferences(q);if(moved)warnings.push(`${q.number||'?'}번 문항: 지운 줄·칸에 걸린 근거 ${moved}개를 문항 전체 근거로 옮겼습니다.`);}
+  // 어느 문항에서 걸렸는지 오류에 번호를 붙인다(M12). 예전에는 「근거 연결을 확인하세요」만 보여 찾을 수 없었다.
+  for(const q of questions){try{validate(bundle,{only:q});}catch(e){throw Error(`${q.number||'?'}번 문항: ${e.message}`);}}
+  return {...validate(bundle),exams,backedIds:[...old.keys()],warnings};
 }
 export async function readPictures(zip,names) {
   const pics=[],attrs=tag=>Object.fromEntries([...tag.matchAll(/([\w:]+)="([^"]*)"/g)].map(m=>[m[1],unesc(m[2])]));

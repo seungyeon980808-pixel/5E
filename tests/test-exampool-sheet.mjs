@@ -96,3 +96,37 @@ test('그림 300장이 든 문항 묶음도 엑셀로 내려받고 다시 올린
   assert.equal(back.questions.length, 60);
   assert.equal(back.questions.flatMap(q => q.choices).filter(c => c.figure).length, 300);
 });
+
+test('「같은 문항은 업데이트」는 엑셀에 없는 조판·대화·단계를 지금 값으로 둔다(M11)', async () => {
+  const {keepAppOnly} = await import('../assets/exampool/sheet/excel.js');
+  const now = newQuestion('1'); now.ask = '화면'; now.workflow = 'review'; now.reviews = [{role: 'me', text: '내보낸 뒤 대화'}];
+  const fromExcel = structuredClone(now); fromExcel.ask = '엑셀에서 고친 발문'; fromExcel.workflow = 'draft'; delete fromExcel.reviews; fromExcel.typeset = {stale: true};
+  const merged = keepAppOnly(fromExcel, now);
+  assert.equal(merged.ask, '엑셀에서 고친 발문');
+  assert.equal(merged.workflow, 'review');
+  assert.deepEqual(merged.reviews, [{role: 'me', text: '내보낸 뒤 대화'}]);
+  assert.equal('typeset' in merged, false, '지금 문항에 없는 조판은 엑셀의 옛 값으로 되살리지 않는다');
+});
+
+test('엑셀에서 근거가 걸린 줄을 지워도 불러오기가 실패하지 않고 근거를 문항으로 옮긴다(M12)', async () => {
+  const q = newQuestion('7'); applyPreset(q, '실험'); q.ask = '발문';
+  const steps = q.blocks.find(b => b.kind === 'steps') || (() => { const b = block('steps'); q.blocks.push(b); return b; })();
+  steps.lines.forEach((l, i) => { l.text = '과정' + i; });
+  const gone = steps.lines.at(-1);
+  q.references.push({target: gone.id, label: '근거', quote: '인용'});
+  const data = {format: FORMAT, questions: [q], documents: [], exams: []}; validate(data);
+  const bytes = await exportExcel(XLSX, JSZip, data);
+  const wb = XLSX.read(bytes, {type: 'array'}), ws = wb.Sheets['구성'], range = XLSX.utils.decode_range(ws['!ref']);
+  let blanked = 0;
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row = Array.from({length: range.e.c + 1}, (_, c) => ws[XLSX.utils.encode_cell({r, c})]?.v);
+    if (row.includes(gone.id)) { for (let c = 0; c <= range.e.c; c++) delete ws[XLSX.utils.encode_cell({r, c})]; blanked++; }
+  }
+  assert.equal(blanked, 1, '지운 줄 하나');
+  const edited = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+  const back = await importExcel(XLSX, JSZip, edited);
+  const bq = back.questions[0];
+  assert.equal(bq.blocks.find(b => b.kind === 'steps').lines.some(l => l.id === gone.id), false);
+  assert.equal(bq.references.find(r => r.quote === '인용').target, 'question');
+  assert.match(back.warnings.join(' '), /7번 문항: 지운 줄·칸에 걸린 근거 1개/);
+});
