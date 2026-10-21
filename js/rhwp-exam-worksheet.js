@@ -777,6 +777,7 @@ export function makeVariant(bridge, random = Math.random, { choices = false } = 
 // 선지 섞기(나형 사본에만): 한 문단에 하나씩인 선지는 문단째(서식 그대로), 3열·5열 선지 표는 칸 글을 섞고 ①부터 다시 붙인다.
 // 문항 안 「[정답] ③」도 바뀐 자리로 고친다. ㄱㄴㄷ·A B C 조합 선지(차례가 관례)와 첨자 등 서식이 섞인 표 칸은 그대로 둔다. 섞은 문항 수.
 const MARKS = '①②③④⑤';
+const checkedCopy = value => { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '선지를 옮기지 못했습니다.'); return r; };
 function shuffleChoices(doc, sec, random, choose = null) {
   const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
   const markAt = p => { const t = textOf(p), i = t.search(/\S/); return i < 0 ? null : { i, mark: t[i], rest: t.slice(i + 1) }; };
@@ -807,7 +808,7 @@ function shuffleChoices(doc, sec, random, choose = null) {
   for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || [])
     if (c.type === 'table' && (c.secIdx ?? 0) === sec && !c.cellPath?.length) { const list = tablesAt.get(c.paraIdx) || []; const ci = c.controlIdx ?? c.ci; if (!list.includes(ci)) list.push(ci); tablesAt.set(c.paraIdx, list); }
   const COMBO = /^[ㄱ-ㅎA-E](?:\s*,\s*[ㄱ-ㅎA-E])*$/;
-  // 3열·5열 선지 표: 칸마다 「①…」 하나, 순서대로, 나머지 칸은 비고, 칸 안 글자 모양이 한 가지(첨자 등이 섞이면 글만 바꿀 수 없어 건너뜀).
+  // 3열·5열 선지 표: 칸마다 「①…」 하나, 순서대로, 나머지 칸은 빈 칸.
   const tableChoices = (p, ci) => {
     const cells = parse(doc.getTableDimensions(sec, p, ci)).cellCount, choice = [];
     for (let cell = 0; cell < cells; cell++) {
@@ -815,8 +816,6 @@ function shuffleChoices(doc, sec, random, choose = null) {
       const len = doc.getCellParagraphLength(sec, p, ci, cell, 0), t = String(doc.getTextInCell(sec, p, ci, cell, 0, 0, len)).trim();
       if (!t) continue;
       if (t[0] !== MARKS[choice.length] || /[①-⑤]/.test(t.slice(1))) return null;
-      const shape = parse(doc.getCellCharPropertiesAt(sec, p, ci, cell, 0, 0)).charShapeId;
-      for (let o = 1; o < len; o++) if (parse(doc.getCellCharPropertiesAt(sec, p, ci, cell, 0, o)).charShapeId !== shape) return null;
       choice.push({ cell, len, content: t.slice(1).trim() });
     }
     return choice.length >= 3 && !choice.every(c => COMBO.test(c.content)) ? choice : null;
@@ -847,11 +846,21 @@ function shuffleChoices(doc, sec, random, choose = null) {
     for (let p = b.head; p < b.end && !found; p++) for (const ci of tablesAt.get(p) || []) { const c = tableChoices(p, ci); if (c) { found = { p, ci, choice: c }; break; } }
     if (!found) continue;
     const n = found.choice.length, perm = pick(k, n); if (!perm) continue;
-    found.choice.forEach((c, i) => {
-      const text = `${MARKS[i]} ${found.choice[perm[i]].content}`;
-      doc.deleteTextInCell(sec, found.p, found.ci, c.cell, 0, 0, c.len);
-      doc.insertTextInCell(sec, found.p, found.ci, c.cell, 0, 0, text);
-    });
+    // 칸 내용(번호 기호 뒤)을 서식째 맞바꾼다 — 첨자·수식 같은 글자 모양을 지키려고 글을 다시 쓰지 않고 내부 복사로 옮긴다.
+    const { p: tp, ci: tci } = found, len = cell => doc.getCellParagraphLength(sec, tp, tci, cell, 0);
+    const bodyStart = cell => { const t = String(doc.getTextInCell(sec, tp, tci, cell, 0, 0, len(cell))); const m = /^\s*[①-⑤]\s*/.exec(t); return m ? m[0].length : 0; };
+    const swapCells = (a, b) => {
+      const sa = bodyStart(a), sb = bodyStart(b), aLen = len(a) - sa, bLen = len(b) - sb;
+      if (aLen > 0) { checkedCopy(doc.copySelectionInCell(sec, tp, tci, a, 0, sa, 0, sa + aLen)); checkedCopy(doc.pasteInternalInCell(sec, tp, tci, b, 0, len(b))); } // b = B|A
+      if (bLen > 0) { checkedCopy(doc.copySelectionInCell(sec, tp, tci, b, 0, sb, 0, sb + bLen)); checkedCopy(doc.pasteInternalInCell(sec, tp, tci, a, 0, len(a))); } // a = A|B
+      if (aLen > 0) doc.deleteTextInCell(sec, tp, tci, a, 0, sa, aLen); // a = B
+      if (bLen > 0) doc.deleteTextInCell(sec, tp, tci, b, 0, sb, bLen); // b = A
+    };
+    const cells = found.choice.map(c => c.cell), current = [...Array(n).keys()];
+    for (let target = 0; target < n; target++) {
+      const at = current.indexOf(perm[target]); if (at === target) continue;
+      swapCells(cells[target], cells[at]); [current[target], current[at]] = [current[at], current[target]];
+    }
     fixAnswer(k, perm, n); count++;
   }
   return count;

@@ -610,6 +610,23 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const preset = await tables();
     assert.deepEqual([preset[0].dims.rowCount, preset[0].dims.colCount], [4, 5]);
     assert.equal(await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table');return JSON.parse(d.getCellProperties(0,t.paraIdx,t.controlIdx,4)).fillType+'/'+d.getTextInCell(0,t.paraIdx,t.controlIdx,4,0,0,2);`), 'solid/평균');
+    // 51) 선지 섞기 — 서식이 섞인 표 선지(H₂O의 아래 첨자)도 서식째 옮긴다.
+    const formatted = await inPage(page, `reset('1. 첫째\\n① 가 ② 나 ③ 다 ④ H2O ⑤ 마\\n[정답] ④\\n2. 둘째\\n① 바 ② 사 ③ 아 ④ 자 ⑤ 차');d.setColumnDef(0,1,0,true,0);
+      for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({subscript:false,superscript:false}));
+      const L=await import('/js/rhwp-exam-layout-tools.js'),W=await import('/js/rhwp-exam-worksheet.js');
+      b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});L.relayoutChoices(b,5);
+      const t0=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length);d.applyCharFormatInCell(0,t0.paraIdx,t0.controlIdx,3,0,3,4,JSON.stringify({subscript:true}));
+      const seq=[.1,.9,.3,.7,.5,.2,.8,.4];let k=0;const r=W.makeVariant(b,()=>seq[k++%seq.length],{choices:true});
+      const c=new d.constructor(r.bytes);try{c.convertToEditable?.();
+        const t=JSON.parse(c.getPageControlLayout(0)).controls.find(x=>x.type==='table'&&!x.cellPath?.length),ci=t.controlIdx;
+        const cells=[0,1,2,3,4].map(cell=>c.getTextInCell(0,t.paraIdx,ci,cell,0,0,c.getCellParagraphLength(0,t.paraIdx,ci,cell,0)));
+        const h=cells.findIndex(x=>x.includes('H2O')),sub=JSON.parse(c.getCellCharPropertiesAt(0,t.paraIdx,ci,h,0,cells[h].indexOf('2'))).subscript;
+        return {shuffled:r.shuffled,cells,sub,answer:r.mapping.find(m=>m.original===1).answer};}finally{c.free();}`);
+    assert.ok(formatted.shuffled >= 1, JSON.stringify(formatted));
+    assert.deepEqual(formatted.cells.map(t => t[0]), ['①', '②', '③', '④', '⑤']);
+    assert.deepEqual(formatted.cells.map(t => t.slice(2)).sort(), ['H2O', '가', '나', '다', '마']);
+    assert.equal(formatted.sub, true, 'subscript kept');
+    assert.equal(formatted.cells.find(t => t[0] === formatted.answer).slice(2), 'H2O', 'answer follows H2O');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
