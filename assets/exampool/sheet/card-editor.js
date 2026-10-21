@@ -575,7 +575,7 @@ export function createCardEditor(root,api){
     if(d.cv==='shape'){setShape(!shapeOpen);if(shapeOpen)root.querySelector('.cv-shape-menu [aria-checked="true"]')?.focus();return;}
     if(d.cvform){const k=d.cvform;setShape(false);if(k===formOf(x))return;
       const lost=formLosses(x,k);if(lost.length){const n=lost.reduce((s,b)=>s+b.lines.filter(l=>l.text.trim()).length,0);if(!confirm(`${FORMS[k].name}(으)로 바꾸면 ${lost[0].kind==='bogi'?'보기':'대화'} ${n}줄을 지웁니다. 바꿀까요?`))return;}
-      api.edit(()=>applyForm(x,k));api.status?.(`${FORMS[k].name}(으)로 바꿨습니다.`);return;}
+      if(api.edit(()=>applyForm(x,k)))api.status?.(`${FORMS[k].name}(으)로 바꿨습니다.`);return;}
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct){api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}
@@ -585,7 +585,10 @@ export function createCardEditor(root,api){
       const i=blk.lines.length,BOGI=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ'],CAP=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];
       const label=key==='bogi'?BOGI[i]||String(i+1):key==='steps'?CAP[i]||`(${i+1})`:`학생 ${'ABCDEFGH'[i]||i+1}`;
       blk.lines.push({id:crypto.randomUUID(),label,text:''});});return;}
-    if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key);blk.lines.splice(i,1);if(key==='bogi'&&!isCombo(x)&&!blk.lines.length){x.blocks=x.blocks.filter(v=>v!==blk);return;}if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
+    if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key),[gone]=blk.lines.splice(i,1),drop=key==='bogi'&&!isCombo(x)&&!blk.lines.length;
+      // 지운 줄에 걸린 근거는 줄이 속한 칸(칸도 없어지면 문항)으로 옮긴다. 남겨 두면 검사에 걸려 ×가 아무 일도 하지 않았다(M16).
+      for(const ref of x.references||[])if(gone&&ref.target===gone.id)ref.target=drop?'question':blk.id;
+      if(drop){x.blocks=x.blocks.filter(v=>v!==blk);return;}if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
     if(d.cvunit){cardEdit('unit',()=>{x.unitLarge=d.cvunit;});return;}
     if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));cardEdit('source',()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}

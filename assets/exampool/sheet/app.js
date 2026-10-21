@@ -3,7 +3,7 @@ import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPrevi
 import {renderNav,renderLibrary,renderExams,renderExam} from './pool-views.js';
 import {createCardEditor} from './card-editor.js';
 import {busyHtml,pastBusyHtml} from './card-shared.js';
-import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,renumberExam} from './exams.js';
+import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {exportExcel,importExcel} from './excel.js';
@@ -578,7 +578,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelec
 let dragId=null;
 $('#examd-view').addEventListener('dragstart',e=>{const row=e.target.closest('[data-order]');if(!row)return;dragId=row.dataset.order;e.dataTransfer.effectAllowed='move';row.classList.add('dragging');});
 $('#examd-view').addEventListener('dragover',e=>{if(!dragId)return;const row=e.target.closest('[data-order]');if(row){e.preventDefault();document.querySelectorAll('.pv-orow.drop-before').forEach(n=>n.classList.remove('drop-before'));row.classList.add('drop-before');}});
-$('#examd-view').addEventListener('drop',e=>{const exam=examNow(),row=e.target.closest('[data-order]');if(!exam||!dragId||!row)return;e.preventDefault();const to=exam.items.indexOf(row.dataset.order),id=dragId;dragId=null;mutate(()=>{moveInExam(data,exam.id,id,to);renumberExam(data,exam.id);});});
+$('#examd-view').addEventListener('drop',e=>{const exam=examNow(),row=e.target.closest('[data-order]');if(!exam||!dragId||!row)return;e.preventDefault();const id=dragId,to=dropBeforeIndex(exam.items,id,row.dataset.order);dragId=null;if(to<0||to===exam.items.indexOf(id))return;mutate(()=>{moveInExam(data,exam.id,id,to);renumberExam(data,exam.id);});});
 $('#examd-view').addEventListener('dragend',()=>{dragId=null;document.querySelectorAll('.pv-orow.dragging,.pv-orow.drop-before').forEach(n=>n.classList.remove('dragging','drop-before'));});
 // 5E_hwp로 보내기: 시험지 한 부(HWPX)를 5E 시험지 편집기에서 연다. 완성이 아닌 문항도 보낸다. 조판 저장이 없는 문항은 먼저 저장해야 한다.
 let examRequest=null;

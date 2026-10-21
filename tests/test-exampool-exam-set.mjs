@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import {validate} from '../assets/exampool/sheet/model.js';
 import {questionFingerprint} from '../assets/exampool/sheet/typeset-model.js';
 import {paginateQuestions,examPlan,paperMix,paperMixMessage} from '../assets/exampool/sheet/exam-layout.js';
-import {newExam,addToExam,removeFromExam,moveInExam,libraryQuestions,examOf,normalizeExams} from '../assets/exampool/sheet/exams.js';
+import {newExam,addToExam,removeFromExam,moveInExam,dropBeforeIndex,libraryQuestions,examOf,normalizeExams} from '../assets/exampool/sheet/exams.js';
 import {filteredQuestions,workflowOf} from '../assets/exampool/sheet/views.js';
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
 const data=()=>structuredClone(examples);
@@ -70,4 +70,9 @@ test('an exam whose questions were typeset on different papers is reported as mi
   assert.match(paperMixMessage(mixed),/용지가 섞여 있습니다\(B4 1번 \/ A4 2번·3번\)/);
   for(const q of d.questions)q.typeset={profile:{paper:'B4',columns:2},verified:true};
   assert.equal(paperMix(examPlan(d,exam).items),null,'one paper is not mixed');
+});
+
+test('끌어 놓기: 파란 선(그 문항 앞)에 정확히 놓인다(M17)',()=>{
+  const drop=(items,id,before)=>{const next=[...items],to=dropBeforeIndex(next,id,before);next.splice(next.indexOf(id),1);next.splice(to,0,id);return next.join('');};
+  assert.equal(drop([...'ABCD'],'A','C'),'BACD');assert.equal(drop([...'ABCD'],'D','B'),'ADBC');assert.equal(drop([...'ABCD'],'B','C'),'ABCD');assert.equal(dropBeforeIndex([...'AB'],'A','Z'),-1);
 });

@@ -32,5 +32,10 @@ export function moveInExam(data,examId,qid,to){
   const exam=examById(data,examId),at=exam?.items.indexOf(qid);if(!exam||at<0)return false;
   to=Math.max(0,Math.min(to,exam.items.length-1));if(to===at)return false;exam.items.splice(at,1);exam.items.splice(to,0,qid);touch(exam);return true;
 }
+// 끌어 놓기의 파란 선은 「이 문항 앞」이다. 아래로 끌면 자기 자리가 빠지며 한 칸 당겨지므로 그만큼 뺀다(M17).
+export function dropBeforeIndex(items,qid,beforeId){
+  const at=items.indexOf(qid),target=items.indexOf(beforeId);if(at<0||target<0)return -1;
+  return at<target?target-1:target;
+}
 // 시험지 순서대로 문항 번호(1, 2, …)를 매긴다.
 export function renumberExam(data,examId){const exam=examById(data,examId);if(!exam)return;exam.items.forEach((id,i)=>{const q=data.questions.find(x=>x.id===id);if(q)q.number=String(i+1);});}
