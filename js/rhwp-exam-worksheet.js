@@ -375,13 +375,15 @@ function tableAfterCursor(bridge, doc, rows, cols, grid, options) {
 }
 const setCell = (doc, t, cell, props) => doc.setCellProperties(t.sec, t.para, t.ci, cell, JSON.stringify(props));
 
-export const BOX_PRESETS = [['개념 정리', '#eef2f7'], ['탐구 활동', '#eef6ee'], ['생각해 보기', '#fbf3e4'], ['주의', '#fbeaea']];
+// [제목, 머리 음영, 미리 채울 줄(없으면 빈 칸)]
+export const BOX_PRESETS = [['개념 정리', '#eef2f7'], ['탐구 활동', '#eef6ee'], ['생각해 보기', '#fbf3e4'], ['주의', '#fbeaea'],
+  ['유의 사항', '#eef2f7', ['1. 답안지에 학년·반·번호·이름을 정확히 쓰시오.', '2. 선택형은 컴퓨터용 사인펜으로 답안지에 표기하시오.', '3. 서술형은 검은색 볼펜으로 답란 안에 쓰시오.', '4. 문항에 따라 배점이 다르니 각 물음의 끝에 표시된 배점을 참고하시오.']]];
 // 제목 줄(음영·굵게)과 내용 칸 하나로 된 상자.
 export function insertBox(bridge, title = '개념 정리') {
   requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), shade = (BOX_PRESETS.find(([t]) => t === title) || BOX_PRESETS[0])[1];
+  const doc = bridge.wasm.borrowDocumentHandle(), [, shade, lines] = BOX_PRESETS.find(([t]) => t === title) || BOX_PRESETS[0];
   bridge.transaction('insert-box', () => {
-    const t = tableAfterCursor(bridge, doc, 2, 1, [[title], ['']], { width: columnWidth(doc), border: 'Solid', heights: [mmUnits(7), mmUnits(30)] });
+    const t = tableAfterCursor(bridge, doc, 2, 1, [[title], [lines ? { kind: 'multiline', lines } : '']], { width: columnWidth(doc), border: 'Solid', heights: [mmUnits(7), mmUnits(lines ? 6 * lines.length : 30)] });
     setCell(doc, t, 0, { fillType: 'solid', fillColor: shade });
     doc.applyCharFormatInCell(t.sec, t.para, t.ci, 0, 0, 0, [...title].length, JSON.stringify({ bold: true }));
     return true;
