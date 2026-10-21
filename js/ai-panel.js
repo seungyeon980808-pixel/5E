@@ -4903,11 +4903,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   };
 
+  // 실행마다 번호를 매긴다. 취소한 이전 라벨 변환이 늦게 끝나면 새 실행의 진행 표시·작업 중 표시를 꺼 버렸다(M42).
+  let submitSerial = 0;
   const submit = async (type, options = {}) => {
     if (panel.dataset.aiSharingMode === 'view') return;
     if (type === 'image' && (isGraphWorkflow(conversionKind) || isGraphWorkflow(options.runInputSnapshot?.conversionKind))) return runGraphRestore(options);
     if (busy || preflightRun) return;
     if (!desktop) return refresh();
+    const runSerial = ++submitSerial;
     const preflight = {};
     const originatingTaskId = activeTaskTabId;
     const activeInput = type === "chat" ? chatInput : input;
@@ -4987,7 +4990,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         const labelWorkflowRequest = [discussionContext, entered].filter(Boolean).join('\n\n');
         await runImageLabelConversion({ runInput, request: labelWorkflowRequest, generationInstructions: labelWorkflowRequest, options, originatingTaskId });
       } catch (error) {
-        if (!disposed && activeTaskTabId === originatingTaskId) {
+        if (!disposed && activeTaskTabId === originatingTaskId && runSerial === submitSerial) {
           const notice = taskTabs.get(originatingTaskId)?.generationNotice === 'review';
           const cancelled = error.name === 'AbortError';
           requestPhase(cancelled ? 'cancelled' : notice ? 'completed' : 'failed'); setGenerating(false); setBusy(false);
