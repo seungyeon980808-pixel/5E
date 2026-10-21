@@ -73,6 +73,8 @@ export class ExamInlineEditor {
       if (event.target.matches('input,textarea,select')) return;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {event.preventDefault();void this.action(event.shiftKey ? 'redo' : 'undo');}
       else if (!this.session?.simple && (event.key === 'Delete' || event.key === 'Backspace')) {event.preventDefault();void this.action('delete');}
+      // 간단 편집 중의 Delete·Backspace가 창 밖으로 흘러 뒤에 숨은 그림의 객체를 지우지 않게(H3)
+      else if (event.key === 'Delete' || event.key === 'Backspace') event.stopPropagation();
     });
   }
   field(name) { return this.root.querySelector(`[data-inline-field="${name}"]`); }

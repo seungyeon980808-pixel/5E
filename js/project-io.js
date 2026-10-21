@@ -715,6 +715,12 @@ function openProject(state, file) {
       const portable = !png && !executable ? parseFiveEProject(reader.result,prepareLoadedProject) : null;
       if (!png && !executable && (!portable || portable.kind === 'exam')) {
         if (!portableProjectIO.openExam) throw new Error('시험지 작업 공간을 준비해주세요.');
+        // 시험지 종류 .5e도 그림 프로젝트 열기와 같이 먼저 묻는다 — 묻지 않고 그림 페이지·되돌리기 기록이 통째로 바뀌던 것(H4).
+        const okExam = await showConfirm(
+          "이 시험지 프로젝트를 열까요?\n지금 작업은 먼저 자동 저장한 뒤 바꿉니다.",
+          { title: "시험지 프로젝트 열기", okText: "열기", cancelText: "취소" },
+        );
+        if (!okExam) return;
         await portableProjectIO.openExam(new Uint8Array(reader.result));return;
       }
       const data = png ? figure.source : executable ? JSON.parse(json) : portable.drawing;

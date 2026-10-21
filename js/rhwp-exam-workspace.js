@@ -1301,7 +1301,7 @@ export function initRhwpExamWorkspace(state, services) {
   services.configurePortableProjectIO({saveExam:async()=>{
     if(window.fiveEDesktop?.exam?.projectSnapshot){const bytes=await window.fiveEDesktop.exam.projectSnapshot();return bytes?new Blob([bytes],{type:'application/zip'}):null;}
     return bridge?.input ? stableSave() : null;
-  },snapshot:captureWorkspace,restore:restoreWorkspace,openExam:async bytes=>{await open();if(location.protocol==='file:' && window.fiveEDesktop?.exam?.openProject) await window.fiveEDesktop.exam.openProject(bytes.buffer);else await loadProject(bytes);}});
+  },snapshot:captureWorkspace,restore:restoreWorkspace,openExam:async bytes=>{await open();if(location.protocol==='file:' && window.fiveEDesktop?.exam?.openProject) await window.fiveEDesktop.exam.openProject(bytes.buffer);else {await stableSave();await loadProject(bytes);}/* 다른 열기 경로처럼 지금 작업을 먼저 저장(H4) */}});
   window.fiveEDesktop?.exam?.onWorkspaceRequest(async request=>{
     try {
       let value;

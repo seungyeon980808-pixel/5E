@@ -1,4 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
+import { coveringApp } from './app-lock.js?v=1021-lock';
 /* ===== PLATFORM =====
  * Mac과 Windows는 수식키 규칙이 다르다. 이 파일이 그 차이를 한곳에 모은다.
  *
@@ -66,7 +67,10 @@ function isComposingKey(e) {
   return !!e.isComposing || e.keyCode === 229;
 }
 
+// 출제 칸·조판 창이 그림 화면을 덮고 있을 때도 「막힌 상태」다. 그림 화면 잠금(inert)은 키 입력을 막지 못해서,
+// 칸이 열려 있어도 ⌘Z·Delete·방향키·⌘V가 뒤에 숨은 그림을 바꾸던 것(H3).
 function hasBlockingModal() {
+  if (coveringApp()) return true;
   const persistentLiteEditor = document.documentElement?.dataset.mode === 'lite'
     && document.documentElement?.dataset.liteResultMode === 'edit';
   return [...document.querySelectorAll('.modal-overlay:not([hidden]):not([inert])')]

@@ -28,6 +28,7 @@ import { pickSelectableObjectAtPoint, isLabelerTextPoint } from "./pick.js?v=1.7
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
 import { isSpaceHeld } from "./tools.js?v=1.7.0-four-session-integration";
+import { hasBlockingModal } from "./platform.js?v=1.7.0-four-session-integration";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives
@@ -2191,6 +2192,7 @@ function setupTextEditShortcuts() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (_textEditor) return;                                   // already editing
+    if (hasBlockingModal()) return;                            // 출제 칸·조판 창·팝업이 덮고 있으면 뒤 그림 글자를 열지 않음(H3)
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if (e.key !== "F2" && e.key !== "Enter") return;
