@@ -295,7 +295,9 @@ export function initRhwpExamWorkspace(state, services) {
     timer = setTimeout(() => {
       if (busy) { scheduleSave(); return; }
       void saveNow().catch(error => message(`자동 저장 실패: ${error.message}`, true));
-    }, 900);
+    // 조판 창을 닫아 둔 동안에도 그림 화면의 변경이 시험지 자동 저장(HWPX 내보내기·zip·IndexedDB)을 0.9초마다 돌려
+    // 그림을 끌다 멈출 때 버벅였다(M5). 닫혀 있을 때는 한참 쉰 뒤에만 저장한다(닫기 직전 변경도 결국 저장된다).
+    }, panel.hidden ? 8000 : 900);
   }
   function changed() { stamp++; renderFigures(); scheduleSave(); }
   async function saveNow() {
