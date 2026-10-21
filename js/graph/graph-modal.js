@@ -2251,10 +2251,13 @@ function deleteSeries(index) {
   const ids = new Set([series.objectId, series.reconstruction?.seriesId].filter(Boolean));
   // Preserve visible annotations at their last contact; deleting the function
   // must not leave references to an absent curve or silently erase labels.
+  // 다시 붙이기는 기준 대비 이동량을 더하는 계산이라, 실제 편집값에 바로 하면 미리보기·적용 때 또 더해져 끝점이 곡선에서 떨어졌다
+  // (예전엔 여기서 두 번 + 적용 때 한 번 = 세 배, H11). 복사본에서 한 번만 계산하고(prepareSeries 안에서 다시 붙임),
+  // 지우는 계열에 붙어 있던 표기만 그 마지막 자리를 가져온다. 나머지 표기는 미리보기·적용 때 한 번만 다시 붙는다.
   if (_previewPlane) {
-    const plane = { ..._previewPlane, graphAnnotations: _cfg.graphAnnotations || [] };
-    const prepared = prepareSeries(plane);
-    if (prepared.ok) rebindGraphAnnotations(plane, prepared.list);
+    const live = _cfg.graphAnnotations || [], copies = structuredClone(live);
+    const prepared = prepareSeries({ ..._previewPlane, graphAnnotations: copies });
+    if (prepared.ok) live.forEach((annotation, i) => { if (ids.has(annotation.seriesId)) Object.assign(annotation, copies[i]); });
   }
   for (const annotation of _cfg.graphAnnotations || []) if (ids.has(annotation.seriesId)) {
     for (const key of ['seriesId', 'pointIndex', 'curveAnchor', 'anchorX']) delete annotation[key];
