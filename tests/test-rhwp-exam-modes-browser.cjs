@@ -452,6 +452,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(plain5.map(t => t.slice(2)).sort(), ['가', '나', '다', '라', '마']);
     const tableAnswer = tableVariant.mapping.find(m => m.original === 1).answer;
     assert.equal(plain5.find(t => t[0] === tableAnswer).slice(2), '나', JSON.stringify(tableVariant));
+    // 38) 만드는 순서: 펼쳐서 단계를 누르면 그 묶음이 열리고 해당 단추가 밝혀진다. 학습지 순서로 바꿀 수 있다.
+    await page.locator('.exam-guide summary').click();
+    await page.locator('[data-exam-guide="2"]').click();
+    assert.equal(await page.locator('[data-exam-ftab="item"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await button(page, '커서가 있는 문항 끝에 「[정답]').evaluate(el => el.classList.contains('is-hint')), true);
+    await page.locator('[data-exam-guide-kind="sheet"]').click(); await page.locator('[data-exam-guide="2"]').click();
+    assert.equal(await page.locator('[data-exam-ftab="sheet"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await button(page, '문서의 굵은 낱말을').evaluate(el => el.classList.contains('is-hint')), true);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

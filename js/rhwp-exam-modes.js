@@ -489,6 +489,39 @@ export function installExamModes(panel, services) {
   });
   document.addEventListener('mousedown', event => { if (!pop.hidden && !event.target.closest('.exam-pop,[data-exam-fx]')) closePop(); }, true);
 
+  // ── 왼쪽 칸 「만드는 순서」: 시험지·학습지를 만드는 차례. 누르면 그 묶음을 열고 해당 단추를 잠깐 밝힌다. ──
+  const GUIDE = {
+    exam: [['판짜기', 'layout', '문서 맨 앞에 제목 줄', '시험지 머리'], ['문항 틀·발문·선지', 'item', '문항 틀 넣기', '문항 쓰기'], ['정답·배점·해설', 'item', '커서가 있는 문항 끝에 「[정답]', '정답·배점'],
+      ['점검', null, null, '✓ 점검'], ['쪽 번호·단 채우기', 'layout', '모든 쪽 아래 가운데에', '마무리'], ['학생용·정답 해설·분류표', 'layout', '문항마다 「번호. 정답」', '내보내기']],
+    sheet: [['학습지 틀', 'sheet', '제목·이름 칸과 상자', '틀 넣기'], ['핵심어 굵게 쓰기', 'text', '굵게', '내용 쓰기'], ['굵은 글씨→빈칸', 'sheet', '문서의 굵은 낱말을', '빈칸 만들기'],
+      ['QR·상자·답란', 'sheet', '영상·자료 주소를 QR', '자료 더하기'], ['학생용·정답지', 'sheet', '빈칸을 「', '내려받기']],
+  };
+  const GUIDE_KEY = '5e.hwp.guide';
+  const guide = document.createElement('details');
+  guide.className = 'exam-guide';
+  try { guide.open = localStorage.getItem(GUIDE_KEY) === 'open'; } catch {}
+  let guideKind = 'exam';
+  const renderGuide = () => {
+    guide.innerHTML = `<summary>만드는 순서</summary><div class="exam-guide-kinds" role="group"><button type="button" data-exam-guide-kind="exam" aria-pressed="${guideKind === 'exam'}">시험지</button><button type="button" data-exam-guide-kind="sheet" aria-pressed="${guideKind === 'sheet'}">학습지</button></div>
+      <ol>${GUIDE[guideKind].map(([what, , , step], i) => `<li><button type="button" data-exam-guide="${i}"><small>${esc(step)}</small> ${esc(what)}</button></li>`).join('')}</ol>`;
+  };
+  renderGuide();
+  guide.addEventListener('toggle', () => { try { localStorage.setItem(GUIDE_KEY, guide.open ? 'open' : 'closed'); } catch {} });
+  guide.addEventListener('click', event => {
+    const kind = event.target.closest('[data-exam-guide-kind]');
+    if (kind) { guideKind = kind.dataset.examGuideKind; renderGuide(); guide.open = true; return; }
+    const step = event.target.closest('[data-exam-guide]'); if (!step) return;
+    const [, tabKey, title] = GUIDE[guideKind][Number(step.dataset.examGuide)];
+    let target = null;
+    if (!tabKey) target = bar.querySelector('[data-exam-fx="check"]');
+    else { bar.querySelector(`[data-exam-ftab="${tabKey}"]`)?.click(); target = [...bar.querySelectorAll('.exam-fgroup [data-exam-fi]')].find(b => (b.title || '').startsWith(title)); }
+    if (!target) return;
+    target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    target.classList.remove('is-hint'); void target.offsetWidth; target.classList.add('is-hint');
+    setTimeout(() => target.classList.remove('is-hint'), 1600);
+  });
+  panel.querySelector('.exam-sidebar')?.prepend(guide);
+
   // ── 왼쪽 칸 문항 목록: 누르면 그 문항으로, ↑↓로 순서 바꾸기(번호는 다시 매김) ──
   const outline = document.createElement('section');
   outline.className = 'exam-outline'; outline.setAttribute('aria-label', '문항 목록');
