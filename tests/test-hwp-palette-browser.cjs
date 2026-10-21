@@ -30,7 +30,7 @@ async function exercise(page, origin) {
         buildQuestionWorkbook,
         blockRows,
       } = await import("/js/hwp-palette/workbook.js");
-    const api = window.fiveEPalette,
+    const api = window.fiveEHwpPalette,
       n = api.native,
       b = n.bridge(),
       d = b.wasm.borrowDocumentHandle(),

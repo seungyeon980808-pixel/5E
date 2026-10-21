@@ -25,7 +25,7 @@ async function exercise(page, origin) {
     );
     const { loadOpenCv, convertExamImage, physicalImageSize, IMAGE_STYLES } =
       await import("/js/hwp-palette/image.js");
-    const api = window.fiveEPalette,
+    const api = window.fiveEHwpPalette,
       n = api.native,
       b = n.bridge(),
       d = b.wasm.borrowDocumentHandle();
@@ -342,7 +342,7 @@ async function exercise(page, origin) {
   });
   const originalText = await page.evaluate(() =>
     String(
-      window.fiveEPalette.native
+      window.fiveEHwpPalette.native
         .bridge()
         .wasm.borrowDocumentHandle()
         .getTextFileText(),
@@ -360,7 +360,7 @@ async function exercise(page, origin) {
   await page.locator('[data-palette-action="content-save"]').waitFor();
   await h.idle(page);
   await page.evaluate(async () =>
-    window.fiveEPalette.native.insertChar("조각수정검증"),
+    window.fiveEHwpPalette.native.insertChar("조각수정검증"),
   );
   await page.locator('[data-palette-action="content-save"]').click();
   await page
@@ -368,7 +368,7 @@ async function exercise(page, origin) {
     .waitFor({ state: "hidden" });
   await h.idle(page);
   const edited = await page.evaluate(async (id) => {
-    const api = window.fiveEPalette,
+    const api = window.fiveEHwpPalette,
       { itemBytes } = await import("/js/hwp-palette/model.js");
     const item = api.store.state.library["템플릿"].find((i) => i.id === id);
     return {

@@ -93,7 +93,7 @@ export function initRhwpExamWorkspace(state, services) {
   });
   // A small public capability surface also makes standalone port regressions
   // exercise the same instances the user operates.
-  window.fiveEPalette = palette;
+  window.fiveEHwpPalette = palette; // 화면 색(graphite-shell)의 window.fiveEPalette와 이름이 겹쳐 덮어쓰이던 것을 피함
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });

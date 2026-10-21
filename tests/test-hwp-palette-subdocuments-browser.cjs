@@ -3,6 +3,8 @@ const { chromium, webkit } = require(
   process.env.PLAYWRIGHT_MODULE || "playwright",
 );
 const h = require("./helpers/rhwp-exam.cjs");
+// 증거 파일을 쓰는 폴더는 Git에서 빠져 있어 새 작업 폴더엔 없다 — 먼저 만든다.
+require("node:fs").mkdirSync("_work/palette-qa", { recursive: true });
 
 async function exercise(page, origin) {
   const errors = [];
@@ -17,7 +19,7 @@ async function exercise(page, origin) {
     const { unzipSync, zipSync } = await import("/vendor/fflate/index.js");
     const { xmlDocument } = await import("/js/hwp-palette/workbook.js");
     const { bytesToBase64 } = await import("/js/hwp-palette/model.js");
-    const n = window.fiveEPalette.native,
+    const n = window.fiveEHwpPalette.native,
       b = n.bridge();
     const d = () => b.wasm.borrowDocumentHandle();
     const xml = () =>
@@ -46,7 +48,7 @@ async function exercise(page, origin) {
         await new Promise((resolve) => canvas.toBlob(resolve))
       ).arrayBuffer(),
     );
-    await window.fiveEPalette.store.update((s) => {
+    await window.fiveEHwpPalette.store.update((s) => {
       s.photos.push({
         id: "subdoc-photo",
         asset: "subdoc-photo",
@@ -138,7 +140,7 @@ async function exercise(page, origin) {
       name: "영역조각",
       label: "영역조각",
     };
-    await window.fiveEPalette.store.update((s) => {
+    await window.fiveEHwpPalette.store.update((s) => {
       s.assets[template.asset] = bytesToBase64(capturedHeader.bytes);
     });
     b.input.cursor.setHfCursorPosition(0, 0);
@@ -200,7 +202,7 @@ async function exercise(page, origin) {
       asset: "slot-source",
       name: "영역빈칸",
     };
-    await window.fiveEPalette.store.update((s) => {
+    await window.fiveEHwpPalette.store.update((s) => {
       s.assets[slotItem.asset] = bytesToBase64(zipSync(files));
     });
     const inspected = await n.inspectFile(zipSync(files));
@@ -291,7 +293,7 @@ async function exercise(page, origin) {
       asset: "foreign-note",
       name: "외부각주조각",
     };
-    await window.fiveEPalette.store.update((s) => {
+    await window.fiveEHwpPalette.store.update((s) => {
       s.assets[foreignItem.asset] = bytesToBase64(foreignBytes);
     });
     n.focusPosition({ sectionIndex: 0, paragraphIndex: 0, charOffset: 0 });
@@ -432,7 +434,7 @@ async function exercise(page, origin) {
     );
     reopened.push(
       await page.evaluate(() => {
-        const b = window.fiveEPalette.native.bridge(),
+        const b = window.fiveEHwpPalette.native.bridge(),
           d = b.wasm.borrowDocumentHandle();
         const pics = b.documentPictures().filter((p) => p.ref.headerFooter);
         return {
@@ -465,7 +467,7 @@ async function exercise(page, origin) {
   // Swap the actual bitmap in a header, and cross the document-handle swap
   // through native undo/redo. Keep this separate from XML structure assertions.
   result.pictureHistory = await page.evaluate(async () => {
-    const b = window.fiveEPalette.native.bridge(),
+    const b = window.fiveEHwpPalette.native.bridge(),
       ref = b
         .documentPictures()
         .find((p) => p.ref.headerFooter && !p.ref.cellPath?.length).ref;
@@ -505,7 +507,7 @@ async function exercise(page, origin) {
   });
   // Exercise the shipped note buttons, including native keyboard input.
   await page.evaluate(() =>
-    window.fiveEPalette.native.focusPosition({
+    window.fiveEHwpPalette.native.focusPosition({
       sectionIndex: 0,
       paragraphIndex: 0,
       charOffset: 0,
@@ -515,7 +517,7 @@ async function exercise(page, origin) {
     page.evaluate(
       () =>
         JSON.parse(
-          window.fiveEPalette.native
+          window.fiveEHwpPalette.native
             .bridge()
             .wasm.borrowDocumentHandle()
             .getControls(),
@@ -535,7 +537,7 @@ async function exercise(page, origin) {
   await tool("note-insert");
   assert.equal(await noteCount(), count + 1);
   await page.evaluate(() =>
-    window.fiveEPalette.native.bridge().input.textarea.focus(),
+    window.fiveEHwpPalette.native.bridge().input.textarea.focus(),
   );
   await page.keyboard.type("typed note");
   assert.match(
@@ -543,7 +545,7 @@ async function exercise(page, origin) {
       const { unzipSync } = await import("/vendor/fflate/index.js");
       return new TextDecoder().decode(
         unzipSync(
-          window.fiveEPalette.native
+          window.fiveEHwpPalette.native
             .bridge()
             .wasm.borrowDocumentHandle()
             .exportHwpx(),
@@ -563,7 +565,7 @@ async function exercise(page, origin) {
     path: `_work/palette-qa/subdocuments-screen-${page.context().browser().browserType().name()}.png`,
   });
   await page.evaluate(() => {
-    const manager = window.fiveEPalette.native.bridge().input.viewportManager;
+    const manager = window.fiveEHwpPalette.native.bridge().input.viewportManager;
     manager.setScrollTop(0);
     manager.setScrollLeft(0);
   });
@@ -587,7 +589,7 @@ async function exercise(page, origin) {
   result.secondSection = await page.evaluate(async () => {
     const { unzipSync, zipSync } = await import("/vendor/fflate/index.js");
     const { xmlDocument } = await import("/js/hwp-palette/workbook.js");
-    const n = window.fiveEPalette.native,
+    const n = window.fiveEHwpPalette.native,
       b = n.bridge(),
       D = b.wasm.borrowDocumentHandle().constructor,
       blank = D.createEmpty();
