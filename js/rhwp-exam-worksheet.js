@@ -648,6 +648,29 @@ export function insertRubric(bridge, items = 3) {
   return items;
 }
 
+// 학습지 표 틀: 머리 줄(음영·굵게·가운데) + 빈 줄. [이름, 머리 칸들, 빈 줄 수, 줄 높이 mm]
+export const TABLE_PRESETS = [
+  ['KWL 표', ['알고 있는 것(K)', '알고 싶은 것(W)', '새로 배운 것(L)'], 1, 40],
+  ['비교표', ['비교 항목', '(가)', '(나)'], 4, 10],
+  ['실험 결과 표', ['구분', '1회', '2회', '3회', '평균'], 3, 9],
+  ['용어 정리표', ['용어', '뜻', '예'], 5, 10],
+];
+export function insertTablePreset(bridge, name) {
+  requireInput(bridge);
+  const preset = TABLE_PRESETS.find(([n]) => n === name); if (!preset) throw new Error('표 틀을 다시 고르세요.');
+  const [, head, empty, rowMm] = preset, cols = head.length, doc = bridge.wasm.borrowDocumentHandle();
+  bridge.transaction('table-preset', () => {
+    const t = tableAfterCursor(bridge, doc, empty + 1, cols, [head, ...Array.from({ length: empty }, () => Array(cols).fill(''))], { width: columnWidth(doc), border: 'Solid', heights: [mmUnits(8), ...Array(empty).fill(mmUnits(rowMm))] });
+    head.forEach((label, cell) => {
+      setCell(doc, t, cell, { fillType: 'solid', fillColor: '#eef2f7' });
+      doc.applyCharFormatInCell(t.sec, t.para, t.ci, cell, 0, 0, [...label].length, JSON.stringify({ bold: true }));
+      doc.applyParaFormatInCell(t.sec, t.para, t.ci, cell, 0, JSON.stringify({ alignment: 'center' }));
+    });
+    return true;
+  });
+  return name;
+}
+
 // ── 판짜기: 단·용지·가나형 ──
 function refuseWhenLocked(bridge) {
   if (bridge.tableLayoutLocked) throw new Error('구조 잠금 중입니다. 단·용지는 구조 잠금을 풀고 바꾸세요.');

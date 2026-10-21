@@ -7,7 +7,7 @@ import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
 const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -84,7 +84,7 @@ function focusTabs(ctx) {
       ['정답지 내려받기', '빈칸 자리에 정답을 빨간 굵은 글씨로 채운 정답지 HWPX 사본 내려받기', doc(b => ctx.answerKey(b))],
       ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
       ['학습지 틀', '제목·이름 칸과 상자를 문서 끝에 한 번에 — 수업 학습지·실험 보고서·형성 평가', (_, button) => ctx.openPicker(button, 'frame')],
-      ['상자', '개념 정리·탐구 활동·생각해 보기·주의·유의 사항 상자(제목 줄 음영)를 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
+      ['상자', '개념 정리·탐구 활동·생각해 보기·주의·유의 사항 상자(제목 줄 음영)와 표 틀(KWL·비교·실험 결과·용어)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
       ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
       ['QR 코드', '영상·자료 주소를 QR 코드로 커서 문단 뒤에 넣기(왼쪽 QR, 오른쪽 안내 글)', (_, button) => ctx.openPicker(button, 'qr')],
       ['평가 기준표', '평가 요소 | 상 | 중 | 하 표를 커서 문단 뒤에 넣기', doc(b => ctx.message(`평가 기준표(${insertRubric(b)}줄)를 넣었습니다.`))],
@@ -416,7 +416,9 @@ export function installExamModes(panel, services) {
         <div class="exam-form-actions"><button type="button" data-exam-form-submit>넣기</button></div>`;
     } else if (kind === 'box') {
       pop.innerHTML = `<div class="exam-pop-head">상자 <small>커서 문단 뒤에 넣음</small></div>
-        <div class="exam-morelist">${BOX_PRESETS.map(([title]) => `<button type="button" data-exam-box="${esc(title)}">${esc(title)}</button>`).join('')}</div>`;
+        <div class="exam-morelist">${BOX_PRESETS.map(([title]) => `<button type="button" data-exam-box="${esc(title)}">${esc(title)}</button>`).join('')}</div>
+        <div class="exam-pop-head exam-pop-sub">표 틀 <small>머리 줄 음영 · 커서 문단 뒤</small></div>
+        <div class="exam-morelist">${TABLE_PRESETS.map(([name]) => `<button type="button" data-exam-tpreset="${esc(name)}">${esc(name)}</button>`).join('')}</div>`;
     } else if (kind === 'stem') {
       pop.innerHTML = `<div class="exam-pop-head">자주 쓰는 발문 <small>누르면 커서 자리에 넣음</small></div>
         <div class="exam-stemlist">${STEMS.map((t, i) => `<button type="button" data-exam-stem="${i}">${esc(t)}</button>`).join('')}</div>`;
@@ -525,6 +527,8 @@ export function installExamModes(panel, services) {
     if (pagenum) { const style = pagenum.dataset.examPagenum; closePop(); void run(async () => message(`모든 쪽 아래에 쪽 번호(${insertPageNumbers(bridgeOrThrow(), style)})를 넣었습니다.`)); return; }
     const paper = event.target.closest('[data-exam-paper]');
     if (paper) { const name = paper.dataset.examPaper; closePop(); void run(async () => message(`용지를 ${setPaper(bridgeOrThrow(), name)}로 바꿨습니다.`)); return; }
+    const tpreset = event.target.closest('[data-exam-tpreset]');
+    if (tpreset) { const name = tpreset.dataset.examTpreset; closePop(); void run(async () => message(`「${insertTablePreset(bridgeOrThrow(), name)}」을 넣었습니다.`)); return; }
     const box = event.target.closest('[data-exam-box]'), lineCount = event.target.closest('[data-exam-lines]');
     if (box) { const title = box.dataset.examBox; closePop(); void run(async () => message(`「${insertBox(bridgeOrThrow(), title)}」 상자를 넣었습니다. 아래 칸에 내용을 쓰세요.`)); return; }
     if (lineCount) { const n = Number(lineCount.dataset.examLines); closePop(); void run(async () => message(`서술형 답란 ${insertAnswerLines(bridgeOrThrow(), n)}줄을 넣었습니다.`)); return; }

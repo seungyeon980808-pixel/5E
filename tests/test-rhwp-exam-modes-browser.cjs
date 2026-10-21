@@ -600,6 +600,12 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const picked = await page.evaluate(async b64 => { const b = window.fiveEHwpPalette.native.bridge(), d = b.wasm.borrowDocumentHandle(), x = new d.constructor(Uint8Array.from(atob(b64), c => c.charCodeAt(0))); try { x.convertToEditable?.(); return [...Array(x.getParagraphCount(0)).keys()].map(p => x.getTextRange(0, p, 0, x.getParagraphLength(0, p))); } finally { x.free(); } }, require('node:fs').readFileSync(await pickFile.path()).toString('base64'));
     assert.deepEqual(picked, ['시험 머리', '1. 나', '2. 라', '3. 마']);
     assert.equal((await inPage(page, `return text();`)).length, 7);
+    // 50) 표 틀: 상자 창의 「실험 결과 표」 → 4줄×5칸, 머리 줄 음영.
+    await inPage(page, `reset('실험');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '개념 정리·탐구 활동').click(); await page.locator('[data-exam-tpreset="실험 결과 표"]').click(); await h.idle(page);
+    const preset = await tables();
+    assert.deepEqual([preset[0].dims.rowCount, preset[0].dims.colCount], [4, 5]);
+    assert.equal(await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table');return JSON.parse(d.getCellProperties(0,t.paraIdx,t.controlIdx,4)).fillType+'/'+d.getTextInCell(0,t.paraIdx,t.controlIdx,4,0,0,2);`), 'solid/평균');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
