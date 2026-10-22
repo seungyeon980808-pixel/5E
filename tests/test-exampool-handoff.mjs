@@ -92,3 +92,13 @@ test('native layout preflight detects nested header and note overflow, while tal
  assert.deepEqual(nativeLayoutIssues(doc),[]);
  runs[1].y=26;assert.throws(()=>assertNativeLayout(doc),/겹칩니다/);
 });
+
+test('empty bogi lines and choices keep one space after their label (ㄱ. ①) so typing starts after the gap',async()=>{
+ const q=structuredClone(examples.questions.find(x=>x.blocks.some(b=>b.kind==='bogi'))),bogi=q.blocks.find(b=>b.kind==='bogi');
+ bogi.lines.forEach(l=>{l.text='';});q.choices.forEach(c=>{c.text='';});
+ const out=await buildQuestionHtml(q,prep,540,{native:true}),html=typeof out==='string'?out:out.html;
+ assert.match(html,/ㄱ\.&nbsp;</);assert.match(html,/①&nbsp;</);
+ const full=structuredClone(examples.questions.find(x=>x.blocks.some(b=>b.kind==='bogi'))),fullHtml=(o=>typeof o==='string'?o:o.html)(await buildQuestionHtml(full,prep,540,{native:true}));
+ assert.doesNotMatch(fullHtml,/ㄱ\.&nbsp;/,'filled lines keep a normal space');
+ assert.doesNotMatch(fullHtml,/카드에서 입력/);
+});

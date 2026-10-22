@@ -82,7 +82,8 @@ export function handoffQuestion(value,{skeleton=false}={}){
   if(!skeleton&&!q.ask.trim())throw Error('발문을 입력한 뒤 한글로 보내세요.');
   return q;
 }
-// 틀 보기(한글 창 전용): 아직 비어 있는 발문·글·그림 자리에 회색 안내를 넣어 문항 모양을 먼저 보여 준다.
+// 틀 보기(한글 창 전용): 아직 비어 있는 발문·글·그림 자리에 회색 이름(발문·지문·자료)만 넣어 문항 모양을 먼저 보여 준다.
+// 「카드에서 입력」 같은 안내는 넣지 않는다 — 조판 칸에서 바로 입력이 안 된다고 오해하게 해서(10-22 사용자 지적).
 // 안내 글은 시트 값이 아니므로 주인이 없고(한글 창에서 고쳐도 시트로 가지 않음), 조판 저장도 하지 않는다.
 const GHOST_INK='#9aa0a6';
 const ghostName=b=>b.label&&!/^\(.+\)$/.test(b.label)?b.label:'지문';
@@ -93,9 +94,9 @@ export function skeletonKey(value){
 }
 function fillSkeleton(q){
   const ghosts=new Set(),figures=new Set();
-  if(!q.ask.trim()){q.ask='발문 (카드에서 입력)';ghosts.add('ask');}
+  if(!q.ask.trim()){q.ask='발문';ghosts.add('ask');}
   for(const b of q.blocks){
-    if(b.kind==='text'&&!b.text.trim()){b.text=`${ghostName(b)} (카드에서 입력)`;ghosts.add('block:'+b.id);}
+    if(b.kind==='text'&&!b.text.trim()){b.text=ghostName(b);ghosts.add('block:'+b.id);}
     if(b.kind==='figure'&&!b.figure)figures.add(b.id);
   }
   return {ghosts,figures};
@@ -151,10 +152,13 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     // [3점]은 앞 낱말과 한 덩어리로 줄을 맞춘다(혼자 다음 줄로 떨어지지 않게).
     value=value.replace(/ (\[\d+점\])$/,'\u2060$1');
     value=(wrap?wrap(value):width&&measureText?wrapMeasured(value,width,width,v=>measureRich(v,fontSize)):wrapQuestionText(value,width,fontSize)).replace(/\u2060(\[\d+점\])$/,' $1');
+    // 줄 나누기는 끝 공백을 잘라 낸다 — 「ㄱ. 」「① 」처럼 원래 공백으로 끝났으면 한 칸을 되살린다.
+    if(/ $/.test(String(v??''))&&!/ $/.test(value))value+=' ';
     // 한글 문서에 들어간 그대로의 글(어절 줄바꿈 포함). 시트에서 고친 글을 한글 창의 같은 문단에 바로 넣을 때 쓴다.
     if(segment){segment.wrapped=value;segment.math=math;}
     if(isGhost){const head=E(value.slice(0,lead)).replace(/\r?\n/g,'<br>'),rest=E(value.slice(lead)).replace(/\r?\n/g,'<br>');return native?`${head?`<span style="font-family:${font};font-size:${fontSize}pt">${head}</span>`:''}<span style="font-family:${font};font-size:${fontSize}pt;color:${GHOST_INK}">${rest}</span>`:head+rest;}
-    const body=E(value).replace(/\r?\n/g,'<br>');return native?`<span style="font-family:${font};font-size:${fontSize}pt">${italicVariables(body)}</span>`:body;
+    // 「ㄱ. 」「① 」처럼 번호 뒤 빈 칸으로 끝나면 한글로 넘길 때 끝 공백이 사라진다 — 마지막 공백만 줄바꿈 없는 공백으로 남겨, 누르면 한 칸 띄운 자리에서 쓰게 한다.
+    const body=E(value).replace(/\r?\n/g,'<br>').replace(/ $/,'&nbsp;');return native?`<span style="font-family:${font};font-size:${fontSize}pt">${italicVariables(body)}</span>`:body;
   };
   const p=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0;text-align:justify">${text(v,width,fontSize,v=>v,owner)}</p>`;
   // 그림 아래 (가)·(나): 평가원처럼 그림 가운데 아래.
