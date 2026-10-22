@@ -2252,6 +2252,12 @@
       ]
     },
     {
+      "path": "tests/test-line-fit-live-browser.cjs",
+      "findingIds": [
+        "LINE-FIT-LIVE"
+      ]
+    },
+    {
       "path": "tests/test-exam-form-browser.cjs",
       "findingIds": [
         "EXAM-ON-SCHOOL-FORM"

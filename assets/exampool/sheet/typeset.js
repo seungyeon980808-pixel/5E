@@ -1,5 +1,5 @@
 import {attachGapView} from './typeset-gaps.js';
-import {fitQuestionLines} from './line-fit.js';
+import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
 import {KICE_STANDARD} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
@@ -38,7 +38,16 @@ const SKELETON={skeleton:true,ghostFigure};
 const LEAD='<p style="margin:0;font-size:1pt;line-height:100%"> </p>';
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
 export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge,onSlot,standardOf=()=>KICE_STANDARD,standardsOf=()=>[],onGap,onStandard}){
-  let gaps=null,lockedFor='';
+  let gaps=null,lockedFor='',lineFitTimer=0,lineFitting=false;
+  // 한글 창에서 글을 고치면 입력이 0.3초 멈춘 뒤 커서가 있는 문단만, 커서 줄부터 아래로 자간을 다시 맞춘다(10-22 O1). 한 번의 되돌리기 단계.
+  // 표 칸 안·수식·그림이 든 문단은 건너뛴다(만들 때 규칙과 같음). 글자 위치(커서)는 그대로. host.dataset.lineFit: 마지막 결과(검사·문제 찾기용).
+  function scheduleLineFit(){clearTimeout(lineFitTimer);lineFitTimer=setTimeout(()=>{try{
+      const S=std(q);if(!S.fit?.on||!ready||loading||!bridge?.input){host.dataset.lineFit='skip:off';return;}const pos=bridge.input.getCursorPosition?.();
+      if(!pos||pos.cellPath?.length||Number.isInteger(pos.cellIndex)){host.dataset.lineFit='skip:cell';return;}
+      lineFitting=true;const r=bridge.transaction('line-fit',()=>fitQuestionParagraph(bridge.wasm.borrowDocumentHandle(),pos.sectionIndex||0,pos.paragraphIndex,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing,from:pos.charOffset||0}));
+      host.dataset.lineFit=r?.skip?'skip:'+r.skip:r?.reverted?'reverted':r?.changed?'changed':'same';
+      bridge.deps.eventBus.emit('document-changed');
+    }catch(e){host.dataset.lineFit='error:'+String(e?.message||e).slice(0,80);}finally{requestAnimationFrame(()=>{lineFitting=false;});}},300);}
   // 문항마다 그 문항의 조판 기준(문항 → 시험지 → 수능 틀)으로 조판한다(10-22 조판 기준).
   const std=value=>standardOf(value)||KICE_STANDARD,stdKey=value=>JSON.stringify(std(value));
   // 지금 조판에 쓴 기준(열 때 값). 기준 값을 바꾸면 내용이 같아도 다시 만든다.
@@ -98,7 +107,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   function scheduleFit(){if(fitting||fitFrame||!ready)return;fitFrame=requestAnimationFrame(()=>{fitFrame=0;try{fitLive();}catch(e){message(e.message,true);}});}
   const equationScripts=async bytes=>{const zip=await JSZip.loadAsync(new Uint8Array(bytes)),xml=await zip.file('Contents/section0.xml').async('string');return [...xml.matchAll(/<hp:script>([\s\S]*?)<\/hp:script>/g)].map(m=>m[1]).join('\n');};
   async function ensure(){
-    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
+    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(lineFitting)return;if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();if(!error)scheduleLineFit();}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
     }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;

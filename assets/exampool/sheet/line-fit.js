@@ -16,21 +16,33 @@ export function fitQuestionLines(doc, { low = -10, high = 0, shortLastLine = 15,
   const result = { paragraphs: 0, changed: 0, reverted: 0, ops: 0 };
   const count = doc.getParagraphCount(section);
   for (let para = 0; para < count; para++) {
-    const length = doc.getParagraphLength(section, para);
-    if (length < 8) { trace?.push({ para, skip: 'short' }); continue; }
-    let controls = []; try { controls = J(doc.getControlTextPositions(section, para)) || []; } catch {}
-    if (controls.length) { trace?.push({ para, skip: 'controls', n: controls.length }); continue; }
-    const props = J(doc.getParaPropertiesAt(section, para));
-    if (!['justify', 'distribute'].includes(String(props.alignment).toLowerCase())) { trace?.push({ para, skip: 'align:' + props.alignment }); continue; }
-    const text = doc.getTextRange(section, para, 0, length), head = (text.match(HEAD)?.[0].length) || 0;
-    const fit = fitParagraph(doc, section, para, { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment });
-    result.paragraphs++; result.ops += fit.ops; trace?.push({ para, head, ...fit });
+    const fit = fitOne(doc, section, para, { colRight, low, high, shortLastLine, base });
+    trace?.push({ para, ...fit });
+    if (fit.skip) continue;
+    result.paragraphs++; result.ops += fit.ops;
     if (fit.reverted) result.reverted++; else if (fit.changed) result.changed++;
   }
   return result;
 }
 
-function fitParagraph(doc, sec, para, { length, head, colRight, low, high, shortLastLine, base, alignment }) {
+// 한 문단만(한글 창에서 글을 고친 뒤, 10-22 O1). from: 이 글자 위치가 든 줄부터 아래로만 맞춘다(윗줄은 그대로라 덜 흔들림).
+export function fitQuestionParagraph(doc, section, para, { low = -10, high = 0, shortLastLine = 15, base = -5, from = 0 } = {}) {
+  const page = J(doc.getPageDef(0)), colRight = (page.width - page.marginRight) / 75;
+  return fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from });
+}
+
+function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from = 0 }) {
+  const length = doc.getParagraphLength(section, para);
+  if (length < 8) return { skip: 'short' };
+  let controls = []; try { controls = J(doc.getControlTextPositions(section, para)) || []; } catch {}
+  if (controls.length) return { skip: 'controls', n: controls.length };
+  const props = J(doc.getParaPropertiesAt(section, para));
+  if (!['justify', 'distribute'].includes(String(props.alignment).toLowerCase())) return { skip: 'align:' + props.alignment };
+  const text = doc.getTextRange(section, para, 0, length), head = (text.match(HEAD)?.[0].length) || 0;
+  return { head, ...fitParagraph(doc, section, para, { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment, from }) };
+}
+
+function fitParagraph(doc, sec, para, { length, head, colRight, low, high, shortLastLine, base, alignment, from: startAt = 0 }) {
   let ops = 0;
   const set = (s, e, v) => { if (e <= s) return; doc.applyCharFormat(sec, para, s, e, JSON.stringify({ spacings: Array(7).fill(v) })); ops++; };
   const lineAt = off => J(doc.getLineInfo(sec, para, off));
@@ -52,10 +64,13 @@ function fitParagraph(doc, sec, para, { length, head, colRight, low, high, short
   const stats = () => { const L = lines(), W = widths(); return { n: L.length, wide: W.slice(0, -1).filter(w => w.slack > WIDE).length, last: W.at(-1)?.ratio ?? 1 }; };
   const before = stats();
   if (before.n < 2) return { ops, changed: false, before };
+  // 되돌릴 때를 위해 글자마다 지금 자간을 기억한다(이미 맞춰 둔 윗줄을 기준 값으로 덮지 않게).
+  const original = []; for (let k = head; k < length; k++) { try { original.push(J(doc.getCharPropertiesAt(sec, para, k)).spacings?.[0] ?? base); } catch { original.push(base); } }
+  const restore = () => { let s0 = head; for (let k = head + 1; k <= length; k++) if (k === length || original[k - head] !== original[s0 - head]) { set(s0, k, original[s0 - head]); s0 = k; } };
   const from = s => Math.max(s, head);
   let changed = false;
   // 1) 윗줄부터
-  let off = 0;
+  let off = startAt ? lineAt(Math.min(startAt, length - 1)).charStart : 0;
   for (let k = 0; k < 60; k++) {
     const li = lineAt(off); if (li.charEnd >= length) break;
     const s = li.charStart, e = li.charEnd, W = widths()[li.lineIndex];
@@ -89,7 +104,7 @@ function fitParagraph(doc, sec, para, { length, head, colRight, low, high, short
   // 3) 나빠졌으면 되돌림
   if (changed) {
     const after = stats();
-    if (after.n > before.n || after.wide > before.wide) { set(head, length, base); return { ops, changed: false, reverted: true, before, after }; }
+    if (after.n > before.n || after.wide > before.wide) { restore(); return { ops, changed: false, reverted: true, before, after }; }
     return { ops, changed, before, after };
   }
   return { ops, changed, before, slack: widths().map(w => +w.slack.toFixed(3)) };
