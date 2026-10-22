@@ -43,6 +43,13 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: an 
   assert.match(await sheet.locator('#cv-page .pg-warn').textContent(),/용지가 섞여 있습니다/);
   const pg=await sheet.locator('#cv-page').boundingBox(),fr=await frame.boundingBox();
   await page.screenshot({path:path.join(out,name+'-page-view-mixed.png'),clip:{x:fr.x+pg.x,y:fr.y+pg.y,width:pg.width,height:pg.height}});
+  // 10-22: 시험지 전체에서 다른 문항을 한 번 누르면 고르기만(옅은 테), 두 번 누르면 그 문항 카드로 돌아온다.
+  const current=await sheet.locator('#card-view .cv-qtab[aria-current="true"]').getAttribute('data-cv-open').catch(()=>null);
+  const other=sheet.locator('#cv-page .pg-q-hit').first();await other.waitFor();const otherId=await other.getAttribute('data-cvpg-q');
+  assert.notEqual(otherId,current,'hit boxes cover the other questions');
+  await other.click();assert.equal(await sheet.locator('#cv-page .pg-q-hit.is-picked').count(),1,'one click only picks');assert.equal(await sheet.locator('#cv-page').count(),1,'one click stays on the sheet');
+  await other.dblclick();await sheet.waitForSelector('#card-view .cv-writer');
+  assert.equal(await sheet.locator('#card-view .cv-qtab[aria-current="true"]').getAttribute('data-cv-open'),otherId,'double click opens that question card');
   assert.deepEqual(errors,[]);
  });
 });

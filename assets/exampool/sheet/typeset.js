@@ -270,14 +270,19 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),pages=paginateQuestions(items,{height:sheet.heightMm,columns:sheet.columns,gap:sheet.gapMm});
     const {document:target,ranges}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>new Document(item.bytes),between:step});
     try{
-      const p=parse(target.getPageDef(0)),width=p.width/75,height=p.height/75,[start,end]=ranges.get(focusId)||[-1,-1],inside=r=>r.secIdx===0&&r.paraIdx>=start&&r.paraIdx<end;
+      const p=parse(target.getPageDef(0)),width=p.width/75,height=p.height/75;
+      // 쪽마다 문항별 차지한 자리(시험지 전체 보기에서 다른 문항을 두 번 눌러 그 카드로 가기, 10-22). focus = 지금 문항.
+      const spans=items.map(x=>[x.id,...(ranges.get(x.id)||[-1,-1])]),owner=r=>r.secIdx===0?spans.find(([,a,b])=>r.paraIdx>=a&&r.paraIdx<b)?.[0]:undefined;
+      const rel=b=>({x:b.x/width,y:b.y/height,w:(b.r-b.x)/width,h:(b.b-b.y)/height});
       const out=[];
       for(let i=0;i<target.pageCount();i++){
-        let box=null;
-        for(const r of [...parse(target.getPageTextLayout(i)).runs,...parse(target.getPageControlLayout(i)).controls])if(inside(r)&&[r.x,r.y,r.w,r.h].every(Number.isFinite)){
-          box=box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h};}
+        const found=new Map();
+        for(const r of [...parse(target.getPageTextLayout(i)).runs,...parse(target.getPageControlLayout(i)).controls]){
+          const id=owner(r);if(id===undefined||![r.x,r.y,r.w,r.h].every(Number.isFinite))continue;const box=found.get(id);
+          found.set(id,box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h});}
         if(i)await step();
-        out.push({svg:target.renderPageSvg(i),width,height,focus:box&&{x:box.x/width,y:box.y/height,w:(box.r-box.x)/width,h:(box.b-box.y)/height}});
+        const box=found.get(focusId);
+        out.push({svg:target.renderPageSvg(i),width,height,focus:box&&rel(box),boxes:[...found].map(([id,b])=>({id,...rel(b)}))});
       }
       const mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));
       return {pages:out,paper:sheet.paper,columns:sheet.columns,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};

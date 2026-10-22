@@ -290,16 +290,29 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-pts{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:7px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#d0d7de);background:var(--ds-doc,#fff)}
 #card-view .cv-pts button{height:24px;padding:0 9px;border:0;border-radius:5px;background:transparent;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px}
 #card-view .cv-pts button[aria-pressed=true]{background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-weight:600}
-/* 자료: 칸을 꽉 채우고 이름·단추는 마우스를 올릴 때만 */
-#card-view .cv-grid .cv-tiles{gap:6px}
-#card-view .cv-grid .cv-tile{position:relative;max-width:none;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e6e9ed);background:var(--ds-doc,#fff)}
-#card-view .cv-grid .cv-tile .pic{aspect-ratio:auto;min-height:150px;max-height:280px;padding:4px}
-#card-view .cv-grid .cv-tile .pic img{width:auto;max-width:100%;max-height:270px}
-#card-view .cv-grid .cv-tile:not(.empty) .cap{position:absolute;left:4px;right:4px;bottom:4px;padding:4px 6px;border-radius:6px;background:#1f2328d9;color:#fff;opacity:0;transition:opacity 140ms var(--ep-ease)}
-#card-view .cv-grid .cv-tile:not(.empty) .cap b{color:#fff}
-#card-view .cv-grid .cv-tile:not(.empty) .cap .mini{color:#fff;background:#ffffff22}
-#card-view .cv-grid .cv-tile:hover .cap,#card-view .cv-grid .cv-tile:focus-within .cap{opacity:1}
-#card-view .cv-grid .cv-tile.empty .pic{min-height:96px}
+/* 자료 칸 「나」안(10-22 exampool-1022 10·11): 칸은 같은 폭·같은 높이로 나란히(넷부터 다음 줄), 이름표는 칸 아래 가운데,
+   바꾸기·지우기는 마우스를 올리면 칸 오른쪽 위. 빈 칸의 두 동작은 같은 옅은 테·같은 글자색, 아이콘은 같은 세로줄. 표는 칸 안쪽 폭의 90%. */
+#card-view .cv-grid .cv-tiles{display:grid;grid-template-columns:repeat(var(--cv-tiles,1),minmax(0,1fr));gap:10px;align-items:stretch}
+#card-view .cv-grid .cv-tile{position:relative;display:flex;flex-direction:column;width:auto;max-width:none;min-width:0;overflow:visible;border:0;border-radius:0;box-shadow:none;background:transparent}
+#card-view .cv-grid .cv-tile .pic{position:relative;flex:1;display:grid;place-items:center;aspect-ratio:auto;height:auto;min-height:132px;max-height:280px;padding:8px;border:0;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e3e6);background:var(--ds-doc,#fff);overflow:hidden}
+#card-view .cv-grid .cv-tile .pic img{width:auto;max-width:100%;max-height:264px}
+#card-view .cv-grid .cv-tile.empty .pic{min-height:132px;padding:8px;border-bottom:0;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.018) 6px 12px),var(--ds-doc,#fff)}
+#card-view .cv-grid .cv-tile .table-pic table{width:90%;font-size:12.5px}
+#card-view .cv-grid .cv-tile .table-pic th,#card-view .cv-grid .cv-tile .table-pic td{padding:4px 6px;min-width:0}
+#card-view .cv-grid .cv-tile .cap{display:block;padding:5px 0 0;background:none;text-align:center;color:var(--ds-doc-ink-2,#3a3f46)}
+#card-view .cv-grid .cv-tile .cap b{color:var(--ds-doc-ink-2,#3a3f46);font-weight:400}
+#card-view .cv-grid .cv-tile-tools{position:absolute;top:6px;right:6px;display:flex;gap:2px;padding:2px;border-radius:7px;background:var(--ds-doc,#fff);box-shadow:0 0 0 1px var(--ds-doc-line,#e1e3e6);opacity:0;pointer-events:none;transition:opacity 140ms var(--ep-ease)}
+#card-view .cv-grid .cv-tile-tools .mini{padding:2px 6px;border-radius:5px;color:var(--ds-doc-ink-3,#6a7079);background:transparent}
+#card-view .cv-grid .cv-tile-tools .mini:hover{background:var(--ds-doc-hover,rgba(0,0,0,.045));color:var(--ds-doc-ink,#1b1e23)}
+#card-view .cv-grid .cv-tile:hover .cv-tile-tools,#card-view .cv-grid .cv-tile:focus-within .cv-tile-tools{opacity:1;pointer-events:auto}
+@media (hover:none){#card-view .cv-grid .cv-tile-tools{opacity:1;pointer-events:auto}}
+#card-view .cv-grid .cv-picks{display:flex;flex-direction:column;gap:6px;width:min(190px,92%)}
+#card-view .cv-grid .cv-pick{display:flex;align-items:center;justify-content:flex-start;gap:8px;height:32px;min-width:0;padding:0 10px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e3e6);color:var(--ds-doc-ink-2,#3a3f46);font:inherit;font-size:var(--cv-text-small,12.5px);text-align:left;cursor:pointer}
+#card-view .cv-grid .cv-pick>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-grid .cv-pick .ico{flex:0 0 16px;width:16px;height:16px;color:var(--ds-doc-ink-3,#6a7079)}
+#card-view .cv-grid .cv-pick:hover{background:var(--ds-doc-hover,rgba(0,0,0,.045));box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink,#1b1e23)}
+#card-view .cv-grid .cv-pick:hover .ico{color:var(--ds-doc-ink-2,#3a3f46)}
+#card-view .cv-grid .cv-pick:focus-visible{outline:2px solid var(--ds-focus,#6ba4f8);outline-offset:1px}
 #card-view .cv-grid .cv-add-row{margin-top:4px;min-height:30px;padding:4px 8px}
 #card-view .cv-grid .cv-add-row span{display:none}
 /* 보기: 한 줄씩 + ○ 옳음 / × 틀림 */
@@ -476,3 +489,17 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 @media (max-width:760px){.top .app-switch-btn{width:46px;font-size:14px}}
 /* 아주 좁은 창(640px 이하): 조판 화면처럼 로고 칸을 줄이고 「_exam」·위치 표시를 접어 오른쪽 단추(도움말·더 보기·닫기)가 화면 안에 남게 */
 @media (max-width:640px){.top .top-cell{width:auto;padding-right:6px}.top .top-cell .brand{margin-left:0}.top .top-cell .brand strong{display:none}.top .top-sep{margin:0 4px}.top .crumbs{display:none}}
+
+/* 「이 문항 | 시험지 전체」(10-22 안 B): 조판 칸 「상세 조판」 줄 맨 앞 두 칸 단추. 시험지 전체면 조판 칸이 가운데 자리까지 넓어지고
+   문항 카드는 왼쪽·오른쪽 칸을 접을 때와 같은 세로 띠. 칸에 붙지 않은 조판 창(따로 연 창)에는 두지 않는다. */
+.ts-scope{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:7px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e3e6)}
+.typeset-view-controls .ts-scope button{height:calc(var(--ds-h-control,28px) - 4px);padding:0 10px;border-radius:5px}
+.ts-scope+button{margin-left:6px}
+#preview-dialog:not(.docked) .ts-scope{display:none}
+#card-view.is-sheet-view .cv-right{flex:1 1 auto!important;min-width:0}
+#card-view .pane-rail.mid{margin-right:var(--cv-gutter,8px)}
+#card-view .cv-pgbar{flex:none}
+#card-view .cv-right .cv-page{background:var(--ds-bench,#0d1320)}
+#card-view .pg-q-hit{position:absolute;z-index:1;margin:-3px;padding:3px;border-radius:3px;cursor:pointer}
+#card-view .pg-q-hit:hover{outline:1px solid var(--ds-line-strong,#30363d);outline-offset:3px}
+#card-view .pg-q-hit.is-picked{outline:2px solid var(--ds-line-strong,#30363d);outline-offset:3px}

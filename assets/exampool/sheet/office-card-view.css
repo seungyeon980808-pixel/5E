@@ -59,9 +59,7 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .pg-q.now{outline:2px solid var(--go-line,#6ba4f8);outline-offset:2px}
 .pg-sheet figcaption{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-size:10px;color:#888}
 
-/* 가운데가 좁으면 보기 전환 버튼은 아이콘만 */
 .cv-center{container-type:inline-size}
-@container (max-width:600px){.cv-vseg button span{display:none}.cv-vseg button{padding:0 8px}}
 
 /* 라이브러리에 붙인 교과서·기준·자료(미룬 수정 4·5): 어두운 패널 위 글자색을 토큰으로 맞추고, 입력칸·버튼도 디자인 토큰으로. 원문 쪽 그림만 흰 종이 */
 .lp-docked #sources{color:var(--ds-ink-2)}

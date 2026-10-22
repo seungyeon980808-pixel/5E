@@ -90,7 +90,18 @@ h.withServer(async origin => {
         await sheet.locator(`#card-view [data-cvsplit="${k}"]`).dblclick();}
       await page.setViewportSize({width:1440,height:960});await sheet.waitForTimeout(200);
       await sheet.click('#card-view [data-cv="toggle-right"]');assert.equal(await sheet.locator('#card-view .cv-right').isHidden(),true);await sheet.click('#card-view [data-cv="toggle-right"]');
-      await sheet.click('#card-view [data-cvview="page"]');await sheet.waitForSelector('#card-view .pg-sheet[data-native-page] svg');await sheet.waitForSelector('#card-view .pg-sheet .pg-now');await sheet.click('#card-view .pg-head [data-cvview="card"]');await sheet.waitForSelector('#card-view .cv-writer');
+      // 10-22 안 B: 문항 카드 입구는 하나 — 가운데 머리 줄 아이콘·쪽 화면 「문항 카드로」 없음. 「이 문항 | 시험지 전체」는 조판 칸 「상세 조판」 줄 맨 앞.
+      assert.equal(await sheet.locator('#card-view .cv-vseg, #card-view .cv-bar [data-cvview]').count(),0,'no view toggle in the card header');
+      const scope=sheet.locator('.cv-hwp-layer .typeset-view-controls .ts-scope');await scope.waitFor();
+      assert.deepEqual(await scope.locator('button').allTextContents(),['이 문항','시험지 전체']);
+      const before=await sheet.evaluate(()=>document.querySelector('#card-view .cv-right').getBoundingClientRect().width);
+      await scope.locator('[data-cvview="page"]').click();await sheet.waitForSelector('#card-view .cv-right .pg-sheet[data-native-page] svg');await sheet.waitForSelector('#card-view .pg-sheet .pg-now');
+      const wide=await sheet.evaluate(()=>({right:document.querySelector('#card-view .cv-right').getBoundingClientRect().width,center:!!document.querySelector('#card-view .cv-center'),rail:!!document.querySelector('#card-view .pane-rail.mid'),back:document.querySelectorAll('#card-view .pg-head [data-cvview]').length,pressed:document.querySelector('#card-view .cv-pgbar [data-cvview="page"]').getAttribute('aria-pressed'),layer:document.querySelector('.cv-hwp-layer').hidden}));
+      assert.ok(wide.right>before+200&&!wide.center&&wide.rail,'the typeset pane widens over the card column and the card folds to a rail: '+JSON.stringify({before,...wide}));
+      assert.equal(wide.back,0,'no second "back to card" entry on the page');assert.equal(wide.pressed,'true');assert.equal(wide.layer,true,'the hwp editor layer is hidden while the whole sheet shows');
+      await sheet.click('#card-view .pane-rail.mid');await sheet.waitForSelector('#card-view .cv-writer');await scope.waitFor();
+      await scope.locator('[data-cvview="page"]').click();await sheet.waitForSelector('#card-view .cv-right .pg-sheet[data-native-page] svg');
+      await sheet.click('#card-view .cv-pgbar [data-cvview="card"]');await sheet.waitForSelector('#card-view .cv-writer');
       // 문항 카드에는 표(엑셀식) 진입이 없다. 표는 시험지의 「표로 한꺼번에 고치기」로만 연다.
       assert.equal(await sheet.locator('#card-view [data-cv="sheet"]').count(),0,'the card has no sheet entry');
       // 머리 줄 틀 이름표: 새 문항 창에서 정한 유형·자료 구조를 보여 주고, 눌렀을 때만 유형 바꾸기 메뉴(서술형 포함 5개)가 열린다.
@@ -117,6 +128,15 @@ h.withServer(async origin => {
       await sheet.click('#card-view .cv-add-row');await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,tiles);
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
+      // 10-22 「나」안: 빈 칸의 두 동작은 같은 폭·같은 옅은 테·같은 글자색(진한 파란 단추 없음), 아이콘은 같은 세로줄, 이름표는 칸 아래 가운데.
+      const picks=await added.evaluate(t=>{const bs=[...t.querySelectorAll('.cv-pick')].map(b=>{const r=b.getBoundingClientRect(),c=getComputedStyle(b),i=b.querySelector('.ico').getBoundingClientRect();return{w:r.width,shadow:c.boxShadow,color:c.color,bg:c.backgroundColor,icon:i.left};});const box=t.querySelector('.pic').getBoundingClientRect(),cap=t.querySelector('.cap').getBoundingClientRect(),name=t.querySelector('.cap b').getBoundingClientRect();return{bs,go:t.querySelectorAll('.btn.go').length,capBelow:cap.top>=box.bottom-1,centered:Math.abs((name.left+name.right)/2-(box.left+box.right)/2)<=2};});
+      assert.equal(picks.go,0,'no strong blue button inside an empty slot');
+      assert.equal(picks.bs.length,2);assert.ok(Math.abs(picks.bs[0].w-picks.bs[1].w)<=1,'both slot actions are the same width');
+      assert.equal(picks.bs[0].shadow,picks.bs[1].shadow,'both slot actions share the same faint outline');assert.equal(picks.bs[0].color,picks.bs[1].color);assert.equal(picks.bs[0].bg,picks.bs[1].bg);
+      assert.ok(Math.abs(picks.bs[0].icon-picks.bs[1].icon)<=1,'slot action icons line up');assert.ok(picks.capBelow&&picks.centered,'slot name sits centred under its box');
+      // 지우기는 칸에 마우스를 올렸을 때만 보이고 눌린다(10-22).
+      assert.equal(await added.locator('.cv-tile-tools').evaluate(e=>getComputedStyle(e).opacity),'0','slot tools stay hidden until hover');
+      await added.hover();await sheet.waitForFunction(()=>[...document.querySelectorAll('#card-view .cv-tile.empty .cv-tile-tools')].some(e=>getComputedStyle(e).opacity==='1'));
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
       // 번호 줄이 넘쳐도 「+」는 줄 끝에 붙어 보이고, 마우스 휠로 가로로 넘어간다.
       assert.equal(await sheet.evaluate(()=>getComputedStyle(document.querySelector('#card-view .cv-qtab.add')).position),'sticky','the add tab stays at the end of the number row');
