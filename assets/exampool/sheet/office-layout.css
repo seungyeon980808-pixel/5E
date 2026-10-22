@@ -153,10 +153,11 @@
 /* 카드 형광펜 준비 중: 그림 오른쪽 위 작은 도는 표시 */
 #card-view .past-pic{position:relative}
 #card-view .past-pic[data-marking]::after{content:"";position:absolute;top:8px;right:8px;background:#fffc}
-/* 검색어 조각 색 = 형광펜 색(노랑·초록·하늘) */
-#card-view .lp-search .lp-token:nth-child(1){box-shadow:inset 0 -3px 0 rgba(255,214,0,.9)}
-#card-view .lp-search .lp-token:nth-child(2){box-shadow:inset 0 -3px 0 rgba(120,220,90,.9)}
-#card-view .lp-search .lp-token:nth-child(3){box-shadow:inset 0 -3px 0 rgba(90,190,255,.9)}
+/* 검색어 조각 색 = 형광펜 색(노랑·초록·하늘). 두꺼운 밑줄 대신 단어 앞 작은 색 점(10-22 시안 exampool-1022 안 A) */
+#card-view .lp-search .lp-token::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--lp-dot,transparent)}
+#card-view .lp-search .lp-token:nth-child(1){--lp-dot:rgba(255,214,0,.9)}
+#card-view .lp-search .lp-token:nth-child(2){--lp-dot:rgba(120,220,90,.9)}
+#card-view .lp-search .lp-token:nth-child(3){--lp-dot:rgba(90,190,255,.9)}
 @keyframes ep-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){#card-view .lp-paper-wait i,#card-view .past-pic[data-marking]::after{animation:none}}
 

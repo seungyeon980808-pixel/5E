@@ -107,6 +107,9 @@ h.withServer(async origin => {
       await query.click();await page.keyboard.type('유도 전류');await page.keyboard.press('Enter');
       await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===3);
       const three=await count();assert.ok(three<=one,'every index word must match');
+      const chipLook=await sheet.$$eval('#card-view .lp-search .lp-token',els=>els.map(el=>({dot:getComputedStyle(el,'::before').backgroundColor,w:getComputedStyle(el,'::before').width,shadow:getComputedStyle(el).boxShadow})));
+      assert.deepEqual(chipLook.map(c=>c.dot),['rgba(255, 214, 0, 0.9)','rgba(120, 220, 90, 0.9)','rgba(90, 190, 255, 0.9)'],'index chips carry a highlighter-colour dot in mark order');
+      assert.ok(chipLook.every(c=>c.w==='7px'&&!/-3px/.test(c.shadow)),'index chips use a 7px dot, not the thick underline');
       await query.click();await page.keyboard.type('간섭');await page.keyboard.press('Enter');
       assert.equal((await tokens()).length,3,'at most three index words');
       await sheet.fill('#card-view [data-cvpast="query"]','');await query.click();await page.keyboard.press('Backspace');
