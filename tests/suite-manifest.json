@@ -2252,6 +2252,12 @@
       ]
     },
     {
+      "path": "tests/test-exam-form-browser.cjs",
+      "findingIds": [
+        "EXAM-ON-SCHOOL-FORM"
+      ]
+    },
+    {
       "path": "tests/test-school-form-browser.cjs",
       "findingIds": [
         "TYPESET-STANDARD-SCHOOL-DIALOG"

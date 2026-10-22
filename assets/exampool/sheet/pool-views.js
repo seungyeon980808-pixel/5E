@@ -78,12 +78,12 @@ export function renderExams(root,data,view){
 }
 
 // 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5E_hwp로 보내기.
-export function renderExam(root,data,examId){
+export function renderExam(root,data,examId,{forms=[]}={}){
   const exam=examById(data,examId);if(!exam){root.innerHTML='<p class="pv-empty">시험지를 찾지 못했습니다.</p>';return;}
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
   const lib=libraryQuestions(data);
   root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
-      <div class="pv-tools"><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
+      <div class="pv-tools"><label class="pv-form" title="시험지를 어느 양식 위에 묶을지 — 학교 양식이면 학교 제목 표·머리말·단을 그대로 두고 그 안에 문항을 넣습니다">양식 <select id="exam-form" aria-label="시험지 양식"><option value="">5E 기본(수능 틀)</option>${forms.map(f=>`<option value="${E(f.id)}" ${f.id===exam.formId?'selected':''}>${E(f.name)}${f.encrypted?' 🔒':''}</option>`).join('')}<option value="__new">학교 양식 등록…</option></select></label><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
         <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
       <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
     <div class="pv-exam-body"><div class="pv-order" id="exam-order">

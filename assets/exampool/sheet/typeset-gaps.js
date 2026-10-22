@@ -178,7 +178,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
     if (pick) { closeMenu(); onStandard?.({ pick: pick.dataset.stdPick }); return; }
     if (e.target.closest('[data-std-save]')) { const f = menu.querySelector('.ts-std-name'); f.hidden = false; f.querySelector('input').focus(); return; }
     if (e.target.closest('[data-std-export]')) {
-      const { standard } = context(), blob = new Blob([exportStandard(standard || KICE_STANDARD)], { type: 'application/json' }), a = doc.createElement('a');
+      const { standard } = context(), text = onStandard?.({ exportText: standard || KICE_STANDARD }) || exportStandard(standard || KICE_STANDARD), blob = new Blob([text], { type: 'application/json' }), a = doc.createElement('a');
       a.href = URL.createObjectURL(blob); a.download = `${(standard?.name || '수능 틀').replace(/[\\/:*?"<>|]/g, '_')}.5e-typeset.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); closeMenu(); return;
     }
     if (e.target.closest('[data-std-import]')) { menu.querySelector('[data-std-file]').click(); return; }
@@ -188,7 +188,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
   menu.addEventListener('change', async e => {
     const file = e.target.closest('[data-std-file]')?.files?.[0]; if (!file) return;
     closeMenu();
-    try { onStandard?.({ imported: importStandard(await file.text()) }); } catch (error) { onStandard?.({ error: error.message }); }
+    try { const text = await file.text(); onStandard?.({ imported: importStandard(text), raw: text }); } catch (error) { onStandard?.({ error: error.message }); }
   });
   doc.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !stdButton.contains(e.target)) closeMenu(); });
   doc.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!menu.hidden) closeMenu(); else if (!pop.hidden) { selected = ''; draw(); } } });

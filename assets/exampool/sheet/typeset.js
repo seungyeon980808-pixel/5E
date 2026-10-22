@@ -1,6 +1,6 @@
 import {attachGapView} from './typeset-gaps.js';
 import {fitQuestionLines} from './line-fit.js';
-import {readSchoolForm as readSchoolDocument} from './standard-from-hwp.js';
+import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
 import {KICE_STANDARD} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
 import {buildExamDocument,assembleExamDocument} from './exam-build.js';
@@ -248,8 +248,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   align.onchange=()=>{try{if(!ready||loading)return;applyTableAlignment(bridge,align.value);message('표 위치 변경됨 · 조판 저장을 누르세요.');}catch(e){message(e.message,true);}finally{align.value='';}};
   indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
   const contentKey=value=>JSON.stringify(renderedContent(value));
-  async function buildExam(data,examSet){
-    await ensure();const Document=document().constructor,{document:exam}=await buildExamDocument(Document,data,examSet,{between:pause});
+  // form: 등록한 학교 양식({bytes,structure}) — 주면 그 양식 위에 묶는다. password는 암호 양식일 때 선생님이 입력한 것(남기지 않음).
+  async function buildExam(data,examSet,{form=null,password=''}={}){
+    await ensure();const Document=document().constructor,template=form?await openForm(form.bytes,password):null;
+    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,template,bodyStart:form?.structure?.firstQuestion??-1});
     try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
@@ -308,6 +310,6 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function openForm(bytes,password){await ensure();const Document=document().constructor,data=new Uint8Array(bytes);
     try{return password?Document.openWithPassword(data,password):new Document(data);}
     catch(e){const text=String(e?.message||e);if(/비밀번호|암호|password/i.test(text)){const error=new Error(password?'암호가 맞지 않습니다. 다시 입력하세요.':'암호가 걸린 한글 파일입니다. 암호를 입력하세요.');error.needsPassword=true;throw error;}throw e;}}
-  async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);try{return readSchoolDocument(d,{fileName});}finally{d.free();}}
+  async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);try{return {...readSchoolDocument(d,{fileName}),structure:formStructure(d)};}finally{d.free();}}
   return {readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

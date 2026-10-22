@@ -54,3 +54,18 @@ export function readSchoolForm(doc, { fileName = '학교 양식', name } = {}) {
   validateStandard(standard);
   return { rows, standard };
 }
+
+// 양식 구조(10-22 S1): 시험지를 이 양식 위에 묶을 때 쓸 자리. 「첫 문항 문단」부터 끝까지가 문항 자리, 그 앞(학교 이름·시험 제목 표 등)은 그대로 둔다.
+export function formStructure(doc) {
+  const out = { pages: 0, columns: 1, firstQuestion: -1, questions: 0, headTables: 0, paragraphs: 0, header: false, footer: false };
+  try { out.pages = doc.pageCount(); } catch {}
+  try { out.columns = J(doc.getColumnDef(0)).columnCount || 1; } catch {}
+  out.paragraphs = doc.getParagraphCount(0);
+  for (let p = 0; p < out.paragraphs; p++) {
+    const len = doc.getParagraphLength(0, p); if (len < 3) continue;
+    if (QUESTION.test(doc.getTextRange(0, p, 0, Math.min(len, 40)))) { out.questions++; if (out.firstQuestion < 0) out.firstQuestion = p; }
+  }
+  if (out.pages) for (const c of J(doc.getPageControlLayout(0)).controls || []) if (!c.cellPath?.length && c.type === 'table' && (out.firstQuestion < 0 || c.paraIdx < out.firstQuestion)) out.headTables++;
+  for (const [k, header] of [['header', true], ['footer', false]]) { try { const info = J(doc.getHeaderFooterParaInfo(0, header, 0)); out[k] = !!info && !(info.ok === false); } catch { out[k] = false; } }
+  return out;
+}

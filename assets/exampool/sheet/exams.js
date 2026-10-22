@@ -13,6 +13,7 @@ export function validateExams(data){
   if(!Array.isArray(data.exams)||data.exams.length>200)throw Error('시험지 목록을 확인하세요.');
   for(const e of data.exams){
     if(!e||typeof e.id!=='string'||ids.has(e.id)||typeof e.title!=='string'||e.title.length>200||!Object.hasOwn(EXAM_STATUS,e.status)||!Array.isArray(e.items)||e.items.length>200)throw Error('시험지 정보를 확인하세요.');
+    if(e.formId!==undefined&&(typeof e.formId!=='string'||e.formId.length>80))throw Error('시험지 양식 표시를 확인하세요.');
     ids.add(e.id);
     for(const id of e.items){if(!qids.has(id)||seen.has(id))throw Error('시험지 구성의 문항 목록을 확인하세요.');seen.add(id);}
   }

@@ -557,3 +557,6 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #school-dialog .school-rows tr[data-found=false] td:last-child{color:var(--ds-doc-ink-3,#6a7079)}
 #school-dialog .school-name{display:flex;align-items:center;gap:8px;margin:4px 0}
 #school-dialog .school-name input{flex:1;height:30px;padding:0 8px;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db)}
+.pv-form{display:inline-flex;align-items:center;gap:6px;margin-right:8px;color:var(--ds-ink-3,#7d8590);font-size:12.5px}
+.pv-form select{height:30px;max-width:180px}
+#school-dialog .school-keep{display:block;margin:8px 0 2px;font-size:12.5px;color:var(--ds-doc-ink-2,#3a3f46)}

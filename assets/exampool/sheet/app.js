@@ -16,7 +16,7 @@ import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
 import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
-import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID} from './typeset-standard.js';
+import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 import {loadStandards} from './standards-data.js';
@@ -94,7 +94,9 @@ function flushSave({now=false}={}){saveTimer=0;
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
   const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();markDirty(only&&data.questions.includes(only)?only:null);demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
-let typesetStandards=[];
+let typesetStandards=[],typesetForms=[];
+// 시험지 양식(학교 양식 파일 그대로): {id,name,fileName,encrypted,bytes,structure,standardId,createdAt}. 같은 state 저장소 'typesetForms' 칸.
+async function saveTypesetForms(list){typesetForms=list;await new Promise((resolve,reject)=>{const t=database.transaction('state','readwrite');t.objectStore('state').put(typesetForms,'typesetForms');t.oncomplete=resolve;t.onerror=()=>reject(t.error);});return typesetForms;}
 // 조판 기준 저장(성취기준 standards와 다른 것): 수능 틀은 내장이라 저장하지 않는다.
 async function saveTypesetStandards(list){typesetStandards=list.filter(s=>s.id!=='kice').map(s=>{validateStandard(s);return s;});
   await new Promise((resolve,reject)=>{const t=database.transaction('state','readwrite');t.objectStore('state').put(typesetStandards,'typesetStandards');t.oncomplete=resolve;t.onerror=()=>reject(t.error);});return typesetStandards;}
@@ -102,6 +104,7 @@ async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   // 조판 기준 목록(10-22): 새 저장소를 만들면 DB 판을 올려야 하고 열린 다른 창이 막히므로, 같은 state 저장소의 'typesetStandards' 칸에 둔다.
   try{typesetStandards=(await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('typesetStandards');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);})||[]).filter(s=>{try{return validateStandard(s);}catch{return false;}});}catch{typesetStandards=[];}
+  try{typesetForms=(await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('typesetForms');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);})||[]).filter(f=>f&&f.id&&f.bytes);}catch{typesetForms=[];}
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
   if(!raw&&!demo){
     const available=await indexedDB.databases?.()||[];
@@ -230,7 +233,7 @@ function renderView(){
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibrary($('#library-view'),data,view);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
-  if(view.name==='exam')renderExam($('#examd-view'),data,view.examId);
+  if(view.name==='exam')renderExam($('#examd-view'),data,view.examId,{forms:typesetForms});
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
@@ -493,34 +496,46 @@ async function onTypesetGap(target,value,scope,stdKey){const q=current;if(!q)ret
     },{render:false});
   }catch(e){status(e.message,true);}
 }
+// 기준 파일(.5e-typeset.json)에 이 기준으로 등록한 학교 양식 파일도 담는다(base64) — 다른 선생님이 가져오면 양식도 함께 등록.
+const b64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(s);};
+function standardFileText(standard){const form=typesetForms.find(f=>f.standardId===standard.id);const base=JSON.parse(exportStandardText(standard));
+  if(form)base.form={name:form.name,fileName:form.fileName,encrypted:!!form.encrypted,structure:form.structure,base64:b64(new Uint8Array(form.bytes))};return JSON.stringify(base,null,2);}
 async function onTypesetStandard(action){const q=current;
   try{
     if(action.error)throw Error(action.error);
-    if(action.school){$('#school-file-input').value='';$('#school-file-input').click();return;}
-    if(action.imported){const s=action.imported;await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);status(`조판 기준 「${s.name}」을 가져왔습니다. 메뉴에서 고르면 이 문항에 씁니다.`);return;}
+    if(action.school){schoolFor=null;$('#school-file-input').value='';$('#school-file-input').click();return;}
+    if(action.imported){const s=action.imported;delete s.form;await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);
+      let raw=null;try{raw=JSON.parse(action.raw||'null');}catch{}const f=raw?.form;
+      if(f?.base64){const bytes=Uint8Array.from(atob(f.base64),c=>c.charCodeAt(0));await saveTypesetForms([...typesetForms,{id:'form_'+uid(),name:f.name||s.name,fileName:f.fileName||'양식.hwpx',encrypted:!!f.encrypted,bytes,structure:f.structure||{},standardId:s.id,createdAt:new Date().toISOString()}]);renderAll();}
+      status(`조판 기준 「${s.name}」을 가져왔습니다${f?.base64?' · 시험지 양식도 등록했습니다':''}. 메뉴에서 고르면 이 문항에 씁니다.`);return;}
     if(action.saveAs){const s=copyStandard(typesetStandardOf(q),{name:action.saveAs});await saveTypesetStandards([...typesetStandards,s]);if(q)mutate(()=>{q.standardId=s.id;},{render:false});status(`조판 기준 「${s.name}」으로 저장했습니다.`);return;}
     if(action.pick&&q){mutate(()=>{if(action.pick===KICE_ID)delete q.standardId;else q.standardId=action.pick;},{render:false});}
   }catch(e){status(e.message,true);}
 }
 // 학교 양식에서 기준 만들기: 파일 → 엔진으로 읽기 → 찾은 값 표 → 이름 붙여 저장하고 이 문항에 쓴다.
-let schoolDraft=null;
+let schoolDraft=null,schoolFor=null;// schoolFor: 시험지 화면에서 등록하면 {exam} — 그 시험지 양식으로 고르고 문항 기준은 건드리지 않는다.
 // 암호 입력 창: 선생님이 직접 넣는 암호만 받는다. 돌려준 뒤 입력칸을 비운다(저장·기록하지 않음).
 function askPassword(message){const dialog=$('#password-dialog'),input=$('#password-input');$('#password-message').textContent=`${message} 암호는 이 파일을 여는 데만 쓰고 저장하지 않습니다.`;input.value='';
   return new Promise(resolve=>{dialog.addEventListener('close',()=>{const value=dialog.returnValue==='ok'&&input.value?input.value:null;input.value='';resolve(value);},{once:true});dialog.showModal();input.focus();});}
 $('#school-file-input').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;
   try{status('학교 양식을 읽는 중…');typesetter||=makeTypesetter();const buffer=await file.arrayBuffer();let read=null,password='',message='';
     for(;;){try{read=await typesetter.readSchoolForm(buffer,file.name,password);break;}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null){status('학교 양식 열기를 그만두었습니다.');return;}}}
-    password='';schoolDraft=read.standard;
+    schoolDraft={standard:read.standard,structure:read.structure,bytes:new Uint8Array(buffer),fileName:file.name,encrypted:!!password};password='';
+    {const st=read.structure;$('#school-structure').textContent=st.firstQuestion>=0?`양식 구조: ${st.pages}쪽 · ${st.columns}단 · 머리 표 ${st.headTables}개${st.header?' · 머리말':''}${st.footer?' · 꼬리말':''} · 문항 자리 ${st.firstQuestion+1}번째 문단부터(예시 문항 ${st.questions}개는 시험지를 묶을 때 비움)`:'양식 구조: 「1.」처럼 번호로 시작하는 문단을 못 찾아, 시험지를 묶으면 양식 끝에 문항을 붙입니다.';}
     $('#school-file').textContent=`${file.name} · 한글 엔진으로 읽은 값`;
     $('#school-rows').innerHTML=read.rows.map(r=>`<tr data-found="${r.found}"><td>${E(r.label)}</td><td>${E(r.value)}${r.note?`<small>${E(r.note)}</small>`:''}</td><td>${r.found?'읽음':'수능 틀'}</td></tr>`).join('');
-    $('#school-name').value=read.standard.name;$('#school-dialog').showModal();status('학교 양식을 읽었습니다. 값을 확인하고 저장하세요.');
+    $('#school-name').value=read.standard.name;$('#school-keep-form').checked=true;$('#school-keep-form').disabled=!!schoolFor;$('#school-save').textContent=schoolFor?'양식으로 등록하고 이 시험지에 쓰기':'기준으로 저장하고 이 문항에 쓰기';$('#school-dialog').showModal();status('학교 양식을 읽었습니다. 값을 확인하고 저장하세요.');
   }catch(error){status(`학교 양식을 읽지 못했습니다: ${error.message}`,true);}
 });
 $('#school-save').addEventListener('click',async()=>{if(!schoolDraft)return;const name=$('#school-name').value.trim();if(!name){$('#school-name').focus();return;}
-  try{const s={...schoolDraft,name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);$('#school-dialog').close();schoolDraft=null;
+  try{const s={...schoolDraft.standard,name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);
+    let formId='';if($('#school-keep-form').checked||schoolFor){const d=schoolDraft;formId='form_'+uid();await saveTypesetForms([...typesetForms,{id:formId,name,fileName:d.fileName,encrypted:d.encrypted,bytes:d.bytes,structure:d.structure,standardId:s.id,createdAt:new Date().toISOString()}]);}
+    $('#school-dialog').close();schoolDraft=null;
+    if(schoolFor){const exam=examById(data,schoolFor.exam);schoolFor=null;if(exam)mutate(()=>{exam.formId=formId;exam.updatedAt=new Date().toISOString();});status(`학교 양식 「${name}」을 등록하고 이 시험지에 썼습니다.`);return;}
+    renderAll();
     const q=current;if(q)mutate(()=>{q.standardId=s.id;},{render:false});status(`조판 기준 「${s.name}」을 만들어 이 문항에 썼습니다.`);}catch(error){status(error.message,true);}
 });
-function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,standardsOf:()=>typesetStandards,onGap:onTypesetGap,onStandard:onTypesetStandard,onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
+function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,standardsOf:()=>typesetStandards,onGap:onTypesetGap,onStandard:action=>action.exportText?standardFileText(action.exportText):onTypesetStandard(action),onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
           const target=data.questions.find(q=>q.id===questionId);if(!target)throw Error('문항이 삭제되어 조판을 저장할 수 없습니다.');
           const {questionFingerprint}=await import('./typeset-model.js?v=1014-compact-panel');
           if(snapshot.fingerprint!==await questionFingerprint(target))throw Error('시트 내용과 저장 전 조판 수정이 함께 바뀌었습니다. 시트 수정을 되돌린 뒤 조판을 저장하세요. 기존 조판 수정은 유지됩니다.');
@@ -538,7 +553,10 @@ function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,
           let changed=false;if(mutate(()=>{changed=fn(target)!==false;})){status(changed?text+' · 구성 시트에 반영':'배치가 그대로입니다.');if(changed){clearTimeout(redrawTimer);void requestTypeset(target);}}
         }});}
 // 시험지 HWPX: 문항 조판 문서를 모은다. 한글 엔진은 조판 창과 같은 것을 쓴다.
-async function buildExamBytes(exam){typesetter ||= makeTypesetter();return typesetter.buildExam(data,exam);}
+async function buildExamBytes(exam){typesetter ||= makeTypesetter();
+  const form=exam.formId?typesetForms.find(f=>f.id===exam.formId):null;if(exam.formId&&!form)throw Error('이 시험지에 고른 양식을 찾지 못했습니다. 시험지 화면에서 양식을 다시 고르세요.');
+  if(!form)return typesetter.buildExam(data,exam);
+  let password='';for(;;){try{return await typesetter.buildExam(data,exam,{form,password});}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null)throw Error('양식 암호를 넣지 않아 시험지를 만들지 않았습니다.');}finally{password='';}}}
 // Serialize loads and saves. Fast column clicks keep the last request without
 // allowing an older load or a save to bind to the newly selected question.
 async function requestTypeset(value){
@@ -638,6 +656,10 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   else if(act==='send')void sendExam(exam);
   else if(act==='download')void sendExam(exam,{download:true});
 });
+// 시험지 양식 고르기: 5E 기본 / 등록한 학교 양식 / 새로 등록.
+$('#examd-view').addEventListener('change',e=>{if(e.target.id!=='exam-form')return;const exam=examNow();if(!exam)return;const v=e.target.value;
+  if(v==='__new'){e.target.value=exam.formId||'';schoolFor={exam:exam.id};$('#school-file-input').value='';$('#school-file-input').click();return;}
+  mutate(()=>{if(v)exam.formId=v;else delete exam.formId;exam.updatedAt=new Date().toISOString();});status(v?`이 시험지는 「${typesetForms.find(f=>f.id===v)?.name}」 양식 위에 묶습니다.`:'이 시험지는 5E 기본 양식으로 묶습니다.');});
 // 시험지 ⋯ 메뉴: 바깥을 누르거나 Esc면 닫는다.
 const closeExamMenu=(focus=false)=>{for(const m of document.querySelectorAll('.pv-more .top-menu:not([hidden])')){m.hidden=true;const b=m.previousElementSibling;b.setAttribute('aria-expanded','false');if(focus)b.focus();}};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('.pv-more'))closeExamMenu();},true);

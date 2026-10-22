@@ -15,7 +15,7 @@ h.withServer(async origin => {
   fs.mkdirSync(evidence, { recursive: true });
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch({ headless: true });
-    const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } });
+    const page = await (await browser.newContext({ viewport: { width: 1600, height: 1100 }, acceptDownloads: true })).newPage();
     page.setDefaultTimeout(60000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -54,6 +54,13 @@ h.withServer(async origin => {
       await sheet.waitForFunction(() => document.querySelector('#native-editor')?.dataset.ready === 'true' && document.querySelector('#preview-dialog')?.getAttribute('aria-busy') !== 'true');
       await sheet.click('.ts-std'); await sheet.waitForSelector('.ts-std-menu:not([hidden]) [data-std-pick]');
       assert.deepEqual(await sheet.locator('.ts-std-menu [data-std-pick]').allTextContents(), ['수능 틀', '○○고 중간고사']);
+      // 내보내기: 기준 파일에 등록한 양식 파일도 담긴다 → 다른 선생님이 가져오면 기준과 양식이 함께 등록된다.
+      const exported = page.waitForEvent('download');
+      await sheet.click('.ts-std-menu [data-std-export]');
+      const saved = JSON.parse(fs.readFileSync(await (await exported).path(), 'utf8'));
+      assert.equal(saved.format, '5e-typeset-standard'); assert.equal(saved.name, '○○고 중간고사');
+      assert.ok(saved.form?.base64?.length > 1000 && saved.form.structure?.firstQuestion >= 0, `${name}: the school form file travels with the standard`);
+      await sheet.click('.ts-std'); await sheet.waitForSelector('.ts-std-menu:not([hidden]) [data-std-pick]');
       await sheet.click('.ts-std-menu [data-std-pick="kice"]');
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 ▾');
       // 암호 걸린 양식: 선생님이 입력하는 창(틀리면 다시), 맞으면 같은 표. 시험용 암호는 검사 안에서 만든 파일의 것.
