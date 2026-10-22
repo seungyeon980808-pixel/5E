@@ -45,7 +45,10 @@ h.withServer(async origin => {
       assert.ok(m.indents >= 2, `${name}: green lines on wrapped hanging-indent paragraphs: ${m.indents}`);
       // 둘째 줄 시작이 초록 선 위에 온다(내어쓰기 맞음).
       const aligned = await sheet.evaluate(() => { const ifr = document.querySelector('#native-editor iframe'), d = ifr.contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle();
-        const runs = JSON.parse(d.getPageTextLayout(0)).runs.filter(r => r.secIdx === 0 && r.paraIdx === 1 && !r.cellPath); return runs.length > 1 && runs.slice(1).every(r => Math.abs(r.x - runs[1].x) < .5); });
+        const runs = JSON.parse(d.getPageTextLayout(0)).runs.filter(r => r.secIdx === 0 && r.paraIdx === 1 && !r.cellPath);
+        // 줄 = 같은 높이의 글자 조각들(자간을 줄마다 다르게 맞추면 한 줄이 여러 조각이 된다) → 줄마다 가장 왼쪽 x
+        const starts = [...runs.reduce((m, r) => m.set(Math.round(r.y), Math.min(m.get(Math.round(r.y)) ?? Infinity, r.x)), new Map())].sort((a, b) => a[0] - b[0]).map(([, x]) => x);
+        return starts.length > 1 && starts.slice(1).every(x => Math.abs(x - starts[1]) < .5); });
       assert.ok(aligned, `${name}: wrapped lines of item 1 share one start`);
       const exportBytes = () => sheet.evaluate(async () => { const w = document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm; const out = await w.exportHwpx(); const bytes = out instanceof Uint8Array ? out : new Uint8Array(out); let sum = 0; for (const b of bytes) sum = (sum * 31 + b) >>> 0; return `${bytes.length}:${sum}`; });
       const withMarks = await exportBytes();

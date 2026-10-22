@@ -1,4 +1,5 @@
 import {attachGapView} from './typeset-gaps.js';
+import {readSchoolForm as readSchoolDocument} from './standard-from-hwp.js';
 import {KICE_STANDARD} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
 import {buildExamDocument,assembleExamDocument} from './exam-build.js';
@@ -298,5 +299,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       return {pages:out,paper:sheet.paper,columns:sheet.columns,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
     }finally{target.free();}
   }
-  return {open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  // 학교 양식(한글 파일)을 엔진으로 열어 조판 기준 값을 읽는다(10-22 C-6). 열린 문항 조판에는 손대지 않는다.
+  async function readSchoolForm(bytes,fileName){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{return readSchoolDocument(d,{fileName});}finally{d.free();}}
+  return {readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

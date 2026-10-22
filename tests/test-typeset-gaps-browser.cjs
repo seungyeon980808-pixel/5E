@@ -80,7 +80,7 @@ h.withServer(async origin => {
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 (내 설정) ▾', null, { timeout: 20000 });
       await ready();
       // 메뉴로 수능 틀 되돌리기
-      await sheet.click('.ts-std');
+      await sheet.click('.ts-std'); await sheet.waitForSelector('.ts-std-menu:not([hidden]) [data-std-pick]');
       assert.deepEqual(await sheet.locator('.ts-std-menu [data-std-pick]').allTextContents(), ['수능 틀', '수능 틀 (내 설정)']);
       await sheet.click('.ts-std-menu [data-std-pick="kice"]');
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 ▾');

@@ -496,12 +496,25 @@ async function onTypesetGap(target,value,scope,stdKey){const q=current;if(!q)ret
 async function onTypesetStandard(action){const q=current;
   try{
     if(action.error)throw Error(action.error);
-    if(action.school){status('학교 양식에서 기준 만들기는 다음 단계에서 열립니다.');return;}
+    if(action.school){$('#school-file-input').value='';$('#school-file-input').click();return;}
     if(action.imported){const s=action.imported;await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);status(`조판 기준 「${s.name}」을 가져왔습니다. 메뉴에서 고르면 이 문항에 씁니다.`);return;}
     if(action.saveAs){const s=copyStandard(typesetStandardOf(q),{name:action.saveAs});await saveTypesetStandards([...typesetStandards,s]);if(q)mutate(()=>{q.standardId=s.id;},{render:false});status(`조판 기준 「${s.name}」으로 저장했습니다.`);return;}
     if(action.pick&&q){mutate(()=>{if(action.pick===KICE_ID)delete q.standardId;else q.standardId=action.pick;},{render:false});}
   }catch(e){status(e.message,true);}
 }
+// 학교 양식에서 기준 만들기: 파일 → 엔진으로 읽기 → 찾은 값 표 → 이름 붙여 저장하고 이 문항에 쓴다.
+let schoolDraft=null;
+$('#school-file-input').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;
+  try{status('학교 양식을 읽는 중…');typesetter||=makeTypesetter();const read=await typesetter.readSchoolForm(await file.arrayBuffer(),file.name);schoolDraft=read.standard;
+    $('#school-file').textContent=`${file.name} · 한글 엔진으로 읽은 값`;
+    $('#school-rows').innerHTML=read.rows.map(r=>`<tr data-found="${r.found}"><td>${E(r.label)}</td><td>${E(r.value)}${r.note?`<small>${E(r.note)}</small>`:''}</td><td>${r.found?'읽음':'수능 틀'}</td></tr>`).join('');
+    $('#school-name').value=read.standard.name;$('#school-dialog').showModal();status('학교 양식을 읽었습니다. 값을 확인하고 저장하세요.');
+  }catch(error){status(`학교 양식을 읽지 못했습니다: ${error.message}`,true);}
+});
+$('#school-save').addEventListener('click',async()=>{if(!schoolDraft)return;const name=$('#school-name').value.trim();if(!name){$('#school-name').focus();return;}
+  try{const s={...schoolDraft,name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);$('#school-dialog').close();schoolDraft=null;
+    const q=current;if(q)mutate(()=>{q.standardId=s.id;},{render:false});status(`조판 기준 「${s.name}」을 만들어 이 문항에 썼습니다.`);}catch(error){status(error.message,true);}
+});
 function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,standardsOf:()=>typesetStandards,onGap:onTypesetGap,onStandard:onTypesetStandard,onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
           const target=data.questions.find(q=>q.id===questionId);if(!target)throw Error('문항이 삭제되어 조판을 저장할 수 없습니다.');
           const {questionFingerprint}=await import('./typeset-model.js?v=1014-compact-panel');

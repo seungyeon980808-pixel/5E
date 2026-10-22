@@ -190,7 +190,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
     closeMenu();
     try { onStandard?.({ imported: importStandard(await file.text()) }); } catch (error) { onStandard?.({ error: error.message }); }
   });
-  doc.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && e.target !== stdButton) closeMenu(); });
+  doc.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !stdButton.contains(e.target)) closeMenu(); });
   doc.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!menu.hidden) closeMenu(); else if (!pop.hidden) { selected = ''; draw(); } } });
   lockButton?.addEventListener('click', () => requestAnimationFrame(() => { if (selected) showPop(); }));
   return { draw, get on() { return on; } };
