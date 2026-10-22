@@ -503,3 +503,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .pg-q-hit{position:absolute;z-index:1;margin:-3px;padding:3px;border-radius:3px;cursor:pointer}
 #card-view .pg-q-hit:hover{outline:1px solid var(--ds-line-strong,#30363d);outline-offset:3px}
 #card-view .pg-q-hit.is-picked{outline:2px solid var(--ds-line-strong,#30363d);outline-offset:3px}
+/* 조판 부호 단추(10-22 17번): 「상세 조판」 줄 오른쪽, 구조 잠금 바로 앞. 켜짐은 다른 켜진 단추와 같은 옅은 면. */
+.typeset-view-controls .typeset-marks{display:inline-flex;align-items:center;gap:var(--ds-space-1,4px);margin-left:auto}
+.typeset-view-controls .typeset-marks+#typeset-lock{margin-left:4px}
+.typeset-view-controls .typeset-marks svg{flex:none}

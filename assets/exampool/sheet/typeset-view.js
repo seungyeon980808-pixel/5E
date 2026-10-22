@@ -1,6 +1,13 @@
 // Chrome and camera changes belong to the view, never the HWPX document.
+import {installExamMarks,marksButtonHtml,marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1022-marks';
 export function attachTypesetView(bridge,host){
   const panel=host.parentElement,doc=bridge.editor.element.contentDocument;
+  // 조판 부호(고정 띄어쓰기 빨간 V·내어쓰기 기준점 초록 선): 「상세 조판」 줄 오른쪽, 구조 잠금 앞. 기본 켜짐·기억, 화면에만(10-22 17번).
+  {const lock=panel.querySelector('#typeset-lock');if(lock&&!panel.querySelector('[data-exam-marks]')){lock.insertAdjacentHTML('beforebegin',marksButtonHtml('typeset-marks'));}
+   const button=panel.querySelector('[data-exam-marks]'),sync=on=>button?.setAttribute('aria-pressed',String(on));
+   installExamMarks(bridge,{onToggle:sync});
+   button?.addEventListener('click',()=>{const on=!marksEnabled();setMarksEnabled(on);sync(on);});
+   window.addEventListener('5e:typeset-marks',e=>sync(e.detail?.on??marksEnabled()));}
   const detail=panel.querySelector('#typeset-detail'),expand=panel.querySelector('#typeset-expand');
   const context=panel.querySelector('#typeset-context'),options=panel.querySelector('#typeset-options');
   let detailed=false,interacted=false,frame=0;

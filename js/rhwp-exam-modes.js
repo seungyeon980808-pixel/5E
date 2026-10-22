@@ -4,6 +4,7 @@ import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { installExamMarks, marksButtonHtml, marksEnabled, setMarksEnabled } from './rhwp-exam-marks.js?v=1022-marks';
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
 const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
@@ -148,6 +149,7 @@ export function installExamModes(panel, services) {
   bar.innerHTML = `<span class="exam-ftabs" role="tablist">${[['text', '글자'], ['para', '문단'], ['table', '표'], ['pic', '그림'], ['item', '문항'], ['sheet', '학습지'], ['layout', '판짜기']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
     <span class="exam-fdiv"></span><div class="exam-fgroup"></div>
     <div class="exam-fright"><span class="exam-fdiv"></span>
+      ${marksButtonHtml('exam-fx big exam-marks-toggle')}
       <button type="button" class="exam-fx big" data-exam-fx="symbols" title="특수기호 창: 기출 3년 빈도로 고른 첫 줄 16칸 + 묶음 탭">Ω 기호</button>
       <button type="button" class="exam-fx big" data-exam-fx="capture" title="고른 부분을 양식(조각)으로 저장 → 팔레트 「템플릿」에 담김">⬚ 양식 저장</button>
       <button type="button" class="exam-fx big" data-exam-fx="check" title="조판 점검: 넓은 그림·표, 흐린 그림, 빈칸, 번호 빠짐을 찾아 목록으로">✓ 점검</button></div>`;
@@ -167,6 +169,14 @@ export function installExamModes(panel, services) {
   const closePop = () => { pop.hidden = true; pop.innerHTML = ''; };
 
   const bridgeOrThrow = () => { const b = getBridge(); if (!b?.input) throw new Error('시험지 편집기를 준비하는 중입니다. 잠시 뒤 다시 누르세요.'); return b; };
+  // 조판 부호(빨간 V·초록 선) — 화면에만. 편집기가 새로 뜨면 그 편집기에 다시 붙인다.
+  const marksToggle = bar.querySelector('[data-exam-marks]');
+  const syncMarksButton = on => marksToggle?.setAttribute('aria-pressed', String(on));
+  let marks = null, marksBridge = null;
+  const attachMarks = () => { const b = getBridge(); if (!b?.input || b === marksBridge) return; marks?.dispose(); marksBridge = b; marks = installExamMarks(b, { onToggle: syncMarksButton }); };
+  setInterval(attachMarks, 800); attachMarks();
+  marksToggle?.addEventListener('click', () => { const on = !marksEnabled(); setMarksEnabled(on); syncMarksButton(on); });
+  window.addEventListener('5e:typeset-marks', event => syncMarksButton(event.detail?.on ?? marksEnabled()));
   const studio = () => getBridge()?.editor?.element?.contentDocument || null;
   const refocus = () => { try { getBridge()?.input?.focus?.(); } catch {} };
   const documentBase = () => (services.documentName?.() || '문항').replace(/[\\/:*?"<>|]/g, '_');

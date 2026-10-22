@@ -153,3 +153,6 @@
     #rhwp-exam-workspace .exam-qlist li:not(:hover):not(:focus-within) .exam-qmove { display: none; }
   }
 }
+/* 조판 부호 단추(10-22): 도구 줄 오른쪽 묶음 맨 앞, 켜짐은 옅은 선택 면 */
+#rhwp-exam-workspace .exam-marks-toggle[aria-pressed="true"] { background: var(--ds-soft-bg, #152137); color: var(--ds-ink, #e6edf3); }
+#rhwp-exam-workspace .exam-marks-toggle svg { flex: none; }

@@ -796,6 +796,12 @@
       ]
     },
     {
+      "path": "tests/test-rhwp-exam-marks.mjs",
+      "findingIds": [
+        "TYPESET-MARKS-GEOMETRY"
+      ]
+    },
+    {
       "path": "tests/test-rhwp-exam-shortcuts.mjs",
       "findingIds": [
         "RHWP-EXAM-HANCOM-SHORTCUTS"
@@ -2231,6 +2237,12 @@
       "findingIds": [
         "MAIN-CANVAS-DRAG-LAYOUT-THRASH",
         "OBJECT-SEARCH-ICON-LAYOUT-THRASH"
+      ]
+    },
+    {
+      "path": "tests/test-typeset-marks-browser.cjs",
+      "findingIds": [
+        "TYPESET-MARKS-SCREEN-ONLY"
       ]
     },
     {
