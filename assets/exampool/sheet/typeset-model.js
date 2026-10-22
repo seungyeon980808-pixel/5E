@@ -137,7 +137,8 @@ export async function applyReferenceBogiIndent(document,JSZip,CFB=globalThis.XLS
   for(const run of runs){
     if(!run.cellPath?.length||run.charStart!==0)continue;
     const bogi=run.cellPath.at(-1).cellIndex===5&&boxes.has(tableKey(run));
-    const prefix=run.text.match(bogi?/^[ㄱ-ㅎ]\. /:/^(?:[①-⑤]|\([가-힣]\)) /)?.[0];if(!prefix)continue;
+    // 빈 줄은 「ㄱ.」 뒤 칸이 줄바꿈 없는 공백(nbsp)으로 온다 — 그 경우도 찾아야 새 문항부터 내어쓰기가 걸린다.
+    const prefix=run.text.match(bogi?/^[ㄱ-ㅎ]\.[ \u00a0]/:/^(?:[①-⑤]|\([가-힣]\))[ \u00a0]/)?.[0];if(!prefix)continue;
     const path=JSON.stringify(run.cellPath),start=JSON.parse(document.getCursorRectByPath(run.secIdx,run.parentParaIdx,path,0)),end=JSON.parse(document.getCursorRectByPath(run.secIdx,run.parentParaIdx,path,prefix.length));
     indents.set(paraKey(run.secIdx,run.parentParaIdx,run.cellPath),-Math.round((end.x-start.x)*75));
   }

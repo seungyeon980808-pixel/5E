@@ -14,6 +14,9 @@ test('paragraph and table keys keep different meanings', () => {
   assert.equal(documentShortcut(key('Enter',{ctrlKey:true})), 'page:break');
   assert.equal(documentShortcut(key('Enter',{ctrlKey:true}),{inCell:true}), 'table:insert-row-below');
   assert.equal(documentShortcut(key('Tab',{ctrlKey:true,shiftKey:true}),{inCell:true}), 'hanging-indent');
+  // 맥: ⌘⇧Tab은 운영체제 앱 전환이라 ⌥⇧Tab으로도 내어쓰기(칸 안·본문)
+  assert.equal(documentShortcut(key('Tab',{altKey:true,shiftKey:true}),{inCell:true}), 'hanging-indent');
+  assert.equal(documentShortcut(key('Tab',{altKey:true,shiftKey:true}),{inCell:false}), 'hanging-indent');
   assert.equal(documentShortcut(key('KeyH')), null);
   assert.equal(documentShortcut(key('KeyH'),{cellSelection:true}), 'equal-height');
   assert.equal(documentShortcut(key('Digit1',{ctrlKey:true})), null, 'palette keys stay unchanged');

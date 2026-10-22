@@ -33,7 +33,7 @@ export const EXAM_SHORTCUTS = [
   ['굵게 / 밑줄 / 기울임','Ctrl+B / U / I'], ['위 첨자 / 아래 첨자','Alt+Shift+P / S'],
   ['글자 모양 / 문단 모양','Alt+L / T'], ['줄 간격 줄이기 / 늘리기','Alt+Shift+A / Z'],
   ['왼쪽 / 가운데 / 오른쪽 / 양쪽 정렬','Ctrl+Shift+L / C / R / M'],
-  ['빠른 내어쓰기','본문 Shift+Tab · 셀 안 Ctrl+Shift+Tab'],
+  ['빠른 내어쓰기','본문 Shift+Tab · 셀 안 Ctrl+Shift+Tab · 맥은 어디서나 ⌥⇧Tab'],
   ['첫 줄 들여쓰기 / 내어쓰기 (한 글자)','Ctrl+F6 / F5 · Ctrl+Shift+I / O'],
   ['왼쪽 여백 늘이기 / 줄이기 (1pt)','Ctrl+Alt+F6 / F5 · Ctrl+Shift+G / E'],
   ['오른쪽 여백 늘이기 / 줄이기 (1pt)','Ctrl+Alt+F7 / F8 · Ctrl+Shift+D / F'],
@@ -59,6 +59,8 @@ export function documentShortcut(event, { inCell = false, cellSelection = false 
   }
   if (event.ctrlKey && !event.metaKey && event.shiftKey && !event.altKey && controlShiftParagraph[key])
     return controlShiftParagraph[key];
+  // 맥에서 ⌘⇧Tab은 운영체제의 앱 전환이라 페이지에 오지 않는다 — 내어쓰기는 ⌥⇧Tab(칸 안·본문 모두)으로도 한다(10-22).
+  if (event.altKey && event.shiftKey && !control && key === 'tab') return 'hanging-indent';
   if (event.altKey && event.shiftKey && !control) return altShift[key] || null;
   if (control && event.shiftKey && !event.altKey) {
     if (key === 'tab' && inCell) return 'hanging-indent';
