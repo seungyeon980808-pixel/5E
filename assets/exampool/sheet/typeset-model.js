@@ -1,6 +1,6 @@
 import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
-export const LAYOUT_VERSION=11;
+export const LAYOUT_VERSION=12;
 // 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
 import {KICE_STANDARD,layoutValues} from './typeset-standard.js';
 // 본문 글자 장평·자간 기본값은 조판 기준(「수능 틀」)에서 읽는다.
@@ -35,8 +35,9 @@ export async function normalizeQuestionImport(bytes,JSZip,{standard=KICE_STANDAR
   // generated question document, before the user starts editing its layout.
   let header=await zip.file('Contents/header.xml').async('string');
   header=header.replace(/<hc:(left|right|intent) value="\d+"/g,'<hc:$1 value="0"');
-  // 한글 줄 나눔은 평가원처럼 어절 단위(KEEP_WORD). 들여온 문단 모양 일부가 글자 단위(BREAK_WORD)로 들어온다.
-  header=header.replace(/breakNonLatinWord="BREAK_WORD"/g,'breakNonLatinWord="KEEP_WORD"');
+  // 한글 줄 나눔은 평가원처럼 어절 단위. HWPX에서는 BREAK_WORD가 「어절」(rhwp koreanBreakUnit 0), KEEP_WORD가 「글자」다
+  // (10-22 실험: KEEP_WORD로 바꾸던 예전 코드가 거꾸로 글자 단위로 만들어 「설계|한다」처럼 어절 가운데에서 끊겼다).
+  header=header.replace(/breakNonLatinWord="KEEP_WORD"/g,'breakNonLatinWord="BREAK_WORD"');
   header=header.replace(/<hh:ratio\b[^>]*\/>/g,tag=>tag.replace(/="\d+"/g,`="${L.ratio}"`)).replace(/<hh:spacing\b[^>]*\/>/g,tag=>tag.replace(/="-?\d+"/g,`="${L.spacing}"`));
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text

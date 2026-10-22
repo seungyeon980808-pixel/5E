@@ -1,7 +1,7 @@
 import {KICE_STANDARD,layoutValues,mmToPx,gapRole} from './typeset-standard.js';
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts,TEXT_WIDTH} from './typeset-model.js?v=1014-compact-panel';
-import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
+import {splitWidths,sizedWidth,choiceColumns} from './placement.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels=['①','②','③','④','⑤'];
@@ -307,8 +307,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // (실측: 발문 앞·선지 표 앞 모두 1mm마다 2mm). 그래서 위 여백 = (원하는 값 − 0.58mm) ÷ 2. 0이면 넣지 않는다.
   const gapHtml=mm=>{if(!(mm>0))return '';const px=Math.max(0,mmToPx((mm-SPACER_MM)/2));return `<p style="margin:0;margin-top:${px}px"><span style="font-size:1pt"> </span></p>`;};
   const roleGap={text:L.gapText,material:L.gapMaterial,bogi:L.gapBogi};
-  // 블록 앞: 블록에 정한 간격(b.gap)은 예전 방식 그대로(출력 불변), 비어 있으면 조판 기준의 종류별 간격(정확한 방식).
-  const spacer=b=>{if(b.gap===undefined)return gapHtml(roleGap[gapRole(b.kind)]);const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
+  // 블록 앞: 블록에 정한 간격(b.gap) → 없으면 조판 기준의 종류별 간격. 둘 다 정확한 방식(예전 빈 문단은 3.6mm + 값의 두 배가 들어갔다).
+  const spacer=b=>gapHtml(b.gap===undefined?roleGap[gapRole(b.kind)]:b.gap);
   // 실험 과정·결과 같은 머리: 〔실험 과정〕. 괄호는 고칠 수 없는 앞뒤로 둔다.
   const heading=b=>(b.kind==='steps'||b.heading===true)&&b.label?p(`〔${b.label}〕`,null,11,{kind:'label',id:b.id,prefix:1,suffix:1}):'';
   const walk=async(parent,width,onlyId=null)=>{
@@ -378,13 +378,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           // 아랫줄 칸마다 (가)·(나) 같은 이름을 가운데. 열 폭은 묶음 안 폭 비율. 표는 칸 폭 가득, 그림은 칸 폭을 넘지 않는 크기로 가운데.
           const widths=rowWidths(children,innerWidth),caption=c=>(/^\(.+\)$/.test(c.label)?c.label:'')+(c.text?(/^\(.+\)$/.test(c.label)?' ':'')+c.text:''),captioned=children.some(c=>caption(c));
           recordTable(captioned?2:1,children.length,[],{kind:'side',id:b.id});
-          const tops=[],heights=[];
+          const tops=[],heights=[],notes=[];
           nested++;try{for(const [i,c] of children.entries()){
             const cellW=Math.max(35,widths[i]-12);let inner='';
             if(c.kind==='figure'){
               if(!c.figure&&ghost.figures.has(c.id)&&ghostFigure){const w=sizedWidth(c,cellW);c.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),c.label);}
               if(c.figure){inner=await picture(c.figure,Math.min(cellW,sizedWidth(c,cellW)),undefined,{kind:'block',id:c.id});heights.push(Number(inner.match(/height="(\d+)"/)?.[1])||0);}
-            }else inner=await table(c.table,cellW,false,undefined,{kind:'block',id:c.id},false,cellW);
+            }else{
+              // 표 아래 설명(예 「0은 실제 값…」)은 칸 안이 아니라 나란한 자료 전체 아래 줄로(10-22 10번 「나」안 조판 쪽).
+              if(c.table?.note)notes.push({note:c.table.note,id:c.id});
+              inner=await table(c.table?.note?{...c.table,note:''}:c.table,cellW,false,undefined,{kind:'block',id:c.id},false,cellW);
+            }
             tops.push(inner||'<p><br></p>');
           }}finally{nested--;}
           const topH='';
@@ -392,6 +396,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           if(captioned)body+=`<tr>${children.map((c,i)=>{const label=caption(c),hasText=!!c.text,prefix=/^\(.+\)$/.test(c.label)?c.label.length+1:0;
             return `<td style="border:none;padding:2px 4px 4px;vertical-align:top;text-align:center;height:24px;width:${widths[i]}px"><p style="margin:0;text-align:center">${label?text(label,Math.max(35,widths[i]-12),11,null,hasText?{kind:'block',id:c.id,prefix}:null):'\u2060'}</p></td>`;}).join('')}</tr>`;
           body+='</table>';
+          // 칸 밖 문단은 한글 엔진이 어절로 줄을 나눈다(칸 안처럼 미리 나누지 않음).
+          for(const n of notes)body+=`<p style="margin:4px 0 6px;text-align:justify">${text(n.note,null,10,v=>v,{kind:'note',table:n.id})}</p>`;
         }else if(b.layout==='나란히'&&children.length>1){
           recordTable(1,children.length,[],{kind:'side',id:b.id});
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>`;

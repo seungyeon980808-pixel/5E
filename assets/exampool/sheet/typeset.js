@@ -1,4 +1,5 @@
 import {attachGapView} from './typeset-gaps.js';
+import {fitQuestionLines} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument} from './standard-from-hwp.js';
 import {KICE_STANDARD} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
@@ -113,7 +114,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:std(value)}),plan.equations);
       const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();centerCellPictures(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});
         // 어울림은 내어쓰기 뒤에 건다. 문단 모양을 나중에 바꾸면 한글 엔진이 그림 옆 줄 폭을 잘못 잡는다.
-        if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled);}fitQuestionPage(styled,prof);verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
+        if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled);}
+        // 윗줄부터 자간 맞춤(조판 기준 fit, 10-22 C-5): 내어쓰기·어울림 뒤, 쪽 높이 맞춤 전. 그림 옆 글(어울림)이 있는 문항은 건너뛴다.
+        {const S=std(value);if(S.fit?.on&&!plan.floats.length&&!plan.floatTable)fitQuestionLines(styled,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing});}
+        fitQuestionPage(styled,prof);verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
       if(plan.warnings.length&&!quiet)message(plan.warnings.join(' '));
     }finally{d.free();}
     return {bytes,owners};
