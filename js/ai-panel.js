@@ -2715,7 +2715,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     setText('.ai-result-pane .ai-pane-metadata > strong', creation ? '결과' : '수정본');
     setText('.ai-compare-controls [data-ai-layout-mode="source"]', creation ? refName : '원본');
     setText('.ai-compare-controls [data-ai-layout-mode="result"]', creation ? '결과' : '수정본');
-    setText('[data-ai-reference-empty]', creation ? `모양·배치·화풍을 참고합니다. 그대로 베끼지 않고, 오른쪽 설명이 우선합니다. (선택 사항 · 최대 ${CREATION_REFERENCE_LIMIT}개)` : '이미지를 추가하면 원본이 여기에 표시됩니다.');
+    // 빈 칸 안내는 제목·설명 글만 바꾼다(안의 「이미지 불러오기」 선택 메뉴는 그대로 — 통째로 글을 바꾸면 메뉴가 지워졌다).
+    setText('[data-ai-reference-empty] > strong', creation ? `${refName}(선택 사항 · 최대 ${CREATION_REFERENCE_LIMIT}개)` : '작업할 이미지를 추가하세요');
+    setText('[data-ai-reference-empty] > span', creation ? '모양·배치·화풍을 참고합니다. 그대로 베끼지 않고, 오른쪽 설명이 우선합니다.' : '이미지를 끌어놓거나 파일을 선택하세요.');
     const refSummary = panel.querySelector('.ai-reference-section > summary')?.firstChild; if (refSummary?.nodeType === 3) refSummary.nodeValue = creation ? `${refName} ` : '원본 이미지 ';
     const addLabel = panel.querySelector('[data-ai-source-menu-trigger] .ds-glyph-plus')?.nextSibling; if (addLabel?.nodeType === 3) addLabel.nodeValue = creation ? ` ${refName} 추가 ` : ' 소스 추가 ';
     const processing = panel.querySelector('[data-ai-output-processing]'); if (processing) processing.hidden = graph;
