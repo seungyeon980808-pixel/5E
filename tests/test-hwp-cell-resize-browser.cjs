@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright'),h=require('./helpers/rhwp-exam.cjs');
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/feedback/parts/night-hwp-cell-resize');fs.mkdirSync(out,{recursive:true});
-h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,webkit})){
+h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try {await h.navigate(page,origin+'/?mode=pro&exam=1&mobile=0');await h.ready(page);await h.action(page,'new');await h.idle(page);
  await page.evaluate(()=>{const d=document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps,w=d.wasm,t=w.createTable(0,0,0,2,2);window.tableFixture=t;w.resizeTableCells(0,t.paraIdx,t.controlIdx,[0,1,2,3].map(cellIdx=>({cellIdx,heightDelta:3000})));w.insertTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,'셀 본문');d.eventBus.emit('document-changed');});

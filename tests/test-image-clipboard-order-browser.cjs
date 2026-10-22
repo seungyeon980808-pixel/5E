@@ -60,5 +60,5 @@ async function scenario(engine, origin, surface) {
   } finally { await browser.close(); }
 }
 (async () => h.withServer(async origin => {
-  for (const engine of [chromium, webkit]) for (const surface of ['/', '/preview/']) await scenario(engine, origin, surface);
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) for (const surface of ['/', '/preview/']) await scenario(engine, origin, surface);
 }))().catch(error => { console.error(error); process.exitCode = 1; });

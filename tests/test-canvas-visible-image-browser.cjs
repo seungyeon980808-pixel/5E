@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const h=require('./helpers/rhwp-exam.cjs');
-h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit})){
+h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);

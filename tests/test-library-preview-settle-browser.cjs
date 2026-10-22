@@ -4,7 +4,7 @@ const {chromium,webkit}=require('playwright');
 const origin=new URL(process.env.RELEASE_URL||process.env.EXAM_URL||'http://127.0.0.1:51819').origin;
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/library-preview-settle');fs.mkdirSync(out,{recursive:true});
 const report={qualification:'Bounded completion lifecycle, real Web Animations and visibility events; no provider requests.',engines:[]};
-(async()=>{for(const [engine,type]of Object.entries({chromium,webkit})){
+(async()=>{for(const [engine,type]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await type.launch({headless:true}),page=await browser.newPage({viewport:{width:1000,height:800}}),row={engine,errors:[],cases:[]};report.engines.push(row);page.on('pageerror',e=>row.errors.push(e.message));
  try{
   await page.route('**/__preview_settle__',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><style>.br-stage{position:absolute;inset:0}.br-final,.br-stack{position:absolute;inset:0;width:100%;height:100%}</style><body></body>'}));await page.goto(origin+'/__preview_settle__');

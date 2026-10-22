@@ -8,7 +8,7 @@ const h = require('./helpers/rhwp-exam.cjs');
 const {installCropFixture,pointerOnImage} = require('./helpers/crop-loading-fixture.cjs');
 
 test('Space advances one ready action per press, while other pages always open a fresh crop', {timeout:120000}, async () => h.withServer(async origin => {
-  for (const engine of [chromium,webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch();
     try {
       const page = await browser.newPage({viewport:{width:1440,height:950}}), errors = [];

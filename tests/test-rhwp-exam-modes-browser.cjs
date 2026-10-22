@@ -15,7 +15,7 @@ const button = (page, title) => page.locator(`.exam-fgroup [data-exam-fi][title^
 // 문항 목록의 ↑↓⧉× 는 칸이 좁으면(기본 160) 줄에 마우스를 올렸을 때만 보인다(10-22) — 사람처럼 줄에 올린 뒤 누른다.
 const rowAction = async (page, selector) => { const target = page.locator(selector); await target.locator('xpath=ancestor::li[1]').hover(); await target.click(); };
 
-for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}: 5E_hwp modes and focus tools change the document`, async t => {
+for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: 5E_hwp modes and focus tools change the document`, async t => {
   await h.withServer(async origin => {
     const browser = await engine.launch(); t.after(() => browser.close());
     const page = await browser.newPage({ viewport: { width: 1440, height: 950 } }), errors = [];

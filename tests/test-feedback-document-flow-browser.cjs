@@ -24,7 +24,7 @@ async function openSource(page) {
 
 h.withServer(async origin => {
   fs.mkdirSync(evidence, { recursive: true });
-  for (const [name, type] of Object.entries({ chromium, webkit })) {
+  for (const [name, type] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await type.launch(), page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
     try {

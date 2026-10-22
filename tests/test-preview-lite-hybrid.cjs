@@ -14,7 +14,7 @@ function centered(p) {
   assert.ok(Math.abs(p.y - p.cy) < 1, `vertical center ${JSON.stringify(p)}`);
 }
 (async () => {
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch();
     try {
       const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });

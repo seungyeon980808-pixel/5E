@@ -1,6 +1,6 @@
 const test=require('node:test');const assert=require('node:assert/strict');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const h=require('./helpers/rhwp-exam.cjs');
-for(const [name,engine] of Object.entries({chromium,webkit}))for(const key of ['Enter','Space'])test(`${name}: ${key} confirms crop, document choice and placement once`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE))for(const key of ['Enter','Space'])test(`${name}: ${key} confirms crop, document choice and placement once`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());const page=await browser.newPage({viewport:{width:1440,height:950},reducedMotion:'reduce'});
   await page.addInitScript(()=>{localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');});

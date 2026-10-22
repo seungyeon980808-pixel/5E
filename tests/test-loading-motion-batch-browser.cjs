@@ -4,7 +4,7 @@ const { chromium, webkit } = require('playwright');
 const h = require('./helpers/rhwp-exam.cjs');
 
 h.withServer(async origin => {
-  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) => !process.env.MOTION_ENGINE || process.env.MOTION_ENGINE === name)) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name]) => !process.env.MOTION_ENGINE || process.env.MOTION_ENGINE === name)) {
     const browser = await engine.launch();
     try {
       const page = await browser.newPage({ viewport: { width: 1000, height: 800 } });

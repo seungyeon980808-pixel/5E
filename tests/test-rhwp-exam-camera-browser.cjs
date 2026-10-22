@@ -26,7 +26,7 @@ async function finish(page){return page.evaluate(async()=>{
 
 h.withServer(async origin=>{
   fs.mkdirSync(dir,{recursive:true});const reports=[];
-  for(const [engine,type]of Object.entries({chromium,webkit})){
+  for(const [engine,type]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
     const browser=await type.launch(),context=await browser.newContext({viewport:{width:1440,height:950},acceptDownloads:true}),p=await context.newPage(),errors=[];
     p.on('pageerror',e=>errors.push(e.message));await p.route('**/api/**',r=>r.abort());
     try{

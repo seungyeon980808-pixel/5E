@@ -8,7 +8,7 @@ const stored=sheet=>sheet.evaluate(async()=>{const name=(await indexedDB.databas
  const v=await new Promise((res,rej)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});db.close();return v?.questions?.map(q=>q.ask)||[];});
 const openSheet=async page=>{await page.click('.app-switch-image [data-app-switch="exam"]');const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
  await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');return sheet;};
-for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: typing right before reload is kept`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: typing right before reload is kept`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const page=await browser.newPage({viewport:{width:1440,height:960}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));

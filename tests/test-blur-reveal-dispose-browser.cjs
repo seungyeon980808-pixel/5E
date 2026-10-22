@@ -4,7 +4,7 @@ const {chromium,webkit}=require('playwright');
 const origin=new URL(process.env.RELEASE_URL||process.env.EXAM_URL||'http://127.0.0.1:51819').origin;
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/blur-reveal-dispose');fs.mkdirSync(out,{recursive:true});
 const report={qualification:'Real owned Web Animations must be canceled after reset/destroy even when their targets have already been detached or paused.',engines:[]};
-(async()=>{for(const [engine,type]of Object.entries({chromium,webkit})){
+(async()=>{for(const [engine,type]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await type.launch(),page=await browser.newPage(),row={engine,cases:[],errors:[]};report.engines.push(row);page.on('pageerror',e=>row.errors.push(e.message));
  try{
   await page.route('**/__reveal_dispose__',r=>r.fulfill({contentType:'text/html',body:'<!doctype html><body></body>'}));await page.goto(origin+'/__reveal_dispose__');

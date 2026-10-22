@@ -9,7 +9,7 @@ async function insideViewport(page) {
   assert.ok(box.y + box.height <= viewport.height - 7, 'expanded menu stays inside the bottom margin');
 }
 h.withServer(async origin => {
-  for (const [name,engine] of Object.entries({chromium,webkit})) {
+  for (const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({headless:true});
     try { for (const surface of ['', 'preview/']) {
       const context = await browser.newContext(), page = await context.newPage(), errors = [];

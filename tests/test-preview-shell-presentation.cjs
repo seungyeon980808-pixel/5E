@@ -4,7 +4,7 @@ const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwrigh
 const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8794/preview/";
 
 (async () => {
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });

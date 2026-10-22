@@ -25,7 +25,7 @@ function a4Pdf(){
 h.withServer(async origin => {
   fs.mkdirSync(evidence,{recursive:true});
   const pdfPath=path.join(evidence,'a4-fixture.pdf');fs.writeFileSync(pdfPath,a4Pdf());
-  for (const [engineName,engine] of Object.entries({chromium,webkit}).filter(([name]) => !process.env.EXAM_ENGINE || name === process.env.EXAM_ENGINE)) {
+  for (const [engineName,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name]) => !process.env.EXAM_ENGINE || name === process.env.EXAM_ENGINE)) {
     const browser = await engine.launch({headless:true});
     try {
       const context = await browser.newContext({viewport:{width:1512,height:900}});

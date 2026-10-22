@@ -22,7 +22,7 @@ async function newCard(sheet,first){
 
 h.withServer(async origin => {
   fs.mkdirSync(evidence,{recursive:true});const rows=[];
-  for (const [engineName,engine] of Object.entries({chromium,webkit}).filter(([name]) => !process.env.EXAM_ENGINE || name === process.env.EXAM_ENGINE)) {
+  for (const [engineName,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name]) => !process.env.EXAM_ENGINE || name === process.env.EXAM_ENGINE)) {
     const browser = await engine.launch({headless:true});
     try {
       const page = await (await browser.newContext({viewport:{width:1440,height:900}})).newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));

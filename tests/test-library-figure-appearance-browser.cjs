@@ -5,7 +5,7 @@ const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const { startServer, stopServer } = require('./run-browser-tests.cjs');
 
-for (const engine of [chromium, webkit]) test(`library figure selection preserves the visible diagram in ${engine.name()}`, { timeout: 45000 }, async t => {
+for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) test(`library figure selection preserves the visible diagram in ${engine.name()}`, { timeout: 45000 }, async t => {
   const evidence = path.join(process.env.EVIDENCE_DIR || '_work/feedback/parts/button-design-correction', engine.name());
   fs.mkdirSync(evidence, { recursive: true });
   let server, origin = process.env.RELEASE_URL;

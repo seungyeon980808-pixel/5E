@@ -8,7 +8,7 @@ const destination = 'https://5e.ai.kr/bug/';
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/cs-center-links');
 fs.mkdirSync(evidence, {recursive:true});
 (async () => h.withServer(async origin => {
-  for (const [name, engine] of Object.entries({chromium, webkit})) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch();
     try {
       const page = await browser.newPage({viewport:{width:1440,height:1000}}), errors = [], uploads = [];

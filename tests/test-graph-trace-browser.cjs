@@ -4,7 +4,7 @@ const fs=require('node:fs');const path=require('node:path');
 const base=(process.env.PREVIEW_URL||'http://127.0.0.1:62759/').replace(/\/$/,'');
 const runningBrowsers=new Set();
 const dir=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-trace-20261009');fs.mkdirSync(dir,{recursive:true});
-(async()=>{const results=[];for(const [name,type]of Object.entries({chromium,webkit})){
+(async()=>{const results=[];for(const [name,type]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await type.launch({headless:true});runningBrowsers.add(browser);const page=await browser.newPage({viewport:{width:1100,height:800}});
  await page.route(base+'/',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Trace controller harness</title>'}));
  await page.goto(base+'/');

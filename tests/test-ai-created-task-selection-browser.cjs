@@ -48,7 +48,7 @@ async function menu(page,action,{keyboard=false}={}) {
   else await button.click();
 }
 h.withServer(async origin=>{
-  for(const[name,engine]of Object.entries({chromium,webkit})){
+  for(const[name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
     const browser=await engine.launch({headless:true});
     try{for(const surface of['','preview/']){
       const context=await browser.newContext({viewport:{width:1440,height:950}}),page=await context.newPage(),errors=[];

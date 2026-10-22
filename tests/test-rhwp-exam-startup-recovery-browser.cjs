@@ -23,4 +23,4 @@ async function scenario(type,origin,surface){const browser=await type.launch();t
  await h.action(page,'demo');await h.idle(page);assert.equal((await h.pictures(page)).length,1,'document commands work after recovery');assert.deepEqual(errors,[]);
  console.log(type.name()+' '+surface+': recovery focus → Enter → exam → document command passed');
 }finally{await browser.close()}}
-(async()=>await h.withServer(async origin=>{for(const type of[chromium,webkit])for(const surface of['/','/preview/'])await scenario(type,origin,surface)}))().catch(e=>{console.error(e);process.exitCode=1});
+(async()=>await h.withServer(async origin=>{for(const type of[chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE))for(const surface of['/','/preview/'])await scenario(type,origin,surface)}))().catch(e=>{console.error(e);process.exitCode=1});

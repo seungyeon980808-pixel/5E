@@ -162,7 +162,7 @@ test('root real DOM menu-focus scheduler contracts',async t=>{
     assert.equal(studioModules.length,1,'Actual Studio module identity');
     const requiredServed=['/index.html',new URL(runtime.mainUrl).pathname,new URL(runtime.stateUrl).pathname,
       workspaceUrl.pathname,'/vendor/rhwp-editor/index.js','/vendor/rhwp-studio/index.html',...studioModules];
-    for(const [engineName,type] of Object.entries({chromium,webkit}))await t.test(engineName+' real DOM menu-focus scheduler contracts',async t=>{
+    for(const [engineName,type] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE))await t.test(engineName+' real DOM menu-focus scheduler contracts',async t=>{
       const browser=await type.launch({headless:true});const engine={name:engineName,version:browser.version(),closeResolved:false,disconnected:false};report.engines.push(engine);
       browser.on('disconnected',()=>{engine.disconnected=true;persist();});
       try{for(const [name,scenario] of cases)await t.test(name,async()=>{

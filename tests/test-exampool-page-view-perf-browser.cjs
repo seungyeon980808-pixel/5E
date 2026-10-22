@@ -16,7 +16,7 @@ function question(number){
 // 문항 창에서 rAF 간격을 재기 시작/끝.
 const watch=frame=>frame.evaluate(()=>{window.__gap=0;window.__watch=true;let last=performance.now();const tick=()=>{const n=performance.now();window.__gap=Math.max(window.__gap,n-last);last=n;if(window.__watch)requestAnimationFrame(tick);};requestAnimationFrame(tick);});
 const stop=frame=>frame.evaluate(()=>{window.__watch=false;return Math.round(window.__gap);});
-for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: a ${N}-question exam renders its page view and HWPX without long freezes`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: a ${N}-question exam renders its page view and HWPX without long freezes`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const context=await browser.newContext({viewport:{width:1440,height:900},acceptDownloads:true}),page=await context.newPage(),errors=[];page.setDefaultTimeout(90000);page.on('pageerror',e=>errors.push(e.message));

@@ -62,7 +62,7 @@ async function cropBook(f) {
 const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-unilib-crop-page]').textContent, zoom: el.querySelector('[data-unilib-crop-zoom]').textContent, rect: el.querySelector('[data-unilib-crop-box]').getAttribute('style'), scroll: [el.querySelector('[data-unilib-crop-stage]').scrollLeft, el.querySelector('[data-unilib-crop-stage]').scrollTop], query: el.querySelector('[data-unilib-query]').value }));
 (async () => {
   fs.mkdirSync(evidence, { recursive: true }); const results = [];
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true }); const contexts = [];
     try {
       let f = await setup(browser); contexts.push(f.context);

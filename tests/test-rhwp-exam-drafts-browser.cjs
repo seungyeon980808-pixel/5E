@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const h=require('./helpers/rhwp-exam.cjs');
 const fixture=fs.readFileSync('tests/fixtures/rights-clear-smoke.png');
-h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||'_work/rhwp/verification'),{recursive:true});for(const [name,engine]of Object.entries({chromium,webkit}).filter(([n])=>!process.env.EXAM_ENGINE||n===process.env.EXAM_ENGINE)){const b=await engine.launch();try{for(const surface of ['', 'preview/'].filter(s=>!process.env.EXAM_SURFACE||s===(process.env.EXAM_SURFACE==='preview'?'preview/':''))){
+h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||'_work/rhwp/verification'),{recursive:true});for(const [name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([n])=>!process.env.EXAM_ENGINE||n===process.env.EXAM_ENGINE)){const b=await engine.launch();try{for(const surface of ['', 'preview/'].filter(s=>!process.env.EXAM_SURFACE||s===(process.env.EXAM_SURFACE==='preview'?'preview/':''))){
  const ctx=await b.newContext({viewport:{width:1440,height:950},acceptDownloads:true}),p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.addInitScript(()=>{Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:undefined});Object.defineProperty(window,'showDirectoryPicker',{configurable:true,value:undefined});});
  const url='/js/state.js?v=1.7.0-four-session-integration';

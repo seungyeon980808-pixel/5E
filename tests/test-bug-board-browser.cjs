@@ -53,7 +53,7 @@ async function pasteImage(page, color) {
   fs.mkdirSync(evidence, { recursive:true });
   const { origin, close } = await servers();
   try {
-    for (const engine of [chromium, webkit]) {
+    for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
       const browser = await engine.launch();
       try {
         const context = await browser.newContext({ viewport:{ width:1280, height:900 } });

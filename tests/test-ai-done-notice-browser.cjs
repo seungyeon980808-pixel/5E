@@ -1,7 +1,7 @@
 // AI 작업 끝남 말풍선: 다른 창(설치형 안내·라이브러리 등)이 떠 있는 동안은 숨었다가 메인 화면으로 돌아오면 다시 보이고,
 // AI 작업 창을 열면 닫힌다. 첫 변환 뒤 저절로 뜨는 설치형 안내가 말풍선을 지워 버리던 것(2026-10-19 밤 점검, 1100px 창).
 const assert=require('node:assert/strict');const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const h=require('./helpers/rhwp-exam.cjs');
-h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit})){
+h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1100,height:800}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);

@@ -8,7 +8,7 @@ const source = fs.readFileSync(path.resolve(__dirname, '../js/visitor-stats.js')
 const date = () => new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
 const evidence = path.resolve('.omo/evidence/feedback-visitor-ui');
 (async () => {
-  for (const [engine, type] of Object.entries({ chromium, webkit })) {
+  for (const [engine, type] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), '5e-stats-ui-'));
     const service = await startVisitorStatsServer({ dataDir, port: 0 });
     const browser = await type.launch(); let offline = false, posts = 0;

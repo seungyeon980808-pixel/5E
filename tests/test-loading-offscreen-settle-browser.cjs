@@ -5,7 +5,7 @@ const h = require('./helpers/rhwp-exam.cjs');
 
 h.withServer(async origin => {
   const rows = [];
-  for (const [engine, type] of Object.entries({ chromium, webkit })) {
+  for (const [engine, type] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await type.launch();
     try {
       for (const mode of ['visible', 'offscreen', 'hidden-parent', 'hidden-document']) {

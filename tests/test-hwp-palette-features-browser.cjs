@@ -392,7 +392,7 @@ async function exercise(page, origin) {
 }
 
 h.withServer(async (origin) => {
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch();
     try {
       const page = await browser.newPage({

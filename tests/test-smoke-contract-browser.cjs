@@ -214,7 +214,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
   const origin = `http://127.0.0.1:${server.address().port}`;
   const report = { invocation: 'node --test tests/test-smoke-contract-browser.cjs', engines: [], errors: [] };
 
-  const engines = process.env.SMOKE_ENGINES === 'chromium' ? [chromium] : process.env.SMOKE_ENGINES === 'webkit' ? [webkit] : [chromium, webkit];
+  const engines = process.env.SMOKE_ENGINES === 'chromium' ? [chromium] : process.env.SMOKE_ENGINES === 'webkit' ? [webkit] : [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE);
   const modes = process.env.SMOKE_MODES === 'lite' ? ['lite'] : process.env.SMOKE_MODES === 'pro' ? ['pro'] : ['pro', 'lite'];
   for (const engine of engines) {
     const browser = await engine.launch({ headless: true });

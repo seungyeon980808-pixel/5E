@@ -172,7 +172,7 @@ async function freshContext(browser, errors, origin) {
   const server = await startServer();
   const results = [];
   try {
-    for (const engine of [chromium, webkit]) {
+    for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
       const browser = await engine.launch({ headless: true });
       const errors = [];
       let page;

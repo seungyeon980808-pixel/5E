@@ -40,7 +40,7 @@ async function run(engine) {
 }
 
 (async () => {
-  for (const engine of [chromium, webkit]) await run(engine);
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) await run(engine);
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

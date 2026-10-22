@@ -8,7 +8,7 @@ const examples=JSON.parse(fs.readFileSync(path.join(__dirname,'../assets/exampoo
 // 줄 = 같은 높이에 놓인 글자들을 왼쪽부터 이은 것(빈칸 무시). 위치 단위가 달라도 순서만 비교한다.
 const linesOf=chars=>{const rows=[];for(const c of [...chars].sort((a,b)=>a.y-b.y||a.x-b.x)){const row=rows.find(r=>Math.abs(r.y-c.y)<1.5);if(row)row.c.push(c);else rows.push({y:c.y,c:[c]});}
   return rows.sort((a,b)=>a.y-b.y).map(r=>r.c.sort((a,b)=>a.x-b.x).map(c=>c.t).join('').replace(/\s+/g,'')).filter(Boolean);};
-for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: page view draws the native typeset, not an HTML approximation`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: page view draws the native typeset, not an HTML approximation`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));

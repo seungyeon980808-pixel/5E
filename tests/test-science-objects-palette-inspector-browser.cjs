@@ -2,7 +2,7 @@
 // 여러 줄 입력칸·조건 단추가 26px 한 줄에 갇혀 잘리지 않는다(2026-10-19 밤 점검에서 찾은 것).
 const assert=require('node:assert/strict');const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const h=require('./helpers/rhwp-exam.cjs');
 const V='?v=1.7.0-four-session-integration';
-h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit})){
+h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);

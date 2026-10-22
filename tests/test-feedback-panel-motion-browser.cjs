@@ -8,7 +8,7 @@ async function settle(page) {
   });
 }
 h.withServer(async origin => {
-  for (const [name, type] of Object.entries({ chromium, webkit })) {
+  for (const [name, type] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await type.launch(), page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
     try {
       await h.navigate(page, origin + '/?mode=pro&mobile=0&exam=0'); await h.ready(page);

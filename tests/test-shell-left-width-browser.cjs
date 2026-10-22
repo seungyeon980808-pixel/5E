@@ -17,7 +17,7 @@ const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
 
 h.withServer(async origin => {
   fs.mkdirSync(evidence, { recursive: true });
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     const errors = [];

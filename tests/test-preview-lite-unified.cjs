@@ -105,7 +105,7 @@ const projection = page => page.locator('#canvas').evaluate(canvas => {
     /Only selected-result-pixels rectangles are accepted/,
   );
   const report = [];
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, acceptDownloads: true });
     const transport = await installTransport(context);

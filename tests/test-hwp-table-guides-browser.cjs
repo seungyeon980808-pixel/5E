@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright'),{PNG}=require('pngjs'),h=require('./helpers/rhwp-exam.cjs');
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/feedback/parts/night-hwp-table-guides');fs.mkdirSync(out,{recursive:true});
-h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,webkit})){
+h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{await h.navigate(page,origin+'/?mode=pro&exam=1&mobile=0');await h.ready(page);await h.action(page,'new');await h.idle(page);
  assert.equal(await page.evaluate(()=>document.querySelector('#exam-studio iframe').contentDocument.querySelector('#sb-message').textContent.includes('로딩')),false,'New waits for native document initialization');

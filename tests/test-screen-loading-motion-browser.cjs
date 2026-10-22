@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const base=process.env.EXAM_URL||'http://127.0.0.1:51819',version='?v=1.7.0-four-session-integration';
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/feedback/parts/screen-loading-motion-20261015');fs.mkdirSync(out,{recursive:true});
-(async()=>{for(const [name,engine] of Object.entries({chromium,webkit})){
+(async()=>{for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),context=await browser.newContext({viewport:{width:1440,height:1000},screen:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
  const deadline=setTimeout(()=>{console.error(name+': overall deadline');void browser.close();},30000);
  page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));

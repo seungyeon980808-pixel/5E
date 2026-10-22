@@ -9,7 +9,7 @@ assert(out, 'EVIDENCE_DIR required'); fs.mkdirSync(out, { recursive: true });
 
 (async () => {
   const reports = [];
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });

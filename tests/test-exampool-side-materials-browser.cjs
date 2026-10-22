@@ -15,7 +15,7 @@ function variant(kind,number){
   if(kind==='boxed')group.boxed=true;
   return q;
 }
-for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: side-by-side figure is centered in its material cell`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: side-by-side figure is centered in its material cell`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));

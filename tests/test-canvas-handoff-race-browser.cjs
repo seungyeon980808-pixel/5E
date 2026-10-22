@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..');
 const evidence=path.resolve(process.env.EVIDENCE_DIR||path.join(root,'_work/canvas-handoff-race'));
 fs.mkdirSync(evidence,{recursive:true});
 
-h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,webkit})){
+h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],alerts=[],proof=[];
  page.on('pageerror',error=>errors.push(error.message));page.on('dialog',async dialog=>{alerts.push(dialog.message());await dialog.dismiss();});
  try{

@@ -30,7 +30,7 @@ async function observeMain(page, seeded) {
 
 h.withServer(async origin => {
   fs.mkdirSync(evidence, { recursive:true });
-  for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+  for (const [engineName, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless:true });
     try {
       for (const included of [false, true]) {

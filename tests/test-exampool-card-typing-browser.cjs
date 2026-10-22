@@ -6,7 +6,7 @@ const h=require('./helpers/rhwp-exam.cjs');
 const {timingCheck}=require('./helpers/performance-reference.cjs');
 const png='data:image/png;base64,'+fs.readFileSync(path.join(__dirname,'../assets/exam-library/images/b1_2007_11_05.png')).toString('base64');
 const pct=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return Math.round(s[Math.min(s.length-1,Math.floor(s.length*p))]);};
-for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: card typing stays responsive with 150 questions`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: card typing stays responsive with 150 questions`,async t=>{
  const {questionFromShape}=await import('../assets/exampool/sheet/templates.js');
  const questions=[];for(let i=0;i<150;i++){const q=questionFromShape({form:['combo','single','pair','talk','essay'][i%5],struct:['two','big','small','experiment'][i%4]},String(i+1));
   q.ask='발문 '+i;if(i%3===0)q.workflow='complete';q.blocks.filter(b=>b.kind==='figure').forEach(b=>b.figure={name:'f.png',data:png,width:600,height:300});questions.push(q);}

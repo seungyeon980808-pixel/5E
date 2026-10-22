@@ -42,7 +42,7 @@ async function capture(browser,id,objects,source){
   fs.writeFileSync(path.join(out,id+'.svg'),await page.locator('#restored').evaluate(s=>s.outerHTML));await page.close();
 }
 (async()=>{
-  for(const [engineName,engine] of Object.entries({chromium,webkit})){
+  for(const [engineName,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
     const browser=await engine.launch({headless:true});
     try{for(const id of ids){
       const row={id,engine:engineName,pass:false};report.cases.push(row);

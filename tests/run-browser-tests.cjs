@@ -121,7 +121,7 @@ async function run() {
     }
     const playwrightModule = process.env.PLAYWRIGHT_MODULE || require.resolve("playwright");
     const { chromium, webkit } = require(playwrightModule);
-    for (const engine of [chromium, webkit]) {
+    for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
       const browser = await engine.launch({ headless: true });
       try {
         const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });

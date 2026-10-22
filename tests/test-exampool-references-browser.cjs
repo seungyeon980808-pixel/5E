@@ -20,7 +20,7 @@ async function importResource(page,file) {
 }
 h.withServer(async origin=>{
   fs.mkdirSync(evidence,{recursive:true});
-  for(const [name,engine] of Object.entries({chromium,webkit})) {
+  for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser=await engine.launch({headless:true});
     try {
       const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true}),page=await context.newPage(),errors=[];

@@ -6,7 +6,7 @@ const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const h=require('./helpers/rhwp-exam.cjs');
 const PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
 h.withServer(async origin=>{
-  for(const [engineName,engine] of Object.entries({chromium,webkit}).filter(([name])=>!process.env.EXAM_ENGINE||name===process.env.EXAM_ENGINE)){
+  for(const [engineName,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name])=>!process.env.EXAM_ENGINE||name===process.env.EXAM_ENGINE)){
     const browser=await engine.launch({headless:true});
     try{
       const page=await (await browser.newContext({viewport:{width:1440,height:960}})).newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));

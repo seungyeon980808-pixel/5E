@@ -9,7 +9,7 @@ async function run() {
   assert.equal(url.pathname, '/', 'This feature lives in the integrated root entry');
   const out = process.env.EVIDENCE_DIR;
   if (out) fs.mkdirSync(out,{recursive:true});
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({headless:true});
     try {
       const page = await browser.newPage({viewport:{width:1400,height:900}}), errors=[];

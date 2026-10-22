@@ -7,7 +7,7 @@ const evidence=path.resolve(process.env.EVIDENCE_DIR||'_work/rhwp/verification')
 async function save(page,action,filename){const waiting=page.waitForEvent('download');await h.action(page,action);const file=await waiting;const target=path.join(evidence,filename);await file.saveAs(target);await h.idle(page);return target;}
 h.withServer(async origin=>{
  fs.mkdirSync(evidence,{recursive:true});
- for(const [engineName,engine]of Object.entries({chromium,webkit}).filter(([name])=>!process.env.EXAM_ENGINE||name===process.env.EXAM_ENGINE)){
+ for(const [engineName,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name])=>!process.env.EXAM_ENGINE||name===process.env.EXAM_ENGINE)){
   const browser=await engine.launch({headless:true});
   try{for(const surface of['','preview/'].filter(surface=>!process.env.EXAM_SURFACE||surface===(process.env.EXAM_SURFACE==='preview'?'preview/':''))){
    const name=engineName+(surface?'-preview':''),stateUrl='/js/state.js?v=1.7.0-four-session-integration';

@@ -4,7 +4,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const h=require('./helpers/rhwp-exam.cjs');
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/structure-lock');fs.mkdirSync(out,{recursive:true});
-for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: structure lock keeps text editable and table structure fixed`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: structure lock keeps text editable and table structure fixed`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.setDefaultTimeout(10000);page.on('pageerror',e=>errors.push(e.message));

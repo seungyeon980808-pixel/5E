@@ -3,7 +3,7 @@ const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwrigh
 const h = require('./helpers/rhwp-exam.cjs');
 
 h.withServer(async origin => {
-  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) => !process.env.CATALOG_ENGINE || process.env.CATALOG_ENGINE === name)) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name]) => !process.env.CATALOG_ENGINE || process.env.CATALOG_ENGINE === name)) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1298, height: 897 } });

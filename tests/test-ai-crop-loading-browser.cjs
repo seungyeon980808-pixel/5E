@@ -27,7 +27,7 @@ async function lensCoordinates(page, ui) {
 (async () => {
   fs.mkdirSync(evidence, { recursive: true });
   const outcomes = [];
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 2, hasTouch: true });
     const page = await context.newPage();

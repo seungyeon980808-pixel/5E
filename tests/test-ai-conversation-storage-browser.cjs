@@ -18,7 +18,7 @@ test('conversation storage failures preserve the draft and allow an explicit ret
   try {
     const origin = await server.ready;
     const { runtimeInit } = fixtureContext(root);
-    for (const [engineName, engine] of Object.entries({ chromium, webkit })) {
+    for (const [engineName, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
       const browser = await engine.launch({ headless: true });
       try {
         for (const fault of ['QuotaExceededError', 'SecurityError']) {

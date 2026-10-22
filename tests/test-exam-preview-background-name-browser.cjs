@@ -8,7 +8,7 @@ const HOSTILE = '<img src=x onerror="window.__examPreviewXss=1">.png';
 // 4×4 흰 PNG(배경 자리). 실제 그림 크기 계산만 하면 되므로 작아도 된다.
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAD0lEQVR4nGP4jwQYiOMAANuQL9FuRbCyAAAAAElFTkSuQmCC';
 
-for (const [engineName, engine] of Object.entries({ chromium, webkit })) test(`${engineName}: exam preview shows a hostile background file name as text`, async t => {
+for (const [engineName, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${engineName}: exam preview shows a hostile background file name as text`, async t => {
   await h.withServer(async origin => {
     const browser = await engine.launch({ headless: true }); t.after(() => browser.close());
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });

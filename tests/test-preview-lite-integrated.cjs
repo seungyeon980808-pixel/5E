@@ -139,7 +139,7 @@ async function run(engine) {
 
 (async () => {
   const report = [];
-  for (const engine of [chromium, webkit]) report.push(await run(engine));
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) report.push(await run(engine));
   fs.writeFileSync(path.join(evidence, 'report.json'), JSON.stringify(report, null, 2));
   console.log('Lite persistent four-pane workspace, controlled conversion, integrated edit, collapse, shortcuts, and Pro return PASS');
 })().catch((error) => { console.error(error); process.exitCode = 1; });

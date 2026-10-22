@@ -47,7 +47,7 @@ async function assertWorkflowState(page,id,open,selected) {
   if(open)assert.deepEqual(await readStateStyle(page,'#'+id),selected,`${id} uses the same active state as the toolbar`);
 }
 
-for (const engine of [chromium,webkit]) test(`canonical button design and unread conversion lifecycle in ${engine.name()}`,{timeout:90000},async t=>{
+for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) test(`canonical button design and unread conversion lifecycle in ${engine.name()}`,{timeout:90000},async t=>{
   const evidence=path.join(evidenceRoot,engine.name());fs.mkdirSync(evidence,{recursive:true});
   let server,origin=process.env.RELEASE_URL;
   if(!origin){server=startServer();origin=await server.ready;}
