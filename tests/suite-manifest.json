@@ -796,6 +796,12 @@
       ]
     },
     {
+      "path": "tests/test-typeset-standard.mjs",
+      "findingIds": [
+        "TYPESET-STANDARD-KICE-BYTES"
+      ]
+    },
+    {
       "path": "tests/test-rhwp-exam-marks.mjs",
       "findingIds": [
         "TYPESET-MARKS-GEOMETRY"

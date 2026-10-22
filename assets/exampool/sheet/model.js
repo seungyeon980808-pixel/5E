@@ -149,6 +149,8 @@ export function validate(data,{only=null}={}) {
   if(!data||data.format!==FORMAT||!Array.isArray(data.questions)||data.questions.length>500||!Array.isArray(data.documents)||data.documents.length>40)throw Error('문항 파일의 형식이나 개수를 확인하세요.');
   const ids=new Set();for(const q of data.questions){if(only&&q!==only&&q&&typeof q.id==='string'&&!ids.has(q.id)){ids.add(q.id);continue;}if(!q||!id(q.id)||ids.has(q.id)||!TYPES.includes(q.type)||!PRESETS.includes(q.preset)||!STYLES.includes(q.style)||!Array.isArray(q.blocks)||q.blocks.length>80||!Array.isArray(q.choices)||q.choices.length!==5)throw Error('문항 유형·ID·구성을 확인하세요.');ids.add(q.id);
     for(const k of ['number','standardCode','ask','modelAnswer','explanation','intent','source'])if(!str(q[k],k==='number'?40:k==='standardCode'?80:32767))throw Error('문항 입력 내용이 너무 길거나 형식이 다릅니다.');
+    // 조판 기준(10-22): 없으면 시험지 기준 → 수능 틀.
+    if(q.standardId!==undefined&&!id(q.standardId))throw Error('조판 기준 표시를 확인하세요.');
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
     if(q.form!==undefined&&!FORM_KEYS.includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');

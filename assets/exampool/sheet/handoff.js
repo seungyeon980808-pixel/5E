@@ -1,3 +1,4 @@
+import {KICE_STANDARD,layoutValues} from './typeset-standard.js';
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts,TEXT_WIDTH} from './typeset-model.js?v=1014-compact-panel';
 import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
@@ -75,7 +76,7 @@ export function wrapMeasured(value,first,rest,measure){
   return lines.join('\n');
 }
 // <보기> 상자: 마지막 줄 글자 아래에서 상자 선까지 남길 높이(px). 평가원 지면처럼 반 줄쯤(약 3mm).
-const BOGI_BOTTOM=14;
+// (값은 조판 기준 gaps.bogiPadBottom — 수능 틀 14px)
 export function handoffQuestion(value,{skeleton=false}={}){
   const q=clone(value);q.references=[];
   validate({format:FORMAT,questions:[q],documents:[]});
@@ -117,7 +118,8 @@ export function wrapHangingText(value,width,prefix,measure){
   }
   return lines.join('\n');
 }
-export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540,{native=false,measureText,skeleton=false,ghostFigure=null}={}){
+export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540,{native=false,measureText,skeleton=false,ghostFigure=null,standard=KICE_STANDARD}={}){
+  const L=layoutValues(standard);
   const q=handoffQuestion(value,{skeleton}),ghost=skeleton?fillSkeleton(q):{ghosts:new Set(),figures:new Set()},images=[],texts=[],warnings=[],tables=[],equations=[];
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
   const imageOwners=[],tableOwners=[],textSegments=[],floats=[];
@@ -405,7 +407,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           // The supplied exam uses a centered title that interrupts the top
           // rule. A native table preserves that cutout without a bitmap or a
           // floating overlay: two shallow header rows and one merged body.
-          const titleWidth=54,side=(bw-titleWidth)/2,rule='0.4pt solid #000';
+          const titleWidth=L.bogiTitleWidth,side=(bw-titleWidth)/2,rule='0.4pt solid #000';
           recordTable(3,3,[{r:0,c:1,rs:2,cs:1},{r:2,c:0,rs:1,cs:3}],{kind:'bogi',id:b.id});
           const empty='<p style="margin:0;font-size:1pt;line-height:100%"> </p>';
           const sideCell=(edge,line=false)=>`<td style="width:${side}px;height:12px;padding:0.1px;border:none;${line?`border-bottom:${rule}`:`border-${edge}:${rule}`} ;vertical-align:top">${empty}</td>`;
@@ -414,14 +416,14 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           const body=b.lines.map(l=>{
             const label=/^[ㄱ-ㅎ]$/.test(l.label)?l.label+'.':l.label,prefix=label+' ';
             // 표 칸 안에서는 한글 엔진이 줄을 나누지 않고 글자를 좁혀 한 줄에 넣는다. 칸 안 글은 실제 글꼴 폭으로 재서 직접 나눈다.
-            const wrap=v=>{const result=wrapHangingText(v,bw-12,prefix,measure);bodyLines+=result.split('\n').length;bodyExtra+=extraHeight(result,11);return result;};
-            return `<p style="margin:0;text-align:left;line-height:150%">${text(prefix+l.text,null,11,wrap,{kind:'line',block:b.id,id:l.id,prefix:prefix.length})}</p>`;
+            const wrap=v=>{const result=wrapHangingText(v,bw-2*L.bogiSide,prefix,measure);bodyLines+=result.split('\n').length;bodyExtra+=extraHeight(result,11);return result;};
+            return `<p style="margin:0;text-align:left;line-height:${L.bogiLineSpacing}%">${text(prefix+l.text,null,11,wrap,{kind:'line',block:b.id,id:l.id,prefix:prefix.length})}</p>`;
           }).join('');
           // The last line needs its glyph height and bottom padding, rather
           // than another full line gap. Explicit height also protects nested
           // tables, whose parent does not expand an implicit HTML row.
-          const padPx=Math.round((b.pad||0)*96/25.4),bodyHeight=Math.ceil(Math.max(0,bodyLines-1)*11*4/3*1.6+11*4/3+bodyExtra+BOGI_BOTTOM+(b.parent?3:0))+padPx;
-          html+=`<table style="border-collapse:collapse;width:${bw}px"><tr>${sideCell('left',true)}<td rowspan="2" style="width:${titleWidth}px;height:24px;padding:0.1px;border:none;vertical-align:middle"><p style="margin:0;text-align:center;line-height:100%">${text('<보 기>')}</p></td>${sideCell('right',true)}</tr><tr>${sideCell('left')}${sideCell('right')}</tr><tr><td colspan="3" style="width:${bw}px;height:${bodyHeight}px;padding:3px 6px 4px;border:none;border-left:${rule};border-right:${rule};border-bottom:${rule};vertical-align:top">${body}</td></tr></table>`;
+          const padPx=Math.round((b.pad||0)*96/25.4),bodyHeight=Math.ceil(Math.max(0,bodyLines-1)*11*4/3*1.6+11*4/3+bodyExtra+L.bogiBottom+(b.parent?3:0))+padPx;
+          html+=`<table style="border-collapse:collapse;width:${bw}px"><tr>${sideCell('left',true)}<td rowspan="2" style="width:${titleWidth}px;height:24px;padding:0.1px;border:none;vertical-align:middle"><p style="margin:0;text-align:center;line-height:100%">${text('<보 기>')}</p></td>${sideCell('right',true)}</tr><tr>${sideCell('left')}${sideCell('right')}</tr><tr><td colspan="3" style="width:${bw}px;height:${bodyHeight}px;padding:${L.bogiTop}px ${L.bogiSide}px 4px;border:none;border-left:${rule};border-right:${rule};border-bottom:${rule};vertical-align:top">${body}</td></tr></table>`;
         }else if(b.kind==='dialogue'){
           // 학생 대화·발표: 이름 칸 + 말 칸(가는 선 상자). 말이 길면 칸 안에서 줄바꿈한다.
           const nameWidth=Math.min(64,Math.max(40,...b.lines.map(l=>choiceWidth(l.label,11)+12))),speech=width-nameWidth;

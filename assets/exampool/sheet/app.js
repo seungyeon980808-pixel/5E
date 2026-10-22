@@ -16,6 +16,7 @@ import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
 import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
+import {validateStandard} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 import {loadStandards} from './standards-data.js';
@@ -93,8 +94,14 @@ function flushSave({now=false}={}){saveTimer=0;
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
   const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();markDirty(only&&data.questions.includes(only)?only:null);demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+let typesetStandards=[];
+// 조판 기준 저장(성취기준 standards와 다른 것): 수능 틀은 내장이라 저장하지 않는다.
+async function saveTypesetStandards(list){typesetStandards=list.filter(s=>s.id!=='kice').map(s=>{validateStandard(s);return s;});
+  await new Promise((resolve,reject)=>{const t=database.transaction('state','readwrite');t.objectStore('state').put(typesetStandards,'typesetStandards');t.oncomplete=resolve;t.onerror=()=>reject(t.error);});return typesetStandards;}
 async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
+  // 조판 기준 목록(10-22): 새 저장소를 만들면 DB 판을 올려야 하고 열린 다른 창이 막히므로, 같은 state 저장소의 'typesetStandards' 칸에 둔다.
+  try{typesetStandards=(await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('typesetStandards');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);})||[]).filter(s=>{try{return validateStandard(s);}catch{return false;}});}catch{typesetStandards=[];}
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
   if(!raw&&!demo){
     const available=await indexedDB.databases?.()||[];

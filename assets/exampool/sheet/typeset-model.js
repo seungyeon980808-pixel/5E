@@ -2,17 +2,19 @@ import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-comp
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
 export const LAYOUT_VERSION=11;
 // 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
-export const TEXT_RATIO=95,TEXT_SPACING=-5,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
+import {KICE_STANDARD,layoutValues} from './typeset-standard.js';
+// 본문 글자 장평·자간 기본값은 조판 기준(「수능 틀」)에서 읽는다.
+export const TEXT_RATIO=KICE_STANDARD.text.ratio,TEXT_SPACING=KICE_STANDARD.text.spacing,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
 const HU=7200/25.4;
-export function pageProfile(profile={paper:'A4',columns:2}){
+export function pageProfile(profile={paper:'A4',columns:2},standard=KICE_STANDARD){
   if(!PAPER_MM[profile.paper]||![1,2].includes(profile.columns))throw Error('용지와 단 수를 확인하세요.');
-  const [w,h]=PAPER_MM[profile.paper],margin=15,spacing=8;
-  return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin*HU),marginRight:Math.round(margin*HU),marginTop:Math.round(margin*HU),marginBottom:Math.round(margin*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-2*margin-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
+  const [w,h]=PAPER_MM[profile.paper],L=layoutValues(standard),margin=L.margin,spacing=L.columnGap;
+  return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin.left*HU),marginRight:Math.round(margin.right*HU),marginTop:Math.round(margin.top*HU),marginBottom:Math.round(margin.bottom*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-margin.left-margin.right-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
 }
 // 한글 문서에 실제로 나오는 값: 번호·유형·선지 표현·발문·구성·선지·선지표·선지 배열·[3점].
 // 단원·성취기준·정답·배점·출처·해설·문항 상태는 조판에 영향이 없으므로 바꿔도 한글 창을 다시 그리지 않는다.
 // 배점은 3점일 때만 [3점]으로 찍힌다. 그때만 지문에 넣어 다른 문항의 저장한 조판 지문은 그대로 둔다.
-export const renderedContent=q=>({number:q.number,type:q.type,style:q.style,ask:q.ask,blocks:q.blocks,choices:q.choices,choiceTable:q.choiceTable,choiceLayout:q.choiceLayout,...(q.points===3?{pointsMark:3}:{})});
+export const renderedContent=q=>({standardId:q.standardId,number:q.number,type:q.type,style:q.style,ask:q.ask,blocks:q.blocks,choices:q.choices,choiceTable:q.choiceTable,choiceLayout:q.choiceLayout,...(q.points===3?{pointsMark:3}:{})});
 const sha256=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(v=>v.toString(16).padStart(2,'0')).join('');
 export const questionFingerprint=q=>sha256(JSON.stringify(renderedContent(q)));
 // 이전 판은 조판과 상관없는 칸까지 지문에 넣었다. 그때 저장한 조판도 내용이 같으면 그대로 인정한다.
@@ -25,7 +27,8 @@ export const mathParts=value=>String(value).split(/(\$\$[\s\S]+?\$\$|\$[^$\n]+?\
   return {math,text:math?text.startsWith('$$')?text.slice(2,-2):text.startsWith('$')?text.slice(1,-1):text.startsWith('\\(')?text.slice(2,-2):text.slice(5,-2):text};
 });
 
-export async function normalizeQuestionImport(bytes,JSZip){
+export async function normalizeQuestionImport(bytes,JSZip,{standard=KICE_STANDARD}={}){
+  const L=layoutValues(standard);
   const zip=await JSZip.loadAsync(new Uint8Array(bytes));
   // The HTML importer adds a 20px indent to table anchor paragraphs, and
   // parses CSS cell padding but leaves hasMargin off. Correct only this newly
@@ -34,7 +37,7 @@ export async function normalizeQuestionImport(bytes,JSZip){
   header=header.replace(/<hc:(left|right|intent) value="\d+"/g,'<hc:$1 value="0"');
   // 한글 줄 나눔은 평가원처럼 어절 단위(KEEP_WORD). 들여온 문단 모양 일부가 글자 단위(BREAK_WORD)로 들어온다.
   header=header.replace(/breakNonLatinWord="BREAK_WORD"/g,'breakNonLatinWord="KEEP_WORD"');
-  header=header.replace(/<hh:ratio\b[^>]*\/>/g,tag=>tag.replace(/="\d+"/g,`="${TEXT_RATIO}"`)).replace(/<hh:spacing\b[^>]*\/>/g,tag=>tag.replace(/="-?\d+"/g,`="${TEXT_SPACING}"`));
+  header=header.replace(/<hh:ratio\b[^>]*\/>/g,tag=>tag.replace(/="\d+"/g,`="${L.ratio}"`)).replace(/<hh:spacing\b[^>]*\/>/g,tag=>tag.replace(/="-?\d+"/g,`="${L.spacing}"`));
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text
   // alignment alone does not position an inline table. Clone the styles so
@@ -66,7 +69,7 @@ export async function normalizeQuestionImport(bytes,JSZip){
     const center=new Set([...styles.entries()].filter(([,v])=>/horizontal="CENTER"/.test(v)).map(([k])=>k));
     for(const p of marks.sort((a,b)=>b.index-a.index)){
       const old=p.tag.match(/paraPrIDRef="(\d+)"/)?.[1];if(!center.has(old))continue;
-      if(!spacing.has(old)){const id=String(nextId++);spacing.set(old,id);header=header.replace('</hh:paraProperties>',styles.get(old).replace(/\bid="\d+"/,`id="${id}"`).replace(/(<hh:lineSpacing type="PERCENT" value=")\d+/g,'$1130')+'</hh:paraProperties>');}
+      if(!spacing.has(old)){const id=String(nextId++);spacing.set(old,id);header=header.replace('</hh:paraProperties>',styles.get(old).replace(/\bid="\d+"/,`id="${id}"`).replace(/(<hh:lineSpacing type="PERCENT" value=")\d+/g,'$1'+L.tableLineSpacing)+'</hh:paraProperties>');}
       xml=xml.slice(0,p.index)+p.tag.replace(/paraPrIDRef="\d+"/,`paraPrIDRef="${spacing.get(old)}"`)+xml.slice(p.index+p.tag.length);
     }
   }
