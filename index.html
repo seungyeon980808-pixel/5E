@@ -445,9 +445,9 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            data-change-short="10.22 12:47 1.7.0 색인 칩 색 점"
-            aria-label="2026-10-22 12:47 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette, 미커밋): ExamPool 기출 검색 색인 칩을 두꺼운 밑줄 대신 옅은 테 칩 + 형광펜 색 점(노랑·초록·하늘)으로. 그 전: 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab, AI 패널 이름 「AI 이미지/그래프」."
-            title="2026-10-22 12:47 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette, 미커밋): ExamPool 기출 검색 색인 칩을 두꺼운 밑줄 대신 옅은 테 칩 + 형광펜 색 점(노랑·초록·하늘)으로. 그 전: 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab, AI 패널 이름 「AI 이미지/그래프」.">10.22 12:47 1.7.0 색인 칩 색 점</span>
+            data-change-short="10.22 13:12 1.7.0 AI 도구 줄 묶음"
+            aria-label="2026-10-22 13:12 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): AI 이미지/그래프 위 도구 줄을 보기·확대·주석 도구·코멘트 표시 네 묶음 틀로 나누고, 켜진 단추에 옅은 선택 면, 확대 묶음은 가운데 선 왼쪽 8px·주석은 오른쪽 끝에 맞춤. 그 전: ExamPool 색인 칩 색 점, 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab, AI 패널 이름 「AI 이미지/그래프」."
+            title="2026-10-22 13:12 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): AI 이미지/그래프 위 도구 줄을 보기·확대·주석 도구·코멘트 표시 네 묶음 틀로 나누고, 켜진 단추에 옅은 선택 면, 확대 묶음은 가운데 선 왼쪽 8px·주석은 오른쪽 끝에 맞춤. 그 전: ExamPool 색인 칩 색 점, 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab, AI 패널 이름 「AI 이미지/그래프」.">10.22 13:12 1.7.0 AI 도구 줄 묶음</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
@@ -511,6 +511,7 @@
             <div class="ai-compare-controls" role="group" aria-label="보기 모드">
               <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
               <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true" title="Space로 원본과 빠르게 비교">수정본</button>
+              <span class="ai-seg-div" aria-hidden="true"></span>
               <details class="ai-compare-menu">
                 <summary data-ai-compare-menu-label>비교 ▾</summary>
                 <div class="ai-compare-menu-items">
@@ -520,20 +521,28 @@
                 </div>
               </details>
             </div>
-<div class="ai-pane-zoom" data-ai-pane-zoom="shared" role="group" aria-label="이미지 배율">
-                  <button type="button" data-ai-zoom-action="out" aria-label="이미지 축소">−</button>
-                  <output data-ai-zoom-value>100%</output>
-                  <button type="button" data-ai-zoom-action="in" aria-label="이미지 확대">＋</button>
-                  <button type="button" data-ai-zoom-action="fit">좌우맞춤</button>
+            <div class="ai-pane-zoom" data-ai-pane-zoom="shared" role="group" aria-label="이미지 배율">
+              <div class="ai-tool-seg">
+                <button type="button" data-ai-zoom-action="out" aria-label="이미지 축소">−</button>
+                <output data-ai-zoom-value>100%</output>
+                <button type="button" data-ai-zoom-action="in" aria-label="이미지 확대">＋</button>
+                <span class="ai-seg-div" aria-hidden="true"></span>
+                <button type="button" data-ai-zoom-action="fit">좌우맞춤</button>
+              </div>
                   <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;좌우맞춤: 이미지 폭에 맞춰 보기">?</button>
                 </div>
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
-              <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
-              <span class="ai-comment-tools-label">코멘트</span>
-              <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="한 위치에 코멘트를 남깁니다">점</button>
-              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="사각형 영역에 코멘트를 남깁니다">박스</button>
-              <button type="button" data-ai-comment-tool="free" aria-pressed="false" title="자유롭게 둘러싼 영역에 코멘트를 남깁니다">자유</button>
-            <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
+              <div class="ai-tool-seg" role="group" aria-label="주석 도구">
+                <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
+                <span class="ai-seg-div" aria-hidden="true"></span>
+                <span class="ai-comment-tools-label">코멘트</span>
+                <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="한 위치에 코멘트를 남깁니다">점</button>
+                <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="사각형 영역에 코멘트를 남깁니다">박스</button>
+                <button type="button" data-ai-comment-tool="free" aria-pressed="false" title="자유롭게 둘러싼 영역에 코멘트를 남깁니다">자유</button>
+              </div>
+              <div class="ai-tool-seg" role="group" aria-label="코멘트 표시">
+                <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
+              </div>
             </div>
           </header>
           <div class="ai-comparison-grid">

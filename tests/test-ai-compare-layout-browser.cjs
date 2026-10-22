@@ -32,6 +32,32 @@ for (const engine of ['chromium', 'webkit']) {
       assert.ok(Math.abs(result.source.width - result.result.width) <= 1, 'Both comparison frames must have the same width: ' + JSON.stringify(result));
       assert.ok(result.picker.x - (result.title.x + result.title.width) < 15, 'revision picker sits immediately beside its heading');
     }
+    await page.click(`${panel} [data-ai-comment-tool="pan"]`);
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-comment-tool="pan"]').getAttribute('aria-pressed') === 'true');
+    // 10-22 위 도구 줄: 묶음 4개(보기·확대·주석 도구·코멘트 표시), 확대 묶음은 가운데 선 왼쪽 8px에서 끝, 주석은 오른쪽 끝.
+    const toolbar = await page.evaluate(() => {
+      const panel = document.querySelector('#ai-image-panel');
+      const r = el => el.getBoundingClientRect();
+      const heading = panel.querySelector('.ai-compare-heading'), grid = r(panel.querySelector('.ai-comparison-grid'));
+      const frames = [panel.querySelector('.ai-compare-controls'), ...heading.querySelectorAll('.ai-tool-seg')];
+      const pressed = heading.querySelector('.ai-compare-controls > .ai-compare-menu > summary');
+      const soft = getComputedStyle(document.documentElement).getPropertyValue('--ds-soft-bg').trim();
+      const probe = document.createElement('i'); probe.style.background = soft; document.body.append(probe);
+      const softColor = getComputedStyle(probe).backgroundColor; probe.remove();
+      return { frames: frames.map(el => ({ radius: getComputedStyle(el).borderTopLeftRadius, h: r(el).height })),
+        center: grid.x + grid.width / 2, gridRight: grid.right, headingH: r(heading).height,
+        zoomRight: r(heading.querySelector('.ai-pane-zoom .ai-tool-seg')).right, help: r(heading.querySelector('.ai-zoom-help')).right,
+        annRight: r(heading.querySelector('.ai-annotation-toolbar')).right, annLeft: r(heading.querySelector('.ai-annotation-toolbar .ai-tool-seg')).left,
+        pressedBg: getComputedStyle(pressed).backgroundColor, onBg: [...heading.querySelectorAll('.ai-tool-seg button[aria-pressed="true"], .ai-compare-controls > button[aria-pressed="true"]')].map(b => getComputedStyle(b).backgroundColor), softColor };
+    });
+    fs.writeFileSync(path.join(evidence, 'toolbar.json'), JSON.stringify(toolbar, null, 2));
+    assert.equal(toolbar.frames.length, 4, 'four tool groups: view, zoom, annotation, comment visibility');
+    assert.ok(toolbar.frames.every(f => f.radius === '8px' && Math.abs(f.h - 30) <= 1), JSON.stringify(toolbar.frames));
+    assert.ok(Math.abs(toolbar.help - (toolbar.center - 8)) <= 1.5, 'zoom group ends 8px left of the centre line: ' + JSON.stringify(toolbar));
+    assert.ok(Math.abs(toolbar.annRight - (toolbar.gridRight - 8)) <= 1.5 && toolbar.annLeft > toolbar.center, 'annotation groups sit in the right half, right-aligned');
+    assert.equal(toolbar.pressedBg, toolbar.softColor, 'active compare mode uses the soft selected surface');
+    assert.ok(toolbar.onBg.length >= 1 && toolbar.onBg.every(bg => bg === toolbar.softColor), 'every pressed tool uses the soft selected surface: ' + JSON.stringify(toolbar.onBg));
+    assert.ok(toolbar.headingH <= 42, 'heading keeps its 41px height');
     await geometry('same-ratio');
     assert.equal(await page.locator(`${panel} [data-ai-capture]`).count(), 0);
     // 코멘트 표시 단추는 코멘트 도구 줄(.ai-annotation-toolbar)에 한 개 있다.

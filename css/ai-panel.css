@@ -3237,3 +3237,42 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-install-open.has-done-notice { background: var(--ds-hover, rgba(177, 186, 196, .08)) !important; color: var(--ds-ink, #e6edf3) !important; }
 @keyframes ai-done-notice-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ai-done-notice.is-anchored { animation: none; } }
+
+/* 10-22 위 도구 줄 묶음(시안 ai-panel-1022 A-2): 보기 · 확대 · 주석 도구 · 코멘트 표시.
+   묶음 틀은 작업 종류 단추와 같은 틀, 켜진 단추는 --ds-soft-bg 면.
+   위 줄을 아래 좌우 칸과 같은 두 칸으로: 왼쪽 칸 = 보기(왼쪽 끝) + 확대(가운데 선 왼쪽 8px에서 끝), 오른쪽 칸 = 주석·표시(오른쪽 끝). */
+#ai-image-panel .ai-compare-heading { justify-content:flex-start; flex-wrap:nowrap; gap:0; min-height:41px; padding:0 8px; }
+#ai-image-panel .ai-compare-heading > .ai-compare-controls,
+#ai-image-panel .ai-compare-heading .ai-tool-seg { display:inline-flex; flex:none; align-items:center; gap:2px; padding:2px; border:1px solid var(--border); border-radius:8px; background:var(--ds-panel); }
+#ai-image-panel .ai-compare-heading > .ai-compare-controls { order:1; }
+#ai-image-panel .ai-compare-heading > .ai-local-edit-history { order:2; margin-left:10px; padding:2px; gap:2px; border:1px solid var(--border); border-radius:8px; background:var(--ds-panel); }
+#ai-image-panel .ai-compare-heading > .ai-local-edit-history[hidden] { display:none; }
+#ai-image-panel .ai-compare-heading > .ai-local-edit-history button { display:inline-grid; place-items:center; width:24px; height:24px; min-height:24px; padding:0; border:0; border-radius:6px; color:var(--ds-ink-2); }
+#ai-image-panel .ai-compare-heading > .ai-local-edit-history button svg { width:14px; height:14px; }
+#ai-image-panel .ai-compare-heading > .ai-pane-zoom { order:3; display:flex; flex:none; align-items:center; gap:6px; margin:0 16px 0 auto; padding:0; border:0; background:none; }
+#ai-image-panel .ai-compare-heading > .ai-annotation-toolbar { order:4; display:flex; flex:0 1 calc(50% - 8px); justify-content:flex-end; align-items:center; flex-wrap:nowrap; gap:10px; margin:0; }
+#ai-image-panel .ai-compare-heading > .ai-compare-controls > button,
+#ai-image-panel .ai-compare-heading > .ai-compare-controls > .ai-compare-menu > summary,
+#ai-image-panel .ai-compare-heading .ai-tool-seg button { display:inline-flex; align-items:center; gap:4px; width:auto; min-width:0; height:24px; min-height:24px; margin:0; padding:0 9px; border:0; border-radius:6px; background:transparent; box-shadow:none; color:var(--ds-ink-2); font:inherit; font-size:11px; line-height:1; cursor:pointer; }
+#ai-image-panel .ai-compare-heading > .ai-pane-zoom .ai-tool-seg [data-ai-zoom-action="out"],
+#ai-image-panel .ai-compare-heading > .ai-pane-zoom .ai-tool-seg [data-ai-zoom-action="in"] { padding:0 7px; }
+#ai-image-panel .ai-compare-heading > .ai-compare-controls > button:not(:disabled):hover,
+#ai-image-panel .ai-compare-heading > .ai-compare-controls > .ai-compare-menu > summary:hover,
+#ai-image-panel .ai-compare-heading .ai-tool-seg button:not(:disabled):hover { background:var(--ds-hover); color:var(--ds-ink); border:0; }
+#ai-image-panel .ai-compare-heading > .ai-compare-controls > button[aria-pressed="true"],
+#ai-image-panel .ai-compare-heading > .ai-compare-controls > .ai-compare-menu:has([aria-pressed="true"]) > summary,
+#ai-image-panel .ai-compare-heading .ai-tool-seg button[aria-pressed="true"] { background:var(--ds-soft-bg); color:var(--ds-ink); border:0; }
+/* graphite-shell의 단추 규칙(:not 여러 겹이라 우선순위가 높다)을 이 줄에서만 이기려고 id를 두 번 쓴다:
+   켜진 단추는 시안대로 바탕만(1px 선 없음), 비교 메뉴는 고른 비교가 있으면 켜진 모양. */
+#ai-image-panel#ai-image-panel .ai-compare-heading :is(.ai-compare-controls > button, .ai-tool-seg button, .ai-local-edit-history button)[aria-pressed="true"],
+#ai-image-panel#ai-image-panel .ai-compare-heading > .ai-compare-controls > .ai-compare-menu:has([aria-pressed="true"]) > summary { background:var(--ds-soft-bg) !important; color:var(--ds-ink) !important; outline:0 !important; }
+#ai-image-panel .ai-compare-heading .ai-tool-seg output { width:40px; min-width:40px; padding:0; border:0; background:none; text-align:center; color:var(--ds-ink-3); font-size:10.5px; font-variant-numeric:tabular-nums; }
+#ai-image-panel .ai-compare-heading .ai-seg-div { flex:none; width:1px; height:14px; margin:0 3px; background:var(--ds-line-strong); }
+#ai-image-panel .ai-compare-heading .ai-tool-seg > .ai-comment-tools-label { display:inline; padding:0 3px 0 6px; color:var(--ds-ink-3); font-size:10.5px; }
+#ai-image-panel .ai-compare-heading > .ai-pane-zoom > .ai-zoom-help { display:inline-grid; place-items:center; width:20px; height:20px; min-height:20px; padding:0; border:0; border-radius:50%; background:none; box-shadow:inset 0 0 0 1px var(--ds-line-strong); color:var(--ds-ink-3); font-size:10.5px; cursor:help; }
+#ai-image-panel .ai-compare-heading .ai-comment-visibility::before { content:""; width:13px; height:13px; background:currentColor; -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z'/%3E%3Ccircle cx='8' cy='8' r='2'/%3E%3C/svg%3E") center/contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z'/%3E%3Ccircle cx='8' cy='8' r='2'/%3E%3C/svg%3E") center/contain no-repeat; }
+@media (max-width: 900px) {
+  #ai-image-panel .ai-compare-heading { flex-wrap:wrap; gap:6px; padding-block:4px; }
+  #ai-image-panel .ai-compare-heading > .ai-pane-zoom { margin-right:0; }
+  #ai-image-panel .ai-compare-heading > .ai-annotation-toolbar { flex:1 1 100%; justify-content:flex-start; flex-wrap:wrap; }
+}
