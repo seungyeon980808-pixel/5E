@@ -106,10 +106,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
   // 저장된 조판을 열 때도 그림·표의 주인을 알아야 한다. 그림을 실제로 읽지 않는 가벼운 계획으로 순서만 얻는다.
   const BLANK='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile()).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
+  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
   async function generate(value,prof=profile(),{quiet=false}={}){
     const Document=document().constructor,d=Document.createEmpty();let bytes,owners;
-    try{d.createBlankDocument();const config=questionPageProfile(prof);d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
+    try{d.createBlankDocument();const config=questionPageProfile(prof,1200,std(value));d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
       const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:std(value)});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:std(value)}),plan.equations);
       const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();centerCellPictures(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});
@@ -181,7 +181,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(contentKey(q)===contentKey(value))return true;
     if(layoutKey(q)!==layoutKey(value)||skeletonKey(q)!==skeletonKey(value))return false;
     const seq=opening,next=structuredClone(value),Document=document().constructor;
-    const plan=await buildQuestionHtml(next,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile()).width,{native:true,measureText:measurer||=createNativeTextMeasurer(Document),...SKELETON,standard:std(next)});
+    const plan=await buildQuestionHtml(next,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(next)).width,{native:true,measureText:measurer||=createNativeTextMeasurer(Document),...SKELETON,standard:std(next)});
     if(seq!==opening||!ready||loading)return false;
     if(JSON.stringify([plan.imageOwners,plan.tableOwners,plan.tables])!==JSON.stringify([owners.images,owners.tables,owners.shapes]))return false;
     const patches=planPatches(textMap.segments,plan.textSegments,nativeRuns(document()));

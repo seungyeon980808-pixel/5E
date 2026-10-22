@@ -39,6 +39,14 @@ export async function normalizeQuestionImport(bytes,JSZip,{standard=KICE_STANDAR
   // (10-22 실험: KEEP_WORD로 바꾸던 예전 코드가 거꾸로 글자 단위로 만들어 「설계|한다」처럼 어절 가운데에서 끊겼다).
   header=header.replace(/breakNonLatinWord="KEEP_WORD"/g,'breakNonLatinWord="BREAK_WORD"');
   header=header.replace(/<hh:ratio\b[^>]*\/>/g,tag=>tag.replace(/="\d+"/g,`="${L.ratio}"`)).replace(/<hh:spacing\b[^>]*\/>/g,tag=>tag.replace(/="-?\d+"/g,`="${L.spacing}"`));
+  // 학교 기준(10-22 S4): 본문 글꼴·글자 크기·줄 간격을 기준 값으로. 크기는 모든 글자 모양을 같은 비율로(11pt 기준), 글꼴은 본문 함초롬바탕만,
+  // 줄 간격은 본문 160%만(표 칸 130%·〈보기〉 150%는 그대로). 수능 틀이면 손대지 않는다(바이트 동일).
+  if(standard&&standard.id!==KICE_STANDARD.id){
+    const T=standard.text||{},scale=(T.size||11)/11;
+    if(scale!==1)header=header.replace(/(<hh:charPr\b[^>]*\bheight=")(\d+)"/g,(m,head,h)=>`${head}${Math.round(Number(h)*scale/50)*50}"`);
+    if(T.font&&T.font!=='함초롬바탕')header=header.replace(/face="함초롬바탕"/g,`face="${T.font.replace(/[&<>"]/g,'')}"`);
+    if(T.lineSpacing&&T.lineSpacing!==160)header=header.replace(/(<hh:lineSpacing type="PERCENT" value=")160"/g,`$1${Math.round(T.lineSpacing)}"`);
+  }
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text
   // alignment alone does not position an inline table. Clone the styles so
