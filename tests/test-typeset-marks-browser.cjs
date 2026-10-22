@@ -61,6 +61,12 @@ h.withServer(async origin => {
       assert.equal(await exportBytes(), withMarks, `${name}: marks are screen-only (HWPX bytes unchanged)`);
       await sheet.click('.typeset-view-controls [data-exam-marks]');
       await sheet.waitForFunction(() => !document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]').hidden);
+      // 단축키 ⌥⌘8(윈도우 Ctrl+Alt+8): 편집기 안에서 눌러도 켜고 끈다. 브라우저 탭 전환 ⌘8과 겹치지 않는다.
+      await sheet.locator('#native-editor iframe').click({ position: { x: 200, y: 160 } });
+      await page.keyboard.press(process.platform === 'darwin' ? 'Meta+Alt+Digit8' : 'Control+Alt+Digit8');
+      await sheet.waitForFunction(() => document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]').hidden && document.querySelector('.typeset-view-controls [data-exam-marks]').getAttribute('aria-pressed') === 'false');
+      await page.keyboard.press(process.platform === 'darwin' ? 'Meta+Alt+Digit8' : 'Control+Alt+Digit8');
+      await sheet.waitForFunction(() => !document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]').hidden);
 
       // 5E_hwp: 도구 줄의 같은 단추, 같은 설정
       await sheet.locator('.top [data-app-switch="hwp"]').click();

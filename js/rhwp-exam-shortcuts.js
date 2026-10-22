@@ -34,6 +34,7 @@ export const EXAM_SHORTCUTS = [
   ['글자 모양 / 문단 모양','Alt+L / T'], ['줄 간격 줄이기 / 늘리기','Alt+Shift+A / Z'],
   ['왼쪽 / 가운데 / 오른쪽 / 양쪽 정렬','Ctrl+Shift+L / C / R / M'],
   ['빠른 내어쓰기','본문 Shift+Tab · 셀 안 Ctrl+Shift+Tab · 맥은 어디서나 ⌥⇧Tab'],
+  ['조판 부호 켜기·끄기','맥 ⌥⌘8 · 윈도우 Ctrl+Alt+8 (고정 띄어쓰기 V·내어쓰기 선, 화면에만)'],
   ['첫 줄 들여쓰기 / 내어쓰기 (한 글자)','Ctrl+F6 / F5 · Ctrl+Shift+I / O'],
   ['왼쪽 여백 늘이기 / 줄이기 (1pt)','Ctrl+Alt+F6 / F5 · Ctrl+Shift+G / E'],
   ['오른쪽 여백 늘이기 / 줄이기 (1pt)','Ctrl+Alt+F7 / F8 · Ctrl+Shift+D / F'],

@@ -57,6 +57,14 @@ export function marksForRuns(runs) {
   return { spaces, indents };
 }
 
+// 켜고 끄기 단축키: 맥 ⌥⌘8, 윈도우 Ctrl+Alt+8(10-22 제안 — Safari·크롬의 ⌘8 탭 전환과 겹치지 않게).
+export const MARKS_SHORTCUT_LABEL = /Mac|iPhone|iPad/.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || '') ? '⌥⌘8' : 'Ctrl+Alt+8';
+export const isMarksShortcut = e => e.code === 'Digit8' && e.altKey && !e.shiftKey && (e.metaKey ? !e.ctrlKey : e.ctrlKey);
+const keyDocs = new WeakSet();
+export function installMarksShortcut(doc) {
+  if (!doc || keyDocs.has(doc)) return; keyDocs.add(doc);
+  doc.addEventListener('keydown', event => { if (!isMarksShortcut(event)) return; event.preventDefault(); event.stopPropagation(); setMarksEnabled(!marksEnabled()); }, true);
+}
 export function installExamMarks(bridge, { onToggle } = {}) {
   let layer = null, svg = null, frame = 0, cacheKey = '', cache = new Map(), on = marksEnabled(), disposed = false;
   const doc = () => bridge?.editor?.element?.contentDocument;
@@ -119,11 +127,13 @@ export function installExamMarks(bridge, { onToggle } = {}) {
   const resize = () => schedule(); window.addEventListener('resize', resize);
   const tick = setInterval(() => { hookScroll(); }, 1000);
   hookScroll(); schedule();
+  // 단축키는 편집기 안(글 쓰는 중)과 이 문서 둘 다에서 받는다.
+  installMarksShortcut(document); const keyTick = setInterval(() => installMarksShortcut(doc()), 1000); installMarksShortcut(doc());
   return {
     redraw: schedule,
     get on() { return on; },
     set(value) { on = !!value; setMarksEnabled(on); onToggle?.(on); schedule(); },
-    dispose() { disposed = true; clearInterval(tick); window.removeEventListener('5e:typeset-marks', toggle); window.removeEventListener('resize', resize); hooked?.removeEventListener('scroll', schedule); layer?.remove(); },
+    dispose() { disposed = true; clearInterval(tick); clearInterval(keyTick); window.removeEventListener('5e:typeset-marks', toggle); window.removeEventListener('resize', resize); hooked?.removeEventListener('scroll', schedule); layer?.remove(); },
   };
 }
 
@@ -131,5 +141,5 @@ export function installExamMarks(bridge, { onToggle } = {}) {
 export const MARKS_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.5 5 11.5 7.5 6.5" stroke="#da3633"/><path d="M11.5 3.5v9" stroke="rgba(46,160,67,.9)"/><path d="M9.8 3.5h3.4" stroke="rgba(46,160,67,.9)"/></svg>';
 export function marksButtonHtml(className = '') {
   const on = marksEnabled();
-  return `<button type="button" class="${className}" data-exam-marks aria-pressed="${on}" aria-label="조판 부호" title="조판 부호 — 고정 띄어쓰기(빨간 V)·내어쓰기 기준점(초록 선)을 화면에만 표시합니다. 인쇄·HWPX에는 나가지 않습니다.">${MARKS_ICON}<span>조판 부호</span></button>`;
+  return `<button type="button" class="${className}" data-exam-marks aria-pressed="${on}" aria-label="조판 부호" title="조판 부호(${MARKS_SHORTCUT_LABEL}) — 고정 띄어쓰기(빨간 V)·내어쓰기 기준점(초록 선)을 화면에만 표시합니다. 인쇄·HWPX에는 나가지 않습니다.">${MARKS_ICON}<span>조판 부호</span></button>`;
 }
