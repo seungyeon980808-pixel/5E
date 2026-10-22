@@ -452,6 +452,7 @@ export function compilePanelScene(input, options) {
   }
 }
 
+const CREATION_REFERENCE_LIMIT = 4;
 const isInputReference = item => { try { return getReferenceRole(item) === 'INPUT_SOURCE'; } catch { return false; } };
 
 export { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
@@ -2707,6 +2708,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const title = panel.querySelector('[data-ai-request-title]'); if (graph && title) title.textContent = graphTarget ? '추가 수정' : '그래프 요청';
     const hint = panel.querySelector('[data-ai-request-hint]'); if (graph && hint) hint.textContent = graphTarget ? `수정 대상: ${graphTarget.name}. 바꿀 내용만 적으세요. 이전 결과는 수정본 목록에 남습니다.` : graphCreate ? '축과 모양을 짧게 설명하세요. 수식·좌표도 입력할 수 있고, 생성 후 세부 편집으로 조정합니다.' : '원본을 편집 가능한 그래프로 복원합니다. 바꿀 조건도 함께 적을 수 있습니다.';
     const options = panel.querySelector('.ai-conversion-options'); if (options) options.hidden = true;
+    // 10-22 A-3: 이미지 생성·그래프 생성도 좌우 두 칸 — 왼쪽 「레퍼런스」(그래프 생성은 「참고 그래프」), 오른쪽 「결과」.
+    const creation = isCreationWorkflow(conversionKind), refName = graphCreate ? '참고 그래프' : '레퍼런스';
+    const setText = (selector, text) => { const node = panel.querySelector(selector); if (node && node.textContent !== text) node.textContent = text; };
+    setText('.ai-original-pane .ai-pane-metadata > strong', creation ? refName : '원본');
+    setText('.ai-result-pane .ai-pane-metadata > strong', creation ? '결과' : '수정본');
+    setText('.ai-compare-controls [data-ai-layout-mode="source"]', creation ? refName : '원본');
+    setText('.ai-compare-controls [data-ai-layout-mode="result"]', creation ? '결과' : '수정본');
+    setText('[data-ai-reference-empty]', creation ? `모양·배치·화풍을 참고합니다. 그대로 베끼지 않고, 오른쪽 설명이 우선합니다. (선택 사항 · 최대 ${CREATION_REFERENCE_LIMIT}개)` : '이미지를 추가하면 원본이 여기에 표시됩니다.');
+    const refSummary = panel.querySelector('.ai-reference-section > summary')?.firstChild; if (refSummary?.nodeType === 3) refSummary.nodeValue = creation ? `${refName} ` : '원본 이미지 ';
+    const addLabel = panel.querySelector('[data-ai-source-menu-trigger] .ds-glyph-plus')?.nextSibling; if (addLabel?.nodeType === 3) addLabel.nodeValue = creation ? ` ${refName} 추가 ` : ' 소스 추가 ';
     const processing = panel.querySelector('[data-ai-output-processing]'); if (processing) processing.hidden = graph;
     for (const control of [modelSelect, effortSelect, speedSelect]) if (control?.closest('label')) control.closest('label').hidden = true;
     modelRefreshButton.hidden = false; if (graph && modelWarning) { let message=''; try { resolveAIModelSelection(GRAPH_WORKBENCH_SELECTION,availableModels); } catch(error) { message=modelsLoaded ? `그래프는 Sol 6.1 / medium으로 실행합니다. ${error.message}` : ''; } modelWarning.textContent=message; modelWarning.hidden=!message; }
@@ -3158,6 +3169,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }
 
   const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto", source = null, sourceTextCandidates, referenceRole }) => {
+    // 그래프 생성의 왼쪽 칸 그림은 복원할 원본이 아니라 모양 참고(10-22 A-3).
+    if (conversionKind === 'graph-create' && referenceRole === undefined) referenceRole = 'STYLE_REFERENCE';
     const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind, source, ...(sourceTextCandidates?{sourceTextCandidates}:{}), referenceRole, comments: [], nextCommentNumber: 1 };
     attachments.push(item);
     attachmentList.appendChild(item.card || makeImageCard(item));
@@ -3815,7 +3828,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     return id;
   };
 
+  // 생성 탭 레퍼런스 4개를 넘겨 넣지 않은 수(안내 문구가 실제로 들어간 수를 말하게)
+  let refusedReferences = 0;
+  const referenceLimitStatus = () => {
+    if (!refusedReferences) return false;
+    setStatus(`레퍼런스는 최대 ${CREATION_REFERENCE_LIMIT}개까지 넣을 수 있습니다. ${refusedReferences}개는 넣지 않았습니다.`, 'warn');
+    refusedReferences = 0; return true;
+  };
   const addReferencesAsTasks = (references, { prompt = "", placement = "separate", groups = null, kind = conversionKind } = {}) => {
+    refusedReferences = 0;
     if (panel.dataset.aiSharingMode === 'view') return [];
     if (busy) {
       setStatus("현재 변환이 끝난 뒤 이미지를 추가해 주세요.", "warn");
@@ -3827,9 +3848,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       conversionKind=kind;const empty=taskTabs.get(activeTaskTabId);if(empty)empty.conversionKind=kind;syncGraphWorkbenchUi();
     }
     const taskActions = {
-      canUseActiveTask: () => Boolean(activeTaskTabId) && attachments.length === 0 && generatedImages.length === 0 && conversionKind === kind,
+      // 생성 탭(이미지 생성·그래프 생성)은 레퍼런스를 지금 작업에 더한다 — 결과가 있어도 새 작업을 만들지 않는다(10-22 A-3).
+      canUseActiveTask: () => Boolean(activeTaskTabId) && conversionKind === kind && (isCreationWorkflow(kind) || (attachments.length === 0 && generatedImages.length === 0)),
       createTask: () => createTaskTab({kind}),
       addSource: reference => {
+        if (isCreationWorkflow(conversionKind) && attachments.length >= CREATION_REFERENCE_LIMIT) { refusedReferences++; return; }
         const freshLibraryTask = attachments.length === 0 && generatedImages.length === 0
           && ["unified-library", "pdf-library", "pdf-crop"].includes(reference.sourceKind);
         if (freshLibraryTask) referenceComposition = normalizeReferenceComposition({ orientation: "free" }, []);
@@ -3853,7 +3876,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       persistTasks();
       return taskIds;
     }
-    if (placement === "together" && references.length) {
+    if ((placement === "together" || (isCreationWorkflow(kind) && kind === conversionKind && activeTaskTabId)) && references.length) {
       groupSourcesInTaskTab(references, taskActions, { prompt });
       persistTasks();
       return [activeTaskTabId];
@@ -4699,7 +4722,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         .map((result) => result.value.source);
       addReferencesAsTasks(readyReferences, { prompt, placement, groups, kind:kind || conversionKind });
       const loadedCount = readyReferences.length;
-      setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${placement === "together" ? 1 : loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
+      if (!referenceLimitStatus()) setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${placement === "together" ? 1 : loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }
     // Account/model reads must not delay local source handoff or window display.
     void refreshPromise;
@@ -5921,10 +5944,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (!files.length || disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') return;
     const owner = captureSourceRead();
     try {
+      // 생성 탭 레퍼런스: PNG·JPEG·WebP, 개당 20MB 이하, 손상된 그림은 넣지 않는다(옛 「도식 만들기」 참고 이미지 규칙, 10-22 A-4).
+      if (isCreationWorkflow(conversionKind)) {
+        const bad = files.find(file => !['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 20 * 1024 * 1024);
+        if (bad) { setStatus(`${bad.name}: 레퍼런스는 PNG·JPEG·WebP 이미지(개당 20MB 이하)만 넣을 수 있습니다.`, 'warn'); return; }
+      }
       const dataUrls = await Promise.all(files.map(blobToDataUrl));
+      if (isCreationWorkflow(conversionKind)) for (const [index, url] of dataUrls.entries()) {
+        const probe = new Image(); probe.src = url;
+        try { await probe.decode(); } catch { setStatus(`${files[index].name}: 손상되었거나 읽을 수 없는 이미지입니다.`, 'warn'); return; }
+      }
       if (!sourceReadCurrent(owner)) return;
       const ids = addReferencesAsTasks(files.map((selected, index) => ({ name: selected.name, data: dataUrls[index], sourceKind })));
-      if (ids.length) setStatus(`이미지 ${files.length}개 · 작업 ${ids.length}개 준비됨`, 'ok');
+      if (!referenceLimitStatus() && ids.length) setStatus(`이미지 ${files.length}개 · 작업 ${ids.length}개 준비됨`, 'ok');
     } catch (error) {
       if (sourceReadCurrent(owner)) setStatus(`이미지를 읽지 못했습니다: ${error.message}`, 'error', error);
     }

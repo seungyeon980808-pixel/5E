@@ -219,8 +219,32 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let combinedCard = null;
   let combinedSignature = '';
   let composition = { orientation: 'horizontal' };
+  // 생성 탭(이미지 생성·그래프 생성)에서는 왼쪽 「레퍼런스」 칸에 앞 판 결과를 띄워 오른쪽 최신 판과 나란히 비교한다(10-22 A-3).
+  let compareCard = null;
+  const isCreation = () => panel.dataset.aiCreation === 'true';
+  const resultKey = card => `__result__:${candidateKey(card)}`;
   const activeSource = () => activeSourceKey === '__combined__' ? combinedCard
+    : activeSourceKey.startsWith('__result__:') ? compareCard
     : sourceCards().find(item => sourceKey(item) === activeSourceKey);
+  function prepareCompare() {
+    const result = isCreation() && activeSourceKey.startsWith('__result__:') ? generatedCards().find(card => resultKey(card) === activeSourceKey) : null;
+    const src = result?.querySelector('.ai-preview-stage > img')?.src;
+    if (!src) { compareCard?.remove(); compareCard = null; return false; }
+    if (!compareCard || !compareCard.isConnected) {
+      compareCard = document.createElement('article');
+      compareCard.className = 'ai-image-card ai-compare-result-card';
+      const head = document.createElement('header'); head.className = 'ai-image-card-head';
+      const title = document.createElement('strong'); head.append(title);
+      const stage = document.createElement('div'); stage.className = 'ai-preview-stage';
+      const image = document.createElement('img'); image.onload = () => { fitCardStage(compareCard); applyPaneZoom('source'); }; stage.append(image);
+      compareCard.append(head, stage); references.append(compareCard);
+    }
+    const name = cardTitle(result, '결과');
+    if (compareCard.querySelector('strong').textContent !== name) compareCard.querySelector('strong').textContent = name;
+    const image = compareCard.querySelector('img');
+    if (image.getAttribute('src') !== src) { image.alt = name; image.src = src; }
+    return true;
+  }
   const activeCandidate = () => generatedCards().find((card) => candidateKey(card) === activeCandidateKey) || null;
 
   function cardFit(card) {
@@ -672,32 +696,40 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const cards = sourceCards();
     const wasCombined = Boolean(combinedCard);
     prepareCombined(cards);
-    const keys = [...(combinedCard ? ['__combined__'] : []), ...cards.map(sourceKey)];
+    const results = isCreation() ? generatedCards().filter(card => card.querySelector('.ai-preview-stage > img')?.src) : [];
+    const keys = [...(combinedCard ? ['__combined__'] : []), ...cards.map(sourceKey), ...results.map(resultKey)];
     if (!keys.includes(activeSourceKey) || (!wasCombined && combinedCard)) activeSourceKey = keys[0] || '';
+    const comparing = prepareCompare();
     combinedCard?.classList.toggle('is-ai-active-source', activeSourceKey === '__combined__');
+    compareCard?.classList.toggle('is-ai-active-source', comparing);
     if (sourceSelect) {
       const picker = sourceSelect.closest("[data-ai-source-picker]");
-      if (picker) picker.hidden = !cards.length;
+      if (picker) picker.hidden = !cards.length && !results.length;
       sourceSelect.replaceChildren();
       if (combinedCard) {
         const option = document.createElement('option');
         option.value = '__combined__'; option.textContent = '연결된 전체 원본'; sourceSelect.append(option);
       }
-      if (!cards.length) {
+      if (!cards.length && !results.length) {
         const option = document.createElement("option");
         option.value = "";
-        option.textContent = "원본 없음";
+        option.textContent = isCreation() ? "레퍼런스 없음" : "원본 없음";
         sourceSelect.appendChild(option);
         sourceSelect.disabled = true;
       } else {
         cards.forEach((card, index) => {
           const option = document.createElement("option");
           option.value = sourceKey(card);
-          option.textContent = `${card.dataset.aiReferenceRole === 'STYLE_REFERENCE' ? '표현 참고' : '원본'} · ${cardTitle(card, `참고 이미지 ${index + 1}`)}`;
+          option.textContent = isCreation() ? `레퍼런스 · ${cardTitle(card, `참고 이미지 ${index + 1}`)}` : `${card.dataset.aiReferenceRole === 'STYLE_REFERENCE' ? '표현 참고' : '원본'} · ${cardTitle(card, `참고 이미지 ${index + 1}`)}`;
+          sourceSelect.appendChild(option);
+        });
+        results.forEach((card, index) => {
+          const option = document.createElement("option");
+          option.value = resultKey(card); option.textContent = `결과 · ${cardTitle(card, `${index + 1}판`)}`;
           sourceSelect.appendChild(option);
         });
         sourceSelect.disabled = false;
-        if (activeSourceKey !== '__combined__') {
+        if (activeSourceKey !== '__combined__' && !activeSourceKey.startsWith('__result__:') && cards.length) {
           const replace = document.createElement('option');
           replace.value = '__replace__'; replace.textContent = '원본 교체…'; sourceSelect.append(replace);
         }

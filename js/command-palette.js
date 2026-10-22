@@ -91,6 +91,9 @@ const COMMANDS = [
   { id: "objectSearch", label: "오브젝트 검색 열기", keywords: ["object", "오브젝트", "검색", "찾기"], shortcutLabel: "Ctrl+F",     run: () => clickById("object-search-trigger") },
   { id: "examSearch",  label: "라이브러리 열기", keywords: ["exam", "기출", "문항", "검색", "라이브러리"], shortcutLabel: "", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
+  // 10-22: 아래 막대 「도식 만들기」 대신 — AI 없는 흐름도·측정값 그래프는 명령 팔레트에서만 연다.
+  { id: "flowchart",   label: "흐름도 만들기",     keywords: ["flow", "흐름도", "순서도", "과정", "도식"], shortcutLabel: "",         run: () => window.dispatchEvent(new CustomEvent("5e:figure-studio-open", { detail: { mode: "flow" } })) },
+  { id: "dataPlot",    label: "데이터 그래프 만들기", keywords: ["plot", "데이터", "측정", "그래프", "표", "csv", "엑셀"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:figure-studio-open", { detail: { mode: "plot" } })) },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
   { id: "aiImage", label: "AI 이미지/그래프", keywords: ["ai", "인공지능", "이미지 변환", "이미지 생성", "그래프 복원", "그래프 생성", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.

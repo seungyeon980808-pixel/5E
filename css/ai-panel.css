@@ -3209,11 +3209,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
   #ai-image-panel .ai-loading-stage b { transition: none; }
 }
 
-/* Description creation starts with the result; references remain optional. */
-#ai-image-panel[data-ai-creation="true"] .ai-original-pane,
-#ai-image-panel[data-ai-creation="true"] .ai-compare-controls { display:none !important; }
-#ai-image-panel[data-ai-creation="true"] .ai-comparison-grid { grid-template-columns:minmax(0,1fr); }
-#ai-image-panel[data-ai-creation="true"] .ai-result-pane { grid-column:1 / -1; display:flex; }
+/* 이미지 생성·그래프 생성도 좌우 두 칸(10-22 A-3): 왼쪽 레퍼런스(선택 사항·최대 4개)·앞 판 결과, 오른쪽 결과. 예전 한 칸 규칙은 없앰. */
 @media (max-width:760px) {
   #ai-image-panel .ai-title-line { min-width:0; }
   .ai-workflow-switch { max-width:100%; }

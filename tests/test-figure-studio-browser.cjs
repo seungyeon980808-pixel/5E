@@ -20,6 +20,15 @@ async function run() {
       await page.addInitScript(() => localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true'));
       await page.goto(url.href+'?mode=pro&mobile=0');
       await page.waitForSelector('#figure-studio',{state:'attached'});
+      // 10-22: 아래 막대 「도식 만들기」 단추는 없고, 흐름도·데이터 그래프는 ⌘K 명령 팔레트에서만 연다(일러스트는 AI 이미지/그래프 「이미지 생성」).
+      assert.equal(await page.locator('#figure-studio-open').count(),0,'no figure studio button on the bottom bar');
+      const fromPalette=async label=>{
+        await page.locator('#canvas').click({position:{x:5,y:5}}).catch(()=>{});
+        await page.keyboard.press(process.platform==='darwin'?'Meta+k':'Control+k');
+        const input=page.locator('#command-palette-title').locator('..').locator('input');await input.waitFor({state:'visible'});
+        await input.fill(label);await page.getByRole('option',{name:new RegExp(label)}).first().click();
+        await page.waitForFunction(()=>document.querySelector('#figure-studio').open);
+      };
       const app = '/js/state.js?v=1.7.0-four-session-integration';
       const snapshot=()=>page.evaluate(async app=>structuredClone((await import(app)).state.get()),app);
       await page.evaluate(async app=>{
@@ -27,8 +36,10 @@ async function run() {
         state.update(s=>{s.objects=[{id:'retained',type:'rect',x:-44,y:-29,w:3,h:3,strokeLevel:0,strokeWidth:.2,fillNone:true,layerId:s.activeLayerId}];s.selectedIds=[];s.undoStack=[];s.redoStack=[];});
       },app);
       const prior=await snapshot();
-      await page.click('#figure-studio-open');
-      await page.click('[data-fs-mode="flow"]');
+      await fromPalette('흐름도 만들기');
+      assert.equal(await page.locator('[data-fs-mode="flow"]').getAttribute('aria-pressed'),'true');
+      assert.deepEqual(await page.locator('[data-fs-mode]').allTextContents(),['흐름도','데이터 그래프'],'illustration moved to AI image creation');
+      assert.equal(await page.locator('#fs-files, [data-fs-references]').count(),0,'reference images moved to AI image creation');
       assert.equal(await page.locator('[data-fs-submit]').isDisabled(),true);
       await page.click('[data-fs-example]');
       await page.waitForFunction(()=>!document.querySelector('[data-fs-svg]').hasAttribute('hidden'));
@@ -55,7 +66,7 @@ async function run() {
       assert.ok(JSON.stringify(saved).includes('결론 도출'));
       await page.evaluate(async app=>{const {state}=await import(app);const {undo}=await import('/js/transform.js?v=1.7.0-four-session-integration');undo(state);},app);
       assert.deepEqual((await snapshot()).objects,prior.objects);
-      await page.click('#figure-studio-open');await page.click('[data-fs-mode="plot"]');
+      await fromPalette('데이터 그래프 만들기');assert.equal(await page.locator('[data-fs-mode="plot"]').getAttribute('aria-pressed'),'true');
       await page.click('[data-fs-example]');
       await page.waitForFunction(()=>!document.querySelector('[data-fs-submit]').disabled);
       await page.fill('#fs-input','x,y\n0,0\n1,2oops');
@@ -68,37 +79,7 @@ async function run() {
       const plotted=await snapshot();
       assert.equal(plotted.objects.length,8);assert.equal(plotted.objects.filter(o=>o.type==='optics').length,5);
       assert.equal(plotted.objects.find(o=>o.type==='coordplane').labelX,'시간(s)');
-      await page.click('#figure-studio-open');await page.click('[data-fs-mode="image"]');
-      await page.click('[data-fs-example]');
-      const teacherBrief=await page.inputValue('#fs-input');
-      assert.equal(await page.locator('.fs-styles').isVisible(),false);
-      // Corrupt files fail locally; no broken image is forwarded.
-      await page.locator('#fs-files').setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('broken')});
-      await page.waitForFunction(()=>document.querySelector('#fs-error').textContent.includes('손상'));
-      const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jMZkAAAAASUVORK5CYII=','base64');
-      await page.locator('#fs-files').setInputFiles({name:'reference.png',mimeType:'image/png',buffer:png});
-      await page.waitForSelector('.fs-references img');
-      await page.click('[data-fs-submit]');
-      await page.waitForFunction(()=>!document.querySelector('#ai-image-panel').hidden);
-      assert.equal(await page.locator('#figure-studio').evaluate(el=>el.open),false);
-      assert.deepEqual((await snapshot()).objects,plotted.objects,'AI handoff must not touch document');
-      // Check the actual existing workbench draft and reference payload, not a mock API.
-      const drafts=await page.locator('#ai-image-panel textarea').evaluateAll(els=>els.map(el=>el.value));
-      assert.ok(drafts.includes(teacherBrief),'the editable draft stays short without internal style instructions');
-      assert.match(await page.locator('#ai-image-panel [data-ai-request-hint]').textContent(),/자동으로 보강/);
-      assert.ok(await page.locator('#ai-image-panel img').count()>0);
-      await page.keyboard.press('Escape');
-      await page.click('#figure-studio-open');
-      await page.click('.fs-references button');
-      await page.fill('#fs-input','새 도식: 지레의 원리');
-      await page.click('[data-fs-submit]');
-      await page.waitForFunction(()=>!document.querySelector('#ai-image-panel').hidden);
-      await page.waitForFunction(()=>[...document.querySelectorAll('#ai-image-panel textarea')].some(el=>el.value.includes('지레')));
-      assert.equal(await page.locator('#ai-image-panel [data-ai-reference-count]').textContent(),'0','A prompt-only draft cannot inherit previous references');
-      assert.ok(await page.locator('[id^="ai-workspace-"] img').count()>0,'Prior work remains available');
-      assert.ok((await page.locator('#ai-image-panel textarea').evaluateAll(els=>els.map(el=>el.value))).some(text=>text.includes('지레')));
-      await page.keyboard.press('Escape');
-      await page.click('#figure-studio-open');
+      await page.evaluate(()=>window.dispatchEvent(new CustomEvent('5e:figure-studio-open',{detail:{mode:'flow'}})));
       await page.setViewportSize({width:390,height:844});
       await page.click('[data-fs-mode="flow"]');
       assert.ok(await page.locator('[data-fs-submit]').isVisible());
@@ -120,7 +101,7 @@ async function run() {
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('#figure-studio').evaluate(el=>el.open),false);
       assert.deepEqual(errors,[]);
-      console.log(`${engine.name()}: flow, plot, error, one-step undo, project/SVG/PNG, image handoff, mobile, Escape PASS`);
+      console.log(`${engine.name()}: palette entry, flow, plot, error, one-step undo, project/SVG/PNG, mobile, Escape PASS`);
     } finally {await browser.close();}
   }
 }
