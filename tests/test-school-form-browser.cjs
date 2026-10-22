@@ -56,6 +56,21 @@ h.withServer(async origin => {
       assert.deepEqual(await sheet.locator('.ts-std-menu [data-std-pick]').allTextContents(), ['수능 틀', '○○고 중간고사']);
       await sheet.click('.ts-std-menu [data-std-pick="kice"]');
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 ▾');
+      // 암호 걸린 양식: 선생님이 입력하는 창(틀리면 다시), 맞으면 같은 표. 시험용 암호는 검사 안에서 만든 파일의 것.
+      const locked = await sheet.evaluate(() => {
+        const D = document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().constructor, d = D.createEmpty();
+        d.createBlankDocument(); d.pasteHtml(0, 0, 0, '<p><span style="font-family:함초롬바탕;font-size:11pt">1. 암호 문서 문항이다. 옳은 것은?</span></p>');
+        const fn = d.exportHwpWithPassword ? 'exportHwpWithPassword' : 'exportHwpxWithPassword', out = Array.from(d[fn]('1234')); d.free(); return { out, fn };
+      });
+      await sheet.setInputFiles('#school-file-input', { name: '암호 양식.' + (locked.fn === 'exportHwpWithPassword' ? 'hwp' : 'hwpx'), mimeType: 'application/octet-stream', buffer: Buffer.from(locked.out) });
+      await sheet.waitForSelector('#password-dialog[open]');
+      await sheet.fill('#password-input', '0000'); await sheet.click('#password-ok');
+      await sheet.waitForFunction(() => document.querySelector('#password-dialog').open && /맞지 않습니다/.test(document.querySelector('#password-message').textContent));
+      await sheet.fill('#password-input', '1234'); await sheet.click('#password-ok');
+      await sheet.waitForSelector('#school-dialog[open]');
+      assert.equal(await sheet.inputValue('#password-input'), '', `${name}: the password is not kept in the page`);
+      assert.match(await sheet.locator('#school-rows').textContent(), /문항 문단/);
+      await sheet.click('#school-dialog [data-close="school-dialog"]');
       assert.deepEqual(errors, [], `${name}: no page errors`);
       console.log(`${name}: school form ok`);
     } finally { await browser.close(); }

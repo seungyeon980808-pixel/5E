@@ -504,8 +504,13 @@ async function onTypesetStandard(action){const q=current;
 }
 // 학교 양식에서 기준 만들기: 파일 → 엔진으로 읽기 → 찾은 값 표 → 이름 붙여 저장하고 이 문항에 쓴다.
 let schoolDraft=null;
+// 암호 입력 창: 선생님이 직접 넣는 암호만 받는다. 돌려준 뒤 입력칸을 비운다(저장·기록하지 않음).
+function askPassword(message){const dialog=$('#password-dialog'),input=$('#password-input');$('#password-message').textContent=`${message} 암호는 이 파일을 여는 데만 쓰고 저장하지 않습니다.`;input.value='';
+  return new Promise(resolve=>{dialog.addEventListener('close',()=>{const value=dialog.returnValue==='ok'&&input.value?input.value:null;input.value='';resolve(value);},{once:true});dialog.showModal();input.focus();});}
 $('#school-file-input').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;
-  try{status('학교 양식을 읽는 중…');typesetter||=makeTypesetter();const read=await typesetter.readSchoolForm(await file.arrayBuffer(),file.name);schoolDraft=read.standard;
+  try{status('학교 양식을 읽는 중…');typesetter||=makeTypesetter();const buffer=await file.arrayBuffer();let read=null,password='',message='';
+    for(;;){try{read=await typesetter.readSchoolForm(buffer,file.name,password);break;}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null){status('학교 양식 열기를 그만두었습니다.');return;}}}
+    password='';schoolDraft=read.standard;
     $('#school-file').textContent=`${file.name} · 한글 엔진으로 읽은 값`;
     $('#school-rows').innerHTML=read.rows.map(r=>`<tr data-found="${r.found}"><td>${E(r.label)}</td><td>${E(r.value)}${r.note?`<small>${E(r.note)}</small>`:''}</td><td>${r.found?'읽음':'수능 틀'}</td></tr>`).join('');
     $('#school-name').value=read.standard.name;$('#school-dialog').showModal();status('학교 양식을 읽었습니다. 값을 확인하고 저장하세요.');

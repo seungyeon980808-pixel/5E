@@ -304,6 +304,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     }finally{target.free();}
   }
   // 학교 양식(한글 파일)을 엔진으로 열어 조판 기준 값을 읽는다(10-22 C-6). 열린 문항 조판에는 손대지 않는다.
-  async function readSchoolForm(bytes,fileName){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{return readSchoolDocument(d,{fileName});}finally{d.free();}}
+  // 암호 걸린 한글 파일: 선생님이 입력한 암호(password)로 연다. 암호는 이 함수 밖으로 남기지 않는다.
+  async function openForm(bytes,password){await ensure();const Document=document().constructor,data=new Uint8Array(bytes);
+    try{return password?Document.openWithPassword(data,password):new Document(data);}
+    catch(e){const text=String(e?.message||e);if(/비밀번호|암호|password/i.test(text)){const error=new Error(password?'암호가 맞지 않습니다. 다시 입력하세요.':'암호가 걸린 한글 파일입니다. 암호를 입력하세요.');error.needsPassword=true;throw error;}throw e;}}
+  async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);try{return readSchoolDocument(d,{fileName});}finally{d.free();}}
   return {readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }
