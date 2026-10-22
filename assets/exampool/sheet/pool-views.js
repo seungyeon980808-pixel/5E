@@ -1,4 +1,5 @@
 // ExamPool 화면: 왼쪽 메뉴(문항 보관함·시험지), 문항 보관함, 시험지 목록, 시험지 안(문항 순서·쪽 배치·보내기).
+import {examStats,examChecks,ANSWER_MARK} from './exam-review.js';
 import {WORKFLOWS} from './model.js';
 import {EXAM_STATUS,libraryQuestions,examById} from './exams.js';
 import {examPlan} from './exam-layout.js';
@@ -84,7 +85,7 @@ export function renderExam(root,data,examId,{forms=[]}={}){
   const lib=libraryQuestions(data);
   root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
       <div class="pv-tools"><label class="pv-form" title="시험지를 어느 양식 위에 묶을지 — 학교 양식이면 학교 제목 표·머리말·단을 그대로 두고 그 안에 문항을 넣습니다">양식 <select id="exam-form" aria-label="시험지 양식"><option value="">5E 기본(수능 틀)</option>${forms.map(f=>`<option value="${E(f.id)}" ${f.id===exam.formId?'selected':''}>${E(f.name)}${f.encrypted?' 🔒':''}</option>`).join('')}<option value="__new">학교 양식 등록…</option></select></label><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
-        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
+        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="variant" title="문항 순서를 섞은 나형 시험지(HWPX, 번호 다시 매김)와 가·나형 정답 대응표">나형(순서 섞기) 내려받기</button><button type="button" role="menuitem" data-exam-act="print" title="한글 엔진이 그린 쪽 그대로 인쇄 창을 엽니다. PDF는 인쇄 창의 「PDF로 저장」">인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="blueprint" title="이원목적분류표와 정답표를 엑셀 한 파일(두 시트)로">이원목적분류표·정답표(엑셀)</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
       <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
     <div class="pv-exam-body"><div class="pv-order" id="exam-order">
       ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
@@ -96,6 +97,9 @@ export function renderExam(root,data,examId,{forms=[]}={}){
     </div>
     <aside class="pv-summary"><h3>시험지 한눈에</h3>
       <div class="stat"><span>문항</span><b>${qs.length}</b><span>배점 합</span><b>${qs.reduce((a,q)=>a+(Number(q.points)||0),0)}</b><span>완성</span><b>${count('complete')}</b><span>검토 중</span><b>${count('review')}</b><span>초안</span><b>${count('draft')}</b></div>
+      ${(()=>{const st=examStats(qs),checks=examChecks(qs,{ready:q=>items.find(x=>x.q===q)?.ready}),max=Math.max(1,...st.answers);
+        return `<h3>정답 분포</h3><div class="pv-answers" aria-label="정답 분포">${st.answers.map((n,i)=>`<span title="${ANSWER_MARK[i]} ${n}문항"><i style="height:${Math.round(n/max*100)}%"></i><b>${ANSWER_MARK[i]}</b><small>${n}</small></span>`).join('')}</div>
+        <h3>출제 점검 ${checks.length?`<small>${checks.length}</small>`:''}</h3><ul class="pv-checks">${checks.map(c=>`<li data-level="${c.level}">${E(c.text)}</li>`).join('')||'<li data-level="ok">걸리는 것이 없습니다.</li>'}</ul>`;})()}
       <h3>쪽 배치 (A4 2단)</h3>
       <div class="pv-pages">${pages.map(p=>`<div class="pv-page">${p.columns.map(col=>`<div>${col.map(id=>{const x=items.find(v=>v.id===id);return `<i style="height:${Math.min(100,x.height/267*100)}%" title="${items.indexOf(x)+1}번"><b>${items.indexOf(x)+1}</b></i>`;}).join('')}</div>`).join('')}</div>`).join('')||'<p class="pv-empty">문항을 넣으면 보입니다.</p>'}</div>
       <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}${missing.length?`조판을 저장하지 않은 문항 ${missing.length}개(${missing.map(x=>items.indexOf(x)+1+'번').join(', ')})는 보내기 전에 한글 조판을 저장해야 합니다.`:'보내면 5E_hwp에서 시험지 한 부로 열려 최종 검수를 합니다.'}</p>

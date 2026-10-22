@@ -104,6 +104,8 @@ async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   // 조판 기준 목록(10-22): 새 저장소를 만들면 DB 판을 올려야 하고 열린 다른 창이 막히므로, 같은 state 저장소의 'typesetStandards' 칸에 둔다.
   try{typesetStandards=(await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('typesetStandards');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);})||[]).filter(s=>{try{return validateStandard(s);}catch{return false;}});}catch{typesetStandards=[];}
+  // 저장소 계속 보관 요청(10-22): 브라우저가 오래 안 쓴 사이트 자료(문항·양식)를 지우지 않게. 거절돼도 그대로 쓴다.
+  try{navigator.storage?.persist?.().catch(()=>{});}catch{}
   try{typesetForms=(await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('typesetForms');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);})||[]).filter(f=>f&&f.id&&f.bytes);}catch{typesetForms=[];}
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
   if(!raw&&!demo){
@@ -554,10 +556,10 @@ function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,
           let changed=false;if(mutate(()=>{changed=fn(target)!==false;})){status(changed?text+' · 구성 시트에 반영':'배치가 그대로입니다.');if(changed){clearTimeout(redrawTimer);void requestTypeset(target);}}
         }});}
 // 시험지 HWPX: 문항 조판 문서를 모은다. 한글 엔진은 조판 창과 같은 것을 쓴다.
-async function buildExamBytes(exam){typesetter ||= makeTypesetter();
+async function buildExamBytes(exam,{order=null}={}){typesetter ||= makeTypesetter();
   const form=exam.formId?typesetForms.find(f=>f.id===exam.formId):null;if(exam.formId&&!form)throw Error('이 시험지에 고른 양식을 찾지 못했습니다. 시험지 화면에서 양식을 다시 고르세요.');
-  if(!form)return typesetter.buildExam(data,exam);
-  let password='';for(;;){try{return await typesetter.buildExam(data,exam,{form,password});}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null)throw Error('양식 암호를 넣지 않아 시험지를 만들지 않았습니다.');}finally{password='';}}}
+  if(!form)return typesetter.buildExam(data,exam,{order});
+  let password='';for(;;){try{return await typesetter.buildExam(data,exam,{form,password,order});}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null)throw Error('양식 암호를 넣지 않아 시험지를 만들지 않았습니다.');}finally{password='';}}}
 // Serialize loads and saves. Fast column clicks keep the last request without
 // allowing an older load or a save to bind to the newly selected question.
 async function requestTypeset(value){
@@ -656,6 +658,9 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   else if(act==='new')$('#new').click();
   else if(act==='send')void sendExam(exam);
   else if(act==='download')void sendExam(exam,{download:true});
+  else if(act==='blueprint')void downloadBlueprint(exam);
+  else if(act==='variant')void sendExam(exam,{download:true,variant:true});
+  else if(act==='print')void sendExam(exam,{print:true});
 });
 // 시험지 양식 고르기: 5E 기본 / 등록한 학교 양식 / 새로 등록.
 $('#examd-view').addEventListener('change',e=>{if(e.target.id!=='exam-form')return;const exam=examNow();if(!exam)return;const v=e.target.value;
@@ -673,7 +678,7 @@ $('#examd-view').addEventListener('drop',e=>{const exam=examNow(),row=e.target.c
 $('#examd-view').addEventListener('dragend',()=>{dragId=null;document.querySelectorAll('.pv-orow.dragging,.pv-orow.drop-before').forEach(n=>n.classList.remove('dragging','drop-before'));});
 // 5E_hwp로 보내기: 시험지 한 부(HWPX)를 5E 시험지 편집기에서 연다. 완성이 아닌 문항도 보낸다. 조판 저장이 없는 문항은 먼저 저장해야 한다.
 let examRequest=null;
-async function sendExam(exam,{download:asFile=false}={}){
+async function sendExam(exam,{download:asFile=false,variant=false,print=false}={}){
   if(!exam.items.length){status('시험지에 문항을 넣은 뒤 보내세요.',true);return;}
   const {examPlan}=await import('./exam-layout.js');const {missing}=examPlan(data,exam);
   if(missing.length){const first=missing[0].q;status(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. ${first.number}번 한글 조판을 엽니다 · 확인하고 「조판 저장」을 누르세요.`,true);current=first;openCard(first.id);cardEditor.showHwp?.();return;}
@@ -681,11 +686,30 @@ async function sendExam(exam,{download:asFile=false}={}){
   {const {typesetMatches}=await import('./typeset-model.js?v=1014-compact-panel'),stale=[];for(const id of exam.items){const q=data.questions.find(x=>x.id===id);if(q?.typeset&&!await typesetMatches(q.typeset,q))stale.push(q);}
     if(stale.length){const first=stale[0];status(`문항 번호나 내용이 바뀌어 조판을 다시 저장해야 하는 문항이 있습니다: ${stale.map(q=>q.number+'번').join(', ')}. ${first.number}번 한글 조판을 엽니다 · 확인하고 「조판 저장」을 누르세요.`,true);current=first;openCard(first.id);cardEditor.showHwp?.();return;}}
   status('시험지를 만드는 중…');
-  try{const bytes=await buildExamBytes(exam);
+  try{
+    // 나형: 문항 순서를 섞어(시험지마다 늘 같은 순서) 묶고 번호를 다시 매긴다. 가·나형 정답 대응표(엑셀)도 함께 내려받는다.
+    if(variant){const {shuffledOrder,answerRows}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id));
+      const seed=[...exam.id].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7),order=shuffledOrder(exam.items,seed);
+      const bytes=await buildExamBytes(exam,{order});download(bytes,`${exam.title} (나형).hwpx`,'application/vnd.hancom.hwpx');
+      const book=window.XLSX.utils.book_new(),map=[['나형 번호','가형 번호','정답','배점'],...order.map((id,i)=>{const q=qs.find(x=>x.id===id);return [i+1,exam.items.indexOf(id)+1,q.type==='서술형'?'서술형':Number.isInteger(q.answer)?['①','②','③','④','⑤'][q.answer]:'',Number(q.points)||0];})];
+      window.XLSX.utils.book_append_sheet(book,window.XLSX.utils.aoa_to_sheet(map),'가나형 대응');download(window.XLSX.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 가나형 정답 대응.xlsx`);
+      status('나형 시험지(HWPX)와 가·나형 정답 대응표(엑셀)를 내려받았습니다.');return;}
+    const bytes=await buildExamBytes(exam);
+    if(print){await printExam(bytes,exam.title);return;}
     if(asFile||!embedded){download(bytes,`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
     examRequest=uid();window.parent.postMessage({channel:'5e-question-sheet',action:'exam-handoff',requestId:examRequest,bytes,title:exam.title,qid:exam.id},location.origin);
   }catch(e){status(e.message,true);}
 }
+// 이원목적분류표·정답표: 엑셀 한 파일 두 시트(10-22).
+async function downloadBlueprint(exam){try{const {blueprintRows,answerRows}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean);
+  if(!qs.length){status('시험지에 문항을 넣은 뒤 내려받으세요.',true);return;}
+  const X=window.XLSX,book=X.utils.book_new();X.utils.book_append_sheet(book,X.utils.aoa_to_sheet(blueprintRows(qs)),'이원목적분류표');X.utils.book_append_sheet(book,X.utils.aoa_to_sheet(answerRows(qs)),'정답표');
+  download(X.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 이원목적분류표·정답표.xlsx`);status('이원목적분류표·정답표(엑셀)를 내려받았습니다.');}catch(e){status(e.message,true);}}
+// 인쇄·PDF: 엔진이 그린 쪽(SVG)을 실제 용지 크기로 인쇄 창에 — PDF는 인쇄 창의 「PDF로 저장」.
+async function printExam(bytes,title){typesetter||=makeTypesetter();const {pages,widthMm,heightMm}=await typesetter.examPagesSvg(bytes);
+  const frame=document.createElement('iframe');frame.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';frame.setAttribute('aria-hidden','true');document.body.append(frame);
+  const doc=frame.contentDocument;doc.open();doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${E(title)}</title><style>@page{size:${widthMm.toFixed(1)}mm ${heightMm.toFixed(1)}mm;margin:0}html,body{margin:0}.p{width:${widthMm.toFixed(1)}mm;height:${heightMm.toFixed(1)}mm;page-break-after:always;overflow:hidden}.p svg{display:block;width:100%;height:100%}</style></head><body>${pages.map(svg=>`<div class="p">${svg}</div>`).join('')}</body></html>`);doc.close();
+  await new Promise(r=>setTimeout(r,300));frame.contentWindow.focus();frame.contentWindow.print();status(`${pages.length}쪽 인쇄 창을 열었습니다 · PDF는 인쇄 창에서 「PDF로 저장」을 고르세요.`);setTimeout(()=>frame.remove(),60000);}
 // 문항 카드 편집기.
 const docked={home:null,next:null};
 const hwpDock={home:null,next:null};

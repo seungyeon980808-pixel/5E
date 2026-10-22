@@ -1,3 +1,4 @@
+import {renumberDocument} from '../../../js/rhwp-exam-layout-tools.js?v=1022-variant';
 import {attachGapView} from './typeset-gaps.js';
 import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
@@ -258,11 +259,15 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
   const contentKey=value=>JSON.stringify(renderedContent(value));
   // form: 등록한 학교 양식({bytes,structure}) — 주면 그 양식 위에 묶는다. password는 암호 양식일 때 선생님이 입력한 것(남기지 않음).
-  async function buildExam(data,examSet,{form=null,password=''}={}){
+  // order: 나형처럼 문항 순서를 바꿔 묶을 때(문항 id 순서) — 묶은 뒤 번호를 다시 매긴다.
+  async function buildExam(data,examSet,{form=null,password='',order=null}={}){
+    if(order)examSet={...examSet,items:[...order]};
     await ensure();const Document=document().constructor,template=form?await openForm(form.bytes,password):null;
     const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,template,bodyStart:form?.structure?.firstQuestion??-1});
-    try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
+    try{if(order)renumberDocument(exam);return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
+  // 인쇄·PDF: 묶은 시험지를 쪽마다 엔진 SVG로(화면 그림과 같음).
+  async function examPagesSvg(bytes){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{const page=parse(d.getPageDef(0)),out=[];for(let i=0;i<d.pageCount();i++)out.push(d.renderPageSvg(i));return {pages:out,widthMm:page.width/(7200/25.4),heightMm:page.height/(7200/25.4)};}finally{d.free();}}
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
   function discard(){clearTimeout(syncTimer);dirty=false;userDirty=false;patchDirty=false;ready=false;onDiverge?.(false);}
   // 틀(회색 안내)만 달라지는 변경: 빈 칸에 처음 쓰거나 다 지울 때. 문단 글 바꾸기로는 안 되고(안내는 회색) 다시 그려야 한다.
@@ -320,5 +325,5 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     try{return password?Document.openWithPassword(data,password):new Document(data);}
     catch(e){const text=String(e?.message||e);if(/비밀번호|암호|password/i.test(text)){const error=new Error(password?'암호가 맞지 않습니다. 다시 입력하세요.':'암호가 걸린 한글 파일입니다. 암호를 입력하세요.');error.needsPassword=true;throw error;}throw e;}}
   async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);try{return {...readSchoolDocument(d,{fileName}),structure:formStructure(d)};}finally{d.free();}}
-  return {readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  return {examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

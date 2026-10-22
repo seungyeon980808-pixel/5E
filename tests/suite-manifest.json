@@ -796,6 +796,12 @@
       ]
     },
     {
+      "path": "tests/test-exam-review.mjs",
+      "findingIds": [
+        "EXAM-REVIEW-CHECKS"
+      ]
+    },
+    {
       "path": "tests/test-standard-from-hwp.mjs",
       "findingIds": [
         "TYPESET-STANDARD-FROM-SCHOOL-FORM"
@@ -2255,6 +2261,12 @@
       "path": "tests/test-line-fit-live-browser.cjs",
       "findingIds": [
         "LINE-FIT-LIVE"
+      ]
+    },
+    {
+      "path": "tests/test-exam-review-browser.cjs",
+      "findingIds": [
+        "EXAM-REVIEW-SUMMARY-PRINT"
       ]
     },
     {
