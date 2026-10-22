@@ -151,7 +151,8 @@ export function installExamModes(panel, services) {
       <button type="button" class="exam-fx big" data-exam-fx="symbols" title="특수기호 창: 기출 3년 빈도로 고른 첫 줄 16칸 + 묶음 탭">Ω 기호</button>
       <button type="button" class="exam-fx big" data-exam-fx="capture" title="고른 부분을 양식(조각)으로 저장 → 팔레트 「템플릿」에 담김">⬚ 양식 저장</button>
       <button type="button" class="exam-fx big" data-exam-fx="check" title="조판 점검: 넓은 그림·표, 흐린 그림, 빈칸, 번호 빠짐을 찾아 목록으로">✓ 점검</button></div>`;
-  panel.querySelector('.exam-topbar').after(bar);
+  // 도구 줄은 문서 쪽 열 맨 위(왼쪽 칸 옆). 시험지 iframe(#exam-studio)은 옮기지 않는다 — 옮기면 다시 읽힌다.
+  panel.querySelector('#exam-studio').before(bar);
   const group = bar.querySelector('.exam-fgroup');
 
   const peek = document.createElement('button');

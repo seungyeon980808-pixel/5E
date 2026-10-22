@@ -2234,6 +2234,13 @@
       ]
     },
     {
+      "path": "tests/test-shell-left-width-browser.cjs",
+      "findingIds": [
+        "SHELL-LEFT-WIDTH-SHARED",
+        "HWP-FOCUSBAR-DOC-COLUMN"
+      ]
+    },
+    {
       "path": "tests/test-app-switch-browser.cjs",
       "findingIds": [
         "APP-SWITCH-NO-FLASH",

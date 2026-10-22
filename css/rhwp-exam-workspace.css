@@ -23,7 +23,7 @@
 #rhwp-exam-workspace .exam-menu-popup[hidden], #rhwp-exam-workspace .exam-menu-popup button[hidden] { display:none; }
 #rhwp-exam-workspace[data-placing] .exam-actions { display:none; }
 .exam-body { display:flex; flex:1; min-height:0; }
-.exam-sidebar { width:232px; flex-shrink:0; padding:14px 12px 0; border-right:1px solid var(--border); overflow:auto; display:flex; flex-direction:column; }
+.exam-sidebar { width:var(--ds-panel-left, 160px); flex-shrink:0; padding:14px 12px 0; border-right:1px solid var(--border); overflow:auto; display:flex; flex-direction:column; }
 .exam-sidebar h2 { font-size:13px; margin:0 4px 4px; }
 .exam-hint, .exam-empty { font-size:11px; color:var(--text-secondary); line-height:1.6; }
 .exam-hint { margin:0 4px 10px; }

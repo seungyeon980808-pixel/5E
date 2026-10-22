@@ -445,9 +445,9 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            data-change-short="10.22 13:12 1.7.0 AI 도구 줄 묶음"
-            aria-label="2026-10-22 13:12 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): AI 이미지/그래프 위 도구 줄을 보기·확대·주석 도구·코멘트 표시 네 묶음 틀로 나누고, 켜진 단추에 옅은 선택 면, 확대 묶음은 가운데 선 왼쪽 8px·주석은 오른쪽 끝에 맞춤. 그 전: ExamPool 색인 칩 색 점, 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab, AI 패널 이름 「AI 이미지/그래프」."
-            title="2026-10-22 13:12 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): AI 이미지/그래프 위 도구 줄을 보기·확대·주석 도구·코멘트 표시 네 묶음 틀로 나누고, 켜진 단추에 옅은 선택 면, 확대 묶음은 가운데 선 왼쪽 8px·주석은 오른쪽 끝에 맞춤. 그 전: ExamPool 색인 칩 색 점, 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab, AI 패널 이름 「AI 이미지/그래프」.">10.22 13:12 1.7.0 AI 도구 줄 묶음</span>
+            data-change-short="10.22 13:24 1.7.0 왼쪽 칸 160·hwp 도구 줄"
+            aria-label="2026-10-22 13:24 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): 세 앱 왼쪽 칸 160으로 통일, 경계를 끌어 160~320(두 번 누르면 160, 세 앱이 같은 폭 기억), 한글 집중 도구 줄 52px로 두껍게·문서 쪽 열에만(왼쪽 칸 침범 없음), 좁은 칸에서는 팔레트·문항 목록 한 줄 목록. 그 전: AI 도구 줄 네 묶음, ExamPool 색인 칩 색 점, 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab."
+            title="2026-10-22 13:24 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): 세 앱 왼쪽 칸 160으로 통일, 경계를 끌어 160~320(두 번 누르면 160, 세 앱이 같은 폭 기억), 한글 집중 도구 줄 52px로 두껍게·문서 쪽 열에만(왼쪽 칸 침범 없음), 좁은 칸에서는 팔레트·문항 목록 한 줄 목록. 그 전: AI 도구 줄 네 묶음, ExamPool 색인 칩 색 점, 조판 「(카드에서 입력)」 삭제·빈 ㄱ.①뒤 한 칸, 〈보기〉 내어쓰기 기본·맥 ⌥⇧Tab.">10.22 13:24 1.7.0 왼쪽 칸 160·hwp 도구 줄</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
@@ -885,6 +885,7 @@
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
   <script type="module" src="/js/panel-visibility.js?v=1.7.0-four-session-integration"></script>
+  <script type="module">import { initShellLeftWidth } from '/js/shell-left-width.js?v=1022-shell'; initShellLeftWidth();</script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="/js/touch-drag.js?v=1.7.0-four-session-integration"></script>
   <script type="module" src="/js/ai-workbench.js?v=1.7.0-four-session-integration"></script>

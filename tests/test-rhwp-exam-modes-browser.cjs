@@ -12,6 +12,8 @@ const reset=s=>{const top=JSON.parse(d.getPageControlLayout(0)).controls.filter(
   for(let i=1;i<lines.length;i++){d.splitParagraph(0,i-1,d.getParagraphLength(0,i-1));d.insertText(0,i,0,lines[i]);}b.deps.eventBus.emit('document-changed');};`;
 const inPage = (page, body, arg) => page.evaluate(new Function('arg', `return (async()=>{${prelude}${body}})()`), arg);
 const button = (page, title) => page.locator(`.exam-fgroup [data-exam-fi][title^="${title}"]`);
+// 문항 목록의 ↑↓⧉× 는 칸이 좁으면(기본 160) 줄에 마우스를 올렸을 때만 보인다(10-22) — 사람처럼 줄에 올린 뒤 누른다.
+const rowAction = async (page, selector) => { const target = page.locator(selector); await target.locator('xpath=ancestor::li[1]').hover(); await target.click(); };
 
 for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}: 5E_hwp modes and focus tools change the document`, async t => {
   await h.withServer(async origin => {
@@ -143,9 +145,15 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     // 9) 왼쪽 문항 목록: 마지막 문항 위로·첫 문항 아래로(번호 다시 매김), 누르면 그 문항으로. 쪽 경계에서 나뉜 문항 점검.
     await inPage(page, `reset('1. 첫 문항\\n가나\\n2. 둘째 문항\\n다라\\n3. 셋째 문항');`);
     await page.locator('.exam-q').nth(2).waitFor();
-    await page.locator('[data-exam-qmove="2:-1"]').click(); await h.idle(page);
+    if (await page.evaluate(() => matchMedia('(hover: hover)').matches)) {
+      await page.mouse.move(700, 500);
+      assert.equal(await page.locator('[data-exam-qmove="2:-1"]').isVisible(), false, 'move buttons stay hidden until the row is hovered in a narrow panel');
+      await page.locator('.exam-q').nth(2).hover();
+      assert.equal(await page.locator('[data-exam-qmove="2:-1"]').isVisible(), true, 'hovering a row shows its move buttons');
+    }
+    await rowAction(page, '[data-exam-qmove="2:-1"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 첫 문항', '가나', '2. 셋째 문항', '3. 둘째 문항', '다라']);
-    await page.locator('[data-exam-qmove="0:1"]').click(); await h.idle(page);
+    await rowAction(page, '[data-exam-qmove="0:1"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 셋째 문항', '2. 첫 문항', '가나', '3. 둘째 문항', '다라']);
     await page.waitForFunction(() => document.querySelector('.exam-q')?.textContent.includes('셋째'));
     await page.locator('.exam-q').nth(2).click(); await h.idle(page);
@@ -204,10 +212,10 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
 
     // 13) 문항 복제·지우기(확인 창), 넓은 그림을 점검 창에서 한 번에 맞추기, 학습지 틀.
     await inPage(page, `reset('1. 가\\n가가\\n2. 나');`);
-    await page.locator('[data-exam-qdup="0"]').waitFor(); await page.locator('[data-exam-qdup="0"]').click(); await h.idle(page);
+    await page.locator('[data-exam-qdup="0"]').waitFor({ state: 'attached' }); await rowAction(page, '[data-exam-qdup="0"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 가', '가가', '3. 나']);
     await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 3);
-    await page.locator('[data-exam-qdel="1"]').click();
+    await rowAction(page, '[data-exam-qdel="1"]');
     await page.getByRole('button', { name: '지우기', exact: true }).click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 나']);
     await inPage(page, `reset('');const N=await import('/js/hwp-palette/native.js');
@@ -233,7 +241,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
 
     // 16) 단 채우기: 한 단의 문항 3개 사이에 남는 공간을 고르게 나누고(글은 그대로), 다시 눌러도 같은 간격.
-    await page.locator('[data-exam-qmove]').first().waitFor();
+    await page.locator('[data-exam-qmove]').first().waitFor({ state: 'attached' });
     await inPage(page, `reset('1. 가\\n가가\\n2. 나\\n3. 다\\n다다');d.setColumnDef(0,2,0,true,2268);
       for(let p=0;p<d.getParagraphCount(0);p++){d.applyParaFormat(0,p,JSON.stringify({lineSpacing:160,spacingBefore:0,spacingAfter:0}));d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000,bold:false,spacings:[0,0,0,0,0,0,0]}));}b.deps.eventBus.emit('document-changed');`);
     const beforeFill = await inPage(page, `return text();`);
@@ -271,7 +279,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const blocks = await inPage(page, `const {questionBlocks}=await import('/js/rhwp-exam-layout-tools.js');return questionBlocks(d).map(q=>[q.number,q.start,q.head,q.end,!!q.group]);`);
     assert.deepEqual(blocks, [[1, 0, 0, 1, false], [2, 1, 3, 4, true], [3, 4, 4, 5, true], [4, 5, 5, 6, false], [5, 6, 6, 7, false]]);
     for (const [at, disabled] of [['0:1', true], ['1:-1', true], ['2:1', true], ['3:-1', true], ['3:1', false]]) assert.equal(await page.locator(`[data-exam-qmove="${at}"]`).isDisabled(), disabled, at);
-    await page.locator('[data-exam-qdel="0"]').click(); await page.getByRole('button', { name: '지우기', exact: true }).click(); await h.idle(page);
+    await rowAction(page, '[data-exam-qdel="0"]'); await page.getByRole('button', { name: '지우기', exact: true }).click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['[1~2] 다음 글을 읽고 물음에 답하시오.', '지문', '1. 둘째', '2. 셋째', '3. 넷째', '4. 다섯째']);
     const variant = await inPage(page, `const W=await import('/js/rhwp-exam-worksheet.js');let k=0;const r=W.makeVariant(b,()=>(k++%2)?0:.99);const c=new d.constructor(r.bytes);try{c.convertToEditable?.();return [r.mapping.map(m=>m.original),[...Array(c.getParagraphCount(0)).keys()].map(p=>c.getTextRange(0,p,0,c.getParagraphLength(0,p)))];}finally{c.free();}`);
     assert.deepEqual(variant[0], [1, 2, 4, 3]);
@@ -389,7 +397,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '2. 나', '[서술형 1] 서술 하나', '답란', '서술형 2. 서술 둘']);
     await page.waitForFunction(() => document.querySelectorAll('.exam-q b')[2]?.textContent === '서술형 1');
-    await page.locator('[data-exam-qmove="2:1"]').click(); await h.idle(page);
+    await rowAction(page, '[data-exam-qmove="2:1"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '2. 나', '서술형 1. 서술 둘', '[서술형 2] 서술 하나', '답란']);
     // 31) 「유의 사항」 상자는 시험 유의 사항 네 줄을 미리 채운다.
     await inPage(page, `reset('제목');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
@@ -551,7 +559,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fixneg]').click(); await h.idle(page);
     assert.equal(await inPage(page, `const c=JSON.parse(d.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length)[0];return JSON.parse(d.getCellCharPropertiesAt(0,c.paraIdx,c.controlIdx,1,0,8)).underline;`), true);
     await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 2);
-    await page.locator('[data-exam-qmove="1:-1"]').click(); await h.idle(page);
+    await rowAction(page, '[data-exam-qmove="1:-1"]'); await h.idle(page);
     assert.deepEqual([await inPage(page, `return ${cellOf(0, 0)}+' '+${cellOf(0, 1)};`), await inPage(page, `return ${cellOf(1, 0)}+' '+${cellOf(1, 1)};`)], ['1. 옳은 것은? (4점)', '2. 다음 중 옳지 않은 것은? (5점)']);
     // 46) 문항을 그림으로(더 보기): 커서 문항 영역만 3배 PNG로, [정답] 줄은 빼고. 그림에 글자가 실제로 그려졌는지 픽셀로 본다.
     await inPage(page, `reset('1. 첫째 문항의 발문은 이것이다.\\n① 가 ② 나 ③ 다 ④ 라 ⑤ 마\\n[정답] ③\\n2. 둘째');d.setColumnDef(0,1,0,true,0);b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:2});`);
@@ -697,11 +705,11 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 3 && document.querySelector('[data-exam-qmove="0:1"]')?.disabled, null, { timeout: 5000 }).catch(() => {});
     assert.equal(await page.locator('[data-exam-qmove="0:1"]').isDisabled(), true, 'no move across sections');
     assert.equal(await page.locator('[data-exam-qmove="1:-1"]').isDisabled(), true);
-    await page.locator('[data-exam-qmove="1:1"]').click(); await h.idle(page);
+    await rowAction(page, '[data-exam-qmove="1:1"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 다', '1:3. 나', '1:나나']);
     await page.locator('[data-exam-q="2"]').click(); await h.idle(page);
     assert.equal(await inPage(page, `return b.input.cursor.getPosition().sectionIndex;`), 1);
-    await page.locator('[data-exam-qdup="2"]').click(); await h.idle(page);
+    await rowAction(page, '[data-exam-qdup="2"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 다', '1:3. 나', '1:나나', '1:4. 나', '1:나나']);
     assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
 

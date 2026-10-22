@@ -5,22 +5,22 @@
 #rhwp-exam-workspace .exam-modes button[aria-pressed="true"] { background: var(--ds-selected, #1f2a3a); color: var(--ds-ink, #e6edf3); }
 
 /* 집중 도구 줄 */
-#rhwp-exam-workspace .exam-focusbar { flex: none; display: flex; align-items: center; gap: 4px; height: 44px; padding: 0 10px; background: var(--ds-panel, #161b22); border-bottom: 1px solid var(--ds-line-strong, #30363d); overflow: hidden; }
+#rhwp-exam-workspace .exam-focusbar { flex: none; display: flex; align-items: center; gap: 4px; height: 52px; padding: 0 10px; background: var(--ds-panel, #161b22); border-bottom: 1px solid var(--ds-line-strong, #30363d); overflow: hidden; }
 #rhwp-exam-workspace .exam-focusbar[hidden] { display: none; }
 #rhwp-exam-workspace .exam-ftabs { display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--ds-bar, #0d1117); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); flex: none; }
-#rhwp-exam-workspace .exam-ftabs button { height: 28px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-3, #7d8590); font: inherit; font-weight: 500; cursor: pointer; }
+#rhwp-exam-workspace .exam-ftabs button { height: 32px; padding: 0 10px; font-size: 13px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-3, #7d8590); font: inherit; font-weight: 500; cursor: pointer; }
 #rhwp-exam-workspace .exam-ftabs button[aria-selected="true"] { background: var(--ds-selected, #1f2a3a); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-fgroup { display: flex; align-items: center; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 #rhwp-exam-workspace .exam-fgroup::-webkit-scrollbar { display: none; }
 #rhwp-exam-workspace .exam-fright { display: flex; align-items: center; gap: 4px; margin-left: auto; flex: none; }
 #rhwp-exam-workspace .exam-fdiv { width: 1px; height: 20px; margin: 0 5px; background: var(--ds-line-strong, #30363d); flex: none; }
-#rhwp-exam-workspace .exam-fx { display: inline-flex; align-items: center; justify-content: center; gap: 3px; height: 30px; min-width: 28px; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; flex: none; transition: background-color 120ms var(--ds-motion, ease), color 120ms var(--ds-motion, ease); }
+#rhwp-exam-workspace .exam-fx { display: inline-flex; align-items: center; justify-content: center; gap: 3px; height: 34px; min-width: 30px; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; flex: none; transition: background-color 120ms var(--ds-motion, ease), color 120ms var(--ds-motion, ease); }
 #rhwp-exam-workspace .exam-fx:hover { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-fx:focus-visible, #rhwp-exam-workspace .exam-modes button:focus-visible, #rhwp-exam-workspace .exam-ftabs button:focus-visible { outline: 2px solid var(--ds-focus, #6ba4f8); outline-offset: 1px; }
 #rhwp-exam-workspace .exam-fx .t { font-size: 11.5px; color: var(--ds-ink-3, #7d8590); }
 #rhwp-exam-workspace .exam-fx.big { padding: 0 10px; box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); }
 #rhwp-exam-workspace .exam-fx sup, #rhwp-exam-workspace .exam-fx sub { font-size: 9px; }
-#rhwp-exam-workspace .exam-fsel, #rhwp-exam-workspace .exam-fsize { height: 28px; padding: 0 8px; border: 0; border-radius: 6px; background: var(--ds-bar, #0d1117); color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); font: inherit; font-size: 12.5px; flex: none; }
+#rhwp-exam-workspace .exam-fsel, #rhwp-exam-workspace .exam-fsize { height: 32px; padding: 0 8px; border: 0; border-radius: 6px; background: var(--ds-bar, #0d1117); color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); font: inherit; font-size: 13px; flex: none; }
 #rhwp-exam-workspace .exam-fsel { width: 132px; }
 #rhwp-exam-workspace .exam-fsel.narrow { width: 82px; }
 #rhwp-exam-workspace .exam-fsize { width: 54px; text-align: right; }
@@ -28,6 +28,12 @@
 /* 없음 모드: 종이만 */
 #rhwp-exam-workspace[data-tool-mode="none"] .exam-sidebar { display: none; }
 #rhwp-exam-workspace .exam-body { position: relative; }
+/* 도구 줄은 문서 쪽 열에만(10-22 shell-layout 2-3): 왼쪽 칸은 맨 위 줄 바로 아래부터 바닥까지, 도구 줄은 칸 오른쪽 열 맨 위.
+   첫 탭이 칸 경계 + 10px에서 시작하고, 칸을 끌어 넓히면 같이 밀린다. */
+#rhwp-exam-workspace .exam-body { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+#rhwp-exam-workspace .exam-body > .exam-sidebar { grid-column: 1; grid-row: 1 / -1; }
+#rhwp-exam-workspace .exam-body > .exam-focusbar { grid-column: 2; grid-row: 1; min-width: 0; }
+#rhwp-exam-workspace .exam-body > #exam-studio { grid-column: 2; grid-row: 2; min-height: 0; }
 #rhwp-exam-workspace .exam-peek { position: absolute; top: 12px; right: 18px; z-index: 5; display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border: 0; border-radius: 15px; background: var(--ds-raise, #1c2128); color: var(--ds-ink-2, #b1bac4); box-shadow: 0 0 0 1px var(--ds-line-strong, #30363d), var(--ds-shadow-float, 0 6px 18px #0006); font: inherit; font-size: 12.5px; cursor: pointer; }
 #rhwp-exam-workspace .exam-peek:hover { color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-peek[hidden] { display: none; }
@@ -78,8 +84,6 @@
 #rhwp-exam-workspace .exam-morelist { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 #rhwp-exam-workspace .exam-morelist button { height: 32px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--ds-panel, #161b22); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
 #rhwp-exam-workspace .exam-morelist button:hover { color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-soft-line, #6ba4f8); }
-/* 집중 모드: 왼쪽 칸에 팔레트(문항 틀·물감)가 들어가므로 팔레트 설계 폭 232px로 넓힌다. 좁은 화면은 그대로 */
-@media (min-width: 901px) { #rhwp-exam-workspace[data-tool-mode="focus"] .exam-sidebar { width: 232px; } }
 
 #rhwp-exam-workspace .exam-formpop { width: 320px; }
 #rhwp-exam-workspace .exam-field { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12.5px; }
@@ -134,3 +138,18 @@
 #rhwp-exam-workspace .exam-morelist.exam-four { grid-template-columns: repeat(4, 1fr); }
 #rhwp-exam-workspace .exam-qlist li.is-drop-target { box-shadow: inset 0 2px 0 var(--ds-line-strong, #30363d); }
 #rhwp-exam-workspace .exam-q[draggable="true"] { cursor: grab; }
+
+/* 왼쪽 칸이 좁을 때(기본 160px, 칸 폭 < 200px) 칸 안 정리(10-22 shell-layout 2-4).
+   팔레트는 교사가 짠 칸 배치(inline grid-column/row)를 저장값 그대로 두고 화면에서만 1열 목록으로 — 편집 중(끌기)일 때는 원래 배치. */
+#rhwp-exam-workspace .exam-sidebar { container-type: inline-size; container-name: exam-side; }
+@container exam-side (max-width: 199px) {
+  #rhwp-exam-workspace .palette-common { grid-template-columns: 1fr; gap: 1px; }
+  #rhwp-exam-workspace .palette-common button { min-height: 28px; padding: 0 8px; justify-content: flex-start; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #rhwp-exam-workspace .palette-grid:not(:has([draggable="true"])) { grid-template-columns: minmax(0, 1fr) !important; grid-auto-rows: 28px !important; gap: 1px; }
+  #rhwp-exam-workspace .palette-grid:not(:has([draggable="true"])) .palette-block { grid-column: 1 !important; grid-row: auto !important; flex-direction: row; justify-content: flex-start; padding: 0 8px; text-align: left; }
+  #rhwp-exam-workspace .palette-grid:not(:has([draggable="true"])) .palette-block span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #rhwp-exam-workspace .palette-grid:not(:has([draggable="true"])) .palette-block small { flex: none; }
+  @media (hover: hover) {
+    #rhwp-exam-workspace .exam-qlist li:not(:hover):not(:focus-within) .exam-qmove { display: none; }
+  }
+}

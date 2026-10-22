@@ -18,10 +18,13 @@ h.withServer(async origin=>{
     await page.setViewportSize({width,height:950});
     const layout = await page.evaluate(() => {
       const panel=document.querySelector('#rhwp-exam-workspace'),header=panel.querySelector('.exam-header'),body=panel.querySelector('.exam-body'),tools=panel.querySelector('.exam-focusbar');
-      return {height:header.getBoundingClientRect().height,bodyTop:body.getBoundingClientRect().top,toolsBottom:tools&&!tools.hidden?tools.getBoundingClientRect().bottom:null,barBottom:panel.querySelector('.exam-topbar').getBoundingClientRect().bottom,bottom:header.getBoundingClientRect().bottom,overflow:panel.scrollWidth>innerWidth};
+      return {height:header.getBoundingClientRect().height,bodyTop:body.getBoundingClientRect().top,studioTop:panel.querySelector('#exam-studio').getBoundingClientRect().top,toolsTop:tools&&!tools.hidden?tools.getBoundingClientRect().top:null,toolsBottom:tools&&!tools.hidden?tools.getBoundingClientRect().bottom:null,barBottom:panel.querySelector('.exam-topbar').getBoundingClientRect().bottom,bottom:header.getBoundingClientRect().bottom,overflow:panel.scrollWidth>innerWidth};
     });
     // 10-20: 5E 세 프로그램 공통 맨 위 줄(40px) 바로 아래에서 편집 본문이 시작한다.
-    assert.equal(layout.bodyTop,layout.toolsBottom??layout.barBottom,'editor body starts right under the shared top bar (10-21: or the focus tool bar) at '+width);assert.ok(layout.barBottom<=41.5,'top bar is 40px + line');assert.equal(layout.overflow,false,'no outer horizontal overflow');
+    // 10-22: 집중 도구 줄은 본문 안 문서 쪽 열 맨 위 — 본문은 맨 위 줄 바로 아래, 종이(#exam-studio)는 도구 줄 바로 아래.
+    assert.equal(layout.bodyTop,layout.barBottom,'editor body starts right under the shared top bar at '+width);
+    if(layout.toolsBottom!=null)assert.equal(layout.toolsTop,layout.bodyTop,'focus tool bar sits at the top of the body at '+width);
+    assert.equal(layout.studioTop,layout.toolsBottom??layout.bodyTop,'paper starts right under the focus tool bar (or the top bar) at '+width);assert.ok(layout.barBottom<=41.5,'top bar is 40px + line');assert.equal(layout.overflow,false,'no outer horizontal overflow');
    }
    await page.setViewportSize({width:1440,height:950});
    await page.locator('[data-exam-menu="file"]').focus();await page.keyboard.press('ArrowDown');

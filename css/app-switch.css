@@ -42,7 +42,7 @@
 #rhwp-exam-workspace .exam-topbar .exam-history svg { width: 18px; height: 18px; }
 #rhwp-exam-workspace .exam-topbar .exam-actions button { border-color: var(--ds-line, #30363d); background: transparent; }
 #rhwp-exam-workspace .exam-topbar .exam-actions .structure-lock[aria-pressed="true"] { color: #9cc3ff; background: var(--go-bg, #152137); border-color: #2f4a73; }
-#rhwp-exam-workspace .exam-sidebar { width: 160px; }
+#rhwp-exam-workspace .exam-sidebar { width: var(--ds-panel-left, 160px); }
 #rhwp-exam-workspace .exam-sidebar .exam-header { padding-top: 0; }
 #rhwp-exam-workspace.exam-left-collapsed .exam-sidebar { display: none; }
 /* 「한글에 넣기」 위치 고르기 중에는 접어 둔 왼쪽 칸도 잠깐 편다 — 확인·취소·안내 줄이 그 칸 안에 있다(M7) */
