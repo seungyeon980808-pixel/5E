@@ -1,4 +1,4 @@
-import {KICE_STANDARD,layoutValues} from './typeset-standard.js';
+import {KICE_STANDARD,layoutValues,mmToPx,gapRole} from './typeset-standard.js';
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts,TEXT_WIDTH} from './typeset-model.js?v=1014-compact-panel';
 import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
@@ -76,6 +76,8 @@ export function wrapMeasured(value,first,rest,measure){
   return lines.join('\n');
 }
 // <보기> 상자: 마지막 줄 글자 아래에서 상자 선까지 남길 높이(px). 평가원 지면처럼 반 줄쯤(약 3mm).
+// 1pt 빈 문단 하나가 차지하는 높이(mm, rhwp 0.8.7 실측).
+const SPACER_MM=0.58;
 // (값은 조판 기준 gaps.bogiPadBottom — 수능 틀 14px)
 export function handoffQuestion(value,{skeleton=false}={}){
   const q=clone(value);q.references=[];
@@ -299,7 +301,14 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     html+=await picture(b.figure,w,undefined,{kind:'block',id:b.id});floats.push({data:images.at(-1),align:b.align==='왼쪽'?'Left':'Right'});
   }return html;};
   // 간격(mm): 구성 앞에 높이를 가진 빈 문단을 둔다. 값이 없으면 넣지 않는다.
-  const spacer=b=>{const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
+  // 블록 앞 간격: 블록 값(mm) → 없으면 조판 기준 gaps.block(수능 틀 0). 발문·선지 앞은 문항의 askGap·choicesGap → 기준 gaps.ask·choices.
+  // 정확한 간격(10-22 실험): 1pt 글자 빈 문단은 0.58mm를 차지하고 위 여백(margin-top)은 그대로 들어간다(높이 지정은 엔진이 무시).
+  // 문항 문서 안에서는 바로 뒤 문단(글·표를 붙인 문단 모두)이 이 문단의 위 여백을 한 번 더 받아 두 번 들어간다
+  // (실측: 발문 앞·선지 표 앞 모두 1mm마다 2mm). 그래서 위 여백 = (원하는 값 − 0.58mm) ÷ 2. 0이면 넣지 않는다.
+  const gapHtml=mm=>{if(!(mm>0))return '';const px=Math.max(0,mmToPx((mm-SPACER_MM)/2));return `<p style="margin:0;margin-top:${px}px"><span style="font-size:1pt"> </span></p>`;};
+  const roleGap={text:L.gapText,material:L.gapMaterial,bogi:L.gapBogi};
+  // 블록 앞: 블록에 정한 간격(b.gap)은 예전 방식 그대로(출력 불변), 비어 있으면 조판 기준의 종류별 간격(정확한 방식).
+  const spacer=b=>{if(b.gap===undefined)return gapHtml(roleGap[gapRole(b.kind)]);const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
   // 실험 과정·결과 같은 머리: 〔실험 과정〕. 괄호는 고칠 수 없는 앞뒤로 둔다.
   const heading=b=>(b.kind==='steps'||b.heading===true)&&b.label?p(`〔${b.label}〕`,null,11,{kind:'label',id:b.id,prefix:1,suffix:1}):'';
   const walk=async(parent,width,onlyId=null)=>{
@@ -460,7 +469,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const firstFloats=sideText?'':await floatImages('first',width-bodyIndent);
   const first=sideText?'':`<p style="margin:4px 0;text-align:justify">${firstFloats}${text(prefix+(firstText?firstText.text:ask),null,11,asIs,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:askOwner(prefix.length))}</p>`;
   width-=bodyIndent;
-  const askParagraph=async()=>`<p style="margin:4px 0;text-align:justify">${sideText?await floatImages('first',width):''}${text(ask,null,11,asIs,askOwner())}</p>`;
+  const askParagraph=async()=>gapHtml(q.askGap??L.askGap)+`<p style="margin:4px 0;text-align:justify">${sideText?await floatImages('first',width):''}${text(ask,null,11,asIs,askOwner())}</p>`;
   // 떠 있는 표는 첫 지문 바로 앞 문단에 둔다(한글 엔진은 표를 글 문단 안에 넣지 못한다).
   // 글 옆 표도 글이 다 들어가지 않으면 단 폭의 60%까지 넓힌다(남은 폭은 지문).
   const floatHtml=!floatTable||!firstText?'':floatTable.kind==='table'?await table(floatTable.table,sizedWidth(floatTable,width),false,undefined,{kind:'block',id:floatTable.id},false,Math.max(sizedWidth(floatTable,width),width*.6))
@@ -468,6 +477,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   let html=floatHtml+first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
   for(const id of afterAsk)html+=await walk(null,width,id);
   if(q.type!=='서술형'){
+    html+=gapHtml(q.choicesGap??L.choicesGap);
     if(q.style==='대응표')html+=kicePair(q.choiceTable)?pairChoices(q.choiceTable):await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){
       {const per=choiceColumns(q.choiceLayout,q.choices.length)||2;recordTable(Math.ceil(q.choices.length/per),per,[],{kind:'choicegrid'});}

@@ -13,7 +13,7 @@ const unsafe=v=>/[\u0000-\u0009\u000b-\u001f￼\ud800-\udfff]/.test(v);
 // 구성 이름은 한글에 찍히는지 여부만 본다(찍히는 이름의 글은 글 조각으로 비교한다).
 export function layoutKey(q){
   const blank=t=>t&&{...t,cells:t.cells.map(row=>row.map(({value,raw,...cell})=>cell)),note:''};
-  return JSON.stringify({number:q.number,type:q.type,style:q.style,choiceLayout:q.choiceLayout,
+  return JSON.stringify({standardId:q.standardId,askGap:q.askGap,choicesGap:q.choicesGap,number:q.number,type:q.type,style:q.style,choiceLayout:q.choiceLayout,
     blocks:q.blocks.map(({text,label,lines,table,...b})=>({...b,shown:labelInDocument({...b,label}),lines:lines?.map(({text,...l})=>l),table:blank(table)})),
     choices:q.choices.map(({text,...c})=>c),choiceTable:blank(q.choiceTable)});
 }

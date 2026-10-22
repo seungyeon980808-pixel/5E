@@ -103,9 +103,11 @@ export class RhwpExamBridge {
 
   get input() {
     const input=this.deps.getInputHandler();this.resizeInputs ||= new WeakSet();
-    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);input.examStructureNotice=message=>this.onChange?.(new Error(message));setTableLayoutLocked(input,this.tableLayoutLocked);}
+    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);input.examStructureNotice=message=>this.onChange?.(new Error(message));input.examLayoutRules=!!this.layoutRules;setTableLayoutLocked(input,this.tableLayoutLocked);}
     return input;
   }
+  // layoutRules: ExamPool 문항 조판만 켠다 — 잠금 중 줄 간격·글꼴·크기·장평·쪽 설정·단도 막는다(10-22 조판 기준). 5E_hwp는 예전 규칙 그대로.
+  setLayoutRules(on) { this.layoutRules=!!on; if(this.input) this.input.examLayoutRules=this.layoutRules; }
   setTableLayoutLocked(locked) {
     this.tableLayoutLocked=!!locked;
     setTableLayoutLocked(this.input,this.tableLayoutLocked);

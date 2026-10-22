@@ -2246,6 +2246,13 @@
       ]
     },
     {
+      "path": "tests/test-typeset-gaps-browser.cjs",
+      "findingIds": [
+        "TYPESET-GAPS-VIEW-ADJUST",
+        "TYPESET-LAYOUT-LOCK-RULES"
+      ]
+    },
+    {
       "path": "tests/test-typeset-marks-browser.cjs",
       "findingIds": [
         "TYPESET-MARKS-SCREEN-ONLY"

@@ -13,7 +13,8 @@ export const KICE_STANDARD = deepFreeze({
   paper: { size: 'A4', columns: 2, columnGap: 8, margin: { top: 15, bottom: 15, left: 15, right: 15 } },
   text: { font: '함초롬바탕', size: 11, ratio: 95, spacing: -5, lineSpacing: 160, align: 'justify', break: 'word' },
   // 〈보기〉 상자 안쪽: 마지막 줄 아래 14px(반 줄쯤), 좌우 6px. 간격 보기·조절(9단계)이 이 값을 고친다.
-  gaps: { bogiPadBottom: pxToMm(14), bogiPadSide: pxToMm(6), bogiPadTop: pxToMm(3) },
+  // text·material·bogi·ask·choices: 지문·자료(그림·표·묶음)·〈보기〉·발문·선지 앞에 더 두는 간격(mm). 수능 틀은 0(조판이 정한 기본 간격만).
+  gaps: { text: 0, material: 0, bogi: 0, ask: 0, choices: 0, bogiPadBottom: pxToMm(14), bogiPadSide: pxToMm(6), bogiPadTop: pxToMm(3) },
   parts: { number: 'n.', bogiTitle: '<보 기>', bogiTitleWidth: pxToMm(54), bogiLineSpacing: 150, tableText: 10, tableLineSpacing: 130, choices: 'auto', labelSpace: 'space', hanging: true },
   fit: { on: true, low: -10, high: 0, shortLastLine: 15 },
   lock: true,
@@ -31,7 +32,7 @@ function merge(base, over) {
 const RANGE = {
   'paper.columns': [1, 2], 'paper.columnGap': [0, 30], 'paper.margin.top': [5, 40], 'paper.margin.bottom': [5, 40], 'paper.margin.left': [5, 40], 'paper.margin.right': [5, 40],
   'text.size': [6, 20], 'text.ratio': [50, 200], 'text.spacing': [-50, 50], 'text.lineSpacing': [80, 300],
-  'gaps.bogiPadBottom': [0, 20], 'gaps.bogiPadSide': [0, 20], 'gaps.bogiPadTop': [0, 20],
+  'gaps.text': [0, 20], 'gaps.material': [0, 20], 'gaps.bogi': [0, 20], 'gaps.ask': [0, 20], 'gaps.choices': [0, 20], 'gaps.bogiPadBottom': [0, 20], 'gaps.bogiPadSide': [0, 20], 'gaps.bogiPadTop': [0, 20],
   'parts.bogiTitleWidth': [5, 40], 'parts.bogiLineSpacing': [80, 300], 'parts.tableText': [6, 20], 'parts.tableLineSpacing': [80, 300],
   'fit.low': [-20, 0], 'fit.high': [0, 20], 'fit.shortLastLine': [0, 50],
 };
@@ -86,11 +87,13 @@ export function standardFor(question, { exam = null, standards = [] } = {}) {
   return id === KICE_ID ? KICE_STANDARD : resolveStandard(standards.find(s => s.id === id) || null);
 }
 
+// 블록 종류 → 기준 간격 이름(간격 보기·조절과 조판이 같이 쓴다).
+export const gapRole = kind => kind === 'bogi' ? 'bogi' : ['figure', 'table', 'group', 'box'].includes(kind) ? 'material' : 'text';
 // 조판 코드가 읽는 값(px·%)으로 풀어 둔 모양. 수능 틀이면 예전 상수와 같은 값.
 export function layoutValues(standard = KICE_STANDARD) {
   const s = resolveStandard(standard);
   return {
-    ratio: s.text.ratio, spacing: s.text.spacing,
+    ratio: s.text.ratio, spacing: s.text.spacing, gapText: s.gaps.text, gapMaterial: s.gaps.material, gapBogi: s.gaps.bogi, askGap: s.gaps.ask, choicesGap: s.gaps.choices,
     margin: s.paper.margin, columnGap: s.paper.columnGap,
     bogiBottom: mmToPx(s.gaps.bogiPadBottom), bogiSide: mmToPx(s.gaps.bogiPadSide), bogiTop: mmToPx(s.gaps.bogiPadTop),
     bogiTitleWidth: mmToPx(s.parts.bogiTitleWidth), bogiLineSpacing: s.parts.bogiLineSpacing,

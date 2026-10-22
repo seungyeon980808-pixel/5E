@@ -507,3 +507,43 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .typeset-view-controls .typeset-marks{display:inline-flex;align-items:center;gap:var(--ds-space-1,4px);margin-left:auto}
 .typeset-view-controls .typeset-marks+#typeset-lock{margin-left:4px}
 .typeset-view-controls .typeset-marks svg{flex:none}
+/* 조판 기준 메뉴·간격 보기(10-22 C-4, 시안 typeset-standard.html ②). 띠 색은 확정 시안 그대로: 초록 = 요소 사이, 보라 = 단 여백. */
+/* 「수능 틀 ▾」·「간격 보기」: 글자·문단·내어쓰기 줄 오른쪽 끝(머리 줄이 차서). 이 줄이 흐려질 때(고르기 전)도 이 둘은 또렷하게. */
+.ts-std-tail{display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex:none}
+.cv-hwp-layer #preview-dialog.docked #typeset-context[data-idle] .ts-std-tail :is(button){opacity:1;pointer-events:auto}
+.ts-std-tail .ts-std{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-std-tail .ts-gaps[aria-pressed=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+/* 조판 부호는 아이콘만(이름은 도움말) — 머리 줄 폭 */
+.typeset-view-controls .typeset-marks span{display:none}
+.typeset-view-controls .typeset-marks{padding:0 8px}
+.typeset-view-controls .ts-std b{font-weight:600}
+#native-editor .ts-gap-layer{position:absolute;z-index:6;pointer-events:none;overflow:hidden}
+#native-editor .ts-gap-layer[hidden]{display:none}
+.ts-gap-margin{position:absolute;background:rgba(155,120,255,.14);pointer-events:none}
+.ts-gap-band{position:absolute;display:flex;align-items:center;justify-content:flex-end;padding:0 4px;border:0;border-radius:2px;background:rgba(47,179,154,.18);box-shadow:inset 0 0 0 1px rgba(47,179,154,.35);color:#1f7a68;font:500 10px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;cursor:pointer;pointer-events:auto}
+.ts-gap-band span{padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.85);white-space:nowrap}
+.ts-gap-band:hover,.ts-gap-band[aria-pressed=true]{box-shadow:inset 0 0 0 1.5px #2fb39a}
+.ts-gap-pop,.ts-std-menu{position:absolute;z-index:30;width:250px;padding:10px 12px;border-radius:10px;background:var(--ds-doc,#fff);color:var(--ds-doc-ink,#1b1e23);box-shadow:0 0 0 1px var(--ds-doc-line-strong,#d3d6db),0 10px 28px rgba(0,0,0,.18);font-size:12.5px}
+.ts-gap-pop[hidden],.ts-std-menu[hidden]{display:none}
+.ts-gap-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.ts-gap-head button{border:0;background:transparent;color:var(--ds-doc-ink-3,#6a7079);font-size:16px;cursor:pointer}
+.ts-gap-now,.ts-gap-note,.ts-gap-lock{margin:0 0 8px;color:var(--ds-doc-ink-3,#6a7079);font-size:11.5px;line-height:1.5}
+.ts-gap-lock{color:var(--ds-doc-ink-2,#3a3f46)}
+.ts-gap-step{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.ts-gap-step button{width:28px;height:28px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink,#1b1e23);cursor:pointer}
+.ts-gap-step button:hover:not(:disabled){background:var(--ds-doc-hover,rgba(0,0,0,.045))}
+.ts-gap-step output{min-width:52px;text-align:center;font-variant-numeric:tabular-nums}
+.ts-gap-step small{color:var(--ds-doc-ink-3,#6a7079)}
+.ts-gap-pop label{display:block;margin:2px 0;color:var(--ds-doc-ink-2,#3a3f46)}
+.ts-gap-reset{margin-top:6px;height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink-2,#3a3f46);cursor:pointer}
+.ts-std-menu{width:240px;padding:4px}
+.ts-std-menu button{display:block;width:100%;height:30px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--ds-doc-ink-2,#3a3f46);text-align:left;font:inherit;cursor:pointer}
+.ts-std-menu button:hover{background:var(--ds-doc-hover,rgba(0,0,0,.045));color:var(--ds-doc-ink,#1b1e23)}
+.ts-std-menu button[aria-checked=true]{font-weight:600;color:var(--ds-doc-ink,#1b1e23)}
+.ts-std-menu button[aria-checked=true]::after{content:" ✓"}
+.ts-std-menu hr{margin:4px 6px;border:0;border-top:1px solid var(--ds-doc-line,#e1e3e6)}
+.ts-std-name{display:flex;gap:4px;padding:4px 6px}
+.ts-std-name[hidden]{display:none}
+.ts-std-name input{flex:1;min-width:0;height:28px;padding:0 8px;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db)}
+.ts-std-name button{width:auto;height:28px}
+#preview-dialog:not(.docked) .ts-std-tail{display:none}

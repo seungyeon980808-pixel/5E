@@ -8,6 +8,13 @@ const structureGuards=new WeakSet();
 // 나누기·테두리·넣기·옮기기·돌리기)은 잠금을 풀어야 바뀐다. 메뉴·단축키 명령은 모두 Studio 명령 전달기를 지나므로 거기서 막는다.
 export const STRUCTURE_LOCK_MESSAGE='구조 잠금 중 · 표·그림의 크기나 틀은 구조 잠금을 풀고 바꾸세요. 글은 그대로 고칠 수 있습니다.';
 const TEXT_TABLE_COMMANDS=new Set(['table:block-sum','table:block-avg','table:block-product','table:block-formula','table:decimal-add','table:decimal-remove','table:thousand-sep','table:transpose-copy']);
+// 조판 기준을 쓰는 ExamPool 조판(input.examLayoutRules)에서는 잠금 중 모양 틀(줄 간격·글꼴·크기·장평·문단 간격·여백·용지·단)도 막는다.
+// 글자 입력·자간·한 줄 맞춤·굵게·기울임·첨자·정렬·내어쓰기는 그대로 된다.
+export const LAYOUT_LOCK_MESSAGE='구조 잠금 중 · 줄 간격·글꼴·크기·장평·문단 간격·여백·용지·단은 구조 잠금을 풀고 바꾸세요. 글과 자간은 그대로 고칠 수 있습니다.';
+const LAYOUT_COMMANDS=new Set(['format:char-shape','format:para-shape','format:line-spacing','format:line-spacing-increase','format:line-spacing-decrease','format:char-ratio-increase','format:char-ratio-decrease','format:font-size-increase','format:font-size-decrease','format:style-dialog','format:apply-style',
+  'page:setup','page:section-settings','page:col-1','page:col-2','page:col-3','page:col-left','page:col-right','page:col-settings']);
+export const isLayoutCommand=id=>LAYOUT_COMMANDS.has(String(id||''));
+export const LAYOUT_OPERATIONS=new Set(['pageSetup','pageMargin','columnSettings','applyStyle']);
 export function isStructureCommand(id){
   id=String(id||'');
   if(id==='format:object-properties')return true;// 그림·표 크기·회전 대화상자(P)
@@ -27,6 +34,7 @@ function installStructureGuard(input){
     const execute=input.executeOperation.bind(input);
     input.executeOperation=(operation,...args)=>{
       if(input.examTableLayoutLocked&&STRUCTURE_OPERATIONS.has(operation?.operationType)){notice();return undefined;}
+      if(input.examTableLayoutLocked&&input.examLayoutRules&&LAYOUT_OPERATIONS.has(operation?.operationType)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return undefined;}
       return execute(operation,...args);
     };
   }
@@ -35,6 +43,7 @@ function installStructureGuard(input){
     const run=dispatcher.dispatchWithResult.bind(dispatcher);
     dispatcher.dispatchWithResult=(id,...args)=>{
       if(input.examTableLayoutLocked&&isStructureCommand(id)){notice();return{ok:false,reason:'structure-locked',message:STRUCTURE_LOCK_MESSAGE};}
+      if(input.examTableLayoutLocked&&input.examLayoutRules&&isLayoutCommand(id)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return{ok:false,reason:'layout-locked',message:LAYOUT_LOCK_MESSAGE};}
       return run(id,...args);
     };
   }

@@ -12,7 +12,7 @@ const measureText = (t, fs) => [...t].length * fs * 0.9;
 
 test('the built-in KICE standard carries exactly the old hard-coded values', () => {
   assert.ok(Object.isFrozen(KICE_STANDARD) && Object.isFrozen(KICE_STANDARD.paper.margin));
-  assert.deepEqual(layoutValues(), { ratio: 95, spacing: -5, margin: { top: 15, bottom: 15, left: 15, right: 15 }, columnGap: 8, bogiBottom: 14, bogiSide: 6, bogiTop: 3, bogiTitleWidth: 54, bogiLineSpacing: 150, tableLineSpacing: 130, tableText: 10 });
+  assert.deepEqual(layoutValues(), { ratio: 95, spacing: -5, gapText: 0, gapMaterial: 0, gapBogi: 0, askGap: 0, choicesGap: 0, margin: { top: 15, bottom: 15, left: 15, right: 15 }, columnGap: 8, bogiBottom: 14, bogiSide: 6, bogiTop: 3, bogiTitleWidth: 54, bogiLineSpacing: 150, tableLineSpacing: 130, tableText: 10 });
   assert.equal(TEXT_RATIO, 95); assert.equal(TEXT_SPACING, -5);
   for (const px of [3, 6, 14, 54]) assert.equal(mmToPx(pxToMm(px)), px);
 });
@@ -61,4 +61,18 @@ test('question → exam → KICE resolution, and the question carries only an id
   assert.equal(JSON.stringify(renderedContent(q)), JSON.stringify(renderedContent({ ...q, standardId: undefined })), 'no id keeps old fingerprints');
   validate({ format: FORMAT, questions: [{ ...q, standardId: 'std_school' }], documents: [] });
   assert.throws(() => validate({ format: FORMAT, questions: [{ ...q, standardId: 'bad id!' }], documents: [] }), /조판 기준/);
+});
+
+test('gaps before the ask and the choices: the question value, then the standard, KICE adds nothing', async () => {
+  const q = structuredClone(examples.questions[0]);
+  const base = await buildQuestionHtml(structuredClone(q), prep, 343, { native: true, measureText });
+  // 정확한 간격 문단: 위 여백 = 값 − 0.58mm(1pt 빈 문단 높이), 1pt 글자
+  const spacer = mmValue => `margin-top:${mmToPx((mmValue - 0.58) / 2)}px"><span style="font-size:1pt">`; // 문항 안에서는 위 여백이 두 번 들어가 절반만
+  const own = await buildQuestionHtml({ ...structuredClone(q), choicesGap: 2.5 }, prep, 343, { native: true, measureText });
+  assert.ok(!base.html.includes(spacer(2.5)) && own.html.includes(spacer(2.5)), 'question choicesGap adds an exact spacer');
+  const s = copyStandard(KICE_STANDARD, { name: '선지 앞 3mm' }); s.gaps.choices = 3;
+  const std = await buildQuestionHtml(structuredClone(q), prep, 343, { native: true, measureText, standard: s });
+  assert.ok(std.html.includes(spacer(3)), 'standard choices gap applies when the question has none');
+  const both = await buildQuestionHtml({ ...structuredClone(q), choicesGap: 0 }, prep, 343, { native: true, measureText, standard: s });
+  assert.equal(both.html, base.html, 'an explicit 0 on the question wins over the standard');
 });

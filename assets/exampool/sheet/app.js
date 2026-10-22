@@ -16,7 +16,7 @@ import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
 import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
-import {validateStandard} from './typeset-standard.js';
+import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 import {loadStandards} from './standards-data.js';
@@ -475,7 +475,34 @@ function pastLabel(d){const m=(d.title||d.name||'').match(/^p([12])_(\d{4})_(06|
 async function loadPastLibrary(){try{$('#source-content').innerHTML='<p class="muted">물리 기출 목록 여는 중…</p>';const payload=await(await fetch(new URL('../../pdf-library/catalog-bootstrap.json',import.meta.url))).json();const catalog=payload.payload?.catalog||payload;const docs=(catalog.documents||catalog.items||[]).filter(d=>/물리/.test(d.source?.locator||d.title||d.name||''));$('#source-content').innerHTML='<button id="back-docs">내 자료로</button><p class="muted">파일을 선택하면 원문을 열고 이 작업에 보관합니다.</p>'+docs.map((d,i)=>`<button class="doc-list" data-past="${i}">${E(pastLabel(d))}</button>`).join('');$('#back-docs').onclick=renderSources;document.querySelectorAll('[data-past]').forEach(n=>n.onclick=async()=>{try{const d=docs[Number(n.dataset.past)],locator=d.source?.locator||d.locator;const relative=locator.replace(/^5e\.shared\.drive\//,'');const url='https://5e-google-drive-gateway.5e-desktop.workers.dev/v1/google-drive/folders/1N46Woe4wIXs-PoUpVf0Uu4hPkSIUBqgX/public/'+relative.split('/').map(encodeURIComponent).join('/');sourceSay('기출 원문 여는 중…');const response=await fetch(url);if(!response.ok)throw Error('기출 원문을 열지 못했습니다.');const blob=await response.blob();await addDocument(new File([blob],(d.title||d.name).replace(/\.pdf$/i,'')+'.pdf',{type:'application/pdf'}),'past');sourceSay('기출 원문을 보관했습니다.');}catch(e){sourceSay(e.message,true);}});}catch(e){sourceSay(e.message,true);}}
 function openRef(ref){sourceTarget=ref.target;if(ref.documentId){doc=data.documents.find(d=>d.id===ref.documentId);page=ref.page;sourceTab=doc?.kind==='textbooks'?'textbooks':'references';}else{sourceTab='standards';selectedStandard=(standards?.standards||[]).find(s=>s.code===ref.standardCode)||null;}showSources();}
 let typesetter=null,typesetRequest,typesetTransition=null;
-function makeTypesetter(){return createTypesetter({onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
+// 조판 기준(10-22): 문항 → 시험지 → 수능 틀. 간격 보기의 값 바꾸기와 기준 메뉴가 여기로 온다.
+const typesetStandardOf=q=>q?standardFor(q,{exam:examOf(data,q.id),standards:typesetStandards}):KICE_STANDARD;
+function refreshTypeset(){if(current&&typesetter){$('#typeset-refresh').hidden=false;void requestTypeset(current);}}
+async function onTypesetGap(target,value,scope,stdKey){const q=current;if(!q)return;
+  try{
+    if(scope==='std'&&value!==undefined){
+      const now=typesetStandardOf(q);let s=now.id===KICE_ID?(typesetStandards.find(x=>x.name==='수능 틀 (내 설정)')||copyStandard(KICE_STANDARD,{name:'수능 틀 (내 설정)'})):structuredClone(now);
+      s.gaps={...s.gaps,[stdKey]:value};s.version=(s.version||1)+1;
+      await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);
+      if(q.standardId!==s.id)mutate(()=>{q.standardId=s.id;},{render:false});else refreshTypeset();
+      status(`조판 기준 「${s.name}」의 간격을 ${value}mm로 바꿨습니다.`);return;
+    }
+    mutate(()=>{
+      if(target.kind==='ask'||target.kind==='choices'){const k=target.kind+'Gap';if(value===undefined)delete q[k];else q[k]=value;}
+      else{const b=q.blocks.find(x=>x.id===target.id);if(!b)return;if(value===undefined)delete b.gap;else b.gap=value;}
+    },{render:false});
+  }catch(e){status(e.message,true);}
+}
+async function onTypesetStandard(action){const q=current;
+  try{
+    if(action.error)throw Error(action.error);
+    if(action.school){status('학교 양식에서 기준 만들기는 다음 단계에서 열립니다.');return;}
+    if(action.imported){const s=action.imported;await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);status(`조판 기준 「${s.name}」을 가져왔습니다. 메뉴에서 고르면 이 문항에 씁니다.`);return;}
+    if(action.saveAs){const s=copyStandard(typesetStandardOf(q),{name:action.saveAs});await saveTypesetStandards([...typesetStandards,s]);if(q)mutate(()=>{q.standardId=s.id;},{render:false});status(`조판 기준 「${s.name}」으로 저장했습니다.`);return;}
+    if(action.pick&&q){mutate(()=>{if(action.pick===KICE_ID)delete q.standardId;else q.standardId=action.pick;},{render:false});}
+  }catch(e){status(e.message,true);}
+}
+function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,standardsOf:()=>typesetStandards,onGap:onTypesetGap,onStandard:onTypesetStandard,onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
           const target=data.questions.find(q=>q.id===questionId);if(!target)throw Error('문항이 삭제되어 조판을 저장할 수 없습니다.');
           const {questionFingerprint}=await import('./typeset-model.js?v=1014-compact-panel');
           if(snapshot.fingerprint!==await questionFingerprint(target))throw Error('시트 내용과 저장 전 조판 수정이 함께 바뀌었습니다. 시트 수정을 되돌린 뒤 조판을 저장하세요. 기존 조판 수정은 유지됩니다.');
