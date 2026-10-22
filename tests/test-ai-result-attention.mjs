@@ -59,5 +59,5 @@ test('the shared entry aggregates workspace attention and describes it without r
   syncResultEntry(doc);
   assert.equal(button.dataset.resultAttention,'true');assert.match(attrs['aria-label'],/3개/);
   panels.length=0;syncResultEntry(doc);
-  assert.equal(button.dataset.resultAttention,'false');assert.equal(attrs['aria-label'],'AI 이미지 변환');
+  assert.equal(button.dataset.resultAttention,'false');assert.equal(attrs['aria-label'],'AI 이미지/그래프');
 });

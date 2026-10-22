@@ -8,7 +8,7 @@ async function openSend(page, ui) {
   await ui.locator('[data-unilib-crop]').waitFor({ state: 'hidden' });
   await page.waitForFunction(() => !document.querySelector('.unified-library-overlay [data-unilib-send]').disabled, null, { timeout: 30_000 });
   const actions = await ui.locator('.unilib-actions > button').evaluateAll(list => list.filter(b => !b.hidden && getComputedStyle(b).display !== 'none').map(b => b.textContent.trim()));
-  assert.deepEqual(actions, ['PDF에서 자르기', '보내기', 'AI 이미지 변환', '좌표/함수 생성'], '2×2: 「보내기」가 이미지 객체화 자리에');
+  assert.deepEqual(actions, ['PDF에서 자르기', '보내기', 'AI 이미지/그래프', '좌표/함수 생성'], '2×2: 「보내기」가 이미지 객체화 자리에');
   assert.equal(await ui.locator('[data-unilib-objectify]').count(), 0, '라이브러리 창에는 이미지 객체화가 없다');
   await ui.locator('[data-unilib-send]').click();
   const menu = await page.evaluate(() => {

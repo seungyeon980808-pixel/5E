@@ -1557,7 +1557,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       batchButton.disabled = busy || attachments.length < 2 || (white && reviewModeCheckbox?.checked !== false);
       batchButton.title = white && reviewModeCheckbox?.checked !== false ? "검수 포함 일괄 변환은 아직 지원하지 않습니다. 새 작업으로 그림별 변환을 실행하세요." : "여러 이미지를 각각 생성합니다. 일괄 결과는 독립 검수되지 않습니다.";
     }
-    sendButton.textContent = boxEdit ? "수정하기" : brief ? '그림 만들기' : "변환하기";
+    sendButton.textContent = boxEdit ? "수정하기" : brief ? '이미지 생성' : "변환하기";
     commentController?.render();
     syncGraphWorkbenchUi();
   };
@@ -2692,7 +2692,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if(repeat) repeat.hidden=graph;
     panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = panel.dataset.aiSharingMode === 'view' || (busy && !switchWorkflow); });
     if (graph) {
-      sendButton.textContent = graphTarget ? '그래프 수정하기' : graphCreate ? '그래프 만들기' : '그래프 복원';
+      sendButton.textContent = graphTarget ? '그래프 수정하기' : graphCreate ? '그래프 생성' : '그래프 복원';
       sendButton.title = graphTarget ? `${graphTarget.name}에 추가 설명을 반영해 새 수정본을 만듭니다. 이전 결과도 유지됩니다.` : graphCreate ? '설명을 편집 가능한 그래프로 만듭니다.' : '원본과 수정 요청으로 편집 가능한 그래프를 복원합니다.';
       input.hidden = false; input.disabled = busy;
       input.placeholder = graphTarget ? '예: B만 점선으로 바꿔줘. 수식과 다른 표기는 유지해줘.' : graphCreate ? '예: 가로축 시간, 세로축 속도. 처음에는 직선으로 증가하다가 일정해짐. 숫자 없이.' : '예: 축 제목을 바꾸고, B 곡선의 점선을 더 굵게 해 주세요.';

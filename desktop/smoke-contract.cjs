@@ -16,7 +16,7 @@ const requiredTruthy = Object.freeze([
 ]);
 
 function desktopSmokePasses(result) {
-  return result.buttonText === "AI 이미지 변환" &&
+  return result.buttonText === "AI 이미지/그래프" &&
     result.codexSendInvocationsDuringLocalSmoke === 0 &&
     result.realSendCount === 0 &&
     result.fixtureSendCount === 1 &&

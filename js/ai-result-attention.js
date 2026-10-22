@@ -23,5 +23,5 @@ export function syncResultEntry(doc = document) {
   const button = doc.getElementById('ai-image-install-open');
   if (!button) return;
   button.dataset.resultAttention = String(count > 0);
-  button.setAttribute('aria-label', count ? `AI 이미지 변환 · 확인할 결과 ${count}개` : 'AI 이미지 변환');
+  button.setAttribute('aria-label', count ? `AI 이미지/그래프 · 확인할 결과 ${count}개` : 'AI 이미지/그래프');
 }

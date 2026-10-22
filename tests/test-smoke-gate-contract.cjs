@@ -6,7 +6,7 @@ const { desktopSmokePasses, requiredTruthy } = require("../desktop/smoke-contrac
 
 function passingResult() {
   return Object.assign(Object.fromEntries(requiredTruthy.map((field) => [field, true])), {
-    buttonText: "AI 이미지 변환",
+    buttonText: "AI 이미지/그래프",
     codexSendInvocationsDuringLocalSmoke: 0,
     fixtureSendCount: 1,
     realSendCount: 0,

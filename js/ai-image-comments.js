@@ -448,7 +448,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         apply.textContent = '수정하기';
         apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));
       } else if (isTextCreation()) {
-        apply.textContent = '그림 만들기';
+        apply.textContent = '이미지 생성';
         apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
       } else {
         apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : '변환하기';

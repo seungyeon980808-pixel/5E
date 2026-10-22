@@ -484,7 +484,7 @@
   :root:not([data-mode="lite"]) :is(.panel-right #inspector, .panel-left #tool-list)::-webkit-scrollbar { width: 0; height: 0; }
 }
 
-/* ---------- 10. AI 이미지 변환 창 — 버튼은 테두리 없음, 칸 버튼은 고른 칸만 진한 면 ---------- */
+/* ---------- 10. AI 이미지/그래프 창 — 버튼은 테두리 없음, 칸 버튼은 고른 칸만 진한 면 ---------- */
 :root:not([data-mode="lite"]) #ai-image-panel :is(
   .ai-header-tool, .ai-head-status .panel-visibility-toggle, .ai-close, .ai-head-status .bug-report-open,
   .ai-label-view > button, .ai-result-tools > button, .ai-rail-actions > button, .ai-setting-pair > button, .ai-setting-help
@@ -809,7 +809,7 @@
    라이브러리 버튼 — 시안 5e-design-mockups/library-controls.html 안 1 (2026-10-18)
    1. 위쪽 막대: 메인 위쪽 막대와 같게. 높이 41, 버튼 28×28, 패널 버튼은 눌림 면 없이 양 끝.
       왼쪽: [왼쪽 패널] 라이브러리 · 오른쪽: [버그][닫기] | [오른쪽 패널]
-   2. 미리보기 아래 버튼: 1px 선 버튼 + 아이콘, AI 이미지 변환만 은은한 버튼.
+   2. 미리보기 아래 버튼: 1px 선 버튼 + 아이콘, AI 이미지/그래프만 은은한 버튼.
    3. 작업대 카드 이미지/그래프: 그림 위 어두운 묶음 + 아이콘(흰 그림 위에서도 또렷하게).
    글자는 스크립트가 바꿔 쓰므로 아이콘은 ::before 마스크로 붙인다.
    ===================================================================== */

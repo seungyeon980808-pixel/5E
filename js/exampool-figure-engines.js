@@ -1,6 +1,6 @@
 // ExamPool 문항의 그림·그래프 만들기(5E 본창 쪽). 기존 엔진을 그대로 부른다.
-// - 그래프: 설명 그래프 엔진(그래프 만들기 탭과 같은 계약) → 편집 가능한 그래프 객체(수식·데이터·축·범위) + PNG.
-// - 그림: 시험용 한 줄 설명 하네스(그림 만들기 탭과 같은 지침) → 비트맵 PNG. 편집 가능한 벡터가 아니다.
+// - 그래프: 설명 그래프 엔진(그래프 생성 탭과 같은 계약) → 편집 가능한 그래프 객체(수식·데이터·축·범위) + PNG.
+// - 그림: 시험용 한 줄 설명 하네스(이미지 생성 탭과 같은 지침) → 비트맵 PNG. 편집 가능한 벡터가 아니다.
 // 작업 범위는 문항마다 따로 둔다. 5E 이미지 작업실의 작업을 덮어쓰지 않는다.
 import {createTaskBridge} from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {defaultAIModelSelection} from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
@@ -54,7 +54,7 @@ export function createFigureEngines({base=()=>window.fiveEDesktop||window.fiveEW
           if(!/^data:image\/png;base64,/.test(src))return finish(Error('PNG가 아닌 결과는 문항에 넣지 않습니다.'));
           finish(null,{data:src,...await sizeOf(src),engine:'ai-image',model:selection.model,ms:Date.now()-t0});}};
       const off=b.onEvent?.(m=>{const ev=parseAiEvent(m);if(ev.kind==='ignore')return;if(!turnId){queue.push(ev);return;}void handle(ev);});
-      const timer=setTimeout(()=>{void b.interrupt?.().catch(()=>{});finish(Error('그림 만들기가 너무 오래 걸려 중단했습니다.'));},IMAGE_TIMEOUT);
+      const timer=setTimeout(()=>{void b.interrupt?.().catch(()=>{});finish(Error('이미지 생성이 너무 오래 걸려 중단했습니다.'));},IMAGE_TIMEOUT);
       b.send({text,attachments,purpose:'image',ephemeralRender:true,conversationId:null,...selection}).then(r=>{turnId=r?.turnId||null;for(const ev of queue.splice(0))void handle(ev);}).catch(e=>finish(e));
     });
   }

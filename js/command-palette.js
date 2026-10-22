@@ -92,7 +92,7 @@ const COMMANDS = [
   { id: "examSearch",  label: "라이브러리 열기", keywords: ["exam", "기출", "문항", "검색", "라이브러리"], shortcutLabel: "", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
-  { id: "aiImage", label: "AI 이미지 변환", keywords: ["ai", "인공지능", "이미지 변환", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
+  { id: "aiImage", label: "AI 이미지/그래프", keywords: ["ai", "인공지능", "이미지 변환", "이미지 생성", "그래프 복원", "그래프 생성", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.
   { id: "trimMargins", label: "이미지 여백 정리",  keywords: ["trim", "여백", "정리", "상자", "맞춤", "crop"], shortcutLabel: "",  run: () => {
     const n = trimSelectedBoxMargins();

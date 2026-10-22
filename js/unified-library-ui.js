@@ -876,7 +876,7 @@ function buildShell() {
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head unilib-preview-heading" hidden><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지 변환</button></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
@@ -1126,7 +1126,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
     overlay.querySelector('[data-unilib-ai]').hidden = graphMode;
     const needsCrop = !aiAllowed && selectedActiveResult()?.provenance?.provider === "pdf";
     const help = overlay.querySelector("[data-unilib-ai-help]");
-    help.textContent=graphMode ? "PDF에서 그래프 영역을 크롭한 뒤 원본으로 선택하세요." : "PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.";
+    help.textContent=graphMode ? "PDF에서 그래프 영역을 크롭한 뒤 원본으로 선택하세요." : "PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.";
     help.hidden = !needsCrop;
     overlay.querySelector("[data-unilib-ai]").title = needsCrop ? help.textContent : "준비한 이미지를 AI 작업으로 보내기 (Space)";
     syncSpaceAction();
@@ -1700,7 +1700,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
       item.append(image, remove);
       return item;
     }));
-    overlay.querySelector("[data-unilib-ai]").textContent = "AI 이미지 변환";
+    overlay.querySelector("[data-unilib-ai]").textContent = "AI 이미지/그래프";
     updateAiActionAvailability();
   }
 

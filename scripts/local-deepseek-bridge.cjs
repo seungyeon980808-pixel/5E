@@ -38,7 +38,7 @@ function createDeepSeekBridge({apiKey,model='deepseek-chat',baseUrl='https://api
     const scope=scopeOf(payload);
     // 그림 요청은 그림을 지원하는 연결로 넘기고, 그 작업 범위의 이벤트·중단도 그쪽으로 보낸다(한 범위에 요청은 하나씩).
     if(action==='bridge-send'&&payload.purpose==='image'){
-      if(!imageBridge)throw Error('DeepSeek는 그림을 만들지 않습니다. 그림 만들기는 Codex 등 그림을 지원하는 연결이 필요합니다.');
+      if(!imageBridge)throw Error('DeepSeek는 그림을 만들지 않습니다. 이미지 생성은 Codex 등 그림을 지원하는 연결이 필요합니다.');
       scope.route='image';return imageBridge.handle(action,payload);
     }
     if(scope.route==='image'&&(action==='bridge-events'||action==='bridge-interrupt'))return imageBridge.handle(action,payload);

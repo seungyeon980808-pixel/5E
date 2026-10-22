@@ -367,7 +367,7 @@ const openSelectedAi = () => {
       return canvas.toDataURL('image/png');
     },
     openPanel: options => aiPanel?.open({ ...options, acknowledge:true }),
-  reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+  reportError: error => window.alert(`AI 이미지/그래프를 열 수 없습니다.\n${error.message}`),
     });
 };
 const webLogin = initWebLoginUi({ openAi: openSelectedAi });

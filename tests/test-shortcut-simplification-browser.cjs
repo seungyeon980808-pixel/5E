@@ -40,7 +40,7 @@ const removedControls = [
         await page.locator('#command-palette-title').waitFor({ state: 'visible' });
         assert.ok(await page.locator('#command-palette-title').locator('..').locator('input').getAttribute('aria-activedescendant'));
         const input = page.locator('#command-palette-title').locator('..').locator('input');
-        for (const command of ['라이브러리', '이미지 객체화', 'AI 이미지 변환', '기본값', '설정 저장하기', '설정 불러오기', '단축키 도움말']) {
+        for (const command of ['라이브러리', '이미지 객체화', 'AI 이미지/그래프', '기본값', '설정 저장하기', '설정 불러오기', '단축키 도움말']) {
           await input.fill(command);
           assert.equal(await page.getByRole('option', { name: new RegExp(command) }).first().isVisible(), true, command);
         }
