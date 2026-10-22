@@ -6,6 +6,7 @@
 import {nativeRuns} from './live-patch.js';
 import {KICE_STANDARD,KICE_ID,gapRole,exportStandard,importStandard} from './typeset-standard.js';
 import {KINDS} from './model.js';
+import {unitGapPositions} from '../../../js/rhwp-exam-science-text.js?v=1022-unit';
 
 const MM_PER_PX = 25.4 / 96;
 const NAME = { ask: '발문', choices: '선지', text: '지문', figure: '자료', table: '자료', group: '자료', bogi: '〈보기〉', steps: '과정', dialogue: '대화' };
@@ -76,6 +77,23 @@ export function gapBands(q, elements, standard = KICE_STANDARD) {
   return bands;
 }
 
+// 〈보기〉 상자 안쪽 여백 띠(10-22 O3): 마지막 줄 아래(bogiPadBottom)와 좌우(bogiPadSide). 조판 기준 값만(문항별 값은 없음).
+export function bogiPadBands(doc, q, elements, standard = KICE_STANDARD) {
+  const out = []; let ctl = [], runs = [];
+  try { ctl = (parse(doc.getPageControlLayout(0)).controls || []).filter(c => !c.cellPath?.length && c.type === 'table'); runs = (parse(doc.getPageTextLayout(0)).runs || []).filter(r => r.cellPath?.length && String(r.text || '').trim()); } catch { return out; }
+  for (const el of elements) {
+    const block = q.blocks.find(b => b.id === el.id); if (block?.kind !== 'bogi') continue;
+    const box = ctl.filter(c => c.y >= el.top - 1 && c.y + c.h <= el.bottom + 1).sort((a, b) => b.w * b.h - a.w * a.h)[0]; if (!box) continue;
+    const inner = runs.filter(r => r.y >= box.y && r.y + r.h <= box.y + box.h + 1 && r.x >= box.x - 1 && r.x + r.w <= box.x + box.w + 1 && !/보\s*기/.test(r.text));
+    if (!inner.length) continue;
+    const left = Math.min(...inner.map(r => r.x)), right = Math.max(...inner.map(r => r.x + r.w)), last = Math.max(...inner.map(r => r.y + r.h));
+    const mk = (key, name, rect) => ({ key: `${key}:${block.id}`, from: '〈보기〉', to: name, ...rect, target: { kind: 'bogiPad', id: block.id }, stdKey: key, own: undefined, value: standard.gaps?.[key] ?? 0, standardValue: standard.gaps?.[key] ?? 0 });
+    out.push(mk('bogiPadBottom', '아래 안쪽', { top: last, bottom: box.y + box.h, x0: box.x, x1: box.x + box.w, measured: Math.max(0, (box.y + box.h - last) * MM_PER_PX) }));
+    out.push(mk('bogiPadSide', '좌우 안쪽', { top: box.y + 8, bottom: box.y + box.h - 2, x0: box.x, x1: left, measured: Math.max(0, (left - box.x) * MM_PER_PX), side: true }));
+  }
+  return out;
+}
+
 export function attachGapView({ bridge, host, panel, context, onGap, onStandard, onStandards }) {
   const doc = host.ownerDocument, controls = panel.querySelector('.typeset-view-controls'), lockButton = panel.querySelector('#typeset-lock');
   // 머리 줄: 「조판 기준 · 이름 ▾」 · 「간격 보기」 — 「이 문항 | 시험지 전체」 바로 뒤
@@ -84,7 +102,20 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
   const gapButton = doc.createElement('button'); gapButton.type = 'button'; gapButton.className = 'ts-gaps'; gapButton.dataset.tsGaps = ''; gapButton.setAttribute('aria-pressed', 'false');
   gapButton.textContent = '간격 보기'; gapButton.title = '요소 사이 간격(초록)·단 여백(보라)을 보고, 구조 잠금을 풀면 0.5mm씩 바꿉니다';
   // 머리 줄은 「이 문항 | 시험지 전체 · 상세 조판 · 조판 부호 · 구조 잠금」으로 이미 차서, 바로 아래 줄(글자·문단·내어쓰기) 오른쪽 끝에 둔다.
-  const context2 = panel.querySelector('#typeset-context'), tail = doc.createElement('span'); tail.className = 'ts-std-tail'; tail.append(stdButton, gapButton);
+  // 숫자·단위 띄어쓰기 점검(10-22 O4): 평가원 표기 「10 m」「2 kg」에서 빠진 곳을 세어 보여 주기만 한다(고치지 않음).
+  const unitChip = doc.createElement('span'); unitChip.className = 'ts-unit-chip'; unitChip.hidden = true; unitChip.tabIndex = 0; unitChip.setAttribute('role', 'status');
+  let unitKey = '';
+  function syncUnits() {
+    let d; try { d = bridge.wasm.borrowDocumentHandle(); } catch { unitChip.hidden = true; return; }
+    const key = `${bridge.generation}:${bridge.revision}`; if (key === unitKey) return; unitKey = key;
+    // 문단·표 칸 글을 문서 순서대로(nativeRuns) 읽어 5E_hwp 점검과 같은 규칙을 쓴다.
+    let list = []; try { list = nativeRuns(d).map(r => ({ text: String(r.text || ''), at: unitGapPositions(r.text || '') })).filter(x => x.at.length); } catch {}
+    const count = list.reduce((n, x) => n + x.at.length, 0);
+    unitChip.hidden = !count; if (!count) return;
+    unitChip.textContent = `숫자·단위 ${count}곳`;
+    unitChip.title = '평가원 표기는 숫자와 단위 사이를 띄어 씁니다(예: 10 m, 2 kg).\n' + list.slice(0, 6).map(x => '· ' + x.at.map(o => x.text.slice(Math.max(0, o - 4), o + 3)).join(' / ')).join('\n');
+  }
+  const context2 = panel.querySelector('#typeset-context'), tail = doc.createElement('span'); tail.className = 'ts-std-tail'; tail.append(unitChip, stdButton, gapButton);
   (context2 || controls)?.append(tail);
 
   const layer = doc.createElement('div'); layer.className = 'ts-gap-layer'; layer.hidden = true; layer.setAttribute('aria-label', '간격 띠');
@@ -100,7 +131,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
   // 머리 줄이 좁아 이름만 보이고(예: 「수능 틀 ▾」), 「조판 기준」은 도움말·읽기 이름에 둔다.
   function syncStd() { const { standard } = context(), name = standard?.name || '수능 틀'; stdButton.innerHTML = `<b>${E(name)}</b> ▾`; stdButton.title = `조판 기준: ${name} — 고르기 · 저장 · 내보내기/가져오기`; stdButton.setAttribute('aria-label', `조판 기준 ${name}`); }
   function draw() {
-    syncStd(); gapButton.setAttribute('aria-pressed', String(on));
+    syncStd(); gapButton.setAttribute('aria-pressed', String(on)); if (context().ready) syncUnits();
     layer.replaceChildren(); layer.hidden = true;
     const ctx = context();
     if (!on || !ctx.ready || !ctx.q || !host.getClientRects().length) { pop.hidden = true; return; }
@@ -111,7 +142,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
     const page = parse(d.getPageDef(0)), mL = page.marginLeft / 75, mR = page.marginRight / 75, W = page.width / 75;
     const pt = (x, y) => { const p = bridge.parentPoint(placement.x + x * placement.scale, placement.y + y * placement.scale); return { x: p.x - viewport.x, y: p.y - viewport.y, s: placement.scale * p.scaleX }; };
     const elements = questionElements(d, ctx.q, ctx.owners?.texts);
-    bands = gapBands(ctx.q, elements, ctx.standard || KICE_STANDARD);
+    bands = [...gapBands(ctx.q, elements, ctx.standard || KICE_STANDARD), ...bogiPadBands(d, ctx.q, elements, ctx.standard || KICE_STANDARD)];
     const last = elements.at(-1);
     if (last) for (const [x0, x1, side] of [[0, mL, 'left'], [W - mR, W, 'right']]) {
       const a = pt(x0, page.marginTop / 75), b = pt(x1, last.bottom);
@@ -119,12 +150,12 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
       Object.assign(m.style, { left: `${a.x}px`, top: `${a.y}px`, width: `${b.x - a.x}px`, height: `${b.y - a.y}px` }); layer.append(m);
     }
     for (const band of bands) {
-      const a = pt(mL, band.top), b = pt(W - mR, band.bottom), h = Math.max(6, b.y - a.y);
-      const el = doc.createElement('button'); el.type = 'button'; el.className = 'ts-gap-band'; el.dataset.gapKey = band.key;
+      const a = pt(band.x0 ?? mL, band.top), b = pt(band.x1 ?? (W - mR), band.bottom), h = Math.max(6, b.y - a.y);
+      const el = doc.createElement('button'); el.type = 'button'; el.className = 'ts-gap-band' + (band.target.kind === 'bogiPad' ? ' inner' : ''); el.dataset.gapKey = band.key;
       el.setAttribute('aria-pressed', String(band.key === selected));
       el.setAttribute('aria-label', `${band.from} ↕ ${band.to} ${band.measured.toFixed(1)}mm`);
-      Object.assign(el.style, { left: `${a.x}px`, top: `${a.y + (b.y - a.y) / 2 - h / 2}px`, width: `${b.x - a.x}px`, height: `${h}px` });
-      el.innerHTML = `<span>${E(band.from)} ↕ ${E(band.to)} ${band.measured.toFixed(1)}mm${band.own !== undefined ? ' · 이 문항' : ''}</span>`;
+      Object.assign(el.style, { left: `${a.x}px`, top: `${band.side ? a.y : a.y + (b.y - a.y) / 2 - h / 2}px`, width: `${Math.max(4, b.x - a.x)}px`, height: `${band.side ? Math.max(6, b.y - a.y) : h}px` });
+      el.innerHTML = band.side ? '' : `<span>${E(band.from)} ${band.target.kind === 'bogiPad' ? '' : '↕ '}${E(band.to)} ${band.measured.toFixed(1)}mm${band.own !== undefined ? ' · 이 문항' : ''}</span>`;
       layer.append(el);
     }
     layer.hidden = false;
@@ -137,8 +168,8 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
       <p class="ts-gap-now">보이는 간격 ${band.measured.toFixed(1)}mm · 더한 간격 ${band.value.toFixed(1)}mm${band.own !== undefined ? '(이 문항)' : `(기준 「${E(std.name)}」)`}</p>
       ${lockedNow ? '<p class="ts-gap-lock">구조 잠금 중 · 간격·여백은 잠금을 풀고 바꾸세요. 글자와 자간은 그대로 고칠 수 있습니다.</p>' : `
       <div class="ts-gap-step"><button type="button" data-gap-step="-0.5" aria-label="0.5mm 줄이기" ${band.value <= 0 ? 'disabled' : ''}>−</button><output>${band.value.toFixed(1)}mm</output><button type="button" data-gap-step="0.5" aria-label="0.5mm 늘리기" ${band.value >= 20 ? 'disabled' : ''}>＋</button><small>0.5mm씩 · 0~20mm</small></div>
-      <label><input type="radio" name="ts-gap-scope" value="q" ${scope === 'q' ? 'checked' : ''}> 이 문항만</label>
-      <label><input type="radio" name="ts-gap-scope" value="std" ${scope === 'std' ? 'checked' : ''}> 조판 기준 「${E(std.name)}」에</label>
+      ${band.target.kind === 'bogiPad' ? `<p class="ts-gap-note">〈보기〉 안쪽 여백은 조판 기준 「${E(std.name)}」에 바뀝니다(이 기준을 쓰는 모든 문항).</p>` : `<label><input type="radio" name="ts-gap-scope" value="q" ${scope === 'q' ? 'checked' : ''}> 이 문항만</label>
+      <label><input type="radio" name="ts-gap-scope" value="std" ${scope === 'std' ? 'checked' : ''}> 조판 기준 「${E(std.name)}」에</label>`}
       ${std.id === KICE_ID ? '<p class="ts-gap-note">「수능 틀」은 바꿀 수 없는 기본 기준이라, 처음 바꾸면 「수능 틀 (내 설정)」으로 복제해 이 문항에 씁니다.</p>' : ''}
       ${band.own !== undefined ? '<button type="button" class="ts-gap-reset" data-gap-reset>기준 값으로 되돌리기</button>' : ''}`}`;
     pop.hidden = false;
@@ -151,7 +182,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
     if (e.target.closest('[data-gap-close]')) { selected = ''; draw(); return; }
     const band = bands.find(b => b.key === selected); if (!band || locked()) return;
     const step = e.target.closest('[data-gap-step]');
-    if (step) { const next = Math.min(20, Math.max(0, Math.round((band.value + Number(step.dataset.gapStep)) * 2) / 2)); onGap?.(band.target, next, scope, band.stdKey); return; }
+    if (step) { const next = Math.min(20, Math.max(0, Math.round((band.value + Number(step.dataset.gapStep)) * 2) / 2)); onGap?.(band.target, next, band.target.kind === 'bogiPad' ? 'std' : scope, band.stdKey); return; }
     if (e.target.closest('[data-gap-reset]')) onGap?.(band.target, undefined, 'q', band.stdKey);
   });
   gapButton.addEventListener('click', () => { on = !on; selected = ''; try { localStorage.setItem('5e.typeset.gaps', on ? 'on' : 'off'); } catch {} draw(); });

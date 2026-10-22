@@ -30,23 +30,29 @@ h.withServer(async origin => {
       await sheet.waitForSelector('#side-new'); await sheet.waitForFunction(() => document.querySelector('#status').textContent !== '준비 중');
       await sheet.evaluate(() => localStorage.removeItem('5e.typeset.gaps'));
       const q = structuredClone(examples.questions[0]);
+      q.blocks.find(b => b.kind === 'text').text += ' 두 물체의 질량은 2kg이다.'; // 숫자·단위 띄어쓰기 점검용
       await sheet.setInputFiles('#excel-file', { name: 'gaps.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ format: examples.format, questions: [q], documents: [] })) });
       await sheet.waitForSelector('#import-dialog[open]'); await sheet.evaluate(() => { const u = document.querySelector('input[name="import-mode"][value="update"]'); if (u) u.checked = true; }); await sheet.click('#apply-import');
       await sheet.waitForSelector(`[data-open-card="${q.id}"]`); await sheet.evaluate(id => document.querySelector(`[data-open-card="${id}"]`).click(), q.id);
       const ready = () => sheet.waitForFunction(() => document.querySelector('#native-editor')?.dataset.ready === 'true' && document.querySelector('#preview-dialog')?.getAttribute('aria-busy') !== 'true');
       await ready();
-      const bands = () => sheet.evaluate(() => [...document.querySelectorAll('.ts-gap-band')].map(b => b.getAttribute('aria-label')));
+      const bands = () => sheet.evaluate(() => [...document.querySelectorAll('.ts-gap-band:not(.inner)')].map(b => b.getAttribute('aria-label')));
       assert.equal(await sheet.locator('.ts-std').textContent(), '수능 틀 ▾');
+      await sheet.waitForFunction(() => /숫자·단위 1곳/.test(document.querySelector('.ts-unit-chip')?.textContent || ''));
+      assert.match(await sheet.locator('.ts-unit-chip').getAttribute('title'), /2kg/);
       await sheet.click('[data-ts-gaps]');
-      await sheet.waitForFunction(() => document.querySelectorAll('.ts-gap-band').length === 4);
+      await sheet.waitForFunction(() => document.querySelectorAll('.ts-gap-band:not(.inner)').length === 4);
       const labels = await bands();
       assert.deepEqual(labels.map(l => l.replace(/ [\d.]+mm$/, '')), ['지문 ↕ 자료', '자료 ↕ 발문', '발문 ↕ 〈보기〉', '〈보기〉 ↕ 선지'], `${name}: bands between the question elements`);
       assert.equal(await sheet.locator('.ts-gap-margin').count(), 2, `${name}: both column margins`);
+      // 〈보기〉 안쪽 여백 띠(아래·좌우): 조판 기준 값만
+      assert.equal(await sheet.locator('.ts-gap-band.inner').count(), 2, `${name}: inner bogi padding bands`);
+      assert.match(await sheet.locator('.ts-gap-band.inner').first().getAttribute('aria-label'), /〈보기〉 ↕ 아래 안쪽/);
       await page.screenshot({ path: path.join(evidence, `${name}-gaps.png`) });
       const measured = label => Number(label.match(/([\d.]+)mm$/)[1]);
 
       // 잠금 중: 보기만
-      await sheet.click('.ts-gap-band >> nth=2');
+      await sheet.click('.ts-gap-band:not(.inner) >> nth=2');
       await sheet.waitForSelector('.ts-gap-pop:not([hidden])');
       assert.equal(await sheet.locator('.ts-gap-pop [data-gap-step]').count(), 0, `${name}: locked → view only`);
       assert.match(await sheet.locator('.ts-gap-pop').textContent(), /구조 잠금 중/);
@@ -59,21 +65,21 @@ h.withServer(async origin => {
       // 잠금 풀기 → 〈보기〉↕선지(선지 앞 간격)를 이 문항만 +0.5mm ×2: 보이는 간격이 약 1mm 늘어난다(0.5mm 단위로 정확)
       await sheet.click('#typeset-lock');
       await sheet.click('.ts-gap-pop [data-gap-close]');
-      await sheet.click('.ts-gap-band >> nth=3');
+      await sheet.click('.ts-gap-band:not(.inner) >> nth=3');
       await sheet.waitForSelector('.ts-gap-pop [data-gap-step="0.5"]');
       const choicesBefore = measured((await bands())[3]);
       const step = async index => { const prev = JSON.stringify(await bands()); await sheet.click('.ts-gap-pop [data-gap-step="0.5"]');
-        await sheet.waitForFunction(p => JSON.stringify([...document.querySelectorAll('.ts-gap-band')].map(b => b.getAttribute('aria-label'))) !== p, prev, { timeout: 20000 }); await ready();
+        await sheet.waitForFunction(p => JSON.stringify([...document.querySelectorAll('.ts-gap-band:not(.inner)')].map(b => b.getAttribute('aria-label'))) !== p, prev, { timeout: 20000 }); await ready();
         await sheet.waitForSelector('.ts-gap-pop [data-gap-step="0.5"]'); return measured((await bands())[index]); };
       const once = await step(3);
       assert.equal(await sheet.locator('#typeset-lock').getAttribute('aria-pressed'), 'false', `${name}: re-typesetting the same question keeps the lock the teacher chose`);
       const twice = await step(3);
       assert.ok(Math.abs(once - choicesBefore - 0.5) <= 0.25 && Math.abs(twice - choicesBefore - 1) <= 0.25, `${name}: 0.5mm steps are exact (${choicesBefore} → ${once} → ${twice})`);
       assert.match((await bands())[3], /이 문항|[\d.]+mm$/);
-      assert.match(await sheet.locator('.ts-gap-band >> nth=3').textContent(), /이 문항/);
+      assert.match(await sheet.locator('.ts-gap-band:not(.inner) >> nth=3').textContent(), /이 문항/);
       // 조판 기준에: 수능 틀 복제
       await sheet.click('.ts-gap-pop [data-gap-close]');
-      await sheet.click('.ts-gap-band >> nth=1');
+      await sheet.click('.ts-gap-band:not(.inner) >> nth=1');
       await sheet.waitForSelector('.ts-gap-pop input[value="std"]');
       await sheet.check('.ts-gap-pop input[value="std"]');
       await sheet.click('.ts-gap-pop [data-gap-step="0.5"]');

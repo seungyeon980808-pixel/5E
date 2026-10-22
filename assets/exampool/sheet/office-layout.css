@@ -560,3 +560,8 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .pv-form{display:inline-flex;align-items:center;gap:6px;margin-right:8px;color:var(--ds-ink-3,#7d8590);font-size:12.5px}
 .pv-form select{height:30px;max-width:180px}
 #school-dialog .school-keep{display:block;margin:8px 0 2px;font-size:12.5px;color:var(--ds-doc-ink-2,#3a3f46)}
+/* 〈보기〉 안쪽 여백 띠(10-22 O3): 요소 사이 띠보다 옅게 */
+.ts-gap-band.inner{background:rgba(47,179,154,.12);box-shadow:inset 0 0 0 1px rgba(47,179,154,.25)}
+/* 숫자·단위 띄어쓰기 점검 표시(보여 주기만) */
+.ts-unit-chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:var(--ds-doc-sub,#f6f7f9);box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink-2,#3a3f46);font-size:11.5px;white-space:nowrap;cursor:help}
+.ts-unit-chip[hidden]{display:none}
