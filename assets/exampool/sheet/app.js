@@ -689,11 +689,10 @@ async function sendExam(exam,{download:asFile=false,variant=false,print=false}={
   try{
     // 나형: 문항 순서를 섞어(시험지마다 늘 같은 순서) 묶고 번호를 다시 매긴다. 가·나형 정답 대응표(엑셀)도 함께 내려받는다.
     if(variant){const {shuffledOrder,answerRows}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id));
-      const seed=[...exam.id].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7),order=shuffledOrder(exam.items,seed);
+      const order=shuffledOrder(exam.items,variantSeed(exam));
+      // 한 번에 파일 하나만(사파리는 연달아 내려받기를 막거나 허락을 묻는다) — 가·나형 대응은 이원목적분류표·정답표 엑셀의 세 번째 시트.
       const bytes=await buildExamBytes(exam,{order});download(bytes,`${exam.title} (나형).hwpx`,'application/vnd.hancom.hwpx');
-      const book=window.XLSX.utils.book_new(),map=[['나형 번호','가형 번호','정답','배점'],...order.map((id,i)=>{const q=qs.find(x=>x.id===id);return [i+1,exam.items.indexOf(id)+1,q.type==='서술형'?'서술형':Number.isInteger(q.answer)?['①','②','③','④','⑤'][q.answer]:'',Number(q.points)||0];})];
-      window.XLSX.utils.book_append_sheet(book,window.XLSX.utils.aoa_to_sheet(map),'가나형 대응');download(window.XLSX.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 가나형 정답 대응.xlsx`);
-      status('나형 시험지(HWPX)와 가·나형 정답 대응표(엑셀)를 내려받았습니다.');return;}
+      status('나형 시험지(HWPX)를 내려받았습니다 · 가·나형 정답 대응은 「이원목적분류표·정답표(엑셀)」의 세 번째 시트에 있습니다.');return;}
     const bytes=await buildExamBytes(exam);
     if(print){await printExam(bytes,exam.title);return;}
     if(asFile||!embedded){download(bytes,`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
@@ -701,9 +700,12 @@ async function sendExam(exam,{download:asFile=false,variant=false,print=false}={
   }catch(e){status(e.message,true);}
 }
 // 이원목적분류표·정답표: 엑셀 한 파일 두 시트(10-22).
-async function downloadBlueprint(exam){try{const {blueprintRows,answerRows}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean);
+// 나형 순서는 시험지마다 늘 같게(시험지 id로 씨앗).
+const variantSeed=exam=>[...exam.id].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
+async function downloadBlueprint(exam){try{const {blueprintRows,answerRows,shuffledOrder}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean);
   if(!qs.length){status('시험지에 문항을 넣은 뒤 내려받으세요.',true);return;}
   const X=window.XLSX,book=X.utils.book_new();X.utils.book_append_sheet(book,X.utils.aoa_to_sheet(blueprintRows(qs)),'이원목적분류표');X.utils.book_append_sheet(book,X.utils.aoa_to_sheet(answerRows(qs)),'정답표');
+  {const order=shuffledOrder(exam.items,variantSeed(exam)),mark=['①','②','③','④','⑤'];X.utils.book_append_sheet(book,X.utils.aoa_to_sheet([['나형 번호','가형 번호','정답','배점'],...order.map((id,i)=>{const q=qs.find(x=>x.id===id);return [i+1,exam.items.indexOf(id)+1,q.type==='서술형'?'서술형':Number.isInteger(q.answer)?mark[q.answer]:'',Number(q.points)||0];})]),'가나형 대응');}
   download(X.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 이원목적분류표·정답표.xlsx`);status('이원목적분류표·정답표(엑셀)를 내려받았습니다.');}catch(e){status(e.message,true);}}
 // 인쇄·PDF: 엔진이 그린 쪽(SVG)을 실제 용지 크기로 인쇄 창에 — PDF는 인쇄 창의 「PDF로 저장」.
 async function printExam(bytes,title){typesetter||=makeTypesetter();const {pages,widthMm,heightMm}=await typesetter.examPagesSvg(bytes);

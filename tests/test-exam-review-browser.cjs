@@ -32,19 +32,20 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   assert.equal(await sheet.locator('.pv-answers span').count(),5);
   assert.ok((await sheet.locator('.pv-checks li').allTextContents()).some(t=>/배점 합계/.test(t)),'exam checks list shows the total');
   // 이원목적분류표·정답표 엑셀
-  {const dl=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="blueprint"]');const d=await dl;assert.match(d.suggestedFilename(),/이원목적분류표·정답표\.xlsx$/);assert.ok(fs.statSync(await d.path()).size>1000);}
-  // 나형: HWPX(번호 다시 매김)와 가·나형 정답 대응 엑셀
-  {const files=[];const got=new Promise(res=>{page.on('download',d=>{files.push(d);if(files.length===2)res();});});
-    await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="variant"]');await got;
-    const names=files.map(f=>f.suggestedFilename());assert.ok(names.some(n=>/\(나형\)\.hwpx$/.test(n))&&names.some(n=>/가나형 정답 대응\.xlsx$/.test(n)),names.join(' '));
-    const hwpx=files.find(f=>/hwpx$/.test(f.suggestedFilename()));const bytes=Array.from(fs.readFileSync(await hwpx.path()));
+  {const dl=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="blueprint"]');const d=await dl;assert.match(d.suggestedFilename().normalize('NFC'),/이원목적분류표·정답표\.xlsx$/);assert.ok(fs.statSync(await d.path()).size>1000);}
+  // 나형: HWPX 한 파일(번호 다시 매김). 가·나형 대응은 위 엑셀의 세 번째 시트.
+  {const dl=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="variant"]');const files=[await dl];
+    assert.match(files[0].suggestedFilename().normalize('NFC'),/\(나형\)\.hwpx$/);
+    const hwpx=files[0];const bytes=Array.from(fs.readFileSync(await hwpx.path()));
     const first=await sheet.evaluate(bytes=>{const D=document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().constructor,d=new D(new Uint8Array(bytes));let t='';for(let p=0;p<d.getParagraphCount(0)&&!t;p++){const s=d.getTextRange(0,p,0,d.getParagraphLength(0,p));if(/^\s*\d+\./.test(s))t=s.slice(0,4);}d.free();return t;},bytes);
     assert.match(first,/^1\./,'the B form is renumbered from 1');}
   // 인쇄·PDF: 쪽마다 실제 용지 크기 인쇄 틀
-  await sheet.evaluate(()=>{window.__printed=0;const orig=HTMLIFrameElement.prototype;window.__frames=()=>[...document.querySelectorAll('iframe[aria-hidden="true"]')].map(f=>f.contentDocument?.querySelectorAll('.p svg').length||0);});
+  // 실제 인쇄 창은 띄우지 않는다(헤드리스 사파리는 인쇄 창에서 멈춤): 인쇄 틀이 붙는 즉시 print를 기록만 하게 바꾼다.
+  await sheet.evaluate(()=>{window.__printed=0;new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.tagName==='IFRAME'&&n.getAttribute('aria-hidden')==='true')n.contentWindow.print=()=>{window.__printed++;};}).observe(document.body,{childList:true});window.__frames=()=>[...document.querySelectorAll('iframe[aria-hidden="true"]')].map(f=>f.contentDocument?.querySelectorAll('.p svg').length||0);});
   await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="print"]');
   await sheet.waitForFunction(()=>/인쇄 창을 열었습니다/.test(document.querySelector('#status').textContent),null,{timeout:90000});
   assert.ok((await sheet.evaluate(()=>window.__frames())).some(n=>n>=1),'print frame holds the engine pages');
+  assert.equal(await sheet.evaluate(()=>window.__printed),1,'the print dialog is asked once');
   assert.deepEqual(errors,[]);
  });
 });
