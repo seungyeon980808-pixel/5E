@@ -34,7 +34,8 @@ function placeGrips(entry) {
   for (const { grip, panel } of entry.grips) {
     const r = panel.isConnected ? panel.getBoundingClientRect() : null;
     // 칸이 보이고 지금 폭으로 펼쳐져 있을 때만(접힘·없음 모드·좁은 띠에는 손잡이 없음)
-    const show = wide && r && r.height > 0 && Math.abs(r.width - width) <= 2;
+    // 5E_hwp 집중 모드는 칸이 공용 폭보다 넓을 수 있다(최소 288) — 공용 폭 이상으로 펼쳐져 있으면 손잡이를 둔다.
+    const show = wide && r && r.height > 0 && r.width >= width - 2;
     if (grip.hidden !== !show) grip.hidden = !show; // 같은 값을 다시 넣지 않는다(감시가 다시 불려 끝없이 도는 것을 막음)
     if (!show) continue;
     grip.style.left = `${Math.round(r.right)}px`; grip.style.top = `${Math.round(r.top)}px`; grip.style.height = `${Math.round(r.height)}px`;
@@ -71,7 +72,8 @@ function attachGrip(doc, entry, panel) {
   grip.addEventListener('pointerdown', event => {
     if (event.button !== 0) return;
     event.preventDefault();
-    drag = { x: event.clientX, w: width };
+    // 보이는 폭에서 시작한다 — 5E_hwp 집중 모드는 칸이 공용 폭보다 넓을 수 있다(최소 288, 시안 hwp-inspector).
+    drag = { x: event.clientX, w: Math.round(panel.getBoundingClientRect().width) || width };
     grip.setPointerCapture?.(event.pointerId); grip.classList.add('is-dragging');
     doc.documentElement.classList.add('shell-left-resizing');
   });

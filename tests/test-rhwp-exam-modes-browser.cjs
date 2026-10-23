@@ -11,7 +11,21 @@ const reset=s=>{const top=JSON.parse(d.getPageControlLayout(0)).controls.filter(
   while(d.getParagraphCount(0)>1)d.mergeParagraph(0,1);const n=d.getParagraphLength(0,0);if(n)d.deleteText(0,0,0,n);const lines=s.split('\\n');d.insertText(0,0,0,lines[0]);
   for(let i=1;i<lines.length;i++){d.splitParagraph(0,i-1,d.getParagraphLength(0,i-1));d.insertText(0,i,0,lines[i]);}b.deps.eventBus.emit('document-changed');};`;
 const inPage = (page, body, arg) => page.evaluate(new Function('arg', `return (async()=>{${prelude}${body}})()`), arg);
-const button = (page, title) => page.locator(`.exam-fgroup [data-exam-fi][title^="${title}"]`);
+// 10-23 양쪽 인스펙터(시안 hwp-inspector): 5E 기능(문항·학습지·판짜기)은 왼쪽 칸 모드, 한글 기능(글자·문단·표·그림·쪽)은 오른쪽 인스펙터 칸.
+// tab(page, k)는 예전 도구 줄 탭 이름을 새 자리로 옮겨 누르고, button(page, 설명)은 그 자리의 단추 → 없으면 「⋯ 더 보기」 안에서 찾는다.
+const LEFT_TABS = ['item', 'sheet', 'layout'], PANE = { text: 'text', para: 'text', table: 'table', pic: 'pic' };
+let lastTab = 'text';
+const tab = async (page, k) => { lastTab = k; if (LEFT_TABS.includes(k)) await page.locator(`.exam-left-tools [data-exam-ltab="${k}"]`).click(); else await page.locator(`.exam-inspector [data-ei-pane="${PANE[k]}"]`).click(); };
+const direct = (page, title) => page.locator(`.exam-left-tools [data-el-i][title^="${title}"], .exam-left-tools [data-el-act][title^="${title}"], .exam-inspector .ei-pane:not([hidden]) [data-ei-act][title^="${title}"]`).first();
+const button = (page, title) => ({
+  evaluate: fn => direct(page, title).evaluate(fn),
+  async click() {
+    if (title === '자주 쓰지 않는 기능') return page.locator(LEFT_TABS.includes(lastTab) ? '.exam-left-tools [data-el-more]' : '.exam-inspector .ei-pane:not([hidden]) [data-ei-more]').click();
+    if (await direct(page, title).count()) return direct(page, title).click();
+    await page.locator('.exam-inspector .ei-pane:not([hidden]) [data-ei-more]').click(); await page.locator('.exam-morepop').waitFor();
+    return page.locator(`.exam-morepop [data-exam-old][title^="${title}"], .exam-morepop [data-exam-more][title^="${title}"]`).first().click();
+  },
+});
 // 문항 목록의 ↑↓⧉× 는 칸이 좁으면(기본 160) 줄에 마우스를 올렸을 때만 보인다(10-22) — 사람처럼 줄에 올린 뒤 누른다.
 const rowAction = async (page, selector) => { const target = page.locator(selector); await target.locator('xpath=ancestor::li[1]').hover(); await target.click(); };
 
@@ -39,15 +53,15 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     await button(page, '굵게').click(); await button(page, '고른 글자에 형광펜').click(); await button(page, '자간 줄이기').click(); await h.idle(page);
     const chars = await inPage(page, `return w.getCharPropertiesAt(0,0,1);`);
     assert.equal(chars.bold, true); assert.equal(chars.shadeColor, '#fff176'); assert.ok(chars.spacings[0] < 0);
-    await page.locator('[data-exam-ftab="para"]').click();
-    await page.locator('[data-exam-fctl="spacing"]').selectOption('200');
+    await tab(page, 'para');
+    await page.locator('.exam-inspector [data-ei-step="line:1"]').click(); await h.idle(page); await page.locator('.exam-inspector [data-ei-step="line:1"]').click(); // 160 → 180 → 200
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:1});`);
     await button(page, '문단 위 간격 2pt 늘리기').click(); await h.idle(page);
     const para = await inPage(page, `return w.getParaPropertiesAt(0,0);`);
     assert.equal(para.lineSpacing, 200); assert.equal(Math.round(para.spacingBefore * 75 / 100) * 100, 400, '2pt = 400 (엔진은 소수 한 자리로 돌려줌)');
 
     // 2-1) 더 보기: 리본 없이 닿는 기능 — 오른쪽 정렬.
-    await page.locator('[data-exam-ftab="text"]').click();
+    await tab(page, 'text');
     await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morepop').waitFor();
     await page.locator('.exam-morelist button', { hasText: '오른쪽 정렬' }).click(); await h.idle(page);
     assert.equal((await inPage(page, `return w.getParaPropertiesAt(0,0);`)).alignment, 'right');
@@ -65,7 +79,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
 
     // 4) 문항: 번호 다시 매기기, 선지 1열(발문은 남음) → 5열 표 → 3열 표.
     await inPage(page, `reset('3. 첫 문항\\n7. 발문 ① 가 ② 나 ③ 다 ④ 라 ⑤ 마');`);
-    await page.locator('[data-exam-ftab="item"]').click();
+    await tab(page, 'item');
     await button(page, '문항 번호 1부터').click(); await h.idle(page);
     assert.deepEqual((await inPage(page, `return text();`)).map(s => s.slice(0, 2)), ['1.', '2.']);
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:9});`);
@@ -85,7 +99,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
       const assets=new Map([['a',{bytes:await png('#c33'),widthMm:40,heightMm:30,width:400,height:300,extension:'png',name:'a.png'}],['b',{bytes:await png('#33c'),widthMm:40,heightMm:30,width:400,height:300,extension:'png',name:'b.png'}]]);
       b.transaction('test-pictures',()=>{N.insertValue(d,{sectionIndex:0,paragraphIndex:0,charOffset:0},[{image:'a'},{text:' ',style:null},{image:'b'}],assets);return true;});
       b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="pic"]').click();
+    await tab(page, 'pic');
     await button(page, '커서 문단의 그림 여러 개를').click(); await h.idle(page);
     const grid = await tables(); assert.equal(grid.length, 1); assert.deepEqual([grid[0].dims.rowCount, grid[0].dims.colCount], [2, 2]);
     const placed = await inPage(page, `return b.documentPictures().map(p=>p.ref.cellPath?.[0]?.cellIndex);`);
@@ -95,7 +109,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     const widths = await inPage(page, `delete b.input.cursor.getSelectedPictureRef;const ref=b.documentPictures()[0].ref,c=JSON.parse(d.getCellProperties(0,ref.ppi,ref.cellPath[0].controlIndex,0));return {pic:b.properties(ref).width,inner:c.width-c.paddingLeft-c.paddingRight};`);
     assert.equal(fit, 0); assert.equal(widths.pic, widths.inner - Math.round(3 * 7200 / 25.4), 'leaves 3mm');
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:arg.p,charOffset:0,parentParaIndex:arg.p,controlIndex:arg.ci,cellIndex:2,cellParaIndex:0,cellPath:[{controlIndex:arg.ci,cellIndex:2,cellParaIndex:0}]});`, grid[0]);
-    await page.locator('[data-exam-ftab="table"]').click();
+    await tab(page, 'table');
     await button(page, '아래에 줄 넣기').click(); await h.idle(page);
     assert.equal((await tables())[0].dims.rowCount, 3);
 
@@ -109,13 +123,13 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
 
     // 7) 되돌리기: 도구 줄 동작은 한 단계로 되돌아간다.
     await inPage(page, `reset('5. 하나\\n9. 둘');`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
+    await tab(page, 'item'); await button(page, '문항 번호 1부터').click(); await h.idle(page);
     await page.locator('[data-exam-action="undo"]').click(); await h.idle(page);
     assert.deepEqual((await inPage(page, `return text();`)).map(s => s.slice(0, 2)), ['5.', '9.']);
 
     // 8) 학습지: 빈칸 표시 → 학생용 사본(지금 문서는 그대로) → 정답 모아 넣기, 시험지 머리, 정답표 칸, 문항 간격, 배점 합계 점검.
     await inPage(page, `reset('1. 식물은 광합성으로 포도당을 만든다. [3점]\\n2. 엽록체에서 일어난다. [4점]');`);
-    await page.locator('[data-exam-ftab="sheet"]').click();
+    await tab(page, 'sheet');
     for (const [para, from, to] of [[0, 7, 10], [1, 3, 6]]) {
       await inPage(page, `b.input.cursor.selectRange({sectionIndex:0,paragraphIndex:arg[0],charOffset:arg[1]},{sectionIndex:0,paragraphIndex:arg[0],charOffset:arg[2]});`, [para, from, to]);
       await button(page, '고른 낱말을 빈칸으로').click(); await h.idle(page);
@@ -128,7 +142,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual((await inPage(page, `return text();`)).slice(0, 2), ['1. 식물은 광합성으로 포도당을 만든다. [3점]', '2. 엽록체에서 일어난다. [4점]'], 'teacher copy keeps answers');
     await button(page, '빈칸 정답을').click(); await h.idle(page);
     assert.equal((await inPage(page, `return text();`)).at(-1), '[빈칸 정답] 1. 광합성   2. 엽록체');
-    await page.locator('[data-exam-ftab="layout"]').click();
+    await tab(page, 'layout');
     await button(page, '문서 맨 앞에 제목').click();
     await page.locator('[data-exam-form="subject"]').fill('통합과학'); await page.locator('[data-exam-form="grade"]').fill('1');
     await page.locator('[data-exam-form-submit]').click(); await h.idle(page);
@@ -147,7 +161,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     await page.locator('.exam-q').nth(2).waitFor();
     if (await page.evaluate(() => matchMedia('(hover: hover)').matches)) {
       await page.mouse.move(700, 500);
-      assert.equal(await page.locator('[data-exam-qmove="2:-1"]').isVisible(), false, 'move buttons stay hidden until the row is hovered in a narrow panel');
+      assert.equal(await page.locator('[data-exam-qmove="2:-1"]').isVisible(), false, 'move buttons stay hidden until the row is hovered');
       await page.locator('.exam-q').nth(2).hover();
       assert.equal(await page.locator('[data-exam-qmove="2:-1"]').isVisible(), true, 'hovering a row shows its move buttons');
     }
@@ -165,7 +179,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
 
     // 10) 수업 자료 틀: 상자(제목 음영)·답란 3줄·평가 기준표를 커서 문단 뒤에 넣는다.
     await inPage(page, `reset('광합성 학습지');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
-    await page.locator('[data-exam-ftab="sheet"]').click();
+    await tab(page, 'sheet');
     await button(page, '개념 정리').click(); await page.locator('[data-exam-box="탐구 활동"]').click(); await h.idle(page);
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
     await button(page, '서술형 답을').click(); await page.locator('[data-exam-lines="3"]').click(); await h.idle(page);
@@ -179,7 +193,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
 
     // 11) 판짜기: 2단·B4, 가·나형(나형 사본은 문항째 섞이고 번호 다시 매김, 교사용 끝에 대응표).
     await inPage(page, `reset('1. 가\\n가가\\n2. 나\\n3. 다\\n다다\\n4. 라');`);
-    await page.locator('[data-exam-ftab="layout"]').click();
+    await tab(page, 'layout');
     await button(page, '모든 쪽을 2단').click(); await h.idle(page);
     assert.equal((await inPage(page, `return JSON.parse(d.getColumnDef(0));`)).columnCount, 2);
     await button(page, '용지 크기').click(); await page.locator('[data-exam-paper="B4"]').click(); await h.idle(page);
@@ -196,17 +210,17 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
 
     // 12) 정답지(빈칸 자리에 빨간 정답)·자주 쓰는 발문·표 머리 줄 음영.
     await inPage(page, `reset('1. 식물은 광합성으로 포도당을 만든다.');b.input.cursor.selectRange({sectionIndex:0,paragraphIndex:0,charOffset:7},{sectionIndex:0,paragraphIndex:0,charOffset:10});`);
-    await page.locator('[data-exam-ftab="sheet"]').click();
+    await tab(page, 'sheet');
     await button(page, '고른 낱말을 빈칸으로').click(); await h.idle(page);
     const keyDownload = page.waitForEvent('download'); await button(page, '빈칸 자리에 정답을').click(); await keyDownload;
     const key = await inPage(page, `const {answerKeyCopy}=await import('/js/rhwp-exam-worksheet.js');const D=d.constructor,x=new D(answerKeyCopy(b).bytes);try{return [x.getTextRange(0,0,0,x.getParagraphLength(0,0)),JSON.parse(x.getCharPropertiesAt(0,0,9)).textColor];}finally{x.free();}`);
     assert.deepEqual(key, ['1. 식물은 ( 광합성 )으로 포도당을 만든다.', '#d0021b']);
     await inPage(page, `reset('2. ');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '자주 쓰는 발문').click();
+    await tab(page, 'item'); await button(page, '자주 쓰는 발문').click();
     await page.locator('[data-exam-stem="0"]').click(); await h.idle(page);
     assert.equal((await inPage(page, `return text();`))[0], '2. 이에 대한 설명으로 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?');
     await inPage(page, `reset('');const r=JSON.parse(d.createTable(0,0,0,2,2));b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:r.paraIdx,charOffset:0,parentParaIndex:r.paraIdx,controlIndex:r.controlIdx,cellIndex:3,cellParaIndex:0,cellPath:[{controlIndex:r.controlIdx,cellIndex:3,cellParaIndex:0}]});window.__t=r;`);
-    await page.locator('[data-exam-ftab="table"]').click(); await button(page, '커서가 있는 표의 첫 줄').click(); await h.idle(page);
+    await tab(page, 'table'); await button(page, '커서가 있는 표의 첫 줄').click(); await h.idle(page);
     const fills = await inPage(page, `const r=window.__t;return [0,1,2,3].map(c=>JSON.parse(d.getCellProperties(0,r.paraIdx,r.controlIdx,c)).fillType);`);
     assert.deepEqual(fills, ['solid', 'solid', 'none', 'none']);
 
@@ -227,7 +241,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     const fitted = await inPage(page, `const {columnWidth}=await import('/js/rhwp-exam-layout-tools.js');return [b.properties(b.documentPictures()[0].ref).width,columnWidth(d,0)];`);
     assert.ok(fitted[0] <= fitted[1], JSON.stringify(fitted));
     await inPage(page, `reset('');`);
-    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '제목·이름 칸과 상자').click(); await page.locator('[data-exam-frame="lesson"]').click(); await h.idle(page);
+    await tab(page, 'sheet'); await button(page, '제목·이름 칸과 상자').click(); await page.locator('[data-exam-frame="lesson"]').click(); await h.idle(page);
     const frame = await tables();
     assert.deepEqual(frame.map(t => [t.dims.rowCount, t.dims.colCount]), [[1, 4], [2, 1], [2, 1], [2, 1], [2, 1]]);
 
@@ -247,7 +261,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     const beforeFill = await inPage(page, `return text();`);
     const gaps = `const runs=JSON.parse(d.getPageTextLayout(0)).runs.filter(r=>r.secIdx===0),top=p=>Math.min(...runs.filter(r=>r.paraIdx===p).map(r=>r.y)),low=Math.max(...runs.map(r=>r.y+r.h)),info=JSON.parse(d.getPageInfo(0));
       return {sp:[2,3].map(p=>Math.round(w.getParaPropertiesAt(0,p).spacingBefore*75)),q2:top(2)-top(1),q3:top(3)-top(2),room:info.footerArea.y-low,pages:d.pageCount()};`;
-    await page.locator('[data-exam-ftab="layout"]').click(); await button(page, '단마다 남는 빈 공간').click(); await h.idle(page);
+    await tab(page, 'layout'); await button(page, '단마다 남는 빈 공간').click(); await h.idle(page);
     const filled = await inPage(page, gaps);
     assert.match(await page.locator('#exam-status').textContent(), /단 1곳/);
     assert.deepEqual(await inPage(page, `return text();`), beforeFill);
@@ -258,7 +272,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual((await inPage(page, gaps)).sp, filled.sp, 'same result when pressed again');
     // 18) 배점: 커서 문항의 발문 끝(「?」 문단)에 넣고, 다시 고르면 바꾸고(겹치지 않음), 합계를 알린다.
     await inPage(page, `reset('1. 그림은 실험이다.\\n이에 대한 설명으로 옳은 것은?\\n① ㄱ ② ㄴ\\n2. 다음 중 옳은 것은? [2점]');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:2,charOffset:1});`);
-    await page.locator('[data-exam-ftab="item"]').click();
+    await tab(page, 'item');
     await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score="3"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 그림은 실험이다.', '이에 대한 설명으로 옳은 것은? [3점]', '① ㄱ ② ㄴ', '2. 다음 중 옳은 것은? [2점]']);
     assert.match(await page.locator('#exam-status').textContent(), /1번 3점 — 배점 2곳 합계 5점/);
@@ -286,7 +300,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual(variant[1], ['[1~2] 다음 글을 읽고 물음에 답하시오.', '지문', '1. 둘째', '2. 셋째', '3. 다섯째', '4. 넷째']);
     // 20) QR 코드: 주소를 쓰고 크기를 고르면 커서 문단 뒤에 테두리 없는 1×2 칸(왼쪽 QR 그림 25mm, 오른쪽 안내 글·주소). 같은 주소면 같은 그림.
     await inPage(page, `reset('학습지');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '영상·자료 주소를 QR 코드로').click();
+    await tab(page, 'sheet'); await button(page, '영상·자료 주소를 QR 코드로').click();
     await page.locator('[data-exam-qr-size="25"]').click();
     assert.match(await page.locator('#exam-status').textContent(), /주소를 쓰세요/);
     await page.locator('[data-exam-qr="url"]').fill('https://youtu.be/5e-science'); await page.locator('[data-exam-qr="label"]').fill('실험 영상 보기');
@@ -306,7 +320,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     // 21) 첨자 자동: 본문과 표 칸의 화학식·이온·단위에 첨자 모양만 입히고 글자는 그대로.
     await inPage(page, `reset('반응식 2H2 + O2 → 2H2O\\n이온 Fe3+ 와 SO42-');const r=JSON.parse(d.createTable(0,1,0,1,1));d.insertTextInCell(0,r.paraIdx,r.controlIdx,0,0,0,'가속도 2 m/s2');b.deps.eventBus.emit('document-changed');window.__t=r;`);
     const plain = await inPage(page, `return text();`);
-    await page.locator('[data-exam-ftab="text"]').click(); await button(page, '문서 전체 화학식').click(); await h.idle(page);
+    await tab(page, 'text'); await button(page, '문서 전체 화학식').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /첨자 7곳/);
     assert.deepEqual(await inPage(page, `return text();`), plain);
     const scripted = await inPage(page, `const at=(p,o)=>{const c=w.getCharPropertiesAt(0,p,o);return c.subscript?'_':c.superscript?'^':'.';};
@@ -322,7 +336,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual(await inPage(page, `return [2,3].map(p=>{const c=w.getCharPropertiesAt(0,p,1);return [c.fontFamily,c.fontSize];});`), [['함초롬바탕', 1000], ['함초롬바탕', 900]]);
     // 23) 학생용 사본은 교사용 줄([정답]·해설:·[빈칸 정답])을 문단째 빼고, 「정답은 …」 같은 본문은 그대로 둔다. 빈칸이 없어도 된다.
     await inPage(page, `reset('1. 문항\\n[정답] ③\\n해설: 설명\\n2. 문항\\n정답은 ③이다\\n【풀이】 끝');`);
-    await page.locator('[data-exam-ftab="sheet"]').click();
+    await tab(page, 'sheet');
     const studentDownload = page.waitForEvent('download'); await button(page, '빈칸을 「').click(); await studentDownload; await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /\[정답\]·\[해설\] 줄 3개를 뺀 학생용/);
     assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`), ['1. 문항', '2. 문항', '정답은 ③이다']);
@@ -341,7 +355,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     const newAnswer = vt[q2 + 6].slice(-1);
     assert.equal(choiceLines.find(t => t[0] === newAnswer).slice(2), '다', 'answer follows the moved choice');
     assert.deepEqual(shuffledChoices.mapping, [{ variant: 1, original: 2, answer: '②' }, { variant: 2, original: 1, answer: newAnswer }]);
-    await page.locator('[data-exam-ftab="layout"]').click();
+    await tab(page, 'layout');
     const bothDownload = page.waitForEvent('download'); await button(page, '문항 순서를 섞은').click(); await page.locator('[data-exam-variant="choices"]').click(); await bothDownload; await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /선지도 섞은 문항 1개/);
     assert.match((await inPage(page, `return text();`)).at(-1), /^\[나형 정답\] 1-② {2}2-[①-⑤]$/);
@@ -355,7 +369,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     // 26) 굵은 글씨 → 빈칸: 굵은 낱말만(앞 띄어쓰기 빼고) 빈칸 표시, 줄 전체가 굵은 제목은 그대로.
     await inPage(page, `reset('개념 정리\\n물은 수소와 산소로 이루어진 화합물이다.');for(let p=0;p<2;p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({bold:false,shadeColor:'#ffffff',underline:false}));
       d.applyCharFormat(0,0,0,d.getParagraphLength(0,0),JSON.stringify({bold:true}));d.applyCharFormat(0,1,3,5,JSON.stringify({bold:true}));d.applyCharFormat(0,1,6,9,JSON.stringify({bold:true}));b.deps.eventBus.emit('document-changed');`);
-    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '문서의 굵은 낱말을').click(); await h.idle(page);
+    await tab(page, 'sheet'); await button(page, '문서의 굵은 낱말을').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /굵은 낱말 2개/);
     assert.deepEqual(await inPage(page, `const {collectBlanks}=await import('/js/rhwp-exam-worksheet.js');return collectBlanks(d).map(x=>[x.where.para,x.start,x.text]);`), [[1, 3, '수소'], [1, 7, '산소']]);
     const labeledDownload = page.waitForEvent('download');
@@ -364,18 +378,18 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.match(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b,{labeled:true}).bytes);try{return x.getTextRange(0,1,0,x.getParagraphLength(0,1));}finally{x.free();}`), /^물은 \(　㉠　+\)와 \(　㉡　+\)로 이루어진/);
     // 27) ㄱㄴㄷ 조합 선지: 발문 줄 뒤에 다섯 조합을 5열 선지 표로.
     await inPage(page, `reset('1. 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '〈보기〉 ㄱㄴㄷ').click(); await page.locator('[data-exam-combo="0"]').click(); await h.idle(page);
+    await tab(page, 'item'); await button(page, '〈보기〉 ㄱㄴㄷ').click(); await page.locator('[data-exam-combo="0"]').click(); await h.idle(page);
     const combo = await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length),ci=t.controlIdx??t.ci,n=JSON.parse(d.getTableDimensions(0,t.paraIdx,ci)).cellCount;
       return [text()[0],[...Array(n).keys()].map(c=>d.getTextInCell(0,t.paraIdx,ci,c,0,0,d.getCellParagraphLength(0,t.paraIdx,ci,c,0)))];`);
     assert.deepEqual(combo, ['1. 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?', ['① ㄱ', '② ㄷ', '③ ㄱ, ㄴ', '④ ㄴ, ㄷ', '⑤ ㄱ, ㄴ, ㄷ']]);
     // 28) 실험 보고서 틀: 제목·이름 칸 + 탐구 주제·가설·준비물·실험 과정·결과·결론 상자.
     await inPage(page, `reset('');`);
-    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '제목·이름 칸과 상자').click(); await page.locator('[data-exam-frame="lab"]').click(); await h.idle(page);
+    await tab(page, 'sheet'); await button(page, '제목·이름 칸과 상자').click(); await page.locator('[data-exam-frame="lab"]').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /실험 보고서 틀\(상자 6개\)/);
     assert.equal((await tables()).length, 7);
     // 29) 이원목적분류표: 문항 번호·배점·정답을 채운 새 한글 파일(머리 줄·합계 줄), 지금 문서는 그대로.
     await inPage(page, `reset('1. 가는? [2점]\\n[정답] ③\\n[성취기준] [10통과1-01]\\n[난이도] 중\\n2. 나는? [3점]\\n3. 다는?\\n정답: ⑤\\n[출처] 2023 모의');`);
-    await page.locator('[data-exam-ftab="layout"]').click();
+    await tab(page, 'layout');
     const bpDownload = page.waitForEvent('download'); await button(page, '이원목적분류표:').click(); const bpFile = await bpDownload; await h.idle(page);
     assert.match(bpFile.suggestedFilename().normalize('NFC'), /이원목적분류표\.hwpx$/);
     assert.match(await page.locator('#exam-status').textContent(), /문항 3개\(배점 합계 5점\)/);
@@ -394,14 +408,14 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual(await page.locator('.exam-q b').allTextContents(), ['1.', '2.', '서술형 3', '서술형 5']);
     assert.equal(await page.locator('[data-exam-qmove="1:1"]').isDisabled(), true);
     assert.equal(await page.locator('[data-exam-qmove="2:1"]').isDisabled(), false);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
+    await tab(page, 'item'); await button(page, '문항 번호 1부터').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '2. 나', '[서술형 1] 서술 하나', '답란', '서술형 2. 서술 둘']);
     await page.waitForFunction(() => document.querySelectorAll('.exam-q b')[2]?.textContent === '서술형 1');
     await rowAction(page, '[data-exam-qmove="2:1"]'); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '2. 나', '서술형 1. 서술 둘', '[서술형 2] 서술 하나', '답란']);
     // 31) 「유의 사항」 상자는 시험 유의 사항 네 줄을 미리 채운다.
     await inPage(page, `reset('제목');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '개념 정리·탐구 활동').click(); await page.locator('[data-exam-box="유의 사항"]').click(); await h.idle(page);
+    await tab(page, 'sheet'); await button(page, '개념 정리·탐구 활동').click(); await page.locator('[data-exam-box="유의 사항"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length),ci=t.controlIdx??t.ci;
       return [0,1].map(c=>[...Array(d.getCellParagraphCount(0,t.paraIdx,ci,c)).keys()].map(p=>d.getTextInCell(0,t.paraIdx,ci,c,p,0,d.getCellParagraphLength(0,t.paraIdx,ci,c,p)).slice(0,6)));`), [['유의 사항'], ['1. 답안지', '2. 선택형', '3. 서술형', '4. 문항에']]);
     // 32) 점검: 배점 빠진 문항, 같은 정답 세 번 연속, 정답 분포 치우침.
@@ -415,7 +429,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     await page.keyboard.press('Escape');
     // 33) 정답 넣기: 커서 문항 끝에 「[정답] ③」, 다시 고르면 바꾸고, 지우기로 뺀다. 목록에 정답이 보인다.
     await inPage(page, `reset('1. 가\\n① 가 ② 나\\n2. 나');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});`);
-    await page.locator('[data-exam-ftab="item"]').click();
+    await tab(page, 'item');
     await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer="③"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '[정답] ③', '2. 나']);
     await page.waitForFunction(() => document.querySelector('.exam-qans')?.textContent === '③');
@@ -429,19 +443,19 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer=""]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '2. 나', '[정답] ①']);
     // 34) 선지 자동(1단 문서): 짧으면 5열, 중간이면 3열, 길면 1열. 2단이면 같은 선지도 칸이 좁아 더 적은 열이 된다.
-    await page.locator('[data-exam-ftab="item"]').click();
+    await tab(page, 'item');
     for (const [choices, want] of [['① ㄱ ② ㄴ ③ ㄷ ④ ㄹ ⑤ ㅁ', 5], ['① 산소의 양이 늘어난다 ② 질소의 양이 줄어든다 ③ 변화가 없다 ④ 모두 늘어난다 ⑤ 모두 줄어든다', 3], ['① 물체에 작용하는 알짜힘의 크기는 시간에 따라 증가한다 ② 나 ③ 다 ④ 라 ⑤ 마', 1]]) {
       await inPage(page, `reset('1. 발문\\n'+arg);d.setColumnDef(0,1,0,true,0);b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});`, choices);
       await button(page, '선지 길이를 보고').click(); await h.idle(page);
       assert.match(await page.locator('#exam-status').textContent(), new RegExp(`선지를 ${want}열로`), choices);
     }
     // 더 보기의 팔레트 도구(마크다운 → 문항)도 오류 없이 연다.
-    await page.locator('.exam-fgroup [data-exam-fi]').last().click();
+    await page.locator('.exam-left-tools [data-el-more]').click();
     await page.locator('.exam-morelist button', { hasText: '마크다운 → 문항' }).click(); await h.idle(page);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     // 35) 정답·해설지: 「번호. 정답」과 [해설]·풀이: 줄을 모은 새 한글 파일. 서술형은 이름만.
     await inPage(page, `reset('1. 가\\n[정답] ③\\n[해설] 셋째가 맞다.\\n2. 나\\n정답: ①\\n풀이: 첫째.\\n[서술형 1] 쓰시오');`);
-    await page.locator('[data-exam-ftab="layout"]').click();
+    await tab(page, 'layout');
     const exDownload = page.waitForEvent('download'); await button(page, '문항마다 「번호. 정답」').click(); const exFile = await exDownload; await h.idle(page);
     assert.match(exFile.suggestedFilename().normalize('NFC'), /정답과해설\.hwpx$/);
     assert.match(await page.locator('#exam-status').textContent(), /문항 3개\(해설 2개\)/);
@@ -449,7 +463,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
       ['중간 정답과 해설', '1. ③', '셋째가 맞다.', '2. ①', '첫째.', '서술형 1']);
     // 36) 해설 줄: 커서 문항 끝에 「[해설] 」을 만들고 커서를 그 끝에 둔다(이미 있으면 그 줄로).
     await inPage(page, `reset('1. 가\\n[정답] ③\\n2. 나');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서 문항 끝에 「[해설]').click(); await h.idle(page);
+    await tab(page, 'item'); await button(page, '커서 문항 끝에 「[해설]').click(); await h.idle(page);
     await page.keyboard.type('셋째'); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[해설] 셋째', '2. 나']);
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
@@ -475,12 +489,12 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     const tableAnswer = tableVariant.mapping.find(m => m.original === 1).answer;
     assert.equal(plain5.find(t => t[0] === tableAnswer).slice(2), '나', JSON.stringify(tableVariant));
     // 38) 만드는 순서: 펼쳐서 단계를 누르면 그 묶음이 열리고 해당 단추가 밝혀진다. 학습지 순서로 바꿀 수 있다.
-    await page.locator('.exam-guide summary').click();
+    await page.locator('.exam-left-tools [data-el-act="tour"]').click();
     await page.locator('[data-exam-guide="2"]').click();
-    assert.equal(await page.locator('[data-exam-ftab="item"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('.exam-left-tools [data-exam-ltab="item"]').getAttribute('aria-pressed'), 'true');
     assert.equal(await button(page, '커서가 있는 문항 끝에 「[정답]').evaluate(el => el.classList.contains('is-hint')), true);
     await page.locator('[data-exam-guide-kind="sheet"]').click(); await page.locator('[data-exam-guide="2"]').click();
-    assert.equal(await page.locator('[data-exam-ftab="sheet"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('.exam-left-tools [data-exam-ltab="sheet"]').getAttribute('aria-pressed'), 'true');
     assert.equal(await button(page, '문서의 굵은 낱말을').evaluate(el => el.classList.contains('is-hint')), true);
     // 39) 점검 「수식 크기 맞추기」: 본문 수식은 그 문단 글자 크기, 표 칸 수식은 본문 크기로.
     await inPage(page, `reset('1. 식은');for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000}));
@@ -547,7 +561,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 2 && /옳지 않은/.test(document.querySelector('.exam-q')?.textContent || ''), null, { timeout: 5000 }).catch(() => {});
     assert.deepEqual(await page.locator('.exam-q').allTextContents(), ['1. 다음 중 옳지 않은 것은? (3점)', '5. 옳은 것은? (4점)']);
     const cellOf = (q, cell) => `(()=>{const t=window.__qt[${q}],c=JSON.parse(d.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length)[${q}];return d.getTextInCell(0,c.paraIdx,c.controlIdx,${cell},0,0,d.getCellParagraphLength(0,c.paraIdx,c.controlIdx,${cell},0));})()`;
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
+    await tab(page, 'item'); await button(page, '문항 번호 1부터').click(); await h.idle(page);
     assert.equal(await inPage(page, `return ${cellOf(1, 0)};`), '2.');
     await inPage(page, `const c=JSON.parse(d.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length)[0];b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:c.paraIdx,charOffset:0,parentParaIndex:c.paraIdx,controlIndex:c.controlIdx,cellIndex:1,cellParaIndex:0,cellPath:[{controlIndex:c.controlIdx,cellIndex:1,cellParaIndex:0}]});`);
     await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score="5"]').click(); await h.idle(page);
@@ -564,7 +578,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     // 46) 문항을 그림으로(더 보기): 커서 문항 영역만 3배 PNG로, [정답] 줄은 빼고. 그림에 글자가 실제로 그려졌는지 픽셀로 본다.
     await inPage(page, `reset('1. 첫째 문항의 발문은 이것이다.\\n① 가 ② 나 ③ 다 ④ 라 ⑤ 마\\n[정답] ③\\n2. 둘째');d.setColumnDef(0,1,0,true,0);b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:2});`);
     const region = await inPage(page, `const T=await import('/js/rhwp-exam-layout-tools.js');const q=T.allQuestionBlocks(d)[0];return [T.questionRegion(d,q),T.questionRegion(d,{...q,end:q.end}).h];`);
-    await page.locator('[data-exam-ftab="item"]').click();
+    await tab(page, 'item');
     const imgDownload = page.waitForEvent('download');
     await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morelist button', { hasText: '문항을 그림으로' }).click();
     const imgFile = await imgDownload; await h.idle(page);
@@ -592,7 +606,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.ok(!marks.some((m, i) => i >= 2 && m === marks[i - 1] && m === marks[i - 2]), marks.join(''));
     // 48) 분류 정보: 커서 문항에 [내용 영역]·[성취기준]·[난이도] 줄을 넣고, 다시 열면 지금 값이 채워져 있고, 비우면 그 줄을 뺀다.
     await inPage(page, `reset('1. 가\\n[정답] ③\\n2. 나');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서 문항의 내용 영역').click();
+    await tab(page, 'item'); await button(page, '커서 문항의 내용 영역').click();
     await page.locator('[data-exam-meta="area"]').fill('물질과 규칙성'); await page.locator('[data-exam-meta="standard"]').fill('[10통과1-01]');
     await page.locator('[data-exam-meta-level="중"]').click(); await page.locator('[data-exam-meta-submit]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[내용 영역] 물질과 규칙성', '[성취기준] [10통과1-01]', '[난이도] 중', '2. 나']);
@@ -604,7 +618,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[성취기준] [10통과1-01]', '[난이도] 상', '2. 나']);
     // 49) 고른 문항만 새 파일로(더 보기): 「2, 4-5」 → 그 문항만 남긴 사본(번호 다시), 지금 문서는 그대로. Enter로도 내려받는다.
     await inPage(page, `reset('시험 머리\\n1. 가\\n[정답] ①\\n2. 나\\n3. 다\\n4. 라\\n5. 마');`);
-    await page.locator('[data-exam-ftab="item"]').click();
+    await tab(page, 'item');
     await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morelist button', { hasText: '고른 문항만 새 파일로' }).click();
     await page.locator('[data-exam-pick]').fill('2, 4-5');
     const pickDownload = page.waitForEvent('download'); await page.locator('[data-exam-pick]').press('Enter'); const pickFile = await pickDownload; await h.idle(page);
@@ -614,7 +628,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.equal((await inPage(page, `return text();`)).length, 7);
     // 50) 표 틀: 상자 창의 「실험 결과 표」 → 4줄×5칸, 머리 줄 음영.
     await inPage(page, `reset('실험');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '개념 정리·탐구 활동').click(); await page.locator('[data-exam-tpreset="실험 결과 표"]').click(); await h.idle(page);
+    await tab(page, 'sheet'); await button(page, '개념 정리·탐구 활동').click(); await page.locator('[data-exam-tpreset="실험 결과 표"]').click(); await h.idle(page);
     const preset = await tables();
     assert.deepEqual([preset[0].dims.rowCount, preset[0].dims.colCount], [4, 5]);
     assert.equal(await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table');return JSON.parse(d.getCellProperties(0,t.paraIdx,t.controlIdx,4)).fillType+'/'+d.getTextInCell(0,t.paraIdx,t.controlIdx,4,0,0,2);`), 'solid/평균');
@@ -659,13 +673,13 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.equal(eqGuard.eq, 1);
     // 54) 정답 한 번에: 「3 2 ④」 → 선택형 차례대로 넣거나 바꾸고(서술형은 건너뜀), Enter로도 된다.
     await inPage(page, `reset('1. 가\\n2. 나\\n[정답] ①\\n[서술형 1] 쓰\\n3. 다');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서가 있는 문항 끝에 「[정답]').click();
+    await tab(page, 'item'); await button(page, '커서가 있는 문항 끝에 「[정답]').click();
     await page.locator('[data-exam-allanswers]').fill('3 2 ④'); await page.locator('[data-exam-allanswers]').press('Enter'); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /선택형 3문항 중 3문항에 정답/);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '2. 나', '[정답] ②', '[서술형 1] 쓰', '3. 다', '[정답] ④']);
     // 55) 배점 한 번에: 「2 3.5 4」 → 문항 차례대로(서술형 포함) 넣거나 바꾸고, 문항에 있던 괄호 모양을 따른다.
     await inPage(page, `reset('1. 가는?\\n2. 나는? (3점)\\n[서술형 1] 쓰시오.');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
-    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서가 있는 문항의 배점').click();
+    await tab(page, 'item'); await button(page, '커서가 있는 문항의 배점').click();
     await page.locator('[data-exam-allscores]').fill('2 3.5 4'); await page.locator('[data-exam-allscores]').press('Enter'); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /3문항 중 3문항에 배점.*합계 9\.5점/);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가는? (2점)', '2. 나는? (3.5점)', '[서술형 1] 쓰시오. (4점)']);
@@ -716,7 +730,7 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
 
     // 17) 쪽 번호: 모든 구역 꼬리말에 넣고, 다시 고르면 모양만 바뀐다(겹치지 않음). 그려진 쪽에 실제 숫자가 찍힌다.
     const footers = `return [...Array(d.getSectionCount()).keys()].map(s=>JSON.parse(d.getHeaderFooter(s,false,0)).text);`;
-    await page.locator('[data-exam-ftab="layout"]').click(); await button(page, '모든 쪽 아래 가운데에 쪽 번호').click(); await page.locator('[data-exam-pagenum="dash"]').click(); await h.idle(page);
+    await tab(page, 'layout'); await button(page, '모든 쪽 아래 가운데에 쪽 번호').click(); await page.locator('[data-exam-pagenum="dash"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, footers), ['- \u0015 -', '- \u0015 -']);
     await button(page, '모든 쪽 아래 가운데에 쪽 번호').click(); await page.locator('[data-exam-pagenum="dashTotal"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, footers), ['- \u0015 / \u0016 -', '- \u0015 / \u0016 -']);

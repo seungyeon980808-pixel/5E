@@ -32,26 +32,25 @@ h.withServer(async origin => {
       await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       if (await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode') !== 'focus') await page.locator('[data-exam-mode="focus"]').click();
-      await page.locator('.exam-focusbar').waitFor({ state: 'visible' });
+      await page.locator('.exam-inspector').waitFor({ state: 'visible' });
       const hwp = () => page.evaluate(() => {
         const r = s => document.querySelector(s).getBoundingClientRect();
-        const side = r('#rhwp-exam-workspace .exam-sidebar'), bar = r('.exam-focusbar'), tab = r('.exam-ftabs button'), top = r('.exam-topbar'), studio = r('#exam-studio');
+        const side = r('#rhwp-exam-workspace .exam-sidebar'), bar = r('.exam-inspector'), top = r('.exam-topbar'), studio = r('#exam-studio');
         const common = getComputedStyle(document.querySelector('#rhwp-exam-workspace .palette-common')).gridTemplateColumns.split(' ').length;
         const grid = document.querySelector('#rhwp-exam-workspace .palette-grid');
         const blocks = [...grid.querySelectorAll('.palette-block')].slice(0, 3).map(b => ({ x: b.getBoundingClientRect().x, inline: b.style.gridColumn }));
-        return { side: { x: side.x, right: side.right, top: side.top, w: side.width }, bar: { x: bar.x, top: bar.top, h: bar.height }, tabX: tab.x, tabH: tab.height, topBottom: top.bottom, studioTop: studio.top, common, blocks };
+        return { side: { x: side.x, right: side.right, top: side.top, w: side.width }, bar: { x: bar.x, right: bar.right, top: bar.top, w: bar.width }, view: innerWidth, topBottom: top.bottom, studio: { top: studio.top, x: studio.x, right: studio.right }, common, blocks };
       });
       let g = await hwp();
       fs.writeFileSync(path.join(evidence, `${name}-hwp-160.json`), JSON.stringify(g, null, 2));
       await page.screenshot({ path: path.join(evidence, `${name}-hwp-160.png`) });
-      assert.ok(near(g.side.w, 160), `${name}: hwp focus sidebar is 160 like the other apps: ${g.side.w}`);
+      // 10-23 양쪽 인스펙터(시안 hwp-inspector): 5E_hwp 집중 모드 왼쪽 칸은 공용 폭과 288 중 큰 값, 오른쪽 인스펙터 340, 위쪽 도구 줄 없음.
+      assert.ok(near(g.side.w, 288), `${name}: hwp focus left panel is 288 (mockup) while the shared width is 160: ${g.side.w}`);
       assert.ok(near(g.side.top, g.topBottom), `${name}: sidebar starts right under the top bar`);
-      assert.ok(near(g.bar.h, 52) && near(g.tabH, 32), `${name}: focus toolbar 52px, tabs 32px: ${JSON.stringify(g.bar)} ${g.tabH}`);
-      assert.ok(near(g.bar.x, g.side.right) && near(g.bar.top, g.topBottom), `${name}: toolbar sits only over the document column`);
-      assert.ok(near(g.tabX, g.side.right + 10 + 2, 2.5), `${name}: first tab starts at the panel edge + 10 (+2 group inset): ${g.tabX} vs ${g.side.right}`);
-      assert.ok(near(g.studioTop, g.bar.top + g.bar.h), `${name}: paper starts under the toolbar`);
-      assert.equal(g.common, 1, `${name}: common palette tools are one column in a narrow panel`);
-      assert.ok(g.blocks.length >= 2 && g.blocks.every(b => near(b.x, g.blocks[0].x)), `${name}: palette blocks list in one column`);
+      assert.ok(near(g.bar.w, 340) && near(g.bar.right, g.view) && near(g.bar.top, g.topBottom), `${name}: inspector is the 340px right column under the top bar: ${JSON.stringify(g.bar)}`);
+      assert.ok(near(g.studio.top, g.topBottom) && near(g.studio.x, g.side.right) && near(g.studio.right, g.bar.x), `${name}: paper fills between the two panels with no toolbar above: ${JSON.stringify(g.studio)}`);
+      assert.equal(g.common, 2, `${name}: the 288 panel keeps the two-column common tools`);
+      assert.ok(g.blocks.length >= 2, `${name}: palette blocks are listed`);
       assert.ok(g.blocks.every(b => /\d/.test(b.inline)), `${name}: the teacher's saved grid placement stays on the blocks`);
 
       // 끌어서 240
@@ -61,26 +60,27 @@ h.withServer(async origin => {
       await page.mouse.move(gb.x + gb.width / 2, gb.y + 200); await page.mouse.down();
       await page.mouse.move(gb.x + gb.width / 2 + 40, gb.y + 200, { steps: 4 });
       await page.mouse.move(gb.x + gb.width / 2 + 80, gb.y + 200, { steps: 4 }); await page.mouse.up();
-      await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === '240');
+      // 보이는 288에서 +80 → 최대 320(공용 폭도 320)
+      await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === '320');
       g = await hwp();
-      assert.ok(near(g.side.w, 240), `${name}: dragged to 240: ${g.side.w}`);
-      assert.ok(near(g.tabX, g.side.right + 12, 2.5), `${name}: toolbar follows the wider panel`);
+      assert.ok(near(g.side.w, 320), `${name}: dragged from the visible 288 to the 320 maximum: ${g.side.w}`);
+      assert.ok(near(g.studio.x, g.side.right), `${name}: paper follows the wider panel`);
       assert.equal(g.common, 2, `${name}: wide panel keeps the two-column common tools`);
 
-      // 출제도 240
+      // 출제도 320
       await page.locator('.exam-topbar [data-app-switch="exam"]').click();
       const sheet = await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await sheet.waitForSelector('#side-new', { state: 'attached' });
       await page.waitForFunction(() => !document.querySelector('.app-leaving'));
-      await sheet.waitForFunction(() => Math.abs(document.querySelector('.side').getBoundingClientRect().width - 240) <= 1.5, null, { timeout: 5000 });
+      await sheet.waitForFunction(() => Math.abs(document.querySelector('.side').getBoundingClientRect().width - 320) <= 1.5, null, { timeout: 5000 });
       assert.equal(await sheet.locator('.shell-left-grip:not([hidden])').count(), 1, `${name}: exam panel has its own resize grip`);
 
-      // 그림도 240, 새로고침 뒤에도
+      // 그림도 320, 새로고침 뒤에도
       await sheet.locator('.top [data-app-switch="image"]').click();
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
-      assert.ok(near(await imageLeft(), 240), `${name}: image left panel follows the shared width`);
+      assert.ok(near(await imageLeft(), 320), `${name}: image left panel follows the shared width`);
       await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
-      await page.waitForFunction(() => Math.abs(document.getElementById('panel-left').getBoundingClientRect().width - 240) <= 1.5);
+      await page.waitForFunction(() => Math.abs(document.getElementById('panel-left').getBoundingClientRect().width - 320) <= 1.5);
 
       // 두 번 누르면 160, 키보드 ←/→ 8px
       const imageGrip = page.locator('body > .shell-left-grip:not([hidden])');

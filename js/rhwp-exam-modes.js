@@ -9,6 +9,7 @@ import { installExamMarks, marksButtonHtml, marksEnabled, setMarksEnabled } from
 const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset, setAllAnswers, setAllScores } from './rhwp-exam-worksheet.js';
+import { inspectorMarkup, leftToolsMarkup, installInspector, installLeftTools } from './rhwp-exam-inspector.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -133,7 +134,7 @@ export function installExamModes(panel, services) {
   const { getBridge, message, run } = services;
   let mode = (() => { try { return localStorage.getItem(MODE_KEY); } catch { return null; } })();
   if (!MODES.some(([m]) => m === mode)) mode = 'focus';
-  let tab = 'text', syncTimer = 0;
+  let syncTimer = 0;
 
   // ── 맨 위 줄: 모드 고르기 ──
   const modes = document.createElement('span');
@@ -148,36 +149,16 @@ export function installExamModes(panel, services) {
   bar.className = 'exam-focusbar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', '집중 편집 도구');
   // 10-23 지적 11: 위쪽 도구 줄 → 오른쪽 인스펙터(한글에 있는 기능: 글자·문단·표·그림, 고른 대상에 따라 바뀜).
   // 5E 기능(문항·학습지·판짜기)은 왼쪽 칸 맨 위로 옮겼다(leftTools). 아래쪽: 조판 부호·기호·양식 저장·점검.
-  bar.classList.add('exam-inspector'); bar.setAttribute('aria-label', '인스펙터 — 고른 글·표·그림 설정');
-  bar.innerHTML = `<div class="exam-ihead"><b class="exam-ititle">글자</b><small class="exam-isub"></small></div><span class="exam-ftabs" role="tablist">${[['text', '글자'], ['para', '문단'], ['table', '표'], ['pic', '그림']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
-    <span class="exam-fdiv"></span><div class="exam-fgroup"></div>
-    <div class="exam-fright"><span class="exam-fdiv"></span>
-      ${marksButtonHtml('exam-fx big exam-marks-toggle')}
-      <button type="button" class="exam-fx big" data-exam-fx="symbols" title="특수기호 창: 기출 3년 빈도로 고른 첫 줄 16칸 + 묶음 탭">Ω 기호</button>
-      <button type="button" class="exam-fx big" data-exam-fx="capture" title="고른 부분을 양식(조각)으로 저장 → 팔레트 「템플릿」에 담김">⬚ 양식 저장</button>
-      <button type="button" class="exam-fx big" data-exam-fx="check" title="조판 점검: 넓은 그림·표, 흐린 그림, 빈칸, 번호 빠짐을 찾아 목록으로">✓ 점검</button></div>`;
+  // 10-23 다시 하기: 시안 hwp-inspector.html 그대로 — 글자·문단 / 표 / 그림 / 쪽 네 칸, 이름 + 값 칸(−/값/+) 줄, 맨 아래 문자표·조판 부호.
+  bar.classList.add('exam-inspector'); bar.setAttribute('aria-label', '인스펙터 — 고른 글·표·그림·쪽 설정');
+  bar.innerHTML = inspectorMarkup();
   // 도구 줄은 문서 쪽 열 맨 위(왼쪽 칸 옆). 시험지 iframe(#exam-studio)은 옮기지 않는다 — 옮기면 다시 읽힌다.
   panel.querySelector('#exam-studio').after(bar);
-  const group = bar.querySelector('.exam-fgroup');
-  // 왼쪽 칸 맨 위: 5E 기능(문항 · 학습지 · 판짜기) — 오른쪽 인스펙터와 같은 짜임(두 칸씩 한 줄 단추)
-  let ltab = 'item';
+  // 왼쪽 칸 맨 위: 5E 기능(새 시험지 · 만드는 순서 · 모드 · 내용 넣기 · 자동 다듬기 · 모드 도구 · 문서의 그림 · 점검·양식 저장)
   const leftTools = document.createElement('section');
   leftTools.className = 'exam-left-tools'; leftTools.setAttribute('aria-label', '5E 기능');
-  leftTools.innerHTML = `<span class="exam-ftabs exam-ltabs" role="tablist">${[['item', '문항'], ['sheet', '학습지'], ['layout', '판짜기']].map(([k, l]) => `<button type="button" role="tab" data-exam-ltab="${k}" aria-selected="false">${l}</button>`).join('')}</span><div class="exam-lgroup"></div>`;
+  leftTools.innerHTML = leftToolsMarkup();
   panel.querySelector('.exam-sidebar .exam-header').after(leftTools);
-  const lgroup = leftTools.querySelector('.exam-lgroup');
-  function renderLeft() {
-    const items = focusTabs(ctx)[ltab].filter(it => it !== '|');
-    lgroup.innerHTML = items.map((it, i) => it.length === 1 ? controlHtml(it[0]) : `<button type="button" class="exam-fx" data-exam-li="${i}" title="${esc(it[1])}">${it[0]}</button>`).join('');
-    leftTools.querySelectorAll('[data-exam-ltab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.examLtab === ltab)));
-  }
-  leftTools.addEventListener('click', event => {
-    const t = event.target.closest('[data-exam-ltab]'); if (t) { ltab = t.dataset.examLtab; renderLeft(); return; }
-    const button = event.target.closest('[data-exam-li]'); if (!button) return;
-    const item = focusTabs(ctx)[ltab].filter(it => it !== '|')[Number(button.dataset.examLi)];
-    void run(async () => { await item[2](ctx, button); });
-  });
-
   const peek = document.createElement('button');
   peek.type = 'button'; peek.className = 'exam-peek'; peek.hidden = true; peek.textContent = '☰ 도구 보기';
   peek.title = '집중 모드로 돌아가기 (⌘⌥2)';
@@ -196,18 +177,6 @@ export function installExamModes(panel, services) {
   let marks = null, marksBridge = null;
   const attachMarks = () => { const b = getBridge(); if (!b?.input || b === marksBridge) return; marks?.dispose(); marksBridge = b; marks = installExamMarks(b, { onToggle: syncMarksButton }); };
   setInterval(attachMarks, 800); attachMarks();
-  let lastPick = '';
-  function followSelection() {
-    if (mode !== 'focus') return;
-    const b = getBridge(); if (!b?.input) return;
-    let kind = 'text';
-    try { if (b.input.cursor?.getSelectedPictureRef?.()) kind = 'pic'; else if (b.input.cursor?.getPosition?.()?.cellPath?.length) kind = 'table'; } catch {}
-    if (kind === lastPick) return; lastPick = kind;
-    const sub = bar.querySelector('.exam-isub'); if (sub) sub.textContent = kind === 'pic' ? '그림을 골랐음' : kind === 'table' ? '표 칸 안에 커서' : '문단 안에 커서';
-    if (kind === 'pic' || kind === 'table') { if (tab !== kind) { tab = kind; renderTab(); } }
-    else if (tab === 'pic' || tab === 'table') { tab = 'text'; renderTab(); }
-  }
-  setInterval(() => { if (!panel.hidden) followSelection(); }, 400);
   marksToggle?.addEventListener('click', () => { const on = !marksEnabled(); setMarksEnabled(on); syncMarksButton(on); });
   window.addEventListener('5e:typeset-marks', event => syncMarksButton(event.detail?.on ?? marksEnabled()));
   const studio = () => getBridge()?.editor?.element?.contentDocument || null;
@@ -300,80 +269,13 @@ export function installExamModes(panel, services) {
     },
   };
 
-  // 글꼴·크기·줄 간격 칸: 스튜디오의 같은 칸(숨겨져 있어도 살아 있음)에 값을 넣어 스튜디오가 적용하게 한다.
-  function controlHtml(kind) {
-    if (kind === 'font') return '<select class="exam-fsel" data-exam-fctl="font" aria-label="글꼴" title="글꼴"></select>';
-    if (kind === 'size') return '<input class="exam-fsize" data-exam-fctl="size" aria-label="글자 크기(pt)" title="글자 크기(pt) · Enter로 적용" inputmode="decimal">';
-    return `<select class="exam-fsel narrow" data-exam-fctl="spacing" aria-label="줄 간격" title="줄 간격">${LINE_SPACINGS.map(v => `<option value="${v}">${v}%</option>`).join('')}</select>`;
-  }
-  function renderTab() {
-    const items = [...focusTabs(ctx)[tab], '|', ['⋯ 더 보기', '자주 쓰지 않는 기능 모음(한글 리본을 켜지 않고 쓰기)', (_, button) => openMore(button)]];
-    group.innerHTML = items.map((it, i) => {
-      if (it === '|') return '<span class="exam-fdiv"></span>';
-      if (it.length === 1) return controlHtml(it[0]);
-      return `<button type="button" class="exam-fx" data-exam-fi="${i}" title="${esc(it[1])}">${it[0]}</button>`;
-    }).join('');
-    bar.querySelectorAll('[data-exam-ftab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.examFtab === tab)));
-    bar.querySelector('.exam-ititle').textContent = { text: '글자', para: '문단', table: '표', pic: '그림' }[tab] || '';
-    group.scrollLeft = 0; requestAnimationFrame(() => syncOverflow());
-    syncControls(true);
-  }
-  group.addEventListener('click', event => {
-    const button = event.target.closest('[data-exam-fi]'); if (!button) return;
-    const item = [...focusTabs(ctx)[tab], '|', ['⋯', '', (_, b) => openMore(b)]][Number(button.dataset.examFi)];
-    void run(async () => { await item[2](ctx, button); });
-  });
-  // 좁은 화면: 세로 휠로도 도구 줄을 옆으로 넘기고, 넘치면 가장자리를 흐리게 보여 더 있다는 것을 알린다.
-  group.addEventListener('wheel', event => {
-    if (group.scrollWidth <= group.clientWidth + 1 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-    group.scrollLeft += event.deltaY; event.preventDefault();
-  }, { passive: false });
-  const syncOverflow = () => {
-    const over = group.scrollWidth > group.clientWidth + 1;
-    group.classList.toggle('is-over-start', over && group.scrollLeft > 2);
-    group.classList.toggle('is-over-end', over && group.scrollLeft + group.clientWidth < group.scrollWidth - 2);
-  };
-  group.addEventListener('scroll', syncOverflow, { passive: true });
-  new ResizeObserver(() => syncOverflow()).observe(group);
-  bar.querySelector('.exam-ftabs').addEventListener('click', event => {
-    const b = event.target.closest('[data-exam-ftab]'); if (!b) return;
-    tab = b.dataset.examFtab; renderTab();
-  });
-  // 스튜디오 값 ↔ 도구 줄 값
-  function syncControls(fillFonts = false) {
-    const doc = studio(); if (!doc || mode !== 'focus') return;
-    const font = group.querySelector('[data-exam-fctl="font"]'), size = group.querySelector('[data-exam-fctl="size"]'), spacing = group.querySelector('[data-exam-fctl="spacing"]');
-    const sFont = doc.getElementById('font-name'), sSize = doc.getElementById('font-size'), sSpacing = doc.getElementById('linespacing-select');
-    if (font && sFont) {
-      if (fillFonts || font.options.length !== sFont.options.length) font.innerHTML = [...sFont.options].map(o => `<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('');
-      if (document.activeElement !== font) font.value = sFont.value;
-    }
-    if (size && sSize && document.activeElement !== size) size.value = sSize.value;
-    if (spacing && sSpacing && document.activeElement !== spacing) {
-      const v = Number(sSpacing.value);
-      if (v && ![...spacing.options].some(o => Number(o.value) === v)) spacing.insertAdjacentHTML('beforeend', `<option value="${v}">${v}%</option>`);
-      if (v) spacing.value = String(v);
-    }
-  }
-  group.addEventListener('change', event => {
-    const el = event.target, doc = studio(); if (!doc) return;
-    void run(async () => {
-      const b = bridgeOrThrow();
-      if (el.dataset.examFctl === 'font') { const s = doc.getElementById('font-name'); s.value = el.value; s.dispatchEvent(new doc.defaultView.Event('change', { bubbles: true })); }
-      if (el.dataset.examFctl === 'spacing') b.input.dispatcher.dispatch('format:line-spacing', { value: Number(el.value) });
-      refocus();
-    });
-  });
-  group.addEventListener('keydown', event => {
-    const el = event.target; if (el.dataset?.examFctl !== 'size' || event.key !== 'Enter' || event.isComposing) return;
-    event.preventDefault();
-    void run(async () => {
-      const doc = studio(), s = doc?.getElementById('font-size'); if (!s) return;
-      s.value = el.value; s.dispatchEvent(new doc.defaultView.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-      refocus();
-    });
-  });
-
+  // 오른쪽 인스펙터·왼쪽 5E 칸 동작은 rhwp-exam-inspector.js(값 읽기·누르기). 인스펙터 칸 이름(text·table·pic·page)을 「더 보기」 목록 열쇠로 쓴다.
+  let tab = 'text';
+  const inspector = installInspector(bar, { ctx, getBridge, run, studio, onPane: p => { tab = p; } });
+  const left = installLeftTools(leftTools, { ctx, run, focusTabs, palette: services.palette, actions: { newDocument: () => panel.querySelector('[data-exam-action="new"]')?.click() } });
+  bar.addEventListener('click', event => { const more = event.target.closest('[data-ei-more]'); if (more) openMore(more); });
+  leftTools.addEventListener('click', event => { const more = event.target.closest('[data-el-more]'); if (more) openMore(more, left.mode); });
+  setInterval(() => { if (!panel.hidden && mode === 'focus') { inspector.follow(); inspector.sync(); } }, 500);
   // ── 기호 창 ──
   let symbolTab = Object.keys(SYMBOL_TABS)[0];
   function openSymbols(anchor) {
@@ -394,6 +296,9 @@ export function installExamModes(panel, services) {
     const p = panel.getBoundingClientRect(), a = anchor.getBoundingClientRect(), w = pop.offsetWidth || 440;
     pop.style.top = `${Math.round(a.bottom - p.top + 6)}px`;
     pop.style.left = `${Math.round(Math.max(8, Math.min(a.right - p.left - w, p.width - w - 8)))}px`;
+    // 아래 자리가 모자라면(인스펙터 아래쪽 「⋯ 더 보기」 등) 단추 위로 띄운다 — 창이 화면 밖으로 나가 누를 수 없던 문제(10-23).
+    const h = pop.offsetHeight;
+    if (a.bottom + 6 + h > window.innerHeight - 8) pop.style.top = `${Math.round(Math.max(8, a.top - p.top - h - 6))}px`;
   }
   async function insertSymbol(s) {
     const b = bridgeOrThrow();
@@ -413,12 +318,12 @@ export function installExamModes(panel, services) {
   }
   pop.addEventListener('click', event => {
     const tabButton = event.target.closest('[data-exam-symtab]');
-    if (tabButton) { symbolTab = tabButton.dataset.examSymtab; openSymbols(bar.querySelector('[data-exam-fx="symbols"]')); return; }
+    if (tabButton) { symbolTab = tabButton.dataset.examSymtab; openSymbols(bar.querySelector('[data-exam-fx="symbols"]') || bar); return; }
     if (event.target.closest('[data-exam-symmore]')) { closePop(); services.palette?.tool('manager', '특수기호'); return; }
     const sym = event.target.closest('[data-exam-sym]');
     if (sym) { void run(() => insertSymbol(sym.dataset.examSym)); return; }
     const more = event.target.closest('[data-exam-more]');
-    if (more) { const [, , action] = (MORE[tab] || MORE[tab === 'para' ? 'text' : 'sheet'])[Number(more.dataset.examMore)]; closePop(); void run(async () => runMore(action)); return; }
+    if (more) { const [, , action] = MORE[pop.dataset.moreKey][Number(more.dataset.examMore)]; closePop(); void run(async () => runMore(action)); return; }
     const jump = event.target.closest('[data-exam-jump]');
     if (jump) {
       const issue = lastIssues[Number(jump.dataset.examJump)];
@@ -428,21 +333,28 @@ export function installExamModes(panel, services) {
   pop.addEventListener('mousedown', event => { if (!event.target.closest('input,select,textarea')) event.preventDefault(); }); // 누를 때 문서 커서를 잃지 않게(입력 칸은 예외)
 
   // ── 더 보기 창 ──
-  function openMore(anchor) {
+  // 「⋯ 더 보기」: 이 칸에서 값 칸으로 옮기지 않은 단추(모양 복사·형광펜 지우기·표 넣기·그림 나란히 등) + 자주 안 쓰는 한글 기능.
+  const OLD = { text: ['text', 'para'], table: ['table'], pic: ['pic'], page: [] };
+  const moreKey = () => tab === 'page' ? 'layout' : tab === 'pic' ? 'pic' : tab === 'table' ? 'table' : 'text';
+  function oldItems() { const all = focusTabs(ctx); return (OLD[tab] || []).flatMap(k => all[k]).filter(it => it !== '|' && it.length > 1); }
+  function openMore(anchor, modeKey = '') {
     if (!pop.hidden && pop.dataset.kind === 'more') { closePop(); return; }
-    pop.dataset.kind = 'more';
+    pop.dataset.kind = 'more'; pop.dataset.moreKey = modeKey || moreKey();
+    const olds = modeKey ? [] : oldItems();
     pop.className = 'exam-pop exam-morepop';
-    pop.innerHTML = `<div class="exam-pop-head">더 보기 <small>${esc(bar.querySelector(`[data-exam-ftab="${tab}"]`)?.textContent || '')}</small></div>
-      <div class="exam-morelist">${(MORE[tab] || MORE[tab === 'para' ? 'text' : 'sheet']).map(([label, tip], i) => `<button type="button" data-exam-more="${i}" title="${esc(tip)}">${esc(label)}</button>`).join('')}</div>
+    const names = { text: '글자·문단', table: '표', pic: '그림', page: '쪽', item: '문항', sheet: '학습지', layout: '판짜기' };
+    pop.innerHTML = `<div class="exam-pop-head">더 보기 <small>${esc(names[modeKey || tab] || '')}</small></div>
+      <div class="exam-morelist">${olds.map(([label, tip], i) => `<button type="button" data-exam-old="${i}" title="${esc(tip)}">${label}</button>`).join('')}${(MORE[pop.dataset.moreKey] || []).map(([label, tip], i) => `<button type="button" data-exam-more="${i}" title="${esc(tip)}">${esc(label)}</button>`).join('')}</div>
       <div class="exam-pop-foot">모든 기능은 「기본」 모드의 한글 리본에도 있습니다 · Esc로 닫기</div>`;
     place(anchor);
   }
+  pop.addEventListener('click', event => { const old = event.target.closest('[data-exam-old]'); if (!old) return; const item = oldItems()[Number(old.dataset.examOld)]; closePop(); void run(async () => { await item[2](ctx, old); }); });
   function runMore(action) {
     if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'x:question-image') return ctx.questionImage(bridgeOrThrow());
     if (action === 'x:student-labeled') return ctx.studentCopy(bridgeOrThrow(), true);
     if (action === 'x:all-question-images') return ctx.allQuestionImages(bridgeOrThrow());
-    if (action === 'x:pick-questions') return openForm(bar.querySelector('.exam-fgroup [data-exam-fi]:last-child') || bar, 'pick');
+    if (action === 'x:pick-questions') return openForm(bar, 'pick');
     if (action === 'table-align-left' || action === 'table-align-right') return ctx.withBridge(b => applyTableAlignment(b, action.slice(12)));
     return ctx.command(action);
   }
@@ -626,7 +538,7 @@ export function installExamModes(panel, services) {
       <div class="exam-pop-foot">Esc로 닫기</div>`;
     place(anchor);
   }
-  bar.querySelector('.exam-fright').addEventListener('click', event => {
+  const fxClick = event => {
     const b = event.target.closest('[data-exam-fx]'); if (!b) return;
     const kind = b.dataset.examFx;
     if (!pop.hidden && pop.dataset.kind === kind) { closePop(); return; }
@@ -634,7 +546,8 @@ export function installExamModes(panel, services) {
     if (kind === 'symbols') { try { bridgeOrThrow(); openSymbols(b); } catch (error) { message(error.message, true); } }
     else if (kind === 'check') void run(async () => openCheck(b));
     else if (kind === 'capture') { closePop(); services.palette?.tool('capture'); }
-  });
+  };
+  bar.addEventListener('click', fxClick); leftTools.addEventListener('click', fxClick);
   document.addEventListener('mousedown', event => { if (!pop.hidden && !event.target.closest('.exam-pop,[data-exam-fx]')) closePop(); }, true);
 
   // ── 왼쪽 칸 「만드는 순서」: 시험지·학습지를 만드는 차례. 누르면 그 묶음을 열고 해당 단추를 잠깐 밝힌다. ──
@@ -661,20 +574,22 @@ export function installExamModes(panel, services) {
     const step = event.target.closest('[data-exam-guide]'); if (!step) return;
     const [, tabKey, title] = GUIDE[guideKind][Number(step.dataset.examGuide)];
     let target = null;
-    if (!tabKey) target = bar.querySelector('[data-exam-fx="check"]');
-    else { bar.querySelector(`[data-exam-ftab="${tabKey}"]`)?.click(); target = [...bar.querySelectorAll('.exam-fgroup [data-exam-fi]')].find(b => (b.title || '').startsWith(title)); }
+    if (!tabKey) target = leftTools.querySelector('[data-exam-fx="check"]');
+    else if (tabKey === 'text') { inspector.show('text'); target = [...bar.querySelectorAll('[data-ei-act]')].find(b => (b.title || '').startsWith(title)); }
+    else { left.setMode(tabKey); target = [...leftTools.querySelectorAll('[data-el-i]')].find(b => (b.title || '').startsWith(title)); }
     if (!target) return;
     target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
     target.classList.remove('is-hint'); void target.offsetWidth; target.classList.add('is-hint');
     setTimeout(() => target.classList.remove('is-hint'), 1600);
   });
-  panel.querySelector('.exam-sidebar')?.prepend(guide);
+  leftTools.querySelector('.el-guide-slot').append(guide);
 
   // ── 왼쪽 칸 문항 목록: 누르면 그 문항으로, ↑↓로 순서 바꾸기(번호는 다시 매김) ──
   const outline = document.createElement('section');
   outline.className = 'exam-outline'; outline.setAttribute('aria-label', '문항 목록');
   const figuresHeading = [...panel.querySelectorAll('.exam-sidebar h2')].find(h => h.textContent.includes('문서의 그림'));
-  (figuresHeading || panel.querySelector('.exam-sidebar')).before?.(outline);
+  // 문항 목록 · 문서의 그림은 왼쪽 5E 칸의 묶음 자리로(시안: 「문서의 그림」 묶음).
+  { const slot = leftTools.querySelector('.el-figs-slot'), hint = panel.querySelector('.exam-sidebar .exam-hint'), figs = panel.querySelector('#exam-figures'); slot.append(...[figuresHeading, hint, figs].filter(Boolean)); leftTools.querySelector('.el-outline-slot').append(outline); { const dock = panel.querySelector('.palette-dock'); if (dock) leftTools.querySelector('.el-palette-slot').append(dock); } if (figuresHeading) { figuresHeading.innerHTML = '문서의 그림 <em>5E에서 보낸 것</em>'; figuresHeading.className = 'el-h'; } }
   let outlineTimer = 0;
   function renderOutline() {
     const b = getBridge(); if (!b?.input || panel.hidden) return;
@@ -764,7 +679,7 @@ export function installExamModes(panel, services) {
     applyStudioChrome();
     clearInterval(syncTimer);
     scheduleOutline();
-    if (mode === 'focus') { renderTab(); renderLeft(); syncTimer = setInterval(() => { if (!panel.hidden) syncControls(); }, 600); }
+    if (mode === 'focus') { inspector.sync(true); left.render(); }
     if (announce) message(mode === 'basic' ? '기본 모드: 한글 리본 그대로(모든 기능)' : mode === 'focus' ? '집중 모드: 시험지·학습지에 필요한 도구 + 팔레트' : '없음: 도구 없이 종이만 · 「도구 보기」나 ⌘⌥2로 돌아옴');
   }
   modes.addEventListener('click', event => { const b = event.target.closest('[data-exam-mode]'); if (b) setMode(b.dataset.examMode); });
@@ -819,7 +734,7 @@ export function installExamModes(panel, services) {
         try { void navigator.storage?.persist?.(); } catch {}
       }
       renderOutline();
-      syncControls(true);
+      inspector.sync(true);
     },
   };
 }
