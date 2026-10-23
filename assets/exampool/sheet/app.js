@@ -1,6 +1,7 @@
 import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
-import {renderNav,renderLibrary,renderExams,renderExam} from './pool-views.js';
+import {renderNav,renderExams,renderExam} from './pool-views.js';
+import {renderLibraryView,installLibraryView,closeViewer,libState} from './library-view.js';
 import {createCardEditor} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
@@ -233,7 +234,7 @@ function renderView(){
   if(view.name!=='card'&&$('#preview-dialog').classList.contains('docked')&&!$('#preview-dialog').hidden)void requestTypeset(null);
   $('#cards-view').hidden=true;$('#exam-view').hidden=true;$('.workspace').hidden=view.name!=='desk';
   renderNav($('.side'),data,view);
-  if(view.name==='library')renderLibrary($('#library-view'),data,view);
+  if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
   if(view.name==='exam'){renderExam($('#examd-view'),data,view.examId,{forms:typesetForms});void fillExamSheet(examById(data,view.examId));}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
@@ -373,13 +374,13 @@ function jobBox(){let n=document.querySelector('#job-box');if(!n){n=document.cre
 function showJob(title,stage,{done=null,error=''}={}){const n=jobBox(),at=done?3:jobStep(stage);n.hidden=false;n.dataset.state=error?'error':done?'done':'busy';
   n.innerHTML=`<div class="job-head"><b>${E(error?'변형 실패':done?'변형 완료':'변형 중')}</b><span>${E(title)}</span><button type="button" data-job-close aria-label="닫기">×</button></div>${error?`<p class="job-err">${E(error)}</p>`:`<ol class="lp-steps">${JOB_STEPS.map((x,i)=>`<li data-at="${i<at?'done':i===at?'now':''}">${i+1}. ${x}</li>`).join('')}</ol>`}${done?`<button type="button" class="job-open" data-job-open="${E(done.id)}">${E(done.number)}번 카드 보기</button>`:''}`;
   for(const ol of document.querySelectorAll(`.lp-steps[data-steps]`))ol.querySelectorAll('li').forEach((li,i)=>li.dataset.at=i<at?'done':i===at?'now':'');}
-function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;showJob(pastBusy.title,stage);
+function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;showJob(pastBusy.title,stage);libView?.refreshJob();
   for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(pastBusy.id)}"]`)){
     if(!b.hasAttribute('aria-busy')){b.style.minWidth=b.offsetWidth+'px';b.setAttribute('aria-busy','true');}b.innerHTML=busyHtml(stage);
     const f=b.closest('figure.past');if(f){f.toggleAttribute('data-busy',true);const o=f.querySelector('.past-busy');if(o)o.querySelector('span').textContent=stage;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',pastBusyHtml(stage));}}
   status(`${pastBusy.title} · ${stage}… (AI 없음)`);}
 // 실패하면 그 그림 위에 짧은 이유를 4초 남긴다(맨 아래 상태 줄만으로는 놓치기 쉬움).
-function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
+function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;queueMicrotask(()=>libView?.refreshJob());if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
     if(o&&failure){o.dataset.error='true';o.querySelector('.busy-ring')?.remove();o.querySelector('span').textContent=failure;setTimeout(()=>o.remove(),4000);}else o?.remove();}}
 async function convertPast(item){
   if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);for(const b of document.querySelectorAll('[data-cvconvert][aria-busy]'))b.animate?.([{scale:1},{scale:1.08},{scale:1}],{duration:260,easing:'cubic-bezier(.2,.9,.25,1.06)'});return;}
@@ -676,21 +677,22 @@ function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시�
 $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.id==='side-new'){$('#new').click();return;}
   const nav=b.dataset.nav;if(!nav)return;
-  if(nav==='library'){view.examId=null;show('library');}
+  if(nav==='library'){view.examId=null;if(view.lib?.mark==='star')view.lib.mark='';show('library');}
+  else if(nav==='stars'){view.examId=null;Object.assign(libState(view),{mark:'star',kind:'all',limit:40,open:-1});show('library');}
   else if(nav==='exams')show('exams',{status:b.dataset.status||'drafting'});
   else if(nav==='exam'){view.examId=b.dataset.exam;show('exam');}
   else if(nav==='new-exam'){const exam=createExam();if(exam){view.examId=exam.id;show('exam');setTimeout(()=>{$('#exam-title')?.select();},0);}}
 });
 // 문항 보관함.
-$('#library-view').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.libStage){view.stage=b.dataset.libStage;renderView();return;}
-  if(b.dataset.libMark!==undefined){view.mark=b.dataset.libMark;renderView();return;}
-  if(b.dataset.poolStar){const s=cardStore.get('stars',{}),k=b.dataset.poolStar;if(s[k])delete s[k];else s[k]=Date.now();cardStore.set('stars',s);if(view.mark==='star')renderView();else{b.setAttribute('aria-pressed',String(!!s[k]));b.setAttribute('aria-label',s[k]?'별표 빼기':'별표');}return;}
-  if(b.dataset.openCard){openCard(b.dataset.openCard);return;}
-  if(b.dataset.toExamNew){const exam=createExam();if(exam&&mutate(()=>{addToExam(data,exam.id,b.dataset.toExamNew);renumberExam(data,exam.id);}))status(`「${exam.title}」에 넣었습니다.`);return;}
-});
-$('#library-view').addEventListener('change',e=>{const sel=e.target.closest('[data-to-exam]');if(!sel||!sel.value)return;const qid=sel.dataset.toExam;let exam=sel.value==='__new'?createExam():examById(data,sel.value);if(exam&&mutate(()=>{addToExam(data,exam.id,qid);renumberExam(data,exam.id);}))status(`「${exam.title}」에 넣었습니다 · 시험지 순서대로 번호를 다시 매겼습니다.`);});
-$('#library-view').addEventListener('input',e=>{if(e.target.id==='lib-query'){view.query=e.target.value;clearTimeout(e.target._t);e.target._t=setTimeout(()=>{renderView();const n=$('#lib-query');n?.focus();n?.setSelectionRange(n.value.length,n.value.length);},250);}});
+// 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023): 기출 + 내 문항 한 목록, 문항 보기 창. 동작은 library-view.js.
+const libApi={data:()=>data,view:()=>view,rerender:()=>{if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);},status:(m,err)=>status(m,err),
+  openCard:id=>openCard(id),askDelete:id=>askDelete(id),convertPast:item=>void convertPast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
+  // 위쪽 경로: 문항 보기 창이 열려 있으면 「문항 보관함 › 제목」, 앞 단계를 누르면 창을 닫는다.
+  crumb:title=>{if(view.name!=='library')return;$('#crumb-question').textContent=title;$('#crumb-question').title=title;document.querySelector('.crumb-sep').hidden=!title;$('#crumb-view').disabled=!title;$('#crumb-view').title=title?'문항 보관함으로 돌아가기':'';},
+  toExamMenu:(qid,button)=>{const exams=data.exams.filter(e=>e.status==='drafting'),sel=document.createElement('select');sel.className='lv-btn';sel.setAttribute('aria-label','시험지에 넣기');
+    sel.innerHTML=`<option value="">시험지 고르기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option>`;button.replaceWith(sel);sel.focus();
+    sel.onchange=()=>{if(!sel.value)return;const exam=sel.value==='__new'?createExam():examById(data,sel.value);if(exam&&mutate(()=>{addToExam(data,exam.id,qid);renumberExam(data,exam.id);}))status(`「${exam.title}」에 넣었습니다 · 시험지 순서대로 번호를 다시 매겼습니다.`);};}};
+const libView=installLibraryView($('#library-view'),libApi);
 $('#exams-view').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.nav==='exam'){view.examId=b.dataset.exam;show('exam');}else if(b.dataset.nav==='new-exam'){const exam=createExam();if(exam){view.examId=exam.id;show('exam');}}});
 // 시험지 안.
 const examNow=()=>view.examId&&examById(data,view.examId);
@@ -985,7 +987,7 @@ $('#brand-home').onclick=()=>{view.examId=null;show('library');};
 // 맨 위 줄(5E 세 프로그램 공통): 다른 프로그램 이름을 누르면 5E에 전환을 부탁하고(app-switch.js), ↶ ↷는 시트의 되돌리기·다시 실행을 그대로 누른다(기록 하나).
 document.addEventListener('click',e=>{const b=e.target.closest?.('button[data-app-switch]');if(!b)return;e.preventDefault();if(e.detail>1)return;/* 두 번 누름(M8) */if(window.parent!==window)window.parent.postMessage({channel:'5e-app-switch',app:b.dataset.appSwitch},location.origin);});
 for(const [top,src] of [['#top-undo','#undo'],['#top-redo','#redo']]){const t=$(top),o=$(src);if(!t||!o)continue;t.onclick=()=>o.click();const sync=()=>{t.disabled=o.disabled;};sync();new MutationObserver(sync).observe(o,{attributes:true,attributeFilter:['disabled']});}
-$('#crumb-view').onclick=()=>{if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;show('library');}};
+$('#crumb-view').onclick=()=>{if(view.name==='library'){libView.close();renderView();return;}if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
 $('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}};
 try{if(localStorage.getItem(CHANNEL+'exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}

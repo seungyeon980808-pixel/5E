@@ -176,7 +176,8 @@ h.withServer(async origin => {
       // 보관함 미리보기 그림은 문항 맨 위(지문)부터 보인다(단추가 내용을 세로 가운데로 두어 윗부분이 잘리던 것).
       // 빈 문항도 같은 크기의 흰 자리(「빈 문항 · 눌러서 쓰기」)로 보인다(10-20: 카드 크기를 맞춤).
       if(await sheet.locator('#library-view .pv-thumb.is-blank').count()){assert.match(await sheet.locator('#library-view .pv-thumb.is-blank').first().textContent(),/빈 문항/,'an empty question shows a placeholder');
-        assert.equal(await sheet.evaluate(()=>Math.round(document.querySelector('#library-view .pv-thumb.is-blank').getBoundingClientRect().height)),170,'the same height as a filled thumbnail');}
+        // 10-23 보관함(시안 exampool-viewer-1023): 카드 그림 칸은 9:8로 모두 같고, 빈 문항 자리도 그 칸을 꽉 채운다.
+        assert.ok(await sheet.evaluate(()=>{const b=document.querySelector('#library-view .pv-thumb.is-blank').getBoundingClientRect(),t=document.querySelector('#library-view .pv-thumb.is-blank').closest('.lv-thumb').getBoundingClientRect(),f=[...document.querySelectorAll('#library-view .lv-thumb')].find(n=>!n.querySelector('.is-blank'))?.getBoundingClientRect();return Math.abs(b.height-t.height)<=1&&(!f||Math.abs(f.height-t.height)<=1);}),'the same height as a filled thumbnail');}
       else{await sheet.waitForFunction(()=>document.querySelector('#library-view .pv-doc')?.textContent.trim(),null,{timeout:10000});
       assert.ok(await sheet.evaluate(()=>{const t=document.querySelector('#library-view .pv-thumb').getBoundingClientRect(),d=document.querySelector('#library-view .pv-doc').getBoundingClientRect();return d.top>=t.top-0.5&&d.top<=t.top+1;}),'the library thumbnail starts at the top of the question');}
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');

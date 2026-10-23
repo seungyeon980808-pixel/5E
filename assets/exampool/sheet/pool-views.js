@@ -11,6 +11,7 @@ const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt
 const ICON={
   more:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg>',
   plus:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  star:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
   box:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 9h16M10 13h4"/></svg>',
   doc:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"/><path d="M9.5 11h5M9.5 14.5h5"/></svg>',
   done:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
@@ -31,7 +32,9 @@ export function renderNav(root,data,view){
   const cur=(name,id)=>view.name===name||(id&&view.examId===id&&['exam','card','desk'].includes(view.name))?'true':'false';
   const examItem=e=>`<button type="button" class="nav sub" data-nav="exam" data-exam="${e.id}" aria-current="${view.examId===e.id&&view.name!=='library'?'true':'false'}" title="${E(e.title)}"><span>${E(e.title)}</span><b>${e.items.length}</b></button>`;
   root.innerHTML=`<button type="button" id="side-new" class="side-new">${ICON.plus}새 문항</button>
-    <button type="button" class="nav" data-nav="library" aria-current="${view.name==='library'||view.name==='card'&&!view.examId?'true':'false'}">${ICON.box}<span>문항 보관함</span><b>${libraryQuestions(data).length}</b></button>
+    <button type="button" class="nav" data-nav="library" aria-current="${(view.name==='library'&&view.lib?.mark!=='star')||view.name==='card'&&!view.examId?'true':'false'}">${ICON.box}<span>문항 보관함</span><b>${libraryQuestions(data).length}</b></button>
+    <p class="side-label">모아 보기</p>
+    <button type="button" class="nav" data-nav="stars" aria-current="${view.name==='library'&&view.lib?.mark==='star'?'true':'false'}" title="별표한 기출·내 문항 — 문항 보관함 「★ 별표만」과 같음">${ICON.star}<span>별표한 문항</span><b>${Object.keys(store.get('stars',{})).length}</b></button>
     <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${ICON.plus}</button></p>
     <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${cur('exams')==='true'&&view.status!=='done'?'true':'false'}">${ICON.doc}<span>출제 중</span><b>${drafting.length}</b></button>
     ${drafting.map(examItem).join('')}
@@ -43,7 +46,7 @@ export function renderNav(root,data,view){
 // 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.
 const filled=v=>typeof v==='string'?!!v.trim():!!v;
 const tableFilled=t=>!!t&&/"(?:text|value)":"\s*[^"\s]/.test(JSON.stringify(t));
-function isBlank(q){
+export function isBlank(q){
   if(filled(q.ask)||filled(q.passage))return false;
   for(const b of q.blocks||[])if(filled(b.text)||b.figure||(b.lines||[]).some(l=>filled(l.text))||(b.kind==='table'&&tableFilled(b.table)))return false;
   return !(q.choices||[]).some(c=>filled(c.text)||c.figure);
