@@ -5,6 +5,7 @@ import {EXAM_STATUS,libraryQuestions,examById} from './exams.js';
 import {examPlan} from './exam-layout.js';
 import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js';
 import {loadStandards} from './standards-data.js';
+import {store,ICON as CARD_ICON} from './card-shared.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICON={
@@ -53,11 +54,13 @@ const stdLine=q=>q.standardCode?`<code>${E(q.standardCode)}</code>${E(stdText?.g
 // 문항 보관함: 시험지에 넣지 않은 문항 카드.
 export function renderLibrary(root,data,view){
   const filter=view.stage||'all',query=String(view.query||'').toLowerCase();
-  const all=libraryQuestions(data),list=all.filter(q=>(filter==='all'||workflowOf(q)===filter)&&(!query||[q.number,q.ask,q.unitLarge,q.unitMiddle,q.managementId,...(q.concepts||[])].join(' ').toLowerCase().includes(query)));
+  // 별표·메모(10-23 지적 1·2): 기출과 같은 저장소(이 기기에만), 키 'q:<id>'.
+  const stars=store.get('stars',{}),memos=store.get('memos',{}),mark=view.mark||'';
+  const all=libraryQuestions(data),list=all.filter(q=>(!mark||(mark==='star'?stars['q:'+q.id]:memos['q:'+q.id]))&&(filter==='all'||workflowOf(q)===filter)&&(!query||[q.number,q.ask,q.unitLarge,q.unitMiddle,q.managementId,...(q.concepts||[])].join(' ').toLowerCase().includes(query)));
   const seg=[['all','전체'],...Object.entries(WORKFLOWS)].map(([k,v])=>`<button type="button" data-lib-stage="${k}" aria-pressed="${filter===k}">${v}</button>`).join('');
   const exams=data.exams.filter(e=>e.status==='drafting');
-  root.innerHTML=`<div class="pv-head"><div><h1>문항 보관함</h1><p>시험지에 넣지 않은 문항 ${all.length}개 · 카드를 열어 쓰거나 시험지로 보냅니다</p></div><div class="pv-tools"><div class="seg">${seg}</div><input id="lib-query" value="${E(view.query||'')}" placeholder="내용·단원 찾기" aria-label="보관함 검색"></div></div>
-    <div class="pv-grid">${list.length?list.map(q=>`<article class="pv-card" data-card="${q.id}">
+  root.innerHTML=`<div class="pv-head"><div><h1>문항 보관함</h1><p>시험지에 넣지 않은 문항 ${all.length}개 · 카드를 열어 쓰거나 시험지로 보냅니다</p></div><div class="pv-tools"><div class="seg">${seg}</div><div class="seg" role="group" aria-label="모아 보기">${[['','모두'],['star','★ 별표만'],['memo','메모 있음']].map(([k,v])=>`<button type="button" data-lib-mark="${k}" aria-pressed="${mark===k}">${v}</button>`).join('')}</div><input id="lib-query" value="${E(view.query||'')}" placeholder="내용·단원 찾기" aria-label="보관함 검색"></div></div>
+    <div class="pv-grid">${list.length?list.map(q=>`<article class="pv-card" data-card="${q.id}"><button type="button" class="lp-star pv-star" data-pool-star="q:${q.id}" aria-pressed="${!!stars['q:'+q.id]}" aria-label="${stars['q:'+q.id]?'별표 빼기':'별표'}" title="별표 — 「★ 별표만」으로 모아 보기">${CARD_ICON.star}</button>
       ${isBlank(q)?`<button type="button" class="pv-thumb is-blank" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><span><b>빈 문항</b>눌러서 쓰기</span></button>`:`<button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>`}
       <div class="pv-meta" title="${E(questionSubtitle(q))}"><p class="pv-plan"><span class="pv-k">기준</span><span class="pv-v">${stdLine(q)}</span></p><p class="pv-plan"><span class="pv-k">의도</span><span class="pv-v">${q.intent?E(q.intent):'<i>출제의도 없음</i>'}</span></p>
         <div class="pv-row pv-actions"><span class="pv-st">${stage(q)}<span>· ${E(q.type)}</span></span>${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>

@@ -340,3 +340,59 @@
 .pv-thumb.is-empty::after{display:none}.pv-thumb.is-empty span{width:100%;text-align:center;color:var(--ds-ink-3);font-size:var(--ds-text-meta,12px)}
 .pv-thumb.is-empty:hover{border-color:var(--ds-ink-3)}
 .pv-grid{align-items:start}
+
+/* ===== 문항 보기(10-23 지적 1~5, 시안 exampool-viewer-1023.html) ===== */
+/* 1 별표: 카드 귀퉁이·크게 보기 제목 옆. 켜면 노란 별, 끄면 마우스를 올릴 때만 보인다 */
+.past-list figure.past{position:relative}
+.lp-star{position:absolute;top:6px;right:6px;z-index:2;width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:50%;background:rgba(13,17,23,.55);color:#e6edf3;cursor:pointer;opacity:0;transition:opacity .12s}
+.past-list figure.past:hover .lp-star,.lp-star:focus-visible,.lp-star[aria-pressed=true]{opacity:1}
+.lp-star .ico,.lp-zstar .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}
+.lp-star[aria-pressed=true]{background:rgba(13,17,23,.7);color:#e3b341}
+.lp-star[aria-pressed=true] .ico,.lp-zstar[aria-pressed=true] .ico{fill:#e3b341;stroke:#e3b341}
+.lp-zstar{width:28px;height:28px;padding:0;justify-content:center;color:var(--ds-ink-2)}
+.lp-memo-dot{display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--ds-soft-line,#6ba4f8);vertical-align:middle}
+/* 3 넘기기: 문항 좌우의 큰 ‹ › — 평소 흐리게, 올리면 진하게. 넘길 때 0.32초 미끄러져 들어옴 */
+.lp-zoom-stage{position:relative;flex:1;min-height:0;display:flex;align-items:stretch;gap:6px}
+.lp-zoom-stage .lp-zoom-pic{flex:1;min-width:0}
+.lp-zoom-side{flex:none;width:32px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-3);cursor:pointer;display:grid;place-items:center}
+.lp-zoom-side:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
+.lp-zoom-side:disabled{opacity:.25;cursor:default}
+.lp-zoom-side .ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5}
+.lp-zoom-pic[data-slide=next] img{animation:lp-in-next .32s cubic-bezier(.2,.8,.2,1)}
+.lp-zoom-pic[data-slide=prev] img{animation:lp-in-prev .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes lp-in-next{from{transform:translateX(18%);opacity:0}to{transform:none;opacity:1}}
+@keyframes lp-in-prev{from{transform:translateX(-18%);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.lp-zoom-pic img{animation:none!important}}
+/* 2 정보·메모: 문항 아래 빈 자리 */
+.lp-zoom-note{flex:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px;padding:10px 12px;border-radius:var(--cv-sec-radius,10px);background:var(--ds-field-raise,rgba(177,186,196,.06))}
+.lp-info{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin:0;font-size:var(--cv-text-small,12.5px)}
+.lp-info dt{color:var(--ds-ink-3)}.lp-info dd{margin:0;color:var(--ds-ink-2);min-width:0;overflow-wrap:anywhere}
+.lp-memo{display:flex;flex-direction:column;gap:4px;font-size:var(--cv-text-small,12.5px);color:var(--ds-ink-3)}
+.lp-memo small{color:var(--ds-ink-3);font-size:var(--cv-text-meta,11px)}
+.lp-memo textarea{resize:vertical;min-height:56px;padding:6px 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:var(--ds-field);color:var(--ds-ink);font:inherit;box-shadow:inset 0 0 0 1px var(--ds-line);outline:none}
+.lp-memo textarea:focus{box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+@media (max-width:560px){.lp-zoom-note{grid-template-columns:1fr}}
+/* 4 변형 단계 띠 + 작업 상자 */
+.lp-steps{display:flex;gap:4px;margin:0;padding:0;list-style:none;font-size:var(--cv-text-small,12.5px)}
+.lp-steps li{flex:1;padding:6px 8px;border-radius:6px;background:var(--ds-field-raise,rgba(177,186,196,.06));color:var(--ds-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-steps li[data-at=done]{color:var(--ds-ink-2)}
+.lp-steps li[data-at=done]::before{content:'✓ ';color:var(--ds-success,#3fb950)}
+.lp-steps li[data-at=now]{background:var(--ds-soft-bg,#152137);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8)}
+#job-box{position:fixed;right:16px;bottom:40px;z-index:80;width:340px;display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px;border-radius:12px;background:var(--ds-panel);color:var(--ds-ink);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));font-size:var(--cv-text-small,12.5px)}
+#job-box[hidden]{display:none}
+#job-box .job-head{display:flex;align-items:center;gap:8px;min-width:0}
+#job-box .job-head span{flex:1;min-width:0;color:var(--ds-ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#job-box .job-head button{width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-3);cursor:pointer}
+#job-box .job-head button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#job-box .job-open{align-self:flex-end;height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--ds-soft-bg,#152137);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8);cursor:pointer;font:inherit}
+#job-box .job-err{margin:0;color:var(--ds-danger,#f85149)}
+#job-box[data-state=busy] .job-head b::after{content:'';display:inline-block;width:10px;height:10px;margin-left:6px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;animation:job-spin .8s linear infinite;vertical-align:-1px}
+@keyframes job-spin{to{transform:rotate(360deg)}}
+/* 5 한 문항 보기: 크게 보기를 본문 자리에(닫기 대신 「카드 모아 보기로」) */
+.lp-zoom.is-one{box-shadow:none}
+#card-view .lp-zoom-stage .lp-zoom-pic{flex:1 1 auto;min-width:0}
+.lp-zoom-side{align-self:center;height:72px}
+/* 내 문항 카드(문항 보관함)의 별표 */
+.pv-card{position:relative}
+.pv-card .pv-star{top:8px;right:8px}
+.pv-card:hover .pv-star{opacity:1}

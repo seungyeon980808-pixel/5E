@@ -2,7 +2,7 @@ import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copy
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderLibrary,renderExams,renderExam} from './pool-views.js';
 import {createCardEditor} from './card-editor.js';
-import {busyHtml,pastBusyHtml} from './card-shared.js';
+import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
@@ -365,7 +365,15 @@ let convertingPast=null;
 // 「변형」 진행 표시: 누른 단추 자리에 고리와 단계 글(준비 → 원본 받는 중 → 바꾸는 중 → 카드 여는 중)을 보인다.
 // 목록이 다시 그려져도 card-editor가 pastBusy()를 보고 같은 표시를 그린다.
 let pastBusy=null;
-function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;
+// 「변형」 작업 상자(10-23 지적 4): 오른쪽 아래에 단계(스캔 → 문항 카드 → 한글 조판)를 보여 주고, 처리하는 동안 다른 작업을 그대로 한다.
+// 끝나면 바로 카드로 넘어가지 않고 「카드 보기」를 띄운다(보고 있던 화면을 빼앗지 않게).
+const JOB_STEPS=['문항 스캔','문항 카드 작성','한글 조판 작성'],jobStep=stage=>/카드 여는|조판/.test(stage||'')?2:/한글 문항/.test(stage||'')?1:0;
+function jobBox(){let n=document.querySelector('#job-box');if(!n){n=document.createElement('section');n.id='job-box';n.setAttribute('role','status');n.setAttribute('aria-live','polite');document.body.append(n);
+  n.addEventListener('click',e=>{const open=e.target.closest('[data-job-open]');if(open){const q=data.questions.find(x=>x.id===open.dataset.jobOpen);if(q){current=q;openCard(q.id);cardEditor.showHwp?.();}n.hidden=true;return;}if(e.target.closest('[data-job-close]'))n.hidden=true;});}return n;}
+function showJob(title,stage,{done=null,error=''}={}){const n=jobBox(),at=done?3:jobStep(stage);n.hidden=false;n.dataset.state=error?'error':done?'done':'busy';
+  n.innerHTML=`<div class="job-head"><b>${E(error?'변형 실패':done?'변형 완료':'변형 중')}</b><span>${E(title)}</span><button type="button" data-job-close aria-label="닫기">×</button></div>${error?`<p class="job-err">${E(error)}</p>`:`<ol class="lp-steps">${JOB_STEPS.map((x,i)=>`<li data-at="${i<at?'done':i===at?'now':''}">${i+1}. ${x}</li>`).join('')}</ol>`}${done?`<button type="button" class="job-open" data-job-open="${E(done.id)}">${E(done.number)}번 카드 보기</button>`:''}`;
+  for(const ol of document.querySelectorAll(`.lp-steps[data-steps]`))ol.querySelectorAll('li').forEach((li,i)=>li.dataset.at=i<at?'done':i===at?'now':'');}
+function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;showJob(pastBusy.title,stage);
   for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(pastBusy.id)}"]`)){
     if(!b.hasAttribute('aria-busy')){b.style.minWidth=b.offsetWidth+'px';b.setAttribute('aria-busy','true');}b.innerHTML=busyHtml(stage);
     const f=b.closest('figure.past');if(f){f.toggleAttribute('data-busy',true);const o=f.querySelector('.past-busy');if(o)o.querySelector('span').textContent=stage;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',pastBusyHtml(stage));}}
@@ -388,13 +396,13 @@ async function convertPast(item){
     q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];if(!q.source||q.source===item.title)q.source=`기출 변형 · ${item.title}`.slice(0,300);
     q.workflow='draft';
     pastStage('카드 여는 중');
-    const ok=mutate(()=>{current=q;data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
+    const ok=mutate(()=>{data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
     if(!ok)return;
-    openCard(q.id);cardEditor.showHwp?.();
+    showJob(item.title,'',{done:{id:q.id,number:q.number}});
     const warn=(diag?.notes||[]).filter(n=>/못|확인|제외|원본 참고/.test(n));
     const done=`${item.title} → ${q.number}번 문항으로 가져왔습니다 · 원본은 근거로 연결${warn.length?' · 확인: '+warn[0]:''}`;
     status(done);notice(done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
-  }catch(e){pastIdle(`가져오지 못했습니다 · ${e.message}`);status(`${item.title} 변환 실패: ${e.message}`,true);}
+  }catch(e){pastIdle(`가져오지 못했습니다 · ${e.message}`);showJob(item.title,'',{error:e.message});status(`${item.title} 변환 실패: ${e.message}`,true);}
   finally{convertingPast=null;pastIdle();}
 }
 const newDialog=createNewQuestionDialog($('#new-dialog'),{onCreate:shape=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,String(data.questions.length+1));data.questions.push(current);activeTab='composition';const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,current.id);renumberExam(data,exam.id);}})&&(show('card'),true)});
@@ -659,6 +667,8 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 // 문항 보관함.
 $('#library-view').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.libStage){view.stage=b.dataset.libStage;renderView();return;}
+  if(b.dataset.libMark!==undefined){view.mark=b.dataset.libMark;renderView();return;}
+  if(b.dataset.poolStar){const s=cardStore.get('stars',{}),k=b.dataset.poolStar;if(s[k])delete s[k];else s[k]=Date.now();cardStore.set('stars',s);if(view.mark==='star')renderView();else{b.setAttribute('aria-pressed',String(!!s[k]));b.setAttribute('aria-label',s[k]?'별표 빼기':'별표');}return;}
   if(b.dataset.openCard){openCard(b.dataset.openCard);return;}
   if(b.dataset.toExamNew){const exam=createExam();if(exam&&mutate(()=>{addToExam(data,exam.id,b.dataset.toExamNew);renumberExam(data,exam.id);}))status(`「${exam.title}」에 넣었습니다.`);return;}
 });

@@ -155,7 +155,7 @@ export function createCardEditor(root,api){
     // 범위 목록 맨 아래 「5E 라이브러리에서 가져오기…」: 어디서 찾을지 고르는 자리와 한곳에(머리 줄의 같은 모양 아이콘 두 개를 없앰).
     const scope=`<select class="lp-scope" data-cvscope aria-label="검색 범위">${TABS.map(([k,t])=>`<option value="${k}"${panels.tab===k?' selected':''}>${t}</option>`).join('')}<option disabled>──────────</option><option value="__lib">5E 라이브러리에서 가져오기…</option></select>`;
     const unit=panels.tab==='past'?['pastview',pastFilter.view==='page','문항별로 보기','시험지 쪽으로 보기']:panels.tab==='textbooks'?['bookview',pastFilter.bookview==='page','쪽 목록','한 쪽 크게 보기']:null;
-    const seg=unit?`<span class="lp-seg lp-headseg" role="group" aria-label="보기 단위"><button type="button" data-cv${unit[0]}="q" aria-pressed="${!unit[1]}" title="${unit[2]}" aria-label="${unit[2]}">${ICON.grid}</button><button type="button" data-cv${unit[0]}="page" aria-pressed="${unit[1]}" title="${unit[3]}" aria-label="${unit[3]}">${ICON.page}</button></span>`:'';
+    const seg=panels.tab==='past'?`<span class="lp-seg lp-headseg" role="group" aria-label="보기 단위">${[['q',ICON.grid,'문항별로 보기'],['one',ICON.card,'한 문항씩 크게 보기'],['page',ICON.page,'시험지 쪽으로 보기']].map(([v,ic,t])=>`<button type="button" data-cvpastview="${v}" aria-pressed="${(pastFilter.view||'q')===v}" title="${t}" aria-label="${t}">${ic}</button>`).join('')}</span>`:unit?`<span class="lp-seg lp-headseg" role="group" aria-label="보기 단위"><button type="button" data-cv${unit[0]}="q" aria-pressed="${!unit[1]}" title="${unit[2]}" aria-label="${unit[2]}">${ICON.grid}</button><button type="button" data-cv${unit[0]}="page" aria-pressed="${unit[1]}" title="${unit[3]}" aria-label="${unit[3]}">${ICON.page}</button></span>`:'';
     const linked='';// 근거는 문항 카드 맨 아래 「근거」 표로 옮겼다(시안 34).
     const search=docked?`<label class="lp-search">${ICON.search}<input data-cvsrc value="${E(root.querySelector('#source-search')?.value||document.querySelector('#source-search')?.value||'')}" placeholder="${panels.tab==='standards'?'코드·핵심어':'자료 이름·본문'}" aria-label="검색"></label>`:'';
     return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="참고 자료"><div class="lp-one">${panels.lib?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-lib" aria-pressed="true" title="참고 자료 닫기" aria-label="참고 자료 닫기">${ICON.panelL}</button>`:''}${scope}<div class="lp-slot" data-cvslot="search">${search}</div>
@@ -355,6 +355,15 @@ export function createCardEditor(root,api){
     return books;
   }
   const bookPage=(b,n,thumb)=>new URL(`../../pdf-library/previews/${b.sha}/${n}${thumb?'-thumb':''}.webp`,import.meta.url).href;
+  // 별표·메모(10-23 지적 1·2): 이 기기에만 저장. 키는 기출 'past:<id>', 내 문항 'q:<id>'.
+  const marks={stars:()=>store.get('stars',{}),memos:()=>store.get('memos',{}),
+    star(key){const s=marks.stars();if(s[key])delete s[key];else s[key]=Date.now();store.set('stars',s);return !!s[key];},
+    memo(key,v){const m=marks.memos();if(String(v).trim())m[key]=String(v);else delete m[key];store.set('memos',m);}};
+  const starBtn=(key,cls='lp-star')=>{const on=!!marks.stars()[key];return `<button type="button" class="${cls}" data-cvstar="${E(key)}" aria-pressed="${on}" aria-label="${on?'별표 빼기':'별표'}" title="${on?'별표 빼기':'별표 — 「★ 별표만」으로 모아 보기'}">${ICON.star}</button>`;};
+  // 「변형」 단계(지적 4): 앱의 처리 단계 글 → 세 단계(스캔 → 문항 카드 → 한글 조판).
+  const STEPS=['문항 스캔','문항 카드 작성','한글 조판 작성'];
+  const stepOf=stage=>/카드 여는|조판/.test(stage||'')?2:/한글 문항/.test(stage||'')?1:0;
+  const stepsHtml=(id,stage)=>`<ol class="lp-steps" data-steps="${E(id)}">${STEPS.map((n,i)=>`<li data-at="${i<stepOf(stage)?'done':i===stepOf(stage)?'now':''}">${i+1}. ${n}</li>`).join('')}</ol>`;
   const searchHtml=(placeholder,n)=>`<label class="lp-search">${ICON.search}<span class="lp-tokens">${pastFilter.tokens.map(w=>`<button type="button" class="lp-token" data-cvtoken="${E(w)}" aria-label="${E(w)} 단어 삭제" title="${E(w)} 단어 삭제">${E(w)}<span aria-hidden="true">×</span></button>`).join('')}</span><input data-cvpast="query" value="${E(pastFilter.query)}" placeholder="${placeholder}" aria-label="검색할 단어 입력(Enter로 색인 추가, 최대 3개)">${n}</label>`;
   function fillHead(search,adv,count){
     // 검색창은 조각·안내 글이 그대로면 바꾸지 않고 문항 수만 고친다 — 치는 중에 입력칸을 새로 만들지 않게(초점·글자 유지, 다시 그리기 줄임).
@@ -388,22 +397,23 @@ export function createCardEditor(root,api){
     const words=[...new Set([...f.tokens,...splitWords(f.query)])];
     // 단원 칸은 지금 과목의 단원만 보여 준다. 과목이 바뀌어 없는 단원이 남아 있으면 칸은 「전체」인데 0문항이 나왔다(M19).
     if(f.part&&!parts.includes(f.part)){f.part='';store.set('past',pastFilter);}
-    const list=items.filter(i=>(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===String(f.year))&&(!words.length||(hay(i),words.every(w=>i._hay.includes(w)||i._hayNs.includes(w)))));
+    let list=items.filter(i=>(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===String(f.year))&&(!words.length||(hay(i),words.every(w=>i._hay.includes(w)||i._hayNs.includes(w)))));
     if(words.length){const sc=new Map(list.map(i=>[i,pastScore(i,words)]));list.sort((a,b)=>sc.get(b)-sc.get(a));}
+    {const S=marks.stars(),M=marks.memos();if(f.mark==='star')list=list.filter(i=>S['past:'+i.id]);else if(f.mark==='memo')list=list.filter(i=>M['past:'+i.id]);}
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
     const sel=(k,vals,label)=>`<label>${label}<select data-cvpast="${k}" aria-label="${label}"><option value="">전체</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select></label>`;
     const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
       return `<div class="past-pic"><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
     fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어+Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
-      sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
-      ['subject','part','year'].filter(k=>f[k]).length);
+      sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<label>모아 보기<select data-cvpast="mark" aria-label="모아 보기"><option value="">모두</option><option value="star"${f.mark==='star'?' selected':''}>★ 별표만</option><option value="memo"${f.mark==='memo'?' selected':''}>메모 있음</option></select></label>`+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
+      ['subject','part','year','mark'].filter(k=>f[k]).length);
     if(f.view==='page'){renderPastPage(body,items,list,'');return;}
-    const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
+    const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${starBtn('past:'+i.id)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b>${marks.memos()['past:'+i.id]?'<i class="lp-memo-dot" title="메모 있음"></i>':''}<span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
     // 카드를 다시 그려도 기출 목록 내용이 같으면 그 전 목록(이미 받은 그림 포함)을 그대로 다시 붙인다 — 매번 새로 만들면
     // 그림 40장을 다시 받고 레이아웃을 다시 계산해 「근거로 연결」 같은 작은 수정에도 화면이 60ms쯤 멈췄다.
-    if(html===pastCache.html&&pastCache.node){body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();return;}
+    if(html===pastCache.html&&pastCache.node){body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();oneMode();return;}
     body.innerHTML=html;pastCache={html,node:body.firstElementChild};
-    loadThumbs(body);refocus();reopenZoom();
+    loadThumbs(body);refocus();reopenZoom();oneMode();
   }
   // 쪽 종이(시안 30·31): 원본 PDF 쪽 + 검색어 형광펜 + 이미 건 근거 자리(주황) + 끌어서 고를 수 있는 글자 층.
   function mountPaper(paper,o,alive=()=>true){
@@ -530,7 +540,9 @@ export function createCardEditor(root,api){
   function edit(field,fn,light=true){api.edit(fn,{key:`card:${q()?.id}:${field}`,light});if(light)refreshLight();}
 
   root.addEventListener('input',e=>{
-    const t=e.target,x=q();if(!x)return;
+    const t=e.target,x=q();
+    if(t.dataset.cvmemo!==undefined){clearTimeout(t._timer);t._timer=setTimeout(()=>{marks.memo(t.dataset.cvmemo,t.value);const n=t.closest('.lp-zoom')?.querySelector('.lp-memo-state');if(n)n.textContent=t.value.trim()?'저장됨 · 이 기기':'';},300);return;}
+    if(!x)return;
     if(t.matches('textarea'))fit(t);
     if(t.id==='cv-ai-input'){aiDrafts.set(x.id,t.value);return;}
     if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else writeField(x,f,t.value);});return;}
@@ -581,6 +593,8 @@ export function createCardEditor(root,api){
     if(d.cvpagestep){const n=root.querySelector('[data-cvslot="pageno"]')?.textContent.match(/\d+/);pastFilter.pageno=Math.max(1,(Number(n?.[0])||1)+Number(d.cvpagestep));store.set('past',pastFilter);renderPast();return;}
     if(d.cvadvclear!==undefined){Object.assign(pastFilter,{subject:'',part:'',year:''});store.set('past',pastFilter);renderPast();return;}
     if(d.cvbooklink!==undefined){const bk=books?.find(v=>v.id===(pastFilter.book||books[0]?.id))||books?.[0];if(bk&&x){api.edit(()=>{x.references.push({target:'question',label:`${bk.title} ${d.cvbooklink}쪽`,quote:''});});api.status?.(`${bk.title} ${d.cvbooklink}쪽을 근거로 연결했습니다.`);}return;}
+    if(d.cvstar!==undefined){const on=marks.star(d.cvstar);root.querySelectorAll(`[data-cvstar="${CSS.escape(d.cvstar)}"]`).forEach(n=>{n.setAttribute('aria-pressed',String(on));n.setAttribute('aria-label',on?'별표 빼기':'별표');});
+      if(pastFilter.mark==='star'&&!on&&!root.querySelector('.lp-zoom'))renderPast();return;}
     if(d.cvzoomnav!==undefined){zoomTo(pastZoom+Number(d.cvzoomnav));return;}
     if(d.cvzoomclose!==undefined){zoomTo(-1);return;}
     if(d.cvtoken!==undefined){pastFilter.tokens=pastFilter.tokens.filter(w=>w!==d.cvtoken);store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
@@ -671,14 +685,27 @@ export function createCardEditor(root,api){
   // 크게 보기 아래 줄(시안 27): [시험지 쪽에서 보기][PDF] ··· [근거로 연결][변형]. 근거·변형은 목록 카드에서는 숨겨 두고 여기서만 보인다.
   function zoomFoot(f){const id=f.querySelector('[data-cvlink]')?.dataset.cvlink,i=id&&pastItem(id),acts=(f.querySelector('.acts')?.innerHTML||'').replace('<span>근거</span>','<span>근거로 연결</span>');
     return `${i?.publicPath?`<button type="button" class="mini" data-cvtopage="${E(i.id)}" title="이 문항이 있는 시험지 쪽을 봅니다">시험지 쪽에서 보기</button><a class="mini lp-pdf-link" href="${E(pdfHref(i.publicPath,i.page))}" target="_blank" rel="noopener" title="시험지 PDF 원본을 새 창에서 열기">PDF</a>`:''}<span class="sp"></span>${acts}`;}
+  // 「한 문항」 보기(지적 5): 더블클릭으로 여는 「크게 보기」와 같은 화면을 바로 연다(첫 문항부터). 닫으면 카드 모아 보기로.
+  function oneMode(){if(panels.tab==='past'&&pastFilter.view==='one'&&!root.querySelector('.lp-zoom'))zoomTo(Math.max(0,pastZoom));}
+  function leaveOne(){pastFilter.view='q';store.set('past',pastFilter);root.querySelectorAll('[data-cvpastview]').forEach(n=>n.setAttribute('aria-pressed',String(n.dataset.cvpastview==='q')));}
   function zoomTo(i){
+    const dir=pastZoom<0?0:i>pastZoom?1:i<pastZoom?-1:0;
     root.querySelector('.lp-zoom')?.remove();
     const figs=[...root.querySelectorAll('.cv-left .past-list figure.past')],lib=root.querySelector('.cv-left');
-    if(i<0||!figs.length||!lib){pastZoom=-1;pastZoomKey='';return;}
+    if(i<0||!figs.length||!lib){pastZoom=-1;pastZoomKey='';if(i<0&&pastFilter.view==='one')leaveOne();return;}
     pastZoom=Math.max(0,Math.min(figs.length-1,i));const f=figs[pastZoom];pastZoomKey=zoomKey(f);const img=f.querySelector('img'),b=f.querySelector('figcaption b');
-    const src=img?.dataset.full||img?.getAttribute('src')||img?.dataset.card||'',meta=(b?.title||'').split(' · ').slice(1).join(' · ');
-    lib.insertAdjacentHTML('beforeend',`<div class="lp-zoom" role="dialog" aria-label="크게 보기"><div class="lp-zoom-head"><b>${E(b?.textContent||'')}</b><span class="meta">${E(meta)}</span><span class="sp"></span><button type="button" class="mini" data-cvzoomnav="-1" aria-label="이전"${pastZoom?'':' disabled'}>${ICON.left}</button><span class="pos">${pastZoom+1} / ${figs.length}</span><button type="button" class="mini" data-cvzoomnav="1" aria-label="다음"${pastZoom<figs.length-1?'':' disabled'}>${ICON.right}</button><button type="button" class="mini" data-cvzoomclose aria-label="닫기 (Esc)" title="닫기 (Esc)">${ICON.close}</button></div><div class="lp-zoom-pic">${src?`<img src="${E(src)}" alt="${E(b?.textContent||'')}">`:''}</div><div class="lp-zoom-foot">${zoomFoot(f)}</div></div>`);
+    // 목록 그림이 아직 안 받아졌으면(한 문항 보기로 바로 열 때) 비워 두고, 받아지는 대로 채운다.
+    const ready=img&&img.complete&&img.naturalWidth>0,src=img?.dataset.full||(ready?img.currentSrc||img.getAttribute('src'):'')||'',meta=(b?.title||'').split(' · ').slice(1).join(' · ');
+    const zid=f.querySelector('[data-cvlink]')?.dataset.cvlink,zitem=zid&&pastItem(zid),key=zid?'past:'+zid:'',busy=api.pastBusy?.(),one=pastFilter.view==='one';
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,slide=!reduce&&dir?` data-slide="${dir>0?'next':'prev'}"`:'';
+    // 정보(출처·과목·단원·연도) + 메모(이 기기에만, 쓰는 대로 저장) — 문항 아래 빈 자리(지적 2)
+    const info=zitem?[['출처',zitem.title],['과목',zitem.subject],['단원',(zitem.parts||[]).join(', ')],['연도',zitem.year?`${zitem.year}학년도`:'']].filter(([,v])=>v):[];
+    const note=key?`<div class="lp-zoom-note"><dl class="lp-info">${info.map(([k,v])=>`<dt>${k}</dt><dd>${E(v)}</dd>`).join('')}</dl><label class="lp-memo"><span>메모 <small class="lp-memo-state">${marks.memos()[key]?'저장됨 · 이 기기':''}</small></span><textarea data-cvmemo="${E(key)}" rows="3" placeholder="이 문항에 남길 메모 — 쓰는 대로 저장(이 기기에만)">${E(marks.memos()[key]||'')}</textarea></label></div>`:'';
+    const steps=busy&&zid&&busy.id===zid?stepsHtml(zid,busy.stage):'';
+    // 넘기기(지적 3): 문항 좌우의 큰 ‹ ›, 제목 줄에는 위치(11 / 40)만. ← → 키도 그대로.
+    lib.insertAdjacentHTML('beforeend',`<div class="lp-zoom${one?' is-one':''}" role="dialog" aria-label="크게 보기"><div class="lp-zoom-head">${key?starBtn(key,'mini lp-zstar'):''}<b>${E(b?.textContent||'')}</b><span class="meta">${E(meta)}</span><span class="sp"></span><span class="pos">${pastZoom+1} / ${figs.length}</span><button type="button" class="mini" data-cvzoomclose aria-label="닫기 (Esc)" title="닫기 (Esc)">${ICON.close}</button></div><div class="lp-zoom-stage"><button type="button" class="lp-zoom-side prev" data-cvzoomnav="-1" aria-label="이전 문항"${pastZoom?'':' disabled'}>${ICON.left}</button><div class="lp-zoom-pic"${slide}>${src?`<img src="${E(src)}" alt="${E(b?.textContent||'')}">`:''}</div><button type="button" class="lp-zoom-side next" data-cvzoomnav="1" aria-label="다음 문항"${pastZoom<figs.length-1?'':' disabled'}>${ICON.right}</button></div>${steps}${note}<div class="lp-zoom-foot">${zoomFoot(f)}</div></div>`);
     root.querySelector('.lp-zoom [data-cvzoomclose]')?.focus({preventScroll:true});
+    if(!src&&img){const k0=pastZoomKey;img.addEventListener('load',()=>{if(pastZoomKey!==k0)return;const pic=root.querySelector('.lp-zoom-pic');if(pic&&!pic.querySelector('img'))pic.insertAdjacentHTML('afterbegin',`<img src="${E(img.currentSrc||img.src)}" alt="${E(b?.textContent||'')}">`);else{const z=pic?.querySelector('img');if(z&&!z.getAttribute('src'))z.src=img.currentSrc||img.src;}},{once:true});}
     // 크게 보기는 원본 PDF에서 문항만 선명하게 다시 그린다(검색어가 있으면 형광펜 포함). 받는 동안·실패하면 카드 그림 그대로.
     const id=f.querySelector('[data-cvlink]')?.dataset.cvlink,item=id&&pastItem(id),zimg=root.querySelector('.lp-zoom-pic img');
     if(item?.publicPath&&Array.isArray(item.box)&&zimg){const key=pastZoomKey;zimg.closest('.lp-zoom-pic').setAttribute('data-marking','');croppedQuestion(item,pastFilter.tokens.slice()).then(r=>{if(r&&zimg.isConnected&&pastZoomKey===key)zimg.src=r.url;}).catch(()=>{}).finally(()=>zimg.closest('.lp-zoom-pic')?.removeAttribute('data-marking'));}
