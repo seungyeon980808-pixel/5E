@@ -146,7 +146,10 @@ export function installExamModes(panel, services) {
   // ── 집중 도구 줄 ──
   const bar = document.createElement('div');
   bar.className = 'exam-focusbar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', '집중 편집 도구');
-  bar.innerHTML = `<span class="exam-ftabs" role="tablist">${[['text', '글자'], ['para', '문단'], ['table', '표'], ['pic', '그림'], ['item', '문항'], ['sheet', '학습지'], ['layout', '판짜기']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
+  // 10-23 지적 11: 위쪽 도구 줄 → 오른쪽 인스펙터(한글에 있는 기능: 글자·문단·표·그림, 고른 대상에 따라 바뀜).
+  // 5E 기능(문항·학습지·판짜기)은 왼쪽 칸 맨 위로 옮겼다(leftTools). 아래쪽: 조판 부호·기호·양식 저장·점검.
+  bar.classList.add('exam-inspector'); bar.setAttribute('aria-label', '인스펙터 — 고른 글·표·그림 설정');
+  bar.innerHTML = `<div class="exam-ihead"><b class="exam-ititle">글자</b><small class="exam-isub"></small></div><span class="exam-ftabs" role="tablist">${[['text', '글자'], ['para', '문단'], ['table', '표'], ['pic', '그림']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
     <span class="exam-fdiv"></span><div class="exam-fgroup"></div>
     <div class="exam-fright"><span class="exam-fdiv"></span>
       ${marksButtonHtml('exam-fx big exam-marks-toggle')}
@@ -154,8 +157,26 @@ export function installExamModes(panel, services) {
       <button type="button" class="exam-fx big" data-exam-fx="capture" title="고른 부분을 양식(조각)으로 저장 → 팔레트 「템플릿」에 담김">⬚ 양식 저장</button>
       <button type="button" class="exam-fx big" data-exam-fx="check" title="조판 점검: 넓은 그림·표, 흐린 그림, 빈칸, 번호 빠짐을 찾아 목록으로">✓ 점검</button></div>`;
   // 도구 줄은 문서 쪽 열 맨 위(왼쪽 칸 옆). 시험지 iframe(#exam-studio)은 옮기지 않는다 — 옮기면 다시 읽힌다.
-  panel.querySelector('#exam-studio').before(bar);
+  panel.querySelector('#exam-studio').after(bar);
   const group = bar.querySelector('.exam-fgroup');
+  // 왼쪽 칸 맨 위: 5E 기능(문항 · 학습지 · 판짜기) — 오른쪽 인스펙터와 같은 짜임(두 칸씩 한 줄 단추)
+  let ltab = 'item';
+  const leftTools = document.createElement('section');
+  leftTools.className = 'exam-left-tools'; leftTools.setAttribute('aria-label', '5E 기능');
+  leftTools.innerHTML = `<span class="exam-ftabs exam-ltabs" role="tablist">${[['item', '문항'], ['sheet', '학습지'], ['layout', '판짜기']].map(([k, l]) => `<button type="button" role="tab" data-exam-ltab="${k}" aria-selected="false">${l}</button>`).join('')}</span><div class="exam-lgroup"></div>`;
+  panel.querySelector('.exam-sidebar .exam-header').after(leftTools);
+  const lgroup = leftTools.querySelector('.exam-lgroup');
+  function renderLeft() {
+    const items = focusTabs(ctx)[ltab].filter(it => it !== '|');
+    lgroup.innerHTML = items.map((it, i) => it.length === 1 ? controlHtml(it[0]) : `<button type="button" class="exam-fx" data-exam-li="${i}" title="${esc(it[1])}">${it[0]}</button>`).join('');
+    leftTools.querySelectorAll('[data-exam-ltab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.examLtab === ltab)));
+  }
+  leftTools.addEventListener('click', event => {
+    const t = event.target.closest('[data-exam-ltab]'); if (t) { ltab = t.dataset.examLtab; renderLeft(); return; }
+    const button = event.target.closest('[data-exam-li]'); if (!button) return;
+    const item = focusTabs(ctx)[ltab].filter(it => it !== '|')[Number(button.dataset.examLi)];
+    void run(async () => { await item[2](ctx, button); });
+  });
 
   const peek = document.createElement('button');
   peek.type = 'button'; peek.className = 'exam-peek'; peek.hidden = true; peek.textContent = '☰ 도구 보기';
@@ -175,6 +196,18 @@ export function installExamModes(panel, services) {
   let marks = null, marksBridge = null;
   const attachMarks = () => { const b = getBridge(); if (!b?.input || b === marksBridge) return; marks?.dispose(); marksBridge = b; marks = installExamMarks(b, { onToggle: syncMarksButton }); };
   setInterval(attachMarks, 800); attachMarks();
+  let lastPick = '';
+  function followSelection() {
+    if (mode !== 'focus') return;
+    const b = getBridge(); if (!b?.input) return;
+    let kind = 'text';
+    try { if (b.input.cursor?.getSelectedPictureRef?.()) kind = 'pic'; else if (b.input.cursor?.getPosition?.()?.cellPath?.length) kind = 'table'; } catch {}
+    if (kind === lastPick) return; lastPick = kind;
+    const sub = bar.querySelector('.exam-isub'); if (sub) sub.textContent = kind === 'pic' ? '그림을 골랐음' : kind === 'table' ? '표 칸 안에 커서' : '문단 안에 커서';
+    if (kind === 'pic' || kind === 'table') { if (tab !== kind) { tab = kind; renderTab(); } }
+    else if (tab === 'pic' || tab === 'table') { tab = 'text'; renderTab(); }
+  }
+  setInterval(() => { if (!panel.hidden) followSelection(); }, 400);
   marksToggle?.addEventListener('click', () => { const on = !marksEnabled(); setMarksEnabled(on); syncMarksButton(on); });
   window.addEventListener('5e:typeset-marks', event => syncMarksButton(event.detail?.on ?? marksEnabled()));
   const studio = () => getBridge()?.editor?.element?.contentDocument || null;
@@ -281,6 +314,7 @@ export function installExamModes(panel, services) {
       return `<button type="button" class="exam-fx" data-exam-fi="${i}" title="${esc(it[1])}">${it[0]}</button>`;
     }).join('');
     bar.querySelectorAll('[data-exam-ftab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.examFtab === tab)));
+    bar.querySelector('.exam-ititle').textContent = { text: '글자', para: '문단', table: '표', pic: '그림' }[tab] || '';
     group.scrollLeft = 0; requestAnimationFrame(() => syncOverflow());
     syncControls(true);
   }
@@ -724,13 +758,13 @@ export function installExamModes(panel, services) {
     try { localStorage.setItem(MODE_KEY, mode); } catch {}
     panel.dataset.toolMode = mode;
     modes.querySelectorAll('[data-exam-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.examMode === mode)));
-    bar.hidden = mode !== 'focus';
+    bar.hidden = mode !== 'focus'; leftTools.hidden = mode !== 'focus';
     peek.hidden = mode !== 'none';
     closePop();
     applyStudioChrome();
     clearInterval(syncTimer);
     scheduleOutline();
-    if (mode === 'focus') { renderTab(); syncTimer = setInterval(() => { if (!panel.hidden) syncControls(); }, 600); }
+    if (mode === 'focus') { renderTab(); renderLeft(); syncTimer = setInterval(() => { if (!panel.hidden) syncControls(); }, 600); }
     if (announce) message(mode === 'basic' ? '기본 모드: 한글 리본 그대로(모든 기능)' : mode === 'focus' ? '집중 모드: 시험지·학습지에 필요한 도구 + 팔레트' : '없음: 도구 없이 종이만 · 「도구 보기」나 ⌘⌥2로 돌아옴');
   }
   modes.addEventListener('click', event => { const b = event.target.closest('[data-exam-mode]'); if (b) setMode(b.dataset.examMode); });

@@ -97,7 +97,6 @@ export function defaultState() {
     });
   const tabs = [{ name: "메인", cols: 8, blocks: tools }];
   for (const [prefix, name] of [
-    ["school_exam", "학교 시험지"],
     ["csat_science", "수능 시험지"],
   ]) {
     const blocks = [];

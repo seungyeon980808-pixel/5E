@@ -105,7 +105,7 @@ export function initPaletteWorkspace(panel, services) {
       replaceDocument: services.replaceDocument,
       notify: services.notify,
     });
-  let activeTab = "학교 시험지",
+  let activeTab = "메인", // 10-23: 학교 시험지 틀 6개는 뺐다(학교 양식 등록 기능으로 대신)
     editing = false,
     manager = null,
     managerCategory = "템플릿",
