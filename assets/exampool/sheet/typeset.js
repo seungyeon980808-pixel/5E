@@ -6,8 +6,8 @@ import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
 import {KICE_STANDARD} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
-import {buildExamDocument,assembleExamDocument} from './exam-build.js';
-import {examPage,paginateQuestions,paperMix,paperMixMessage} from './exam-layout.js';
+import {buildExamDocument,assembleExamChecked} from './exam-build.js';
+import {examPage,paperMix,paperMixMessage} from './exam-layout.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
@@ -294,9 +294,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
   // 쉬는 사이 쪽 전체를 떠났으면(alive가 false) 남은 일을 하지 않는다.
   const cancelled=()=>Object.assign(Error('쪽 전체 그리기를 멈췄습니다.'),{cancelled:true});
-  async function sheetEntry(Document,value){
-    const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2};
-    if(ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value))
+  async function sheetEntry(Document,value,paperOverride=''){
+    const own={paper:paperOverride||value.paper||value.typeset?.profile?.paper||'A4',columns:2};
+    if(!paperOverride&&ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value))
       return {bytes:exportLayoutHwpx(document(),XLSX.CFB),profile:profile(),height:questionPageMetrics(document(),profile()).usedHeightMm,saved:!dirty&&!!value.typeset?.verified&&await typesetMatches(value.typeset,value)};
     // 보기 전용이라 저장한 조판이 지금 문항과 맞는지만 가볍게 본다(문서를 미리 열어 검사하지 않음). 시험지 HWPX를 만들 때는 openApprovedQuestion으로 엄격히 검사한다.
     const t=value.typeset;
@@ -314,8 +314,11 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+after,after,breakBefore:!!exam?.breaks?.[id],saved:e.saved});}
     if(!items.length)throw Error('쪽에 놓을 문항이 없습니다.');
     // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 아니면 A4 2단.
-    const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),pages=paginateQuestions(items,{height:sheet.heightMm,columns:sheet.columns,gap:sheet.gapMm});
-    const {document:target,ranges}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>new Document(item.bytes),between:step});
+    const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));
+    // 단 폭이 다른 용지로 조판한 문항(10-23 지적 2-3: B4 문항이 A4 단에서 넘쳐 겹침)은 화면에서는 시험지 단 폭으로 새로 조판해 놓는다.
+    const rewidth=[];
+    for(const x of items)if(x.profile?.paper!==sheet.paper){await step();const e=await sheetEntry(Document,x.q,sheet.paper);Object.assign(x,{bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
+    const {document:target,ranges,pages,moved,tall}=await assembleExamChecked(Document,{items,sheet,open:item=>new Document(item.bytes),between:step});
     try{
       const p=parse(target.getPageDef(0)),width=p.width/75,height=p.height/75;
       // 쪽마다 문항별 차지한 자리(시험지 전체 보기에서 다른 문항을 두 번 눌러 그 카드로 가기, 10-22). focus = 지금 문항.
@@ -326,17 +329,24 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         const found=new Map();
         // 글 줄로 문항 자리를 먼저 잡고, 그림·표는 같은 단(가로로 겹침)일 때만 넓힌다 — 엔진이 그림·표를 엉뚱한 문단 번호로
         // 보고할 때가 있어(rhwp 0.8.7) 문항 상자가 옆 단까지 넓어지던 문제(10-23).
-        const grow=(id,r)=>{const box=found.get(id);found.set(id,box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h});};
+        const pd=parse(target.getPageDef(0)),mL=pd.marginLeft/75,colW=(pd.width-pd.marginLeft-pd.marginRight)/75/sheet.columns,colOf=x=>Math.max(0,Math.min(sheet.columns-1,Math.floor((x+1-mL)/colW)));
+        // 한 문항이 두 단에 걸치면 상자도 단마다 하나씩(10-23 지적 2-2) — 열쇠는 「문항|단」.
+        const grow=(id0,r)=>{const id=id0+'|'+colOf(r.x),box=found.get(id);found.set(id,box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h});};
         const ok=r=>owner(r)!==undefined&&[r.x,r.y,r.w,r.h].every(Number.isFinite);
+        const filled=r=>String(r.text||'').replace(/\u2060/g,'').trim();
         // 칸 안 글 줄의 paraIdx는 칸 안쪽 번호라 문항 범위와 맞지 않는다 — 맨 바깥 글 줄만.
-        for(const r of parse(target.getPageTextLayout(i)).runs)if(!(r.cellPath||[]).length&&ok(r))grow(owner(r),r);
-        for(const r of parse(target.getPageControlLayout(i)).controls){if(!ok(r)||(r.cellPath||[]).length)continue;const box=found.get(owner(r)),cx=r.x+r.w/2;if(box&&(cx<box.x-4||cx>box.r+4))continue;grow(owner(r),r);}
+        for(const r of parse(target.getPageTextLayout(i)).runs)if(!(r.cellPath||[]).length&&ok(r)&&filled(r))grow(owner(r),r);
+        // 그림·표는 같은 문항이 그 단에 글 줄로 이미 자리를 잡았을 때만 넓힌다. 다른 표 안에 완전히 든 것은 엉뚱한 문단 번호일 수 있어 뺀다.
+        const ctl=parse(target.getPageControlLayout(i)).controls.filter(r=>ok(r)&&!(r.cellPath||[]).length),inside=(c,o)=>o!==c&&o.x<=c.x+.5&&o.y<=c.y+.5&&o.x+o.w>=c.x+c.w-.5&&o.y+o.h>=c.y+c.h-.5&&o.w*o.h>c.w*c.h;
+        for(const r of ctl){if(ctl.some(o=>inside(r,o)))continue;const box=found.get(owner(r)+'|'+colOf(r.x)),cx=r.x+r.w/2;if(!box||cx<box.x-4||cx>box.r+4)continue;grow(owner(r),r);}
         if(i)await step();
-        const box=found.get(focusId);
-        out.push({svg:target.renderPageSvg(i),width,height,focus:box&&rel(box),boxes:[...found].map(([id,b])=>({id,...rel(b)}))});
+        const boxes=[...found].map(([key,b])=>({id:key.split('|')[0],...rel(b)})),focus=boxes.find(b=>b.id===focusId);
+        out.push({svg:target.renderPageSvg(i),width,height,focus:focus&&{x:focus.x,y:focus.y,w:focus.w,h:focus.h},boxes});
       }
-      const mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));
-      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved:pages.flatMap(p=>p.moved||[]),oversized:pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
+      // 문항 하나가 여러 상자(단·쪽)로 나뉘면 첫 상자에만 이름표, 마지막 상자에만 여백 막대를 단다.
+      const all=out.flatMap(p=>p.boxes);for(const id of new Set(all.map(b=>b.id))){all.filter(b=>b.id===id).forEach((b,i,mine)=>{b.first=i===0;b.last=i===mine.length-1;});}
+      const oversized=[...new Set([...pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),...tall])];
+      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved,oversized,rewidth,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
     }finally{target.free();}
   }
   // 학교 양식(한글 파일)을 엔진으로 열어 조판 기준 값을 읽는다(10-22 C-6). 열린 문항 조판에는 손대지 않는다.
