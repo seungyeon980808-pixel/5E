@@ -14,7 +14,7 @@ const measureText = (t, fs) => [...t].length * fs * 0.9;
 test('the built-in KICE standard carries the measured KICE rules scaled to the A4 column', () => {
   assert.ok(Object.isFrozen(KICE_STANDARD) && Object.isFrozen(KICE_STANDARD.paper.margin));
   assert.deepEqual(layoutValues(), { ratio: 95, spacing: -5, gapText: 0, gapMaterial: 0, gapBogi: 0, askGap: 0, choicesGap: 0, margin: { top: 15, bottom: 15, left: 15, right: 15 }, columnGap: 8,
-    bogiBottom: 8.69, bogiSide: 8.69, bogiTop: 5.82, bogiTitleWidth: 46.34, bogiTitlePad: 1.44, bogiLineSpacing: 150, gapAfter: 1.54, boxSide: 8.69, boxTop: 5.82, boxBottom: 5.82,
+    bogiBottom: 8.69, bogiSide: 8.69, bogiTop: 5.82, bogiLeft: 8.69, bogiRight: 8.69, bogiTitle: '<보 기>', bogiTitleRow: 11, bogiTitleWidth: 46.34, bogiTitlePad: 1.44, bogiLineSpacing: 150, gapAfter: 1.54, boxSide: 8.69, boxTop: 5.82, boxBottom: 5.82,
     cellPad: 1.44, rule: '0.34pt solid #000', choiceTabs: [62.7, 104.5, 162.6], labelSpace: 'space', tableLineSpacing: 130, tableText: 10 });
   assert.equal(TEXT_RATIO, 95); assert.equal(TEXT_SPACING, -5);
   for (const px of [3, 6, 14, 54]) assert.equal(mmToPx(pxToMm(px)), px);

@@ -1,5 +1,5 @@
 import {renumberDocument} from '../../../js/rhwp-exam-layout-tools.js?v=1022-variant';
-import {attachGapView} from './typeset-gaps.js';
+import {attachGapView,questionElements} from './typeset-gaps.js';
 import {attachTypesetSettings} from './typeset-settings.js';
 import {marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1022-marks';
 import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
@@ -123,23 +123,25 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function ensure(){
     if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(lineFitting)return;if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 잠시 뒤 자동 저장',!!error);scheduleFit();scheduleTextSync();if(!error){scheduleLineFit();scheduleAuto();}}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
-    }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);bridge.setPictureResizeAllowed(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});settings=attachTypesetSettings({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onSetting,onStandard,gaps,marks:{enabled:marksEnabled,toggle:()=>setMarksEnabled(!marksEnabled())}});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
+    }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);bridge.setPictureResizeAllowed(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});settings=attachTypesetSettings({panel:host.parentElement,context:()=>({q,standard:std(q),standards:standardsOf()}),preview:(value,standard)=>previewSheet(value,standard),onApply:a=>onSetting?.({apply:a.standard,exception:a.exception}),onStandard});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
   }
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
   // 저장된 조판을 열 때도 그림·표의 주인을 알아야 한다. 그림을 실제로 읽지 않는 가벼운 계획으로 순서만 얻는다.
   const BLANK='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
   async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
-  async function generate(value,prof=profile(),{quiet=false}={}){
+  // standard: 조판 설정 미리보기(10-23)처럼 저장하지 않은 초안 틀로 그릴 때.
+  async function generate(value,prof=profile(),{quiet=false,standard=null}={}){
+    const stdv=standard||std(value);
     const Document=document().constructor,d=Document.createEmpty();let bytes,owners;
-    try{d.createBlankDocument();const config=questionPageProfile(prof,1200,std(value));d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
-      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:std(value)});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
-      bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:std(value)}),plan.equations);
-      const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();centerCellPictures(styled);if(std(value).parts?.labelSpace==='fixed')fixedLabelSpaces(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});
+    try{d.createBlankDocument();const config=questionPageProfile(prof,1200,stdv);d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
+      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:stdv});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
+      bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:stdv}),plan.equations);
+      const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();centerCellPictures(styled);if(stdv.parts?.labelSpace==='fixed')fixedLabelSpaces(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});
         // 어울림은 내어쓰기 뒤에 건다. 문단 모양을 나중에 바꾸면 한글 엔진이 그림 옆 줄 폭을 잘못 잡는다.
         if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled);}
         // 윗줄부터 자간 맞춤(조판 기준 fit, 10-22 C-5): 내어쓰기·어울림 뒤, 쪽 높이 맞춤 전. 그림 옆 글(어울림)이 있는 문항은 건너뛴다.
-        {const S=std(value);if(S.fit?.on&&!plan.floats.length&&!plan.floatTable)fitQuestionLines(styled,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing});}
+        {const S=stdv;if(S.fit?.on&&!plan.floats.length&&!plan.floatTable)fitQuestionLines(styled,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing});}
         fitQuestionPage(styled,prof);verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
       if(plan.warnings.length&&!quiet)message(plan.warnings.join(' '));
     }finally{d.free();}
@@ -357,5 +359,17 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       }finally{re.free();}
     }finally{d.free();}
   }
-  return {autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  // 조판 설정 팝업의 미리보기(10-23 B, 시안 typeset-settings-1023-v3): 초안 틀로 이 문항을 새로 조판해 깨끗한 쪽 그림으로.
+  // 편집 창과 따로 그린다(편집용 칸 테두리 없음). 겹쳐 그리기용으로 요소 자리·글 줄·개체 자리(쪽 px)도 준다.
+  async function previewSheet(value,standard){
+    await ensure();const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2},Document=document().constructor;
+    const {bytes,owners:o}=await generate(structuredClone(value),own,{quiet:true,standard}),raw=new Document(bytes);
+    // 문항 쪽 높이를 내용에 맞춘 뒤(한 쪽에 다 들어가게) 다시 열어 그린다 — 자동 조판과 같은 순서.
+    let d;try{fitQuestionPage(raw,own);d=new Document(exportLayoutHwpx(raw,XLSX.CFB));}finally{raw.free();}
+    try{const page=parse(d.getPageDef(0));
+      return {svg:d.renderPageSvg(0),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.texts),
+        runs:parse(d.getPageTextLayout(0)).runs,controls:parse(d.getPageControlLayout(0)).controls};
+    }finally{d.free();}
+  }
+  return {previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

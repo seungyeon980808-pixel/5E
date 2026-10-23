@@ -512,6 +512,23 @@ const setPath=(o,path,v)=>{const ks=path.split('.'),last=ks.pop();let t=o;for(co
 async function onTypesetSetting(a){const q=current;if(!q)return;
   try{
     const now=typesetStandardOf(q),own=now.source?.kind==='exception'&&now.source.qid===q.id;
+    // 팝업의 「모든 문항에 적용」/「이 문항에 적용」: 초안 틀 전체를 한 번에 저장한다(값만 — 이름·출처는 저장할 틀 것을 지킨다).
+    if(a.apply){
+      const values=t=>{const s={...structuredClone(a.apply),id:t.id,name:t.name,base:t.base,source:t.source,version:(t.version||1)+1};validateStandard(s);return s;};
+      if(a.exception){
+        if(own){const s=values(now);await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);refreshTypeset();}
+        else{const s=values(copyStandard(now,{name:`${now.name} · ${q.number}번만`,source:{kind:'exception',qid:q.id,from:now.id}}));
+          await saveTypesetStandards([...typesetStandards,s]);mutate(()=>{q.standardId=s.id;},{render:false});}
+        status(`${q.number}번에만 적용했습니다(예외).`);return true;}
+      // 예외를 끄고 적용하면 이 문항은 원래 틀로 돌아가고, 초안 값은 그 틀(모든 문항)에 건다.
+      let shared=now,drop=[];
+      if(own){const from=now.source.from;shared=from&&from!==KICE_ID?typesetStandards.find(x=>x.id===from)||KICE_STANDARD:KICE_STANDARD;drop=[now.id];
+        mutate(()=>{if(shared.id===KICE_ID)delete q.standardId;else q.standardId=shared.id;},{render:false});}
+      const fromKice=shared.id===KICE_ID,target=fromKice?(typesetStandards.find(x=>x.name==='수능 틀 (내 설정)')||copyStandard(KICE_STANDARD,{name:'수능 틀 (내 설정)'})):shared,s=values(target);
+      await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id&&!drop.includes(x.id)),s]);
+      if(fromKice)mutate(()=>{for(const x of data.questions)if(!x.standardId&&typesetStandardOf(x).id===KICE_ID)x.standardId=s.id;},{render:false});else refreshTypeset();
+      status(`틀 「${s.name}」에 적용했습니다 · 이 틀을 쓰는 모든 문항에 걸립니다.`);return true;
+    }
     if(a.exception!==undefined){
       if(a.exception&&!own){const s=copyStandard(now,{name:`${now.name} · ${q.number}번만`,source:{kind:'exception',qid:q.id,from:now.id}});
         await saveTypesetStandards([...typesetStandards,s]);mutate(()=>{q.standardId=s.id;},{render:false});status(`${q.number}번만 예외로 — 이제 바꾸는 값은 이 문항에만 걸립니다.`);}
@@ -527,7 +544,7 @@ async function onTypesetSetting(a){const q=current;if(!q)return;
       if(fromKice)mutate(()=>{for(const x of data.questions)if(!x.standardId&&typesetStandardOf(x).id===KICE_ID)x.standardId=s.id;},{render:false});else refreshTypeset();
       status(own?`${q.number}번만 바꿨습니다.`:`틀 「${s.name}」을 바꿨습니다 · 이 틀을 쓰는 모든 문항에 적용`);
     }
-  }catch(e){status(e.message,true);}
+  }catch(e){status(e.message,true);return false;}
 }
 // 기준 파일(.5e-typeset.json)에 이 기준으로 등록한 학교 양식 파일도 담는다(base64) — 다른 선생님이 가져오면 양식도 함께 등록.
 const b64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(s);};

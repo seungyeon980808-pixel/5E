@@ -17,11 +17,11 @@ export const KICE_STANDARD = deepFreeze({
   // 10-23 평가원 규칙(2009-6 모평 한글 원본 실측 × 0.768 = 5E 단 폭 86 ÷ 원본 111.98, kice-form-analysis/rules-200906.md):
   // 〈보기〉 안쪽 좌우 3.0→2.30, 위 2.0→1.54, 아래 3.0→2.30. 자료 상자 안쪽 좌우 3.0→2.30, 위아래 2.0→1.54.
   // 상자·표·그림·〈보기〉 뒤 문단 아래 2.01→1.54(after). 표 칸 안 여백 0.5→0.38. 선 굵기 0.12mm는 줄이지 않는다(0.09는 인쇄가 흐림).
-  gaps: { text: 0, material: 0, bogi: 0, ask: 0, choices: 0, after: 1.54, bogiPadBottom: 2.30, bogiPadSide: 2.30, bogiPadTop: 1.54, boxPadSide: 2.30, boxPadTop: 1.54, boxPadBottom: 1.54 },
+  gaps: { text: 0, material: 0, bogi: 0, ask: 0, choices: 0, after: 1.54, bogiPadBottom: 2.30, bogiPadSide: 2.30, bogiPadLeft: 2.30, bogiPadRight: 2.30, bogiPadTop: 1.54, boxPadSide: 2.30, boxPadTop: 1.54, boxPadBottom: 1.54 },
   // bogiTitleWidth 15.96→12.26: 11pt 「<보 기>」가 더 넓으면 글 폭에 맞춰 넓힌다(handoff). cellPad 표 칸 안 여백, rule 선 굵기(mm).
   // choiceTabs: 선지 칸 간격(① 시작선부터, 5개·3개·2개 한 줄) — 원본 21.6·36.0·56.0 × 0.768.
   // labelSpace: 「ㄱ.」「①」 뒤 빈칸 — 'space' 보통 띄어쓰기(평가원 원본), 'fixed' 고정 띄어쓰기(지워지지 않음, 빈 자리만).
-  parts: { number: 'n.', bogiTitle: '<보 기>', bogiTitleWidth: 12.26, bogiTitlePad: 0.38, bogiLineSpacing: 150, tableText: 10, tableLineSpacing: 130, cellPad: 0.38, rule: 0.12, choices: 'auto', choiceTabs: [16.59, 27.65, 43.02], labelSpace: 'space', hanging: true },
+  parts: { number: 'n.', bogiTitle: '<보 기>', bogiTitleWidth: 12.26, bogiTitleRow: 2.91, bogiTitlePad: 0.38, bogiLineSpacing: 150, tableText: 10, tableLineSpacing: 130, cellPad: 0.38, rule: 0.12, choices: 'auto', choiceTabs: [16.59, 27.65, 43.02], labelSpace: 'space', hanging: true },
   fit: { on: true, low: -10, high: 0, shortLastLine: 15 },
   lock: true,
 });
@@ -38,8 +38,8 @@ function merge(base, over) {
 const RANGE = {
   'paper.columns': [1, 2], 'paper.columnGap': [0, 30], 'paper.margin.top': [5, 40], 'paper.margin.bottom': [5, 40], 'paper.margin.left': [5, 40], 'paper.margin.right': [5, 40],
   'text.size': [6, 20], 'text.ratio': [50, 200], 'text.spacing': [-50, 50], 'text.lineSpacing': [80, 300],
-  'gaps.text': [0, 20], 'gaps.material': [0, 20], 'gaps.bogi': [0, 20], 'gaps.ask': [0, 20], 'gaps.choices': [0, 20], 'gaps.bogiPadBottom': [0, 20], 'gaps.bogiPadSide': [0, 20], 'gaps.bogiPadTop': [0, 20], 'gaps.after': [0, 20], 'gaps.boxPadSide': [0, 20], 'gaps.boxPadTop': [0, 20], 'gaps.boxPadBottom': [0, 20],
-  'parts.bogiTitleWidth': [5, 40], 'parts.bogiLineSpacing': [80, 300], 'parts.tableText': [6, 20], 'parts.tableLineSpacing': [80, 300], 'parts.cellPad': [0, 5], 'parts.rule': [0.05, 1], 'parts.bogiTitlePad': [0, 5],
+  'gaps.text': [0, 20], 'gaps.material': [0, 20], 'gaps.bogi': [0, 20], 'gaps.ask': [0, 20], 'gaps.choices': [0, 20], 'gaps.bogiPadBottom': [0, 20], 'gaps.bogiPadSide': [0, 20], 'gaps.bogiPadLeft': [0, 20], 'gaps.bogiPadRight': [0, 20], 'gaps.bogiPadTop': [0, 20], 'gaps.after': [0, 20], 'gaps.boxPadSide': [0, 20], 'gaps.boxPadTop': [0, 20], 'gaps.boxPadBottom': [0, 20],
+  'parts.bogiTitleWidth': [5, 40], 'parts.bogiLineSpacing': [80, 300], 'parts.tableText': [6, 20], 'parts.tableLineSpacing': [80, 300], 'parts.cellPad': [0, 5], 'parts.rule': [0.05, 1], 'parts.bogiTitlePad': [0, 5], 'parts.bogiTitleRow': [0.5, 10],
   'fit.low': [-20, 0], 'fit.high': [0, 20], 'fit.shortLastLine': [0, 50],
 };
 const get = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
@@ -102,6 +102,9 @@ export function layoutValues(standard = KICE_STANDARD) {
     ratio: s.text.ratio, spacing: s.text.spacing, gapText: s.gaps.text, gapMaterial: s.gaps.material, gapBogi: s.gaps.bogi, askGap: s.gaps.ask, choicesGap: s.gaps.choices,
     margin: s.paper.margin, columnGap: s.paper.columnGap,
     bogiBottom: mmToPx(s.gaps.bogiPadBottom), bogiSide: mmToPx(s.gaps.bogiPadSide), bogiTop: mmToPx(s.gaps.bogiPadTop),
+    // 〈보기〉 왼쪽·오른쪽 안 여백(10-23 설정 팝업): 따로 정하지 않은 옛 틀은 「좌우」 값 하나를 양쪽에 쓴다.
+    bogiLeft: mmToPx(standard?.gaps?.bogiPadLeft ?? s.gaps.bogiPadSide), bogiRight: mmToPx(standard?.gaps?.bogiPadRight ?? s.gaps.bogiPadSide),
+    bogiTitle: s.parts.bogiTitle || '<보 기>', bogiTitleRow: mmToPx(s.parts.bogiTitleRow ?? 2.91),
     bogiTitleWidth: mmToPx(s.parts.bogiTitleWidth), bogiTitlePad: mmToPx(s.parts.bogiTitlePad ?? 0), bogiLineSpacing: s.parts.bogiLineSpacing,
     gapAfter: s.gaps.after ?? 0, boxSide: mmToPx(s.gaps.boxPadSide), boxTop: mmToPx(s.gaps.boxPadTop), boxBottom: mmToPx(s.gaps.boxPadBottom),
     cellPad: mmToPx(s.parts.cellPad), rule: `${Math.round(s.parts.rule * 72 / 25.4 * 100) / 100}pt solid #000`,

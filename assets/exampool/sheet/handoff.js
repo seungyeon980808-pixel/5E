@@ -434,26 +434,26 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           // The supplied exam uses a centered title that interrupts the top
           // rule. A native table preserves that cutout without a bitmap or a
           // floating overlay: two shallow header rows and one merged body.
-          const titleWidth=Math.max(L.bogiTitleWidth,Math.ceil(measureRich('<보 기>',11)+2*L.bogiTitlePad+2)),side=(bw-titleWidth)/2,rule=RULE;
+          const titleWidth=Math.max(L.bogiTitleWidth,Math.ceil(measureRich(L.bogiTitle,11)+2*L.bogiTitlePad+2)),side=(bw-titleWidth)/2,rule=RULE;
           recordTable(3,3,[{r:0,c:1,rs:2,cs:1},{r:2,c:0,rs:1,cs:3}],{kind:'bogi',id:b.id});
           // 빈 칸 문단: 글자 크기를 span에 걸어야 1pt로 잡힌다(p에 걸면 10pt 줄 높이가 남아 1행이 3.6mm 아래로 줄지 않음). 빈칸(공백)은 엔진이 지워 기본 10pt가 되므로 폭 0 글자(U+2060)를 둔다.
           const empty='<p style="margin:0;line-height:100%"><span style="font-size:1pt">\u2060</span></p>';
           // 위 선 = 1행과 2행 경계. 평가원 원본(2009-6): 제목 글 높이의 약 55% 지점을 지나고, 2행은 1.35mm(× 0.768 = 1.04mm)라 본문 칸이 바로 이어진다.
-          const glyph=11*4/3,row1=Math.round(glyph*.75*100)/100,row2=mmToPx(1.04);
+          const row1=Math.round(L.bogiTitleRow*100)/100,row2=mmToPx(1.04);// 1행 기본 2.91mm = 제목 글(11pt) 높이의 75%
           const sideCell=(edge,line=false)=>`<td style="width:${side}px;height:${line?row1:row2}px;padding:0.1px;border:none;${line?`border-bottom:${rule}`:`border-${edge}:${rule}`} ;vertical-align:top">${empty}</td>`;
           let bodyLines=0,bodyExtra=0;
           const measure=v=>measureRich(v,11);
           const body=b.lines.map(l=>{
             const label=/^[ㄱ-ㅎ]$/.test(l.label)?l.label+'.':l.label,prefix=label+' ';
             // 표 칸 안에서는 한글 엔진이 줄을 나누지 않고 글자를 좁혀 한 줄에 넣는다. 칸 안 글은 실제 글꼴 폭으로 재서 직접 나눈다.
-            const wrap=v=>{const result=wrapHangingText(v,bw-2*L.bogiSide,prefix,measure);bodyLines+=result.split('\n').length;bodyExtra+=extraHeight(result,11);return result;};
+            const wrap=v=>{const result=wrapHangingText(v,bw-L.bogiLeft-L.bogiRight,prefix,measure);bodyLines+=result.split('\n').length;bodyExtra+=extraHeight(result,11);return result;};
             return `<p style="margin:0;text-align:left;line-height:${L.bogiLineSpacing}%">${text(prefix+l.text,null,11,wrap,{kind:'line',block:b.id,id:l.id,prefix:prefix.length})}</p>`;
           }).join('');
           // The last line needs its glyph height and bottom padding, rather
           // than another full line gap. Explicit height also protects nested
           // tables, whose parent does not expand an implicit HTML row.
           const padPx=Math.round((b.pad||0)*96/25.4),bodyHeight=Math.ceil(Math.max(0,bodyLines-1)*11*4/3*1.6+11*4/3+bodyExtra+L.bogiTop+L.bogiBottom+BOGI_FIT+(b.parent?3:0))+padPx;
-          html+=`<table style="border-collapse:collapse;width:${bw}px"><tr>${sideCell('left',true)}<td rowspan="2" style="width:${titleWidth}px;height:${Math.round((row1+row2)*100)/100}px;padding:0 ${L.bogiTitlePad}px;border:none;vertical-align:top"><p style="margin:0;text-align:center;line-height:100%">${text('<보 기>')}</p></td>${sideCell('right',true)}</tr><tr>${sideCell('left')}${sideCell('right')}</tr><tr><td colspan="3" style="width:${bw}px;height:${bodyHeight}px;padding:${L.bogiTop}px ${L.bogiSide}px 0;border:none;border-left:${rule};border-right:${rule};border-bottom:${rule};vertical-align:top">${body}</td></tr></table>`;
+          html+=`<table style="border-collapse:collapse;width:${bw}px"><tr>${sideCell('left',true)}<td rowspan="2" style="width:${titleWidth}px;height:${Math.round((row1+row2)*100)/100}px;padding:0 ${L.bogiTitlePad}px;border:none;vertical-align:top"><p style="margin:0;text-align:center;line-height:100%">${text(L.bogiTitle)}</p></td>${sideCell('right',true)}</tr><tr>${sideCell('left')}${sideCell('right')}</tr><tr><td colspan="3" style="width:${bw}px;height:${bodyHeight}px;padding:${L.bogiTop}px ${L.bogiRight}px 0 ${L.bogiLeft}px;border:none;border-left:${rule};border-right:${rule};border-bottom:${rule};vertical-align:top">${body}</td></tr></table>`;
         }else if(b.kind==='dialogue'){
           // 학생 대화·발표: 이름 칸 + 말 칸(가는 선 상자). 말이 길면 칸 안에서 줄바꿈한다.
           const nameWidth=Math.min(64,Math.max(40,...b.lines.map(l=>choiceWidth(l.label,11)+12))),speech=width-nameWidth;
