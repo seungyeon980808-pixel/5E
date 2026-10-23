@@ -22,7 +22,7 @@
 
 /* ---- 조판(5E_hwp) 맨 위 줄: 그림 화면과 같은 수치 — 높이 40, 왼쪽 160 칸(접기 · 5E · 오른쪽 선), 왼쪽 칸 폭 160 ---- */
 #rhwp-exam-workspace .exam-topbar { flex: none; display: flex; align-items: center; height: 40px; padding: 0 10px 0 0; background: var(--ds-bar, #0d1117); border-bottom: 1px solid var(--ds-line, #30363d); font-family: var(--ds-font, -apple-system, sans-serif); }
-#rhwp-exam-workspace .exam-top-cell { position: relative; flex: none; box-sizing: border-box; display: flex; align-items: center; width: 160px; height: 100%; padding-left: 41px; border-right: 1px solid var(--ds-line, #21262d); }
+#rhwp-exam-workspace .exam-top-cell { position: relative; flex: none; box-sizing: border-box; display: flex; align-items: center; width: var(--ds-panel-left, 160px); height: 100%; padding-left: 41px; border-right: 1px solid var(--ds-line, #21262d); }
 #rhwp-exam-workspace .exam-panel-toggle { position: absolute; left: 12px; top: 50%; width: 28px; height: 28px; margin-top: -14px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); }
 #rhwp-exam-workspace .exam-panel-toggle:hover { background: var(--ds-hover, #1f2630); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-panel-toggle svg { width: 18px; height: 18px; }
