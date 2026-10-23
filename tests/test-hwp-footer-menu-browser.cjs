@@ -46,7 +46,7 @@ h.withServer(async origin => {
         await page.locator('#rhwp-exam-workspace').waitFor({state:'visible'}); await h.idle(page);
         // 5E_hwp 안에서 그림 화면의 영역을 골라 넣는다(예전 아래 막대 단추와 같은 동작). 취소하면 한글 문서로 돌아온다.
         // 아주 좁은 화면은 모드 단추를 감추므로(집중 모드로 씀) 스크립트로 고른다.
-        await page.evaluate(() => document.querySelector('[data-exam-mode="focus"]').click()); await page.locator('.exam-inspector [data-ei-pane="pic"]').click();
+        await page.evaluate(() => document.querySelector('[data-exam-mode="focus"]').click()); if(await page.locator('.exam-insp-toggle').isVisible()&&!(await page.locator('#rhwp-exam-workspace.insp-open').count()))await page.locator('.exam-insp-toggle').click(); /* 900px 이하: 인스펙터는 오른쪽 서랍 */ await page.locator('.exam-inspector [data-ei-pane="pic"]').click();
         // 10-23 인스펙터: 「그림 화면에서 넣기」는 그림 칸의 「⋯ 더 보기」 안
         await page.locator('.exam-inspector .ei-pane:not([hidden]) [data-ei-more]').click();
         await page.getByRole('button',{name:'그림 화면에서 넣기',exact:true}).click();

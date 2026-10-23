@@ -18,7 +18,8 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   // 새 문항 만들기(전체 변경)와 카드 입력(그 문항만 변경) 두 경우를 차례로.
   await sheet.fill('#cv-ask','첫 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);
   await sheet.waitForFunction(()=>true);await sheet.waitForTimeout(800);assert.deepEqual(await stored(sheet),['첫 입력'],'new question and its text survive an immediate reload');
-  await sheet.locator('text=첫 입력').first().click();await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');
+  // 10-23 보관함: 카드를 누르면 문항 보기 창, 카드 오른쪽 아래 「열기」로 바로 카드 화면.
+  await sheet.locator('.lv-card:has-text("첫 입력") [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');
   await sheet.fill('#cv-ask','둘째 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);await sheet.waitForTimeout(800);
   assert.deepEqual(await stored(sheet),['둘째 입력'],'a card edit right before reload survives');
   assert.deepEqual(errors,[]);

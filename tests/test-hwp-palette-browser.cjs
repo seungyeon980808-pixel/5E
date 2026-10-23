@@ -290,7 +290,7 @@ async function exercise(page, origin) {
   assert.ok(await page.locator("[data-piece]").count());
   await page.locator('[data-palette-action="manager-close"]').click();
   await h.idle(page);
-  await page.getByRole("button", { name: "문항 엑셀", exact: true }).click();
+  await page.locator("#exam-palette").getByRole("button", { name: "문항 엑셀", exact: true }).first().click(); // 10-23 C: 왼쪽 5E 칸 「내용 넣기」 타일에도 같은 이름이 있어 팔레트 안으로 좁힘
   await page.locator('[data-palette-action="excel-block-add"]').click();
   await page.locator('[name="block-0-0"]').fill("기존 값 유지");
   await page.locator('[data-palette-action="excel-block-add"]').click();

@@ -77,7 +77,9 @@ export function renderLibraryView(root, data, view, api) {
   const kt = x => `<span class="lv-kt ${x.kind}">${x.kind === 'mine' ? '내 문항' : '기출'}</span>`;
   const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
   let body;
-  if (!list.length) body = `<p class="lv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
+  // 보관함을 읽지 못했으면(저장소 오류) 그 까닭을 먼저 보인다(예전 보관함과 같은 자리·같은 글).
+  if (view.loadError && !libraryQuestions(data).length) body = `<p class="lv-empty pv-empty">${E(view.loadError)}</p>`;
+  else if (!list.length) body = `<p class="lv-empty pv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
   else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
   else if (s.mode === 'list') body = `<ol class="lv-list">${shown.map((x, n) => `<li><button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
   else body = `<div class="lv-grid">${shown.map((x, n) => `<article class="lv-card" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} 보기"><div class="lv-thumb">${thumb(x)}</div>

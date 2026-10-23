@@ -58,7 +58,7 @@ h.withServer(async origin => {
       // 2. 상세검색: 과목·단원·연도는 단추 아래 작은 창에서. 고른 개수는 단추 숫자, 바깥을 누르면 닫힘.
       await sheet.click('#card-view [data-cvadv]');
       assert.equal(await sheet.locator('#card-view .lp-adv-pop').isVisible(),true);
-      assert.deepEqual(await sheet.locator('#card-view .lp-adv-pop select').evaluateAll(l=>l.map(s=>s.getAttribute('aria-label'))),['과목','단원','연도']);
+      assert.deepEqual(await sheet.locator('#card-view .lp-adv-pop select').evaluateAll(l=>l.map(s=>s.getAttribute('aria-label'))),['과목','단원','연도','모아 보기']); // 10-23 E: 별표·메모로 모아 보기
       const allPast=Number((await sheet.locator('#card-view .lp-search .lp-n').textContent()).replace(/[^0-9]/g,''));
       await sheet.selectOption('#card-view .lp-adv-pop [data-cvpast="subject"]','물리학Ⅰ');
       await sheet.waitForFunction(()=>document.querySelector('#card-view [data-cvslot="advn"]').textContent==='1');

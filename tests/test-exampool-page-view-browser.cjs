@@ -6,8 +6,9 @@ const h=require('./helpers/rhwp-exam.cjs');
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/exampool-page-view');fs.mkdirSync(out,{recursive:true});
 const examples=JSON.parse(fs.readFileSync(path.join(__dirname,'../assets/exampool/sheet/examples.json'),'utf8'));
 // 줄 = 같은 높이에 놓인 글자들을 왼쪽부터 이은 것(빈칸 무시). 위치 단위가 달라도 순서만 비교한다.
+// 보이지 않는 글자(U+2060, 시험지 맨 위 빈 문단을 1pt로 줄이는 표시)만 든 줄은 줄로 세지 않는다(10-23 지적 2).
 const linesOf=chars=>{const rows=[];for(const c of [...chars].sort((a,b)=>a.y-b.y||a.x-b.x)){const row=rows.find(r=>Math.abs(r.y-c.y)<1.5);if(row)row.c.push(c);else rows.push({y:c.y,c:[c]});}
-  return rows.sort((a,b)=>a.y-b.y).map(r=>r.c.sort((a,b)=>a.x-b.x).map(c=>c.t).join('').replace(/\s+/g,'')).filter(Boolean);};
+  return rows.sort((a,b)=>a.y-b.y).map(r=>r.c.sort((a,b)=>a.x-b.x).map(c=>c.t).join('').replace(/[\s\u2060]+/g,'')).filter(Boolean);};
 for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: page view draws the native typeset, not an HTML approximation`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
@@ -35,7 +36,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const pg=await sheet.locator('#cv-page').boundingBox();
   await page.screenshot({path:path.join(out,name+'-page-view.png'),clip:{x:fr.x+pg.x,y:fr.y+pg.y,width:pg.width,height:pg.height}});
   assert.equal(view.html,false,'no HTML approximation');assert.equal(view.pages,1);assert.equal(view.caption,'1 / 1');assert.ok(view.now,'current question marked');
-  assert.match(view.head,/한글 조판 그대로\(A4 2단\)/);assert.match(view.head,/조판 저장 전: 1번/);
+  assert.match(view.head,/한글 조판 그대로\(A4 2단\)/);assert.doesNotMatch(view.head,/조판 저장 전/); // 10-23 A2: 조판은 자동 저장 — 「조판 저장 전」 표시는 없앰
   assert.doesNotMatch(view.raw,/\$v\$/,'equation is a native equation, not TeX text');assert.deepEqual(view.mathText,['v'],'equation drawn with the math font');
   assert.ok(view.images>=1,'empty figure keeps its placeholder picture');
   const a=linesOf(preview),b=linesOf(view.chars);
