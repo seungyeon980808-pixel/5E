@@ -52,16 +52,18 @@ h.withServer(async origin => {
       await sheet.click('#school-save');
       await sheet.waitForFunction(() => !document.querySelector('#school-dialog').open && document.querySelector('.ts-std')?.textContent === '○○고 중간고사 ▾', null, { timeout: 20000 });
       await sheet.waitForFunction(() => document.querySelector('#native-editor')?.dataset.ready === 'true' && document.querySelector('#preview-dialog')?.getAttribute('aria-busy') !== 'true');
-      await sheet.click('.ts-std'); await sheet.waitForSelector('.ts-std-menu:not([hidden]) [data-std-pick]');
-      assert.deepEqual(await sheet.locator('.ts-std-menu [data-std-pick]').allTextContents(), ['수능 틀', '○○고 중간고사']);
+      // 10-23 B: 틀 고르기·내보내기는 「⚙ 조판 설정」 팝업 머리 줄(틀 고르기 · ⋯ 메뉴)
+      const openSettings = async () => { if (!(await sheet.locator('.tsx-back:not([hidden])').count())) await sheet.click('#typeset-settings'); await sheet.waitForSelector('.tsx-pop [data-std-pick]'); };
+      await openSettings();
+      assert.deepEqual(await sheet.locator('.tsx-pop [data-std-pick] option').allTextContents(), ['수능 틀', '○○고 중간고사']);
       // 내보내기: 기준 파일에 등록한 양식 파일도 담긴다 → 다른 선생님이 가져오면 기준과 양식이 함께 등록된다.
       const exported = page.waitForEvent('download');
-      await sheet.click('.ts-std-menu [data-std-export]');
+      await sheet.click('.tsx-pop [data-menu]'); await sheet.click('.tsx-pop [data-act="export"]');
       const saved = JSON.parse(fs.readFileSync(await (await exported).path(), 'utf8'));
       assert.equal(saved.format, '5e-typeset-standard'); assert.equal(saved.name, '○○고 중간고사');
       assert.ok(saved.form?.base64?.length > 1000 && saved.form.structure?.firstQuestion >= 0, `${name}: the school form file travels with the standard`);
-      await sheet.click('.ts-std'); await sheet.waitForSelector('.ts-std-menu:not([hidden]) [data-std-pick]');
-      await sheet.click('.ts-std-menu [data-std-pick="kice"]');
+      await openSettings();
+      await sheet.selectOption('.tsx-pop [data-std-pick]', 'kice');
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 ▾');
       // 암호 걸린 양식: 선생님이 입력하는 창(틀리면 다시), 맞으면 같은 표. 시험용 암호는 검사 안에서 만든 파일의 것.
       const locked = await sheet.evaluate(() => {

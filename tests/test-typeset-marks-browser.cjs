@@ -57,12 +57,12 @@ h.withServer(async origin => {
       await page.screenshot({ path: path.join(evidence, `${name}-exampool-marks.png`), clip: { x: fr.x + box.x, y: fr.y + box.y, width: box.width, height: Math.min(box.height, 700) } });
 
       // 끄기: 사라지고 기억, 내보내기 바이트는 같다.
-      await sheet.click('.typeset-view-controls [data-exam-marks]');
+      await sheet.evaluate(() => document.querySelector('.typeset-view-controls [data-exam-marks]').click()); // 10-23 B: 카드 조판 칸의 단추는 숨김(설정은 팝업) — 같은 명령, 단축키 ⌥⌘8은 아래에서
       await sheet.waitForFunction(() => document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]').hidden);
       m = await marks();
       assert.equal(m.pressed, 'false'); assert.equal(await sheet.evaluate(() => localStorage.getItem('5e.typeset.marks')), 'off');
       assert.equal(await exportBytes(), withMarks, `${name}: marks are screen-only (HWPX bytes unchanged)`);
-      await sheet.click('.typeset-view-controls [data-exam-marks]');
+      await sheet.evaluate(() => document.querySelector('.typeset-view-controls [data-exam-marks]').click()); // 10-23 B: 카드 조판 칸의 단추는 숨김(설정은 팝업) — 같은 명령, 단축키 ⌥⌘8은 아래에서
       await sheet.waitForFunction(() => !document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]').hidden);
       // 단축키 ⌥⌘8(윈도우 Ctrl+Alt+8): 편집기 안에서 눌러도 켜고 끈다. 브라우저 탭 전환 ⌘8과 겹치지 않는다.
       await sheet.locator('#native-editor iframe').click({ position: { x: 200, y: 160 } });
@@ -75,7 +75,7 @@ h.withServer(async origin => {
       await sheet.locator('.top [data-app-switch="hwp"]').click();
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       if (await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode') !== 'focus') await page.locator('[data-exam-mode="focus"]').click();
-      const hwpButton = page.locator('.exam-focusbar [data-exam-marks]');
+      const hwpButton = page.locator('.exam-inspector [data-exam-marks]');
       await hwpButton.waitFor();
       assert.equal(await hwpButton.getAttribute('aria-pressed'), 'true', `${name}: 5E_hwp shares the on setting`);
       await page.evaluate(() => { const b = window.fiveEHwpPalette.native.bridge(), d = b.wasm.borrowDocumentHandle(); d.insertText(0, 0, 0, '가 나'); b.deps.eventBus.emit('document-changed'); });

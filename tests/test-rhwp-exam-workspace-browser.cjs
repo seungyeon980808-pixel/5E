@@ -17,14 +17,15 @@ h.withServer(async origin=>{
    for (const width of [1440,900,640,390]) {
     await page.setViewportSize({width,height:950});
     const layout = await page.evaluate(() => {
-      const panel=document.querySelector('#rhwp-exam-workspace'),header=panel.querySelector('.exam-header'),body=panel.querySelector('.exam-body'),tools=panel.querySelector('.exam-focusbar');
-      return {height:header.getBoundingClientRect().height,bodyTop:body.getBoundingClientRect().top,studioTop:panel.querySelector('#exam-studio').getBoundingClientRect().top,toolsTop:tools&&!tools.hidden?tools.getBoundingClientRect().top:null,toolsBottom:tools&&!tools.hidden?tools.getBoundingClientRect().bottom:null,barBottom:panel.querySelector('.exam-topbar').getBoundingClientRect().bottom,bottom:header.getBoundingClientRect().bottom,overflow:panel.scrollWidth>innerWidth};
+      const panel=document.querySelector('#rhwp-exam-workspace'),header=panel.querySelector('.exam-header'),body=panel.querySelector('.exam-body'),tools=panel.querySelector('.exam-inspector');
+      return {height:header.getBoundingClientRect().height,bodyTop:body.getBoundingClientRect().top,studioTop:panel.querySelector('#exam-studio').getBoundingClientRect().top,toolsTop:tools&&!tools.hidden?tools.getBoundingClientRect().top:null,toolsLeft:tools&&!tools.hidden?tools.getBoundingClientRect().left:null,studioRight:panel.querySelector('#exam-studio').getBoundingClientRect().right,barBottom:panel.querySelector('.exam-topbar').getBoundingClientRect().bottom,bottom:header.getBoundingClientRect().bottom,overflow:panel.scrollWidth>innerWidth};
     });
     // 10-20: 5E 세 프로그램 공통 맨 위 줄(40px) 바로 아래에서 편집 본문이 시작한다.
-    // 10-22: 집중 도구 줄은 본문 안 문서 쪽 열 맨 위 — 본문은 맨 위 줄 바로 아래, 종이(#exam-studio)는 도구 줄 바로 아래.
+    // 10-23(시안 hwp-inspector): 위쪽 도구 줄은 없고 오른쪽 인스펙터 칸 — 종이(#exam-studio)는 맨 위 줄 바로 아래, 인스펙터는 종이 바로 오른쪽.
     assert.equal(layout.bodyTop,layout.barBottom,'editor body starts right under the shared top bar at '+width);
-    if(layout.toolsBottom!=null)assert.equal(layout.toolsTop,layout.bodyTop,'focus tool bar sits at the top of the body at '+width);
-    assert.equal(layout.studioTop,layout.toolsBottom??layout.bodyTop,'paper starts right under the focus tool bar (or the top bar) at '+width);assert.ok(layout.barBottom<=41.5,'top bar is 40px + line');assert.equal(layout.overflow,false,'no outer horizontal overflow');
+    if(layout.toolsTop!=null&&width>900){assert.equal(layout.toolsTop,layout.bodyTop,'inspector column starts at the top of the body at '+width);assert.ok(Math.abs(layout.toolsLeft-layout.studioRight)<=1,'inspector sits right of the paper at '+width);}
+    if(width<=900)assert.equal(await page.locator('#rhwp-exam-workspace .exam-insp-toggle').isVisible(),await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode')==='focus','narrow screens open the inspector as a drawer from the right edge at '+width);
+    assert.equal(layout.studioTop,layout.bodyTop,'paper starts right under the top bar (no tool row above it) at '+width);assert.ok(layout.barBottom<=41.5,'top bar is 40px + line');assert.equal(layout.overflow,false,'no outer horizontal overflow');
    }
    await page.setViewportSize({width:1440,height:950});
    await page.locator('[data-exam-menu="file"]').focus();await page.keyboard.press('ArrowDown');
@@ -34,7 +35,7 @@ h.withServer(async origin=>{
    await page.evaluate(async url=>{const{state}=await import(url);state.update(s=>{s.objects=[{id:'line',type:'line',p1:{x:-15,y:-10},p2:{x:15,y:10},layerId:1,order:0,rotation:0,strokeWidth:.3,strokeLevel:0,lineMode:'solid',arrowHead:'none'}];s.undoStack=[[]];});},stateUrl);
    const original=await h.drawing(page,stateUrl);
    await h.crop(page);await page.locator('.exam-placement:not([hidden])').waitFor();await h.idle(page);
-   {const top=await page.locator('#rhwp-exam-workspace .exam-focusbar').isVisible()?await page.locator('#rhwp-exam-workspace .exam-focusbar').boundingBox():await page.locator('#rhwp-exam-workspace .exam-topbar').boundingBox();assert.equal((await page.locator('#exam-studio').boundingBox()).y,top.y+top.height,'placement leaves editor right under the shared top bar (10-21: or the focus tool bar)');}
+   {const top=await page.locator('#rhwp-exam-workspace .exam-topbar').boundingBox();assert.equal((await page.locator('#exam-studio').boundingBox()).y,top.y+top.height,'placement leaves editor right under the shared top bar (10-23: tools are the right inspector column)');}
    assert.equal((await h.pictures(page)).length,0,'crop confirmation does not insert');
    assert.equal(await page.locator('[data-exam-action="confirm-placement"]').isDisabled(),true,'fresh document position is required');
    await page.screenshot({path:path.join(evidence,name+'-placement.png')});

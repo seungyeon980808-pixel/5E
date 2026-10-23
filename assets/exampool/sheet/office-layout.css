@@ -583,7 +583,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .typeset-view-controls .ts-settings-open{display:inline-flex;align-items:center;gap:6px;margin-left:4px;border-radius:6px}
 .typeset-view-controls .ts-settings-open[aria-expanded=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
 /* 팝업: 화면 가운데, 작업대 위 두 판(왼쪽 설정 336px · 오른쪽 자체 미리보기) — 시안 값 그대로 */
-.tsx-back{position:fixed;inset:0;z-index:80;display:grid;place-items:center;background:rgba(1,4,9,.45);padding:24px}
+.tsx-back{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(1,4,9,.45);padding:24px;box-sizing:border-box}
 .tsx-back[hidden]{display:none}
 .tsx-pop{display:grid;grid-template-columns:336px minmax(0,1fr);gap:8px;padding:8px;width:min(1208px,100%);height:min(680px,100%);background:var(--ds-bench);border-radius:14px;box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));color:var(--ds-ink);font:13px/1.5 -apple-system,"Apple SD Gothic Neo",sans-serif}
 .tsx-pop svg{flex:none}

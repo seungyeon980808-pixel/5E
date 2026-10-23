@@ -40,56 +40,51 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('.ts-std').textContent(), '수능 틀 ▾');
       await sheet.waitForFunction(() => /숫자·단위 1곳/.test(document.querySelector('.ts-unit-chip')?.textContent || ''));
       assert.match(await sheet.locator('.ts-unit-chip').getAttribute('title'), /2kg/);
-      await sheet.click('[data-ts-gaps]');
-      await sheet.waitForFunction(() => document.querySelectorAll('.ts-gap-band:not(.inner)').length === 4);
-      const labels = await bands();
-      assert.deepEqual(labels.map(l => l.replace(/ [\d.]+mm$/, '')), ['지문 ↕ 자료', '자료 ↕ 발문', '발문 ↕ 〈보기〉', '〈보기〉 ↕ 선지'], `${name}: bands between the question elements`);
-      assert.equal(await sheet.locator('.ts-gap-margin').count(), 2, `${name}: both column margins`);
-      // 〈보기〉 안쪽 여백 띠(아래·좌우): 조판 기준 값만
-      assert.equal(await sheet.locator('.ts-gap-band.inner').count(), 2, `${name}: inner bogi padding bands`);
-      assert.match(await sheet.locator('.ts-gap-band.inner').first().getAttribute('aria-label'), /〈보기〉 ↕ 아래 안쪽/);
+      // 10-23 B 다시 하기: 조판 간격은 「⚙ 조판 설정」 팝업에서만 바꾼다(입력할 때는 조판 변경 없음). 팝업 미리보기의 「간격 보기」로 요소 사이를 잰다.
+      const popup = {
+        open: async () => { if (!(await sheet.locator('.tsx-back:not([hidden])').count())) await sheet.click('#typeset-settings'); await sheet.waitForSelector('.tsx-sheet svg', { timeout: 30000 }); },
+        gaps: () => sheet.evaluate(() => [...document.querySelectorAll('.tsx-gap')].map(g => parseFloat(g.dataset.mm))),
+        waitGaps: prev => sheet.waitForFunction(p => JSON.stringify([...document.querySelectorAll('.tsx-gap')].map(g => g.dataset.mm)) !== p, prev, { timeout: 20000 }),
+      };
+      await popup.open();
+      await sheet.click('.tsx-pop [data-view="gaps"]');
+      await sheet.waitForFunction(() => document.querySelectorAll('.tsx-gap').length === 4);
+      const before = await popup.gaps();
+      assert.equal(before.length, 4, `${name}: bands between the question elements (지문↕자료·자료↕발문·발문↕〈보기〉·〈보기〉↕선지)`);
       await page.screenshot({ path: path.join(evidence, `${name}-gaps.png`) });
-      const measured = label => Number(label.match(/([\d.]+)mm$/)[1]);
 
-      // 잠금 중: 보기만
-      await sheet.click('.ts-gap-band:not(.inner) >> nth=2');
-      await sheet.waitForSelector('.ts-gap-pop:not([hidden])');
-      assert.equal(await sheet.locator('.ts-gap-pop [data-gap-step]').count(), 0, `${name}: locked → view only`);
-      assert.match(await sheet.locator('.ts-gap-pop').textContent(), /구조 잠금 중/);
-      // 잠금 중 줄 간격 명령은 막히고 자간은 된다(ExamPool 조판만)
+      // 구조 잠금(10-23부터 늘 켜짐): 줄 간격 명령은 막히고 자간은 된다(ExamPool 조판만)
       const command = id => sheet.evaluate(id => { const input = document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler(); const r = input.dispatcher.dispatchWithResult(id); return r?.reason || 'ran'; }, id);
       assert.equal(await command('format:line-spacing-increase'), 'layout-locked', `${name}: line spacing is a layout change while locked`);
       assert.notEqual(await command('format:char-spacing-increase'), 'layout-locked', `${name}: letter spacing stays editable while locked`);
       await sheet.evaluate(() => document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().dispatcher.dispatchWithResult('format:char-spacing-decrease'));
 
-      // 잠금 풀기 → 〈보기〉↕선지(선지 앞 간격)를 이 문항만 +0.5mm ×2: 보이는 간격이 약 1mm 늘어난다(0.5mm 단위로 정확)
-      await sheet.click('#typeset-lock');
-      await sheet.click('.ts-gap-pop [data-gap-close]');
-      await sheet.click('.ts-gap-band:not(.inner) >> nth=3');
-      await sheet.waitForSelector('.ts-gap-pop [data-gap-step="0.5"]');
-      const choicesBefore = measured((await bands())[3]);
-      const step = async index => { const prev = JSON.stringify(await bands()); await sheet.click('.ts-gap-pop [data-gap-step="0.5"]');
-        await sheet.waitForFunction(p => JSON.stringify([...document.querySelectorAll('.ts-gap-band:not(.inner)')].map(b => b.getAttribute('aria-label'))) !== p, prev, { timeout: 20000 }); await ready();
-        await sheet.waitForSelector('.ts-gap-pop [data-gap-step="0.5"]'); return measured((await bands())[index]); };
-      const once = await step(3);
-      assert.equal(await sheet.locator('#typeset-lock').getAttribute('aria-pressed'), 'false', `${name}: re-typesetting the same question keeps the lock the teacher chose`);
-      const twice = await step(3);
-      assert.ok(Math.abs(once - choicesBefore - 0.5) <= 0.25 && Math.abs(twice - choicesBefore - 1) <= 0.25, `${name}: 0.5mm steps are exact (${choicesBefore} → ${once} → ${twice})`);
-      assert.match((await bands())[3], /이 문항|[\d.]+mm$/);
-      assert.match(await sheet.locator('.ts-gap-band:not(.inner) >> nth=3').textContent(), /이 문항/);
-      // 조판 기준에: 수능 틀 복제
-      await sheet.click('.ts-gap-pop [data-gap-close]');
-      await sheet.click('.ts-gap-band:not(.inner) >> nth=1');
-      await sheet.waitForSelector('.ts-gap-pop input[value="std"]');
-      await sheet.check('.ts-gap-pop input[value="std"]');
-      await sheet.click('.ts-gap-pop [data-gap-step="0.5"]');
+      // 선지 앞 간격 +1.0mm(초안) → 미리보기의 〈보기〉↕선지가 약 1mm 늘어난다(0.5mm 단위 두 번과 같음)
+      await sheet.click('.tsx-pop [data-part="choices"]');
+      let prev = JSON.stringify(await sheet.evaluate(() => [...document.querySelectorAll('.tsx-gap')].map(g => g.dataset.mm)));
+      const field = sheet.locator('.tsx-pop input[data-p="gaps.choices"]');
+      await field.fill('1'); await field.press('Enter'); await popup.waitGaps(prev);
+      const after = await popup.gaps();
+      assert.ok(Math.abs(after[3] - before[3] - 1) <= 0.25, `${name}: +1.0mm before the choices is exact (${before[3]} → ${after[3]})`);
+      assert.ok(Math.abs(after[2] - before[2]) <= 0.15, `${name}: other gaps stay (${before[2]} → ${after[2]})`);
+      // 적용 → 수능 틀을 복제한 「수능 틀 (내 설정)」이 모든 문항에
+      await sheet.click('.tsx-pop [data-apply]');
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 (내 설정) ▾', null, { timeout: 20000 });
       await ready();
-      // 메뉴로 수능 틀 되돌리기
-      await sheet.click('.ts-std'); await sheet.waitForSelector('.ts-std-menu:not([hidden]) [data-std-pick]');
-      assert.deepEqual(await sheet.locator('.ts-std-menu [data-std-pick]').allTextContents(), ['수능 틀', '수능 틀 (내 설정)']);
-      await sheet.click('.ts-std-menu [data-std-pick="kice"]');
+      // 틀 고르기로 수능 틀 되돌리기
+      await popup.open();
+      assert.deepEqual(await sheet.locator('.tsx-pop [data-std-pick] option').allTextContents(), ['수능 틀', '수능 틀 (내 설정)']);
+      await sheet.selectOption('.tsx-pop [data-std-pick]', 'kice');
       await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 ▾');
+      await ready();
+      // 이 문항만 예외: 값은 이 문항만 쓰는 복사본에(틀 이름 「… · 1번만」)
+      await popup.open();
+      await sheet.click('.tsx-pop [data-part="choices"]');
+      await sheet.click('.tsx-pop .tsx-exc');
+      const f2 = sheet.locator('.tsx-pop input[data-p="gaps.choices"]'); await f2.fill('0.5'); await f2.press('Enter');
+      assert.equal(await sheet.locator('.tsx-pop [data-apply]').textContent(), '이 문항에 적용');
+      await sheet.click('.tsx-pop [data-apply]');
+      await sheet.waitForFunction(() => /1번만 ▾$/.test(document.querySelector('.ts-std')?.textContent || ''), null, { timeout: 20000 });
       await ready();
       assert.deepEqual(errors, [], `${name}: no page errors`);
       console.log(`${name}: typeset gaps ok`);

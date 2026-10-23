@@ -245,3 +245,12 @@ body { --hwp-shared-left: var(--ds-panel-left, 160px); }
 #rhwp-exam-workspace .el-palette-slot > .palette-dock { margin: 0; }
 /* 문항 목록 ↑↓⧉× 는 칸 폭과 상관없이 줄에 마우스를 올리거나 초점이 있을 때만(10-23 지적 3과 같은 규칙) */
 @media (hover: hover) { #rhwp-exam-workspace .exam-qlist li:not(:hover):not(:focus-within) .exam-qmove { display: none; } }
+/* 좁은 화면(900px 이하): 인스펙터는 오른쪽 서랍(가장자리 「도구」로 열기) — 종이가 가려지거나 가로로 넘치지 않게 */
+#rhwp-exam-workspace .exam-insp-toggle { display: none; }
+@media (max-width: 900px) {
+  #rhwp-exam-workspace .exam-body { grid-template-columns: auto minmax(0, 1fr); }
+  #rhwp-exam-workspace .exam-body > .exam-focusbar.exam-inspector { position: fixed; top: 41px; right: 0; bottom: 0; width: min(340px, 92vw); z-index: 40; transform: translateX(100%); visibility: hidden; transition: transform .18s ease, visibility 0s .18s; box-shadow: -8px 0 24px rgba(0,0,0,.45); }
+  #rhwp-exam-workspace.insp-open .exam-body > .exam-focusbar.exam-inspector { transform: none; visibility: visible; transition: transform .18s ease; }
+  #rhwp-exam-workspace[data-tool-mode="focus"] .exam-insp-toggle { display: block; position: fixed; right: 0; top: 50%; z-index: 41; transform: translateY(-50%); writing-mode: vertical-rl; padding: 10px 6px; min-height: 0; height: auto; border: 1px solid var(--ds-line-strong, #30363d); border-right: 0; border-radius: 8px 0 0 8px; background: var(--ds-raise, #161b22); color: var(--ds-ink, #e6edf3); font-size: 12.5px; cursor: pointer; }
+  #rhwp-exam-workspace.insp-open .exam-insp-toggle { right: min(340px, 92vw); }
+}

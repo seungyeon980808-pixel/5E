@@ -159,6 +159,11 @@ export function installExamModes(panel, services) {
   leftTools.className = 'exam-left-tools'; leftTools.setAttribute('aria-label', '5E 기능');
   leftTools.innerHTML = leftToolsMarkup();
   panel.querySelector('.exam-sidebar .exam-header').after(leftTools);
+  // 좁은 화면(900px 이하): 인스펙터는 오른쪽에서 밀어 여는 서랍 — 오른쪽 가장자리 「도구」로 열고 닫는다.
+  const inspToggle = document.createElement('button');
+  inspToggle.type = 'button'; inspToggle.className = 'exam-insp-toggle'; inspToggle.textContent = '도구'; inspToggle.setAttribute('aria-expanded', 'false'); inspToggle.title = '인스펙터(글자·문단·표·그림·쪽) 열기·닫기';
+  inspToggle.addEventListener('click', () => { const open = !panel.classList.contains('insp-open'); panel.classList.toggle('insp-open', open); inspToggle.setAttribute('aria-expanded', String(open)); inspToggle.textContent = open ? '닫기' : '도구'; });
+  panel.querySelector('.exam-body').append(inspToggle);
   const peek = document.createElement('button');
   peek.type = 'button'; peek.className = 'exam-peek'; peek.hidden = true; peek.textContent = '☰ 도구 보기';
   peek.title = '집중 모드로 돌아가기 (⌘⌥2)';

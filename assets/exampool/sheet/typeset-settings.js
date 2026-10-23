@@ -122,7 +122,8 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   }
   // ── 미리보기: 초안 틀로 새로 조판(0.3초 쉬면) → 쪽 그림 + 겹쳐 그리기
   function refresh(delay=300){clearTimeout(timer);timer=setTimeout(async()=>{const my=++seq,{q}=context();if(!q||!draft)return;
-    try{const r=await preview(q,structuredClone(draft));if(my!==seq||back.hidden)return;sheet=r;paint();}
+    // 수능 틀 열쇠(kice) 그대로면 조판이 「수능 틀이니 기본값」으로 보고 초안 값을 무시한다 — 미리보기에는 따로 열쇠를 준다(10-24).
+    try{const d=structuredClone(draft);if(d.id===KICE_ID)d.id='draft-preview';const r=await preview(q,d);if(my!==seq||back.hidden)return;sheet=r;paint();}
     catch(e){if(my===seq){const p=back.querySelector('.tsx-paper');if(p)p.innerHTML=`<p class="tsx-wait error">미리보기를 그리지 못했습니다: ${E(e.message)}</p>`;}}},delay);}
   function paint(){
     const paper=back.querySelector('.tsx-paper');if(!paper||!sheet)return;
