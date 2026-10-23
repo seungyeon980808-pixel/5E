@@ -125,7 +125,7 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
   const menu = doc.createElement('div'); menu.className = 'ts-std-menu'; menu.hidden = true; menu.setAttribute('role', 'menu');
   panel.append(menu);
   let on = false, selected = '', bands = [], scope = 'q';
-  try { on = localStorage.getItem('5e.typeset.gaps') === 'on'; } catch {}
+  // 10-23: 간격 띠는 「조판 설정」 안에서만 켠다(평소 화면은 글만). 켜 둔 기억은 쓰지 않는다.
   const locked = () => lockButton?.getAttribute('aria-pressed') !== 'false';
 
   // 머리 줄이 좁아 이름만 보이고(예: 「수능 틀 ▾」), 「조판 기준」은 도움말·읽기 이름에 둔다.
@@ -224,5 +224,5 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
   doc.addEventListener('pointerdown', e => { if (!menu.hidden && !menu.contains(e.target) && !stdButton.contains(e.target)) closeMenu(); });
   doc.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!menu.hidden) closeMenu(); else if (!pop.hidden) { selected = ''; draw(); } } });
   lockButton?.addEventListener('click', () => requestAnimationFrame(() => { if (selected) showPop(); }));
-  return { draw, get on() { return on; } };
+  return { draw, get on() { return on; }, toggle() { on = !on; selected = ''; draw(); } };
 }

@@ -1,5 +1,7 @@
 import {renumberDocument} from '../../../js/rhwp-exam-layout-tools.js?v=1022-variant';
 import {attachGapView} from './typeset-gaps.js';
+import {attachTypesetSettings} from './typeset-settings.js';
+import {marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1022-marks';
 import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
 import {KICE_STANDARD} from './typeset-standard.js';
@@ -38,8 +40,8 @@ const SKELETON={skeleton:true,ghostFigure};
 // 문서 첫 문단은 구역 정보를 품는 자리라 시험지로 옮길 때 빠진다(native-transfer sourceStart:1). 높이가 거의 없는 빈 문단으로 둔다.
 const LEAD='<p style="margin:0;font-size:1pt;line-height:100%"> </p>';
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
-export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge,onSlot,standardOf=()=>KICE_STANDARD,standardsOf=()=>[],onGap,onStandard}){
-  let gaps=null,lockedFor='',lineFitTimer=0,lineFitting=false;
+export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge,onSlot,standardOf=()=>KICE_STANDARD,standardsOf=()=>[],onGap,onStandard,onSetting}){
+  let settings=null,gaps=null,lockedFor='',lineFitTimer=0,lineFitting=false;
   // 한글 창에서 글을 고치면 입력이 0.3초 멈춘 뒤 커서가 있는 문단만, 커서 줄부터 아래로 자간을 다시 맞춘다(10-22 O1). 한 번의 되돌리기 단계.
   // 표 칸 안·수식·그림이 든 문단은 건너뛴다(만들 때 규칙과 같음). 글자 위치(커서)는 그대로. host.dataset.lineFit: 마지막 결과(검사·문제 찾기용).
   function scheduleLineFit(){clearTimeout(lineFitTimer);lineFitTimer=setTimeout(()=>{try{
@@ -84,7 +86,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   const guide=window.document.createElement('div');guide.className='question-height-guide';guide.hidden=true;
   const guideLabel=window.document.createElement('span');guide.append(guideLabel);guideLayer.append(guide);host.append(guideLayer);
   function drawGuide(){
-    placer?.refresh();gaps?.draw();
+    placer?.refresh();gaps?.draw();settings?.draw();
     guide.hidden=true;if(!ready||loading||!host.getClientRects().length)return;
     const m=metricsCache||questionPageMetrics(document(),profile()),placement=bridge.pagePlacement(0);
     metricsOutput.textContent=`본문 폭 ${m.bodyWidthMm.toFixed(1)}mm · 문항 ${m.usedHeightMm.toFixed(1)} / 출력 기준 ${Math.round(m.targetHeightMm)}mm${m.exceeded?' · 출력 기준 높이 초과':''}`;
@@ -110,7 +112,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function ensure(){
     if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(lineFitting)return;if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();if(!error)scheduleLineFit();}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
-    }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
+    }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);bridge.setPictureResizeAllowed(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});settings=attachTypesetSettings({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onSetting,onStandard,gaps,marks:{enabled:marksEnabled,toggle:()=>setMarksEnabled(!marksEnabled())}});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
   }
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
@@ -156,7 +158,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       q=next;qStd=stdKey(next);fingerprint=nextFingerprint;
       await loadKeepingFocus(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);
       // 다른 문항을 열면 다시 잠근다. 같은 문항을 다시 조판할 때(간격 조절·기준 바꾸기)는 사용자가 정한 잠금 상태를 그대로 둔다(10-22).
-      const keepLock=lockedFor===value.id?bridge.tableLayoutLocked:true;lockedFor=value.id;
+      const keepLock=true;lockedFor=value.id;// 10-23: 조판 칸은 늘 구조 잠금(틀은 「조판 설정」에서만). 그림 세부 크기만 잠금 예외.
       bridge.setTableLayoutLocked(keepLock);resize.setAttribute('aria-pressed',String(keepLock));
       baselineText=normalized(parse(document().getTextFileText()));baselineEquations=await equationScripts(bytes);
       baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;userDirty=false;patchDirty=false;view.refresh();

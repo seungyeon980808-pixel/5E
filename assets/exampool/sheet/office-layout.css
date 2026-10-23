@@ -575,3 +575,71 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .pv-checks li[data-level=warn]{box-shadow:inset 3px 0 0 var(--ds-danger,#f85149)}
 .pv-checks li[data-level=info]{box-shadow:inset 3px 0 0 var(--ds-soft-line,#6ba4f8)}
 .pv-checks li[data-level=ok]{color:var(--ds-ink-3,#7d8590)}
+
+/* ===== 「⚙ 조판 설정」(10-23, 시안 typeset-settings-1023-v3.html) =====
+   평소 조판 칸은 글만: 구조 잠금·조판 부호·상세 조판 단추와 글자/문단/내어쓰기·「수능 틀 ▾」·「간격 보기」 줄은 숨기고 설정 판으로 옮긴다. */
+.typeset-view-controls #typeset-lock,.typeset-view-controls #typeset-detail,.typeset-view-controls [data-exam-marks]{display:none!important}
+#preview-dialog #typeset-context,.cv-hwp-layer #preview-dialog.docked #typeset-context[hidden]{display:none!important}
+.typeset-view-controls .ts-settings-open{display:inline-flex;align-items:center;gap:6px;margin-left:4px;border-radius:6px}
+.typeset-view-controls .ts-settings-open[aria-expanded=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+.ts-settings{position:fixed;z-index:60;display:flex;flex-direction:column;background:var(--ds-panel);color:var(--ds-ink);border-radius:12px;box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));font-size:12.5px;overflow:hidden}
+.ts-settings[hidden]{display:none}
+.ts-settings svg{flex:none}
+.tss-head{height:44px;flex:none;display:flex;align-items:center;gap:4px;padding:0 6px 0 16px;border-bottom:1px solid var(--ds-line)}
+.tss-head b{font-size:15px;font-weight:600}
+.ts-settings .sp{flex:1}
+.tss-pick{position:relative;display:inline-flex;align-items:center;height:28px;border-radius:6px;padding:0 4px 0 8px;color:var(--ds-ink)}
+.tss-pick:hover{background:var(--ds-hover)}
+.tss-pick select{appearance:none;border:0;background:transparent;color:inherit;font:inherit;max-width:150px;padding-right:16px;cursor:pointer}
+.tss-pick svg{position:absolute;right:6px;pointer-events:none;color:var(--ds-ink-3)}
+.tss-ic{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);cursor:pointer}
+.tss-ic:hover,.tss-ic[aria-expanded=true]{background:var(--ds-hover);color:var(--ds-ink)}
+.tss-menu{position:absolute;top:44px;right:8px;z-index:2;min-width:240px;padding:4px;border-radius:8px;background:var(--ds-raise);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));display:flex;flex-direction:column}
+.tss-menu button{height:30px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;text-align:left;padding:0 10px;cursor:pointer}
+.tss-menu button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.tss-menu hr{border:0;border-top:1px solid var(--ds-line);margin:4px 0}
+.tss-body{flex:1;overflow:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px}
+.tss-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;border-radius:8px;background:var(--ds-field-raise)}
+.tss-parts button,.tss-tabs button{position:relative;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;cursor:pointer}
+.tss-parts button:hover,.tss-tabs button:hover{background:var(--ds-hover)}
+.tss-parts button[aria-selected=true]{background:var(--ds-selected-strong);color:var(--ds-ink);font-weight:600}
+.tss-parts .d{position:absolute;right:6px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--ds-soft-line)}
+.tss-tabs{display:flex;gap:2px;padding:2px;border-radius:8px;background:var(--ds-field-raise)}
+.tss-tabs button{flex:1;height:26px}
+.tss-tabs button[aria-selected=true]{background:var(--ds-raise);color:var(--ds-ink);box-shadow:0 0 0 1px var(--ds-line-strong)}
+.tss-grp{display:flex;flex-direction:column;gap:6px}
+.tss-gh{font-size:11px;color:var(--ds-ink-3);letter-spacing:.02em}
+.tss-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tss-row.one{grid-template-columns:1fr}
+.tss-row>*{min-width:0}
+.tsf{position:relative;height:32px;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:6px;background:var(--ds-field);box-shadow:inset 0 0 0 1px var(--ds-line);color:var(--ds-ink)}
+.tsf:hover{box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.tsf:focus-within{box-shadow:inset 0 0 0 1px var(--ds-soft-line);background:var(--ds-soft-bg)}
+.tsf.diff{box-shadow:inset 0 0 0 1px var(--ds-line),inset 3px 0 0 var(--ds-soft-line)}
+.tsf .n{color:var(--ds-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tsf.num .n{cursor:ew-resize;user-select:none}
+.tsf input:not([type=checkbox]){flex:1;width:0;min-width:0;border:0;background:transparent;color:var(--ds-ink);font:inherit;text-align:right;font-variant-numeric:tabular-nums;outline:none}
+.tsf .u{color:var(--ds-ink-3);font-size:11px}
+.tsf select{flex:1;min-width:0;appearance:none;border:0;background:transparent;color:var(--ds-ink);font:inherit;text-align:right;text-align-last:right;padding-right:14px;cursor:pointer;outline:none}
+.tsf.sel svg{position:absolute;right:8px;color:var(--ds-ink-3);pointer-events:none}
+.tsf.info{background:transparent;box-shadow:none;padding:0 2px;height:auto;min-height:24px}
+.tsf.info .v{color:var(--ds-ink-2)}
+.tsf.tog{justify-content:space-between;cursor:pointer}
+.tsf.tog .n{color:var(--ds-ink-2)}
+.ts-settings input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
+.ts-settings .sw{flex:none;width:28px;height:16px;border-radius:8px;background:var(--ds-line-strong);position:relative;transition:background .15s}
+.ts-settings .sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--ds-ink-2);transition:left .15s}
+.ts-settings input:checked+.sw{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.ts-settings input:checked+.sw::after{left:14px;background:var(--ds-ink)}
+.ts-settings input:focus-visible+.sw{outline:2px solid var(--ds-focus);outline-offset:2px}
+.tss-view{display:flex;gap:6px;margin-top:2px}
+.tss-view button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;cursor:pointer}
+.tss-view button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.tss-view button[aria-pressed=true]{background:var(--ds-selected);color:var(--ds-ink)}
+.tss-foot{flex:none;display:flex;align-items:center;gap:8px;padding:8px 12px 8px 16px;border-top:1px solid var(--ds-line)}
+.tss-exc{position:relative;display:inline-flex;align-items:center;gap:8px;color:var(--ds-ink-2);cursor:pointer}
+.tss-note{color:var(--ds-ink-3);font-size:11px}
+/* 미리보기의 고른 부분: 단 바깥 왼쪽 파란 띠 + 이름(조판 부호 빨간 V·초록 선과 겹치지 않게) */
+.ts-part-layer{position:absolute;pointer-events:none;z-index:5}
+.ts-part-bar{position:absolute;width:3px;border-radius:2px;background:var(--ds-soft-line,#6ba4f8)}
+.ts-part-tag{position:absolute;transform:translate(-100%,0);margin-left:-6px;color:#1a4fb4;font:600 10.5px/1.2 -apple-system,"Apple SD Gothic Neo",sans-serif;writing-mode:vertical-rl;letter-spacing:.04em;white-space:nowrap}

@@ -103,11 +103,13 @@ export class RhwpExamBridge {
 
   get input() {
     const input=this.deps.getInputHandler();this.resizeInputs ||= new WeakSet();
-    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);input.examStructureNotice=message=>this.onChange?.(new Error(message));input.examLayoutRules=!!this.layoutRules;setTableLayoutLocked(input,this.tableLayoutLocked);}
+    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);input.examStructureNotice=message=>this.onChange?.(new Error(message));input.examLayoutRules=!!this.layoutRules;input.examPictureResizeAllowed=!!this.pictureResizeAllowed;setTableLayoutLocked(input,this.tableLayoutLocked);}
     return input;
   }
   // layoutRules: ExamPool 문항 조판만 켠다 — 잠금 중 줄 간격·글꼴·크기·장평·쪽 설정·단도 막는다(10-22 조판 기준). 5E_hwp는 예전 규칙 그대로.
   setLayoutRules(on) { this.layoutRules=!!on; if(this.input) this.input.examLayoutRules=this.layoutRules; }
+  // 그림 크기만 잠금 예외(10-23: ExamPool 조판은 늘 잠그고, 그림 세부 크기만 미리보기에서 손으로 조절).
+  setPictureResizeAllowed(on) { this.pictureResizeAllowed=!!on; if(this.input) this.input.examPictureResizeAllowed=this.pictureResizeAllowed; }
   setTableLayoutLocked(locked) {
     this.tableLayoutLocked=!!locked;
     setTableLayoutLocked(this.input,this.tableLayoutLocked);

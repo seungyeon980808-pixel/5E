@@ -47,6 +47,9 @@ export async function normalizeQuestionImport(bytes,JSZip,{standard=KICE_STANDAR
     if(scale!==1)header=header.replace(/(<hh:charPr\b[^>]*\bheight=")(\d+)"/g,(m,head,h)=>`${head}${Math.round(Number(h)*scale/50)*50}"`);
     if(T.font&&T.font!=='함초롬바탕')header=header.replace(/face="함초롬바탕"/g,`face="${T.font.replace(/[&<>"]/g,'')}"`);
     if(T.lineSpacing&&T.lineSpacing!==160)header=header.replace(/(<hh:lineSpacing type="PERCENT" value=")160"/g,`$1${Math.round(T.lineSpacing)}"`);
+    // 조판 설정(10-23): 한글 줄 나눔 「글자」, 본문 정렬 「왼쪽」을 고르면 바꾼다(기본은 어절·양쪽).
+    if(T.break==='char')header=header.replace(/breakNonLatinWord="BREAK_WORD"/g,'breakNonLatinWord="KEEP_WORD"');
+    if(T.align==='left')header=header.replace(/(<hh:align\b[^>]*horizontal=")JUSTIFY"/g,'$1LEFT"');
   }
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text

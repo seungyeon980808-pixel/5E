@@ -16,7 +16,7 @@ import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
 import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
-import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText} from './typeset-standard.js';
+import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText,importStandard} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 import {loadStandards} from './standards-data.js';
@@ -498,6 +498,29 @@ async function onTypesetGap(target,value,scope,stdKey){const q=current;if(!q)ret
     },{render:false});
   }catch(e){status(e.message,true);}
 }
+// 「⚙ 조판 설정」(10-23): 값 하나를 틀에 넣는다. 수능 틀이면 「수능 틀 (내 설정)」으로 복제하고, 수능 틀을 쓰던 모든 문항이 그 틀을 쓴다.
+// 「이 문항만 예외」는 지금 틀을 복제해 이 문항에만 걸고(source.kind='exception'), 끄면 원래 틀로 돌아간다.
+const setPath=(o,path,v)=>{const ks=path.split('.'),last=ks.pop();let t=o;for(const k of ks){t[k]=Array.isArray(t[k])?[...t[k]]:{...t[k]};t=t[k];}t[last]=v;};
+async function onTypesetSetting(a){const q=current;if(!q)return;
+  try{
+    const now=typesetStandardOf(q),own=now.source?.kind==='exception'&&now.source.qid===q.id;
+    if(a.exception!==undefined){
+      if(a.exception&&!own){const s=copyStandard(now,{name:`${now.name} · ${q.number}번만`,source:{kind:'exception',qid:q.id,from:now.id}});
+        await saveTypesetStandards([...typesetStandards,s]);mutate(()=>{q.standardId=s.id;},{render:false});status(`${q.number}번만 예외로 — 이제 바꾸는 값은 이 문항에만 걸립니다.`);}
+      else if(!a.exception&&own){const from=now.source.from;mutate(()=>{if(!from||from===KICE_ID)delete q.standardId;else q.standardId=from;},{render:false});
+        await saveTypesetStandards(typesetStandards.filter(x=>x.id!==now.id));status(`${q.number}번 예외를 끄고 틀 값으로 돌아갔습니다.`);}
+      return;}
+    if(a.reset){if(now.id===KICE_ID)return;const s={...structuredClone(KICE_STANDARD),id:now.id,name:now.name,base:KICE_ID,source:now.source,version:(now.version||1)+1};
+      await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);refreshTypeset();status(`「${s.name}」 값을 수능 틀 값으로 되돌렸습니다.`);return;}
+    if(a.path){
+      const fromKice=now.id===KICE_ID;let s=fromKice?(typesetStandards.find(x=>x.name==='수능 틀 (내 설정)')||copyStandard(KICE_STANDARD,{name:'수능 틀 (내 설정)'})):structuredClone(now);
+      s=structuredClone(s);setPath(s,a.path,a.value);s.version=(s.version||1)+1;validateStandard(s);
+      await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);
+      if(fromKice)mutate(()=>{for(const x of data.questions)if(!x.standardId&&typesetStandardOf(x).id===KICE_ID)x.standardId=s.id;},{render:false});else refreshTypeset();
+      status(own?`${q.number}번만 바꿨습니다.`:`틀 「${s.name}」을 바꿨습니다 · 이 틀을 쓰는 모든 문항에 적용`);
+    }
+  }catch(e){status(e.message,true);}
+}
 // 기준 파일(.5e-typeset.json)에 이 기준으로 등록한 학교 양식 파일도 담는다(base64) — 다른 선생님이 가져오면 양식도 함께 등록.
 const b64=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(s);};
 function standardFileText(standard){const form=typesetForms.find(f=>f.standardId===standard.id);const base=JSON.parse(exportStandardText(standard));
@@ -505,6 +528,8 @@ function standardFileText(standard){const form=typesetForms.find(f=>f.standardId
 async function onTypesetStandard(action){const q=current;
   try{
     if(action.error)throw Error(action.error);
+    if(action.download){const s=typesetStandardOf(q),blob=new Blob([standardFileText(s)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${s.name.replace(/[\\/:*?"<>|]/g,'_')}.5e-typeset.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);return;}
+    if(action.importFile){const raw=await action.importFile.text();return onTypesetStandard({imported:importStandard(raw),raw});}
     if(action.school){schoolFor=null;$('#school-file-input').value='';$('#school-file-input').click();return;}
     if(action.imported){const s=action.imported;delete s.form;await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);
       let raw=null;try{raw=JSON.parse(action.raw||'null');}catch{}const f=raw?.form;
@@ -512,7 +537,8 @@ async function onTypesetStandard(action){const q=current;
       status(`조판 기준 「${s.name}」을 가져왔습니다${f?.base64?' · 시험지 양식도 등록했습니다':''}. 메뉴에서 고르면 이 문항에 씁니다.`);return;}
     if(action.saveAs){const s=copyStandard(typesetStandardOf(q),{name:action.saveAs});await saveTypesetStandards([...typesetStandards,s]);if(q)mutate(()=>{q.standardId=s.id;},{render:false});status(`조판 기준 「${s.name}」으로 저장했습니다.`);return;}
     // 학교 기준을 고르면 문항 기준 용지도 그 기준 용지로(단 폭이 기준을 따르게). 수능 틀로 돌아가면 용지는 그대로 둔다.
-    if(action.pick&&q){const s=typesetStandards.find(x=>x.id===action.pick);mutate(()=>{if(action.pick===KICE_ID)delete q.standardId;else{q.standardId=action.pick;if(s?.paper?.size)q.paper=s.paper.size;}},{render:false});}
+    // 틀 고르기(10-23): 틀은 모든 문항에 건다 — 「이 문항만 예외」로 둔 문항만 빼고.
+    if(action.pick&&q){const s=typesetStandards.find(x=>x.id===action.pick);mutate(()=>{for(const x of data.questions){if(typesetStandardOf(x).source?.kind==='exception')continue;if(action.pick===KICE_ID)delete x.standardId;else{x.standardId=action.pick;if(s?.paper?.size)x.paper=s.paper.size;}}},{render:false});status(`틀 「${s?.name||'수능 틀'}」을 모든 문항에 걸었습니다.`);}
   }catch(e){status(e.message,true);}
 }
 // 학교 양식에서 기준 만들기: 파일 → 엔진으로 읽기 → 찾은 값 표 → 이름 붙여 저장하고 이 문항에 쓴다.
@@ -538,7 +564,7 @@ $('#school-save').addEventListener('click',async()=>{if(!schoolDraft)return;cons
     renderAll();
     const q=current;if(q)mutate(()=>{q.standardId=s.id;if(s.paper?.size)q.paper=s.paper.size;},{render:false});status(`조판 기준 「${s.name}」을 만들어 이 문항에 썼습니다.`);}catch(error){status(error.message,true);}
 });
-function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,standardsOf:()=>typesetStandards,onGap:onTypesetGap,onStandard:action=>action.exportText?standardFileText(action.exportText):onTypesetStandard(action),onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
+function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,standardsOf:()=>typesetStandards,onGap:onTypesetGap,onStandard:action=>action.exportText?standardFileText(action.exportText):onTypesetStandard(action),onSetting:onTypesetSetting,onSlot:(action,b,qid)=>{const q=data.questions.find(x=>x.id===qid);if(!q)return;if(current?.id!==q.id)choose(q);slotAction(action,q,b.id);},host:$('#native-editor'),status:$('#typeset-status'),paper:$('#paper-size'),columns:$('#paper-columns'),save:$('#typeset-save'),download:$('#typeset-download'),onSave:async(snapshot,questionId)=>{
           const target=data.questions.find(q=>q.id===questionId);if(!target)throw Error('문항이 삭제되어 조판을 저장할 수 없습니다.');
           const {questionFingerprint}=await import('./typeset-model.js?v=1014-compact-panel');
           if(snapshot.fingerprint!==await questionFingerprint(target))throw Error('시트 내용과 저장 전 조판 수정이 함께 바뀌었습니다. 시트 수정을 되돌린 뒤 조판을 저장하세요. 기존 조판 수정은 유지됩니다.');

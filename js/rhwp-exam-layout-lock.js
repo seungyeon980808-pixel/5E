@@ -51,8 +51,9 @@ function installStructureGuard(input){
   for(const name of ['updatePictureMoveDrag','updatePictureRotateDrag','updatePictureResizeDrag','updateMoveDrag','moveSelectedPicture','resizeSelectedPicture','moveSelectedTable','resizeCellByKeyboard','resizeTableProportional']){
     if(typeof input[name]!=='function')continue;
     const original=input[name].bind(input);let warned=0;
+    const picture=name==='updatePictureResizeDrag'||name==='resizeSelectedPicture';
     input[name]=(...args)=>{
-      if(!input.examTableLayoutLocked)return original(...args);
+      if(!input.examTableLayoutLocked||picture&&input.examPictureResizeAllowed)return original(...args);
       const now=Date.now();if(now-warned>1500){warned=now;notice();}
     };
   }
@@ -60,7 +61,7 @@ function installStructureGuard(input){
   if(typeof input.finishPictureResizeDrag==='function'){
     const finish=input.finishPictureResizeDrag;
     input.finishPictureResizeDrag=function(...args){
-      if(!input.examTableLayoutLocked)return finish.apply(this,args);
+      if(!input.examTableLayoutLocked||input.examPictureResizeAllowed)return finish.apply(this,args);
       this.cleanupPictureResizeDrag?.();this.renderPictureObjectSelection?.();
     };
   }
