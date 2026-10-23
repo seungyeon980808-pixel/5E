@@ -235,7 +235,7 @@ function renderView(){
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibrary($('#library-view'),data,view);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
-  if(view.name==='exam')renderExam($('#examd-view'),data,view.examId,{forms:typesetForms});
+  if(view.name==='exam'){renderExam($('#examd-view'),data,view.examId,{forms:typesetForms});void fillExamSheet(examById(data,view.examId));}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
@@ -712,6 +712,23 @@ $('#examd-view').addEventListener('dragstart',e=>{const row=e.target.closest('[d
 $('#examd-view').addEventListener('dragover',e=>{if(!dragId)return;const row=e.target.closest('[data-order]');if(row){e.preventDefault();document.querySelectorAll('.pv-orow.drop-before').forEach(n=>n.classList.remove('drop-before'));row.classList.add('drop-before');}});
 $('#examd-view').addEventListener('drop',e=>{const exam=examNow(),row=e.target.closest('[data-order]');if(!exam||!dragId||!row)return;e.preventDefault();const id=dragId,to=dropBeforeIndex(exam.items,id,row.dataset.order);dragId=null;if(to<0||to===exam.items.indexOf(id))return;mutate(()=>{moveInExam(data,exam.id,id,to);renumberExam(data,exam.id);});});
 $('#examd-view').addEventListener('dragend',()=>{dragId=null;document.querySelectorAll('.pv-orow.dragging,.pv-orow.drop-before').forEach(n=>n.classList.remove('dragging','drop-before'));});
+// 시험지 쪽 배치(10-23 지적 8·9): 실제 한글 조판으로 합친 쪽을 그리고, 문항을 누르면 바로 아래에 얇은 여백 막대.
+let examPick=null,examSheetSeq=0;
+async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;const seq=++examSheetSeq;
+  typesetter||=makeTypesetter();let view;
+  try{view=await typesetter.pageSheets(data,exam,examPick||exam.items[0],{alive:()=>seq===examSheetSeq&&n.isConnected});}catch(e){if(e.cancelled)return;if(seq===examSheetSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
+  if(seq!==examSheetSeq||!n.isConnected)return;
+  const pct=v=>(v*100).toFixed(3)+'%',moved=new Set(view.moved||[]);
+  // 배치 점검은 실제로 그린 쪽(한글 조판 높이) 기준으로 다시 쓴다(시험지 화면 처음 그릴 때는 어림 높이).
+  {const c=document.querySelector('#exam-layout-checks'),no=id=>exam.items.indexOf(id)+1+'번';if(c)c.innerHTML=[(view.oversized||[]).length?`<li data-level="warn">단 높이를 넘는 문항: ${view.oversized.map(no).join(', ')}</li>`:'',moved.size?`<li data-level="info">통째로 다음 단·쪽으로 넘긴 문항: ${[...moved].map(no).join(', ')}</li>`:''].join('')||'<li data-level="ok">겹침·넘침 없음</li>';}
+  n.innerHTML=`<div class="pv-sheet-head"><b>${view.pages.length}쪽</b><span>한글 조판 그대로 · ${E(view.paper)} ${view.columns}단${exam.formId?' · 학교 양식 위 모양은 보낼 때 확인':''}</span></div>`+view.pages.map((p,i)=>`<figure class="pv-pg" style="aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}${(p.boxes||[]).map(b=>{const no=exam.items.indexOf(b.id)+1,picked=b.id===examPick,after=Number(exam.after?.[b.id])||0;
+    return `<button type="button" class="pv-pg-q${picked?' is-picked':''}" data-exam-pick="${E(b.id)}" aria-label="${no}번 문항 고르기" style="left:${pct(b.x)};top:${pct(b.y)};width:${pct(b.w)};height:${pct(b.h)}">${moved.has(b.id)?'<span class="pv-moved">통째로 넘김</span>':''}</button>${picked?`<div class="pv-gapbar" style="left:${pct(b.x)};top:calc(${pct(b.y+b.h)} + 2px);width:${pct(b.w)}" role="group" aria-label="${no}번 문항 아래 여백"><button type="button" data-exam-gap="-4" aria-label="여백 4mm 줄이기" ${after<=0?'disabled':''}>−</button><span>여백 ${after}mm</span><button type="button" data-exam-gap="4" aria-label="여백 4mm 늘리기">+</button><i></i><label><input type="checkbox" data-exam-break ${exam.breaks?.[b.id]?'checked':''}>다음 단에서 시작</label></div>`:''}`;}).join('')}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`).join('');}
+document.addEventListener('click',e=>{const pick=e.target.closest('[data-exam-pick]');if(!pick)return;examPick=pick.dataset.examPick===examPick?null:pick.dataset.examPick;
+  const exam=view.examId&&examById(data,view.examId);if(exam)fillExamSheet(exam);});
+document.addEventListener('click',e=>{const g=e.target.closest('[data-exam-gap]');if(!g||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
+  mutate(()=>{exam.after={...(exam.after||{})};const v=Math.max(0,(Number(exam.after[examPick])||0)+Number(g.dataset.examGap));if(v)exam.after[examPick]=v;else delete exam.after[examPick];exam.updatedAt=new Date().toISOString();});});
+document.addEventListener('change',e=>{const c=e.target.closest('[data-exam-break]');if(!c||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
+  mutate(()=>{exam.breaks={...(exam.breaks||{})};if(c.checked)exam.breaks[examPick]=true;else delete exam.breaks[examPick];exam.updatedAt=new Date().toISOString();});});
 // 5E_hwp로 보내기: 시험지 한 부(HWPX)를 5E 시험지 편집기에서 연다. 완성이 아닌 문항도 보낸다. 조판 저장이 없는 문항은 먼저 저장해야 한다.
 let examRequest=null;
 async function sendExam(exam,{download:asFile=false,variant=false,print=false}={}){

@@ -10,8 +10,11 @@ export function paginateQuestions(items,{height,columns=2,gap=0}){
       if(page.columns.some(c=>c.length))nextPage();
       page.columns[0].push(item.id);page.oversized=true;page=null;continue;
     }
+    // 「다음 단에서 시작」(10-23 지적 9): 이 단에 이미 문항이 있으면 다음 단(마지막 단이면 다음 쪽)으로.
+    if(item.breakBefore&&used){if(column+1>=columns)nextPage();else{column++;used=0;}}
     const needed=item.height+(used?gap:0);
-    if(used+needed>height){if(column+1>=columns)nextPage();else{column++;used=0;}}
+    // 다 들어가지 않으면 문항을 통째로 다음 단·쪽으로(지적 10) — 넘긴 문항은 page.moved에 남겨 배치 점검에 보인다.
+    if(used+needed>height){if(column+1>=columns)nextPage();else{column++;used=0;}(page.moved||=[]).push(item.id);}
     page.columns[column].push(item.id);used+=item.height+(used?gap:0);
   }
   return pages;
@@ -24,7 +27,9 @@ export function examItems(data,exam=data.exams?.[0]){
     const q=data.questions.find(x=>x.id===id);if(!q)return null;
     const measured=q.typeset?.metrics?.usedHeightMm;
     const estimate=60+q.blocks.length*18+(q.type==='서술형'?20:16);
-    return {id,q,height:Number.isFinite(measured)?measured:estimate,ready:!!q.typeset?.verified,measured:Number.isFinite(measured)};
+    // 문항 아래 여백(exam.after, mm)은 높이에 더하고, exam.breaks는 「다음 단에서 시작」(10-23 지적 9).
+    const after=Math.max(0,Number(exam?.after?.[id])||0);
+    return {id,q,height:(Number.isFinite(measured)?measured:estimate)+after,after,breakBefore:!!exam?.breaks?.[id],ready:!!q.typeset?.verified,measured:Number.isFinite(measured)};
   }).filter(Boolean);
 }
 

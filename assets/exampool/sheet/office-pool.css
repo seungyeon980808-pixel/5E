@@ -396,3 +396,25 @@
 .pv-card{position:relative}
 .pv-card .pv-star{top:8px;right:8px}
 .pv-card:hover .pv-star{opacity:1}
+
+/* ===== 시험지 쪽 배치(10-23 지적 8·9·10): 실제 한글 조판 쪽 + 문항 바로 아래 얇은 여백 막대 ===== */
+.pv-exam-body{grid-template-columns:minmax(280px,360px) minmax(0,1fr) minmax(240px,300px)!important}
+.pv-sheetcol{min-width:0;overflow:auto;padding:0 4px}
+.pv-sheet{display:flex;flex-direction:column;gap:14px;align-items:center}
+.pv-sheet-head{align-self:stretch;display:flex;align-items:baseline;gap:8px;color:var(--ds-ink-2);font-size:var(--cv-text-small,12.5px)}
+.pv-sheet-head span{color:var(--ds-ink-3)}
+.pv-pg{position:relative;margin:0;width:min(100%,640px);background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.pv-pg figcaption{position:absolute;bottom:-18px;right:0;font-size:11px;color:var(--ds-ink-3)}
+.pv-pg-q{position:absolute;border:0;padding:0;background:transparent;cursor:pointer;border-radius:2px}
+.pv-pg-q:hover{background:rgba(107,164,248,.08);box-shadow:0 0 0 1px rgba(107,164,248,.45)}
+.pv-pg-q.is-picked{box-shadow:0 0 0 2px var(--ds-soft-line,#6ba4f8);background:rgba(107,164,248,.06)}
+.pv-moved{position:absolute;top:2px;right:2px;padding:1px 6px;border-radius:8px;background:rgba(210,153,34,.9);color:#111;font:600 10px/1.4 -apple-system,"Apple SD Gothic Neo",sans-serif}
+/* 막대는 문항 바로 아래(문항 끝에서 2px), 얇게 20px — 그림자·테두리 없이 */
+.pv-gapbar{position:absolute;z-index:2;display:flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:var(--ds-soft-bg,#152137);color:var(--ds-ink,#e6edf3);font:10.5px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;width:auto!important;max-width:100%}
+.pv-gapbar button{width:18px;height:16px;border:0;border-radius:3px;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer;padding:0}
+.pv-gapbar button:hover:not(:disabled){background:rgba(255,255,255,.12)}
+.pv-gapbar button:disabled{opacity:.35}
+.pv-gapbar i{width:1px;height:12px;background:rgba(255,255,255,.25);margin:0 2px}
+.pv-gapbar label{display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap}
+.pv-gapbar input{margin:0;width:11px;height:11px}
+@media (max-width:1100px){.pv-exam-body{grid-template-columns:minmax(0,1fr)!important}}

@@ -98,14 +98,16 @@ export function renderExam(root,data,examId,{forms=[]}={}){
         <span class="pv-row-tools"><button type="button" class="mini" data-move="up" title="위로">${ICON.up}</button><button type="button" class="mini" data-move="down" title="아래로">${ICON.down}</button><button type="button" class="mini" data-out="${x.id}" title="보관함으로 빼기">빼기</button></span></div>`).join('')||'<p class="pv-empty">아직 문항이 없습니다.</p>'}
       <div class="pv-add"><button type="button" class="btn" data-exam-act="new">${ICON.plus}이 시험지에 새 문항</button>${lib.length?`<select id="exam-from-library" aria-label="보관함에서 넣기"><option value="">보관함에서 넣기 (${lib.length})…</option>${lib.map(q=>`<option value="${q.id}">${E(questionSubtitle(q))}</option>`).join('')}</select>`:''}</div>
     </div>
+    <section class="pv-sheetcol" aria-label="쪽 배치"><div class="pv-sheet" id="exam-sheet" data-exam="${E(exam.id)}"><p class="pv-empty">${items.length?'한글 조판으로 쪽을 그리는 중…':'문항을 넣으면 실제 쪽이 보입니다.'}</p></div></section>
     <aside class="pv-summary"><h3>시험지 한눈에</h3>
       <div class="stat"><span>문항</span><b>${qs.length}</b><span>배점 합</span><b>${qs.reduce((a,q)=>a+(Number(q.points)||0),0)}</b><span>완성</span><b>${count('complete')}</b><span>검토 중</span><b>${count('review')}</b><span>초안</span><b>${count('draft')}</b></div>
       ${(()=>{const st=examStats(qs),checks=examChecks(qs,{ready:q=>items.find(x=>x.q===q)?.ready}),max=Math.max(1,...st.answers);
         return `<h3>정답 분포</h3><div class="pv-answers" aria-label="정답 분포">${st.answers.map((n,i)=>`<span title="${ANSWER_MARK[i]} ${n}문항"><i style="height:${Math.round(n/max*100)}%"></i><b>${ANSWER_MARK[i]}</b><small>${n}</small></span>`).join('')}</div>
         <h3>출제 점검 ${checks.length?`<small>${checks.length}</small>`:''}</h3><ul class="pv-checks">${checks.map(c=>`<li data-level="${c.level}">${E(c.text)}</li>`).join('')||'<li data-level="ok">걸리는 것이 없습니다.</li>'}</ul>`;})()}
-      <h3>쪽 배치 (A4 2단)</h3>
-      <div class="pv-pages">${pages.map(p=>`<div class="pv-page">${p.columns.map(col=>`<div>${col.map(id=>{const x=items.find(v=>v.id===id);return `<i style="height:${Math.min(100,x.height/267*100)}%" title="${items.indexOf(x)+1}번"><b>${items.indexOf(x)+1}</b></i>`;}).join('')}</div>`).join('')}</div>`).join('')||'<p class="pv-empty">문항을 넣으면 보입니다.</p>'}</div>
-      <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}${missing.length?`조판을 저장하지 않은 문항 ${missing.length}개(${missing.map(x=>items.indexOf(x)+1+'번').join(', ')})는 보내기 전에 한글 조판을 저장해야 합니다.`:'보내면 5E_hwp에서 시험지 한 부로 열려 최종 검수를 합니다.'}</p>
+      <h3>배치 점검 <small>움직일 때마다</small></h3><ul class="pv-checks" id="exam-layout-checks">${(()=>{const moved=pages.flatMap(p=>p.moved||[]),over=pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),no=id=>items.findIndex(x=>x.id===id)+1+'번';
+        return [over.length?`<li data-level="warn">단 높이를 넘는 문항: ${over.map(no).join(', ')}</li>`:'',moved.length?`<li data-level="info">통째로 다음 단·쪽으로 넘긴 문항: ${moved.map(no).join(', ')}</li>`:''].join('')||'<li data-level="ok">겹침·넘침 없음</li>';})()}</ul>
+      <p class="note">쪽에서 문항을 누르면 바로 아래에 여백 막대가 나옵니다(− 여백 ＋ · 다음 단에서 시작). 순서는 왼쪽 목록에서 끌어 바꿉니다.</p>
+      <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}보내면 조판이 없는 문항은 알아서 조판한 뒤 5E_hwp에서 시험지 한 부로 열립니다.</p>
     </aside></div>`;
   fillPreviews(root,data);
 }

@@ -308,7 +308,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const step=async()=>{await pause();if(!alive())throw cancelled();};
     await ensure();const Document=document().constructor,ids=exam?.items?.length?exam.items:[focusId],items=[];
     for(const id of ids){const value=data.questions.find(x=>x.id===id);if(!value)continue;if(items.length)await step();const e=await sheetEntry(Document,value);
-      items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:Number.isFinite(e.height)?e.height:60,saved:e.saved});}
+      const after=Math.max(0,Number(exam?.after?.[id])||0);
+      items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+after,after,breakBefore:!!exam?.breaks?.[id],saved:e.saved});}
     if(!items.length)throw Error('쪽에 놓을 문항이 없습니다.');
     // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 아니면 A4 2단.
     const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),pages=paginateQuestions(items,{height:sheet.heightMm,columns:sheet.columns,gap:sheet.gapMm});
@@ -321,15 +322,19 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const out=[];
       for(let i=0;i<target.pageCount();i++){
         const found=new Map();
-        for(const r of [...parse(target.getPageTextLayout(i)).runs,...parse(target.getPageControlLayout(i)).controls]){
-          const id=owner(r);if(id===undefined||![r.x,r.y,r.w,r.h].every(Number.isFinite))continue;const box=found.get(id);
-          found.set(id,box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h});}
+        // 글 줄로 문항 자리를 먼저 잡고, 그림·표는 같은 단(가로로 겹침)일 때만 넓힌다 — 엔진이 그림·표를 엉뚱한 문단 번호로
+        // 보고할 때가 있어(rhwp 0.8.7) 문항 상자가 옆 단까지 넓어지던 문제(10-23).
+        const grow=(id,r)=>{const box=found.get(id);found.set(id,box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h});};
+        const ok=r=>owner(r)!==undefined&&[r.x,r.y,r.w,r.h].every(Number.isFinite);
+        // 칸 안 글 줄의 paraIdx는 칸 안쪽 번호라 문항 범위와 맞지 않는다 — 맨 바깥 글 줄만.
+        for(const r of parse(target.getPageTextLayout(i)).runs)if(!(r.cellPath||[]).length&&ok(r))grow(owner(r),r);
+        for(const r of parse(target.getPageControlLayout(i)).controls){if(!ok(r)||(r.cellPath||[]).length)continue;const box=found.get(owner(r)),cx=r.x+r.w/2;if(box&&(cx<box.x-4||cx>box.r+4))continue;grow(owner(r),r);}
         if(i)await step();
         const box=found.get(focusId);
         out.push({svg:target.renderPageSvg(i),width,height,focus:box&&rel(box),boxes:[...found].map(([id,b])=>({id,...rel(b)}))});
       }
       const mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));
-      return {pages:out,paper:sheet.paper,columns:sheet.columns,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
+      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved:pages.flatMap(p=>p.moved||[]),oversized:pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
     }finally{target.free();}
   }
   // 학교 양식(한글 파일)을 엔진으로 열어 조판 기준 값을 읽는다(10-22 C-6). 열린 문항 조판에는 손대지 않는다.

@@ -35,6 +35,8 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
         const before=target.getParagraphCount(0);
         const result=parse(target.importParagraphBlock(source,nativeInsertOptions(source,0,before)));
         if(!result?.operationResult?.result?.inserted&&result?.ok===false)throw Error(`${item.q.number}번 문항을 시험지에 넣지 못했습니다.`);
+        // 문항 아래 여백(10-23 지적 9): 문항 마지막 문단의 「문단 아래」 간격으로 넣는다(1pt = 200).
+        if(item.after>0){const last=target.getParagraphCount(0)-1;target.applyParaFormat(0,last,JSON.stringify({spacingAfter:Math.round(item.after*72/25.4*200)}));}
         ranges.set(item.id,[before,target.getParagraphCount(0)]);
       }finally{source.free();}
       if(between&&i<items.length-1)await between();

@@ -14,6 +14,9 @@ export function validateExams(data){
   for(const e of data.exams){
     if(!e||typeof e.id!=='string'||ids.has(e.id)||typeof e.title!=='string'||e.title.length>200||!Object.hasOwn(EXAM_STATUS,e.status)||!Array.isArray(e.items)||e.items.length>200)throw Error('시험지 정보를 확인하세요.');
     if(e.formId!==undefined&&(typeof e.formId!=='string'||e.formId.length>80))throw Error('시험지 양식 표시를 확인하세요.');
+    // 문항 아래 여백(mm)·다음 단에서 시작(10-23 지적 9): 여백 0~200mm. 시험지에서 뺀 문항의 값은 남아도 쓰이지 않는다.
+    if(e.after!==undefined&&(typeof e.after!=='object'||Object.values(e.after).some(v=>!(Number(v)>=0&&Number(v)<=200))))throw Error('시험지 문항 여백을 확인하세요.');
+    if(e.breaks!==undefined&&(typeof e.breaks!=='object'||Object.values(e.breaks).some(v=>v!==true)))throw Error('시험지 단 나누기 표시를 확인하세요.');
     ids.add(e.id);
     for(const id of e.items){if(!qids.has(id)||seen.has(id))throw Error('시험지 구성의 문항 목록을 확인하세요.');seen.add(id);}
   }
