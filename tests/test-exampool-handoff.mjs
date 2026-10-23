@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {buildQuestionHtml,handoffQuestion,verifyNativeQuestion,wrapQuestionText,wrapHangingText,decodeNativeText} from '../assets/exampool/sheet/handoff.js';
+import {buildQuestionHtml,handoffQuestion,verifyNativeQuestion,wrapQuestionText,wrapHangingText,decodeNativeText,choiceGrid} from '../assets/exampool/sheet/handoff.js';
 import {nativeLayoutIssues,assertNativeLayout} from '../assets/exampool/sheet/native-layout-check.js';
 import {FORMAT,newQuestion,block,validate} from '../assets/exampool/sheet/model.js';
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
@@ -31,7 +31,7 @@ test('reference bogi uses an editable centered title cutout, thin rules and dott
  const q=structuredClone(examples.questions[0]),bogi=q.blocks.find(b=>b.kind==='bogi');bogi.lines[1].label='ㄴ.';
  const plan=await buildQuestionHtml(q,prep,317,{native:true});
  assert.deepEqual(plan.tables.find(t=>t.rows===3&&t.cols===3).merges,['0:1:2:1','2:0:1:3']);
- assert(plan.html.includes('border-bottom:0.4pt solid #000'));assert(plan.html.includes('text-align:center;line-height:100%'));
+ assert(plan.html.includes('border-bottom:0.34pt solid #000'));assert(plan.html.includes('text-align:center;line-height:100%'));
  assert(plan.texts.includes('<보 기>'));assert(plan.texts.some(t=>t.startsWith('ㄱ. ')));assert(plan.texts.some(t=>t.startsWith('ㄴ. ')));assert(!plan.html.includes('ㄴ..'));
  assert(plan.html.includes('line-height:150%'));assert(!plan.html.includes('text-indent:-22px'));
 });
@@ -101,4 +101,11 @@ test('empty bogi lines and choices keep one space after their label (ㄱ. ①) s
  const full=structuredClone(examples.questions.find(x=>x.blocks.some(b=>b.kind==='bogi'))),fullHtml=(o=>typeof o==='string'?o:o.html)(await buildQuestionHtml(full,prep,540,{native:true}));
  assert.doesNotMatch(fullHtml,/ㄱ\.&nbsp;/,'filled lines keep a normal space');
  assert.doesNotMatch(fullHtml,/카드에서 입력/);
+});
+// 10-23 평가원 선지 탭: 가장 긴 선지가 칸 간격 안에 들어가면 원본처럼 왼쪽부터 같은 간격, 아니면 예전 배열.
+test('short choices sit on the KICE tab steps, long ones keep the old spread',()=>{
+ const tabs=[62.7,104.5,162.6],w=t=>[...t].length*8,short=['ㄱ','ㄴ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ'].map(text=>({text}));
+ const a=choiceGrid(short,320,11,undefined,w,tabs);assert.equal(a.cols,5);assert.deepEqual(a.widths.slice(0,4),[62.7,62.7,62.7,62.7]);assert.ok(a.tabs);
+ const long=['ㄱ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ, ㄹ, ㅁ'].map(text=>({text}));
+ const b=choiceGrid(long,320,11,undefined,w,tabs),c=choiceGrid(long,320,11,undefined,w);assert.deepEqual(b,c);assert.ok(!b.tabs);
 });

@@ -84,7 +84,8 @@ test('a boxed side-by-side group is one native table, so the result table inside
 test('empty cells get an invisible word joiner only inside side-by-side cells, never a character reference',async()=>{
   const q=structuredClone(data().questions[0]),group=q.blocks.find(b=>b.kind==='group'),table=q.blocks.find(b=>b.kind==='table'&&b.parent===group.id);
   for(const row of table.table.cells)for(const c of row){c.value='';delete c.figure;}
-  const plain=await buildQuestionHtml(q);assert.ok(!plain.html.includes('⁠'),'ordinary empty cells stay empty');
+  // 〈보기〉 제목 줄의 빈 장식 칸만 1pt 글자 안에 폭 0 글자를 둔다(10-23: 빈칸이면 엔진이 10pt 줄 높이를 남김). 자료표 빈칸은 비어 있어야 한다.
+  const plain=await buildQuestionHtml(q);assert.ok(!plain.html.replaceAll('<span style="font-size:1pt">⁠</span>','').includes('⁠'),'ordinary empty cells stay empty');
   group.layout='나란히';group.boxed=true;
   const side=await buildQuestionHtml(q);assert.ok(side.html.includes('⁠'));assert.ok(!/&#\d+;/.test(side.html),'the engine prints character references literally');
 });

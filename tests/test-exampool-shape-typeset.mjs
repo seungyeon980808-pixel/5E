@@ -66,7 +66,7 @@ test('a side material frame floats its picture at the start of the numbered pass
   assert.ok(values.indexOf(q.ask)>0);assert.ok(!plan.tables.some(t=>t&&t.rows===1&&t.cols===2),'no side-by-side table');
   // 그림은 첫 문단 맨 앞(번호 글 앞)에 들어가고, 한글로 들여온 뒤 오른쪽 어울림으로 바뀐다.
   // 폭은 크기 40%: 단 폭에서 번호 너비를 뺀 본문 폭의 40%.
-  assert.match(plan.html,/<p style="margin:4px 0;text-align:justify"><img [^>]*width="(\d+)"[^>]*>7\. 그림과/);assert.equal(Number(plan.html.match(/<img [^>]*width="(\d+)"/)[1]),Math.round((400-plan.bodyIndent)*.4));
+  assert.match(plan.html,/<p style="margin:0;text-align:justify"><img [^>]*width="(\d+)"[^>]*>7\. 그림과/);assert.equal(Number(plan.html.match(/<img [^>]*width="(\d+)"/)[1]),Math.round((400-plan.bodyIndent)*.4));
   assert.deepEqual(plan.floats.map(f=>f.align),['Right']);assert.equal(plan.floats[0].data,png);assert.deepEqual(plan.imageOwners,[{kind:'block',id:q.blocks[1].id}]);
   q.blocks[1].align='왼쪽';assert.deepEqual((await buildQuestionHtml(q,async f=>({...f,width:200,height:100}),400)).floats.map(f=>f.align),['Left']);
 });

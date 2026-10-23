@@ -1,7 +1,8 @@
 import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
-export const LAYOUT_VERSION=12;
+export const LAYOUT_VERSION=13;
 // 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
+import {nativeRuns} from './live-patch.js';
 import {KICE_STANDARD,layoutValues} from './typeset-standard.js';
 // 본문 글자 장평·자간 기본값은 조판 기준(「수능 틀」)에서 읽는다.
 export const TEXT_RATIO=KICE_STANDARD.text.ratio,TEXT_SPACING=KICE_STANDARD.text.spacing,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
@@ -352,4 +353,16 @@ export function applyFloatingTable(document,spec,number){
     if(r?.ok===false)throw Error('글 옆 표를 배치하지 못했습니다.');return;
   }
   throw Error('글 옆 표의 지문을 찾지 못했습니다.');
+}
+
+// 빈 「ㄱ.」「①」 뒤 한 칸을 고정 띄어쓰기(U+00A0)로(10-22 O5). 조판 기준 parts.labelSpace가 'fixed'일 때만(10-23: 교사가 고름, 수능 틀은 보통 띄어쓰기).
+// HTML 붙여넣기는 &nbsp;를 보통 띄어쓰기로 바꿔서, 들여온 뒤 엔진 문서에서 바꾼다. 글이 이미 들어간 칸은 손대지 않는다 — 비어 있는 자리만(교사가 칠 자리).
+export function fixedLabelSpaces(document,section=0){
+  const J=JSON.stringify;let count=0;
+  for(const r of nativeRuns(document,section)){
+    if(!r.path||!/^(?:[ㄱ-ㅎ]\.|[①-⑳]) $/.test(r.text))continue;
+    const at=r.text.length-1,path=J(r.path);
+    document.deleteTextInCellByPath(section,r.parent,path,at,1);document.insertTextInCellByPath(section,r.parent,path,at,'\u00a0');count++;
+  }
+  return count;
 }
