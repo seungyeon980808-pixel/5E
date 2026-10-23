@@ -643,3 +643,5 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .ts-part-layer{position:absolute;pointer-events:none;z-index:5}
 .ts-part-bar{position:absolute;width:3px;border-radius:2px;background:var(--ds-soft-line,#6ba4f8)}
 .ts-part-tag{position:absolute;transform:translate(-100%,0);margin-left:-6px;color:#1a4fb4;font:600 10.5px/1.2 -apple-system,"Apple SD Gothic Neo",sans-serif;writing-mode:vertical-rl;letter-spacing:.04em;white-space:nowrap}
+/* 조판 자동 저장(10-23 A2): 「조판 저장」 단추는 없앤다(창 머리 줄·카드 칸 머리 줄 둘 다). */
+#typeset-save,#card-view [data-cv="hwp-save"]{display:none!important}

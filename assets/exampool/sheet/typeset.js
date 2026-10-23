@@ -41,6 +41,17 @@ const SKELETON={skeleton:true,ghostFigure};
 const LEAD='<p style="margin:0;font-size:1pt;line-height:100%"> </p>';
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
 export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge,onSlot,standardOf=()=>KICE_STANDARD,standardsOf=()=>[],onGap,onStandard,onSetting}){
+  let autoTimer=0,autoTries=0;
+  // 조판 자동 저장(10-23 A2): 고친 뒤 1.5초 쉬면 저장하고, 새로 만든 조판은 바로 저장한다. 「조판 저장」 단추는 없앴다. 실패할 때만 알린다.
+  function scheduleAuto(delay=1500){clearTimeout(autoTimer);autoTimer=setTimeout(()=>{autoSaveNow().catch(()=>{});},delay);}
+  async function autoSaveNow(){
+    if(!ready||loading||fitting||lineFitting||!dirty||!q)return;
+    // 빈 칸(회색 「자료」·「발문」 자리)이 있으면 저장하지 않는다 — 채우면 그때 자동 저장.
+    if(skeletonKey(q)){message('비어 있는 칸이 있어 조판은 채운 뒤 자동 저장됩니다.');return;}
+    if(bridge&&[...bridge.editor.element.contentDocument.querySelectorAll('.modal-overlay')].some(n=>n.getClientRects().length))return scheduleAuto(3000);
+    try{const s=await snapshot();if(!s){if(++autoTries<3)scheduleAuto(800);return;}autoTries=0;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;message('자동 저장됨');}
+    catch(e){autoTries=0;message(`조판을 자동 저장하지 못했습니다: ${e.message}`,true);}
+  }
   let settings=null,gaps=null,lockedFor='',lineFitTimer=0,lineFitting=false;
   // 한글 창에서 글을 고치면 입력이 0.3초 멈춘 뒤 커서가 있는 문단만, 커서 줄부터 아래로 자간을 다시 맞춘다(10-22 O1). 한 번의 되돌리기 단계.
   // 표 칸 안·수식·그림이 든 문단은 건너뛴다(만들 때 규칙과 같음). 글자 위치(커서)는 그대로. host.dataset.lineFit: 마지막 결과(검사·문제 찾기용).
@@ -110,7 +121,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   function scheduleFit(){if(fitting||fitFrame||!ready)return;fitFrame=requestAnimationFrame(()=>{fitFrame=0;try{fitLive();}catch(e){message(e.message,true);}});}
   const equationScripts=async bytes=>{const zip=await JSZip.loadAsync(new Uint8Array(bytes)),xml=await zip.file('Contents/section0.xml').async('string');return [...xml.matchAll(/<hp:script>([\s\S]*?)<\/hp:script>/g)].map(m=>m[1]).join('\n');};
   async function ensure(){
-    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(lineFitting)return;if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();if(!error)scheduleLineFit();}},onEdit:(_id,ref)=>{
+    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(lineFitting)return;if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 잠시 뒤 자동 저장',!!error);scheduleFit();scheduleTextSync();if(!error){scheduleLineFit();scheduleAuto();}}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
     }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);bridge.setPictureResizeAllowed(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});settings=attachTypesetSettings({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onSetting,onStandard,gaps,marks:{enabled:marksEnabled,toggle:()=>setMarksEnabled(!marksEnabled())}});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
@@ -161,7 +172,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const keepLock=true;lockedFor=value.id;// 10-23: 조판 칸은 늘 구조 잠금(틀은 「조판 설정」에서만). 그림 세부 크기만 잠금 예외.
       bridge.setTableLayoutLocked(keepLock);resize.setAttribute('aria-pressed',String(keepLock));
       baselineText=normalized(parse(document().getTextFileText()));baselineEquations=await equationScripts(bytes);
-      baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;userDirty=false;patchDirty=false;view.refresh();
+      baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=!saved;userDirty=false;patchDirty=false;view.refresh();if(!saved)scheduleAuto(600);
       bridge.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});
       validateQuestionPage(document(),profile());lastProfile=profile();message('문항 길이에 맞춰 용지 높이 자동 조절 · 구조 잠금(글만 고침) · 내어쓰기 Shift+Tab(표 칸 안 Ctrl+Shift+Tab · 맥은 ⌥⇧Tab)');
       try{assertNativeLayout(document());}catch(e){message(e.message,true);}
@@ -182,7 +193,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     for(const c of result.changes){applyTextEdit(q,c.owner,c.value);textMap.segments[c.index].value=c.full;}
     textMap=buildTextMap(raw,textMap.segments);baselineText=normalized(encoded);fingerprint=await questionFingerprint(q);
     if(!onTextEdit(changes,id))return;
-    message('한글에서 고친 글을 시트에 반영했습니다 · 서식까지 남기려면 조판 저장을 누르세요.');
+    message('한글에서 고친 글을 시트에 반영했습니다 · 조판은 자동 저장됩니다.');
   }
   // 시트에서 고친 글을 한글 창에 바로 넣는다. 같은 문항이고 글 조각의 구성이 같으면 바뀐 문단만 바꾸고(서식·저장 전 조판 유지),
   // 구성이 바뀌었거나 짝을 찾지 못하면 false — 부르는 쪽이 다시 그린다. 차례로 하나씩 처리한다.
@@ -230,7 +241,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         // Show the reopened output itself and require a review of that result;
         // never mark an earlier, different rendering as approved.
         loading=true;try{await loadKeepingFocus(new Uint8Array(bytes),`${q.number}번 문항.hwpx`);}finally{loading=false;}
-        message('최종 저장 모양으로 갱신했습니다. 글·표·그림 배치를 확인한 뒤 조판 저장을 다시 누르세요.');return null;
+        message('최종 저장 모양으로 갱신했습니다 · 잠시 뒤 자동 저장됩니다.');return null;
       }
       return {bytes:toBase64(bytes),fingerprint,baselineText,profile:profile(),pageMode:QUESTION_PAGE_MODE,metrics:questionPageMetrics(reopened,profile()),pageDef:parse(document().getPageDef(0)),columnDef:parse(document().getColumnDef(0)),savedAt:new Date().toISOString(),layoutVersion:LAYOUT_VERSION,verified:true};
     }finally{reopened.free();}
@@ -241,7 +252,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(!ready||!dirty)return;
     if(skeletonKey(q)){dirty=false;userDirty=false;patchDirty=false;return;}
     // 바로 넣기(H14)로만 켜진 저장은 모양 확인이 필요하면 조용히 넘긴다 — 오타 하나 고쳤다고 문항 전환이 막히지 않게.
-    const s=await snapshot();if(!s){if(patchDirty){dirty=false;userDirty=false;patchDirty=false;return;}throw Error('저장될 모양을 확인하고 조판 저장을 누르세요.');}
+    const s=await snapshot();if(!s){if(patchDirty){dirty=false;userDirty=false;patchDirty=false;return;}throw Error('저장될 모양으로 갱신했습니다 · 잠시 뒤 자동 저장됩니다.');}
     await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;
   }
   save.onclick=async()=>{save.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;message('조판 저장됨 · HWPX 재열기 후 모양 검수 완료');}catch(e){message(e.message,true);}finally{save.disabled=!ready;}};
@@ -250,15 +261,15 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(!bridge||loading||!ready)return;loading=true;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;guide.hidden=true;
     try{const next=profile(),bytes=resizeQuestionDocument(document(),next,XLSX.CFB),cursor=bridge.input.getCursorPosition();
       await loadKeepingFocus(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);bridge.input.cursor.moveTo(cursor);lastProfile=next;metricsCache=null;dirty=true;view.fit();
-      message('기준 단 폭 변경됨 · 글·표·그림 배치를 확인하고 조판 저장을 누르세요.');
+      message('기준 단 폭 변경됨 · 잠시 뒤 자동 저장됩니다.');
     }catch(e){paper.value=lastProfile.paper;columns.value=String(lastProfile.columns);message(e.message,true);}
     finally{loading=false;save.disabled=false;download.disabled=false;paper.disabled=false;columns.disabled=false;drawGuide();}
   };
   paper.onchange=()=>{changingProfile=changeProfile();};columns.onchange=()=>{changingProfile=changeProfile();};
   const align=host.parentElement.querySelector('#typeset-table-align'),indent=host.parentElement.querySelector('#typeset-indent'),resize=host.parentElement.querySelector('#typeset-lock');
   resize.onclick=()=>{if(!ready||loading)return;bridge.setTableLayoutLocked(!bridge.tableLayoutLocked);resize.setAttribute('aria-pressed',String(bridge.tableLayoutLocked));message(bridge.tableLayoutLocked?'구조 잠금 · 글만 고칠 수 있습니다. 표·그림의 크기나 틀은 잠금을 풀고 바꾸세요.':'구조 잠금 풀림 · 표·그림의 크기와 틀을 고칠 수 있습니다. 다 고치면 다시 잠그세요.');};
-  align.onchange=()=>{try{if(!ready||loading)return;applyTableAlignment(bridge,align.value);message('표 위치 변경됨 · 조판 저장을 누르세요.');}catch(e){message(e.message,true);}finally{align.value='';}};
-  indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
+  align.onchange=()=>{try{if(!ready||loading)return;applyTableAlignment(bridge,align.value);message('표 위치 변경됨 · 잠시 뒤 자동 저장됩니다.');}catch(e){message(e.message,true);}finally{align.value='';}};
+  indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 잠시 뒤 자동 저장됩니다.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
   const contentKey=value=>JSON.stringify(renderedContent(value));
   // form: 등록한 학교 양식({bytes,structure}) — 주면 그 양식 위에 묶는다. password는 암호 양식일 때 선생님이 입력한 것(남기지 않음).
   // order: 나형처럼 문항 순서를 바꿔 묶을 때(문항 id 순서) — 묶은 뒤 번호를 다시 매긴다.
@@ -327,5 +338,19 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     try{return password?Document.openWithPassword(data,password):new Document(data);}
     catch(e){const text=String(e?.message||e);if(/비밀번호|암호|password/i.test(text)){const error=new Error(password?'암호가 맞지 않습니다. 다시 입력하세요.':'암호가 걸린 한글 파일입니다. 암호를 입력하세요.');error.needsPassword=true;throw error;}throw e;}}
   async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);try{return {...readSchoolDocument(d,{fileName}),structure:formStructure(d)};}finally{d.free();}}
-  return {examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  // 화면 없이 조판 만들기(10-23 A2): 저장한 조판이 없거나 낡은 문항을 새로 조판해 승인된 조판으로 만든다(시험지로 보낼 때).
+  // 지금 열린 문항이면 열린 한글 창 모양(교사가 다듬은 것)을 그대로 저장한다.
+  async function autoTypeset(value){
+    await ensure();
+    if(skeletonKey(value))throw Error(`${value.number}번 문항에 비어 있는 칸이 있어 조판을 만들 수 없습니다. 채우거나 구성에서 지우세요.`);
+    if(ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value)){const s=await snapshot()||await snapshot();if(s){dirty=false;userDirty=false;patchDirty=false;return s;}}
+    const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2},Document=document().constructor;
+    const {bytes:raw}=await generate(structuredClone(value),own,{quiet:true}),d=new Document(raw);
+    try{fitQuestionPage(d,own);assertNativeLayout(d);const bytes=exportLayoutHwpx(d,XLSX.CFB),re=new Document(bytes);
+      try{assertNativeLayout(re);validateQuestionPage(re,own);
+        return {bytes:toBase64(bytes),fingerprint:await questionFingerprint(value),baselineText:normalized(parse(re.getTextFileText())),profile:own,pageMode:QUESTION_PAGE_MODE,metrics:questionPageMetrics(re,own),pageDef:parse(re.getPageDef(0)),columnDef:parse(re.getColumnDef(0)),savedAt:new Date().toISOString(),layoutVersion:LAYOUT_VERSION,verified:true,auto:true};
+      }finally{re.free();}
+    }finally{d.free();}
+  }
+  return {autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

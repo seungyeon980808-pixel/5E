@@ -12,7 +12,9 @@ test('stats: answer distribution, points, units and standards', () => {
 test('checks: missing answer/points/ask, duplicate choices, three same answers in a row, total not 100', () => {
   const qs = [q(1, { answer: 2 }), q(2, { answer: 2 }), q(3, { answer: 2 }), q(4, { answer: null }), q(5, { points: 0 }), q(6, { ask: ' ' }), q(7, { choices: [{ text: 'ㄱ, ㄴ' }, { text: 'ㄱ,ㄴ' }] })];
   const text = examChecks(qs, { ready: x => x.id !== 'q1' }).map(c => c.text);
-  for (const re of [/정답을 정하지 않은 문항: 4번/, /배점이 없는 문항: 5번/, /발문이 비어 있는 문항: 6번/, /선지 글이 겹치는 문항: 7번/, /정답 ③이 3번 이어짐: 1번, 2번, 3번/, /한글 조판을 저장하지 않은 문항: 1번/, /배점 합계 30점/]) assert.ok(text.some(t => re.test(t)), re.source);
+  for (const re of [/정답을 정하지 않은 문항: 4번/, /배점이 없는 문항: 5번/, /발문이 비어 있는 문항: 6번/, /선지 글이 겹치는 문항: 7번/, /정답 ③이 3번 이어짐: 1번, 2번, 3번/, /배점 합계 30점/]) assert.ok(text.some(t => re.test(t)), re.source);
+  // 조판은 자동 저장(10-23)이라 「조판 저장 전」 점검은 나오지 않는다.
+  assert.ok(!text.some(t => /조판을 저장하지 않은/.test(t)));
   assert.deepEqual(examChecks([]), []);
 });
 

@@ -90,7 +90,7 @@ export function renderExam(root,data,examId,{forms=[]}={}){
     <div class="pv-exam-body"><div class="pv-order" id="exam-order">
       ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
         <button type="button" class="pv-mini-thumb" data-open-card="${x.id}" aria-label="${i+1}번 카드 열기"><div class="pv-doc" data-preview="${x.id}"></div></button>
-        <div class="t"><b>${E(questionSubtitle(x.q))}</b><span>${E(x.q.type)}${x.q.unitLarge?` · ${E(x.q.unitLarge)}`:''}${x.ready?'':' · 조판 저장 전'}</span></div>
+        <div class="t"><b>${E(questionSubtitle(x.q))}</b><span>${E(x.q.type)}${x.q.unitLarge?` · ${E(x.q.unitLarge)}`:''}</span></div>
         <span class="p">${stage(x.q)}</span><span class="p">${Number(x.q.points)||0}점</span>
         <span class="pv-row-tools"><button type="button" class="mini" data-move="up" title="위로">${ICON.up}</button><button type="button" class="mini" data-move="down" title="아래로">${ICON.down}</button><button type="button" class="mini" data-out="${x.id}" title="보관함으로 빼기">빼기</button></span></div>`).join('')||'<p class="pv-empty">아직 문항이 없습니다.</p>'}
       <div class="pv-add"><button type="button" class="btn" data-exam-act="new">${ICON.plus}이 시험지에 새 문항</button>${lib.length?`<select id="exam-from-library" aria-label="보관함에서 넣기"><option value="">보관함에서 넣기 (${lib.length})…</option>${lib.map(q=>`<option value="${q.id}">${E(questionSubtitle(q))}</option>`).join('')}</select>`:''}</div>
