@@ -158,6 +158,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     const ghostKey=owner&&(owner.kind==='ask'?'ask':owner.kind==='block'?'block:'+owner.id:null),isGhost=!!ghostKey&&ghost.ghosts.has(ghostKey),lead=isGhost?owner.prefix||0:0;
     if(isGhost)owner=null;
     let value=String(v??''),math=false;const segment=value.trim()?{value,owner}:null;if(segment)textSegments.push(segment);
+    // 꺾쇠 〈 〉(U+3008·3009)는 한글 엔진이 반 폭으로 재고 제 폭으로 그려 「〈보기〉」가 「보」와 겹치고, 줄 끝에서 「〈」만 남았다(10-23).
+    // 평가원 표기대로 반각 < >로 바꿔 넣는다 — 카드에 적힌 글(segment.value)은 그대로 둔다.
+    value=value.replace(/\u3008/g,'<').replace(/\u3009/g,'>');
     if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text);return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
     else if(value.replace(/\u200b/g,'').trim())texts.push(value);
     // [3점]은 앞 낱말과 한 덩어리로 줄을 맞춘다(혼자 다음 줄로 떨어지지 않게).

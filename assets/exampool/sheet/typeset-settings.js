@@ -44,7 +44,7 @@ export const PARTS=[
       G('뒤 간격',[[N('gaps.after','뒤 간격','mm',.1,0,20,'gap')]])]}},
   {k:'ask',name:'발문',match:'ask',tabs:{...textTabs,'간격':[G('앞 간격(더함)',[[N('gaps.ask','발문 앞','mm',.1,0,20,'gap')]])]}},
   {k:'bogi',name:'〈보기〉',match:b=>b.kind==='bogi',tabs:{
-    '상자':[G('제목',[[S('parts.bogiTitle','글',['<보 기>','〈보기〉','<보기>']),N('parts.bogiTitlePad','칸 좌우','mm',.01,0,5)],[N('parts.bogiTitleWidth','칸 폭','mm',.1,5,40),N('parts.bogiTitleRow','1행','mm',.01,.5,10)]],'칸 폭은 최소 폭 — 제목 글이 더 넓으면 글에 맞춰 넓어집니다 · 1행은 위 선까지 높이'),
+    '상자':[G('제목',[[S('parts.bogiTitle','글',['<보 기>','<보기>']),N('parts.bogiTitlePad','칸 좌우','mm',.01,0,5)],[N('parts.bogiTitleWidth','칸 폭','mm',.1,5,40),N('parts.bogiTitleRow','1행','mm',.01,.5,10)]],'칸 폭은 최소 폭 — 제목 글이 더 넓으면 글에 맞춰 넓어집니다 · 1행은 위 선까지 높이'),
       G('안 여백',[[N('gaps.bogiPadLeft','왼쪽','mm',.1,0,20,'pad'),N('gaps.bogiPadRight','오른쪽','mm',.1,0,20,'pad')],[N('gaps.bogiPadTop','위','mm',.1,0,20,'pad'),N('gaps.bogiPadBottom','아래','mm',.1,0,20,'pad')]]),
       G('ㄱ·ㄴ·ㄷ',[[N('parts.bogiLineSpacing','줄 간격','%',5,80,300,'hang'),S('parts.hanging','내어쓰기',[[true,'자동']])],[T('parts.labelSpace','「ㄱ.」 뒤 고정 띄어쓰기','fixed','space')]],'내어쓰기는 기호(ㄱ.) 폭만큼 자동'),
       G('선 · 뒤 간격',[[N('parts.rule','선 굵기','mm',.01,.05,1),N('gaps.choices','뒤 간격','mm',.1,0,20,'gap')]],'뒤 간격은 다음 선지 앞 간격과 같은 값 — 간격의 주인은 하나')],
