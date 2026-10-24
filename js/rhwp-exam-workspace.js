@@ -12,6 +12,7 @@ import { buildExamProject, parseExamProject, readExamDraft, writeExamDraft, list
 import { embedEditablePng, readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from './editable-png.js?v=1.7.0-four-session-integration';
 import { normalizeExamFigure, forkExamFigure, validateExamLink, validateExamContext, renameExamFigure } from './rhwp-exam-links.js?v=1.7.0-four-session-integration';
 import { createExamSourceTabs, createExamDraftChecker } from './rhwp-exam-source-tabs.js?v=1.7.0-four-session-integration';
+import { fitViewToBounds } from './viewport.js?v=1.7.0-four-session-integration';
 import { annotationsFor, getAnnotationPage, mergeAnnotationPatch, validateAnnotationPatch } from './rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
 import { ExamInlineEditor, chooseInlineCrop } from './rhwp-exam-inline-editor.js?v=1.7.0-four-session-integration';
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
@@ -648,6 +649,13 @@ export function initRhwpExamWorkspace(state, services) {
     for(const [key,value]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'none',stroke:'#6ba4f8','stroke-width':1.5,'stroke-dasharray':'6 4','vector-effect':'non-scaling-stroke'}))rect.setAttribute(key,value);
     group.append(rect);
   }
+  // 그림 편집을 열면 그림 전체가 편집 막대 아래 캔버스의 약 80%에 들어오게 가운데로(10-24 지적 19).
+  // 예전에는 보낼 때 저장한 보기 상자(그림 테두리 그대로)를 되살려 그림이 화면 끝까지 차고 편집 막대에 가렸다.
+  function fitEditView(b) {
+    // 편집 막대(「… 편집 중 · 문서에 반영 · 돌아가기」)는 그림 테두리 위에 붙어 다닌다 → 막대 높이만큼 위에 자리를 두고 함께 가운데.
+    const barBox = bar && !bar.hidden ? bar.getBoundingClientRect() : null, top = barBox?.height ? barBox.height + 8 : 0;
+    fitViewToBounds(state, b, { fill: 0.8, top });
+  }
   function figureBounds(figure,ref) {
     const a=getAnnotationPage(figure.source).artboard;
     const original=(!figure.nativeCropIncluded && figure.render?.bounds) || {x:-a.w/2,y:-a.h/2,w:a.w,h:a.h};
@@ -837,6 +845,7 @@ export function initRhwpExamWorkspace(state, services) {
     document.body.classList.add('exam-editing');
     syncBackground();
     window.dispatchEvent(new Event('resize'));
+    requestAnimationFrame(() => { if (editing) fitEditView(editing.baseBounds); });
     if (!editing.aiContext) document.querySelector('#canvas').focus({preventScroll:true});
     message('원래 작업 탭입니다. 수정한 뒤 시험지에 반영하세요.');
   }
@@ -1364,6 +1373,7 @@ export function initRhwpExamWorkspace(state, services) {
         editing = {...activated,id:figure.id,external:true,requestId:request.requestId};
         bar.querySelector('#exam-edit-name').textContent = `${figure.name} 편집 중`;
         editing.baseBounds=clone(figure.render?.bounds);bar.hidden=false;syncSourceControls();document.body.classList.add('exam-editing');syncBackground();
+        requestAnimationFrame(() => { if (editing) fitEditView(editing.baseBounds); });
         message('원래 작업 탭입니다. 수정한 뒤 시험지에 반영하세요.');
       } catch (error) {await window.fiveEDesktop.exam.finish({requestId:request.requestId,error:error.message});throw error;}
     });

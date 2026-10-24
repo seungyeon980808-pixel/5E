@@ -218,6 +218,7 @@ export function initViewport(svg, state, onChange) {
       s.viewBox.x = modeProjection ? (next.left - previous.x) / previous.scale : -s.viewBox.w / 2;
       s.viewBox.y = modeProjection ? (next.top - previous.y) / previous.scale : -s.viewBox.h / 2;
     });
+    reapplyPendingFit();
     layoutAnimation?.cancel();
     projection = readProjection();
     commit();
@@ -411,6 +412,38 @@ export function initViewport(svg, state, onChange) {
 }
 
 /* ----- centerView: restore the default visual alignment ----- */
+// 주어진 범위(세계 좌표 {x,y,w,h})가 캔버스의 fill 비율에 들어오게 확대하고 가운데로(10-24 지적 19: 그림 편집을 열 때).
+// top: 캔버스 위쪽을 덮는 막대 높이(px) — 그만큼 아래로 내려 가운데. 확대 한계(clampZoom)를 먼저 적용한 뒤 가운데를 정한다.
+// 화면 배치가 바뀌는 중(칸이 숨거나 나타남)에 맞추면 바로 뒤 배치 보존(preserveProjection)이 원점 가운데로 되돌린다 —
+// 맞춤 요청을 잠깐(1.5초) 기억해 배치 보존 뒤에 다시 적용한다.
+let pendingFit = null;
+export function fitViewToBounds(state, b, options = {}) {
+  pendingFit = { state, b, options, until: Date.now() + 1500 };
+  return applyFit(state, b, options);
+}
+function reapplyPendingFit() {
+  if (!pendingFit) return;
+  if (Date.now() > pendingFit.until) { pendingFit = null; return; }
+  applyFit(pendingFit.state, pendingFit.b, pendingFit.options);
+}
+function applyFit(state, b, { fill = 0.8, top = 0 } = {}) {
+  const svg = document.querySelector('#canvas');
+  if (!svg || !b || !(b.w > 0 && b.h > 0)) return false;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  state.update((s) => {
+    const z = Math.min(rect.width * fill / b.w, (rect.height - top) * fill / b.h);
+    s.viewBox.w = rect.width / z;
+    s.viewBox.h = rect.height / z;
+    clampZoom(svg, s);
+    const zoom = rect.width / s.viewBox.w;
+    s.viewBox.x = b.x + b.w / 2 - s.viewBox.w / 2;
+    s.viewBox.y = b.y + b.h / 2 - (top / 2) / zoom - s.viewBox.h / 2;
+    clampViewBox(s);
+  });
+  return true;
+}
+
 export function centerView(state) {
   state.update((s) => {
     s.viewBox.x = -s.viewBox.w / 2;

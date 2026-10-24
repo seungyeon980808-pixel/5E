@@ -20,6 +20,9 @@ h.withServer(async origin=>{
    assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'AI shows no document badge or apply controls');
    await page.locator('#ai-image-panel [data-ai-close]').click();
    await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+   // 그림 편집을 열면 그림 전체가 캔버스 안에 · 너무 크지도 작지도 않게(약 80%) · 가운데(10-24 지적 19).
+   {await page.waitForTimeout(300);const fit=await page.evaluate(()=>{const c=document.querySelector('#canvas').getBoundingClientRect(),o=document.querySelector('#canvas [data-id="link-line"]').getBoundingClientRect(),bar=document.querySelector('#exam-edit-bar').getBoundingClientRect();return {inside:o.left>=c.left&&o.right<=c.right&&bar.top>=c.top&&o.bottom<=c.bottom,share:Math.max(o.width/c.width,o.height/c.height),dx:Math.abs((o.left+o.right)/2-(c.left+c.right)/2)/c.width};});
+    assert.ok(fit.inside,`picture and edit bar fit in the canvas: ${JSON.stringify(fit)}`);assert.ok(fit.share>.45&&fit.share<.85,`picture fills about 80%: ${JSON.stringify(fit)}`);assert.ok(fit.dx<.08,`picture is centred: ${JSON.stringify(fit)}`);}
    for(let revision=0;revision<2;revision++) {
     const linked=await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return state.get().pages.find(p=>p.id===state.get().activePageId).meta.examLink;});assert.ok(linked);
     assert.ok(await page.locator('.page-tab.is-exam-linked.is-active').isVisible());
