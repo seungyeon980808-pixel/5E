@@ -31,8 +31,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await detail();await save();
   // 두 문항을 시험지에 넣고 HWPX를 받으려 한다.
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-  await sheet.click('.side [data-nav="new-exam"]');await sheet.click('#examd-view [data-ef-step="3"]') /* 새 시험지는 ① 틀 · 속성에서 열림(10-24) */;await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
-  for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}
+  await sheet.click('.side [data-nav="new-exam"]');/* 새 시험지는 ① 틀 · 속성에서 열림 → ② 「담기」(10-24) */await h.pickIntoExam(sheet,qs.map(q=>q.id));
   let downloaded=false;page.on('download',()=>{downloaded=true;});
   await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');
   await sheet.waitForFunction(()=>document.querySelector('#status').dataset.error==='true');

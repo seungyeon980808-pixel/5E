@@ -7,6 +7,7 @@ import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js'
 import {loadStandards} from './standards-data.js';
 import {store,ICON as CARD_ICON} from './card-shared.js';
 import {stepsMarkup,renderStep1,frameOf} from './exam-flow.js';
+import {renderStep3} from './exam-place.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICON={
@@ -86,7 +87,7 @@ export function renderExams(root,data,view){
 }
 
 // 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5E_hwp로 보내기.
-export function renderExam(root,data,examId,{forms=[],step=3,step2=null}={}){
+export function renderExam(root,data,examId,{forms=[],step=3,step2=null,place=null}={}){
   const exam=examById(data,examId);if(!exam){root.innerHTML='<p class="pv-empty">시험지를 찾지 못했습니다.</p>';return;}
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
   const lib=libraryQuestions(data);
@@ -96,26 +97,8 @@ export function renderExam(root,data,examId,{forms=[],step=3,step2=null}={}){
       <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
     <div class="ef-stepbar">${stepsMarkup(step)}</div>
     ${step===1?renderStep1(exam,data,forms):step===2&&step2?step2(exam):''}
-    <div class="pv-exam-body"${step===3?'':' hidden'}><div class="pv-order" id="exam-order">
-      ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
-        <button type="button" class="pv-mini-thumb" data-open-card="${x.id}" aria-label="${i+1}번 카드 열기"><div class="pv-doc" data-preview="${x.id}"></div></button>
-        <div class="t"><b>${E(questionSubtitle(x.q))}</b><span>${E(x.q.type)}${x.q.unitLarge?` · ${E(x.q.unitLarge)}`:''}</span></div>
-        <span class="p">${stage(x.q)}</span><span class="p">${Number(x.q.points)||0}점</span>
-        <span class="pv-row-tools"><button type="button" class="mini" data-move="up" title="위로">${ICON.up}</button><button type="button" class="mini" data-move="down" title="아래로">${ICON.down}</button><button type="button" class="mini" data-out="${x.id}" title="보관함으로 빼기">빼기</button></span></div>`).join('')||'<p class="pv-empty">아직 문항이 없습니다.</p>'}
-      <div class="pv-add"><button type="button" class="btn" data-exam-act="new">${ICON.plus}이 시험지에 새 문항</button>${lib.length?`<select id="exam-from-library" aria-label="보관함에서 넣기"><option value="">보관함에서 넣기 (${lib.length})…</option>${lib.map(q=>`<option value="${q.id}">${E(questionSubtitle(q))}</option>`).join('')}</select>`:''}</div>
-    </div>
-    <section class="pv-sheetcol" aria-label="쪽 배치"><div class="pv-sheet" id="exam-sheet" data-exam="${E(exam.id)}"><p class="pv-empty">${items.length?'한글 조판으로 쪽을 그리는 중…':'문항을 넣으면 실제 쪽이 보입니다.'}</p></div></section>
-    <aside class="pv-summary"><h3>시험지 한눈에</h3>
-      <div class="stat"><span>문항</span><b>${qs.length}</b><span>배점 합</span><b>${qs.reduce((a,q)=>a+(Number(q.points)||0),0)}</b><span>완성</span><b>${count('complete')}</b><span>검토 중</span><b>${count('review')}</b><span>초안</span><b>${count('draft')}</b></div>
-      ${(()=>{const st=examStats(qs),checks=examChecks(qs,{ready:q=>items.find(x=>x.q===q)?.ready}),max=Math.max(1,...st.answers);
-        return `<h3>정답 분포</h3><div class="pv-answers" aria-label="정답 분포">${st.answers.map((n,i)=>`<span title="${ANSWER_MARK[i]} ${n}문항"><i style="height:${Math.round(n/max*100)}%"></i><b>${ANSWER_MARK[i]}</b><small>${n}</small></span>`).join('')}</div>
-        <h3>출제 점검 ${checks.length?`<small>${checks.length}</small>`:''}</h3><ul class="pv-checks">${checks.map(c=>`<li data-level="${c.level}">${E(c.text)}</li>`).join('')||'<li data-level="ok">걸리는 것이 없습니다.</li>'}</ul>`;})()}
-      <h3>배치 점검 <small>움직일 때마다</small></h3><ul class="pv-checks" id="exam-layout-checks">${(()=>{const moved=pages.flatMap(p=>p.moved||[]),over=pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),no=id=>items.findIndex(x=>x.id===id)+1+'번';
-        return [over.length?`<li data-level="warn">단 높이를 넘는 문항: ${over.map(no).join(', ')}</li>`:'',moved.length?`<li data-level="info">통째로 다음 단·쪽으로 넘긴 문항: ${moved.map(no).join(', ')}</li>`:''].join('')||'<li data-level="ok">겹침·넘침 없음</li>';})()}</ul>
-      <p class="note">쪽에서 문항을 누르면 바로 아래에 여백 막대가 나옵니다(− 여백 ＋ · 다음 단에서 시작). 순서는 왼쪽 목록에서 끌어 바꿉니다.</p>
-      <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}보내면 조판이 없는 문항은 알아서 조판한 뒤 5E_hwp에서 시험지 한 부로 열립니다.</p>
-    </aside></div>`;
-  fillPreviews(root,data);
+    ${step===3?renderStep3(exam,data,forms,items,place||{lv:'list',zoom:'page',noGoal:false}):''}`;
+  if(step===3)fillPreviews(root,data);
 }
 
 async function fillPreviews(root,data){

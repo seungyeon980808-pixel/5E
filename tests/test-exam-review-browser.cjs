@@ -26,11 +26,11 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const save=async()=>{for(let i=0;i<3;i++){await sheet.evaluate(()=>(document.querySelector('#card-view:not([hidden]) [data-cv="hwp-save"]')||document.querySelector('#typeset-save')).click()) /* 10-23 A2: 조판은 자동 저장 — 단추는 숨겼지만 같은 저장 명령을 부른다 */;await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';});const s=await sheet.locator('#typeset-status').textContent();if(/조판 저장됨/.test(s))return;assert.notEqual(await sheet.locator('#typeset-status').getAttribute('data-error'),'true',s);await sheet.waitForTimeout(400);}throw Error('조판을 저장하지 못했습니다');};
   await open(qs[0]);await save();await open(qs[1]);await save();
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-  await sheet.click('.side [data-nav="new-exam"]');await sheet.click('#examd-view [data-ef-step="3"]') /* 새 시험지는 ① 틀 · 속성에서 열림(10-24) */;await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
-  for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}
-  // 시험지 한눈에: 정답 분포 5칸·출제 점검(배점 합계 100이 아님 등)
+  await sheet.click('.side [data-nav="new-exam"]');/* 새 시험지는 ① 틀 · 속성에서 열림 → ② 「담기」(10-24) */await h.pickIntoExam(sheet,qs.map(q=>q.id));
+  // 점검 칸(10-24 ③): 정답 분포 5칸 · 목표 대비 배점 합(100점이 아님)
   assert.equal(await sheet.locator('.pv-answers span').count(),5);
-  assert.ok((await sheet.locator('.pv-checks li').allTextContents()).some(t=>/배점 합계/.test(t)),'exam checks list shows the total');
+  // 배점 합은 「목표 대비 지금」 줄(기본 틀 목표 100점)에서 보이고, 100점이 아니면 ! 표시.
+  {const row=sheet.locator('.ex-gr',{hasText:'배점 합'});assert.match(await row.textContent(),/\d+점 \/ 100점/,'exam checks show the total against the goal');assert.equal(await row.locator('.si.wn').count(),1,'a total other than 100 is flagged');}
   // 이원목적분류표·정답표 엑셀
   {const dl=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="blueprint"]');const d=await dl;assert.match(d.suggestedFilename().normalize('NFC'),/이원목적분류표·정답표\.xlsx$/);assert.ok(fs.statSync(await d.path()).size>1000);}
   // 나형: HWPX 한 파일(번호 다시 매김). 가·나형 대응은 위 엑셀의 세 번째 시트.

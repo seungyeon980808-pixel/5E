@@ -28,7 +28,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.locator('#exams-view button:has-text("열기")').first().click();
   await sheet.waitForSelector('#exam-sheet .pv-pg',{timeout:180000});
   await sheet.waitForFunction(()=>document.querySelectorAll('#exam-sheet .pv-pg').length>=3&&!/어림/.test(document.querySelector('#exam-layout-checks')?.textContent||''),null,{timeout:120000});
-  const view=await sheet.evaluate(()=>({checks:document.querySelector('#exam-layout-checks').textContent,pages:[...document.querySelectorAll('#exam-sheet .pv-pg')].map(p=>[...p.querySelectorAll('.pv-pg-q')].map(b=>{const r=b.getBoundingClientRect();return {id:b.dataset.examPick,x:r.x,y:r.y,r:r.right,b:r.bottom};}))}));
+  const view=await sheet.evaluate(()=>({checks:document.querySelector('#exam-layout-checks').textContent,tall:[...document.querySelectorAll('#exam-layout-checks .ex-rl')].filter(r=>/단 높이를 넘는/.test(r.textContent)).map(r=>r.querySelector('.si').className),pages:[...document.querySelectorAll('#exam-sheet .pv-pg')].map(p=>[...p.querySelectorAll('.pv-pg-q')].map(b=>{const r=b.getBoundingClientRect();return {id:b.dataset.examPick,x:r.x,y:r.y,r:r.right,b:r.bottom};}))}));
   fs.writeFileSync(path.join(out,`${name}-pages.json`),JSON.stringify(view,null,1));
   await page.screenshot({path:path.join(out,`${name}-exam.png`)});
   const all=view.pages.flat(),per=new Map();for(const b of all)per.set(b.id,(per.get(b.id)||0)+1);
@@ -36,8 +36,9 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   for(const [id,n] of per)assert.equal(n,1,`${name}: question ${qs.findIndex(q=>q.id===id)+1} sits in one column (its choices did not move to the next column or page)`);
   for(const boxes of view.pages)for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j],overlap=Math.min(a.r,b.r)-Math.max(a.x,b.x)>2&&Math.min(a.b,b.b)-Math.max(a.y,b.y)>2;
     assert.equal(overlap,false,`${name}: boxes of questions ${qs.findIndex(q=>q.id===a.id)+1} and ${qs.findIndex(q=>q.id===b.id)+1} do not overlap`);}
-  assert.doesNotMatch(view.checks,/단 높이를 넘는/,`${name}: no question is taller than a column`);
-  assert.match(view.checks,/단 폭이 다른 용지로 조판한 문항: 5번/,`${name}: the B4 question is re-typeset for the A4 column and reported`);
+  // 점검 칸(10-24 ③)은 줄을 늘 보이고 상태 표시(✓ / !)로 알린다 — 「단 높이를 넘는 문항」 줄이 ✓여야 한다.
+  assert.deepEqual(view.tall,['si ok'],`${name}: no question is taller than a column (${view.checks})`);
+  assert.match(view.checks,/단 폭이 다른 용지로 조판한 문항:?\s*5번/,`${name}: the B4 question is re-typeset for the A4 column and reported`);
   assert.deepEqual(errors,[],`${name}: no page errors`);
   console.log(`${name}: choices stay with their question`);
  });

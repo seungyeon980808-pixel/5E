@@ -314,3 +314,12 @@ module.exports.seedSourceLabel=async function(page,text='기존 라벨'){
  },{stateUrl:runtimes.get(page).stateUrl,text});
  await page.locator('[data-source-apply]').click();await module.exports.idle(page);
 };
+// 시험지 만들기 ② 문항 고르기(10-24): 지금 열린 시험지에 내 문항을 「담기」로 넣고 ③ 배치 · 점검으로 간다.
+// ids가 없으면 보관함 내 문항 카드 앞에서 count개.
+module.exports.pickIntoExam=async function(sheet,ids,count=1){
+  await sheet.click('#examd-view [data-ef-step="2"]');await sheet.click('[data-ep-kind="mine"]');await sheet.waitForSelector('.ep-card[data-ep-key^="q:"]');
+  if(!ids)ids=(await sheet.locator('.ep-card[data-ep-key^="q:"]:not(.in)').evaluateAll((n,c)=>n.slice(0,c).map(x=>x.dataset.epKey.slice(2)),count));
+  for(const id of ids){const card=sheet.locator(`.ep-card[data-ep-key="q:${id}"]`);await card.scrollIntoViewIfNeeded();await card.hover();await card.locator('[data-ep-take]').click();
+    await sheet.waitForFunction(id=>document.querySelector(`.ep-card[data-ep-key="q:${id}"]`)?.classList.contains('in'),id);}
+  await sheet.click('.ef-foot [data-ef-step="3"]');await sheet.waitForSelector('#examd-view .ex-s3');
+};

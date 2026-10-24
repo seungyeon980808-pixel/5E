@@ -28,8 +28,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   // 새 시험지는 ① 틀 · 속성에서 열린다(10-24 세 단계). 문항 넣기는 ③ 배치 · 점검의 「보관함에서 넣기」.
   await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) .ef-s1');
-  await sheet.click('[data-ef-step="3"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
-  for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}
+  await h.pickIntoExam(sheet,qs.map(q=>q.id));
   // ① 틀 · 속성의 「＋ 내 틀 등록…」 → 「학교 시험지 양식」으로 등록하면 문항 기준은 그대로, 이 시험지 틀로 바로 고른다.
   await sheet.click('[data-ef-step="1"]');await sheet.click('[data-ef-register]');await sheet.click('[data-reg-kind="school"]');
   // 학교 양식: 같은 엔진으로 만든 B4 2단 시험지(제목 표 + 예시 문항 둘)를 등록한다.

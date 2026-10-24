@@ -32,8 +32,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   for(const q of qs){await open(q);
     for(let i=0;i<3;i++){await sheet.evaluate(()=>(document.querySelector('#card-view:not([hidden]) [data-cv="hwp-save"]')||document.querySelector('#typeset-save')).click()) /* 10-23 A2: 조판은 자동 저장 — 단추는 숨겼지만 같은 저장 명령을 부른다 */;await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';});if(/조판 저장됨/.test(await sheet.locator('#typeset-status').textContent()))break;assert.notEqual(await sheet.locator('#typeset-status').getAttribute('data-error'),'true');}}
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-  await sheet.click('.side [data-nav="new-exam"]');await sheet.click('#examd-view [data-ef-step="3"]') /* 새 시험지는 ① 틀 · 속성에서 열림(10-24) */;await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
-  for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}
+  await sheet.click('.side [data-nav="new-exam"]');/* 새 시험지는 ① 틀 · 속성에서 열림 → ② 「담기」(10-24) */await h.pickIntoExam(sheet,qs.map(q=>q.id));
   // 시험지 HWPX
   await watch(sheet);const downloading=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');await downloading;const hwpxGap=await stop(sheet);
   // 쪽 전체
