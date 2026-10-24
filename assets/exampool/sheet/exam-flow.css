@@ -1,13 +1,11 @@
 /* 시험지 만들기 세 단계(10-24 확정, 시안 5e-design-mockups/exam-flow-1024-v4.html 값 그대로). exam-flow.js의 ef-* 마크업. */
-#examd-view{--ef-ok:#3fb950;--ef-warn:#d29922;--ef-bad:#f85149;--ef-go:#9cc3ff;--ef-star:#e3b341}
+/* 10-24 시안 11 「나」: 시험지 화면은 회색 + 파랑(선택)만. 상태색은 작은 점·아이콘에만 — 괜찮음 #4f9a6c · 문제 #d06a5f. 노랑 없음. */
+#examd-view{--ef-ok:#4f9a6c;--ef-bad:#d06a5f;--ef-go:#9cc3ff;--ef-star:var(--ds-ink)}
 .ef-stepbar{display:flex;align-items:center;gap:14px;min-width:0}
 .ef-steps{display:flex;gap:2px;padding:2px;border-radius:10px;background:var(--ds-field-raise);flex:none}
 .ef-steps button{height:32px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px}
 .ef-steps button:hover{color:var(--ds-ink)}
-.ef-steps button b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:10px;background:var(--ds-line-strong);font-size:11px;color:var(--ds-ink);font-weight:600}
 .ef-steps button[aria-selected=true]{background:var(--ds-raise);color:var(--ds-ink);box-shadow:0 0 0 1px var(--ds-line-strong)}
-.ef-steps button[aria-selected=true] b{background:var(--ds-soft-line);color:#071022}
-.ef-steps button.done b{background:#1f6f43}
 .ef-note{flex:1 1 200px;min-width:0;color:var(--ds-ink-3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ef-pill{height:24px;padding:0 9px;border:0;border-radius:12px;background:var(--ds-field-raise);color:var(--ds-ink-2);font:inherit;font-size:var(--ds-text-meta);cursor:pointer;white-space:nowrap}
 .ef-pill:hover{background:var(--ds-hover);color:var(--ds-ink)}
@@ -135,19 +133,18 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ep-tg.lv{box-shadow:inset 0 0 0 1px var(--ds-line)}
 .ep-pick{position:absolute;left:8px;top:8px;width:22px;height:22px;border-radius:6px;background:rgba(13,17,23,.85);box-shadow:inset 0 0 0 1px var(--ds-line-strong);display:none;place-items:center;color:var(--ds-ink);font-size:13px}
 .multi .ep-card{cursor:pointer}.multi .ep-pick{display:grid}.multi .ep-acts{display:none}
-.multi .ep-card.pk{border-color:var(--ds-soft-line);box-shadow:0 0 0 1px var(--ds-soft-line)}.multi .ep-card.pk .ep-pick{background:var(--ds-soft-line);color:#071022}
+.multi .ep-card.pk{border-color:var(--ds-soft-line);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}.multi .ep-card.pk .ep-pick{background:var(--ds-soft-line);color:#071022}
 .ep-bulk{flex:none;display:flex;align-items:center;gap:8px;padding:8px 16px;border-top:1px solid var(--ds-line);background:var(--ds-raise);font-size:12px}
 .ep-bulk b{font-size:13px}
 .ep-meter{padding:12px 16px;border-bottom:1px solid var(--ds-line);display:flex;flex-direction:column;gap:7px}
 .ep-mrow{display:grid;grid-template-columns:56px 1fr 72px;align-items:center;gap:8px;font-size:12px}
 .ep-mrow .lb{color:var(--ds-ink-2)}
 .ep-mrow .bar{height:6px;border-radius:3px;background:var(--ds-line-strong);overflow:hidden}
-.ep-mrow .bar i{display:block;height:100%;background:var(--ds-soft-line);border-radius:3px}
-.ep-mrow .bar i.full{background:var(--ef-ok)}.ep-mrow .bar i.over{background:var(--ef-warn)}
+.ep-mrow .bar i{display:block;height:100%;background:var(--ds-ink-3);border-radius:3px}
 .ep-mrow .v{text-align:right;font-variant-numeric:tabular-nums;color:var(--ds-ink)}
 .ep-rng{grid-column:2/4;display:flex;gap:4px;flex-wrap:wrap}
 .ep-cz{font-size:10.5px;line-height:17px;padding:0 6px;border-radius:9px;background:var(--ds-field-raise);color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line)}
-.ep-cz.wn{color:var(--ef-warn)}
+.ep-cz.wn{color:var(--ds-ink-2)}
 .ep-cart{flex:1;overflow:auto;padding:6px;display:flex;flex-direction:column;gap:2px}
 .ep-ci{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;padding:6px 8px;border-radius:8px}
 .ep-ci:hover{background:var(--ds-hover)}
@@ -190,7 +187,8 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-cs{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0 3px}
 .ex-cz{font-size:10.5px;line-height:17px;padding:0 6px;border-radius:9px;background:var(--ds-field-raise);color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line)}
 .ex-m{font-size:11px;color:var(--ds-ink-3)}
-.ex-m .wn,.ex-cm .wn{color:var(--ef-warn)}
+/* 「정답 없음」: 회색 글 + 앞에 6px 빨간 점(11 나). */
+.ex-m .wn,.ex-cm .wn{color:var(--ds-ink-2)}.ex-m .wn::before,.ex-cm .wn::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ef-bad);margin-right:5px;vertical-align:1px}
 .ex-tools{position:absolute;right:6px;top:6px;display:flex;gap:2px;background:rgba(13,17,23,.92);border-radius:6px;padding:2px;box-shadow:0 0 0 1px var(--ds-line-strong);opacity:0;transition:opacity .1s}
 .ex-lr:hover .ex-tools,.ex-cc:hover .ex-tools,.ex-tools:focus-within{opacity:1}
 .ex-tools .mini{width:24px;height:24px;min-height:0;padding:0;display:grid;place-items:center;border:0;border-radius:5px;background:none;color:var(--ds-ink-2)}
@@ -212,7 +210,7 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-rp{flex:1;overflow:auto}
 .ex-sum{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ds-line)}
 .ex-sum .big{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
-.ex-sum .big.ok{color:var(--ef-ok)}.ex-sum .big.wn{color:var(--ef-warn)}
+.ex-sum .big.ok{color:var(--ef-ok)}.ex-sum .big.wn{color:var(--ds-ink)}
 .ex-sum .lb{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--ds-ink-2)}
 .ex-sum .lb b{font-weight:500;color:var(--ds-ink)}.ex-sum .lb small{color:var(--ds-ink-3);font-size:11px}
 .ex-sec{padding:12px 16px 10px;border-bottom:1px solid var(--ds-line)}
@@ -221,13 +219,14 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-gr{display:grid;grid-template-columns:64px 1fr 78px 14px;align-items:center;gap:10px;min-height:28px;font-size:12.5px}
 .ex-gr .gl{color:var(--ds-ink-2)}
 .ex-gr .gb{height:4px;border-radius:2px;background:var(--ds-line);overflow:hidden}
-.ex-gr .gb i{display:block;height:100%;background:var(--ds-soft-line);opacity:.8}
-.ex-gr .gb i.full{background:var(--ef-ok);opacity:.75}.ex-gr .gb i.over{background:var(--ef-warn)}
+.ex-gr .gb i{display:block;height:100%;background:var(--ds-ink-3)}
 .ex-gr .gv{text-align:right;font-variant-numeric:tabular-nums;color:var(--ds-ink);white-space:nowrap}
 .ex-gr .gv small{color:var(--ds-ink-3)}.ex-gr .gv.wide{grid-column:2/4}.ex-gr .gv.off{color:var(--ds-ink-3)}
-.ex-gr .wn{color:var(--ef-warn)}
+.ex-gr .wn{color:var(--ds-ink-2)}
 .si{font-style:normal;font-size:12px;text-align:center;width:14px}
-.si.ok{color:var(--ef-ok)}.si.wn{color:var(--ef-warn)}.si.bd{color:var(--ef-bad)}.si.in{color:var(--ds-ink-3)}
+/* 목표 「!」는 회색, 규칙 점검의 문제 줄은 7px 빨간 점(11 나). */
+.si.ok{color:var(--ef-ok)}.si.wn{color:var(--ds-ink-3)}.si.bd{font-size:0}.si.bd::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ef-bad)}.si.in{color:var(--ds-ink-3)}
+.ex-rl .si.wn{font-size:0}.ex-rl .si.wn::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ef-bad)}
 .ex-gsep{height:1px;background:var(--ds-line);margin:4px 0}
 .ex-dist{min-height:34px}
 .ex-dist2{grid-column:2/4;display:flex;align-items:flex-end;justify-content:flex-end;gap:7px;height:24px}
@@ -236,7 +235,7 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-rl{display:grid;grid-template-columns:14px 1fr auto;align-items:center;gap:10px;min-height:30px;padding:3px 6px;margin:0 -6px;border-radius:6px;font-size:12.5px;color:var(--ds-ink-2)}
 .ex-rl.act{cursor:pointer}.ex-rl.act:hover{background:var(--ds-hover)}
 .ex-rl .rv{color:var(--ds-ink-3);font-size:12px;white-space:nowrap}
-.ex-rl .rv.wn{color:var(--ef-warn)}.ex-rl .rv.bd{color:var(--ef-bad)}
+.ex-rl .rv.wn,.ex-rl .rv.bd{color:var(--ds-ink)}
 .ex-rl .rv .go{color:var(--ef-go);margin-left:6px}
 .ex-swl{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--ds-ink-2);cursor:pointer;padding:0 6px;height:28px;border-radius:6px}
 .ex-swl:hover{background:var(--ds-hover)}
@@ -257,3 +256,83 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ep-fail{margin:8px;color:#7d8590;font:12px/1.4 -apple-system,"Apple SD Gothic Neo",sans-serif}
 .ex-tip .ep-doc.is-engine{padding:10px}
 .ex-cm .ex-no{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-right:6px;padding:0 5px;border-radius:10px;background:var(--ds-field-raise);color:var(--ds-ink);font-size:11.5px;font-weight:600;vertical-align:1px}
+
+/* ── 10-24 확정 시안 14 · 15 · 17(mockups-1024/impl-spec.md) ── */
+/* 14 머리 한 줄: [이름 · 출제 중] | [탭] …… [틀] [⋯] [5E_hwp로 보내기]. 높이 56, 아래 4. */
+#examd-view.view-pane{padding:0 16px 16px;gap:4px}
+.ef-head1{flex-wrap:nowrap;align-items:center;gap:12px;height:56px;margin:0;flex:none}
+.ef-head1 .pv-title{flex:none;gap:8px;min-width:0}
+.ef-head1 .pv-title input{font-size:17px;font-weight:600;min-width:0;max-width:24vw}
+.ef-head1 .badge{height:22px;padding:0 9px;border-radius:11px;font-size:11px;background:transparent;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.ef-hsep{flex:none;width:1px;height:20px;background:var(--ds-line-strong)}
+.ef-head1 .ef-stepbar{flex:1 1 auto;min-width:0}
+.ef-head1 .pv-tools{flex:none;margin-left:auto}
+/* 화면 전환 탭: 번호·✓ 없음, 이름 옆에 지금 상태만(담은 문항 수 · 쪽 수). */
+.ef-steps{padding:3px;border-radius:10px;background:var(--ds-field-raise);gap:2px}
+.ef-steps button{height:30px;padding:0 13px;font-size:12.5px;border-radius:8px;gap:6px;color:var(--ds-ink-2)}
+.ef-steps button small{font-size:11px;color:var(--ds-ink-3)}
+.ef-steps button[aria-selected=true]{background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line-strong);color:var(--ds-ink)}
+/* 15 떠 있는 패널: 작업대 바탕 bench, 바깥 16 · 사이 12, 패널 둥근 12 + 옅은 그림자. */
+.ef-work{gap:12px;height:calc(100vh - 124px)}
+.ef-pane{box-shadow:0 0 0 1px var(--ds-line),0 4px 16px rgba(0,0,0,.32)}
+.ep-s2{grid-template-columns:minmax(0,1fr) 350px}
+.ex-s3{grid-template-columns:364px minmax(0,1fr) 400px}
+.ex-desk{background:var(--ds-bench)}
+@media (max-width:1100px){.ep-s2,.ex-s3{grid-template-columns:1fr;height:auto}}
+/* 17 「목표 고치기」(점검 칸 「목표 대비 지금」 제목 오른쪽) + 떠 있는 창. */
+.ex-goalsec{position:relative}
+.ex-goalbtn{height:24px;min-height:0;padding:0 8px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-line-strong);color:var(--ds-ink-2);font:inherit;font-size:11.5px;display:inline-flex;align-items:center;gap:4px;cursor:pointer;margin-left:6px}
+.ex-goalbtn:hover{background:var(--ds-hover);color:var(--ds-ink)}.ex-goalbtn[aria-expanded=true]{background:var(--ds-selected);color:var(--ds-ink)}
+.ex-goalbtn .ico{width:13px;height:13px}
+/* 목표 고치기 창: 숫자 칸이 「끄기」 단추에 밀려 잘리지 않게(웹킷 10-24). */
+.ex-goalpop .ef-f input{min-width:3.4ch}
+.ex-goalpop{position:absolute;right:10px;top:40px;z-index:20;width:min(400px,calc(100vw - 40px));max-height:min(70vh,560px);display:flex;flex-direction:column;background:var(--ds-raise);border-radius:12px;box-shadow:var(--ds-shadow-float);color:var(--ds-ink)}
+.ex-gph{flex:none;height:44px;display:flex;align-items:center;gap:8px;padding:0 14px;border-bottom:1px solid var(--ds-line)}
+.ex-gph b{font-size:13.5px;font-weight:600}.ex-gph small{margin-left:auto;color:var(--ds-ink-3);font-size:11px}
+.ex-gpb{flex:1;overflow:auto;padding:12px 14px}
+.ex-gpf{flex:none;display:flex;gap:8px;padding:8px 10px;border-top:1px solid var(--ds-line)}.ex-gpf .sp{flex:1}
+/* 17 「새 시험지」 창: 폭 640, 위에서 92. */
+.ef-newback{align-items:flex-start;padding-top:92px}
+.ef-new{width:min(640px,100%);background:var(--ds-raise);color:var(--ds-ink);border-radius:12px;box-shadow:var(--ds-shadow-float);display:flex;flex-direction:column;overflow:hidden;font-size:13px}
+.ef-new-h{height:52px;flex:none;display:flex;align-items:center;padding:0 10px 0 20px;border-bottom:1px solid var(--ds-line)}
+.ef-new-h b{font-size:16px;font-weight:600}.ef-new-h .ef-x{margin-left:auto}
+.ef-x{width:28px;height:28px;min-height:0;padding:0;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font-size:18px;cursor:pointer}.ef-x:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.ef-new-b{padding:16px 20px 18px;display:flex;flex-direction:column;gap:8px}
+.ef-new-l{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ds-ink-2)}
+div.ef-new-l{flex-direction:row;align-items:baseline;gap:8px;margin-top:6px}.ef-new-l small{color:var(--ds-ink-3);font-size:11px}
+.ef-new-name{height:38px;border:0;border-radius:8px;background:var(--ds-field);color:var(--ds-ink);font:inherit;font-size:15px;padding:0 12px;box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.ef-new-name:focus{outline:0;box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.ef-new-fr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ef-nc{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:0;height:auto;padding:10px;border:0;border-radius:10px;background:var(--ds-panel);box-shadow:0 0 0 1px var(--ds-line-strong);color:var(--ds-ink);font:inherit;cursor:pointer;text-align:center}
+.ef-nc:hover{background:var(--ds-hover)}
+.ef-nc[aria-pressed=true]{background:var(--ds-soft-bg);box-shadow:0 0 0 2px var(--ds-soft-line)}
+.ef-nc .pp{width:54px;height:76px;display:grid;place-items:center}.ef-nc .pp svg{width:54px;height:76px;background:#fff;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+.ef-nc .pp.plus{font-size:22px;color:var(--ds-ink-3)}
+.ef-nc b{font-size:12.5px;font-weight:500}.ef-nc small{font-size:11px;color:var(--ds-ink-3)}
+.ef-nc.add{background:transparent;box-shadow:none;outline:1px dashed var(--ds-line-strong);outline-offset:-1px}
+.ef-new-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ef-nf{display:flex;align-items:center;gap:6px;height:32px;padding:0 8px;border-radius:7px;background:var(--ds-field);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12px;color:var(--ds-ink-3)}
+.ef-nf input{flex:1;min-width:0;width:100%;height:28px;border:0;background:transparent;color:var(--ds-ink);font:inherit;font-size:13px;text-align:right;padding:0}
+.ef-nf input:focus{outline:0}.ef-nf em{font-style:normal}
+.ef-new-f{flex:none;display:flex;align-items:center;gap:8px;padding:10px 12px 10px 20px;border-top:1px solid var(--ds-line)}
+.ef-new-f .mu{font-size:11px}.ef-new-f .sp{flex:1}
+@media (max-width:640px){.ef-new-fr,.ef-new-g{grid-template-columns:repeat(2,1fr)}.ef-newback{padding-top:24px}}
+/* 16 보관함 카드(3차): 아래는 해시태그 한 줄 + 「#＋」, 담은 카드는 「✓ n번」 + 은은한 파랑 테두리 + 눌린 음영(카드 바탕 --ds-raise 위에 --ds-selected 덧칠 — 10-24 결정 4). */
+/* 바깥 그림자는 웹킷 단(column)에서 앞 단 아래에 선으로 남아(10-24 웹킷 점검) 안쪽 테두리로 그린다. */
+.ep-card.in{border-color:var(--ds-soft-line);background:linear-gradient(var(--ds-selected),var(--ds-selected)),var(--ds-raise);box-shadow:inset 0 0 0 1px var(--ds-soft-line),inset 0 2px 6px rgba(0,0,0,.45)}
+.ep-card.in .ep-th{filter:brightness(.8) saturate(.7)}
+/* 「✓ n번」 표 · 여러 개 고르기 체크 칸이 문항 첫 줄(번호 · 글)과 미리보기 실패 문구를 가리지 않게 그림 위에 자리를 둔다(웹킷 점검 10-24). */
+.ep-card.in .ep-th,.multi .ep-th{padding-top:34px}
+.ep-fail{margin:0;padding:40px 14px 18px;text-align:center}
+.ep-no{position:absolute;left:8px;top:8px;z-index:2;height:24px;padding:0 9px;border-radius:12px;background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);color:var(--ds-ink);font-size:12.5px;font-weight:500;display:inline-flex;align-items:center}
+.ep-no[hidden]{display:none}
+.ep-acts .take,.ep-card.in .ep-acts .take{background:rgba(13,17,23,.92);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.ep-card.in .ep-acts{opacity:0}.ep-card:hover .ep-acts,.ep-card:focus-within .ep-acts{opacity:1}
+.ep-mt{flex-direction:row;align-items:center;gap:6px;min-height:38px;padding:7px 6px 7px 10px}
+.ep-mt .ep-tgs{flex:1;min-width:0;flex-wrap:nowrap;overflow:hidden;margin:0;gap:4px}
+.ep-tg{font-size:11px;line-height:18px;padding:0 6px;border-radius:4px;background:var(--ds-field-raise);color:var(--ds-ink-2);white-space:nowrap}
+.ep-tg.none{background:transparent;color:#4b535e;box-shadow:inset 0 0 0 1px var(--ds-line)}
+.ep-tadd{flex:none;height:24px;min-height:0;padding:0 7px;border:0;border-radius:5px;background:transparent;color:var(--ds-ink-3);font:inherit;font-size:11px;cursor:pointer}
+.ep-tadd:hover{background:var(--ds-hover);color:var(--ds-ink)}
+/* 여러 개 고르기: 이미 담은 카드는 「✓ n번」을 그대로 보이고 고를 수 없다(10-24 결정 5). */
+.multi .ep-card.in{cursor:default}.multi .ep-card.in .ep-pick{display:none}

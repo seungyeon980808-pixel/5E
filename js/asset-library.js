@@ -84,7 +84,16 @@ async function insertItem(state, item) {
   });
 }
 
+// 오브젝트 창(10-24 시안 20 「그림」 탭)이 쓰는 목록 · 미리보기 주소 · 넣기.
+let _assetState = null;
+export async function assetLibraryItems() { await loadManifest(); return manifest.items; }
+export const assetThumbUrl = (item) => LIB_BASE + (item.thumb || item.file);
+export function insertAssetItem(item) {
+  if (!_assetState) return Promise.reject(new Error("캔버스가 준비되지 않았습니다."));
+  return insertItem(_assetState, item);
+}
 export function initAssetLibrary(state) {
+  _assetState = state;
   const section = document.getElementById("asset-library-section");
   const tabs = document.getElementById("asset-library-tabs");
   const input = document.getElementById("asset-library-query");

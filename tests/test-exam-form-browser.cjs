@@ -26,11 +26,11 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const save=async()=>{for(let i=0;i<3;i++){await sheet.evaluate(()=>(document.querySelector('#card-view:not([hidden]) [data-cv="hwp-save"]')||document.querySelector('#typeset-save')).click()) /* 10-23 A2: 조판은 자동 저장 — 단추는 숨겼지만 같은 저장 명령을 부른다 */;await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';});const s=await sheet.locator('#typeset-status').textContent();if(/조판 저장됨/.test(s))return;assert.notEqual(await sheet.locator('#typeset-status').getAttribute('data-error'),'true',s);await sheet.waitForTimeout(400);}throw Error('조판을 저장하지 못했습니다');};
   await open(qs[0]);await save();await open(qs[1]);await save();
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-  // 새 시험지는 ① 틀 · 속성에서 열린다(10-24 세 단계). 문항 넣기는 ③ 배치 · 점검의 「보관함에서 넣기」.
-  await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) .ef-s1');
+  // 새 시험지는 「새 시험지」 창(이름 · 틀 · 핵심 목표)에서 「만들기」 → 바로 문항 고르기(10-24 시안 17). 틀은 머리의 「틀 · 이름」 표로 바꾼다.
+  await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('.ef-new [data-new-make]');
   await h.pickIntoExam(sheet,qs.map(q=>q.id));
-  // ① 틀 · 속성의 「＋ 내 틀 등록…」 → 「학교 시험지 양식」으로 등록하면 문항 기준은 그대로, 이 시험지 틀로 바로 고른다.
-  await sheet.click('[data-ef-step="1"]');await sheet.click('[data-ef-register]');await sheet.click('[data-reg-kind="school"]');
+  // 머리 「틀 · 이름」 표 → 「틀 바꾸기」 창의 「＋ 내 틀」 → 「학교 시험지 양식」으로 등록하면 문항 기준은 그대로, 이 시험지 틀로 바로 고른다(10-24 결정 2).
+  await sheet.click('#examd-view .ef-pill');await sheet.click('.ef-frpick [data-new-register]');await sheet.click('[data-reg-kind="school"]');
   // 학교 양식: 같은 엔진으로 만든 B4 2단 시험지(제목 표 + 예시 문항 둘)를 등록한다.
   const form=await sheet.evaluate(()=>{
     const D=document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().constructor,HU=7200/25.4,d=D.createEmpty();
@@ -44,7 +44,9 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.fill('[data-reg-name]','미래과학고 중간고사');
   await sheet.click('[data-reg-done]');await sheet.waitForFunction(()=>!document.querySelector('.ef-back')&&/이 시험지에 썼습니다/.test(document.querySelector('#status').textContent));
   assert.equal((await sheet.locator('#examd-view .ef-pill').textContent()).trim(),'틀 · 미래과학고 중간고사','the exam now uses the new form');
-  assert.equal(await sheet.locator('.ef-fr[aria-pressed="true"] b').first().evaluate(n=>n.firstChild.textContent),'미래과학고 중간고사','the registered form is the picked frame');
+  await sheet.click('#examd-view .ef-pill');
+  assert.equal(await sheet.locator('.ef-frpick .ef-nc[aria-pressed="true"] b').textContent(),'미래과학고 중간고사','the registered form is the picked frame');
+  await sheet.click('.ef-frpick [data-new-close]');
   await sheet.click('[data-ef-step="3"]');
   const download=page.waitForEvent('download',{timeout:90000});
   await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');

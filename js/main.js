@@ -59,6 +59,7 @@ import { initTooltips } from "./tooltip.js?v=1.7.0-four-session-integration";
 import { initViewMode } from "./view-mode.js?v=1.7.0-four-session-integration";
 import { initPersonalObjects } from "./personal-objects.js?v=1.7.0-four-session-integration";
 import { initAssetLibrary } from "./asset-library.js?v=1.7.0-four-session-integration";
+import { initObjectWindow } from "./object-window.js?v=1.7.0-object-window";
 import { initBulkEdit } from "./bulk-edit.js?v=1.7.0-four-session-integration";
 import { initDataPlot } from "./data-plot.js?v=1.7.0-four-session-integration";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=1.7.0-four-session-integration";
@@ -495,6 +496,7 @@ window.addEventListener("keydown", (e) => {
 initPersonalObjects(state);
 /* ----- 에셋 라이브러리: 과목별 투명 PNG 에셋 검색·삽입 ----- */
 initAssetLibrary(state);
+initObjectWindow(state);  // 10-24 시안 20: 아래 「오브젝트」 탭 → 도구 · 그림 · 내 오브젝트 창
 
 /* ----- 전체 수정: 선택(없으면 전체) 오브젝트 속성 일괄 통일/증감 ----- */
 initBulkEdit(state);

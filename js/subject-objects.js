@@ -75,6 +75,15 @@ function validIds(ids) {
   return Array.isArray(ids) ? ids.filter((id) => TEMPLATES[id]) : [];
 }
 
+// 오브젝트 창(10-24 시안 20 「도구」 탭)이 쓰는 과목·단원 목록과 별표(왼쪽 칸 「즐겨찾기」와 같은 저장 칸).
+export const OBJECT_SUBJECTS = SUBJECTS;
+export function objectFavorites() { return validIds(readJson(FAVORITES_KEY, [])); }
+export function toggleObjectFavorite(id) {
+  const list = objectFavorites(), next = list.includes(id) ? list.filter((x) => x !== id) : [id, ...list];
+  writeJson(FAVORITES_KEY, next);
+  window.dispatchEvent(new CustomEvent("5e:object-favorites-changed"));
+  return next.includes(id);
+}
 export function initSubjectObjects() {
   const switcher = document.getElementById("subject-switch");
   const partsHost = document.getElementById("subject-parts");
@@ -112,9 +121,7 @@ export function initSubjectObjects() {
       favorite.setAttribute("aria-pressed", String(favorites.includes(id)));
       favorite.addEventListener("click", (event) => {
         event.stopPropagation();
-        favorites = favorites.includes(id) ? favorites.filter((item) => item !== id) : [id, ...favorites];
-        writeJson(FAVORITES_KEY, favorites);
-        renderAll();
+        toggleObjectFavorite(id);
       });
       button.replaceWith(tile);
       tile.append(button, favorite);
@@ -230,6 +237,7 @@ export function initSubjectObjects() {
     renderQuickAccess();
   });
 
+  window.addEventListener("5e:object-favorites-changed", () => { favorites = objectFavorites(); renderAll(); });
   document.documentElement.setAttribute("data-subject", subject);
   saveSubject();
   renderAll();

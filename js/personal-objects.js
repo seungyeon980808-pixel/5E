@@ -423,6 +423,29 @@ export function renderLibrary() {
   }
 }
 
+// 오브젝트 창(10-24 시안 20 「내 오브젝트」 탭): 목록 · 미리보기 · 캔버스에서 고른 것 · 저장(이름·분류·태그·별표) · 별표 · 삭제.
+export const PERSONAL_DEFAULT_CATEGORY = DEFAULT_CATEGORY;
+export function personalItems() { return load(); }
+export function personalThumbnail(objects) { return makeThumbnail(objects); }
+export function selectedPersonalObjects() {
+  if (!_state) return [];
+  const s = _state.get(), ids = new Set(s.selectedIds || []);
+  const planes = new Set(s.objects.filter(o => ids.has(o.id) && o.type === 'coordplane').map(o => o.id));
+  return s.objects.filter(o => ids.has(o.id) || planes.has(o.planeId));
+}
+export async function savePersonalObject({ name, category, tags = [], star = false, objects }) {
+  const item = { name, category: category || DEFAULT_CATEGORY, subject: currentSubject(), savedAt: new Date().toISOString(), objects: JSON.parse(JSON.stringify(objects)) };
+  if (tags.length) item.tags = tags.slice(0, 20);
+  if (star) item.star = true;
+  const ok = await addItem(item);
+  if (ok) renderLibrary();
+  return ok;
+}
+export async function setPersonalStar(id, star) {
+  const ok = await enqueueMutation((list) => list.map((it) => it.id === id ? { ...it, star: !!star } : it));
+  return ok;
+}
+export async function deletePersonalObject(id) { const it = load().find((x) => x.id === id); return it ? deleteItem(it) : false; }
 export async function initPersonalObjects(state) {
   _state = state;
   _partsHost = document.getElementById("personal-parts");

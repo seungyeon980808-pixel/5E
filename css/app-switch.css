@@ -68,3 +68,16 @@
 @media (prefers-reduced-motion: reduce) {
   #exampool-sheet-workspace:not([hidden]), #rhwp-exam-workspace:not([hidden]), #exampool-sheet-workspace.app-leaving, #rhwp-exam-workspace.app-leaving { animation: none; }
 }
+
+/* ---- 맨 위 막대 48px + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 출제 office-layout.css · 그림 graphite-shell.css) ----
+   단추 32 · 아이콘 20 · 로고 「5E」 23 · 「_hwp」 18 · 앱 바꾸기 16.5 · 막대 안 글자 13.5. 로고 칸 폭(160·288)과 구분선은 그대로. */
+.app-switch-btn { font-size: 16.5px !important; height: 32px !important; }
+@media (max-width: 760px) { .app-switch-btn { font-size: 14px !important; } }
+#rhwp-exam-workspace .exam-topbar { height: 48px; font-size: 13.5px; --ds-h-control: 32px; --ds-text-body: 13.5px; }
+#rhwp-exam-workspace .exam-topbar :is(button, select, label, span) { font-size: 13.5px; }
+#rhwp-exam-workspace .exam-panel-toggle { width: 32px; height: 32px; margin-top: -16px; }
+#rhwp-exam-workspace .exam-panel-toggle svg, #rhwp-exam-workspace .exam-topbar .exam-history svg { width: 20px; height: 20px; }
+#rhwp-exam-workspace .exam-topbar .exam-history { width: 32px; height: 32px; }
+#rhwp-exam-workspace .exam-top-cell .exam-brand { height: 32px; line-height: 32px; }
+#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-mark { font-size: 23px; }
+#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-name { font-size: 18px; }

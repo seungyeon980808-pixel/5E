@@ -1,7 +1,7 @@
 import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderExams,renderExam} from './pool-views.js';
-import {applyFrame,goalOf,frameOf,openRegister} from './exam-flow.js';
+import {applyFrame,goalOf,frameOf,frameKey,openRegister,openNewExam,openFramePicker} from './exam-flow.js';
 import {placeState,checkMarkup} from './exam-place.js';
 import {examPlan} from './exam-layout.js';
 import {pickState,renderStep2,fillStep2,refreshCart,poolEntries,editMeta,normTag,tagPopMarkup,menuMarkup} from './exam-pick.js';
@@ -244,7 +244,8 @@ function renderView(){
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
   if(view.name==='exam'){const ex=examById(data,view.examId);
     // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
-    if(ex&&view.examStepFor!==ex.id){view.examStepFor=ex.id;view.examStep=ex.items.length?3:1;}
+    // 시험지를 열면: 문항이 있으면 배치·점검, 없으면 문항 고르기(10-24 시안 17 — ① 틀·속성은 「새 시험지」 창과 머리의 「틀」 표로).
+    if(ex&&view.examStepFor!==ex.id){view.examStepFor=ex.id;view.examStep=ex.items.length?3:2;}
     const keep=$('#examd-view .ep-grid')?.scrollTop||0;
     renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy}),place:placeState(view)});if((view.examStep||3)===3)void fillExamSheet(ex);fillEngineCards($('#examd-view'));if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
@@ -691,7 +692,7 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   else if(nav==='stars'){view.examId=null;Object.assign(libState(view),{mark:'star',kind:'all',limit:40,open:-1});show('library');}
   else if(nav==='exams')show('exams',{status:b.dataset.status||'drafting'});
   else if(nav==='exam'){view.examId=b.dataset.exam;show('exam');}
-  else if(nav==='new-exam'){const exam=createExam();if(exam){view.examId=exam.id;show('exam');setTimeout(()=>{$('#exam-title')?.select();},0);}}
+  else if(nav==='new-exam')newExamDialog();
 });
 // 문항 보관함.
 // 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023): 기출 + 내 문항 한 목록, 문항 보기 창. 동작은 library-view.js.
@@ -703,7 +704,7 @@ const libApi={data:()=>data,view:()=>view,rerender:()=>{if(view.name==='library'
     sel.innerHTML=`<option value="">시험지 고르기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option>`;button.replaceWith(sel);sel.focus();
     sel.onchange=()=>{if(!sel.value)return;const exam=sel.value==='__new'?createExam():examById(data,sel.value);if(exam&&mutate(()=>{addToExam(data,exam.id,qid);renumberExam(data,exam.id);}))status(`「${exam.title}」에 넣었습니다 · 시험지 순서대로 번호를 다시 매겼습니다.`);};}};
 const libView=installLibraryView($('#library-view'),libApi);
-$('#exams-view').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.nav==='exam'){view.examId=b.dataset.exam;show('exam');}else if(b.dataset.nav==='new-exam'){const exam=createExam();if(exam){view.examId=exam.id;show('exam');}}});
+$('#exams-view').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.nav==='exam'){view.examId=b.dataset.exam;show('exam');}else if(b.dataset.nav==='new-exam')newExamDialog();});
 // 시험지 안.
 const examNow=()=>view.examId&&examById(data,view.examId);
 $('#examd-view').addEventListener('change',e=>{const exam=examNow();if(!exam)return;
@@ -726,10 +727,12 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   else if(act==='blueprint')void downloadBlueprint(exam);
   else if(act==='variant')void sendExam(exam,{download:true,variant:true});
   else if(act==='print')void sendExam(exam,{print:true});
+  else if(act==='print-a4')void sendExam(exam,{print:'A4'});
 });
 // 시험지 만들기 세 단계(10-24, exam-flow.js): 단계 막대 · ① 틀 · 속성.
 const goalEdit=(exam,fn)=>mutate(()=>{const g=goalOf(exam,typesetForms);fn(g);exam.goal={...g,edited:true};exam.updatedAt=new Date().toISOString();});
 $('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if(!exam)return;
+  if(t.closest('[data-ef-framepick]')){framePicker(exam);return;}
   const st=t.closest('[data-ef-step]');if(st){view.examStep=Number(st.dataset.efStep);renderView();$('#examd-view').scrollTop=0;return;}
   const fr=t.closest('[data-ef-frame]');if(fr){const key=fr.dataset.efFrame;mutate(()=>{applyFrame(exam,key,typesetForms);exam.updatedAt=new Date().toISOString();});status(`틀 「${frameOf(exam,typesetForms).name}」 기본값으로 시험지 속성을 채웠습니다.`);return;}
   if(t.closest('[data-ef-redef]')){mutate(()=>{applyFrame(exam,frameOf(exam,typesetForms).key,typesetForms);});return;}
@@ -737,11 +740,27 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if
   const off=t.closest('[data-ef-off]');if(off){e.preventDefault();const k=off.dataset.efOff;goalEdit(exam,g=>{g[k]=null;});return;}
   const adv=t.closest('[data-ef-adv]');if(adv){const k=adv.dataset.efAdv;goalEdit(exam,g=>{g[k]=!g[k];});return;}
   const rg=t.closest('[data-ef-range]');if(rg){const r=rg.dataset.efRange;goalEdit(exam,g=>{g.range=g.range.includes(r)?g.range.filter(x=>x!==r):[...g.range,r];});return;}
-  if(t.closest('[data-ef-register]')){openRegister({status:(m,err)=>status(m,err),readForm:readFormFile,saveForm:async({name,kind,draft})=>{
-    const s={...draft.read.standard,name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);const id='form_'+uid();
-    await saveTypesetForms([...typesetForms,{id,name,kind,fileName:draft.fileName,encrypted:draft.encrypted,bytes:draft.bytes,structure:draft.read.structure,standardId:s.id,createdAt:new Date().toISOString()}]);
-    mutate(()=>{applyFrame(exam,'form:'+id,typesetForms);exam.updatedAt=new Date().toISOString();});status(`내 틀 「${name}」을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.`);}});}
+  if(t.closest('[data-ef-register]')){registerForm(id=>{mutate(()=>{applyFrame(exam,'form:'+id,typesetForms);exam.updatedAt=new Date().toISOString();});status('내 틀을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.');});return;}
+  // 「목표 고치기」 창(10-24 시안 17): 열 때 목표를 적어 두고, 「닫기」는 되돌리고 「적용」은 그대로 둔다. 칸은 ① 시험지 속성과 같은 칸이라 고칠 때마다 점검에 바로 보인다.
+  if(t.closest('[data-ex-goal-open]')){const st=placeState(view);st.goalPop=!st.goalPop;st.goalSnap=st.goalPop?JSON.parse(JSON.stringify(exam.goal||null)):null;renderView();return;}
+  if(t.closest('[data-ex-goal-close]')){const st=placeState(view),snap=st.goalSnap;st.goalPop=false;st.goalSnap=null;if(snap&&JSON.stringify(snap)!==JSON.stringify(exam.goal))mutate(()=>{exam.goal=snap;});else renderView();return;}
+  if(t.closest('[data-ex-goal-apply]')){const st=placeState(view);st.goalPop=false;st.goalSnap=null;renderView();status('시험지 목표를 바꿨습니다.');return;}
 });
+// 내 틀 등록 창(학교 시험지 양식 · 학습지) — 「새 시험지」 창과 ① 틀 칸이 같이 쓴다. onSaved(양식 id).
+function registerForm(onSaved){openRegister({status:(m,err)=>status(m,err),readForm:readFormFile,saveForm:async({name,kind,draft})=>{
+  const s={...draft.read.standard,name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);const id='form_'+uid();
+  await saveTypesetForms([...typesetForms,{id,name,kind,fileName:draft.fileName,encrypted:draft.encrypted,bytes:draft.bytes,structure:draft.read.structure,standardId:s.id,createdAt:new Date().toISOString()}]);
+  onSaved(id);}});}
+// 「틀 바꾸기」(10-24 결정 2): 틀만 바꾸고 핵심 목표(문항 수 · 총점 · 시간 · 과목 · 범위 · 규칙)는 그대로 둔다.
+function changeFrame(exam,key){const g=goalOf(exam,typesetForms);applyFrame(exam,key,typesetForms);exam.goal={...exam.goal,subject:g.subject,range:g.range,nObj:g.nObj,nEssay:g.nEssay,total:g.total,time:g.time,points:g.points,diff:g.diff,rule:g.rule,edited:g.edited};exam.updatedAt=new Date().toISOString();}
+function framePicker(exam){openFramePicker({forms:()=>typesetForms,current:frameKey(exam),
+  pick:key=>{mutate(()=>changeFrame(exam,key));status(`틀을 「${frameOf(exam,typesetForms).name}」(으)로 바꿨습니다 — 핵심 목표는 그대로입니다.`);},
+  register:()=>registerForm(id=>{mutate(()=>changeFrame(exam,'form:'+id));status('내 틀을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.');})});}
+// 「새 시험지」 창(10-24 시안 17 안 A): 이름 · 틀 · 핵심 목표 → 「만들기」 → 바로 문항 고르기.
+function newExamDialog(){openNewExam({forms:()=>typesetForms,name:`새 시험지 ${data.exams.length+1}`,status:(m,err)=>status(m,err),
+  register:onSaved=>registerForm(id=>{status('내 틀을 등록했습니다 — 이 브라우저에 저장했습니다.');onSaved('form:'+id);}),
+  create:({name,frame,goal})=>{let exam;const ok=mutate(()=>{exam=newExam(name);applyFrame(exam,frame,typesetForms);const def={...exam.goal};Object.assign(exam.goal,goal);exam.goal.edited=['nObj','nEssay','total','time'].some(k=>def[k]!==goal[k]);data.exams.push(exam);});
+    if(!ok)return false;view.examId=exam.id;view.examStepFor=exam.id;view.examStep=2;show('exam');return true;}});}
 $('#examd-view').addEventListener('change',e=>{const exam=examNow(),t=e.target;if(!exam)return;
   if(t.matches('[data-ef-subject]')){goalEdit(exam,g=>{g.subject=t.value;});return;}
   const k=t.dataset.efGoal;if(k){const v=Math.round(Number(t.value));if(!(Number.isFinite(v)&&v>=0&&v<=(k==='total'?1000:k==='time'?600:200))){status('0 이상의 정수로 적어 주세요.',true);renderView();return;}goalEdit(exam,g=>{g[k]=v;});}
@@ -792,7 +811,7 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if
     else{status('기출은 편집할 수 있는 문항으로 바꿔 담습니다(오른쪽 담은 문항 칸).');void convertPast(x.i);setTimeout(pickCart,0);}
     return;}
   const out=t.closest('[data-ep-out]');if(out){mutate(()=>{removeFromExam(data,out.dataset.epOut);renumberExam(data,exam.id);});return;}
-  if(s.multi){const card=t.closest('.ep-card');if(card){const k=card.dataset.epKey;s.picked=s.picked.includes(k)?s.picked.filter(y=>y!==k):[...s.picked,k];card.classList.toggle('pk',s.picked.includes(k));card.querySelector('.ep-pick').textContent=s.picked.includes(k)?'✓':'';const b=$('#examd-view .ep-bulk');if(b){b.querySelector('b').textContent=`${s.picked.length}개 골랐음`;b.querySelectorAll('[data-ep-bulktag],[data-ep-bulktake]').forEach(n=>n.disabled=!s.picked.length);}return;}}
+  if(s.multi){const card=t.closest('.ep-card');if(card){if(card.classList.contains('in'))return;const k=card.dataset.epKey;s.picked=s.picked.includes(k)?s.picked.filter(y=>y!==k):[...s.picked,k];card.classList.toggle('pk',s.picked.includes(k));card.querySelector('.ep-pick').textContent=s.picked.includes(k)?'✓':'';const b=$('#examd-view .ep-bulk');if(b){b.querySelector('b').textContent=`${s.picked.length}개 골랐음`;b.querySelectorAll('[data-ep-bulktag],[data-ep-bulktake]').forEach(n=>n.disabled=!s.picked.length);}return;}}
 });
 let pickQueryTimer=0;
 $('#examd-view').addEventListener('input',e=>{if(!e.target.matches('[data-ep-query]'))return;const s=pickState(view);s.query=e.target.value;s.limit=40;clearTimeout(pickQueryTimer);pickQueryTimer=setTimeout(()=>{const at=e.target.selectionStart;renderView();const n=$('#examd-view [data-ep-query]');if(n){n.focus();n.setSelectionRange(at,at);}},220);});
@@ -875,7 +894,7 @@ async function sendExam(exam,{download:asFile=false,variant=false,print=false}={
       const bytes=await buildExamBytes(exam,{order});download(bytes,`${exam.title} (나형).hwpx`,'application/vnd.hancom.hwpx');
       status('나형 시험지(HWPX)를 내려받았습니다 · 가·나형 정답 대응은 「이원목적분류표·정답표(엑셀)」의 세 번째 시트에 있습니다.');return;}
     const bytes=await buildExamBytes(exam);
-    if(print){await printExam(bytes,exam.title);return;}
+    if(print){await printExam(bytes,exam.title,print==='A4'?'A4':null);return;}
     if(asFile||!embedded){download(bytes,`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
     examRequest=uid();window.parent.postMessage({channel:'5e-question-sheet',action:'exam-handoff',requestId:examRequest,bytes,title:exam.title,qid:exam.id},location.origin);
   }catch(e){status(e.message,true);}
@@ -889,10 +908,12 @@ async function downloadBlueprint(exam){try{const {blueprintRows,answerRows,shuff
   {const order=shuffledOrder(exam.items,variantSeed(exam)),mark=['①','②','③','④','⑤'];X.utils.book_append_sheet(book,X.utils.aoa_to_sheet([['나형 번호','가형 번호','정답','배점'],...order.map((id,i)=>{const q=qs.find(x=>x.id===id);return [i+1,exam.items.indexOf(id)+1,q.type==='서술형'?'서술형':Number.isInteger(q.answer)?mark[q.answer]:'',Number(q.points)||0];})]),'가나형 대응');}
   download(X.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 이원목적분류표·정답표.xlsx`);status('이원목적분류표·정답표(엑셀)를 내려받았습니다.');}catch(e){status(e.message,true);}}
 // 인쇄·PDF: 엔진이 그린 쪽(SVG)을 실제 용지 크기로 인쇄 창에 — PDF는 인쇄 창의 「PDF로 저장」.
-async function printExam(bytes,title){typesetter||=makeTypesetter();const {pages,widthMm,heightMm}=await typesetter.examPagesSvg(bytes);
+// fit='A4': B4·A3 시험지를 통째로 A4에 줄여 찍는다(10-24 용지 원칙). 용지 비율이 같아 줄바꿈·그림 위치는 그대로, 크기만 약 82%(B4).
+async function printExam(bytes,title,fit=null){typesetter||=makeTypesetter();const drawn=await typesetter.examPagesSvg(bytes),{pages}=drawn;
+  const shrink=fit==='A4'&&drawn.widthMm>211,widthMm=shrink?210:drawn.widthMm,heightMm=shrink?297:drawn.heightMm;
   const frame=document.createElement('iframe');frame.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';frame.setAttribute('aria-hidden','true');document.body.append(frame);
   const doc=frame.contentDocument;doc.open();doc.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>${E(title)}</title><style>@page{size:${widthMm.toFixed(1)}mm ${heightMm.toFixed(1)}mm;margin:0}html,body{margin:0}.p{width:${widthMm.toFixed(1)}mm;height:${heightMm.toFixed(1)}mm;page-break-after:always;overflow:hidden}.p svg{display:block;width:100%;height:100%}</style></head><body>${pages.map(svg=>`<div class="p">${svg}</div>`).join('')}</body></html>`);doc.close();
-  await new Promise(r=>setTimeout(r,300));frame.contentWindow.focus();frame.contentWindow.print();status(`${pages.length}쪽 인쇄 창을 열었습니다 · PDF는 인쇄 창에서 「PDF로 저장」을 고르세요.`);setTimeout(()=>frame.remove(),60000);}
+  await new Promise(r=>setTimeout(r,300));frame.contentWindow.focus();frame.contentWindow.print();status(`${pages.length}쪽 인쇄 창을 열었습니다${shrink?` · A4로 ${Math.round(210/drawn.widthMm*100)}% 줄임`:fit==='A4'?' · 이미 A4라 그대로':''} · PDF는 인쇄 창에서 「PDF로 저장」을 고르세요.`);setTimeout(()=>frame.remove(),60000);}
 // 문항 카드 편집기.
 const docked={home:null,next:null};
 const hwpDock={home:null,next:null};

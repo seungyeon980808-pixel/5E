@@ -876,3 +876,13 @@
     background: rgba(255, 255, 255, .1) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55) !important;
   }
 }
+
+/* ---------- 맨 위 막대 48px + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 출제 office-layout.css · 조판 app-switch.css) ----------
+   막대 안에서만 높이·단추·아이콘·글자 토큰을 바꾼다: 막대 48 · 단추 32 · 아이콘 20 · 로고 23/18 · 막대 안 글자 13.5. 아래 구분선은 그대로. */
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .app-shell-header { --ds-h-bar: 48px; --ds-h-control: 32px; --ds-icon-bar: 20px; --shell-control-size: 32px; --shell-icon-size: 20px; --ds-text-body: 13.5px; font-size: 13.5px; }
+  :root:not([data-mode="lite"]) .app-shell-header :is(button, select, label) { font-size: 13.5px; }
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-status [data-account-label] { font-size: 13.5px !important; }
+  .app-brand .app-brand-mark { font-size: 23px; }
+  .app-brand .app-brand-name { font-size: 18px; }
+}

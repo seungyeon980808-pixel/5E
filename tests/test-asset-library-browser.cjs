@@ -7,22 +7,26 @@ h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,we
   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);
   assert.equal(manifests.length,0,'the manifest is not fetched at app start');
   await page.evaluate(async V=>{const{state}=await import('/js/state.js'+V);state.update(s=>{s.objects=[];s.selectedIds=[];});},V);
-  await page.locator('#asset-library-section > .tool-section-header').click();
-  const cards=page.locator('#asset-library-grid .asset-card');await cards.first().waitFor();
-  assert.equal(await cards.count(),53,'physics follows the default subject');
+  // 10-24 시안 20: 에셋 라이브러리는 아래 「오브젝트」 탭 → 오브젝트 창 「그림」 탭(기본 보기 훑어보기, 「격자」로 바꿀 수 있음)으로 옮겼다.
+  await page.click('#object-window-open');await page.click('.ow [data-ow-tab="pic"]');await page.waitForSelector('.ow-gal .ow-tile');
+  await page.click('.ow [data-ow-view="grid"]');
+  const cards=page.locator('.ow-grid.pic .ow-card');await cards.first().waitFor();
+  assert.equal(await cards.count(),67,'all subjects in 「전체」');
   assert.ok(manifests.some(u=>u.includes('manifest-p.json'))&&manifests.some(u=>u.includes('manifest-cbe.json')),'subject part files are loaded on first open');
-
-  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('5e:subject-changed',{detail:{subject:'c'}})));
-  assert.equal(await cards.count(),7,'the tab follows the object subject switch');
-  await page.locator('#asset-library-tabs button',{hasText:'물리'}).click();
-  await page.locator('#asset-library-query').fill('학생 남');
-  const hits=await page.locator('#asset-library-grid .asset-card-name').allTextContents();
+  await page.click('.ow-side [data-ow-cat="c"]');assert.equal(await cards.count(),7,'the left subject list filters');
+  await page.click('.ow-side [data-ow-cat="person"]');assert.equal(await cards.count(),10,'people are their own group');
+  await page.click('.ow-side [data-ow-cat="all"]');
+  await page.fill('.ow-q','학생 남');await page.waitForFunction(()=>document.querySelectorAll('.ow-grid.pic .ow-card').length&&[...document.querySelectorAll('.ow-grid.pic .ow-name')].every(n=>/학생/.test(n.textContent)));
+  const hits=await page.locator('.ow-grid.pic .ow-name').allTextContents();
   assert.ok(hits.length>0&&hits.every(t=>t.includes('학생')&&t.includes('남')),'every search word must match');
-  await page.locator('#asset-library-query').fill('');
-
-  const card=cards.first(),title=await card.locator('.asset-card-name').textContent();
+  await page.fill('.ow-q','');await page.waitForFunction(()=>document.querySelectorAll('.ow-grid.pic .ow-card').length===67);
+  // 별표: 카드 ☆ → ★, 「별표만」으로 그 카드만.
+  await cards.first().hover();await cards.first().locator('[data-ow-star-asset]').click();
+  await page.click('[data-ow-staronly]');assert.equal(await cards.count(),1,'star-only shows the starred picture');await page.click('[data-ow-staronly]');
+  const card=cards.first(),title=await card.locator('.ow-name').textContent();
   await page.evaluate(async V=>{window.__assetTestState=(await import('/js/state.js'+V)).state;},V);
-  await card.click();
+  // 그림은 누르면 오른쪽 자세히 패널 → 「캔버스에 넣기」.
+  await card.locator('[data-ow-asset-pick]').click();await page.waitForSelector('.ow-det');await page.click('.ow-det [data-ow-insert-asset]');await page.waitForSelector('.ow-back',{state:'hidden'});
   const inserted=await page.waitForFunction(()=>{const o=window.__assetTestState.get().objects.find(o=>o.type==='image');return o&&o.w!==30?{name:o.name,w:o.w,h:o.h,src:o.src.slice(0,22),provider:o.sourceMetadata?.provider,itemId:o.sourceMetadata?.itemId}:null;}).then(r=>r.jsonValue());
   assert.equal(inserted.name,title);assert.equal(inserted.w,40);assert.equal(inserted.h,19.02);assert.equal(inserted.src,'data:image/png;base64,','bytes are embedded so saved files open without the library');
   assert.equal(inserted.provider,'asset-library');assert.equal(inserted.itemId,'p_spaceship_h');
@@ -32,6 +36,6 @@ h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,we
 
   await page.locator('#undo-btn, [data-action="undo"], button[aria-label*="실행 취소"]').first().click();
   assert.equal(await page.evaluate(async V=>(await import('/js/state.js'+V)).state.get().objects.length,V),0,'one undo removes the inserted asset');
-  assert.deepEqual(errors,[]);console.log(name+': lazy manifest, subject tabs, AND search, embedded insert, save/reopen and single undo passed');
+  assert.deepEqual(errors,[]);console.log(name+': lazy manifest, object window picture tab, AND search, star, embedded insert, save/reopen and single undo passed');
  }finally{await browser.close();}
 }}).catch(e=>{console.error(e);process.exitCode=1;});

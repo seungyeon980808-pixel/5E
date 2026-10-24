@@ -1,0 +1,131 @@
+/* 오브젝트 창(10-24 시안 20 확정 — mockups-1024/impl-spec.md 20-2 · obj5.html). js/object-window.js의 ow-* 마크업.
+   classic 토큰만 쓴다. 별표는 노랑이 아니라 글자색(--ds-ink). 확인 창(showPrompt · showAlert, z 1000)이 위에 오도록 z 900. */
+.ow-back{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(1,4,9,.62)}
+.ow-back[hidden]{display:none}
+.ow{position:relative;width:min(1180px,100%);height:min(780px,calc(100vh - 48px));display:flex;flex-direction:column;overflow:hidden;background:var(--ds-panel,#0d1117);color:var(--ds-ink,#e6edf3);border-radius:12px;box-shadow:var(--ds-shadow-float);font:13px/1.4 var(--ds-font)}
+.ow button{font:inherit}
+.ow-ico{width:18px;height:18px;flex:none}
+/* 머리 줄(높이 52) */
+.ow-h{flex:none;height:52px;display:flex;align-items:center;gap:10px;padding:0 10px 0 16px;border-bottom:1px solid var(--ds-line,#21262d)}
+.ow-title{display:inline-flex;align-items:center;gap:7px;flex:none}.ow-title b{font-size:15px;font-weight:600}
+.ow-tabs{display:flex;gap:2px;padding:3px;border-radius:10px;background:var(--ds-field-raise);box-shadow:inset 0 0 0 1px var(--ds-line,#21262d);margin-left:8px}
+.ow-tabs button{height:32px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2,#b1bac4);font-size:13.5px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.ow-tabs button small{font-size:11px;color:var(--ds-ink-3,#7d8590)}
+.ow-tabs button:hover{color:var(--ds-ink)}
+.ow-tabs button[aria-selected=true]{background:var(--ds-raise,#161b22);box-shadow:0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink)}
+.ow-sp{flex:1}
+.ow-qw{display:flex;align-items:center;gap:6px;width:300px;max-width:28vw;height:32px;padding:0 10px;border-radius:8px;background:var(--ds-field,#010409);box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink-3)}
+.ow-qw:focus-within{box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8)}
+.ow-qw .ow-ico{width:15px;height:15px}
+.ow-q{flex:1;min-width:0;height:30px;border:0;background:transparent;color:var(--ds-ink);font:inherit;outline:0}
+.ow-staronly{height:32px;padding:0 11px;border:0;border-radius:8px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink-2);cursor:pointer;white-space:nowrap}
+.ow-staronly:hover{background:var(--ds-hover)}
+.ow-staronly[aria-pressed=true]{background:var(--ds-soft-bg,#152137);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8);color:var(--ds-ink)}
+.ow-seg{display:flex;gap:2px;padding:2px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d)}
+.ow-seg button{height:28px;padding:0 9px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12.5px}
+.ow-seg button .ow-ico{width:15px;height:15px}
+.ow-seg button[aria-pressed=true]{background:var(--ds-selected);color:var(--ds-ink)}
+.ow-x{width:32px;height:32px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--ds-ink-2);font-size:20px;line-height:1;cursor:pointer}
+.ow-x:hover{background:var(--ds-hover);color:var(--ds-ink)}
+/* 몸통: 왼쪽 칸 220 · 가운데 */
+.ow-b{flex:1;min-height:0;display:flex;position:relative}
+.ow-side{flex:none;width:220px;overflow:auto;padding:10px 8px;border-right:1px solid var(--ds-line,#21262d);display:flex;flex-direction:column;gap:2px}
+.ow-sl{margin:10px 8px 4px;font-size:11px;color:var(--ds-ink-3);letter-spacing:.02em}.ow-sl:first-child{margin-top:2px}
+.ow-side button{height:32px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--ds-ink-2);display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left}
+.ow-side button span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ow-side button small{font-size:11px;color:var(--ds-ink-3)}
+.ow-side button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.ow-side button[aria-pressed=true]{background:var(--ds-selected);color:var(--ds-ink)}
+.ow-side .ow-newcat{color:var(--ds-ink-3);margin-top:4px}
+.ow-main{flex:1;min-width:0;overflow:auto;padding:14px 18px 24px;position:relative}
+.ow-empty{color:var(--ds-ink-3);padding:24px 4px;margin:0}
+.ow-grp{margin:0 0 18px}
+.ow-grp h3{display:flex;align-items:baseline;gap:6px;margin:0 0 8px;font-size:13px;font-weight:500;color:var(--ds-ink)}
+.ow-grp h3 small{font-size:11px;font-weight:400;color:var(--ds-ink-3)}.ow-gs{font-size:11px;font-weight:400;color:var(--ds-ink-3)}
+/* 카드 · 별표 */
+.ow-grid{display:grid;gap:10px}
+.ow-grid.tool{grid-template-columns:repeat(auto-fill,112px)}
+.ow-grid.pic{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.ow-grid.mine{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.ow-card{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:8px;overflow:hidden;background:var(--ds-raise,#161b22);box-shadow:0 0 0 1px var(--ds-line-strong,#30363d)}
+.ow-card:hover,.ow-card.on{box-shadow:0 0 0 2px var(--ds-soft-line,#6ba4f8)}
+.ow-pick{display:block;width:100%;padding:0;border:0;background:transparent;cursor:pointer}
+.ow-pic{display:grid;place-items:center;height:84px;padding:6px;background:#fff;color:#111}
+.ow-grid.pic .ow-pic{height:120px}
+.ow-pic.tall{height:120px}
+.ow-pic{overflow:hidden}
+.ow-pic svg,.ow-pic img{display:block;max-width:100%;max-height:72px;width:auto;height:auto;object-fit:contain}
+.ow-grid.pic .ow-pic img,.ow-pic.tall img,.ow-pic.tall svg{max-height:108px}
+.ow-grid.tool .ow-pic svg{width:56px;height:56px}
+.ow-name{display:block;padding:5px 8px 6px;font-size:11px;color:var(--ds-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ow-star{position:absolute;top:5px;right:5px;width:24px;height:24px;padding:0;border:0;border-radius:12px;background:rgba(13,17,23,.82);box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink);font-size:13px;line-height:1;cursor:pointer;opacity:0}
+.ow-card:hover .ow-star,.ow-card:focus-within .ow-star,.ow-star.on{opacity:1}
+/* 그림 자세히(오른쪽 떠 있는 패널, 폭 330) */
+.ow-det{position:absolute;top:16px;right:16px;bottom:16px;width:330px;z-index:5;display:flex;flex-direction:column;overflow:auto;background:var(--ds-raise,#161b22);border-radius:12px;box-shadow:var(--ds-shadow-float)}
+.ow-detx{position:absolute;top:8px;right:8px;z-index:1;background:rgba(13,17,23,.6)}
+.ow-detpic{flex:none;height:300px;display:grid;place-items:center;background:#fff;padding:14px}
+.ow-detpic img{max-width:100%;max-height:100%}
+.ow-detb{display:flex;flex-direction:column;gap:8px;padding:14px 16px 16px}
+.ow-detb b{font-size:16px;font-weight:600}
+.ow-path{font-size:12px;color:var(--ds-ink-3)}
+.ow-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ow-tag{display:inline-flex;align-items:center;gap:2px;height:20px;padding:0 6px;border-radius:4px;background:var(--ds-field-raise);color:var(--ds-ink-2);font-size:11px}
+.ow-tag button{width:16px;height:16px;padding:0;border:0;background:transparent;color:var(--ds-ink-3);cursor:pointer}
+.ow-detacts{display:flex;gap:8px;margin-top:6px}
+.ow-go{height:34px;padding:0 14px;border:0;border-radius:8px;background:var(--ds-soft-bg,#152137);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8);color:var(--ds-ink);cursor:pointer}
+.ow-detacts .ow-go{flex:1}
+.ow-go:hover{filter:brightness(1.12)}
+.ow-line{height:34px;padding:0 12px;border:0;border-radius:8px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink-2);cursor:pointer}
+.ow-line:hover{background:var(--ds-hover)}
+/* 훑어보기(아트갤러리 방식) */
+.ow-main:has(.ow-gal){padding:0;overflow:hidden}
+.ow-gal{position:absolute;inset:0;overflow:hidden;background:var(--ds-bench,#0a0e14);cursor:grab;touch-action:none;outline:0;
+  -webkit-mask:radial-gradient(ellipse 75% 75% at 50% 50%,#000 55%,transparent 100%);mask:radial-gradient(ellipse 75% 75% at 50% 50%,#000 55%,transparent 100%)}
+.ow-gal.drag{cursor:grabbing}
+.ow-board{position:absolute;inset:0}
+.ow-tile{position:absolute;left:0;top:0;width:188px;height:206px;padding:0;border:0;border-radius:10px;overflow:hidden;background:var(--ds-raise,#161b22);box-shadow:0 0 0 1px var(--ds-line-strong,#30363d);cursor:pointer;transform-origin:center;will-change:transform;display:flex;flex-direction:column}
+.ow-tile .pic{height:170px;display:grid;place-items:center;background:#fff;padding:10px}
+.ow-tile .pic img{max-width:100%;max-height:100%;pointer-events:none;user-select:none}
+.ow-tile .cap{display:flex;align-items:baseline;gap:6px;padding:7px 9px;font-size:11.5px;color:var(--ds-ink-2);text-align:left}
+.ow-tile .cap b{flex:1;min-width:0;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ow-tile .cap small{flex:none;font-size:10.5px;color:var(--ds-ink-3)}
+.ow-note{margin:14px 8px 0;padding-top:12px;border-top:1px solid var(--ds-line,#21262d);font-size:11.5px;line-height:1.55;color:var(--ds-ink-3)}
+/* 도구 · 내 오브젝트 훑어보기 칸(10-24 결정 12) */
+.ow-tile .pic.tool,.ow-tile .pic.mine{color:#111;overflow:hidden}
+.ow-tile .pic.tool svg{width:64px;height:64px}
+.ow-tile .pic.mine svg,.ow-tile .pic.mine img,.ow-tile .pic.mine canvas{display:block;max-width:100%;max-height:150px;width:auto;height:auto;pointer-events:none}
+.ow-tile:hover,.ow-tile.on{box-shadow:0 0 0 2px var(--ds-soft-line,#6ba4f8)}
+.ow-main:has(.ow-gal) + .ow-det{top:16px}
+.ow-pill{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:2;height:30px;padding:0 6px 0 14px;display:flex;align-items:center;gap:12px;border-radius:15px;background:rgba(22,27,34,.92);box-shadow:0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink-3);font-size:12px;white-space:nowrap;cursor:default}
+.ow-lens{display:inline-flex;align-items:center;gap:6px;color:var(--ds-ink-2);cursor:pointer;padding-right:6px}
+.ow-lens input{position:absolute;opacity:0;pointer-events:none}
+.ow-lens .sw{position:relative;width:26px;height:14px;border-radius:7px;background:var(--ds-line-strong,#30363d)}
+.ow-lens .sw::after{content:'';position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:5px;background:var(--ds-ink-3);transition:left .12s}
+.ow-lens input:checked+.sw{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.ow-lens input:checked+.sw::after{left:14px;background:var(--ds-ink)}
+.ow-lens input:focus-visible+.sw{outline:2px solid var(--ds-soft-line);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.ow-lens{display:none}.ow-lens .sw::after{transition:none}}
+/* 내 오브젝트 저장 카드 */
+.ow-save{display:flex;align-items:center;gap:14px;margin:0 0 18px;padding:12px 14px;border-radius:10px;background:var(--ds-soft-bg,#152137);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8)}
+.ow-savepic{flex:none;width:72px;height:72px;border-radius:6px;background:#fff;display:grid;place-items:center;padding:4px;color:#111}
+.ow-savepic svg{width:100%;height:100%}
+.ow-savebody{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.ow-savehead{display:flex;align-items:baseline;gap:10px}.ow-savehead b{font-weight:600}.ow-savehead span{font-size:12px;color:var(--ds-ink-3)}
+.ow-saverow{display:flex;gap:10px;flex-wrap:wrap}
+.ow-saverow label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ds-ink-2)}
+.ow-saverow input,.ow-saverow select{height:30px;padding:0 8px;border:0;border-radius:6px;background:var(--ds-field,#010409);box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink);font:inherit;min-width:160px}
+.ow-saverow input:focus,.ow-saverow select:focus{outline:0;box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.ow-savetags{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.ow-mini{height:24px;padding:0 8px;border:0;border-radius:5px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-line-strong,#30363d);color:var(--ds-ink-2);font-size:11.5px;cursor:pointer}
+.ow-mini:hover{background:var(--ds-hover)}.ow-mini[aria-pressed=true]{color:var(--ds-ink)}
+.ow-savego{flex:none;align-self:center}
+@media (max-width:900px){.ow-side{width:150px}.ow-qw{width:180px}.ow-title b{display:none}}
+@media (max-width:640px){.ow-back{padding:0}.ow{height:100vh;border-radius:0}.ow-side{display:none}.ow-h{flex-wrap:wrap;height:auto;padding:8px}.ow-det{left:8px;right:8px;width:auto}}
+
+/* 왼쪽 칸 정리(시안 20-1): 「오브젝트 · 내 오브젝트 · 에셋 라이브러리」 묶음과 「오브젝트 저장」은 오브젝트 창으로 옮겼다. 요소는 모듈이 쓰므로 숨기기만. */
+#subject-section,#personal-section,#asset-library-section,#personal-object-save{display:none!important}
+/* 아래 막대 탭(시안 20-1): 높이 28 · 좌우 10 · 아이콘과 글자 사이 6 · 아이콘 16, 고른 탭은 고른 바탕 + 흰 글자. */
+:root:not([data-mode="lite"]) .image-workflow-hub .object-search-trigger{padding:0 10px!important;gap:6px!important}
+:root:not([data-mode="lite"]) .image-workflow-hub .object-search-trigger .search-trigger-ico{width:16px!important;height:16px!important}
+:root:not([data-mode="lite"]) .image-workflow-hub #object-window-open{height:28px;display:inline-flex;align-items:center}
+:root:not([data-mode="lite"]) .image-workflow-hub #object-window-open:hover{background:var(--ds-hover)!important;color:var(--ds-ink)!important}
+:root:not([data-mode="lite"]) .image-workflow-hub #object-window-open[aria-expanded="true"]{background:var(--ds-selected)!important;color:var(--ds-ink)!important}

@@ -75,6 +75,7 @@
   <link rel="stylesheet" href="/css/mode-transition.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/button-design.css?v=20261013-toolbar-states" />
   <link rel="stylesheet" href="/css/graphite-shell.css?v=1.7.0-graphite-20261020serif" />
+  <link rel="stylesheet" href="/css/object-window.css?v=1.7.0-object-window" />
   <link rel="stylesheet" href="/css/popup-surface.css?v=1020-popup" />
 </head>
 <body>
@@ -401,13 +402,18 @@
       <!-- ===== CANVAS BOTTOM BAR: 검색 · 격자 토글(+세부) · 중앙 정렬 ===== -->
       <div class="canvas-bottom-bar">
         <div class="image-workflow-hub" role="group" aria-label="이미지 작업">
+          <!-- 10-24 시안 20: 아래 탭 「오브젝트 · 라이브러리 · 좌표/그래프 · AI 이미지/그래프」. 오브젝트 창은 js/object-window.js. -->
+          <button class="object-search-trigger" type="button" id="object-window-open" title="오브젝트 — 도구 · 그림 · 내 오브젝트" aria-label="오브젝트" aria-haspopup="dialog" aria-expanded="false">
+            <svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="9" r="4.5"/><path d="M14 4.5 19.5 14h-11z"/><rect x="11" y="13" width="8.5" height="7" rx="1"/></svg>
+            <span class="search-trigger-label">오브젝트</span>
+          </button>
           <button class="object-search-trigger" type="button" id="exam-library-open"
                   title="라이브러리" aria-label="라이브러리">
-            <svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5h4v15H4zM10 4.5h4v15h-4z"/><path d="m16 5.5 3.8-1 3 13.8-3.8 1z"/></svg>
+            <svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5" y="5" width="3.2" height="15" rx=".6"/><rect x="9.6" y="7.5" width="3.2" height="12.5" rx=".6"/><path d="m14.6 8.6 3-.8 3 11.4-3 .8z"/></svg>
             <span class="search-trigger-label">라이브러리</span>
           </button>
           <button class="object-search-trigger image-workflow-ai" type="button" id="ai-image-install-open" title="AI 이미지/그래프" aria-label="AI 이미지/그래프">
-            <svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5 11.6 8 16 9.5l-4.4 1.6L10 15.5l-1.6-4.4L4 9.5 8.4 8z"/><path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></svg>
+            <svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="6.5" width="13" height="13" rx="1.5"/><path d="m4.5 17.5 3.5-3.5 3 3 1.5-1.5 3 3"/><path d="M18.5 2.5c.3 2 1 2.7 3 3-2 .3-2.7 1-3 3-.3-2-1-2.7-3-3 2-.3 2.7-1 3-3z"/></svg>
             <span class="search-trigger-label">AI 이미지/그래프</span>
           </button>
         </div>

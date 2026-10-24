@@ -2,11 +2,12 @@
 // 왼쪽 문항 순서(목록/카드), 가운데 실제 조판 쪽(쪽 맞춤/폭 맞춤), 오른쪽 점검(목표 대비 지금 · 규칙 점검 · 배치 점검 · AI 내용 검토).
 // 규칙 점검은 AI 없이 문항 자료만으로 계산한다. 목표가 없는 줄은 숫자만, 경고하지 않는다(10-24 결정 ⑥).
 import { ANSWER_MARK } from './exam-review.js';
-import { goalOf, frameOf } from './exam-flow.js';
+import { goalOf, frameOf, propsMarkup } from './exam-flow.js';
 import { questionTitle, questionSubtitle } from './views.js';
 
 const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const SVG = {
+  pen: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
   list: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="5" cy="6" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="18" r="1"/></svg>',
   grid: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
   up: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>',
@@ -100,7 +101,8 @@ export function checkMarkup(exam, data, forms, items, st, sheet) {
   if (sheet && (sheet.oversized || []).length) warn.place++;
   const total = warn.goal + warn.rule + warn.place;
   return `<div class="ex-sum"><span class="big ${total ? 'wn' : 'ok'}">${total || '✓'}</span><span class="lb"><b>${total ? '확인할 것' : '모두 맞습니다'}</b><small>목표 ${warn.goal} · 규칙 ${warn.rule} · 배치 ${warn.place}</small></span></div>
-    <div class="ex-sec"><div class="ex-chd"><b>목표 대비 지금</b><em>${useGoal ? '시험지 속성 기준' : '목표 없이 · 숫자만'}</em></div>${goalHtml}</div>
+    <div class="ex-sec ex-goalsec"><div class="ex-chd"><b>목표 대비 지금</b>${useGoal ? '' : '<em>목표 없이 · 숫자만</em>'}<button type="button" class="ex-goalbtn" data-ex-goal-open aria-expanded="${!!st.goalPop}"${useGoal ? ' style="margin-left:auto"' : ''}>${SVG.pen}목표 고치기</button></div>${goalHtml}
+      ${st.goalPop ? `<div class="ex-goalpop" role="dialog" aria-label="목표 고치기"><div class="ex-gph"><b>목표 고치기</b><small>시험지 속성</small></div><div class="ex-gpb">${propsMarkup(exam, data, forms)}</div><div class="ex-gpf"><span class="sp"></span><button type="button" class="ef-btn" data-ex-goal-close>닫기</button><button type="button" class="ef-btn go" data-ex-goal-apply>적용</button></div></div>` : ''}</div>
     <div class="ex-sec"><div class="ex-chd"><b>규칙 점검</b><em>AI 없이 · 움직일 때마다</em></div>${rules}</div>
     <div class="ex-sec"><div class="ex-chd"><b>배치 점검</b></div><div id="exam-layout-checks">${place}</div></div>
     <div class="ex-sec" style="border-bottom:0"><div class="ex-chd"><b>내용 검토</b><em>AI · 누를 때만</em></div><button type="button" class="ex-aib" data-ex-ai><span class="ai-ic">${SVG.spark}</span><span><b>AI로 내용 검토</b><small>정답 · 오류 · 힌트 겹침을 문항을 읽고 판단</small></span><span class="go2">→</span></button></div>`;

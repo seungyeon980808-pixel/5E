@@ -221,6 +221,8 @@ export function initRhwpExamWorkspace(state, services) {
     const signature = JSON.stringify([rows.map(({id,name,figure,draft}) => [id,name,figure?.version,draft]),selectedKey,busy,!!editing]);
     if (signature === renderedFigures) return;
     renderedFigures = signature;
+    // 10-24 결정 9: 묶음 제목 옆에 개수(「n개 · 5E에서 보낸 것」). 제목은 rhwp-exam-modes.js가 왼쪽 칸으로 옮겨 만든다.
+    { const em = panel.querySelector('.el-h em'); if (em && em.closest('.el-figs-slot')) em.textContent = rows.length ? `${rows.length}개 · 5E에서 보낸 것` : '5E에서 보낸 것'; }
     const live = new Set(rows.map(({id}) => id));
     for (const [id,url] of thumbnails) if (!live.has(id)) {URL.revokeObjectURL(url);thumbnails.delete(id);}
     const list = panel.querySelector('#exam-figures'); list.replaceChildren();
@@ -238,7 +240,8 @@ export function initRhwpExamWorkspace(state, services) {
       const image = document.createElement('img'); image.src = thumbnails.get(id); image.alt = ''; image.className = 'exam-figure-thumbnail';
       const text = document.createElement('div'); text.className = 'exam-figure-text';
       const title = document.createElement('strong'); title.textContent = name;
-      const detail = document.createElement('span'); detail.textContent = draft ? '미반영 수정' : '';detail.hidden=!draft;
+      // 2열 카드(10-24 시안 5): 미반영 수정은 이름 줄 오른쪽에 회색 점 + 「수정」(「미반영」은 읽기 프로그램에만).
+      const detail = document.createElement('span');detail.className='exam-figure-draft';if(draft){const dot=document.createElement('i');const sr=document.createElement('em');sr.className='exam-sr';sr.textContent='미반영 ';detail.append(dot,sr,'수정');}detail.hidden=!draft;
       text.append(title,detail); button.append(image,text); button.disabled = busy || !!editing;
       button.addEventListener('click',()=>{if(!busy){bridge.selectPicture(ref,{reveal:true});renderFigures();}});button.addEventListener('dblclick',()=>void run(()=>beginInline(figure?.id,ref)));list.append(button);
     }

@@ -12,7 +12,7 @@ const DEF = {
 };
 export const BASE_FRAMES = {
   basic: { name: '기본', desc: 'A4 2단 · 여백 15mm · 가운데 선 · 쪽 번호', kind: '정기고사', cols: 2, m: 15, hdr: 0, look: 'basic', def: DEF.exam },
-  kice: { name: '수능', desc: 'A4 2단 · 평가원 시험지 머리 · 영역·과목 표시', kind: '수능형 모의', cols: 2, m: 15, hdr: 24, look: 'kice', def: DEF.kice, pts: '2 · 3점' },
+  kice: { name: '수능', desc: 'B4 2단(기출 원본 그대로) · A4는 줄여 인쇄 · 평가원 시험지 머리 · 영역·과목 표시', kind: '수능형 모의', cols: 2, m: 15, hdr: 24, look: 'kice', def: DEF.kice, pts: '2 · 3점' },
   sheet: { name: '학습지', desc: 'A4 1단 · 제목 · 반·번호·이름 칸', kind: '학습지', cols: 1, m: 18, hdr: 22, look: 'sheet', def: DEF.sheet },
 };
 export const SUBJECTS = ['통합과학', '물리학Ⅰ', '화학Ⅰ', '생명과학Ⅰ', '지구과학Ⅰ', '물리학Ⅱ', '화학Ⅱ', '생명과학Ⅱ', '지구과학Ⅱ'];
@@ -71,8 +71,11 @@ const defLine = f => { const d = f.def; return `${f.kind} · ${d.nObj + d.nEssay
 
 // ── 단계 막대 ──
 export const STEP_NOTE = { 1: '틀을 고르고 시험지 속성(목표)을 정합니다 — 점검의 기준이 됩니다', 2: '카드에 마우스를 올려 「담기」 · 오른쪽 막대가 목표를 채워 갑니다', 3: '문항을 눌러 아래 여백 · 「다음 단에서 시작」 · 왼쪽 위 목록/카드 · 오른쪽 「목표 없이 보기」' };
-export function stepsMarkup(step) {
-  return `<div class="ef-steps" role="tablist" aria-label="시험지 만들기 단계">${[[1, '틀 · 속성'], [2, '문항 고르기'], [3, '배치 · 점검']].map(([n, t]) => `<button type="button" role="tab" data-ef-step="${n}" aria-selected="${step === n}" class="${n < step ? 'done' : ''}"><b>${n}</b>${t}</button>`).join('')}</div><span class="ef-note">${E(STEP_NOTE[step] || '')}</span>`;
+// 화면 전환 탭(10-24 시안 14 안 A): 번호·✓ 없이 「문항 고르기 · 배치·점검」 둘만, 언제든 오간다. 안내 글은 탭 툴팁, 이름 옆에는 지금 상태(담은 문항 수 · 쪽 수)만.
+// ① 틀 · 속성은 탭이 아니라 머리의 「틀 · 이름」 표로 연다(17 안 A — 새 시험지는 「새 시험지」 창에서 틀·목표를 정한다).
+export function stepsMarkup(step, { n = 0, pages = 0 } = {}) {
+  const tab = (k, t, small) => `<button type="button" role="tab" data-ef-step="${k}" aria-selected="${step === k}" title="${E(STEP_NOTE[k])}">${t}<small>${small}</small></button>`;
+  return `<div class="ef-steps" role="tablist" aria-label="시험지 만들기 화면">${tab(2, '문항 고르기', `${n}문항`)}${tab(3, '배치·점검', `${pages}쪽`)}</div>`;
 }
 
 // ── ① 틀 · 속성 ──
@@ -81,21 +84,15 @@ export function rangeOptions(data, goal) {
   const units = [...new Set(data.questions.map(q => q.unitLarge).filter(Boolean))];
   return [...new Set([...(units.length ? units : RANGE_DEFAULT), ...goal.range])];
 }
-export function renderStep1(exam, data, forms) {
-  const list = frameList(forms), cur = frameOf(exam, forms), g = goalOf(exam, forms);
+// 시험지 속성(목표) 칸 — ① 틀·속성과 ③ 점검 칸 「목표 고치기」 창이 같이 쓴다(10-24 시안 17: 지금 칸을 그대로 옮겨 씀).
+export function propsMarkup(exam, data, forms) {
+  const cur = frameOf(exam, forms), g = goalOf(exam, forms);
   const field = (n, k, v, u) => v == null
     ? `<div class="ef-f off"><span class="n">${n}</span><span class="mu">점검 안 함</span><button type="button" class="ef-tiny" data-ef-on="${k}">켜기</button></div>`
     : `<label class="ef-f"><span class="n">${n}</span><input inputmode="numeric" data-ef-goal="${k}" value="${E(v)}" aria-label="${n}"><span class="u">${u}</span>${k === 'total' || k === 'time' ? `<button type="button" class="ef-tiny" data-ef-off="${k}" title="이 목표는 점검하지 않기">끄기</button>` : ''}</label>`;
   const tog = (k, label, on) => `<button type="button" class="ef-tog${on ? ' on' : ''}" data-ef-adv="${k}" aria-pressed="${on}">${label}<span class="sw"></span></button>`;
   const ranges = rangeOptions(data, g);
-  return `<div class="ef-work ef-s1">
-  <section class="ef-pane"><div class="ef-ph"><b>틀</b><small>용지 · 단 · 머리 · 꼬리 + 시험 종류 기본값</small></div>
-    <div class="ef-body"><div class="ef-frames">${list.map(([k, f]) => `<button type="button" class="ef-fr" data-ef-frame="${E(k)}" aria-pressed="${cur.key === k}">${frameSvg(f)}<span class="tx"><b>${E(f.name)}${f.mine ? '<span class="mine">내 틀</span>' : ''}</b><span>${E(f.desc)}</span><span class="dv">${defLine(f)}</span></span></button>`).join('')}
-      <button type="button" class="ef-fr add" data-ef-register><b>＋ 내 틀 등록…</b><span>학교 시험지 · 학습지 한글 파일</span></button></div>
-      <p class="ef-hint">틀이 곧 시험 종류입니다 — 틀을 고르면 문항 수 · 총점 · 시간 · 배점 규칙 기본값이 같이 채워집니다(오른쪽에서 바꿀 수 있음). 학교 시험지나 직접 만든 학습지는 한글 파일(hwp·hwpx)을 올려 「내 틀」로 등록합니다.</p></div></section>
-  <section class="ef-pane"><div class="ef-ph"><b>시험지 속성</b><small>점검의 기준</small></div>
-    <div class="ef-body">
-      <div class="ef-from"><span>틀 「<b>${E(cur.name)}</b>」 기본값으로 채웠습니다 · 시험 종류 <b>${E(cur.kind)}</b></span><span class="sp"></span>${g.edited ? '<button type="button" class="ef-tiny" data-ef-redef>기본값으로</button>' : ''}</div>
+  return `      <div class="ef-from"><span>틀 「<b>${E(cur.name)}</b>」 기본값으로 채웠습니다 · 시험 종류 <b>${E(cur.kind)}</b></span><span class="sp"></span>${g.edited ? '<button type="button" class="ef-tiny" data-ef-redef>기본값으로</button>' : ''}</div>
       <div class="ef-gh">과목 · 범위</div>
       <label class="ef-f"><span class="n">과목</span><select data-ef-subject aria-label="과목"><option value="">고르지 않음</option>${SUBJECTS.map(s => `<option${g.subject === s ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
       <div class="ef-chips">${ranges.map(r => `<button type="button" class="ef-chip${g.range.includes(r) ? ' on' : ''}" data-ef-range="${E(r)}" aria-pressed="${g.range.includes(r)}">${E(r)}</button>`).join('')}</div>
@@ -106,7 +103,19 @@ export function renderStep1(exam, data, forms) {
         <div class="ef-gh">난이도 비율</div>${tog('diff', '상 20% · 중 50% · 하 30%', g.diff)}
         <div class="ef-gh">정답 분포 규칙</div>${tog('rule', '①~⑤ 차이 2개 이하 · 같은 번호 3번 연속 금지', g.rule)}
         <p class="ef-hint">켜지 않은 규칙은 점검에서 숫자만 보이고 경고하지 않습니다.</p></details>
-    </div>
+`;
+}
+
+export function renderStep1(exam, data, forms) {
+  const list = frameList(forms), cur = frameOf(exam, forms);
+  return `<div class="ef-work ef-s1">
+  <section class="ef-pane"><div class="ef-ph"><b>틀</b><small>용지 · 단 · 머리 · 꼬리 + 시험 종류 기본값</small></div>
+    <div class="ef-body"><div class="ef-frames">${list.map(([k, f]) => `<button type="button" class="ef-fr" data-ef-frame="${E(k)}" aria-pressed="${cur.key === k}">${frameSvg(f)}<span class="tx"><b>${E(f.name)}${f.mine ? '<span class="mine">내 틀</span>' : ''}</b><span>${E(f.desc)}</span><span class="dv">${defLine(f)}</span></span></button>`).join('')}
+      <button type="button" class="ef-fr add" data-ef-register><b>＋ 내 틀 등록…</b><span>학교 시험지 · 학습지 한글 파일</span></button></div>
+      <p class="ef-hint">틀이 곧 시험 종류입니다 — 틀을 고르면 문항 수 · 총점 · 시간 · 배점 규칙 기본값이 같이 채워집니다(오른쪽에서 바꿀 수 있음). 학교 시험지나 직접 만든 학습지는 한글 파일(hwp·hwpx)을 올려 「내 틀」로 등록합니다.</p></div></section>
+  <section class="ef-pane"><div class="ef-ph"><b>시험지 속성</b><small>점검의 기준</small></div>
+    <div class="ef-body">
+${propsMarkup(exam, data, forms)}    </div>
     <div class="ef-foot"><span class="mu">나중에 언제든 바꿀 수 있습니다</span><span class="sp"></span><button type="button" class="ef-btn go" data-ef-step="2">다음: 문항 고르기 →</button></div></section>
   <section class="ef-pane"><div class="ef-ph"><b>틀 미리보기</b><small>${E(cur.name)}</small></div><div class="ef-bigprev">${frameSvg(cur)}</div></section>
 </div>`;
@@ -168,5 +177,83 @@ export function openRegister(api) {
     }
   });
   render();
+  return { close };
+}
+
+// ── 「새 시험지」 창(10-24 시안 17 안 A) ──
+// 이름 · 틀(작은 카드) · 핵심 목표 넷(틀 기본값으로 채움) → 「만들기」 → 바로 문항 고르기. 범위 · 배점 규칙 · 난이도 · 정답 분포는 배치·점검의 「목표 고치기」에서.
+// api: {forms:()=>양식 목록, name:기본 이름, create({name,frame,goal}), register(onSaved(key))}
+const SHORT = { basic: '2단 · 정기고사', kice: '2단 · 평가원 머리', sheet: '1단 · 반·번호·이름' };
+export function openNewExam(api) {
+  const back = document.createElement('div');
+  back.className = 'ef-back ef-newback';
+  back.innerHTML = '<div class="ef-new" role="dialog" aria-modal="true" aria-label="새 시험지"></div>';
+  document.body.append(back);
+  const dlg = back.firstElementChild, st = { name: api.name, key: 'basic', goal: null };
+  const fill = () => { const f = frameList(api.forms()).find(([k]) => k === st.key)?.[1] || BASE_FRAMES.basic; st.goal = { nObj: f.def.nObj, nEssay: f.def.nEssay, total: f.def.total, time: f.def.time }; };
+  fill();
+  const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+  document.addEventListener('keydown', onKey, true);
+  const num = (k, label, unit) => `<label class="ef-nf"><span>${label}</span><input inputmode="numeric" data-new-goal="${k}" value="${st.goal[k] == null ? '' : E(st.goal[k])}" placeholder="점검 안 함" aria-label="${label}"><em>${unit}</em></label>`;
+  function render() {
+    const list = frameList(api.forms());
+    dlg.innerHTML = `<div class="ef-new-h"><b>새 시험지</b><button type="button" class="ef-x" data-new-close aria-label="닫기">×</button></div>
+      <div class="ef-new-b">
+        <label class="ef-new-l">이름<input class="ef-new-name" data-new-name value="${E(st.name)}" maxlength="200"></label>
+        <div class="ef-new-l">틀</div>
+        <div class="ef-new-fr">${list.map(([k, f]) => `<button type="button" class="ef-nc" data-new-frame="${E(k)}" aria-pressed="${st.key === k}"><span class="pp">${frameSvg(f)}</span><b>${E(f.name)}</b><small>${E(SHORT[k] || '내 틀')}</small></button>`).join('')}
+          <button type="button" class="ef-nc add" data-new-register><span class="pp plus">＋</span><b>내 틀</b><small>한글 파일 올리기</small></button></div>
+        <div class="ef-new-l">핵심 목표 <small>틀 기본값으로 채워짐</small></div>
+        <div class="ef-new-g">${num('nObj', '선택형', '문항')}${num('nEssay', '서술형', '문항')}${num('total', '총점', '점')}${num('time', '시간', '분')}</div>
+      </div>
+      <div class="ef-new-f"><span class="mu">범위 · 배점 규칙 · 난이도 · 정답 분포는 배치·점검의 「목표 고치기」에서</span><span class="sp"></span><button type="button" class="ef-btn" data-new-close>취소</button><button type="button" class="ef-btn go" data-new-make>만들기</button></div>`;
+  }
+  render();
+  dlg.addEventListener('input', e => { if (e.target.matches('[data-new-name]')) st.name = e.target.value; });
+  dlg.addEventListener('change', e => {
+    const k = e.target.dataset.newGoal; if (!k) return;
+    const raw = e.target.value.trim(), v = Math.round(Number(raw)), max = k === 'total' ? 1000 : k === 'time' ? 600 : 200;
+    if (raw === '' && (k === 'total' || k === 'time')) { st.goal[k] = null; return; }
+    if (!(Number.isFinite(v) && v >= 0 && v <= max)) { e.target.value = st.goal[k] ?? ''; api.status?.('0 이상의 정수로 적어 주세요.', true); return; }
+    st.goal[k] = v;
+  });
+  dlg.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest('[data-new-close]')) { close(); return; }
+    const fr = t.closest('[data-new-frame]'); if (fr) { st.key = fr.dataset.newFrame; fill(); render(); return; }
+    if (t.closest('[data-new-register]')) { api.register(key => { st.key = key; fill(); render(); }); return; }
+    if (t.closest('[data-new-make]')) { const name = st.name.trim(); if (!name) { api.status?.('시험지 이름을 적어 주세요.', true); return; } if (api.create({ name, frame: st.key, goal: st.goal }) !== false) close(); }
+  });
+  back.addEventListener('mousedown', e => { if (e.target === back) close(); });
+  setTimeout(() => dlg.querySelector('[data-new-name]')?.select(), 0);
+  return { close };
+}
+
+// ── 「틀 바꾸기」 작은 창(10-24 결정 2) ──
+// 머리의 「틀 · 이름」 표를 누르면 「새 시험지」 창과 같은 틀 카드가 뜬다. 고르면 그 틀로 바꾸고 핵심 목표 값은 그대로 둔다.
+// api: {forms:()=>양식 목록, current:지금 틀 열쇠, pick(key), register()}
+export function openFramePicker(api) {
+  const back = document.createElement('div');
+  back.className = 'ef-back ef-newback';
+  back.innerHTML = '<div class="ef-new ef-frpick" role="dialog" aria-modal="true" aria-label="틀 바꾸기"></div>';
+  document.body.append(back);
+  const dlg = back.firstElementChild;
+  const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); close(); } };
+  document.addEventListener('keydown', onKey, true);
+  const list = frameList(api.forms());
+  dlg.innerHTML = `<div class="ef-new-h"><b>틀 바꾸기</b><button type="button" class="ef-x" data-new-close aria-label="닫기">×</button></div>
+    <div class="ef-new-b"><div class="ef-new-fr">${list.map(([k, f]) => `<button type="button" class="ef-nc" data-pick-frame="${E(k)}" aria-pressed="${api.current === k}"><span class="pp">${frameSvg(f)}</span><b>${E(f.name)}</b><small>${E(SHORT[k] || '내 틀')}</small></button>`).join('')}
+      <button type="button" class="ef-nc add" data-new-register><span class="pp plus">＋</span><b>내 틀</b><small>한글 파일 올리기</small></button></div></div>
+    <div class="ef-new-f"><span class="mu">틀을 바꿔도 핵심 목표(문항 수 · 총점 · 시간)는 그대로입니다 — 배치·점검의 「목표 고치기」에서 고칩니다</span><span class="sp"></span><button type="button" class="ef-btn" data-new-close>닫기</button></div>`;
+  dlg.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest('[data-new-close]')) { close(); return; }
+    const fr = t.closest('[data-pick-frame]'); if (fr) { close(); if (fr.dataset.pickFrame !== api.current) api.pick(fr.dataset.pickFrame); return; }
+    if (t.closest('[data-new-register]')) { close(); api.register(); }
+  });
+  back.addEventListener('mousedown', e => { if (e.target === back) close(); });
+  setTimeout(() => dlg.querySelector('.ef-nc[aria-pressed="true"]')?.focus(), 0);
   return { close };
 }

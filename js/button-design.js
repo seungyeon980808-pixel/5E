@@ -47,7 +47,9 @@ export function initButtonDesign(doc = document) {
   if (graph && hub && ai) {
     graph.classList.remove('advanced-tool-btn');
     graph.classList.add('object-search-trigger');
-    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5v16.5h16.5"/><path d="M6.5 17c3-1 4-9 7-9.5S18 9 20 6"/></svg><span>좌표/함수 생성</span>';
+    // 10-24 시안 20: 이름 「좌표/그래프」 · 좌표축 + 곡선 아이콘(라이브러리 창 안 단추 이름은 그대로).
+    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M6.5 16c2.5-7 5-9 7-6s3.5 1 5-4"/></svg><span class="search-trigger-label">좌표/그래프</span>';
+    graph.title = '좌표/그래프'; graph.setAttribute('aria-label', '좌표/그래프');
     ai.before(graph);
   }
   if (hub && !doc.getElementById('exam-pool-open')) {

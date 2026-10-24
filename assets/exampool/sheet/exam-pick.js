@@ -71,10 +71,13 @@ export function renderStep2(exam, data, forms, s, { busy = null } = {}) {
   const tags = allTags(data);
   const card = x => { const m = metaOf(x), inC = x.kind === 'mine' && inExam.has(x.id), pk = s.picked.includes(x.key), conv = busy && x.kind === 'past' && busy.id === x.id;
     const doc = x.kind === 'mine' ? `<div class="ep-doc" data-preview="${E(x.id)}"></div>` : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
-    return `<article class="ep-card${inC ? ' in' : ''}${pk ? ' pk' : ''}" data-ep-key="${E(x.key)}"><div class="ep-th">${doc}</div><span class="ep-pick" aria-hidden="true">${pk ? '✓' : ''}</span>
-      <div class="ep-acts"><button type="button" data-ep-tag="${E(x.key)}"># 분류·태그</button><button type="button" class="take" data-ep-take="${E(x.key)}" ${conv ? 'disabled' : ''}>${inC ? '✓ 담음' : conv ? '바꾸는 중…' : '담기'}</button></div>
-      <div class="ep-mt"><span class="ep-kt ${x.kind}">${x.kind === 'mine' ? '내 문항' : '기출'}</span><b>${E(x.title)}</b><span>${[x.ty, x.pt ? x.pt + '점' : x.exam, m.unit].filter(Boolean).map(E).join(' · ')}</span>
-        <div class="ep-tgs">${m.lv ? `<span class="ep-tg lv">난이도 ${E(m.lv)}</span>` : ''}${m.tags.map(t => `<span class="ep-tg">${E(t)}</span>`).join('')}</div></div></article>`; };
+    // 카드 아래는 해시태그 한 줄 + 「#＋」(10-24 시안 16 3차): 내 문항/기출 표 · 제목 · 유형·배점은 위 「전체 · 내 문항 · 기출」로 이미 구별돼 뺀다.
+    // 담은 카드는 그림 왼쪽 위 「✓ n번」(시험지에 담긴 순서) + 은은한 파랑 테두리 + 눌린 듯한 회색 음영. 「빼기」·「＋ 담기」는 마우스를 올릴 때만.
+    const at = inC ? exam.items.indexOf(x.id) + 1 : 0, tagsHtml = [...(m.lv ? [`난이도 ${m.lv}`] : []), ...m.tags];
+    return `<article class="ep-card${inC ? ' in' : ''}${pk ? ' pk' : ''}" data-ep-key="${E(x.key)}" title="${E(x.title)}"><div class="ep-th">${doc}</div><span class="ep-pick" aria-hidden="true">${pk ? '✓' : ''}</span>
+      <span class="ep-no"${inC ? '' : ' hidden'}>✓ ${at}번</span>
+      <div class="ep-acts"><button type="button" class="take" data-ep-take="${E(x.key)}" ${conv ? 'disabled' : ''}>${inC ? '빼기' : conv ? '바꾸는 중…' : '＋ 담기'}</button></div>
+      <div class="ep-mt"><div class="ep-tgs">${tagsHtml.length ? tagsHtml.map(t => `<span class="ep-tg">${E(t)}</span>`).join('') : '<span class="ep-tg none"># 태그</span>'}</div><button type="button" class="ep-tadd" data-ep-tag="${E(x.key)}" title="분류 · 태그" aria-label="분류 · 태그">#＋</button></div></article>`; };
   const body = !list.length ? `<p class="ef-hint ep-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '이 태그·조건에 맞는 문항이 없습니다.'}</p>` : `<div class="ep-cols">${shown.map(card).join('')}</div>${list.length > shown.length ? `<div class="ep-more"><button type="button" class="ef-btn" data-ep-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : ''}`;
   return `<div class="ef-work ep-s2">
   <section class="ef-pane${s.multi ? ' multi' : ''}" id="ep-pool"><div class="ef-ph"><b>문항 보관함</b><small>${list.length.toLocaleString()}개</small><span class="sp"></span><button type="button" class="ef-btn" data-ep-multi aria-pressed="${s.multi}">여러 개 고르기</button><input class="ep-search" data-ep-query value="${E(s.query)}" placeholder="내용·단원·태그 찾기" aria-label="보관함 찾기"></div>
@@ -85,7 +88,7 @@ export function renderStep2(exam, data, forms, s, { busy = null } = {}) {
   <section class="ef-pane"><div class="ef-ph"><b>담은 문항</b><small>${exam.items.length}문항</small></div>
     <div class="ep-meter">${meters(exam, data, g, busy)}</div>
     <div class="ep-cart">${cart(exam, data, busy)}</div>
-    <div class="ef-foot"><button type="button" class="ef-btn" data-ef-step="1">← 틀 · 속성</button><span class="sp"></span><button type="button" class="ef-btn go" data-ef-step="3">다음: 배치 →</button></div></section>
+    <div class="ef-foot"><span class="sp"></span><button type="button" class="ef-btn go" data-ef-step="3">다음: 배치 →</button></div></section>
 </div>`;
 }
 const qsOf = (exam, data) => exam.items.map(id => data.questions.find(q => q.id === id)).filter(Boolean);
@@ -134,6 +137,6 @@ export function refreshCart(root, exam, data, forms, busy) {
   const m = root.querySelector('.ep-meter'), c = root.querySelector('.ep-cart'), n = root.querySelector('.ep-s2 .ef-pane:last-child .ef-ph small');
   if (m) m.innerHTML = meters(exam, data, goalOf(exam, forms)); if (c) c.innerHTML = cart(exam, data, busy); if (n) n.textContent = `${exam.items.length}문항`;
   const inExam = new Set(exam.items);
-  root.querySelectorAll('.ep-card[data-ep-key^="q:"]').forEach(card => { const on = inExam.has(card.dataset.epKey.slice(2)); card.classList.toggle('in', on); const b = card.querySelector('.take'); if (b) b.textContent = on ? '✓ 담음' : '담기'; });
-  root.querySelectorAll('.ep-card[data-ep-key^="past:"] .take').forEach(b => { const id = b.closest('.ep-card').dataset.epKey.slice(5), conv = busy && busy.id === id; b.disabled = !!conv; b.textContent = conv ? '바꾸는 중…' : '담기'; });
+  root.querySelectorAll('.ep-card[data-ep-key^="q:"]').forEach(card => { const id = card.dataset.epKey.slice(2), on = inExam.has(id); card.classList.toggle('in', on); const b = card.querySelector('.take'); if (b) b.textContent = on ? '빼기' : '＋ 담기'; const no = card.querySelector('.ep-no'); if (no) { no.hidden = !on; no.textContent = on ? `✓ ${exam.items.indexOf(id) + 1}번` : ''; } });
+  root.querySelectorAll('.ep-card[data-ep-key^="past:"] .take').forEach(b => { const id = b.closest('.ep-card').dataset.epKey.slice(5), conv = busy && busy.id === id; b.disabled = !!conv; b.textContent = conv ? '바꾸는 중…' : '＋ 담기'; });
 }

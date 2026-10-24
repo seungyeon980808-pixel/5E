@@ -668,3 +668,15 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .tsx-v{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 62 60'%3E%3Cpath d='M3 3L31 57L59 3' fill='none' stroke='%23da3633' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/contain;transform:translateX(-50%)}
 /* 조판 자동 저장(10-23 A2): 「조판 저장」 단추는 없앤다(창 머리 줄·카드 칸 머리 줄 둘 다). */
 #typeset-save,#card-view [data-cv="hwp-save"]{display:none!important}
+
+/* 맨 위 막대 48px + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 그림 graphite-shell.css · 조판 app-switch.css).
+   단추 32 · 아이콘 20 · 로고 「5E」 23 · 「_exam」 18 · 앱 바꾸기 16.5 · 막대 안 글자 13.5. 로고 칸 폭 160과 구분선은 그대로. */
+.top{--ds-h-bar:48px;--ds-h-control:32px;--ds-text-body:13.5px;font-size:13.5px}
+.top button{font-size:13.5px}
+.top .top-cell #toggle-nav{margin:-16px 0 0;width:32px;height:32px}
+.top .top-cell .brand{height:32px;line-height:32px}
+.top .top-cell .brand-mark{font-size:23px}
+.top .top-cell .brand strong{font-size:18px}
+.top .app-switch-btn{font-size:16.5px;height:32px}
+.top-actions .top-help .ico,.top .ico{width:20px;height:20px}
+@media (max-width:760px){.top .app-switch-btn{font-size:14px}}

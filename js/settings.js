@@ -111,7 +111,12 @@ const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라
 const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
 const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크기 프리셋
 const REF_MEMO_KEY = "5e.refmemo";                  // 참고 창의 문항별 메모
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, REF_MEMO_KEY, SHORTCUT_PLATFORM_KEY];
+// 오브젝트 창(10-24 시안 20)의 별표·분류 — 이 컴퓨터에 저장하고 백업 파일에 포함한다(10-24 결정 11).
+const OBJECT_FAVORITES_KEY = "5e.objectFavorites.v1";   // 도구 별표(subject-objects.js)
+const ASSET_FAVORITES_KEY = "5e.assetFavorites.v1";     // 그림 별표(object-window.js)
+const PERSONAL_CATEGORIES_KEY = "5e.personalCategories.v1"; // 내 오브젝트 분류 목록(object-window.js)
+const OBJECT_LIST_KEYS = new Set([OBJECT_FAVORITES_KEY, ASSET_FAVORITES_KEY, PERSONAL_CATEGORIES_KEY]);
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, REF_MEMO_KEY, SHORTCUT_PLATFORM_KEY, OBJECT_FAVORITES_KEY, ASSET_FAVORITES_KEY, PERSONAL_CATEGORIES_KEY];
 
 /* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
  * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=body zoom)이 전환된다. */
@@ -238,6 +243,9 @@ const EXPORT_CHOICES = [
   { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
   { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
   { key: REF_MEMO_KEY,          label: "참고 창 문항별 메모" },
+  { key: OBJECT_FAVORITES_KEY,  label: "오브젝트 별표 (도구)" },
+  { key: ASSET_FAVORITES_KEY,   label: "오브젝트 별표 (그림)" },
+  { key: PERSONAL_CATEGORIES_KEY, label: "내 오브젝트 분류" },
 ];
 
 /* ===== 환경 설정 대화상자 (탭) =====
@@ -595,6 +603,10 @@ async function applyImportedSettings(data) {
       }
     }
     if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
+    // 별표·분류 목록은 글자 배열일 때만 반영한다(깨진 값이 목록을 오염시키지 않게).
+    if (OBJECT_LIST_KEYS.has(key)) {
+      try { const parsed = JSON.parse(value); if (!Array.isArray(parsed) || !parsed.every((v) => typeof v === "string")) continue; } catch { continue; }
+    }
 
     // ① 통째로 덮어써 기존 데이터가 사라질 수 있는 키는 먼저 확인받는다(감사 finding 1).
     //    라이브러리는 이제 IDB에 살기 때문에 "기존 항목이 있는지"를 localStorage로 판단하면

@@ -96,8 +96,8 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
     return {id:el.id,width:s.width,height:s.height,radius:s.borderRadius,padding:s.padding,iconWidth:icon.width,iconHeight:icon.height};
   }));
   assert.equal(toolbar.length,8);
-  // 그라파이트 규격: 위쪽 막대 버튼 28px·모서리 6px·아이콘 18px, 버튼 사이 2px.
-  assert.ok(toolbar.every(s=>s.width==='28px' && s.height==='28px' && s.radius==='6px' && s.padding==='0px' && s.iconWidth==='18px' && s.iconHeight==='18px'),JSON.stringify(toolbar));
+  // 그라파이트 규격: 위쪽 막대 버튼 32px·모서리 6px·아이콘 20px, 버튼 사이 2px(10-24 시안 8 확정: 막대 48 · 단추 28→32 · 아이콘 18→20).
+  assert.ok(toolbar.every(s=>s.width==='32px' && s.height==='32px' && s.radius==='6px' && s.padding==='0px' && s.iconWidth==='20px' && s.iconHeight==='20px'),JSON.stringify(toolbar));
   assert.equal(await page.locator('.canvas-view-controls').evaluate(el=>getComputedStyle(el).gap),'2px');
   const tools=await assertOriginalAppearance(page,'.tool-btn');
   const eyes=await assertOriginalAppearance(page,'.insp-layer-eye');

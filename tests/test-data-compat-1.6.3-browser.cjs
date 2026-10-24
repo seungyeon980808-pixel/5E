@@ -174,12 +174,12 @@ async function storageUpdate(browser, origin, engine) {
 
     // 내 오브젝트(라이브러리): 1.6.3에서 저장한 "1.6.3 상자"를 눌러 캔버스에 넣는다.
     const before = await appState(page);
-    const parts = page.locator('#personal-parts');
-    if (!(await parts.isVisible())) await page.locator('#personal-section > .tool-section-header').click();
-    const category = parts.locator('.subject-part').filter({ hasText: personalObjects[0].category });
+    // 10-24 시안 20: 내 오브젝트는 아래 「오브젝트」 탭 → 오브젝트 창 「내 오브젝트」 탭에서 카드를 눌러 넣는다.
+    await page.locator('#object-window-open').click();await page.locator('.ow [data-ow-tab="mine"]').click();
+    const category = page.locator('.ow-grp').filter({ has: page.locator('h3', { hasText: personalObjects[0].category }) });
     await category.waitFor();
-    if (await category.evaluate(element => element.classList.contains('is-collapsed'))) await category.locator('.subject-part-header').click();
-    await category.getByRole('button', { name: personalObjects[0].name, exact: true }).click();
+    await category.locator('.ow-card', { hasText: personalObjects[0].name }).locator('[data-ow-mine-pick]').click();
+    await page.locator('.ow-back').waitFor({ state: 'hidden' });
     let state = await appState(page);
     const inserted = state.objects.filter(object => !before.objects.some(existing => existing.id === object.id));
     const { id, order, x, y, ...shape } = personalObjects[0].objects[0];

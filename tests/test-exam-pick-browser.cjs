@@ -16,8 +16,13 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.setInputFiles('#excel-file',{name:'pick.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:examples.format,questions:qs,documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.evaluate(()=>{const u=document.querySelector('input[name="import-mode"][value="update"]');if(u)u.checked=true;});await sheet.click('#apply-import');
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-  await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) .ef-s1');
-  await sheet.click('[data-ef-step="2"]');await sheet.click('[data-ep-kind="mine"]');
+  // 「새 시험지」 창(10-24 시안 17): 틀을 바꾸면 핵심 목표가 그 틀 기본값으로 다시 채워지고, 「만들기」 → 바로 문항 고르기(탭 둘, 번호·✓ 없음).
+  await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('.ef-new [data-new-make]');
+  await sheet.click('[data-new-frame="kice"]');assert.equal(await sheet.inputValue('[data-new-goal="total"]'),'50','수능 틀 기본 총점');
+  await sheet.click('[data-new-frame="basic"]');assert.equal(await sheet.inputValue('[data-new-goal="total"]'),'100','기본 틀 기본 총점');
+  await sheet.click('[data-new-make]');await sheet.waitForSelector('#examd-view:not([hidden]) .ep-s2');
+  assert.deepEqual(await sheet.locator('.ef-steps button').evaluateAll(b=>b.map(x=>x.firstChild.textContent)),['문항 고르기','배치·점검'],'탭 둘');
+  await sheet.click('[data-ep-kind="mine"]');
   const card=n=>sheet.locator(`.ep-card[data-ep-key="q:${qs[n].id}"]`);
   await card(0).waitFor();
   // 문항 전체 카드: 미리보기가 잘리지 않고 문항 높이만큼(고정 높이 아님).
@@ -26,6 +31,9 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   assert.ok(th.h>=th.doc-1&&th.h>80,`the whole question shows: ${JSON.stringify(th)}`);
   // 담기 두 개 → 담은 문항 칸 · 목표 막대(기본 틀 선택형 20).
   for(const n of [0,1]){await card(n).hover();await card(n).locator('[data-ep-take]').click();await sheet.waitForFunction(id=>document.querySelector(`.ep-card[data-ep-key="q:${id}"]`)?.classList.contains('in'),qs[n].id);}
+  // 담은 카드(시안 16 3차): 그림 왼쪽 위 「✓ n번」(담은 순서), 카드 아래는 태그 한 줄 + 「#＋」.
+  assert.equal((await card(1).locator('.ep-no').textContent()).trim(),'✓ 2번');assert.equal(await card(2).locator('.ep-no').isHidden(),true);
+  assert.equal(await card(2).locator('.ep-tadd').textContent(),'#＋');
   assert.equal(await sheet.locator('.ep-ci').count(),2);
   assert.match(await sheet.locator('.ep-meter').textContent(),/선택형2 \/ 20/);
   // 빼기 → 다시 하나.
@@ -49,6 +57,15 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   // ③으로: 담은 순서대로 번호.
   await sheet.click('.ef-foot [data-ef-step="3"]');await sheet.waitForSelector('#examd-view .pv-orow');
   assert.equal(await sheet.locator('.pv-orow').count(),3);
+  // 「목표 고치기」(시안 17): 점검 칸 제목 옆 단추 → 떠 있는 창. 「닫기」는 고친 것을 되돌리고 「적용」은 남긴다.
+  const nObj=()=>sheet.evaluate(()=>document.querySelector('#exam-check .ex-goalpop [data-ef-goal="nObj"]')?.value);
+  await sheet.click('[data-ex-goal-open]');await sheet.waitForSelector('#exam-check .ex-goalpop');assert.equal(await nObj(),'20');
+  await sheet.fill('.ex-goalpop [data-ef-goal="nObj"]','12');await sheet.press('.ex-goalpop [data-ef-goal="nObj"]','Tab');await sheet.waitForFunction(()=>document.querySelector('#exam-check .ex-goalpop [data-ef-goal="nObj"]')?.value==='12');
+  await sheet.click('[data-ex-goal-close]');await sheet.waitForFunction(()=>!document.querySelector('#exam-check .ex-goalpop'));
+  await sheet.click('[data-ex-goal-open]');await sheet.waitForSelector('#exam-check .ex-goalpop');assert.equal(await nObj(),'20','닫기는 되돌린다');
+  await sheet.fill('.ex-goalpop [data-ef-goal="nObj"]','12');await sheet.press('.ex-goalpop [data-ef-goal="nObj"]','Tab');await sheet.waitForFunction(()=>document.querySelector('#exam-check .ex-goalpop [data-ef-goal="nObj"]')?.value==='12');
+  await sheet.click('[data-ex-goal-apply]');await sheet.waitForFunction(()=>!document.querySelector('#exam-check .ex-goalpop'));
+  await sheet.click('[data-ex-goal-open]');await sheet.waitForSelector('#exam-check .ex-goalpop');assert.equal(await nObj(),'12','적용은 남는다');await sheet.click('[data-ex-goal-close]');
   // ③ 카드 = 한글 엔진이 그린 문항(10-24 지적 10): 가운데 쪽과 같은 엔진 그림(svg), HTML 미리보기가 아님.
   await sheet.click('[data-ex-lv="card"]');await sheet.waitForFunction(()=>{const d=[...document.querySelectorAll('.ex-cc .ep-doc')];return d.length===3&&d.every(n=>n.classList.contains('is-engine')&&!n.classList.contains('is-loading')&&n.querySelector('svg'));},null,{timeout:120000});
   // 여백(지적 12): 문항을 누르고 + → 쪽에 「여백 4mm」 빗금. 통째로 넘김(지적 13): 쪽 위 이름표는 없다.

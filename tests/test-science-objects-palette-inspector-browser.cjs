@@ -6,15 +6,15 @@ h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,we
  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  try{
   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);
-  if(!await page.locator('#subject-switch').isVisible())await page.locator('#subject-section > .tool-section-header').click();
-  await page.locator('#subject-switch [data-subject="p"]').click();
-  const part=page.locator('#subject-parts .subject-part',{has:page.locator('.subject-part-header',{hasText:'현대물리학'})});
-  await part.locator('.subject-part-header').click();
-  assert.equal(await part.locator('.subject-part-empty').count(),0,'현대물리학 칸은 "준비 중"이 아니다');
-  for(const id of ['energy_levels','spectrum'])assert.equal(await part.locator(`[data-symbol="${id}"]`).count(),1,`${id} 단추가 팔레트에 있다`);
+  // 10-24 시안 20: 과목 오브젝트는 아래 「오브젝트」 탭 → 오브젝트 창 「도구」 탭(왼쪽 단원 = 과목, 가운데 단원별 묶음)으로 옮겼다.
+  await page.click('#object-window-open');await page.waitForSelector('.ow [data-ow-tab="tool"][aria-selected="true"]');
+  await page.click('.ow-side [data-ow-cat="p"]');
+  const part=page.locator('.ow-grp',{has:page.locator('h3',{hasText:'현대물리학'})});
+  assert.equal(await part.count(),1,'현대물리학 묶음이 있다(준비 중 아님)');
+  for(const id of ['energy_levels','spectrum'])assert.equal(await part.locator(`[data-ow-tool="${id}"]`).count(),1,`${id} 카드가 창에 있다`);
 
-  // 팔레트에서 에너지 준위를 골라 끌어 놓는다.
-  await part.locator('[data-symbol="energy_levels"]').click();
+  // 창에서 에너지 준위를 골라(창이 닫히고 놓을 준비) 끌어 놓는다.
+  await part.locator('[data-ow-tool-pick="energy_levels"]').click();await page.waitForSelector('.ow-back',{state:'hidden'});
   const box=await page.locator('#canvas').boundingBox(),x=box.x+box.width*.4,y=box.y+box.height*.35;
   await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+160,y+120,{steps:6});await page.mouse.up();
   const kind=await page.evaluate(async V=>{const{state}=await import('/js/state.js'+V);const s=state.get();return s.objects.find(o=>s.selectedIds.includes(o.id))?.kind;},V);

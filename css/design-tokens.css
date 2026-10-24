@@ -186,9 +186,9 @@
   --ds-watermark: rgba(255, 255, 255, .045);
   --ds-shadow-float: 0 0 0 1px #30363d, 0 12px 32px rgba(0, 0, 0, .55);
   --ds-shadow-board: 0 0 0 1px #30363d, 0 2px 8px rgba(0, 0, 0, .5);
-  --ds-success: #3fb950;
+  --ds-success: #4f9a6c;   /* 10-24 시안 11 「나」: 진중한 초록(세 앱 공통) */
   --ds-warning: #d29922;
-  --ds-danger: #f85149;
+  --ds-danger: #d06a5f;    /* 10-24 시안 11 「나」: 진중한 빨강(세 앱 공통) */
   --bg-canvas: var(--ds-bench);
   --control-selected-border: transparent;
 

@@ -86,16 +86,19 @@ export function renderExams(root,data,view){
     <h2 class="pv-sub">출제 완료</h2>${done.map(row).join('')||'<p class="pv-empty">아직 출제 완료한 시험지가 없습니다.</p>'}`;
 }
 
+// 머리 한 줄 제목 칸 폭: 글자 수에 맞춰(한글 1em · 그 밖 0.6em) — 「출제 중」 표가 제목 바로 뒤에 붙게. 4~22em.
+const titleEm=t=>Math.round(Math.min(22,Math.max(4,[...String(t||'')].reduce((w,c)=>w+(/[\u3131-\uD79D]/.test(c)?1:.6),0)+1.2))*10)/10;
 // 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5E_hwp로 보내기.
 export function renderExam(root,data,examId,{forms=[],step=3,step2=null,place=null}={}){
   const exam=examById(data,examId);if(!exam){root.innerHTML='<p class="pv-empty">시험지를 찾지 못했습니다.</p>';return;}
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
   const lib=libraryQuestions(data);
-  root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
-      <div class="pv-tools"><button type="button" class="ef-pill" data-ef-step="1" title="틀 · 시험지 속성 바꾸기">틀 · ${E(frameOf(exam,forms).name)}</button><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
-        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="variant" title="문항 순서를 섞은 나형 시험지(HWPX, 번호 다시 매김)와 가·나형 정답 대응표">나형(순서 섞기) 내려받기</button><button type="button" role="menuitem" data-exam-act="print" title="한글 엔진이 그린 쪽 그대로 인쇄 창을 엽니다. PDF는 인쇄 창의 「PDF로 저장」">인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="blueprint" title="이원목적분류표와 정답표를 엑셀 한 파일(두 시트)로">이원목적분류표·정답표(엑셀)</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
+  // 머리 한 줄(10-24 시안 14): [이름 · 출제 중] | [문항 고르기 · 배치·점검 탭] …… [틀 · 이름] [⋯] [5E_hwp로 보내기].
+  root.innerHTML=`<div class="pv-head ef-head1"><div class="pv-title"><input id="exam-title" style="width:${titleEm(exam.title)}em" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
+      <span class="ef-hsep"></span><div class="ef-stepbar">${stepsMarkup(step,{n:items.length,pages:pages.length})}</div>
+      <div class="pv-tools"><button type="button" class="ef-pill" data-ef-framepick title="틀 바꾸기">틀 · ${E(frameOf(exam,forms).name)}</button><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
+        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="variant" title="문항 순서를 섞은 나형 시험지(HWPX, 번호 다시 매김)와 가·나형 정답 대응표">나형(순서 섞기) 내려받기</button><button type="button" role="menuitem" data-exam-act="print" title="한글 엔진이 그린 쪽 그대로 인쇄 창을 엽니다. PDF는 인쇄 창의 「PDF로 저장」">인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="print-a4" title="B4 시험지를 통째로 A4에 줄여 찍습니다(줄바꿈·그림 위치 그대로, 크기 약 82%). PDF는 인쇄 창의 「PDF로 저장」">A4로 줄여 인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="blueprint" title="이원목적분류표와 정답표를 엑셀 한 파일(두 시트)로">이원목적분류표·정답표(엑셀)</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
       <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
-    <div class="ef-stepbar">${stepsMarkup(step)}</div>
     ${step===1?renderStep1(exam,data,forms):step===2&&step2?step2(exam):''}
     ${step===3?renderStep3(exam,data,forms,items,place||{lv:'list',zoom:'page',noGoal:false}):''}`;
   if(step===3)fillPreviews(root,data);
