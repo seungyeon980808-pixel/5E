@@ -306,7 +306,38 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       try{fresh.set(value.id,{key,bytes,height:questionPageMetrics(doc,own).usedHeightMm});}finally{doc.free();}}
     const entry=fresh.get(value.id);return {bytes:entry.bytes,profile:own,height:entry.height,saved:false};
   }
-  async function pageSheets(data,exam,focusId,{alive=()=>true}={}){
+  // 문항 하나를 한글 엔진이 그린 그림(SVG)으로(10-24 지적 10): 시험지 화면의 문항 카드·미리보기가 가운데 조판 쪽과 똑같아 보이게.
+  // 쪽 그리기와 같은 문항 문서(sheetEntry 캐시)를 쓰고, 여백을 뺀 글 자리(본문 폭 × 쓴 높이)만 보이게 viewBox를 자른다.
+  const svgCache=new Map();let svgSeq=0;
+  // 엔진 일(쪽 그리기 · 문항 그림)은 한 번에 하나씩 — 같은 엔진을 동시에 쓰면 쪽 그림이 깨진다(10-24).
+  let engineLock=Promise.resolve();
+  const serial=fn=>{const run=engineLock.then(fn,fn);engineLock=run.catch(()=>{});return run;};
+  const questionSvg=value=>serial(()=>questionSvgNow(value));
+  async function questionSvgNow(value){
+    await ensure();const Document=document().constructor,e=await sheetEntry(Document,value),key=value.id+'|'+e.bytes.length+'|'+e.height;
+    const hit=svgCache.get(value.id);if(hit?.key===key)return hit.out;
+    const d=new Document(e.bytes);
+    try{const p=parse(d.getPageDef(0)),u=v=>v/75,m0=u(p.marginLeft),y0=u(p.marginTop),right=u(p.width-p.marginRight);
+      // 문항 문서가 여러 쪽이면(긴 문항) 쪽마다 실제로 그린 자리(글·표·그림)만 잘라 위아래로 잇는다 — 첫 쪽만 그리면 보기·선지가 빠졌다.
+      // 왼쪽 끝은 실제 글 자리(번호 「1.」은 내어쓰기로 본문 여백보다 왼쪽), 아래 끝은 그린 것의 맨 아래.
+      const parts=[];
+      for(let i=0;i<d.pageCount();i++){
+        const marks=[...(parse(d.getPageTextLayout(i)).runs||[]),...(parse(d.getPageControlLayout(i)).controls||[])].filter(r=>[r.x,r.y,r.h].every(Number.isFinite)&&String(r.text??'x').trim());
+        if(!marks.length)continue;
+        const top=Math.min(y0,...marks.map(r=>r.y)),bottom=Math.max(...marks.map(r=>r.y+r.h));
+        parts.push({i,x:Math.min(m0,...marks.map(r=>r.x)),top,h:bottom-top+2});
+      }
+      if(!parts.length)parts.push({i:0,x:m0,top:y0,h:40});
+      const x=Math.min(...parts.map(q=>q.x))-3,w=right-x+3,H=parts.reduce((a,q)=>a+q.h,0)+6;
+      // SVG 안 이름(id·clipPath 등)을 쪽·문항마다 다르게 — 한 화면의 여러 엔진 SVG(카드 · 쪽)가 같은 이름을 쓰면 서로의 잘라내기를 덮어 쪽 글이 잘린다(10-24).
+      const rename=(svg,pre)=>svg.replace(/\bid="([^"]+)"/g,(m,id)=>`id="${pre}${id}"`).replace(/url\(#([^)]+)\)/g,(m,id)=>`url(#${pre}${id})`).replace(/(xlink:href|href)="#([^"]+)"/g,(m,attr,id)=>`${attr}="#${pre}${id}"`);
+      let at=3;const inner=parts.map(q=>{const piece=rename(d.renderPageSvg(q.i),'q'+(++svgSeq)+'-').replace(/<svg\b([^>]*)>/,(m,attrs)=>`<svg${attrs.replace(/\s(x|y|width|height|viewBox|style)="[^"]*"/g,'')} x="0" y="${at}" width="${w}" height="${q.h}" viewBox="${x} ${q.top} ${w} ${q.h}" overflow="hidden">`);at+=q.h;return piece;}).join('');
+      const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${w} ${H}" preserveAspectRatio="xMidYMin meet" style="display:block;width:100%;height:auto">${inner}</svg>`;
+      const out={svg,width:w,height:H};svgCache.set(value.id,{key,out});return out;
+    }finally{d.free();}
+  }
+  const pageSheets=(...args)=>serial(()=>pageSheetsNow(...args));
+  async function pageSheetsNow(data,exam,focusId,{alive=()=>true}={}){
     const step=async()=>{await pause();if(!alive())throw cancelled();};
     await ensure();const Document=document().constructor,ids=exam?.items?.length?exam.items:[focusId],items=[];
     for(const id of ids){const value=data.questions.find(x=>x.id===id);if(!value)continue;if(items.length)await step();const e=await sheetEntry(Document,value);
@@ -381,5 +412,5 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         runs:parse(d.getPageTextLayout(0)).runs,controls:parse(d.getPageControlLayout(0)).controls};
     }finally{d.free();}
   }
-  return {previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  return {questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

@@ -49,6 +49,14 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   // ③으로: 담은 순서대로 번호.
   await sheet.click('.ef-foot [data-ef-step="3"]');await sheet.waitForSelector('#examd-view .pv-orow');
   assert.equal(await sheet.locator('.pv-orow').count(),3);
+  // ③ 카드 = 한글 엔진이 그린 문항(10-24 지적 10): 가운데 쪽과 같은 엔진 그림(svg), HTML 미리보기가 아님.
+  await sheet.click('[data-ex-lv="card"]');await sheet.waitForFunction(()=>{const d=[...document.querySelectorAll('.ex-cc .ep-doc')];return d.length===3&&d.every(n=>n.classList.contains('is-engine')&&!n.classList.contains('is-loading')&&n.querySelector('svg'));},null,{timeout:120000});
+  // 여백(지적 12): 문항을 누르고 + → 쪽에 「여백 4mm」 빗금. 통째로 넘김(지적 13): 쪽 위 이름표는 없다.
+  await sheet.waitForSelector('#exam-sheet .pv-pg-q',{timeout:120000});await sheet.locator('.pv-pg-q').first().click();await sheet.waitForSelector('.pv-gapbar');
+  await sheet.click('[data-exam-gap="4"]');await sheet.waitForSelector('.pv-gapz',{timeout:120000});
+  assert.match(await sheet.locator('.pv-gapz').first().textContent(),/여백 4mm/);
+  assert.equal(await sheet.locator('.pv-moved').count(),0,'쪽 위 「통째로 넘김」 이름표 없음');
+  await sheet.click('[data-ex-lv="list"]');
   // 태그는 내용이 아니므로 저장해도 문항 상태가 바뀌지 않고, 자료 검사를 통과해 그대로 남는다.
   await sheet.click('[data-ef-step="2"]');await card(2).waitFor();
   assert.equal(await card(2).locator('.ep-tgs').textContent(),'난이도 상#실험#킬러');

@@ -102,5 +102,6 @@ export function renderExam(root,data,examId,{forms=[],step=3,step2=null,place=nu
 }
 
 async function fillPreviews(root,data){
-  for(const n of root.querySelectorAll('[data-preview]')){const q=data.questions.find(x=>x.id===n.dataset.preview);if(!q)continue;n.innerHTML=await previewHtml(q);}
+  // 시험지 화면 카드(.ep-doc)는 한글 엔진 그림으로 앱이 채운다(10-24 지적 10).
+  for(const n of root.querySelectorAll('[data-preview]:not(.ep-doc)')){const q=data.questions.find(x=>x.id===n.dataset.preview);if(!q)continue;n.innerHTML=await previewHtml(q);}
 }

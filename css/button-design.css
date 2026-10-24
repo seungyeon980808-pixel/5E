@@ -27,7 +27,7 @@
   flex:none;
 }
 .image-workflow-hub #exam-send {
-  --ui-button-accent:#dba52b;
+  --ui-button-accent:var(--ds-soft-line,#6ba4f8);
 }
 /* The three view controls share the settings/file/share shell geometry and states. */
 .app-shell-header .canvas-view-controls { gap:inherit; }

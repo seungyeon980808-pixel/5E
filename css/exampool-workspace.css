@@ -7,7 +7,7 @@
 #exampool-workspace button:disabled { opacity:.48; cursor:default; }
 #exampool-workspace :focus-visible { outline:2px solid #397bb5; outline-offset:2px; }
 #exampool-workspace ::selection { background:#cde3f7; color:#152c42; }
-#exampool-workspace .pool-primary { border-color:var(--pool-accent,var(--exam-accent,#dba52b)); font-weight:600; }
+#exampool-workspace .pool-primary { border-color:var(--pool-accent,var(--ds-soft-line,#6ba4f8)); font-weight:600; }
 .pool-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; border-bottom:1px solid var(--border); }
 .pool-header>div:first-child { display:flex; align-items:baseline; gap:12px; flex-shrink:0; }
 .pool-header strong { font-size:18px; }
@@ -20,7 +20,7 @@
 #exampool-workspace .pool-list-item { display:block; width:100%; margin:0 0 6px; text-align:left; padding:9px; }
 .pool-list-item strong, .pool-list-item span { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .pool-list-item span { margin-top:3px; font-size:12px; color:var(--text-secondary); }
-#exampool-workspace .pool-list-item[aria-current="true"] { border-color:var(--exam-accent,#dba52b); background:var(--bg-app); }
+#exampool-workspace .pool-list-item[aria-current="true"] { border-color:var(--ds-soft-line,#6ba4f8); background:var(--bg-app); }
 #exampool-workspace .pool-storage { margin-top:auto; font-size:11px; line-height:1.8; color:var(--text-secondary); }
 /* The document and sources remain light, regardless of the drawing app's theme. */
 .pool-main, .pool-references { --pool-surface:#fff; --pool-border:#d8dfe6; --pool-hover:#edf3f8; --pool-accent:#245b90; --pool-muted:#526273; color:#1e2c3a; color-scheme:light; background:#fff; scrollbar-color:#bcc8d2 #f4f6f8; scrollbar-width:thin; }

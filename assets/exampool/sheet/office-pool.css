@@ -408,7 +408,6 @@
 .pv-pg-q{position:absolute;border:0;padding:0;background:transparent;cursor:pointer;border-radius:2px}
 .pv-pg-q:hover{background:rgba(107,164,248,.08);box-shadow:0 0 0 1px rgba(107,164,248,.45)}
 .pv-pg-q.is-picked{box-shadow:0 0 0 2px var(--ds-soft-line,#6ba4f8);background:rgba(107,164,248,.06)}
-.pv-moved{position:absolute;top:2px;right:2px;padding:1px 6px;border-radius:8px;background:rgba(210,153,34,.9);color:#111;font:600 10px/1.4 -apple-system,"Apple SD Gothic Neo",sans-serif}
 /* 막대는 문항 바로 아래(문항 끝에서 2px), 얇게 20px — 그림자·테두리 없이 */
 .pv-gapbar{position:absolute;z-index:2;display:flex;align-items:center;gap:4px;height:20px;padding:0 6px;border-radius:4px;background:var(--ds-soft-bg,#152137);color:var(--ds-ink,#e6edf3);font:10.5px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;width:auto!important;max-width:100%}
 .pv-gapbar button{width:18px;height:16px;border:0;border-radius:3px;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer;padding:0}
@@ -417,6 +416,11 @@
 .pv-gapbar i{width:1px;height:12px;background:rgba(255,255,255,.25);margin:0 2px}
 .pv-gapbar label{display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap}
 .pv-gapbar input{margin:0;width:11px;height:11px}
+.pv-gapbar{white-space:nowrap}
+.pv-gapbar .pv-gapwhy{color:var(--ds-ink-2,#b1bac4)}
+/* 문항 아래 늘린 여백(10-24 지적 12): 옅은 빗금 + 위 점선, 오른쪽 아래 「여백 Nmm」 */
+.pv-gapz{position:absolute;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(59,130,246,.10) 0 6px,transparent 6px 12px);border-top:1px dashed rgba(59,130,246,.55);display:flex;align-items:flex-end;justify-content:flex-end;overflow:hidden}
+.pv-gapz span{font:10px/1.2 -apple-system,"Apple SD Gothic Neo",sans-serif;color:#2f6fd6;padding:0 4px 2px}
 @media (max-width:1100px){.pv-exam-body{grid-template-columns:minmax(0,1fr)!important}}
 
 /* ===== 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023 값 그대로): 기출 + 내 문항 한 목록 · 칩 · 문항 보기 창 ===== */

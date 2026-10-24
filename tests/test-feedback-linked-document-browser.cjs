@@ -23,7 +23,7 @@ h.withServer(async origin=>{
    for(let revision=0;revision<2;revision++) {
     const linked=await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return state.get().pages.find(p=>p.id===state.get().activePageId).meta.examLink;});assert.ok(linked);
     assert.ok(await page.locator('.page-tab.is-exam-linked.is-active').isVisible());
-    assert.equal(await page.locator('[data-source-apply]').evaluate(n=>getComputedStyle(n).borderTopColor),'rgb(219, 165, 43)','linked editing uses the yellow outline');
+    assert.equal(await page.locator('[data-source-apply]').evaluate(n=>getComputedStyle(n).borderTopColor),'rgb(107, 164, 248)','linked editing uses the ds blue outline (노란 시그니처 폐지, 10-24)');
     await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');state.update(s=>s.objects[0].strokeWidth+=.1);});
     await page.locator('[data-source-apply]').click();await h.idle(page);
     assert.equal((await h.pictures(page)).length,1,'revisions replace the linked picture');

@@ -1,7 +1,7 @@
 // 5E_hwp 양쪽 인스펙터(10-23 다시 하기, 시안 5e-design-mockups/hwp-inspector.html 그대로).
 // 오른쪽 340px = 한글에 있는 기능: 글자·문단 / 표 / 그림 / 쪽 네 칸. 누른 것(글·표·그림·빈 곳)에 따라 저절로 바뀐다.
 //   묶음(소제목 + 줄) · 줄 = 이름(78px) + 값 칸(−/값/+)·단추·고르기 · 맨 아래 늘 보이는 문자표·조판 부호.
-// 왼쪽 288px = 5E에서 만든 기능: 새 시험지 · 만드는 순서 · 모드(문항·학습지·판짜기) · 내용 넣기 · 자동 다듬기 · 모드 도구 · 문서의 그림 · 점검·양식 저장.
+// 왼쪽 288px = 5E에서 만든 기능: 새 시험지 · 모드(문항·학습지·판짜기) · 내용 넣기 · 자동 다듬기 · 모드 도구 · 문서의 그림 · 점검·양식 저장.
 // 값은 엔진에서 읽어 보이고, 바꿀 때는 단축키와 같은 명령(ctx.command)이나 엔진 쓰기(bridge.transaction 안 — 되돌리기 한 번)를 쓴다.
 import { applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitTableToColumn, fitCellPicture, renumberQuestions } from './rhwp-exam-layout-tools.js';
@@ -107,11 +107,10 @@ export function inspectorMarkup() {
 // 왼쪽 5E 기능 칸
 export function leftToolsMarkup() {
   const tiles = list => `<div class="ei-tiles">${list.map(([key, label, title, ic]) => `<button type="button" class="ei-cb" data-el-act="${key}" title="${esc(title)}">${icon(ic)}<span>${label}</span></button>`).join('')}</div>`;
-  return `<div class="ei-top el-top"><button type="button" class="el-new" data-el-act="new">${icon('plus')}새 시험지</button><button type="button" class="el-tour" data-el-act="tour" aria-expanded="false">▶ 만드는 순서 보기</button>
+  return `<div class="ei-top el-top"><button type="button" class="el-new" data-el-act="new">${icon('plus')}새 시험지</button>
       <div class="ei-seg el-seg" role="tablist">${MODES.map(([k, l]) => `<button type="button" role="tab" data-exam-ltab="${k}" aria-pressed="false">${l}</button>`).join('')}</div>
       <p class="el-note" data-el-note></p></div>
     <div class="ei-body el-body">
-      <div class="el-guide-slot"></div>
       ${sec('내용 넣기', '밖에서 가져오기', tiles([['md', '마크다운', '고른 마크다운을 한글 문서로 (팔레트)', 'md'], ['excel', '문항 엑셀', '엑셀 표에 채워 문항 만들기 (팔레트)', 'grid'], ['form', '양식 채우기', '양식 빈칸을 채워 새 문서로 (팔레트)', 'form'], ['photo', '사진', '그림 파일을 커서 자리에 (팔레트 사진)', 'photo']]) + '<button type="button" class="el-more" data-el-act="palette">조판 팔레트로 가기 ↓</button>')}
       ${sec('자동 다듬기', '고른 곳에 적용', tiles([['fit', '자간 맞춤', '줄 끝에서 단어가 잘리지 않게 — 넘친 한두 글자를 자간으로 줄 안에 (팔레트 자간 맞춤)', 'fit'], ['oneline', '한 줄에 맞추기', '고른 문단을 한 줄에 들어가게 자간으로 (팔레트 한 줄 맞춤)', 'oneline'], ['chem', '화학식 첨자', 'H2O → H₂O 숫자를 아래 첨자로(문서 전체)', 'sub'], ['renum', '문항 번호', '문항 번호를 1부터 순서대로 다시 매기기', 'num']]))}
       <div class="ei-sec el-figs-slot"></div>
@@ -306,7 +305,7 @@ export function installInspector(root, { ctx, getBridge, run, studio, onPane }) 
 }
 
 // 왼쪽 5E 기능 칸 동작
-export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, onMode, guide, figures }) {
+export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, onMode, figures }) {
   let mode = 'item';
   const tiles = root.querySelector('[data-el-modetools]');
   function render() {
@@ -317,11 +316,9 @@ export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, 
     root.querySelector('[data-el-modetitle]').innerHTML = `${MODE_TOOLS[mode]}<em>지금 모드</em>`;
     onMode?.(mode);
   }
-  if (guide) root.querySelector('.el-guide-slot').append(guide);
   if (figures) root.querySelector('.el-figs-slot').append(...figures);
   const ACT = {
     new: () => actions.newDocument(),
-    tour: button => { const g = guide || root.querySelector('.exam-guide'); if (!g) return; g.open = !g.open; button.setAttribute('aria-expanded', String(g.open)); button.textContent = g.open ? '▼ 만드는 순서 접기' : '▶ 만드는 순서 보기'; },
     md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => palette?.tool('photo'), palette: () => {},
     fit: () => palette?.tool('spacing_fit'), oneline: () => palette?.tool('spacing_fit'),
     chem: () => ctx.withBridge(b => { const n = applyScienceScripts(b); ctx.message(n ? `첨자 ${n}곳을 입혔습니다(되돌리기 ⌘Z).` : '첨자를 입힐 화학식·단위를 찾지 못했습니다.'); }),

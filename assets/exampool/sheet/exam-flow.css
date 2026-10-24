@@ -248,3 +248,12 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-aib b{font-size:12.5px;font-weight:500;display:block;color:var(--ds-ink)}.ex-aib small{color:var(--ds-ink-3);font-size:11.5px}
 .ex-aib .go2{margin-left:auto;color:var(--ds-ink-3)}
 @media (max-width:1100px){.ex-s3{grid-template-columns:1fr;height:auto}.ex-desk{container-type:normal;min-height:600px}.ex-zoom-page .pv-pg{width:min(100%,640px)}}
+/* 한글 엔진이 그린 문항 카드(10-24 지적 10): 그림이 카드 폭에 맞음 — HTML 미리보기의 축소(zoom)를 쓰지 않는다 */
+.ep-doc.is-engine{zoom:1!important;padding:6px 6px 4px;width:auto!important;min-height:0}
+.ep-doc.is-engine svg{display:block;width:100%;height:auto}
+.ep-doc.is-engine.is-loading{min-height:120px;background:linear-gradient(90deg,#f4f5f7 25%,#eceef1 50%,#f4f5f7 75%) 0 0/200% 100%;animation:ep-shimmer 1.2s linear infinite}
+@keyframes ep-shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ep-doc.is-engine.is-loading{animation:none}}
+.ep-fail{margin:8px;color:#7d8590;font:12px/1.4 -apple-system,"Apple SD Gothic Neo",sans-serif}
+.ex-tip .ep-doc.is-engine{padding:10px}
+.ex-cm .ex-no{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-right:6px;padding:0 5px;border-radius:10px;background:var(--ds-field-raise);color:var(--ds-ink);font-size:11.5px;font-weight:600;vertical-align:1px}

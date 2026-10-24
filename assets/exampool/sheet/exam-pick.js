@@ -4,7 +4,7 @@
 import { store } from './card-shared.js';
 import { past, loadPast, examLabel, loadThumbs } from './library-view.js';
 import { libraryQuestions } from './exams.js';
-import { questionTitle, previewHtml } from './views.js';
+import { questionTitle } from './views.js';
 import { goalOf } from './exam-flow.js';
 
 const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -104,7 +104,6 @@ function cart(exam, data, busy) {
 }
 // 그린 뒤: 내 문항 미리보기 · 기출 그림 채우기.
 export function fillStep2(root, data) {
-  root.querySelectorAll('.ep-doc[data-preview]').forEach(async n => { const q = data.questions.find(x => x.id === n.dataset.preview); if (q) n.innerHTML = await previewHtml(q); });
   loadThumbs(root);
 }
 

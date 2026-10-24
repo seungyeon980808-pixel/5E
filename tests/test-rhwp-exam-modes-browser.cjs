@@ -488,14 +488,8 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     assert.deepEqual(plain5.map(t => t.slice(2)).sort(), ['가', '나', '다', '라', '마']);
     const tableAnswer = tableVariant.mapping.find(m => m.original === 1).answer;
     assert.equal(plain5.find(t => t[0] === tableAnswer).slice(2), '나', JSON.stringify(tableVariant));
-    // 38) 만드는 순서: 펼쳐서 단계를 누르면 그 묶음이 열리고 해당 단추가 밝혀진다. 학습지 순서로 바꿀 수 있다.
-    await page.locator('.exam-left-tools [data-el-act="tour"]').click();
-    await page.locator('[data-exam-guide="2"]').click();
-    assert.equal(await page.locator('.exam-left-tools [data-exam-ltab="item"]').getAttribute('aria-pressed'), 'true');
-    assert.equal(await button(page, '커서가 있는 문항 끝에 「[정답]').evaluate(el => el.classList.contains('is-hint')), true);
-    await page.locator('[data-exam-guide-kind="sheet"]').click(); await page.locator('[data-exam-guide="2"]').click();
-    assert.equal(await page.locator('.exam-left-tools [data-exam-ltab="sheet"]').getAttribute('aria-pressed'), 'true');
-    assert.equal(await button(page, '문서의 굵은 낱말을').evaluate(el => el.classList.contains('is-hint')), true);
+    // 38) 「만드는 순서」는 없앴다(10-24 사용자 결정) — 단추·안내 칸이 다시 생기지 않는다.
+    assert.equal(await page.locator('.exam-left-tools [data-el-act="tour"], .exam-guide, [data-exam-guide]').count(), 0, '만드는 순서가 없어야 함');
     // 39) 점검 「수식 크기 맞추기」: 본문 수식은 그 문단 글자 크기, 표 칸 수식은 본문 크기로.
     await inPage(page, `reset('1. 식은');for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000}));
       d.insertEquation(0,0,d.getParagraphLength(0,0),'a over b',1600,0);const N=await import('/js/hwp-palette/native.js');

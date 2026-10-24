@@ -645,7 +645,7 @@ export function initRhwpExamWorkspace(state, services) {
     if(!editing || !panel.hidden || !state.get().objects.length || !page?.meta?.examLink || !bounds)return;
     const fill=document.createElementNS('http://www.w3.org/2000/svg','rect');fill.id='exam-source-crop-fill';for(const[k,v]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'#fff','pointer-events':'none'}))fill.setAttribute(k,v);canvas.insertBefore(fill,canvas.querySelector('#scene'));
     const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    for(const [key,value]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'none',stroke:'#dba52b','stroke-width':1.5,'stroke-dasharray':'6 4','vector-effect':'non-scaling-stroke'}))rect.setAttribute(key,value);
+    for(const [key,value]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'none',stroke:'#6ba4f8','stroke-width':1.5,'stroke-dasharray':'6 4','vector-effect':'non-scaling-stroke'}))rect.setAttribute(key,value);
     group.append(rect);
   }
   function figureBounds(figure,ref) {

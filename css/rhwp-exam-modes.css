@@ -116,19 +116,6 @@
 #rhwp-exam-workspace .exam-fgroup.is-over-start { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
 #rhwp-exam-workspace .exam-fgroup.is-over-start.is-over-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
 
-/* 만드는 순서(왼쪽 칸 맨 위, 접힘) — 탭 묶음(.exam-ftabs)과 같은 토큰 */
-#rhwp-exam-workspace .exam-guide { margin: 6px 10px 4px; border-radius: 8px; background: var(--ds-panel, #161b22); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); font-size: 12px; color: var(--ds-ink-2, #b1bac4); }
-#rhwp-exam-workspace[data-tool-mode="basic"] .exam-guide { display: none; }
-#rhwp-exam-workspace .exam-guide summary { padding: 6px 10px; cursor: pointer; color: var(--ds-ink-2, #b1bac4); font-weight: 500; list-style-position: inside; border-radius: 8px; }
-#rhwp-exam-workspace .exam-guide summary:hover { color: var(--ds-ink, #e6edf3); }
-#rhwp-exam-workspace .exam-guide-kinds { display: flex; gap: 2px; margin: 0 8px 4px; padding: 2px; border-radius: 8px; background: var(--ds-bar, #0d1117); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); }
-#rhwp-exam-workspace .exam-guide-kinds button { flex: 1; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-3, #7d8590); font: inherit; font-weight: 500; cursor: pointer; }
-#rhwp-exam-workspace .exam-guide-kinds button[aria-pressed="true"] { background: var(--ds-selected, #1f2a3a); color: var(--ds-ink, #e6edf3); }
-#rhwp-exam-workspace .exam-guide ol { margin: 0; padding: 0 6px 6px; list-style: none; counter-reset: step; }
-#rhwp-exam-workspace .exam-guide li button { display: flex; gap: 6px; align-items: baseline; width: 100%; padding: 4px 6px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); font: inherit; text-align: left; cursor: pointer; }
-#rhwp-exam-workspace .exam-guide li button::before { counter-increment: step; content: counter(step); color: var(--ds-ink-3, #7d8590); min-width: 10px; }
-#rhwp-exam-workspace .exam-guide li button:hover { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); }
-#rhwp-exam-workspace .exam-guide small { color: var(--ds-ink-3, #7d8590); font-size: 11px; min-width: 52px; }
 #rhwp-exam-workspace .is-hint { box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); animation: exam-hint 1.6s ease; }
 @keyframes exam-hint { 0%, 60% { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); } }
 @media (prefers-reduced-motion: reduce) { #rhwp-exam-workspace .is-hint { animation: none; } }
@@ -212,8 +199,6 @@ body { --hwp-shared-left: var(--ds-panel-left, 160px); }
 #rhwp-exam-workspace .exam-sidebar:has(.exam-left-tools:not([hidden])) > .exam-header { padding: 12px 16px 0; }
 #rhwp-exam-workspace .exam-left-tools { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 #rhwp-exam-workspace .exam-sidebar .el-new { width: 100%; height: 36px; min-height: 0; border-radius: 8px; background: var(--ds-soft-bg, #152137); border: 1px solid var(--ds-soft-line, #6ba4f8); color: var(--ds-ink, #e6edf3); cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13.5px; }
-#rhwp-exam-workspace .exam-sidebar .el-tour { display: block; margin: 8px auto 0; height: auto; min-height: 0; background: none; border: 0; color: var(--ds-ink-3, #7d8590); font-size: 12px; cursor: pointer; }
-#rhwp-exam-workspace .exam-sidebar .el-tour:hover { color: var(--ds-ink-2, #b1bac4); }
 #rhwp-exam-workspace .el-note { color: var(--ds-ink-3, #7d8590); font-size: 12px; margin: 8px 0 0; }
 #rhwp-exam-workspace .el-body { padding-top: 0; }
 #rhwp-exam-workspace .ei-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
@@ -225,9 +210,6 @@ body { --hwp-shared-left: var(--ds-panel-left, 160px); }
 #rhwp-exam-workspace .exam-sidebar .el-more { display: block; margin: 8px 0 0; height: auto; min-height: 0; padding: 0; background: none; border: 0; color: var(--ds-ink-3, #7d8590); font-size: 12px; cursor: pointer; }
 #rhwp-exam-workspace .exam-sidebar .el-more:hover { color: var(--ds-ink-2, #b1bac4); }
 #rhwp-exam-workspace .el-outline-slot:empty, #rhwp-exam-workspace .el-outline-slot:has(> .exam-outline[hidden]) { display: none; }
-#rhwp-exam-workspace .el-guide-slot .exam-guide { margin: 10px 0 0; }
-#rhwp-exam-workspace .el-guide-slot .exam-guide > summary { display: none; }
-#rhwp-exam-workspace .el-guide-slot .exam-guide:not([open]) { display: none; }
 #rhwp-exam-workspace .exam-sidebar .ei-seg button { height: auto; min-height: 0; background: none; border: 0; padding: 7px 0; border-radius: 6px; color: var(--ds-ink-2, #b1bac4); font-size: 13px; }
 #rhwp-exam-workspace .exam-sidebar .ei-seg button[aria-pressed="true"] { background: var(--ds-soft-bg, #152137); color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-soft-line, #6ba4f8); }
 #rhwp-exam-workspace .exam-sidebar .ei-ghost { height: 36px; min-height: 0; border: 1px solid var(--ds-line-strong, #30363d); background: none; border-radius: 6px; color: var(--ds-ink-2, #b1bac4); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; }

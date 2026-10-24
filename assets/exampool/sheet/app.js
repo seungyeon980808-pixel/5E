@@ -246,7 +246,7 @@ function renderView(){
     // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
     if(ex&&view.examStepFor!==ex.id){view.examStepFor=ex.id;view.examStep=ex.items.length?3:1;}
     const keep=$('#examd-view .ep-grid')?.scrollTop||0;
-    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy}),place:placeState(view)});if((view.examStep||3)===3)void fillExamSheet(ex);if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
+    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy}),place:placeState(view)});if((view.examStep||3)===3)void fillExamSheet(ex);fillEngineCards($('#examd-view'));if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
@@ -746,6 +746,10 @@ $('#examd-view').addEventListener('change',e=>{const exam=examNow(),t=e.target;i
   if(t.matches('[data-ef-subject]')){goalEdit(exam,g=>{g.subject=t.value;});return;}
   const k=t.dataset.efGoal;if(k){const v=Math.round(Number(t.value));if(!(Number.isFinite(v)&&v>=0&&v<=(k==='total'?1000:k==='time'?600:200))){status('0 이상의 정수로 적어 주세요.',true);renderView();return;}goalEdit(exam,g=>{g[k]=v;});}
 });
+// 시험지 화면 문항 카드 · 미리보기 = 한글 엔진이 그린 문항(10-24 지적 10, 가운데 조판 쪽과 같은 모양). 한 번에 하나씩 줄 세워 그린다.
+let engineQueue=Promise.resolve();
+function engineCard(node,q){node.classList.add('is-engine','is-loading');engineQueue=engineQueue.then(async()=>{if(!node.isConnected)return;try{typesetter||=makeTypesetter();const r=await typesetter.questionSvg(q);if(node.isConnected)node.innerHTML=r.svg;}catch(e){if(node.isConnected)node.innerHTML=`<p class="ep-fail">미리보기를 그리지 못했습니다: ${E(e.message)}</p>`;}finally{node.classList.remove('is-loading');}});return engineQueue;}
+function fillEngineCards(root){for(const n of root.querySelectorAll('.ep-doc[data-preview]')){const q=data.questions.find(x=>x.id===n.dataset.preview);if(q)engineCard(n,q);}}
 // ② 문항 고르기(exam-pick.js): 보관함 거르기 · 담기 · 분류·태그 창 · 여러 개 고르기.
 function pickCart(){const exam=view.name==='exam'&&view.examStep===2&&examNow();if(exam)refreshCart($('#examd-view'),exam,data,typesetForms,pastBusy);}
 const pickList=()=>{const exam=examNow();return exam?poolEntries(data,exam,{...pickState(view),limit:1e9}):[];};
@@ -804,9 +808,9 @@ $('#examd-view').addEventListener('change',e=>{if(!e.target.matches('[data-ex-no
 {let tip=null;
   $('#examd-view').addEventListener('mouseover',async e=>{const r=e.target.closest('[data-ex-tip]');if(!r||(tip&&tip.dataset.id===r.dataset.exTip))return;const q=data.questions.find(x=>x.id===r.dataset.exTip);if(!q)return;
     tip?.remove();tip=document.createElement('div');tip.className='ex-tip';tip.dataset.id=q.id;tip.innerHTML='<div class="ep-doc"></div>';document.body.append(tip);
-    const doc=tip.firstElementChild;doc.innerHTML=await previewHtml(q);if(!tip?.isConnected||tip.dataset.id!==q.id)return;
-    // 문항 전체: 화면보다 길면 줄여서 전체가 보이게.
-    const b=r.getBoundingClientRect(),avail=innerHeight-24;doc.style.zoom='.62';let h=tip.offsetHeight;if(h>avail){doc.style.zoom=String(.62*avail/h);h=tip.offsetHeight;}
+    const doc=tip.firstElementChild;await engineCard(doc,q);if(!tip?.isConnected||tip.dataset.id!==q.id)return;
+    // 문항 전체(한글 엔진 그림): 폭 440px, 화면보다 길면 줄여서 전체가 보이게.
+    const b=r.getBoundingClientRect(),avail=innerHeight-24;tip.style.width='440px';let h=tip.offsetHeight;if(h>avail){tip.style.width=Math.max(220,440*avail/h)+'px';h=tip.offsetHeight;}
     tip.style.left=Math.min(innerWidth-tip.offsetWidth-12,b.right+12)+'px';tip.style.top=Math.max(12,Math.min(innerHeight-h-12,b.top-20))+'px';tip.classList.add('on');});
   $('#examd-view').addEventListener('mouseout',e=>{const r=e.target.closest('[data-ex-tip]');if(r&&!r.contains(e.relatedTarget)){tip?.remove();tip=null;}});
   document.addEventListener('dragstart',()=>{tip?.remove();tip=null;},true);}
@@ -838,7 +842,11 @@ async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet')
   // 배치 점검은 실제로 그린 쪽(한글 조판 높이) 기준으로 다시 쓴다(시험지 화면 처음 그릴 때는 어림 높이).
   {const c=document.querySelector('#exam-check');if(c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(appView()),view);const info=document.querySelector('#exam-sheet-info');if(info)info.textContent=`${view.pages.length}쪽 · 한글 조판 그대로 · ${view.paper} ${view.columns}단${exam.formId?' · 학교 양식 위 모양은 보낼 때 확인':''}`;}
   n.innerHTML=view.pages.map((p,i)=>`<figure class="pv-pg" style="aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}${(p.boxes||[]).map(b=>{const no=exam.items.indexOf(b.id)+1,picked=b.id===examPick,after=Number(exam.after?.[b.id])||0;
-    return `<button type="button" class="pv-pg-q${picked?' is-picked':''}" data-exam-pick="${E(b.id)}" aria-label="${no}번 문항 고르기" style="left:${pct(b.x)};top:${pct(b.y)};width:${pct(b.w)};height:${pct(b.h)}">${moved.has(b.id)&&b.first!==false?'<span class="pv-moved">통째로 넘김</span>':''}</button>${picked&&b.last!==false?`<div class="pv-gapbar" style="left:${pct(b.x)};top:calc(${pct(b.y+b.h)} + 2px);width:${pct(b.w)}" role="group" aria-label="${no}번 문항 아래 여백"><button type="button" data-exam-gap="-4" aria-label="여백 4mm 줄이기" ${after<=0?'disabled':''}>−</button><span>여백 ${after}mm</span><button type="button" data-exam-gap="4" aria-label="여백 4mm 늘리기">+</button><i></i><label><input type="checkbox" data-exam-break ${exam.breaks?.[b.id]?'checked':''}>다음 단에서 시작</label></div>`:''}`;}).join('')}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`).join('');}
+    // 여백(10-24 지적 12): 문항 아래 늘린 여백 자리를 빗금으로 — 아래에 밀려날 문항이 없어도 보인다. 쪽 높이(px)는 96dpi, 1mm = 96/25.4px.
+    const gapH=b.last!==false&&after>0?after*96/25.4/p.height:0,gap=gapH?`<div class="pv-gapz" style="left:${pct(b.x)};top:${pct(b.y+b.h)};width:${pct(b.w)};height:${pct(gapH)}" aria-hidden="true"><span>여백 ${after}mm</span></div>`:'';
+    // 통째로 넘김(10-24 지적 13): 쪽 위 이름표 대신, 문항을 누르면 나오는 아래 막대에 까닭과 함께.
+    const why=moved.has(b.id)?'<i></i><span class="pv-gapwhy" title="앞 단에 자리가 모자라 문항을 나누지 않고 통째로 다음 단·쪽으로 옮겼습니다">↪ 다음 단으로 옮김</span>':'';
+    return `<button type="button" class="pv-pg-q${picked?' is-picked':''}" data-exam-pick="${E(b.id)}" aria-label="${no}번 문항 고르기${moved.has(b.id)&&b.first!==false?' · 자리가 모자라 다음 단으로 옮김':''}" style="left:${pct(b.x)};top:${pct(b.y)};width:${pct(b.w)};height:${pct(b.h)}"></button>${gap}${picked&&b.last!==false?`<div class="pv-gapbar" style="${b.x+b.w/2>.5?`right:${pct(1-b.x-b.w)}`:`left:${pct(b.x)}`};top:calc(${pct(b.y+b.h+gapH)} + 2px)" role="group" aria-label="${no}번 문항 아래 여백"><button type="button" data-exam-gap="-4" aria-label="여백 4mm 줄이기" ${after<=0?'disabled':''}>−</button><span>여백 ${after}mm</span><button type="button" data-exam-gap="4" aria-label="여백 4mm 늘리기">+</button><i></i><label><input type="checkbox" data-exam-break ${exam.breaks?.[b.id]?'checked':''}>다음 단에서 시작</label>${why}</div>`:''}`;}).join('')}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`).join('');}
 document.addEventListener('click',e=>{const pick=e.target.closest('[data-exam-pick]');if(!pick)return;examPick=pick.dataset.examPick===examPick?null:pick.dataset.examPick;
   const exam=view.examId&&examById(data,view.examId);if(exam)fillExamSheet(exam);});
 document.addEventListener('click',e=>{const g=e.target.closest('[data-exam-gap]');if(!g||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
