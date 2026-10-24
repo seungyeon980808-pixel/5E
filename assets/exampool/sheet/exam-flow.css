@@ -1,0 +1,91 @@
+/* 시험지 만들기 세 단계(10-24 확정, 시안 5e-design-mockups/exam-flow-1024-v4.html 값 그대로). exam-flow.js의 ef-* 마크업. */
+#examd-view{--ef-ok:#3fb950;--ef-warn:#d29922;--ef-bad:#f85149;--ef-go:#9cc3ff;--ef-star:#e3b341}
+.ef-stepbar{display:flex;align-items:center;gap:14px;min-width:0}
+.ef-steps{display:flex;gap:2px;padding:2px;border-radius:10px;background:var(--ds-field-raise);flex:none}
+.ef-steps button{height:32px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.ef-steps button:hover{color:var(--ds-ink)}
+.ef-steps button b{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:10px;background:var(--ds-line-strong);font-size:11px;color:var(--ds-ink);font-weight:600}
+.ef-steps button[aria-selected=true]{background:var(--ds-raise);color:var(--ds-ink);box-shadow:0 0 0 1px var(--ds-line-strong)}
+.ef-steps button[aria-selected=true] b{background:var(--ds-soft-line);color:#071022}
+.ef-steps button.done b{background:#1f6f43}
+.ef-note{flex:1 1 200px;min-width:0;color:var(--ds-ink-3);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ef-pill{height:24px;padding:0 9px;border:0;border-radius:12px;background:var(--ds-field-raise);color:var(--ds-ink-2);font:inherit;font-size:var(--ds-text-meta);cursor:pointer;white-space:nowrap}
+.ef-pill:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.ef-work{display:grid;gap:8px;min-height:560px;height:calc(100vh - 190px)}
+.ef-s1{grid-template-columns:minmax(0,1fr) 380px minmax(300px,440px)}
+.ef-pane{background:var(--ds-panel);border-radius:12px;box-shadow:0 0 0 1px var(--ds-line);overflow:hidden;display:flex;flex-direction:column;min-height:0;min-width:0}
+.ef-ph{height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 8px 0 16px;border-bottom:1px solid var(--ds-line)}
+.ef-ph b{font-size:15px;font-weight:600;white-space:nowrap}
+.ef-ph small{color:var(--ds-ink-3);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ef-body{flex:1;overflow:auto;padding:14px 16px}
+.ef-foot{flex:none;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 16px;border-top:1px solid var(--ds-line)}
+.ef-foot .mu{font-size:12px}
+.ef-work .sp,.ef-reg .sp,.ef-from .sp{flex:1}
+.mu{color:var(--ds-ink-3)}
+.ef-gh{display:flex;align-items:center;gap:6px;font-size:var(--ds-text-meta);color:var(--ds-ink-3);margin:16px 0 8px;letter-spacing:.02em}
+.ef-gh:first-child{margin-top:0}.ef-gh em{margin-left:auto;font-style:normal}
+.ef-hint{color:var(--ds-ink-3);font-size:12px;margin:8px 0 0;line-height:1.5}
+.ef-btn{height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+.ef-btn:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.ef-btn.go{height:34px;padding:0 14px;font-size:13px;background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);color:var(--ds-ink)}
+.ef-btn.ic{width:28px;padding:0;justify-content:center}
+.ef-btn:disabled{opacity:.45;cursor:default}
+/* ① 틀 */
+.ef-frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px}
+.ef-fr{height:auto;min-height:0;border-radius:10px;background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line-strong);padding:10px;cursor:pointer;text-align:left;border:0;display:flex;align-items:flex-start;gap:12px;color:var(--ds-ink);font:inherit}
+.ef-fr:hover{box-shadow:0 0 0 1px #3d4550}
+.ef-fr[aria-pressed=true]{box-shadow:0 0 0 2px var(--ds-soft-line);background:var(--ds-soft-bg)}
+.ef-fr svg{width:68px;flex:none;height:auto;background:#fff;border-radius:3px;display:block;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+.ef-fr .tx{display:flex;flex-direction:column;gap:4px;min-width:0;padding-top:2px}
+.ef-fr b{font-size:13px;color:var(--ds-ink)}
+.ef-fr .tx>span{color:var(--ds-ink-3);font-size:11.5px;line-height:1.4}
+.ef-fr .tx>.dv{color:var(--ds-ink-2);font-size:11px;background:var(--ds-field-raise);border-radius:5px;padding:2px 6px;align-self:flex-start}
+.ef-fr .mine{font-size:10.5px;color:var(--ef-go);border:1px solid #2b4a7a;border-radius:4px;padding:0 5px;line-height:16px;margin-left:6px;font-weight:400;vertical-align:1px}
+.ef-fr.add{align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:12px;color:var(--ds-ink-3);background:none;box-shadow:none;border:1px dashed var(--ds-line-strong)}
+.ef-fr.add b{font-weight:500;color:var(--ds-ink-2)}.ef-fr.add span{font-size:11.5px}
+/* 값 칸(조판 설정과 같은 문법) */
+.ef-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.ef-row2>*{min-width:0}
+.ef-f{height:32px;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:6px;background:var(--ds-field);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12.5px;margin-bottom:6px;min-width:0}
+.ef-row2 .ef-f{margin-bottom:0}
+.ef-f .n{color:var(--ds-ink-3);white-space:nowrap}
+.ef-f input,.ef-f select{flex:1;min-width:0;border:0;background:transparent;text-align:right;outline:none;font:inherit;color:var(--ds-ink);font-variant-numeric:tabular-nums}
+.ef-f select{appearance:none;-webkit-appearance:none;cursor:pointer}
+.ef-f .u{color:var(--ds-ink-3);font-size:11px}
+.ef-f.off .mu{flex:1;text-align:right;font-size:12px}
+.ef-tiny{height:22px;padding:0 7px;border:0;border-radius:5px;background:var(--ds-field-raise);color:var(--ds-ink-2);font:inherit;font-size:11.5px;cursor:pointer;flex:none}
+.ef-tiny:hover{color:var(--ds-ink);background:var(--ds-hover)}
+.ef-from{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px rgba(107,164,248,.35);font-size:12.5px;color:var(--ds-ink-2);margin-bottom:4px}
+.ef-from b{color:var(--ds-ink);font-weight:500}
+.ef-chips{display:flex;flex-wrap:wrap;gap:4px}
+.ef-chip{height:28px;padding:0 11px;border-radius:14px;border:1px solid var(--ds-line-strong);background:none;color:var(--ds-ink-2);font:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.ef-chip:hover{background:var(--ds-hover)}
+.ef-chip.on{background:var(--ds-soft-bg);border-color:var(--ds-soft-line);color:var(--ds-ink)}
+.ef-tog{width:100%;height:32px;min-height:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px;border:0;border-radius:6px;background:var(--ds-field);box-shadow:inset 0 0 0 1px var(--ds-line);font:inherit;font-size:12.5px;color:var(--ds-ink-2);cursor:pointer;margin-bottom:6px;text-align:left}
+.sw{width:28px;height:16px;border-radius:8px;background:var(--ds-line-strong);position:relative;flex:none}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--ds-ink-2)}
+.ef-tog.on .sw{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}.ef-tog.on .sw::after{left:14px;background:var(--ds-ink)}
+details.ef-more{margin-top:12px;border-top:1px solid var(--ds-line);padding-top:10px}
+details.ef-more summary{cursor:pointer;color:var(--ds-ink-2);font-size:12.5px;list-style:none}
+details.ef-more summary::-webkit-details-marker{display:none}
+.ef-bigprev{flex:1;display:grid;place-items:center;background:#1b2028;overflow:auto;padding:16px}
+.ef-bigprev svg{width:min(100%,430px);height:auto;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+/* 내 틀 등록 창 */
+.ef-back{position:fixed;inset:0;z-index:60;background:rgba(1,4,9,.62);display:flex;align-items:center;justify-content:center;padding:24px}
+.ef-reg{width:min(880px,100%);max-height:calc(100vh - 48px);background:var(--ds-panel);color:var(--ds-ink);border-radius:12px;box-shadow:var(--ds-shadow-float);display:flex;flex-direction:column;overflow:hidden;font-size:13px}
+.ef-rb{flex:1;overflow:auto;display:grid;grid-template-columns:300px 1fr;gap:18px;padding:18px}
+.ef-rb>*{min-width:0}.ef-rb.one{grid-template-columns:1fr}
+.ef-seg{display:flex;gap:2px;padding:2px;border-radius:8px;background:var(--ds-field-raise);max-width:360px}
+.ef-seg button{flex:1;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:12.5px;cursor:pointer}
+.ef-seg button[aria-pressed=true]{background:var(--ds-raise);color:var(--ds-ink);box-shadow:0 0 0 1px var(--ds-line-strong)}
+.ef-drop{margin-top:14px;border:1.5px dashed var(--ds-line-strong);border-radius:10px;padding:34px 16px;text-align:center;color:var(--ds-ink-2);display:flex;flex-direction:column;align-items:center;gap:10px}
+.ef-drop b{font-size:14px;color:var(--ds-ink)}
+.ef-regprev{background:#1b2028;border-radius:8px;padding:14px;display:grid;place-items:center}
+.ef-regprev svg{width:100%;height:auto;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.45)}
+.ef-readout{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px}
+.ef-readout td{padding:6px 0;border-bottom:1px solid var(--ds-line);vertical-align:top}
+.ef-readout td:first-child{color:var(--ds-ink-3);width:96px}
+.ef-readout .ok{color:var(--ef-ok)}
+.ef-store{padding:10px 12px;border-radius:8px;background:var(--ds-field-raise);font-size:12px;color:var(--ds-ink-2);line-height:1.55;margin-top:10px}
+.ef-store b{color:var(--ds-ink);font-weight:500}
+@media (max-width:1100px){.ef-s1{grid-template-columns:1fr;height:auto}.ef-s1 .ef-pane:last-child{display:none}}

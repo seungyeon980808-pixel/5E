@@ -16,7 +16,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');await sheet.fill('#cv-ask','앞 문항');
   await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-  await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
+  await sheet.click('.side [data-nav="new-exam"]');await sheet.click('#examd-view [data-ef-step="3"]') /* 새 시험지는 ① 틀 · 속성에서 열림(10-24) */;await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
   await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));
   await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');
   const typed='실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?';

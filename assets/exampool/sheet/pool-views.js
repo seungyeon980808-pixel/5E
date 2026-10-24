@@ -6,6 +6,7 @@ import {examPlan} from './exam-layout.js';
 import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js';
 import {loadStandards} from './standards-data.js';
 import {store,ICON as CARD_ICON} from './card-shared.js';
+import {stepsMarkup,renderStep1,frameOf} from './exam-flow.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICON={
@@ -85,15 +86,17 @@ export function renderExams(root,data,view){
 }
 
 // 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5E_hwp로 보내기.
-export function renderExam(root,data,examId,{forms=[]}={}){
+export function renderExam(root,data,examId,{forms=[],step=3,step2=null}={}){
   const exam=examById(data,examId);if(!exam){root.innerHTML='<p class="pv-empty">시험지를 찾지 못했습니다.</p>';return;}
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
   const lib=libraryQuestions(data);
   root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
-      <div class="pv-tools"><label class="pv-form" title="시험지를 어느 양식 위에 묶을지 — 학교 양식이면 학교 제목 표·머리말·단을 그대로 두고 그 안에 문항을 넣습니다">양식 <select id="exam-form" aria-label="시험지 양식"><option value="">5E 기본(수능 틀)</option>${forms.map(f=>`<option value="${E(f.id)}" ${f.id===exam.formId?'selected':''}>${E(f.name)}${f.encrypted?' 🔒':''}</option>`).join('')}<option value="__new">학교 양식 등록…</option></select></label><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
+      <div class="pv-tools"><button type="button" class="ef-pill" data-ef-step="1" title="틀 · 시험지 속성 바꾸기">틀 · ${E(frameOf(exam,forms).name)}</button><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
         <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="variant" title="문항 순서를 섞은 나형 시험지(HWPX, 번호 다시 매김)와 가·나형 정답 대응표">나형(순서 섞기) 내려받기</button><button type="button" role="menuitem" data-exam-act="print" title="한글 엔진이 그린 쪽 그대로 인쇄 창을 엽니다. PDF는 인쇄 창의 「PDF로 저장」">인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="blueprint" title="이원목적분류표와 정답표를 엑셀 한 파일(두 시트)로">이원목적분류표·정답표(엑셀)</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
       <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
-    <div class="pv-exam-body"><div class="pv-order" id="exam-order">
+    <div class="ef-stepbar">${stepsMarkup(step)}</div>
+    ${step===1?renderStep1(exam,data,forms):step===2&&step2?step2(exam):''}
+    <div class="pv-exam-body"${step===3?'':' hidden'}><div class="pv-order" id="exam-order">
       ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
         <button type="button" class="pv-mini-thumb" data-open-card="${x.id}" aria-label="${i+1}번 카드 열기"><div class="pv-doc" data-preview="${x.id}"></div></button>
         <div class="t"><b>${E(questionSubtitle(x.q))}</b><span>${E(x.q.type)}${x.q.unitLarge?` · ${E(x.q.unitLarge)}`:''}</span></div>

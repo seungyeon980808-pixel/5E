@@ -1,6 +1,7 @@
 import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderExams,renderExam} from './pool-views.js';
+import {applyFrame,goalOf,frameOf,openRegister} from './exam-flow.js';
 import {renderLibraryView,installLibraryView,closeViewer,libState} from './library-view.js';
 import {createCardEditor} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
@@ -236,7 +237,10 @@ function renderView(){
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
-  if(view.name==='exam'){renderExam($('#examd-view'),data,view.examId,{forms:typesetForms});void fillExamSheet(examById(data,view.examId));}
+  if(view.name==='exam'){const ex=examById(data,view.examId);
+    // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
+    if(ex&&view.examStepFor!==ex.id){view.examStepFor=ex.id;view.examStep=ex.items.length?3:1;}
+    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3});if((view.examStep||3)===3)void fillExamSheet(ex);}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
@@ -717,6 +721,29 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   else if(act==='variant')void sendExam(exam,{download:true,variant:true});
   else if(act==='print')void sendExam(exam,{print:true});
 });
+// 시험지 만들기 세 단계(10-24, exam-flow.js): 단계 막대 · ① 틀 · 속성.
+const goalEdit=(exam,fn)=>mutate(()=>{const g=goalOf(exam,typesetForms);fn(g);exam.goal={...g,edited:true};exam.updatedAt=new Date().toISOString();});
+$('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if(!exam)return;
+  const st=t.closest('[data-ef-step]');if(st){view.examStep=Number(st.dataset.efStep);renderView();$('#examd-view').scrollTop=0;return;}
+  const fr=t.closest('[data-ef-frame]');if(fr){const key=fr.dataset.efFrame;mutate(()=>{applyFrame(exam,key,typesetForms);exam.updatedAt=new Date().toISOString();});status(`틀 「${frameOf(exam,typesetForms).name}」 기본값으로 시험지 속성을 채웠습니다.`);return;}
+  if(t.closest('[data-ef-redef]')){mutate(()=>{applyFrame(exam,frameOf(exam,typesetForms).key,typesetForms);});return;}
+  const on=t.closest('[data-ef-on]');if(on){const k=on.dataset.efOn;goalEdit(exam,g=>{g[k]=k==='total'?100:50;});return;}
+  const off=t.closest('[data-ef-off]');if(off){e.preventDefault();const k=off.dataset.efOff;goalEdit(exam,g=>{g[k]=null;});return;}
+  const adv=t.closest('[data-ef-adv]');if(adv){const k=adv.dataset.efAdv;goalEdit(exam,g=>{g[k]=!g[k];});return;}
+  const rg=t.closest('[data-ef-range]');if(rg){const r=rg.dataset.efRange;goalEdit(exam,g=>{g.range=g.range.includes(r)?g.range.filter(x=>x!==r):[...g.range,r];});return;}
+  if(t.closest('[data-ef-register]')){openRegister({status:(m,err)=>status(m,err),readForm:readFormFile,saveForm:async({name,kind,draft})=>{
+    const s={...draft.read.standard,name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);const id='form_'+uid();
+    await saveTypesetForms([...typesetForms,{id,name,kind,fileName:draft.fileName,encrypted:draft.encrypted,bytes:draft.bytes,structure:draft.read.structure,standardId:s.id,createdAt:new Date().toISOString()}]);
+    mutate(()=>{applyFrame(exam,'form:'+id,typesetForms);exam.updatedAt=new Date().toISOString();});status(`내 틀 「${name}」을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.`);}});}
+});
+$('#examd-view').addEventListener('change',e=>{const exam=examNow(),t=e.target;if(!exam)return;
+  if(t.matches('[data-ef-subject]')){goalEdit(exam,g=>{g.subject=t.value;});return;}
+  const k=t.dataset.efGoal;if(k){const v=Math.round(Number(t.value));if(!(Number.isFinite(v)&&v>=0&&v<=(k==='total'?1000:k==='time'?600:200))){status('0 이상의 정수로 적어 주세요.',true);renderView();return;}goalEdit(exam,g=>{g[k]=v;});}
+});
+// 내 틀 등록 창이 한글 파일을 읽을 때: 암호는 선생님이 넣고, 여기서만 쓰고 남기지 않는다.
+async function readFormFile(file){typesetter||=makeTypesetter();const buffer=await file.arrayBuffer();let read=null,password='';
+  for(;;){try{read=await typesetter.readSchoolForm(buffer,file.name,password);break;}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null){status('한글 파일 열기를 그만두었습니다.');return null;}}}
+  const encrypted=!!password;password='';return {read,bytes:new Uint8Array(buffer),fileName:file.name,encrypted};}
 // 시험지 양식 고르기: 5E 기본 / 등록한 학교 양식 / 새로 등록.
 $('#examd-view').addEventListener('change',e=>{if(e.target.id!=='exam-form')return;const exam=examNow();if(!exam)return;const v=e.target.value;
   if(v==='__new'){e.target.value=exam.formId||'';schoolFor={exam:exam.id};$('#school-file-input').value='';$('#school-file-input').click();return;}

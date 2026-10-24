@@ -181,7 +181,7 @@ h.withServer(async origin => {
       else{await sheet.waitForFunction(()=>document.querySelector('#library-view .pv-doc')?.textContent.trim(),null,{timeout:10000});
       assert.ok(await sheet.evaluate(()=>{const t=document.querySelector('#library-view .pv-thumb').getBoundingClientRect(),d=document.querySelector('#library-view .pv-doc').getBoundingClientRect();return d.top>=t.top-0.5&&d.top<=t.top+1;}),'the library thumbnail starts at the top of the question');}
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
+      await sheet.click('.side [data-nav="new-exam"]');await sheet.click('#examd-view [data-ef-step="3"]') /* 새 시험지는 ① 틀 · 속성에서 열림(10-24) */;await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
       await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));
       await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');
       await sheet.waitForSelector('.workspace:not([hidden]) #registry');
