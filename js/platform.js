@@ -63,8 +63,14 @@ function isEditingTarget(target) {
   return !!target && (/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(target.tagName) || target.isContentEditable === true);
 }
 
+// 한글 입력기 상태의 키(isComposing · keyCode 229)를 「글자 조합 중」으로 볼지(10-24 사용자 요구: 단축키는 한글 상태와 상관없이 무조건 작동).
+// - ⌘·Ctrl·⌥를 함께 누른 키는 글자 조합이 아니다 → 단축키로 처리.
+// - 글 입력 칸(입력란·글상자 편집)이 아닌 곳의 키는 한글 입력기 상태라도 조합할 글이 없다 → 단축키로 처리(Safari는 이때도 229를 보낸다).
+// - 글 입력 칸 안에서 조합 중인 키만 글자 입력에 맡긴다.
 function isComposingKey(e) {
-  return !!e.isComposing || e.keyCode === 229;
+  if (!e || !(e.isComposing || e.keyCode === 229)) return false;
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  return isEditingTarget(e.target);
 }
 
 // 출제 칸·조판 창이 그림 화면을 덮고 있을 때도 「막힌 상태」다. 그림 화면 잠금(inert)은 키 입력을 막지 못해서,

@@ -2227,6 +2227,12 @@
       ]
     },
     {
+      "path": "tests/test-shortcuts-korean-ime-browser.cjs",
+      "findingIds": [
+        "SHORTCUTS-KOREAN-IME-AND-CMD-ARROW"
+      ]
+    },
+    {
       "path": "tests/test-exampool-page-view-perf-browser.cjs",
       "findingIds": [
         "EXAMPOOL-PAGE-VIEW-NO-FREEZE"

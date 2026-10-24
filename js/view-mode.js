@@ -4,6 +4,7 @@ import { serialize, applyLoaded } from './project-io.js?v=1.7.0-four-session-int
 import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { setActiveTool } from './tools.js?v=1.7.0-four-session-integration';
+import { shortcutKey } from './platform.js?v=1.7.0-four-session-integration';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
  *
  * 단축키를 모르면 쓰기 어려운 기능이 많아, 입문용 'Lite' 모드를 둔다.
@@ -160,7 +161,8 @@ export function initViewMode(state, { prepareNewAiWork } = {}) {
   window.addEventListener("keydown", (event) => {
     if (document.documentElement.dataset.mode !== "lite") return;
     if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable='true']")) return;
-    const key = String(event.key || "").toLowerCase();
+    // 키 자리(KeyV…)로 읽는다 — 한글 입력 상태의 「ㅍ」도 V로(10-24, 그림 도구 단축키와 같은 규칙).
+    const key = shortcutKey(event);
     if (LITE_SHORTCUT_KEYS.has(key) && !(key === "e" && (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey))) return;
     if (!/^[a-z]$/.test(key) || ((event.metaKey || event.ctrlKey || event.altKey) && key !== "e")) return;
     event.preventDefault();

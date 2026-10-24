@@ -1,4 +1,5 @@
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
+import { shortcutKey } from './platform.js?v=1.7.0-four-session-integration';
 import { createImageEraseProcessor } from './ai-image-erase-processor.js?v=1.7.0-four-session-integration';
 export { eraseImagePolygon, eraseImageRegion } from './ai-image-erase-core.js?v=1.7.0-four-session-integration';
 import { getImageStageGeometry } from './ai-image-comments.js?v=1.7.0-four-session-integration';
@@ -305,7 +306,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, isSa
       && !panel.hidden && !panel.inert && eligible(getTarget())
       && !event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"])')
       && !doc.querySelector('dialog[open],.modal-overlay:not([hidden]):not(#ai-image-panel)')) {
-      const key = event.key.toLowerCase();
+      const key = shortcutKey(event);
       const direction = key === 'z' ? (event.shiftKey ? 'redo' : 'undo') : key === 'y' && event.ctrlKey ? 'redo' : null;
       if (direction) {
         // The AI editor owns its history. Never undo the hidden main canvas.

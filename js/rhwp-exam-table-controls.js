@@ -45,14 +45,15 @@ export function installTableShortcuts(bridge) {
   const doc=bridge.editor.element.contentDocument;
   if(installed.has(doc))return;installed.add(doc);
   doc.addEventListener('keydown',event=>{
-    if(bridge.tableLayoutLocked&&(event.ctrlKey||event.metaKey&&bridge.input?.cursor.isInCellSelectionMode())&&!event.altKey&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)&&event.target===bridge.input?.textarea&&(bridge.input.cursor.isInCell()||bridge.input.cursor.isInCellSelectionMode()||bridge.input.cursor.isInTableObjectSelection())){
+    if(bridge.tableLayoutLocked&&(event.ctrlKey||event.metaKey)&&!event.altKey&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)&&event.target===bridge.input?.textarea&&(bridge.input.cursor.isInCell()||bridge.input.cursor.isInCellSelectionMode()||bridge.input.cursor.isInTableObjectSelection())){
       event.preventDefault();event.stopImmediatePropagation();return;
     }
     // 한컴 방식: 표 칸 안 Shift+Tab은 이전 칸으로 간다(칸 안 내어쓰기는 Ctrl+Shift+Tab·「내어쓰기」 단추). 본문에서만 빠른 내어쓰기.
     if(event.key==='Tab'&&event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.isComposing&&event.target===bridge.input?.textarea&&!(bridge.input.cursor?.isInCell?.()&&!bridge.input.cursor?.isInTextBox?.())){
       try{if(applyHangingIndent(bridge)){event.preventDefault();event.stopImmediatePropagation();}}catch(error){event.preventDefault();event.stopImmediatePropagation();bridge.onChange?.(error);}return;
     }
-    if(!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || event.isComposing || event.keyCode===229 || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
+    // 칸 안 커서에서 줄·칸 크기: 윈도우 Ctrl+방향키, 맥 ⌘+방향키(10-24 — 맥 ⌘가 막혀 있었음). 수식키를 누른 키는 한글 입력 상태라도 단축키다.
+    if(!(event.ctrlKey||event.metaKey) || (event.ctrlKey&&event.metaKey) || event.altKey || event.shiftKey || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;
     const input=bridge.input,cursor=input?.cursor;
     if(event.target!==input?.textarea || !cursor?.isInCell() || cursor.isInTextBox() || cursor.isInCellSelectionMode() || cursor.isInTableObjectSelection() || cursor.isInPictureObjectSelection() || cursor.hasSelection() || bridge.editor.element.ownerDocument.querySelector('#rhwp-exam-workspace[aria-busy="true"]'))return;
     const pos=input.getCursorPosition(),nested=pos.cellPath?.length>1,cellIdx=pos.cellPath?.at(-1)?.cellIndex ?? pos.cellIndex;

@@ -260,7 +260,9 @@ export function installDocumentShortcuts(bridge) {
     const context = { inCell:cursor.isInCell() && !cursor.isInTextBox(), cellSelection:cursor.isInCellSelectionMode() };
     const blockLetter = context.cellSelection && !input.isComposing && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey &&
       ['h','w','m','s'].includes(letters(event)) ? documentShortcut(event, context) : null;
-    if ((event.isComposing || event.keyCode === 229 || input.isComposing) && !blockLetter) {
+    // ⌘·Ctrl·⌥ 조합은 한글 입력 상태여도 단축키다(10-24). 수식키 없는 글자만 입력기에 맡긴다.
+    const modified = event.ctrlKey || event.metaKey || event.altKey;
+    if ((event.isComposing || event.keyCode === 229 || input.isComposing) && !blockLetter && !modified) {
       clear();
       // Leave ordinary composing text to the IME, but do not let Studio's
       // fallback shortcuts mutate a half-composed selection.
