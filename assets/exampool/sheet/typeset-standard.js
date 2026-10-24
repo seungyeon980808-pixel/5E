@@ -93,6 +93,24 @@ export function standardFor(question, { exam = null, standards = [] } = {}) {
   return id === KICE_ID ? KICE_STANDARD : resolveStandard(standards.find(s => s.id === id) || null);
 }
 
+// 용지 맞춤(10-24 용지 원칙): A4 2단에 맞춘 기준(간격은 평가원 원본 × 0.768)을 B4·A3 문항에 쓸 때는
+// 단 폭을 평가원 원본(111.98mm, kice-form-analysis/rules-200906.md)으로 맞추고 — 좌우 여백을 그만큼 줄이거나 늘린다 —
+// 간격·선지 칸·〈보기〉 머리를 단 폭 비율만큼 되돌린다. 원본과 같은 단 폭이라 줄바꿈이 원본과 같아진다. 글자 크기·선 굵기는 그대로.
+const PAGE_W = { A4: 210, B4: 257, A3: 297 }, KICE_COLUMN_MM = 111.98;
+export function standardForPaper(standard, paper) {
+  const s = resolveStandard(standard);
+  if (!PAGE_W[paper] || paper === s.paper.size || s.paper.size !== 'A4' || s.paper.columns !== 2) return s;
+  const m = s.paper.margin, col = (PAGE_W.A4 - m.left - m.right - s.paper.columnGap) / 2;
+  const side = Math.round((PAGE_W[paper] - s.paper.columnGap - 2 * KICE_COLUMN_MM) / 2 * 100) / 100;
+  const k = KICE_COLUMN_MM / col, r = v => Math.round(v * k * 100) / 100, out = structuredClone(s);
+  for (const key of Object.keys(out.gaps)) if (Number.isFinite(out.gaps[key])) out.gaps[key] = r(out.gaps[key]);
+  for (const key of ['bogiTitleWidth', 'bogiTitleRow', 'bogiTitlePad', 'cellPad']) if (Number.isFinite(out.parts[key])) out.parts[key] = r(out.parts[key]);
+  if (Array.isArray(out.parts.choiceTabs)) out.parts.choiceTabs = out.parts.choiceTabs.map(r);
+  out.paper = { ...out.paper, size: paper, margin: { ...m, left: side, right: side } };
+  // 수능 틀 id 그대로면 resolveStandard가 A4 수능 틀로 되돌린다 — 용지 이름을 붙인 id로.
+  out.id = `${s.id}@${paper}`;
+  return deepFreeze(out);
+}
 // 블록 종류 → 기준 간격 이름(간격 보기·조절과 조판이 같이 쓴다).
 export const gapRole = kind => kind === 'bogi' ? 'bogi' : ['figure', 'table', 'group', 'box'].includes(kind) ? 'material' : 'text';
 // 조판 코드가 읽는 값(px·%)으로 풀어 둔 모양. 수능 틀이면 예전 상수와 같은 값.

@@ -36,12 +36,18 @@ h.withServer(async origin => {
       const marks = () => sheet.evaluate(() => { const layer = document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]');
         return { layer: !!layer, hidden: !!layer?.hidden, spaces: layer?.querySelectorAll('[data-mark="space"]').length || 0, indents: layer?.querySelectorAll('[data-mark="indent"]').length || 0,
           pressed: document.querySelector('.typeset-view-controls [data-exam-marks]')?.getAttribute('aria-pressed') }; });
+      // 〈보기〉 「ㄱ.」 뒤 한 칸은 조판할 때 이미 고정 띄어쓰기(10-24 지적 9) — 그 V들을 먼저 센다.
+      await sheet.waitForFunction(() => !!document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]'));
+      const base = (await marks()).spaces;
+      const bogiLabels = (q.blocks.find(b => b.kind === 'bogi')?.lines || []).length;
+      // 내어쓰기를 거는 번호(〈보기〉 ㄱ.ㄴ.ㄷ. · 선지 ①~⑤ · 상자 안 (가)(나)) 뒤는 모두 고정 띄어쓰기 → 적어도 〈보기〉 줄마다 하나.
+      assert.ok(base >= bogiLabels + 5, `${name}: 〈보기〉 번호·선지 번호마다 빨간 V: ${base} (보기 ${bogiLabels}줄 + 선지 5)`);
       await sheet.evaluate(() => { const st = document.querySelector('#native-editor iframe').contentWindow.rhwpStudio, d = st.plugins.deps.wasm.borrowDocumentHandle();
         const t = d.getTextRange(0, 1, 0, 4), at = t.indexOf(' ', 2); d.deleteText(0, 1, at, 1); d.insertText(0, 1, at, ' '); st.plugins.deps.eventBus.emit('document-changed'); });
-      await sheet.waitForFunction(() => document.querySelector('#native-editor iframe').contentDocument.querySelectorAll('[data-exam-marks] [data-mark="space"]').length === 1);
+      await sheet.waitForFunction(n => document.querySelector('#native-editor iframe').contentDocument.querySelectorAll('[data-exam-marks] [data-mark="space"]').length === n + 1, base);
       let m = await marks();
       assert.equal(m.pressed, 'true', `${name}: marks are on by default`);
-      assert.equal(m.spaces, 1, `${name}: one red V for the one fixed space`);
+      assert.equal(m.spaces, base + 1, `${name}: one more red V for the one fixed space`);
       assert.ok(m.indents >= 2, `${name}: green lines on wrapped hanging-indent paragraphs: ${m.indents}`);
       // 둘째 줄 시작이 초록 선 위에 온다(내어쓰기 맞음).
       const aligned = await sheet.evaluate(() => { const ifr = document.querySelector('#native-editor iframe'), d = ifr.contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle();

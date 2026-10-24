@@ -78,7 +78,8 @@ test('narrow table headers wrap units without changing Korean words or values',a
  assert.equal(wrapQuestionText('충돌 시간 (s)',43,9),'충돌\n시간\n(s)');
  const plan=await buildQuestionHtml(examples.questions[0],prep,317,{native:true});
  // 평가원 표: 머리칸은 한 단계 작은 돋움체.
- assert(plan.html.includes('font-family:함초롬돋움;font-size:8pt">(kg)</p>'));
+ // 글자 크기는 글(span)에 건다 — 문단(p)에만 걸면 한글 엔진이 무시하고 10pt로 그렸다(10-24 11번).
+ assert(plan.html.includes('<span style="font-family:함초롬돋움;font-size:8pt">(kg)</span></p>'));
  assert(plan.texts.includes('질량 (kg)'));assert(plan.texts.some(v=>v.includes('0, 빈칸, ㉠')));
 });
 test('native layout preflight detects nested header and note overflow, while tall fractions do not enlarge text glyphs',()=>{
@@ -104,8 +105,10 @@ test('empty bogi lines and choices keep one space after their label (ㄱ. ①) s
 });
 // 10-23 평가원 선지 탭: 가장 긴 선지가 칸 간격 안에 들어가면 원본처럼 왼쪽부터 같은 간격, 아니면 예전 배열.
 test('short choices sit on the KICE tab steps, long ones keep the old spread',()=>{
- const tabs=[62.7,104.5,162.6],w=t=>[...t].length*8,short=['ㄱ','ㄴ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ'].map(text=>({text}));
+ const tabs=[62.7,104.5,162.6],w=t=>[...t].length*8,short=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ'].map(text=>({text}));
  const a=choiceGrid(short,320,11,undefined,w,tabs);assert.equal(a.cols,5);assert.deepEqual(a.widths.slice(0,4),[62.7,62.7,62.7,62.7]);assert.ok(a.tabs);
+ // 10-24 지적 1: 가장 긴 선지(「① ㄱ, ㄴ」 60px)가 간격(62.7px)에 겨우 들어가면 칸 사이가 붙는다 — 한 글자 여유가 없으면 평가원 간격 대신 고루 나눈다.
+ const tight=['ㄱ','ㄷ','ㄱ, ㄴ','ㄱ, ㄷ','ㄴ, ㄷ'].map(text=>({text})),t=choiceGrid(tight,320,11,undefined,w,tabs);assert.ok(!t.tabs);assert.equal(t.cols,5);const gaps=t.widths.map((x,i)=>x-(w('①'+' '+tight[i].text)+4));assert.ok(gaps.every(g=>g>8&&Math.abs(g-gaps[0])<1e-6),`칸마다 글자 뒤에 같은 여유: ${gaps}`);
  const long=['ㄱ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ, ㄹ, ㅁ'].map(text=>({text}));
  const b=choiceGrid(long,320,11,undefined,w,tabs),c=choiceGrid(long,320,11,undefined,w);assert.deepEqual(b,c);assert.ok(!b.tabs);
 });

@@ -60,7 +60,8 @@ async function typesetBatch(browser,origin,converted,wid){
   if(args['debug-verify'])await ctx.route(/\/assets\/exampool\/sheet\/handoff\.js/,async r=>{const res=await r.fetch();let body=await res.text();body=body.replace("if(plan.texts.some(v=>!body.includes(normalized(v))))throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다.');","{const miss=plan.texts.find(v=>!body.includes(normalized(v)));if(miss!==undefined)throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다. [빠짐: '+JSON.stringify(normalized(miss)).slice(0,160)+' | 본문: '+JSON.stringify(body).slice(0,200)+']');}");await r.fulfill({response:res,body});});
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message.slice(0,200)));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
-  await page.click('#exam-pool-open');const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
+  // 5E_exam 열기: 예전 단추(#exam-pool-open)가 없으면 맨 위 앱 전환(exam).
+  await page.evaluate(()=>{const b=document.querySelector('[data-app-switch="exam"]')||document.querySelector('#exam-pool-open');b.click();});const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
   await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
   const questions=ok.map((c,i)=>{const q=structuredClone(c.question);delete q.kice;q.number=String(i+1);return q;});
   const FORMAT=await sheet.evaluate(async()=>(await import('/assets/exampool/sheet/model.js')).FORMAT);

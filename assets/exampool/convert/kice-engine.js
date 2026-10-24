@@ -142,7 +142,8 @@ export async function toQuestion(structure,item,{number='1'}={}){
   }
   // 크기 기준 폭: 상자 안 자료는 상자 안쪽 폭(테두리·여백 약 16pt 뺌), 아니면 단 폭.
   const within=n=>n.rect?.box?Math.max(40,n.rect.box[2]-n.rect.box[0]-16):col;
-  const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data};
+  // widthPt: 원본 PDF에서 잰 그림 폭(pt). 조판기가 원본 크기 그대로 넣는다(10-24 — size %는 묶음 칸 안에서 두 번 줄어들었음).
+  const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data,...(d.box?{widthPt:Math.round((d.box[2]-d.box[0])*10)/10}:{})};
     if(size){const w=d.box?d.box[2]-d.box[0]:col*.6,base=within(f);b.size=Math.min(100,Math.max(10,Math.round(w/base*100/5)*5));}return b;};
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
     // 원본 열 폭(pt)·칸 글자 크기(pt): 조판기가 열 폭 비율과 글 크기를 원본대로 쓴다.

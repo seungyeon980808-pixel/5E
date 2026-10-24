@@ -32,8 +32,12 @@ test('reference bogi measures actual labels and changes only the matching nested
  const p=t=>`<hp:p paraPrIDRef="0"><hp:run><hp:t>${t}</hp:t></hp:run><hp:linesegarray><hp:lineseg vertpos="9000"/></hp:linesegarray></hp:p>`,cell=t=>`<hp:tc><hp:subList>${p(t)}</hp:subList></hp:tc>`;
  const inner='<hp:tbl><hp:tr>'+['','&lt;보 기&gt;','','','','ㄱ. 긴 문장'].map(cell).join('')+'</hp:tr></hp:tbl>';
  const original=p('<hp:tbl><hp:tr><hp:tc><hp:subList>'+p(inner)+'</hp:subList></hp:tc></hp:tr></hp:tbl>')+p('ㄱ. 다른 표');zip.file('Contents/section0.xml',original);
- const bytes=await zip.generateAsync({type:'uint8array'}),d={pageCount:()=>1,getPageTextLayout:()=>json({runs}),getCursorRectByPath:(_s,_p,_path,offset)=>json({x:75+(offset===3?26.3:0)}),exportHwpx:()=>bytes};
- const result=await JSZip.loadAsync(await applyReferenceBogiIndent(d,JSZip)),h=await result.file('Contents/header.xml').async('string'),s=await result.file('Contents/section0.xml').async('string');
+ const bytes=await zip.generateAsync({type:'uint8array'}),d={pageCount:()=>1,getPageTextLayout:()=>json({runs}),getCursorRectByPath:(_s,_p,_path,offset)=>json({x:75+(offset===3?26.3:0)}),exportHwpx:()=>bytes,
+   // 10-24 지적 9: 「ㄱ.」 뒤 보통 띄어쓰기를 고정 띄어쓰기(U+00A0)로 바꾼다 — 바꾼 자리를 기록.
+   edits:[],deleteTextInCellByPath(...a){this.edits.push(['del',...a]);},insertTextInCellByPath(...a){this.edits.push(['ins',...a]);}};
+ const result=await JSZip.loadAsync(await applyReferenceBogiIndent(d,JSZip));
+ assert.deepEqual(d.edits.map(e=>[e[0],e[4],e.at(-1)]),[['del',2,1],['ins',2,'\u00a0']],'「ㄱ.」 뒤 한 칸만 고정 띄어쓰기로');
+ const h=await result.file('Contents/header.xml').async('string'),s=await result.file('Contents/section0.xml').async('string');
  assert(Math.abs(Number(h.match(/value="(-\d+)"/)[1])/75+26.3)<.02);assert(h.includes('itemCnt="2"'));assert.equal((s.match(/paraPrIDRef="1"/g)||[]).length,1);assert(s.includes('paraPrIDRef="0"><hp:run><hp:t>ㄱ. 다른 표'));assert.equal((s.match(/vertpos="9000"/g)||[]).length,(original.match(/vertpos="9000"/g)||[]).length-1);
 });
 test('Shift+Tab keeps text unchanged and formats the current body or nested cell in one undo step',()=>{

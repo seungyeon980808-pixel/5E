@@ -4,7 +4,7 @@ import {attachTypesetSettings} from './typeset-settings.js';
 import {marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1022-marks';
 import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
-import {KICE_STANDARD} from './typeset-standard.js';
+import {KICE_STANDARD,standardForPaper} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
 import {buildExamDocument,assembleExamChecked} from './exam-build.js';
 import {examPage,paperMix,paperMixMessage} from './exam-layout.js';
@@ -132,7 +132,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
   // standard: 조판 설정 미리보기(10-23)처럼 저장하지 않은 초안 틀로 그릴 때.
   async function generate(value,prof=profile(),{quiet=false,standard=null}={}){
-    const stdv=standard||std(value);
+    // 용지 맞춤: B4 문항은 A4 기준 간격을 단 폭 비율만큼 되돌린다(standardForPaper).
+    const stdv=standardForPaper(standard||std(value),prof.paper);
     const Document=document().constructor,d=Document.createEmpty();let bytes,owners;
     try{d.createBlankDocument();const config=questionPageProfile(prof,1200,stdv);d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
       const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:stdv});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');

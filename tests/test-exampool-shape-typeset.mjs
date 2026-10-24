@@ -34,7 +34,9 @@ test('condition and experiment boxes print no title; experiment parts get 〔 �
   assert.ok(ep.textSegments.some(s=>s.value==='(가) 수레 A, B의 질량을 측정한다.'&&s.owner.prefix===4));
   const doc=docOf(ep),map=buildTextMap(doc,ep.textSegments);
   const r=mapTextEdit(map,doc.replace('〔실험 결과〕','〔측정 결과〕'));assert.equal(r.ok,true,r.reason);assert.equal(r.changes[0].value,'측정 결과');
-  assert.equal(mapTextEdit(map,doc.replace('〔실험 결과〕','〔실험 결과]')).ok,false);
+  // 닫는 괄호는 프로그램이 붙인 꼬리라 고칠 수 없다. 〔〕는 한글에 [ ]로 들어가므로(10-24) 둘은 같은 글자로 본다.
+  assert.equal(mapTextEdit(map,doc.replace('〔실험 결과〕','〔실험 결과)')).ok,false);
+  assert.equal(mapTextEdit(map,doc.replace('〔실험 결과〕','[실험 결과]').replace('〔실험 과정〕','[실험 과정]')).ok,undefined,'[ ]는 〔 〕와 같은 글자 — 고친 것이 아니다');
 });
 
 test('dialogue lines become name + speech rows; pair choices use the original two-column layout',async()=>{

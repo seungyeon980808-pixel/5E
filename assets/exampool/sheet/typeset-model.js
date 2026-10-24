@@ -3,13 +3,14 @@ export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
 export const LAYOUT_VERSION=13;
 // 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
 import {nativeRuns} from './live-patch.js';
-import {KICE_STANDARD,layoutValues} from './typeset-standard.js';
+import {KICE_STANDARD,layoutValues,standardForPaper} from './typeset-standard.js';
 // 본문 글자 장평·자간 기본값은 조판 기준(「수능 틀」)에서 읽는다.
 export const TEXT_RATIO=KICE_STANDARD.text.ratio,TEXT_SPACING=KICE_STANDARD.text.spacing,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
 const HU=7200/25.4;
 export function pageProfile(profile={paper:'A4',columns:2},standard=KICE_STANDARD){
   if(!PAPER_MM[profile.paper]||![1,2].includes(profile.columns))throw Error('용지와 단 수를 확인하세요.');
-  const [w,h]=PAPER_MM[profile.paper],L=layoutValues(standard),margin=L.margin,spacing=L.columnGap;
+  // B4·A3 2단은 단 폭을 평가원 원본(111.98mm)으로 맞춘 여백을 쓴다(standardForPaper, 10-24 용지 원칙) — 문항 조판·시험지 묶기·검사가 같은 값을 쓴다.
+  const [w,h]=PAPER_MM[profile.paper],L=layoutValues(profile.columns===2?standardForPaper(standard,profile.paper):standard),margin=L.margin,spacing=L.columnGap;
   return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin.left*HU),marginRight:Math.round(margin.right*HU),marginTop:Math.round(margin.top*HU),marginBottom:Math.round(margin.bottom*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-margin.left-margin.right-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
 }
 // 한글 문서에 실제로 나오는 값: 번호·유형·선지 표현·발문·구성·선지·선지표·선지 배열·[3점].
@@ -118,7 +119,9 @@ export function applyQuestionIndent(document,number,{body=false,askLead='',askIn
   if(!number)return;
   const prefix=`${number}. `;
   for(let page=0;page<document.pageCount();page++){
-    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>r.charStart===0&&r.text.startsWith(prefix)||!r.cellPath?.length&&r.text.startsWith(prefix));
+    // 번호를 굵게 따로 찍으면(10-24) 「7.」이 혼자 한 조각이 된다 — 그 조각도 번호로 본다.
+    const isNo=r=>r.text.startsWith(prefix)||r.text===`${number}.`;
+    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>r.charStart===0&&isNo(r)||!r.cellPath?.length&&isNo(r));
     if(!run)continue;
     // 글 옆 자료처럼 번호가 표 칸 안에 있으면 칸 문단은 내어쓰기를 건드리지 않는다.
     if(run.cellPath?.length)return;
@@ -150,13 +153,19 @@ export async function applyReferenceBogiIndent(document,JSZip,CFB=globalThis.XLS
   const tableKey=r=>JSON.stringify([r.secIdx,r.parentParaIdx,r.cellPath.slice(0,-1),r.cellPath.at(-1).controlIndex]);
   const boxes=new Set(runs.filter(r=>r.cellPath?.length&&r.text==='<보 기>').map(tableKey)),indents=new Map();
   const paraKey=(sec,parent,path)=>JSON.stringify([sec,parent,path]);
+  // 한 문단 앞부분이 여러 조각으로 올 수 있다(「(」만 따로 · 「다) …」 — 10-24 11번). 같은 문단 조각을 이어 앞머리를 찾는다.
+  const heads=new Map();for(const r of runs){if(!r.cellPath?.length)continue;const k=JSON.stringify([r.secIdx,r.parentParaIdx,r.cellPath]);heads.set(k,[...(heads.get(k)||[]),r]);}
+  const headText=run=>(heads.get(JSON.stringify([run.secIdx,run.parentParaIdx,run.cellPath]))||[run]).filter(r=>r.charStart<12).sort((a,b)=>a.charStart-b.charStart).reduce((t,r)=>r.charStart===t.length?t+r.text:t,'');
   for(const run of runs){
     if(!run.cellPath?.length||run.charStart!==0)continue;
     const bogi=run.cellPath.at(-1).cellIndex===5&&boxes.has(tableKey(run));
+    // 상자 안 항목 줄(○ · (가) · ①)도 — 〈보기〉 밖 「ㄱ.」은 그대로 — handoff가 항목마다 문단을 나눠 넣는다(10-24).
     // 빈 줄은 「ㄱ.」 뒤 칸이 줄바꿈 없는 공백(nbsp)으로 온다 — 그 경우도 찾아야 새 문항부터 내어쓰기가 걸린다.
-    const prefix=run.text.match(bogi?/^[ㄱ-ㅎ]\.[ \u00a0]/:/^(?:[①-⑤]|\([가-힣]\))[ \u00a0]/)?.[0];if(!prefix)continue;
+    const prefix=headText(run).match(bogi?/^[ㄱ-ㅎ]\.[ \u00a0]/:/^(?:[①-⑤○◦•▪◆□■]|\([가-힣]\))[ \u00a0]/)?.[0];if(!prefix)continue;
     const path=JSON.stringify(run.cellPath),start=JSON.parse(document.getCursorRectByPath(run.secIdx,run.parentParaIdx,path,0)),end=JSON.parse(document.getCursorRectByPath(run.secIdx,run.parentParaIdx,path,prefix.length));
     indents.set(paraKey(run.secIdx,run.parentParaIdx,run.cellPath),-Math.round((end.x-start.x)*75));
+    // 번호 뒤 보통 띄어쓰기는 고정 띄어쓰기로(10-24 지적 9) — 폭은 같고, 번호와 글이 떨어지지 않으며 조판 부호(빨간 V)가 보인다.
+    if(prefix.endsWith(' ')){const at=prefix.length-1;document.deleteTextInCellByPath(run.secIdx,run.parentParaIdx,path,at,1);document.insertTextInCellByPath(run.secIdx,run.parentParaIdx,path,at,'\u00a0');}
   }
   const bytes=CFB?exportLayoutHwpx(document,CFB):document.exportHwpx();
   const zip=await JSZip.loadAsync(new Uint8Array(bytes));
@@ -349,7 +358,7 @@ export function applyFloatingTable(document,spec,number){
   if(!spec)return;
   const prefix=`${number}. `;
   for(let page=0;page<document.pageCount();page++){
-    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>!r.cellPath?.length&&r.text.startsWith(prefix));if(!run)continue;
+    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>!r.cellPath?.length&&(r.text.startsWith(prefix)||r.text===`${number}.`));if(!run)continue;
     const t=(JSON.parse(document.getPageControlLayout(page)).controls||[]).find(c=>c.type==='table'&&!c.cellPath?.length&&c.paraIdx===run.paraIdx-1);
     if(!t)throw Error('글 옆 표를 찾지 못했습니다.');
     const r=JSON.parse(document.setTableProperties(t.secIdx,t.paraIdx,t.controlIdx,JSON.stringify({treatAsChar:false,textWrap:'InFrontOfText',horzRelTo:'Column',horzAlign:spec.align,vertRelTo:'Para',vertAlign:'Top',vertOffset:0,horzOffset:0})));

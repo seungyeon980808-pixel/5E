@@ -4,13 +4,16 @@
 // 두 조각에 걸치거나(문단 합치기 등) 번호·기호를 고쳤으면 덮어쓰지 않고 이유를 알린다.
 import {cellValue} from './model.js';
 
+// 한글로 넣을 때 바꿔 넣는 괄호(handoff text: 〈〉→<>, 〔〕→[])는 같은 글자로 본다 — 한 글자씩 바뀌어 위치는 그대로.
+const SAME={'\u3008':'<','\u3009':'>','\u3014':'[','\u3015':']'};
 // 공백 묶음을 한 칸으로 줄이고 앞뒤를 자른 글과, 각 글자의 원래 위치.
 export function normMap(value){
   const v=String(value??''),idx=[];let text='',space=false;
   for(let i=0;i<v.length;i++){
     if(/\s/.test(v[i])){if(text)space=true;continue;}
+    if(v[i]==='\u2060')continue; // 조판이 넣은 폭 없는 글자(줄 첫머리 수식 앞)는 글로 보지 않는다
     if(space){text+=' ';idx.push(i-1);space=false;}
-    text+=v[i];idx.push(i);
+    text+=SAME[v[i]]||v[i];idx.push(i);
   }
   return {text,idx};
 }
@@ -94,6 +97,8 @@ export function applyTextEdit(q,owner,value){
     case 'ask':q.ask=value;return true;
     case 'block':blockOf(owner.id).text=value;return true;
     case 'label':{const v=value.trim();if(!v)throw Error('묶음 이름을 비울 수 없습니다.');blockOf(owner.id).label=v;return true;}
+    // 상자 안 항목 줄(handoff ITEM_LEAD): 원래 앞머리(keep)를 그대로 두고 그 줄만 바꾼다.
+    case 'blockLine':{const blk=blockOf(owner.id),rows=String(blk.text||'').split(/\r?\n/);if(!(owner.line<rows.length))throw Error('고친 항목을 찾지 못했습니다.');rows[owner.line]=(owner.keep||'')+value;blk.text=rows.join('\n');return true;}
     case 'line':{const l=blockOf(owner.block).lines?.find(x=>x.id===owner.id);if(!l)throw Error('고친 항목을 찾지 못했습니다.');l.text=value;return true;}
     case 'choice':{const c=q.choices.find(x=>x.id===owner.id);if(!c)throw Error('고친 선지를 찾지 못했습니다.');c.text=value;return true;}
     case 'cell':{const t=tableOf(owner.table),cell=t?.cells[owner.r]?.[owner.c];if(!cell)throw Error('고친 표 칸을 찾지 못했습니다.');cell.value=cellValue(value);return true;}
