@@ -27,8 +27,8 @@ const STEPS = ['문항을 스캔하는 중', '문항 카드를 작성하는 중'
 const stepOf = stage => /카드|여는/.test(stage || '') ? 1 : /조판/.test(stage || '') ? 2 : 0;
 
 // ── 기출 자료(과목 파일은 처음 기출을 볼 때 읽는다) ──
-const past = { index: null, items: null, loading: null };
-async function loadPast() {
+export const past = { index: null, items: null, loading: null };
+export async function loadPast() {
   if (past.items) return past.items;
   past.loading ||= (async () => {
     past.index = await fetch(new URL('../convert/data/index.json', import.meta.url)).then(r => { if (!r.ok) throw Error('기출 목록을 불러오지 못했습니다.'); return r.json(); });
@@ -40,7 +40,7 @@ async function loadPast() {
   })();
   try { return await past.loading; } catch (e) { past.loading = null; throw e; }
 }
-const examLabel = (y, m) => `${String(y).slice(2)}년 ${{ 6: '6평', 9: '9평', 11: '수능' }[m] || m + '월'}`;
+export const examLabel = (y, m) => `${String(y).slice(2)}년 ${{ 6: '6평', 9: '9평', 11: '수능' }[m] || m + '월'}`;
 
 // ── 목록 만들기 ──
 function entries(data, s) {
@@ -93,7 +93,7 @@ export function renderLibraryView(root, data, view, api) {
   if (s.open >= 0 && s.mode !== 'one') openViewer(root, list, s.open, api);
 }
 
-function loadThumbs(root) {
+export function loadThumbs(root) {
   // 그림을 못 받으면(인터넷 없음 등) 깨진 그림 대신 제목만 옅게 보인다. 로컬 그림이 있으면 그것으로.
   const miss = img => { if (img.dataset.fallback && img.src !== img.dataset.fallback) { img.src = img.dataset.fallback; return; } img.closest('.lv-thumb,.lv-qbox')?.setAttribute('data-missing', img.alt || ''); img.remove(); };
   const show = img => { if (img.dataset.loading) return; img.dataset.loading = '1'; img.onerror = () => miss(img);

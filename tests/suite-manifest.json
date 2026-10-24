@@ -2221,6 +2221,12 @@
       ]
     },
     {
+      "path": "tests/test-exam-pick-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-EXAM-PICK-TAGS"
+      ]
+    },
+    {
       "path": "tests/test-exampool-page-view-perf-browser.cjs",
       "findingIds": [
         "EXAMPOOL-PAGE-VIEW-NO-FREEZE"

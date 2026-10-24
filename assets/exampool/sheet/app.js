@@ -2,7 +2,8 @@ import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copy
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderExams,renderExam} from './pool-views.js';
 import {applyFrame,goalOf,frameOf,openRegister} from './exam-flow.js';
-import {renderLibraryView,installLibraryView,closeViewer,libState} from './library-view.js';
+import {pickState,renderStep2,fillStep2,refreshCart,poolEntries,editMeta,normTag,tagPopMarkup,menuMarkup} from './exam-pick.js';
+import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastData,loadPast} from './library-view.js';
 import {createCardEditor} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
@@ -223,7 +224,8 @@ function renderTable(t,id,full){let html=`<div class="table-card" data-table="${
 }
 function renderDetail(){if(!current)return;$('#question-title').textContent=`${current.number||'번호 미입력'}번 문항`;$('#structure-count').textContent=current.blocks.length+'개 구성';$('#ask').value=current.ask;renderBlocks();renderChoices();$('#tables').innerHTML=current.blocks.filter(b=>b.kind==='table').map(b=>renderTable(b.table,b.id,true)).join('')+(current.style==='대응표'?renderTable(current.choiceTable,'choices',true):'')||'<p class="muted">구성 추가에서 표를 추가하세요. 그림을 표 안의 셀에도 넣을 수 있습니다.</p>';renderEvidence();switchTab(activeTab);grid?.refresh();}
 // 완성한 문항의 내용이 바뀌면 점검으로 돌린다(상태는 내용이 아니다).
-const contentOf=q=>{const {typeset,references,workflow,reviews,authoring,...c}=q;return JSON.stringify(c);};
+// 태그·난이도(보관함 분류)는 내용이 아니므로 바꿔도 완성 상태를 유지한다.
+const contentOf=q=>{const {typeset,references,workflow,reviews,authoring,tags,difficulty,...c}=q;return JSON.stringify(c);};
 function completeKeys(only=null){const m=new Map();for(const q of only?[only]:data.questions)if(q.workflow==='complete')m.set(q.id,contentOf(q));return m;}
 function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.questions.find(x=>x.id===id);if(q?.workflow==='complete'&&contentOf(q)!==k){q.workflow='review';n++;}}if(n)setTimeout(()=>status(`완성한 문항 ${n}개의 내용이 바뀌어 점검할 문항으로 옮겼습니다.`),0);}
 // 화면: cards(분류별 카드) · desk(5E_cell·5E_hwp 작업대) · exam(시험지 구성). 처음에는 문항이 있으면 카드로 연다.
@@ -240,7 +242,8 @@ function renderView(){
   if(view.name==='exam'){const ex=examById(data,view.examId);
     // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
     if(ex&&view.examStepFor!==ex.id){view.examStepFor=ex.id;view.examStep=ex.items.length?3:1;}
-    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3});if((view.examStep||3)===3)void fillExamSheet(ex);}
+    const keep=$('#examd-view .ep-grid')?.scrollTop||0;
+    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy})});if((view.examStep||3)===3)void fillExamSheet(ex);if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
@@ -378,13 +381,13 @@ function jobBox(){let n=document.querySelector('#job-box');if(!n){n=document.cre
 function showJob(title,stage,{done=null,error=''}={}){const n=jobBox(),at=done?3:jobStep(stage);n.hidden=false;n.dataset.state=error?'error':done?'done':'busy';
   n.innerHTML=`<div class="job-head"><b>${E(error?'변형 실패':done?'변형 완료':'변형 중')}</b><span>${E(title)}</span><button type="button" data-job-close aria-label="닫기">×</button></div>${error?`<p class="job-err">${E(error)}</p>`:`<ol class="lp-steps">${JOB_STEPS.map((x,i)=>`<li data-at="${i<at?'done':i===at?'now':''}">${i+1}. ${x}</li>`).join('')}</ol>`}${done?`<button type="button" class="job-open" data-job-open="${E(done.id)}">${E(done.number)}번 카드 보기</button>`:''}`;
   for(const ol of document.querySelectorAll(`.lp-steps[data-steps]`))ol.querySelectorAll('li').forEach((li,i)=>li.dataset.at=i<at?'done':i===at?'now':'');}
-function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;showJob(pastBusy.title,stage);libView?.refreshJob();
+function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;showJob(pastBusy.title,stage);libView?.refreshJob();pickCart();
   for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(pastBusy.id)}"]`)){
     if(!b.hasAttribute('aria-busy')){b.style.minWidth=b.offsetWidth+'px';b.setAttribute('aria-busy','true');}b.innerHTML=busyHtml(stage);
     const f=b.closest('figure.past');if(f){f.toggleAttribute('data-busy',true);const o=f.querySelector('.past-busy');if(o)o.querySelector('span').textContent=stage;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',pastBusyHtml(stage));}}
   status(`${pastBusy.title} · ${stage}… (AI 없음)`);}
 // 실패하면 그 그림 위에 짧은 이유를 4초 남긴다(맨 아래 상태 줄만으로는 놓치기 쉬움).
-function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;queueMicrotask(()=>libView?.refreshJob());if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
+function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;queueMicrotask(()=>{libView?.refreshJob();pickCart();});if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
     if(o&&failure){o.dataset.error='true';o.querySelector('.busy-ring')?.remove();o.querySelector('span').textContent=failure;setTimeout(()=>o.remove(),4000);}else o?.remove();}}
 async function convertPast(item){
   if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);for(const b of document.querySelectorAll('[data-cvconvert][aria-busy]'))b.animate?.([{scale:1},{scale:1.08},{scale:1}],{duration:260,easing:'cubic-bezier(.2,.9,.25,1.06)'});return;}
@@ -740,6 +743,52 @@ $('#examd-view').addEventListener('change',e=>{const exam=examNow(),t=e.target;i
   if(t.matches('[data-ef-subject]')){goalEdit(exam,g=>{g.subject=t.value;});return;}
   const k=t.dataset.efGoal;if(k){const v=Math.round(Number(t.value));if(!(Number.isFinite(v)&&v>=0&&v<=(k==='total'?1000:k==='time'?600:200))){status('0 이상의 정수로 적어 주세요.',true);renderView();return;}goalEdit(exam,g=>{g[k]=v;});}
 });
+// ② 문항 고르기(exam-pick.js): 보관함 거르기 · 담기 · 분류·태그 창 · 여러 개 고르기.
+function pickCart(){const exam=view.name==='exam'&&view.examStep===2&&examNow();if(exam)refreshCart($('#examd-view'),exam,data,typesetForms,pastBusy);}
+const pickList=()=>{const exam=examNow();return exam?poolEntries(data,exam,{...pickState(view),limit:1e9}):[];};
+const pickByKey=keys=>{const all=pickList(),want=new Set(keys);return all.filter(x=>want.has(x.key));};
+let pickPop=null,pickMenu=null;
+function closePick(){pickPop?.remove();pickPop=null;pickMenu?.remove();pickMenu=null;}
+function floatAt(node,anchor,width){const b=anchor.getBoundingClientRect();node.style.left=Math.max(12,Math.min(innerWidth-width-12,b.left))+'px';const h=node.offsetHeight;node.style.top=(b.bottom+6+h>innerHeight-8?Math.max(8,b.top-h-6):b.bottom+6)+'px';}
+function openTagPop(keys,anchor){closePick();const xs=pickByKey(keys);if(!xs.length)return;pickPop=document.createElement('div');pickPop.className='ep-pop';pickPop.dataset.keys=JSON.stringify(keys);document.body.append(pickPop);pickPop.innerHTML=tagPopMarkup(xs,data);floatAt(pickPop,anchor,340);pickPop.querySelector('[data-ep-taginput]')?.focus();}
+function redrawPop(){if(!pickPop)return;const keys=JSON.parse(pickPop.dataset.keys),xs=pickByKey(keys);pickPop.innerHTML=tagPopMarkup(xs,data);pickPop.querySelector('[data-ep-taginput]')?.focus();}
+function popEdit(fn){const xs=pickByKey(JSON.parse(pickPop.dataset.keys));editMeta({mutate:(f,o)=>mutate(f,o)},xs,fn);redrawPop();const g=$('#examd-view .ep-grid'),top=g?.scrollTop||0;renderView();const g2=$('#examd-view .ep-grid');if(g2)g2.scrollTop=top;}
+function addPopTag(raw){const t=normTag(raw);if(!t)return;popEdit(m=>{if(!m.tags.includes(t))m.tags.push(t);return m;});}
+document.addEventListener('pointerdown',e=>{if(pickPop&&!e.target.closest('.ep-pop,[data-ep-tag],[data-ep-bulktag]'))closePick();else if(pickMenu&&!e.target.closest('.ep-menu,[data-ep-menu]')){pickMenu.remove();pickMenu=null;}},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(pickPop||pickMenu)){e.preventDefault();closePick();}
+  if(e.target.matches?.('[data-ep-taginput]')&&(e.key==='Enter'||e.key===' ')&&!e.isComposing){e.preventDefault();addPopTag(e.target.value);}},true);
+document.addEventListener('click',e=>{const t=e.target;if(!pickPop&&!pickMenu)return;
+  if(pickMenu){const set=t.closest('[data-ep-set]');if(set){const s=pickState(view),k=set.dataset.epSet,f={subj:'subject',unit:'part',std:'std',lv:'lv',ty:'ty',sort:'sort'}[k];s[f]=set.dataset.v||(k==='sort'?'recent':'');s.limit=40;closePick();renderView();return;}}
+  if(!pickPop||!t.closest('.ep-pop'))return;
+  if(t.closest('[data-ep-popx]')){closePick();return;}
+  const rm=t.closest('[data-ep-tagrm]');if(rm){const x=rm.dataset.epTagrm;popEdit(m=>{m.tags=m.tags.filter(y=>y!==x);return m;});return;}
+  const ad=t.closest('[data-ep-tagadd]');if(ad){addPopTag(ad.dataset.epTagadd);return;}
+  const lv=t.closest('[data-ep-lvset]');if(lv){const v=lv.dataset.epLvset;popEdit(m=>{m.lv=m.lv===v&&JSON.parse(pickPop.dataset.keys).length===1?'':v;return m;});}
+});
+document.addEventListener('change',e=>{const k=e.target.dataset?.epCls;if(!k||!pickPop)return;const v=e.target.value;if(v==='__keep')return;popEdit(m=>{m[k]=v;return m;});});
+$('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if(!exam||view.examStep!==2)return;const s=pickState(view);
+  const kd=t.closest('[data-ep-kind]');if(kd){s.kind=kd.dataset.epKind;s.limit=40;renderView();return;}
+  const mn=t.closest('[data-ep-menu]');if(mn){const k=mn.dataset.epMenu;if(pickMenu?.dataset.k===k){closePick();return;}closePick();pickMenu=document.createElement('div');pickMenu.className='ep-menu';pickMenu.setAttribute('role','menu');pickMenu.dataset.k=k;document.body.append(pickMenu);pickMenu.innerHTML=menuMarkup(data,exam,s,k);floatAt(pickMenu,mn,200);return;}
+  if(t.closest('[data-ep-star]')){s.star=!s.star;s.limit=40;renderView();return;}
+  const tf=t.closest('[data-ep-tagf]');if(tf){const x=tf.dataset.epTagf;s.tags=s.tags.includes(x)?s.tags.filter(y=>y!==x):[...s.tags,x];s.limit=40;renderView();return;}
+  if(t.closest('[data-ep-tagclear]')){s.tags=[];renderView();return;}
+  if(t.closest('[data-ep-more]')){s.limit+=40;renderView();return;}
+  if(t.closest('[data-ep-multi]')){s.multi=!s.multi;s.picked=[];closePick();renderView();return;}
+  const bt=t.closest('[data-ep-bulktag]');if(bt){openTagPop([...s.picked],bt);return;}
+  if(t.closest('[data-ep-bulktake]')){const xs=pickByKey(s.picked),mine=xs.filter(x=>x.kind==='mine'&&!exam.items.includes(x.id)),pasts=xs.filter(x=>x.kind==='past');
+    if(mine.length)mutate(()=>{for(const x of mine)addToExam(data,exam.id,x.id);renumberExam(data,exam.id);});
+    if(pasts.length)status(`기출 ${pasts.length}개는 하나씩 「담기」로 변형해 담아 주세요 — 지금은 내 문항 ${mine.length}개를 담았습니다.`);else status(`${mine.length}개를 담았습니다.`);
+    s.multi=false;s.picked=[];renderView();return;}
+  const tg=t.closest('[data-ep-tag]');if(tg){openTagPop([tg.dataset.epTag],tg);return;}
+  const tk=t.closest('[data-ep-take]');if(tk){const key=tk.dataset.epTake,x=pickByKey([key])[0];if(!x)return;
+    if(x.kind==='mine'){const inside=exam.items.includes(x.id);mutate(()=>{if(inside)removeFromExam(data,x.id);else addToExam(data,exam.id,x.id);renumberExam(data,exam.id);});status(inside?'문항을 시험지에서 뺐습니다.':'문항을 담았습니다 · 시험지 순서대로 번호를 다시 매겼습니다.');}
+    else{status('기출은 편집할 수 있는 문항으로 바꿔 담습니다(오른쪽 담은 문항 칸).');void convertPast(x.i);setTimeout(pickCart,0);}
+    return;}
+  const out=t.closest('[data-ep-out]');if(out){mutate(()=>{removeFromExam(data,out.dataset.epOut);renumberExam(data,exam.id);});return;}
+  if(s.multi){const card=t.closest('.ep-card');if(card){const k=card.dataset.epKey;s.picked=s.picked.includes(k)?s.picked.filter(y=>y!==k):[...s.picked,k];card.classList.toggle('pk',s.picked.includes(k));card.querySelector('.ep-pick').textContent=s.picked.includes(k)?'✓':'';const b=$('#examd-view .ep-bulk');if(b){b.querySelector('b').textContent=`${s.picked.length}개 골랐음`;b.querySelectorAll('[data-ep-bulktag],[data-ep-bulktake]').forEach(n=>n.disabled=!s.picked.length);}return;}}
+});
+let pickQueryTimer=0;
+$('#examd-view').addEventListener('input',e=>{if(!e.target.matches('[data-ep-query]'))return;const s=pickState(view);s.query=e.target.value;s.limit=40;clearTimeout(pickQueryTimer);pickQueryTimer=setTimeout(()=>{const at=e.target.selectionStart;renderView();const n=$('#examd-view [data-ep-query]');if(n){n.focus();n.setSelectionRange(at,at);}},220);});
 // 내 틀 등록 창이 한글 파일을 읽을 때: 암호는 선생님이 넣고, 여기서만 쓰고 남기지 않는다.
 async function readFormFile(file){typesetter||=makeTypesetter();const buffer=await file.arrayBuffer();let read=null,password='';
   for(;;){try{read=await typesetter.readSchoolForm(buffer,file.name,password);break;}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null){status('한글 파일 열기를 그만두었습니다.');return null;}}}
