@@ -2865,7 +2865,7 @@ const EXAM_TASK_INCLINE = {
         "· 마찰 구간 띠가 지형선에 붙어 있는지 봅니다",
     },
     {
-      target: () => "#menu-file",
+      target: () => "#file-menu-btn",   // 10-25 P3: 파일 단추 id가 바뀌어 가리킬 곳이 없었음
       title: "마지막 — 내보내기",
       text:
         "그림은 파일 → 이미지로 내보내기로 뽑아 한글·워드에 붙입니다.\n" +
