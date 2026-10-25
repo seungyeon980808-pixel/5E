@@ -10,7 +10,8 @@ const dir=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-trace-2026
  await page.goto(base+'/');
  await page.setContent('<style>body{background:#172029;color:white;font:14px sans-serif}button,input{font:inherit}#preview{width:760px;height:500px;background:white}.gm-trace-source-pane img{max-width:250px}.gm-trace-source-pane[hidden]{display:none}</style><div id="toolbar"></div><main><div id="preview"><svg viewBox="-40 -30 80 60" width="760" height="500"><path d="M-25 15L25 -15" stroke="black" fill="none"/><circle cx="0" cy="0" r="2" fill="white" stroke="black"/><path id="inline" d="M-25 14L25 -14" style="stroke:var(--accent, orange);fill:none;stroke-width:.3"/><path id="inline-hit" d="M-25 15L25 -15" stroke="black" style="stroke:transparent!important;fill:transparent"/><path id="hit" d="M-25 15L25 -15" stroke="transparent" stroke-width="5"/></svg></div></main>');
  await page.evaluate(async base=>{
-   const {createTraceEditor}=await import(base+'/js/graph/trace-overlay.js');
+   // 앱 모듈은 진입 경로(/preview/)와 상관없이 늘 루트 /js/에 있다(preview/index.html도 /js/main.js를 씀). 저장소의 preview/js는 10-19 옛 사본.
+   const {createTraceEditor}=await import(new URL(base).origin+'/js/graph/trace-overlay.js');
    const canvas=document.createElement('canvas');canvas.width=300;canvas.height=180;const ctx=canvas.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,300,180);ctx.strokeStyle='black';ctx.beginPath();ctx.moveTo(0,180);ctx.lineTo(300,0);ctx.stroke();
    window.plane={x:-25,y:-15,w:50,h:30,xMin:0,xMax:1,yMin:0,yMax:1};window.events=[];
    window.trace=createTraceEditor({toolbarHost:document.querySelector('#toolbar'),previewHost:document.querySelector('#preview'),reference:{data:canvas.toDataURL(),width:300,height:180,plotBox:{x:0,y:0,w:300,h:180}},onChange:s=>events.push(s)});
