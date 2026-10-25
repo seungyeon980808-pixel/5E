@@ -328,7 +328,9 @@ export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, 
   const showPalette = () => requestAnimationFrame(() => root.querySelector('.el-palette-slot')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
   root.addEventListener('click', e => {
     const t = e.target.closest('[data-exam-ltab]'); if (t) { mode = t.dataset.examLtab; render(); return; }
-    const a = e.target.closest('[data-el-act]'); if (a && ACT[a.dataset.elAct]) { if (a.dataset.elAct === 'tour') return ACT.tour(a); void run(async () => { await ACT[a.dataset.elAct](a); if (PALETTE.has(a.dataset.elAct)) showPalette(); }); return; }
+    const a = e.target.closest('[data-el-act]'); if (a && ACT[a.dataset.elAct]) { if (a.dataset.elAct === 'tour') return ACT.tour(a);
+      // 「새 시험지」는 파일 메뉴의 같은 단추를 누르고 그 단추가 스스로 작업 잠금(run)을 건다 — 여기서 run으로 감싸면 안쪽 실행이 「작업 중」으로 무시돼 아무 일도 없었다(10-26).
+      if (a.dataset.elAct === 'new') return ACT.new(a); void run(async () => { await ACT[a.dataset.elAct](a); if (PALETTE.has(a.dataset.elAct)) showPalette(); }); return; }
     const i = e.target.closest('[data-el-i]'); if (!i) return;
     const item = focusTabs(ctx)[mode].filter(it => it !== '|' && it.length > 1)[Number(i.dataset.elI)];
     void run(async () => { await item[2](ctx, i); });

@@ -13,6 +13,23 @@ import { inspectorMarkup, leftToolsMarkup, installInspector, installLeftTools } 
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
+// 문서의 모든 쪽을 엔진 SVG로 그려 숨은 틀에서 인쇄 창을 연다(portable 글자 폭 — 화면용 보조 측정이 켜져 있으면 SVG 그리기가 거부됨).
+async function printNativePages(bridge, ctx, pdf) {
+  try { await printNativePagesNow(bridge, ctx, pdf); } catch (error) { ctx.message(`인쇄 창을 열지 못했습니다: ${error.message}`); }
+}
+async function printNativePagesNow(bridge, ctx, pdf) {
+  const w = bridge.wasm, d = w.borrowDocumentHandle(), count = d.pageCount();
+  if (!count) { ctx.message('인쇄할 쪽이 없습니다.'); return; }
+  const svgOf = i => typeof w.withPortableMetrics === 'function' ? w.withPortableMetrics(() => d.renderPageSvg(i)) : d.renderPageSvg(i);
+  const page = JSON.parse(d.getPageDef(0)), mm = v => v / 7200 * 25.4, wmm = mm(page.width), hmm = mm(page.height);
+  const pages = Array.from({ length: count }, (_, i) => svgOf(i).replace(/<svg\b([^>]*)\swidth="[^"]*"/, '<svg$1').replace(/<svg\b([^>]*)\sheight="[^"]*"/, '<svg$1'));
+  const frame = document.createElement('iframe'); frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; frame.setAttribute('aria-hidden', 'true'); document.body.append(frame);
+  const out = frame.contentDocument, size = `${wmm.toFixed(1)}mm ${hmm.toFixed(1)}mm`;
+  out.open(); out.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>시험지</title><style>@page{size:${size};margin:0}html,body{margin:0}.p{width:${wmm.toFixed(1)}mm;height:${hmm.toFixed(1)}mm;break-after:page;overflow:hidden}.p svg{width:100%;height:100%;display:block}</style></head><body>${pages.map(svg => `<div class="p">${svg}</div>`).join('')}</body></html>`); out.close();
+  await new Promise(r => setTimeout(r, 300)); frame.contentWindow.focus(); frame.contentWindow.print();
+  setTimeout(() => frame.remove(), 60000);
+  ctx.message(`${count}쪽 인쇄 창을 열었습니다${pdf ? ' · 인쇄 창에서 「PDF로 저장」을 고르세요' : ''}.`);
+}
 const MODES = [['basic', '기본', '한글 리본 그대로(모든 기능)'], ['focus', '집중', '시험지·학습지에 필요한 것만 + 팔레트'], ['none', '없음', '도구 없이 종이만']];
 const LINE_SPACINGS = [100, 130, 150, 160, 180, 200, 250];
 const HIGHLIGHT = '#fff176';
@@ -102,7 +119,9 @@ function focusTabs(ctx) {
       ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
       ['쪽 번호·머리말', '모든 쪽 아래 가운데에 쪽 번호(- 1 -, 1 / 4 …) — 다시 누르면 모양만 바뀜 · 쪽 위 머리말(시험 이름)도 여기서', (_, button) => ctx.openPicker(button, 'pagenum')],
       ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김, 선지까지 섞기 고를 수 있음) + 교사용 문서 끝에 대응표·나형 정답', (_, button) => ctx.openPicker(button, 'variant')], '|',
-      ['인쇄', '인쇄 창 열기', cmd('file:print')], ['PDF로 저장', 'PDF로 저장', cmd('file:print-to-pdf')],
+      // 5E_hwp 안 편집기에는 파일 명령(인쇄 등)이 등록되지 않아 이 두 단추가 늘 「이 위치에서는 해당 단축키를 사용할 수 없습니다」였다(10-26).
+      // 5E_exam 인쇄와 같은 방식: 엔진이 그린 쪽(SVG)을 실제 용지 크기로 인쇄 창에 — PDF는 인쇄 창의 「PDF로 저장」.
+      ['인쇄', '인쇄 창 열기', doc(b => printNativePages(b, ctx, false))], ['PDF로 저장', 'PDF로 저장(인쇄 창에서 「PDF로 저장」)', doc(b => printNativePages(b, ctx, true))],
     ],
   };
 }
