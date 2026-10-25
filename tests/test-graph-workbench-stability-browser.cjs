@@ -97,7 +97,8 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();
         await page.waitForGraphSignal(({kind,sourceTaskId})=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===(kind==='image'?1:2)
           && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId!==sourceTaskId,{kind,sourceTaskId});
-        if(kind==='image')assert.equal(await page.locator(ui+'[data-ai-mark-leaders]').inputValue(),'remove','a new image task defaults to removing guidelines');
+        // 10-16(83201a54) 결정: 보조선·지시선 기본값은 「유지」.
+        if(kind==='image')assert.equal(await page.locator(ui+'[data-ai-mark-leaders]').inputValue(),'keep','a new image task defaults to keeping guidelines');
         try {
           await page.locator(ui+'.ai-task-tab.is-on .ai-task-tab-select').click({button:'right'});
         } catch (error) {
