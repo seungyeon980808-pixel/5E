@@ -136,7 +136,8 @@ const cases=[
   ['public-close-keeps-workspace-inactive',async(page,capture)=>{
     await keyboardOpen(page);await arm(page);const held=batch(await nativeFocus(page));
     await h.action(page,'close');const before=await capture('actual-public-close');
-    assert.equal(before.panelHidden,true);assert.equal(before.active.id,'exam-workspace-open');
+    // 10-24 개편으로 따로 있던 여는 단추(#exam-workspace-open)는 없어지고 맨 위 앱 전환 단추가 그 자리다 — 닫은 뒤 초점은 5E_hwp 창 밖(메뉴·작업 단추가 아님)에 있어야 한다.
+    assert.equal(before.panelHidden,true);assert.equal(before.active.menu,null);assert.equal(before.active.action,null);
     await release(page,held);const after=await capture('old-callback-after-close');
     assert.equal(after.panelHidden,true);assert.deepEqual(after.active,before.active);
   }]
@@ -177,7 +178,12 @@ test('root real DOM menu-focus scheduler contracts',async t=>{
             const pathname=url.pathname==='/'?'/index.html':url.pathname;
             const pin=servedPins.get(pathname);if(!pin)return;
             const job=(async()=>{try{
-              const bytes=await response.body();const entry={url:response.url(),pathname,status:response.status(),bytes:bytes.length,sha256:sha(bytes),expectedSha256:pin.sha256};
+              // 미리보기 서버는 index.html의 개발 배지(data-change-summary) 한 칸에 기준 커밋을 끼워 보낸다(scripts/preview-local-server.cjs revisionBadge).
+              // 그 칸만 디스크 파일의 원래 칸으로 되돌린 뒤 바이트를 비교한다 — 나머지 글자는 그대로 같아야 한다.
+              let bytes=await response.body();
+              if(pathname==='/index.html'){const disk=fs.readFileSync(pin.path,'utf8'),badge=/<span\b[^>]*\bdata-change-summary\b[^>]*>[^<]*<\/span>/;const original=disk.match(badge)?.[0];
+                if(original)bytes=Buffer.from(bytes.toString('utf8').replace(badge,original),'utf8');}
+              const entry={url:response.url(),pathname,status:response.status(),bytes:bytes.length,sha256:sha(bytes),expectedSha256:pin.sha256};
               row.loadedResponses.push(entry);
               if(url.pathname===workspaceUrl.pathname)row.responses.push(entry);
             }catch(error){row.errors.push('response: '+String(error));}})();pending.add(job);job.finally(()=>pending.delete(job));

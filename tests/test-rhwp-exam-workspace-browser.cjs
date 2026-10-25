@@ -25,7 +25,7 @@ h.withServer(async origin=>{
     assert.equal(layout.bodyTop,layout.barBottom,'editor body starts right under the shared top bar at '+width);
     if(layout.toolsTop!=null&&width>900){assert.equal(layout.toolsTop,layout.bodyTop,'inspector column starts at the top of the body at '+width);assert.ok(Math.abs(layout.toolsLeft-layout.studioRight)<=1,'inspector sits right of the paper at '+width);}
     if(width<=900)assert.equal(await page.locator('#rhwp-exam-workspace .exam-insp-toggle').isVisible(),await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode')==='focus','narrow screens open the inspector as a drawer from the right edge at '+width);
-    assert.equal(layout.studioTop,layout.bodyTop,'paper starts right under the top bar (no tool row above it) at '+width);assert.ok(layout.barBottom<=41.5,'top bar is 40px + line');assert.equal(layout.overflow,false,'no outer horizontal overflow');
+    assert.equal(layout.studioTop,layout.bodyTop,'paper starts right under the top bar (no tool row above it) at '+width);assert.ok(layout.barBottom<=49.5,'top bar is 48px + line (10-24 시안 「막대 48」)');assert.equal(layout.overflow,false,'no outer horizontal overflow');
    }
    await page.setViewportSize({width:1440,height:950});
    await page.locator('[data-exam-menu="file"]').focus();await page.keyboard.press('ArrowDown');

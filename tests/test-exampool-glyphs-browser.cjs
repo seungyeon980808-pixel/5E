@@ -62,7 +62,7 @@ h.withServer(async origin => {
             const checked=new Document(bytes);let styled;
             try{styled=new Document(await T.applyReferenceBogiIndent(checked,JSZip));H.verifyNativeQuestion(styled,plan);
               const xml=await (await JSZip.loadAsync(new Uint8Array(styled.exportHwpx()))).file('Contents/section0.xml').async('string');
-              const body=new DOMParser().parseFromString(xml,'application/xml').documentElement.textContent;r.kept=body.includes('가'+c+'나');r.angle=body.includes('가'+({'〈':'<','〉':'>'}[c]||c)+'나');r.ok=true;}
+              const body=new DOMParser().parseFromString(xml,'application/xml').documentElement.textContent;r.kept=body.includes('가'+c+'나');r.angle=body.includes('가'+({'〈':'<','〉':'>','〔':'[','〕':']'}[c]||c)+'나');r.ok=true;}
             finally{styled?.free();checked.free();}
           }catch(e){r.ok=false;r.error=String(e.message||e).slice(0,120);}
           out.push(r);
@@ -72,8 +72,9 @@ h.withServer(async origin => {
       const failed = results.filter(r=>!r.ok).map(r=>`${r.c} U+${r.c.codePointAt(0).toString(16)}: ${r.error}`);
       assert.deepEqual(failed,[],`${engineName}: every KICE special character survives the HWP round trip`);
       // 10-23 사용자 결정(1번): 꺾쇠 〈 〉는 한글 엔진이 반 폭으로 재 겹치므로 조판할 때 평가원 표기 < >로 바꿔 넣는다. 나머지는 글자 그대로.
-      const ANGLE = ['〈', '〉'];
-      assert.deepEqual(results.filter(r=>ANGLE.includes(r.c)&&!r.angle).map(r=>r.c),[],`${engineName}: 〈 〉 are stored as < > (KICE notation)`);
+      // 10-25(387302d5): 거북 괄호 〔 〕도 같은 이유(엔진이 반 폭으로 재 「〔실험」이 겹침)로 [ ]로 넣는다.
+      const ANGLE = ['〈', '〉', '〔', '〕'];
+      assert.deepEqual(results.filter(r=>ANGLE.includes(r.c)&&!r.angle).map(r=>r.c),[],`${engineName}: 〈 〉 〔 〕 are stored as < > [ ] (KICE notation)`);
       const lost = results.filter(r=>!ANGLE.includes(r.c)&&!r.kept).map(r=>r.c);
       assert.deepEqual(lost,[],`${engineName}: the HWP document stores each character itself`);
       assert.deepEqual(errors,[],`${engineName}: no page errors`);

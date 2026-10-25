@@ -1918,7 +1918,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const includeLabels = labelPreviewStates.get(item)?.included !== false;
     const count = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
     const review = includeLabels && item.labelPlan?.reviewRequired === true;
-    const accepted = Boolean(item.data || item.graphResult || item.sceneResult);
+    const accepted = Boolean(item.data || item.graphResult || item.sceneResult) && item.removalReport?.status !== 'out-of-scope';
     output.disabled = busy || !accepted;
     output.textContent = `${count ? `캔버스에 삽입 · 라벨 ${count}개` : "캔버스에 삽입"}${review ? " · 확인" : ""}`;
     output.title = !includeLabels && item.labelPlan?.labels?.length
@@ -2605,7 +2605,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const details=panel.querySelector('[data-ai-output-details]');
     if(details) details.hidden=!isGraphWorkflow(conversionKind) || !item?.graphResult;
     if (insert) {
-      insert.disabled = outputBusy || !item || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
+      // 「범위 밖 · 원본 보존」 결과(라벨 복원 대상 0개)는 승인된 복원이 아니다 — 캔버스에 넣지 못하게 끈다(검사 workflow unlabeled exam, 10-26).
+      const sourcePreserved = item?.removalReport?.status === 'out-of-scope';
+      insert.disabled = outputBusy || !item || sourcePreserved || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
       const labelCount = item?.labelPlan?.labels?.length || 0;
       const labelReview = item?.labelPlan?.reviewRequired === true;
       insert.textContent = '캔버스에 삽입';
