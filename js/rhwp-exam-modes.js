@@ -634,7 +634,9 @@ export function installExamModes(panel, services) {
     if (!style) {
       style = doc.createElement('style'); style.id = 'exam-mode-style';
       // 집중·없음 모드에서는 스튜디오 메뉴·리본·서식 줄을 감춘다(칸은 살아 있어 도구 줄이 값을 넘겨 쓴다).
-      style.textContent = 'html[data-exam-tools="focus"] #studio-header,html[data-exam-tools="none"] #studio-header{display:none!important}html[data-exam-tools="none"] #status-bar{display:none!important}';
+      style.textContent = 'html[data-exam-tools="focus"] #studio-header,html[data-exam-tools="none"] #studio-header{display:none!important}html[data-exam-tools="none"] #status-bar{display:none!important}'
+        // 좁은 창(767px 이하)에서 편집기가 상태 줄 구분선을 숨겨 「1 / 1 쪽구역: 1 / 1삽입」처럼 붙었다(10-25 H5) — 칸 사이를 띄운다.
+        + '@media (width<=767px){#status-bar .stb-item~.stb-item{margin-left:10px}}';
       doc.head.append(style);
     }
     doc.documentElement.dataset.examTools = mode;

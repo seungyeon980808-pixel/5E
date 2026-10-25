@@ -236,3 +236,10 @@ body { --hwp-shared-left: var(--ds-panel-left, 160px); }
   #rhwp-exam-workspace[data-tool-mode="focus"] .exam-insp-toggle { display: block; position: fixed; right: 0; top: 50%; z-index: 41; transform: translateY(-50%); writing-mode: vertical-rl; padding: 10px 6px; min-height: 0; height: auto; border: 1px solid var(--ds-line-strong, #30363d); border-right: 0; border-radius: 8px 0 0 8px; background: var(--ds-raise, #161b22); color: var(--ds-ink, #e6edf3); font-size: 12.5px; cursor: pointer; }
   #rhwp-exam-workspace.insp-open .exam-insp-toggle { right: min(340px, 92vw); }
 }
+
+/* 좁은 창(900px 이하) 왼쪽 칸은 160px — 288px용 두 칸 단추가 「시험…」「정답…」으로 잘리고 아래 「양식 저장」이 넘쳤다(10-25 H5). 한 줄에 하나씩 쌓는다. */
+@media (max-width: 900px) {
+  #rhwp-exam-workspace .exam-left-tools .ei-tiles, #rhwp-exam-workspace .ei-foot { grid-template-columns: 1fr; }
+  #rhwp-exam-workspace .ei-foot { padding: 8px 10px; gap: 6px; }
+  #rhwp-exam-workspace .exam-left-tools .el-seg button { padding: 0 2px; font-size: 12px; }
+}

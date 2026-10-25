@@ -106,7 +106,7 @@ async function lasso(page, points, finish=true) {
 for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rectangle, white/transparent, outside start and cancellation`,{timeout:120000},async t=>{
   const {page,errors}=await fixture(t,engine),panel=page.locator(active),erase=panel.locator('[data-ai-local-erase]');
   await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(a=>a.finished)));const before=await snapshot(page),header=(await geometry(page)).header;
-  await erase.click();assert.equal(await panel.locator('[data-ai-erase-mode=brush]').getAttribute('aria-pressed'),'true');
+  await erase.click();assert.equal(await panel.locator('button[data-ai-erase-mode=brush]').getAttribute('aria-pressed'),'true');
   await panel.locator('[data-ai-erase-size]').fill('12');assert.equal(await panel.locator('[data-ai-erase-size-value]').textContent(),'12 px');
   const read=async src=>page.evaluate(async src=>{const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');const d=await decodeScopedPng(new Uint8Array(await(await fetch(src)).arrayBuffer()));return {width:d.width,height:d.height,data:[...d.data]};},src);
   const stroke=async points=>{const old=await panel.getAttribute('data-ai-selected-candidate-id');await lasso(page,points);await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,old);return(await snapshot(page))[0].generated.at(-1);};
@@ -119,9 +119,9 @@ for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rect
   }
   assert.equal(inside,h.maskedPixels);assert.deepEqual((await snapshot(page))[1],before[1]);assert.deepEqual((await snapshot(page))[0].generated[0],before[0].generated[0]);
   await panel.locator('[data-ai-erase-background]').selectOption('white');const white=await stroke([{x:65,y:80},{x:200,y:80}]);const whitePixels=await read(white.data);assert.deepEqual(whitePixels.data.slice((80*512+100)*4,(80*512+100)*4+4),[255,255,255,255]);
-  await panel.locator('[data-ai-erase-mode=rect]').click();assert.equal(await panel.locator('[data-ai-erase-size]').isDisabled(),true);
+  await panel.locator('button[data-ai-erase-mode=rect]').click();assert.equal(await panel.locator('[data-ai-erase-size]').isDisabled(),true);
   await panel.locator('[data-ai-erase-background]').selectOption('transparent');const rect=await stroke([{x:300,y:260},{x:245,y:230}]);assert.equal(rect.scopedEditHistory[0].operation,'local-rect-erase');const rectPixels=await read(rect.data);assert.equal(rectPixels.data[(245*512+270)*4+3],0);
-  await panel.locator('[data-ai-erase-mode=brush]').click();const outside=await stroke([{x:100,y:-18},{x:100,y:45}]);assert.ok(outside.scopedEditHistory[0].points[0].y<0,'outside coordinates stay outside instead of snapping to an edge');
+  await panel.locator('button[data-ai-erase-mode=brush]').click();const outside=await stroke([{x:100,y:-18},{x:100,y:45}]);assert.ok(outside.scopedEditHistory[0].points[0].y<0,'outside coordinates stay outside instead of snapping to an edge');
   const count=(await snapshot(page))[0].generated.length;await lasso(page,[{x:100,y:160},{x:200,y:160}],false);await page.keyboard.press('Escape');await page.mouse.up();assert.equal((await snapshot(page))[0].generated.length,count);assert.equal(await panel.locator('.ai-local-erase-overlay').count(),0);assert.equal(await panel.isVisible(),true);assert.equal(await panel.locator('[data-ai-local-erase-options]').isVisible(),false);
   assert.deepEqual((await geometry(page)).header,header,'tool settings never change the image fitting header');assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);assert.deepEqual(errors,[]);
   await erase.click();await page.screenshot({path:path.join(evidence,engine,'brush-settings.png')});
