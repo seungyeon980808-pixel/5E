@@ -347,6 +347,9 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
     if (!box) return;
     normBox();
     if ((box.r - box.l) < 4 || (box.b - box.t) < 4) return; // 너무 작으면 무시
+    // 처음 받은 영역을 손대지 않고 확인하면 그 값을 그대로 돌려준다 — 화면 좌표를 거쳐 다시 셈하면 소수 끝자리가 달라져
+    // 「다시 보내기는 이전 자른 영역에서 시작」이 어긋났다(그래프 확대 검사, 10-26).
+    if (initialWorld && initialBox && box.l === initialBox.l && box.t === initialBox.t && box.r === initialBox.r && box.b === initialBox.b) { finish({ ...initialWorld }); return; }
     const vb = state.get().viewBox;
     const w1 = screenToWorld(svg, vb, box.l, box.t);
     const w2 = screenToWorld(svg, vb, box.r, box.b);
@@ -412,11 +415,12 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
   }
   function onCtx(e) { e.preventDefault(); cancel(); }
 
+  let initialBox = null, initialWorld = null;
   if (options.initialBounds) {
     const b=options.initialBounds;
     if ([b.x,b.y,b.w,b.h].every(Number.isFinite) && b.w>0 && b.h>0) {
       const vb=state.get().viewBox, a=worldToScreen(svg,vb,b.x,b.y), z=worldToScreen(svg,vb,b.x+b.w,b.y+b.h);
-      box={l:a.x,t:a.y,r:z.x,b:z.y};phase="adjust";hint.textContent=HINT_ADJUST;render();
+      box={l:a.x,t:a.y,r:z.x,b:z.y};initialBox={...box};initialWorld={x:b.x,y:b.y,w:b.w,h:b.h};phase="adjust";hint.textContent=HINT_ADJUST;render();
     }
   }
   overlay.addEventListener("mousedown", onDown);
