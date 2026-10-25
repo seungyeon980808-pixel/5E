@@ -37,6 +37,8 @@ export class RhwpExamBridge {
     // Studio consumes Escape even at a plain body caret. Intercept only that
     // case; selections, nested editing and drawing retain Studio's cancellation.
     if (!cursor || event.target !== input.textarea) return false;
+    // 편집기 자체의 오른쪽 클릭 메뉴가 열려 있으면 Esc는 그 메뉴만 닫는다 — 5E_hwp 전체가 닫혔다(코드 점검 10-21 하).
+    if (input.textarea.ownerDocument?.querySelector('.context-menu')) return false;
     if (input.imagePlacementMode || input.textboxPlacementMode || input.connectorDrawingMode || input.polygonDrawingMode || input.formOverlay) return false;
     return !['isInHeaderFooter','isInFootnote','isInPictureObjectSelection','isInTableObjectSelection',
       'isInBlockSelectionMode','isInCellSelectionMode','isInCell','isInTextBox','hasSelection']

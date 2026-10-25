@@ -90,6 +90,8 @@ export function initBubbleSection(state) {
   }
 
   const bindNumber = (inp, key, min, max) => inp.addEventListener("change", () => {
+    // 빈 칸은 Number('') = 0으로 저장됐다 — 지운 채 나가면 원래 값으로 되돌린다(코드 점검 10-21 하).
+    if (!String(inp.value).trim()) { sync(); return; }
     const v = Number(inp.value);
     if (!Number.isFinite(v) || v < min || (max != null && v > max)) return;
     commit((t) => { t[key] = v; });

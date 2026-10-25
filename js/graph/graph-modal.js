@@ -831,6 +831,8 @@ function bakeBars(s, plane) {
       labelSize: endLabelSizeOf(plane),
       strokeWidth: Number.isFinite(s.strokeWidth) ? s.strokeWidth : 0.3,
       ...barFillFields(s.fillStyle),
+      // 다시 연 막대의 원래 회색 농도(예: 복원 결과 220)를 지킨다 — 기본값 170으로 바뀌던 것(코드 점검 10-21 하).
+      ...((s.fillStyle || "gray") === "gray" && Number.isFinite(s.barFillLevel) ? { fillLevel: s.barFillLevel } : {}),
     },
   };
 }
@@ -842,7 +844,8 @@ function prepareSeries(plane) {
   const list = [];
   const endSize = endLabelSizeOf(plane); // 끝 라벨(눈금 라벨과 동일 크기)
   for (const s of _series) {
-    if(!s.objectId && !s.reconstruction)s.seriesId ||= `series-${_series.indexOf(s)+1}`;
+    // 계열 ID는 이미 쓰는 번호를 피한다 — 순번만 쓰면 지운 뒤 추가한 계열이 남은 계열과 ID가 겹쳤다(코드 점검 10-21 하).
+    if(!s.objectId && !s.reconstruction && !s.seriesId){const used=new Set(_series.map(x=>x.seriesId).filter(Boolean));let k=_series.indexOf(s)+1;while(used.has(`series-${k}`))k++;s.seriesId=`series-${k}`;}
     // 이 계열이 읽는 축(왼쪽 y / 오른쪽 y2)에 맞는 평면 뷰. axis가 없으면 plane 그대로다.
     const pl = planeForSeries(s, plane);
     const db = dataBounds(pl);
@@ -4044,7 +4047,7 @@ function build() {
     b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => {
       const s = _series[_sel]; if (!s || s.kind !== "bar") return;
-      s.fillStyle = value;
+      s.fillStyle = value; delete s.barFillLevel;   // 사용자가 채우기를 고르면 그 방식의 기본 농도로
       syncSeriesEditor(); refreshPreview();
     });
     _els.barFillHost.appendChild(b);
@@ -4705,6 +4708,7 @@ function loadFromPlane(plane) {
         ...preserved, kind: "bar", axis: fg.axis === "y2" ? "y2" : "y", items,
         widthRatio: Number.isFinite(fg.barWidthRatio) ? fg.barWidthRatio : 0.55,
         fillStyle: fg.barFill || "gray", barBase:fg.barBase,
+        barFillLevel: (fg.barFill || "gray") === "gray" && Number.isFinite(fg.bars?.fillLevel) ? fg.bars.fillLevel : undefined,
         styleIdx: 0, strokeWidth: fg.strokeWidth ?? 0.3,
         endLabel: "", movable: false, markers: [], guides: [], arrows: [],
       });

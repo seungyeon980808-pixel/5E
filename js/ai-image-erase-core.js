@@ -1,6 +1,23 @@
 import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 import { brushPixelMask, rectanglePixelMask } from './image-erase-mask.js?v=1.7.0-four-session-integration';
 import { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
+// 엄격한 PNG 해석기는 색 PNG(RGB·RGBA 8비트)만 받는다. 회색조·팔레트 PNG는 영어 오류(「Unsupported or invalid PNG」)로 실패했다
+// (코드 점검 10-21 하) — 그때만 브라우저 해석으로 RGBA로 풀고, 그것도 안 되면 한국어로 안내한다. 색 정보 덧붙임(metadata)은 없앤다.
+async function decodeForErase(bytes) {
+  try { return await decodeScopedPng(bytes); }
+  catch (error) {
+    if (!/Unsupported or invalid PNG/.test(String(error?.message))) throw error;
+    const unsupported = () => new Error('이 PNG 형식(회색조·팔레트 등)은 지우개로 고칠 수 없습니다. 색 PNG로 저장한 뒤 다시 시도해 주세요.');
+    if (typeof createImageBitmap !== 'function' || typeof OffscreenCanvas !== 'function') throw unsupported();
+    try {
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' });
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height), g = canvas.getContext('2d');
+      g.drawImage(bitmap, 0, 0); bitmap.close?.();
+      const rgba = g.getImageData(0, 0, canvas.width, canvas.height);
+      return { width: rgba.width, height: rgba.height, data: new Uint8Array(rgba.data.buffer.slice(0)), metadata: [] };
+    } catch { throw unsupported(); }
+  }
+}
 const abort = signal => { if (signal?.aborted) throw new DOMException('지우기 취소 · 이전 버전 유지', 'AbortError'); };
 
 async function eraseMaskedImage(dataUrl, makeMask, { signal, background = 'transparent', minimum = 0 } = {}) {
@@ -8,7 +25,7 @@ async function eraseMaskedImage(dataUrl, makeMask, { signal, background = 'trans
   if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,')) throw new TypeError('PNG 수정본에서 지우개를 사용할 수 있습니다.');
   if (!['white', 'transparent'].includes(background)) throw new TypeError('지운 자리의 배경을 선택하세요.');
   const encoded = atob(dataUrl.slice(dataUrl.indexOf(',') + 1));
-  const image = await decodeScopedPng(Uint8Array.from(encoded, c => c.charCodeAt(0)));
+  const image = await decodeForErase(Uint8Array.from(encoded, c => c.charCodeAt(0)));
   abort(signal);
   const mask = makeMask(image.width, image.height);
   const pixels = new Uint8Array(image.data);

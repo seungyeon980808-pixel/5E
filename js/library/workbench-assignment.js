@@ -267,6 +267,8 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
     overlay.addEventListener('dragend', () => { dragged = null; clearDrop(); delete overlay.dataset.dragging; });
     function onKeydown(event) {
       if (!overlay.isConnected || event.isComposing) return;
+      // 라이브러리가 닫혀(숨어) 배정 창이 보이지 않으면 스스로 끝내고 키는 넘긴다 — 숨은 채 Space·Esc를 가로챘다(코드 점검 10-21 하, 「5E_exam으로 돌아가기」).
+      if (!overlay.getClientRects().length || overlay.closest('[hidden],[inert]')) { finish(null); return; }
       if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); finish(null); return; }
       if (event.key === 'Enter' && event.target.matches?.('[data-drop-target]')) {
         event.preventDefault(); event.stopImmediatePropagation();

@@ -258,7 +258,9 @@ export function installDocumentShortcuts(bridge) {
     if (event.target !== input?.textarea || !cursor || event.defaultPrevented ||
         bridge.editor.element.ownerDocument.querySelector('#rhwp-exam-workspace[aria-busy="true"]')) { clear(); return; }
     const context = { inCell:cursor.isInCell() && !cursor.isInTextBox(), cellSelection:cursor.isInCellSelectionMode() };
-    const blockLetter = context.cellSelection && !input.isComposing && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey &&
+    // 칸 블록 상태에는 글자를 넣을 커서가 없다 — 조합 중이어도 M·S·H·W(키 자리)는 단축키다(H2, 10-25).
+    // macOS Safari는 한글 입력에서 compositionstart를 keydown보다 먼저 보내 「조합 중이 아님」 조건이면 네 글자가 모두 글자로 들어갔다.
+    const blockLetter = context.cellSelection && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey &&
       ['h','w','m','s'].includes(letters(event)) ? documentShortcut(event, context) : null;
     // ⌘·Ctrl·⌥ 조합은 한글 입력 상태여도 단축키다(10-24). 수식키 없는 글자만 입력기에 맡긴다.
     const modified = event.ctrlKey || event.metaKey || event.altKey;
@@ -271,7 +273,13 @@ export function installDocumentShortcuts(bridge) {
     }
     // Korean cell-block letters can start an IME sequence despite preventDefault.
     // Reuse Studio's guard to suppress that sequence and its trailing input.
-    if (blockLetter) input._cellBlockLetterImeGuard?.arm(event);
+    if (blockLetter) {
+      const ime = /^[ㄱ-ㅎㅏ-ㅣ]$/.test(event.key || '') || event.key === 'Process' || event.keyCode === 229 || event.isComposing || input.isComposing;
+      // 편집기 잔여 글자 막기는 ㄴ·ㅡ만 알아본다 — 한글 입력에서 눌린 네 글자 모두에 켠다(영문 입력이면 켜지 않음: 다음 글자를 막지 않게).
+      input._cellBlockLetterImeGuard?.arm(ime ? { key: 'Process', keyCode: 229, isComposing: true } : event);
+      // 이미 시작된 조합은 숨은 입력칸을 떼었다 붙여 버린다.
+      if (event.isComposing || input.isComposing) { input.textarea.blur(); input.textarea.focus({ preventScroll: true }); }
+    }
     if (input.imagePlacementMode || input.textboxPlacementMode || input.connectorDrawingMode || input.polygonDrawingMode || input.formOverlay) { clear(); return; }
     if (['Control','Meta','Alt','Shift'].includes(event.key)) return;
     let action = blockLetter;

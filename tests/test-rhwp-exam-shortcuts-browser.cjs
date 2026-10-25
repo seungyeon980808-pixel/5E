@@ -110,6 +110,11 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await cellFocus();await page.keyboard.press('F5');
   await change('Alt+ArrowRight',cellProps,(a,b)=>{assert.equal(a[0].width+a[1].width+a[2].width,b[0].width+b[1].width+b[2].width);assert.equal(a[0].width,b[0].width+300);});
   await cellFocus();await page.keyboard.press('Shift+F5');await page.keyboard.press('ArrowRight');await page.keyboard.press('m');assert.equal((await dims()).cellCount,5);await page.keyboard.press('Control+z');assert.equal((await dims()).cellCount,6);
+  // Safari 한글 입력: compositionstart가 keydown보다 먼저 와 조합 중이어도 칸 블록 M(ㅡ)은 합치기다(H2, 10-25).
+  await cellFocus();await page.keyboard.press('Shift+F5');await page.keyboard.press('ArrowRight');
+  await frame.locator('textarea').first().evaluate(node=>{node.dispatchEvent(new CompositionEvent('compositionstart',{data:'',bubbles:true}));
+    const e=new KeyboardEvent('keydown',{key:'ㅡ',code:'KeyM',isComposing:true,bubbles:true,cancelable:true,composed:true});Object.defineProperty(e,'keyCode',{get:()=>229});node.dispatchEvent(e);});
+  assert.equal((await dims()).cellCount,5,'한글 조합이 먼저 시작돼도 칸 블록 M은 합치기');await page.keyboard.press('Control+z');assert.equal((await dims()).cellCount,6);
   await cellFocus();await page.keyboard.press('F5');await page.keyboard.press('s');await frame.locator('.modal-overlay .dialog-title').filter({hasText:'셀 나누기'}).waitFor();
   await frame.locator('.modal-overlay').last().locator('button').filter({hasText:/취소|닫기/}).last().click();await focus();
   // Shortcut handling must not leak into a settings input or IME composition.

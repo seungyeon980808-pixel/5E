@@ -68,3 +68,16 @@ test('white and transparent brush/rectangle revisions preserve untouched RGBA an
   }
   assert.equal(await eraseImageRegion(source,{mode:'brush',points:[{x:-20,y:1},{x:-20,y:20}],diameter:5}),null);
 });
+
+test('grayscale PNG erase fails with a Korean explanation instead of the raw parser error', async () => {
+  const zlib = require('node:zlib');
+  const { eraseImageRegion } = await import('../js/ai-image-erase-core.js?v=1.7.0-four-session-integration');
+  // 4×4 8-bit grayscale (color type 0) PNG.
+  const crcTable = Array.from({ length: 256 }, (_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c >>> 0; });
+  const crc = buf => { let c = 0xffffffff; for (const b of buf) c = crcTable[(c ^ b) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+  const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type), data]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(4, 0); ihdr.writeUInt32BE(4, 4); ihdr[8] = 8; ihdr[9] = 0;
+  const raw = Buffer.concat(Array.from({ length: 4 }, () => Buffer.from([0, 10, 20, 30, 40])));
+  const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+  await assert.rejects(eraseImageRegion(url(png), { mode: 'rect', points: [{ x: 0, y: 0 }, { x: 3, y: 3 }] }), error => /회색조/.test(error.message) && !/Unsupported/.test(error.message));
+});
