@@ -736,7 +736,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         activate(entry);
         await entry.controller.open({ reveal: true });
       },
-      exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount: () => selectedTasks.values().length, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
+      exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount: () => selectedTasks.values().length, selectedTaskBlocked: () => selectedTasks.values().filter(owner => { const entry=resolveOwner(owner); return entry?.controller?.taskHasSource && !entry.controller.taskHasSource(owner.taskId); }).length, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
       newWorkspace: () => {
         const kind=workflowKind(),next=add(crypto.randomUUID(),false);
         void next.controller.ready.then(()=>{

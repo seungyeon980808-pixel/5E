@@ -98,7 +98,7 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, isTextCreation = () => false, changed, viewChanged, areaOnlyForSelected = false }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, selectedTaskBlocked = () => 0, isTextCreation = () => false, changed, viewChanged, areaOnlyForSelected = false }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
@@ -443,7 +443,10 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       const selectedCount = selectedTaskCount();
       if (Number.isInteger(selectedCount) && selectedCount >= 2) {
         apply.textContent = `선택한 작업 ${selectedCount}개 변환하기`;
-        apply.disabled = busy || panel.dataset.aiSharingMode === 'view';
+        // 원본 없는 작업이 섞여 있으면 미리 끈다 — 누른 뒤에야 오류 목록이 떴다(I6, 10-25).
+        const blocked = selectedTaskBlocked();
+        apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || blocked > 0;
+        apply.title = blocked > 0 ? `원본 없는 작업 ${blocked}개 — 원본을 넣거나 선택에서 빼세요.` : '';
       } else if (scopedTarget()) {
         apply.textContent = '수정하기';
         apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));

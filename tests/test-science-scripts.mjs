@@ -14,10 +14,11 @@ test('chemical formulas, ions, units and physics labels get scripts', () => {
   assert.equal(show('(NH4)2SO4'), '(NH_4)_2SO_4');
   assert.equal(show('가속도는 2 m/s2, 넓이 10 cm2, 3 s-1'), '가속도는 2 m/s^2, 넓이 10 cm^2, 3 s^-^1');
   assert.equal(show('스위치 S1을 닫고 V2를 읽는다'), '스위치 S_1을 닫고 V_2를 읽는다');
+  assert.equal(show('H2 기체와 B2H6'), 'H_2 기체와 B_2H_6');
 });
 
 test('ordinary words, Korean labels, question numbers and mass labels stay plain', () => {
-  for (const text of ['1. 다음 중 옳은 것은? [3점]', 'Hello World', 'A4 용지', 'm1과 m2의 질량', '(가)와 (나)', 'CO와 NO', 'DNA 2개', 'ㄱ, ㄴ, ㄷ', 'pH 7'])
+  for (const text of ['1. 다음 중 옳은 것은? [3점]', 'Hello World', 'A4 용지', 'B4 용지', 'B5판', 'C4 식물과 C3식물', 'm1과 m2의 질량', '(가)와 (나)', 'CO와 NO', 'DNA 2개', 'ㄱ, ㄴ, ㄷ', 'pH 7'])
     assert.deepEqual(scriptRanges(text), [], text);
 });
 

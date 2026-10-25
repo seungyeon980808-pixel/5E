@@ -8,12 +8,17 @@ const SIGN = /[+\-−]/;
 // 단위 위 첨자: 숫자(띄어쓰기 하나까지)나 「/」「·」 뒤에 오는 단위 + 지수. m1·m2(질량 기호)처럼 앞에 숫자가 없으면 건드리지 않는다.
 const UNIT = /(?<=(?:\d ?|[/·⋅*]))(km|cm|mm|nm|μm|m|s|kg|mg|g|mL|mol)([\-−]?\d)(?![A-Za-z0-9])/g;
 
+// 원소 기호 + 숫자지만 첨자가 아닌 이름(T4, 10-25): 종이 크기 「B4 용지」, 생물 「C4 식물」. 「H2 기체」처럼 뒤 낱말만으로는 가를 수 없어 이름만 둔다.
+const PLAIN_NAME = /^(?:B[3-6](?=\s?(?:용지|판|크기|규격|사이즈|종이|인쇄))|C[34](?=\s?식물))/;
+
 // [{start, end, kind:'sub'|'sup'}] (end는 포함 안 함)
 export function scriptRanges(text) {
   const out = [];
   for (let i = 0; i < text.length;) {
     const c = text[i];
     if ((c >= 'A' && c <= 'Z' || c === '(') && !isLetter(text[i - 1])) {
+      const plain = text.slice(i).match(PLAIN_NAME);
+      if (plain) { i += plain[0].length; continue; }
       const r = readFormula(text, i);
       if (r) { out.push(...r.ranges); i = r.end; continue; }
     }

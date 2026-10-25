@@ -531,7 +531,7 @@ export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTa
   return { acknowledged: outcome?.ok === true };
 }
 
-function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, switchWorkflow, navigationChanged, workspaceEmpty, clearCollection, selectCollection, launchSelected, selectedTaskCount, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
+function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, switchWorkflow, navigationChanged, workspaceEmpty, clearCollection, selectCollection, launchSelected, selectedTaskCount, selectedTaskBlocked = () => 0, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
   if (!panel) return;
   const lifecycle = new AbortController();
   const disposalCallbacks = [];
@@ -6551,7 +6551,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   }));
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
-  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,isTextCreation:()=>isExamBrief(taskTabs.get(activeTaskTabId)),areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
+  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,selectedTaskBlocked,isTextCreation:()=>isExamBrief(taskTabs.get(activeTaskTabId)),areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
   input.addEventListener('input', () => commentController.refreshControls(), { signal: lifecycle.signal });
   localEraseController = createLocalImageEraseController({ panel, getTarget: () => isGraphWorkflow(conversionKind) ? null : selectedOutputItem(),
     isBusy: () => busy || isLocalSavePending(selectedOutputItem()),
@@ -7157,7 +7157,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       conversionKind = kind; if (isCreationWorkflow(kind) && !activeTaskTabId) createTaskTab({kind});
       syncLiteModeUi(); syncGraphWorkbenchUi(); renderTaskTabs(); persistTasks(); return true;
     },
-    batchOwner, ownsBatchOwner: owner => taskTabs.has(owner.taskId)&&sameBatchOwner(batchOwner(owner.taskId),owner), captureBatchTask,preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
+    batchOwner, ownsBatchOwner: owner => taskTabs.has(owner.taskId)&&sameBatchOwner(batchOwner(owner.taskId),owner), captureBatchTask,
+    // 여러 작업 실행 전 가벼운 확인: 원본(입력 그림)이 있는지. 글로 만드는 작업(시험지 그림 요청)은 원본이 필요 없다(I6, 10-25).
+    taskHasSource: id => { const tab=taskTabs.get(id); return !!tab && (isExamBrief(tab) || (tab.attachments||[]).some(isInputReference) || (tab.generated||[]).length>0); },preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
     open, close, attachReference, clearTasks, ready: workspaceReady,
     acknowledgeViewedResult: () => acknowledgeVisibleResult(),
     refreshTaskSelection: () => commentController?.refreshControls(),

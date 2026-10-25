@@ -167,7 +167,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       }
       if(saved&&saved.layoutVersion<LAYOUT_VERSION){
         const Document=document().constructor,old=new Document(bytes);let compact;
-        try{compact=new Document(await compactSavedBogi(old,next,JSZip,XLSX.CFB));compact.reflowLinesegs();fitQuestionPage(compact,profile());assertNativeLayout(compact);
+        // 옛 조판(E2, 10-25): 〈보기〉 여백 정리에 더해 〈보기〉 내어쓰기 기본값을 건다 — 새 조판과 같은 함수, 내용·사용자 서식은 그대로.
+        try{const tidy=new Document(await compactSavedBogi(old,next,JSZip,XLSX.CFB));try{compact=new Document(await applyReferenceBogiIndent(tidy,JSZip));}finally{tidy.free();}
+          compact.reflowLinesegs();fitQuestionPage(compact,profile());assertNativeLayout(compact);
           if(normalized(parse(old.getTextFileText())).replace(/\s/g,'')!==normalized(parse(compact.getTextFileText())).replace(/\s/g,''))throw Error('보기 여백을 정리하면서 내용이 달라졌습니다.');
           bytes=exportLayoutHwpx(compact,XLSX.CFB);
         }finally{compact?.free();old.free();}

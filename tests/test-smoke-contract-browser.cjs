@@ -82,7 +82,12 @@ async function transferCurrentLibraryReference(page, panel, mode, errors) {
   }
   const transferPath = await destination.jsonValue(); await destination.dispose();
   assert.ok(['assignment', 'consumer'].includes(transferPath), 'The current library uses either explicit assignment or its existing one-reference consumer');
-  if (transferPath === 'assignment') await page.locator('.workbench-assignment [data-action="continue"]').click();
+  // 배정 창의 「계속」은 두 단계다: 처음은 분류 안 된 그림을 이미지 작업대에 배치만 하고(단추가 「작업대 열기」로 바뀜), 다음에 작업대를 연다
+  // (workbench-assignment.js — 작업대 열기는 따로 하는 동작). 창이 닫힐 때까지 누른다.
+  if (transferPath === 'assignment') {
+    const proceed = page.locator('.workbench-assignment [data-action="continue"]');
+    for (let i = 0; i < 3 && await proceed.isVisible().catch(() => false); i++) { await proceed.click(); await page.waitForTimeout(250); }
+  }
   const referenceDiagnostic = await page.evaluate(() => ({
     transferPath: document.querySelector('.workbench-assignment') ? 'assignment' : 'consumer',
     panels: [...document.querySelectorAll('#ai-image-panel,[id^="ai-workspace-"]')].map(node => ({id:node.id,hidden:node.hidden,workflow:node.dataset.aiWorkflow})),
@@ -284,7 +289,9 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').click();
       await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').click();
       traceLibrary('fixture-send-click', { mode });
-      await panel.locator('[data-ai-send]').click();
+      // 이미지 작업에서는 준비 칸의 보내기 단추를 숨기고(10-16 83201a54) 「변환하기」([data-ai-comments-apply])가 같은 보내기를 부른다.
+      const send = panel.locator('[data-ai-send]');
+      await (await send.isVisible() ? send : panel.locator('[data-ai-comments-apply]')).click();
       await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 1, undefined, { timeout: 15_000 });
       // First candidate registration precedes the actual review and busy-state settlement.
       // Observe the real completion before hit-testing or editing its visible surface.
