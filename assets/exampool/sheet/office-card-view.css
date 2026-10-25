@@ -29,7 +29,7 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .cv-qtab{position:relative;flex:none;width:34px;height:34px;border:0;border-radius:var(--ds-radius);background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--ds-ink-2)}
 .cv-qtab:hover{background:var(--ds-hover)}.cv-qtab[aria-current=true]{background:var(--ds-selected)}
 .cv-qtab .ring{--c:var(--st-draft,#8b94a3);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--ds-line-strong) 0)}
-.cv-qtab.st-review .ring{--c:var(--st-review,#d9a43a)}.cv-qtab.st-complete .ring{--c:var(--st-done,#4caf6a)}
+.cv-qtab.st-review .ring{--c:var(--st-review,#d9a43a)}.cv-qtab.st-complete .ring{--c:var(--st-done,var(--ds-success))}
 .cv-qtab .num{width:21px;height:21px;border-radius:50%;background:var(--ds-panel);display:grid;place-items:center;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .cv-qtab[aria-current=true] .num{background:var(--ds-selected);color:var(--ds-ink)}
 .cv-qtab .flag{position:absolute;top:3px;right:3px;width:12px;height:12px;border-radius:50%;background:var(--warn,#e0a339);color:#111;font-size:9px;font-style:normal;font-weight:800;display:grid;place-items:center}
@@ -138,14 +138,14 @@ figure.past{position:relative}
 @media (prefers-reduced-motion:reduce){.busy-ring{animation-duration:2400ms}}
 /* 아래 상태 막대: 진행 중 문장이면 앞에 작은 고리(단추 고리와 같은 모양). */
 #status[data-busy=true]::before{content:"";display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:-1px;border:2px solid color-mix(in srgb,currentColor 22%,transparent);border-top-color:currentColor;border-radius:50%;animation:ep-spin 800ms linear infinite}
-.past-busy[data-error=true]{padding:0 14px;text-align:center;line-height:1.45;font-size:var(--cv-text-small,12.5px);color:#e6edf3;box-shadow:inset 0 0 0 1px var(--ds-danger,#f85149)}
+.past-busy[data-error=true]{padding:0 14px;text-align:center;line-height:1.45;font-size:var(--cv-text-small,12.5px);color:#e6edf3;box-shadow:inset 0 0 0 1px var(--ds-danger)}
 /* 끝·실패 알림 카드: 오른쪽 아래(상태 줄 위). 5E AI 완료 알림과 같은 크기·모서리·그림자. */
 #ep-notice{position:fixed;right:16px;bottom:40px;z-index:60;pointer-events:none;display:grid;grid-template-columns:auto 1fr;align-items:start;gap:8px;width:300px;padding:12px 10px 12px 14px;border-radius:8px;background:var(--ds-raise);color:var(--ds-ink);box-shadow:var(--ds-shadow-float,0 8px 28px rgba(0,0,0,.45)),0 0 0 1px var(--ds-line);font-size:13px;line-height:1.45}
 #ep-notice[hidden]{display:none}
 #ep-notice.in{animation:ep-notice-in 220ms cubic-bezier(.2,.9,.25,1.06)}
 @keyframes ep-notice-in{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
-#ep-notice i{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-top:1px;border-radius:50%;font-style:normal;font-size:11px;font-weight:700;background:color-mix(in srgb,#3fb950 20%,transparent);color:#3fb950}
-#ep-notice[data-error=true] i{background:color-mix(in srgb,var(--ds-danger,#f85149) 20%,transparent);color:var(--ds-danger,#f85149)}
+#ep-notice i{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-top:1px;border-radius:50%;font-style:normal;font-size:11px;font-weight:700;background:color-mix(in srgb,var(--ds-success) 20%,transparent);color:var(--ds-success)}
+#ep-notice[data-error=true] i{background:color-mix(in srgb,var(--ds-danger) 20%,transparent);color:var(--ds-danger)}
 #ep-notice p{margin:0;min-width:0;overflow-wrap:anywhere}
 #ep-notice button{width:22px;height:22px;padding:0;border:0;border-radius:5px;background:transparent;color:var(--ds-ink-3);font-size:15px;line-height:1;cursor:pointer}
 #ep-notice button:hover{background:var(--ds-hover);color:var(--ds-ink)}

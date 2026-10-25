@@ -40,7 +40,7 @@
   animation:web-login-copy-orbit 2.4s linear infinite;
 }
 .ai-sharing-dialog [data-copy]:not(:disabled):hover { filter:brightness(1.12); box-shadow:0 0 12px color-mix(in srgb,var(--accent) 30%,transparent); }
-.ai-sharing-dialog [data-copy][data-copied] { color:var(--success,#3fb950); border-color:var(--success,#3fb950); animation:none; }
+.ai-sharing-dialog [data-copy][data-copied] { color:var(--success,var(--ds-success)); border-color:var(--success,var(--ds-success)); animation:none; }
 @media (prefers-reduced-motion: reduce) {
   .ai-sharing-dialog [data-copy]:not(:disabled):not([data-copied]) { animation:none; border-color:var(--accent); background:var(--bg-input); }
 }

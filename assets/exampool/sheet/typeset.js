@@ -70,6 +70,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,patching=false,updating=Promise.resolve(),measurer=null,changingProfile=Promise.resolve();
   const message=(text,error=false)=>{status.textContent=text;status.title=text;status.dataset.error=String(error);};// 카드 미리보기 칸에서는 한 줄로 줄이므로 전체 글은 풍선으로
   const document=()=>bridge.wasm.borrowDocumentHandle();
+  // 엔진이 화면용 글자 폭(Canvas2D 보조 측정)을 켜 둔 동안 SVG를 그리면 「Canvas2D supplemental metrics are active; select portable metrics」로
+  // 거부해 카드에 「미리보기를 그리지 못했습니다」가 떴다(10-25). SVG는 엔진 다리의 portable 글자 폭으로 그린다.
+  const svgOf=(doc,page)=>typeof bridge?.wasm?.withPortableMetrics==='function'?bridge.wasm.withPortableMetrics(()=>doc.renderPageSvg(page)):doc.renderPageSvg(page);
   // 문서를 다시 읽으면 한글 편집기가 자기 입력칸으로 초점을 가져간다(빈 문서 만들기·읽기마다, 겹치면 여러 번). 그러면 카드 칸 입력과
   // ⌘Z·⇧⌘Z가 한글 창으로 넘어간다. 한글 창 밖에 초점이 있을 때 읽는 동안만 편집기의 focus()를 막고, 그 사이 한글 창을 누르거나 치면 바로 푼다.
   let quietLoads=0,quietProto=null,quietFocus=null;
@@ -283,7 +286,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     try{if(order)renumberDocument(exam);return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
   // 인쇄·PDF: 묶은 시험지를 쪽마다 엔진 SVG로(화면 그림과 같음).
-  async function examPagesSvg(bytes){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{const page=parse(d.getPageDef(0)),out=[];for(let i=0;i<d.pageCount();i++)out.push(d.renderPageSvg(i));return {pages:out,widthMm:page.width/(7200/25.4),heightMm:page.height/(7200/25.4)};}finally{d.free();}}
+  async function examPagesSvg(bytes){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{const page=parse(d.getPageDef(0)),out=[];for(let i=0;i<d.pageCount();i++)out.push(svgOf(d,i));return {pages:out,widthMm:page.width/(7200/25.4),heightMm:page.height/(7200/25.4)};}finally{d.free();}}
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
   function discard(){clearTimeout(syncTimer);dirty=false;userDirty=false;patchDirty=false;ready=false;onDiverge?.(false);}
   // 틀(회색 안내)만 달라지는 변경: 빈 칸에 처음 쓰거나 다 지울 때. 문단 글 바꾸기로는 안 되고(안내는 회색) 다시 그려야 한다.
@@ -332,7 +335,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const x=Math.min(...parts.map(q=>q.x))-3,w=right-x+3,H=parts.reduce((a,q)=>a+q.h,0)+6;
       // SVG 안 이름(id·clipPath 등)을 쪽·문항마다 다르게 — 한 화면의 여러 엔진 SVG(카드 · 쪽)가 같은 이름을 쓰면 서로의 잘라내기를 덮어 쪽 글이 잘린다(10-24).
       const rename=(svg,pre)=>svg.replace(/\bid="([^"]+)"/g,(m,id)=>`id="${pre}${id}"`).replace(/url\(#([^)]+)\)/g,(m,id)=>`url(#${pre}${id})`).replace(/(xlink:href|href)="#([^"]+)"/g,(m,attr,id)=>`${attr}="#${pre}${id}"`);
-      let at=3;const inner=parts.map(q=>{const piece=rename(d.renderPageSvg(q.i),'q'+(++svgSeq)+'-').replace(/<svg\b([^>]*)>/,(m,attrs)=>`<svg${attrs.replace(/\s(x|y|width|height|viewBox|style)="[^"]*"/g,'')} x="0" y="${at}" width="${w}" height="${q.h}" viewBox="${x} ${q.top} ${w} ${q.h}" overflow="hidden">`);at+=q.h;return piece;}).join('');
+      let at=3;const inner=parts.map(q=>{const piece=rename(svgOf(d,q.i),'q'+(++svgSeq)+'-').replace(/<svg\b([^>]*)>/,(m,attrs)=>`<svg${attrs.replace(/\s(x|y|width|height|viewBox|style)="[^"]*"/g,'')} x="0" y="${at}" width="${w}" height="${q.h}" viewBox="${x} ${q.top} ${w} ${q.h}" overflow="hidden">`);at+=q.h;return piece;}).join('');
       const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${w} ${H}" preserveAspectRatio="xMidYMin meet" style="display:block;width:100%;height:auto">${inner}</svg>`;
       const out={svg,width:w,height:H};svgCache.set(value.id,{key,out});return out;
     }finally{d.free();}
@@ -373,7 +376,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         for(const r of ctl){if(ctl.some(o=>inside(r,o)))continue;const box=found.get(owner(r)+'|'+colOf(r.x)),cx=r.x+r.w/2;if(!box||cx<box.x-4||cx>box.r+4)continue;grow(owner(r),r);}
         if(i)await step();
         const boxes=[...found].map(([key,b])=>({id:key.split('|')[0],...rel(b)})),focus=boxes.find(b=>b.id===focusId);
-        out.push({svg:target.renderPageSvg(i),width,height,focus:focus&&{x:focus.x,y:focus.y,w:focus.w,h:focus.h},boxes});
+        out.push({svg:svgOf(target,i),width,height,focus:focus&&{x:focus.x,y:focus.y,w:focus.w,h:focus.h},boxes});
       }
       // 문항 하나가 여러 상자(단·쪽)로 나뉘면 첫 상자에만 이름표, 마지막 상자에만 여백 막대를 단다.
       const all=out.flatMap(p=>p.boxes);for(const id of new Set(all.map(b=>b.id))){all.filter(b=>b.id===id).forEach((b,i,mine)=>{b.first=i===0;b.last=i===mine.length-1;});}
@@ -409,7 +412,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     // 문항 쪽 높이를 내용에 맞춘 뒤(한 쪽에 다 들어가게) 다시 열어 그린다 — 자동 조판과 같은 순서.
     let d;try{fitQuestionPage(raw,own);d=new Document(exportLayoutHwpx(raw,XLSX.CFB));}finally{raw.free();}
     try{const page=parse(d.getPageDef(0));
-      return {svg:d.renderPageSvg(0),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.texts),
+      return {svg:svgOf(d,0),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.texts),
         runs:parse(d.getPageTextLayout(0)).runs,controls:parse(d.getPageControlLayout(0)).controls};
     }finally{d.free();}
   }

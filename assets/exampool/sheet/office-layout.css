@@ -73,10 +73,10 @@
 .typeset-info-wrap{position:static;display:inline-flex;margin-left:2px}
 #typeset-info-btn{width:22px;height:22px;min-width:0;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--ds-doc-ink-2,#5c6670);box-shadow:inset 0 0 0 1.5px currentColor;font:600 12px/1 Georgia,serif;font-style:italic;cursor:help}
 #typeset-info-btn:hover,#typeset-info-btn[aria-expanded=true]{color:var(--ds-hwp,#1a5fb4)}
-#typeset-info-btn[data-warn=true]{color:var(--ds-warning,#b07100)}
+#typeset-info-btn[data-warn=true]{color:var(--ds-danger)}
 #typeset-info-pop{position:absolute;z-index:30;top:calc(100% + 4px);left:8px;right:8px;width:auto;display:grid;gap:4px;padding:8px 10px;border-radius:8px;background:var(--ds-doc,#fff);color:var(--ds-doc-ink,#1b1e23);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-doc-line,#e3e6ea);font-size:var(--ds-text-meta,12px);line-height:1.5}
 #typeset-info-pop[hidden]{display:none}
-#typeset-info-pop .warn{color:var(--ds-danger,#cf222e)}
+#typeset-info-pop .warn{color:var(--ds-danger)}
 
 /* 13. 조판 칸: 칸 안의 또 하나의 창(둥근 테두리·그림자·어두운 「5e_hwp」 머리 줄)을 없애고 칸 바탕 위에 바로.
    「HWPX · 조판 저장」은 칸 머리 줄로(card-editor pane-acts, 진짜 단추를 대신 누름). */
@@ -111,7 +111,7 @@
 .cv-hwp-layer #preview-dialog.docked #typeset-context[hidden]{display:flex!important}
 .cv-hwp-layer #preview-dialog.docked #typeset-context[data-idle] :is(button,select,label){opacity:.4;pointer-events:none}
 .cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]),
-.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-metrics[data-exceeded=true]){position:absolute;z-index:20;left:10px;right:10px;bottom:10px;border:0;border-radius:8px;background:var(--ds-doc,#fff);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-danger,#cf222e);animation:ep-backdrop-fade 180ms ease-out}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-metrics[data-exceeded=true]){position:absolute;z-index:20;left:10px;right:10px;bottom:10px;border:0;border-radius:8px;background:var(--ds-doc,#fff);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-danger);animation:ep-backdrop-fade 180ms ease-out}
 
 /* 16. 성취기준 과목 고르기 두 단계: ① 과목 성격(네모) → ② 과목(둥근 단추). 고른 것은 은은한 파랑. */
 #sources #source-content .std-kinds,#sources #source-content .std-subs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
@@ -140,7 +140,7 @@
 #card-view .lp-paper{position:relative;display:grid;place-items:center;min-height:240px;border-radius:var(--cv-sec-radius,10px);background:#fff;overflow:hidden;box-shadow:0 0 0 1px var(--ds-line)}
 #card-view .lp-paper canvas{display:block;width:100%;height:auto}
 #card-view .lp-paper-wait{display:inline-flex;align-items:center;gap:8px;color:#57606a;font-size:13px}
-#card-view .lp-paper-wait.err{padding:0 16px;text-align:center;color:#cf222e}
+#card-view .lp-paper-wait.err{padding:0 16px;text-align:center;color:var(--ds-danger)}
 #card-view .lp-paper-wait i,#card-view .past-pic[data-marking]::after{width:14px;height:14px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;animation:ep-spin .7s linear infinite}
 #card-view .lp-qchips{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 #card-view .lp-qnote{color:var(--ds-ink-3);font-size:12px;margin-right:2px}
@@ -324,8 +324,8 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .ox{flex:none;display:inline-flex;gap:2px;margin:0 2px}
 #card-view .ox button{width:26px;height:24px;min-height:0;padding:0;border:0;border-radius:5px;background:transparent;color:#b1b8c0;font:700 13px/1 inherit}
 #card-view .ox button:hover{background:var(--ds-doc-hover,#f0f2f4)}
-#card-view .ox .o[aria-pressed=true]{background:#e6f4ea;color:#1a7f37}
-#card-view .ox .x[aria-pressed=true]{background:#fdeceb;color:#cf222e}
+#card-view .ox .o[aria-pressed=true]{background:#e6f4ea;color:var(--ds-success)}
+#card-view .ox .x[aria-pressed=true]{background:#fdeceb;color:var(--ds-danger)}
 #card-view .cv-grid .link.add{margin:2px 0 2px 4px}
 /* 선지: 추천 조합 + 한 줄 5칸 */
 #card-view .cv-suggs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 2px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
@@ -337,10 +337,10 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-combos .combo-row input[type=radio]{margin:0;flex:none}
 #card-view .cv-combos .combo-row .no{flex:none;color:var(--ds-doc-ink-2,#57606a);font-weight:600}
 #card-view .cv-combos .combo-row input:not([type]){flex:1;min-width:0;height:28px;padding:0 2px;border:0;background:transparent;box-shadow:none}
-#card-view .cv-combos .combo-row.on{background:#e6f4ea;box-shadow:inset 0 0 0 1.5px #1a7f37}
-#card-view .cv-combos .combo-row.right:not(.on){box-shadow:inset 0 0 0 1.5px #1a7f37}
+#card-view .cv-combos .combo-row.on{background:#e6f4ea;box-shadow:inset 0 0 0 1.5px var(--ds-success)}
+#card-view .cv-combos .combo-row.right:not(.on){box-shadow:inset 0 0 0 1.5px var(--ds-success)}
 #card-view .cv-autoans{margin:4px 2px 2px;font-size:12px}
-#card-view .cv-autoans.ok{color:#1a7f37}#card-view .cv-autoans.bad{color:#cf222e}
+#card-view .cv-autoans.ok{color:var(--ds-success)}#card-view .cv-autoans.bad{color:var(--ds-danger)}
 #card-view .cv-grid .ig{display:flex;align-items:center;gap:2px}
 #card-view .cv-grid .ig>input{flex:1;min-width:0}
 #card-view .cv-grid .ig .ig-x{position:static;flex:none;width:24px;height:24px;min-height:0;padding:0;opacity:0;transform:none}
@@ -419,7 +419,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-unit>.cv-mid{flex:0 1 150px;background:var(--ds-doc-hover,#f6f8fa)}
 #card-view .cv-unit b{font-weight:600}
 #card-view .cv-unit .link{padding:0;height:auto;min-height:0;font-size:12.5px}
-#card-view .cv-auto{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:9px;background:#e6f4ea;color:#1a7f37;font-size:11px;font-weight:600;white-space:nowrap}
+#card-view .cv-auto{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:9px;background:#e6f4ea;color:var(--ds-success);font-size:11px;font-weight:600;white-space:nowrap}
 #card-view .cv-srcseg button{white-space:nowrap}
 #card-view .cv-srcnote{display:inline-flex;align-items:center;gap:6px;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px}
 #card-view .cv-exp-tools{display:flex;align-items:center;gap:6px;padding:2px 6px 2px}
@@ -572,7 +572,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .pv-answers small{color:var(--ds-ink-3,#7d8590);font-size:11px}
 .pv-checks{margin:4px 0 12px;padding:0;list-style:none;display:grid;gap:4px;font-size:12px}
 .pv-checks li{padding:4px 8px;border-radius:6px;background:var(--ds-raise,#161b22);color:var(--ds-ink-2,#b1bac4);line-height:1.45}
-.pv-checks li[data-level=warn]{box-shadow:inset 3px 0 0 var(--ds-danger,#f85149)}
+.pv-checks li[data-level=warn]{box-shadow:inset 3px 0 0 var(--ds-danger)}
 .pv-checks li[data-level=info]{box-shadow:inset 3px 0 0 var(--ds-soft-line,#6ba4f8)}
 .pv-checks li[data-level=ok]{color:var(--ds-ink-3,#7d8590)}
 
@@ -648,7 +648,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .tsx-pv{flex:1;overflow:auto;background:var(--ds-doc-paper-bench,#e9ebee);padding:16px}
 .tsx-paper{background:var(--ds-doc,#fff);box-shadow:0 1px 2px rgba(0,0,0,.12);margin:0 auto;max-width:640px;padding:12px 0 8px}
 .tsx-wait{margin:0;padding:40px;color:#59636e;font-size:12.5px;text-align:center}
-.tsx-wait.error{color:#cf222e}
+.tsx-wait.error{color:var(--ds-danger)}
 .tsx-ruler{position:relative;height:16px;background:repeating-linear-gradient(to right,#c9cdd3 0 1px,transparent 1px 6px) bottom/100% 4px no-repeat,repeating-linear-gradient(to right,#9aa0a6 0 1px,transparent 1px 60px) bottom/100% 8px no-repeat;box-shadow:inset 0 -1px 0 #c9cdd3}
 .tsx-mk{position:absolute;bottom:0;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;transform:translateX(-5px)}
 .tsx-mk.t{top:0;bottom:auto;border-top:6px solid rgba(46,160,67,.8)}
@@ -664,7 +664,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .tsx-hang::before{content:'';position:absolute;left:-4px;top:-5px;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:5px solid rgba(46,160,67,.8)}
 .tsx-padfill{background:rgba(46,160,67,.10)}
 .tsx-gap{background:rgba(46,160,67,.14);box-shadow:inset 0 1px 0 rgba(46,160,67,.5),inset 0 -1px 0 rgba(46,160,67,.5)}
-.tsx-gap::after{content:attr(data-mm);position:absolute;right:2px;top:50%;transform:translateY(-50%);font:600 9.5px/1 -apple-system,sans-serif;color:#1a7f37;background:#fff;padding:1px 3px;border-radius:3px}
+.tsx-gap::after{content:attr(data-mm);position:absolute;right:2px;top:50%;transform:translateY(-50%);font:600 9.5px/1 -apple-system,sans-serif;color:var(--ds-success);background:#fff;padding:1px 3px;border-radius:3px}
 .tsx-v{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 62 60'%3E%3Cpath d='M3 3L31 57L59 3' fill='none' stroke='%23da3633' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/contain;transform:translateX(-50%)}
 /* 조판 자동 저장(10-23 A2): 「조판 저장」 단추는 없앤다(창 머리 줄·카드 칸 머리 줄 둘 다). */
 #typeset-save,#card-view [data-cv="hwp-save"]{display:none!important}

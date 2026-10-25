@@ -124,7 +124,6 @@
   --ds-shadow-float: 0 0 0 1px rgba(0, 0, 0, .55), 0 12px 32px rgba(0, 0, 0, .45);
   --ds-shadow-board: 0 0 0 1px rgba(0, 0, 0, .28), 0 2px 8px rgba(0, 0, 0, .32);
   --ds-success: #4f9a6c;
-  --ds-warning: #c69a46;
   --ds-danger: #d06a5f;
 
   /* 기존 변수 연결 — 이 블록만 바꾸면 26개 CSS 전체가 따라온다 */
@@ -187,7 +186,6 @@
   --ds-shadow-float: 0 0 0 1px #30363d, 0 12px 32px rgba(0, 0, 0, .55);
   --ds-shadow-board: 0 0 0 1px #30363d, 0 2px 8px rgba(0, 0, 0, .5);
   --ds-success: #4f9a6c;   /* 10-24 시안 11 「나」: 진중한 초록(세 앱 공통) */
-  --ds-warning: #d29922;
   --ds-danger: #d06a5f;    /* 10-24 시안 11 「나」: 진중한 빨강(세 앱 공통) */
   --bg-canvas: var(--ds-bench);
   --control-selected-border: transparent;
@@ -226,7 +224,6 @@
   --ds-shadow-float: 0 0 0 1px rgba(0, 0, 0, .12), 0 12px 32px rgba(0, 0, 0, .14);
   --ds-shadow-board: 0 0 0 1px rgba(0, 0, 0, .14), 0 2px 8px rgba(0, 0, 0, .12);
   --ds-success: #2f7d55;
-  --ds-warning: #a87a1f;
   --ds-danger: #c2463c;
 
   --bg-app: var(--ds-app);

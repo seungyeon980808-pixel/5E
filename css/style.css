@@ -635,7 +635,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 /* Beta label: red "[시범공개]" badge before the program name (brand + footer) */
 .beta-label {
-  color: #d1242f;
+  color: var(--ds-danger);
   font-weight: 700;
   margin-right: 4px;
 }
@@ -1780,7 +1780,7 @@ body { zoom: var(--ui-zoom, 1); }
   line-height: 1.5;
   color: var(--text-secondary);
 }
-.objectify-status.is-error { color: #e35d6a; }
+.objectify-status.is-error { color: var(--ds-danger); }
 .objectify-dropzone {
   display: flex;
   align-items: center;
@@ -2139,7 +2139,7 @@ textarea.unified-text-input {
   overflow: visible;
 }
 .formula-preview-error {
-  color: #b42318;
+  color: var(--ds-danger);
   font: 12px/1.35 "IBM Plex Sans KR", sans-serif;
 }
 .unified-style-controls {
@@ -2870,7 +2870,7 @@ textarea.unified-text-input {
   color: var(--text-secondary); background: transparent; border: none; cursor: pointer;
   align-self: center;
 }
-.personal-item-del:hover { color: #e5534b; }
+.personal-item-del:hover { color: var(--ds-danger); }
 .personal-store-btn {
   display: block; width: 100%; margin: 0 0 6px; padding: 6px 8px;
   font-family: inherit; font-size: 12px; font-weight: 600;
@@ -2910,7 +2910,7 @@ textarea.unified-text-input {
 .defaults-pbg-thumb { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--c-border); border-radius: 4px; background: #fff; flex: none; }
 .defaults-pbg-meta { flex: 1 1 auto; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .defaults-pbg-del { flex: none; width: 20px; font-size: 11px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
-.defaults-pbg-del:hover { color: #e5534b; }
+.defaults-pbg-del:hover { color: var(--ds-danger); }
 .defaults-pbg-row { display: flex; gap: 6px; margin-top: 6px; }
 .defaults-pbg-row .modal-input { min-width: 0; }
 .defaults-pbg-row #defaults-pbg-name { flex: 2 1 0; }
@@ -2964,7 +2964,7 @@ textarea.unified-text-input {
 .page-ctx-sep { height: 1px; margin: 4px 6px; background: var(--border); }
 .text-ctx-item:disabled { opacity: 0.4; cursor: default; }
 .text-ctx-item:disabled:hover { background: transparent; color: inherit; }
-.text-ctx-item.is-danger:hover:not(:disabled) { background: #b03a4a; color: #fff; }
+.text-ctx-item.is-danger:hover:not(:disabled) { background: var(--ds-danger); color: #fff; }
 
 /* delayed cut action stays inside the right inspector so the final commit is
  * visible where object properties are edited. */
@@ -3295,13 +3295,13 @@ textarea.unified-text-input {
 #graph-modal-overlay :is(#gm-expr, #gm-pts, .gm-ta) { width: 100%; min-width: 0; }
 #graph-modal-overlay .gm-input-error {
   margin: 4px 0 0;
-  color: #e5534b;
+  color: var(--ds-danger);
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 #graph-modal-overlay input[aria-invalid="true"],
-#graph-modal-overlay textarea[aria-invalid="true"] { border-color: #e5534b; }
+#graph-modal-overlay textarea[aria-invalid="true"] { border-color: var(--ds-danger); }
 
 /* Select an item to edit it; deletion is a separate action. */
 #graph-modal-overlay #gm-display-list { display: grid; gap: 6px; }
@@ -3355,7 +3355,7 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-series-kind { flex: 0 0 auto; color: var(--text-secondary); font-size: 11px; font-weight: 400; }
 #graph-modal-overlay #gm-series-delete { min-height: 32px; margin-bottom: 8px; }
 #graph-modal-overlay #gm-series-delete:hover:not(:disabled) {
-  color: #e5534b;
+  color: var(--ds-danger);
   background: var(--btn-tool-hover);
   border-color: var(--border-strong);
 }
@@ -3475,7 +3475,7 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-series-item { position: relative; display: flex; min-width: 0; max-width: 100%; }
 #graph-modal-overlay #gm-chips .gm-series-item .gm-series-chip { min-height: 40px; padding-right: 36px; max-width: 100%; gap: 6px; }
 #graph-modal-overlay .gm-series-remove { position: absolute; top: 2px; right: 2px; width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--text-secondary); cursor: pointer; }
-#graph-modal-overlay .gm-series-remove:hover { background: var(--bg-panel-hover); color: #f17676; }
+#graph-modal-overlay .gm-series-remove:hover { background: var(--bg-panel-hover); color: var(--ds-danger); }
 #graph-modal-overlay .gm-series-remove svg { width: 14px; height: 14px; }
 #graph-modal-overlay .gm-series-item:focus-within { z-index: 1; }
 #graph-modal-overlay .gm-element-guide { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; }
@@ -3544,7 +3544,7 @@ textarea.unified-text-input {
 #graph-modal-overlay #gm-display-list .gm-display-select { flex:1 1 0; min-width:0; min-height:34px; border:0; border-radius:4px; padding:6px 8px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #graph-modal-overlay .gm-display-remove { flex:0 0 30px; width:30px; min-height:32px; padding:6px; border:0; border-radius:4px; color:var(--text-secondary); background:transparent; cursor:pointer; }
 #graph-modal-overlay .gm-display-remove svg { display:block; width:16px; height:16px; }
-#graph-modal-overlay .gm-display-remove:hover { background:var(--bg-panel-hover); color:#f17676; }
+#graph-modal-overlay .gm-display-remove:hover { background:var(--bg-panel-hover); color:var(--ds-danger); }
 #graph-modal-overlay #gm-display-properties { border-top:1px solid var(--border); margin-top:12px; padding-top:12px; }
 #graph-modal-overlay #gm-display-properties-title { font-size:13px; margin:0 0 8px; font-weight:600; overflow-wrap:anywhere; }
 #graph-modal-overlay #gm-display-properties :is(.gm-annotation-editor,.gm-region-editor) { padding:0; margin:0; }

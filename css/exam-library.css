@@ -63,7 +63,7 @@
 .pdflib-pack-row { justify-content: flex-end; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
 .pdflib-pack-row span { margin-right: auto; }
 .pdflib-source-status { color: var(--text-secondary); font-size: 12px; }
-.pdflib-source-status.is-error { color: var(--danger, #b42318); }
+.pdflib-source-status.is-error { color: var(--danger, var(--ds-danger)); }
 .pdflib-upload { cursor: pointer; }
 .pdflib-desktop-link { text-decoration: none; }
 .pdflib-query-label { margin-top: 8px; color: var(--text-secondary); font-size: 12px; }

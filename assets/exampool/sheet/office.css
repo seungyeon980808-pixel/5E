@@ -111,7 +111,7 @@ input,select,textarea{border:1px solid var(--ds-doc-line-strong);border-radius:v
 #typeset-status{font-size:var(--ds-text-meta);color:var(--ds-doc-ink-2)}
 #typeset-metrics{font-size:var(--ds-text-meta);color:var(--ds-hwp)}
 #typeset-status[data-error=true]{color:var(--ds-danger)}
-#typeset-metrics[data-exceeded=true]{color:var(--ds-warning)}
+#typeset-metrics[data-exceeded=true]{color:var(--ds-danger)}
 #native-editor{background:var(--ds-doc-paper-bench)}
 #preview-dialog[data-expanded=true]{inset:var(--ds-space-6);border:0;box-shadow:var(--ds-shadow-float)}
 #preview-dialog .exam-picture-settings{background:var(--ds-doc);border:0;border-radius:var(--ds-radius);box-shadow:var(--ds-shadow-float)}
@@ -270,7 +270,7 @@ body>:not(dialog){transition:filter 180ms ease-out}
 .q-card-foot{display:flex;gap:var(--ds-space-4);padding:var(--ds-space-3) var(--ds-space-5) var(--ds-space-4);font-size:var(--ds-text-meta);color:var(--ds-doc-ink-3)}
 .q-status{display:inline-flex;align-items:center;gap:var(--ds-space-2)}
 .q-status::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ds-doc-ink-3)}
-.q-status[data-status=review]::before{background:var(--ds-warning)}.q-status[data-status=complete]::before{background:var(--ds-success)}
+.q-status[data-status=review]::before{background:var(--ds-ink-3)}.q-status[data-status=complete]::before{background:var(--ds-success)}
 .q-ready{color:var(--ds-cell)}
 
 .exam-body{display:grid;grid-template-columns:minmax(260px,320px) 1fr;gap:var(--ds-space-6);min-height:0}
@@ -294,8 +294,8 @@ body>:not(dialog){transition:filter 180ms ease-out}
 .exam-col:first-child{border-left:0;padding-left:0}
 .exam-q{display:flex;gap:3px;min-height:14px;padding:2px 3px;border-radius:2px;background:var(--ds-cell-tint);color:var(--ds-doc-ink-2);font-size:9px;line-height:1.2;overflow:hidden}
 .exam-q b{flex:none;color:var(--ds-cell)}
-.exam-q[data-ready=false]{background:var(--ds-doc-head);box-shadow:inset 0 0 0 1px var(--ds-warning)}
-.exam-page[data-oversized=true] .exam-sheet{box-shadow:0 0 0 1.5px var(--ds-warning),var(--ds-shadow-board)}
+.exam-q[data-ready=false]{background:var(--ds-doc-head);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.exam-page[data-oversized=true] .exam-sheet{box-shadow:0 0 0 1.5px var(--ds-danger),var(--ds-shadow-board)}
 .exam-page figcaption{font-size:var(--ds-text-meta);color:var(--ds-ink-3)}
 @media(max-width:1100px){.side{width:52px}.side .side-item>span,.side .side-item>b,.side kbd,.side-label,.side-foot,.side .side-new{font-size:0}.side .side-new{padding:0;justify-content:center}.side button{justify-content:center;padding:0}.crumbs #crumb-question{max-width:200px}}
 
@@ -309,7 +309,7 @@ body>:not(dialog){transition:filter 180ms ease-out}
 .q-card-delete,.col-delete{margin-left:auto;width:var(--ds-h-control-sm);height:var(--ds-h-control-sm);padding:0;border:0;border-radius:var(--ds-radius);background:transparent;color:var(--ds-doc-ink-3);display:grid;place-items:center;opacity:0;cursor:pointer}
 .q-card-delete .ico,.col-delete .ico{width:16px;height:16px}
 .q-card:hover .q-card-delete,.q-card:focus-within .q-card-delete,#registry thead th:hover .col-delete,.col-delete:focus-visible{opacity:1}
-.q-card-delete:hover,.col-delete:hover{background:var(--ds-hover);color:var(--ds-danger,#d1242f)}
+.q-card-delete:hover,.col-delete:hover{background:var(--ds-hover);color:var(--ds-danger)}
 #registry thead th[data-id]{position:relative}
 /* 한글 창 그림 위 수정·설정, 수정 메뉴(5E 시험지 편집기와 같은 모양) */
 .place-tools{position:absolute;display:flex;gap:4px;transform:translate(calc(-100% - 4px),4px);pointer-events:auto}
@@ -354,7 +354,7 @@ button.q-status:hover{background:var(--ds-hover)}
 #ctx-menu{position:fixed;z-index:50;min-width:160px;padding:4px;background:var(--ds-raise);border:1px solid var(--ds-line);border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-float)}
 #ctx-menu button{display:block;width:100%;text-align:left;height:var(--ds-h-row);padding:0 10px;border:0;border-radius:var(--ds-radius);background:transparent;color:var(--ds-ink)}
 #ctx-menu button:hover,#ctx-menu button:focus-visible{background:var(--ds-hover)}
-#ctx-menu .danger{color:var(--ds-danger,#d06a5f)}
+#ctx-menu .danger{color:var(--ds-danger)}
 /* 상태 줄 오른쪽: 자동 저장 · 5E 버전 · 문제 신고(5E 아래 막대와 같은 글자 크기·색). */
 .footer-right{display:flex;align-items:center;gap:14px}
 #host-bug{color:var(--ds-ink-2);text-decoration:underline;text-underline-offset:2px}#host-bug:hover{color:var(--ds-ink)}

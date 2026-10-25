@@ -1,7 +1,7 @@
 /* 새 문항 창: 승인된 시안(5e-design-mockups/new-question.html)과 같은 크기·색. 토큰은 css/design-tokens.css, 시안에만 있던 값은 --nq-*로 둔다. */
 :root[data-theme="dark"][data-palette="classic"]{--nq-icon:#b1bac4;--nq-go-bg:#152137;--nq-go-line:#6ba4f8;--nq-go-ink:#e6edf3;--nq-bar:#3b4552;--nq-bar-on:#6ba4f8;--nq-thumb:#0d1117}
 :root[data-theme="dark"]:not([data-palette="classic"]){--nq-icon:#c4c4c4;--nq-go-bg:rgba(255,255,255,.09);--nq-go-line:#8a8a8a;--nq-go-ink:#ffffff;--nq-bar:#454545;--nq-bar-on:#d4d4d4;--nq-thumb:#2b2b2b}
-:root[data-theme="light"]{--nq-icon:#4a4f57;--nq-go-bg:#eef6f1;--nq-go-line:#1e7145;--nq-go-ink:#1e7145;--nq-bar:#dcdfe3;--nq-bar-on:#4a4f57;--nq-thumb:#ffffff}
+:root[data-theme="light"]{--nq-icon:#4a4f57;--nq-go-bg:#eef6f1;--nq-go-line:var(--ds-success);--nq-go-ink:var(--ds-success);--nq-bar:#dcdfe3;--nq-bar-on:#4a4f57;--nq-thumb:#ffffff}
 #new-dialog{--paper-font:"HCR Batang","함초롬바탕","AppleMyungjo","Noto Serif KR",serif;--paper-num:"HCR Dotum","함초롬돋움","Apple SD Gothic Neo",sans-serif;--hl:#2f81f7;--paper-w:600px}
 #new-dialog[open]{width:min(1280px,calc(100vw - 32px));max-width:none;height:min(760px,calc(100dvh - 48px));max-height:none;padding:0;margin:auto;background:var(--ds-raise);color:var(--ds-ink);border:0;border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-float);font-family:var(--ds-font);font-size:var(--ds-text-body);display:grid;grid-template-columns:288px 1fr 216px;grid-template-rows:var(--ds-h-bar) minmax(0,1fr) var(--ds-h-bar);overflow:hidden}
 #new-dialog button,#new-dialog select{font:inherit;color:inherit}

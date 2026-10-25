@@ -1,7 +1,7 @@
 :root {
-  --product-state-success: #3fb950;
+  --product-state-success: var(--ds-success);
   --product-state-warning: #d29922;
-  --product-state-error: #f85149;
+  --product-state-error: var(--ds-danger);
   --product-space-label: 2px;
   --product-space-compact: 4px;
   --product-space-control: 5px;

@@ -1,6 +1,6 @@
 /* 5E_ExamPool 문항 시트 — office.css에서 나눈 둘째 묶음(2026-10-19 밤 리팩토링, 내용·순서 그대로): 문항 보관함·시험지·문항 카드·라이브러리 칸·출제 대화. office.css 바로 다음에 읽는다. */
 /* ── 문항 보관함 · 시험지 · 문항 카드 ───────────────────────────── */
-:root{--st-draft:var(--ds-ink-3);--st-review:#d29922;--st-complete:#3fb950}
+:root{--st-draft:var(--ds-ink-3);--st-review:#d29922;--st-complete:var(--ds-success)}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--st-draft);flex-shrink:0}
 .dot.st-review{background:var(--st-review)}.dot.st-complete{background:var(--st-complete)}
 .shell-body.nav-off>.side{display:none}
@@ -28,7 +28,7 @@
 .pv .btn.go,.cv .btn.go{background:var(--go-bg,#152137);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8);color:var(--go-ink,var(--ds-ink))}
 .pv .mini,.cv .mini{height:var(--ds-h-control-sm);padding:0 8px;border:0;border-radius:var(--ds-radius-sm);background:transparent;color:var(--ds-ink-2);font-size:var(--ds-text-meta);display:inline-flex;align-items:center;gap:4px}
 .pv .mini:hover,.cv .mini:hover{background:var(--ds-hover);color:var(--ds-ink)}
-.pv .mini.danger{color:var(--ds-danger,#d06a5f)}
+.pv .mini.danger{color:var(--ds-danger)}
 .pv-empty{color:var(--ds-ink-3);padding:var(--ds-space-5) 0}
 .pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:var(--ds-space-5)}
 .pv-card{background:var(--ds-raise);border-radius:var(--ds-radius-lg);box-shadow:0 0 0 1px var(--ds-line);overflow:hidden;display:flex;flex-direction:column}
@@ -123,7 +123,7 @@
 .ig>span{width:44px;flex-shrink:0;display:grid;place-items:center;font-size:15px;color:#2f343a;background:#f0f2f5;border:1px solid #c9ced6;border-right:0;border-radius:6px 0 0 6px;padding:0 4px;text-align:center}
 .cv-writer .ig>input:not([type=radio]){border-radius:0 6px 6px 0;padding-right:34px}
 .ig-x{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:24px;height:24px;border:0;border-radius:4px;background:transparent;color:#9aa0a8;font-size:16px;opacity:0}
-.ig:hover .ig-x,.ig-x:focus-visible{opacity:1}.ig-x:hover{background:#eef0f3;color:#d1242f}
+.ig:hover .ig-x,.ig-x:focus-visible{opacity:1}.ig-x:hover{background:#eef0f3;color:var(--ds-danger)}
 .choice-row{align-items:stretch;cursor:text}
 .choice-row input[type=radio]{align-self:center;width:18px;height:18px;margin:0 10px 0 2px;accent-color:#2f6fd6;flex-shrink:0}
 .choice-row.on>span{background:#2f6fd6;color:#fff;border-color:#2f6fd6}.choice-row.on input:not([type=radio]){border-color:#2f6fd6}
@@ -173,7 +173,7 @@
 .cv-shape-menu .tick{margin-left:auto;color:#1a5fb4}
 .f-more summary{cursor:pointer;font-size:13.5px;font-weight:600;color:#2f343a}
 .f-foot{display:flex;align-items:center;gap:10px;padding:4px 2px}
-.f-foot .checks{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:#6b7078}.f-foot .checks .ok{color:#1a7f37}
+.f-foot .checks{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:#6b7078}.f-foot .checks .ok{color:var(--ds-success)}
 .f-foot .sp{flex:1}.f-foot .btn{color:#2f343a}.f-foot .btn:hover{background:#eef0f3;color:#1b1e23}
 .f-foot .btn.go{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6;color:#1a5fb4;height:34px;padding:0 14px}
 .cv-lib{width:380px;flex-shrink:0;border-left:1px solid var(--ds-line);display:flex;flex-direction:column;min-height:0;background:var(--ds-panel)}
@@ -309,7 +309,7 @@
 .au-strip{display:flex;flex-direction:column;gap:6px;font-size:var(--ds-text-meta);color:var(--ds-ink-3)}
 .au-axes{display:flex;flex-wrap:wrap;gap:4px;align-items:center}.au-axes b{color:var(--ds-ink-2);margin-right:4px}
 .ax{padding:2px 7px;border-radius:999px;background:var(--ds-raise);box-shadow:inset 0 0 0 1px var(--ds-line)}
-.ax-pass{color:var(--st-done,#4caf6a);box-shadow:inset 0 0 0 1px currentColor}.ax-issue{color:var(--warn,#e0a339);box-shadow:inset 0 0 0 1px currentColor}
+.ax-pass{color:var(--st-done,var(--ds-success));box-shadow:inset 0 0 0 1px currentColor}.ax-issue{color:var(--warn,#e0a339);box-shadow:inset 0 0 0 1px currentColor}
 .ax-stale{color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line-strong);background:transparent;text-decoration:line-through dotted}
 .ax-unverified{color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
 .au-stale,.au-pending{margin:0}.au-stale span{color:var(--warn,#e0a339)}
@@ -376,7 +376,7 @@
 .lp-steps{display:flex;gap:4px;margin:0;padding:0;list-style:none;font-size:var(--cv-text-small,12.5px)}
 .lp-steps li{flex:1;padding:6px 8px;border-radius:6px;background:var(--ds-field-raise,rgba(177,186,196,.06));color:var(--ds-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lp-steps li[data-at=done]{color:var(--ds-ink-2)}
-.lp-steps li[data-at=done]::before{content:'✓ ';color:var(--ds-success,#3fb950)}
+.lp-steps li[data-at=done]::before{content:'✓ ';color:var(--ds-success)}
 .lp-steps li[data-at=now]{background:var(--ds-soft-bg,#152137);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8)}
 #job-box{position:fixed;right:16px;bottom:40px;z-index:80;width:340px;display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px;border-radius:12px;background:var(--ds-panel);color:var(--ds-ink);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));font-size:var(--cv-text-small,12.5px)}
 #job-box[hidden]{display:none}
@@ -385,7 +385,7 @@
 #job-box .job-head button{width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-3);cursor:pointer}
 #job-box .job-head button:hover{background:var(--ds-hover);color:var(--ds-ink)}
 #job-box .job-open{align-self:flex-end;height:28px;padding:0 12px;border:0;border-radius:6px;background:var(--ds-soft-bg,#152137);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8);cursor:pointer;font:inherit}
-#job-box .job-err{margin:0;color:var(--ds-danger,#f85149)}
+#job-box .job-err{margin:0;color:var(--ds-danger)}
 #job-box[data-state=busy] .job-head b::after{content:'';display:inline-block;width:10px;height:10px;margin-left:6px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;animation:job-spin .8s linear infinite;vertical-align:-1px}
 @keyframes job-spin{to{transform:rotate(360deg)}}
 /* 5 한 문항 보기: 크게 보기를 본문 자리에(닫기 대신 「카드 모아 보기로」) */
@@ -501,7 +501,7 @@
 .lv-btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--ds-line-strong,#30363d);background:none;color:var(--ds-ink,#e6edf3);display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;cursor:pointer;text-decoration:none}
 .lv-btn:hover{background:var(--ds-hover,#1f2630)}
 .lv-btn.soft{background:var(--ds-soft-bg,#152137);border-color:var(--ds-soft-line,#6ba4f8)}
-.lv-btn.danger{color:#ff7b72}
+.lv-btn.danger{color:var(--ds-danger)}
 .lv-btn[disabled]{opacity:.6;cursor:default}
 select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .lv-strip{margin:10px 66px 0;border:1px solid #2b4a7a;background:#0f1a2b;border-radius:10px;padding:10px 14px;display:none}

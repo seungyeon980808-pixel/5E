@@ -124,7 +124,7 @@
 .pool-evidence-actions { display:flex; justify-content:space-between; gap:8px; align-items:flex-end; margin-top:7px; }
 .pool-evidence-actions button { font-size:12px !important; }
 #exampool-workspace #pool-reference-status { margin-top:12px; font-size:11px; color:#526273; overflow-wrap:anywhere; }
-#pool-reference-status[data-error="true"] { color:#ae2534 !important; }
+#pool-reference-status[data-error="true"] { color:var(--ds-danger) !important; }
 .pool-statusbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:6px 20px; border-top:1px solid var(--border); color:var(--text-secondary); font-size:11px; }
 #pool-status[data-error="true"] { color:var(--text-primary); font-weight:600; }
 #pool-empty { max-width:520px; margin:64px auto; }

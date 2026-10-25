@@ -1,6 +1,6 @@
 /* 시험지 만들기 세 단계(10-24 확정, 시안 5e-design-mockups/exam-flow-1024-v4.html 값 그대로). exam-flow.js의 ef-* 마크업. */
 /* 10-24 시안 11 「나」: 시험지 화면은 회색 + 파랑(선택)만. 상태색은 작은 점·아이콘에만 — 괜찮음 #4f9a6c · 문제 #d06a5f. 노랑 없음. */
-#examd-view{--ef-ok:#4f9a6c;--ef-bad:#d06a5f;--ef-go:#9cc3ff;--ef-star:var(--ds-ink)}
+#examd-view{--ef-ok:var(--ds-success);--ef-bad:var(--ds-danger);--ef-go:#9cc3ff;--ef-star:var(--ds-ink)}
 .ef-stepbar{display:flex;align-items:center;gap:14px;min-width:0}
 .ef-steps{display:flex;gap:2px;padding:2px;border-radius:10px;background:var(--ds-field-raise);flex:none}
 .ef-steps button{height:32px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px}
@@ -113,14 +113,14 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ep-more{display:flex;justify-content:center;padding:8px 0}
 .ep-card{position:relative;display:inline-block;width:100%;vertical-align:top;margin:0 0 10px;break-inside:avoid;-webkit-column-break-inside:avoid;background:var(--ds-raise);border:1px solid var(--ds-line-strong);border-radius:10px;overflow:hidden;cursor:default}
 .ep-card:hover{border-color:#3d4550}
-.ep-card.in{border-color:#1f6f43}
+.ep-card.in{border-color:var(--ds-line-strong)}
 .ep-th{background:#fff;position:relative;overflow:hidden;min-height:60px}
 .ep-th img{display:block;width:100%;height:auto}
 .ep-doc{zoom:.42;padding:16px 20px;color:#111;text-align:left;pointer-events:none}
 .ep-acts{position:absolute;right:8px;top:8px;display:flex;gap:4px;opacity:0;transition:opacity .12s}
 .ep-acts button{height:28px;min-height:0;padding:0 11px;border-radius:7px;border:0;background:rgba(13,17,23,.92);box-shadow:inset 0 0 0 1px var(--ds-line-strong);color:var(--ds-ink);font:inherit;font-size:12.5px;cursor:pointer}
 .ep-acts .take{background:rgba(21,33,55,.95);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
-.ep-card.in .ep-acts .take{background:rgba(15,40,25,.95);box-shadow:inset 0 0 0 1px #2ea043}
+.ep-card.in .ep-acts .take{background:var(--ds-panel);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
 .ep-acts button:disabled{opacity:.7;cursor:default}
 .ep-card:hover .ep-acts,.ep-card.in .ep-acts,.ep-card:focus-within .ep-acts{opacity:1}
 .ep-mt{padding:8px 10px;display:flex;flex-direction:column;gap:3px}

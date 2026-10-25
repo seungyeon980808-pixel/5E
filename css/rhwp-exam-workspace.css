@@ -41,7 +41,7 @@
 #rhwp-exam-workspace .exam-footer button { display:flex; align-items:center; justify-content:center; gap:6px; min-height:34px; font-size:12px; color:var(--text-primary); }
 .exam-footer svg { width:16px; height:16px; }
 #exam-figures {padding-bottom:16px;}
-#exam-status[data-error="true"] { color:#d54438; }
+#exam-status[data-error="true"] { color:var(--ds-danger); }
 .ai-exam-send { margin-left:auto; padding:6px 14px; background:var(--bg-input); color:var(--text-primary); border:1px solid var(--ds-soft-line, #6ba4f8); font:inherit; cursor:pointer; }
 .ai-exam-send:disabled { opacity:.45; cursor:default; }
 #ai-image-panel .ai-head-status .ai-exam-send { margin:0; padding:5px 9px; min-height:30px; border-color:var(--ds-soft-line, #6ba4f8); background:var(--bg-input); color:var(--text-primary); font-size:11px; white-space:nowrap; }
