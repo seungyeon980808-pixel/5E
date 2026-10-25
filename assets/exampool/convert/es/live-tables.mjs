@@ -92,11 +92,13 @@ export function tableFlow(extracted, pageHeight, toRuns) {
       return [];
     }
     const xs = [...new Set(table.grid.cells.flatMap((cell) => [cell.box[0], cell.box[2]]))].sort((a, b) => a - b);
+    // 5E 기출 복원: 행 높이(pt, 위에서 아래로). PDF 좌표는 아래가 0이라 큰 y가 위 행이다(10-25 — 조판기가 원본 행 높이 그대로 쓴다).
+    const ys = [...new Set(table.grid.cells.flatMap((cell) => [cell.box[1], cell.box[3]]).map((y) => Math.round(y * 10) / 10))].sort((a, b) => b - a);
     // 5E 기출 복원: 칸 글자 크기(본문 글꼴 글자 높이의 가운데 값, pt). 조판기가 원본처럼 작은 표 글로 찍는다.
     const heights = table.cells.flatMap((cell) => cell.items.filter((item) => !item.math && item.height > 0 && String(item.value || '').trim()).map((item) => item.height)).sort((a, b) => a - b);
     const fontSize = heights.length ? Math.round(heights[heights.length >> 1] * 10) / 10 : null;
     return [{ kind: 'table', rows, spans: table.cells.map(({ row, col, rowSpan, colSpan }) => ({ row, col, rowSpan, colSpan })),
-      widths: xs.slice(1).map((x, col) => x - xs[col]), fontSize, box: table.box, marker: `\uFFFCtable${index}\uFFFC` }];
+      widths: xs.slice(1).map((x, col) => x - xs[col]), heights: ys.slice(1).map((y, row) => ys[row] - y), fontSize, box: table.box, marker: `\uFFFCtable${index}\uFFFC` }];
   });
   // Captions centred just below their own ruled panel move with that panel. Keeping
   // them in the page-wide baseline flow would combine '(가) (나)' after both tables.

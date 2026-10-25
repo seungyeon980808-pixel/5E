@@ -188,6 +188,25 @@ function clipItems(question, pdf, glyphs) {
     }
   }
   const clipped = inQuestionItems.filter((item) => !dropped.has(item));
+  // 밑줄(10-25): 글 조각 기준선 바로 아래(0.3~4pt)에 겹치는 가는 가로선(선 또는 높이 1.2pt 이하 막대)은 밑줄이다.
+  // 밑줄 친 글자 뒤에 결합 밑줄 문자(U+0332)를 붙인다 — 카드 입력 칸에서도 밑줄로 보이고, 조판이 한글 밑줄 서식으로 바꾼다.
+  const verticals = primitives.filter((p) => p.type === 'line' && p.orient === 'v').map((p) => ({ x: (p.x0 + p.x1) / 2, a: Math.min(p.y0, p.y1), b: Math.max(p.y0, p.y1) }))
+    .concat(primitives.filter((p) => p.type === 'rect' && p.box && p.box[2] - p.box[0] <= 1.2 && p.box[3] - p.box[1] > 4).map((p) => ({ x: (p.box[0] + p.box[2]) / 2, a: p.box[1], b: p.box[3] })));
+  const underSegs = primitives.filter((p) => p.type === 'line' && p.orient === 'h').map((p) => ({ y: (p.y0 + p.y1) / 2, a: Math.min(p.x0, p.x1), b: Math.max(p.x0, p.x1) }))
+    .concat(primitives.filter((p) => p.type === 'rect' && p.box && p.box[3] - p.box[1] <= 1.2 && p.box[2] - p.box[0] > 4).map((p) => ({ y: (p.box[1] + p.box[3]) / 2, a: p.box[0], b: p.box[2] })))
+    // 표·상자 테두리(끝이 세로선에 닿음)와 분수 줄(아래 13pt 안에 기준선이 있는 글자 = 분모가 붙음, 다음 줄은 15pt 넘게 떨어짐)은 밑줄이 아니다 — 표 칸 글자·분자가 밑줄로 잡혔다.
+    .filter((u) => !verticals.some((v) => (Math.abs(v.x - u.a) <= 1.5 || Math.abs(v.x - u.b) <= 1.5) && v.a <= u.y + 1.5 && v.b >= u.y - 1.5))
+    .filter((u) => !clipped.some((item) => { const base = pdf.pageHeight - item.transform[5], x0 = item.transform[4], x1 = x0 + item.width;
+      return base >= u.y + 1 && base <= u.y + 13 && x1 > u.a + 0.5 && x0 < u.b - 0.5; }));
+  const underline = (item, value) => {
+    if (!underSegs.length || !value.trim()) return value;
+    const baseTd = pdf.pageHeight - item.transform[5], x0 = item.transform[4], x1 = x0 + item.width;
+    const segs = underSegs.filter((u) => u.y - baseTd >= 0.3 && u.y - baseTd <= 4 && u.b > x0 + 0.5 && u.a < x1 - 0.5);
+    if (!segs.length) return value;
+    const chars = [...value];
+    return chars.map((char, i) => { const cx = x0 + (i + 0.5) / chars.length * (x1 - x0);
+      return char !== '\n' && segs.some((u) => cx >= u.a - 0.5 && cx <= u.b + 0.5) ? char + '̲' : char; }).join('');
+  };
   // Lets buildLiveStructure know figure labels were removed from this question.
   clipItems.lastDropped = dropped.size;
   clipItems.lastRegions = regions;
@@ -218,6 +237,7 @@ function clipItems(question, pdf, glyphs) {
       math: /^(?:HyhwpEQ|HYhwpEQ)/u.test(pdf.fonts[item.fontName]?.name?.split('+').at(-1) || '') };
       // A raised or lowered script belongs to its base's line.
       if (scriptOf && attachedScript.test(base.value.trim())) base.y = scriptOf.transform[5];
+      if (!base.math) base.value = underline(item, base.value);
       if (!base.math || !/[\uE05C\uE06D\uE06E]/u.test(item.str) || [...item.str.trim()].length < 2) return [base];
       const chars = [...item.str];
       const widths = chars.map((char) => advances.get(`${item.fontName}:${char.codePointAt(0)}`)

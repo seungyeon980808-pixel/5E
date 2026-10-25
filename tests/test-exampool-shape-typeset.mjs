@@ -179,10 +179,11 @@ test('a space after a sub/superscript group keeps the native engine from extendi
   assert.equal(n('x^{2}'),'x^{2}');assert.equal(n('a_{b_{c}}d'),'a_{b_{c}} d');assert.equal(n('A_{0} '),'A_{0} ');
 });
 
-test('picture choices keep their original KICE width (widthPt, 387pt column = typeset column)',async()=>{
+test('picture choices keep their original KICE width (widthPt, 317.5pt column = typeset column)',async()=>{
   const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
   const q=shape('single','none',q=>{q.style='그림·그래프';q.choices.forEach((c,i)=>{c.text='';c.figure={name:`c${i}.png`,data:png,...(i===0?{widthPt:77.4}:{})};});});
   const plan=await buildQuestionHtml(q,async f=>({...f,width:2000,height:1000}),414);
   const widths=[...plan.html.matchAll(/<img [^>]*width="(\d+)"/g)].map(m=>Number(m[1]));
-  assert.equal(widths[0],Math.round(77.4*414/387));assert.ok(widths[1]>widths[0],'pictures without widthPt fill their cell as before');
+  // 평가원 한 단 = 112mm = 317.5pt(10-25 원본 실측, 387pt는 문항 영역 폭이었다).
+  assert.equal(widths[0],Math.round(77.4*414/317.5));assert.ok(widths[1]>widths[0],'pictures without widthPt fill their cell as before');
 });

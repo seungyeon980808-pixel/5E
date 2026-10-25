@@ -19,9 +19,10 @@ export const KICE_STANDARD = deepFreeze({
   // 상자·표·그림·〈보기〉 뒤 문단 아래 2.01→1.54(after). 표 칸 안 여백 0.5→0.38. 선 굵기 0.12mm는 줄이지 않는다(0.09는 인쇄가 흐림).
   gaps: { text: 0, material: 0, bogi: 0, ask: 0, choices: 0, after: 1.54, bogiPadBottom: 2.30, bogiPadSide: 2.30, bogiPadLeft: 2.30, bogiPadRight: 2.30, bogiPadTop: 1.54, boxPadSide: 2.30, boxPadTop: 1.54, boxPadBottom: 1.54 },
   // bogiTitleWidth 15.96→12.26: 11pt 「<보 기>」가 더 넓으면 글 폭에 맞춰 넓힌다(handoff). cellPad 표 칸 안 여백, rule 선 굵기(mm).
+  // numberIndent: 번호 아래 본문·〈보기〉·선지가 들어가는 고정 폭(mm) — 평가원 「문단 왼쪽 여백 3.99mm」 × 0.768(10-25: 번호 글자 폭으로 들이면 6.4mm로 넓어 선지 줄이 좁았다).
   // choiceTabs: 선지 칸 간격(① 시작선부터, 5개·3개·2개 한 줄) — 원본 21.6·36.0·56.0 × 0.768.
   // labelSpace: 「ㄱ.」「①」 뒤 빈칸 — 'space' 보통 띄어쓰기(평가원 원본), 'fixed' 고정 띄어쓰기(지워지지 않음, 빈 자리만).
-  parts: { number: 'n.', bogiTitle: '<보 기>', bogiTitleWidth: 12.26, bogiTitleRow: 2.91, bogiTitlePad: 0.38, bogiLineSpacing: 150, tableText: 10, tableLineSpacing: 130, cellPad: 0.38, rule: 0.12, choices: 'auto', choiceTabs: [16.59, 27.65, 43.02], labelSpace: 'space', hanging: true },
+  parts: { number: 'n.', bogiTitle: '<보 기>', bogiTitleWidth: 12.26, bogiTitleRow: 2.91, bogiTitlePad: 0.38, bogiLineSpacing: 150, tableText: 10, tableLineSpacing: 130, cellPad: 0.38, rule: 0.12, choices: 'auto', choiceTabs: [16.59, 27.65, 43.02], labelSpace: 'space', hanging: true, numberIndent: 3.06 },
   fit: { on: true, low: -10, high: 0, shortLastLine: 15 },
   lock: true,
 });
@@ -104,9 +105,15 @@ export function standardForPaper(standard, paper) {
   const side = Math.round((PAGE_W[paper] - s.paper.columnGap - 2 * KICE_COLUMN_MM) / 2 * 100) / 100;
   const k = KICE_COLUMN_MM / col, r = v => Math.round(v * k * 100) / 100, out = structuredClone(s);
   for (const key of Object.keys(out.gaps)) if (Number.isFinite(out.gaps[key])) out.gaps[key] = r(out.gaps[key]);
-  for (const key of ['bogiTitleWidth', 'bogiTitleRow', 'bogiTitlePad', 'cellPad']) if (Number.isFinite(out.parts[key])) out.parts[key] = r(out.parts[key]);
+  // 〈보기〉 제목 칸(폭·줄 높이·여백)은 11pt 제목 글자에 맞춘 값이라 키우지 않는다 — 키우면 위 선이 글자 밑으로 내려가고 양옆이 뜬다(10-25).
+  for (const key of ['cellPad', 'numberIndent']) if (Number.isFinite(out.parts[key])) out.parts[key] = r(out.parts[key]);
   if (Array.isArray(out.parts.choiceTabs)) out.parts.choiceTabs = out.parts.choiceTabs.map(r);
   out.paper = { ...out.paper, size: paper, margin: { ...m, left: side, right: side } };
+  // 수능 틀의 글자: 원본 PDF(10-25 실측) 본문 11.5pt·장평 95%·자간 −3%·줄 간격 16.65pt(145%), 〈보기〉·상자 안도 같은 줄 간격.
+  // A4 틀의 11pt·자간 −5%·160%를 그대로 쓰면 글자가 원본보다 6% 좁고 줄 간격은 6% 넓어 줄 나눔이 계속 달랐다.
+  if (s.id === KICE_STANDARD.id) { out.text = { ...out.text, size: 11.5, spacing: -3, lineSpacing: 145 }; out.parts.bogiLineSpacing = 145;
+    // 상자 안 좌우 여백: 원본 7.2pt(= 2.54mm). A4 값을 키운 2.99mm는 글 폭이 3.4px 좁아 줄이 일찍 넘어갔다.
+    out.gaps.boxPadSide = 2.54; }
   // 수능 틀 id 그대로면 resolveStandard가 A4 수능 틀로 되돌린다 — 용지 이름을 붙인 id로.
   out.id = `${s.id}@${paper}`;
   return deepFreeze(out);
@@ -117,7 +124,7 @@ export const gapRole = kind => kind === 'bogi' ? 'bogi' : ['figure', 'table', 'g
 export function layoutValues(standard = KICE_STANDARD) {
   const s = resolveStandard(standard);
   return {
-    ratio: s.text.ratio, spacing: s.text.spacing, gapText: s.gaps.text, gapMaterial: s.gaps.material, gapBogi: s.gaps.bogi, askGap: s.gaps.ask, choicesGap: s.gaps.choices,
+    ratio: s.text.ratio, spacing: s.text.spacing, textSize: s.text.size, lineSpacing: s.text.lineSpacing, gapText: s.gaps.text, gapMaterial: s.gaps.material, gapBogi: s.gaps.bogi, askGap: s.gaps.ask, choicesGap: s.gaps.choices,
     margin: s.paper.margin, columnGap: s.paper.columnGap,
     bogiBottom: mmToPx(s.gaps.bogiPadBottom), bogiSide: mmToPx(s.gaps.bogiPadSide), bogiTop: mmToPx(s.gaps.bogiPadTop),
     // 〈보기〉 왼쪽·오른쪽 안 여백(10-23 설정 팝업): 따로 정하지 않은 옛 틀은 「좌우」 값 하나를 양쪽에 쓴다.
@@ -128,5 +135,6 @@ export function layoutValues(standard = KICE_STANDARD) {
     cellPad: mmToPx(s.parts.cellPad), rule: `${Math.round(s.parts.rule * 72 / 25.4 * 100) / 100}pt solid #000`,
     choiceTabs: (s.parts.choiceTabs || []).map(mmToPx), labelSpace: s.parts.labelSpace,
     tableLineSpacing: s.parts.tableLineSpacing, tableText: s.parts.tableText,
+    numberIndent: mmToPx(s.parts.numberIndent ?? 3.06),
   };
 }

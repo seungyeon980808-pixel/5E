@@ -28,6 +28,8 @@ h.withServer(async origin => {
       const frame = await page.waitForSelector('#exampool-sheet-workspace iframe'), sheet = await frame.contentFrame();
       await sheet.waitForSelector('#side-new'); await sheet.waitForFunction(() => document.querySelector('#status').textContent !== '준비 중');
       const q = structuredClone(examples.questions[0]);
+      // 〈보기〉 ㄱ 줄을 두 줄을 확실히 넘게 늘린다 — 조판이 문단 끝 짧은 낱말을 자간으로 좁혀 넣게 되면서(10-25) 예시의 두 줄 문단이 하나 줄었다.
+      { const ln = q.blocks.find(b => b.kind === 'bogi').lines[0]; ln.text += ' 이때 충돌 전후 운동량의 차이는 물체가 받은 충격량과 같으므로 그 값으로 평균 힘의 크기를 구할 수 있다.'; }
       await sheet.setInputFiles('#excel-file', { name: 'marks.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ format: examples.format, questions: [q], documents: [] })) });
       await sheet.waitForSelector('#import-dialog[open]'); await sheet.evaluate(() => { const u = document.querySelector('input[name="import-mode"][value="update"]'); if (u) u.checked = true; }); await sheet.click('#apply-import');
       await sheet.waitForSelector(`[data-open-card="${q.id}"]`); await sheet.evaluate(id => document.querySelector(`[data-open-card="${id}"]`).click(), q.id);

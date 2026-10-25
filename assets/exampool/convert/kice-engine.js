@@ -143,17 +143,22 @@ export async function toQuestion(structure,item,{number='1'}={}){
   // 크기 기준 폭: 상자 안 자료는 상자 안쪽 폭(테두리·여백 약 16pt 뺌), 아니면 단 폭.
   const within=n=>n.rect?.box?Math.max(40,n.rect.box[2]-n.rect.box[0]-16):col;
   // widthPt: 원본 PDF에서 잰 그림 폭(pt). 조판기가 원본 크기 그대로 넣는다(10-24 — size %는 묶음 칸 안에서 두 번 줄어들었음).
+  // 글 옆 그림의 세로 자리(besideAt): 그림 윗변 옆 첫 줄이 몇째 문단(item)의 몇째 줄(line)인지. 조판기가 그 줄부터 그림 옆을 좁히고
+  // 그림을 그 줄 높이에 둔다(10-25 어울림). 줄 수로만 세면 우리 줄 나눔이 원본과 한 줄만 달라도 그림이 어긋났다(9번).
+  const besideAt=(paras,box)=>{for(const [item,p] of paras.entries()){const L=(p.lines||[]).filter(l=>l.geo&&Number.isFinite(l.base));const line=L.findIndex(l=>l.base>=box[1]+3);if(line>=0)return {item,line};}return {item:0,line:0};};
   const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data,...(d.box?{widthPt:Math.round((d.box[2]-d.box[0])*10)/10}:{})};
     if(size){const w=d.box?d.box[2]-d.box[0]:col*.6,base=within(f);b.size=Math.min(100,Math.max(10,Math.round(w/base*100/5)*5));}return b;};
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
     // 원본 열 폭(pt)·칸 글자 크기(pt): 조판기가 열 폭 비율과 글 크기를 원본대로 쓴다.
     const w=t.block.widths;if(Array.isArray(w)&&w.length===b.table.cols)b.table.colWidths=w.map(x=>Math.round(x*10)/10);
     if(t.block.fontSize)b.table.fontPt=t.block.fontSize;
+    {const h=t.block.heights;if(Array.isArray(h)&&h.length===b.table.rows&&h.every(v=>v>0))b.table.rowHeights=h.map(x=>Math.round(x*10)/10);}
     if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/within(t)*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
   // 자료 바로 아래 이름 줄 '(가)'·'(가) 아세트산 (나) 뷰테인'과 범례 '(＋: …)'를 그 자료 칸에 붙인다(x 위치로 짝).
   // 그림: 이름은 label, 뒤 글은 text(조판기가 그림 아래에 찍음). 표: 이름은 label, 범례는 table.note.
-  const CAPLINE=/^\([가-하]\)(?!.*다\.$)/u,LEGEND=/^\(.*[:：].*\)$/u;
+  // 범례 판정은 수식 표시($)를 뺀 글로 한다 — 「$(○$: 발병함, $×$: 발병 안 함)」처럼 기호가 수식으로 읽혀 범례를 놓쳤다(10-25 6번).
+  const CAPLINE=/^\([가-하]\)(?!.*다\.$)/u,LEGEND_RE=/^\(.*[:：].*\)$/u,LEGEND={test:t=>LEGEND_RE.test(String(t).replace(/\$/g,'').trim())},legendText=t=>String(t).replace(/\$/g,'').trim();
   const attachCaptions=(seq,i,run,made)=>{
     const xs=run.map(m=>m.box);if(!xs.every(Boolean))return i;
     const bottom=Math.max(...xs.map(b=>b[3]));
@@ -178,7 +183,7 @@ export async function toQuestion(structure,item,{number='1'}={}){
       if(!LEGEND.test(t)&&parts.length===made.length&&made.length>1){parts.forEach((m,k)=>{made[k].label=`(${m[1]})`;if(m[2].trim()&&made[k].kind==='figure')made[k].text=m[2].trim();});i++;continue;}
       const cx=(pb[0]+pb[2])/2;let k=xs.findIndex(b=>cx>=b[0]-6&&cx<=b[2]+6);if(k<0)k=made.length===1?0:-1;if(k<0)break;
       const b=made[k];
-      if(LEGEND.test(t)){if(b.kind!=='table')break;b.table.note=(b.table.note?b.table.note+'\n':'')+t;}
+      if(LEGEND.test(t)){if(b.kind!=='table')break;b.table.note=(b.table.note?b.table.note+'\n':'')+legendText(t);}
       else{const m=t.match(/^\(([가-하])\)\s*(.*)$/u);if(!m)break;b.label=`(${m[1]})`;if(m[2]&&b.kind==='figure')b.text=m[2];}
       i++;
     }
@@ -202,7 +207,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
             const part=ls=>({...p,lines:ls,text:clean(ls.map(l=>l.text).join(' '))});all.splice(k,1,part(L.slice(0,cut)),{...part(L.slice(cut)),mark:false,caption:false});break;}}
         const near=all.map(p=>{const b=paraBox(p);return b&&mb&&yOverlap(b,mb)>4&&p.lines.some(l=>l.base>mb[1]+2&&l.base<=mb[3]+2)?b:null;});
         const k0=near.findIndex(Boolean),k1=near.findLastIndex(Boolean);
-        const sideOk=k0>=0&&near.slice(k0,k1+1).every(b=>b&&mb[0]>=b[2]-3);
+        // 옆 글 판정은 그림과 높이가 겹치는 줄만 본다 — 문단이 그림 아래에서 넓어지면(평가원 어울림) 문단 상자 전체로는 실패했다(10-25 12번).
+        const besideLines=p=>p.lines.filter(l=>l.geo&&Number.isFinite(l.base)&&l.base>mb[1]+2&&l.base<=mb[3]+2);
+        const sideOk=k0>=0&&near.slice(k0,k1+1).every((b,j)=>{if(!b)return false;if(mb[0]>=b[2]-3)return true;const L=besideLines(all[k0+j]);return L.length>0&&L.every(l=>l.right<=mb[0]+3);});
         const run=sideOk?all.slice(k0,k1+1):all,pre=sideOk?all.slice(0,k0):[],post=sideOk?all.slice(k1+1):[];
         if(pre.length){textBlock(pre,parent,firstText?firstLabel:'설명');firstText=false;}
         const next=seq[i],tb=run.length?paraBox(run.at(-1)):null,nb=sideOk?mb:null;
@@ -216,7 +223,7 @@ export async function toQuestion(structure,item,{number='1'}={}){
           const t=textBlock(run,g,firstText?firstLabel:'설명');// 상자 안 글은 원본에서 본문보다 작은 글자라, 본문 크기로 찍을 때 필요한 폭만큼 글 몫을 키운다.
           const hs=run.flatMap(p=>p.lines.map(l=>l.h)).filter(Boolean).sort((x,y)=>x-y),lineH=hs[hs.length>>1],fs=A.bodyH&&lineH?Math.min(1.4,Math.max(1,A.bodyH/lineH)):1;
           const [a,b]=ratioPair(Math.max(10,(tb[2]-tb[0])*fs+(nb[0]-tb[2])),nb[2]-nb[0]);t.ratio=a;
-          if(mats.length===1){const m=next.k==='figure'?figure(next,g,'자료',false):table(next,g);m.ratio=b;if(next.k==='figure')m.size=100;i++;}
+          if(mats.length===1){const m=next.k==='figure'?figure(next,g,'자료',false):table(next,g);m.ratio=b;if(next.k==='figure'){m.size=100;if(next.box&&m.figure)m.figure.besideAt=besideAt(run,next.box);}i++;}
           else{// 여러 자료: 옆 칸 안에 자료 묶음(한 줄이면 나란히, 아니면 세로)
             const row=mats.every((m,k)=>!k||yOverlap(m.box,mats[k-1].box)>4),sub=add('group',g,'자료');sub.layout=row?'나란히':'세로';sub.boxed=false;sub.ratio=b;
             for(const m of mats){const x=m.k==='figure'?figure(m,sub,figs.get(m.run)?.caption||'자료',!row):table(m,sub);if(row&&m.box)x.ratio=Math.max(1,Math.min(12,Math.round((m.box[2]-m.box[0])/((nb[2]-nb[0])/12))));if(!row&&m.k==='figure')x.size=100;}
@@ -266,11 +273,21 @@ export async function toQuestion(structure,item,{number='1'}={}){
         let host=g;if(sideFig){host=add('group',g,'글 옆 자료');host.layout='나란히';host.boxed=false;}
         const st=add('steps',host,s.name||'실험 과정');st.lines=[];
         if(sideFig){const tb=[Math.min(...pb.map(b=>b[0])),0,Math.max(...pb.filter(b=>yOverlap(b,sideFig.box)>4).map(b=>b[2])),0],nb=sideFig.box;
-          const [a,b]=ratioPair(Math.max(10,nb[0]-tb[0]),nb[2]-nb[0]);st.ratio=a;const f=figure(sideFig,host,'자료',false);f.ratio=b;f.size=100;}
+          const [a,b]=ratioPair(Math.max(10,nb[0]-tb[0]),nb[2]-nb[0]);st.ratio=a;const f=figure(sideFig,host,'자료',false);f.ratio=b;f.size=100;if(f.figure)f.figure.besideAt=besideAt(paras,sideFig.box);}
         if(!s.name)st.label='';
-        for(const p of paras){const m=p.text.match(/^\(([가-힣])\)\s*(.*)$/);if(m)st.lines.push({id:crypto.randomUUID(),label:`(${m[1]})`,text:m[2]});
-          else if(st.lines.length&&!/^[◦○•]/.test(p.text)&&!p.head&&!p.display)st.lines.at(-1).text+=' '+p.text;else st.lines.push({id:crypto.randomUUID(),label:'',text:p.text});}
-        emit(s.items.filter(n=>n.k!=='para'&&n!==sideFig),g);
+        const itemOf=[],legends=[];
+        const hasTable=s.items.some(n=>n.k==='table');
+        for(const p0 of paras){
+          // 표 범례 줄 「(○: 있음, ×: 없음)」은 과정 항목에 잇지 않고 이 구역 표의 범례로 붙인다(10-25 6번: (다) 끝 줄로 묶여 본문으로 찍혔다).
+          let p=p0;
+          if(hasTable&&LEGEND.test(p.text)){legends.push(legendText(p.text));itemOf.push(Math.max(0,st.lines.length-1));continue;}
+          {const last=p.lines?.at(-1),lt=String(last?.text||'').trim();if(hasTable&&p.lines?.length>1&&LEGEND.test(lt)&&p.text.trim().endsWith(lt)){legends.push(legendText(lt));p={...p,lines:p.lines.slice(0,-1),text:p.text.trim().slice(0,-lt.length).trim()};}}
+          const m=p.text.match(/^\(([가-힣])\)\s*(.*)$/);if(m)st.lines.push({id:crypto.randomUUID(),label:`(${m[1]})`,text:m[2]});
+          else if(st.lines.length&&!/^[◦○•]/.test(p.text)&&!p.head&&!p.display)st.lines.at(-1).text+=' '+p.text;else st.lines.push({id:crypto.randomUUID(),label:'',text:p.text});itemOf.push(st.lines.length-1);}
+        // 과정 문단이 앞 항목에 이어 붙으면 문단 번호와 항목 번호가 달라진다 — 항목 번호로 바꾼다(이어 붙은 문단의 줄은 그 항목 뒤쪽 줄이라 줄 수는 그대로 둔다).
+        {const f=out.find(b=>b.parent===host.id&&b.kind==='figure');if(sideFig&&f?.figure?.besideAt)f.figure.besideAt={...f.figure.besideAt,item:itemOf[f.figure.besideAt.item]??0};}
+        {const before=out.length;emit(s.items.filter(n=>n.k!=='para'&&n!==sideFig),g);
+          const tb=out.slice(before).find(b=>b.kind==='table');if(tb&&legends.length)tb.table.note=[tb.table.note,...legends].filter(Boolean).join('\n');}
         continue;
       }
       const mats=s.items.filter(n=>n.k!=='para');
@@ -337,12 +354,52 @@ export async function toQuestion(structure,item,{number='1'}={}){
   if(choiceFigs&&form!=='pair')q.style='그림·그래프';
   // 수식 안 괄호·상태 기호는 본문 글로(원본 글꼴과 같게).
   mapQuestionText(q,splitEquationParens);
+  // 기호 하나뿐인 수식($○$ · $×$ 등)은 본문 글자로 — 수식 개체로 넣으면 뒤 글자(「:」)를 가렸다(10-25 16번 「(○: 있음」).
+  mapQuestionText(q,v=>String(v??'').replace(/\$\s*([○●◎△▲▽▼□■◇◆☆★×])\s*\$/gu,'$1'));
+  attachRowCaptions(q);tidyStrays(q);
   if(figs.size>count.images)diag.notes.push(`그림 ${figs.size}개 중 ${count.images}개만 넣었습니다.`);
   // figures: 넣은 자료 수(그림 + 표 + 조건·실험 상자). images: 그림 수.
   diag.counts={stem:out.filter(b=>b.kind==='text').length,ask:!!q.ask,bogi:bogi?.lines.length||0,
     choices:form==='pair'?q.choiceTable.cells.slice(1).filter(r=>r.some(c=>String(c.value).trim())).length:q.choices.filter(c=>c.text.trim()||c.figure).length,choiceFigures:choiceFigs?5:0,
     figures:count.images+count.tables+Math.max(0,count.boxes),images:count.images,tables:count.tables,boxes:count.boxes,three:A.three};
   return {question:q,diag};
+}
+
+// 나란히 자료 묶음(표·그림 둘 이상) 바로 뒤 글이 「(가) (나)」처럼 자료 수만큼의 이름표 줄이면 각 자료 이름으로 옮긴다.
+// 그 앞 줄이 괄호 설명(「(○: 있음, ×: 없음)」)이면 첫 표의 설명(표 아래 글)으로 — 평가원은 첫 표 바로 아래에 둔다(10-25 생명Ⅰ 16번).
+export function attachRowCaptions(q){
+  const CAP=/^\s*(\([가-하]\)\s*)+$/u;
+  for(const g of q.blocks.filter(b=>b.kind==='group'&&b.layout==='나란히')){
+    const kids=q.blocks.filter(b=>b.parent===g.id);if(kids.length<2||!kids.every(b=>b.kind==='table'||b.kind==='figure'))continue;
+    const sibs=q.blocks.filter(b=>b.parent===g.parent),next=sibs[sibs.indexOf(g)+1];if(!next||next.kind!=='text')continue;
+    const lines=String(next.text||'').split('\n').map(l=>l.trim()).filter(Boolean),last=lines.at(-1)||'';
+    const caps=last.match(/\([가-하]\)/gu)||[];if(!CAP.test(last)||caps.length!==kids.length)continue;
+    kids.forEach((k,i)=>{k.label=caps[i];});
+    const rest=lines.slice(0,-1);
+    if(rest.length===1&&/^\(.*\)$/u.test(rest[0])){const t=kids.find(k=>k.kind==='table');if(t){t.table.note=rest[0];rest.length=0;}}
+    if(rest.length)next.text=rest.join('\n');else q.blocks.splice(q.blocks.indexOf(next),1);
+  }
+}
+
+// 10-25 눈 검사로 찾은 변환 찌꺼기 정리.
+// ① 쪽 옆 세로 띠(「생명과학Ⅰ」)의 글자가 줄 끝에 한 글자씩 붙는다(b1 6월 4번 〈보기〉 「…이다. 명」) — 문장 끝 뒤 외톨이 한 글자는 뗀다.
+// ② 표 옆 글에서 「(단위: ㎛)」 범례 줄이 다음 글 첫 줄로 들어간다(b1 6월 15번) — 바로 앞 묶음의 표 범례로 옮긴다.
+export function tidyStrays(q){
+  // ③ 띄어쓰기가 빠져 「(나)는(가)에서㉠의」처럼 붙으면 줄을 못 나눠 앞 줄이 크게 벌어진다(b1 6월 12번) — 한글 바로 뒤 (가)·㉠ 앞에 띄어쓰기.
+  const stray=t=>String(t).replace(/([다요]\.)\s+[가-힣]$/gmu,'$1').replace(/([가-힣])(\([가-하]\)|[\u3260-\u326d])/gu,'$1 $2');
+  for(const b of q.blocks){if(typeof b.text==='string')b.text=stray(b.text);for(const l of b.lines||[])l.text=stray(l.text);}
+  const LEG=/^\((?:단위|[^()]*[:：])[^()]*\)$/u;
+  for(const t of q.blocks.filter(b=>b.kind==='text'&&b.text)){
+    const lines=t.text.split('\n'),first=lines[0].replace(/\$/g,'').trim();if(!LEG.test(first))continue;
+    const sibs=q.blocks.filter(b=>b.parent===t.parent),prev=sibs[sibs.indexOf(t)-1];if(!prev)continue;
+    const tables=prev.kind==='table'?[prev]:q.blocks.filter(b=>b.parent===prev.id&&b.kind==='table');if(tables.length!==1)continue;
+    const tb=tables[0].table;tb.note=[tb.note,first].filter(Boolean).join('\n');t.text=lines.slice(1).join('\n');
+    // 범례 다음 줄이 앞 묶음 글 문장의 이어지는 부분이면(항목 머리 없음, 앞 글이 문장 끝이 아님) 앞 글에 잇는다 — 따로 두면 칸 첫 문단이 되어
+    // 한글 엔진이 다음 문단과 겹쳐 그렸다(b1 6월 15번 「뺀 값(ⓒ－ⓑ)을…」).
+    {const host=prev.kind==='group'?q.blocks.filter(b=>b.parent===prev.id&&b.kind==='text').at(-1):null,rest=t.text.split('\n');
+      if(host&&rest[0]&&!/^[○◦•▪◆□■①-⑤]|^\([가-힣]\)/u.test(rest[0])&&!/[.。?!]$/u.test(host.text.trim())){host.text=host.text.trim()+' '+rest[0];t.text=rest.slice(1).join('\n');}}
+    if(!t.text.trim())q.blocks.splice(q.blocks.indexOf(t),1);
+  }
 }
 
 export async function convertKice(item,opts={}){

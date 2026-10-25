@@ -11,7 +11,7 @@ export function normMap(value){
   const v=String(value??''),idx=[];let text='',space=false;
   for(let i=0;i<v.length;i++){
     if(/\s/.test(v[i])){if(text)space=true;continue;}
-    if(v[i]==='\u2060')continue; // 조판이 넣은 폭 없는 글자(줄 첫머리 수식 앞)는 글로 보지 않는다
+    if(v[i]==='\u2060'||v[i]==='\u0332')continue; // 폭 없는 글자 · 결합 밑줄 문자(밑줄 표시)는 글로 보지 않는다 // 조판이 넣은 폭 없는 글자(줄 첫머리 수식 앞)는 글로 보지 않는다
     if(space){text+=' ';idx.push(i-1);space=false;}
     text+=SAME[v[i]]||v[i];idx.push(i);
   }
