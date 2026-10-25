@@ -17,7 +17,8 @@ export function createNativeTextMeasurer(Document){
       // 본문 글꼴 조각과 기호 조각을 따로 담아 두고, 장평 + 자간 배율(measure.factor, 틀 값)은 꺼낼 때 곱한다.
       // 10-25 엔진 실측: 장평·자간은 기호(㉠ ① Ⅰ ○ ～ ×)·문장 부호·띄어쓰기까지 모든 글자에 걸린다(실제 = 잰 값 × 0.92).
       // 예전처럼 기호를 그대로 재면 기호마다 1.2px씩 넓게 재 원본보다 한 낱말 일찍 넘어갔다. 장평 + 자간 배율은 꺼낼 때 곱한다(measure.factor, 틀 값).
-      void plain;const raw=text?runs.reduce((sum,run)=>sum+run.w,0):0;cache.set(key,raw);return raw*measure.factor;
+      // 캐시는 한 편집 세션 내내 남는다 — 2만 개를 넘으면 비운다(코드 점검 10-21 하: 끝없이 쌓였음).
+      void plain;const raw=text?runs.reduce((sum,run)=>sum+run.w,0):0;if(cache.size>20000)cache.clear();cache.set(key,raw);return raw*measure.factor;
     }finally{d.free();}
   };
   // 한글 수식 개체의 실제 폭·높이(px). 표 칸 안 줄 나눔과 칸 높이를 수식 크기로 잰다(수식 자리표시 글자로 재면 수식마다 줄이 바뀐다).
@@ -27,7 +28,7 @@ export function createNativeTextMeasurer(Document){
     try{
       d.createBlankDocument();const result=JSON.parse(d.insertEquation(0,0,0,normalizeEquationScript(script),Math.round(fontSize*100),0));
       const control=result.ok?(JSON.parse(d.getPageControlLayout(0)).controls||[]).find(c=>c.type==='equation'):null;
-      const size=control?{w:control.w,h:control.h}:null;cache.set(key,size);return size;
+      const size=control?{w:control.w,h:control.h}:null;if(cache.size>20000)cache.clear();cache.set(key,size);return size;
     }finally{d.free();}
   };
   measure.factor=TEXT_WIDTH;

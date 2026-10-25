@@ -200,7 +200,11 @@ export function installLibraryView(root, api) {
   document.addEventListener('mousedown', e => { if (modal && !modal.hidden && e.target === modal) { s().open = -1; closeViewer(api); } });
   root.addEventListener('keydown', e => { const o = e.target.closest?.('[data-lv-open]'); if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); o.click(); } });
   root.addEventListener('change', e => { const sel = e.target.closest('[data-lv-sel]'); if (!sel) return; s()[sel.dataset.lvSel] = sel.value; if (sel.dataset.lvSel === 'subject') { s().part = ''; s().exam = ''; } s().limit = PAGE; api.rerender(); });
-  root.addEventListener('input', e => { if (e.target.id !== 'lib-query') return; s().query = e.target.value; clearTimeout(e.target._t); e.target._t = setTimeout(() => { s().limit = PAGE; api.rerender(); const n = root.querySelector('#lib-query'); n?.focus(); n?.setSelectionRange(n.value.length, n.value.length); }, 250); });
+  // 한글 조합 중에는 다시 그리지 않는다 — 검색칸이 새로 만들어져 「ㄱ」만 남고 조합이 끊겼다(코드 점검 10-21 하). 조합이 끝나면(compositionend) 그린다.
+  const searchAgain = t => { clearTimeout(t._t); t._t = setTimeout(() => { if (t._composing) return; s().limit = PAGE; api.rerender(); const n = root.querySelector('#lib-query'); n?.focus(); n?.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  root.addEventListener('compositionstart', e => { if (e.target.id === 'lib-query') e.target._composing = true; });
+  root.addEventListener('compositionend', e => { if (e.target.id !== 'lib-query') return; e.target._composing = false; s().query = e.target.value; searchAgain(e.target); });
+  root.addEventListener('input', e => { if (e.target.id !== 'lib-query') return; s().query = e.target.value; if (e.isComposing || e.target._composing) return; searchAgain(e.target); });
   // 메모: 쓰는 대로 저장(이 기기). 카드의 메모 표시·「메모 있음」 수는 창을 닫을 때 다시 그린다.
   const memoInput = e => { const t = e.target.closest?.('[data-lv-memo]'); if (!t) return; const m = store.get('memos', {}), at = store.get('memoAt', {}), k = t.dataset.lvMemo;
     if (t.value.trim()) { m[k] = t.value; const d = new Date(); at[k] = `${d.getMonth() + 1}-${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } else { delete m[k]; delete at[k]; }

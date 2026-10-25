@@ -468,15 +468,16 @@ export function createCardEditor(root,api){
     const busy=api.pastBusy?.();
     body.innerHTML=`<div class="past-list lp-pageview"><div class="lp-viewbar">${seg}${(()=>{const firstOf=fn=>exams.find(fn)?.pdfFile,years=[...new Set(exams.map(x=>x.year))],months=[...new Set(exams.filter(x=>x.year===ex.year).map(x=>String(x.month)))],subs=exams.filter(x=>x.year===ex.year&&String(x.month)===String(ex.month));
         return `<span class="lp-exam-pick"><select data-cvpast="pagefile" aria-label="연도">${years.map(y=>`<option value="${E(firstOf(x=>x.year===y))}"${y===ex.year?' selected':''}>${y}학년도</option>`).join('')}</select><select data-cvpast="pagefile" aria-label="시험">${months.map(m=>`<option value="${E(firstOf(x=>x.year===ex.year&&String(x.month)===m))}"${m===String(ex.month)?' selected':''}>${E(MONTH[m]||m+'월')}</option>`).join('')}</select><select data-cvpast="pagefile" aria-label="과목">${subs.map(x=>`<option value="${E(x.pdfFile)}"${x===ex?' selected':''}>${E(x.subjectLabel)}</option>`).join('')}</select></span>`;})()}
-      <span class="lp-pnav"><button type="button" data-cvpagestep="-1" aria-label="이전 쪽"${pageNo<=1?' disabled':''}>‹</button><span data-cvslot="pageno">${pageNo}쪽</span><button type="button" data-cvpagestep="1" aria-label="다음 쪽">›</button></span>
+      <span class="lp-pnav"><button type="button" data-cvpagestep="-1" aria-label="이전 쪽"${pageNo<=1?' disabled':''}>‹</button><span data-cvslot="pageno">${pageNo}쪽</span><button type="button" data-cvpagestep="1" aria-label="다음 쪽" disabled title="원본 시험지를 받는 중">›</button></span>
       <button type="button" class="lp-pageref" data-cvpageref title="이 쪽 전체를 근거로 연결">이 쪽을 근거로</button><a class="lp-pdf" href="${E(pdfHref(ex.publicPath,pageNo))}" target="_blank" rel="noopener" title="시험지 PDF 원본을 새 창에서 열기">PDF</a></div>
       <div class="lp-paper" data-cvpaper><span class="lp-paper-wait"><i aria-hidden="true"></i>원본 시험지 받는 중…</span></div>
       <div class="lp-qchips">${onPage.length?`<span class="lp-qnote">이 쪽의 문항</span>${onPage.map(i=>`<span class="lp-q${hits.has(i.id)?' on':''}" title="${E(i.title)}"><b>${E(i.no)}번</b><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?.id===i.id?' aria-busy="true"':''}>${busy?.id===i.id?busyHtml(busy.stage):'변형'}</button></span>`).join('')}`:'<span class="lp-qnote">이 쪽에는 색인된 문항이 없습니다</span>'}</div></div>`;
     const paper=body.querySelector('[data-cvpaper]'),seq=++pastPageSeq;
     mountPaper(paper,{path:ex.publicPath,page:pageNo,words:f.tokens.slice(),title:examName(ex),kind:'past'},()=>seq===pastPageSeq).then(r=>{if(!r||seq!==pastPageSeq)return;
       if(pageNo>r.pages){pastFilter.pageno=r.pages;store.set('past',pastFilter);renderPast();return;}
-      const n=body.querySelector('[data-cvslot="pageno"]');if(n)n.textContent=`${pageNo} / ${r.pages}쪽`;const next=body.querySelector('[data-cvpagestep="1"]');if(next)next.disabled=pageNo>=r.pages;})
-      .catch(()=>{if(seq===pastPageSeq&&paper.isConnected)paper.innerHTML='<span class="lp-paper-wait err">원본 시험지를 받지 못했습니다. 잠시 뒤 다시 누르거나 「PDF」로 열어 보세요.</span>';});
+      const n=body.querySelector('[data-cvslot="pageno"]');if(n)n.textContent=`${pageNo} / ${r.pages}쪽`;const next=body.querySelector('[data-cvpagestep="1"]');if(next){next.disabled=pageNo>=r.pages;next.title='';}})
+      // 쪽 수를 알기 전에는 › 를 끈다(코드 점검 10-21 하: 마지막 쪽 뒤로도 넘어갔다). 받지 못하면 다시 켜 쪽은 넘길 수 있게.
+      .catch(()=>{const next=body.querySelector('[data-cvpagestep="1"]');if(next){next.disabled=false;next.title='';}if(seq===pastPageSeq&&paper.isConnected)paper.innerHTML='<span class="lp-paper-wait err">원본 시험지를 받지 못했습니다. 잠시 뒤 다시 누르거나 「PDF」로 열어 보세요.</span>';});
   }
 
 

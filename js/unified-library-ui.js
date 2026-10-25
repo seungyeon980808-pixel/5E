@@ -3422,7 +3422,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
     const session=cropSession,revision=actionRevision;
     const isCurrent=()=>!overlay.hidden&&!cropDialog.hidden&&cropSession===session&&actionRevision===revision;
     cropActionBusy=true;setCropActionAvailability();
-    try{await deliverGraphReference(entry.result,entry.materialized,isCurrent);}
+    // 크롭 미리보기(빠른 쪽 그림)를 그대로 보내지 않는다 — 원본 PDF 고해상도로 다시 뜬 뒤 보낸다(코드 점검 10-21 하: 저해상도가 그래프 복원으로 갔음).
+    try{let materialized=entry.materialized;
+      if(materialized?.previewOnly){const activeProvider=await provider();if(!isCurrent())return;materialized=await materializeLibraryAction(entry.result,activeProvider,{acceptedAssets});if(!isCurrent())return;}
+      await deliverGraphReference(entry.result,materialized,isCurrent);}
     catch(error){if(isCurrent())overlay.querySelector('[data-unilib-crop-selection]').textContent=`원본 연결 실패: ${error.message}`;}
     finally{cropActionBusy=false;if(!cropDialog.hidden)setCropActionAvailability();}
   });
