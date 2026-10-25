@@ -32,7 +32,8 @@ const evidence = process.env.EVIDENCE_DIR;
       }
       const page = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 1512, height: 982 } });
       await page.goto(base);
-      assert.equal(await page.locator('.app-shell-header .toolbar-document #undo-btn').count(), 1);
+      // 10-24 개편: 되돌리기·다시 하기는 로고 옆 「작업 기록」 묶음(.toolbar-history)으로 옮겼다.
+      assert.equal(await page.locator('.app-shell-header .toolbar-history #undo-btn').count(), 1);
       const file = await page.locator('#file-menu-btn').boundingBox();
       const theme = await page.locator('#theme-toggle').boundingBox();
       assert.ok(file && theme && file.x + file.width <= theme.x, 'Static header must not overlap');
