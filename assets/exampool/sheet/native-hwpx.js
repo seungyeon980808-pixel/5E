@@ -31,7 +31,8 @@ export function exportLayoutHwpx(document,CFB){
       const tag=record&1023;
       if(tag===66)segments.push([]);
       if(tag===69){if(size%36||!segments.length)throw Error('한글 줄 배치를 읽지 못했습니다.');
-        for(let i=0;i<size;i+=36)segments.at(-1).push(Array.from({length:9},(_,j)=>data.getUint32(pos+i+j*4,true)));
+        // LINE_SEG: textpos·flags만 부호 없는 수, vertpos~horzsize 일곱 칸은 부호 있는 수(음수 줄 간격이 42억대 수로 저장됐음, 코드 점검 10-21 하).
+        for(let i=0;i<size;i+=36)segments.at(-1).push(Array.from({length:9},(_,j)=>j===0||j===8?data.getUint32(pos+i+j*4,true):data.getInt32(pos+i+j*4,true)));
       }
       pos+=size;
     }
