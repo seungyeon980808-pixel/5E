@@ -31,7 +31,8 @@
     padding: 0 0 0 calc(var(--ds-edge) + var(--ds-h-control) + 1px);
     justify-content: flex-start; /* 세 프로그램 로고 「5E」를 같은 자리(x60)에 — 이름 길이가 달라도 안 움직이게 */
     align-items: center;
-    border-right: 1px solid var(--ds-line);
+    /* 10-26 사용자 지적: 왼쪽 칸 경계선이 맨 위 줄까지 올라와 「5E_image」가 선을 넘어 보였다 — 5E_exam·5E_hwp처럼 맨 위 줄에는 선을 긋지 않는다. */
+    border-right: 0;
   }
   :root:not([data-mode="lite"]) .app[data-left-collapsed="true"] .app-shell-header .toolbar-history { border-right-color: transparent; }
   :root:not([data-mode="lite"]) .app-shell-header .app-brand {
