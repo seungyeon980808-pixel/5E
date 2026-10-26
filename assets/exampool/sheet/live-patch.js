@@ -57,11 +57,19 @@ export function planPatches(before,after,runs){
     if(!run||used.has(run)||unsafe(run.text.replace(/\n/g,'')))return null;
     // 표 칸 안 글은 줄 수가 같을 때만(칸 높이를 줄 수로 미리 정해 두었다). 본문 문단은 늘거나 줄어도 된다.
     if(run.path&&run.text.split('\n').length!==b.wrapped.split('\n').length)return null;
-    used.add(run);patches.push({run,text:b.wrapped});
+    used.add(run);patches.push({run,text:keepLabelSpace(run.text,b.wrapped)});
   }
   return patches;
 }
 
+// 「ㄱ.」「①」「(가)」 바로 뒤 고정 띄어쓰기(U+00A0)는 조판 때 넣은 것 — 글만 바꿔 넣을 때도 남긴다(10-26 지적 U2).
+// 시트 글은 보통 띄어쓰기이거나(「ㄱ. 글」) 비면 번호만(「ㄱ.」) 오므로, 한글 창 문단에 고정 띄어쓰기가 있었으면 그 자리를 고정 띄어쓰기로 맞춘다.
+const LABEL_SPACE=/^((?:[ㄱ-ㅎ]\.|[①-⑳○◦•▪◆□■]|\([가-힣]\)))[ \u00a0]?/;
+export function keepLabelSpace(old,text){
+  const o=String(old??'').match(LABEL_SPACE);if(!o||!o[0].endsWith('\u00a0'))return text;
+  const n=String(text).match(LABEL_SPACE);if(!n||n[1]!==o[1])return text;
+  return n[1]+'\u00a0'+String(text).slice(n[0].length);
+}
 const ok=result=>{const r=typeof result==='string'?JSON.parse(result):result;if(!r?.ok)throw Error('한글 창에 글을 넣지 못했습니다.');};
 // 바뀐 구간만 지우고 넣는다. 앞뒤 같은 글자의 글자 모양은 그대로 남는다.
 export function applyPatches(wasm,patches){

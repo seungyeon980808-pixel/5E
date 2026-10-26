@@ -50,6 +50,24 @@ export const EXAM_SHORTCUTS = [
   ['표 크기 유지하며 줄·칸 크기','셀 선택 후 Alt+방향키'], ['표 빠져나오기','Shift+Esc'],
 ];
 
+// 「ㄱ.」「①」「(가)」 바로 뒤 고정 띄어쓰기(빨간 V)는 지우기 키로 지워지지 않는다(10-26 지적 U2 — 교사가 글을 칠 자리).
+// 번호 자체(「ㄱ.」)는 지울 수 있고, 고른 영역을 지우는 것도 그대로다. 고정 띄어쓰기를 지우는 키 하나만 막는다.
+const LABEL_FIXED = /^(?:[ㄱ-ㅎ]\.|[①-⑳○◦•▪◆□■]|\([가-힣]\))\u00a0/;
+function keepsLabelSpace(event, input, w) {
+  if (!['Backspace', 'Delete'].includes(event.key) || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return false;
+  const c = input.cursor;
+  try {
+    if (c.hasSelection?.() || c.isInCellSelectionMode?.() || c.isInBlockSelectionMode?.()) return false;
+    const p = input.getCursorPosition(), cell = p.cellPath?.length, sec = p.sectionIndex;
+    const len = cell ? w.getCellParagraphLengthByPath(sec, p.parentParaIndex, JSON.stringify(p.cellPath)) : w.getParagraphLength(sec, p.paragraphIndex);
+    if (!len) return false;
+    const n = Math.min(len, 6), head = String(cell ? w.getTextInCellByPath(sec, p.parentParaIndex, JSON.stringify(p.cellPath), 0, n) : w.getTextRange(sec, p.paragraphIndex, 0, n));
+    const m = head.match(LABEL_FIXED); if (!m) return false;
+    const space = m[0].length - 1;   // 고정 띄어쓰기 글자 자리
+    return event.key === 'Backspace' ? p.charOffset === space + 1 : p.charOffset === space;
+  } catch { return false; }
+}
+
 export function documentShortcut(event, { inCell = false, cellSelection = false } = {}) {
   const key = letters(event), control = event.ctrlKey || event.metaKey;
   if (event.ctrlKey && !event.metaKey && !event.shiftKey) {
@@ -271,6 +289,7 @@ export function installDocumentShortcuts(bridge) {
       if (documentShortcut(event, context)) consume(event);
       return;
     }
+    if (keepsLabelSpace(event, input, bridge.wasm)) { consume(event); return; }
     // Korean cell-block letters can start an IME sequence despite preventDefault.
     // Reuse Studio's guard to suppress that sequence and its trailing input.
     if (blockLetter) {

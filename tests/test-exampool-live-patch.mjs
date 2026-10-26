@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {buildQuestionHtml} from '../assets/exampool/sheet/handoff.js';
-import {planPatches,applyPatches,layoutKey} from '../assets/exampool/sheet/live-patch.js';
+import {planPatches,applyPatches,layoutKey,keepLabelSpace} from '../assets/exampool/sheet/live-patch.js';
 import {newQuestion} from '../assets/exampool/sheet/model.js';
 import {questionFingerprint,typesetMatches} from '../assets/exampool/sheet/typeset-model.js';
 import {ROWS} from '../assets/exampool/sheet/vertical.js';
@@ -91,4 +91,16 @@ test('white cells are exactly the fields printed as text in the HWP document',()
   assert.equal(labelInDocument(kind('table')),false,'a table name is not printed');
   assert.equal(labelInDocument({kind:'figure',label:'(가)',figure:{data:'x'}}),true);
   assert.equal(labelInDocument({kind:'figure',label:'실험 장치',figure:{data:'x'}}),false);
+});
+
+test('바로 넣기도 「ㄱ.」「①」 뒤 고정 띄어쓰기를 남긴다(10-26 U2)', () => {
+  const N = ' ';
+  assert.equal(keepLabelSpace(`ㄱ.${N}`, 'ㄱ.'), `ㄱ.${N}`, '비운 칸도 고정 띄어쓰기는 남는다');
+  assert.equal(keepLabelSpace(`ㄱ.${N}`, 'ㄱ. 운동량은 보존된다.'), `ㄱ.${N}운동량은 보존된다.`, '보통 띄어쓰기를 고정 띄어쓰기로');
+  assert.equal(keepLabelSpace(`ㄱ.${N}글`, 'ㄱ.'), `ㄱ.${N}`);
+  assert.equal(keepLabelSpace(`①${N}`, '① 3 J'), `①${N}3 J`);
+  assert.equal(keepLabelSpace(`(가)${N}`, '(가)'), `(가)${N}`);
+  assert.equal(keepLabelSpace('ㄱ. ', 'ㄱ.'), 'ㄱ.', '원래 보통 띄어쓰기(평가원 원본 틀)면 손대지 않는다');
+  assert.equal(keepLabelSpace(`ㄴ.${N}`, 'ㄱ. x'), 'ㄱ. x', '번호가 바뀌면 손대지 않는다');
+  assert.equal(keepLabelSpace('그림과 같이', '그림과 같이 높이'), '그림과 같이 높이');
 });
