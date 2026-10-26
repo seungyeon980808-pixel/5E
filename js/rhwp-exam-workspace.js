@@ -71,7 +71,8 @@ export function initRhwpExamWorkspace(state, services) {
         </div>
 
         <button type="button" class="structure-lock" data-exam-action="structure-lock" aria-pressed="false" title="구조 잠금 · 켜면 글만 고치고, 끄면 표·그림의 크기와 틀도 고칩니다"><svg class="lock-on" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><svg class="lock-off" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 4.8-1"/></svg>구조 잠금</button>
-        <button type="button" class="exam-close" data-exam-action="close" title="닫기 · 그림 편집기로 돌아가기 (Esc)" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <!-- aria-label을 「닫기」 그대로 두면 escape-layers가 Esc마다 이 단추를 눌러 편집기 자체 취소(그림 크기 바꾸기 등)를 가로챈다 -->
+        <button type="button" class="exam-close" data-exam-action="close" title="닫기 · 그림 편집기로 돌아가기 (Esc)" aria-label="5E_hwp 닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       </nav></div></div>
     <div class="exam-body"><aside class="exam-sidebar"><header class="exam-header">
       <input id="exam-name" value="새 시험지" maxlength="200" aria-label="시험지 이름">
