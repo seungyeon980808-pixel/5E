@@ -22,6 +22,9 @@ const button = (page, title) => ({
   async click() {
     if (title === '자주 쓰지 않는 기능') return page.locator(LEFT_TABS.includes(lastTab) ? '.exam-left-tools [data-el-more]' : '.exam-inspector .ei-pane:not([hidden]) [data-ei-more]').click();
     if (await direct(page, title).count()) return direct(page, title).click();
+    // 10-26(H4): 칸 숫자 줄에 있는 기능(「자간 줄이기」 = 「자간」 줄의 −)은 「더 보기」에서 뺐다 — 칸의 그 단추를 누른다.
+    const step = String(title).match(/^(.+?) (줄이기|늘리기)$/);
+    if (step) { const b = page.locator(`.exam-inspector .ei-pane:not([hidden]) .ei-row:has(> label:text-is("${step[1]}")) [aria-label="${step[2]}"]`).first(); if (await b.count()) return b.click(); }
     await page.locator('.exam-inspector .ei-pane:not([hidden]) [data-ei-more]').click(); await page.locator('.exam-morepop').waitFor();
     return page.locator(`.exam-morepop [data-exam-old][title^="${title}"], .exam-morepop [data-exam-more][title^="${title}"]`).first().click();
   },
@@ -60,10 +63,14 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     const para = await inPage(page, `return w.getParaPropertiesAt(0,0);`);
     assert.equal(para.lineSpacing, 200); assert.equal(Math.round(para.spacingBefore * 75 / 100) * 100, 400, '2pt = 400 (엔진은 소수 한 자리로 돌려줌)');
 
-    // 2-1) 더 보기: 리본 없이 닿는 기능 — 오른쪽 정렬.
+    // 2-1) 더 보기에는 칸에 이미 있는 단추가 다시 나오지 않는다(10-26 결정 H4) — 오른쪽 정렬은 칸에서.
     await tab(page, 'text');
     await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morepop').waitFor();
-    await page.locator('.exam-morelist button', { hasText: '오른쪽 정렬' }).click(); await h.idle(page);
+    assert.equal(await page.locator('.exam-morepop [title^="오른쪽 정렬"]').count(), 0, '칸에 있는 정렬이 더 보기에 겹쳐 나옴');
+    assert.equal(await page.locator('.exam-morepop [title^="굵게"]').count(), 0, '칸에 있는 굵게가 더 보기에 겹쳐 나옴');
+    assert.ok(await page.locator('.exam-morepop [title^="문단 위 간격 2pt 늘리기"]').count(), '칸에 없는 2pt 간격은 더 보기에 남아야 함');
+    await page.keyboard.press('Escape'); await page.locator('.exam-morepop').waitFor({ state: 'hidden' }).catch(() => {});
+    await page.locator('.exam-inspector .ei-pane:not([hidden]) [data-ei-act="right"]').click(); await h.idle(page);
     assert.equal((await inPage(page, `return w.getParaPropertiesAt(0,0);`)).alignment, 'right');
 
     // 3) 기호 창: 첫 줄 ①, 따옴표 한 쌍(커서 가운데), 조각 「위첨자 ＋」(위 첨자 모양까지).

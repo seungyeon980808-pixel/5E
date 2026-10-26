@@ -364,11 +364,24 @@ export function installExamModes(panel, services) {
   function openMore(anchor, modeKey = '') {
     if (!pop.hidden && pop.dataset.kind === 'more') { closePop(); return; }
     pop.dataset.kind = 'more'; pop.dataset.moreKey = modeKey || moreKey();
-    const olds = modeKey ? [] : oldItems();
+    // 10-26 결정(H4): 칸에 이미 단추로 보이는 기능(굵게·정렬·첨자·자간 등)은 「더 보기」에서 뺀다 — 같은 단추가 두 곳에 있어 헷갈렸다.
+    // 칸 단추의 설명(단축키 괄호 앞)·이름이 같으면 같은 기능으로 본다. 원래 순번(data-exam-old)은 그대로 둔다.
+    // 움직이는 양이 다른 것(칸 「문단 위」 −/＋는 1pt, 「더 보기」 「문단 위 간격 2pt」)은 다른 기능이라 남는다.
+    const key = t => String(t || '').replace(/\s*[(（].*$/, '').replace(/\s+/g, '').toLowerCase();
+    const paneRoot = anchor?.closest('.ei-pane') || document;
+    const shown = new Set();
+    // 칸 안 모든 단추(이름·설명), 그리고 줄 이름과 짝지은 이름(「정렬」+「오른쪽」, 「장평」+「줄이기」)을 모은다.
+    for (const b of paneRoot.querySelectorAll('button')) {
+      if (b.closest('.exam-morepop') || b.matches('[data-ei-more]')) continue;
+      const names = [b.title, b.getAttribute('aria-label'), b.textContent].map(key).filter(Boolean);
+      const label = key(b.closest('.ei-row')?.querySelector('label')?.textContent);
+      for (const n of names) { shown.add(n); if (label) { shown.add(label + n); shown.add(n + label); } }
+    }
+    const olds = (modeKey ? [] : oldItems()).map((item, i) => [item, i]).filter(([[label, tip]]) => !shown.has(key(tip)) && !shown.has(key(label)));
     pop.className = 'exam-pop exam-morepop';
     const names = { text: '글자·문단', table: '표', pic: '그림', page: '쪽', item: '문항', sheet: '학습지', layout: '판짜기' };
     pop.innerHTML = `<div class="exam-pop-head">더 보기 <small>${esc(names[modeKey || tab] || '')}</small></div>
-      <div class="exam-morelist">${olds.map(([label, tip], i) => `<button type="button" data-exam-old="${i}" title="${esc(tip)}">${label}</button>`).join('')}${(MORE[pop.dataset.moreKey] || []).map(([label, tip], i) => `<button type="button" data-exam-more="${i}" title="${esc(tip)}">${esc(label)}</button>`).join('')}</div>
+      <div class="exam-morelist">${olds.map(([[label, tip], i]) => `<button type="button" data-exam-old="${i}" title="${esc(tip)}">${label}</button>`).join('')}${(MORE[pop.dataset.moreKey] || []).map((item, i) => [item, i]).filter(([[label, tip]]) => modeKey || (!shown.has(key(tip)) && !shown.has(key(label)))).map(([[label, tip], i]) => `<button type="button" data-exam-more="${i}" title="${esc(tip)}">${esc(label)}</button>`).join('')}</div>
       <div class="exam-pop-foot">모든 기능은 「기본」 모드의 한글 리본에도 있습니다 · Esc로 닫기</div>`;
     place(anchor);
   }
