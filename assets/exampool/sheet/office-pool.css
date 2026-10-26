@@ -432,7 +432,8 @@
 .lv-vt button{width:34px;height:30px;border:0;border-radius:6px;background:none;color:var(--ds-ink-2,#b1bac4);display:grid;place-items:center;cursor:pointer;padding:0}
 .lv-vt button:hover{background:var(--ds-hover,#1f2630);color:var(--ds-ink,#e6edf3)}
 .lv-vt button[aria-pressed=true]{background:var(--ds-soft-bg,#152137);color:var(--ds-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8)}
-#library-view svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* 아이콘 규칙은 한글 엔진 그림(.lv-eng) 안 SVG에는 걸지 않는다 — 글자에 1.5px 테두리가 붙어 굵게 보였다(10-26 지적). */
+#library-view svg:not(.lv-eng svg){width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .lv-chips{display:flex;gap:6px;padding:0 20px 12px;flex-wrap:wrap;align-items:center}
 .lv-chip{position:relative;height:30px;padding:0 12px;border-radius:15px;border:1px solid var(--ds-line-strong,#30363d);background:none;color:var(--ds-ink-2,#b1bac4);display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
 .lv-chip:hover{background:var(--ds-hover,#1f2630)}
@@ -529,7 +530,7 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .lv-modal-bg{position:fixed;inset:0;background:rgba(1,4,9,.6);z-index:70;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 0}
 .lv-modal-bg[hidden]{display:none}
 .lv-modal{width:min(1060px,94vw);border:1px solid var(--ds-line-strong,#30363d);border-radius:12px;overflow:hidden;box-shadow:0 12px 32px rgba(0,0,0,.55)}
-.lv-modal svg,.lv-inline svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lv-modal svg:not(.lv-eng svg),.lv-inline svg:not(.lv-eng svg){width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .lv-inline .lv-viewer{max-width:1060px;margin:0 auto;border-radius:12px}
 @media (max-width:760px){.lv-btns,.lv-strip,.lv-im{padding-left:16px;padding-right:16px;margin-left:16px;margin-right:16px}.lv-im{grid-template-columns:1fr}.lv-search{margin-left:0}.lv-search input{width:100%}}
 .lv-thumb[data-missing]::after,.lv-qbox[data-missing]::after{content:attr(data-missing);position:absolute;inset:0;display:grid;place-items:center;padding:12px;color:#8c959f;font-size:12px;text-align:center}
@@ -539,4 +540,24 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .pv-doc.lv-eng svg{display:block;width:100%;height:auto}
 .pv-doc.lv-eng.is-loading{min-height:120px;background:linear-gradient(90deg,#f4f5f7 25%,#eceef1 50%,#f4f5f7 75%) 0 0/200% 100%}
 .lv-qbox .lv-own.lv-eng{padding:20px 26px}
-.lv-qbox .lv-own.lv-eng svg{max-width:760px;margin:0 auto}
+/* 열어 보기 크기: 실제 단 폭(약 330px)의 1.7배까지 — 760px은 부담스럽게 컸다(10-26 지적). */
+.lv-qbox .lv-own.lv-eng svg{max-width:560px;margin:0 auto}
+/* 한글 엔진 그림(SVG)의 글꼴(10-26 사용자 지적: 보관함·시험지 카드 글자가 굵고 다른 글꼴로 보였다).
+   한글 편집 창은 「함초롬바탕」을 웹 글꼴로 받아 그리는데 이 화면에는 선언이 없어 사파리가 다른 굵은 글꼴로 바꿨다.
+   편집 창과 같은 파일을 쓰고, PC에 깔린 글꼴이 있으면 그것을 먼저(local을 맨 앞에 — 선언하면 이름이 예약된다, css/style.css 주석). */
+@font-face{font-family:'함초롬바탕';src:local('함초롬바탕'),local('HCR Batang'),local('HCRBatang'),url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2104@1.0/HANBatang.woff') format('woff'),url('../../../vendor/rhwp-studio/fonts/NotoSerifKR-Regular.woff2') format('woff2');font-display:swap}
+/* 인터넷이 없어 위 파일을 못 받으면 함께 들어 있는 본명조(Noto Serif KR)로 — 대체 글꼴이 굵게 보이던 것을 막는다. */
+@font-face{font-family:'Latin Modern Math';src:local('Latin Modern Math'),local('LatinModernMath-Regular'),url('../../../vendor/rhwp-studio/fonts/LatinModernMath-Regular.woff2') format('woff2');font-display:swap}
+/* 크게 보기: 흰 그림 칸이 창 아래까지 늘어 문항 밑에 빈 흰 여백이 생겼다(10-26 지적) — 그림 높이만큼만, 넘치면 그 안에서 넘겨 본다. 정보·메모는 바로 밑으로. */
+.lp-zoom-stage{flex:0 1 auto}
+/* 보관함 거르기 줄(10-26 지적 「단추가 짜침」): 둥근 알약 여러 개 → 차분한 한 묶음(모두 · 별표 · 메모), 개수는 작은 회색 숫자.
+   굵은 파란 테두리 대신 눌린 칸만 살짝 밝게. 단원·찾기도 같은 높이(28px)·같은 모서리(6px). */
+.lv-chips{gap:8px}
+.lv-seg{display:inline-flex;gap:2px;padding:2px;border-radius:7px;background:var(--ds-raise,#161b22);box-shadow:inset 0 0 0 1px var(--ds-line,#262c36)}
+.lv-seg button{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px;border:0;border-radius:5px;background:none;color:var(--ds-ink-3,#8b949e);font:inherit;font-size:13px;cursor:pointer}
+.lv-seg button:hover{color:var(--ds-ink,#e6edf3)}
+.lv-seg button[aria-pressed=true]{background:var(--ds-hover,#262c36);color:var(--ds-ink,#e6edf3)}
+.lv-seg small{font-size:11.5px;color:var(--ds-ink-3,#8b949e);font-variant-numeric:tabular-nums}
+.lv-chip.lv-sel{height:28px;padding:0 10px;border-radius:6px;border-color:var(--ds-line,#262c36);color:var(--ds-ink-3,#8b949e);font-size:13px}
+.lv-chip.lv-sel.on{background:var(--ds-hover,#262c36);border-color:var(--ds-line,#262c36);color:var(--ds-ink,#e6edf3)}
+.lv-search input{height:28px;border-radius:6px;border-color:var(--ds-line,#262c36)}

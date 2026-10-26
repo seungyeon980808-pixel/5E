@@ -688,3 +688,9 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-sugg b{font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #card-view .cv-sugg b i{display:inline-block;width:2.5px}
 #card-view .cv-sugg em{flex:none;font-size:10.5px}
+/* 합답형 선지 다섯 칸은 늘 한 줄(10-26 지적: 좁으면 ⑤가 다음 줄로 넘어갔다). 칸을 얇게 — 동그라미 13px, 높이 28px. */
+#card-view .cv-combos{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+#card-view .cv-combos .combo-row{height:28px;padding:0 4px;gap:2px}
+#card-view .cv-combos .combo-row input[type=radio]{width:13px;height:13px}
+#card-view .cv-combos .combo-row .no{font-size:12px}
+#card-view .cv-combos .combo-row input:not([type]){height:24px;font-size:12px;padding:0 1px}

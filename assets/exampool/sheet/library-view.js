@@ -54,27 +54,30 @@ function entries(data, s) {
 }
 
 // 보관함 상태는 app의 view.lib에 둔다(다시 그려도 남게).
-export function libState(view) { return view.lib ||= { kind: 'all', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; }
+// 10-26 사용자 지적: 기출은 말 그대로 기출 — 보관함에는 내 문항만(기출은 문항 카드의 「기출문제」 칸·시험지 담기에서 본다).
+export function libState(view) { const s = view.lib ||= { kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.kind = 'mine'; s.subject = ''; s.exam = ''; return s; }
 
 export function renderLibraryView(root, data, view, api) {
   const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
   if (s.kind !== 'mine' && !past.items) loadPast().then(() => { if (root.isConnected) api.rerender(); }).catch(e => api.status?.(e.message, true));
   const list = entries(data, s), shown = s.mode === 'one' ? list : list.slice(0, s.limit);
-  const starN = Object.keys(stars).length, memoN = Object.keys(memos).filter(k => memos[k]).length;
+  const starN = Object.keys(stars).filter(k => k.startsWith('q:') && stars[k]).length, memoN = Object.keys(memos).filter(k => k.startsWith('q:') && memos[k]).length;
   const subjects = past.index ? past.index.subjects.map(v => v[1]) : [], partPool = list.flatMap(x => x.part ? x.part.split(' · ') : []), parts = [...new Set(partPool)].sort().slice(0, 300);
   const exams = past.items ? [...new Set(past.items.filter(i => !s.subject || i.subjectLabel === s.subject).map(i => examLabel(i.year, i.month)))] : [];
   const chipSel = (k, label, opts) => `<label class="lv-chip lv-sel${s[k] ? ' on' : ''}"><span>${E(s[k] || label)}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-lv-sel="${k}" aria-label="${label}"><option value="">${label} 전체</option>${opts.map(o => `<option${s[k] === o ? ' selected' : ''}>${E(o)}</option>`).join('')}</select></label>`;
-  const head = `<div class="lv-head"><h1>문항 보관함</h1><p>${list.length.toLocaleString()}개 보는 중${s.kind !== 'mine' && !past.items ? ' · 기출을 불러오는 중…' : ''}</p>
+  const head = `<div class="lv-head"><h1>문항 보관함</h1><p>${list.length.toLocaleString()}개</p>
       <div class="lv-vt" role="group" aria-label="보기 방식">${[['grid', '카드 모아 보기', 'grid'], ['list', '목록', 'list'], ['one', '한 문항씩 보기', 'one']].map(([m, t, ic]) => `<button type="button" data-lv-mode="${m}" aria-pressed="${s.mode === m}" title="${t}" aria-label="${t}">${SVG[ic]}</button>`).join('')}</div></div>
     <div class="lv-chips">
-      <span class="lv-kseg" role="group" aria-label="문항 종류">${[['all', '전체'], ['past', '기출'], ['mine', '내 문항']].map(([k, v]) => `<button type="button" data-lv-kind="${k}" aria-pressed="${s.kind === k}">${v}</button>`).join('')}</span><span class="lv-vline"></span>
-      <button type="button" class="lv-chip${!s.mark ? ' on' : ''}" data-lv-mark="">모두</button>
-      <button type="button" class="lv-chip${s.mark === 'star' ? ' on' : ''}" data-lv-mark="star"><span class="lv-st">★</span> 별표만 ${starN}</button>
-      <button type="button" class="lv-chip${s.mark === 'memo' ? ' on' : ''}" data-lv-mark="memo">${SVG.memo} 메모 있음 ${memoN}</button>
-      ${s.kind !== 'mine' ? chipSel('subject', '과목', subjects) : ''}${chipSel('part', '단원', parts)}${s.kind !== 'mine' ? chipSel('exam', '시험', exams) : ''}
+      <span class="lv-seg" role="group" aria-label="거르기">
+        <button type="button" data-lv-mark="" aria-pressed="${!s.mark}">모두</button>
+        <button type="button" data-lv-mark="star" aria-pressed="${s.mark === 'star'}">별표<small>${starN}</small></button>
+        <button type="button" data-lv-mark="memo" aria-pressed="${s.mark === 'memo'}">메모<small>${memoN}</small></button>
+      </span>
+      ${chipSel('part', '단원', parts)}
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
-  const kt = x => `<span class="lv-kt ${x.kind}">${x.kind === 'mine' ? '내 문항' : '기출'}</span>`;
+  // 보관함은 내 문항만이라 카드마다 「내 문항」 표시는 겹치는 정보 — 기출일 때만 표시.
+  const kt = x => x.kind === 'mine' ? '' : `<span class="lv-kt ${x.kind}">기출</span>`;
   const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
   let body;
   // 보관함을 읽지 못했으면(저장소 오류) 그 까닭을 먼저 보인다(예전 보관함과 같은 자리·같은 글).
@@ -131,7 +134,7 @@ function viewerHtml(list, n, inline, api) {
        <button type="button" class="lv-btn soft" data-lv-act="convert" ${job ? 'disabled' : ''} title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 만듭니다(AI 없음)">${job ? '변형 중…' : '변형'}</button>`
     : `<span class="sp"></span><button type="button" class="lv-btn danger" data-lv-act="delete">삭제</button><button type="button" class="lv-btn" data-lv-act="toexam">시험지에 넣기…</button><button type="button" class="lv-btn soft" data-lv-act="card">카드 열기</button>`;
   const at = job ? stepOf(job.stage) : 0;
-  return `<div class="lv-viewer" data-lv-viewer data-n="${n}"><div class="lv-vhead"><h3>${E(x.title)}</h3>${x.kind === 'mine' ? '<span class="lv-kt mine">내 문항</span>' : '<span class="lv-kt past">기출</span>'}
+  return `<div class="lv-viewer" data-lv-viewer data-n="${n}"><div class="lv-vhead"><h3>${E(x.title)}</h3>${x.kind === 'mine' ? '' : '<span class="lv-kt past">기출</span>'}
       <button type="button" class="lv-ib lv-vstar${on ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${on}" title="별표 (S)" aria-label="별표">${SVG.star}</button>
       <span class="lv-pos">${n + 1} / ${list.length.toLocaleString()}</span>${inline ? '' : `<button type="button" class="lv-ib" data-lv-close title="닫기 (Esc)" aria-label="닫기">${SVG.close}</button>`}</div>
     <div class="lv-stage"><button type="button" class="lv-side" data-lv-step="-1" title="이전 (←)" aria-label="이전 문항" ${n <= 0 ? 'disabled' : ''}>${SVG.prev}</button>
