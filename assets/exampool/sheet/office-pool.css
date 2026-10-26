@@ -561,3 +561,8 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .lv-chip.lv-sel{height:28px;padding:0 10px;border-radius:6px;border-color:var(--ds-line,#262c36);color:var(--ds-ink-3,#8b949e);font-size:13px}
 .lv-chip.lv-sel.on{background:var(--ds-hover,#262c36);border-color:var(--ds-line,#262c36);color:var(--ds-ink,#e6edf3)}
 .lv-search input{height:28px;border-radius:6px;border-color:var(--ds-line,#262c36)}
+
+/* 여백 ± 를 누르면 빗금 여백과 막대가 부드럽게 따라온다(10-27). */
+.pv-gapz{transition:height .28s cubic-bezier(.2,.8,.2,1)}
+.pv-gapbar{transition:top .28s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){.pv-gapz,.pv-gapbar{transition:none}}

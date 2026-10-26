@@ -15,6 +15,12 @@ import {F,MONTH,shortTitle,norm,splitWords,pastScore} from './past-search.js';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
+// 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
+export function clearPastBusy(root){
+  root.querySelectorAll?.('.past-busy').forEach(o=>o.remove());
+  root.querySelectorAll?.('figure.past[data-busy]').forEach(f=>f.removeAttribute('data-busy'));
+  root.querySelectorAll?.('[data-cvconvert][aria-busy]').forEach(b=>{b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';});
+}
 export function completeness(q){
   const slots=slotsOf(q),filled=slots.filter(b=>b.kind==='table'?b.table.cells.flat().some(c=>c.value||c.figure):!!b.figure).length;
   const bogi=bogiOf(q),lines=bogi?bogi.lines.filter(l=>l.text.trim()).length:0;
@@ -411,7 +417,8 @@ export function createCardEditor(root,api){
     const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${starBtn('past:'+i.id)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b>${marks.memos()['past:'+i.id]?'<i class="lp-memo-dot" title="메모 있음"></i>':''}<span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
     // 카드를 다시 그려도 기출 목록 내용이 같으면 그 전 목록(이미 받은 그림 포함)을 그대로 다시 붙인다 — 매번 새로 만들면
     // 그림 40장을 다시 받고 레이아웃을 다시 계산해 「근거로 연결」 같은 작은 수정에도 화면이 60ms쯤 멈췄다.
-    if(html===pastCache.html&&pastCache.node){body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();oneMode();return;}
+    // 붙여 두었던 목록에 「변형」 진행 표시(「카드 여는 중」)가 남아 있을 수 있다 — 변형이 끝날 때 화면에 없던 복사본은 지워지지 않았다(10-27 지적).
+    if(html===pastCache.html&&pastCache.node){if(!api.pastBusy?.())clearPastBusy(pastCache.node);body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();oneMode();return;}
     body.innerHTML=html;pastCache={html,node:body.firstElementChild};
     loadThumbs(body);refocus();reopenZoom();oneMode();
   }

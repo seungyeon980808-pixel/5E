@@ -6,7 +6,7 @@ import {placeState,checkMarkup} from './exam-place.js';
 import {examPlan} from './exam-layout.js';
 import {pickState,renderStep2,fillStep2,refreshCart,poolEntries,editMeta,normTag,tagPopMarkup,menuMarkup} from './exam-pick.js';
 import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastData,loadPast} from './library-view.js';
-import {createCardEditor} from './card-editor.js';
+import {createCardEditor,clearPastBusy} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
@@ -246,8 +246,9 @@ function renderView(){
     // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
     // 시험지를 열면: 문항이 있으면 배치·점검, 없으면 문항 고르기(10-24 시안 17 — ① 틀·속성은 「새 시험지」 창과 머리의 「틀」 표로).
     if(ex&&view.examStepFor!==ex.id){view.examStepFor=ex.id;view.examStep=ex.items.length?3:2;}
-    const keep=$('#examd-view .ep-grid')?.scrollTop||0;
-    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy}),place:placeState(view)});if((view.examStep||3)===3)void fillExamSheet(ex);fillEngineCards($('#examd-view'));if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
+    const keep=$('#examd-view .ep-grid')?.scrollTop||0,oldSheet=$('#exam-sheet'),oldPages=oldSheet?.dataset.exam===String(ex?.id)&&oldSheet.querySelector('.pv-pg')?[...oldSheet.childNodes]:null,deskScroll=$('#examd-view .ex-desk')?.scrollTop||0;
+    renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy}),place:placeState(view)});// 다시 그려도 이미 그린 쪽은 그대로 두고, 새 조판이 끝나면 한 번에 바꾼다 — 「그리는 중…」으로 비었다가 다시 나타나 깜빡였다(10-27 지적).
+    if((view.examStep||3)===3){const n=$('#exam-sheet');if(n&&oldPages){n.replaceChildren(...oldPages);const d=$('#examd-view .ex-desk');if(d)d.scrollTop=deskScroll;}void fillExamSheet(ex);}fillEngineCards($('#examd-view'));if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
   if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
@@ -391,7 +392,7 @@ function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;showJob(pastB
     const f=b.closest('figure.past');if(f){f.toggleAttribute('data-busy',true);const o=f.querySelector('.past-busy');if(o)o.querySelector('span').textContent=stage;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',pastBusyHtml(stage));}}
   status(`${pastBusy.title} · ${stage}… (AI 없음)`);}
 // 실패하면 그 그림 위에 짧은 이유를 4초 남긴다(맨 아래 상태 줄만으로는 놓치기 쉬움).
-function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;queueMicrotask(()=>{libView?.refreshJob();pickCart();});if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
+function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;if(id&&!failure)queueMicrotask(()=>clearPastBusy(document));queueMicrotask(()=>{libView?.refreshJob();pickCart();});if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
     if(o&&failure){o.dataset.error='true';o.querySelector('.busy-ring')?.remove();o.querySelector('span').textContent=failure;setTimeout(()=>o.remove(),4000);}else o?.remove();}}
 async function convertPast(item){
   if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);for(const b of document.querySelectorAll('[data-cvconvert][aria-busy]'))b.animate?.([{scale:1},{scale:1.08},{scale:1}],{duration:260,easing:'cubic-bezier(.2,.9,.25,1.06)'});return;}
@@ -862,16 +863,29 @@ async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet')
   {const c=document.querySelector('#exam-check');if(c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(appView()),view);const info=document.querySelector('#exam-sheet-info');if(info)info.textContent=`${view.pages.length}쪽 · 한글 조판 그대로 · ${view.paper} ${view.columns}단${exam.formId?' · 학교 양식 위 모양은 보낼 때 확인':''}`;}
   n.innerHTML=view.pages.map((p,i)=>`<figure class="pv-pg" style="aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}${(p.boxes||[]).map(b=>{const no=exam.items.indexOf(b.id)+1,picked=b.id===examPick,after=Number(exam.after?.[b.id])||0;
     // 여백(10-24 지적 12): 문항 아래 늘린 여백 자리를 빗금으로 — 아래에 밀려날 문항이 없어도 보인다. 쪽 높이(px)는 96dpi, 1mm = 96/25.4px.
-    const gapH=b.last!==false&&after>0?after*96/25.4/p.height:0,gap=gapH?`<div class="pv-gapz" style="left:${pct(b.x)};top:${pct(b.y+b.h)};width:${pct(b.w)};height:${pct(gapH)}" aria-hidden="true"><span>여백 ${after}mm</span></div>`:'';
+    const gapH=b.last!==false&&after>0?after*96/25.4/p.height:0,gap=gapH?`<div class="pv-gapz" data-for="${E(b.id)}" style="left:${pct(b.x)};top:${pct(b.y+b.h)};width:${pct(b.w)};height:${pct(gapH)}" aria-hidden="true"><span>여백 ${after}mm</span></div>`:'';
     // 통째로 넘김(10-24 지적 13): 쪽 위 이름표 대신, 문항을 누르면 나오는 아래 막대에 까닭과 함께.
     const why=moved.has(b.id)?'<i></i><span class="pv-gapwhy" title="앞 단에 자리가 모자라 문항을 나누지 않고 통째로 다음 단·쪽으로 옮겼습니다">↪ 다음 단으로 옮김</span>':'';
     return `<button type="button" class="pv-pg-q${picked?' is-picked':''}" data-exam-pick="${E(b.id)}" aria-label="${no}번 문항 고르기${moved.has(b.id)&&b.first!==false?' · 자리가 모자라 다음 단으로 옮김':''}" style="left:${pct(b.x)};top:${pct(b.y)};width:${pct(b.w)};height:${pct(b.h)}"></button>${gap}${picked&&b.last!==false?`<div class="pv-gapbar" style="${b.x+b.w/2>.5?`right:${pct(1-b.x-b.w)}`:`left:${pct(b.x)}`};top:calc(${pct(b.y+b.h+gapH)} + 2px)" role="group" aria-label="${no}번 문항 아래 여백"><button type="button" data-exam-gap="-4" aria-label="여백 4mm 줄이기" ${after<=0?'disabled':''}>−</button><span>여백 ${after}mm</span><button type="button" data-exam-gap="4" aria-label="여백 4mm 늘리기">+</button><i></i><label><input type="checkbox" data-exam-break ${exam.breaks?.[b.id]?'checked':''}>다음 단에서 시작</label>${why}</div>`:''}`;}).join('')}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`).join('');}
 document.addEventListener('click',e=>{const pick=e.target.closest('[data-exam-pick]');if(!pick)return;examPick=pick.dataset.examPick===examPick?null:pick.dataset.examPick;
   const exam=view.examId&&examById(data,view.examId);if(exam)fillExamSheet(exam);});
 document.addEventListener('click',e=>{const g=e.target.closest('[data-exam-gap]');if(!g||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
-  mutate(()=>{exam.after={...(exam.after||{})};const v=Math.max(0,(Number(exam.after[examPick])||0)+Number(g.dataset.examGap));if(v)exam.after[examPick]=v;else delete exam.after[examPick];exam.updatedAt=new Date().toISOString();});});
+  if(!mutate(()=>{exam.after={...(exam.after||{})};const v=Math.max(0,(Number(exam.after[examPick])||0)+Number(g.dataset.examGap));if(v)exam.after[examPick]=v;else delete exam.after[examPick];exam.updatedAt=new Date().toISOString();},{render:false}))return;
+  growGap(examPick,Number(exam.after?.[examPick])||0);queueExamSheet(exam);});
+// 여백 ±(10-27 지적: 누를 때마다 쪽이 깜빡였다): 화면 전체를 다시 그리지 않고 빗금 여백만 바로 늘이고 줄인다(부드럽게).
+// 한글 조판은 마지막으로 누른 뒤 0.35초에 한 번 — 끝나면 쪽을 한 번에 바꾼다.
+let examSheetTimer=0;
+function queueExamSheet(exam){clearTimeout(examSheetTimer);examSheetTimer=setTimeout(()=>void fillExamSheet(exam),350);}
+function growGap(id,after){
+  const bar=document.querySelector('#exam-sheet .pv-gapbar'),fig=bar?.closest('.pv-pg');if(!fig)return;
+  const [,H]=String(fig.style.aspectRatio).split('/').map(Number),q=[...fig.querySelectorAll(`[data-exam-pick="${CSS.escape(id)}"]`)].at(-1);if(!H||!q)return;
+  const pctOf=v=>parseFloat(v)||0,bottom=pctOf(q.style.top)+pctOf(q.style.height),gapH=after*96/25.4/H*100;
+  let z=fig.querySelector(`.pv-gapz[data-for="${CSS.escape(id)}"]`);
+  if(!z&&after>0){z=document.createElement('div');z.className='pv-gapz';z.dataset.for=id;z.setAttribute('aria-hidden','true');z.style.cssText=`left:${q.style.left};top:${bottom}%;width:${q.style.width};height:0%`;z.innerHTML='<span></span>';q.after(z);z.getBoundingClientRect();}
+  if(z){z.style.height=`${gapH.toFixed(3)}%`;z.querySelector('span').textContent=after?`여백 ${after}mm`:'';}
+  bar.style.top=`calc(${(bottom+gapH).toFixed(3)}% + 2px)`;bar.querySelector('span').textContent=`여백 ${after}mm`;bar.querySelector('[data-exam-gap="-4"]').disabled=after<=0;}
 document.addEventListener('change',e=>{const c=e.target.closest('[data-exam-break]');if(!c||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
-  mutate(()=>{exam.breaks={...(exam.breaks||{})};if(c.checked)exam.breaks[examPick]=true;else delete exam.breaks[examPick];exam.updatedAt=new Date().toISOString();});});
+  if(mutate(()=>{exam.breaks={...(exam.breaks||{})};if(c.checked)exam.breaks[examPick]=true;else delete exam.breaks[examPick];exam.updatedAt=new Date().toISOString();},{render:false}))queueExamSheet(exam);});
 // 5E_hwp로 보내기: 시험지 한 부(HWPX)를 5E 시험지 편집기에서 연다. 완성이 아닌 문항도 보낸다. 조판 저장이 없는 문항은 먼저 저장해야 한다.
 let examRequest=null;
 async function sendExam(exam,{download:asFile=false,variant=false,print=false}={}){
