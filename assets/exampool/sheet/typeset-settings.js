@@ -118,7 +118,8 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
     back.innerHTML=`<section class="tsx-pop" role="dialog" aria-modal="true" aria-label="조판 설정">${leftHtml()}${rightHtml()}</section>`;
     const body=back.querySelector('.tsx-body');if(body)body.scrollTop=scroll;
     if(focusP){const n=back.querySelector(`[data-p="${CSS.escape(focusP)}"]`);n?.focus();if(n?.select&&n.matches('input:not([type=checkbox])'))n.select();}
-    paint();const pv=back.querySelector('.tsx-pv');if(pv&&sheet)pv.scrollTop=pvScroll;
+    // 미리보기 스크롤을 먼저 되돌린 뒤 그린다 — paint가 고른 부분으로 옮긴 것을 되돌리기가 덮어써 부분을 눌러도 그대로였다(10-26 U3).
+    const pv=back.querySelector('.tsx-pv');if(pv&&sheet)pv.scrollTop=pvScroll;paint();
   }
   // ── 미리보기: 초안 틀로 새로 조판(0.3초 쉬면) → 쪽 그림 + 겹쳐 그리기
   function refresh(delay=300){clearTimeout(timer);timer=setTimeout(async()=>{const my=++seq,{q}=context();if(!q||!draft)return;
@@ -131,6 +132,8 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
     const pct=(v,t)=>(v/t*100).toFixed(3)+'%',box=(x,y,w,h,cls,extra='')=>`<i class="${cls}" style="left:${pct(x,W)};top:${pct(y,H)};width:${pct(Math.max(0,w),W)};height:${pct(Math.max(0,h),H)}"${extra}></i>`;
     const {q}=context(),P=PARTS.find(x=>x.k===part),els=sheet.elements||[];
     const ids=new Set(!P.match||!q?[]:typeof P.match==='string'?[P.match]:q.blocks.filter(b=>!b.parent&&P.match(b)).map(b=>b.id));
+    // 상자 안 그림은 맨 바깥 상자 자리로(맨 바깥에 그림이 없을 때 「그림」이 아무 표시도 없었다).
+    if(P.k==='figure'&&!ids.size)for(const b of q?.blocks||[])if(b.kind==='figure'&&b.parent){let t=b;while(t?.parent)t=q.blocks.find(x=>x.id===t.parent);if(t)ids.add(t.id);}
     if(P.k==='table')for(const b of q?.blocks||[])if(b.kind==='table'&&b.parent){let t=b;while(t?.parent)t=q.blocks.find(x=>x.id===t.parent);if(t)ids.add(t.id);}
     const sel=els.filter(e=>ids.has(e.id)),others=els.filter(e=>!ids.has(e.id));
     let over='';
@@ -168,8 +171,12 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
     paper.outerHTML=`<div class="tsx-paper"${zoom}><div class="tsx-ruler" style="margin-left:${pct(mL,W)};margin-right:${pct(mR,W)}">${ruler.replace(/left:([\d.]+)%/g,(m,v)=>`left:${((Number(v)/100*W-mL)/(W-mL-mR)*100).toFixed(3)}%`)}</div><div class="tsx-sheet" style="aspect-ratio:${W}/${H}">${sheet.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}<div class="tsx-over">${over}</div></div></div>`;
     // 고른 부분이 미리보기 창 안에 보이게(부분을 바꿨을 때만 — 값을 고치거나 마우스를 올릴 때는 그대로)
     const pv=back.querySelector('.tsx-pv'),key=`${q?.id}:${part}:${view.zoom}`;
-    if(pv&&sel.length&&scrolled!==key){scrolled=key;const sh=back.querySelector('.tsx-sheet'),y=sh.offsetTop+sel[0].top/H*sh.offsetHeight,y2=sh.offsetTop+sel.at(-1).bottom/H*sh.offsetHeight;
-      pv.scrollTop=y2-y<pv.clientHeight-48?Math.max(0,(y+y2)/2-pv.clientHeight/2):Math.max(0,y-24);}
+    // 10-26 U3: 부드럽게 옮기고(움직임 줄이기 설정이면 바로), 문항 전체가 대상인 「간격」「쪽·단」은 맨 위로.
+    const go=top=>pv.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    if(pv&&scrolled!==key&&(sel.length||!P.match)){scrolled=key;
+      if(!sel.length)go(0);
+      else{const sh=back.querySelector('.tsx-sheet'),y=sh.offsetTop+sel[0].top/H*sh.offsetHeight,y2=sh.offsetTop+sel.at(-1).bottom/H*sh.offsetHeight;
+        go(y2-y<pv.clientHeight-48?Math.max(0,(y+y2)/2-pv.clientHeight/2):Math.max(0,y-24));}}
   }
   // ── 열기·닫기
   function open(){

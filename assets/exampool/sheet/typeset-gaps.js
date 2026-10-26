@@ -34,7 +34,8 @@ export function questionElements(doc, q, segments) {
   let cursor = 0;
   for (const s of segments || []) {
     const el = ownerElement(s.owner), key = flat(s.wrapped ?? s.value).slice(0, 12);
-    if (!el || key.length < 2) continue;
+    // 선지 「①」은 한 글자라도 찾는다(빈 문항의 선지 줄). 앞으로만 찾으니 앞 문단의 ①을 차지하지 않는다.
+    if (!el || key.length < (el === 'choices' ? 1 : 2)) continue;
     const p = order.find(x => x >= cursor && texts.get(x).includes(key));
     if (p === undefined) continue;
     cursor = p; if (!owner.has(p)) owner.set(p, el);

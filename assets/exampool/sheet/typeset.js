@@ -132,14 +132,14 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
   // 저장된 조판을 열 때도 그림·표의 주인을 알아야 한다. 그림을 실제로 읽지 않는 가벼운 계획으로 순서만 얻는다.
   const BLANK='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
+  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};}
   // standard: 조판 설정 미리보기(10-23)처럼 저장하지 않은 초안 틀로 그릴 때.
   async function generate(value,prof=profile(),{quiet=false,standard=null}={}){
     // 용지 맞춤: B4 문항은 A4 기준 간격을 단 폭 비율만큼 되돌린다(standardForPaper).
     const stdv=standardForPaper(standard||std(value),prof.paper);
     const Document=document().constructor,d=Document.createEmpty();let bytes,owners;
     try{d.createBlankDocument();const config=questionPageProfile(prof,1200,stdv);d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
-      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:stdv});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
+      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:stdv});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:stdv}),plan.equations);
       const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();if(plan.cellFloats?.length)applyCellFloatingPictures(styled,plan.cellFloats);centerCellPictures(styled);if(stdv.parts?.labelSpace==='fixed')fixedLabelSpaces(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent,hangPx:plan.bodyIndent});
         // 어울림은 내어쓰기 뒤에 건다. 문단 모양을 나중에 바꾸면 한글 엔진이 그림 옆 줄 폭을 잘못 잡는다.
@@ -226,7 +226,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       if(value.typeset){dirty=true;if(!userDirty)patchDirty=true;}
       message('시트에서 고친 글을 한글 창에 바로 넣었습니다.');
     }
-    q=next;qStd=stdKey(next);owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};
+    q=next;qStd=stdKey(next);owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};
     const encoded=parse(document().getTextFileText()),raw=decodeNativeText(encoded);
     textMap=buildTextMap(raw,owners.texts.map(s=>({...s})));baselineText=normalized(encoded);fingerprint=await questionFingerprint(q);
     placer?.setModel({question:q,owners});scheduleFit();
@@ -414,7 +414,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     // 문항 쪽 높이를 내용에 맞춘 뒤(한 쪽에 다 들어가게) 다시 열어 그린다 — 자동 조판과 같은 순서.
     let d;try{fitQuestionPage(raw,own);d=new Document(exportLayoutHwpx(raw,XLSX.CFB));}finally{raw.free();}
     try{const page=parse(d.getPageDef(0));
-      return {svg:svgOf(d,0),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.texts),
+      return {svg:svgOf(d,0),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.places||o?.texts),
         runs:parse(d.getPageTextLayout(0)).runs,controls:parse(d.getPageControlLayout(0)).controls};
     }finally{d.free();}
   }

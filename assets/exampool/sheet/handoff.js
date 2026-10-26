@@ -172,6 +172,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const q=handoffQuestion(value,{skeleton}),ghost=skeleton?fillSkeleton(q):{ghosts:new Set(),figures:new Set()},images=[],texts=[],warnings=[],tables=[],equations=[];
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
   const imageOwners=[],tableOwners=[],textSegments=[],floats=[],cellFloats=[];
+  // 자리 찾기용 글 조각(10-26 U3): 빈 칸 안내 글(「발문」)·글 없는 그림 캡션까지 주인과 함께 — 조판 설정 미리보기가 빈 문항에서도 부분 자리를 찾는다. 되돌리기(textSegments)와 따로.
+  const placeSegments=[];
   // 상자 안 그림 어울림(10-25): 그림 높이만큼의 줄(k)만 좁은 폭(narrow)으로 나눈다. used = 지금까지 나눈 줄 수.
   let beside=null;
   // 칸·〈보기〉·과정 줄의 자간 좁힘 한도(기본 −5%에서 더 좁힐 %). 한글 문서로 보낼 때만.
@@ -219,6 +221,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 글 조각마다 주인(어느 칸의 글인지)과 앞머리 길이(번호·ㄱ.·① 등)를 남긴다. 한글 창에서 고친 글을 시트로 되돌릴 때 쓴다.
   const text=(v,width=null,fontSize=FS,wrap=null,owner=null,font='함초롬바탕')=>{
     const ghostKey=owner&&(owner.kind==='ask'?'ask':owner.kind==='block'?'block:'+owner.id:null),isGhost=!!ghostKey&&ghost.ghosts.has(ghostKey),lead=isGhost?owner.prefix||0:0;
+    if(owner&&String(v??'').trim())placeSegments.push({value:String(v),owner});
     if(isGhost)owner=null;
     // 번호 굵게 표시(number)는 그리기에만 쓰고 글 주인 기록에는 남기지 않는다.
     const numberMark=owner?.number;if(numberMark){const {number,...rest}=owner;owner=rest;}
@@ -561,7 +564,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           const topH='';
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>${tops.map((inner,i)=>`<td style="border:none;padding:4px 4px 2px;vertical-align:middle;text-align:center;${topH}width:${widths[i]}px">${inner}</td>`).join('')}</tr>`;
           if(captioned)body+=`<tr>${children.map((c,i)=>{const label=caption(c),hasText=!!c.text,prefix=/^\(.+\)$/.test(c.label)?c.label.length+1:0;
-            return `<td style="border:none;padding:2px 4px 4px;vertical-align:top;text-align:center;height:24px;width:${widths[i]}px"><p style="margin:0;text-align:center">${label?text(label,Math.max(35,widths[i]-12),FS,null,hasText?{kind:'block',id:c.id,prefix}:null):'\u2060'}</p></td>`;}).join('')}</tr>`;
+            return `<td style="border:none;padding:2px 4px 4px;vertical-align:top;text-align:center;height:24px;width:${widths[i]}px"><p style="margin:0;text-align:center">${label?text(label,Math.max(35,widths[i]-12),FS,null,hasText?{kind:'block',id:c.id,prefix}:(placeSegments.push({value:label,owner:{kind:'block',id:c.id}}),null)):'\u2060'}</p></td>`;}).join('')}</tr>`;
           body+='</table>';
           // 칸 밖 문단은 한글 엔진이 어절로 줄을 나눈다(칸 안처럼 미리 나누지 않음).
           for(const n of notes)body+=`<p style="margin:4px 0 6px;text-align:justify">${text(n.note,null,10,v=>v,{kind:'note',table:n.id})}</p>`;
@@ -689,7 +692,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     }
   }
   const askLead=firstText||sideText?String(ask).replace(/\s+/g,' ').trim().slice(0,12):'';
-  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,cellFloats,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
+  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,placeSegments,cellFloats,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
 }
 
 // 한글 엔진의 getTextFileText는 완성형(KS X 1001) 밖 글자를 문서에는 그대로 두고, 글로 꺼낼 때만 &#9702; 같은
