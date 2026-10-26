@@ -680,3 +680,11 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .top .app-switch-btn{font-size:16.5px;height:32px}
 .top-actions .top-help .ico,.top .ico{width:20px;height:20px}
 @media (max-width:760px){.top .app-switch-btn{font-size:14px}}
+
+/* 합답형 「추천」 한 줄(10-26 U4, 시안 decisions-1026/u3-u4.html): 줄을 넘기지 않고, 좁으면 단추 글이 「…」로 줄어든다. 「/」 대신 좁은 빈칸. */
+#card-view .cv-suggs{flex-wrap:nowrap;gap:3px;overflow:hidden}
+#card-view .cv-suggs>span:first-child{flex:none;white-space:nowrap;margin-right:1px}
+#card-view .cv-sugg{height:22px;padding:0 5px;gap:3px;font-size:11px;letter-spacing:-.4px;flex:0 1 auto;min-width:0;white-space:nowrap}
+#card-view .cv-sugg b{font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-sugg b i{display:inline-block;width:2.5px}
+#card-view .cv-sugg em{flex:none;font-size:10.5px}

@@ -67,7 +67,7 @@ export function createCardEditor(root,api){
     if(isCombo(x)){
       // 선지(시안 32): ㄱㄴㄷ 단추 줄 대신 한 줄 5칸에 바로 쓰고, 기출 통계 상위 조합을 눌러 채운다. 보기 ○×가 다 정해지면 옳은 것만 모은 조합이 정답으로 표시된다.
       const right=comboRight(x),ri=right?x.choices.findIndex(c=>normalizeCombo(c.text)===right):-1;
-      const sugg=COMBO_STATS.top.map(([set,pct],k)=>`<button type="button" class="cv-sugg" data-cvcombofill="${k}" title="평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개 중 ${pct}%가 이 조합">${set.map(v=>E(v.replace(/,\s*/g,''))).join('/')}<em>${pct}%</em></button>`).join('');
+      const sugg=COMBO_STATS.top.map(([set,pct],k)=>`<button type="button" class="cv-sugg" data-cvcombofill="${k}" title="평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개 중 ${pct}%가 이 조합"><b>${set.map(v=>E(v.replace(/,\s*/g,''))).join('<i></i>')}</b><em>${Math.round(pct)}%</em></button>`).join('');
       const note=right===null?'':ri>=0?`<p class="cv-autoans ok">옳은 보기 ${E(right)} → 정답 ${NUM[ri]}${x.answer===ri?'':' (동그라미를 맞춰 주세요)'}</p>`:`<p class="cv-autoans bad">${right?`옳은 보기 조합 「${E(right)}」이 선지에 없습니다`:'옳은 보기가 하나도 없습니다'}</p>`;
       return `<div class="f-field cv-row"><label data-tip="자주 쓰는 조합은 평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개에서 센 비율입니다. 보기의 ○·×를 다 정하면 정답 선지가 자동으로 표시됩니다." tabindex="0" aria-label="선지"><span class="vt">선지</span></label><div class="cv-v">
         <div class="cv-suggs"><span>추천</span>${sugg}</div>
