@@ -87,10 +87,24 @@ export function renderLibraryView(root, data, view, api) {
       <div class="lv-meta">${kt(x)}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
   root.innerHTML = head + body + more;
-  root.querySelectorAll('[data-preview]').forEach(async n => { const q = data.questions.find(x => x.id === n.dataset.preview); if (q) n.innerHTML = await previewHtml(q); });
+  fillOwn(root, data, api);
   loadThumbs(root);
   view.lib.list = list;
   if (s.open >= 0 && s.mode !== 'one') openViewer(root, list, s.open, api);
+}
+
+// 내 문항 카드·열어 보기 = 한글 엔진이 조판한 그림(시험지 화면 카드와 같은 모양, 10-26 지적 U1).
+// 어림 HTML은 수식($5h$)·〈보기〉 틀이 실제와 달라 보였다. 엔진은 한 번에 하나씩 그리니 화면에 들어온 카드만 그린다.
+// 엔진 그림(SVG) 글은 글자 조각으로 흩어져 있어 읽기 프로그램·찾기(⌘F)가 읽지 못한다 — 같은 글을 숨은 글로 붙인다.
+const plainOf = q => [...(q.blocks || []).flatMap(b => [b.text, ...(b.lines || []).map(l => l.text)]), q.ask, ...(q.choices || []).map(c => c.text)]
+  .filter(Boolean).join(' ').replace(/\$([^$]*)\$/g, '$1').replace(/\s+/g, ' ').trim().slice(0, 600);
+let ownSeen = null;
+function fillOwn(root, data, api) {
+  const draw = n => { const q = data.questions.find(x => x.id === n.dataset.preview); if (!q) return;
+    if (api?.engine) { n.classList.add('lv-eng'); api.engine(n, q).then(() => { if (n.isConnected) n.insertAdjacentHTML('beforeend', `<span class="sr-only">${E(plainOf(q))}</span>`); }); } else previewHtml(q).then(h => { if (n.isConnected) n.innerHTML = h; }); };
+  ownSeen?.disconnect();
+  ownSeen = typeof IntersectionObserver === 'function' ? new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { ownSeen.unobserve(e.target); draw(e.target); } }, { rootMargin: '300px' }) : null;
+  root.querySelectorAll('[data-preview]').forEach(n => { if (n.closest('[data-lv-viewer]') || !ownSeen) draw(n); else ownSeen.observe(n); });
 }
 
 export function loadThumbs(root) {
@@ -128,10 +142,10 @@ function viewerHtml(list, n, inline, api) {
     <div class="lv-im"><div class="lv-box"><h4>문항 정보</h4><dl class="lv-kv">${info.map(([k, v, html]) => `<dt>${k}</dt><dd>${html ? v : E(v)}</dd>`).join('')}</dl></div>
       <div class="lv-box"><h4>${SVG.memo}내 메모 <em>이 기기에 저장</em></h4><textarea data-lv-memo="${E(x.key)}" placeholder="이 문항에 대한 메모 — 쓰는 대로 저장됩니다">${E(memos[x.key] || '')}</textarea><div class="lv-saved">${memoAt[x.key] ? '마지막 저장 ' + E(memoAt[x.key]) : ''}</div></div></div></div>`;
 }
-function fillViewer(host, list, data) {
+function fillViewer(host, list, data, api) {
   const v = host.querySelector('[data-lv-viewer]'); if (!v) return;
   const x = list[Number(v.dataset.n)];
-  const own = v.querySelector('[data-preview]'); if (own) { const q = data.questions.find(y => y.id === own.dataset.preview); if (q) previewHtml(q).then(h => { own.innerHTML = h; }); }
+  fillOwn(v, data, api);
   const img = v.querySelector('img[data-lv-full]');
   if (img && x?.i) { img.onerror = () => { if (!img.dataset.sharp) { img.closest('.lv-qbox')?.setAttribute('data-missing', '그림을 불러오지 못했습니다 — 인터넷 연결을 확인하세요'); img.remove(); } }; croppedPastImage(past.index.cards.replace('{id}', encodeURIComponent(x.id))).then(src => { if (img.isConnected && !img.dataset.sharp) img.src = src; }).catch(() => {});
     if (x.i.publicPath && Array.isArray(x.i.box)) croppedQuestion(x.i).then(r => { if (r && img.isConnected) { img.dataset.sharp = '1'; img.src = r.url; } }).catch(() => {}); }
@@ -141,7 +155,7 @@ function openViewer(root, list, n, api) {
   modal ||= Object.assign(document.createElement('div'), { className: 'lv-modal-bg' });
   if (!modal.isConnected) document.body.append(modal);
   modal.innerHTML = `<div class="lv-modal" role="dialog" aria-modal="true" aria-label="문항 보기">${viewerHtml(list, n, false, api)}</div>`;
-  modal.hidden = false; fillViewer(modal, list, api.data()); api.crumb?.(list[n].title);
+  modal.hidden = false; fillViewer(modal, list, api.data(), api); api.crumb?.(list[n].title);
   modal.querySelector('[data-lv-close]')?.focus({ preventScroll: true });
 }
 export function closeViewer(api) { if (modal && !modal.hidden) { modal.hidden = true; modal.innerHTML = ''; api?.crumb?.(''); } }
@@ -157,7 +171,7 @@ export function installLibraryView(root, api) {
     st.open = n;
     if (st.mode === 'one') api.rerender(); else { openViewer(root, l, n, api); }
     const h2 = st.mode === 'one' ? root : modal, box = h2.querySelector('.lv-qbox');
-    if (st.mode === 'one') fillViewer(root, l, api.data());
+    if (st.mode === 'one') fillViewer(root, l, api.data(), api);
     if (!box || !ghost || reduce()) return;
     // 옛 문항은 밀려 나가며 흐려지고, 새 문항은 반대쪽에서 미끄러져 들어온다(0.32초).
     const E2 = 'cubic-bezier(.22,.8,.24,1)', T = 320, D = 64 * d, stage = box.parentElement; stage.style.position = 'relative';
@@ -181,7 +195,7 @@ export function installLibraryView(root, api) {
     if (kind === 'delete') { closeViewer(api); api.askDelete(x.id); return; }
     if (kind === 'toexam') api.toExamMenu(x.id, button);
   }
-  function refreshJob() { const st = s(); if (st.mode === 'one') api.rerender(); else if (modal && !modal.hidden) { const n = Number(modal.querySelector('[data-lv-viewer]')?.dataset.n); if (Number.isFinite(n)) { modal.querySelector('.lv-modal').innerHTML = viewerHtml(list(), n, false, api); fillViewer(modal, list(), api.data()); } } }
+  function refreshJob() { const st = s(); if (st.mode === 'one') api.rerender(); else if (modal && !modal.hidden) { const n = Number(modal.querySelector('[data-lv-viewer]')?.dataset.n); if (Number.isFinite(n)) { modal.querySelector('.lv-modal').innerHTML = viewerHtml(list(), n, false, api); fillViewer(modal, list(), api.data(), api); } } }
   const onClick = e => {
     const t = e.target;
     const star = t.closest('[data-lv-star]'); if (star) { e.stopPropagation(); toggleStar(star.dataset.lvStar); return; }
@@ -191,7 +205,7 @@ export function installLibraryView(root, api) {
     const a = t.closest('[data-lv-act]'); if (a) { void act(a.dataset.lvAct, a); return; }
     const k = t.closest('[data-lv-kind]'); if (k) { Object.assign(s(), { kind: k.dataset.lvKind, limit: PAGE, open: -1 }); if (k.dataset.lvKind === 'mine') Object.assign(s(), { subject: '', exam: '' }); api.rerender(); return; }
     const m = t.closest('[data-lv-mark]'); if (m) { Object.assign(s(), { mark: m.dataset.lvMark, limit: PAGE, open: -1 }); api.rerender(); api.navChanged?.(); return; }
-    const mo = t.closest('[data-lv-mode]'); if (mo) { Object.assign(s(), { mode: mo.dataset.lvMode, open: mo.dataset.lvMode === 'one' ? Math.max(0, s().open) : -1 }); api.rerender(); if (mo.dataset.lvMode === 'one') fillViewer(root, list(), api.data()); return; }
+    const mo = t.closest('[data-lv-mode]'); if (mo) { Object.assign(s(), { mode: mo.dataset.lvMode, open: mo.dataset.lvMode === 'one' ? Math.max(0, s().open) : -1 }); api.rerender(); if (mo.dataset.lvMode === 'one') fillViewer(root, list(), api.data(), api); return; }
     if (t.closest('[data-lv-more]')) { s().limit += PAGE; api.rerender(); return; }
     const o = t.closest('[data-lv-open]'); if (o && root.contains(o)) { s().open = Number(o.dataset.lvOpen); openViewer(root, list(), s().open, api); }
   };

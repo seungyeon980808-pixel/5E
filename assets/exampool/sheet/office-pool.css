@@ -534,3 +534,9 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 @media (max-width:760px){.lv-btns,.lv-strip,.lv-im{padding-left:16px;padding-right:16px;margin-left:16px;margin-right:16px}.lv-im{grid-template-columns:1fr}.lv-search{margin-left:0}.lv-search input{width:100%}}
 .lv-thumb[data-missing]::after,.lv-qbox[data-missing]::after{content:attr(data-missing);position:absolute;inset:0;display:grid;place-items:center;padding:12px;color:#8c959f;font-size:12px;text-align:center}
 .lv-qbox[data-missing]{min-height:200px}
+/* 내 문항 = 한글 엔진 그림(10-26 U1): 어림 HTML용 축소(scale .42)는 끄고 그림을 칸 폭에 맞춘다. */
+.pv-doc.lv-eng{transform:none;width:100%;padding:8px 10px;background:#fff}
+.pv-doc.lv-eng svg{display:block;width:100%;height:auto}
+.pv-doc.lv-eng.is-loading{min-height:120px;background:linear-gradient(90deg,#f4f5f7 25%,#eceef1 50%,#f4f5f7 75%) 0 0/200% 100%}
+.lv-qbox .lv-own.lv-eng{padding:20px 26px}
+.lv-qbox .lv-own.lv-eng svg{max-width:760px;margin:0 auto}

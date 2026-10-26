@@ -696,7 +696,7 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 });
 // 문항 보관함.
 // 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023): 기출 + 내 문항 한 목록, 문항 보기 창. 동작은 library-view.js.
-const libApi={data:()=>data,view:()=>view,rerender:()=>{if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);},status:(m,err)=>status(m,err),
+const libApi={data:()=>data,view:()=>view,engine:(node,q)=>engineCard(node,q),rerender:()=>{if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);},status:(m,err)=>status(m,err),
   openCard:id=>openCard(id),askDelete:id=>askDelete(id),convertPast:item=>void convertPast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
   // 위쪽 경로: 문항 보기 창이 열려 있으면 「문항 보관함 › 제목」, 앞 단계를 누르면 창을 닫는다.
   crumb:title=>{if(view.name!=='library')return;$('#crumb-question').textContent=title;$('#crumb-question').title=title;document.querySelector('.crumb-sep').hidden=!title;$('#crumb-view').disabled=!title;$('#crumb-view').title=title?'문항 보관함으로 돌아가기':'';},
