@@ -81,3 +81,8 @@
 #rhwp-exam-workspace .exam-top-cell .exam-brand { height: 32px; line-height: 32px; }
 #rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-mark { font-size: 23px; }
 #rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-name { font-size: 18px; }
+
+/* 닫기(10-26 결정 S3): 세 앱 모두 오른쪽 끝 ✕ — 5E_exam과 같은 테두리 없는 아이콘 단추 */
+#rhwp-exam-workspace .exam-topbar .exam-actions > .exam-close { width: 32px; min-width: 32px; height: 32px; padding: 0; margin-left: 4px; border: 0; background: transparent; color: var(--ds-ink-2, #b9c1cc); }
+#rhwp-exam-workspace .exam-topbar .exam-actions > .exam-close:hover { color: var(--ds-ink, #f0f0f0); background: var(--ds-hover, rgba(255,255,255,.06)); }
+#rhwp-exam-workspace .exam-topbar .exam-actions > .exam-close svg { width: 20px; height: 20px; }
