@@ -266,7 +266,7 @@ h.withServer(async origin => {
       assert.match(await nativeText(),/OK[\s\S]*실시간/,'the card edit reaches the HWP paragraph after the HWP edit');
       assert.equal(await passageCard(),'다음은 실험이다. OK','the HWP edit survives the card edit');
       // 한글에 나오지 않는 칸(해설)을 고쳐도 한글 창은 그대로다.
-      await sheet.evaluate(()=>{const d=document.querySelector('#card-view [data-cvf="explanation"]').closest('details');if(d)d.open=true;});
+      if(!await sheet.locator('#card-view [data-cvf="explanation"]').isVisible())await sheet.click('#card-view [data-cvmore="exp"]');// 해설은 「문항 정보」 단추로 연다(10-27 카드 정리)
       await sheet.click('#card-view [data-cvf="explanation"]');await page.keyboard.type('해설만 바꿈');
       await sheet.waitForTimeout(900);
       assert.equal(await sheet.evaluate(()=>window.__busySeen),false,'text edits and non-printed fields never redraw the HWP window');
@@ -390,7 +390,7 @@ h.withServer(async origin => {
         await smallSheet.waitForSelector('#import-dialog[open]');await smallSheet.click('#apply-import');
         await smallSheet.locator('[data-open-card]').first().click();await smallSheet.waitForFunction(()=>document.querySelector('#cv-ask')?.value==='보기가 남은 문항');
         assert.equal(await smallSheet.locator('#card-view [data-cvline="bogi"]').count(),3,'a printed bogi stays visible on a non-combo card');
-        for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-remove="bogi"]').first().click();await smallSheet.waitForTimeout(150);}
+        for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-menu="bogi"]').first().click();await smallSheet.locator('#card-view .ig-menu [data-cvline-remove="bogi"]').click();await smallSheet.waitForTimeout(150);}// 줄 지우기는 줄 왼쪽 ⋮ 메뉴 안(10-27)
         await smallSheet.waitForFunction(()=>!document.querySelector('#card-view [data-cvline="bogi"]'));}
       // 자료 칸을 여럿 더해도 이름은 (가)·(나)… 순서로 겹치지 않는다((아) 다음은 (자)·(차)).
       await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');await smallSheet.click('#new-dialog [data-nq="go"]');

@@ -694,3 +694,79 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-combos .combo-row input[type=radio]{width:13px;height:13px}
 #card-view .cv-combos .combo-row .no{font-size:12px}
 #card-view .cv-combos .combo-row input:not([type]){height:24px;font-size:12px;padding:0 1px}
+
+/* ---------- 10-27 문항 카드 정리(W8): 위는 시험지에 찍히는 것만, 색은 회색 + 파랑(정답·고른 것) 하나 ---------- */
+/* 머리줄 한 줄: 번호 · 유형 · 배점(2점|3점|자유) · 단계 */
+#card-view .w-head,#card-view .cv-center .w-head{flex-wrap:nowrap;row-gap:0;gap:6px}
+#card-view .w-head .cv-shape-wrap{min-width:0;flex:0 1 auto}
+#card-view .w-head .stage{flex:none}
+#card-view .w-head .stage button:not([aria-pressed=true]){font-size:0;gap:0;padding:0 8px}
+#card-view .w-head .stage button:not([aria-pressed=true]) .dot{margin:0}
+#card-view .cv-ptsfree{display:inline-flex;align-items:center;height:24px;padding:0 4px 0 2px;border-radius:5px;color:var(--ds-doc-ink-3,#8c959f);font-size:12.5px;cursor:text}
+#card-view .cv-ptsfree input{width:34px;height:22px;padding:0 3px;border:0;background:transparent;box-shadow:none;text-align:center;font:inherit;color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-ptsfree input::placeholder{color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-ptsfree>span{display:none}
+#card-view .cv-ptsfree.on{background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-weight:600}
+#card-view .cv-ptsfree.on input{width:3.2ch;padding:0 1px 0 0;text-align:right;color:#1a5fb4;font-weight:600}
+#card-view .cv-ptsfree.on>span{display:inline}
+#card-view .cv-ptsfree:focus-within{box-shadow:inset 0 0 0 1px #2f6fd6}
+/* 자료: 그림은 미리보기에서 크게 보므로 카드에서는 작게, 칸 추가는 회색 글자 단추 */
+#card-view .cv-grid .cv-tile:not(.empty) .pic{min-height:96px;max-height:132px}
+#card-view .cv-grid .cv-tile:not(.empty) .pic img{max-height:112px}
+#card-view .cv-grid .cv-add-row{border:0;background:transparent;color:var(--ds-doc-ink-2,#57606a);justify-content:flex-start;min-height:26px;padding:0 4px;font-size:12.5px;box-shadow:none}
+#card-view .cv-grid .cv-add-row:hover{background:var(--ds-doc-hover,#f6f8fa);color:var(--ds-doc-ink,#1f2328)}
+/* 보기: 줄 왼쪽 ⋮ 메뉴, 판정 ○×는 눌린 쪽만 진한 글자·회색 바탕 */
+#card-view .cv-grid .ig{position:relative}
+#card-view .cv-grid .rows>.ig{padding-left:14px}
+#card-view .ig-h{position:absolute;left:-2px;top:4px;width:16px;height:26px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:#c2c8cf;font:700 14px/26px -apple-system,sans-serif;cursor:pointer;z-index:2}
+#card-view .ig-h:hover,#card-view .ig-h[aria-expanded=true]{background:var(--ds-doc-hover,#eef0f3);color:var(--ds-doc-ink-2,#57606a)}
+#card-view .ig-menu{position:absolute;left:0;top:32px;z-index:20;display:flex;flex-direction:column;min-width:132px;padding:4px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px #d6dbe1,0 8px 22px rgba(15,23,42,.16)}
+#card-view .ig-menu button{display:flex;align-items:center;justify-content:flex-start;height:30px;min-height:0;padding:0 10px;border:0;border-radius:5px;background:transparent;color:#24292f;font-size:13px;text-align:left}
+#card-view .ig-menu button:hover:not(:disabled),#card-view .ig-menu button:focus-visible{background:#f0f2f4;outline:0}
+#card-view .ig-menu button:disabled{color:#c2c8cf}
+#card-view .ig-menu button.del{color:#cf222e}
+#card-view .ig-menu hr{border:0;border-top:1px solid #e6e9ed;margin:3px 2px}
+#card-view .ox .o[aria-pressed=true],#card-view .ox .x[aria-pressed=true]{background:#eef1f4;color:#24292f}
+#card-view .cv-grid .link.add,#card-view .cv-grid [data-cvline-add].link{color:var(--ds-doc-ink-2,#57606a);font-weight:500}
+/* 선지: 번호가 곧 정답 단추(라디오는 숨기되 그대로 동작), 추천 조합은 접어 둠 */
+#card-view .cv-sugg-toggle{display:inline-flex;align-items:center;gap:4px;height:22px;min-height:0;margin:0 0 4px;padding:0 4px;border:0;border-radius:4px;background:transparent;color:var(--ds-doc-ink-2,#57606a);font-size:12px}
+#card-view .cv-sugg-toggle:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-sugg-toggle i{font-style:normal;font-size:10px}
+#card-view .cv-suggs[hidden]{display:none}
+#card-view .cv-sugg em{color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-combos .combo-row{position:relative;padding:0 3px;gap:2px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e6e9ed);background:#fff;cursor:pointer}
+#card-view .cv-combos .combo-row input[type=radio]{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}
+#card-view .cv-combos .combo-row .no{flex:none;width:21px;height:21px;border-radius:11px;display:grid;place-items:center;font-size:14px;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-combos .combo-row:hover .no{background:#eef0f3}
+#card-view .cv-combos .combo-row.on{box-shadow:inset 0 0 0 1.5px #2f6fd6;background:#fff}
+#card-view .cv-combos .combo-row.on .no{background:#2f6fd6;color:#fff}
+#card-view .cv-combos .combo-row:has(input[type=radio]:focus-visible){outline:2px solid #2f6fd6;outline-offset:1px}
+#card-view .cv-autoans.ok{display:none}
+#card-view .cv-autoans.bad{color:#cf222e}
+/* 문항 정보: 항목별 단추, 누른 것만 아래에 열림 */
+#card-view .cv-more{margin:14px 2px 0;padding-top:10px;border-top:1px solid var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-more-h{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-more-h span{font-weight:400;margin-left:4px}
+#card-view .cv-more-chips{display:flex;flex-wrap:wrap;gap:6px}
+#card-view .cv-more-chip{display:inline-flex;align-items:center;gap:6px;height:28px;min-height:0;padding:0 10px;border:1px solid var(--ds-doc-line,#e6e9ed);border-radius:7px;background:#fff;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px;font-weight:500}
+#card-view .cv-more-chip small{font-size:11.5px;font-weight:400;color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-more-chip.has{color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-more-chip.has small{color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-more-chip:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-more-chip[aria-expanded=true]{background:var(--ds-doc-hover,#f6f8fa);border-color:#cfd5dc;color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-more-rows{margin-top:10px}
+#card-view .cv-more-rows:not(:has(.cv-more-g:not([hidden]))){display:none}
+#card-view .cv-more-g[hidden]{display:none}
+#card-view .cv-more-rows .cv-meta{padding:6px 0 0}
+#card-view .cv-evtab tr.miss,#card-view .cv-evtab tr.miss td{background:transparent;color:var(--ds-doc-ink-2,#57606a);font-weight:400}
+#card-view .cv-evtab .who span{background:#f0f2f4;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-more-rows .cv-pts button[aria-pressed=true]{background:#f0f2f4;color:var(--ds-doc-ink,#1f2328);box-shadow:inset 0 0 0 1px #cfd5dc}
+#card-view .cv-exp-tools .mini{background:#fff;color:var(--ds-doc-ink-2,#57606a);border:1px solid var(--ds-doc-line,#e6e9ed);box-shadow:none}
+/* 바닥 줄: 완성 체크는 회색 작은 글자, AI 검토는 회색 테두리 */
+#card-view .f-foot .checks{font-size:12px}
+#card-view .f-foot .checks span{color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .f-foot .checks span.ok{color:var(--ds-doc-ink-2,#57606a)}
+#card-view .f-foot .btn.go{background:#fff;color:var(--ds-doc-ink,#1f2328);border:1px solid #cfd5dc;box-shadow:none}
+#card-view .f-foot .btn.go:hover{background:var(--ds-doc-hover,#f6f8fa)}
+/* 머리줄은 카드 위에 붙어 있으므로, 칸으로 스크롤할 때 그 높이만큼 비워 둔다(머리줄 밑에 단추·입력 칸이 숨지 않게) */
+#card-view .cv-writer{scroll-padding-top:60px}

@@ -283,7 +283,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 글 옆 자료: 번호는 묶음 칸 안의 첫 지문 앞에 붙고, 발문은 자료 뒤에 온다.
   const sideText=!firstText?openingSideText(q):null;
   // 배점이 3점이면 발문 끝에 [3점]. 한글 창에서 고칠 수 없는 꼬리(suffix)로 둔다.
-  const mark=q.points===3?' [3점]':'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
+  // 2점은 표시하지 않는다(평가원). 3점과 카드에서 「자유」로 적은 배점(4, 2.5 …)은 [N점].
+  const pts=Number(q.points),mark=pts>0&&pts!==2?` [${pts}점]`:'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
   // 평가원 순서: 발문 다음에 <보기>. 맨 바깥 보기는 발문 뒤에 찍는다.
   const afterAsk=q.blocks.filter(b=>!b.parent&&b.kind==='bogi').map(b=>b.id);
   // 기출 그림의 원본 폭(widthPt, 원본 PDF pt)이 있으면 그 크기를 넘지 않는다. 평가원 PDF 한 단(387pt)이 조판 단 폭(columnPx)에 대응.
