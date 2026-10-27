@@ -113,10 +113,14 @@ async function fixture(t, engine, name, count = null) {
   };
 }
 async function selected(page, index) {
-  await page.waitForFunction(({ index, selector }) => {
+  // Comment markers are hidden by default and each task keeps its own marker visibility (83201a54 / ai-image-comments.js restoreViewState):
+  // once this task is the selected one with its image decoded, press the real 「코멘트」 toggle while it still reports hidden.
+  await page.waitForFunction(({ index, selector, canonical }) => {
     const panel = document.querySelector('#ai-image-panel');
-    return panel?.dataset.aiSelectedCandidateId === `candidate-${index}` && [...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) && [...panel.querySelectorAll(selector)].some(row => row.getBoundingClientRect().height > 0);
-  }, { index, selector: visibleCommentSelector });
+    if (panel?.dataset.aiSelectedCandidateId !== `candidate-${index}` || ![...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512)) return false;
+    if (canonical && panel.dataset.aiCommentsVisible === 'false') panel.querySelector('[data-ai-comment-visibility]')?.click();
+    return [...panel.querySelectorAll(selector)].some(row => row.getBoundingClientRect().height > 0);
+  }, { index, selector: visibleCommentSelector, canonical: canonicalRuntime });
 }
 async function select(page, index) { await page.click(taskButton(index)); await selected(page, index); }
 async function content(page, count) {

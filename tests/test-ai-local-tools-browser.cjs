@@ -82,6 +82,11 @@ async function selectVersion(page, id) {
   await page.locator(`${active} [data-ai-candidate-option="${id}"]`).click();
   await selected(page,id);
 }
+// Comment markers are hidden by default (data-ai-comments-visible="false", commit 83201a54); turn them on through the real toggle.
+async function showComments(page) {
+  if (await page.locator(active).getAttribute('data-ai-comments-visible') === 'false') await page.locator(`${active} [data-ai-comment-visibility]`).click();
+  await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiCommentsVisible === 'true');
+}
 async function snapshot(page) {
   return page.evaluate(async () => (await window.__localToolsManager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs));
 }
@@ -109,7 +114,15 @@ for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rect
   await erase.click();assert.equal(await panel.locator('button[data-ai-erase-mode=brush]').getAttribute('aria-pressed'),'true');
   await panel.locator('[data-ai-erase-size]').fill('12');assert.equal(await panel.locator('[data-ai-erase-size-value]').textContent(),'12 px');
   const read=async src=>page.evaluate(async src=>{const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');const d=await decodeScopedPng(new Uint8Array(await(await fetch(src)).arrayBuffer()));return {width:d.width,height:d.height,data:[...d.data]};},src);
-  const stroke=async points=>{const old=await panel.getAttribute('data-ai-selected-candidate-id');await lasso(page,points);await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,old);return(await snapshot(page))[0].generated.at(-1);};
+  // The eraser now edits a draft first (js/ai-image-local-erase.js); the saved version only appears after the explicit 「수정 저장」.
+  // Selecting the saved version closes the eraser tool (5e:ai-candidate-select -> setActive(false), 61bcd508); reopen it before the next stroke/setting.
+  const tool=async()=>{if(await erase.getAttribute('aria-pressed')!=='true')await erase.click();};
+  const stroke=async points=>{await tool();const old=await panel.getAttribute('data-ai-selected-candidate-id');await lasso(page,points);
+    await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel'),save=p.querySelector('[data-ai-edit-save]');return p.dataset.aiEditDraft==='true'&&!save.hidden&&!save.disabled&&!p.querySelector('.ai-local-erase-overlay');});
+    assert.equal(await panel.getAttribute('data-ai-selected-candidate-id'),old,'a draft stroke never creates a saved version by itself');
+    await panel.locator('[data-ai-edit-save]').click();
+    await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,old);
+    await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiEditDraft==='false');return(await snapshot(page))[0].generated.at(-1);};
   const brush=await stroke([{x:65,y:80},{x:200,y:80},{x:200,y:220},{x:65,y:220},{x:65,y:80}]);
   assert.equal(brush.scopedEditHistory[0].operation,'local-brush-erase');const pixels=await read(brush.data);assert.equal(pixels.data[(150*512+132)*4+3],255,'closed brush loop keeps its center');
   const h=brush.scopedEditHistory[0],original=await read(before[0].generated[0].data);let inside=0;
@@ -118,11 +131,19 @@ for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rect
     const at=(y*512+x)*4;if(onStroke){assert.deepEqual(pixels.data.slice(at,at+4),[0,0,0,0]);inside++;}else assert.deepEqual(pixels.data.slice(at,at+4),original.data.slice(at,at+4));
   }
   assert.equal(inside,h.maskedPixels);assert.deepEqual((await snapshot(page))[1],before[1]);assert.deepEqual((await snapshot(page))[0].generated[0],before[0].generated[0]);
-  await panel.locator('[data-ai-erase-background]').selectOption('white');const white=await stroke([{x:65,y:80},{x:200,y:80}]);const whitePixels=await read(white.data);assert.deepEqual(whitePixels.data.slice((80*512+100)*4,(80*512+100)*4+4),[255,255,255,255]);
-  await panel.locator('button[data-ai-erase-mode=rect]').click();assert.equal(await panel.locator('[data-ai-erase-size]').isDisabled(),true);
+  await tool();await panel.locator('[data-ai-erase-background]').selectOption('white');const white=await stroke([{x:65,y:80},{x:200,y:80}]);const whitePixels=await read(white.data);assert.deepEqual(whitePixels.data.slice((80*512+100)*4,(80*512+100)*4+4),[255,255,255,255]);
+  await tool();await panel.locator('button[data-ai-erase-mode=rect]').click();assert.equal(await panel.locator('[data-ai-erase-size]').isDisabled(),true);
   await panel.locator('[data-ai-erase-background]').selectOption('transparent');const rect=await stroke([{x:300,y:260},{x:245,y:230}]);assert.equal(rect.scopedEditHistory[0].operation,'local-rect-erase');const rectPixels=await read(rect.data);assert.equal(rectPixels.data[(245*512+270)*4+3],0);
-  await panel.locator('button[data-ai-erase-mode=brush]').click();const outside=await stroke([{x:100,y:-18},{x:100,y:45}]);assert.ok(outside.scopedEditHistory[0].points[0].y<0,'outside coordinates stay outside instead of snapping to an edge');
+  await tool();await panel.locator('button[data-ai-erase-mode=brush]').click();
+  // Since 61bcd508 a drag that STARTS outside the picture is ignored (no draft); a drag that starts inside and leaves keeps its outside coordinates unclamped.
+  {const box=await page.locator(image).boundingBox(),sx=box.x+100/512*box.width,sy=box.y-18/384*box.height;
+    await page.mouse.move(sx,sy);await page.mouse.down();await page.mouse.move(sx,sy+63/384*box.height,{steps:4});await page.mouse.up();
+    assert.equal(await panel.getAttribute('data-ai-edit-draft'),'false','a stroke starting outside the image creates no draft');}
+  const outside=await stroke([{x:100,y:20},{x:100,y:-18}]);assert.ok(outside.scopedEditHistory[0].points.at(-1).y<0,'outside coordinates stay outside instead of snapping to an edge');
+  await tool(); // the previous save closed the eraser; Escape must close only the tool (otherwise it closes the whole workbench)
   const count=(await snapshot(page))[0].generated.length;await lasso(page,[{x:100,y:160},{x:200,y:160}],false);await page.keyboard.press('Escape');await page.mouse.up();assert.equal((await snapshot(page))[0].generated.length,count);assert.equal(await panel.locator('.ai-local-erase-overlay').count(),0);assert.equal(await panel.isVisible(),true);assert.equal(await panel.locator('[data-ai-local-erase-options]').isVisible(),false);
+  // saving selects a new version, which replays the pane entrance/modal fade (header scales for ~0.4s); compare only after the header rect stops changing
+  for(let prev=null,k=0;k<20;k++){const cur=JSON.stringify((await geometry(page)).header);if(cur===prev)break;prev=cur;await page.waitForTimeout(250);}
   assert.deepEqual((await geometry(page)).header,header,'tool settings never change the image fitting header');assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);assert.deepEqual(errors,[]);
   await erase.click();await page.screenshot({path:path.join(evidence,engine,'brush-settings.png')});
 });
@@ -143,6 +164,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   await page.waitForFunction(()=>window.__compositeCalls===1);
   const labeled=await geometry(page);
   const advanced=page.locator(`${active} [data-ai-scoped-advanced]`), precision=page.locator(`${active} [data-ai-precision-settings]`);
+  await showComments(page);
   await page.locator(`${active} .is-ai-active-candidate button[data-ai-comment-marker]`).first().hover();
   await precision.waitFor({state:'visible'});
   assert.equal(await advanced.getAttribute('open'),null);assert.equal(await precision.getAttribute('open'),null,'existing precision checks do not force open experiment settings');
@@ -167,6 +189,10 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   const erase=page.locator(`${active} [data-ai-local-erase]`);
   await erase.click();assert.equal(await erase.getAttribute('aria-pressed'),'true');await page.locator(`${active} [data-ai-erase-mode=rect]`).click();
   await lasso(page,[{x:75,y:35},{x:140,y:100}]);
+  // Draft first, then the explicit save creates the new version (js/ai-image-local-erase.js).
+  await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel'),save=p.querySelector('[data-ai-edit-save]');return p.dataset.aiEditDraft==='true'&&!save.hidden&&!save.disabled&&!p.querySelector('.ai-local-erase-overlay');});
+  assert.equal(await page.locator(active).getAttribute('data-ai-selected-candidate-id'),'candidate-0','the draft does not create a saved version yet');
+  await page.locator(`${active} [data-ai-edit-save]`).click();
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId.startsWith('generated-')).catch(async error=>{fs.writeFileSync(path.join(evidence,engine,'erase-trace.json'),JSON.stringify(await page.evaluate(()=>({trace:window.__eraseTrace,geometry:[...document.querySelectorAll('#ai-image-panel .is-ai-active-candidate .ai-preview-stage')].map(n=>({rect:JSON.stringify(n.getBoundingClientRect()),cls:n.className,img:n.querySelector('img')?.src.slice(0,80)})),status:document.querySelector('#ai-image-panel [data-ai-status]')?.textContent})),null,2));throw error;});
   const after=await snapshot(page), result=after[0].generated.at(-1);
   assert.equal(after[0].generated.length,before[0].generated.length+1);
@@ -181,7 +207,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   assert.match(await page.locator(`${active} [data-ai-scoped-apply-hint]`).textContent(),/영역/);
   // Cancel a gesture by changing the selected version. The old captured pointer
   // must not create either an erased version or a request box on release.
-  assert.equal(await erase.getAttribute('aria-pressed'),'true','eraser stays active after creating a revision');
+  assert.equal(await erase.getAttribute('aria-pressed'),'false','the eraser tool closes once the explicit save selects the new version (61bcd508)');
+  await erase.click();assert.equal(await erase.getAttribute('aria-pressed'),'true');
   await lasso(page,[{x:100,y:100},{x:170,y:100},{x:170,y:170}],false);
   await page.evaluate(()=>{const p=document.querySelector('#ai-image-panel');p.dataset.aiSelectedCandidateId='candidate-0';p.aiWorkbench.restoreViewState({...p.aiWorkbench.getViewState(),selectedCandidateId:'candidate-0'});p.dispatchEvent(new CustomEvent('5e:ai-candidate-select',{detail:{candidateId:'candidate-0'}}));});
   await page.mouse.up();await selected(page,'candidate-0');
@@ -191,7 +218,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   const downloadPromise=page.waitForEvent('download');await page.locator(`${active} [data-ai-save-selected]`).click();
   const download=await downloadPromise;const downloadPath=await download.path();
   assert.equal(fs.readFileSync(downloadPath).toString('base64'),result.data.split(',')[1],'PNG export uses the erased bytes');
-  await page.locator(`${active} .is-ai-active-candidate [data-ai-canvas-output]`).click();
+  await page.locator(`${active} [data-ai-insert-selected]`).click(); // the per-card 「캔버스에 삽입」 is hidden now; the header button forwards to it (ai-panel.js:6818)
   await page.waitForFunction(()=>window.__localToolsState.get().objects.some(o=>o.aiCandidateId?.startsWith('generated-')));
   const inserted=await page.evaluate(id=>window.__localToolsState.get().objects.find(o=>o.aiCandidateId===id)?.src,result.id);
   assert.equal(inserted,result.data,'canvas insertion uses the same erased bytes');
@@ -237,6 +264,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: R01–R07 follow-up
   assert.equal(await panel.locator('[data-ai-layout-mode][aria-pressed="true"]').count(),0,'slider comparison is the sole selected view');
   await panel.locator('[data-ai-layout-mode="result"]').click();
   await panel.locator('[data-tab-id="task-1"] .ai-task-tab-select').click(); await selected(page,'candidate-1');
+  await showComments(page);
   const pin=panel.locator('.is-ai-active-candidate button[data-ai-comment-marker]').first();
   await pin.hover(); await popup.waitFor({state:'visible'});
   const editor=popup.locator('[data-ai-inline-editor]');
@@ -245,7 +273,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: R01–R07 follow-up
   await editor.press('End'); await editor.press('!');
   assert.equal(await editor.inputValue(),'사각형 추가 · 위치 코멘트에서 편집!','typing survives geometry changes');
   await page.screenshot({path:path.join(evidence,engine,'r07-comment.png')});
-  await editor.press('Escape'); assert.equal(await popup.isVisible(),false);
+  // Escape now also deletes the selected comment (escapeComment = deleteSelectedComment + close, 83201a54), so close the popup with its close button to keep the comment.
+  await popup.locator('.ai-comment-popover-close').click(); assert.equal(await popup.isVisible(),false);
   await pin.focus(); await pin.press('Enter'); assert.equal(await popup.isVisible(),true);
   // This scenario verifies label ownership, not the seeded zero-distance move check.
   await popup.locator('[data-ai-precision-settings] summary').click();

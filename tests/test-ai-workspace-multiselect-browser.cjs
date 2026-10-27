@@ -241,7 +241,7 @@ test('12 task selection uses existing primary action with immutable overflow sna
   assert.equal(await page.evaluate(()=>window.__task2.sends.length),0,'Baseline preparation makes zero provider requests');
   fs.writeFileSync(path.join(evidence,'overflow-canonical-baseline-proof.json'),JSON.stringify({original:originalBaseline,canonical:baseline,allOriginalImageFieldsExact:true},null,2));
   await page.click('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-select');
-  for(let i=1;i<12;i++) await page.click(`#ai-image-panel [data-tab-id="task-${i}"] .ai-task-tab-select`,{modifiers:[i%2?'Meta':'Control']});
+  for(let i=1;i<12;i++) await page.click(`#ai-image-panel [data-tab-id="task-${i}"] .ai-task-tab-select`,{modifiers:[i%2||process.platform==='darwin'?'Meta':'Control']}); // macOS Chromium turns Ctrl+click into a context menu (no click event); the app toggles on metaKey||ctrlKey
   assert.equal(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(),'12개 선택');
   await (await currentPrimaryAction(page)).click();
   await page.waitForFunction(()=>window.__task2.generationSends.length===10);
