@@ -324,7 +324,11 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
     if (document.activeElement !== hInput) hInput.value = ws.h.toFixed(1);
     dim.style.display = "block";
     let dy = t - 26; if (dy < 4) dy = t + 4;
-    dim.style.left = l + "px"; dim.style.top = dy + "px";
+    // 상자가 화면 가장자리에 붙으면 크기 표시와 확정 단추가 화면 밖으로 나가 누를 수 없었다 — 넘칠 때만 안으로 당긴다.
+    const ov = overlay.getBoundingClientRect();
+    const dl = Math.max(4, Math.min(l, ov.width - dim.offsetWidth - 4));
+    const dt = Math.max(4, Math.min(dy, ov.height - dim.offsetHeight - 4));
+    dim.style.left = dl + "px"; dim.style.top = dt + "px";
   }
 
   function cleanup() {
