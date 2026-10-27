@@ -44,7 +44,8 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-studio/LICENSE-FONTS", { sha256: "d28c4c4ba705a6a40ea0f5f950afb9dceca146d94ddf432572190921fecf5d94", bytes: 4686 }],
   ["vendor/rhwp-studio/assets/canvaskit-renderer-qwNCZ9x6.js", { sha256: "3b7efb4d890bbdc9d59780d43a6041ac37b88d3dbb76682a0c31983c2b2e6788", bytes: 247494 }],
   ["vendor/rhwp-studio/assets/index-CJqHfaJX.css", { sha256: "77febd44c7840da15121989e64d344123d5d353b9d7c4ecc66f44ac8d544110e", bytes: 113835 }],
-  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "b78ebda7b1f3b521485d4109f5fe2d1faefb9f495b4481e73b17c7401d1b19f2", bytes: 2116313 }],
+  // 4fabe265(10-13, 편집 중 안 보이는 표 테두리 보이기)로 바뀐 파일의 값.
+  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "edb1faeb65e1a1fab264ad0ea5e1c79301732a1a4d9dff3fdd1e0c870b430fe1", bytes: 2116311 }],
   ["vendor/rhwp-studio/assets/rhwp_bg-BkVWMBaR.wasm", { sha256: "54cf95014312e605c51b98eb9021247ea79ef2bbd0a7080e11c011d0246e3989", bytes: 11821756 }],
   ["vendor/rhwp-studio/assets/studio-plugin-7wns0tfd.js", { sha256: "3523819ac5b02bf6ae7cbe43d818ac0abaacf2dd09e03594c5b3172ed835e828", bytes: 54381 }],
   ["vendor/rhwp-studio/fonts/Cafe24Ssurround-v2.0.woff2", { sha256: "2d726dbf8863d66e6d5cf56e2532c5d14d8a4b514461b565c513c1da6ae2f41a", bytes: 391868 }],
@@ -80,7 +81,7 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-studio/images/icon_small_ko_dark.svg", { sha256: "9d02ea0b8c1d399a89290d97613759826f19f3e3f392b6d79dcf6109e7e15fa6", bytes: 451775 }],
   ["vendor/rhwp-studio/index.html", { sha256: "5bd733cb7edfa921da36dc7b0a6d68b7c13590d2d57d43ee7aa7821139a24be4", bytes: 86815 }],
   ["vendor/rhwp-studio/locale-init.js", { sha256: "633d47a6a53b2211cf816769f8c084b097c1b60b6ab263803d8610c0531539fa", bytes: 1342 }],
-  ["vendor/rhwp-studio/provenance.json", { sha256: "9a9606deef144eeee0064c376ae56b848479932892f612bb0e9a808a197d5fe0", bytes: 7332 }],
+  ["vendor/rhwp-studio/provenance.json", { sha256: "263d5bc19bccc191fa065236c3a01fc9747250bf26e2893017d7d3f645adea88", bytes: 7416 }],
   ["vendor/rhwp-studio/theme-init.js", { sha256: "5a3afcc0139187bfe509414cd60fde2a0dfea72fd72751c4e6e696cdc0f6c587", bytes: 2783 }],
 ]);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');

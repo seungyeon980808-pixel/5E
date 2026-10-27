@@ -221,8 +221,9 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.evaluate(() => {
         const original = document.fonts.load.bind(document.fonts);
         let started;
-        window.__fontGate = { calls: 0, release: null, started: new Promise(resolve => { started = resolve; }) };
-        document.fonts.load = (...args) => { window.__fontGate.calls++; started(); return new Promise(resolve => { window.__fontGate.release = () => original(...args).then(resolve); }); };
+        window.__fontGate = { calls: 0, releases: [], release() { return Promise.all(this.releases.splice(0).map(release => release())); }, started: new Promise(resolve => { started = resolve; }) };
+        // The candidate renderer loads the normal and italic faces in parallel (workbench-result.js); every held load must be released, not only the last.
+        document.fonts.load = (...args) => { window.__fontGate.calls++; started(); return new Promise(resolve => { window.__fontGate.releases.push(() => original(...args).then(resolve)); }); };
       });
       await page.locator('#gm-confirm').click();
       await page.evaluate(() => new Promise((resolve, reject) => {
@@ -286,7 +287,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.locator(ui+'[data-ai-tab-select-all]').click();
       assert.equal(await page.locator(ui+'.ai-task-tab.is-batch-selected').count(),1,'select all is scoped to image tasks');
       await page.locator(ui+'[data-ai-tab-clear]').click();
-      await page.getByRole('dialog',{name:'전체 작업 삭제',exact:true}).getByRole('button',{name:'1개 삭제',exact:true}).click();
+      await page.getByRole('dialog',{name:'선택 작업 삭제',exact:true}).getByRole('button',{name:'1개 삭제',exact:true}).click();
       await page.waitForGraphSignal(()=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===0);
       await page.locator(ui+'[data-ai-workflow="graph"]').click();
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();

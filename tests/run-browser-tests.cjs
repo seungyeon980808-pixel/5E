@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, "..");
 function startServer() {
   const child = spawn(process.execPath, ["scripts/preview-local-server.cjs"], {
     cwd: root,
-    env: { ...process.env, PORT: "0" },
+    env: { ...process.env, PORT: "0", FIVE_E_NO_REVISION_BADGE: "1" },
     stdio: ["ignore", "pipe", "inherit"],
   });
   const ready = new Promise((resolve, reject) => {

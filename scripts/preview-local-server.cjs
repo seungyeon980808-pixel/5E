@@ -29,7 +29,8 @@ async function previewRevision() {
   } catch { return null; }
 }
 function revisionBadge(html, revision) {
-  if (!revision) return html;
+  // 검사 실행기(tests/run-browser-tests.cjs)가 띄운 서버는 디스크와 같은 바이트를 보낸다(자원 정리 검사가 바이트 일치를 확인).
+  if (!revision || process.env.FIVE_E_NO_REVISION_BADGE === '1') return html;
   const escape = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
   return html.replace(/<span\b([^>]*\bdata-change-summary\b[^>]*)>([^<]*)<\/span>/, (match, attributes, label) => {
     const detail = `브랜치: ${revision.branch} · 기준 커밋: ${revision.commit} · ${revision.dirty ? '미커밋 수정 포함' : '커밋과 동일한 소스'}`;
