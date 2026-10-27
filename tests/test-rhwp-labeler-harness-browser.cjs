@@ -40,7 +40,13 @@ for (const engine of ['chromium', 'webkit']) {
         const large = { data: original };
         const prepared = await prepareApprovedFirstAttachment(large);
         const img = new Image(); img.src = prepared.data; await img.decode();
-        return { actual, expectedText: approvedFirstRequestText({ instructions: '선택한 원본을 변환해 주세요' }),
+        // 4dbdd0b8(10-13)부터 첫 이미지 요청 본문 = 원본 추적 머리말 + 승인된 프롬프트(준비된 입력 크기를 원본 프레임으로).
+        const { buildSourceTracingPrompt } = await import('/js/ai-source-tracing-contract.js' + v);
+        const inputImg = new Image(); inputImg.src = expectedInput.data; await inputImg.decode();
+        const tracingPrompt = buildSourceTracingPrompt({ sourceFrame: { width: inputImg.naturalWidth, height: inputImg.naturalHeight }, preserveStyle: true });
+        // 10-16(83201a54)부터 사용자 요청 뒤에 이번 작업의 표시선·보조선 선택 지시가 붙는다.
+        const { selectedMarkInstructions } = await import('/js/ai-image-label-run.js' + v);
+        return { actual, expectedText: approvedFirstRequestText({ prompt: tracingPrompt, instructions: ['선택한 원본을 변환해 주세요', selectedMarkInstructions(candidate.imageLabelWorkflow || candidate.workflow)].filter(Boolean).join('\n\n') }),
           expectedInput, count: imageCalls.length, promptSha256: await imageLabelDigest(APPROVED_FIRST_PROMPT),
           candidateDataUnchanged: candidate.data === q.modified,
           generationHarness: candidate.workflowMetrics.generationHarness,
@@ -63,7 +69,9 @@ for (const engine of ['chromium', 'webkit']) {
       assert.equal(result.legacyStyleRequestInjected, false);
       assert.equal(result.generationHarness.id, 'rhwp-approved-first-v1');
       assert.deepEqual(result.preparation, { width: 1536, height: 512, originalUnchanged: true, name: 'INPUT_SOURCE.png' });
-      assert.doesNotMatch(result.actual.text, /SOURCE-GRID-TRACING|5e-source-tracing|5e-kice-flat-style/);
+      // 4dbdd0b8(10-13): 첫 요청은 원본 추적 머리말을 싣되(기하 보존), 스타일은 원본 그대로(평가원 단순화 본문 없음).
+      assert.match(result.actual.text, /^\[SOURCE-GRID-TRACING[\s\S]*\[5e-source-tracing v/);
+      assert.doesNotMatch(result.actual.text, /5e-kice-flat-style/);
       await page.screenshot({ path: path.join(dir, 'workbench.png') });
 
       if (labelResult === 'restore-editable') {
@@ -93,15 +101,14 @@ for (const engine of ['chromium', 'webkit']) {
           const s = fontQA.state.get(), o = s.objects.find(o => o.id === id);
           return worldToScreen(document.querySelector('#canvas'), s.viewBox, o.p2.x, o.p2.y);
         }, initial.object.id);
-        await armSelection(page, initial.object.id);
+        // 4dbdd0b8(10-13): 이미지+라벨은 한 묶음 — 한 번 누르면 묶음(라벨 포함)이 골라지고, 두 번 누르면 그 라벨만 지목해 고친다.
         const point = await centerPoint();
         await page.mouse.click(point.x, point.y);
-        assert.deepEqual(await page.evaluate(() => fontQA.state.get().selectedIds), [initial.object.id]);
-        // Distinct single clicks: first select the actual rendered glyph, then edit.
-        await selectionArrived(page);
+        assert.ok((await page.evaluate(() => fontQA.state.get().selectedIds)).includes(initial.object.id));
         const selectedPoint = await centerPoint();
-        await page.mouse.click(selectedPoint.x, selectedPoint.y);
-        const inline = page.locator('.ai-inline-label-editor');
+        await page.mouse.dblclick(selectedPoint.x, selectedPoint.y);
+        assert.deepEqual(await page.evaluate(() => fontQA.state.get().selectedIds), [initial.object.id]);
+        const inline = page.locator('.ai-inline-label-editor, .unified-text-input.text-formula-source-input').first();
         await inline.waitFor({ state: 'visible' });
         await inline.fill('전류 센서'); await inline.press('Enter');
         const edited = await rendered();

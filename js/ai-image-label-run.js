@@ -17,7 +17,8 @@ import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-
 
 export const IMAGE_LABEL_RUN_VERSION = '1.6.1';
 export const IMAGE_LABEL_GENERATION_HARNESS = 'rhwp-approved-first-v1';
-function selectedMarkInstructions(workflow) {
+// 검사(test-rhwp-labeler-harness)가 첫 요청 본문을 그대로 재구성할 수 있게 내보낸다.
+export function selectedMarkInstructions(workflow) {
   return [
     workflow.scientificArrows === 'remove'
       ? '사용자가 화살표 제거를 켰습니다. 이번 작업의 기본 표시선 선택을 대체하여 과학적 힘·운동·혈류·전류 화살표도 제거하세요. 실제 관·혈관·도선·물체 윤곽·눈금은 보존하세요.' : '',

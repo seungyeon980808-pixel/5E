@@ -27,7 +27,8 @@ async function assertApprovedGeneration(page, indices) {
     return Promise.all(indices.map(async index => {
       const request = window.__task2.sends[index].payload;
       return { purpose: request.purpose, attachmentNames: request.attachments.map(attachment => attachment.name),
-        approvedPrefix: request.text.startsWith(APPROVED_FIRST_PROMPT), approvedPromptSha256: await imageLabelDigest(APPROVED_FIRST_PROMPT) };
+        // 4dbdd0b8(10-13)부터 첫 이미지 요청은 원본 추적 머리말(buildSourceTracingPrompt) 뒤에 승인된 프롬프트 본문을 그대로 싣는다.
+        approvedPrefix: request.text.startsWith((await import('/js/ai-source-tracing-contract.js?v=1.7.0-four-session-integration')).buildSourceTracingPrompt({ preserveStyle: true }).split('\n')[0]) && request.text.includes(APPROVED_FIRST_PROMPT), approvedPromptSha256: await imageLabelDigest(APPROVED_FIRST_PROMPT) };
     }));
   }, indices);
   for (const request of requests) {
@@ -88,14 +89,16 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
   assert.equal(state.finalLabelComposite, reviewedComposite, 'Final overlay preserves the independently reviewed bytes');
   const included = page.locator('[data-ai-label-view-mode="included"]');
   const diagram = page.locator('[data-ai-label-view-mode="diagram"]');
+  // 「그림만 / 라벨 포함」 두 단추는 숨은 상태 표시이고, 실제로 누르는 것은 「라벨 ON/OFF」 토글 하나다.
+  const labelToggle = page.locator('#ai-image-panel [data-ai-label-toggle]');
   const shown = () => page.locator('#ai-image-panel .ai-generated-card .ai-preview-stage > img').first().getAttribute('src');
   await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, state.finalLabelComposite);
   assert.equal(await included.getAttribute('aria-pressed'), 'true');
   assert.equal(await shown(), state.finalLabelComposite, 'Preview displays the exact final native overlay bound to its review');
-  await diagram.click();
+  await labelToggle.click();
   await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, state.data);
   assert.equal(await diagram.getAttribute('aria-pressed'), 'true'); assert.equal(await shown(), state.data);
-  await included.click();
+  await labelToggle.click();
   await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, state.finalLabelComposite);
   if (verdict === 'fail') {
     await page.locator('[data-ai-review-open]').click();
@@ -109,10 +112,11 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
     assert.match(await page.locator('[data-ai-input]').inputValue(), /raster-label-removal: \+ 기호가 원래 위치에 남아 있음/);
     assert.equal((await sends(page)).length,3,'Preparing correction must not dispatch another generation');
     await page.locator('[data-ai-review-dialog] [data-ai-info-close]').click();
-    assert.equal(await page.locator('#ai-image-panel [data-ai-insert-selected]').isDisabled(), true, 'Failed review cannot use normal insertion');
+    // 4dbdd0b8(10-13)부터 검토에 실패해도 넣을 수는 있고(따로 있던 「캔버스에서 편집」 단추는 영구히 숨김), 넣기 전에 라벨 확인을 요구한다.
+    assert.match(await page.locator('#ai-image-panel [data-ai-insert-selected]').getAttribute('title'), /확인해 주세요/, 'Failed review asks for a label check before insertion');
   }
   await page.screenshot({ path: path.join(evidence, 'review-result.png') });
-  await page.locator(verdict === 'pass' ? '#ai-image-panel [data-ai-insert-selected]' : '#ai-image-panel [data-ai-edit-review-draft]').click();
+  await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
   await page.waitForFunction(async () => (await import('/js/state.js?v=1.7.0-four-session-integration')).state.get().objects.some(o => o.aiAutoLabel));
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').hidden);
   const inserted = await page.evaluate(async () => {
@@ -145,7 +149,8 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
   assert.ok(roundtrip.reopened.leaderRoutes.every(route => route.end === 'filled-arrow' && route.controls.length === 1));
   assert.equal(roundtrip.reopened.text, '• 수정한 전자');
   const background = await page.evaluate(() => window.__sourceQA.state.get().objects.find(object => object.type === 'image'));
-  assert.equal(background.src, state.data); assert.equal(background.imageSelectionLocked, true);
+  // 4dbdd0b8(10-13): 이미지+라벨 한 묶음, 이미지 선택 잠금은 풀린다.
+  assert.equal(background.src, state.data); assert.equal(background.imageSelectionLocked, false); assert.equal(background.groupId, `${background.id}_image_labels`);
   assert.equal(state.data, await page.evaluate(() => window.__task2.modified), 'Insertion and editing preserve the original controlled RAW bytes');
   await page.screenshot({ path: path.join(evidence, 'edited-native-leader.png') });
   assert.deepEqual(errors, []);
@@ -234,7 +239,8 @@ test('missing final overlay checks cannot promote a candidate to passed', {timeo
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
   const candidate=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs)[0].generated[0]);
   assert.notEqual(candidate.reviewState,'passed');assert.equal(candidate.labelPlan.reviewRequired,true);assert.equal((await sends(page)).length,3);assert.equal(imageSends(await sends(page)).length,1);
-  assert.equal(await page.locator('#ai-image-panel [data-ai-insert-selected]').isDisabled(),true);assert.deepEqual(errors,[]);
+  // 4dbdd0b8(10-13)부터 검토가 덜 끝난 후보도 넣을 수는 있되, 넣기 전에 라벨 확인을 요구한다(통과로 오르지 않는 것은 위에서 확인).
+  assert.match(await page.locator('#ai-image-panel [data-ai-insert-selected]').getAttribute('title'),/확인해 주세요/);assert.deepEqual(errors,[]);
   await page.screenshot({path:path.join(evidence,'review-rejected.png')});fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({candidate,sends:await sends(page),errors},null,2));
 });
 
