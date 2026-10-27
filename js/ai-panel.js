@@ -2065,7 +2065,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     display.included = next;
     if (!next) inlineLabelEditor?.close();
     syncEditableLabelPlanButton(item);
-    syncLabelViewControls(); void renderLabelPreview(item);
+    syncLabelViewControls(); syncSelectedOutputActions(); void renderLabelPreview(item);
     captureActiveTaskTab(); persistTasks();
   });
 
@@ -2608,12 +2608,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // 「범위 밖 · 원본 보존」 결과(라벨 복원 대상 0개)는 승인된 복원이 아니다 — 캔버스에 넣지 못하게 끈다(검사 workflow unlabeled exam, 10-26).
       const sourcePreserved = item?.removalReport?.status === 'out-of-scope';
       insert.disabled = outputBusy || !item || sourcePreserved || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
-      const labelCount = item?.labelPlan?.labels?.length || 0;
-      const labelReview = item?.labelPlan?.reviewRequired === true;
+      // 라벨 표시를 끈 결과는 라벨 없이 넣는다 — 설명도 카드 단추(syncEditableLabelPlanButton)와 같게 그 선택을 따른다(10-28).
+      const includeLabels = !item || labelPreviewStates.get(item)?.included !== false;
+      const labelCount = includeLabels ? item?.labelPlan?.labels?.length || 0 : 0;
+      const labelReview = includeLabels && item?.labelPlan?.reviewRequired === true;
       insert.textContent = '캔버스에 삽입';
       insert.hidden = false;
-      insert.title = labelCount
-        ? `이미지와 편집 가능한 자동 라벨 ${labelCount}개를 캔버스에 넣습니다.${labelReview ? ' 라벨 위치와 제외 항목을 확인해 주세요.' : ''}`
+      insert.title = !includeLabels && item?.labelPlan?.labels?.length
+        ? '라벨을 숨긴 현재 이미지만 넣습니다. 라벨 계획은 보존됩니다.'
+        : labelCount
+        ? `이미지와 이동·수정·삭제 가능한 자동 라벨 ${labelCount}개를 함께 넣습니다.${labelReview ? ' 라벨 위치와 제외 항목을 확인해 주세요.' : ''}`
         : labelReview ? '확인되지 않은 라벨은 제외되어 이미지만 넣습니다. 필요한 라벨을 확인해 주세요.'
         : item?.labelPlan?.status === 'unavailable' ? '자동 라벨 계획을 확인하지 못해 이미지만 넣습니다.' : '캔버스에 삽입';
       insert.setAttribute('aria-label', insert.textContent);

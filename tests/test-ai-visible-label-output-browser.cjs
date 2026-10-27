@@ -51,7 +51,9 @@ h.withServer(async origin => {
           assert.equal(await toggle.getAttribute('aria-checked'), String(included));
           // 카드의 '캔버스에 삽입'은 숨겨지고(2026-10-12~13) 아래 단추 줄의 한 단추가 선택한 결과를 넣는다.
           const output = page.locator('#ai-image-panel [data-ai-insert-selected]');
-          assert.equal((await output.textContent()).includes('라벨 1개'), included, 'Output caption must describe the visible label choice');
+          // 아래 줄 단추 글자는 「캔버스에 삽입」 그대로이고, 라벨을 넣는지는 설명(title)이 말한다(10-28).
+          assert.equal((await output.getAttribute('title')).includes('라벨 1개'), included, 'Output caption must describe the visible label choice');
+          if (included) assert.ok((await output.getAttribute('title')).includes('함께 넣습니다'), 'Visible labels are promised by the output tooltip');
           if (!included) assert.ok(!(await output.getAttribute('title')).includes('함께 넣습니다'), 'Hidden labels are not promised by the output tooltip');
           const before = await page.evaluate(async () => {
             const tab = (await __visibleManager.sharingSnapshot()).workspaces.flatMap(w => w.tabs).find(t => t.id === 'task-1');

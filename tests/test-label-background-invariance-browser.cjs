@@ -57,18 +57,21 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
       const objects = state.get().objects;
       return { image: objects.find(o => o.type === 'image'), labels: objects.filter(o => o.aiAutoLabel) };
     });
-    assert.equal(native.image.src, first.data); assert.equal(native.image.imageSelectionLocked, true);
+    // 4dbdd0b8(10-13)부터 결과는 이미지+라벨 한 묶음으로 들어가고 이미지 선택 잠금은 풀린다(묶음으로 함께 옮기기).
+    assert.equal(native.image.src, first.data); assert.equal(native.image.imageSelectionLocked, false);
+    assert.equal(native.image.groupId, `${native.image.id}_image_labels`); assert.ok(native.labels.every(l => l.groupId === native.image.groupId));
     assert.equal(native.labels.length, 1); assert.ok(!native.labels[0].locked);
     const center = () => page.evaluate(async id => {
       const { worldToScreen } = await import('/js/viewport.js?v=1.7.0-four-session-integration');
       const s = backgroundQA.state.get(), o = s.objects.find(o => o.id === id);
       return worldToScreen(document.querySelector('#canvas'), s.viewBox, o.p2.x, o.p2.y);
     }, native.labels[0].id);
-    await armSelection(page, native.labels[0].id);
+    // 묶음 안 라벨은 한 번 누르면 묶음 전체가 골라지고, 두 번 누르면 그 라벨만 지목·바로 고치기가 열린다.
     let point = await center(); await page.mouse.click(point.x, point.y);
-    await selectionArrived(page);
-    point = await center(); await page.mouse.click(point.x, point.y);
-    const inline = page.locator('.ai-inline-label-editor'); await inline.waitFor({ state: 'visible' });
+    await page.waitForFunction(id => window.backgroundQA.state.get().selectedIds.includes(id), native.labels[0].id);
+    point = await center(); await page.mouse.dblclick(point.x, point.y);
+    // 지목한 라벨은 통합 글자 편집 창으로 바로 고친다(묶음이 아닌 라벨은 예전처럼 .ai-inline-label-editor).
+    const inline = page.locator('.ai-inline-label-editor, .unified-text-input.text-formula-source-input').first(); await inline.waitFor({ state: 'visible' });
     await inline.fill('수정된 라벨'); await inline.press('Enter');
     const saved = await page.evaluate(() => {
       const q = backgroundQA;

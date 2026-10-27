@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+// 10-16(83201a54)부터 분리 단추는 닫힌 「고급 출력」 안에 있다 — 열고 누른다.
+const openOutputMore = async page => { if (!await page.locator('#ai-image-panel .ai-output-more').evaluate(d => d.open)) await page.locator('#ai-image-panel .ai-output-more > summary').click(); };
 const root = path.resolve(__dirname, '..');
 const evidence = process.env.SEPARATION_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-latest-fixes-0928/separation-green');
 fs.mkdirSync(evidence, { recursive: true });
@@ -50,6 +52,7 @@ test('legacy separated candidate dialog shares processed pixels, positions, and 
   write('required-legacy-preview-contract.json', previewContract);
   assert.equal(previewContract.sourceIsRaw, false,
     'CURRENT_UI_CONTRACT_GAP: qualified historical PNG did not resolve its local variant; original processed-main/dialog alpha oracle is not waived');
+  await openOutputMore(page);
   await page.click('#ai-image-panel [data-ai-editable-groups]');
   await page.waitForFunction(() => document.querySelectorAll('.aea-thumbnail img').length === 3);
   const inspect = () => page.evaluate(async () => {
@@ -67,6 +70,7 @@ test('legacy separated candidate dialog shares processed pixels, positions, and 
   assert.equal(first.sameSource, true); assert.equal(first.outerAlpha, 0); assert.equal(first.innerAlpha, 255);
   assert.equal(first.width, 512); assert.equal(first.height, 384); assert.equal(first.bounds.length, 3); assert.equal(first.separationCalls, 1);
   await page.click('.aea-dialog [data-action="cancel"]');
+  await openOutputMore(page);
   await page.click('#ai-image-panel [data-ai-editable-groups]');
   await page.waitForFunction(() => document.querySelectorAll('.aea-thumbnail img').length === 3);
   const second = await inspect(); write('dialog-second.json', second);
