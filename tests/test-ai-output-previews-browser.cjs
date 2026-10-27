@@ -3,6 +3,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+// 10-22(e704e45e)부터 「좌우·상하·슬라이더 비교」는 「비교 ▾」 메뉴 안에 있다 — 메뉴를 열고 누른다.
+const clickCompare = async (scope, selector = '[data-ai-compare]') => { const menu = scope.locator('.ai-compare-menu').first(); if (await menu.count() && !await menu.evaluate(d => d.open)) await menu.locator('summary').click(); await scope.locator(selector).first().click(); };
+// 10-22(83201a54)부터 「그룹으로 보기·분리 복구·출력 상세·선택 결과 안내」는 닫힌 「고급 출력」(details.ai-output-more) 안에 있다 — 열고 확인·클릭한다.
+const openOutputMore = async page => { const d = page.locator('#ai-image-panel .ai-output-more').first(); if (await d.count() && !await d.evaluate(e => e.open)) await d.locator('summary').click(); };
 const root = path.resolve(__dirname, '..');
 const evidenceRoot = process.env.OUTPUT_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-followup-0928/output/green');
 const original = fs.readFileSync(path.join(root, 'tests/test-ai-workspace-lifecycle-browser.cjs'), 'utf8');
@@ -145,7 +149,7 @@ for (const engine of ['chromium', 'webkit']) {
     await page.screenshot({ path: path.join(evidence, 'normal.png') });
     assert.equal(normal.outside[3], 0, JSON.stringify(normal));
     assert.equal(normal.inside[3], 255); assert.equal(normal.ink[3], 255); assert.equal(normal.srcIsRaw, false);
-    await page.click(`${panel} [data-ai-compare]`);
+    await clickCompare(page.locator(panel));
     await page.waitForFunction(() => document.querySelector('.ai-comparison-right image')?.hasAttribute('href'));
     const swipe = await inspect(page, true); write(evidence, 'swipe.json', swipe);
     assert.equal(swipe.outside[3], 0); assert.equal(swipe.inside[3], 255); assert.equal(swipe.srcIsRaw, false);
@@ -176,6 +180,7 @@ for (const engine of ['chromium', 'webkit']) {
     const groups = page.locator(`${panel} [data-ai-editable-groups]`);
     await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-editable-groups]')?.dataset.aiSeparationState === 'ready');
     assert.equal(await page.locator(background).isDisabled(), true); assert.equal(await page.locator(background).inputValue(), 'connected');
+    await openOutputMore(page);
     const note = page.locator(`${panel} [data-ai-selected-output-note]`);
     const count = Number(await groups.getAttribute('data-ai-separated-count'));
     write(evidence, 'separated.json', { count, note: await note.textContent(), noteVisible: await note.isVisible(), pixels: await inspect(page) });
@@ -368,7 +373,8 @@ for (const engine of ['chromium', 'webkit']) {
       });
       window.__firstImageRequest.catch(() => {});
     });
-    await page.locator(`${panel} [data-ai-send]`).click();
+    // 10-22(83201a54): 이미지 작업은 숨은 [data-ai-send] 대신 보이는 「변환하기」([data-ai-comments-apply])로 같은 전송 흐름을 시작한다.
+    await page.locator(`${panel} [data-ai-comments-apply]`).click();
     await page.evaluate(() => window.__firstImageRequest);
     await page.evaluate(() => {
       const index = window.__task2.sends.indexOf(window.__task2.generationSends[0]);
@@ -388,6 +394,8 @@ for (const engine of ['chromium', 'webkit']) {
       if (!candidate) throw new Error('The actual completed candidate is required');
       const { imageLabelDigest } = await import(window.__runtime.base + 'ai-image-label-run.js' + window.__runtime.query);
       const { APPROVED_FIRST_PROMPT } = await import(window.__runtime.base + 'ai-approved-first-png.js' + window.__runtime.query);
+      // 10-13(4dbdd0b8)부터 첫 생성 요청은 승인된 규칙을 원본 추적 계약(buildSourceTracingPrompt, preserveStyle)으로 감싸 보낸다.
+      const { buildSourceTracingPrompt } = await import(window.__runtime.base + 'ai-source-tracing-contract.js' + window.__runtime.query);
       const pixels = async source => {
         const image = new Image(); image.src = source; await image.decode();
         const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
@@ -399,10 +407,14 @@ for (const engine of ['chromium', 'webkit']) {
       const actualImage = document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
       const generation = window.__task2.generationSends[0];
       const attachment = generation.payload.attachments[0];
+      const attachmentFrame = await pixels(attachment.data);
+      const tracingPrompt = buildSourceTracingPrompt({ sourceFrame: { width: attachmentFrame.width, height: attachmentFrame.height }, preserveStyle: true });
       return { id:candidate.id,data:candidate.data,separationMode:tab.separationMode, stages:window.__task2.sends.map(send => send.stage), generations:window.__task2.generationSends.length,
         purposes:window.__task2.sends.map(send => send.payload.purpose), text:generation.payload.text,
-        approvedPrefixRetained:generation.payload.text.startsWith(APPROVED_FIRST_PROMPT),
-        approvedPromptSha256:await imageLabelDigest(APPROVED_FIRST_PROMPT), generationHarness:candidate.workflowMetrics?.generationHarness,
+        approvedPrefixRetained:generation.payload.text.startsWith(tracingPrompt),
+        approvedPromptVerbatimInText:generation.payload.text.includes(APPROVED_FIRST_PROMPT),
+        tracingWrapsApprovedPrompt:tracingPrompt.includes(APPROVED_FIRST_PROMPT) && tracingPrompt.startsWith('[SOURCE-GRID-TRACING'),
+        approvedPromptSha256:await imageLabelDigest(tracingPrompt), generationHarness:candidate.workflowMetrics?.generationHarness,
         sourceFrame:candidate.sourceFrame, candidateFrame:candidate.candidateFrame,
         attachment:await pixels(attachment.data), reference:await pixels(window.__task2.original),
         encodedRawIdentity:candidate.data===window.__task2.modified,
@@ -419,6 +431,8 @@ for (const engine of ['chromium', 'webkit']) {
     // The modern source turn uses the immutable approved RHWP prefix, rather
     // than the legacy separated request's additional whole-frame instructions.
     assert.equal(result.approvedPrefixRetained, true, 'The real generation payload retains the entire canonical approved source contract');
+    assert.equal(result.approvedPromptVerbatimInText, true, 'The immutable approved RHWP prompt text is carried verbatim, unnormalized');
+    assert.equal(result.tracingWrapsApprovedPrompt, true, 'The source-tracing contract wraps the whole approved prompt');
     assert.equal(result.generationHarness.id, 'rhwp-approved-first-v1');
     assert.equal(result.generationHarness.promptSha256, result.approvedPromptSha256);
     assert.equal(metrics.generationHarness.promptSha256, result.approvedPromptSha256);
@@ -620,12 +634,14 @@ async function qualifyModernAutoRaw(page,evidence,expected) {
   },images[0].id,'actual materialized image render');
   const insertionPixels=await page.evaluate(async id=>{
     const owner=document.querySelector('#scene [data-id="'+CSS.escape(id)+'"]'),node=owner.localName==='image'?owner:owner.querySelector('image'),href=node.getAttribute('href');
+    // 10-19(32525bde): 편집 화면은 큰 data URL 그림을 재사용 blob URL로 그린다(내보내기는 data URL 그대로). 같은 바이트인지 blob을 data URL로 되읽어 비교한다.
+    const resolvedData=href.startsWith('blob:')?await new Promise((resolve,reject)=>{fetch(href).then(r=>r.blob()).then(b=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(b);},reject);}):href;
     const image=new Image();image.src=href;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d');context.drawImage(image,0,0);const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;
     const {imageLabelDigest}=await import(window.__runtime.base+'ai-image-label-run.js'+window.__runtime.query);
-    return{objectId:id,href,digest:await imageLabelDigest(href),pixels:{width:canvas.width,height:canvas.height,rgbaHash:[...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(v=>v.toString(16).padStart(2,'0')).join(''),alpha:[rgba[3],rgba[(100*canvas.width+80)*4+3]]}};
+    return{objectId:id,href,resolvedData,digest:await imageLabelDigest(resolvedData),pixels:{width:canvas.width,height:canvas.height,rgbaHash:[...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(v=>v.toString(16).padStart(2,'0')).join(''),alpha:[rgba[3],rgba[(100*canvas.width+80)*4+3]]}};
   },images[0].id);
   write(evidence,'actual-auto-native-render.json',insertionPixels);
-  assert.equal(insertionPixels.href,expected.data);assert.equal(insertionPixels.digest,expected.storedDigest);assert.deepEqual(insertionPixels.pixels,expected.raw);
+  assert.ok(insertionPixels.href===expected.data||insertionPixels.href.startsWith('blob:'),'Edit canvas serves the image as the data URL or its reusable blob URL');assert.equal(insertionPixels.resolvedData,expected.data,'Rendered image bytes are exactly the accepted RAW PNG');assert.equal(insertionPixels.digest,expected.storedDigest);assert.deepEqual(insertionPixels.pixels,expected.raw);
   await page.screenshot({path:path.join(evidence,'actual-auto-native-render.png')});
   const after=await page.evaluate(id=>({others:window.__integrationState.get().objects.filter(object=>!(object.aiTaskId==='task-0'&&object.aiCandidateId===id)),sends:window.__task2.sends.length,outputCalls:window.__outputProcessCalls||[],separationCalls:window.__localSeparationCalls||[]}),expected.id);
   assert.deepEqual(after.others,originalObjects);assert.equal(after.sends,0);assert.deepEqual(after.outputCalls,[]);assert.deepEqual(after.separationCalls,[]);
@@ -640,8 +656,8 @@ async function qualifyModernAutoRaw(page,evidence,expected) {
 // explicitly instrumented native-decode and separation observers; they do not
 // certify a wholly uninstrumented module closure or provider quality.
 const rawTransitionCrypto = require('node:crypto');
-const rawTransitionOriginalBytes = 57222;
-const rawTransitionOriginalSHA = '2b3a2c81a48e8148ddecf57e15fbbe950ff6c7469645de94410a23ef63e02f62';
+const rawTransitionOriginalBytes = 59962;
+const rawTransitionOriginalSHA = '8d2d0edd9458f3a5553a7dbd39489c27d0a7cbb266011bd04d34c7cdbf6e26dc';
 const rawTransitionPrefix = fs.readFileSync(__filename).subarray(0, rawTransitionOriginalBytes);
 assert.equal(rawTransitionCrypto.createHash('sha256').update(rawTransitionPrefix).digest('hex'), rawTransitionOriginalSHA,
   'Every original test/assertion prefix is the reviewed unchanged source');
@@ -1090,7 +1106,7 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
         if(mode==='auto')assert.equal(prepared.assets.length,3,'The retained three-disjoint-object fixture separates exactly three objects');
         else{assert.equal(prepared.stats.layoutMode,'fixed-grid');assert.ok(prepared.assets.length>0&&prepared.assets.length<=16);assert.ok(prepared.reviewReasons.includes('grid-boundary-foreground'),'Actual grid reports the original fixture objects crossing cell boundaries');}
         assert.equal(Number(await groups.getAttribute('data-ai-separated-count')),prepared.assets.length,'Physical result action reflects the actual algorithm result');
-        assert.equal(await groups.isVisible(),true);assert.equal(await groups.isEnabled(),true);await groups.click();
+        await openOutputMore(page);assert.equal(await groups.isVisible(),true);assert.equal(await groups.isEnabled(),true);await groups.click();
         await waitModernSignal(page,count=>document.querySelectorAll('.aea-dialog .aea-thumbnail img').length===count,prepared.assets.length,'real '+mode+' dialog thumbnails');
         assert.deepEqual(await page.locator('.aea-dialog .aea-region-number').allTextContents(),prepared.assets.map((_,index)=>String(index+1)));
         await page.locator('.aea-dialog [data-action="cancel"]').click();await page.locator('.aea-dialog').waitFor({state:'detached'});
@@ -1124,8 +1140,8 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
 // Keep all preceding 32 cases, including the original 57,222-byte prefix.
 // ZIP fallback in Chromium has an explicit unsupported-directory capability
 // fixture. Neither engine's ZIP case certifies native picker/directory/desktop IO.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 97549)).digest('hex'),
-  '366a92f005950ec2d2e50c9eefbfc60737016501e6a6347c05306af7d5ab933c',
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 100316)).digest('hex'),
+  '7bb47b389938276aa257c2719e7829c22c027d0a3dfff94a87671a0201398d29',
   'All 32 existing cases remain byte-for-byte preserved before the collective append');
 async function installCollectiveExportObservation(page, runtime, origin, evidence) {
   const foreign = [];
@@ -1541,8 +1557,8 @@ for (const engine of ['chromium', 'webkit']) for (const mode of ['selected', 'al
 }
 
 // COLLECTIVE-EXPORT-BUSY-STATUS-APPEND-06 — private, unexecuted proposal.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 129341)).digest('hex'),
-  '88b4936969ab8637f6ee8ffa5d30f9940395c3e9bf4a7897665a410825872e1c', 'All 40 existing cases remain byte-for-byte unchanged');
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 132109)).digest('hex'),
+  'bb4712027c9df6c6ad9402a871dfe9222b795b53b7f1529a8e5d2554265281a4', 'All 40 existing cases remain byte-for-byte unchanged');
 
 function observeCollectiveBusyUiCompletion(source) {
   const opening = "  collectiveExportButton.addEventListener('click', async () => {";
@@ -1816,8 +1832,8 @@ for (const engine of ['chromium', 'webkit']) {
 
 // PRIVATE08: actual native load/decode success/error across preview UI lifetimes.
 // Root only. Manager dispose is explicitly component-lifecycle coverage, not a UI delete claim.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0,151959)).digest('hex'),
-  'b3c6a043cb3a5e653ebb4b845fe2be8b0402293b5fd34fcf72af16b1d60fc592', 'PRIVATE08 retains all reviewed42 bytes');
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0,154727)).digest('hex'),
+  'fd7313c054f7898b6059ed1d6cbb702d86951ae4bfbf036834de716fd3dd028f', 'PRIVATE08 retains all reviewed42 bytes');
 
 function lifetimeReplaceOnce(source, from, to, label) {
   assert.equal(source.split(from).length-1,1,label);return source.replace(from,to);
