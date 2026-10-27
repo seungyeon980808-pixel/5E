@@ -770,3 +770,49 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .f-foot .btn.go:hover{background:var(--ds-doc-hover,#f6f8fa)}
 /* 머리줄은 카드 위에 붙어 있으므로, 칸으로 스크롤할 때 그 높이만큼 비워 둔다(머리줄 밑에 단추·입력 칸이 숨지 않게) */
 #card-view .cv-writer{scroll-padding-top:60px}
+/* 10-27 W6: 기출 검색 줄 끝 상세검색을 테두리 있는 「≡ 조건」 단추로 늘 보이게, 조건을 걸면 파랗게 「조건 N」 */
+#card-view .lp-one .lp-scope{max-width:none;padding:0 18px 0 6px;background-position:right 3px center;font-weight:600}
+#card-view .lp-one .lp-adv{margin-left:-74px;height:24px;padding:0 8px;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line-strong,#3a4556);font-size:12px}
+#card-view .lp-one .lp-adv>span{display:inline}
+#card-view .lp-one .lp-slot .lp-search{padding-right:80px}
+#card-view .lp-one .lp-adv:has(i:not([hidden]))>span{display:none}
+#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-74px;box-shadow:inset 0 0 0 1px #3b82f6;color:var(--go-ink,#e6edf3);background:rgba(59,130,246,.18)}
+#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:80px}
+@container lib (max-width:320px){
+  #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-30px;padding:0 4px;box-shadow:none}
+  #card-view .lp-one .lp-adv>span{display:none}
+  #card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:40px}
+}
+
+/* ---------- 10-27 문항 카드 다듬기 2 ---------- */
+/* 글꼴: 시험지에 찍히는 글(지문·발문·보기·선지)은 함초롬바탕, 이름표·단추·문항 정보는 Pretendard(무료 OFL, vendor/에 들어 있음) */
+@font-face{font-family:'Pretendard Variable';src:local('Pretendard Variable'),url('../../../vendor/PretendardVariable.woff2') format('woff2-variations'),url('../../../vendor/PretendardVariable.woff2') format('woff2');font-weight:45 920;font-display:swap}
+#card-view .cv-writer{font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo',sans-serif}
+#card-view .cv-writer :is(button,input,select,textarea,label,small){font-family:inherit}
+#card-view .cv-grid>.f-sec:not(.cv-more-rows) :is(textarea,input[data-cvchoice],input[data-cvct]){font-family:'HCR Batang','함초롬바탕','AppleMyungjo',serif;font-size:15px;letter-spacing:-.1px}
+#card-view .cv-grid>.f-sec:not(.cv-more-rows) .ig>span:first-child{font-family:'HCR Batang','함초롬바탕','AppleMyungjo',serif}
+#card-view .cv-combos .combo-row input[data-cvchoice]{font-size:13px}
+/* 머리줄 유형 단추에는 유형만(「자료 2개」 같은 구조는 말줄임이 생겨서 뺀다) */
+#card-view .w-head .cv-shape .st{display:none}
+#card-view .w-head .cv-shape b{white-space:nowrap}
+/* 자유 배점: 숫자와 「점」을 붙여 한 덩어리 */
+#card-view .cv-ptsfree.on{gap:0;padding:0 7px 0 5px}
+#card-view .cv-ptsfree.on input{min-width:1.6ch;padding:0;text-align:right}
+#card-view .cv-ptsfree.on>span{margin-left:1px}
+/* 빈 자료 칸 단추 글자가 잘리지 않게 */
+#card-view .cv-tile.empty .cv-pick{min-width:0;white-space:nowrap}
+#card-view .cv-tile.empty .cv-pick span{overflow:visible;text-overflow:clip}
+/* 문항 정보: 문항 카드(흰 판)와 다른 영역 — 회색 판, 위 굵은 선, 「시험지에 찍히지 않음」 띠 */
+#card-view .cv-more{margin:18px 0 0;padding:12px 12px 10px;border-top:2px solid #d0d7de;border-radius:0 0 10px 10px;background:#eceff3}
+#card-view .cv-more-h{display:flex;align-items:center;gap:8px;color:#57606a}
+#card-view .cv-more-h span{margin-left:0;padding:1px 8px;border-radius:9px;background:#dde2e8;color:#57606a;font-size:11px;font-weight:500}
+#card-view .cv-more-rows{margin:0;padding:2px 12px 12px;border:0;border-radius:0 0 10px 10px;background:#eceff3;box-shadow:none}
+#card-view .cv-more-rows .cv-row{background:#fff;border-radius:8px;margin-top:8px;box-shadow:inset 0 0 0 1px #dde2e8}
+/* ○·× 판정 기호는 Pretendard의 영문 O처럼 보이지 않게 시스템 기호 글꼴로 */
+#card-view .ox button,#card-view .ig-h,#card-view .cv-combos .combo-row .no{font-family:-apple-system,'Apple SD Gothic Neo',sans-serif}
+/* 빈 자료 칸 단추: 글자가 테두리에 닿지 않게 */
+#card-view .cv-tile.empty .cv-picks{padding:0 6px}
+#card-view .cv-tile.empty .cv-pick{gap:6px;padding:0 8px;font-size:12.5px}
+/* 열린 문항 정보 칸도 같은 회색 판 안에 */
+#card-view .cv-more>.f-sec.cv-more-rows{margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+#card-view .cv-more>.f-sec.cv-more-rows .cv-row{margin-top:8px;border:0;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px #dde2e8;overflow:hidden}
