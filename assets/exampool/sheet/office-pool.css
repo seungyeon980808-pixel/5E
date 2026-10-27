@@ -566,3 +566,14 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .pv-gapz{transition:height .28s cubic-bezier(.2,.8,.2,1)}
 .pv-gapbar{transition:top .28s cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){.pv-gapz,.pv-gapbar{transition:none}}
+/* 10-27 D13 안 D: 고른 문항 오른쪽 아래 안쪽의 얇은 세로 줄(+ · 여백 값 · − · 다음 단) — 다른 문항을 가리지 않는다 */
+.pv-gapbar.v{flex-direction:column;align-items:stretch;gap:0;width:17px!important;height:auto;padding:2px 0;border-radius:4px;transform:translateY(-100%);opacity:.92;font-size:10px}
+.pv-gapbar.v button{width:17px;height:15px;font-size:12px;line-height:15px}
+.pv-gapbar.v>span{display:block;text-align:center;font-size:9px;line-height:12px;color:var(--ds-ink-2,#b1bac4)}
+.pv-gapbar.v label{justify-content:center;height:15px;margin-top:1px;padding-top:1px;border-top:1px solid rgba(255,255,255,.2);gap:0}
+.pv-gapbar.v label input{position:absolute;opacity:0;width:0;height:0}
+.pv-gapbar.v label b{font-weight:400;font-size:10px;line-height:14px;width:17px;text-align:center;border-radius:3px;opacity:.75}
+.pv-gapbar.v label:has(input:checked) b{opacity:1;background:#2f6fd6;color:#fff}
+.pv-gapbar.v label:has(input:focus-visible) b{outline:1px solid #6ba4f8}
+.pv-gapbar.v .pv-gapwhy{display:block;text-align:center;font-size:10px;line-height:13px}
+.pv-gapbar.v{transition:none}
