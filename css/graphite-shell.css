@@ -31,13 +31,14 @@
     padding: 0 0 0 calc(var(--ds-edge) + var(--ds-h-control) + 1px);
     justify-content: flex-start; /* 세 프로그램 로고 「5E」를 같은 자리(x60)에 — 이름 길이가 달라도 안 움직이게 */
     align-items: center;
-    /* 10-26 사용자 지적: 왼쪽 칸 경계선이 맨 위 줄까지 올라와 「5E_image」가 선을 넘어 보였다 — 5E_exam·5E_hwp처럼 맨 위 줄에는 선을 긋지 않는다. */
-    border-right: 0;
+    /* 왼쪽 칸 경계선은 맨 위 줄까지 잇는다(10-27 사용자: 선은 두고 글자를 옮긴다). */
+    border-right: 1px solid var(--ds-line);
   }
   :root:not([data-mode="lite"]) .app[data-left-collapsed="true"] .app-shell-header .toolbar-history { border-right-color: transparent; }
   :root:not([data-mode="lite"]) .app-shell-header .app-brand {
     display: inline-flex; align-items: baseline; gap: 0;
-    height: var(--ds-h-control); padding: 0 4px; margin-left: 15px; border-radius: var(--ds-radius);
+    /* 10-27 사용자 사진 기준: 글자 왼쪽 끝 x≈45(패널 단추 바로 오른쪽), 세로선(x160) 앞 12px쯤에서 끝난다. */
+    height: var(--ds-h-control); padding: 0 4px; margin-left: -3px; border-radius: var(--ds-radius);
     color: var(--ds-ink); text-decoration: none; line-height: var(--ds-h-control);
   }
   :root:not([data-mode="lite"]) .app-shell-header .app-brand:hover { background: var(--ds-hover); }
