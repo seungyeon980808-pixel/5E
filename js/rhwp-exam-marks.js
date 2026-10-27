@@ -1,6 +1,7 @@
 // 보이지 않는 조판 표시(조판 부호, 10-22 시안 exampool-1022 17번). ExamPool 조판 칸과 5E_hwp가 함께 쓴다.
 // - 고정 띄어쓰기(nbsp U+00A0, 한글 고정폭 빈칸 U+2007, 좁은 고정 빈칸 U+202F): 글자 사이에 얇고 큰 빨간 V.
-// - 내어쓰기 기준점: 둘째 줄이 생긴 문단에만, 둘째 줄 시작 x에 1px 초록 세로선 + 위 작은 삼각형.
+// - 내어쓰기 기준점: 내어쓰기가 걸린 문단마다(한 줄이어도) 둘째 줄이 시작할 x에 1px 초록 세로선 + 위 작은 삼각형.
+//   문단 모양의 내어쓰기 값(indentOf)이 있으면 그것으로, 없으면 둘째 줄 위치에서 거꾸로 찾는다.
 // rhwp 화면(캔버스)은 건드리지 않고 편집기 문서 위에 투명한 층을 하나 얹는다. 화면에만 보이고 인쇄·HWPX·한글로 보내기에는 나가지 않는다.
 // 위치는 rhwp 조판 글자 정보(getPageTextLayout: 글자마다 charX)에서 읽고, 스크롤·확대·글 고침마다 다시 그린다.
 const NS = 'http://www.w3.org/2000/svg';
@@ -18,7 +19,7 @@ export function setMarksEnabled(on) {
 }
 
 // 쪽 하나의 부호 자리(쪽 좌표, 확대 1). 순수 함수 — 검사에서 그대로 쓴다.
-export function marksForRuns(runs) {
+export function marksForRuns(runs, indentOf = null) {
   const spaces = [], indents = [], paras = new Map();
   for (const r of runs || []) {
     if (![r.x, r.y, r.w, r.h].every(Number.isFinite)) continue;
@@ -44,15 +45,21 @@ export function marksForRuns(runs) {
     // 글자 정보에는 표가 든 문단 번호가 없어, 다른 표의 같은 칸 번호가 한 문단으로 섞인다 → 줄 사이가 줄 높이보다 크게 벌어지면 다른 문단.
     const groups = [];
     for (const line of lines) { const g = groups.at(-1), prev = g?.at(-1); if (prev && line.y - prev.b <= (prev.b - prev.y) * 1.2) g.push(line); else groups.push([line]); }
-    for (const group of groups) indentOf(group);
+    const hang = indentOf ? Number(indentOf(runs[0])) : NaN, hasText = runs.some(r => String(r.text || '').trim());
+    for (const group of groups) {
+      if (inferIndent(group)) continue;
+      // 한 줄·짧은 문단(〈보기〉 ㄴ·ㄷ, 선지 칸)도 내어쓰기 값이 있으면 둘째 줄이 시작할 자리에 긋는다(10-27).
+      if (hasText && Number.isFinite(hang) && hang < -0.5) indents.push({ x: group[0].x - hang, top: group[0].y, bottom: group.at(-1).b });
+    }
   }
-  function indentOf(lines) {
-    if (lines.length < 2) return;
+  function inferIndent(lines) {
+    if (lines.length < 2) return false;
     const [first, second] = lines, rest = lines.slice(1);
     // 내어쓰기: 둘째 줄부터 모두 같은 x에서 시작하고 첫 줄보다 안쪽. 가운데 정렬(줄 가운데가 같음)은 빼고.
-    if (second.x <= first.x + 0.5 || rest.some(l => Math.abs(l.x - second.x) > 0.5)) return;
-    if (Math.abs((first.x + first.r) / 2 - (second.x + second.r) / 2) <= 1.5) return;
+    if (second.x <= first.x + 0.5 || rest.some(l => Math.abs(l.x - second.x) > 0.5)) return false;
+    if (Math.abs((first.x + first.r) / 2 - (second.x + second.r) / 2) <= 1.5) return false;
     indents.push({ x: second.x, top: first.y, bottom: lines.at(-1).b });
+    return true;
   }
   return { spaces, indents };
 }
@@ -79,10 +86,18 @@ export function installExamMarks(bridge, { onToggle } = {}) {
     layer.append(svg); d.body.append(layer);
     return layer;
   }
+  // 글자 조각이 속한 문단의 내어쓰기 값(화면 px, 음수=내어쓰기). 표 칸 안 문단도 같은 방식으로 읽는다.
+  function paraIndent(r) {
+    const w = bridge?.wasm; if (!w || !r) return NaN;
+    try {
+      const p = r.cellPath?.length ? w.getCellParaPropertiesAt(r.secIdx, r.parentParaIdx ?? r.paraIdx, r.controlIdx, r.cellIdx, r.cellParaIdx) : w.getParaPropertiesAt(r.secIdx, r.paraIdx);
+      return Number(p?.indent);
+    } catch { return NaN; }
+  }
   function pageMarks(handle, page) {
     const key = `${bridge.generation}:${bridge.revision}`;
     if (key !== cacheKey) { cacheKey = key; cache = new Map(); }
-    if (!cache.has(page)) { let runs = []; try { runs = JSON.parse(handle.getPageTextLayout(page)).runs || []; } catch {} cache.set(page, marksForRuns(runs)); }
+    if (!cache.has(page)) { let runs = []; try { runs = JSON.parse(handle.getPageTextLayout(page)).runs || []; } catch {} cache.set(page, marksForRuns(runs, paraIndent)); }
     return cache.get(page);
   }
   function draw() {
