@@ -1,13 +1,13 @@
-import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-hwppalette-rhwp';
-import { installExamModes } from './rhwp-exam-modes.js';
+import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-four-session-integration';
+import { installExamModes } from './rhwp-exam-modes.js?v=1.7.0-four-session-integration';
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
-import { appSwitchHtml } from './app-switch.js?v=1021-fix';
+import { appSwitchHtml } from './app-switch.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
 import { PictureSettings, ExamRegionSurface } from './rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import { validRegion, DEFAULT_PICTURE_LAYOUT } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
-import { RhwpExamBridge } from './rhwp-exam-bridge.js?v=1014-question-page';
+import { RhwpExamBridge } from './rhwp-exam-bridge.js?v=1.7.0-four-session-integration';
 import { buildExamProject, parseExamProject, readExamDraft, writeExamDraft, listExamDrafts, EXAM_PROJECT_MAX_BYTES } from './rhwp-exam-project.js?v=1.7.0-four-session-integration';
 import { embedEditablePng, readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from './editable-png.js?v=1.7.0-four-session-integration';
 import { normalizeExamFigure, forkExamFigure, validateExamLink, validateExamContext, renameExamFigure } from './rhwp-exam-links.js?v=1.7.0-four-session-integration';
@@ -19,7 +19,7 @@ import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integrati
 import { registerTopMenu } from './top-menu.js?v=1.7.0-four-session-integration';
 import { showExamDocumentChoice } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
-import { syncAppLock } from './app-lock.js?v=1021-lock';
+import { syncAppLock } from './app-lock.js?v=1.7.0-four-session-integration';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const safeName = name => (name.trim() || '새 시험지').replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);

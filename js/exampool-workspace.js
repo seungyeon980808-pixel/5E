@@ -1,10 +1,10 @@
-import { newQuestion, confirmFigure, questionHandoff, encodePool, decodePoolBundle, validateQuestion, POOL_MAX_BYTES } from './exampool-model.js?v=1013-exampool';
-import { listQuestions, saveQuestion, importQuestions, listResources } from './exampool-store.js?v=1013-exampool';
-import { initPoolReferences } from './exampool-references.js?v=1013-exampool';
+import { newQuestion, confirmFigure, questionHandoff, encodePool, decodePoolBundle, validateQuestion, POOL_MAX_BYTES } from './exampool-model.js?v=1.7.0-four-session-integration';
+import { listQuestions, saveQuestion, importQuestions, listResources } from './exampool-store.js?v=1.7.0-four-session-integration';
+import { initPoolReferences } from './exampool-references.js?v=1.7.0-four-session-integration';
 import { embedEditablePng, readEditablePng } from './editable-png.js?v=1.7.0-four-session-integration';
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
-import { syncAppLock } from './app-lock.js?v=1021-lock';
-import { initQuestionSheet } from './exampool-sheet-workspace.js?v=1021-fix';
+import { syncAppLock } from './app-lock.js?v=1.7.0-four-session-integration';
+import { initQuestionSheet } from './exampool-sheet-workspace.js?v=1.7.0-four-session-integration';
 
 const copy = value => structuredClone(value);
 const letters = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];

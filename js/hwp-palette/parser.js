@@ -1,5 +1,5 @@
 // HwpPalette parser port, AGPL-3.0. See assets/hwp-palette/NOTICE.md.
-import { CATALOG } from "./catalog.js";
+import { CATALOG } from "./catalog.js?v=1.7.0-four-session-integration";
 const normalized = (text) => String(text || "").replace(/\r\n?/g, "\n");
 const token = /^\\([^\\\r\n]+?)\\$/;
 const table = /^표\s*(\d+)\s*[*xX×]\s*(\d+)$/;

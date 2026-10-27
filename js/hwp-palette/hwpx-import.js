@@ -1,7 +1,7 @@
 // Resource-preserving HWPX import for note/numbering controls rejected by the
 // pinned paragraph-block API. The native parser validates the assembled package.
 import { zipSync, unzipSync } from "../../vendor/fflate/index.js";
-import { xmlDocument } from "./workbook.js";
+import { xmlDocument } from "./workbook.js?v=1.7.0-four-session-integration";
 const encode = (node) =>
   new TextEncoder().encode(new XMLSerializer().serializeToString(node));
 const kids = (node, tag) =>

@@ -41,7 +41,7 @@ h.withServer(async origin => {
         page.on('pageerror', error => errors.push(error.message));
         await page.route('**/reopen-fixture', route => route.fulfill({
           contentType: 'text/html',
-          body: '<html><head><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/unified-library.css"></head><body></body></html>',
+          body: '<html><head><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/unified-library.css"><link rel="stylesheet" href="/css/loading/blur-reveal.css"><link rel="stylesheet" href="/css/loading/reveal-status.css"><link rel="stylesheet" href="/css/loading/library-loading.css"></head><body></body></html>',
         }));
         await page.goto(origin + '/reopen-fixture');
         await page.evaluate(async () => {

@@ -1,12 +1,12 @@
 import {embedEditablePng,readEditablePng} from './editable-png.js?v=1.7.0-four-session-integration';
 import {getContentBounds} from './svg-export.js?v=1.7.0-four-session-integration';
-import {syncAppLock} from './app-lock.js?v=1021-lock';
+import {syncAppLock} from './app-lock.js?v=1.7.0-four-session-integration';
 const copy=v=>structuredClone(v);
 const asData=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/png;base64,'+btoa(s);};
 let harnessPromise,enginesPromise;
-const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1018-authoring').then(x=>x.createFigureEngines()));
+const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1.7.0-four-session-integration').then(x=>x.createFigureEngines()));
 // 시험에서 대역 하네스를 넣을 수 있게 window.fiveEAuthoringHarness를 먼저 본다.
-const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):harnessPromise||=(import('./exampool-authoring-harness.js?v=1018-authoring').then(x=>x.createAuthoringHarness()));
+const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):harnessPromise||=(import('./exampool-authoring-harness.js?v=1.7.0-four-session-integration').then(x=>x.createAuthoringHarness()));
 export function initQuestionSheet(state,services,examWorkspace){
   // 5E_ExamPool 버튼(button-design.js가 만든 자리)이 문항 시트를 연다. 없으면 같은 자리에 만든다.
   let entry=document.getElementById('exam-pool-open');

@@ -1,5 +1,5 @@
-import { createLibraryLoading } from './loading/library-controller.js?v=20261015';
-import { createLibraryPreviewLoading } from './loading/library-preview.js?v=20261015';
+import { createLibraryLoading } from './loading/library-controller.js?v=1.7.0-four-session-integration';
+import { createLibraryPreviewLoading } from './loading/library-preview.js?v=1.7.0-four-session-integration';
 import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';

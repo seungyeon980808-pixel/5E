@@ -1,16 +1,16 @@
 // 5E_hwp 도구 모드 3개(10-21): 기본(한글 리본 그대로) · 집중(시험지·학습지에 필요한 것만 + 팔레트) · 없음(종이만).
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
-import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
-import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js';
+import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1.7.0-four-session-integration';
+import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
+import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
-import { installExamMarks, marksButtonHtml, marksEnabled, setMarksEnabled } from './rhwp-exam-marks.js?v=1022-marks';
+import { installExamMarks, marksButtonHtml, marksEnabled, setMarksEnabled } from './rhwp-exam-marks.js?v=1.7.0-four-session-integration';
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
-const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
-import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset, setAllAnswers, setAllScores } from './rhwp-exam-worksheet.js';
-import { inspectorMarkup, leftToolsMarkup, installInspector, installLeftTools } from './rhwp-exam-inspector.js';
-import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
+const examPoolOpen = () => import('./rhwp-exam-exampool-open.js?v=1.7.0-four-session-integration');
+import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset, setAllAnswers, setAllScores } from './rhwp-exam-worksheet.js?v=1.7.0-four-session-integration';
+import { inspectorMarkup, leftToolsMarkup, installInspector, installLeftTools } from './rhwp-exam-inspector.js?v=1.7.0-four-session-integration';
+import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js?v=1.7.0-four-session-integration';
 
 const MODE_KEY = '5e.hwp.toolMode';
 // 문서의 모든 쪽을 엔진 SVG로 그려 숨은 틀에서 인쇄 창을 연다(portable 글자 폭 — 화면용 보조 측정이 켜져 있으면 SVG 그리기가 거부됨).

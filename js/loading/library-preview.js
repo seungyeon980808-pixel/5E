@@ -1,5 +1,5 @@
-import { BlurReveal } from './blur-reveal.js';
-import { trackLoadingMotion } from './activity-visibility.js';
+import { BlurReveal } from './blur-reveal.js?v=1.7.0-four-session-integration';
+import { trackLoadingMotion } from './activity-visibility.js?v=1.7.0-four-session-integration';
 import { createPreviewLoading } from '../library/page-loading.js?v=1.7.0-four-session-integration';
 
 // One operation owns its indicator, source layers and clock. Disposing a stale

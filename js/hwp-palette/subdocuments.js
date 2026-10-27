@@ -1,6 +1,6 @@
 // Editable HWPX subdocuments and cross-document native history. AGPL-3.0.
 import { zipSync, unzipSync } from "../../vendor/fflate/index.js";
-import { xmlDocument } from "./workbook.js";
+import { xmlDocument } from "./workbook.js?v=1.7.0-four-session-integration";
 
 const adapters = new WeakMap();
 const decode = (x) => (typeof x === "string" ? JSON.parse(x) : x);

@@ -1,6 +1,6 @@
 import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 import { initSettingsShortcuts, settingsShortcutRows } from './settings-shortcuts.js?v=1.7.0-four-session-integration';
-import { COLOR_MODES, COLOR_MODE_LABELS, getColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-graphite';
+import { COLOR_MODES, COLOR_MODE_LABELS, getColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-four-session-integration';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== SETTINGS (설정 dropdown + 기본값 설정 modal) ===== */
 //

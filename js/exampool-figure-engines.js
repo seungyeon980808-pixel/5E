@@ -8,7 +8,7 @@ import {parseAiEvent} from './ai-events.js?v=1.7.0-four-session-integration';
 import {graphDescriptionSource,prepareGraphDescriptionPlan} from './graph/description-contract.js?v=1.7.0-four-session-integration';
 import {createGraphReconstructionWorkflow} from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import {GRAPH_WORKBENCH_SELECTION,validateWorkbenchGraph,buildWorkbenchGraph,workbenchGraphDataUrl,editWorkbenchGraph} from './graph/workbench-result.js?v=1.7.0-four-session-integration';
-import {buildExamBriefPrompt} from './ai-exam-brief.js?v=1.7.0-exam-brief';
+import {buildExamBriefPrompt} from './ai-exam-brief.js?v=1.7.0-four-session-integration';
 const IMAGE_TIMEOUT=300000;
 // 그래프 렌더러는 SVG를 준다. 문항 그림 칸·엑셀·한글은 PNG를 쓰므로 인쇄용으로 3배 해상도 PNG로 바꾼다.
 async function svgToPng(svg,width,height,scale=3){const i=new Image();i.src=svg;await i.decode();const c=document.createElement('canvas');c.width=Math.round(width*scale);c.height=Math.round(height*scale);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);return {data:c.toDataURL('image/png'),width:c.width,height:c.height};}

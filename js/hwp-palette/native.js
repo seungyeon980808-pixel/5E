@@ -1,13 +1,13 @@
 // Native RHWP execution of HwpPalette operations. AGPL-3.0.
-import { CATALOG } from "./catalog.js";
-import { physicalImageSize, convertExamImage } from "./image.js";
+import { CATALOG } from "./catalog.js?v=1.7.0-four-session-integration";
+import { physicalImageSize, convertExamImage } from "./image.js?v=1.7.0-four-session-integration";
 import {
   parseQuestion,
   recognizedQuestion,
   buildSegments,
   buildLibraryPlan,
   formatChoice,
-} from "./parser.js";
+} from "./parser.js?v=1.7.0-four-session-integration";
 import {
   libraryLookup,
   itemBytes,
@@ -15,9 +15,9 @@ import {
   clone,
   styleActions,
   profileSpec,
-} from "./model.js";
+} from "./model.js?v=1.7.0-four-session-integration";
 import { zipSync, unzipSync } from "../../vendor/fflate/index.js";
-import { xmlDocument } from "./workbook.js";
+import { xmlDocument } from "./workbook.js?v=1.7.0-four-session-integration";
 import {
   inSubdocument,
   stageSubdocument,
@@ -25,8 +25,8 @@ import {
   detachedDocument,
   installDocumentHistory,
   REPLACE_DETACHED,
-} from "./subdocuments.js";
-import { importHwpxParagraphs } from "./hwpx-import.js";
+} from "./subdocuments.js?v=1.7.0-four-session-integration";
+import { importHwpxParagraphs } from "./hwpx-import.js?v=1.7.0-four-session-integration";
 export const mm = (value) => Math.round((Number(value) * 7200) / 25.4);
 const chars = (value) => [...String(value)].length;
 export function read(value) {

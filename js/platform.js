@@ -1,5 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
-import { coveringApp } from './app-lock.js?v=1021-lock';
+import { coveringApp } from './app-lock.js?v=1.7.0-four-session-integration';
 /* ===== PLATFORM =====
  * Mac과 Windows는 수식키 규칙이 다르다. 이 파일이 그 차이를 한곳에 모은다.
  *

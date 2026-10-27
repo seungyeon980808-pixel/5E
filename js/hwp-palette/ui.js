@@ -1,5 +1,5 @@
-import { CATALOG } from "./catalog.js";
-import { IMAGE_STYLES, physicalImageSize } from "./image.js";
+import { CATALOG } from "./catalog.js?v=1.7.0-four-session-integration";
+import { IMAGE_STYLES, physicalImageSize } from "./image.js?v=1.7.0-four-session-integration";
 import {
   PaletteStore,
   CATEGORIES,
@@ -21,8 +21,8 @@ import {
   removeItem,
   styleActions,
   unzipPalette,
-} from "./model.js";
-import { NativePalette } from "./native.js";
+} from "./model.js?v=1.7.0-four-session-integration";
+import { NativePalette } from "./native.js?v=1.7.0-four-session-integration";
 import {
   buildWorkbook,
   workbookToMarkdown,
@@ -34,7 +34,7 @@ import {
   buildQuestionWorkbook,
   excelStyles,
   slotNamesFor,
-} from "./workbook.js";
+} from "./workbook.js?v=1.7.0-four-session-integration";
 const safe = (value) =>
   String(value ?? "").replace(
     /[&<>"']/g,
@@ -284,7 +284,7 @@ export function initPaletteWorkspace(panel, services) {
         wide: true,
         submit: async (box) => {
           const lookup = libraryLookup(store.state),
-            { buildLibraryPlan } = await import("./parser.js");
+            { buildLibraryPlan } = await import("./parser.js?v=1.7.0-four-session-integration");
           const fills = names.map((_, i) => {
             const value = box.querySelector(`[name="slot-${i}"]`).value;
             if (!value.trim()) return null;
@@ -916,7 +916,7 @@ export function initPaletteWorkspace(panel, services) {
             const p = store.state.photos.find(
               (p) => p.id === button.dataset.photo,
             );
-            const { buildLibraryPlan } = await import("./parser.js");
+            const { buildLibraryPlan } = await import("./parser.js?v=1.7.0-four-session-integration");
             await native.executePlan({
               ops: [["rich_line", [{ text: "", style: null, image: p.id }]]],
               warnings: [],

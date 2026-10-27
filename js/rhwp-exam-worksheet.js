@@ -1,9 +1,9 @@
 // 학습지·시험지 만들기 도구(10-21 밤). 빈칸 학습지(표시 → 학생용 사본·정답 모음), 시험지 머리 양식, 정답표 칸, 문항 간격 일괄.
 // 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 학생용 사본은 지금 문서를 건드리지 않고 복사본에서 만든다.
-import { insertTable } from './hwp-palette/native.js';
-import { qrPng } from './qr-encode.js';
-import { unitGapIssues } from './rhwp-exam-science-text.js';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps, hasInlineObjects, objectCounts, assertObjectsKept } from './rhwp-exam-layout-tools.js';
+import { insertTable } from './hwp-palette/native.js?v=1.7.0-four-session-integration';
+import { qrPng } from './qr-encode.js?v=1.7.0-four-session-integration';
+import { unitGapIssues } from './rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps, hasInlineObjects, objectCounts, assertObjectsKept } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 문단 끝 위치(10-27 D4): 글 길이(getParagraphLength)에는 표·그림·수식 개체가 빠져 있다. 개체만 든 문단(5E_exam 선지 표)은 길이 0이라

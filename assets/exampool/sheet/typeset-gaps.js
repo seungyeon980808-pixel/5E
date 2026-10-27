@@ -6,7 +6,7 @@
 import {nativeRuns} from './live-patch.js';
 import {KICE_STANDARD,KICE_ID,gapRole,exportStandard,importStandard} from './typeset-standard.js';
 import {KINDS} from './model.js';
-import {unitGapPositions} from '../../../js/rhwp-exam-science-text.js?v=1022-unit';
+import {unitGapPositions} from '../../../js/rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
 
 const MM_PER_PX = 25.4 / 96;
 const NAME = { ask: '발문', choices: '선지', text: '지문', figure: '자료', table: '자료', group: '자료', bogi: '〈보기〉', steps: '과정', dialogue: '대화' };

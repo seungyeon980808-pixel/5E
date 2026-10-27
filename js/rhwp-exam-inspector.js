@@ -3,10 +3,10 @@
 //   묶음(소제목 + 줄) · 줄 = 이름(78px) + 값 칸(−/값/+)·단추·고르기 · 맨 아래 늘 보이는 문자표·조판 부호.
 // 왼쪽 288px = 5E에서 만든 기능: 새 시험지 · 모드(문항·학습지·판짜기) · 내용 넣기 · 자동 다듬기 · 모드 도구 · 문서의 그림 · 점검·양식 저장.
 // 값은 엔진에서 읽어 보이고, 바꿀 때는 단축키와 같은 명령(ctx.command)이나 엔진 쓰기(bridge.transaction 안 — 되돌리기 한 번)를 쓴다.
-import { applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitTableToColumn, fitCellPicture, renumberQuestions } from './rhwp-exam-layout-tools.js';
-import { applyScienceScripts } from './rhwp-exam-science-text.js';
-import { setColumns, setPaper, PAPERS } from './rhwp-exam-worksheet.js';
+import { applyHangingIndent } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
+import { fitTableToColumn, fitCellPicture, renumberQuestions } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
+import { applyScienceScripts } from './rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
+import { setColumns, setPaper, PAPERS } from './rhwp-exam-worksheet.js?v=1.7.0-four-session-integration';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const parse = v => typeof v === 'string' ? JSON.parse(v) : v;

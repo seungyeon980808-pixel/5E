@@ -2,11 +2,11 @@ import { createEditor } from '../vendor/rhwp-editor/index.js?v=1.7.0-four-sessio
 import { readEditablePng } from './editable-png.js?v=1.7.0-four-session-integration';
 import { DEFAULT_PICTURE_LAYOUT, validatePictureLayout, regionGeometry } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
 import { installPictureResize } from './rhwp-exam-picture-resize.js?v=1.7.0-four-session-integration';
-import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { installDocumentShortcuts } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
-import { setTableLayoutLocked } from './rhwp-exam-layout-lock.js?v=1021-fix';
+import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
+import { installDocumentShortcuts } from './rhwp-exam-shortcuts.js?v=1.7.0-four-session-integration';
+import { setTableLayoutLocked } from './rhwp-exam-layout-lock.js?v=1.7.0-four-session-integration';
 import {exportCompatibleHwp,exportVerifiedHwpx} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
-import { installDocumentHistory, nativePictureBytes, withHeaderFooterPicture, nativePicturePaint } from './hwp-palette/subdocuments.js';
+import { installDocumentHistory, nativePictureBytes, withHeaderFooterPicture, nativePicturePaint } from './hwp-palette/subdocuments.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_PREFIX = '5e-exam:';
 const HWP_UNITS_PER_MM = 7200 / 25.4;

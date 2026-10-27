@@ -388,6 +388,8 @@ async function probeFeatures(page, runtime) {
   await page.locator('#ai-image-install-open').click();
   await page.locator('#ai-image-panel').waitFor({ state: 'visible' });
   await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  // Workflow switching is async (switchWorkflow); wait for the pressed state instead of sampling it once.
+  await page.locator('#ai-image-panel [data-ai-workflow="graph"][aria-pressed="true"]').waitFor({ state: 'attached' });
   assert.equal(await page.locator('#ai-image-panel [data-ai-workflow="graph"]').getAttribute('aria-pressed'), 'true');
   await page.locator('#ai-image-panel [data-ai-workflow="image"]').click();
   await page.locator('#ai-image-panel [data-ai-close]').click();

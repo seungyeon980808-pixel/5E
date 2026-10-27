@@ -1,6 +1,6 @@
 // HwpPalette storage/model port (AGPL-3.0). Browser transactions replace file writes.
-import { CATALOG } from "./catalog.js";
-import { styleFields } from "./parser.js";
+import { CATALOG } from "./catalog.js?v=1.7.0-four-session-integration";
+import { styleFields } from "./parser.js?v=1.7.0-four-session-integration";
 import { zipSync, unzipSync } from "../../vendor/fflate/index.js";
 export const CATEGORIES = ["서식", "문자", "템플릿", "양식"];
 export const clone = (value) => structuredClone(value);

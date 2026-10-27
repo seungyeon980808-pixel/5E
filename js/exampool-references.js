@@ -1,6 +1,6 @@
 import {createPdfRuntimeLoader} from './pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
-import {listResources,saveResource} from './exampool-store.js?v=1013-exampool';
-import {validateResource} from './exampool-model.js?v=1013-exampool';
+import {listResources,saveResource} from './exampool-store.js?v=1.7.0-four-session-integration';
+import {validateResource} from './exampool-model.js?v=1.7.0-four-session-integration';
 
 const decode = value => Uint8Array.from(atob(value), char => char.charCodeAt(0));
 function base64(bytes) {

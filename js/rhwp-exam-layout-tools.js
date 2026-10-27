@@ -1,6 +1,6 @@
 // 5E_hwp 집중 도구 줄의 새 조판 기능(10-21). 모두 한 번의 되돌리기 단계(bridge.transaction)로 문서를 고친다.
 // 그림 칸 너비 맞춤 · 그림 2×N 표 · 표를 단 폭에 맞춤 · 문항 번호 다시 매기기 · 선지 배열 바꾸기 · 조판 점검.
-import { insertTable, mm, read } from './hwp-palette/native.js';
+import { insertTable, mm, read } from './hwp-palette/native.js?v=1.7.0-four-session-integration';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 문단 끝 위치(10-27 D4): 글 길이(getParagraphLength)에는 표·그림·수식 개체가 빠져 있다. 개체만 든 문단(5E_exam 선지 표)은 길이 0이라

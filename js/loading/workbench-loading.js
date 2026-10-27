@@ -1,7 +1,7 @@
-import { BlurReveal } from './blur-reveal.js';
-import { RevealStatus } from './reveal-status.js';
-import { trackLoadingMotion } from './activity-visibility.js';
-import { coveringApp } from '../app-lock.js?v=1021-lock';
+import { BlurReveal } from './blur-reveal.js?v=1.7.0-four-session-integration';
+import { RevealStatus } from './reveal-status.js?v=1.7.0-four-session-integration';
+import { trackLoadingMotion } from './activity-visibility.js?v=1.7.0-four-session-integration';
+import { coveringApp } from '../app-lock.js?v=1.7.0-four-session-integration';
 
 const COPY = Object.freeze({
   image: { start: '시험지 스타일로 다시 그리고 있어요', slow: '평소보다 조금 더 걸리고 있어요', verySlow: '아직 작업 중이에요 · 원본은 그대로 있어요', done: '시험지 스타일로 바꿨어요', failed: '변환하지 못했어요 · 원본은 그대로예요' },

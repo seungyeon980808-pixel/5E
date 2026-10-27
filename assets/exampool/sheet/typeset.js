@@ -1,11 +1,11 @@
-import {renumberDocument} from '../../../js/rhwp-exam-layout-tools.js?v=1022-variant';
+import {renumberDocument} from '../../../js/rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
 import {attachGapView,questionElements} from './typeset-gaps.js';
 import {attachTypesetSettings} from './typeset-settings.js';
-import {marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1022-marks';
+import {marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1.7.0-four-session-integration';
 import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
 import {KICE_STANDARD,standardForPaper} from './typeset-standard.js';
-import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
+import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1.7.0-four-session-integration';
 import {buildExamDocument,assembleExamChecked} from './exam-build.js';
 import {examPage,paperMix,paperMixMessage} from './exam-layout.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
@@ -15,7 +15,7 @@ import {PictureSettings} from '../../../js/rhwp-exam-picture-controls.js?v=1.7.0
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
 import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
-import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1014-compact-panel';
+import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
 import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
 import {assertNativeLayout} from './native-layout-check.js?v=1014-compact-panel';

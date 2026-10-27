@@ -1,6 +1,6 @@
-import { BlurReveal } from './blur-reveal.js';
-import { LibraryLoading } from './library-loading.js';
-import { trackLoadingMotion } from './activity-visibility.js';
+import { BlurReveal } from './blur-reveal.js?v=1.7.0-four-session-integration';
+import { LibraryLoading } from './library-loading.js?v=1.7.0-four-session-integration';
+import { trackLoadingMotion } from './activity-visibility.js?v=1.7.0-four-session-integration';
 
 export function createLibraryLoading({ header, grid }) {
   const indicator = LibraryLoading.attach({ header, grid });

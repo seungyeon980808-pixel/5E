@@ -1,4 +1,4 @@
-import { FIGURE_STYLES, parseFlowSteps, parsePlotTable, buildFlowchart } from './figure-studio-model.js?v=20261018';
+import { FIGURE_STYLES, parseFlowSteps, parsePlotTable, buildFlowchart } from './figure-studio-model.js?v=1.7.0-four-session-integration';
 import { planDataPlot } from './data-plot.js?v=1.7.0-four-session-integration';
 import { renderObject } from './render.js?v=1.7.0-four-session-integration';
 import { nextObjectId } from './tools/id.js?v=1.7.0-four-session-integration';

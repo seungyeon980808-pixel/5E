@@ -1,7 +1,7 @@
 // HwpPalette spreadsheet pathways (AGPL-3.0); OOXML, no remote service.
-import { CATALOG } from "./catalog.js";
+import { CATALOG } from "./catalog.js?v=1.7.0-four-session-integration";
 import { zipSync, unzipSync } from "../../vendor/fflate/index.js";
-import { unzipPalette, libraryLookup } from "./model.js";
+import { unzipPalette, libraryLookup } from "./model.js?v=1.7.0-four-session-integration";
 const enc = new TextEncoder(),
   dec = new TextDecoder("utf-8", { fatal: true });
 const esc = (value) =>
