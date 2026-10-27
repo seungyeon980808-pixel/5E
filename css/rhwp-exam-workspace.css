@@ -219,3 +219,7 @@ body.exam-editing #ai-image-panel .modal-ai.ai-workbench {
 #rhwp-exam-workspace .exam-figure .exam-figure-draft i { width:6px; height:6px; border-radius:50%; background:var(--ds-ink-3, #7d8590); }
 .exam-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; font-style:normal; }
 @media (max-width:900px) { #rhwp-exam-workspace .exam-figure .exam-figure-thumbnail { width:100%; height:78px; } }
+/* 빈 그림 화면에서 「그림 화면에서 넣기」: 캔버스 위 아래쪽 가운데 막대(10-27) */
+.exam-draw-bar{position:fixed;z-index:1200;left:50%;bottom:64px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:22px;background:var(--bg-panel,#152137);color:var(--text-primary,#e6edf3);box-shadow:0 0 0 1px var(--border,#30363d),0 10px 28px rgba(0,0,0,.35);font-size:13px;white-space:nowrap}
+.exam-draw-bar button{height:32px;padding:0 14px;border-radius:16px;border:1px solid var(--border,#30363d);background:transparent;color:inherit;font:inherit;cursor:pointer}
+.exam-draw-bar button.exam-primary{background:#2f6fd6;border-color:#2f6fd6;color:#fff}

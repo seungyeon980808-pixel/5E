@@ -406,6 +406,20 @@ export function initRhwpExamWorkspace(state, services) {
     row.querySelector('[data-placement-hint]').textContent = current ? '기존 위치와 객체 크기를 유지하며 보내는 영역을 바꿉니다. 확인하면 선택한 영역으로 바뀝니다.' : '본문이나 표 셀에서 위치를 클릭한 뒤 확인하세요.';
     message(current ? '같은 탭에서 보낸 그림은 기존 그림 한 개를 갱신합니다.' : '시험지에서 그림을 넣을 위치를 클릭하세요.'); updatePlacement();
   }
+  // 빈 그림 화면 → 시험지 창을 잠시 숨기고 캔버스 위에 「시험지에 넣기 · 돌아가기」 막대를 띄운다.
+  function drawThenSend() {
+    document.querySelector('.exam-draw-bar')?.remove();
+    panel.hidden = true; syncBackground();
+    const bar = document.createElement('div'); bar.className = 'exam-draw-bar'; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', '그림 그려서 시험지에 넣기');
+    bar.innerHTML = '<span>그림을 그리거나 붙여 넣은 뒤 「시험지에 넣기」를 누르세요.</span><button type="button" data-draw="back">돌아가기</button><button type="button" class="exam-primary" data-draw="send">시험지에 넣기</button>';
+    const back = () => { bar.remove(); document.removeEventListener('keydown', esc, true); panel.hidden = false; syncBackground(); };
+    const esc = e => { if (e.key === 'Escape' && bar.isConnected && !document.querySelector('.area-capture, .capture-overlay')) { e.preventDefault(); back(); } };
+    bar.addEventListener('click', e => { const b = e.target.closest('[data-draw]'); if (!b) return;
+      if (b.dataset.draw === 'back') return back();
+      if (!state.get().objects.length) { bar.querySelector('span').textContent = '캔버스가 아직 비어 있습니다. 그림을 그리거나 붙여 넣은 뒤 다시 누르세요.'; return; }
+      back(); void run(() => startSend()); });
+    document.addEventListener('keydown', esc, true); document.body.append(bar);
+  }
   async function startSend(aiRequest = null, graph = null) {
     pendingDocumentInsertion = null;
     if (window.fiveEExam) {await window.fiveEExam.returnToSource();return;}
@@ -1059,8 +1073,8 @@ export function initRhwpExamWorkspace(state, services) {
     close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); await fadeOut(panel); panel.hidden = true; syncBackground(); await resumeLinkedPage();document.querySelector('.app-switch-image [data-app-switch="hwp"]')?.focus(); },
     new:async () => { cancelPlacement();await stableSave();await closeInline(); initializing=true;await bridge.newDocument();initializing=false;documentGeneration=bridge.generation;projectId=crypto.randomUUID();figures = new Map(); nameInput.value = '새 시험지'; changed(); },
     insert:() => startSend(),
-    // 집중 도구 줄 「그림 화면에서 넣기」: 그림 화면이 비었으면 안내만 한다(예전 아래 막대 단추의 동작).
-    'insert-from-image':() => { if (!state.get().objects.length) throw new Error('그림 화면에 넣을 그림이 없습니다. 맨 위 「image」에서 그림을 만든 뒤 누르세요.'); return startSend(); },
+    // 집중 도구 줄 「그림 화면에서 넣기」: 그림 화면이 비었으면 막지 않고 그림 화면으로 데려가, 다 그린 뒤 그 자리에서 넣게 한다(10-27).
+    'insert-from-image':() => { if (!state.get().objects.length) return drawThenSend(); return startSend(); },
     'cancel-placement':() => {cancelPlacement();message('그림 보내기를 취소했습니다.');},
     'confirm-placement':confirmPlacement,
     edit:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginEdit(bridge.selectedFigureId(),ref); },

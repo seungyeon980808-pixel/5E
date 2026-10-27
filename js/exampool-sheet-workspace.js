@@ -22,7 +22,7 @@ export function initQuestionSheet(state,services,examWorkspace){
   function close(){if(!host)return;host.hidden=true;document.documentElement.classList.remove('exampool-modal');syncAppLock();focusReturn?.focus();}
   // 5E 그림을 ExamPool 문항의 그림 칸으로 보낸다. region(mm)이 있으면 그 영역만, 없으면 그림 전체.
   async function captureFigure(m,send,region=null){
-        services.commitActiveText?.();const source=copy(services.serialize(state.get()));source.pages=source.pages.filter(p=>p.id===source.activePageId);const {active}=services.prepareLoadedProject(copy(source));if(!active.objects.length)throw Error('5E에서 그림을 만든 뒤 가져오세요.');const bounds=region||getContentBounds({...state.get(),...active});if(!bounds||bounds.w<=0||bounds.h<=0||(bounds.w/25.4*300)*(bounds.h/25.4*300)>40000000)throw Error('그림 영역을 줄인 뒤 가져오세요.');
+        services.commitActiveText?.();const source=copy(services.serialize(state.get()));source.pages=source.pages.filter(p=>p.id===source.activePageId);const {active}=services.prepareLoadedProject(copy(source));if(!active.objects.length)throw Error('캔버스가 비어 있습니다');const bounds=region||getContentBounds({...state.get(),...active});if(!bounds||bounds.w<=0||bounds.h<=0||(bounds.w/25.4*300)*(bounds.h/25.4*300)>40000000)throw Error('그림 영역을 줄인 뒤 가져오세요.');
         const assetId=m.key.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,80),id=crypto.randomUUID(),name=active.name.slice(0,200);source.pages[0].meta={...source.pages[0].meta,exampoolLink:{questionId:m.qid,assetId}};await services.ensureEmbeddedFonts();const render={bounds,options:{includeReferenceImages:true,excludeAllImages:false}},result=await services.rasterizeExportCanvas({...state.get(),...active},{dpi:300,...render}),blob=await new Promise((resolve,reject)=>result.canvas.toBlob(b=>b?resolve(b):reject(Error('그림을 가져오지 못했습니다.')),'image/png'));
         const png=asData(embedEditablePng(new Uint8Array(services.insertPngPhys(await blob.arrayBuffer(),300)),{id,name,version:1,source,render,link:{tabId:m.qid,assetId}},services.prepareLoadedProject));if(png.length>8*1024*1024)throw Error('엑셀에 보관할 그림은 5 MB 이하로 줄여주세요.');send({action:'figure-ready',figure:{name,data:png,editable:{id,name,png,source,render,capturedAt:new Date().toISOString(),widthMm:result.widthMm,heightMm:result.heightMm,pixelWidth:result.canvas.width,pixelHeight:result.canvas.height}}});
         state.update(v=>{const page=v.pages.find(p=>p.id===source.activePageId);if(page)page.meta={...page.meta,exampoolLink:{questionId:m.qid,assetId}};});
@@ -44,8 +44,10 @@ export function initQuestionSheet(state,services,examWorkspace){
   async function pickFigure(m,send,options={}){
     services.commitActiveText?.();
     const page=()=>services.prepareLoadedProject(copy(services.serialize(state.get()))).active;
-    const first=page();if(!first.objects.length){send({error:'5E 그림 화면에서 그림을 만든 뒤 다시 더블클릭하세요.'});return;}
-    let bounds=copy(options.bounds||getContentBounds({...state.get(),...first}));if(!bounds||bounds.w<=0||bounds.h<=0){send({error:'5E 그림의 영역을 찾지 못했습니다.'});return;}
+    // 그림 화면이 비어 있어도 막지 않는다(10-27): 캔버스로 나가 아트보드 가운데에 영역 상자를 띄우고, 그 자리에서 그리거나 붙여 넣게 한다.
+    const first=page(),empty=!first.objects.length,A=state.get().artboard||{w:90,h:60};
+    const blank=()=>{const w=Math.round(A.w*0.6),h=Math.round(w*0.75);return {x:-w/2,y:-h/2,w,h};};
+    let bounds=copy(options.bounds||(empty?blank():getContentBounds({...state.get(),...first})));if(!bounds||bounds.w<=0||bounds.h<=0)bounds=blank();
     const {ExamRegionSurface}=await import('./rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration');
     host.hidden=true;const app=document.querySelector('body>.app');syncAppLock();
     const canvasRect=()=>{const c=document.querySelector('#canvas');return c?.getScreenCTM()&&c;};
@@ -68,6 +70,7 @@ export function initQuestionSheet(state,services,examWorkspace){
       // 적용·취소로 끝나도 Esc 감시를 떼도록 finish에서 지운다(예전엔 쌓였다 — M6 덧붙임).
       esc=e=>{if(e.key==='Escape'&&picking){e.preventDefault();picking.cancel();}};document.addEventListener('keydown',esc,true);
       region.show(session());follow();
+      if(empty)say('그림을 그리거나 붙여 넣으세요');
     });
   }
   // 문항 창 안에서 대화 창이 뜨면 바깥 5E 상태 줄·튜토리얼 말풍선도 같이 흐린다(문항 창 안쪽은 스스로 흐린다).
