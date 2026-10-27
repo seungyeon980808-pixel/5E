@@ -3,6 +3,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+// 10-22(e704e45e)부터 「좌우·상하·슬라이더 비교」는 「비교 ▾」 메뉴 안에 있다 — 메뉴를 열고 누른다.
+const clickCompare = async (scope, selector = '[data-ai-compare]') => { const menu = scope.locator('.ai-compare-menu').first(); if (await menu.count() && !await menu.evaluate(d => d.open)) await menu.locator('summary').click(); await scope.locator(selector).first().click(); };
+// 83201a54(10-22): 「그룹으로 보기」등 부가 출력 단추는 닫힌 「고급 출력」(details.ai-output-more) 안에 있다 — 먼저 연다.
+const openOutputMore = async page => { const d = page.locator('#ai-image-panel .ai-output-more').first(); if (await d.count() && !await d.evaluate(e => e.open)) await d.locator('summary').click(); };
 const root = path.resolve(__dirname, '..');
 const evidenceRoot = process.env.TASK7_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task7/browser');
 function seedRequestWorkspaces(count, initialGeneration = false, missingCapabilities = false, mode = 'pro', scoped = false, badTask = false, sourceOnly = false, fixtureOptions = {}) {
@@ -21,7 +25,9 @@ function seedRequestWorkspaces(count, initialGeneration = false, missingCapabili
     id: `task-${index}`, title: `검증 작업 ${index + 1}`, workState: 'idle', input: '선택 영역 안에 작은 사각형 추가',
     model: index ? 'gpt-6.1-sol' : 'gpt-6-luna', effort: 'medium', serviceTier: 'priority', separationMode: fixtureOptions.separationMode || 'off',
     generationMode: fixtureOptions.separationMode === 'auto' ? 'separated' : 'single',
-    imageLabelWorkflow: { version: '1.1.0', imageKind: 'general', labelResult: 'remove', verificationMode: 'full', auxiliaryMarks: 'remove', scientificArrows: 'keep', explicit: true },
+    // 워크플로 버전은 현재 1.2.0으로 정규화되고, 보조선 '제거'는 markPolicyChosen+markPolicy.leaders(js/ai-panel.js restoreMarkPolicy)가 있어야 유지된다.
+    imageLabelWorkflow: { version: '1.2.0', imageKind: 'general', labelResult: 'remove', verificationMode: 'full', auxiliaryMarks: 'remove', scientificArrows: 'keep', explicit: true },
+    markPolicyChosen: true, markPolicy: { arrows: 'keep', trendLines: 'keep', leaders: 'remove' },
     outputOptions: { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
     attachments: [{ id: `source-${index}`, kind: 'reference', name: `원본 ${index + 1}`, data: original, comments: [] }],
     generated: [{ id: `candidate-${index}`, kind: 'generated', name: `결과 ${index + 1}`, data: original,
@@ -369,47 +375,71 @@ for (const engine of ['chromium', 'webkit']) {
     const {page,errors} = await requestBrowserFixture(context,2,evidence,{fixtureOptions:{separationMode:'auto',historicalPoint:true}});
     assert.deepEqual(settingsFixture.errors,[]);
     await chooseRevision(page,'candidate-0');
-    await page.click(`${active} [data-ai-compare]`);
+    await clickCompare(page.locator(active));
     await page.locator(`${active} .ai-inline-comparison .ai-comparison`).waitFor();
     assert.equal(await page.locator('.ai-comparison-overlay').count(), 0);
     assert.equal(await page.locator(`${active} .ai-inline-comparison .ai-comparison`).evaluate(node => getComputedStyle(node).fontFamily.includes('IBM Plex Sans KR')), true);
     assert.equal(await page.getByRole('button',{name:'나란히 비교',exact:true}).count(), 0);
-    assert.equal(await page.getByLabel('오른쪽 비교 버전',{exact:true}).inputValue(),'candidate-0');
+    // 83201a54: 슬라이더 비교의 오른쪽 기본값은 선택본이 아니라 가장 최근 수정본(comparisonDefaults)이다. 선택본은 그대로 candidate-0.
+    assert.equal(await page.locator(active).getAttribute('data-ai-selected-candidate-id'),'candidate-0','comparison does not change the selected revision');
+    assert.equal(await page.getByLabel('오른쪽 비교 버전',{exact:true}).inputValue(),'latest-0');
     assert.equal(await page.getByLabel('왼쪽 비교 버전',{exact:true}).inputValue(),'source-0');
     await page.getByLabel('왼쪽 비교 버전',{exact:true}).selectOption('latest-0');
     assert.equal(await page.locator('.ai-comparison').getAttribute('data-mode'), 'wipe');
     await page.screenshot({path:path.join(evidence,'selected-comparison.png')});
-    await page.click(`${active} [data-ai-compare]`);
+    await clickCompare(page.locator(active));
     assert.equal(await page.locator(`${active} .ai-inline-comparison .ai-comparison`).count(), 0);
     assert.equal(await page.locator(`${active} .ai-generated-card .ai-image-card-head > strong`).first().evaluate(node => getComputedStyle(node).display), 'none');
-    assert.equal(await page.locator(`${active} [data-ai-comment-tool="point"]`).isVisible(),false,'Generated PNG keeps area-only editing');
+    // 24219c8a(10-12): 생성 PNG에서도 점 도구 단추는 더 이상 숨기지 않는다(button.hidden=false). 영역 전용 보장은 아래 변환 단추 비활성(점만으로는 전체 재생성 불가)이 맡는다.
+    assert.equal(await page.locator(`${active} [data-ai-comment-tool="point"]`).isVisible(),true,'Generated PNG shows the point tool; area-only is enforced by the apply button');
     assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).isDisabled(),true,'A historical point cannot authorize whole-PNG regeneration');
-    await page.locator(`${active} [data-ai-comment-marker]`).first().waitFor();
+    // 83201a54(10-16): 코멘트 표시는 기본 '숨김'(markersVisible=false)이다. 처음엔 마커가 있으나 숨겨져 있고, 단추로 켜면 보인다.
+    await page.locator(`${active} [data-ai-comment-marker]`).first().waitFor({state:'attached'});
     const commentRows = await page.locator(`${active} [data-ai-comment-row]`).count();
-    await page.click(`${active} [data-ai-comment-visibility]`);
-    assert.equal(await page.locator(`${active} [data-ai-comment-visibility]`).getAttribute('aria-pressed'), 'false');
-    await page.waitForFunction(() => {
+    const allMarkersHidden = () => page.waitForFunction(() => {
       const markers = [...document.querySelectorAll('#ai-image-panel [data-ai-comment-marker]')];
       return markers.length > 0 && markers.every(node => getComputedStyle(node).display === 'none');
     });
+    assert.equal(await page.locator(`${active} [data-ai-comment-visibility]`).getAttribute('aria-pressed'), 'false', 'comments start hidden');
+    await allMarkersHidden();
+    await page.click(`${active} [data-ai-comment-visibility]`);
+    assert.equal(await page.locator(`${active} [data-ai-comment-visibility]`).getAttribute('aria-pressed'), 'true');
+    await page.locator(`${active} [data-ai-comment-marker]`).first().waitFor();
+    assert.equal(await page.locator(`${active} [data-ai-comment-row]`).count(), commentRows);
+    await page.click(`${active} [data-ai-comment-visibility]`);
+    assert.equal(await page.locator(`${active} [data-ai-comment-visibility]`).getAttribute('aria-pressed'), 'false');
+    await allMarkersHidden();
     assert.equal(await page.locator(`${active} [data-ai-comment-row]`).count(), commentRows);
     await page.click(`${active} [data-ai-comment-visibility]`);
     await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel [data-ai-comment-marker]')].some(node => node.isConnected && getComputedStyle(node).display !== 'none'));
     await page.click(`${active} [data-ai-comment-tool="pan"]`);
-    await page.click(`${active} [data-ai-compare]`);
+    await clickCompare(page.locator(active));
+    // 83201a54: 새로 연 비교의 오른쪽은 최신본(latest-0)이므로, 코멘트가 달린 선택본(candidate-0)을 오른쪽으로 직접 고른다.
+    await page.getByLabel('오른쪽 비교 버전',{exact:true}).selectOption('candidate-0');
     await page.waitForFunction(() => document.querySelector('.ai-comparison-right .ai-comparison-markers circle') && document.querySelector('.ai-comparison-right image')?.getAttribute('href'));
     assert.equal(await page.locator('.ai-comparison-right .ai-comparison-markers text').first().textContent(), '1');
     assert.equal(await page.locator('.ai-comparison-left .ai-comparison-markers circle').count(), 0);
+    // 슬라이더 비교가 열려 있으면 주석 도구 줄(코멘트 표시 단추)이 숨는다(.is-wipe-comparing). 비교를 닫고 끈 뒤 다시 열어 비교 마커도 숨는지 확인한다.
+    assert.equal(await page.locator(`${active} [data-ai-comment-visibility]`).isVisible(), false);
+    await clickCompare(page.locator(active));
     await page.click(`${active} [data-ai-comment-visibility]`);
+    await clickCompare(page.locator(active));
+    await page.getByLabel('오른쪽 비교 버전',{exact:true}).selectOption('candidate-0');
+    await page.waitForFunction(() => document.querySelector('.ai-comparison-right image')?.getAttribute('href') && document.querySelector('.ai-comparison-right .ai-comparison-markers'));
     assert.equal(await page.locator('.ai-comparison-right .ai-comparison-markers').evaluate(node => getComputedStyle(node).display), 'none');
+    await clickCompare(page.locator(active));
     await page.click(`${active} [data-ai-comment-visibility]`);
-    await page.click(`${active} [data-ai-compare]`);
+    await clickCompare(page.locator(active));
+    await page.getByLabel('오른쪽 비교 버전',{exact:true}).selectOption('candidate-0');
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.ai-comparison-right .ai-comparison-markers')).display !== 'none');
+    await clickCompare(page.locator(active));
     assert.equal(await page.locator(`${active} select[data-ai-generation-mode]`).inputValue(),'separated');
     await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-editable-groups]')?.dataset.aiSeparationState==='ready');
     assert.equal(await page.locator(`${active} [data-ai-background-policy]`).inputValue(),'connected');
     assert.equal(await page.locator(`${active} [data-ai-background-policy]`).isDisabled(),true);
     assert.match(await page.locator(`${active} [data-ai-background-policy]`).getAttribute('title'),/한 장으로 전환/);
     assert.equal(await page.evaluate(()=>window.__task2.generationSends.length),0);assert.equal(await page.evaluate(()=>window.__task2.sends.length),0, 'Blocked input must send neither generation nor observation');
+    await openOutputMore(page);
     await page.click(`${active} [data-ai-editable-groups]`);
     await page.waitForFunction(()=>document.querySelector('.aea-count')?.textContent==='2');
     assert.equal(await page.locator('.aea-thumbnail').count(),2);
@@ -436,7 +466,7 @@ for (const engine of ['chromium', 'webkit']) {
     const singlePage=singleFixture.page;await chooseRevision(singlePage,'candidate-0');
     assert.equal(await singlePage.locator(`${active} [data-ai-background-policy]`).inputValue(),'preserve');
     assert.equal(await singlePage.locator(`${active} [data-ai-background-policy]`).isEnabled(),true);
-    assert.equal(await singlePage.locator(`${active} [data-ai-insert-selected]`).textContent(),'캔버스에서 편집');
+    assert.equal(await singlePage.locator(`${active} [data-ai-insert-selected]`).textContent(),'캔버스에 삽입');
     await singlePage.click(`${active} [data-ai-insert-selected]`);
     await singlePage.locator(active).waitFor({state:'hidden'});
     const single=await objects(singlePage); assert.equal(single.length,1); assert.equal(single[0].aiCandidateId,'candidate-0');
@@ -462,7 +492,7 @@ for (const engine of ['chromium','webkit']) {
     const {page,errors,baseline}=await requestBrowserFixture(context,3,evidence,{sourceOnly:true});
     await chooseModel(page,'luna');
     await page.evaluate(()=>window.__task2.delayStatus());
-    await page.click(`${active} [data-ai-send]`);
+    await page.click(`${active} [data-ai-comments-apply]`);
     await task(page,1);
     await page.evaluate(()=>window.__task2.releaseStatus());
     await page.waitForFunction(()=>window.__task2.generationSends.length===1);
@@ -677,7 +707,7 @@ for (const engine of ['chromium', 'webkit']) {
       fs.mkdirSync(evidence, { recursive: true });
       // Given a genuinely completed fixture request with retained original/history.
       const { page, errors } = await requestBrowserFixture(context, 2, evidence, { initialGeneration: true });
-      await page.click(`${active} [data-ai-send]`);
+      await page.click(`${active} [data-ai-comments-apply]`);
       await page.waitForFunction(() => window.__task2.generationSends.length === 1);
       await page.evaluate(() => { window.__task2.emitGeneration(0, 'image'); window.__task2.emitGeneration(0, 'done'); });
       await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
