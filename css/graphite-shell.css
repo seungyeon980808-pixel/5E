@@ -698,6 +698,8 @@
     .gm-step:focus-within { border-color: var(--ds-soft-line); outline: none; }
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
     :is(input[type="checkbox"], input[type="radio"], input[type="range"]) { accent-color: var(--ds-check); }
+  /* 그래프 위 바로 고치기 칸은 흰 그림 위에 뜨므로 어두운 입력칸 색을 쓰지 않는다(D12: 흰 바탕에 연한 글자) */
+  :root:not([data-mode="lite"]) #graph-modal-overlay input.gm-inline-text:not([type="checkbox"]) { background-color: #fff; color: #111; caret-color: #111; }
   /* 라이브러리 결과 카드: 굵은 파란 테두리 대신 은은한 면 + 가는 선 */
   :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card { border-color: transparent; }
   :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card:hover { background: var(--ds-hover); }

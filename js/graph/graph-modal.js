@@ -1005,10 +1005,29 @@ function rebindGraphAnnotations(plane,list) {
 }
 
 /* ---------- 커밋: 생성 / 편집 ---------- */
+/* 긴 축 이름(「속력 v (m/s)」)은 축 왼쪽으로 뻗어 아트보드 밖으로 나간다(D12).
+ * 틀이 아트보드 안에 있을 때만, 이름까지 그려 잰 실제 상자로 평면을 안쪽으로 민다.
+ * 계열은 prepareSeries가 옮긴 평면 기준으로 다시 굽는다. */
+function keepLabelsOnArtboard(plane, A) {
+  const scene = document.getElementById('scene');
+  if (!scene || !A?.w || !A?.h) return;
+  const hx = A.w / 2, hy = A.h / 2, pad = 1;
+  if (plane.x < -hx || plane.y < -hy || plane.x + plane.w > hx || plane.y + plane.h > hy) return;
+  let box;
+  try { const g = renderCoordplane(plane); scene.appendChild(g); box = g.getBBox(); g.remove(); } catch { return; }
+  if (!box || !Number.isFinite(box.x) || !box.width) return;
+  // 왼쪽(위쪽) 넘침을 먼저 막는다. 오른쪽(아래쪽)만 넘치면 왼쪽 끝을 넘지 않는 만큼만 당긴다.
+  const shift = (lo, size, half) => lo < -half + pad ? -half + pad - lo
+    : lo + size > half - pad ? Math.max(half - pad - (lo + size), -half + pad - lo) : 0;
+  plane.x += shift(box.x, box.width, hx);
+  plane.y += shift(box.y, box.height, hy);
+}
+
 function commitCreate() {
   const s0 = editorState().get();
   const vb = s0.viewBox;
   const plane = buildFrame(_cfg, { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 }, s0.artboard);
+  keepLabelsOnArtboard(plane, s0.artboard);
   const prep = prepareSeries(plane);
   if (!prep.ok) { _els.error.textContent = prep.error; return; }
   saveTrace(plane);
