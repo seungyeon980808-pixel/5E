@@ -129,6 +129,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-material-layout.mjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-MATERIAL-LAYOUT"
+      ]
+    },
+    {
       "path": "tests/test-exampool-live-patch.mjs",
       "findingIds": [
         "EXAMPOOL-SHEET-TO-HWP-LIVE",

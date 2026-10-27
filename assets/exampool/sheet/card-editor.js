@@ -1,7 +1,7 @@
 // 문항 카드: 문항 하나를 인쇄 순서대로 쓰는 입력 화면(밝은 종이 위 상자). 왼쪽은 시험지·보관함 문항 목록,
 // 오른쪽은 라이브러리(기출·교과서·기준·자료·지면·AI). 엑셀형 표는 시험지의 '전체 표'로만 남긴다.
 import {WORKFLOWS,KINDS,formOf,formLosses,applyForm} from './model.js';
-import {FORMS,STRUCTS} from './templates.js';
+import {FORMS,STRUCTS,materialLayout,setMaterialLayout} from './templates.js';
 import {fieldValue,writeField} from './vertical.js';
 import {loadStandards} from './standards-data.js';
 import {normalizeCombo} from './choice-text.js';
@@ -41,6 +41,10 @@ export function createCardEditor(root,api){
     return `<nav class="cv-qtabs" aria-label="${E(ctx.label)} 문항">${list.map((x,i)=>{const {items}=completeness(x),pct=Math.round(items.filter(v=>v[1]).length/items.length*100),open=x.authoring?.issues?.filter(v=>v.status==='open').length||0,stale=x.authoring?.stale?.length||0;
       return `<button type="button" class="cv-qtab st-${workflowOf(x)}" data-cv-open="${x.id}" aria-current="${x.id===q()?.id}" title="${E((ctx.numbered?`${i+1}번 · `:'')+questionSubtitle(x))} · ${WORKFLOWS[workflowOf(x)]} · 완성도 ${pct}%${stale?' · 다시 확인 '+stale:''}"><span class="ring" style="--p:${pct}"><span class="num">${ctx.numbered?i+1:E(x.number||i+1)}</span></span>${stale||open?'<i class="flag">!</i>':''}</button>`;}).join('')}<button type="button" class="cv-qtab add" data-cv="new" title="새 문항">${ICON.plus}</button></nav>`;
   }
+  // 자료 배치(10-27): 「자/료」 이름표 칸 아래에 위치·개수·배열. 섞인 모양(상자·묶음 속 묶음)이면 단추를 두지 않는다.
+  function matSet(x){const L=materialLayout(x);if(!L)return '';
+    const seg=(k,name,opts,cur,off)=>`<span class="cv-matseg" role="group" aria-label="${name}">${opts.map(([v,t,tip])=>`<button type="button" data-cvmat="${k}:${v}" aria-pressed="${String(cur)===String(v)}" title="${tip}"${off?' disabled':''}>${t}</button>`).join('')}</span>`;
+    return `<div class="cv-matset">${seg('place','자료 위치',[['below','아래','글 아래에 단 폭으로'],['side','옆','글 오른쪽 옆(어울림) — 자료 1개일 때']],L.place,L.count>1)}${seg('count','자료 개수',[[1,'1','자료 1개'],[2,'2','자료 2개 (가)(나)'],[3,'3','자료 3개 (가)(나)(다)']],L.count)}${seg('dir','자료 배열',[['row','가로','나란히 가로로'],['col','세로','위아래로']],L.dir,L.count<2)}</div>`;}
   function slotsHtml(x){
     // 10-22 「나」안: 칸은 같은 폭·같은 높이로 나란히(넷부터 다음 줄), 이름표 (가)(나)는 칸 아래 가운데,
     // 바꾸기·지우기는 칸에 마우스를 올리면 오른쪽 위. 빈 칸의 두 동작은 같은 옅은 테(한쪽만 단추처럼 보이지 않게).
@@ -150,7 +154,7 @@ export function createCardEditor(root,api){
       <form class="sheet-form cv-grid" onsubmit="return false">
         <section class="f-sec" aria-label="문항 내용">
           ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" aria-label="지문">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'')}
-          ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다.')}
+          ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다. 이름표 아래 단추로 위치(글 아래·글 옆)·개수·배열(가로·세로)을 바꿉니다.','cv-matrow').replace('<div class="cv-v">',matSet(x)+'<div class="cv-v">')}
           ${steps?row('실험과정',linesHtml(steps,'steps','과정을 입력하세요'),'(가)·(나)는 자동으로 붙습니다.'):''}
           ${talk?row('대화',linesHtml(talk,'dialogue','말을 입력하세요'),'이름 칸에 학생 이름, 오른쪽에 말'):''}
           ${row('발문',`<textarea id="cv-ask" data-cvf="ask" rows="1" aria-label="발문">${E(x.ask)}</textarea>`,'학생에게 묻는 문장')}
@@ -663,6 +667,7 @@ export function createCardEditor(root,api){
     if(d.cvunit){cardEdit('unit',()=>{x.unitLarge=d.cvunit;});return;}
     if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));cardEdit('source',()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}
     if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)cardEdit('explanation',()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
+    if(d.cvmat){const [k,v]=d.cvmat.split(':');try{api.edit(()=>{setMaterialLayout(x,{[k]:k==='count'?Number(v):v});});}catch(e){api.status?.(e.message,true);}return;}
     if(d.cvpoints){cardEdit('points',()=>{x.points=Number(d.cvpoints);});return;}
     if(d.cvtruth!==undefined){const l=bogiOf(x)?.lines?.[Number(d.cvtruth)];if(!l)return;const v=d.v==='1';cardEdit('truth',()=>{if(l.truth===v)delete l.truth;else l.truth=v;const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
     if(d.cvcombofill!==undefined){const set=COMBO_STATS.top[Number(d.cvcombofill)]?.[0];if(set)cardEdit('choices',()=>{x.choices.forEach((c,i)=>c.text=set[i]);const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}

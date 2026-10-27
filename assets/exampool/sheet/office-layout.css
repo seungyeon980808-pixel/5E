@@ -816,3 +816,13 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 /* 열린 문항 정보 칸도 같은 회색 판 안에 */
 #card-view .cv-more>.f-sec.cv-more-rows{margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
 #card-view .cv-more>.f-sec.cv-more-rows .cv-row{margin-top:8px;border:0;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px #dde2e8;overflow:hidden}
+/* 자료 배치(10-27): 「자/료」 이름표 칸 아래 위치·개수·배열 — 좁은 칸에 세로로 쌓는다 */
+#card-view .cv-grid .cv-matrow{position:relative}
+#card-view .cv-grid .cv-matrow>label{justify-content:flex-start;padding-top:14px}
+#card-view .cv-matset{position:absolute;left:0;top:58px;width:36px;display:flex;flex-direction:column;align-items:center;gap:7px;z-index:1}
+#card-view .cv-matseg{display:flex;flex-direction:column;gap:1px;width:30px;padding:2px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e4e8);background:#fff}
+#card-view .cv-matseg button{height:18px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:var(--ds-doc-ink-3,#8c959f);font:500 10.5px/18px 'Pretendard Variable',-apple-system,sans-serif;letter-spacing:-.3px;cursor:pointer}
+#card-view .cv-matseg button:hover:not(:disabled){background:#eef1f4;color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-matseg button[aria-pressed=true]{background:#eef1f4;color:var(--ds-doc-ink,#1f2328);font-weight:700}
+#card-view .cv-matseg button:disabled{opacity:.35;cursor:default}
+#card-view .cv-grid .cv-matrow{min-height:240px}

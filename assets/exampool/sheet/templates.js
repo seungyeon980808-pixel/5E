@@ -87,3 +87,41 @@ export function sheetCells(form,struct){
   if(form==='talk')c.push(['학생 말','A·B·C 한 줄씩','type'],['선지','AB처럼 입력 → A, B','type']);
   if(form==='essay')c.push(['모범 답안','채점 기준이 되는 답','type']);else c.push(['정답','번호 하나','type']);return c;
 }
+
+// ── 자료 배치(10-27): 카드 「자/료」 이름표 칸에서 위치(글 아래·글 옆)·개수(1~3)·배열(가로·세로)을 고른다 ──
+// 다루는 자료: 맨 바깥의 그림·표, 또는 맨 바깥 「자료」 묶음(상자 아님) 안의 그림·표. 실험·조건 상자 안 자료는 건드리지 않는다.
+const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험';
+function materialsOf(q){
+  const top=q.blocks.filter(b=>!b.parent);
+  const group=top.find(b=>b.kind==='group'&&!isBoxed(b)&&q.blocks.some(x=>x.parent===b.id&&(x.kind==='figure'||x.kind==='table'))&&!q.blocks.some(x=>x.parent===b.id&&x.kind==='group'));
+  const loose=top.filter(b=>b.kind==='figure'||b.kind==='table');
+  if(group&&!loose.length)return {group,items:q.blocks.filter(b=>b.parent===group.id&&(b.kind==='figure'||b.kind==='table'))};
+  if(!group)return {group:null,items:loose};
+  return null; // 섞인 모양(묶음 + 낱 자료, 묶음 속 묶음)은 여기서 바꾸지 않는다
+}
+export function materialLayout(q){
+  const m=materialsOf(q);if(!m)return null;
+  const n=m.items.length,first=m.items[0];
+  return {count:n,place:n===1&&first?.layout===WRAP?'side':'below',dir:m.group?.layout==='나란히'?'row':'col'};
+}
+const filled=b=>b.kind==='figure'?!!b.figure:b.kind==='table'?b.table?.cells?.some(r=>r.some(c=>c.value||c.figure)):false;
+// 채운 자료는 지우지 않는다: 개수를 줄일 때는 뒤쪽 빈 칸만 뺀다. 줄일 수 없으면 Error(이유와 할 일).
+export function setMaterialLayout(q,{place,count,dir}={}){
+  const m=materialsOf(q);if(!m)throw Error('자료가 상자·묶음 안에 섞여 있어 여기서 배치를 바꿀 수 없습니다. 조판 설정에서 바꾸세요.');
+  let items=[...m.items];const cur=materialLayout(q);
+  count=Math.max(1,Math.min(3,Number(count??cur.count)||1));place=place||cur.place;dir=dir||cur.dir;
+  if(count>1&&place==='side')place='below';
+  while(items.length<count)items.push(block('figure',null,CAPS[items.length]||'자료'));
+  while(items.length>count){const i=items.map(filled).lastIndexOf(false);if(i<0)throw Error(`채운 자료가 ${items.length}개라 ${count}개로 줄이지 않았습니다. 지울 자료 칸에 마우스를 올려 「지우기」를 누르세요.`);items.splice(i,1);}
+  // 자리: 첫 지문 바로 뒤(지문이 없으면 맨 앞)에 놓는다.
+  const keep=new Set(items.map(b=>b.id));
+  q.blocks=q.blocks.filter(b=>!(m.items.includes(b)&&!keep.has(b.id))&&b!==m.group);
+  for(const b of items)q.blocks=q.blocks.filter(x=>x!==b);
+  const firstText=q.blocks.find(b=>!b.parent&&b.kind==='text'),at=firstText?q.blocks.indexOf(firstText)+1:0;
+  let insert;
+  if(count===1){const b=items[0];b.parent=null;if(place==='side'){b.layout=WRAP;b.size=b.size&&b.size<=70?b.size:40;}else{delete b.layout;if(b.size===40)delete b.size;}if(!b.label||CAPS.includes(b.label))b.label='자료';insert=[b];}
+  else{const g=m.group||block('group',null,'자료');g.parent=null;g.layout=dir==='row'?'나란히':'세로';g.boxed=false;
+    items.forEach((b,i)=>{b.parent=g.id;if(b.layout===WRAP)delete b.layout;if(b.size===40)delete b.size;if(!b.label||b.label==='자료')b.label=CAPS[i];});insert=[g,...items];}
+  q.blocks.splice(at,0,...insert);
+  return materialLayout(q);
+}
