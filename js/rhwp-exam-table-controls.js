@@ -32,7 +32,13 @@ export function applyHangingIndent(bridge){
   if(!cursor||cursor.hasSelection()||['isInHeaderFooter','isInFootnote','isInTextBox','isInCellSelectionMode','isInTableObjectSelection','isInPictureObjectSelection'].some(k=>cursor[k]?.()))return false;
   const document=bridge.wasm.borrowDocumentHandle(),pos=input.getCursorPosition(),inCell=cursor.isInCell();
   const rect=offset=>parse(inCell?document.getCursorRectByPath(pos.sectionIndex,pos.parentParaIndex,JSON.stringify(pos.cellPath?.length?pos.cellPath:[{controlIndex:pos.controlIndex,cellIndex:pos.cellIndex,cellParaIndex:pos.cellParaIndex}]),offset):document.getCursorRect(pos.sectionIndex,pos.paragraphIndex,offset));
-  const start=rect(0),caret=rect(pos.charOffset),indent=-Math.round(Math.max(0,caret.x-start.x)*150);
+  // 커서가 줄 맨 앞이나 「ㄱ.」「①」「(가)」「1.」 이름표 안에 있으면 그 이름표(뒤 빈칸 포함)까지를 내어쓰기 폭으로 쓴다(10-27: 커서 위치 때문에 막히지 않게).
+  let at=pos.charOffset;
+  try{const top=pos.cellPath?.at?.(-1),text=inCell?((pos.cellPath?.length||1)>1?'':String(document.getTextInCell(pos.sectionIndex,pos.parentParaIndex,pos.controlIndex,pos.cellIndex??top?.cellIndex,pos.cellParaIndex??top?.cellParaIndex,0,document.getCellParagraphLength(pos.sectionIndex,pos.parentParaIndex,pos.controlIndex,pos.cellIndex??top?.cellIndex,pos.cellParaIndex??top?.cellParaIndex))??'')):String(document.getTextRange(pos.sectionIndex,pos.paragraphIndex,0,document.getParagraphLength(pos.sectionIndex,pos.paragraphIndex))??'');
+    const label=text.match(/^\s*(?:[ㄱ-ㅎ]\.|[①-⑳]|\([가-힣A-Za-z0-9]{1,2}\)|\d{1,2}\.)[\s\u00a0\u2007\u202f]*/)?.[0];
+    if(label&&at<=label.length)at=label.length;}catch{}
+  const start=rect(0),caret=rect(at),indent=-Math.round(Math.max(0,caret.x-start.x)*150);
+  if(!indent)return false;
   bridge.transaction('hanging-indent',()=>{
     const props=JSON.stringify({indent});
     const result=inCell?document.applyParaFormatAtCursor(cellList(document,pos).listId,pos.cellPath?.at(-1)?.cellParaIndex??pos.cellParaIndex,props):document.applyParaFormat(pos.sectionIndex,pos.paragraphIndex,props);

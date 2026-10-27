@@ -56,7 +56,7 @@ function focusTabs(ctx) {
       ['spacing'],
       ['문단↑<span class="t">+</span>', '문단 위 간격 2pt 늘리기', () => ctx.paraSpacing('spacingBefore', 2)], ['문단↑<span class="t">−</span>', '문단 위 간격 2pt 줄이기', () => ctx.paraSpacing('spacingBefore', -2)],
       ['문단↓<span class="t">+</span>', '문단 아래 간격 2pt 늘리기', () => ctx.paraSpacing('spacingAfter', 2)], ['문단↓<span class="t">−</span>', '문단 아래 간격 2pt 줄이기', () => ctx.paraSpacing('spacingAfter', -2)],
-      ['내어쓰기', '빠른 내어쓰기: 커서 앞 글자 폭만큼 둘째 줄부터 들여 맞춤 (Shift+Tab)', doc(b => { if (!applyHangingIndent(b)) throw new Error('본문이나 칸 안 글자 사이에 커서를 두고 누르세요.'); })],
+      ['내어쓰기', '빠른 내어쓰기: 커서 앞 글자 폭만큼 둘째 줄부터 들여 맞춤 (Shift+Tab)', doc(b => { if (!applyHangingIndent(b)) throw new Error('이 줄에는 내어 쓸 앞부분이 없습니다. 「ㄱ.」「①」 같은 이름표가 있는 줄이나, 맞출 글자 뒤에 커서를 두세요.'); })],
       ['들여쓰기', '첫 줄 들여쓰기 한 글자 (Ctrl+F6)', cmd('para:indent-in')], ['¶', '조판 부호 보기 켜기·끄기', cmd('view:ctrl-mark')],
     ],
     table: [
@@ -85,7 +85,7 @@ function focusTabs(ctx) {
       ['문항 틀', '문항 틀 넣기 — 수능·학교 양식 (팔레트)', tool('manager', '템플릿')],
       ['발문', '자주 쓰는 발문 넣기(평가원 과학탐구 꼴)', (_, button) => ctx.openPicker(button, 'stem')],
       ['〈보기〉', '〈보기〉 상자 넣기(마크다운 창에 틀을 채워 둠)', tool('markdown', '보기:\nㄱ: \nㄴ: \nㄷ: ')],
-      ['내어쓰기', '〈보기〉 「ㄱ. 」 뒤에 커서를 두고 누르면 둘째 줄을 글자에 맞춰 내어 씀', doc(b => { if (!applyHangingIndent(b)) throw new Error('「ㄱ. 」 바로 뒤에 커서를 두고 누르세요.'); })], '|',
+      ['내어쓰기', '〈보기〉·선지 줄에서 누르면 「ㄱ. 」「① 」 이름표 폭만큼 둘째 줄을 내어 씀(커서는 그 줄 어디든)', doc(b => { if (!applyHangingIndent(b)) throw new Error('이 줄에는 「ㄱ.」「①」 같은 이름표가 없습니다. 맞출 글자 뒤에 커서를 두고 다시 누르세요.'); })], '|',
       ['ㄱㄴㄷ 선지', '〈보기〉 ㄱㄴㄷ·학생 A B C 조합 선지 다섯 개를 커서 줄 뒤에 5열로 넣기', (_, button) => ctx.openPicker(button, 'combo')], ['선지 자동', '선지 길이를 보고 5열·3열·1열 중 한 줄에 들어가는 배열로', doc(b => ctx.message(`선지를 ${relayoutChoices(b, 'auto')}열로 놓았습니다.`))], ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
       ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
