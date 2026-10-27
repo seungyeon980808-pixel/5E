@@ -626,6 +626,10 @@ async function buildExamBytes(exam,{order=null}={}){typesetter ||= makeTypesette
   let password='';for(;;){try{return await typesetter.buildExam(data,exam,{form,password,order});}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null)throw Error('양식 암호를 넣지 않아 시험지를 만들지 않았습니다.');}finally{password='';}}}
 // Serialize loads and saves. Fast column clicks keep the last request without
 // allowing an older load or a save to bind to the newly selected question.
+// 같은 문항·같은 내용으로 조판이 한 번 실패하면 다시 시도하지 않는다(10-27 D1): 실패 → 카드 다시 그리기 → 한글 칸이 다시 조판 요청 → 또 실패가
+// 끝없이 되풀이돼 시험지 보내기·내려받기와 화면 전체가 멈췄다. 내용이 바뀌면 다시 시도한다.
+let typesetFailed=null;
+const typesetFailKey=q=>JSON.stringify({n:q.number,t:q.type,s:q.style,a:q.ask,b:q.blocks,c:q.choices,ct:q.choiceTable,sd:q.standardId,g:[q.askGap,q.choicesGap]});
 async function requestTypeset(value){
   typesetRequest=value;
   if(typesetTransition)return typesetTransition;
@@ -644,12 +648,14 @@ async function requestTypeset(value){
           const focusWasInside=panel.contains(document.activeElement)||document.activeElement===document.body||!document.activeElement;
           panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');if(focusWasInside)$('#preview').focus();continue;}
         next=data.questions.find(q=>q.id===next.id);if(!next)throw Error('문항이 삭제되었습니다. 다른 문항을 선택하세요.');
+        if(typesetFailed&&typesetFailed.id===next.id&&typesetFailed.key===typesetFailKey(next)){panel.hidden=false;$('#typeset-status').textContent=typesetFailed.message;$('#typeset-status').dataset.error='true';continue;}
         closeSources();panel.hidden=false;$('#preview').setAttribute('aria-expanded','true');
         typesetter ||= makeTypesetter();
         $('#typeset-title').textContent=`${next.number}번 문항 조판`;
         if(!typesetter.matches(next)){await typesetter.open(next);if(lostFormat)status('구성이 바뀌어 한글 창을 다시 그렸습니다 · 저장하지 않은 서식 조정은 다시 해 주세요.');}else typesetter.refreshView();lostFormat=false;
         $('#typeset-refresh').hidden=true;
       }catch(e){
+        const failedQ=next&&data.questions.find(q=>q.id===next.id);if(failedQ)typesetFailed={id:failedQ.id,key:typesetFailKey(failedQ),message:`${failedQ.number}번 문항을 조판하지 못했습니다: ${e.message}`};
         typesetRequest=undefined;$('#typeset-status').textContent=e.message;$('#typeset-status').dataset.error='true';
         if(/내용이 시트와 달라|조판 설정을 적용/.test(e.message))$('#typeset-discard').hidden=!/내용이 시트와 달라/.test(e.message);
         const previous=data.questions.find(q=>q.id===typesetter?.questionId);if(previous){current=previous;renderRows();grid?.refresh({questionId:current.id});/* 카드도 그 문항으로 다시 그린다 — 화면은 새 문항 카드인데 입력이 옛 문항에 들어가 덮어쓰던 것(H6) */if(view.name==='card')renderView();$('#typeset-title').textContent=`${previous.number}번 문항 조판`;}
@@ -895,7 +901,7 @@ async function sendExam(exam,{download:asFile=false,variant=false,print=false}={
     for(const id of exam.items){const q=data.questions.find(x=>x.id===id);if(q&&!(q.typeset?.verified&&await typesetMatches(q.typeset,q)))need.push(q);}
     if(need.length){typesetter||=makeTypesetter();
       for(const [i,q] of need.entries()){status(`조판 만드는 중 ${i+1}/${need.length} · ${q.number}번`);
-        try{const t=await typesetter.autoTypeset(q);mutate(()=>{q.typeset=t;},{render:false});}catch(e){status(e.message,true);current=q;openCard(q.id);cardEditor.showHwp?.();return;}}
+        try{const t=await typesetter.autoTypeset(q);mutate(()=>{q.typeset=t;},{render:false});}catch(e){const why=`${q.number}번 문항을 조판하지 못해 시험지를 만들지 않았습니다: ${e.message} — 카드에서 고친 뒤 다시 보내세요.`;typesetFailed={id:q.id,key:typesetFailKey(q),message:why};status(why,true);current=q;openCard(q.id);cardEditor.showHwp?.();return;}}
       await saveQueue;}}
   // 순서를 바꾸면 문항 번호가 바뀌어 저장한 조판과 맞지 않게 된다. 예전에는 만드는 도중 번호 없는 오류로 실패했다(M9). 먼저 모두 확인해 알린다.
 

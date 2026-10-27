@@ -3,9 +3,18 @@
 import { insertTable } from './hwp-palette/native.js';
 import { qrPng } from './qr-encode.js';
 import { unitGapIssues } from './rhwp-exam-science-text.js';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps, hasInlineObjects } from './rhwp-exam-layout-tools.js';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps, hasInlineObjects, objectCounts, assertObjectsKept } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
+// 문단 끝 위치(10-27 D4): 글 길이(getParagraphLength)에는 표·그림·수식 개체가 빠져 있다. 개체만 든 문단(5E_exam 선지 표)은 길이 0이라
+// 「빈 줄」로 여겨 그 앞에 [정답]·정답표·대응표를 써 넣었고(표 앞에 들어감), 글 끝에서 나누면 끝의 개체가 다음 문단으로 떨어졌다.
+// 개체 수까지 더한 끝에서 나누고, 엔진이 받지 않으면 예전 위치로.
+const controlCount = (doc, sec, p) => { try { const x = doc.getControlTextPositions(sec, p); return (typeof x === 'string' ? JSON.parse(x || '[]') : x || []).length; } catch { return 0; } };
+const paraEnd = (doc, sec, p) => doc.getParagraphLength(sec, p) + controlCount(doc, sec, p);
+const splitAtEnd = (doc, sec, p) => { try { return doc.splitParagraph(sec, p, paraEnd(doc, sec, p)); } catch { return splitAtEnd(doc, sec, p); } };
+// 쪽 배치가 「표」라고 알려 준 개체가 엔진에서는 표가 아닐 때가 있다(10-27 D2: 기출 변형 문항의 그림·수식) —
+// 엔진이 「지정된 컨트롤이 표가 아닙니다」를 던져 점검 전체가 멈췄다. 표로 읽지 못하면 칸 0개로 보고 건너뛴다.
+const tableCellCount = (doc, sec, para, ci) => { try { return parse(doc.getTableDimensions(sec, para, ci)).cellCount || 0; } catch { return 0; } };
 // 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
 export const BLANK_SHADE = '#dce8ff';
 const BLANK_MARK = { shadeColor: BLANK_SHADE, underline: true };
@@ -50,7 +59,7 @@ function collectRuns(doc, test) {
       const len = doc.getParagraphLength(sec, para);
       scan(len, i => doc.getCharPropertiesAt(sec, para, i), (a, b) => String(doc.getTextRange(sec, para, a, b - a)), { kind: 'body', sec, para });
       for (const t of byPara.get(para) || []) {
-        const cells = parse(doc.getTableDimensions(sec, para, t.ci)).cellCount;
+        const cells = tableCellCount(doc, sec, para, t.ci);
         for (let cell = 0; cell < cells; cell++) {
           const paras = doc.getCellParagraphCount(sec, para, t.ci, cell);
           for (let cp = 0; cp < paras; cp++) {
@@ -129,7 +138,7 @@ export function shadeHeaderRow(bridge, color = '#eef2f7') {
   const pos = input.getCursorPosition();
   if ((pos.cellPath?.length || 1) > 1) throw new Error('표 안의 표는 아직 머리 줄을 칠할 수 없습니다.');
   const doc = bridge.wasm.borrowDocumentHandle(), sec = pos.sectionIndex, para = pos.parentParaIndex, ci = pos.controlIndex;
-  const count = parse(doc.getTableDimensions(sec, para, ci)).cellCount, heads = [];
+  const count = tableCellCount(doc, sec, para, ci), heads = [];
   for (let cell = 0; cell < count; cell++) { const info = parse(doc.getCellInfo(sec, para, ci, cell)); if (info.row === 0) heads.push(cell); }
   bridge.transaction('shade-header', () => {
     for (const cell of heads) {
@@ -398,7 +407,7 @@ function writeAnswer(doc, sec, q, mark) {
   } else if (mark) {
     // 문항 마지막 문단 뒤에 새 줄(빈 줄이 끝에 있으면 그 줄을 쓴다).
     let p = q.end - 1;
-    if (doc.getParagraphLength(sec, p) || p === q.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+    if (paraEnd(doc, sec, p) || p === q.head) { parse(splitAtEnd(doc, sec, p)); p++; }
     doc.insertText(sec, p, 0, text);
     doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
   }
@@ -447,7 +456,7 @@ export function addExplanationLine(bridge) {
   let line = -1; for (let p = q.head; p < q.end; p++) if (/^\s*(?:[\[【]\s*(?:해설|풀이)\s*[\]】]|(?:해설|풀이)\s*[:：])/.test(textOf(p))) { line = p; break; }
   if (line < 0) bridge.transaction('explanation-line', () => {
     let p = q.end - 1;
-    if (doc.getParagraphLength(sec, p) || p === q.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+    if (paraEnd(doc, sec, p) || p === q.head) { parse(splitAtEnd(doc, sec, p)); p++; }
     doc.insertText(sec, p, 0, '[해설] ');
     doc.applyCharFormat(sec, p, 0, 5, JSON.stringify({ textColor: '#3a5a8c', bold: false }));
     line = p; return true;
@@ -546,7 +555,7 @@ export function setQuestionMeta(bridge, values) {
       if (now && !value) { parse(doc.deleteParagraph(sec, now.p)); continue; }
       if (!value) continue;
       let p = now?.p;
-      if (p === undefined) { p = block.end - 1; if (doc.getParagraphLength(sec, p) || p === block.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; } }
+      if (p === undefined) { p = block.end - 1; if (paraEnd(doc, sec, p) || p === block.head) { parse(splitAtEnd(doc, sec, p)); p++; } }
       else doc.deleteText(sec, p, 0, doc.getParagraphLength(sec, p));
       doc.insertText(sec, p, 0, text);
       doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#3a5a8c', bold: false }));
@@ -572,12 +581,14 @@ export function extraChecks(doc) {
     }
   // 배점: 문항 안(본문·표 칸) 「[3점]」「(3점)」.
   const scores = blocks.flatMap(q => q.lines.flatMap(l => [...l.text.matchAll(SCORE_VALUES)].map(m => Number(m[1]))));
+  // 평가원식(10-27 D7): 3점 문항만 「[3점]」을 달고 표시 없는 문항은 2점이다. 표시가 모두 3점이면 표시 없는 선택형은 2점으로 센다.
+  const unmarked = blocks.filter(q => !q.essay && !q.lines.some(l => SCORE_VALUE.test(l.text))), kice = scores.length > 0 && scores.every(v => v === 3);
   if (scores.length) {
-    const total = Math.round(scores.reduce((a, b) => a + b, 0) * 10) / 10;
-    if (total !== 100) issues.push({ text: `배점 합계가 ${total}점입니다(배점 표시 ${scores.length}곳 · 100점이 아님).`, at: null });
+    const total = Math.round((scores.reduce((a, b) => a + b, 0) + (kice ? unmarked.length * 2 : 0)) * 10) / 10;
+    if (total !== 100) issues.push({ text: kice ? `배점 합계가 ${total}점입니다(3점 표시 ${scores.length}문항 · 표시 없는 ${unmarked.length}문항은 2점으로 셈 · 100점이 아님).` : `배점 합계가 ${total}점입니다(배점 표시 ${scores.length}곳 · 100점이 아님).`, at: null });
   }
-  // 배점 빠진 문항: 배점을 단 문항이 있는데 안 단 선택형·서술형 문항이 있으면 알린다.
-  if (scores.length) for (const q of blocks) if (!q.lines.some(l => SCORE_VALUE.test(l.text))) issues.push({ text: `${q.label} 문항에 배점(n점)이 없습니다.`, at: { sectionIndex: q.sec, paragraphIndex: q.head, charOffset: 0 } });
+  // 배점 빠진 문항: 배점을 단 문항이 있는데 안 단 선택형·서술형 문항이 있으면 알린다(평가원식이면 선택형은 2점이라 넘어간다).
+  if (scores.length) for (const q of blocks) if (!q.lines.some(l => SCORE_VALUE.test(l.text)) && !(kice && !q.essay)) issues.push({ text: `${q.label} 문항에 배점(n점)이 없습니다.`, at: { sectionIndex: q.sec, paragraphIndex: q.head, charOffset: 0 } });
   // 정답 분포: 문항 안 「[정답] ③」이 다섯 개 이상이면 번호별 개수와 같은 정답 연속을 본다.
   const answers = [...questionAnswers(doc)].sort((a, b) => a[0] - b[0]).map(([n, a]) => [n, MARKS.indexOf(a.trim()[0])]).filter(([, i]) => i >= 0);
   if (answers.length >= 5) {
@@ -628,7 +639,7 @@ function tableAfterCursor(bridge, doc, rows, cols, grid, options) {
   const pos = bridge.input.getCursorPosition();
   if (pos.cellPath?.length || bridge.input.cursor.isInCell?.()) throw new Error('표 밖 본문에 커서를 두고 누르세요.');
   const sec = pos.sectionIndex, para = pos.paragraphIndex;
-  parse(doc.splitParagraph(sec, para, doc.getParagraphLength(sec, para)));
+  parse(splitAtEnd(doc, sec, para));
   const before = new Set();
   const tablesIn = p => { const out = []; for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && c.secIdx === sec && c.paraIdx === p && !(c.cellPath || []).length) out.push(c.controlIdx ?? c.ci); return out; };
   insertTable(doc, { sectionIndex: sec, paragraphIndex: para + 1, charOffset: 0 }, rows, cols, grid, options.assets || new Map(), options);
@@ -820,6 +831,7 @@ export function makeVariant(bridge, random = Math.random, { choices = false } = 
     renumberDocument(copy);
     const shuffled = choices ? shuffleChoices(copy, mainSec, random) : 0;
     const final = questionBlocks(copy, mainSec), answers = questionAnswers(copy);
+    assertObjectsKept(objectCounts(doc, mainSec), objectCounts(copy, mainSec), '섞으면');
     return { bytes: copy.exportHwpx(), shuffled, mapping: order.map((orig, i) => ({ variant: final[i]?.number ?? i + 1, original: first[orig].number, answer: answers.get(final[i]?.number) || '' })) };
   } finally { copy.free(); }
 }
@@ -859,7 +871,8 @@ function shuffleChoices(doc, sec, random, choose = null) {
   const COMBO = /^[ㄱ-ㅎA-E](?:\s*,\s*[ㄱ-ㅎA-E])*$/;
   // 3열·5열 선지 표: 칸마다 「①…」 하나, 순서대로, 나머지 칸은 빈 칸.
   const tableChoices = (p, ci) => {
-    const cells = parse(doc.getTableDimensions(sec, p, ci)).cellCount, choice = [];
+    const cells = tableCellCount(doc, sec, p, ci), choice = [];
+    if (!cells) return null;
     for (let cell = 0; cell < cells; cell++) {
       if (doc.getCellParagraphCount(sec, p, ci, cell) !== 1) return null;
       const len = doc.getCellParagraphLength(sec, p, ci, cell, 0), t = String(doc.getTextInCell(sec, p, ci, cell, 0, 0, len)).trim();
@@ -978,7 +991,7 @@ export function appendVariantMapping(bridge, mapping) {
   // 문항 안에 정답을 적어 두었으면 나형 정답도 한 줄 더(선지를 섞었으면 바뀐 번호).
   const key = mapping.some(m => m.answer) ? `[나형 정답] ${mapping.map(m => `${m.variant}-${m.answer || '?'}`).join('  ')}` : '';
   bridge.transaction('variant-mapping', () => {
-    parse(doc.splitParagraph(sec, last, doc.getParagraphLength(sec, last)));
+    parse(splitAtEnd(doc, sec, last));
     doc.insertText(sec, last + 1, 0, line);
     if (key) { parse(doc.splitParagraph(sec, last + 1, [...line].length)); doc.insertText(sec, last + 2, 0, key); }
     return true;
@@ -1001,15 +1014,15 @@ export function insertWorksheetFrame(bridge, title = '', kind = 'lesson') {
   const sections = frame[2];
   bridge.transaction('worksheet-frame', () => {
     const last = doc.getParagraphCount(sec) - 1, startEmpty = doc.getParagraphCount(sec) === 1 && !doc.getParagraphLength(sec, 0);
-    let p = startEmpty ? 0 : (parse(doc.splitParagraph(sec, last, doc.getParagraphLength(sec, last))), last + 1);
+    let p = startEmpty ? 0 : (parse(splitAtEnd(doc, sec, last)), last + 1);
     doc.insertText(sec, p, 0, title);
     doc.applyCharFormat(sec, p, 0, [...title].length, JSON.stringify({ bold: true, fontSize: 1600 }));
     doc.applyParaFormat(sec, p, JSON.stringify({ alignment: 'center' }));
-    parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++;
+    parse(splitAtEnd(doc, sec, p)); p++;
     insertTable(doc, { sectionIndex: sec, paragraphIndex: p, charOffset: 0 }, 1, 4, [['   학년', '   반', '   번', '이름:']], new Map(), { width, border: 'Solid' });
     for (const [label, shade, height] of sections) {
       p = doc.getParagraphCount(sec) - 1;
-      if (doc.getParagraphLength(sec, p)) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+      if (paraEnd(doc, sec, p)) { parse(splitAtEnd(doc, sec, p)); p++; }
       insertTable(doc, { sectionIndex: sec, paragraphIndex: p, charOffset: 0 }, 2, 1, [[label], ['']], new Map(), { width, border: 'Solid', heights: [mmUnits(7), mmUnits(height)] });
       const controls = []; for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && c.secIdx === sec && c.paraIdx === p && !(c.cellPath || []).length) controls.push(c.controlIdx ?? c.ci);
       const ci = controls.at(-1);
@@ -1049,7 +1062,7 @@ export function blueprintCopy(bridge, title = '시험') {
     out.insertText(0, 0, 0, name);
     out.applyCharFormat(0, 0, 0, [...name].length, JSON.stringify({ bold: true, fontSize: 1500 }));
     out.applyParaFormat(0, 0, JSON.stringify({ alignment: 'center' }));
-    parse(out.splitParagraph(0, 0, out.getParagraphLength(0, 0)));
+    parse(splitAtEnd(out, 0, 0));
     const width = columnWidth(out, 0), cols = BLUEPRINT_HEAD.length;
     insertTable(out, { sectionIndex: 0, paragraphIndex: 1, charOffset: 0 }, rows.length, cols, rows, new Map(), { width, border: 'Solid' });
     let t = null;
@@ -1092,7 +1105,7 @@ export function explanationCopy(bridge, title = '시험') {
       for (const n of it.notes) lines.push({ text: n, style: null });
     }
     lines.forEach((line, i) => {
-      if (i) parse(out.splitParagraph(0, i - 1, out.getParagraphLength(0, i - 1)));
+      if (i) parse(splitAtEnd(out, 0, i - 1));
       out.insertText(0, i, 0, line.text);
       const len = [...line.text].length;
       out.applyCharFormat(0, i, 0, len, JSON.stringify(line.style || { bold: false, fontSize: 1000 }));

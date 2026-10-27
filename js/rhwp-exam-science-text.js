@@ -79,7 +79,8 @@ export function applyScienceScripts(bridge) {
     if (c.type !== 'table' || c.cellPath?.length) continue;
     const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, key = `${sec}:${c.paraIdx}:${ci}`;
     if (seen.has(key)) continue; seen.add(key);
-    const cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
+    // 쪽 배치가 표라고 해도 엔진에서는 표가 아닐 수 있다(10-27 D2) — 읽지 못하면 건너뛴다(점검·고치기 전체가 멈추지 않게).
+    let cells = 0; try { cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount; } catch { continue; }
     for (let cell = 0; cell < cells; cell++)
       for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++) {
         const text = String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp)));
@@ -105,7 +106,8 @@ function forEachTextRun(doc, visit) {
     if (c.type !== 'table' || c.cellPath?.length) continue;
     const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, key = `${sec}:${c.paraIdx}:${ci}`;
     if (seen.has(key)) continue; seen.add(key);
-    const cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
+    // 쪽 배치가 표라고 해도 엔진에서는 표가 아닐 수 있다(10-27 D2) — 읽지 못하면 건너뛴다(점검·고치기 전체가 멈추지 않게).
+    let cells = 0; try { cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount; } catch { continue; }
     for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++)
       visit({ kind: 'cell', sec, para: c.paraIdx, ci, cell, cp }, String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp))));
   }

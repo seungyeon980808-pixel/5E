@@ -3,6 +3,12 @@
 import { insertTable, mm, read } from './hwp-palette/native.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
+// 문단 끝 위치(10-27 D4): 글 길이(getParagraphLength)에는 표·그림·수식 개체가 빠져 있다. 개체만 든 문단(5E_exam 선지 표)은 길이 0이라
+// 「빈 줄」로 여겨 그 앞에 [정답]·정답표·대응표를 써 넣었고(표 앞에 들어감), 글 끝에서 나누면 끝의 개체가 다음 문단으로 떨어졌다.
+// 개체 수까지 더한 끝에서 나누고, 엔진이 받지 않으면 예전 위치로.
+const controlCount = (doc, sec, p) => { try { const x = doc.getControlTextPositions(sec, p); return (typeof x === 'string' ? JSON.parse(x || '[]') : x || []).length; } catch { return 0; } };
+const paraEnd = (doc, sec, p) => doc.getParagraphLength(sec, p) + controlCount(doc, sec, p);
+const splitAtEnd = (doc, sec, p) => { try { return doc.splitParagraph(sec, p, paraEnd(doc, sec, p)); } catch { return doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p)); } };
 const HWP_PER_MM = 7200 / 25.4;
 const CIRCLED = '①②③④⑤';
 const CAPTIONS = ['(가)', '(나)', '(다)', '(라)', '(마)', '(바)', '(사)', '(아)'];
@@ -419,6 +425,26 @@ export function moveQuestionTo(bridge, from, to) {
     return true;
   });
   return to;
+}
+// 문항마다 개체(표·그림·수식) 수 — 가·나형으로 섞은 뒤에도 같아야 한다(10-27 D3).
+// 한글 엔진(rhwp 0.8.7)의 문단 범위 복사·붙여넣기는 개체만 든 문단(5E_exam이 만든 선지 표·그림)이 섞이면 개체를 겹쳐 붙이거나 다른 문단으로 옮긴다.
+// 그러면 표·그림이 글과 겹친 문서가 나온다 — 바뀐 것이 보이면 되돌리고(편집 묶음 오류 = 원래대로) 알린다.
+export function objectCounts(doc, sec) {
+  // 쪽 배치에 그려지는 개체(표·그림·수식·도형)만 센다 — 구역·단 설정 같은 보이지 않는 개체는 0번 문단에 남아 문항과 함께 움직이지 않는다.
+  // 편집 묶음 안에서는 쪽 배치가 미뤄져 있어 마저 한 뒤 잰다.
+  try { doc.flushDeferredPagination?.(); } catch {}
+  const perPara = new Map(), seenObj = new Set();
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
+    if ((c.secIdx ?? 0) !== sec || c.cellPath?.length) continue;
+    // 단·쪽을 넘는 표는 조각마다 한 번씩 나온다 — 개체 하나로 센다.
+    const id = `${c.paraIdx}:${c.controlIdx ?? c.ci}`; if (seenObj.has(id)) continue; seenObj.add(id);
+    perPara.set(c.paraIdx, (perPara.get(c.paraIdx) || 0) + 1);
+  }
+  return questionBlocks(doc, sec).map(q => { let n = 0; for (let p = q.head; p < q.end; p++) n += perPara.get(p) || 0; return { key: paragraphText(doc, sec, q.head).replace(/^\s*\d{1,3}\.\s*/, '').slice(0, 30), n }; });
+}
+export function assertObjectsKept(before, after, what) {
+  const bag = list => list.map(x => `${x.key}|${x.n}`).sort().join('\n');
+  if (bag(before) !== bag(after)) throw new Error(`${what} 문항의 그림·표 자리가 어긋나서 하지 않았습니다. 5E_exam에서 만든 시험지는 5E_exam 시험지 화면에서 순서를 바꾸거나 B형을 만드세요.`);
 }
 // a번째와 a+1번째 문항 묶음을 바꾼다(문서 손잡이만 씀 — 복사본에도 쓴다).
 export function swapAdjacentQuestions(doc, sec, blocks, a) {

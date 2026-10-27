@@ -736,7 +736,9 @@ export function installExamModes(panel, services) {
       applyStudioChrome();
       if (doc !== boundDoc) {
         boundDoc = doc; doc.addEventListener('keydown', modeKey, true); doc.addEventListener('keydown', escKey, true);
-        getBridge()?.deps?.eventBus?.on?.('document-changed', scheduleOutline);
+        // 문서를 새로 열거나 바꿨을 때(보내기·파일 열기)도 문항 목록을 다시 그린다 — 「document-changed」만 받아
+        // 보내기 직후 목록이 비고, 다른 파일을 열어도 이전 문서 목록이 남았다(10-27 D5).
+        for (const ev of ['document-changed', 'document-swapped']) getBridge()?.deps?.eventBus?.on?.(ev, scheduleOutline);
         // 사파리는 이레 동안 안 쓴 사이트 저장소를 지울 수 있다 — 자동 저장·팔레트를 지키려고 계속 보관을 한 번 부탁한다.
         try { void navigator.storage?.persist?.(); } catch {}
       }

@@ -34,7 +34,11 @@ export function addToExam(data,examId,qid,at){
   for(const e of data.exams){const i=e.items.indexOf(qid);if(i>=0){e.items.splice(i,1);touch(e);}}
   exam.items.splice(at===undefined?exam.items.length:Math.max(0,Math.min(at,exam.items.length)),0,qid);touch(exam);
 }
-export function removeFromExam(data,qid){for(const e of data.exams){const i=e.items.indexOf(qid);if(i>=0){e.items.splice(i,1);touch(e);}}}
+// 보관함으로 빼면 시험지 번호가 그대로 남아 보관함에 「4번 문항」이 둘 생겼다(10-27 D11) — 다른 보관함 문항과 겹치면 비어 있는 가장 작은 번호로.
+export function removeFromExam(data,qid){for(const e of data.exams){const i=e.items.indexOf(qid);if(i>=0){e.items.splice(i,1);touch(e);}}
+  const q=data.questions.find(x=>x.id===qid);if(!q||data.exams.some(e=>e.items.includes(qid)))return;
+  const used=new Set(libraryQuestions(data).filter(x=>x.id!==qid).map(x=>String(x.number)));
+  if(used.has(String(q.number))){let n=1;while(used.has(String(n)))n++;q.number=String(n);}}
 export function moveInExam(data,examId,qid,to){
   const exam=examById(data,examId),at=exam?.items.indexOf(qid);if(!exam||at<0)return false;
   to=Math.max(0,Math.min(to,exam.items.length-1));if(to===at)return false;exam.items.splice(at,1);exam.items.splice(to,0,qid);touch(exam);return true;
