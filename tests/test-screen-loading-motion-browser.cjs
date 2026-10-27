@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
-const base=process.env.EXAM_URL||'http://127.0.0.1:51819',version='?v=1.7.0-four-session-integration';
+const base=(process.env.EXAM_URL||'http://127.0.0.1:51819').replace(/\/+$/,''),/* 실행기는 끝에 / 를 붙여 넘긴다 */version='?v=1.7.0-four-session-integration';
 const out=path.resolve(process.env.EVIDENCE_DIR||'_work/feedback/parts/screen-loading-motion-20261015');fs.mkdirSync(out,{recursive:true});
 (async()=>{for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
  const browser=await engine.launch(),context=await browser.newContext({viewport:{width:1440,height:1000},screen:{width:1440,height:1000}}),page=await context.newPage(),errors=[];

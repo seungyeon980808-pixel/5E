@@ -4,6 +4,12 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+// 2026-10-16(83201a54)부터 이미지 작업의 실행은 아래 「변환하기」([data-ai-comments-apply]) 하나다. 그래프 작업의 준비 단계만 [data-ai-send]를 쓴다.
+const primarySend = async (page, panel) => {
+  const root = page.locator(panel).first();
+  const graph = await root.getAttribute('data-ai-workflow') === 'graph', stage = await root.getAttribute('data-ai-stage');
+  return root.locator(stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]').first();
+};
 const root = path.resolve(__dirname, '../..');
 const version = '?v=1.7.0-four-session-integration';
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
@@ -503,7 +509,7 @@ async function makeLabel(ctx, page, { task = 'task-0', labels = 'restore-editabl
   if (labels === 'restore-editable') await page.locator(panel + ` [data-ai-setting-key="verification"] [data-ai-setting-value="${verification}"]`).click();
   await page.locator(panel + ' [data-ai-input]').fill(request);
   const startIndex = await page.evaluate(() => __task2.sends.length);
-  await ctx.act(`${kind}/${labels}: actual Send`, () => page.locator(panel + ' [data-ai-send]').click(), page);
+  await ctx.act(`${kind}/${labels}: actual Send`, async () => (await primarySend(page, panel)).click(), page);
   await workflow.finish(page, { sourcePlan: workflow.verifiedPlan, startIndex });
   const candidate = (await tabs(page)).find(tab => tab.id === task).generated.at(-1);
   await ctx.check('real pipeline returned a bound candidate', () => { assert.ok(candidate); assert.match(candidate.candidateSha256, /^[a-f0-9]{64}$/); });
@@ -1157,7 +1163,7 @@ async function replayGraph(ctx, page) {
   const next = await page.evaluate(() => __task2.sends.length);
   const prior = await page.evaluate(() => __task2.sends.map(s => s.payload));
   await arm(page, 'graph-request', next => __task2.sends.length > next, next);
-  await ctx.act('real graph upload/restoration Send', () => page.locator(panel + ' [data-ai-send]').click(), page); await arrived(page, 'graph-request');
+  await ctx.act('real graph upload/restoration Send', async () => (await primarySend(page, panel)).click(), page); await arrived(page, 'graph-request');
   const request = await page.evaluate(i => __task2.sends[i].payload, next);
   assert.equal(request.purpose, 'scene'); const binding = request.text.match(/바인딩을 정확히 복사하고[^\n]*: (\{[^\n]+\})/); assert.ok(binding);
   const reply = clone(fixture.plan); reply.source = { ...JSON.parse(binding[1]), plotBox: clone(fixture.plan.source.plotBox) };
@@ -1734,7 +1740,7 @@ scenarios.QA6 = async ctx => {
     const label = await makeLabel(ctx, page), rich = await richUnion(ctx, page, label); await selectTask(ctx, page, 'task-1');
     await require('./label-source-browser.cjs').choose(page, 'general', 'restore-editable');
     const next = await page.evaluate(() => __task2.sends.length);
-    await arm(page, 'provider-held', index => __task2.sends.length > index, next); await page.locator(panel + ' [data-ai-send]').click(); await arrived(page, 'provider-held');
+    await arm(page, 'provider-held', index => __task2.sends.length > index, next); await (await primarySend(page, panel)).click(); await arrived(page, 'provider-held');
     const before = (await tabs(page)).find(t => t.id === 'task-1').generated.length;
     await selectTask(ctx, page, 'cross-label-task');
     await finishOwned(ctx, page, { task: 'task-1', startIndex: next, before }); await checkpoint(ctx, page);
@@ -2048,7 +2054,7 @@ async function prepareSend(ctx, page, task, request, labels = 'remove') {
   await page.locator(panel + ' [data-ai-input]').fill(request);
   const next = await page.evaluate(() => __task2.sends.length);
   await arm(page, 'send-first-turn', n => __task2.sends.length > n, next);
-  await ctx.act(`real Send ${task}`, () => page.locator(panel + ' [data-ai-send]').click(), page); await arrived(page, 'send-first-turn'); return next;
+  await ctx.act(`real Send ${task}`, async () => (await primarySend(page, panel)).click(), page); await arrived(page, 'send-first-turn'); return next;
 }
 async function advanceUntil(page, next, predicate, argument) {
   for (let phase = 0; phase < 30; phase++) {
@@ -2454,7 +2460,7 @@ async function graphGuards(ctx) {
     if (fault === 'unsupported-model') await page.evaluate(() => { fiveEDesktop.models = async () => ({ data: [{ model: 'gpt-6-luna', supportedReasoningEfforts: ['medium'] }] }); });
     await arm(page, 'guard-idle', () => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false' && document.querySelector('#ai-image-panel [data-ai-status]').dataset.kind === 'error');
     if (fault !== 'unsupported-model') await arm(page, 'guard-request', n => __task2.sends.length > n, start);
-    await page.locator(panel + ' [data-ai-send]').click();
+    await (await primarySend(page, panel)).click();
     if (fault !== 'unsupported-model') {
       await arrived(page, 'guard-request'); const request = await page.evaluate(n => __task2.sends[n].payload, start); assert.equal(request.purpose,'scene');
       const match = request.text.match(/바인딩을 정확히 복사하고[^\n]*: (\{[^\n]+\})/); assert.ok(match);

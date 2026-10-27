@@ -81,7 +81,9 @@ async function capture(browser,id,objects,source){
           const beforePlane=original.find(o=>o.type==='coordplane'),afterPlane=edited.find(o=>o.type==='coordplane');
           for(const a of beforePlane.graphAnnotations || [])if(a.seriesId===firstExpr.reconstruction.seriesId && Number.isFinite(a.anchorX)){
             const current=afterPlane.graphAnnotations.find(q=>q.id===a.id),before=['leader','arrow'].includes(a.kind)?a.to:a,after=['leader','arrow'].includes(a.kind)?current.to:current;
-            assert(Math.abs(after.y-before.y-.005)<1e-8,'linked annotation follows formula: '+a.id);
+            // 24219c8a(10-12): 글자 표시는 자유 배치라 곡선이 바뀌어도 제자리. 점·지시선 끝은 식을 따라간다.
+            if(a.kind==='text')assert.equal(after.y,before.y,'free text label stays put: '+a.id);
+            else assert(Math.abs(after.y-before.y-.005)<1e-8,'linked annotation follows formula: '+a.id);
           }
           if(id==='p1_2021_11_12'){
             const straight=edited.filter(o=>o.reconstruction?.original?.vertexBindings?.some(b=>b.seriesId===firstExpr.reconstruction.seriesId));assert.equal(straight.length,2);
