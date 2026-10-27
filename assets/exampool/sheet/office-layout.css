@@ -826,3 +826,10 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-matseg button[aria-pressed=true]{background:#eef1f4;color:var(--ds-doc-ink,#1f2328);font-weight:700}
 #card-view .cv-matseg button:disabled{opacity:.35;cursor:default}
 #card-view .cv-grid .cv-matrow{min-height:240px}
+/* 라이브러리 칸이 좁으면(380px 이하) 「조건」 글자는 빼고 아이콘만 — 검색 칸 자리를 남긴다 */
+@container lib (max-width:380px){
+  #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-36px;padding:0 6px}
+  #card-view .lp-one .lp-adv>span{display:none}
+  #card-view .lp-one .lp-adv i::before{content:""}
+  #card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:44px}
+}
