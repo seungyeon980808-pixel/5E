@@ -56,6 +56,8 @@ export function initLiteAiControls() {
     const bindings = enhance(panel);
     bindings.forEach(update => update());
     if (panel.hidden) return;
+    // 슬라이더 비교를 연 동안은 좌우 비교를 다시 누르지 않는다(누르면 슬라이더가 바로 닫힘).
+    if (panel.querySelector('[data-ai-compare][aria-pressed="true"]')) return;
     const comparison = panel.querySelector('[data-ai-layout-mode="side-by-side"]');
     if (comparison?.getAttribute('aria-pressed') !== 'true') comparison?.click();
   };

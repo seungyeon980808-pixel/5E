@@ -360,6 +360,7 @@ export function installExamModes(panel, services) {
   // 「⋯ 더 보기」: 이 칸에서 값 칸으로 옮기지 않은 단추(모양 복사·형광펜 지우기·표 넣기·그림 나란히 등) + 자주 안 쓰는 한글 기능.
   const OLD = { text: ['text', 'para'], table: ['table'], pic: ['pic'], page: [] };
   const moreKey = () => tab === 'page' ? 'layout' : tab === 'pic' ? 'pic' : tab === 'table' ? 'table' : 'text';
+  let shownOldItems = [];
   function oldItems() { const all = focusTabs(ctx); return (OLD[tab] || []).flatMap(k => all[k]).filter(it => it !== '|' && it.length > 1); }
   function openMore(anchor, modeKey = '') {
     if (!pop.hidden && pop.dataset.kind === 'more') { closePop(); return; }
@@ -377,7 +378,9 @@ export function installExamModes(panel, services) {
       const label = key(b.closest('.ei-row')?.querySelector('label')?.textContent);
       for (const n of names) { shown.add(n); if (label) { shown.add(label + n); shown.add(n + label); } }
     }
-    const olds = (modeKey ? [] : oldItems()).map((item, i) => [item, i]).filter(([[label, tip]]) => !shown.has(key(tip)) && !shown.has(key(label)));
+    // 누를 때 칸이 바뀌어도(사파리는 누르는 순간 커서 칸으로 돌아감) 그릴 때의 목록으로 실행한다.
+    shownOldItems = modeKey ? [] : oldItems();
+    const olds = shownOldItems.map((item, i) => [item, i]).filter(([[label, tip]]) => !shown.has(key(tip)) && !shown.has(key(label)));
     pop.className = 'exam-pop exam-morepop';
     const names = { text: '글자·문단', table: '표', pic: '그림', page: '쪽', item: '문항', sheet: '학습지', layout: '판짜기' };
     pop.innerHTML = `<div class="exam-pop-head">더 보기 <small>${esc(names[modeKey || tab] || '')}</small></div>
@@ -385,7 +388,7 @@ export function installExamModes(panel, services) {
       <div class="exam-pop-foot">모든 기능은 「기본」 모드의 한글 리본에도 있습니다 · Esc로 닫기</div>`;
     place(anchor);
   }
-  pop.addEventListener('click', event => { const old = event.target.closest('[data-exam-old]'); if (!old) return; const item = oldItems()[Number(old.dataset.examOld)]; closePop(); void run(async () => { await item[2](ctx, old); }); });
+  pop.addEventListener('click', event => { const old = event.target.closest('[data-exam-old]'); if (!old) return; const item = shownOldItems[Number(old.dataset.examOld)]; if (!item) return; closePop(); void run(async () => { await item[2](ctx, old); }); });
   function runMore(action) {
     if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'x:question-image') return ctx.questionImage(bridgeOrThrow());

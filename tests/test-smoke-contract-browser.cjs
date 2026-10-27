@@ -5,6 +5,8 @@ const path = require('node:path');
 const test = require('node:test');
 
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+// 10-22(e704e45e)부터 「좌우·상하·슬라이더 비교」는 「비교 ▾」 메뉴 안에 있다 — 메뉴를 열고 누른다.
+const clickCompare = async (scope, selector = '[data-ai-compare]') => { const menu = scope.locator('.ai-compare-menu').first(); if (await menu.count() && !await menu.evaluate(d => d.open)) await menu.locator('summary').click(); await scope.locator(selector).first().click(); };
 const root = path.resolve(__dirname, '..');
 const evidenceDir = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/smoke-contract-browser');
 const fixture = path.join(root, 'tests/fixtures/rights-clear-smoke.png');
@@ -312,7 +314,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       traceLibrary('fixture-send-observed', { mode, sends: transport.sends.length, events: transport.delivered.size });
       const generatedImage = panel.locator('.ai-generated-card .ai-preview-stage img').first();
       await generatedImage.waitFor({ state: 'visible', timeout: 15_000 });
-      if (mode === 'pro') await panel.locator('[data-ai-layout-mode="side-by-side"]').click();
+      if (mode === 'pro') await clickCompare(panel, '[data-ai-layout-mode="side-by-side"]');
       await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiLayout === 'side-by-side');
       await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const geometry = await (await page.waitForFunction(() => {
@@ -378,7 +380,9 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         const panel = document.querySelector('#ai-image-panel:not([hidden])');
         const visible = (selector) => { const rect = panel?.querySelector(selector)?.getBoundingClientRect(); return Boolean(rect && rect.width > 0 && rect.height > 0); };
         return { layout: panel?.dataset.aiLayout, sourceVisible: visible('.ai-original-pane .ai-reference-card'),
-          resultVisible: visible('.ai-result-pane .ai-generated-card'), compareVisible: visible('[data-ai-compare]') };
+          resultVisible: visible('.ai-result-pane .ai-generated-card'),
+          // 슬라이더 비교는 「비교 ▾」 메뉴 안(e704e45e): 메뉴가 보이고 단추가 숨김 상태가 아니면 쓸 수 있다.
+          compareVisible: visible('.ai-compare-menu > summary') && panel.querySelector('[data-ai-compare]')?.hidden === false };
       });
       traceLibrary('comparison-controls', { engine: engine.name(), mode, ...comparison });
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison-controls.png`), fullPage: true });
@@ -433,7 +437,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       }
       traceLibrary('raw-persistence', { mode, engine: engine.name(), results: rawPersistence });
       assert.ok(rawPersistence.some(result => result.matches), 'original generated PNG bytes survive persistence independently from Lite display processing');
-      await panel.locator('[data-ai-compare]').click();
+      await clickCompare(panel);
       const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });
       await page.waitForFunction(() => ['left', 'right'].every((side) => {
@@ -449,7 +453,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(await comparisonDialog.locator('.ai-comparison-right image').getAttribute('href'), selectedDisplaySource,
         'the comparison right side displays the selected generated content');
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison.png`), fullPage: true });
-      await panel.locator('[data-ai-compare]').click();
+      await clickCompare(panel);
       await comparisonDialog.waitFor({ state: 'detached' });
       const tasksBeforeFileAdd = await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').count();
       await panel.locator('[data-ai-source-file]').setInputFiles(fixture);
