@@ -161,6 +161,11 @@ export function analyze(structure,item={}){
       if(m.k==='para'&&!m.rect&&!m.display&&!m.caption&&!m.head)askParts.push(m.text);else post.push(m);
     }
     ask=clean(askParts.join(' '));
+    // 발문 첫 줄이 앞 문단으로 떨어진 경우(예: 2012 6월 지구Ⅰ 6번 「…<보기>에서 있는」 + 「대로 고른 것은?」, 10-28): 발문이 문장 중간에서 시작하면
+    // 바로 앞 글 문단(끝에 마침표·물음표가 없는 것)을 발문 앞에 붙인다. 가운데 줄·표 설명으로 잡혀도 <보기>·「것만을」이 있으면 발문이다.
+    const last=pre[pre.length-1];
+    if(/^(대로|있는\s*대로|에서\s*있는|고른|것만을|것은)/.test(ask)&&last?.k==='para'&&!last.head&&(!last.rect&&!last.caption&&!last.display||/<보기>|것만을/.test(last.text))&&!/[.?!」)]\s*$/.test(last.text)){
+      pre.pop();ask=clean(last.text+' '+ask);}
   }
   if(!header&&(item.form==='pair'||item.choiceShape==='table')){
     // 머리줄이 발문 앞에 온 경우(드묾)

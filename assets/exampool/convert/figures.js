@@ -113,6 +113,16 @@ function candidates(item,pdf){
       if(!near||between(u))continue;
       out[i]={box:u,ink:union(a.ink,b.ink),kind:a.kind===b.kind?a.kind:'mixed'};out.splice(j,1);changed=true;break outer;
     }}
+  // 그래프 눈금·축 이름 줄(10-28: 2015 수능 지구Ⅱ 14번 「100 200 … 700」「거리(Mpc)」가 그림 밖 글로 빠졌다):
+  // 그림 바로 아래·옆에 붙은, 본문보다 작은 숫자 줄과 「이름(단위)」 꼴 짧은 줄은 그림에 넣는다. 붙여 넣은 줄 아래로 한 줄씩 이어 본다.
+  {const tick=t=>{t=String(t||'').trim();return /^[-−+]?\d+(?:\.\d+)?(?:\s+[-−+]?\d+(?:\.\d+)?)*$/.test(t)||/^[^\s()]{1,12}\s*\([^()]{1,10}\)$/.test(t);};
+    for(const o of out){if(o.table)continue;
+      for(let grew=true;grew;){grew=false;
+        // 본문 줄로 잡힌 눈금 줄도 받는다. 이미 그림 테두리 안에 다 든 줄은 건너뛴다.
+        for(const c of chains){if(!tick(c.str)||c.size>=body*.9||(inBox(o.box,[c.box[0],c.box[1]],0.5)&&inBox(o.box,[c.box[2],c.box[3]],0.5)))continue;
+          const below=overlapX(c.box,o.box)>(c.box[2]-c.box[0])*.6&&c.box[3]>o.box[3]&&gapY(c.box,o.box)<=body*1.2;
+          const side=overlapY(c.box,o.box)>(c.box[3]-c.box[1])*.6&&gapX(c.box,o.box)<=body*.8;
+          if(below||side){o.box=union(o.box,c.box);o.ink=union(o.ink,c.box);grew=true;}}}}}
   // 선택지 ①~⑤ 자리의 그림(그래프 고르기 등)은 문항 그림이 아니다.
   const firstChoice=Math.min(...chains.filter(c=>/^\s*①/u.test(c.str)).map(c=>c.box[1]));
   const choiceFigs=[];
