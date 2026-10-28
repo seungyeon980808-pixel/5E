@@ -207,6 +207,13 @@ function clipItems(question, pdf, glyphs) {
     return chars.map((char, i) => { const cx = x0 + (i + 0.5) / chars.length * (x1 - x0);
       return char !== '\n' && segs.some((u) => cx >= u.a - 0.5 && cx <= u.b + 0.5) ? char + '̲' : char; }).join('');
   };
+  // 5E 10-28(주말 출제 지적 5): PDF가 단어 사이에 넣은 빈칸 조각. 글자를 좁혀 짠 줄은 단어 틈이 띄어쓰기 기준보다 좁아
+  // 「난자를낳고,이난자와」처럼 붙었다 — 빈칸 조각이 있던 자리는 틈이 좁아도 띄어 쓴다(lineRuns).
+  const [qx0, qy0, qx1, qy1] = question.box;
+  clipItems.lastSpaces = source.filter((item) => typeof item.str === 'string' && item.str.length && !item.str.trim() && item.transform
+    && item.transform[4] >= qx0 - 1 && item.transform[4] <= qx1 + 1
+    && pdf.pageHeight - item.transform[5] >= qy0 - 3 && pdf.pageHeight - item.transform[5] <= qy1 + 3)
+    .map((item) => ({ x: item.transform[4], y: item.transform[5] }));
   // Lets buildLiveStructure know figure labels were removed from this question.
   clipItems.lastDropped = dropped.size;
   clipItems.lastRegions = regions;
@@ -386,7 +393,12 @@ export function lineRuns(line) {
     const kind = item.math ? 'equation' : 'text';
     const value = item.value;
     const gap = previous ? item.x - previous.x - previous.width : 0;
-    const spaced = previous && gap > (previous.math && item.math ? 5 : Math.max(1.5, Math.min(previous.height, item.height) * 0.2))
+    // 한글 낱말 사이에만(앞이 한글·쉼표·마침표로 끝나고 뒤가 한글로 시작). ◦·㉠·Ⅰ·쌍점 둘레는 예전 기준대로 둔다 —
+    // 넓히면 「◦ (가)」「비커 Ⅰ」처럼 평가원 표기와 다른 칸이 생겼다(540문항 비교 78개).
+    const explicitSpace = previous && !previous.math && !item.math && gap > 0.3
+      && /[\uac00-\ud7a3,.]$/u.test(previous.value) && /^[\uac00-\ud7a3]/u.test(value) && (clipItems.lastSpaces || []).some((space) =>
+      Math.abs(space.y - item.y) < 1.5 && space.x >= previous.x + previous.width - 0.8 && space.x <= item.x + 0.2);
+    const spaced = previous && (explicitSpace || gap > (previous.math && item.math ? 5 : Math.max(1.5, Math.min(previous.height, item.height) * 0.2)))
       && !attachedScript.test(value) && !/\s$/u.test(previous.value) && !/^\s/u.test(value);
     if (spaced) {
       if (runs.at(-1)?.kind === 'text') runs.at(-1).value += ' ';
