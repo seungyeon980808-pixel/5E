@@ -84,7 +84,7 @@ export function createCardEditor(root,api){
       return `<div class="f-field cv-row"><label data-tip="자주 쓰는 조합은 평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개에서 센 비율입니다. 보기의 ○·×를 다 정하면 정답 선지가 자동으로 표시됩니다. 번호를 누르면 그 선지가 정답입니다." tabindex="0" aria-label="선지"><span class="vt">선지</span></label><div class="cv-v">
         <button type="button" class="cv-sugg-toggle" data-cv="sugg" aria-expanded="${suggOpen}">추천 조합 ${suggOpen?'접기':'보기'}<i aria-hidden="true">${suggOpen?'▴':'▾'}</i></button>
         <div class="cv-suggs"${suggOpen?'':' hidden'}><span>추천</span>${sugg}</div>
-        <div class="cv-combos">${x.choices.map((c,i)=>`<label class="combo-row${x.answer===i?' on':''}${ri===i?' right':''}" title="번호를 누르면 정답"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답"><span class="no">${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" aria-label="${NUM[i]} 조합"></label>`).join('')}</div>${note}</div></div>`;
+        <div class="cv-combos${x.choices.some(c=>String(c.text||'').length>=7)?' tight':''}">${x.choices.map((c,i)=>`<label class="combo-row${x.answer===i?' on':''}${ri===i?' right':''}" title="번호를 누르면 정답"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답"><span class="no">${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" aria-label="${NUM[i]} 조합"></label>`).join('')}</div>${note}</div></div>`;
     }
     const lay=x.choiceLayout||'';
     return `<div class="f-field"><label title="값·식·낱말·문장을 한 줄씩 · 동그라미로 정답">선지<span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
@@ -594,7 +594,7 @@ export function createCardEditor(root,api){
     if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else writeField(x,f,t.value);});return;}
     if(t.dataset.cvline){const key=t.dataset.cvline,b=x.blocks.find(v=>v.kind===key),i=Number(t.dataset.i);edit(key,()=>{b.lines[i].text=t.value;});return;}
     if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
-    if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);edit('choices',()=>{x.choices[i].text=t.value;});return;}
+    if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);{const g=t.closest('.cv-combos');if(g)g.classList.toggle('tight',[...g.querySelectorAll('[data-cvchoice]')].some(n=>n.value.length>=7));}edit('choices',()=>{x.choices[i].text=t.value;});return;}
     if(t.dataset.cvsrc!==undefined){srcQuery[panels.tab]=t.value;store.set('srcq',srcQuery);const src=document.querySelector('#source-search');if(src){src.value=t.value;src.dispatchEvent(new Event('input',{bubbles:true}));}return;}
     if(t.dataset.cvpast==='query'){pastFilter[panels.tab==='textbooks'?'bookq':'query']=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);if(!pastComposing&&!e.isComposing)t._timer=setTimeout(renderPast,250);}
   });

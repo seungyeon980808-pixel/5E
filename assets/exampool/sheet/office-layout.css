@@ -833,3 +833,5 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
   #card-view .lp-one .lp-adv i::before{content:""}
   #card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:44px}
 }
+/* 10-28: 「ㄱ, ㄴ, ㄷ」처럼 긴 조합은 다섯 칸 폭에서 잘렸다 — 긴 조합이 있으면 다섯 칸 글자를 같이 줄이고 자간을 좁힌다(조판은 그대로). */
+#card-view .cv-combos.tight .combo-row input[data-cvchoice]{font-size:12px;letter-spacing:-.06em;padding:0}

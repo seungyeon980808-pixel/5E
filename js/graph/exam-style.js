@@ -23,6 +23,16 @@ export function examMetrics(plane) {
     dash: EXAM_STYLE.dash * stroke, gap: EXAM_STYLE.gap * stroke };
 }
 const offset = (value, scale) => value ? Object.fromEntries(Object.entries(value).map(([k,v]) => [k, Number.isFinite(v) ? v * scale : v])) : value;
+// 원본 그림에서 복원한 그래프는 원본에서 잰 화살표 길이·폭을 따른다(10-28 결정: 평가원 모양 고정 크기 17×10px 대신 원본 19×13px).
+// 글로 만든 설명 그래프(descriptionLayout)와 크기를 모르는 그래프는 지금처럼 평가원 크기로 통일한다. 「크게·작게」 요청(arrowScale)은 둘 다 반영.
+const EXAM_HEAD_RATIO = 0.7314 / 1.1551; // smoothArrowHead 기본 모양의 폭/길이(ARROW_TRACE 최대 폭 2×0.3657, 길이 1.1551)
+function examArrow(plane, m, relative) {
+  const style = plane.graphStyle || {}, widthScale = positive(style.arrowWidthScale, 1);
+  const own = !style.descriptionLayout && plane.axisArrowLength > 0 && plane.axisArrowWidth > 0;
+  if (!own) return { axisArrowLength: m.arrowLength, axisArrowWidthScale: widthScale };
+  return { axisArrowLength: plane.axisArrowLength * relative * positive(style.arrowScale, 1),
+    axisArrowWidthScale: plane.axisArrowWidth / plane.axisArrowLength / EXAM_HEAD_RATIO * widthScale };
+}
 export function examPlaneStyle(plane) {
   if (!isExamStyle(plane)) return plane;
   const m = examMetrics(plane), relative = plane.w / positive(plane.graphStyle.referenceWidth, EXAM_STYLE.referenceWidth);
@@ -35,7 +45,7 @@ export function examPlaneStyle(plane) {
   const customGuide=a=>a.customStyle?{...a,...Object.fromEntries(['strokeWidth','dashLength','dashGap'].filter(k=>Number.isFinite(a[k])).map(k=>[k,a[k]*plane.w/positive(a.customStyleWidth,plane.graphStyle.referenceWidth||EXAM_STYLE.referenceWidth)]))}:a;
   const result = { ...plane, richLabels: true, strokeWidth: m.axis, tickStrokeWidth: m.tick,
     tickLength: m.tickLength, axisLabelSize: m.label, tickLabelSize: m.label, originLabelSize: m.label,
-    axisArrowShape: 'exam', axisArrowLength: m.arrowLength, axisArrowWidthScale: positive(plane.graphStyle.arrowWidthScale, 1),
+    axisArrowShape: 'exam', ...examArrow(plane, m, relative),
     guideStyle: guide, markerSize: m.marker,
     graphAnnotations: (plane.graphAnnotations || []).map(annotation),
     annGuides: (plane.annGuides || []).map(customGuide),
