@@ -10,9 +10,9 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const page=await browser.newPage({viewport:{width:1440,height:960}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
   await page.click('.app-switch-image [data-app-switch="exam"]');const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
-  await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
+  await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
   // 카드(한글 미리보기 열림)에서 문항을 만든 뒤, 시험지 → 시트로 바로 넘어가 친다.
-  await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
+  await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
   await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');await sheet.fill('#cv-ask','앞 문항');
   await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');

@@ -12,6 +12,7 @@
 .side .nav>b{font-weight:var(--ds-weight-regular);font-size:var(--ds-text-meta);color:var(--ds-ink-3);font-variant-numeric:tabular-nums}
 .side .nav.sub{padding-left:calc(var(--ds-space-4) + 22px);font-size:12px;height:28px}
 .side-label{display:flex;align-items:center}
+.side>.side-label:first-child{margin-top:4px}
 .side .side-add{margin-left:auto;width:22px;height:22px;padding:0;justify-content:center;color:var(--ds-ink-3)}
 .side .side-add .ico{width:14px;height:14px}
 @media(max-width:1100px){.side .nav>span,.side .nav>b,.side .nav.sub{font-size:0}.side .nav.sub{display:none}.side .side-add{display:none}}
@@ -435,6 +436,19 @@
 /* 아이콘 규칙은 한글 엔진 그림(.lv-eng) 안 SVG에는 걸지 않는다 — 글자에 1.5px 테두리가 붙어 굵게 보였다(10-26 지적). */
 #library-view svg:not(.lv-eng svg){width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .lv-chips{display:flex;gap:6px;padding:0 20px 12px;flex-wrap:wrap;align-items:center}
+.lv-head:has(+.lv-addbar){padding-bottom:2px}
+/* 문항 추가 줄(10-28 출제 지적 1, 시안 exam-weekend-1031/library-start 2판): 제목 바로 아래 46px 점선 줄 하나 — 「출제 중」 칸에서만 */
+.lv-addbar{display:flex;align-items:center;gap:8px;height:46px;margin:0 20px 14px;padding:0 8px;border:1px dashed var(--ds-line-strong,#30363d);border-radius:10px}
+.lv-add{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:6px;border:1px solid var(--ds-line,#21262d);background:none;color:var(--ds-ink-2,#b1bac4);font:inherit;font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap}
+.lv-add:hover{background:var(--ds-hover,#1f2630);color:var(--ds-ink,#e6edf3)}
+.lv-add.go{background:var(--ds-soft-bg,#152137);border-color:var(--ds-soft-line,#6ba4f8);color:var(--ds-ink,#e6edf3)}
+#library-view .lv-add svg{width:16px;height:16px}
+#library-view .lv-seg .lv-segstar{width:12px;height:12px;fill:currentColor;stroke:none}
+.lv-addhint{margin-left:auto;padding-right:6px;color:var(--ds-ink-3,#7d8590);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+/* 빈 칸: 안내 한 줄 + 흐름 한 줄 */
+.lv-emptyline{margin-top:58px;padding:0 20px;text-align:center;color:var(--ds-ink-3,#7d8590);font-size:13px}
+.lv-flow{margin-top:12px;display:flex;justify-content:center;align-items:center;gap:10px;font-size:12.5px}
+.lv-flow em{font-style:normal;color:var(--ds-ink-2,#b1bac4)}
 .lv-chip{position:relative;height:30px;padding:0 12px;border-radius:15px;border:1px solid var(--ds-line-strong,#30363d);background:none;color:var(--ds-ink-2,#b1bac4);display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
 .lv-chip:hover{background:var(--ds-hover,#1f2630)}
 .lv-chip.on{background:var(--ds-soft-bg,#152137);border-color:var(--ds-soft-line,#6ba4f8);color:var(--ds-ink,#e6edf3)}

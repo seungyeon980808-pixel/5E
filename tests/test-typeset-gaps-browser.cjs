@@ -27,7 +27,7 @@ h.withServer(async origin => {
       await page.click('.app-switch-image [data-app-switch="exam"]');
       const frame = await page.waitForSelector('#exampool-sheet-workspace iframe'), sheet = await frame.contentFrame();
       sheet.on?.('pageerror', e => errors.push(e.message));
-      await sheet.waitForSelector('#side-new'); await sheet.waitForFunction(() => document.querySelector('#status').textContent !== '준비 중');
+      await sheet.waitForSelector('.side [data-pool="drafting"]'); await sheet.waitForFunction(() => document.querySelector('#status').textContent !== '준비 중');
       await sheet.evaluate(() => localStorage.removeItem('5e.typeset.gaps'));
       const q = structuredClone(examples.questions[0]);
       q.blocks.find(b => b.kind === 'text').text += ' 두 물체의 질량은 2kg이다.'; // 숫자·단위 띄어쓰기 점검용

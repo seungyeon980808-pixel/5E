@@ -7,7 +7,7 @@ const h = require('./helpers/rhwp-exam.cjs');
 async function openPool(page,origin){
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
   await page.locator('.app-switch-image [data-app-switch="exam"]').click();const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
-  await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
+  await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
   return sheet;
 }
 
@@ -17,7 +17,7 @@ h.withServer(async origin => {
     try {
       const page = await (await browser.newContext({viewport:{width:1440,height:900}})).newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));
       let sheet=await openPool(page,origin);
-      await sheet.click('#side-new');
+      await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');
       await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.locator('#new-dialog .nq-opt[data-step="struct"]').first().click();await sheet.click('#new-dialog [data-nq="go"]');
       await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:20000});
       // 저장소에 열 수 없는 자료(검사를 통과하지 못하는 큰 그림)를 직접 넣어 「열지 못함」 상태를 만든다.
@@ -28,7 +28,7 @@ h.withServer(async origin => {
       assert.equal(stored,1);
       await page.reload();sheet=await openPool(page,origin);
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"]');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');
       await sheet.waitForTimeout(7000);
       const status=await sheet.locator('#status').textContent();
       assert.match(status,/저장된 입력을 열지 못했습니다/,`${engineName}: the load failure stays in the status bar after 6 s`);

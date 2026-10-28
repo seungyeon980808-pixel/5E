@@ -6,7 +6,7 @@ import {F,MONTH,shortTitle,norm,splitWords} from './past-search.js';
 import {croppedQuestion,pdfHref} from './past-pdf.js';
 import {croppedPastImage} from './past-crop.js';
 import {store,ICON,E} from './card-shared.js';
-import {libraryQuestions} from './exams.js';
+import {libraryQuestions,POOLS,poolQuestions} from './exams.js';
 import {questionTitle,previewHtml,workflowOf} from './views.js';
 import {WORKFLOWS} from './model.js';
 import {isBlank} from './pool-views.js';
@@ -20,8 +20,16 @@ const SVG = {
   one: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="1.5"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
   prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>',
   next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  sheet: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M10 4v16"/></svg>',
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
   link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+};
+const POOL_TITLE = { drafting: '출제 중인 문항', done: '출제 완료한 문항', inexam: '시험지에 담긴 문항' };
+const POOL_EMPTY = {
+  drafting: '아직 출제 중인 문항이 없습니다. 위 줄에서 카드를 열거나 엑셀을 올리면 여기에 쌓입니다.',
+  done: '아직 출제 완료한 문항이 없습니다. 카드에서 단계를 「완성」으로 바꾸면 여기로 옮겨집니다.',
+  inexam: '아직 시험지에 담은 문항이 없습니다. 카드나 「시험지 ＋」에서 시험지에 담으면 여기에 모입니다.',
 };
 const STEPS = ['문항을 스캔하는 중', '문항 카드를 작성하는 중', '한글 조판을 작성하는 중'];
 const stepOf = stage => /카드|여는/.test(stage || '') ? 1 : /조판/.test(stage || '') ? 2 : 0;
@@ -45,7 +53,7 @@ export const examLabel = (y, m) => `${String(y).slice(2)}년 ${{ 6: '6평', 9: '
 // ── 목록 만들기 ──
 function entries(data, s) {
   const stars = store.get('stars', {}), memos = store.get('memos', {}), words = splitWords(s.query || '');
-  const mine = s.kind === 'past' ? [] : libraryQuestions(data).map(q => ({ kind: 'mine', key: 'q:' + q.id, id: q.id, q, title: questionTitle(q), pt: q.points, subject: '', part: [q.unitLarge, q.unitMiddle].filter(Boolean).join(' · '), exam: '' }));
+  const mine = s.kind === 'past' ? [] : poolQuestions(data, s.pool).map(q => ({ kind: 'mine', key: 'q:' + q.id, id: q.id, q, title: questionTitle(q), pt: q.points, subject: '', part: [q.unitLarge, q.unitMiddle].filter(Boolean).join(' · '), exam: '' }));
   const pasts = s.kind === 'mine' || !past.items ? [] : past.items.map(i => ({ kind: 'past', key: 'past:' + i.id, id: i.id, i, title: i.short, pt: null, subject: i.subjectLabel, part: i.parts.join(' · '), exam: examLabel(i.year, i.month) }));
   return [...mine, ...pasts].filter(x =>
     (!s.mark || (s.mark === 'star' ? stars[x.key] : memos[x.key])) &&
@@ -55,7 +63,7 @@ function entries(data, s) {
 
 // 보관함 상태는 app의 view.lib에 둔다(다시 그려도 남게).
 // 10-26 사용자 지적: 기출은 말 그대로 기출 — 보관함에는 내 문항만(기출은 문항 카드의 「기출문제」 칸·시험지 담기에서 본다).
-export function libState(view) { const s = view.lib ||= { kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.kind = 'mine'; s.subject = ''; s.exam = ''; return s; }
+export function libState(view) { const s = view.lib ||= { pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] ? s.pool : 'drafting'; return s; }
 
 export function renderLibraryView(root, data, view, api) {
   const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
@@ -65,23 +73,28 @@ export function renderLibraryView(root, data, view, api) {
   const subjects = past.index ? past.index.subjects.map(v => v[1]) : [], partPool = list.flatMap(x => x.part ? x.part.split(' · ') : []), parts = [...new Set(partPool)].sort().slice(0, 300);
   const exams = past.items ? [...new Set(past.items.filter(i => !s.subject || i.subjectLabel === s.subject).map(i => examLabel(i.year, i.month)))] : [];
   const chipSel = (k, label, opts) => `<label class="lv-chip lv-sel${s[k] ? ' on' : ''}"><span>${E(s[k] || label)}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-lv-sel="${k}" aria-label="${label}"><option value="">${label} 전체</option>${opts.map(o => `<option${s[k] === o ? ' selected' : ''}>${E(o)}</option>`).join('')}</select></label>`;
-  const head = `<div class="lv-head"><h1>문항 보관함</h1><p>${list.length.toLocaleString()}개</p>
+  // 제목은 고른 칸을 그대로 말한다(10-28 출제 지적 1): 「출제 중인 문항 N개」.
+  const head = `<div class="lv-head"><h1>${POOL_TITLE[s.pool]}</h1><p>${list.length.toLocaleString()}개</p>
       <div class="lv-vt" role="group" aria-label="보기 방식">${[['grid', '카드 모아 보기', 'grid'], ['list', '목록', 'list'], ['one', '한 문항씩 보기', 'one']].map(([m, t, ic]) => `<button type="button" data-lv-mode="${m}" aria-pressed="${s.mode === m}" title="${t}" aria-label="${t}">${SVG[ic]}</button>`).join('')}</div></div>
-    <div class="lv-chips">
+    <!--addbar--><div class="lv-chips">
       <span class="lv-seg" role="group" aria-label="거르기">
         <button type="button" data-lv-mark="" aria-pressed="${!s.mark}">모두</button>
-        <button type="button" data-lv-mark="star" aria-pressed="${s.mark === 'star'}">별표<small>${starN}</small></button>
+        <button type="button" data-lv-mark="star" aria-pressed="${s.mark === 'star'}">${SVG.star.replace('<svg ', '<svg class="lv-segstar" ')}별표<small>${starN}</small></button>
         <button type="button" data-lv-mark="memo" aria-pressed="${s.mark === 'memo'}">메모<small>${memoN}</small></button>
       </span>
       ${chipSel('part', '단원', parts)}
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
+  // 문항 추가 줄 하나(시안 2판 3): 「출제 중」 칸에서만, 문항이 있든 없든 제목 바로 아래 같은 자리.
+  const addbar = s.pool === 'drafting' ? `<div class="lv-addbar"><button type="button" class="lv-add go" data-lv-new>${SVG.plus}새 문항 카드 열기</button><button type="button" class="lv-add" data-lv-import>${SVG.sheet}엑셀로 여러 문항 올리기</button><span class="lv-addhint">카드는 유형·자료 구조를 고르면 바로 열립니다 · 엑셀은 5E 문항 시트(.xlsx)</span></div>` : '';
   // 보관함은 내 문항만이라 카드마다 「내 문항」 표시는 겹치는 정보 — 기출일 때만 표시.
   const kt = x => x.kind === 'mine' ? '' : `<span class="lv-kt ${x.kind}">기출</span>`;
   const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
   let body;
   // 보관함을 읽지 못했으면(저장소 오류) 그 까닭을 먼저 보인다(예전 보관함과 같은 자리·같은 글).
   if (view.loadError && !libraryQuestions(data).length) body = `<p class="lv-empty pv-empty">${E(view.loadError)}</p>`;
+  // 빈 칸(시안 2판 4): 큰 칸 없이 안내 한 줄 + 흐름 한 줄. 거르기·찾기로 비었으면 그대로 「조건에 맞는 문항이 없습니다」.
+  else if (!list.length && !poolQuestions(data, s.pool).length) body = `<div class="lv-emptyline">${POOL_EMPTY[s.pool]}<div class="lv-flow"><em>문항 쓰기</em>→<em>시험지에 담기</em>→<em>5E_hwp로 조판·인쇄</em></div></div>`;
   else if (!list.length) body = `<p class="lv-empty pv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
   else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
   else if (s.mode === 'list') body = `<ol class="lv-list">${shown.map((x, n) => `<li><button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
@@ -89,7 +102,7 @@ export function renderLibraryView(root, data, view, api) {
       <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>
       <div class="lv-meta">${kt(x)}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
-  root.innerHTML = head + body + more;
+  root.innerHTML = head.replace('<!--addbar-->', addbar) + body + more;
   fillOwn(root, data, api);
   loadThumbs(root);
   view.lib.list = list;
@@ -201,6 +214,8 @@ export function installLibraryView(root, api) {
   function refreshJob() { const st = s(); if (st.mode === 'one') api.rerender(); else if (modal && !modal.hidden) { const n = Number(modal.querySelector('[data-lv-viewer]')?.dataset.n); if (Number.isFinite(n)) { modal.querySelector('.lv-modal').innerHTML = viewerHtml(list(), n, false, api); fillViewer(modal, list(), api.data(), api); } } }
   const onClick = e => {
     const t = e.target;
+    if (t.closest('[data-lv-new]')) { api.newCard?.(); return; }
+    if (t.closest('[data-lv-import]')) { api.importExcel?.(); return; }
     const star = t.closest('[data-lv-star]'); if (star) { e.stopPropagation(); toggleStar(star.dataset.lvStar); return; }
     const oc = t.closest('[data-open-card]'); if (oc) { e.stopPropagation(); closeViewer(api); api.openCard(oc.dataset.openCard); return; }
     if (t.closest('[data-lv-close]')) { s().open = -1; closeViewer(api); return; }

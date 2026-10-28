@@ -1,7 +1,7 @@
 // ExamPool 화면: 왼쪽 메뉴(문항 보관함·시험지), 문항 보관함, 시험지 목록, 시험지 안(문항 순서·쪽 배치·보내기).
 import {examStats,examChecks,ANSWER_MARK} from './exam-review.js';
 import {WORKFLOWS} from './model.js';
-import {EXAM_STATUS,libraryQuestions,examById} from './exams.js';
+import {EXAM_STATUS,libraryQuestions,examById,POOLS,poolQuestions} from './exams.js';
 import {examPlan} from './exam-layout.js';
 import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js';
 import {loadStandards} from './standards-data.js';
@@ -22,27 +22,31 @@ const ICON={
   down:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
   out:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M13 7l5 5-5 5"/></svg>',
   table:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>',
+  pencil:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
+  checked:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="m9 12 2 2 4-4"/></svg>',
+  inexam:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12h5M10 15.5h5"/></svg>',
   card:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
 };
 const dot=q=>`<i class="dot st-${workflowOf(q)}"></i>`;
 const stage=q=>`${dot(q)}${WORKFLOWS[workflowOf(q)]}`;
 const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.getMonth()+1}월 ${d.getDate()}일`:'';};
 
-// 왼쪽 메뉴: 새 문항 · 문항 보관함 · 시험지(출제 중 / 출제 완료).
+// 왼쪽 메뉴(10-28 출제 지적 1, 시안 exam-weekend-1031/library-start 2판): 문항(출제 중 · 출제 완료 · 시험지에 담김) · 시험지(출제 중 · 출제 완료).
+// 별표는 칸이 아니라 목록 위 「모두 / 별표 / 메모」 거르기로만 쓴다.
 export function renderNav(root,data,view){
   const drafting=data.exams.filter(e=>e.status==='drafting'),done=data.exams.filter(e=>e.status==='done');
   const cur=(name,id)=>view.name===name||(id&&view.examId===id&&['exam','card','desk'].includes(view.name))?'true':'false';
   const examItem=e=>`<button type="button" class="nav sub" data-nav="exam" data-exam="${e.id}" aria-current="${view.examId===e.id&&view.name!=='library'?'true':'false'}" title="${E(e.title)}"><span>${E(e.title)}</span><b>${e.items.length}</b></button>`;
-  root.innerHTML=`<button type="button" id="side-new" class="side-new">${ICON.plus}새 문항</button>
-    <button type="button" class="nav" data-nav="library" aria-current="${(view.name==='library'&&view.lib?.mark!=='star')||view.name==='card'&&!view.examId?'true':'false'}">${ICON.box}<span>문항 보관함</span><b>${libraryQuestions(data).length}</b></button>
-    <p class="side-label">모아 보기</p>
-    <button type="button" class="nav" data-nav="stars" aria-current="${view.name==='library'&&view.lib?.mark==='star'?'true':'false'}" title="별표한 기출·내 문항 — 문항 보관함 「★ 별표만」과 같음">${ICON.star}<span>별표한 문항</span><b>${Object.keys(store.get('stars',{})).length}</b></button>
+  // 지금 보는 문항 칸: 보관함이면 고른 칸, 시험지 밖 문항 카드면 그 문항이 든 칸.
+  const pool=view.name==='library'?view.lib?.pool||'drafting':view.name==='card'&&!view.examId&&view.cardPool?view.cardPool:'';
+  const poolItem=(k,icon)=>`<button type="button" class="nav" data-nav="library" data-pool="${k}" aria-current="${pool===k?'true':'false'}">${icon}<span>${POOLS[k]}</span><b>${poolQuestions(data,k).length}</b></button>`;
+  root.innerHTML=`<p class="side-label">문항</p>
+    ${poolItem('drafting',ICON.pencil)}${poolItem('done',ICON.checked)}${poolItem('inexam',ICON.inexam)}
     <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${ICON.plus}</button></p>
     <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${cur('exams')==='true'&&view.status!=='done'?'true':'false'}">${ICON.doc}<span>출제 중</span><b>${drafting.length}</b></button>
     ${drafting.map(examItem).join('')}
     <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${view.name==='exams'&&view.status==='done'?'true':'false'}">${ICON.done}<span>출제 완료</span><b>${done.length}</b></button>
-    ${done.slice(0,5).map(examItem).join('')}
-    <p class="side-foot">문항 하나는 카드로 쓰고,<br>시험지에서 모아 5E_hwp로 보냅니다</p>`;
+    ${done.slice(0,5).map(examItem).join('')}`;
 }
 
 // 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.

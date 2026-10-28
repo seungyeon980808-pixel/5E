@@ -35,8 +35,8 @@ h.withServer(async origin => {
       await page.locator('.app-switch-image [data-app-switch="exam"]').click();
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
-      await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
-      await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
+      await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
+      await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
 
       // 1. 머리 한 줄(시안 library-one-row.html): [검색 범위 ▾][검색창][상세검색][5E 라이브러리][근거 N] — 높이 44, 칸 맨 위, 가운데 머리 줄과 같은 줄.

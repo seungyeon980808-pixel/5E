@@ -12,11 +12,11 @@ const N = 12, TEXT = '가나다라마바사아자차카타파하'.repeat(3).slic
 async function openPool(page,origin){
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
   await page.locator('.app-switch-image [data-app-switch="exam"]').click();const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
-  await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
+  await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
   return sheet;
 }
 async function newCard(sheet,first){
-  await sheet.click(first?'#side-new':'#card-view .cv-qtab.add');
+  if(first){await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');}else await sheet.click('#card-view .cv-qtab.add');
   await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.locator('#new-dialog .nq-opt[data-step="struct"]').first().click();await sheet.click('#new-dialog [data-nq="go"]');
 }
 
@@ -38,7 +38,7 @@ h.withServer(async origin => {
       assert.equal(stored,N,'every question got a figure');
       await page.reload();sheet=await openPool(page,origin);
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden])');await sheet.waitForTimeout(3000);
       await sheet.evaluate(()=>{const M=window.__typing={lat:[]};let at=0;
         document.addEventListener('beforeinput',()=>{at=performance.now();},true);
@@ -52,7 +52,7 @@ h.withServer(async origin => {
       await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:20000});
       await page.reload();sheet=await openPool(page,origin);
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       assert.equal(await sheet.inputValue('#cv-passage'),TEXT,'the typed passage is saved');
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: card typing with ${N} figure questions verified`,JSON.stringify(rows.at(-1)));

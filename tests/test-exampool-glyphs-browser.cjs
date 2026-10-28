@@ -23,7 +23,7 @@ h.withServer(async origin => {
       await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
       await page.click('.app-switch-image [data-app-switch="exam"]');
       const frameHandle = await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet = await frameHandle.contentFrame();
-      await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
+      await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
 
       // 1) 문항 카드에 직접 넣은 글: 발문·지문에 평가원 글머리표 ◦와 ≳가 있어도 조판이 끝까지 된다.
       const FORMAT = await sheet.evaluate(async()=>(await import('/assets/exampool/sheet/model.js')).FORMAT);

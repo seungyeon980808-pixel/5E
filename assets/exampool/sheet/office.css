@@ -228,9 +228,7 @@ body>:not(dialog){transition:filter 180ms ease-out}
 .side .side-item>span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .side .side-item>b{font-weight:var(--ds-weight-regular);font-size:var(--ds-text-meta);color:var(--ds-ink-3);font-variant-numeric:tabular-nums}
 .side kbd{font:var(--ds-text-meta)/1 var(--ds-font-mono);padding:2px 4px;border-radius:var(--ds-radius-sm);background:var(--ds-kbd);color:var(--ds-ink-3)}
-.side .side-new{margin-bottom:var(--ds-space-4);color:var(--ds-ink);font-weight:var(--ds-weight-medium);background:var(--ds-hover)}
 .side-label{margin:var(--ds-space-5) 0 var(--ds-space-2);padding:0 var(--ds-space-4);font-size:var(--ds-text-meta);color:var(--ds-ink-3)}
-.side-foot{margin:auto 0 0;padding:var(--ds-space-4);font-size:var(--ds-text-meta);line-height:1.6;color:var(--ds-ink-3)}
 
 .crumbs{display:flex;align-items:center;gap:var(--ds-space-4);min-width:0;margin-left:var(--ds-space-6);font-size:var(--ds-text-body);color:var(--ds-ink-3);white-space:nowrap}
 .crumbs #crumb-question{color:var(--ds-ink);font-weight:var(--ds-weight-medium);overflow:hidden;text-overflow:ellipsis;max-width:420px}
@@ -297,7 +295,7 @@ body>:not(dialog){transition:filter 180ms ease-out}
 .exam-q[data-ready=false]{background:var(--ds-doc-head);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
 .exam-page[data-oversized=true] .exam-sheet{box-shadow:0 0 0 1.5px var(--ds-danger),var(--ds-shadow-board)}
 .exam-page figcaption{font-size:var(--ds-text-meta);color:var(--ds-ink-3)}
-@media(max-width:1100px){.side{width:52px}.side .side-item>span,.side .side-item>b,.side kbd,.side-label,.side-foot,.side .side-new{font-size:0}.side .side-new{padding:0;justify-content:center}.side button{justify-content:center;padding:0}.crumbs #crumb-question{max-width:200px}}
+@media(max-width:1100px){.side{width:52px}.side .side-item>span,.side .side-item>b,.side kbd,.side-label{font-size:0}.side button{justify-content:center;padding:0}.crumbs #crumb-question{max-width:200px}}
 
 /* 표 시트: 머리칸 글도 한글에 그대로 나오므로 흰색으로 두고 굵기로만 구분한다 */
 .data-table td[data-header=true]:not(.grid-selected):not(.selected){background:var(--ds-doc)}

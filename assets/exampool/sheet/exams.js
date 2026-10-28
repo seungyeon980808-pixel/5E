@@ -27,6 +27,14 @@ export function validateExams(data){
 export const examById=(data,id)=>data.exams.find(e=>e.id===id)||null;
 export const examOf=(data,qid)=>data.exams.find(e=>e.items.includes(qid))||null;
 export function libraryQuestions(data){const used=new Set(data.exams.flatMap(e=>e.items));return data.questions.filter(q=>!used.has(q.id));}
+// 왼쪽 「문항」 칸(10-28 출제 지적 1, 시안 exam-weekend-1031/library-start 2판): 시험지에 넣지 않은 문항은 단계로 출제 중(초안·검토 중) / 출제 완료(완성),
+// 시험지에 넣은 문항은 「시험지에 담김」에만.
+export const POOLS={drafting:'출제 중',done:'출제 완료',inexam:'시험지에 담김'};
+export function poolQuestions(data,pool){
+  if(pool==='inexam'){const used=new Set(data.exams.flatMap(e=>e.items));return data.questions.filter(q=>used.has(q.id));}
+  return libraryQuestions(data).filter(q=>(q.workflow==='complete')===(pool==='done'));
+}
+export const poolOf=(data,q)=>examOf(data,q.id)?'inexam':q.workflow==='complete'?'done':'drafting';
 const touch=e=>{e.updatedAt=now();};
 // 문항을 시험지에 넣는다(다른 시험지에 있으면 옮긴다). at이 없으면 맨 뒤.
 export function addToExam(data,examId,qid,at){

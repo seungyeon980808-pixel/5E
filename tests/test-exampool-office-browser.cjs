@@ -48,7 +48,7 @@ h.withServer(async origin => {
       await entry.click();
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
-      await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
+      await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
 
       // 화면 색: 5E의 팔레트·테마를 그대로 따른다.
       for(const [theme,palette] of [['dark','classic'],['dark','graphite'],['light','graphite']]){
@@ -61,7 +61,7 @@ h.withServer(async origin => {
       await page.evaluate(()=>{document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-palette','classic');});
 
       // 새 문항: 유형(합답형) → 자료 구조(실험 상자), 클릭 2번.
-      await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');
+      await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');
       assert.equal(await sheet.locator('#new-dialog [data-nq="go"]').isEnabled(),true);await sheet.click('#new-dialog [data-nq="go"]');
       // 새 문항은 문항 카드(입력 칸)로 열린다. 합답형 선지는 보기 조합 버튼, 오른쪽에는 라이브러리 탭.
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
@@ -361,7 +361,7 @@ h.withServer(async origin => {
       await page.evaluate(()=>{window.__authorHold=null;});
       // 세 가지 화면 색 캡처(증거).
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');// 카드 화면에서는 왼쪽 메뉴가 기본으로 접힌다
-      await sheet.click('.side [data-nav="library"]');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');
       for(const [theme,palette] of [['dark','classic'],['dark','graphite'],['light','graphite']]){
         await page.evaluate(([t,p])=>{document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-palette',p);},[theme,palette]);
         await sheet.waitForFunction(([t,p])=>document.documentElement.dataset.theme===t&&document.documentElement.dataset.palette===p,[theme,palette]);
@@ -377,8 +377,8 @@ h.withServer(async origin => {
       {const skip=small.getByRole('button',{name:'건너뛰기',exact:true});await skip.waitFor({state:'visible',timeout:3000}).then(()=>skip.click()).catch(()=>{});}
       await small.click('.app-switch-image [data-app-switch="exam"]');
       const smallSheet=await (await small.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
-      await smallSheet.waitForSelector('#side-new');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
-      await smallSheet.click('#side-new');await smallSheet.waitForSelector('#new-dialog[open]');
+      await smallSheet.waitForSelector('.side [data-pool="drafting"]');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
+      await smallSheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await smallSheet.click('[data-lv-new]');await smallSheet.waitForSelector('#new-dialog[open]');
       await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="essay"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');
       const narrow=await smallSheet.evaluate(()=>{const d=document.querySelector('#new-dialog'),c=d.querySelector('.nq-col'),f=d.querySelector('.nq-foot').getBoundingClientRect(),r=d.getBoundingClientRect();return {clipped:c.scrollHeight>c.clientHeight+1,struct:!!d.querySelector('.nq-opt[data-step="struct"][aria-pressed="true"]'),foot:f.bottom<=r.bottom+1&&f.top>=r.top};});
       assert.deepEqual(narrow,{clipped:false,struct:true,foot:true},'the narrow new-question dialog keeps every option reachable');

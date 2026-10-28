@@ -70,7 +70,7 @@ h.withServer(async origin => {
       // 출제도 320
       await page.locator('.exam-topbar [data-app-switch="exam"]').click();
       const sheet = await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
-      await sheet.waitForSelector('#side-new', { state: 'attached' });
+      await sheet.waitForSelector('.side [data-pool="drafting"]', { state: 'attached' });
       await page.waitForFunction(() => !document.querySelector('.app-leaving'));
       await sheet.waitForFunction(() => Math.abs(document.querySelector('.side').getBoundingClientRect().width - 320) <= 1.5, null, { timeout: 5000 });
       assert.equal(await sheet.locator('.shell-left-grip:not([hidden])').count(), 1, `${name}: exam panel has its own resize grip`);

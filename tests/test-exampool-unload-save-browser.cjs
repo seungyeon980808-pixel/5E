@@ -7,13 +7,13 @@ const stored=sheet=>sheet.evaluate(async()=>{const name=(await indexedDB.databas
  const db=await new Promise((res,rej)=>{const r=indexedDB.open(name);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
  const v=await new Promise((res,rej)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});db.close();return v?.questions?.map(q=>q.ask)||[];});
 const openSheet=async page=>{await page.click('.app-switch-image [data-app-switch="exam"]');const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
- await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');return sheet;};
+ await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');return sheet;};
 for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: typing right before reload is kept`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const page=await browser.newPage({viewport:{width:1440,height:960}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);let sheet=await openSheet(page);
-  await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
+  await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
   await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');
   // 새 문항 만들기(전체 변경)와 카드 입력(그 문항만 변경) 두 경우를 차례로.
   await sheet.fill('#cv-ask','첫 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);

@@ -33,7 +33,7 @@ export function initAppSwitch(doc = document) {
   const until = async (test, ms) => { for (let waited = 0; !test() && waited < ms; waited += 50) await sleep(50); return test(); };
   const reduced = () => win.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   // 출제 칸 안 문서가 다 그려졌는지(첫 열기는 iframe을 읽느라 시간이 걸린다)
-  const examReady = () => !!surface('exam')?.querySelector('iframe')?.contentDocument?.querySelector('#side-new');
+  const examReady = () => !!surface('exam')?.querySelector('iframe')?.contentDocument?.querySelector('.side [data-pool]');
   // 칸이 한 번이라도 나타났는지: 잠깐 열렸다 닫혀도 놓치지 않게 hidden 속성 바뀜을 직접 지켜본다.
   const appear = (app, ms) => new Promise(resolve => {
     const el = surface(app);

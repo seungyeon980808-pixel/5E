@@ -41,7 +41,7 @@ flow.runEngines('library-send', {
     const sheet = page.frames().find(f => f.url().includes('/assets/exampool/sheet/index.html'));
     assert.ok(sheet, 'ExamPool 문항 창');
     // 문항 카드를 열면 기출 탭 목록 맨 위에 가져온 자료가 있다.
-    await sheet.click('#side-new'); await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]'); await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]'); await sheet.click('#new-dialog [data-nq="go"]');
+    await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]'); await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]'); await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]'); await sheet.click('#new-dialog [data-nq="go"]');
     await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
     await sheet.selectOption('#card-view [data-cvscope]','past');
     await sheet.waitForSelector('#card-view .past-list figure.past.pick', { timeout: 30_000 });

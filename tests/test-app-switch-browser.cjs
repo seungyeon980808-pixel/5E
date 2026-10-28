@@ -32,7 +32,7 @@ h.withServer(async origin => {
       const frames = async () => { await page.waitForTimeout(1600); return page.evaluate(() => window.__switchFrames); };
 
       await page.locator('.app-switch-image [data-app-switch="exam"]').click();
-      await (await sheet()).waitForSelector('#side-new', { state: 'attached' });
+      await (await sheet()).waitForSelector('.side [data-pool="drafting"]', { state: 'attached' });
       await page.waitForFunction(() => !document.querySelector('.app-leaving'));
 
       // 1) exam → hwp → exam: 둘 다 안 보이는 프레임이 없어야 한다.

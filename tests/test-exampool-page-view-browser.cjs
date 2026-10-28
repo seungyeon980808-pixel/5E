@@ -15,7 +15,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
   await page.click('.app-switch-image [data-app-switch="exam"]');const frame=await page.waitForSelector('#exampool-sheet-workspace iframe'),sheet=await frame.contentFrame();
-  await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
+  await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
   const q=structuredClone(examples.questions[0]);q.blocks[0].text+=' 물체의 속력은 $v$이다.';
   await sheet.setInputFiles('#excel-file',{name:'page-view.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:examples.format,questions:[q],documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.evaluate(()=>{const u=document.querySelector('input[name="import-mode"][value="update"]');if(u)u.checked=true;});await sheet.click('#apply-import');

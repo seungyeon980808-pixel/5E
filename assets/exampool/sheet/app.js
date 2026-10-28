@@ -8,7 +8,7 @@ import {pickState,renderStep2,fillStep2,refreshCart,poolEntries,editMeta,normTag
 import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastData,loadPast} from './library-view.js';
 import {createCardEditor,clearPastBusy} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
-import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
+import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {exportExcel,importExcel,keepAppOnly} from './excel.js';
@@ -239,6 +239,7 @@ function renderView(){
   // 한글 조판 창은 한 번 미리보기에 붙으면 그 자리에 둔다(옮기면 편집기 프레임을 처음부터 다시 읽고 간결 화면이 풀린다). 카드를 떠나면 닫기만 한다.
   if(view.name!=='card'&&$('#preview-dialog').classList.contains('docked')&&!$('#preview-dialog').hidden)void requestTypeset(null);
   $('#cards-view').hidden=true;$('#exam-view').hidden=true;$('.workspace').hidden=view.name!=='desk';
+  view.cardPool=view.name==='card'&&current?poolOf(data,current):'';
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
@@ -257,7 +258,8 @@ function renderView(){
   document.querySelector('.workflow-pick').hidden=view.name==='card';
   {const ex=view.name==='card'&&current?examOf(data,current.id):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
-  $('#crumb-view').textContent=view.name==='library'||(view.name==='card'&&!exam)?'문항 보관함':view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
+  // 경로는 지금 고른 칸을 그대로 말한다(10-28 출제 지적 1): 「문항 · 출제 중」.
+  $('#crumb-view').textContent=view.name==='library'?`문항 · ${POOLS[libState(view).pool]}`:view.name==='card'&&!exam?`문항 · ${POOLS[view.cardPool||'drafting']}`:view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
   {const q=['desk','card'].includes(view.name)&&current;$('#crumb-question').textContent=q?questionTitle(current):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!q;}
   // 이동 줄 앞 단계는 그 화면으로 가는 단추: 시험지 문항이면 그 시험지, 아니면 문항 보관함(보관함·시험지 목록 화면에서는 지금 화면이라 누를 일 없음).
   $('#crumb-view').disabled=!['card','desk'].includes(view.name);$('#crumb-view').title=$('#crumb-view').disabled?'':exam?'이 시험지 열기':'문항 보관함 열기';
@@ -696,10 +698,8 @@ function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
 // 왼쪽 메뉴(다시 그려지므로 위임으로 받는다).
 $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  if(b.id==='side-new'){$('#new').click();return;}
   const nav=b.dataset.nav;if(!nav)return;
-  if(nav==='library'){view.examId=null;if(view.lib?.mark==='star')view.lib.mark='';show('library');}
-  else if(nav==='stars'){view.examId=null;Object.assign(libState(view),{mark:'star',kind:'all',limit:40,open:-1});show('library');}
+  if(nav==='library'){view.examId=null;Object.assign(libState(view),{pool:b.dataset.pool||'drafting',limit:40,open:-1});show('library');}
   else if(nav==='exams')show('exams',{status:b.dataset.status||'drafting'});
   else if(nav==='exam'){view.examId=b.dataset.exam;show('exam');}
   else if(nav==='new-exam')newExamDialog();
@@ -707,7 +707,7 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 // 문항 보관함.
 // 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023): 기출 + 내 문항 한 목록, 문항 보기 창. 동작은 library-view.js.
 const libApi={data:()=>data,view:()=>view,engine:(node,q)=>engineCard(node,q),rerender:()=>{if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);},status:(m,err)=>status(m,err),
-  openCard:id=>openCard(id),askDelete:id=>askDelete(id),convertPast:item=>void convertPast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
+  newCard:()=>$('#new').click(),importExcel:()=>$('#excel-file').click(),openCard:id=>openCard(id),askDelete:id=>askDelete(id),convertPast:item=>void convertPast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
   // 위쪽 경로: 문항 보기 창이 열려 있으면 「문항 보관함 › 제목」, 앞 단계를 누르면 창을 닫는다.
   crumb:title=>{if(view.name!=='library')return;$('#crumb-question').textContent=title;$('#crumb-question').title=title;document.querySelector('.crumb-sep').hidden=!title;$('#crumb-view').disabled=!title;$('#crumb-view').title=title?'문항 보관함으로 돌아가기':'';},
   toExamMenu:(qid,button)=>{const exams=data.exams.filter(e=>e.status==='drafting'),sel=document.createElement('select');sel.className='lv-btn';sel.setAttribute('aria-label','시험지에 넣기');
@@ -1136,7 +1136,7 @@ $('#brand-home').onclick=()=>{view.examId=null;show('library');};
 // 맨 위 줄(5E 세 프로그램 공통): 다른 프로그램 이름을 누르면 5E에 전환을 부탁하고(app-switch.js), ↶ ↷는 시트의 되돌리기·다시 실행을 그대로 누른다(기록 하나).
 document.addEventListener('click',e=>{const b=e.target.closest?.('button[data-app-switch]');if(!b)return;e.preventDefault();if(e.detail>1)return;/* 두 번 누름(M8) */if(window.parent!==window)window.parent.postMessage({channel:'5e-app-switch',app:b.dataset.appSwitch},location.origin);});
 for(const [top,src] of [['#top-undo','#undo'],['#top-redo','#redo']]){const t=$(top),o=$(src);if(!t||!o)continue;t.onclick=()=>o.click();const sync=()=>{t.disabled=o.disabled;};sync();new MutationObserver(sync).observe(o,{attributes:true,attributeFilter:['disabled']});}
-$('#crumb-view').onclick=()=>{if(view.name==='library'){libView.close();renderView();return;}if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;show('library');}};
+$('#crumb-view').onclick=()=>{if(view.name==='library'){libView.close();renderView();return;}if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;if(current)libState(view).pool=poolOf(data,current);show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
 $('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}};
 try{if(localStorage.getItem(CHANNEL+'exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}
