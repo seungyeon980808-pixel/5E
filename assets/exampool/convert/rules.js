@@ -6,7 +6,8 @@
 
 // 줄 하나의 글. 수식은 $스크립트$. 그림 런은 뺀다.
 export const runsText=runs=>(runs||[]).filter(r=>r.kind!=='figure').map(r=>r.kind==='equation'?`$${String(r.script||r.value||'').trim()}$`:String(r.value||'')).join('');
-export const clean=s=>String(s||'').replace(/\s+/g,' ').replace(/\$\s*\$/g,'').trim();
+// 일부 기출 PDF는 「[3점]」의 괄호가 「~」「₩」로 읽힌다(예: 2012 9월 지구Ⅰ 6번 「…것은?~3점₩」, 10-28) — 원래 표기로 되돌린다.
+export const clean=s=>String(s||'').replace(/~\s*([1-9])\s*점\s*₩/g,' [$1점]').replace(/\s+/g,' ').replace(/\$\s*\$/g,'').trim();
 export const MARK=/^(\[[^\]]{1,12}\]|〔[^〕]{1,12}〕|\((가|나|다|라|마|바|사)\)\s?|[◦○•ㆍ·∙]\s?|[※*]\s?)/;
 export const HEAD=/^[\[〔［]\s*([^\]〕］]{1,12}?)\s*[\]〕］]$/;
 const CAPTION=/^(\s*\((가|나|다|라|마|바)\)\s*)+$/;
