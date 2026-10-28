@@ -261,9 +261,8 @@
  * 평상시(창 크기 추적)엔 부드러운 이동, 단계 전환 땐 새 자리에서 pop 으로 뜬다. */
 .tut-halo {
   position: fixed;
-  border: 2px solid var(--accent);
+  border: 1px solid var(--ds-soft-line, #6ba4f8); /* 은은한 선 하나(10-28 출제 지적 3) — 2px 진한 선·안쪽 흰 선은 뺌 */
   border-radius: 6px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   pointer-events: none;
   transition: left var(--tut-t-track) var(--tut-ease-in-out),
               top var(--tut-t-track) var(--tut-ease-in-out),

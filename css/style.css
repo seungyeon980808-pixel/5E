@@ -2097,7 +2097,7 @@ textarea.unified-text-input {
 .unified-text-input:focus,
 .unified-style-controls select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.22);
+  box-shadow: none;
 }
 .unified-editor-btn,
 .unified-style-toggle,
@@ -2465,7 +2465,7 @@ textarea.unified-text-input {
 }
 .canvas-bottom-bar input[type="number"]:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.22);
+  box-shadow: none;
 }
 :root[data-theme="dark"] .canvas-bottom-bar input[type="number"] {
   color: var(--text-primary);

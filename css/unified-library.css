@@ -50,7 +50,7 @@
   --unilib-focus-outline-offset: 2px;
   --unilib-focus-text-thickness: 2px;
   --unilib-focus-text-offset: 3px;
-  --unilib-focus-ring: 0 0 0 2px color-mix(in srgb, var(--unilib-accent) 24%, transparent);
+  --unilib-focus-ring: none;
   --unilib-border-width: 1px;
   --unilib-card-outline-width: 2px;
   --unilib-grid-thumb-height: 146px;

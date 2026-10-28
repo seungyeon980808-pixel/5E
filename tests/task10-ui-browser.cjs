@@ -272,7 +272,7 @@ async function run() {
       return { style: style.outlineStyle, width: style.outlineWidth, color: style.outlineColor };
     });
     assert.equal(keyboardOutline.style, 'solid');
-    assert.equal(keyboardOutline.width, '3px');
+    assert.equal(keyboardOutline.width, '1px'); // 10-28 출제 지적 3: 키보드 초점은 은은한 1px 선 하나(css/focus-calm.css)
     await page.screenshot({ path: path.join(evidenceDir, 'canvas-keyboard-focus.png') });
     const box = await canvas.boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);

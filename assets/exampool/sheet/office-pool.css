@@ -107,7 +107,7 @@
 .f-field>label{font-size:13.5px;font-weight:600;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .f-field>label em{font-style:normal;font-weight:400;font-size:12px;color:#6b7078}
 .cv-writer input:not([type=radio]):not([type=checkbox]),.cv-writer textarea{width:100%;font:inherit;font-size:15px;line-height:1.6;color:#1b1e23;background:#fff;border:1px solid #c9ced6;border-radius:6px;padding:9px 12px;outline:0;resize:none;overflow:hidden}
-.cv-writer input:not([type=radio]):not([type=checkbox]):focus,.cv-writer textarea:focus{border-color:#2f6fd6;box-shadow:0 0 0 3px rgba(47,111,214,.15)}
+.cv-writer input:not([type=radio]):not([type=checkbox]):focus,.cv-writer textarea:focus{border-color:#2f6fd6;box-shadow:none}
 .cv-writer ::placeholder{color:#9aa0a8}
 .f-row2{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}.f-row3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}
 .pick{font-size:13.5px;line-height:1.55;color:#2f343a;border:1px solid #c9ced6;border-radius:6px;padding:8px 12px;background:#fff;min-height:44px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}

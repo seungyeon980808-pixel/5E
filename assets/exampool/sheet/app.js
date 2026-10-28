@@ -240,6 +240,7 @@ function renderView(){
   if(view.name!=='card'&&$('#preview-dialog').classList.contains('docked')&&!$('#preview-dialog').hidden)void requestTypeset(null);
   $('#cards-view').hidden=true;$('#exam-view').hidden=true;$('.workspace').hidden=view.name!=='desk';
   view.cardPool=view.name==='card'&&current?poolOf(data,current):'';
+  document.dispatchEvent(new Event('ex-rerender'));
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
@@ -835,14 +836,19 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if
 });
 $('#examd-view').addEventListener('change',e=>{if(!e.target.matches('[data-ex-nogoal]'))return;placeState(view).noGoal=e.target.checked;const exam=examNow();const c=$('#exam-check');if(exam&&c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(view),null);void fillExamSheet(exam);});
 {let tip=null;
-  $('#examd-view').addEventListener('mouseover',async e=>{const r=e.target.closest('[data-ex-tip]');if(!r||(tip&&tip.dataset.id===r.dataset.exTip))return;const q=data.questions.find(x=>x.id===r.dataset.exTip);if(!q)return;
+  // 문항 미리보기 풍선(마우스를 올린 줄의 문항 전체). 시험지가 다시 그려지면 올려 둔 줄이 바뀌어 mouseout이 오지 않아
+  // 풍선이 화면 위에 남았다(10-28 출제 지적 4) — 다시 그릴 때·누를 때·스크롤할 때·줄이 사라졌을 때 닫는다.
+  const closeTip=()=>{tip?.remove();tip=null;};
+  $('#examd-view').addEventListener('mouseover',async e=>{const r=e.target.closest('[data-ex-tip]');if(!r||(tip?.isConnected&&tip.dataset.id===r.dataset.exTip))return;const q=data.questions.find(x=>x.id===r.dataset.exTip);if(!q)return;
     tip?.remove();tip=document.createElement('div');tip.className='ex-tip';tip.dataset.id=q.id;tip.innerHTML='<div class="ep-doc"></div>';document.body.append(tip);
     const doc=tip.firstElementChild;await engineCard(doc,q);if(!tip?.isConnected||tip.dataset.id!==q.id)return;
+    if(!r.isConnected||!r.matches(':hover')||$('#examd-view').hidden){closeTip();return;}
     // 문항 전체(한글 엔진 그림): 폭 440px, 화면보다 길면 줄여서 전체가 보이게.
     const b=r.getBoundingClientRect(),avail=innerHeight-24;tip.style.width='440px';let h=tip.offsetHeight;if(h>avail){tip.style.width=Math.max(220,440*avail/h)+'px';h=tip.offsetHeight;}
     tip.style.left=Math.min(innerWidth-tip.offsetWidth-12,b.right+12)+'px';tip.style.top=Math.max(12,Math.min(innerHeight-h-12,b.top-20))+'px';tip.classList.add('on');});
-  $('#examd-view').addEventListener('mouseout',e=>{const r=e.target.closest('[data-ex-tip]');if(r&&!r.contains(e.relatedTarget)){tip?.remove();tip=null;}});
-  document.addEventListener('dragstart',()=>{tip?.remove();tip=null;},true);}
+  $('#examd-view').addEventListener('mouseout',e=>{const r=e.target.closest('[data-ex-tip]');if(r&&!r.contains(e.relatedTarget))closeTip();});
+  for(const k of ['dragstart','pointerdown','wheel'])document.addEventListener(k,closeTip,{capture:true,passive:true});
+  document.addEventListener('ex-rerender',closeTip);}
 // 내 틀 등록 창이 한글 파일을 읽을 때: 암호는 선생님이 넣고, 여기서만 쓰고 남기지 않는다.
 async function readFormFile(file){typesetter||=makeTypesetter();const buffer=await file.arrayBuffer();let read=null,password='';
   for(;;){try{read=await typesetter.readSchoolForm(buffer,file.name,password);break;}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null){status('한글 파일 열기를 그만두었습니다.');return null;}}}
