@@ -1483,6 +1483,8 @@ export function initRhwpExamWorkspace(state, services) {
     if(busy||placement||editing)throw Error('현재 한글 그림 작업을 마친 뒤 시험지를 보내세요.');
     // 바꾸기 전에 지금 문서를 자동 저장한다(H4와 같은 이유). 예전에는 마지막 0.9초 안의 수정을 잃었다(점검 하).
     await open();if(bridge?.input)await stableSave();await loadDocument(new Uint8Array(bytes),`${String(name||'5E_exam 시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`);
+    // 시험지 맨 앞은 1pt 빈 문단(쪽 위 자리)이라, 커서가 거기 있으면 오른쪽 글자 크기가 「1.0 pt」로 보였다(10-28) — 첫 문항으로 옮긴다.
+    try{const w=bridge.wasm;if(w?.getParagraphLength?.(0,0)===1&&w.getParagraphLength(0,1)>=0)bridge.input?.cursor?.moveTo?.({sectionIndex:0,paragraphIndex:1,charOffset:0});}catch{}
     message('5E_exam 시험지를 열었습니다. 최종 검수 후 한글로 저장하세요.');
   }
   async function receiveStructuredQuestion(packet){

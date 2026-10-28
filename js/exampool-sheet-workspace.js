@@ -46,7 +46,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     const page=()=>services.prepareLoadedProject(copy(services.serialize(state.get()))).active;
     // 그림 화면이 비어 있어도 막지 않는다(10-27): 캔버스로 나가 아트보드 가운데에 영역 상자를 띄우고, 그 자리에서 그리거나 붙여 넣게 한다.
     const first=page(),empty=!first.objects.length,A=state.get().artboard||{w:90,h:60};
-    const blank=()=>{const w=Math.round(A.w*0.6),h=Math.round(w*0.75);return {x:-w/2,y:-h/2,w,h};};
+    const blank=(art=A)=>{const w=Math.round((art||A).w*0.6),h=Math.round(w*0.75);return {x:-w/2,y:-h/2,w,h};};
     let bounds=copy(options.bounds||(empty?blank():getContentBounds({...state.get(),...first})));if(!bounds||bounds.w<=0||bounds.h<=0)bounds=blank();
     const {ExamRegionSurface}=await import('./rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration');
     host.hidden=true;const app=document.querySelector('body>.app');syncAppLock();
@@ -54,7 +54,15 @@ export function initQuestionSheet(state,services,examWorkspace){
     const geometry=()=>{const c=canvasRect(),mx=c?.getScreenCTM();if(!mx)return null;const p=new DOMPoint(bounds.x,bounds.y).matrixTransform(mx);return {x:p.x,y:p.y,w:bounds.w*mx.a,h:bounds.h*mx.d};};
     const viewport=()=>{const r=document.querySelector('#canvas')?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
     const session=()=>({bounds,name:`5E_exam ${m.label||'그림'} 자리`,geometry,viewport});
-    const region=new ExamRegionSurface(document.body,{source:true,onChange:next=>{bounds=copy(next);region.show(session());},onError:error=>say(error.message)});
+    // 상자를 손으로 고치기 전에는 그림을 따라간다(10-28): 빈 캔버스에 나중에 그리거나 붙여 넣은 그림이 처음 상자보다 크면 잘렸고,
+    // 다른 페이지 탭으로 바꿔도 상자가 처음 페이지 크기 그대로였다.
+    let adjusted=!!options.bounds,fitFrame=0;
+    const region=new ExamRegionSurface(document.body,{source:true,onChange:next=>{adjusted=true;bounds=copy(next);region.show(session());},onError:error=>say(error.message)});
+    const refit=()=>{fitFrame=0;if(adjusted||!picking)return;const value=state.get(),objects=value.objects||[];
+      const fit=objects.length?getContentBounds(value):null;const next=fit&&fit.w>0&&fit.h>0?fit:blank(value.artboard);
+      if(JSON.stringify(next)!==JSON.stringify(bounds)){bounds=copy(next);region.show(session());}
+      if(objects.length)region.root.querySelector('.exam-edit-badge')?.setAttribute('hidden','');};
+    const stopFit=state.subscribe?.(()=>{if(!fitFrame)fitFrame=requestAnimationFrame(refit);});
     const say=text=>{const badge=region.root.querySelector('.exam-edit-badge');badge.hidden=false;badge.textContent=text;};
     region.root.classList.add('exampool-pick');
     const actions=region.heading.querySelector('.exam-region-actions');
@@ -62,7 +70,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     const cancel=button(options.cancel||'취소'),apply=button(options.apply||'이 자리에 넣기',true);
     let raf=0;const follow=()=>{region.position();raf=requestAnimationFrame(follow);};
     let esc=null;
-    const finish=()=>{cancelAnimationFrame(raf);region.hide();region.root.remove();picking=null;if(esc)document.removeEventListener('keydown',esc,true);host.hidden=false;syncAppLock();frame?.contentWindow?.focus?.();};
+    const finish=()=>{stopFit?.();cancelAnimationFrame(fitFrame);cancelAnimationFrame(raf);region.hide();region.root.remove();picking=null;if(esc)document.removeEventListener('keydown',esc,true);host.hidden=false;syncAppLock();frame?.contentWindow?.focus?.();};
     return new Promise(resolve=>{
       picking={cancel:()=>{finish();send({action:'pick-cancelled'});resolve();}};
       cancel.onclick=()=>picking.cancel();

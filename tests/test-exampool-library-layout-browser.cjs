@@ -183,6 +183,13 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('#card-view figure.book b').first().textContent(),'교과서_중2 1쪽','5E shared textbook pages are listed');
       await sheet.fill('#card-view [data-cvpast="query"]','120');await sheet.press('#card-view [data-cvpast="query"]','Enter');
       await sheet.waitForFunction(()=>document.querySelector('#card-view figure.book b')?.textContent==='교과서_중2 120쪽');
+      // 10-28: 교과서 쪽 번호는 기출 검색창에 남지 않고(「120연주」 같은 검색어가 되던 결함), 돌아오면 쪽 번호가 그대로다.
+      await sheet.selectOption('#card-view [data-cvscope]','past');await sheet.waitForSelector('#card-view [data-cvpast="query"]');await sheet.waitForTimeout(400);
+      assert.equal(await sheet.locator('#card-view [data-cvpast="query"]').inputValue(),'','the textbook page number does not leak into the past-exam search');
+      assert.deepEqual(await sheet.locator('#card-view .lp-token').allTextContents(),[],'no page-number token in the past-exam search');
+      await sheet.selectOption('#card-view [data-cvscope]','textbooks');
+      await sheet.waitForFunction(()=>document.querySelector('#card-view figure.book b')?.textContent==='교과서_중2 120쪽');
+      assert.equal(await sheet.locator('#card-view [data-cvpast="query"]').inputValue(),'120','the textbook keeps its own page number');
       await sheet.fill('#card-view [data-cvpast="query"]','');await sheet.press('#card-view [data-cvpast="query"]','Enter');
       await page.screenshot({path:path.join(evidence,`${engineName}-past.png`)});
 

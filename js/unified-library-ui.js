@@ -3357,7 +3357,15 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
     },
     onPage: (page) => changeCropPage(page, true),
   });
-  const stepCropPage = (delta) => void changeCropPage((cropSession?.pageNumber ?? 1) + delta);
+  // 빨리 연달아 누르면 앞 쪽을 그리는 동안 쪽 번호가 아직 그대로라 넘김이 빠졌다(10-28) — 가려는 쪽을 따로 기억해 그 쪽에서 센다.
+  let cropPageTarget = null;
+  const stepCropPage = (delta) => {
+    const pageCount = Math.max(1, Number(cropDocumentFile?.pageCount) || 1);
+    const target = Math.max(1, Math.min(pageCount, (cropPageTarget ?? cropSession?.pageNumber ?? 1) + delta));
+    cropPageTarget = target;
+    cropPageOutput.textContent = `${target} / ${pageCount}쪽`;
+    void changeCropPage(target).finally(() => { if (cropPageTarget === target) cropPageTarget = null; });
+  };
   cropPagePrev.addEventListener("click", () => stepCropPage(-1));
   cropPageNext.addEventListener("click", () => stepCropPage(1));
   cropStage.addEventListener("wheel", (event) => {

@@ -31,7 +31,7 @@ export function completeness(q){
 
 export function createCardEditor(root,api){
   const panels={nav:store.get('nav',true),lib:true/* 참고 자료 칸은 ExamPool을 열 때마다 열린 채로 시작(쓰는 동안 접는 것은 그대로) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:store.get('rightOpen',true),view:store.get('view','card')==='page'?'page':'card'};
-  let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[]}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
+  let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[],bookq:''}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
   if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   const q=()=>api.question();
 
@@ -272,6 +272,8 @@ export function createCardEditor(root,api){
   let overHwp=false,lastFocus=null;hwpLayer.addEventListener('pointerenter',()=>{overHwp=true;});hwpLayer.addEventListener('pointerleave',()=>{overHwp=false;});
   // 편집기 안에서 스스로 잡는 초점은 이 문서에 focusin이 오지 않아, 창 blur·칸 focusout 뒤에 어디로 갔는지 본다.
   document.addEventListener('focusin',e=>{if(!hwpLayer.contains(e.target))lastFocus=e.target;},true);
+  // 교과서 쪽 번호 칸은 누르면 통째로 골라, 새로 친 번호가 이전 번호에 이어 붙지 않게 한다(「283」 위에 283 → 「283283」, 10-28).
+  root.addEventListener('focusin',e=>{const t=e.target;if(t.dataset?.cvpast==='query'&&panels.tab==='textbooks'&&t.value)setTimeout(()=>{if(document.activeElement===t)t.select();},0);});
   // 빈 곳을 누르면 쓰던 칸에서 나온 것이므로 돌려줄 칸을 잊는다.
   document.addEventListener('pointerdown',e=>{if(!hwpLayer.contains(e.target)&&!e.target.closest?.('input,textarea,select,button,[contenteditable],[tabindex]'))lastFocus=null;},true);
   // 번호 줄이 넘치면 마우스 휠(세로)로도 가로로 넘긴다(스크롤 막대는 숨겨져 있음).
@@ -355,7 +357,7 @@ export function createCardEditor(root,api){
   // 조각을 모두 포함하는 문항만 남기고(띄어쓰기·대소문자 무시, 태그·단원의 비슷한 말 사전 포함), 제목·태그에 걸린 문항을 앞에 둔다.
   const hay=i=>{if(i._hay===undefined){const rel=[...i.tags,...i.parts].flatMap(n=>pastSyn?.[n]||[]);i._hay=norm([i.id,i.title,i.short,i.text,...i.tags,...i.parts,...rel].join(' '));i._hayNs=i._hay.replace(/\s+/gu,'');}return i;};
   function addPastWords(input){
-    if(panels.tab==='textbooks'){pastFilter.query=input.value.trim();store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
+    if(panels.tab==='textbooks'){pastFilter.bookq=input.value.trim();store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
     const incoming=splitWords(input.value);if(!incoming.length)return;
     const joined=[...new Set([...pastFilter.tokens,...incoming])];
     if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return false;}
@@ -413,10 +415,11 @@ export function createCardEditor(root,api){
     const refocus=()=>{if(typing){const n=root.querySelector('[data-cvpast="query"]');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}}};
     if(panels.tab==='textbooks'){
       const list=await loadBooks();if(!body.isConnected||panels.tab!=='textbooks')return;
-      const b=list.find(v=>v.id===f.book)||list[0],p=picksHtml(),from=Math.max(1,Math.min(b?.pages||1,Number(f.query)||1));
-      fillHead(`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="쪽 번호" inputmode="numeric" aria-label="쪽 번호로 가기"><span class="lp-n">${b?b.pages+'쪽':''}</span></label>`,
+      // 교과서 쪽 번호는 기출 검색어(query)와 따로 둔다(bookq) — 칸을 바꿔도 서로의 검색창에 남지 않게(10-28).
+      const bq=f.bookq??'',b=list.find(v=>v.id===f.book)||list[0],p=picksHtml(),from=Math.max(1,Math.min(b?.pages||1,Number(bq)||1));
+      fillHead(`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(bq)}" placeholder="쪽 번호" inputmode="numeric" aria-label="쪽 번호로 가기"><span class="lp-n">${b?b.pages+'쪽':''}</span></label>`,
         `<label>교과서<select data-cvpast="book" aria-label="교과서">${list.map(v=>`<option value="${E(v.id)}"${v===b?' selected':''}>${E(v.title)} · ${v.pages}쪽</option>`).join('')}</select></label><p class="lp-adv-note">5E 공유 자료의 교과서입니다. 쪽 번호를 치면 그 쪽부터 보입니다.</p>`,0);
-      if(b&&f.bookview==='page'){const n=Math.max(1,Math.min(b.pages,/^\d+$/.test(f.query)?Number(f.query):Number(f.bookpage)||1));renderBookPage(body,list,b,n);refocus();return;}
+      if(b&&f.bookview==='page'){const n=Math.max(1,Math.min(b.pages,/^\d+$/.test(bq)?Number(bq):Number(f.bookpage)||1));renderBookPage(body,list,b,n);refocus();return;}
       const pages=b?Array.from({length:Math.min(60,b.pages-from+1)},(_,k)=>from+k):[];
       body.innerHTML=`<div class="past-list">${p}${pages.map(n=>`<figure class="past book" data-book="${E(b.id)}" data-page="${n}"><div class="past-pic"><img loading="lazy" src="${E(bookPage(b,n,true))}" data-full="${E(bookPage(b,n))}" alt="${E(b.title)} ${n}쪽"></div><figcaption><b>${E(b.title)} ${n}쪽</b><span class="acts"><button type="button" class="mini" data-cvbooklink="${n}" title="이 쪽을 근거로 연결">${ICON.link}<span>근거</span></button></span></figcaption></figure>`).join('')}${!p&&!pages.length?'<p class="lp-count">교과서를 찾지 못했습니다. 「5E 라이브러리」에서 쪽이나 영역을 골라 가져올 수 있습니다.</p>':''}</div>`;
       refocus();reopenZoom();return;
@@ -585,7 +588,7 @@ export function createCardEditor(root,api){
     if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
     if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);edit('choices',()=>{x.choices[i].text=t.value;});return;}
     if(t.dataset.cvsrc!==undefined){srcQuery[panels.tab]=t.value;store.set('srcq',srcQuery);const src=document.querySelector('#source-search');if(src){src.value=t.value;src.dispatchEvent(new Event('input',{bubbles:true}));}return;}
-    if(t.dataset.cvpast==='query'){pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);if(!pastComposing&&!e.isComposing)t._timer=setTimeout(renderPast,250);}
+    if(t.dataset.cvpast==='query'){pastFilter[panels.tab==='textbooks'?'bookq':'query']=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);if(!pastComposing&&!e.isComposing)t._timer=setTimeout(renderPast,250);}
   });
   root.addEventListener('change',e=>{
     const t=e.target,x=q();
@@ -701,7 +704,7 @@ export function createCardEditor(root,api){
   root.addEventListener('compositionstart',e=>{if(e.target.dataset?.cvpast==='query')pastComposing=true;});
   root.addEventListener('compositionend',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;pastComposing=false;
     if(pastEnterPending){pastEnterPending=false;clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
-    else{pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);t._timer=setTimeout(renderPast,250);}});
+    else{pastFilter[panels.tab==='textbooks'?'bookq':'query']=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);t._timer=setTimeout(renderPast,250);}});
   root.addEventListener('keydown',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;
     if(e.key==='Enter'&&(e.isComposing||pastComposing)){e.preventDefault();pastEnterPending=true;return;}
     // Enter 순간의 글을 바로 떼어 낸다(미루면 빠르게 이어 친 다음 단어가 같은 조각에 붙음: 「자석」 Enter 「질량」 → 「자석질량」).
