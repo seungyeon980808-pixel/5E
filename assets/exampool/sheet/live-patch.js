@@ -11,10 +11,11 @@ const unsafe=v=>/[\u0000-\u0009\u000b-\u001f￼\ud800-\udfff]/.test(v);
 
 // 글을 뺀 문항 모양: 구성·순서·묶음·배치·크기·간격·표 크기·병합·그림·선지 표현·번호. 이것이 같아야 글만 바꿔 넣을 수 있다.
 // 구성 이름은 한글에 찍히는지 여부만 본다(찍히는 이름의 글은 글 조각으로 비교한다).
+// 〈보기〉 ○×(truth)는 한글 조판에 쓰이지 않는다 — 넣으면 ○×를 누를 때마다 미리보기를 통째로 다시 그려 잠깐 비었다(10-28).
 export function layoutKey(q){
   const blank=t=>t&&{...t,cells:t.cells.map(row=>row.map(({value,raw,...cell})=>cell)),note:''};
   return JSON.stringify({standardId:q.standardId,askGap:q.askGap,choicesGap:q.choicesGap,number:q.number,type:q.type,style:q.style,choiceLayout:q.choiceLayout,
-    blocks:q.blocks.map(({text,label,lines,table,...b})=>({...b,shown:labelInDocument({...b,label}),lines:lines?.map(({text,...l})=>l),table:blank(table)})),
+    blocks:q.blocks.map(({text,label,lines,table,...b})=>({...b,shown:labelInDocument({...b,label}),lines:lines?.map(({text,truth,...l})=>l),table:blank(table)})),
     choices:q.choices.map(({text,...c})=>c),choiceTable:blank(q.choiceTable)});
 }
 

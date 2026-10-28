@@ -79,7 +79,7 @@ export function createCardEditor(root,api){
       const right=comboRight(x),ri=right?x.choices.findIndex(c=>normalizeCombo(c.text)===right):-1;
       const sugg=COMBO_STATS.top.map(([set,pct],k)=>`<button type="button" class="cv-sugg" data-cvcombofill="${k}" title="평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개 중 ${pct}%가 이 조합"><b>${set.map(v=>E(v.replace(/,\s*/g,''))).join('<i></i>')}</b><em>${Math.round(pct)}%</em></button>`).join('');
       // 맞으면 조용히(안 보임), 정답 동그라미가 어긋나거나 조합이 없을 때만 한 줄로 알린다.
-      const note=right===null?'':ri>=0?`<p class="cv-autoans ${x.answer===ri?'ok':'bad'}">옳은 보기 ${E(right)} → 정답 ${NUM[ri]}${x.answer===ri?'':' (동그라미를 맞춰 주세요)'}</p>`:`<p class="cv-autoans bad">${right?`옳은 보기 조합 「${E(right)}」이 선지에 없습니다`:'옳은 보기가 하나도 없습니다'}</p>`;
+      const note=right===null?'':ri>=0?`<p class="cv-autoans ${x.answer===ri?'ok':'bad'}">옳은 보기 ${E(right)} → 정답 ${NUM[ri]}${x.answer===ri?'':' (동그라미를 맞춰 주세요)'}</p>`:`<p class="cv-autoans bad">${right?`옳은 보기 조합 「${E(right)}」이 선지에 없습니다 <button type="button" class="link" data-cvcombofit>이 조합이 든 추천 조합으로 채우기</button>`:'옳은 보기가 하나도 없습니다'}</p>`;
       // 선지(10-27 D10·5-A): 번호 ①~⑤가 곧 정답 단추(라디오는 숨김), 추천 조합은 「추천 조합 보기 ▾」 안에.
       return `<div class="f-field cv-row"><label data-tip="자주 쓰는 조합은 평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개에서 센 비율입니다. 보기의 ○·×를 다 정하면 정답 선지가 자동으로 표시됩니다. 번호를 누르면 그 선지가 정답입니다." tabindex="0" aria-label="선지"><span class="vt">선지</span></label><div class="cv-v">
         <button type="button" class="cv-sugg-toggle" data-cv="sugg" aria-expanded="${suggOpen}">추천 조합 ${suggOpen?'접기':'보기'}<i aria-hidden="true">${suggOpen?'▴':'▾'}</i></button>
@@ -108,6 +108,14 @@ export function createCardEditor(root,api){
   function evMissing(x){const out=[];(bogiOf(x)?.lines||[]).forEach(l=>{if(l.truth===true&&!refsOf(x,l.id).length)out.push('보기 '+l.label+'(옳음)');});
     if(Number.isInteger(x.answer)&&x.choices?.[x.answer]&&!refsOf(x,x.choices[x.answer].id).length)out.push('정답 '+NUM[x.answer]);return out;}
   // 보기 ○×가 모두 정해졌으면 옳은 것만 모은 조합(「ㄱ, ㄷ」), 하나라도 비었으면 null.
+  // 옳은 조합이 든 추천 조합으로 선지 ①~⑤를 채우고 정답을 고른다(10-28: 새 문항은 선지가 비어 ○×를 정해도 정답이 안 떴다).
+  // 추천 조합 가운데 그 조합이 든 것을 먼저 쓰고, 없으면 1순위에서 같은 글자 수 칸을 그 조합으로 바꾼다.
+  function fillCombosFor(x,right){
+    const keyOf=v=>[v.split(',').length,v];let set=COMBO_STATS.top.map(([v])=>v).find(v=>v.some(c=>normalizeCombo(c)===right));
+    if(!set){set=[...COMBO_STATS.top[0][0]];const n=right.split(',').length,k=set.findIndex(c=>c.split(',').length===n);set[k>=0?k:set.length-1]=right;
+      set.sort((a,b)=>{const [la,sa]=keyOf(normalizeCombo(a)),[lb,sb]=keyOf(normalizeCombo(b));return la-lb||sa.localeCompare(sb);});}
+    x.choices.forEach((c,i)=>c.text=set[i]??'');const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;
+  }
   function comboRight(x){const ls=bogiOf(x)?.lines||[];if(!ls.length||ls.some(l=>l.truth!==true&&l.truth!==false))return null;return normalizeCombo(ls.filter(l=>l.truth).map(l=>l.label).join(', '));}
   let shapeOpen=false;
   // 문항 정보(시험지에 안 찍히는 것): 항목별 단추를 눌러 연 것만 보인다. 연 상태는 이 기기에 남는다. 추천 조합도 접어 둔다.
@@ -672,7 +680,8 @@ export function createCardEditor(root,api){
     if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)cardEdit('explanation',()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
     if(d.cvmat){const [k,v]=d.cvmat.split(':');try{api.edit(()=>{setMaterialLayout(x,{[k]:k==='count'?Number(v):v});});}catch(e){api.status?.(e.message,true);}return;}
     if(d.cvpoints){cardEdit('points',()=>{x.points=Number(d.cvpoints);});return;}
-    if(d.cvtruth!==undefined){const l=bogiOf(x)?.lines?.[Number(d.cvtruth)];if(!l)return;const v=d.v==='1';cardEdit('truth',()=>{if(l.truth===v)delete l.truth;else l.truth=v;const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
+    if(d.cvtruth!==undefined){const l=bogiOf(x)?.lines?.[Number(d.cvtruth)];if(!l)return;const v=d.v==='1';cardEdit('truth',()=>{if(l.truth===v)delete l.truth;else l.truth=v;const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;else if(right&&x.choices.every(c=>!String(c.text||'').trim()))fillCombosFor(x,right);}});return;}
+    if(d.cvcombofit!==undefined){const right=comboRight(x);if(right)cardEdit('choices',()=>fillCombosFor(x,right));return;}
     if(d.cvcombofill!==undefined){const set=COMBO_STATS.top[Number(d.cvcombofill)]?.[0];if(set)cardEdit('choices',()=>{x.choices.forEach((c,i)=>c.text=set[i]);const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
     if(d.cv==='common-combos'){api.edit(()=>{x.choices.forEach((c,i)=>c.text=COMMON[i]);});return;}
     if(d.cvlayout!==undefined){api.edit(()=>{if(d.cvlayout)x.choiceLayout=d.cvlayout;else delete x.choiceLayout;});return;}

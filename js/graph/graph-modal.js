@@ -1916,7 +1916,9 @@ function refreshPreview() {
           const w = clientToWorld(ev.clientX, ev.clientY);
           if (!w) return;
           const nx = baseW.x + (w.x - start.x), ny = baseW.y + (w.y - start.y);
-          _cfg[posKey] = { fx: (nx - pl.x) / pl.w, fy: (ny - pl.y) / pl.h };
+          // 그래프 틀 밖으로는 15mm까지만(10-28): 멀리 끌어 놓으면 그 글자까지 그림 영역에 들어가 카드·시험지에서 그래프가 아주 작아졌다.
+          const AXIS_NAME_REACH = 15, clampF = (v, size) => Math.max(-AXIS_NAME_REACH / size, Math.min(1 + AXIS_NAME_REACH / size, v));
+          _cfg[posKey] = { fx: clampF((nx - pl.x) / pl.w, pl.w), fy: clampF((ny - pl.y) / pl.h, pl.h) };
           refreshPreview();
         };
         const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };

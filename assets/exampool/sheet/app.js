@@ -443,9 +443,12 @@ $('#filter').oninput=()=>{renderRows();grid?.refresh();};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(grid?.finish()!==false)$('#export').click();return;}if((e.metaKey||e.ctrlKey)&&['z','y'].includes(e.key.toLowerCase())&&!e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea,select,[contenteditable]')){e.preventDefault();replay(e.shiftKey||e.key.toLowerCase()==='y'?'redo':'undo');return;}if(e.key==='Escape'&&!document.querySelector('dialog[open]'))closeSources();});
 function download(bytes,name,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){const url=URL.createObjectURL(new Blob([bytes],{type:mime})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
 $('#export').onclick=async()=>{try{status('엑셀 만드는 중…');const bytes=await exportExcel(window.XLSX,window.JSZip,data);download(bytes,'5E_exam-문항.xlsx');status('엑셀 내려받기 완료 · 구성·표·그림·자료와 5E 원본을 함께 보관합니다.');}catch(e){status(e.message,true);}};
-$('#top-more').onclick=e=>{e.stopPropagation();const m=$('#top-menu');m.hidden=!m.hidden;$('#top-more').setAttribute('aria-expanded',String(!m.hidden));};
+$('#top-more').onclick=e=>{e.stopPropagation();const m=$('#top-menu');m.hidden=!m.hidden;
+  // 카드 화면에서는 왼쪽 메뉴가 숨어 새 시험지를 못 찾았다(10-28) — 여기서 만들고, 보고 있는 문항을 바로 담는다.
+  $('#top-new-exam').textContent=view.name==='card'&&current&&!examOf(data,current.id)?'이 문항으로 새 시험지 만들기':'새 시험지 만들기';$('#top-more').setAttribute('aria-expanded',String(!m.hidden));};
 document.addEventListener('click',e=>{if(!e.target.closest('.top-more')){$('#top-menu').hidden=true;$('#top-more').setAttribute('aria-expanded','false');}});
 $('#top-menu').addEventListener('click',()=>{$('#top-menu').hidden=true;});
+$('#top-new-exam').addEventListener('click',()=>newExamDialog({seed:view.name==='card'?current?.id:null}));
 $('#send-hwp').onclick=()=>{const exam=examById(data,$('#send-hwp').dataset.exam);if(exam)void sendExam(exam);};
 $('#import').onclick=()=>$('#excel-file').click();$('#excel-file').onchange=async()=>{const file=$('#excel-file').files[0];if(!file)return;try{
   status('파일 확인 중…');if(/\.xlsx$/i.test(file.name))pending=await importExcel(window.XLSX,window.JSZip,await file.arrayBuffer());else{if(file.size>32*1024*1024)throw Error('32 MB 이하의 문항 파일을 선택하세요.');const v=JSON.parse(await file.text());if(v.format===FORMAT)pending={...validate(v),exams:Array.isArray(v.exams)?v.exams.map(e=>({...e,items:(e.items||[]).filter(id=>v.questions.some(q=>q.id===id))})):[],backedIds:v.questions.map(q=>q.id),warnings:[]};else{const {decodePoolBundle}=await import('../../../js/exampool-model.js?v=1.7.0-four-session-integration');const pack=decodePoolBundle(JSON.stringify(v));pending=validate({format:FORMAT,questions:pack.items.map(fromLegacy),documents:pack.resources.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))});pending.backedIds=pack.items.map(q=>q.id);pending.warnings=[];}}
@@ -764,9 +767,9 @@ function framePicker(exam){openFramePicker({forms:()=>typesetForms,current:frame
   pick:key=>{mutate(()=>changeFrame(exam,key));status(`틀을 「${frameOf(exam,typesetForms).name}」(으)로 바꿨습니다 — 핵심 목표는 그대로입니다.`);},
   register:()=>registerForm(id=>{mutate(()=>changeFrame(exam,'form:'+id));status('내 틀을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.');})});}
 // 「새 시험지」 창(10-24 시안 17 안 A): 이름 · 틀 · 핵심 목표 → 「만들기」 → 바로 문항 고르기.
-function newExamDialog(){openNewExam({forms:()=>typesetForms,name:`새 시험지 ${data.exams.length+1}`,status:(m,err)=>status(m,err),
+function newExamDialog({seed=null}={}){openNewExam({forms:()=>typesetForms,name:`새 시험지 ${data.exams.length+1}`,status:(m,err)=>status(m,err),
   register:onSaved=>registerForm(id=>{status('내 틀을 등록했습니다 — 이 브라우저에 저장했습니다.');onSaved('form:'+id);}),
-  create:({name,frame,goal})=>{let exam;const ok=mutate(()=>{exam=newExam(name);applyFrame(exam,frame,typesetForms);const def={...exam.goal};Object.assign(exam.goal,goal);exam.goal.edited=['nObj','nEssay','total','time'].some(k=>def[k]!==goal[k]);data.exams.push(exam);});
+  create:({name,frame,goal})=>{let exam;const ok=mutate(()=>{exam=newExam(name);applyFrame(exam,frame,typesetForms);const def={...exam.goal};Object.assign(exam.goal,goal);exam.goal.edited=['nObj','nEssay','total','time'].some(k=>def[k]!==goal[k]);if(seed&&data.questions.some(q=>q.id===seed)&&!examOf(data,seed))exam.items.push(seed);data.exams.push(exam);});
     if(!ok)return false;view.examId=exam.id;view.examStepFor=exam.id;view.examStep=2;show('exam');return true;}});}
 $('#examd-view').addEventListener('change',e=>{const exam=examNow(),t=e.target;if(!exam)return;
   if(t.matches('[data-ef-subject]')){goalEdit(exam,g=>{g.subject=t.value;});return;}
