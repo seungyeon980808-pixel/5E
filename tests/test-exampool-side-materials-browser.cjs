@@ -13,6 +13,8 @@ function variant(kind,number){
   const group=q.blocks.find(b=>b.kind==='group'),table=q.blocks.find(b=>b.kind==='table');
   while(table.table.rows<8){table.table.cells.push(table.table.cells[table.table.rows-1].map(c=>({...c})));table.table.rows++;}
   if(kind==='boxed')group.boxed=true;
+  // 표 아래 주석이 칸 폭에서 줄바꿈되는지 보는 검사라 좁은 A4 단 폭에 고정한다(10-28부터 새 문항 기본은 넓은 B4 단).
+  q.paper='A4';
   return q;
 }
 for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: side-by-side figure is centered in its material cell`,async t=>{

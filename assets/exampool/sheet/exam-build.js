@@ -87,12 +87,15 @@ export async function assembleExamChecked(Document,{items,sheet,open,between}){
   }
 }
 
-export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between,template=null,bodyStart=-1}={}){
-  const {items,pages,page:sheet,missing,mixed}=examPlan(data,exam);
+// rewidth: 시험지 단 폭과 다르게 조판한 문항을 그 단 폭으로 새로 조판한 것(문항 id → {bytes,height}). 저장한 조판은 그대로 둔다.
+export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between,template=null,bodyStart=-1,rewidth=null}={}){
+  const plan=examPlan(data,exam),{pages,page:sheet,missing,mixed}=plan;
+  const items=rewidth?plan.items.map(x=>rewidth.has(x.id)?{...x,height:rewidth.get(x.id).height+x.after}:x):plan.items;
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
   if(missing.length)throw Error(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. 각 문항의 조판을 저장한 뒤 다시 만드세요.`);
-  if(mixed&&!template)throw Error(paperMixMessage(mixed));
-  const open=item=>openApprovedQuestion(Document,item.q,item.q.typeset).catch(e=>{throw Error(`${item.q.number}번 문항: ${e.message}`);});
+  if(mixed&&!template&&!rewidth)throw Error(paperMixMessage(mixed));
+  const open=item=>rewidth?.has(item.id)?Promise.resolve(new Document(rewidth.get(item.id).bytes))
+    :openApprovedQuestion(Document,item.q,item.q.typeset).catch(e=>{throw Error(`${item.q.number}번 문항: ${e.message}`);});
   // 학교 양식 위에서는 양식이 흘리는 대로(「다음 문단과 함께」만), 빈 시험지는 그린 결과로 확인해 문항을 통째로 넘긴다.
   if(template){const {document}=await assembleExamDocument(Document,{items,pages,sheet,template,bodyStart,open,between});return {document,pages,count:items.length};}
   const built=await assembleExamChecked(Document,{items,sheet,open,between});

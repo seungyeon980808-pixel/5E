@@ -48,11 +48,12 @@ test('exam plan uses saved typesetting heights and lists questions that still ne
   assert.deepEqual(plan.missing.map(x=>x.id),[b.id]);
 });
 
-test('exam paper follows the questions: all B4 typesets make a B4 two-column exam, mixed papers stay A4',async()=>{
+// 10-28 결정: 단 폭이 섞이면(또는 비었으면) 수능 형태 B4 2단 — 다른 단 폭 문항은 만들 때 그 단 폭으로 다시 조판한다.
+test('exam paper follows the questions: one paper keeps it, mixed papers use the KICE B4 two-column page',async()=>{
   const {examPage,EXAM_PAGE}=await import('../assets/exampool/sheet/exam-layout.js');
-  const item=paper=>({q:{typeset:{profile:{paper,columns:2}}}});
-  assert.deepEqual(examPage([item('B4'),item('B4')]),{...EXAM_PAGE,paper:'B4',heightMm:334});
-  assert.equal(examPage([item('B4'),item('A4')]),EXAM_PAGE);assert.equal(examPage([]),EXAM_PAGE);
+  const item=paper=>({q:{typeset:{profile:{paper,columns:2}}}}),kice={...EXAM_PAGE,paper:'B4',heightMm:334};
+  assert.deepEqual(examPage([item('B4'),item('B4')]),kice);assert.equal(examPage([item('A4'),item('A4')]),EXAM_PAGE);
+  assert.deepEqual(examPage([item('B4'),item('A4')]),kice);assert.deepEqual(examPage([]),kice);
   assert.equal(examPage([{q:{paper:'B4'}}]).paper,'B4');
 });
 
@@ -66,8 +67,9 @@ test('an exam whose questions were typeset on different papers is reported as mi
   const d=data(),exam=newExam('섞인 시험지');d.exams=[exam];for(const q of d.questions)addToExam(d,exam.id,q.id);
   d.questions[0].typeset={profile:{paper:'B4',columns:2},verified:true,metrics:{usedHeightMm:100}};d.questions[1].paper='A4';
   const {mixed}=examPlan(d,exam);
-  assert.deepEqual(mixed,[{paper:'B4',numbers:[d.questions[0].number]},{paper:'A4',numbers:[d.questions[1].number,d.questions[2].number]}]);
-  assert.match(paperMixMessage(mixed),/용지가 섞여 있습니다\(B4 1번 \/ A4 2번·3번\)/);
+  // 용지를 정하지 않은 새 문항(3번)은 수능 형태 B4가 기본(10-28).
+  assert.deepEqual(mixed,[{paper:'B4',numbers:[d.questions[0].number,d.questions[2].number]},{paper:'A4',numbers:[d.questions[1].number]}]);
+  assert.match(paperMixMessage(mixed),/용지가 섞여 있습니다\(B4 1번·3번 \/ A4 2번\)/);
   for(const q of d.questions)q.typeset={profile:{paper:'B4',columns:2},verified:true};
   assert.equal(paperMix(examPlan(d,exam).items),null,'one paper is not mixed');
 });

@@ -1,5 +1,5 @@
-// 용지가 섞인 시험지(B4로 조판한 문항 + A4 문항): 시험지 HWPX를 만들면 B4 문항 표가 A4 단 밖으로 나가므로 만들지 않고 알린다.
-// 쪽 전체에도 같은 경고. 용지를 하나로 맞추면 다시 만들 수 있다.
+// 용지가 섞인 시험지(B4로 조판한 문항 + A4 문항), 10-28 결정: 막지 않고 수능 형태(B4 2단)로 만든다.
+// A4로 조판한 문항만 시험지 단 폭으로 다시 조판하고(저장한 조판은 그대로), 쪽 전체에도 「용지가 섞여 있습니다」 경고가 없다.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const h=require('./helpers/rhwp-exam.cjs');
@@ -11,7 +11,7 @@ function question(number){
   const ids=new Map(q.blocks.map(b=>[b.id,crypto.randomUUID()]));for(const b of q.blocks){b.id=ids.get(b.id);if(b.parent)b.parent=ids.get(b.parent);if(b.kind==='figure'&&!b.figure)b.figure={name:'f.png',data:PNG};}
   return q;
 }
-for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: an exam mixing B4 and A4 typesets is not assembled`,async t=>{
+for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: an exam mixing B4 and A4 typesets is assembled on the KICE B4 two-column page`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch();t.after(()=>browser.close());
   const context=await browser.newContext({viewport:{width:1600,height:1100},acceptDownloads:true}),page=await context.newPage(),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
@@ -32,14 +32,17 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   // 두 문항을 시험지에 넣고 HWPX를 받으려 한다.
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   await sheet.click('.side [data-nav="new-exam"]');/* 새 시험지는 ① 틀 · 속성에서 열림 → ② 「담기」(10-24) */await h.pickIntoExam(sheet,qs.map(q=>q.id));
-  let downloaded=false;page.on('download',()=>{downloaded=true;});
-  await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');
-  await sheet.waitForFunction(()=>document.querySelector('#status').dataset.error==='true');
-  assert.match(await sheet.locator('#status').textContent(),/용지가 섞여 있습니다\(A4 1번 \/ B4 2번\)/);
-  await sheet.waitForTimeout(500);assert.equal(downloaded,false,'no broken exam HWPX is downloaded');
-  // 쪽 전체에도 경고
+  const [download]=await Promise.all([page.waitForEvent('download'),(async()=>{await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');})()]);
+  const file=path.join(out,name+'-mixed.hwpx');await download.saveAs(file);
+  assert.notEqual(await sheet.locator('#status').getAttribute('data-error'),'true',await sheet.locator('#status').textContent());
+  // 시험지 쪽은 B4(257×364mm = 72850×103180 HWPUNIT 근처) — 줄여 뽑는 A4는 인쇄 때만.
+  const section=require('node:child_process').execFileSync('unzip',['-p',file,'Contents/section0.xml']).toString();
+  const pagePr=section.match(/<hp:pagePr\b[^>]*>/)?.[0]||'';const w=Number(pagePr.match(/\bwidth="(\d+)"/)?.[1]),hgt=Number(pagePr.match(/\bheight="(\d+)"/)?.[1]);
+  assert.ok(Math.abs(w-72850)<300&&Math.abs(hgt-103180)<300,`B4 exam page: ${pagePr}`);
+  // 쪽 전체: 수능 형태 B4 2단, 섞임 경고 없음
   await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="cards"]');await sheet.click('[data-cvview="page"]');await sheet.waitForSelector('#cv-page [data-native-page] svg');
-  assert.match(await sheet.locator('#cv-page .pg-warn').textContent(),/용지가 섞여 있습니다/);
+  assert.match(await sheet.locator('#cv-page .pg-head').textContent(),/B4 2단/);
+  assert.doesNotMatch(await sheet.locator('#cv-page').textContent(),/용지가 섞여 있습니다/);
   const pg=await sheet.locator('#cv-page').boundingBox(),fr=await frame.boundingBox();
   await page.screenshot({path:path.join(out,name+'-page-view-mixed.png'),clip:{x:fr.x+pg.x,y:fr.y+pg.y,width:pg.width,height:pg.height}});
   // 10-22: 시험지 전체에서 다른 문항을 한 번 누르면 고르기만(옅은 테), 두 번 누르면 그 문항 카드로 돌아온다.

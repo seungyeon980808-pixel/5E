@@ -7,7 +7,7 @@ import {readSchoolForm as readSchoolDocument,formStructure} from './standard-fro
 import {KICE_STANDARD,standardForPaper} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1.7.0-four-session-integration';
 import {buildExamDocument,assembleExamChecked} from './exam-build.js';
-import {examPage,paperMix,paperMixMessage} from './exam-layout.js';
+import {examPage,examPlan} from './exam-layout.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
@@ -155,8 +155,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
     try{await ensure();if(seq!==opening)return;const next=structuredClone(value),nextFingerprint=await questionFingerprint(next);
       const saved=await typesetMatches(next.typeset,next)&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
-      // 기준 용지: 문항에 정한 용지(q.paper) → 저장한 조판의 용지 → A4. 저장한 조판과 다르면 같은 단 폭 문서를 새 용지로 옮긴다.
-      paper.value=next.paper||saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
+      // 기준 용지: 문항에 정한 용지(q.paper) → 저장한 조판의 용지 → 수능 형태 B4(10-28: 새 문항도 기출과 같은 단 폭). 저장한 조판과 다르면 같은 단 폭 문서를 새 용지로 옮긴다.
+      paper.value=next.paper||saved?.profile.paper||'B4';columns.value=String(saved?.profile.columns||2);
       let bytes;if(saved)bytes=fromBase64(saved.bytes);else({bytes,owners}=await generate(next));
       if(saved)owners=await planOwners(next);
       if(saved&&(saved.pageMode!==QUESTION_PAGE_MODE||saved.profile.paper!==paper.value)){
@@ -284,7 +284,12 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function buildExam(data,examSet,{form=null,password='',order=null}={}){
     if(order)examSet={...examSet,items:[...order]};
     await ensure();const Document=document().constructor,template=form?await openForm(form.bytes,password):null;
-    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,template,bodyStart:form?.structure?.firstQuestion??-1});
+    // 단 폭이 섞인 시험지(빈 시험지): 배치·점검 화면과 같게, 시험지 단 폭과 다른 문항만 그 단 폭으로 새로 조판해 묶는다.
+    let rewidth=null;
+    if(!template){const plan=examPlan(data,examSet);
+      if(plan.mixed){rewidth=new Map();
+        for(const x of plan.items)if((x.q.typeset?.profile?.paper||x.q.paper||'B4')!==plan.page.paper){await pause();const e=await sheetEntry(Document,x.q,plan.page.paper);rewidth.set(x.id,{bytes:e.bytes,height:Number.isFinite(e.height)?e.height:60});}}}
+    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,template,bodyStart:form?.structure?.firstQuestion??-1,rewidth});
     try{if(order)renumberDocument(exam);return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
   // 인쇄·PDF: 묶은 시험지를 쪽마다 엔진 SVG로(화면 그림과 같음).
@@ -301,7 +306,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   // 쉬는 사이 쪽 전체를 떠났으면(alive가 false) 남은 일을 하지 않는다.
   const cancelled=()=>Object.assign(Error('쪽 전체 그리기를 멈췄습니다.'),{cancelled:true});
   async function sheetEntry(Document,value,paperOverride=''){
-    const own={paper:paperOverride||value.paper||value.typeset?.profile?.paper||'A4',columns:2};
+    const own={paper:paperOverride||value.paper||value.typeset?.profile?.paper||'B4',columns:2};
     if(!paperOverride&&ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value))
       return {bytes:exportLayoutHwpx(document(),XLSX.CFB),profile:profile(),height:questionPageMetrics(document(),profile()).usedHeightMm,saved:!dirty&&!!value.typeset?.verified&&await typesetMatches(value.typeset,value)};
     // 보기 전용이라 저장한 조판이 지금 문항과 맞는지만 가볍게 본다(문서를 미리 열어 검사하지 않음). 시험지 HWPX를 만들 때는 openApprovedQuestion으로 엄격히 검사한다.
@@ -350,8 +355,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const after=Math.max(0,Number(exam?.after?.[id])||0);
       items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+after,after,breakBefore:!!exam?.breaks?.[id],saved:e.saved});}
     if(!items.length)throw Error('쪽에 놓을 문항이 없습니다.');
-    // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 아니면 A4 2단.
-    const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));
+    // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 섞였으면 수능 형태 B4 2단.
+    const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}})));
     // 단 폭이 다른 용지로 조판한 문항(10-23 지적 2-3: B4 문항이 A4 단에서 넘쳐 겹침)은 화면에서는 시험지 단 폭으로 새로 조판해 놓는다.
     const rewidth=[];
     for(const x of items)if(x.profile?.paper!==sheet.paper){await step();const e=await sheetEntry(Document,x.q,sheet.paper);Object.assign(x,{bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
@@ -383,7 +388,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       // 문항 하나가 여러 상자(단·쪽)로 나뉘면 첫 상자에만 이름표, 마지막 상자에만 여백 막대를 단다.
       const all=out.flatMap(p=>p.boxes);for(const id of new Set(all.map(b=>b.id))){all.filter(b=>b.id===id).forEach((b,i,mine)=>{b.first=i===0;b.last=i===mine.length-1;});}
       const oversized=[...new Set([...pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),...tall])];
-      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved,oversized,rewidth,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
+      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved,oversized,rewidth,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:''};
     }finally{target.free();}
   }
   // 학교 양식(한글 파일)을 엔진으로 열어 조판 기준 값을 읽는다(10-22 C-6). 열린 문항 조판에는 손대지 않는다.
@@ -398,7 +403,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     await ensure();
     if(skeletonKey(value))throw Error(`${value.number}번 문항에 비어 있는 칸이 있어 조판을 만들 수 없습니다. 채우거나 구성에서 지우세요.`);
     if(ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value)){const s=await snapshot()||await snapshot();if(s){dirty=false;userDirty=false;patchDirty=false;return s;}}
-    const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2},Document=document().constructor;
+    const own={paper:value.paper||value.typeset?.profile?.paper||'B4',columns:2},Document=document().constructor;
     const {bytes:raw}=await generate(structuredClone(value),own,{quiet:true}),d=new Document(raw);
     try{fitQuestionPage(d,own);assertNativeLayout(d);const bytes=exportLayoutHwpx(d,XLSX.CFB),re=new Document(bytes);
       try{assertNativeLayout(re);validateQuestionPage(re,own);
@@ -409,7 +414,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   // 조판 설정 팝업의 미리보기(10-23 B, 시안 typeset-settings-1023-v3): 초안 틀로 이 문항을 새로 조판해 깨끗한 쪽 그림으로.
   // 편집 창과 따로 그린다(편집용 칸 테두리 없음). 겹쳐 그리기용으로 요소 자리·글 줄·개체 자리(쪽 px)도 준다.
   async function previewSheet(value,standard){
-    await ensure();const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2},Document=document().constructor;
+    await ensure();const own={paper:value.paper||value.typeset?.profile?.paper||'B4',columns:2},Document=document().constructor;
     const {bytes,owners:o}=await generate(structuredClone(value),own,{quiet:true,standard}),raw=new Document(bytes);
     // 문항 쪽 높이를 내용에 맞춘 뒤(한 쪽에 다 들어가게) 다시 열어 그린다 — 자동 조판과 같은 순서.
     let d;try{fitQuestionPage(raw,own);d=new Document(exportLayoutHwpx(raw,XLSX.CFB));}finally{raw.free();}

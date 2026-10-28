@@ -314,7 +314,7 @@ h.withServer(async origin => {
       const downloading=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');const download=await downloading;
       const file=path.join(evidence,`${engineName}-exam.hwpx`);await download.saveAs(file);
       const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file('Contents/section0.xml').async('string');
-      assert.match(xml,/colCount="2"/);assert.match(xml,/width="59528" height="84189"/);assert.ok(xml.includes('OK'),'the text typed in the HWP window is in the exam');
+      assert.match(xml,/colCount="2"/);assert.match(xml,/width="72850" height="103181"/); /* 10-28: 새 문항 기본은 수능 형태 B4 2단 */assert.ok(xml.includes('OK'),'the text typed in the HWP window is in the exam');
       assert.ok(Object.keys(zip.files).some(n=>n.startsWith('BinData/')),'the figure is in the exam');
       // 5e_hwp로 보내기: 시험지 한 부가 5E 시험지 편집기에서 열리고 문항 창은 닫힌다.
       await sheet.click('[data-exam-act="send"]');

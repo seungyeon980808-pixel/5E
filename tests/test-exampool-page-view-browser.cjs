@@ -36,7 +36,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const pg=await sheet.locator('#cv-page').boundingBox();
   await page.screenshot({path:path.join(out,name+'-page-view.png'),clip:{x:fr.x+pg.x,y:fr.y+pg.y,width:pg.width,height:pg.height}});
   assert.equal(view.html,false,'no HTML approximation');assert.equal(view.pages,1);assert.equal(view.caption,'1 / 1');assert.ok(view.now,'current question marked');
-  assert.match(view.head,/한글 조판 그대로\(A4 2단\)/);assert.doesNotMatch(view.head,/조판 저장 전/); // 10-23 A2: 조판은 자동 저장 — 「조판 저장 전」 표시는 없앰
+  assert.match(view.head,/한글 조판 그대로\(B4 2단\)/); /* 10-28: 새 문항 기본은 수능 형태 B4 2단 */assert.doesNotMatch(view.head,/조판 저장 전/); // 10-23 A2: 조판은 자동 저장 — 「조판 저장 전」 표시는 없앰
   assert.doesNotMatch(view.raw,/\$v\$/,'equation is a native equation, not TeX text');assert.deepEqual(view.mathText,['v'],'equation drawn with the math font');
   assert.ok(view.images>=1,'empty figure keeps its placeholder picture');
   const a=linesOf(preview),b=linesOf(view.chars);
