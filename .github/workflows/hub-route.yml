@@ -37,7 +37,7 @@ jobs:
           const api = suffix => JSON.parse(execFileSync('gh', ['api', `repos/${process.env.GITHUB_REPOSITORY}/${suffix}`], { encoding: 'utf8' }));
           const run = api(`actions/runs/${process.env.BASE_RUN}`);
           if (run.status !== 'completed' || run.conclusion !== 'success' || run.head_branch !== 'main'
-              || !['.github/workflows/memo-route.yml', '.github/workflows/hub-route.yml', '.github/workflows/bug-route.yml'].includes(run.path)) throw Error('Successful route publication required');
+              || !['.github/workflows/memo-route.yml', '.github/workflows/hub-route.yml', '.github/workflows/bug-route.yml', '.github/workflows/print-route.yml'].includes(run.path)) throw Error('Successful route publication required');
           const jobs = api(`actions/runs/${process.env.BASE_RUN}/jobs?per_page=100`).jobs;
           if (!['validate', 'publish'].every(name => jobs.some(job => job.name === name && job.conclusion === 'success'))) throw Error('Base publication did not pass');
           let latest;
