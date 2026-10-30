@@ -44,7 +44,7 @@ jobs:
           if(!/^[a-f0-9]{40}$/.test(process.env.PREVIEW_SHA)||!/^[0-9]+$/.test(process.env.BASE_RUN))throw Error('Exact source and numeric base run required');
           const api=suffix=>JSON.parse(execFileSync('gh',['api',`repos/${process.env.GITHUB_REPOSITORY}/${suffix}`],{encoding:'utf8'}));
           const run=api(`actions/runs/${process.env.BASE_RUN}`);
-          if(run.status!=='completed'||run.conclusion!=='success'||run.head_branch!=='main'||!['.github/workflows/hub-route.yml','.github/workflows/memo-route.yml','.github/workflows/bug-route.yml','.github/workflows/preview-release.yml'].includes(run.path))throw Error('Successful route publication required');
+          if(run.status!=='completed'||run.conclusion!=='success'||run.head_branch!=='main'||!['.github/workflows/hub-route.yml','.github/workflows/memo-route.yml','.github/workflows/bug-route.yml','.github/workflows/print-route.yml','.github/workflows/preview-release.yml'].includes(run.path))throw Error('Successful route publication required');
           const jobs=api(`actions/runs/${process.env.BASE_RUN}/jobs?per_page=100`).jobs;
           if(!['validate','publish'].every(name=>jobs.some(j=>j.name===name&&j.conclusion==='success')))throw Error('Base validation or deployment failed');
           let latest;for(const deployment of api('deployments?environment=github-pages&per_page=100')){const status=api(`deployments/${deployment.id}/statuses?per_page=1`)[0];if(status?.state==='success'){latest=status;break;}}
