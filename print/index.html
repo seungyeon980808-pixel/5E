@@ -359,16 +359,16 @@
 
   <!-- 4 -->
   <div class="step" data-short="범위·자료" data-focus="">
-    <div class="st-head"><small>4단계 <em class="req">필수</em></small><h2>범위와 자료</h2>
-      <p>교과서가 개념·용어·쪽수의 기준이 됩니다. 교과서 PDF, 기출 PDF, 참고할 지면 사진, 수업 메모를 한 폴더에 모아 고르세요. 브리프 파일도 이 폴더에 저장됩니다.</p></div>
+    <div class="st-head"><small>4단계 <em class="req">필수 · 단원만</em></small><h2>범위와 자료</h2>
+      <p>단원만 적으면 됩니다. <b>교과서 PDF가 없어도</b> 평가원 기출과 2022 개정 교육과정 성취기준으로 만듭니다. 교과서 PDF를 넣으면 교과서 순서·용어·쪽수를 따르고 교과서 변형 문항도 들어갑니다.</p></div>
     <div class="rows">
-      <div class="row" data-q="교과서"><div class="lab"><b>교과서</b></div>
+      <div class="row" data-q="교과서"><div class="lab"><b>교과서</b><p>선택</p></div>
         <div><input type="text" name="textbook" placeholder="예: 중학교 과학 2 (정대홍 외)"></div></div>
-      <div class="row" data-q="단원"><div class="lab"><b>단원</b><p>쪽수까지 적으면 정확합니다</p></div>
-        <div><input type="text" name="unit" placeholder="예: Ⅷ. 별과 우주 (279–312쪽)"></div></div>
+      <div class="row" data-q="단원"><div class="lab"><b>단원</b><p>교과서가 있으면 쪽수까지</p></div>
+        <div><input type="text" name="unit" placeholder="예: Ⅷ. 별과 우주 (279–312쪽) / 중학교 과학 「별과 우주」"></div></div>
       <div class="row" data-q="빼야 할 내용"><div class="lab"><b>빼야 할 내용</b><p>선택</p></div>
         <div><input type="text" name="exclude" placeholder="예: 광도, 별의 반지름, H-R도"></div></div>
-      <div class="row stack" data-q="자료 폴더"><div class="lab"><b>자료 폴더</b></div><div>
+      <div class="row stack" data-q="자료 폴더"><div class="lab"><b>자료 폴더</b><p>선택 · 교과서 PDF, 학교 기출 PDF, 참고할 지면 사진, 수업 메모를 한 폴더에. 브리프 파일도 이 폴더에 저장됩니다</p></div><div>
         <div class="drop" id="drop">
           <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
           <div class="txt"><b id="dropTitle">폴더를 고르세요</b><span id="dropSub">여기에 끌어다 놓아도 됩니다</span></div>
@@ -708,7 +708,7 @@ addEventListener('resize', () => document.querySelectorAll('.frame').forEach(fit
 const STEPS = [...form.querySelectorAll('.step')], LAST = STEPS.length - 1;
 let cur = 0;
 const seen = new Set([0]);
-const REQ = { 0: [['교재 이름', 'title'], ['대상', 'grade']], 3: [['교과서', 'textbook'], ['단원', 'unit'], ['자료 폴더', null]] };
+const REQ = { 0: [['교재 이름', 'title'], ['대상', 'grade']], 3: [['단원', 'unit']] };
 const missing = i => (REQ[i] || []).filter(([, n]) => n ? !val(n) : !dirName);
 const allMissing = () => STEPS.flatMap((_, i) => missing(i));
 $('#steps').innerHTML = STEPS.map((s, i) => `<button type="button" data-i="${i}"><i></i><span>${i + 1} ${s.dataset.short}</span></button>`).join('');
@@ -800,12 +800,12 @@ const nameOf = (arr, k) => (arr.find(x => x[0] === k) || [k, k])[1];
 const plain = l => [...l.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim();
 const LISTQ = ['쪽 아래 한마디', '꼭 넣을 문항', '그 밖에 원하는 조건'];
 const NONEQ = ['부제', '만든 사람', '슬로건', '저작권 문구', '쪽 아래 한마디'];
-const emptyText = q => NONEQ.includes(q) ? '넣지 않음' : ['빼야 할 내용', '꼭 넣을 문항', '그 밖에 원하는 조건'].includes(q) ? '없음' : '(Claude가 정함)';
+const emptyText = q => NONEQ.includes(q) ? '넣지 않음' : ['빼야 할 내용', '꼭 넣을 문항', '그 밖에 원하는 조건', '교과서'].includes(q) ? '없음' : '(Claude가 정함)';
 function rowValue(row) {
   const q = row.dataset.q, d = design();
   if (q === '표지 모양') return nameOf(COVERS, d.cover);
   if (q === '내지 모양') return nameOf(INNERS, d.inner);
-  if (q === '자료 폴더') return dirName ? `${dirName} (파일 ${files.filter(f => !f.dir).length}개)` : '';
+  if (q === '자료 폴더') return dirName ? `${dirName} (파일 ${files.filter(f => !f.dir).length}개)` : '없음 — 교과서 PDF 없이 평가원 기출과 교육과정 성취기준으로 만든다';
   if (q === '만든 사람') { const nm = [val('org'), val('author')].filter(Boolean); return nm.length ? [...nm, vals('role')[0]].join(' ') : ''; }
   if (q === '파트 나누기' && vals('parts')[0] === '직접 정함') return ['직접 정함', ...val('partlist').split('\n').map(x => x.trim()).filter(Boolean).map((x, i) => `${i + 1}. ${x}`)];
   const ins = [...row.querySelectorAll('input,select,textarea')].filter(i => !i.hidden);
@@ -828,7 +828,7 @@ function brief() {
       if (!v.length) { L.push(`- ${q}: ${emptyText(q)}`); continue; }
       L.push(`- ${q}:`); v.forEach(x => L.push(`  - ${x}`));
     }
-    if (s.i === 3) {
+    if (s.i === 3 && dirName) {
       L.push('', '| 파일 | 쓰는 법 | 메모 |', '|---|---|---|');
       files.filter(f => f.tag !== '안 씀').forEach(f => L.push(`| ${f.name} | ${f.tag} | ${f.memo || ''} |`));
       L.push('', '쓰는 법: 근거=사실·용어·쪽수의 기준 / 문항=문제로 씀 / 반영=내용을 녹여 넣음 / 느낌=분위기만(색·구조는 따르지 않음) / 금지=이렇게 하지 말 것');
@@ -866,15 +866,15 @@ const INSTALL = {
   codex: { mac: 'brew install codex', win: '# Node.js가 먼저 있어야 합니다\nnpm install -g @openai/codex' },
 };
 const OPEN = {
-  claude: d => `Claude 데스크톱 앱의 Code 탭에서 「${d}」 폴더를 고르거나, 터미널에서 그 폴더로 들어가 claude를 실행합니다.`,
-  codex: d => `Codex 앱에서 「${d}」 폴더를 열거나, 터미널에서 그 폴더로 들어가 codex를 실행합니다.`,
+  claude: d => `Claude 데스크톱 앱의 Code 탭에서 ${d}를 고르거나, 터미널에서 그 폴더로 들어가 claude를 실행합니다.`,
+  codex: d => `Codex 앱에서 ${d}를 열거나, 터미널에서 그 폴더로 들어가 codex를 실행합니다.`,
 };
 let agent = 'claude', os = /Win/.test(navigator.platform) ? 'win' : 'mac';
 function setTool() {
   document.querySelectorAll('#agentTabs button').forEach(b => b.classList.toggle('on', b.dataset.a === agent));
   document.querySelectorAll('#osTabs button').forEach(b => b.classList.toggle('on', b.dataset.os === os));
   $('#install').textContent = INSTALL[agent][os];
-  $('#openHow').textContent = OPEN[agent](dirName || '자료');
+  $('#openHow').textContent = OPEN[agent](dirName ? `「${dirName}」 폴더` : '교재를 만들 새 폴더(비어 있어도 됨)');
 }
 document.querySelectorAll('#agentTabs button').forEach(b => b.onclick = () => { agent = b.dataset.a; setTool(); });
 document.querySelectorAll('#osTabs button').forEach(b => b.onclick = () => { os = b.dataset.os; setTool(); });
@@ -887,7 +887,7 @@ form.onsubmit = async e => {
   let saved = false;
   if (dirHandle) { try { const fh = await dirHandle.getFileHandle('print-브리프.md', { create: true }); const w = await fh.createWritable(); await w.write(brief()); await w.close(); saved = true; } catch {} }
   if (!saved) download();
-  $('#savedMsg').textContent = saved ? `같은 내용을 「${dirName}」 폴더에 print-브리프.md로 저장했습니다.` : `같은 내용을 print-브리프.md로 내려받았습니다. 「${dirName}」 폴더에 넣어 두면 나중에 다시 쓸 수 있습니다.`;
+  $('#savedMsg').textContent = !dirName ? '같은 내용을 print-브리프.md로 내려받았습니다. 교재를 만들 빈 폴더에 넣어 두면 나중에 다시 쓸 수 있습니다.' : saved ? `같은 내용을 「${dirName}」 폴더에 print-브리프.md로 저장했습니다.` : `같은 내용을 print-브리프.md로 내려받았습니다. 「${dirName}」 폴더에 넣어 두면 나중에 다시 쓸 수 있습니다.`;
   setTool();
   $('#prompt').textContent = prompt();
   form.hidden = true; $('#done').hidden = false; scrollTo(0, 0);
