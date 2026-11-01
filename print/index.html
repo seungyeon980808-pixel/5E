@@ -69,6 +69,28 @@
   .choices label:has(input:checked){border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
   .choices input{margin:0;accent-color:var(--accent)}
   .choices label small{font-weight:500;color:var(--faint);font-size:12px}
+  .numin{width:52px;height:30px;padding:0 6px;border:1px solid var(--line);border-radius:8px;text-align:center;font:inherit;font-weight:700;background:var(--field);color:var(--text)}
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .presets button{font:inherit;font-size:13px;padding:7px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--text);cursor:pointer}
+  .presets button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .mix{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .mrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .mrow.off .nm{color:var(--faint)}
+  .mrow.dis{background:var(--field)}.mrow.dis .nm,.mrow.dis .ds{color:var(--faint)}
+  .mrow .nm{font-weight:600;font-size:13.5px}.mrow .ds{font-size:12px;color:var(--muted)}
+  .stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card)}
+  .stepper button{width:32px;height:32px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--text)}
+  .stepper button:disabled{color:var(--faint);cursor:default}
+  .stepper span{min-width:58px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+  .stepper span.zero{color:var(--faint);font-weight:500}
+  .msum{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--field);font-size:13px}
+  .msum .bad{color:var(--err);font-weight:600}.msum .good{color:var(--ok);font-weight:600}
+  .mixbar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line);margin:10px 0 4px}
+  .mixbar i{display:block;height:100%}
+  .mixleg{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:var(--muted)}
+  .mixleg i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+  .total{margin:4px 36px 22px;padding:14px 16px;border-radius:12px;background:var(--ok-soft);color:var(--ok);font-size:13px;line-height:1.6}
+  .total b{font-size:15px}.total span{color:var(--muted)}
   .swatch{width:14px;height:14px;border-radius:4px;display:inline-block}
 
   .pick4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -407,7 +429,7 @@
       <div class="row" data-q="개념편에 넣을 것"><div class="lab"><b>넣을 것</b></div>
         <div class="choices"><label><input type="checkbox" name="cparts" value="개념 정리" checked>개념 정리</label><label><input type="checkbox" name="cparts" value="그림·도해" checked>그림·도해</label><label><input type="checkbox" name="cparts" value="교과서 탐구" checked>교과서 탐구</label><label><input type="checkbox" name="cparts" value="한눈에 정리 표" checked>한눈에 정리 표</label><label><input type="checkbox" name="cparts" value="확인 퀴즈" checked>확인 퀴즈</label><label><input type="checkbox" name="cparts" value="서논술형" checked>서논술형</label></div></div>
       <div class="row" data-q="확인 퀴즈"><div class="lab"><b>확인 퀴즈</b><p>파트마다</p></div>
-        <div class="choices"><label><input type="radio" name="quizn" value="10개 안팎">10개 안팎</label><label><input type="radio" name="quizn" value="20개 안팎" checked>20개 안팎 <small>O·X 8 · 빈칸 6 · 계산 6</small></label><label><input type="radio" name="quizn" value="30개 안팎">30개 안팎</label></div></div>
+        <div class="choices"><label><input type="radio" name="quizn" value="넣지 않음">안 넣음</label><label><input type="radio" name="quizn" value="10개 안팎" checked>10개 안팎 <small>O·X 4 · 빈칸 3 · 계산 3</small></label><label><input type="radio" name="quizn" value="20개 안팎">20개 안팎 <small>O·X 8 · 빈칸 6 · 계산 6</small></label><label><input type="radio" name="quizn" value="30개 안팎">30개 안팎</label></div></div>
       <div class="row" data-q="퀴즈 종류"><div class="lab"><b>퀴즈 종류</b></div>
         <div class="choices"><label><input type="checkbox" name="quizk" value="O·X" checked>O·X</label><label><input type="checkbox" name="quizk" value="빈칸 채우기" checked>빈칸 채우기</label><label><input type="checkbox" name="quizk" value="계산·고르기" checked>계산·고르기</label></div></div>
       <div class="row" data-q="서논술형"><div class="lab"><b>서논술형</b><p>까닭·생각을 쓰는 문항</p></div>
@@ -420,22 +442,42 @@
   <!-- 6 -->
   <div class="step" data-short="문항편" data-focus="2">
     <div class="st-head"><small>6단계 <em class="opt">선택 · 그대로 두면 「별과 우주」와 같게</em></small><h2>문항편</h2>
-      <p>문항을 어디서 몇 개 가져오고, 쪽에 어떻게 놓을지 정합니다.</p></div>
-    <div class="grp">문항 고르기</div>
+      <p>몇 개를, 어떤 종류로 넣고, 쪽에 어떻게 놓을지 정합니다. 책 전체 분량은 맨 아래에 보입니다.</p></div>
+    <div class="grp">분량</div>
     <div class="rows">
-      <div class="row" data-q="문항 가져올 곳"><div class="lab"><b>가져올 곳</b></div>
+      <div class="row" data-q="파트 수"><div class="lab"><b>파트 수</b><p>개념편 + 문항편 묶음</p></div>
+        <div class="choices" id="partsN">
+          <label><input type="radio" name="partn" value="단원에 맞게(3~5)" checked>단원에 맞게 <small>보통 3~5</small></label>
+          <label><input type="radio" name="partn" value="직접">직접 <input type="number" name="partcount" min="1" max="12" value="4" class="numin">개</label>
+        </div></div>
+      <div class="row" data-q="파트당 문항 수"><div class="lab"><b>파트당 문항 수</b><p id="perHint">쪽당 4문항 기준</p></div>
+        <div><div class="choices" id="perC"></div>
+        <div class="hint">쪽이 꽉 차도록 쪽당 문항 수의 배수로만 고릅니다. 1문항짜리 쪽이 생기지 않습니다.</div></div></div>
+    </div>
+    <div class="grp">문항 종류 · 파트마다</div>
+    <div class="rows">
+      <div class="row stack" data-q="문항 종류"><div class="lab"><b>종류마다 몇 개</b><p>0개로 두면 그 종류는 한 문항도 넣지 않습니다</p></div>
+        <div><div class="presets" id="presets">
+          <button type="button" data-p="only">기출만</button>
+          <button type="button" data-p="mostly">기출 위주 + 변형 조금</button>
+          <button type="button" data-p="even">골고루</button>
+          <button type="button" data-p="custom">직접 정하기</button>
+        </div>
+        <div class="mix" id="mix"></div>
+        <div class="mixbar" id="mixbar"></div>
+        <div class="mixleg" id="mixleg"></div></div></div>
+      <div class="row" data-q="기출 가져올 곳"><div class="lab"><b>기출 가져올 곳</b></div>
         <div class="choices">
           <label><input type="checkbox" name="src" value="평가원 수능·모의평가(examlibrary)" checked>평가원 수능·모의평가</label>
-          <label><input type="checkbox" name="src" value="자료 폴더의 학교·교육청 기출 PDF">학교·교육청 기출 PDF</label>
-          <label><input type="checkbox" name="src" value="교과서 문항 변형" checked>교과서 문항 변형</label>
-          <label><input type="checkbox" name="src" value="교과서 탐구로 새로 만들기" checked>교과서 탐구로 새로</label>
+          <label><input type="checkbox" name="src" value="자료 폴더의 학교·교육청 기출 PDF">학교·교육청 기출 PDF <small>자료 폴더에</small></label>
         </div></div>
-      <div class="row" data-q="파트당 문항 수"><div class="lab"><b>파트당 문항 수</b></div>
-        <div class="choices"><label><input type="radio" name="per" value="8개">8개</label><label><input type="radio" name="per" value="12개" checked>12개</label><label><input type="radio" name="per" value="16개">16개</label><label><input type="radio" name="per" value="찾은 만큼">찾은 만큼</label></div></div>
+      <div class="row" data-q="기출이 모자라면"><div class="lab"><b>기출이 모자라면</b><p>그 성취기준에 맞는 기출이 적을 때</p></div>
+        <div class="choices"><label><input type="radio" name="short" value="문항 수를 줄임(새로 만들어 채우지 않음)" checked>문항 수를 줄임 <small>있는 만큼만</small></label><label><input type="radio" name="short" value="새로 만들어 채움">새로 만들어 채움</label><label><input type="radio" name="short" value="확인 1에서 물어봄">확인 1에서 물어봄</label></div></div>
       <div class="row" data-q="기출 연도"><div class="lab"><b>기출 연도</b></div>
         <div class="choices"><label><input type="radio" name="years" value="전체 2007–2027" checked>전체 2007–2027</label><label><input type="radio" name="years" value="최근 10년">최근 10년</label><label><input type="radio" name="years" value="최근 5년">최근 5년</label></div></div>
-      <div class="row" data-q="기출 고치기"><div class="lab"><b>기출 고치기</b><p>대상에게 어려운 기출</p></div>
-        <div class="choices"><label><input type="radio" name="adapt" value="수준에 맞게 고쳐서 넣기" checked>수준에 맞게 고쳐서 넣기 <small>기출변형 표시</small></label><label><input type="radio" name="adapt" value="그대로만 넣기">그대로만 넣기</label><label><input type="radio" name="adapt" value="어려우면 빼기">어려우면 빼기</label></div></div>
+      <div class="row" data-q="어려운 기출"><div class="lab"><b>어려운 기출</b><p>대상 학년보다 어려울 때</p></div>
+        <div><div class="choices"><label id="adaptFix"><input type="radio" name="adapt" value="고쳐서 넣기(기출변형으로 셈)" checked>고쳐서 넣기 <small>기출변형으로</small></label><label><input type="radio" name="adapt" value="그대로 넣기">그대로 넣기</label><label><input type="radio" name="adapt" value="빼기">빼기</label></div>
+        <div class="hint" id="adaptHint" hidden>기출변형을 0개로 두어 「고쳐서 넣기」는 고를 수 없습니다.</div></div></div>
       <div class="row" data-q="교육과정 범위"><div class="lab"><b>교육과정 범위</b></div>
         <div class="choices"><label><input type="radio" name="scope" value="교과서 범위만" checked>교과서 범위만 <small>밖의 개념은 넣지 않음</small></label><label><input type="radio" name="scope" value="심화도 조금">심화도 조금 <small>「도전」 표시</small></label></div></div>
       <div class="row" data-q="난이도"><div class="lab"><b>난이도</b></div>
@@ -456,6 +498,7 @@
       <div class="row" data-q="문항 번호"><div class="lab"><b>문항 번호</b></div>
         <div class="choices"><label><input type="radio" name="numbering" value="책 처음부터 끝까지 이어서" checked>책 처음부터 끝까지 이어서</label><label><input type="radio" name="numbering" value="파트마다 1번부터">파트마다 1번부터</label></div></div>
     </div>
+    <div class="total" id="total"></div>
   </div>
 
   <!-- 7 -->
@@ -706,11 +749,73 @@ addEventListener('keydown', e => { if ($('#zoom').hidden) return; if (e.key === 
 addEventListener('resize', () => document.querySelectorAll('.frame').forEach(fit));
 
 // 단계: 한 번에 한 단계만 보이고, 「다음」은 그 단계의 필수가 차야 넘어간다
+// 6단계 분량 · 문항 종류: 종류마다 개수(0이면 넣지 않음), 합계는 파트당 문항 수와 같아야 한다
+const KINDS = [
+  { k: 'g', nm: '기출 그대로', ds: '평가원·학교 기출을 고치지 않고', c: '#2b44c9' },
+  { k: 'v', nm: '기출변형', ds: '기출을 대상 수준에 맞게 고침', c: '#7b8fe8' },
+  { k: 't', nm: '교과서 변형', ds: '교과서 문항을 고침', c: '#12805c', tb: true },
+  { k: 'n', nm: '새로 만들기', ds: '성취기준·교과서 탐구를 바탕으로', c: '#d08a1a' },
+];
+const MIXP = { only: { g: 1, v: 0, t: 0, n: 0 }, mostly: { g: .75, v: .25, t: 0, n: 0 }, even: { g: .5, v: .25, t: .125, n: .125 } };
+let mix = { g: 6, v: 2, t: 0, n: 0 }, mixPreset = 'mostly';
+const hasTb = () => !!val('textbook') || files.some(f => !f.dir && f.tag === '근거' && /\.pdf$/i.test(f.name));
+const perPage = () => { const pp = vals('perpage')[0]; return pp && pp !== '내지에 맞게' ? parseInt(pp) : ({ exam: 6, note: 2 }[design().inner] || 4); };
+const perN = () => parseInt(vals('per')[0]) || perPage() * 2;
+const mixSum = () => KINDS.reduce((a, K) => a + mix[K.k], 0);
+function buildPer() {
+  const pp = perPage(), ks = pp === 2 ? [2, 3, 4, 6] : [1, 2, 3, 4], old = vals('per')[0], oldPages = old ? Math.round(parseInt(old) / (+$('#perC').dataset.pp || pp)) : 2;
+  if ($('#perC').dataset.pp === String(pp)) return;
+  $('#perC').dataset.pp = pp;
+  const pick = ks.includes(oldPages) ? oldPages : 2;
+  $('#perC').innerHTML = ks.map(k => `<label><input type="radio" name="per" value="${k * pp}개" ${k === pick ? 'checked' : ''}>${k * pp}개 <small>${k}쪽</small></label>`).join('');
+  $('#perHint').textContent = `쪽당 ${pp}문항 기준`;
+}
+function fitMix() {
+  if (!hasTb()) { mix.n += mix.t; mix.t = 0; }
+  if (mixPreset !== 'custom') {
+    const r = { ...MIXP[mixPreset] }; if (!hasTb()) { r.n += r.t; r.t = 0; }
+    const n = perN(); let used = 0;
+    KINDS.forEach(K => { mix[K.k] = Math.floor(r[K.k] * n); used += mix[K.k]; });
+    for (const K of KINDS) { if (used >= n) break; if (r[K.k] > 0) { mix[K.k]++; used++; } }
+  }
+}
+function renderMix() {
+  buildPer(); fitMix();
+  const n = perN(), sum = mixSum(), tb = hasTb();
+  $('#presets').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === mixPreset));
+  $('#mix').innerHTML = KINDS.map(K => {
+    const dis = K.tb && !tb, v = mix[K.k];
+    return `<div class="mrow${v ? '' : ' off'}${dis ? ' dis' : ''}"><div><div class="nm">${K.nm}</div><div class="ds">${dis ? '교과서 PDF가 없어 넣을 수 없음' : K.ds}</div></div>
+      <div class="stepper"><button type="button" data-k="${K.k}" data-d="-1" aria-label="${K.nm} 하나 빼기" ${dis || !v ? 'disabled' : ''}>−</button><span class="${v ? '' : 'zero'}">${v ? v + '개' : '안 넣음'}</span><button type="button" data-k="${K.k}" data-d="1" aria-label="${K.nm} 하나 더" ${dis || sum >= n ? 'disabled' : ''}>+</button></div></div>`;
+  }).join('') + `<div class="msum"><span>합계 <b>${sum}</b> / ${n}개</span>${sum === n ? '<span class="good">맞음</span>' : sum < n ? `<span class="bad">${n - sum}개 더 정해 주세요</span>` : `<span class="bad">${sum - n}개 많음</span>`}</div>`;
+  $('#mixbar').innerHTML = KINDS.map(K => mix[K.k] ? `<i style="width:${mix[K.k] / Math.max(n, sum) * 100}%;background:${K.c}"></i>` : '').join('');
+  $('#mixleg').innerHTML = KINDS.filter(K => mix[K.k]).map(K => `<span><i style="background:${K.c}"></i>${K.nm} ${mix[K.k]}</span>`).join('');
+  // 기출변형이 0이면 「고쳐서 넣기」는 고를 수 없다
+  const fix = $('#adaptFix'), off = mix.v === 0;
+  fix.hidden = off; $('#adaptHint').hidden = !off;
+  if (off && fix.querySelector('input').checked) form.querySelector('[name=adapt][value="그대로 넣기"]').checked = true;
+  // 분량 어림
+  const own = vals('parts')[0] === '직접 정함' ? val('partlist').split('\n').filter(x => x.trim()).length : 0;
+  const auto = !own && vals('partn')[0] !== '직접', parts = own || (auto ? 4 : Math.max(1, +val('partcount') || 1));
+  const cp = parseInt(vals('cpages')[0]) || 2, qp = Math.ceil(n / perPage()), quiz = vals('quizn')[0] !== '넣지 않음';
+  const ans = Math.ceil(parts * n / 12) + (quiz ? Math.ceil(parts / 2) : 0), pages = 2 + parts * (cp + qp) + ans;
+  $('#total').innerHTML = `책 한 권 <b>약 ${pages}쪽 · 문항 ${parts * n}개</b> <span>(${auto ? '파트 4개로 어림 · ' : ''}표지 2 + 파트 ${parts}개 × (개념편 ${cp} + 문항편 ${qp}) + 정답 약 ${ans})</span>`;
+}
+$('#mix').addEventListener('click', e => { const b = e.target.closest('button[data-k]'); if (!b) return; mix[b.dataset.k] = Math.max(0, mix[b.dataset.k] + +b.dataset.d); mixPreset = 'custom'; check(); });
+$('#presets').addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (!b) return; mixPreset = b.dataset.p; if (mixPreset === 'custom') return check(); check(); });
+form.elements.partcount.addEventListener('focus', () => { form.querySelector('[name=partn][value="직접"]').checked = true; });
+function perChanged() {
+  // 직접 정한 개수는 새 합계에 맞춰 뒤쪽 종류부터 줄이거나 기출 그대로를 늘린다
+  if (mixPreset !== 'custom') return;
+  const n = perN(); let s = mixSum();
+  for (const k of ['n', 't', 'v', 'g']) while (s > n && mix[k] > 0) { mix[k]--; s--; }
+  if (s < n) mix.g += n - s;
+}
 const STEPS = [...form.querySelectorAll('.step')], LAST = STEPS.length - 1;
 let cur = 0;
 const seen = new Set([0]);
-const REQ = { 0: [['교재 이름', 'title'], ['대상', 'grade']], 3: [['단원', 'unit']] };
-const missing = i => (REQ[i] || []).filter(([, n]) => n ? !val(n) : !dirName);
+const REQ = { 0: [['교재 이름', 'title'], ['대상', 'grade']], 3: [['단원', 'unit']], 5: [['문항 종류 합계', 'mix']] };
+const missing = i => (REQ[i] || []).filter(([, n]) => n === 'mix' ? mixSum() !== perN() : n ? !val(n) : !dirName);
 const allMissing = () => STEPS.flatMap((_, i) => missing(i));
 $('#steps').innerHTML = STEPS.map((s, i) => `<button type="button" data-i="${i}"><i></i><span>${i + 1} ${s.dataset.short}</span></button>`).join('');
 $('#steps').onclick = e => { const b = e.target.closest('button'); if (b) go(+b.dataset.i); };
@@ -723,12 +828,13 @@ function go(i) {
 }
 function next() {
   const m = missing(cur);
-  if (m.length) { const n = m[0][1]; (n ? form.elements[n] : $('#pick')).focus(); return; }
+  if (m.length) { const n = m[0][1]; (n === 'mix' ? $('#mix') : n ? form.elements[n] : $('#pick')).scrollIntoView({ block: 'center', behavior: 'smooth' }); if (n && n !== 'mix') form.elements[n].focus(); return; }
   go(cur + 1);
 }
 $('#prev').onclick = () => go(cur - 1);
 
 function check() {
+  renderMix();
   $('#partlist').hidden = vals('parts')[0] !== '직접 정함';
   document.querySelectorAll('#steps button').forEach((b, i) => {
     b.className = (i === cur ? 'on' : seen.has(i) ? 'seen' : '') + (i !== cur && seen.has(i) && missing(i).length ? ' miss' : '');
@@ -744,7 +850,7 @@ function check() {
   if (cur === LAST) renderReview();
 }
 form.addEventListener('input', check);
-form.addEventListener('change', check);
+form.addEventListener('change', e => { if (e.target.name === 'per') perChanged(); check(); });
 
 const TAGS = ['근거', '문항', '반영', '느낌', '금지', '안 씀'];
 const guessTag = n => /교과서/i.test(n) ? '근거' : /기출|모의|수능|시험|문항/i.test(n) ? '문항' : /\.(png|jpe?g|webp|heic)$/i.test(n) ? '느낌' : /메모|노트|수업|\.md$|\.txt$/i.test(n) ? '반영' : '근거';
@@ -806,6 +912,11 @@ function rowValue(row) {
   const q = row.dataset.q, d = design();
   if (q === '표지 모양') return nameOf(COVERS, d.cover);
   if (q === '내지 모양') return nameOf(INNERS, d.inner);
+  if (q === '문항 종류') return [KINDS.map(K => `${K.nm} ${mix[K.k]}`).join(' · '), ...KINDS.filter(K => !mix[K.k]).map(K => `${K.nm}은 한 문항도 넣지 않는다`)];
+  if (q === '파트 수') return vals('parts')[0] === '직접 정함' ? '파트 나누기에 적은 대로' : vals('partn')[0] === '직접' ? `${+val('partcount') || 1}개` : '단원에 맞게(3~5)';
+  if (q === '파트당 문항 수') return `${perN()}개 (쪽당 ${perPage()}문항, 쪽을 꽉 채움)`;
+  if (q === '파트 나누기' && !hasTb() && vals('parts')[0] === '교과서 소단원 그대로') return '성취기준 단위(교과서 PDF 없음)';
+  if (q === '교육과정 범위' && !hasTb() && vals('scope')[0] === '교과서 범위만') return '성취기준 범위만(밖의 개념은 넣지 않음)';
   if (q === '자료 폴더') return dirName ? `${dirName} (파일 ${files.filter(f => !f.dir).length}개)` : '없음 — 교과서 PDF 없이 평가원 기출과 교육과정 성취기준으로 만든다';
   if (q === '만든 사람') { const nm = [val('org'), val('author')].filter(Boolean); return nm.length ? [...nm, vals('role')[0]].join(' ') : ''; }
   if (q === '파트 나누기' && vals('parts')[0] === '직접 정함') return ['직접 정함', ...val('partlist').split('\n').map(x => x.trim()).filter(Boolean).map((x, i) => `${i + 1}. ${x}`)];
