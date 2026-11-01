@@ -78,6 +78,7 @@
   .pick4 input{position:absolute;opacity:0;pointer-events:none}
   .pick4 .thumb{border-radius:5px}
   .pick4 label > b{display:block;font-size:13px;margin-top:7px}
+  .aitag{font-style:normal;font-size:10.5px;font-weight:700;color:#b5532a;background:#fbefe8;border-radius:5px;padding:1px 5px;white-space:nowrap;vertical-align:1px}
   .pick4 label > span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
   .pick4 label:has(input:checked) > b{color:var(--accent)}
 
@@ -314,7 +315,7 @@
   <!-- 3 -->
   <div class="step" data-short="디자인" data-focus="">
     <div class="st-head"><small>3단계 <em class="req">필수 · 기본값을 골라 두었습니다</em></small><h2>디자인</h2>
-      <p>책 전체의 모양입니다. 앞에서 적은 제목과 이름이 들어간 모습으로 보여 줍니다.</p></div>
+      <p>책 전체의 모양입니다. 앞에서 적은 제목과 이름이 들어간 모습으로 보여 줍니다. 표시가 없는 선택은 서식에 그대로 들어가고, <em class="aitag">AI 시안</em> 표시는 Claude가 서식을 새로 고쳐 맞춘 뒤 파트 1 시안에서 먼저 보여 줍니다.</p></div>
     <div class="rows">
       <div class="row stack" data-q="표지 모양"><div class="lab"><b>표지 모양</b><p>앞뒤 표지를 펼치면 하나로 이어지는 큰 그림이 들어갑니다</p></div>
         <div class="pick4" id="coverPick"></div></div>
@@ -325,7 +326,7 @@
           <label><input type="radio" name="font" value="serif" checked>명조 본문 + 고딕 제목 <small>교과서 느낌</small></label>
           <label><input type="radio" name="font" value="sans">고딕만 <small>깔끔</small></label>
           <label><input type="radio" name="font" value="allserif">명조만 <small>고전적</small></label>
-          <label><input type="radio" name="font" value="round">둥근 고딕 <small>부드러움</small></label>
+          <label><input type="radio" name="font" value="round">둥근 고딕 <small>부드러움</small> <em class="aitag">AI 시안</em></label>
         </div></div>
       <div class="row" data-q="포인트 색"><div class="lab"><b>포인트 색</b><p>인쇄용이라 한 가지만</p></div>
         <div class="choices">
@@ -351,7 +352,7 @@
       <div class="row" data-q="본문 글자 크기"><div class="lab"><b>본문 글자 크기</b></div>
         <div class="choices"><label><input type="radio" name="fontsize" value="작게">작게 <small>9pt</small></label><label><input type="radio" name="fontsize" value="보통" checked>보통 <small>9.6pt</small></label><label><input type="radio" name="fontsize" value="크게">크게 <small>10.5pt</small></label></div></div>
       <div class="row" data-q="줄 맞춤"><div class="lab"><b>줄 맞춤</b><p>좁은 두 단에서는 왼쪽 맞춤이 깔끔합니다</p></div>
-        <div class="choices"><label><input type="radio" name="align" value="왼쪽 맞춤" checked>왼쪽 맞춤 <small>어절 단위로 줄바꿈</small></label><label><input type="radio" name="align" value="양쪽 맞춤">양쪽 맞춤 <small>띄어쓰기가 벌어질 수 있음</small></label></div></div>
+        <div class="choices"><label><input type="radio" name="align" value="왼쪽 맞춤" checked>왼쪽 맞춤 <small>어절 단위로 줄바꿈</small></label><label><input type="radio" name="align" value="양쪽 맞춤">양쪽 맞춤 <small>띄어쓰기가 벌어질 수 있음</small> <em class="aitag">AI 시안</em></label></div></div>
       <div class="row" data-q="머리글"><div class="lab"><b>머리글</b><p>쪽 위</p></div>
         <div class="choices"><label><input type="radio" name="header" value="왼쪽 파트 이름 · 오른쪽 소속·이름" checked>왼쪽 파트 이름 · 오른쪽 소속·이름</label><label><input type="radio" name="header" value="파트 이름만">파트 이름만</label><label><input type="radio" name="header" value="넣지 않음">넣지 않음</label></div></div>
     </div>
@@ -556,15 +557,15 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 const COVERS = [
   ['poster', '전시 포스터', '가는 큰 제목 + 점 하나'],
-  ['catalog', '도록', '그림을 작품처럼 걸고 캡션'],
-  ['split', '반반', '왼쪽 색 판 + 오른쪽 제목'],
-  ['mono', '단색 전면', '한 색 바탕에 흰 선'],
+  ['catalog', '도록', '그림을 작품처럼 걸고 캡션', 1],
+  ['split', '반반', '왼쪽 색 판 + 오른쪽 제목', 1],
+  ['mono', '단색 전면', '한 색 바탕에 흰 선', 1],
 ];
 const INNERS = [
   ['drill', '드릴형', '가는 괘선, 쪽당 4문항'],
-  ['textbook', '교과서형', '색 머리띠와 옅은 상자'],
-  ['note', '노트형', '왼쪽 메모 여백, 1단'],
-  ['exam', '시험지형', '평가원처럼 촘촘한 2단'],
+  ['textbook', '교과서형', '색 머리띠와 옅은 상자', 1],
+  ['note', '노트형', '왼쪽 메모 여백, 1단', 1],
+  ['exam', '시험지형', '평가원처럼 촘촘한 2단', 1],
 ];
 const FONTS = {
   serif: ["'Pretendard Variable',Pretendard,sans-serif", "'Noto Serif KR',serif", '명조 본문 + 고딕 제목'],
@@ -580,8 +581,8 @@ function design(over = {}) {
 }
 function sheetStyle(d) { const f = FONTS[d.font]; return `--c:${d.color};--r:${d.radius}px;--tf:${f[0]};--bf:${f[1]}`; }
 function buildPicks() {
-  $('#coverPick').innerHTML = COVERS.map(([k, t, s], i) => `<label><input type="radio" name="cover-style" value="${k}"${i ? '' : ' checked'}><div class="thumb frame" data-cover="${k}"></div><b>${t}</b><span>${s}</span></label>`).join('');
-  $('#innerPick').innerHTML = INNERS.map(([k, t, s], i) => `<label><input type="radio" name="inner-style" value="${k}"${i ? '' : ' checked'}><div class="thumb frame" data-inner="${k}"></div><b>${t}</b><span>${s}</span></label>`).join('');
+  $('#coverPick').innerHTML = COVERS.map(([k, t, s, ai], i) => `<label><input type="radio" name="cover-style" value="${k}"${i ? '' : ' checked'}><div class="thumb frame" data-cover="${k}"></div><b>${t}${ai ? ' <em class="aitag">AI 시안</em>' : ''}</b><span>${s}</span></label>`).join('');
+  $('#innerPick').innerHTML = INNERS.map(([k, t, s, ai], i) => `<label><input type="radio" name="inner-style" value="${k}"${i ? '' : ' checked'}><div class="thumb frame" data-inner="${k}"></div><b>${t}${ai ? ' <em class="aitag">AI 시안</em>' : ''}</b><span>${s}</span></label>`).join('');
 }
 
 const lines = (n, w = [100, 92, 96, 70]) => Array.from({ length: n }, (_, i) => `<div class="ln" style="width:${w[i % w.length]}%"></div>`).join('');
@@ -835,7 +836,34 @@ function brief() {
     }
     L.push('');
   }
+  L.push(...brandBlock());
   return L.join('\n');
+}
+// 서식(templates)이 바로 그리는 선택은 brand.typ 값으로, 그렇지 않은 선택은 「AI 시안」 목록으로
+function brandBlock() {
+  const d = design(), pick = n => vals(n)[0] || '';
+  const inner = d.inner, pp = pick('perpage');
+  const B = {
+    paper: { A4: 'a4', B4: 'jis-b4', B5: 'jis-b5' }[pick('paper')] || 'a4',
+    size: { 작게: '9pt', 보통: '9.6pt', 크게: '10.5pt' }[pick('fontsize')] || '9.6pt',
+    accent: `rgb("${(pick('color') || '#1E4D8C').slice(1)}")`,
+    tone: pick('tone') || '2도',
+    font: d.font === 'round' ? 'sans' : d.font,
+    radius: { '0': '0mm', '1.5': '0.8mm', '4': '2mm' }[pick('radius')] || '0mm',
+    'per-page': pp && pp !== '내지에 맞게' ? parseInt(pp) : ({ exam: 6, note: 2 }[inner] || 4),
+    'answer-box': pick('saBox').startsWith('밑줄') ? 'line' : pick('saBox') === '답 상자' ? 'box' : 'space',
+    answers: { '책 맨 뒤': 'end', '따로 교사용 PDF': 'teacher' }[pick('ansAt')] || 'part',
+    header: pick('header').startsWith('파트 이름만') ? 'title' : pick('header') === '넣지 않음' ? 'none' : 'full',
+    'name-field': { 이름만: 'name', '넣지 않음': 'none' }[pick('namefield')] || 'full',
+  };
+  const q = v => /^rgb\(|^\d+(\.\d+)?(pt|mm)?$/.test(String(v)) ? v : `"${v}"`;
+  const ai = [];
+  if (d.cover !== 'poster') ai.push(`표지 모양 「${(COVERS.find(x => x[0] === d.cover) || [])[1]}」: cover.typ를 새로 짠다`);
+  if (inner !== 'drill') ai.push(`내지 모양 「${(INNERS.find(x => x[0] === inner) || [])[1]}」: drill.typ · concept.typ의 쪽 꾸밈을 새로 짠다`);
+  if (d.font === 'round') ai.push('글꼴 「둥근 고딕」: 둥근 고딕 글꼴을 구해 style.typ의 글꼴 목록에 넣는다(그 전까지는 고딕)');
+  if (pick('align') === '양쪽 맞춤') ai.push('줄 맞춤 「양쪽 맞춤」: drill.typ · concept.typ의 justify를 켠다');
+  return ['## 서식 값', '', 'brand.typ에 그대로 넣는다(서식이 바로 그리는 선택):', '```', ...Object.entries(B).map(([k, v]) => `${k}: ${q(v)},`), '```', '',
+    ai.length ? 'AI 시안(서식 사본을 고쳐 맞추고 파트 1 시안에서 먼저 보여 줄 것):' : 'AI 시안으로 맞출 것: 없음', ...ai.map(x => `- ${x}`), ''];
 }
 function renderReview() {
   $('#review').innerHTML = collect().map(s => {
