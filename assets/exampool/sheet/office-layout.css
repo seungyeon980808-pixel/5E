@@ -835,3 +835,22 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 }
 /* 10-28: 「ㄱ, ㄴ, ㄷ」처럼 긴 조합은 다섯 칸 폭에서 잘렸다 — 긴 조합이 있으면 다섯 칸 글자를 같이 줄이고 자간을 좁힌다(조판은 그대로). */
 #card-view .cv-combos.tight .combo-row input[data-cvchoice]{font-size:12px;letter-spacing:-.06em;padding:0}
+/* 「틀 · ○○ ▾」(10-29 학교 양식 시안 ②-나): 학교 양식이 있을 때만. 머리는 문서(밝은) 바탕이라 글자색은 이웃 단추를 따른다. */
+.ts-frame{position:relative;display:inline-flex;align-items:center}
+.ts-frame[hidden]{display:none}
+.typeset-view-controls .ts-frame-btn{height:26px;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ds-doc-line,#d8dce1);border-radius:13px;background:transparent;color:inherit;font-size:12px;padding:0 8px 0 10px;cursor:pointer;max-width:240px;white-space:nowrap;min-width:0}
+.typeset-view-controls .ts-frame-btn .k{opacity:.65}
+.typeset-view-controls .ts-frame-btn b{font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.typeset-view-controls .ts-frame-btn svg{flex:none;opacity:.6}
+.typeset-view-controls .ts-frame-btn[aria-expanded=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+.ts-frame-menu{position:absolute;top:calc(100% + 4px);right:0;z-index:40;min-width:270px;background:var(--ds-raise,#161b22);color:var(--ds-ink);border:1px solid var(--ds-line);border-radius:10px;box-shadow:var(--ds-shadow-float,0 12px 32px rgba(0,0,0,.5));padding:6px}
+.ts-frame-menu[hidden]{display:none}
+.typeset-view-controls .ts-frame-menu button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;height:32px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink);font-size:13px;padding:0 8px;text-align:left;cursor:pointer}
+.typeset-view-controls .ts-frame-menu button:hover{background:var(--ds-hover,rgba(255,255,255,.06))}
+.ts-frame-menu .dot{flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ds-ink-3);box-sizing:border-box}
+.ts-frame-menu button[aria-checked=true] .dot{border-color:#6ba4f8;background:radial-gradient(circle,#6ba4f8 0 2.5px,transparent 3px)}
+.ts-frame-menu .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-frame-menu small{color:var(--ds-ink-3);font-size:11.5px}
+.ts-frame-menu hr{border:0;border-top:1px solid var(--ds-line);margin:5px 2px}
+.ts-frame-menu .nt{margin:4px 8px 4px;color:var(--ds-ink-3);font-size:11.5px;line-height:1.5;white-space:normal}
+.pv-frame{margin-left:4px;padding:0 6px;height:18px;line-height:18px;border-radius:9px;background:rgba(107,164,248,.12);color:#9cc0f9;font-size:11px}

@@ -111,6 +111,7 @@ input,select,textarea{border:1px solid var(--ds-doc-line-strong);border-radius:v
 #typeset-status{font-size:var(--ds-text-meta);color:var(--ds-doc-ink-2)}
 #typeset-metrics{font-size:var(--ds-text-meta);color:var(--ds-hwp)}
 #typeset-status[data-error=true]{color:var(--ds-danger)}
+#typeset-status .ts-unlock{margin-left:8px;height:22px;padding:0 10px;border:1px solid color-mix(in srgb,var(--ds-danger) 55%,transparent);border-radius:7px;background:color-mix(in srgb,var(--ds-danger) 14%,transparent);color:inherit;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
 #typeset-metrics[data-exceeded=true]{color:var(--ds-danger)}
 #native-editor{background:var(--ds-doc-paper-bench)}
 #preview-dialog[data-expanded=true]{inset:var(--ds-space-6);border:0;box-shadow:var(--ds-shadow-float)}

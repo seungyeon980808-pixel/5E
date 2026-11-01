@@ -65,7 +65,7 @@ test('stored typesetting survives Excel, and changed question content invalidate
  q.references.push({target:'question',label:'성취기준',quote:'근거'});assert.equal(await questionFingerprint(q),hash);q.ask='새 발문';assert.notEqual(await questionFingerprint(q),hash);
 });
 test('A4 two columns and mixed LaTeX/Hancom math keep native placement tokens',()=>{
- const p=pageProfile();assert.equal(p.page.width,59528);assert.ok(p.width>300&&p.width<330);assert.throws(()=>pageProfile({paper:'A5',columns:3}),/용지/);
+ const p=pageProfile();assert.equal(p.page.width,59528);assert.ok(p.width>300&&p.width<330);assert.throws(()=>pageProfile({paper:'Tabloid',columns:2}),/용지/);assert.throws(()=>pageProfile({paper:'A4',columns:5}),/용지/);
  const parts=mathParts('에너지 $\\frac{1}{2}mv^2$, 속력 \\(v_0\\), {{수식:1 over 2}}');assert.deepEqual(parts.filter(p=>p.math).map(p=>p.text),['\\frac{1}{2}mv^2','v_0','1 over 2']);
 });
 test('choice and bogi cells carry no ①·ㄱ. numbers; combinations are normalized and put in the usual order',()=>{

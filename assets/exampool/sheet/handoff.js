@@ -163,12 +163,21 @@ export function wrapHangingText(value,width,prefix,measure,condense=null){
   }
   return lines.join('\n');
 }
+// 좁은 단의 글 옆 그림(11-01 대왕중 A4 11pt, 사용자: 「실제 기출이랑 비슷하게」): 그림은 원본처럼 글 옆에 두되, 옆에 남는 글이 한 줄
+// BESIDE_MIN_CHARS 글자보다 좁으면 그림을 BESIDE_SHRINK배까지 줄여 글 자리를 만든다. 그래도 안 되면 그때만 글 아래 가운데로 쌓는다.
+// (옆 글이 한 줄 10자 남짓이면 글자 사이가 벌어지고 글이 그림보다 한참 길게 내려갔다.) 표·그림 묶음은 옆에 띄우면 번호 위로 올라가 쌓는다. 수능 틀은 원본 그대로.
+const BESIDE_MIN_CHARS=12,BESIDE_SHRINK=.7;
 export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540,{native=false,measureText,skeleton=false,ghostFigure=null,standard=KICE_STANDARD}={}){
   const L=layoutValues(standard),RULE=L.rule||BASE_RULE;
   // 본문 글자 크기(pt): 틀 값. 수능 B4 틀은 원본 PDF 그대로 11.5pt(10-25 실측 — 11pt로 찍어 글자가 원본보다 6% 좁았다).
   const FS=L.textSize||11;
   // 글자 폭 재기(장평 + 자간)도 틀 값으로.
-  if(measureText)measureText.factor=(L.ratio+L.spacing)/100;
+  // 학교 양식은 2% 넉넉히 잰다(11-01 밤샘 대왕중 화학Ⅰ 24-9월 16번: 긴 수식 뒤 「이다.」가 칸 오른쪽 여백을 6px 넘음 — 잰 폭과 엔진 폭 차이). 수능 틀은 그대로.
+  if(measureText)measureText.factor=(L.ratio+L.spacing)/100*(String(standard.id).split('@')[0]===KICE_STANDARD.id?1:1.02);
+  const kiceFrame=String(standard.id).split('@')[0]===KICE_STANDARD.id,besideNeed=BESIDE_MIN_CHARS*FS*4/3*(L.ratio+L.spacing)/100;
+  const besideRoom=w=>kiceFrame||w>=besideNeed;
+  // 글 옆 그림 폭: 옆 글 자리가 모자라면 BESIDE_SHRINK배까지 줄인다(수능 틀은 그대로).
+  const besideFit=(w,slot)=>kiceFrame?w:Math.max(w*BESIDE_SHRINK,Math.min(w,slot-14-besideNeed));
   const q=handoffQuestion(value,{skeleton}),ghost=skeleton?fillSkeleton(q):{ghosts:new Set(),figures:new Set()},images=[],texts=[],warnings=[],tables=[],equations=[];
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
   const imageOwners=[],tableOwners=[],textSegments=[],floats=[],cellFloats=[];
@@ -190,13 +199,15 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const MARK=/(EXAMPOOL_EQ_\d+_END)/,eqSize=(script,fontSize)=>measureText?.equation?.(script,fontSize)||equationEstimate(script,fontSize);
   const pieces=v=>String(v??'').split(MARK).flatMap(part=>{const m=part.match(/^EXAMPOOL_EQ_(\d+)_END$/);return m?[{math:true,text:equations[Number(m[1])]?.script||''}]:mathParts(part);});
   // 결합 밑줄 문자(U+0332)는 폭이 없다 — 재기 전에 뺀다.
-  const measureRich=(v,fontSize=FS)=>pieces(String(v??'').replace(/\u0332/g,'')).reduce((sum,part)=>sum+(part.math?eqSize(part.text,fontSize).w:part.text?(measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)):0),0);
+  // 학교 양식: 수식 폭도 6% 넉넉히(긴 반응식 수식이 잰 것보다 넓게 그려져 같은 줄 뒤 글이 칸 여백을 넘음, 11-01 밤샘). 수능 틀은 그대로.
+  const eqPad=kiceFrame?1:1.06;
+  const measureRich=(v,fontSize=FS)=>pieces(String(v??'').replace(/\u0332/g,'')).reduce((sum,part)=>sum+(part.math?eqSize(part.text,fontSize).w*eqPad:part.text?(measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)):0),0);
   // 줄에 든 수식이 글자보다 높으면 그만큼 줄이 높아진다(분수). 칸 높이를 미리 정할 때 더한다.
   const extraHeight=(wrapped,fontSize=FS)=>String(wrapped).split('\n').reduce((sum,line)=>sum+Math.max(0,...pieces(line).filter(p=>p.math).map(p=>eqSize(p.text,fontSize).h-fontSize*4/3)),0);
   // 가로 묶음 안 폭: 자료표 칸은 적어도 열마다 가장 긴 어절이 들어가는 폭을 받는다(옆 글 칸에서 덜어 온다).
   const tableMin=t=>{if(!measureText||!t)return 0;const fs=t.cols>3?9:10,word=Array(t.cols).fill(36);for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c)||t.merges.some(m=>m.r===r&&m.c===c&&m.cs>1))continue;word[c]=Math.max(word[c],Math.max(0,...words(String(t.cells[r][c].value)).map(x=>measureRich(x,r<t.headerRows?fs-1:fs)))+22);}return word.reduce((a,b)=>a+b,0)+20;};
   // 기출 자료의 원본 실제 폭(px): 그림 widthPt, 표 colWidths 합(PDF pt, 평가원 한 단 387pt = 조판 단 폭). 없으면 0.
-  const physical=c=>{const k=columnPx/KICE_COLUMN_PT;if(c.kind==='figure'&&Number(c.figure?.widthPt)>0)return c.figure.widthPt*k;
+  const physical=c=>{const k=kiceFrame?columnPx/KICE_COLUMN_PT:Math.min(1,columnPx/KICE_COLUMN_PT);if(c.kind==='figure'&&Number(c.figure?.widthPt)>0)return c.figure.widthPt*k;
     if(c.kind==='table'&&Array.isArray(c.table?.colWidths)&&c.table.colWidths.length&&c.table.colWidths.every(v=>Number(v)>0))return c.table.colWidths.reduce((a,b)=>a+Number(b),0)*k;return 0;};
   const rowWidths=(children,total)=>{
     // 기출 자료가 원본 폭을 알면 그 칸은 원본 폭 + 칸 여백(16), 글 칸은 나머지 — size %(상자 폭 기준)를 칸 폭 기준으로 다시 곱하면 두 번 줄거나 커졌다(10-24 15번).
@@ -233,8 +244,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text.replace(/\u0332/g,''));return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
     else if(value.replace(/\u200b/g,'').trim())texts.push(value.replace(/\u0332/g,''));
     // [3점]은 앞 낱말과 한 덩어리로 줄을 맞춘다(혼자 다음 줄로 떨어지지 않게).
-    value=value.replace(/ (\[\d+점\])$/,'\u2060$1');
-    value=(wrap?wrap(value):width&&measureText?wrapMeasured(value,width,width,v=>measureRich(v,fontSize)):wrapQuestionText(value,width,fontSize)).replace(/\u2060(\[\d+점\])$/,' $1');
+    value=value.replace(/ (\[\d+(?:\.\d+)?점\]|\(\d+(?:\.\d+)?점\))$/,'\u2060$1');
+    value=(wrap?wrap(value):width&&measureText?wrapMeasured(value,width,width,v=>measureRich(v,fontSize)):wrapQuestionText(value,width,fontSize)).replace(/\u2060(\[\d+(?:\.\d+)?점\]|\(\d+(?:\.\d+)?점\))$/,' $1');
     // 줄 나누기는 끝 공백을 잘라 낸다 — 「ㄱ. 」「① 」처럼 원래 공백으로 끝났으면 한 칸을 되살린다.
     if(/ $/.test(String(v??''))&&!/ $/.test(value))value+=' ';
     // 줄바꿈 바로 뒤 줄 첫머리 수식은 한글 엔진이 그리지 않는다(10-24 물리Ⅰ 11번 「S₂를」) — 앞에 1pt 크기 폭 없는 글자(U+2060)를 둔다.
@@ -252,7 +263,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     const body=E(marked).replace(/\r?\n/g,'<br>').replace(/ $/,'&nbsp;').replace(/([\uE010-\uE01F])(.*?)(?=<br>|$)/g,(m,c,rest)=>native?`<span style="color:#0A0B${(c.charCodeAt(0)-CONDENSE).toString(16).padStart(2,'0').toUpperCase()}">${rest}</span>`:rest);
     // 문항 번호(「7.」)는 평가원처럼 굵게, 본문보다 1pt 크게(10-24). 첫 문단은 줄을 미리 나누지 않고(asIs) 엔진이 나누며, 내어쓰기는 applyQuestionIndent가 실제 번호 폭으로 잰다.
     const numLen=native&&numberMark&&value.startsWith(numberMark)?numberMark.length:0;
-    if(numLen)return `<span style="font-family:${font};font-size:${fontSize+1}pt;font-weight:bold">${E(value.slice(0,numLen))}</span><span style="font-family:${font};font-size:${fontSize}pt">${ul(italicVariables(body.slice(E(value.slice(0,numLen)).length)))}</span>`;
+    // 학교 양식(10-29): 양식에서 읽은 번호 모양(굵기·크기 더하기)을 따른다. 수능 틀은 값이 없어 굵게·1pt 크게 그대로.
+    if(numLen)return `<span style="font-family:${font};font-size:${fontSize+(L.numberPlus??1)}pt${L.numberBold===false?'':';font-weight:bold'}">${E(value.slice(0,numLen))}</span><span style="font-family:${font};font-size:${fontSize}pt">${ul(italicVariables(body.slice(E(value.slice(0,numLen)).length)))}</span>`;
     // 여는 작은따옴표 ‘(U+2018): 한글 엔진은 반 글자 폭으로 재는데 함초롬바탕의 ‘ 모양은 전각 칸 오른쪽에 그려져 뒤 글자(○ 등)에 덮였다(10-25 6번 「‘○’」).
     // 폭과 모양이 맞는 라틴 글꼴로 넣는다(닫는 ’는 칸 왼쪽에 그려져 문제없음).
     const quote=h=>native?h.replace(/\u2018/g,`<span style="font-family:'Times New Roman';font-size:${fontSize}pt">\u2018</span>`):h;
@@ -263,6 +275,27 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const pc=(v,width=null,fontSize=FS,owner=null)=>`<p style="margin:0;text-align:center">${text(v,width,fontSize,null,owner)}</p>`;
   // 글 옆 자료(맨 바깥 가로 묶음: 글 하나 + 그림·표 하나, 상자 아님)는 평가원처럼 글 문단 옆에 떠 있는 자료로 찍는다.
   // 그림은 어울림 그림으로, 표는 첫 지문 앞에 넣고 떠 있는 표로 바꾼다(applyFloatingTable). 자료 폭은 묶음 안 폭 비율 몫.
+  // 좁은 단(besideRoom)의 「글 | 자료」 묶음은 글 아래 가운데 자료로 쌓는다 — 맨 바깥이든 상자 안이든. 기출 변환은 자료 옆 글과 그 뒤 글을
+  // 따로 나눠 두므로(「…ⓐ와 ⓑ를」 | 「나타낸 것이다.」) 바로 뒤 글이 있으면 한 문단으로 이어 붙이고 자료는 그 뒤에 둔다.
+  // 표(글 옆 표)는 학교 양식에서 떠 있는 표가 번호 위로 올라가 늘 쌓는다.
+  if(String(standard.id).split('@')[0]!==KICE_STANDARD.id)for(const g of q.blocks.filter(b=>b.kind==='group'&&b.layout==='나란히'&&b.boxed!==true&&!(b.boxed===undefined&&b.label==='실험'))){
+    const kids=q.blocks.filter(b=>b.parent===g.id),txt=kids.find(b=>b.kind==='text'),mat=kids.find(b=>b!==txt);
+    if(kids.length!==2||!txt?.text||!mat||q.blocks.some(b=>b.parent===txt.id)||!['figure','table','group'].includes(mat.kind))continue;
+    if(mat.kind==='group'&&!q.blocks.filter(x=>x.parent===mat.id).every(x=>x.kind==='figure'))continue;
+    const slot=g.parent?width-Math.ceil(2*L.boxSide)-14:width,share=(mat.ratio||1)/((mat.ratio||1)+(txt.ratio||1));
+    const matW=mat.kind==='figure'&&Number(mat.figure?.widthPt)>0?Math.min(slot,mat.figure.widthPt*slot/317.5):slot*share;
+    const siblings=q.blocks.filter(b=>b.parent===g.parent),next=siblings[siblings.indexOf(g)+1];
+    // 그림은 옆에 둔다. 기출 변환은 그림 옆 글과 그 뒤 글을 원본 줄 끝에서 나눠 두므로(「…높아지면서 독도」 | 「해역에서 …」) 학교 양식 폭에서는
+    // 나눈 자리에서 문단이 끊겨 한 어절만 남은 줄이 생겼다(11-01 부채꼬리실고기) — 바로 뒤 이어지는 글을 그림 옆 글에 붙여 한 문단으로 흐르게 한다.
+    if(mat.kind==='figure'&&besideRoom(slot-matW*BESIDE_SHRINK-14)){
+      if(next?.kind==='text'&&next.text&&!q.blocks.some(b=>b.parent===next.id)&&!/^\s*(\([가-힣]\)|[◦○•ㄱ-ㅎ]\.?\s)/.test(next.text)){txt.text=`${txt.text} ${next.text}`;q.blocks.splice(q.blocks.indexOf(next),1);}
+      continue;}
+    for(const b of [txt,mat])q.blocks.splice(q.blocks.indexOf(b),1);
+    // 쌓은 표는 묶음 안 비율 크기(단의 30% 남짓)를 버리고 내용에 맞는 폭으로 — 좁은 단(3단 양식)에서 칸 글이 넘쳤다(11-01 밤샘 f09).
+    delete mat.ratio;delete mat.align;mat.parent=g.parent;if(mat.kind!=='group')mat.layout='세로';if(mat.kind==='table')delete mat.size;
+    if(next?.kind==='text'&&next.text&&!q.blocks.some(b=>b.parent===next.id)){next.text=`${txt.text} ${next.text}`;q.blocks.splice(q.blocks.indexOf(g),1);q.blocks.splice(q.blocks.indexOf(next)+1,0,mat);}
+    else{delete txt.ratio;txt.parent=g.parent;q.blocks.splice(q.blocks.indexOf(g),1,txt,mat);}
+  }
   let floatTable=null,floatShare=1;
   for(const g of q.blocks.filter(b=>!b.parent&&b.kind==='group'&&b.layout==='나란히'&&b.boxed!==true&&!(b.boxed===undefined&&b.label==='실험'))){
     const kids=q.blocks.filter(b=>b.parent===g.id),txt=kids.find(b=>b.kind==='text');
@@ -284,22 +317,24 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const sideText=!firstText?openingSideText(q):null;
   // 배점이 3점이면 발문 끝에 [3점]. 한글 창에서 고칠 수 없는 꼬리(suffix)로 둔다.
   // 2점은 표시하지 않는다(평가원). 3점과 카드에서 「자유」로 적은 배점(4, 2.5 …)은 [N점].
-  const pts=Number(q.points),mark=pts>0&&pts!==2?` [${pts}점]`:'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
+  const pts=Number(q.points),mark=pts>0&&pts!==2?(L.points==='round'?` (${pts}점)`:` [${pts}점]`):'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
   // 평가원 순서: 발문 다음에 <보기>. 맨 바깥 보기는 발문 뒤에 찍는다.
   const afterAsk=q.blocks.filter(b=>!b.parent&&b.kind==='bogi').map(b=>b.id);
   // 기출 그림의 원본 폭(widthPt, 원본 PDF pt)이 있으면 그 크기를 넘지 않는다. 평가원 PDF 한 단(387pt)이 조판 단 폭(columnPx)에 대응.
   // 평가원 원본 한 단 = 112mm = 317.5pt(원본 PDF에서 잰 〈보기〉·본문 폭). 387pt는 문항 영역(번호 여백 포함) 폭이라 그 값으로 환산하면
   // 원본 폭을 쓰는 그림·표가 모두 0.82배로 작게 들어갔다(10-25 16번 표 실측 104.7pt = 엔진 104.4pt). B4 단(112mm)에서는 1:1.
-  const KICE_COLUMN_PT=317.5,columnPx=width;
+  // orig: 기출 원본 크기(평가원 한 단 기준)를 이 단으로 옮기는 배율. 학교 양식은 원본보다 크게 키우지 않는다(11-01 밤샘 1단 학습지:
+  // 단이 넓다고 표 글자를 11pt까지 키우면 원본 칸 높이에 글이 넘쳤고 그림도 지나치게 커졌다). 수능 틀은 그대로(단 폭 비율).
+  const KICE_COLUMN_PT=317.5,columnPx=width,orig=v=>kiceFrame?v*columnPx/KICE_COLUMN_PT:v*Math.min(1,columnPx/KICE_COLUMN_PT);
   // 기출 그림(widthPt 있음)은 원본 크기 그대로(원본 폭 ÷ 원본 단 387pt × 조판 단 폭), 들어갈 칸보다 크면 칸에 맞춘다. 원본 폭이 없으면 정한 크기(size %).
-  const figWidth=(b,slot)=>Number(b.figure?.widthPt)>0?Math.min(slot,b.figure.widthPt*columnPx/KICE_COLUMN_PT):sizedWidth(b,slot);
+  const figWidth=(b,slot)=>Number(b.figure?.widthPt)>0?Math.min(slot,orig(b.figure.widthPt)):sizedWidth(b,slot);
   const picture=async(f,width,align,owner={kind:'other'})=>{
     if(!f)return '';
     const image=await prepareFigure(clone(f));
     if(!/^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/.test(image.data))throw Error('한글에 넣을 그림을 PNG로 준비하지 못했습니다.');
     const ratio=Number(image.height)/Number(image.width);
     if(!Number.isFinite(ratio)||ratio<=0)throw Error('그림 크기를 확인하세요.');
-    const original=owner.kind==='choice'&&Number(f.widthPt)>0?f.widthPt*columnPx/KICE_COLUMN_PT:Infinity;
+    const original=owner.kind==='choice'&&Number(f.widthPt)>0?orig(f.widthPt):Infinity;
     // 원본 그림 픽셀 폭으로 줄이지 않는다(10-24 지적 2·3: 그림이 칸을 채우지 못했음). 그림 선지만 원본 크기를 넘지 않는다.
     const w=Math.min(width,original),h=w*ratio;
     images.push(image.data);imageOwners.push(owner);
@@ -314,11 +349,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     // 기출 표 칸 글의 원본 줄바꿈은 원본 글꼴 폭 기준이라 그대로 두면 우리 줄 나눔과 겹쳐 한 낱말만 남는 줄이 생긴다(10-25 e1 6월 1번 「같은」).
     // 열 폭이 원본과 같으므로 줄바꿈을 띄어쓰기로 풀고 칸 폭으로 다시 나눈다.
     if(original)t={...t,cells:t.cells.map(row=>row.map(c=>c&&typeof c.value==='string'?{...c,value:c.value.replace(/[ \t]*\n[ \t]*/g,' ')}:c))};
-    const fontSize=Number(t.fontPt)>0?Math.min(11,Math.max(7,Math.round(t.fontPt*columnPx/KICE_COLUMN_PT*.75*2)/2)):t.cols>3?9:10,headSize=Number(t.fontPt)>0?fontSize:fontSize-1;
+    let fontSize=Number(t.fontPt)>0?Math.min(11,Math.max(7,Math.round(orig(t.fontPt)*.75*2)/2)):t.cols>3?9:10,headSize=Number(t.fontPt)>0?fontSize:fontSize-1;
     let inner=width-(choices?25:0);
     // 기출 표는 원본 실제 폭(열 폭 합)을 쓴다 — 놓일 자리를 꽉 채우면 원본보다 넓어져 아래 글이 모두 밀렸다(10-25 겹쳐 보기: 6번 표 198pt를 상자 폭으로 넓힘).
     // (예전에 표가 좁았던 것은 단 폭을 387pt로 잡은 배율 오류였다 — 317.5pt로 고친 뒤 열 폭 합은 원본 표와 같다.)
-    if(original){const w=original.reduce((a,b)=>a+b,0)*columnPx/KICE_COLUMN_PT;inner=Math.min(room-(choices?25:0),w);width=inner+(choices?25:0);}
+    if(original){const w=orig(original.reduce((a,b)=>a+b,0));inner=Math.min(room-(choices?25:0),w);width=inner+(choices?25:0);}
     // 열 폭: 원본 열 폭이 없으면 표 폭 안에서 칸 글 길이 비율로 나눈다.
     // 열마다 가장 긴 어절은 한 줄에 들어가게 한다(어절 중간에서 끊기면 칸 높이를 넘는다). 빈 표·그림이 든 표·선지표는 똑같이 나눈다.
     let colW=Array(t.cols).fill(inner/t.cols);
@@ -358,12 +393,21 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       }
       width=colW.reduce((a,b)=>a+b,0)+(choices?25:0);
     }
+    // 좁은 단(학교 양식 3단·B5, 11-01 밤샘 f09): 원본 열 폭을 단 비율로 줄이면 글자 크기는 7pt 아래로 못 줄어 칸 글이 넘쳤다 —
+    // 열마다 가장 긴 어절이 들어가는 폭까지는 넓히고(놓일 자리 안에서), 그래도 넘치면 자리 폭에 맞춰 같은 비율로 줄인다. 수능 틀은 원본 그대로.
+    if(original&&!kiceFrame&&measureText){const need=Array(t.cols).fill(0);
+      for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(m=>m.r===r&&m.c===c);if((m?.cs||1)>1)continue;const size=r<t.headerRows?headSize:fontSize;
+        need[c]=Math.max(need[c],Math.max(0,...words(String(t.cells[r][c].value)).map(x=>measureRich(x,size)))+22);}
+      colW=colW.map((v,c)=>Math.max(v,need[c]));const sum=colW.reduce((a,b)=>a+b,0),cap=room-(choices?25:0);
+      // 자리 폭에도 다 안 들어가면 열을 줄이는 만큼 칸 글자도 줄인다(6pt까지) — 3단 양식 상자 안 표(11-01 밤샘 f09 6번 「구분」).
+      if(sum>inner){if(sum<=cap){inner=sum;width=inner+(choices?25:0);}else{const f=cap/sum;colW=colW.map(v=>v*f);inner=cap;width=inner+(choices?25:0);fontSize=Math.max(6,Math.round(fontSize*f*2)/2);headSize=Number(t.fontPt)>0?fontSize:fontSize-1;}}}
     const cw=(c,cs=1)=>colW.slice(c,c+cs).reduce((a,b)=>a+b,0);
     // 평가원 자료표: 위아래 여백 작게. 한 줄 칸 높이 약 22px(10pt, 이전 30px).
     // 기출 표에 원본 행 높이(rowHeights, pt)가 있으면 한 줄 칸은 그 높이 그대로(10-25 겹쳐 보기: 6번 원본 11.7pt인데 15pt로 찍혀 표가 컸다).
     // 분수처럼 글자보다 높은 수식이 든 칸은 원본 높이보다 커질 수 있다(새 32문항 시험: c2 25-6월 19번 분수가 칸 아래로 잘림).
-    const PITCH=1.15,origRows=original&&Array.isArray(t.rowHeights)&&t.rowHeights.length===t.rows?t.rowHeights.map(v=>Number(v)*columnPx/KICE_COLUMN_PT):null;
-    const rowHeights=origRows?origRows.map(v=>Math.round(v*100)/100):Array(t.rows).fill(Math.ceil(fontSize*4/3*PITCH+6));
+    const PITCH=1.15,origRows=original&&Array.isArray(t.rowHeights)&&t.rowHeights.length===t.rows?t.rowHeights.map(v=>orig(Number(v))):null;
+    // 학교 양식에서 원본 줄 높이를 단 비율로 줄이면 글자(7pt 아래로 안 줄어듦)보다 낮아졌다(11-01 밤샘 3단 f09 6번) — 한 줄 글이 들어가는 높이는 지킨다.
+    const rowHeights=origRows?origRows.map(v=>Math.round((kiceFrame?v:Math.max(v,fontSize*4/3*PITCH+2*L.cellPad+2))*100)/100):Array(t.rows).fill(Math.ceil(fontSize*4/3*PITCH+6));
     for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
       if(tableCovered(t,r,c))continue;
       const m=t.merges.find(m=>m.r===r&&m.c===c),span=m?.rs||1;
@@ -407,13 +451,15 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   };
   // 어울림 그림: 바로 앞 맨 바깥 글 문단(없으면 번호가 붙는 첫 문단)의 맨 앞에 넣고, 한글로 들여온 뒤 떠 있는 그림으로 바꾼다
   // (applyFloatingPictures). 글자처럼 취급하지 않으므로 문단 글은 그대로 그림 옆·아래로 흐른다. 그림 폭은 크기(단 폭 대비 %).
+  // 카드에서 바로 어울림으로 둔 그림도 좁은 단이면 글 아래 가운데로(besideRoom).
+  for(const b of q.blocks.filter(b=>isWrapped(b)&&b.figure))if(!besideRoom(width-figWidth(b,width)*BESIDE_SHRINK-14)){b.layout='세로';delete b.align;}
   const floatsAt=new Map(),floated=new Set();
   {let at='first';for(const b of q.blocks.filter(b=>!b.parent)){
     if(b.kind==='text'&&b!==firstText&&b.text)at=b.id;
     if(isWrapped(b)&&(b.figure||ghost.figures.has(b.id)&&ghostFigure)){if(!floatsAt.has(at))floatsAt.set(at,[]);floatsAt.get(at).push(b);floated.add(b.id);}
   }}
   const floatImages=async(at,width)=>{let html='';for(const b of floatsAt.get(at)||[]){
-    const w=figWidth(b,width);if(!b.figure)b.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),b.label);
+    const w=besideFit(figWidth(b,width),width);if(!b.figure)b.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),b.label);
     html+=await picture(b.figure,w,undefined,{kind:'block',id:b.id});floats.push({data:images.at(-1),align:b.align==='왼쪽'?'Left':'Right'});
   }return html;};
   // 간격(mm): 구성 앞에 높이를 가진 빈 문단을 둔다. 값이 없으면 넣지 않는다.
@@ -488,10 +534,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           for(const row of plan){
             const n=row.single?1:row.cells.length,widths=row.widths,inner=[];
             if(row.wrapFigure){
-              const f=row.wrapFigure,pitch=FS*4/3*(L.lineSpacing||160)/100,slot=images.length,img=await picture(f.figure,Math.min(innerWidth*.6,figWidth(f,innerWidth)),undefined,{kind:'block',id:f.id});
+              const f=row.wrapFigure,pitch=FS*4/3*(L.lineSpacing||160)/100,slot=images.length,img=await picture(f.figure,besideFit(Math.min(innerWidth*.6,figWidth(f,innerWidth)),innerWidth),undefined,{kind:'block',id:f.id});
               const fw=Number(img.match(/width="(\d+)"/)[1]),fh=Number(img.match(/height="(\d+)"/)[1]),head=row.cells[0].kind==='steps'&&row.cells[0].label?1:0;
               const at=f.figure.besideAt||{item:0,line:0};
-              beside={k:Math.ceil((fh+4)/pitch),narrow:Math.max(80,innerWidth-fw-14),used:0,from:null,at:{item:Number(at.item)||0,line:Number(at.line)||0}};
+              // 학교 양식(11-01 부채꼬리실고기 「독도」만 남은 줄): 엔진이 칸 안 그림 옆에 남기는 폭이 잰 값보다 조금 좁아 줄 끝 어절이 넘어갔다 — 반 글자 여유를 둔다.
+              beside={k:Math.ceil((fh+4)/pitch),narrow:Math.max(80,innerWidth-fw-14-(kiceFrame?0:FS*2/3)),used:0,from:null,at:{item:Number(at.item)||0,line:Number(at.line)||0}};
               let body,from=0;nested++;try{body=await walk(row.group.id,innerWidth,row.cells[0].id);from=beside.from??0;}finally{nested--;beside=null;}
               // 그림은 1pt 빈 문단에 따로 두고(머리 다음) 띄운다. 글 문단에 넣으면 엔진이 그림을 문단 맨 앞에 두고, 띄운 뒤에도
               // 칸 문단에서는 그림 폭만큼 자리를 남겨 그 줄 글이 밀렸다(10-25).
@@ -641,7 +688,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     // 묶음 간격은 선지 탭과 같다(3묶음 36mm=102pt, 2묶음 56mm=159pt — 원본 240문항 실측). 마지막 묶음이 남은 폭을 쓴다.
     const step=n=>Math.min(L.choiceTabs?.[{3:1,2:2}[n]]||width/n,width/n*1.2),fit=n=>{const s=step(n),last=width-s*(n-1);return Math.min(s,last)-numW-8*k>=longest*k;};
     // 묶음 안 값 칸은 열마다 가장 긴 값 + 여백만큼 주고 남는 폭은 고르게 나눈다(10-25 p2 26-6월 1번: 똑같이 나눠 「중력 렌즈 효과」가 두 줄이 됐다).
-    const g=fit(3)?3:2,lines=Math.ceil(5/g),gw=side=>side<g-1?step(g):width-step(g)*(g-1);
+    // 좁은 단(학교 양식 A4, 11-01 물리 4번)에서 두 묶음도 안 들어가면 한 줄에 하나씩 — 값이 두 줄로 꺾여 「원리」만 남는 줄이 생겼다. 수능 틀은 그대로.
+    const g=fit(3)?3:fit(2)||String(standard.id).split('@')[0]===KICE_STANDARD.id?2:1,lines=Math.ceil(5/g),gw=side=>side<g-1?step(g):width-step(g)*(g-1);
     const need=Array.from({length:k},(_,c)=>Math.max(0,...t.cells.map(row=>measureRich(row[c]?.value,FS)))+10);
     const valW=(side,c=0)=>{const room=gw(side)-numW,sum=need.reduce((a,b)=>a+b,0);return sum<=room?need[c]+(room-sum)/k:need[c]*room/sum;};
     recordTable(lines+1,g*(k+1),[],{kind:'choices'});

@@ -1,6 +1,9 @@
 // 시험지 만들기 세 단계(10-24 확정, 시안 5e-design-mockups/exam-flow-1024-v4.html 그대로):
 // ① 틀 · 속성 → ② 문항 고르기 → ③ 배치 · 점검. 여기는 단계 막대 · ① 틀 · 속성 · 내 틀 등록 창.
 // 틀이 곧 시험 종류다 — 틀을 고르면 문항 수 · 총점 · 시간 · 배점 규칙 기본값이 같이 채워진다(exam.goal).
+import { PARTS, fieldHtml, groupsHtml, partChanged, fieldValue, setStandardPath } from './typeset-settings.js';
+import { KICE_STANDARD } from './typeset-standard.js';
+const getPath = (o, path) => path.split('.').reduce((v, k) => v?.[k], o);
 const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // 틀(용지 · 단 · 머리 · 꼬리)과 그 틀의 시험 종류 · 기본 목표. 등록한 내 틀(학교 시험지 · 학습지 한글 파일)은 forms에서 온다.
@@ -129,7 +132,7 @@ export function openRegister(api) {
   back.className = 'ef-back';
   back.innerHTML = '<div class="ef-reg" role="dialog" aria-modal="true" aria-label="내 틀 등록"></div>';
   document.body.append(back);
-  const dlg = back.firstElementChild, st = { step: 1, kind: 'sheet', draft: null, name: '', busy: false };
+  const dlg = back.firstElementChild, st = { step: 1, kind: api.kind || 'sheet', draft: null, name: '', busy: false, std: null, part: 'keep', tab: 0, pv: { seq: 0, pages: null, err: '', busy: false }, keep: { head: true, score: true, foot: true, next: true } };
   const input = Object.assign(document.createElement('input'), { type: 'file', accept: '.hwp,.hwpx', hidden: true });
   back.append(input);
   const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); };
@@ -141,6 +144,7 @@ export function openRegister(api) {
     if (st.step === 1) body = `<div class="ef-rb one"><div><div class="ef-gh">무엇을 등록하나요</div><div class="ef-seg">${[['school', '학교 시험지 양식'], ['sheet', '내가 만든 학습지']].map(([k, v]) => `<button type="button" data-reg-kind="${k}" aria-pressed="${st.kind === k}">${v}</button>`).join('')}</div>
       <div class="ef-drop" data-reg-drop><b>한글 파일(hwp · hwpx)을 여기에 끌어 놓기</b><span class="mu">문항을 지운 빈 양식이 가장 좋고, 문항이 들어 있어도 됩니다 — 문항 자리는 비우고 틀만 읽습니다</span><button type="button" class="ef-btn go" data-reg-pick ${st.busy ? 'disabled' : ''}>${st.busy ? '읽는 중…' : '파일 고르기…'}</button></div>
       <div class="ef-store"><b>설치하지 않아도 등록됩니다.</b> 등록한 틀은 이 컴퓨터의 이 브라우저에 저장됩니다. 다른 컴퓨터에서 쓰려면 한글 파일을 다시 올리면 됩니다. 여러 기기·선생님끼리 자동으로 함께 쓰기는 나중에 설치형이나 동기화 때 붙입니다.</div></div></div>`;
+    else if (d?.read) body = confirmBody(d, s);
     else {
       const preview = { m: st.kind === 'sheet' ? 18 : 12, hdr: st.kind === 'sheet' ? 30 : 18, foot: s.footer ? 6 : 0, cols: s.columns || 1, look: st.kind === 'sheet' ? 'mine' : 'school', title: st.name };
       const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
@@ -151,13 +155,58 @@ export function openRegister(api) {
         <p class="ef-hint">${st.kind === 'sheet' ? '학습지는 총점 · 시험 시간 점검을 끈 채로 시작합니다(③에서 숫자만 보임).' : '정기고사 기본값(23문항 · 100점 · 50분)으로 시작합니다.'}</p>
         <div class="ef-store">이 브라우저에 저장 · 시험지 화면 ①에서 언제든 고를 수 있습니다</div></div></div>`;
     }
-    dlg.innerHTML = `<div class="ef-ph"><b>내 틀 등록</b><small>${st.step === 1 ? '1 / 2 · 파일 올리기' : '2 / 2 · 읽은 결과 확인'}</small><span class="sp"></span><button type="button" class="ef-btn ic" data-reg-close aria-label="닫기">✕</button></div>${body}
-      <div class="ef-foot"><span class="sp"></span>${st.step === 2 ? '<button type="button" class="ef-btn" data-reg-back>← 다른 파일</button><button type="button" class="ef-btn go" data-reg-done>등록하고 이 틀 쓰기</button>' : '<button type="button" class="ef-btn" data-reg-close>닫기</button>'}</div>`;
+    const confirm = st.step === 2 && !!d?.read, school = st.kind === 'school';
+    dlg.classList.toggle('wide', confirm);
+    dlg.innerHTML = `<div class="ef-ph"><b>${school ? '학교 양식 넣기' : '내 틀 등록'}</b><small>${st.step === 1 ? '1 / 2 · 파일 올리기' : '2 / 2 · 조판 확정'}</small><span class="sp"></span><button type="button" class="ef-btn ic" data-reg-close aria-label="닫기">✕</button></div>${body}
+      <div class="ef-foot">${confirm ? '<span class="mu">학교 시험지 양식 · 학습지 · hwp · hwpx 모두 이 화면을 거칩니다.</span>' : ''}<span class="sp"></span>${st.step === 2 ? '<button type="button" class="ef-btn" data-reg-back>← 다른 파일</button><button type="button" class="ef-btn go" data-reg-done>확정하고 이 틀 쓰기</button>' : '<button type="button" class="ef-btn" data-reg-close>닫기</button>'}</div>`;
+    if (confirm) paintSample();
+  }
+  // 2단계 「조판 확정」(11-01 시안 fix-1101 ③): 왼쪽은 문항 카드 「조판 설정」과 같은 칸(맨 앞 「남길 것」, 쪽·단은 양식 값으로 잠금),
+  // 오른쪽은 5E 견본 문항 6개를 이 초안 틀로 양식 위에 실제로 묶은 견본 시험지 1쪽 · 2쪽. 값을 바꾸면 견본을 다시 묶는다.
+  function confirmBody(d, s) {
+    const rows = Object.fromEntries((d.read.rows || []).map(r => [r.label, r])), v = k => rows[k]?.found ? rows[k].value : '';
+    const value = p => { const x = getPath(st.std, p); return x === undefined ? getPath(KICE_STANDARD, p) : x; };
+    const nav = [['keep', '남길 것'], ...PARTS.filter(x => x.k !== 'paper').map(x => [x.k, x.name]), ['paper', '쪽·단 🔒']];
+    let inner = '';
+    if (st.part === 'keep') {
+      const scorePart = (s.parts || []).find(p => p.score), headPart = (s.parts || []).find(p => p.kind === 'head');
+      inner = `<div class="tsx-grp ef-keep"><div class="tsx-gh">끄면 견본에서 바로 빠집니다</div>${[['head', '머리 표', headPart ? '학년·과목 등 제목 표 · 1쪽' : '제목 표 없음', !!headPart], ['score', '배점 현황 상자', scorePart ? '1쪽 · 숫자는 시험지에 맞춰 자동' : '상자 없음', !!scorePart], ['foot', '꼬리말', s.footer ? '모든 쪽 · 「총(N)쪽」은 실제 쪽수로' : '꼬리말 없음', !!s.footer], ['next', '「다음 면에 계속」', s.nextMark >= 0 ? '마지막 쪽만 빼고' : '양식에 없음', s.nextMark >= 0]]
+        .map(([k, n, w, on]) => `<label${on ? '' : ' class="off"'}><input type="checkbox" data-reg-keep="${k}" ${st.keep[k] && on ? 'checked' : ''} ${on ? '' : 'disabled'}><span class="n">${n}</span><span class="w">${w}</span></label>`).join('')}</div>`;
+    } else if (st.part === 'paper') {
+      const std = d.read.standard || {};
+      inner = groupsHtml([{ h: '양식에서 읽은 값 · 바꾸려면 양식 파일을 고쳐 다시 올리세요', rows: [[{ t: 'info', n: '용지', text: `${std.paper?.size || 'A4'} · ${s.columns || 1}단` }], [{ t: 'info', n: '여백', text: v('여백 위') ? `위 ${v('여백 위')} · 아래 ${v('여백 아래')}` : '양식 그대로' }]] }], f => fieldHtml(f, value));
+    } else {
+      const P = PARTS.find(x => x.k === st.part), names = Object.keys(P.tabs); if (st.tab >= names.length) st.tab = 0;
+      const extra = st.part === 'bogi' ? [{ h: '상자 맞춤', rows: [[{ t: 'info', n: '가로', text: '단 가운데' }]] }] : [];
+      inner = `${names.length > 1 ? `<div class="tsx-seg" role="tablist">${names.map((n, i) => `<button type="button" role="tab" data-reg-tab="${i}" aria-selected="${i === st.tab}">${E(n)}</button>`).join('')}</div>` : ''}${groupsHtml([...extra, ...P.tabs[names[st.tab]]], f => fieldHtml(f, value))}`;
+    }
+    return `<div class="ef-rb sfx"><section class="sfx-left">
+      <label class="ef-f"><span class="n">이름</span><input data-reg-name value="${E(st.name)}" maxlength="40" style="text-align:left"></label>
+      <div class="tsx-body"><div class="tsx-parts" role="tablist" aria-label="부분">${nav.map(([k, n]) => `<button type="button" role="tab" data-reg-part="${k}" aria-selected="${k === st.part}">${E(n)}${PARTS.some(x => x.k === k) && k !== 'paper' && partChanged(k, value) ? '<i class="d" title="수능 틀과 다른 값 있음"></i>' : ''}</button>`).join('')}</div>${inner}</div>
+      <div class="sfx-foot"><span class="mu">파란 점 = 수능 틀과 다른 값(처음 값은 양식에서 읽음)</span><span class="sp"></span><button type="button" class="ef-btn" data-reg-revert>되돌리기</button></div></section>
+      <section class="sfx-right"><div class="sfx-ph"><b>견본 시험지</b><span class="mu" data-sfx-state></span><span class="sp"></span><span class="mu">1쪽 · 2쪽</span></div><div class="sfx-pages" data-sfx-pages></div></section></div>`;
+  }
+  // 견본 다시 묶기: 0.5초 쉬면 묶고, 늦게 끝난 옛 결과는 버린다. 그림은 st.pv에 두어 다시 그려도 남는다.
+  function schedulePreview(delay = 500) {
+    clearTimeout(st.pv.timer); const my = ++st.pv.seq; st.pv.busy = true; paintSample();
+    st.pv.timer = setTimeout(async () => {
+      try { const r = await api.previewForm({ draft: st.draft, standard: structuredClone(st.std), keep: { ...st.keep } }); if (my !== st.pv.seq) return; st.pv = { ...st.pv, pages: r.pages.slice(0, 2), err: '', busy: false }; }
+      catch (e) { if (my !== st.pv.seq) return; st.pv = { ...st.pv, err: e.message, busy: false }; }
+      if (back.isConnected) paintSample();
+    }, delay);
+  }
+  function paintSample() {
+    const box = dlg.querySelector('[data-sfx-pages]'), state = dlg.querySelector('[data-sfx-state]'); if (!box) return;
+    state.textContent = st.pv.busy ? '견본 다시 묶는 중…' : st.pv.err ? '' : '5E 견본 문항 6개를 이 양식으로 실제 내보내기와 똑같이 묶은 모양';
+    box.classList.toggle('busy', st.pv.busy && !!st.pv.pages);
+    if (st.pv.err) { box.innerHTML = `<p class="ef-hint sfx-err">견본을 묶지 못했습니다: ${E(st.pv.err)}</p>`; return; }
+    if (!st.pv.pages) { box.innerHTML = '<p class="ef-hint">견본 시험지를 묶는 중입니다…</p>'; return; }
+    box.innerHTML = st.pv.pages.map((svg, i) => `<figure><div class="sfx-page">${svg.replace('<svg ', '<svg style="display:block;width:100%;height:auto" ')}</div><figcaption>${i + 1}쪽${i === 0 ? ' — 머리 표 · 배점 현황 · 「다음 면에 계속」' : ' — 머리 표 없는 쪽'}</figcaption></figure>`).join('');
   }
   async function read(file) {
     if (!file || st.busy) return;
     st.busy = true; render();
-    try { const d = await api.readForm(file); if (!d) return; st.draft = d; st.name = String(d.read?.standard?.name || file.name.replace(/\.[^.]+$/, '')).slice(0, 40); st.step = 2; }
+    try { const d = await api.readForm(file); if (!d) return; st.draft = d; st.name = String(d.read?.standard?.name || file.name.replace(/\.[^.]+$/, '')).slice(0, 40); st.step = 2; st.std = structuredClone(d.read.standard || {}); st.part = 'keep'; st.tab = 0; st.pv = { seq: 0, pages: null, err: '', busy: true }; schedulePreview(0); }
     catch (e) { api.status(`한글 파일을 읽지 못했습니다: ${e.message}`, true); }
     finally { st.busy = false; if (back.isConnected) render(); }
   }
@@ -165,15 +214,21 @@ export function openRegister(api) {
   back.addEventListener('dragover', e => { if (e.target.closest('[data-reg-drop]')) e.preventDefault(); });
   back.addEventListener('drop', e => { if (!e.target.closest('[data-reg-drop]')) return; e.preventDefault(); read(e.dataTransfer.files?.[0]); });
   back.addEventListener('input', e => { if (e.target.matches('[data-reg-name]')) st.name = e.target.value; });
+  back.addEventListener('change', e => { const t = e.target, k = t.dataset?.regKeep; if (k) { st.keep[k] = t.checked; render(); return schedulePreview(); }
+    const p = t.dataset?.p; if (!p || !st.std) return; const v = fieldValue(p, t.value, t.checked); if (v === undefined) return render();
+    setStandardPath(st.std, p, v); render(); schedulePreview(); });
   back.addEventListener('click', async e => {
     const t = e.target;
     if (t === back || t.closest('[data-reg-close]')) return close();
     const k = t.closest('[data-reg-kind]'); if (k) { st.kind = k.dataset.regKind; return render(); }
     if (t.closest('[data-reg-pick]')) { input.value = ''; input.click(); return; }
-    if (t.closest('[data-reg-back]')) { st.step = 1; st.draft = null; return render(); }
+    if (t.closest('[data-reg-back]')) { st.step = 1; st.draft = null; st.std = null; clearTimeout(st.pv?.timer); return render(); }
+    const pt = t.closest('[data-reg-part]'); if (pt) { st.part = pt.dataset.regPart; st.tab = 0; return render(); }
+    const tb = t.closest('[data-reg-tab]'); if (tb) { st.tab = Number(tb.dataset.regTab) || 0; return render(); }
+    if (t.closest('[data-reg-revert]')) { st.std = structuredClone(st.draft.read.standard || {}); st.keep = { head: true, score: true, foot: true, next: true }; render(); return schedulePreview(0); }
     if (t.closest('[data-reg-done]')) {
       const name = st.name.trim(); if (!name) { dlg.querySelector('[data-reg-name]')?.focus(); return; }
-      try { await api.saveForm({ name, kind: st.kind, draft: st.draft }); close(); } catch (err) { api.status(err.message, true); }
+      try { await api.saveForm({ name, kind: st.kind, draft: st.draft, keep: { ...st.keep }, standard: st.std }); close(); } catch (err) { api.status(err.message, true); }
     }
   });
   render();

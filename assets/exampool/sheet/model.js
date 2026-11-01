@@ -159,7 +159,7 @@ export function validate(data,{only=null}={}) {
     if(q.tags!==undefined&&(!Array.isArray(q.tags)||q.tags.length>30||!q.tags.every(v=>str(v,40)&&/^#\S+$/.test(v))))throw Error('태그는 #으로 시작하는 낱말 30개 이내로 붙여 주세요.');
     if(q.difficulty!==undefined&&!['상','중','하'].includes(q.difficulty))throw Error('난이도는 상·중·하 중 하나입니다.');
     // 문항별 기준 용지(선택): 조판을 처음 열 때의 용지. 기출(평가원 단 폭 약 110mm)은 B4.
-    if(q.paper!==undefined&&!['A4','B4','A3'].includes(q.paper))throw Error('문항 기준 용지는 A4·B4·A3 중 하나입니다.');
+    if(q.paper!==undefined&&!['A4','B4','A3','B5','A5','Letter','Legal','8절','16절'].includes(q.paper))throw Error('문항 기준 용지를 확인하세요.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
     if(q.reviews!==undefined&&(!Array.isArray(q.reviews)||q.reviews.length>200||!q.reviews.every(m=>m&&['me','ai'].includes(m.role)&&str(m.text,20000))))throw Error('AI 대화 기록을 확인하세요.');
     if(q.authoring!==undefined)validateAuthoring(q.authoring);

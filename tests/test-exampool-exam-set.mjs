@@ -57,10 +57,12 @@ test('exam paper follows the questions: one paper keeps it, mixed papers use the
   assert.equal(examPage([{q:{paper:'B4'}}]).paper,'B4');
 });
 
-test('question paper is optional and limited to A4, B4 and A3',async()=>{
+// 11-01: 학교 양식 용지(B5·레터·8절 등)를 문항 기준 용지로 쓸 수 있게 넓혔다 — 모르는 용지는 여전히 막는다.
+test('question paper is optional and limited to the known papers',async()=>{
   const {validate,newQuestion,FORMAT}=await import('../assets/exampool/sheet/model.js');
   const q=newQuestion('1');q.paper='B4';validate({format:FORMAT,questions:[q],documents:[]});
-  q.paper='Letter';assert.throws(()=>validate({format:FORMAT,questions:[q],documents:[]}),/기준 용지/);
+  q.paper='B5';validate({format:FORMAT,questions:[q],documents:[]});
+  q.paper='Tabloid';assert.throws(()=>validate({format:FORMAT,questions:[q],documents:[]}),/기준 용지/);
 });
 
 test('an exam whose questions were typeset on different papers is reported as mixed',()=>{

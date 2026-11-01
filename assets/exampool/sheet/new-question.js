@@ -24,15 +24,21 @@ const CHECK='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="widt
 const thumb=k=>`<span class="nq-thumb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_ICONS[k]}</svg></span>`;
 const pct=(n,d)=>d?n/d*100:0,fmt=v=>v.toFixed(1);
 
-export function createNewQuestionDialog(dialog,{onCreate}){
+// frames(10-29 학교 양식): 고를 수 있는 학교 양식 틀 [{id,name}]. 하나도 없으면 「틀」 줄을 숨긴다(예전과 같음). 처음엔 마지막으로 쓴 틀.
+const LAST_FRAME='5e.newQuestion.lastFrame';
+const lastFrame=()=>{try{return localStorage.getItem(LAST_FRAME)||'kice';}catch{return 'kice';}};
+export function createNewQuestionDialog(dialog,{onCreate,frames=()=>[]}){
   dialog.innerHTML=`<header class="nq-head"><h2 id="nq-title">새 문항</h2><div class="nq-crumbs" data-nq="crumbs"></div><div class="nq-spacer"></div><button type="button" class="nq-tool nq-icon" data-nq="close" aria-label="닫기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
 <section class="nq-col" data-nq="steps"></section>
 <section class="nq-preview"><div class="nq-pv"><div class="nq-preview-head"><span>예시 문항</span><span data-nq="match"></span></div><div data-nq="paper"></div><div class="nq-sources" data-nq="sources"></div></div></section>
 <aside class="nq-cells"><h3>문항 카드에서 채울 칸</h3><p class="nq-muted">틀을 확정하면 이 칸만 흰색으로 열립니다. ①·ㄱ. 같은 번호는 적지 않습니다.</p><div class="nq-sheet" data-nq="sheet"></div></aside>
-<footer class="nq-foot"><div class="nq-summary" data-nq="summary"></div><div class="nq-spacer"></div><button type="button" class="nq-tool" data-nq="reset">처음부터</button><button type="button" class="nq-go" data-nq="go" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>엑셀에서 작성 <span class="nq-kbd">Enter</span></button></footer>`;
+<footer class="nq-foot"><div class="nq-summary" data-nq="summary"></div><div class="nq-spacer"></div><span class="nq-frame" data-nq="frame" hidden></span><button type="button" class="nq-tool" data-nq="reset">처음부터</button><button type="button" class="nq-go" data-nq="go" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>엑셀에서 작성 <span class="nq-kbd">Enter</span></button></footer>`;
   dialog.setAttribute('aria-labelledby','nq-title');
   const part=k=>dialog.querySelector(`[data-nq="${k}"]`);
-  const pick={form:null,struct:null},info={form:false,struct:false};let hover=null;const subject='all';
+  const pick={form:null,struct:null},info={form:false,struct:false};let hover=null,frame='kice';const subject='all';
+  function renderFrame(){const list=frames(),n=part('frame');n.hidden=!list.length;if(!list.length){frame='kice';n.innerHTML='';return;}
+    if(frame!=='kice'&&!list.some(f=>f.id===frame))frame='kice';
+    n.innerHTML=`<span class="nq-frame-k">틀</span><span class="nq-seg" role="group" aria-label="틀">${[{id:'kice',name:'수능 틀'},...list].map(f=>`<button type="button" data-nq-frame="${E(f.id)}" aria-pressed="${f.id===frame}">${E(f.name)}</button>`).join('')}</span>`;}
 
   function optHtml(step,o,label,desc,total){
     const p=pct(o.n,total);
@@ -69,8 +75,9 @@ export function createNewQuestionDialog(dialog,{onCreate}){
     const done=pick.form&&pick.struct;part('go').disabled=!done;
     part('summary').innerHTML=done?`<b>${E(FORMS[pick.form].name)} · ${E(STRUCTS[pick.struct].name)}</b> · 2번 클릭으로 확정 · 배치 자동`:`${(pick.form?1:0)+(pick.struct?1:0)} / 2 선택 · 유형과 자료 구조만 고르면 됩니다`;
   }
-  const create=()=>{if(pick.form&&pick.struct&&onCreate({form:pick.form,struct:pick.struct,subject})!==false)dialog.close();};
+  const create=()=>{if(pick.form&&pick.struct&&onCreate({form:pick.form,struct:pick.struct,subject,frame})!==false){try{localStorage.setItem(LAST_FRAME,frame);}catch{}dialog.close();}};
   dialog.addEventListener('click',e=>{
+    const fr=e.target.closest('[data-nq-frame]');if(fr){frame=fr.dataset.nqFrame;renderFrame();return;}
     const h=e.target.closest('.nq-help');if(h){info[h.dataset.help]=!info[h.dataset.help];render();return;}
     const b=e.target.closest('.nq-opt');if(b){pick[b.dataset.step]=b.dataset.k;hover=null;render();return;}
     if(e.target.closest('[data-nq="close"]'))dialog.close();
@@ -85,5 +92,5 @@ export function createNewQuestionDialog(dialog,{onCreate}){
     else if(e.key==='Backspace'){if(pick.struct)pick.struct=null;else pick.form=null;render();e.preventDefault();}
     else if(e.key==='Enter'&&pick.form&&pick.struct&&!e.target.closest('[data-nq="close"],[data-nq="reset"],.nq-help')){create();e.preventDefault();}
   });
-  return {open(){pick.form=pick.struct=null;hover=null;render();dialog.showModal();dialog.querySelector('.nq-opt')?.focus();},get pick(){return {...pick,subject};}};
+  return {open(){pick.form=pick.struct=null;hover=null;frame=lastFrame();renderFrame();render();dialog.showModal();dialog.querySelector('.nq-opt')?.focus();},get pick(){return {...pick,subject};}};
 }

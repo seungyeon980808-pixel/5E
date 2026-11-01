@@ -319,7 +319,7 @@ module.exports.seedSourceLabel=async function(page,text='기존 라벨'){
 module.exports.pickIntoExam=async function(sheet,ids,count=1){
   // 「새 시험지」 창(10-24 시안 17)이 떠 있으면 기본값 그대로 「만들기」 → 바로 문항 고르기.
   if(await sheet.locator('.ef-new [data-new-make]').count()){await sheet.click('.ef-new [data-new-make]');await sheet.waitForSelector('#examd-view:not([hidden]) .ep-s2');}
-  await sheet.click('#examd-view [data-ef-step="2"]');await sheet.click('[data-ep-kind="mine"]');await sheet.waitForSelector('.ep-card[data-ep-key^="q:"]');
+  await sheet.click('#examd-view [data-ef-step="2"]');await sheet.waitForSelector('.ep-card[data-ep-key^="q:"]');
   if(!ids)ids=(await sheet.locator('.ep-card[data-ep-key^="q:"]:not(.in)').evaluateAll((n,c)=>n.slice(0,c).map(x=>x.dataset.epKey.slice(2)),count));
   for(const id of ids){const card=sheet.locator(`.ep-card[data-ep-key="q:${id}"]`);await card.scrollIntoViewIfNeeded();await card.hover();await card.locator('[data-ep-take]').click();
     await sheet.waitForFunction(id=>document.querySelector(`.ep-card[data-ep-key="q:${id}"]`)?.classList.contains('in'),id);}

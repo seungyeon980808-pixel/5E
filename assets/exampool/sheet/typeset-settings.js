@@ -54,13 +54,32 @@ export const PARTS=[
       G('기호',[[T('parts.labelSpace','「ㄱ.」「①」 뒤 고정 띄어쓰기','fixed','space')]]),G('앞 간격(더함)',[[N('gaps.choices','선지 앞','mm',.1,0,20,'gap')]])]}},
   {k:'gaps',name:'간격',match:null,tabs:{'간격':[G('요소 앞에 더하는 간격',[[N('gaps.text','지문','mm',.1,0,20,'gap'),N('gaps.material','자료','mm',.1,0,20,'gap')],[N('gaps.ask','발문','mm',.1,0,20,'gap'),N('gaps.bogi','〈보기〉','mm',.1,0,20,'gap')],[N('gaps.choices','선지','mm',.1,0,20,'gap')]],'간격의 주인은 하나 — 앞 요소 아래와 더하지 않습니다'),
       G('자료 뒤 간격',[[N('gaps.after','상자·표·그림 뒤','mm',.1,0,20,'gap')]])]}},
-  {k:'paper',name:'쪽·단',match:null,tabs:{'편집 용지':[G('단',[[S('paper.columns','단 수',[[2,'2단'],[1,'1단']]),N('paper.columnGap','단 간격','mm',.5,0,30)]]),
+  {k:'paper',name:'쪽·단',match:null,tabs:{'편집 용지':[G('단',[[S('paper.columns','단 수',[[2,'2단'],[1,'1단'],[3,'3단'],[4,'4단']]),N('paper.columnGap','단 간격','mm',.5,0,30)]]),
       G('여백',[[N('paper.margin.top','위','mm',1,5,40),N('paper.margin.bottom','아래','mm',1,5,40)],[N('paper.margin.left','왼쪽','mm',1,5,40),N('paper.margin.right','오른쪽','mm',1,5,40)]])]}},
 ];
 const ALL_FIELDS=PARTS.flatMap(x=>Object.values(x.tabs).flat().flatMap(g=>g.rows.flat()));
 const fieldOf=p=>ALL_FIELDS.find(f=>f.p===p);
 const decimals=(step,u)=>u==='mm'?2:String(step).includes('.')?String(step).split('.')[1].length:0;
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+
+// 칸 하나(값 v는 value(p)로 읽는다). 조판 설정 팝업과 학교 양식 등록 창(11-01 「조판 확정」)이 함께 쓴다.
+export function fieldHtml(f,value,hot=''){
+  if(f.t==='info')return `<div class="tsx-f info"><span class="n">${E(f.n)}</span><span class="v">${E(f.text)}</span></div>`;
+  const v=value(f.p),kv=get(KICE_STANDARD,f.p),diff=!same(v,kv),tip=diff?` title="수능 틀 ${E(f.t==='tog'?(kv===f.on?'켬':'끔'):kv)}${f.u&&f.t==='num'?E(f.u):''}과 다름"`:'',cls=`${diff?' diff':''}${hot&&hot===f.p?' hot':''}`;
+  if(f.t==='tog')return `<label class="tsx-f tog${cls}"${tip}><span class="n">${E(f.n)}</span><input type="checkbox" data-p="${f.p}" ${v===f.on?'checked':''}><span class="sw" aria-hidden="true"></span></label>`;
+  if(f.t==='sel')return `<label class="tsx-f sel${cls}"${tip}><span class="n">${E(f.n)}</span><select data-p="${f.p}">${f.opts.map(o=>{const [ov,ol]=Array.isArray(o)?o:[o,o];return `<option value="${E(ov)}" ${String(ov)===String(v)?'selected':''}>${E(ol)}</option>`;}).join('')}</select>${svg('chev',12)}</label>`;
+  return `<label class="tsx-f num${cls}"${tip} data-hl="${f.hl}" data-fp="${f.p}"><span class="n" data-scrub>${E(f.n)}</span><input inputmode="decimal" data-p="${f.p}" data-step="${f.step}" data-min="${f.min}" data-max="${f.max}" data-u="${f.u||''}" value="${Number(v).toFixed(decimals(f.step,f.u))}"><span class="u">${E(f.u||'')}</span></label>`;
+}
+export const groupsHtml=(groups,field)=>groups.map(g=>`<div class="tsx-grp"><div class="tsx-gh">${E(g.h)}${g.tip?`<span class="tsx-tip" tabindex="0" title="${E(g.tip)}" aria-label="${E(g.tip)}">${svg('info',14)}</span>`:''}</div>${g.rows.map(r=>`<div class="tsx-row${r.length===1?' one':''}">${r.map(field).join('')}</div>`).join('')}</div>`).join('');
+export const partChanged=(k,value)=>Object.values(PARTS.find(x=>x.k===k).tabs).flat().flatMap(g=>g.rows.flat()).some(f=>f.p&&!same(value(f.p),get(KICE_STANDARD,f.p)));
+// 값 칸에 넣은 글을 틀 값으로(범위·소수 자리 맞춤). 잘못된 수면 undefined.
+export function fieldValue(p,raw,checked){
+  const f=fieldOf(p);if(!f)return undefined;
+  if(f.t==='tog')return checked?f.on:f.off;
+  if(f.t==='sel'){const k=typeof get(KICE_STANDARD,p);return k==='number'?Number(raw):k==='boolean'?raw==='true':raw;}
+  const v=Number(raw);if(!Number.isFinite(v))return undefined;return Number(Math.min(f.max,Math.max(f.min,v)).toFixed(decimals(f.step,f.u)));
+}
+export {setPath as setStandardPath};
 
 export function attachTypesetSettings({panel,context,preview,onApply,onStandard}){
   const doc=panel.ownerDocument;
@@ -75,14 +94,8 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   const value=p=>{const v=get(draft,p);return v===undefined?get(KICE_STANDARD,p):v;};
   const dirty=()=>!!draft&&(!same(draft,saved)||exception!==ownException());
 
-  function field(f){
-    if(f.t==='info')return `<div class="tsx-f info"><span class="n">${E(f.n)}</span><span class="v">${E(f.text)}</span></div>`;
-    const v=value(f.p),kv=get(KICE_STANDARD,f.p),diff=!same(v,kv),tip=diff?` title="수능 틀 ${E(f.t==='tog'?(kv===f.on?'켬':'끔'):kv)}${f.u&&f.t==='num'?E(f.u):''}과 다름"`:'',cls=`${diff?' diff':''}${hot&&hot===f.p?' hot':''}`;
-    if(f.t==='tog')return `<label class="tsx-f tog${cls}"${tip}><span class="n">${E(f.n)}</span><input type="checkbox" data-p="${f.p}" ${v===f.on?'checked':''}><span class="sw" aria-hidden="true"></span></label>`;
-    if(f.t==='sel')return `<label class="tsx-f sel${cls}"${tip}><span class="n">${E(f.n)}</span><select data-p="${f.p}">${f.opts.map(o=>{const [ov,ol]=Array.isArray(o)?o:[o,o];return `<option value="${E(ov)}" ${String(ov)===String(v)?'selected':''}>${E(ol)}</option>`;}).join('')}</select>${svg('chev',12)}</label>`;
-    return `<label class="tsx-f num${cls}"${tip} data-hl="${f.hl}" data-fp="${f.p}"><span class="n" data-scrub>${E(f.n)}</span><input inputmode="decimal" data-p="${f.p}" data-step="${f.step}" data-min="${f.min}" data-max="${f.max}" data-u="${f.u||''}" value="${Number(v).toFixed(decimals(f.step,f.u))}"><span class="u">${E(f.u||'')}</span></label>`;
-  }
-  const changed=k=>Object.values(PARTS.find(x=>x.k===k).tabs).flat().flatMap(g=>g.rows.flat()).some(f=>f.p&&!same(value(f.p),get(KICE_STANDARD,f.p)));
+  const field=f=>fieldHtml(f,value,hot);
+  const changed=k=>partChanged(k,value);
   function leftHtml(){
     const {standards=[]}=context(),P=PARTS.find(x=>x.k===part),names=Object.keys(P.tabs);if(tab>=names.length)tab=0;
     const shared=standards.filter(x=>x.source?.kind!=='exception'),pick=ownException()?base().source?.from||KICE_ID:base().id,pickName=(pick===KICE_ID?'수능 틀':shared.find(x=>x.id===pick)?.name)||'수능 틀';
@@ -94,7 +107,7 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
       <div class="tsx-body">
         <div class="tsx-parts" role="tablist" aria-label="부분">${PARTS.map(x=>`<button type="button" role="tab" data-part="${x.k}" aria-selected="${x.k===part}">${E(x.name)}${changed(x.k)?'<i class="d" title="수능 틀과 다른 값 있음"></i>':''}</button>`).join('')}</div>
         ${names.length>1?`<div class="tsx-seg" role="tablist">${names.map((n,i)=>`<button type="button" role="tab" data-tab="${i}" aria-selected="${i===tab}">${E(n)}</button>`).join('')}</div>`:''}
-        ${P.tabs[names[tab]].map(g=>`<div class="tsx-grp"><div class="tsx-gh">${E(g.h)}${g.tip?`<span class="tsx-tip" tabindex="0" title="${E(g.tip)}" aria-label="${E(g.tip)}">${svg('info',14)}</span>`:''}</div>${g.rows.map(r=>`<div class="tsx-row${r.length===1?' one':''}">${r.map(field).join('')}</div>`).join('')}</div>`).join('')}
+        ${groupsHtml(P.tabs[names[tab]],field)}
       </div>
       <footer class="tsx-pf"><label class="tsx-exc"><input type="checkbox" data-exception ${exception?'checked':''}><span class="sw" aria-hidden="true"></span>이 문항만 예외</label><span class="sp"></span>
         <button type="button" class="tsx-b" data-revert ${dirty()?'':'disabled'}>되돌리기</button><button type="button" class="tsx-b go" data-apply ${dirty()?'':'disabled'}>${exception?'이 문항에 적용':'모든 문항에 적용'}</button></footer>
@@ -246,9 +259,37 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   });
   // 값 칸에 마우스를 올리면 그 자리(안 여백·간격)를 미리보기에서 함께 켠다
   back.addEventListener('pointerover',e=>{const f=e.target.closest?.('[data-fp]');const next=f?.dataset.fp||'';if(next!==hot){hot=next;back.querySelectorAll('.tsx-f.hot').forEach(n=>n.classList.remove('hot'));if(f)f.classList.add('hot');paint();}});
+  // 「틀 · ○○ ▾」(10-29 학교 양식 시안 ②-나): 이 문항의 틀을 고르고 바꾼다. 학교 양식이 하나도 없으면 숨긴다(예전 머리 그대로).
+  // 바꾸면 이 문항만 그 틀로 다시 조판한다 — 틀마다 다듬은 조판은 따로 남는다(app의 onStandard {frame}).
+  const pill=doc.createElement('span');pill.className='ts-frame';pill.hidden=true;
+  pill.innerHTML=`<button type="button" class="ts-frame-btn" aria-haspopup="menu" aria-expanded="false"></button><div class="ts-frame-menu" role="menu" hidden></div>`;
+  const pillBtn=pill.firstElementChild,pillMenu=pill.lastElementChild;
+  const schoolFrames=()=>(context().standards||[]).filter(x=>x.source?.kind==='hwp');
+  const PAPER_TEXT=s=>`${s.paper?.size||'A4'} ${s.paper?.columns||2}단`;
+  function drawPill(){
+    if(!pill.isConnected)(opener||controls.querySelector('.ts-scope'))?.insertAdjacentElement(opener?'beforebegin':'afterend',pill);
+    const {q,standard}=context(),list=schoolFrames();pill.hidden=!q||!list.length;if(pill.hidden){pillMenu.hidden=true;return;}
+    const cur=standard?.source?.kind==='hwp'?standard:null,label=cur?cur.name:'수능 틀';
+    if(pillBtn.dataset.label!==label){pillBtn.dataset.label=label;pillBtn.innerHTML=`<span class="k">틀</span> · <b>${E(label)}</b>${svg('chev',13)}`;pillBtn.title=`틀 · ${label} — 눌러서 바꾸기`;}
+  }
+  function openPill(){
+    const {standard}=context(),list=schoolFrames(),curId=standard?.source?.kind==='hwp'?standard.id:KICE_ID;
+    const opt=(id,name,sub)=>`<button type="button" role="menuitemradio" aria-checked="${id===curId}" data-frame="${E(id)}"><span class="dot" aria-hidden="true"></span><span class="nm">${E(name)}</span><small>${E(sub)}</small></button>`;
+    pillMenu.innerHTML=`${opt(KICE_ID,'수능 틀','B4 2단')}${list.map(x=>opt(x.id,x.name,PAPER_TEXT(x))).join('')}<hr><button type="button" role="menuitem" data-frame-add>＋ 학교 양식 넣기…</button><hr><p class="nt">바꾸면 이 문항을 그 틀 모양으로 다시 조판합니다. 틀마다 다듬은 모습은 따로 남아, 되돌아오면 그대로입니다.</p>`;
+    pillMenu.hidden=false;pillBtn.setAttribute('aria-expanded','true');
+  }
+  const closePill=()=>{pillMenu.hidden=true;pillBtn.setAttribute('aria-expanded','false');};
+  pill.addEventListener('click',e=>{
+    if(e.target.closest('.ts-frame-btn')){pillMenu.hidden?openPill():closePill();return;}
+    const f=e.target.closest('[data-frame]');if(f){closePill();const {standard}=context(),curId=standard?.source?.kind==='hwp'?standard.id:KICE_ID;if(f.dataset.frame!==curId)onStandard?.({frame:f.dataset.frame});return;}
+    if(e.target.closest('[data-frame-add]')){closePill();onStandard?.({registerFrame:true});}
+  });
+  doc.addEventListener('pointerdown',e=>{if(!pillMenu.hidden&&!pill.contains(e.target))closePill();},true);
+  doc.addEventListener('keydown',e=>{if(e.key==='Escape'&&!pillMenu.hidden){closePill();pillBtn.focus();}},true);
+  drawPill();
   return {
     // 문항이 바뀌면 열린 팝업은 닫는다(초안은 그 문항 기준). 그 밖에는 할 일 없음.
-    draw(){const {q}=context();if(!back.hidden&&q&&back.querySelector('.tsx-pvtitle')&&!back.querySelector('.tsx-pvtitle').textContent.startsWith(String(q.number)))close(true);},
+    draw(){drawPill();const {q}=context();if(!back.hidden&&q&&back.querySelector('.tsx-pvtitle')&&!back.querySelector('.tsx-pvtitle').textContent.startsWith(String(q.number)))close(true);},
     open,close:()=>close(true),get isOpen(){return !back.hidden;},
   };
 }

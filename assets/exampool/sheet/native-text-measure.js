@@ -1,6 +1,7 @@
 import {normalizeEquationScript,TEXT_WIDTH} from './typeset-model.js?v=1014-compact-panel';
 // Measure with the same native font engine that paints and exports the paper.
-export function createNativeTextMeasurer(Document){
+// font·factor: 학교 양식 틀(10-29)이면 양식 글꼴과 그 장평·자간으로 잰다. 주지 않으면 수능 틀(함초롬바탕) 그대로.
+export function createNativeTextMeasurer(Document,{font='함초롬바탕',factor=TEXT_WIDTH}={}){
   const cache=new Map(),escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const measure=(text,fontSize=11)=>{
     const key=JSON.stringify([text,fontSize]);if(cache.has(key))return cache.get(key)*measure.factor;
@@ -8,7 +9,7 @@ export function createNativeTextMeasurer(Document){
     try{
       d.createBlankDocument();const page=JSON.parse(d.getPageDef(0));
       Object.assign(page,{width:2000000,marginLeft:0,marginRight:0});d.setPageDef(0,JSON.stringify(page));
-      d.pasteHtml(0,0,0,`<p><span style="font-family:함초롬바탕;font-size:${fontSize}pt">${escape(text||' ')}</span></p>`);
+      d.pasteHtml(0,0,0,`<p><span style="font-family:${font};font-size:${fontSize}pt">${escape(text||' ')}</span></p>`);
       const runs=JSON.parse(d.getPageTextLayout(0)).runs;
       // 들여온 문서의 글자 모양(장평·자간)만큼 줄인다. 수식은 따로 잰다.
       // 기호만 든 조각(㉠ · ⓐ · ◦ 등 다른 글꼴로 그려짐)은 장평·자간이 걸리지 않아 0.9배로 줄이면 실제보다 좁게 잰다 — 줄 끝 어절이 넘쳐 한 어절만 남는 줄이 생겼다(10-24 15번).
@@ -31,6 +32,6 @@ export function createNativeTextMeasurer(Document){
       const size=control?{w:control.w,h:control.h}:null;if(cache.size>20000)cache.clear();cache.set(key,size);return size;
     }finally{d.free();}
   };
-  measure.factor=TEXT_WIDTH;
+  measure.factor=factor;
   return measure;
 }

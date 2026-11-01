@@ -65,6 +65,8 @@ export function menuOptions(data, exam, s, k) {
 }
 const FIELD = { subj: 'subject', unit: 'part', std: 'std', lv: 'lv', ty: 'ty', sort: 'sort' };
 export function renderStep2(exam, data, forms, s, { busy = null } = {}) {
+  // 11-01 사용자 결정: 시험지 보관함에서 기출을 바로 고르지 않는다 — 기출은 「기출문제」에서 변형해 내 문항이 된 것만 담는다.
+  s.kind = 'mine';
   if (s.kind !== 'mine' && !past.items) loadPast().catch(() => {});
   const list = poolEntries(data, exam, s), shown = list.slice(0, s.limit), g = goalOf(exam, forms), inExam = new Set(exam.items);
   const fb = (k, label) => { const v = s[FIELD[k]]; const show = k === 'sort' ? SORTS.find(x => x[0] === s.sort)[1] : label; return `<button type="button" class="ep-fbtn${v && k !== 'sort' ? ' on' : ''}" data-ep-menu="${k}" aria-haspopup="menu">${E(show)}${v && k !== 'sort' ? ` <span class="v">${E(v)}</span>` : ''}${CV}</button>`; };
@@ -81,7 +83,8 @@ export function renderStep2(exam, data, forms, s, { busy = null } = {}) {
   const body = !list.length ? `<p class="ef-hint ep-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '이 태그·조건에 맞는 문항이 없습니다.'}</p>` : `<div class="ep-cols">${shown.map(card).join('')}</div>${list.length > shown.length ? `<div class="ep-more"><button type="button" class="ef-btn" data-ep-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : ''}`;
   return `<div class="ef-work ep-s2">
   <section class="ef-pane${s.multi ? ' multi' : ''}" id="ep-pool"><div class="ef-ph"><b>문항 보관함</b><small>${list.length.toLocaleString()}개</small><span class="sp"></span><button type="button" class="ef-btn" data-ep-multi aria-pressed="${s.multi}">여러 개 고르기</button><input class="ep-search" data-ep-query value="${E(s.query)}" placeholder="내용·단원·태그 찾기" aria-label="보관함 찾기"></div>
-    <div class="ep-fbar"><div class="ef-seg ep-kind">${[['all', '전체'], ['mine', '내 문항'], ['past', '기출']].map(([k, v]) => `<button type="button" data-ep-kind="${k}" aria-pressed="${s.kind === k}">${v}</button>`).join('')}</div><span class="ep-fdiv"></span>${fb('subj', '과목')}${fb('unit', '단원')}${fb('std', '성취기준')}${fb('lv', '난이도')}${fb('ty', '유형')}<button type="button" class="ep-fbtn${s.star ? ' on' : ''}" data-ep-star aria-pressed="${s.star}"><span class="st">★</span> 별표</button><span class="sp"></span>${fb('sort', '정렬')}</div>
+    <div class="ep-fbar">${fb('subj', '과목')}${fb('unit', '단원')}${fb('std', '성취기준')}${fb('lv', '난이도')}${fb('ty', '유형')}<button type="button" class="ep-fbtn${s.star ? ' on' : ''}" data-ep-star aria-pressed="${s.star}"><span class="st">★</span> 별표</button><span class="sp"></span>${fb('sort', '정렬')}</div>
+    <div class="ep-past"><span>기출은 「기출문제」에서 <b>변형</b>하면 내 문항으로 들어와 여기서 고를 수 있습니다.</span><button type="button" class="ef-btn go" data-ep-gopast>기출문제 열기 →</button></div>
     <div class="ep-tbar"><span class="lbl">태그</span>${tags.length ? tags.map(([t, n]) => `<button type="button" class="ep-tok${s.tags.includes(t) ? ' on' : ''}" data-ep-tagf="${E(t)}" aria-pressed="${s.tags.includes(t)}">${E(t)}<small>${n}</small></button>`).join('') : '<span class="mu ep-none">카드의 「# 분류·태그」로 태그를 붙이면 여기서 거를 수 있습니다</span>'}${s.tags.length ? '<button type="button" class="ep-tok mu" data-ep-tagclear>✕ 풀기</button>' : ''}</div>
     <div class="ep-grid">${body}</div>
     ${s.multi ? `<div class="ep-bulk"><b>${s.picked.length}개 골랐음</b><span class="mu">카드를 누르면 고르고 · 다시 누르면 뺍니다</span><span class="sp"></span><button type="button" class="ef-btn" data-ep-bulktag ${s.picked.length ? '' : 'disabled'}># 태그 · 분류 한꺼번에</button><button type="button" class="ef-btn" data-ep-bulktake ${s.picked.length ? '' : 'disabled'}>모두 담기</button><button type="button" class="ef-btn" data-ep-multi>그만 고르기</button></div>` : ''}</section>

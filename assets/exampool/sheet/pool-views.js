@@ -60,6 +60,9 @@ export function isBlank(q){
 // 성취기준 글(카드에 한 줄로): 교육과정 자료를 한 번만 읽어 둔다. 다 읽으면 보관함 카드의 그 줄만 다시 채운다.
 let stdText=null;const stdWait=loadStandards().then(d=>{stdText=new Map((d?.standards||[]).map(s=>[s.code,s.text]));}).catch(()=>{stdText=new Map();});
 const stdLine=q=>q.standardCode?`<code>${E(q.standardCode)}</code>${E(stdText?.get(q.standardCode)||'')}`:'<i>성취기준 없음</i>';
+// 학교 양식 틀 이름(10-29 시안 ②): 학교 양식으로 조판하는 문항 카드에만 작은 이름표(이름 첫 낱말). app이 이름 찾기를 넘긴다.
+let frameNameOf=()=>'';export const setFrameNames=fn=>{frameNameOf=fn;};
+const frameTag=q=>{const n=q.standardId&&frameNameOf(q.standardId);return n?`<span class="pv-frame" title="틀 · ${E(n)}">${E(String(n).split(/\s+/)[0])}</span>`:'';};
 // 문항 보관함: 시험지에 넣지 않은 문항 카드.
 export function renderLibrary(root,data,view){
   const filter=view.stage||'all',query=String(view.query||'').toLowerCase();
@@ -72,7 +75,7 @@ export function renderLibrary(root,data,view){
     <div class="pv-grid">${list.length?list.map(q=>`<article class="pv-card" data-card="${q.id}"><button type="button" class="lp-star pv-star" data-pool-star="q:${q.id}" aria-pressed="${!!stars['q:'+q.id]}" aria-label="${stars['q:'+q.id]?'별표 빼기':'별표'}" title="별표 — 「★ 별표만」으로 모아 보기">${CARD_ICON.star}</button>
       ${isBlank(q)?`<button type="button" class="pv-thumb is-blank" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><span><b>빈 문항</b>눌러서 쓰기</span></button>`:`<button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>`}
       <div class="pv-meta" title="${E(questionSubtitle(q))}"><p class="pv-plan"><span class="pv-k">기준</span><span class="pv-v">${stdLine(q)}</span></p><p class="pv-plan"><span class="pv-k">의도</span><span class="pv-v">${q.intent?E(q.intent):'<i>출제의도 없음</i>'}</span></p>
-        <div class="pv-row pv-actions"><span class="pv-st">${stage(q)}<span>· ${E(q.type)}</span></span>${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
+        <div class="pv-row pv-actions"><span class="pv-st">${stage(q)}<span>· ${E(q.type)}</span>${frameTag(q)}</span>${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
     </article>`).join(''):`<p class="pv-empty">${view.loadError?E(view.loadError):all.length?'조건에 맞는 문항이 없습니다.':'보관함이 비어 있습니다. 「새 문항」으로 시험지에 넣지 않은 문항을 만들어 둘 수 있습니다.'}</p>`}</div>`;
   fillPreviews(root,data);
   if(!stdText)stdWait.then(()=>{if(!root.isConnected)return;root.querySelectorAll('.pv-card').forEach(c=>{const q=data.questions.find(x=>x.id===c.dataset.card),v=c.querySelector('.pv-plan .pv-v');if(q?.standardCode&&v)v.innerHTML=stdLine(q);});});

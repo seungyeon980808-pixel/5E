@@ -268,7 +268,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
       const stepish=/과정|방법/.test(s.name)||noHead&&paras.filter(p=>/^\((가|나|다)\)/.test(p.text)).length>=2;
       if(stepish){
         // 과정 글 옆 그림 하나: 상자 안 '글 옆 자료' 가로 묶음(과정 칸 + 그림).
-        const mats0=s.items.filter(n=>n.k!=='para'),pb=paras.map(paraBox).filter(Boolean);
+        // 줄 단위로 본다(11-01 생명1 27년 6평 1번 납자루): 그림 옆 줄만 그림 왼쪽에서 끝나면 글 옆 그림이다. 문단 상자로 보면 그림 아래로 단 폭 끝까지
+        // 이어지는 (나) 줄 때문에 문단이 그림과 겹쳐 보여 그림이 상자 맨 아래 따로 떨어졌다.
+        const mats0=s.items.filter(n=>n.k!=='para'),pb=paras.flatMap(p=>(p.lines||[]).filter(l=>l.geo&&Number.isFinite(l.base)).map(l=>[l.left,l.base-l.h,l.right,l.base]));
         const sideFig=mats0.length===1&&mats0[0].k==='figure'&&mats0[0].box&&pb.length&&pb.some(b=>yOverlap(b,mats0[0].box)>4)&&pb.filter(b=>yOverlap(b,mats0[0].box)>4).every(b=>mats0[0].box[0]>=b[2]-3)?mats0[0]:null;
         let host=g;if(sideFig){host=add('group',g,'글 옆 자료');host.layout='나란히';host.boxed=false;}
         const st=add('steps',host,s.name||'실험 과정');st.lines=[];

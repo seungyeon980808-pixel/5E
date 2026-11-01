@@ -31,11 +31,11 @@ test('a B4 two-column school form: paper, margins, columns and the most used que
 });
 
 test('unknown paper and no numbered paragraphs fall back to KICE values and say so', () => {
-  const doc = fakeDoc({ page: [200, 280], columns: 3, paras: [{ text: '안내문입니다. 번호가 없습니다.', font: 'x', size: 11, ratio: 100, spacing: 0, line: 160 }] });
+  const doc = fakeDoc({ page: [200, 280], columns: 6, paras: [{ text: '안내문입니다. 번호가 없습니다.', font: 'x', size: 11, ratio: 100, spacing: 0, line: 160 }] });
   const { rows, standard } = readSchoolForm(doc, { fileName: '안내.hwp' });
   assert.equal(standard.paper.size, KICE_STANDARD.paper.size);
   assert.equal(standard.paper.columns, KICE_STANDARD.paper.columns);
   assert.equal(standard.text.font, KICE_STANDARD.text.font);
   assert.ok(rows.filter(r => !r.found).length >= 3);
-  assert.match(rows.find(r => r.label === '용지').note, /A4·B4·A3이 아님/);
+  assert.match(rows.find(r => r.label === '용지').note, /아는 용지 크기가 아님/);
 });

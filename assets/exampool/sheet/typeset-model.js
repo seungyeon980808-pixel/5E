@@ -1,5 +1,6 @@
 import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
-export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
+// 학교 양식에서 읽는 용지(11-01 밤샘): A4·B4·A3 밖의 양식(B5·레터·8절·16절 등)을 A4로 바꿔 읽어 문항 폭이 틀렸다.
+export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420],B5:[182,257],A5:[148,210],Letter:[216,279],Legal:[216,356],'8절':[272,394],'16절':[197,272]};
 export const LAYOUT_VERSION=13;
 // 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
 import {nativeRuns} from './live-patch.js';
@@ -8,7 +9,7 @@ import {KICE_STANDARD,layoutValues,standardForPaper} from './typeset-standard.js
 export const TEXT_RATIO=KICE_STANDARD.text.ratio,TEXT_SPACING=KICE_STANDARD.text.spacing,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
 const HU=7200/25.4;
 export function pageProfile(profile={paper:'A4',columns:2},standard=KICE_STANDARD){
-  if(!PAPER_MM[profile.paper]||![1,2].includes(profile.columns))throw Error('용지와 단 수를 확인하세요.');
+  if(!PAPER_MM[profile.paper]||![1,2,3,4].includes(profile.columns))throw Error('용지와 단 수를 확인하세요.');
   // B4·A3 2단은 단 폭을 평가원 원본(111.98mm)으로 맞춘 여백을 쓴다(standardForPaper, 10-24 용지 원칙) — 문항 조판·시험지 묶기·검사가 같은 값을 쓴다.
   const [w,h]=PAPER_MM[profile.paper],L=layoutValues(profile.columns===2?standardForPaper(standard,profile.paper):standard),margin=L.margin,spacing=L.columnGap;
   return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin.left*HU),marginRight:Math.round(margin.right*HU),marginTop:Math.round(margin.top*HU),marginBottom:Math.round(margin.bottom*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-margin.left-margin.right-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
@@ -360,7 +361,104 @@ export function applyCellFloatingPictures(document,floats){
 // 그림이 붙은 문단이 그림과 겹치거나 그림보다 짧으면(다음 문단도 그림 옆에 와야 함) 엔진의 어울림 대신
 // 그림은 글 앞(단 기준 정렬)에 두고, 그림 옆에서 시작하는 문단마다 오른쪽(왼쪽) 여백을 그림 폭만큼 둔다(평가원처럼 발문도 그림 옆).
 // 표·그림 문단이 그림 옆에서 시작하면 앞 문단 아래 간격을 둬서 그림 밑으로 보낸다. 문단 모양 단위: 여백·간격은 px×150.
-export function settleFloatingPictures(document){
+// 칸 높이를 글에 맞춰 늘린다(10-31 학교 양식 24번): 엔진은 칸 안 글이 늘어도 저장된 칸 높이를 그대로 써서 마지막 줄이 상자 밖으로 잘렸다.
+// 맨 바깥 표의 칸만 본다. 글 아래 끝 + 칸 아래 여백이 칸 바닥을 넘는 만큼 그 칸(줄)을 늘린다.
+export function growCellsToContent(document){
+  const J=JSON.stringify,need=new Map();
+  for(let page=0;page<document.pageCount();page++)for(const r of JSON.parse(document.getPageTextLayout(page)).runs){
+    if(!r.text.trim()||(r.cellPath||[]).length!==1)continue;
+    const path=r.cellPath.slice(0,1),json=J(path),cell=path[0].cellIndex,box=JSON.parse(document.getTableCellBboxesByPath(r.secIdx,r.parentParaIdx,json)).find(c=>c.cellIdx===cell&&c.pageIndex===page);if(!box)continue;
+    const props=JSON.parse(document.getCellPropertiesByPath(r.secIdx,r.parentParaIdx,json,cell)),pad=props.applyInnerMargin?props.paddingBottom/75:0;
+    const over=r.y+(r.fontSize||r.h)+pad-(box.y+box.h);if(over<=.8)continue;
+    const k=J([r.secIdx,r.parentParaIdx,path[0].controlIndex,cell]);need.set(k,Math.max(need.get(k)||0,over));
+  }
+  for(const [k,over] of need){const [sec,para,ci,cell]=JSON.parse(k);document.resizeTableCells(sec,para,ci,J([{cellIdx:cell,heightDelta:Math.ceil((over+4)*75)}]));}
+  if(need.size)document.reflowLinesegs();
+  return need.size;
+}
+// 높은 수식 아래 줄 띄우기(10-31 학교 양식): 학교 틀은 줄 간격이 좁아 분수·루트 수식이 제 줄 아래로 내려와 다음 줄 글과 겹쳤다(〈보기〉 ㄱ의 분수 → ㄴ).
+// 수식보다 아래 줄에서 시작하는데 수식 상자와 겹치는 글이 있으면, 그 글 문단(칸 안이면 칸 문단)의 「문단 위」 간격을 겹친 만큼 더한다(px×150).
+// tables: 글자처럼 놓인 표·그림이 앞 문단 줄에 걸친 것도 띄운다 — 다시 열어 줄 자리가 새로 잡힌 문서(시험지 묶기)에서만. 문항 조판 중에는 표 자리가 옛 자리라 잘못 잡았다.
+export function spaceEquationOverlaps(document,{tables=false}={}){
+  const J=JSON.stringify;let total=0;
+  for(let pass=0;pass<3;pass++){
+    const need=new Map(),after=new Map(),lines=new Map();
+    const keyOf=r=>{const cell=(r.cellPath||[]).length===1?r.cellPath[0]:null;return cell?J([r.secIdx,r.parentParaIdx,cell.controlIndex,cell.cellIndex,cell.cellParaIndex]):J([r.secIdx,r.paraIdx]);};
+    for(let page=0;page<document.pageCount();page++){
+      const runs=(JSON.parse(document.getPageTextLayout(page)).runs||[]).filter(r=>r.text.trim()),eqs=(JSON.parse(document.getPageControlLayout(page)).controls||[]).filter(c=>c.type==='equation');
+      for(const e of eqs){
+        // 수식이 든 문단: 같은 줄(수식 세로 가운데를 지나는 글)에서 수식과 가장 가까운 글의 문단(칸 안 수식은 cellPath가 비어 글로 찾는다).
+        const mid=e.y+e.h/2,own=runs.filter(r=>(r.cellPath||[]).length<=1&&r.y<mid&&r.y+(r.fontSize||r.h)>mid-(r.fontSize||r.h)).map(r=>({r,d:Math.max(0,r.x-(e.x+e.w),e.x-(r.x+r.w))})).filter(x=>x.d<24).sort((a,b)=>a.d-b.d)[0]?.r;
+        const ownKey=own?keyOf(own):'';
+        for(const r of runs){
+          const h=r.fontSize||r.h,over=e.y+e.h-r.y;
+          // 키 큰 수식이 윗줄 글로 올라간 것(11-01 밤샘 대왕중 화학Ⅰ 24-9월 14번: 반응식 수식 위가 윗줄 「…는 반응 계수)」에 걸침) — 수식 문단을 내린다.
+          // 칸 안은 띄운 뒤에도 줄 자리가 바로 다시 계산되지 않아 같은 겹침이 또 잡혀 쌓였다(11-01 밤샘 화학Ⅰ 16번 〈보기〉에 큰 빈 줄) — 첫 차례에 한 번만, 글자 높이까지만.
+          if(r.y<e.y&&r.y+h>e.y+.8&&Math.min(e.x+e.w,r.x+r.w)-Math.max(e.x,r.x)>.8&&(r.cellPath||[]).length<=1){if(pass)continue;const up=Math.min(h,r.y+h-e.y+2),key=keyOf(r);
+            // 같은 문단 윗줄로 올라간 것은 그 문단 줄 간격을 한 번만, 60%까지 넓힌다(11-01 밤샘 화학Ⅰ 24-9월 14번). 아랫줄 겹침에는 쓰지 않는다(그때는 다른 줄만 벌어짐).
+            if(key===ownKey)lines.set(key,Math.max(lines.get(key)||0,Math.min(.6,up/h)));else after.set(key,Math.max(after.get(key)||0,up));continue;}
+          if(r.y<=e.y+2||over<=.8||Math.min(e.x+e.w,r.x+r.w)-Math.max(e.x,r.x)<=.8||r.y+h<=e.y)continue;
+          if((r.cellPath||[]).length>1)continue;const key=keyOf(r);
+          // 같은 문단의 다음 줄과 겹치는 것은 띄워 고칠 수 없다(문단 위 간격은 두 줄을 함께 내리고, 줄 간격은 수식 줄 높이에 걸리지 않아 다른 줄만 벌어짐 —
+          // 11-01 밤샘 화학Ⅰ 반응식 문단이 515%까지 커짐). 그대로 두고 마지막 검사에 맡긴다.
+          if(key!==ownKey)need.set(key,Math.max(need.get(key)||0,over+2));
+        }
+      }
+      // 글자처럼 놓인 본문 표·그림이 앞 문단 마지막 줄에 올라탄 것(11-01 대왕중 2번 표: 앞 줄 낡은 줄 자리로 4px 겹침)도 그 표·그림 문단을 띄운다.
+      // 떠 있는 표·그림(글 옆 자료)은 글과 겹쳐 놓는 것이 정상이라 뺀다.
+      if(tables&&!pass)for(const c of (JSON.parse(document.getPageControlLayout(page)).controls||[]).filter(c=>(c.type==='table'||c.type==='image')&&!(c.cellPath||[]).length)){
+        let tac=false;try{tac=!!JSON.parse(c.type==='table'?document.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx):document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx)).treatAsChar;}catch{}
+        if(!tac)continue;
+        for(const r of runs){
+          if((r.cellPath||[]).length||r.secIdx!==c.secIdx||r.paraIdx>=c.paraIdx)continue;
+          // 앞 문단 줄이 표 위쪽에 걸치거나(r.y<c.y) 표 안으로 들어온 것(11-01 밤샘 f04 돋움 12pt 200%: 엔진이 앞 문단을 한 줄 적게 잡아 셋째 줄이 표 속에 그려짐) 모두.
+          // 표 윗부분(글줄 둘 높이)에 걸친 것만 본다 — 표 자리가 아직 옛 자리인 문서에서 아래쪽 글을 겹침으로 보고 표를 수백 px 띄웠다(11-01 밤샘 화학Ⅰ 16번).
+          const h=r.fontSize||r.h,over=r.y+h-c.y;
+          if(over<=.8||r.y>=c.y+2*h||Math.min(c.x+c.w,r.x+r.w)-Math.max(c.x,r.x)<=.8)continue;
+          const key=J([c.secIdx,c.paraIdx]);need.set(key,Math.max(need.get(key)||0,Math.min(over+2,3*h)));
+        }
+      }
+    }
+    if(!need.size&&!after.size&&!lines.size)break;
+    for(const [key,ratio] of lines){const k=JSON.parse(key),add=Math.ceil(ratio*100/5)*5;
+      if(k.length===5){let ls=160;try{ls=JSON.parse(document.getCellParaPropertiesAt(...k,0)).lineSpacing||160;}catch{}document.applyParaFormatInCell(...k,J({lineSpacing:ls+add}));}
+      else{const ls=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).lineSpacing||160;document.applyParaFormat(k[0],k[1],J({lineSpacing:ls+add}));}
+      total++;}
+    for(const [key,px] of after){const k=JSON.parse(key);
+      if(k.length===5){let a=0;try{a=JSON.parse(document.getCellParaPropertiesAt(...k,0)).spacingAfter||0;}catch{}document.applyParaFormatInCell(...k,J({spacingAfter:Math.round((a+px)*150)}));}
+      else{const a=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).spacingAfter||0;document.applyParaFormat(k[0],k[1],J({spacingAfter:Math.round((a+px)*150)}));}
+      total++;}
+    for(const [key,px] of need){const k=JSON.parse(key);
+      if(k.length===5){let before=0;try{before=JSON.parse(document.getCellParaPropertiesAt(...k,0)).spacingBefore||0;}catch{}
+        document.applyParaFormatInCell(...k,J({spacingBefore:Math.round((before+px)*150)}));}
+      else{const before=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).spacingBefore||0;document.applyParaFormat(k[0],k[1],J({spacingBefore:Math.round((before+px)*150)}));}
+      total++;}
+    document.reflowLinesegs();
+  }
+  return total;
+}
+// 〈보기〉 상자 단 가운데(10-31 학교 양식): 번호 뒤 문단은 모두 번호 폭만큼 들어가(applyQuestionIndent) 상자가 오른쪽으로 치우친다.
+// 학교 양식에서는 칸 안에 「보기」 제목이 있는 글자처럼 놓인 표만 좌우 여백이 같게 단 가운데에 둔다. 선지·자료 표는 그대로.
+export function centerBogiBoxes(document){
+  const J=JSON.stringify,done=new Set();let count=0;
+  for(let page=0;page<document.pageCount();page++){
+    const runs=JSON.parse(document.getPageTextLayout(page)).runs||[];
+    for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
+      if(c.type!=='table'||c.cellPath?.length)continue;const key=`${c.secIdx}|${c.paraIdx}|${c.controlIdx}`;if(done.has(key))continue;done.add(key);
+      const text=runs.filter(r=>r.cellPath?.length&&r.parentParaIdx===c.paraIdx&&r.cellPath[0].controlIndex===c.controlIdx).map(r=>r.text).join('');
+      if(!/보\s*기/.test(text))continue;
+      let props;try{props=JSON.parse(document.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx));}catch{continue;}if(!props.treatAsChar)continue;
+      // 엔진은 왼쪽 여백을 뺀 나머지 폭 안에서 가운데 맞춘다 — 좌우 여백을 0으로 두면 단 한가운데(정렬 값은 소문자 'center').
+      // 〈보기〉 상자 문단 줄 간격 120%(11-01 사용자: 〈보기〉와 선지 사이를 30% 더 가깝게 — 160%에서 17.4px → 12.1px 실측).
+      // 표를 글자처럼 둔 문단은 줄 간격만큼 표 아래가 벌어진다. 학교 양식에서만 부른다(수능 틀은 원본 PDF 간격 그대로).
+      document.applyParaFormat(c.secIdx,c.paraIdx,J({alignment:'center',marginLeft:0,marginRight:0,indent:0,lineSpacing:120}));count++;
+    }
+  }
+  if(count)document.reflowLinesegs();
+  return count;
+}
+// front(10-30 학교 양식): 둘레 흐르기(Square)를 그대로 두지 않고 늘 글 앞 + 문단 폭 줄이기로 — 엔진이 2단 오른쪽 단에서 둘레 흐르기를 잘못 계산한다(23번 실측).
+export function settleFloatingPictures(document,{front=false}={}){
   const GAP=4,pics=[];
   for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
     if(!['image','table'].includes(c.type)||c.cellPath?.length)continue;
@@ -379,7 +477,7 @@ export function settleFloatingPictures(document){
   for(const p of pics){
     const right=p.props.horzAlign!=='Left';let b=box(p);if(!b)continue;
     const own=lines(p,p.para),overlaps=own.some(l=>l.y<b.y+b.h&&l.y+l.h>b.y&&(right?l.x1>b.x+1:l.x0<b.x+b.w-1));
-    if(!overlaps&&bottomOf(own)+GAP>=b.y+b.h)continue;
+    if(!front&&!overlaps&&bottomOf(own)+GAP>=b.y+b.h)continue;
     const room=b.w+((right?p.props.outerMarginLeft:p.props.outerMarginRight)||0)/75+GAP+2;
     const narrow=para=>{const props=JSON.parse(document.getParaPropertiesAt(p.sec,para));document.applyParaFormat(p.sec,para,JSON.stringify(right?{marginRight:Math.round(((props.marginRight||0)+room)*150)}:{marginLeft:Math.round(((props.marginLeft||0)+room)*150)}));};
     setProps(p,{textWrap:'InFrontOfText',horzRelTo:'Column'});

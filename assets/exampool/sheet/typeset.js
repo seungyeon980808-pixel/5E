@@ -4,27 +4,37 @@ import {attachTypesetSettings} from './typeset-settings.js';
 import {marksEnabled,setMarksEnabled} from '../../../js/rhwp-exam-marks.js?v=1.7.0-four-session-integration';
 import {fitQuestionLines,fitQuestionParagraph} from './line-fit.js';
 import {readSchoolForm as readSchoolDocument,formStructure} from './standard-from-hwp.js';
-import {KICE_STANDARD,standardForPaper} from './typeset-standard.js';
+import {KICE_STANDARD,standardForPaper,resolveStandard} from './typeset-standard.js';
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1.7.0-four-session-integration';
-import {buildExamDocument,assembleExamChecked} from './exam-build.js';
+import {buildExamDocument,assembleExamChecked,assembleFormChecked,fillFormPageCount,clearFormBody} from './exam-build.js';
 import {examPage,examPlan} from './exam-layout.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '../../../js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
-import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
-import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
+import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,spaceEquationOverlaps,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
+import {QUESTION_PAGE_MODE,frameProfile,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
 import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
-import {assertNativeLayout} from './native-layout-check.js?v=1014-compact-panel';
+import {assertNativeLayout,nativeLayoutIssues} from './native-layout-check.js?v=1014-compact-panel';
 import {attachTypesetView} from './typeset-view.js';
 import {createNativeTextMeasurer} from './native-text-measure.js';
 import {compactSavedBogi} from './compact-bogi.js';
 import {nativeRuns,planPatches,applyPatches,layoutKey} from './live-patch.js';
 
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
+// 한 화면에 엔진 SVG를 여럿 둘 때 안의 이름(id·clipPath)이 겹치지 않게(10-24 같은 문제).
+let uniqueSeq=0;
+const uniqueSvg=svg=>{const pre='u'+(++uniqueSeq)+'-';return svg.replace(/\bid="([^"]+)"/g,(m,id)=>`id="${pre}${id}"`).replace(/url\(#([^)]+)\)/g,(m,id)=>`url(#${pre}${id})`).replace(/(xlink:href|href)="#([^"]+)"/g,(m,attr,id)=>`${attr}="#${pre}${id}"`);};
+// 글자 폭 재기: 학교 양식 틀(source.kind 'hwp', 10-29)은 양식 글꼴·장평·자간으로, 그 밖(수능 틀·복제 틀)은 예전 그대로.
+const measurers=new Map();
+function measurerFor(Document,standard){
+  const school=standard?.source?.kind==='hwp'&&standard.text?.font,key=school?`${standard.text.font}|${standard.text.ratio}|${standard.text.spacing}`:'';
+  if(!measurers.has(key))measurers.set(key,school?createNativeTextMeasurer(Document,{font:standard.text.font,factor:(standard.text.ratio+standard.text.spacing)/100}):createNativeTextMeasurer(Document));
+  return measurers.get(key);
+}
 // 틀 보기용 빈 그림 자리: 옅은 점선 상자에 이름. PNG라야 한글 엔진이 받는다.
 const ghostFigures=new Map();
 function ghostFigure(width,height,label){
@@ -64,11 +74,17 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     }catch(e){host.dataset.lineFit='error:'+String(e?.message||e).slice(0,80);}finally{requestAnimationFrame(()=>{lineFitting=false;});}},300);}
   // 문항마다 그 문항의 조판 기준(문항 → 시험지 → 수능 틀)으로 조판한다(10-22 조판 기준).
   const std=value=>standardOf(value)||KICE_STANDARD,stdKey=value=>JSON.stringify(std(value));
+  // 등록한 학교 양식의 틀(양식을 등록할 때 같이 저장한 조판 기준).
+  // form.standard(11-01): 등록 창 「조판 확정」 견본은 아직 저장하지 않은 초안 틀로 묶는다.
+  const formStandardOf=form=>{const s=form?.standard||form?.standardId&&standardsOf().find(x=>x.id===form.standardId);return s?resolveStandard(s):null;};
   // 지금 조판에 쓴 기준(열 때 값). 기준 값을 바꾸면 내용이 같아도 다시 만든다.
   let qStd='';
   let userDirty=false,patchDirty=false;
   let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,patching=false,updating=Promise.resolve(),measurer=null,changingProfile=Promise.resolve();
-  const message=(text,error=false)=>{status.textContent=text;status.title=text;status.dataset.error=String(error);};// 카드 미리보기 칸에서는 한 줄로 줄이므로 전체 글은 풍선으로
+  const message=(text,error=false)=>{status.textContent=text;status.title=text;status.dataset.error=String(error);
+    // 구조 잠금에 막혔을 때(11-01 사용자: 그림이 왜 안 옮겨지나) 안내로 끝내지 않고 그 자리에서 잠금을 풀게 한다. 고른 그림은 그대로라 바로 끌면 된다.
+    if(error&&String(text).startsWith('구조 잠금 중')){const b=Object.assign(host.ownerDocument.createElement('button'),{type:'button',className:'ts-unlock',textContent:'잠금 풀고 옮기기'});
+      b.onclick=e=>{e.stopPropagation();if(bridge?.tableLayoutLocked)host.parentElement.querySelector('#typeset-lock')?.click();bridge?.input?.textarea?.focus({preventScroll:true});};status.append(' ',b);}};// 카드 미리보기 칸에서는 한 줄로 줄이므로 전체 글은 풍선으로
   const document=()=>bridge.wasm.borrowDocumentHandle();
   // 엔진이 화면용 글자 폭(Canvas2D 보조 측정)을 켜 둔 동안 SVG를 그리면 「Canvas2D supplemental metrics are active; select portable metrics」로
   // 거부해 카드에 「미리보기를 그리지 못했습니다」가 떴다(10-25). SVG는 엔진 다리의 portable 글자 폭으로 그린다.
@@ -94,7 +110,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(getComputedStyle(host).position==='static')host.style.position='relative';host.append(c);return c;}catch{return null;}}
   const thaw=c=>{if(!c)return;setTimeout(()=>requestAnimationFrame(()=>{c.style.opacity='0';setTimeout(()=>c.remove(),160);}),160);};
   const loadKeepingFocus=async(bytes,name)=>{const snap=freeze();try{return await keepingFocus(()=>bridge.load(bytes,name));}finally{thaw(snap);}};
-  const profile=()=>({paper:paper.value,columns:Number(columns.value)});
+  // 학교 양식 틀이면 양식 여백·단 간격(frame)을 함께 — 문항마다 다르므로 그 문항(value)의 틀로.
+  const profileFor=value=>({paper:paper.value,columns:Number(columns.value),...frameProfile(value&&std(value))}),profile=()=>profileFor(q);
   const metricsOutput=host.parentElement.querySelector('#typeset-metrics');
   const guideLayer=window.document.createElement('div');guideLayer.className='question-guide-layer';guideLayer.setAttribute('aria-hidden','true');
   const guide=window.document.createElement('div');guide.className='question-height-guide';guide.hidden=true;
@@ -132,21 +149,25 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
   // 저장된 조판을 열 때도 그림·표의 주인을 알아야 한다. 그림을 실제로 읽지 않는 가벼운 계획으로 순서만 얻는다.
   const BLANK='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};}
+  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profileFor(value),1200,std(value)).width,{...SKELETON,standard:std(value)});return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};}
   // standard: 조판 설정 미리보기(10-23)처럼 저장하지 않은 초안 틀로 그릴 때.
-  async function generate(value,prof=profile(),{quiet=false,standard=null}={}){
+  async function generate(value,prof=profileFor(value),{quiet=false,standard=null}={}){
     // 용지 맞춤: B4 문항은 A4 기준 간격을 단 폭 비율만큼 되돌린다(standardForPaper).
     const stdv=standardForPaper(standard||std(value),prof.paper);
     const Document=document().constructor,d=Document.createEmpty();let bytes,owners;
     try{d.createBlankDocument();const config=questionPageProfile(prof,1200,stdv);d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
-      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON,standard:stdv});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
+      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:measurerFor(Document,stdv),...SKELETON,standard:stdv});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments,places:plan.placeSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:stdv}),plan.equations);
       const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();if(plan.cellFloats?.length)applyCellFloatingPictures(styled,plan.cellFloats);centerCellPictures(styled);if(stdv.parts?.labelSpace==='fixed')fixedLabelSpaces(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent,hangPx:plan.bodyIndent});
+        if(stdv.source?.kind==='hwp')centerBogiBoxes(styled);
         // 어울림은 내어쓰기 뒤에 건다. 문단 모양을 나중에 바꾸면 한글 엔진이 그림 옆 줄 폭을 잘못 잡는다.
-        if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled);}
+        if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled,{front:stdv.source?.kind==='hwp'});}
         // 윗줄부터 자간 맞춤(조판 기준 fit, 10-22 C-5): 내어쓰기·어울림 뒤, 쪽 높이 맞춤 전. 그림 옆 글(어울림)이 있는 문항은 건너뛴다.
         {const S=stdv;if(S.fit?.on&&!plan.floats.length&&!plan.floatTable)fitQuestionLines(styled,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing});}
+        if(stdv.source?.kind==='hwp'){spaceEquationOverlaps(styled);growCellsToContent(styled);}
         fitQuestionPage(styled,prof);verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
+      // 학교 틀(10-31): 칸 수식 줄 다시 쓰기(applyCellEquationLines)가 위 띄우기를 덮어써 수식이 아랫줄과 다시 겹쳤다(set11 9번) — 다시 열어 한 번 더 띄운다.
+      if(stdv.source?.kind==='hwp'){const re=new Document(bytes);try{if(spaceEquationOverlaps(re)){growCellsToContent(re);fitQuestionPage(re,prof);bytes=exportLayoutHwpx(re,XLSX.CFB);}}finally{re.free();}}
       if(plan.warnings.length&&!quiet)message(plan.warnings.join(' '));
     }finally{d.free();}
     return {bytes,owners};
@@ -163,13 +184,13 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         // Retain the user's approved native formatting while moving the same
         // column width onto the new question paper; never rebuild it as HTML.
         const Document=document().constructor,old=new Document(bytes);
-        try{bytes=resizeQuestionDocument(old,profile(),XLSX.CFB);}finally{old.free();}
+        try{bytes=resizeQuestionDocument(old,profileFor(next),XLSX.CFB);}finally{old.free();}
       }
       if(saved&&saved.layoutVersion<LAYOUT_VERSION){
         const Document=document().constructor,old=new Document(bytes);let compact;
         // 옛 조판(E2, 10-25): 〈보기〉 여백 정리에 더해 〈보기〉 내어쓰기 기본값을 건다 — 새 조판과 같은 함수, 내용·사용자 서식은 그대로.
         try{const tidy=new Document(await compactSavedBogi(old,next,JSZip,XLSX.CFB));try{compact=new Document(await applyReferenceBogiIndent(tidy,JSZip));}finally{tidy.free();}
-          compact.reflowLinesegs();fitQuestionPage(compact,profile());assertNativeLayout(compact);
+          compact.reflowLinesegs();fitQuestionPage(compact,profileFor(next));assertNativeLayout(compact);
           if(normalized(parse(old.getTextFileText())).replace(/\s/g,'')!==normalized(parse(compact.getTextFileText())).replace(/\s/g,''))throw Error('보기 여백을 정리하면서 내용이 달라졌습니다.');
           bytes=exportLayoutHwpx(compact,XLSX.CFB);
         }finally{compact?.free();old.free();}
@@ -212,7 +233,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(contentKey(q)===contentKey(value))return true;
     if(layoutKey(q)!==layoutKey(value)||skeletonKey(q)!==skeletonKey(value))return false;
     const seq=opening,next=structuredClone(value),Document=document().constructor;
-    const plan=await buildQuestionHtml(next,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile(),1200,std(next)).width,{native:true,measureText:measurer||=createNativeTextMeasurer(Document),...SKELETON,standard:std(next)});
+    const plan=await buildQuestionHtml(next,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profileFor(next),1200,std(next)).width,{native:true,measureText:measurerFor(Document,std(next)),...SKELETON,standard:std(next)});
     if(seq!==opening||!ready||loading)return false;
     if(JSON.stringify([plan.imageOwners,plan.tableOwners,plan.tables])!==JSON.stringify([owners.images,owners.tables,owners.shapes]))return false;
     const patches=planPatches(textMap.segments,plan.textSegments,nativeRuns(document()));
@@ -285,12 +306,36 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(order)examSet={...examSet,items:[...order]};
     await ensure();const Document=document().constructor,template=form?await openForm(form.bytes,password):null;
     // 단 폭이 섞인 시험지(빈 시험지): 배치·점검 화면과 같게, 시험지 단 폭과 다른 문항만 그 단 폭으로 새로 조판해 묶는다.
-    let rewidth=null;
+    let rewidth=null,structure=null;
     if(!template){const plan=examPlan(data,examSet);
       if(plan.mixed){rewidth=new Map();
         for(const x of plan.items)if((x.q.typeset?.profile?.paper||x.q.paper||'B4')!==plan.page.paper){await pause();const e=await sheetEntry(Document,x.q,plan.page.paper);rewidth.set(x.id,{bytes:e.bytes,height:Number.isFinite(e.height)?e.height:60});}}}
-    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,template,bodyStart:form?.structure?.firstQuestion??-1,rewidth});
-    try{if(order)renumberDocument(exam);return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
+    else{
+      // 학교 양식(10-29): 양식 구조는 지금 코드로 다시 읽는다(예전에 등록한 양식도 문단 번호 문항·꼬리를 알아보게).
+      // 이 양식 틀로 조판하지 않은 문항(수능 틀 문항, 기출 등)은 양식 틀로 새로 조판해 넣는다 — 문항에 저장한 조판은 그대로 둔다.
+      try{structure=formStructure(template);}catch{structure=form.structure||{};}
+      const fstd=formStandardOf(form);
+      if(fstd){rewidth=new Map();
+        for(const x of examPlan(data,examSet).items){if(std(x.q).id===fstd.id&&x.q.typeset?.verified&&x.q.typeset?.profile?.paper===fstd.paper.size)continue;
+          await pause();let e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);
+          // 보낼 때는 저장 조판과 같은 기준으로 검사한다(10-30): 학교 틀로 새로 조판한 문항이 넘치면 그 문항을 학교 틀로 열어 고치게 한다.
+          // 그 전에 스스로 고쳐 본다(11-01 밤샘 「조판 스트레스 0」): 좁은 단(B5·3단·1단 학습지)에서 표 칸 글이 넘치면 표를 단 폭 가득 넓혀 다시 조판한다.
+          const layoutError=bytes=>{const d=new Document(bytes);try{assertNativeLayout(d,{lenient:true});return null;}catch(err){return err;}finally{d.free();}};
+          if(!e.saved){let err=layoutError(e.bytes);
+            // 1) 표를 단 폭 가득 2) 거기에 표 칸 안 여백을 반으로 — 차례로 해 보고 처음 통과한 조판을 쓴다.
+            // 상자·〈보기〉 좌우 안 여백도 반으로(긴 수식 뒤 「이다.」처럼 끊을 수 없는 줄이 칸 여백을 몇 px 넘는 경우).
+            if(err){const wide=structuredClone(x.q);for(const b of wide.blocks)if(b.kind==='table')b.size=100;const half=v=>Math.max(.3,(Number(v)||1)/2),g=fstd.gaps||{};
+              const tight={...structuredClone(fstd),parts:{...fstd.parts,cellPad:half(fstd.parts?.cellPad)},gaps:{...g,boxPadSide:half(g.boxPadSide),bogiPadLeft:half(g.bogiPadLeft),bogiPadRight:half(g.bogiPadRight)}};
+              for(const s of x.q.blocks.some(b=>b.kind==='table')?[fstd,tight]:[tight]){const e2=await sheetEntry(Document,wide,fstd.paper.size,s);if(!layoutError(e2.bytes)){e=e2;err=null;break;}}}
+            if(err){const failed=Error(`${x.q.number}번 문항이 학교 양식 단에서 ${err.message}`);failed.questionId=x.id;failed.frameId=fstd.id;throw failed;}}
+          rewidth.set(x.id,{bytes:e.bytes,height:Number.isFinite(e.height)?e.height:60});}}
+    }
+    // 학교 양식은 묶을 때마다 새로 연다(걸친 문항을 넘겨 다시 묶기). 처음 연 문서는 구조를 읽는 데만 쓴다.
+    template?.free();    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,openTemplate:form?()=>openForm(form.bytes,password):null,columns:structure?.columns||2,bodyStart:structure?.firstQuestion??form?.structure?.firstQuestion??-1,tailStart:structure?.tailStart??-1,rewidth,structure,keep:form?.keep||{},settle:d=>new Document(exportLayoutHwpx(d,XLSX.CFB))});
+    try{if(order)renumberDocument(exam);const bytes=exportLayoutHwpx(exam,XLSX.CFB);      // 학교 양식 최종 검사(10-31): 보낼 파일을 다시 열어 글 겹침·칸 넘침이 있으면 깨진 시험지를 내보내지 않는다(양식 머리 표처럼 쪽 너비인 양식 자체 표는 빼고).
+      if(form){const check=new Document(bytes);try{const head=structure?.firstQuestion??form.structure?.firstQuestion??0,issue=nativeLayoutIssues(check).find(i=>!/단 너비나 인쇄 영역/.test(i.reason)&&!(Number.isInteger(i.para)&&i.para<head)&&!i.withinBorder&&!i.graze);/*학교 양식 자체 머리 부분(배점·안내 상자 글)은 우리가 만든 글이 아니라 검사에서 뺀다(11-01 대왕중 원안지 양식).*/
+        if(issue)throw Error(`시험지 ${issue.page}쪽에서 ${issue.reason}${issue.text?` (「${issue.text}」)`:''}. 배치·점검 화면에서 그 쪽을 확인하세요.`);}finally{check.free();}}
+      return bytes;}finally{exam.free();}
   }
   // 인쇄·PDF: 묶은 시험지를 쪽마다 엔진 SVG로(화면 그림과 같음).
   async function examPagesSvg(bytes){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{const page=parse(d.getPageDef(0)),out=[];for(let i=0;i<d.pageCount();i++)out.push(svgOf(d,i));return {pages:out,widthMm:page.width/(7200/25.4),heightMm:page.height/(7200/25.4)};}finally{d.free();}}
@@ -305,15 +350,16 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
   // 쉬는 사이 쪽 전체를 떠났으면(alive가 false) 남은 일을 하지 않는다.
   const cancelled=()=>Object.assign(Error('쪽 전체 그리기를 멈췄습니다.'),{cancelled:true});
-  async function sheetEntry(Document,value,paperOverride=''){
-    const own={paper:paperOverride||value.paper||value.typeset?.profile?.paper||'B4',columns:2};
+  // standardOverride(10-29): 학교 양식 시험지처럼 문항의 틀과 다른 틀로 그릴 때.
+  async function sheetEntry(Document,value,paperOverride='',standardOverride=null){
+    const own={paper:paperOverride||value.paper||value.typeset?.profile?.paper||'B4',columns:2,...frameProfile(standardOverride||std(value))};
     if(!paperOverride&&ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value))
       return {bytes:exportLayoutHwpx(document(),XLSX.CFB),profile:profile(),height:questionPageMetrics(document(),profile()).usedHeightMm,saved:!dirty&&!!value.typeset?.verified&&await typesetMatches(value.typeset,value)};
     // 보기 전용이라 저장한 조판이 지금 문항과 맞는지만 가볍게 본다(문서를 미리 열어 검사하지 않음). 시험지 HWPX를 만들 때는 openApprovedQuestion으로 엄격히 검사한다.
     const t=value.typeset;
-    if(t?.verified&&t.layoutVersion===LAYOUT_VERSION&&t.pageMode===QUESTION_PAGE_MODE&&t.profile?.paper===own.paper&&await typesetMatches(t,value))return {bytes:fromBase64(t.bytes),profile:t.profile,height:t.metrics?.usedHeightMm,saved:true};
-    const key=contentKey(value)+'|'+own.paper,hit=fresh.get(value.id);
-    if(hit?.key!==key){const {bytes}=await generate(structuredClone(value),own,{quiet:true}),doc=new Document(bytes);
+    if((!standardOverride||std(value).id===standardOverride.id)&&t?.verified&&t.layoutVersion===LAYOUT_VERSION&&t.pageMode===QUESTION_PAGE_MODE&&t.profile?.paper===own.paper&&await typesetMatches(t,value))return {bytes:fromBase64(t.bytes),profile:t.profile,height:t.metrics?.usedHeightMm,saved:true};
+    const key=contentKey(value)+'|'+own.paper+(standardOverride?'|'+JSON.stringify(standardOverride):''),hit=fresh.get(value.id);
+    if(hit?.key!==key){const {bytes}=await generate(structuredClone(value),own,{quiet:true,standard:standardOverride}),doc=new Document(bytes);
       try{fresh.set(value.id,{key,bytes,height:questionPageMetrics(doc,own).usedHeightMm});}finally{doc.free();}}
     const entry=fresh.get(value.id);return {bytes:entry.bytes,profile:own,height:entry.height,saved:false};
   }
@@ -348,7 +394,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     }finally{d.free();}
   }
   const pageSheets=(...args)=>serial(()=>pageSheetsNow(...args));
-  async function pageSheetsNow(data,exam,focusId,{alive=()=>true}={}){
+  async function pageSheetsNow(data,exam,focusId,{alive=()=>true,form=null}={}){
     const step=async()=>{await pause();if(!alive())throw cancelled();};
     await ensure();const Document=document().constructor,ids=exam?.items?.length?exam.items:[focusId],items=[];
     for(const id of ids){const value=data.questions.find(x=>x.id===id);if(!value)continue;if(items.length)await step();const e=await sheetEntry(Document,value);
@@ -356,11 +402,24 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+after,after,breakBefore:!!exam?.breaks?.[id],saved:e.saved});}
     if(!items.length)throw Error('쪽에 놓을 문항이 없습니다.');
     // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 섞였으면 수능 형태 B4 2단.
-    const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}})));
+    let sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}})));
+    const rewidth=[],fstd=form&&formStandardOf(form);let built;
+    if(fstd){
+      // 학교 양식(10-29): 보낼 때(buildExam)와 같게 — 양식 틀로 조판하지 않은 문항은 양식 틀로 새로 조판해 양식 위에 묶는다.
+      for(const x of items){if(std(x.q).id===fstd.id&&x.saved&&x.profile?.paper===fstd.paper.size)continue;await step();const e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);Object.assign(x,{bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
+      const first=await openForm(form.bytes,'');let structure;try{structure=formStructure(first);}finally{first.free();}
+      sheet={...sheet,paper:fstd.paper.size,columns:structure.columns||2};
+      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settle:d=>new Document(exportLayoutHwpx(d,XLSX.CFB))});
+      try{fillFormPageCount(b.document);}catch{}
+      // 양식 위에 넣은 직후의 문서는 엔진이 머리 표·〈보기〉 자리를 옛 위치로 그린다(10-29 실측: 2번이 제목 표와 겹침). 저장한 모양으로 다시 열어 그린다 — 문단 번호는 같다.
+      let again;try{again=new Document(exportLayoutHwpx(b.document,XLSX.CFB));}finally{b.document.free();}
+      built={...b,document:again,pages:[]};
+    }else{
     // 단 폭이 다른 용지로 조판한 문항(10-23 지적 2-3: B4 문항이 A4 단에서 넘쳐 겹침)은 화면에서는 시험지 단 폭으로 새로 조판해 놓는다.
-    const rewidth=[];
     for(const x of items)if(x.profile?.paper!==sheet.paper){await step();const e=await sheetEntry(Document,x.q,sheet.paper);Object.assign(x,{bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
-    const {document:target,ranges,pages,moved,tall}=await assembleExamChecked(Document,{items,sheet,open:item=>new Document(item.bytes),between:step});
+    built=await assembleExamChecked(Document,{items,sheet,open:item=>new Document(item.bytes),between:step});
+    }
+    const {document:target,ranges,pages,moved,tall}=built;
     try{
       const p=parse(target.getPageDef(0)),width=p.width/75,height=p.height/75;
       // 쪽마다 문항별 차지한 자리(시험지 전체 보기에서 다른 문항을 두 번 눌러 그 카드로 가기, 10-22). focus = 지금 문항.
@@ -388,7 +447,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       // 문항 하나가 여러 상자(단·쪽)로 나뉘면 첫 상자에만 이름표, 마지막 상자에만 여백 막대를 단다.
       const all=out.flatMap(p=>p.boxes);for(const id of new Set(all.map(b=>b.id))){all.filter(b=>b.id===id).forEach((b,i,mine)=>{b.first=i===0;b.last=i===mine.length-1;});}
       const oversized=[...new Set([...pages.filter(p=>p.oversized).flatMap(p=>p.columns.flat()),...tall])];
-      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved,oversized,rewidth,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:''};
+      return {pages:out,paper:sheet.paper,columns:sheet.columns,moved,oversized,rewidth,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:'',form:!!fstd};
     }finally{target.free();}
   }
   // 학교 양식(한글 파일)을 엔진으로 열어 조판 기준 값을 읽는다(10-22 C-6). 열린 문항 조판에는 손대지 않는다.
@@ -396,14 +455,56 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function openForm(bytes,password){await ensure();const Document=document().constructor,data=new Uint8Array(bytes);
     try{return password?Document.openWithPassword(data,password):new Document(data);}
     catch(e){const text=String(e?.message||e);if(/비밀번호|암호|password/i.test(text)){const error=new Error(password?'암호가 맞지 않습니다. 다시 입력하세요.':'암호가 걸린 한글 파일입니다. 암호를 입력하세요.');error.needsPassword=true;throw error;}throw e;}}
-  async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);try{return {...readSchoolDocument(d,{fileName}),structure:formStructure(d)};}finally{d.free();}}
+  async function readSchoolForm(bytes,fileName,password){const d=await openForm(bytes,password);let read,structure,sample=null;
+    try{read=readSchoolDocument(d,{fileName});structure=formStructure(d);try{sample=questionSample(d,structure);}catch{}}finally{d.free();}
+    let empty=null;try{empty=await emptyForm(bytes,password,structure);}catch{}
+    return {...read,structure,sample,empty};}
+  // 양식 등록 창 견본(10-29 시안 ①): 원본 첫 문항이 그려진 자리만 잘라 낸 쪽 그림.
+  // 견본은 그림 없는 짧은 문항(한 쪽 한 단 안, 다른 문단과 겹치지 않음) 가운데 첫 것 — 없으면 첫 문항.
+  function questionSample(d,structure){
+    const starts=structure.questionParas||[],end=structure.tailStart>0?structure.tailStart:d.getParagraphCount(0),pd=parse(d.getPageDef(0)),pageH=pd.height/75;
+    const layouts=Array.from({length:d.pageCount()},(_,page)=>({page,marks:[...(parse(d.getPageTextLayout(page)).runs||[]),...(parse(d.getPageControlLayout(page)).controls||[])].filter(r=>!(r.cellPath||[]).length&&[r.x,r.y,r.w,r.h].every(Number.isFinite))}));
+    const region=(a,b)=>{const hit=layouts.map(l=>({page:l.page,mine:l.marks.filter(r=>r.paraIdx>=a&&r.paraIdx<b),others:l.marks.filter(r=>!(r.paraIdx>=a&&r.paraIdx<b))})).filter(l=>l.mine.length);if(hit.length!==1)return null;
+      // 한글 「문단 번호」(1.)는 글 줄로 오지 않는다 — 왼쪽을 번호 자리(약 5mm)만큼 더 연다.
+      const {page,mine,others}=hit[0],x=Math.min(...mine.map(r=>r.x))-22,y=Math.min(...mine.map(r=>r.y))-4,w=Math.max(...mine.map(r=>r.x+r.w))-x+4,h=Math.max(...mine.map(r=>r.y+r.h))-y+4;
+      const clash=others.some(r=>r.x<x+w&&r.x+r.w>x&&r.y<y+h&&r.y+r.h>y&&String(r.text??'x').trim());
+      return {page,x,y,w,h,image:mine.some(r=>r.type==='image'),clash};};
+    let pick=null;
+    for(let i=0;i<starts.length&&!pick;i++){const r=region(starts[i],starts[i+1]??end);if(r&&!r.image&&!r.clash&&r.h<pageH*.4)pick=r;}
+    pick||=starts.length?region(starts[0],starts[1]??end):null;if(!pick)return null;
+    {const {page,x,y,w,h}=pick;
+      const svg=uniqueSvg(svgOf(d,page)).replace(/<svg\b([^>]*)>/,(m,attrs)=>`<svg${attrs.replace(/\s(width|height|viewBox|style|preserveAspectRatio)="[^"]*"/g,'')} viewBox="${x} ${y} ${w} ${h}" preserveAspectRatio="xMinYMin meet" style="display:block;width:100%;height:auto;background:#fff">`);
+      return {svg,width:w,height:h};
+    }
+  }
+  // 빈 틀(10-29 시안 ①): 예시 문항을 비운 양식을 쪽마다 그리고, 「남길 것」을 끄면 가릴 자리·문항 자리(쪽 비율)를 같이 준다.
+  async function emptyForm(bytes,password,structure){
+    const d=await openForm(bytes,password);
+    try{
+      clearFormBody(d,structure.firstQuestion,structure.tailStart);
+      const again=new (d.constructor)(exportLayoutHwpx(d,XLSX.CFB));
+      try{
+        const pd=parse(again.getPageDef(0)),W=pd.width/75,H=pd.height/75,rel=r=>({x:r.x/W,y:r.y/H,w:r.w/W,h:r.h/H});
+        const parts=(structure.parts||[]),ctl=(parse(again.getPageControlLayout(0)).controls||[]).filter(c=>!(c.cellPath||[]).length&&c.type==='table');
+        const mask={head:[],score:[]};for(const part of parts){const c=ctl.find(c=>c.paraIdx===part.para);if(c)(part.kind==='head'?mask.head:mask.score).push(rel(c));}
+        const footTop=(pd.height-pd.marginBottom)/75,cols=structure.columns||1,left=pd.marginLeft/75,right=(pd.width-pd.marginRight)/75,gap=8,colW=(right-left-gap*(cols-1))/cols;
+        const pages=[];
+        for(let i=0;i<again.pageCount();i++){
+          const top=i===0?Math.max(pd.marginTop/75,...ctl.map(c=>c.y+c.h))+4:pd.marginTop/75;
+          const slots=Array.from({length:cols},(_,k)=>rel({x:left+k*(colW+gap),y:top,w:colW,h:footTop-top-4}));
+          pages.push({svg:uniqueSvg(svgOf(again,i)),slots,foot:rel({x:0,y:footTop,w:W,h:H-footTop})});
+        }
+        return {pages,width:W,height:H,mask};
+      }finally{again.free();}
+    }finally{d.free();}
+  }
   // 화면 없이 조판 만들기(10-23 A2): 저장한 조판이 없거나 낡은 문항을 새로 조판해 승인된 조판으로 만든다(시험지로 보낼 때).
   // 지금 열린 문항이면 열린 한글 창 모양(교사가 다듬은 것)을 그대로 저장한다.
   async function autoTypeset(value){
     await ensure();
     if(skeletonKey(value))throw Error(`${value.number}번 문항에 비어 있는 칸이 있어 조판을 만들 수 없습니다. 채우거나 구성에서 지우세요.`);
     if(ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value)){const s=await snapshot()||await snapshot();if(s){dirty=false;userDirty=false;patchDirty=false;return s;}}
-    const own={paper:value.paper||value.typeset?.profile?.paper||'B4',columns:2},Document=document().constructor;
+    const own={paper:value.paper||value.typeset?.profile?.paper||'B4',columns:2,...frameProfile(std(value))},Document=document().constructor;
     const {bytes:raw}=await generate(structuredClone(value),own,{quiet:true}),d=new Document(raw);
     try{fitQuestionPage(d,own);assertNativeLayout(d);const bytes=exportLayoutHwpx(d,XLSX.CFB),re=new Document(bytes);
       try{assertNativeLayout(re);validateQuestionPage(re,own);
@@ -414,7 +515,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   // 조판 설정 팝업의 미리보기(10-23 B, 시안 typeset-settings-1023-v3): 초안 틀로 이 문항을 새로 조판해 깨끗한 쪽 그림으로.
   // 편집 창과 따로 그린다(편집용 칸 테두리 없음). 겹쳐 그리기용으로 요소 자리·글 줄·개체 자리(쪽 px)도 준다.
   async function previewSheet(value,standard){
-    await ensure();const own={paper:value.paper||value.typeset?.profile?.paper||'B4',columns:2},Document=document().constructor;
+    await ensure();const own={paper:value.paper||value.typeset?.profile?.paper||'B4',columns:2,...frameProfile(standard||std(value))},Document=document().constructor;
     const {bytes,owners:o}=await generate(structuredClone(value),own,{quiet:true,standard}),raw=new Document(bytes);
     // 문항 쪽 높이를 내용에 맞춘 뒤(한 쪽에 다 들어가게) 다시 열어 그린다 — 자동 조판과 같은 순서.
     let d;try{fitQuestionPage(raw,own);d=new Document(exportLayoutHwpx(raw,XLSX.CFB));}finally{raw.free();}
@@ -423,5 +524,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         runs:parse(d.getPageTextLayout(0)).runs,controls:parse(d.getPageControlLayout(0)).controls};
     }finally{d.free();}
   }
-  return {questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  // 학교 양식 시험지에서 양식 틀로 새로 조판할 문항(10-30): 그 문항은 보내기 전에 제 틀로 조판해 둘 필요가 없다.
+  const retypesForForm=(value,form)=>{const f=formStandardOf(form);return !!f&&!(std(value).id===f.id&&value.typeset?.verified&&value.typeset?.profile?.paper===f.paper.size);};
+  return {retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

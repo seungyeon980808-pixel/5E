@@ -40,7 +40,8 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
     const out=Array.from(d.exportHwpx());d.free();return out;});
   await sheet.setInputFiles('.ef-back input[type="file"]',{name:'미래과학고 중간고사.hwpx',mimeType:'application/octet-stream',buffer:Buffer.from(form)});
   await sheet.waitForSelector('.ef-reg [data-reg-done]');
-  assert.match(await sheet.locator('.ef-readout').textContent(),/제목 표 1개/);
+  // 10-29 시안 ①(학교 양식 넣기 · 빈 틀 확인): 머리 표를 읽었으면 「남길 것 · 머리 표」가 켜진 채 고를 수 있다(예전 「읽은 것」 표의 「제목 표 1개」).
+  assert.equal(await sheet.locator('[data-reg-keep="head"]').evaluate(n=>n.checked&&!n.disabled),true,'the title table was read and is kept');
   await sheet.fill('[data-reg-name]','미래과학고 중간고사');
   await sheet.click('[data-reg-done]');await sheet.waitForFunction(()=>!document.querySelector('.ef-back')&&/이 시험지에 썼습니다/.test(document.querySelector('#status').textContent));
   assert.equal((await sheet.locator('#examd-view .ef-pill').textContent()).trim(),'틀 · 미래과학고 중간고사','the exam now uses the new form');

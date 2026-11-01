@@ -22,7 +22,9 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.click('[data-new-frame="basic"]');assert.equal(await sheet.inputValue('[data-new-goal="total"]'),'100','기본 틀 기본 총점');
   await sheet.click('[data-new-make]');await sheet.waitForSelector('#examd-view:not([hidden]) .ep-s2');
   assert.deepEqual(await sheet.locator('.ef-steps button').evaluateAll(b=>b.map(x=>x.firstChild.textContent)),['문항 고르기','배치·점검'],'탭 둘');
-  await sheet.click('[data-ep-kind="mine"]');
+  // 11-01 사용자 결정: 보관함에는 내 문항만 — 「전체 · 내 문항 · 기출」 칸이 없고, 기출은 「기출문제 열기」로 변형하러 간다.
+  assert.equal(await sheet.locator('[data-ep-kind]').count(),0,'no 기출 tab in the exam pool');
+  assert.equal(await sheet.locator('[data-ep-gopast]').isVisible(),true,'the pool links to 기출문제');
   const card=n=>sheet.locator(`.ep-card[data-ep-key="q:${qs[n].id}"]`);
   await card(0).waitFor();
   // 문항 전체 카드: 미리보기가 잘리지 않고 문항 높이만큼(고정 높이 아님).

@@ -9,8 +9,12 @@ const parse=v=>typeof v==='string'?JSON.parse(v):v;
 // The exam profile determines the body width. The editable document itself
 // has one column and a content-sized physical page, independently of A4/B4/A3.
 // standard: 조판 기준(여백·단 간격) — 학교 기준이면 그 단 폭으로 문항을 조판한다(10-22 S4). 없으면 수능 틀.
+// 학교 양식 틀(10-29): 단 폭은 양식의 여백·단 간격으로 잰다. profile.frame에 담아 저장한 조판·검사·묶기가 같은 폭을 쓴다. 수능 틀·복제 틀은 빈 값(예전 그대로).
+// 학교 양식은 양식의 단 수로 문항 폭을 잡는다(11-01 밤샘 가짜 양식 f09: 3단 양식에 2단 폭으로 조판해 문항이 옆 단까지 넘었다).
+export const frameProfile=standard=>standard?.source?.kind==='hwp'&&standard.paper?{frame:{margin:{...standard.paper.margin},columnGap:standard.paper.columnGap},...(standard.paper.columns>=1?{columns:standard.paper.columns}:{})}:{};
+const frameStandard=profile=>profile?.frame?{id:'frame',name:'학교 양식',paper:{size:profile.paper,columns:profile.columns,margin:profile.frame.margin,columnGap:profile.frame.columnGap}}:undefined;
 export function questionPageProfile(profile={paper:'A4',columns:2},heightMm=1200,standard){
-  const exam=pageProfile(profile,standard),p=exam.page;
+  const exam=pageProfile(profile,standard||frameStandard(profile)),p=exam.page;
   const body=Math.floor((p.width-p.marginLeft-p.marginRight-exam.spacing*(profile.columns-1))/profile.columns);
   return {page:{...p,width:body+2*PAD,height:Math.round(heightMm*HU),marginLeft:PAD,marginRight:PAD,marginTop:PAD,marginBottom:PAD},
     bodyWidth:body,targetHeight:p.height-p.marginTop-p.marginBottom,width:exam.width,spacing:0};

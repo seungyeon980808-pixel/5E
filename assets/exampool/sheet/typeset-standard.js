@@ -37,7 +37,7 @@ function merge(base, over) {
 }
 
 const RANGE = {
-  'paper.columns': [1, 2], 'paper.columnGap': [0, 30], 'paper.margin.top': [5, 40], 'paper.margin.bottom': [5, 40], 'paper.margin.left': [5, 40], 'paper.margin.right': [5, 40],
+  'paper.columns': [1, 4], 'paper.columnGap': [0, 30], 'paper.margin.top': [5, 40], 'paper.margin.bottom': [5, 40], 'paper.margin.left': [5, 40], 'paper.margin.right': [5, 40],
   'text.size': [6, 20], 'text.ratio': [50, 200], 'text.spacing': [-50, 50], 'text.lineSpacing': [80, 300],
   'gaps.text': [0, 20], 'gaps.material': [0, 20], 'gaps.bogi': [0, 20], 'gaps.ask': [0, 20], 'gaps.choices': [0, 20], 'gaps.bogiPadBottom': [0, 20], 'gaps.bogiPadSide': [0, 20], 'gaps.bogiPadLeft': [0, 20], 'gaps.bogiPadRight': [0, 20], 'gaps.bogiPadTop': [0, 20], 'gaps.after': [0, 20], 'gaps.boxPadSide': [0, 20], 'gaps.boxPadTop': [0, 20], 'gaps.boxPadBottom': [0, 20],
   'parts.bogiTitleWidth': [5, 40], 'parts.bogiLineSpacing': [80, 300], 'parts.tableText': [6, 20], 'parts.tableLineSpacing': [80, 300], 'parts.cellPad': [0, 5], 'parts.rule': [0.05, 1], 'parts.bogiTitlePad': [0, 5], 'parts.bogiTitleRow': [0.5, 10],
@@ -56,7 +56,7 @@ export function resolveStandard(standard) {
 export function validateStandard(s) {
   if (!s || typeof s !== 'object') throw Error('조판 기준 형식이 아닙니다.');
   if (!String(s.name || '').trim()) throw Error('조판 기준 이름을 적어 주세요.');
-  if (!['A4', 'B4', 'A3'].includes(s.paper?.size)) throw Error('용지는 A4·B4·A3 가운데 하나여야 합니다.');
+  if (!['A4', 'B4', 'A3', 'B5', 'A5', 'Letter', 'Legal', '8절', '16절'].includes(s.paper?.size)) throw Error('용지는 A4·B4·A3·B5·A5·레터·리걸·8절·16절 가운데 하나여야 합니다.');
   for (const [path, [lo, hi]] of Object.entries(RANGE)) {
     const v = get(s, path);
     if (v === undefined) continue;
@@ -136,5 +136,7 @@ export function layoutValues(standard = KICE_STANDARD) {
     choiceTabs: (s.parts.choiceTabs || []).map(mmToPx), labelSpace: s.parts.labelSpace,
     tableLineSpacing: s.parts.tableLineSpacing, tableText: s.parts.tableText,
     numberIndent: mmToPx(s.parts.numberIndent ?? 3.06),
+    // 학교 양식에서 읽은 것(10-29): 있을 때만 담는다. 수능 틀은 칸이 없어 조판이 예전 그대로(굵은 번호·1pt 크게·[3점]).
+    ...Object.fromEntries(['numberBold', 'numberPlus', 'points'].filter(k => s.parts[k] !== undefined).map(k => [k, s.parts[k]])),
   };
 }

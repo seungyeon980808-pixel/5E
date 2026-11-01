@@ -22,14 +22,14 @@ export function exportLayoutHwpx(document,CFB){
     const header=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith('/FileHeader'))].content;
     const stream=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith(`/BodyText/Section${section}`))].content;
     let body=new Uint8Array(stream);if(header[36]&1){body.l=0;body=CFB.utils._inflateRaw(body);}
-    const data=new DataView(body.buffer,body.byteOffset,body.byteLength),segments=[];
+    const data=new DataView(body.buffer,body.byteOffset,body.byteLength),segments=[],levels=[];
     for(let pos=0;pos<body.length;){
       if(pos+4>body.length)throw Error('한글 문단 정보가 불완전합니다.');
       const record=data.getUint32(pos,true);pos+=4;let size=record>>>20;
       if(size===4095){size=data.getUint32(pos,true);pos+=4;}
       if(pos+size>body.length)throw Error('한글 문단 범위를 확인하세요.');
       const tag=record&1023;
-      if(tag===66)segments.push([]);
+      if(tag===66){segments.push([]);levels.push((record>>>10)&1023);}
       if(tag===69){if(size%36||!segments.length)throw Error('한글 줄 배치를 읽지 못했습니다.');
         // LINE_SEG: textpos·flags만 부호 없는 수, vertpos~horzsize 일곱 칸은 부호 있는 수(음수 줄 간격이 42억대 수로 저장됐음, 코드 점검 10-21 하).
         for(let i=0;i<size;i+=36)segments.at(-1).push(Array.from({length:9},(_,j)=>j===0||j===8?data.getUint32(pos+i+j*4,true):data.getInt32(pos+i+j*4,true)));
@@ -39,17 +39,24 @@ export function exportLayoutHwpx(document,CFB){
     const paragraphs=[],stack=[];
     for(const match of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
       if(match[0].startsWith('</')){const p=stack.pop();if(!p)throw Error('한글 문단 구조를 확인하세요.');p.end=match.index;}
-      else{const p={start:match.index,body:match.index+match[0].length};paragraphs.push(p);stack.push(p);}
+      else{const p={start:match.index,body:match.index+match[0].length,depth:stack.length};paragraphs.push(p);stack.push(p);}
     }
-    if(stack.length||paragraphs.length!==segments.length)throw Error('수식 문단의 저장 배치를 확인하지 못했습니다. 문항 조판을 다시 여세요.');
+    if(stack.length)throw Error('수식 문단의 저장 배치를 확인하지 못했습니다. 문항 조판을 다시 여세요.');
+    // 학교 양식에 한글 문단 수가 XML과 바이너리에서 다른 개체(11-01 대왕중 원안지 양식 — 글상자·머리말 등)가 있으면 짝을 맞출 수 없다 —
+    // 이 구역은 줄 배치 손질을 건너뛰고 엔진 배치 그대로 둔다(내보내기를 통째로 멈추지 않는다). 마지막 겹침 검사는 그대로 거친다.
+    // 그때는 맨 바깥 본문 문단끼리만 차례로 짝지어 손질한다(수가 같을 때) — 다 건너뛰면 어울림 그림 문단의 줄 배치가 빠져 그림 옆 글이 찌그러졌다(11-02 밤샘).
+    let pick=null;
+    if(paragraphs.length!==segments.length){const top=paragraphs.map((p,i)=>p.depth===0?i:-1).filter(i=>i>=0),btop=levels.map((l,i)=>l===0?i:-1).filter(i=>i>=0);
+      if(top.length!==btop.length)continue;pick=new Map(top.map((xi,k)=>[xi,btop[k]]));}
     const keys=['textpos','vertpos','vertsize','textheight','baseline','spacing','horzpos','horzsize','flags'];let output=xml;
     // Work backwards so nested paragraph edits retain their original offsets.
     for(let i=paragraphs.length-1;i>=0;i--){const p=paragraphs[i],body=xml.slice(p.body,p.end);
       // Only leaf equation/break paragraphs require the writer repair. Parent table
       // paragraphs retain their native cell placement and borders.
-      if((!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak')&&!floating.test(body))||body.includes('<hp:p ')||!segments[i].length)continue;
+      const si=pick?pick.get(i):i;if(si===undefined)continue;
+      if((!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak')&&!floating.test(body))||body.includes('<hp:p ')||!segments[si].length)continue;
       const clean=body.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
-      const lines='<hp:linesegarray>'+segments[i].map(values=>'<hp:lineseg '+keys.map((key,j)=>`${key}="${values[j]}"`).join(' ')+'/>').join('')+'</hp:linesegarray>';
+      const lines='<hp:linesegarray>'+segments[si].map(values=>'<hp:lineseg '+keys.map((key,j)=>`${key}="${values[j]}"`).join(' ')+'/>').join('')+'</hp:linesegarray>';
       output=output.slice(0,p.body)+clean+lines+output.slice(p.end);changed=true;
     }
     output=restackPictureLines(output);
