@@ -13,7 +13,7 @@ import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '../../../js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
-import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
+import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,anchorRaisedTables,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,frameProfile,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
@@ -338,10 +338,11 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
           rewidth.set(x.id,{bytes:widenForForm(Document,e.bytes,fstd),height:Number.isFinite(e.height)?e.height:60});}}
     }
     // 학교 양식은 묶을 때마다 새로 연다(걸친 문항을 넘겨 다시 묶기). 처음 연 문서는 구조를 읽는 데만 쓴다.
-    template?.free();    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,openTemplate:form?()=>openForm(form.bytes,password):null,columns:structure?.columns||2,bodyStart:structure?.firstQuestion??form?.structure?.firstQuestion??-1,tailStart:structure?.tailStart??-1,rewidth,structure,keep:form?.keep||{},settle:d=>new Document(exportLayoutHwpx(d,XLSX.CFB))});
+    template?.free();    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,openTemplate:form?()=>openForm(form.bytes,password):null,columns:structure?.columns||2,bodyStart:structure?.firstQuestion??form?.structure?.firstQuestion??-1,tailStart:structure?.tailStart??-1,rewidth,structure,keep:form?.keep||{},settle:d=>new Document(anchorRaisedTables(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document))});
     try{if(order)renumberDocument(exam);let bytes=exportLayoutHwpx(exam,XLSX.CFB);
       // 학교 양식: 묶을 때 엔진이 줄 배치를 다시 계산해 문항에서 끌어올린 수식 줄이 되돌아간다 — 보낼 파일에서 한 번 더(이 뒤 최종 검사도 이 파일로).
       if(form)bytes=await applyLiftTallEquations(bytes,JSZip,Document);
+      if(form)bytes=anchorRaisedTables(bytes,XLSX.CFB,Document);
       // 학교 양식 최종 검사(10-31): 보낼 파일을 다시 열어 글 겹침·칸 넘침이 있으면 깨진 시험지를 내보내지 않는다(양식 머리 표처럼 쪽 너비인 양식 자체 표는 빼고).
       if(form){const check=new Document(bytes);try{const head=structure?.firstQuestion??form.structure?.firstQuestion??0,issue=nativeLayoutIssues(check).find(i=>!/단 너비나 인쇄 영역/.test(i.reason)&&!(Number.isInteger(i.para)&&i.para<head)&&!i.withinBorder&&!i.graze);/*학교 양식 자체 머리 부분(배점·안내 상자 글)은 우리가 만든 글이 아니라 검사에서 뺀다(11-01 대왕중 원안지 양식).*/
         if(issue)throw Error(`시험지 ${issue.page}쪽에서 ${issue.reason}${issue.text?` (「${issue.text}」)`:''}. 배치·점검 화면에서 그 쪽을 확인하세요.`);}finally{check.free();}}
@@ -428,10 +429,12 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       else{progress({stage:'place'});
       const first=await openForm(form.bytes,'');let structure;try{structure=formStructure(first);}finally{first.free();}
       sheet={...sheet,paper:fstd.paper.size,columns:structure.columns||2};
-      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settle:d=>new Document(exportLayoutHwpx(d,XLSX.CFB))});
+      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settle:d=>new Document(anchorRaisedTables(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document))});
       try{fillFormPageCount(b.document);}catch{}
       // 양식 위에 넣은 직후의 문서는 엔진이 머리 표·〈보기〉 자리를 옛 위치로 그린다(10-29 실측: 2번이 제목 표와 겹침). 저장한 모양으로 다시 열어 그린다 — 문단 번호는 같다.
       let againBytes;try{againBytes=exportLayoutHwpx(b.document,XLSX.CFB);}finally{b.document.free();}
+      // 표만 든 문단이 앞 글보다 위로 올라가는 양식(원안지 r01)은 그 문단에 줄 정보를 준다(anchorRaisedTables, 11-02). 보낼 때와 같은 처리.
+      againBytes=anchorRaisedTables(againBytes,XLSX.CFB,Document);
       const {document:_,...meta}=b;assembled={key:akey,bytes:againBytes,meta,columns:sheet.columns};
       built={...b,document:new Document(againBytes),pages:[]};
       }
