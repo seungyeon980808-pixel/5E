@@ -4,6 +4,7 @@ export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420],B5:[182,257],A5:[1
 export const LAYOUT_VERSION=13;
 // 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
 import {nativeRuns} from './live-patch.js';
+import {fitQuestionParagraph} from './line-fit.js';
 import {KICE_STANDARD,layoutValues,standardForPaper} from './typeset-standard.js';
 // 본문 글자 장평·자간 기본값은 조판 기준(「수능 틀」)에서 읽는다.
 export const TEXT_RATIO=KICE_STANDARD.text.ratio,TEXT_SPACING=KICE_STANDARD.text.spacing,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
@@ -316,6 +317,60 @@ export async function applyCellEquationLines(bytes,JSZip){
   zip.file('Contents/section0.xml',next);return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
 
+// 키 큰 수식 줄 끌어올리기(11-02 학교 양식, 사용자: 〈보기〉 ㄴ–ㄷ 사이를 붙여라). 엔진은 수식 줄의 글 기준선을 줄 높이의 85%에 두고 수식을 제 기준선에 맞춰
+// 그린다 — 분수는 기준선이 60%쯤이라 줄 맨 위보다 8px쯤 아래에 그려져 위에 빈틈, 아래로 삐져나옴이 생겼다(내보낸 시험지 키 큰 수식 749개 중 84%).
+// 엔진은 줄 기준선 값(baseline)은 안 읽고 줄 높이(vertsize)로 위치를 정한다(실측). 그래서 수식이 든 줄의 높이를 「내려간 만큼 ÷ 0.85」 줄이고
+// 줄인 만큼 줄 사이를 늘리면 수식이 줄 맨 위로 올라오고 다음 줄·쪽 나눔은 그대로다. 내려가는 양은 수식마다 엔진에 따로 그려 잰다(같은 수식은 한 번).
+const equationDrops=new Map();
+export function equationDrop(Document,script,unit){
+  const key=unit+'|'+script;if(equationDrops.has(key))return equationDrops.get(key);
+  let drop=0;const d=Document.createEmpty();
+  try{d.createBlankDocument();d.pasteHtml(0,0,0,'<p><span style="font-family:함초롬바탕;font-size:11pt">가나 EQDROPMARK 다라</span></p>');
+    // 수식 앞뒤에 글을 둔다 — 줄 끝 수식은 엔진이 줄 높이에 넣지 않는다(handoff가 수식 뒤에 1pt 연결 문자를 두는 까닭).
+    const at=JSON.parse(d.getPageTextLayout(0)).runs.map(r=>r.text).join('').indexOf('EQDROPMARK');
+    if(at>=0){d.deleteText(0,0,at,10);const r=JSON.parse(d.insertEquation(0,0,at,script,unit,0));
+      if(r.ok){d.reflowLinesegs();const runs=JSON.parse(d.getPageTextLayout(0)).runs.filter(r=>r.text.trim()),e=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='equation');
+        if(e&&runs.length)drop=Math.max(0,e.y-Math.min(...runs.map(r=>r.y)))*75;}}
+  }catch{return 0;}finally{d.free();}
+  // 잰 값만 기억한다 — 엔진 오류 한 번으로 0을 기억하면 그 수식은 끝까지 끌어올리기에서 빠졌다(GPT 검토).
+  equationDrops.set(key,drop);return drop;
+}
+// 줄 배치 손질(XML): 줄 높이가 그 문단 키 큰 수식 높이와 같은 줄(엔진이 수식 때문에 키운 줄)만. 같은 높이 수식이 여럿이면 가장 적게 내려간 값으로(어느 수식도 줄 위로 넘지 않게).
+// 글자가 들어갈 높이(문단 다른 줄 높이, 없으면 baseUnit÷0.9 — 키 큰 수식은 글자의 90%로 넣으므로)보다는 줄이지 않는다. 다시 해도 같다(줄인 줄은 수식 높이와 달라져 다시 잡히지 않음).
+export function liftTallEquations(xml,dropOf){
+  const paragraphs=[],stack=[];
+  for(const m of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
+    if(m[0].startsWith('</')){const p=stack.pop();if(p)p.end=m.index;}
+    else{const p={body:m.index+m[0].length};paragraphs.push(p);stack.push(p);}
+  }
+  const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]),edits=[];
+  for(const p of paragraphs){
+    if(p.end===undefined)continue;const body=xml.slice(p.body,p.end);if(body.includes('<hp:p ')||!body.includes('<hp:equation'))continue;
+    const eqs=[...body.matchAll(/<hp:equation\b[^>]*>[\s\S]*?<\/hp:equation>/g)].map(m=>({unit:num(m[0].match(/^<hp:equation\b[^>]*>/)[0],'baseUnit')||1100,h:num(m[0].match(/<hp:sz\b[^>]*>/)?.[0]||'','height'),script:(m[0].match(/<hp:script>([\s\S]*?)<\/hp:script>/)?.[1]||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&')})).filter(e=>e.h>e.unit*1.2);
+    if(!eqs.length)continue;
+    const array=body.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);if(!array)continue;
+    const segs=[...array[0].matchAll(/<hp:lineseg\b[^>]*>/g)],at=p.body+array.index;
+    const heights=segs.map(m=>num(m[0],'vertsize')),floor=Math.min(...heights.filter(v=>!eqs.some(e=>Math.abs(e.h-v)<=40)),Math.round(Math.max(...eqs.map(e=>e.unit))/0.9));
+    for(const [i,m] of segs.entries()){
+      const v=heights[i],near=eqs.filter(e=>Math.abs(e.h-v)<=40);if(!near.length)continue;
+      const drop=Math.min(...near.map(e=>dropOf(e.script,e.unit)));if(!(drop>40))continue;
+      const next=Math.max(floor,Math.round(v-drop/0.85));if(next>=v)continue;
+      // 줄인 만큼 줄 사이(spacing)를 늘린다 — 엔진은 같은 문단 다음 줄을 저장 위치 대신 「이 줄 높이 + 줄 사이」로 다시 놓기도 해서(〈보기〉 ㄱ 둘째 줄이 분수 위로 올라옴, 실측) 둘 다 같은 자리가 되게.
+      const gap=num(m[0],'spacing')||0;
+      edits.push([at+m.index,m[0],m[0].replace(/\bvertsize="-?\d+"/,`vertsize="${next}"`).replace(/\btextheight="-?\d+"/,`textheight="${next}"`).replace(/\bbaseline="-?\d+"/,`baseline="${Math.round(next*.85)}"`).replace(/\bspacing="-?\d+"/,`spacing="${gap+v-next}"`)]);
+    }
+  }
+  for(const [index,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,index)+next+xml.slice(index+old.length);
+  return xml;
+}
+export async function applyLiftTallEquations(bytes,JSZip,Document){
+  const zip=await JSZip.loadAsync(new Uint8Array(bytes));let changed=false;
+  for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){
+    const xml=await zip.file(name).async('string'),next=liftTallEquations(xml,(script,unit)=>equationDrop(Document,script,unit));
+    if(next!==xml){zip.file(name,next);changed=true;}
+  }
+  return changed?zip.generateAsync({type:'uint8array',compression:'DEFLATE'}):bytes;
+}
 // 어울림: 글 문단 맨 앞에 넣은 그림을 떠 있는 그림(문단 기준 오른쪽·왼쪽, 본문이 옆·아래로 흐름)으로 바꾼다.
 // 어느 그림인지는 그림 내용(바이트)으로 찾는다. 표 칸 안 그림은 대상이 아니다. 줄 배치는 부르는 쪽에서 다시 계산한다.
 export function applyFloatingPictures(document,floats){
@@ -365,77 +420,44 @@ export function applyCellFloatingPictures(document,floats){
 // 맨 바깥 표의 칸만 본다. 글 아래 끝 + 칸 아래 여백이 칸 바닥을 넘는 만큼 그 칸(줄)을 늘린다.
 export function growCellsToContent(document){
   const J=JSON.stringify,need=new Map();
-  for(let page=0;page<document.pageCount();page++)for(const r of JSON.parse(document.getPageTextLayout(page)).runs){
-    if(!r.text.trim()||(r.cellPath||[]).length!==1)continue;
-    const path=r.cellPath.slice(0,1),json=J(path),cell=path[0].cellIndex,box=JSON.parse(document.getTableCellBboxesByPath(r.secIdx,r.parentParaIdx,json)).find(c=>c.cellIdx===cell&&c.pageIndex===page);if(!box)continue;
-    const props=JSON.parse(document.getCellPropertiesByPath(r.secIdx,r.parentParaIdx,json,cell)),pad=props.applyInnerMargin?props.paddingBottom/75:0;
-    const over=r.y+(r.fontSize||r.h)+pad-(box.y+box.h);if(over<=.8)continue;
-    const k=J([r.secIdx,r.parentParaIdx,path[0].controlIndex,cell]);need.set(k,Math.max(need.get(k)||0,over));
+  for(let page=0;page<document.pageCount();page++){
+    const cells=new Map();
+    for(const r of JSON.parse(document.getPageTextLayout(page)).runs){
+      if(!r.text.trim()||(r.cellPath||[]).length!==1)continue;
+      const path=r.cellPath.slice(0,1),json=J(path),cell=path[0].cellIndex,k=J([r.secIdx,r.parentParaIdx,path[0].controlIndex,cell]);
+      if(!cells.has(k)){const box=JSON.parse(document.getTableCellBboxesByPath(r.secIdx,r.parentParaIdx,json)).find(c=>c.cellIdx===cell&&c.pageIndex===page);if(!box)continue;
+        const props=JSON.parse(document.getCellPropertiesByPath(r.secIdx,r.parentParaIdx,json,cell));cells.set(k,{box,pad:props.applyInnerMargin?props.paddingBottom/75:0});}
+      const {box,pad}=cells.get(k),over=r.y+(r.fontSize||r.h)+pad-(box.y+box.h);if(over>.8)need.set(k,Math.max(need.get(k)||0,over));
+    }
   }
   for(const [k,over] of need){const [sec,para,ci,cell]=JSON.parse(k);document.resizeTableCells(sec,para,ci,J([{cellIdx:cell,heightDelta:Math.ceil((over+4)*75)}]));}
   if(need.size)document.reflowLinesegs();
   return need.size;
 }
-// 높은 수식 아래 줄 띄우기(10-31 학교 양식): 학교 틀은 줄 간격이 좁아 분수·루트 수식이 제 줄 아래로 내려와 다음 줄 글과 겹쳤다(〈보기〉 ㄱ의 분수 → ㄴ).
-// 수식보다 아래 줄에서 시작하는데 수식 상자와 겹치는 글이 있으면, 그 글 문단(칸 안이면 칸 문단)의 「문단 위」 간격을 겹친 만큼 더한다(px×150).
-// tables: 글자처럼 놓인 표·그림이 앞 문단 줄에 걸친 것도 띄운다 — 다시 열어 줄 자리가 새로 잡힌 문서(시험지 묶기)에서만. 문항 조판 중에는 표 자리가 옛 자리라 잘못 잡았다.
-export function spaceEquationOverlaps(document,{tables=false}={}){
-  const J=JSON.stringify;let total=0;
-  for(let pass=0;pass<3;pass++){
-    const need=new Map(),after=new Map(),lines=new Map();
-    const keyOf=r=>{const cell=(r.cellPath||[]).length===1?r.cellPath[0]:null;return cell?J([r.secIdx,r.parentParaIdx,cell.controlIndex,cell.cellIndex,cell.cellParaIndex]):J([r.secIdx,r.paraIdx]);};
-    for(let page=0;page<document.pageCount();page++){
-      const runs=(JSON.parse(document.getPageTextLayout(page)).runs||[]).filter(r=>r.text.trim()),eqs=(JSON.parse(document.getPageControlLayout(page)).controls||[]).filter(c=>c.type==='equation');
-      for(const e of eqs){
-        // 수식이 든 문단: 같은 줄(수식 세로 가운데를 지나는 글)에서 수식과 가장 가까운 글의 문단(칸 안 수식은 cellPath가 비어 글로 찾는다).
-        const mid=e.y+e.h/2,own=runs.filter(r=>(r.cellPath||[]).length<=1&&r.y<mid&&r.y+(r.fontSize||r.h)>mid-(r.fontSize||r.h)).map(r=>({r,d:Math.max(0,r.x-(e.x+e.w),e.x-(r.x+r.w))})).filter(x=>x.d<24).sort((a,b)=>a.d-b.d)[0]?.r;
-        const ownKey=own?keyOf(own):'';
-        for(const r of runs){
-          const h=r.fontSize||r.h,over=e.y+e.h-r.y;
-          // 키 큰 수식이 윗줄 글로 올라간 것(11-01 밤샘 대왕중 화학Ⅰ 24-9월 14번: 반응식 수식 위가 윗줄 「…는 반응 계수)」에 걸침) — 수식 문단을 내린다.
-          // 칸 안은 띄운 뒤에도 줄 자리가 바로 다시 계산되지 않아 같은 겹침이 또 잡혀 쌓였다(11-01 밤샘 화학Ⅰ 16번 〈보기〉에 큰 빈 줄) — 첫 차례에 한 번만, 글자 높이까지만.
-          if(r.y<e.y&&r.y+h>e.y+.8&&Math.min(e.x+e.w,r.x+r.w)-Math.max(e.x,r.x)>.8&&(r.cellPath||[]).length<=1){if(pass)continue;const up=Math.min(h,r.y+h-e.y+2),key=keyOf(r);
-            // 같은 문단 윗줄로 올라간 것은 그 문단 줄 간격을 한 번만, 60%까지 넓힌다(11-01 밤샘 화학Ⅰ 24-9월 14번). 아랫줄 겹침에는 쓰지 않는다(그때는 다른 줄만 벌어짐).
-            if(key===ownKey)lines.set(key,Math.max(lines.get(key)||0,Math.min(.6,up/h)));else after.set(key,Math.max(after.get(key)||0,up));continue;}
-          if(r.y<=e.y+2||over<=.8||Math.min(e.x+e.w,r.x+r.w)-Math.max(e.x,r.x)<=.8||r.y+h<=e.y)continue;
-          if((r.cellPath||[]).length>1)continue;const key=keyOf(r);
-          // 같은 문단의 다음 줄과 겹치는 것은 띄워 고칠 수 없다(문단 위 간격은 두 줄을 함께 내리고, 줄 간격은 수식 줄 높이에 걸리지 않아 다른 줄만 벌어짐 —
-          // 11-01 밤샘 화학Ⅰ 반응식 문단이 515%까지 커짐). 그대로 두고 마지막 검사에 맡긴다.
-          if(key!==ownKey)need.set(key,Math.max(need.get(key)||0,over+2));
-        }
-      }
-      // 글자처럼 놓인 본문 표·그림이 앞 문단 마지막 줄에 올라탄 것(11-01 대왕중 2번 표: 앞 줄 낡은 줄 자리로 4px 겹침)도 그 표·그림 문단을 띄운다.
-      // 떠 있는 표·그림(글 옆 자료)은 글과 겹쳐 놓는 것이 정상이라 뺀다.
-      if(tables&&!pass)for(const c of (JSON.parse(document.getPageControlLayout(page)).controls||[]).filter(c=>(c.type==='table'||c.type==='image')&&!(c.cellPath||[]).length)){
-        let tac=false;try{tac=!!JSON.parse(c.type==='table'?document.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx):document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx)).treatAsChar;}catch{}
-        if(!tac)continue;
-        for(const r of runs){
-          if((r.cellPath||[]).length||r.secIdx!==c.secIdx||r.paraIdx>=c.paraIdx)continue;
-          // 앞 문단 줄이 표 위쪽에 걸치거나(r.y<c.y) 표 안으로 들어온 것(11-01 밤샘 f04 돋움 12pt 200%: 엔진이 앞 문단을 한 줄 적게 잡아 셋째 줄이 표 속에 그려짐) 모두.
-          // 표 윗부분(글줄 둘 높이)에 걸친 것만 본다 — 표 자리가 아직 옛 자리인 문서에서 아래쪽 글을 겹침으로 보고 표를 수백 px 띄웠다(11-01 밤샘 화학Ⅰ 16번).
-          const h=r.fontSize||r.h,over=r.y+h-c.y;
-          if(over<=.8||r.y>=c.y+2*h||Math.min(c.x+c.w,r.x+r.w)-Math.max(c.x,r.x)<=.8)continue;
-          const key=J([c.secIdx,c.paraIdx]);need.set(key,Math.max(need.get(key)||0,Math.min(over+2,3*h)));
-        }
+// 글자처럼 놓인 본문 표·그림이 앞 문단 마지막 줄에 올라탄 것(11-01 대왕중 2번 표: 앞 줄 낡은 줄 자리로 4px 겹침)을 그 표·그림 문단 위 간격으로 띄운다.
+// 다시 열어 줄 자리가 새로 잡힌 문서(시험지 묶기)에서만 부른다 — 문항 조판 중에는 표 자리가 옛 자리라 잘못 잡았다. 떠 있는 표·그림(글 옆 자료)은 글과 겹쳐 놓는 것이 정상이라 뺀다.
+// 예전(10-31~11-01)에는 수식이 아랫줄·윗줄과 겹치면 문단 간격·줄 간격도 넓혔으나, 원인(수식 바로 뒤에서 줄이 바뀌면 엔진이 줄 높이에 수식을 넣지 않음)을
+// handoff의 수식 뒤 1pt 연결 문자로 고친 뒤 뺐다(11-02): 611문항 중 93문항을 띄워 문항 높이가 모두 655mm 늘었고, 같은 띄우기가 쌓여 한 문항이 55mm → 231mm가 되기도 했다.
+export function spaceTableOverlaps(document){
+  const J=JSON.stringify,need=new Map();
+  for(let page=0;page<document.pageCount();page++){
+    const runs=(JSON.parse(document.getPageTextLayout(page)).runs||[]).filter(r=>r.text.trim());
+    for(const c of (JSON.parse(document.getPageControlLayout(page)).controls||[]).filter(c=>(c.type==='table'||c.type==='image')&&!(c.cellPath||[]).length)){
+      let tac=false;try{tac=!!JSON.parse(c.type==='table'?document.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx):document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx)).treatAsChar;}catch{}
+      if(!tac)continue;
+      for(const r of runs){
+        if((r.cellPath||[]).length||r.secIdx!==c.secIdx||r.paraIdx>=c.paraIdx)continue;
+        // 앞 문단 줄이 표 위쪽에 걸치거나(r.y<c.y) 표 안으로 들어온 것(11-01 밤샘 f04 돋움 12pt 200%: 엔진이 앞 문단을 한 줄 적게 잡아 셋째 줄이 표 속에 그려짐) 모두.
+        // 표 윗부분(글줄 둘 높이)에 걸친 것만 본다 — 표 자리가 아직 옛 자리인 문서에서 아래쪽 글을 겹침으로 보고 표를 수백 px 띄웠다(11-01 밤샘 화학Ⅰ 16번).
+        const h=r.fontSize||r.h,over=r.y+h-c.y;
+        if(over<=.8||r.y>=c.y+2*h||Math.min(c.x+c.w,r.x+r.w)-Math.max(c.x,r.x)<=.8)continue;
+        const key=J([c.secIdx,c.paraIdx]);need.set(key,Math.max(need.get(key)||0,Math.min(over+2,3*h)));
       }
     }
-    if(!need.size&&!after.size&&!lines.size)break;
-    for(const [key,ratio] of lines){const k=JSON.parse(key),add=Math.ceil(ratio*100/5)*5;
-      if(k.length===5){let ls=160;try{ls=JSON.parse(document.getCellParaPropertiesAt(...k,0)).lineSpacing||160;}catch{}document.applyParaFormatInCell(...k,J({lineSpacing:ls+add}));}
-      else{const ls=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).lineSpacing||160;document.applyParaFormat(k[0],k[1],J({lineSpacing:ls+add}));}
-      total++;}
-    for(const [key,px] of after){const k=JSON.parse(key);
-      if(k.length===5){let a=0;try{a=JSON.parse(document.getCellParaPropertiesAt(...k,0)).spacingAfter||0;}catch{}document.applyParaFormatInCell(...k,J({spacingAfter:Math.round((a+px)*150)}));}
-      else{const a=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).spacingAfter||0;document.applyParaFormat(k[0],k[1],J({spacingAfter:Math.round((a+px)*150)}));}
-      total++;}
-    for(const [key,px] of need){const k=JSON.parse(key);
-      if(k.length===5){let before=0;try{before=JSON.parse(document.getCellParaPropertiesAt(...k,0)).spacingBefore||0;}catch{}
-        document.applyParaFormatInCell(...k,J({spacingBefore:Math.round((before+px)*150)}));}
-      else{const before=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).spacingBefore||0;document.applyParaFormat(k[0],k[1],J({spacingBefore:Math.round((before+px)*150)}));}
-      total++;}
-    document.reflowLinesegs();
   }
-  return total;
+  for(const [key,px] of need){const k=JSON.parse(key),before=JSON.parse(document.getParaPropertiesAt(k[0],k[1],0)).spacingBefore||0;document.applyParaFormat(k[0],k[1],J({spacingBefore:Math.round((before+px)*150)}));}
+  if(need.size)document.reflowLinesegs();
+  return need.size;
 }
 // 〈보기〉 상자 단 가운데(10-31 학교 양식): 번호 뒤 문단은 모두 번호 폭만큼 들어가(applyQuestionIndent) 상자가 오른쪽으로 치우친다.
 // 학교 양식에서는 칸 안에 「보기」 제목이 있는 글자처럼 놓인 표만 좌우 여백이 같게 단 가운데에 둔다. 선지·자료 표는 그대로.
@@ -501,6 +523,105 @@ export function settleFloatingPictures(document,{front=false}={}){
   return true;
 }
 
+// 그림 아래 줄 넓히기(11-02 학교 양식, 사용자: 어울림이면 그림 아래는 글이 채워야 한다). settleFloatingPictures는 그림 옆에 걸친 문단 전체를
+// 그림 폭만큼 좁혀(엔진 어울림은 2단 오른쪽 단에서 틀림) 그림 아래로 내려간 줄까지 좁았다. 그 문단을 그림 아래 첫 줄에서 둘로 나누고
+// 뒤 문단은 단 폭으로(번호 내어쓰기만큼 들여) 되돌린다. 나눌 자리는 엔진 함수마다 글자 위치 단위가 달라(줄 조각·좌표·나누기 셋 다 다름, 실측)
+// 복사본에서 나눠 보고 뒷부분이 그 줄 첫 글자로 시작하는 값을 찾는다. 시험지에 넣을 학교 양식 문항(sheetEntry)에만 — 문항 편집 문서는 그대로.
+// 문단 끝줄이 그 문단의 다른 줄 끝(오른쪽 끝)에 비해 얼마나 찼는지(0~1). 한 줄뿐이면 1.
+function lastLineFill(d,sec,para){
+  const lines=new Map();
+  for(let p=0;p<d.pageCount();p++)for(const r of JSON.parse(d.getPageTextLayout(p)).runs||[]){if(r.secIdx!==sec||r.paraIdx!==para||r.cellPath?.length||!String(r.text||'').trim())continue;
+    const k=p*1e5+Math.round(r.y*2),v=lines.get(k)||{x:Infinity,end:-Infinity};v.x=Math.min(v.x,r.x);v.end=Math.max(v.end,r.x+r.w);lines.set(k,v);}
+  const ls=[...lines.entries()].sort((a,b)=>a[0]-b[0]).map(e=>e[1]);if(ls.length<2)return 1;
+  const last=ls.pop(),edge=Math.max(...ls.map(l=>l.end));return (last.end-last.x)/Math.max(1,edge-last.x);
+}
+// fit: 학교 틀 자간 맞춤 값({low,high,shortLastLine,base}) — 넓힌 뒷문단을 다시 맞춘다(넓어진 폭에서 새로 생긴 어색한 줄바꿈).
+export function widenBelowPictures(Document,bytes,CFB,fit=null){
+  const P=JSON.parse,J=JSON.stringify,GAP=2,jobs=[];
+  let d=new Document(bytes);
+  try{
+    for(let page=0;page<d.pageCount();page++){
+      const ctl=P(d.getPageControlLayout(page)).controls||[],runs=(P(d.getPageTextLayout(page)).runs||[]).filter(r=>!(r.cellPath||[]).length);
+      for(const c of ctl.filter(c=>c.type==='image'&&!(c.cellPath||[]).length)){
+        let pr;try{pr=P(d.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));}catch{continue;}
+        if(pr.treatAsChar||pr.textWrap!=='InFrontOfText')continue;
+        const right=pr.horzAlign!=='Left',bottom=c.y+c.h+GAP,room=c.w+((right?pr.outerMarginLeft:pr.outerMarginRight)||0)/75+6;
+        for(let para=c.paraIdx;para<c.paraIdx+8;para++){
+          const own=runs.filter(r=>r.secIdx===c.secIdx&&r.paraIdx===para&&r.text.replace(/\u2060/g,'').trim());if(!own.length)break;
+          const ys=[...new Set(own.map(r=>Math.round(r.y*10)/10))].sort((a,b)=>a-b);if(ys[0]>=bottom)break;
+          // 그림 아래 첫 줄부터, 맨 앞이 글인 줄을 고른다 — 수식으로 시작하는 줄에서 나누면 엔진이 수식을 한 칸씩 밀어 내용이 바뀌었다
+          // (11-02 물리Ⅱ 25-9월 9번: 「A를 향해」 줄에서 나눠 「A는 진동수 S인 … f₀가 측정한」으로 나감).
+          const eqs=ctl.filter(e=>e.type==='equation'&&!(e.cellPath||[]).length&&e.paraIdx===para);
+          const lineFirst=y=>own.filter(r=>Math.abs(r.y-y)<.2).sort((a,b)=>a.x-b.x)[0];
+          const below=ys.filter(y=>y>=bottom).find(y=>{const f=lineFirst(y);return !eqs.some(e=>Math.abs(e.y-y)<8&&e.x<f.x-.5);});if(below===undefined)continue;
+          const first=lineFirst(below),pp=P(d.getParaPropertiesAt(c.secIdx,para));
+          const eqAfter=eqs.filter(e=>e.y>=below-1).length;
+          // 좁힌 문단만(그림 쪽 여백이 그림 폭만큼 있는 문단).
+          if(((right?pp.marginRight:pp.marginLeft)||0)<room*.8)break;
+          jobs.push({sec:c.secIdx,para,text:first.text,guess:first.charStart,right,room,pp,eqAfter});break;
+        }
+      }
+    }
+  }finally{d.free();}
+  if(!jobs.length)return bytes;
+  // 뒤 문단부터(앞 문단 번호가 바뀌지 않게).
+  jobs.sort((a,b)=>b.para-a.para);
+  const head=t=>String(t).replace(/^\s+/,'').slice(0,4);
+  // 맨 바깥 문단 차례대로 「글 + [수식 스크립트]」(U+2060·줄 배치는 뺌). 나누기 전후 두 문단을 이어 붙인 것이 같아야 수식이 밀리지 않은 것.
+  const inline=doc=>{const archive=CFB.read(doc.exportHwpx(),{type:'array'}),file=archive.FileIndex[archive.FullPaths.findIndex(x=>x.endsWith('Contents/section0.xml'))];if(!file)return null;
+    const xml=new TextDecoder().decode(file.content),out=[],stack=[];
+    for(const m of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){if(m[0].startsWith('</')){const q=stack.pop();if(q&&!stack.length)out.push(xml.slice(q,m.index));}else stack.push(m.index+m[0].length);}
+    return out.map(b=>b.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'').replace(/<hp:equation\b[\s\S]*?<hp:script>([\s\S]*?)<\/hp:script>[\s\S]*?<\/hp:equation>/g,'[$1]').replace(/<hp:(?:pic|tbl)\b[\s\S]*?<\/hp:(?:pic|tbl)>/g,'[개체]').replace(/<[^>]+>/g,'').replace(/\u2060/g,''));};
+  let current=bytes;
+  for(const j of jobs){
+    let at=null,want=null;{const o=new Document(current);try{want=inline(o)?.[j.para]??null;}finally{o.free();}}
+    for(let v=Math.max(1,j.guess-3);v<=j.guess+10&&at===null;v++){const t=new Document(current);
+      try{const r=P(t.splitParagraph(j.sec,j.para,v));if(r?.ok===false)continue;const got=t.getTextRange(j.sec,j.para+1,0,Math.min(8,t.getParagraphLength(j.sec,j.para+1)));
+        // 뒷부분 글이 그 줄 첫 글로 시작하고, 뒷부분 수식 수가 원래 그 줄부터의 수식 수와 같을 때만(수식이 밀리지 않았는지).
+        let n=-1;try{n=(P(t.getControlTextPositions(j.sec,j.para+1))||[]).length;}catch{}
+        let same=false;if(want!==null&&got.startsWith(j.text.slice(0,Math.min(4,j.text.length)))&&head(got)===head(j.text)&&n===j.eqAfter){const ps=inline(t);same=!!ps&&ps[j.para]+ps[j.para+1]===want;}
+        if(same)at=v;}catch{}finally{t.free();}}
+    if(at===null)continue;
+    d=new Document(current);
+    try{d.splitParagraph(j.sec,j.para,at);
+      const hang=Math.max(0,-(j.pp.indent||0)),side=j.right?'marginRight':'marginLeft',left=(j.pp.marginLeft||0)+hang,narrowed=(j.pp[side]||0);
+      const fmt=j.right?{marginRight:Math.round(Math.max(0,narrowed-j.room)*150),marginLeft:Math.round(left*150)}:{marginLeft:Math.round((Math.max(0,narrowed-j.room)+hang)*150)};
+      d.applyParaFormat(j.sec,j.para+1,J({...fmt,indent:0,spacingBefore:0,spacingAfter:Math.round((j.pp.spacingAfter||0)*150)}));
+      // 앞 문단 마지막 줄은 원래 문단에서 꽉 찬 가운데 줄이었다 — 마지막 줄이라 왼쪽 정렬로 바뀌어 그림 앞이 비었다(사용자 지적). 양쪽 정렬이면 배분 정렬(엔진 이름 split)로.
+      // 단, 그 줄이 거의 찰 때(80% 이상)만 — 어절 단위라 짧아진 줄을 퍼뜨리면 「동일한    입사각    θ로」처럼 크게 벌어졌다.
+      d.applyParaFormat(j.sec,j.para,J({spacingAfter:0}));d.reflowLinesegs();
+      if(j.pp.alignment==='justify'&&lastLineFill(d,j.sec,j.para)>=.8)d.applyParaFormat(j.sec,j.para,J({alignment:'split'}));
+      d.reflowLinesegs();if(fit)fitQuestionParagraph(d,j.sec,j.para+1,{...fit,school:true});d.reflowLinesegs();current=exportLayoutHwpx(d,CFB);
+    }finally{d.free();}
+  }
+  return current;
+}
+// 자간 맞춤 뒤 그림 옆 다시 맞추기(11-02 학교 양식): settleFloatingPictures가 그림 옆 문단을 좁힌 뒤 자간 맞춤(line-fit)이 그 문단을 줄이면
+// 다음 문단이 그림 높이 안으로 올라와 좁혀지지 않은 채 그림과 겹쳤다(통합과학 27번). 그림 높이 안에서 시작하는 다음 글 문단은 마저 좁히고,
+// 표·그림 문단이면 앞 문단 아래 간격으로 그림 밑에 둔다.
+// 돌려주는 값: 새로 좁힌 문단 번호들(부르는 쪽이 자간 맞춤을 다시 건다).
+export function resettleBesidePictures(document){
+  const P=JSON.parse,J=JSON.stringify,GAP=4;let changed=0;const narrowed=[];
+  for(let page=0;page<document.pageCount();page++)for(const c of (P(document.getPageControlLayout(page)).controls||[]).filter(c=>c.type==='image'&&!(c.cellPath||[]).length)){
+    let pr;try{pr=P(document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));}catch{continue;}
+    if(pr.treatAsChar||pr.textWrap!=='InFrontOfText')continue;
+    const right=pr.horzAlign!=='Left',room=c.w+((right?pr.outerMarginLeft:pr.outerMarginRight)||0)/75+GAP+2,side=right?'marginRight':'marginLeft',bottom=c.y+c.h;
+    const runs=(P(document.getPageTextLayout(page)).runs||[]).filter(r=>!(r.cellPath||[]).length&&r.secIdx===c.secIdx&&String(r.text||'').trim());
+    const ctlParas=new Set((P(document.getPageControlLayout(page)).controls||[]).filter(x=>!(x.cellPath||[]).length&&(x.type==='table'||(x.type==='image'&&x!==c))).map(x=>x.paraIdx));
+    let prev=c.paraIdx;
+    for(let para=c.paraIdx+1;para<c.paraIdx+12;para++){
+      const own=runs.filter(r=>r.paraIdx===para);const top=own.length?Math.min(...own.map(r=>r.y)):null;
+      if(ctlParas.has(para)){const ctlTop=Math.min(...(P(document.getPageControlLayout(page)).controls||[]).filter(x=>x.paraIdx===para&&!(x.cellPath||[]).length).map(x=>x.y));
+        if(ctlTop<bottom+GAP){const pp=P(document.getParaPropertiesAt(c.secIdx,prev));document.applyParaFormat(c.secIdx,prev,J({spacingAfter:Math.round(((pp.spacingAfter||0)+bottom+GAP-ctlTop)*150)}));changed++;}break;}
+      if(top===null||top>=bottom)break;
+      const pp=P(document.getParaPropertiesAt(c.secIdx,para));
+      if((pp[side]||0)<room*.8){document.applyParaFormat(c.secIdx,para,J({[side]:Math.round(((pp[side]||0)+room)*150)}));changed++;narrowed.push([c.secIdx,para]);}
+      prev=para;
+    }
+  }
+  if(changed)document.reflowLinesegs();
+  return narrowed;
+}
 // 글 옆 표: 첫 지문(번호 문단) 바로 앞 문단에 든 표를 떠 있는 표로 바꾼다. 줄 배치는 settleFloatingPictures가 맞춘다.
 export function applyFloatingTable(document,spec,number){
   if(!spec)return;

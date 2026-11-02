@@ -15,7 +15,8 @@ export function nativeLayoutIssues(document){
     issues.push({page:page+1,text:snippet(text),reason,...cell?{row:cell.row+1,col:cell.col+1}:{},...Number.isInteger(para)?{para}:{},...extra});
   };
   for(let page=0;page<document.pageCount();page++){
-    const runs=parse(document.getPageTextLayout(page)).runs.filter(run=>run.text.trim());
+    // 폭 없는 글자(U+2060·U+200B·U+FEFF)만 든 조각은 그려지는 것이 없어 겹침·넘침을 보지 않는다(11-02: 수식 뒤 U+2060이 칸 줄 끝 테두리 밖 자리로 잡혀 「넘침」).
+    const runs=parse(document.getPageTextLayout(page)).runs.filter(run=>run.text.replace(/[\u2060\u200b\ufeff]/g,'').trim());
     const controls=parse(document.getPageControlLayout(page)).controls;
     const cache=new Map();
     const cellBounds=(run,depth)=>{

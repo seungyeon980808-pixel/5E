@@ -13,6 +13,7 @@ import {isBlank} from './pool-views.js';
 
 const PAGE = 40;
 const SVG = {
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
   memo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/></svg>',
   grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
@@ -63,12 +64,17 @@ function entries(data, s) {
 
 // 보관함 상태는 app의 view.lib에 둔다(다시 그려도 남게).
 // 10-26 사용자 지적: 기출은 말 그대로 기출 — 보관함에는 내 문항만(기출은 문항 카드의 「기출문제」 칸·시험지 담기에서 본다).
-export function libState(view) { const s = view.lib ||= { pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] ? s.pool : 'drafting'; return s; }
+export function libState(view) { const s = view.lib ||= { pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.sel ||= new Set(); s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] ? s.pool : 'drafting'; return s; }
 
 export function renderLibraryView(root, data, view, api) {
   const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
   if (s.kind !== 'mine' && !past.items) loadPast().then(() => { if (root.isConnected) api.rerender(); }).catch(e => api.status?.(e.message, true));
   const list = entries(data, s), shown = s.mode === 'one' ? list : list.slice(0, s.limit);
+  // 여러 문항 고르기(11-02 시안 select-delete-1102): 지운 문항·지금 칸에 없는 문항은 고른 것에서 뺀다.
+  { const here = new Set(list.map(x => x.id)); for (const id of [...s.sel]) if (!here.has(id)) s.sel.delete(id); }
+  const picking = s.mode !== 'one' && s.sel.size > 0, picked = x => s.sel.has(x.id);
+  const check = (x, n) => x.kind === 'mine' ? `<button type="button" class="lv-check" data-lv-check="${E(x.id)}" data-n="${n}" aria-pressed="${picked(x)}" aria-label="${picked(x) ? '고르기 빼기' : '고르기'}" title="고르기 (Shift: 범위)">${SVG.check}</button>` : '';
+  const selbar = picking ? `<div class="lv-selbar" role="toolbar" aria-label="고른 문항"><b>${s.sel.size}개 선택</b><button type="button" class="lv-btn" data-lv-bulk="toexam">시험지에 넣기…</button><button type="button" class="lv-btn danger" data-lv-bulk="delete">삭제…</button><span class="sp"></span><button type="button" class="lv-btn" data-lv-bulk="all">보이는 것 모두 (⌘A)</button><button type="button" class="lv-btn" data-lv-bulk="clear">선택 해제 (Esc)</button></div>` : '';
   const starN = Object.keys(stars).filter(k => k.startsWith('q:') && stars[k]).length, memoN = Object.keys(memos).filter(k => k.startsWith('q:') && memos[k]).length;
   const subjects = past.index ? past.index.subjects.map(v => v[1]) : [], partPool = list.flatMap(x => x.part ? x.part.split(' · ') : []), parts = [...new Set(partPool)].sort().slice(0, 300);
   const exams = past.items ? [...new Set(past.items.filter(i => !s.subject || i.subjectLabel === s.subject).map(i => examLabel(i.year, i.month)))] : [];
@@ -97,12 +103,12 @@ export function renderLibraryView(root, data, view, api) {
   else if (!list.length && !poolQuestions(data, s.pool).length) body = `<div class="lv-emptyline">${POOL_EMPTY[s.pool]}<div class="lv-flow"><em>문항 쓰기</em>→<em>시험지에 담기</em>→<em>5E_hwp로 조판·인쇄</em></div></div>`;
   else if (!list.length) body = `<p class="lv-empty pv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
   else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
-  else if (s.mode === 'list') body = `<ol class="lv-list">${shown.map((x, n) => `<li><button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
-  else body = `<div class="lv-grid">${shown.map((x, n) => `<article class="lv-card" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} 보기"><div class="lv-thumb">${thumb(x)}</div>
+  else if (s.mode === 'list') body = `<ol class="lv-list${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<li class="${picked(x) ? 'sel' : ''}">${check(x, n)}<button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
+  else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
       <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>
       <div class="lv-meta">${kt(x)}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
-  root.innerHTML = head.replace('<!--addbar-->', addbar) + body + more;
+  root.innerHTML = head.replace('<!--addbar-->', selbar || addbar) + body + more;
   fillOwn(root, data, api);
   loadThumbs(root);
   view.lib.list = list;
@@ -212,11 +218,28 @@ export function installLibraryView(root, api) {
     if (kind === 'toexam') api.toExamMenu(x.id, button);
   }
   function refreshJob() { const st = s(); if (st.mode === 'one') api.rerender(); else if (modal && !modal.hidden) { const n = Number(modal.querySelector('[data-lv-viewer]')?.dataset.n); if (Number.isFinite(n)) { modal.querySelector('.lv-modal').innerHTML = viewerHtml(list(), n, false, api); fillViewer(modal, list(), api.data(), api); } } }
+  // 여러 문항 고르기(11-02 시안 select-delete-1102): 체크 상자·Shift 범위·⌘A·Esc·Delete. 하나라도 고르면 카드를 눌러도 열지 않고 고르기만 한다.
+  function pick(id, n, range) {
+    const st = s(), shown = list().slice(0, st.limit);
+    if (range && Number.isFinite(st.anchor)) { for (let k = Math.min(st.anchor, n); k <= Math.max(st.anchor, n); k++) if (shown[k]?.kind === 'mine') st.sel.add(shown[k].id); }
+    else { if (st.sel.has(id)) st.sel.delete(id); else st.sel.add(id); st.anchor = n; }
+    api.rerender();
+  }
+  function bulk(kind, button) {
+    const st = s(), ids = [...st.sel];
+    if (kind === 'clear') { st.sel.clear(); api.rerender(); return; }
+    if (kind === 'all') { for (const x of list().slice(0, st.limit)) if (x.kind === 'mine') st.sel.add(x.id); api.rerender(); return; }
+    if (!ids.length) return;
+    if (kind === 'delete') api.askDelete(ids);
+    else if (kind === 'toexam') api.toExamMenu(ids, button);
+  }
   const onClick = e => {
     const t = e.target;
     if (t.closest('[data-lv-new]')) { api.newCard?.(); return; }
     if (t.closest('[data-lv-import]')) { api.importExcel?.(); return; }
     const star = t.closest('[data-lv-star]'); if (star) { e.stopPropagation(); toggleStar(star.dataset.lvStar); return; }
+    const ck = t.closest('[data-lv-check]'); if (ck) { e.stopPropagation(); pick(ck.dataset.lvCheck, Number(ck.dataset.n), e.shiftKey); return; }
+    const bk = t.closest('[data-lv-bulk]'); if (bk) { bulk(bk.dataset.lvBulk, bk); return; }
     const oc = t.closest('[data-open-card]'); if (oc) { e.stopPropagation(); closeViewer(api); api.openCard(oc.dataset.openCard); return; }
     if (t.closest('[data-lv-close]')) { s().open = -1; closeViewer(api); return; }
     const stp = t.closest('[data-lv-step]'); if (stp) { step(Number(stp.dataset.lvStep)); return; }
@@ -225,7 +248,8 @@ export function installLibraryView(root, api) {
     const m = t.closest('[data-lv-mark]'); if (m) { Object.assign(s(), { mark: m.dataset.lvMark, limit: PAGE, open: -1 }); api.rerender(); api.navChanged?.(); return; }
     const mo = t.closest('[data-lv-mode]'); if (mo) { Object.assign(s(), { mode: mo.dataset.lvMode, open: mo.dataset.lvMode === 'one' ? Math.max(0, s().open) : -1 }); api.rerender(); if (mo.dataset.lvMode === 'one') fillViewer(root, list(), api.data(), api); return; }
     if (t.closest('[data-lv-more]')) { s().limit += PAGE; api.rerender(); return; }
-    const o = t.closest('[data-lv-open]'); if (o && root.contains(o)) { s().open = Number(o.dataset.lvOpen); openViewer(root, list(), s().open, api); }
+    const o = t.closest('[data-lv-open]'); if (o && root.contains(o) && s().sel.size && s().mode !== 'one') { const n = Number(o.dataset.lvOpen), x = list()[n]; if (x?.kind === 'mine') pick(x.id, n, e.shiftKey); return; }
+    if (o && root.contains(o)) { s().open = Number(o.dataset.lvOpen); openViewer(root, list(), s().open, api); }
   };
   root.addEventListener('click', onClick);
   document.addEventListener('click', e => { if (!modal || modal.hidden || !modal.contains(e.target)) return; if (e.target === modal) { s().open = -1; closeViewer(api); return; } onClick(e); });
@@ -242,6 +266,14 @@ export function installLibraryView(root, api) {
     if (t.value.trim()) { m[k] = t.value; const d = new Date(); at[k] = `${d.getMonth() + 1}-${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } else { delete m[k]; delete at[k]; }
     store.set('memos', m); store.set('memoAt', at); const n = t.parentElement.querySelector('.lv-saved'); if (n) n.textContent = at[k] ? '저장됨 · ' + at[k] : ''; };
   document.addEventListener('input', memoInput);
+  document.addEventListener('keydown', e => {
+    const st = s();
+    if (!root.isConnected || root.closest('[hidden]') || (modal && !modal.hidden) || st.mode === 'one' || document.querySelector('dialog[open]') || /^(TEXTAREA|INPUT|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'a') { e.preventDefault(); bulk('all'); return; }
+    if (!st.sel.size || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Escape') { e.preventDefault(); bulk('clear'); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); bulk('delete'); }
+  });
   // 키: ← → 넘기기 · S 별표 · Esc 닫기(메모를 쓰는 중에는 꺼짐)
   document.addEventListener('keydown', e => {
     const st = s(), active = (modal && !modal.hidden) || (st.mode === 'one' && root.isConnected && !root.closest('[hidden]'));

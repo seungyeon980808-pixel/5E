@@ -1,6 +1,6 @@
 // 저장한 문항 조판(한 단 폭 문항 용지)을 2단 시험지 한 문서로 모은다(문항들이 모두 B4로 조판됐으면 B4, 아니면 A4).
 // 문항 용지의 본문 폭은 시험지 한 단과 같아서, 문단을 그대로 옮기면 줄바꿈이 유지된다. HTML로 다시 만들지 않는다.
-import {pageProfile,spaceEquationOverlaps} from './typeset-model.js?v=1014-compact-panel';
+import {pageProfile,spaceTableOverlaps} from './typeset-model.js?v=1014-compact-panel';
 import {openApprovedQuestion,nativeInsertOptions} from './native-transfer.js?v=1014-compact-panel';
 import {examPlan,paperMixMessage,paginateQuestions} from './exam-layout.js';
 
@@ -49,6 +49,9 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
           // 학교 양식(10-30): 첫 문단이 글 없이 그림·표만 든 문단(글 옆 그림 문항)이면 엔진이 나눌 때 개체를 앞 단에 남긴다 —
           // 폭 없는 글자(U+2060)를 맨 앞에 두면 개체까지 새 단으로 같이 간다(9·25번 실측).
           if(template&&!target.getParagraphLength(0,before))target.insertText(0,before,0,'\u2060');
+          // 글이 있어도 맨 앞이 개체(글 옆 그림 문항은 그림 자리 글자가 번호 앞에 옴)면, 그 앞에서 나눌 때 엔진이 개체를 한 칸씩 뒤로 밀어
+          // 수식 내용이 바뀌었다(11-02 실측: 「단색광 A, B를 … 중심이 O인」 → 「단색광 , A를 … 중심이 B인」). 1pt 폭 없는 글자를 먼저 둔다.
+          else if(template){target.insertText(0,before,0,'\u2060');target.applyCharFormat(0,before,0,1,JSON.stringify({fontSize:100}));}
           const r=parse(target.insertColumnBreak(0,before,0));
           if(r&&r.ok===false)throw Error('시험지의 단 나누기를 넣지 못했습니다.');
           // 학교 양식(10-31): 문단 맨 앞에서 나누면 빈 앞 문단이 남아 앞 단 끝에 한 줄을 차지한다 — 앞 단이 꽉 차면 그 빈 줄만 다음 단으로 넘어가고
@@ -250,7 +253,11 @@ export function alignFormTop(doc,{bodyStart,columns,gap=8}){
   const head=Math.max(...wide.map(c=>c.y+c.h)),runs=(parse(doc.getPageTextLayout(0)).runs||[]).filter(r=>!(r.cellPath||[]).length&&(r.secIdx??0)===0&&String(r.text||'').replace(/\u2060/g,'').trim());
   let moved=0;
   for(let col=0;col<columns;col++){
-    const els=[...runs,...ctl.filter(c=>!wide.includes(c))].filter(r=>Number.isInteger(r.paraIdx)&&colOf(r.x)===col&&r.y<head+gap+40);if(!els.length)continue;
+    let els=[...runs,...ctl.filter(c=>!wide.includes(c))].filter(r=>Number.isInteger(r.paraIdx)&&colOf(r.x)===col&&r.y<head+gap+40);if(!els.length)continue;
+    // 떠 있는 그림(글 옆 그림)은 문단 위 간격을 늘려도 내려가지 않는다 — 그림 세로 위치를 직접 내린다(11-02 B4 3단: 단 맨 위 5번 그림이 머리 표 「총 4쪽」에 걸침).
+    for(const c of els.filter(c=>c.type==='image')){let props;try{props=parse(doc.getPictureProperties(0,c.paraIdx,c.controlIdx));}catch{continue;}if(props.treatAsChar)continue;
+      const lift=head+gap-c.y;if(lift<=.5)continue;doc.setPictureProperties(0,c.paraIdx,c.controlIdx,JSON.stringify({vertOffset:(props.vertOffset||0)+Math.round(lift*75)}));moved++;els=els.filter(e=>e!==c);}
+    if(!els.length)continue;
     // 머리 표에 걸쳐 놓인 글(11-01 밤샘 가짜 양식 f03: 떠 있는 머리 표가 옆 단 글을 밀어내지 못함)도 머리 표 아래로 내린다.
     const first=els.reduce((a,b)=>b.y<a.y?b:a),need=head+gap-first.y;if(need<=.5)continue;
     const pp=parse(doc.getParaPropertiesAt(0,first.paraIdx,0));doc.applyParaFormat(0,first.paraIdx,JSON.stringify({spacingBefore:Math.round(((pp.spacingBefore||0)+need)*150)}));moved++;
@@ -316,7 +323,7 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
         marks={text:mark.text,missing:on.map((v,i)=>i<last&&!v?i:-1).filter(i=>i>=0),extra:on[last]&&last>0?[last]:[]};}
       if(fixTableGaps(doc,ranges))doc=again(doc);
       // 합친 뒤 줄 자리가 바뀌어 수식이 아랫줄과 겹치면(10-31 set37 19번) 시험지에서도 띄운다.
-      if(spaceEquationOverlaps(doc,{tables:true}))doc=again(doc);
+      if(spaceTableOverlaps(doc))doc=again(doc);
     }catch(e){doc?.free();throw e;}finally{mark?.source.free();}
     const pd=parse(doc.getPageDef(0)),stripTop=mark?(pd.height-pd.marginBottom-pd.marginFooter-mark.height)/75-1:Infinity;
     // 양식 꼬리(「◇ 끝 ◇」·답지 안내, 10-31 set23): 마지막 문항 뒤 문단은 그 문항에 붙여 잰다 — 빼고 재면 꼬리가 단 바닥 테두리를 넘거나 옆 단으로 흘렀다.

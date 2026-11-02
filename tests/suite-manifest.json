@@ -198,6 +198,18 @@
       ]
     },
     {
+      "path": "tests/test-equation-script.mjs",
+      "findingIds": [
+        "SCHOOL-FORM-EQUATION-LAYOUT"
+      ]
+    },
+{
+      "path": "tests/test-hancom-file.mjs",
+      "findingIds": [
+        "HANCOM-WORD-JOINER-MARK"
+      ]
+    },
+    {
       "path": "tests/test-exampool-sheet.mjs",
       "findingIds": [
         "EXAMPOOL-STRUCTURED-QUESTION",

@@ -2,6 +2,7 @@ import {KICE_STANDARD,layoutValues,mmToPx,gapRole} from './typeset-standard.js';
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts} from './typeset-model.js?v=1014-compact-panel';
 import {splitWidths,sizedWidth,choiceColumns} from './placement.js';
+import {tidyEquationScript,joinTildeEquations,tailOf} from './equation-script.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels=['①','②','③','④','⑤'];
@@ -145,8 +146,13 @@ export function wrapHangingText(value,width,prefix,measure,condense=null){
   // 문단 가운데 줄: 넘친 폭이 띄어쓰기 합의 condense.space(비율) 이하이면 한 줄에 두고 그 줄 자간을 그만큼 좁힌다
   // (평가원 양쪽 정렬의 최소 공백, 10-25 6번 (나) 줄 8%). 칸 안에서 넘친 줄은 엔진이 눌러 담지 않고 다시 나눠 「ⓒ와,」만 남는 줄이 생겼다.
   const spaceW=condense?.space?measure(' '):0,loose=(text,limit)=>!!condense?.space&&measure(text)-limit<=(text.split(' ').length-1)*spaceW*condense.space;
-  const squeeze=(text,limit)=>{if(!condense)return null;const over=measure(text)-limit;if(over<=0)return 0;// 엔진의 자간 %는 글자마다 자기 폭 기준이라(10-25 실측: 가·ⓐ·마침표·띄어쓰기 모두 약 10%) 줄어드는 폭 ≈ c% × 줄 폭. 3px은 재기 오차 여유.
-    const c=Math.ceil((over+3)/measure(text)*100);return c<=condense.max?c:null;};
+  // condense.text(학교 양식, 11-02): 좁혀지는 폭은 글자 폭뿐이다(엔진 자간은 수식에 안 걸림). 줄 폭으로 나누면 수식이 긴 줄에서 「들어간다」고 잘못 보고
+  // 엔진이 낱말 가운데를 끊었다(화학Ⅰ 「…(%) 22=8이 / 다.」). condense.text가 없으면(수능 틀) 예전처럼 줄 폭으로 나눈다.
+  // condense.width(학교 양식): 넘친 양은 글자·수식 폭 여유(SCHOOL_TEXT_PAD·eqPad)를 빼고 재고, 그만큼 재기 오차 여유는 3px에서 2px로 — 여유까지 넘친 몫으로 세면 들어갈 줄도 넘겼다(물리Ⅰ 「…세기는 / I₀이다.」).
+  const squeeze=(text,limit)=>{if(!condense)return null;if(measure(text)<=limit)return 0;const over=(condense.width?condense.width(text):measure(text))-limit;if(over<=0)return 1;// 실제 폭으로는 들어가면 1%만(0은 바깥에서 「못 넣음」으로 읽혀 줄을 넘겼다)// 엔진의 자간 %는 글자마다 자기 폭 기준이라(10-25 실측: 가·ⓐ·마침표·띄어쓰기 모두 약 10%) 줄어드는 폭 ≈ c% × 줄 폭. 3px은 재기 오차 여유.
+    const base=condense.text?condense.text(text):measure(text);if(!(base>0))return null;const c=Math.ceil((over+(condense.width?2:3))/base*100);return c<=condense.max?c:null;};
+  // condense.shrink(학교 양식): 나눌 수 없는 낱말(수식+「이다.」)만으로도 줄이 넘치면 그 줄 수식을 줄여 넣는다(handoff가 크기를 정함).
+  const fit=(text,limit)=>{if(condense?.shrink&&measure(text)>limit)condense.shrink(text,limit);return text;};
   // 문단 끝: 넘치는 낱말이 문단의 마지막 낱말들이고 좁혀서(최대 max%) 다 들어가면 한 줄에 둔다(원본도 「있다.」 하나만 남는 줄을 이렇게 없앤다).
   for(const original of String(value).split(/\r?\n/)){
     let line='',tight=0;const units=wrapUnits(original);
@@ -156,9 +162,15 @@ export function wrapHangingText(value,width,prefix,measure,condense=null){
       // 문단 끝 규칙이 먼저: 남은 낱말을 모두 좁혀 넣을 수 있으면 그렇게 한다. 그다음 띄어쓰기 규칙.
       const rest=[line,...units.slice(k)].join(' '),c=squeeze(rest,at(lines.length)-(lines.length?indent:0)-eqRoom(rest));
       if(c){line=rest;tight=c;break;}
+      // 글자만 좁혀서는 안 되면 남은 낱말의 수식을 줄여서라도 한 줄에(학교 양식) — 「○」만 남는 줄이 생겼다(11-02 화학Ⅰ 분수 줄).
+      // 글자만으로 안 되면 글자는 한도(max%)까지 좁히고 모자란 몫만 수식을 줄인다(사용자 11-02: 자간과 수식 크기로 맞춰 한 줄에).
+      // 수식만 줄이기를 먼저 하면 분수가 80%까지 작아졌다(「W와 Y의 [분수]는 같다.」) — 자간을 먼저 쓴다.
+      if(condense?.shrink&&condense.text){const cover=condense.text(rest)*condense.max/100-2;
+        if(cover>0&&condense.shrink(rest,at(lines.length)-(lines.length?indent:0)-eqRoom(rest)+cover,true)){line=rest;tight=condense.max;break;}}
       if(loose(candidate,limit)){const c2=squeeze(candidate,limit);if(c2){lines.push(String.fromCharCode(CONDENSE+c2)+candidate);line='';continue;}}
-      lines.push(line);line=word;
+      fit(line,at(lines.length)-(lines.length?indent:0)-eqRoom(line));lines.push(line);line=word;
     }
+    if(!tight)fit(line,at(lines.length)-(lines.length?indent:0)-eqRoom(line));
     lines.push(tight?String.fromCharCode(CONDENSE+tight)+line:line);
   }
   return lines.join('\n');
@@ -173,7 +185,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const FS=L.textSize||11;
   // 글자 폭 재기(장평 + 자간)도 틀 값으로.
   // 학교 양식은 2% 넉넉히 잰다(11-01 밤샘 대왕중 화학Ⅰ 24-9월 16번: 긴 수식 뒤 「이다.」가 칸 오른쪽 여백을 6px 넘음 — 잰 폭과 엔진 폭 차이). 수능 틀은 그대로.
-  if(measureText)measureText.factor=(L.ratio+L.spacing)/100*(String(standard.id).split('@')[0]===KICE_STANDARD.id?1:1.02);
+  const SCHOOL_TEXT_PAD=1.02;
+  if(measureText)measureText.factor=(L.ratio+L.spacing)/100*(String(standard.id).split('@')[0]===KICE_STANDARD.id?1:SCHOOL_TEXT_PAD);
   const kiceFrame=String(standard.id).split('@')[0]===KICE_STANDARD.id,besideNeed=BESIDE_MIN_CHARS*FS*4/3*(L.ratio+L.spacing)/100;
   const besideRoom=w=>kiceFrame||w>=besideNeed;
   // 글 옆 그림 폭: 옆 글 자리가 모자라면 BESIDE_SHRINK배까지 줄인다(수능 틀은 그대로).
@@ -186,7 +199,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 상자 안 그림 어울림(10-25): 그림 높이만큼의 줄(k)만 좁은 폭(narrow)으로 나눈다. used = 지금까지 나눈 줄 수.
   let beside=null;
   // 칸·〈보기〉·과정 줄의 자간 좁힘 한도(기본 −5%에서 더 좁힐 %). 한글 문서로 보낼 때만.
-  const TIGHT=native?{em:FS*4/3,max:15,space:.5}:null;
+  // 학교 양식(11-02): text = 좁혀지는 글자 폭만, shrink = 나눌 수 없는 낱말이 넘치면 그 줄 수식을 EQ_FIT_MIN배까지 줄인다(사용자: 수식을 조금 줄이더라도 한 줄에).
+  const TIGHT=native?{em:FS*4/3,max:15,space:.5,...(kiceFrame?{}:{text:v=>measureGlyphs(v,FS),width:v=>measureGlyphs(v,FS)/SCHOOL_TEXT_PAD+measureEqs(v,FS),shrink:(v,limit,exact)=>shrinkEquations(v,limit,FS,exact)})}:null;
   // at = {item, line}: 그림 옆 첫 줄이 칸 안 몇째 항목의 몇째 줄인지(변환기 besideAt). 그 항목을 나눌 때 from(칸 안 줄 번호)을 정한다.
   const besideWidth=(w,item=0)=>{if(!beside)return w;const b=beside;if(b.from===null&&item>=b.at.item)b.from=b.used+(item===b.at.item?b.at.line:0);return i=>b.from!==null&&b.used+i>=b.from&&b.used+i<b.from+b.k?Math.min(w,b.narrow):w;};
   const besideCount=wrapped=>{if(beside)beside.used+=String(wrapped).split('\n').length;return wrapped;};
@@ -196,14 +210,28 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 줄 배치가 흔들리며, 공백류는 빈 칸으로 취급된다(2026-10-16 실험).
   let nested=0,inBox=0;
   // 칸 안 글 폭·높이를 잴 때 수식은 수식 개체 크기로 잰다. 글에는 $…$ 그대로이거나 이미 수식 자리표시(EXAMPOOL_EQ_n_END)로 바뀐 것이 온다.
-  const MARK=/(EXAMPOOL_EQ_\d+_END)/,eqSize=(script,fontSize)=>measureText?.equation?.(script,fontSize)||equationEstimate(script,fontSize);
-  const pieces=v=>String(v??'').split(MARK).flatMap(part=>{const m=part.match(/^EXAMPOOL_EQ_(\d+)_END$/);return m?[{math:true,text:equations[Number(m[1])]?.script||''}]:mathParts(part);});
+  // 학교 양식: 분수·합·적분·행렬처럼 위아래로 쌓는 키 큰 수식은 90% 크기로(11-02 사용자: 분수 줄 위아래가 너무 벌어짐). 수능 틀은 그대로.
+  const EQ_TALL=.9,tallEq=s=>/\\(?:frac|dfrac|tfrac|binom|sum|int|lim|prod)\b|\b(?:over|atop|matrix|pmatrix|bmatrix|cases|pile|sum|int|lim)\b/.test(String(s)),eqScale=s=>kiceFrame||!tallEq(s)?1:EQ_TALL;
+  // 학교 양식은 수식 글도 엔진이 겹치지 않게 그리는 꼴로 손질해 넣고 잰다(equation-script.js). 수능 틀은 그대로.
+  const eqScript=s=>kiceFrame?s:tidyEquationScript(s);
+  const MARK=/(EXAMPOOL_EQ_\d+_END)/,eqSize=(script,fontSize)=>{const f=fontSize*eqScale(script);script=eqScript(script);return measureText?.equation?.(script,f)||equationEstimate(script,f);};
+  const pieces=v=>String(v??'').split(MARK).flatMap(part=>{const m=part.match(/^EXAMPOOL_EQ_(\d+)_END$/);return m?[{math:true,text:equations[Number(m[1])]?.script||'',k:equations[Number(m[1])]?.shrink||1}]:mathParts(part);});
   // 결합 밑줄 문자(U+0332)는 폭이 없다 — 재기 전에 뺀다.
   // 학교 양식: 수식 폭도 6% 넉넉히(긴 반응식 수식이 잰 것보다 넓게 그려져 같은 줄 뒤 글이 칸 여백을 넘음, 11-01 밤샘). 수능 틀은 그대로.
   const eqPad=kiceFrame?1:1.06;
-  const measureRich=(v,fontSize=FS)=>pieces(String(v??'').replace(/\u0332/g,'')).reduce((sum,part)=>sum+(part.math?eqSize(part.text,fontSize).w*eqPad:part.text?(measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)):0),0);
+  const measureRich=(v,fontSize=FS)=>pieces(String(v??'').replace(/\u0332/g,'')).reduce((sum,part,i,all)=>sum+(part.math?eqSize(part.text+(kiceFrame?'':tailOf(part.text,all[i+1]?.text)),fontSize*(part.k||1)).w*eqPad:part.text?(measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)):0),0);
+  const measureGlyphs=(v,fontSize=FS)=>pieces(String(v??'').replace(/\u0332/g,'')).reduce((sum,part)=>sum+(part.math||!part.text?0:measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)),0);
+  const measureEqs=(v,fontSize=FS)=>pieces(String(v??'')).reduce((sum,part,i,all)=>sum+(part.math?eqSize(part.text+(kiceFrame?'':tailOf(part.text,all[i+1]?.text)),fontSize*(part.k||1)).w:0),0);
+  const EQ_FIT_MIN=.8;
+  // exact: 줄여서 다 들어갈 때만 줄인다(못 들어가면 그대로 두고 false). 아니면 EQ_FIT_MIN배까지라도 줄여 넘침을 줄인다.
+  // 줄이는 것은 넓은 수식(글자 두 개 반보다 넓은 것: 분수·긴 식)만 — 한두 글자 변수(「Y」)까지 줄여 같은 줄 변수가 작아졌다(11-02).
+  const shrinkEquations=(v,limit,fontSize=FS,exact=false)=>{const ids=[...String(v).matchAll(/EXAMPOOL_EQ_(\d+)_END/g)].map(m=>Number(m[1])).filter(n=>equations[n]&&eqSize(equations[n].script,fontSize*(equations[n].shrink||1)).w>fontSize*4/3*2.5);if(!ids.length)return false;
+    // 수식 폭 여유(eqPad)는 넘침 판단에서 빼고 수식 자체 폭만 줄인다 — 여유까지 줄일 몫으로 세면 들어갈 줄도 못 들어간다고 봤다(화학Ⅰ 분수 줄 실측).
+    // 여유(eqPad)는 줄의 모든 수식에서 뺀다 — 넓은 수식에서만 빼면 작은 수식(p·I₀)의 여유가 넘친 양에 남아 들어갈 줄을 넘겼다(물리Ⅰ 〈보기〉 ㄷ).
+    const raw=ids.reduce((sum,n)=>sum+eqSize(equations[n].script,fontSize*(equations[n].shrink||1)).w,0),over=measureRich(v,fontSize)-measureEqs(v,fontSize)*(eqPad-1)-limit;if(over<=0||raw<=0)return false;
+    const want=(raw-over-2)/raw;if(exact&&want<EQ_FIT_MIN)return false;const f=Math.max(EQ_FIT_MIN,want);for(const n of ids)equations[n].shrink=Math.max(EQ_FIT_MIN,(equations[n].shrink||1)*f);return true;};
   // 줄에 든 수식이 글자보다 높으면 그만큼 줄이 높아진다(분수). 칸 높이를 미리 정할 때 더한다.
-  const extraHeight=(wrapped,fontSize=FS)=>String(wrapped).split('\n').reduce((sum,line)=>sum+Math.max(0,...pieces(line).filter(p=>p.math).map(p=>eqSize(p.text,fontSize).h-fontSize*4/3)),0);
+  const extraHeight=(wrapped,fontSize=FS)=>String(wrapped).split('\n').reduce((sum,line)=>sum+Math.max(0,...pieces(line).filter(p=>p.math).map(p=>eqSize(p.text,fontSize*(p.k||1)).h-fontSize*4/3)),0);
   // 가로 묶음 안 폭: 자료표 칸은 적어도 열마다 가장 긴 어절이 들어가는 폭을 받는다(옆 글 칸에서 덜어 온다).
   const tableMin=t=>{if(!measureText||!t)return 0;const fs=t.cols>3?9:10,word=Array(t.cols).fill(36);for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c)||t.merges.some(m=>m.r===r&&m.c===c&&m.cs>1))continue;word[c]=Math.max(word[c],Math.max(0,...words(String(t.cells[r][c].value)).map(x=>measureRich(x,r<t.headerRows?fs-1:fs)))+22);}return word.reduce((a,b)=>a+b,0)+20;};
   // 기출 자료의 원본 실제 폭(px): 그림 widthPt, 표 colWidths 합(PDF pt, 평가원 한 단 387pt = 조판 단 폭). 없으면 0.
@@ -241,7 +269,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     // 평가원 표기대로 반각 < >로 바꿔 넣는다 — 카드에 적힌 글(segment.value)은 그대로 둔다.
     // 거북 괄호 〔 〕(U+3014·3015)도 같은 문제로 「〔실험」이 「칠험」처럼 겹쳤다(10-24 11번) — 이 글꼴에서 비슷하게 그려지는 [ ]로 넣는다.
     value=value.replace(/\u3008/g,'<').replace(/\u3009/g,'>').replace(/\u3014/g,'[').replace(/\u3015/g,']');
-    if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text.replace(/\u0332/g,''));return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
+    if(native&&!kiceFrame)value=joinTildeEquations(value);
+    if(native)value=mathParts(value).map((part,i,all)=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text.replace(/\u0332/g,''));return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:eqScript(part.text)+(kiceFrame?'':tailOf(part.text,all[i+1]?.text)),fontSize:Math.round(fontSize*100*eqScale(part.text))});return marker;}).join('');
     else if(value.replace(/\u200b/g,'').trim())texts.push(value.replace(/\u0332/g,''));
     // [3점]은 앞 낱말과 한 덩어리로 줄을 맞춘다(혼자 다음 줄로 떨어지지 않게).
     value=value.replace(/ (\[\d+(?:\.\d+)?점\]|\(\d+(?:\.\d+)?점\))$/,'\u2060$1');
@@ -250,14 +279,19 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     if(/ $/.test(String(v??''))&&!/ $/.test(value))value+=' ';
     // 줄바꿈 바로 뒤 줄 첫머리 수식은 한글 엔진이 그리지 않는다(10-24 물리Ⅰ 11번 「S₂를」) — 앞에 1pt 크기 폭 없는 글자(U+2060)를 둔다.
     // 글자 크기 그대로 두면 엔진이 U+2060을 13px(U+200A도 7px)로 그려 그 줄만 한 글자 들어갔다(10-25 물리Ⅰ 24-9월 11번).
-    value=value.replace(/\n(EXAMPOOL_EQ_\d+_END)/g,'\n\u2060$1');
+    // 자간을 좁힌 줄은 첫머리에 좁힘 표시(U+E010~)가 먼저 와서 「줄바꿈 바로 뒤 수식」을 못 알아봤다 — 그 줄 첫 수식이 그려지지 않았다(11-02 화학Ⅰ 「n+l가」).
+    // 수능 틀에도 같은 줄이 16건 있으나 출력이 바뀌어 사용자 승인 전까지 학교 양식만(11-02).
+    value=kiceFrame?value.replace(/\n(EXAMPOOL_EQ_\d+_END)/g,'\n\u2060$1'):value.replace(/\n([\uE010-\uE01F]?)(EXAMPOOL_EQ_\d+_END)/g,'\n$1\u2060$2');
     // 한글 문서에 들어간 그대로의 글(어절 줄바꿈 포함). 시트에서 고친 글을 한글 창의 같은 문단에 바로 넣을 때 쓴다.
     if(segment){segment.wrapped=value.replace(/[\uE010-\uE01F]/g,'');segment.math=math;}
     if(isGhost)value=value.replace(/\u0332/g,'');
     if(isGhost){const head=E(value.slice(0,lead)).replace(/\r?\n/g,'<br>'),rest=E(value.slice(lead)).replace(/\r?\n/g,'<br>');return native?`${head?`<span style="font-family:${font};font-size:${fontSize}pt">${head}</span>`:''}<span style="font-family:${font};font-size:${fontSize}pt;color:${GHOST_INK}">${rest}</span>`:head+rest;}
     // 「ㄱ. 」「① 」처럼 번호 뒤 빈 칸으로 끝나면 한글로 넘길 때 끝 공백이 사라진다 — 마지막 공백만 줄바꿈 없는 공백으로 남겨, 누르면 한 칸 띄운 자리에서 쓰게 한다.
     // 밑줄(10-25): 글자 뒤 결합 밑줄 문자(U+0332)가 붙은 글자들을 밑줄 서식으로. 줄바꿈에서 끊는다.
-    const marked=value.replace(/\n\u2060(EXAMPOOL_EQ_)/g,'\n\uE002$1').replace(/(?:[^\u0332\n]\u0332)+/g,m=>'\uE000'+m.replace(/\u0332/g,'')+'\uE001').replace(/\u0332/g,'');
+    // 학교 양식(11-02): 수식 바로 뒤가 빈칸·줄바꿈·글 끝이면 1pt 연결 문자(\uE002)를 둔다 — 줄이 수식 바로 뒤에서 끝나면 엔진이 그 줄 높이에 수식을 넣지 않아
+    // (문단 끝 수식은 줄째로 빠짐) 분수·반응식이 아랫줄과 겹쳤다. 보통 크기 U+2060은 한컴산뜻돋움 7px·함초롬바탕 14px 폭을 차지해 수식 뒤가 벌어졌다(실측).
+    if(native&&!kiceFrame)value=value.replace(/(EXAMPOOL_EQ_\d+_END)(?=[ \n]|$)/g,'$1\uE002');
+    const marked=value.replace(/\n([\uE010-\uE01F]?)\u2060(EXAMPOOL_EQ_)/g,'\n$1\uE002$2').replace(/(?:[^\u0332\n]\u0332)+/g,m=>'\uE000'+m.replace(/\u0332/g,'')+'\uE001').replace(/\u0332/g,'');
     const ul=h=>h.replace(/\uE000/g,native?'<span style="text-decoration:underline">':'<u>').replace(/\uE001/g,native?'</span>':'</u>').replace(/\uE002/g,native?'<span style="font-size:1pt">\u2060</span>':'');
     // 좁힌 줄 표시(U+E010+n): 그 줄을 글자색 #0A0B(n) 표시로 감싼다(normalizeQuestionImport가 자간 −n%로 바꾼다).
     const body=E(marked).replace(/\r?\n/g,'<br>').replace(/ $/,'&nbsp;').replace(/([\uE010-\uE01F])(.*?)(?=<br>|$)/g,(m,c,rest)=>native?`<span style="color:#0A0B${(c.charCodeAt(0)-CONDENSE).toString(16).padStart(2,'0').toUpperCase()}">${rest}</span>`:rest);
@@ -741,7 +775,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     }
   }
   const askLead=firstText||sideText?String(ask).replace(/\s+/g,' ').trim().slice(0,12):'';
-  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,placeSegments,cellFloats,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
+  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations:equations.map(({shrink,...e})=>shrink?{...e,fontSize:Math.round(e.fontSize*shrink)}:e),warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,placeSegments,cellFloats,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
 }
 
 // 한글 엔진의 getTextFileText는 완성형(KS X 1001) 밖 글자를 문서에는 그대로 두고, 글로 꺼낼 때만 &#9702; 같은

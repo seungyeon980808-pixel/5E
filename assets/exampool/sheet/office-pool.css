@@ -43,7 +43,7 @@
 .pv-actions{justify-content:space-between}
 .pv-actions select{height:var(--ds-h-control-sm);border-radius:var(--ds-radius-sm);border:1px solid var(--ds-line-strong);background:var(--ds-field);color:var(--ds-ink-2);font-size:var(--ds-text-meta)}
 .pv-sub{font-size:12px;color:var(--ds-ink-3);font-weight:500;margin:var(--ds-space-4) 0 0}
-.pv-exam{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center;padding:12px 14px;background:var(--ds-raise);border-radius:var(--ds-radius-lg);box-shadow:0 0 0 1px var(--ds-line)}
+.pv-exam{display:grid;grid-template-columns:1fr auto auto auto auto;gap:14px;align-items:center;padding:12px 14px;background:var(--ds-raise);border-radius:var(--ds-radius-lg);box-shadow:0 0 0 1px var(--ds-line)}
 .pv-exam b{font-size:13.5px}.pv-exam span{display:block;color:var(--ds-ink-3);font-size:var(--ds-text-meta);margin-top:3px}
 .bar3{display:flex;width:120px;height:6px;border-radius:3px;overflow:hidden;background:var(--ds-panel)}.bar3 i{display:block}
 .badge{height:22px;padding:0 9px;border-radius:11px;font-size:var(--ds-text-meta);display:inline-flex!important;align-items:center;margin:0!important;background:var(--go-bg,#152137);color:var(--go-ink,var(--ds-ink));box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
@@ -402,6 +402,21 @@
 .pv-exam-body{grid-template-columns:minmax(280px,360px) minmax(0,1fr) minmax(240px,300px)!important}
 .pv-sheetcol{min-width:0;overflow:auto;padding:0 4px}
 .pv-sheet{display:flex;flex-direction:column;gap:14px;align-items:center}
+/* 조판 중 표시(11-02 시안 exam-loading-1102): 처음 = 도는 표시·단계·진행 막대·빈 종이, 다시 = 옛 쪽 흐리게 + 위에 작은 표시 */
+.pv-load{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 0 4px;color:var(--ds-ink)}
+.pv-load b{font-size:13px;font-weight:600}.pv-load small{font-size:12px;color:var(--ds-ink-3)}
+.pv-bar{width:180px;height:3px;border-radius:2px;background:var(--ds-line);overflow:hidden}
+.pv-bar i{display:block;height:100%;width:2%;border-radius:2px;background:var(--go-line,#6ba4f8);transition:width .3s ease}
+.pv-spin{width:20px;height:20px;border-radius:50%;border:2px solid var(--ds-line);border-top-color:var(--go-line,#6ba4f8);animation:pv-spin .9s linear infinite}
+@keyframes pv-spin{to{transform:rotate(1turn)}}
+.pv-ghost{width:min(70%,520px);aspect-ratio:257/364;border-radius:4px;background:var(--ds-raise);position:relative;overflow:hidden;opacity:.7}
+.pv-ghost::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);transform:translateX(-100%);animation:pv-sheen 1.6s linear infinite}
+.pv-ghost::after{content:"";position:absolute;top:8%;bottom:6%;left:50%;width:1px;background:var(--ds-line)}
+@keyframes pv-sheen{to{transform:translateX(100%)}}
+.pv-busy .pv-pg{opacity:.45;transition:opacity .3s}
+.pv-rechip{position:sticky;top:12px;z-index:5;margin-bottom:-40px;display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--ds-line-strong);border-radius:20px;background:var(--ds-raise);color:var(--ds-ink);font-size:12px;box-shadow:var(--ds-shadow-float,0 6px 18px rgba(0,0,0,.4))}
+.pv-rechip .pv-spin{width:14px;height:14px}.pv-rechip small{color:var(--ds-ink-3)}
+@media (prefers-reduced-motion:reduce){.pv-spin,.pv-ghost::before{animation:none}}
 .pv-sheet-head{align-self:stretch;display:flex;align-items:baseline;gap:8px;color:var(--ds-ink-2);font-size:var(--cv-text-small,12.5px)}
 .pv-sheet-head span{color:var(--ds-ink-3)}
 .pv-pg{position:relative;margin:0;width:min(100%,640px);background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
@@ -591,3 +606,17 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .pv-gapbar.v label:has(input:focus-visible) b{outline:1px solid #6ba4f8}
 .pv-gapbar.v .pv-gapwhy{display:block;text-align:center;font-size:10px;line-height:13px}
 .pv-gapbar.v{transition:none}
+
+/* 여러 문항 고르기·시험지 삭제(11-02 시안 select-delete-1102) */
+.lv-check{position:absolute;top:6px;left:6px;z-index:2;width:24px;height:24px;padding:0;border-radius:6px;border:1.5px solid var(--ds-line-strong);background:rgba(13,17,23,.75);color:transparent;display:grid;place-items:center;opacity:0;transition:opacity .15s;cursor:pointer}
+.lv-check svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.lv-card:hover .lv-check,.lv-check:focus-visible,.lv-picking .lv-check,.lv-list li:hover .lv-check{opacity:1}
+.lv-check[aria-pressed="true"]{background:var(--go-line,#6ba4f8);border-color:var(--go-line,#6ba4f8);color:#0b0d12}
+.lv-card.sel{border-color:var(--go-line,#6ba4f8);box-shadow:0 0 0 1px var(--go-line,#6ba4f8)}
+.lv-picking .lv-card:not(.sel) .lv-thumb{opacity:.75}
+.lv-list .lv-check{position:static;flex:none;margin-right:2px}
+.lv-list li.sel .lv-row{background:var(--ds-selected,#1c2a3d)}
+.lv-selbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:8px;min-height:46px;margin:0 20px 14px;padding:5px 8px 5px 14px;border-radius:10px;background:var(--ds-raise);box-shadow:0 0 0 1px var(--go-line,#6ba4f8)}
+.lv-selbar b{font-size:13px;font-weight:600;margin-right:6px}.lv-selbar .sp{flex:1}.lv-selbar .lv-btn{height:32px;padding:0 12px;font-size:12.5px}
+.top-menu button.danger{color:var(--ds-danger)}
+.pv-rename{height:28px;min-width:240px;padding:0 8px;border:1px solid var(--go-line,#6ba4f8);border-radius:6px;background:var(--ds-field,#010409);color:var(--ds-ink);font:inherit;font-size:13.5px}

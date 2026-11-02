@@ -4,6 +4,7 @@ import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integ
 import { appSwitchHtml } from './app-switch.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
+import {forHancom} from '../assets/exampool/sheet/hancom-file.js';
 
 import { PictureSettings, ExamRegionSurface } from './rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import { validRegion, DEFAULT_PICTURE_LAYOUT } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
@@ -1140,7 +1141,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
   async function exportDocument(format) {
     await stableSave();
-    const bytes = format === 'hwp' ? await bridge.exportHwp() : await bridge.exportHwpx();
+    const bytes = format === 'hwp' ? await bridge.exportHwp() : await forHancom(await bridge.exportHwpx());
     download(new Blob([bytes]), `${safeName(nameInput.value)}.${format}`);
     message('한글 파일 다운로드를 시작했습니다. 연결된 PNG에 그림 원본이 들어 있습니다.');
   }

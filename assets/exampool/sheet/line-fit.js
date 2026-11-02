@@ -9,14 +9,16 @@ const J = v => typeof v === 'string' ? JSON.parse(v) : v;
 const HEAD = /^(?:\d{1,3}\.|[ㄱ-ㅎ]\.|[①-⑳]|\([가-하]\)|서술형\s*\d+\.)[  ]/;
 const WIDE = 0.06;
 
-export function fitQuestionLines(doc, { low = -10, high = 0, shortLastLine = 15, base = -5, section = 0, trace = null } = {}) {
+// school(11-02 학교 양식): 수식이 든 문단도 맞추고(applyCharFormat·getLineInfo는 수식을 한 칸으로 같게 셈, 실측), 줄 오른쪽 끝은 쪽 여백이 아니라
+// 그 문단의 양쪽 정렬 줄 끝으로 잰다(여러 단·그림 옆으로 좁힌 문단). 수능 틀은 예전 그대로.
+export function fitQuestionLines(doc, { low = -10, high = 0, shortLastLine = 15, base = -5, section = 0, trace = null, school = false } = {}) {
   // 내어쓰기·어울림을 건 뒤에는 줄 배치 정보가 옛것이라(getLineInfo가 한 줄로 답함) 먼저 다시 계산한다.
   doc.reflowLinesegs?.();
   const page = J(doc.getPageDef(0)), colRight = (page.width - page.marginRight) / 75;
   const result = { paragraphs: 0, changed: 0, reverted: 0, ops: 0 };
   const count = doc.getParagraphCount(section);
   for (let para = 0; para < count; para++) {
-    const fit = fitOne(doc, section, para, { colRight, low, high, shortLastLine, base });
+    const fit = fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, school });
     trace?.push({ para, ...fit });
     if (fit.skip) continue;
     result.paragraphs++; result.ops += fit.ops;
@@ -26,22 +28,33 @@ export function fitQuestionLines(doc, { low = -10, high = 0, shortLastLine = 15,
 }
 
 // 한 문단만(한글 창에서 글을 고친 뒤, 10-22 O1). from: 이 글자 위치가 든 줄부터 아래로만 맞춘다(윗줄은 그대로라 덜 흔들림).
-export function fitQuestionParagraph(doc, section, para, { low = -10, high = 0, shortLastLine = 15, base = -5, from = 0 } = {}) {
+export function fitQuestionParagraph(doc, section, para, { low = -10, high = 0, shortLastLine = 15, base = -5, from = 0, school = false } = {}) {
   const page = J(doc.getPageDef(0)), colRight = (page.width - page.marginRight) / 75;
-  return fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from });
+  return fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from, school });
 }
 
-function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from = 0 }) {
+function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from = 0, school = false }) {
   const length = doc.getParagraphLength(section, para);
   if (length < 8) return { skip: 'short' };
   let controls = []; try { controls = J(doc.getControlTextPositions(section, para)) || []; } catch {}
-  if (controls.length) return { skip: 'controls', n: controls.length };
+  if (controls.length && !school) return { skip: 'controls', n: controls.length };
   const props = J(doc.getParaPropertiesAt(section, para));
   if (!['justify', 'distribute'].includes(String(props.alignment).toLowerCase())) return { skip: 'align:' + props.alignment };
+  if (school) { const edge = justifiedEdge(doc, section, para); if (!edge) return { skip: 'edge' }; colRight = edge; }
   const text = doc.getTextRange(section, para, 0, length), head = (text.match(HEAD)?.[0].length) || 0;
   return { head, ...fitParagraph(doc, section, para, { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment, from }) };
 }
 
+// 양쪽 정렬 문단에서 끝줄을 뺀 줄들의 오른쪽 끝 = 그 문단이 쓰는 오른쪽 끝(단·그림 옆 여백 반영). 두 줄 미만이면 모름.
+function justifiedEdge(doc, sec, para) {
+  const lines = new Map();
+  for (let p = 0; p < doc.pageCount(); p++) for (const r of J(doc.getPageTextLayout(p)).runs || []) {
+    if (r.secIdx !== sec || r.paraIdx !== para || r.cellPath?.length || !String(r.text || '').trim()) continue;
+    const key = `${p}:${Math.round(r.y * 2)}`; lines.set(key, Math.max(lines.get(key) ?? -Infinity, r.x + r.w));
+  }
+  const ends = [...lines.values()]; if (ends.length < 2) return null;
+  ends.pop(); return Math.max(...ends);
+}
 function fitParagraph(doc, sec, para, { length, head, colRight, low, high, shortLastLine, base, alignment, from: startAt = 0 }) {
   let ops = 0;
   const set = (s, e, v) => { if (e <= s) return; doc.applyCharFormat(sec, para, s, e, JSON.stringify({ spacings: Array(7).fill(v) })); ops++; };

@@ -48,8 +48,10 @@ export function readSchoolForm(doc, { fileName = '학교 양식', name } = {}) {
     const percent = heads.filter(x => String(x.p.lineSpacingType).toLowerCase() === 'percent'), line = percent.length ? Math.round(mode(percent.map(x => x.p.lineSpacing))) : null;
     const align = mode(heads.map(x => String(x.p.alignment || '').toLowerCase()));
     // 한글 줄 나눔(koreanBreakUnit 1 = 글자, 0 = 어절): 문항 문단의 1/3 넘게 글자 단위면 글자 — 좁은 단에서 어절 + 양쪽 맞춤은 띄어쓰기가 크게 벌어진다.
-    const chars = heads.filter(x => x.p.koreanBreakUnit === 1).length, brk = chars * 3 > heads.length ? 'char' : 'word';
-    over.text.break = brk; row('줄 나눔', brk === 'char' ? '글자 단위' : '어절 단위', true);
+    // 11-02 사용자(어색한 줄바꿈 없게): 양식이 글자 단위여도 기본은 어절 — 벌어지는 띄어쓰기는 윗줄부터 자간 맞춤(line-fit)이 잡는다. 「조판 확정」에서 글자로 바꿀 수 있다.
+    // 한글 기본값이 글자 단위라 시험한 양식이 모두 글자로 읽혀 「이온 / 화」「(3 / 점)」처럼 낱말 가운데가 끊겼다.
+    const chars = heads.filter(x => x.p.koreanBreakUnit === 1).length, brk = 'word'; void chars;
+    over.text.break = brk; row('줄 나눔', '어절 단위', true, chars * 3 > heads.length ? '양식은 글자 단위 — 낱말이 끊기지 않게 어절로' : '');
     const put = (key, value, ok, label, shown) => { if (ok) { over.text[key] = value; row(label, shown, true); } else row(label, `${KICE_STANDARD.text[key]}(수능 틀)`, false, `${shown} — 범위 밖`); };
     row('문항 문단', `${heads.length}개`, true, '「1.」처럼 번호로 시작하는 문단에서 읽음');
     if (font) { over.text.font = font; row('글꼴', font, true); }
