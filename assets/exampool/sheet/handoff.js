@@ -280,8 +280,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     // 줄바꿈 바로 뒤 줄 첫머리 수식은 한글 엔진이 그리지 않는다(10-24 물리Ⅰ 11번 「S₂를」) — 앞에 1pt 크기 폭 없는 글자(U+2060)를 둔다.
     // 글자 크기 그대로 두면 엔진이 U+2060을 13px(U+200A도 7px)로 그려 그 줄만 한 글자 들어갔다(10-25 물리Ⅰ 24-9월 11번).
     // 자간을 좁힌 줄은 첫머리에 좁힘 표시(U+E010~)가 먼저 와서 「줄바꿈 바로 뒤 수식」을 못 알아봤다 — 그 줄 첫 수식이 그려지지 않았다(11-02 화학Ⅰ 「n+l가」).
-    // 수능 틀에도 같은 줄이 16건 있으나 출력이 바뀌어 사용자 승인 전까지 학교 양식만(11-02).
-    value=kiceFrame?value.replace(/\n(EXAMPOOL_EQ_\d+_END)/g,'\n\u2060$1'):value.replace(/\n([\uE010-\uE01F]?)(EXAMPOOL_EQ_\d+_END)/g,'\n$1\u2060$2');
+    // 수능 틀에도 같은 줄이 있어(11-02 실측 16건) 11-02 사용자 결정으로 두 틀 모두에 건다.
+    value=value.replace(/\n([\uE010-\uE01F]?)(EXAMPOOL_EQ_\d+_END)/g,'\n$1\u2060$2');
     // 한글 문서에 들어간 그대로의 글(어절 줄바꿈 포함). 시트에서 고친 글을 한글 창의 같은 문단에 바로 넣을 때 쓴다.
     if(segment){segment.wrapped=value.replace(/[\uE010-\uE01F]/g,'');segment.math=math;}
     if(isGhost)value=value.replace(/\u0332/g,'');
