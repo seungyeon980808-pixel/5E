@@ -337,11 +337,11 @@ export function equationDrop(Document,script,unit){
 }
 // 줄 배치 손질(XML): 줄 높이가 그 문단 키 큰 수식 높이와 같은 줄(엔진이 수식 때문에 키운 줄)만. 같은 높이 수식이 여럿이면 가장 적게 내려간 값으로(어느 수식도 줄 위로 넘지 않게).
 // 글자가 들어갈 높이(문단 다른 줄 높이, 없으면 baseUnit÷0.9 — 키 큰 수식은 글자의 90%로 넣으므로)보다는 줄이지 않는다. 다시 해도 같다(줄인 줄은 수식 높이와 달라져 다시 잡히지 않음).
-export function liftTallEquations(xml,dropOf){
-  const paragraphs=[],stack=[];
+export function liftTallEquations(xml,dropOf,roomOf=()=>Infinity){
+  const paragraphs=[],stack=[];let top=0;
   for(const m of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
     if(m[0].startsWith('</')){const p=stack.pop();if(p)p.end=m.index;}
-    else{const p={body:m.index+m[0].length};paragraphs.push(p);stack.push(p);}
+    else{const p={body:m.index+m[0].length,depth:stack.length,para:stack.length?-1:top++};paragraphs.push(p);stack.push(p);}
   }
   const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]),edits=[];
   for(const p of paragraphs){
@@ -351,13 +351,25 @@ export function liftTallEquations(xml,dropOf){
     const array=body.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);if(!array)continue;
     const segs=[...array[0].matchAll(/<hp:lineseg\b[^>]*>/g)],at=p.body+array.index;
     const heights=segs.map(m=>num(m[0],'vertsize')),floor=Math.min(...heights.filter(v=>!eqs.some(e=>Math.abs(e.h-v)<=40)),Math.round(Math.max(...eqs.map(e=>e.unit))/0.9));
+    let shift=0;
     for(const [i,m] of segs.entries()){
-      const v=heights[i],near=eqs.filter(e=>Math.abs(e.h-v)<=40);if(!near.length)continue;
-      const drop=Math.min(...near.map(e=>dropOf(e.script,e.unit)));if(!(drop>40))continue;
-      const next=Math.max(floor,Math.round(v-drop/0.85));if(next>=v)continue;
-      // 줄인 만큼 줄 사이(spacing)를 늘린다 — 엔진은 같은 문단 다음 줄을 저장 위치 대신 「이 줄 높이 + 줄 사이」로 다시 놓기도 해서(〈보기〉 ㄱ 둘째 줄이 분수 위로 올라옴, 실측) 둘 다 같은 자리가 되게.
-      const gap=num(m[0],'spacing')||0;
-      edits.push([at+m.index,m[0],m[0].replace(/\bvertsize="-?\d+"/,`vertsize="${next}"`).replace(/\btextheight="-?\d+"/,`textheight="${next}"`).replace(/\bbaseline="-?\d+"/,`baseline="${Math.round(next*.85)}"`).replace(/\bspacing="-?\d+"/,`spacing="${gap+v-next}"`)]);
+      const v=heights[i],near=eqs.filter(e=>Math.abs(e.h-v)<=40);
+      let tag=m[0].replace(/\bvertpos="-?\d+"/,`vertpos="${num(m[0],'vertpos')-shift}"`);
+      if(near.length){
+        const drop=Math.min(...near.map(e=>dropOf(e.script,e.unit))),next=drop>40?Math.max(floor,Math.round(v-drop/0.85)):v;
+        const gap=num(m[0],'spacing')||0;
+        // OmO 11-02: 본문 둘째 줄부터 분수 뒤 추가 여백만 0.15em로. 첫 줄은 엔진이 문단 모양으로 다시 계산하며,
+        // 문단 모양을 줄이면 보통 줄까지 좁아지므로 그대로 둔다. 표 칸도 기존 간격을 유지한다.
+        const compact=!p.depth&&i>0&&near.some(e=>/\\(?:frac|dfrac|tfrac)\b|\bover\b/.test(e.script));
+        // 자동 줄바꿈·그림 어울림에서는 같은 수식도 독립 측정 때보다 아래에 놓일 수 있다.
+        // 실제 다음 줄까지 남은 공간에서 0.15em를 남긴 만큼만 줄인다. 수식 크기나 검사 기준은 바꾸지 않는다.
+        const clear=Math.round(floor*.15),room=roomOf(p.para,i,segs.length)+(v-next)*.85-clear;
+        const reduce=compact?Math.max(0,Math.min(gap-clear,Math.floor(room))):0,spacing=gap-reduce;shift+=reduce;
+        if(next<v)tag=tag.replace(/\bvertsize="-?\d+"/,`vertsize="${next}"`).replace(/\btextheight="-?\d+"/,`textheight="${next}"`).replace(/\bbaseline="-?\d+"/,`baseline="${Math.round(next*.85)}"`);
+        // 수식 끌어올리기로 줄인 높이는 여백으로 돌려준다. 실제 간격 감소량은 위에서 고른 추가 여백 차이뿐이다.
+        tag=tag.replace(/\bspacing="-?\d+"/,`spacing="${spacing+v-next}"`);
+      }
+      if(tag!==m[0])edits.push([at+m.index,m[0],tag]);
     }
   }
   for(const [index,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,index)+next+xml.slice(index+old.length);
@@ -365,10 +377,28 @@ export function liftTallEquations(xml,dropOf){
 }
 export async function applyLiftTallEquations(bytes,JSZip,Document){
   const zip=await JSZip.loadAsync(new Uint8Array(bytes));let changed=false;
-  for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){
-    const xml=await zip.file(name).async('string'),next=liftTallEquations(xml,(script,unit)=>equationDrop(Document,script,unit));
-    if(next!==xml){zip.file(name,next);changed=true;}
-  }
+  const document=new Document(bytes),lines=new Map(),equations=[];
+  try{
+    for(let page=0;page<document.pageCount();page++){
+      for(const r of JSON.parse(document.getPageTextLayout(page)).runs.filter(r=>!r.cellPath?.length)){
+        const key=r.secIdx+':'+r.paraIdx,list=lines.get(key)||[];
+        if(!list.some(l=>l.page===page&&Math.abs(l.y-r.y)<.2))list.push({page,y:r.y});lines.set(key,list);
+      }
+      equations.push(...JSON.parse(document.getPageControlLayout(page)).controls.filter(c=>c.type==='equation'&&!c.cellPath?.length).map(c=>({...c,page})));
+    }
+    for(const list of lines.values())list.sort((a,b)=>a.page-b.page||a.y-b.y);
+    for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){
+      const section=Number(name.match(/section(\d+)/)[1]);
+      const roomOf=(para,line,count)=>{
+        const list=lines.get(section+':'+para);
+        if(list?.length!==count||line+1===count||list[line].page!==list[line+1].page)return -Infinity;
+        const here=list[line],next=list[line+1],own=equations.filter(e=>e.secIdx===section&&e.paraIdx===para&&e.page===here.page&&e.y>=here.y-.8&&e.y<next.y-.8);
+        return own.length?(next.y-Math.max(...own.map(e=>e.y+e.h)))*75:-Infinity;
+      };
+      const xml=await zip.file(name).async('string'),next=liftTallEquations(xml,(script,unit)=>equationDrop(Document,script,unit),roomOf);
+      if(next!==xml){zip.file(name,next);changed=true;}
+    }
+  }finally{document.free();}
   return changed?zip.generateAsync({type:'uint8array',compression:'DEFLATE'}):bytes;
 }
 // 학교 양식(11-02, OmO): 표만 든 문단(선지 표 등)에 줄 정보가 없으면 rhwp가 어떤 양식(원안지 r01)에서 그 표를 앞 글보다 위에 놓아 본문과 겹쳤다

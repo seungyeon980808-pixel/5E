@@ -54,3 +54,18 @@ test('키 큰 수식 줄은 내려간 만큼 줄 높이를 줄이고 그만큼 �
   assert.equal(num('vertsize') + num('spacing'), 2435 + 552);
   assert.equal(liftTallEquations(out, () => 7.9 * 75), out);
 });
+
+test('문단 둘째 줄부터 분수 뒤 여백만 줄이고 보통 줄 간격과 글자 크기는 유지한다', () => {
+  const xml = '<hp:p id="0"><hp:run><hp:t>보통글자일곱개<hp:lineBreak/></hp:t><hp:equation baseUnit="990"><hp:script>\\frac{가}{나}</hp:script><hp:sz height="3000"/></hp:equation><hp:t><hp:lineBreak/>보통 글줄</hp:t></hp:run>'
+    + '<hp:linesegarray><hp:lineseg textpos="0" vertpos="0" vertsize="1100" textheight="1100" baseline="935" spacing="660"/>'
+    + '<hp:lineseg textpos="8" vertpos="1760" vertsize="3000" textheight="3000" baseline="2550" spacing="660"/>'
+    + '<hp:lineseg textpos="17" vertpos="5420" vertsize="1100" textheight="1100" baseline="935" spacing="660"/></hp:linesegarray></hp:p>';
+  const out = liftTallEquations(xml, () => 0);
+  const segs = [...out.matchAll(/<hp:lineseg [^>]*>/g)].map(m => m[0]);
+  const num = (i, key) => Number(segs[i].match(new RegExp(`${key}="(\\d+)"`))[1]);
+  assert.deepEqual(segs.map((_, i) => num(i, 'spacing')), [660, 165, 660]);
+  assert.deepEqual(segs.map((_, i) => num(i, 'vertpos')), [0, 1760, 4925]);
+  assert.equal(out.match(/<hp:equation[\s\S]*?<\/hp:equation>/)[0], xml.match(/<hp:equation[\s\S]*?<\/hp:equation>/)[0]);
+  assert.equal(liftTallEquations(out, () => 0), out);
+  assert.equal(liftTallEquations(xml, () => 0, () => 0), xml);
+});

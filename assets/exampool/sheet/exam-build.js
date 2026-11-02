@@ -224,6 +224,38 @@ export function placeNextMarks(doc,mark,bodyStart,ranges){
   }
   return {ranges:out,missing};
 }
+// 「☞」 표시 정리(11-03 OmO): 표시를 붙인 뒤 표 간격·채우기로 문단이 옮겨 가면 한 쪽에 표시가 둘 남아 서로 겹쳤다(r00 set01 11쪽).
+// 쪽마다 표시만 든 문단을 모아 둘 이상이면 첫 것만 남기고 나머지 표시 문단을 지운다(본문·학교 꼬리말은 건드리지 않음). 지운 만큼 문항 범위를 당긴다.
+export function dedupeNextMarks(doc,text,ranges){
+  const key=text.replace(/^\S+\s*/,'')||text,extra=[];
+  for(let page=0;page<doc.pageCount();page++){
+    const outer=new Set((parse(doc.getPageTextLayout(page)).runs||[]).filter(r=>!(r.cellPath||[]).length&&String(r.text||'').replace(/\u2060/g,'').trim()).map(r=>r.paraIdx));
+    const paras=[...new Set((parse(doc.getPageTextLayout(page)).runs||[]).filter(r=>(r.cellPath||[]).length&&String(r.text||'').includes(key)).map(r=>r.parentParaIdx??r.paraIdx))].filter(p=>Number.isInteger(p)&&!outer.has(p)).sort((a,b)=>a-b);
+    extra.push(...paras.slice(1));}
+  if(!extra.length)return 0;
+  for(const p of [...new Set(extra)].sort((a,b)=>b-a)){doc.deleteParagraph(0,p);
+    for(const range of ranges.values()){if(range[0]>p)range[0]--;if(range[1]>p)range[1]--;}}
+  return extra.length;
+}
+// 글 앞 그림 제자리(11-03 OmO): 문단 기준 글 앞 그림은 문단의 저장된 줄 위치를 따라 놓이는데, 묶은 뒤 앞 문항이 길어지면
+// 그림만 옛 자리(문단 첫 줄보다 위나 아래)에 남아 앞 문항의 〈보기〉·선지와 겹쳤다(set16 2번, set11 10번). 모자란 만큼 그림의 세로 어긋남을 더한다.
+export function dropRaisedPictures(doc){
+  let fixed=0;
+  for(let p=0;p<doc.pageCount();p++){
+    const runs=(parse(doc.getPageTextLayout(p)).runs||[]).filter(r=>!(r.cellPath||[]).length&&String(r.text||'').replace(/\u2060/g,'').trim());
+    for(const c of parse(doc.getPageControlLayout(p)).controls||[]){
+      if(c.type!=='image'||(c.cellPath||[]).length)continue;
+      let props;try{props=parse(doc.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));}catch{continue;}
+      if(props.treatAsChar||props.vertRelTo!=='Para')continue;
+      const own=runs.filter(r=>r.paraIdx===c.paraIdx);if(!own.length)continue;
+      // 문단이 앞 쪽에서 시작했으면 이 쪽 첫 줄은 문단 첫 줄이 아니다 — 건드리지 않는다. 앞 문항이 짧아져 그림만 아래에 남은 경우(set11 5쪽)도 같은 방식으로 올린다.
+      if(p>0&&(parse(doc.getPageTextLayout(p-1)).runs||[]).some(r=>!(r.cellPath||[]).length&&r.paraIdx===c.paraIdx))continue;
+      const gap=Math.min(...own.map(r=>r.y))-c.y;if(Math.abs(gap)<=2)continue;
+      doc.setPictureProperties(c.secIdx,c.paraIdx,c.controlIdx,JSON.stringify({vertOffset:Math.round((props.vertOffset||0)+gap*75)}));fixed++;
+    }
+  }
+  return fixed;
+}
 // 표가 앞 글줄에 붙거나 겹침(10-31, 14번 〈보기〉 제목이 발문 끝 줄에 겹침): 양식 위에서 엔진이 글자처럼 놓인 표를 앞 글보다 위로 놓을 때가 있다.
 // 문항 안 맨 바깥 표마다 같은 단의 바로 앞 문단 마지막 줄 아래와 비교해, 모자란 만큼 그 표 문단의 「문단 위」 간격을 더한다(1px = 75, 문단 간격은 1pt = 200 → px×150).
 export function fixTableGaps(doc,ranges,{gap=8}={}){
@@ -369,6 +401,8 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
     if(all?.next){b.doc.free();b=all.next;}
     else if(all)for(const at of all.done){const one=tryFill(new Set([at]));if(one?.next){b.doc.free();b=one.next;}}
   }
+  if(b.marks&&dedupeNextMarks(b.doc,b.marks.text,b.ranges)){b.doc=again(b.doc);const on=nextMarkPages(b.doc,b.marks.text),last=on.length-1;b.marks={...b.marks,missing:on.map((v,i)=>i<last&&!v?i:-1).filter(i=>i>=0),extra:on[last]&&last>0?[last]:[]};}
+  for(let round=0;round<3&&dropRaisedPictures(b.doc);round++)b.doc=again(b.doc);
   const left=badOf(b,new Set());
   return {document:b.doc,ranges:b.ranges,moved:[...breaks],tall:left.map(x=>x.id),marks:b.marks};
 }
