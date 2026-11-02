@@ -42,8 +42,52 @@ function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, 
   if (!['justify', 'distribute'].includes(String(props.alignment).toLowerCase())) return { skip: 'align:' + props.alignment };
   if (school) { const edge = justifiedEdge(doc, section, para); if (!edge) return { skip: 'edge' }; colRight = edge; }
   const text = doc.getTextRange(section, para, 0, length), head = (text.match(HEAD)?.[0].length) || 0;
-  return { head, ...fitParagraph(doc, section, para, { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment, from }) };
+  const args = { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment, from };
+  const res = { head, ...fitParagraph(doc, section, para, args) };
+  // 수능 기준 ⑤(11-02 사용자 승인, 실측 ~/Work/2026-11-02_5e-omo-인계/kice-analysis): 수능 양끝맞춤 줄의 띄어쓰기는 0.26~0.46em이고, 좁은 줄에서는 어절 안에서도 끊는다.
+  // 학교 양식에서 어절 단위로 맞춘 뒤에도 띄어쓰기가 GAP_EM 넘게 벌어진 줄이 남으면 이 문단만 한글 줄 나눔을 「글자」로 바꿔 다시 맞춘다. 줄이 늘거나 더 고르지 않으면 되돌린다.
+  if (school && props.koreanBreakUnit === 0) {
+    const g0 = gapLines(doc, section, para);
+    if (g0.widest > GAP_EM) {
+      const keep = spacingsOf(doc, section, para, length, base);
+      doc.applyParaFormat(section, para, '{"koreanBreakUnit":1}');
+      const again = fitParagraph(doc, section, para, { ...args, from: 0 }), g1 = gapLines(doc, section, para);
+      // 어절 안 끊김은 수능에서도 드물다(약 4%). 1.2em 넘게 심하게 벌어진 문단만 끊김 수를 따지지 않고, 그 아래는 한 번까지만 받는다(11-02 사용자 결정 「나 안 1.2em」 — 611문항에서 어절 안 끊김 4.66%, 수능 4.3~4.6%).
+      const mid = midBreaks(doc, section, para, length);
+      // 분수 든 줄이 둘로 갈라지면 줄 수는 같아도 문단이 높아진다(set17#19) — 높아지면 되돌린다.
+      if (g1.n > g0.n || g1.h > g0.h + 0.5 || g1.widest >= g0.widest || (g0.widest <= GAP_SEVERE && mid > 1)) { doc.applyParaFormat(section, para, '{"koreanBreakUnit":0}'); putSpacings(doc, section, para, keep); res.charBreak = 'reverted'; }
+      else { res.charBreak = true; res.changed = true; res.ops += again.ops; }
+      res.gapEm = [+g0.widest.toFixed(2), +g1.widest.toFixed(2)]; res.midBreaks = mid;
+    }
+  }
+  return res;
 }
+const GAP_EM = 0.6, GAP_SEVERE = 1.2;
+// 어절 가운데에서 나뉜 줄 수(줄 끝 글자와 다음 줄 첫 글자가 모두 빈칸이 아님).
+function midBreaks(doc, sec, para, length) {
+  const text = String(doc.getTextRange(sec, para, 0, length)); let off = 0, n = 0;
+  for (let k = 0; k < 400 && off < length; k++) { const li = J(doc.getLineInfo(sec, para, off)); if (li.charEnd <= off) break; if (li.charEnd < length && /\S/.test(text[li.charEnd - 1] || ' ') && /\S/.test(text[li.charEnd] || ' ')) n++; off = li.charEnd; }
+  return n;
+}
+// 문단의 줄 수·높이(px)와, 끝줄을 뺀 줄들에서 가장 넓은 띄어쓰기(글자 크기 대비 em). 줄 첫머리 빈칸·줄 끝 빈칸은 뺀다.
+function gapLines(doc, sec, para) {
+  const lines = new Map();
+  for (let p = 0; p < doc.pageCount(); p++) for (const r of J(doc.getPageTextLayout(p)).runs || []) {
+    if (r.secIdx !== sec || r.paraIdx !== para || r.cellPath?.length) continue;
+    const key = p * 1e6 + Math.round(r.y * 2); (lines.get(key) ?? lines.set(key, []).get(key)).push(r);
+  }
+  const keys = [...lines.keys()].sort((a, b) => a - b); let widest = 0, h = 0;
+  const pages = new Map(); for (const key of keys) for (const r of lines.get(key)) { const p = Math.floor(key / 1e6), b = pages.get(p) ?? [Infinity, -Infinity]; pages.set(p, [Math.min(b[0], r.y), Math.max(b[1], r.y + r.h)]); }
+  for (const [t, b] of pages.values()) h += b - t;
+  for (const key of keys.slice(0, -1)) {
+    const runs = lines.get(key).sort((a, b) => a.x - b.x);
+    runs.forEach((r, ri) => { const t = [...String(r.text || '')], cx = r.charX || [];
+      t.forEach((c, i) => { if (c !== ' ' || (ri === 0 && i === 0) || (ri === runs.length - 1 && i === t.length - 1) || !(r.fontSize > 0) || i + 1 >= cx.length) return; widest = Math.max(widest, (cx[i + 1] - cx[i]) / r.fontSize); }); });
+  }
+  return { n: keys.length, widest, h };
+}
+const spacingsOf = (doc, sec, para, length, base) => { const out = []; for (let k = 0; k < length; k++) { try { out.push(J(doc.getCharPropertiesAt(sec, para, k)).spacings?.[0] ?? base); } catch { out.push(base); } } return out; };
+const putSpacings = (doc, sec, para, sp) => { let s0 = 0; for (let k = 1; k <= sp.length; k++) if (k === sp.length || sp[k] !== sp[s0]) { doc.applyCharFormat(sec, para, s0, k, JSON.stringify({ spacings: Array(7).fill(sp[s0]) })); s0 = k; } };
 
 // 양쪽 정렬 문단에서 끝줄을 뺀 줄들의 오른쪽 끝 = 그 문단이 쓰는 오른쪽 끝(단·그림 옆 여백 반영). 두 줄 미만이면 모름.
 function justifiedEdge(doc, sec, para) {
