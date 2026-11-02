@@ -178,7 +178,7 @@ export function wrapHangingText(value,width,prefix,measure,condense=null){
 // 좁은 단의 글 옆 그림(11-01 대왕중 A4 11pt, 사용자: 「실제 기출이랑 비슷하게」): 그림은 원본처럼 글 옆에 두되, 옆에 남는 글이 한 줄
 // BESIDE_MIN_CHARS 글자보다 좁으면 그림을 BESIDE_SHRINK배까지 줄여 글 자리를 만든다. 그래도 안 되면 그때만 글 아래 가운데로 쌓는다.
 // (옆 글이 한 줄 10자 남짓이면 글자 사이가 벌어지고 글이 그림보다 한참 길게 내려갔다.) 표·그림 묶음은 옆에 띄우면 번호 위로 올라가 쌓는다. 수능 틀은 원본 그대로.
-const BESIDE_MIN_CHARS=12,BESIDE_SHRINK=.7;
+const BESIDE_MIN_CHARS=12,BESIDE_SHRINK=.7,WIDE_FIGURE=.5;
 export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540,{native=false,measureText,skeleton=false,ghostFigure=null,standard=KICE_STANDARD}={}){
   const L=layoutValues(standard),RULE=L.rule||BASE_RULE;
   // 본문 글자 크기(pt): 틀 값. 수능 B4 틀은 원본 PDF 그대로 11.5pt(10-25 실측 — 11pt로 찍어 글자가 원본보다 6% 좁았다).
@@ -486,7 +486,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 어울림 그림: 바로 앞 맨 바깥 글 문단(없으면 번호가 붙는 첫 문단)의 맨 앞에 넣고, 한글로 들여온 뒤 떠 있는 그림으로 바꾼다
   // (applyFloatingPictures). 글자처럼 취급하지 않으므로 문단 글은 그대로 그림 옆·아래로 흐른다. 그림 폭은 크기(단 폭 대비 %).
   // 카드에서 바로 어울림으로 둔 그림도 좁은 단이면 글 아래 가운데로(besideRoom).
-  for(const b of q.blocks.filter(b=>isWrapped(b)&&b.figure))if(!besideRoom(width-figWidth(b,width)*BESIDE_SHRINK-14)){b.layout='세로';delete b.align;}
+  // 수능 기준 ①(11-02 사용자 승인, 평가원 과탐 실측): 글 옆 그림은 단 폭의 27~50%, 그보다 넓은 그림은 글 아래 가운데. 학교 양식만(수능 틀은 원본 그대로).
+  for(const b of q.blocks.filter(b=>isWrapped(b)&&b.figure))if(!besideRoom(width-figWidth(b,width)*BESIDE_SHRINK-14)||!kiceFrame&&figWidth(b,width)>width*WIDE_FIGURE){b.layout='세로';delete b.align;}
   const floatsAt=new Map(),floated=new Set();
   {let at='first';for(const b of q.blocks.filter(b=>!b.parent)){
     if(b.kind==='text'&&b!==firstText&&b.text)at=b.id;
