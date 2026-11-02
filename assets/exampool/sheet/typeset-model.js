@@ -575,7 +575,16 @@ export function widenBelowPictures(Document,bytes,CFB,fit=null){
   let current=bytes;
   for(const j of jobs){
     let at=null,want=null;{const o=new Document(current);try{want=inline(o)?.[j.para]??null;}finally{o.free();}}
-    for(let v=Math.max(1,j.guess-3);v<=j.guess+10&&at===null;v++){const t=new Document(current);
+    // 줄 첫 글자 자리(charStart)는 글 차례(그림·수식 빼고 셈)이고, 문단 나누기 자리는 그림·수식을 한 칸씩 센다 — 앞에 든 그림·수식 수만큼 어긋나
+    // 수식 많은 문단에서 나눌 자리를 못 찾고 넓히기를 포기했다(11-02 set17#24 「물체가 」 줄: 글 차례 96, 나누기 자리 107). 개체 자리로 바꿔 후보를 만들고,
+    // 그 줄 첫 글이 나오는 다른 자리도 함께 해 본다(아래 검사가 수식이 밀리지 않은 자리만 받는다).
+    let full='',cps=[];{const o=new Document(current);try{full=String(o.getTextRange(j.sec,j.para,0,o.getParagraphLength(j.sec,j.para)));cps=P(o.getControlTextPositions(j.sec,j.para))||[];}finally{o.free();}}
+    const toPos=t=>t+cps.filter(c=>Number(c)<=t).length,lead=head(j.text),cands=new Set(),texts=[j.guess];
+    if(lead)for(let i=full.indexOf(lead);i>=0;i=full.indexOf(lead,i+1))texts.push(i);
+    for(let k=-3;k<=10;k++)cands.add(j.guess+k);
+    for(const t of texts)for(let k=-2;k<=2;k++)cands.add(toPos(t)+k);
+    const aim=toPos(j.guess);
+    for(const v of [...cands].filter(v=>v>=1).sort((a,b)=>Math.abs(a-aim)-Math.abs(b-aim))){if(at!==null)break;const t=new Document(current);
       try{const r=P(t.splitParagraph(j.sec,j.para,v));if(r?.ok===false)continue;const got=t.getTextRange(j.sec,j.para+1,0,Math.min(8,t.getParagraphLength(j.sec,j.para+1)));
         // 뒷부분 글이 그 줄 첫 글로 시작하고, 뒷부분 수식 수가 원래 그 줄부터의 수식 수와 같을 때만(수식이 밀리지 않았는지).
         let n=-1;try{n=(P(t.getControlTextPositions(j.sec,j.para+1))||[]).length;}catch{}

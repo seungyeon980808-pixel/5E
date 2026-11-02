@@ -167,6 +167,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         {const S=stdv,school=stdv.source?.kind==='hwp';if(S.fit?.on&&(school||!plan.floats.length&&!plan.floatTable)){fitQuestionLines(styled,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing,school});if(school&&plan.floats.length)for(const [sec,para] of resettleBesidePictures(styled))fitQuestionParagraph(styled,sec,para,{low:S.fit.low,high:S.fit.high,shortLastLine:S.fit.shortLastLine,base:S.text.spacing,school});}}
         if(stdv.source?.kind==='hwp')growCellsToContent(styled);
         fitQuestionPage(styled,prof);verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
+      // 학교 틀(11-02 사용자 거듭 지적): 그림 아래로 내려간 줄은 단 폭으로(widenBelowPictures) — 시험지·내보낸 파일만이 아니라 문항 화면·한글 창·카드 그림도 같게.
+      // 끌어올리기보다 먼저(넓히기가 다시 저장하며 줄 배치를 새로 잡는다). 한글 창 글 연동(buildTextMap)은 공백·문단 나눔을 하나로 보고 찾아 문단이 나뉘어도 맞는다.
+      if(stdv.source?.kind==='hwp')bytes=widenForForm(Document,bytes,stdv);
       // 학교 틀: 키 큰 수식 줄을 끌어올린다(수식이 줄 맨 위에, 다음 줄은 그대로 — applyLiftTallEquations).
       if(stdv.source?.kind==='hwp')bytes=await applyLiftTallEquations(bytes,JSZip,Document);
       if(plan.warnings.length&&!quiet)message(plan.warnings.join(' '));
@@ -418,7 +421,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const rewidth=[];let built;
     if(fstd){
       // 학교 양식(10-29): 보낼 때(buildExam)와 같게 — 양식 틀로 조판하지 않은 문항은 양식 틀로 새로 조판해 양식 위에 묶는다.
-      for(const [k,x] of items.entries()){if(std(x.q).id===fstd.id&&x.saved&&x.profile?.paper===fstd.paper.size)continue;progress({stage:'form',i:k+1,n:items.length});await step();const e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);Object.assign(x,{bytes:widenForForm(Document,e.bytes,fstd),profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
+      for(const [k,x] of items.entries()){if(std(x.q).id===fstd.id&&x.saved&&x.profile?.paper===fstd.paper.size){x.bytes=widenForForm(Document,x.bytes,fstd);continue;}progress({stage:'form',i:k+1,n:items.length});await step();const e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);Object.assign(x,{bytes:widenForForm(Document,e.bytes,fstd),profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
       // 묶은 결과 기억(11-02): 묶기·점검이 쪽 그리기 시간의 대부분(20문항 약 10초)이라, 문항·양식이 그대로면 지난번 묶은 문서를 다시 연다.
       const akey=JSON.stringify([form.id||'',form.bytes?.length||0,form.keep||{},fstd,items.map(x=>[x.id,contentKey(x.q),x.bytes?.length||0,x.after,x.breakBefore])]);
       if(assembled?.key===akey){sheet={...sheet,paper:fstd.paper.size,columns:assembled.columns};built={...assembled.meta,document:new Document(assembled.bytes),pages:[]};}
