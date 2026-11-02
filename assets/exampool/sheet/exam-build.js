@@ -145,13 +145,27 @@ export function pinFormHead(doc,structure){
     if(!off)break;
   }
 }
+// 원안지 양식(11-02): 「※ 선택형 00문항, 논술형 00문항」의 「00」은 글이 아니라 빈 누름틀의 안내문이라 줄 글에 숫자가 없다.
+// 바로 앞 글이 「선택형·객관식」「서술형·논술형」인 누름틀 자리에 문항 수를 글로 끼워 넣는다 — 줄은 fillFormScore가 한 번에 다시 쓴다(누름틀은 글이 된다).
+// 누름틀에 값만 넣고 같은 줄의 총점을 부분 수정하면 엔진이 그 뒤 글자 모양을 빨간 기울임으로 틀었다(11-02 실측).
+function withFieldCounts(doc,part,k,line,objective,essay){
+  if(typeof doc.getFieldList!=='function')return line;
+  const list=JSON.parse(doc.getFieldList()),len=doc.getCellParagraphLength(0,part.para,part.ctrl,0,k),raw=String(doc.getTextInCell(0,part.para,part.ctrl,0,k,0,len)),lead=Math.max(0,raw.search(/\S/));
+  const here=(Array.isArray(list)?list:list.fields||[]).filter(f=>{const path=f.location?.path||[];return f.fieldType==='clickhere'&&f.location.paraIndex===part.para&&path.length===1&&path[0].type==='cell'&&path[0].controlIndex===part.ctrl&&path[0].cellIndex===0&&path[0].paraIndex===k;}).sort((a,b)=>b.startCharIdx-a.startCharIdx);
+  let out=line;
+  for(const f of here){const at=f.startCharIdx-lead;if(at<0||at>out.length)continue;const before=out.slice(0,at);
+    const n=/(?:선택형|객관식)\s*:?\s*$/.test(before)?objective:/(?:서술형|논술형)\s*:?\s*$/.test(before)?essay:null;
+    if(n!==null&&!/^\s*\d/.test(out.slice(at)))out=before+n+out.slice(at);}
+  return out;
+}
 // 「[배점 현황]」 상자(10-29): 「총 31문항」과 「4문항×2점 + … = 100점」을 넣은 문항에 맞춰 다시 쓴다. 다른 줄·글자 모양은 그대로.
 export function fillFormScore(doc,structure,questions){
   const part=(structure.parts||[]).find(p=>p.score);if(!part||!questions.length)return false;
   const objective=questions.filter(q=>q.type!=='서술형'),essay=questions.filter(q=>q.type==='서술형');
   const formula=list=>{const by=new Map();for(const q of list){const v=Number(q.points)||0;by.set(v,(by.get(v)||0)+1);}const keys=[...by.keys()].sort((a,b)=>a-b);return keys.map(v=>`${by.get(v)}문항×${v}점`).join(' + ')+` = ${Math.round(list.reduce((a,q)=>a+(Number(q.points)||0),0)*100)/100}점`;};
   let changed=false;
-  part.lines.forEach((text,k)=>{
+  part.lines.forEach((line,k)=>{
+    const text=withFieldCounts(doc,part,k,line,objective.length,essay.length);
     const pick=/서술/.test(text)?essay:/선택|객관/.test(text)?objective:questions;let next=text;
     if(/총\s*\d+\s*문항/.test(text))next=text.replace(/(총\s*)\d+(\s*문항)/,`$1${pick.length}$2`);
     else if(/\d+\s*문항\s*[×xX*]\s*\d/.test(text)&&/=\s*\d/.test(text))next=formula(/서술/.test(text)?essay:objective.length?objective:questions);
@@ -161,7 +175,7 @@ export function fillFormScore(doc,structure,questions){
     else{const total=Math.round(questions.reduce((a,q)=>a+(Number(q.points)||0),0)*100)/100;
       next=next.replace(/((?:선택형|객관식)\s*:?\s*)\d+(\s*문항)/g,(m,a,b)=>a+objective.length+b).replace(/((?:서술형|논술형)\s*:?\s*)\d+(\s*문항)/g,(m,a,b)=>a+essay.length+b);
       if(!/=\s*\d/.test(text))next=next.replace(/(총\s*)\d+(?:\.\d+)?(\s*점)/,`$1${total}$2`);}
-    if(next===text)return;
+    if(next===line)return;
     const len=doc.getCellParagraphLength(0,part.para,part.ctrl,0,k),lead=String(doc.getTextInCell(0,part.para,part.ctrl,0,k,0,len)).search(/\S/);
     const from=Math.max(0,lead),body=String(doc.getTextInCell(0,part.para,part.ctrl,0,k,0,len)).trim().length;
     doc.deleteTextInCell(0,part.para,part.ctrl,0,k,from,body);doc.insertTextInCell(0,part.para,part.ctrl,0,k,from,next.trim());changed=true;
