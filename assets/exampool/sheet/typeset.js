@@ -303,6 +303,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   const contentKey=value=>JSON.stringify(renderedContent(value));
   // form: 등록한 학교 양식({bytes,structure}) — 주면 그 양식 위에 묶는다. password는 암호 양식일 때 선생님이 입력한 것(남기지 않음).
   // order: 나형처럼 문항 순서를 바꿔 묶을 때(문항 id 순서) — 묶은 뒤 번호를 다시 매긴다.
+  // 그림 아래로 내려간 줄을 단 폭으로(widenBelowPictures, 11-02) — 학교 양식으로 새로 조판한 문항에. 보낼 때(buildExam)와 시험지 미리보기(pageSheetsNow)가 같은 모양이 되게 한 곳에서.
+  const widenForForm=(Document,bytes,s)=>widenBelowPictures(Document,bytes,XLSX.CFB,s.fit?.on?{low:s.fit.low,high:s.fit.high,shortLastLine:s.fit.shortLastLine,base:s.text?.spacing}:null);
   async function buildExam(data,examSet,{form=null,password='',order=null}={}){
     if(order)examSet={...examSet,items:[...order]};
     await ensure();const Document=document().constructor,template=form?await openForm(form.bytes,password):null;
@@ -330,7 +332,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
               for(const s of x.q.blocks.some(b=>b.kind==='table')?[fstd,tight]:[tight]){const e2=await sheetEntry(Document,wide,fstd.paper.size,s);if(!layoutError(e2.bytes)){e=e2;err=null;break;}}}
             if(err){const failed=Error(`${x.q.number}번 문항이 학교 양식 단에서 ${err.message}`);failed.questionId=x.id;failed.frameId=fstd.id;throw failed;}}
           // 그림 아래로 내려간 줄은 단 폭으로(widenBelowPictures, 11-02). 문항이 짧아지기만 해서 쪽 나눔 계획은 그대로 안전하다.
-          rewidth.set(x.id,{bytes:widenBelowPictures(Document,e.bytes,XLSX.CFB,fstd.fit?.on?{low:fstd.fit.low,high:fstd.fit.high,shortLastLine:fstd.fit.shortLastLine,base:fstd.text?.spacing}:null),height:Number.isFinite(e.height)?e.height:60});}}
+          rewidth.set(x.id,{bytes:widenForForm(Document,e.bytes,fstd),height:Number.isFinite(e.height)?e.height:60});}}
     }
     // 학교 양식은 묶을 때마다 새로 연다(걸친 문항을 넘겨 다시 묶기). 처음 연 문서는 구조를 읽는 데만 쓴다.
     template?.free();    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,openTemplate:form?()=>openForm(form.bytes,password):null,columns:structure?.columns||2,bodyStart:structure?.firstQuestion??form?.structure?.firstQuestion??-1,tailStart:structure?.tailStart??-1,rewidth,structure,keep:form?.keep||{},settle:d=>new Document(exportLayoutHwpx(d,XLSX.CFB))});
@@ -416,7 +418,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const rewidth=[];let built;
     if(fstd){
       // 학교 양식(10-29): 보낼 때(buildExam)와 같게 — 양식 틀로 조판하지 않은 문항은 양식 틀로 새로 조판해 양식 위에 묶는다.
-      for(const [k,x] of items.entries()){if(std(x.q).id===fstd.id&&x.saved&&x.profile?.paper===fstd.paper.size)continue;progress({stage:'form',i:k+1,n:items.length});await step();const e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);Object.assign(x,{bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
+      for(const [k,x] of items.entries()){if(std(x.q).id===fstd.id&&x.saved&&x.profile?.paper===fstd.paper.size)continue;progress({stage:'form',i:k+1,n:items.length});await step();const e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);Object.assign(x,{bytes:widenForForm(Document,e.bytes,fstd),profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
       // 묶은 결과 기억(11-02): 묶기·점검이 쪽 그리기 시간의 대부분(20문항 약 10초)이라, 문항·양식이 그대로면 지난번 묶은 문서를 다시 연다.
       const akey=JSON.stringify([form.id||'',form.bytes?.length||0,form.keep||{},fstd,items.map(x=>[x.id,contentKey(x.q),x.bytes?.length||0,x.after,x.breakBefore])]);
       if(assembled?.key===akey){sheet={...sheet,paper:fstd.paper.size,columns:assembled.columns};built={...assembled.meta,document:new Document(assembled.bytes),pages:[]};}
