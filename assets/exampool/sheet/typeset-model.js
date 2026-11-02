@@ -377,9 +377,15 @@ export async function applyLiftTallEquations(bytes,JSZip,Document){
 export function anchorRaisedTables(bytes,CFB,Document){
   const raised=d=>{const out=[];
     for(let p=0;p<d.pageCount();p++){const runs=JSON.parse(d.getPageTextLayout(p)).runs.filter(r=>!(r.cellPath||[]).length&&String(r.text||'').trim());
-      for(const t of JSON.parse(d.getPageControlLayout(p)).controls){
+      const controls=JSON.parse(d.getPageControlLayout(p)).controls;
+      for(const t of controls){
         if(t.type!=='table'||(t.cellPath||[]).length||runs.some(r=>r.secIdx===t.secIdx&&r.paraIdx===t.paraIdx))continue;
-        const prev=runs.filter(r=>r.secIdx===t.secIdx&&r.paraIdx===t.paraIdx-1&&r.x<t.x+t.w&&r.x+r.w>t.x);if(!prev.length)continue;
+        const prev=runs.filter(r=>r.secIdx===t.secIdx&&r.paraIdx===t.paraIdx-1&&r.x<t.x+t.w&&r.x+r.w>t.x);
+        // 11-03 OmO: 앞 문단이 글 없는 inline 표(〈보기〉 표)면 비교할 글줄이 없어 그 뒤 선지 표가 위로 올라간 것을 놓쳤다 — 같은 단의 직전 inline 표도 비교 대상에.
+        for(const before of controls.filter(c=>c.type==='table'&&c.stableIndex?.length===3&&c.secIdx===t.secIdx&&c.paraIdx===t.paraIdx-1&&c.x<t.x+t.w&&c.x+c.w>t.x)){
+          if(JSON.parse(d.getTableProperties(before.secIdx,before.paraIdx,before.controlIdx)).treatAsChar===true)prev.push(before);
+        }
+        if(!prev.length)continue;
         if(t.y>=Math.max(...prev.map(r=>r.y+r.h))-1)continue;
         let inline=false;try{inline=JSON.parse(d.getTableProperties(t.secIdx,t.paraIdx,t.controlIdx)).treatAsChar===true;}catch{}
         if(inline)out.push({sec:t.secIdx,para:t.paraIdx,h:t.h,w:t.w});}}

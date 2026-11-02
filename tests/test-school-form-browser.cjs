@@ -80,6 +80,55 @@ h.withServer(async origin => {
       assert.equal(await sheet.inputValue('#password-input'), '', `${name}: the password is not kept in the page`);
       assert.match(await sheet.locator('#school-rows').textContent(), /문항 문단/);
       await sheet.click('#school-dialog [data-close="school-dialog"]');
+      // OmO 11-03: 떠 있는 머리표 아래에서 〈보기〉 표 다음 선지 표가 위로 되돌아가지 않는다(실제 엔진, 합성 문서).
+      const tableChain = await sheet.evaluate(async origin => {
+        const w = document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm;
+        const D = w.borrowDocumentHandle().constructor, CFB = (globalThis.XLSX || w.XLSX).CFB;
+        const { exportLayoutHwpx } = await import(origin + '/assets/exampool/sheet/native-hwpx.js');
+        const { anchorRaisedTables } = await import(origin + '/assets/exampool/sheet/typeset-model.js');
+        const source = D.createEmpty();
+        let bytes;
+        try {
+          source.createBlankDocument();
+          source.setColumnDef(0, 2, 0, true, 2000);
+          source.pasteHtml(0, 0, 0, '<table style="width:650px" border="1"><tr><td><p>학교 시험 제목</p><p>안내</p></td></tr></table><p>문항 안내</p><table style="width:240px" border="1"><tr><td>' +
+            Array.from({ length: 8 }, (_, i) => `<p>보기 내용 ${i + 1}</p>`).join('') +
+            '</td></tr></table><table border="1"><tr><td>선지 하나</td><td>선지 둘</td></tr></table>');
+          bytes = exportLayoutHwpx(source, CFB);
+        } finally { source.free(); }
+        const original = new D(bytes);
+        let tables;
+        try {
+          tables = JSON.parse(original.getPageControlLayout(0)).controls.filter(c => c.type === 'table' && c.stableIndex.length === 3);
+        } finally { original.free(); }
+        const archive = CFB.read(bytes, { type: 'array' });
+        const file = archive.FileIndex[archive.FullPaths.findIndex(path => path.endsWith('Contents/section0.xml'))];
+        const dom = new DOMParser().parseFromString(new TextDecoder().decode(file.content), 'application/xml');
+        const paragraphs = [...dom.documentElement.children].filter(element => element.localName === 'p');
+        const header = [...paragraphs[tables[0].paraIdx].querySelectorAll('*')].find(element => element.localName === 'tbl');
+        header.setAttribute('textWrap', 'TOP_AND_BOTTOM');
+        const position = [...header.children].find(element => element.localName === 'pos');
+        for (const [key, value] of Object.entries({
+          treatAsChar:'0', affectLSpacing:'0', flowWithText:'1', allowOverlap:'0', vertRelTo:'PAGE',
+          horzRelTo:'COLUMN', vertAlign:'TOP', horzAlign:'LEFT', vertOffset:'12623', horzOffset:'0',
+        })) position.setAttribute(key, value);
+        const first = tables[1];
+        const line = new DOMParser().parseFromString(
+          `<hp:linesegarray xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph"><hp:lineseg textpos="0" vertpos="0" vertsize="${Math.round(first.h * 75)}" textheight="${Math.round(first.h * 75)}" baseline="${Math.round(first.h * 75 * .85)}" spacing="0" horzpos="0" horzsize="${Math.round(first.w * 75)}" flags="393216"/></hp:linesegarray>`, 'application/xml');
+        paragraphs[first.paraIdx].append(dom.importNode(line.documentElement, true));
+        file.content = new TextEncoder().encode(new XMLSerializer().serializeToString(dom));
+        file.size = file.content.length;
+        const input = new Uint8Array(CFB.write(archive, { type:'array', fileType:'zip' }));
+        const fixed = new D(anchorRaisedTables(input, CFB, D));
+        try {
+          return JSON.parse(fixed.getPageControlLayout(0)).controls
+            .filter(c => c.type === 'table' && c.stableIndex.length === 3).slice(1)
+            .map(c => ({ x:c.x, y:c.y, h:c.h }));
+        } finally { fixed.free(); }
+      }, origin);
+      assert.equal(tableChain.length, 2, `${name}: 보기와 선지 표가 모두 남는다`);
+      assert.ok(Math.abs(tableChain[1].x - tableChain[0].x) < 1, `${name}: 선지는 보기와 같은 단에 남는다`);
+      assert.ok(tableChain[1].y >= tableChain[0].y + tableChain[0].h - 1, `${name}: 선지 표는 보기 표 아래에 놓인다`);
       assert.deepEqual(errors, [], `${name}: no page errors`);
       console.log(`${name}: school form ok`);
     } finally { await browser.close(); }
