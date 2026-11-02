@@ -21,7 +21,7 @@ export function clearFormBody(target,bodyStart,tailStart=-1){
   return Math.max(1,bodyStart);
 }
 // breaks(10-29): 학교 양식 위에서 그 앞에 단 나누기를 넣을 문항 id(그린 결과로 단에 걸친다고 본 문항).
-export async function assembleExamDocument(Document,{items,pages,sheet,open,between,template=null,bodyStart=-1,tailStart=-1,breaks=null,keepTogether=true}){
+export async function assembleExamDocument(Document,{items,pages,sheet,open,between,template=null,bodyStart=-1,tailStart=-1,breaks=null,firstPage=false,keepTogether=true}){
   // 단이 시작되는 문항: 그 앞에 단 나누기를 넣는다(첫 문항 제외).
   const starts=new Set();for(const page of pages)for(const column of page.columns)if(column.length)starts.add(column[0]);
   const target=template||Document.createEmpty(),ranges=new Map();
@@ -45,7 +45,9 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
         if(!template&&i===0)target.applyParaFormat(0,before,JSON.stringify({spacingBefore:0}));
         // 단 나누기는 넣은 문항의 첫 문단 앞에 건다(10-23 지적 2). 앞 문항 끝 문단에 걸면, 그 문단이 표(그림 선지 등)뿐일 때
         // 글 길이가 0이라 표 앞에서 나뉘어 앞 문항의 선지가 다음 단·쪽으로 넘어갔다.
-        if(template?breaks?.has(item.id):i>0&&starts.has(item.id)){
+        // OmO 작성: 첫 쪽의 어느 단에도 들어가지 않는 첫 문항은 다음 쪽에서 시작한다. 문단을 쪼개지 않아 개체도 함께 간다.
+        if(template&&i===0&&firstPage)target.applyParaFormat(0,before,JSON.stringify({pageBreakBefore:true}));
+        else if(template?breaks?.has(item.id):i>0&&starts.has(item.id)){
           // 학교 양식(10-30): 첫 문단이 글 없이 그림·표만 든 문단(글 옆 그림 문항)이면 엔진이 나눌 때 개체를 앞 단에 남긴다 —
           // 폭 없는 글자(U+2060)를 맨 앞에 두면 개체까지 새 단으로 같이 간다(9·25번 실측).
           if(template&&!target.getParagraphLength(0,before))target.insertText(0,before,0,'\u2060');
@@ -256,6 +258,24 @@ export function dropRaisedPictures(doc){
   }
   return fixed;
 }
+// 표 아래로 삐져나온 수식(11-03 OmO, set13 f05): 선지 표 칸 안 분수는 칸보다 키가 커서 표 바닥 아래로 7px쯤 나온다.
+// 문항 하나만 조판할 때는 그 아래가 비어 있지만 시험지로 묶으면 다음 문항 첫 줄과 닿았다 — 닿는 만큼만 다음 문단 위 간격을 둔다(칸 높이는 그대로).
+export function spaceBelowTableEquations(doc){
+  const need=new Map();
+  for(let p=0;p<doc.pageCount();p++){
+    const runs=(parse(doc.getPageTextLayout(p)).runs||[]).filter(r=>!(r.cellPath||[]).length&&String(r.text||'').replace(/\u2060/g,'').trim());
+    const controls=parse(doc.getPageControlLayout(p)).controls||[];
+    for(const t of controls.filter(c=>c.type==='table'&&!(c.cellPath||[]).length&&!Number.isInteger(c.cellIdx))){
+      const eqs=controls.filter(c=>c.type==='equation'&&Number.isInteger(c.cellIdx)&&c.secIdx===t.secIdx&&c.paraIdx===t.paraIdx&&c.controlIdx===t.controlIdx);
+      if(!eqs.length)continue;const bottom=Math.max(...eqs.map(c=>c.y+c.h));if(bottom<=t.y+t.h+.8)continue;
+      const next=runs.filter(r=>r.secIdx===t.secIdx&&r.paraIdx===t.paraIdx+1&&r.x<t.x+t.w&&r.x+r.w>t.x);if(!next.length)continue;
+      const over=bottom+2-Math.min(...next.map(r=>r.y));if(over>.8)need.set(t.paraIdx+1,Math.max(need.get(t.paraIdx+1)||0,over));
+    }
+  }
+  for(const [para,px] of need){const pp=parse(doc.getParaPropertiesAt(0,para,0));doc.applyParaFormat(0,para,JSON.stringify({spacingBefore:Math.round(((pp.spacingBefore||0)+px)*150)}));}
+  if(need.size)doc.reflowLinesegs?.();
+  return need.size;
+}
 // 표가 앞 글줄에 붙거나 겹침(10-31, 14번 〈보기〉 제목이 발문 끝 줄에 겹침): 양식 위에서 엔진이 글자처럼 놓인 표를 앞 글보다 위로 놓을 때가 있다.
 // 문항 안 맨 바깥 표마다 같은 단의 바로 앞 문단 마지막 줄 아래와 비교해, 모자란 만큼 그 표 문단의 「문단 위」 간격을 더한다(1px = 75, 문단 간격은 1pt = 200 → px×150).
 export function fixTableGaps(doc,ranges,{gap=8}={}){
@@ -315,7 +335,7 @@ export function alignFormTop(doc,{bodyStart,columns,gap=8}){
 // 단 나누기 계획(10-31): 그린 결과로 문항마다 높이와 문항 사이 간격을 재고, 차례대로 단을 채워 새 단에서 시작할 문항을 한꺼번에 정한다.
 // 문항은 통째로 넣는다(한 단에 다 들어가지 않으면 다음 단). 한 단보다 긴 문항은 단 맨 위에서 시작해 흘러가게 두고 tall로 알린다.
 // 단 바닥: 오른쪽 단은 「다음 면에 계속」 자리(stripTop) 위, 왼쪽 단은 본문 끝. forced: 앞 계획대로 묶었는데도 걸쳐서 반드시 새 단에서 시작할 문항.
-export function planFormBreaks(doc,items,boxes,{columns,stripTop=Infinity,forced=new Set()}){
+export function planFormBreaks(doc,items,boxes,{columns,stripTop=Infinity,forced=new Set(),firstStart=0}){
   const pd=parse(doc.getPageDef(0)),top=(pd.marginTop+pd.marginHeader)/75,bottom=(pd.height-pd.marginBottom-pd.marginFooter)/75;
   const span=b=>b?[...b.values()].reduce((a,p)=>a+p.bottom-p.top,0):0,firstAt=b=>Math.min(...b.keys()),lastAt=b=>Math.max(...b.keys());
   const heights=items.map(x=>{const b=boxes.get(x.id);return b?span(b):(Number(x.height)||0)*96/25.4;});
@@ -325,15 +345,24 @@ export function planFormBreaks(doc,items,boxes,{columns,stripTop=Infinity,forced
     if(prev&&lastAt(prev)===at)gaps[i]=b.get(at).top-prev.get(at).bottom;else starts.set(at,Math.min(starts.get(at)??Infinity,b.get(at).top));});
   const known=gaps.filter(Number.isFinite).sort((a,b)=>a-b),gap=known.length?known[known.length>>1]:12;
   const topOf=at=>at<columns?(starts.get(at)??top):top,bottomOf=at=>(at%columns===columns-1?Math.min(stripTop,bottom):bottom)-1;
-  const breaks=new Set(),tall=new Set();let at=0,y=topOf(0),first=true;
+  const breaks=new Set(),tall=new Set();let at=firstStart,y=topOf(at),first=true;
   items.forEach((x,i)=>{
     const h=heights[i],g=first?0:(Number.isFinite(gaps[i])?gaps[i]:gap);
-    if(i>0&&(forced.has(x.id)||!first&&y+g+h>bottomOf(at))){at++;y=topOf(at);breaks.add(x.id);first=true;}
+    // OmO 작성: 첫 문항 시작 단을 재조립 사이에 보존한다. 옆 단에서도 걸치면 처음 자리로 되돌리지 않고 다음 쪽에서 전체 문항을 다시 배치한다.
+    if(i===0){
+      if(at<columns&&(forced.has(x.id)||y+h>bottomOf(at))){
+        const side=Math.min(...[...boxes.values()].map(b=>b.get(1)?.top).filter(Number.isFinite));
+        if(at===0&&columns>1&&!forced.has(x.id)&&Number.isFinite(side)&&side+h<=bottomOf(1)){at=1;y=side;}
+        else{at=columns;y=topOf(at);}
+      }
+      firstStart=at;if(at>0)breaks.add(x.id);
+    }
+    else if(i>0&&(forced.has(x.id)||!first&&y+g+h>bottomOf(at))){at++;y=topOf(at);breaks.add(x.id);first=true;}
     else y+=first?0:g;
     let rest=h;if(y+rest>bottomOf(at)){tall.add(x.id);while(y+rest>bottomOf(at)){rest-=bottomOf(at)-y;at++;y=topOf(at);}}
     y+=rest;first=false;
   });
-  return {breaks,tall};
+  return {breaks,tall,firstStart};
 }
 // 단 아래 채우기(10-31 사용자 지적 「하단을 똑바로 채우라」): 엔진은 단 구분선을 단 내용 끝까지만 긋는다 — 마지막 단을 뺀 단마다
 // 그 단 마지막 문항 끝 문단에 「문단 아래」 간격을 더해 단 끝을 본문 바닥 가까이로 내린다(보이는 글·개체는 그대로, 원래 양식처럼 선이 바닥까지).
@@ -357,13 +386,23 @@ export function fillColumns(doc,items,ranges,boxes,{columns,pad=16,only=null}){
 // settle(10-30): 양식 위에 넣은 직후 문서는 엔진이 옛 자리로 그린다 — 저장했다 다시 연 문서(화면·보낸 파일과 같은 모양)로 잰다.
 export async function assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure=null,keep={},settle=null}){
   const again=d=>{if(!settle)return d;try{return settle(d);}finally{d.free();}};
-  const build=async breaks=>{
+  const tableAnchors=new Set();
+  const build=async (breaks,firstStart)=>{
     const template=await openTemplate();let mark=null,doc=null,ranges,marks=null;
     if(structure){applyFormKeep(template,structure,keep);pinFormHead(template,structure);if(keep.score!==false)try{fillFormScore(template,structure,items.map(x=>x.q));}catch{}
       if(keep.next!==false&&structure.nextMark>=0){const source=await openTemplate();try{mark=reserveNextMark(template,source,structure.nextMark,columns);}catch{mark=null;}finally{if(!mark)source.free();}}}
     try{
-      const built=await assembleExamDocument(Document,{items,pages:[],sheet:null,template,bodyStart,tailStart,open,between,breaks,keepTogether:false});
-      doc=again(built.document);ranges=built.ranges;
+      const built=await assembleExamDocument(Document,{items,pages:[],sheet:null,template,bodyStart,tailStart,open,between,breaks,firstPage:firstStart>=columns,keepTogether:false});
+      doc=built.document;ranges=built.ranges;
+      // OmO 작성: 새 단에서 시작했는데도 빈 표 문단만 다음 단으로 넘어간 문항은 표의 줄 위치를 보존한다.
+      // 1pt 폭 없는 글자를 두면 저장기가 표 문단의 줄 정보를 비우지 않는다. 표 간격과 뒤 문항 배치는 아래에서 다시 계산한다.
+      const anchored=[...ranges].filter(([id])=>tableAnchors.has(id)).map(([,range])=>range);
+      if(anchored.length)for(let page=0;page<doc.pageCount();page++)for(const c of parse(doc.getPageControlLayout(page)).controls||[]){
+        if(c.type!=='table'||c.stableIndex?.length!==3||!anchored.some(([a,b])=>c.paraIdx>=a&&c.paraIdx<b)||doc.getParagraphLength(0,c.paraIdx))continue;
+        if(!parse(doc.getTableProperties(0,c.paraIdx,c.controlIdx)).treatAsChar)continue;
+        doc.insertText(0,c.paraIdx,0,'\u2060');doc.applyCharFormat(0,c.paraIdx,0,1,JSON.stringify({fontSize:100}));
+      }
+      doc=again(doc);
       if(alignFormTop(doc,{bodyStart,columns}))doc=again(doc);
       if(mark){ranges=placeNextMarks(doc,mark,bodyStart,ranges).ranges;doc=again(doc);const on=nextMarkPages(doc,mark.text),last=on.length-1;
         marks={text:mark.text,missing:on.map((v,i)=>i<last&&!v?i:-1).filter(i=>i>=0),extra:on[last]&&last>0?[last]:[]};}
@@ -380,14 +419,15 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
   // 걸침(단·쪽에 걸친 문항)과 표시 자리 닿음: 표시는 글 앞에 떠 있어 자리를 차지하지 않는다 — 마지막 쪽이 아닌 쪽의 오른쪽 단에서 표시 자리에 닿는 문항은 걸친 것으로 본다.
   const badOf=(b,tall)=>{const hits=Number.isFinite(b.stripTop)?stripHits(b.doc,b.measure,b.stripTop,b.mid):new Set();
     return items.filter(x=>{const p=b.boxes.get(x.id);return p&&(p.size>1||hits.has(x.id))&&!tall.has(x.id);});};
-  const forced=new Set();let breaks=new Set(),tall=new Set(),b=await build(breaks);
+  const forced=new Set();let breaks=new Set(),tall=new Set(),firstStart=0,b=await build(breaks,firstStart);
   for(let round=0;round<8;round++){
     const bad=badOf(b,tall);
         if(round>0&&!bad.length)break;
     for(const x of bad)if(breaks.has(x.id)||round>0)forced.add(x.id);
-    const plan=planFormBreaks(b.doc,items,b.boxes,{columns,stripTop:b.stripTop,forced});
-    if(!bad.length&&plan.breaks.size===breaks.size&&[...plan.breaks].every(id=>breaks.has(id)))break;
-    breaks=plan.breaks;tall=plan.tall;b.doc.free();b=await build(breaks);
+    for(const x of bad)if(breaks.has(x.id)&&b.boxes.get(x.id).size>1)tableAnchors.add(x.id);
+    const plan=planFormBreaks(b.doc,items,b.boxes,{columns,stripTop:b.stripTop,forced,firstStart});
+    if(!bad.length&&plan.firstStart===firstStart&&plan.breaks.size===breaks.size&&[...plan.breaks].every(id=>breaks.has(id)))break;
+    breaks=plan.breaks;tall=plan.tall;firstStart=plan.firstStart;b.doc.free();b=await build(breaks,firstStart);
   }
   // 단 아래 채우기 — 채운 뒤 쪽 수·문항 자리가 바뀌거나 새로 걸치는 문항이 생기면 그 채우기는 버린다(11-01 사용자 사진: 채움 간격이
   // 커서 〈보기〉 뒤 선지만 다음 쪽으로 밀렸다). 한꺼번에 채워 안 되면 단마다 하나씩 채워 보고 되는 단만 남긴다.
@@ -403,6 +443,7 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
   }
   if(b.marks&&dedupeNextMarks(b.doc,b.marks.text,b.ranges)){b.doc=again(b.doc);const on=nextMarkPages(b.doc,b.marks.text),last=on.length-1;b.marks={...b.marks,missing:on.map((v,i)=>i<last&&!v?i:-1).filter(i=>i>=0),extra:on[last]&&last>0?[last]:[]};}
   for(let round=0;round<3&&dropRaisedPictures(b.doc);round++)b.doc=again(b.doc);
+  if(spaceBelowTableEquations(b.doc))b.doc=again(b.doc);
   const left=badOf(b,new Set());
   return {document:b.doc,ranges:b.ranges,moved:[...breaks],tall:left.map(x=>x.id),marks:b.marks};
 }
