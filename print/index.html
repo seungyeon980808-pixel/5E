@@ -242,16 +242,20 @@
   .paste2 summary{cursor:pointer;color:var(--accent);font-weight:600}
   .paste2 .code{margin-top:6px;font-size:12px}
   .ftabs{display:flex;gap:6px;margin-top:10px}
-  .ftabs button{font:inherit;font-size:14px;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer}
+  .ftabs button{font:inherit;font-size:15px;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--muted);cursor:pointer}
   .ftabs button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
-  .faq{margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .faq details{border-top:1px solid var(--line);padding:12px 16px}
-  .faq details:first-child{border-top:0}
-  .faq summary{cursor:pointer;font-size:14px;font-weight:600;list-style:none}
-  .faq summary::before{content:"Q ";color:var(--accent)}
-  .faq details p{margin:8px 0 0;font-size:13.5px;color:var(--muted);line-height:1.7}
-  .faq details p b{color:var(--text)}
-  .faq-lead{font-size:13.5px;color:var(--muted);margin:10px 2px 0;line-height:1.6}
+  .faq{margin-top:12px;display:grid;gap:10px}
+  .faq details{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:var(--card)}
+  .faq details[open]{border-color:var(--accent);box-shadow:inset 4px 0 0 var(--accent)}
+  .faq summary{cursor:pointer;font-size:16px;font-weight:700;color:var(--text);list-style:none;display:flex;align-items:center;gap:10px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::before{content:"Q";flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;font-weight:800;display:grid;place-items:center}
+  .faq summary::after{content:"+";margin-left:auto;font-size:20px;font-weight:400;color:var(--faint)}
+  .faq details[open] summary::after{content:"−"}
+  .faq details p{margin:12px 0 0 36px;font-size:15px;color:var(--text);line-height:1.75}
+  .faq details p b{color:var(--accent)}
+  .faq details code{font-size:13.5px;background:var(--field);border-radius:5px;padding:1px 5px}
+  .faq-lead{font-size:15px;color:var(--text);margin:12px 2px 0;line-height:1.7;background:var(--accent-soft);border-radius:12px;padding:12px 16px}
   .tree{margin:10px 0 0;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);font:13px/1.75 ui-monospace,"SF Mono",Menlo,monospace;white-space:pre;overflow:auto;color:var(--text)}
   .tree .c{color:var(--faint)}
   .naming{font-size:13px;color:var(--muted);margin:8px 2px 0}
@@ -559,7 +563,7 @@
       <div class="row" data-q="교과서"><div class="lab"><b>교과서</b><p>선택</p></div>
         <div><input type="text" name="textbook" placeholder="예: 중학교 과학 2 (정대홍 외)"></div></div>
       <div class="row stack" data-q="성취기준" hidden><div class="lab"><b>성취기준</b><p id="stdHead">1단계에서 과목을 고르면 목록이 나옵니다</p></div><div>
-        <div class="std-tools"><input type="text" id="stdFind" placeholder="찾기: 낱말이나 코드 (예: 별, 전자기, 10통과1)"><button type="button" id="stdNone">모두 빼기</button></div>
+        <div class="std-tools"><input type="text" id="stdFind" placeholder="찾기: 낱말이나 코드 (예: 별, 전자기, 10통과1)"><button type="button" id="stdAll">전체 선택</button><button type="button" id="stdNone">모두 빼기</button></div>
         <div class="std-list" id="stdList"><div class="std-empty">1단계에서 과목을 먼저 고르세요.</div></div>
         <div class="picked" id="stdPicked" hidden></div>
       </div></div>
@@ -700,11 +704,10 @@
       <p>고른 내용을 한 번에 봅니다. 고칠 곳이 있으면 「고치기」로 그 단계로 돌아가세요. 「프롬프트 만들기」를 누르면 Claude(Claude Code)나 GPT(Codex)에 붙여 넣을 프롬프트가 나오고, 같은 내용의 브리프 파일을 자료 폴더에 저장합니다.</p></div>
     <div class="grp">어디서 만들까요</div>
     <div class="rows">
-      <div class="row" data-q="컴퓨터"><div class="lab"><b>컴퓨터</b><p>교재를 만들 컴퓨터</p></div>
-        <div><select name="os2"><option value="mac">맥 (macOS)</option><option value="win">윈도우 (Windows)</option></select></div></div>
-      <div class="row" data-q="AI"><div class="lab"><b>AI</b><p>프롬프트를 붙여 넣을 곳</p></div>
-        <div><select name="agent2"><option value="claude">Claude — Claude Code (Claude 데스크톱 앱 Code 탭)</option><option value="codex">GPT — Codex (Codex 앱 · 터미널)</option></select>
-        <div class="hint">claude.ai나 ChatGPT 웹 채팅 창이 아니라, 컴퓨터에서 폴더를 열어 쓰는 프로그램이어야 합니다.</div></div></div>
+      <div class="row stack" data-q="컴퓨터"><div class="lab"><b>컴퓨터</b><p>교재를 만들 컴퓨터</p></div>
+        <div class="seg2"><label><input type="radio" name="os2" value="win" checked><b>윈도우</b><small>Windows</small></label><label><input type="radio" name="os2" value="mac"><b>맥</b><small>macOS</small></label></div></div>
+      <div class="row stack" data-q="AI"><div class="lab"><b>AI</b><p>프롬프트를 붙여 넣을 곳 · claude.ai나 ChatGPT 웹 채팅 창이 아니라, 컴퓨터에서 폴더를 열어 쓰는 프로그램이어야 합니다</p></div>
+        <div class="seg2"><label><input type="radio" name="agent2" value="claude" checked><b>Claude</b><small>Claude Code (Claude 데스크톱 앱 Code 탭)</small></label><label><input type="radio" name="agent2" value="codex"><b>GPT</b><small>Codex (Codex 앱 · 터미널)</small></label></div></div>
     </div>
     <div class="grp">고른 내용</div>
     <div class="review" id="review"></div>
@@ -763,8 +766,8 @@
       <div class="faq">
         <details open><summary>편집기는 어떻게 여나요?</summary><p>맥은 <b>편집기 열기.command</b>, 윈도우는 <b>편집기 열기.bat</b>을 더블클릭합니다. 맥에서 「확인되지 않은 개발자」 경고가 뜨면 파일을 <b>오른쪽 클릭 → 열기</b>를 한 번 하면 됩니다. 창(터미널)은 편집하는 동안 켜 두세요.</p></details>
         <details><summary>글자 · 정답 · 배점은 어디를 고치나요?</summary><p>왼쪽 원본에서 문항 번호를 찾아 글을 고치면 오른쪽 쪽이 바로 다시 조판됩니다. 정답은 <code>answer:</code>, 배점은 <code>points:</code> 줄입니다. 저장은 ⌘S(Ctrl+S)입니다. 오른쪽 쪽을 누르면 그 쪽을 AI에게 부탁하는 글이 만들어집니다.</p></details>
-        <details><summary>고친 것을 PDF로 다시 뽑으려면요?</summary><p>편집기 위쪽의 <b>PDF 저장</b>을 누르면 <code>결과/</code>에 다음 버전 이름으로 저장됩니다(예: v1 → v2). 이전 판은 지워지지 않습니다.</p></details>
-        <details><summary>엑셀 문항표만 고치면 되나요?</summary><p>아니요. 문항표는 결과를 정리한 표라서, 고쳐도 PDF에 반영되지 않습니다. 원본(편집기 왼쪽)을 고친 뒤 AI에게 「문항표 다시 만들어 줘」라고 하세요.</p></details>
+        <details><summary>고친 것을 PDF · 엑셀로 다시 뽑으려면요?</summary><p>편집기 위쪽의 <b>PDF 저장</b>을 누르면 <code>결과/</code>에 다음 판 이름으로 저장됩니다(예: v1 → v2, 시험지는 해설 · 검토 용지 · 문항표까지 함께). 이전 판은 지워지지 않습니다. 시험지는 <b>엑셀 저장</b>으로 지금 판의 문항표만 다시 만들 수도 있습니다.</p></details>
+        <details><summary>엑셀 문항표만 고치면 되나요?</summary><p>아니요. 문항표는 결과를 정리한 표라서, 고쳐도 PDF에 반영되지 않습니다. 원본(편집기 왼쪽)을 고친 뒤 <b>엑셀 저장</b>을 누르면 문항표가 다시 만들어집니다.</p></details>
         <details><summary>고치다가 망가졌어요</summary><p>되돌리기(⌘Z / Ctrl+Z)를 먼저 해 보고, 안 되면 <code>결과/</code>의 이전 버전 PDF와 <code>작업/</code>의 원본이 남아 있으니 AI에게 「v1으로 되돌려 줘」라고 하면 됩니다.</p></details>
         <details><summary>한글(HWP) 파일로 옮기려면요?</summary><p>지금은 PDF와 엑셀로 만듭니다. 한글로는 엑셀 문항표를 5E에 불러와 조판하는 방법을 준비 중입니다. 급하면 한컴오피스에서 PDF를 열어 변환할 수 있지만 수식 · 그림이 깨질 수 있습니다.</p></details>
         <details><summary>편집기가 안 열려요</summary><p>AI에게 「<b>편집기 열어 줘</b>」라고 하면 필요한 프로그램(Python · Typst)을 확인하고 대신 띄워 줍니다.</p></details>
@@ -1079,6 +1082,7 @@ $('#stdList').addEventListener('change', e => {
 $('#stdList').addEventListener('input', e => e.stopPropagation());
 $('#stdFind').addEventListener('input', e => { e.stopPropagation(); renderStd(); });
 $('#stdNone').onclick = () => { chosenStd.clear(); renderStd(); check(); };
+$('#stdAll').onclick = () => { $('#stdList').querySelectorAll('[data-std]').forEach(x => chosenStd.add(x.dataset.std)); renderStd(); check(); };   // 찾기 중이면 보이는 것만
 function stdLines() {
   const c = curCourse(); if (!c || !chosenStd.size) return [];
   const L = [];
@@ -1395,7 +1399,8 @@ function treeHTML(kind) {
     `├─ 결과/          ${c('완성본')}`,
     ...f.map((x, i) => `│   ${i === f.length - 1 ? '└─' : '├─'} ${esc(x)}`),
     `└─ 작업/          ${c('AI 작업 파일: 브리프 · 문항 배정표')}`,
-    `    └─ 원본/       ${c('편집용 원본(Typst)과 그림 — 예: ' + figName() + ' (3번 문항의 첫째 그림)')}`].join('\n');
+    ...(kind === '시험지' ? [`    ├─ 원본/       ${c('문항.typ(문항) · brand.typ(학교 · 시험) · 성취기준.typ')}`, `    ├─ 그림/       ${c('원본에서 잘라 온 그림 — 예: ' + figName())}`, `    ├─ 참고원본/   ${c('변형 전 원본 문항(검토 용지 ① 칸)')}`, `    └─ 검토스캔/   ${c('검토 용지 스캔본을 넣으면 읽고 고쳐 판을 올림')}`]
+      : [`    └─ 원본/       ${c('편집용 원본(Typst)과 그림 — 예: ' + figName() + ' (3번 문항의 첫째 그림)')}`])].join('\n');
 }
 const SKILL_REPO = 'https://github.com/seungyeon980808-pixel/print';   // 공개 예정
 // Claude Code와 Codex 어느 쪽에 붙여도 같게: 스킬을 자료 폴더 안 _print/로 받아 읽게 한다
@@ -1405,10 +1410,11 @@ const prompt = () => `print 스킬로 ${val('form2') === '시험지' || design()
    git clone ${SKILL_REPO} _print
 2. _print/SKILL.md를 끝까지 읽고 그 순서대로 해. SKILL.md와 이 프롬프트가 다르면(폴더 구조 · 파일 이름 · 문항 구성 등) 이 프롬프트를 따라. 이 프롬프트 맨 아래 브리프는 먼저 작업/print-브리프.md로 저장해. 「준비물 점검」에서 Typst나 글꼴이 없으면 이 컴퓨터(${os === 'win' ? '윈도우 — 명령은 PowerShell' : '맥 — 없으면 Homebrew로'})에 맞게 설치해.
 3. 자료 폴더의 파일은 열어 보고 쓰는 법을 정하되(브리프의 「자료 폴더」 절 참고), 원본 파일은 고치지 마.
-4. 문항 배정표 → 파트 1 → 전체 → 표지 순서로, 단계마다 시안을 보여 주고 내가 승인하면 다음으로 넘어가.
+   그림은 직접 그리지 마(Typst · SVG 등 금지). 기출 · 교과서 · 참고서의 원본 그림을 잘라 재활용하고, 숫자만 다르면 조건을 그림에 맞추고, 모양을 바꿔야 할 때만 GPT 이미지 편집으로 고쳐.
+4. 중간에 멈추거나 승인을 기다리지 말고 처음부터 끝까지 한 번에 만들어(쪽 그림은 네가 직접 보고 고쳐). 시험지는 SKILL.md 8절의 시험지 세트(문항 · 정답과 해설 · 검토 용지 + 문항표 엑셀, exam_new.py → exam_build.py)로 만들어. 다 만든 뒤에 한 번만 보고해.
 5. 폴더 정리: 시작할 때 이 폴더 바로 안에 있던 파일·폴더는 참고자료/로 옮겨(지우지 말 것). 작업 파일(이 브리프, 문항 배정표)은 작업/에, 편집용 Typst 원본과 그림은 작업/원본/에, 완성본(PDF · 문항표 엑셀)은 결과/에만 둬. (_print는 그대로)
    파일 이름은 날짜_과목명_학습지|시험지_버전 (예: ${outName(val('form2') === '시험지' || design().inner === 'exam' ? '시험지' : '학습지')}). 해설·검토 용지는 같은 이름 끝에 _해설, _검토용지. 고칠 때마다 버전을 올려 새 파일로 만들고 이전 판은 남겨.
-   그림 파일은 작업/원본/ 안(파트N/img/)에 날짜_과목_버전_문항번호_문항안번호 (예: ${figName()} = 3번 문항의 첫째 그림).
+   그림 파일은 ${val('form2') === '시험지' || design().inner === 'exam' ? '작업/그림/' : '작업/원본/ 안(파트N/img/)'}에 날짜_과목_버전_문항번호_문항안번호 (예: ${figName()} = 3번 문항의 첫째 그림).
    문항표 엑셀(같은 이름 끝에 _문항표.xlsx)을 늘 함께 만들어: 문항마다 한 줄 — 번호 · 성취기준 코드 · 난이도 · 변형 정도 · 근거(기출 출처·교과서 쪽) · 답 형식 · 자료 구성 · 계산 여부 · 정답 · 배점 · 발문 · 〈보기〉 · 선지 ①~⑤ · 해설 · 그림 파일 이름.
 6. 준비물 점검에서 Python 3과 Typst가 없으면 설치하고, 폴더 맨 위에 「편집기 열기」 더블클릭 파일을 만들어(맥 .command · 윈도우 .bat, _print/scripts/make_launcher.py가 있으면 그것으로). 더블클릭하면 이 폴더의 작업물을 print 편집기(왼쪽 원본 · 오른쪽 조판)로 열어야 해. 편집기를 직접 띄우는 것은 내가 「편집기 열어 줘」라고 할 때만. 편집기에서 「AI에게 부탁」으로 붙여 넣는 글은 그 위치를 고쳐 달라는 뜻이야. 다 만든 뒤에도 같은 규칙으로 추가 변형(어려운 버전, 문항 추가 등)을 해 줘.
 
@@ -1423,14 +1429,12 @@ const OPEN = {
   claude: d => `Claude 데스크톱 앱 → Code 탭에서 ${d}를 열고 프롬프트를 붙여 넣으세요. (터미널이 편하면 그 폴더에서 claude 실행)`,
   codex: d => `Codex 앱에서 ${d}를 열고 프롬프트를 붙여 넣으세요. (터미널이 편하면 그 폴더에서 codex 실행)`,
 };
-let agent = 'claude', os = /Win/.test(navigator.platform) ? 'win' : 'mac';
-form.elements.os2.value = os;
-form.elements.os2.addEventListener('change', e => { e.stopPropagation(); os = e.target.value; setTool(); });
-form.elements.agent2.addEventListener('change', e => { e.stopPropagation(); agent = e.target.value; setTool(); });
+let agent = 'claude', os = 'win';   // 처음 값: 윈도우 + Claude
+form.addEventListener('change', e => { if (e.target.name === 'os2') { os = e.target.value; setTool(); } if (e.target.name === 'agent2') { agent = e.target.value; setTool(); } });
 function setTool() {
   document.querySelectorAll('#agentTabs button').forEach(b => b.classList.toggle('on', b.dataset.a === agent));
   document.querySelectorAll('#osTabs button').forEach(b => b.classList.toggle('on', b.dataset.os === os));
-  form.elements.os2.value = os; form.elements.agent2.value = agent;
+  form.querySelectorAll('[name=os2]').forEach(x => x.checked = x.value === os); form.querySelectorAll('[name=agent2]').forEach(x => x.checked = x.value === agent);
   $('#install').textContent = INSTALL[agent][os];
   document.querySelectorAll('[data-install]').forEach(x => x.textContent = INSTALL[x.dataset.install][os]);
   document.querySelectorAll('.paste2 [data-agent]').forEach(x => x.classList.toggle('on', x.dataset.agent === agent));
