@@ -3,8 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>print · 교재 만들기</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%232b44c9%27/%3E%3Cpath d=%27M10 8h9l4 4v12H10z%27 fill=%27none%27 stroke=%27%23fff%27 stroke-width=%272.2%27 stroke-linejoin=%27round%27/%3E%3Cpath d=%27M13 16h7M13 20h5%27 stroke=%27%23fff%27 stroke-width=%272.2%27 stroke-linecap=%27round%27/%3E%3C/svg%3E">
+<title>5E_print · 교재 · 문항 만들기</title>
+<meta name="description" content="과목 · 범위 · 문항 구성만 고르면 AI가 시험지 · 정답과 해설 · 검토 용지 · 문항표까지 한 번에 만듭니다.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="5E_print">
+<meta property="og:title" content="5E_print · 설문에 답하면, 시험지 끝까지">
+<meta property="og:description" content="과목 · 범위 · 문항 구성만 고르면 AI가 시험지 · 정답과 해설 · 검토 용지 · 문항표까지 한 번에 만듭니다.">
+<meta property="og:url" content="https://www.5e.ai.kr/print/">
+<meta property="og:image" content="https://raw.githubusercontent.com/seungyeon980808-pixel/print/main/survey/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/seungyeon980808-pixel/print/main/survey/og.png">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22 role=%22img%22 aria-label=%225E%22%3E %3Cdefs%3E %3CradialGradient id=%22bg%22 cx=%2250%25%22 cy=%2260%25%22 r=%2272%25%22%3E %3Cstop offset=%220%25%22 stop-color=%22%2323366b%22/%3E %3Cstop offset=%2266%25%22 stop-color=%22%230b1128%22/%3E %3C/radialGradient%3E %3C/defs%3E %3Crect width=%2296%22 height=%2296%22 rx=%2220%22 fill=%22url%28%23bg%29%22/%3E %3Ctext x=%2249%22 y=%2249%22 font-family=%22Georgia%2C 'Times New Roman'%2C serif%22 font-style=%22italic%22 font-weight=%22600%22 font-size=%2254%22 fill=%22%23f5f8ff%22 text-anchor=%22middle%22 dominant-baseline=%22central%22%3E5E%3C/text%3E %3C/svg%3E">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Gowun+Dodum&display=swap">
 <style>
@@ -404,7 +416,7 @@
 
 <form class="card" id="form" autocomplete="off">
   <div class="head">
-    <div class="badge"><i></i>5e.ai.kr/print</div>
+    <div class="badge" style="gap:8px"><img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22 role=%22img%22 aria-label=%225E%22%3E %3Cdefs%3E %3CradialGradient id=%22bg%22 cx=%2250%25%22 cy=%2260%25%22 r=%2272%25%22%3E %3Cstop offset=%220%25%22 stop-color=%22%2323366b%22/%3E %3Cstop offset=%2266%25%22 stop-color=%22%230b1128%22/%3E %3C/radialGradient%3E %3C/defs%3E %3Crect width=%2296%22 height=%2296%22 rx=%2220%22 fill=%22url%28%23bg%29%22/%3E %3Ctext x=%2249%22 y=%2249%22 font-family=%22Georgia%2C 'Times New Roman'%2C serif%22 font-style=%22italic%22 font-weight=%22600%22 font-size=%2254%22 fill=%22%23f5f8ff%22 text-anchor=%22middle%22 dominant-baseline=%22central%22%3E5E%3C/text%3E %3C/svg%3E" alt="" style="width:22px;height:22px;border-radius:6px"><b style="color:var(--text);font-size:14px">5E_print</b> · 5e.ai.kr/print</div>
     <h1><em class="hl">교재</em> · <em class="hl">문항</em> 만들기</h1>
     <p class="intro">몇 가지만 고르면 AI(Claude 또는 GPT)가 내 자료로 <b>교재</b>와 <b>문항</b>(정답·해설까지)을 PDF로 만들어 드립니다.</p>
     <p class="easy">전혀 어렵지 않아요. <b>설문조사에 답한다고 생각하고</b> 차례대로 따라와 주세요.</p>
