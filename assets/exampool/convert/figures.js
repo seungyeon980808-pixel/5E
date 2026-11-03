@@ -380,6 +380,15 @@ export async function detectFigures(item,{signal,scale=4,choices=false}={}){
     }
     for(const o of order)figs.push({data:crop(canvas,o.r),box:o.box,page:item.page,caption:o.caption,kind:cand.kind,widthPt:o.box[2]-o.box[0],role:cand.table?'table':'figure',group:cands.indexOf(cand)});
   }
+  // OmO 작성 · 후보 필터가 대화 그림을 전부 뺐으면 원문 비트맵을 보존한다. 선지 그림은 제외한다.
+  if(!figs.length){
+    const firstChoice=Math.min(...ctx.markers.map(marker=>marker.box[1]));
+    for(const [number,box] of (item.nativeImageBoxes||[]).entries()){
+      if(!Number.isFinite(firstChoice)||box[3]>firstChoice)continue;
+      const canvas=await renderFigureCanvas({...item,box,displayBox:box},scale,{signal});
+      figs.push({data:canvas.toDataURL('image/png'),box,page:item.page,caption:null,kind:'raster',widthPt:box[2]-box[0],role:'figure',group:cands.length+number});
+    }
+  }
   // 읽는 순서: 위→아래(같은 줄은 왼→오른).
   // 후보끼리는 위→아래(같은 줄은 왼→오른), 한 후보 안에서는 캡션 순서.
   const groupBox=new Map();for(const f of figs)groupBox.set(f.group,groupBox.has(f.group)?union(groupBox.get(f.group),f.box):f.box);

@@ -864,7 +864,7 @@ function buildShell() {
             <div class="unilib-exam-filters" data-unilib-exam-filters hidden>
               <select data-unilib-filter="subject" aria-label="과목"><option value="">모든 과목</option><option value="p1">물리학Ⅰ</option><option value="p2">물리학Ⅱ</option><option value="c1">화학Ⅰ</option><option value="c2">화학Ⅱ</option><option value="b1">생명과학Ⅰ</option><option value="b2">생명과학Ⅱ</option><option value="e1">지구과학Ⅰ</option><option value="e2">지구과학Ⅱ</option></select>
               <span class="unilib-year-range" aria-label="학년도 범위"><select data-unilib-year-start aria-label="시작 학년도"><option value="">시작</option></select><span>–</span><select data-unilib-year-end aria-label="끝 학년도"><option value="">끝</option></select></span>
-              <select data-unilib-filter="administration" aria-label="시험"><option value="">모든 시험</option><option value="06">6월 모의평가</option><option value="09">9월 모의평가</option><option value="11">수능</option></select>
+              <select data-unilib-filter="administration" aria-label="시험"><option value="">모든 시험</option><option value="03">3월 학평</option><option value="04">4월 학평</option><option value="05">5월 학평</option><option value="06">6월 모의평가</option><option value="07">7월 학평</option><option value="09">9월 모의평가</option><option value="10">10월 학평</option><option value="11">수능</option></select>
             </div>
           </div>
           <div class="unilib-result-scroll"><div class="unilib-result-state" data-unilib-result-state role="status" aria-live="polite" hidden><span data-unilib-result-state-message></span><button type="button" class="unilib-button" data-unilib-result-retry hidden>다시 시도</button></div><ul class="unilib-result-list library-card-grid" data-unilib-results role="listbox"></ul></div>
@@ -916,7 +916,7 @@ const SEND_ICONS = {
   hwp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v17H7zM9.5 8h5M9.5 11h5M9.5 14h3"/></svg>',
   exampool: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>',
 };
-export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
+export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMaterialized, sendTo, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   // 자르기 창·크롭 모음이 열렸는지를 overlay 속성으로 옮겨 둔다. CSS가 :has(...:not([hidden]))로 보면, 목록 안의 그림 칸이
   // hidden을 바꿀 때마다 overlay 전체 스타일을 다시 계산해 스크롤이 끊긴다(바쁜 컴퓨터에서 스크롤 프레임 대부분 50ms 초과).
@@ -1416,12 +1416,15 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
     overlay.querySelector("[data-unilib-count]").textContent = "불러오는 중";
     setStatus("라이브러리를 검색하는 중…");
     try {
+      const queryText = query.value.trim();
+      const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
+      const changed = await prepareSearch?.({query: queryText, filters, questionSearch: activeTypes.includes("question")});
+      if (!searchIsCurrent(ownEpoch, signal)) return;
+      if (changed) await renderSources(() => searchIsCurrent(ownEpoch, signal));
       const activeProvider = await provider();
       if (!enabledSources) await renderSources();
       if (!searchIsCurrent(ownEpoch, signal)) return;
-      const queryText = query.value.trim();
       const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
-      const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
       const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: Number.MAX_SAFE_INTEGER, requestId, signal };
       const pageInventoryOptions = { query: queryText, sourceIds: [...enabledSources], filters, requestId, signal };
       const kinds = [...(activeTypes.includes("question") ? ["crop"] : []), ...(activeTypes.includes("image") ? ["image"] : [])];

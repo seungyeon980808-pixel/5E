@@ -793,7 +793,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     }
   }
 
-  async function replacePackCatalog({ documents: nextDocuments, openDocument, downloadDocument = null, canDownloadDocument = () => true, searchIndex = null }) {
+  async function replacePackCatalog({ documents: nextDocuments, openDocument, downloadDocument = null, canDownloadDocument = () => true, searchIndex = null, notify = true }) {
     const ownEpoch = ++packSyncEpoch;
     const nextIds = new Set(nextDocuments.map((document) => document.id));
     const removedIds = [...packDocumentIds].filter((id) => !nextIds.has(id));
@@ -816,12 +816,12 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     packSearchIndex = searchIndex;
     searchIndexRevision += 1;
     catalogChanged();
-    onCatalogChange?.();
+    if (notify) onCatalogChange?.();
     refreshPackFilters();
     invalidateSearch?.();
     closePreview();
     refreshOcrControls();
-    if (host.isConnected) await runSearch();
+    if (notify && host.isConnected) await runSearch();
   }
 
   async function recognizeScans() {

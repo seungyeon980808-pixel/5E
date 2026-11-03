@@ -37,6 +37,11 @@ function questionThumbnailRect(source, result) {
 }
 
 async function providedPagePreview(document, source, result, options = {}) {
+  // OmO 작성 · 학평 목록 그림도 외부 탐색기 카드를 재사용한다. 원문 작업은 PDF로 연다.
+  if (document?.packId === "5e.hakpyeong" && options.thumbnail === true && !options.original && result.cropType === "question") {
+    const id = result.provenance.itemId.split("::").at(-1);
+    return Object.freeze({ url: `https://raw.githubusercontent.com/seungyeon980808-pixel/exam-search/main/cards/${encodeURIComponent(id)}.webp`, source, provenance: result.provenance, result, previewOnly: true });
+  }
   // prebuiltPage: a full-page card may use the prebuilt page image even when it asks for the original page.
   if ((options.original && !options.continuous && !options.prebuiltPage) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
   const hash = document.source.sha256;
@@ -53,7 +58,7 @@ async function providedPagePreview(document, source, result, options = {}) {
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
 const SUBJECT_LABELS = Object.freeze({ p1: "물리학Ⅰ", p2: "물리학Ⅱ", c1: "화학Ⅰ", c2: "화학Ⅱ", b1: "생명과학Ⅰ", b2: "생명과학Ⅱ", e1: "지구과학Ⅰ", e2: "지구과학Ⅱ" });
-const ADMINISTRATION_LABELS = Object.freeze({ "06": "6월 모의평가", "09": "9월 모의평가", "11": "대학수학능력시험" });
+const ADMINISTRATION_LABELS = Object.freeze({ "03": "3월 학평", "04": "4월 학평", "05": "5월 학평", "07": "7월 학평", "10": "10월 학평", "06": "6월 모의평가", "09": "9월 모의평가", "11": "대학수학능력시험" });
 
 export function humanExamName(metadata = {}, itemNumber = null) {
   if (!metadata) return "";
@@ -63,7 +68,7 @@ export function humanExamName(metadata = {}, itemNumber = null) {
   if (!subject || !validYear || !administration) return "";
   const year = `${String(metadata.academicYear).slice(-2)}년`;
   const question = Number.isInteger(itemNumber) ? `${itemNumber}번` : "";
-  return [subject.replace("물리학", "물리").replace("지구과학", "지구").replace("생명과학", "생명").replace("Ⅰ", "1").replace("Ⅱ", "2"), year, ({ "06": "6평", "09": "9평", "11": "수능" })[metadata.administration], question].filter(Boolean).join(" ");
+  return [subject.replace("물리학", "물리").replace("지구과학", "지구").replace("생명과학", "생명").replace("Ⅰ", "1").replace("Ⅱ", "2"), year, ({ "06": "6평", "09": "9평", "11": "수능" })[metadata.administration] || administration, question].filter(Boolean).join(" ");
 }
 
 export function compareExamResults(left, right) {

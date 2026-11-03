@@ -408,6 +408,7 @@ async function convertPast(item){
     pastStage('원본 받는 중');
     const r=item.record||[];
     const source={id:item.id,subject:item.subject,title:item.title,page:item.page,box:item.box,pdfFile:item.pdfFile,publicPath:item.publicPath,no:String(item.no),
+      ...(item.nativeImageBoxes?.length?{nativeImageBoxes:item.nativeImageBoxes}:{}),
       ...(r.length?{form:r[0],struct:r[1],layout:r[2],choiceShape:r[3],choiceArrange:r[4]}:{})};
     const {question:q,diag}=await engine.convertKice(source,{number:String(data.questions.length+1)});
     q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];if(!q.source||q.source===item.title)q.source=`기출 변형 · ${item.title}`.slice(0,300);

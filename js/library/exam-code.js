@@ -6,6 +6,11 @@ const SUBJECT_ALIASES = Object.freeze({
 });
 
 const ADMINISTRATION_ALIASES = Object.freeze({
+  "03": "03", "3": "03", "3월 학평": "03",
+  "04": "04", "4": "04", "4월 학평": "04",
+  "05": "05", "5": "05", "5월 학평": "05",
+  "07": "07", "7": "07", "7월 학평": "07",
+  "10": "10", "10월 학평": "10",
   "06": "06", "6": "06", june: "06", "6월": "06", "6월 모평": "06", "6월 모의평가": "06",
   "09": "09", "9": "09", september: "09", "9월": "09", "9월 모평": "09", "9월 모의평가": "09",
   "11": "11", csat: "11", suneung: "11", "수능": "11", "대학수학능력시험": "11",
@@ -29,7 +34,7 @@ function codeResult(subject, academicYear, administration, itemNumber) {
 }
 
 export function parseCompactExamCode(value) {
-  const match = /^([pbce][12])(\d{2})(06|09|11)(\d{2})?(?:\.pdf)?$/iu.exec(String(value ?? "").trim());
+  const match = /^([pbce][12])(\d{2})(03|04|05|06|07|09|10|11)(\d{2})?(?:\.pdf)?$/iu.exec(String(value ?? "").trim());
   if (!match) return null;
   const itemNumber = match[4] === undefined ? null : Number(match[4]);
   if (itemNumber !== null && (itemNumber < 1 || itemNumber > 40)) return null;
@@ -39,7 +44,7 @@ export function parseCompactExamCode(value) {
 export function isRecognizedExamSourceName(value) {
   const sourceFileName = String(value ?? "").split(/[\\/]/u).at(-1) || "";
   return Boolean(parseCompactExamCode(sourceFileName)
-    || /^([pbce][12])_(20\d{2})_?(06|09|11)\.pdf$/iu.test(sourceFileName));
+    || /^([pbce][12])_(20\d{2})_?(03|04|05|06|07|09|10|11)\.pdf$/iu.test(sourceFileName));
 }
 
 export function deriveExamMetadata(input = {}) {
@@ -49,7 +54,7 @@ export function deriveExamMetadata(input = {}) {
     const { itemNumber: _itemNumber, itemCode: _itemCode, ...documentMetadata } = direct;
     return Object.freeze({ ...documentMetadata, sourceFileName });
   }
-  const subjectFirst = /^([pbce][12])_(20\d{2})_?(06|09|11)\.pdf$/iu.exec(sourceFileName ?? "");
+  const subjectFirst = /^([pbce][12])_(20\d{2})_?(03|04|05|06|07|09|10|11)\.pdf$/iu.exec(sourceFileName ?? "");
   if (subjectFirst) {
     const result = codeResult(subjectFirst[1].toLowerCase(), Number(subjectFirst[2]), subjectFirst[3], null);
     return Object.freeze({ subject: result.subject, academicYear: result.academicYear, administration: result.administration, documentCode: result.documentCode, sourceFileName });

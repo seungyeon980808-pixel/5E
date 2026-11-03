@@ -133,6 +133,28 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       assert.equal(await f.ui.getAttribute('data-search-readiness'), 'ready');
       assert.equal(f.state.requests.filter(url => url.endsWith('google-drive.json')).length, 1, 'mount/config deduplicated across reopen');
       assert.deepEqual(f.state.errors, []); results.push({ engine: name, case: 'closed-view-not-reopened-late-and-reopen-deduplicated', errors: f.state.errors });
+
+      // OmO 작성 · 학평은 첫 열기에 받지 않고, 고른 과목만 자동으로 연결한다.
+      f = await setup(browser); contexts.push(f.context); await f.open();
+      assert.equal(f.state.requests.some(url => url.includes('/data/hakpyeong/')), false);
+      await f.ui.locator('[data-unilib-type="question"]').click();
+      await f.ui.locator('[data-unilib-filter="subject"]').selectOption('p1');
+      await f.ui.locator('[data-unilib-filter="administration"]').selectOption('03');
+      await f.ui.locator('[data-unilib-query]').fill('물리1 27년 3월 학평');
+      await f.ui.getByText('물리1 27년 3월 학평 1번', { exact: true }).first().waitFor({ timeout: 60000 });
+      await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor();
+      assert.equal(await f.ui.locator('[data-result-kind="crop"]').count(), 20);
+      const shards = f.state.requests.filter(url => /\/data\/hakpyeong\/.*\.json\.gz/.test(url));
+      assert.equal(shards.length, 1);
+      assert.ok(shards[0].endsWith('/p1.json.gz'));
+      // 기존 색인이 늦게 도착해도 방금 찾은 학평 문항을 덮어쓰지 않는다.
+      f.state.metadata.release(); f.state.indexGate.release();
+      await f.page.locator('.unified-library-overlay[data-search-readiness="ready"]').waitFor();
+      await f.ui.getByText('물리1 27년 3월 학평 1번', { exact: true }).first().waitFor();
+      await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor();
+      assert.equal(await f.ui.locator('[data-result-kind="crop"]').count(), 20);
+      assert.deepEqual(f.state.errors, []);
+      results.push({ engine: name, case: 'hakpyeong-lazy-subject-and-late-primary-index', errors: f.state.errors });
     } finally { for (const context of contexts) await context.close().catch(() => {}); await browser.close(); }
   }
   fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify({ results, passed: results.length }, null, 2));

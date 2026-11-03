@@ -124,6 +124,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
   let defaultPack = null;
   let drivePack = null;
+  let hakpyeongPack = null, hakpyeongRevision = 0, hakpyeongAll = false;
+  let hakpyeongTask = Promise.resolve(), syncProvidedCatalog;
+  const hakpyeongSubjects = new Set();
   let drivePackDocumentIds = new Set();
   const mountPackManagement = () => {
     if (packManagementLoading) return packManagementLoading;
@@ -158,29 +161,37 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       },
     });
     const isProvidedFolder = (url) => Boolean(url) && parseGoogleDriveFolderUrl(url).folderId === parseGoogleDriveFolderUrl(PROVIDED_DRIVE_FOLDER_URL).folderId;
-    const syncPackCatalog = () => {
-      const currentDefault = defaultPack, currentDrive = drivePack;
+    const syncPackCatalog = (notify = true) => {
+      const currentDefault = defaultPack, currentDrive = drivePack, currentHakpyeong = hakpyeongPack;
+      const hakpyeongIds = new Set(currentHakpyeong?.documents.map(document => document.id) || []);
       const currentDriveIds = new Set(drivePackDocumentIds);
       const preferredRemote = mergePreferredCatalogs(defaultPack, drivePack);
-      const merged = mergePreferredCatalogs(
+      const baseMerged = mergePreferredCatalogs(
         preferredRemote,
         isDesktopLibrary ? { documents: installedPackDocuments, searchIndex: installedPackSearchIndex } : null,
       );
+      const merged = currentHakpyeong ? mergePreferredCatalogs(baseMerged, currentHakpyeong) : baseMerged;
       return pdfUi.syncPackCatalog({
+        notify,
         documents: merged.documents,
         searchIndex: merged.searchIndex,
-        openDocument: (runtime, document) => merged.installedDocumentIds.has(document.id)
+        openDocument: (runtime, document) => hakpyeongIds.has(document.id)
+          ? currentHakpyeong.openDocument(runtime, document)
+          : baseMerged.installedDocumentIds.has(document.id)
           ? store.openDocument(runtime, document)
           : currentDriveIds.has(document.id)
             ? currentDrive.openDocument(runtime, document)
             : currentDefault.openDocument(runtime, document),
-        downloadDocument: (document) => currentDriveIds.has(document.id)
+        downloadDocument: (document) => hakpyeongIds.has(document.id)
+          ? currentHakpyeong.downloadDocument(document)
+          : currentDriveIds.has(document.id)
           ? currentDrive.downloadDocument(document)
           : currentDefault?.downloadDocument?.(document),
-        canDownloadDocument: (document) => !merged.installedDocumentIds.has(document.id)
-          && (currentDriveIds.has(document.id) || typeof currentDefault?.downloadDocument === "function"),
+        canDownloadDocument: (document) => hakpyeongIds.has(document.id) || (!baseMerged.installedDocumentIds.has(document.id)
+          && (currentDriveIds.has(document.id) || typeof currentDefault?.downloadDocument === "function")),
       });
     };
+    syncProvidedCatalog = () => syncPackCatalog(false);
     packManagement = mount({
       host: pdfUi.getPackHost(),
       driveHost: pdfUi.getDriveHost(),
@@ -245,7 +256,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
             const index = await pack.loadSearchIndex();
             if (epoch !== providedEpoch) return;
             defaultPack = Object.freeze({ ...defaultPack, searchIndex: index });
-            pdfUi.syncPackSearchIndex(mergePreferredCatalogs(defaultPack, drivePack).searchIndex, { notify: false });
+            pdfUi.syncPackSearchIndex(mergePreferredCatalogs(mergePreferredCatalogs(defaultPack, drivePack), hakpyeongPack).searchIndex, { notify: false });
             unifiedUi?.setSearchReadiness("ready");
             packManagement.setProvidedStatus(`${defaultPack.documentCount}개 PDF · 본문 검색 가능`);
           };
@@ -319,6 +330,30 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     return { dataUrl: await urlToDataUrl(result.preview.url), result };
   }
 
+  async function prepareHakpyeong({query, filters, questionSearch}) {
+    if (["06", "09", "11"].includes(filters.administration)) return false;
+    const explicit = /학평|학력평가|(?:^|\D)(?:3|4|5|7|10)월|[pbce][12]_?\d{2,4}_?(?:03|04|05|07|10)/i.test(query)
+      || ["03", "04", "05", "07", "10"].includes(filters.administration);
+    if (!explicit && (!questionSearch || /6평|9평|수능/.test(query))) return false;
+    if (!query && !filters.subject && !filters.startYear && !filters.endYear && !filters.administration) return false;
+    const before = hakpyeongRevision;
+    await mountPackManagement();
+    const work = hakpyeongTask.then(async () => {
+      if (hakpyeongAll || (filters.subject && hakpyeongSubjects.has(filters.subject))) return;
+      const subjects = filters.subject ? [...new Set([...hakpyeongSubjects, filters.subject])].sort() : [];
+      const {loadHakpyeongPack} = await import("./pdf-library/hakpyeong-pack.js");
+      hakpyeongPack = await loadHakpyeongPack(subjects);
+      if (!subjects.length) hakpyeongAll = true;
+      subjects.forEach(subject => hakpyeongSubjects.add(subject));
+      hakpyeongRevision++;
+      await unifiedUi.applyCatalogUpdate(syncProvidedCatalog);
+    });
+    // 호출자는 오류를 받고, 다음 검색은 이전 실패에 막히지 않는다.
+    hakpyeongTask = work.catch(() => {});
+    await work;
+    return hakpyeongRevision !== before;
+  }
+
   async function getUnifiedProvider() {
     await ensureUnifiedManifests();
     const catalog = pdfUi.getCatalog();
@@ -373,6 +408,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
 
   unifiedUi = createUnifiedLibraryUi({
     getProvider: getUnifiedProvider,
+    prepareSearch: prepareHakpyeong,
     initialSearchReadiness: isDesktopLibrary ? "ready" : "loading",
     insertMaterialized: insertUnifiedResult,
     // 「보내기」: 한글 시험지로 = 작업대에 넣은 뒤 기존 「한글로 보내기」(영역 확인 → 한글에서 놓을 자리 고르기),
