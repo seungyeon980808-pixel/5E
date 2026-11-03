@@ -448,9 +448,9 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            data-change-short="11.03 08:59 프리뷰에서 왼쪽 칸 폭 파일 못 찾던 것 고침"
-            aria-label="2026-11-03 08:59 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): /preview/로 올렸을 때 왼쪽 칸 폭 조절 파일(shell-left-width.js)을 정식 사이트 주소에서 찾아 못 불러오던 것 고침(11-03 학교 양식 첫 문항·표 아래 수식·☞ 중복·그림 자리 고침 포함)"
-            title="2026-11-03 08:59 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): /preview/로 올렸을 때 왼쪽 칸 폭 조절 파일(shell-left-width.js)을 정식 사이트 주소에서 찾아 못 불러오던 것 고침(11-03 학교 양식 첫 문항·표 아래 수식·☞ 중복·그림 자리 고침 포함)">11.03 08:59 프리뷰에서 왼쪽 칸 폭 파일 못 찾던 것 고침</span>
+            data-change-short="11.03 10:01 프리뷰에서 왼쪽 칸 폭 파일 판 맞춤"
+            aria-label="2026-11-03 10:01 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): 왼쪽 칸 폭 시작 코드를 index.html 안에서 js/shell-left-width-init.js로 옮겨 /preview/ 게시 때 주소·판 표시가 다른 파일과 같게(11-03 학교 양식 첫 문항·표 아래 수식·☞ 중복·그림 자리 고침 포함)"
+            title="2026-11-03 10:01 KST 반영(작업 브랜치 feature/1.7.0/hwp-modes-palette): 왼쪽 칸 폭 시작 코드를 index.html 안에서 js/shell-left-width-init.js로 옮겨 /preview/ 게시 때 주소·판 표시가 다른 파일과 같게(11-03 학교 양식 첫 문항·표 아래 수식·☞ 중복·그림 자리 고침 포함)">11.03 10:01 프리뷰에서 왼쪽 칸 폭 파일 판 맞춤</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
@@ -888,7 +888,7 @@
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
   <script type="module" src="/js/panel-visibility.js?v=1.7.0-four-session-integration"></script>
-  <script type="module">import { initShellLeftWidth } from './js/shell-left-width.js?v=1.7.0-four-session-integration'; initShellLeftWidth();</script>
+  <script type="module" src="/js/shell-left-width-init.js?v=1.7.0-four-session-integration"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="/js/touch-drag.js?v=1.7.0-four-session-integration"></script>
   <script type="module" src="/js/ai-workbench.js?v=1.7.0-four-session-integration"></script>
