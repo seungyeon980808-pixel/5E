@@ -98,8 +98,9 @@ export function initWebLoginUi({ openAi }) {
       }, 1000);
     }
     if (next !== 'waiting') resetPairedLayout();
-    label.textContent = next === 'connected' ? 'ChatGPT 연결됨' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : next === 'error' ? '연결 확인' : 'ChatGPT 연결';
-    badge.title = connected ? 'ChatGPT 연결됨 · 계정과 이용 한도 보기' : label.textContent;
+    // 11-04 시안 topbar-1104: 글자는 「ChatGPT」만, 상태는 점 색(연결됨 밝은 초록·안 됨 회색). 자세한 상태는 설명으로.
+    label.textContent = ['waiting', 'starting'].includes(next) ? '로그인 중…' : 'ChatGPT';
+    badge.title = connected ? 'ChatGPT 연결됨 · 계정과 이용 한도 보기' : next === 'error' ? 'ChatGPT 연결 확인 필요 · 눌러서 다시 연결' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : 'ChatGPT 연결 안 됨 · 눌러서 연결';
     badge.setAttribute('aria-label', badge.title);
     if (aiButton) {
       aiButton.dataset.loginState = next;
@@ -274,4 +275,27 @@ export function initWebLoginUi({ openAi }) {
     openAi: options => requireAi(() => openAi(options)),
     requireAi,
   };
+}
+
+// 설치형(11-04): 웹판과 같은 자리에 「● ChatGPT」 — 로그인 상태는 Codex(fiveEDesktop.status)에서 읽고, 누르면 AI 작업대를 연다.
+export function initDesktopAccountBadge({ openAi }) {
+  const desktop = window.fiveEDesktop;
+  if (!desktop?.status) return null;
+  const host = document.querySelector('.app-shell-header .toolbar-inspector-controls .canvas-global-controls') || document.querySelector('.canvas-global-controls');
+  if (!host) return null;
+  const badge = document.createElement('button');
+  badge.className = 'topbar-btn web-account-status'; badge.type = 'button'; badge.dataset.state = 'idle';
+  badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>ChatGPT</span>';
+  host.prepend(badge);
+  const render = loggedIn => {
+    badge.dataset.state = loggedIn ? 'connected' : 'idle';
+    badge.title = loggedIn ? 'ChatGPT 연결됨 · AI 작업대 열기' : 'ChatGPT 연결 안 됨 · 눌러서 연결';
+    badge.setAttribute('aria-label', badge.title);
+  };
+  const refresh = async () => { try { render(Boolean((await desktop.status())?.login?.loggedIn)); } catch { render(false); } };
+  badge.addEventListener('click', () => openAi?.());
+  desktop.onState?.(() => void refresh());
+  window.addEventListener('focus', () => void refresh());
+  void refresh();
+  return { refresh };
 }

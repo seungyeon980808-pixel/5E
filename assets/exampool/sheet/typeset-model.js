@@ -404,7 +404,10 @@ export async function applyLiftTallEquations(bytes,JSZip,Document){
 // 학교 양식(11-02, OmO): 표만 든 문단(선지 표 등)에 줄 정보가 없으면 rhwp가 어떤 양식(원안지 r01)에서 그 표를 앞 글보다 위에 놓아 본문과 겹쳤다
 // (진단 _work/eqfix/r01dbg-diagnosis.md — 그 문단에 줄 정보 하나를 주면 제자리로 간다). 모든 표 문단에 주면 대왕중 양식이 깨지므로(겹침 36건),
 // 앞 문단 글보다 위로 올라간 글자처럼 취급한 표의 문단에만 준다. exportLayoutHwpx가 표 문단 줄 정보를 지우므로 그 뒤에 건다. 끝까지 안 고쳐지면 원래 파일 그대로.
-export function anchorRaisedTables(bytes,CFB,Document){
+export function anchorRaisedTables(bytes,CFB,Document){return anchorRaised(bytes,CFB,Document,false).bytes;}
+// 11-03: 고칠 표가 없으면(대부분) 확인하느라 연 문서를 그대로 돌려준다 — 부르는 쪽이 같은 바이트를 또 열지 않게(settle마다 한 번씩 줄어듦).
+export function anchorRaisedTablesOpen(bytes,CFB,Document){return anchorRaised(bytes,CFB,Document,true);}
+function anchorRaised(bytes,CFB,Document,keep){
   const raised=d=>{const out=[];
     for(let p=0;p<d.pageCount();p++){const runs=JSON.parse(d.getPageTextLayout(p)).runs.filter(r=>!(r.cellPath||[]).length&&String(r.text||'').trim());
       const controls=JSON.parse(d.getPageControlLayout(p)).controls;
@@ -424,23 +427,24 @@ export function anchorRaisedTables(bytes,CFB,Document){
   // 동기(CFB)로 — 묶을 때 단 나누기를 계획하는 settle에서도 불러, 처음부터 제자리 기준으로 단을 나눈다(진단서 권고).
   let cur=bytes;
   for(let round=0;round<8;round++){
-    let d=new Document(cur),found;try{found=raised(d);}finally{d.free();}
-    if(!found.length)return cur;
+    let d=new Document(cur),found;try{found=raised(d);}catch(e){d.free();throw e;}
+    if(!found.length){if(keep)return {bytes:cur,doc:d};d.free();return {bytes:cur,doc:null};}
+    d.free();
     const archive=CFB.read(cur,{type:'array'}),decode=new TextDecoder(),encode=new TextEncoder();let changed=false;
     for(const sec of new Set(found.map(f=>f.sec))){
-      const file=archive.FileIndex[archive.FullPaths.findIndex(p=>p.endsWith(`Contents/section${sec}.xml`))];if(!file)return bytes;
+      const file=archive.FileIndex[archive.FullPaths.findIndex(p=>p.endsWith(`Contents/section${sec}.xml`))];if(!file)return {bytes,doc:null};
       let xml=decode.decode(file.content);const spans=[];let depth=0,start=0;
       for(const m of xml.matchAll(/<hp:p\b[^>]*?(\/?)>|<\/hp:p>/g)){if(m[0].startsWith('</')){if(--depth===0)spans.push([start,m.index+m[0].length]);}else if(!m[1]){if(depth++===0)start=m.index;}}
-      for(const f of found.filter(f=>f.sec===sec).sort((a,b)=>b.para-a.para)){const s=spans[f.para];if(!s)return bytes;
+      for(const f of found.filter(f=>f.sec===sec).sort((a,b)=>b.para-a.para)){const s=spans[f.para];if(!s)return {bytes,doc:null};
         let p=xml.slice(s[0],s[1]);if(/<\/hp:linesegarray>\s*<\/hp:p>$/.test(p))continue;
         const H=Math.round(f.h*75),seg=`<hp:linesegarray><hp:lineseg textpos="0" vertpos="0" vertsize="${H}" textheight="${H}" baseline="${Math.round(H*.85)}" spacing="0" horzpos="0" horzsize="${Math.round(f.w*75)}" flags="393216"/></hp:linesegarray>`;
         p=/<hp:linesegarray\/>\s*<\/hp:p>$/.test(p)?p.replace(/<hp:linesegarray\/>(\s*<\/hp:p>)$/,seg+'$1'):p.replace(/<\/hp:p>$/,seg+'</hp:p>');
         xml=xml.slice(0,s[0])+p+xml.slice(s[1]);changed=true;}
       file.content=encode.encode(xml);file.size=file.content.length;}
-    if(!changed)return bytes;
+    if(!changed)return {bytes,doc:null};
     cur=new Uint8Array(CFB.write(archive,{type:'array',fileType:'zip'}));
   }
-  return bytes;
+  return {bytes,doc:null};
 }
 // 어울림: 글 문단 맨 앞에 넣은 그림을 떠 있는 그림(문단 기준 오른쪽·왼쪽, 본문이 옆·아래로 흐름)으로 바꾼다.
 // 어느 그림인지는 그림 내용(바이트)으로 찾는다. 표 칸 안 그림은 대상이 아니다. 줄 배치는 부르는 쪽에서 다시 계산한다.

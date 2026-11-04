@@ -53,7 +53,7 @@
   --ds-edge: 12px;           /* 위쪽 막대 양 끝 여백 — 패널 버튼 고정 위치 */
 
   /* ---- 패널 폭 ---- */
-  --ds-panel-left: 160px;
+  --ds-panel-left: 160px;          /* 넓은 화면 기본 192는 js/shell-left-width.js(11-04) */
   --ds-panel-right: 224px;
   --ds-rail: 52px;
 

@@ -126,15 +126,21 @@
   }
   :root:not([data-mode="lite"]) .app-shell-header .web-account-status [data-account-label] { font-size: 12.5px !important; overflow: visible; }
   :root:not([data-mode="lite"]) .app-shell-header .web-account-status [data-account-label]::after { content: none !important; }
-  :root:not([data-mode="lite"]) .app-shell-header .web-account-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ds-ink-3); }
+  /* 연결 상태는 점 색만(11-04): 연결됨 밝은 초록, 안 됨 회색 테두리 점 */
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 1.5px solid var(--ds-ink-3); box-sizing: border-box; }
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-status[data-state="connected"] .web-account-dot { background: #4ade80 !important; border-color: #4ade80 !important; box-shadow: 0 0 0 3px rgba(74,222,128,.18); }
 
   /* 패널 버튼 — 양 끝 12px 고정, 글자 숨김, 채워진 칸 = 열림 */
   :root:not([data-mode="lite"]) .app-shell-header .panel-shell-toggles { height: var(--ds-h-bar); }
-  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle { color: var(--ds-ink-2); }
+  /* 11-04: 패널 단추는 가는 테두리만, 흐리게 — 마우스를 올리면 밝아진다(채운 칸 없음) */
+  /* 11-04 두 번째: 그래도 커 보인다 → 아이콘을 16px로 줄이고 더 어둡게(#4f5866), 선은 1.2 */
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle { color: #4f5866; background: transparent !important; }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle:hover { color: var(--ds-ink-2); background: var(--ds-hover) !important; }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle svg { width: 16px !important; height: 16px !important; stroke-width: 1.2; }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle .ds-fillcol { opacity: 0; }
   :root:not([data-mode="lite"]) .app-shell-header [data-panel-toggle="left"] { margin: 0 0 0 var(--ds-edge); }
   :root:not([data-mode="lite"]) .app-shell-header [data-panel-toggle="right"] { margin: 0 var(--ds-edge) 0 0; }
   :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle .panel-toggle-label { display: none; }
-  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle[aria-expanded="false"] { background: transparent; color: var(--ds-ink-2); }
   :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle[aria-expanded="false"] .ds-fillcol { opacity: 0; }
 }
 
@@ -645,7 +651,7 @@
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action:hover svg { color: var(--ds-ink-2); }
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:is([aria-pressed="true"], [aria-expanded="true"], .active, .is-active):not(.panel-visibility-toggle) svg,
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #tool-list .tool-btn.is-active svg { color: var(--ds-selected-icon); }
-  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #canvas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.05' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E"); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #canvas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.05' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EEvaluation Exam Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EEvaluation Exam Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E"); }
 }
 
 /* =====================================================================
@@ -881,12 +887,75 @@
   }
 }
 
-/* ---------- 맨 위 막대 48px + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 출제 office-layout.css · 조판 app-switch.css) ----------
+/* ---------- 맨 위 막대 56px(11-04 위아래 여유, 처음 10-24 시안 8은 48px) + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 출제 office-layout.css · 조판 app-switch.css) ----------
    막대 안에서만 높이·단추·아이콘·글자 토큰을 바꾼다: 막대 48 · 단추 32 · 아이콘 20 · 로고 23/18 · 막대 안 글자 13.5. 아래 구분선은 그대로. */
 @media (min-width: 768px) {
-  :root:not([data-mode="lite"]) .app-shell-header { --ds-h-bar: 48px; --ds-h-control: 32px; --ds-icon-bar: 20px; --shell-control-size: 32px; --shell-icon-size: 20px; --ds-text-body: 13.5px; font-size: 13.5px; }
+  :root:not([data-mode="lite"]) .app-shell-header { --ds-h-bar: 56px; --ds-h-control: 32px; --ds-icon-bar: 20px; --shell-control-size: 32px; --shell-icon-size: 20px; --ds-text-body: 13.5px; font-size: 13.5px; }
   :root:not([data-mode="lite"]) .app-shell-header :is(button, select, label) { font-size: 13.5px; }
   :root:not([data-mode="lite"]) .app-shell-header .web-account-status [data-account-label] { font-size: 13.5px !important; }
   .app-brand .app-brand-mark { font-size: 23px; }
   .app-brand .app-brand-name { font-size: 18px; }
+}
+
+/* ---------- 12. 패널 머리줄 · 접히면 떠 있는 카드 (11-04 시안 app-final-1104, js/panel-heads.js) ---------- */
+.pf-head, .pf-mini { display: none; }
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .app.pf-on { position: relative; }
+  :root:not([data-mode="lite"]) .app.pf-on .pf-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 2px; flex: none;
+    height: 40px; padding: 0 8px 0 var(--ds-panel-pad, 14px);
+  }
+  :root:not([data-mode="lite"]) .app.pf-on .pf-title { font: 600 12.5px/1 var(--ds-font); color: var(--ds-ink-2); letter-spacing: .2px; white-space: nowrap; }
+  :root:not([data-mode="lite"]) .app.pf-on :is(.pf-head, .pf-mini) .panel-visibility-toggle {
+    width: 28px; height: 28px; min-height: 28px; padding: 0; display: grid; place-items: center;
+    border: 0; border-radius: var(--ds-radius); background: transparent; color: var(--ds-ink-3); box-shadow: none;
+  }
+  :root:not([data-mode="lite"]) .app.pf-on :is(.pf-head, .pf-mini) .panel-visibility-toggle:hover { background: var(--ds-hover); color: var(--ds-ink); }
+  :root:not([data-mode="lite"]) .app.pf-on :is(.pf-head, .pf-mini) .panel-visibility-toggle svg { width: 17px; height: 17px; stroke-width: 1.4; }
+  /* 패널 분리·합치기 단추(11-04, js/panel-detach.js): 접기 단추와 같은 모양, 제목 오른쪽 끝에 붙는다. */
+  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach {
+    width: 28px; height: 28px; min-height: 28px; margin-left: auto; padding: 0; display: grid; place-items: center;
+    border: 0; border-radius: var(--ds-radius); background: transparent; color: var(--ds-ink-3); box-shadow: none; cursor: pointer;
+  }
+  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach:hover { background: var(--ds-hover); color: var(--ds-ink); }
+  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: -2px; }
+  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach svg { width: 16px; height: 16px; }
+  /* 떼어 낸 동안: 그 패널 칸은 0 — 캔버스와 남은 패널이 자리를 채운다. 가장자리 줄도 숨긴다. */
+  :root:not([data-mode="lite"]) .app[data-left-detached="true"] { --editor-left-track: 0px !important; }
+  :root:not([data-mode="lite"]) .app[data-right-detached="true"] { --editor-right-track: 0px !important; }
+  :root:not([data-mode="lite"]) .app[data-left-detached="true"] > .ds-rail-left,
+  :root:not([data-mode="lite"]) .app[data-right-detached="true"] > .ds-rail-right { display: none !important; }
+  /* 패널 단추: 열림 = 아이콘의 패널 쪽 칸이 옅게 채워짐(바탕 없음), 닫힘 = 불(선택 바탕). */
+  :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle { background: transparent !important; box-shadow: none !important; outline: none; }
+  :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle:hover { background: var(--ds-hover) !important; }
+  :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle .ds-fillcol { fill: currentColor; stroke: none; opacity: .3; }
+  :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle[aria-expanded="false"] .ds-fillcol { opacity: 0; }
+  /* 11-04 사용자: 패널이 닫혀 있을 때 불이 들어온다(「접혀 있음」을 알려 주는 켜짐 표시) */
+  :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle[aria-expanded="false"] { background: var(--ds-selected) !important; color: var(--ds-selected-ink, var(--ds-ink)) !important; }
+  :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: -2px; }
+  /* 접힘(11-04 확정): 가장자리에 붙은 44px 줄 — 맨 위 ▢(펴기), 아래로 도구·섹션 아이콘. 떠 있는 카드는 쓰지 않는다. */
+  :root:not([data-mode="lite"]) .app.pf-on[data-panel-layout][data-left-collapsed="true"] { --editor-left-track: 44px; }
+  :root:not([data-mode="lite"]) .app.pf-on[data-panel-layout][data-right-collapsed="true"] { --editor-right-track: 44px; }
+  :root:not([data-mode="lite"]) .app.pf-on > .pf-mini { display: none !important; }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail { padding: 6px 0; gap: 1px; }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail .panel-visibility-toggle { margin: 0 0 6px; flex: none; background: transparent !important; color: var(--ds-ink-3); }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail .panel-visibility-toggle:hover { background: var(--ds-hover) !important; color: var(--ds-ink); }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail .ds-rail-sep { width: 20px; height: 1px; margin: 5px 0; flex: none; background: var(--ds-line-strong, #2b3442); }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail .ds-rail-btn { width: 34px; height: 32px; flex: none; }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail-right .ds-rail-btn { color: var(--ds-ink-3); }
+  :root:not([data-mode="lite"]) .app.pf-on > .ds-rail-right .ds-rail-btn:hover { color: var(--ds-ink); }
+}
+@media (min-width: 768px) {
+  /* 맨 위 줄에서 패널 단추가 빠졌으니 양 끝 자리를 돌려주고, 오른쪽 패널을 접어도 맨 위 줄 오른쪽 도구는 그대로 보인다 */
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .toolbar-history { padding: 0 8px; justify-content: center; } /* 11-04: 로고 「5E_image ⌄」는 왼쪽 칸 가운데 */
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .app-brand { margin-left: 0; }
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .toolbar-inspector-controls { padding-right: 14px; }
+  :root:not([data-mode="lite"]) .app.pf-on[data-right-collapsed="true"] .app-shell-header .canvas-global-controls { visibility: visible; }
+}
+@media (min-width: 768px) {
+  /* 11-04: 오른쪽 위 ChatGPT · ◐ · ⛶ — 패널 단추가 빠진 뒤 헐렁해진 자리를 오른쪽 끝으로 붙여 한 묶음으로, ChatGPT 뒤에 얇은 세로선 */
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .toolbar-inspector-controls { justify-content: flex-end; }
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .canvas-global-controls { justify-content: flex-end; gap: 4px; margin-left: auto; }
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .canvas-global-controls .web-account-status { margin-right: 4px; position: relative; }
+  :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .canvas-global-controls .web-account-status::after { content: ""; position: absolute; right: -6px; top: 50%; width: 1px; height: 18px; margin-top: -9px; background: var(--ds-line-strong, #2b3442); }
 }

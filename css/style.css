@@ -195,10 +195,14 @@ body {
   -webkit-app-region: drag;
   user-select: none;
 }
+/* 맥: 줄 자리를 차지하지 않고 숨어 있다가, 맨 위로 마우스가 가면 위에 겹쳐 내려온다(preload.cjs). */
 .desktop-shell.platform-darwin .desktop-titlebar {
-  padding-inline-start: 78px;
-  padding-inline-end: 12px;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 4000; height: 30px;
+  padding: 0; border-bottom-color: var(--ds-line, #232a35); background: var(--ds-bar, #0d1117);
+  transform: translateY(-100%); transition: transform .18s ease; box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
+.desktop-shell.platform-darwin.desktop-titlebar-open .desktop-titlebar { transform: none; }
+@media (prefers-reduced-motion: reduce) { .desktop-shell.platform-darwin .desktop-titlebar { transition: none; } }
 .desktop-shell.is-native-fullscreen .desktop-titlebar {
   display: none;
 }
@@ -562,7 +566,7 @@ body { zoom: var(--ui-zoom, 1); }
   height: 28px;
   padding: 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 제거 */
   color: var(--accent-2);
-  /* 워터마크(sciEnce Educational Exam Easy Editor)와 같은 글씨체 + 20% 확대 */
+  /* 워터마크(sciEnce Educational Evaluation Exam Editor)와 같은 글씨체 + 20% 확대 */
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
   /* 툴바 한 줄(28px) 안에 머무는 최대치. 더 키우면 위아래 칸을 침범한다. */
@@ -1980,11 +1984,11 @@ body { zoom: var(--ui-zoom, 1); }
    (never on the paper) and export (which re-renders scene objects) never sees it.
    Screen-fixed texture only. Tune density via fill-opacity, scale via font-size. */
 :root[data-theme="dark"] #canvas {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.08' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.08' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EEvaluation Exam Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EEvaluation Exam Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
 }
 :root[data-theme="light"] #canvas {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%239da7b5' fill-opacity='0.30' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%239da7b5' fill-opacity='0.30' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EEvaluation Exam Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EEvaluation Exam Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
 }
 
@@ -3685,3 +3689,23 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-inline-text:focus { outline:2px solid var(--accent); outline-offset:1px; }
 
 #personal-object-save, #image-objectify-open, #bulk-edit-open { text-align:center; justify-content:center; }
+
+/* ===== 화면 확대 단추(11-04): 맨 위 줄 가운데 칸 오른쪽 끝, 다른 막대 단추와 같은 결 ===== */
+.canvas-zoom { position: relative; margin-left: auto; flex: none; display: flex; align-items: center; gap: 0; }
+.canvas-zoom button {
+  height: var(--ds-h-control, 28px); min-width: 26px; padding: 0 6px; border: 0; border-radius: var(--ds-radius, 6px);
+  background: transparent; color: var(--ds-ink-2, #b1bac4); font: 500 13px/1 var(--ds-font, -apple-system, sans-serif); cursor: pointer;
+}
+.canvas-zoom button:hover { background: var(--ds-hover, #1a2029); color: var(--ds-ink, #e6edf3); }
+.canvas-zoom .zoom-readout { min-width: 46px; margin: 0; padding: 0 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.canvas-zoom [data-canvas-zoom="fit"] { font-size: 12px; }
+.canvas-zoom-sep { width: 1px; height: 16px; background: var(--ds-line, #232a35); margin: 0 4px; }
+:root[data-mode="lite"] .canvas-zoom { display: none; }
+
+.canvas-zoom :is([data-canvas-zoom="fit"],[data-canvas-zoom="default"]) svg { width: 17px; height: 17px; display: block; }
+.canvas-zoom .zoom-readout::after { content: ""; display: inline-block; width: 0; height: 0; margin-left: 4px; vertical-align: middle; border: 3.5px solid transparent; border-top: 4px solid currentColor; border-bottom: 0; opacity: .55; }
+.canvas-zoom-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; min-width: 196px; padding: 5px; border-radius: 10px; background: #141a23; border: 1px solid #2b3442; box-shadow: 0 12px 30px rgba(0,0,0,.5); }
+.canvas-zoom-menu button { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 30px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--ds-ink, #e6edf3); font: 400 13px/1 var(--ds-font, -apple-system, sans-serif); cursor: pointer; text-align: left; }
+.canvas-zoom-menu button:hover { background: #1d2633; }
+.canvas-zoom-menu kbd { font: inherit; font-size: 11.5px; color: var(--ds-ink-3, #7d8590); }
+.canvas-zoom-menu-sep { display: block; height: 1px; margin: 4px 6px; background: #232a35; }

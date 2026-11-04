@@ -671,7 +671,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 
 /* 맨 위 막대 48px + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 그림 graphite-shell.css · 조판 app-switch.css).
    단추 32 · 아이콘 20 · 로고 「5E」 23 · 「_exam」 18 · 앱 바꾸기 16.5 · 막대 안 글자 13.5. 로고 칸 폭 160과 구분선은 그대로. */
-.top{--ds-h-bar:48px;--ds-h-control:32px;--ds-text-body:13.5px;font-size:13.5px}
+.top{--ds-h-bar:56px;--ds-h-control:32px;--ds-text-body:13.5px;font-size:13.5px}
 .top button{font-size:13.5px}
 .top .top-cell #toggle-nav{margin:-16px 0 0;width:32px;height:32px}
 .top .top-cell .brand{height:32px;line-height:32px}
@@ -854,3 +854,22 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .ts-frame-menu hr{border:0;border-top:1px solid var(--ds-line);margin:5px 2px}
 .ts-frame-menu .nt{margin:4px 8px 4px;color:var(--ds-ink-3);font-size:11.5px;line-height:1.5;white-space:normal}
 .pv-frame{margin-left:4px;padding:0 6px;height:18px;line-height:18px;border-radius:9px;background:rgba(107,164,248,.12);color:#9cc0f9;font-size:11px}
+
+/* ===== 11-04 확정(5E_image와 같게): 패널 단추는 왼쪽 칸 「문항」 머리줄 오른쪽 ▢, 접으면 44px 아이콘 줄 + 맨 위 ▢. 로고는 왼쪽 칸 가운데 ===== */
+@media (min-width:641px){
+  .top .top-cell{width:var(--ds-panel-left,160px);padding:0 8px;justify-content:center}
+  .top .top-cell .brand{margin:0}
+  .top .top-cell #toggle-nav{position:fixed;z-index:30;left:calc(var(--ds-panel-left,160px) - 36px);top:calc(var(--ds-h-bar,56px) + 4px);margin:0;width:28px;height:28px;
+    background:transparent!important;box-shadow:none!important;color:var(--ds-ink-3)}
+  .top .top-cell #toggle-nav:hover{background:var(--ds-hover)!important;color:var(--ds-ink)}
+  .top .top-cell #toggle-nav .ico{width:17px;height:17px}
+  .top .top-cell #toggle-nav[aria-pressed="false"]{background:var(--ds-selected)!important;color:var(--ds-selected-ink,var(--ds-ink))}
+  .shell-body.nav-off>.side{display:flex!important;width:44px;padding:44px 4px 8px;align-items:center}
+  .shell-body.nav-off>.side .side-item>span,.shell-body.nav-off>.side .side-item>b,.shell-body.nav-off>.side kbd,.shell-body.nav-off>.side .side-label{font-size:0}
+  .shell-body.nav-off>.side .side-label{height:1px;margin:6px 6px;background:var(--ds-line);padding:0;overflow:hidden}
+  .shell-body.nav-off>.side .side-label:first-child{display:none}
+  .shell-body.nav-off>.side .side-add{display:none}
+  .shell-body.nav-off>.side button{justify-content:center;padding:0;width:34px;font-size:0;gap:0}
+  .shell-body.nav-off>.side button>:not(svg):not(.ico){display:none}
+}
+.top .brand:focus:not(:focus-visible),.top-icon:focus:not(:focus-visible){outline:none}

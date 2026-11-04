@@ -10,6 +10,7 @@ import {libraryQuestions,POOLS,poolQuestions} from './exams.js';
 import {questionTitle,previewHtml,workflowOf} from './views.js';
 import {WORKFLOWS} from './model.js';
 import {isBlank} from './pool-views.js';
+import {qIcon,questionState,progressOf} from './status-icons.js';
 
 const PAGE = 40;
 const SVG = {
@@ -92,8 +93,10 @@ export function renderLibraryView(root, data, view, api) {
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
   // 문항 추가 줄 하나(시안 2판 3): 「출제 중」 칸에서만, 문항이 있든 없든 제목 바로 아래 같은 자리.
-  const addbar = s.pool === 'drafting' ? `<div class="lv-addbar"><button type="button" class="lv-add go" data-lv-new>${SVG.plus}새 문항 카드 열기</button><button type="button" class="lv-add" data-lv-import>${SVG.sheet}엑셀로 여러 문항 올리기</button><span class="lv-addhint">카드는 유형·자료 구조를 고르면 바로 열립니다 · 엑셀은 5E 문항 시트(.xlsx)</span></div>` : '';
+  const addbar = s.pool === 'drafting' ? `<div class="lv-addbar"><button type="button" class="lv-add go" data-lv-new>${qIcon('new',0,{title:false})}새 문항 카드 열기</button><button type="button" class="lv-add" data-lv-import>${SVG.sheet}엑셀로 여러 문항 올리기</button><span class="lv-addhint">카드는 유형·자료 구조를 고르면 바로 열립니다 · 엑셀은 5E 문항 시트(.xlsx)</span></div>` : '';
   // 보관함은 내 문항만이라 카드마다 「내 문항」 표시는 겹치는 정보 — 기출일 때만 표시.
+  // 내 문항 상태 아이콘(11-04): 원이 완성도만큼 채워짐 · 출제 완료는 초록 가득 · 시험지에 넣으면 파랑 + 체크.
+  const mineMark = q => { const st = questionState(q, data); return qIcon(st, st === 'work' ? progressOf(q) : 1); };
   const kt = x => x.kind === 'mine' ? '' : `<span class="lv-kt ${x.kind}">기출</span>`;
   const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
   let body;
@@ -106,7 +109,7 @@ export function renderLibraryView(root, data, view, api) {
   else if (s.mode === 'list') body = `<ol class="lv-list${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<li class="${picked(x) ? 'sel' : ''}">${check(x, n)}<button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
   else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
       <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>
-      <div class="lv-meta">${kt(x)}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
+      <div class="lv-meta">${kt(x)}${x.kind === 'mine' ? mineMark(x.q) : ''}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
   root.innerHTML = head.replace('<!--addbar-->', selbar || addbar) + body + more;
   fillOwn(root, data, api);

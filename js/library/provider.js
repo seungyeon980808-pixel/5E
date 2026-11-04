@@ -5,6 +5,7 @@ import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source
 import { createCropSource } from "../pdf-library/contract.js?v=1.7.0-four-session-integration";
 import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-four-session-integration";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-four-session-integration";
+import { connectionName } from "./connection-names.js";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 // Results are immutable. Reuse their searchable text across keystrokes without
@@ -206,6 +207,9 @@ function collectImageResults(input) {
     const folders = pathSegments(item.relativePath ?? item.path).slice(0, -1);
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (folders[0] === categoryLabel) folders.shift();
+    // 설치형 연결 폴더의 그림은 그 폴더 이름 아래(같은 폴더의 PDF와 한 나무)에 둔다.
+    const root = connectionName(item.connectionId);
+    if (root) folders.unshift(root);
     const sourceId = stableId("source", "import", externalId, ...folders);
     if (!importsBySource.has(sourceId)) importsBySource.set(sourceId, []);
     importsBySource.get(sourceId).push(item);
@@ -224,6 +228,8 @@ function collectImageResults(input) {
     const folders = pathSegments(first.relativePath ?? first.path).slice(0, -1);
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (folders[0] === categoryLabel) folders.shift();
+    const root = connectionName(first.connectionId);
+    if (root) folders.unshift(root);
     sources.push(sourceNode(id, first.sourceLabel || "가져온 이미지", ["image"], values.length, {
       origin: "local", category, pathSegments: folders, counts: { pdf: 0, image: values.length, page: 0, question: 0 },
     }));
@@ -490,7 +496,7 @@ function pdfResults(documents, index, entriesByDocument = groupIndexEntries(inde
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (relativeFolders[0] === categoryLabel) relativeFolders.shift();
     const examPath = metadata ? [`${metadata.academicYear}학년도`, administration].filter(Boolean)
-      : [document.source?.kind === "file" ? "연결 폴더" : null, ...relativeFolders].filter(Boolean);
+      : [document.source?.kind === "file" ? connectionName(document.source.connectionId) || "연결 폴더" : null, ...relativeFolders].filter(Boolean);
     sources.push(sourceNode(sourceId, document.source?.displayName ?? document.title, ["crop", "page"], 1, {
       origin, category, pathSegments: document.driveFolder ? pathSegments(document.source.relativePath).slice(0, -1) : examPath,
       ...(document.driveFolder ? { driveFolder: document.driveFolder } : {}),

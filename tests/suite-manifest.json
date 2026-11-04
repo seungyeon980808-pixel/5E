@@ -204,6 +204,12 @@
       ]
     },
 {
+      "path": "tests/test-preconverted-key.mjs",
+      "findingIds": [
+        "PRECONVERTED-ENGINE-KEY"
+      ]
+    },
+{
       "path": "tests/test-hancom-file.mjs",
       "findingIds": [
         "HANCOM-WORD-JOINER-MARK"

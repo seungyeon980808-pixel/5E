@@ -1,5 +1,6 @@
 // 5E_hwp 도구 모드 3개(10-21): 기본(한글 리본 그대로) · 집중(시험지·학습지에 필요한 것만 + 팔레트) · 없음(종이만).
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
+import { appKeyLabel } from './app-switch-menu.js?v=1.7.0-four-session-integration';
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1.7.0-four-session-integration';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
@@ -158,7 +159,7 @@ export function installExamModes(panel, services) {
   // ── 맨 위 줄: 모드 고르기 ──
   const modes = document.createElement('span');
   modes.className = 'exam-modes'; modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', '도구 모드');
-  modes.innerHTML = MODES.map(([m, label, tip], i) => `<button type="button" data-exam-mode="${m}" aria-pressed="false" title="${esc(tip)} (⌘⌥${i + 1})">${label}</button>`).join('');
+  modes.innerHTML = MODES.map(([m, label, tip], i) => `<button type="button" data-exam-mode="${m}" aria-pressed="false" title="${esc(tip)} (${appKeyLabel(i + 4)})">${label}</button>`).join('');
   const actionsNav = panel.querySelector('.exam-actions');
   const sep = document.createElement('span'); sep.className = 'exam-top-sep exam-modes-sep'; sep.setAttribute('aria-hidden', 'true');
   actionsNav.before(sep, modes);
@@ -185,7 +186,7 @@ export function installExamModes(panel, services) {
   panel.querySelector('.exam-body').append(inspToggle);
   const peek = document.createElement('button');
   peek.type = 'button'; peek.className = 'exam-peek'; peek.hidden = true; peek.textContent = '☰ 도구 보기';
-  peek.title = '집중 모드로 돌아가기 (⌘⌥2)';
+  peek.title = `집중 모드로 돌아가기 (${appKeyLabel(5)})`;
   panel.querySelector('.exam-body').append(peek);
 
   // ── 떠 있는 창(기호·점검) ──
@@ -696,7 +697,8 @@ export function installExamModes(panel, services) {
   peek.addEventListener('click', () => setMode('focus'));
   const modeKey = event => {
     if (panel.hidden || !(event.metaKey || event.ctrlKey) || !event.altKey || event.shiftKey) return;
-    const n = { Digit1: 'basic', Digit2: 'focus', Digit3: 'none' }[event.code]; if (!n) return;
+    // 11-04: ⌥⌘1~3은 프로그램 전환(image·exam·hwp)이 쓰므로 한글 화면 모드는 ⌥⌘4·5·6(윈도우 Ctrl+Alt+4·5·6).
+    const n = { Digit4: 'basic', Digit5: 'focus', Digit6: 'none' }[event.code]; if (!n) return;
     event.preventDefault(); event.stopImmediatePropagation(); setMode(n);
   };
   const escKey = event => { if (event.key === 'Escape' && !pop.hidden) { event.preventDefault(); event.stopImmediatePropagation(); closePop(); } };

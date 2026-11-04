@@ -6,7 +6,8 @@ import {examPlan} from './exam-layout.js';
 import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js';
 import {loadStandards} from './standards-data.js';
 import {store,ICON as CARD_ICON} from './card-shared.js';
-import {stepsMarkup,renderStep1,frameOf} from './exam-flow.js';
+import {stepsMarkup,renderStep1,frameOf,goalOf} from './exam-flow.js';
+import {qIcon,examIcon,questionState,progressOf} from './status-icons.js';
 import {renderStep3} from './exam-place.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -27,8 +28,11 @@ const ICON={
   inexam:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M10 12h5M10 15.5h5"/></svg>',
   card:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
 };
-const dot=q=>`<i class="dot st-${workflowOf(q)}"></i>`;
-const stage=q=>`${dot(q)}${WORKFLOWS[workflowOf(q)]}`;
+// 상태 아이콘(11-04): 문항은 원이 완성도만큼 채워짐 · 시험지에 넣으면 파랑 + 체크. 시험지는 2단 칸이 목표 문항 수만큼 채워짐.
+const dot=(q,data)=>{const st=questionState(q,data);return qIcon(st,st==='work'?progressOf(q):1);};
+const stage=(q,data)=>`${dot(q,data)}${WORKFLOWS[workflowOf(q)]}`;
+const examProgress=e=>{const g=goalOf(e,[]),goal=(Number(g.nObj)||0)+(Number(g.nEssay)||0)||20;return e.items.length/goal;};
+const examMark=e=>e.status==='done'?examIcon('done'):examIcon('work',examProgress(e));
 const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.getMonth()+1}월 ${d.getDate()}일`:'';};
 
 // 왼쪽 메뉴(10-28 출제 지적 1, 시안 exam-weekend-1031/library-start 2판): 문항(출제 중 · 출제 완료 · 시험지에 담김) · 시험지(출제 중 · 출제 완료).
@@ -36,16 +40,16 @@ const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.
 export function renderNav(root,data,view){
   const drafting=data.exams.filter(e=>e.status==='drafting'),done=data.exams.filter(e=>e.status==='done');
   const cur=(name,id)=>view.name===name||(id&&view.examId===id&&['exam','card','desk'].includes(view.name))?'true':'false';
-  const examItem=e=>`<button type="button" class="nav sub" data-nav="exam" data-exam="${e.id}" aria-current="${view.examId===e.id&&view.name!=='library'?'true':'false'}" title="${E(e.title)}"><span>${E(e.title)}</span><b>${e.items.length}</b></button>`;
+  const examItem=e=>`<button type="button" class="nav sub" data-nav="exam" data-exam="${e.id}" aria-current="${view.examId===e.id&&view.name!=='library'?'true':'false'}" title="${E(e.title)}">${examMark(e)}<span>${E(e.title)}</span><b>${e.items.length}</b></button>`;
   // 지금 보는 문항 칸: 보관함이면 고른 칸, 시험지 밖 문항 카드면 그 문항이 든 칸.
   const pool=view.name==='library'?view.lib?.pool||'drafting':view.name==='card'&&!view.examId&&view.cardPool?view.cardPool:'';
   const poolItem=(k,icon)=>`<button type="button" class="nav" data-nav="library" data-pool="${k}" aria-current="${pool===k?'true':'false'}">${icon}<span>${POOLS[k]}</span><b>${poolQuestions(data,k).length}</b></button>`;
   root.innerHTML=`<p class="side-label">문항</p>
-    ${poolItem('drafting',ICON.pencil)}${poolItem('done',ICON.checked)}${poolItem('inexam',ICON.inexam)}
-    <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${ICON.plus}</button></p>
-    <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${cur('exams')==='true'&&view.status!=='done'?'true':'false'}">${ICON.doc}<span>출제 중</span><b>${drafting.length}</b></button>
+    ${poolItem('drafting',qIcon('work',.5,{title:false}))}${poolItem('done',qIcon('done',1,{title:false}))}${poolItem('inexam',qIcon('used',1,{title:false}))}
+    <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${examIcon('new',0,{title:false})}</button></p>
+    <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${cur('exams')==='true'&&view.status!=='done'?'true':'false'}">${examIcon('work',.5,{title:false})}<span>출제 중</span><b>${drafting.length}</b></button>
     ${drafting.map(examItem).join('')}
-    <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${view.name==='exams'&&view.status==='done'?'true':'false'}">${ICON.done}<span>출제 완료</span><b>${done.length}</b></button>
+    <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${view.name==='exams'&&view.status==='done'?'true':'false'}">${examIcon('done',1,{title:false})}<span>출제 완료</span><b>${done.length}</b></button>
     ${done.slice(0,5).map(examItem).join('')}`;
 }
 
@@ -75,7 +79,7 @@ export function renderLibrary(root,data,view){
     <div class="pv-grid">${list.length?list.map(q=>`<article class="pv-card" data-card="${q.id}"><button type="button" class="lp-star pv-star" data-pool-star="q:${q.id}" aria-pressed="${!!stars['q:'+q.id]}" aria-label="${stars['q:'+q.id]?'별표 빼기':'별표'}" title="별표 — 「★ 별표만」으로 모아 보기">${CARD_ICON.star}</button>
       ${isBlank(q)?`<button type="button" class="pv-thumb is-blank" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><span><b>빈 문항</b>눌러서 쓰기</span></button>`:`<button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>`}
       <div class="pv-meta" title="${E(questionSubtitle(q))}"><p class="pv-plan"><span class="pv-k">기준</span><span class="pv-v">${stdLine(q)}</span></p><p class="pv-plan"><span class="pv-k">의도</span><span class="pv-v">${q.intent?E(q.intent):'<i>출제의도 없음</i>'}</span></p>
-        <div class="pv-row pv-actions"><span class="pv-st">${stage(q)}<span>· ${E(q.type)}</span>${frameTag(q)}</span>${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
+        <div class="pv-row pv-actions"><span class="pv-st">${stage(q,data)}<span>· ${E(q.type)}</span>${frameTag(q)}</span>${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
     </article>`).join(''):`<p class="pv-empty">${view.loadError?E(view.loadError):all.length?'조건에 맞는 문항이 없습니다.':'보관함이 비어 있습니다. 「새 문항」으로 시험지에 넣지 않은 문항을 만들어 둘 수 있습니다.'}</p>`}</div>`;
   fillPreviews(root,data);
   if(!stdText)stdWait.then(()=>{if(!root.isConnected)return;root.querySelectorAll('.pv-card').forEach(c=>{const q=data.questions.find(x=>x.id===c.dataset.card),v=c.querySelector('.pv-plan .pv-v');if(q?.standardCode&&v)v.innerHTML=stdLine(q);});});
@@ -84,7 +88,7 @@ export function renderLibrary(root,data,view){
 // 시험지 목록: 출제 중 / 출제 완료.
 export function renderExams(root,data,view){
   const row=e=>{const qs=e.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean),n=k=>qs.filter(q=>workflowOf(q)===k).length,total=qs.length||1;
-    return `<article class="pv-exam" data-exam-row="${e.id}"><div><b>${E(e.title)}</b><span>${qs.length}문항 · 배점 ${qs.reduce((a,q)=>a+(Number(q.points)||0),0)} · ${e.status==='done'&&e.sentAt?`5E_hwp로 보낸 날 ${when(e.sentAt)}`:`고친 날 ${when(e.updatedAt)}`}</span></div>
+    return `<article class="pv-exam" data-exam-row="${e.id}">${examMark(e)}<div><b>${E(e.title)}</b><span>${qs.length}문항 · 배점 ${qs.reduce((a,q)=>a+(Number(q.points)||0),0)} · ${e.status==='done'&&e.sentAt?`5E_hwp로 보낸 날 ${when(e.sentAt)}`:`고친 날 ${when(e.updatedAt)}`}</span></div>
       <div class="bar3" title="완성 ${n('complete')} · 검토 중 ${n('review')} · 초안 ${n('draft')}"><i style="width:${n('complete')/total*100}%;background:var(--st-complete)"></i><i style="width:${n('review')/total*100}%;background:var(--st-review)"></i><i style="width:${n('draft')/total*100}%;background:var(--st-draft)"></i></div>
       ${e.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}<button type="button" class="btn" data-nav="exam" data-exam="${e.id}">열기</button>
       <div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-rowmore="${e.id}" aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>

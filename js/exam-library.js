@@ -10,6 +10,7 @@ import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.7.0-f
 import { createUnifiedLibraryProviderAsync } from "./library/provider.js?v=1.7.0-four-session-integration";
 import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.7.0-four-session-integration";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.7.0-four-session-integration";
+import { setConnectionNames } from "./library/connection-names.js";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
 export function unifiedImageInsertionOptions(result, asset) {
@@ -69,6 +70,22 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   });
   const ensurePdfSearchWorker = () => {
     if (pdfSearchWorker) return pdfSearchWorker;
+    // 설치형(file://)은 모듈 일꾼을 띄울 수 없어(주소가 없는 문서) 「PDF 검색 작업이 중단되었습니다」가 났다(11-04) —
+    // 같은 검색 코드를 화면 쪽에서 직접 돌리는 대역을 쓴다(일꾼과 같은 메시지 약속).
+    if (location.protocol === "file:") {
+      const listeners = [];
+      const controllerReady = import("./pdf-library/search-worker.js?v=1.7.0-four-session-integration").then(m => m.createSearchWorkerController());
+      pdfSearchWorker = {
+        addEventListener: (type, fn) => { if (type === "message") listeners.push(fn); },
+        postMessage: (data) => { void controllerReady.then(controller => {
+          let reply;
+          try { reply = { id: data.id, ok: true, result: controller.handle(data) }; }
+          catch (error) { reply = { id: data.id, ok: false, error: { code: "PDF_SEARCH_ERROR", message: error instanceof Error ? error.message : String(error) } }; }
+          setTimeout(() => listeners.forEach(fn => fn({ data: reply })), 0);
+        }); },
+      };
+      return pdfSearchWorker;
+    }
     pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.7.0-four-session-integration", import.meta.url), { type: "module" });
     pdfSearchWorker.addEventListener("message", (event) => {
       const request = pdfSearchRequests.get(event.data?.id);
@@ -117,7 +134,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     },
     onCatalogChange: () => void unifiedUi?.refresh(),
   });
-  const isDesktopLibrary = Boolean(globalThis.fiveEDesktop?.pdfLibrary);
+  // 11-04: 설치형도 웹과 같은 자료(구글 드라이브 「5E 공유 자료」 + 미리 변환한 기출)를 기본으로 쓴다. 9월 설치형 전용 묶음(제공 자료·옛 이미지)은 쓰지 않고,
+  // 설치형 기능(fiveEDesktop.pdfLibrary)은 「내 컴퓨터 폴더 연결」에만 쓴다.
+  const isDesktopLibrary = false;
   let packManagement = null;
   let packManagementLoading = null;
   let installedPackDocuments = [];
@@ -439,13 +458,14 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       importedImages = [...importedImages, ...records];
     },
     onDesktopSnapshot: (snapshot) => {
+      setConnectionNames(snapshot?.connections || []);
       const browserImports = importedImages.filter((item) => !item.imageId);
       const desktopImages = (snapshot?.images || []).map((item) => ({
         ...item,
         id: item.imageId,
         fileName: item.name,
         sourceId: item.connectionId || "desktop",
-        sourceLabel: "연결한 폴더",
+        sourceLabel: "그림",
       }));
       importedImages = [...browserImports, ...desktopImages];
     },

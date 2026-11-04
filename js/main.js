@@ -6,9 +6,11 @@ import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration"
 import { getColorMode, nextColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-four-session-integration';
 import { initButtonDesign } from './button-design.js?v=1.7.0-four-session-integration';
 import { initAppSwitch } from './app-switch.js?v=1.7.0-four-session-integration';
+import { createStartScreen } from "./start-screen.js?v=1.7.0-four-session-integration";
+import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
 import { installAppLock } from './app-lock.js?v=1.7.0-four-session-integration';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
-import { initWebLoginUi } from './web-login-ui.js?v=1.7.0-four-session-integration';
+import { initWebLoginUi, initDesktopAccountBadge } from './web-login-ui.js?v=1.7.0-four-session-integration';
 import { createAiLoginHandoff, LOGIN_INTENT_SESSION_KEY } from './ai-login-handoff.js?v=1.7.0-four-session-integration';
 import { idbGet, idbSet, idbDel } from './idb-store.js?v=1.7.0-four-session-integration';
 import { chooseWorkbenchAssignment } from './library/workbench-assignment.js?v=1.7.0-four-session-integration';
@@ -27,7 +29,7 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.7.0-four-session-integrati
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.7.0-four-session-integration";
 import { render, setSmartGuides } from "./render.js?v=1.7.0-four-session-integration";
-import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.7.0-four-session-integration";
+import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode, zoomPercent, zoomByStep, fitArtboard, fitDefault, setZoomPercent, fitBounds } from "./viewport.js?v=1.7.0-four-session-integration";
 import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=1.7.0-four-session-integration";
 import { initTools } from "./tools.js?v=1.7.0-four-session-integration";
 import { initLabApparatusEditing } from "./tools/lab-apparatus.js?v=1.7.0-four-session-integration";
@@ -87,11 +89,12 @@ import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.7.0-f
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.7.0-four-session-integration";
 import { initAutosave } from "./autosave.js?v=1.7.0-four-session-integration";
 import { initPages, switchPage, resetPageHistory } from "./pages.js?v=1.7.0-four-session-integration";
-import { localizeShortcutLabels } from "./platform.js?v=1.7.0-four-session-integration";
+import { localizeShortcutLabels, blocksCanvasShortcut, IS_MAC as IS_MAC_ZOOM } from "./platform.js?v=1.7.0-four-session-integration";
 import { initModalDrag } from "./modal-drag.js?v=1.7.0-four-session-integration";
 import { initSteppers } from "./stepper.js?v=1.7.0-four-session-integration";
 import { initRangeFill } from "./range-fill.js?v=1.7.0-four-session-integration";
 import { initReferenceWindows } from "./reference-window.js?v=1.7.0-four-session-integration";
+import { initShortcutTips } from "./shortcut-table.js?v=1.7.0-four-session-integration";
 import { initTutorial } from "./tutorial.js?v=1.7.0-four-session-integration";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
 import { initAiPanel } from "./ai-panel.js?v=1.7.0-four-session-integration";
@@ -101,6 +104,10 @@ import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integrat
 
 const svg = document.getElementById("canvas");
 initButtonDesign();
+// 시작 창(첫 장면 → 새로 만들기·이어서 하기)을 가장 먼저 띄운다 — 준비가 끝나면 자동 저장 기록을 받아 고르게 한다.
+const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ? DESKTOP_RELEASE_URL : "" });
+// 시작 창이 걷히기 직전(창이 다 커진 뒤) 도화지 크기를 한 번만 맞춘다 — 걷힌 뒤 도화지가 튀지 않게.
+if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
 initAppSwitch();
 installAppLock();
 initVisitorStats();
@@ -115,6 +122,39 @@ svg.addEventListener("pointerdown", (event) => {
 });
 svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
 const zoomReadout = document.getElementById("zoom-readout");
+// 캔버스 오른쪽 아래 확대 단추: − / 배율(누르면 100%) / + / 맞춤 — 100% = 도화지 전체가 보이는 크기
+{
+  // 확대 묶음(11-04): − 82%▾ + ⤢ — 숫자를 누르면 배율 목록(맞춤·고른 것·82% 기본·50~200%)
+  const zoomBox = document.querySelector(".canvas-zoom"), zoomMenu = zoomBox?.querySelector(".canvas-zoom-menu");
+  const setMenu = open => { if (!zoomMenu) return; zoomMenu.hidden = !open; zoomReadout?.setAttribute("aria-expanded", String(open)); };
+  const fitSelected = () => {
+    const s = state.get(), ids = new Set(s.selectedIds || []);
+    if (!ids.size) return fitArtboard(state);
+    const b = getContentBounds({ ...s, objects: s.objects.filter(o => ids.has(o.id)) });
+    return b ? fitBounds(state, b) : fitArtboard(state);
+  };
+  const applyZoom = key => {
+    if (key === "fit") fitArtboard(state); else if (key === "sel") fitSelected(); else setZoomPercent(state, Number(key));
+  };
+  zoomBox?.addEventListener("click", (event) => {
+    const set = event.target.closest?.("[data-zoom-set]")?.dataset.zoomSet;
+    if (set) { applyZoom(set); setMenu(false); return; }
+    const action = event.target.closest?.("[data-canvas-zoom]")?.dataset.canvasZoom;
+    if (action === "in" || action === "out") zoomByStep(state, action === "in" ? 1 : -1);
+    else if (action === "menu") setMenu(zoomMenu?.hidden);
+    else if (action === "fit") fitArtboard(state);
+    else if (action === "default") fitDefault(state);
+  });
+  document.addEventListener("pointerdown", event => { if (zoomMenu && !zoomMenu.hidden && !zoomBox.contains(event.target)) setMenu(false); }, true);
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && zoomMenu && !zoomMenu.hidden) { setMenu(false); event.stopPropagation(); } }, true);
+  // ⇧1 도화지 맞춤 · ⇧2 고른 것에 맞춤(Figma·Photoshop과 같은 키)
+  window.addEventListener("keydown", event => {
+    if (!event.shiftKey || event.metaKey || event.ctrlKey || event.altKey || blocksCanvasShortcut(event)) return;
+    if (event.code === "Digit1") { event.preventDefault(); fitArtboard(state); }
+    else if (event.code === "Digit2") { event.preventDefault(); fitSelected(); }
+  });
+  for (const kbd of zoomMenu?.querySelectorAll("kbd[data-sc]") || []) kbd.textContent = IS_MAC_ZOOM ? kbd.dataset.sc.replace("Shift+", "⇧").replace("Mod+", "⌘") : kbd.dataset.sc.replace("Mod+", "Ctrl+");
+}
 
 /* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
 (function initFullscreen() {
@@ -234,7 +274,7 @@ function applyViewBox(s, change) {
   if (change === 'native-text-input' && s.draftText?.nativeEditor) return;
   const { x, y, w, h } = s.viewBox;
   svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
-  if (zoomReadout) zoomReadout.textContent = `zoom ${getZoom().toFixed(2)}×`;
+  if (zoomReadout) zoomReadout.textContent = `${zoomPercent(state)}%`;
 }
 
 /* ----- subscribe: every state.update() repaints + re-projects viewBox ----- */
@@ -336,9 +376,21 @@ const examWorkspace = initRhwpExamWorkspace(state, { configurePortableProjectIO,
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog });
+const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog, chooseStart: startScreen?.choose });
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
+// 시작 창 없이 열린 경우에도 처음 크기는 82%(기본)
+if (!startScreen) requestAnimationFrame(() => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); });
+// 시작 창에서 고른 것: exam·hwp로 가기, 파일 열기(끌어다 놓은 파일이면 그 파일로)
+{
+  const picked = startScreen?.choice;
+  if (picked?.kind === "new" && picked.app !== "image") setTimeout(() => document.querySelector(`button[data-app-switch="${picked.app}"]`)?.click(), 0);
+  else if (picked?.kind === "open") setTimeout(() => {
+    const input = document.getElementById("project-source-file");
+    if (picked.file && input) { const dt = new DataTransfer(); dt.items.add(picked.file); input.files = dt.files; input.dispatchEvent(new Event("change", { bubbles: true })); }
+    else document.getElementById("project-open")?.click();
+  }, 0);
+}
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });
 examWorkspace.setAiPanel(aiPanel);
 initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys,
@@ -372,6 +424,7 @@ const openSelectedAi = () => {
     });
 };
 const webLogin = initWebLoginUi({ openAi: openSelectedAi });
+if (!webLogin) initDesktopAccountBadge({ openAi: openSelectedAi });// 설치형도 맨 위 줄에 「● ChatGPT」
 const aiLoginHandoff = webLogin ? createAiLoginHandoff({
   read:idbGet,write:idbSet,remove:idbDel,session:window.sessionStorage,
   prepare:options=>aiPanel.openIndependentReferences(options),
@@ -482,6 +535,7 @@ initReferenceWindows(state);
 /* ----- 따라하기: 상단바 단추 + 첫 방문 제안 배너 -----
    페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
 if (new URLSearchParams(location.search).get('exam') !== '1' && new URLSearchParams(location.search).get('sheet') !== '1') initTutorial();
+initShortcutTips();// 단추 설명에 「이름 (단축키)」 — 표는 shortcut-table.js 하나
 
 /* Canvas and crop views own their zoom; surrounding UI keeps browser zoom. */
 const ownsZoom = target => target instanceof Element && target.closest("#ruler-container, [data-unilib-crop-stage]");
@@ -489,7 +543,14 @@ window.addEventListener("wheel", (e) => {
   if ((e.ctrlKey || e.metaKey) && ownsZoom(e.target)) e.preventDefault();
 }, { passive: false });
 window.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key) && ownsZoom(e.target)) e.preventDefault();
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || !["+", "-", "=", "0"].includes(e.key)) return;
+  // ⌘=·⌘−·⌘0(윈도우 Ctrl): 브라우저 화면 배율 대신 캔버스 배율(11-04 확대 단추와 같은 동작). 입력 중·창이 덮였을 땐 그대로.
+  const blocked = blocksCanvasShortcut(e) || document.documentElement.dataset.mode === "lite";
+  if (ownsZoom(e.target)) e.preventDefault();
+  if (blocked) return;
+  e.preventDefault();
+  if (e.key === "0") fitDefault(state);
+  else zoomByStep(state, e.key === "-" ? -1 : 1);
 });
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
@@ -631,7 +692,10 @@ initDataPlot();
       e.preventDefault();
       centerBtn.click();
     }, true);
-    applyCanvasLock("free");
+    // 기본은 「기준 좌표 고정」(도화지가 화면 가운데에 고정) — 10-13에 「자유 이동」으로 바뀌었던 것을 11-04 사용자 요청으로 되돌림.
+    applyCanvasLock("coordinate");
+    // 설치형 시작 창이 끝나 창이 커지면 가운데 기준을 새 창 크기로 다시 잡는다.
+    window.addEventListener("5e:start-screen-done", () => { if (mode !== "free") applyCanvasLock(mode); });
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);

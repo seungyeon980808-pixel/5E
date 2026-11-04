@@ -1,4 +1,5 @@
 import { syncAppLock } from './app-lock.js?v=1.7.0-four-session-integration';
+import { attachAppMenu, appSwitchKey } from './app-switch-menu.js?v=1.7.0-four-session-integration';
 // 5E 세 프로그램 전환(시안 41, 10-20 승인): 맨 위 줄 로고 「5E_단어」 옆에 나머지 두 프로그램 이름(exam · image · hwp)을 두고,
 // 누르면 그 프로그램을 연 뒤 지금 프로그램을 닫는다(사이에 그림 화면이 비치지 않게). 지금은 세 프로그램이 한 페이지 안에서 열리므로(그림 화면 위 덧창)
 // 각 프로그램의 원래 열기·닫기 단추를 그대로 눌러 전환한다 — 저장·확인 창 같은 원래 동작을 거치게.
@@ -113,8 +114,17 @@ export function initAppSwitch(doc = document) {
     if (event.detail > 1) return;
     void go(button.dataset.appSwitch);
   });
+  // 출제·조판 안쪽 화면이 부르는 전환. 설치형은 file://로 열려 주소(origin)가 비교되지 않으므로
+  // 함수를 바로 부르게 열어 두고, 신호(postMessage)는 주소가 같거나 보낸 쪽이 우리 화면일 때만 받는다(11-04).
+  win.fiveEAppSwitch = target => { if (['image', 'exam', 'hwp'].includes(target)) void go(target); };
+  const ownSource = source => source === win || [...doc.querySelectorAll('iframe')].some(frame => frame.contentWindow === source);
   win.addEventListener('message', event => {
-    if (event.origin !== win.location.origin || event.data?.channel !== '5e-app-switch') return;
+    if (event.data?.channel !== '5e-app-switch') return;
+    const trusted = event.origin === win.location.origin || (win.location.protocol === 'file:' && ownSource(event.source));
+    if (!trusted) return;
     void go(event.data.app);
   });
+  // 로고에 마우스를 올리면 프로그램 목록(11-04) · 단축키 ⌥⌘1~3(윈도우 Ctrl+Alt+1~3)
+  { const brand = doc.querySelector('.app-shell-header .app-brand'); attachAppMenu(brand, 'image', { guide: brand?.getAttribute('href') || '' }); }
+  doc.addEventListener('keydown', event => { const target = appSwitchKey(event); if (!target) return; event.preventDefault(); void go(target); });
 }

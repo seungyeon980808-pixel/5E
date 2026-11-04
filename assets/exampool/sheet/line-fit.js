@@ -18,7 +18,7 @@ export function fitQuestionLines(doc, { low = -10, high = 0, shortLastLine = 15,
   const result = { paragraphs: 0, changed: 0, reverted: 0, ops: 0 };
   const count = doc.getParagraphCount(section);
   for (let para = 0; para < count; para++) {
-    const fit = fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, school });
+    const fit = fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, school, trace: !!trace });
     trace?.push({ para, ...fit });
     if (fit.skip) continue;
     result.paragraphs++; result.ops += fit.ops;
@@ -33,7 +33,7 @@ export function fitQuestionParagraph(doc, section, para, { low = -10, high = 0, 
   return fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from, school });
 }
 
-function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from = 0, school = false }) {
+function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, from = 0, school = false, trace = false }) {
   const length = doc.getParagraphLength(section, para);
   if (length < 8) return { skip: 'short' };
   let controls = []; try { controls = J(doc.getControlTextPositions(section, para)) || []; } catch {}
@@ -42,7 +42,7 @@ function fitOne(doc, section, para, { colRight, low, high, shortLastLine, base, 
   if (!['justify', 'distribute'].includes(String(props.alignment).toLowerCase())) return { skip: 'align:' + props.alignment };
   if (school) { const edge = justifiedEdge(doc, section, para); if (!edge) return { skip: 'edge' }; colRight = edge; }
   const text = doc.getTextRange(section, para, 0, length), head = (text.match(HEAD)?.[0].length) || 0;
-  const args = { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment, from };
+  const args = { length, head, colRight, low, high, shortLastLine, base, alignment: props.alignment, from, trace };
   const res = { head, ...fitParagraph(doc, section, para, args) };
   // 수능 기준 ⑤(11-02 사용자 승인, 실측 ~/Work/2026-11-02_5e-omo-인계/kice-analysis): 수능 양끝맞춤 줄의 띄어쓰기는 0.26~0.46em이고, 좁은 줄에서는 어절 안에서도 끊는다.
   // 학교 양식에서 어절 단위로 맞춘 뒤에도 띄어쓰기가 GAP_EM 넘게 벌어진 줄이 남으면 이 문단만 한글 줄 나눔을 「글자」로 바꿔 다시 맞춘다. 줄이 늘거나 더 고르지 않으면 되돌린다.
@@ -99,13 +99,16 @@ function justifiedEdge(doc, sec, para) {
   const ends = [...lines.values()]; if (ends.length < 2) return null;
   ends.pop(); return Math.max(...ends);
 }
-function fitParagraph(doc, sec, para, { length, head, colRight, low, high, shortLastLine, base, alignment, from: startAt = 0 }) {
+function fitParagraph(doc, sec, para, { length, head, colRight, low, high, shortLastLine, base, alignment, from: startAt = 0, trace = false }) {
   let ops = 0;
-  const set = (s, e, v) => { if (e <= s) return; doc.applyCharFormat(sec, para, s, e, JSON.stringify({ spacings: Array(7).fill(v) })); ops++; };
+  // 11-03: 자간을 바꾸지 않았으면 줄 폭(widths — 정렬을 두 번 바꿔 다시 흘림)은 같으므로 앞서 잰 값을 다시 쓴다. 결과는 같고 계산만 준다.
+  let measured = null;
+  const set = (s, e, v) => { if (e <= s) return; measured = null; doc.applyCharFormat(sec, para, s, e, JSON.stringify({ spacings: Array(7).fill(v) })); ops++; };
   const lineAt = off => J(doc.getLineInfo(sec, para, off));
   const lines = () => { const out = []; let off = 0; for (let k = 0; k < 400 && off < length; k++) { const li = lineAt(off); out.push([li.charStart, li.charEnd]); if (li.charEnd <= off) break; off = li.charEnd; } return out; };
   // 줄마다 왼쪽 정렬일 때의 실제 글 끝(끝 공백 뺌)과 시작 → 남는 폭 비율
-  const widths = () => {
+  const widths = () => measured ||= measure();
+  const measure = () => {
     doc.applyParaFormat(sec, para, '{"alignment":"left"}');
     const by = new Map();
     try {
@@ -133,7 +136,10 @@ function fitParagraph(doc, sec, para, { length, head, colRight, low, high, short
     const s = li.charStart, e = li.charEnd, W = widths()[li.lineIndex];
     if (W && W.slack > WIDE) {
       let done = false;
-      for (let v = base - 1; v >= low; v--) {
+      // 11-03: 가장 좁힌 자간(low)으로도 다음 어절이 안 올라오면 그 사이 값도 안 올라온다 — 넷을 다 해 보지 않고 넘어간다(결과 같음, 조판 해시로 확인).
+      let reach = true;
+      if (low < base - 1) { set(from(s), e, low); reach = lineAt(s).charEnd > e; }
+      if (reach) for (let v = base - 1; v >= low; v--) {
         set(from(s), e, v);
         const n = lineAt(s);
         if (n.charEnd > e) { set(from(s), n.charEnd, v); done = true; changed = true; break; }
@@ -164,5 +170,5 @@ function fitParagraph(doc, sec, para, { length, head, colRight, low, high, short
     if (after.n > before.n || after.wide > before.wide) { restore(); return { ops, changed: false, reverted: true, before, after }; }
     return { ops, changed, before, after };
   }
-  return { ops, changed, before, slack: widths().map(w => +w.slack.toFixed(3)) };
+  return { ops, changed, before, ...(trace ? { slack: widths().map(w => +w.slack.toFixed(3)) } : {}) };
 }

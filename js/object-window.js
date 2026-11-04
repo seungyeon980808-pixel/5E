@@ -8,7 +8,7 @@
  *   켜도 그림은 휘지 않고 칸 크기만 바뀐다. 「움직임 줄이기」면 꺼진다.
  * · 캔버스에서 무언가를 고른 채 열면 「내 오브젝트」 탭 맨 위에 저장 카드(이름 · 분류 · 태그 · 별표 → 저장). */
 import { previewStorage as localStorage } from "./preview-storage.js?v=1.7.0-four-session-integration";
-import { TEMPLATES, renderSymbolsForIds, sizeIconViewBoxes, activateTemplate } from "./templates.js?v=1.7.0-four-session-integration";
+import { TEMPLATES, buildSymbolPreview, fitSymbolPreviews, activateTemplate } from "./templates.js?v=1.7.0-four-session-integration";
 import { OBJECT_SUBJECTS, objectFavorites, toggleObjectFavorite } from "./subject-objects.js?v=1.7.0-four-session-integration";
 import { assetLibraryItems, assetThumbUrl, insertAssetItem } from "./asset-library.js?v=1.7.0-four-session-integration";
 import { personalItems, personalThumbnail, selectedPersonalObjects, savePersonalObject, setPersonalStar, insertPersonalItem, PERSONAL_DEFAULT_CATEGORY } from "./personal-objects.js?v=1.7.0-four-session-integration";
@@ -169,20 +169,15 @@ export function initObjectWindow(state) {
   function picTile(el, it) { el.dataset.owAssetPick = it.id; el.title = it.name; el.classList.toggle("on", st.detail === it.id); el.innerHTML = `<span class="pic"><img alt="" draggable="false" src="${E(assetThumbUrl(it))}"></span>${cap(it.name, it.category === "인물" ? "사람" : SUBJECT_NAMES[it.subject] || "")}`; }
   function toolTile(el, it) {
     el.dataset.owToolPick = it.id; el.title = it.name + " — 누르면 캔버스에 놓을 준비"; el.innerHTML = `<span class="pic tool"></span>${cap(it.name, it.sub)}`;
-    const tmp = document.createElement("div"), pending = []; renderSymbolsForIds(tmp, [it.id], pending);
-    const icon = tmp.querySelector("kbd"); if (icon) el.querySelector(".pic").append(...icon.childNodes);
-    requestAnimationFrame(() => sizeIconViewBoxes(pending));
+    const preview = buildSymbolPreview(it.id); el.querySelector(".pic").append(preview);
+    requestAnimationFrame(() => fitSymbolPreviews([preview]));
   }
   function mineTile(el, it) { el.dataset.owMinePick = it.id; el.title = it.name + " — 누르면 캔버스 가운데에 넣습니다"; el.innerHTML = `<span class="pic mine"></span>${cap(it.name, it.category || PERSONAL_DEFAULT_CATEGORY)}`; el.querySelector(".pic").append(personalThumbnail(it.objects || [])); }
   function fillToolIcons(dlg) {
+    // 11-04: 아이콘이 아니라 실제 모양 미리보기(렌더러로 그때그때 그림 — 저장하는 파일 없음).
     const pending = [];
-    for (const slot of dlg.querySelectorAll("[data-ow-icon]")) {
-      const tmp = document.createElement("div");
-      renderSymbolsForIds(tmp, [slot.dataset.owIcon], pending);
-      const icon = tmp.querySelector("kbd");
-      if (icon) slot.append(...icon.childNodes);
-    }
-    requestAnimationFrame(() => sizeIconViewBoxes(pending));
+    for (const slot of dlg.querySelectorAll("[data-ow-icon]")) { const preview = buildSymbolPreview(slot.dataset.owIcon); slot.append(preview); pending.push(preview); }
+    requestAnimationFrame(() => fitSymbolPreviews(pending));
   }
 
   function picList() {

@@ -2,6 +2,7 @@ import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-four-session-i
 import { installExamModes } from './rhwp-exam-modes.js?v=1.7.0-four-session-integration';
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
 import { appSwitchHtml } from './app-switch.js?v=1.7.0-four-session-integration';
+import { attachAppMenu, appSwitchKey } from './app-switch-menu.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 import {forHancom} from '../assets/exampool/sheet/hancom-file.js';
@@ -16,6 +17,8 @@ import { createExamSourceTabs, createExamDraftChecker } from './rhwp-exam-source
 import { fitViewToBounds } from './viewport.js?v=1.7.0-four-session-integration';
 import { annotationsFor, getAnnotationPage, mergeAnnotationPatch, validateAnnotationPatch } from './rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
 import { ExamInlineEditor, chooseInlineCrop } from './rhwp-exam-inline-editor.js?v=1.7.0-four-session-integration';
+// 11-04: 설치형도 한글 편집기를 앱 안에서 연다. 예전처럼 별도 「5E 시험지」 창으로 보내는 것은 window.__fiveEHwpSeparateWindow를 켤 때만.
+const hwpInSeparateWindow = () => location.protocol === 'file:' && !!window.__fiveEHwpSeparateWindow;
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
 import { registerTopMenu } from './top-menu.js?v=1.7.0-four-session-integration';
 import { showExamDocumentChoice } from './ui-dialogs.js?v=1.7.0-four-session-integration';
@@ -87,6 +90,7 @@ export function initRhwpExamWorkspace(state, services) {
     <input id="exam-project-file" type="file" accept=".5e,.5exam,.json" hidden>
     <input id="exam-png-file" type="file" accept=".png" hidden>`;
   document.body.append(panel);
+  attachAppMenu(panel.querySelector('.exam-topbar .app-brand'), 'hwp');// 로고에 올리면 프로그램 목록(11-04)
   if (window.fiveEExam) {
     panel.querySelector('[data-exam-action="open-png"]').hidden = true;
   }
@@ -444,7 +448,7 @@ export function initRhwpExamWorkspace(state, services) {
     if (state.get().activePageId !== pageId) throw new Error('작업 탭이 바뀌었습니다. 보내기를 다시 눌러주세요.');
     const latest = await tabs.capture(captured.context.ai,{commit:false,link:captured.link});
     latest.render = {bounds,options:{includeReferenceImages:true,excludeAllImages:false}};
-    if (location.protocol === 'file:' && window.fiveEDesktop?.exam?.open) {await window.fiveEDesktop.exam.open({source:latest.source,captured:latest});return;}
+    if (hwpInSeparateWindow() && window.fiveEDesktop?.exam?.open) {await window.fiveEDesktop.exam.open({source:latest.source,captured:latest});return;}
     // New insertion never dispatches the linked picture's apply action.
     // Its owner tab may differ from the source-edit session kept in the background.
     if (editing) endEdit();
@@ -873,7 +877,7 @@ export function initRhwpExamWorkspace(state, services) {
     editing = null;
     tabs.closeAi();
     document.body.classList.remove('exam-editing'); sourceRegion.hide();bar.hidden=true;regionInspector.hidden=true;pictureSettings.close();syncSourceCrop();
-    if (location.protocol !== 'file:') panel.hidden = false;
+    if (!hwpInSeparateWindow()) panel.hidden = false;
     syncBackground();
     window.dispatchEvent(new Event('resize')); renderFigures();
   }
@@ -1001,6 +1005,8 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.editor.element.contentDocument.addEventListener('keydown', saveShortcut, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', closeOpenMenu, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', confirmPlacementWithKey, true);
+    // 편집기 안에 글쇠가 있어도 프로그램 전환 ⌥⌘1~3(윈도우 Ctrl+Alt+1~3)이 되게 — 전환은 app-switch.js가 받는다.
+    bridge.editor.element.contentDocument.addEventListener('keydown', event => { const app = appSwitchKey(event); if (!app) return; event.preventDefault(); event.stopPropagation(); if (typeof window.fiveEAppSwitch === 'function') window.fiveEAppSwitch(app); else window.postMessage({ channel: '5e-app-switch', app }, '*'); }, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', event => {
       if (event.key === 'Escape' && bridge.canReturnOnEscape(event)) closeWorkspaceWithEscape(event);
     }, true);
@@ -1052,8 +1058,10 @@ export function initRhwpExamWorkspace(state, services) {
     // once, then let recovery own the modal surface until its choice is made.
     await Promise.resolve();
     await services.whenReady?.();
-    if(editing && !editing.remote){await returnFromEdit();if(location.protocol==='file:')return;}
-    if (location.protocol === 'file:') {
+    // 11-04: 설치형(file://)도 한글 편집기를 앱 안에서 연다(예전에는 별도 「5E 시험지」 창). 편집기 연결이 안 되면 그때만 별도 창으로.
+    const separateWindow = hwpInSeparateWindow();
+    if(editing && !editing.remote){await returnFromEdit();if(separateWindow)return;}
+    if (separateWindow) {
       if (window.fiveEDesktop?.exam?.open) {
         try { await window.fiveEDesktop.exam.open({source:clone(serialize(state.get()))}); }
         catch { panel.hidden = false; syncBackground(); message('시험지 창을 열지 못했습니다. 다른 5E 시험지 창을 닫고 다시 열어주세요.', true); }
@@ -1355,7 +1363,7 @@ export function initRhwpExamWorkspace(state, services) {
   services.configurePortableProjectIO({saveExam:async()=>{
     if(window.fiveEDesktop?.exam?.projectSnapshot){const bytes=await window.fiveEDesktop.exam.projectSnapshot();return bytes?new Blob([bytes],{type:'application/zip'}):null;}
     return bridge?.input ? stableSave() : null;
-  },snapshot:captureWorkspace,restore:restoreWorkspace,openExam:async bytes=>{await open();if(location.protocol==='file:' && window.fiveEDesktop?.exam?.openProject) await window.fiveEDesktop.exam.openProject(bytes.buffer);else {await stableSave();await loadProject(bytes);}/* 다른 열기 경로처럼 지금 작업을 먼저 저장(H4) */}});
+  },snapshot:captureWorkspace,restore:restoreWorkspace,openExam:async bytes=>{await open();if(hwpInSeparateWindow() && window.fiveEDesktop?.exam?.openProject) await window.fiveEDesktop.exam.openProject(bytes.buffer);else {await stableSave();await loadProject(bytes);}/* 다른 열기 경로처럼 지금 작업을 먼저 저장(H4) */}});
   window.fiveEDesktop?.exam?.onWorkspaceRequest(async request=>{
     try {
       let value;
@@ -1428,7 +1436,7 @@ export function initRhwpExamWorkspace(state, services) {
   // the image is an immutable confirmed snapshot. No live canvas is sampled.
   async function receiveQuestion(packet) {
     if (busy || placement || editing) throw new Error('현재 한글 그림 작업을 마친 뒤 문항을 보내세요.');
-    if (location.protocol === 'file:') throw new Error('문항 전달은 로컬 웹 미리보기에서 한글 편집기를 열어 사용하세요.');
+    if (hwpInSeparateWindow()) throw new Error('문항 전달은 로컬 웹 미리보기에서 한글 편집기를 열어 사용하세요.');
     const q = packet?.question, snapshot = packet?.figure;
     if (packet?.format !== '5e-exampool' || packet.version !== 1 || !q || typeof q.id !== 'string' ||
         !['number','passage','ask'].every(key => typeof q[key] === 'string') || !Array.isArray(q.bogi_items) || !Array.isArray(q.choices) || q.choices.length !== 5) throw new Error('문항 전달 데이터가 올바르지 않습니다.');
@@ -1490,7 +1498,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
   async function receiveStructuredQuestion(packet){
     if(busy||placement||editing)throw Error('현재 한글 그림 작업을 마친 뒤 문항을 보내세요.');
-    if(location.protocol==='file:')throw Error('로컬 웹 미리보기에서 문항 시트를 열어 한글로 보내세요.');
+    if(hwpInSeparateWindow())throw Error('로컬 웹 미리보기에서 문항 시트를 열어 한글로 보내세요.');
     if(packet?.format!=='5e-question-sheet-v2'||![1,2].includes(packet.version))throw Error('문항 전달 형식이 올바르지 않습니다.');
     await open();if(busy||placement||editing)throw Error('한글 편집기가 준비된 뒤 다시 보내세요.');setBusy(true);
     try{

@@ -13,7 +13,7 @@ import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '../../../js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
-import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,anchorRaisedTables,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
+import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,anchorRaisedTables,anchorRaisedTablesOpen,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,frameProfile,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
@@ -285,7 +285,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(!ready||!dirty)return;
     if(skeletonKey(q)){dirty=false;userDirty=false;patchDirty=false;return;}
     // 바로 넣기(H14)로만 켜진 저장은 모양 확인이 필요하면 조용히 넘긴다 — 오타 하나 고쳤다고 문항 전환이 막히지 않게.
-    const s=await snapshot();if(!s){if(patchDirty){dirty=false;userDirty=false;patchDirty=false;return;}throw Error('저장될 모양으로 갱신했습니다 · 잠시 뒤 자동 저장됩니다.');}
+    // 11-03: 처음 열 때의 자동 저장도 같다(사람이 한글 창에서 고친 것이 아님). 검사(수식·글자 겹침 등)에 걸리면 저장하지 않고 넘어가며,
+    // 경고는 문항 탭의 「!」로 남긴다. 예전에는 실패 → 원래 문항으로 되돌려 다시 그림 → 또 저장 시도가 끝없이 되풀이돼 화면이 멈췄다.
+    let s;try{s=await snapshot();}catch(e){if(userDirty)throw e;skipped={id:q.id,message:e.message};dirty=false;patchDirty=false;return;}
+    if(!s){if(!userDirty){dirty=false;patchDirty=false;return;}throw Error('저장될 모양으로 갱신했습니다 · 잠시 뒤 자동 저장됩니다.');}
     await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;
   }
   save.onclick=async()=>{save.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;message('조판 저장됨 · HWPX 재열기 후 모양 검수 완료');}catch(e){message(e.message,true);}finally{save.disabled=!ready;}};
@@ -338,7 +341,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
           rewidth.set(x.id,{bytes:widenForForm(Document,e.bytes,fstd),height:Number.isFinite(e.height)?e.height:60});}}
     }
     // 학교 양식은 묶을 때마다 새로 연다(걸친 문항을 넘겨 다시 묶기). 처음 연 문서는 구조를 읽는 데만 쓴다.
-    template?.free();    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,openTemplate:form?()=>openForm(form.bytes,password):null,columns:structure?.columns||2,bodyStart:structure?.firstQuestion??form?.structure?.firstQuestion??-1,tailStart:structure?.tailStart??-1,rewidth,structure,keep:form?.keep||{},settle:d=>new Document(anchorRaisedTables(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document))});
+    template?.free();    const {document:exam}=await buildExamDocument(Document,data,examSet,{between:pause,openTemplate:form?()=>openForm(form.bytes,password):null,columns:structure?.columns||2,bodyStart:structure?.firstQuestion??form?.structure?.firstQuestion??-1,tailStart:structure?.tailStart??-1,rewidth,structure,keep:form?.keep||{},settleOpen:d=>anchorRaisedTablesOpen(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document)});
     try{if(order)renumberDocument(exam);let bytes=exportLayoutHwpx(exam,XLSX.CFB);
       // 학교 양식: 묶을 때 엔진이 줄 배치를 다시 계산해 문항에서 끌어올린 수식 줄이 되돌아간다 — 보낼 파일에서 한 번 더(이 뒤 최종 검사도 이 파일로).
       if(form)bytes=await applyLiftTallEquations(bytes,JSZip,Document);
@@ -405,7 +408,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const out={svg,width:w,height:H};svgCache.set(value.id,{key,out});return out;
     }finally{d.free();}
   }
-  let assembled=null;
+  let assembled=null,skipped=null;
   const pageSheets=(...args)=>serial(()=>pageSheetsNow(...args));
   // progress(11-02 조판 중 표시): {stage:'items'|'form'|'place'|'draw', i, n} — 시험지 화면이 단계·진행 막대를 그린다.
   async function pageSheetsNow(data,exam,focusId,{alive=()=>true,form=null,progress=()=>{}}={}){
@@ -429,7 +432,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       else{progress({stage:'place'});
       const first=await openForm(form.bytes,'');let structure;try{structure=formStructure(first);}finally{first.free();}
       sheet={...sheet,paper:fstd.paper.size,columns:structure.columns||2};
-      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settle:d=>new Document(anchorRaisedTables(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document))});
+      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settleOpen:d=>anchorRaisedTablesOpen(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document)});
       try{fillFormPageCount(b.document);}catch{}
       // 양식 위에 넣은 직후의 문서는 엔진이 머리 표·〈보기〉 자리를 옛 위치로 그린다(10-29 실측: 2번이 제목 표와 겹침). 저장한 모양으로 다시 열어 그린다 — 문단 번호는 같다.
       let againBytes;try{againBytes=exportLayoutHwpx(b.document,XLSX.CFB);}finally{b.document.free();}
@@ -550,5 +553,5 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   }
   // 학교 양식 시험지에서 양식 틀로 새로 조판할 문항(10-30): 그 문항은 보내기 전에 제 틀로 조판해 둘 필요가 없다.
   const retypesForForm=(value,form)=>{const f=formStandardOf(form);return !!f&&!(std(value).id===f.id&&value.typeset?.verified&&value.typeset?.profile?.paper===f.paper.size);};
-  return {retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  return {retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},takeSkipped(){const v=skipped;skipped=null;return v;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

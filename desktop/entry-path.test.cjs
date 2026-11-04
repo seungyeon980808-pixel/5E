@@ -166,7 +166,7 @@ test('ready installs the default-session file handler before both trusted loadFi
   await h.boot();
   assert.deepEqual([...h.protocols.keys()], ['file']);
   assert.deepEqual(h.effects.filter(effect => effect.loadFile || effect.protocol), [
-    {protocol:'file'}, {loadFile:path.join(root, 'desktop/splash.html'), installed:true}, {loadFile:path.join(root, 'index.html'), installed:true},
+    {protocol:'file'}, {loadFile:path.join(root, 'index.html'), installed:true},
   ]);
   assert.equal(h.windows.at(-1).webContents.mainFrame.url, primaryUrl);
   for (const window of h.windows) {

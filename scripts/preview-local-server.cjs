@@ -67,6 +67,21 @@ const server = http.createServer(async (req, res) => {
     });
     return;
   }
+  // 버벅임 기록(11-04, 로컬 전용): 5E_exam이 화면이 0.1초 넘게 멈춘 순간과 그 직전 동작을 보낸다 → _work/perf-safari.log 한 줄씩.
+  if (pathname === '/api/local-perf') {
+    if (req.method !== 'POST') return fail(405, 'Method rejected');
+    if (req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return fail(403, 'Origin rejected');
+    let body = '', size = 0;
+    req.on('data', chunk => { size += chunk.length; if (size > 200000) { req.destroy(); return; } body += chunk; });
+    req.on('end', () => {
+      try { const rows = JSON.parse(body || '[]'); if (!Array.isArray(rows)) throw Error('rows');
+        fs.mkdirSync(path.join(root, '_work'), { recursive: true });
+        fs.appendFileSync(path.join(root, '_work', 'perf-safari.log'), rows.map(r => JSON.stringify(r)).join('\n') + (rows.length ? '\n' : ''));
+        res.writeHead(204); res.end(); }
+      catch (error) { fail(400, error.message); }
+    });
+    return;
+  }
   if (pathname === '/api/local-ai-config' && req.method === 'GET') {
     res.writeHead(200, {'Content-Type':'application/json'});
     res.end(JSON.stringify({local:Boolean(localBridge)}));

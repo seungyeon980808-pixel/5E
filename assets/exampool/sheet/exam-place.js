@@ -43,9 +43,10 @@ export function renderStep3(exam, data, forms, items, st) {
       <div class="ef-seg ex-lv" role="group" aria-label="보기 방식"><button type="button" data-ex-lv="list" aria-pressed="${st.lv === 'list'}" title="목록" aria-label="목록">${SVG.list}</button><button type="button" data-ex-lv="card" aria-pressed="${st.lv === 'card'}" title="카드" aria-label="카드">${SVG.grid}</button></div></div>
     <div class="ex-ord" id="exam-order">${items.length ? (st.lv === 'card' ? `<div class="ex-cgrid">${cards}</div>` : rows) : '<p class="ef-hint" style="padding:12px">아직 문항이 없습니다. 「＋ 문항 더 담기」로 보관함에서 고르세요.</p>'}</div>
     <div class="ef-foot"><button type="button" class="ef-btn" data-ef-step="2">＋ 문항 더 담기</button><span class="sp"></span><span class="mu" style="font-size:11.5px">끌어서 순서 바꾸기</span></div></section>
-  <section class="ef-pane"><div class="ef-ph"><b>쪽</b><small id="exam-sheet-info"></small><span class="sp"></span>
+  <section class="ef-pane ex-sheetpane"><div class="ef-ph"><b>쪽</b><small id="exam-sheet-info"></small><span class="sp"></span>
       <div class="ef-seg ex-zoom" role="group" aria-label="쪽 보기"><button type="button" data-ex-zoom="page" aria-pressed="${st.zoom === 'page'}">쪽 맞춤</button><button type="button" data-ex-zoom="width" aria-pressed="${st.zoom === 'width'}">폭 맞춤</button></div></div>
-    <div class="ex-desk"><div class="pv-sheet ex-zoom-${st.zoom}" id="exam-sheet" data-exam="${E(exam.id)}"><p class="pv-empty">${items.length ? '한글 조판으로 쪽을 그리는 중…' : '문항을 넣으면 실제 쪽이 보입니다.'}</p></div></div></section>
+    <div class="ex-desk"><div class="pv-sheet ex-zoom-${st.zoom}" id="exam-sheet" data-exam="${E(exam.id)}" style="--ex-scale:${st.scale || 1}"><p class="pv-empty">${items.length ? '한글 조판으로 쪽을 그리는 중…' : '문항을 넣으면 실제 쪽이 보입니다.'}</p></div></div>
+    <div class="ex-zoomctl" role="group" aria-label="쪽 배율"><button type="button" data-ex-scale="-1" title="축소" aria-label="축소">−</button><button type="button" class="pct" data-ex-scale="0" title="맞춤 크기(100%)로" aria-label="쪽 배율 · 누르면 100%">${Math.round((st.scale || 1) * 100)}%</button><button type="button" data-ex-scale="1" title="확대" aria-label="확대">+</button></div></section>
   <section class="ef-pane"><div class="ef-ph"><b>점검</b><span class="sp"></span><label class="ex-swl"><input type="checkbox" data-ex-nogoal ${st.noGoal ? 'checked' : ''}><span class="sw"></span>목표 없이 보기</label></div>
     <div class="ex-rp" id="exam-check">${checkMarkup(exam, data, forms, items, st, null)}</div></section>
 </div>`;
@@ -88,7 +89,9 @@ export function checkMarkup(exam, data, forms, items, st, sheet) {
   goalHtml += `<div class="ex-gr ex-dist"><span class="gl">정답 분포</span><span class="pv-answers ex-dist2" aria-label="정답 분포">${dist.map((v, k) => `<span title="${ANSWER_MARK[k]} ${v}문항"><i style="height:${3 + v * 4}px"></i>${ANSWER_MARK[k]}${v}</span>`).join('')}</span>${useGoal && g.rule && ans.length ? (distOk ? '<i class="si ok">✓</i>' : '<i class="si wn">!</i>') : '<i class="si"></i>'}</div>`;
   // 규칙 점검(AI 없이): 문항 자료로 바로 계산.
   const list = pred => qs.map((q, i) => pred(q) ? i : -1).filter(i => i >= 0);
-  const rule = (idx, label, okText = '없음', level = 'bd') => { if (idx.length) warn.rule++; return rl(idx.length ? level : 'ok', label, idx.length ? `${idx.map(i => i + 1).join('·')}번` : okText, idx.length ? qs[idx[0]].id : null); };
+  // 11-04: 걸린 문항이 많으면 번호 줄이 칸 폭을 다 차지해 이름이 한 글자씩 세로로 깨졌다 — 이름·개수는 윗줄, 번호는 아래에 한 줄 5개씩 단추(누르면 그 문항).
+  const rule = (idx, label, okText = '없음', level = 'bd') => { if (!idx.length) return rl('ok', label, okText, null); warn.rule++;
+    return `<div class="ex-rlm">${rl(level, label, `${idx.length}개`, null)}<div class="ex-rnums">${idx.map(i => `<button type="button" data-open-card="${E(qs[i].id)}" title="${i + 1}번 문항 카드 열기">${i + 1}번</button>`).join('')}</div></div>`; };
   const noAns = list(q => objective(q) && !Number.isInteger(q.answer)), noPts = list(q => !(Number(q.points) > 0)), noAsk = list(q => !String(q.ask || '').trim());
   const dup = list(q => { const t = (q.choices || []).map(c => String(c.text || '').replace(/\s+/g, '')).filter(Boolean); return new Set(t).size !== t.length; });
   const allowed = new Set(frameOf(exam, forms).pts ? [2, 3] : [2, 3, 4]);

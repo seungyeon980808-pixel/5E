@@ -44,8 +44,8 @@ h.withServer(async origin => {
       assert.equal(await page.locator('#exam-pool-open').isEnabled(),true,'5E_ExamPool is ready');
       assert.equal(await page.locator('#exam-pool-open').isVisible(),false,'one entry: the footer button is hidden');
       assert.equal(await page.locator('#exampool-open').isVisible(),false,'one entry: the legacy design button is hidden');
-      const entry=page.locator('.app-switch-image [data-app-switch="exam"]');
-      await entry.click();
+      // 11-04: 프로그램 전환은 로고 「5E_image ⌄」 목록으로(옛 exam·hwp 글자 줄은 숨김).
+      await page.hover('.app-shell-header .app-brand');await page.click('.app-menu.is-open [data-app-switch="exam"]');
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
       await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
@@ -85,8 +85,9 @@ h.withServer(async origin => {
       for(const k of ['left','right']){const pane=k==='left'?'.cv-left':'.cv-right',w0=await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane),b=await sheet.locator(`#card-view [data-cvsplit="${k}"]`).boundingBox(),f=await (await page.$('#exampool-sheet-workspace iframe')).boundingBox();
         const x=f.x+b.x+b.width/2,y=f.y+b.y+b.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+1,y);await page.mouse.move(x,y);
         assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-w0)<=1,`grabbing the ${k} border in a narrow window does not jump`);
-        await page.mouse.move(k==='left'?x-30:x+30,y,{steps:3});await page.mouse.up();
-        assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-(w0-30))<=2,`dragging the ${k} border in a narrow window shrinks it by the drag`);
+        // 11-04: 카드 화면 왼쪽에 44px 줄이 생겨 칸이 그만큼 좁다 — 오른쪽 칸 최소 폭(300)에 닿지 않게 20px만 끈다.
+        await page.mouse.move(k==='left'?x-20:x+20,y,{steps:3});await page.mouse.up();
+        assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-(w0-20))<=2,`dragging the ${k} border in a narrow window shrinks it by the drag`);
         await sheet.locator(`#card-view [data-cvsplit="${k}"]`).dblclick();}
       await page.setViewportSize({width:1440,height:960});await sheet.waitForTimeout(200);
       await sheet.click('#card-view [data-cv="toggle-right"]');assert.equal(await sheet.locator('#card-view .cv-right').isHidden(),true);await sheet.click('#card-view [data-cv="toggle-right"]');
@@ -328,7 +329,7 @@ h.withServer(async origin => {
       await page.waitForFunction(()=>/ExamPool 시험지 「/.test(document.querySelector('#exam-status')?.textContent||''),null,{timeout:60000});
       assert.equal(await docText(),sent,'opening from the HWP file menu gives the same exam as sending it');
       assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'false');
-      await page.click('[data-exam-action="close"]');await page.locator('.app-switch-image [data-app-switch="exam"]').click();await sheet.waitForSelector('#examd-view:not([hidden])');
+      await page.click('[data-exam-action="close"]');await page.hover('.app-shell-header .app-brand');await page.click('.app-menu.is-open [data-app-switch="exam"]');await sheet.waitForSelector('#examd-view:not([hidden])');
 
       // 출제 대화(대역 하네스 · 실제 AI 아님): 요청 묶음 → 변경안 보관 → 「적용」→ 버전 기록, 대기 중 직접 수정한 응답은 지난 변경안.
       await page.evaluate(()=>{window.__authorPackets=[];window.__authorHold=null;window.fiveEAuthoringHarness={cancel(){return true;},request:async packet=>{window.__authorPackets.push(packet);if(window.__authorHold)await window.__authorHold;
@@ -375,7 +376,7 @@ h.withServer(async origin => {
       await h.navigate(small,origin+'/?mode=pro&mobile=0');await h.ready(small);
       // 새 브라우저라 튜토리얼 환영 창이 ready 뒤에 늦게 뜰 수 있다 — 뜨면 닫고 누른다.
       {const skip=small.getByRole('button',{name:'건너뛰기',exact:true});await skip.waitFor({state:'visible',timeout:3000}).then(()=>skip.click()).catch(()=>{});}
-      await small.click('.app-switch-image [data-app-switch="exam"]');
+      await small.evaluate(()=>document.querySelector('.app-switch-image [data-app-switch="exam"]').click());
       const smallSheet=await (await small.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await smallSheet.waitForSelector('.side [data-pool="drafting"]');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
       await smallSheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await smallSheet.click('[data-lv-new]');await smallSheet.waitForSelector('#new-dialog[open]');

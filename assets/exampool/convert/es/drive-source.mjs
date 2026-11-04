@@ -50,9 +50,22 @@ async function readWithStallGuard(url, stallMs) {
   }
 }
 
+// 11-03: 기출 PDF(평가원·학평)는 Cloudflare 정적 파일(5e-exam-pdf Worker)에서 먼저 받는다 — 드라이브 게이트웨이는 받을 때마다
+// 경로를 찾느라 1~5초, 가끔 멈춰 12초씩 다시 시도했다. 거기 없거나 못 받으면 아래 게이트웨이로 그대로 넘어간다. 올리기: exam-pdf/.
+const STATIC_BASE = 'https://5e-exam-pdf.5e-desktop.workers.dev/v1/';
+const STATIC_STALL_MS = 8000;
+const fromStatic = path => /\.pdf$/i.test(path) && /^(기출문제|학력평가)\//.test(path) && !path.startsWith('기출문제/기출확장_국영수사탐/');
+export function staticLink(path) { return STATIC_BASE + path.split('/').map(encodeURIComponent).join('/'); }
+
 export async function downloadDriveFile(path) {
   const url = driveLink(path);
   if (!url) throw new DriveError('공개 시험지 경로가 없습니다.');
+  if (fromStatic(path)) {
+    try {
+      const { response, bytes } = await readWithStallGuard(staticLink(path), STATIC_STALL_MS);
+      if (response.ok && bytes) return bytes;
+    } catch { /* 게이트웨이로 */ }
+  }
   // The public gateway sometimes never answers a request (measured: about 1 in 10 tries
   // stall, and leaving a page mid-download can stall the next ones). Each try gets a
   // deadline and a distinct URL so a stalled request is abandoned instead of joined.

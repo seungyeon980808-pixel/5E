@@ -232,7 +232,7 @@ export function initViewport(svg, state, onChange) {
       ], {duration:300, easing:'cubic-bezier(.22,1,.36,1)'});
     }
   };
-  for (const name of ['pointerdown', 'wheel']) svg.addEventListener(name, () => { layoutAnimation?.cancel(); projection = readProjection(); }, {capture:true, passive:true});
+  for (const name of ['pointerdown', 'wheel']) svg.addEventListener(name, () => { pendingFit = null; layoutAnimation?.cancel(); projection = readProjection(); }, {capture:true, passive:true});
   const layoutObserver = new ResizeObserver(preserveProjection);
   layoutObserver.observe(svg);
   window.addEventListener("5e:panel-layout-did-change", preserveProjection);
@@ -415,10 +415,11 @@ export function initViewport(svg, state, onChange) {
 // 주어진 범위(세계 좌표 {x,y,w,h})가 캔버스의 fill 비율에 들어오게 확대하고 가운데로(10-24 지적 19: 그림 편집을 열 때).
 // top: 캔버스 위쪽을 덮는 막대 높이(px) — 그만큼 아래로 내려 가운데. 확대 한계(clampZoom)를 먼저 적용한 뒤 가운데를 정한다.
 // 화면 배치가 바뀌는 중(칸이 숨거나 나타남)에 맞추면 바로 뒤 배치 보존(preserveProjection)이 원점 가운데로 되돌린다 —
-// 맞춤 요청을 잠깐(1.5초) 기억해 배치 보존 뒤에 다시 적용한다.
+// 맞춤 요청을 기억해 배치 보존 뒤에 다시 적용한다 — 사용자가 캔버스를 만지거나(누르기·휠) 10초가 지나면 잊는다.
+// 11-04: 1.5초만 기억했더니 Safari에서 프로그램 전환(흐림 등장)이 늦게 끝나면 맞춤이 사라져 그림이 화면보다 크게 보였다.
 let pendingFit = null;
 export function fitViewToBounds(state, b, options = {}) {
-  pendingFit = { state, b, options, until: Date.now() + 1500 };
+  pendingFit = { state, b, options, until: Date.now() + 10000 };
   return applyFit(state, b, options);
 }
 function reapplyPendingFit() {
@@ -449,4 +450,54 @@ export function centerView(state) {
     s.viewBox.x = -s.viewBox.w / 2;
     s.viewBox.y = -s.viewBox.h / 2;
   });
+}
+
+/* ----- 화면 확대 단추(11-04): 캔버스 가운데를 기준으로 배율을 바꾼다 ----- */
+// 100% = 도화지 전체가 캔버스의 90%에 들어오는 크기(「맞춤」). 도화지가 작아 실제 크기(1mm=3.78px)는 최소 배율보다 작다.
+export function fitZoom(state) {
+  const svg = _svgRef, ab = state.get().artboard;
+  const rect = svg?.getBoundingClientRect();
+  if (!rect?.width || !rect?.height || !ab?.w || !ab?.h) return 0;
+  return Math.min(rect.width * 0.9 / ab.w, rect.height * 0.9 / ab.h);
+}
+export function zoomPercent(state) {
+  const fit = fitZoom(state);
+  return fit ? Math.round(getZoom() / fit * 100) : 100;
+}
+export function setZoomLevel(state, zoom) {
+  const svg = _svgRef;
+  if (!svg || !(zoom > 0)) return false;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  pendingFit = null;
+  state.update((s) => {
+    const vb = s.viewBox, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2, factor = zoom / currentZoom(svg, vb);
+    vb.w /= factor;
+    vb.h /= factor;
+    clampZoom(svg, s);
+    vb.x = cx - vb.w / 2;
+    vb.y = cy - vb.h / 2;
+    clampViewBox(s);
+  });
+  return true;
+}
+export function zoomByStep(state, direction) {
+  return setZoomLevel(state, getZoom() * (direction > 0 ? 1.1 : 1 / 1.1));
+}
+// 처음 여는 크기(11-04 사용자 사진 기준): 도화지 전체 보기(100%)의 80% — 도화지 둘레에 여유가 남는 크기.
+export const DEFAULT_ZOOM_PERCENT = 82;
+export function setZoomPercent(state, percent) {
+  const fit = fitZoom(state);
+  return fit ? setZoomLevel(state, fit * percent / 100) : false;
+}
+// 고른 것에 맞춤: 세계 좌표 범위 b가 화면의 80%에 들어오게
+export function fitBounds(state, b) { return b && b.w > 0 && b.h > 0 ? applyFit(state, b, { fill: 0.8 }) : false; }
+export function fitDefault(state) {
+  if (!fitArtboard(state)) return false;
+  const fit = fitZoom(state);
+  return fit ? setZoomLevel(state, fit * DEFAULT_ZOOM_PERCENT / 100) : false;
+}
+export function fitArtboard(state) {
+  const ab = state.get().artboard;
+  return ab ? applyFit(state, { x: -ab.w / 2, y: -ab.h / 2, w: ab.w, h: ab.h }, { fill: 0.9 }) : false;
 }

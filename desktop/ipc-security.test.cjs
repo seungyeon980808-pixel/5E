@@ -10,8 +10,9 @@ const { pathToFileURL } = require('node:url');
 
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const channels = ['codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
-  'codex:send', 'codex:interrupt', 'codex:login', 'capture:sources', 'local-images:pick-folder',
+  'codex:send', 'codex:interrupt', 'codex:login', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand',
   'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence'];
+const pdfLibraryChannels=['pdf-library:pick-folder','pdf-library:ensure-default-folder','pdf-library:connections','pdf-library:folder-tree','pdf-library:set-folder-selection','pdf-library:disconnect','pdf-library:sync','pdf-library:cancel','pdf-library:list','pdf-library:read','pdf-library:read-image','pdf-library:open-folder','pdf-library:reveal-item','pdf-library:save-index','pdf-library:load-index','pdf-library:index-state','pdf-library:save-index-state','pdf-library:retry-index','pdf-library:list-corrections','pdf-library:save-correction','pdf-library:delete-correction','pdf-library:capabilities','pdf-library:bundled-pack','pdf-library:read-bundled-pack'];
 const auxChannels=['exam:request-edit','exam:get-names','exam:return-source','exam:ack','exam:workspace-snapshot','exam:workspace-restore','exam:project-snapshot-reply','exam:annotations'];
 
 function harness(t) {
@@ -86,7 +87,7 @@ function harness(t) {
   return { handlers, window, windows, event, call, effects, events, children, folder, image, requests };
 }
 
-for (const channel of channels) {
+for (const channel of [...channels, ...pdfLibraryChannels]) {
   for (const senderKind of ['external URL', 'subframe', 'other webContents']) {
     test(`${channel} rejects ${senderKind} before privileged effects`, async t => {
       // Given a real production handler and an untrusted renderer identity.
@@ -104,6 +105,7 @@ for (const channel of channels) {
   test(`${channel} accepts the trusted application main frame`, async t => {
     // Given a trusted main frame and a folder explicitly selected through the dialog.
     const h = harness(t);
+    if (channel.startsWith('pdf-library:')) return; // 폴더 연결 채널은 믿을 수 있는 창 확인만 이 검사에서 본다(동작은 pdf-library 검사 몫)
     if (channel.startsWith('local-images:')) await h.call('local-images:pick-folder');
     // When the production handler runs, then it returns its successful result.
     if(channel==='exam:open-project'){await assert.rejects(async()=>h.call(channel),/프로젝트 파일/);return;}
@@ -120,6 +122,7 @@ for (const channel of channels) {
       case 'codex:models': assert.deepEqual(result.data, []); break;
       case 'codex:account': assert.deepEqual(Object.keys(result).sort(), ['account', 'limits', 'usage']); break;
       case 'capture:sources': assert.deepEqual(result, []); break;
+      case 'window:traffic-lights': case 'window:start-expand': assert.equal(result, true); break;
       case 'local-images:pick-folder': assert.equal(result.folder, fs.realpathSync(h.folder)); break;
       case 'local-images:list': assert.deepEqual(result.items.map(item => item.path), [fs.realpathSync(h.image)]); break;
       case 'local-images:thumbnail': case 'local-images:read':
@@ -189,7 +192,7 @@ test('exam workspace snapshot rejects malformed or expired owner proof requests 
 
 test('all registered privileged channels are covered by sender tests', t => {
   const h = harness(t);
-  assert.deepEqual([...h.handlers.keys()].sort(), [...channels,...auxChannels].sort());
+  assert.deepEqual([...h.handlers.keys()].sort(), [...channels,...auxChannels,...pdfLibraryChannels].sort());
 });
 
 for (const url of ['https://example.com', 'file:///tmp/other.html', 'javascript:alert(1)']) {

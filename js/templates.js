@@ -780,6 +780,41 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
   return svg;                     // viewBox + stroke set after it goes live (needs getBBox)
 }
 
+/* 오브젝트 창 미리보기(11-04 지시): 팔레트 아이콘 대신 실제 모양을 그대로 보인다.
+ * 아이콘과 같은 대표 데이터(iconSampleObject)를 진짜 렌더러로 그리되, 단색으로 바꾸거나 선 굵기를 덮어쓰지 않는다.
+ * 렌더러로 그릴 수 없는 것(각도 표시처럼 손그림 아이콘만 있는 도구)은 아이콘으로 대신한다.
+ * 미리보기는 그때그때 그리므로 따로 저장하는 그림 파일이 없다. */
+export function buildSymbolPreview(id, def = TEMPLATES[id]) {
+  const asset = getSvgAsset(id);
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", "tool-preview");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  if (asset) {
+    svg.setAttribute("viewBox", `0 0 ${asset.naturalWidth} ${asset.naturalHeight}`);
+    svg.innerHTML = `<image href="${asset.dataUri}" x="0" y="0" width="${asset.naturalWidth}" height="${asset.naturalHeight}" preserveAspectRatio="xMidYMid meet"/>`;
+    return svg;
+  }
+  let el = null;
+  try { const obj = iconSampleObject(id, def); el = obj ? renderObject(obj) : null; } catch (_) { el = null; }
+  if (!el) { const icon = buildSymbolIcon(id, def); icon.dataset.previewIcon = "1"; return icon; }
+  svg.dataset.preview = "1";
+  svg.appendChild(el);
+  return svg;
+}
+// 미리보기 viewBox: 화면에 붙은 뒤 내용 크기에 맞춘다(선 굵기는 실제 그대로 둔다). 한꺼번에 읽고 나서 고친다.
+export function fitSymbolPreviews(svgs) {
+  const live = svgs.filter((svg) => svg.dataset.preview === "1");
+  const boxes = live.map((svg) => { try { return svg.getBBox(); } catch (_) { return null; } });
+  live.forEach((svg, i) => {
+    const bb = boxes[i];
+    if (!bb || (bb.width <= 0 && bb.height <= 0)) return;
+    const pad = Math.max(bb.width, bb.height) * 0.08 + 0.5;
+    svg.setAttribute("viewBox", `${bb.x - pad} ${bb.y - pad} ${bb.width + pad * 2} ${bb.height + pad * 2}`);
+  });
+  sizeIconViewBoxes(svgs.filter((svg) => svg.dataset.previewIcon === "1"));
+}
+
 // viewBox needs the svg LIVE in the DOM (getBBox). Fit it to the content and give
 // every icon the same on-screen stroke weight.
 export function sizeIconViewBox(svg) {

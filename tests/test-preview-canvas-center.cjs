@@ -74,7 +74,7 @@ async function assertLockedCenter(page, baseline, rulersVisible, label) {
 }
 
 async function togglePanel(page, side) {
-  await page.locator(`.app-shell-header [data-panel-toggle="${side}"]`).click();
+  await page.locator(`#drawer-${side}-toggle`).click(); // 11-04: 데스크톱은 패널 머리줄·떠 있는 카드에 있음(js/panel-heads.js)
   await page.waitForTimeout(360);
 }
 
@@ -89,8 +89,8 @@ async function togglePanel(page, side) {
       await page.goto(`${previewUrl}${separator}mode=pro`, { waitUntil: 'networkidle' });
       await dismissWelcome(page);
 
-      // 기본값은 자유 이동(2026-10-13 '기본 상태는 꺼진 모습' 결정). 기준 좌표 고정은 메뉴에서 고른다.
-      assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'free');
+      // 기본값은 기준 좌표 고정(11-04 사용자: 중앙 고정이 기본). 10-13에는 「자유 이동」이 기본이었다.
+      assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'coordinate');
       await page.click('#center-view-btn');
       await page.click('[data-canvas-lock-mode="coordinate"]');
       assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'coordinate');

@@ -384,7 +384,10 @@ export function fillColumns(doc,items,ranges,boxes,{columns,pad=16,only=null}){
 // 그래도 걸치는 문항이 있으면 그 문항은 반드시 새 단에서 시작하게 하고 높이를 다시 재 계획한다(보통 2~3번).
 // 양식 문서는 묶을 때마다 새로 연다(openTemplate). 한 단보다 긴 문항은 단 맨 위에서 흘러가게 두고 tall로 알린다.
 // settle(10-30): 양식 위에 넣은 직후 문서는 엔진이 옛 자리로 그린다 — 저장했다 다시 연 문서(화면·보낸 파일과 같은 모양)로 잰다.
-export async function assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure=null,keep={},settle=null}){
+export async function assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure=null,keep={},settle=null,settleOpen=null}){
+  // settleOpen(11-03): 저장했다 다시 연 결과를 {바이트, 이미 연 문서(없으면 null)}로 돌려주는 settle — 같은 바이트를 두 번 열지 않고,
+  // 단 아래 채우기에서 같은 문서의 사본을 여러 번 만들 때 바이트를 한 번만 만든다.
+  if(settleOpen)settle=d=>{const r=settleOpen(d);return r.doc||new Document(r.bytes);};
   const again=d=>{if(!settle)return d;try{return settle(d);}finally{d.free();}};
   const tableAnchors=new Set();
   const build=async (breaks,firstStart)=>{
@@ -433,7 +436,9 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
   // 커서 〈보기〉 뒤 선지만 다음 쪽으로 밀렸다). 한꺼번에 채워 안 되면 단마다 하나씩 채워 보고 되는 단만 남긴다.
   if(settle){
     const key=m=>JSON.stringify(items.map(x=>[...(m.get(x.id)?.keys()||[])])),before=new Set(badOf(b,new Set()).map(x=>x.id));
-    const tryFill=only=>{const copy=settle(b.doc),done=fillColumns(copy,items,b.ranges,b.boxes,{columns,only});if(!done.length){copy.free();return null;}
+    // 단마다 채워 볼 때 바탕 문서(b.doc)는 받아들인 채우기가 없는 한 그대로다 — 그 사본 바이트를 한 번만 만들어 다시 연다(11-03: 시험지 전체를 매번 HWPX로 썼다 열어 40초 걸린 시험지).
+    let base=null;const copyOf=()=>{if(!settleOpen)return settle(b.doc);if(base?.doc!==b.doc){const r=settleOpen(b.doc);base={doc:b.doc,bytes:r.bytes};return r.doc||new Document(r.bytes);}return new Document(base.bytes);};
+    const tryFill=only=>{const copy=copyOf(),done=fillColumns(copy,items,b.ranges,b.boxes,{columns,only});if(!done.length){copy.free();return null;}
       const filled=again(copy),boxes=itemBoxes(filled,b.measure,columns,b.skip),next={...b,doc:filled,boxes};
       if(filled.pageCount()===b.doc.pageCount()&&key(boxes)===key(b.boxes)&&badOf(next,new Set()).every(x=>before.has(x.id)))return {next,done};
       filled.free();return {next:null,done};};
@@ -464,7 +469,7 @@ export function fillFormPageCount(doc){
 }
 
 // rewidth: 시험지 단 폭과 다르게 조판한 문항을 그 단 폭으로 새로 조판한 것(문항 id → {bytes,height}). 저장한 조판은 그대로 둔다.
-export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between,template=null,openTemplate=null,columns=2,bodyStart=-1,tailStart=-1,rewidth=null,structure=null,keep={},settle=null}={}){
+export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between,template=null,openTemplate=null,columns=2,bodyStart=-1,tailStart=-1,rewidth=null,structure=null,keep={},settle=null,settleOpen=null}={}){
   const plan=examPlan(data,exam),{pages,page:sheet,missing,mixed}=plan;
   const items=rewidth?plan.items.map(x=>rewidth.has(x.id)?{...x,height:rewidth.get(x.id).height+x.after}:x):plan.items;
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
@@ -474,7 +479,7 @@ export async function buildExamDocument(Document,data,exam=data.exams?.[0],{betw
   const open=item=>rewidth?.has(item.id)?Promise.resolve(new Document(rewidth.get(item.id).bytes))
     :openApprovedQuestion(Document,item.q,item.q.typeset).catch(e=>{throw Error(`${item.q.number}번 문항: ${e.message}`);});
   // 학교 양식 위에서는 양식이 흘리는 대로(「다음 문단과 함께」만), 빈 시험지는 그린 결과로 확인해 문항을 통째로 넘긴다.
-  if(openTemplate){const built=await assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure,keep,settle});try{fillFormPageCount(built.document);}catch{}return {document:built.document,ranges:built.ranges,pages,moved:built.moved,tall:built.tall,marks:built.marks,count:items.length};}
+  if(openTemplate){const built=await assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure,keep,settle,settleOpen});try{fillFormPageCount(built.document);}catch{}return {document:built.document,ranges:built.ranges,pages,moved:built.moved,tall:built.tall,marks:built.marks,count:items.length};}
   if(template){const {document,ranges}=await assembleExamDocument(Document,{items,pages,sheet,template,bodyStart,tailStart,open,between});return {document,ranges,pages,count:items.length};}
   const built=await assembleExamChecked(Document,{items,sheet,open,between});
   return {document:built.document,pages:built.pages,count:items.length};

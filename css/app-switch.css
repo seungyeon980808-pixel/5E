@@ -73,7 +73,7 @@
    단추 32 · 아이콘 20 · 로고 「5E」 23 · 「_hwp」 18 · 앱 바꾸기 16.5 · 막대 안 글자 13.5. 로고 칸 폭(160·288)과 구분선은 그대로. */
 .app-switch-btn { font-size: 16.5px !important; height: 32px !important; }
 @media (max-width: 760px) { .app-switch-btn { font-size: 14px !important; } }
-#rhwp-exam-workspace .exam-topbar { height: 48px; font-size: 13.5px; --ds-h-control: 32px; --ds-text-body: 13.5px; }
+#rhwp-exam-workspace .exam-topbar { height: 56px; font-size: 13.5px; --ds-h-control: 32px; --ds-text-body: 13.5px; }
 #rhwp-exam-workspace .exam-topbar :is(button, select, label, span) { font-size: 13.5px; }
 #rhwp-exam-workspace .exam-panel-toggle { width: 32px; height: 32px; margin-top: -16px; }
 #rhwp-exam-workspace .exam-panel-toggle svg, #rhwp-exam-workspace .exam-topbar .exam-history svg { width: 20px; height: 20px; }
@@ -86,3 +86,15 @@
 #rhwp-exam-workspace .exam-topbar .exam-actions > .exam-close { width: 32px; min-width: 32px; height: 32px; padding: 0; margin-left: 4px; border: 0; background: transparent; color: var(--ds-ink-2, #b9c1cc); }
 #rhwp-exam-workspace .exam-topbar .exam-actions > .exam-close:hover { color: var(--ds-ink, #f0f0f0); background: var(--ds-hover, rgba(255,255,255,.06)); }
 #rhwp-exam-workspace .exam-topbar .exam-actions > .exam-close svg { width: 20px; height: 20px; }
+
+/* ===== 11-04(5E_image와 같게): 패널 단추는 왼쪽 칸 맨 위 오른쪽 ▢, 접으면 44px 빈 줄 맨 위 ▢(닫혀 있을 때 불). 로고는 왼쪽 칸 가운데 ===== */
+@media (min-width: 641px) {
+  #rhwp-exam-workspace .exam-top-cell { padding: 0 8px; justify-content: center; }
+  #rhwp-exam-workspace .exam-top-cell .exam-brand { margin-left: 0; }
+  #rhwp-exam-workspace .exam-panel-toggle { position: fixed; z-index: 30; left: calc(max(var(--ds-panel-left, 192px), 288px) - 46px); top: 70px; margin: 0; width: 28px; height: 28px; color: var(--ds-ink-3); }
+  #rhwp-exam-workspace .exam-panel-toggle svg { width: 17px; height: 17px; }
+  #rhwp-exam-workspace.exam-left-collapsed .exam-panel-toggle { left: 8px; background: var(--ds-selected); color: var(--ds-selected-ink, var(--ds-ink)); }
+  #rhwp-exam-workspace.exam-left-collapsed:not([data-placing]) .exam-sidebar { display: flex; width: 44px; min-width: 44px; overflow: hidden; }
+  #rhwp-exam-workspace.exam-left-collapsed:not([data-placing]) .exam-sidebar > * { visibility: hidden; }
+  #rhwp-exam-workspace .exam-sidebar #exam-name { width: calc(100% - 38px) !important; }
+}

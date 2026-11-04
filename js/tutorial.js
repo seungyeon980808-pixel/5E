@@ -1709,5 +1709,5 @@ export function initTutorial() {
   // 탭을 닫아도 흐림이 남지 않게(뒤로가기·새로고침 포함) 정리한다.
   window.addEventListener("pagehide", () => { if (_run) teardown(); });
 
-  maybeShowBanner();
+  // 첫 방문 환영 창은 띄우지 않는다(11-04 사용자: 이제 필요 없음). 튜토리얼은 도움말 메뉴에서 연다.
 }

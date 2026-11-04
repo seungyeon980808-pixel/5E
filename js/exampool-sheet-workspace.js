@@ -2,6 +2,8 @@ import {embedEditablePng,readEditablePng} from './editable-png.js?v=1.7.0-four-s
 import {getContentBounds} from './svg-export.js?v=1.7.0-four-session-integration';
 import {syncAppLock} from './app-lock.js?v=1.7.0-four-session-integration';
 const copy=v=>structuredClone(v);
+// 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — '*'로 보내고 받을 때는 출제 창에서 왔는지로 가린다.
+const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin;
 const asData=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/png;base64,'+btoa(s);};
 let harnessPromise,enginesPromise;
 const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1.7.0-four-session-integration').then(x=>x.createFigureEngines()));
@@ -15,7 +17,10 @@ export function initQuestionSheet(state,services,examWorkspace){
   let host,frame,focusReturn,busy=false;
   // 그림 고르기 중(「5E에서 잘라 넣기」)에 출제 칸을 다시 열면 고르기를 취소하고 연다 — 예전엔 고르기 상자가 가려지고 전송 잠금이 안 풀려
   // 「한글로 보내기」·그림 가져오기가 모두 막혔다(M6).
-  function open(){if(picking){picking.cancel();return;}if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('.side [data-pool]')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
+  // 11-04: 시작 창이 떠 있는 동안 출제 칸을 숨긴 채 미리 불러 둔다 — 처음 exam으로 넘어갈 때 기다림·버벅임 줄이기.
+  function prewarm(){if(host)return;open({silent:true});}
+  function open(opts={}){if(picking){picking.cancel();return;}if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('.side [data-pool]')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
+    if(opts.silent){host.hidden=true;return;}
     focusReturn=document.activeElement;host.hidden=false;host.style.bottom='0';/* ExamPool 상태 줄 하나에 5E 버전·문제 신고를 함께 두므로 5E 아래 막대는 덮는다(아래 막대 두 줄 → 한 줄). */syncAppLock();}
   // 사용자가 출제 칸을 닫거나(✕) 한글로 보낼 때: 휙 사라지지 않게 0.16초 흐려지며 닫는다(app-switch.css의 .app-leaving). 움직임 줄이기 설정이면 바로.
   function fadeClose(){if(!host||host.hidden)return;if(matchMedia('(prefers-reduced-motion: reduce)').matches){close();return;}host.classList.add('app-leaving');setTimeout(()=>{host.classList.remove('app-leaving');close();},160);}
@@ -90,10 +95,10 @@ export function initQuestionSheet(state,services,examWorkspace){
   window.addEventListener('5e:exampool-receive',e=>{const items=e.detail?.items;if(!Array.isArray(items)||!items.length||entry.disabled)return;e.detail.accepted=true;
     setTimeout(async()=>{open();const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
-      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},location.origin);},0);});
+      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},OWN);},0);});
   window.addEventListener('message',async e=>{
-    if(e.origin!==location.origin||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
-    const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},location.origin);
+    if((!FILE_MODE&&e.origin!==location.origin)||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
+    const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},OWN);
     if(m.action==='modal'){document.documentElement.classList.toggle('exampool-modal',!!m.open&&!host.hidden);return;}
     if(m.action==='close'){fadeClose();return;}
     // 출제 대화: 시간이 오래 걸리므로 다른 전송 작업을 막지 않는다. 문항별 작업 범위로 따로 실행한다.
@@ -128,5 +133,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     }catch(error){send({error:error.message});}finally{busy=false;}
   });
   if(new URLSearchParams(location.search).get('sheet')==='1')open();
-  return {open,close};
+  // 작업 화면이 뜬 뒤 한가할 때(2초 뒤) 출제 칸을 숨긴 채 미리 불러 둔다 — 처음 exam 전환이 바로 열리게.
+  if(!navigator.webdriver)setTimeout(()=>(window.requestIdleCallback||(f=>setTimeout(f,0)))(()=>prewarm()),2000);
+  return {open,close,prewarm};
 }

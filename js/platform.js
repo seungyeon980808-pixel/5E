@@ -77,6 +77,7 @@ function isComposingKey(e) {
 // 칸이 열려 있어도 ⌘Z·Delete·방향키·⌘V가 뒤에 숨은 그림을 바꾸던 것(H3).
 function hasBlockingModal() {
   if (coveringApp()) return true;
+  if (document.getElementById('start-screen')) return true; // 시작 창이 떠 있는 동안 그림 단축키 막기
   const persistentLiteEditor = document.documentElement?.dataset.mode === 'lite'
     && document.documentElement?.dataset.liteResultMode === 'edit';
   return [...document.querySelectorAll('.modal-overlay:not([hidden]):not([inert])')]

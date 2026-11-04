@@ -31,7 +31,8 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /Menu\.setApplicationMenu\(null\)/);
   assert.match(main, /win\.setMenu\(null\)/);
   assert.match(main, /win\.setMenuBarVisibility\(false\)/);
-  assert.match(main, /splash\.html/);
+  // 11-04: 작은 로딩 창 대신 앱 창 안 시작 창(js/start-screen.js)
+  assert.doesNotMatch(main, /loadFile\(path\.join\(__dirname, "splash\.html"\)\)/);
   assert.match(main, /show: false/);
   assert.match(main, /ready-to-show/);
   assert.match(main, /titleBarStyle: "hidden"/);

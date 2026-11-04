@@ -1,6 +1,14 @@
 /* 5E_ExamPool 문항 시트 — office.css에서 나눈 둘째 묶음(2026-10-19 밤 리팩토링, 내용·순서 그대로): 문항 보관함·시험지·문항 카드·라이브러리 칸·출제 대화. office.css 바로 다음에 읽는다. */
 /* ── 문항 보관함 · 시험지 · 문항 카드 ───────────────────────────── */
-:root{--st-draft:var(--ds-ink-3);--st-review:#d29922;--st-complete:var(--ds-success)}
+:root{--st-draft:var(--ds-ink-3);--st-review:#b89a55;--st-complete:#5b8a6d;
+  /* 상태 아이콘 색(11-04 확정 시안 status-icons-1104-v3): 문항 출제 중 · 출제 완료 · 시험지에 넣음, 시험지 출제 중 · 출제 완료 */
+  --st-q-work:#b89a55;--st-q-done:#5b8a6d;--st-q-used:#6f93c4;--st-e-work:#b89a55;--st-e-done:#6f93c4}
+.st-ico{width:18px;height:18px;flex:none;display:inline-block;vertical-align:-4px}
+.st-q-work{color:var(--st-q-work)}.st-q-done{color:var(--st-q-done)}.st-q-used{color:var(--st-q-used)}
+.st-e-work{color:var(--st-e-work)}.st-e-done{color:var(--st-e-done)}.st-q-new,.st-e-new{color:var(--ds-ink-3)}
+.st-ico .st-mark{stroke:var(--ds-panel)}
+.side .nav .st-ico{width:18px;height:18px}.side .nav.sub .st-ico{width:15px;height:15px}.side .side-add .st-ico{width:16px;height:16px}
+.pv-st .st-ico{width:15px;height:15px;margin-right:4px}.pv-exam>.st-ico{width:22px;height:22px}
 .dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:var(--st-draft);flex-shrink:0}
 .dot.st-review{background:var(--st-review)}.dot.st-complete{background:var(--st-complete)}
 .shell-body.nav-off>.side{display:none}
@@ -10,7 +18,7 @@
 .side .nav[aria-current=true]{background:var(--ds-selected);color:var(--ds-selected-ink)}
 .side .nav>span{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .side .nav>b{font-weight:var(--ds-weight-regular);font-size:var(--ds-text-meta);color:var(--ds-ink-3);font-variant-numeric:tabular-nums}
-.side .nav.sub{padding-left:calc(var(--ds-space-4) + 22px);font-size:12px;height:28px}
+.side .nav.sub{padding-left:calc(var(--ds-space-4) + 18px);font-size:12px;height:28px}
 .side-label{display:flex;align-items:center}
 .side>.side-label:first-child{margin-top:4px}
 .side .side-add{margin-left:auto;width:22px;height:22px;padding:0;justify-content:center;color:var(--ds-ink-3)}
@@ -43,7 +51,7 @@
 .pv-actions{justify-content:space-between}
 .pv-actions select{height:var(--ds-h-control-sm);border-radius:var(--ds-radius-sm);border:1px solid var(--ds-line-strong);background:var(--ds-field);color:var(--ds-ink-2);font-size:var(--ds-text-meta)}
 .pv-sub{font-size:12px;color:var(--ds-ink-3);font-weight:500;margin:var(--ds-space-4) 0 0}
-.pv-exam{display:grid;grid-template-columns:1fr auto auto auto auto;gap:14px;align-items:center;padding:12px 14px;background:var(--ds-raise);border-radius:var(--ds-radius-lg);box-shadow:0 0 0 1px var(--ds-line)}
+.pv-exam{display:grid;grid-template-columns:auto 1fr auto auto auto auto;gap:14px;align-items:center;padding:12px 14px;background:var(--ds-raise);border-radius:var(--ds-radius-lg);box-shadow:0 0 0 1px var(--ds-line)}
 .pv-exam b{font-size:13.5px}.pv-exam span{display:block;color:var(--ds-ink-3);font-size:var(--ds-text-meta);margin-top:3px}
 .bar3{display:flex;width:120px;height:6px;border-radius:3px;overflow:hidden;background:var(--ds-panel)}.bar3 i{display:block}
 .badge{height:22px;padding:0 9px;border-radius:11px;font-size:var(--ds-text-meta);display:inline-flex!important;align-items:center;margin:0!important;background:var(--go-bg,#152137);color:var(--go-ink,var(--ds-ink));box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
@@ -389,6 +397,33 @@
 #job-box .job-err{margin:0;color:var(--ds-danger)}
 #job-box[data-state=busy] .job-head b::after{content:'';display:inline-block;width:10px;height:10px;margin-left:6px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;animation:job-spin .8s linear infinite;vertical-align:-1px}
 @keyframes job-spin{to{transform:rotate(360deg)}}
+/* 11-03 변형 줄: 여러 개면 한 줄에 하나씩(끝 → n번 열기 · 하는 중 단계 · 기다림 빼기 · 실패 다시) */
+#job-box .job-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;max-height:220px;overflow:auto}
+#job-box .job-list li{display:flex;align-items:center;gap:8px;min-height:30px;border-top:1px solid var(--ds-line,#30363d);font-size:12.5px}
+#job-box .job-list li:first-child{border-top:0}
+#job-box .job-list li>b{width:14px;flex:none;text-align:center;font-weight:600;color:var(--ds-ink-3)}
+#job-box .job-list li[data-state=done]>b{color:#5bc489}#job-box .job-list li[data-state=fail]>b{color:var(--ds-danger)}
+#job-box .job-list li .busy-ring{width:12px;height:12px;flex:none;margin:0 1px;border-width:2px}
+#job-box .job-list em{flex:1;min-width:0;font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#job-box .job-list small{color:var(--ds-ink-3);font-size:11.5px;flex:none}
+#job-box .job-list li[data-state=now] small{color:var(--go-line,#6ba4f8)}
+#job-box .job-list button{height:24px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);font:inherit;font-size:11.5px;cursor:pointer;flex:none}
+#job-box .job-list button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+/* 11-03 기출 여러 개 고르기: 그림 왼쪽 위 동그라미(별표는 오른쪽 위), 고른 그림은 파란 테두리, 아래 띠 */
+.past-check{position:absolute;top:6px;left:6px;z-index:2;width:24px;height:24px;padding:0;display:grid;place-items:center;border:1.5px solid rgba(230,237,243,.75);border-radius:50%;background:rgba(13,17,23,.55);color:transparent;cursor:pointer;opacity:0;transition:opacity .12s}
+.cv-left .past .past-check{top:14px;left:14px}
+.past-check svg,.past-check .ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.past-list figure.past:hover .past-check,.past-check:focus-visible,.lp-picking .past-check{opacity:1}
+.past-check[aria-pressed=true]{background:var(--go-line,#6ba4f8);border-color:var(--go-line,#6ba4f8);color:#0b0d12}
+.lp-picking figure.past{cursor:pointer}
+.past-list figure.past.sel{box-shadow:0 0 0 2px var(--go-line,#6ba4f8);border-radius:var(--cv-ctl-radius,8px)}
+.lp-selbar{position:sticky;bottom:0;z-index:6;display:flex;align-items:center;gap:6px;min-height:44px;margin:0 12px 10px;padding:5px 8px 5px 12px;border-radius:10px;background:var(--ds-raise,#161b22);box-shadow:0 0 0 1px var(--go-line,#6ba4f8),0 8px 22px rgba(0,0,0,.35);color:var(--ds-ink,#e6edf3)}
+.lp-selbar b{font-size:13px;font-weight:600}.lp-selbar .sp{flex:1}
+.lp-selbar .mini{height:30px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:var(--ds-ink-2,#c9d1d9);box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);font:inherit;font-size:12.5px;cursor:pointer}
+.lp-selbar .mini:hover{background:var(--ds-hover)}
+.lp-selbar .go-mini{background:var(--go-bg,#152137);color:var(--ds-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+/* 줄에서 기다리는 기출: 고리 없이 흐리게 「차례 기다림 · n번째」 */
+.past-busy.past-wait{background:color-mix(in srgb,#0d1117 58%,transparent);color:#c9d1d9;font-weight:500}
 /* 5 한 문항 보기: 크게 보기를 본문 자리에(닫기 대신 「카드 모아 보기로」) */
 .lp-zoom.is-one{box-shadow:none}
 #card-view .lp-zoom-stage .lp-zoom-pic{flex:1 1 auto;min-width:0}
@@ -421,6 +456,8 @@
 .pv-sheet-head span{color:var(--ds-ink-3)}
 .pv-pg{position:relative;margin:0;width:min(100%,640px);background:#fff;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .pv-pg figcaption{position:absolute;bottom:-18px;right:0;font-size:11px;color:var(--ds-ink-3)}
+/* 11-03: 화면 밖 쪽 그림은 그리지 않는다(12쪽 SVG 요소 1만 개 넘게 → 스크롤 끊김). 쪽 크기는 aspect-ratio로 그대로. */
+.pv-pgart{content-visibility:auto;contain-intrinsic-size:auto 640px auto 905px}
 .pv-pg-q{position:absolute;border:0;padding:0;background:transparent;cursor:pointer;border-radius:2px}
 .pv-pg-q:hover{background:rgba(107,164,248,.08);box-shadow:0 0 0 1px rgba(107,164,248,.45)}
 .pv-pg-q.is-picked{box-shadow:0 0 0 2px var(--ds-soft-line,#6ba4f8);background:rgba(107,164,248,.06)}
@@ -596,15 +633,15 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .pv-gapbar{transition:top .28s cubic-bezier(.2,.8,.2,1)}
 @media (prefers-reduced-motion:reduce){.pv-gapz,.pv-gapbar{transition:none}}
 /* 10-27 D13 안 D: 고른 문항 오른쪽 아래 안쪽의 얇은 세로 줄(+ · 여백 값 · − · 다음 단) — 다른 문항을 가리지 않는다 */
-.pv-gapbar.v{flex-direction:column;align-items:stretch;gap:0;width:17px!important;height:auto;padding:2px 0;border-radius:4px;transform:translateY(-100%);opacity:.92;font-size:10px}
-.pv-gapbar.v button{width:17px;height:15px;font-size:12px;line-height:15px}
-.pv-gapbar.v>span{display:block;text-align:center;font-size:9px;line-height:12px;color:var(--ds-ink-2,#b1bac4)}
-.pv-gapbar.v label{justify-content:center;height:15px;margin-top:1px;padding-top:1px;border-top:1px solid rgba(255,255,255,.2);gap:0}
+.pv-gapbar.v{flex-direction:column;align-items:stretch;gap:0;width:30px!important;height:auto;padding:3px 0;border-radius:7px;transform:translateY(-100%);opacity:.95;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.pv-gapbar.v button{width:30px;height:26px;font-size:17px;line-height:26px;border-radius:5px}.pv-gapbar.v button:hover:not(:disabled){background:rgba(255,255,255,.12)}
+.pv-gapbar.v>span{display:block;text-align:center;font-size:12px;line-height:18px;color:var(--ds-ink,#e6edf3);font-weight:600}
+.pv-gapbar.v label{justify-content:center;height:28px;margin-top:2px;padding-top:2px;border-top:1px solid rgba(255,255,255,.2);gap:0;cursor:pointer}
 .pv-gapbar.v label input{position:absolute;opacity:0;width:0;height:0}
-.pv-gapbar.v label b{font-weight:400;font-size:10px;line-height:14px;width:17px;text-align:center;border-radius:3px;opacity:.75}
+.pv-gapbar.v label b{font-weight:400;font-size:15px;line-height:24px;width:26px;text-align:center;border-radius:5px;opacity:.8}
 .pv-gapbar.v label:has(input:checked) b{opacity:1;background:#2f6fd6;color:#fff}
 .pv-gapbar.v label:has(input:focus-visible) b{outline:1px solid #6ba4f8}
-.pv-gapbar.v .pv-gapwhy{display:block;text-align:center;font-size:10px;line-height:13px}
+.pv-gapbar.v .pv-gapwhy{display:block;text-align:center;font-size:14px;line-height:22px}
 .pv-gapbar.v{transition:none}
 
 /* 여러 문항 고르기·시험지 삭제(11-02 시안 select-delete-1102) */

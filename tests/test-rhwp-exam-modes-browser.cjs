@@ -41,14 +41,14 @@ for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!pr
     await page.waitForSelector('#exam-palette [data-block]'); await h.idle(page);
     const header = () => page.evaluate(() => getComputedStyle(document.querySelector('#exam-studio iframe').contentDocument.getElementById('studio-header')).display);
 
-    // 1) 모드: 기본은 집중. 기본=리본·팔레트 없음, 없음=왼쪽 칸 없음·도구 보기, ⌘⌥2(Ctrl+Alt+2)로 집중.
+    // 1) 모드: 기본은 집중. 기본=리본·팔레트 없음, 없음=왼쪽 칸 없음·도구 보기, ⌘⌥5(Ctrl+Alt+5)로 집중(⌥⌘1~3은 프로그램 전환).
     assert.equal(await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode'), 'focus');
     assert.equal(await header(), 'none'); assert.ok(await page.locator('.exam-focusbar').isVisible());
     await page.locator('[data-exam-mode="basic"]').click();
     assert.notEqual(await header(), 'none'); assert.equal(await page.locator('.exam-focusbar').isVisible(), false); assert.equal(await page.locator('#exam-palette').isVisible(), false);
     await page.locator('[data-exam-mode="none"]').click();
     assert.equal(await page.locator('.exam-sidebar').isVisible(), false); assert.ok(await page.locator('.exam-peek').isVisible()); assert.equal(await header(), 'none');
-    await page.keyboard.press('Control+Alt+Digit2');
+    await page.keyboard.press('Control+Alt+Digit5');
     assert.equal(await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode'), 'focus'); assert.ok(await page.locator('#exam-palette').isVisible());
 
     // 2) 글자·문단: 고른 글자에 굵게·형광펜·자간, 줄 간격·문단 위 간격.

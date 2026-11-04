@@ -206,8 +206,8 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-desk{flex:1;overflow:auto;background:#1b2028;padding:20px 16px 40px;container-type:size}
 .ex-desk .pv-sheet{gap:26px}
 .ex-zoom-page{flex-direction:row!important;flex-wrap:wrap;justify-content:center;align-items:flex-start!important}
-.ex-zoom-page .pv-pg{width:min(calc(100cqw - 32px),calc((100cqh - 56px) * .707))}
-.ex-zoom-width .pv-pg{width:min(100%,760px)}
+.ex-zoom-page .pv-pg{width:calc(min(calc(100cqw - 32px),calc((100cqh - 56px) * .707)) * var(--ex-scale,1))}
+.ex-zoom-width .pv-pg{width:calc(min(100%,760px) * var(--ex-scale,1));max-width:none}
 .ex-rp{flex:1;overflow:auto}
 .ex-sum{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ds-line)}
 .ex-sum .big{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
@@ -238,6 +238,10 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-rl .rv{color:var(--ds-ink-3);font-size:12px;white-space:nowrap}
 .ex-rl .rv.wn,.ex-rl .rv.bd{color:var(--ds-ink)}
 .ex-rl .rv .go{color:var(--ef-go);margin-left:6px}
+/* 11-04 규칙 점검: 걸린 문항 번호는 이름 아래 한 줄 5개씩 단추 */
+.ex-rlm{padding:2px 0 6px}.ex-rnums{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:2px 0 0 24px}
+.ex-rnums button{height:24px;padding:0;border:0;border-radius:6px;background:var(--ds-raise,#161b22);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line,#2b3442);font:inherit;font-size:12px;cursor:pointer}
+.ex-rnums button:hover{box-shadow:inset 0 0 0 1px var(--ef-go);color:var(--ef-go)}
 .ex-swl{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--ds-ink-2);cursor:pointer;padding:0 6px;height:28px;border-radius:6px}
 .ex-swl:hover{background:var(--ds-hover)}
 .ex-swl input{position:absolute;opacity:0;pointer-events:none}.ex-swl input:checked+.sw{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}.ex-swl input:checked+.sw::after{left:14px;background:var(--ds-ink)}
@@ -381,3 +385,10 @@ div.ef-new-l{flex-direction:row;align-items:baseline;gap:8px;margin-top:6px}.ef-
 .sfx-pages figure{margin:0}.sfx-page{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.4)}
 .sfx-pages figcaption{color:#d6dae3;font-size:12px;text-align:center;margin-top:6px}
 .sfx-pages .ef-hint{grid-column:1/-1;color:#e6e9ef}.sfx-err{color:#ffb4ae!important}
+
+/* 쪽 배율 −·+ (11-04 시안 tooltip-zoom-1104): 쪽 칸 오른쪽 아래, 스크롤과 상관없이 제자리 */
+.ex-sheetpane{position:relative}
+.ex-zoomctl{position:absolute;right:14px;bottom:14px;z-index:5;display:flex;align-items:center;gap:2px;padding:3px;background:#141a23;border:1px solid #2b3442;border-radius:9px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.ex-zoomctl button{height:28px;min-width:28px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:#e6edf3;font:500 13px/1 inherit;cursor:pointer}
+.ex-zoomctl button:hover{background:#1f2733}
+.ex-zoomctl .pct{min-width:52px;color:#b1bac4;font-size:12px;font-variant-numeric:tabular-nums}

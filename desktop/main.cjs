@@ -20,6 +20,10 @@ const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { snapshotAttachments } = require("./codex-attachment-audit.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
 const { startExamServer } = require('./exam-server.cjs');
+// 문항 라이브러리 「내 컴퓨터 폴더 연결」(11-04 백업 갈래에서 되살림)
+const { createPdfLibraryService } = require("./pdf-library-service.cjs");
+const { registerPdfLibraryIpc } = require("./pdf-library-ipc.cjs");
+const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bundled-pdf-pack.cjs");
 
 const DESKTOP_RESOURCE_DIRECTORIES = new Set(['js', 'css', 'vendor', 'assets', 'fonts']);
 const DESKTOP_RESOURCE_FILES = new Set([
@@ -381,6 +385,21 @@ if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
 let splash;
+// 자료 목록 서비스는 처음 쓸 때 만든다(파일을 읽는 순간 app.getPath를 부르면 검사용 가짜 app에서 깨진다).
+let pdfLibraryServiceInstance = null;
+const pdfLibraryService = new Proxy({}, {
+  get(_target, key) {
+    pdfLibraryServiceInstance ||= createPdfLibraryService({
+      storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
+      documentsPath: app.getPath("documents"),
+      onProgress: (progress) => { if (win && !win.isDestroyed()) win.webContents.send("pdf-library:progress", progress); },
+    });
+    const value = pdfLibraryServiceInstance[key];
+    return typeof value === "function" ? value.bind(pdfLibraryServiceInstance) : value;
+  },
+});
+const bundledPdfPackPath = app.isPackaged ? path.join(process.resourcesPath, "pdf-library", "recent-three-pack") : process.env.FIVE_E_BUNDLED_PDF_PACK_SOURCE;
+const bundledPdfPack = bundledPdfPackPath ? createBundledPdfPackReader({ root: bundledPdfPackPath, expectedIdentity: RECENT_THREE_PACK_IDENTITY }) : null;
 let server;
 let rpcId = 0;
 let recoveryTerminatingTurnId = null;
@@ -1024,35 +1043,40 @@ async function sendWorkspaceTurn(payload, owner) {
   };
 }
 
+const START_WINDOW = { width: 960, height: 560 };
+let startExpanded = true;
+// 시작 창 → 작업 화면: 화면 가운데에서 1520×960(화면보다 크면 화면에 맞춤)으로 부드럽게 커진다.
+function expandMainWindow(animate = true) {
+  if (startExpanded || !win || win.isDestroyed()) return false;
+  startExpanded = true;
+  const { screen } = require("electron");
+  const area = screen?.getDisplayMatching ? screen.getDisplayMatching(win.getBounds()).workArea : null;
+  const width = area ? Math.min(1520, area.width) : 1520, height = area ? Math.min(960, area.height) : 960;
+  const x = area ? Math.round(area.x + (area.width - width) / 2) : undefined, y = area ? Math.round(area.y + (area.height - height) / 2) : undefined;
+  if (typeof win.setResizable === "function") win.setResizable(true);
+  if (typeof win.setBounds === "function") win.setBounds(area ? { x, y, width, height } : { width, height }, animate && process.platform === "darwin");
+  if (typeof win.setMinimumSize === "function") win.setMinimumSize(1100, 700);
+  return true;
+}
+
 function createWindow() {
   if (win && !win.isDestroyed()) {
     win.show();
     return;
   }
-  const splashStartedAt = Date.now();
-  splash = new BrowserWindow({
-    width: 520,
-    height: 310,
-    frame: false,
-    resizable: false,
-    alwaysOnTop: true,
-    center: true,
-    backgroundColor: "#111820",
-    icon: APP_ICON_PATH,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
-  });
-  splash.loadFile(path.join(__dirname, "splash.html"));
+  // 11-04: 따로 뜨던 작은 로딩 창(splash.html)은 쓰지 않는다 — 앱 창 안의 시작 창(js/start-screen.js)이 첫 장면을 맡는다.
   const platformWindowOptions = process.platform === "darwin"
-    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 12, y: 7 } }
+    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 12, y: 8 } }
     : {
         titleBarStyle: "hidden",
         titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
       };
+  // 11-04: 처음엔 시작 창 카드 크기(960×560)로만 열고, 시작 창에서 고르면 원래 크기로 부드럽게 커진다(window:start-expand).
   win = new BrowserWindow({
-    width: 1520,
-    height: 960,
-    minWidth: 1100,
-    minHeight: 700,
+    width: START_WINDOW.width,
+    height: START_WINDOW.height,
+    resizable: false,
+    center: true,
     show: false,
     backgroundColor: "#0e1512",
     icon: APP_ICON_PATH,
@@ -1061,16 +1085,15 @@ function createWindow() {
   });
   win.setMenu(null);
   win.setMenuBarVisibility(false);
+  // 맥: 빨강·노랑·초록 단추는 평소 숨기고, 마우스가 맨 위 가장자리에 가면 얇은 줄과 함께 내려온다(11-04 사용자).
+  if (process.platform === "darwin" && typeof win.setWindowButtonVisibility === "function") win.setWindowButtonVisibility(false);
   const revealMainWindow = () => {
-    const reveal = () => {
-      if (splash && !splash.isDestroyed()) splash.destroy();
-      splash = null;
-      if (win && !win.isDestroyed()) win.show();
-    };
-    const remaining = Math.max(0, 900 - (Date.now() - splashStartedAt));
-    if (remaining) setTimeout(reveal, remaining); else reveal();
+    if (splash && !splash.isDestroyed()) splash.destroy();
+    splash = null;
+    if (win && !win.isDestroyed()) win.show();
   };
   win.once("ready-to-show", revealMainWindow);
+  startExpanded = false;
   win.webContents.once("did-fail-load", revealMainWindow);
   win.on("closed", () => {
     win = null;
@@ -1091,7 +1114,11 @@ function createWindow() {
   win.webContents.on("will-navigate", (event, url) => {
     if (String(url).split(/[?#]/, 1)[0] !== entryUrl) event.preventDefault();
   });
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url, frameName }) => {
+    // 패널 분리(11-04, js/panel-detach.js): 빈 창(about:blank)에 패널을 옮겨 담는 창만 허용한다.
+    if (String(url) === "about:blank" && /^five-e-panel-(left|right)$/.test(String(frameName || ""))) {
+      return { action: "allow", overrideBrowserWindowOptions: { autoHideMenuBar: true, backgroundColor: "#0d1117", minWidth: 200, minHeight: 300, title: "5E" } };
+    }
     if (/^https:\/\//i.test(String(url))) void shell.openExternal(url);
     return { action: "deny" };
   });
@@ -1739,6 +1766,13 @@ handleTrustedIpc("capture:sources", async () => {
   });
   return sources.map((source) => ({ id: source.id, name: source.name, data: source.thumbnail.toDataURL() }));
 });
+registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack, handle: handleTrustedIpc });
+handleTrustedIpc("window:start-expand", () => { expandMainWindow(true); return true; });
+handleTrustedIpc("window:traffic-lights", (_event, visible) => {
+  if (process.platform === "darwin" && win && !win.isDestroyed() && typeof win.setWindowButtonVisibility === "function") win.setWindowButtonVisibility(Boolean(visible));
+  return true;
+});
+
 handleTrustedIpc("local-images:pick-folder", async (event) => {
   const result = await dialog.showOpenDialog(win, {
     title: "검색할 로컬 이미지 폴더 선택",

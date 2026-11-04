@@ -161,7 +161,8 @@ export function createSearchWorkerController() {
   });
 }
 
-if (typeof self !== "undefined" && typeof self.addEventListener === "function") {
+// 일꾼(worker) 안에서만 메시지를 받는다 — 설치형(file://)은 같은 모듈을 화면 쪽에서 직접 불러 쓰므로 창 메시지를 가로채면 안 된다(11-04).
+if (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope) {
   const controller = createSearchWorkerController();
   self.addEventListener("message", (event) => {
     const id = event.data?.id;

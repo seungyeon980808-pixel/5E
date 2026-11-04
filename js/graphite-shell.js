@@ -11,13 +11,13 @@ function placeModeToggle() {
   if (!button || !documentGroup) return false;
   // Lite는 이 버튼을 자기 칸으로 옮겼다가 원래 자리로 되돌린다. Lite 중에는 손대지 않는다.
   if (document.documentElement.dataset.mode === 'lite' || button.closest('.lite-brand-slot')) return true;
-  // 10-20 세 프로그램 탭: 맨 앞은 로고·이름 → 되돌리기·다시 실행(세 프로그램 공통 자리) → Pro|Lite.
-  const redo = document.getElementById('redo-btn');
-  if (redo && redo.parentElement === documentGroup) {
+  // 11-04 사용자: 로고 → Pro|Lite → 되돌리기·다시 실행(Pro/Lite가 되돌리기보다 앞).
+  const undo = document.getElementById('undo-btn');
+  if (undo && undo.parentElement === documentGroup) {
     let sep = documentGroup.querySelector('.tb-sep.ds-sep-apps');
     if (!sep) { sep = document.createElement('span'); sep.className = 'tb-sep ds-sep-apps'; sep.setAttribute('aria-hidden', 'true'); }
-    if (redo.nextElementSibling !== sep) redo.after(sep);
-    if (sep.nextElementSibling !== button) sep.after(button);
+    if (undo.previousElementSibling !== sep) undo.before(sep);
+    if (sep.previousElementSibling !== button) sep.before(button);
   } else if (button.parentElement !== documentGroup || documentGroup.firstElementChild !== button) {
     documentGroup.prepend(button);
   }
@@ -103,6 +103,9 @@ function buildLeftRail(app) {
         source.click();
       }
     });
+    // 11-04: 묶음 사이 얇은 선(선택·회전·자르기 | 도형 | 선 | 글자·그래프 | 점·자·각도기)
+    const key = source.dataset.tool || source.dataset.symbol || source.id;
+    if (['O', 'L', 'tool-text-merged', 'node'].includes(key) && rail.childElementCount) { const sep = document.createElement('span'); sep.className = 'ds-rail-sep'; sep.setAttribute('aria-hidden', 'true'); rail.append(sep); }
     rail.append(proxy);
     return [source, proxy];
   });

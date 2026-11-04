@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>5E 1.6.3 · 과학교사를 위한 시험용 이미지 제작기</title>
+  <title>5E 1.7.0 · 과학교사를 위한 시험용 이미지 제작기</title>
   <meta name="description" content="어떤 그림이든 가져와서 시험용 이미지로 변환합니다." />
   <meta name="5e-visitor-stats-endpoint" content="https://5e-visitor-stats.5e-desktop.workers.dev/api/visitor-stats" />
 
@@ -11,7 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
   <link rel="icon" type="image/png" href="assets/favicon.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
-  <link rel="manifest" href="manifest.json?v=1.6.3" />
+  <link rel="manifest" href="manifest.json?v=1.7.0" />
   <meta name="theme-color" content="#0d1117" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -42,6 +42,7 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
+  <script>/* 시작 창이 뜨기 전 앱 화면이 잠깐 비치지 않게 어두운 덮개(js/start-screen.js가 걷음, 늦어도 10초 뒤 걷힘) */(()=>{try{if(navigator.webdriver||!matchMedia("(min-width:760px)").matches||/[?&](start=0|exam=1|sheet=1|mobile=1)/.test(location.search))return;const h=document.documentElement;h.classList.add("ss-boot");setTimeout(()=>h.classList.remove("ss-boot"),10000)}catch{}})();</script>
   <script>(()=>{try{const p=localStorage.getItem("5e.palette");document.documentElement.setAttribute("data-palette",p==="graphite"?"graphite":"classic")}catch{document.documentElement.setAttribute("data-palette","classic")}})();</script>
   <link rel="stylesheet" href="/css/style.css?v=1.7.0-four-session-integration-footer-20261011" />
   <link rel="stylesheet" href="/css/design-tokens.css?v=1.7.0-graphite" />
@@ -75,23 +76,21 @@
   <link rel="stylesheet" href="/css/mode-transition.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/button-design.css?v=20261013-toolbar-states" />
   <link rel="stylesheet" href="/css/graphite-shell.css?v=1.7.0-graphite-20261020serif" />
+  <link rel="stylesheet" href="/css/start-screen.css?v=1.7.0-start-1104" />
   <link rel="stylesheet" href="/css/object-window.css?v=1.7.0-object-window" />
   <link rel="stylesheet" href="/css/popup-surface.css?v=1020-popup" />
   <link rel="stylesheet" href="/css/focus-calm.css?v=1028-focus" />
 </head>
 <body>
-  <div class="desktop-titlebar" aria-hidden="true">
-    <span class="desktop-titlebar-mark">5E</span>
-    <span>과학교사를 위한 시험용 이미지 제작기</span>
-  </div>
+  <div class="desktop-titlebar" aria-hidden="true"></div>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
   <div class="app">
 <header class="app-shell-header">
 <div class="canvas-toolbar">
 <div class="toolbar-history" role="group" aria-label="작업 기록"><a class="app-brand" href="https://seungyeon980808-pixel.github.io/personal_site/projects/physics-draw.html"
-           target="_blank" rel="noopener" title="5E_image (sciEnceEducationalExamEasyEditor) · 기능 안내 페이지"><b class="app-brand-mark">5E</b><span class="app-brand-name">_image</span></a></div>
+           target="_blank" rel="noopener" title="5E · sciEnce Educational Evaluation Exam Editor · 과학 교육을 위한 평가 문항 편집기"><b class="app-brand-mark">5E</b><span class="app-brand-name">_image</span></a></div>
 <div class="toolbar-canvas"><div class="toolbar-document">
-        <nav class="app-switch app-switch-image" aria-label="5E 프로그램"><button type="button" class="app-switch-btn" data-app-switch="exam" title="출제 — 문항 만들기">exam</button><button type="button" class="app-switch-btn" data-app-switch="hwp" title="조판 — 시험지 인쇄 전 마무리">hwp</button></nav><span class="tb-sep ds-sep-mode" aria-hidden="true"></span><button id="undo-btn" class="topbar-btn icon-btn" type="button"
+        <nav class="app-switch app-switch-image" aria-label="5E 프로그램"><button type="button" class="app-switch-btn" data-app-switch="exam" title="출제 — 문항 만들기">exam</button><button type="button" class="app-switch-btn" data-app-switch="hwp" title="조판 — 시험지 인쇄 전 마무리">hwp</button></nav><button id="undo-btn" class="topbar-btn icon-btn" type="button"
                 title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button id="redo-btn" class="topbar-btn icon-btn" type="button"
                 title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button><span class="tb-sep" aria-hidden="true"></span>
         <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->
@@ -196,7 +195,25 @@
           MCP <span class="mcp-dot" aria-hidden="true"></span>
         </button>
 
-      </div><span id="zoom-readout" class="zoom-readout" aria-label="현재 화면 배율">zoom 1.00×</span></div>
+      </div>
+        <!-- 화면 확대 단추(11-04): 노트북 트랙패드가 불편할 때 — 맨 위 줄 가운데 칸 오른쪽 끝(옛 「zoom 1.00×」 자리) -->
+        <div class="canvas-zoom" role="group" aria-label="화면 배율" data-shortcut-label-fixed>
+          <button type="button" data-canvas-zoom="out" title="축소" aria-label="축소">−</button>
+          <button type="button" id="zoom-readout" class="zoom-readout" data-canvas-zoom="menu" title="배율 고르기" aria-label="현재 화면 배율 · 누르면 배율 목록" aria-haspopup="menu" aria-expanded="false">82%</button>
+          <button type="button" data-canvas-zoom="in" title="확대" aria-label="확대">+</button>
+          <button type="button" data-canvas-zoom="default" title="기본 크기(82%)로" aria-label="기본 크기로"><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
+          <button type="button" data-canvas-zoom="fit" title="도화지 맞춤" aria-label="도화지 맞춤"><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg></button>
+          <div class="canvas-zoom-menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-zoom-set="fit"><span>도화지 맞춤</span><kbd data-sc="Shift+1"></kbd></button>
+            <button type="button" role="menuitem" data-zoom-set="sel"><span>고른 것에 맞춤</span><kbd data-sc="Shift+2"></kbd></button>
+            <span class="canvas-zoom-menu-sep" aria-hidden="true"></span>
+            <button type="button" role="menuitem" data-zoom-set="82"><span>82% · 기본</span><kbd data-sc="Mod+0"></kbd></button>
+            <button type="button" role="menuitem" data-zoom-set="50"><span>50%</span></button>
+            <button type="button" role="menuitem" data-zoom-set="100"><span>100%</span></button>
+            <button type="button" role="menuitem" data-zoom-set="150"><span>150%</span></button>
+            <button type="button" role="menuitem" data-zoom-set="200"><span>200%</span></button>
+          </div>
+        </div></div>
 <div class="toolbar-inspector-controls" role="group" aria-label="계정 및 화면 조작">
           <div class="canvas-global-controls" role="group" aria-label="계정 및 화면 조작">
             <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="라이트 모드 켜기" aria-label="라이트 모드 켜기" aria-pressed="false">
@@ -442,7 +459,7 @@
        "네트워크로 제공 시 소스 받는 법 제공" 의무를 충족한다. -->
   <footer class="app-footer">
     <span class="app-footer-main">
-      <strong class="footer-brand">5E</strong> <strong data-release-version>v1.6.3 · 2026.10.07</strong>
+      <strong class="footer-brand">5E</strong> <strong data-release-version>v1.7.0 · 2026.11 출시 준비</strong>
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E/blob/main/LICENSE"
          target="_blank" rel="noopener" title="GNU AGPL v3 라이선스">AGPL-3.0</a>
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
@@ -881,7 +898,8 @@
     </section>
   </div>
 
-  <script type="module" src="/js/release-receipt.js?v=1.7.0-four-session-integration"></script>
+  <script src="/js/doc-listeners.js?v=1.7.0-four-session-integration"></script>
+<script type="module" src="/js/release-receipt.js?v=1.7.0-four-session-integration"></script>
   <script src="/js/mobile-entry.js?v=1.7.0-four-session-integration"></script>
   <script src="/js/web-ai-connection.js?v=1.7.0-four-session-integration"></script>
   <script src="experiments/web-codex-auth/editor-bridge.js?v=1.6.1-preview-login-0916-1535"></script>

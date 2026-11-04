@@ -199,7 +199,7 @@ function formatTime(ts) {
 }
 
 /* ----- initAutosave: 부팅 복구 → 디바운스 자동 저장 구독 ----- */
-export async function initAutosave(state, { selectRecoveryCheckpoint } = {}) {
+export async function initAutosave(state, { selectRecoveryCheckpoint, chooseStart } = {}) {
   let db;
   try {
     db = await openDB();
@@ -217,7 +217,20 @@ export async function initAutosave(state, { selectRecoveryCheckpoint } = {}) {
   //     덮어쓰지 않는다.
   try {
     let checkpointRecovered = false;
-    if (typeof selectRecoveryCheckpoint === "function") {
+    // 11-04 시작 창(js/start-screen.js): 「새로 만들기 / 이어서 하기」를 한 화면에서 고른다 — 아래 두 확인창 대신.
+    if (typeof chooseStart === "function") {
+      const [previewCheckpoints, legacy, latestRow] = await Promise.all([
+        listRecoveryCheckpoints({ includeLegacy: false }), inspectLegacyRecovery(), getLatest(db)]);
+      const checkpoints = [...previewCheckpoints, ...legacy.checkpoints].sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      const latest = latestRow?.data && snapshotHasWork(latestRow.data) ? { ts: latestRow.ts, ...snapshotSummary(latestRow.data) } : null;
+      const choice = await chooseStart({ checkpoints, latest,
+        remove: item => item.kind === "latest" ? clearAutosaveSnapshots() : deleteRecoveryCheckpoint(item.checkpoint) });
+      if (choice?.kind === "checkpoint") { await restoreRecoveryCheckpoint(state, choice.checkpoint); recoveryChoice = "restore"; }
+      else if (choice?.kind === "latest") { applyLoaded(state, migrate(latestRow.data)); markProjectStatus(state, captureProjectStatus(state), "recovery"); recoveryChoice = "restore"; }
+      else recoveryChoice = "fresh";
+      checkpointRecovered = true;
+    }
+    if (!checkpointRecovered && typeof selectRecoveryCheckpoint === "function") {
       const [previewCheckpoints, legacy] = await Promise.all([
         listRecoveryCheckpoints({ includeLegacy: false }),
         inspectLegacyRecovery(),
@@ -371,6 +384,35 @@ export async function restoreRecoveryCheckpoint(state, checkpoint) {
   } finally {
     db.close();
   }
+}
+
+// 시작 창의 「이어서 하기」 × (11-04): 기록 하나를 지운다 — 되돌릴 수 없다(시작 창이 먼저 확인을 받음).
+export async function deleteRecoveryCheckpoint(checkpoint) {
+  if (!checkpoint || !Number.isInteger(checkpoint.id) || (checkpoint.source !== "preview" && checkpoint.source !== "legacy")) return false;
+  const db = checkpoint.source === "preview" ? await openDB() : await openLegacyDB();
+  if (!db) return false;
+  try {
+    const storeName = checkpoint.source === "preview" ? CHECKPOINT_STORE : STORE;
+    if (!db.objectStoreNames.contains(storeName)) return false;
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(storeName, "readwrite");
+      tx.objectStore(storeName).delete(checkpoint.id);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+    return true;
+  } finally { db.close(); }
+}
+// 마지막 자동 저장(이어서 하기 맨 위 줄)을 지운다 — 자동 저장 기록 전체를 비운다.
+export async function clearAutosaveSnapshots() {
+  const db = await openDB();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, "readwrite");
+      tx.objectStore(STORE).clear();
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
+    return true;
+  } finally { db.close(); }
 }
 
 export async function checkpointBeforeModeSwitch(state) {

@@ -28,8 +28,8 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .cv-qtabs::-webkit-scrollbar{display:none}
 .cv-qtab{position:relative;flex:none;width:34px;height:34px;border:0;border-radius:var(--ds-radius);background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--ds-ink-2)}
 .cv-qtab:hover{background:var(--ds-hover)}.cv-qtab[aria-current=true]{background:var(--ds-selected)}
-.cv-qtab .ring{--c:var(--st-draft,#8b94a3);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--ds-line-strong) 0)}
-.cv-qtab.st-review .ring{--c:var(--st-review,#d9a43a)}.cv-qtab.st-complete .ring{--c:var(--st-done,var(--ds-success))}
+.cv-qtab .ring{--c:var(--st-q-work,#b89a55);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--ds-line-strong) 0)}
+.cv-qtab.st-review .ring{--c:var(--st-q-work,#b89a55)}.cv-qtab.st-complete .ring{--c:var(--st-q-done,#5b8a6d)}
 .cv-qtab .num{width:21px;height:21px;border-radius:50%;background:var(--ds-panel);display:grid;place-items:center;font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums}
 .cv-qtab[aria-current=true] .num{background:var(--ds-selected);color:var(--ds-ink)}
 .cv-qtab .flag{position:absolute;top:3px;right:3px;width:12px;height:12px;border-radius:50%;background:var(--warn,#e0a339);color:#111;font-size:9px;font-style:normal;font-weight:800;display:grid;place-items:center}

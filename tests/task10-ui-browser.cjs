@@ -330,7 +330,7 @@ async function run() {
       document.getElementById('ai-image-panel').hidden = true;
     });
     await mobile.waitForFunction(() => document.getElementById('canvas').getBoundingClientRect().width > 0);
-    await mobile.waitForFunction(() => document.getElementById('zoom-readout').textContent !== 'zoom 0.00×');
+    await mobile.waitForFunction(() => document.getElementById('zoom-readout').textContent !== '0%');
     await waitFrames(mobile, 20);
     const reveal = await mobile.evaluate(() => ({
       width: document.getElementById('canvas').getBoundingClientRect().width,

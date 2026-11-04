@@ -1,0 +1,112 @@
+/* 시작 창(11-04 확정 시안 5e-design-mockups/app-final-1104.html) — js/start-screen.js
+   첫 장면: 왼쪽 큰 「5E」 · 오른쪽 E를 세로로 맞춘 다섯 단어 · 아래 한글 문구와 진행 줄 · 빛 한 번.
+   준비되면 「5E」가 왼쪽 칸으로 옮겨 가고, 오른쪽에 새로 만들기 · 이어서 하기. */
+#start-screen{position:fixed;inset:0;z-index:30000;display:grid;place-items:center;background:#05070a;
+  font-family:var(--ds-font,-apple-system,"Apple SD Gothic Neo",sans-serif);color:#e6edf3;transition:opacity .3s ease;
+  -webkit-user-select:none;user-select:none;-webkit-user-drag:none;cursor:default}
+#start-screen{transition:opacity .28s ease}
+/* 고른 뒤: 카드는 바로 흐려지고 덮개(바탕)만 남았다가, 작업 화면 준비가 끝나면 덮개가 걷힌다 */
+#start-screen.is-covering .ss-win{opacity:0;transition:opacity .18s ease}
+#start-screen.is-leaving{opacity:0;pointer-events:none}
+#start-screen .ss-win{transition:transform .5s cubic-bezier(.2,.8,.2,1),opacity .45s}
+#start-screen.is-leaving .ss-win{transform:scale(1.04);opacity:0}
+/* 설치형: 창 = 시작 카드(960×560). 카드가 창을 꽉 채움 */
+#start-screen.is-desktop{background:#0b0f15}
+#start-screen.is-desktop .ss-win{width:100vw;height:100vh;border-radius:0;box-shadow:none}
+#start-screen.is-desktop.is-leaving .ss-win{transform:none}
+#start-screen *{box-sizing:border-box}
+#start-screen button{font:inherit;color:inherit}
+.ss-win{position:relative;width:min(960px,calc(100vw - 32px));height:min(560px,calc(100vh - 32px));border-radius:14px;overflow:hidden;background:#0b0f15;box-shadow:0 30px 80px rgba(0,0,0,.7),0 0 0 1px #1c232d}
+.ss-left{position:absolute;top:0;bottom:0;left:0;width:100%;overflow:hidden;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.ss-win.is-ready .ss-left{width:300px}
+.ss-left::after{content:"";position:absolute;right:0;top:48px;bottom:48px;width:1px;background:#1c2430;opacity:0;transition:opacity .4s .3s}
+.ss-win.is-ready .ss-left::after{opacity:1}
+.ss-grid{position:absolute;inset:0;background-image:linear-gradient(#1a2230 1px,transparent 1px),linear-gradient(90deg,#1a2230 1px,transparent 1px),linear-gradient(#131a25 1px,transparent 1px),linear-gradient(90deg,#131a25 1px,transparent 1px);
+  background-size:50px 50px,50px 50px,10px 10px,10px 10px;background-position:-1px -1px;opacity:.9}
+.ss-grid::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 45%,rgba(11,15,21,0) 0%,#0b0f15 100%)}
+@keyframes ss-grid{to{background-position:49px 49px,49px 49px,9px 9px,9px 9px}}
+/* 첫 장면 */
+.ss-intro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:56px;padding-bottom:70px;transition:opacity .3s}
+.ss-win.is-ready .ss-intro{opacity:0;pointer-events:none}
+.ss-big{position:relative;display:inline-block;padding:.12em .22em .26em .12em;margin:-.12em -.22em -.26em -.12em;font:italic 700 150px/1 Georgia,"Times New Roman",serif;letter-spacing:-4px;color:#e2e8f0;animation:ss-up .7s cubic-bezier(.2,.8,.2,1) both}
+.ss-col{position:relative;display:grid;grid-template-columns:auto auto auto;row-gap:6px;font:italic 600 30px/1.15 Georgia,"Times New Roman",serif}
+.ss-col>span{animation:ss-in .45s ease both}
+.ss-pre{text-align:right;color:#3d4757}.ss-suf{color:#3d4757}.ss-e{color:#aab6c6;font-weight:700;padding:0 1px}
+.ss-sl{position:absolute!important;left:0;top:0;width:100%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent 0 40%,rgba(255,255,255,.9) 48%,#cfe0ff 52%,transparent 60% 100%);background-size:320% 100%;background-position:140% 0;-webkit-background-clip:text;background-clip:text}
+.ss-sl>span{color:transparent!important;animation:none!important}
+.ss-sl.go{animation:ss-sweep 1.3s ease-in-out both}
+.ss-big.shine::after{content:"5E";position:absolute;inset:0;padding:inherit;font:inherit;letter-spacing:inherit;background:linear-gradient(105deg,transparent 40%,#fff 49%,#bcd6ff 51%,transparent 60%);background-size:260% 100%;background-position:120% 0;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ss-sweep 1.3s ease-in-out both}
+.ss-bottom{position:absolute;left:0;right:0;bottom:56px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.ss-ko{font-size:15px;letter-spacing:1.2px;color:#8b95a5;animation:ss-in .6s .5s ease both}
+.ss-bar{position:relative;width:200px;height:1px;background:#1a2230;overflow:hidden}.ss-bar i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#3d5070,#bcd6ff);transition:width .3s}
+.ss-st{font-size:12px;color:#4b5563;letter-spacing:.3px;height:14px}
+@keyframes ss-in{from{opacity:0}to{opacity:1}}
+@keyframes ss-up{from{opacity:0;transform:translateY(8px);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
+@keyframes ss-sweep{from{background-position:140% 0}to{background-position:-40% 0}}
+/* 준비 뒤 왼쪽 칸 */
+.ss-ready{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:96px;opacity:0}
+.ss-win.is-ready .ss-ready{opacity:1}
+.ss-five{position:relative;display:inline-block;padding:.12em .22em .26em .12em;margin:-.12em -.22em -.26em -.12em;font:italic 700 76px/1 Georgia,"Times New Roman",serif;letter-spacing:-2px;color:#d7dee8}
+.ss-five::after{content:"5E";position:absolute;inset:0;padding:inherit;font:inherit;letter-spacing:inherit;background:linear-gradient(105deg,transparent 0%,transparent 40%,rgba(255,255,255,0) 43%,#fff 49%,#bcd6ff 51%,rgba(255,255,255,0) 57%,transparent 100%);background-size:260% 100%;background-position:120% 0;-webkit-background-clip:text;background-clip:text;color:transparent;animation:ss-five 6s ease-in-out infinite}
+@keyframes ss-five{0%{background-position:120% 0}37%{background-position:-20% 0}100%{background-position:-20% 0}}
+.ss-mean{position:absolute;left:0;right:0;top:calc(50% + 8px);display:flex;flex-direction:column;align-items:center;opacity:0;transition:opacity .5s .4s}
+.ss-win.is-ready .ss-mean{opacity:1}
+.ss-mean small{font-size:12.5px;letter-spacing:.6px;color:#6b7686}
+.ss-en{display:flex;flex-direction:column;align-items:center;gap:3px;font:italic 600 13.5px/1.25 Georgia,"Times New Roman",serif;color:#4f5968;max-height:0;opacity:0;overflow:hidden;transition:max-height .35s cubic-bezier(.2,.8,.2,1),opacity .3s,margin .35s}
+.ss-en b{color:#aab6c6;font-weight:700}
+.ss-win.is-ready .ss-left:has(.ss-five:hover,.ss-mean:hover) .ss-en,.ss-win.is-ready .ss-left:hover .ss-en{max-height:60px;opacity:1;margin-top:12px}
+.ss-foot{position:absolute;left:0;right:0;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:9px;opacity:0;transition:opacity .5s .4s}
+.ss-win.is-ready .ss-foot{opacity:1}
+.ss-upd{display:flex;align-items:center;gap:8px;padding:5px 6px 5px 12px;border:0;border-radius:8px;background:rgba(17,22,30,.85);box-shadow:inset 0 0 0 1px #222b37;font-size:12px;color:#8b95a5;cursor:pointer}
+.ss-upd:hover{box-shadow:inset 0 0 0 1px #3a4a62}.ss-upd b{color:#e6edf3}.ss-upd span{border-radius:5px;padding:3px 10px;background:#e6edf3;color:#0b0f15;font-weight:600;font-size:11.5px}
+.ss-ver{font-size:11.5px;color:#4b5563}.ss-cpy{font-size:10.5px;color:#4b5563}
+/* 오른쪽 고르기 칸 */
+.ss-right{position:absolute;top:0;bottom:0;left:300px;right:0;padding:34px 36px 24px;display:flex;flex-direction:column;gap:22px;min-width:0;opacity:0;transform:translateX(24px);pointer-events:none;transition:opacity .4s .3s,transform .5s .25s cubic-bezier(.2,.8,.2,1)}
+.ss-win.is-ready .ss-right{opacity:1;transform:none;pointer-events:auto}
+.ss-lbl{font-size:12.5px;font-weight:600;color:#7d8794;margin:0 0 10px}
+.ss-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.ss-card{position:relative;height:150px;padding:18px 18px 16px;border:0;border-radius:14px;background:#121924;box-shadow:inset 0 0 0 1px #222b37;text-align:left;cursor:pointer;overflow:hidden;transition:background .2s,box-shadow .2s}
+.ss-card .en{display:block;font:italic 700 40px/1 Georgia,"Times New Roman",serif;letter-spacing:-1px;color:#e6edf3;transition:transform .3s cubic-bezier(.2,.8,.2,1),font-size .3s}
+.ss-card .ko{display:block;margin-top:10px;font-size:13.5px;color:#9aa6b6;transition:opacity .2s}
+.ss-card .tg{position:absolute;right:16px;top:18px;font-size:11.5px;color:#5d6775;letter-spacing:.3px;transition:opacity .2s}
+.ss-card .guide{position:absolute;left:18px;right:16px;bottom:14px;margin:0;padding:0;list-style:none;font-size:12.5px;line-height:1.6;color:#c9d3df;opacity:0;transform:translateY(8px);transition:opacity .22s,transform .25s cubic-bezier(.2,.8,.2,1)}
+.ss-card .guide li::before{content:"·";color:#6b7686;margin-right:6px}
+.ss-card .go{position:absolute;right:16px;top:18px;font-size:12px;color:#9cc2ff;opacity:0;transition:opacity .2s}
+.ss-card:hover,.ss-card:focus-visible{background:#151d2a;box-shadow:inset 0 0 0 1px #3d4d66;outline:none}
+.ss-card:hover .en,.ss-card:focus-visible .en{transform:translateY(-4px);font-size:30px}
+.ss-card:hover .ko,.ss-card:focus-visible .ko,.ss-card:hover .tg,.ss-card:focus-visible .tg{opacity:0}
+.ss-card:hover .guide,.ss-card:focus-visible .guide,.ss-card:hover .go,.ss-card:focus-visible .go{opacity:1;transform:none}
+.ss-list{display:flex;flex-direction:column;gap:1px}
+.ss-list>button,.ss-row>button[data-ss-item]{display:grid;grid-template-columns:58px 1fr auto 44px;align-items:center;gap:12px;height:36px;padding:0 12px;border:0;border-radius:8px;background:transparent;text-align:left;cursor:pointer}
+.ss-list>button:hover,.ss-list>button:focus-visible,.ss-row>button[data-ss-item]:hover,.ss-row>button[data-ss-item]:focus-visible,.ss-row:hover>button[data-ss-item]{background:#151c27;outline:none}
+.ss-k{font:italic 700 14px/1 Georgia,serif;color:#8b95a5}
+.ss-nm{font-size:13.5px;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss-meta{font-size:12px;color:#6b7686;white-space:nowrap}
+.ss-open{font-size:12px;color:#9cc2ff;opacity:0;transition:opacity .15s;text-align:right}.ss-row>button:hover .ss-open,.ss-row>button:focus-visible .ss-open{opacity:1}
+.ss-list .ss-o1{height:40px;margin-bottom:6px;border-radius:8px 8px 0 0;box-shadow:inset 0 -1px 0 #1c2430}
+.ss-o1 .ss-k,.ss-o1 .ss-nm{color:#e6edf3}.ss-o1 .ss-nm{font-weight:500}.ss-o1 .ss-meta{color:#6b7686}
+.ss-list .ss-o1:hover .ss-meta,.ss-list .ss-o1.over .ss-meta{color:#b1bac4}.ss-list .ss-o1.over{background:#151c27}
+.ss-empty{padding:8px 12px;font-size:12.5px;color:#5d6775}
+.ss-list .ss-more{display:block;height:30px;margin-top:2px;color:#9aa6b6;font-size:12.5px}
+.ss-note{margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7686;white-space:nowrap;overflow:hidden}
+.ss-note i{flex:none;width:5px;height:5px;border-radius:50%;background:#8a7a4a}
+@media (prefers-reduced-motion:reduce){#start-screen *{animation:none!important;transition:none!important}}
+@media (max-width:860px){.ss-win.is-ready .ss-left{width:0}.ss-right{left:0}.ss-cards{grid-template-columns:1fr 1fr 1fr}}
+/* 시작 창이 뜨기 전 덮개(index.html 첫 줄 스크립트가 켬) */
+html.ss-boot body::after{content:"";position:fixed;inset:0;z-index:29999;background:#05070a}
+
+/* 이어서 하기 줄: 마우스를 올리면 × (기록 지우기) · 지우기 전 확인 줄 */
+.ss-row{position:relative;display:block}
+.ss-row>button[data-ss-item]{width:100%;padding-right:44px}
+.ss-del{position:absolute;right:14px;top:50%;width:24px;height:24px;margin-top:-12px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:#6b7686;cursor:pointer;opacity:0;transition:opacity .15s,background .15s,color .15s}
+.ss-del svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.ss-row:hover .ss-del,.ss-del:focus-visible{opacity:1}
+.ss-del:hover{background:#2a1d22;color:#f0a5a5}
+.ss-ask{display:flex;align-items:center;gap:8px;height:36px;padding:0 6px 0 12px;border-radius:8px;background:#1d1517;box-shadow:inset 0 0 0 1px #4a2a30;font-size:12.5px;color:#e8c4c4}
+.ss-ask span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss-ask button{height:26px;padding:0 10px;border:0;border-radius:6px;font-size:12px;cursor:pointer}
+.ss-ask .ss-ask-yes{background:#c2454f;color:#fff}.ss-ask .ss-ask-yes:hover{background:#d4505b}
+.ss-ask .ss-ask-no{background:transparent;color:#b1bac4;box-shadow:inset 0 0 0 1px #3a4350}
+/* 설치형: 빈 곳을 잡고 창을 옮긴다(단추·카드·목록은 그대로 누름) */
+#start-screen.is-desktop .ss-win{-webkit-app-region:drag}
+#start-screen.is-desktop :is(button,a,input,.ss-ask,.ss-five,.ss-mean){-webkit-app-region:no-drag}

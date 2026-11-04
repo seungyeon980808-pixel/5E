@@ -68,10 +68,14 @@ export class EditorTransport {
   constructor(iframe, studioUrl, options = {}) {
     this._iframe = iframe;
     const targetUrl = new URL(studioUrl, globalThis.location?.href);
-    if (targetUrl.protocol !== 'http:' && targetUrl.protocol !== 'https:') {
+    // 5E 설치형(11-04): 앱이 file://로 열리므로 편집기도 file://. 이때 주소(origin)는 'null'이라 비교할 수 없어
+    // 메시지는 '*'로 보내고, 받을 때는 보낸 창이 우리 편집기 iframe인지만 확인한다.
+    const fileMode = targetUrl.protocol === 'file:' && globalThis.location?.protocol === 'file:';
+    if (!fileMode && targetUrl.protocol !== 'http:' && targetUrl.protocol !== 'https:') {
       throw new Error('studioUrl must use HTTP(S)');
     }
-    this._targetOrigin = targetUrl.origin;
+    this._fileMode = fileMode;
+    this._targetOrigin = fileMode ? '*' : targetUrl.origin;
     this._window = options.window || window;
     this._requestTimeoutMs = options.requestTimeoutMs;
     this._handshakeTimeoutMs = options.handshakeTimeoutMs ?? 1000;
@@ -206,7 +210,7 @@ export class EditorTransport {
   }
 
   _handleLegacyMessage(event) {
-    if (event.source !== this._iframe.contentWindow || event.origin !== this._targetOrigin) return;
+    if (event.source !== this._iframe.contentWindow || (!this._fileMode && event.origin !== this._targetOrigin)) return;
     this._handleResponse(event.data, true);
   }
 

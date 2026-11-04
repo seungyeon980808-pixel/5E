@@ -26,10 +26,10 @@ h.withServer(async origin => {
       await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
       await page.evaluate(() => localStorage.removeItem('5e.shell.leftWidth'));
       const imageLeft = () => page.evaluate(() => document.getElementById('panel-left').getBoundingClientRect().width);
-      assert.ok(near(await imageLeft(), 160), `${name}: image left panel starts at 160`);
+      assert.ok(near(await imageLeft(), 192), `${name}: image left panel starts at 192 (11-04 기본 20% 넓게)`);
 
       // 한글(집중)
-      await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
+      await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b => b.click()); // 11-04: 이 단추는 로고 목록으로 옮겨져 숨겨짐
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       if (await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode') !== 'focus') await page.locator('[data-exam-mode="focus"]').click();
       await page.locator('.exam-inspector').waitFor({ state: 'visible' });
@@ -68,7 +68,7 @@ h.withServer(async origin => {
       assert.equal(g.common, 2, `${name}: wide panel keeps the two-column common tools`);
 
       // 출제도 320
-      await page.locator('.exam-topbar [data-app-switch="exam"]').click();
+      await page.locator('.exam-topbar [data-app-switch="exam"]').evaluate(b => b.click());
       const sheet = await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await sheet.waitForSelector('.side [data-pool="drafting"]', { state: 'attached' });
       await page.waitForFunction(() => !document.querySelector('.app-leaving'));
@@ -76,7 +76,7 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('.shell-left-grip:not([hidden])').count(), 1, `${name}: exam panel has its own resize grip`);
 
       // 그림도 320, 새로고침 뒤에도
-      await sheet.locator('.top [data-app-switch="image"]').click();
+      await sheet.locator('.top [data-app-switch="image"]').evaluate(b => b.click());
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
       assert.ok(near(await imageLeft(), 320), `${name}: image left panel follows the shared width`);
       await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
@@ -86,11 +86,11 @@ h.withServer(async origin => {
       const imageGrip = page.locator('body > .shell-left-grip:not([hidden])');
       await imageGrip.waitFor({ state: 'visible' });
       await imageGrip.dblclick();
-      await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === null && Math.abs(document.getElementById('panel-left').getBoundingClientRect().width - 160) <= 1.5);
+      await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === null && Math.abs(document.getElementById('panel-left').getBoundingClientRect().width - 192) <= 1.5);
       await imageGrip.waitFor({ state: 'visible' });
       await imageGrip.focus(); await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight');
-      await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === '176');
-      await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft');
+      await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === '208');
+      await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft');
       await page.waitForFunction(() => localStorage.getItem('5e.shell.leftWidth') === null, null, { timeout: 3000 });
 
       // 900 이하: 끈 폭을 쓰지 않음

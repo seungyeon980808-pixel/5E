@@ -4,16 +4,17 @@
 // 출제(ExamPool)는 같은 출처 iframe이라 바깥 문서에서 폭 규칙과 손잡이를 넣는다(ExamPool 파일은 고치지 않는다).
 export const LEFT_WIDTH_KEY = '5e.shell.leftWidth';
 export const LEFT_MIN = 160, LEFT_MAX = 320, LEFT_STEP = 8;
+export const LEFT_DEFAULT = 192; // 11-04 사용자: 기본 폭 20% 넓게(160 → 192)
 const NARROW = 900;
 
 export function clampLeftWidth(value) {
   const n = Math.round(Number(value));
   return Number.isFinite(n) ? Math.min(LEFT_MAX, Math.max(LEFT_MIN, n)) : LEFT_MIN;
 }
-function readWidth() { try { return clampLeftWidth(localStorage.getItem(LEFT_WIDTH_KEY) ?? LEFT_MIN); } catch { return LEFT_MIN; } }
-function saveWidth(w) { try { if (w === LEFT_MIN) localStorage.removeItem(LEFT_WIDTH_KEY); else localStorage.setItem(LEFT_WIDTH_KEY, String(w)); } catch {} }
+function readWidth() { try { return clampLeftWidth(localStorage.getItem(LEFT_WIDTH_KEY) ?? LEFT_DEFAULT); } catch { return LEFT_DEFAULT; } }
+function saveWidth(w) { try { if (w === LEFT_DEFAULT) localStorage.removeItem(LEFT_WIDTH_KEY); else localStorage.setItem(LEFT_WIDTH_KEY, String(w)); } catch {} }
 
-let width = LEFT_MIN;
+let width = LEFT_DEFAULT;
 const docs = new Map(); // 문서 → { style, grips: [{ grip, panel }] }
 
 function styleText(w) {
@@ -88,7 +89,7 @@ function attachGrip(doc, entry, panel) {
     setLeftWidth(width);
   };
   grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
-  grip.addEventListener('dblclick', () => setLeftWidth(LEFT_MIN));
+  grip.addEventListener('dblclick', () => setLeftWidth(LEFT_DEFAULT));
   grip.addEventListener('keydown', event => {
     const d = event.key === 'ArrowLeft' ? -LEFT_STEP : event.key === 'ArrowRight' ? LEFT_STEP : 0;
     if (event.key === 'Home') { event.preventDefault(); setLeftWidth(LEFT_MIN); return; }
@@ -137,5 +138,5 @@ export function initShellLeftWidth(doc = document) {
   scan();
   new MutationObserver(scan).observe(doc.body, { childList: true });
   // 다른 탭에서 바꾼 폭도 따라간다.
-  doc.defaultView.addEventListener('storage', event => { if (event.key === LEFT_WIDTH_KEY) setLeftWidth(event.newValue ?? LEFT_MIN, { save: false }); });
+  doc.defaultView.addEventListener('storage', event => { if (event.key === LEFT_WIDTH_KEY) setLeftWidth(event.newValue ?? LEFT_DEFAULT, { save: false }); });
 }
