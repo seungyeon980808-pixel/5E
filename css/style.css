@@ -3594,6 +3594,10 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-body { grid-template-columns: minmax(0, calc(80% - 380.8px)) minmax(0, 1fr); }
 #graph-modal-overlay .gm-modal > .modal-title { flex-wrap: nowrap !important; padding-right: 36px; position: relative; }
 #graph-modal-overlay .gm-close { position: absolute; top: -4px; right: 0; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text-primary); font-size: 24px; cursor: pointer; }
+/* 11-05: 그래프 창 버그 신고 — 닫기(×) 바로 왼쪽, 같은 크기 */
+#graph-modal-overlay .modal-title .gm-bug { position: absolute; top: -4px; right: 40px; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: var(--ds-ink-3, var(--text-secondary)); }
+#graph-modal-overlay .modal-title .gm-bug:hover { background: var(--ds-hover); color: var(--ds-ink, var(--text-primary)); }
+#graph-modal-overlay .modal-title .gm-bug svg { width: 17px; height: 17px; }
 #graph-modal-overlay .gm-export-actions { display: flex; justify-content: flex-end; flex: 0 0 auto; padding-top: 6px; }
 #graph-modal-overlay .gm-export-actions .modal-btn { min-height: 30px; padding: 4px 10px; font-size: 12px; }
 #graph-modal-overlay .gm-export-actions { gap:6px; }

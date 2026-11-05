@@ -902,7 +902,7 @@
 @media (min-width: 768px) {
   :root:not([data-mode="lite"]) .app.pf-on { position: relative; }
   :root:not([data-mode="lite"]) .app.pf-on .pf-head {
-    display: flex; align-items: center; justify-content: space-between; gap: 2px; flex: none;
+    display: flex; align-items: center; justify-content: space-between; flex: none;
     height: 40px; padding: 0 8px 0 var(--ds-panel-pad, 14px);
   }
   :root:not([data-mode="lite"]) .app.pf-on .pf-title { font: 600 12.5px/1 var(--ds-font); color: var(--ds-ink-2); letter-spacing: .2px; white-space: nowrap; }
@@ -912,19 +912,6 @@
   }
   :root:not([data-mode="lite"]) .app.pf-on :is(.pf-head, .pf-mini) .panel-visibility-toggle:hover { background: var(--ds-hover); color: var(--ds-ink); }
   :root:not([data-mode="lite"]) .app.pf-on :is(.pf-head, .pf-mini) .panel-visibility-toggle svg { width: 17px; height: 17px; stroke-width: 1.4; }
-  /* 패널 분리·합치기 단추(11-04, js/panel-detach.js): 접기 단추와 같은 모양, 제목 오른쪽 끝에 붙는다. */
-  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach {
-    width: 28px; height: 28px; min-height: 28px; margin-left: auto; padding: 0; display: grid; place-items: center;
-    border: 0; border-radius: var(--ds-radius); background: transparent; color: var(--ds-ink-3); box-shadow: none; cursor: pointer;
-  }
-  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach:hover { background: var(--ds-hover); color: var(--ds-ink); }
-  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: -2px; }
-  :root:not([data-mode="lite"]) .app.pf-on .pf-head .pf-detach svg { width: 16px; height: 16px; }
-  /* 떼어 낸 동안: 그 패널 칸은 0 — 캔버스와 남은 패널이 자리를 채운다. 가장자리 줄도 숨긴다. */
-  :root:not([data-mode="lite"]) .app[data-left-detached="true"] { --editor-left-track: 0px !important; }
-  :root:not([data-mode="lite"]) .app[data-right-detached="true"] { --editor-right-track: 0px !important; }
-  :root:not([data-mode="lite"]) .app[data-left-detached="true"] > .ds-rail-left,
-  :root:not([data-mode="lite"]) .app[data-right-detached="true"] > .ds-rail-right { display: none !important; }
   /* 패널 단추: 열림 = 아이콘의 패널 쪽 칸이 옅게 채워짐(바탕 없음), 닫힘 = 불(선택 바탕). */
   :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle { background: transparent !important; box-shadow: none !important; outline: none; }
   :root:not([data-mode="lite"]) .app.pf-on .panel-visibility-toggle:hover { background: var(--ds-hover) !important; }

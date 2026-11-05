@@ -57,7 +57,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: preview AI edits p
     const ui=createUnifiedLibraryUi({getProvider:()=>null});
     return {
       foldersExpanded:ui.element.querySelector('[data-unilib-folders-open]').getAttribute('aria-expanded'),
-      previewExpanded:ui.element.querySelector('[data-unilib-preview-toggle]').getAttribute('aria-pressed'),
+      previewExpanded:String(!!ui.element.querySelector('.unilib.preview-open')),// 11-05: 미리보기 접기 단추를 뺐다 — 미리보기는 늘 열림
       stableFolders:localStorage.getItem('5e.unified-library.search-pane-open.v1'),
       stablePreview:localStorage.getItem('5e.unified-library.preview-pane-open.v1'),
       previewFolders:localStorage.getItem('5e.preview:5e.unified-library.search-pane-open.v1'),

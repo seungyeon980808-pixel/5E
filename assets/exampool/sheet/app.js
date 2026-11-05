@@ -29,6 +29,7 @@ import {loadStandards} from './standards-data.js';
 let grid=null,future=[];
 let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
+import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — 그때는 '*'로 보내고, 받을 때는 부모 창에서 왔는지로 가린다.
 const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin,fromOwn=e=>FILE_MODE?e.source===window.parent:e.origin===location.origin;
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
@@ -1098,6 +1099,7 @@ async function printExam(bytes,title,fit=null){typesetter||=makeTypesetter();con
 // 문항 카드 편집기.
 const docked={home:null,next:null};
 const hwpDock={home:null,next:null};
+recordPaneListeners($('#card-view'));// 11-05 칸 분리: 카드 편집기가 듣기를 걸기 전에 기록
 const cardEditor=createCardEditor($('#card-view'),{
   question:()=>current,
   context:()=>{const exam=view.examId&&examById(data,view.examId);return exam?{label:exam.title,numbered:true,questions:exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean)}:{label:'문항 보관함',numbered:false,questions:libraryQuestions(data)};},
@@ -1133,6 +1135,8 @@ const cardEditor=createCardEditor($('#card-view'),{
   cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),login:()=>window.parent.postMessage({channel:'5e-question-sheet',action:'login'},OWN),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
+// 11-05 칸 분리: 참고 자료·문항 카드·조건 창을 별도 창으로 떼어 쓴다(pane-detach.js).
+window.fiveEPaneDetach=initPaneDetach($('#card-view'),{render:()=>cardEditor.render(),refreshLibrary:()=>cardEditor.refreshLibrary()});
 // ── 출제 대화(대화형 출제·검토) ──
 // 문항이 곧 화면의 문항이다. 요청에는 문항 ID·기준 버전·내용 해시·요청 ID를 묶고, 응답은 바로 쓰지 않는다:
 // 변경안은 교사가 「적용」할 때까지 보관하고, 기다리는 동안 문항이 바뀌었으면 '지난 변경안'으로 남긴다.

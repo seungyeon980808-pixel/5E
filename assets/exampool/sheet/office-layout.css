@@ -873,3 +873,25 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
   .shell-body.nav-off>.side button>:not(svg):not(.ico){display:none}
 }
 .top .brand:focus:not(:focus-visible),.top-icon:focus:not(:focus-visible){outline:none}
+
+/* 11-05: 「조건」은 글자 없이 아이콘 하나 — 검색 칸 밖, 보기 단추와 같은 30px 정사각. 거른 조건이 있으면 아이콘이 파랗고 개수 배지. */
+#card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:0;width:30px;height:30px;padding:0;justify-content:center;box-shadow:none;background:transparent;color:var(--ds-ink-3);border-radius:6px}
+#card-view .lp-one .lp-adv>span{display:none!important}
+#card-view .lp-one .lp-adv .ico{width:17px;height:17px}
+#card-view .lp-one .lp-adv:hover,#card-view .lp-one .lp-adv[aria-expanded=true]{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-one .lp-adv:has(i:not([hidden])){color:var(--ds-soft-line,#6ba4f8)}
+#card-view .lp-one .lp-adv i{position:absolute;top:0;right:0;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:var(--ds-soft-line,#6ba4f8);color:#0d1117;font-size:9.5px;line-height:13px;font-weight:700}
+#card-view .lp-one .lp-adv i::before{content:""!important}
+#card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:12px}
+
+/* 11-05 칸 분리(pane-detach.js): 머리줄 [분리 ↗] 단추 — 보기 단추와 같은 28px 아이콘 */
+#card-view .pane-detach{flex:none;width:28px;height:28px;padding:0;display:inline-grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-3);cursor:pointer}
+#card-view .pane-detach:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-detach svg{width:16px;height:16px}
+#card-view .cv-bar .pane-detach{margin-left:auto}
+#card-view .lp-adv-foot .pane-detach{margin-left:6px}
+/* 떼어 낸 동안 남은 칸이 자리를 채운다 */
+#card-view[data-det-left]>[data-cvsplit="left"]{display:none}
+#card-view[data-det-center]>[data-cvsplit="right"]{display:none}
+#card-view[data-det-center]>.cv-right{flex:1 1 auto!important}
+#card-view[data-det-center][data-det-left]>.cv-right{flex:1 1 auto!important}

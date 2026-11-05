@@ -1,6 +1,6 @@
-// 본 창 문서(document)에 건 이벤트 듣기를 기록해 둔다(11-04 패널 분리).
-// 패널을 별도 창으로 떼어 내면(js/panel-detach.js) 그 창 문서에도 같은 듣기를 걸어, 문서 전체에서 누름·입력을 받던 기능이 떼어 낸 창에서도 그대로 돈다.
-// 다른 스크립트보다 먼저 읽혀야 하므로 index.html 머리에서 일반 스크립트로 읽는다.
+// 출제 창 문서(document)에 건 이벤트 듣기를 기록해 둔다(11-05 칸 분리, pane-detach.js).
+// 칸을 별도 창으로 떼어 내면 그 창 문서에도 같은 듣기를 걸어, 문서 전체에서 누름·입력을 받던 기능이 떼어 낸 창에서도 그대로 돈다.
+// 다른 스크립트보다 먼저 읽혀야 하므로 sheet/index.html 머리에서 일반 스크립트로 읽는다.
 (function () {
   if (window.__fiveEDocListeners) return;
   var list = [], add = document.addEventListener, remove = document.removeEventListener;

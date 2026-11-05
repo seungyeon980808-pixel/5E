@@ -199,7 +199,7 @@ export function createCardEditor(root,api){
     const linked='';// 근거는 문항 카드 맨 아래 「근거」 표로 옮겼다(시안 34).
     const search=docked?`<label class="lp-search">${ICON.search}<input data-cvsrc value="${E(root.querySelector('#source-search')?.value||document.querySelector('#source-search')?.value||'')}" placeholder="${panels.tab==='standards'?'코드·핵심어':'자료 이름·본문'}" aria-label="검색"></label>`:'';
     return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="참고 자료"><div class="lp-one">${scope}<div class="lp-slot" data-cvslot="search">${search}</div>
-      ${docked||panels.tab==='textbooks'?'':`<button type="button" class="lp-adv" data-cvadv aria-expanded="${pastAdvOpen}" title="조건으로 거르기: 과목·단원·연도">${ICON.sliders}<span>조건</span><i data-cvslot="advn" hidden></i></button>`}${seg}${panels.lib?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-lib" aria-pressed="true" title="참고 자료 닫기" aria-label="참고 자료 닫기">${ICON.panelL}</button>`:''}</div>
+      ${docked||panels.tab==='textbooks'?'':`<button type="button" class="lp-adv" data-cvadv aria-expanded="${pastAdvOpen}" title="조건으로 거르기 — 과목·단원·연도" aria-label="조건으로 거르기">${ICON.sliders}<i data-cvslot="advn" hidden></i></button>`}${seg}${panels.lib?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-lib" aria-pressed="true" title="참고 자료 닫기" aria-label="참고 자료 닫기">${ICON.panelL}</button>`:''}</div>
       <div class="lp-adv-pop" data-cvslot="adv"${pastAdvOpen&&!docked?'':' hidden'}></div>
       <div class="lp-body" data-cvbody="past" ${['past','textbooks'].includes(panels.tab)?'':'hidden'}></div>
       <div class="lp-body lp-docked" data-cvbody="docked" ${docked?'':'hidden'}></div>

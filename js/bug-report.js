@@ -22,10 +22,13 @@ export function initBugReporter() {
   mount(document.querySelector('.footer-actions'));
   mount(document.querySelector('#ai-image-panel .ai-head-status'), 'ai-header-tool modal-btn');
   const mountLibrary = () => {
-    // 라이브러리에서는 위쪽 막대(미리보기 접기 · 닫기 옆)에 둔다.
+    // 라이브러리에서는 위쪽 막대(닫기 옆)에 둔다.
     for (const host of document.querySelectorAll('.unified-library-overlay .unilib-header-actions')) {
       mount(host, 'unilib-icon-button', host.querySelector('[aria-label="라이브러리 닫기"]') || host.lastElementChild);
     }
+    // 11-05: 그래프(함수) 만들기 창에도 — 제목 줄 오른쪽, 닫기(×) 왼쪽.
+    const graphTitle = document.querySelector('#graph-modal-overlay .modal-title');
+    if (graphTitle) mount(graphTitle, 'gm-bug', graphTitle.querySelector('#gm-cancel'));
   };
   mountLibrary();
   new MutationObserver(mountLibrary).observe(document.body, {childList: true, subtree: true});

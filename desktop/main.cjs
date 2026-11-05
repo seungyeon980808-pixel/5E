@@ -1115,8 +1115,8 @@ function createWindow() {
     if (String(url).split(/[?#]/, 1)[0] !== entryUrl) event.preventDefault();
   });
   win.webContents.setWindowOpenHandler(({ url, frameName }) => {
-    // 패널 분리(11-04, js/panel-detach.js): 빈 창(about:blank)에 패널을 옮겨 담는 창만 허용한다.
-    if (String(url) === "about:blank" && /^five-e-panel-(left|right)$/.test(String(frameName || ""))) {
+    // 칸 분리(11-05, assets/exampool/sheet/pane-detach.js): 빈 창(about:blank)에 출제 칸을 옮겨 담는 창만 허용한다.
+    if (String(url) === "about:blank" && /^five-e-pane-(left|center|adv)$/.test(String(frameName || ""))) {
       return { action: "allow", overrideBrowserWindowOptions: { autoHideMenuBar: true, backgroundColor: "#0d1117", minWidth: 200, minHeight: 300, title: "5E" } };
     }
     if (/^https:\/\//i.test(String(url))) void shell.openExternal(url);

@@ -835,7 +835,6 @@ function buildShell() {
       <header class="unilib-header">
         <div class="unilib-brand"><button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-folders-open aria-expanded="true" aria-label="검색 위치 접기">${ICONS.panelLeft}</button><h2 id="unilib-title">라이브러리</h2><span data-unilib-location-summary hidden>검색 위치</span></div>
         <div class="unilib-header-actions">
-          <button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-preview-toggle aria-pressed="true" aria-label="미리보기 열기">${ICONS.panelRight}</button>
           <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기">${ICONS.close}</button>
         </div>
       </header>
@@ -992,9 +991,18 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   const expandedSources = loadExpandedSources(storage);
   let treeExpansionInitialized = (() => { try { return storage.getItem(TREE_STORAGE_KEY) !== null; } catch { return false; } })();
   let searchPaneOpen = loadPaneOpen(storage);
-  let previewPaneOpen = (() => { try { return storage.getItem(PREVIEW_PANE_STORAGE_KEY) !== "false"; } catch { return true; } })();
+  // 11-05: 미리보기 접기 단추는 뺐다(사용자) — 미리보기는 늘 열어 둔다(전에 접어 둔 기록도 무시).
+  let previewPaneOpen = true;
   const isLiteMode = () => document.documentElement.dataset.mode === "lite";
   const foldersToggle = overlay.querySelector("[data-unilib-folders-open]");
+  // 11-05: 넓은 화면에서는 「검색 위치」 접기 단추를 그 칸 머리줄 오른쪽으로(5E_image 패널 머리줄과 같게). 접으면 44px 줄 맨 위에 남는다.
+  // 좁은 화면(서랍)에서는 원래 자리(맨 위 제목 옆)에 둔다.
+  {
+    const brand = overlay.querySelector(".unilib-brand"), head = overlay.querySelector(".unilib-folders .unilib-pane-head");
+    const wideLib = window.matchMedia("(min-width: 768px)");
+    const placeToggle = () => { if (wideLib.matches) { if (foldersToggle.parentElement !== head) head?.append(foldersToggle); } else if (foldersToggle.parentElement !== brand) brand?.prepend(foldersToggle); };
+    placeToggle(); wideLib.addEventListener?.("change", placeToggle);
+  }
   const setSearchPaneOpen = (open) => {
     if (isLiteMode()) open = true;
     else searchPaneOpen = open;
@@ -1009,8 +1017,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     else previewPaneOpen = open;
     root.classList.toggle("preview-hidden", !open);
     root.classList.toggle("preview-open", open);
-    previewToggle.setAttribute("aria-pressed", String(open));
-    previewToggle.setAttribute("aria-label", `미리보기 ${open ? "접기" : "펼치기"}`);
+    previewToggle?.setAttribute("aria-pressed", String(open));
+    previewToggle?.setAttribute("aria-label", `미리보기 ${open ? "접기" : "펼치기"}`);
     if (!isLiteMode()) { try { storage.setItem(PREVIEW_PANE_STORAGE_KEY, String(open)); } catch {} }
   };
   const setMobileFoldersOpen = (open) => {
@@ -2459,7 +2467,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   });
   setSearchPaneOpen(searchPaneOpen);
   setPreviewPaneOpen(previewPaneOpen);
-  previewToggle.addEventListener("click", () => setPreviewPaneOpen(!previewPaneOpen));
+  previewToggle?.addEventListener("click", () => setPreviewPaneOpen(!previewPaneOpen));
   overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void (searchReadiness === "error" && providedRetry ? providedRetry() : overlay.querySelector('[data-unilib-folder-loading]').dataset.state === 'error' ? open(returnFocus) : runSearch()));
   overlay.querySelector("[data-unilib-provided-retry]").addEventListener("click", () => { if (typeof providedRetry === "function") void providedRetry(); });
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);

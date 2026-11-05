@@ -242,9 +242,7 @@ function discover() {
 
 discover();
 // 11-04: 데스크톱 Pro에서는 접기 단추를 패널 머리줄로(떠 있는 카드 방식) — js/panel-heads.js
-import('./panel-heads.js?v=1.7.0-four-session-integration').then(m => m.initPanelHeads())
-  // 11-04: 패널 머리줄의 [분리]로 패널을 별도 창으로 떼어 낸다 — js/panel-detach.js
-  .then(() => import('./panel-detach.js?v=1.7.0-four-session-integration')).then(m => { window.fiveEPanelDetach = m.initPanelDetach(); });
+import('./panel-heads.js?v=1.7.0-four-session-integration').then(m => m.initPanelHeads());
 new MutationObserver(discover).observe(document.body, { childList: true });
 narrow.addEventListener('change', () => {
   preferences.editor.drawer = null;
