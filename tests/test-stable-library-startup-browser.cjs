@@ -25,7 +25,7 @@ async function setup(browser, { changed = false, fallback = false, indexFailure 
   checksums.files[pack.paths.searchIndex] = hash(encode(search));
   const state = { indexFailure, requests, errors, metadata, indexGate };
   if (fallback) await context.route('**/assets/pdf-library/catalog-bootstrap.json', route => route.fulfill({ status: 404, body: 'missing' }));
-  await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', async route => {
+  await context.route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', async route => {
     const pathname = new URL(route.request().url()).pathname;
     const name = pathname.split('/').at(-1);
     try {
@@ -138,8 +138,9 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       f = await setup(browser); contexts.push(f.context); await f.open();
       assert.equal(f.state.requests.some(url => url.includes('/data/hakpyeong/')), false);
       await f.ui.locator('[data-unilib-type="question"]').click();
-      await f.ui.locator('[data-unilib-filter="subject"]').selectOption('p1');
-      await f.ui.locator('[data-unilib-filter="administration"]').selectOption('03');
+      // 11-05: 과목·시험은 왼쪽 「조건」 칸(과목 바둑판·시험 단추)에서 고른다.
+      await f.ui.locator('[data-cond-subject="p1"]').click();
+      await f.ui.locator('[data-cond-exam="hak"]').click();
       await f.ui.locator('[data-unilib-query]').fill('물리1 27년 3월 학평');
       await f.ui.getByText('물리1 27년 3월 학평 1번', { exact: true }).first().waitFor({ timeout: 60000 });
       await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor();

@@ -64,7 +64,7 @@ const out=path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/screen-
   assert(tabs.length>=2);assert(tabs.every(tab=>tab.width===90&&tab.name==='ellipsis'&&tab.align==='center'));
   // 2026-10-16(0a2db4a0): 고급 기능 줄은 다른 도구 줄과 같은 16px 시작선(왼쪽 정렬)으로 맞췄다.
   for(const id of ['personal-object-save','image-objectify-open','bulk-edit-open']) assert.equal(await page.locator('#'+id).evaluate(n=>getComputedStyle(n).textAlign),'left');
-  const link=page.locator('.footer-actions .bug-report-open');assert.equal(await link.getAttribute('href'),'https://5e.ai.kr/bug/');assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await page.locator('#bug-report-dialog').count(),0);
+  const link=page.locator('.canvas-global-controls .bug-report-open');assert.equal(await link.getAttribute('href'),'https://5e.ai.kr/bug/');assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await page.locator('#bug-report-dialog').count(),0);
   // Help stays in the headings even with every image classified.
   await page.evaluate(async version=>{const{chooseWorkbenchAssignment}=await import('/js/library/workbench-assignment.js'+version);const c=document.createElement('canvas');c.width=100;c.height=70;window.__assignment=chooseWorkbenchAssignment({references:[{name:'그림',data:c.toDataURL()},{name:'그래프',data:c.toDataURL()}]});},version);
   const bench=page.locator('.workbench-assignment');await bench.waitFor();assert.equal(await bench.locator('.workbench-assignment-instructions').count(),0);assert.equal(await bench.locator('h3 button[title]').count(),3);

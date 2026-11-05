@@ -27,18 +27,19 @@ export function chipsOf(q) {
 }
 const answerText = q => !objective(q) ? '서술형' : Number.isInteger(q.answer) ? `정답 ${ANSWER_MARK[q.answer]}` : '<span class="wn">정답 없음</span>';
 
-export function placeState(view) { return view.place ||= { lv: 'list', zoom: 'page', noGoal: false }; }
+// 11-05(시안 layout-1105.html ③): 문항 순서는 작은 그림 카드가 기본, 점검 칸은 접힌 줄(「확인할 것 N」)이 기본.
+export function placeState(view) { return view.place ||= { lv: 'card', zoom: 'page', noGoal: false, checkOpen: false }; }
 
 export function renderStep3(exam, data, forms, items, st) {
   const qs = items.map(x => x.q);
   const rows = items.map((x, i) => { const q = x.q;
-    return `<div class="pv-orow ex-lr" draggable="true" data-order="${E(x.id)}" data-ex-tip="${E(x.id)}"><span class="n">${i + 1}</span><div class="ex-t"><b>${E(questionSubtitle(q))}</b>
+    return `<div class="pv-orow ex-lr" draggable="true" data-order="${E(x.id)}"><span class="n">${i + 1}</span><div class="ex-t"><b>${E(questionSubtitle(q))}</b>
       <div class="ex-cs">${chipsOf(q).map(c => `<span class="ex-cz">${E(c)}</span>`).join('')}</div>
       <div class="ex-m">${[q.unitLarge, q.type, `${Number(q.points) || 0}점`].filter(Boolean).map(E).join(' · ')} · ${answerText(q)}</div></div>
       <span class="ex-tools pv-row-tools"><button type="button" class="mini" data-move="up" title="위로" aria-label="${i + 1}번 위로">${SVG.up}</button><button type="button" class="mini" data-move="down" title="아래로" aria-label="${i + 1}번 아래로">${SVG.down}</button><button type="button" class="mini" data-open-card="${E(x.id)}" title="카드 열기" aria-label="${i + 1}번 카드 열기">${SVG.card}</button><button type="button" class="mini" data-out="${E(x.id)}" title="보관함으로 빼기" aria-label="${i + 1}번 빼기">${SVG.out}</button></span></div>`; }).join('');
   const cards = items.map((x, i) => `<div class="pv-orow ex-cc" draggable="true" data-order="${E(x.id)}"><div class="ex-th"><div class="ep-doc" data-preview="${E(x.id)}"></div></div><div class="ex-cm"><b><span class="ex-no">${i + 1}</span>${E(questionSubtitle(x.q))}</b><span>${E(x.q.type)} · ${Number(x.q.points) || 0}점 · ${answerText(x.q)}</span></div>
       <span class="ex-tools pv-row-tools"><button type="button" class="mini" data-open-card="${E(x.id)}" title="카드 열기" aria-label="${i + 1}번 카드 열기">${SVG.card}</button><button type="button" class="mini" data-out="${E(x.id)}" title="보관함으로 빼기" aria-label="${i + 1}번 빼기">${SVG.out}</button></span></div>`).join('');
-  return `<div class="ef-work ex-s3">
+  return `<div class="ef-work ex-s3"${st.checkOpen ? ' data-check-open' : ''}>
   <section class="ef-pane"><div class="ef-ph"><b>문항 순서</b><small>${items.length}문항</small><span class="sp"></span>
       <div class="ef-seg ex-lv" role="group" aria-label="보기 방식"><button type="button" data-ex-lv="list" aria-pressed="${st.lv === 'list'}" title="목록" aria-label="목록">${SVG.list}</button><button type="button" data-ex-lv="card" aria-pressed="${st.lv === 'card'}" title="카드" aria-label="카드">${SVG.grid}</button></div></div>
     <div class="ex-ord" id="exam-order">${items.length ? (st.lv === 'card' ? `<div class="ex-cgrid">${cards}</div>` : rows) : '<p class="ef-hint" style="padding:12px">아직 문항이 없습니다. 「＋ 문항 더 담기」로 보관함에서 고르세요.</p>'}</div>
@@ -47,7 +48,7 @@ export function renderStep3(exam, data, forms, items, st) {
       <div class="ef-seg ex-zoom" role="group" aria-label="쪽 보기"><button type="button" data-ex-zoom="page" aria-pressed="${st.zoom === 'page'}">쪽 맞춤</button><button type="button" data-ex-zoom="width" aria-pressed="${st.zoom === 'width'}">폭 맞춤</button></div></div>
     <div class="ex-desk"><div class="pv-sheet ex-zoom-${st.zoom}" id="exam-sheet" data-exam="${E(exam.id)}" style="--ex-scale:${st.scale || 1}"><p class="pv-empty">${items.length ? '한글 조판으로 쪽을 그리는 중…' : '문항을 넣으면 실제 쪽이 보입니다.'}</p></div></div>
     <div class="ex-zoomctl" role="group" aria-label="쪽 배율"><button type="button" data-ex-scale="-1" title="축소" aria-label="축소">−</button><button type="button" class="pct" data-ex-scale="0" title="맞춤 크기(100%)로" aria-label="쪽 배율 · 누르면 100%">${Math.round((st.scale || 1) * 100)}%</button><button type="button" data-ex-scale="1" title="확대" aria-label="확대">+</button></div></section>
-  <section class="ef-pane"><div class="ef-ph"><b>점검</b><span class="sp"></span><label class="ex-swl"><input type="checkbox" data-ex-nogoal ${st.noGoal ? 'checked' : ''}><span class="sw"></span>목표 없이 보기</label></div>
+  <section class="ef-pane ex-checkpane" data-open="${st.checkOpen ? 'true' : 'false'}"><div class="ef-ph"><b>점검</b><span class="sp"></span><label class="ex-swl"><input type="checkbox" data-ex-nogoal ${st.noGoal ? 'checked' : ''}><span class="sw"></span>목표 없이 보기</label><button type="button" class="ex-checkfold" data-ex-check-toggle title="점검 접기" aria-label="점검 접기">${SVG.out}</button></div>
     <div class="ex-rp" id="exam-check">${checkMarkup(exam, data, forms, items, st, null)}</div></section>
 </div>`;
 }

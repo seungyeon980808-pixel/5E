@@ -125,7 +125,7 @@ async function showSource(page) {
    const app=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
    const pdfFixture=fixturePack();
    await app.route('**/assets/pdf-library/catalog-bootstrap.json',route=>route.fulfill({status:404,body:'controlled catalog fixture'}));
-   await app.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',route=>{
+   await app.route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await app.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',route=>{
     const url=decodeURIComponent(new URL(route.request().url()).pathname);
     const body=url.endsWith('/pack.json')?pdfFixture.pack:url.endsWith('/checksums.json')?pdfFixture.checksums:url.endsWith('/catalog.json')?pdfFixture.catalog:url.endsWith('/search-index.json')?pdfFixture.search:pdfFixture.pdf;
     return route.fulfill({contentType:Buffer.isBuffer(body)?'application/pdf':'application/json',body:Buffer.isBuffer(body)?body:JSON.stringify(body)});

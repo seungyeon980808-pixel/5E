@@ -48,7 +48,7 @@ export function installPictureResize(input,bridge) {
   input.finishPictureResizeDrag=function(event){
     const next=resized(event);if(!next)return finish.call(this,event);
     const state=this.pictureResizeState;
-    try{if(Object.entries(next.props).some(([k,v])=>state.fiveEOriginalProps[k]!==v))bridge.transaction('resize-picture',()=>{bridge.setProperties(state.ref,next.props);return true;});}
+    try{if(Object.entries(next.props).some(([k,v])=>state.fiveEOriginalProps[k]!==v)){bridge.transaction('resize-picture',()=>{bridge.setProperties(state.ref,next.props);return true;});bridge.onPictureResized?.(state.ref,next.props.width);}}
     finally{this.cleanupPictureResizeDrag();this.renderPictureObjectSelection();}
   };
 }

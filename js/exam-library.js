@@ -7,7 +7,7 @@ import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.7.0-four-session-integration";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.7.0-four-session-integration";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.7.0-four-session-integration";
-import { createUnifiedLibraryProviderAsync } from "./library/provider.js?v=1.7.0-four-session-integration";
+import { createUnifiedLibraryProviderAsync, setLibraryExamTags } from "./library/provider.js?v=1.7.0-four-session-integration";
 import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.7.0-four-session-integration";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.7.0-four-session-integration";
 import { setConnectionNames } from "./library/connection-names.js";
@@ -159,7 +159,8 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       { loadRemotePack },
       { loadCatalogFirst },
       { PROVIDED_CATALOG_BOOTSTRAP },
-      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
+      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl, googleDrivePackBaseUrl },
+      { createStaticMirrorFetcher },
     ] = await Promise.all([
       import("./pdf-library/pack-store.js?v=1.7.0-four-session-integration"),
       import("./pdf-library/pack-management.js?v=1.7.0-four-session-integration"),
@@ -167,13 +168,18 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       import("./pdf-library/catalog-startup.js?v=1.7.0-four-session-integration"),
       import("./pdf-library/catalog-bootstrap.js?v=1.7.0-four-session-integration"),
       import("./pdf-library/google-drive.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/static-mirror.js?v=1.7.0-four-session-integration"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();
     const gatewayBaseUrl = await configuredGoogleDriveGatewayUrl();
-    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl });
+    // 11-05: 「5E 제공」 공유 폴더(웹 기본 제공·설치본에서 직접 연결 모두)는 빠른 주소에서 먼저 받는다(static-mirror.js).
+    let providedRoot = "";
+    try { providedRoot = gatewayBaseUrl ? googleDrivePackBaseUrl(gatewayBaseUrl, PROVIDED_DRIVE_FOLDER_URL) : ""; } catch {}
+    const fetcher = createStaticMirrorFetcher(providedRoot);
+    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl, fetcher });
     let startup = null;
-    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null,
+    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null, fetcher,
       loadPack: isDesktopLibrary ? loadRemotePack : async options => {
         startup = await loadCatalogFirst({ ...options, bootstrap: PROVIDED_CATALOG_BOOTSTRAP });
         return startup.pack;
@@ -332,8 +338,12 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let importedImages = [];
   let unifiedProviderCache = null;
   let unifiedProviderCacheKey = "";
+  // 11-05: 문항 단원·태그·모양 색인(exam 기출 검색과 같은 수준). 한 번만 읽고, 못 읽어도 검색은 본문으로 그대로 된다.
+  let examTagsLoading = null;
+  const loadExamTags = () => examTagsLoading ||= fetch(new URL("../assets/exampool/convert/data/library-tags.json", import.meta.url))
+    .then((response) => response.ok ? response.json() : null).then(setLibraryExamTags).catch(() => {});
   async function ensureUnifiedManifests() {
-    if (isDesktopLibrary && !partsManifest) partsManifest = await loadPartsManifest();
+    await Promise.all([isDesktopLibrary && !partsManifest ? loadPartsManifest().then((manifest) => { partsManifest = manifest; }) : null, loadExamTags()]);
   }
 
   async function materializeImportedImage({ result, item }) {
@@ -349,12 +359,15 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     return { dataUrl: await urlToDataUrl(result.preview.url), result };
   }
 
-  async function prepareHakpyeong({query, filters, questionSearch}) {
+  async function prepareHakpyeong({query, filters, questionSearch, providedEnabled = true}) {
+    // 11-05: 「5E 제공」 묶음을 껐거나 시험을 「수능·모평」으로 거르면 학평 자료는 불러오지 않는다.
+    if (!providedEnabled || filters.exam === "kice") return false;
     if (["06", "09", "11"].includes(filters.administration)) return false;
+    if (!filters.subject && Array.isArray(filters.subjects) && filters.subjects.length === 1) filters = { ...filters, subject: filters.subjects[0] };
     const explicit = /학평|학력평가|(?:^|\D)(?:3|4|5|7|10)월|[pbce][12]_?\d{2,4}_?(?:03|04|05|07|10)/i.test(query)
-      || ["03", "04", "05", "07", "10"].includes(filters.administration);
+      || ["03", "04", "05", "07", "10"].includes(filters.administration) || filters.exam === "hak";
     if (!explicit && (!questionSearch || /6평|9평|수능/.test(query))) return false;
-    if (!query && !filters.subject && !filters.startYear && !filters.endYear && !filters.administration) return false;
+    if (!query && !filters.subject && !filters.startYear && !filters.endYear && !filters.administration && !filters.exam && !filters.subjects?.length) return false;
     const before = hakpyeongRevision;
     await mountPackManagement();
     const work = hakpyeongTask.then(async () => {

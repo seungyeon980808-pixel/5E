@@ -657,3 +657,28 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .lv-selbar b{font-size:13px;font-weight:600;margin-right:6px}.lv-selbar .sp{flex:1}.lv-selbar .lv-btn{height:32px;padding:0 12px;font-size:12.5px}
 .top-menu button.danger{color:var(--ds-danger)}
 .pv-rename{height:28px;min-width:240px;padding:0 8px;border:1px solid var(--go-line,#6ba4f8);border-radius:6px;background:var(--ds-field,#010409);color:var(--ds-ink);font:inherit;font-size:13.5px}
+/* 11-05 시험지 목록(시안 layout-1105.html ②): 첫 쪽 미리보기 카드 바둑판. 종이는 B4 비율 2단, 담긴 앞 문항 넷을 작게. */
+.pv-egrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:var(--ds-space-5,16px);margin-top:var(--ds-space-4,12px)}
+.pv-ecard{display:flex;flex-direction:column;min-width:0;border-radius:10px;background:var(--ds-raise);outline:1px solid var(--ds-line);outline-offset:-1px;overflow:visible}
+.pv-ecard:hover{outline-color:var(--ds-line-strong)}
+.pv-epage{display:block;width:100%;padding:10px 10px 0;border:0;background:none;cursor:pointer}
+.pv-paper{position:relative;display:flex;flex-direction:column;gap:5%;aspect-ratio:257/364;padding:6% 6% 5%;border-radius:3px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);overflow:hidden}
+.pv-paper-hd{flex:none;height:5%;border:1px solid #9aa0a6;border-radius:1px}
+.pv-paper-cols{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6%;min-height:0;position:relative}
+.pv-paper-cols::before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px solid #c9cdd2}
+.pv-paper-col{display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden}
+.pv-pq{position:relative;flex:none;height:46%;overflow:hidden}
+.pv-pq .pv-doc{transform:scale(.16);width:625%}
+.pv-pq.is-blank{display:block;background:repeating-linear-gradient(#e3e6ea 0 1px,transparent 1px 7px)}
+.pv-paper-empty{margin:auto;color:#9aa0a6;font-size:12px}
+.pv-emeta{display:flex;align-items:flex-start;gap:8px;padding:10px 10px 12px}
+.pv-emeta>.st-ico{flex:none;width:18px;height:18px;margin-top:1px}
+.pv-emeta>div:not(.pv-more){flex:1;min-width:0}
+.pv-emeta b{display:block;overflow:hidden;font-size:13.5px;text-overflow:ellipsis;white-space:nowrap}
+.pv-emeta span{display:block;margin-top:2px;color:var(--ds-ink-3);font-size:var(--ds-text-meta)}
+.pv-emeta .pv-more{flex:none;margin:-4px -4px 0 0}
+.pv-enew{align-items:center;justify-content:center;gap:8px;min-height:260px;border:0;background:none;outline-style:dashed;color:var(--ds-ink-3);font:inherit;cursor:pointer}
+.pv-enew:hover{color:var(--ds-ink);background:var(--ds-hover)}
+.pv-enew .ico{width:20px;height:20px}
+.pv-ecard .pv-epage{height:auto;min-height:0;border-radius:10px 10px 0 0}.pv-ecard .pv-epage:hover{background:none}.pv-ecard .pv-epage:hover .pv-paper{box-shadow:0 0 0 2px var(--ds-soft-line,#2f6fd6),0 1px 4px rgba(0,0,0,.25)}
+.pv-egrid>.pv-enew{height:auto;align-self:stretch}

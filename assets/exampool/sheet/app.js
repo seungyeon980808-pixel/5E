@@ -35,8 +35,8 @@ const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin,fr
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
 const options=(values,value)=>values.map(v=>`<option ${v===value?'selected':''}>${E(v)}</option>`).join('');
 const demo=new URLSearchParams(location.search).has('example'),embedded=window.parent!==window;
-// 5E 안에서 열리면 5E 아래 막대를 덮으므로, 이 상태 줄 오른쪽에 5E 버전과 「문제 신고」를 같이 둔다.
-if(embedded)try{const v=window.parent.document.querySelector('[data-release-version]')?.textContent.trim();const n=document.getElementById('host-version');if(v&&n){n.textContent='5E '+v;n.hidden=false;}document.getElementById('host-bug').hidden=false;}catch{}
+// 5E 안에서 열리면 5E 아래 막대를 덮으므로, 이 상태 줄 오른쪽에 5E 버전을 둔다(버그 신고는 맨 위 줄 ? 옆, 11-05).
+if(embedded)try{const v=window.parent.document.querySelector('[data-release-version]')?.textContent.trim();const n=document.getElementById('host-version');if(v&&n){n.textContent='5E '+v;n.hidden=false;}}catch{}
 if(demo){$('.brand-page').hidden=false;$('.brand-page').textContent='구조 예제';$('.brand-page').title='실제 문항과 별도 공간에 저장하는 편집 연습 예제입니다.';}
 if(embedded)$('[data-change-summary]').hidden=true;
 // 공개 프리뷰(/preview/…)는 정식 사이트와 같은 원점이라 저장소 이름에 '5e.preview:'를 붙여 분리한다(js/preview-storage.js channelStore와 같은 규칙).
@@ -943,6 +943,9 @@ $('#examd-view').addEventListener('input',e=>{if(!e.target.matches('[data-ep-que
 // ③ 배치 · 점검(exam-place.js): 목록/카드 · 쪽 맞춤/폭 맞춤 · 목표 없이 보기 · 줄을 누르면 그 문항 쪽으로 · 마우스를 올리면 문항 전체.
 $('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if(!exam||(view.examStep||3)!==3)return;const st=placeState(view);
   const lv=t.closest('[data-ex-lv]');if(lv){st.lv=lv.dataset.exLv;renderView();return;}
+  // 11-05: 점검 칸 접기·펴기 — 접힌 줄(「확인할 것 N」)을 누르면 펼치고, 머리줄 ×로 접는다. 다시 그리지 않고 칸 폭만 바꾼다.
+  const fold=t.closest('[data-ex-check-toggle]'),rail=!fold&&t.closest('.ex-checkpane[data-open="false"]');
+  if(fold||rail){st.checkOpen=!fold;const pane=document.querySelector('#examd-view .ex-checkpane');pane?.setAttribute('data-open',String(st.checkOpen));pane?.closest('.ex-s3')?.toggleAttribute('data-check-open',st.checkOpen);return;}
   // 쪽 배율 −·+(11-04): 쪽 맞춤/폭 맞춤 크기에 곱한다(50~250%, 10%씩). 가운데 숫자를 누르면 100%.
   const sc=t.closest('[data-ex-scale]');if(sc){const d=Number(sc.dataset.exScale);st.scale=d?Math.min(2.5,Math.max(.5,Math.round(((st.scale||1)+d*.1)*10)/10)):1;$('#exam-sheet')?.style.setProperty('--ex-scale',st.scale);const p=document.querySelector('.ex-zoomctl .pct');if(p)p.textContent=`${Math.round(st.scale*100)}%`;return;}
   const zm=t.closest('[data-ex-zoom]');if(zm){st.zoom=zm.dataset.exZoom;const n=$('#exam-sheet');n?.classList.toggle('ex-zoom-page',st.zoom==='page');n?.classList.toggle('ex-zoom-width',st.zoom==='width');document.querySelectorAll('[data-ex-zoom]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.exZoom===st.zoom)));return;}

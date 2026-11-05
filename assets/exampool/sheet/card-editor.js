@@ -226,8 +226,9 @@ export function createCardEditor(root,api){
   const sheetView=()=>panels.view==='page'&&panels.rightOpen&&panels.right==='paper'&&!!q();
   const scopeHtml=()=>`<span class="ts-scope" role="group" aria-label="조판 보기"><button type="button" data-cvview="card" aria-pressed="${!sheetView()}">이 문항</button><button type="button" data-cvview="page" aria-pressed="${sheetView()}">시험지 전체</button></span>`;
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
-  // 기본 폭(시안 4): 화면 너비의 38%·28.5%(1440px 화면 → 545·410, 1920px → 730·547). 끈 폭은 기억한다.
-  function widths(){const w=root.clientWidth||1440;return {lw:store.get('lw',Math.round(Math.min(760,Math.max(300,w*0.38)))),rw:store.get('rw',Math.round(Math.min(600,Math.max(340,w*0.285))))};}
+  // 기본 폭(11-05 사용자 확정): 참고 자료 34% · 문항 카드 35% · 미리보기 31%(칸 사이 틈을 뺀 너비 기준). 끈 폭은 기억한다.
+  function widths(){const cs=getComputedStyle(root),gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8,w=(root.clientWidth||1440)-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)-2*gut;
+    return {lw:store.get('lw',Math.round(Math.min(1100,Math.max(300,w*0.34)))),rw:store.get('rw',Math.round(Math.min(1000,Math.max(340,w*0.31))))};}
   // 창이 좁아지면 가운데 칸 최소 폭(300)을 남기도록 양쪽 칸을 비율대로 줄인다(저장한 폭은 그대로, 창이 넓어지면 되돌아감).
   // 칸 폭을 열 때 한 번만 정해, 넓은 창에서 연 뒤 창을 줄이면 오른쪽 칸이 창 밖으로 밀려 잘렸다.
   function applyWidths(){let {lw,rw}=widths();const cs=getComputedStyle(root),gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8;

@@ -31,7 +31,7 @@ fs.mkdirSync(evidence, {recursive:true});
         await popup.close();
         assert.equal(await page.locator('#bug-report-dialog').count(), 0);
       };
-      await open(page.locator('.footer-actions .bug-report-open'));
+      await open(page.locator('.canvas-global-controls .bug-report-open'));
       await page.locator('#ai-image-install-open').click();
       await open(page.locator('#ai-image-panel .bug-report-open'));
       await page.locator('[data-ai-empty-import]:visible').selectOption('library');

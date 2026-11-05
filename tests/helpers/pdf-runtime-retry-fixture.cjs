@@ -73,7 +73,7 @@ async function runPdfRuntimeRetryCases({ origin, evidence, sourceRoot = path.res
         });
         page.on('pageerror', error => errors.push(error.message));
         await context.route('**/assets/pdf-library/catalog-bootstrap.json', route => route.fulfill({ status: 404, body: 'force verified remote fixture' }));
-        await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
+        await context.route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
           const url = decodeURIComponent(new URL(route.request().url()).pathname);
           const body = url.endsWith('/pack.json') ? json(fixture.pack)
             : url.endsWith('/checksums.json') ? json(fixture.checksums)

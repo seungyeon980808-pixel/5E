@@ -57,7 +57,7 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   const page=await context.newPage(),errors=[];
   // Button QA uses fixed library metadata instead of a live CORS-dependent gateway.
   const library=JSON.parse(fs.readFileSync(path.join(root,'assets/pdf-library/catalog-bootstrap.json'))).payload;
-  await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',route=>{
+  await context.route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',route=>{
     const name=new URL(route.request().url()).pathname.split('/').at(-1);
     const body=name==='pack.json'?library.pack:name==='checksums.json'?library.checksums:name===library.pack.paths.catalog?library.catalog:null;
     return route.fulfill(body ? {contentType:'application/json',body:JSON.stringify(body)} : {status:503,contentType:'application/json',body:'{"error":"fixture unavailable"}'});

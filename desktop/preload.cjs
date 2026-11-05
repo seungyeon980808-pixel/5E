@@ -12,7 +12,8 @@ window.addEventListener("DOMContentLoaded", () => {
     clearTimeout(timer);
     if (shown === next) return;
     shown = next;
-    root.classList.toggle("desktop-titlebar-open", next);
+    // 11-05: 라이브러리처럼 창을 다 덮는 화면은 자기 머리줄을 창 끌기 자리로 쓴다 — 제목 줄을 내리지 않고 신호등 단추만 보인다.
+    root.classList.toggle("desktop-titlebar-open", next && !document.querySelector(".unified-library-overlay:not([hidden])"));
     ipcRenderer.invoke("window:traffic-lights", next).catch(() => {});
   };
   document.addEventListener("mousemove", (event) => {

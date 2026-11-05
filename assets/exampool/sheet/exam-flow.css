@@ -392,3 +392,25 @@ div.ef-new-l{flex-direction:row;align-items:baseline;gap:8px;margin-top:6px}.ef-
 .ex-zoomctl button{height:28px;min-width:28px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:#e6edf3;font:500 13px/1 inherit;cursor:pointer}
 .ex-zoomctl button:hover{background:#1f2733}
 .ex-zoomctl .pct{min-width:52px;color:#b1bac4;font-size:12px;font-variant-numeric:tabular-nums}
+/* 11-05 배치·점검(시안 layout-1105.html ③): 쪽이 주인공 — 두 쪽 나란히 크게. 왼쪽 문항 순서는 좁게(작은 그림 카드),
+   점검은 평소 「확인할 것 N」만 있는 좁은 줄, 누르면 펼쳐지고 문제 있는 줄만 보인다. 문항 위에 뜨던 큰 미리보기 창은 없앴다. */
+@media (min-width:1101px){
+  .ex-s3{grid-template-columns:232px minmax(0,1fr) 56px;transition:grid-template-columns .18s ease}
+  .ex-s3[data-check-open]{grid-template-columns:232px minmax(0,1fr) 340px}
+  .ex-s3 .ex-cgrid{grid-template-columns:1fr}
+  .ex-s3 .ef-pane:first-child .ef-ph small{display:none}
+  .ex-zoom-page:has(.pv-pg ~ .pv-pg) .pv-pg{width:calc(min(calc((100cqw - 58px) / 2),calc((100cqh - 56px) * .707)) * var(--ex-scale,1))}
+  .ex-s3 .ex-cc .ex-th{max-height:132px;overflow:hidden}
+}
+.ex-checkfold{display:grid;place-items:center;width:26px;height:26px;margin-left:4px;padding:0;border:0;border-radius:6px;background:none;color:var(--ds-ink-3);cursor:pointer}
+.ex-checkfold:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.ex-checkfold .ico{width:15px;height:15px}
+.ex-checkpane[data-open="false"]{cursor:pointer}
+.ex-checkpane[data-open="false"]:hover{background:var(--ds-hover)}
+.ex-checkpane[data-open="false"] .ef-ph{display:none}
+.ex-checkpane[data-open="false"] .ex-rp>:not(.ex-sum){display:none}
+.ex-checkpane[data-open="false"] .ex-sum{flex-direction:column;align-items:center;gap:10px;padding:14px 0;border:0}
+.ex-checkpane[data-open="false"] .ex-sum .lb small{display:none}
+.ex-checkpane[data-open="false"] .ex-sum .lb b{writing-mode:vertical-rl;font-weight:500;color:var(--ds-ink-3);font-size:12px;letter-spacing:.1em}
+/* 펼쳤을 때: 문제 없는 줄(✓)은 숨겨 문제 있는 것만 보이게 */
+.ex-checkpane[data-open="true"] .ex-rl:has(> .si.ok),.ex-checkpane[data-open="true"] .ex-gr:has(> .si.ok){display:none}

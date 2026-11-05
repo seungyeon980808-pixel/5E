@@ -63,8 +63,10 @@ export function placeAround(q,dragId,targetId,where){
 export function resizeTo(q,id,width,available){
   const b=find(q,id);if(!(available>0))return false;
   const size=snapSize(width/available*100);
-  if(size===100){if(b.size===undefined)return false;delete b.size;return true;}
-  if(b.size===size)return false;b.size=size;return true;
+  // 11-05: 기출·라이브러리에서 온 그림은 원본 폭(figure.widthPt)으로 그려져 크기를 바꿔도 남지 않았다 — 손으로 크기를 정하면 원본 폭 고정을 푼다.
+  const pinned=Number(b.figure?.widthPt)>0;if(pinned)delete b.figure.widthPt;
+  if(size===100){if(b.size===undefined&&!pinned)return false;delete b.size;return true;}
+  if(b.size===size&&!pinned)return false;b.size=size;return true;
 }
 
 // 가로 묶음 안 두 이웃의 경계를 옮긴 결과 → 정수 폭 비율.

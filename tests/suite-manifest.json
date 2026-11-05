@@ -614,6 +614,9 @@
       "path": "tests/test-library-provider.mjs"
     },
     {
+      "path": "tests/test-static-mirror.mjs"
+    },
+    {
       "path": "tests/test-ai-events.mjs"
     },
     {

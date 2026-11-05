@@ -10,7 +10,7 @@ import { connectionName } from "./connection-names.js";
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 // Results are immutable. Reuse their searchable text across keystrokes without
 // retaining results from a replaced catalog.
-const searchableResultText = new WeakMap();
+let searchableResultText = new WeakMap();
 
 // 문항 카드 썸네일: 문항 상자는 단 전체 폭·고정 아래 끝으로 잡혀 있어 여백과 옆 단 세로선이
 // 같이 들어가고 마지막 줄(보기)이 잘리기도 한다. 썸네일만 실제 글자·그림이 있는 곳에 맞춰
@@ -82,7 +82,67 @@ export function compareExamResults(left, right) {
     || left.title.localeCompare(right.title, "ko");
 }
 
+// 11-05: 라이브러리 「문항」 검색을 exam 기출 검색과 같은 수준으로 — 문항마다 단원·태그·비슷한 말·모양(그림/표/〈보기〉).
+// 색인은 assets/exampool/convert/data/library-tags.json(scripts/build-library-tags.mjs)이고, 라이브러리를 열 때 한 번 읽는다.
+let examTags = null;
+let examTagCache = new WeakMap();
+export function setLibraryExamTags(data) {
+  examTags = data?.schema === "library-tags-v1" && data.items ? data : null;
+  examTagCache = new WeakMap();
+  searchableResultText = new WeakMap();
+}
+export function examIdOf(result) {
+  const m = result?.metadata;
+  if (!m?.subject || !Number.isInteger(m.academicYear) || !m.administration || !Number.isInteger(m.itemNumber)) return "";
+  return `${m.subject}_${m.academicYear}_${String(m.administration).padStart(2, "0")}_${String(m.itemNumber).padStart(2, "0")}`;
+}
+export function examTagsOf(result) {
+  if (!examTags || result?.kind !== "crop") return null;
+  if (examTagCache.has(result)) return examTagCache.get(result);
+  const item = examTags.items[examIdOf(result)];
+  let value = null;
+  if (item) {
+    const parts = item[0].map((i) => examTags.parts[i]), tags = item[1].map((i) => examTags.tags[i]);
+    const words = [...parts, ...tags, ...[...parts, ...tags].flatMap((key) => examTags.synonyms?.[key] ?? [])];
+    const text = normalizedText(words.join(" "));
+    value = Object.freeze({ parts, tags, figure: Boolean(item[2] & 1), table: Boolean(item[2] & 2), bogi: Boolean(item[2] & 4), text, textNoSpace: text.replace(/\s+/gu, "") });
+  }
+  examTagCache.set(result, value);
+  return value;
+}
+// 시험 묶음: 수능·모평(6·9·11월) / 학평(3·4·5·7·10월).
+const KICE_ADMINISTRATIONS = new Set(["06", "09", "11"]);
+function matchesExamFacets(result, filters) {
+  const metadata = result.metadata ?? {};
+  if (Array.isArray(filters.subjects) && filters.subjects.length && !filters.subjects.includes(metadata.subject)) return false;
+  if (filters.exam === "kice" && !KICE_ADMINISTRATIONS.has(metadata.administration)) return false;
+  if (filters.exam === "hak" && (!metadata.administration || KICE_ADMINISTRATIONS.has(metadata.administration))) return false;
+  // 단원은 「과목|단원」. 단원을 하나라도 고른 과목만 단원으로 거르고, 단원을 안 고른 과목은 그대로 둔다.
+  const partKeys = Array.isArray(filters.parts) ? filters.parts.filter((key) => key.startsWith(`${metadata.subject}|`)) : [];
+  const needsTags = partKeys.length || (Array.isArray(filters.shapes) && filters.shapes.length);
+  if (!needsTags) return true;
+  const tags = examTagsOf(result);
+  if (!tags) return false;
+  if (partKeys.length && !partKeys.some((key) => tags.parts.includes(key.slice(key.indexOf("|") + 1)))) return false;
+  if (Array.isArray(filters.shapes) && filters.shapes.length && !filters.shapes.every((shape) => tags[shape])) return false;
+  return true;
+}
+// 점수(exam 기출 검색과 같은 규칙): 낱말마다 제목 8 · 단원·태그(비슷한 말 포함) 5 · 본문 1.
+export function examSearchScore(result, queryTokens) {
+  if (!queryTokens.length) return 0;
+  const title = normalizedText(result.title), titleNoSpace = title.replace(/\s+/gu, "");
+  const tags = examTagsOf(result);
+  let score = 0;
+  for (const token of queryTokens) {
+    if (title.includes(token) || titleNoSpace.includes(token)) score += 8;
+    if (tags && (tags.text.includes(token) || tags.textNoSpace.includes(token))) score += 5;
+    score += 1;
+  }
+  return score;
+}
+
 function matchesFilters(result, filters = {}) {
+  if (!matchesExamFacets(result, filters)) return false;
   const metadata = result.metadata ?? {};
   const startYear = Number(filters.startYear);
   const endYear = Number(filters.endYear);
@@ -117,6 +177,22 @@ function stableId(namespace, ...segments) {
 function matchesText(haystack, queryTokens) {
   const normalized = normalizedText(haystack);
   const withoutSpaces = normalized.replace(/\s+/gu, "");
+  return queryTokens.every((token) => normalized.includes(token) || withoutSpaces.includes(token));
+}
+
+// 11-05: PDF 쪽 본문은 검색할 때마다 수천 쪽을 다시 정리했다 — 쪽마다 한 번만 정리해 둔다.
+const normalizedPageText = new WeakMap();
+function pageTextForms(page) {
+  let forms = normalizedPageText.get(page);
+  if (!forms) {
+    const normalized = normalizedText(page.text);
+    forms = [normalized, normalized.replace(/\s+/gu, "")];
+    normalizedPageText.set(page, forms);
+  }
+  return forms;
+}
+function pageMatches(page, queryTokens) {
+  const [normalized, withoutSpaces] = pageTextForms(page);
   return queryTokens.every((token) => normalized.includes(token) || withoutSpaces.includes(token));
 }
 
@@ -511,7 +587,7 @@ function resultMatches(result, queryTokens, compact) {
     if (!queryTokens.length) return true;
     let searchable = searchableResultText.get(result);
     if (!searchable) {
-      const text = normalizedText([result.title, result.searchText].join(" "));
+      const text = normalizedText([result.title, result.searchText, examTagsOf(result)?.text ?? ""].join(" "));
       searchable = [text, text.replace(/\s+/gu, "")];
       searchableResultText.set(result, searchable);
     }
@@ -682,10 +758,12 @@ function createProvider(input, preparedPdf) {
     if (!allowedKinds && compact?.itemNumber !== null && found.some((result) => result.kind === "crop")) {
       found = found.filter((result) => result.kind === "crop");
     }
+    const scores = new Map(queryTokens.length ? found.map((result) => [result, examSearchScore(result, queryTokens)]) : []);
     found.sort((left, right) => {
       const exactLeft = compact && left.metadata.itemCode === compact.itemCode ? 1 : 0;
       const exactRight = compact && right.metadata.itemCode === compact.itemCode ? 1 : 0;
       return exactRight - exactLeft
+        || (scores.get(right) ?? 0) - (scores.get(left) ?? 0)
         || compareExamResults(left, right)
         || ((left.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER) - (right.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER))
         || left.title.localeCompare(right.title, "ko");
@@ -767,11 +845,11 @@ function createProvider(input, preparedPdf) {
       for (const document of allowedDocuments) {
         for (const page of document.pages ?? []) {
           const key = `${document.id}\0${page.pageNumber}`;
-          if (matchedPages.has(key) || !matchesText(page.text, queryTokens)) continue;
+          if (matchedPages.has(key) || !pageMatches(page, queryTokens)) continue;
           const mapped = mapQueryHighlights({ ...page, documentId: document.id }, query);
           const pageText = String(page.text ?? "");
           const firstMatch = queryTokens.reduce((offset, token) => {
-            const found = normalizedText(pageText).indexOf(token);
+            const found = pageTextForms(page)[0].indexOf(token);
             return found < 0 ? offset : Math.min(offset, found);
           }, Number.POSITIVE_INFINITY);
           const snippetStart = Number.isFinite(firstMatch) ? Math.max(0, firstMatch - 48) : 0;
@@ -852,6 +930,29 @@ function createProvider(input, preparedPdf) {
       const limit = Number.isInteger(options.limit) && options.limit > 0 ? boundedLimit(options.limit) : found.length;
       return Object.freeze(found.sort(compareExamResults).slice(0, limit));
     },
+    // 11-05: 왼쪽 「조건」 칸의 개수 — 지금 검색어·검색 위치에서 걸리는 문항 수. 각 조건 묶음은 자기 조건만 빼고 센다
+    // (과목을 바꾸면 다른 과목 수가 0이 되지 않게). 결과 목록을 만들지 않고 세기만 한다.
+    facetCounts(options = {}) {
+      const compact = parseCompactExamCode(options.query);
+      const queryTokens = compact ? [] : tokens(options.query ?? "");
+      const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
+      const filters = options.filters ?? {};
+      const base = allResults().filter((result) => result.kind === "crop"
+        && (!allowedSources || allowedSources.has(result.sourceId)) && resultMatches(result, queryTokens, compact));
+      const pass = (result, omit) => matchesFilters(result, { ...filters, ...omit });
+      const subjects = {}, parts = {}, years = {}, exams = { kice: 0, hak: 0 }, shapes = { figure: 0, table: 0, bogi: 0 };
+      let total = 0;
+      for (const result of base) {
+        const metadata = result.metadata ?? {}, tags = examTagsOf(result);
+        if (pass(result, { subjects: [], parts: [] })) subjects[metadata.subject] = (subjects[metadata.subject] ?? 0) + 1;
+        if (tags && pass(result, { parts: [] })) for (const part of tags.parts) { const key = `${metadata.subject}|${part}`; parts[key] = (parts[key] ?? 0) + 1; }
+        if (Number.isInteger(metadata.academicYear) && pass(result, { startYear: null, endYear: null })) years[metadata.academicYear] = (years[metadata.academicYear] ?? 0) + 1;
+        if (metadata.administration && pass(result, { exam: "" })) exams[KICE_ADMINISTRATIONS.has(metadata.administration) ? "kice" : "hak"] += 1;
+        if (tags && pass(result, { shapes: [] })) { if (tags.figure) shapes.figure += 1; if (tags.table) shapes.table += 1; if (tags.bogi) shapes.bogi += 1; }
+        if (pass(result, {})) total += 1;
+      }
+      return Object.freeze({ total, subjects, parts, years, exams, shapes });
+    },
     getExamFilterOptions() {
       const metadata = allResults().filter((result) => result.kind === "crop").map((result) => result.metadata ?? {});
       return Object.freeze({
@@ -877,6 +978,12 @@ function createProvider(input, preparedPdf) {
         && (!allowedKinds || allowedKinds.has(result.kind))
         && matchesFilters(result, options.filters)
         && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true));
+      const queryTokens = tokens(options.query ?? "");
+      if (queryTokens.length) {
+        const order = new Map(merged.map((result, index) => [result, index]));
+        const scores = new Map(merged.map((result) => [result, examSearchScore(result, queryTokens)]));
+        merged.sort((left, right) => (scores.get(right) - scores.get(left)) || (order.get(left) - order.get(right)));
+      }
       return Object.freeze(merged.slice(0, boundedLimit(options.limit)).map((result) => contextualized(withManualCrop(result), options.query ?? "")));
     },
     replacePdfCatalog(next = {}) {

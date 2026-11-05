@@ -217,5 +217,17 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     setModel(next){model=next;enabled=!!next;host.append(layer);bindFrame();showHover(null);refresh();},
     clear(){model=null;enabled=false;endDrag(false);showHover(null);items=[];dividers=[];paintDividers();say();},
     refresh(){if(enabled&&!drag)refresh();},
+    // 11-05: 한글 엔진 손잡이로 그림 크기를 바꾼 경우에도 문항 데이터(칸 폭 대비 %)로 옮겨 적는다 — 다시 조판해도 크기가 남는다.
+    nativeResized(ref,widthHu){
+      if(!enabled||!model||!(widthHu>0)||!canEdit())return false;
+      if(!items.length)refresh();
+      const same=i=>i.kind==='figure'&&i.ref.sec===(ref.sec??ref.secIdx)&&i.ref.ppi===(ref.ppi??ref.paraIdx)&&i.ref.ci===(ref.ci??ref.controlIdx)&&JSON.stringify(i.ref.cellPath||[])===JSON.stringify(ref.cellPath||[]);
+      const item=items.find(same);if(!item)return false;
+      const placement=bridge.pagePlacement(item.ref.pageIndex??0);if(!placement)return false;
+      const a=bridge.parentPoint(placement.x,placement.y),width=widthHu/75*placement.scale*a.scaleX,available=availableWidth(item);
+      const size=snapSize(width/available*100);
+      onApply(q=>resizeTo(q,item.id,available*size/100,available),`${item.block.label} 크기 ${size===100?'자동(칸 폭)':size+'%'}`);
+      return true;
+    },
   };
 }

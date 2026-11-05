@@ -1,0 +1,8 @@
+{
+  // 미리 변환한 학평 문항(11-03) — 파일 수 한도 2만 때문에 5e-exam-pdf와 나눔. site-hak/는 build-site.mjs가 만드는 링크 묶음.
+  "name": "5e-exam-hak",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "account_id": "a6dd35b7aa385514042f9003bc937b92",
+  "assets": { "directory": "./site-hak", "not_found_handling": "none" }
+}

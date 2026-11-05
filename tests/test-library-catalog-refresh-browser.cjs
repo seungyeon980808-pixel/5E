@@ -52,13 +52,13 @@ h.withServer(async origin => {
       });
       assert.ok(result.maxLayoutCards <= 120, JSON.stringify(result));
       assert.equal(result.state, 'ready');
-      assert.equal(result.count, '8413개');
+      assert.equal(result.count.replace(/,/g, ''), '8413개');
       assert.equal(result.selectedAfter, result.selectedBefore, 'background results preserve the current selection');
       assert.equal(result.first, 'existing-image', 'background arrivals retain existing result positions');
       assert.ok(result.cards <= 120);
       await page.locator('[data-unilib-type="question"]').click();
       await page.waitForFunction(() => document.querySelector('[data-unilib-result-state]').dataset.state === 'ready');
-      assert.equal(await page.locator('[data-unilib-count]').textContent(), '8412개', 'all added questions remain searchable');
+      assert.equal((await page.locator('[data-unilib-count]').textContent()).replace(/,/g, ''), '8412개', 'all added questions remain searchable');
       assert.equal(await page.locator('[data-result-id]').first().getAttribute('data-result-id'), 'new-0', 'explicit filters use provider order');
       await page.evaluate(() => catalogFixture.close());
       assert.deepEqual(errors, []);

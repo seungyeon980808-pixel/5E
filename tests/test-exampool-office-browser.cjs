@@ -227,7 +227,7 @@ h.withServer(async origin => {
       // 표 화면의 「문항 조판」은 문항 카드로 가서 오른쪽 미리보기에 한글 조판(5e_hwp)을 연다.
       const toCardHwp=async()=>{await sheet.click('#preview');await sheet.waitForSelector('#card-view:not([hidden])');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);};
       // 표로 돌아가기: 시험지의 「표로 한꺼번에 고치기」.
-      const toSheet=async()=>{if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');await sheet.click('.side [data-nav="exam"]');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');};
+      const toSheet=async()=>{if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');await sheet.click('.side [data-nav="exams"][data-status="drafting"]');await sheet.click('#exams-view .pv-epage');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');};
       await toCardHwp();
       assert.equal(await sheet.evaluate(()=>document.querySelector('.workspace').hidden),true,'the sheet is not shown beside the HWP window');
       assert.equal(await sheet.locator('#card-view [data-cvright="paper"]').getAttribute('aria-pressed'),'true','the HWP window is the preview tab');
@@ -311,7 +311,7 @@ h.withServer(async origin => {
       assert.match(await sheet.locator('#typeset-status').textContent(),/조판 저장됨/);
       // 앞에서 만든 시험지(이 문항이 든)를 HWPX로 받는다.
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) [data-exam-more]');
+      await sheet.click('.side [data-nav="exams"][data-status="drafting"]');await sheet.click('#exams-view .pv-epage');await sheet.waitForSelector('#examd-view:not([hidden]) [data-exam-more]');
       const downloading=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');const download=await downloading;
       const file=path.join(evidence,`${engineName}-exam.hwpx`);await download.saveAs(file);
       const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file('Contents/section0.xml').async('string');

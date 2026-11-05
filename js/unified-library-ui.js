@@ -834,28 +834,30 @@ function buildShell() {
     <section class="unilib" role="dialog" aria-modal="true" aria-labelledby="unilib-title">
       <header class="unilib-header">
         <div class="unilib-brand"><button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-folders-open aria-expanded="true" aria-label="검색 위치 접기">${ICONS.panelLeft}</button><h2 id="unilib-title">라이브러리</h2><span data-unilib-location-summary hidden>검색 위치</span></div>
+        <div class="unilib-search-row library-search-row">
+              <label class="unilib-search library-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
+              <strong class="unilib-result-count library-result-count" data-unilib-count>0개</strong>
+              <details class="unilib-help library-help" data-unilib-help><summary aria-label="검색 도움말">?</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
+        </div>
         <div class="unilib-header-actions">
           <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기">${ICONS.close}</button>
         </div>
       </header>
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
-          <div class="unilib-pane-head"><h3>검색 위치</h3><details class="unilib-location-add"><summary aria-label="자료 위치 추가" title="자료 위치 추가">＋</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button></div></details><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <div class="unilib-folder-scroll"><div class="unilib-folder-loading" data-unilib-folder-loading role="status" aria-live="polite" hidden><div class="unilib-folder-loading-copy"><span class="unilib-folder-loading-spinner" aria-hidden="true"></span><div><strong data-unilib-folder-loading-title>라이브러리 폴더를 불러오는 중</strong><span data-unilib-folder-loading-detail>자료 수에 따라 잠시 걸릴 수 있습니다.</span></div></div><div class="unilib-folder-skeleton" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-pane-head unilib-conditions-head"><h3>조건</h3><button type="button" class="unilib-link-button" data-unilib-conditions-clear hidden>모두 지우기</button><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
+          <div class="unilib-folder-scroll"><section class="unilib-conditions" data-unilib-conditions aria-label="조건"></section>
+          <div class="unilib-location-head"><h3>검색 위치</h3><details class="unilib-location-add"><summary aria-label="자료 위치 추가" title="내 구글 드라이브 공유 폴더나 이 컴퓨터의 폴더를 검색 위치에 더합니다">＋ 폴더 연결</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button></div></details></div>
+          <div class="unilib-folder-loading" data-unilib-folder-loading role="status" aria-live="polite" hidden><div class="unilib-folder-loading-copy"><span class="unilib-folder-loading-spinner" aria-hidden="true"></span><div><strong data-unilib-folder-loading-title>라이브러리 폴더를 불러오는 중</strong><span data-unilib-folder-loading-detail>자료 수에 따라 잠시 걸릴 수 있습니다.</span></div></div><div class="unilib-folder-skeleton" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
           <div class="unilib-search-tools library-toolbar">
-            <div class="unilib-search-row library-search-row">
-              <label class="unilib-search library-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
-              <strong class="unilib-result-count library-result-count" data-unilib-count>0개</strong>
-              <details class="unilib-help library-help" data-unilib-help><summary aria-label="검색 도움말">?</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
-            </div>
             <div class="unilib-filter-row library-filter-row">
               <div class="unilib-tabs library-kind-toggle" role="group" aria-label="결과 종류">
                 <button type="button" data-unilib-type="all" aria-pressed="true">전체</button>
                 <button type="button" data-unilib-type="question" aria-pressed="false">문항</button>
+                <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF 쪽</button>
                 <button type="button" data-unilib-type="image" aria-pressed="false">이미지</button>
-                <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF</button>
               </div>
               <div class="unilib-grid-density" data-unilib-grid-density hidden></div>
               <div class="unilib-pdf-display library-scope-toggle" data-unilib-pdf-display hidden role="group" aria-label="PDF 표시 방식"><button type="button" data-unilib-pdf-mode="file" aria-pressed="false">파일</button><button type="button" data-unilib-pdf-mode="page" aria-pressed="true">페이지</button></div>
@@ -915,6 +917,23 @@ const SEND_ICONS = {
   hwp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v17H7zM9.5 8h5M9.5 11h5M9.5 14h3"/></svg>',
   exampool: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>',
 };
+const MAX_RESTORED_CARDS = 600;
+const RESULT_SECTIONS = Object.freeze([
+  ["question", "문항", (result) => result.kind === "crop", 6],
+  ["pdf", "PDF 쪽", (result) => result.kind === "pdf" || result.kind === "page", 3],
+  ["image", "이미지", (result) => result.kind === "image", 6],
+]);
+const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/gu, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const escapeAttr = escapeHtml;
+const LIBRARY_SUBJECTS = Object.freeze([["p1", "물리Ⅰ", "물리학Ⅰ"], ["p2", "물리Ⅱ", "물리학Ⅱ"], ["c1", "화학Ⅰ", "화학Ⅰ"], ["c2", "화학Ⅱ", "화학Ⅱ"],
+  ["b1", "생명Ⅰ", "생명과학Ⅰ"], ["b2", "생명Ⅱ", "생명과학Ⅱ"], ["e1", "지구Ⅰ", "지구과학Ⅰ"], ["e2", "지구Ⅱ", "지구과학Ⅱ"]]);
+const LIBRARY_ROOT_GROUPS = Object.freeze([["provided", "5E 제공", "공용"], ["drive", "내 구글 드라이브", "공유 폴더"],
+  ["local", /Mac/iu.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || "") ? "이 맥" : "이 컴퓨터", "연결한 폴더"]]);
+const PROVIDED_ROOT_LABELS = /^(5E 공유 자료|학력평가|과학 부품)/u;
+function libraryRootGroup(source) {
+  if (source.origin === "local") return "local";
+  return PROVIDED_ROOT_LABELS.test(String(source.label ?? "")) ? "provided" : "drive";
+}
 export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMaterialized, sendTo, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   // 자르기 창·크롭 모음이 열렸는지를 overlay 속성으로 옮겨 둔다. CSS가 :has(...:not([hidden]))로 보면, 목록 안의 그림 칸이
@@ -985,6 +1004,97 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   let activeTypes = [...LIBRARY_TYPES];
   let pdfDisplayMode = "page";
   const examFilters = { subject: "", startYear: null, endYear: null, administration: "" };
+  // 11-05: 왼쪽 「조건」 칸(시안 5e-design-mockups/library-1105.html) — 과목 바둑판 → 고른 과목의 단원 · 연도 막대와 끌기 · 시험 · 모양.
+  // 개수는 지금 검색어·검색 위치에서 걸리는 문항 수(provider.facetCounts). 각 묶음은 자기 조건만 빼고 센다.
+  const conditions = { subjects: new Set(), parts: new Set(), startYear: null, endYear: null, exam: "", shapes: new Set() };
+  const conditionsHost = overlay.querySelector("[data-unilib-conditions]");
+  const conditionsClear = overlay.querySelector("[data-unilib-conditions-clear]");
+  const knownParts = new Map();
+  let knownYears = [];
+  const anyCondition = () => Boolean(conditions.subjects.size || conditions.parts.size || conditions.startYear != null
+    || conditions.endYear != null || conditions.exam || conditions.shapes.size);
+  const conditionFilters = () => ({
+    subjects: [...conditions.subjects], parts: [...conditions.parts], exam: conditions.exam, shapes: [...conditions.shapes],
+    ...(conditions.startYear != null ? { startYear: conditions.startYear } : {}),
+    ...(conditions.endYear != null ? { endYear: conditions.endYear } : {}),
+  });
+  const conditionCount = (n) => `<small>${Number(n || 0).toLocaleString("ko-KR")}</small>`;
+  function renderConditions(counts) {
+    if (!conditionsHost) return;
+    for (const key of Object.keys(counts?.parts ?? {})) { const [code, part] = key.split("|"); if (!knownParts.has(code)) knownParts.set(code, new Set()); knownParts.get(code).add(part); }
+    const years = [...new Set([...knownYears, ...Object.keys(counts?.years ?? {}).map(Number)])].filter(Number.isInteger).sort((a, b) => a - b);
+    knownYears = years;
+    const y0 = years[0], y1 = years.at(-1);
+    const from = conditions.startYear ?? y0, to = conditions.endYear ?? y1;
+    const subjectsHtml = LIBRARY_SUBJECTS.map(([code, label]) => {
+      const n = counts?.subjects?.[code] ?? 0, on = conditions.subjects.has(code);
+      return `<button type="button" class="unilib-subject${on ? " is-on" : ""}${n ? "" : " is-zero"}" data-cond-subject="${code}" aria-pressed="${on}"><span>${label}</span>${conditionCount(n)}</button>`;
+    }).join("");
+    const partsHtml = [...conditions.subjects].map((code) => {
+      const parts = [...(knownParts.get(code) ?? [])].sort((a, b) => a.localeCompare(b, "ko"));
+      if (!parts.length) return "";
+      const name = LIBRARY_SUBJECTS.find(([value]) => value === code)?.[2] ?? code;
+      return `<div class="unilib-cond-sub">${name} 단원</div>` + parts.map((part) => {
+        const key = `${code}|${part}`, n = counts?.parts?.[key] ?? 0, on = conditions.parts.has(key);
+        return `<label class="unilib-cond-check${n ? "" : " is-zero"}"><input type="checkbox" data-cond-part="${escapeAttr(key)}"${on ? " checked" : ""}><span>${escapeHtml(part)}</span>${conditionCount(n)}</label>`;
+      }).join("");
+    }).join("");
+    const histMax = Math.max(1, ...years.map((year) => counts?.years?.[year] ?? 0));
+    const yearHtml = years.length > 1 ? `<div class="unilib-cond-sec"><span>연도</span><small data-cond-year-label>${conditions.startYear == null && conditions.endYear == null ? "전체" : `${from} – ${to}`}</small></div>
+      <div class="unilib-year-hist" aria-hidden="true">${years.map((year) => `<i class="${year >= from && year <= to ? "is-in" : ""}" style="height:${Math.max(6, Math.round((counts?.years?.[year] ?? 0) / histMax * 100))}%" title="${year} · ${counts?.years?.[year] ?? 0}문항"></i>`).join("")}</div>
+      <div class="unilib-year-slider" style="--from:${(from - y0) / (y1 - y0) * 100}%;--to:${(to - y0) / (y1 - y0) * 100}%"><span class="unilib-year-track"></span><input type="range" min="${y0}" max="${y1}" value="${from}" data-cond-year="start" aria-label="시작 학년도"><input type="range" min="${y0}" max="${y1}" value="${to}" data-cond-year="end" aria-label="끝 학년도"></div>
+      <div class="unilib-year-ends"><span>${y0}</span><span>${y1}</span></div>` : "";
+    const examHtml = `<div class="unilib-cond-sec"><span>시험</span></div><div class="unilib-cond-seg" role="group" aria-label="시험">${[["", "전체"], ["kice", "수능·모평"], ["hak", "학평"]].map(([value, label]) => `<button type="button" data-cond-exam="${value}" aria-pressed="${conditions.exam === value}">${label}</button>`).join("")}</div>`;
+    const shapesHtml = `<div class="unilib-cond-sec"><span>모양</span></div>${[["figure", "그림 있음"], ["table", "표 있음"], ["bogi", "〈보기〉 있음"]].map(([key, label]) => `<label class="unilib-cond-check"><input type="checkbox" data-cond-shape="${key}"${conditions.shapes.has(key) ? " checked" : ""}><span>${label}</span>${conditionCount(counts?.shapes?.[key])}</label>`).join("")}`;
+    const scroller = conditionsHost.closest(".unilib-folder-scroll"), top = scroller?.scrollTop ?? 0;
+    conditionsHost.innerHTML = `<div class="unilib-cond-sec"><span>과목</span>${conditions.subjects.size || conditions.parts.size ? '<button type="button" class="unilib-link-button" data-cond-clear="subjects">지우기</button>' : ""}</div><div class="unilib-subject-grid">${subjectsHtml}</div>${partsHtml}${yearHtml}${examHtml}${shapesHtml}`;
+    if (scroller) scroller.scrollTop = top;
+    if (conditionsClear) conditionsClear.hidden = !anyCondition();
+  }
+  async function refreshConditions(activeProvider, queryText, filters) {
+    if (typeof activeProvider?.facetCounts !== "function") { if (conditionsHost) conditionsHost.hidden = true; return; }
+    if (!knownYears.length) knownYears = [...(activeProvider.getExamFilterOptions?.().academicYears ?? [])];
+    renderConditions(activeProvider.facetCounts({ query: queryText, sourceIds: enabledSources ? [...enabledSources] : null, filters }));
+  }
+  conditionsHost?.addEventListener("click", (event) => {
+    const subject = event.target.closest("[data-cond-subject]"), exam = event.target.closest("[data-cond-exam]"), clear = event.target.closest("[data-cond-clear]");
+    if (subject) {
+      const code = subject.dataset.condSubject;
+      if (conditions.subjects.has(code)) { conditions.subjects.delete(code); for (const key of [...conditions.parts]) if (key.startsWith(`${code}|`)) conditions.parts.delete(key); }
+      else conditions.subjects.add(code);
+    } else if (exam) conditions.exam = exam.dataset.condExam;
+    else if (clear) { conditions.subjects.clear(); conditions.parts.clear(); }
+    else return;
+    void runSearch();
+  });
+  conditionsHost?.addEventListener("change", (event) => {
+    const part = event.target.closest("[data-cond-part]"), shape = event.target.closest("[data-cond-shape]"), year = event.target.closest("[data-cond-year]");
+    if (part) part.checked ? conditions.parts.add(part.dataset.condPart) : conditions.parts.delete(part.dataset.condPart);
+    else if (shape) shape.checked ? conditions.shapes.add(shape.dataset.condShape) : conditions.shapes.delete(shape.dataset.condShape);
+    else if (year) {
+      const [a, b] = [...conditionsHost.querySelectorAll("[data-cond-year]")].map((input) => Number(input.value));
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      conditions.startYear = lo === knownYears[0] ? null : lo;
+      conditions.endYear = hi === knownYears.at(-1) ? null : hi;
+    } else return;
+    void runSearch();
+  });
+  // 끄는 동안에는 숫자·막대만 바로 바꾸고, 놓을 때(change) 검색한다.
+  conditionsHost?.addEventListener("input", (event) => {
+    if (!event.target.closest("[data-cond-year]")) return;
+    const [a, b] = [...conditionsHost.querySelectorAll("[data-cond-year]")].map((input) => Number(input.value));
+    const lo = Math.min(a, b), hi = Math.max(a, b), y0 = knownYears[0], y1 = knownYears.at(-1);
+    const slider = conditionsHost.querySelector(".unilib-year-slider");
+    slider?.style.setProperty("--from", `${(lo - y0) / (y1 - y0) * 100}%`);
+    slider?.style.setProperty("--to", `${(hi - y0) / (y1 - y0) * 100}%`);
+    const label = conditionsHost.querySelector("[data-cond-year-label]");
+    if (label) label.textContent = lo === y0 && hi === y1 ? "전체" : `${lo} – ${hi}`;
+    conditionsHost.querySelectorAll(".unilib-year-hist i").forEach((bar, index) => bar.classList.toggle("is-in", knownYears[index] >= lo && knownYears[index] <= hi));
+  });
+  conditionsClear?.addEventListener("click", () => {
+    conditions.subjects.clear(); conditions.parts.clear(); conditions.shapes.clear(); conditions.exam = ""; conditions.startYear = null; conditions.endYear = null;
+    void runSearch();
+  });
   const storedSources = loadSourceState(storage);
   let enabledSources = storedSources.enabled;
   const excludedSourceGroups = storedSources.excludedGroups;
@@ -1230,6 +1340,19 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   async function provider() { return getProvider(); }
 
   let renderedSourceProvider = null, renderedSourceRevision = null, renderedSourceKey = '';
+  let sourceGroupRoots = {};
+  let resultSections = null, resultTotal = null, kindTotals = null;
+  const updateTabCounts = (key) => {
+    const totals = kindTotals?.key === key ? kindTotals.totals : {};
+    overlay.querySelectorAll("[data-unilib-type]").forEach((button) => {
+      const type = button.dataset.unilibType;
+      let small = button.querySelector("small");
+      if (type === "all" || totals[type] == null) { small?.remove(); return; }
+      if (!small) { small = document.createElement("small"); button.append(small); }
+      small.textContent = totals[type].toLocaleString("ko-KR");
+    });
+  };
+  const groupEnabled = { provided: true, drive: true, local: true };
   const sourceTreeKey = () => JSON.stringify([[...(enabledSources || [])].sort(),[...expandedSources].sort(),[...excludedSourceGroups].sort(),desktopConnections]);
   async function renderSources(isCurrent = () => true) {
     const activeProvider = await provider();
@@ -1308,6 +1431,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       }
       parent.append(item);
     };
+    // 11-05: 검색 위치를 어디서 왔는지로 묶는다 — 5E 제공 / 내 구글 드라이브 / 이 맥. 묶음 스위치를 끄면 그 묶음 전체를
+    // 검색에서 빼고, 「5E 제공」을 끄면 학평 자료도 아예 불러오지 않는다(prepareSearch).
+    const groupFragments = { provided: document.createDocumentFragment(), drive: document.createDocumentFragment(), local: document.createDocumentFragment() };
+    const groupRoots = { provided: [], drive: [], local: [] };
     const desktopRootNames = new Set();
     if (desktopLibrary) {
       for (const connection of desktopConnections) {
@@ -1324,7 +1451,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         });
         const projected = projectDesktop(treeResult.tree);
         desktopRootNames.add(projected.name);
-        appendTreeNode(projected, fragment);
+        groupRoots.local.push({ desktop: projected.desktop, checked: projected.checked || projected.indeterminate });
+        appendTreeNode(projected, groupFragments.local);
       }
     }
     const { roots } = indexLibrarySources(sources);
@@ -1343,7 +1471,23 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     };
     for (const source of roots) {
       if (source.origin === "local" && desktopRootNames.has(source.label)) continue;
-      appendTreeNode(projectProvider(source), fragment);
+      const group = libraryRootGroup(source);
+      const projected = projectProvider(source);
+      groupRoots[group].push({ id: source.id, checked: projected.checked || projected.indeterminate });
+      appendTreeNode(projected, groupFragments[group]);
+    }
+    sourceGroupRoots = groupRoots;
+    for (const [group, label, note] of LIBRARY_ROOT_GROUPS) {
+      if (!groupRoots[group].length) continue;
+      const on = groupRoots[group].some((item) => item.checked);
+      groupEnabled[group] = on;
+      const head = document.createElement("li");
+      head.className = "unilib-tree-group";
+      head.dataset.sourceGroup = group;
+      head.classList.toggle("is-off", !on);
+      head.innerHTML = `<strong>${label}</strong><small>${note}</small><button type="button" class="unilib-switch" role="switch" data-source-group-switch="${group}" aria-checked="${on}" aria-label="${label} ${on ? "끄기" : "켜기"}" title="${label} ${on ? "끄기 — 끄면 이 묶음은 검색하지 않고 파일도 불러오지 않습니다" : "켜기"}"><i></i></button>`;
+      for (const item of groupFragments[group].children) item.classList.toggle("is-group-off", !on);
+      fragment.append(head, groupFragments[group]);
     }
     tree.replaceChildren(fragment);
     treeExpansionInitialized = true;
@@ -1425,12 +1569,13 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     setStatus("라이브러리를 검색하는 중…");
     try {
       const queryText = query.value.trim();
-      const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
-      const changed = await prepareSearch?.({query: queryText, filters, questionSearch: activeTypes.includes("question")});
+      const filters = { ...Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null)), ...conditionFilters() };
+      const changed = await prepareSearch?.({query: queryText, filters, questionSearch: activeTypes.includes("question"), providedEnabled: groupEnabled.provided});
       if (!searchIsCurrent(ownEpoch, signal)) return;
       if (changed) await renderSources(() => searchIsCurrent(ownEpoch, signal));
       const activeProvider = await provider();
       if (!enabledSources) await renderSources();
+      void refreshConditions(activeProvider, queryText, filters);
       if (!searchIsCurrent(ownEpoch, signal)) return;
       const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
       const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: Number.MAX_SAFE_INTEGER, requestId, signal };
@@ -1460,6 +1605,31 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         const positions = new Map(results.map((item, index) => [item.id, index]));
         found.sort((a, b) => (positions.get(a.id) ?? positions.size) - (positions.get(b.id) ?? positions.size));
       }
+      // 11-05: 「전체」 탭은 종류별 묶음으로(시안) — 문항 6 · PDF 쪽 4 · 이미지 8, 묶음마다 「모두 보기 →」. 개수는 탭에도 붙는다.
+      resultSections = null;
+      resultTotal = null;
+      // PDF는 「쪽」으로 센다(전체 탭의 PDF는 파일마다 첫 쪽만 보여 주지만 수는 맞은 쪽 수 — PDF 쪽 탭과 같은 수).
+      const sectionCount = (type, items) => type === "pdf" ? items.reduce((sum, item) => sum + (item.kind === "pdf" && !pageDisplayActive ? Math.max(1, queryText ? (item.matches?.length ?? 1) : (item.pageCount ?? 1)) : 1), 0) : items.length;
+      const totals = Object.fromEntries(RESULT_SECTIONS.map(([type, , test]) => [type, sectionCount(type, found.filter(test))]));
+      const totalsKey = JSON.stringify([queryText, filters, [...(enabledSources || [])].sort()]);
+      if (activeTypes.length === LIBRARY_TYPES.length) { kindTotals = { key: totalsKey, totals }; }
+      else if (activeTypes.length === 1) kindTotals = { key: totalsKey, totals: { ...(kindTotals?.key === totalsKey ? kindTotals.totals : {}), [activeTypes[0]]: totals[activeTypes[0]] } };
+      updateTabCounts(totalsKey);
+      resultTotal = activeTypes.length === 1 ? totals[activeTypes[0]] : Object.values(totals).reduce((sum, value) => sum + value, 0);
+      // 종류가 하나뿐이면 묶음으로 자르지 않는다(모두 보여 줌).
+      const nonEmptySections = RESULT_SECTIONS.filter(([, , test]) => found.some(test)).length;
+      if (activeTypes.length === LIBRARY_TYPES.length && !preserveResultOrder && nonEmptySections > 1) {
+        const limited = [];
+        resultSections = new Map();
+        for (const [type, label, test, limit] of RESULT_SECTIONS) {
+          const items = found.filter(test);
+          if (!items.length) continue;
+          resultSections.set(limited.length, { type, label, total: totals[type], more: items.length > limit });
+          limited.push(...items.slice(0, limit));
+        }
+        found.length = 0;
+        found.push(...limited);
+      }
       results = Array.isArray(found) ? found : [];
       selectedId = reconcileUnifiedSelection(selectedId, results);
       if (pageDisplayActive && queryText && !results.find((item) => item.id === selectedId && item.matches?.length)) {
@@ -1468,18 +1638,20 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       const samePreview = preservePreview && previousIdentity && previousIdentity === libraryResultIdentity(selectedActiveResult());
       // Restore the old viewport only after its batches exist; otherwise the
       // browser clamps scrollTop to the first batch and hides a deep selection.
-      renderResults({
-        initialCount: samePreview ? Math.max(previousRenderedCount, results.findIndex(item => item.id === selectedId) + 1) : 60,
-      });
-      if (samePreview) { scroller.scrollTop = previousScroll; restoreSelectionOffset(); }
-      else { if (preservePreview) invalidateAction(); void renderPreview(); }
+      // 11-05: 검색어를 지우면 고른 자료가 1만 번째 근처일 수 있다 — 거기까지 카드를 한꺼번에 그리면 화면이 수십 초 멈췄다.
+      // 되살릴 카드가 MAX_RESTORED_CARDS를 넘으면 목록은 맨 위부터 다시 그리고, 오른쪽 미리보기만 그대로 둔다.
+      const restoreCount = samePreview ? Math.max(previousRenderedCount, results.findIndex(item => item.id === selectedId) + 1) : 0;
+      const restoreList = samePreview && restoreCount <= MAX_RESTORED_CARDS;
+      renderResults({ initialCount: restoreList ? restoreCount : 60 });
+      if (restoreList) { scroller.scrollTop = previousScroll; restoreSelectionOffset(); }
+      else if (!samePreview) { if (preservePreview) invalidateAction(); void renderPreview(); }
       if (searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
       if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
       libraryLoading.empty();
       if (!searchIsCurrent(ownEpoch, signal)) return;
       setResultState(results.length ? "ready" : searchReadiness === "error" ? "error" : searchReadiness !== "ready" ? "loading" : "empty", results.length ? "" : searchReadiness !== "ready" ? readinessMessage() : "검색 결과가 없습니다.");
       // content-visibility may replace estimated heights on the first paint.
-      if (samePreview) restoreSelectionOffset();
+      if (restoreList) restoreSelectionOffset();
       if (searchReadiness !== "ready") { setStatus(readinessMessage(), searchReadiness === "error"); return; }
       setStatus(pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "");
     } catch (error) {
@@ -1511,7 +1683,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     scroller.scrollTop = 0;
     root.dataset.activeTab = activeTypes.length === LIBRARY_TYPES.length ? "all" : activeTypes.join("-");
     root.dataset.pdfDisplay = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
-    overlay.querySelector("[data-unilib-count]").textContent = `${visibleResults.length}개`;
+    overlay.querySelector("[data-unilib-count]").textContent = `${(resultTotal ?? visibleResults.length).toLocaleString("ko-KR")}개`;
     renderCropTray();
     const pendingThumbnails = [];
     const thumbnailLookup = new Map();
@@ -1571,6 +1743,13 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       }).catch(() => {
         if (ownThumbnailEpoch === thumbnailEpoch && media.isConnected) thumbnailStatus(media, true);
       });
+    };
+    const createSectionHeader = (section) => {
+      const item = document.createElement("li");
+      item.className = "unilib-result-section";
+      item.setAttribute("role", "presentation");
+      item.innerHTML = `<strong>${section.label}</strong><small>${section.total.toLocaleString("ko-KR")}</small>${section.more ? `<button type="button" data-unilib-section-more="${section.type}">모두 보기 →</button>` : ""}`;
+      return item;
     };
     const createResultCard = (result) => {
       const item = document.createElement("li");
@@ -1656,7 +1835,13 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       if (ownThumbnailEpoch !== thumbnailEpoch || overlay.hidden) return;
       const end = Math.min(visibleResults.length, Math.max(renderedResultCount + 60, throughIndex + 1));
       if (end <= renderedResultCount) return;
-      list.append(...visibleResults.slice(renderedResultCount, end).map(createResultCard));
+      const nodes = [];
+      visibleResults.slice(renderedResultCount, end).forEach((result, offset) => {
+        const section = resultSections?.get(renderedResultCount + offset);
+        if (section) nodes.push(createSectionHeader(section));
+        nodes.push(createResultCard(result));
+      });
+      list.append(...nodes);
       renderedResultCount = end;
       for (const { result, media, src } of pendingThumbnails.splice(0)) {
         if (thumbnailObserver) { thumbnailLookup.set(media, {result, src}); thumbnailObserver.observe(media); }
@@ -2198,7 +2383,32 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     await renderSources();
     await runSearch();
   });
-  tree.addEventListener("click", (event) => {
+  tree.addEventListener("click", async (event) => {
+    const groupSwitch = event.target.closest("[data-source-group-switch]");
+    if (groupSwitch) {
+      event.preventDefault();
+      const group = groupSwitch.dataset.sourceGroupSwitch, on = groupSwitch.getAttribute("aria-checked") !== "true";
+      groupSwitch.disabled = true;
+      try {
+        const activeProvider = await provider();
+        const sources = activeProvider.getSources();
+        for (const root of sourceGroupRoots[group] || []) {
+          if (root.desktop) { await desktopLibrary?.setFolderSelection(root.desktop.folderId, on); continue; }
+          const affected = descendantLeafIds(root.id, sources);
+          if (!affected.length) affected.push(root.id);
+          affected.forEach((id) => on ? enabledSources.add(id) : enabledSources.delete(id));
+          on ? excludedSourceGroups.delete(root.id) : excludedSourceGroups.add(root.id);
+        }
+        saveEnabledSources(storage, enabledSources, excludedSourceGroups);
+        if ((sourceGroupRoots[group] || []).some((root) => root.desktop)) await refreshDesktopSources(true);
+        await renderSources();
+        await runSearch();
+      } catch (error) {
+        setStatus(`검색 위치를 바꾸지 못했습니다: ${error instanceof Error ? error.message : error}`, true);
+        groupSwitch.disabled = false;
+      }
+      return;
+    }
     const browse = event.target.closest("[data-browse-source]");
     if (browse && !event.target.closest("input")) {
       event.preventDefault();
@@ -2314,6 +2524,16 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     overlay.querySelector("[data-unilib-exam-filters]").hidden = !activeTypes.includes("question");
     overlay.querySelector("[data-unilib-pdf-display]").hidden = !(activeTypes.length === 1 && activeTypes[0] === "pdf");
   };
+  list.addEventListener("click", (event) => {
+    const more = event.target.closest("[data-unilib-section-more]");
+    if (!more) return;
+    event.preventDefault();
+    event.stopPropagation();
+    cancelSpacePress();
+    activeTypes = [more.dataset.unilibSectionMore];
+    updateTypeControls();
+    void runSearch();
+  });
   overlay.querySelectorAll("[data-unilib-type]").forEach((control) => control.addEventListener("click", () => {
     cancelSpacePress();
     activeTypes = toggleLibraryType(activeTypes, control.dataset.unilibType);

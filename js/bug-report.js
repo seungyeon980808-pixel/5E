@@ -19,7 +19,9 @@ export function initBugReporter() {
     link.innerHTML = icon;
     if (before?.parentNode === host) host.insertBefore(link, before); else host.append(link);
   };
-  mount(document.querySelector('.footer-actions'));
+  // 11-05: image·hwp는 맨 위 줄 오른쪽(화면 색 단추 왼쪽) — exam(맨 위 줄 ? 옆)·라이브러리·AI·그래프 창과 같은 자리.
+  const top = document.querySelector('.canvas-global-controls');
+  mount(top, 'topbar-btn icon-btn', top?.querySelector('#theme-toggle'));
   mount(document.querySelector('#ai-image-panel .ai-head-status'), 'ai-header-tool modal-btn');
   const mountLibrary = () => {
     // 라이브러리에서는 위쪽 막대(닫기 옆)에 둔다.

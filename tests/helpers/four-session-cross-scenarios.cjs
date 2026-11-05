@@ -1893,7 +1893,7 @@ scenarios.QA7 = async ctx => {
     await pdfRetry(ctx, page, controls); ctx.cover('pdf-runtime-retry-original');
   }, { setupRoutes: async page => {
     await page.context().route('**/assets/pdf-library/catalog-bootstrap.json', route => route.fulfill({ status: 404, body: 'controlled catalog fallback' }));
-    await page.context().route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
+    await page.context().route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await page.context().route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
       const pathname = decodeURIComponent(new URL(route.request().url()).pathname);
       const body = pathname.endsWith('/pack.json') ? json(pack.pack) : pathname.endsWith('/checksums.json') ? json(pack.checksums)
         : pathname.endsWith('/catalog.json') ? json(pack.catalog) : pathname.endsWith('/search-index.json') ? json(pack.search) : pack.pdf;
@@ -2882,7 +2882,7 @@ async function latePdf(ctx){
     ctx.result.inputs.push({provenance:'held actual prior PDF resolver delivery after scheduler completion; original resolve await and stale return remain unchanged',originalSha256:sha(source),instrumentedSha256:sha(observed),seams:[entry,resolvedBoundary.trim(),end]});
     await page.route('**/js/unified-library-ui.js?*',route=>route.fulfill({contentType:'text/javascript',body:observed}));
     await page.context().route('**/assets/pdf-library/catalog-bootstrap.json',route=>route.fulfill({status:404,body:'controlled two document catalog'}));
-    await page.context().route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',async route=>{
+    await page.context().route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await page.context().route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',async route=>{
       const pathname=decodeURIComponent(new URL(route.request().url()).pathname);requests.push(pathname);const relative=Object.keys(pack.pdfs).find(name=>pathname.endsWith(name));
       const body=relative?pack.pdfs[relative]:pathname.endsWith('/pack.json')?json(pack.pack):pathname.endsWith('/checksums.json')?json(pack.checksums):pathname.endsWith('/catalog.json')?json(pack.catalog):pathname.endsWith('/search-index.json')?json(pack.search):null;
       assert.ok(body,'Unexpected fixture request '+pathname);return route.fulfill({contentType:relative?'application/pdf':'application/json',body});

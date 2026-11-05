@@ -78,9 +78,10 @@
   --unilib-app-height: 100dvh;
   --unilib-app-min-height: 620px;
   --unilib-app-viewport-inset: 0px;
-  --unilib-desktop-columns: 248px minmax(360px, 1fr) minmax(380px, .95fr);
+  --unilib-folders-width: 262px;
+  --unilib-desktop-columns: var(--unilib-folders-width) minmax(360px, 1fr) minmax(380px, .95fr);
   --unilib-collapsed-columns: minmax(360px, 1fr) minmax(380px, .95fr);
-  --unilib-tablet-columns: 248px minmax(0, 1fr);
+  --unilib-tablet-columns: var(--unilib-folders-width) minmax(0, 1fr);
   --unilib-tablet-preview-width: 520px;
   --unilib-tablet-preview-inset: 80px;
   --unilib-tablet-stage-height: 330px;
@@ -896,20 +897,23 @@
 @media (min-width: 1101px) {
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-list,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--unilib-space-3);
   }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-row,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-row,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-row {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-row,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-row {
     position: relative;
     display: block;
     min-width: 0;
   }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-card,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-card,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-card {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-card,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-card {
     grid-template-columns: minmax(0, 1fr);
     align-content: start;
     min-height: 0;
@@ -917,13 +921,15 @@
   }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-thumb,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-thumb,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-thumb {
     width: 100%;
     height: var(--unilib-grid-thumb-height);
   }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-check,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-check,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-check {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-check,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-check {
     position: absolute;
     top: var(--unilib-space-2);
     right: var(--unilib-space-2);
@@ -1143,13 +1149,15 @@
   .unified-library-overlay .unilib-result-scroll { container-type: size; }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-list,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-list {
     grid-template-columns: repeat(var(--unilib-grid-columns, 3), minmax(0, 1fr));
     grid-auto-rows: minmax(8rem, calc((100cqh - (var(--unilib-space-3) * 2) - var(--unilib-space-6)) / 3));
   }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-thumb,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-thumb,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb { height: min(100%, var(--unilib-grid-thumb-height)); }
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-thumb { height: min(100%, var(--unilib-grid-thumb-height)); }
 }
 
 /* Opaque workbench with stable, horizontal cards. */
@@ -1193,28 +1201,35 @@
 @media (min-width: 1101px) {
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-list,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list {
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-auto-rows: minmax(8rem, calc((100cqh - (var(--unilib-space-3) * 2) - var(--unilib-space-6)) / 3));
   }
   .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="image"] .unilib-result-list,
   .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list,
+  .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="all"] .unilib-result-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="image"] .unilib-result-list,
   .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list,
+  .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="all"] .unilib-result-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="image"] .unilib-result-list,
   .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list,
+  .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="all"] .unilib-result-list { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-row,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-row,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-row { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; min-height: 0; }
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-row,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-row { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; min-height: 0; }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-card,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-card,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-card { height: auto; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-card,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-card { height: auto; min-height: 0; grid-template-rows: minmax(0, 1fr) auto; }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-thumb,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-thumb,
-  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb { width: 100%; height: 100%; min-height: 0; }
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb,
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-thumb { width: 100%; height: 100%; min-height: 0; }
 }
 
 /* Preview chrome is intentionally text-free; PDF pages use the full reader width. */
@@ -1304,3 +1319,96 @@
   .unified-library-overlay .unilib.folders-collapsed .unilib-folders .unilib-pane-head { justify-content: center; padding: 6px 0; border-bottom: 0; }
   .unified-library-overlay .unilib.folders-collapsed .unilib-folders .unilib-pane-head > :not([data-unilib-folders-open]) { display: none; }
 }
+
+/* ── 11-05 시안(5e-design-mockups/library-1105.html) ─────────────────────────────────────────────
+   머리줄: [라이브러리(왼쪽 칸 폭)] [검색칸 400px · 개수] ··· [버그 신고][닫기]. 로딩 표시는 개수 자리 하나(가운데 글 알림은 숨김, 얇은 막대만).
+   왼쪽 칸: 조건(과목 바둑판 · 단원 · 연도 막대 · 시험 · 모양) 위, 검색 위치(5E 제공 / 내 구글 드라이브 / 이 맥, 묶음 스위치) 아래. */
+.unified-library-overlay .unilib-header { justify-content: flex-start; }
+.unified-library-overlay .unilib-header .unilib-brand { flex: none; width: calc(var(--unilib-folders-width) - var(--unilib-space-5)); }
+.unified-library-overlay .unilib-header .unilib-search-row { flex: none; gap: var(--unilib-space-4); }
+.unified-library-overlay .unilib-header .unilib-search { width: 400px; max-width: 40vw; height: 30px; min-height: 30px; }
+.unified-library-overlay .unilib-header .unilib-result-count { color: var(--unilib-muted); font-size: var(--unilib-type-helper); font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-header .unilib-header-actions { margin-inline-start: auto; }
+.unified-library-overlay .unilib-header .ll { display: none !important; }
+.unified-library-overlay .unilib-search input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
+/* 맥 설치본: 신호등 단추 자리를 비우고 머리줄로 창을 끈다(제목 줄이 내려와 머리줄을 덮지 않음, desktop/preload.cjs). */
+.desktop-shell.platform-darwin .unified-library-overlay .unilib-header { padding-inline-start: 84px; -webkit-app-region: drag; }
+.desktop-shell.platform-darwin .unified-library-overlay .unilib-header .unilib-brand { width: calc(var(--unilib-folders-width) - 84px); }
+.desktop-shell.platform-darwin .unified-library-overlay .unilib-header :is(button, a, input, label, details, summary) { -webkit-app-region: no-drag; }
+
+.unified-library-overlay .unilib-folder-scroll { overflow: auto; overscroll-behavior: contain; }
+.unified-library-overlay .unilib-link-button { margin-inline-start: auto; padding: 0 2px; border: 0; background: none; color: var(--unilib-muted); font: inherit; font-size: var(--unilib-type-caption); cursor: pointer; }
+.unified-library-overlay .unilib-link-button:hover { color: var(--unilib-text); }
+.unified-library-overlay .unilib-conditions-head .unilib-link-button + [data-unilib-folders-open],
+.unified-library-overlay .unilib-conditions-head .unilib-link-button[hidden] + .unilib-mobile-only + [data-unilib-folders-open] { margin-inline-start: 4px; }
+.unified-library-overlay .unilib-conditions { padding: var(--unilib-space-2) var(--unilib-space-4) var(--unilib-space-4); }
+.unified-library-overlay .unilib-cond-sec { display: flex; align-items: baseline; gap: var(--unilib-space-3); margin: var(--unilib-space-5) 0 var(--unilib-space-2); color: var(--unilib-text); font-size: var(--unilib-type-helper); font-weight: var(--unilib-font-weight-strong); }
+.unified-library-overlay .unilib-cond-sec:first-child { margin-top: var(--unilib-space-3); }
+.unified-library-overlay .unilib-cond-sec > small { margin-inline-start: auto; color: var(--unilib-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-subject-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--unilib-space-1); }
+.unified-library-overlay .unilib-subject { display: flex; align-items: center; justify-content: space-between; gap: var(--unilib-space-1); min-height: 30px; padding: 0 var(--unilib-space-3); border: 0; outline: 1px solid var(--ds-line-strong, #30363d); outline-offset: -1px; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-label); font: inherit; font-size: var(--unilib-type-helper); cursor: pointer; }
+.unified-library-overlay .unilib-subject small { color: var(--unilib-muted); font-size: var(--unilib-type-caption); font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-subject:hover { background: var(--ds-hover, var(--unilib-raised)); }
+.unified-library-overlay .unilib-subject.is-on { outline-color: var(--ds-soft-line, var(--ds-line-strong)); background: var(--ds-selected, color-mix(in srgb, var(--unilib-accent) 16%, transparent)); color: var(--unilib-text); }
+.unified-library-overlay .unilib-subject.is-zero:not(.is-on), .unified-library-overlay .unilib-cond-check.is-zero { opacity: .45; }
+.unified-library-overlay .unilib-cond-sub { margin: var(--unilib-space-4) 0 var(--unilib-space-1); color: var(--unilib-label); font-size: var(--unilib-type-caption); }
+.unified-library-overlay .unilib-cond-check { display: flex; align-items: center; gap: var(--unilib-space-3); min-height: 28px; padding: 0 var(--unilib-space-2); border-radius: var(--unilib-control-radius); color: var(--unilib-label); font-size: var(--unilib-type-body); cursor: pointer; }
+.unified-library-overlay .unilib-cond-check:hover { background: var(--ds-hover, var(--unilib-raised)); }
+.unified-library-overlay .unilib-cond-check input { margin: 0; accent-color: var(--unilib-accent); }
+.unified-library-overlay .unilib-cond-check > small { margin-inline-start: auto; color: var(--unilib-muted); font-size: var(--unilib-type-caption); font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-cond-check:has(input:checked) { color: var(--unilib-text); }
+.unified-library-overlay .unilib-year-hist { display: flex; align-items: flex-end; gap: 1px; height: 34px; margin: var(--unilib-space-1) 0 0; }
+.unified-library-overlay .unilib-year-hist i { flex: 1; min-height: 2px; border-radius: 1px 1px 0 0; background: color-mix(in srgb, var(--unilib-border) 80%, transparent); }
+.unified-library-overlay .unilib-year-hist i.is-in { background: color-mix(in srgb, var(--unilib-accent) 55%, var(--unilib-border)); }
+.unified-library-overlay .unilib-year-slider { position: relative; height: 18px; }
+.unified-library-overlay .unilib-year-track { position: absolute; inset: 8px 0 auto; height: 2px; border-radius: 1px; background: linear-gradient(90deg, var(--unilib-border) var(--from), var(--unilib-accent) var(--from), var(--unilib-accent) var(--to), var(--unilib-border) var(--to)); }
+.unified-library-overlay .unilib-year-slider input { position: absolute; inset: 0; width: 100%; height: 18px; margin: 0; background: none; pointer-events: none; -webkit-appearance: none; appearance: none; }
+.unified-library-overlay .unilib-year-slider input::-webkit-slider-runnable-track { background: none; border: 0; }
+.unified-library-overlay .unilib-year-slider input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 13px; height: 13px; margin-top: 0; border: 2px solid var(--unilib-accent); border-radius: 50%; background: var(--unilib-text); cursor: pointer; }
+.unified-library-overlay .unilib-year-slider input::-moz-range-thumb { pointer-events: auto; width: 10px; height: 10px; border: 2px solid var(--unilib-accent); border-radius: 50%; background: var(--unilib-text); cursor: pointer; }
+.unified-library-overlay .unilib-year-ends { display: flex; justify-content: space-between; color: var(--unilib-muted); font-size: var(--unilib-type-caption); font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-cond-seg { display: flex; overflow: hidden; border: 1px solid var(--ds-line-strong, #30363d); border-radius: var(--unilib-control-radius); }
+.unified-library-overlay .unilib-cond-seg button { flex: 1; min-height: 28px; border: 0; background: none; color: var(--unilib-label); font: inherit; font-size: var(--unilib-type-helper); cursor: pointer; }
+.unified-library-overlay .unilib-cond-seg button + button { box-shadow: none; outline: 0; border-inline-start: 1px solid var(--ds-line-strong, #30363d) !important; }
+.unified-library-overlay .unilib-cond-seg button:hover { background: var(--ds-hover, var(--unilib-raised)); }
+.unified-library-overlay .unilib-cond-seg button[aria-pressed="true"] { background: var(--ds-selected, color-mix(in srgb, var(--unilib-accent) 16%, transparent)); color: var(--unilib-text); }
+
+.unified-library-overlay .unilib-location-head { display: flex; align-items: center; gap: var(--unilib-space-3); margin: 0 var(--unilib-space-4); padding: var(--unilib-space-5) 0 var(--unilib-space-2); border-top: var(--unilib-border-width) solid var(--unilib-border-muted); }
+.unified-library-overlay .unilib-location-head h3 { flex: 1; margin: 0; color: var(--unilib-muted); font-size: var(--unilib-type-helper); font-weight: 500; }
+.unified-library-overlay .unilib-location-head .unilib-location-add { position: relative; }
+.unified-library-overlay .unilib-location-head .unilib-location-add > summary { display: inline-flex; align-items: center; min-height: 26px; padding: 0 var(--unilib-space-3); border: 0; outline: 1px solid var(--ds-line-strong, #30363d); outline-offset: -1px; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-text); font-size: var(--unilib-type-helper); list-style: none; cursor: pointer; }
+.unified-library-overlay .unilib-location-head .unilib-location-add > summary::-webkit-details-marker { display: none; }
+.unified-library-overlay .unilib-location-head .unilib-location-add > summary:hover { color: var(--ds-ink, var(--unilib-text)); }
+.unified-library-overlay .unilib-tree-group { display: flex; align-items: center; gap: var(--unilib-space-3); margin: var(--unilib-space-3) var(--unilib-space-4) var(--unilib-space-1); font-size: var(--unilib-type-helper); }
+.unified-library-overlay .unilib-tree-group strong { color: var(--unilib-text); font-weight: var(--unilib-font-weight-strong); }
+.unified-library-overlay .unilib-tree-group small { margin-inline-start: auto; color: var(--unilib-muted); font-size: var(--unilib-type-caption); }
+.unified-library-overlay .unilib-tree-group.is-off strong { color: var(--unilib-muted); }
+.unified-library-overlay .unilib-tree-item.is-group-off { opacity: .45; }
+.unified-library-overlay .unilib-switch { position: relative; flex: none; width: 28px; height: 16px; padding: 0; border: 0; border-radius: 8px; background: color-mix(in srgb, var(--unilib-border) 90%, transparent); cursor: pointer; }
+.unified-library-overlay .unilib-switch i { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: var(--unilib-muted); transition: left var(--unilib-motion), background-color var(--unilib-motion); }
+.unified-library-overlay .unilib-switch[aria-checked="true"] { background: color-mix(in srgb, var(--unilib-accent) 55%, var(--unilib-border)); }
+.unified-library-overlay .unilib-switch[aria-checked="true"] i { left: 14px; background: var(--unilib-text); }
+.unified-library-overlay .unilib-conditions-head h3 { flex: 1; }
+.unified-library-overlay .unilib-switch { outline: 0; }
+.unified-library-overlay .unilib-switch[aria-checked="true"] { background: color-mix(in srgb, var(--unilib-accent) 55%, var(--ds-line-strong, #30363d)) !important; }
+.unified-library-overlay .unilib-switch[aria-checked="false"] { background: var(--ds-line-strong, #30363d) !important; }
+.unified-library-overlay [data-unilib-exam-filters] { display: none !important; }
+.unified-library-overlay .unilib-tabs button { white-space: nowrap; }
+/* 「전체」 탭: 종류별 묶음 머리 + 그림 카드 바둑판(문항 탭과 같은 카드). 탭 이름 옆 작은 개수. */
+.unified-library-overlay .unilib-tabs button small { margin-inline-start: 4px; color: var(--unilib-muted); font-size: var(--unilib-type-caption); font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib[data-active-tab="all"] .unilib-thumb img { inset: 0 0 auto 0; height: auto; object-fit: initial; }
+.unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-row:has([data-result-kind="image"]) .unilib-thumb img { inset: 0; height: 100%; object-fit: contain; }
+.unified-library-overlay .unilib-result-section { grid-column: 1 / -1; display: flex; align-items: baseline; gap: var(--unilib-space-3); margin: var(--unilib-space-4) var(--unilib-space-1) 0; list-style: none; }
+.unified-library-overlay .unilib-result-section:first-child { margin-top: 0; }
+.unified-library-overlay .unilib-result-section strong { font-size: var(--unilib-type-helper); font-weight: var(--unilib-font-weight-strong); }
+.unified-library-overlay .unilib-result-section small { color: var(--unilib-muted); font-size: var(--unilib-type-caption); font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-result-section button { margin-inline-start: auto; padding: 0 2px; border: 0; background: none; color: var(--ds-accent, var(--unilib-accent)); font: inherit; font-size: var(--unilib-type-caption); cursor: pointer; }
+.unified-library-overlay .unilib-location-head .unilib-location-add > summary { width: auto; height: 26px; min-height: 26px; }
+/* 「전체」 탭: 묶음 머리 줄은 글 높이만, 카드 줄은 다른 바둑판 탭과 같은 높이(결과 칸의 1/3). */
+@media (min-width: 768px) {
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-list { grid-auto-rows: auto !important; }
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-row { height: max(8rem, calc((100cqh - (var(--unilib-space-3) * 2) - var(--unilib-space-6)) / 3)); }
+  .unified-library-overlay .unilib[data-active-tab="all"] .unilib-result-section { height: auto; }
+}
+/* 진행 막대는 머리줄 바로 아래 선에(예전 58px 고정이라 왼쪽 칸 제목 줄을 가로질렀다). */
+.unified-library-overlay .unilib > .ll-bar { top: calc(var(--unilib-header-height, 41px) - 1px); }

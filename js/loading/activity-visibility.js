@@ -12,10 +12,13 @@ function scheduleRefresh() {
   // shared frames once, rather than once per card's mutation callback.
   refreshFrame = requestAnimationFrame(() => { refreshFrame = 0; refresh(); });
 }
-// getAnimations({subtree:true})는 스타일 계산을 강제한다. 결과 칸 전체(grid)도 등록되므로, 스크롤·카드 하나 바뀔 때마다
-// 모든 칸을 훑으면 목록이 끊긴다(바쁜 컴퓨터에서 스크롤 프레임 절반 이상 50ms 초과). 상태가 바뀌었거나 안이 바뀐 칸만 훑는다.
+// getAnimations()는 스타일 계산을 강제한다. 칸마다 getAnimations({subtree:true})를 부르면서 그 사이에 data-loading-* 속성을 쓰면
+// 칸 수만큼 화면 전체 스타일을 다시 계산했다(11-05 실측: 라이브러리 검색 결과 수천 개에서 한 번에 12초 멈춤).
+// 이제 (1) 속성을 먼저 다 쓰고 (2) 문서 전체 애니메이션을 한 번만 읽어 (3) 바뀐 칸에 속한 것만 멈추고 다시 켠다.
+// 상태가 바뀌었거나 안이 바뀐 칸만 훑는 규칙은 그대로다.
 function refresh(all = false) {
   let lights = 0;
+  const work = [];
   for (const [node, entry] of frames) {
     for (const animation of entry.paused) {
       if (animation.playState === 'idle' || animation.playState === 'finished') entry.paused.delete(animation);
@@ -27,11 +30,17 @@ function refresh(all = false) {
     if (node.dataset.loadingSheen !== sheen) node.dataset.loadingSheen = sheen;
     if (!all && !entry.dirty && entry.running === running) continue;
     entry.dirty = false; entry.running = running;
-    for (const animation of node.getAnimations({ subtree: true })) {
+    work.push([node, entry, running]);
+  }
+  if (!work.length || typeof document.getAnimations !== 'function') return;
+  for (const animation of document.getAnimations()) {
+    const target = animation.effect?.target;
+    if (!target) continue;
+    for (const [node, entry, running] of work) {
+      if (node !== target && !node.contains(target)) continue;
       // A completed source only has a bounded crossfade left. Let it finish
       // even under a paused grid so its promise can release the visual layers.
-      const settling = animation.effect?.target?.closest?.('[data-loading-phase="settling"]');
-      const active = running || settling;
+      const active = running || target.closest?.('[data-loading-phase="settling"]');
       if (!active && animation.playState === 'running') { animation.pause(); entry.paused.add(animation); }
       else if (active && entry.paused.delete(animation) && animation.playState === 'paused') animation.play();
     }

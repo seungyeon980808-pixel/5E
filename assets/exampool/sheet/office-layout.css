@@ -895,3 +895,10 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view[data-det-center]>[data-cvsplit="right"]{display:none}
 #card-view[data-det-center]>.cv-right{flex:1 1 auto!important}
 #card-view[data-det-center][data-det-left]>.cv-right{flex:1 1 auto!important}
+/* 11-05: 맨 위 줄 버그 신고(링크) — ? · … 단추와 같은 모양·색. */
+.top-actions a.top-help{height:var(--ds-h-control);border-radius:var(--ds-radius);color:var(--ds-ink-2);text-decoration:none}
+.top-actions a.top-help:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.top-actions a.top-help .ico{fill:none;stroke:currentColor}
+/* 11-05: 가운데 칸이 좁으면(칸 분리·좁은 창) 머리줄이 한 줄을 고집하다 유형 칸이 번호 위로 겹쳤다 — 좁을 때만 두 줄로 넘긴다. */
+#card-view .w-head .cv-shape-wrap{overflow:hidden}
+@container (max-width:440px){#card-view .w-head,#card-view .cv-center .w-head{flex-wrap:wrap;row-gap:6px}#card-view .w-head .sp{display:none}}
