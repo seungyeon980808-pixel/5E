@@ -1412,3 +1412,214 @@
 }
 /* 진행 막대는 머리줄 바로 아래 선에(예전 58px 고정이라 왼쪽 칸 제목 줄을 가로질렀다). */
 .unified-library-overlay .unilib > .ll-bar { top: calc(var(--unilib-header-height, 41px) - 1px); }
+
+/* ── 11-05 시안 v8(5e-design-mockups/library-1105-v8.html) ───────────────────────────────────────
+   작업대 바탕 위에 둥글고 떠 있는 세 칸(exam과 같은 값: 바깥 여백 10 · 칸 사이 14 · 모서리 12 · 1px 선).
+   맨 위 줄 = 제목 + ChatGPT·버그 신고·테마·전체화면(5E_image 단추를 비춤) + 닫기. 검색칸·정렬은 가운데 칸 머리줄.
+   왼쪽 「찾기」 = 종류 한 줄(색 바탕 칩) · 문항 검색 조건(한 번에 펴고 접기) · 파일 위치(묶음 스위치). 접으면 52px 아이콘 줄. */
+.unified-library-overlay .unilib { --v8-k-all: #8b949e; --v8-k-question: #6f93c4; --v8-k-pdf: #b89a55; --v8-k-image: #5b8a6d; --v8-g-provided: #6f93c4; --v8-g-drive: #5b8a6d; --v8-g-local: #9aa4b1;
+  --v8-box: color-mix(in srgb, var(--ds-ink, #e6edf3) 3%, var(--ds-panel, #0d1117)); background: var(--ds-bench, #0a0e14); }
+.unified-library-overlay .unilib .unilib-header { height: 52px; min-height: 52px; padding: 0 12px 0 18px; border: 0 !important; background: transparent !important; gap: 8px; }
+.unified-library-overlay .unilib .unilib-header .unilib-brand { width: auto; flex: 1; }
+.unified-library-overlay .unilib .unilib-header h2 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.unified-library-overlay .unilib-header-actions { display: flex; align-items: center; gap: 2px; margin-inline-start: auto; }
+.unified-library-overlay .unilib-global-controls { display: flex; align-items: center; gap: 2px; }
+.unified-library-overlay .unilib-global-mirror { width: 30px; height: 30px; min-width: 30px; min-height: 30px; padding: 0; display: grid; place-items: center; border: 0 !important; border-radius: 7px; background: none !important; color: var(--ds-ink-2) !important; box-shadow: none !important; outline: 0; cursor: pointer; }
+.unified-library-overlay .unilib-global-mirror:hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib-global-mirror svg { width: 17px; height: 17px; }
+.unified-library-overlay .unilib-global-mirror.is-account { width: auto; display: inline-flex; gap: 6px; padding: 0 10px; font: inherit; font-size: 12.5px; }
+.unified-library-overlay .unilib-global-mirror.is-account .web-account-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ds-ink-3); }
+.unified-library-overlay .unilib-global-mirror.is-account[data-state="connected"] .web-account-dot { background: #3fb950; }
+.unified-library-overlay .unilib-global-controls:empty + .unilib-header-sep { display: none; }
+.unified-library-overlay .unilib-header-sep { width: 1px; height: 18px; margin: 0 6px; background: var(--ds-line-strong); }
+.unified-library-overlay .unilib .unilib-shell { gap: 14px; padding: 0 10px 10px; background: transparent; }
+.unified-library-overlay .unilib .unilib-pane { min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 0 !important; border-radius: 12px; background: var(--ds-panel, #0d1117); box-shadow: 0 0 0 1px var(--ds-line, #21262d); }
+.unified-library-overlay .unilib .unilib-pane-head { flex: none; height: 44px; min-height: 44px; box-sizing: border-box; padding: 0 10px 0 16px; border-bottom: 1px solid var(--ds-line) !important; }
+.unified-library-overlay .unilib .unilib-pane-head h3 { font-size: 13.5px; font-weight: 600; color: var(--ds-ink); }
+.unified-library-overlay .unilib .unilib-folder-scroll { flex: 1; min-height: 0; overflow: auto; padding: 12px 12px 16px; }
+/* 종류 한 줄 */
+.unified-library-overlay .unilib-kinds .unilib-tabs { display: grid !important; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0 0 12px; padding: 3px; border: 0; border-radius: 10px; background: var(--ds-bench); box-shadow: inset 0 0 0 1px var(--ds-line); }
+.unified-library-overlay .unilib-kinds .unilib-tabs button { min-width: 0; height: 62px; min-height: 62px; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0 !important; border-radius: 7px; background: none !important; box-shadow: none !important; color: var(--ds-ink-2) !important; font-size: 12px; line-height: 1.2; }
+.unified-library-overlay .unilib-kinds .unilib-tabs button:hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib-kinds .unilib-tabs button[aria-pressed="true"] { background: var(--ds-selected) !important; color: var(--ds-ink) !important; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-accent, #2f81f7) 45%, transparent) !important; }
+.unified-library-overlay .unilib-kinds .unilib-tabs button small { margin: 0; color: var(--ds-ink-3); font-size: 11px; font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib-kinds .unilib-tabs button[aria-pressed="true"] small { color: var(--ds-ink-2); }
+.unified-library-overlay .unilib .unilib-kind-icon { width: 24px; height: 24px; display: grid; place-items: center; margin-bottom: 1px; border-radius: 7px; background: color-mix(in srgb, currentColor 16%, transparent); }
+.unified-library-overlay .unilib .unilib-kind-icon svg, .unified-library-overlay .unilib .unilib-box-icon svg, .unified-library-overlay .unilib .unilib-group-icon svg, .unified-library-overlay .unilib .unilib-rail-button > svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.unified-library-overlay .unilib svg .f { fill: currentColor; stroke: none; }
+.unified-library-overlay .unilib .unilib-kind-all .unilib-kind-icon { color: var(--v8-k-all); }
+.unified-library-overlay .unilib .unilib-kind-question .unilib-kind-icon { color: var(--v8-k-question); }
+.unified-library-overlay .unilib .unilib-kind-pdf .unilib-kind-icon { color: var(--v8-k-pdf); }
+.unified-library-overlay .unilib .unilib-kind-image .unilib-kind-icon { color: var(--v8-k-image); }
+/* 상자(문항 검색 조건 · 파일 위치) */
+.unified-library-overlay .unilib .unilib-box { margin: 0 0 12px; padding: 2px 10px 2px; border-radius: 10px; background: var(--v8-box); box-shadow: inset 0 0 0 1px var(--ds-line); }
+.unified-library-overlay .unilib .unilib-box-head, .unified-library-overlay .unilib .unilib-loc-box .unilib-location-head { display: flex; align-items: center; gap: 8px; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 0; }
+.unified-library-overlay .unilib .unilib-box-icon { flex: none; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 7px; background: color-mix(in srgb, var(--ds-ink-3) 18%, transparent); color: var(--ds-ink-3); }
+.unified-library-overlay .unilib .unilib-cond-toggle { flex: 1; min-width: 0; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--ds-ink); font: inherit; font-size: 13px; text-align: start; cursor: pointer; }
+.unified-library-overlay .unilib .unilib-cond-toggle strong, .unified-library-overlay .unilib .unilib-loc-box .unilib-location-head h3 { flex: none; margin: 0; color: var(--ds-ink); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.unified-library-overlay .unilib .unilib-cond-value { margin-inline-start: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ds-ink-3); font-size: 12px; }
+.unified-library-overlay .unilib .unilib-cond-value.is-set { color: var(--ds-accent, #6f93c4); }
+.unified-library-overlay .unilib .unilib-chevron { flex: none; width: 14px; text-align: center; color: var(--ds-ink-3); font-size: 14px; transition: transform var(--ds-motion, .15s); }
+.unified-library-overlay .unilib .is-open > .unilib-box-head .unilib-chevron, .unified-library-overlay .unilib .unilib-tree-group.is-open .unilib-chevron { transform: rotate(90deg); }
+.unified-library-overlay .unilib .unilib-cond-reset { flex: none; width: 26px; height: 26px; min-width: 26px; min-height: 26px; padding: 0; display: grid; place-items: center; border: 0 !important; border-radius: 6px; background: none !important; box-shadow: none !important; color: var(--ds-accent, #6f93c4) !important; }
+.unified-library-overlay .unilib .unilib-cond-reset:hover { background: var(--ds-hover) !important; }
+.unified-library-overlay .unilib .unilib-cond-reset svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.unified-library-overlay .unilib .unilib-cond-box .unilib-conditions { padding: 0 0 12px; border-top: 1px solid var(--ds-line); }
+.unified-library-overlay .unilib .unilib-loc-box .unilib-location-head h3 { flex: 1; }
+.unified-library-overlay .unilib .unilib-loc-box .unilib-location-add > summary { height: 26px; min-height: 26px; padding: 0 8px; outline: 0 !important; border-radius: 6px; background: none; color: var(--ds-accent, #6f93c4) !important; font-size: 12px; }
+.unified-library-overlay .unilib .unilib-loc-box .unilib-location-add > summary:hover { background: var(--ds-hover); }
+.unified-library-overlay .unilib .unilib-loc-box .unilib-tree { margin: 0; padding: 0; }
+.unified-library-overlay .unilib .unilib-tree-group { display: flex; align-items: center; gap: 6px; margin: 0; padding: 0; border-top: 1px solid var(--ds-line); font-size: 13px; }
+.unified-library-overlay .unilib .unilib-group-open { flex: 1; min-width: 0; height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 2px; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--ds-ink); font: inherit; text-align: start; cursor: pointer; }
+.unified-library-overlay .unilib .unilib-group-icon { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: color-mix(in srgb, currentColor 16%, transparent); }
+.unified-library-overlay .unilib .unilib-group-icon svg { width: 16px; height: 16px; }
+.unified-library-overlay .unilib [data-source-group="provided"] .unilib-group-icon { color: var(--v8-g-provided); }
+.unified-library-overlay .unilib [data-source-group="drive"] .unilib-group-icon { color: var(--v8-g-drive); }
+.unified-library-overlay .unilib [data-source-group="local"] .unilib-group-icon { color: var(--v8-g-local); }
+.unified-library-overlay .unilib .unilib-group-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.unified-library-overlay .unilib .unilib-group-text strong { color: var(--ds-ink); font-size: 13px; font-weight: 500; }
+.unified-library-overlay .unilib .unilib-group-text small { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ds-ink-3); font-size: 11.5px; }
+.unified-library-overlay .unilib .unilib-tree-group.is-off .unilib-group-text strong { color: var(--ds-ink-3); }
+.unified-library-overlay .unilib .unilib-tree-group.is-off .unilib-group-icon { opacity: .45; }
+.unified-library-overlay .unilib .unilib-tree-item.is-group-collapsed { display: none; }
+.unified-library-overlay .unilib .unilib-tree-group.is-open + .unilib-tree-item, .unified-library-overlay .unilib .unilib-tree-group.is-open ~ .unilib-tree-item { margin-inline-start: 4px; }
+.unified-library-overlay .unilib .unilib-switch[aria-checked="true"] { background: var(--ds-accent, #2f81f7) !important; }
+.unified-library-overlay .unilib .unilib-switch[aria-checked="true"] i { background: #fff; }
+/* 가운데 칸 머리줄: 검색칸 + 정렬 */
+.unified-library-overlay .unilib .unilib-mid-head { flex: none; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 12px; border-bottom: 1px solid var(--ds-line); }
+.unified-library-overlay .unilib .unilib-mid-head .unilib-search-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.unified-library-overlay .unilib .unilib-mid-head .unilib-search { flex: 1; width: auto; max-width: none; height: 32px; min-height: 32px; border-radius: 8px; background: var(--ds-bench); box-shadow: inset 0 0 0 1px var(--ds-line); }
+.unified-library-overlay .unilib .unilib-mid-head .unilib-result-count { display: none; }
+.unified-library-overlay .unilib .unilib-mid-head .ll { display: none !important; }
+.unified-library-overlay .unilib .unilib-sort { flex: none; display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--ds-bench); box-shadow: inset 0 0 0 1px var(--ds-line); }
+.unified-library-overlay .unilib .unilib-sort button { height: 26px; min-height: 26px; padding: 0 10px; border: 0 !important; border-radius: 6px; background: none !important; box-shadow: none !important; color: var(--ds-ink-3) !important; font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; }
+.unified-library-overlay .unilib .unilib-sort button:hover { color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib .unilib-sort button[aria-pressed="true"] { background: var(--ds-selected) !important; color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib .unilib-results { position: relative; }
+.unified-library-overlay .unilib .unilib-results > .ll-bar { position: absolute; top: 51px; left: 0; right: 0; z-index: 10; }
+.unified-library-overlay .unilib .unilib-search-tools { display: none; }
+/* 11-05 v13: 「파일·페이지」는 왼쪽 PDF 칩 목록으로 옮겨 이 줄은 늘 숨긴다(가운데 카드와 오른쪽 미리보기 위 끝을 맞춤). */
+.unified-library-overlay .unilib .unilib-result-section button { display: none; }
+/* 접힌 왼쪽 칸 = 52px 아이콘 줄(종류 4 · 조건 · 파일 위치). 조건·위치는 옆에 떠서 열린다. */
+.unified-library-overlay .unilib .unilib-rail { display: none; }
+@media (min-width: 768px) {
+  .unified-library-overlay .unilib.folders-collapsed .unilib-shell { grid-template-columns: 52px var(--unilib-collapsed-columns) !important; }
+  .unified-library-overlay .unilib.folders-collapsed .unilib-folders { position: relative; z-index: 20; overflow: visible; }
+  .unified-library-overlay .unilib.folders-collapsed .unilib-folders .unilib-pane-head { height: 52px; min-height: 52px; padding: 0; justify-content: center; border-bottom: 0 !important; }
+  .unified-library-overlay .unilib.folders-collapsed .unilib-folders > .unilib-rail { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 0 8px; }
+  .unified-library-overlay .unilib .unilib-rail-button { position: relative; width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; display: grid; place-items: center; border: 0 !important; border-radius: 8px; background: none !important; box-shadow: none !important; color: var(--ds-ink-3) !important; }
+  .unified-library-overlay .unilib .unilib-rail-button:hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+  .unified-library-overlay .unilib .unilib-rail-button[aria-pressed="true"], .unified-library-overlay .unilib .unilib-rail-button.is-on { background: var(--ds-selected) !important; color: var(--ds-ink) !important; }
+  .unified-library-overlay .unilib .unilib-rail-button .unilib-kind-icon { margin: 0; }
+  .unified-library-overlay .unilib .unilib-rail-button[data-unilib-fly="conditions"] { margin-top: 6px; border-top: 0; }
+  .unified-library-overlay .unilib .unilib-rail-button[data-unilib-fly="conditions"]::before { content: ""; position: absolute; top: -6px; left: 8px; right: 8px; height: 1px; background: var(--ds-line-strong); }
+  .unified-library-overlay .unilib .unilib-rail-button > b { position: absolute; top: 2px; right: 2px; min-width: 14px; height: 14px; padding: 0 3px; border-radius: 7px; background: var(--ds-accent, #2f81f7); color: #fff; font-size: 9.5px; line-height: 14px; font-weight: 600; }
+  .unified-library-overlay .unilib .unilib-rail-button > b[hidden] { display: none; }
+  .unified-library-overlay .unilib.folders-collapsed[data-fly] .unilib-folders > .unilib-folder-scroll { display: block !important; position: absolute; left: 60px; top: 0; width: 262px; max-height: 100%; overflow: auto; padding: 10px; border-radius: 12px; background: var(--ds-panel); box-shadow: 0 0 0 1px var(--ds-line-strong), 0 14px 36px rgba(0, 0, 0, .6); }
+  .unified-library-overlay .unilib.folders-collapsed[data-fly] .unilib-folder-scroll > .unilib-kinds { display: none; }
+  .unified-library-overlay .unilib.folders-collapsed[data-fly="conditions"] .unilib-loc-box,
+  .unified-library-overlay .unilib.folders-collapsed[data-fly="location"] .unilib-cond-box { display: none; }
+  .unified-library-overlay .unilib.folders-collapsed[data-fly] .unilib-box { margin: 0; }
+}
+.unified-library-overlay .unilib .unilib-results { display: flex; flex-direction: column; }
+.unified-library-overlay .unilib .unilib-results > .unilib-result-scroll { flex: 1; min-height: 0; }
+.unified-library-overlay .unilib .unilib-global-mirror.is-account { display: inline-flex !important; align-items: center; width: auto !important; }
+.unified-library-overlay .unilib .unilib-global-controls > .bug-report-open { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 7px; color: var(--ds-ink-2); }
+.unified-library-overlay .unilib .unilib-global-controls > .bug-report-open:hover { background: var(--ds-hover); color: var(--ds-ink); }
+/* 오른쪽 칸 머리줄: [문항 전체 | 그림만] 아이콘 · 제목 · (PDF) 일치 쪽 ‹ n / m › */
+.unified-library-overlay .unilib .unilib-preview-heading { display: flex !important; align-items: center; gap: 10px; padding: 0 12px; }
+.unified-library-overlay .unilib .unilib-preview-heading-main { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+.unified-library-overlay .unilib .unilib-preview-heading-main h3 { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 600; }
+.unified-library-overlay .unilib .unilib-preview-heading-main p, .unified-library-overlay .unilib .unilib-highlight-legend { display: none !important; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations { flex: none; display: inline-flex; gap: 2px; margin: 0; padding: 2px; border-radius: 8px; background: var(--ds-bench); box-shadow: inset 0 0 0 1px var(--ds-line); }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations[hidden] { display: none; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations button { width: 30px; height: 26px; min-width: 30px; min-height: 26px; padding: 0; display: grid; place-items: center; border: 0 !important; border-radius: 6px; background: none !important; box-shadow: none !important; color: var(--ds-ink-3) !important; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations button:hover { color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations button[aria-pressed="true"] { background: var(--ds-selected) !important; color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations button.is-unavailable { opacity: .4; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-representations select { height: 26px; max-width: 120px; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-match-nav { flex: none; display: inline-flex; align-items: center; gap: 2px; margin: 0; padding: 0; border: 0; background: none; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-match-nav[hidden] { display: none; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-match-nav button { width: 26px; height: 26px; min-width: 26px; min-height: 26px; padding: 0; border: 0 !important; border-radius: 6px; background: none !important; box-shadow: none !important; color: var(--ds-ink-2) !important; font-size: 16px; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-match-nav button:hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-match-nav output { min-width: 64px; text-align: center; color: var(--ds-ink-3); font-size: 12px; font-variant-numeric: tabular-nums; }
+.unified-library-overlay .unilib .unilib-preview { display: flex !important; flex-direction: column; }
+.unified-library-overlay .unilib .unilib-preview > .unilib-preview-scroll { flex: 1; min-height: 0; }
+/* 결과가 이미 보이면 「검색 결과를 불러오는 중」 띠는 숨긴다(머리줄 아래 얇은 막대만). 실패(다시 시도)는 그대로 보인다. */
+.unified-library-overlay .unilib .unilib-result-scroll:has(.unilib-result-row) .unilib-result-state:has([data-unilib-result-retry][hidden]) { display: none; }
+.unified-library-overlay .unilib .unilib-cond-toggle, .unified-library-overlay .unilib .unilib-group-open { border-radius: 7px; margin-inline: -4px; padding-inline: 4px; }
+.unified-library-overlay .unilib .unilib-cond-toggle:hover, .unified-library-overlay .unilib .unilib-group-open:hover { background: var(--ds-hover) !important; }
+/* 문항 카드: 두 칸으로 넓게, 그림은 좌우 맞춤 · 위에 붙임(시안 v8 · 사용자 「좌우맞춤이 더 중요해, 윗부분은 붙이고」). */
+@media (min-width: 768px) {
+  .unified-library-overlay .unilib:is([data-active-tab="question"], [data-active-tab="all"]) .unilib-result-list { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important; }
+  .unified-library-overlay .unilib .unilib-result-row:has([data-result-kind="crop"]) { height: auto !important; }
+  .unified-library-overlay .unilib .unilib-result-card[data-result-kind="crop"] .unilib-thumb { position: relative; height: 300px !important; min-height: 0; padding: 0; overflow: hidden; background: #fff; }
+  .unified-library-overlay .unilib .unilib-result-card[data-result-kind="crop"] .unilib-thumb img { position: absolute; inset: 0 0 auto 0 !important; width: 100% !important; height: auto !important; max-height: none; object-fit: initial !important; object-position: top; }
+}
+
+/* ── 11-05 시안 v13: PDF 칩 목록(로고 목록과 같은 모양·움직임) */
+.unified-library-overlay .unilib-kind-caret { display:inline-block; width:11px; height:11px; margin-left:2px; vertical-align:-1px; color:var(--ds-ink-3, #8b95a5); transition:transform .2s, color .2s; }
+.unified-library-overlay .unilib-kind-caret svg { display:block; width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.unified-library-overlay .is-menu-open .unilib-kind-caret { transform:rotate(180deg); color:var(--ds-ink, #e6edf3); }
+.unilib-pdf-menu { position:fixed; z-index:10060; width:236px; box-sizing:border-box; padding:6px; border:1px solid #2b3442; border-radius:12px; background:#141a23; box-shadow:0 14px 34px rgba(0,0,0,.5);
+  font:400 13px/1.35 "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; opacity:0; transform:translateY(-6px); pointer-events:none; transition:opacity .18s ease, transform .18s ease; }
+.unilib-pdf-menu.is-side { transform:translateX(-6px); }
+.unilib-pdf-menu.is-open { opacity:1; transform:none; pointer-events:auto; }
+.unilib-pdf-menu::before { content:""; position:absolute; left:0; right:0; top:-10px; height:10px; }
+.unilib-pdf-menu.is-side::before { left:-10px; top:0; bottom:0; right:auto; width:10px; height:auto; }
+.unilib-pdf-menu button { display:flex; align-items:center; gap:10px; width:100%; margin:0; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:#e6edf3; font:inherit; text-align:left; cursor:pointer; }
+.unilib-pdf-menu button:hover, .unilib-pdf-menu button:focus-visible { background:#1d2633; outline:none; }
+.unilib-pdf-menu button[aria-current="true"] { background:#1a2230; box-shadow:inset 0 0 0 1px #2f3b4d; }
+.unilib-pdf-menu-icon { flex:none; display:grid; place-items:center; width:26px; height:26px; border-radius:7px; color:#b89a55; background:color-mix(in srgb, #b89a55 16%, transparent); }
+.unilib-pdf-menu-icon svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+.unilib-pdf-menu b { display:block; font-weight:500; font-size:13px; }
+.unilib-pdf-menu small { display:block; color:#8b95a5; font-size:11.5px; }
+@media (prefers-reduced-motion:reduce) { .unilib-pdf-menu { transition:none; } }
+
+/* ── 11-05 시안 v13: 「파일로 보기」 = 파일 목록 */
+.unified-library-overlay .unilib[data-pdf-display="file"][data-active-tab="pdf"] .unilib-results { grid-template-columns:1fr !important; gap:0 !important; }
+.unified-library-overlay .unilib-file-head { list-style:none; display:grid; grid-template-columns:1fr 96px 64px; gap:12px; padding:0 14px 6px 74px; border-bottom:1px solid var(--ds-line, #232a35); color:var(--ds-ink-3, #8b95a5); font-size:11.5px; }
+.unified-library-overlay .unilib-result-row.is-file-row .unilib-result-card { display:grid !important; grid-template-columns:44px 1fr 96px 64px; align-items:center; gap:12px; min-height:0; padding:8px 14px; border:0; border-bottom:1px solid var(--ds-line, #232a35); border-radius:8px; }
+.unified-library-overlay .unilib-result-row.is-file-row .unilib-thumb { width:44px !important; height:60px !important; min-height:0 !important; aspect-ratio:auto !important; border-radius:3px; }
+.unified-library-overlay .unilib-result-row.is-file-row .unilib-thumb .unilib-thumbnail-status { font-size:0; }
+.unified-library-overlay .unilib-result-row.is-file-row .unilib-result-copy { min-width:0; display:flex !important; flex-direction:column; align-items:flex-start; gap:1px; padding:0; text-align:left; }
+.unified-library-overlay .unilib-result-row.is-file-row .library-card-page { display:block !important; }
+.unified-library-overlay .unilib-result-row.is-file-row .unilib-file-cols span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.unified-library-overlay .unilib-result-row.is-file-row .library-card-name { font-size:13.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.unified-library-overlay .unilib-result-row.is-file-row .library-card-page { color:var(--ds-ink-3, #8b95a5); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.unified-library-overlay .unilib-file-cols { display:contents; }
+.unified-library-overlay .unilib-file-cols span { color:var(--ds-ink-2, #b1bac4); font-size:12.5px; font-variant-numeric:tabular-nums; }
+
+/* ── 11-05 시안 v13: 기출 문항 ★(exam과 같은 별표) */
+.unified-library-overlay .unilib-result-row { position:relative; }
+.unified-library-overlay .unilib-star { position:absolute; top:10px; right:10px; z-index:3; display:grid; place-items:center; width:28px; height:28px; padding:0; border:0; border-radius:50%; background:rgba(13,17,23,.6); cursor:pointer; opacity:0; transition:opacity .12s, background .12s; }
+.unified-library-overlay .unilib-star svg { width:15px; height:15px; fill:none; stroke:#fff; stroke-width:1.6; stroke-linejoin:round; }
+.unified-library-overlay .unilib-result-row:hover .unilib-star, .unified-library-overlay .unilib-star:focus-visible, .unified-library-overlay .unilib-star.is-on { opacity:1; }
+.unified-library-overlay .unilib-star.is-on { background:rgba(13,17,23,.75); }
+.unified-library-overlay .unilib-star.is-on svg { fill:#b89a55; stroke:#b89a55; }
+
+/* ── 11-05 시안 v13: 문항 ○ 고르기 · 문항용 단추 */
+.unified-library-overlay .unilib-pick { position:absolute; top:10px; left:10px; z-index:3; display:grid; place-items:center; width:26px; height:26px; padding:0; border:0; border-radius:50%; background:rgba(13,17,23,.55); box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85); cursor:pointer; opacity:0; transition:opacity .12s, background .12s; }
+.unified-library-overlay .unilib-pick svg { width:14px; height:14px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:0; }
+.unified-library-overlay .unilib-pick:hover svg { opacity:.55; }
+.unified-library-overlay .unilib-result-row:hover .unilib-pick, .unified-library-overlay .unilib-pick:focus-visible, .unified-library-overlay .is-picked .unilib-pick { opacity:1; }
+.unified-library-overlay .is-picked .unilib-pick { background:#6f93c4; box-shadow:none; }
+.unified-library-overlay .is-picked .unilib-pick svg { opacity:1; }
+.unified-library-overlay .unilib-result-row.is-picked .unilib-result-card { border-color:#6f93c4 !important; box-shadow:0 0 0 2px #6f93c4 inset !important; }
+.unified-library-overlay .unilib[data-action-context="question"] .unilib-preview-foot > .unilib-actions,
+.unified-library-overlay .unilib[data-action-context="question"] .unilib-preview-foot > [data-unilib-ai-help] { display:none !important; }
+.unified-library-overlay .unilib-qpanel { display:flex; flex-direction:column; gap:8px; }
+.unified-library-overlay .unilib-qpanel[hidden] { display:none; }
+.unified-library-overlay .unilib-qsel { display:flex; align-items:center; gap:8px; min-width:0; font-size:12px; color:var(--ds-ink-3, #8b95a5); }
+.unified-library-overlay .unilib-qsel b { flex:1; min-width:0; font-weight:500; color:var(--ds-ink-2, #b1bac4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.unified-library-overlay .unilib-qlink { margin-left:auto; border:0; background:none; color:#6f93c4; font:inherit; font-size:12px; cursor:pointer; }
+.unified-library-overlay .unilib-ctxseg { display:inline-flex; gap:2px; padding:2px; border-radius:7px; background:#0a0e14; box-shadow:inset 0 0 0 1px var(--ds-line, #232a35); }
+.unified-library-overlay .unilib-ctxseg[hidden] { display:none; }
+.unified-library-overlay .unilib-ctxseg button { height:22px; padding:0 8px; border:0; border-radius:5px; background:none; color:var(--ds-ink-3, #8b95a5); font:inherit; font-size:11.5px; cursor:pointer; }
+.unified-library-overlay .unilib-ctxseg button.is-on { background:var(--ds-selected, #1b2a40); color:var(--ds-ink, #e6edf3); }
+.unified-library-overlay .unilib-qactions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.unified-library-overlay .unilib-qactions .unilib-button { display:flex; align-items:center; justify-content:center; gap:6px; height:36px; border:1px solid #30363d; border-radius:6px; background:transparent; color:#b1bac4; font-size:12.5px; font-weight:500; cursor:pointer; }
+.unified-library-overlay .unilib-qactions .unilib-button:hover:not(:disabled) { background:var(--ds-hover, #1d2633); color:var(--ds-ink, #e6edf3); }
+.unified-library-overlay .unilib-qactions .unilib-button:disabled { opacity:.45; cursor:default; }
+.unified-library-overlay .unilib-qactions svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }

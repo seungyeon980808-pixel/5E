@@ -96,6 +96,11 @@ export function initQuestionSheet(state,services,examWorkspace){
     setTimeout(async()=>{open();const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
       frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},OWN);},0);});
+  // 11-05 시안 v13: 5E 라이브러리 「문항 카드로 / 시험지에 넣기」(기출 id) — 문항 창을 열고(처음이면 다 읽힐 때까지) 「변형」 줄로 넘긴다.
+  window.addEventListener('5e:exampool-past',e=>{const ids=e.detail?.ids;if(!Array.isArray(ids)||!ids.length||entry.disabled)return;e.detail.accepted=true;
+    setTimeout(async()=>{open();const until=Date.now()+30000;
+      while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
+      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);});
   window.addEventListener('message',async e=>{
     if((!FILE_MODE&&e.origin!==location.origin)||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},OWN);

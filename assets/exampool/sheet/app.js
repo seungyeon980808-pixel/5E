@@ -1292,6 +1292,16 @@ window.addEventListener('message',e=>{if(!fromOwn(e)||e.data?.channel!=='5e-ques
   if(e.data.action==='author-progress'){authorRequests.get(e.data.requestId).progress=e.data.progress;cardEditor.refreshAi?.();return;}
   if(e.data.action==='author-ready')receiveAuthor(e.data);});
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet'||e.data.action!=='library-picked')return;const items=(e.data.items||[]).filter(x=>/^data:image\/(png|jpeg|webp);base64,/.test(x?.data||'')&&x.data.length<8*1024*1024);if(items.length){libraryPicks=[...items,...libraryPicks].slice(0,24);status(`5E 라이브러리에서 ${items.length}개를 가져왔습니다 · 근거로 연결하거나 그림 칸에 넣으세요.`);}if(e.data.reveal&&items.length)cardEditor.showPicks?.();else cardEditor.refreshLibrary?.();});
+// 11-05 시안 v13: 5E 라이브러리 「문항 카드로 / 시험지에 넣기」 — 기출 id를 받아 「변형」 줄에 넣는다(편집 가능한 한글 문항 카드가 됨).
+// 시험지에 넣기면 지금 보던 시험지에(없으면 새 시험지를 만들어) 담는다 — convertPast는 시험지 화면일 때 그 시험지에 담는다.
+window.addEventListener('message',async e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet'||e.data.action!=='library-past')return;
+  const ids=[...new Set((e.data.ids||[]).map(String))].slice(0,100);if(!ids.length)return;
+  let all;try{all=await loadPast();}catch(error){status(`기출 목록을 불러오지 못했습니다 · ${error.message}`,true);return;}
+  const items=ids.map(id=>all.find(x=>x.id===id)).filter(Boolean);if(!items.length){status('보낸 문항이 5E_exam 기출 목록에 없습니다.',true);return;}
+  if(e.data.toExam){let exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(!exam)exam=createExam();if(!exam)return;
+    show('exam',{examId:exam.id,examStep:2});status(`「${exam.title}」에 기출 ${items.length}문항을 한글 문항으로 바꿔 담는 중…`);}
+  else status(`기출 ${items.length}문항을 한글 문항 카드로 바꾸는 중…`);
+  queuePast(items,{go:!e.data.toExam});});
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.data?.channel!=='5e-question-sheet'||e.data.action!=='figure-made'||!figureRequests.has(e.data.requestId))return;void receiveFigure(e.data);});
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;
   if(m.requestId&&m.requestId===examRequest){examRequest=null;if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5E_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}

@@ -13,6 +13,8 @@ import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.7.0-four-s
 import { queryHighlightTerms } from "./pdf-library/search.js?v=1.7.0-four-session-integration";
 import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.7.0-four-session-integration";
 import { markSpaceAction, loadSpaceActionStyle } from "./library/space-action.js?v=1.7.0-four-session-integration";
+import { compareExamResults } from "./library/provider.js?v=1.7.0-four-session-integration";
+import { croppedPastImage } from "../assets/exampool/sheet/past-crop.js?v=1.7.0-four-session-integration";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
@@ -75,6 +77,17 @@ const ICONS = Object.freeze({
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>',
   file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h10l4 4v16H5zM14 2v5h5M8 12h8M8 16h8"/></svg>',
   panelLeft: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3zM7 3.5v13"/></svg>',
+  // 11-05 시안 v8(5e-design-mockups/library-1105-v8.html): 종류는 exam 상태 아이콘처럼 선 + 칠한 부분, 조건·위치는 선.
+  kindAll: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.6"/><rect x="13" y="4" width="7" height="7" rx="1.6"/><rect x="4" y="13" width="7" height="7" rx="1.6"/><rect class="f" x="13" y="13" width="7" height="7" rx="1.6"/></svg>',
+  kindQuestion: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="3.5" width="15" height="17" rx="2.2"/><circle class="f" cx="8.6" cy="8" r="1.9"/><path d="M12 8h4.5M8 12.5h8.5M8 16h5.5"/></svg>',
+  kindPdf: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 3.5h9.5l4 4v12a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z"/><path d="M15 3.5v3a1 1 0 0 0 1 1h3"/><rect class="f" x="7.5" y="10.5" width="9" height="3.2" rx=".8"/><path d="M7.5 17h6"/></svg>',
+  kindImage: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.2"/><circle class="f" cx="9" cy="9.5" r="1.8"/><path class="f" d="M4 18l5.2-4.6 3.6 3 2.8-2.3L20 18v.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/></svg>',
+  conditions: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>',
+  reset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg>',
+  provided: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4"/><text x="12" y="15.6" text-anchor="middle" font-size="8.6" font-weight="700" font-family="Georgia,serif" font-style="italic" fill="currentColor" stroke="none">5E</text></svg>',
+  cloud: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 18.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.6 9.1 4.7 4.7 0 0 0 7.5 18.5z"/></svg>',
+  laptop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="10" rx="1.5"/><path d="M3 18.5h18"/></svg>',
+  viewQuestion: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/></svg>',
   panelRight: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3zM13 3.5v13"/></svg>',
   chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>',
 });
@@ -211,7 +224,7 @@ export function normalizeYearRange(start, end, availableYears) {
   return { start: Math.min(first, last), end: Math.max(first, last) };
 }
 
-export function createSearchScheduler(run, { delay = 140, setTimer = setTimeout, clearTimer = clearTimeout } = {}) {
+export function createSearchScheduler(run, { delay = 60, setTimer = setTimeout, clearTimer = clearTimeout } = {}) {
   let composing = false;
   let timer = null;
   const cancel = () => { if (timer != null) clearTimer(timer); timer = null; };
@@ -834,29 +847,34 @@ function buildShell() {
     <section class="unilib" role="dialog" aria-modal="true" aria-labelledby="unilib-title">
       <header class="unilib-header">
         <div class="unilib-brand"><button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-folders-open aria-expanded="true" aria-label="검색 위치 접기">${ICONS.panelLeft}</button><h2 id="unilib-title">라이브러리</h2><span data-unilib-location-summary hidden>검색 위치</span></div>
-        <div class="unilib-search-row library-search-row">
-              <label class="unilib-search library-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
-              <strong class="unilib-result-count library-result-count" data-unilib-count>0개</strong>
-              <details class="unilib-help library-help" data-unilib-help><summary aria-label="검색 도움말">?</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
-        </div>
         <div class="unilib-header-actions">
-          <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기">${ICONS.close}</button>
+          <span class="unilib-global-controls" data-unilib-global-controls></span><span class="unilib-header-sep" aria-hidden="true"></span>
+          <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기" title="닫기 (Esc)">${ICONS.close}</button>
         </div>
       </header>
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
-          <div class="unilib-pane-head unilib-conditions-head"><h3>조건</h3><button type="button" class="unilib-link-button" data-unilib-conditions-clear hidden>모두 지우기</button><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <div class="unilib-folder-scroll"><section class="unilib-conditions" data-unilib-conditions aria-label="조건"></section>
-          <div class="unilib-location-head"><h3>검색 위치</h3><details class="unilib-location-add"><summary aria-label="자료 위치 추가" title="내 구글 드라이브 공유 폴더나 이 컴퓨터의 폴더를 검색 위치에 더합니다">＋ 폴더 연결</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button></div></details></div>
-          <div class="unilib-folder-loading" data-unilib-folder-loading role="status" aria-live="polite" hidden><div class="unilib-folder-loading-copy"><span class="unilib-folder-loading-spinner" aria-hidden="true"></span><div><strong data-unilib-folder-loading-title>라이브러리 폴더를 불러오는 중</strong><span data-unilib-folder-loading-detail>자료 수에 따라 잠시 걸릴 수 있습니다.</span></div></div><div class="unilib-folder-skeleton" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-pane-head unilib-conditions-head"><h3>찾기</h3><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
+          <div class="unilib-rail" data-unilib-rail><button type="button" class="unilib-rail-button" data-unilib-fly="conditions" title="문항 검색 조건">${ICONS.conditions}<b data-unilib-rail-badge="conditions" hidden></b></button><button type="button" class="unilib-rail-button" data-unilib-fly="location" title="파일 위치">${ICONS.folder}<b data-unilib-rail-badge="location" hidden></b></button></div>
+          <div class="unilib-folder-scroll"><div class="unilib-kinds" data-unilib-kinds></div>
+          <section class="unilib-box unilib-cond-box" data-unilib-box="conditions"><div class="unilib-box-head"><button type="button" class="unilib-cond-toggle" data-unilib-cond-toggle aria-expanded="false"><span class="unilib-box-icon">${ICONS.conditions}</span><strong>문항 검색 조건</strong><span class="unilib-cond-value" data-unilib-cond-value>전체</span><span class="unilib-chevron" aria-hidden="true">›</span></button><button type="button" class="unilib-icon-button unilib-cond-reset" data-unilib-conditions-clear hidden title="조건을 모두 처음대로" aria-label="조건을 모두 처음대로">${ICONS.reset}</button></div><section class="unilib-conditions" data-unilib-conditions aria-label="문항 검색 조건" hidden></section></section>
+          <section class="unilib-box unilib-loc-box" data-unilib-box="location"><div class="unilib-location-head"><span class="unilib-box-icon">${ICONS.folder}</span><h3>파일 위치</h3><details class="unilib-location-add"><summary aria-label="자료 위치 추가" title="내 구글 드라이브 공유 폴더나 이 컴퓨터의 폴더를 검색 위치에 더합니다">＋ 폴더 연결</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button></div></details></div>
+          <div class="unilib-folder-loading" data-unilib-folder-loading role="status" aria-live="polite" hidden><div class="unilib-folder-loading-copy"><span class="unilib-folder-loading-spinner" aria-hidden="true"></span><div><strong data-unilib-folder-loading-title>라이브러리 폴더를 불러오는 중</strong><span data-unilib-folder-loading-detail>자료 수에 따라 잠시 걸릴 수 있습니다.</span></div></div><div class="unilib-folder-skeleton" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></section></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
+          <div class="unilib-mid-head"><div class="unilib-search-row library-search-row">
+              <label class="unilib-search library-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
+              <strong class="unilib-result-count library-result-count" data-unilib-count>0개</strong>
+              <details class="unilib-help library-help" data-unilib-help><summary aria-label="검색 도움말">?</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
+        </div>
+            <div class="unilib-sort" role="group" aria-label="정렬"><button type="button" data-unilib-sort="score" aria-pressed="true">정확도순</button><button type="button" data-unilib-sort="recent" aria-pressed="false">최신순</button></div>
+          </div>
           <div class="unilib-search-tools library-toolbar">
             <div class="unilib-filter-row library-filter-row">
               <div class="unilib-tabs library-kind-toggle" role="group" aria-label="결과 종류">
                 <button type="button" data-unilib-type="all" aria-pressed="true">전체</button>
                 <button type="button" data-unilib-type="question" aria-pressed="false">문항</button>
-                <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF 쪽</button>
+                <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF</button>
                 <button type="button" data-unilib-type="image" aria-pressed="false">이미지</button>
               </div>
               <div class="unilib-grid-density" data-unilib-grid-density hidden></div>
@@ -875,8 +893,8 @@ function buildShell() {
           </section>
         </section>
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
-          <div class="unilib-pane-head unilib-preview-heading" hidden><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
-          <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
+          <div class="unilib-pane-head unilib-preview-heading"><div class="unilib-preview-heading-main"><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
+          <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev aria-label="이전 일치" title="이전 일치">‹</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next aria-label="다음 일치" title="다음 일치">›</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
           <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
@@ -928,12 +946,47 @@ const escapeAttr = escapeHtml;
 const LIBRARY_SUBJECTS = Object.freeze([["p1", "물리Ⅰ", "물리학Ⅰ"], ["p2", "물리Ⅱ", "물리학Ⅱ"], ["c1", "화학Ⅰ", "화학Ⅰ"], ["c2", "화학Ⅱ", "화학Ⅱ"],
   ["b1", "생명Ⅰ", "생명과학Ⅰ"], ["b2", "생명Ⅱ", "생명과학Ⅱ"], ["e1", "지구Ⅰ", "지구과학Ⅰ"], ["e2", "지구Ⅱ", "지구과학Ⅱ"]]);
 const LIBRARY_ROOT_GROUPS = Object.freeze([["provided", "5E 제공", "공용"], ["drive", "내 구글 드라이브", "공유 폴더"],
-  ["local", /Mac/iu.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || "") ? "이 맥" : "이 컴퓨터", "연결한 폴더"]]);
+  ["local", "로컬 폴더", "연결한 폴더"]]);
+const GROUP_ICONS = Object.freeze({ provided: ICONS.provided, drive: ICONS.cloud, local: ICONS.laptop });
+const KIND_ICONS = Object.freeze({ all: ICONS.kindAll, question: ICONS.kindQuestion, pdf: ICONS.kindPdf, image: ICONS.kindImage });
+// 최신순: 기출은 학년도·시험 순(provider와 같은 비교), 그 밖의 자료는 원래 순서 그대로 뒤에.
+function compareRecent(left, right) {
+  const a = left.metadata?.academicYear, b = right.metadata?.academicYear;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) return Number(Number.isInteger(b)) - Number(Number.isInteger(a));
+  return compareExamResults(left, right);
+}
 const PROVIDED_ROOT_LABELS = /^(5E 공유 자료|학력평가|과학 부품)/u;
 function libraryRootGroup(source) {
   if (source.origin === "local") return "local";
   return PROVIDED_ROOT_LABELS.test(String(source.label ?? "")) ? "provided" : "drive";
 }
+// 11-05 시안 v13: 기출 문항 별표는 5E_exam과 같은 저장 칸을 쓴다(assets/exampool/sheet/card-shared.js의 store와 같은 이름).
+const EXAM_STORE_PREFIX = `${/^\/preview(?:\/|$)/u.test(globalThis.location?.pathname || "") ? "5e.preview:" : ""}exampool-card:`;
+export function examStars() {
+  try { return JSON.parse(globalThis.localStorage?.getItem(`${EXAM_STORE_PREFIX}stars`) || "null") || {}; } catch { return {}; }
+}
+export function setExamStar(pastId, on) {
+  const stars = examStars(), key = `past:${pastId}`;
+  if (on) stars[key] = Date.now(); else delete stars[key];
+  try { globalThis.localStorage?.setItem(`${EXAM_STORE_PREFIX}stars`, JSON.stringify(stars)); } catch { return false; }
+  return true;
+}
+// 라이브러리 기출 문항 → exam 기출 id(「p1_2027_06.pdf」 13번 → 「p1_2027_06_13」). 평가원 기출 시험지 파일이 아니면 null.
+export function pastQuestionId(result) {
+  if (result?.kind !== "crop" || result.cropType !== "question") return null;
+  const file = String(result.provenance?.displayName || result.provenance?.locator || "").split(/[\\/]/u).pop();
+  const match = /^([a-z]\d?_\d{4}_\d{2})\.pdf$/iu.exec(file), no = Number(result.metadata?.itemNumber);
+  // exam 기출 목록은 평가원(6·9월 모의평가, 11월 수능)만 있다 — 학평에는 별표를 달지 않는다(exam에서 안 보이므로).
+  if (!match || !/_(06|09|11)$/u.test(match[1])) return null;
+  return Number.isInteger(no) && no > 0 ? `${match[1]}_${String(no).padStart(2, "0")}` : null;
+}
+function paintStar(button, on) {
+  button.classList.toggle("is-on", on);
+  button.setAttribute("aria-pressed", String(on));
+  button.title = on ? "별표 빼기" : "별표 — 5E_exam 「★ 별표만」에도 나옵니다";
+  button.setAttribute("aria-label", on ? "별표 빼기" : "별표");
+}
+
 export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMaterialized, sendTo, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   // 자르기 창·크롭 모음이 열렸는지를 overlay 속성으로 옮겨 둔다. CSS가 :has(...:not([hidden]))로 보면, 목록 안의 그림 칸이
@@ -986,7 +1039,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     }
   });
   const list = overlay.querySelector("[data-unilib-results]");
-  const libraryLoading = createLibraryLoading({ header: overlay.querySelector('.unilib-header'), grid: overlay.querySelector('.unilib-result-scroll') });
+  const libraryLoading = createLibraryLoading({ header: overlay.querySelector('.unilib-mid-head'), grid: overlay.querySelector('.unilib-result-scroll') });
   const query = overlay.querySelector("[data-unilib-query]");
   const stage = overlay.querySelector("[data-unilib-stage]");
   const partOptionsHost = overlay.querySelector("[data-unilib-part-options]");
@@ -1050,9 +1103,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     conditionsHost.innerHTML = `<div class="unilib-cond-sec"><span>과목</span>${conditions.subjects.size || conditions.parts.size ? '<button type="button" class="unilib-link-button" data-cond-clear="subjects">지우기</button>' : ""}</div><div class="unilib-subject-grid">${subjectsHtml}</div>${partsHtml}${yearHtml}${examHtml}${shapesHtml}`;
     if (scroller) scroller.scrollTop = top;
     if (conditionsClear) conditionsClear.hidden = !anyCondition();
+    updateConditionSummary();
   }
   async function refreshConditions(activeProvider, queryText, filters) {
-    if (typeof activeProvider?.facetCounts !== "function") { if (conditionsHost) conditionsHost.hidden = true; return; }
+    if (typeof activeProvider?.facetCounts !== "function") { const box = conditionsHost?.closest("[data-unilib-box]"); if (box) box.hidden = true; return; }
     if (!knownYears.length) knownYears = [...(activeProvider.getExamFilterOptions?.().academicYears ?? [])];
     renderConditions(activeProvider.facetCounts({ query: queryText, sourceIds: enabledSources ? [...enabledSources] : null, filters }));
   }
@@ -1121,6 +1175,224 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     foldersToggle.setAttribute("aria-label", `검색 위치 ${open ? "접기" : "펼치기"}`);
     if (!isLiteMode()) { try { storage.setItem(PANE_STORAGE_KEY, String(open)); } catch {} }
   };
+  // ── 11-05 시안 v8(5e-design-mockups/library-1105-v8.html) ──
+  // 종류 탭을 왼쪽 「찾기」 칸 맨 위 한 줄로(아이콘 + 이름 + 개수). 접힌 칸에서는 아이콘 줄로 남는다.
+  const kindsHost = overlay.querySelector("[data-unilib-kinds]"), kindTabs = overlay.querySelector(".unilib-tabs");
+  if (kindsHost && kindTabs) {
+    kindsHost.append(kindTabs);
+    kindTabs.querySelectorAll("[data-unilib-type]").forEach((button) => {
+      const type = button.dataset.unilibType, name = button.textContent.trim();
+      button.classList.add(`unilib-kind-${type}`);
+      button.title = name;
+      button.innerHTML = `<span class="unilib-kind-icon">${KIND_ICONS[type] ?? ""}</span><span class="unilib-kind-name">${name}</span>`;
+    });
+    overlay.querySelector("[data-unilib-rail]")?.prepend(...[...kindTabs.children].map((button) => {
+      const mirror = document.createElement("button");
+      mirror.type = "button"; mirror.className = `unilib-rail-button unilib-kind-${button.dataset.unilibType}`; mirror.dataset.unilibRailType = button.dataset.unilibType;
+      mirror.title = button.title; mirror.innerHTML = `<span class="unilib-kind-icon">${KIND_ICONS[button.dataset.unilibType] ?? ""}</span>`;
+      mirror.addEventListener("click", () => button.click());
+      return mirror;
+    }));
+  }
+  // 11-05 시안 v13: PDF 칩(접힌 칸에서는 아이콘)에 마우스를 올리면 「페이지로 / 파일로 보기」가 스르륵 내려온다.
+  // 로고 「5E_image ▾」 목록(app-switch-menu.js)과 같은 움직임: 0.12초 뒤 열림, 떼면 0.3초 뒤 닫힘, 눌러도 열림. 가운데 「파일·페이지」 줄은 없앤다.
+  // body 끝에 div를 더하면 「.unified-library-overlay:last-of-type」으로 라이브러리 창을 찾는 곳이 어긋난다 — 다른 태그(nav)로 둔다.
+  const pdfMenu = document.createElement("nav");
+  pdfMenu.className = "unilib-pdf-menu"; pdfMenu.setAttribute("role", "menu"); pdfMenu.setAttribute("aria-label", "PDF 보기 방식");
+  pdfMenu.innerHTML = [["page", "페이지로 보기", "쪽마다 한 장", ICONS.kindPdf], ["file", "파일로 보기", "시험지마다 한 줄", ICONS.file]]
+    .map(([mode, label, note, icon]) => `<button type="button" role="menuitem" data-unilib-pdf-pick="${mode}"><span class="unilib-pdf-menu-icon" aria-hidden="true">${icon}</span><span><b>${label}</b><small>${note}</small></span></button>`).join("");
+  document.body.append(pdfMenu);
+  let pdfMenuTimer = 0;
+  const pdfTriggers = () => [...overlay.querySelectorAll('[data-unilib-type="pdf"], [data-unilib-rail-type="pdf"]')];
+  const closePdfMenu = () => { clearTimeout(pdfMenuTimer); pdfMenu.classList.remove("is-open"); pdfTriggers().forEach((trigger) => { trigger.classList.remove("is-menu-open"); trigger.setAttribute("aria-expanded", "false"); }); };
+  const openPdfMenu = (trigger) => {
+    clearTimeout(pdfMenuTimer);
+    if (overlay.hidden || !trigger.getClientRects().length) return;
+    const pdfOnly = activeTypes.length === 1 && activeTypes[0] === "pdf";
+    pdfMenu.querySelectorAll("[data-unilib-pdf-pick]").forEach((item) => item.setAttribute("aria-current", String(pdfOnly && item.dataset.unilibPdfPick === pdfDisplayMode)));
+    const rect = trigger.getBoundingClientRect(), side = trigger.matches("[data-unilib-rail-type]");
+    pdfMenu.classList.toggle("is-side", side);
+    Object.assign(pdfMenu.style, side ? { left: `${rect.right + 8}px`, top: `${rect.top}px` } : { left: `${rect.left}px`, top: `${rect.bottom + 8}px` });
+    pdfMenu.classList.add("is-open");
+    pdfTriggers().forEach((item) => { item.classList.toggle("is-menu-open", item === trigger); item.setAttribute("aria-expanded", String(item === trigger)); });
+  };
+  pdfTriggers().forEach((trigger) => {
+    trigger.setAttribute("aria-haspopup", "menu"); trigger.setAttribute("aria-expanded", "false");
+    trigger.removeAttribute("title"); delete trigger.dataset.tip;
+    trigger.querySelector(".unilib-kind-name")?.insertAdjacentHTML("beforeend", '<i class="unilib-kind-caret" aria-hidden="true"><svg viewBox="0 0 14 14"><path d="M3.5 5.5 7 9l3.5-3.5"/></svg></i>');
+    trigger.addEventListener("mouseenter", () => { clearTimeout(pdfMenuTimer); pdfMenuTimer = setTimeout(() => openPdfMenu(trigger), 120); });
+    trigger.addEventListener("mouseleave", () => { clearTimeout(pdfMenuTimer); pdfMenuTimer = setTimeout(closePdfMenu, 300); });
+    trigger.addEventListener("click", () => requestAnimationFrame(() => openPdfMenu(trigger)));
+  });
+  pdfMenu.addEventListener("mouseenter", () => clearTimeout(pdfMenuTimer));
+  pdfMenu.addEventListener("mouseleave", () => { pdfMenuTimer = setTimeout(closePdfMenu, 300); });
+  pdfMenu.addEventListener("click", (event) => {
+    const item = event.target.closest("[data-unilib-pdf-pick]");
+    if (!item) return;
+    closePdfMenu();
+    const mode = item.dataset.unilibPdfPick;
+    if (!(activeTypes.length === 1 && activeTypes[0] === "pdf")) { pdfDisplayMode = mode; overlay.querySelector('[data-unilib-type="pdf"]')?.click(); }
+    overlay.querySelector(`[data-unilib-pdf-mode="${mode}"]`)?.click();
+  });
+  document.addEventListener("pointerdown", (event) => { if (pdfMenu.classList.contains("is-open") && !pdfMenu.contains(event.target) && !pdfTriggers().some((item) => item.contains(event.target))) closePdfMenu(); }, true);
+  // 11-05 시안 v13: 문항 카드는 누르면 보기만 하고, 왼쪽 위 ○를 눌러야 고른다(여러 개). 문항을 고르면 오른쪽 아래가 문항용 단추로 바뀐다.
+  // 시험지에 넣기 · 문항 카드로 = 5E_exam 「변형」 줄(기출 id) · 한글 페이지로 = 기존 「보내기 → 한글 시험지로」 · 그림만 자르기 = 자르기 창.
+  const pickedQuestions = new Map();
+  let actionContext = null; // 문항과 크롭된 이미지가 둘 다 있을 때 어느 쪽 단추를 보일지(사용자가 고름)
+  const Q_ICONS = {
+    sheet: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/></svg>',
+    card: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7 9.5h6M7 13h10"/></svg>',
+    hwp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h9l3.5 3.5v13a.5.5 0 0 1-.5.5H6a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"/><path d="M8.5 11h7M8.5 14h7M8.5 17h4"/></svg>',
+    crop: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/></svg>',
+  };
+  const qPanel = document.createElement("div");
+  qPanel.className = "unilib-qpanel"; qPanel.hidden = true;
+  qPanel.innerHTML = `<div class="unilib-qsel"><span>지금 고른 것</span><span class="unilib-ctxseg" data-unilib-ctxseg hidden><button type="button" data-unilib-ctx="question"></button><button type="button" data-unilib-ctx="image"></button></span><b data-unilib-qcount></b><button type="button" class="unilib-qlink" data-unilib-unpick>고르기 풀기</button></div>
+    <div class="unilib-qactions">${[["sheet", "시험지에 넣기", "5E_exam 지금 시험지에 한글 문항으로 담습니다(없으면 새 시험지)"], ["card", "문항 카드로", "5E_exam에서 편집할 수 있는 한글 문항 카드로 만듭니다"], ["hwp", "한글 페이지로", "5E_hwp 지금 쪽에 넣습니다"], ["crop", "그림만 자르기", "보고 있는 문항의 시험지를 크게 열어 그림 부분을 자릅니다"]]
+      .map(([key, label, tip]) => `<button type="button" class="unilib-button" data-unilib-qact="${key}" title="${tip}">${Q_ICONS[key]}${label}</button>`).join("")}</div>`;
+  overlay.querySelector(".unilib-preview-foot .unilib-actions")?.before(qPanel);
+  const syncQuestionPanel = () => {
+    const nq = pickedQuestions.size, ni = acceptedAssets?.size || 0;
+    const ctx = nq && ni ? (actionContext || "question") : nq ? "question" : "image";
+    root.dataset.actionContext = nq && ctx === "question" ? "question" : "image";
+    qPanel.hidden = !(nq && ctx === "question");
+    const seg = qPanel.querySelector("[data-unilib-ctxseg]");
+    seg.hidden = !(nq && ni);
+    seg.querySelector('[data-unilib-ctx="question"]').textContent = `문항 ${nq}`;
+    seg.querySelector('[data-unilib-ctx="image"]').textContent = `그림 ${ni}`;
+    seg.querySelectorAll("[data-unilib-ctx]").forEach((button) => button.classList.toggle("is-on", button.dataset.unilibCtx === ctx));
+    qPanel.querySelector("[data-unilib-qcount]").textContent = nq && ni ? "" : `문항 ${nq}개`;
+    const past = [...pickedQuestions.values()].filter((result) => pastQuestionId(result)).length;
+    const sheet = qPanel.querySelector('[data-unilib-qact="sheet"]'), card = qPanel.querySelector('[data-unilib-qact="card"]'), hwp = qPanel.querySelector('[data-unilib-qact="hwp"]');
+    sheet.disabled = !past;
+    sheet.title = past ? (past < nq ? `평가원 기출 ${past}문항만 시험지에 담습니다(학평은 5E_exam 기출 목록에 없음)` : "5E_exam 지금 시험지에 한글 문항으로 담습니다(없으면 새 시험지)") : "학평 문항은 5E_exam 기출 목록에 없어 시험지에 담을 수 없습니다 · 「문항 카드로」는 그림으로 보냅니다";
+    card.title = past === nq ? "5E_exam에서 편집할 수 있는 한글 문항 카드로 만듭니다" : "평가원 기출은 한글 문항 카드로, 학평 문항은 그림으로 「가져온 자료」에 보냅니다";
+    hwp.disabled = nq !== 1 || typeof sendTo !== "function";
+    hwp.title = nq === 1 ? "5E_hwp 지금 쪽에 넣습니다" : "한글 페이지로는 한 문항씩 보냅니다 · 하나만 고르세요";
+  };
+  const paintPicks = () => list.querySelectorAll("[data-unilib-pick]").forEach((button) => {
+    const on = pickedQuestions.has(button.dataset.unilibPick);
+    button.setAttribute("aria-pressed", String(on)); button.title = on ? "고르기 풀기" : "이 문항 고르기";
+    button.closest(".unilib-result-row")?.classList.toggle("is-picked", on);
+  });
+  const togglePick = (id) => {
+    const result = results.find((item) => item.id === id);
+    if (pickedQuestions.has(id)) pickedQuestions.delete(id); else if (result) pickedQuestions.set(id, result);
+    actionContext = "question";
+    paintPicks(); syncQuestionPanel();
+  };
+  const sendPast = (toExam) => {
+    const picked = [...pickedQuestions.values()], ids = picked.map(pastQuestionId).filter(Boolean);
+    if (!ids.length) return false;
+    const request = { ids, toExam, accepted: false };
+    window.dispatchEvent(new CustomEvent("5e:exampool-past", { detail: request }));
+    if (!request.accepted) { setStatus("5E_exam을 열 수 없습니다.", true); return false; }
+    return true;
+  };
+  qPanel.addEventListener("click", async (event) => {
+    if (event.target.closest("[data-unilib-unpick]")) { pickedQuestions.clear(); paintPicks(); syncQuestionPanel(); return; }
+    const ctxButton = event.target.closest("[data-unilib-ctx]");
+    if (ctxButton) { actionContext = ctxButton.dataset.unilibCtx; syncQuestionPanel(); return; }
+    const action = event.target.closest("[data-unilib-qact]")?.dataset.unilibQact;
+    if (!action || event.target.closest("[data-unilib-qact]").disabled) return;
+    if (action === "crop") { overlay.querySelector("[data-unilib-adjust]")?.click(); return; }
+    if (action === "hwp") {
+      const [only] = pickedQuestions.keys();
+      if (selectedId !== only) list.querySelector(`[data-result-id="${CSS.escape(only)}"]`)?.click();
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      overlay.querySelector('[data-unilib-send-to="hwp"]')?.click();
+      return;
+    }
+    const nonPast = [...pickedQuestions.values()].filter((result) => !pastQuestionId(result));
+    if (action === "card" && nonPast.length) {
+      // 학평처럼 exam 기출 목록에 없는 문항은 지금처럼 그림으로 「가져온 자료」에 보낸다.
+      for (const result of nonPast) {
+        if (selectedId !== result.id) list.querySelector(`[data-result-id="${CSS.escape(result.id)}"]`)?.click();
+        await new Promise((resolve) => requestAnimationFrame(resolve));
+        overlay.querySelector('[data-unilib-send-to="exampool"]')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
+    const sent = sendPast(action === "sheet");
+    if (sent || (action === "card" && nonPast.length)) {
+      const n = pickedQuestions.size;
+      pickedQuestions.clear(); paintPicks(); syncQuestionPanel();
+      if (sent) close();
+      setStatus(action === "sheet" ? `5E_exam 시험지에 ${n}문항을 담는 중입니다` : `5E_exam 문항 카드 ${n}개를 만드는 중입니다`);
+    }
+  });
+  // 문항 검색 조건: 머리줄 한 번으로 통째로 펴고 접는다. 접혀 있으면 지금 값만 한 줄(「물리1 외 2」).
+  const condToggle = overlay.querySelector("[data-unilib-cond-toggle]"), condValue = overlay.querySelector("[data-unilib-cond-value]");
+  let conditionsOpen = false;
+  let pendingConditions = null, warmedProvider = null;
+  const flushConditions = () => { const run = pendingConditions; pendingConditions = null; void run?.(); };
+  const setConditionsOpen = (open) => {
+    conditionsOpen = open;
+    if (conditionsHost) conditionsHost.hidden = !open;
+    condToggle?.setAttribute("aria-expanded", String(open));
+    condToggle?.closest("[data-unilib-box]")?.classList.toggle("is-open", open);
+  };
+  condToggle?.addEventListener("click", () => { setConditionsOpen(!conditionsOpen); if (conditionsOpen) flushConditions(); });
+  function updateConditionSummary() {
+    if (!condValue) return;
+    const yearSet = conditions.startYear != null || conditions.endYear != null;
+    const subjectNames = [...conditions.subjects].map((code) => LIBRARY_SUBJECTS.find(([value]) => value === code)?.[1] ?? code);
+    const shapeNames = [...conditions.shapes].map((key) => ({ figure: "그림", table: "표", bogi: "〈보기〉" })[key] ?? key);
+    const parts = [subjectNames.join("·"), yearSet ? `${conditions.startYear ?? knownYears[0] ?? ""}–${conditions.endYear ?? knownYears.at(-1) ?? ""}` : "", ({ kice: "수능·모평", hak: "학평" })[conditions.exam] ?? "", shapeNames.join("·")].filter(Boolean);
+    condValue.textContent = !parts.length ? "전체" : parts.length === 1 ? parts[0] : `${parts[0]} 외 ${parts.length - 1}`;
+    condValue.title = parts.join(" · ") || "조건 없음";
+    condValue.classList.toggle("is-set", parts.length > 0);
+    const badge = overlay.querySelector('[data-unilib-rail-badge="conditions"]');
+    if (badge) { badge.hidden = !parts.length; badge.textContent = String(parts.length); }
+  }
+  // 접힌 칸(아이콘 줄)에서 조건·파일 위치를 누르면 옆에 떠서 열린다. 칸을 펴거나 Esc·바깥을 누르면 닫힌다.
+  const setFly = (name) => {
+    if (name) root.dataset.fly = name; else delete root.dataset.fly;
+    overlay.querySelectorAll("[data-unilib-fly]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.unilibFly === name)));
+    if (name === "conditions") { setConditionsOpen(true); flushConditions(); }
+  };
+  overlay.querySelectorAll("[data-unilib-fly]").forEach((button) => button.addEventListener("click", (event) => { event.stopPropagation(); setFly(root.dataset.fly === button.dataset.unilibFly ? null : button.dataset.unilibFly); }));
+  overlay.addEventListener("pointerdown", (event) => { if (root.dataset.fly && !event.target.closest(".unilib-folders")) setFly(null); });
+  overlay.addEventListener("keydown", (event) => { if (event.key === "Escape" && root.dataset.fly) { event.stopPropagation(); setFly(null); } }, true);
+  foldersToggle.addEventListener("click", () => setFly(null));
+  // 정렬: 정확도순(검색 점수) · 최신순(학년도·시험)
+  let sortMode = "score";
+  overlay.querySelectorAll("[data-unilib-sort]").forEach((button) => button.addEventListener("click", () => {
+    if (sortMode === button.dataset.unilibSort) return;
+    sortMode = button.dataset.unilibSort;
+    overlay.querySelectorAll("[data-unilib-sort]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+    void runSearch();
+  }));
+  // 맨 위 줄 오른쪽: 5E_image 맨 위 줄의 ChatGPT·버그 신고·테마·전체화면 단추를 그대로 비춰 보이고, 누르면 그 단추를 누른다.
+  const globalHost = overlay.querySelector("[data-unilib-global-controls]");
+  const syncGlobalControls = () => {
+    if (!globalHost) return;
+    const sources = [...document.querySelectorAll(".canvas-global-controls > button")].filter((button) => !button.closest(".unified-library-overlay"));
+    globalHost.replaceChildren(...sources.map((source) => {
+      const mirror = document.createElement("button");
+      mirror.type = "button";
+      mirror.className = `unilib-icon-button unilib-global-mirror${source.classList.contains("web-account-status") ? " is-account" : ""}`;
+      mirror.innerHTML = source.innerHTML;
+      for (const name of ["title", "aria-label", "aria-pressed", "data-state"]) { const value = source.getAttribute(name); if (value != null) mirror.setAttribute(name, value); }
+      mirror.addEventListener("click", () => {
+        // AI 작업대(ChatGPT)는 라이브러리 뒤에서 열리므로 라이브러리를 먼저 닫는다.
+        if (source.classList.contains("web-account-status")) overlay.querySelector("[data-unilib-close]")?.click();
+        source.click();
+        requestAnimationFrame(syncGlobalControls);
+      });
+      return mirror;
+    }));
+    // 라이브러리 자신의 버그 신고 단추(js/bug-report.js가 닫기 앞에 붙임)는 ChatGPT 바로 뒤로.
+    const bug = overlay.querySelector(".unilib-header-actions > .bug-report-open");
+    if (bug) globalHost.querySelector(".is-account") ? globalHost.querySelector(".is-account").after(bug) : globalHost.prepend(bug);
+  };
+  new MutationObserver(() => { if (!overlay.hidden) syncGlobalControls(); }).observe(overlay, { attributes: true, attributeFilter: ["hidden"] });
+  document.addEventListener("fullscreenchange", () => { if (!overlay.hidden) syncGlobalControls(); });
+  {
+    const heading = overlay.querySelector(".unilib-preview-heading");
+    heading?.prepend(overlay.querySelector("[data-unilib-representations]"));
+    heading?.append(overlay.querySelector("[data-unilib-match-nav]"));
+  }
   const previewToggle = overlay.querySelector("[data-unilib-preview-toggle]");
   const setPreviewPaneOpen = (open) => {
     if (isLiteMode()) open = true;
@@ -1347,12 +1619,14 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     overlay.querySelectorAll("[data-unilib-type]").forEach((button) => {
       const type = button.dataset.unilibType;
       let small = button.querySelector("small");
-      if (type === "all" || totals[type] == null) { small?.remove(); return; }
+      const value = type === "all" ? (Object.keys(totals).length ? Object.values(totals).reduce((sum, n) => sum + (n ?? 0), 0) : null) : totals[type];
+      if (value == null) { small?.remove(); return; }
       if (!small) { small = document.createElement("small"); button.append(small); }
-      small.textContent = totals[type].toLocaleString("ko-KR");
+      small.textContent = value.toLocaleString("ko-KR");
     });
   };
   const groupEnabled = { provided: true, drive: true, local: true };
+  const openSourceGroups = new Set();
   const sourceTreeKey = () => JSON.stringify([[...(enabledSources || [])].sort(),[...expandedSources].sort(),[...excludedSourceGroups].sort(),desktopConnections]);
   async function renderSources(isCurrent = () => true) {
     const activeProvider = await provider();
@@ -1473,7 +1747,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       if (source.origin === "local" && desktopRootNames.has(source.label)) continue;
       const group = libraryRootGroup(source);
       const projected = projectProvider(source);
-      groupRoots[group].push({ id: source.id, checked: projected.checked || projected.indeterminate });
+      groupRoots[group].push({ id: source.id, label: visibleLibraryName(source.label), checked: projected.checked || projected.indeterminate });
       appendTreeNode(projected, groupFragments[group]);
     }
     sourceGroupRoots = groupRoots;
@@ -1485,7 +1759,11 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       head.className = "unilib-tree-group";
       head.dataset.sourceGroup = group;
       head.classList.toggle("is-off", !on);
-      head.innerHTML = `<strong>${label}</strong><small>${note}</small><button type="button" class="unilib-switch" role="switch" data-source-group-switch="${group}" aria-checked="${on}" aria-label="${label} ${on ? "끄기" : "켜기"}" title="${label} ${on ? "끄기 — 끄면 이 묶음은 검색하지 않고 파일도 불러오지 않습니다" : "켜기"}"><i></i></button>`;
+      const open = openSourceGroups.has(group), names = groupRoots[group].filter((item) => item.checked).map((item) => item.label).filter(Boolean);
+      const summary = on ? (names.join(" · ") || note) : "꺼짐 · 불러오지 않음";
+      head.classList.toggle("is-open", open);
+      head.innerHTML = `<button type="button" class="unilib-group-open" data-source-group-open="${group}" aria-expanded="${open}" title="${label} — 안의 폴더 고르기"><span class="unilib-group-icon">${GROUP_ICONS[group]}</span><span class="unilib-group-text"><strong>${label}</strong><small>${escapeHtml(summary)}</small></span><span class="unilib-chevron" aria-hidden="true">›</span></button><button type="button" class="unilib-switch" role="switch" data-source-group-switch="${group}" aria-checked="${on}" aria-label="${label} ${on ? "끄기" : "켜기"}" title="${label} ${on ? "끄기 — 끄면 이 묶음은 검색하지 않고 파일도 불러오지 않습니다" : "켜기"}"><i></i></button>`;
+      for (const item of groupFragments[group].children) item.classList.toggle("is-group-collapsed", !open);
       for (const item of groupFragments[group].children) item.classList.toggle("is-group-off", !on);
       fragment.append(head, groupFragments[group]);
     }
@@ -1575,7 +1853,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       if (changed) await renderSources(() => searchIsCurrent(ownEpoch, signal));
       const activeProvider = await provider();
       if (!enabledSources) await renderSources();
-      void refreshConditions(activeProvider, queryText, filters);
+      // 11-05: 조건 칸 숫자 세기(facetCounts)는 문항 전체를 훑어 무겁다 — 결과를 먼저 그리고, 조건 상자가 열려 있을 때만 센다.
+      pendingConditions = () => refreshConditions(activeProvider, queryText, filters);
       if (!searchIsCurrent(ownEpoch, signal)) return;
       const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
       const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: Number.MAX_SAFE_INTEGER, requestId, signal };
@@ -1604,7 +1883,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         // Explicit searches and filters still use the provider's fresh order.
         const positions = new Map(results.map((item, index) => [item.id, index]));
         found.sort((a, b) => (positions.get(a.id) ?? positions.size) - (positions.get(b.id) ?? positions.size));
-      }
+      } else if (sortMode === "recent") found.sort(compareRecent);
       // 11-05: 「전체」 탭은 종류별 묶음으로(시안) — 문항 6 · PDF 쪽 4 · 이미지 8, 묶음마다 「모두 보기 →」. 개수는 탭에도 붙는다.
       resultSections = null;
       resultTotal = null;
@@ -1643,6 +1922,13 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       const restoreCount = samePreview ? Math.max(previousRenderedCount, results.findIndex(item => item.id === selectedId) + 1) : 0;
       const restoreList = samePreview && restoreCount <= MAX_RESTORED_CARDS;
       renderResults({ initialCount: restoreList ? restoreCount : 60 });
+      if (conditionsOpen || root.dataset.fly === "conditions") setTimeout(() => { if (ownEpoch === searchEpoch) flushConditions(); }, 0);
+      // 11-05: 첫 검색어만 0.5초쯤 걸렸다(본문 글 정리·캐시를 그때 만듦). 라이브러리를 연 뒤 한가할 때 한 번 미리 데워 둔다.
+      if (warmedProvider !== activeProvider && enabledSources?.size) {
+        warmedProvider = activeProvider;
+        const warm = () => { try { void (activeProvider.searchAsync ?? activeProvider.search).call(activeProvider, { query: "자기장", kinds: ["crop"], sourceIds: [...enabledSources], filters: {}, limit: 1 }); } catch {} };
+        typeof requestIdleCallback === "function" ? requestIdleCallback(warm, { timeout: 1500 }) : setTimeout(warm, 300);
+      }
       if (restoreList) { scroller.scrollTop = previousScroll; restoreSelectionOffset(); }
       else if (!samePreview) { if (preservePreview) invalidateAction(); void renderPreview(); }
       if (searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
@@ -1683,6 +1969,13 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     scroller.scrollTop = 0;
     root.dataset.activeTab = activeTypes.length === LIBRARY_TYPES.length ? "all" : activeTypes.join("-");
     root.dataset.pdfDisplay = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
+    const fileListMode = activeTypes.length === 1 && activeTypes[0] === "pdf" && pdfDisplayMode === "file";
+    if (fileListMode && visibleResults.length) {
+      const head = document.createElement("li");
+      head.className = "unilib-file-head"; head.setAttribute("role", "presentation");
+      head.innerHTML = "<span>파일 이름</span><span>걸린 쪽</span><span>맞은 곳</span>";
+      list.append(head);
+    }
     overlay.querySelector("[data-unilib-count]").textContent = `${(resultTotal ?? visibleResults.length).toLocaleString("ko-KR")}개`;
     renderCropTray();
     const pendingThumbnails = [];
@@ -1740,6 +2033,14 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         const src = resultImage(result, materialized);
         if (!src) { thumbnailStatus(media, true); return; }
         showThumbnail(media, src, result);
+        // 11-05 시안 v8: 기출 문항 카드 그림(exam-search cards/*.webp)은 exam과 같이 문항 부분만 픽셀로 잘라 보인다(작업 스레드).
+        // 원래 그림을 먼저 보이고, 잘린 그림이 오면 바꾼다(자르는 동안 「불러오는 중」으로 기다리게 하지 않음).
+        if (result.kind === "crop" && result.cropType === "question" && /\/exam-search\/main\/cards\//u.test(src)) {
+          void croppedPastImage(src).then((cropped) => {
+            const image = media.querySelector("img");
+            if (cropped !== src && image && ownThumbnailEpoch === thumbnailEpoch && media.isConnected) image.src = cropped;
+          });
+        }
       }).catch(() => {
         if (ownThumbnailEpoch === thumbnailEpoch && media.isConnected) thumbnailStatus(media, true);
       });
@@ -1800,6 +2101,35 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       if (shouldShowResultTypeBadge(activeTypes, result.kind)) copy.append(badge);
       copy.append(disclosure, title, meta);
       button.append(media, copy);
+      if (result.kind === "crop" && result.cropType === "question") {
+        const pick = document.createElement("button");
+        pick.type = "button"; pick.className = "unilib-pick"; pick.dataset.unilibPick = result.id;
+        pick.innerHTML = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8.4 6.8 11 12 5.4"/></svg>';
+        pick.setAttribute("aria-label", "이 문항 고르기");
+        item.append(pick);
+        if (pickedQuestions.has(result.id)) { item.classList.add("is-picked"); pick.setAttribute("aria-pressed", "true"); } else pick.setAttribute("aria-pressed", "false");
+      }
+      // 11-05 시안 v13: 기출 문항 카드 오른쪽 위 ★ — 5E_exam 별표와 같은 저장 칸(stars, 열쇠 past:<기출 id>)이라 exam 「★ 별표만」에도 나온다.
+      const pastId = pastQuestionId(result);
+      if (pastId) {
+        const star = document.createElement("button");
+        star.type = "button"; star.className = "unilib-star"; star.dataset.unilibStar = pastId;
+        star.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
+        paintStar(star, Boolean(examStars()[`past:${pastId}`]));
+        item.append(star);
+      }
+      // 11-05 시안 v13 「파일로 보기」: 파인더 목록처럼 한 줄에 파일 하나 — 파일 이름 · 걸린 쪽 · 맞은 곳.
+      if (fileListMode && result.kind === "pdf") {
+        item.classList.add("is-file-row");
+        const fileName = String(result.provenance?.displayName || result.provenance?.locator || "").split(/[\\/]/u).pop();
+        if (fileName) { meta.textContent = fileName; meta.title = fileName; }
+        const pagesHit = [...new Set((result.matches || []).map((match) => match.pageNumber))];
+        const hits = (result.matches || []).reduce((sum, match) => sum + (match.highlights?.length || 0), 0);
+        const cols = document.createElement("span");
+        cols.className = "unilib-file-cols";
+        cols.innerHTML = `<span title="${pagesHit.join("·")}쪽">${pagesHit.length ? (pagesHit.length > 4 ? `${pagesHit.slice(0, 3).join("·")}쪽 외 ${pagesHit.length - 3}` : `${pagesHit.join("·")}쪽`) : (result.pageCount ? `전체 ${result.pageCount}쪽` : "—")}</span><span>${hits ? `${hits}곳` : "—"}</span>`;
+        button.append(cols);
+      }
       item.append(button);
       return item;
     };
@@ -1857,6 +2187,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   }, { passive: true });
 
   function renderCropTray() {
+    syncQuestionPanel();
     const tray = overlay.querySelector("[data-unilib-crop-tray]");
     const entries = [...acceptedAssets.values()];
     if (!entries.length) cropTrayExpanded = false;
@@ -2111,7 +2442,9 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.representation = option.id;
-      button.textContent = option.label;
+      button.innerHTML = option.id === "image" ? ICONS.kindImage : ICONS.viewQuestion;
+      button.title = option.id === "image" ? "그림만" : "문항 전체";
+      button.setAttribute("aria-label", button.title);
       button.setAttribute("aria-pressed", String(option.id === activeRepresentation || (option.id === "image" && activeRepresentation !== "full")));
       return button;
     }));
@@ -2125,14 +2458,15 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       representationHost.append(picker);
     }
     if (result?.kind === "crop" && result.cropType === "question" && imageChoices.length === 0) {
-      const notice = document.createElement("span");
-      notice.className = "unilib-crop-offer";
-      notice.textContent = "자동으로 찾은 이미지가 없습니다.";
+      // 11-05 시안 v8: 그림을 못 찾았으면 「그림만」 아이콘을 끈 채로 두고, 누르면 직접 자르기로 이어 준다.
       const cropButton = document.createElement("button");
       cropButton.type = "button";
       cropButton.dataset.unilibCropOffer = "";
-      cropButton.textContent = "이미지 직접 자르기";
-      representationHost.append(notice, cropButton);
+      cropButton.className = "is-unavailable";
+      cropButton.innerHTML = ICONS.kindImage;
+      cropButton.title = "자동으로 찾은 그림이 없습니다 — 눌러서 직접 자르기";
+      cropButton.setAttribute("aria-label", cropButton.title);
+      representationHost.append(cropButton);
     }
     const matchContext = overlay.querySelector("[data-unilib-match-context]");
     matchContext.hidden = !result?.matchContext?.snippet;
@@ -2384,6 +2718,16 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     await runSearch();
   });
   tree.addEventListener("click", async (event) => {
+    const groupOpen = event.target.closest("[data-source-group-open]");
+    if (groupOpen) {
+      event.preventDefault();
+      const group = groupOpen.dataset.sourceGroupOpen, open = !openSourceGroups.has(group);
+      open ? openSourceGroups.add(group) : openSourceGroups.delete(group);
+      groupOpen.setAttribute("aria-expanded", String(open));
+      groupOpen.closest(".unilib-tree-group")?.classList.toggle("is-open", open);
+      for (let item = groupOpen.closest(".unilib-tree-group")?.nextElementSibling; item && !item.classList.contains("unilib-tree-group"); item = item.nextElementSibling) item.classList.toggle("is-group-collapsed", !open);
+      return;
+    }
     const groupSwitch = event.target.closest("[data-source-group-switch]");
     if (groupSwitch) {
       event.preventDefault();
@@ -2466,6 +2810,17 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       requestAnimationFrame(() => keepSelectedInView(id));
     });
   });
+  list.addEventListener("click", (event) => {
+    const pick = event.target.closest("[data-unilib-pick]");
+    if (pick) { event.preventDefault(); event.stopPropagation(); togglePick(pick.dataset.unilibPick); return; }
+    const star = event.target.closest("[data-unilib-star]");
+    if (!star) return;
+    event.preventDefault(); event.stopPropagation();
+    const on = !star.classList.contains("is-on");
+    if (!setExamStar(star.dataset.unilibStar, on)) { setStatus("별표를 저장하지 못했습니다. 브라우저 저장 공간을 확인하세요.", true); return; }
+    list.querySelectorAll(`[data-unilib-star="${CSS.escape(star.dataset.unilibStar)}"]`).forEach((button) => paintStar(button, on));
+    setStatus(on ? "별표했습니다 · 5E_exam 「★ 별표만」에도 나옵니다" : "별표를 뺐습니다");
+  }, true);
   list.addEventListener('dblclick', event => {
     if (!event.target.closest('[data-result-id]')) return;
     event.preventDefault(); cancelSpacePress();
@@ -2521,6 +2876,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   const updateTypeControls = () => {
     const all = activeTypes.length === LIBRARY_TYPES.length;
     overlay.querySelectorAll("[data-unilib-type]").forEach((item) => item.setAttribute("aria-pressed", String(item.dataset.unilibType === "all" ? all : !all && activeTypes.includes(item.dataset.unilibType))));
+    overlay.querySelectorAll("[data-unilib-rail-type]").forEach((item) => item.classList.toggle("is-on", item.dataset.unilibRailType === "all" ? all : !all && activeTypes.includes(item.dataset.unilibRailType)));
     overlay.querySelector("[data-unilib-exam-filters]").hidden = !activeTypes.includes("question");
     overlay.querySelector("[data-unilib-pdf-display]").hidden = !(activeTypes.length === 1 && activeTypes[0] === "pdf");
   };
@@ -3333,7 +3689,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       void (async () => { for (const update of updates) await update(); await refreshCatalog(); })().catch(error => setStatus(`자료 갱신 실패: ${error.message}`, true));
     }
   };
-  const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭", preserveScroll = false } = {}) => {
+  const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭", preserveScroll = false, draftQuestion = false } = {}) => {
     // The stage was opened from the fast preview; swap in the original page without moving the view.
     const upgradeCropToOriginal = async (session, result, originalPage) => {
       const outcome = await originalPage;
@@ -3396,6 +3752,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       || (result.kind === "crop" ? result.variants?.content?.source?.rect || result.provenance.rect : null);
     // Existing question bounds determine the view, never an unconfirmed crop.
     draftCrop = null;
+    // 11-05 시안 v13: 문항 카드를 두 번 누르거나 Space로 크게 보면 그 문항 영역을 임시 영역으로 잡아 둔다(Enter·Space로 추가, 끌면 다시 고름).
+    if (draftQuestion && existingCrop?.length === 4) draftCrop = [...existingCrop];
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;
@@ -3491,7 +3849,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const identity = libraryResultIdentity(result);
     if (!result || (expectedIdentity && identity !== expectedIdentity)) return false;
     if (result.provenance?.provider === "pdf") {
-      return openCropEditor({ emptyDraft: true, wholePage: result.kind !== "crop", title: `${result.title || "PDF"} · ${result.provenance.pageNumber}쪽` });
+      return openCropEditor({ emptyDraft: true, wholePage: result.kind !== "crop", draftQuestion: result.kind === "crop" && result.cropType === "question", title: `${result.title || "PDF"} · ${result.provenance.pageNumber}쪽` });
     }
     if (!currentMaterialized || currentMaterializedIdentity !== identity) return false;
     const src = resultImage(result, currentMaterialized);

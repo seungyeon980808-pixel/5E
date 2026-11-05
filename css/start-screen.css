@@ -110,3 +110,6 @@ html.ss-boot body::after{content:"";position:fixed;inset:0;z-index:29999;backgro
 /* 설치형: 빈 곳을 잡고 창을 옮긴다(단추·카드·목록은 그대로 누름) */
 #start-screen.is-desktop .ss-win{-webkit-app-region:drag}
 #start-screen.is-desktop :is(button,a,input,.ss-ask,.ss-five,.ss-mean){-webkit-app-region:no-drag}
+/* 11-06: 웹 시작 창은 설치판 시작 창과 같은 크기(960×560)로 작게 띄운다 — 브라우저는 창 크기를 바꿀 수 없으니,
+   바깥은 검정으로 덮지 않고 뒤의 작업 화면이 흐리게 비치게 한다(검정 여백 없음). */
+#start-screen:not(.is-desktop){background:rgba(5,7,10,.28);-webkit-backdrop-filter:blur(18px) saturate(.9);backdrop-filter:blur(18px) saturate(.9)}

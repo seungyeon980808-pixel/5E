@@ -138,12 +138,13 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       f = await setup(browser); contexts.push(f.context); await f.open();
       assert.equal(f.state.requests.some(url => url.includes('/data/hakpyeong/')), false);
       await f.ui.locator('[data-unilib-type="question"]').click();
-      // 11-05: 과목·시험은 왼쪽 「조건」 칸(과목 바둑판·시험 단추)에서 고른다.
+      // 11-05: 과목·시험은 왼쪽 「문항 검색 조건」 상자(과목 바둑판·시험 단추)에서 고른다. 상자는 접힌 채로 시작한다(시안 v8).
+      await f.ui.locator('[data-unilib-cond-toggle]').click();
       await f.ui.locator('[data-cond-subject="p1"]').click();
       await f.ui.locator('[data-cond-exam="hak"]').click();
       await f.ui.locator('[data-unilib-query]').fill('물리1 27년 3월 학평');
       await f.ui.getByText('물리1 27년 3월 학평 1번', { exact: true }).first().waitFor({ timeout: 60000 });
-      await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor();
+      await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor({ state: 'attached' }); // 11-05 시안 v8: 개수 글은 숨기고 종류 칸 숫자로 보인다
       assert.equal(await f.ui.locator('[data-result-kind="crop"]').count(), 20);
       const shards = f.state.requests.filter(url => /\/data\/hakpyeong\/.*\.json\.gz/.test(url));
       assert.equal(shards.length, 1);
@@ -152,7 +153,7 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       f.state.metadata.release(); f.state.indexGate.release();
       await f.page.locator('.unified-library-overlay[data-search-readiness="ready"]').waitFor();
       await f.ui.getByText('물리1 27년 3월 학평 1번', { exact: true }).first().waitFor();
-      await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor();
+      await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor({ state: 'attached' }); // 11-05 시안 v8: 개수 글은 숨기고 종류 칸 숫자로 보인다
       assert.equal(await f.ui.locator('[data-result-kind="crop"]').count(), 20);
       assert.deepEqual(f.state.errors, []);
       results.push({ engine: name, case: 'hakpyeong-lazy-subject-and-late-primary-index', errors: f.state.errors });
