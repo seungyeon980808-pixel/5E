@@ -381,10 +381,26 @@ function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers, pa
   });
 }
 
+// 11-06 사용자(생명1 27년 6평 6번): 문항 영역 아래 끝이 선지 줄 가운데를 잘랐다 — 기출 문항 8,751개 중 1,437개에서 선지 글자 아래가 영역 밖으로
+// 1~2px 나갔다. 그 문항 낱말이 영역 위·아래로 조금(쪽 높이의 2% 안) 넘치면 그만큼 덮고 여유를 둔다. 멀리 떨어진 낱말은 건드리지 않는다.
+export function coverItemWords(source, words) {
+  const rect = source?.rect;
+  if (!Array.isArray(rect) || rect.length < 4 || !Array.isArray(words) || !words.length) return source;
+  const [x, y, w, h] = rect, inX = (r) => r[0] + r[2] / 2 >= x && r[0] + r[2] / 2 <= x + w;
+  const rects = words.map((word) => word.rect).filter((r) => Array.isArray(r) && r.length >= 4 && r[3] > 0 && inX(r));
+  if (!rects.length) return source;
+  const pad = 0.002, bottom = Math.max(...rects.map((r) => r[1] + r[3])), top = Math.min(...rects.map((r) => r[1]));
+  let y1 = y, y2 = y + h;
+  if (bottom > y2 && bottom - y2 < 0.02) y2 = Math.min(1, bottom + pad);
+  if (top < y1 && y1 - top < 0.02) y1 = Math.max(0, top - pad);
+  if (y1 === y && y2 === y + h) return source;
+  return { ...source, rect: Object.freeze([x, y1, w, y2 - y1]) };
+}
+
 function pdfQuestionResult(document, entry, metadata) {
   const pageNumber = entry.pageNumber;
   const itemNumber = entry.itemNumber ?? null;
-  const source = entry.source;
+  const source = coverItemWords(entry.source, entry.words);
   const code = metadata?.documentCode ?? null;
   const itemCode = code && itemNumber ? `${code}${String(itemNumber).padStart(2, "0")}` : null;
   const figures = (entry.figureCandidates ?? []).map((candidate, index) => ({
@@ -392,7 +408,7 @@ function pdfQuestionResult(document, entry, metadata) {
     label: `이미지 ${index + 1}`,
     source: candidate.source,
   }));
-  const contentSource = entry.contentSource ?? source;
+  const contentSource = entry.contentSource ? coverItemWords(entry.contentSource, entry.words) : source;
   const matchText = String(entry.text ?? entry.snippet ?? "");
   const matchRects = Object.freeze((entry.matchRects ?? []).map((rect) => Object.freeze([...rect])));
   return freezeResult({
