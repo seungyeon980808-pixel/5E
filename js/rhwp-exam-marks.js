@@ -29,7 +29,10 @@ export function marksForRuns(runs, indentOf = null) {
       const a = xs?.[i] ?? (r.w * i) / Math.max(1, text.length), b = xs?.[i + 1] ?? (r.w * (i + 1)) / Math.max(1, text.length);
       spaces.push({ x: r.x + (a + b) / 2, y: r.y, h: r.h, size: r.fontSize || r.h });
     });
-    const key = `${r.secIdx}:${r.paraIdx}:${JSON.stringify(r.cellPath || [])}`;
+    // 표 칸 글자는 paraIdx가 칸 안 문단 번호라, 표가 든 문단 번호(parentParaIdx)까지 넣어야 다른 표의 같은 칸과 섞이지 않는다(11-06: (나) 그림 칸과 〈보기〉 제목이 한 문단으로 묶여 긴 초록 선).
+    // 글자 없는 조각(그림 줄)은 내어쓰기 판단에서 뺀다 — 키 큰 그림 줄이 「줄 사이가 벌어지면 다른 문단」 판단을 무디게 했다.
+    if (!text.trim()) continue;
+    const key = `${r.secIdx}:${r.paraIdx}:${r.parentParaIdx ?? ''}:${JSON.stringify(r.cellPath || [])}`;
     let p = paras.get(key); if (!p) paras.set(key, p = []);
     p.push(r);
   }
@@ -46,19 +49,21 @@ export function marksForRuns(runs, indentOf = null) {
     const groups = [];
     for (const line of lines) { const g = groups.at(-1), prev = g?.at(-1); if (prev && line.y - prev.b <= (prev.b - prev.y) * 1.2) g.push(line); else groups.push([line]); }
     const hang = indentOf ? Number(indentOf(runs[0])) : NaN, hasText = runs.some(r => String(r.text || '').trim());
+    // 누르면 해제할 문단(11-06): 문단 모양의 내어쓰기 값이 있을 때만(글 배치로 생긴 선은 해제할 값이 없다).
+    const r0 = runs[0], para = Number.isFinite(hang) && hang < -0.5 ? { secIdx: r0.secIdx, paraIdx: r0.paraIdx, parentParaIdx: r0.parentParaIdx, controlIdx: r0.controlIdx, cellIdx: r0.cellIdx, cellParaIdx: r0.cellParaIdx, cellPath: r0.cellPath || [] } : null;
     for (const group of groups) {
-      if (inferIndent(group)) continue;
+      if (inferIndent(group, para)) continue;
       // 한 줄·짧은 문단(〈보기〉 ㄴ·ㄷ, 선지 칸)도 내어쓰기 값이 있으면 둘째 줄이 시작할 자리에 긋는다(10-27).
-      if (hasText && Number.isFinite(hang) && hang < -0.5) indents.push({ x: group[0].x - hang, top: group[0].y, bottom: group.at(-1).b });
+      if (hasText && Number.isFinite(hang) && hang < -0.5) indents.push({ x: group[0].x - hang, top: group[0].y, bottom: group.at(-1).b, ...(para ? { para } : {}) });
     }
   }
-  function inferIndent(lines) {
+  function inferIndent(lines, para = null) {
     if (lines.length < 2) return false;
     const [first, second] = lines, rest = lines.slice(1);
     // 내어쓰기: 둘째 줄부터 모두 같은 x에서 시작하고 첫 줄보다 안쪽. 가운데 정렬(줄 가운데가 같음)은 빼고.
     if (second.x <= first.x + 0.5 || rest.some(l => Math.abs(l.x - second.x) > 0.5)) return false;
     if (Math.abs((first.x + first.r) / 2 - (second.x + second.r) / 2) <= 1.5) return false;
-    indents.push({ x: second.x, top: first.y, bottom: lines.at(-1).b });
+    indents.push({ x: second.x, top: first.y, bottom: lines.at(-1).b, ...(para ? { para } : {}) });
     return true;
   }
   return { spaces, indents };
@@ -72,8 +77,8 @@ export function installMarksShortcut(doc) {
   if (!doc || keyDocs.has(doc)) return; keyDocs.add(doc);
   doc.addEventListener('keydown', event => { if (!isMarksShortcut(event)) return; event.preventDefault(); event.stopPropagation(); setMarksEnabled(!marksEnabled()); }, true);
 }
-export function installExamMarks(bridge, { onToggle } = {}) {
-  let layer = null, svg = null, frame = 0, cacheKey = '', cache = new Map(), on = marksEnabled(), disposed = false;
+export function installExamMarks(bridge, { onToggle, onIndent } = {}) {
+  let layer = null, svg = null, frame = 0, cacheKey = '', cache = new Map(), on = marksEnabled(), disposed = false, hits = [];
   const doc = () => bridge?.editor?.element?.contentDocument;
   const input = () => bridge?.input;
   function ensureLayer() {
@@ -84,6 +89,13 @@ export function installExamMarks(bridge, { onToggle } = {}) {
     Object.assign(layer.style, { position: 'fixed', pointerEvents: 'none', overflow: 'hidden', zIndex: '6', left: '0', top: '0', width: '0', height: '0' });
     svg = d.createElementNS(NS, 'svg'); Object.assign(svg.style, { position: 'absolute', left: '0', top: '0', overflow: 'visible' });
     layer.append(svg); d.body.append(layer);
+    svg.addEventListener('pointerdown', event => { const hit = event.target.closest?.('[data-mark-hit]'); if (!hit) return; event.preventDefault(); event.stopPropagation(); }, true);
+    svg.addEventListener('click', event => {
+      const hit = event.target.closest?.('[data-mark-hit]'), para = hit && hits[Number(hit.dataset.markHit)]; if (!para || !onIndent) return;
+      event.preventDefault(); event.stopPropagation();
+      const frameRect = bridge?.editor?.element?.getBoundingClientRect?.() || { left: 0, top: 0 };
+      onIndent(para, { x: frameRect.left + event.clientX, y: frameRect.top + event.clientY });
+    });
     return layer;
   }
   // 글자 조각이 속한 문단의 내어쓰기 값(화면 px, 음수=내어쓰기). 표 칸 안 문단도 같은 방식으로 읽는다.
@@ -104,7 +116,7 @@ export function installExamMarks(bridge, { onToggle } = {}) {
     frame = 0;
     if (disposed) return;
     const box = ensureLayer(); if (!box) return;
-    svg.replaceChildren();
+    svg.replaceChildren(); hits = [];
     const inp = input(), manager = inp?.viewportManager, virtual = inp?.virtualScroll, container = inp?.container;
     if (!on || !manager || !virtual || !container?.getClientRects().length) { box.hidden = true; return; }
     let handle; try { handle = bridge.wasm.borrowDocumentHandle(); } catch { box.hidden = true; return; }
@@ -126,6 +138,8 @@ export function installExamMarks(bridge, { onToggle } = {}) {
       for (const i of indents) {
         const x = Math.round(X(i.x)) + .5, y1 = Y(i.top), y2 = Y(i.bottom);
         parts.push(`<path d="M${x} ${y1}V${y2}" stroke="${GREEN}" stroke-width="1" data-mark="indent"/><path d="M${x - 3} ${y1 - 3}L${x + 3} ${y1 - 3}L${x} ${y1}Z" fill="${GREEN}"/>`);
+        // 11-06: 초록 선을 누르면 해제 메뉴(들여쓰기 해제 / 이 문항 전체 해제). 선 둘레 9px를 누를 자리로.
+        if (onIndent && i.para) { hits.push(i.para); parts.push(`<rect x="${x - 4.5}" y="${y1 - 6}" width="9" height="${Math.max(8, y2 - y1 + 6)}" fill="transparent" style="pointer-events:all;cursor:pointer" data-mark-hit="${hits.length - 1}"><title>눌러서 내어쓰기 해제</title></rect>`); }
       }
     }
     svg.setAttribute('width', String(container.clientWidth)); svg.setAttribute('height', String(container.clientHeight));

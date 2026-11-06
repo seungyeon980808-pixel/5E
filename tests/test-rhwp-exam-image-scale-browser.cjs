@@ -134,10 +134,11 @@ async function workflow(origin,browser,name,surface){
  await p.locator('#capture-confirm').click();await h.idle(p);await p.locator('[data-source-apply]').click();await h.recrop(p);
  let after=(await h.pictures(p))[0];assert.deepEqual(after.figure.link,link);assert.equal((await h.pictures(p)).length,1);near(after.props.width/after.figure.render.bounds.w,before.props.width/before.figure.render.bounds.w,'recrop preserves source output scale',.02);assert.notEqual(after.figure.render.bounds.w,before.figure.render.bounds.w);
  ref={sec:after.control.secIdx,ppi:after.control.paraIdx,ci:after.control.controlIdx,type:'image'};await shown(p,ref,name+'/'+surface+'recrop',{pixels:false});
- // Inline label commit keeps both physical dimensions and returns zoom.
+ // 11-06: 두 번 누르기 = 5E_image 편집 화면이 한글 위 창으로 — 라벨을 고쳐 반영해도 그림의 실제 크기는 그대로.
  await h.seedSourceLabel(p);
- await h.doubleClick(p);await p.locator('#exam-inline-editor:not([hidden])').waitFor();
- await p.locator('[data-inline-field="text"]').fill('scale check');await p.locator('[data-inline-field="text"]').press('Tab');await p.locator('[data-inline-action="apply"]').click();await h.idle(p);
+ await h.doubleClick(p);await p.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length);await h.idle(p);
+ await p.evaluate(async stateUrl=>{const {state}=await import(stateUrl);state.update(s=>{const label=s.objects.find(o=>o.type==='labeler');label.text='scale check';});},h.runtime(p).stateUrl);
+ await p.locator('[data-source-apply]').click();await h.recrop(p);
  const labelled=(await h.pictures(p))[0];assert.equal(labelled.props.width,after.props.width);assert.equal(labelled.props.height,after.props.height);assert.deepEqual(labelled.figure.link,link);await shown(p,ref,name+'/'+surface+'labels',{pixels:false});
  const wait=p.waitForEvent('download');await h.action(p,'save');const file=await wait,target=path.join(evidence,name+'-'+(surface?'preview':'root')+'.5e');await file.saveAs(target);await h.idle(p);
  const fresh=await browser.newContext({viewport:{width:1440,height:1000}});await guard(fresh);const q=await fresh.newPage();await h.navigate(q,origin+'/'+surface+'?mode=pro&mobile=0&exam=1',{waitUntil:'domcontentloaded'});await h.ready(q);await q.locator('#exam-project-file').setInputFiles(target);await h.idle(q);

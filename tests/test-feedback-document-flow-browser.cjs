@@ -17,8 +17,7 @@ async function observeBridge(page) {
 }
 async function openSource(page) {
   await page.locator('.exam-figure').first().click(); await h.idle(page);
-  await page.locator('[data-picture-modify]').click();
-  await page.locator('[data-exam-action="edit"]').click();
+  await h.action(page, 'edit'); // 11-06: 「수정」 → 떠오르는 편집 창 → 「5E_image에서 자세히」
   await page.locator('#exam-source-region').waitFor({ state: 'visible' }); await h.idle(page);
 }
 

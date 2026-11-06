@@ -1,3 +1,4 @@
+import { applyPictureFit, detectFitMode, nextFitMode, FIT_LABELS } from './rhwp-exam-picture-fit.js?v=1.7.0-four-session-integration';
 import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-four-session-integration';
 import { installExamModes } from './rhwp-exam-modes.js?v=1.7.0-four-session-integration';
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
@@ -108,7 +109,7 @@ export function initRhwpExamWorkspace(state, services) {
   const toolModes = installExamModes(panel, { getBridge:() => bridge, palette, message:(...args) => message(...args), run:task => run(task),
     actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), loadExam:async(bytes,title) => { if (bridge?.input) await stableSave(); await loadDocument(new Uint8Array(bytes),`${String(title||'시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`); }, openPictureSettings:anchor => openPictureSettings(anchor) });
   const nativeRegion = new ExamRegionSurface(document.body, {
-    onSettings:anchor => openPictureSettings(anchor),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
+    onSettings:anchor => openPictureSettings(anchor),onFit:() => void run(cyclePictureFit),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
   const sourceRegion = new ExamRegionSurface(document.body, {
     source:true,onChange:bounds=>updateSourceRegion(bounds),onUndo:undoSourceRegion,onError:error=>message(error.message,true),
@@ -120,7 +121,16 @@ export function initRhwpExamWorkspace(state, services) {
   applySource.addEventListener('click',()=>void run(applyEdit));
   const returnSource=document.createElement('button');returnSource.type='button';returnSource.textContent='돌아가기';
   returnSource.addEventListener('click',()=>void run(returnFromEdit));
-  bar.querySelector('.exam-region-actions').append(applySource,returnSource);
+  // 11-06 사용자: 떠 있는 편집 창에서는 바탕을 「흰 바탕 | 투명 격자」로 고를 수 있다(화면 표시만 — 그림·반영에는 안 들어감).
+  const checkerToggle=document.createElement('span');checkerToggle.className='exam-edit-bg-toggle';checkerToggle.setAttribute('role','group');checkerToggle.setAttribute('aria-label','편집 바탕');
+  checkerToggle.innerHTML='<button type="button" data-edit-bg="white" title="흰 바탕에서 고칩니다">흰 바탕</button><button type="button" data-edit-bg="checker" title="투명한 곳이 보이도록 격자 바탕에서 고칩니다">투명 격자</button>';
+  checkerToggle.addEventListener('click',event=>{const value=event.target.closest('[data-edit-bg]')?.dataset.editBg;if(!value)return;try{localStorage.setItem('5e.exam.editBackground',value);}catch{}syncCheckerToggle();});
+  function syncCheckerToggle(){let value='white';try{value=localStorage.getItem('5e.exam.editBackground')||'white';}catch{}
+    document.body.classList.toggle('exam-edit-checker',value==='checker');
+    checkerToggle.querySelectorAll('[data-edit-bg]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.editBg===value)));
+    const canvas=document.querySelector('#canvas');if(canvas&&!canvas.querySelector('#exam-edit-checker')){const ns='http://www.w3.org/2000/svg',defs=document.createElementNS(ns,'defs');
+      defs.innerHTML='<pattern id="exam-edit-checker" width="2" height="2" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#ffffff"/><rect width="1" height="1" fill="#e3e6ea"/><rect x="1" y="1" width="1" height="1" fill="#e3e6ea"/></pattern>';canvas.prepend(defs);}}
+  bar.querySelector('.exam-region-actions').append(applySource,returnSource);bar.querySelector('.exam-region-actions').before(checkerToggle);
   const pictureSettings = new PictureSettings(document.body, {
     onApply:async(layout,context)=>{if(busy)return false;setBusy(true);try{await applyLayout(layout,context);return true;}finally{setBusy(false);}},
     onError:error=>message(error.message,true),
@@ -250,7 +260,7 @@ export function initRhwpExamWorkspace(state, services) {
       // 2열 카드(10-24 시안 5): 미반영 수정은 이름 줄 오른쪽에 회색 점 + 「수정」(「미반영」은 읽기 프로그램에만).
       const detail = document.createElement('span');detail.className='exam-figure-draft';if(draft){const dot=document.createElement('i');const sr=document.createElement('em');sr.className='exam-sr';sr.textContent='미반영 ';detail.append(dot,sr,'수정');}detail.hidden=!draft;
       text.append(title,detail); button.append(image,text); button.disabled = busy || !!editing;
-      button.addEventListener('click',()=>{if(!busy){bridge.selectPicture(ref,{reveal:true});renderFigures();}});button.addEventListener('dblclick',()=>void run(()=>beginInline(figure?.id,ref)));list.append(button);
+      button.addEventListener('click',()=>{if(!busy){bridge.selectPicture(ref,{reveal:true});renderFigures();}});button.addEventListener('dblclick',()=>void run(()=>editPicture(figure?.id,ref)));list.append(button);
     }
     if (!rows.length) {
       const empty = document.createElement('p'); empty.className = 'exam-empty';
@@ -641,6 +651,7 @@ export function initRhwpExamWorkspace(state, services) {
     if(key===selectedRegionKey && nativeRegion.session){nativeRegion.position();return;}
     selectedRegionKey=key;
     nativeRegion.show({ref,id,generation:bridge.generation,bounds:null,geometry:()=>bridge.figureGeometry(ref),viewport:()=>bridge.figureViewport(ref)});
+    nativeRegion.setFitMode(pictureFitMode(id,ref));
   }
   function openPictureSettings(anchor,source=false){
     const session=source?editing:nativeRegion.session;if(!session)return;
@@ -726,16 +737,21 @@ export function initRhwpExamWorkspace(state, services) {
     nativeRegion.hide();pictureSettings.close();
     // Raster preparation overlaps the camera, but a failed/stale preparation
     // must also restore the view instead of leaving a half-open edit session.
-    const [preview,camera]=await Promise.allSettled([inlinePreview(prepared.source,shownRender.bounds,shownRender.options),bridge.focusFigure(target,{toolbarHeight:150})]);
+    // 11-06: 그림이 떠올라 따로 창에서 고치므로 문서를 확대하지 않는다(어두운 막 뒤에서 확대하던 시간을 없앰).
+    const [preview,camera]=await Promise.allSettled([inlinePreview(prepared.source,shownRender.bounds,shownRender.options),Promise.resolve(null)]);
     opening.view=camera.status==='fulfilled'?camera.value:null;
     if(preview.status==='rejected'||camera.status==='rejected'||inlineSession!==opening||opening.generation!==bridge.generation||bridge.figureId(target)!==id){
       if(inlineSession===opening)await closeInline();
       throw preview.reason || camera.reason || new Error('문서의 그림이 바뀌었습니다. 다시 선택해주세요.');
     }
     const baseUrl=preview.value;
-    inlineEditor.open({simple:true,bridge,ref:target,labels:recovery?.edited || reading.draft,bounds:shownRender.bounds,baseUrl,recovery:!!recovery,layers:getAnnotationPage(prepared.source).layers,layerId:getAnnotationPage(prepared.source).layers.find(layer=>layer.visible!==false)?.id || 1});
+    // 11-06 결정 11-05e: 두 번 누르면 다섯 도구 편집기가 그 자리에 뜬다. 그림 안에 그래프 객체가 있으면 바로 그래프 창을 연다.
+    const page0=getAnnotationPage(prepared.source),graphFigure=page0.objects.some(object=>object.type==='coordplane');
+    opening.graph=graphFigure;
+    inlineEditor.open({simple:false,graph:graphFigure,restored:!!page0.meta?.examRestoredFrom,bridge,ref:target,labels:recovery?.edited || reading.draft,bounds:shownRender.bounds,baseUrl,recovery:!!recovery,layers:page0.layers,layerId:page0.layers.find(layer=>layer.visible!==false)?.id || 1});
     inlineEditor.position();
-    message(recovery ? '보관한 라벨 초안입니다. 적용하면 원본 라벨을 이 초안으로 교체합니다.' : '라벨 내용·글꼴·글자 크기·선 굵기를 수정하세요. 라벨 추가나 위치 변경은 원본 편집에서 할 수 있습니다.');
+    message(recovery ? '보관한 라벨 초안입니다. 적용하면 원본 라벨을 이 초안으로 교체합니다.' : graphFigure ? '그래프 그림입니다. 그래프 창에서 고치고 적용하면 같은 자리에 바뀝니다.' : '그림을 그 자리에서 고칩니다 — AI 변환 · 복원 · 텍스트 · 라벨러 · 자르기. 적용하면 같은 자리·같은 크기로 바뀝니다.');
+    if(graphFigure && !recovery)await inlineAction('restore');
   }
   function queueInlineChange(labels,bounds) {
     const session=inlineSession;if(!session)return;
@@ -766,6 +782,10 @@ export function initRhwpExamWorkspace(state, services) {
     await flushInline(name==='close' || name==='original');const session=inlineSession;
     if(name==='close'){const failed=!!inlineFailure;await closeInline();scheduleSave();message(failed ? '원본 변경으로 반영하지 못한 라벨은 프로젝트의 초안으로 보관했습니다. 다시 열어 확인하세요.' : '라벨 수정은 작업 탭에 남아 있습니다.');return;}
     if(name==='original'){const {id,ref}=session;await closeInline();await beginEdit(id,ref);return;}
+    // 11-06: 복원 = AI 그래프 복원 작업대(이 그림을 원본으로). 이미 그래프 객체인 그림은 그래프 편집 창.
+    if(name==='restore')return session.graph ? inlineGraph(session) : inlineAi(session,'graph');
+    if(name==='revert')return inlineRevert(session);
+    if(name==='ai')return inlineAi(session,'image');
     if(name==='crop') {
       const page=getAnnotationPage(session.figure.source),a=page.artboard,current=session.render.bounds,content=getContentBounds(page,session.render.options,3);
       const boxes=[{x:-a.w/2,y:-a.h/2,w:a.w,h:a.h},current,...(content?[content]:[])],x=Math.min(...boxes.map(b=>b.x)),y=Math.min(...boxes.map(b=>b.y));
@@ -795,6 +815,179 @@ export function initRhwpExamWorkspace(state, services) {
     figures.set(nextId,figure);
     await closeInline();await annotationRequest('revision',figure);changed();await stableSave();
     message('같은 그림에 라벨 수정을 반영했습니다.');
+  }
+  // ── 11-06 결정 11-05e: 그 자리 편집 — 그림 원본(figure.source)을 바꿔 같은 자리·같은 폭으로 바꿔 끼운다(한글 되돌리기 한 번).
+  function figurePageSource(session){
+    const source=mergeAnnotationPatch(clone(session.figure.source),annotationsFor(session.figure.source),inlineEditor.snapshot?.() || session.baseline);
+    return {source,page:getAnnotationPage(source)};
+  }
+  function editingDraft(page,bounds){
+    // 그래프 창은 이 초안만 고친다(취소하면 아무것도 안 바뀜). 새 그래프는 보던 영역 가운데에 놓인다.
+    const layerId=page.layers?.find(layer=>layer.visible!==false)?.id || page.layers?.[0]?.id || 1;
+    const draft={objects:clone(page.objects),groups:clone(page.groups || []),layers:clone(page.layers || []),artboard:clone(page.artboard),viewBox:{x:bounds.x,y:bounds.y,w:bounds.w,h:bounds.h},
+      activeLayerId:layerId,activePageId:page.id,undoStack:[],redoStack:[],selectedIds:[],targetedId:null,activeTool:'V'};
+    return {draft,state:{get:()=>draft,update:fn=>fn(draft)}};
+  }
+  async function applyInPlaceSource(session,source,bounds,scope,note){
+    if(session.generation!==bridge.generation || bridge.figureId(session.ref)!==session.id)throw new Error('시험지의 그림이 바뀌었습니다. 다시 선택해주세요.');
+    if(figures.size>=500)throw new Error('그림 수정 이력을 500개까지 보관할 수 있습니다.');
+    if(!(bounds?.w>0 && bounds?.h>0))throw new Error('그림 영역을 찾지 못했습니다.');
+    const nextId=crypto.randomUUID(),render={...clone(session.render),bounds:clone(bounds)};delete render.layoutDraft;
+    const figure={...session.figure,id:nextId,version:session.figure.version+1,source,render,nativeCropIncluded:false,editScope:scope};
+    const page=getAnnotationPage(source);page.meta={...page.meta,examRevisionId:nextId,examRender:clone(render)};delete page.meta.examDraftRender;
+    const image=await imageFor(source,figure);
+    if((!session.detached && inlineSession!==session) || session.generation!==bridge.generation || bridge.figureId(session.ref)!==session.id)throw new Error('시험지의 그림이 바뀌었습니다. 다시 선택해주세요.');
+    // 폭과 자리는 그대로, 높이만 새 그림 비율로(같은 자리·같은 크기).
+    bridge.replaceFigure(session.id,image,nextId,session.ref);
+    figures.set(nextId,figure);
+    if(!session.detached || inlineSession)await closeInline();changed();
+    try{await stableSave();message(note);}catch(error){message(`그림을 바꿨지만 자동 저장에 실패했습니다. 작업 저장을 다시 눌러주세요. ${error.message}`,true);}
+    return figure;
+  }
+  async function figureRaster(session,source){
+    const {active}=prepareLoadedProject(clone(source));
+    await ensureEmbeddedFonts();
+    const {canvas}=await rasterizeExportCanvas({...state.get(),...active},{dpi:200,bounds:session.render.bounds,options:session.render.options || {}});
+    return {data:canvas.toDataURL('image/png'),width:canvas.width,height:canvas.height,name:`${session.figure.name || '시험지 그림'} 원본`};
+  }
+  async function inlineGraph(session){
+    await flushInline();const {source,page}=figurePageSource(session);
+    const plane=page.objects.find(object=>object.type==='coordplane');
+    const {draft,state:draftState}=editingDraft(page,session.render.bounds);
+    const before=new Set(page.objects.map(object=>object.id));
+    const reference=plane ? null : await figureRaster(session,source);
+    const {openGraphModal}=await import('./graph/graph-modal.js?v=1.7.0-four-session-integration');
+    message(plane ? '그래프 창에서 고친 뒤 「적용」을 누르면 같은 자리에 바뀝니다.' : '원본 그림을 깔고 축·곡선을 맞춘 뒤 「적용」을 누르면 이 그림이 그래프 객체로 바뀝니다.');
+    const applied=await new Promise(resolve=>{let done=false;
+      openGraphModal(plane?.id || null,'coord',{state:draftState,title:plane?'그래프 편집':'그래프로 복원',confirmLabel:'적용',...(reference?{traceReference:reference}:{}),onApply:()=>{done=true;resolve(true);},onClose:()=>{if(!done)resolve(false);}});});
+    if(!applied || inlineSession!==session){if(inlineSession===session)message('그래프 편집을 그만두었습니다.');return;}
+    let objects=draft.objects;
+    const next=clone(source),nextPage=getAnnotationPage(next);
+    if(!plane){
+      // 복원: 새로 만든 그래프 객체만 남기고, 원래 그림은 「그림으로 되돌리기」용으로 붙여 둔다.
+      const made=objects.filter(object=>!before.has(object.id));
+      if(!made.some(object=>object.type==='coordplane'))throw new Error('그래프를 만들지 못했습니다. 그래프 창에서 다시 시도하세요.');
+      nextPage.meta={...nextPage.meta,examRestoredFrom:{objects:clone(page.objects),groups:clone(page.groups || []),bounds:clone(session.render.bounds)}};
+      objects=made;nextPage.groups=clone((draft.groups || []).filter(group=>group.memberIds?.every(id=>made.some(object=>object.id===id))));
+    } else nextPage.groups=clone(draft.groups || []);
+    nextPage.objects=clone(objects);
+    const bounds=getContentBounds({...state.get(),...nextPage,objects:nextPage.objects},session.render.options || {},2);
+    return applyInPlaceSource(session,next,bounds,plane?'inline-graph':'inline-restore',plane?'그래프를 고쳐 같은 자리에 반영했습니다 · 되돌리기 ⌘Z':'그림을 그래프 객체로 복원했습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z');
+  }
+  async function inlineRevert(session){
+    await flushInline();const {source,page}=figurePageSource(session),saved=page.meta?.examRestoredFrom;
+    if(!saved)throw new Error('되돌릴 원래 그림이 없습니다.');
+    const next=clone(source),nextPage=getAnnotationPage(next);
+    nextPage.objects=clone(saved.objects);nextPage.groups=clone(saved.groups || []);
+    const meta={...nextPage.meta};delete meta.examRestoredFrom;nextPage.meta=meta;
+    return applyInPlaceSource(session,next,saved.bounds,'inline-revert','복원하기 전 그림으로 되돌렸습니다 · 되돌리기 ⌘Z');
+  }
+  async function inlineAi(session,kind='image'){
+    // 11-06: 5E_image로 넘어가지 않는다 — 한글 위에 AI 작업대(이미지 변환 / 그래프 복원)를 이 그림을 원본으로 열고,
+    // 결과를 「이 자리에 넣기」하면 같은 자리·같은 폭으로 바뀐다(applyAiInPlace). 원래 그림은 「그림으로 되돌리기」용으로 붙여 둔다.
+    await flushInline();const {id}=session,{source}=figurePageSource(session);
+    const reference=await figureRaster(session,source);
+    await closeInline();
+    window.dispatchEvent(new CustomEvent('5e:ai-open-reference',{detail:{reference:{dataUrl:reference.data,name:reference.name,sourceKind:'exam-figure'},conversionKind:kind,hwpTarget:{figureId:id,generation:bridge.generation,label:session.figure?.name || '그림'}}}));
+    message(kind==='graph' ? 'AI 그래프 복원 작업대에서 복원한 뒤 「이 자리에 넣기」를 누르면 이 그림이 그래프 객체로 바뀝니다.' : 'AI 작업대에서 다시 그린 뒤 「이 자리에 넣기」를 누르면 이 그림 자리에 같은 폭으로 바뀝니다.');
+  }
+  async function applyAiInPlace(detail){
+    const id=detail?.target?.figureId,figure=id&&figures.get(id),ref=id&&bridge?.findFigure(id);
+    if(!figure||!ref)throw new Error('바꿀 그림을 시험지에서 찾지 못했습니다. 그림을 다시 두 번 눌러 AI 작업을 여세요.');
+    if(editing||inlineSession)await closeInline();
+    const prepared=normalizeExamFigure(figure);
+    const render={...figure.render,bounds:figureBounds(figure,ref),options:figure.render?.options || {includeReferenceImages:true,excludeAllImages:false}};
+    const session={id,figure:prepared,ref,generation:bridge.generation,render,detached:true};
+    const source=clone(prepared.source),page=getAnnotationPage(source),layerId=page.layers?.find(layer=>layer.visible!==false)?.id || page.layers?.[0]?.id || 1;
+    // 원래 그림(처음 것)은 되돌리기용으로 하나만 붙여 둔다 — AI를 여러 번 거쳐도 처음 그림으로 돌아간다.
+    const restoredFrom=page.meta?.examRestoredFrom || {objects:clone(page.objects),groups:clone(page.groups || []),bounds:clone(render.bounds)};
+    let bounds;
+    if(detail.graph){
+      const objects=clone(detail.graph.objects || []).map(object=>({...object,layerId}));
+      if(!objects.some(object=>object.type==='coordplane'))throw new Error('그래프 결과가 비어 있습니다.');
+      page.objects=objects;page.groups=clone(detail.graph.groups || []);
+      bounds=getContentBounds({...state.get(),...page,objects:page.objects},render.options,2);
+    }else{
+      const {data,width,height}=detail.image || {},b=render.bounds,ratio=Number(height)/Number(width);
+      if(!String(data || '').startsWith('data:image/')||!(ratio>0))throw new Error('넣을 결과 그림을 읽지 못했습니다.');
+      const w=b.w,h=w*ratio;
+      page.objects=[{id:crypto.randomUUID(),type:'image',src:data,x:b.x,y:b.y,w,h,rotation:0,mode:'edit',opacity:1,exportable:true,aspectLocked:true,cutouts:[],layerId,order:0}];page.groups=[];
+      bounds={x:b.x,y:b.y,w,h};
+    }
+    page.meta={...page.meta,examRestoredFrom:restoredFrom};
+    return applyInPlaceSource(session,source,bounds,detail.graph?'ai-restore':'ai-image',detail.graph?'AI로 복원한 그래프를 이 자리에 넣었습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z':'AI 결과를 이 자리에 같은 폭으로 넣었습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z');
+  }
+  window.addEventListener('5e:hwp-inplace-ai',event=>{const id=event.detail?.target?.figureId;void run(async()=>{const result=await applyAiInPlace(event.detail);if(id){aiJobs.delete(id);hideAiToast(id);paintAiJobs();}return result;});});
+  // 11-06 D3~D5: 한글 그림에서 연 AI 작업은 AI 창을 닫아도(Esc·×) 뒤에서 계속 돈다.
+  // 도는 동안 문서 속 그 그림에 파란 테두리가 숨 쉬고 「● 그래프 복원 중 · 00:14」, 끝나면 초록 테두리 「복원 끝 · 눌러서 보기」와 아래 알림 [결과 보기].
+  const aiJobs=new Map(),aiLayer=document.createElement('div');aiLayer.className='exam-ai-jobs';document.body.append(aiLayer);
+  const aiToast=document.createElement('div');aiToast.className='exam-ai-toast';aiToast.hidden=true;aiToast.setAttribute('role','status');
+  aiToast.innerHTML='<span data-ai-toast-text></span><button type="button" data-ai-toast-open>결과 보기</button><button type="button" data-ai-toast-close aria-label="알림 닫기" title="닫기">×</button>';document.body.append(aiToast);
+  const aiWord=(kind,state)=>kind==='graph'?(state==='busy'?'그래프 복원 중':state==='failed'?'복원 실패':'복원 끝'):(state==='busy'?'이미지 변환 중':state==='failed'?'변환 실패':'변환 끝');
+  const clock=ms=>{const t=Math.max(0,Math.floor(ms/1000));return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
+  function openAiJob(id){const job=aiJobs.get(id);if(!job)return;hideAiToast(id);
+    if(!connectedAi?.hasHwpTask?.(job.taskId)){aiJobs.delete(id);paintAiJobs();message('이 AI 작업은 이미 닫혔습니다. 그림 단추에서 다시 시작해주세요.',true);return;}
+    void Promise.resolve(connectedAi.openHwpTask(job.taskId)).catch(error=>message(error.message || 'AI 창을 열지 못했습니다.',true));}
+  function hideAiToast(id=null){if(id===null||aiToast.dataset.figureId===id){aiToast.hidden=true;delete aiToast.dataset.figureId;}}
+  aiToast.addEventListener('click',event=>{const id=aiToast.dataset.figureId;if(event.target.closest('[data-ai-toast-close]'))hideAiToast();else if(event.target.closest('[data-ai-toast-open]')&&id)openAiJob(id);});
+  aiLayer.addEventListener('click',event=>{const id=event.target.closest('[data-ai-job]')?.dataset.aiJob;if(id&&aiJobs.get(id)?.state!=='busy')openAiJob(id);});
+  let aiFrame=0;
+  function paintAiJobs(){
+    cancelAnimationFrame(aiFrame);aiFrame=0;
+    const visible=!!bridge && !panel.hidden && aiJobs.size>0;
+    for(const node of [...aiLayer.children])if(!visible||!aiJobs.has(node.dataset.aiJob))node.remove();
+    if(!visible)return;
+    for(const [id,job] of aiJobs){
+      let node=[...aiLayer.children].find(child=>child.dataset.aiJob===id);
+      if(!node){node=document.createElement('div');node.className='exam-ai-job';node.dataset.aiJob=id;node.innerHTML='<button type="button" class="exam-ai-job-label"></button>';aiLayer.append(node);}
+      node.dataset.state=job.state;
+      let g=null,v=null;try{const ref=bridge.findFigure(id);g=ref&&bridge.figureGeometry(ref);v=ref&&bridge.figureViewport(ref);}catch{}
+      const shown=!!g&&!!v&&g.x+g.w>v.x&&g.y+g.h>v.y&&g.x<v.x+v.w&&g.y<v.y+v.h;
+      node.hidden=!shown;if(!shown)continue;
+      Object.assign(node.style,{left:`${g.x-3}px`,top:`${g.y-3}px`,width:`${g.w+6}px`,height:`${g.h+6}px`});
+      const label=node.firstElementChild,text=job.state==='busy'?`● ${aiWord(job.kind,'busy')} · ${clock(Date.now()-job.startedAt)}`:`${aiWord(job.kind,job.state)} · 눌러서 보기`;
+      if(label.textContent!==text)label.textContent=text;label.tabIndex=job.state==='busy'?-1:0;
+      label.title=job.state==='busy'?'AI 창을 닫아도 작업은 계속됩니다':'AI 창을 열어 결과를 보고 「한글 파일에 넣기」를 누르세요';
+    }
+    aiFrame=requestAnimationFrame(paintAiJobs);
+  }
+  window.addEventListener('5e:hwp-ai-task',event=>{
+    const {taskId,workState,target}=event.detail || {},id=target?.figureId;if(!id||!taskId)return;
+    const previous=aiJobs.get(id);
+    if(workState==='busy')aiJobs.set(id,{taskId,kind:target.kind,label:target.label,state:'busy',startedAt:previous?.taskId===taskId&&previous.state==='busy'?previous.startedAt:Date.now()});
+    else if(workState==='completed'||workState==='failed'){
+      if(previous?.taskId!==taskId && workState==='failed')return;
+      aiJobs.set(id,{taskId,kind:target.kind,label:target.label,state:workState,startedAt:previous?.startedAt||Date.now()});
+      // AI 창이 열려 있으면 결과가 바로 보이므로 아래 알림은 창이 닫혀 있을 때만.
+      if(!document.querySelector('#ai-image-panel:not([hidden])')){aiToast.dataset.figureId=id;aiToast.dataset.state=workState;
+        aiToast.querySelector('[data-ai-toast-text]').textContent=`${target.label || '그림'} — ${target.kind==='graph'?'AI 그래프 복원':'AI 이미지 변환'}${workState==='failed'?'에 실패했습니다':'이 끝났습니다'}`;aiToast.hidden=false;}
+    }else return;
+    paintAiJobs();
+  });
+  // 그림 단추 줄 「이미지 변환」「그래프 복원」: 등록 안 된 그림이면 먼저 등록(편집기 없이)하고, 그 그림을 원본으로 AI 창을 연다.
+  async function pictureAi(kind){
+    const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image')throw new Error('시험지에서 그림을 선택해주세요.');
+    let id=bridge.selectedFigureId();if(!id||!figures.get(id))id=(await registerPicture(ref,'register')).id;
+    const figure=figures.get(id),target=bridge.findFigure(id)||ref,prepared=normalizeExamFigure(figure);
+    const session={id,figure:prepared,ref:target,generation:bridge.generation,render:{...figure.render,bounds:figureBounds(figure,target),options:figure.render?.options || {includeReferenceImages:true,excludeAllImages:false}}};
+    const reference=await figureRaster(session,clone(prepared.source));
+    nativeRegion.hide();
+    window.dispatchEvent(new CustomEvent('5e:ai-open-reference',{detail:{reference:{dataUrl:reference.data,name:reference.name,sourceKind:'exam-figure'},conversionKind:kind,hwpTarget:{figureId:id,generation:bridge.generation,label:tabs.pageForLink(figure.link)?.name || figure.name || '그림'}}}));
+    message(kind==='graph' ? 'AI 그래프 창에서 복원한 뒤 「한글 파일에 넣기」를 누르면 이 그림 자리에 바뀝니다.' : 'AI 이미지 창에서 다시 그린 뒤 「한글 파일에 넣기」를 누르면 이 그림 자리에 바뀝니다.');
+  }
+  // 그림 맞춤 단추(좌우 → 상하 → 자유). 모드는 그림(5E에서 보낸 그림이면 그 그림 정보)에 기억하고, 기본값은 좌우 맞춤.
+  const fitModes=new Map();
+  // 아이콘은 지금 크기가 실제로 맞는 모드를 보인다(5E가 보낸 그림은 이미 좌우·상하로 맞춰 들어온다). 못 재면 기억한 모드.
+  function pictureFitMode(id,ref){const remembered=(id&&figures.get(id)?.fitMode)||fitModes.get(id||pictureKey(ref))||null;try{return detectFitMode(bridge,ref,remembered);}catch{return remembered||'width';}}
+  async function cyclePictureFit(){
+    const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image')throw new Error('시험지에서 그림을 선택해주세요.');
+    const id=bridge.selectedFigureId();let mode=nextFitMode(pictureFitMode(id,ref));
+    let result=applyPictureFit(bridge,ref,mode);
+    let skipped=false;if(result==='skip'){skipped=true;mode=nextFitMode(mode);result=applyPictureFit(bridge,ref,mode);}
+    if(id&&figures.get(id))figures.set(id,{...figures.get(id),fitMode:mode});else fitModes.set(id||pictureKey(ref),mode);
+    if(result&&result!=='skip')changed();
+    nativeRegion.setFitMode(mode);bridge.selectPicture(bridge.input.cursor.getSelectedPictureRef() || ref);
+    message(`맞춤: ${FIT_LABELS[mode]}${skipped?(ref.cellPath?.length?' — 같은 줄에 높이를 맞출 다른 그림이 없어 상하 맞춤을 건너뛰었습니다':' — 본문 그림은 높이 기준이 없어 상하 맞춤을 건너뛰었습니다'):result?'':mode==='free'?' — 크기를 직접 바꿀 수 있습니다':' — 이미 맞습니다'}`);
   }
   async function registerPicture(ref, mode = 'original') {
     if (figures.size>=500) throw new Error('그림과 수정 이력은 500개까지 보관합니다. 새 프로젝트로 나눠주세요.');
@@ -833,14 +1026,21 @@ export function initRhwpExamWorkspace(state, services) {
       return result;
     });
     figures.set(id,figure);changed();
-    if(mode === 'inline') await beginInline(id,ref);else if(mode!=='register') await beginEdit(id,ref);return figure;
+    if(mode === 'inline') await beginInline(id,ref);else if(mode!=='register') await beginEdit(id,ref,{float:mode==='float'});return figure;
   }
-  async function beginEdit(id, ref = null) {
+  // 11-06 사용자: 한글에서 그림을 고칠 때 5E_image로 넘어가지 않는다. 두 번 누르기·연필 단추는 image와 똑같은 편집 화면을
+  // 한글 위에 뜨는 창으로 연다(한글은 뒤에 어둡게). 그래프로 복원된 그림은 그래프 창이 바로 열린다(beginInline).
+  async function editPicture(id, ref = null) {
+    const figure = id && figures.get(id);
+    if (figure && getAnnotationPage(normalizeExamFigure(figure).source).objects.some(object => object.type === 'coordplane')) return beginInline(id, ref);
+    return beginEdit(id, ref, {float:true});
+  }
+  async function beginEdit(id, ref = null, {float = false} = {}) {
     if (editing) return;
     await flushInline(true);await closeInline();
     refreshFigureNames();
     const figure = figures.get(id);
-    if (!figure) {if(ref) return registerPicture(ref);throw new Error('시험지에서 편집할 그림을 선택해주세요.');}
+    if (!figure) {if(ref) return registerPicture(ref, float ? 'float' : 'original');throw new Error('시험지에서 편집할 그림을 선택해주세요.');}
     if (!bridge.findFigure(id)) throw new Error('시험지에서 이 그림을 찾지 못했습니다.');
     cancelPlacement();
     const target = ref || bridge.findFigure(id);
@@ -863,13 +1063,19 @@ export function initRhwpExamWorkspace(state, services) {
     if(draftRender)editing.figure.render=clone(draftRender);
     nativeRegion.hide();pictureSettings.close();
     editing.baseBounds=clone(editing.figure.render.bounds);
+    editing.float = float && !hwpInSeparateWindow();
+    // 떠 있는 창: 논리상으로는 늘 하던 대로 한글 칸을 숨긴 편집 상태(panel.hidden)이고, 화면에만 한글을 뒤에 어둡게 남긴다(CSS).
     panel.hidden = true;
+    if (editing.float) { panel.inert = true; document.body.classList.add('exam-float-edit'); syncCheckerToggle(); }
+    else document.body.classList.remove('exam-float-edit');
     bar.querySelector('#exam-edit-name').textContent = `${figure.name} 편집 중`;
     bar.hidden = false;syncSourceControls();
     document.body.classList.add('exam-editing');
     syncBackground();
     window.dispatchEvent(new Event('resize'));
     requestAnimationFrame(() => { if (editing) fitEditView(editing.baseBounds); });
+    // 떠 있는 창: 창 크기가 자리 잡은 뒤(두 프레임 뒤) 한 번 더 맞춘다 — 영역 상자·「문서에 반영」 줄이 창 안 그림에 붙는다.
+    if (editing.float) { const session = editing; requestAnimationFrame(() => requestAnimationFrame(() => { if (editing === session) { window.dispatchEvent(new Event('resize')); fitEditView(editing.baseBounds); syncSourceControls(); } })); }
     if (!editing.aiContext) document.querySelector('#canvas').focus({preventScroll:true});
     message('원래 작업 탭입니다. 수정한 뒤 시험지에 반영하세요.');
   }
@@ -877,6 +1083,7 @@ export function initRhwpExamWorkspace(state, services) {
     if (!editing) return;
     editing = null;
     tabs.closeAi();
+    panel.inert = false; document.body.classList.remove('exam-float-edit');
     document.body.classList.remove('exam-editing'); sourceRegion.hide();bar.hidden=true;regionInspector.hidden=true;pictureSettings.close();syncSourceCrop();
     if (!hwpInSeparateWindow()) panel.hidden = false;
     syncBackground();
@@ -1000,7 +1207,7 @@ export function initRhwpExamWorkspace(state, services) {
         if(initializing) return;
         cancelPlacement();void closeInline();endEdit();figures=new Map();projectId=crypto.randomUUID();documentGeneration=bridge.generation;nameInput.value='불러온 시험지';stamp++;
       },
-      onEdit:(id, ref) => { if (!busy) void run(() => beginInline(id, ref)); },
+      onEdit:(id, ref) => { if (!busy) void run(() => editPicture(id, ref)); },
     });
     bridge.editor.element.contentDocument.addEventListener('focusin',preserveMenuFocus,true);
     bridge.editor.element.contentDocument.addEventListener('keydown', saveShortcut, true);
@@ -1088,7 +1295,10 @@ export function initRhwpExamWorkspace(state, services) {
     'cancel-placement':() => {cancelPlacement();message('그림 보내기를 취소했습니다.');},
     'confirm-placement':confirmPlacement,
     edit:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginEdit(bridge.selectedFigureId(),ref); },
-    labels:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginInline(bridge.selectedFigureId(),ref); },
+    // 11-06 시안 A3·A4: 그림 단추 줄에서 한 번에 AI 창(이미지 변환 / 그래프 복원) — 한글 위에서, 결과는 같은 자리로.
+    'picture-ai-image':() => pictureAi('image'),
+    'picture-ai-graph':() => pictureAi('graph'),
+    labels:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return editPicture(bridge.selectedFigureId(),ref); },
     save:async () => { const blob = await stableSave(); download(blob, `${safeName(nameInput.value)}.5e`); message('작업 파일 다운로드를 시작했습니다. 그림 원본도 함께 들어 있습니다.'); },
     // 맨 위 줄 공통 되돌리기·다시 실행(세 프로그램 같은 자리): 한글 편집 기록을 되돌린다.
     undo:() => { bridge.input?.performUndo?.(); renderFigures(); },
@@ -1402,6 +1612,8 @@ export function initRhwpExamWorkspace(state, services) {
         bar.querySelector('#exam-edit-name').textContent = `${figure.name} 편집 중`;
         editing.baseBounds=clone(figure.render?.bounds);bar.hidden=false;syncSourceControls();document.body.classList.add('exam-editing');syncBackground();
         requestAnimationFrame(() => { if (editing) fitEditView(editing.baseBounds); });
+    // 떠 있는 창: 창 크기가 자리 잡은 뒤(두 프레임 뒤) 한 번 더 맞춘다 — 영역 상자·「문서에 반영」 줄이 창 안 그림에 붙는다.
+    if (editing.float) { const session = editing; requestAnimationFrame(() => requestAnimationFrame(() => { if (editing === session) { window.dispatchEvent(new Event('resize')); fitEditView(editing.baseBounds); syncSourceControls(); } })); }
         message('원래 작업 탭입니다. 수정한 뒤 시험지에 반영하세요.');
       } catch (error) {await window.fiveEDesktop.exam.finish({requestId:request.requestId,error:error.message});throw error;}
     });

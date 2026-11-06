@@ -706,3 +706,36 @@ export function questionRegion(doc, q) {
   }
   return null;
 }
+
+// 11-06 사용자: 초록 선(내어쓰기 기준점)을 눌러 안 쓸 내어쓰기를 해제한다. 글자·문단 칸의 「첫 줄: 없음」과 같은 동작(indent 0).
+// para: 초록 선이 가리키는 문단(본문 또는 표 칸). scope 'para' = 그 문단만, 'question' = 그 문단이 든 문항의 모든 문단(표 칸 안 포함).
+const paraTarget = p => ({ sec: p.secIdx ?? 0, top: p.parentParaIdx ?? p.paraIdx, cell: !!(p.cellPath?.length) });
+function paraIndentOf(wasm, p) {
+  try { const v = p.cellPath?.length ? wasm.getCellParaPropertiesAt(p.secIdx, p.parentParaIdx ?? p.paraIdx, p.controlIdx, p.cellIdx, p.cellParaIdx) : wasm.getParaPropertiesAt(p.secIdx, p.paraIdx); return Number(parse(v)?.indent); } catch { return NaN; }
+}
+function clearIndent(doc, p) {
+  const json = JSON.stringify({ indent: 0 });
+  if (p.cellPath?.length) doc.applyParaFormatInCell(p.secIdx, p.parentParaIdx ?? p.paraIdx, p.controlIdx, p.cellIdx, p.cellParaIdx, json);
+  else doc.applyParaFormat(p.secIdx, p.paraIdx, json);
+}
+export function releaseIndent(bridge, para, scope = 'para') {
+  const { doc, wasm } = requireDocument(bridge);
+  const targets = [];
+  if (scope === 'question') {
+    const { sec, top } = paraTarget(para), block = allQuestionBlocks(doc).find(b => b.sec === sec && top >= b.start && top < b.end);
+    if (!block) throw new Error('이 문단이 든 문항을 찾지 못했습니다. 「들여쓰기 해제」로 이 문단만 풀어 주세요.');
+    const seen = new Set();
+    for (let page = 0; page < doc.pageCount(); page++) {
+      let runs = []; try { runs = parse(doc.getPageTextLayout(page)).runs || []; } catch {}
+      for (const r of runs) {
+        const t = paraTarget(r); if (t.sec !== sec || t.top < block.start || t.top >= block.end) continue;
+        const key = `${r.secIdx}:${r.paraIdx}:${r.parentParaIdx}:${r.controlIdx}:${r.cellIdx}:${r.cellParaIdx}:${JSON.stringify(r.cellPath || [])}`;
+        if (seen.has(key)) continue; seen.add(key);
+        if (paraIndentOf(wasm, r) < -0.5) targets.push(r);
+      }
+    }
+  } else if (paraIndentOf(wasm, para) < -0.5) targets.push(para);
+  if (!targets.length) return 0;
+  bridge.transaction(scope === 'question' ? 'release-indent-question' : 'release-indent', () => { for (const p of targets) clearIndent(doc, p); return true; });
+  return targets.length;
+}

@@ -1435,7 +1435,11 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   let pdfMatchIndex = 0;
   let previewEpoch = 0;
   let previewLoading = null;
-  const clearPreviewLoading = () => { previewLoading?.dispose(); previewLoading = null; };
+  // 11-06 깜빡임: 카드를 바꿀 때 이전 미리보기를 바로 지우지 않는다. 새 그림이 0.4초 안에 오면 로딩 막대 없이 한 번에 바꾸고,
+  // 늦을 때만 빈 종이·로딩 막대를 띄운다(흰 종이 → 회색 종이 → 그림으로 세 번 바뀌던 것).
+  let previewLoadingTimer = 0;
+  const PREVIEW_LOADING_DELAY = 400;
+  const clearPreviewLoading = () => { clearTimeout(previewLoadingTimer); previewLoadingTimer = 0; previewLoading?.dispose(); previewLoading = null; };
   let continuousView = null;
   let thumbnailEpoch = 0;
   const thumbnailQueue = createThumbnailQueue();
@@ -2360,6 +2364,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       void renderPreview();
     });
     message.append(text, retryButton);
+    clearTimeout(previewLoadingTimer); previewLoadingTimer = 0;
     stage.replaceChildren(message);
   }
 
@@ -2367,16 +2372,25 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const ownEpoch = ++previewEpoch;
     let result = selectedResult();
     clearPreviewLoading();
+    const keepPrevious = !stage.classList.contains("is-continuous-pdf") && !!stage.querySelector(":scope > .unilib-preview-image");
     continuousView?.loading.forEach(pending => pending.dispose());
     continuousView = null;
     stage.classList.remove("is-continuous-pdf");
     stage.removeAttribute("data-visible-pdf-page");
     stage.querySelector(".unilib-preview-loading")?.remove();
+    let pendingPaper = null;
     if (result) {
-      const paper = createPreviewPaper(result);
-      stage.replaceChildren(paper);
+      pendingPaper = createPreviewPaper(result);
       const thumbnail = list.querySelector(`[data-result-id="${CSS.escape(result.id)}"] .unilib-thumb img`);
-      previewLoading = createLibraryPreviewLoading(stage, paper, thumbnail?.currentSrc || resultImage(result));
+      const thumbnailSrc = thumbnail?.currentSrc || resultImage(result);
+      const mountLoading = () => {
+        previewLoadingTimer = 0;
+        if (ownEpoch !== previewEpoch) return;
+        stage.replaceChildren(pendingPaper);
+        previewLoading = createLibraryPreviewLoading(stage, pendingPaper, thumbnailSrc);
+      };
+      if (keepPrevious) previewLoadingTimer = setTimeout(mountLoading, PREVIEW_LOADING_DELAY);
+      else mountLoading();
     }
     const pdfMatches = result?.kind === "pdf" && Array.isArray(result.matches) ? result.matches : [];
     if (pdfMatchIndex >= pdfMatches.length) pdfMatchIndex = 0;
@@ -2433,9 +2447,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (representations.length && !isValidQuestionRepresentation(result, activeRepresentation)) activeRepresentation = representations[0].id;
     if (!representations.length) activeRepresentation = result?.variants?.manual ? "manual" : "full";
     const materializeResult = resultForRepresentation(result, activeRepresentation);
-    const nextPaper = createPreviewPaper(materializeResult);
-    stage.querySelector(".unilib-preview-paper")?.replaceWith(nextPaper);
-    previewLoading?.setPaper(nextPaper);
+    // 종이를 갈아끼우지 않고 비율만 맞춘다(두 번째 교체가 깜빡임이었다).
+    if (pendingPaper) pendingPaper.style.aspectRatio = createPreviewPaper(materializeResult).style.aspectRatio || "";
     const representationHost = overlay.querySelector("[data-unilib-representations]");
     representationHost.hidden = representations.length === 0;
     representationHost.replaceChildren(...representations.map((option) => {
@@ -2550,6 +2563,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
           activeFigureRepresentation = representation;
           void renderPreview();
         });
+        clearTimeout(previewLoadingTimer); previewLoadingTimer = 0;
         stage.replaceChildren(frame);
         previewLoading?.complete(frame, image); previewLoading = null;
         stage.removeAttribute("aria-busy");

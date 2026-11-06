@@ -29,6 +29,8 @@ test('RHWP inline routed handles change rendered geometry and survive undo and p
     return {label,paths,glyph:glyph?{x:glyph.x,y:glyph.y}:null,saved:__inlineSaved};
   });
   async function drag(handle,dx,dy) {
+    // 11-06: 편집 창은 그림이 떠오르며 열린다(0.44초) — 떠오르기가 끝난 뒤 손잡이를 잡는다.
+    await page.waitForFunction(()=>{const p=document.querySelector('#inline-route-test .exam-inline-picture');return p&&p.getAnimations().length===0&&!p.style.transform;});
     const locator=host.locator(`[data-inline-handle="${handle}"]`),box=await locator.boundingBox();
     assert.ok(box,'native inline handle is visible');
     await page.evaluate(()=>{

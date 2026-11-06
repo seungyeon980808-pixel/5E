@@ -24,7 +24,7 @@ h.withServer(async origin => {
     try {
       await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
       await page.evaluate(() => localStorage.removeItem('5e.typeset.marks'));
-      await page.click('.app-switch-image [data-app-switch="exam"]');
+      await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());
       const frame = await page.waitForSelector('#exampool-sheet-workspace iframe'), sheet = await frame.contentFrame();
       await sheet.waitForSelector('.side [data-pool="drafting"]'); await sheet.waitForFunction(() => document.querySelector('#status').textContent !== '준비 중');
       const q = structuredClone(examples.questions[0]);
@@ -80,7 +80,7 @@ h.withServer(async origin => {
       await sheet.waitForFunction(() => !document.querySelector('#native-editor iframe').contentDocument.querySelector('[data-exam-marks]').hidden);
 
       // 5E_hwp: 도구 줄의 같은 단추, 같은 설정
-      await sheet.locator('.top [data-app-switch="hwp"]').click();
+      await sheet.locator('.top [data-app-switch="hwp"]').evaluate(b=>b.click());
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       if (await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode') !== 'focus') await page.locator('[data-exam-mode="focus"]').click();
       const hwpButton = page.locator('.exam-inspector [data-exam-marks]');

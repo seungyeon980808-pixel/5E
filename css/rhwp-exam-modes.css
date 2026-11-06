@@ -243,3 +243,9 @@ body { --hwp-shared-left: var(--ds-panel-left, 160px); }
   #rhwp-exam-workspace .ei-foot { padding: 8px 10px; gap: 6px; }
   #rhwp-exam-workspace .exam-left-tools .el-seg button { padding: 0 2px; font-size: 12px; }
 }
+/* 11-06: 초록 선(내어쓰기 기준점)을 누르면 뜨는 해제 메뉴. */
+#rhwp-exam-workspace .exam-pop.exam-indentpop { width: 230px; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+#rhwp-exam-workspace .exam-indentpop .exam-pop-head { padding: 4px 8px 6px; }
+#rhwp-exam-workspace .exam-indentpop button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--ds-ink, #e6edf3); text-align: left; cursor: pointer; }
+#rhwp-exam-workspace .exam-indentpop button small { color: var(--ds-ink-3, #8b95a5); font-size: 11px; }
+#rhwp-exam-workspace .exam-indentpop button:hover, #rhwp-exam-workspace .exam-indentpop button:focus-visible { background: var(--ds-hover, #1f2630); }

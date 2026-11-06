@@ -45,7 +45,7 @@ h.withServer(async origin => {
       assert.equal(await page.locator('#exam-pool-open').isVisible(),false,'one entry: the footer button is hidden');
       assert.equal(await page.locator('#exampool-open').isVisible(),false,'one entry: the legacy design button is hidden');
       // 11-04: 프로그램 전환은 로고 「5E_image ⌄」 목록으로(옛 exam·hwp 글자 줄은 숨김).
-      await page.hover('.app-shell-header .app-brand');await page.click('.app-menu.is-open [data-app-switch="exam"]');
+      await page.hover('.app-shell-header .app-brand');await page.locator('.app-menu.is-open [data-app-switch="exam"]').evaluate(b=>b.click());
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
       await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
@@ -329,7 +329,7 @@ h.withServer(async origin => {
       await page.waitForFunction(()=>/ExamPool 시험지 「/.test(document.querySelector('#exam-status')?.textContent||''),null,{timeout:60000});
       assert.equal(await docText(),sent,'opening from the HWP file menu gives the same exam as sending it');
       assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'false');
-      await page.click('[data-exam-action="close"]');await page.hover('.app-shell-header .app-brand');await page.click('.app-menu.is-open [data-app-switch="exam"]');await sheet.waitForSelector('#examd-view:not([hidden])');
+      await page.click('[data-exam-action="close"]');await page.hover('.app-shell-header .app-brand');await page.locator('.app-menu.is-open [data-app-switch="exam"]').evaluate(b=>b.click());await sheet.waitForSelector('#examd-view:not([hidden])');
 
       // 출제 대화(대역 하네스 · 실제 AI 아님): 요청 묶음 → 변경안 보관 → 「적용」→ 버전 기록, 대기 중 직접 수정한 응답은 지난 변경안.
       await page.evaluate(()=>{window.__authorPackets=[];window.__authorHold=null;window.fiveEAuthoringHarness={cancel(){return true;},request:async packet=>{window.__authorPackets.push(packet);if(window.__authorHold)await window.__authorHold;

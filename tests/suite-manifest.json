@@ -203,13 +203,13 @@
         "SCHOOL-FORM-EQUATION-LAYOUT"
       ]
     },
-{
+    {
       "path": "tests/test-preconverted-key.mjs",
       "findingIds": [
         "PRECONVERTED-ENGINE-KEY"
       ]
     },
-{
+    {
       "path": "tests/test-hancom-file.mjs",
       "findingIds": [
         "HANCOM-WORD-JOINER-MARK"
@@ -1294,6 +1294,12 @@
         "RHWP-UNAPPLIED-DRAFT-RESTORE",
         "UX-U44",
         "UX-U45"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-inplace-editor-browser.cjs",
+      "findingIds": [
+        "DECISION-11-05E-INPLACE-EDITOR"
       ]
     },
     {

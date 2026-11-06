@@ -118,33 +118,39 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
   const darkStyle=await readStateStyle(page,'#theme-toggle');
   assert.equal(darkStyle.border,neutral.border);assert.equal(darkStyle.background,neutral.background);
+  // 11-04(15a825be): 새 화면은 「좌표 고정」으로 시작한다. 이 검사는 꺼진(자유) 단추 모양부터 보므로 먼저 자유로 돌린다.
+  assert.equal(await page.locator('#center-view-btn').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'coordinate');
+  await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="free"]').click();
   assert.equal(await page.locator('#center-view-btn').getAttribute('aria-pressed'),'false');
   assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
   assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
   assert.deepEqual(await readStateStyle(page,'#center-view-btn'),neutral);
   assert.deepEqual(await readStateStyle(page,'#auto-snap-btn'),neutral);
-  for(const side of ['left','right'])assert.deepEqual(await readStateStyle(page,'#drawer-'+side+'-toggle'),neutral);
+  // 11-04(15a825be): 칸 접기 단추는 맨 위 단추줄이 아니라 칸 머리줄에 있어 머리줄 아이콘처럼 한 단계 옅다(--ds-ink-3).
+  for(const side of ['left','right'])assert.deepEqual(await readStateStyle(page,'#drawer-'+side+'-toggle'),{background:'rgba(0, 0, 0, 0)',border:'rgb(125, 133, 144)',color:'rgb(125, 133, 144)'});
   await page.screenshot({path:path.join(evidence,'main-defaults.png')});
   await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
   await page.locator('#auto-snap-btn').click();
   const selected=await readStateStyle(page,'#center-view-btn');
   assert.notEqual(selected.border,neutral.border);
   assert.deepEqual(await readStateStyle(page,'#auto-snap-btn'),selected);
+  const drawerNeutral={background:'rgba(0, 0, 0, 0)',border:'rgb(125, 133, 144)',color:'rgb(125, 133, 144)'};// 칸 머리줄 아이콘(11-04)
   for(const side of ['left','right']) {
     const selector='#drawer-'+side+'-toggle';
-    assert.deepEqual(await readStateStyle(page,selector),neutral);
-    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),
-      await page.locator('#settings-menu-btn svg').first().evaluate(el=>getComputedStyle(el).color),'Open panel uses the neutral default');
+    assert.deepEqual(await readStateStyle(page,selector),drawerNeutral);
+    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),drawerNeutral.color,'Open panel uses the panel-head default');
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='false',side);
     await page.mouse.move(1000,400);
     // 그라파이트: 접힌 패널 버튼은 면 대신 아이콘의 채운 칸이 사라지는 것으로 구별한다.
-    assert.deepEqual(await readStateStyle(page,selector),neutral);
+    // 11-04: 접히면 단추가 칸 머리줄을 떠나 가장자리에 남으므로 아이콘만 또렷하게(--ds-ink) — 면·테두리는 여전히 없다.
+    assert.deepEqual(await readStateStyle(page,selector),{background:'rgba(0, 0, 0, 0)',border:'rgba(0, 0, 0, 0)',color:'rgb(230, 237, 243)'});
     assert.equal(await page.locator(selector+' .ds-fillcol').evaluate(el=>getComputedStyle(el).opacity),'0');
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='true',side);
     await page.mouse.move(1000,400);
-    assert.deepEqual(await readStateStyle(page,selector),neutral);
+    assert.deepEqual(await readStateStyle(page,selector),drawerNeutral);
   }
   await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
   await page.mouse.move(1000,400);
@@ -159,7 +165,8 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   // 10-21: 아래 막대 「한글에 넣기」(#exam-send)는 없앴다 — 한글 문서는 맨 위 이름 줄 「hwp」로만 열고, 그림 넣기는 5E_hwp 안 「그림 화면에서 넣기」로.
   assert.equal(await page.locator('#exam-send').count(),0);
   assert.equal(await page.locator('#exam-document-menu').count(),0);
-  assert.equal(await page.locator('.app-switch-image [data-app-switch="hwp"]').isVisible(),true);
+  // 11-04: 프로그램 전환은 로고 「5E_image ▾」 목록(app-switch-menu.js)으로 — 예전 글자 줄은 숨는다.
+  assert.ok(await page.locator('.app-menu [data-app-switch="hwp"]').count()>=1);
   await page.locator('#graph-tool-open').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
   await assertWorkflowState(page,'graph-tool-open',true,selected);
   await assertOriginalAppearance(page,'#graph-modal-overlay button');

@@ -4795,8 +4795,9 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   _overlay.querySelector('#gm-style-detail').open = false;
   _lpSel = -1;                           // 라벨러 표시점 선택도 초기화(옛 인덱스가 남지 않게)
   if (_els.advPanel) { _els.advPanel.hidden = true; _els.advOpen.setAttribute('aria-expanded','false'); if (_els.advCaret) _els.advCaret.textContent = "▾"; }   // 고급 패널은 접힌 채로 시작
-  _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
-  _els.confirm.textContent = _mode === "edit" ? "적용" : "캔버스로 내보내기";
+  _els.title.textContent = editingContext?.title || (_mode === "edit" ? "그래프 편집" : "그래프 만들기");
+  // 11-06: 한글 그 자리 편집(복원)처럼 캔버스가 아닌 곳에 반영할 때는 부르는 쪽이 단추 이름을 준다.
+  _els.confirm.textContent = editingContext?.confirmLabel || (_mode === "edit" ? "적용" : "캔버스로 내보내기");
   _els.confirm.classList.add('modal-btn-primary');
   _overlay.querySelector('#gm-send-exam').hidden=!!editingContext || !document.querySelector('#rhwp-exam-workspace');
   _els.error.textContent = "";

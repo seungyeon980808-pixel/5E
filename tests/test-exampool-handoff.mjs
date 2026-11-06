@@ -38,7 +38,7 @@ test('reference bogi uses an editable centered title cutout, thin rules and dott
 test('five graph choices remain separate images in a two-column native table and paired materials stay grouped',async()=>{
  const q=structuredClone(examples.questions[2]),plan=await buildQuestionHtml(q,prep);
  assert.equal(plan.images.length,5);assert.deepEqual(plan.images,q.choices.map(c=>c.figure.data));
- assert(plan.tables.some(t=>t.rows===3&&t.cols===2));assert(plan.tables.some(t=>[1,2].includes(t.rows)&&t.cols===2));
+ /* 11-06 사용자: 그림 선지는 선지마다 「번호 칸 + 그림 칸」(선 없음) — 한 줄에 선지 둘이면 4열 */assert(plan.tables.some(t=>t.rows===3&&t.cols===4));assert(plan.tables.some(t=>[1,2].includes(t.rows)&&t.cols===2));
  for(const label of ['①','②','③','④','⑤'])assert(plan.texts.some(v=>v.startsWith(label)));
  const matrix=await buildQuestionHtml(examples.questions[1],prep);assert(matrix.tables.some(t=>t.rows===6&&t.cols===5));
 });

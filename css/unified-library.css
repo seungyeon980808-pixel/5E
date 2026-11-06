@@ -172,6 +172,8 @@
 .unilib-loading-dots > i:nth-child(5) { animation-delay:400ms; }
 @keyframes unilib-dot-wave { 0%,60%,100% { transform:translateY(0); opacity:.4; } 30% { transform:translateY(-3px); opacity:.85; } }
 .unified-library-overlay[hidden] .unilib-loading-dots > i { animation:none; }
+/* 11-06: 화면 밖 썸네일의 로딩 점은 그리지 않는다(브라우저가 건너뛰어 애니메이션도 멈춤) — 열어만 둬도 계속 다시 그리던 것 */
+.unilib-thumbnail-status .unilib-loading-dots { content-visibility:auto; contain-intrinsic-size:32px 18px; }
 .unilib-folder-loading[data-state="error"] .unilib-loading-dots { display:none; }
 .unilib-result-placeholder { padding:10px; border:1px solid var(--unilib-border-muted); border-radius:var(--unilib-control-radius); list-style:none; }
 .unilib-result-placeholder > div { aspect-ratio:4/3; background:var(--unilib-input); border-radius:3px; }
@@ -1563,9 +1565,10 @@
 .unified-library-overlay .unilib-kind-caret svg { display:block; width:11px; height:11px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .unified-library-overlay .is-menu-open .unilib-kind-caret { transform:rotate(180deg); color:var(--ds-ink, #e6edf3); }
 .unilib-pdf-menu { position:fixed; z-index:10060; width:236px; box-sizing:border-box; padding:6px; border:1px solid #2b3442; border-radius:12px; background:#141a23; box-shadow:0 14px 34px rgba(0,0,0,.5);
-  font:400 13px/1.35 "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; opacity:0; transform:translateY(-6px); pointer-events:none; transition:opacity .18s ease, transform .18s ease; }
+  font:400 13px/1.35 "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif; opacity:0; visibility:hidden; transform:translateY(-6px); pointer-events:none; transition:opacity .18s ease, transform .18s ease, visibility 0s linear .18s; }
+/* 11-06: 닫힌 메뉴는 보이지 않게(visibility) — 열린 [role=menu]로 잘못 잡혀 Esc·초점 복원을 가로채던 문제. 사라지는 동안은 그대로 흐려짐 */
 .unilib-pdf-menu.is-side { transform:translateX(-6px); }
-.unilib-pdf-menu.is-open { opacity:1; transform:none; pointer-events:auto; }
+.unilib-pdf-menu.is-open { opacity:1; visibility:visible; transform:none; pointer-events:auto; transition:opacity .18s ease, transform .18s ease, visibility 0s; }
 .unilib-pdf-menu::before { content:""; position:absolute; left:0; right:0; top:-10px; height:10px; }
 .unilib-pdf-menu.is-side::before { left:-10px; top:0; bottom:0; right:auto; width:10px; height:auto; }
 .unilib-pdf-menu button { display:flex; align-items:center; gap:10px; width:100%; margin:0; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:#e6edf3; font:inherit; text-align:left; cursor:pointer; }

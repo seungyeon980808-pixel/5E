@@ -1465,7 +1465,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // 라벨 변환 작업은 단계 신호를 보낸다. 라벨 복원과 이미지만은 단계 구성이 다르다.
       if (phase === 'generating' && pendingLoading?.token === requestToken) loading.begin(currentRunInput?.loadingPlan ? { ...pendingLoading, plan: currentRunInput.loadingPlan, phased: true } : pendingLoading);
       if (phase === 'validating') { loading.setPhase('결과 확인 중'); loading.stage('validating'); }
-      if (phase === 'completed' && pendingLoading?.token === requestToken && (panel.hidden || panel.inert) && conversionKind !== 'graph') {
+      if (phase === 'completed' && pendingLoading?.token === requestToken && (panel.hidden || panel.inert) && conversionKind !== 'graph' && !hwpInPlaceTargets.has(activeTaskTabId)) {
         const tookMs = Date.now() - pendingLoading.startedAt;
         showDoneNotice({ title: '그림 변환이 끝났어요', detail: `${Math.floor(tookMs / 60000)}:${String(Math.floor(tookMs / 1000) % 60).padStart(2, '0')} 걸림`, onOpen: () => showWorkbench() });
       }
@@ -2542,7 +2542,22 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (copy) copy.disabled = outputBusy || !item || Boolean(item.sceneResult && !item.graphResult) || copy.dataset.copyPending === 'true';
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const examSend = panel.querySelector('[data-ai-exam-send]');
-    if (examSend) examSend.disabled = outputBusy || !item;
+    if (examSend) {
+      examSend.disabled = outputBusy || !item;
+      const inPlace = hwpInPlaceTargets.has(activeTaskTabId);
+      // 11-06: 한글 그림 편집에서 연 작업은 고친 뒤 바로 한글로 — 보내기 단추는 「클립보드로 복사」「한글 파일에 넣기」 두 개만.
+      panel.dataset.aiHwpInPlace = String(inPlace);
+      // D1: 한글에서 연 AI 창은 전환 줄 없이 제목만 — 「AI 이미지 / AI 그래프 · 한글 n번 그림에서 엶」.
+      const title = panel.querySelector('#ai-image-title');
+      if (title) {
+        if (!title.dataset.defaultTitle) title.dataset.defaultTitle = title.textContent;
+        const target = hwpInPlaceTargets.get(activeTaskTabId);
+        title.textContent = inPlace ? `${target?.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target?.label || '그림'}에서 엶` : title.dataset.defaultTitle;
+      }
+      if (copy) copy.textContent = inPlace ? '클립보드로 복사' : '이미지 복사';
+      examSend.textContent = inPlace ? '한글 파일에 넣기' : '한글로 보내기';
+      examSend.title = inPlace ? '고른 결과를 한글 시험지의 원래 그림 자리에 같은 폭으로 넣습니다(원래 그림은 「그림으로 되돌리기」로 돌아갈 수 있음).' : '현재 선택한 결과의 영역을 확인해 한글 문서에 넣습니다. 작업별 연결을 보존합니다.';
+    }
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
     const groups = panel.querySelector('[data-ai-editable-groups]');
     const recovery = panel.querySelector('[data-ai-separated-recovery]');
@@ -3135,6 +3150,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (done) {
           const owner = taskTabs.get(ownerTaskId);
           owner.workState = 'completed'; owner.inFlightRequest = null; owner.retryRequest = null;
+          try { notifyHwpTask(ownerTaskId, 'completed'); } catch {}
           markTaskResult(owner, generatedImages.at(-1));
           await taskPersistence.checkpoint();
           requestPhase('completed'); renderTaskTabs();
@@ -3468,6 +3484,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (workState === 'failed' && tab.generationNotice === 'review') workState = 'completed';
     if (tab.workState === workState) { renderTaskTabs(); return; }
     tab.workState = workState;
+    try { notifyHwpTask(activeTaskTabId, workState); } catch {}
     if (workState === 'completed' && currentTurnType === 'image') {
       captureActiveTaskTab();
       markResultReady(tab, currentTurnCandidate || generatedImages.at(-1));
@@ -4675,7 +4692,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   };
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); }, { signal: lifecycle.signal });
-  const open = async ({ reference, references = [], prompt, examBriefProfile, startGeneration = false, placement = "separate", groups = null, reveal = true, taskId = null, candidateId = null, conversionKind:kind, acknowledge = false } = {}) => {
+  // 11-06: 한글 그림 편집 창에서 연 작업(AI 변환·복원)은 결과를 그 그림 자리로 돌려보낸다 — 작업 탭 id → 한글 그림.
+  const hwpInPlaceTargets = new Map();
+  // 11-06 D3~D5: 한글 그림에서 연 AI 작업은 창을 닫아도 계속 돈다. 상태가 바뀔 때마다 한글 칸에 알린다(그림 테두리·시간·끝 알림).
+  function notifyHwpTask(taskId, workState) {
+    const target = hwpInPlaceTargets.get(taskId);
+    if (!target) return;
+    window.dispatchEvent(new CustomEvent('5e:hwp-ai-task', { detail: { taskId, workState, target: structuredClone(target) } }));
+  }
+  const open = async ({ reference, references = [], prompt, examBriefProfile, startGeneration = false, placement = "separate", groups = null, reveal = true, taskId = null, candidateId = null, conversionKind:kind, acknowledge = false, hwpTarget = null } = {}) => {
     await workspaceReady;
     if (!activeTaskTabId && isCreationWorkflow(conversionKind)) createTaskTab();
     syncLiteModeUi();
@@ -4729,6 +4754,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         .filter((result) => result.status === "fulfilled")
         .map((result) => result.value.source);
       addReferencesAsTasks(readyReferences, { prompt, placement, groups, kind:kind || conversionKind });
+      if (hwpTarget && activeTaskTabId && readyReferences.length) { hwpInPlaceTargets.set(activeTaskTabId, { ...structuredClone(hwpTarget), kind: kind === 'graph' ? 'graph' : 'image' }); syncSelectedOutputActions(); notifyHwpTask(activeTaskTabId, taskTabs.get(activeTaskTabId)?.workState || 'idle'); }
       const loadedCount = readyReferences.length;
       if (!referenceLimitStatus()) setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${placement === "together" ? 1 : loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }
@@ -6821,6 +6847,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   panel.querySelector('[data-ai-exam-send]')?.addEventListener('click', () => {
     const item = selectedOutputItem();
     if (busy || !item) return;
+    const target = hwpInPlaceTargets.get(activeTaskTabId);
+    if (target) {
+      // 한글 그림 편집 창에서 연 작업: 5E_image를 거치지 않고 그 그림 자리로 바로 바꿔 넣는다.
+      const detail = { target, name: item.name || 'AI 결과', ...(item.graphResult ? { graph: structuredClone(item.graphResult) } : { image: { data: item.data, width: item.width, height: item.height } }) };
+      if (!detail.graph && !String(detail.image.data || '').startsWith('data:image/')) { setStatus('넣을 결과 그림을 찾지 못했습니다.', 'error'); return; }
+      hwpInPlaceTargets.delete(activeTaskTabId); syncSelectedOutputActions();
+      close();
+      window.dispatchEvent(new CustomEvent('5e:hwp-inplace-ai', { detail }));
+      return;
+    }
     window.dispatchEvent(new CustomEvent('5e:exam-send-ai', {detail:{scope:clientScope || '',taskId:activeTaskTabId}}));
   });
   const reviewDraftButton = document.createElement('button');
@@ -7107,6 +7143,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }
 
   return {
+    // 11-06 D5: 한글 그림 위 「끝 · 눌러서 보기」·알림 [결과 보기] — 그 작업 탭을 다시 연다.
+    openHwpTask: taskId => taskTabs.has(taskId) ? open({ taskId }) : null,
+    hasHwpTask: taskId => hwpInPlaceTargets.has(taskId) && taskTabs.has(taskId),
     deleteTask,
     taskVisibleImage: async id => {
       if (id === activeTaskTabId) captureActiveTaskTab();

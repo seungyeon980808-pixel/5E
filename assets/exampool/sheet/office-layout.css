@@ -15,6 +15,8 @@
 .cv-right{container:rpane/inline-size}
 @container lib (max-width:600px){#card-view .lp-adv span{display:none}}
 @container lib (max-width:560px){#card-view .lp-one .lp-search .lp-n{display:none}#card-view .lp-one .lp-search{min-width:96px}}
+/* 11-06: 칸을 가장 좁게(240~280px) 줄이면 떼어 내기 단추까지 머리줄에 다 못 들어가 칸 밖으로 넘쳤다 — 그때만 떼어 내기를 접는다(넓히면 다시 보임). */
+@container lib (max-width:280px){#card-view .lp-one .pane-detach{display:none}}
 @container lib (max-width:440px){#card-view .cv-left .pane-role span{display:none}#card-view .cv-left .pane-role{padding-right:4px}}
 @container (max-width:380px){#card-view .cv-bar .pane-role span{display:none}#card-view .cv-bar .pane-role{padding-right:4px}}
 @container rpane (max-width:470px){#card-view .cv-ph .pane-role span{display:none}#card-view .cv-ph .pane-role{padding-right:2px}}
@@ -885,7 +887,7 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:12px}
 
 /* 11-05 칸 분리(pane-detach.js): 머리줄 [분리 ↗] 단추 — 보기 단추와 같은 28px 아이콘 */
-#card-view .pane-detach{flex:none;width:28px;height:28px;padding:0;display:inline-grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-3);cursor:pointer}
+#card-view .pane-detach{flex:none;width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-3);cursor:pointer}
 #card-view .pane-detach:hover{background:var(--ds-hover);color:var(--ds-ink)}
 #card-view .pane-detach svg{width:16px;height:16px}
 #card-view .cv-bar .pane-detach{margin-left:auto}

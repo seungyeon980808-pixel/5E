@@ -81,7 +81,7 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     },
   },
   // 시작 창에서 고르면 창을 작업 화면 크기로 키운다(11-04)
-  startWindow: { expand: () => ipcRenderer.invoke("window:start-expand") },
+  startWindow: { expand: () => ipcRenderer.invoke("window:start-expand"), shrink: () => ipcRenderer.invoke("window:start-shrink") },
   pickLocalImageFolder: () => ipcRenderer.invoke("local-images:pick-folder"),
   listLocalImages: (folder) => ipcRenderer.invoke("local-images:list", folder),
   localImageThumbnail: (filePath) => ipcRenderer.invoke("local-images:thumbnail", filePath),

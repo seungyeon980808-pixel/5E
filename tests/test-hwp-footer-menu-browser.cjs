@@ -42,7 +42,7 @@ h.withServer(async origin => {
         assert.ok(result.hwp.rect.right <= result.viewport.width, 'hwp stays in the viewport');
         assert.equal(result.legacy,false,'no footer 5E_hwp menu (one entry: the top bar)');assert.equal(result.pool,'none','no footer 5E_ExamPool entry');
         await page.screenshot({ path:path.join(evidence, `${name}-${width}-${theme}.png`) });
-        await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
+        await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b=>b.click());
         await page.locator('#rhwp-exam-workspace').waitFor({state:'visible'}); await h.idle(page);
         // 5E_hwp 안에서 그림 화면의 영역을 골라 넣는다(예전 아래 막대 단추와 같은 동작). 취소하면 한글 문서로 돌아온다.
         // 아주 좁은 화면은 모드 단추를 감추므로(집중 모드로 씀) 스크립트로 고른다.

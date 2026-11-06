@@ -3,7 +3,7 @@
 import { appKeyLabel } from './app-switch-menu.js?v=1.7.0-four-session-integration';
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1.7.0-four-session-integration';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
+import { releaseIndent, fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { installExamMarks, marksButtonHtml, marksEnabled, setMarksEnabled } from './rhwp-exam-marks.js?v=1.7.0-four-session-integration';
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
@@ -23,7 +23,9 @@ async function printNativePagesNow(bridge, ctx, pdf) {
   if (!count) { ctx.message('인쇄할 쪽이 없습니다.'); return; }
   const svgOf = i => typeof w.withPortableMetrics === 'function' ? w.withPortableMetrics(() => d.renderPageSvg(i)) : d.renderPageSvg(i);
   const page = JSON.parse(d.getPageDef(0)), mm = v => v / 7200 * 25.4, wmm = mm(page.width), hmm = mm(page.height);
-  const pages = Array.from({ length: count }, (_, i) => svgOf(i).replace(/<svg\b([^>]*)\swidth="[^"]*"/, '<svg$1').replace(/<svg\b([^>]*)\sheight="[^"]*"/, '<svg$1'));
+  // 11-06: 쪽마다 SVG 안 이름(body-clip·cell-clip 등)을 다르게 — 같은 문서의 쪽끼리도 이름이 겹쳐 다른 쪽의 잘라내기를 쓸 수 있었다.
+  const unique = (svg, pre) => svg.replace(/\bid="([^"]+)"/g, (m, id) => `id="${pre}${id}"`).replace(/url\(#([^)]+)\)/g, (m, id) => `url(#${pre}${id})`).replace(/(xlink:href|href)="#([^"]+)"/g, (m, attr, id) => `${attr}="#${pre}${id}"`);
+  const pages = Array.from({ length: count }, (_, i) => unique(svgOf(i), `p${i + 1}-`).replace(/<svg\b([^>]*)\swidth="[^"]*"/, '<svg$1').replace(/<svg\b([^>]*)\sheight="[^"]*"/, '<svg$1'));
   const frame = document.createElement('iframe'); frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'; frame.setAttribute('aria-hidden', 'true'); document.body.append(frame);
   const out = frame.contentDocument, size = `${wmm.toFixed(1)}mm ${hmm.toFixed(1)}mm`;
   out.open(); out.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>시험지</title><style>@page{size:${size};margin:0}html,body{margin:0}.p{width:${wmm.toFixed(1)}mm;height:${hmm.toFixed(1)}mm;break-after:page;overflow:hidden}.p svg{width:100%;height:100%;display:block}</style></head><body>${pages.map(svg => `<div class="p">${svg}</div>`).join('')}</body></html>`); out.close();
@@ -200,8 +202,26 @@ export function installExamModes(panel, services) {
   const marksToggle = bar.querySelector('[data-exam-marks]');
   const syncMarksButton = on => marksToggle?.setAttribute('aria-pressed', String(on));
   let marks = null, marksBridge = null;
-  const attachMarks = () => { const b = getBridge(); if (!b?.input || b === marksBridge) return; marks?.dispose(); marksBridge = b; marks = installExamMarks(b, { onToggle: syncMarksButton }); };
+  const attachMarks = () => { const b = getBridge(); if (!b?.input || b === marksBridge) return; marks?.dispose(); marksBridge = b; marks = installExamMarks(b, { onToggle: syncMarksButton, onIndent: (para, point) => openIndentMenu(para, point) }); };
   setInterval(attachMarks, 800); attachMarks();
+  // 11-06 사용자: 초록 선(내어쓰기 기준점)을 누르면 「들여쓰기 해제 / 이 문항 전체 해제」. ⌘Z로 되돌린다.
+  function openIndentMenu(para, point) {
+    pop.className = 'exam-pop exam-indentpop';
+    pop.innerHTML = `<div class="exam-pop-head">내어쓰기</div><button type="button" data-indent-release="para">들여쓰기 해제<small>이 문단만</small></button><button type="button" data-indent-release="question">이 문항 전체 해제<small>이 문항의 모든 문단·표 칸</small></button>`;
+    pop.hidden = false;
+    const p = panel.getBoundingClientRect(), w = pop.offsetWidth || 200, h = pop.offsetHeight || 120;
+    pop.style.left = `${Math.round(Math.max(8, Math.min(point.x - p.left + 8, p.width - w - 8)))}px`;
+    pop.style.top = `${Math.round(Math.max(8, Math.min(point.y - p.top + 8, p.height - h - 8)))}px`;
+    pop.dataset.indentPara = JSON.stringify(para);
+    pop.querySelector('[data-indent-release]')?.focus();
+  }
+  document.addEventListener('pointerdown', event => { if (!pop.hidden && pop.dataset.indentPara && !pop.contains(event.target)) { closePop(); delete pop.dataset.indentPara; } }, true);
+  pop.addEventListener('click', event => {
+    const button = event.target.closest('[data-indent-release]'); if (!button) return;
+    const para = JSON.parse(pop.dataset.indentPara || 'null'), scope = button.dataset.indentRelease; closePop(); delete pop.dataset.indentPara;
+    if (!para) return;
+    void run(() => { const n = releaseIndent(bridgeOrThrow(), para, scope); ctx.message(n ? `내어쓰기 ${n}곳을 해제했습니다 · 되돌리기 ⌘Z` : '해제할 내어쓰기가 없습니다.'); refocus(); });
+  });
   marksToggle?.addEventListener('click', () => { const on = !marksEnabled(); setMarksEnabled(on); syncMarksButton(on); });
   window.addEventListener('5e:typeset-marks', event => syncMarksButton(event.detail?.on ?? marksEnabled()));
   const studio = () => getBridge()?.editor?.element?.contentDocument || null;

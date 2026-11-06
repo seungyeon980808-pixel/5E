@@ -3272,3 +3272,8 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
   #ai-image-panel .ai-compare-heading > .ai-pane-zoom { margin-right:0; }
   #ai-image-panel .ai-compare-heading > .ai-annotation-toolbar { flex:1 1 100%; justify-content:flex-start; flex-wrap:wrap; }
 }
+/* 11-06: 한글 그림 편집에서 연 AI 작업 — 보내기는 「클립보드로 복사」「한글 파일에 넣기」 두 개만(PNG 저장·캔버스 삽입·고급 출력 숨김). */
+#ai-image-panel[data-ai-hwp-in-place="true"] .ai-output-actions > :not([data-ai-copy-selected]):not([data-ai-exam-send]) { display:none !important; }
+#ai-image-panel[data-ai-hwp-in-place="true"] .ai-output-more { display:none !important; }
+/* 11-06 D1: 한글 그림에서 연 AI 창은 입구로 종류가 정해졌으므로 전환 줄을 숨기고 제목만(「AI 그래프 · 한글 그림 1에서 엶」). */
+#ai-image-panel[data-ai-hwp-in-place="true"] .ai-workflow-switch { display:none !important; }

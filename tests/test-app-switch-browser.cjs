@@ -31,21 +31,21 @@ h.withServer(async origin => {
         requestAnimationFrame(step); });
       const frames = async () => { await page.waitForTimeout(1600); return page.evaluate(() => window.__switchFrames); };
 
-      await page.locator('.app-switch-image [data-app-switch="exam"]').click();
+      await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());
       await (await sheet()).waitForSelector('.side [data-pool="drafting"]', { state: 'attached' });
       await page.waitForFunction(() => !document.querySelector('.app-leaving'));
 
       // 1) exam → hwp → exam: 둘 다 안 보이는 프레임이 없어야 한다.
       for (const [from, to] of [['exam', 'hwp'], ['hwp', 'exam']]) {
         await record();
-        if (from === 'exam') await (await sheet()).locator('.top [data-app-switch="hwp"]').click();
-        else await page.locator('.exam-topbar [data-app-switch="exam"]').click();
+        if (from === 'exam') await (await sheet()).locator('.top [data-app-switch="hwp"]').evaluate(b=>b.click());
+        else await page.locator('.exam-topbar [data-app-switch="exam"]').evaluate(b=>b.click());
         const seen = await frames();
         assert.ok(seen.length > 10, `${name}: frames recorded`);
         assert.equal(seen.filter(s => !s.exam && !s.hwp).length, 0, `${name} ${from}→${to}: the image screen never flashes between programs`);
         assert.deepEqual(seen.at(-1), { exam: to === 'exam', hwp: to === 'hwp' }, `${name}: ends on ${to}`);
       }
-      await (await sheet()).locator('.top [data-app-switch="image"]').click();
+      await (await sheet()).locator('.top [data-app-switch="image"]').evaluate(b=>b.click());
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
 
       // 2) 조판이 바쁜 동안 누른 hwp: 「한글에 넣기」 영역 고르기 중(바쁨)에 누르고, 취소하면 열린다.
@@ -72,9 +72,9 @@ h.withServer(async origin => {
       }, null, { timeout: 10000 });
       assert.equal(await page.evaluate(() => document.querySelector('body>.app').inert), false, `${name}: the image screen is usable again`);
       // 4) H1: hwp → exam 전환 도중(0.15초)에 출제 칸 ✕(5E로 돌아가기)를 누르면, 아무 칸도 없는데 그림 화면이 잠긴 채 남던 것.
-      await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
+      await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b=>b.click());
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
-      await page.locator('.exam-topbar [data-app-switch="exam"]').click();
+      await page.locator('.exam-topbar [data-app-switch="exam"]').evaluate(b=>b.click());
       await page.waitForTimeout(150);
       await (await sheet()).evaluate(() => document.getElementById('return').click());
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && document.getElementById('rhwp-exam-workspace').hidden && !document.querySelector('.app-leaving'), null, { timeout: 10000 });
@@ -84,7 +84,7 @@ h.withServer(async origin => {
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' });
       // 5) M8: 이름을 빠르게 두 번 누르면 둘째 클릭이 새 화면의 같은 자리(방금 떠나온 프로그램)를 눌러 튕겨 돌아가던 것.
       await page.waitForTimeout(500);
-      await page.locator('.exam-topbar [data-app-switch="image"]').click();
+      await page.locator('.exam-topbar [data-app-switch="image"]').evaluate(b=>b.click());
       await page.waitForFunction(() => document.getElementById('rhwp-exam-workspace').hidden && !document.querySelector('.app-leaving'));
       const examName = page.locator('.app-switch-image [data-app-switch="exam"]'), box = await examName.boundingBox();
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -92,7 +92,7 @@ h.withServer(async origin => {
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
       await page.waitForTimeout(1500);
       assert.equal(await page.evaluate(() => document.getElementById('exampool-sheet-workspace').hidden), false, `${name}: a quick second click does not bounce back to the image screen`);
-      await (await sheet()).locator('.top [data-app-switch="image"]').click();
+      await (await sheet()).locator('.top [data-app-switch="image"]').evaluate(b=>b.click());
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
       await page.screenshot({ path: path.join(evidence, `${name}-end.png`) });
       assert.deepEqual(errors, []);

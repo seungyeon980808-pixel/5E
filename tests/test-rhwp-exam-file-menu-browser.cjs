@@ -86,7 +86,7 @@ async function scenario(origin,engine,surface) {
     await h.nativeOpen(page,fixtures.hwpx); // Same file is selectable again after resetting input.value.
     const p=await h.point(page,'image');await page.mouse.click(p.x,p.y);
     await page.locator('#exam-picture-controls:not([hidden])').waitFor();
-    assert.equal(await page.locator('[data-picture-modify]').textContent(),'수정');
+    assert.equal(await page.locator('[data-picture-modify]').getAttribute('aria-label'),'간단한 수정');/* 11-06: 그림 단추 다섯 칸은 아이콘(이름은 aria-label·title) */
     assert.ok(await page.locator('.exam-header').evaluate(n=>n.getBoundingClientRect().height)<150,'selected picture controls share one row');
     if(engine==='webkit' && !surface) {
       await page.screenshot({path:path.join(evidence,'compact-desktop.png')});
@@ -118,9 +118,10 @@ async function scenario(origin,engine,surface) {
     assert.equal((await h.pictures(page))[0].figure.id,linked.figure.id);
     assert.match(await page.locator('.exam-figure span').textContent(),/미반영 수정/);
     await h.seedSourceLabel(page);
-    await h.doubleClick(page);await page.locator('#exam-inline-editor:not([hidden])').waitFor();await h.idle(page);
-    await page.locator('[data-inline-field="text"]').fill('외부 그림 라벨');await page.locator('[data-inline-field="text"]').press('Tab');
-    await page.locator('[data-inline-action="apply"]').click();await h.idle(page);
+    // 11-06: 두 번 누르기 = 5E_image 편집 화면이 한글 위 창으로 — 그 안에서 라벨을 고쳐 「문서에 반영」.
+    await h.doubleClick(page);await page.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length);await h.idle(page);
+    await page.evaluate(async stateUrl=>{const {state}=await import(stateUrl);state.update(s=>{s.objects.find(o=>o.type==='labeler').text='외부 그림 라벨';});},h.runtime(page).stateUrl);
+    await page.locator('[data-source-apply]').click();await h.recrop(page);
     const applied=(await h.pictures(page))[0];assert.equal(applied.figure.source.pages[0].objects.find(o=>o.type==='labeler').text,'외부 그림 라벨');
     for(const format of ['hwp','hwpx']) {
       const file=await save(page,`export-${format}`,`${tag}-edited.${format}`);

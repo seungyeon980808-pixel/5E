@@ -491,6 +491,8 @@ const openIndependentAiReferences = async options => {
   return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.openIndependentReferences(prepared);
 };
 initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
+// 11-06 결정 11-05e: 한글 그림 편집 창 「AI 변환」「복원」 — 그 그림을 원본으로 AI 작업대(이미지 변환 / 그래프 복원)를 한글 위에 연다. 결과는 「이 자리에 넣기」로 그 자리에(rhwp-exam-workspace.js inlineAi).
+window.addEventListener('5e:ai-open-reference', (event) => { const detail = event.detail || {}; if (detail.reference) void Promise.resolve(openAiWithReference({ reference: detail.reference, conversionKind: detail.conversionKind || 'image', ...(detail.hwpTarget ? { hwpTarget: detail.hwpTarget } : {}) })).catch(error => { if (!/로그인이 취소/.test(String(error?.message || error))) console.warn(error); }); });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);

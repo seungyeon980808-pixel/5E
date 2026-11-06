@@ -21,7 +21,7 @@ h.withServer(async origin => {
       const context = await browser.newContext({viewport:{width:1440,height:960}});
       const page = await context.newPage(), errors = [];page.on('pageerror',error => errors.push(error.message));
       await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
-      await page.click('.app-switch-image [data-app-switch="exam"]');
+      await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());
       const frameHandle = await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet = await frameHandle.contentFrame();
       await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
 

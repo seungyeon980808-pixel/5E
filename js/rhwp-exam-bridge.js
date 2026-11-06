@@ -31,6 +31,9 @@ const intersect = (a, b) => {
 
 // This experiment pins the Studio build. Its local plugin context is the only
 // boundary that touches Studio internals; document mutations use its history.
+// 그림만 바꾸는 한글 변경 — 화면을 글 커서로 옮기지 않고 보던 자리를 지킨다.
+const KEEP_VIEW_LABELS = new Set(['resize-picture','picture-layout','replace-figure','replace-labels','inspector-picture-fit','inspector-picture-orig','inspector-picture-size','fit-cell-picture','register-picture','center-cell-pictures']);
+
 export class RhwpExamBridge {
   canReturnOnEscape(event) {
     const input = this.input, cursor = input?.cursor;
@@ -328,6 +331,11 @@ export class RhwpExamBridge {
     // A structured question is one native undo step, including its picture.
     if (this.batchMutation) return mutate(input);
     let result;
+    // 11-06: 그림만 바꾸는 일(크기·배치·바꿔 끼우기)은 보던 자리를 지킨다 — 엔진이 글 커서(그림을 고르면 문서 앞쪽에 남아 있음)로
+    // 화면을 옮겨, 그림 크기를 바꾸면 깜빡하며 다른 쪽으로 튀었다(2쪽 y 1361 → 1쪽 y 119 실측).
+    const manager = KEEP_VIEW_LABELS.has(label) ? input.viewportManager : null;
+    const view = manager ? { x: manager.getScrollX(), y: manager.getScrollY() } : null;
+    const keepView = () => { if (!view || this.input !== input) return; if (Math.abs(manager.getScrollY() - view.y) > .5) manager.setScrollTop(view.y); if (Math.abs(manager.getScrollX() - view.x) > .5) manager.setScrollLeft(view.x); };
     input.executeOperation({ kind:'snapshot', operationType:`5e-exam:${label}`,
       operation:() => {
         const before = input.getCursorPosition(), snapshot = this.wasm.saveSnapshot();
@@ -342,6 +350,7 @@ export class RhwpExamBridge {
           this.wasm.discardSnapshot(snapshot);
         }
       } });
+    if (view) { keepView(); const w = this.editor?.element?.contentWindow || window; w.requestAnimationFrame(() => { keepView(); w.requestAnimationFrame(keepView); }); }
     if (result === undefined) throw new Error('이 위치에서 그림을 수정할 수 없습니다.');
     this.deps.eventBus.emit('document-changed');
     return result;
@@ -526,7 +535,20 @@ export class RhwpExamBridge {
       this.documentHistory.adopt(stage.finish().document);return result;
     });
     if(ref.headerFooter)return this.wasm.setHeaderFooterPictureProperties(ref.sec,ref.headerFooter.outerParaIdx,ref.headerFooter.outerControlIdx,ref.ppi,ref.ci,props);
-    return ref.cellPath?.length ? this.wasm.setCellPicturePropertiesByPath(ref.sec,ref.ppi,ref.cellPath,ref.ci,props) : this.wasm.setPictureProperties(ref.sec,ref.ppi,ref.ci,props);
+    if(!ref.cellPath?.length)return this.wasm.setPictureProperties(ref.sec,ref.ppi,ref.ci,props);
+    const result=this.wasm.setCellPicturePropertiesByPath(ref.sec,ref.ppi,ref.cellPath,ref.ci,props);
+    if('width' in props || 'height' in props)this.relayoutPictureCell(ref);
+    return result;
+  }
+  // 11-06: 표 칸 안 그림 크기를 바꾸면 칸 높이는 늘지만 그 아래 글((가)·(나) 이름 등)의 줄 자리는 옛 자리에 남아 그림과 겹쳤다.
+  // 그 칸의 문단을 한 번씩 건드려(보이지 않는 글자를 넣었다 바로 지움) 엔진이 줄 자리를 다시 잡게 한다 — 그림과 글자는 절대 겹치지 않게.
+  relayoutPictureCell(ref) {
+    try {
+      const doc=this.wasm.borrowDocumentHandle(),base=ref.cellPath.slice(0,-1),last=ref.cellPath.at(-1),J=JSON.stringify;
+      const cell={controlIndex:last.controlIndex ?? last.controlIdx,cellIndex:last.cellIndex ?? last.cellIdx};
+      const count=doc.getCellParagraphCountByPath(ref.sec,ref.ppi,J([...base,{...cell,cellParaIndex:0}]));
+      for(let i=0;i<count;i++){const path=J([...base,{...cell,cellParaIndex:i}]);doc.insertTextInCellByPath(ref.sec,ref.ppi,path,0,'\u200b');doc.deleteTextInCellByPath(ref.sec,ref.ppi,path,0,1);}
+    } catch (error) { console.warn('칸 줄 자리 다시 잡기 실패', error); }
   }
   pictureRasterSize(ref, op) {
     // Linked display images are PNGs. Read the header without decoding a

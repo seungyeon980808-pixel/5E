@@ -223,3 +223,91 @@ body.exam-editing #ai-image-panel .modal-ai.ai-workbench {
 .exam-draw-bar{position:fixed;z-index:1200;left:50%;bottom:64px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;border-radius:22px;background:var(--bg-panel,#152137);color:var(--text-primary,#e6edf3);box-shadow:0 0 0 1px var(--border,#30363d),0 10px 28px rgba(0,0,0,.35);font-size:13px;white-space:nowrap}
 .exam-draw-bar button{height:32px;padding:0 14px;border-radius:16px;border:1px solid var(--border,#30363d);background:transparent;color:inherit;font:inherit;cursor:pointer}
 .exam-draw-bar button.exam-primary{background:#2f6fd6;border-color:#2f6fd6;color:#fff}
+/* 11-06 결정 11-05e: 그 자리 그림 편집기 — 다섯 도구(AI 변환·복원·텍스트·라벨러·자르기) + 아래 한 줄(안내·되돌리기·5E_image에서 자세히) */
+#exam-inline-editor .exam-inline-five {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;}
+#exam-inline-editor .exam-inline-tool {flex-direction:column;gap:3px;height:54px;min-height:54px;padding:4px 2px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2,#b1bac4);font-size:12px;white-space:nowrap;}
+#exam-inline-editor .exam-inline-tool:hover {background:var(--ds-hover,#1d2633);color:var(--ds-ink,#e6edf3);}
+#exam-inline-editor .exam-inline-tool[aria-pressed="true"] {background:var(--ds-selected,#1b2a40);box-shadow:inset 0 0 0 1px var(--ds-selected-line,#2f4a70);color:var(--ds-ink,#e6edf3);}
+#exam-inline-editor .exam-inline-tool svg {width:18px;height:18px;}
+#exam-inline-editor .exam-inline-sub {display:flex;align-items:center;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+#exam-inline-editor .exam-inline-hint {flex:1;min-width:0;font-size:11.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#exam-inline-editor .exam-inline-icon {width:28px;min-height:28px;padding:0;border:0;background:transparent;color:var(--text-secondary);}
+#exam-inline-editor .exam-inline-icon:hover:not(:disabled) {background:var(--ds-hover,#1d2633);color:var(--ds-ink,#e6edf3);}
+#exam-inline-editor .exam-inline-more {min-height:28px;padding:0 4px;border:0;background:transparent;color:var(--text-secondary);font-size:11.5px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap;}
+#exam-inline-editor .exam-inline-more:hover {color:var(--ds-ink,#e6edf3);background:transparent;}
+#exam-inline-editor [data-inline-action="revert"] {min-height:28px;font-size:11.5px;}
+/* 11-06 떠오르는 편집 창(시안 hwp-float-1106): 그림이 종이에서 떠올라 가운데 큰 창 · 나머지 문서는 어둡게 · 적용/닫기하면 제자리로 */
+#exam-inline-editor .exam-inline-backdrop {position:fixed;inset:0;pointer-events:auto;background:rgba(6,9,14,.66);-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px);opacity:0;transition:opacity .3s ease;}
+#exam-inline-editor.is-in .exam-inline-backdrop {opacity:1;}
+#exam-inline-editor .exam-inline-slot {position:fixed;pointer-events:none;border:1.5px dashed rgba(122,162,247,.8);border-radius:3px;opacity:0;transition:opacity .3s ease;}
+#exam-inline-editor.is-in .exam-inline-slot {opacity:1;}
+#exam-inline-editor .exam-inline-slot[hidden] {display:none;}
+#exam-inline-editor .exam-inline-window {position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:auto;display:grid;grid-template-columns:92px auto;grid-template-areas:"head head" "tools stage" "sub sub" "props props" "rec rec";
+  max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);box-sizing:border-box;background:var(--bg-panel,#121821);border:1px solid var(--border,#2b3442);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.55);}
+#exam-inline-editor .exam-inline-window::before {content:"";grid-area:head;}
+/* 창 틀은 그림보다 살짝 늦게 나타난다(그림이 먼저 떠오르는 느낌) */
+#exam-inline-editor .exam-inline-window > :not(.exam-inline-clip),#exam-inline-editor .exam-inline-toolbar > * {transition:opacity .24s ease .1s;}
+#exam-inline-editor:not(.is-in) .exam-inline-window {background:transparent;border-color:transparent;box-shadow:none;}
+#exam-inline-editor:not(.is-in) .exam-inline-window > :not(.exam-inline-clip),#exam-inline-editor:not(.is-in) .exam-inline-toolbar > * {opacity:0;}
+#exam-inline-editor .exam-inline-window {transition:background-color .24s ease .08s,border-color .24s ease .08s,box-shadow .24s ease .08s;}
+#exam-inline-editor .exam-inline-image-heading {grid-area:head;position:static;width:auto!important;display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border-bottom:1px solid var(--border,#2b3442);pointer-events:auto;}
+#exam-inline-editor .exam-inline-image-heading .exam-edit-badge {position:static;background:transparent;border:0;box-shadow:none;padding:0;font-size:13.5px;font-weight:600;color:var(--ds-ink,#e6edf3);}
+#exam-inline-editor .exam-inline-clip {grid-area:stage;position:relative;overflow:visible;pointer-events:auto;}
+#exam-inline-editor .exam-inline-picture {position:absolute;outline:0;border-radius:4px;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 12px 40px rgba(0,0,0,.45);transition:transform .44s cubic-bezier(.2,.8,.2,1);}
+#exam-inline-editor .exam-inline-toolbar {display:contents;}
+#exam-inline-editor .exam-inline-five {grid-area:tools;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;border-right:1px solid var(--border,#2b3442);}
+#exam-inline-editor .exam-inline-five .exam-inline-tool {width:72px;}
+#exam-inline-editor .exam-inline-sub {grid-area:sub;margin:0;padding:6px 14px;border-top:1px solid var(--border,#2b3442);}
+#exam-inline-editor .exam-inline-properties {grid-area:props;margin:0;padding:8px 14px 10px;border-top:1px solid var(--border,#2b3442);}
+#exam-inline-editor .exam-inline-recovery {grid-area:rec;margin:0;padding:0 14px 8px;}
+.exam-inline-ghost {z-index:1101;pointer-events:none;background:white;border-radius:4px;transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .14s ease .32s;}
+.exam-inline-ghost-shade {position:fixed;inset:0;z-index:1100;pointer-events:none;background:rgba(6,9,14,.66);transition:opacity .36s ease;}
+@media (prefers-reduced-motion: reduce){#exam-inline-editor .exam-inline-picture,#exam-inline-editor .exam-inline-backdrop,#exam-inline-editor .exam-inline-window,#exam-inline-editor .exam-inline-window > *{transition:none!important;}}
+/* 11-06 시안 A1: 그림 아이콘 다섯 칸 한 줄(칸 24×26, 모서리 3px, 짙은 남색 90%, 칸 사이 가는 선). 이름은 마우스를 올리면(title). */
+#exam-picture-controls .exam-picture-tools-row {width:auto;min-height:0;gap:0;}
+#exam-picture-controls .exam-picture-tools-row .exam-edit-badge {display:none;}
+#exam-picture-controls .exam-picture-tools {display:inline-flex;height:36px;border-radius:8px;background:rgba(22,27,34,.96);border:1px solid #3d4652;box-shadow:0 4px 14px rgba(0,0,0,.35);overflow:hidden;color:#e6edf3;pointer-events:auto;}
+#exam-picture-controls .exam-region-actions .exam-picture-tools button {all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;width:38px;height:100%;cursor:pointer;color:inherit;}
+#exam-picture-controls .exam-picture-tools button + button {border-left:1px solid #313945;}
+#exam-picture-controls .exam-picture-tools button:hover {background:#283342;}
+#exam-picture-controls .exam-picture-tools button:focus-visible {outline:2px solid var(--ds-soft-line,#6ba4f8);outline-offset:-2px;}
+#exam-picture-controls .exam-picture-tools svg {width:20px;height:20px;}
+#exam-picture-controls .exam-region-actions {margin-left:0;}
+
+/* 11-06 사용자: 한글에서 그림을 고칠 때 5E_image로 넘어가지 않는다 — image와 똑같은 편집 화면을 한글 위에 뜨는 창으로.
+   한글 화면은 뒤에 그대로 두고 어둡게(누를 수 없음), 편집 화면(.app)은 가운데 창. 편집 창 안에서는 AI 입구를 뺀다(AI는 그림 단추에서). */
+body.exam-float-edit #rhwp-exam-workspace, body.exam-float-edit #rhwp-exam-workspace[hidden] {display:flex;pointer-events:none;}
+body.exam-float-edit #rhwp-exam-workspace::after {content:"";position:absolute;inset:0;z-index:50;background:rgba(6,9,14,.66);animation:exam-float-shade .22s ease both;}
+body.exam-float-edit > .app {position:fixed !important;inset:max(28px,4vh) max(28px,4vw) !important;width:auto !important;height:auto !important;max-width:none !important;max-height:none !important;min-width:0 !important;min-height:0 !important;margin:0 !important;z-index:900;border-radius:12px;overflow:hidden;border:1px solid #3d4652;box-shadow:0 24px 80px rgba(0,0,0,.55);animation:exam-float-lift .26s cubic-bezier(.2,.8,.2,1) both;}
+body.exam-float-edit > .app-footer, body.exam-float-edit > .shell-left-grip {display:none;}
+body.exam-float-edit #ai-image-install-open {display:none;}
+@keyframes exam-float-shade {from{opacity:0}to{opacity:1}}
+/* 편집 화면은 창 크기로 보는 영역·영역 상자를 재므로 떠오를 때 크기를 바꾸지 않는다(투명도만). */
+@keyframes exam-float-lift {from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce) {body.exam-float-edit > .app, body.exam-float-edit #rhwp-exam-workspace::after {animation:none;}}
+/* 바탕 고르기: 흰 바탕 | 투명 격자(화면 표시만). */
+#exam-edit-bar .exam-edit-bg-toggle {display:inline-flex;flex:none;margin-left:auto;margin-right:6px;border:1px solid var(--border);border-radius:var(--shell-control-radius,6px);overflow:hidden;pointer-events:auto;}
+#exam-edit-bar .exam-edit-bg-toggle button {border:0;border-radius:0;min-height:var(--shell-control-size);padding:4px 9px;background:var(--bg-input);color:var(--text-secondary,#9aa4b2);}
+#exam-edit-bar .exam-edit-bg-toggle button + button {border-left:1px solid var(--border);}
+#exam-edit-bar .exam-edit-bg-toggle button[aria-pressed="true"] {background:#2a313b;color:var(--text-primary);}
+body:not(.exam-float-edit) #exam-edit-bar .exam-edit-bg-toggle {display:none;}
+body.exam-float-edit.exam-edit-checker #canvas #exam-source-crop-fill, body.exam-float-edit.exam-edit-checker #canvas #scene > rect[fill="#ffffff"]:first-of-type {fill:url(#exam-edit-checker);}
+/* 11-06 D4·D5: 한글 그림에서 연 AI 작업 표시 — 도는 동안 파란 테두리 숨쉬기 + 「● 복원 중 · 00:14」, 끝나면 초록 테두리 + 「복원 끝 · 눌러서 보기」. */
+.exam-ai-jobs {position:fixed;inset:0;z-index:1050;pointer-events:none;}
+.exam-ai-job {position:fixed;box-sizing:border-box;border:2px solid #6f93c4;border-radius:4px;pointer-events:none;animation:exam-ai-breathe 1.6s ease-in-out infinite;}
+.exam-ai-job[data-state="completed"] {border-color:#5b8a6d;animation:none;box-shadow:0 0 0 3px rgba(91,138,109,.22);}
+.exam-ai-job[data-state="failed"] {border-color:#c98a5b;animation:none;}
+.exam-ai-job-label {all:unset;position:absolute;left:-2px;bottom:calc(100% + 4px);box-sizing:border-box;padding:4px 9px;border-radius:7px;background:rgba(22,27,34,.96);border:1px solid #3d4652;color:#e6edf3;font:600 12px/1.3 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.exam-ai-job[data-state="busy"] .exam-ai-job-label {color:#c9daf0;}
+.exam-ai-job[data-state="completed"] .exam-ai-job-label {pointer-events:auto;cursor:pointer;color:#cfe5d6;border-color:#5b8a6d;}
+.exam-ai-job[data-state="failed"] .exam-ai-job-label {pointer-events:auto;cursor:pointer;color:#f0d2bd;border-color:#c98a5b;}
+.exam-ai-job-label:focus-visible {outline:2px solid #6ba4f8;outline-offset:2px;}
+@keyframes exam-ai-breathe {0%,100%{box-shadow:0 0 0 0 rgba(111,147,196,.0);border-color:rgba(111,147,196,.55)}50%{box-shadow:0 0 0 5px rgba(111,147,196,.28);border-color:#6f93c4}}
+@media (prefers-reduced-motion: reduce) {.exam-ai-job {animation:none;}}
+.exam-ai-toast {position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:1060;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:10px;background:rgba(22,27,34,.97);border:1px solid #5b8a6d;color:#e6edf3;font:13px/1.4 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.4);}
+.exam-ai-toast[hidden] {display:none;}
+.exam-ai-toast[data-state="failed"] {border-color:#c98a5b;}
+.exam-ai-toast button {font:inherit;color:inherit;background:#26303b;border:1px solid #3d4652;border-radius:6px;padding:4px 10px;cursor:pointer;}
+.exam-ai-toast button:hover {background:#303b48;}
+.exam-ai-toast [data-ai-toast-close] {padding:4px 8px;background:transparent;border-color:transparent;color:#9aa4b2;}
+body.exam-float-edit .exam-ai-toast, body.exam-editing .exam-ai-jobs {display:none;}

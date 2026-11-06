@@ -43,6 +43,8 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
   const root = document.createElement('div');
   root.id = 'start-screen';
   root.className = desktopWindow ? 'start-screen is-desktop' : 'start-screen';
+  // 11-06: 설치판에서 시작 창이 뜰 때 창이 작업 크기로 커져 있으면(새로 고침 등) 시작 창 크기 960×560으로 되돌린다.
+  void desktopWindow?.shrink?.()?.catch?.(() => {});
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-modal', 'true');
   root.setAttribute('aria-label', '5E 시작');

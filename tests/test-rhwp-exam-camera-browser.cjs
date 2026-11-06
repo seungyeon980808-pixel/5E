@@ -9,6 +9,8 @@ async function revealPicture(page){
   await h.waitForState(page,()=>!!window.cameraBridge.figureGeometry(window.cameraRef));
 }
 async function doubleClickPicture(page){const g=await page.evaluate(()=>window.cameraBridge.figureGeometry(window.cameraRef));assert.ok(g,'selected page is rendered');await page.mouse.dblclick(g.x+g.w*.4,g.y+g.h*.4);}
+async function openedFloat(page){await page.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length,null,{timeout:30000});await h.idle(page);}
+async function closeFloat(page){await page.locator('#exam-edit-bar button',{hasText:'돌아가기'}).click();await page.waitForFunction(()=>!document.body.classList.contains('exam-editing')&&!document.body.classList.contains('exam-float-edit'));await h.idle(page);}
 async function monitor(page){await page.evaluate(async()=>{
   const {RhwpExamBridge}=await import('/js/rhwp-exam-bridge.js?v=1.7.0-four-session-integration'),f=document.querySelector('#exam-studio iframe');
   const b=Object.assign(Object.create(RhwpExamBridge.prototype),{editor:{element:f},deps:f.contentWindow.rhwpStudio.plugins.deps});
@@ -46,27 +48,25 @@ h.withServer(async origin=>{
       assert.ok(pages>=10,'fixture exercises a multi-page document');
       const download=p.waitForEvent('download');await h.action(p,'export-hwp');const file=await download,target=path.join(dir,engine+'-multipage.hwp');await file.saveAs(target);await h.idle(p);
       await h.action(p,'new');await h.idle(p);await h.nativeOpen(p,target);
-      await revealPicture(p);await monitor(p);await doubleClickPicture(p);await p.locator('#exam-inline-editor:not([hidden])').waitFor();await h.idle(p);
-      const result=await finish(p),animated=result.frames.filter(f=>f.animating);
-      assert.ok(animated.length>=4,'camera is interpolated over multiple frames');assert.ok(result.final>result.initial,'whole document enlarges');assert.equal(result.animating,false);
-      for(const f of animated)for(const z of f.rendered)assert.ok(Math.abs(z-result.initial)<.002,'intermediate camera frames reuse the initial page rasters');
-      const finalZooms=result.frames.filter(f=>!f.animating&&Math.abs(f.zoom-result.final)<.002).flatMap(f=>f.rendered);assert.ok(finalZooms.some(z=>Math.abs(z-result.final)<.002),'final view receives a raster at the final zoom');
-      for(let i=1;i<animated.length;i++)assert.ok(animated[i].zoom>=animated[i-1].zoom-.0001,'zoom never reverses');
-      const gaps=animated.slice(1).map((f,i)=>f.time-animated[i].time),maxFrameMs=Math.max(...gaps);
-      timingCheck(maxFrameMs<90,`animation has no long frame stalls: ${maxFrameMs}ms`);
-      const last=animated.at(-1),settled=result.frames.find(f=>f.time>last.time&&!f.animating);
-      const settleJump=settled?Math.hypot(settled.cx-last.cx,settled.cy-last.cy):0;
-      assert.ok(settleJump<5,`final raster does not jump away from camera preview: ${settleJump}px`);
-      const heading=await p.locator('.exam-inline-image-heading').boundingBox(),image=await p.locator('.exam-inline-picture').boundingBox();assert.ok(heading.y+heading.height<=image.y-4,'edit actions remain above the image');
+      await revealPicture(p);await monitor(p);await doubleClickPicture(p);await openedFloat(p);
+      // 11-06 사용자: 두 번 누르면 5E_image로 넘어가지 않고, image와 똑같은 편집 화면이 한글 위 가운데 창으로 뜬다(한글은 뒤에 어둡게). 문서는 확대하지 않는다.
+      const result=await finish(p);
+      assert.ok(Math.abs(result.final-result.initial)<.002,'the document keeps its zoom while the editor floats');assert.equal(result.animating,false);
+      const win=await p.evaluate(()=>{const a=document.querySelector('body>.app').getBoundingClientRect(),hwp=document.querySelector('#rhwp-exam-workspace');return {x:a.x,y:a.y,r:a.right,b:a.bottom,vw:innerWidth,vh:innerHeight,hwp:getComputedStyle(hwp).display,inert:hwp.inert};});
+      assert.ok(win.x>=20&&win.y>=20&&win.r<=win.vw-20&&win.b<=win.vh-20,`the editor is a window with the document around it: ${JSON.stringify(win)}`);
+      assert.notEqual(win.hwp,'none','the exam stays visible behind the window');assert.equal(win.inert,true,'the exam behind cannot be clicked');
+      assert.equal(await p.locator('#exam-edit-bar').isVisible(),true,'apply / return actions are shown');
+      assert.equal(await p.locator('.tool-btn[data-tool="V"]').first().isVisible(),true,'the same 5E_image tools are in the window');
       await p.screenshot({path:path.join(dir,engine+'-focused.png')});
-      await p.locator('[data-inline-action="close"]').click();await h.idle(p);
-      await p.emulateMedia({reducedMotion:'reduce'});await monitor(p);await doubleClickPicture(p);await h.idle(p);const reduced=await finish(p);assert.ok(reduced.frames.filter(f=>f.animating).length<=1,'reduced motion skips tween');assert.equal(reduced.animating,false);
-      await p.locator('[data-inline-action="close"]').click();await h.idle(p);await p.emulateMedia({reducedMotion:'no-preference'});
-      const zoomStarted=h.waitForState(p,()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.isZoomAnimating());await doubleClickPicture(p);await zoomStarted;
-      // Manual zoom owns the camera as soon as the user interrupts the tween.
-      await p.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.setZoom(1.25));
-      await h.idle(p);await p.locator('[data-inline-action="close"]').click();await h.idle(p);
-      assert.equal(await p.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.getZoom()),1.25,'interrupted manual zoom remains a user preference');
+      await closeFloat(p);
+      // 움직임 줄이기: 떠오르기 없이 바로 창이 뜬다.
+      await p.emulateMedia({reducedMotion:'reduce'});await doubleClickPicture(p);await openedFloat(p);
+      assert.equal(await p.evaluate(()=>getComputedStyle(document.querySelector('body>.app')).animationName),'none','reduced motion skips the lift');
+      await closeFloat(p);await p.emulateMedia({reducedMotion:'no-preference'});
+      // 문서 배율은 편집 창을 열고 닫아도 그대로.
+      await p.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.setZoom(1.25));await h.idle(p);
+      await doubleClickPicture(p).catch(async()=>{await revealPicture(p);await doubleClickPicture(p);});await openedFloat(p);await closeFloat(p);
+      assert.equal(await p.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.getZoom()),1.25,'manual zoom remains a user preference');
       // The list can open a picture on an unrendered page. The earlier camera
       // journey started with revealPicture(), so it never covered that case.
       await p.evaluate(()=>{
@@ -89,15 +89,11 @@ h.withServer(async origin=>{
       await h.waitForState(p,()=>{const b=window.cameraBridge,g=b.figureGeometry(window.cameraRef),v=b.figureViewport();return g&&g.y>=v.y&&g.y+g.h<=v.y+v.h;});
       await p.evaluate(()=>window.cameraBridge.input.viewportManager.setScrollTop(0));
       await h.waitForState(p,()=>!window.cameraBridge.figureGeometry(window.cameraRef));
-      await p.locator('.exam-figure').first().dblclick();await h.idle(p);
-      await h.waitForState(p,()=>{const b=window.cameraBridge,g=b.figureGeometry(window.cameraRef),v=b.figureViewport();return !document.querySelector('#exam-inline-editor').hidden&&g&&g.x>=v.x&&g.y>=v.y&&g.x+g.w<=v.x+v.w&&g.y+g.h<=v.y+v.h;});
-      const offscreenHeading=await p.locator('.exam-inline-image-heading').boundingBox(),offscreenImage=await p.locator('.exam-inline-picture').boundingBox(),offscreenToolbar=await p.locator('.exam-inline-toolbar').boundingBox();
-      assert.ok(offscreenHeading.y+offscreenHeading.height<=offscreenImage.y-4,'offscreen picture keeps its apply actions above the image');
-      assert.ok(offscreenToolbar.y>offscreenImage.y+offscreenImage.height,'editing tools leave the picture visible');
+      await p.locator('.exam-figure').first().dblclick();await openedFloat(p);
       await p.screenshot({path:path.join(dir,engine+'-offscreen-focused.png')});
-      await p.locator('[data-inline-action="close"]').click();await h.idle(p);
-      assert.deepEqual(errors,[]);reports.push({...result,engine,maxFrameMs,settleJump,reducedMotion:true,manualInterruption:true});
-      console.log(`${engine}: ${result.pages} HWP pages, ${animated.length} camera frames, max ${maxFrameMs.toFixed(1)}ms, reused page rasters, settle jump ${settleJump.toFixed(2)}px`);
+      await closeFloat(p);
+      assert.deepEqual(errors,[]);reports.push({...result,engine,floating:true,reducedMotion:true,manualInterruption:true});
+      console.log(`${engine}: ${result.pages} HWP pages, the 5E_image editor floats over the exam without zooming the document, offscreen picture, reduced motion and manual zoom preference passed`);
     }finally{await context.close();await browser.close();}
   }
   fs.writeFileSync(path.join(dir,'report.json'),JSON.stringify(reports,null,2));

@@ -18,37 +18,51 @@ export class ExamInlineEditor {
     this.options = options;
     this.root = document.createElement('section');
     this.root.id = 'exam-inline-editor'; this.root.hidden = true;
-    this.root.setAttribute('aria-label', '그림의 라벨과 지시선 편집');
-    this.root.innerHTML = `<div class="exam-inline-clip"><div class="exam-inline-picture"><svg class="exam-inline-canvas" aria-label="라벨 편집 영역" tabindex="0"></svg></div></div>
-      <div class="exam-inline-image-heading"><span class="exam-edit-badge">라벨·지시선 편집 중</span><div><button type="button" data-inline-action="apply" class="exam-primary">수정 반영</button><button type="button" data-inline-action="close">돌아가기</button></div></div>
-      <div class="exam-inline-toolbar" role="toolbar" aria-label="라벨 편집 도구">
-        <div class="exam-inline-heading"><strong>라벨 편집</strong><span data-inline-hint>라벨이나 지시선의 점을 드래그하세요.</span></div>
+    this.root.setAttribute('aria-label', '그림 편집');
+    // 11-06 결정 11-05e: 한글에서 그림을 두 번 누르면 그 자리에서 고친다(수식처럼). 도구는 다섯 개만 —
+    // AI 변환 · 복원(그래프 객체로) · 텍스트 · 라벨러 · 자르기. 정밀 작업은 작은 「5E_image에서 자세히」로만 넘어간다.
+    const icon = path => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+    this.root.innerHTML = `<div class="exam-inline-clip"><div class="exam-inline-picture"><svg class="exam-inline-canvas" aria-label="그림 편집 영역" tabindex="0"></svg></div></div>
+      <div class="exam-inline-image-heading"><span class="exam-edit-badge">그림 편집 중</span><div><button type="button" data-inline-action="apply" class="exam-primary" title="같은 자리·같은 크기로 반영 (되돌리기 ⌘Z)">적용</button><button type="button" data-inline-action="close" title="닫기 (Esc)">닫기</button></div></div>
+      <div class="exam-inline-toolbar" role="toolbar" aria-label="그림 편집 도구">
         <p class="exam-inline-recovery" hidden>보관한 초안을 표시합니다. 적용하면 원본의 현재 라벨을 이 내용으로 바꿉니다.</p>
-        <div class="exam-inline-tools">
-          <button type="button" data-inline-action="add-label">라벨 추가</button><button type="button" data-inline-action="add-leader">지시선 추가</button>
-          <button type="button" data-inline-action="elbow">꺾임점</button><button type="button" data-inline-action="delete">삭제</button>
-          <button type="button" data-inline-action="undo" aria-label="라벨 편집 되돌리기">되돌리기</button><button type="button" data-inline-action="redo">다시 실행</button>
-          <button type="button" data-inline-action="crop">영역 조정</button><button type="button" data-inline-action="original">원본 편집</button>
+        <div class="exam-inline-tools exam-inline-five">
+          <button type="button" class="exam-inline-tool" data-inline-action="ai" title="AI로 이 그림을 다시 그립니다 — 5E_image AI 작업대(이미지 변환)가 이 그림을 참고 그림으로 열립니다">${icon('<path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>')}<span>AI 변환</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="restore" title="그림 속 그래프를 고칠 수 있는 그래프 객체로 되살립니다 — 그래프 창에서 원본을 깔고 맞춥니다">${icon('<path d="M4 4v16h16M7 15c3-1 4-8 6-8s3 5 7 5"/>')}<span data-inline-restore-label>복원</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="add-label" title="글자 라벨 넣기 — 그림을 눌러 자리를 고릅니다">${icon('<path d="M5 6h14M12 6v13M9 19h6"/>')}<span>텍스트</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="add-leader" title="지시선 라벨 넣기 — 가리킬 곳과 글자 자리를 차례로 누릅니다">${icon('<circle cx="7" cy="17" r="2"/><path d="M8.5 15.5 15 9h5"/>')}<span>라벨러</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="crop" title="보이는 영역 다시 고르기">${icon('<path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/>')}<span>자르기</span></button>
+        </div>
+        <div class="exam-inline-sub">
+          <span class="exam-inline-hint" data-inline-hint>도구를 고르세요 · 글자를 두 번 누르면 바로 고칩니다</span>
+          <button type="button" data-inline-action="revert" hidden title="복원 전의 그림으로 되돌립니다">그림으로 되돌리기</button>
+          <button type="button" class="exam-inline-icon" data-inline-action="elbow" title="지시선 꺾임점" aria-label="꺾임점">${icon('<path d="M5 19V9h10V5"/>')}</button>
+          <button type="button" class="exam-inline-icon" data-inline-action="delete" title="고른 라벨 지우기 (Delete)" aria-label="삭제">${icon('<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>')}</button>
+          <button type="button" class="exam-inline-icon" data-inline-action="undo" title="되돌리기 (⌘Z)" aria-label="라벨 편집 되돌리기">${icon('<path d="M9 7 5 11l4 4M5 11h9a5 5 0 0 1 0 10h-2"/>')}</button>
+          <button type="button" class="exam-inline-icon" data-inline-action="redo" title="다시 실행 (⇧⌘Z)" aria-label="다시 실행">${icon('<path d="m15 7 4 4-4 4M19 11h-9a5 5 0 0 0 0 10h2"/>')}</button>
+          <button type="button" class="exam-inline-more" data-inline-action="original" title="손이 많이 가는 정밀 작업은 5E_image에서 — 고친 뒤 「시험지에 반영」하면 이 자리로 돌아옵니다">5E_image에서 자세히 ↗</button>
         </div>
         <div class="exam-inline-properties">
           <label class="exam-inline-text">내용<textarea data-inline-field="text" rows="1" maxlength="10000" aria-label="라벨 내용"></textarea></label>
           <label>글꼴<select data-inline-field="font" aria-label="라벨 글꼴"></select></label>
           <label>글자<input data-inline-field="size" type="number" min="2" max="200" step="0.5" aria-label="라벨 글자 크기">pt</label>
           <label>선<input data-inline-field="stroke" type="number" min="0.05" max="5" step="0.05" aria-label="지시선 굵기">mm</label>
-
         </div>
       </div>`;
     host.append(this.root);
     this.svg = this.root.querySelector('svg');this.heading=this.root.querySelector('.exam-inline-image-heading');
     this.picture = this.root.querySelector('.exam-inline-picture');
     this.toolbar = this.root.querySelector('.exam-inline-toolbar');
+    // 11-06 사용자: 종이 위에 도구만 붙이지 말고 「따로 창」 — 그림이 종이에서 떠올라 가운데 큰 창이 되고, 나머지 문서는 어둡게.
+    // 적용·닫기하면 줄어들며 제자리로. 창 = 머리줄(적용·닫기) · 왼쪽 다섯 도구 · 가운데 큰 그림 · 아래 속성 줄.
+    this.backdrop=document.createElement('div');this.backdrop.className='exam-inline-backdrop';
+    this.slot=document.createElement('div');this.slot.className='exam-inline-slot';
+    this.window=document.createElement('div');this.window.className='exam-inline-window';this.window.setAttribute('role','dialog');this.window.setAttribute('aria-modal','true');this.window.setAttribute('aria-label','그림 편집');
+    this.clip=this.root.querySelector('.exam-inline-clip');
+    this.window.append(this.heading,this.clip,this.toolbar);
+    this.root.prepend(this.backdrop,this.slot);this.root.append(this.window);
     const font = this.field('font');
     for (const item of TEXT_FONTS) font.add(new Option(item.label, item.css));
-    // Reuse the palette's approved icon artwork rather than introducing a set.
-    for (const [action, selector] of [['add-label','[data-tool="text"] svg'],['add-leader','[data-symbol="labeler"] svg']]) {
-      const icon = document.querySelector(selector);
-      if (icon) this.button(action).prepend(icon.cloneNode(true));
-    }
     this.root.addEventListener('click', event => {
       const action = event.target.closest('[data-inline-action]')?.dataset.inlineAction;
       if (action) void this.action(action);
@@ -78,24 +92,56 @@ export class ExamInlineEditor {
     });
   }
   field(name) { return this.root.querySelector(`[data-inline-field="${name}"]`); }
+  syncTools() { for (const [action, mode] of [['add-label','label'],['add-leader','leader']]) this.button(action).setAttribute('aria-pressed', String(this.mode===mode)); }
   button(name) { return this.root.querySelector(`[data-inline-action="${name}"]`); }
   get active() { return !this.root.hidden; }
   open(session) {
     this.close();this.session = session;this.labels = copy(session.labels);this.bounds = copy(session.bounds);
     this.root.dataset.simple = String(!!session.simple);
-    for (const action of ['add-label','add-leader','elbow','delete']) this.button(action).hidden=!!session.simple;
-    this.root.querySelector('.exam-edit-badge').textContent = session.simple ? '라벨 간단 편집 중' : '라벨·지시선 편집 중';
+    // 11-06: 두 번 누르기로 열어도 다섯 도구를 모두 보인다(예전 「간단 편집」은 라벨 글자만 고쳤다).
+    this.root.querySelector('.exam-edit-badge').textContent = session.graph ? '그래프 그림 편집 중' : '그림 편집 중';
+    this.root.querySelector('[data-inline-restore-label]').textContent = session.graph ? '그래프 편집' : '복원';
+    this.button('restore').title = session.graph ? '그래프 창에서 이 그래프 객체를 고칩니다' : '그림 속 그래프를 고칠 수 있는 그래프 객체로 되살립니다 — 그래프 창에서 원본을 깔고 맞춥니다';
+    this.button('revert').hidden = !session.restored;
     this.busy=false;this.root.querySelectorAll('button,input,textarea,select').forEach(control=>control.disabled=false);
     this.selected = this.labels[0]?.id;this.undo = [];this.redo = [];this.mode = null;this.lastPress=null;this.root.hidden = false;
     this.root.querySelector('.exam-inline-recovery').hidden=!session.recovery;
-    this.position();this.render();
+    this.position();this.render();this.liftIn();
     this.stopPosition=session.bridge.watchView(()=>this.position());
     this.resizeObserver=new ResizeObserver(()=>this.position());this.resizeObserver.observe(this.toolbar);
     this.svg.focus({preventScroll:true});
   }
   close() {
     this.stopPosition?.();this.stopPosition=null;this.resizeObserver?.disconnect();
+    if(this.session&&!this.root.hidden)this.settleBack();
+    this.root.classList.remove('is-in');
     this.root.hidden = true;this.session = null;this.drag = null;
+  }
+  // 떠오르기: 종이 위 그림 자리(source)에서 창 속 큰 그림 자리로 확대되며 올라온다.
+  liftIn(){
+    const reduce=matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    this.root.classList.remove('is-in');
+    const from=this.sourceRect,to=this.picture.getBoundingClientRect();
+    if(!reduce&&from&&to.width>0){
+      this.picture.style.transition='none';
+      this.picture.style.transformOrigin='0 0';
+      this.picture.style.transform=`translate(${from.x-to.left}px,${from.y-to.top}px) scale(${from.w/to.width},${from.h/to.height})`;
+      void this.picture.offsetWidth;
+      this.picture.style.transition='';
+    }
+    requestAnimationFrame(()=>{if(!this.session)return;this.root.classList.add('is-in');this.picture.style.transform='';});
+  }
+  // 제자리로: 창을 닫는 즉시 그림 사본이 종이 위 자리로 줄어들며 사라진다(문서는 바로 다시 쓸 수 있게).
+  settleBack(){
+    const reduce=matchMedia?.('(prefers-reduced-motion: reduce)').matches,from=this.picture.getBoundingClientRect(),to=this.sourceRect;
+    if(reduce||!to||!from.width)return;
+    const ghost=this.picture.cloneNode(true);ghost.className='exam-inline-ghost';ghost.setAttribute('aria-hidden','true');ghost.removeAttribute('id');ghost.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));
+    Object.assign(ghost.style,{position:'fixed',left:`${from.left}px`,top:`${from.top}px`,width:`${from.width}px`,height:`${from.height}px`,transform:'none',transformOrigin:'0 0',margin:'0'});
+    const shade=this.backdrop.cloneNode(false);shade.classList.add('exam-inline-ghost-shade');
+    (this.root.parentElement||document.body).append(shade,ghost);
+    void ghost.offsetWidth;
+    ghost.style.transform=`translate(${to.x-from.left}px,${to.y-from.top}px) scale(${to.w/from.width},${to.h/from.height})`;ghost.style.opacity='0.0';shade.style.opacity='0';
+    setTimeout(()=>{ghost.remove();shade.remove();},420);
   }
   setBase(url) {if (!this.session) return;this.session.baseUrl = url;this.render();}
   setLabels(labels) {this.labels=copy(labels);this.undo=[];this.redo=[];this.render();}
@@ -103,21 +149,17 @@ export class ExamInlineEditor {
   position() {
     if (!this.session) return;
     const {bridge, ref} = this.session, geometry = bridge.figureGeometry?.(ref) || bridge.figureRect(ref);
-    if (!geometry) {this.picture.hidden = true;return;}
-    this.picture.hidden = false;
-    const fallback=bridge.editor.element.getBoundingClientRect(),viewport=bridge.figureViewport?.(),clip=bridge.figureViewport?.(ref) || viewport || {x:fallback.x,y:fallback.y,w:fallback.width,h:fallback.height};
-    const frame=viewport ? {x:viewport.x,y:viewport.y,width:viewport.w,height:viewport.h,right:viewport.x+viewport.w,bottom:viewport.y+viewport.h} : fallback;
-    Object.assign(this.root.querySelector('.exam-inline-clip').style,{left:`${clip.x}px`,top:`${clip.y}px`,width:`${clip.w}px`,height:`${clip.h}px`});
-    Object.assign(this.picture.style,{left:`${geometry.x-clip.x}px`,top:`${geometry.y-clip.y}px`,width:`${geometry.w}px`,height:`${geometry.h}px`,transform:`rotate(${geometry.rotation || 0}deg) scale(${geometry.flipH ? -1 : 1},${geometry.flipV ? -1 : 1})`});
-    for(const handle of this.svg.querySelectorAll('[data-inline-handle]'))handle.setAttribute('r',Math.max(.25,this.bounds.w/Math.max(1,geometry.w)*4));
-    const width = Math.min(640,Math.max(130,frame.width-24));
-    this.toolbar.style.width = `${width}px`;
-    const height = this.toolbar.offsetHeight;
-    const headingWidth=Math.min(frame.width-24,Math.max(320,geometry.w));
-    Object.assign(this.heading.style,{left:`${Math.max(frame.x+12,Math.min(geometry.x,frame.right-headingWidth-12))}px`,top:`${Math.max(8,geometry.y-40)}px`,width:`${headingWidth}px`});
-    const angle=(geometry.rotation || 0)*Math.PI/180;
-    const bottom=geometry.y+geometry.h/2+(Math.abs(geometry.w*Math.sin(angle))+Math.abs(geometry.h*Math.cos(angle)))/2;
-    Object.assign(this.toolbar.style,{left:`${Math.max(frame.x+12,Math.min(geometry.x,frame.right-width-12))}px`,top:`${Math.max(frame.y+12,Math.min(bottom+8,frame.bottom-height-12))}px`});
+    // 종이 위 자리(떠오르기·제자리 애니메이션과 「떠난 자리」 점선). 문서가 움직이면 따라간다.
+    if (geometry) {this.sourceRect={x:geometry.x,y:geometry.y,w:geometry.w,h:geometry.h};Object.assign(this.slot.style,{left:`${geometry.x}px`,top:`${geometry.y}px`,width:`${geometry.w}px`,height:`${geometry.h}px`});this.slot.hidden=false;}
+    else this.slot.hidden=true;
+    // 창 속 큰 그림: 그림 비율 그대로 화면 높이의 62%까지(창 틀 자리 230px은 남김), 화면 폭에 맞게 줄인다.
+    const ratio=(this.bounds?.w>0&&this.bounds?.h>0)?this.bounds.w/this.bounds.h:(geometry?geometry.w/Math.max(1,geometry.h):4/3);
+    const vw=innerWidth,vh=innerHeight,maxW=Math.max(160,Math.min(vw*.7,vw-260)),maxH=Math.max(120,Math.min(vh*.62,vh-230));
+    let w=maxW,h=w/ratio;if(h>maxH){h=maxH;w=h*ratio;}
+    this.picture.hidden=false;
+    Object.assign(this.clip.style,{left:'',top:'',width:`${Math.round(w)+56}px`,height:`${Math.round(h)+40}px`});
+    Object.assign(this.picture.style,{left:'28px',top:'20px',width:`${Math.round(w)}px`,height:`${Math.round(h)}px`});
+    for(const handle of this.svg.querySelectorAll('[data-inline-handle]'))handle.setAttribute('r',Math.max(.25,this.bounds.w/Math.max(1,w)*5));
   }
   point(event) {
     const point = new DOMPoint(event.clientX,event.clientY).matrixTransform(this.svg.getScreenCTM().inverse());
@@ -178,7 +220,8 @@ export class ExamInlineEditor {
     this.button('delete').disabled=!label;this.button('elbow').disabled=!label || !!label.leaderRoutes?.length;
     this.button('elbow').title=label?.leaderRoutes?.length ? '경로의 제어점을 직접 드래그하세요.' : '꺾임점 추가 또는 제거';
     this.button('undo').disabled=!this.undo.length;this.button('redo').disabled=!this.redo.length;
-    this.root.querySelector('[data-inline-hint]').textContent=this.session.simple ? '라벨을 선택해 내용과 모양을 바꿉니다.' : this.mode==='label' ? '그림에서 라벨을 놓을 위치를 클릭하세요.' : this.mode==='leader' ? (this.anchor ? '라벨을 놓을 위치를 클릭하세요.' : '지시선이 가리킬 위치를 클릭하세요.') : '라벨이나 지시선의 점을 드래그하세요.';
+    this.root.querySelector('[data-inline-hint]').textContent=this.mode==='label' ? '그림에서 글자를 놓을 자리를 누르세요 · Esc 그만두기' : this.mode==='leader' ? (this.anchor ? '글자를 놓을 자리를 누르세요 · Esc 그만두기' : '지시선이 가리킬 곳을 누르세요 · Esc 그만두기') : label ? '글자는 아래 칸에서 고치고, 라벨·지시선의 점은 끌어 옮깁니다' : '도구를 고르세요 · 글자를 두 번 누르면 바로 고칩니다';
+    this.syncTools();
     this.svg.dataset.placing=String(!!this.mode);
   }
   changeField(field) {
@@ -270,11 +313,12 @@ export class ExamInlineEditor {
   }
   async action(name) {
     if (!this.active || this.busy) return;
-    if (this.session.simple && ['add-label','add-leader','elbow','delete'].includes(name)) return;
     if(name==='add-label' || name==='add-leader') {this.mode=name==='add-label' ? 'label' : 'leader';this.anchor=null;this.render();this.svg.focus();return;}
-    if(name==='delete') {if(!this.selected)return;this.remember();this.labels=this.labels.filter(l=>l.id!==this.selected);this.selected=null;this.render();this.publish();return;}
+    if(name==='delete') {if(!this.selected)return;this.remember();this.lastDeleted=this.selected;this.labels=this.labels.filter(l=>l.id!==this.selected);this.selected=null;this.render();this.publish();return;}
     if(name==='elbow') {const l=this.selectedLabel();if(!l)return;this.remember();if(l.elbow)delete l.elbow;else l.elbow={x:l.p1.x,y:l.p2.y};this.render();this.publish();return;}
-    if(name==='undo' || name==='redo') {const from=name==='undo'?this.undo:this.redo,to=name==='undo'?this.redo:this.undo;if(!from.length)return;to.push(this.snapshot());this.labels=from.pop();this.render();this.publish();return;}
+    if(name==='undo' || name==='redo') {const from=name==='undo'?this.undo:this.redo,to=name==='undo'?this.redo:this.undo;if(!from.length)return;to.push(this.snapshot());this.labels=from.pop();
+      // 지운 라벨을 되돌리면 다시 골라 둔다(글자 칸이 비지 않게).
+      if(!this.labels.some(l=>l.id===this.selected))this.selected=this.labels.some(l=>l.id===this.lastDeleted)?this.lastDeleted:this.labels[0]?.id;this.render();this.publish();return;}
     this.flush();this.busy=true;
     this.root.querySelectorAll('button,input,textarea,select').forEach(control=>control.disabled=true);
     try {await this.options.onAction(name);} catch(error) {this.options.onError?.(error);}

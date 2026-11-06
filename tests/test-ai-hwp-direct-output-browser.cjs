@@ -117,7 +117,7 @@ h.withServer(async origin => {
       assert.equal(linkState.filter(p => p.link).length, 2);
       assert.equal(linkState.filter(p => p.pending).length, 1, 'Pending independent canvas is kept as an uncommitted draft');
       await ai.locator('[data-ai-close]').click(); await ai.waitFor({state:'hidden'});
-      await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click(); await h.idle(page);
+      await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').evaluate(b=>b.click()); await h.idle(page);
       const waiting=page.waitForEvent('download'); await h.action(page,'save');
       const file=path.join(evidence,engineName+'-pending.5e'); await (await waiting).saveAs(file); await h.idle(page);
       const portable=await browser.newContext({viewport:{width:1440,height:1000}});

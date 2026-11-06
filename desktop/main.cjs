@@ -1059,6 +1059,22 @@ function expandMainWindow(animate = true) {
   return true;
 }
 
+// 11-06: 시작 창이 다시 뜨면(새로 고침·처음 화면으로) 창을 시작 창 크기(960×560)로 되돌린다 — 작업 화면 크기 그대로 두면 시작 창이 과하게 크게 보였다.
+function shrinkMainWindow(animate = true) {
+  if (!startExpanded || !win || win.isDestroyed()) return false;
+  if (typeof win.isFullScreen === "function" && win.isFullScreen()) return false;
+  startExpanded = false;
+  if (typeof win.isMaximized === "function" && win.isMaximized() && typeof win.unmaximize === "function") win.unmaximize();
+  const { screen } = require("electron");
+  const area = screen?.getDisplayMatching ? screen.getDisplayMatching(win.getBounds()).workArea : null;
+  const { width, height } = START_WINDOW;
+  const x = area ? Math.round(area.x + (area.width - width) / 2) : undefined, y = area ? Math.round(area.y + (area.height - height) / 2) : undefined;
+  if (typeof win.setMinimumSize === "function") win.setMinimumSize(width, height);
+  if (typeof win.setBounds === "function") win.setBounds(area ? { x, y, width, height } : { width, height }, animate && process.platform === "darwin");
+  if (typeof win.setResizable === "function") win.setResizable(false);
+  return true;
+}
+
 function createWindow() {
   if (win && !win.isDestroyed()) {
     win.show();
@@ -1768,6 +1784,7 @@ handleTrustedIpc("capture:sources", async () => {
 });
 registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack, handle: handleTrustedIpc });
 handleTrustedIpc("window:start-expand", () => { expandMainWindow(true); return true; });
+handleTrustedIpc("window:start-shrink", () => { shrinkMainWindow(true); return true; });
 handleTrustedIpc("window:traffic-lights", (_event, visible) => {
   if (process.platform === "darwin" && win && !win.isDestroyed() && typeof win.setWindowButtonVisibility === "function") win.setWindowButtonVisibility(Boolean(visible));
   return true;

@@ -352,7 +352,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       return bytes;}finally{exam.free();}
   }
   // 인쇄·PDF: 묶은 시험지를 쪽마다 엔진 SVG로(화면 그림과 같음).
-  async function examPagesSvg(bytes){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{const page=parse(d.getPageDef(0)),out=[];for(let i=0;i<d.pageCount();i++)out.push(svgOf(d,i));return {pages:out,widthMm:page.width/(7200/25.4),heightMm:page.height/(7200/25.4)};}finally{d.free();}}
+  async function examPagesSvg(bytes){await ensure();const Document=document().constructor,d=new Document(new Uint8Array(bytes));try{const page=parse(d.getPageDef(0)),out=[];for(let i=0;i<d.pageCount();i++)out.push(uniqueSvg(svgOf(d,i)));return {pages:out,widthMm:page.width/(7200/25.4),heightMm:page.height/(7200/25.4)};}finally{d.free();}}
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
   function discard(){clearTimeout(syncTimer);dirty=false;userDirty=false;patchDirty=false;ready=false;onDiverge?.(false);}
   // 틀(회색 안내)만 달라지는 변경: 빈 칸에 처음 쓰거나 다 지울 때. 문단 글 바꾸기로는 안 되고(안내는 회색) 다시 그려야 한다.
@@ -469,7 +469,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         for(const r of ctl){if(ctl.some(o=>inside(r,o)))continue;const box=found.get(owner(r)+'|'+colOf(r.x)),cx=r.x+r.w/2;if(!box||cx<box.x-4||cx>box.r+4)continue;grow(owner(r),r);}
         if(i)await step();
         const boxes=[...found].map(([key,b])=>({id:key.split('|')[0],...rel(b)})),focus=boxes.find(b=>b.id===focusId);
-        out.push({svg:svgOf(target,i),width,height,focus:focus&&{x:focus.x,y:focus.y,w:focus.w,h:focus.h},boxes});
+        // 11-06: 쪽 그림도 SVG 안 이름(cell-clip-8 등)을 쪽마다 다르게 — 같은 화면의 다른 엔진 SVG(문항 카드·미리보기)와 이름이 겹치면
+        // 브라우저가 먼저 나온 잘라내기를 써서 표 칸(〈보기〉·선지·그림 칸) 안이 비어 보였다. 한글 화면은 캔버스라 멀쩡했다.
+        out.push({svg:uniqueSvg(svgOf(target,i)),width,height,focus:focus&&{x:focus.x,y:focus.y,w:focus.w,h:focus.h},boxes});
       }
       // 문항 하나가 여러 상자(단·쪽)로 나뉘면 첫 상자에만 이름표, 마지막 상자에만 여백 막대를 단다.
       const all=out.flatMap(p=>p.boxes);for(const id of new Set(all.map(b=>b.id))){all.filter(b=>b.id===id).forEach((b,i,mine)=>{b.first=i===0;b.last=i===mine.length-1;});}
@@ -547,7 +549,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     // 문항 쪽 높이를 내용에 맞춘 뒤(한 쪽에 다 들어가게) 다시 열어 그린다 — 자동 조판과 같은 순서.
     let d;try{fitQuestionPage(raw,own);d=new Document(exportLayoutHwpx(raw,XLSX.CFB));}finally{raw.free();}
     try{const page=parse(d.getPageDef(0));
-      return {svg:svgOf(d,0),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.places||o?.texts),
+      return {svg:uniqueSvg(svgOf(d,0)),width:page.width/75,height:page.height/75,page,elements:questionElements(d,value,o?.places||o?.texts),
         runs:parse(d.getPageTextLayout(0)).runs,controls:parse(d.getPageControlLayout(0)).controls};
     }finally{d.free();}
   }

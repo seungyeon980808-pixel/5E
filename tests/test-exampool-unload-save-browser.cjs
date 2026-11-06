@@ -6,7 +6,7 @@ const h=require('./helpers/rhwp-exam.cjs');
 const stored=sheet=>sheet.evaluate(async()=>{const name=(await indexedDB.databases()).map(d=>d.name).find(n=>n.endsWith('5e-exampool-structure'));if(!name)return [];
  const db=await new Promise((res,rej)=>{const r=indexedDB.open(name);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
  const v=await new Promise((res,rej)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});db.close();return v?.questions?.map(q=>q.ask)||[];});
-const openSheet=async page=>{await page.click('.app-switch-image [data-app-switch="exam"]');const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
+const openSheet=async page=>{await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
  await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');return sheet;};
 for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) test(`${name}: typing right before reload is kept`,async t=>{
  await h.withServer(async origin=>{

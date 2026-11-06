@@ -49,11 +49,12 @@ async function openInline(page, index = 0) {
     assert.equal(await button(page, action).isVisible(), true, `inline ${action} action is visible`);
     if (!['undo', 'redo'].includes(action)) assert.equal(await button(page, action).isEnabled(), true, `inline ${action} action is enabled after opening`);
   }
-  for (const action of ['add-label','add-leader','elbow','delete']) assert.equal(await button(page,action).isVisible(),false,'simple editing excludes '+action);
+  // 11-06 결정 11-05e: 두 번 누르면 다섯 도구(AI 변환·복원·텍스트·라벨러·자르기)와 라벨 손질 단추가 모두 보인다.
+  for (const action of ['ai','restore','add-label','add-leader','crop','elbow','delete']) assert.equal(await button(page,action).isVisible(),true,'five-tool editing shows '+action);
 }
 
 async function returnToExistingExam(page) {
-  await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click();await h.idle(page);
+  await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').evaluate(b=>b.click());await h.idle(page);
 }
 
 // Use the actual SVG matrix, including its placement over the iframe picture.
@@ -277,14 +278,14 @@ async function scenario(browser, origin, surface, name) {
 
     await clickText(page, 'inline-seed', true);
     assert.equal(await field(page, 'text').evaluate(node => node === document.activeElement), true, 'label double-click focuses the toolbar textarea');
-    assert.equal(await canvas(page).locator('[data-inline-handle]').count(),0,'simple editing has no geometry handles');
+    // 11-06: 다섯 도구 편집기는 라벨을 끌어 옮기고 지울 수 있다(예전 「간단 편집」은 글자만 고쳤다).
     await changeField(page, 'text', '기존 라벨 수정');
     await waitLabel(page, stateUrl, first.figure.link, 'inline-seed', { text: '기존 라벨 수정' });
 
     const geometryBefore = labels((await linkedDrawing(page,stateUrl,first.figure.link)).objects)[0];
     await dragFrom(page,await textPoint(page,'inline-seed'),18,10);
-    const geometryAfter = labels((await linkedDrawing(page,stateUrl,first.figure.link)).objects)[0];
-    for (const key of ['p1','p2','elbow']) assert.deepEqual(geometryAfter[key],geometryBefore[key],'simple editing preserves '+key);
+    let geometryAfter;for(let i=0;i<40;i++){geometryAfter=labels((await linkedDrawing(page,stateUrl,first.figure.link)).objects)[0];if(JSON.stringify([geometryAfter.p1,geometryAfter.p2])!==JSON.stringify([geometryBefore.p1,geometryBefore.p2]))break;await page.waitForTimeout(100);}
+    assert.notDeepEqual([geometryAfter.p1,geometryAfter.p2],[geometryBefore.p1,geometryBefore.p2],'dragging a label moves it in the five-tool editor');
     await changeField(page,'size',12);await changeField(page,'stroke',.35);
     const oldFont=await field(page,'font').inputValue();
     const otherFont=await field(page,'font').evaluate(select=>[...select.options].find(option=>!option.disabled&&option.value!==select.value)?.value);
@@ -292,9 +293,16 @@ async function scenario(browser, origin, surface, name) {
     await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{labelSize:12*25.4/72,strokeWidth:.35,fontFamily:otherFont});
     await button(page,'undo').click();await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{fontFamily:oldFont});
     await button(page,'redo').click();await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{fontFamily:otherFont});
-    await canvas(page).focus();await page.keyboard.press('Delete');assert.equal(await canvas(page).locator('g[data-annotation-id]').count(),1,'simple editing cannot delete labels');
-    const near = await page.locator('.exam-inline-toolbar').evaluate(n=>{const p=document.querySelector('.exam-inline-picture').getBoundingClientRect(),t=n.getBoundingClientRect();return{gap:t.top-p.bottom,bottom:t.bottom};});
-    assert.ok(near.gap>=0&&near.gap<=10,'toolbar follows just below the image');assert.ok(near.bottom<=950);
+    await canvas(page).focus();await page.keyboard.press('Delete');assert.equal(await canvas(page).locator('g[data-annotation-id]').count(),0,'Delete removes the selected label');
+    await button(page,'undo').click();assert.equal(await canvas(page).locator('g[data-annotation-id]').count(),1,'undo restores the deleted label');
+    await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{fontFamily:otherFont});
+    // 11-06: 떠오르는 편집 창 — 그림은 창 가운데 크게, 창은 화면 안, 다섯 도구는 그림 왼쪽, 문서는 어둡게 덮임.
+    const floating = await page.evaluate(()=>{const r=s=>document.querySelector(s).getBoundingClientRect(),p=r('.exam-inline-picture'),w=r('.exam-inline-window'),t=r('.exam-inline-five'),slot=r('.exam-inline-slot');return{p:[p.left,p.top,p.right,p.bottom,p.width],w:[w.left,w.top,w.right,w.bottom],tools:t.right,slot:slot.width,dim:getComputedStyle(document.querySelector('.exam-inline-backdrop')).opacity};});
+    assert.ok(floating.p[0]>=floating.w[0]&&floating.p[2]<=floating.w[2]&&floating.p[1]>=floating.w[1]&&floating.p[3]<=floating.w[3],'the lifted picture sits inside the editing window');
+    assert.ok(floating.w[0]>=0&&floating.w[3]<=950,'the editing window fits the screen');
+    assert.ok(floating.tools<=floating.p[0],'the five tools sit left of the picture');
+    assert.ok(floating.p[4]>floating.slot*1.3,'the picture is lifted larger than its place on the page');
+    assert.ok(Number(floating.dim)>.9,'the document behind is dimmed');
     const draftLabels = labels((await linkedDrawing(page, stateUrl, first.figure.link)).objects);
     const editedBoxes = await annotationBoxes(page);
     assert.equal(draftLabels.length, 1);

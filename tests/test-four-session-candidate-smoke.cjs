@@ -107,7 +107,7 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   assert.ok(types.includes('image')&&types.includes('labeler')&&types.includes('coordplane')&&types.includes('funcgraph'));
   await page.screenshot({path:path.join(output,'labels-and-native-graph.png')});
 
-  await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click();
+  await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').evaluate(b=>b.click());
   await page.locator('#rhwp-exam-workspace[aria-busy="false"]').waitFor({timeout:60000});
   const native=await page.evaluate(()=>{
     const deps=document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps;

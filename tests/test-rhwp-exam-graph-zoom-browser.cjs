@@ -3,6 +3,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {chromium, webkit} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const h = require('./helpers/rhwp-exam.cjs');
+// 11-06 결정 11-05e: 그래프 그림을 두 번 누르면 바로 그래프 창이 열린다. 창을 닫으면 그 자리 편집기(확대·라벨)가 남는다.
+async function graphWindowClosed(page){const overlay=page.locator('#graph-modal-overlay');await overlay.waitFor({state:'visible'});await page.locator('#gm-cancel').click();await overlay.waitFor({state:'hidden'});}
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/rhwp/verification/graph-zoom');
 
 async function view(page) {
@@ -80,20 +82,19 @@ async function scenario(origin, engine, surface) {
       bridge.insertParagraph();bridge.insertText('② 그래프의 라벨과 본문 글자 크기를 비교하시오.');
     });
     const before=await view(page);
-    await h.doubleClick(page);await page.locator('#exam-inline-editor:not([hidden])').waitFor();await h.idle(page);
-    const editing=await view(page),factor=editing.zoom/before.zoom;
-    assert.ok(factor>1.3,'double click enlarges the document');
-    assert.ok(Math.abs(editing.paperScale/before.paperScale-factor)<.02,'paper and body text use the same magnification');
-    assert.ok(Math.abs(editing.geometry.w/before.geometry.w-factor)<.02,'picture projection follows document magnification');
-    assert.ok(editing.geometry.y>=editing.viewport.y-2,'the whole picture begins below document controls');
-    assert.ok(editing.toolbar.y>=editing.geometry.y+editing.geometry.h && editing.toolbar.y<=editing.geometry.y+editing.geometry.h+10,'simple toolbar is directly below the picture');
+    await h.doubleClick(page);await page.locator('#exam-inline-editor:not([hidden])').waitFor();await graphWindowClosed(page);await h.idle(page);
+    // 11-06: 문서를 확대하지 않고 그림이 떠올라 따로 창에서 크게 보인다(어두운 막 뒤 문서는 그대로).
+    const editing=await view(page);
+    assert.ok(Math.abs(editing.zoom-before.zoom)<.001,'the document keeps its zoom while the picture floats');
+    const lifted=await page.evaluate(()=>document.querySelector('.exam-inline-picture').getBoundingClientRect().width);
+    assert.ok(lifted>before.geometry.w*1.3,'the floating picture is larger than its place on the page');
     assert.deepEqual((await h.pictures(page))[0].props,zoomPicture.props,'zoom does not change stored picture properties');
     await page.locator('[data-inline-field="text"]').fill('가속 구간');await page.locator('[data-inline-field="text"]').press('Tab');
     await page.locator('[data-inline-field="size"]').fill('10');await page.locator('[data-inline-field="size"]').press('Tab');
     if(engine==='chromium' && !surface) {
       await page.screenshot({path:path.join(evidence,'document-label-zoom.png')});
       await page.setViewportSize({width:760,height:900});
-      await h.waitForState(page,()=>document.querySelector('.exam-inline-toolbar').getBoundingClientRect().right<=innerWidth);
+      await h.waitForState(page,()=>document.querySelector('.exam-inline-window').getBoundingClientRect().right<=innerWidth);
       await page.screenshot({path:path.join(evidence,'document-label-narrow.png')});
       await page.setViewportSize({width:1440,height:950});
     }
@@ -101,7 +102,7 @@ async function scenario(origin, engine, surface) {
     assert.ok(Math.abs((await view(page)).zoom-before.zoom)<.001,'apply restores previous view zoom');
     const labeled=(await h.pictures(page))[0];assert.equal(labeled.figure.source.pages[0].objects.find(object=>object.type==='labeler').text,'가속 구간');
     // Native manual zoom remains a preference after leaving inline editing.
-    await h.doubleClick(page);await h.idle(page);
+    await h.doubleClick(page);await page.locator('#exam-inline-editor:not([hidden])').waitFor();await graphWindowClosed(page);await h.idle(page);
     await page.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.setZoom(1.25));
     await page.locator('[data-inline-action="close"]').click();await h.idle(page);
     assert.equal((await view(page)).zoom,1.25,'manual zoom is not undone on close');

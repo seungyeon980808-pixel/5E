@@ -362,15 +362,16 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const KICE_COLUMN_PT=317.5,columnPx=width,orig=v=>kiceFrame?v*columnPx/KICE_COLUMN_PT:v*Math.min(1,columnPx/KICE_COLUMN_PT);
   // 기출 그림(widthPt 있음)은 원본 크기 그대로(원본 폭 ÷ 원본 단 387pt × 조판 단 폭), 들어갈 칸보다 크면 칸에 맞춘다. 원본 폭이 없으면 정한 크기(size %).
   const figWidth=(b,slot)=>Number(b.figure?.widthPt)>0?Math.min(slot,orig(b.figure.widthPt)):sizedWidth(b,slot);
-  const picture=async(f,width,align,owner={kind:'other'})=>{
+  const picture=async(f,width,align,owner={kind:'other'},{maxHeight=Infinity,prepared=null}={})=>{
     if(!f)return '';
-    const image=await prepareFigure(clone(f));
+    const image=prepared||await prepareFigure(clone(f));
     if(!/^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/.test(image.data))throw Error('한글에 넣을 그림을 PNG로 준비하지 못했습니다.');
     const ratio=Number(image.height)/Number(image.width);
     if(!Number.isFinite(ratio)||ratio<=0)throw Error('그림 크기를 확인하세요.');
     const original=owner.kind==='choice'&&Number(f.widthPt)>0?orig(f.widthPt):Infinity;
     // 원본 그림 픽셀 폭으로 줄이지 않는다(10-24 지적 2·3: 그림이 칸을 채우지 못했음). 그림 선지만 원본 크기를 넘지 않는다.
-    const w=Math.min(width,original),h=w*ratio;
+    // 11-06: 폭을 꽉 채우되 높이 상한(maxHeight)을 넘으면 높이 기준으로 줄인다 — 세로로 긴 그림(용수철)이 칸을 채우다 지나치게 커졌다.
+    let w=Math.min(width,original);if(w*ratio>maxHeight)w=maxHeight/ratio;const h=w*ratio;
     images.push(image.data);imageOwners.push(owner);
     const img=`<img src="${image.data}" width="${Math.round(w)}" height="${Math.round(h)}" alt="${E(image.name)}">`;
     return align?`<p style="margin:0;text-align:${{왼쪽:'left',가운데:'center',오른쪽:'right'}[align]}">${img}</p>`:img;
@@ -629,12 +630,18 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           const widths=rowWidths(children,innerWidth),caption=c=>(/^\(.+\)$/.test(c.label)?c.label:'')+(c.text?(/^\(.+\)$/.test(c.label)?' ':'')+c.text:''),captioned=children.some(c=>caption(c));
           recordTable(captioned?2:1,children.length,[],{kind:'side',id:b.id});
           const tops=[],heights=[],notes=[];
+          // 11-06 사용자: 자료 칸 그림은 열자마자 「좌우 맞춤」(칸 폭에 꽉, 원본 크기에서 멈추지 않음). 단 세로로 긴 그림(높이 > 폭 × 1.2)은
+          // 좌우로 채우면 지나치게 커지므로 「상하 맞춤」 — 같은 줄 다른 그림 높이에 맞추고(없으면 칸 폭 × 1.2), 칸 폭은 넘지 않는다. 비율은 그대로.
+          const TALL=1.2,cellWs=widths.map(w=>Math.max(35,w-12));
+          const prepared=await Promise.all(children.map(c=>c.kind==='figure'&&c.figure?prepareFigure(clone(c.figure)):null));
+          const ratioOf=i=>{const im=prepared[i];const r=im?Number(im.height)/Number(im.width):NaN;return Number.isFinite(r)&&r>0?r:null;};
+          const fills=children.map((c,i)=>ratioOf(i)&&ratioOf(i)<=TALL?cellWs[i]*ratioOf(i):0),refH=Math.max(0,...fills);
           nested++;try{for(const [i,c] of children.entries()){
-            const cellW=Math.max(35,widths[i]-12);let inner='';
+            const cellW=cellWs[i];let inner='';
             if(c.kind==='figure'){
               if(!c.figure&&ghost.figures.has(c.id)&&ghostFigure){const w=sizedWidth(c,cellW);c.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),c.label);}
               // 11-05: 자료 칸((가)·(나) 등) 안 그림은 크기를 따로 정하지 않았으면 칸 폭에 꽉 채운다(원본이 작아도).
-              if(c.figure){inner=await picture(c.figure,c.size===undefined?cellW:Math.min(cellW,figWidth(c,cellW)),undefined,{kind:'block',id:c.id});heights.push(Number(inner.match(/height="(\d+)"/)?.[1])||0);}
+              if(c.figure){const tall=ratioOf(i)>TALL;inner=await picture(c.figure,cellW,undefined,{kind:'block',id:c.id},{prepared:prepared[i]||null,maxHeight:tall?(refH||cellW*TALL):Infinity});heights.push(Number(inner.match(/height="(\d+)"/)?.[1])||0);}
             }else{
               // 표 아래 설명(예 「0은 실제 값…」)은 칸 안이 아니라 나란한 자료 전체 아래 줄로(10-22 10번 「나」안 조판 쪽).
               // 짧은 설명(칸 폭에 한 줄로 드는 「(○: 있음, ×: 없음)」)은 평가원처럼 그 표 바로 아래 가운데(10-25 16번). 긴 설명만 묶음 아래 줄로.
@@ -758,9 +765,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     html+=gapHtml(q.choicesGap??L.choicesGap);
     if(q.style==='대응표')html+=kicePair(q.choiceTable)?pairChoices(q.choiceTable):await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){
-      {const per=choiceColumns(q.choiceLayout,q.choices.length)||2;recordTable(Math.ceil(q.choices.length/per),per,[],{kind:'choicegrid'});}
+      // 11-06 사용자: 그림 선지는 선지마다 왼쪽 좁은 칸 위에 번호(①), 오른쪽 칸에 그림 — ①~⑤ 반복, 선은 안 보이는 「선 없음」.
+      // 표 안에 표를 넣으면 문항 카드 편집기가 열리지 않아(겹친 표) 선지 표 하나에 「번호 칸 · 그림 칸」을 선지마다 나란히 둔다.
+      // 11-06 사용자: 번호 칸은 동그라미 번호 폭에 딱 맞게(여백 거의 0), 그림만 있는 선지는 번호 뒤 띄어쓰기를 넣지 않는다 —
+      // 「① 」로 시작하면 조판기가 번호 폭만큼 내어쓰기를 걸고 띄어쓰기를 고정 빈칸(빨간 V)으로 바꾼다(typeset-model applyReferenceBogiIndent).
+      const per=choiceColumns(q.choiceLayout,q.choices.length)||2,cw=width/per,nw=Math.ceil(choiceWidth('⑤',FS))+2;
+      recordTable(Math.ceil(q.choices.length/per),per*2,[],{kind:'choicegrid'});
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
-      const per=choiceColumns(q.choiceLayout,q.choices.length)||2;for(let i=0;i<q.choices.length;i+=per){html+='<tr>';for(let j=i;j<i+per;j++){const c=q.choices[j];html+=`<td style="border:none;width:${width/per}px;padding:5px;vertical-align:top">${c?p(labels[j]+' '+c.text,null,FS,{kind:'choice',id:c.id,prefix:labels[j].length+1})+await picture(c.figure,width/per-20,undefined,{kind:'choice',id:c.id}):''}</td>`;}html+='</tr>';}
+      for(let i=0;i<q.choices.length;i+=per){html+='<tr>';for(let j=i;j<i+per;j++){const c=q.choices[j];
+        const said=String(c?.text||'').trim();
+        html+=`<td style="border:none;width:${nw}px;padding:4px 0;vertical-align:top">${c?p(said?labels[j]+' '+c.text:labels[j],null,FS,{kind:'choice',id:c.id,prefix:labels[j].length+(said?1:0)}):'<p><br></p>'}</td>`;
+        html+=`<td style="border:none;width:${cw-nw}px;padding:4px 6px 4px 2px;vertical-align:top">${c?await picture(c.figure,cw-nw-14,undefined,{kind:'choice',id:c.id}):'<p><br></p>'}</td>`;}html+='</tr>';}
       html+='</table>';
     }else {
       const fontSize=q.style==='조합'?FS-1:FS,grid=choiceGrid(q.choices,width,fontSize,q.choiceLayout,measureText?measureRich:choiceWidth,L.choiceTabs),rows=Math.ceil(q.choices.length/grid.cols);

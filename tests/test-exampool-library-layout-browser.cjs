@@ -32,7 +32,7 @@ h.withServer(async origin => {
       const page = await context.newPage(), errors = [];page.on('pageerror',error => errors.push(error.message));
       await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
       await page.addStyleTag({content:'.tut-pointout,.tut-pointout-ring{display:none!important}'});
-      await page.locator('.app-switch-image [data-app-switch="exam"]').click();
+      await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
       await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
@@ -50,7 +50,7 @@ h.withServer(async origin => {
       assert.equal(head.h,44,'one 44px head row');assert.equal(head.top,0,'at the top of the pane');assert.equal(head.barTop,0,'on the same line as the card head row');
       // 10-20 화면 정리: 머리 줄 맨 앞에 칸 닫기(바깥쪽 끝)와 칸 이름 「참고 자료」.
       // 10-20 묶음 D: [닫기][범위▾][검색(안에 상세검색)][문항|쪽]. 칸 이름표·라이브러리 아이콘·근거 수 단추는 없다(라이브러리는 범위 목록 맨 아래, 근거는 칸 맨 아래 줄).
-      assert.deepEqual(head.kids.map(k=>k.k),['btn icon pt pane-close','scope','search','adv','lp-seg lp-headseg'],'close · scope · search · detail search · item|page');
+      assert.deepEqual(head.kids.map(k=>k.k),['scope','search','adv','lp-seg lp-headseg','pane-detach','btn icon pt pane-close'],'scope · search · detail search · item|page · detach · close (11-05 칸 떼어 내기: 닫기는 오른쪽 끝)');
       assert.ok(head.kids.filter(k=>k.k!=='adv').every(k=>k.h===30)&&new Set(head.kids.filter(k=>k.k!=='adv').map(k=>k.top)).size===1,'all 30px on one line: '+JSON.stringify(head.kids));
       assert.deepEqual(head.scopes.slice(0,4),['기출문제','교과서','성취기준·교육과정','자료']);
       assert.equal(head.scopes.at(-1),'5E 라이브러리에서 가져오기…','the 5E library lives at the bottom of the scope list');

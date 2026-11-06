@@ -134,6 +134,19 @@ async function idle(page) {
   await waitForState(page,()=>document.querySelector('#rhwp-exam-workspace')?.getAttribute('aria-busy')==='false');
 }
 async function action(page,name) {
+  // 11-06: 그림 「수정」 메뉴(현재 페이지에서 수정·편집기에서 수정)를 없앴다. 「수정」 = 떠오르는 편집 창, 5E_image 원본 편집은 창 안 「5E_image에서 자세히」.
+  if (name === 'edit') {
+    // 11-06 사용자: 「수정」(연필·두 번 누르기)은 5E_image와 똑같은 편집 화면을 한글 위에 뜨는 창으로 연다(body.exam-editing.exam-float-edit).
+    // 그래프로 복원된 그림만 그 자리 편집기 + 그래프 창이 열린다 — 그래프 창을 닫고 「5E_image에서 자세히」로 같은 편집 화면을 연다.
+    if (await page.evaluate(() => document.body.classList.contains('exam-editing'))) return;
+    await page.locator('[data-picture-modify]').click();
+    await page.waitForFunction(() => document.body.classList.contains('exam-editing') || !document.querySelector('#exam-inline-editor')?.hidden || !!document.querySelector('#graph-modal-overlay')?.getClientRects().length, null, {timeout:30000});
+    const graph = page.locator('#graph-modal-overlay');
+    await page.waitForTimeout(50);
+    if (await graph.isVisible()) { await page.locator('#gm-cancel').click(); await graph.waitFor({state:'hidden'}); }
+    if (await page.locator('#exam-inline-editor').isVisible()) await page.locator('#exam-inline-editor [data-inline-action="original"]').click();
+    return;
+  }
   const button = page.locator(`[data-exam-action="${name}"]`);
   if (!await button.isVisible()) {
     const menu = await button.evaluate(element => element.closest('.exam-menu')?.querySelector('[data-exam-menu]')?.dataset.examMenu);
