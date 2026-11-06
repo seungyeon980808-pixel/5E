@@ -46,3 +46,7 @@ export function joinTildeEquations(text){
 export const needsTail=(script,after)=>{const t=String(script).trim();return t.length<=3&&/[A-Za-z]'*$/.test(t)&&/^[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(String(after??''));};
 // W·V처럼 넓게 기울어진 대문자는 ¼ 빈칸 하나로는 뒤 한글에 닿아(「W와」, 사용자 11-02) 둘을 붙인다(실측).
 export const tailOf=(script,after)=>needsTail(script,after)?(/[WV]'*$/.test(String(script).trim())?'``':'`'):'';
+
+// 11-06 수능 틀(기출): 「$1m$,」「$L=1m$일」처럼 라틴 글자로 끝나는 짧은 수식 뒤에 한글·쉼표·마침표가 붙으면 엔진이 글자를 수식 폭 밖으로 그려 겹쳤다.
+// 겹침이 실제로 생긴 꼴(숫자 뒤 단위 글자: 1m·2s·L=1m)만, 여섯 글자 이하 — 다른 기출 조판은 그대로 둔다. 학교 양식은 위 tailOf 그대로.
+export const kiceTailOf=(script,after)=>{const t=String(script).trim();return t.length<=6&&/\d[A-Za-z]{1,2}'*$/.test(t)&&/^[가-힣ㄱ-ㅎㅏ-ㅣ,.]/.test(String(after??''))?'`':'';};

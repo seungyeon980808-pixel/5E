@@ -2,7 +2,7 @@ import {KICE_STANDARD,layoutValues,mmToPx,gapRole} from './typeset-standard.js';
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts} from './typeset-model.js?v=1014-compact-panel';
 import {splitWidths,sizedWidth,choiceColumns} from './placement.js';
-import {tidyEquationScript,joinTildeEquations,tailOf} from './equation-script.js';
+import {tidyEquationScript,joinTildeEquations,tailOf,kiceTailOf} from './equation-script.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels=['①','②','③','④','⑤'];
@@ -272,7 +272,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     // 거북 괄호 〔 〕(U+3014·3015)도 같은 문제로 「〔실험」이 「칠험」처럼 겹쳤다(10-24 11번) — 이 글꼴에서 비슷하게 그려지는 [ ]로 넣는다.
     value=value.replace(/\u3008/g,'<').replace(/\u3009/g,'>').replace(/\u3014/g,'[').replace(/\u3015/g,']');
     if(native&&!kiceFrame)value=joinTildeEquations(value);
-    if(native)value=mathParts(value).map((part,i,all)=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text.replace(/\u0332/g,''));return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:eqScript(part.text)+(kiceFrame?'':tailOf(part.text,all[i+1]?.text)),fontSize:Math.round(fontSize*100*eqScale(part.text))});return marker;}).join('');
+    if(native)value=mathParts(value).map((part,i,all)=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text.replace(/\u0332/g,''));return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:eqScript(part.text)+(kiceFrame?kiceTailOf(part.text,all[i+1]?.text):tailOf(part.text,all[i+1]?.text)),fontSize:Math.round(fontSize*100*eqScale(part.text))});return marker;}).join('');
     else if(value.replace(/\u200b/g,'').trim())texts.push(value.replace(/\u0332/g,''));
     // [3점]은 앞 낱말과 한 덩어리로 줄을 맞춘다(혼자 다음 줄로 떨어지지 않게).
     value=value.replace(/ (\[\d+(?:\.\d+)?점\]|\(\d+(?:\.\d+)?점\))$/,'\u2060$1');
