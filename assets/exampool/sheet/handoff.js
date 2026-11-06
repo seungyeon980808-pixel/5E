@@ -223,6 +223,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const measureGlyphs=(v,fontSize=FS)=>pieces(String(v??'').replace(/\u0332/g,'')).reduce((sum,part)=>sum+(part.math||!part.text?0:measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)),0);
   const measureEqs=(v,fontSize=FS)=>pieces(String(v??'')).reduce((sum,part,i,all)=>sum+(part.math?eqSize(part.text+(kiceFrame?'':tailOf(part.text,all[i+1]?.text)),fontSize*(part.k||1)).w:0),0);
   const EQ_FIT_MIN=.8;
+  // 키 큰 수식(분수) 줄에서 늘어난 높이 중 기준선 위로 솟는 몫(엔진 실측 11-06: 높이 차 22px 중 18px).
+  const TALL_RISE=.95;
   // exact: 줄여서 다 들어갈 때만 줄인다(못 들어가면 그대로 두고 false). 아니면 EQ_FIT_MIN배까지라도 줄여 넘침을 줄인다.
   // 줄이는 것은 넓은 수식(글자 두 개 반보다 넓은 것: 분수·긴 식)만 — 한두 글자 변수(「Y」)까지 줄여 같은 줄 변수가 작아졌다(11-02).
   const shrinkEquations=(v,limit,fontSize=FS,exact=false)=>{const ids=[...String(v).matchAll(/EXAMPOOL_EQ_(\d+)_END/g)].map(m=>Number(m[1])).filter(n=>equations[n]&&eqSize(equations[n].script,fontSize*(equations[n].shrink||1)).w>fontSize*4/3*2.5);if(!ids.length)return false;
@@ -784,9 +786,13 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       for(let row=0;row<rows;row++){
         // 번호(①) 폭은 둘째 줄부터만 줄인다. 첫 줄은 번호를 포함한 글 전체를 칸 폭에 잰다.
         const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],first=grid.singleLine?w-1:w-8,available=grid.singleLine?w-1:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'',tight=grid.tightLast&&col===grid.cols-1&&measureRich(value,fontSize)>first,wrap=tight?v=>String.fromCharCode(CONDENSE+grid.tightLast)+v:v=>measureText?wrapMeasured(v,first,available,x=>measureRich(x,fontSize)):wrapQuestionText(v,available,fontSize),wrapped=wrap(value);return {w,value,wrap,owner:c?{kind:'choice',id:c.id,prefix:labels[i].length+1}:null,height:Math.ceil(wrapped.split('\n').length*fontSize*4/3*1.5+2+extraHeight(wrapped,fontSize)),available};});
-        // 한 줄에 분수 같은 높은 수식이 있으면 칸 가운데에 맞춰 ①~⑤의 글자 줄이 나란하게 한다.
-        const height=Math.max(...cells.map(c=>c.height)),valign=cells.some(c=>extraHeight(c.value,fontSize)>0)?'middle':'top';
-        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:${grid.singleLine?'0':'0 2px'};vertical-align:${valign}"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,c.wrap,c.owner)}</p></td>`).join('')+'</tr>';
+        // 한 줄에 분수 같은 높은 수식이 있으면 ①~⑤의 글자 기준선을 맞춘다. 칸 가운데 맞춤은 분수가 기준선 위로 크게 솟아
+        // 분수 없는 칸(④ 2m)이 7px쯤 떠 보였다(11-06). 모두 위 맞춤으로 두고, 분수 없는 칸만 분수가 위로 솟은 만큼(높이 차의 약 0.8) 위 여백을 준다.
+        // 칸마다 수식 높이가 같으면(모두 「4m」, 모두 분수) 예전 그대로(가운데 맞춤) — 높이가 다를 때만 위 맞춤 + 위 여백으로 기준선을 맞춘다.
+        const height=Math.max(...cells.map(c=>c.height)),extras=cells.map(c=>extraHeight(c.value,fontSize)),rise=Math.max(0,...extras),uneven=rise-Math.min(...extras)>=1;
+        const valign=uneven?'top':extras.some(v=>v>0)?'middle':'top';
+        html+='<tr>'+cells.map((c,k)=>{const top=uneven&&!c.value.includes('\n')?Math.round((rise-extras[k])*TALL_RISE):0;
+          return `<td style="border:none;width:${c.w}px;height:${height}px;padding:${top?`${top}px ${grid.singleLine?'0':'2px'} 0`:grid.singleLine?'0':'0 2px'};vertical-align:${valign}"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,c.wrap,c.owner)}</p></td>`;}).join('')+'</tr>';
       }
       html+='</table>';
     }
