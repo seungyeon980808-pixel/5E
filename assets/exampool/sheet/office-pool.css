@@ -555,11 +555,14 @@
 .lv-ib{width:34px;height:34px;border-radius:8px;border:0;padding:0;background:none;color:var(--ds-ink-2,#b1bac4);display:grid;place-items:center;cursor:pointer;flex:none}
 .lv-ib:hover{background:var(--ds-hover,#1f2630);color:var(--ds-ink,#e6edf3)}
 .lv-vstar.on{color:#e3b341}
-.lv-stage{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:6px;padding:0 8px}
-.lv-side{height:120px;border-radius:10px;border:0;padding:0;background:none;color:var(--ds-ink-2,#b1bac4);display:grid;place-items:center;opacity:.55;transition:opacity .15s,background .15s;cursor:pointer}
-.lv-side svg{width:28px!important;height:28px!important}
-.lv-side:hover{opacity:1;background:var(--ds-hover,#1f2630);color:var(--ds-ink,#e6edf3)}
-.lv-side:disabled{opacity:.15;cursor:default;background:none}
+/* 11-04 사용자(11-06 밤 적용): 좌우 ‹ › 단추를 문항 그림 가장자리 위에 반투명으로 겹쳐 올리고, 문항은 칸 전체 폭을 쓴다. */
+.lv-stage{position:relative;display:block;padding:0 8px}
+.lv-side{position:absolute;top:50%;z-index:2;width:40px;height:88px;margin-top:-44px;border-radius:10px;border:0;padding:0;background:rgba(13,17,23,.42);color:#e6edf3;display:grid;place-items:center;opacity:.5;transition:opacity .15s,background .15s;cursor:pointer;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.lv-side[data-lv-step="-1"]{left:14px}.lv-side[data-lv-step="1"]{right:14px}
+.lv-stage:hover .lv-side:not(:disabled){opacity:.85}
+.lv-side svg{width:24px!important;height:24px!important}
+.lv-side:hover,.lv-side:focus-visible{opacity:1!important;background:rgba(13,17,23,.72)}
+.lv-side:disabled{display:none}
 .lv-qbox{background:#fff;border-radius:10px;overflow:hidden;position:relative;min-height:160px}
 .lv-qbox img{display:block;width:100%;height:auto}
 .lv-qbox .lv-own{transform:none;width:auto;padding:20px 26px;pointer-events:auto}
