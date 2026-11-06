@@ -1626,3 +1626,5 @@
 .unified-library-overlay .unilib-qactions .unilib-button:hover:not(:disabled) { background:var(--ds-hover, #1d2633); color:var(--ds-ink, #e6edf3); }
 .unified-library-overlay .unilib-qactions .unilib-button:disabled { opacity:.45; cursor:default; }
 .unified-library-overlay .unilib-qactions svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+/* 11-06 사용자: 기출 미리보기의 정답 선지 노란 형광펜(화면 표시만). 테두리 없이 형광펜처럼 글자 아래 깔린다. */
+.unified-library-overlay .unilib-match-rect.is-answer { border: 0; border-radius: 2px; background: rgba(255, 212, 0, .42); mix-blend-mode: multiply; }

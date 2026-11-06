@@ -412,9 +412,44 @@ export function highlightRectsInCrop(highlights, crop) {
   });
 }
 
+// 11-06 사용자: 기출 문항 미리보기에서 정답 선지에 노란 형광펜(화면 표시만 — 잘라 내기·보내기는 원본 PDF 픽셀만 쓰므로 들어가지 않는다).
+// 정답은 평가원 정답표를 줄인 assets/exampool/answers/kice-answers.json(파일명 → 문항별 정답, 드라이브 문서 id → 파일명).
+let answerKeys = null;
+export function loadAnswerKeys() {
+  answerKeys ||= fetch(new URL("../assets/exampool/answers/kice-answers.json", import.meta.url)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return answerKeys;
+}
+const CIRCLED = ["①", "②", "③", "④", "⑤"];
+// 선지 낱말(① ㄱ, ③ ㄱ, ㄷ …)에서 정답 번호부터 다음 번호 앞까지를 칠한다. 한 낱말에 선지 여럿이 붙어 있으면 글자 수 비율로 자른다.
+export function answerHighlights(result, keys) {
+  if (!keys || result?.cropType !== "question") return [];
+  const name = keys.documents?.[result.provenance?.documentId] || keys.documents?.[result.documentId];
+  const number = result.metadata?.itemNumber;
+  const accepted = name && Number.isInteger(number) ? keys.papers?.[name]?.[number - 1] : null;
+  if (!Array.isArray(accepted) || !accepted.length) return [];
+  const crop = result.provenance?.rect ?? [0, 0, 1, 1];
+  const inside = (r) => r[0] + r[2] / 2 >= crop[0] && r[0] + r[2] / 2 <= crop[0] + crop[2] && r[1] + r[3] / 2 >= crop[1] && r[1] + r[3] / 2 <= crop[1] + crop[3];
+  const marks = [];
+  for (const answer of accepted) {
+    const mark = CIRCLED[answer - 1];
+    if (!mark) continue;
+    for (const word of result.searchWords ?? []) {
+      const chars = [...String(word.text ?? "")], start = chars.indexOf(mark);
+      if (start < 0 || !Array.isArray(word.rect) || word.rect.length < 4 || !inside(word.rect)) continue;
+      let end = chars.findIndex((c, i) => i > start && CIRCLED.includes(c));
+      if (end < 0) end = chars.length;
+      while (end > start + 1 && /\s/.test(chars[end - 1])) end--;
+      const [x, y, w, h] = word.rect, unit = w / Math.max(1, chars.length), padX = unit * 0.25, padY = h * 0.18;
+      marks.push({ rect: [x + unit * start - padX, y - padY, unit * (end - start) + padX * 2, h + padY * 2], termId: "answer", answer: true, color: "#ffd400" });
+      break;
+    }
+  }
+  return marks;
+}
+
 function paintHighlightLayer(host, image, result, crop) {
   host.querySelector(".unilib-highlight-layer")?.remove();
-  const highlights = highlightRectsInCrop(result?.matchContext?.highlights, crop);
+  const highlights = [...highlightRectsInCrop(result?.matchContext?.highlights, crop), ...highlightRectsInCrop(result?.answerHighlights, crop)];
   if (!highlights.length) return;
   const layer = document.createElement("span");
   layer.className = "unilib-highlight-layer";
@@ -427,6 +462,7 @@ function paintHighlightLayer(host, image, result, crop) {
       marker.className = "unilib-match-rect";
       marker.setAttribute("aria-hidden", "true");
       marker.dataset.termId = highlight.termId;
+      if (highlight.answer) marker.classList.add("is-answer");
       marker.style.setProperty("--unilib-highlight-color", highlight.color);
       Object.assign(marker.style, {
         left: `${imageBounds.left - hostBounds.left + highlight.rect[0] * imageBounds.width}px`,
@@ -2557,7 +2593,9 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         if (ownEpoch !== previewEpoch || result.id !== selectedId) return;
         frame.append(image);
         const previewCrop = materializeResult.provenance?.rect ?? [0, 0, 1, 1];
-        paintHighlightLayer(frame, image, result, previewCrop);
+        const keys = result?.cropType === "question" ? await loadAnswerKeys() : null;
+        if (ownEpoch !== previewEpoch || result.id !== selectedId) return;
+        paintHighlightLayer(frame, image, { ...result, answerHighlights: answerHighlights(result, keys) }, previewCrop);
         if (activeRepresentation === "full") paintFigureChoiceLayer(frame, image, figureChoicesForResult(result, activeFigureRepresentation), (representation) => {
           invalidateAction();
           activeFigureRepresentation = representation;
