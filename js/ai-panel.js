@@ -7143,10 +7143,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }
 
   return {
+    deleteTask,
     // 11-06 D5: 한글 그림 위 「끝 · 눌러서 보기」·알림 [결과 보기] — 그 작업 탭을 다시 연다.
     openHwpTask: taskId => taskTabs.has(taskId) ? open({ taskId }) : null,
     hasHwpTask: taskId => hwpInPlaceTargets.has(taskId) && taskTabs.has(taskId),
-    deleteTask,
     taskVisibleImage: async id => {
       if (id === activeTaskTabId) captureActiveTaskTab();
       const owner = taskTabs.get(id);

@@ -15,11 +15,9 @@ h.withServer(async origin=>{
    await h.crop(page);await h.idle(page);assert.equal((await metadata()).examLink,undefined);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),0);
    await page.locator('#exam-name').focus();await page.keyboard.press('Escape');assert.equal((await h.pictures(page)).length,0);await h.action(page,'close');
    await h.crop(page);await h.place(page);await h.originalEdit(page);
-   await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel').waitFor({state:'visible'});
-   await page.locator('#exam-source-region').waitFor({state:'hidden'});
-   assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'AI shows no document badge or apply controls');
-   await page.locator('#ai-image-panel [data-ai-close]').click();
+   // 11-06 사용자 결정: 한글 위에 뜨는 편집 창 안에서는 AI 입구를 뺀다(AI는 그림 단추에서 따로 연다).
    await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+   assert.equal(await page.locator('#ai-image-install-open').isVisible(),false,'floating picture edit hides the AI entry');
    // 그림 편집을 열면 그림 전체가 캔버스 안에 · 너무 크지도 작지도 않게(약 80%) · 가운데(10-24 지적 19).
    {await page.waitForTimeout(300);const fit=await page.evaluate(()=>{const c=document.querySelector('#canvas').getBoundingClientRect(),o=document.querySelector('#canvas [data-id="link-line"]').getBoundingClientRect(),bar=document.querySelector('#exam-edit-bar').getBoundingClientRect();return {inside:o.left>=c.left&&o.right<=c.right&&bar.top>=c.top&&o.bottom<=c.bottom,share:Math.max(o.width/c.width,o.height/c.height),dx:Math.abs((o.left+o.right)/2-(c.left+c.right)/2)/c.width};});
     assert.ok(fit.inside,`picture and edit bar fit in the canvas: ${JSON.stringify(fit)}`);assert.ok(fit.share>.45&&fit.share<.85,`picture fills about 80%: ${JSON.stringify(fit)}`);assert.ok(fit.dx<.08,`picture is centred: ${JSON.stringify(fit)}`);}
