@@ -1054,19 +1054,41 @@ function growGap(id,after){
 document.addEventListener('change',e=>{const c=e.target.closest('[data-exam-break]');if(!c||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
   if(mutate(()=>{exam.breaks={...(exam.breaks||{})};if(c.checked)exam.breaks[examPick]=true;else delete exam.breaks[examPick];exam.updatedAt=new Date().toISOString();},{render:false}))queueExamSheet(exam);});
 // 5E_hwp로 보내기: 시험지 한 부(HWPX)를 5E 시험지 편집기에서 연다. 완성이 아닌 문항도 보낸다. 조판 저장이 없는 문항은 먼저 저장해야 한다.
-let examRequest=null;
-async function sendExam(exam,{download:asFile=false,variant=false,print=false}={}){
+let examRequest=null,examRequestTimer=0;
+// 11-06 사용자: 「5E_hwp로 보내기」는 단추 안에서만 돌지 말고 화면 전체로 「5E_hwp로 옮기는 중」을 알린다.
+// 단계(문항 조판 확인 → 시험지 만들기 → 5E_hwp에서 열기)·진행 막대·경과 시간. 실패하면 안내를 닫고 그 문항 카드로 데려간다(막다른 경고 금지).
+const sendProgress=(()=>{let el=null,clock=0,started=0;
+  const ensure=()=>{if(el)return el;el=document.createElement('div');el.className='send-progress';el.hidden=true;el.setAttribute('role','status');el.setAttribute('aria-live','polite');
+    el.innerHTML='<div class="sp-card"><div class="sp-head"><span class="sp-spin" aria-hidden="true"></span><b>5E_hwp로 옮기는 중</b><time class="sp-time">00:00</time></div><p class="sp-title"></p><ol class="sp-steps"><li data-step="typeset">문항 조판 확인</li><li data-step="build">시험지 만들기</li><li data-step="open">5E_hwp에서 열기</li></ol><div class="sp-bar"><i></i></div><p class="sp-detail"></p></div>';
+    document.body.append(el);return el;};
+  const tick=()=>{if(!el)return;const t=Math.floor((performance.now()-started)/1000);el.querySelector('.sp-time').textContent=`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
+  const order=['typeset','build','open'],span={typeset:[0,.55],build:[.55,.85],open:[.85,1]};
+  return {
+    start(title){ensure();started=performance.now();el.querySelector('.sp-title').textContent=title||'';el.hidden=false;document.body.classList.add('sending-exam');this.step('typeset','확인하는 중…',0);tick();clearInterval(clock);clock=setInterval(tick,500);},
+    step(name,detail='',fraction=0){if(!el||el.hidden)return;const at=order.indexOf(name);
+      el.querySelectorAll('[data-step]').forEach((li,i)=>{li.dataset.state=i<at?'done':i===at?'active':'';});
+      const [a,b]=span[name];el.querySelector('.sp-bar i').style.width=`${Math.round((a+(b-a)*Math.max(0,Math.min(1,fraction)))*100)}%`;
+      el.querySelector('.sp-bar').dataset.waiting=String(name==='open');el.querySelector('.sp-detail').textContent=detail;},
+    hide(){clearInterval(clock);clock=0;if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
+  };})();
+async function sendExam(exam,options={}){
+  const toHwp=!options.download&&!options.variant&&!options.print&&embedded&&exam.items.length>0;
+  if(toHwp)sendProgress.start(exam.title);
+  try{await sendExamNow(exam,options);}
+  finally{if(toHwp){if(examRequest){clearTimeout(examRequestTimer);examRequestTimer=setTimeout(()=>{if(examRequest){sendProgress.hide();status('5E_hwp가 아직 열리지 않았습니다. 5E_hwp 창을 확인하거나 다시 보내세요.',true);}},120000);}else sendProgress.hide();}}
+}
+async function sendExamNow(exam,{download:asFile=false,variant=false,print=false}={}){
   if(!exam.items.length){status('시험지에 문항을 넣은 뒤 보내세요.',true);return;}
   // 조판 자동 저장(10-23 A2): 조판이 없거나 낡은 문항은 여기서 새로 조판해 저장한다(교사가 「조판 저장」을 누를 일 없음).
   {const {typesetMatches}=await import('./typeset-model.js?v=1014-compact-panel'),need=[],form=exam.formId?typesetForms.find(f=>f.id===exam.formId):null;typesetter||=makeTypesetter();
     for(const id of exam.items){const q=data.questions.find(x=>x.id===id);if(q&&!(form&&typesetter.retypesForForm(q,form))&&!(q.typeset?.verified&&await typesetMatches(q.typeset,q)))need.push(q);}
     if(need.length){typesetter||=makeTypesetter();
-      for(const [i,q] of need.entries()){status(`조판 만드는 중 ${i+1}/${need.length} · ${q.number}번`);
+      for(const [i,q] of need.entries()){status(`조판 만드는 중 ${i+1}/${need.length} · ${q.number}번`);sendProgress.step('typeset',`${q.number}번 조판 만드는 중 · ${i+1}/${need.length}`,i/need.length);
         try{const t=await typesetter.autoTypeset(q);mutate(()=>{q.typeset=t;},{render:false});}catch(e){const why=`${q.number}번 문항을 조판하지 못해 시험지를 만들지 않았습니다: ${e.message} — 카드에서 고친 뒤 다시 보내세요.`;typesetFailed={id:q.id,key:typesetFailKey(q),message:why};status(why,true);current=q;openCard(q.id);cardEditor.showHwp?.();return;}}
       await saveQueue;}}
   // 순서를 바꾸면 문항 번호가 바뀌어 저장한 조판과 맞지 않게 된다. 예전에는 만드는 도중 번호 없는 오류로 실패했다(M9). 먼저 모두 확인해 알린다.
 
-  status('시험지를 만드는 중…');
+  status('시험지를 만드는 중…');sendProgress.step('build',`${exam.items.length}문항을 한 시험지로 묶는 중…`,.3);
   try{
     // 나형: 문항 순서를 섞어(시험지마다 늘 같은 순서) 묶고 번호를 다시 매긴다. 가·나형 정답 대응표(엑셀)도 함께 내려받는다.
     if(variant){const {shuffledOrder,answerRows}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id));
@@ -1077,6 +1099,7 @@ async function sendExam(exam,{download:asFile=false,variant=false,print=false}={
     const bytes=await buildExamBytes(exam);
     if(print){await printExam(bytes,exam.title,print==='A4'?'A4':null);return;}
     if(asFile||!embedded){download(await forHancom(bytes),`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
+    sendProgress.step('open','5E_hwp에서 시험지를 여는 중…',.4);
     examRequest=uid();window.parent.postMessage({channel:'5e-question-sheet',action:'exam-handoff',requestId:examRequest,bytes,title:exam.title,qid:exam.id},OWN);
   }catch(e){
     // 학교 양식 단에서 넘친 문항(10-30): 경고로 끝내지 않고 그 문항을 학교 틀로 열어 고치게 한다(저장하면 다음 보내기부터 그 조판을 쓴다).
@@ -1304,7 +1327,7 @@ window.addEventListener('message',async e=>{if(!fromOwn(e)||e.source!==window.pa
   queuePast(items,{go:!e.data.toExam});});
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.data?.channel!=='5e-question-sheet'||e.data.action!=='figure-made'||!figureRequests.has(e.data.requestId))return;void receiveFigure(e.data);});
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;
-  if(m.requestId&&m.requestId===examRequest){examRequest=null;if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5E_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}
+  if(m.requestId&&m.requestId===examRequest){examRequest=null;clearTimeout(examRequestTimer);sendProgress.hide();if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5E_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}
 });
 // 위쪽 막대: 로고는 문항 보관함(홈), 이동 줄 앞 단계는 보관함 또는 지금 문항이 든 시험지.
 $('#brand-home').onclick=()=>{view.examId=null;show('library');};

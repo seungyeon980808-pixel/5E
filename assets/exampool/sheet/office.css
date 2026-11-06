@@ -357,3 +357,27 @@ button.q-status:hover{background:var(--ds-hover)}
 /* 상태 줄 오른쪽: 자동 저장 · 5E 버전 · 문제 신고(5E 아래 막대와 같은 글자 크기·색). */
 .footer-right{display:flex;align-items:center;gap:14px}
 #host-bug{color:var(--ds-ink-2);text-decoration:underline;text-underline-offset:2px}#host-bug:hover{color:var(--ds-ink)}
+/* 11-06 사용자: 5E_hwp로 보내는 동안 화면 전체 안내(단계·진행 막대·경과 시간). */
+.send-progress{position:fixed;inset:0;z-index:9000;display:grid;place-items:center;background:rgba(9,12,17,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:sp-in .2s ease both}
+.send-progress[hidden]{display:none}
+.send-progress .sp-card{width:min(420px,calc(100vw - 32px));box-sizing:border-box;padding:22px 24px 20px;border-radius:14px;background:#161b22;border:1px solid #30363d;box-shadow:0 24px 70px rgba(0,0,0,.5);color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif}
+.send-progress .sp-head{display:flex;align-items:center;gap:10px}
+.send-progress .sp-head b{font-size:16px;font-weight:650;flex:1}
+.send-progress .sp-time{font-variant-numeric:tabular-nums;color:#8b95a5;font-size:13px}
+.send-progress .sp-spin{width:16px;height:16px;border-radius:50%;border:2px solid #3d4652;border-top-color:#6f93c4;animation:sp-turn .9s linear infinite}
+.send-progress .sp-title{margin:6px 0 14px;color:#9aa4b2;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.send-progress .sp-steps{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:7px}
+.send-progress .sp-steps li{position:relative;padding-left:22px;color:#6e7681}
+.send-progress .sp-steps li::before{content:"";position:absolute;left:3px;top:6px;width:9px;height:9px;border-radius:50%;border:1.5px solid #3d4652}
+.send-progress .sp-steps li[data-state="active"]{color:#e6edf3}
+.send-progress .sp-steps li[data-state="active"]::before{border-color:#6f93c4;background:#6f93c4;box-shadow:0 0 0 3px rgba(111,147,196,.25)}
+.send-progress .sp-steps li[data-state="done"]{color:#9aa4b2}
+.send-progress .sp-steps li[data-state="done"]::before{border-color:#5b8a6d;background:#5b8a6d}
+.send-progress .sp-bar{height:6px;border-radius:3px;background:#262c35;overflow:hidden}
+.send-progress .sp-bar i{display:block;height:100%;width:0;border-radius:3px;background:#6f93c4;transition:width .35s ease}
+.send-progress .sp-bar[data-waiting="true"] i{background:linear-gradient(90deg,#6f93c4 0%,#9cb6dc 50%,#6f93c4 100%);background-size:200% 100%;animation:sp-wave 1.2s linear infinite}
+.send-progress .sp-detail{margin:10px 0 0;min-height:1.5em;color:#9aa4b2;font-size:13px}
+@keyframes sp-in{from{opacity:0}to{opacity:1}}
+@keyframes sp-turn{to{transform:rotate(360deg)}}
+@keyframes sp-wave{from{background-position:200% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){.send-progress,.send-progress .sp-spin,.send-progress .sp-bar[data-waiting="true"] i{animation:none}.send-progress .sp-bar i{transition:none}}

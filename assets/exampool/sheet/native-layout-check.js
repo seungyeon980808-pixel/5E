@@ -54,7 +54,9 @@ export function nativeLayoutIssues(document){
       // graze: 수식 상자 아래·위가 옆줄 글 상자에 2px 이하로만 닿음(글자 획은 겹치지 않음) — 학교 양식에서는 깨짐으로 보지 않는다(11-02 밤샘 물리 「자기 선속」 1.5px).
       // 키 큰 수식(분수)은 상자 위쪽 약 1/4이 빈 공간이다(엔진 실측: 상자 38px 중 글자 26px, 빈 곳은 위쪽).
       const ink=control.type==='equation'&&runs.some(r=>control.h>(r.fontSize||r.h)*1.8)?{...control,y:control.y+control.h*.25,h:control.h*.75}:control;
-      for(const run of runs){const r=glyph(run);if(intersects(ink,r))add(page,run.text,`${control.type==='equation'?'수식':'그림'}과 글자가 겹칩니다. 크기와 어울림을 확인하세요`,null,null,{graze:control.type==='equation'&&Math.min(ink.y+ink.h,r.y+r.h)-Math.max(ink.y,r.y)<=2});}
+      // 키 큰 수식(분수)의 분모 아래도 상자 끝까지 꽉 차지 않는다 — 옆 줄 글자에 2.5px 이하로 스치는 것은 겹침이 아니다(11-06 기출 〈보기〉 ㄴ→ㄷ, 실제 획 사이 1~2px).
+      const tall=ink!==control;
+      for(const run of runs){const r=glyph(run);if(intersects(ink,r)&&!(tall&&Math.min(ink.y+ink.h,r.y+r.h)-Math.max(ink.y,r.y)<=2.5))add(page,run.text,`${control.type==='equation'?'수식':'그림'}과 글자가 겹칩니다. 크기와 어울림을 확인하세요`,null,null,{graze:control.type==='equation'&&Math.min(ink.y+ink.h,r.y+r.h)-Math.max(ink.y,r.y)<=2});}
     }
     const sec=runs[0]?.secIdx??controls[0]?.secIdx??0,definition=parse(document.getPageDef(sec)),columns=parse(document.getColumnDef(sec));
     const left=(definition.marginLeft+definition.marginGutter)/75,right=(definition.width-definition.marginRight)/75,top=definition.marginTop/75,bottom=(definition.height-definition.marginBottom)/75;
