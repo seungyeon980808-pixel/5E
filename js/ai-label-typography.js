@@ -44,9 +44,12 @@ export function fontForLabelRole(role) {
 export function inferLabelRole(label) {
   const text = String(label.text || '').trim();
   if (/^[+−-]?\d+(?:[.,]\d+)*(?:°)?$/.test(text)) return 'number';
-  if (/^(?:[A-Z][a-z]?\d*[_^]?\{?\d*\}?)+(?:\^\{?[+−-]\}?|[⁺⁻])?(?:\([sgl]\))?$/.test(text) && text.length > 1) return 'chemical';
+  if (/^(?:[A-Z][a-z]?[\d₀-₉]*[_^]?\{?\d*\}?)+(?:\^\{?[+−-]\}?|[⁺⁻²³]+)?(?:\([sgl]\))?$/u.test(text) && text.length > 1) return 'chemical';
   if (label.labelType === 'quantity') return 'quantity';
-  if (/^[A-Z]$/.test(text)) return 'name';
+  // 11-06 사용자 「라벨 복원 글씨체가 망가졌다」: AI가 종류를 안 붙이면 θ·l₁·h₀까지 돋움이 됐다.
+  // 한 글자 소문자·그리스 문자(아래첨자·프라임 허용)는 물리량(기울인 수식 글꼴). 대문자 한 글자(아래첨자 허용)는 물체 이름(글꼴은 라벨 도구 기본과 같게).
+  if (/^(?:[a-zα-ωϑϕϵΑ-Ω])(?:[₀-₉ₐₑₒₓₔₕₖₗₘₙₚₛₜ]+|_\{?[0-9a-zA-Z]{1,3}\}?|[′'])*$/u.test(text) && !/^[Α-Ω]$/u.test(text) || /^[Δ][a-zA-Zα-ω]/u.test(text)) return 'quantity';
+  if (/^[A-Z](?:[₀-₉]+|_\{?[0-9]{1,2}\}?|[′'])?$/u.test(text)) return 'name';
   if (/^[㉠-㉻ⓐ-ⓩⒶ-Ⓩ?+−-]$/.test(text)) return 'symbol';
   return 'text';
 }
