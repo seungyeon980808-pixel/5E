@@ -89,9 +89,13 @@ test('native layout preflight detects nested header and note overflow, while tal
  assert.throws(()=>assertNativeLayout(doc),/표 1행 2열/);
  runs=[{text:'표 아래 설명',x:20,y:98,w:70,h:12,fontSize:12,secIdx:0,parentParaIdx:1,cellPath:path.slice(0,1)}];
  assert(nativeLayoutIssues(doc).some(v=>v.reason.includes('테두리')));
- runs=[{text:'수식 앞',x:10,y:20,w:30,h:36,fontSize:12},{text:'다음 줄',x:10,y:42,w:30,h:12,fontSize:12}];
+ // 분수 든 키 큰 줄(h 36)의 글자는 줄 상자 맨 위가 아니라 기준선 쪽(늘어난 높이의 0.8 아래, y 39.2~51.2)에 있다(11-06 엔진 실측).
+ runs=[{text:'수식 앞',x:10,y:20,w:30,h:36,fontSize:12},{text:'다음 줄',x:10,y:56,w:30,h:12,fontSize:12}];
  assert.deepEqual(nativeLayoutIssues(doc),[]);
- runs[1].y=26;assert.throws(()=>assertNativeLayout(doc),/겹칩니다/);
+ // 앞 보통 줄 상자와 키 큰 줄 상자가 겹쳐도(〈보기〉 줄 당기기) 글자끼리 안 겹치면 통과, 글자 자리에 들어오면 막는다.
+ runs=[{text:'앞 줄',x:10,y:10,w:30,h:12,fontSize:12},{text:'수식 앞',x:10,y:14,w:30,h:36,fontSize:12}];
+ assert.deepEqual(nativeLayoutIssues(doc),[]);
+ runs[0].y=26;assert.throws(()=>assertNativeLayout(doc),/겹칩니다/);
 });
 
 test('empty bogi lines and choices keep one space after their label (ㄱ. ①) so typing starts after the gap',async()=>{

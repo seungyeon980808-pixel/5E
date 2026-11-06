@@ -43,13 +43,18 @@ export function nativeLayoutIssues(document){
     }
     // Distinct lines/paragraphs must not share glyph space. Runs of different
     // scripts on the same line are adjacent and pass this test naturally.
+    // 11-06: 분수 든 키 큰 줄은 글자가 줄 상자 맨 위가 아니라 기준선 쪽(늘어난 높이의 약 0.8 아래)에 있다 — 줄 상자 맨 위로 재면
+    // 〈보기〉 줄 사이를 원본처럼 당겼을 때(applyTightBogi) 글자끼리 겹친다고 잘못 막았다. 보통 줄(h≈글자 크기)은 그대로다.
+    const glyph=r=>{const f=r.fontSize||r.h;return {...r,y:r.y+(r.h>f*1.4?(r.h-f)*.8:0),h:f};};
     for(let i=0;i<runs.length;i++)for(let j=i+1;j<runs.length;j++){
       const a=runs[i],b=runs[j];
-      if(intersects({...a,h:a.fontSize||a.h},{...b,h:b.fontSize||b.h}))add(page,a.text+' / '+b.text,'글자가 서로 겹칩니다. 줄 간격과 셀 높이를 확인하세요',null,Math.max((a.cellPath||[]).length?a.parentParaIdx:a.paraIdx,(b.cellPath||[]).length?b.parentParaIdx:b.paraIdx));
+      if(intersects(glyph(a),glyph(b)))add(page,a.text+' / '+b.text,'글자가 서로 겹칩니다. 줄 간격과 셀 높이를 확인하세요',null,Math.max((a.cellPath||[]).length?a.parentParaIdx:a.paraIdx,(b.cellPath||[]).length?b.parentParaIdx:b.paraIdx));
     }
     for(const control of controls.filter(c=>c.type==='image'||c.type==='equation')){
       // graze: 수식 상자 아래·위가 옆줄 글 상자에 2px 이하로만 닿음(글자 획은 겹치지 않음) — 학교 양식에서는 깨짐으로 보지 않는다(11-02 밤샘 물리 「자기 선속」 1.5px).
-      for(const run of runs){const r={...run,h:run.fontSize||run.h};if(intersects(control,r))add(page,run.text,`${control.type==='equation'?'수식':'그림'}과 글자가 겹칩니다. 크기와 어울림을 확인하세요`,null,null,{graze:control.type==='equation'&&Math.min(control.y+control.h,r.y+r.h)-Math.max(control.y,r.y)<=2});}
+      // 키 큰 수식(분수)은 상자 위쪽 약 1/4이 빈 공간이다(엔진 실측: 상자 38px 중 글자 26px, 빈 곳은 위쪽).
+      const ink=control.type==='equation'&&runs.some(r=>control.h>(r.fontSize||r.h)*1.8)?{...control,y:control.y+control.h*.25,h:control.h*.75}:control;
+      for(const run of runs){const r=glyph(run);if(intersects(ink,r))add(page,run.text,`${control.type==='equation'?'수식':'그림'}과 글자가 겹칩니다. 크기와 어울림을 확인하세요`,null,null,{graze:control.type==='equation'&&Math.min(ink.y+ink.h,r.y+r.h)-Math.max(ink.y,r.y)<=2});}
     }
     const sec=runs[0]?.secIdx??controls[0]?.secIdx??0,definition=parse(document.getPageDef(sec)),columns=parse(document.getColumnDef(sec));
     const left=(definition.marginLeft+definition.marginGutter)/75,right=(definition.width-definition.marginRight)/75,top=definition.marginTop/75,bottom=(definition.height-definition.marginBottom)/75;

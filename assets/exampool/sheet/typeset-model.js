@@ -731,3 +731,51 @@ export function fixedLabelSpaces(document,section=0){
   }
   return count;
 }
+
+// 11-06 사용자: 〈보기〉에 분수 같은 키 큰 수식 줄이 있으면 줄 사이가 너무 벌어졌다(원본은 분수 줄 1.4배, 엔진은 1.9배).
+// 엔진은 수식 상자 위쪽 빈 공간까지 줄 높이로 잡고 그 위에 줄 간격을 또 얹는다. 한글처럼 「잉크 기준」 간격으로 줄 배치(lineseg)만 손본다:
+//   간격 = max(보통 줄 간격, 앞 줄 잉크 아래 + 다음 줄 잉크 위 + 0.4em), 지금보다 넓히지는 않는다.
+// 문단 첫 줄은 vertpos, 같은 문단 안 줄은 앞 줄 spacing으로 당긴다(엔진이 문단 안 줄은 앞 줄 높이+spacing으로 다시 쌓는다).
+// 줄인 만큼 〈보기〉 칸·표 높이도 줄인다. 상자 안에 든 〈보기〉(겹친 표)와 학교 양식(applyLiftTallEquations가 따로 맡음)은 건드리지 않는다.
+export function tightenBogiTallLines(xml){
+  const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
+  const edits=[];
+  for(const m of xml.matchAll(/<hp:tc\b(?:(?!<hp:tc\b|<\/hp:tc>)[\s\S])*<\/hp:tc>/g)){
+    const tc=m[0];if(!tc.includes('<hp:equation'))continue;
+    const paras=[...tc.matchAll(/<hp:p\b[\s\S]*?<\/hp:p>/g)];
+    const text=p=>p.replace(/<hp:equation\b[\s\S]*?<\/hp:equation>/g,'').replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'').replace(/<[^>]+>/g,'');
+    if(paras.length<2||!paras.every(p=>/^\s*[ㄱ-ㅎ]\./.test(text(p[0]))))continue;
+    // 바깥 표가 칸 안에 들어 있으면(상자 안 〈보기〉) 건너뛴다.
+    const before=xml.slice(0,m.index),tbl=before.lastIndexOf('<hp:tbl');if(tbl<0)continue;
+    if((before.slice(0,tbl).match(/<hp:tc\b/g)||[]).length>(before.slice(0,tbl).match(/<\/hp:tc>/g)||[]).length)continue;
+    const lines=[];
+    for(const [pi,p] of paras.entries())for(const [li,s] of [...p[0].matchAll(/<hp:lineseg\b[^>]*>/g)].entries())
+      lines.push({pi,li,tag:s[0],at:m.index+p.index+s.index,pos:num(s[0],'vertpos'),h:num(s[0],'vertsize'),b:num(s[0],'baseline'),sp:num(s[0],'spacing')});
+    if(lines.length<2||lines.some(l=>![l.pos,l.h,l.b,l.sp].every(Number.isFinite)))continue;
+    const hn=Math.min(...lines.map(l=>l.h));if(!lines.some(l=>l.h>hn*1.4))continue;
+    // 지금 기준선 자리(엔진과 같게 쌓는다).
+    let top=lines[0].pos;for(const [k,l] of lines.entries()){if(k&&l.li===0)top=l.pos;else if(k)top=lines[k-1].top+lines[k-1].h+lines[k-1].sp;l.top=top;l.base=top+l.b;}
+    const normal=lines.find(l=>l.h<=hn*1.1),pn=(normal?normal.h+normal.sp:hn*1.45);
+    const ink=l=>{if(l.h<=hn*1.4)return {up:.8*hn,down:.2*hn};const half=l.h*.35,axis=.25*hn;return {up:half+axis,down:half-axis};};
+    let cut=0;const out=lines.map(l=>({...l}));
+    for(let k=1;k<lines.length;k++){
+      const now=lines[k].base-lines[k-1].base,want=Math.max(pn,ink(lines[k-1]).down+ink(lines[k]).up+.4*hn),r=Math.max(0,Math.round(now-want));
+      cut+=r;
+      if(lines[k].li===0)out[k].pos=lines[k].pos-cut;else out[k-1].sp-=r;
+      // 같은 문단 안 다음 줄들은 엔진이 쌓으므로 vertpos만 맞춰 둔다(값이 어긋나지 않게).
+    }
+    if(cut<=0)continue;
+    // 새 vertpos를 엔진처럼 다시 쌓아 적는다.
+    let t2=out[0].pos;for(const [k,l] of out.entries()){if(k&&l.li===0)t2=l.pos;else if(k)t2=out[k-1].top2+out[k-1].h+out[k-1].sp;l.top2=t2;}
+    for(const l of out){const tag=l.tag.replace(/\bvertpos="-?\d+"/,`vertpos="${l.top2}"`).replace(/\bspacing="-?\d+"/,`spacing="${l.sp}"`);if(tag!==l.tag)edits.push([l.at,l.tag,tag]);}
+    const size=tc.match(/<hp:cellSz\b[^>]*>/)?.[0];if(size)edits.push([m.index+tc.indexOf(size),size,size.replace(/\bheight="(\d+)"/,(x,v)=>`height="${Math.max(0,Number(v)-cut)}"`)]);
+    const tsz=xml.slice(tbl).match(/<hp:sz\b[^>]*>/);if(tsz)edits.push([tbl+tsz.index,tsz[0],tsz[0].replace(/\bheight="(\d+)"/,(x,v)=>`height="${Math.max(0,Number(v)-cut)}"`)]);
+  }
+  for(const [index,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,index)+next+xml.slice(index+old.length);
+  return xml;
+}
+export async function applyTightBogi(bytes,JSZip){
+  const zip=await JSZip.loadAsync(new Uint8Array(bytes));let changed=false;
+  for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){const xml=await zip.file(name).async('string'),next=tightenBogiTallLines(xml);if(next!==xml){zip.file(name,next);changed=true;}}
+  return changed?zip.generateAsync({type:'uint8array',compression:'DEFLATE'}):bytes;
+}
