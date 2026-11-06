@@ -410,7 +410,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const out={svg,width:w,height:H};svgCache.set(value.id,{key,out});return out;
     }finally{d.free();}
   }
-  let assembled=null,skipped=null;
+  let assembled=null,skipped=null,assembledPlain=null;
   const pageSheets=(...args)=>serial(()=>pageSheetsNow(...args));
   // progress(11-02 조판 중 표시): {stage:'items'|'form'|'place'|'draw', i, n} — 시험지 화면이 단계·진행 막대를 그린다.
   async function pageSheetsNow(data,exam,focusId,{alive=()=>true,form=null,progress=()=>{}}={}){
@@ -446,7 +446,12 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     }else{
     // 단 폭이 다른 용지로 조판한 문항(10-23 지적 2-3: B4 문항이 A4 단에서 넘쳐 겹침)은 화면에서는 시험지 단 폭으로 새로 조판해 놓는다.
     for(const x of items)if(x.profile?.paper!==sheet.paper){await step();const e=await sheetEntry(Document,x.q,sheet.paper);Object.assign(x,{bytes:e.bytes,profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
-    progress({stage:'place'});built=await assembleExamChecked(Document,{items,sheet,open:item=>new Document(item.bytes),between:step});
+    // 11-06(11-04 지적): 기본 틀 시험지도 묶은 결과를 기억한다 — 정답·해설·성취기준처럼 지면에 안 나오는 값만 고치면 다시 묶지 않는다
+    // (열쇠 = 쪽 모양·문항별 지면 내용·조판 크기·여백·나눔). 학교 양식 쪽(assembled)과 같은 방식.
+    const pkey=JSON.stringify([sheet,items.map(x=>[x.id,contentKey(x.q),x.bytes?.length||0,x.after,x.breakBefore])]);
+    if(assembledPlain?.key===pkey)built={...assembledPlain.meta,document:new Document(assembledPlain.bytes),pages:[]};
+    else{progress({stage:'place'});built=await assembleExamChecked(Document,{items,sheet,open:item=>new Document(item.bytes),between:step});
+      try{const {document:_,...meta}=built;assembledPlain={key:pkey,bytes:exportLayoutHwpx(built.document,XLSX.CFB),meta};}catch{assembledPlain=null;}}
     }
     const {document:target,ranges,pages,moved,tall}=built;
     try{
