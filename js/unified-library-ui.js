@@ -1,3 +1,4 @@
+import { loadAnswerBook, acceptedAnswers, answersShown, setAnswersShown, onAnswersShown, CIRCLED, ANSWER_COLOR } from "../assets/exampool/answers/answers.js?v=1107";
 import { createLibraryLoading } from './loading/library-controller.js?v=1.7.0-four-session-integration';
 import { createLibraryPreviewLoading } from './loading/library-preview.js?v=1.7.0-four-session-integration';
 import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
@@ -413,19 +414,15 @@ export function highlightRectsInCrop(highlights, crop) {
 }
 
 // 11-06 사용자: 기출 문항 미리보기에서 정답 선지에 노란 형광펜(화면 표시만 — 잘라 내기·보내기는 원본 PDF 픽셀만 쓰므로 들어가지 않는다).
-// 정답은 평가원 정답표를 줄인 assets/exampool/answers/kice-answers.json(파일명 → 문항별 정답, 드라이브 문서 id → 파일명).
-let answerKeys = null;
-export function loadAnswerKeys() {
-  answerKeys ||= fetch(new URL("../assets/exampool/answers/kice-answers.json", import.meta.url)).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  return answerKeys;
-}
-const CIRCLED = ["①", "②", "③", "④", "⑤"];
+// 11-07: 정답은 평가원·학력평가 통합본(assets/exampool/answers/science-answers.json, 파일명 → 문항별 정답, 드라이브 문서 id → 파일명).
+// 「정답 표시」 단추로 끌 수 있다(exam 기출 보기와 같은 값).
+export function loadAnswerKeys() { return loadAnswerBook(); }
 // 선지 낱말(① ㄱ, ③ ㄱ, ㄷ …)에서 정답 번호부터 다음 번호 앞까지를 칠한다. 한 낱말에 선지 여럿이 붙어 있으면 글자 수 비율로 자른다.
 export function answerHighlights(result, keys) {
   if (!keys || result?.cropType !== "question") return [];
   const name = keys.documents?.[result.provenance?.documentId] || keys.documents?.[result.documentId];
   const number = result.metadata?.itemNumber;
-  const accepted = name && Number.isInteger(number) ? keys.papers?.[name]?.[number - 1] : null;
+  const accepted = name ? acceptedAnswers(keys, name, number) : null;
   if (!Array.isArray(accepted) || !accepted.length) return [];
   const crop = result.provenance?.rect ?? [0, 0, 1, 1];
   const inside = (r) => r[0] + r[2] / 2 >= crop[0] && r[0] + r[2] / 2 <= crop[0] + crop[2] && r[1] + r[3] / 2 >= crop[1] && r[1] + r[3] / 2 <= crop[1] + crop[3];
@@ -440,7 +437,7 @@ export function answerHighlights(result, keys) {
       if (end < 0) end = chars.length;
       while (end > start + 1 && /\s/.test(chars[end - 1])) end--;
       const [x, y, w, h] = word.rect, unit = w / Math.max(1, chars.length), padX = unit * 0.25, padY = h * 0.18;
-      marks.push({ rect: [x + unit * start - padX, y - padY, unit * (end - start) + padX * 2, h + padY * 2], termId: "answer", answer: true, color: "#ffd400" });
+      marks.push({ rect: [x + unit * start - padX, y - padY, unit * (end - start) + padX * 2, h + padY * 2], termId: "answer", answer: true, color: ANSWER_COLOR });
       break;
     }
   }
@@ -929,7 +926,7 @@ function buildShell() {
           </section>
         </section>
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
-          <div class="unilib-pane-head unilib-preview-heading"><div class="unilib-preview-heading-main"><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
+          <div class="unilib-pane-head unilib-preview-heading"><div class="unilib-preview-heading-main"><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div><button type="button" class="unilib-answer-toggle" data-unilib-answers hidden aria-pressed="true" title="정답 선지 형광펜 보이기/숨기기 — 화면 표시만">정답</button></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev aria-label="이전 일치" title="이전 일치">‹</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next aria-label="다음 일치" title="다음 일치">›</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
           <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button></div></div>
         </aside>
@@ -1036,6 +1033,12 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const watch = new MutationObserver(mirror);
     for (const node of [tray, crop]) if (node) watch.observe(node, { attributes: true, attributeFilter: ["hidden", "class"] });
     mirror();
+  }
+  // 11-07 「정답 표시」 켜기/끄기(exam 기출 보기와 같은 값). 끄면 형광펜만 숨긴다.
+  {
+    const apply = (on) => { overlay.dataset.answersOff = String(!on); overlay.querySelector("[data-unilib-answers]")?.setAttribute("aria-pressed", String(on)); };
+    apply(answersShown()); onAnswersShown(apply);
+    overlay.querySelector("[data-unilib-answers]")?.addEventListener("click", () => { setAnswersShown(!answersShown()); apply(answersShown()); });
   }
   const root = overlay.querySelector(".unilib");
   overlay.querySelector('.unilib-folder-loading-spinner').replaceWith(createLoadingDots());
@@ -2595,7 +2598,11 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         const previewCrop = materializeResult.provenance?.rect ?? [0, 0, 1, 1];
         const keys = result?.cropType === "question" ? await loadAnswerKeys() : null;
         if (ownEpoch !== previewEpoch || result.id !== selectedId) return;
-        paintHighlightLayer(frame, image, { ...result, answerHighlights: answerHighlights(result, keys) }, previewCrop);
+        const answerMarks = answerHighlights(result, keys);
+        paintHighlightLayer(frame, image, { ...result, answerHighlights: answerMarks }, previewCrop);
+        // 정답 표시 단추: 정답 형광펜이 있는 문항에서만 보인다. 끄면 형광펜만 숨긴다(다시 그리지 않음).
+        const answerToggle = overlay.querySelector("[data-unilib-answers]");
+        if (answerToggle) { answerToggle.hidden = !answerMarks.length; answerToggle.setAttribute("aria-pressed", String(answersShown())); }
         if (activeRepresentation === "full") paintFigureChoiceLayer(frame, image, figureChoicesForResult(result, activeFigureRepresentation), (representation) => {
           invalidateAction();
           activeFigureRepresentation = representation;

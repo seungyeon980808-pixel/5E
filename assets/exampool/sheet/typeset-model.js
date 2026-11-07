@@ -737,7 +737,9 @@ export function fixedLabelSpaces(document,section=0){
 //   간격 = max(보통 줄 간격, 앞 줄 잉크 아래 + 다음 줄 잉크 위 + 0.4em), 지금보다 넓히지는 않는다.
 // 문단 첫 줄은 vertpos, 같은 문단 안 줄은 앞 줄 spacing으로 당긴다(엔진이 문단 안 줄은 앞 줄 높이+spacing으로 다시 쌓는다).
 // 줄인 만큼 〈보기〉 칸·표 높이도 줄인다. 상자 안에 든 〈보기〉(겹친 표)와 학교 양식(applyLiftTallEquations가 따로 맡음)은 건드리지 않는다.
-export function tightenBogiTallLines(xml){
+// itemGap(시안용, 기본 끔): 여러 줄 항목 다음 항목(ㄴ→ㄷ)은 그 항목 안 줄 사이 간격보다 itemGap×보통 글자 높이만큼 더 띄운다
+// (11-07 사용자: ㄴ 안이 분수 두 줄이라 벌어지고 ㄷ 앞은 붙어서 ㄴ 둘째 줄이 ㄷ에 붙어 보임).
+export function tightenBogiTallLines(xml,{itemGap=null}={}){
   const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
   const edits=[];
   for(const m of xml.matchAll(/<hp:tc\b(?:(?!<hp:tc\b|<\/hp:tc>)[\s\S])*<\/hp:tc>/g)){
@@ -758,8 +760,13 @@ export function tightenBogiTallLines(xml){
     const normal=lines.find(l=>l.h<=hn*1.1),pn=(normal?normal.h+normal.sp:hn*1.45);
     const ink=l=>{if(l.h<=hn*1.4)return {up:.8*hn,down:.2*hn};const half=l.h*.35,axis=.25*hn;return {up:half+axis,down:half-axis};};
     let cut=0;const out=lines.map(l=>({...l}));
+    const inner=new Map();// 문단마다 안쪽 줄 사이 잉크 간격(당긴 뒤) 최댓값
+    for(let k=1;k<lines.length;k++)if(lines[k].li>0){const now=lines[k].base-lines[k-1].base,d=ink(lines[k-1]).down,u=ink(lines[k]).up,w=Math.max(pn,d+u+.4*hn);inner.set(lines[k].pi,Math.max(inner.get(lines[k].pi)||0,Math.min(now,w)-d-u));}
     for(let k=1;k<lines.length;k++){
-      const now=lines[k].base-lines[k-1].base,want=Math.max(pn,ink(lines[k-1]).down+ink(lines[k]).up+.4*hn),r=Math.max(0,Math.round(now-want));
+      let want=Math.max(pn,ink(lines[k-1]).down+ink(lines[k]).up+.4*hn),grow=false;
+      if(itemGap!=null&&lines[k].li===0&&inner.has(lines[k-1].pi)){want=Math.max(want,inner.get(lines[k-1].pi)+ink(lines[k-1]).down+ink(lines[k]).up)+itemGap*hn;grow=true;}
+      // 항목 경계(grow)는 엔진 간격보다 넓힐 수도 있다(ㄴ 안 줄 사이보다 ㄷ 앞이 좁아 보이지 않게).
+      const now=lines[k].base-lines[k-1].base,r=grow?Math.round(now-want):Math.max(0,Math.round(now-want));
       cut+=r;
       if(lines[k].li===0)out[k].pos=lines[k].pos-cut;else out[k-1].sp-=r;
       // 같은 문단 안 다음 줄들은 엔진이 쌓으므로 vertpos만 맞춰 둔다(값이 어긋나지 않게).
@@ -774,8 +781,10 @@ export function tightenBogiTallLines(xml){
   for(const [index,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,index)+next+xml.slice(index+old.length);
   return xml;
 }
-export async function applyTightBogi(bytes,JSZip){
+// 11-07 사용자 「안 1」: 여러 줄 항목 다음 항목 앞은 그 항목 안 줄 사이만큼(ㄴ 둘째 줄이 ㄷ에 붙어 보이지 않게).
+export const BOGI_ITEM_GAP=0;
+export async function applyTightBogi(bytes,JSZip,{itemGap=BOGI_ITEM_GAP}={}){
   const zip=await JSZip.loadAsync(new Uint8Array(bytes));let changed=false;
-  for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){const xml=await zip.file(name).async('string'),next=tightenBogiTallLines(xml);if(next!==xml){zip.file(name,next);changed=true;}}
+  for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){const xml=await zip.file(name).async('string'),next=tightenBogiTallLines(xml,{itemGap});if(next!==xml){zip.file(name,next);changed=true;}}
   return changed?zip.generateAsync({type:'uint8array',compression:'DEFLATE'}):bytes;
 }

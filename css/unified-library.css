@@ -1628,3 +1628,11 @@
 .unified-library-overlay .unilib-qactions svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 /* 11-06 사용자: 기출 미리보기의 정답 선지 노란 형광펜(화면 표시만). 테두리 없이 형광펜처럼 글자 아래 깔린다. */
 .unified-library-overlay .unilib-match-rect.is-answer { border: 0; border-radius: 2px; background: rgba(255, 212, 0, .42); mix-blend-mode: multiply; }
+/* 11-07 「정답 표시」 켜기/끄기 — 켜짐 모양은 라이브러리 단추 공통(「정확도순」과 같은 파란 선), 앞에 형광펜 색 견본. 끄면 정답 형광펜만 숨긴다. */
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 30px; min-height: 30px; padding: 0 10px; border: 0 !important; border-radius: 8px; background: var(--ds-bench) !important; box-shadow: inset 0 0 0 1px var(--ds-line) !important; color: var(--ds-muted, #9aa4b2) !important; font-size: 12.5px; cursor: pointer; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle[hidden] { display: none; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle::before { content: ""; width: 10px; height: 10px; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--ds-line); }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle[aria-pressed="true"] { color: var(--ds-ink) !important; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle[aria-pressed="true"]::before { background: #ffd400; box-shadow: none; }
+.unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle:hover { color: var(--ds-ink) !important; }
+.unified-library-overlay[data-answers-off="true"] .unilib-match-rect.is-answer { display: none; }

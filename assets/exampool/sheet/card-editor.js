@@ -13,6 +13,7 @@ import {markedQuestion,croppedQuestion,renderPage as renderPdfPage,pdfHref} from
 
 import {MONTH,norm,splitWords,pastScore} from './past-search.js';
 import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
+import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
@@ -783,13 +784,20 @@ export function createCardEditor(root,api){
     const note=key?`<div class="lp-zoom-note"><dl class="lp-info">${info.map(([k,v])=>`<dt>${k}</dt><dd>${E(v)}</dd>`).join('')}</dl><label class="lp-memo"><span>메모 <small class="lp-memo-state">${marks.memos()[key]?'저장됨 · 이 기기':''}</small></span><textarea data-cvmemo="${E(key)}" rows="3" placeholder="이 문항에 남길 메모 — 쓰는 대로 저장(이 기기에만)">${E(marks.memos()[key]||'')}</textarea></label></div>`:'';
     const steps=busy&&zid&&busy.id===zid?stepsHtml(zid,busy.stage):'';
     // 넘기기(지적 3): 문항 좌우의 큰 ‹ ›, 제목 줄에는 위치(11 / 40)만. ← → 키도 그대로.
-    lib.insertAdjacentHTML('beforeend',`<div class="lp-zoom${one?' is-one':''}" role="dialog" aria-label="크게 보기"><div class="lp-zoom-head">${key?starBtn(key,'mini lp-zstar'):''}<b>${E(b?.textContent||'')}</b><span class="meta">${E(meta)}</span><span class="sp"></span><span class="pos">${pastZoom+1} / ${figs.length}</span><button type="button" class="mini" data-cvzoomclose aria-label="닫기 (Esc)" title="닫기 (Esc)">${ICON.close}</button></div><div class="lp-zoom-stage"><button type="button" class="lp-zoom-side prev" data-cvzoomnav="-1" aria-label="이전 문항"${pastZoom?'':' disabled'}>${ICON.left}</button><div class="lp-zoom-pic"${slide}>${src?`<img src="${E(src)}" alt="${E(b?.textContent||'')}">`:''}</div><button type="button" class="lp-zoom-side next" data-cvzoomnav="1" aria-label="다음 문항"${pastZoom<figs.length-1?'':' disabled'}>${ICON.right}</button></div>${steps}${note}<div class="lp-zoom-foot">${zoomFoot(f)}</div></div>`);
+    lib.insertAdjacentHTML('beforeend',`<div class="lp-zoom${one?' is-one':''}" role="dialog" aria-label="크게 보기"><div class="lp-zoom-head">${key?starBtn(key,'mini lp-zstar'):''}<b>${E(b?.textContent||'')}</b><span class="meta">${E(meta)}</span><span class="sp"></span>${zitem?`<button type="button" class="lv-ans" data-cvanswers hidden aria-pressed="${answersShown()}" title="정답 선지 형광펜 보이기/숨기기 — 화면 표시만">정답</button>`:''}<span class="pos">${pastZoom+1} / ${figs.length}</span><button type="button" class="mini" data-cvzoomclose aria-label="닫기 (Esc)" title="닫기 (Esc)">${ICON.close}</button></div><div class="lp-zoom-stage"><button type="button" class="lp-zoom-side prev" data-cvzoomnav="-1" aria-label="이전 문항"${pastZoom?'':' disabled'}>${ICON.left}</button><div class="lp-zoom-pic"${slide}>${src?`<img src="${E(src)}" alt="${E(b?.textContent||'')}">`:''}</div><button type="button" class="lp-zoom-side next" data-cvzoomnav="1" aria-label="다음 문항"${pastZoom<figs.length-1?'':' disabled'}>${ICON.right}</button></div>${steps}${note}<div class="lp-zoom-foot">${zoomFoot(f)}</div></div>`);
     root.querySelector('.lp-zoom [data-cvzoomclose]')?.focus({preventScroll:true});api.markQueued?.(lib);
     if(!src&&img){const k0=pastZoomKey;img.addEventListener('load',()=>{if(pastZoomKey!==k0)return;const pic=root.querySelector('.lp-zoom-pic');if(pic&&!pic.querySelector('img'))pic.insertAdjacentHTML('afterbegin',`<img src="${E(img.currentSrc||img.src)}" alt="${E(b?.textContent||'')}">`);else{const z=pic?.querySelector('img');if(z&&!z.getAttribute('src'))z.src=img.currentSrc||img.src;}},{once:true});}
     // 크게 보기는 원본 PDF에서 문항만 선명하게 다시 그린다(검색어가 있으면 형광펜 포함). 받는 동안·실패하면 카드 그림 그대로.
     const id=f.querySelector('[data-cvlink]')?.dataset.cvlink,item=id&&pastItem(id),zimg=root.querySelector('.lp-zoom-pic img');
-    if(item?.publicPath&&Array.isArray(item.box)&&zimg){const key=pastZoomKey;zimg.closest('.lp-zoom-pic').setAttribute('data-marking','');croppedQuestion(item,pastFilter.tokens.slice()).then(r=>{if(r&&zimg.isConnected&&pastZoomKey===key)zimg.src=r.url;}).catch(()=>{}).finally(()=>zimg.closest('.lp-zoom-pic')?.removeAttribute('data-marking'));}
+    if(item?.publicPath&&Array.isArray(item.box)&&zimg)zoomSharp(item,zimg);
+    // 11-07 정답 형광펜(평가원·학력평가): 정답 자료가 있는 문항에서만 「정답」 단추(라이브러리와 같은 켜기/끄기 값).
+    const ans=root.querySelector('.lp-zoom [data-cvanswers]');if(ans&&item)loadAnswerBook().then(book=>{const acc=acceptedAnswers(book,item.pdfFile,item.no);ans.hidden=!(Array.isArray(acc)&&acc.length);});
   }
+  function zoomSharp(item,zimg){const key=pastZoomKey;zimg.closest('.lp-zoom-pic')?.setAttribute('data-marking','');croppedQuestion(item,pastFilter.tokens.slice(),{answers:answersShown()}).then(r=>{if(r&&zimg.isConnected&&pastZoomKey===key)zimg.src=r.url;}).catch(()=>{}).finally(()=>zimg.closest('.lp-zoom-pic')?.removeAttribute('data-marking'));}
+  function refreshZoomAnswers(){const z=root.querySelector('.lp-zoom');if(!z)return;z.querySelector('[data-cvanswers]')?.setAttribute('aria-pressed',String(answersShown()));
+    const id=[...root.querySelectorAll('.cv-left .past-list figure.past')][pastZoom]?.querySelector('[data-cvlink]')?.dataset.cvlink,item=id&&pastItem(id),zimg=z.querySelector('.lp-zoom-pic img');if(item?.publicPath&&Array.isArray(item.box)&&zimg)zoomSharp(item,zimg);}
+  onAnswersShown(()=>refreshZoomAnswers());
+  root.addEventListener('click',e=>{if(!e.target.closest('[data-cvanswers]'))return;e.stopPropagation();setAnswersShown(!answersShown());});
   // 고르는 중에는 그림을 누르기만 해도 골라진다(두 번 눌러 크게 보기는 고르기를 마친 뒤).
   root.addEventListener('click',e=>{if(!pastPick.size)return;const f=e.target.closest('.cv-left .past-list figure.past');if(!f||e.target.closest('button,a,input,textarea,select'))return;const id=f.querySelector('[data-cvpick]')?.dataset.cvpick;if(id)togglePick(id,e.shiftKey);});
   root.addEventListener('dblclick',e=>{const f=e.target.closest('.cv-left .past-list figure.past');if(!f||e.target.closest('button')||pastPick.size)return;

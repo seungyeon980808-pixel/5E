@@ -4,6 +4,7 @@
 // 별표·메모는 이 기기에만(store stars·memos, 열쇠 past:<id> · q:<id>) — 카드 화면 라이브러리 칸과 같은 저장소.
 import {F,MONTH,shortTitle,norm,splitWords} from './past-search.js';
 import {croppedQuestion,pdfHref} from './past-pdf.js';
+import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {croppedPastImage} from './past-crop.js';
 import {store,ICON,E} from './card-shared.js';
 import {libraryQuestions,POOLS,poolQuestions} from './exams.js';
@@ -158,7 +159,7 @@ function viewerHtml(list, n, inline, api) {
   const at = job ? stepOf(job.stage) : 0;
   return `<div class="lv-viewer" data-lv-viewer data-n="${n}"><div class="lv-vhead"><h3>${E(x.title)}</h3>${x.kind === 'mine' ? '' : '<span class="lv-kt past">기출</span>'}
       <button type="button" class="lv-ib lv-vstar${on ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${on}" title="별표 (S)" aria-label="별표">${SVG.star}</button>
-      <span class="lv-pos">${n + 1} / ${list.length.toLocaleString()}</span>${inline ? '' : `<button type="button" class="lv-ib" data-lv-close title="닫기 (Esc)" aria-label="닫기">${SVG.close}</button>`}</div>
+      ${x.kind === 'past' ? `<button type="button" class="lv-ans" data-lv-answers hidden aria-pressed="${answersShown()}" title="정답 선지 형광펜 보이기/숨기기 — 화면 표시만">정답</button>` : ''}<span class="lv-pos">${n + 1} / ${list.length.toLocaleString()}</span>${inline ? '' : `<button type="button" class="lv-ib" data-lv-close title="닫기 (Esc)" aria-label="닫기">${SVG.close}</button>`}</div>
     <div class="lv-stage"><button type="button" class="lv-side" data-lv-step="-1" title="이전 (←)" aria-label="이전 문항" ${n <= 0 ? 'disabled' : ''}>${SVG.prev}</button>
       <div class="lv-qbox">${x.kind === 'mine' ? `<div class="lv-own pv-doc" data-preview="${x.id}"></div>` : `<img alt="${E(x.title)}" data-lv-full="${E(x.id)}">`}</div>
       <button type="button" class="lv-side" data-lv-step="1" title="다음 (→)" aria-label="다음 문항" ${n >= list.length - 1 ? 'disabled' : ''}>${SVG.next}</button></div>
@@ -173,7 +174,23 @@ function fillViewer(host, list, data, api) {
   fillOwn(v, data, api);
   const img = v.querySelector('img[data-lv-full]');
   if (img && x?.i) { img.onerror = () => { if (!img.dataset.sharp) { img.closest('.lv-qbox')?.setAttribute('data-missing', '그림을 불러오지 못했습니다 — 인터넷 연결을 확인하세요'); img.remove(); } }; croppedPastImage(past.index.cards.replace('{id}', encodeURIComponent(x.id))).then(src => { if (img.isConnected && !img.dataset.sharp) img.src = src; }).catch(() => {});
-    if (x.i.publicPath && Array.isArray(x.i.box)) croppedQuestion(x.i).then(r => { if (r && img.isConnected) { img.dataset.sharp = '1'; img.src = r.url; } }).catch(() => {}); }
+    if (x.i.publicPath && Array.isArray(x.i.box)) sharpPast(img, x.i);
+    // 11-07 정답 형광펜(평가원·학력평가): 정답 자료가 있는 문항에서만 「정답」 단추를 보인다.
+    const ans = v.querySelector('[data-lv-answers]');
+    if (ans) loadAnswerBook().then(book => { const acc = acceptedAnswers(book, x.i.pdfFile, x.i.no); ans.hidden = !(Array.isArray(acc) && acc.length); }); }
+}
+const pastItemOf = id => past.items?.find(i => i.id === id);
+onAnswersShown(() => refreshAnswers());
+function sharpPast(img, item) {
+  croppedQuestion(item, [], { answers: answersShown() }).then(r => { if (r && img.isConnected) { img.dataset.sharp = '1'; img.src = r.url; } }).catch(() => {});
+}
+// 정답 표시를 바꾸면(여기서나 라이브러리에서) 열린 문항 보기 그림을 다시 받는다.
+function refreshAnswers() {
+  for (const v of document.querySelectorAll('[data-lv-viewer]')) {
+    v.querySelector('[data-lv-answers]')?.setAttribute('aria-pressed', String(answersShown()));
+    const img = v.querySelector('img[data-lv-full]'), item = img && pastItemOf(img.dataset.lvFull);
+    if (item?.publicPath && Array.isArray(item.box)) sharpPast(img, item);
+  }
 }
 let modal = null;
 function openViewer(root, list, n, api) {
@@ -244,6 +261,7 @@ export function installLibraryView(root, api) {
     const ck = t.closest('[data-lv-check]'); if (ck) { e.stopPropagation(); pick(ck.dataset.lvCheck, Number(ck.dataset.n), e.shiftKey); return; }
     const bk = t.closest('[data-lv-bulk]'); if (bk) { bulk(bk.dataset.lvBulk, bk); return; }
     const oc = t.closest('[data-open-card]'); if (oc) { e.stopPropagation(); closeViewer(api); api.openCard(oc.dataset.openCard); return; }
+    if (t.closest('[data-lv-answers]')) { setAnswersShown(!answersShown()); return; }
     if (t.closest('[data-lv-close]')) { s().open = -1; closeViewer(api); return; }
     const stp = t.closest('[data-lv-step]'); if (stp) { step(Number(stp.dataset.lvStep)); return; }
     const a = t.closest('[data-lv-act]'); if (a) { void act(a.dataset.lvAct, a); return; }

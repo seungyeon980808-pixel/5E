@@ -28,7 +28,7 @@ test('general native typography preserves roles, bounds, rotation, pointer editi
     await page.waitForSelector('#canvas');
     const result = await page.evaluate(async () => {
       const v = '?v=1.7.0-four-session-integration';
-      const { state, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, EQUATION_FONT_FAMILY, TEXT_FONT_FAMILY } = await import('/js/state.js' + v);
+      const { state, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, EQUATION_FONT_FAMILY, TEXT_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY } = await import('/js/state.js' + v);
       const { parseEditableImageLabelPlan } = await import('/js/ai-editable-image-labels.js' + v);
       const { insertImageFromSrc } = await import('/js/image-paste.js' + v);
       const { serialize, applyLoaded } = await import('/js/project-io.js' + v);
@@ -94,7 +94,7 @@ test('general native typography preserves roles, bounds, rotation, pointer editi
           fonts: [...document.querySelectorAll(`#canvas [data-id="${o.id}"] text`)].map(t => ({ text: t.textContent, family: t.getAttribute('font-family'), style: t.getAttribute('font-style'), weight: t.getAttribute('font-weight'), tracking: t.getAttribute('letter-spacing') })) }; });
       window.__typographyQA = { state, titleId: after[4].id, mixedId: after[7].id, quantityId: after[0].id, italicId: after[8].id };
       state.update(s => { s.activeTool = 'V'; s.selectedIds = []; });
-      return { defaults, standardFont: DEFAULT_TEXT_FONT, standardSize: DEFAULT_TEXT_SIZE_MM, undone, redone, roundtrip: JSON.stringify(before) === JSON.stringify(after), metrics,
+      return { defaults, standardFont: DEFAULT_TEXT_FONT, nameFont: OBJECT_LABEL_TEXT_FONT_FAMILY, standardSize: DEFAULT_TEXT_SIZE_MM, undone, redone, roundtrip: JSON.stringify(before) === JSON.stringify(after), metrics,
         acceptedCount: plan.labels.length, excludedScopes: plan.excludedLabels.map(label => label.scope),
         rejectedCount: plan.rejectedCount, equationFont: EQUATION_FONT_FAMILY, textFont: TEXT_FONT_FAMILY };
     });
@@ -116,7 +116,9 @@ test('general native typography preserves roles, bounds, rotation, pointer editi
       assert.equal(native.tracking, undefined);
       assert.equal(native.lineHeight, undefined);
       assert.equal(native.rotation, index === 6 ? -30 : 0);
-      if ([3, 4, 5, 8].includes(index)) assert.equal(native.fontFamily, result.standardFont);
+      if ([4, 5, 8].includes(index)) assert.equal(native.fontFamily, result.standardFont);
+      // 11-07 사용자 결정(안 B): 한 글자 이름 A는 물체 라벨 도구와 같은 명조.
+      if (index === 3) assert.equal(native.fontFamily, result.nameFont);
     }
     assert.equal(result.defaults[8].italic, false, 'source cosmetic italic is an observation');
     for (const m of result.metrics) {

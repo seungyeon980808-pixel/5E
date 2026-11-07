@@ -38,7 +38,7 @@ test('invalid optional typography keeps evidence text and requests review', asyn
 
 test('physical quantities and chemicals share installed math faces with distinct italic policies', async () => {
   const { createEditableImageLabelObjects } = await modulePromise;
-  const { EQUATION_FONT_FAMILY, DEFAULT_TEXT_FONT } = await import('../js/state.js');
+  const { EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY } = await import('../js/state.js');
   let id = 0;
   const labels = [['m_B', 'quantity'], ['CO_2', 'chemical'], ['A', 'name'], ['100', 'number']].map(([text, role]) => ({
     text, mode: 'text', labelType: 'quantity', contentMode: 'formula', anchor: { x: 0.5, y: 0.5 }, position: { x: 0.5, y: 0.5 }, typography: { role },
@@ -49,7 +49,8 @@ test('physical quantities and chemicals share installed math faces with distinct
   assert.equal(objects[1].fontFamily, EQUATION_FONT_FAMILY);
   assert.equal(objects[1].formulaUpright, true);
   assert.equal(objects[1].italic, false);
-  assert.equal(objects[2].fontFamily, DEFAULT_TEXT_FONT);
+  // 11-07 사용자 결정(안 B): 한 글자 이름 A·B는 물체 라벨 도구와 같은 명조.
+  assert.equal(objects[2].fontFamily, OBJECT_LABEL_TEXT_FONT_FAMILY);
   assert.equal(objects[3].italic, false);
 });
 

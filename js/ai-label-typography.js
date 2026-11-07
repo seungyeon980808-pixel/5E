@@ -41,6 +41,13 @@ export function fontForLabelRole(role) {
   return { fontFamily: DEFAULT_TEXT_FONT, italic: false, formulaUpright: false };
 }
 
+// 11-07 사용자 결정(안 B): AI 라벨 복원에서 A·B·P·A₁처럼 대문자 한 글자 이름만 물체 라벨 도구와 같은 명조(OBJECT_LABEL_TEXT_FONT_FAMILY).
+// 「전류 센서」 같은 한글 이름은 지금처럼 돋움, 사람이 글꼴을 바꾼 라벨은 그대로.
+const OBJECT_NAME_TEXT = /^[A-Z](?:[₀-₉]+|_\{?[0-9]{1,2}\}?|[′'])?$/u;
+export function isObjectNameText(text) { return OBJECT_NAME_TEXT.test(String(text ?? '').trim()); }
+// 라벨 전체 글꼴을 정할 때 쓰는 종류: 이름이어도 한 글자 이름이 아니면 보통 글(돋움).
+export function presentationRoleFor(role, text) { return role === 'name' && !isObjectNameText(text) ? 'text' : role; }
+
 export function inferLabelRole(label) {
   const text = String(label.text || '').trim();
   if (/^[+−-]?\d+(?:[.,]\d+)*(?:°)?$/.test(text)) return 'number';
@@ -116,10 +123,10 @@ export async function prepareEditableLabelFonts(labels) {
     // Loading must use the same defaults as createEditableImageLabelObjects.
     // Source font observations become user styles only after a manual edit.
     const base = nativePresentationForLabelTypography(label.manualStyle ? typography
-      : { role:typography.role === 'name' ? 'text' : typography.role });
+      : { role:presentationRoleFor(typography.role, label.text) });
     return [base, ...(typography.runs || []).map(run => ({ ...fontForLabelRole(run.role),
       ...(base.labelFontOverride || !isEquationFontFamily(base.fontFamily)
-        ? ['text','name','symbol'].includes(run.role) ? base : {} : {}), fontWeight:base.fontWeight })),
+        ? ['text','name','symbol'].includes(run.role) && !(run.role === 'name' && isObjectNameText(run.text)) ? base : {} : {}), fontWeight:base.fontWeight })),
       ...(typography.scriptStyles || []).map(style => fontForLabelRole(style.role)),
       { fontFamily:ROMAN_NUMERAL_FONT_FAMILY, italic:false }];
   });
@@ -268,7 +275,10 @@ export function measureLabelTypography(obj, size = obj.fontSize || obj.labelSize
   const validRuns = Array.isArray(obj.labelRuns) && obj.labelRuns.length <= MAX_RUNS
     && obj.labelRuns.every(r => r && LABEL_TYPOGRAPHY_ROLES.includes(r.role) && typeof r.text === 'string'
       && ['plain', 'formula'].includes(r.contentMode)) && obj.labelRuns.map(r => r.text).join('') === text;
-  const initialRuns = validRuns ? obj.labelRuns.map(r => ({ ...r, font: { ...fontForLabelRole(r.role), ...((obj.labelFontOverride || obj.aiAutoLabel && !isEquationFontFamily(baseFont.fontFamily)) && ['text', 'name', 'symbol'].includes(r.role) ? baseFont : {}), ...(obj.labelItalicOverride && ['text', 'name', 'symbol'].includes(r.role) ? { italic: baseFont.italic } : {}), fontWeight: baseFont.fontWeight } }))
+  // 섞인 라벨(「검출기 Q」) 안의 한 글자 이름 조각은 라벨 글꼴을 사람이 바꾸지 않았으면 명조(11-07 안 B).
+  const autoFont = !obj.fontFamily || obj.fontFamily === DEFAULT_TEXT_FONT || obj.fontFamily === OBJECT_LABEL_TEXT_FONT_FAMILY;
+  const keepName = r => r.role === 'name' && autoFont && isObjectNameText(r.text);
+  const initialRuns = validRuns ? obj.labelRuns.map(r => ({ ...r, font: { ...fontForLabelRole(r.role), ...((obj.labelFontOverride || obj.aiAutoLabel && !isEquationFontFamily(baseFont.fontFamily)) && ['text', 'name', 'symbol'].includes(r.role) && !keepName(r) ? baseFont : {}), ...(obj.labelItalicOverride && ['text', 'name', 'symbol'].includes(r.role) ? { italic: baseFont.italic } : {}), fontWeight: baseFont.fontWeight } }))
     : [{ text, contentMode: obj.contentMode || 'plain', font: baseFont }];
   const { runs, styles } = connectedFormulaRuns(initialRuns, text, obj.labelScriptStyles);
   const lines = [[]];

@@ -5,6 +5,7 @@
 import '../convert/es/stream-iterator-polyfill.mjs';
 import {downloadDriveFile,driveLink} from '../convert/es/drive-source.mjs';
 import {norm} from './past-search.js';
+import {loadAnswerBook,acceptedAnswers,CIRCLED} from '../answers/answers.js?v=1107';
 
 // pdf.js(약 1MB)는 처음 PDF를 열 때만 받는다 — 출제 칸을 여는 것만으로 받지 않게. 아래 글자 좌표 계산(findMarks·questionRect)은
 // 늘 열린 PDF의 내용으로만 부르므로 그때는 이미 받아 둔 상태다.
@@ -94,9 +95,29 @@ export function questionRect(content,vp1,box){
   const used=body.filter(l=>l.y>=top-1&&l.y<=bottom);if(!used.length||bottom-top<10)return null;
   return [Math.max(bx0,Math.min(...used.map(l=>l.x))-4),top,Math.min(bx1-4,Math.max(...used.map(l=>l.x+l.w))+14),bottom];
 }
+// 11-07 정답 형광펜(문항 보기 화면 표시만): 정답 번호 글자(①~⑤)부터 같은 줄 다음 번호 앞까지. 선지 글자가 여러 조각이어도 줄 단위로 잰다.
+export function answerMarks(content,viewport,rect,accepted){
+  if(!Array.isArray(accepted)||!accepted.length)return [];
+  const [rx0,ry0,rx1,ry1]=rect.map(v=>v*viewport.scale),glyphs=[];
+  for(const it of content.items){
+    if(!it.str||!it.width)continue;
+    const tx=pdfjs.Util.transform(viewport.transform,it.transform),fh=Math.hypot(tx[2],tx[3]);
+    if(!fh||Math.abs(tx[1])>0.01*Math.abs(tx[0]))continue;
+    const chars=[...it.str],widths=chars.map(c=>/\s/u.test(c)?charWidth(' '):charWidth(c)),total=widths.reduce((a,b)=>a+b,0)||1,len=it.width*viewport.scale;
+    let x=tx[4];chars.forEach((c,i)=>{const w=len*widths[i]/total;if(!/\s/u.test(c))glyphs.push({c,x0:x,x1:x+w,y:tx[5],h:fh});x+=w;});
+  }
+  const inRect=glyphs.filter(g=>g.x0>=rx0-4&&g.x1<=rx1+4&&g.y-g.h>=ry0-6&&g.y<=ry1+8),out=[];
+  for(const a of accepted){const mark=CIRCLED[a-1];if(!mark)continue;
+    const m=inRect.filter(g=>g.c===mark).at(-1);if(!m)continue;// 선지 줄은 문항 맨 아래 — 본문에 같은 글자가 있어도 마지막 것
+    const line=inRect.filter(g=>Math.abs(g.y-m.y)<m.h*.5&&g.x0>=m.x0).sort((p,q)=>p.x0-q.x0);
+    const next=line.find(g=>g!==m&&CIRCLED.includes(g.c));const tail=line.filter(g=>!next||g.x1<=next.x0+.5);
+    const end=Math.max(m.x1,...tail.map(g=>g.x1)),pad=m.h*.12;
+    out.push({x:m.x0-pad,y:m.y-m.h*.95,w:end-m.x0+pad*2,h:m.h*1.25});}
+  return out;
+}
 // 문항 그림(+형광펜). 형광펜을 원하는데 칠할 자리가 없으면 null(카드는 원래 그림을 그대로 쓴다).
-function drawQuestion(item,words,needMarks){return withFile(item.publicPath,{},({doc})=>drawQuestionIn(doc,item,words,needMarks));}
-async function drawQuestionIn(doc,item,words,needMarks){
+function drawQuestion(item,words,needMarks,opts={}){return withFile(item.publicPath,{},({doc})=>drawQuestionIn(doc,item,words,needMarks,opts));}
+async function drawQuestionIn(doc,item,words,needMarks,{answers=false}={}){
   const page=await doc.getPage(item.page),scale=3,vp=page.getViewport({scale}),content=await page.getTextContent();
   const r=questionRect(content,page.getViewport({scale:1}),item.box)||item.box,pad=6,x0=r[0]-pad,y0=r[1]-pad,x1=r[2]+pad,y1=r[3]+pad;
   const marks=words.length?findMarks(content,vp,words).filter(m=>m.x>=x0*scale-2&&m.x+m.w<=x1*scale+2&&m.y>=y0*scale-4&&m.y+m.h<=y1*scale+4):[];
@@ -105,7 +126,9 @@ async function drawQuestionIn(doc,item,words,needMarks){
   const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
   await page.render({canvasContext:g,viewport:vp,transform:[1,0,0,1,-x0*scale,-y0*scale]}).promise;
   paint(g,marks,x0*scale,y0*scale);
-  return {url:await toUrl(c),count:marks.length};
+  let answered=0;
+  if(answers){const book=await loadAnswerBook(),acc=acceptedAnswers(book,item.pdfFile,item.no);const am=answerMarks(content,vp,[x0,y0,x1,y1],acc);answered=am.length;paint(g,am,x0*scale,y0*scale,'rgba(255,212,0,.42)');}
+  return {url:await toUrl(c),count:marks.length,answered};
 }
 const qCache=new Map();
 function cached(key,make){
@@ -116,7 +139,7 @@ function cached(key,make){
 }
 export function markedQuestion(item,words){return cached(JSON.stringify([item.id,words]),()=>drawQuestion(item,words,true));}
 // 형광펜 없이 문항만(카드 그림 자르기가 실패했을 때·크게 보기).
-export function croppedQuestion(item,words=[]){return cached(JSON.stringify([item.id,words,'q']),()=>drawQuestion(item,words,false));}
+export function croppedQuestion(item,words=[],{answers=false}={}){return cached(JSON.stringify([item.id,words,'q',answers]),()=>drawQuestion(item,words,false,{answers}));}
 
 // 쪽 한 장(폭 cssWidth에 맞춤, 화면 배율 반영) + 형광펜 + 끌어서 고를 수 있는 글자 층(시안 31).
 // marks: 다시 열 때 칠할 근거 자리 [{x,y,w,h}](쪽 비율 0~1). 돌려주는 sha·fp는 근거에 남길 원본 지문.

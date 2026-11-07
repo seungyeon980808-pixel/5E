@@ -1,6 +1,6 @@
 import { applyLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { normalizeLeaderRoutes, mapLeaderRoutes } from './ai-label-leaders.js?v=1.7.0-four-session-integration';
-import { nativePresentationForLabelTypography, LABEL_TYPOGRAPHY_PROMPT, normalizeLabelTypography, positionNativeLabelAtCenter } from './ai-label-typography.js?v=1.7.0-four-session-integration';
+import { nativePresentationForLabelTypography, LABEL_TYPOGRAPHY_PROMPT, normalizeLabelTypography, positionNativeLabelAtCenter, presentationRoleFor } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 import { DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-four-session-integration';
 import { getFormulaScriptSpans, normalizeFormulaScriptStyles } from './formula.js?v=1.7.0-four-session-integration';
 
@@ -280,7 +280,7 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       labelType: typography.role === 'quantity' ? 'quantity' : 'label',
       contentMode: label.contentMode,
       ...(formula ? { source: label.text, rawSource: label.text } : {}),
-      ...nativePresentationForLabelTypography({ role: typography.role === 'name' ? 'text' : typography.role }),
+      ...nativePresentationForLabelTypography({ role: presentationRoleFor(typography.role, label.text) }),
       ...(['text', 'name', 'symbol'].includes(typography.role) ? { labelFontOverride: true } : {}),
       labelTypographyVersion: 1,
       aiLabelRole: typography.role,

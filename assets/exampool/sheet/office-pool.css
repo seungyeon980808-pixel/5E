@@ -685,3 +685,9 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .pv-enew .ico{width:20px;height:20px}
 .pv-ecard .pv-epage{height:auto;min-height:0;border-radius:10px 10px 0 0}.pv-ecard .pv-epage:hover{background:none}.pv-ecard .pv-epage:hover .pv-paper{box-shadow:0 0 0 2px var(--ds-soft-line,#2f6fd6),0 1px 4px rgba(0,0,0,.25)}
 .pv-egrid>.pv-enew{height:auto;align-self:stretch}
+/* 11-07 「정답 표시」 켜기/끄기(라이브러리 미리보기와 같은 값·같은 모양): 켜지면 형광펜 색 견본 */
+.lv-ans{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border:0;border-radius:8px;background:var(--ds-bench,#161b22);box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);color:var(--ds-ink-3,#7d8590);font-size:12.5px;cursor:pointer}
+.lv-ans[hidden]{display:none}.lv-ans:hover{color:var(--ds-ink,#e6edf3)}
+.lv-ans::before{content:"";width:10px;height:10px;border-radius:2px;box-shadow:inset 0 0 0 1px var(--ds-line,#30363d)}
+.lv-ans[aria-pressed="true"]{color:var(--ds-ink,#e6edf3)}.lv-ans[aria-pressed="true"]::before{background:#ffd400;box-shadow:none}
+.lv-ans:not([hidden])+.lv-pos{margin-left:0}

@@ -71,3 +71,33 @@ test('기출 문항 영역: 선지 낱말이 아래로 조금 넘치면 덮고, 
   assert.equal(far, source);
   assert.equal(coverItemWords(source, []), source);
 });
+
+test('통합 정답(11-07): 평가원·학평 파일명으로 찾고, 전원 정답은 빈 배열·없는 문항은 null', async () => {
+  const { acceptedAnswers } = await import('../assets/exampool/answers/answers.js');
+  const fs = require('node:fs'), path = require('node:path');
+  const book = JSON.parse(fs.readFileSync(path.join(__dirname, '../assets/exampool/answers/science-answers.json'), 'utf8'));
+  assert.ok(Object.keys(book.papers).length >= 1056, '평가원·학평 시험지 1,056개');
+  assert.deepEqual(acceptedAnswers(book, 'p2_2025_11.pdf', 4), [4], '2025 수능 물Ⅱ 4번');
+  assert.deepEqual(acceptedAnswers(book, '학력평가/생명과학1/문제/b1_2027_10.pdf', 3), [5], '경로가 붙어도 파일명으로');
+  assert.deepEqual(acceptedAnswers(book, 'b2_2022_11.pdf', 20), [], '전원 정답');
+  assert.deepEqual(acceptedAnswers(book, 'p2_2008_11.pdf', 11), [2, 4], '복수 정답');
+  assert.equal(acceptedAnswers(book, 'p2_2025_11.pdf', 99), null);
+  assert.equal(acceptedAnswers(book, 'none.pdf', 1), null);
+});
+
+test('라벨 이름 글꼴(11-07 안 B): 한 글자 이름만 명조, 한글 이름·글꼴 바꾼 라벨은 그대로', async () => {
+  const { presentationRoleFor, measureLabelTypography } = await import('../js/ai-label-typography.js');
+  const state = await import('../js/state.js');
+  assert.equal(presentationRoleFor('name', 'A'), 'name');
+  assert.equal(presentationRoleFor('name', 'A₁'), 'name');
+  assert.equal(presentationRoleFor('name', '전류 센서'), 'text');
+  assert.equal(presentationRoleFor('quantity', 'm'), 'quantity');
+  const mixed = (fontFamily) => ({ type: 'labeler', text: '검출기 Q', contentMode: 'plain', fontFamily, labelFontOverride: true, fontSize: 4,
+    labelRuns: [{ text: '검출기 ', role: 'text', contentMode: 'plain' }, { text: 'Q', role: 'name', contentMode: 'plain' }] });
+  const runs = o => measureLabelTypography(o).lines.flatMap(l => l.runs);
+  const auto = runs(mixed(state.DEFAULT_TEXT_FONT));
+  assert.equal(auto.find(r => r.text === 'Q').font.fontFamily, state.OBJECT_LABEL_TEXT_FONT_FAMILY, '섞인 라벨 안 Q는 명조');
+  assert.equal(auto.find(r => r.text.startsWith('검출기')).font.fontFamily, state.DEFAULT_TEXT_FONT, '한글은 돋움');
+  const manual = runs(mixed('Arial, sans-serif'));
+  assert.equal(manual.find(r => r.text === 'Q').font.fontFamily, 'Arial, sans-serif', '사람이 고른 글꼴은 그대로');
+});
