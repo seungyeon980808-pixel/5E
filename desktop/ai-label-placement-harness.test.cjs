@@ -63,13 +63,13 @@ test('non-square RAW ranks clear candidates by physical pixel travel, retaining 
  for(const [width,height] of [[200,800],[800,200]]){
   const l=label('a',.5);l.typography.role='quantity';l.position.y=.5;l.anchor.y=.5;l.typography.bounds={x:.49,y:.49,w:.02,h:.02};
   const data=new Uint8ClampedArray(width*height*4).fill(255),plan={frozen:true,labels:[l]},measurements=[{id:'a',glyphBounds:{...l.typography.bounds}}];
-  // Block original location with one actual pixel. Nearest clear move must prefer the physically shorter axis.
-  data.set([0,0,0,255],(Math.floor(height*.5)*width+Math.floor(width*.5))*4);
+  // Block original location with a 3x3 ink patch (v4: a stray pixel under sourceInkTolerance keeps the source spot). Nearest clear move must prefer the physically shorter axis.
+  for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++)data.set([0,0,0,255],((Math.floor(height*.5)+y)*width+Math.floor(width*.5)+x)*4);
   const before=Buffer.from(data),args={plan,measurements,raster:{width,height,data}},p=m.buildLabelPlacementCandidates(args),first=p.groups[0].candidates[0];
   if(width<height)assert.ok(Math.abs(first.dx)>Math.abs(first.dy),'tall frame moves horizontally first');
   else assert.ok(Math.abs(first.dy)>Math.abs(first.dx),'wide frame moves vertically first');
   const distances=p.groups[0].candidates.map(c=>Math.hypot(c.dx*width,c.dy*height));assert.deepEqual([...distances].sort((a,b)=>a-b),distances);
-  assert.deepEqual(m.buildLabelPlacementCandidates(args),p);assert.deepEqual(Buffer.from(data),before);assert.equal(p.policy.version,3);
+  assert.deepEqual(m.buildLabelPlacementCandidates(args),p);assert.deepEqual(Buffer.from(data),before);assert.equal(p.policy.version,4);
   if(process.env.PIXEL_DISTANCE_EVIDENCE)require('node:fs').writeFileSync(`${process.env.PIXEL_DISTANCE_EVIDENCE}/pixel-distance-${width}x${height}.json`,JSON.stringify({width,height,policy:p.policy,candidates:p.groups[0].candidates,pixelDistances:distances,rawUnchanged:true},null,2));
  }
 });
@@ -86,7 +86,7 @@ const unitWeightControl=mod.then(async()=>{
 });
 function rowPreferenceFixture(overrides={}) {
  const l={...label('a',.5),...overrides};l.position={x:.5,y:.5};l.anchor={x:.5,y:.5};l.typography={...l.typography,bounds:{x:.49,y:.48,w:.02,h:.04}};
- const r={width:400,height:200,data:new Uint8ClampedArray(400*200*4).fill(255)};r.data.set([0,0,0,255],(100*400+200)*4);
+ const r={width:400,height:200,data:new Uint8ClampedArray(400*200*4).fill(255)};for(let y=-1;y<=1;y++)for(let x=-1;x<=1;x++)r.data.set([0,0,0,255],((100+y)*400+200+x)*4);
  return {plan:{frozen:true,labels:[l]},measurements:[{id:l.id,glyphBounds:{...l.typography.bounds}}],raster:r};
 }
 function recordRowEvidence(name,value) {
@@ -128,4 +128,19 @@ test('phrase, reaction and sequence group proposals do not adopt independent-tex
   results.push({kind,unchanged:true,groups:actual.groups});
  }
  recordRowEvidence('group-weight-control',results);
+});
+
+// v4(11-07): 라벨이 날아다니지 않게 — 원본 자리 먼저, 옮겨도 가로·세로 4% 안.
+test('v4 keeps a nearly clear source spot and never proposes far moves',async()=>{
+ const m=await mod;
+ const l={id:'a',text:'A',mode:'text',scope:'general',contentMode:'plain',position:{x:.5,y:.5},anchor:{x:.5,y:.5},typography:{role:'name',bounds:{x:.49,y:.48,w:.02,h:.04}}};
+ const make=()=>({width:400,height:200,data:new Uint8ClampedArray(400*200*4).fill(255)});
+ const stray=make();stray.data.set([0,0,0,255],(100*400+200)*4);
+ const kept=m.buildLabelPlacementCandidates({plan:{frozen:true,labels:[l]},measurements:[{id:'a',glyphBounds:{...l.typography.bounds}}],raster:stray}).groups[0].candidates[0];
+ assert.deepEqual([kept.dx,kept.dy,kept.sourcePosition],[0,0,true],'a stray pixel left by erasing does not move the label');
+ const wall=make();for(let y=60;y<140;y++)for(let x=150;x<250;x++)wall.data.set([0,0,0,255],(y*400+x)*4);
+ const far=m.buildLabelPlacementCandidates({plan:{frozen:true,labels:[l]},measurements:[{id:'a',glyphBounds:{...l.typography.bounds}}],raster:wall}).groups[0];
+ assert.equal(far.candidates.length,0,'no clear spot nearby keeps the source position instead of flying away');
+ for(const c of m.buildLabelPlacementCandidates({plan:{frozen:true,labels:[l]},measurements:[{id:'a',glyphBounds:{...l.typography.bounds}}],raster:(()=>{const r=make();for(let y=97;y<104;y++)for(let x=197;x<204;x++)r.data.set([0,0,0,255],(y*400+x)*4);return r;})()}).groups[0].candidates)
+  assert.ok(Math.abs(c.dx)<=.04+1e-9&&Math.abs(c.dy)<=.04+1e-9,'moves stay within 4%');
 });

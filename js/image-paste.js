@@ -175,6 +175,7 @@ function autoLabelsForImage(image, place, artboard) {
       image,
       metadata: { aiTaskId: place.aiTaskId, aiCandidateId: place.aiCandidateId },
       idFactory: () => `${image.id}_auto_label_${++serial}`,
+      ...(Number.isFinite(place?.labelSizeMm) ? { labelSizeMm: place.labelSizeMm } : {}),
       }).map(label => ({ ...label, aiLabelReviewRequired: image.aiEditableLabelPlan?.reviewRequired === true,
       ...(image.aiEditableLabelPlan?.qualityReview?.targetVerified === false ? {aiTargetReviewRequired:true} : {}),
       ...(image.aiReviewState ? { aiReviewState: image.aiReviewState } : {}) }));

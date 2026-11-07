@@ -5,7 +5,11 @@ const validBox = b => b && ['x','y','w','h'].every(k => Number.isFinite(b[k])) &
 const inside = b => validBox(b) && b.x >= 0 && b.y >= 0 && b.x + b.w <= 1 + 1e-9 && b.y + b.h <= 1 + 1e-9;
 const translate = (b, dx, dy) => ({ ...b, x: b.x + dx, y: b.y + dy });
 const intersects = (a,b) => Math.min(a.x+a.w,b.x+b.w)>Math.max(a.x,b.x)+1e-9 && Math.min(a.y+a.h,b.y+b.h)>Math.max(a.y,b.y)+1e-9;
-export const LABEL_PLACEMENT_POLICY = Object.freeze({version:3,ordinaryTextVerticalWeight:2,luminanceThreshold:242,halo:.006,inset:.004,step:.006,maxDx:.22,maxDy:.10,maxCandidates:3});
+// v4(11-07 사용자 「라벨이 지 맘대로 날아다닌다」): 새로 그린 그림도 배치는 원본과 같으므로 원본 자리가 먼저다.
+// 원본 자리 글자 상자 안 잉크가 sourceInkTolerance 이하(지우다 남은 점·가까운 테두리)면 그 자리 그대로 두고,
+// 아니면 짧은 거리(가로·세로 4%) 안에서만 빈 곳을 찾는다. 못 찾으면 후보 없음 → 원본 자리(불확실 표시).
+// 예전(v3)은 가로 22%·세로 10%까지 찾아 상자 안 A·B가 상자 밖·바닥으로 밀려났다.
+export const LABEL_PLACEMENT_POLICY = Object.freeze({version:4,ordinaryTextVerticalWeight:2,luminanceThreshold:242,halo:.006,inset:.004,step:.006,maxDx:.04,maxDy:.04,maxCandidates:3,sourceInkTolerance:.04});
 
 export function createLabelInkIndex({width,height,data}) {
   if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width*height>16777216 || data?.length !== width*height*4) throw new TypeError('Bounded decoded RAW RGBA required');
@@ -66,7 +70,15 @@ export function buildLabelPlacementCandidates({plan,measurements,raster,imageKin
       && (members[0].contentMode??'plain')==='plain';
     const verticalWeight=ordinaryText?policy.ordinaryTextVerticalWeight:1;
     offsets.sort((a,b)=>Math.hypot(a.dx*raster.width,a.dy*raster.height*verticalWeight)-Math.hypot(b.dx*raster.width,b.dy*raster.height*verticalWeight)||Math.abs(a.dy*raster.height)-Math.abs(b.dy*raster.height)||(a.dx-b.dx)*raster.width);
+    // 원본 자리: 글자 상자(여백 없이) 안 잉크가 아주 적으면 그대로 쓴다.
+    if(!locked) {
+      const glyphs=group.labelIds.map(id=>({id,box:byId.get(id)}));
+      const nearlyClear=glyphs.every(g=>{const n=ink.count(g.box);const area=Math.max(1,g.box.w*raster.width*g.box.h*raster.height);return n!==null&&n/area<=policy.sourceInkTolerance;});
+      const labels=members.map(l=>geometry(l,0,0));
+      if(nearlyClear&&labels.every(l=>inside(l.bounds)))candidates.push({candidateId:`${group.id}:candidate:0`,dx:0,dy:0,labels,glyphs,rawInkPixels:glyphs.reduce((n,g)=>n+(ink.count(g.box)||0),0),sourcePosition:true});
+    }
     for(const {dx,dy} of offsets) {
+      if(candidates.length===policy.maxCandidates)break;
       const glyphs=group.labelIds.map(id=>({id,box:translate(byId.get(id),dx,dy)}));
       const boxes=glyphs.map(g=>({x:g.box.x-policy.halo,y:g.box.y-policy.halo,w:g.box.w+2*policy.halo,h:g.box.h+2*policy.halo}));
       if(boxes.some(b=>!inside(b)||b.x<policy.inset||b.y<policy.inset||b.x+b.w>1-policy.inset||b.y+b.h>1-policy.inset||ink.count(b)!==0))continue;

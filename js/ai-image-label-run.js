@@ -14,6 +14,7 @@ import { prepareJointLabelVerification, retainFinalVerification } from './ai-lab
 import { SOURCE_LABEL_POLICY_VERSION } from './ai-editable-image-labels.js?v=1.7.0-four-session-integration';
 import { externalLabelDraftIds } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-label-background.js?v=1.7.0-four-session-integration';
+import { reframeCandidateToSource } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
 
 export const IMAGE_LABEL_RUN_VERSION = '1.6.1';
 export const IMAGE_LABEL_GENERATION_HARNESS = 'rhwp-approved-first-v1';
@@ -289,6 +290,14 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       } }));
     data = background.data; rendererPrompt = background.rendererPrompt;
     metrics.backgroundReused = background.reused;
+    // 라벨을 되살릴 때만: AI가 바꾼 판 비율을 원본에 맞춰, 원본에서 잰 라벨 자리가 그대로 맞게 한다(11-07).
+    if (workflow.labelResult === 'restore-editable' && plan.labels.length && !verifyOnly) {
+      try {
+        const frame = await reframeCandidateToSource({ candidateDataUrl: data, sourceDataUrl: source.data, labels: plan.labels, signal });
+        if (frame.reframed) data = frame.data;
+        metrics.reframe = { reframed: frame.reframed, reason: frame.reason || null, transform: frame.transform || null };
+      } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { reframed: false, reason: String(error?.message || error).slice(0, 200) }; }
+    }
   }
   cancelled(signal);
   const candidateSha256 = await imageLabelDigest(data);

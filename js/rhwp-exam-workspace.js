@@ -908,11 +908,40 @@ export function initRhwpExamWorkspace(state, services) {
       page.objects=objects;page.groups=clone(detail.graph.groups || []);
       bounds=getContentBounds({...state.get(),...page,objects:page.objects},render.options,2);
     }else{
-      const {data,width,height}=detail.image || {},b=render.bounds,ratio=Number(height)/Number(width);
+      const {data,width,height}=detail.image || {},b=render.bounds;
+      // 비율은 넘어온 숫자보다 실제 그림에서 읽는다(판 비율 맞춤 뒤 크기와 어긋날 수 있음 — 11-07).
+      let ratio=Number(height)/Number(width);
+      try{const probe=new Image();probe.src=data;await probe.decode();if(probe.naturalWidth>0)ratio=probe.naturalHeight/probe.naturalWidth;}catch{}
       if(!String(data || '').startsWith('data:image/')||!(ratio>0))throw new Error('넣을 결과 그림을 읽지 못했습니다.');
-      const w=b.w,h=w*ratio;
-      page.objects=[{id:crypto.randomUUID(),type:'image',src:data,x:b.x,y:b.y,w,h,rotation:0,mode:'edit',opacity:1,exportable:true,aspectLocked:true,cutouts:[],layerId,order:0}];page.groups=[];
-      bounds={x:b.x,y:b.y,w,h};
+      // 11-07: 그림 칸(render.bounds)은 원래 그림 둘레 여백까지 포함한다. 새 그림은 원래 그림이 있던 자리·폭 그대로 넣는다
+      // (여백까지 꽉 채우면 그림·라벨이 원본보다 커졌다). 원래 그림이 여럿이거나 없으면 예전처럼 칸 전체.
+      const originals=(restoredFrom.objects||[]).filter(o=>o.type==='image'&&o.w>0&&o.h>0);
+      const slot=originals.length===1&&!originals[0].rotation?{x:originals[0].x,y:originals[0].y,w:originals[0].w}:{x:b.x,y:b.y,w:b.w};
+      const w=slot.w,h=w*ratio;
+      const imageObject={id:crypto.randomUUID(),type:'image',src:data,x:slot.x,y:slot.y,w,h,rotation:0,mode:'edit',opacity:1,exportable:true,aspectLocked:true,cutouts:[],layerId,order:0};
+      // 11-07: 라벨 복원 결과면 「캔버스에 삽입」과 같은 함수로 그림 + 5E 라벨(편집 가능)을 만든다. 라벨 크기는 3.7mm 그대로.
+      if(detail.labelPlan?.labels?.length){
+        const {prepareImageCandidateRevision}=await import('./image-paste.js?v=1.7.0-four-session-integration');
+        // 라벨 크기: 원본 그림에서 잰 라벨 글자 높이(0~1) × 이 자리 그림 높이(mm). 한 그림 안은 한 크기(중앙값).
+        // 한글 글자 상자는 글자 크기의 약 0.88, 영어 대문자·숫자는 약 0.72 높이다.
+        // 글자 높이는 원본 그림 픽셀에서 직접 잰다(AI가 준 상자 높이는 작게 잡힘). 원본 그림이 없으면 AI 상자 높이.
+        const originalSrc=(restoredFrom.objects||[]).find(o=>o.type==='image'&&String(o.src||'').startsWith('data:image/'))?.src;
+        let measured=[];
+        if(originalSrc){try{const {measureSourceLabelHeights}=await import('./ai-label-reframe.js?v=1.7.0-four-session-integration');measured=await measureSourceLabelHeights({sourceDataUrl:originalSrc,labels:detail.labelPlan.labels});}catch{measured=[];}}
+        const glyph=new Map(measured.map(m=>[m.id,m.h]));
+        const heights=detail.labelPlan.labels.filter(l=>!String(l.text).includes('\n')&&(glyph.get(l.id)>0||l.typography?.bounds?.h>0)).map(l=>{
+          const hangul=/[가-힣]/.test(l.text),hn=glyph.get(l.id)||l.typography.bounds.h;
+          return hn*h/(hangul?.88:/^[A-Z0-9]+$/.test(String(l.text).trim())?.72:.8);}).sort((a,b)=>a-b);
+        const labelSizeMm=heights.length?Math.min(5,Math.max(1.8,heights[Math.floor(heights.length/2)])):undefined;
+        const made=await prepareImageCandidateRevision(imageObject,data,{editableLabelPlan:detail.labelPlan,aiTaskId:detail.aiTaskId,aiCandidateId:detail.aiCandidateId,labelSizeMm});
+        page.objects=[{...made.image,layerId},...made.labels.map(label=>({...label,layerId}))];page.groups=[];
+        // 원래 칸(여백 포함)보다 줄이지 않는다 — 줄이면 한글이 같은 폭으로 늘려 그림·라벨이 커진다. 라벨이 칸 밖으로 나가면 그만큼만 넓힌다.
+        const c=getContentBounds({...state.get(),...page,objects:page.objects},render.options,1),x0=Math.min(b.x,c.x),y0=Math.min(b.y,c.y);
+        bounds={x:x0,y:y0,w:Math.max(b.x+b.w,c.x+c.w)-x0,h:Math.max(b.y+b.h,c.y+c.h)-y0};
+      }else{
+        page.objects=[imageObject];page.groups=[];
+        bounds=slot.w===b.w?{x:b.x,y:b.y,w,h}:{x:b.x,y:b.y,w:b.w,h:Math.max(b.h,slot.y+h-b.y)};
+      }
     }
     page.meta={...page.meta,examRestoredFrom:restoredFrom};
     return applyInPlaceSource(session,source,bounds,detail.graph?'ai-restore':'ai-image',detail.graph?'AI로 복원한 그래프를 이 자리에 넣었습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z':'AI 결과를 이 자리에 같은 폭으로 넣었습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z');

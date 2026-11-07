@@ -29,7 +29,8 @@ test('clipped coordinates and malformed JSON reject; Unicode script metadata is 
  assert.throws(()=>parseSourceLabelAnalysis('{"version":4,}',1),/JSON/);
  const unicode=wire();Object.assign(unicode.labels[0],{mode:'text',text:'H₂O'});delete unicode.labels[0].leaderRoutes;unicode.labels[0].typography.role='chemical';
  assert.equal(parseSourceLabelAnalysis(JSON.stringify(unicode),1).labels[0].text,'H₂O');
- unicode.labels[0].typography.scriptStyles=[{start:1,end:2,kind:'sub',role:'number'}];assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(unicode),1),/명세/);
+ // 11-07: 서식만 틀린 라벨은 버리지 않는다(글자가 사라지므로). 틀린 첨자 서식만 빼고 「서식 확인 필요」를 붙인다 — 조용히 넘어가지 않음.
+ unicode.labels[0].typography.scriptStyles=[{start:1,end:2,kind:'sub',role:'number'}];{const kept=parseSourceLabelAnalysis(JSON.stringify(unicode),1).labels[0];assert.equal(kept.text,'H₂O');assert.equal(kept.typographyReviewRequired,true);assert.ok(!kept.typography.scriptStyles?.length);}
  unicode.labels[0].text='H_{2}O';unicode.labels[0].contentMode='formula';unicode.labels[0].typography.scriptStyles=[{start:3,end:4,kind:'sub',role:'number'}];assert.equal(parseSourceLabelAnalysis(JSON.stringify(unicode),1).labels[0].typography.scriptStyles.length,1);
 });
 test('uncertain object identity stays uncertain and groups preserve source reading order',async()=>{

@@ -1,6 +1,6 @@
 import { applyLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { normalizeLeaderRoutes, mapLeaderRoutes } from './ai-label-leaders.js?v=1.7.0-four-session-integration';
-import { nativePresentationForLabelTypography, LABEL_TYPOGRAPHY_PROMPT, normalizeLabelTypography, positionNativeLabelAtCenter, presentationRoleFor } from './ai-label-typography.js?v=1.7.0-four-session-integration';
+import { nativePresentationForLabelTypography, LABEL_TYPOGRAPHY_PROMPT, normalizeLabelTypography, positionNativeLabelAtCenter, presentationRoleFor, scriptLabelRuns } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 import { DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-four-session-integration';
 import { getFormulaScriptSpans, normalizeFormulaScriptStyles } from './formula.js?v=1.7.0-four-session-integration';
 
@@ -100,7 +100,10 @@ function verifiedLabel(value, evidenceOptions, strict = false) {
   const contentMode = value.contentMode === 'formula' ? 'formula' : 'plain';
   const legacyLabelType = value.labelType === 'quantity' || contentMode === 'formula' ? 'quantity' : 'label';
   const { typography, review } = normalizeLabelTypography(value.typography, { text, labelType: legacyLabelType, contentMode });
-  if (strict && (!typography.bounds || review || !['leader', 'text'].includes(value.mode))) return null;
+  // 11-07 사용자 「라벨이 빠진다」: 예전엔 서식 칸 하나(글꼴 이름·굵기·조각 나누기·종류 이름)만 어긋나도 라벨을 통째로 버렸다.
+  // 그림에서는 글자를 이미 지우므로 라벨이 사라졌다. 이제 위치(글자 상자)와 글/지시선 종류가 틀릴 때만 버리고,
+  // 서식은 normalizeLabelTypography가 틀린 칸만 빼고 남긴다(검토 표시 typographyReviewRequired는 그대로 붙음).
+  if (strict && (!typography.bounds || !['leader', 'text'].includes(value.mode))) return null;
   if (strict && value.mode === 'leader' && !anchor) return null;
   const leaderRoutes = value.leaderRoutes === undefined ? null : normalizeLeaderRoutes(value.leaderRoutes);
   if (value.leaderRoutes !== undefined && (!leaderRoutes || !leader)) return null;
@@ -246,7 +249,7 @@ function worldPoint(image, normalized) {
   };
 }
 
-export function createEditableImageLabelObjects({ labels, placement, candidateSha256, image, metadata = {}, relationGroups = [], idFactory }) {
+export function createEditableImageLabelObjects({ labels, placement, candidateSha256, image, metadata = {}, relationGroups = [], idFactory, labelSizeMm = null }) {
   if (placement) labels = applyLabelTargetPlacement(labels, placement, { candidateSha256 });
   if (!Array.isArray(labels) || labels.length > MAX_LABELS) throw new TypeError('자동 라벨 목록을 확인할 수 없습니다.');
   if (!image || typeof image.id !== 'string' || !['x', 'y', 'w', 'h'].every(key => Number.isFinite(image[key]))
@@ -271,6 +274,8 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
     const inferredScripts = typography.role === 'quantity' ? getFormulaScriptSpans(label.text)
       .filter(span => names.has(span.text)).map(span => ({ start: span.start, end: span.end, kind: span.kind, role: 'name' })) : [];
     const scriptStyles = normalizeFormulaScriptStyles(label.text, typography.scriptStyles || inferredScripts);
+    // 11-07: 손으로 고친 서식이 없는 라벨은 글자 자체로 한글·영어·영어 수식 조각을 나눠 글꼴을 정한다(scriptLabelRuns).
+    const scriptRuns = !label.manualStyle && !formula && !scriptStyles.length ? scriptLabelRuns(label.text, typography.role, typography.runs) : null;
     const object = {
       id: idFactory(),
       type: 'labeler',
@@ -280,11 +285,12 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       labelType: typography.role === 'quantity' ? 'quantity' : 'label',
       contentMode: label.contentMode,
       ...(formula ? { source: label.text, rawSource: label.text } : {}),
-      ...nativePresentationForLabelTypography({ role: presentationRoleFor(typography.role, label.text) }),
-      ...(['text', 'name', 'symbol'].includes(typography.role) ? { labelFontOverride: true } : {}),
+      ...nativePresentationForLabelTypography({ role: scriptRuns ? 'text' : presentationRoleFor(typography.role, label.text) }),
+      ...(!scriptRuns && ['text', 'name', 'symbol'].includes(typography.role) ? { labelFontOverride: true } : {}),
+      ...(scriptRuns ? { aiScriptRuns: true } : {}),
       labelTypographyVersion: 1,
       aiLabelRole: typography.role,
-      ...(typography.runs ? { labelRuns: typography.runs } : {}),
+      ...(scriptRuns ? { labelRuns: scriptRuns } : typography.runs ? { labelRuns: typography.runs } : {}),
       ...(scriptStyles.length ? { labelScriptStyles: scriptStyles } : {}),
       ...(typography.orientation === 'vertical' ? { textOrient: 'vertical' } : {}),
       textRotation: typography.rotation || 0,
@@ -321,7 +327,8 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       throw new TypeError('직접 편집한 라벨 서식을 확인할 수 없습니다.');
     }
     if (style) Object.assign(object, nativePresentationForLabelTypography(typography));
-    object.labelSize = style ? image.h * style.size : DEFAULT_TEXT_SIZE_MM;
+    // 11-07: 한글 그림 자리에 넣을 때는 원본 라벨 높이로 정한 크기(labelSizeMm)를 쓴다. 그 밖엔 3.7mm.
+    object.labelSize = style ? image.h * style.size : (Number.isFinite(labelSizeMm) && labelSizeMm > 0 ? labelSizeMm : DEFAULT_TEXT_SIZE_MM);
     if (style?.strokeLevel !== undefined) object.strokeLevel = style.strokeLevel;
     if (label.mode !== 'leader') {
       object.type = formula ? 'formula' : 'text';

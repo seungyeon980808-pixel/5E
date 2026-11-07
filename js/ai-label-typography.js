@@ -48,6 +48,51 @@ export function isObjectNameText(text) { return OBJECT_NAME_TEXT.test(String(tex
 // 라벨 전체 글꼴을 정할 때 쓰는 종류: 이름이어도 한 글자 이름이 아니면 보통 글(돋움).
 export function presentationRoleFor(role, text) { return role === 'name' && !isObjectNameText(text) ? 'text' : role; }
 
+// 11-07 사용자 「라벨 글씨체가 엉망 — 한글·영어·영어 수식 세 가지로 나뉘어 들어가야 한다」:
+// AI가 붙인 종류 이름(name·symbol 등)은 들쭉날쭉해서 A·B가 고딕이 되곤 했다. 글자 자체로 조각을 나눈다.
+//   한글이 든 조각(앞뒤 괄호·문장부호 포함) → text(돋움)
+//   숫자+단위(3N, 10 cm, 30°) → unit(수식 글꼴 정체)   숫자만 → number(정체)
+//   AI가 물리량이라 한 영어 조각 → quantity(수식 글꼴 기울임)   AI가 화학식이라 한 조각 → chemical(정체)
+//   그 밖의 영어 글자(A·B·p·q·LED) → name(명조 정체)   기호만 → text
+const HANGUL = '가-힣ㄱ-ㅎㅏ-ㅣ㉠-㉻㈀-㈜';
+const HANGUL_CHUNK = new RegExp(`[(\\[〈「]*[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
+const UNIT_AFTER_NUMBER = /^[+−-]?\d[\d.,]*\s*(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|°C?|%|kg)$/u;
+export function scriptLabelRuns(text, role, aiRuns) {
+  const source = String(text ?? '');
+  if (!source.trim() || /[_^{}\\]/.test(source)) return null; // 수식 문법 라벨은 기존 수식 경로
+  const qty = new Set(), chem = new Set();
+  if (role === 'quantity') qty.add('*');
+  if (role === 'chemical') chem.add('*');
+  for (const run of Array.isArray(aiRuns) ? aiRuns : []) {
+    if (run?.role === 'quantity') qty.add(String(run.text).trim());
+    if (run?.role === 'chemical') chem.add(String(run.text).trim());
+  }
+  const parts = [];
+  let last = 0;
+  for (const match of source.matchAll(HANGUL_CHUNK)) {
+    if (match.index > last) parts.push({ text: source.slice(last, match.index), hangul: false });
+    parts.push({ text: match[0], hangul: true });
+    last = match.index + match[0].length;
+  }
+  if (last < source.length) parts.push({ text: source.slice(last), hangul: false });
+  const runs = parts.filter(part => part.text).map(part => {
+    const core = part.text.trim();
+    let runRole;
+    if (part.hangul || !/[A-Za-z0-9α-ωΑ-Ω]/u.test(core)) runRole = 'text';
+    else if (UNIT_AFTER_NUMBER.test(core)) runRole = 'unit';
+    else if (/^[+−-]?\d[\d.,]*$/.test(core)) runRole = 'number';
+    else if (chem.has('*') || [...chem].some(c => c && core.includes(c))) runRole = 'chemical';
+    else if (qty.has('*') || qty.has(core) || [...qty].some(q => q && q !== '*' && core.includes(q)) || /[α-ωΑ-Ωθ]/u.test(core)) runRole = 'quantity';
+    else runRole = 'name';
+    return { text: part.text, role: runRole, contentMode: 'plain' };
+  });
+  return runs.reduce((out, run) => {
+    const prev = out[out.length - 1];
+    if (prev && prev.role === run.role) prev.text += run.text; else out.push({ ...run });
+    return out;
+  }, []);
+}
+
 export function inferLabelRole(label) {
   const text = String(label.text || '').trim();
   if (/^[+−-]?\d+(?:[.,]\d+)*(?:°)?$/.test(text)) return 'number';
@@ -277,7 +322,8 @@ export function measureLabelTypography(obj, size = obj.fontSize || obj.labelSize
       && ['plain', 'formula'].includes(r.contentMode)) && obj.labelRuns.map(r => r.text).join('') === text;
   // 섞인 라벨(「검출기 Q」) 안의 한 글자 이름 조각은 라벨 글꼴을 사람이 바꾸지 않았으면 명조(11-07 안 B).
   const autoFont = !obj.fontFamily || obj.fontFamily === DEFAULT_TEXT_FONT || obj.fontFamily === OBJECT_LABEL_TEXT_FONT_FAMILY;
-  const keepName = r => r.role === 'name' && autoFont && isObjectNameText(r.text);
+  // 11-07: 글자로 나눈 영어 이름 조각(A·B·p·q·LED)도 명조 정체로 — 돋움으로 덮지 않는다.
+  const keepName = r => r.role === 'name' && autoFont && (isObjectNameText(r.text) || obj.aiScriptRuns === true && /[A-Za-z]/.test(r.text) && !new RegExp(`[${HANGUL}]`, 'u').test(r.text));
   const initialRuns = validRuns ? obj.labelRuns.map(r => ({ ...r, font: { ...fontForLabelRole(r.role), ...((obj.labelFontOverride || obj.aiAutoLabel && !isEquationFontFamily(baseFont.fontFamily)) && ['text', 'name', 'symbol'].includes(r.role) && !keepName(r) ? baseFont : {}), ...(obj.labelItalicOverride && ['text', 'name', 'symbol'].includes(r.role) ? { italic: baseFont.italic } : {}), fontWeight: baseFont.fontWeight } }))
     : [{ text, contentMode: obj.contentMode || 'plain', font: baseFont }];
   const { runs, styles } = connectedFormulaRuns(initialRuns, text, obj.labelScriptStyles);
