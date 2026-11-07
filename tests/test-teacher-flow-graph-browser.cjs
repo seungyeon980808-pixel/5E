@@ -18,7 +18,7 @@ flow.runEngines('graph', {
   options: { savePicker: true },
   async run({ page, evidence, engine, shot }) {
     // ① 좌표: x 0~4, y 0~4, 1칸 간격
-    await page.locator('#graph-tool-open').click();
+    await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
     const modal = page.locator('#graph-modal-overlay');
     await modal.waitFor({ state: 'visible' });
     for (const [id, value] of [['#gm-xpos', 4], ['#gm-ypos', 4], ['#gm-xstep', 1], ['#gm-ystep', 1]]) await setNumber(modal.locator(id), value);

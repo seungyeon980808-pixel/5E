@@ -3713,3 +3713,15 @@ textarea.unified-text-input {
 .canvas-zoom-menu button:hover { background: #1d2633; }
 .canvas-zoom-menu kbd { font: inherit; font-size: 11.5px; color: var(--ds-ink-3, #7d8590); }
 .canvas-zoom-menu-sep { display: block; height: 1px; margin: 4px 6px; background: #232a35; }
+
+/* 11-07 G3·G7(시안 graph-hub-1107): 그래프 편집기 위 AI 입구, 함수 「옮김」 줄 */
+#graph-modal-overlay .gm-ai-entries { display:inline-flex; align-items:center; gap:6px; flex:none; }
+#graph-modal-overlay .gm-ai-entries[hidden] { display:none; }
+#graph-modal-overlay .gm-ai-entry { white-space:nowrap; }
+#graph-modal-overlay .gm-ai-entry .gm-ai-spark { color:var(--ds-selected-icon, var(--accent)); }
+#graph-modal-overlay .gm-offset-body { display:flex; align-items:center; flex-wrap:wrap; gap:6px 8px; }
+#graph-modal-overlay .gm-offset-fields { display:inline-flex; align-items:center; gap:6px; }
+#graph-modal-overlay .gm-offset-in { width:70px; }
+#graph-modal-overlay .gm-offset-hint { font-size:12px; color:var(--text-secondary); }
+/* 그래프 편집기 위에서 묻는 확인 창(11-07 G3: AI 창으로 갈 때) */
+.modal-overlay.gm-above-graph { z-index: 10040; }

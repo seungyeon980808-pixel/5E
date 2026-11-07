@@ -55,9 +55,15 @@ test('deleting a pending candidate removes its attention without changing other 
 test('the shared entry aggregates workspace attention and describes it without replacing its icon', () => {
   const attrs={},button={dataset:{},setAttribute:(name,value)=>attrs[name]=value};
   const panels=[{dataset:{aiResultCount:'2'}},{dataset:{aiResultCount:'1'}}];
-  const doc={querySelectorAll:()=>panels,getElementById:()=>button};
+  const graphAttrs={},graphButton={dataset:{},setAttribute:(name,value)=>graphAttrs[name]=value};
+  const doc={querySelectorAll:()=>panels,getElementById:id=>id==='ai-image-install-open'?button:id==='graph-tool-open'?graphButton:null};
   syncResultEntry(doc);
   assert.equal(button.dataset.resultAttention,'true');assert.match(attrs['aria-label'],/3개/);
+  assert.equal(graphButton.dataset.resultAttention,'false');assert.equal(graphAttrs['aria-label'],'그래프');
+  // 11-07: 그래프 작업의 결과는 「그래프」 단추에, 나머지는 「AI 이미지」 단추에 알린다.
+  panels[1].dataset.aiGraphResultCount='1';syncResultEntry(doc);
+  assert.match(attrs['aria-label'],/2개/);assert.equal(graphButton.dataset.resultAttention,'true');assert.match(graphAttrs['aria-label'],/^그래프 · 확인할 결과 1개$/);
   panels.length=0;syncResultEntry(doc);
-  assert.equal(button.dataset.resultAttention,'false');assert.equal(attrs['aria-label'],'AI 이미지/그래프');
+  assert.equal(button.dataset.resultAttention,'false');assert.equal(attrs['aria-label'],'AI 이미지');
+  assert.equal(graphButton.dataset.resultAttention,'false');
 });

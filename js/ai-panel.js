@@ -140,6 +140,9 @@ import {
 } from "./ai-quality-mode.js?v=1.7.0-four-session-integration";
 
 // This path never redraws a PNG through Canvas or registers a pending proposal.
+const GRAPH_TO_EDITOR_LABEL = '편집기로 가져오기';
+const GRAPH_TO_EDITOR_TITLE = '결과를 그래프 편집기로 가져옵니다. 편집기에서 캔버스로 내보내거나 한글에 넣습니다.';
+
 export function scopedPngBytes(data) {
   if (!/^data:image\/png;base64,/i.test(data)) throw new Error('원본 PNG만 지원합니다. PNG 형식을 확인하세요.');
   return Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), c => c.charCodeAt(0));
@@ -754,6 +757,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   let attachments = [];
   let generatedImages = [];
   let conversionKind = 'image';
+  const hwpInPlaceTargets = new Map();
   let graphSubmitting = false;
   let graphOwnerEpoch = 0;
   const graphWorkflow = createGraphReconstructionWorkflow({transport:desktop || {send:async()=>{throw new Error('AI 연결을 확인해 주세요.');}}});
@@ -1467,7 +1471,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (phase === 'validating') { loading.setPhase('결과 확인 중'); loading.stage('validating'); }
       if (phase === 'completed' && pendingLoading?.token === requestToken && (panel.hidden || panel.inert) && conversionKind !== 'graph' && !hwpInPlaceTargets.has(activeTaskTabId)) {
         const tookMs = Date.now() - pendingLoading.startedAt;
-        showDoneNotice({ title: '그림 변환이 끝났어요', detail: `${Math.floor(tookMs / 60000)}:${String(Math.floor(tookMs / 1000) % 60).padStart(2, '0')} 걸림`, onOpen: () => showWorkbench() });
+        const graphJob = isGraphWorkflow(conversionKind);
+        showDoneNotice({ title: graphJob ? '그래프가 다 만들어졌어요' : '그림 변환이 끝났어요', detail: `${Math.floor(tookMs / 60000)}:${String(Math.floor(tookMs / 1000) % 60).padStart(2, '0')} 걸림`, onOpen: () => showWorkbench(), ...(graphJob ? { anchor: document.getElementById('graph-tool-open') } : {}) });
       }
       if (['completed', 'failed', 'cancelled'].includes(phase)) {
         const candidate = currentTurnCandidate || generatedImages.at(-1);
@@ -1912,6 +1917,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     });
   };
 
+  // 11-07 G9: 그래프 결과는 「편집기로 가져오기」(한글 그림 자리에서 연 작업은 예전처럼 「한글 파일에 넣기」).
+  const graphToEditor = item => Boolean(item?.graphResult) && !hwpInPlaceTargets.has(activeTaskTabId);
   const syncEditableLabelPlanButton = (item) => {
     const output = item?.card?.querySelector("[data-ai-canvas-output]");
     if (!output) return;
@@ -1920,6 +1927,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const review = includeLabels && item.labelPlan?.reviewRequired === true;
     const accepted = Boolean(item.data || item.graphResult || item.sceneResult) && item.removalReport?.status !== 'out-of-scope';
     output.disabled = busy || !accepted;
+    if (graphToEditor(item)) { output.textContent = GRAPH_TO_EDITOR_LABEL; output.title = GRAPH_TO_EDITOR_TITLE; if (!accepted) output.title = '가져올 결과를 선택하세요.'; return; }
     output.textContent = `${count ? `캔버스에 삽입 · 라벨 ${count}개` : "캔버스에 삽입"}${review ? " · 확인" : ""}`;
     output.title = !includeLabels && item.labelPlan?.labels?.length
       ? '라벨을 숨긴 현재 이미지만 넣습니다. 라벨 계획은 보존됩니다.'
@@ -2154,15 +2162,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     stage.appendChild(img);
     if (item.graphResult) {
+      // 11-07 G9: 결과 위 「그래프 세부 편집」은 아래 「편집기로 가져오기」와 하는 일이 같아 뺐다.
+      // 한글 그림 자리에서 연 작업(그 창에는 「편집기로 가져오기」가 없다)만 예전처럼 남긴다.
       const graphEdit = document.createElement('button');
       graphEdit.type='button';graphEdit.dataset.aiGraphEdit='';graphEdit.className='ai-graph-edit-hint';graphEdit.textContent='그래프 세부 편집';
       graphEdit.disabled=busy || panel.dataset.aiSharingMode==='view';
+      graphEdit.hidden = !hwpInPlaceTargets.has(activeTaskTabId);
       graphEdit.onclick=()=>{if(!busy && panel.dataset.aiSharingMode!=='view')void editGraphCandidate(item);};
       stage.addEventListener('dblclick', event => {
         if (event.target.closest('button,input,select,textarea')) return;
         const bounds = img.getBoundingClientRect();
         if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) return;
-        event.preventDefault(); event.stopPropagation(); graphEdit.click();
+        event.preventDefault(); event.stopPropagation();
+        if (busy || panel.dataset.aiSharingMode === 'view') return;
+        // 두 번 누르기 = 「편집기로 가져오기」(한글 그림 자리 작업은 예전 세부 편집).
+        if (graphToEditor(item)) void editGraphCandidate(item, { toCanvas:true }); else graphEdit.click();
       });
       stage.append(graphEdit);
     }
@@ -2175,6 +2189,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       output.title = "캔버스에 삽입";
       output.onclick = () => {
         if (busy || output.disabled) return;
+        // 11-07 G9: 그래프 결과는 캔버스에 바로 넣지 않고 그래프 편집기로 가져온다(편집기에서 캔버스로 내보내기·한글에 넣기).
+        if (graphToEditor(item)) { if (panel.dataset.aiSharingMode !== 'view') void editGraphCandidate(item, { toCanvas:true }); return; }
         const includeLabels = labelPreviewState(item).included !== false;
         const labelCount = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
         if (candidateUsesSeparatedAssets(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) { void openGroupsForItem(item, true, false, true); return; }
@@ -2548,12 +2564,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // 11-06: 한글 그림 편집에서 연 작업은 고친 뒤 바로 한글로 — 보내기 단추는 「클립보드로 복사」「한글 파일에 넣기」 두 개만.
       panel.dataset.aiHwpInPlace = String(inPlace);
       // D1: 한글에서 연 AI 창은 전환 줄 없이 제목만 — 「AI 이미지 / AI 그래프 · 한글 n번 그림에서 엶」.
-      const title = panel.querySelector('#ai-image-title');
-      if (title) {
-        if (!title.dataset.defaultTitle) title.dataset.defaultTitle = title.textContent;
-        const target = hwpInPlaceTargets.get(activeTaskTabId);
-        title.textContent = inPlace ? `${target?.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target?.label || '그림'}에서 엶` : title.dataset.defaultTitle;
-      }
+      syncSurfaceTitle();
       if (copy) copy.textContent = inPlace ? '클립보드로 복사' : '이미지 복사';
       examSend.textContent = inPlace ? '한글 파일에 넣기' : '한글로 보내기';
       examSend.title = inPlace ? '고른 결과를 한글 시험지의 원래 그림 자리에 같은 폭으로 넣습니다(원래 그림은 「그림으로 되돌리기」로 돌아갈 수 있음).' : '현재 선택한 결과의 영역을 확인해 한글 문서에 넣습니다. 작업별 연결을 보존합니다.';
@@ -2598,7 +2609,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (scoped) scoped.disabled = outputBusy || !item || Boolean(item.sceneResult);
     if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult && !item.graphResult);
     for (const graphEdit of panel.querySelectorAll('.ai-graph-edit-hint')) {
-      const active = graphEdit.closest('[data-ai-candidate-id]')?.dataset.aiCandidateId === item?.id;
+      const active = graphEdit.closest('[data-ai-candidate-id]')?.dataset.aiCandidateId === item?.id && hwpInPlaceTargets.has(activeTaskTabId);
       graphEdit.hidden = !active;
       if (active) graphEdit.dataset.aiGraphEdit = '';
       else delete graphEdit.dataset.aiGraphEdit;
@@ -2610,7 +2621,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (save) { save.hidden = false; save.textContent = 'PNG 저장'; }
       if (outputNote) {
         outputNote.hidden = true;
-        outputNote.textContent = item?.graphResult ? [...summarizeAnalyticGraph(item.graphResult.plan).lines,'더블클릭 또는 세부 편집으로 축·곡선·표기를 조정할 수 있습니다.'].join('\n') : '';
+        outputNote.textContent = item?.graphResult ? [...summarizeAnalyticGraph(item.graphResult.plan).lines,'더블클릭 또는 「편집기로 가져오기」로 축·곡선·표기를 조정할 수 있습니다.'].join('\n') : '';
         outputNote.style.whiteSpace = 'pre-line';
       }
     } else {
@@ -2629,6 +2640,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const labelReview = includeLabels && item?.labelPlan?.reviewRequired === true;
       insert.textContent = '캔버스에 삽입';
       insert.hidden = false;
+      if (graphToEditor(item) || (!item && isGraphWorkflow(conversionKind))) {
+        insert.textContent = GRAPH_TO_EDITOR_LABEL; insert.title = GRAPH_TO_EDITOR_TITLE;
+        insert.setAttribute('aria-label', insert.textContent);
+      } else {
       insert.title = !includeLabels && item?.labelPlan?.labels?.length
         ? '라벨을 숨긴 현재 이미지만 넣습니다. 라벨 계획은 보존됩니다.'
         : labelCount
@@ -2636,6 +2651,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         : labelReview ? '확인되지 않은 라벨은 제외되어 이미지만 넣습니다. 필요한 라벨을 확인해 주세요.'
         : item?.labelPlan?.status === 'unavailable' ? '자동 라벨 계획을 확인하지 못해 이미지만 넣습니다.' : '캔버스에 삽입';
       insert.setAttribute('aria-label', insert.textContent);
+      }
     }
     const draft = panel.querySelector('[data-ai-edit-review-draft]');
     if (draft) {
@@ -2700,6 +2716,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   function syncGraphWorkbenchUi() {
     const graph = isGraphWorkflow(conversionKind);
     const graphCreate = conversionKind === 'graph-create';
+    syncSurfaceTitle();
     const graphTarget = selectedOutputItem()?.graphResult ? selectedOutputItem() : null;
     const brief = !graph && isExamBrief(taskTabs.get(activeTaskTabId));
     const fixedModel=panel.querySelector('[data-ai-fixed-model]'); if(fixedModel)fixedModel.hidden=!graph;
@@ -2764,9 +2781,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }
   panel.querySelectorAll('[data-ai-workflow]').forEach(button => button.addEventListener('click', () => switchConversionKind(button.dataset.aiWorkflow)));
 
-  async function editGraphCandidate(item) {
+  async function editGraphCandidate(item, { toCanvas = false } = {}) {
     if (busy || panel.dataset.aiSharingMode === 'view' || !item?.graphResult) return;
     const taskId = activeTaskTabId, original = item.graphResult;
+    // 11-07 G9: 「편집기로 가져오기」 — AI 창을 닫고 결과가 채워진 그래프 편집기를 연다. 편집기에서 「캔버스로 내보내기」 하면
+    // (바뀐 것이 있으면 수정본으로 남기고) 그 결과를 캔버스에 넣는다. 「한글에 넣기」는 넣은 그래프를 이어서 한글로 보낸다.
+    if (toCanvas) close({ integratedEdit: true });
     const owner = taskTabs.get(taskId), ownerEpoch = graphOwnerEpoch;
     const ownsTask = () => !disposed && graphOwnerEpoch === ownerEpoch && taskTabs.get(taskId) === owner;
     let reference = original.objects?.find(o => o.type === 'coordplane')?.graphTrace?.reference || original.graphTrace?.reference || original.traceReference || null;
@@ -2776,8 +2796,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (source?.data && await graphSourceHash(source.data) === original.source.hash) reference = { data:source.data, name:source.name, width:original.source.width, height:original.source.height, plotBox:structuredClone(original.plan.source.plotBox) };
       }
       if (!ownsTask() || taskId !== activeTaskTabId || !generatedImages.includes(item) || item.graphResult !== original) return;
-      editWorkbenchGraph(original, { reference, onApply: edited => {
+      editWorkbenchGraph(original, { reference, ...(toCanvas ? { destination: {} } : {}), onApply: edited => {
       if (!ownsTask() || taskId !== activeTaskTabId || !generatedImages.includes(item) || item.graphResult !== original) return;
+      if (toCanvas && JSON.stringify(edited.objects) === JSON.stringify(original.objects) && JSON.stringify(edited.groups || []) === JSON.stringify(original.groups || [])) return placeGraphCandidate(item, taskId);
       const candidate = { ...snapshotImageItem(item), id:`generated-${++imageSerial}`, name:`그래프 수정본 ${generatedImages.length + 1}`,
         graphResult:edited, sceneResult:{valid:true,supported:true,objects:edited.objects},
         graphEdit:{parentCandidateId:item.id,createdAt:new Date().toISOString()},
@@ -2814,7 +2835,28 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       })().catch(error => {
         if (liveRevision() && activeTaskTabId === taskId) setStatus('새 수정본의 편집 내용은 유지했습니다. 미리보기 갱신 실패: ' + error.message,'error');
       });
+      if (toCanvas) return placeGraphCandidate(candidate, taskId);
     } }); } catch (error) { if (ownsTask() && activeTaskTabId === taskId) setStatus(error.message, 'error'); }
+  }
+  // 편집기에서 「캔버스로 내보내기」: 고른(또는 방금 만든) 수정본을 캔버스에 넣는다. 넣은 그래프 자리를 돌려줘 「한글에 넣기」가 이어 쓴다.
+  function placeGraphCandidate(candidate, taskId) {
+    const pageId = state.get().activePageId;
+    return Promise.resolve(materializeCandidate(candidate, { taskId, userOutput:true, isCurrent:() => !disposed }))
+      .then(result => { addLog('그래프를 캔버스에 넣었습니다.'); captureActiveTaskTab(); persistTasks(); return { pageId, planeId:result?.planeId, ids:result?.ids }; })
+      .catch(error => { addLog(`캔버스 삽입 실패: ${error.message}`, 'error'); void showAlert(`그래프를 캔버스에 넣지 못했습니다.\n${error.message}`); return null; });
+  }
+  function syncSurfaceTitle() {
+    // 11-07 G2·G4: 창의 모양은 지금 작업 종류가 정한다 — 이미지 작업이면 「AI 이미지」(이미지 탭 둘), 그래프 작업이면 「그래프 · AI」(그래프 탭 둘).
+    const graph = isGraphWorkflow(conversionKind);
+    const mode = graph ? 'graph' : 'image';
+    if (panel.dataset.aiMode !== mode) panel.dataset.aiMode = mode;
+    const title = panel.querySelector('#ai-image-title');
+    const target = hwpInPlaceTargets.get(activeTaskTabId);
+    const text = target ? `${target.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target.label || '그림'}에서 엶` : graph ? '그래프 · AI' : 'AI 이미지';
+    if (title && title.textContent !== text) title.textContent = text;
+    const closeButton = panel.querySelector('[data-ai-close]');
+    const closeLabel = `${graph ? '그래프 AI' : 'AI 이미지'} 닫기`;
+    if (closeButton && closeButton.getAttribute('aria-label') !== closeLabel) closeButton.setAttribute('aria-label', closeLabel);
   }
 
   async function runGraphRestore(options = {}) {
@@ -3519,6 +3561,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const renderTaskTabs = () => {
     if (!tabList) return;
     panel.dataset.aiResultCount = String([...taskTabs.values()].filter(tab => pendingResult(tab)).length);
+    // 11-07: 그래프 작업의 결과 알림은 아래 「그래프」 단추에, 이미지 작업은 「AI 이미지」 단추에 띄운다.
+    panel.dataset.aiGraphResultCount = String([...taskTabs.values()].filter(tab => pendingResult(tab) && isGraphWorkflow(tab.conversionKind)).length);
     syncResultEntry();
     // Task identity also exists during canceled preparation. Only a committed
     // drawing revision establishes the document connection shown to the user.
@@ -4693,7 +4737,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   };
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); }, { signal: lifecycle.signal });
   // 11-06: 한글 그림 편집 창에서 연 작업(AI 변환·복원)은 결과를 그 그림 자리로 돌려보낸다 — 작업 탭 id → 한글 그림.
-  const hwpInPlaceTargets = new Map();
+  // (11-07: 맨 위로 옮김 — 처음 그릴 때부터 그래프 결과 단추·창 제목이 이 표를 본다.)
   // 11-06 D3~D5: 한글 그림에서 연 AI 작업은 창을 닫아도 계속 돈다. 상태가 바뀔 때마다 한글 칸에 알린다(그림 테두리·시간·끝 알림).
   function notifyHwpTask(taskId, workState) {
     const target = hwpInPlaceTargets.get(taskId);
@@ -4754,7 +4798,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         .filter((result) => result.status === "fulfilled")
         .map((result) => result.value.source);
       addReferencesAsTasks(readyReferences, { prompt, placement, groups, kind:kind || conversionKind });
-      if (hwpTarget && activeTaskTabId && readyReferences.length) { hwpInPlaceTargets.set(activeTaskTabId, { ...structuredClone(hwpTarget), kind: kind === 'graph' ? 'graph' : 'image' }); syncSelectedOutputActions(); notifyHwpTask(activeTaskTabId, taskTabs.get(activeTaskTabId)?.workState || 'idle'); }
+      if (hwpTarget && activeTaskTabId && readyReferences.length) { hwpInPlaceTargets.set(activeTaskTabId, { ...structuredClone(hwpTarget), kind: kind === 'graph' ? 'graph' : 'image' }); syncSelectedOutputActions();
+        // 11-07: 한글 그림(라벨 있는 기출)에서 연 이미지 작업은 라벨 복원을 켠 채로 시작한다(끄면 AI가 글자를 제 글씨로 그려 넣음).
+        if (kind !== 'graph' && labelResultSelect && [...labelResultSelect.options].some(o => o.value === 'restore-editable' && !o.disabled)
+          && labelResultSelect.value !== 'restore-editable') { labelResultSelect.value = 'restore-editable'; labelResultSelect.dispatchEvent(new Event('change', { bubbles: true })); } notifyHwpTask(activeTaskTabId, taskTabs.get(activeTaskTabId)?.workState || 'idle'); }
       const loadedCount = readyReferences.length;
       if (!referenceLimitStatus()) setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${placement === "together" ? 1 : loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }
@@ -6850,7 +6897,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const target = hwpInPlaceTargets.get(activeTaskTabId);
     if (target) {
       // 한글 그림 편집 창에서 연 작업: 5E_image를 거치지 않고 그 그림 자리로 바로 바꿔 넣는다.
-      const detail = { target, name: item.name || 'AI 결과', ...(item.graphResult ? { graph: structuredClone(item.graphResult) } : { image: { data: item.data, width: item.width, height: item.height } }) };
+      // 11-07 사용자 「한글 라벨 복원부터 글씨체·크기가 엉망」: 예전엔 그림 한 장만 보내 5E 라벨(한글·영어·수식 글꼴, 3.7mm)이 빠졌다.
+      // 「캔버스에 삽입」과 같이 라벨 계획을 함께 보내 한글 쪽에서 그림 + 편집 가능한 5E 라벨로 넣는다.
+      const detail = { target, name: item.name || 'AI 결과', ...(item.graphResult ? { graph: structuredClone(item.graphResult) } : { image: { data: item.data, width: item.width, height: item.height },
+        ...(item.labelPlan?.labels?.length ? { labelPlan: structuredClone(item.labelPlan), aiTaskId: activeTaskTabId, aiCandidateId: item.id } : {}) }) };
       if (!detail.graph && !String(detail.image.data || '').startsWith('data:image/')) { setStatus('넣을 결과 그림을 찾지 못했습니다.', 'error'); return; }
       hwpInPlaceTargets.delete(activeTaskTabId); syncSelectedOutputActions();
       close();
@@ -7245,7 +7295,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       for (const dispose of disposalCallbacks) if (typeof dispose === 'function') dispose();
       disposalCallbacks.length = 0;
       panel.hidden = true;
-      delete panel.dataset.aiResultCount;
+      delete panel.dataset.aiResultCount; delete panel.dataset.aiGraphResultCount;
       syncResultEntry();
     },
     snapshotTask: async id => {

@@ -43,7 +43,8 @@ async function readStateStyle(page, selector) {
 
 async function assertWorkflowState(page,id,open,selected) {
   await page.waitForFunction(({id,open})=>document.getElementById(id)?.dataset.workflowOpen===String(open),{id,open});
-  if(id!=='exam-send')assert.equal(await page.locator('#'+id).getAttribute('aria-expanded'),String(open));
+  // 11-07: 「그래프」의 aria-expanded는 세 갈래 메뉴(js/graph-entry-menu.js)의 열림이다 — 편집기 열림은 data-workflow-open으로 본다.
+  if(id!=='exam-send' && id!=='graph-tool-open')assert.equal(await page.locator('#'+id).getAttribute('aria-expanded'),String(open));
   if(open)assert.deepEqual(await readStateStyle(page,'#'+id),selected,`${id} uses the same active state as the toolbar`);
 }
 
@@ -167,7 +168,7 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   assert.equal(await page.locator('#exam-document-menu').count(),0);
   // 11-04: 프로그램 전환은 로고 「5E_image ▾」 목록(app-switch-menu.js)으로 — 예전 글자 줄은 숨는다.
   assert.ok(await page.locator('.app-menu [data-app-switch="hwp"]').count()>=1);
-  await page.locator('#graph-tool-open').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
+  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
   await assertWorkflowState(page,'graph-tool-open',true,selected);
   await assertOriginalAppearance(page,'#graph-modal-overlay button');
   await page.locator('#gm-variant-sel button[data-variant="cross"]').click();await page.mouse.move(400,400);

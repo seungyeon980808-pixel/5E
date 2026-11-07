@@ -1,3 +1,4 @@
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -184,7 +185,7 @@ test('product entries and actual request signal mount the approved effect', {tim
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-loading-frame]').dataset.loadingState==='failed');
  assert.ok((await page.locator('#ai-image-panel .rs-text').textContent()).includes('변환하지 못했어요'));
  // Empty graph workbench keeps imports on the original (left) side.
- await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+ await openAiWorkflow(page,'graph');
  await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
  const imports=page.locator('#ai-image-panel [data-ai-empty-import]:visible');
  assert.equal(await imports.count(),1);

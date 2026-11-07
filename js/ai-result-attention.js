@@ -18,10 +18,14 @@ export function acknowledgeResult(tab, candidateId) {
 }
 
 export function syncResultEntry(doc = document) {
-  const count = [...doc.querySelectorAll('[data-ai-result-count]')]
-    .reduce((sum, panel) => sum + (Number(panel.dataset.aiResultCount) || 0), 0);
-  const button = doc.getElementById('ai-image-install-open');
-  if (!button) return;
-  button.dataset.resultAttention = String(count > 0);
-  button.setAttribute('aria-label', count ? `AI 이미지/그래프 · 확인할 결과 ${count}개` : 'AI 이미지/그래프');
+  const panels = [...doc.querySelectorAll('[data-ai-result-count]')];
+  const total = panels.reduce((sum, panel) => sum + (Number(panel.dataset.aiResultCount) || 0), 0);
+  const graph = panels.reduce((sum, panel) => sum + (Number(panel.dataset.aiGraphResultCount) || 0), 0);
+  // 11-07: 이미지 작업 결과는 「AI 이미지」, 그래프 작업 결과는 「그래프」 단추에 알린다.
+  for (const [id, name, count] of [['ai-image-install-open', 'AI 이미지', total - graph], ['graph-tool-open', '그래프', graph]]) {
+    const button = doc.getElementById(id);
+    if (!button) continue;
+    if (button.dataset.resultAttention !== String(count > 0)) button.dataset.resultAttention = String(count > 0);
+    button.setAttribute('aria-label', count ? `${name} · 확인할 결과 ${count}개` : name);
+  }
 }

@@ -231,7 +231,7 @@ async function windowAfterCapture(app,capture) {
 }
 async function graphRoundtrip(main,app,profile) {
  await main.evaluate(async url=>{const{state}=await import(url);state.update(s=>{s.artboard={w:80,h:50};s.viewBox={x:-40,y:-25,w:80,h:50};});},stateUrl);
- await main.locator('#graph-tool-open').click();await graphStage(main,'coord','① 좌표');
+ await main.locator('#graph-tool-open').click();await main.locator('[data-graph-entry="direct"]').click();await graphStage(main,'coord','① 좌표');
  await main.locator('#gm-tab-coord #gm-labelx').fill('시간(s)');await main.locator('#gm-tab-coord #gm-labely').fill('속력(m/s)');
  await graphStage(main,'func','② 함수');await main.getByRole('button',{name:'해석적 함수',exact:true}).click();await main.getByRole('button',{name:'＋ 함수식 추가',exact:true}).click();
  await main.locator('#gm-chips [data-series-index="0"]').click();await main.locator('#gm-series-editor #gm-expr').fill('x');

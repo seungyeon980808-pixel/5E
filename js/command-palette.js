@@ -95,7 +95,11 @@ const COMMANDS = [
   { id: "flowchart",   label: "흐름도 만들기",     keywords: ["flow", "흐름도", "순서도", "과정", "도식"], shortcutLabel: "",         run: () => window.dispatchEvent(new CustomEvent("5e:figure-studio-open", { detail: { mode: "flow" } })) },
   { id: "dataPlot",    label: "데이터 그래프 만들기", keywords: ["plot", "데이터", "측정", "그래프", "표", "csv", "엑셀"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:figure-studio-open", { detail: { mode: "plot" } })) },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
-  { id: "aiImage", label: "AI 이미지/그래프", keywords: ["ai", "인공지능", "이미지 변환", "이미지 생성", "그래프 복원", "그래프 생성", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
+  // 11-07: 「AI 이미지/그래프」를 둘로 — 이미지는 AI 이미지 창, 그래프는 「그래프」 세 갈래(js/graph-entry-menu.js)와 같은 길.
+  { id: "aiImage", label: "AI 이미지", keywords: ["ai", "인공지능", "이미지 변환", "이미지 생성", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
+  { id: "graphDirect", label: "그래프 · 직접 만들기", keywords: ["graph", "그래프", "좌표", "함수", "직접", "만들기"], shortcutLabel: "F", run: () => window.dispatchEvent(new CustomEvent("5e:graph-entry", { detail: { kind: "direct" } })) },
+  { id: "graphRestore", label: "그래프 · 사진에서 복원", keywords: ["graph", "그래프", "복원", "사진", "기출", "ai"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:graph-entry", { detail: { kind: "graph" } })) },
+  { id: "graphCreate", label: "그래프 · AI와 대화로 만들기", keywords: ["graph", "그래프", "생성", "대화", "ai", "인공지능"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:graph-entry", { detail: { kind: "graph-create" } })) },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.
   { id: "trimMargins", label: "이미지 여백 정리",  keywords: ["trim", "여백", "정리", "상자", "맞춤", "crop"], shortcutLabel: "",  run: () => {
     const n = trimSelectedBoxMargins();

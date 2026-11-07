@@ -14,7 +14,7 @@ h.withServer(async origin => {
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await h.navigate(page, new URL(surface + '?mode=pro&mobile=0&exam=0', origin).href);
       await h.ready(page);
-      await page.locator('#graph-tool-open').click();
+      await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
       await page.locator('#graph-modal-overlay').waitFor({ state: 'visible' });
       await page.locator('#gm-bounds-on').check();
       for (const [axis, min, max] of [['x', '-3', '3'], ['y', '-2', '4']]) {

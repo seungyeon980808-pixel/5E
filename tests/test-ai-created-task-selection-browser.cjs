@@ -1,3 +1,4 @@
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const {chromium,webkit} = require('playwright');
@@ -75,21 +76,22 @@ h.withServer(async origin=>{
       await menu(page,'delete');await page.getByRole('button',{name:'취소',exact:true}).click();
       await selectionSet(page,'graph',2,[graph,graphCopy]);
       assert.equal(await page.locator(current).evaluate(row=>`${row.dataset.aiWorkspaceLink}:${row.dataset.tabId}`),graphCopy,'cancel preserves the active task');
-      await page.locator(`${panel} [data-ai-workflow="image"]`).click();await selected(page,2,null,duplicate);
-      await page.locator(`${panel} [data-ai-workflow="graph"]`).click();await selectionSet(page,'graph',2,[graph,graphCopy]);
+      await openAiWorkflow(page,'image');await selected(page,2,null,duplicate);
+      await openAiWorkflow(page,'graph');await selectionSet(page,'graph',2,[graph,graphCopy]);
       await menu(page,'delete');await page.getByRole('button',{name:'작업 삭제',exact:true}).click();
       await selected(page,1,null,graph);
       await page.locator(`${panel} [data-ai-close]`).click();await page.reload({waitUntil:'domcontentloaded'});
-      await page.locator('#ai-image-install-open').click();await selected(page,1,null,graph);assert.equal(await original(page),source);
-      await page.locator(`${panel} [data-ai-workflow="image"]`).click();await selected(page,2,null,duplicate);assert.equal(await original(page),source);
+      // 11-07 G2: 「AI 이미지」는 이미지 작업으로 연다 — 마지막 그래프 작업은 아래 「그래프」에서 다시 연다.
+      await openAiWorkflow(page,'graph');await selected(page,1,null,graph);assert.equal(await original(page),source);
+      await openAiWorkflow(page,'image');await selected(page,2,null,duplicate);assert.equal(await original(page),source);
       await task(page,initial).click({modifiers:['Meta']});await selectionSet(page,'image',2,[initial,duplicate]);
-      await page.locator(`${panel} [data-ai-workflow="graph"]`).click();await selected(page,1,null,graph);assert.equal(await original(page),source);
-      await page.locator(`${panel} [data-ai-workflow="image"]`).click();await selectionSet(page,'image',2,[initial,duplicate]);
+      await openAiWorkflow(page,'graph');await selected(page,1,null,graph);assert.equal(await original(page),source);
+      await openAiWorkflow(page,'image');await selectionSet(page,'image',2,[initial,duplicate]);
       await task(page,initial).click({modifiers:['Meta']});await selected(page,2,null,duplicate);
       await task(page,duplicate).focus();await page.keyboard.press('Delete');
       await page.getByRole('button',{name:'작업 삭제',exact:true}).click();
       await selected(page,1,null,initial);assert.equal(await original(page),source);
-      await page.locator(`${panel} [data-ai-workflow="graph"]`).click();await selected(page,1,null,graph);assert.equal(await original(page),source);
+      await openAiWorkflow(page,'graph');await selected(page,1,null,graph);assert.equal(await original(page),source);
       const evidence=path.join(__dirname,'../_work/overnight-qa',`omo-nqa017-${name}${surface?'-preview':''}`);
       await page.screenshot({path:`${evidence}-desktop.png`});
       await page.setViewportSize({width:390,height:844});
@@ -97,8 +99,8 @@ h.withServer(async origin=>{
       await page.setViewportSize({width:1440,height:950});
       await menu(page,'delete');await page.getByRole('button',{name:'작업 삭제',exact:true}).click();
       await selectionSet(page,'graph',0,[]);
-      await page.locator(`${panel} [data-ai-workflow="image"]`).click();await selected(page,1,null,initial);assert.equal(await original(page),source);
-      await page.locator(`${panel} [data-ai-workflow="graph"]`).click();await selectionSet(page,'graph',0,[]);
+      await openAiWorkflow(page,'image');await selected(page,1,null,initial);assert.equal(await original(page),source);
+      await openAiWorkflow(page,'graph');await selectionSet(page,'graph',0,[]);
       assert.deepEqual(errors,[]);console.log(`${name}${surface?'-preview':''}: duplicate/send source, reload and both workflow selections, Meta multiselect, cancel/confirmed/keyboard deletion, and empty workflow PASS; no AI requests`);
       await context.close();
     }}finally{await browser.close();}

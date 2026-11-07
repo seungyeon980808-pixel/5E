@@ -157,8 +157,7 @@ export function initTools(svg, state) {
   setupNodePlacement(_svg, _state);
   initTextEditing(_svg, _state); // text tool + click-to-edit + shortcuts + context menu
 
-  // 고급 기능의 "좌표(중간점)함수" 버튼 → 통합 그래프 모달(요구: 함수 기능을 고급으로 이동).
-  document.getElementById("graph-tool-open")?.addEventListener("click", () => openGraphModal());
+  // 아래 「그래프」 단추는 11-07부터 세 갈래 메뉴를 연다(js/graph-entry-menu.js — 직접 만들기가 이 편집기).
 
   // Keep the tool buttons in sync with state.activeTool on every change.
   state.subscribe((s) => syncButtons(s.activeTool));

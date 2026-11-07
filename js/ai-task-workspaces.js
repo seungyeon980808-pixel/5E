@@ -1,4 +1,4 @@
-import { normalizeAIWorkflowKind } from './ai-workflow-kinds.js?v=1.7.0-four-session-integration';
+import { normalizeAIWorkflowKind, isGraphWorkflow } from './ai-workflow-kinds.js?v=1.7.0-four-session-integration';
 import { referenceDestinations } from './library/reference-destinations.js?v=1.7.0-four-session-integration';
 import { channelStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { validateWorkspaceCandidates } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
@@ -419,7 +419,10 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   }
   let workflowNavigation = Promise.resolve();
   const workflowTargets = new Map();
+  // 11-07 G2·G4: 「AI 이미지」로 열면 이미지 작업, 「그래프」에서 열면 그래프 작업 — 각 쪽에서 마지막으로 쓴 탭을 기억한다.
+  const surfaceKinds = { image: 'image', graph: 'graph' };
   function navigateWorkflow(kind) {
+    surfaceKinds[isGraphWorkflow(kind) ? 'graph' : 'image'] = kind;
     const next = workflowNavigation.catch(()=>{}).then(async () => {
       await ready;
       const preferred = workflowTargets.get(kind);
@@ -955,10 +958,26 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       const selected = state.get().objects.find(o => state.get().selectedIds?.includes(o.id) && o.aiTaskId);
       const hasReference = options?.reference || options?.references?.length;
       const owner = !hasReference && entries.find(e => e.controller.ownsTask(selected?.aiTaskId));
+      // 11-07 G2: 「AI 이미지」 단추(surface:'image')로 열 때 지금 창이 그래프 작업이면 이미지 작업으로 옮긴다(그 반대도 같음).
+      // 고른 캔버스 결과가 가진 작업(owner)·특정 작업 열기(taskId)는 그 작업 그대로 연다.
+      const surface = options?.surface === 'graph' || options?.surface === 'image' ? options.surface : null;
+      if (surface && !owner && !options.taskId) {
+        const activeKind = active.panel.dataset.aiWorkflow;
+        if (activeKind) surfaceKinds[isGraphWorkflow(activeKind) ? 'graph' : 'image'] = activeKind;
+        if ((surface === 'graph') !== isGraphWorkflow(activeKind)) {
+          if (!hasReference) return navigateWorkflow(surfaceKinds[surface]);
+          if (!options.conversionKind) options = { ...options, conversionKind: surfaceKinds[surface] };
+        }
+      }
       const target = owner || (hasReference && active.panel.dataset.aiSharingMode === 'view' ? add(crypto.randomUUID()) : active);
       if (hasReference) saveRegistry();
       activate(target);
       return active.controller.open(options);
+    },
+    // 11-07 G0·G3: 「그래프」 세 갈래·편집기의 AI 단추 — 그 작업 탭(graph=사진에서 복원, graph-create=AI와 대화로 만들기)으로 바로 연다.
+    openWorkflow: async kind => {
+      await ready;
+      return navigateWorkflow(normalizeAIWorkflowKind(kind));
     },
     close: () => active.controller.close(),
     attachReference: (...args) => active.controller.attachReference(...args),

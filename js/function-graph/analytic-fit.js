@@ -2,6 +2,7 @@
  * the editable source only after comparison in DISPLAY coordinates. No units,
  * axis ranges or physical law are inferred here. */
 import { compile } from './parser.js?v=1.7.0-four-session-integration';
+import { tidyExpressionNumbers } from './tidy-number.js?v=1.7.0-four-session-integration';
 import { shapePreservingHandles, sampleShapeSegment } from './shape-preserving.js?v=1.7.0-four-session-integration';
 import { calibrateTickUnits, fitPhysicsGraphPlan, checkPhysicsApproximation, PHYSICS_FIT_VERSION } from './physics-fit.js?v=1.7.0-four-session-integration';
 
@@ -285,6 +286,13 @@ function preferGenericAnalyticPlan(input,{maxDeviation=ANALYTIC_MAX_DEVIATION,re
     const dense=assess(fit.expression,points,referenceSamples(points,s,true),tolerance);
     if(!dense){rejected.push({seriesId:s.id,reason:'Formula failed independent dense interior/extrema verification'});continue;}
     Object.assign(fit,dense);
+    // 11-07 G6: 고른 식의 계수를 소수 둘째 자리(0.1 미만은 유효숫자 두 자리)로 줄여 본다. 같은 오차·모양 검사를
+    // 모두 통과할 때만 바꾸고, 못 넘으면 원래 정밀도를 둔다 — 보이는 식 = 그려지는 식, 원본 일치도 그대로.
+    const tidyExpression=tidyExpressionNumbers(fit.expression);
+    if(tidyExpression!==fit.expression&&assess(tidyExpression,points,referenceSamples(points,s),tolerance)) {
+      const tidyDense=assess(tidyExpression,points,referenceSamples(points,s,true),tolerance);
+      if(tidyDense)Object.assign(fit,{expression:tidyExpression},tidyDense);
+    }
     fitted.set(s.id,{fit,points});
   }
   // Check topology against other continuous curves before replacing any source.

@@ -5,6 +5,7 @@ import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integratio
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
 import { getColorMode, nextColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-four-session-integration';
 import { initButtonDesign } from './button-design.js?v=1.7.0-four-session-integration';
+import { initGraphEntryMenu } from './graph-entry-menu.js?v=1.7.0-four-session-integration';
 import { initAppSwitch } from './app-switch.js?v=1.7.0-four-session-integration';
 import { createStartScreen } from "./start-screen.js?v=1.7.0-four-session-integration";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
@@ -221,6 +222,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   });
 })();
 
+let graphEntryMenu = null;
 (function initGraphLauncherState() {
   const btn = document.getElementById("graph-tool-open");
   if (!btn) return;
@@ -228,7 +230,8 @@ const zoomReadout = document.getElementById("zoom-readout");
   const syncButton = () => {
     const active = Boolean(document.querySelector("#graph-modal-overlay:not([hidden])"));
     btn.classList.toggle("is-open", active);
-    btn.setAttribute("aria-expanded", String(active));
+    // aria-expanded는 「그래프」 세 갈래 메뉴가 쓴다(11-07). 편집기가 열리면 메뉴는 접는다.
+    if (active) graphEntryMenu?.close();
   };
 
   const observeOverlay = () => {
@@ -404,9 +407,10 @@ initMobileImage(aiPanel);
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
+// 11-07 G2: 「AI 이미지」 단추는 이미지 작업으로 연다(그래프 작업은 아래 「그래프」에서).
 const openSelectedAi = () => {
   if (document.documentElement.classList.contains("mobile-image-mode")) {
-    void aiPanel?.open({ acknowledge:true });
+    void aiPanel?.open({ acknowledge:true, surface:'image' });
     return;
   }
   void handSelectedCanvasImageToAi(state, {
@@ -419,8 +423,8 @@ const openSelectedAi = () => {
       const { canvas } = await rasterizeExportCanvas(snapshot, {bounds, dpi});
       return canvas.toDataURL('image/png');
     },
-    openPanel: options => aiPanel?.open({ ...options, acknowledge:true }),
-  reportError: error => window.alert(`AI 이미지/그래프를 열 수 없습니다.\n${error.message}`),
+    openPanel: options => aiPanel?.open({ ...options, acknowledge:true, surface:'image' }),
+  reportError: error => window.alert(`AI 이미지를 열 수 없습니다.\n${error.message}`),
     });
 };
 const webLogin = initWebLoginUi({ openAi: openSelectedAi });
@@ -438,12 +442,16 @@ if (aiLoginHandoff) {
   });
 }
 if (aiEntryButton) {
-  aiEntryButton.title = "AI 이미지/그래프 · 선택한 객체 조합, 선택이 없으면 전체 그림";
-  aiEntryButton.setAttribute("aria-label", "AI 이미지/그래프");
+  aiEntryButton.title = "AI 이미지 · 선택한 객체 조합, 선택이 없으면 전체 그림";
+  aiEntryButton.setAttribute("aria-label", "AI 이미지");
   const label = aiEntryButton.querySelector(".search-trigger-label");
-  if (label) label.textContent = "AI 이미지/그래프";
+  if (label) label.textContent = "AI 이미지";
   aiEntryButton.addEventListener("click", openSelectedAi);
 }
+// 11-07 G0·G3: 「그래프」 세 갈래 메뉴와 그래프 편집기의 AI 단추 — AI 창을 그래프 탭(사진에서 복원·AI와 대화로 만들기)으로 연다.
+const openGraphAi = kind => void Promise.resolve(aiPanel?.openWorkflow(kind)).catch(error => window.alert(`그래프 AI를 열 수 없습니다.\n${error.message}`));
+graphEntryMenu = initGraphEntryMenu({ openAiWorkflow: openGraphAi });
+window.addEventListener('5e:graph-ai-open', event => openGraphAi(event.detail?.kind === 'graph-create' ? 'graph-create' : 'graph'));
 const desktopHandoff = initAiInstallGuide({
   saveProject: () => saveProject(state),
   openDesktopPanel: () => aiPanel?.open(),

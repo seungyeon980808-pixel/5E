@@ -10,7 +10,7 @@ export const IMAGE_SHORTCUTS = [
   ['[data-tool="F"]', 'D'], ['[data-tool="T"]', 'T'], ['[data-tool="CUT"]', 'E'], ['[data-tool="DELAYED_CUT"]', 'Mod+E'],
   ['[data-tool="ERASE"]', 'Shift+E'],
   ['[data-symbol="node"]', 'N'], ['[data-symbol="labeler"]', 'Shift+T'], ['[data-symbol="anglearc"]', 'A'], ['[data-symbol="rightangle"]', 'Shift+A'],
-  ['#graph-tool-open', 'F'],
+  ['[data-graph-entry="direct"]', 'F'],
   ['#center-view-btn', 'Mod+Space'], ['#fullscreen-toggle', 'Alt+Enter'],
   ['#function-search-btn', 'Mod+K'], ['#object-search-trigger', 'Mod+F'], ['#quick-capture-btn', 'Alt+C'],
   ['#project-save', 'Mod+S'], ['#image-export', 'Alt+P'],

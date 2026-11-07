@@ -1,3 +1,4 @@
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -54,7 +55,7 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   await page.screenshot({path:path.join(output,'native-labels.png')});
 
   await page.locator('#ai-image-install-open').click();
-  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await openAiWorkflow(page,'graph');
   // Modes keep separate tasks. Supply the synthetic source through the actual
   // graph-mode file input instead of borrowing the previous image task.
   const graphSource=await page.evaluate(()=>__task2.original);
@@ -79,7 +80,9 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   }
   let graphs=(await snapshot(page)).flatMap(tab=>tab.generated).filter(item=>item.graphResult);
   assert.equal(graphs.length,1,'graph reconstruction creates a native candidate');
-  await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
+  // 11-07 G9: 결과를 두 번 누르면 「편집기로 가져오기」와 같다 — AI 창을 닫고 그래프 편집기가 열린다.
+  await openAiWorkflow(page,'graph');await page.locator('#ai-image-panel .ai-previews .ai-preview-stage > img').first().dblclick();
+  await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
   await page.locator('#gm-labelx').fill('편집한 시간');
   await page.locator('#gm-labelx').dispatchEvent('input');
   await page.evaluate(()=>{
@@ -101,7 +104,7 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   assert.equal(graphs[1].graphEdit.parentCandidateId,graphs[0].id);
   assert.equal(graphs[0].graphResult.objects.find(o=>o.type==='coordplane').labelX,'시간');
   assert.equal(graphs[1].graphResult.objects.find(o=>o.type==='coordplane').labelX,'편집한 시간');
-  await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
+  // 편집기의 「캔버스로 내보내기」가 이미 수정본을 캔버스에 넣었다(AI 창은 닫혀 있다).
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   const types=await page.evaluate(()=>__candidateQA.state.get().objects.map(o=>o.type));
   assert.ok(types.includes('image')&&types.includes('labeler')&&types.includes('coordplane')&&types.includes('funcgraph'));

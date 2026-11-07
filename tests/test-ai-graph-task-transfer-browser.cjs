@@ -105,10 +105,20 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
     };
   });
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no'); if (await welcome.isVisible()) await welcome.click();
-  await page.locator('#ai-image-install-open').click();
+  // 11-07 G0·G9: 그래프 작업은 아래 「그래프」 → 「사진에서 복원」으로 열고, 결과는 「편집기로 가져오기」로 그래프 편집기에서 고친다.
+  const openGraphAi = async () => {
+    const shown = () => page.evaluate(() => { const p = document.querySelector('#ai-image-panel'); return !!p && !p.hidden && !p.inert && p.dataset.aiWorkflow === 'graph'; });
+    if (await shown()) return;
+    if (await page.locator(panel).isVisible()) { await page.keyboard.press('Escape'); await page.locator(panel).waitFor({state:'hidden'}); }
+    await page.locator('#graph-tool-open').click(); await page.locator('[data-graph-entry="graph"]').click();
+    await page.waitForFunction(() => { const p = document.querySelector('#ai-image-panel'); return !!p && !p.hidden && p.dataset.aiWorkflow === 'graph'; });
+  };
+  await openGraphAi();
   await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === 'candidate-0');
   const original = (await snap(page)).find(tab => tab.id === 'task-0');
-  await page.locator(panel + ' [data-ai-graph-edit]').click();
+  assert.equal(await page.locator(panel + ' [data-ai-graph-edit]').isVisible(), false);
+  await page.locator(panel + ' [data-ai-insert-selected]').click();
+  await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   await page.locator('#gm-labelx').fill('Transferred time');
   await page.locator('#gm-labelx').dispatchEvent('change');
   await page.locator('#gm-confirm').click();
@@ -121,7 +131,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
   assert.notEqual(revision.data,original.generated[0].data);
   const receipts = [];
   for (const candidateId of [revision.id,'candidate-0']) for (const targetKind of ['image','graph']) {
-    await page.locator(panel + ' [data-ai-workflow="graph"]').click();
+    await openGraphAi();
     await page.locator(panel + ' [data-tab-id="task-0"] .ai-task-tab-select').click();
     if ((await snap(page)).find(tab => tab.id === 'task-0').selectedCandidateId !== candidateId) {
       await page.locator(panel + ' [data-ai-version-button]').click();
@@ -135,7 +145,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
     const dimensions = await img.evaluate(image => [image.naturalWidth,image.naturalHeight]);
     assert.deepEqual(dimensions,[512,384]);
     if (targetKind === 'image') {
-      await page.locator(panel + ' [data-ai-graph-edit]').click();
+      await page.locator(panel + ' [data-ai-insert-selected]').click();
       const graph = page.locator('#graph-modal-overlay'), selectedCurve = graph.locator('#gm-chips [data-series-index="0"]');
       assert.equal(await selectedCurve.getAttribute('aria-pressed'),'true');
       await graph.locator('[data-trace-zoom-toggle]').click();
@@ -158,6 +168,9 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
       assert.deepEqual(await snap(page),before,'Cancel after graph viewing changes preserves every revision, source, comment and selection');
       await img.evaluate(image => image.decode());
       assert.equal(await img.getAttribute('src'),displayed,'Cancel keeps the selected graph preview byte-for-byte');
+      await openGraphAi();
+      await page.locator(panel + ' [data-tab-id="task-0"] .ai-task-tab-select').click();
+      await page.waitForFunction(id => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === id,candidateId);
       receipts.push({action:'graph-view-cancel',candidateId,zoom:156,locked:true,escapeAndEnter:true,reset:100,curveSelected:true,previewPreserved:true,sourcePreserved:true});
       await page.evaluate(() => {window.__graphClipboard = null;});
       await page.locator(panel + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});

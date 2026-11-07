@@ -10,6 +10,10 @@ const report={startedAt:new Date().toISOString(),base,provider:'Recorded-respons
 const cache=page=>page.evaluate(()=>window.__readGraphFollowupWorkspace());
 async function waitVersions(page,count){await page.waitForGraphSignal(async count=>(await window.__readGraphFollowupWorkspace())?.tabs?.flatMap(t=>t.generated||[]).length===count,count,{timeout:5000});return cache(page);}
 const versions=d=>d.tabs.flatMap(t=>t.generated||[]);
+// 11-07 G0·G9: 그래프 AI는 아래 「그래프」 세 갈래에서 열고, 결과는 「편집기로 가져오기」로 같은 그래프 편집기에서 고친다.
+async function openGraphAi(page,kind='graph'){await page.locator('#graph-tool-open').click();await page.locator(`[data-graph-entry="${kind}"]`).click();await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();}
+const appState=async(page,fn)=>page.evaluate(async([version,body])=>{const{state}=await import('/js/state.js'+version);return new Function('state',body)(state);},[version,fn]);
+const canvasPlanes=page=>appState(page,"return state.get().objects.filter(o=>o.type==='coordplane').map(o=>({labelX:o.labelX,aiTaskId:o.aiTaskId,aiCandidateId:o.aiCandidateId}));");
 async function drag(page,locator,dx,dy){const b=await locator.boundingBox();assert(b);await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+dx,b.y+b.height/2+dy,{steps:8});await page.mouse.up();}
 const ink=page=>page.locator('#gm-preview .gm-preview-svg').evaluate(n=>[...n.querySelectorAll('path,polyline,line,text')].filter(x=>!x.closest('[data-preview-hit],[data-preview-annotation-hit]')).map(x=>({stroke:getComputedStyle(x).stroke,fill:getComputedStyle(x).fill})));
 const axis=(title,min,max)=>({min,max,step:1,title,unit:'',scale:'linear',ticks:[]});
@@ -51,20 +55,21 @@ async function run(browser,engine,kind){
  if(kind==='history'){
   await step('Restore real recorded graph through image converter UI',async()=>{
    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root,replay.responseFile))).digest('hex'),replay.responseSha256);
-   await page.locator('#ai-image-install-open').click();
+   await openGraphAi(page);
    assert.equal(await page.locator('#ai-image-panel .ai-workbench').evaluate(n=>getComputedStyle(n).animationName),'modal-pop');
-   await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+   assert.equal((await page.locator('#ai-image-title').textContent()).trim(),'그래프 · AI');
    await page.locator('#ai-image-panel [data-ai-source-file]').setInputFiles(path.join(root,replay.sourceFile));
    await page.locator('#ai-image-panel [data-ai-attachment-list] img').first().waitFor({state:'attached'});
    await page.observeGraphSignal(()=>window.__traceReplay.requests.length===1&&document.querySelector('#ai-image-panel')?.dataset.aiBusy!=='true', null, {timeout:45000}, async () => { await page.locator('#ai-image-panel [data-ai-send]').click(); });
   });
   const original=structuredClone(versions(await waitVersions(page,1))[0]);
   const stage=()=>page.locator(`#ai-image-panel [data-ai-candidate-id="${original.id}"] .ai-preview-stage`);
-  await step('Persistent image badge opens a topmost graph editor immediately, without closing image editor',async()=>{
-   const badge=page.locator('#ai-image-panel [data-ai-graph-edit]');
-   assert(await badge.isVisible());assert.notEqual(await badge.evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(47, 129, 247)');
+  await step('Double-click (= 「편집기로 가져오기」) closes the AI panel and opens the topmost graph editor filled with the result',async()=>{
+   assert.equal(await page.locator('#ai-image-panel [data-ai-graph-edit]').isVisible(),false,'「그래프 세부 편집」 badge is replaced by 「편집기로 가져오기」');
+   assert.equal((await page.locator('#ai-image-panel [data-ai-insert-selected]').textContent()).trim(),'편집기로 가져오기');
    await stage().locator(':scope > img').dblclick();await page.locator('#gm-preview .gm-preview-svg').waitFor();
-   assert(await page.locator('#ai-image-panel').isVisible());
+   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
+   assert.equal((await page.locator('#gm-title').textContent()).trim(),'그래프');assert.equal((await page.locator('#gm-confirm').textContent()).trim(),'캔버스로 내보내기');
    assert(await page.locator('#graph-modal-overlay .gm-modal').evaluate(n=>{const b=n.getBoundingClientRect();return Boolean(document.elementFromPoint(b.x+b.width/2,b.y+60)?.closest('#graph-modal-overlay'));}));
    const edges=await page.locator('#graph-modal-overlay').evaluate(root=>{
     const fields=[...root.querySelectorAll('button,input,select,textarea,summary,[tabindex]')].filter(n=>!n.disabled&&n.tabIndex>=0&&!n.closest('[hidden],[inert]')&&n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden');
@@ -74,23 +79,26 @@ async function run(browser,engine,kind){
    await page.keyboard.press('Shift+Tab');assert.equal(await page.evaluate(()=>document.activeElement.id),edges.last,'Reverse Tab stays inside the graph child dialog');
    await page.locator('#gm-labelx').fill('첫 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await shot('immediate-editor');await page.locator('#gm-cancel').click();assert.deepEqual(versions(await cache(page)),[original]);
+   assert.deepEqual(await canvasPlanes(page),[],'Cancel leaves the page unchanged');
   });
-  await step('Apply appends a new image/version and preserves original pixels, objects and review log',async()=>{
-   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
+  await step('Export appends a new image/version, places it on the canvas and preserves original pixels, objects and review log',async()=>{
+   await openGraphAi(page);await page.locator('#ai-image-panel [data-ai-insert-selected]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
    await page.locator('#gm-labelx').fill('첫 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await page.observeGraphSignal(()=>document.querySelector('#ai-image-panel [data-ai-status]')?.textContent.includes('편집을 적용'), undefined, undefined, async () => { await page.locator('#gm-confirm').click(); });
    const saved=await waitVersions(page,2),vs=versions(saved);assert.deepEqual(vs[0],original);assert.notEqual(vs[1].data,original.data);assert.equal(vs[1].graphEdit.parentCandidateId,original.id);
    assert.equal(plane(vs[1].graphResult).labelX,'첫 번째 수정');assert.equal(saved.tabs.find(t=>t.generated.length).selectedCandidateId,vs[1].id);
-   await page.locator('#ai-image-panel [data-ai-version-button]').click();assert.equal(await page.locator('#ai-image-panel [data-ai-candidate-option]').count(),2);
+   assert.deepEqual((await canvasPlanes(page)).map(p=>[p.labelX,p.aiCandidateId]),[['첫 번째 수정',vs[1].id]],'Exported graph is the new revision on the canvas');
+   await appState(page,'state.update(s=>{s.selectedIds=[];});');
+   await openGraphAi(page);await page.locator('#ai-image-panel [data-ai-version-button]').click();assert.equal(await page.locator('#ai-image-panel [data-ai-candidate-option]').count(),2);
    await page.locator(`#ai-image-panel [data-ai-candidate-option="${original.id}"]`).click();
    assert.equal(await stage().locator('img').getAttribute('src'),original.data);await shot('history-original');save('two-versions',saved);
   });
   await step('Editing a previous version makes another independent result; reload keeps three versions',async()=>{
-   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
+   await page.locator('#ai-image-panel [data-ai-insert-selected]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
    await page.locator('#gm-labelx').fill('두 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await page.observeGraphSignal(()=>document.querySelector('#ai-image-panel [data-ai-status]')?.textContent.includes('편집을 적용'), undefined, undefined, async () => { await page.locator('#gm-confirm').click(); });
    const saved=await waitVersions(page,3),vs=versions(saved);assert.deepEqual(vs[0],original);assert.equal(plane(vs[1].graphResult).labelX,'첫 번째 수정');assert.equal(plane(vs[2].graphResult).labelX,'두 번째 수정');assert.equal(vs[2].graphEdit.parentCandidateId,original.id);
-   save('three-versions',saved);await page.reload({waitUntil:'networkidle'});await page.locator('#ai-image-install-open').click();
+   save('three-versions',saved);await page.reload({waitUntil:'networkidle'});await openGraphAi(page);
    await page.locator('#ai-image-panel [data-ai-version-button]').click();assert.equal(await page.locator('#ai-image-panel [data-ai-candidate-option]').count(),3);await shot('history-reloaded');
   });
   await step('Image workbench entrance uses shared overshoot and respects reduced motion',async()=>{

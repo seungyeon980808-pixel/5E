@@ -47,7 +47,7 @@ async function assertFiniteFuncgraphFrame(page, graph, label) {
 }
 
 async function createFuncgraph(page) {
-  await page.locator('#graph-tool-open').click();
+  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
   await page.locator('#gm-tab-func-btn').click();
   await page.locator('#gm-add-series').click();
   await page.locator('#gm-expr').last().fill('x^2');

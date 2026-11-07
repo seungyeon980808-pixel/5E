@@ -104,3 +104,38 @@
   .ui-core-action:hover::before { animation:none !important; }
   :is(.ui-core-action,.ai-task-tab-select)[data-result-attention="true"]::before { animation:none !important; opacity:1; }
 }
+
+/* 11-07 G0(시안 graph-hub-1107): 아래 「그래프」 세 갈래 — 단추 바로 위로 펼침. 색은 떠 있는 메뉴 토큰만 쓴다. */
+.graph-entry-menu {
+  position:fixed; z-index:2400; width:300px; box-sizing:border-box; padding:6px;
+  display:flex; flex-direction:column; gap:2px;
+  background:var(--ds-raise,#161b22); color:var(--ds-ink,#e6edf3);
+  border-radius:var(--ds-radius-lg,10px); box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));
+  font:13px/1.35 var(--ds-font,-apple-system,"Apple SD Gothic Neo",sans-serif);
+  animation:graph-entry-in 120ms cubic-bezier(.2,.8,.2,1);
+}
+.graph-entry-menu[hidden] { display:none; }
+@keyframes graph-entry-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+.graph-entry-row {
+  display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:8px 10px; box-sizing:border-box;
+  border:0; border-radius:var(--ds-radius,6px); background:transparent; color:inherit; text-align:left; cursor:pointer; font:inherit;
+}
+.graph-entry-row:hover, .graph-entry-row:focus-visible { background:var(--ds-hover,rgba(177,186,196,.08)); outline:none; }
+.graph-entry-row:focus-visible { box-shadow:inset 0 0 0 1px var(--ds-focus,rgba(88,166,255,.7)); }
+.graph-entry-ico {
+  flex:none; width:28px; height:28px; display:grid; place-items:center; border-radius:var(--ds-radius,6px);
+  color:var(--ds-selected-icon,var(--ds-accent,#58a6ff)); background:var(--ds-selected,rgba(47,129,247,.15));
+}
+.graph-entry-ico[data-tone="direct"] { color:var(--ds-success,#4f9a6c); background:color-mix(in srgb,var(--ds-success,#4f9a6c) 20%,transparent); }
+.graph-entry-ico svg { width:16px; height:16px; }
+.graph-entry-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.graph-entry-text strong { font-weight:600; font-size:13.5px; color:var(--ds-ink,#e6edf3); }
+.graph-entry-text span { font-size:12px; color:var(--ds-ink-3,#7d8590); }
+.graph-entry-key {
+  flex:none; min-width:18px; padding:1px 5px; border-radius:4px; text-align:center;
+  font:500 11px/1.4 var(--ds-font,inherit); color:var(--ds-ink-3,#7d8590);
+  background:var(--ds-kbd,#21262d); border:1px solid var(--ds-line-strong,#30363d);
+}
+.graph-entry-foot { margin:4px 6px 0; padding:7px 4px 3px; border-top:1px solid var(--ds-line,#21262d); font-size:11.5px; color:var(--ds-ink-3,#7d8590); }
+.image-workflow-hub #graph-tool-open[data-graph-menu-open="true"] { background:var(--ds-selected) !important; color:var(--ds-selected-ink,var(--ds-ink)) !important; }
+@media (prefers-reduced-motion:reduce) { .graph-entry-menu { animation:none; } }

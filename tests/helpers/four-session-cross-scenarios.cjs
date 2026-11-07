@@ -1,4 +1,5 @@
 'use strict';
+const { openAiWorkflow } = require('./graph-entry.cjs');
 
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -688,7 +689,7 @@ async function editGraph(ctx, page, text, { held = false, beforeConfirm } = {}) 
     }))));
     assert.equal(layout.overlap, false); assert.equal(layout.clickable, true);
   });
-  await page.locator(panel + ' [data-ai-graph-edit]').click(); await page.locator('#gm-labelx').fill(text); await page.locator('#gm-labelx').dispatchEvent('input');
+  await openAiWorkflow(page,'graph');await page.locator(panel + ' [data-ai-insert-selected]').click(); await page.locator('#gm-labelx').fill(text); await page.locator('#gm-labelx').dispatchEvent('input');
   if (held) await holdGraph(page);
   // For other label values subscribe to the exact persistent write instead.
   await page.evaluate(() => {
@@ -1156,7 +1157,7 @@ async function replayGraph(ctx, page) {
   const source = ctx.input(fixture.sourceFile, 'retained source PNG copied by main writer from read-only graph source');
   const receipt = JSON.parse(ctx.input('.omo/evidence/codex-continuation-20261010/graph-replay-inputs.json', 'main-writer copy/hash provenance receipt'));
   for (const file of [fixture.responseFile, fixture.sourceFile]) { const row = receipt.find(r => r.path === path.join(root, file)); assert.ok(row); assert.equal(row.sha256, sha(fs.readFileSync(row.path))); assert.equal(row.providerCalls, 0); }
-  await selectTask(ctx, page, 'task-1'); await page.locator(panel + ' [data-ai-workflow="graph"]').click();
+  await selectTask(ctx, page, 'task-1'); await openAiWorkflow(page,'graph');
   await transition(page, 'replay-upload', () => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(i => i.complete && i.naturalWidth === 831), null,
     () => page.locator(panel + ' [data-ai-source-file]').setInputFiles({ name: 'p2_2021_09_03.png', mimeType: 'image/png', buffer: source }));
   const taskId = await page.evaluate(() => document.querySelector('#ai-image-panel').__crossController.activeTask());
@@ -1281,7 +1282,7 @@ scenarios.QA4 = async ctx => {
       () => page.locator('#gm-confirm').click()); await checkpoint(ctx, page);
     const changed = (await tabs(page)).find(t => t.id === replayTaskId);
     await ctx.check('divider-only Apply creates independent parent-linked revision', () => { assert.deepEqual(changed.generated.slice(0, -1), old.generated); assert.equal(changed.generated.at(-1).graphEdit.parentCandidateId, replayed.id); });
-    await page.locator(panel + ' [data-ai-graph-edit]').click(); await page.locator('select[data-trace-view]').selectOption('wipe');
+    await openAiWorkflow(page,'graph');await page.locator(panel + ' [data-ai-insert-selected]').click(); await page.locator('select[data-trace-view]').selectOption('wipe');
     await ctx.check('comparison divider persists through actual graph reopening', async () => assert.equal(await divider.getAttribute('aria-valuenow'), position));
     await page.locator('#gm-labelx').fill('취소할 축'); await page.locator('#gm-cancel').click();
     await ctx.check('graph Cancel preserves original/new candidates, comments and review', async () => assert.deepEqual((await tabs(page)).find(t => t.id === replayTaskId), changed));
@@ -1989,7 +1990,7 @@ scenarios.QA8 = async ctx => {
       }
     } ctx.cover('layout-four-sizes-themes-motion');
     await page.setViewportSize({ width: 1440, height: 1000 }); await page.emulateMedia({ reducedMotion: 'reduce' });
-    await selectTask(ctx, page, 'cross-graph-task'); const trigger = page.locator(panel + ' [data-ai-graph-edit]'); await trigger.click();
+    await selectTask(ctx, page, 'cross-graph-task'); await openAiWorkflow(page,'graph'); const trigger = page.locator(panel + ' [data-ai-insert-selected]'); await trigger.click();
     await page.locator('#graph-modal-overlay').waitFor({ state: 'visible' });
     for (const selector of ['#gm-confirm', '#gm-cancel']) await onScreen(ctx, page, selector, 'graph child topmost ' + selector);
     await page.keyboard.press('Tab');

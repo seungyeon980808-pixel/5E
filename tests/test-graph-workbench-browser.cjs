@@ -1,4 +1,5 @@
 // Fixed graph source: b1846e849656076b1c0c5da2f82abffff3813eb1:tests/test-graph-workbench-browser.cjs
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -58,7 +59,7 @@ async function setup(browser) {
   await page.goto(base + '?mode=pro', { waitUntil: 'networkidle' });
   assert.equal(await page.locator('#graph-reconstruction-open').count(), 0, 'Graph restoration uses the shared AI conversion tabs.');
   await page.locator('#ai-image-install-open').click();
-  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await openAiWorkflow(page,'graph');
   await page.locator('#ai-image-panel [data-ai-workflow="graph"][aria-pressed="true"]').waitFor();
   return { context, page, errors };
 }
@@ -166,69 +167,29 @@ async function storedTabs(page) {
       const originalTask = (await storedTabs(page)).find(t => t.generated?.some(c => c.graphResult));
       assert.equal(originalTask.generated.length, 1);
       const originalCandidate = originalTask.generated[0];
-      assert.equal(await page.locator('#ai-image-panel [data-ai-graph-edit]').count(),1,'one graph detail entry');
-      assert.equal(await page.locator('#ai-image-panel .ai-compare-heading [data-ai-graph-edit]').count(),0,'no duplicate toolbar entry');
-      const checkBadge = async label => {
-        const boxes=await page.locator('#ai-image-panel [data-ai-graph-edit]').evaluate(button=>{
-          const rect=n=>{const b=n.getBoundingClientRect();return {x:b.x,y:b.y,right:b.right,bottom:b.bottom,width:b.width,height:b.height};};
-          const image=button.parentElement.querySelector(':scope > img');
-          const b=button.getBoundingClientRect();
-          const hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);
-          return {badge:rect(button),image:rect(image),color:getComputedStyle(button).color,background:getComputedStyle(button).backgroundColor,clickable:hit?.closest('[data-ai-graph-edit]')===button,hit:hit?.outerHTML.slice(0,300),ancestors:[...function*(n){while(n){yield n;n=n.parentElement;}}(button.parentElement)].slice(0,5).map(n=>({class:n.className,rect:rect(n),overflow:getComputedStyle(n).overflow,scrollTop:n.scrollTop,scrollLeft:n.scrollLeft}))};
-        });
-        fs.writeFileSync(path.join(output,name+'-badge-'+label+'.json'),JSON.stringify(boxes,null,2));
-        if(!boxes.clickable) await page.screenshot({path:path.join(output,name+'-badge-'+label+'-failure.png'),animations:'disabled'});
-        assert.ok(Math.abs(boxes.badge.right-boxes.image.right)<=2,label+': badge aligns to actual image right edge');
-        assert.ok(boxes.image.y-boxes.badge.bottom>=2 && boxes.image.y-boxes.badge.bottom<=6,label+': badge sits immediately above image');
-        assert.notEqual(boxes.color,boxes.background,label+': badge has visible contrasting text');
-        assert.ok(boxes.clickable,label+': badge can be clicked above image');
-        return boxes;
-      };
-      const anchorProof=[await checkBadge('fit')];
-      await page.locator('#ai-image-panel [data-ai-zoom-action="in"]').click();
-      anchorProof.push(await checkBadge('zoom'));
-      await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
-      await page.setViewportSize({width:1080,height:900});
-      // The resize event can precede ResizeObserver's automatic image fit.
-      // Wait for that fit, then independently measure the action's hit target.
-      await page.waitForGraphSignal(()=>{
-        const card=document.querySelector('#ai-image-panel .ai-previews .ai-image-card');
-        const stage=card?.querySelector('.ai-preview-stage');
-        if(!stage) return false;
-        const style=getComputedStyle(card);
-        const available=card.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
-        return stage.getBoundingClientRect().width<=available+1;
-      });
-      anchorProof.push(await checkBadge('resize'));
-      await page.screenshot({path:path.join(output,name+'-image-edge-1080.png'),animations:'disabled'});
-      await page.setViewportSize({width:390,height:844});
-      await page.locator('#ai-image-panel [data-ai-layout-mode="result"]').click();
-      await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
-      anchorProof.push(await checkBadge('mobile'));
-      await page.screenshot({path:path.join(output,name+'-image-edge-390.png'),animations:'disabled'});
-      await page.setViewportSize({width:1440,height:1000});
-      await page.locator('#ai-image-panel .ai-compare-menu summary').click();
-      await page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]').click();
-      await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
-      fs.writeFileSync(path.join(output,name+'-image-edge.json'),JSON.stringify(anchorProof,null,2));
+      // 11-07 G9: 결과 위 「그래프 세부 편집」 대신 아래 「편집기로 가져오기」 — 누르거나 결과를 두 번 누르면 AI 창을 닫고 그래프 편집기가 열린다.
+      assert.equal(await page.locator('#ai-image-panel [data-ai-graph-edit]:visible').count(),0,'no badge above the graph result');
+      assert.equal((await page.locator('#ai-image-panel [data-ai-insert-selected]').textContent()).trim(),'편집기로 가져오기');
       await page.locator('#ai-image-panel .ai-previews img').first().dblclick();
-      // 2026-10-16(83201a54)부터 결과 그림을 두 번 누르면 '그래프 세부 편집'과 같은 창이 열린다.
+      // 결과 그림 두 번 누르기 = 「편집기로 가져오기」.
       await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
+      await page.locator('#ai-image-panel').waitFor({state:'hidden'});
       await page.locator('#gm-cancel').click();
       await page.locator('#graph-modal-overlay').waitFor({state:'hidden'});
-      await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
+      await openAiWorkflow(page,'graph');await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
       const toolbar=await page.locator('.gm-preview-toolbar').evaluate(node=>{
         const selectors=['select[data-trace-view]','[data-trace-import]','[data-trace-zoom-toggle]','#gm-send-exam','#gm-confirm'];
         return selectors.map(selector=>{const element=node.querySelector(selector),b=element.getBoundingClientRect();return {selector,top:b.top,bottom:b.bottom,left:b.left,right:b.right};}).filter(b=>b.right>b.left);
       });
       fs.writeFileSync(path.join(output,name+'-toolbar.json'),JSON.stringify(toolbar,null,2));
-      assert.ok(Math.max(...toolbar.map(b=>b.top))-Math.min(...toolbar.map(b=>b.top))<=4,'all visible graph controls share one row');
-      assert.ok(toolbar.every((b,index)=>index===0 || b.left>=toolbar[index-1].right),'toolbar controls do not overlap');
+      // 11-07 G3: 위쪽 줄에 AI 입구 두 개가 더해져 내보내기 단추는 둘째 줄(시안 h-empty). 줄마다 겹치지 않는다.
+      const rows=[toolbar.filter(b=>!['#gm-send-exam','#gm-confirm'].includes(b.selector)),toolbar.filter(b=>['#gm-send-exam','#gm-confirm'].includes(b.selector))].filter(r=>r.length);
+      for(const row of rows){assert.ok(Math.max(...row.map(b=>b.top))-Math.min(...row.map(b=>b.top))<=4,'graph controls of one group share one row');assert.ok(row.every((b,index)=>index===0 || b.left>=row[index-1].right),'toolbar controls do not overlap');}
       await page.screenshot({path:path.join(output,name+'-compact-editor.png')});
       await page.locator('#gm-labelx').fill('취소할 제목');
       await page.locator('#gm-cancel').click();
       assert.equal((await objects(page)).length, 0);
-      await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
+      await openAiWorkflow(page,'graph');await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
       await page.locator('#gm-labelx').fill('편집한 시간');
       await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-chips [data-series-index="0"]').click();
       await page.locator('#gm-point-detail summary').click();
@@ -254,6 +215,9 @@ async function storedTabs(page) {
         return tabs?.find(t=>t.id===taskId)?.generated?.find(c=>c.id===candidateId)?.graphResult?.objects?.find(o=>o.type==='funcgraph')?.endpointMarkers;
       }, {taskId: originalTask.id, candidateId: editedCandidate.id});
       assert.deepEqual(storedMarker,[{index:1,kind:'closed',fillLevel:128,markerSize:0.8}]);
+      // 「캔버스로 내보내기」로 넣은 수정본은 지우고, AI 창으로 돌아가 이어서 요청한다.
+      await page.evaluate(async () => { const { state } = await import('/js/state.js?v=1.7.0-four-session-integration'); state.update(s => { s.objects = []; s.groups = []; s.selectedIds = []; s.undoStack = []; s.redoStack = []; }); });
+      await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel [data-ai-send]').click();
       await result(page, 3);
       const revisedTask = (await storedTabs(page)).find(t => t.id === originalTask.id);
@@ -278,7 +242,7 @@ async function storedTabs(page) {
       assert.equal(fs.readFileSync(selectedPng).subarray(1,4).toString('latin1'),'PNG','Selected graph saves as a real PNG');
       await page.reload({ waitUntil: 'networkidle' });
       await page.locator('#ai-image-install-open').click();
-      await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+      await openAiWorkflow(page,'graph');
       await result(page, 3);
       const recoveredTask = (await storedTabs(page)).find(t => t.id === originalTask.id);
       assert.deepEqual(recoveredTask.generated, revisedTask.generated);
@@ -286,6 +250,10 @@ async function storedTabs(page) {
       assert.equal(await page.evaluate(() => window.__graphWorkbench.requests.length), 0, 'Recovered results must not resend.');
       await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
       await page.locator('#ai-image-panel').waitFor({state:'hidden'});
+      await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
+      assert.equal((await page.locator('#gm-confirm').textContent()).trim(),'캔버스로 내보내기');
+      await page.locator('#gm-confirm').click();
+      await page.waitForGraphSignal(async () => { const { state } = await import('/js/state.js?v=1.7.0-four-session-integration'); return state.get().objects.some(o => o.type === 'coordplane'); });
       const inserted = await objects(page);
       assert(inserted.some(o => o.type === 'coordplane' && o.labelX === '편집한 시간'));
       assert(inserted.some(o => o.type === 'funcgraph'));
@@ -327,7 +295,7 @@ async function storedTabs(page) {
       await cancelled.page.evaluate(() => { window.__graphWorkbench.unavailable = false; });
       await cancelled.page.locator('#ai-image-panel [data-ai-send]').click();
       await result(cancelled.page);
-      await cancelled.page.locator('#ai-image-panel [data-ai-workflow="image"]').click();
+      await openAiWorkflow(cancelled.page,'image');
       await cancelled.page.waitForGraphSignal(() => document.querySelector('#ai-image-panel')?.dataset.aiWorkflow === 'image');
       assert.equal(await cancelled.page.locator('#ai-image-panel .ai-previews .ai-image-card').count(), 0, 'Switching workflows keeps the old result in its own task.');
       assert.equal(await cancelled.page.locator('#ai-image-panel [data-ai-connection-dialog]').isVisible(),false, 'Connection metadata stays outside the restored workbench layout.');
@@ -337,7 +305,7 @@ async function storedTabs(page) {
       assert.equal(await imageModel.getAttribute('aria-pressed'),'true');assert.equal(await cancelled.page.locator('#ai-image-panel [data-ai-model]').inputValue(),'gpt-6.1-sol');
       assert.equal(await cancelled.page.locator('#ai-image-panel [data-ai-workflow="image"]').getAttribute('aria-pressed'), 'true');
       assert.equal(await cancelled.page.locator('#ai-image-panel .ai-task-tab-select').count(), 0, 'Empty workflow has no synthetic tasks.');
-      await cancelled.page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+      await openAiWorkflow(cancelled.page,'graph');
       await cancelled.page.waitForGraphSignal(() => document.querySelector('#ai-image-panel')?.dataset.aiWorkflow === 'graph');
       await result(cancelled.page);
       assert.equal(await cancelled.page.locator('#ai-image-panel .ai-task-tab-select').count(), 1, 'Returning restores the original graph owner.');
@@ -367,7 +335,7 @@ async function storedTabs(page) {
       for (let index = 0; index < 2; index++) {
         await batch.page.locator('#ai-image-panel .ai-task-tab-select').nth(index).click();
         await result(batch.page);
-        assert(await batch.page.locator('#ai-image-panel [data-ai-graph-edit]').isEnabled());
+        assert(await batch.page.locator('#ai-image-panel [data-ai-insert-selected]').isEnabled());
       }
       await batch.page.screenshot({ path: path.join(output, name + '-batch.png') });
       assert.deepEqual(batch.errors, []);

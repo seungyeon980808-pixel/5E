@@ -1,4 +1,5 @@
 'use strict';
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 
 // Standalone: RELEASE_URL/EXAM_URL must point to the externally owned candidate.
 // `node this-file --self-test` exercises the oracles without loading Playwright.
@@ -359,7 +360,7 @@ async function probeFeatures(page, runtime) {
   await page.locator('[data-exam-action="close"]').click();
   await page.locator('#rhwp-exam-workspace').waitFor({ state: 'hidden' });
 
-  await page.locator('#graph-tool-open').click();
+  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
   await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
   await page.locator('#gm-labelx').fill('시간');
   await page.locator('#gm-tab-func-btn').click();
@@ -387,11 +388,11 @@ async function probeFeatures(page, runtime) {
 
   await page.locator('#ai-image-install-open').click();
   await page.locator('#ai-image-panel').waitFor({ state: 'visible' });
-  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await openAiWorkflow(page,'graph');
   // Workflow switching is async (switchWorkflow); wait for the pressed state instead of sampling it once.
   await page.locator('#ai-image-panel [data-ai-workflow="graph"][aria-pressed="true"]').waitFor({ state: 'attached' });
   assert.equal(await page.locator('#ai-image-panel [data-ai-workflow="graph"]').getAttribute('aria-pressed'), 'true');
-  await page.locator('#ai-image-panel [data-ai-workflow="image"]').click();
+  await openAiWorkflow(page,'image');
   await page.locator('#ai-image-panel [data-ai-close]').click();
   await page.locator('#ai-image-panel').waitFor({ state: 'hidden' });
 

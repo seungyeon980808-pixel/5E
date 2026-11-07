@@ -1,4 +1,5 @@
 'use strict';
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -46,7 +47,7 @@ async function transfer(page, taskId, kind) {
   }, {kind,taskId});
 }
 async function selectSource(page) {
-  await page.locator(active + ' [data-ai-workflow="image"]').click();
+  await openAiWorkflow(page,'image');
   await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select').click();
   await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === 'candidate-0');
 }
@@ -223,7 +224,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
   assert.deepEqual((await snapshot(page)).find(tab => tab.id === 'task-0').generated,beforeCopyRace.find(tab => tab.id === 'task-0').generated);
   receipts.push({action:'clipboard-change-during-real-composition',rejected:true,clipboardNotWritten:true,writeDuringGesture:true,candidatesPreserved:true});
   async function historical(policy) {
-    await page.locator(active + ' [data-ai-workflow="image"]').click();
+    await openAiWorkflow(page,'image');
     await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click();
     await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === 'candidate-2');
     const button = page.locator(active + ` [data-ai-legacy-result-settings] [data-ai-setting-key="background"] [data-ai-setting-value="${policy}"]`);

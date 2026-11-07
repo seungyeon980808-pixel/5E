@@ -32,7 +32,7 @@ async function scenario(origin, engine, surface) {
   try {
     await h.navigate(page,new URL(`${surface}?mode=pro&mobile=0&exam=1`,origin).href,{waitUntil:'domcontentloaded'});await h.ready(page);
     await h.action(page,'close');
-    await page.locator('#graph-tool-open').click();
+    await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
     await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
     await page.locator('#gm-labelx').fill('시간(s)');await page.locator('#gm-labely').fill('속력(m/s)');
     await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-add-series').click();

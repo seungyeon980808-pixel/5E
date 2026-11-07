@@ -3277,3 +3277,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel[data-ai-hwp-in-place="true"] .ai-output-more { display:none !important; }
 /* 11-06 D1: 한글 그림에서 연 AI 창은 입구로 종류가 정해졌으므로 전환 줄을 숨기고 제목만(「AI 그래프 · 한글 그림 1에서 엶」). */
 #ai-image-panel[data-ai-hwp-in-place="true"] .ai-workflow-switch { display:none !important; }
+
+/* 11-07 G2·G5(시안 graph-hub-1107): 창의 모양은 지금 작업 종류가 정한다 — 이미지 작업이면 이미지 탭 둘, 그래프 작업이면 그래프 탭 둘만. */
+[data-ai-mode="image"] .ai-workflow-switch [data-ai-workflow^="graph"],
+[data-ai-mode="graph"] .ai-workflow-switch [data-ai-workflow^="image"] { display:none; }

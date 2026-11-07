@@ -2,6 +2,7 @@
  * Exact printed/contact constraints are eliminated before fitting the remaining
  * coefficients. Samples remain evidence, not the definition of a saved curve. */
 import { compile, tokenize, parse, FUNCS } from './parser.js?v=1.7.0-four-session-integration';
+import { tidyGraphNumber, withPreciseGraphNumbers, preciseGraphNumbers } from './tidy-number.js?v=1.7.0-four-session-integration';
 import { PHYSICS_LIMITS, measurePhysicsCandidate, solvePhysicsCoefficients, collectPhysicsAnchors, physicsDisplayMap } from './physics-fit.js?v=1.7.0-four-session-integration';
 import { shapePreservingHandles, sampleShapeSegment } from './shape-preserving.js?v=1.7.0-four-session-integration';
 
@@ -12,9 +13,12 @@ const MAX_POINTS = 512, MAX_EXPRESSION = 320, MAX_ANNOTATIONS = 256;
 // Source endpoints + linked annotations + relation declarations + tick-derived
 // contacts + two possible origin contacts, all within their source budgets.
 const MAX_CONTACTS = MAX_POINTS + MAX_ANNOTATIONS + 256 + 64 + 2;
+// 11-07 G6: 식에 넣는 계수는 소수 둘째 자리(0.1 미만은 유효숫자 두 자리) — 보이는 식 = 그려지는 식.
+// 둘째 자리 식이 관계·접점 검사를 못 넘으면 그 곡선만 예전 정밀도(유효숫자 13자리)로 다시 맞춘다.
 const number = value => {
   if (!finite(value)) throw Error('Nonfinite coefficient');
   if (Math.abs(value) < 1e-14) return '0';
+  if (!preciseGraphNumbers()) return tidyGraphNumber(value);
   let text = String(Number(value.toPrecision(13)));
   if (!/[eE]/.test(text)) return text;
   const [mantissa, exponent] = text.split('e'), negative = mantissa.startsWith('-');
@@ -354,17 +358,32 @@ export function fitRelationAnalyticPlan(input) {
   // independent; an AI family label alone never causes grouping.
   for (let i = 0; i < entries.length; i++) for (let j = i + 1; j < entries.length; j++) {
     if (chosen.has(entries[i].s.id) || chosen.has(entries[j].s.id)) continue;
-    const joint = sharedPoleCandidate(plan, [entries[i], entries[j]]); if (!joint) continue;
+    // 11-07 G6: 고르는 것은 예전 정밀도로, 고른 모델을 둘째 자리 식으로도 맞춰 보고 같은 모델이 검사를 넘으면 그것을 쓴다.
+    const precise = withPreciseGraphNumbers(() => sharedPoleCandidate(plan, [entries[i], entries[j]])); if (!precise) continue;
+    const tidy = sharedPoleCandidate(plan, [entries[i], entries[j]]);
+    const joint = tidy && JSON.stringify(tidy.model) === JSON.stringify(precise.model) ? tidy : precise;
     joint.members.forEach((entry, k) => chosen.set(entry.s.id, { ...joint, ...joint.measurements[k] }));
   }
   for (const entry of entries) {
     if (chosen.has(entry.s.id)) continue;
     let best = null, failure = null;
-    for (const candidate of candidates(entry.s, entry.context)) {
-      const measurement = measurePhysicsCandidate(candidate.expression, entry.s.points, [...entry.context.anchors, ...(candidate.extraAnchors || [])], entry.context.measured, entry.s.axis || 'y', entry.s.curveStyle || 'straight');
-      if (!measurement.ok) { failure ||= measurement.reason; continue; }
-      const score = measurement.rmsDeviation + .001 * candidate.parameterCount + .00001 * candidate.expression.length - (candidate.family === 'cosine-square' ? .002 : 0);
-      if (!best || score < best.score) best = { ...candidate, ...measurement, score };
+    const search = () => {
+      for (const candidate of candidates(entry.s, entry.context)) {
+        const measurement = measurePhysicsCandidate(candidate.expression, entry.s.points, [...entry.context.anchors, ...(candidate.extraAnchors || [])], entry.context.measured, entry.s.axis || 'y', entry.s.curveStyle || 'straight');
+        if (!measurement.ok) { failure ||= measurement.reason; continue; }
+        const score = measurement.rmsDeviation + .001 * candidate.parameterCount + .00001 * candidate.expression.length - (candidate.family === 'cosine-square' ? .002 : 0);
+        if (!best || score < best.score) best = { ...candidate, ...measurement, score };
+      }
+    };
+    withPreciseGraphNumbers(search);
+    // 11-07 G6: 고른 모델을 둘째 자리 계수로 다시 만들어 같은 접점·모양 검사를 넘으면 그 식을 쓴다(못 넘으면 정밀한 식 그대로).
+    if (best && best.model?.kind !== 'proposal') {
+      const facts = waveFacts(entry.s.points, entry.context.anchors, entry.context.map, entry.context.axisY);
+      const tidy = fitModel(best.model, entry.s.points, entry.context.anchors, facts);
+      if (tidy && tidy.expression !== best.expression) {
+        const measurement = measurePhysicsCandidate(tidy.expression, entry.s.points, [...entry.context.anchors, ...(tidy.extraAnchors || [])], entry.context.measured, entry.s.axis || 'y', entry.s.curveStyle || 'straight');
+        if (measurement.ok) best = { ...best, ...tidy, ...measurement, score: best.score };
+      }
     }
     if (best) chosen.set(entry.s.id, best);
     else rejected.push({ seriesId: entry.s.id, reason: '관계 제약을 유지하는 제한된 함수 후보를 검증했으나 접점·방향·모양 검증을 통과하지 못했습니다.', stage: RELATION_ANALYTIC_FIT_VERSION, failedCondition: failure || 'no-bounded-candidate' });
@@ -384,7 +403,14 @@ export function fitRelationAnalyticPlan(input) {
   return { plan, conversions, rejected };
 }
 
+// 저장된 식은 둘째 자리 식이거나(검사를 넘은 경우) 예전 정밀도 식이다 — 두 방식 모두로 다시 만들어 맞춰 본다.
 export function checkRelationAnalyticApproximation(series, plan) {
+  const tidy = checkRelationAnalyticSaved(series, plan);
+  if (tidy.ok) return tidy;
+  const precise = withPreciseGraphNumbers(() => checkRelationAnalyticSaved(series, plan));
+  return precise.ok ? precise : tidy;
+}
+function checkRelationAnalyticSaved(series, plan) {
   const a = series?.approximation;
   const fail = reason => ({ ok: false, reason });
   if (!a || a.method !== RELATION_ANALYTIC_FIT_VERSION || a.provenance !== 'image-fit' || series.kind !== 'expression' || !eligible(series, series.observedPoints)) return fail('Relation analytic approximation requires bounded original observations');

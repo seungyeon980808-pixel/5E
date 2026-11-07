@@ -38,6 +38,7 @@ import { appendDisplayHeading, syncDisplayProperties } from './display-workspace
 import { openPdfReferencePicker } from '../pdf-library/reference-picker.js?v=1.7.0-four-session-integration';
 import { applyElementGuide, seriesGuideColor, annotationGuideColor } from './element-guide.js?v=1.7.0-four-session-integration';
 import { createTraceEditor } from './trace-overlay.js?v=1.7.0-four-session-integration';
+import { showConfirm } from '../ui-dialogs.js?v=1.7.0-four-session-integration';
 
 let _engineControls = null;
 let _editBaseline = null;
@@ -104,6 +105,7 @@ let _sel = -1;                    // 선택 계열 index
 let _previewSvg = null;           // 클릭 좌표 환산용
 let _previewPlane = null;
 let _editingContext = null;
+let _contextApplyOutcome;          // onApply가 돌려준 값(AI 결과 편집기: 캔버스에 넣은 그래프) — 한글에 넣기가 이어 쓴다
 const editorState = () => _editingContext?.state || state;
 let _placeMode = null;            // null | "marker" | "guide" | "arrow" — 미리보기 클릭 배치 모드
 let _annMode = null;              // '표시' 탭 배치 모드: null | "marker"|"guide"|"arrow"|"guideline"|"legend"
@@ -162,7 +164,7 @@ function defaultCfg() {
 }
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
-// movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
+// movable: 옛 「이동」 체크 값. 11-07부터는 보지 않는다 — 함수 탭에서 고른 곡선은 늘 끌어 옮길 수 있다(옛 파일도 그대로 열림).
 function newExprSeries() { return { kind: "expr", axis: "y", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.45, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [], area: null }; }
 function newPointsSeries() { return { kind: "points", axis: "y", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.45, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 // 막대그래프 계열(생명과학 기출 관례): 세로 막대 + 회색 단색 + 검은 외곽선, 무늬 없음이 기본.
@@ -1380,7 +1382,8 @@ function refreshPreview() {
     // '이동' 체크(요구): 선택 계열의 곡선 몸통을 드래그하면 계열 전체가 따라온다.
     // 함수식 = offset(math) 누적, 점 계열 = 찍은 점들을 통째로 평행이동(저장·수선도 일관).
     // 곡선 위 투명 굵은 히트선 + 드래그. refreshPreview가 재생성해도 window 리스너로 이어감.
-    if (i === _sel && _tab === 'func' && !_placeMode && s.movable && _activeDraw !== i) {
+    // 11-07 G7: 「이동」 칸 없이, 함수 탭에서 고른 함수식·직선(점 계열)은 바로 끈다. 범위·면적 지정, 그리기 중에는 끼어들지 않는다.
+    if (i === _sel && _tab === 'func' && !_placeMode && !_boxMode && !_areaMode && _activeDraw !== i && (s.kind === "expr" || s.kind === "points")) {
       const path = el.querySelector("path");
       if (path) {
         const hit = path.cloneNode(false);
@@ -1408,9 +1411,11 @@ function refreshPreview() {
           };
           const ux = (pl.xMax - pl.xMin) ? pl.w / (pl.xMax - pl.xMin) : 1;
           const uy = (pl.yMax - pl.yMin) ? pl.h / (pl.yMax - pl.yMin) : 1;
+          let moved = false;
           const onMove = (ev) => {
             const w = clientToWorld(ev.clientX, ev.clientY);
             if (!w) return;
+            moved = true;
             const dxm = (w.x - start.x) / ux, dym = -(w.y - start.y) / uy;
             if (s.kind === "expr") s.offset = { dx: baseOff.dx + dxm, dy: baseOff.dy + dym };
             else s.pts = basePts.map((p) => ({ x: p.x + dxm, y: p.y + dym }));
@@ -1424,10 +1429,18 @@ function refreshPreview() {
             }));
             syncElementLists();
             refreshPreview();
+            syncOffsetFields(s, true);
           };
           const onUp = () => {
             window.removeEventListener("mousemove", onMove);
             window.removeEventListener("mouseup", onUp);
+            if (!moved) return;
+            if (s.kind === "expr") {
+              // 놓는 순간 옮긴 양을 0.01 칸으로 맞춘다(숫자 칸과 그림이 같은 값).
+              const off = s.offset || { dx: 0, dy: 0 };
+              s.offset = { dx: Math.round(off.dx * 100) / 100, dy: Math.round(off.dy * 100) / 100 };
+              refreshPreview(); syncOffsetFields(s, true);
+            }
             if (s.kind === "points") {
               // 자유 이동이라 소수가 길어진다 — 놓는 순간 1/1000로 반올림해 좌표를 깔끔하게.
               s.pts = s.pts.map((p) => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 }));
@@ -1436,7 +1449,8 @@ function refreshPreview() {
           };
           window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
         });
-        svg.appendChild(hit);
+        // 꼭짓점·끝 라벨 핸들은 이 히트선 위에 있어야 한다(늘 켜져 있으니 그쪽 끌기를 가로채지 않게).
+        el.after(hit);
       }
     }
   });
@@ -2682,6 +2696,24 @@ function textToPts(text) {
 }
 
 // 선택 계열 → 편집 패널 값 동기화(+kind별 행 표시 전환).
+// 11-07 G7: 「옮김」 줄 — 함수식은 오른쪽·위 숫자(0.01 칸), 직선·꺾은선은 끌기 안내만.
+function syncOffsetFields(s, force = false) {
+  if (!_els.offsetRow) return;
+  const movable = !!s && (s.kind === "expr" || s.kind === "points");
+  _els.offsetRow.style.display = movable ? "" : "none";
+  if (!movable) return;
+  const expr = s.kind === "expr";
+  _els.offsetFields.style.display = expr ? "" : "none";
+  _els.offsetHint.textContent = expr ? "곡선을 끌면 바로 옮겨집니다" : "선을 끌면 바로 옮겨집니다";
+  if (!expr) return;
+  const off = s.offset && Number.isFinite(s.offset.dx) ? s.offset : { dx: 0, dy: 0 };
+  for (const [input, value] of [[_els.offsetDx, off.dx], [_els.offsetDy, off.dy]]) {
+    if (!force && document.activeElement === input) continue;
+    const text = (Number.isFinite(value) ? value : 0).toFixed(2);
+    if (input.value !== text) input.value = text === "-0.00" ? "0.00" : text;
+  }
+}
+
 function syncSeriesEditor() {
   _overlay.querySelectorAll('#gm-series-editor input,#gm-series-editor textarea,#gm-series-editor select').forEach(input=>input.setCustomValidity(''));
   _engineControls?.sync();
@@ -2700,7 +2732,7 @@ function syncSeriesEditor() {
   // 자동 연장선: 직선·꺾은선(점 계열)에만 의미 있음(눈대중 그리기). 끝 라벨과 한 줄(요구 8).
   _els.autoExtRow.style.display = s.kind === "points" ? "inline-flex" : "none";
   _els.autoExt.checked = !!s.autoExtend;
-  _els.move.checked = !!s.movable;
+  syncOffsetFields(s);
   // 읽는 축: 오른쪽 축이 켜져 있을 때만 고르게 한다(꺼져 있으면 선택지가 하나뿐이라 무의미).
   const y2Avail = !!(_cfg && _cfg.y2On);
   _els.axisRow.style.display = y2Avail ? "" : "none";
@@ -3253,6 +3285,7 @@ function build() {
       <div class="gm-body">
         <div class="gm-left" style="flex:1;min-width:0;">
           <div class="gm-preview-toolbar"><div id="gm-trace-toolbar-host"></div>
+          <span class="gm-ai-entries" id="gm-ai-entries"><button type="button" class="modal-btn gm-ai-entry" data-gm-ai="graph" title="사진에서 복원 · 기출 그림을 그래프로 되살립니다"><span class="gm-ai-spark" aria-hidden="true">✦</span> 사진에서 복원</button><button type="button" class="modal-btn gm-ai-entry" data-gm-ai="graph-create" title="AI와 대화로 만들기 · 말로 설명하면 그려 줍니다"><span class="gm-ai-spark" aria-hidden="true">✦</span> AI와 대화로 만들기</button></span>
           <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-undo" disabled title="실행 취소 (⌘/Ctrl+Z)">실행 취소</button><button type="button" class="modal-btn" id="gm-redo" disabled title="다시 실행 (⌘/Ctrl+Shift+Z)">다시 실행</button><button type="button" class="modal-btn" id="gm-send-exam">한글에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
           </div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
@@ -3696,11 +3729,22 @@ function build() {
               <div class="gm-row-body">
                 <input type="text" id="gm-endlabel" class="gm-num gm-endlabel-in"
                        spellcheck="false" placeholder="예: v_0" aria-label="끝 라벨">
-                <label class="gm-check" title="체크하면 미리보기에서 이 함수(곡선)를 끌어 옮길 수 있습니다.">
-                  <input type="checkbox" id="gm-move"> 이동</label>
                 <label class="gm-check" id="gm-autoext-row"
                        title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 맞습니다.">
                   <input type="checkbox" id="gm-autoext"> 자동 연장선</label>
+              </div>
+            </div>
+            <!-- 11-07 G7: 「이동」 칸 없이 고른 곡선을 미리보기에서 바로 끈다. 옮긴 양은 수학 단위 0.01 칸까지 숫자로 본다. -->
+            <div class="gm-row" id="gm-offset-row">
+              <span class="gm-row-lbl">옮김</span>
+              <div class="gm-row-body gm-offset-body">
+                <span class="gm-offset-fields" id="gm-offset-fields">
+                  <label class="gm-inl" for="gm-offset-dx">오른쪽</label>
+                  <input type="number" id="gm-offset-dx" class="gm-num gm-offset-in" step="0.01" data-step-size="0.01" data-graph-precision="exact" aria-label="오른쪽으로 옮긴 양">
+                  <label class="gm-inl" for="gm-offset-dy">위</label>
+                  <input type="number" id="gm-offset-dy" class="gm-num gm-offset-in" step="0.01" data-step-size="0.01" data-graph-precision="exact" aria-label="위로 옮긴 양">
+                </span>
+                <span class="gm-offset-hint" id="gm-offset-hint">곡선을 끌면 바로 옮겨집니다</span>
               </div>
             </div>
 
@@ -3855,7 +3899,11 @@ function build() {
     markerRow: overlay.querySelector("#gm-marker-row"),
     guideRow: overlay.querySelector("#gm-guide-row"),
     arrowRow: overlay.querySelector("#gm-arrow-row"),
-    move: overlay.querySelector("#gm-move"),
+    offsetRow: overlay.querySelector("#gm-offset-row"),
+    offsetFields: overlay.querySelector("#gm-offset-fields"),
+    offsetHint: overlay.querySelector("#gm-offset-hint"),
+    offsetDx: overlay.querySelector("#gm-offset-dx"),
+    offsetDy: overlay.querySelector("#gm-offset-dy"),
     endLabel: overlay.querySelector("#gm-endlabel"),
     areaOn: overlay.querySelector("#gm-area-on"), areaRows: overlay.querySelector("#gm-area-rows"),
     areaFrom: overlay.querySelector("#gm-area-from"), areaTo: overlay.querySelector("#gm-area-to"),
@@ -4303,9 +4351,22 @@ function build() {
     syncElementLists(); syncSeriesEditor(); refreshPreview();
   });
 
-  _els.move.addEventListener("change", () => {
-    const s = _series[_sel]; if (s) { s.movable = _els.move.checked; refreshPreview(); }
-  });
+  // 11-07 G7: 옮김 숫자(수학 단위). 함수식은 offset으로만 옮긴다 — 식 자체는 그대로.
+  for (const [input, key] of [[_els.offsetDx, "dx"], [_els.offsetDy, "dy"]]) {
+    const apply = (commit) => {
+      const s = _series[_sel]; if (!s || s.kind !== "expr") return;
+      const value = Number(input.value);
+      if (input.value.trim() === "" || !Number.isFinite(value)) { if (commit) syncOffsetFields(s, true); return; }
+      const before = s.offset && Number.isFinite(s.offset.dx) ? s.offset : { dx: 0, dy: 0 };
+      const next = Math.round(value * 100) / 100;
+      if (next === before[key]) { if (commit) syncOffsetFields(s, true); return; }
+      s.offset = { ...before, [key]: next };
+      refreshPreview();
+      if (commit) syncOffsetFields(s, true);
+    };
+    input.addEventListener("input", () => apply(false));
+    input.addEventListener("change", () => apply(true));
+  }
   // 곡률 증감(요구: 곡선일 때만). 현재값 기준 ±(0.4~2.4, 표준=1).
   const bumpCurv = (d) => {
     const s = _series[_sel]; if (!s) return;
@@ -4377,12 +4438,31 @@ function build() {
   };
   _els.confirm.addEventListener("click", commitValidated);
   overlay.querySelector('#gm-send-exam').addEventListener('click', () => {
-    if (_overlay.hidden || _editingContext || !document.querySelector('#rhwp-exam-workspace')) return;
+    if (_overlay.hidden || (_editingContext && !_editingContext.examSend) || !document.querySelector('#rhwp-exam-workspace')) return;
+    const context = _editingContext; _contextApplyOutcome = undefined;
     const result = commitValidated();
-    if (result) window.dispatchEvent(new CustomEvent('5e:exam-send-graph',{detail:result}));
+    // AI 결과 편집기: 적용하면 부르는 쪽(onApply)이 캔버스에 넣고 그 자리를 돌려준다 — 그 그래프를 한글로 보낸다.
+    const target = context?.examSend ? (result ? _contextApplyOutcome : null) : result;
+    if (target) void Promise.resolve(target).then(sent => { if (sent?.planeId) window.dispatchEvent(new CustomEvent('5e:exam-send-graph',{detail:{pageId:sent.pageId,planeId:sent.planeId}})); }).catch(() => {});
   });
 
   _els.cancel.addEventListener("click", hide);
+  // 11-07 G3: 편집기에서 AI로 — 적용하지 않은 편집이 있으면 한 번 묻고, 편집기를 닫은 뒤 AI 창을 그 탭으로 연다(main.js가 받음).
+  overlay.querySelector('#gm-ai-entries').addEventListener('click', async event => {
+    const button = event.target.closest('[data-gm-ai]');
+    if (!button || _overlay.hidden) return;
+    const dirty = !_overlay.querySelector('#gm-undo').disabled;
+    if (dirty) {
+      const answer = showConfirm('적용하지 않은 편집은 사라집니다. AI 창으로 갈까요?', { title: '그래프', okText: 'AI 창으로', cancelText: '계속 편집' });
+      // 확인 창(z 10000)이 그래프 편집기(z 10030) 아래로 깔리지 않게 그 위로 올린다.
+      const layer = document.body.lastElementChild;
+      if (layer?.classList.contains('modal-overlay') && layer !== _overlay) layer.classList.add('gm-above-graph');
+      if (!await answer) return;
+    }
+    if (_overlay.hidden) return;
+    hide();
+    window.dispatchEvent(new CustomEvent('5e:graph-ai-open', { detail: { kind: button.dataset.gmAi } }));
+  });
   overlay.addEventListener('input',e=>{if(e.target.closest('#gm-series-editor'))rememberInvalidSeries();});
   overlay.addEventListener('change',e=>{if(e.target.closest('#gm-series-editor'))rememberInvalidSeries();});
   overlay.addEventListener('keydown',e=>{
@@ -4423,7 +4503,7 @@ function build() {
     // #gm-add-series(추가 버튼)와 #gm-subtabs(하위 탭 컨테이너)가 있으므로 교체.
     // Viewing controls keep the selected curve. Redrawing on their mousedown
     // also interrupts WebKit's subsequent click on the zoom toggle.
-    if (e.target.closest("#gm-preview, #gm-trace-toolbar-host, #gm-series-editor, #gm-engine-series, #gm-engine-controls, #gm-style-controls, #gm-adv-open, #gm-adv-panel, #gm-engine-regions, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions, .gm-export-actions")) return;
+    if (e.target.closest("#gm-preview, #gm-trace-toolbar-host, #gm-ai-entries, #gm-series-editor, #gm-engine-series, #gm-engine-controls, #gm-style-controls, #gm-adv-open, #gm-adv-panel, #gm-engine-regions, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions, .gm-export-actions")) return;
     _sel = -1; _placeMode = null; _activeDraw = -1;
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
@@ -4591,7 +4671,7 @@ function hide(applied = false) {
   if (_overlay) _overlay.hidden = true; _placeMode = null; closeHelpPopover();
   _focusReturn?.focus({preventScroll:true}); _focusReturn = null;
   const context = _editingContext; _editingContext = null;
-  if (applied === true) context?.onApply?.();
+  if (applied === true) _contextApplyOutcome = context?.onApply?.();
   context?.onClose?.();
 }
 
@@ -4795,11 +4875,15 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   _overlay.querySelector('#gm-style-detail').open = false;
   _lpSel = -1;                           // 라벨러 표시점 선택도 초기화(옛 인덱스가 남지 않게)
   if (_els.advPanel) { _els.advPanel.hidden = true; _els.advOpen.setAttribute('aria-expanded','false'); if (_els.advCaret) _els.advCaret.textContent = "▾"; }   // 고급 패널은 접힌 채로 시작
-  _els.title.textContent = editingContext?.title || (_mode === "edit" ? "그래프 편집" : "그래프 만들기");
+  // 11-07 G1: 새로 만들 때도 고칠 때도 창 제목은 「그래프」(한글 쪽처럼 부르는 쪽이 제목을 주면 그것을 쓴다).
+  _els.title.textContent = editingContext?.title || "그래프";
   // 11-06: 한글 그 자리 편집(복원)처럼 캔버스가 아닌 곳에 반영할 때는 부르는 쪽이 단추 이름을 준다.
   _els.confirm.textContent = editingContext?.confirmLabel || (_mode === "edit" ? "적용" : "캔버스로 내보내기");
   _els.confirm.classList.add('modal-btn-primary');
-  _overlay.querySelector('#gm-send-exam').hidden=!!editingContext || !document.querySelector('#rhwp-exam-workspace');
+  // 11-07 G3: 편집기 위 AI 입구 두 개. 한글 그림 자리 편집처럼 부르는 쪽이 따로 있는 창에서는 숨긴다.
+  _overlay.querySelector('#gm-ai-entries').hidden = !!editingContext && !editingContext.aiEntries;
+  // AI 결과를 가져온 편집기(editingContext.examSend)는 「한글에 넣기」도 그대로 쓴다.
+  _overlay.querySelector('#gm-send-exam').hidden=(!!editingContext && !editingContext.examSend) || !document.querySelector('#rhwp-exam-workspace');
   _els.error.textContent = "";
   _overlay.querySelectorAll("input, textarea, select").forEach(input => input.setCustomValidity(""));
   _overlay.hidden = false;

@@ -95,7 +95,8 @@ export function insertWorkbenchGraph(state, result, { taskId, candidateId } = {}
 }
 
 // The standard editor edits an isolated draft; Cancel never changes the page or result.
-export function editWorkbenchGraph(result, { onApply, onClose, reference = null } = {}) {
+// 11-07 G9: 「편집기로 가져오기」는 같은 편집기를 제목 「그래프」·「캔버스로 내보내기」·「한글에 넣기」로 연다(destination).
+export function editWorkbenchGraph(result, { onApply, onClose, reference = null, destination = null } = {}) {
   const plane = validateWorkbenchGraph(result);
   const savedTrace = plane.graphTrace || result.graphTrace || null;
   const initialReference = reference || result.traceReference || null;
@@ -112,8 +113,9 @@ export function editWorkbenchGraph(result, { onApply, onClose, reference = null 
     state: editingState,
     traceReference: copy(traceReference),
     traceState: copy(savedTrace),
-    onApply: () => { const edited = { ...copy(result), objects: copy(draft.objects), groups: copy(draft.groups) }; validateWorkbenchGraph(edited); onApply?.(edited); },
+    onApply: () => { const edited = { ...copy(result), objects: copy(draft.objects), groups: copy(draft.groups) }; validateWorkbenchGraph(edited); return onApply?.(edited); },
     onClose,
+    ...(destination ? { title: '그래프', confirmLabel: destination.confirmLabel || '캔버스로 내보내기', examSend: destination.examSend !== false, aiEntries: true } : {}),
   });
 }
 

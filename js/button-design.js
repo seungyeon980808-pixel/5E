@@ -31,7 +31,8 @@ export function initButtonDesign(doc = document) {
       const open = surfaces.some(surface => !surface.hidden);
       if (button.dataset.workflowOpen !== String(open)) button.dataset.workflowOpen = String(open);
       // 「한글에 넣기」는 메뉴가 없는 바로 실행 단추라 aria-expanded를 달지 않는다(10-20 입구 통일).
-      if (id !== 'exam-send' && button.getAttribute('aria-expanded') !== String(open)) button.setAttribute('aria-expanded', String(open));
+      // 「그래프」는 11-07부터 세 갈래 메뉴의 열림을 aria-expanded로 알린다(js/graph-entry-menu.js).
+      if (id !== 'exam-send' && id !== 'graph-tool-open' && button.getAttribute('aria-expanded') !== String(open)) button.setAttribute('aria-expanded', String(open));
     }
   };
   decorate(doc.body);
@@ -47,9 +48,9 @@ export function initButtonDesign(doc = document) {
   if (graph && hub && ai) {
     graph.classList.remove('advanced-tool-btn');
     graph.classList.add('object-search-trigger');
-    // 10-24 시안 20: 이름 「좌표/그래프」 · 좌표축 + 곡선 아이콘(라이브러리 창 안 단추 이름은 그대로).
-    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M6.5 16c2.5-7 5-9 7-6s3.5 1 5-4"/></svg><span class="search-trigger-label">좌표/그래프</span>';
-    graph.title = '좌표/그래프'; graph.setAttribute('aria-label', '좌표/그래프');
+    // 10-24 시안 20: 좌표축 + 곡선 아이콘. 11-07(시안 graph-hub-1107 G1): 이름 「그래프」 — 올리거나 누르면 세 갈래.
+    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M6.5 16c2.5-7 5-9 7-6s3.5 1 5-4"/></svg><span class="search-trigger-label">그래프</span>';
+    graph.title = '그래프 · 직접 만들기 · 사진에서 복원 · AI와 대화로 만들기'; graph.setAttribute('aria-label', '그래프');
     ai.before(graph);
   }
   if (hub && !doc.getElementById('exam-pool-open')) {

@@ -1,4 +1,5 @@
 // Fixed graph source: b1846e849656076b1c0c5da2f82abffff3813eb1:tests/test-graph-workbench-stability-browser.cjs
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 // Fault injection through the real workbench UI; no provider requests.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -48,7 +49,7 @@ async function setup(browser) {
   page.on('pageerror', error => errors.push(String(error)));
   await page.goto(base + '?mode=pro', { waitUntil: 'networkidle' });
   await page.locator('#ai-image-install-open').click();
-  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await openAiWorkflow(page,'graph');
   await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
   const png = await page.evaluate(() => window.__stability.source.split(',')[1]);
   await page.locator('#ai-image-panel [data-ai-source-file]').setInputFiles({ name: 'stability.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
@@ -88,7 +89,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.waitForGraphSignal(()=>window.__copiedPng?.size>0);
       assert.equal(await page.evaluate(()=>window.__copiedPng.type),'image/png');
       for (const kind of ['image','graph']) {
-        await page.locator(ui+'[data-ai-workflow="graph"]').click();
+        await openAiWorkflow(page,'graph');
         await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
         await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
         const sourceTaskId=await page.locator(ui+'.ai-task-tab').first().getAttribute('data-tab-id');
@@ -133,17 +134,17 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId===sourceId,duplicatedSourceId);
       await page.evaluate(() => { window.__stability.hold = true; });
       await page.observeGraphSignal(() => window.__stability.requests.length === 1, undefined, undefined, async () => { await page.locator(ui + '[data-ai-send]').dblclick(); });
-      await page.locator(ui + '[data-ai-workflow="image"]').click({ force: true });
+      await openAiWorkflow(page,'image');
       await page.locator('#ai-image-panel[data-ai-workflow="image"]').waitFor();
       assert.equal(await page.locator('.modal-overlay[data-ai-workflow="graph"][data-ai-busy="true"]').count(),1,'Original graph continues in its own controller');
       assert.equal(await page.locator(ui + '.ai-task-tab:not(.ai-task-add)').count(),0,'Image workflow excludes the graph source');
       await page.evaluate(() => window.__stability.release(0));
       await page.waitForGraphSignal(() => document.querySelector('.modal-overlay[data-ai-workflow="graph"]')?.dataset.aiBusy==='false');
-      await page.locator(ui + '[data-ai-workflow="graph"]').click();
+      await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();await complete(page, 1);
       assert.equal(await page.locator(ui+'[data-ai-comments-apply]').isVisible(),false,'graph restore uses one action');
       assert.deepEqual(await page.locator(ui+'.ai-output-actions > button').allTextContents(),
-        ['PNG 저장','이미지 복사','캔버스에 삽입','한글로 보내기'],'The approved four output actions are retained for graph results');
+        ['PNG 저장','이미지 복사','편집기로 가져오기','한글로 보내기'],'The approved four output actions are retained for graph results (11-07 G9: 캔버스에 삽입 → 편집기로 가져오기)');
       assert.equal(await page.locator(ui+'[data-ai-save-selected]').isVisible(),true,'The common graph output action saves a PNG');
       const beforePng = await tabs(page), requestsBeforePng = await page.evaluate(() => __stability.requests.length);
       fs.writeFileSync(path.join(output,name+'-png-action.json'), JSON.stringify({
@@ -189,10 +190,11 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       if (!await moreOutputs.evaluate(el => el.open)) await moreOutputs.locator('summary').click();
       await page.locator(ui+'[data-ai-output-details]').click();
       await page.getByRole('dialog',{name:'그래프 복원 상세',exact:true}).getByRole('button',{name:'닫기',exact:true}).click();
-      assert.equal(await page.locator(ui+'[data-ai-insert-selected]').textContent(),'캔버스에 삽입');
+      assert.equal(await page.locator(ui+'[data-ai-insert-selected]').textContent(),'편집기로 가져오기');
       assert.equal(await page.locator(ui+'.ai-annotation-toolbar [data-ai-comment-visibility]').count(),1,'comment visibility is adjacent to its creation tools');
       for (const kind of ['image','graph','image','graph']) {
-        await page.locator(ui+`[data-ai-workflow="${kind}"]`).click();
+        // 11-07: 이미지↔그래프는 같은 창 안 탭이 아니라 각자의 입구(「AI 이미지」 / 「그래프」)로 오간다.
+        await openAiWorkflow(page,kind);
         await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();
         assert.equal(await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count(),kind==='image'?0:1,'Navigation preserves separated task lists');
       }
@@ -209,13 +211,14 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.evaluate(() => window.__stability.release(2));
       assert.equal(await count(page), 1);
       await page.reload({ waitUntil: 'networkidle' }); await page.locator('#ai-image-install-open').click();
-      await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click(); await complete(page, 1);
+      await openAiWorkflow(page,'graph'); await complete(page, 1);
       assert.equal(await page.evaluate(() => window.__stability.requests.length), 0);
       const beforeEditTask = (await tabs(page)).find(t => t.generated?.some(c => c.id === baseline.id));
       assert.equal(beforeEditTask.generated.length, 1);
-      await page.locator(ui + '[data-ai-graph-edit]').click();
-      assert.equal(await page.locator('#gm-send-exam').isVisible(),false,'The shared graph editor hides its exam action while editing a workbench draft');
-      assert.equal(await page.locator('#gm-send-exam').evaluate(el=>el.hidden),true,'A hidden shared control must not appear as a duplicate output action');
+      await openAiWorkflow(page,'graph');await page.locator(ui + '[data-ai-insert-selected]').click();
+      // 11-07 G9: 「편집기로 가져오기」로 연 편집기는 「캔버스로 내보내기」·「한글에 넣기」를 그대로 쓴다(한글 칸이 있을 때만 「한글에 넣기」).
+      assert.equal(await page.locator('#gm-send-exam').evaluate(el=>el.hidden),!(await page.locator('#rhwp-exam-workspace').count()),'The exam action follows the shared editor rule');
+      assert.equal((await page.locator('#gm-confirm').textContent()).trim(),'캔버스로 내보내기');
       await page.locator('#gm-labelx').fill('보존된 편집');
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => {
@@ -236,7 +239,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         const active=panel?.querySelector('.ai-task-tab.is-on');
         // A temporarily detached panel is not a completed owner switch.
         return active && active.dataset.tabId!==old && panel.dataset.aiWorkflow==='graph';
-      }, oldTask, undefined, async () => { await page.locator(ui + '[data-ai-task-add]').click(); });
+      }, oldTask, undefined, async () => { await openAiWorkflow(page,'graph'); await page.locator(ui + '[data-ai-task-add]').click(); });
       await page.waitForGraphSignal(async old => {
         const { IndexedDBOutputCacheBackend } = await import('/js/ai-output-cache-store.js?v=1.7.0-four-session-integration');
         const saved = (await new IndexedDBOutputCacheBackend({ databaseName: '5e-ai-image-tasks', storeName: 'tasks' }).get('workspace'));
@@ -265,8 +268,10 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         throw error;
       }
       assert.equal(await count(page), 0, 'Inactive owner render cannot add a result to the new task.');
-      await page.reload({ waitUntil: 'networkidle' }); await page.locator('#ai-image-install-open').click();
-      await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+      // 11-07 G9: 내보내기로 캔버스에 들어간 그래프는 이 검사 대상이 아니다 — 새로고침 복구 안내가 끼어들지 않게 비운다.
+      await page.evaluate(async () => (await import('/js/state.js?v=1.7.0-four-session-integration')).state.update(s => { s.objects = []; s.groups = []; s.selectedIds = []; s.undoStack = []; s.redoStack = []; }));
+      await page.reload({ waitUntil: 'networkidle' });
+      await openAiWorkflow(page,'graph');
       await page.locator(ui + `[data-tab-id="${oldTask}"] .ai-task-tab-select`).click(); await complete(page, 2);
       const recoveredTask = (await tabs(page)).find(t => t.id === oldTask);
       assert.equal(recoveredTask.selectedCandidateId, editedId);
@@ -274,10 +279,14 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       assert.notEqual(recoveredTask.generated.find(c=>c.id===editedId).data,beforeEditTask.generated[0].data,'The edited version has new rendered pixels after the font gate and owner switch');
       assert.equal(recoveredTask.generated.find(c => c.id === editedId).graphResult.objects.find(o => o.type === 'coordplane').labelX, '보존된 편집');
       await page.locator(ui + '[data-ai-insert-selected]').click();
+      await page.locator('#graph-modal-overlay').waitFor({state:'visible'});await page.locator('#gm-confirm').click();
+      await page.locator('#graph-modal-overlay').waitFor({state:'hidden'});
       const objects = await page.evaluate(async () => (await import('/js/state.js?v=1.7.0-four-session-integration')).state.get().objects);
       assert.equal(objects.find(o => o.type === 'coordplane').labelX, '보존된 편집'); assert(!objects.some(o => o.type === 'image'));
-      await page.locator('#ai-image-install-open').click();
+      await page.evaluate(async () => (await import('/js/state.js?v=1.7.0-four-session-integration')).state.update(s => { s.selectedIds = []; }));
+      await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel').waitFor({state:'visible'});
+      await page.locator(ui + `[data-tab-id="${oldTask}"] .ai-task-tab-select`).click(); await complete(page, 2);
       const graphTaskCount=await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count();
       await page.locator(ui+'.ai-task-tab.is-on .ai-task-tab-select').click({button:'right'});
       await menu.getByRole('menuitem',{name:'이미지/그래프 변환으로 보내기',exact:true}).click();
@@ -289,7 +298,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.locator(ui+'[data-ai-tab-clear]').click();
       await page.getByRole('dialog',{name:'선택 작업 삭제',exact:true}).getByRole('button',{name:'1개 삭제',exact:true}).click();
       await page.waitForGraphSignal(()=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===0);
-      await page.locator(ui+'[data-ai-workflow="graph"]').click();
+      await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
       assert.equal(await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count(),graphTaskCount,'clearing image tasks preserves graph tasks');
       assert.deepEqual(errors, []);

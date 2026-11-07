@@ -1,3 +1,4 @@
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -469,12 +470,12 @@ for (const engine of ['chromium','webkit']) test(`${engine}: mixed destinations 
   const expectedPixels=await page.evaluate(()=>window.__mixedReferences.map(r=>r.dataUrl));
   assert.deepEqual(saved.flatMap(t=>t.pixels),expectedPixels);
   assert.deepEqual(await page.evaluate(()=>window.__mixedReceipt.flatMap(r=>r.referenceIndices)),[0,1,2,3]);
-  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await openAiWorkflow(page,'graph');
   await page.locator('#ai-image-panel [data-ai-workflow="graph"][aria-pressed="true"]').waitFor();
   assert.equal(await page.locator('#ai-image-panel .ai-rail-heading > strong').textContent(),'그래프 작업대');
   assert.equal(await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add)').count(),2);
   for (const row of await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add) .ai-task-tab-select').all()) await row.click();
-  await page.locator('#ai-image-panel [data-ai-workflow="image"]').click();
+  await openAiWorkflow(page,'image');
   await page.locator('#ai-image-panel [data-ai-workflow="image"][aria-pressed="true"]').waitFor();
   assert.equal(await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add)').count(),2,'existing draft plus grouped image task');
   await page.evaluate(()=>window.__manager.checkpointForClose());

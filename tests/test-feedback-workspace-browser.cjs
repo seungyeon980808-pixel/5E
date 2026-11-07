@@ -1,3 +1,4 @@
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -330,7 +331,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: empty workbench sta
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiStage==='preparation');
  const after=await boxes();for(const key of Object.keys(before))for(const axis of ['x','y','w','h'])assert.ok(Math.abs(before[key][axis]-after[key][axis])<2,`${key}.${axis}: ${JSON.stringify({before,after})}`);
  await page.screenshot({path:path.join(evidence,engine,'source-added-same-layout.png')});
- await panel.locator('[data-ai-workflow="graph"]').click();
+ await openAiWorkflow(page,'graph');
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiWorkflow==='graph');
  assert.equal(await panel.locator('.ai-rail-heading > strong').textContent(),'그래프 작업대');
  assert.equal(await panel.getAttribute('data-ai-layout'),'side-by-side');

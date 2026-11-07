@@ -2308,7 +2308,7 @@ const TASKS = [
     intro: "좌표평면을 만들고 그 위에 그래프를 그립니다. 넓이가 이동 거리인 그 그림입니다.",
     figure: [{ pts: T.box(-30, -20, 56, 40), close: true, note: "좌표평면" }],
     parts: [
-      { tool: "GRAPH_MODAL", type: "coordplane", name: "좌표/함수 생성", selectName: "좌표/함수 생성", where: "왼쪽 맨 아래 '고급 기능'의 [좌표/함수 생성] 입니다.", target: "#graph-tool-open", selectDemo: { kind: "clicks", at: ["#graph-tool-open"] }, selectUntil: () => !!vis("#gm-tab-coord-btn"),
+      { tool: "GRAPH_MODAL", type: "coordplane", name: "그래프", selectName: "그래프 → 직접 만들기", where: "아래 [그래프]를 누르고 [직접 만들기]를 고릅니다.", target: "#graph-tool-open", selectDemo: { kind: "clicks", at: ["#graph-tool-open", '[data-graph-entry="direct"]'] }, selectUntil: () => !!vis("#gm-tab-coord-btn"),
         tip: "그래프 만들기 창에서 축 범위를 확인합니다", placeTarget: "#gm-confirm", placeDemo: { kind: "clicks", at: ["#gm-confirm"] }, place: "그래프 만들기 창에서 [만들기]를 누르세요." },
       { tool: "P", type: "polyline", name: "그래프(꺾은선)", where: "왼쪽 도구 3번째 줄 가운데입니다.",
         at: [[-26, 14], [-8, -8], [10, -8], [24, 14]], close: false,
@@ -3334,7 +3334,7 @@ function graphEditButton() { return selectedRichGraph() ? byText("그래프 편�
 const ADVANCED_GRAPH = {
   id:"advanced-graph", title:"5 · 좌표평면과 함수 그래프", desc:"물리 문제에 쓰는 좌표·함수 그래프 만들기", minutes:9, practice:true, keepPracticeOnFinish:true, next:["advanced-graph-annot"],
   steps:[
-    {chapter:"좌표평면",practice:true,title:"좌표·함수 생성을 열어 주세요",text:"왼쪽 고급 기능에서 ‘좌표/함수 생성’을 누릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"좌표/함수 생성을 눌러 주세요"}},
+    {chapter:"좌표평면",practice:true,title:"그래프 편집기를 열어 주세요",text:"아래 ‘그래프’를 누르고 ‘직접 만들기’를 고릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open",'[data-graph-entry="direct"]']}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"그래프 → 직접 만들기를 눌러 주세요"}},
     {chapter:"좌표평면",title:"물리 그래프의 축과 눈금을 검토합니다",text:"x축과 y축 범위, 격자 간격, 눈금 간격을 확인합니다. 기본값을 그대로 써도 됩니다. 확인한 뒤 [다음]을 누르세요.",target:()=>"#gm-tab-coord",allowNext:true},
     {chapter:"함수",title:"함수 탭을 열어 주세요",text:"함수 탭에서 두 식을 추가합니다.",target:()=>"#gm-tab-func-btn",demo:()=>({kind:"clicks",at:["#gm-tab-func-btn"]}),wait:{until:()=>!!vis("#gm-add-series"),hint:"함수 탭을 눌러 주세요"}},
     {chapter:"함수",title:"사인 함수를 입력합니다",text:"‘함수식 추가’를 누른 뒤 sin(x)를 입력합니다.",target:()=>"#gm-add-series",auto:{label:"sin(x) 입력하기",run:()=>addModalExpr("sin(x)")},wait:{until:()=>modalHasExpr("sin(x)"),hint:"sin(x) 계열이 칩으로 보이는지 확인해 주세요"}},

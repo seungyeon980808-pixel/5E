@@ -1,3 +1,4 @@
+const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -58,7 +59,7 @@ for(const scenario of ['sharing-same-id','sharing-same-id-rejected','sharing-che
         window.addEventListener('qa:graph-render-settled',done,{once:true});
       });
     });
-    await page.locator('[data-ai-graph-edit]').click();
+    await openAiWorkflow(page,'graph');await page.locator('[data-ai-insert-selected]').click();
     await page.locator('#gm-labelx').fill('수정한 시간');
     await page.locator('#gm-labelx').dispatchEvent('input');
     await page.locator('#gm-confirm').click();

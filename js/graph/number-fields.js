@@ -1,8 +1,9 @@
 // Rounded controls are a view of the model. Opening, focusing or committing an
 // untouched field must never turn an imported contact into a rounded coordinate.
+// 11-07 G6: 보이는 자리는 소수 둘째 자리(0.01). 원래 값은 사용자가 고칠 때까지 그대로 둔다.
 export function roundedGraphNumber(value) {
   if (!Number.isFinite(Number(value)) || String(value).trim() === '') return String(value ?? '');
-  const n = Math.round((Number(value) + Number.EPSILON) * 10) / 10;
+  const n = Math.round((Number(value) + Number.EPSILON) * 100) / 100;
   return String(Object.is(n, -0) ? 0 : n);
 }
 
@@ -68,8 +69,8 @@ export function installGraphNumberFields(root) {
     let value = Number(roundedGraphNumber(input.value));
     const min = input.min === '' ? -Infinity : Number(input.min);
     const max = input.max === '' ? Infinity : Number(input.max);
-    if (value < min) value = Math.ceil(min * 10) / 10;
-    if (value > max) value = Math.floor(max * 10) / 10;
+    if (value < min) value = Math.ceil(min * 100) / 100;
+    if (value > max) value = Math.floor(max * 100) / 100;
     const typed = input.value;
     input.value = roundedGraphNumber(value);
     records.set(input, { raw: input.value, display: input.value, dirty: false });

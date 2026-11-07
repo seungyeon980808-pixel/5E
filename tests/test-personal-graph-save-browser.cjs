@@ -17,7 +17,7 @@ h.withServer(async origin => {
       const { stateUrl } = h.runtime(page);
       const read = () => page.evaluate(async url => JSON.parse(JSON.stringify((await import(url)).state.get().objects)), stateUrl);
       const library = () => page.evaluate(async url => JSON.parse((await import(new URL('personal-objects.js?v=1.7.0-four-session-integration', url).href)).exportLibraryString() || '[]'), stateUrl);
-      await page.locator('#graph-tool-open').click();
+      await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
       await page.locator('#gm-tab-func-btn').click();
       await page.locator('#gm-add-series').click();
       await page.locator('#gm-expr').fill('x^2');
