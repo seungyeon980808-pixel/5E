@@ -14,7 +14,7 @@ import { prepareJointLabelVerification, retainFinalVerification } from './ai-lab
 import { SOURCE_LABEL_POLICY_VERSION } from './ai-editable-image-labels.js?v=1.7.0-four-session-integration';
 import { externalLabelDraftIds } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-label-background.js?v=1.7.0-four-session-integration';
-import { reframeCandidateToSource } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
+import { reframeCandidateToSource, restoreVanishedText } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
 
 export const IMAGE_LABEL_RUN_VERSION = '1.6.1';
 export const IMAGE_LABEL_GENERATION_HARNESS = 'rhwp-approved-first-v1';
@@ -312,6 +312,10 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         const frame = await reframeCandidateToSource({ candidateDataUrl: data, sourceDataUrl: source.data, labels: plan.labels, signal });
         if (frame.reframed) data = frame.data;
         metrics.reframe = { reframed: frame.reframed, reason: frame.reason || null, transform: frame.transform || null };
+        // 11-08 안전장치: AI가 라벨 목록에서 빠뜨려 새 그림에서 지워진 글자는 원본 픽셀로 제자리에 되붙인다(사라지지 않게).
+        const vanished = await restoreVanishedText({ candidateDataUrl: data, sourceDataUrl: source.data, labels: plan.labels, signal });
+        if (vanished.restored.length) data = vanished.data;
+        metrics.vanishedTextRestored = vanished.restored.length;
       } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { reframed: false, reason: String(error?.message || error).slice(0, 200) }; }
     }
   }

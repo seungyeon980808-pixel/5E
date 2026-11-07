@@ -101,3 +101,49 @@ export async function reframeCandidateToSource({ candidateDataUrl, sourceDataUrl
   if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
   return { data, reframed: true, transform: { sx, sy, tx, ty, outW, outH }, sourceBox, candidateBox };
 }
+
+// 11-08 안전장치(사용자 「라벨이 빠진다」): AI가 원본 글자를 라벨 목록에서 빠뜨리면, 새 그림에서는 그 글자가 지워지고
+// 라벨로도 돌아오지 않아 사라졌다(저울 그림 A·B 세 번 중 한 번). 판 비율을 맞춘 뒤 새 그림과 원본은 자리가 같으므로,
+// 원본의 글자 크기 잉크 덩어리 중 라벨 상자에 들지 않고 새 그림에서 비어 버린 곳을 찾아 원본 픽셀을 그 자리에 되붙인다.
+// 편집은 안 되지만 사라지지는 않는다. 결과 { data, restored:[{x,y,w,h}] } (0~1 원본 좌표).
+export async function restoreVanishedText({ candidateDataUrl, sourceDataUrl, labels = [], signal }) {
+  const [candidate, source] = await Promise.all([decode(candidateDataUrl, signal), decode(sourceDataUrl, signal)]);
+  const src = pixels(source), { width: W, height: H, data } = src, cand = pixels(candidate);
+  const inkAt = (d, w, x, y) => { const i = (y * w + x) * 4, a = d[i + 3] / 255; return (.2126 * d[i] + .7152 * d[i + 1] + .0722 * d[i + 2]) * a + 255 * (1 - a) < LUMINANCE; };
+  // 글자는 획이 붙어 있지 않으므로 2px 넓혀 한 덩어리로 본다.
+  const ink = new Uint8Array(W * H); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (inkAt(data, W, x, y)) ink[y * W + x] = 1;
+  const grown = new Uint8Array(W * H), R = Math.max(1, Math.round(Math.min(W, H) * .006));
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ink[y * W + x]) for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const yy = y + dy, xx = x + dx; if (yy >= 0 && yy < H && xx >= 0 && xx < W) grown[yy * W + xx] = 1; }
+  const seen = new Uint8Array(W * H), boxes = [];
+  for (let s = 0; s < W * H; s++) {
+    if (!grown[s] || seen[s]) continue;
+    let x0 = W, y0 = H, x1 = -1, y1 = -1, n = 0; const stack = [s]; seen[s] = 1;
+    while (stack.length) { const p = stack.pop(), x = p % W, y = (p / W) | 0; if (ink[p]) n++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      for (const q of [p - 1, p + 1, p - W, p + W]) if (q >= 0 && q < W * H && !seen[q] && grown[q] && Math.abs((q % W) - x) <= 1) { seen[q] = 1; stack.push(q); } }
+    const bw = x1 + 1 - x0, bh = y1 + 1 - y0;
+    // 글자 크기: 높이 2~12%, 폭 30% 이하, 너무 성기거나(선) 너무 빽빽하지(칠한 면) 않음
+    if (bh < H * .02 || bh > H * .12 || bw > W * .3 || bw < 2) continue;
+    const fill = n / (bw * bh); if (fill < .06 || fill > .6) continue;
+    boxes.push({ x: x0 / W, y: y0 / H, w: bw / W, h: bh / H, n });
+  }
+  const pad = .01, labelBoxes = labels.map(l => l?.typography?.bounds).filter(Boolean);
+  const covered = b => labelBoxes.some(l => b.x < l.x + l.w + pad && b.x + b.w > l.x - pad && b.y < l.y + l.h + pad && b.y + b.h > l.y - pad);
+  const CW = cand.width, CH = cand.height, restored = [];
+  for (const b of boxes) {
+    if (covered(b)) continue;
+    let m = 0; const cx0 = Math.floor(b.x * CW), cy0 = Math.floor(b.y * CH), cx1 = Math.ceil((b.x + b.w) * CW), cy1 = Math.ceil((b.y + b.h) * CH);
+    for (let y = cy0; y < cy1; y++) for (let x = cx0; x < cx1; x++) if (x >= 0 && y >= 0 && x < CW && y < CH && inkAt(cand.data, CW, x, y)) m++;
+    const expected = b.n * (CW * CH) / (W * H);
+    if (m < expected * .15) restored.push(b); // 새 그림에서 거의 비었다 → 사라진 글자
+  }
+  if (!restored.length) return { data: candidateDataUrl, restored };
+  const canvas = document.createElement('canvas'); canvas.width = CW; canvas.height = CH;
+  const g = canvas.getContext('2d'); g.drawImage(candidate, 0, 0); g.imageSmoothingQuality = 'high';
+  for (const b of restored) {
+    const e = .004, sx = Math.max(0, b.x - e), sy = Math.max(0, b.y - e), sw = Math.min(1 - sx, b.w + 2 * e), sh = Math.min(1 - sy, b.h + 2 * e);
+    g.fillStyle = '#fff'; g.fillRect(sx * CW, sy * CH, sw * CW, sh * CH);
+    g.drawImage(source, sx * W, sy * H, sw * W, sh * H, sx * CW, sy * CH, sw * CW, sh * CH);
+  }
+  const out = canvas.toDataURL('image/png'); canvas.width = canvas.height = 0;
+  return { data: out, restored: restored.map(({ n, ...b }) => b) };
+}
