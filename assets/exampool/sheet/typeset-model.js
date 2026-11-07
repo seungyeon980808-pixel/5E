@@ -788,3 +788,119 @@ export async function applyTightBogi(bytes,JSZip,{itemGap=BOGI_ITEM_GAP}={}){
   for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){const xml=await zip.file(name).async('string'),next=tightenBogiTallLines(xml,{itemGap});if(next!==xml){zip.file(name,next);changed=true;}}
   return changed?zip.generateAsync({type:'uint8array',compression:'DEFLATE'}):bytes;
 }
+// 11-07 사용자: 수능 틀 본문·선지에서 분수 같은 키 큰 수식 줄 위가 원본보다 2배 넘게 벌어졌다(17번 「p와 / y축」 2.1→5.1mm, 발문→선지 3.8→6.6mm).
+// 까닭은 학교 양식 끌어올리기(liftTallEquations)와 같다 — 엔진이 수식을 줄 맨 위보다 아래에 그려 위에 빈틈이 생긴다.
+// 수능 틀은 빈틈만큼 줄 높이를 줄이고 돌려주지 않는다(뒤 줄이 그만큼 올라온다). 본문은 문단 줄 배치를, 선지 표(①~⑤로 시작하는 칸)는 칸·표 높이까지 줄인다.
+// 〈보기〉 칸은 tightenBogiTallLines가 따로 맡는다. 다시 해도 같다(줄인 줄은 수식 높이와 달라져 다시 잡히지 않음).
+export function tightenKiceTallLines(xml,dropOf,planOf=()=>null){
+  const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
+  const paragraphs=[],stack=[];let top=0;
+  for(const m of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
+    if(m[0].startsWith('</')){const p=stack.pop();if(p)p.end=m.index;}
+    else{const p={start:m.index,body:m.index+m[0].length,depth:stack.length,para:stack.length?-1:top++};paragraphs.push(p);stack.push(p);}
+  }
+  const edits=[];
+  // 1) 수식 든 문단(안에 다른 문단이 없는 것): 키 큰 수식 줄을 끌어올린다.
+  const lift=new Map();// 문단 → 줄마다 줄인 양
+  for(const p of paragraphs){
+    if(p.end===undefined)continue;const body=xml.slice(p.body,p.end);if(body.includes('<hp:p ')||!body.includes('<hp:equation'))continue;
+    // 표 칸 안(선지·〈보기〉·자료 표)은 건드리지 않는다 — 11-07 사용자: 선지 표에 분수 칸과 보통 칸이 섞이면 분수 칸 글만 올라가 같은 줄이 어긋났다.
+    if(p.depth)continue;
+    const eqs=[...body.matchAll(/<hp:equation\b[^>]*>[\s\S]*?<\/hp:equation>/g)].map(m=>({unit:num(m[0].match(/^<hp:equation\b[^>]*>/)[0],'baseUnit')||1100,h:num(m[0].match(/<hp:sz\b[^>]*>/)?.[0]||'','height'),script:(m[0].match(/<hp:script>([\s\S]*?)<\/hp:script>/)?.[1]||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&')})).filter(e=>Number.isFinite(e.h)&&e.h>e.unit*1.4);
+    if(!eqs.length)continue;
+    const array=body.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);if(!array)continue;
+    const segs=[...array[0].matchAll(/<hp:lineseg\b[^>]*>/g)],at=p.body+array.index;
+    const heights=segs.map(m=>num(m[0],'vertsize'));
+    const others=heights.filter(v=>!eqs.some(e=>Math.abs(e.h-v)<=40)),floor=Math.max(Math.min(...others,Infinity)===Infinity?0:Math.min(...others),Math.round(Math.max(...eqs.map(e=>e.unit))/0.9));
+    const cuts=[];let shift=0;
+    for(const [i,m] of segs.entries()){
+      const v=heights[i],near=eqs.filter(e=>Math.abs(e.h-v)<=40);let tag=m[0].replace(/\bvertpos="-?\d+"/,`vertpos="${num(m[0],'vertpos')-shift}"`),r=0;
+      if(near.length){
+        // 본문: 엔진이 그린 자리(실측)로 수식 위·아래 빈 곳을 보통 줄 사이(G)에 맞춘다. 줄 높이를 L 줄이면 수식이 0.85L 올라오고,
+        // 줄 사이를 L−y 늘리면 다음 줄은 y만 올라온다. 문단 끝 줄은 다음 줄이 다른 문단이라 줄인 만큼 그대로 올린다(y=L).
+        const plan=planOf(p.para,i,segs.length),sp=num(m[0],'spacing')||0;
+        // 문단 첫 줄은 엔진이 문단 모양으로 줄 자리를 다시 잡아 손대면 아래만 벌어지거나(올리면) 다음 줄과 겹쳤다(11-07 p2_2024_07_13 등) — 그대로 둔다.
+        if(i>0&&plan&&Number.isFinite(plan.above)&&plan.above>plan.gap){
+          // 수식은 줄 맨 위보다 더 올라가지 않는다(엔진) — 그 이상 줄이면 글자만 올라가 수식과 어긋난다. drop(엔진 실측)까지만.
+          const drop=Math.min(...near.map(e=>dropOf(e.script,e.unit)));
+          const L=Math.max(0,Math.min(v-floor,Math.round(drop/0.85),Math.round((plan.above-plan.gap)/0.85)));
+          // 다음 줄은 수식 아래가 보통 줄 사이만큼 남도록 올린다(지금보다 좁아지면 그대로 둔다).
+          let y=Number.isFinite(plan.below)?Math.round(plan.below+L*.85-plan.gap):L;y=Math.max(0,Math.min(y,sp+L));
+          if(L>0||y>0){tag=tag.replace(/\bvertsize="-?\d+"/,`vertsize="${v-L}"`).replace(/\btextheight="-?\d+"/,`textheight="${v-L}"`).replace(/\bbaseline="-?\d+"/,`baseline="${Math.round((v-L)*.85)}"`).replace(/\bspacing="-?\d+"/,`spacing="${sp+L-y}"`);r=y;}
+        }}
+      cuts.push(r);if(tag!==m[0])edits.push([at+m.index,m[0],tag]);shift+=r;
+    }
+    if(!shift)continue;
+    lift.set(p,shift);
+  }
+  // 2) 한 줄 선지 표에서 모든 칸이 분수(키 큰 수식)인 것만: 분수 위 빈 곳을 줄인다(11-07 사용자 「글 선지처럼 깔끔하게」).
+  //    분수 칸 줄을 drop만큼 끌어올리고(줄 높이 −L) 모든 칸·표 높이를 L 줄인다. 보통 칸이 섞인 줄(①2 ②7/3)은 엔진이 보통 칸 글 자리를
+  //    줄 배치로 옮기지 않아(실측: 칸 아래로 넘침) 그대로 둔다. 여러 행 표도 그대로.
+  for(const host of paragraphs.filter(p=>!p.depth&&p.end!==undefined)){
+    const body=xml.slice(host.body,host.end);if((body.match(/<hp:tbl\b/g)||[]).length!==1||!body.includes('<hp:equation'))continue;
+    const tbl=host.body+body.indexOf('<hp:tbl'),end=xml.indexOf('</hp:tbl>',tbl),cells=[...xml.slice(tbl,end).matchAll(/<hp:tc\b[\s\S]*?<\/hp:tc>/g)].map(m=>({at:tbl+m.index,xml:m[0]}));
+    const text=c=>c.replace(/<hp:equation\b[\s\S]*?<\/hp:equation>/g,'').replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'').replace(/<[^>]+>/g,'');
+    if(cells.length<2||!cells.every(c=>/^\s*[①②③④⑤]/.test(text(c.xml))))continue;
+    if(new Set(cells.map(c=>num(c.xml.match(/<hp:cellAddr\b[^>]*>/)?.[0]||'','rowAddr'))).size!==1)continue;
+    const info=cells.map(c=>{const segs=[...c.xml.matchAll(/<hp:lineseg\b[^>]*>/g)];if(segs.length!==1)return null;
+      const eq=[...c.xml.matchAll(/<hp:equation\b[^>]*>[\s\S]*?<\/hp:equation>/g)].map(m=>({unit:num(m[0].match(/^<hp:equation\b[^>]*>/)[0],'baseUnit')||1100,h:num(m[0].match(/<hp:sz\b[^>]*>/)?.[0]||'','height'),script:(m[0].match(/<hp:script>([\s\S]*?)<\/hp:script>/)?.[1]||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&')}));
+      const v=num(segs[0][0],'vertsize'),tall=eq.filter(e=>e.h>e.unit*1.4&&Math.abs(e.h-v)<=40);return {...c,seg:segs[0][0],segAt:c.at+segs[0].index,v,tall};});
+    if(info.some(x=>!x||!x.tall.length))continue;
+    const drops=info.map(x=>Math.min(...x.tall.map(e=>dropOf(e.script,e.unit))));
+    // 칸·표는 0.7L만 줄인다 — L 다 줄이면 분모가 칸 아래 선에 닿았다(11-07 31문항 눈 확인).
+    const L=Math.round(Math.min(...drops)/0.85),cut=Math.round(L*.7);if(!(L>40))continue;
+    for(const x of info){
+      let tag=x.seg;
+      {const n=x.v-L;tag=tag.replace(/\bvertsize="-?\d+"/,`vertsize="${n}"`).replace(/\btextheight="-?\d+"/,`textheight="${n}"`).replace(/\bbaseline="-?\d+"/,`baseline="${Math.round(n*.85)}"`);}
+      if(tag!==x.seg)edits.push([x.segAt,x.seg,tag]);
+      const size=x.xml.match(/<hp:cellSz\b[^>]*>/)?.[0];if(size)edits.push([x.at+x.xml.indexOf(size),size,size.replace(/\bheight="(\d+)"/,(m,v)=>`height="${Math.max(0,Number(v)-cut)}"`)]);
+    }
+    const sz=xml.slice(tbl,end).match(/<hp:sz\b[^>]*>/);if(sz)edits.push([tbl+sz.index,sz[0],sz[0].replace(/\bheight="(\d+)"/,(m,v)=>`height="${Math.max(0,Number(v)-cut)}"`)]);
+    lift.set(host,(lift.get(host)||0)+cut);
+  }
+  // 3) 줄인 만큼 뒤 본문 문단 줄 배치(vertpos)를 올린다(같은 문단 안은 1)에서 맞춤).
+  let carry=0;
+  for(const p of paragraphs.filter(p=>!p.depth&&p.end!==undefined)){
+    if(carry){const body=xml.slice(p.body,p.end),last=body.lastIndexOf('<hp:linesegarray>'),inner=body.lastIndexOf('</hp:p>');
+      if(last>inner){const arr=body.slice(last,body.indexOf('</hp:linesegarray>',last));
+        for(const m of arr.matchAll(/<hp:lineseg\b[^>]*>/g)){const at=p.body+last+m.index,done=edits.find(e=>e[0]===at),old=done?done[2]:m[0],tag=old.replace(/\bvertpos="(-?\d+)"/,(x,v)=>`vertpos="${Number(v)-carry}"`);
+          if(done)done[2]=tag;else edits.push([at,m[0],tag]);}}}
+    carry+=lift.get(p)||0;
+  }
+  for(const [index,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,index)+next+xml.slice(index+old.length);
+  return xml;
+}
+export async function applyKiceTallLines(bytes,JSZip,Document){
+  const zip=await JSZip.loadAsync(new Uint8Array(bytes));let changed=false;
+  const document=new Document(bytes),lines=new Map(),equations=[];
+  try{
+    // 줄마다 실제 그려진 위치(본문만) — 수식 아래와 다음 줄 사이를 잰다(applyLiftTallEquations와 같은 방법).
+    for(let page=0;page<document.pageCount();page++){
+      for(const r of JSON.parse(document.getPageTextLayout(page)).runs.filter(r=>!r.cellPath?.length)){
+        const key=r.secIdx+':'+r.paraIdx,list=lines.get(key)||[];
+        const same=list.find(l=>l.page===page&&Math.abs(l.y-r.y)<.2),f=r.fontSize||r.h;
+        if(same){same.h=Math.max(same.h,r.h);same.f=Math.max(same.f,f);}else list.push({page,y:r.y,h:r.h,f});lines.set(key,list);
+      }
+      equations.push(...JSON.parse(document.getPageControlLayout(page)).controls.filter(c=>c.type==='equation'&&!c.cellPath?.length).map(c=>({...c,page})));
+    }
+    for(const list of lines.values())list.sort((a,b)=>a.page-b.page||a.y-b.y);
+    for(const name of Object.keys(zip.files).filter(n=>/^Contents\/section\d+\.xml$/.test(n))){
+      const section=Number(name.match(/section(\d+)/)[1]);
+      // 본문 줄을 쪽마다 위에서부터 늘어놓는다(문단 경계를 넘어 앞 줄을 찾으려고).
+      const flow=[...lines.entries()].filter(([k])=>k.startsWith(section+':')).flatMap(([k,list])=>list.map((l,i)=>({...l,para:Number(k.split(':')[1]),i,count:list.length}))).sort((a,b)=>a.page-b.page||a.y-b.y);
+      const gaps=[];for(let k=1;k<flow.length;k++){const a=flow[k-1],b=flow[k];if(a.page===b.page&&a.para===b.para&&a.h<a.f*1.4&&b.h<b.f*1.4)gaps.push(b.y-a.y-a.f);}
+      gaps.sort((a,b)=>a-b);const gap=gaps.length?gaps[gaps.length>>1]:null;
+      const planOf=(para,line,count)=>{
+        const at=flow.findIndex(l=>l.para===para&&l.i===line);if(at<0||gap===null||flow[at].count!==count)return null;
+        const here=flow[at],prev=flow[at-1],next=line+1<count?flow[at+1]:null;if(!prev||prev.page!==here.page||prev.h>=prev.f*1.4)return null;
+        const own=equations.filter(e=>e.secIdx===section&&e.paraIdx===para&&e.page===here.page&&e.y>=here.y-.8&&(!next||e.y<next.y-.8)&&e.h>here.f*1.4);if(!own.length)return null;
+        // 키 큰 수식(분수) 잉크는 상자 높이의 6%~83%(11-07 화면 실측: 2023 6월 물Ⅰ 14번 ¼mg, 2026 수능 물Ⅱ 17번 1/(2√3)).
+        const top=Math.min(...own.map(e=>e.y+e.h*.06)),bottom=Math.max(...own.map(e=>e.y+e.h*.83));
+        return {gap:gap*75,above:(top-(prev.y+prev.f))*75,below:next&&next.page===here.page?(next.y-bottom)*75:-Infinity};
+      };
+      const xml=await zip.file(name).async('string'),next=tightenKiceTallLines(xml,(script,unit)=>equationDrop(Document,script,unit),planOf);
+      if(next!==xml){zip.file(name,next);changed=true;}
+    }
+  }finally{document.free();}
+  return changed?zip.generateAsync({type:'uint8array',compression:'DEFLATE'}):bytes;
+}

@@ -13,7 +13,7 @@ import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '../../../js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
-import {applyTightBogi,questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,anchorRaisedTables,anchorRaisedTablesOpen,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
+import {applyTightBogi,applyKiceTallLines,questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,anchorRaisedTables,anchorRaisedTablesOpen,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,frameProfile,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
@@ -173,7 +173,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       // 학교 틀: 키 큰 수식 줄을 끌어올린다(수식이 줄 맨 위에, 다음 줄은 그대로 — applyLiftTallEquations).
       if(stdv.source?.kind==='hwp')bytes=await applyLiftTallEquations(bytes,JSZip,Document);
       // 수능 틀: 〈보기〉 분수 줄 사이를 원본처럼(잉크 기준) — 11-06 applyTightBogi.
-      else bytes=await applyTightBogi(bytes,JSZip);
+      // 수능 틀: 본문·선지 키 큰 수식 줄 위 빈틈을 원본처럼 — 11-07 applyKiceTallLines.
+      else bytes=await applyTightBogi(await applyKiceTallLines(bytes,JSZip,Document),JSZip);
       if(plan.warnings.length&&!quiet)message(plan.warnings.join(' '));
     }finally{d.free();}
     return {bytes,owners};

@@ -101,3 +101,32 @@ test('라벨 이름 글꼴(11-07 안 B): 한 글자 이름만 명조, 한글 이
   const manual = runs(mixed('Arial, sans-serif'));
   assert.equal(manual.find(r => r.text === 'Q').font.fontFamily, 'Arial, sans-serif', '사람이 고른 글꼴은 그대로');
 });
+
+// 11-07 수능 틀 본문·선지 분수 줄 위 빈틈(17번 「p와 / y축」 2.1→5.1mm, 발문→선지 3.8→6.6mm).
+const top = (segs, eq = '') => `<hp:p id="0" paraPrIDRef="1" styleIDRef="0"><hp:run charPrIDRef="1"><hp:t>글</hp:t>${eq}</hp:run><hp:linesegarray>${segs.join('')}</hp:linesegarray></hp:p>`;
+const feq = h => `<hp:equation id="1" baseLine="85" baseUnit="1150"><hp:script>\\frac{1}{4}mg</hp:script><hp:sz width="2420" widthRelTo="ABSOLUTE" height="${h}" heightRelTo="ABSOLUTE"/></hp:equation>`;
+test('수능 틀 본문 분수 줄: 수식은 drop까지만 올리고, 다음 줄은 수식 아래가 보통 줄 사이만큼 남게 당긴다', async () => {
+  const { tightenKiceTallLines } = await import('../assets/exampool/sheet/typeset-model.js');
+  const xml = '<hs:sec>' + top([seg(0, 1150, 978, 690), seg(1840, 2806, 2385, 690), seg(5336, 1150, 978, 690)], feq(2806)) + top([seg(7176, 1150, 978, 690)]) + '</hs:sec>';
+  const out = tightenKiceTallLines(xml, () => 690, (para, line) => para === 0 && line === 1 ? { gap: 517, above: 1380, below: 310 } : null);
+  const segs = [...out.matchAll(/<hp:lineseg\b[^>]*>/g)].map(m => ({ pos: Number(m[0].match(/vertpos="(-?\d+)"/)[1]), size: Number(m[0].match(/vertsize="(\d+)"/)[1]), sp: Number(m[0].match(/spacing="(-?\d+)"/)[1]) }));
+  const L = Math.round(690 / 0.85), y = Math.round(310 + L * .85 - 517);
+  assert.equal(segs[1].size, 2806 - L, '분수 줄 높이를 drop÷0.85만큼(수식이 줄 맨 위로)');
+  assert.equal(segs[1].sp, 690 + L - y, '줄인 높이 중 y만 빼고 줄 사이로 돌려줌');
+  assert.equal(segs[3].pos, 7176 - y, '다음 문단도 y만큼 올라옴');
+  assert.equal(tightenKiceTallLines(xml, () => 690, () => null), xml, '실측이 없으면 그대로');
+});
+test('수능 틀 선지 표: 모든 칸이 분수인 한 줄 선지만 당기고, 섞인 선지·다른 표는 그대로', async () => {
+  const { tightenKiceTallLines } = await import('../assets/exampool/sheet/typeset-model.js');
+  const cell = (text, eq, col) => `<hp:tc><hp:subList><hp:p id="9"><hp:run><hp:t>${text}</hp:t>${eq}</hp:run><hp:linesegarray>${seg(0, eq ? 2806 : 1150, eq ? 2385 : 978, 576)}</hp:linesegarray></hp:p></hp:subList><hp:cellAddr colAddr="${col}" rowAddr="0"/><hp:cellSz width="6123" height="3600"/></hp:tc>`;
+  const choices = cells => `<hs:sec><hp:p id="0"><hp:run><hp:tbl id="2"><hp:sz width="30566" height="3600"/><hp:tr>${cells}</hp:tr></hp:tbl></hp:run></hp:p></hs:sec>`;
+  const mixed = choices(cell('① 2', '', 0) + cell('② ', feq(2806), 1));
+  assert.equal(tightenKiceTallLines(mixed, () => 690, () => null), mixed, '보통 칸이 섞인 선지 줄은 그대로');
+  const notChoice = choices(cell('ㄱ. ', feq(2806), 0) + cell('ㄴ. ', feq(2806), 1));
+  assert.equal(tightenKiceTallLines(notChoice, () => 690, () => null), notChoice, '선지가 아닌 표는 그대로');
+  // 모든 칸이 분수인 한 줄 선지: 줄·칸·표 높이를 같이 줄인다(11-07 「글 선지처럼 깔끔하게」).
+  const out = tightenKiceTallLines(choices(cell('① ', feq(2806), 0) + cell('② ', feq(2806), 1)), () => 690, () => null), L = Math.round(690 / 0.85), cut = Math.round(L * .7);
+  assert.deepEqual([...out.matchAll(/<hp:cellSz [^>]*height="(\d+)"/g)].map(m => Number(m[1])), [3600 - cut, 3600 - cut]);
+  assert.equal(Number(out.match(/<hp:sz [^>]*height="(\d+)"/)[1]), 3600 - cut);
+  assert.deepEqual([...out.matchAll(/vertsize="(\d+)"/g)].map(m => Number(m[1])), [2806 - L, 2806 - L]);
+});
