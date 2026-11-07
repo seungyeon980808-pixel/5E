@@ -79,7 +79,7 @@ async function install(page) {
       await change('#gm-custom-dash', 3.123456789, 'input'); await change('#gm-custom-gap', 1, 'input');
       assert.equal(await page.locator('#gm-engine-dash-pattern').inputValue(), '');
       await change('#gm-engine-dash-pattern', '1.7, .6, .25, .4'); await page.locator('#gm-confirm').click();
-      const custom = curveOf(await snap()); assert.deepEqual(custom.dashPattern, [1.7, .6, .25, .4]); assert.equal(custom.dashLength, 3.1, 'Explicit number edits commit one decimal; pattern text remains exact');
+      const custom = curveOf(await snap()); assert.deepEqual(custom.dashPattern, [1.7, .6, .25, .4]); assert.equal(custom.dashLength, 3.12, 'Explicit number edits commit two decimals (11-07 decision); pattern text remains exact');
       await open(); await page.locator('#gm-confirm').click(); assert.deepEqual(curveOf(await snap()), custom);
       scenarios.push('presets replace overrides; simple lengths clear complex pattern; arbitrary saved pattern remains exact');
 
@@ -110,7 +110,7 @@ async function install(page) {
       await open(); await page.locator('#gm-tab-annot-btn').click(); assert.equal(await page.locator('#gm-typed-properties details[open]').count(), 0); await select(1); await page.locator('.gm-annotation-editor:visible summary').click();
       await change('[aria-label="표시 1 끝 y"]', 7.123456789); await select(4); await page.locator('[aria-label="표시 4 삭제"]').click();
       assert.equal(await page.locator('.gm-annotation-editor:visible').count(), 0); await page.locator('#gm-confirm').click();
-      const edited = await snap(); assert.equal(planeOf(edited).graphAnnotations[0].to.y, 7.1, 'Explicit endpoint number edit commits one decimal'); assert.equal(planeOf(edited).graphAnnotations.length, 3);
+      const edited = await snap(); assert.equal(planeOf(edited).graphAnnotations[0].to.y, 7.12, 'Explicit endpoint number edit commits two decimals (11-07)'); assert.equal(planeOf(edited).graphAnnotations.length, 3);
       assert.deepEqual(planeOf(edited).graphAnnotations[1], planeOf(original).graphAnnotations[1]); assert.deepEqual(planeOf(edited).graphAnnotations[2], planeOf(original).graphAnnotations[2]);
       await page.evaluate(async version => { const { state } = await import('/js/state.js' + version); const { undo, redo } = await import('/js/transform.js' + version); undo(state); redo(state); }, version);
       assert.deepEqual(await snap(), edited);

@@ -67,7 +67,7 @@ test('general native typography preserves roles, bounds, rotation, pointer editi
       const defaults = state.get().objects.filter(o => o.aiAutoLabel).map(o => ({
         text: labelTypographyText(o), fontSize: o.fontSize, fontFamily: o.fontFamily,
         weight: o.fontWeight, italic: o.italic, tracking: o.letterSpacing, lineHeight: o.labelLineHeight,
-        sourceBounds: structuredClone(o.aiLabelSourceBounds), rotation: o.rotation,
+        sourceBounds: structuredClone(o.aiLabelSourceBounds), rotation: o.rotation, runs: o.labelRuns?.map(r => r.role),
       }));
       // Cosmetic source observations must not set display styles. Separately
       // seed explicit saved user styles so their rendering/edit/roundtrip
@@ -118,7 +118,8 @@ test('general native typography preserves roles, bounds, rotation, pointer editi
       assert.equal(native.rotation, index === 6 ? -30 : 0);
       if ([4, 5, 8].includes(index)) assert.equal(native.fontFamily, result.standardFont);
       // 11-07 사용자 결정(안 B): 한 글자 이름 A는 물체 라벨 도구와 같은 명조.
-      if (index === 3) assert.equal(native.fontFamily, result.nameFont);
+      // 11-08: 글자 조각(runs)으로 나눈 라벨은 조각 종류가 글꼴을 정한다 — 이름 조각이면 명조.
+      if (index === 3) assert.ok(native.fontFamily === result.nameFont || (native.runs?.length && native.runs.every(role => role === 'name')), JSON.stringify(native));
     }
     assert.equal(result.defaults[8].italic, false, 'source cosmetic italic is an observation');
     for (const m of result.metrics) {
@@ -197,7 +198,12 @@ test('general native typography preserves roles, bounds, rotation, pointer editi
         assert.equal(committed.object.rawSource ?? committed.object.source ?? committed.object.text, inlineCommitText);
         assert.equal(committed.undo, before.undo + 1, 'inline confirmation commits one history entry');
         for (const field of ['aiLabelSourceBounds','aiParentImageId','aiTaskId','aiCandidateId','fontFamily','fontSize','fontWeight','letterSpacing','labelLineHeight','labelScriptStyles']) assert.deepEqual(committed.object[field],before.object[field],`inline edit preserves ${field}`);
-        if (before.object.labelRuns) assert.deepEqual(committed.object.labelRuns.slice(0,2),before.object.labelRuns.slice(0,2),'unchanged semantic runs survive inline commit');
+        // 11-08: 끝에 덧붙인 글자는 같은 종류의 마지막 조각에 이어 붙으므로 조각 종류와 앞부분이 그대로인지만 본다.
+        if (before.object.labelRuns) {
+          const kept = before.object.labelRuns.slice(0,2), now = committed.object.labelRuns.slice(0,kept.length);
+          assert.deepEqual(now.map(r => r.role), kept.map(r => r.role), 'unchanged semantic runs survive inline commit');
+          kept.forEach((run, i) => assert.ok(now[i].text.startsWith(run.text), 'unchanged semantic runs survive inline commit'));
+        }
         await page.evaluate(async () => { const {undo}=await import('/js/transform.js?v=1.7.0-four-session-integration');undo(window.__typographyQA.state); });
         assert.deepEqual((await snapshot()).object,before.object,'inline undo restores the complete source object');
         await page.evaluate(async () => { const {redo}=await import('/js/transform.js?v=1.7.0-four-session-integration');redo(window.__typographyQA.state); });

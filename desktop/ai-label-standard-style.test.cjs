@@ -102,7 +102,8 @@ test('name runs render in the saved Gothic font rather than silently switching t
       typography: { ...label.typography, role: 'name', runs: [{ text, role: 'name', contentMode: 'plain' }] } }],
       image: { id: 'image', x: 0, y: 0, w: 100, h: 100 }, idFactory: () => 'label' })[0];
     assert.equal(object.fontFamily, state.DEFAULT_TEXT_FONT);
-    assert.equal(object.labelFontOverride, true);
+    // 11-08: 한글 조각은 글자 조각(runs)으로 돋움이 정해지므로 고정 표시 없이도 돋움이다.
+    if (!object.aiScriptRuns) assert.equal(object.labelFontOverride, true);
     for (const run of measureLabelTypography(object).lines.flatMap(line => line.runs)) {
       assert.equal(run.font.fontFamily, state.DEFAULT_TEXT_FONT);
     }

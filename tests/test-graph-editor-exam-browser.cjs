@@ -42,7 +42,7 @@ const out = process.env.EVIDENCE_DIR || path.resolve(__dirname,'../.omo/evidence
  await open();assert.equal(await page.locator('#gm-tickbase-x').inputValue(),'t_0');assert.equal(await page.locator('#gm-tickbase-y').inputValue(),'F');await page.locator('#gm-confirm').click();
  report.scenarios.push({name:'imported numeric intervals and multiple labels edit and reopen without changing curve data or geometry',pass:true});
  await open();await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-sub-poly').click();await page.locator('#gm-chips [data-series-index="0"]').click();if(!await page.locator('#gm-point-detail').evaluate(el=>el.open))await page.locator('#gm-point-detail summary').click();
- const arrowSize=page.getByRole('spinbutton',{name:'화살촉 1 길이(mm)',exact:true});assert.equal(Number(await arrowSize.inputValue()),1.1);
+ const arrowSize=page.getByRole('spinbutton',{name:'화살촉 1 길이(mm)',exact:true});assert.equal(Number(await arrowSize.inputValue()),1.13);
  await arrowSize.fill('0');await arrowSize.dispatchEvent('change');await page.locator('#gm-confirm').click();assert.equal(await page.locator('#graph-modal-overlay').isVisible(),true);assert.equal((await snap()).find(o=>o.type==='funcgraph').arrowSpecs[0].strokeWidth,.25);
  assert.equal(await arrowSize.inputValue(),'0','invalid arrow draft remains available for correction');
  assert.equal(await arrowSize.evaluate(n=>n===document.activeElement),true,'confirmation focuses the invalid field');

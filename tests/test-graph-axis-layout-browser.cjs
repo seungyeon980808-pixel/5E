@@ -84,7 +84,7 @@ async function install(page) {
       await page.locator('[aria-label="영역 1 화면에서 조절"]').click();assert.equal(await page.locator('.gm-region-editor:visible').count(),1);
       assert.equal(await page.evaluate(()=>document.activeElement.getAttribute('aria-label')),'영역 1 화면에서 조절');
       assert.equal(await page.locator('[aria-label="영역 1 level"]').inputValue(),'185');
-      assert.equal(await page.locator('[aria-label="영역 1 opacity"]').inputValue(),'0.7','Imported opacity has a rounded display');
+      assert.equal(await page.locator('[aria-label="영역 1 opacity"]').inputValue(),'0.73','Imported opacity has a two-decimal display (11-07)');
       assert.equal(edited.find(o=>o.regionSpec?.id==='r0').regionSpec.opacity,.73,'Display formatting preserves exact imported opacity');
       assert.equal(await page.locator('.gm-region-editor:visible details[open]').count(),0);
       await shoot('region-selected');

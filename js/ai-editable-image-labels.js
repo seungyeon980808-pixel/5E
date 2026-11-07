@@ -277,7 +277,8 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       .filter(span => names.has(span.text)).map(span => ({ start: span.start, end: span.end, kind: span.kind, role: 'name' })) : [];
     const scriptStyles = normalizeFormulaScriptStyles(label.text, typography.scriptStyles || inferredScripts);
     // 11-07: 손으로 고친 서식이 없는 라벨은 글자 자체로 한글·영어·영어 수식 조각을 나눠 글꼴을 정한다(scriptLabelRuns).
-    const scriptRuns = !label.manualStyle && !formula && !scriptStyles.length ? scriptLabelRuns(label.text, typography.role, typography.runs) : null;
+    // 그려진 모습만 고정한 상태(defaultFontPinned, 위치만 옮김 등)도 조각 글꼴을 그대로 쓴다 — 옮겼다고 글꼴이 바뀌면 안 됨(11-08).
+    const scriptRuns = (!label.manualStyle || label.manualStyle.defaultFontPinned) && !formula && !scriptStyles.length ? scriptLabelRuns(label.text, typography.role, typography.runs) : null;
     const object = {
       id: idFactory(),
       type: 'labeler',

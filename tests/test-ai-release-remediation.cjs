@@ -161,6 +161,8 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
   const bindingHelpers = sourcePart('  const isAdoptableImageLabelCandidate =', '  const reviewSourceLabelCandidate =');
   const buttonHelper = sourcePart('  const syncEditableLabelPlanButton =', '  const attachEditableLabelPlan =');
   const labelViewHelper = sourcePart('  function labelPreviewState(item) {', '  function ensureCompositePreviewControl(item) {');
+  // 11-07: 그래프 결과는 편집기로 보내는 갈래(graphToEditor)가 생겼다 — 이 시나리오는 그림 결과라 해당 없음.
+  context.graphToEditor = () => false;
   vm.runInNewContext(`${bindingHelpers}\n${buttonHelper}\n${labelViewHelper}\n${pasteSource}\n${handler}\n};`, context);
   context.materializeCandidate = materializer.createCandidateMaterializer(context.state, {
     insertImageFromSrc: context.insertImageFromSrc,
