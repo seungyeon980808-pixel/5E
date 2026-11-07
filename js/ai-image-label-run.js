@@ -129,7 +129,7 @@ export async function executeImageLabelRun(options = {}) {
 async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, request = '', observer, raster, selection,
   artboard, signal, observation, onObservation = () => {}, onPhase = () => {}, onSourceCandidates, onRaster = () => {}, cache,
   bypassCache = false, preciseRestore = false, verifyOnly = false, previousCandidate, localRestore,
-  generationInstructions = request, generationSource, backgroundCache, previousCandidates = [] } = {}) {
+  generationInstructions = request, generationSource, backgroundCache, previousCandidates = [], graphLabels = 'route' } = {}) {
   const started = performance.now();
   const labelSelection = { ...selection, model: 'gpt-6-luna', effort: 'medium' };
   const workflow = normalizeImageLabelWorkflow(rawWorkflow, { requireExplicit: true });
@@ -206,6 +206,22 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       return observer.analyze({ ...labelSelection, attachments:[{...attachments[0],sourceTextCandidates:source.sourceTextCandidates}], request, workflow,signal,
         onSourceCandidates:async receipt=>{metrics.timings.sourceCandidates=Math.round(receipt.totalMs);metrics.sourceCandidates={sets:receipt.candidateSets.map(set=>({sourceRef:set.sourceRef,count:set.candidates.length})),errors:receipt.errors};await onSourceCandidates?.(receipt);} });
     });
+  }
+  // 11-08: 새로 그리는 변환(일반)은 그래프 축·눈금 글자까지 그림에서 지운다. 그 글자는 라벨로 돌아오지 않아 사라졌다.
+  // 기본은 그림을 그리기 전에 멈추고 그래프 복원으로 넘긴다(AI_GRAPH_FIGURE). 사용자가 같은 작업에서 다시 변환하면(graphLabels:'restore')
+  // 그래프·세로쓰기 글자도 일반 라벨로 살려 이미지로 변환한다 — 어느 쪽이든 글자가 사라지지 않게.
+  const deferredLabels = (plan.excludedLabels || []).filter(label => label.scope === 'graph' || label.scope === 'non_graph_vertical_deferred');
+  if (workflow.imageKind === 'general' && workflow.labelResult === 'restore-editable' && !verifyOnly && deferredLabels.length) {
+    if (graphLabels === 'restore') {
+      const restored = deferredLabels.map(label => { const { owner, ...rest } = clone(label); return { ...rest, scope: 'general', ...(label.scope === 'graph' ? { restoredGraphLabel: true } : { restoredVerticalLabel: true }) }; });
+      plan = { ...plan, labels: [...plan.labels, ...restored], excludedLabels: (plan.excludedLabels || []).filter(label => !deferredLabels.includes(label)) };
+    } else if (deferredLabels.some(label => label.scope === 'graph')) {
+      await onObservation(clone({ version: IMAGE_LABEL_RUN_VERSION, contractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION, workflowVersion: workflow.version, imageKind: workflow.imageKind, sourceSha256, sourceFrame,
+        planSha256: await imageLabelDigest(JSON.stringify(plan)), plan: clone(plan), localRestoreAttempted: false }));
+      const error = new Error('그래프가 있는 그림이라 그래프 복원으로 옮겼습니다.');
+      error.code = 'AI_GRAPH_FIGURE'; error.graphLabelCount = deferredLabels.length;
+      throw error;
+    }
   }
   const planSha256 = await imageLabelDigest(JSON.stringify(plan));
   const observationState = { version: IMAGE_LABEL_RUN_VERSION, contractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION, workflowVersion: workflow.version, imageKind: workflow.imageKind, sourceSha256, sourceFrame, planSha256, plan: clone(plan),

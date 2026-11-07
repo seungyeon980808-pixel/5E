@@ -3559,6 +3559,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   };
 
   const renderTaskTabs = () => {
+    // 11-08: 다른 길(그래프 넘기기 등)로 작업 종류가 바뀌어도 창 제목·모양을 맞춘다.
+    queueMicrotask(() => { try { syncSurfaceTitle(); } catch {} });
     if (!tabList) return;
     panel.dataset.aiResultCount = String([...taskTabs.values()].filter(tab => pendingResult(tab)).length);
     // 11-07: 그래프 작업의 결과 알림은 아래 「그래프」 단추에, 이미지 작업은 「AI 이미지」 단추에 띄운다.
@@ -4918,7 +4920,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
       const result = await executeImageLabelRun({ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection,
         generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
-        artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation,
+        artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphLabelsRestore ? 'restore' : 'route',
         onObservation: async observation => {
           if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
           tab.sourceLabelObservation = structuredClone(observation); currentRunInput.sourceLabelObservation = structuredClone(observation);
@@ -4988,6 +4990,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (candidate.reviewState === 'passed') window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: candidate.id } }));
       }
     } catch (error) {
+      // 11-08: 그래프가 든 그림 → 그림을 그리기 전에 멈췄다. 보통 실패 처리(작업 상태·로딩 정리)를 그대로 거친 뒤
+      // 같은 그림으로 그래프 복원 창을 연다. 이 작업에서 다시 변환하면 그래프 글자도 라벨로 살린다(graphLabelsRestore).
+      if (error?.code === 'AI_GRAPH_FIGURE' && isCurrent()) {
+        const tab = taskTabs.get(originatingTaskId); if (tab) tab.graphLabelsRestore = true;
+        error.message = '그래프가 있는 그림이라 그래프 복원으로 옮겼습니다 · 이미지로 바꾸려면 이 작업에서 다시 「변환하기」(그래프 글자도 라벨로 살림)';
+        const hwpTarget = hwpInPlaceTargets.get(originatingTaskId), reference = { dataUrl: sources[0].data, name: sources[0].name || '원본' };
+        setTimeout(() => window.dispatchEvent(new CustomEvent('5e:ai-open-reference', { detail: { reference, conversionKind: 'graph', ...(hwpTarget ? { hwpTarget: structuredClone(hwpTarget) } : {}) } })), 400);
+        for (const ms of [900, 1800, 3500]) setTimeout(() => { try { syncSurfaceTitle(); } catch {} }, ms);
+      }
       if (batchOwnerRun) batchOwnerRun.reject(error);
       if (isCurrent()) {
         const generatedThisRun = Boolean(pendingRawCandidate?.data);

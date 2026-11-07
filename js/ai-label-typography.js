@@ -83,6 +83,8 @@ export function scriptLabelRuns(text, role, aiRuns) {
     else if (/^[+−-]?\d[\d.,]*$/.test(core)) runRole = 'number';
     else if (chem.has('*') || [...chem].some(c => c && core.includes(c))) runRole = 'chemical';
     else if (qty.has('*') || qty.has(core) || [...qty].some(q => q && q !== '*' && core.includes(q)) || /[α-ωΑ-Ωθ]/u.test(core)) runRole = 'quantity';
+    // AI가 일반 글자(text)로 준 영어 소문자(v, t, t₀, 3t₀, 2d)는 물리량 — 기울임. 점 이름(p·q)은 AI가 기호·이름으로 주므로 정체 그대로.
+    else if ((role === 'text' || role === undefined) && /^[+−-]?\d*[a-z][a-z]?(?:[₀-₉ₐₑₒₓ]+|[′'])*$/u.test(core)) runRole = 'quantity';
     else runRole = 'name';
     return { text: part.text, role: runRole, contentMode: 'plain' };
   });

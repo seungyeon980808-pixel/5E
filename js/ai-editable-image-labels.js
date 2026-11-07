@@ -22,6 +22,8 @@ const MAX_LABEL_TEXT = 80;
 
 export function editableLabelScope(label) {
   if (label.owner === 'graph' || label.scope === 'graph') return 'graph';
+  // 11-08: 사용자가 「이미지로 계속」해 살린 세로쓰기 라벨은 세로 글자로 그린다.
+  if (label.restoredVerticalLabel === true && label.scope === 'general') return 'general';
   if (label.scope === 'non_graph_vertical_deferred' || label.typography?.orientation === 'vertical') return 'non_graph_vertical_deferred';
   if (label.scope !== undefined && label.scope !== 'general') return 'unknown';
   return 'general';
