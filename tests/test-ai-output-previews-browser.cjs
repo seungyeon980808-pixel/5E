@@ -179,7 +179,8 @@ for (const engine of ['chromium', 'webkit']) {
     await chooseExposedOutputSetting(page, evidence, 'objects', 'auto');
     const groups = page.locator(`${panel} [data-ai-editable-groups]`);
     await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-editable-groups]')?.dataset.aiSeparationState === 'ready');
-    assert.equal(await page.locator(background).isDisabled(), true); assert.equal(await page.locator(background).inputValue(), 'connected');
+    // 11-09 사용자 원칙: 분리 중에도 배경 단추는 묶이지 않는다(언제든 바꿀 수 있음).
+    assert.equal(await page.locator(background).isDisabled(), false); assert.equal(await page.locator(background).inputValue(), 'connected');
     await openOutputMore(page);
     const note = page.locator(`${panel} [data-ai-selected-output-note]`);
     const count = Number(await groups.getAttribute('data-ai-separated-count'));
@@ -233,13 +234,15 @@ for (const engine of ['chromium', 'webkit']) {
       await page.waitForFunction(id => document.querySelector(`#ai-image-panel [data-tab-id="${id}"] .ai-task-tab-select`)?.getAttribute('aria-pressed') === 'true', id);
     };
     const single = { composition: 'single', separation: 'off', background: 'preserve', locked: false };
-    const separated = { composition: 'separated', separation: 'auto', background: 'connected', locked: true };
+    // 11-09 사용자 원칙: 분리 중에도 배경은 묶이지 않고(locked false), 고른 지우는 방식(안쪽 흰색까지)을 그대로 둔다.
+    const separated = { composition: 'separated', separation: 'auto', background: 'connected', locked: false };
+    const separatedAllWhite = { ...separated, background: 'all-near-white' };
     const initial = await state(); write(evidence, 'initial.json', initial);
     await page.screenshot({ path: path.join(evidence, 'initial.png') });
     assert.deepEqual(initial, single, 'legacy single task must not inherit automatic separation');
     await chooseExposedOutputSetting(page, evidence, 'background', 'all-near-white');
     await chooseExposedOutputSetting(page, evidence, 'composition', 'separated');
-    assert.deepEqual(await state(), separated);
+    assert.deepEqual(await state(), separatedAllWhite);
     await chooseExposedOutputSetting(page, evidence, 'composition', 'single');
     assert.deepEqual(await state(), { ...single, background: 'all-near-white' });
     await chooseExposedOutputSetting(page, evidence, 'composition', 'separated');
@@ -254,7 +257,7 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(await state(), single);
     assert.equal((await inspect(page)).outside[3], 255);
     await selectTask('task-0');
-    assert.deepEqual(await state(), separated);
+    assert.deepEqual(await state(), separatedAllWhite);
     const snapshot = await page.evaluate(() => window.__task2Manager.sharingSnapshot());
     const saved = snapshot.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'task-0');
     assert.equal(saved.generationMode, 'separated');
@@ -266,7 +269,7 @@ for (const engine of ['chromium', 'webkit']) {
     if (!(await page.locator(panel).isVisible())) await open.click();
     await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-tab-id="task-0"]'));
     await selectTask('task-0');
-    assert.deepEqual(await state(), separated);
+    assert.deepEqual(await state(), separatedAllWhite);
     await chooseExposedOutputSetting(page, evidence, 'composition', 'single');
     assert.deepEqual(await state(), { ...single, background: 'all-near-white' });
     await page.screenshot({ path: path.join(evidence, 'restored-single.png') });
@@ -495,7 +498,7 @@ for (const engine of ['chromium', 'webkit']) {
     await chooseExposedOutputSetting(page,evidence,'background','connected');await settled(page);
     const lite=await inspect(page);assert.equal(lite.outside[3],0);assert.equal(lite.inside[3],255);
     await chooseExposedOutputSetting(page,evidence,'objects','auto');
-    assert.equal(await page.locator(background).isDisabled(),true);
+    assert.equal(await page.locator(background).isDisabled(),false);
     assert.equal(await page.locator(background).inputValue(),'connected');
     await chooseExposedOutputSetting(page,evidence,'objects','off');
     await chooseExposedOutputSetting(page,evidence,'background','preserve');await settled(page);
@@ -658,8 +661,8 @@ async function qualifyModernAutoRaw(page,evidence,expected) {
 // explicitly instrumented native-decode and separation observers; they do not
 // certify a wholly uninstrumented module closure or provider quality.
 const rawTransitionCrypto = require('node:crypto');
-const rawTransitionOriginalBytes = 60198; // 11-08 사용자 결정(일반 결과도 고른 배경 처리를 따름)으로 앞부분 기대값 한 줄을 고쳐 다시 고정
-const rawTransitionOriginalSHA = '68411c319f953dc848774efaa109658bb76d5a65093259d808e321e6835a8df8';
+const rawTransitionOriginalBytes = 60338; // 11-08 사용자 결정(일반 결과도 고른 배경 처리를 따름)으로 앞부분 기대값 한 줄을 고쳐 다시 고정
+const rawTransitionOriginalSHA = 'f95dd2a9b28740690808a9686750c0e8e4f52b6307ce2e5434545b5271d2021c';
 const rawTransitionPrefix = fs.readFileSync(__filename).subarray(0, rawTransitionOriginalBytes);
 assert.equal(rawTransitionCrypto.createHash('sha256').update(rawTransitionPrefix).digest('hex'), rawTransitionOriginalSHA,
   'Every original test/assertion prefix is the reviewed unchanged source');
@@ -1106,7 +1109,7 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
       for(const mode of ['auto','grid']){
         await chooseExposedOutputSetting(page,evidence,'objects',mode);
         await waitModernSignal(page,()=>document.querySelector('#ai-image-panel [data-ai-editable-groups]')?.dataset.aiSeparationState==='ready',null,'actual '+mode+' segmentation');
-        assert.equal(await page.locator(background).inputValue(),'connected');assert.equal(await page.locator(background).isDisabled(),true);
+        assert.equal(await page.locator(background).inputValue(),'connected');assert.equal(await page.locator(background).isDisabled(),false);
         const actualCall=await page.evaluate(mode=>(window.__rawTransitionSeparations||[]).filter(call=>call.layout===mode&&call.candidateId==='candidate-0').at(-1),mode);
         assert.ok(actualCall);assert.equal(actualCall.completed,true);assert.equal(actualCall.error,undefined);
         const prepared=actualCall.prepared;
@@ -1149,8 +1152,8 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
 // Keep all preceding 32 cases, including the original 57,222-byte prefix.
 // ZIP fallback in Chromium has an explicit unsupported-directory capability
 // fixture. Neither engine's ZIP case certifies native picker/directory/desktop IO.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 101241)).digest('hex'),
-  'a58d01edd95b15ccd803c40f863142a95304d3975ace3c5394b0c5c9f357927a',
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 100693)).digest('hex'),
+  'cd749a9a28eff51206baaadc103bb2cc6dd285cc7c777df956c156437f587ad8',
   'All 32 existing cases remain byte-for-byte preserved before the collective append');
 async function installCollectiveExportObservation(page, runtime, origin, evidence) {
   const foreign = [];
@@ -1566,8 +1569,8 @@ for (const engine of ['chromium', 'webkit']) for (const mode of ['selected', 'al
 }
 
 // COLLECTIVE-EXPORT-BUSY-STATUS-APPEND-06 — private, unexecuted proposal.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 133034)).digest('hex'),
-  '44fe4aad2e1b783426a6925c597490f4d79e194dc2967706a9f6938928c72a2b', 'All 40 existing cases remain byte-for-byte unchanged');
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 132486)).digest('hex'),
+  '3798ffe0532fd936cf7f192297a537aecad5f32a9ab6f20bbc1f38f81b853872', 'All 40 existing cases remain byte-for-byte unchanged');
 
 function observeCollectiveBusyUiCompletion(source) {
   const opening = "  collectiveExportButton.addEventListener('click', async () => {";
@@ -1841,8 +1844,8 @@ for (const engine of ['chromium', 'webkit']) {
 
 // PRIVATE08: actual native load/decode success/error across preview UI lifetimes.
 // Root only. Manager dispose is explicitly component-lifecycle coverage, not a UI delete claim.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 155652)).digest('hex'),
-  'eb1b880795f8d38b61b5bdcdc3b4cbdd20e05e85e83823f6bc30c40ce940ebc3', 'PRIVATE08 retains all reviewed42 bytes');
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 155104)).digest('hex'),
+  'eafdaf9a93769cdd55aa861a22a772dfb30dc57acf54a948251d81c7aff647de', 'PRIVATE08 retains all reviewed42 bytes');
 
 function lifetimeReplaceOnce(source, from, to, label) {
   assert.equal(source.split(from).length-1,1,label);return source.replace(from,to);

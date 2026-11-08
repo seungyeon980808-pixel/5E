@@ -65,10 +65,20 @@ async function setup(){
  const options={source:{name:'input',data:png},workflow,selection,onObservation:x=>{observation=x;},observer:{analyze:async()=>{counts.analyze++;return structuredClone(plan);},review:async()=>{counts.review++;return {verdict:'pass',checks:['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','raster-label-removal','kice-flat-style','flat-gray-regions'].map(id=>({id,label:id,status:'pass',detail:'Explicit verified flat-style fixture'})),issues:[]};}},raster:{generate:async()=>{counts.generate++;return {src:png,imageToolCalls:1,rendererPrompt:'render'};}}};
  return {plan,counts,options,get observation(){return observation;}};
 }
-test('source analysis failure retains stage timing and diagnostics without dispatching a generation',async()=>{
+// 11-09 사용자 원칙(실패 금지): 라벨 읽기가 계속 실패하면 자동으로 다시 보내고(마지막은 Luna), 시도마다 기록한 뒤
+// 실패 대신 원본 그림을 결과로 돌려준다. 그림 생성은 보내지 않는다.
+test('source analysis failure is retried with a Luna last attempt, recorded, and returns the original as a fallback result without generation',async()=>{
  const {executeImageLabelRun}=await api,f=await setup();
- f.options.observer.analyze=async()=>{throw Object.assign(Error('analysis timeout'),{aiRequest:{turnId:'label-turn',model:'gpt-6-luna',effort:'medium'}});};
- await assert.rejects(executeImageLabelRun(f.options),e=>e.aiPhase==='sourceAnalysis'&&e.workflowMetrics.calls.sourceAnalysis===1&&e.workflowMetrics.calls.fullGeneration===0&&Number.isFinite(e.workflowMetrics.timings.sourceAnalysis)&&e.aiRequest.turnId==='label-turn');
+ const models=[],failures=[];
+ f.options.observer.analyze=async options=>{models.push(options.model);throw Object.assign(Error('analysis timeout'),{aiRequest:{turnId:'label-turn',model:'gpt-6-luna',effort:'medium'}});};
+ const result=await executeImageLabelRun({...f.options,retryPolicy:{attempts:3,backoffMs:[0,0],analysisTimeoutMs:[0,0,0],generationTimeoutMs:[0,0,0]},onAiFailure:record=>failures.push(record)});
+ assert.equal(result.status,'fallback');assert.equal(result.accepted,false);assert.equal(result.data,f.options.source.data);
+ assert.equal(result.metrics.fallback.phase,'sourceAnalysis');assert.equal(result.metrics.fallback.image,'source');
+ assert.equal(result.metrics.calls.sourceAnalysis,3);assert.equal(result.metrics.calls.fullGeneration,0);
+ assert.ok(Number.isFinite(result.metrics.timings.sourceAnalysis));
+ assert.deepEqual(failures.map(r=>[r.stage,r.attempt,r.attempts]),[['sourceAnalysis',1,3],['sourceAnalysis',2,3],['sourceAnalysis',3,3]]);
+ assert.ok(failures.every(r=>r.message.includes('analysis timeout')));
+ assert.equal(models.at(-1),'gpt-6-luna');
  assert.equal(f.counts.generate,0);
 });
 test('review timeout retains the generated RAW as needs-attention without generating a replacement',async()=>{

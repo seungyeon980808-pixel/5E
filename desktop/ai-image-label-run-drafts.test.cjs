@@ -36,7 +36,8 @@ async function setup(removal) {
       labels:plan.labels.map(l=>({id:l.id,status:'uncertain',reason:'Local measurement; not verified'}))}),
     proposals:{groups:[]},composite:structuredClone(composite),measurementOnly:true,semanticConfirmed:false,
   });
-  const context = vm.createContext({...dependencies,crypto,performance,DOMException,structuredClone,TextEncoder,Uint8Array});
+  // 브라우저와 같이 타이머가 있다(11-09: AI 재시도·응답 없음 시간 제한이 타이머를 쓴다).
+  const context = vm.createContext({...dependencies,crypto,performance,DOMException,structuredClone,TextEncoder,Uint8Array,setTimeout,clearTimeout});
   vm.runInContext(source.replace(/^import .*;\n/gm,'').replace(/^export /gm,''),context);
   let observation;
   const options = {source:{data:png,name:'source'},workflow:{imageKind:'general',labelResult:'restore-editable',verificationMode:'draft-first'},

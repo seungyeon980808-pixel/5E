@@ -73,7 +73,8 @@ test('modern and unknown generated contracts stay RAW through the actual output 
   assert.equal(calls,1);assert.equal(result.data,historical.data);assert.equal(result.options.backgroundPolicy,'all-near-white');
 });
 
-test('legacy delegate policy retains Lite binary actions, locks separation, and rejects hidden advanced choices', async()=>{
+// 11-09 사용자 원칙: 배경 제거·객체 분리는 묶지 않는다(분리 중에도 배경을 고를 수 있고, 지우는 방식은 그대로 둔다).
+test('legacy delegate policy retains Lite binary actions, keeps background selectable while separating, and rejects hidden advanced choices', async()=>{
   const {canChooseLocalOutput}=await import('../js/ai-output-processing.js');
   const {transitionSeparationMode}=await import('../js/ai-separation-mode.js');
   const item={kind:'generated',data:retainedPng};
@@ -84,7 +85,7 @@ test('legacy delegate policy retains Lite binary actions, locks separation, and 
       assert.equal(canChooseLocalOutput(item,'background','connected',{mode,...restrictions}),false);
       assert.equal(canChooseLocalOutput(item,'objects','auto',{mode,...restrictions}),false);
     }
-    assert.equal(canChooseLocalOutput(item,'background','preserve',{mode,separationMode:'auto'}),false);
+    assert.equal(canChooseLocalOutput(item,'background','preserve',{mode,separationMode:'auto'}),true);
     assert.equal(canChooseLocalOutput(item,'background','all-near-white',{mode}),mode==='pro');
     for(const value of ['grid','manual'])assert.equal(canChooseLocalOutput(item,'objects',value,{mode}),mode==='pro');
   }
@@ -95,7 +96,9 @@ test('legacy delegate policy retains Lite binary actions, locks separation, and 
   }
   const original={separationMode:'off',outputOptions:{backgroundPolicy:'all-near-white',examPalette:false,lineThickness:0}};
   const separated=transitionSeparationMode(original,'auto');
-  assert.equal(separated.outputOptions.backgroundPolicy,'connected');
+  assert.equal(separated.outputOptions.backgroundPolicy,'all-near-white');
+  assert.equal(separated.backgroundLocked,false);
+  assert.equal(transitionSeparationMode({separationMode:'off',outputOptions:{backgroundPolicy:'preserve'}},'auto').outputOptions.backgroundPolicy,'connected');
   assert.equal(separated.singleBackgroundPolicy,'all-near-white');
   assert.deepEqual(transitionSeparationMode(separated,'off').outputOptions,original.outputOptions);
   assert.deepEqual(original,{separationMode:'off',outputOptions:{backgroundPolicy:'all-near-white',examPalette:false,lineThickness:0}});

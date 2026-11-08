@@ -59,7 +59,7 @@ import { createSourceLabelController, withFrozenSourceLabelPlan, buildSourceLabe
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
-import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
+import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { validateLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { prepareEditableLabelFonts } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
@@ -822,15 +822,33 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     return parsed.ok && parsed.report.verdict === 'pass' && bindings
       && ['candidateSha256', 'planSha256', 'compositeSha256'].every(key => /^[a-f0-9]{64}$/.test(bindings[key]));
   };
-  const isAdoptableImageLabelCandidate = candidate => isImageLabelCandidateAccepted(candidate)
+  // 11-09 사용자 원칙: 만든 결과는 검수를 돌리지 않았거나 통과하지 않아도 캔버스에 넣고 분리할 수 있어야 한다.
+  // 검수 대신 「지금 보이는 그림이 이 작업이 만든 그 그림인지」(그림 지문)만 확인한다.
+  const isAdoptableImageLabelCandidate = candidate => Boolean(candidate?.data)
     && (!candidate?.imageLabelWorkflow?.explicit || candidate.verifiedCandidateData === candidate.data);
   const verifyImageLabelCandidateBytes = async candidate => {
     if (!candidate?.imageLabelWorkflow?.explicit) return true;
     const data = candidate.data, hash = candidate.candidateSha256;
-    const verified = await imageLabelDigest(data) === hash;
+    if (!data) return false;
+    const digest = await imageLabelDigest(data);
     if (candidate.data !== data || candidate.candidateSha256 !== hash) return false;
+    // 지문이 없는 옛 결과는 지금 그림으로 지문을 만든다(막지 않음).
+    if (!hash) { candidate.candidateSha256 = digest; candidate.verifiedCandidateData = data; return true; }
+    const verified = digest === hash;
     candidate.verifiedCandidateData = verified ? data : null; // Runtime only; never persisted as a trusted flag.
-    return verified && isImageLabelCandidateAccepted(candidate);
+    return verified;
+  };
+  // 11-09: 실패한 AI 시도(다시 보내기 전)를 남긴다 — 화면 오류 기록(문제 신고에 들어감)·콘솔·이 기기 저장소(최근 200개).
+  const recordAiAttemptFailure = record => {
+    const stageNames = { sourceAnalysis: '라벨 읽기', generation: '그림 생성', pixelProcessing: '기출 주석 제거', conversion: '변환' };
+    const text = `AI ${stageNames[record.stage] || record.stage} ${record.attempt}/${record.attempts}번째 시도 실패 · ${record.model || '기본 모델'} · ${Math.round((record.elapsedMs || 0) / 1000)}초 · ${record.message}`;
+    try { console.warn('[5E AI 실패 기록]', JSON.stringify({ ...record, taskId: activeTaskTabId, scope: clientScope || 'main' })); } catch {}
+    try { errorLog.record(text, Object.assign(new Error(record.message), { code: record.code || undefined, aiPhase: record.stage })); } catch {}
+    try {
+      const list = JSON.parse(localStorage.getItem('5e.aiFailureLog') || '[]');
+      list.push({ ...record, taskId: activeTaskTabId, scope: clientScope || 'main' });
+      localStorage.setItem('5e.aiFailureLog', JSON.stringify(list.slice(-200)));
+    } catch {}
   };
   const reviewSourceLabelCandidate = async ({ controller, run, candidate, request, isCurrent }) => {
     const capturedData = candidate.data;
@@ -1186,7 +1204,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         legacyOption?.remove();
       }
       backgroundPolicySelect.value = selectedImageOutputOptions.backgroundPolicy;
-      backgroundPolicySelect.disabled = busy || backgroundLocked;
+      backgroundPolicySelect.disabled = busy;
       backgroundPolicySelect.title = backgroundLocked ? SEPARATION_BACKGROUND_HINT : '';
       backgroundPolicySelect.setAttribute('aria-description', backgroundPolicySelect.title);
       const proxy = backgroundPolicySelect.nextElementSibling;
@@ -2476,7 +2494,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   async function openGroupsForItem(item, separated = false, manual = false, useResult = false) {
     if (!isHistoricalPngLocalResult(item)) { setStatus('이 결과는 원본을 그대로 사용합니다. 저장된 그림 처리로 분리할 수 없습니다.', 'warn'); return; }
-    if (!isAdoptableImageLabelCandidate(item)) { setStatus('그림·스타일 검수에 통과하지 않아 분리 결과를 적용할 수 없습니다. RAW 비교 결과를 확인하세요.', 'warn'); return; }
+    // 11-09: 검수 통과는 묻지 않는다. 지금 그림이 이 작업이 만든 그림인지(지문)만 먼저 확인한다(다시 연 작업도 여기서 확인됨).
+    if (!await verifyImageLabelCandidateBytes(item)) { setStatus('결과 그림이 이 작업에서 만든 그림과 달라 분리하지 않았습니다. 다시 변환하면 새 결과로 분리할 수 있습니다.', 'warn'); return; }
     const epoch = currentRequestEpoch;
     const taskId = activeTaskTabId;
     const candidateId = item.id;
@@ -2493,7 +2512,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       && isHistoricalPngLocalResult(item) && isAdoptableImageLabelCandidate(item)
       && state.get().activePageId === pageId && pageSnapshot() === originalPage;
     try {
-      if (!await verifyImageLabelCandidateBytes(item) || !isCurrent()) throw new Error('검수한 RAW 후보와 분리 후보가 다릅니다. 원본은 유지했습니다.');
+      if (!await verifyImageLabelCandidateBytes(item) || !isCurrent()) throw new Error('분리하는 동안 결과 그림이나 작업이 바뀌어 적용하지 않았습니다. 원본은 유지했습니다.');
       if (separated) {
         item.separatedAssetsError = '';
         captureActiveTaskTab();
@@ -4910,6 +4929,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     setBusy(true); requestPhase('generating');
     const phaseNames = { sourceAnalysis: '원본 라벨·소속 확인 중', pixelProcessing: '기출 주석 국소 제거 중', generation: runInput.preciseRestore ? '선택한 그림 정밀 복원 중' : '일반 이미지 변환 중', targetMapping: '최종 연결 대상 확인 중', labelProposals: '편집 라벨 배치 준비 중', finalVerification: '그림·라벨 결과 확인 중', labelPlacement: '편집 라벨 배치 중', review: '그림·라벨 결과 확인 중', localRestore: '겹친 주석 영역 복원 중', localReview: '국소 복원 결과 확인 중' };
     const onPhase = phase => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', '원본의 과학 구조와 라벨 소속을 확인합니다.', phase === 'generation' ? 'generate' : 'analyze'); loading.setPhase(phaseNames[phase] || '결과 준비 중'); loading.stage(phase); panel.dataset.aiWorkflowPhase = phase; } };
+    // 11-09: 다른 작업 칸의 변환이 돌고 있으면 줄을 서고(「차례 기다리는 중」), AI 응답이 없거나 고르지 않으면 자동으로 다시 보낸다.
+    const onQueueWait = position => {
+      if (!isCurrent()) return;
+      const text = `차례 기다리는 중 · 앞에 ${position}개`;
+      setStatus(text, 'busy'); setGenerating(true, text, '다른 작업 칸의 AI 변환이 끝나면 바로 이어서 시작합니다.', 'analyze'); loading.setPhase(text);
+    };
+    const onAiRetry = record => {
+      if (!isCurrent()) return;
+      const why = record.code === 'AI_NO_RESPONSE' ? 'AI 응답이 없어' : 'AI 응답에 문제가 있어';
+      const text = record.nextModel === AI_RETRY_FALLBACK_MODEL && record.nextAttempt === record.attempts
+        ? `${why} Luna로 바꿔 다시 보내는 중 (${record.nextAttempt}/${record.attempts})` : `${why} 다시 보내는 중 (${record.nextAttempt}/${record.attempts})`;
+      setStatus(text, 'busy'); loading.setPhase(text);
+    };
     const observer = sourceLabelAnalysis;
     const selection = { model: runInput.model, effort: runInput.effort, serviceTier: runInput.serviceTier, models: runInput.modelCatalog || availableModels };
     let pendingRawCandidate = null;
@@ -4937,16 +4969,18 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
             planSha256:raw.planSha256,candidateSha256:raw.candidateSha256,candidateFrame:raw.candidateFrame,workflowMetrics:raw.metrics,verifiedCandidateData:raw.data});
           tab.generationNotice = 'review';
           captureActiveTaskTab();await taskPersistence.checkpoint();
-        }, onPhase, cache: outputCache, backgroundCache: labelBackgroundCache, previousCandidates: runInput.generated, bypassCache: options.bypassCache === true,
+        }, onPhase, onQueueWait, onAiRetry, onAiFailure: recordAiAttemptFailure, cache: outputCache, backgroundCache: labelBackgroundCache, previousCandidates: runInput.generated, bypassCache: options.bypassCache === true,
         preciseRestore: runInput.preciseRestore === true, verifyOnly: options.verifyOnly === true, previousCandidate,
         localRestore: createExamLocalRestore({ observer, raster: imageLabelRaster, onPhase }) });
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
       currentTurnPerformance = { ...result.metrics, elapsedMs: result.metrics.timings.total, cacheHit: result.metrics.cacheHit };
       const outOfScope = result.status === 'out-of-scope';
+      const fallbackResult = result.status === 'fallback';
       const outOfScopeName = '범위 밖 · 원본 보존';
       const outOfScopeMessage = '원본 유지 · 일반 라벨 복원 대상이 0개이므로 원본을 그대로 보존했습니다.';
       const candidate = pendingRawCandidate || await addPreview(result.data, { alreadyEditable: true, isCurrent, rendererPrompt: result.rendererPrompt, labelPlan: result.labelPlan,
-        name: outOfScope ? outOfScopeName : result.removalReport?.unchanged && !result.accepted ? '원본 유지 · 라벨 제거 보류' : undefined,
+        name: outOfScope ? outOfScopeName : fallbackResult ? (result.metrics?.fallback?.image === 'generated' ? '라벨 없이 · 다시 변환 가능' : '원본 유지 · 다시 변환 가능')
+          : result.removalReport?.unchanged && !result.accepted ? '원본 유지 · 라벨 제거 보류' : undefined,
         reviewState: result.accepted ? 'passed' : 'needs-attention', reviewReport: result.report, selectCandidate: true });
       if (!candidate || !isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
       Object.assign(candidate,{labelPlan:result.labelPlan,reviewState:result.accepted?'passed':'needs-attention',reviewReport:result.report});
@@ -4970,15 +5004,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       panel.dispatchEvent(new CustomEvent('5e:ai-image-label-timing', { detail: structuredClone(result.metrics) }));
       if (batchOwnerRun) {
         batchOwnerRun.candidate = candidate;
-        if (!isAdoptableImageLabelCandidate(candidate)) {
-          generatedImages.push(candidate); previews.querySelector('[data-ai-empty]')?.remove(); previews.prepend(makeImageCard(candidate));
-          captureActiveTaskTab(); await taskPersistence.checkpoint();
-          throw new Error('그림·스타일 검수 미통과. 원본과 RAW 결과는 작업에 보존했습니다.');
-        }
+        // 11-09: 검수 미통과여도 결과를 버리지 않는다(경고는 결과 확인에 남음). 만든 결과는 늘 작업 칸으로 돌려준다.
         batchOwnerRun.resolve({ ...batchOwnerRun.context.owner, operation: 'generate', candidateId: candidate.id, candidate: snapshotImageItem(candidate) });
       } else {
         setTaskState('completed'); taskTabs.get(originatingTaskId).generationNotice = candidate.reviewState === 'needs-attention' ? 'review' : null; renderTaskTabs(); setGenerating(false); setBusy(false);
-        setStatus(outOfScope ? outOfScopeMessage
+        setStatus(outOfScope ? outOfScopeMessage : fallbackResult ? result.fallbackMessage
           : candidate.reviewState === 'passed' ? (candidate.reviewReport?.advisory?.length ? `처리 완료 · 참고 사항 ${candidate.reviewReport.advisory.length}개는 결과 확인에서 볼 수 있습니다.` : '처리 완료 · 편집 가능한 결과를 준비했습니다.')
           : draftReady ? candidate.editableDraft?.presentation === 'external-list'
             ? `원본 유지 · 편집 라벨 목록 ${candidate.editableDraft.labelIds.length}개를 준비했습니다. 원본 글자는 남아 있습니다.`
@@ -4998,6 +5028,25 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         const hwpTarget = hwpInPlaceTargets.get(originatingTaskId), reference = { dataUrl: sources[0].data, name: sources[0].name || '원본' };
         setTimeout(() => window.dispatchEvent(new CustomEvent('5e:ai-open-reference', { detail: { reference, conversionKind: 'graph', ...(hwpTarget ? { hwpTarget: structuredClone(hwpTarget) } : {}) } })), 400);
         for (const ms of [900, 1800, 3500]) setTimeout(() => { try { syncSurfaceTitle(); } catch {} }, ms);
+      }
+      // 11-09: 변환 안쪽의 대체 결과도 만들지 못한 드문 경우(그림 디코딩 실패 등)에도 실패로 끝내지 않고 원본을 결과로 둔다.
+      if (error?.name !== 'AbortError' && error?.code !== 'AI_GRAPH_FIGURE' && !batchOwnerRun && isCurrent() && !pendingRawCandidate?.data && sources[0]?.data) {
+        try {
+          const reason = String(error?.message || error).slice(0, 200);
+          const fallbackCandidate = await addPreview(sources[0].data, { alreadyEditable: true, isCurrent, name: '원본 유지 · 다시 변환 가능', reviewState: 'needs-attention',
+            reviewReport: { verdict: 'uncertain', checks: [], issues: [{ code: 'ai-fallback-result', message: `변환을 끝내지 못해 원본을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`, severity: 'major' }] }, selectCandidate: true });
+          if (fallbackCandidate && isCurrent()) {
+            Object.assign(fallbackCandidate, { candidateSha256: await imageLabelDigest(fallbackCandidate.data), verifiedCandidateData: fallbackCandidate.data });
+            recordAiAttemptFailure({ stage: error?.aiPhase || 'conversion', attempt: 1, attempts: 1, model: null, effort: null, code: error?.code || null,
+              message: reason, elapsedMs: Date.now() - currentTurnStartedAt, at: new Date().toISOString() });
+            imageReceived = true; currentTurnCandidate = fallbackCandidate; currentTurnDone = true; currentTerminalOutcome = 'completed'; serverTurnFinished = true;
+            taskTabs.get(originatingTaskId).generationNotice = 'review';
+            setTaskState('completed'); renderTaskTabs(); setGenerating(false); setBusy(false);
+            setStatus(fallbackCandidate.reviewReport.issues[0].message, 'warn');
+            captureActiveTaskTab(); await taskPersistence.checkpoint();
+            return;
+          }
+        } catch (fallbackError) { if (fallbackError?.name === 'AbortError') throw fallbackError; }
       }
       if (batchOwnerRun) batchOwnerRun.reject(error);
       if (isCurrent()) {
@@ -5669,18 +5718,27 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }
   backgroundPolicySelect?.addEventListener('change', () => {
     if (!outputChoiceAllowed('background', backgroundPolicySelect.value)) { syncOutputProcessingUi(); return; }
+    // 11-09 사용자 원칙: 배경 제거·객체 분리는 설정처럼 언제든 바꿀 수 있어야 한다(묶여서 안 바뀌는 단추 금지).
+    // 물체 분리 중에 「원본 유지」를 고르면 분리도 「한 장」으로 같이 바꾼다.
+    const separationTurnedOff = backgroundPolicySelect.value === 'preserve' && selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
     selectedImageOutputOptions = normalizeImageOutputOptions({
       ...selectedImageOutputOptions,
       backgroundPolicy: backgroundPolicySelect.value,
     });
     const lite = document.documentElement.dataset.mode === 'lite';
+    if (separationTurnedOff) {
+      singleBackgroundPolicy = 'preserve';
+      applySeparationMode(AI_SEPARATION_MODES.OFF);
+      if (lite) liteSeparationMode = selectedSeparationMode;
+      localStorage.setItem(lite ? '5e.aiLiteSeparationMode' : '5e.aiSeparationMode', selectedSeparationMode);
+    }
     if (lite) liteBackgroundPolicy = selectedImageOutputOptions.backgroundPolicy;
     localStorage.setItem(lite ? '5e.aiLiteOutputBackgroundPolicy' : '5e.aiOutputBackgroundPolicy', selectedImageOutputOptions.backgroundPolicy);
     syncOutputProcessingUi();
     refreshOutputPreviews();
-    restartSelectedAutomaticSeparation();
+    restartSelectedAutomaticSeparation(separationTurnedOff ? 'separation-mode-changed' : undefined);
     captureActiveTaskTab(); persistTasks();
-    setStatus('추가 AI 요청 없이 기기에서 배경을 처리합니다. 생성 원본은 유지됩니다.', 'ok');
+    setStatus(separationTurnedOff ? '배경을 원본 그대로 두고, 물체 분리는 「한 장」으로 같이 바꿨습니다.' : '추가 AI 요청 없이 기기에서 배경을 처리합니다. 생성 원본은 유지됩니다.', 'ok');
   });
   examPaletteSelect?.addEventListener('change', () => {
     if (!localAppearanceAllowed()) { syncOutputProcessingUi(); return; }

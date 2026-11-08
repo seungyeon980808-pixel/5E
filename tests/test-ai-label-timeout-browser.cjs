@@ -5,17 +5,25 @@ const {fixture,choose,verifiedPlan,emit,snapshot}=require('./helpers/label-sourc
 const evidence=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/labeler-timeout-browser');
 const panel='#ai-image-panel';
 
-test('failed source observation uses the actual label model and preserves the original for retry',{timeout:90000},async t=>{
+// 11-09 사용자 원칙(실패 금지): 라벨 읽기가 실패하면 같은 라벨 모델로 자동으로 다시 보내고(3번, 마지막도 Luna),
+// 끝내 실패하면 실패 대신 원본 그림을 결과로 둔다. 그림 생성은 보내지 않는다.
+test('failed source observation is retried with the actual label model and keeps the original as a fallback result',{timeout:90000},async t=>{
  const dir=path.join(evidence,'source-failure');fs.mkdirSync(dir,{recursive:true});
  const {page,errors}=await fixture(t,1,dir);await choose(page,'general','restore-editable');
  await page.locator(panel+' [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
  assert.equal(await page.evaluate(()=>window.__task2.sends[0].payload.model),'gpt-6-luna');
- await page.evaluate(()=>window.__task2.emit(0,'error'));
+ for (const index of [0,1,2]) {
+  await page.waitForFunction(n=>window.__task2.sends.length===n,index+1);
+  assert.equal(await page.evaluate(n=>window.__task2.sends[n].payload.model,index),'gpt-6-luna');
+  await page.evaluate(n=>window.__task2.emit(n,'error'),index);
+ }
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
  // 오류 기록 창은 2026-10-13(61bcd508)에 없어졌고 문제 신고는 바깥 게시판 링크가 됐다(4fa3c199). 화면에서 읽을 기록이 없어 기록 문구 확인은 뺐다.
  const log=await page.locator(panel+' [data-ai-status]').textContent();
- assert.equal(await page.evaluate(()=>window.__task2.sends.length),1);
- const tabs=await snapshot(page);assert.equal(tabs[0].attachments.length,1);assert.equal(tabs[0].generated.length,0);
+ assert.match(log,/원본 그림을 그대로 두었습니다/);
+ assert.equal(await page.evaluate(()=>window.__task2.sends.length),3);
+ const tabs=await snapshot(page);assert.equal(tabs[0].attachments.length,1);assert.equal(tabs[0].generated.length,1);
+ assert.notEqual(tabs[0].generated[0].reviewState,'passed');
  assert.deepEqual(errors,[]);await page.screenshot({path:path.join(dir,'actual-stage-error.png')});
  fs.writeFileSync(path.join(dir,'result.json'),JSON.stringify({scope:'synthetic transport; real product modules',log,imageCalls:0,originalPreserved:true,errors},null,2));
 });

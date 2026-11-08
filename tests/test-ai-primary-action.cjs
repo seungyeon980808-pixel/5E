@@ -171,6 +171,7 @@ function capturedFirstSourceTurn(runInput, options = {}, { held = false } = {}) 
   const preparation = new Promise(resolve => { releasePreparation = resolve; });
   const context = {
     AbortController, DOMException, clearTimeout,
+    recordAiAttemptFailure() {}, AI_RETRY_FALLBACK_MODEL: 'gpt-6-luna',
     AI_ASSET_GENERATION_MODES: { SINGLE: 'single', SEPARATED: 'separated' },
     SEPARATED_ASSETS_PROMPT: null,
     currentRequestEpoch: 0, activeTaskTabId: 'captured-owner', disposed: false,

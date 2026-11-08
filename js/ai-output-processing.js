@@ -36,8 +36,8 @@ export function canChooseLocalOutput(item, key, value, {
   if (busy || readOnly || (item && !isHistoricalPngLocalResult(item))) return false;
   // A source without a result retains only the fixed labeler's safe choices.
   const advanced = Boolean(item) && mode === 'pro';
-  if (key === 'background') return separationMode === 'off'
-    && (advanced ? ['preserve','connected','all-near-white'] : ['preserve','connected']).includes(value);
+  // 11-09: 물체 분리가 켜져 있어도 배경은 언제든 고를 수 있다(「원본 유지」를 고르면 분리가 한 장으로 같이 바뀐다).
+  if (key === 'background') return (advanced ? ['preserve','connected','all-near-white'] : ['preserve','connected']).includes(value);
   if (key === 'objects') return (advanced ? ['off','auto','grid','manual'] : ['off','auto']).includes(value);
   return false;
 }

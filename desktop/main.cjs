@@ -708,6 +708,7 @@ function handleServerProcessTermination(child, {
   signal = null,
 } = {}) {
   if (server !== child) return;
+  appendAiTurnLog({ event: "codex-stopped", state, code, signal, message: error ? String(error.message || error).slice(0, 300) : null });
   const affectedScopes = new Set([...workspaceRequests.keys(), ...workspaceConversations.keys()]);
   let failure;
   for (const owner of [...workspaceRequests.values()]) {
@@ -762,7 +763,13 @@ function processTurnEvent(msg) {
     send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
     turnPerformance.delete(performanceObservation.performance.turnId);
   }
-  if (msg.method === "turn/completed" && msg.params?.turn?.id) releaseActiveTurn(owner.turnId);
+  if (msg.method === "error") appendAiTurnLog({ event: "turn-error", scope: owner.scope, turnId: owner.turnId, message: String(msg.params?.error?.message || "").slice(0, 300) });
+  if (msg.method === "turn/completed" && msg.params?.turn?.id) {
+    const turn = msg.params.turn;
+    appendAiTurnLog({ event: "turn-completed", scope: owner.scope, turnId: owner.turnId, status: turn.status || null,
+      error: turn.error ? String(turn.error.message || turn.error).slice(0, 300) : null, ms: owner.startedAt ? Date.now() - owner.startedAt : null });
+    releaseActiveTurn(owner.turnId);
+  }
 }
 
 function startServer() {
@@ -818,6 +825,7 @@ function rpc(method, params) {
     const timer = setTimeout(() => {
       const error = new Error(`${method} timeout`);
       error.code = "RPC_TIMEOUT";
+      appendAiTurnLog({ event: "rpc-timeout", method });
       // Optional metadata does not own any turn. Recovery reads and mutations
       // retain the fatal deadline because their remote state may be uncertain.
       if (["model/list", "account/read", "account/rateLimits/read", "account/usage/read"].includes(method)) {
@@ -893,13 +901,51 @@ async function safeAttachment(data, name) {
   await fs.promises.writeFile(file, buffer);
   return { file, bytes: buffer.length, name: name || path.basename(file) };
 }
+// 11-09: AI 요청 기록(실패 원인 확인용). 설치판 기록 폴더의 ai-turns.log, 5MB가 넘으면 .1로 넘긴다.
+function appendAiTurnLog(entry) {
+  try {
+    const dir = app.getPath("logs"), file = path.join(dir, "ai-turns.log");
+    fs.mkdirSync(dir, { recursive: true });
+    try { if (fs.statSync(file).size > 5e6) fs.renameSync(file, file + ".1"); } catch {}
+    fs.appendFileSync(file, JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n");
+  } catch {}
+}
+// 11-09 시험 스위치(밤샘 지시 「일부러 끊기」 실패 시험용): FIVEE_AI_FAULT=error-odd로 켠 경우에만 홀수 번째 AI 요청을 일부러 실패시킨다.
+// 평소(환경 변수 없음)에는 아무 일도 하지 않는다.
+let injectedFaultCount = 0;
+function injectedSendFault() {
+  if (process.env.FIVEE_AI_FAULT !== "error-odd") return null;
+  injectedFaultCount += 1;
+  return injectedFaultCount % 2 === 1 ? new Error("시험용: 일부러 끊은 AI 요청") : null;
+}
 async function sendTurn(payload = {}) {
   const scope = workspaceScope(payload);
+  const fault = injectedSendFault();
+  if (fault) { appendAiTurnLog({ event: "injected-fault", scope }); throw fault; }
+  // 11-09 사용자 원칙: AI 요청은 실패로 끝내지 않는다. 화면이 앞 요청을 이미 끊은(취소한) 칸에 다시 보내면
+  // (응답이 없어 자동으로 다시 보내는 경우) 오류로 돌려보내지 않고 앞 요청이 정리되기를 최대 8초 기다린 뒤,
+  // 그래도 남아 있으면 정리하고 보낸다. 끊지 않은 같은 칸 겹침은 예전처럼 거절한다.
+  const previous = workspaceRequests.get(scope);
+  if (previous?.cancelled) {
+    appendAiTurnLog({ event: "takeover", scope, turnId: previous.turnId || null });
+    const deadline = Date.now() + 8000;
+    while (workspaceRequests.get(scope) === previous && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 100));
+    if (workspaceRequests.get(scope) === previous) {
+      previous.done = true;
+      if (previous.turnId) releaseActiveTurn(previous.turnId);
+      if (workspaceRequests.get(scope) === previous) workspaceRequests.delete(scope);
+    }
+  }
   if (workspaceRequests.has(scope)) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
   const owner = { scope, threadId: null, turnId: null, done: false, cancelled: false };
   workspaceRequests.set(scope, owner);
-  try { return await sendWorkspaceTurn(payload, owner); }
-  catch (error) {
+  try {
+    const result = await sendWorkspaceTurn(payload, owner);
+    appendAiTurnLog({ event: "send", scope, turnId: owner.turnId || null, purpose: payload.purpose || null, model: payload.model || null, effort: payload.effort || null,
+      attachments: Array.isArray(payload.attachments) ? payload.attachments.length : 0 });
+    return result;
+  } catch (error) {
+    appendAiTurnLog({ event: "send-failed", scope, message: String(error?.message || error).slice(0, 300) });
     if (workspaceRequests.get(scope) === owner) workspaceRequests.delete(scope);
     owner.done = true;
     throw error;
@@ -939,6 +985,7 @@ async function sendWorkspaceTurn(payload, owner) {
   } = payload;
   if (turnId) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
   const startedAt = Date.now();
+  owner.startedAt = startedAt;
   const plan = resolveTurnPlan({ ...payload, conversationId, resetConversation });
   owner.attachmentDiagnostics = plan.purpose === "image" && payload.attachmentDiagnostics === true;
   const outputSchema = validatedSceneOutputSchema(payload.outputSchema, plan.purpose);

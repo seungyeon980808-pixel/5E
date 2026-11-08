@@ -42,6 +42,90 @@ async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
   return sizes.length ? sizes[Math.floor(sizes.length / 2)] : null;
 }
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError'); };
+// 11-09 사용자 원칙: AI 변환(이미지·그래프)은 어떤 경우에도 「실패」로 끝나면 안 된다.
+// 응답이 없거나 오류가 나면 같은 요청을 자동으로 다시 보내고(시도마다 응답 없음 시간 제한), 마지막 시도는 Luna로 바꿔 보낸다.
+// 사용자가 취소한 경우(signal)만 바로 멈춘다. 실패한 시도는 단계·모델·오류·걸린 시간을 onFailure로 남긴다.
+export const AI_RETRY_FALLBACK_MODEL = 'gpt-6-luna';
+export const AI_RETRY_POLICY = Object.freeze({ attempts: 3, backoffMs: [2000, 5000],
+  analysisTimeoutMs: [180000, 180000, 0], generationTimeoutMs: [240000, 240000, 0] });
+const waitMs = (ms, signal) => new Promise((resolve, reject) => {
+  if (!(ms > 0)) { resolve(); return; }
+  const onAbort = () => { clearTimeout(timer); reject(new DOMException('작업이 취소되었습니다.', 'AbortError')); };
+  const timer = setTimeout(() => { signal?.removeEventListener('abort', onAbort); resolve(); }, ms);
+  signal?.addEventListener('abort', onAbort, { once: true });
+});
+export async function runAiWithRetry({ stage, selection = {}, attempts = AI_RETRY_POLICY.attempts, timeoutsMs = [], backoffMs = AI_RETRY_POLICY.backoffMs,
+  run, cancel, signal, onFailure = () => {}, onRetry = () => {} } = {}) {
+  const total = Math.max(1, Math.floor(Number(attempts)) || 1);
+  let lastError = null;
+  for (let attempt = 1; attempt <= total; attempt++) {
+    cancelled(signal);
+    const fallback = total > 1 && attempt === total;
+    const choice = fallback ? { ...selection, model: AI_RETRY_FALLBACK_MODEL, effort: 'medium' } : selection;
+    const startedAt = Date.now(), limit = Number(timeoutsMs[attempt - 1]) || 0;
+    let timer = null;
+    try {
+      const work = Promise.resolve().then(() => run(choice, attempt));
+      if (!(limit > 0)) return await work;
+      return await Promise.race([work, new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error(`AI 응답 없음 ${Math.round(limit / 1000)}초`); error.code = 'AI_NO_RESPONSE';
+          try { cancel?.(); } catch {}
+          reject(error);
+        }, limit);
+      })]);
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      lastError = error;
+      const record = { stage, attempt, attempts: total, model: choice.model || null, effort: choice.effort || null, code: error?.code || null,
+        message: String(error?.message || error).slice(0, 400), elapsedMs: Date.now() - startedAt, at: new Date().toISOString() };
+      try { onFailure(record); } catch {}
+      if (attempt < total) {
+        await waitMs(backoffMs[attempt - 1] ?? backoffMs.at(-1) ?? 0, signal);
+        try { onRetry({ ...record, nextAttempt: attempt + 1, nextModel: attempt + 1 === total && total > 1 ? AI_RETRY_FALLBACK_MODEL : (selection.model || null) }); } catch {}
+      }
+    } finally { clearTimeout(timer); }
+  }
+  if (lastError && typeof lastError === 'object') lastError.aiAttempts = total;
+  throw lastError;
+}
+// 11-09: 작업 칸 여러 개가 동시에 변환해도 AI에는 한 번에 하나씩 보낸다(줄 세우기). 기다리는 칸은 onWait(앞에 남은 수)로 「차례 기다리는 중」을 띄운다.
+export const AI_CONVERSION_CONCURRENCY = 1;
+const conversionQueue = [];
+let conversionsRunning = 0;
+const pumpConversionQueue = () => {
+  while (conversionsRunning < AI_CONVERSION_CONCURRENCY && conversionQueue.length) { conversionsRunning++; conversionQueue.shift().grant(); }
+  conversionQueue.forEach((entry, index) => { try { entry.onWait?.(index + 1); } catch {} });
+};
+export function acquireAiConversionSlot({ signal, onWait } = {}) {
+  cancelled(signal);
+  return new Promise((resolve, reject) => {
+    let released = false;
+    const release = () => { if (released) return; released = true; conversionsRunning = Math.max(0, conversionsRunning - 1); pumpConversionQueue(); };
+    const onAbort = () => {
+      const index = conversionQueue.indexOf(entry);
+      if (index >= 0) conversionQueue.splice(index, 1);
+      reject(new DOMException('작업이 취소되었습니다.', 'AbortError'));
+      pumpConversionQueue();
+    };
+    const entry = { onWait, grant: () => { signal?.removeEventListener('abort', onAbort); resolve(release); } };
+    signal?.addEventListener('abort', onAbort, { once: true });
+    conversionQueue.push(entry);
+    pumpConversionQueue();
+  });
+}
+// 11-09: 라벨별 제거 결과가 계획·마스크와 맞지 않으면 실패로 끝내지 않고 원본을 쓰기 위해, 맞지 않는 이유만 돌려준다(맞으면 '').
+function examRemovalBindingProblem({ plan, report, sourceFrame }) {
+  const ids = report.removedLabelIds || [];
+  if (new Set(ids).size !== ids.length || ids.some(id => !plan.labels.some(label =>
+    label.id === id && label.scope === 'general' && label.sourceRef === 1 && !label.ownershipReviewRequired))
+    || report.deferredLabels?.some(label => ids.includes(label.labelId))) return '라벨별 제거 결과와 원본 계획의 소속이 다릅니다.';
+  const mask = report.removalMasks;
+  if (mask?.version !== 1 || mask.coordinateSpace !== 'source-pixels' || !Array.isArray(mask.regions)
+    || sourceFrame?.width && (mask.width !== sourceFrame.width || mask.height !== sourceFrame.height)
+    || ids.some(id => !mask.regions.some(region => region.labelId === id && region.component === 'text'))) return '완료된 라벨의 실제 제거 마스크를 확인할 수 없습니다.';
+  return '';
+}
 export const imageLabelDigest = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))].map(b => b.toString(16).padStart(2, '0')).join('');
 const imageFrame = async (dataUrl, signal) => {
   // The browser owns decoding; headless controller unit tests have no Image.
@@ -81,6 +165,8 @@ export function createImageLabelRasterController({ transport, timeoutMs = 600000
       return finish(r, new Error('한 번의 이미지 처리에서 추가 생성이 감지되어 중단했습니다.'));
     }
     if (e.kind === 'image') { r.src = e.src; r.rendererPrompt = e.rendererPrompt || ''; }
+    // 11-09: 그림 없이 글로만 끝난 차례는 AI가 남긴 말을 실패 원인으로 기록한다(예: 「첨부 이미지 경로에 생성 도구가 접근할 수 없어…」).
+    if (e.kind === 'assistant' && e.text) r.text = String(e.text);
     if (e.kind === 'assistant' && /usage.?limit|rate.?limit|quota|사용량\s*제한|한도\s*(초과|제한)|429/i.test(e.text || '')) {
       r.failureMessage = '이미지 생성이 계정 사용량 제한으로 거절되었습니다. 크레딧 잔여 여부와 별도로 이미지 생성 이용 상태를 확인해 주세요.';
     }
@@ -88,7 +174,7 @@ export function createImageLabelRasterController({ transport, timeoutMs = 600000
     // 데스크톱 앱은 그림이 나오면 차례를 스스로 끊고 「interrupted」를 보내거나 끝 확인(finalization)만 보낸다 — 그림을 받았으면 성공(H13).
     // 사용자가 취소한 경우는 cancel()이 먼저 끝내므로 여기까지 오지 않는다(ai-panel.resolveAiTerminalOutcome과 같은 규칙).
     if (e.kind === 'finalization' && ['confirmed', 'recovered'].includes(e.state) && r.src) finish(r, null);
-    if (e.kind === 'done') finish(r, !['completed', 'interrupted'].includes(e.status) || e.error || !r.src ? new Error(e.error || r.failureMessage || '이미지 처리 완료를 확인하지 못했습니다.') : null);
+    if (e.kind === 'done') finish(r, !['completed', 'interrupted'].includes(e.status) || e.error || !r.src ? new Error(e.error || r.failureMessage || `이미지 처리 완료를 확인하지 못했습니다.${r.text ? ` AI 답: ${r.text.slice(0, 200)}` : ''}`) : null);
   };
   const matches = (r, e) => Boolean((e.turnId || e.threadId) && (!e.turnId || e.turnId === r.turnId) && (!e.threadId || e.threadId === r.threadId));
   return {
@@ -133,15 +219,58 @@ export async function executeImageLabelRun(options = {}) {
   const abort = () => { options.observer?.cancel?.(); options.raster?.cancel?.(); };
   cancelled(options.signal);
   options.signal?.addEventListener('abort', abort, { once: true });
-  try { return await executeBoundImageLabelRun(options); }
-  catch (error) { cancelled(options.signal); throw error; }
-  finally { options.signal?.removeEventListener('abort', abort); }
+  let release = null;
+  const progress = { data: null, plan: null, rendererPrompt: '', phase: null };
+  try {
+    if (options.queue !== false) release = await acquireAiConversionSlot({ signal: options.signal, onWait: options.onQueueWait });
+    return await executeBoundImageLabelRun({ ...options, progress });
+  } catch (error) {
+    cancelled(options.signal);
+    if (error?.name === 'AbortError' || error?.code === 'AI_GRAPH_FIGURE' || options.fallback === false) throw error;
+    // 11-09: 어떤 단계가 끝내 실패해도 결과를 내놓는다 — 새로 그린 그림이 있으면 그 그림(라벨 없이), 없으면 원본 그림.
+    return await fallbackImageLabelResult(options, progress, error);
+  } finally { release?.(); options.signal?.removeEventListener('abort', abort); }
+}
+
+async function fallbackImageLabelResult(options, progress, error) {
+  const source = options.source;
+  if (options.verifyOnly || !source?.data?.startsWith('data:image/')) throw error;
+  let workflow;
+  try { workflow = normalizeImageLabelWorkflow(options.workflow, { requireExplicit: true }); } catch { throw error; }
+  const sourceSha256 = await imageLabelDigest(source.data);
+  let sourceFrame = null;
+  try { sourceFrame = { id: source.id || sourceSha256, name: source.name || '원본', ...(await imageFrame(source.data)) }; } catch {}
+  let useGenerated = workflow.imageKind === 'general' && typeof progress.data === 'string' && progress.data.startsWith('data:image/') && progress.data !== source.data;
+  let candidateFrame = sourceFrame;
+  if (useGenerated) { try { candidateFrame = await imageFrame(progress.data); } catch { useGenerated = false; candidateFrame = sourceFrame; } }
+  const data = useGenerated ? progress.data : source.data;
+  const candidateSha256 = useGenerated ? await imageLabelDigest(data) : sourceSha256;
+  const reason = String(error?.message || error).slice(0, 300);
+  const phaseName = error?.aiPhase || progress.phase || null;
+  const message = useGenerated
+    ? `라벨을 붙이지 못해 새로 그린 그림만 넣었습니다(원인: ${reason}). 다시 변환하면 라벨을 다시 붙입니다.`
+    : phaseName === 'generation' ? `AI가 그림을 끝내 만들지 못해 원본 그림을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`
+      : phaseName === 'sourceAnalysis' ? `AI가 라벨을 끝내 읽지 못해 원본 그림을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`
+        : `변환을 끝내지 못해 원본 그림을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`;
+  const metrics = clone(error?.workflowMetrics || { version: IMAGE_LABEL_RUN_VERSION, timings: {}, calls: {} });
+  metrics.timings ||= {};
+  metrics.fallback = { phase: phaseName, reason, image: useGenerated ? 'generated' : 'source', attempts: error?.aiAttempts || null };
+  metrics.cacheStored = false; metrics.cacheSkipReason = 'fallback';
+  const plan = progress.plan ? clone(progress.plan) : null;
+  return { version: IMAGE_LABEL_RUN_VERSION, accepted: false, status: 'fallback', data, workflow, sourceSha256, sourceFrame,
+    planSha256: plan ? await imageLabelDigest(JSON.stringify(plan)) : null, candidateSha256, candidateFrame,
+    sourceLabelPlan: plan, targetPlacement: null, labelPlan: null, editableDraft: null,
+    removalReport: { status: 'fallback', changedPixels: 0, removedLabelIds: [], deferredLabels: [], unchanged: !useGenerated, issues: [] },
+    report: { verdict: 'uncertain', checks: [], issues: [{ code: 'ai-fallback-result', message, severity: 'major' }] },
+    rendererPrompt: useGenerated ? progress.rendererPrompt || '' : '', finalLabelComposite: null, labelVerificationPreview: null, labelProposals: null,
+    metrics, fallbackMessage: message };
 }
 
 async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, request = '', observer, raster, selection,
   artboard, signal, observation, onObservation = () => {}, onPhase = () => {}, onSourceCandidates, onRaster = () => {}, cache,
   bypassCache = false, preciseRestore = false, verifyOnly = false, previousCandidate, localRestore,
-  generationInstructions = request, generationSource, backgroundCache, previousCandidates = [], graphLabels = 'route' } = {}) {
+  generationInstructions = request, generationSource, backgroundCache, previousCandidates = [], graphLabels = 'route',
+  progress = null, onAiFailure = () => {}, onAiRetry = () => {}, retryPolicy = AI_RETRY_POLICY } = {}) {
   const started = performance.now();
   const labelSelection = { ...selection, model: 'gpt-6-luna', effort: 'medium' };
   const workflow = normalizeImageLabelWorkflow(rawWorkflow, { requireExplicit: true });
@@ -154,7 +283,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   const metrics = { version: IMAGE_LABEL_RUN_VERSION, timings: {}, calls: { sourceAnalysis: 0, fullGeneration: 0, localRestore: 0, localReview: 0, targetMapping: 0, review: 0 },
     attempts: { fullGeneration: 0, localRestore: 0 }, cacheHit: false, observationReused: false };
   const phase = async (name, action) => {
-    cancelled(signal); onPhase(name); const t = performance.now();
+    cancelled(signal); onPhase(name); if (progress) progress.phase = name; const t = performance.now();
     try { return await action(); }
     catch(error) {
       metrics.timings[name]=Math.round(performance.now()-t);
@@ -213,11 +342,14 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     plan = clone(observation.plan); metrics.observationReused = true;
   } else {
     if (verifyOnly) throw new Error('최종 검수에는 같은 원본의 보존된 관찰이 필요합니다.');
-    plan = await phase('sourceAnalysis', async () => {
-      metrics.calls.sourceAnalysis++;
-      return observer.analyze({ ...labelSelection, attachments:[{...attachments[0],sourceTextCandidates:source.sourceTextCandidates}], request, workflow,signal,
-        onSourceCandidates:async receipt=>{metrics.timings.sourceCandidates=Math.round(receipt.totalMs);metrics.sourceCandidates={sets:receipt.candidateSets.map(set=>({sourceRef:set.sourceRef,count:set.candidates.length})),errors:receipt.errors};await onSourceCandidates?.(receipt);} });
-    });
+    plan = await phase('sourceAnalysis', () => runAiWithRetry({ stage: 'sourceAnalysis', selection: labelSelection, signal,
+      attempts: retryPolicy.attempts, timeoutsMs: retryPolicy.analysisTimeoutMs, backoffMs: retryPolicy.backoffMs,
+      cancel: () => observer.cancel?.('라벨 읽기 응답이 없어 다시 보냅니다.'), onFailure: onAiFailure, onRetry: onAiRetry,
+      run: choice => {
+        metrics.calls.sourceAnalysis++;
+        return observer.analyze({ ...choice, attachments:[{...attachments[0],sourceTextCandidates:source.sourceTextCandidates}], request, workflow,signal,
+          onSourceCandidates:async receipt=>{metrics.timings.sourceCandidates=Math.round(receipt.totalMs);metrics.sourceCandidates={sets:receipt.candidateSets.map(set=>({sourceRef:set.sourceRef,count:set.candidates.length})),errors:receipt.errors};await onSourceCandidates?.(receipt);} });
+      } }));
   }
   // 11-08: 새로 그리는 변환(일반)은 그래프 축·눈금 글자까지 그림에서 지운다. 그 글자는 라벨로 돌아오지 않아 사라졌다.
   // 기본은 그림을 그리기 전에 멈추고 그래프 복원으로 넘긴다(AI_GRAPH_FIGURE). 사용자가 같은 작업에서 다시 변환하면(graphLabels:'restore')
@@ -235,6 +367,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       throw error;
     }
   }
+  if (progress) progress.plan = clone(plan);
   const planSha256 = await imageLabelDigest(JSON.stringify(plan));
   const observationState = { version: IMAGE_LABEL_RUN_VERSION, contractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION, workflowVersion: workflow.version, imageKind: workflow.imageKind, sourceSha256, sourceFrame, planSha256, plan: clone(plan),
     localRestoreAttempted: observation?.sourceSha256 === sourceSha256 && observation.localRestoreAttempted === true };
@@ -289,7 +422,9 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     }
     data = previousCandidate.data; rendererPrompt = previousCandidate.rendererPrompt || '';
   } else if (workflow.imageKind === 'exam') {
-    const local = await phase('pixelProcessing', () => removeExamLabelsFromDataUrl({ dataUrl: source.data, plan, workflow, signal,
+    let local;
+    try {
+    local = await phase('pixelProcessing', () => removeExamLabelsFromDataUrl({ dataUrl: source.data, plan, workflow, signal,
       localRestore: localRestore && !observationState.localRestoreAttempted ? async args => {
         observationState.localRestoreAttempted = true;
         await onObservation(clone(observationState)); // Reserve the one attempt durably before dispatch.
@@ -298,6 +433,16 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         try { return await localRestore(args, { metrics, selection, signal }); }
         finally { metrics.timings.localRestore = Math.round(performance.now() - t); }
       } : undefined }));
+    } catch (error) {
+      // 11-09: 기출 주석 제거가 끝내 실패해도 변환을 실패로 끝내지 않는다 — 원본 그림을 그대로 쓰고 글자는 편집 목록으로 남긴다.
+      if (error?.name === 'AbortError' || signal?.aborted) throw error;
+      const message = `기출 주석 제거를 끝내지 못해 원본을 유지했습니다: ${String(error?.message || error).slice(0, 200)}`;
+      try { onAiFailure({ stage: 'pixelProcessing', attempt: 1, attempts: 1, model: null, effort: null, code: error?.code || null, message, elapsedMs: metrics.timings.pixelProcessing ?? null, at: new Date().toISOString() }); } catch {}
+      local = { dataUrl: source.data, report: { status: 'failed', changedPixels: 0, removedLabelIds: [], deferredLabels: [], issues: [{ code: 'pixel-processing-failed', message }] } };
+    }
+    const bindingProblem = local.report.status !== 'complete' && local.report.removedLabelIds?.length ? examRemovalBindingProblem({ plan, report: local.report, sourceFrame }) : '';
+    if (bindingProblem) local = { dataUrl: source.data, report: { ...local.report, status: 'failed', removedLabelIds: [], removalMasks: undefined,
+      issues: [...(local.report.issues || []), { code: 'removal-binding-mismatch', message: `${bindingProblem} 원본을 유지했습니다.` }] } };
     removalReport = local.report;
     observationState.removalIncomplete=local.report.status!=='complete';
     await onObservation(clone(observationState));
@@ -311,8 +456,13 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     const background = await phase('generation', () => resolveImageLabelBackground({ contract: backgroundContract,
       candidates: [previousCandidate, ...previousCandidates], cache: backgroundCache, signal,
       generate: async () => {
-        metrics.attempts.fullGeneration++;
-        const result = await raster.generate(generationPayload, { imageKind: workflow.imageKind, signal });
+        const result = await runAiWithRetry({ stage: 'generation', selection: { model: generationPayload.model, effort: generationPayload.effort }, signal,
+          attempts: retryPolicy.attempts, timeoutsMs: retryPolicy.generationTimeoutMs, backoffMs: retryPolicy.backoffMs,
+          cancel: () => raster.cancel?.(), onFailure: onAiFailure, onRetry: onAiRetry,
+          run: choice => {
+            metrics.attempts.fullGeneration++;
+            return raster.generate({ ...generationPayload, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, signal });
+          } });
         metrics.calls.fullGeneration += result.imageToolCalls;
         return { data: await resolveGeneratedRaster(result.src, { whitePng: true }), rendererPrompt: result.rendererPrompt };
       } }));
@@ -331,6 +481,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { fitted: false, reason: String(error?.message || error).slice(0, 200) }; }
     }
   }
+  if (progress && workflow.imageKind === 'general' && !verifyOnly) { progress.data = data; progress.rendererPrompt = rendererPrompt; }
   cancelled(signal);
   const candidateSha256 = await imageLabelDigest(data);
   const candidateFrame = await imageFrame(data, signal);
@@ -342,7 +493,9 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     // Persist and display the one real RAW before a slower label verification.
     // This is a pending diagnostic candidate, never an accepted/cache result.
     cancelled(signal);
-    await onRaster({data,rendererPrompt,workflow,sourceSha256,sourceFrame,planSha256,candidateSha256,candidateFrame,sourceLabelPlan:clone(plan),metrics:clone(metrics)});
+    // 11-09: 미리 보여 주기가 실패해도 변환은 계속한다(결과는 마지막에 다시 만든다).
+    try { await onRaster({data,rendererPrompt,workflow,sourceSha256,sourceFrame,planSha256,candidateSha256,candidateFrame,sourceLabelPlan:clone(plan),metrics:clone(metrics)}); }
+    catch (error) { if (error?.name === 'AbortError' || signal?.aborted) throw error; metrics.rasterPreviewError = String(error?.message || error).slice(0, 200); }
     cancelled(signal);
   }
   if (workflow.imageKind === 'exam' && removalReport?.status !== 'complete') {
