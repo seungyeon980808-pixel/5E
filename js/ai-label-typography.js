@@ -57,7 +57,7 @@ export function presentationRoleFor(role, text) { return role === 'name' && !isO
 const HANGUL = '가-힣ㄱ-ㅎㅏ-ㅣ㉠-㉻㈀-㈜';
 const HANGUL_CHUNK = new RegExp(`[(\\[〈「]*[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
 const UNIT_AFTER_NUMBER = /^[+−-]?\d[\d.,]*\s*(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|°C?|%|kg)$/u;
-export function scriptLabelRuns(text, role, aiRuns) {
+export function scriptLabelRuns(text, role, aiRuns, { graph = false } = {}) {
   const source = String(text ?? '');
   if (!source.trim() || /[_^{}\\]/.test(source)) return null; // 수식 문법 라벨은 기존 수식 경로
   const qty = new Set(), chem = new Set();
@@ -84,7 +84,9 @@ export function scriptLabelRuns(text, role, aiRuns) {
     else if (chem.has('*') || [...chem].some(c => c && core.includes(c))) runRole = 'chemical';
     else if (qty.has('*') || qty.has(core) || [...qty].some(q => q && q !== '*' && core.includes(q)) || /[α-ωΑ-Ωθ]/u.test(core)) runRole = 'quantity';
     // AI가 일반 글자(text)로 준 영어 소문자(v, t, t₀, 3t₀, 2d)는 물리량 — 기울임. 점 이름(p·q)은 AI가 기호·이름으로 주므로 정체 그대로.
-    else if ((role === 'text' || role === undefined) && /^[+−-]?\d*[a-z][a-z]?(?:[₀-₉ₐₑₒₓ]+|[′'])*$/u.test(core)) runRole = 'quantity';
+    // 11-08: 그래프에서 되살린 글자(v·t·t₀·3t₀)는 AI가 「이름」으로 줘도 물리량 — 평가원 그래프의 점·곡선 이름은 대문자, 소문자는 변수다.
+    // 다만 그래프 위 점 이름(p·q·r·s, 평가원은 정체)은 글자 하나만 있으면 이름으로 둔다.
+    else if ((role === 'text' || role === undefined || graph && role === 'name' && !/^[pqrs]$/.test(core)) && /^[+−-]?\d*[a-z][a-z]?(?:[₀-₉ₐₑₒₓ]+|[′'])*$/u.test(core)) runRole = 'quantity';
     else runRole = 'name';
     return { text: part.text, role: runRole, contentMode: 'plain' };
   });

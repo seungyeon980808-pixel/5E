@@ -76,3 +76,15 @@ test('explicit ordinary mixed-run italic survives while scientific roles retain 
     assert.equal(JSON.parse(JSON.stringify(object)).labelItalicOverride,true);
   }
 });
+
+test('11-08: graph letters restored as labels are italic quantities even when the AI calls them names', async () => {
+  const { scriptLabelRuns } = await typography;
+  const roles = (text, graph) => scriptLabelRuns(text, 'name', [], { graph }).map(r => [r.text, r.role]);
+  for (const text of ['v', 't', 't₀', '3t₀']) {
+    assert.deepEqual(roles(text, true), [[text, 'quantity']]);
+    assert.deepEqual(roles(text, false), [[text, 'name']]);
+  }
+  // 그래프 위 점 이름(p·q·r·s)과 대문자 이름은 정체 그대로
+  for (const text of ['p', 'q', 'A']) assert.deepEqual(roles(text, true), [[text, 'name']]);
+  assert.deepEqual(roles('0', true), [['0', 'number']]);
+});
