@@ -206,3 +206,15 @@ test('local restore serializes Uint8ClampedArray pixels and reaches scoped raste
  const run=createExamLocalRestore({observer:{},raster:{generate:async(payload,options)=>{calls++;assert.equal(options.imageKind,'exam');assert.equal(options.local,true);assert.equal(payload.attachments.length,2);const decoded=await decodeScopedPng(new Uint8Array(Buffer.from(payload.attachments[0].data.split(',')[1],'base64')));assert.deepEqual([...decoded.data],[...pixels]);throw Error('scoped send reached');}}});
  await assert.rejects(run({data:pixels,width:2,height:2,mask:new Uint8Array([1,0,0,0])},{metrics:{calls:{}},selection}),/scoped send reached/);assert.equal(calls,1);
 });
+
+// 11-09: 원본 글자 비율은 짝수 개면 가운데 두 값 중 작은 쪽 — 크게 잘못 재진 라벨 하나가 그림의 모든 라벨을 키우지 않게(교과서 tb04).
+test('measured label size ratio takes the lower middle value so one inflated label cannot enlarge every label',async()=>{
+ const {measuredLabelSizeRatio}=await api;
+ const label=(id,h)=>({id,text:'A',typography:{bounds:{x:.1,y:.1,w:.1,h}}});
+ // node에서는 그림 픽셀을 못 읽어 AI 상자 높이로 잰다(대문자·숫자는 ÷ .72).
+ const two=await measuredLabelSizeRatio('data:,',[label('a',.036),label('b',.072)]);
+ assert.ok(Math.abs(two-.036/.72)<1e-9,String(two));
+ const three=await measuredLabelSizeRatio('data:,',[label('a',.036),label('b',.072),label('c',.05)]);
+ assert.ok(Math.abs(three-.05/.72)<1e-9,String(three));
+ assert.equal(await measuredLabelSizeRatio('data:,',[]),null);
+});

@@ -34,7 +34,7 @@ export const TEXTBOOK_OBJECT_ONLY_CONTRACT = '교과서 그림 정리: 그림의
 const clone = value => structuredClone(value);
 // 11-08: 캔버스에 넣을 때도 라벨 크기를 원본에 맞춘다 — 원본 그림 픽셀에서 잰 글자 높이로 글자 크기(그림 높이에 대한 비율)를 정한다.
 // 한글 글자는 글자 크기의 약 0.88, 영어 대문자·숫자는 약 0.72, 그 밖은 0.8 높이(한글에 넣기와 같은 셈).
-async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
+export async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
   let measured = [];
   try { measured = await measureSourceLabelHeights({ sourceDataUrl, labels, signal }); } catch (error) { if (error?.name === 'AbortError') throw error; }
   const glyph = new Map(measured.map(m => [m.id, m.h]));
@@ -43,7 +43,10 @@ async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
     const h = glyph.get(l.id) || l.typography.bounds.h;
     return h / (/[가-힣]/.test(l.text) ? .88 : /^[A-Z0-9]+$/.test(String(l.text).trim()) ? .72 : .8);
   }).sort((a, b) => a - b);
-  return sizes.length ? sizes[Math.floor(sizes.length / 2)] : null;
+  // 11-09: 짝수 개일 때 가운데 두 값 중 큰 쪽을 써서, AI가 두 줄 글자를 한 줄로 준 라벨 하나(「매질의 진동 방향」: 두 줄과
+  // 옆 물결 바탕까지 이어져 0.105로 재짐)가 그림의 모든 라벨을 두 배 넘게 키웠다(교과서 tb04 0.119).
+  // 잘못 재지는 쪽은 거의 늘 「크게」라서 작은 쪽을 쓴다. 홀수 개면 지금처럼 가운데 값.
+  return sizes.length ? sizes[Math.floor((sizes.length - 1) / 2)] : null;
 }
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError'); };
 // 11-09 사용자 원칙: AI 변환(이미지·그래프)은 어떤 경우에도 「실패」로 끝나면 안 된다.
