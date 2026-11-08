@@ -102,7 +102,40 @@ export async function reframeCandidateToSource({ candidateDataUrl, sourceDataUrl
   return { data, reframed: true, transform: { sx, sy, tx, ty, outW, outH }, sourceBox, candidateBox };
 }
 
-// 11-08 안전장치(사용자 「라벨이 빠진다」): AI가 원본 글자를 라벨 목록에서 빠뜨리면, 새 그림에서는 그 글자가 지워지고
+// 11-08 사용자 결정: 「라벨 켬과 끔은 무조건 같은 그림, 그 위에 라벨만 올린다」·「크기를 재고 그 크기를 벗어나지 않게」.
+// 그래서 판 맞춤은 라벨 켬·끔과 상관없이 늘 같은 방법으로 하고, 가로·세로를 같은 배율로만 키우거나 줄인다(모양이 바뀌지 않음).
+// 원본의 그림 영역(글자 상자는 뺌) 안에 새 그림의 그림 영역이 들어가도록 같은 배율로 맞추고 가운데에 놓는다.
+// 판은 원본과 같은 비율이다. 그림 영역을 못 찾으면 새 그림 전체를 원본 비율 판 안에 같은 배율로 넣는다.
+export async function fitCandidateToSource({ candidateDataUrl, sourceDataUrl, textBoxes = [], signal }) {
+  const [candidate, source] = await Promise.all([decode(candidateDataUrl, signal), decode(sourceDataUrl, signal)]);
+  const sourceAspect = source.naturalWidth / source.naturalHeight;
+  const skip = textBoxes.filter(b => b && ['x', 'y', 'w', 'h'].every(k => Number.isFinite(b[k])));
+  const CW = candidate.naturalWidth, CH = candidate.naturalHeight;
+  let sourceBox = inkBounds(pixels(source), skip), candidateBox = inkBounds(pixels(candidate));
+  if (!sourceBox || !candidateBox) { sourceBox = { x: 0, y: 0, w: 1, h: 1 }; candidateBox = { x: 0, y: 0, w: 1, h: 1 }; }
+  const contentW = candidateBox.w * CW, contentH = candidateBox.h * CH;
+  // 판 크기: 새 그림의 해상도를 살리되 원본 비율로.
+  let outW = Math.max(1, Math.round(contentW / sourceBox.w)), outH = Math.max(1, Math.round(outW / sourceAspect));
+  if (outH * sourceBox.h < contentH * .5) { outH = Math.max(1, Math.round(contentH / sourceBox.h)); outW = Math.max(1, Math.round(outH * sourceAspect)); }
+  const s = Math.min((sourceBox.w * outW) / contentW, (sourceBox.h * outH) / contentH);
+  const tx = (sourceBox.x + sourceBox.w / 2) * outW - (candidateBox.x * CW + contentW / 2) * s;
+  const ty = (sourceBox.y + sourceBox.h / 2) * outH - (candidateBox.y * CH + contentH / 2) * s;
+  if (Math.abs(CW / CH - sourceAspect) / sourceAspect < .005 && Math.abs(s - 1) < .005 && Math.abs(tx) < 1 && Math.abs(ty) < 1) {
+    return { data: candidateDataUrl, fitted: false, reason: 'already-aligned' };
+  }
+  const canvas = document.createElement('canvas'); canvas.width = outW; canvas.height = outH;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#fff'; context.fillRect(0, 0, outW, outH);
+  context.imageSmoothingQuality = 'high';
+  context.setTransform(s, 0, 0, s, tx, ty);
+  context.drawImage(candidate, 0, 0);
+  const data = canvas.toDataURL('image/png');
+  canvas.width = canvas.height = 0;
+  if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+  return { data, fitted: true, transform: { s, tx, ty, outW, outH } };
+}
+
+// (11-08 사용자 결정으로 쓰지 않음 — 그림을 라벨 켤 때만 바꾸게 되므로) 11-08 안전장치(사용자 「라벨이 빠진다」): AI가 원본 글자를 라벨 목록에서 빠뜨리면, 새 그림에서는 그 글자가 지워지고
 // 라벨로도 돌아오지 않아 사라졌다(저울 그림 A·B 세 번 중 한 번). 판 비율을 맞춘 뒤 새 그림과 원본은 자리가 같으므로,
 // 원본의 글자 크기 잉크 덩어리 중 라벨 상자에 들지 않고 새 그림에서 비어 버린 곳을 찾아 원본 픽셀을 그 자리에 되붙인다.
 // 편집은 안 되지만 사라지지는 않는다. 결과 { data, restored:[{x,y,w,h}] } (0~1 원본 좌표).

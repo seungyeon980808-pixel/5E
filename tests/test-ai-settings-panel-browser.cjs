@@ -208,45 +208,36 @@ test('actual modern controller: policy payloads and exact RAW review/export/nati
   assert.equal(await page.locator(`${panel} [data-ai-compact-settings]`).isVisible(),false,'selected RAW review hides conversion policy controls');
   assert.equal(await pair(page,'background').getByRole('button',{name:'켜기',exact:true,includeHidden:true}).isVisible(),false);
   assert.equal(await page.locator(`${panel} [data-ai-background-policy]`).inputValue(),'connected','hidden policy remains the selected pre-generation value');
-  await page.waitForFunction(raw=>{const image=document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage img');return image?.complete&&image.naturalWidth&&image.src===raw;},c.data);
+  // 11-08 사용자 결정: 일반 그림 변환 결과도 고른 배경 처리(여기서는 변환 전에 고른 외부 배경 제거)를 따른다.
+  // 저장된 AI 원본(RAW)은 바뀌지 않고, 미리보기·PNG 저장만 처리한 그림을 쓴다.
+  await page.waitForFunction(raw=>{const image=document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage img');return image?.complete&&image.naturalWidth&&image.src!==raw;},c.data);
   const reviewRaw=await page.locator(`${panel} .ai-generated-card .ai-preview-stage img`).getAttribute('src');
-  assert.equal(reviewRaw,c.data,'review preview remains the exact verified RAW bytes');
-  // Transport-only filesystem boundary: click the current PNG save UI,
-  // let its real RAW guard export the captured bound candidate unchanged.
+  assert.notEqual(reviewRaw,c.data,'selected background removal reaches the general result preview');
   const downloadReady=page.waitForEvent('download');
   await page.locator(`${panel} [data-ai-save-selected]`).click();
   const download=await downloadReady;
   assert.match(download.suggestedFilename(), /\.png$/);
   const exported={extension:'.png', dataUrl:'data:image/png;base64,'+fs.readFileSync(await download.path()).toString('base64')};
-  assert.equal(exported.extension,'.png');assert.equal(exported.dataUrl,c.data,'Modern export preserves the exact bound RAW bytes');
   const pixels=await page.evaluate(async src=>{
     const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Actual exported PNG did not decode'));img.src=src;});
     const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
-    return{width:canvas.width,height:canvas.height,outside:[...ctx.getImageData(0,0,1,1).data],inside:[...ctx.getImageData(250,150,1,1).data]};
+    return{width:canvas.width,height:canvas.height,outside:[...ctx.getImageData(0,0,1,1).data]};
   },exported.dataUrl);
-  const rawProof=await page.evaluate(async({raw,exported,id,taskId})=>{
-    const {imageLabelDigest}=await import('/js/ai-image-label-run.js?v=1.7.0-four-session-integration');
+  assert.equal(pixels.outside[3],0,'exported general result has the selected outside background removed');
+  const proof=await page.evaluate(async id=>{
     const {requiresRawImageOutput,isHistoricalPngLocalResult}=await import('/js/ai-output-processing.js?v=1.7.0-four-session-integration');
-    const owner=(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs).find(tab=>tab.id===taskId&&tab.generated.some(item=>item.id===id));
-    const candidate=owner?.generated.find(item=>item.id===id);
-    if(!candidate)throw new Error('Actual durable modern candidate is required');
-    const fullPixels=async src=>{const image=new Image();image.src=src;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d');context.drawImage(image,0,0);const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;return{width:canvas.width,height:canvas.height,rgbaSha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(v=>v.toString(16).padStart(2,'0')).join('')};};
-    return{taskId:owner.id,id:candidate.id,selectedId:document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId,requiresRaw:requiresRawImageOutput(candidate),historical:isHistoricalPngLocalResult(candidate),rawDigest:await imageLabelDigest(raw),exportDigest:await imageLabelDigest(exported),storedDigest:candidate.candidateSha256,rawPixels:await fullPixels(raw),exportPixels:await fullPixels(exported),sourceFrame:candidate.sourceFrame,candidateFrame:candidate.candidateFrame,reviewState:candidate.reviewState};
-  },{raw:c.data,exported:exported.dataUrl,id:c.id,taskId:row.id});
-  assert.equal(rawProof.taskId,row.id);assert.equal(rawProof.id,c.id);assert.equal(rawProof.selectedId,c.id);
-  assert.equal(rawProof.requiresRaw,true);assert.equal(rawProof.historical,false);
-  assert.equal(rawProof.rawDigest,rawProof.storedDigest);assert.equal(rawProof.exportDigest,rawProof.storedDigest);
-  assert.deepEqual(rawProof.exportPixels,rawProof.rawPixels,'Every decoded RAW channel is preserved by modern export');
-  assert.equal(rawProof.sourceFrame.width,512);assert.equal(rawProof.sourceFrame.height,384);
-  assert.equal(rawProof.candidateFrame.width,rawProof.rawPixels.width);assert.equal(rawProof.candidateFrame.height,rawProof.rawPixels.height);
-  assert.equal(rawProof.reviewState,'passed');assert.equal((await sends(page)).length,beforeCalls);
-  assert.deepEqual((await active(page)).generated.find(item=>item.id===c.id),c,'export must not mutate any RAW candidate field or verification binding');
-  assert.equal(await page.locator(`${panel} .ai-generated-card .ai-preview-stage img`).getAttribute('src'),reviewRaw);
-  fs.writeFileSync(path.join(evidence,'raw-export.png'),Buffer.from(exported.dataUrl.split(',')[1],'base64'));
-  await page.screenshot({path:path.join(evidence,'raw-review-export.png')});
+    const candidate=(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs).flatMap(t=>t.generated).find(item=>item.id===id);
+    return {requiresRaw:requiresRawImageOutput(candidate),local:isHistoricalPngLocalResult(candidate)};
+  },c.id);
+  assert.equal(proof.requiresRaw,false);assert.equal(proof.local,true);
+  assert.equal((await sends(page)).length,beforeCalls);
+  assert.deepEqual((await active(page)).generated.find(item=>item.id===c.id),c,'export must not mutate the stored AI original or its bindings');
+  fs.writeFileSync(path.join(evidence,'processed-export.png'),Buffer.from(exported.dataUrl.split(',')[1],'base64'));
+  await page.screenshot({path:path.join(evidence,'processed-review-export.png')});
   await page.locator(`${panel} [data-ai-insert-selected]`).click();await page.waitForFunction(()=>document.querySelector('#ai-image-panel').hidden);
   const inserted=await page.evaluate(async candidateId=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return state.get().objects.filter(object=>object.aiCandidateId===candidateId);},c.id);
-  const images=inserted.filter(object=>object.type==='image');assert.equal(images.length,1);assert.equal(images[0].src,c.data,'native insertion preserves selected RAW bytes');assert.equal(images[0].aiTaskId,row.id);
+  const images=inserted.filter(object=>object.type==='image');assert.equal(images.length,1);assert.equal(images[0].aiTaskId,row.id);
+  const rawProof={exported:'processed'};
   assert.equal((await sends(page)).length,beforeCalls,'export and native insertion add no provider calls');
   assert.deepEqual(errors,[]);fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({paidAiCalls:0,c,requests,payloads,reviewRaw,exported,pixels,rawProof,inserted,errors},null,2));
 });

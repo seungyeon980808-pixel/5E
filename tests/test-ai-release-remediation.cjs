@@ -615,14 +615,17 @@ test('batch capture retains only selected revision inputs and immutable operatio
 
 
 test('bound RAW cannot enter automatic, manual or cached legacy-separated delegates', async()=>{
-  const [guards,review,labels,store]=await Promise.all([separationGuards(),productModule('ai-image-review'),productModule('ai-image-label-run'),productModule('store')]);
+  const [guards,review,labels,store,output]=await Promise.all([separationGuards(),productModule('ai-image-review'),productModule('ai-image-label-run'),productModule('store'),productModule('ai-output-processing')]);
   const candidateSha256=await labels.imageLabelDigest(retainedPng),workflow={imageKind:'general',labelResult:'remove',explicit:true};
+  let unlockedChecked=0;
   const ids=['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','raster-label-removal','kice-flat-style','flat-gray-regions'];
   const acceptance=review.enforceImageLabelAcceptance({verdict:'pass',checks:ids.map(id=>({id,label:id,status:'pass',detail:'Controlled complete byte-bound unit review'})),issues:[]},{workflow,candidateSha256});
   assert.equal(acceptance.accepted,true);
   for(const metadata of [{},{imageLabelWorkflow:false},{imageLabelWorkflow:{}},{labelPlan:{frozen:true}},{targetPlacement:{}},{scopedEditHistory:[{status:'cancelled'}]},{graphResult:{}},{sceneResult:{objects:[]}},{nativeGraph:{}},{candidateSha256:'invalid'}]){
     const candidate={id:'protected',kind:'generated',data:retainedPng,imageLabelWorkflow:workflow,candidateSha256,reviewReport:acceptance.report,reviewState:acceptance.state,verifiedCandidateData:retainedPng,
       generationMode:'separated',automaticSeparationState:'ready',automaticSeparationPrepared:{assets:[{id:'stale',data:retainedPng}]},...metadata};
+    // 11-08 사용자 결정: 일반 그림 변환 결과는 작업 뒤에도 배경 제거·객체 분리가 된다 — 그 경우는 이 잠금 검사에서 뺀다.
+    if (output.isGeneralImageLabelResult(candidate)) { unlockedChecked++; continue; }
     const before=structuredClone(candidate),calls={variant:0,automatic:0,dialog:0,insertion:0},statuses=[];
     const context={...guards,generatedImages:[candidate],selectedCandidateId:candidate.id,activeTaskTabId:'task-A',selectedSeparationMode:'auto',selectedImageOutputOptions:{},
       automaticSeparationRun:null,automaticSeparationCache:new Map(),AbortController,panel:{dataset:{}},AI_SEPARATION_MODES:{OFF:'off',MANUAL:'manual'},

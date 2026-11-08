@@ -278,13 +278,18 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
     const scriptStyles = normalizeFormulaScriptStyles(label.text, typography.scriptStyles || inferredScripts);
     // 11-07: 손으로 고친 서식이 없는 라벨은 글자 자체로 한글·영어·영어 수식 조각을 나눠 글꼴을 정한다(scriptLabelRuns).
     // 그려진 모습만 고정한 상태(defaultFontPinned, 위치만 옮김 등)도 조각 글꼴을 그대로 쓴다 — 옮겼다고 글꼴이 바뀌면 안 됨(11-08).
-    const scriptRuns = (!label.manualStyle || label.manualStyle.defaultFontPinned) && !formula && !scriptStyles.length ? scriptLabelRuns(label.text, typography.role, typography.runs) : null;
+    // 11-08: AI가 「A (l)」처럼 상태 기호 앞에 띄어 읽은 것은 평가원 표기대로 붙인다((s)·(l)·(g)·(aq)).
+    const scriptEligible = (!label.manualStyle || label.manualStyle.defaultFontPinned) && !formula && !scriptStyles.length;
+    const tidied = scriptEligible && !label.manualStyle ? String(label.text).replace(/([A-Za-z0-9)₀-₉])\s+\((s|l|g|aq)\)/g, '$1($2)') : label.text;
+    const tidiedRuns = scriptEligible ? scriptLabelRuns(tidied, typography.role, typography.runs) : null;
+    const labelText = tidiedRuns ? tidied : label.text;
+    const scriptRuns = tidiedRuns || (scriptEligible && tidied !== label.text ? scriptLabelRuns(label.text, typography.role, typography.runs) : null);
     const object = {
       id: idFactory(),
       type: 'labeler',
       p1: label.mode === 'text' ? { ...position } : anchor,
       p2: position,
-      text: label.text,
+      text: labelText,
       labelType: typography.role === 'quantity' ? 'quantity' : 'label',
       contentMode: label.contentMode,
       ...(formula ? { source: label.text, rawSource: label.text } : {}),

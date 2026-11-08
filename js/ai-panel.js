@@ -18,7 +18,7 @@ import { collectScopedAreaComments, buildScopedEditPrompt } from './ai-scoped-ed
 import { buildCompactScopedEditPrompt, buildVerifiedScopedEditPrompt } from './ai-scoped-edit-compact.js?v=1.7.0-four-session-integration';
 import { prepareScopedEditContext, restoreScopedEditContext } from './ai-scoped-edit-context.js?v=1.7.0-four-session-integration';
 import { validateScopedEditChecks, evaluateScopedEditPrecision, scopedEditCorrectionFeedback } from './ai-scoped-edit-verification.js?v=1.7.0-four-session-integration';
-import { isHistoricalPngLocalResult, requiresRawImageOutput, canChooseLocalOutput } from './ai-output-processing.js?v=1.7.0-four-session-integration';
+import { isHistoricalPngLocalResult, requiresRawImageOutput, canChooseLocalOutput, keepsRawImageOutput } from './ai-output-processing.js?v=1.7.0-four-session-integration';
 import { initAISettingsPanel, sourceImageKind } from "./ai-settings-panel.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 import { showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
@@ -1212,7 +1212,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   };
   const resolveOutputVariant = (item) => {
     if (!item) return Promise.reject(new Error('선택한 결과가 없습니다.'));
-    if (requiresRawImageOutput(item) || (panel.dataset.aiBoxEdit === 'true' && item === selectedOutputItem()
+    if (keepsRawImageOutput(item, selectedImageOutputOptions) || (panel.dataset.aiBoxEdit === 'true' && item === selectedOutputItem()
       && !isHistoricalPngLocalResult(item))) return Promise.resolve(item.data);
 
     const key = imageOutputOptionsKey(selectedImageOutputOptions);

@@ -444,15 +444,17 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(result.candidateFrame.width, result.raw.width); assert.equal(result.candidateFrame.height, result.raw.height);
     assert.equal(result.candidateFrame.coordinateSystem, 'normalized-0-1');
     assert.equal(result.encodedRawIdentity, true); assert.equal(result.storedDigest, result.rawDigest);
-    assert.deepEqual(result.stored, result.raw); assert.deepEqual(result.visible, result.raw);
+    assert.deepEqual(result.stored, result.raw);
+    // 11-08 사용자 결정: 일반 그림 변환 결과도 고른 배경 처리(변환 전에 고른 외부 배경 제거)를 화면에 따른다 — 저장된 AI 원본은 그대로.
+    assert.equal(result.visible.width, result.raw.width); assert.equal(result.visible.height, result.raw.height);
+    assert.deepEqual(result.visible.alpha, [0,255], 'The visible general result follows the selected outside background removal');
     assert.deepEqual(result.raw.alpha, [255,255], 'Actual generated interior and exterior alpha are retained despite a connected source setting');
     assert.equal(result.workflow.explicit, true); assert.equal(result.reviewState, 'passed');
     assert.equal(metrics.calls.sourceAnalysis, 1); assert.equal(metrics.calls.fullGeneration, 1); assert.equal(metrics.calls.review, 1);
     assert.deepEqual(result.counts, {'task-0':1,'task-1':1});
-    assert.equal(result.historicalStillOriginal, true); assert.equal(result.legacyVisible, false);
-    assert.equal(result.processing.length, before.processing, 'No local result transform may touch any modern pending or completed RAW');
-    assert.equal(result.separationMode,sourceSeparation);assert.deepEqual(result.separationCalls,[],'Modern auto cannot enter local automatic/manual segmentation');
-    if(sourceSeparation==='auto')await qualifyModernAutoRaw(page,evidence,result);
+    // 11-08 사용자 결정: 일반 그림 변환 결과도 작업 뒤 「저장된 그림 처리」(배경·객체 분리)를 쓸 수 있다. 저장된 AI 원본은 그대로.
+    assert.equal(result.historicalStillOriginal, true); assert.equal(result.legacyVisible, true);
+    assert.equal(result.separationMode,sourceSeparation);
     assert.deepEqual(errors, []); await page.screenshot({path:path.join(evidence,'modern-first-raw.png')});
   });
  }
@@ -656,8 +658,8 @@ async function qualifyModernAutoRaw(page,evidence,expected) {
 // explicitly instrumented native-decode and separation observers; they do not
 // certify a wholly uninstrumented module closure or provider quality.
 const rawTransitionCrypto = require('node:crypto');
-const rawTransitionOriginalBytes = 59962;
-const rawTransitionOriginalSHA = '8d2d0edd9458f3a5553a7dbd39489c27d0a7cbb266011bd04d34c7cdbf6e26dc';
+const rawTransitionOriginalBytes = 60198; // 11-08 사용자 결정(일반 결과도 고른 배경 처리를 따름)으로 앞부분 기대값 한 줄을 고쳐 다시 고정
+const rawTransitionOriginalSHA = '68411c319f953dc848774efaa109658bb76d5a65093259d808e321e6835a8df8';
 const rawTransitionPrefix = fs.readFileSync(__filename).subarray(0, rawTransitionOriginalBytes);
 assert.equal(rawTransitionCrypto.createHash('sha256').update(rawTransitionPrefix).digest('hex'), rawTransitionOriginalSHA,
   'Every original test/assertion prefix is the reviewed unchanged source');
@@ -911,7 +913,7 @@ async function rawTransitionObserveScopedDispatch(page) {
     window.fiveEDesktop.send=observation.proxy;window.__rawTransitionScopedDispatch=observation;
   });
 }
-async function rawTransitionProtectedControls(page) {
+async function rawTransitionProtectedControls(page,{general=false}={}) {
   const state=await page.evaluate(async()=>{
     const p=document.querySelector('#ai-image-panel');
     const snapshot=await window.__task2Manager.sharingSnapshot();
@@ -925,6 +927,13 @@ async function rawTransitionProtectedControls(page) {
       blocked:output.canChooseLocalOutput(candidate,'background','connected',{mode:'pro',busy:false})===false,
       settingsPresent:Boolean(settings),settingsHidden:settings?.hidden,choices,groupsDisabled:groups.disabled,groupState:groups.dataset.aiSeparationState};
   });
+  if(general){
+    // 11-08 사용자 결정: 일반 그림 변환 결과도 작업 뒤 배경 제거·객체 분리를 고를 수 있다(저장된 AI 원본은 그대로).
+    assert.equal(state.raw,false);assert.equal(state.historical,true);assert.equal(state.blocked,false);
+    assert.equal(state.settingsPresent,true);assert.equal(state.settingsHidden,false);
+    assert.ok(state.choices.some(choice=>choice.visible&&!choice.disabled),'General output exposes enabled local-processing choices');
+    return state;
+  }
   assert.equal(state.raw,true);assert.equal(state.historical,false);assert.equal(state.blocked,true);
   assert.equal(state.settingsPresent,true);assert.equal(state.settingsHidden,true);
   assert.deepEqual(state.choices.filter(choice=>choice.visible&&!choice.disabled),[],'Protected output exposes no enabled physical local-processing choice');
@@ -1078,7 +1087,7 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
         'return async function(t){'+body+'\n};')(path,ownEvidenceRoot,process,fs,captureModern,chooseExposedOutputSetting,panel,write,assert,qualifyModernAutoRaw,engine,'auto');
       await callback(t); // Every substantive original producer assertion is reused verbatim.
       assert.equal(new URL(page.url()).pathname,entry);
-      const protection=await rawTransitionProtectedControls(page);
+      const protection=await rawTransitionProtectedControls(page,{general:true});
       const evidence=path.join(ownEvidenceRoot,engine,'modern-first-raw-auto');
       write(evidence,'original-producer-reuse-and-protection.json',{entry,originalPrefixSHA256:rawTransitionOriginalSHA,
         originalCallbackSHA256:rawTransitionCrypto.createHash('sha256').update(body).digest('hex'),allOriginalProducerAssertionsRetained:true,protection});
@@ -1140,8 +1149,8 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
 // Keep all preceding 32 cases, including the original 57,222-byte prefix.
 // ZIP fallback in Chromium has an explicit unsupported-directory capability
 // fixture. Neither engine's ZIP case certifies native picker/directory/desktop IO.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 100316)).digest('hex'),
-  '7bb47b389938276aa257c2719e7829c22c027d0a3dfff94a87671a0201398d29',
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 101241)).digest('hex'),
+  'a58d01edd95b15ccd803c40f863142a95304d3975ace3c5394b0c5c9f357927a',
   'All 32 existing cases remain byte-for-byte preserved before the collective append');
 async function installCollectiveExportObservation(page, runtime, origin, evidence) {
   const foreign = [];
@@ -1557,8 +1566,8 @@ for (const engine of ['chromium', 'webkit']) for (const mode of ['selected', 'al
 }
 
 // COLLECTIVE-EXPORT-BUSY-STATUS-APPEND-06 — private, unexecuted proposal.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 132109)).digest('hex'),
-  'bb4712027c9df6c6ad9402a871dfe9222b795b53b7f1529a8e5d2554265281a4', 'All 40 existing cases remain byte-for-byte unchanged');
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 133034)).digest('hex'),
+  '44fe4aad2e1b783426a6925c597490f4d79e194dc2967706a9f6938928c72a2b', 'All 40 existing cases remain byte-for-byte unchanged');
 
 function observeCollectiveBusyUiCompletion(source) {
   const opening = "  collectiveExportButton.addEventListener('click', async () => {";
@@ -1832,8 +1841,8 @@ for (const engine of ['chromium', 'webkit']) {
 
 // PRIVATE08: actual native load/decode success/error across preview UI lifetimes.
 // Root only. Manager dispose is explicitly component-lifecycle coverage, not a UI delete claim.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0,154727)).digest('hex'),
-  'fd7313c054f7898b6059ed1d6cbb702d86951ae4bfbf036834de716fd3dd028f', 'PRIVATE08 retains all reviewed42 bytes');
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 155652)).digest('hex'),
+  'eb1b880795f8d38b61b5bdcdc3b4cbdd20e05e85e83823f6bc30c40ce940ebc3', 'PRIVATE08 retains all reviewed42 bytes');
 
 function lifetimeReplaceOnce(source, from, to, label) {
   assert.equal(source.split(from).length-1,1,label);return source.replace(from,to);

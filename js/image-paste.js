@@ -175,7 +175,10 @@ function autoLabelsForImage(image, place, artboard) {
       image,
       metadata: { aiTaskId: place.aiTaskId, aiCandidateId: place.aiCandidateId },
       idFactory: () => `${image.id}_auto_label_${++serial}`,
-      ...(Number.isFinite(place?.labelSizeMm) ? { labelSizeMm: place.labelSizeMm } : {}),
+      ...(Number.isFinite(place?.labelSizeMm) ? { labelSizeMm: place.labelSizeMm }
+        // 11-08: 캔버스에 넣을 때는 원본에서 잰 글자 크기 비율 × 넣은 그림 높이(1.8~8mm).
+        : Number.isFinite(place.editableLabelPlan?.measuredLabelSize) && place.editableLabelPlan.measuredLabelSize > 0 && image.h > 0
+          ? { labelSizeMm: Math.min(8, Math.max(1.8, place.editableLabelPlan.measuredLabelSize * image.h)) } : {}),
       }).map(label => ({ ...label, aiLabelReviewRequired: image.aiEditableLabelPlan?.reviewRequired === true,
       ...(image.aiEditableLabelPlan?.qualityReview?.targetVerified === false ? {aiTargetReviewRequired:true} : {}),
       ...(image.aiReviewState ? { aiReviewState: image.aiReviewState } : {}) }));

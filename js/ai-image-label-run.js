@@ -14,7 +14,7 @@ import { prepareJointLabelVerification, retainFinalVerification } from './ai-lab
 import { SOURCE_LABEL_POLICY_VERSION } from './ai-editable-image-labels.js?v=1.7.0-four-session-integration';
 import { externalLabelDraftIds } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-label-background.js?v=1.7.0-four-session-integration';
-import { reframeCandidateToSource, restoreVanishedText } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
+import { fitCandidateToSource, measureSourceLabelHeights } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
 
 export const IMAGE_LABEL_RUN_VERSION = '1.6.1';
 export const IMAGE_LABEL_GENERATION_HARNESS = 'rhwp-approved-first-v1';
@@ -29,6 +29,18 @@ export function selectedMarkInstructions(workflow) {
   ].filter(Boolean).join('\n');
 }
 const clone = value => structuredClone(value);
+// 11-08: 캔버스에 넣을 때도 라벨 크기를 원본에 맞춘다 — 원본 그림 픽셀에서 잰 글자 높이로 글자 크기(그림 높이에 대한 비율)를 정한다.
+// 한글 글자는 글자 크기의 약 0.88, 영어 대문자·숫자는 약 0.72, 그 밖은 0.8 높이(한글에 넣기와 같은 셈).
+async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
+  let measured = [];
+  try { measured = await measureSourceLabelHeights({ sourceDataUrl, labels, signal }); } catch (error) { if (error?.name === 'AbortError') throw error; }
+  const glyph = new Map(measured.map(m => [m.id, m.h]));
+  const sizes = labels.filter(l => !String(l.text).includes('\n') && (glyph.get(l.id) > 0 || l.typography?.bounds?.h > 0)).map(l => {
+    const h = glyph.get(l.id) || l.typography.bounds.h;
+    return h / (/[가-힣]/.test(l.text) ? .88 : /^[A-Z0-9]+$/.test(String(l.text).trim()) ? .72 : .8);
+  }).sort((a, b) => a - b);
+  return sizes.length ? sizes[Math.floor(sizes.length / 2)] : null;
+}
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError'); };
 export const imageLabelDigest = async value => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)))].map(b => b.toString(16).padStart(2, '0')).join('');
 const imageFrame = async (dataUrl, signal) => {
@@ -306,17 +318,17 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       } }));
     data = background.data; rendererPrompt = background.rendererPrompt;
     metrics.backgroundReused = background.reused;
-    // 라벨을 되살릴 때만: AI가 바꾼 판 비율을 원본에 맞춰, 원본에서 잰 라벨 자리가 그대로 맞게 한다(11-07).
-    if (workflow.labelResult === 'restore-editable' && plan.labels.length && !verifyOnly) {
+    // 11-08 사용자 결정: 라벨 켬·끔은 같은 그림이어야 한다. 원본 판(비율)을 재고 그 안에 같은 배율로만 맞춘다 —
+    // 켬·끔 모두 같은 방법(글자 상자는 원본 관찰의 모든 글자: 라벨·그래프 글자·제외 글자)이므로 같은 AI 그림이면 결과도 픽셀까지 같다.
+    // 이미 맞춘 결과(같은 작업의 이전 후보)를 다시 쓰는 경우는 그대로 둔다 — 두 번 맞추면 픽셀이 미세하게 달라진다.
+    if (!verifyOnly && background.reused !== 'candidate') {
       try {
-        const frame = await reframeCandidateToSource({ candidateDataUrl: data, sourceDataUrl: source.data, labels: plan.labels, signal });
-        if (frame.reframed) data = frame.data;
-        metrics.reframe = { reframed: frame.reframed, reason: frame.reason || null, transform: frame.transform || null };
-        // 11-08 안전장치: AI가 라벨 목록에서 빠뜨려 새 그림에서 지워진 글자는 원본 픽셀로 제자리에 되붙인다(사라지지 않게).
-        const vanished = await restoreVanishedText({ candidateDataUrl: data, sourceDataUrl: source.data, labels: plan.labels, signal });
-        if (vanished.restored.length) data = vanished.data;
-        metrics.vanishedTextRestored = vanished.restored.length;
-      } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { reframed: false, reason: String(error?.message || error).slice(0, 200) }; }
+        const textBoxes = [...(plan.labels || []), ...(plan.excludedLabels || []), ...(plan.removalOnlyItems || [])]
+          .map(label => label?.typography?.bounds || label?.bounds).filter(Boolean);
+        const frame = await fitCandidateToSource({ candidateDataUrl: data, sourceDataUrl: source.data, textBoxes, signal });
+        if (frame.fitted) data = frame.data;
+        metrics.reframe = { fitted: frame.fitted, reason: frame.reason || null, transform: frame.transform || null };
+      } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { fitted: false, reason: String(error?.message || error).slice(0, 200) }; }
     }
   }
   cancelled(signal);
@@ -369,8 +381,9 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         targetVerified: false, placementVerified: false }, { workflow, candidateSha256 }).report;
       report.mechanicalDiagnostics = [...clone(removalReport.issues || []), ...clone(composite?.report.issues || [])];
       if (composite) { report.compositeBindings = composite.bindings; report.compositeMeasurements = composite.report; }
+      const labelSizeRatio = workflow.labelResult === 'restore-editable' ? await measuredLabelSizeRatio(source.data, restorationPlan.labels || [], signal) : null;
       const labelPlan = workflow.labelResult === 'restore-editable' ? { ...clone(restorationPlan), sourcePlan: clone(restorationPlan),
-        qualityReview: report, reviewRequired: true, targetPlacement: clone(placement), candidateSha256 } : null;
+        qualityReview: report, reviewRequired: true, targetPlacement: clone(placement), candidateSha256, ...(labelSizeRatio ? { measuredLabelSize: labelSizeRatio } : {}) } : null;
       if (placement) removalReport.restorationPlanSha256 = placement.planSha256;
       metrics.cacheStored = false; metrics.cacheSkipReason = 'exam-removal-partial';
       metrics.timings.total = Math.round(performance.now() - started);
@@ -478,7 +491,10 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     ...report.issues.filter(issue=>issue.code==='final-composite-changed-after-review'||issue.code==='joint-verification-unavailable')];
   report = acceptance.report;
   report.mechanicalDiagnostics = mechanicalDiagnostics;
-  if (workflow.labelResult === 'restore-editable') labelPlan = { ...clone(plan), sourcePlan: clone(plan), qualityReview: report, reviewRequired: !acceptance.accepted, targetPlacement: clone(targetPlacement), candidateSha256 };
+  if (workflow.labelResult === 'restore-editable') {
+    const labelSizeRatio = await measuredLabelSizeRatio(source.data, plan.labels || [], signal);
+    labelPlan = { ...clone(plan), sourcePlan: clone(plan), qualityReview: report, reviewRequired: !acceptance.accepted, targetPlacement: clone(targetPlacement), candidateSha256, ...(labelSizeRatio ? { measuredLabelSize: labelSizeRatio } : {}) };
+  }
   metrics.timings.total = Math.round(performance.now() - started);
   const result = { version: IMAGE_LABEL_RUN_VERSION, accepted: acceptance.accepted, status: acceptance.accepted ? 'complete' : 'needs-attention', data, workflow, sourceSha256, sourceFrame, planSha256, candidateSha256, candidateFrame, sourceLabelPlan: clone(plan), targetPlacement,
     labelPlan, removalReport, report, rendererPrompt, labelVerificationPreview: jointPreview?.composite.attachment.data || null, labelProposals: jointPreview?.proposals || null, finalLabelComposite: composite?.attachment.data || null, metrics };

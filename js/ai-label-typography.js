@@ -88,7 +88,14 @@ export function scriptLabelRuns(text, role, aiRuns) {
     else runRole = 'name';
     return { text: part.text, role: runRole, contentMode: 'plain' };
   });
-  return runs.reduce((out, run) => {
+  // 11-08: 물질 상태 (l)의 l은 평가원처럼 기울임(액체). (s)·(g)·(aq)는 정체 그대로.
+  const split = runs.flatMap(run => {
+    if (run.role === 'text' || !/\(l\)/.test(run.text)) return [run];
+    return run.text.split(/(\(l\))/).filter(Boolean).flatMap(piece => piece === '(l)'
+      ? [{ text: '(', role: run.role, contentMode: 'plain' }, { text: 'l', role: 'quantity', contentMode: 'plain' }, { text: ')', role: run.role, contentMode: 'plain' }]
+      : [{ ...run, text: piece }]);
+  });
+  return split.reduce((out, run) => {
     const prev = out[out.length - 1];
     if (prev && prev.role === run.role) prev.text += run.text; else out.push({ ...run });
     return out;
