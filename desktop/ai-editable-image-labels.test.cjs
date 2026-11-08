@@ -352,6 +352,43 @@ test('inserts source labels alongside separated image regions in one undo step',
   assert.equal(value.objects[1].aiParentImageId, value.objects[0].id);
 });
 
+// 11-09: 기출 글자를 하나도 못 지운 결과(원본 글자가 남음)를 넣을 때 라벨을 원본 글자 위에 겹치지 않고 그림 옆 목록으로 둔다.
+test('external-list exam drafts go beside the image on user output instead of over undeleted source text', async () => {
+  const { userOutputLabelPlan } = await import('../js/ai-label-edit-model.js');
+  const label = id => ({ id, text: id, evidence: id, sourceKind: 'reference', sourceRef: 1, scope: 'general', mode: 'text', labelType: 'label', contentMode: 'plain', position: { x: 0.5, y: 0.5 }, anchor: { x: 0.5, y: 0.5 } });
+  const external = userOutputLabelPlan({ id: 'c1', labelPlan: null, reviewState: 'needs-attention',
+    editableDraft: { version: 1, presentation: 'external-list', labelIds: ['a'] },
+    sourceLabelPlan: { version: 4, frozen: true, labels: [label('a'), label('b')], relationGroups: [] } });
+  assert.equal(external.reviewDraft.presentation, 'external-list');
+  assert.deepEqual(external.labels.map(l => l.id), ['a']);
+  const restored = userOutputLabelPlan({ id: 'c2', labelPlan: { version: 4, frozen: true, labels: [label('a')], relationGroups: [] } });
+  assert.equal(restored.reviewDraft, undefined);
+});
+
+// 11-09: 객체 분리로 넣어도 「한 장」 넣기와 같이 원본에서 잰 글자 비율 × 넣은 그림 전체 높이로 라벨 크기를 정한다.
+test('separated insertion sizes source labels from the measured source ratio like single-image insertion', async () => {
+  const { insertEditableAssets } = await import('../js/ai-editable-assets.js');
+  const value = {
+    objects: [], groups: [], undoStack: [], redoStack: [], selectedIds: [], targetedId: null,
+    activeTool: 'V', activeLayerId: 1, activePageId: 'page-1', artboard: { w: 100, h: 60 },
+  };
+  const state = { get: () => value, update: update => update(value) };
+  insertEditableAssets(state, {
+    width: 1000, height: 500, labelsDisabled: true,
+    assets: [{ id: 'heart', x: 250, y: 100, width: 500, height: 300, data: 'data:image/png;base64,AA==', label: '', labelMode: 'none' }],
+  }, {
+    isCurrent: () => true, aiTaskId: 'task-1', aiCandidateId: 'candidate-1',
+    editableLabelPlan: { measuredLabelSize: 0.05, labels: [{
+      text: '좌심실', evidence: '좌심실', sourceKind: 'reference', sourceRef: 1,
+      mode: 'text', labelType: 'label', contentMode: 'plain', anchor: { x: 0.8, y: 0.4 }, position: { x: 0.8, y: 0.4 },
+    }] },
+  });
+  // 넣은 그림 전체 높이 = 500 × min(100·0.9/1000, 60·0.9/500) = 45mm → 0.05 × 45 = 2.25mm
+  const label = value.objects.find(object => object.aiAutoLabel);
+  assert.equal(label.type, 'text');
+  assert.ok(Math.abs(label.fontSize - 2.25) < 1e-9, String(label.fontSize));
+});
+
 test('inserts and replaces the raster plus auto labels in one undoable state change', async () => {
   const previousImage = globalThis.Image;
   globalThis.Image = class FakeImage {

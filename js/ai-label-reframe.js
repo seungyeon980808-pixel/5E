@@ -51,9 +51,12 @@ export async function measureSourceLabelHeights({ sourceDataUrl, labels = [], si
   const out = [];
   for (const label of labels) {
     const b = label?.typography?.bounds;
-    if (!b || String(label.text || '').includes('\n')) continue;
+    if (!b) continue;
+    // 11-09: 여러 줄 라벨(「매질의\n진동 방향」)은 첫 줄 가운데에서 한 줄 높이만 잰다. 전에는 건너뛰어,
+    // 라벨이 모두 여러 줄이면 원본 글자 크기를 못 재고 기본 3.7mm로 커졌다(설치판 tb04).
+    const lines = Math.max(1, String(label.text || '').split('\n').length), lineH = b.h / lines;
     const x0 = Math.max(0, Math.floor(b.x * width)), x1 = Math.min(width, Math.ceil((b.x + b.w) * width));
-    const cy = Math.round((b.y + b.h / 2) * height), reach = Math.ceil(b.h * height * 1.2);
+    const cy = Math.round((b.y + lineH / 2) * height), reach = Math.ceil(lineH * height * 1.2);
     // 세로선(실·축·상자 옆선)처럼 찾는 범위 위아래로 거의 다 잉크인 세로줄은 글자가 아니므로 뺀다.
     const ya = Math.max(0, cy - reach), yb = Math.min(height, cy + reach), span = Math.max(1, yb - ya);
     const cols = [];

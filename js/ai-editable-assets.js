@@ -167,6 +167,10 @@ export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiC
         w: prepared.width * scale, h: prepared.height * scale, rotation: 0 },
       metadata: { aiTaskId, aiCandidateId },
       idFactory: () => `obj_editable_${stamp}_auto_label_${++labelSerial}`,
+      // 11-09: 객체 분리로 넣어도 「한 장」 넣기(image-paste.js)와 같은 글자 크기 — 원본에서 잰 글자 비율 × 넣은 그림 전체 높이(1.8~8mm).
+      // (전에는 분리하면 기본 3.7mm로 들어가 작은 그림에서 라벨이 원본보다 두세 배 커져 물체를 가렸다.)
+      ...(Number.isFinite(editableLabelPlan.measuredLabelSize) && editableLabelPlan.measuredLabelSize > 0
+        ? { labelSizeMm: Math.min(8, Math.max(1.8, editableLabelPlan.measuredLabelSize * prepared.height * scale)) } : {}),
     }));
   }
   if (sharedGroupId) groups.push({ id: sharedGroupId, memberIds: sharedMemberIds });

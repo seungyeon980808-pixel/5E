@@ -42,6 +42,30 @@ test('an edge-touching glyph connected to outside structure remains entirely unc
   assert.deepEqual(result.data, before);
 });
 
+// 11-09: OCR 후보 상자가 그림 맨 아래 줄까지 닿아도(손 X선 「A: X선」) 가장자리에서 1px 안으로 재서 글자를 지운다.
+test('a sample-flat text search touching the image edge is measured one pixel inside and removes the complete glyph', async () => {
+  const { removeExamLabelPixels } = await import('../js/ai-exam-label-removal.js');
+  const f = fixture(), before = f.data.slice();
+  f.plan.inkSearchRegions[0].bounds = { x: 0.4, y: 0.3, w: 0.25, h: 0.7 };
+  const result = removeExamLabelPixels({ ...f, workflow: { imageKind: 'exam', labelResult: 'restore-editable' } });
+  assert.deepEqual(result.report.removedLabelIds, ['glyph']);
+  assert.equal(result.report.changedPixels, f.glyph.length);
+  const glyphPixels = new Set(f.glyph.map(([x, y]) => y * f.width + x));
+  for (let i = 0; i < f.width * f.height; i++) if (!glyphPixels.has(i)) assert.deepEqual(Array.from(result.data.slice(i * 4, i * 4 + 4)), Array.from(before.slice(i * 4, i * 4 + 4)));
+});
+
+test('ink on the excluded image-edge row keeps an edge-touching text search unchanged', async () => {
+  const { removeExamLabelPixels } = await import('../js/ai-exam-label-removal.js');
+  const f = fixture();
+  f.plan.inkSearchRegions[0].bounds = { x: 0.4, y: 0.3, w: 0.25, h: 0.7 };
+  f.data.set([20, 20, 20, 255], (19 * f.width + 10) * 4);
+  const before = f.data.slice();
+  const result = removeExamLabelPixels({ ...f, workflow: { imageKind: 'exam', labelResult: 'restore-editable' } });
+  assert.deepEqual(result.report.removedLabelIds, []);
+  assert.equal(result.report.changedPixels, 0);
+  assert.deepEqual(result.data, before);
+});
+
 test('unknown self and cross-source geometry edges defer independently while bounded objects and valid edges survive', async () => {
   const { normalizeSourceGeometry } = await import('../js/ai-label-source-geometry.js');
   const object = (id, sourceRef) => ({ id, sourceRef, description: 'fixture',

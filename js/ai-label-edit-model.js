@@ -102,5 +102,9 @@ export function userOutputLabelPlan(candidate) {
   const plan = manualLabelPlan(candidate);
   plan.bundleWithImage = true;
   plan.manualReview = { origin:'user-output', candidateId:candidate.id, reviewState:candidate.reviewState || 'idle' };
+  // 11-09: 기출 글자를 하나도 지우지 못한 결과(원본 글자가 그대로 남음)를 검수 없이 넣을 때도 편집 라벨을 원본 글자 위에
+  // 겹쳐 놓지 않는다(같은 글자가 두 번 보였음). 「라벨 목록 편집」과 같이 그림 오른쪽에 목록으로 놓는다.
+  if (!candidate.labelPlan && candidate.editableDraft?.presentation === 'external-list')
+    plan.reviewDraft = { version:1, origin:'user-output', presentation:'external-list', labelIds:[...candidate.editableDraft.labelIds] };
   return plan;
 }

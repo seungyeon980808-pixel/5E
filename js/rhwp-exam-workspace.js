@@ -929,7 +929,7 @@ export function initRhwpExamWorkspace(state, services) {
         let measured=[];
         if(originalSrc){try{const {measureSourceLabelHeights}=await import('./ai-label-reframe.js?v=1.7.0-four-session-integration');measured=await measureSourceLabelHeights({sourceDataUrl:originalSrc,labels:detail.labelPlan.labels});}catch{measured=[];}}
         const glyph=new Map(measured.map(m=>[m.id,m.h]));
-        const heights=detail.labelPlan.labels.filter(l=>!String(l.text).includes('\n')&&(glyph.get(l.id)>0||l.typography?.bounds?.h>0)).map(l=>{
+        const heights=detail.labelPlan.labels.filter(l=>glyph.get(l.id)>0||!String(l.text).includes('\n')&&l.typography?.bounds?.h>0).map(l=>{ // 11-09: 여러 줄 라벨도 잰 한 줄 높이로
           const hangul=/[가-힣]/.test(l.text),hn=glyph.get(l.id)||l.typography.bounds.h;
           return hn*h/(hangul?.88:/^[A-Z0-9]+$/.test(String(l.text).trim())?.72:.8);}).sort((a,b)=>a-b);
         const labelSizeMm=heights.length?Math.min(5,Math.max(1.8,heights[Math.floor(heights.length/2)])):undefined;

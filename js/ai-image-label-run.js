@@ -38,7 +38,8 @@ async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
   let measured = [];
   try { measured = await measureSourceLabelHeights({ sourceDataUrl, labels, signal }); } catch (error) { if (error?.name === 'AbortError') throw error; }
   const glyph = new Map(measured.map(m => [m.id, m.h]));
-  const sizes = labels.filter(l => !String(l.text).includes('\n') && (glyph.get(l.id) > 0 || l.typography?.bounds?.h > 0)).map(l => {
+  // 여러 줄 라벨은 잰 한 줄 높이만 쓴다(상자 높이는 여러 줄 합이라 쓰지 않음).
+  const sizes = labels.filter(l => glyph.get(l.id) > 0 || !String(l.text).includes('\n') && l.typography?.bounds?.h > 0).map(l => {
     const h = glyph.get(l.id) || l.typography.bounds.h;
     return h / (/[가-힣]/.test(l.text) ? .88 : /^[A-Z0-9]+$/.test(String(l.text).trim()) ? .72 : .8);
   }).sort((a, b) => a - b);

@@ -122,18 +122,26 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     const label=plan.labels.find(l=>l.id===r.labelId && l.sourceRef===1 && l.scope==='general' && !l.ownershipReviewRequired);
     if(!label || r.sourceRef!==1 || r.ownership!=='confirmed' || !boundsOK(r.bounds) || !rgbaOK(r.background) || r.background[3]!==255 || !['text','leader','endpoint'].includes(r.component) || r.backgroundMode!==undefined && (r.backgroundMode!=='sample-flat' || r.component!=='text')) {issues.push({code:'unconfirmed-ink-search',id:r.id,labelId:r.labelId});continue;}
     let pixels;
+    let edgePixels=null;
     if(r.component==='text') {
       const b=r.bounds; pixels=[];
-      for(let y=Math.floor(b.y*height);y<Math.min(height,Math.ceil((b.y+b.h)*height));y++) for(let x=Math.floor(b.x*width);x<Math.min(width,Math.ceil((b.x+b.w)*width));x++) pixels.push(y*width+x);
+      // 11-09: 글자 후보 상자가 그림 가장자리 줄까지 닿으면(손 X선 「A: X선」의 「:」 OCR 상자가 맨 아래 줄까지) 닫힌 바깥 테두리를
+      // 잴 수 없어 글자 전체를 보류했다. 단색 표본 탐색만 가장자리에서 1px 안으로 당기고, 빠진 가장자리 줄은 아래에서 잉크가 없는지 확인한다.
+      const inset=r.backgroundMode==='sample-flat'?1:0;edgePixels=inset?[]:null;
+      for(let y=Math.floor(b.y*height);y<Math.min(height,Math.ceil((b.y+b.h)*height));y++) for(let x=Math.floor(b.x*width);x<Math.min(width,Math.ceil((b.x+b.w)*width));x++) {
+        if(inset && (x===0 || y===0 || x===width-1 || y===height-1)) edgePixels.push(y*width+x); else pixels.push(y*width+x);
+      }
     } else if(r.component==='leader' && r.kind==='path' || r.component==='endpoint' && r.kind==='ellipse') pixels=shapePixels(r,width,height);
     if(!pixels?.length || pixels.length>Math.min(200000,width*height*.2)) {issues.push({code:'invalid-ink-search-shape',id:r.id,labelId:r.labelId});continue;}
-    const group=grouped.get(r.labelId)||[];group.push({...r,searchPixels:pixels});grouped.set(r.labelId,group);
+    const group=grouped.get(r.labelId)||[];group.push({...r,searchPixels:pixels,...(edgePixels?.length?{edgePixels}:{})});grouped.set(r.labelId,group);
   }
   for(const [labelId, searches] of grouped) {
     const sampled=searches.some(r=>r.backgroundMode==='sample-flat');
     if(sampled && (searches.length!==1 || searches[0].component!=='text')) {issues.push({code:'unsupported-sampled-ink-search',id:labelId});continue;}
     const measured=sampled?sampleFlatTextBackground(data,searches[0],width,height):null;
     if(sampled && !measured) {issues.push({code:'non-flat-search-border',id:labelId});continue;}
+    // 가장자리에서 뺀 줄에 실제 글자 잉크가 있으면 잘린 글자다 — 지우지 않고 그대로 보류한다(지울 범위는 넓어지지 않음).
+    if(sampled && searches[0].edgePixels?.some(i=>data[i*4+3]!==255 || rgbaDistance(data,i*4,measured.background)>measured.inkTolerance)) {issues.push({code:'clipped-annotation-ink',id:labelId});continue;}
     const bg=measured?.background || searches[0].background;
     if(!sampled && searches.some(r=>!r.background.every((v,k)=>v===bg[k]))) {issues.push({code:'inconsistent-ink-background',id:labelId});continue;}
     const strongInk=i=>data[i*4+3]!==255 || rgbaDistance(data,i*4,bg)>Math.max(20,measured?.backgroundTolerance||0);
