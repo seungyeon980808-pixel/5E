@@ -41,7 +41,10 @@ function createLocalCodexBridge({binary,spawnProcess=spawn,takeoverWaitMs=8000,l
     if(action==='bridge-account'){const [a,l]=await Promise.all([rpc('account/read'),rpc('account/rateLimits/read')]);return {...a,...l};}
     const id=typeof payload.clientScope==='string'?payload.clientScope:'';
     if(id.length>200)throw Error('잘못된 작업 범위입니다.');
-    if(!scopes.has(id)){if(scopes.size>=256)throw Error('로컬 작업 수가 너무 많습니다. 서버를 다시 실행하세요.');scopes.set(id,{id,events:[],active:false});}
+    if(!scopes.has(id)){
+      // 11-09: 창마다 작업 칸 이름이 달라져(창 고유 앞머리) 쌓이므로, 가득 차면 끝난 칸부터 비운다(오류로 막지 않음).
+      if(scopes.size>=256)for(const [key,old] of scopes){if(old.active)continue;threads.delete(old.threadId);scopes.delete(key);if(scopes.size<192)break;}
+      if(scopes.size>=256)throw Error('로컬 작업 수가 너무 많습니다. 서버를 다시 실행하세요.');scopes.set(id,{id,events:[],active:false});}
     const scope=scopes.get(id);
     if(action==='bridge-events'){const cursor=payload.cursor??0;if(!Number.isInteger(cursor)||cursor<0||cursor>scope.events.length)throw Error('잘못된 이벤트 위치입니다.');return {cursor:scope.events.length,events:scope.events.slice(cursor)};}
     if(action==='bridge-interrupt'){if(scope.active&&scope.turnId)await rpc('turn/interrupt',{threadId:scope.threadId,turnId:scope.turnId});return {ok:true,acknowledged:true};}

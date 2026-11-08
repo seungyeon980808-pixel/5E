@@ -22,7 +22,7 @@ ${workflow.imageKind==='exam'?'기출 국소 제거에 필요한 원본 관찰�
 각 항목의 중괄호를 완결한 엄격한 JSON을 반환한다. 누락된 문자나 잘린 영역은 추측하지 않는다.${buildSourceCandidatePrompt(normalizeSourceCandidateSets(candidateSets,referenceNames.length || 1))}`;
 }
 
-export function parseSourceLabelAnalysis(raw, sourceCount, candidateSets = [], { requireLeaderObservation = false, requireClassification = false } = {}) {
+export function parseSourceLabelAnalysis(raw, sourceCount, candidateSets = [], { requireLeaderObservation = false, requireClassification = false, imageKind = null } = {}) {
   if (typeof raw !== 'string' || raw.length > 100000) throw new Error('원본 라벨 관찰 응답 크기가 올바르지 않습니다.');
   const tagged = /^<5e-editable-labels>([\s\S]*)<\/5e-editable-labels>$/.exec(raw.trim());
   let value; try { value = JSON.parse(tagged ? tagged[1] : raw); } catch { throw new Error('원본 라벨 관찰 응답이 엄격한 JSON이 아닙니다.'); }
@@ -64,7 +64,8 @@ export function parseSourceLabelAnalysis(raw, sourceCount, candidateSets = [], {
         if(!valid) throw new Error('원본 의미 역할·소유 분류가 충돌합니다.');
       }
       if(label.scope==='graph') { graphOwnedLabels.push(label);excludedLabels.push(label); }
-      else if(item.disposition==='remove-only') {
+      // 11-09 사용자 결정: 기출은 보이는 글자를 캡션·설명 줄 가리지 않고 모두 라벨로 살린다(AI가 캡션으로 보아도 지우지만 하지 않고 복원).
+      else if(item.disposition==='remove-only' && imageKind!=='exam') {
         if(label.ownershipReviewRequired) throw new Error('불확실 소속은 제거 전용 권한을 가질 수 없습니다.');
         const b=label.typography.bounds;
         if(geometryLock?.objects.some(o=>o.sourceRef===label.sourceRef && o.role==='scientific-inset' && b.x<o.bounds.x+o.bounds.w && b.x+b.w>o.bounds.x && b.y<o.bounds.y+o.bounds.h && b.y+b.h>o.bounds.y)) throw new Error('과학적 확대 삽화에 제거 전용 영역이 겹칩니다.');
@@ -275,7 +276,7 @@ export function createSourceLabelController({ transport, timeoutMs = SOURCE_LABE
       ready(token);
       const plan = await send({ ...selectionPayload(options), attachments, outputSchema: buildSourceObservationOutputSchema(attachments.length,candidateSets,options.workflow),
         text: buildSourceLabelAnalysisPrompt({ request: options.request, referenceNames: attachments.map(a => a.name), workflow: options.workflow,candidateSets }) }, raw => {
-        const observed = parseSourceLabelAnalysis(raw, attachments.length,candidateSets,{requireLeaderObservation:true,requireClassification:true});
+        const observed = parseSourceLabelAnalysis(raw, attachments.length,candidateSets,{requireLeaderObservation:true,requireClassification:true,imageKind:options.workflow?.imageKind || null});
         if (!observed.geometryLock) throw new Error('현재 생성에는 원본 형태 관찰 명세가 필요합니다. 이전 버전의 응답으로 생성하지 않았습니다.');
         return observed;
       },token);

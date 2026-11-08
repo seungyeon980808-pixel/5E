@@ -26,8 +26,11 @@ export function selectedMarkInstructions(workflow) {
     workflow.auxiliaryMarks === 'keep'
       ? '사용자가 보조선 제거를 껐습니다. 이번 작업의 기타 보조선은 유지하세요. 라벨 글자와 그 글자에 소속된 설명 지시선·끝점은 계속 함께 제거하세요.' : '',
     IMAGE_EMPHASIS_REMOVAL_CONTRACT,
+    workflow.imageKind === 'general' ? TEXTBOOK_OBJECT_ONLY_CONTRACT : '',
   ].filter(Boolean).join('\n');
 }
+// 11-09 사용자 결정: 교과서(일반) 그림은 평가원 스타일로 새로 그리되 주인공 물체만 남긴다.
+export const TEXTBOOK_OBJECT_ONLY_CONTRACT = '교과서 그림 정리: 그림의 주인공 물체(예: 암석, 기관, 실험 기구, 지구본, 밧줄 파동)와 그 물체에 딸린 과학 표시(진행·진동·힘·운동·전류 방향 화살표, 파장·진폭 같은 치수선, 중심선·눈금)는 평가원 선화로 남긴다(화살표·보조선 설정이 지우라고 한 것만 지운다). 색 상자 안의 제목 딱지(예: 「화산암」), 쪽·그림 번호와 캡션, 배경 띠·색 줄·배경 면·배경 삽화, 그림과 그림 사이의 순서·변화를 가리키는 안내 화살표(예: 원래 암석 → 변성암), 말풍선과 그 안의 글, 캐릭터(그림 밖에서 설명하거나 말을 거는 안내 마스코트: 로봇·사람·동물 캐릭터), 그림 테두리·둥근 판·장식은 모두 지우고 그 자리는 흰 바탕으로 둔다. 장면 안에서 과학 현상에 참여하는 생물·물체(예: 물결 위에 뜬 개구리·나뭇잎, 실험하는 손, 관찰 대상 동물)는 캐릭터가 아니라 주인공 물체로 남긴다. 지운 자리에 흰 네모나 빈 상자를 남기지 않는다. 남은 물체의 크기·위치·간격은 원본 그대로 둔다. 물체 이름 글자도 그림에서 지운다(편집 라벨로 따로 복원된다).';
 const clone = value => structuredClone(value);
 // 11-08: 캔버스에 넣을 때도 라벨 크기를 원본에 맞춘다 — 원본 그림 픽셀에서 잰 글자 높이로 글자 크기(그림 높이에 대한 비율)를 정한다.
 // 한글 글자는 글자 크기의 약 0.88, 영어 대문자·숫자는 약 0.72, 그 밖은 0.8 높이(한글에 넣기와 같은 셈).
@@ -43,7 +46,8 @@ async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal) {
 }
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError'); };
 // 11-09 사용자 원칙: AI 변환(이미지·그래프)은 어떤 경우에도 「실패」로 끝나면 안 된다.
-// 응답이 없거나 오류가 나면 같은 요청을 자동으로 다시 보내고(시도마다 응답 없음 시간 제한), 마지막 시도는 Luna로 바꿔 보낸다.
+// 응답이 없거나 오류가 나면 같은 요청을 자동으로 다시 보내고(시도마다 응답 없음 시간 제한), 두 번째 시도부터는 Luna로 바꿔 보낸다.
+// (11-09 실제 기록: Sol 6.1 그림 생성이 「첨부 이미지 경로에 접근할 수 없어…」로 두 번 연달아 실패하고 Luna는 한 번에 그렸다.)
 // 사용자가 취소한 경우(signal)만 바로 멈춘다. 실패한 시도는 단계·모델·오류·걸린 시간을 onFailure로 남긴다.
 export const AI_RETRY_FALLBACK_MODEL = 'gpt-6-luna';
 export const AI_RETRY_POLICY = Object.freeze({ attempts: 3, backoffMs: [2000, 5000],
@@ -60,7 +64,7 @@ export async function runAiWithRetry({ stage, selection = {}, attempts = AI_RETR
   let lastError = null;
   for (let attempt = 1; attempt <= total; attempt++) {
     cancelled(signal);
-    const fallback = total > 1 && attempt === total;
+    const fallback = total > 1 && attempt >= 2;
     const choice = fallback ? { ...selection, model: AI_RETRY_FALLBACK_MODEL, effort: 'medium' } : selection;
     const startedAt = Date.now(), limit = Number(timeoutsMs[attempt - 1]) || 0;
     let timer = null;
@@ -82,7 +86,7 @@ export async function runAiWithRetry({ stage, selection = {}, attempts = AI_RETR
       try { onFailure(record); } catch {}
       if (attempt < total) {
         await waitMs(backoffMs[attempt - 1] ?? backoffMs.at(-1) ?? 0, signal);
-        try { onRetry({ ...record, nextAttempt: attempt + 1, nextModel: attempt + 1 === total && total > 1 ? AI_RETRY_FALLBACK_MODEL : (selection.model || null) }); } catch {}
+        try { onRetry({ ...record, nextAttempt: attempt + 1, nextModel: AI_RETRY_FALLBACK_MODEL, switchedModel: selection.model !== AI_RETRY_FALLBACK_MODEL }); } catch {}
       }
     } finally { clearTimeout(timer); }
   }

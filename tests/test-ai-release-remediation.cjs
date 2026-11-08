@@ -533,9 +533,13 @@ test('raster preflight retains the actual explicit-workflow guard and captured r
   invalid.selectedOutputEngine = invalid.AI_OUTPUT_ENGINES.RASTER;
   invalid.setStatus = (message, type) => errors.push({ message, type });
   invalid.runImageLabelConversion = async detail => invalidRuns.push(detail);
+  // 11-09 사용자 결정: 출처(교과서/기출)가 없으면 막다른 오류 대신 그 자리에서 고르게 한다(고르면 바로 이어서 변환).
+  const sourceChoices = [];
+  invalid.requestSourceChoice = () => sourceChoices.push(true);
   await invalid.submit('image');
   assert.equal(invalidRuns.length, 0, 'Missing explicit policy cannot reach the conversion boundary');
-  assert.ok(errors.some(error => error.type === 'error' && /이미지 종류와 라벨 처리 선택/.test(error.message)));
+  assert.equal(sourceChoices.length, 1, 'A missing source kind asks for the source in place instead of failing');
+  assert.equal(errors.some(error => error.type === 'error'), false);
   assert.equal(invalid.preflightRun, null);
 
   const status = deferred();
@@ -605,6 +609,8 @@ test('batch capture retains only selected revision inputs and immutable operatio
   assert.equal(context.preflight(normal),null,'A native scene request with an explicit workflow and real catalog remains valid');
   const invalidPolicy=structuredClone(normal);
   invalidPolicy.snapshot.options.imageLabelWorkflow={explicit:false};
+  assert.match(context.preflight(invalidPolicy),/출처\(교과서\/기출\)를 골라 주세요/);
+  invalidPolicy.snapshot.options.imageLabelWorkflow={imageKind:'general',explicit:false};
   assert.match(context.preflight(invalidPolicy),/이미지 종류와 라벨 처리 선택/);
   const invalidModel=structuredClone(normal);
   invalidModel.snapshot.model='missing-model';

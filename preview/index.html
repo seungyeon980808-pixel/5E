@@ -622,6 +622,14 @@
           </nav>
           <section class="ai-compact-settings" data-ai-compact-settings aria-label="변환 설정">
 
+            <div class="ai-setting-row ai-source-kind-row" data-ai-source-kind-row>
+              <span>출처</span>
+              <div class="ai-setting-pair" data-ai-setting-key="kind" role="group" aria-label="그림 출처">
+                <button type="button" data-ai-setting-value="general" aria-pressed="false">교과서</button>
+                <button type="button" data-ai-setting-value="exam" aria-pressed="false">기출</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="출처 도움말" aria-expanded="false" data-ai-help-title="그림 출처" data-ai-setting-help="라이브러리 기출·학평, 5E_hwp 시험지 그림은 기출로, 라이브러리 교과서는 교과서로 자동으로 정합니다. 기출은 그림을 다시 그리지 않고 원본 그대로 두며 보이는 글자를 모두 편집 라벨로 살립니다. 교과서는 평가원 스타일로 새로 그리고, 물체 말고는 글자·제목 딱지·배경 띠·안내 화살표·말풍선·캐릭터를 지웁니다. 파일·붙여넣기·캡처로 넣은 그림은 여기서 골라 주세요.">?</button>
+            </div>
             <div class="ai-setting-row">
               <span>변환 모델</span>
               <div class="ai-setting-pair" data-ai-setting-key="model" role="group" aria-label="변환 모델">
@@ -685,22 +693,13 @@
             <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
             <details class="ai-source-treatment">
               <summary>원본 처리 방식</summary>
-              <div class="ai-setting-row">
-                <span>원본 종류</span>
-                <div class="ai-setting-pair" data-ai-setting-key="kind" role="group" aria-label="원본 종류">
-                  <button type="button" data-ai-setting-value="general" aria-pressed="true">일반</button>
-                  <button type="button" data-ai-setting-value="exam" aria-pressed="false">기출</button>
-                </div>
-                <button type="button" class="ai-setting-help" aria-label="원본 종류 도움말" aria-expanded="false" data-ai-help-title="원본 종류" data-ai-setting-help="라이브러리에서 출처를 아는 이미지는 자동으로 정합니다. 직접 넣은 교과서 사진·삽화는 일반으로 두면 됩니다. 기출 그림을 직접 넣었을 때만 기출로 바꾸세요. 일반은 선화로 변환하고, 기출은 기존 선과 배치를 유지하며 라벨을 처리합니다.">?</button>
-              </div>
-              <p class="ai-source-treatment-note">교과서 사진·삽화는 일반 · 기출 그림은 원본 선 유지</p>
               <label class="ai-review-toggle">
                 <input type="checkbox" data-ai-precise-restore data-ai-input-mutator> 결과를 원본과 대조해 추가 보정</label>
               </details>
             </section>
           <div class="ai-settings-native-controls" hidden>
           <div class="ai-source-label-control">
-            <label class="ai-output-processing-row"><span>원본 종류</span><select data-ai-image-kind data-ai-input-mutator aria-label="원본 이미지 종류"><option value="">선택해 주세요</option><option value="exam">기출 · 원본 스타일 유지</option><option value="general" selected>일반 · 과학 도식으로 변환</option></select></label>
+            <label class="ai-output-processing-row"><span>원본 종류</span><select data-ai-image-kind data-ai-input-mutator aria-label="그림 출처"><option value="" selected>출처를 골라 주세요</option><option value="exam">기출 · 원본 그대로</option><option value="general">교과서 · 평가원 스타일로 새로</option></select></label>
             <label class="ai-output-processing-row"><span>라벨 처리</span><select data-ai-label-result data-ai-input-mutator aria-label="라벨 처리"><option value="">선택해 주세요</option><option value="remove" selected>라벨 삭제</option><option value="restore-editable">편집 라벨 복원</option></select></label>
             <label class="ai-output-processing-row"><span>라벨 검수</span><select data-ai-label-verification data-ai-input-mutator aria-label="라벨 검수 방식"><option value="draft-first" selected>편집 초안 먼저 · 검수 선택</option><option value="full">자동 검수 후 제공</option></select></label>
 

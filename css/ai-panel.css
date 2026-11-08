@@ -3281,3 +3281,12 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 /* 11-07 G2·G5(시안 graph-hub-1107): 창의 모양은 지금 작업 종류가 정한다 — 이미지 작업이면 이미지 탭 둘, 그래프 작업이면 그래프 탭 둘만. */
 [data-ai-mode="image"] .ai-workflow-switch [data-ai-workflow^="graph"],
 [data-ai-mode="graph"] .ai-workflow-switch [data-ai-workflow^="image"] { display:none; }
+
+/* 11-09 OmO: 출처(교과서/기출)를 아직 고르지 않았는데 변환을 누르면 출처 줄을 눈에 띄게 알린다(막다른 경고 대신 그 자리에서 고름). */
+[data-ai-source-kind-row].ai-needs-choice {
+  border-radius: 8px;
+  outline: 2px solid var(--accent, #2f81f7);
+  outline-offset: 2px;
+  animation: ai-source-choice-pulse 1.1s ease-in-out 3;
+}
+@keyframes ai-source-choice-pulse { 50% { outline-color: color-mix(in srgb, var(--accent, #2f81f7) 25%, transparent); } }

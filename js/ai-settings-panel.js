@@ -94,12 +94,26 @@ export function initAISettingsPanel(panel, { signal, canChoose = () => true } = 
   return { sync, dispose() { observer.disconnect(); closeHelp(); } };
 }
 
-/** Known exam provenance wins over file names; uploaded images use the style workflow. */
+// 11-09 사용자 결정: 출처를 아는 그림은 자동으로 정한다. 기출(5E_hwp 시험지 그림·라이브러리 기출·학평)은 'exam',
+// 라이브러리 교과서는 'general'(화면 이름 「교과서」). 모르는 외부 그림(파일·붙여넣기·캡처·모바일)은 ''로 두고
+// 사람이 그 자리에서 고른다(「출처를 골라 주세요」).
+const EXAM_SOURCE_KINDS = new Set(['exam', 'exam-library', 'exam-figure', 'hakpyeong', 'kice', 'past-exams']);
+const TEXTBOOK_SOURCE_KINDS = new Set(['textbook', 'textbooks']);
+const LIBRARY_SOURCE_KINDS = new Set(['unified-library', 'pdf-library', 'pdf-crop']);
+const EXAM_TITLE = /기출|수능|모의평가|평가원|학력평가|학평|전국연합|대학수학능력/;
+const TEXTBOOK_TITLE = /교과서/;
 export function sourceImageKind(source = {}) {
   const metadata = source.source || {};
-  if (source.imageKind === 'exam' || metadata.imageKind === 'exam'
-    || source.sourceKind === 'exam' || source.sourceKind === 'exam-library'
-    || metadata.sourceKind === 'exam' || metadata.sourceKind === 'exam-library'
-    || metadata.libraryKind === 'exam') return 'exam';
-  return 'general';
+  if (source.imageKind === 'exam' || metadata.imageKind === 'exam') return 'exam';
+  if (source.imageKind === 'general' || metadata.imageKind === 'general') return 'general';
+  const kinds = [source.sourceKind, metadata.sourceKind, metadata.libraryKind, metadata.packKind, metadata.category].filter(Boolean).map(String);
+  if (kinds.some(kind => EXAM_SOURCE_KINDS.has(kind))) return 'exam';
+  if (kinds.some(kind => TEXTBOOK_SOURCE_KINDS.has(kind))) return 'general';
+  // 라이브러리 PDF는 문서 이름·위치로 안다(예: 교과서_중2.pdf, 학력평가/…, 2024학년도 6월 모의평가).
+  if (LIBRARY_SOURCE_KINDS.has(String(source.sourceKind || ''))) {
+    const title = [metadata.documentTitle, metadata.displayName, metadata.locator, metadata.title, metadata.fileName, source.name].filter(Boolean).join(' ');
+    if (EXAM_TITLE.test(title)) return 'exam';
+    if (TEXTBOOK_TITLE.test(title)) return 'general';
+  }
+  return '';
 }

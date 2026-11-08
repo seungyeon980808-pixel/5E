@@ -175,7 +175,8 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
   const row=await active(page);assert.equal(row.imageLabelWorkflow.labelResult,'restore-editable');assert.equal(row.imageLabelWorkflow.scientificArrows,'remove');assert.equal(row.imageLabelWorkflow.auxiliaryMarks,'keep');assert.equal(row.model,'gpt-6-luna');
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'objects').getByRole('button',{name:'켜기',exact:true}).click();
-  assert.equal((await active(page)).separationMode,'auto');assert.equal(await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).getAttribute('aria-pressed'),'true');assert.equal(await pair(page,'background').getByRole('button',{name:'끄기',exact:true}).isDisabled(),true);
+  assert.equal((await active(page)).separationMode,'auto');assert.equal(await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).getAttribute('aria-pressed'),'true');// 11-09 사용자 원칙: 객체 분리 중에도 배경 단추는 묶이지 않는다(누르면 분리도 「한 장」으로 같이 바뀜).
+  assert.equal(await pair(page,'background').getByRole('button',{name:'끄기',exact:true}).isDisabled(),false);
   await pair(page,'objects').getByRole('button',{name:'끄기',exact:true}).click();assert.equal(await pair(page,'background').getByRole('button',{name:'끄기',exact:true}).isEnabled(),true);
   assert.equal((await active(page)).serviceTier,'priority');
   const persisted=await active(page);
@@ -189,6 +190,8 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
 });
 test('actual modern controller: policy payloads and exact RAW review/export/native insertion', {timeout:90000},async t => {
   const evidence=dir('request-and-background');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
+  // 11-09: 출처를 모르는 그림은 변환 전에 출처(교과서/기출)를 고른다.
+  await pair(page,'kind').getByRole('button',{name:'교과서',exact:true}).click();
   await pair(page,'arrows').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'guides').getByRole('button',{name:'끄기',exact:true}).click();
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
@@ -282,6 +285,7 @@ test('historical PNG controller: background export pixels and complete original 
 
 test('label restoration button uses Sol image generation and Luna joint verification, then inserts editable native labels', {timeout:90000},async t => {
   const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
+  await pair(page,'kind').getByRole('button',{name:'교과서',exact:true}).click();
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'verification').getByRole('button',{name:'자동 검수',exact:true}).click();
   await page.locator(`${panel} [data-ai-comments-apply]`).click();await finish(page);

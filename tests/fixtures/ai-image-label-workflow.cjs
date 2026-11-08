@@ -166,7 +166,8 @@ async function emit(page,index,kind,text) { await page.evaluate(({index,kind,tex
 async function choose(page,imageKind,labelResult) {
   const source=page.locator('#ai-image-panel .ai-source-treatment');
   if(!await source.evaluate(element=>element.open)) await source.locator('summary').click();
-  await page.locator('#ai-image-panel [data-ai-setting-key=kind]').getByRole('button',{name:imageKind==='exam'?'기출':'일반',exact:true}).click();
+  // 11-09: 출처 단추가 「교과서 / 기출」로 바뀌고 접힌 칸 밖(늘 보이는 자리)으로 옮겨졌다.
+  await page.locator('#ai-image-panel [data-ai-setting-key=kind]').getByRole('button',{name:imageKind==='exam'?'기출':'교과서',exact:true}).click();
   await page.locator('#ai-image-panel [data-ai-setting-key=labels]').getByRole('button',{name:labelResult==='remove'?'끄기':'켜기',exact:true}).click();
 }
 function jointResponse(text) {

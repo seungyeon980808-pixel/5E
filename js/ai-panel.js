@@ -1581,7 +1581,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       batchButton.disabled = busy || attachments.length < 2 || (white && reviewModeCheckbox?.checked !== false);
       batchButton.title = white && reviewModeCheckbox?.checked !== false ? "검수 포함 일괄 변환은 아직 지원하지 않습니다. 새 작업으로 그림별 변환을 실행하세요." : "여러 이미지를 각각 생성합니다. 일괄 결과는 독립 검수되지 않습니다.";
     }
-    sendButton.textContent = boxEdit ? "수정하기" : brief ? '이미지 생성' : "변환하기";
+    // 11-09: 출처를 모르는 그림이면 변환 단추 자리에서 「출처를 골라 주세요」라고 알린다(누르면 출처 줄로 데려가고, 고르면 바로 변환).
+    const needsSource = !boxEdit && !brief && !isGraphWorkflow(conversionKind) && !isCreationWorkflow(conversionKind)
+      && attachments.some(item => item.referenceRole !== 'STYLE_REFERENCE') && Boolean(imageKindSelect) && !['exam', 'general'].includes(imageKindSelect.value);
+    sendButton.textContent = boxEdit ? "수정하기" : brief ? '이미지 생성' : needsSource ? "출처를 골라 주세요" : "변환하기";
+    panel.dataset.aiNeedsSource = String(needsSource);
     commentController?.render();
     syncGraphWorkbenchUi();
   };
@@ -3807,6 +3811,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     restoreMarkPolicy(tab.markPolicyChosen ? tab.markPolicy : {...tab.markPolicy, leaders:'keep'});
     if (preserveSourceLabels) preserveSourceLabels.checked = tab.preserveSourceLabels === true;
+    sourceChoicePending = false;
     if (imageKindSelect) imageKindSelect.value = tab.imageLabelWorkflow?.imageKind || '';
     if (labelResultSelect) labelResultSelect.value = tab.imageLabelWorkflow?.labelResult || '';
     if (labelVerificationSelect) labelVerificationSelect.value = normalizeImageLabelWorkflow(tab.imageLabelWorkflow).verificationMode;
@@ -3948,6 +3953,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (freshLibraryTask) referenceComposition = normalizeReferenceComposition({ orientation: "free" }, []);
         addReferenceData(reference);
         if (attachments.length === 1 && generatedImages.length === 0 && imageKindSelect) {
+          sourceChoicePending = false;
           imageKindSelect.value = sourceImageKind(reference);
           imageKindSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
@@ -4938,7 +4944,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const onAiRetry = record => {
       if (!isCurrent()) return;
       const why = record.code === 'AI_NO_RESPONSE' ? 'AI 응답이 없어' : 'AI 응답에 문제가 있어';
-      const text = record.nextModel === AI_RETRY_FALLBACK_MODEL && record.nextAttempt === record.attempts
+      const text = record.switchedModel && record.nextModel === AI_RETRY_FALLBACK_MODEL
         ? `${why} Luna로 바꿔 다시 보내는 중 (${record.nextAttempt}/${record.attempts})` : `${why} 다시 보내는 중 (${record.nextAttempt}/${record.attempts})`;
       setStatus(text, 'busy'); loading.setPhase(text);
     };
@@ -5098,6 +5104,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       reviewEnabled: reviewModeCheckbox?.checked !== false,
       ...(modelsLoaded ? modelSelection() : savedModelPreference()),
     };
+    // 11-09 사용자 결정: 출처(교과서/기출)를 모르는 그림은 막다른 경고 대신 그 자리에서 고르게 하고, 고르면 바로 이어서 변환한다.
+    if (type === 'image' && !options.runInputSnapshot && !isCreationWorkflow(conversionKind) && !isExamBrief(originatingRunInput)
+      && normalizeOutputEngine(originatingRunInput.outputEngine) !== AI_OUTPUT_ENGINES.ASSET
+      && originatingRunInput.attachments.some(item => item.referenceRole !== 'STYLE_REFERENCE')
+      && !['exam', 'general'].includes(originatingRunInput.imageLabelWorkflow?.imageKind)) {
+      requestSourceChoice(); return;
+    }
     currentRequestSnapshot = null;
     providerRequestPersistable = false;
     preflightRun = preflight;
@@ -5899,10 +5912,23 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   if (batchButton) batchButton.onclick = runBatch;
   reviewModeCheckbox?.addEventListener("change", syncWhitePngUi);
   preserveSourceLabels?.addEventListener("change", () => { syncConversionSummary(); captureActiveTaskTab(); persistTasks(); });
+  // 11-09: 출처를 고르라고 알린 뒤 사람이 고르면 바로 변환을 이어 간다.
+  let sourceChoicePending = false;
+  function requestSourceChoice() {
+    sourceChoicePending = true;
+    const row = panel.querySelector('[data-ai-source-kind-row]');
+    row?.classList.add('ai-needs-choice');
+    row?.scrollIntoView?.({ block: 'nearest' });
+    row?.querySelector('[data-ai-setting-value]:not([disabled])')?.focus?.({ preventScroll: true });
+    setStatus('출처를 골라 주세요 · 교과서는 평가원 스타일로 새로 그리고, 기출은 원본 그대로 둡니다. 고르면 바로 변환합니다.', 'warn');
+  }
   imageKindSelect?.addEventListener('change', () => {
 
     if (preciseRestoreCheckbox) { preciseRestoreCheckbox.checked = false; preciseRestoreCheckbox.disabled = imageKindSelect.value !== 'general'; }
     captureActiveTaskTab(); persistTasks();
+    panel.querySelector('[data-ai-source-kind-row]')?.classList.remove('ai-needs-choice');
+    syncWhitePngUi();
+    if (sourceChoicePending && ['exam', 'general'].includes(imageKindSelect.value)) { sourceChoicePending = false; void submit('image'); }
   });
   labelResultSelect?.addEventListener('change', () => {
     if (preserveSourceLabels) preserveSourceLabels.checked = labelResultSelect.value === 'restore-editable';
@@ -7165,6 +7191,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     if(!desktop?.send)return 'AI 연결을 사용할 수 없습니다.';
     if(snapshot.operation==='generate' && !isGraphWorkflow(snapshot.options?.conversionKind) && !isExamBrief(snapshot.options) && snapshot.options?.outputEngine !== AI_OUTPUT_ENGINES.ASSET) {
+      if (!['exam', 'general'].includes(snapshot.options?.imageLabelWorkflow?.imageKind)) return '출처(교과서/기출)를 골라 주세요.';
       try { normalizeImageLabelWorkflow(snapshot.options?.imageLabelWorkflow, { requireExplicit: true }); } catch(error) { return error.message; }
     }
     return null;

@@ -454,7 +454,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         apply.textContent = '이미지 생성';
         apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
       } else {
-        apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : '변환하기';
+        // 11-09: 출처(교과서/기출)를 모르는 그림이면 「출처를 골라 주세요」(누르면 출처 줄로 데려가고, 고르면 바로 변환).
+        apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : panel.dataset.aiNeedsSource === 'true' ? '출처를 골라 주세요' : '변환하기';
         apply.disabled = busy || !allowed().length;
       }
     }

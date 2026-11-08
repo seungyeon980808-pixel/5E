@@ -5,6 +5,10 @@
   const key = '5e:web-ai-session';
   const localReady = location.hostname === '127.0.0.1' ? fetch('/api/local-ai-config',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(r=>r.local===true).catch(()=>false) : Promise.resolve(false);
   let popup, token = '', loginTicket = '', loginTimer, attempt = 0;
+  // 11-09: 이 맥의 로컬 AI 서버 하나를 여러 창(탭)이 함께 쓸 때 작업 칸 이름이 겹치지 않게 창마다 고유 앞머리를 붙인다.
+  // (서버는 같은 칸에 새 요청이 오면 앞 요청을 끊고 보내므로, 다른 창의 요청을 끊지 않게 한다.)
+  const pageScope = String(window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`).slice(0, 36);
+  const scopedActions = new Set(['bridge-send', 'bridge-events', 'bridge-interrupt']);
   let authUrl = '', preparing = false, positioning = false, positionTimer, positionDeadline;
   const closeLoginWindows = () => {
     positioning = false; clearTimeout(positionTimer); clearTimeout(positionDeadline);
@@ -26,10 +30,12 @@
       throw new Error('ChatGPT 로그인을 눌러 계정을 연결해 주세요.');
     }
     if (!['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt'].includes(action)) throw new Error('허용되지 않은 요청입니다.');
+    const pageScoped = local && scopedActions.has(action);
+    const body = pageScoped ? { ...payload, clientScope: `${pageScope}:${payload.clientScope || ''}` } : payload;
     const response = await fetch(`${origin}/api/${action}`, {
       method: 'POST', credentials: 'omit',
       headers: { ...(local ? {} : {Authorization: `Bearer ${token}`}), 'X-5E-Request': '1', 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload), signal: AbortSignal.timeout(40000),
+      body: JSON.stringify(body), signal: AbortSignal.timeout(40000),
     });
     if (!local && response.status === 401) {
       save('');
@@ -38,6 +44,9 @@
     const result = await response.json();
     if (!local && action === 'bridge-status' && result.login?.loggedIn === false && token) save('');
     if (!response.ok) throw Object.assign(new Error(result.error || '서버 연결에 실패했습니다.'), { status: response.status });
+    if (pageScoped && action === 'bridge-events' && Array.isArray(result.events)) {
+      for (const event of result.events) if (event && typeof event === 'object') event.clientScope = payload.clientScope || '';
+    }
     return result;
   };
   const loginRequest = async (action, ticket) => {
