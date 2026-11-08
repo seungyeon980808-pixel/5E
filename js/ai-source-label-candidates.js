@@ -35,13 +35,21 @@ export async function createPdfSourceTextCandidates({document,page,render,data}=
   freeze(receipt);boundPdfReceipts.add(receipt);return receipt;
 }
 
+// 11-09: 설치판(file:)은 이 모듈을 /js/… 별칭 주소로 읽어 import.meta.url 기준 OCR 주소가 file:///vendor/…가 되고,
+// 그 주소로 만든 OCR 작업자는 곧바로 실패했다(오류 값 undefined). 그래서 설치판에서는 글자 위치 후보가 하나도 없이
+// AI가 어림 상자로 글자를 잡아 기출 글자 지우기가 자주 보류됐다. 설치판에서는 실제 앱 폴더(index.html 위치) 기준 주소를 쓴다.
+function ocrVendorBase() {
+  return typeof location!=='undefined' && location.protocol==='file:' && typeof document!=='undefined'
+    ? new URL('vendor/ocr/',document.baseURI) : new URL('../vendor/ocr/',import.meta.url);
+}
 async function bundledWorker() {
-  const moduleURL=new URL('../vendor/ocr/tesseract.esm.min.js',import.meta.url);
+  const base=ocrVendorBase();
+  const moduleURL=new URL('tesseract.esm.min.js',base);
   const module=await import(moduleURL.href),tesseract=module.default??module;
   return tesseract.createWorker(['kor','eng'],1,{
-    workerPath:new URL('../vendor/ocr/worker.min.js',import.meta.url).href,
-    corePath:new URL('../vendor/ocr/tesseract-core-simd-lstm.wasm.js',import.meta.url).href,
-    langPath:new URL('../vendor/ocr/lang/',import.meta.url).href,
+    workerPath:new URL('worker.min.js',base).href,
+    corePath:new URL('tesseract-core-simd-lstm.wasm.js',base).href,
+    langPath:new URL('lang/',base).href,
     gzip:true,cacheMethod:'none',workerBlobURL:false,
   });
 }
