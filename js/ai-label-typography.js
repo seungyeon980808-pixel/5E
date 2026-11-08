@@ -46,7 +46,13 @@ export function fontForLabelRole(role) {
 const OBJECT_NAME_TEXT = /^[A-Z](?:[₀-₉]+|_\{?[0-9]{1,2}\}?|[′'])?$/u;
 export function isObjectNameText(text) { return OBJECT_NAME_TEXT.test(String(text ?? '').trim()); }
 // 라벨 전체 글꼴을 정할 때 쓰는 종류: 이름이어도 한 글자 이름이 아니면 보통 글(돋움).
-export function presentationRoleFor(role, text) { return role === 'name' && !isObjectNameText(text) ? 'text' : role; }
+// 11-09: AI가 t₁·t₂·ε_A를 화학식(chemical)으로 잘못 줘 정체가 됐다(기출 b2_2025_11_17_1·p2_2022_06_07_1).
+// 화학식은 원소 기호(대문자)로 시작하므로, 소문자·그리스 문자 하나로 시작하는 기호(+아래 첨자)는 물리량으로 본다.
+const LONE_QUANTITY_SYMBOL = /^[a-zα-ωθ](?:[₀-₉ₐₑₒₓ]+|[′'])*$/u;
+export function presentationRoleFor(role, text) {
+  if (role === 'chemical' && /^[a-zα-ωθ](?:_|$|[₀-₉])/u.test(String(text ?? '').trim())) return 'quantity';
+  return role === 'name' && !isObjectNameText(text) ? 'text' : role;
+}
 
 // 11-07 사용자 「라벨 글씨체가 엉망 — 한글·영어·영어 수식 세 가지로 나뉘어 들어가야 한다」:
 // AI가 붙인 종류 이름(name·symbol 등)은 들쭉날쭉해서 A·B가 고딕이 되곤 했다. 글자 자체로 조각을 나눈다.
@@ -81,6 +87,7 @@ export function scriptLabelRuns(text, role, aiRuns, { graph = false } = {}) {
     if (part.hangul || !/[A-Za-z0-9α-ωΑ-Ω]/u.test(core)) runRole = 'text';
     else if (UNIT_AFTER_NUMBER.test(core)) runRole = 'unit';
     else if (/^[+−-]?\d[\d.,]*$/.test(core)) runRole = 'number';
+    else if ((chem.has('*') || [...chem].some(c => c && core.includes(c))) && LONE_QUANTITY_SYMBOL.test(core)) runRole = 'quantity';
     else if (chem.has('*') || [...chem].some(c => c && core.includes(c))) runRole = 'chemical';
     else if (qty.has('*') || qty.has(core) || [...qty].some(q => q && q !== '*' && core.includes(q)) || /[α-ωΑ-Ωθ]/u.test(core)) runRole = 'quantity';
     // AI가 일반 글자(text)로 준 영어 소문자(v, t, t₀, 3t₀, 2d)는 물리량 — 기울임. 점 이름(p·q)은 AI가 기호·이름으로 주므로 정체 그대로.

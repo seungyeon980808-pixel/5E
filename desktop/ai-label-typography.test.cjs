@@ -88,3 +88,13 @@ test('11-08: graph letters restored as labels are italic quantities even when th
   for (const text of ['p', 'q', 'A']) assert.deepEqual(roles(text, true), [[text, 'name']]);
   assert.deepEqual(roles('0', true), [['0', 'number']]);
 });
+
+test('11-09: lone lowercase or Greek symbols the AI calls chemical are italic quantities; real formulas stay chemical', async () => {
+  const { scriptLabelRuns, presentationRoleFor } = await typography;
+  for (const text of ['t₁', 't₂', 'ε', 'v₀']) assert.deepEqual(scriptLabelRuns(text, 'chemical', [{ text, role: 'chemical' }]).map(r => [r.text, r.role]), [[text, 'quantity']]);
+  assert.deepEqual(scriptLabelRuns('NaOH', 'chemical', [{ text: 'NaOH', role: 'chemical' }]).map(r => r.role), ['chemical']);
+  assert.equal(presentationRoleFor('chemical', 'ε_A'), 'quantity');
+  assert.equal(presentationRoleFor('chemical', 't_1'), 'quantity');
+  assert.equal(presentationRoleFor('chemical', 'H_2O'), 'chemical');
+  assert.equal(presentationRoleFor('chemical', 'e^-'), 'chemical');
+});
