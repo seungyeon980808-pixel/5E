@@ -352,6 +352,17 @@ test('inserts source labels alongside separated image regions in one undo step',
   assert.equal(value.objects[1].aiParentImageId, value.objects[0].id);
 });
 
+// 11-09: 라벨 편집 창·PNG 저장(labelEditObjects)도 캔버스 넣기와 같이 원본에서 잰 비율 × 그림 높이(1.8~8).
+test('label editor and PNG export objects use the measured source label ratio like canvas insertion', async () => {
+  const { labelEditObjects } = await import('../js/ai-label-edit-model.js');
+  const label = { id: 'a', text: '좌심실', evidence: '좌심실', sourceKind: 'reference', sourceRef: 1, mode: 'text', labelType: 'label', contentMode: 'plain', anchor: { x: 0.5, y: 0.5 }, position: { x: 0.5, y: 0.5 } };
+  const image = { id: 'label-editor-image', x: 0, y: 0, w: 90, h: 45, rotation: 0 };
+  const [measured] = labelEditObjects({ measuredLabelSize: 0.05, labels: [label], relationGroups: [] }, image);
+  assert.ok(Math.abs(measured.fontSize - 2.25) < 1e-9, String(measured.fontSize));
+  const [plain] = labelEditObjects({ labels: [label], relationGroups: [] }, image);
+  assert.equal(plain.fontSize, 3.7);
+});
+
 // 11-09: 기출 글자를 하나도 못 지운 결과(원본 글자가 남음)를 넣을 때 라벨을 원본 글자 위에 겹치지 않고 그림 옆 목록으로 둔다.
 test('external-list exam drafts go beside the image on user output instead of over undeleted source text', async () => {
   const { userOutputLabelPlan } = await import('../js/ai-label-edit-model.js');

@@ -103,7 +103,9 @@ export async function createEditableLabelComposite({ plan, placement, candidateD
   const image = { id: 'composite-image', type: 'image', x: 0, y: 0, w: width * scale, h: height * scale, rotation: 0 };
   await prepareEditableLabelFonts(snapshot.labels); await document.fonts.ready; abort(signal);
   let serial = 0;
-  const objects = createEditableImageLabelObjects({ labels: snapshot.labels, relationGroups: snapshot.relationGroups, image, idFactory: () => `composite-label-${++serial}` });
+  // 11-09: 원본에서 잰 글자 비율이 든 결과 명세면 AI 창 「라벨 ON」 미리보기도 캔버스 넣기와 같은 크기로(전에는 기본 3.7이라 두 배쯤 커 보였다).
+  const measured = Number.isFinite(plan?.measuredLabelSize) && plan.measuredLabelSize > 0 ? { labelSizeMm: Math.min(8, Math.max(1.8, plan.measuredLabelSize * image.h)) } : {};
+  const objects = createEditableImageLabelObjects({ labels: snapshot.labels, relationGroups: snapshot.relationGroups, image, ...measured, idFactory: () => `composite-label-${++serial}` });
   const [{ renderObject }, { ensureEmbeddedFonts }] = await Promise.all([import('./render/scene.js?v=1.7.0-four-session-integration'), import('./svg-export.js?v=1.7.0-four-session-integration')]);
   const css = await ensureEmbeddedFonts(); abort(signal);
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

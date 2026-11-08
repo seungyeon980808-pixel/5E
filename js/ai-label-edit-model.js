@@ -24,7 +24,9 @@ export function labelEditFrame(width, height, artboard) {
 
 export function labelEditObjects(plan, image) {
   let serial = 0;
-  return createEditableImageLabelObjects({ labels:plan.labels, relationGroups:plan.relationGroups || [], image,
+  // 11-09: 라벨 편집 창과 PNG 저장도 캔버스 넣기와 같은 글자 크기(원본에서 잰 비율 × 그림 높이, 1.8~8).
+  const measured = Number.isFinite(plan?.measuredLabelSize) && plan.measuredLabelSize > 0 ? { labelSizeMm: Math.min(8, Math.max(1.8, plan.measuredLabelSize * image.h)) } : {};
+  return createEditableImageLabelObjects({ labels:plan.labels, relationGroups:plan.relationGroups || [], image, ...measured,
     idFactory:() => `label-editor-${++serial}` });
 }
 
