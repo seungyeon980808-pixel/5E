@@ -87,9 +87,10 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
           setTimeout(() => listeners.forEach(fn => fn({ data: reply })), 0);
         }); },
       };
-      return pdfSearchWorker;
+      // 11-08: 대역도 답을 받는 쪽(아래 message 처리)을 붙여야 한다 — 빠져 있어서 설치판에서는 검색어를 넣으면 결과가 영영 안 왔다.
+    } else {
+      pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.7.0-four-session-integration", import.meta.url), { type: "module" });
     }
-    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.7.0-four-session-integration", import.meta.url), { type: "module" });
     pdfSearchWorker.addEventListener("message", (event) => {
       const request = pdfSearchRequests.get(event.data?.id);
       if (!request) return;
@@ -512,7 +513,8 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     // 11-08: 학평 자료는 첫 검색 때 불러오느라 검색이 4~7초 걸렸다 — 라이브러리를 연 뒤 한가할 때 미리 불러 둔다.
     // 다 불러오면 목록을 한 번 새로 고쳐(지금 보던 자리 유지) 검색 준비(문항 색인·PDF 본문 색인)를 미리 끝낸다.
     const preload = () => { void prepareHakpyeong({ query: "", filters: { exam: "hak" }, questionSearch: true }).then((changed) => { if (changed) return unifiedUi.refresh(); }).catch(() => {}); };
-    typeof requestIdleCallback === "function" ? requestIdleCallback(preload, { timeout: 2500 }) : setTimeout(preload, 800);
+    // 설치판(file://)은 일꾼이 없어 미리 불러오기·색인 교체가 모두 화면 쪽에서 돌아 오히려 검색을 붙잡았다(연 뒤 3초 검색 3.8→9.1초) — 웹에서만.
+    if (location.protocol !== "file:") typeof requestIdleCallback === "function" ? requestIdleCallback(preload, { timeout: 2500 }) : setTimeout(preload, 800);
   };
   openButton.addEventListener("click", () => void openLibrary(openButton));
   registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, onClose, bindClose, trigger } = {}) => {
