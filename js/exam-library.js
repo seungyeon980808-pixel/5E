@@ -61,6 +61,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let pdfSearchWorker = null;
   let pdfSearchRequestId = 0;
   let pdfSearchWorkerKey = "";
+  const pdfPrebuiltSent = new Set();
+  const pdfPrebuiltIds = new WeakMap();
+  let pdfPrebuiltSerial = 0;
   const pdfSearchRequests = new Map();
   let pdfSearchKey = "";
   const workerSearch = (message) => new Promise((resolve, reject) => {
@@ -116,7 +119,22 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         pdfSearchKey = key;
         const worker = ensurePdfSearchWorker();
         if (pdfSearchWorkerKey !== key) {
-          await workerSearch({ type: "replace", documents: dynamicDocuments, prebuilt: prebuiltIndexes });
+          // 11-08: 미리 만든 색인(33MB)은 일꾼에 한 번만 보내고, 그 뒤 교체 때는 열쇠만 보낸다(매번 통째 복사하느라 화면이 멈췄다).
+          // 열쇠는 색인 객체마다 하나(내용이 바뀌면 새 객체이므로 새 열쇠) — 글자 수·쪽 수만으로는 내용이 바뀐 것을 놓친다.
+          const keyed = prebuiltIndexes.map((source) => {
+            if (!pdfPrebuiltIds.has(source.index)) pdfPrebuiltIds.set(source.index, `prebuilt:${++pdfPrebuiltSerial}`);
+            return { source, key: `${pdfPrebuiltIds.get(source.index)}:${source.documents.map((document) => `${document.id}:${document.pageCount}`).join(",")}` };
+          });
+          const message = (full) => ({ type: "replace", documents: dynamicDocuments,
+            prebuilt: keyed.map(({ source, key: sourceKey }) => (!full && pdfPrebuiltSent.has(sourceKey) ? { key: sourceKey } : { key: sourceKey, documents: source.documents, index: source.index })) });
+          try { await workerSearch(message(false)); }
+          catch (error) {
+            if (!/PREBUILT_MISSING/.test(error?.message || "")) throw error;
+            pdfPrebuiltSent.clear();
+            await workerSearch(message(true));
+          }
+          pdfPrebuiltSent.clear();
+          keyed.forEach(({ key: sourceKey }) => pdfPrebuiltSent.add(sourceKey));
           pdfSearchWorkerKey = key;
         }
       }
@@ -491,6 +509,10 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     const opening = unifiedUi.open(trigger || openButton);
     void mountPackManagement().catch((error) => pdfUi.setSourceStatus(`자료팩 관리 열기 실패: ${error instanceof Error ? error.message : error}`, true));
     await opening;
+    // 11-08: 학평 자료는 첫 검색 때 불러오느라 검색이 4~7초 걸렸다 — 라이브러리를 연 뒤 한가할 때 미리 불러 둔다.
+    // 다 불러오면 목록을 한 번 새로 고쳐(지금 보던 자리 유지) 검색 준비(문항 색인·PDF 본문 색인)를 미리 끝낸다.
+    const preload = () => { void prepareHakpyeong({ query: "", filters: { exam: "hak" }, questionSearch: true }).then((changed) => { if (changed) return unifiedUi.refresh(); }).catch(() => {}); };
+    typeof requestIdleCallback === "function" ? requestIdleCallback(preload, { timeout: 2500 }) : setTimeout(preload, 800);
   };
   openButton.addEventListener("click", () => void openLibrary(openButton));
   registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, onClose, bindClose, trigger } = {}) => {

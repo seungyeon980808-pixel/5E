@@ -1891,7 +1891,19 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     try {
       const queryText = query.value.trim();
       const filters = { ...Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null)), ...conditionFilters() };
-      const changed = await prepareSearch?.({query: queryText, filters, questionSearch: activeTypes.includes("question"), providedEnabled: groupEnabled.provided});
+      // 11-08: 학평 자료를 불러오는 동안(수 초) 검색 결과를 붙잡지 않는다 — 지금 있는 자료로 먼저 보여 주고,
+      // 다 불러오면 같은 검색을 한 번 더 돌려 학평 결과를 보탠다.
+      const preparing = prepareSearch?.({query: queryText, filters, questionSearch: activeTypes.includes("question"), providedEnabled: groupEnabled.provided});
+      let changed = false;
+      if (preparing) {
+        const PENDING = Symbol("pending");
+        const quick = await Promise.race([preparing, new Promise((resolve) => setTimeout(() => resolve(PENDING), 150))]);
+        if (quick === PENDING) {
+          void Promise.resolve(preparing).then((late) => {
+            if (late && searchIsCurrent(ownEpoch, signal)) void runSearch({ preservePreview: true });
+          }).catch(() => {});
+        } else changed = quick;
+      }
       if (!searchIsCurrent(ownEpoch, signal)) return;
       if (changed) await renderSources(() => searchIsCurrent(ownEpoch, signal));
       const activeProvider = await provider();
@@ -1969,7 +1981,9 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       // 11-05: 첫 검색어만 0.5초쯤 걸렸다(본문 글 정리·캐시를 그때 만듦). 라이브러리를 연 뒤 한가할 때 한 번 미리 데워 둔다.
       if (warmedProvider !== activeProvider && enabledSources?.size) {
         warmedProvider = activeProvider;
-        const warm = () => { try { void (activeProvider.searchAsync ?? activeProvider.search).call(activeProvider, { query: "자기장", kinds: ["crop"], sourceIds: [...enabledSources], filters: {}, limit: 1 }); } catch {} };
+        const warm = () => { try { void (activeProvider.searchAsync ?? activeProvider.search).call(activeProvider, { query: "자기장", kinds: ["crop"], sourceIds: [...enabledSources], filters: {}, limit: 1 }); } catch {}
+          // 11-08: PDF 본문 색인(8천여 쪽)도 첫 검색어 전에 일꾼에 올려 둔다 — 안 그러면 첫 검색이 색인 올리기(1~3초)를 기다린다.
+          try { if (searchReadiness === "ready" && typeof activeProvider.searchPdfFiles === "function") void Promise.resolve(activeProvider.searchPdfFiles({ query: "자기장", sourceIds: [...enabledSources], filters: {}, limit: 1, requestId: "unilib-warm" })).catch(() => {}); } catch {} };
         typeof requestIdleCallback === "function" ? requestIdleCallback(warm, { timeout: 1500 }) : setTimeout(warm, 300);
       }
       if (restoreList) { scroller.scrollTop = previousScroll; restoreSelectionOffset(); }

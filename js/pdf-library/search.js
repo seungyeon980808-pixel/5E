@@ -6,6 +6,18 @@ function normalizedText(value) {
   return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
 }
 
+// 11-08: 검색마다 8천여 쪽 본문을 처음부터 다시 정규화하던 것을 쪽(entry)마다 한 번만 하고 재사용한다.
+const searchableCache = new WeakMap();
+function searchableText(entry) {
+  let value = searchableCache.get(entry);
+  if (value === undefined) {
+    value = normalizedText(entry.normalized ?? entry.text).replace(/\s+/gu, "");
+    searchableCache.set(entry, value);
+  }
+  return value;
+}
+const wordRunsCache = new WeakMap();
+
 const BASE_HIGHLIGHT_COLORS = Object.freeze(["#ffcf4a", "#5fd3ff", "#ff7ab8", "#83e377", "#b59cff", "#ff9866", "#63e6be", "#f783ff"]);
 
 function stableTermId(term) {
@@ -27,6 +39,13 @@ export function queryHighlightTerms(query) {
 
 export function mapQueryHighlights(entry, queryOrTerms) {
   const terms = Array.isArray(queryOrTerms) ? queryOrTerms : queryHighlightTerms(queryOrTerms);
+  const runs = entryWordRuns(entry);
+  return highlightsFromRuns(entry, terms, runs);
+}
+
+function entryWordRuns(entry) {
+  const cached = entry && typeof entry === "object" ? wordRunsCache.get(entry) : undefined;
+  if (cached) return cached;
   const words = (entry.words ?? []).flatMap((word) => {
     const text = normalizedText(word.text).replace(/\s+/gu, "");
     return text ? [{ text, characters: [...text], rect: word.rect }] : [];
@@ -43,13 +62,20 @@ export function mapQueryHighlights(entry, queryOrTerms) {
       && Math.abs((previous.rect[1] + previous.rect[3] / 2) - (word.rect[1] + word.rect[3] / 2)) <= Math.max(previous.rect[3], word.rect[3]) * 0.65
       && horizontalGap >= -Math.max(previous.rect[2], word.rect[2]) * 0.1
       && horizontalGap <= maximumAdjacentGap;
-    if (!sameLine) runs.push({ words: [], stream: "", offsets: [] });
+    if (!sameLine) runs.push({ words: [], stream: "", offsets: [], length: 0 });
     const run = runs.at(-1);
-    const start = [...run.stream].length;
+    // 11-08: 줄 글자 수를 매번 처음부터 세던 것(단어마다 [...stream])을 누적 수로 — 긴 줄에서 제곱으로 느려졌다.
+    const start = run.length;
     run.words.push(word);
     run.stream += word.text;
+    run.length += word.characters.length;
     run.offsets.push({ word, start, end: start + word.characters.length });
   }
+  if (entry && typeof entry === "object") wordRunsCache.set(entry, runs);
+  return runs;
+}
+
+function highlightsFromRuns(entry, terms, runs) {
   const highlights = [];
   const misses = [];
   for (const term of terms) {
@@ -115,6 +141,11 @@ export function buildSearchIndex(documents) {
   return Object.freeze({ schemaVersion: "pdf-search-index-v1", entries: Object.freeze(entries) });
 }
 
+// 11-08: 색인을 새로 만든 직후(일꾼 안·한가할 때) 쪽마다 정규화한 글을 미리 만들어, 첫 검색도 바로 끝나게 한다.
+export function warmSearchIndex(index) {
+  for (const entry of index?.entries ?? []) searchableText(entry);
+}
+
 export function searchIndex(index, options) {
   const terms = queryHighlightTerms(options?.query ?? "");
   if (terms.length === 0) return Object.freeze([]);
@@ -128,7 +159,7 @@ export function searchIndex(index, options) {
     if (filters.academicYear && String(entry.metadata?.academicYear) !== String(filters.academicYear)) continue;
     if (filters.administration && entry.metadata?.administration !== filters.administration) continue;
     if (filters.subject && entry.metadata?.subject !== filters.subject) continue;
-    const searchable = normalizedText(entry.normalized ?? entry.text).replace(/\s+/gu, "");
+    const searchable = searchableText(entry);
     if (!terms.every(({ term }) => searchable.includes(term))) continue;
     const firstOffset = Math.min(...terms.map(({ term }) => searchable.indexOf(term)).filter((offset) => offset >= 0));
     const start = Math.max(0, firstOffset - 48);
