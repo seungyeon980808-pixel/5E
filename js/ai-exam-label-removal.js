@@ -146,7 +146,22 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
     comps.push(c);
   }
   // 넓힌 영역 테두리까지 이어진 덩어리는 구조선이다(글자가 거기에 붙어 있으면 그 글자는 다시 찾지 않는다).
-  const inner=comps.filter(c=>!c.edge),hOf=c=>c.y1-c.y0+1;
+  let inner=comps.filter(c=>!c.edge);const hOf=c=>c.y1-c.y0+1;
+  // 한글 라벨: 한 글자 안에서 위아래로 쌓인 자모(「힘」의 ㅎ·ㅁ)는 한 덩어리로 묶는다 — 따로 두면 가장 큰 자모만 글자로 잡혀
+  // 아래 받침이 남거나 글자 높이를 작게 잰다. 묶은 높이가 AI 글자 높이의 1.3배를 넘으면(글자 위 점·작은 원) 묶지 않는다.
+  if(/[\uAC00-\uD7A3]/.test(text)) {
+    for(let merged=true;merged;) {
+      merged=false;
+      outer: for(let i=0;i<inner.length;i++) for(let j=i+1;j<inner.length;j++) {
+        const a=inner[i],c=inner[j],xo=Math.min(a.x1,c.x1)-Math.max(a.x0,c.x0)+1,gap=Math.max(c.y0-a.y1,a.y0-c.y1);
+        // AI가 본 글자 줄(위아래 0.15글자 여유) 안에 가운데가 있는 덩어리끼리만 묶는다(글자 위의 점·작은 원은 줄 밖).
+        const inBand=o=>(o.y0+o.y1)/2>=ty0-th*.15 && (o.y0+o.y1)/2<=ty1+th*.15;
+        if(!inBand(a) || !inBand(c)) continue;
+        const u={x0:Math.min(a.x0,c.x0),y0:Math.min(a.y0,c.y0),x1:Math.max(a.x1,c.x1),y1:Math.max(a.y1,c.y1),edge:false,parts:[...(a.parts||[a]),...(c.parts||[c])]};
+        if(xo>=Math.min(a.x1-a.x0+1,c.x1-c.x0+1)*.5 && gap<=th*.35 && hOf(u)<=th*1.3) {inner=inner.filter((_,k)=>k!==i&&k!==j);inner.push(u);merged=true;break outer;}
+      }
+    }
+  }
   // 씨앗은 AI 글자 자리에 닿는 덩어리 가운데 글자 크기인 것만(글자를 둘러싼 상자·틀은 글자가 아니다).
   const seeds=inner.filter(c=>c.x1>=tx0-th*.25 && c.x0<=tx1+th*.25 && c.y1>=ty0-th*.25 && c.y0<=ty1+th*.25 && hOf(c)<=th*1.6 && c.x1-c.x0+1<=tw+th*2);
   if(!seeds.length) return {rejected:'no-glyph-at-observed-position'};
@@ -184,14 +199,14 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   const weight=[...text].reduce((s,ch)=>s+glyphWeight(ch),0),bw=box.x1-box.x0+1,bh=box.y1-box.y0+1;
   if(bw<weight*H*.45 || bw>weight*H*1.35+H*.6) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
   for(const other of plan?.labels || []) {
-    if(other===label || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
+    if(other===label || other.id===label.id || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
     const o=other.typography.bounds,iw=Math.min((o.x+o.w)*width,box.x1+1)-Math.max(o.x*width,box.x0),ih=Math.min((o.y+o.h)*height,box.y1+1)-Math.max(o.y*height,box.y0);
     if(iw>0 && ih>0 && iw*ih>bw*bh*.3) return {rejected:'other-label-overlap'};
   }
   const x=Math.max(0,box.x0-2),y=Math.max(0,box.y0-2),r=Math.min(width,box.x1+3),b=Math.min(height,box.y1+3);
   // 상자 근처를 지나는 다른 잉크(구조선·점)는 이 라벨 것이 아니다 — 그 픽셀과 1px 둘레는 지울 범위에서 빼고, 닫힌 테두리의 단색 판정에서도 뺀다.
   // 글자 덩어리는 그것과 떨어져 있어야 하며(붙어 있으면 위 덩어리 단계에서 글자로 고르지 않는다), 지우는 것은 여전히 검증된 글자 잉크뿐이다.
-  const chosenIds=new Set([...chosen].map(c=>comps.indexOf(c))),foreign=new Set();
+  const chosenIds=new Set([...chosen].flatMap(c=>(c.parts||[c]).map(p=>comps.indexOf(p)))),foreign=new Set();
   for(let yy=Math.max(ey0,y-2);yy<Math.min(ey1,b+2);yy++) for(let xx=Math.max(ex0,x-2);xx<Math.min(ex1,r+2);xx++) {
     const id=seen[(yy-ey0)*ew+xx-ex0];
     if(id<0 || chosenIds.has(id)) continue;

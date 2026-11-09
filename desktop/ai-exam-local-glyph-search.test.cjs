@@ -38,3 +38,23 @@ test('text or ownership uncertainty, leader labels and text touching a structure
   assert.notEqual(r.report.status,'complete',JSON.stringify(opt));assert.deepEqual(r.removedLabelIds,[]);assert.deepEqual(r.data,f.data);
  }
 });
+
+// 11-09 라벨 안정화(한글 자모 묶음): 한 글자 안에서 위아래로 쌓인 자모(ㅎ 위·ㅁ 아래, 오른쪽 ㅣ)를 한 글자로 묶어 다시 찾는다 —
+// 가장 큰 자모만 잡아 아래 받침이 남으면 안 된다. 글자 위 작은 원 표시는 묶지 않는다.
+test('Hangul syllables made of stacked jamo are erased whole; a small circle above the word is not merged into it', async () => {
+ const {removeExamLabelPixels}=await api;
+ const width=120,height=70,data=new Uint8ClampedArray(width*height*4).fill(255),dark=(x,y)=>data.set([0,0,0,255],(y*width+x)*4);
+ // 「힘」 비슷한 글자: 위 가로획(ㅎ 머리)·가운데 동그라미·아래 네모(ㅁ)는 세로로 떨어져 있고, 오른쪽 세로획(ㅣ)은 따로 길다.
+ for(let x=42;x<=50;x++){dark(x,22);dark(x,23);}                       // 위 짧은 가로획
+ for(let x=40;x<=52;x++)for(const y of [26,32])dark(x,y);for(let y=26;y<=32;y++){dark(40,y);dark(52,y);} // 가운데 네모(ㅇ 대신)
+ for(let x=40;x<=52;x++)for(const y of [36,42])dark(x,y);for(let y=36;y<=42;y++){dark(40,y);dark(52,y);} // 아래 네모(ㅁ)
+ for(let y=21;y<=35;y++){dark(56,y);dark(57,y);}                        // 오른쪽 세로획
+ // 글자 위 작은 원 표시(다른 물체)
+ for(let y=10;y<=15;y++)for(let x=45;x<=50;x++)if((x-47.5)**2+(y-12.5)**2<=7)dark(x,y);
+ const label={id:'a',text:'힘',sourceRef:1,scope:'general',mode:'text',typography:{bounds:{x:39/120,y:20/70,w:20/120,h:23/70}}};
+ const plan={labels:[label],uncertainties:[{sourceRef:1,labelId:'a',component:'text',domain:'removal',reason:'배경 분리 불확실'}],protectedRegions:[],preservedMarks:[],removalRegions:[],inkSearchRegions:[]};
+ const r=removeExamLabelPixels({width,height,data,plan});
+ assert.equal(r.report.status,'complete');assert.deepEqual(r.removedLabelIds,['a']);
+ for(const [x,y] of [[45,22],[40,30],[46,42],[56,30]])assert.equal(r.data[(y*width+x)*4],255,`${x},${y} 글자 획이 남음`);
+ for(let i=0;i<width*height;i++){const x=i%width,y=Math.floor(i/width);if(y<=16)assert.deepEqual(r.data.slice(i*4,i*4+4),data.slice(i*4,i*4+4));}
+});
