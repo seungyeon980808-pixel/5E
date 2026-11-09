@@ -32,12 +32,17 @@ test('explicit candidate searches reject unknown, cross-source, duplicate, reuse
  const {parseSourceLabelAnalysis}=await api;
  for(const ids of [['unknown'],['s2-a'],['s1-a','s1-a'],[]]){const v=wire();v.labels[0].textInkSearch={status:'confirmed-candidates',textCandidateIds:ids,background:[255,255,255,255]};assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(v),2,[set(),set(2)]));}
  const v=wire();v.labels[0].textInkSearch={status:'confirmed-candidates',textCandidateIds:['s1-a'],background:[255,255,255,255]};v.labels[0].reviewRequired=true;assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]),/소속/);
- delete v.labels[0].reviewRequired;const other=structuredClone(v.labels[0]);other.id='other';delete other.textCandidateIds;other.position={x:.5,y:.5};other.typography={role:'name',size:{w:.1,h:.1}};v.labels.push(other);const held=assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]),/후보/);assert.equal(held.labels.length,0);
+ delete v.labels[0].reviewRequired;const other=structuredClone(v.labels[0]);other.id='other';delete other.textCandidateIds;other.position={x:.5,y:.5};other.typography={role:'name',size:{w:.1,h:.1}};v.labels.push(other);const held=assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]),/후보/);
+ // 11-09: 같은 후보를 둘이 고르고 가려지지 않으면 아무도 그 후보를 못 갖는다. 위치를 그 후보로 정한 라벨은 격리하고, 탐색에만 쓴 라벨은 탐색 권한 없이 남긴다.
+ assert.deepEqual(held.quarantinedItems.map(i=>i.labelId),['sensor']);assert.deepEqual(held.labels.map(l=>l.id),['other']);
+ assert.ok(held.uncertainties.some(u=>u.labelId==='other'&&u.domain==='removal'&&u.component==='text'));
 });
 test('unknown, cross-source, duplicated and shared candidate IDs fail closed',async()=>{
  const {parseSourceLabelAnalysis}=await api;
  for(const ids of [['missing'],['s2-a'],['s1-a','s1-a'],[]]){const v=wire();v.labels[0].textCandidateIds=ids;assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(v),2,[set(),set(2)]));}
  const v=wire();v.labels.push({...structuredClone(v.labels[0]),id:'duplicate'});const held=assertQuarantined(()=>parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]),/후보/);assert.equal(held.labels.length,0);
+ // 11-09: 똑같은 두 라벨이 같은 후보로 위치를 정하면 가려지지 않으므로 예전처럼 둘 다 격리한다.
+ assert.deepEqual(held.quarantinedItems.map(i=>i.labelId).sort(),['duplicate','sensor']);
 });
 test('source candidate coordinates cannot be combined with model coordinates or legacy wire',async()=>{
  const {parseSourceLabelAnalysis}=await api;
@@ -75,4 +80,25 @@ test('cancel during OCR or asynchronous receipt never dispatches a native turn',
  const controller=createSourceLabelController({transport:{send:async()=>{calls++;return{threadId:'bad'};}},collectCandidates:async input=>({...set(),sourceSha256:input.sourceSha256})});
  const abort=new AbortController(),p=controller.analyze({attachments:[{data:'data:image/png;base64,YQ=='}],signal:abort.signal,onSourceCandidates:async()=>{entered();await new Promise(r=>continueReceipt=r);}});
  await enteredPromise;abort.abort();continueReceipt();await assert.rejects(p,/취소/);assert.equal(calls,0);assert.equal(controller.isActive(),false);
+});
+
+// 11-09 라벨 안정화: 같은 후보를 여러 라벨이 고르면 원문이 믿을 만한 후보 글자와 맞는 라벨, 여럿이면 그 후보로 글자 탐색까지 확인한 라벨 하나만 갖는다.
+test('a shared candidate goes to the single label whose text matches a reliable reading; position-bound losers stay quarantined',async()=>{
+ const {parseSourceLabelAnalysis}=await api;
+ const mk=(id,text,ids,search)=>{const l=wire().labels[0];l.id=id;l.text=text;l.textCandidateIds=ids;if(search)l.textInkSearch=search;return l;};
+ const confirm=ids=>({status:'confirmed-candidates',textCandidateIds:ids,background:[255,255,255,255]});
+ let v=wire();v.labels=[mk('sensor','온도 센서',['s1-a','s1-b']),mk('thirty','30',['s1-a'],confirm(['s1-a']))];
+ let p=parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]);
+ assert.deepEqual(p.labels.map(l=>l.id),['sensor'],'원문이 후보 글자와 맞는 라벨만 갖는다');assert.deepEqual(p.quarantinedItems.map(i=>i.labelId),['thirty']);
+ assert.ok(Math.abs(p.labels[0].typography.bounds.w-.21)<1e-12,'이긴 라벨의 위치는 두 후보 그대로');
+ v=wire();v.labels=[mk('upper','센서',['s1-b'],{status:'confirmed-flat',bounds:{x:.205,y:.195,w:.11,h:.05},background:[255,255,255,255]}),mk('lower','센서',['s1-b'],{status:'needs-review',reason:'선과 겹침'})];
+ p=parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]);
+ assert.deepEqual(p.labels.map(l=>l.id),['upper'],'같은 글자 둘이면 그 후보로 탐색까지 확인한 라벨');assert.deepEqual(p.quarantinedItems.map(i=>i.labelId),['lower']);
+ v=wire();v.labels=[mk('upper','센서',['s1-b'],confirm(['s1-b'])),mk('lower','센서',['s1-b'],confirm(['s1-b']))];
+ p=parseSourceLabelAnalysis(JSON.stringify(v),1,[set()]);
+ assert.deepEqual(p.labels,[],'가려지지 않으면 예전처럼 둘 다 격리');assert.equal(p.quarantinedItems.length,2);
+ const weak=set();weak.candidates[1]={...weak.candidates[1],text:'ra',confidence:8};
+ v=wire();v.labels=[mk('c','C',['s1-b'],{status:'needs-review',reason:'경계와 가까움'}),mk('range','100 m',['s1-b'],{status:'needs-review',reason:'점선과 가까움'})];
+ p=parseSourceLabelAnalysis(JSON.stringify(v),1,[weak]);
+ assert.deepEqual(p.labels,[],'믿기 어려운 후보는 탐색 확인 없이 아무도 못 갖는다');assert.equal(p.quarantinedItems.length,2);
 });

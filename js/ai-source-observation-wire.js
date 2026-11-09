@@ -109,6 +109,43 @@ function expandValidatedSourceObservationWire(value, { candidateSets = [], sourc
   }
   return { value: expanded, compact: true, candidateSelections };
 }
+// 11-09 라벨 안정화: 같은 글자 후보를 두 라벨 이상이 고르면 예전에는 그 라벨들을 모두 버려(격리) 글자가 원본으로 남았다
+// (개발 기출 회차마다 4~12개, 검증 기출 한 회차 18개). 후보를 가질 라벨이 하나로 가려지면 그 라벨에 후보를 주고 나머지에서만 뺀다.
+// - 후보 글자를 믿을 만하면(문자 인식 확신 60 이상·PDF 글자) 원문이 그 글자와 맞는 라벨만 가질 수 있고, 여럿이면 AI가 그 후보 자리로
+//   글자 탐색까지 확인한 라벨 하나만 갖는다. 믿기 어려운 후보는 글자 탐색까지 확인한 라벨이 하나일 때만 그 라벨이 갖는다.
+// - 가려지지 않으면 아무도 갖지 않는다. 위치를 그 후보로 정한 라벨이 후보를 잃으면 예전처럼 격리한다(위치를 추측하지 않는다).
+//   글자 탐색에만 그 후보를 쓴 라벨은 남기고 탐색만 「다시 확인」으로 바꾼다(제 자리에서 글자를 다시 찾는다).
+const candidateText = s => String(s || '').replace(/\s+/g, '').toLowerCase();
+const mostlyOverlaps = (a, b) => {
+  const ix = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)), iy = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+  return ix * iy > .5 * Math.min(a.w * a.h, b.w * b.h);
+};
+const labelCandidateIds = label => [...(Array.isArray(label?.textCandidateIds) ? label.textCandidateIds : []), ...(Array.isArray(label?.textInkSearch?.textCandidateIds) ? label.textInkSearch.textCandidateIds : [])];
+function searchConfirms(label, candidate) {
+  const search = label?.textInkSearch;
+  if (search?.status === 'confirmed-candidates') return Array.isArray(search.textCandidateIds) && search.textCandidateIds.includes(candidate.id);
+  return search?.status === 'confirmed-flat' && Boolean(search.bounds) && ['x','y','w','h'].every(k => Number.isFinite(search.bounds[k])) && mostlyOverlaps(search.bounds, candidate.bounds);
+}
+function resolveSharedCandidateClaims(labels, claims, sets) {
+  const drops = new Map(), lookup = new Map(sets.flatMap(set => set.candidates.map(c => [c.id, c])));
+  for (const [id, count] of claims) {
+    const candidate = lookup.get(id);
+    if (count < 2 || !candidate) continue;
+    const claimants = labels.filter(label => labelCandidateIds(label).includes(id)), read = candidateText(candidate.text);
+    const reliable = read && (candidate.origin === 'pdf' || candidate.confidence === undefined || candidate.confidence >= 60);
+    const eligible = reliable ? claimants.filter(label => { const text = candidateText(label?.text); return text && (text.includes(read) || read.includes(text)); }) : claimants;
+    const confirmed = eligible.filter(label => searchConfirms(label, candidate));
+    const winner = reliable && eligible.length === 1 ? eligible[0] : confirmed.length === 1 ? confirmed[0] : null;
+    for (const label of claimants) if (label !== winner) { if (!drops.has(label)) drops.set(label, new Set()); drops.get(label).add(id); }
+  }
+  return drops;
+}
+function withoutCandidates(label, ids) {
+  if (Array.isArray(label.textCandidateIds) && label.textCandidateIds.some(id => ids.has(id))) throw new Error('다른 라벨과 공유된 글자 후보 바인딩입니다.');
+  const next = clone(label);
+  next.textInkSearch = { status: 'needs-review', reason: '다른 라벨과 같은 글자 후보를 골라 후보 상자 대신 글자 자리에서 다시 찾습니다.' };
+  return next;
+}
 export function expandSourceObservationWire(value, { candidateSets = [], sourceCount = 1 } = {}) {
   // Root and source/frame contracts stay fatal. Item errors carry no authority.
   const sets = normalizeSourceCandidateSets(candidateSets, sourceCount);
@@ -124,12 +161,14 @@ export function expandSourceObservationWire(value, { candidateSets = [], sourceC
       ...(Array.isArray(label?.textInkSearch?.textCandidateIds)?label.textInkSearch.textCandidateIds:[])])];
     for (const id of ids) claims.set(id, (claims.get(id) || 0) + 1);
   }
-  for (const label of value.labels) {
+  const drops = resolveSharedCandidateClaims(value.labels, claims, sets);
+  for (let label of value.labels) {
     try {
+      if (drops.has(label)) label = withoutCandidates(label, drops.get(label));
       if (!idOK(label?.id) || labelIds.get(label.id)>1) throw new Error('원본 라벨 ID가 잘못되거나 중복되었습니다.');
       if (!Number.isInteger(label.sourceRef) || label.sourceRef<1 || label.sourceRef>sourceCount) throw new Error('원본 라벨의 sourceRef 바인딩이 잘못되었습니다.');
       const ids=[...(Array.isArray(label.textCandidateIds)?label.textCandidateIds:[]),...(Array.isArray(label.textInkSearch?.textCandidateIds)?label.textInkSearch.textCandidateIds:[])];
-      if(ids.some(id=>claims.get(id)>1)) throw new Error('다른 라벨과 공유된 글자 후보 바인딩입니다.');
+      if(ids.some(id=>claims.get(id)-[...drops.values()].filter(set=>set.has(id)).length>1)) throw new Error('다른 라벨과 공유된 글자 후보 바인딩입니다.');
       const item = expandValidatedSourceObservationWire({...value, labels:[label],
         inkSearchRegions:(value.inkSearchRegions || []).filter(r=>r?.labelId===label.id)}, {candidateSets:sets, sourceCount});
       labels.push(item.value.labels[0]); selections.push(...(item.candidateSelections || []));
