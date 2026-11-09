@@ -218,3 +218,21 @@ test('measured label size ratio takes the lower middle value so one inflated lab
  assert.ok(Math.abs(three-.05/.72)<1e-9,String(three));
  assert.equal(await measuredLabelSizeRatio('data:,',[]),null);
 });
+
+// 11-09 사용자 결정: 그래프는 라벨 복원을 하지 않는다. 새로 그리는 변환에서 그래프가 든 그림은 그래프 복원으로 넘기고,
+// 그래도 같은 작업에서 다시 변환하면(keep) 라벨 복원·새로 그리기 없이 원본 그대로 둔다. 예전 'restore'(그래프 글자를 라벨로 살림) 길은 없다.
+test('graph figures route to graph restore, are never label-restored, and stay the original when the user insists',async()=>{
+ const {executeImageLabelRun}=await api;
+ const graphPlan=f=>{delete f.plan.observationVersion;f.plan.labels=[];f.plan.excludedLabels=[{id:'g1',sourceRef:1,scope:'graph',owner:'graph',mode:'text',text:'t₀',position:{x:.5,y:.9},anchor:{x:.5,y:.9},typography:{role:'quantity',bounds:{x:.45,y:.85,w:.1,h:.05}}}];};
+ const restoreWorkflow={imageKind:'general',labelResult:'restore-editable'};
+ for(const graphLabels of [undefined,'route','restore']){
+  const f=await setup();graphPlan(f);
+  await assert.rejects(executeImageLabelRun({...f.options,workflow:restoreWorkflow,...(graphLabels?{graphLabels}:{})}),e=>e.code==='AI_GRAPH_FIGURE'&&e.graphLabelCount===1);
+  assert.equal(f.counts.generate,0);
+ }
+ const f=await setup();graphPlan(f);
+ const kept=await executeImageLabelRun({...f.options,workflow:restoreWorkflow,graphLabels:'keep'});
+ assert.equal(kept.status,'graph-kept');assert.equal(kept.data,f.options.source.data);assert.equal(kept.labelPlan,null);
+ assert.equal(kept.removalReport.changedPixels,0);assert.equal(kept.removalReport.unchanged,true);assert.equal(f.counts.generate,0);
+ assert.match(kept.keptMessage,/원본/);
+});

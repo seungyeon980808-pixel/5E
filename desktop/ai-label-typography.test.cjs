@@ -77,18 +77,6 @@ test('explicit ordinary mixed-run italic survives while scientific roles retain 
   }
 });
 
-test('11-08: graph letters restored as labels are italic quantities even when the AI calls them names', async () => {
-  const { scriptLabelRuns } = await typography;
-  const roles = (text, graph) => scriptLabelRuns(text, 'name', [], { graph }).map(r => [r.text, r.role]);
-  for (const text of ['v', 't', 't₀', '3t₀']) {
-    assert.deepEqual(roles(text, true), [[text, 'quantity']]);
-    assert.deepEqual(roles(text, false), [[text, 'name']]);
-  }
-  // 그래프 위 점 이름(p·q·r·s)과 대문자 이름은 정체 그대로
-  for (const text of ['p', 'q', 'A']) assert.deepEqual(roles(text, true), [[text, 'name']]);
-  assert.deepEqual(roles('0', true), [['0', 'number']]);
-});
-
 test('11-09: lone lowercase or Greek symbols the AI calls chemical are italic quantities; real formulas stay chemical', async () => {
   const { scriptLabelRuns, presentationRoleFor } = await typography;
   for (const text of ['t₁', 't₂', 'ε', 'v₀']) assert.deepEqual(scriptLabelRuns(text, 'chemical', [{ text, role: 'chemical' }]).map(r => [r.text, r.role]), [[text, 'quantity']]);

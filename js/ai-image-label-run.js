@@ -359,21 +359,29 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
           onSourceCandidates:async receipt=>{metrics.timings.sourceCandidates=Math.round(receipt.totalMs);metrics.sourceCandidates={sets:receipt.candidateSets.map(set=>({sourceRef:set.sourceRef,count:set.candidates.length})),errors:receipt.errors};await onSourceCandidates?.(receipt);} });
       } }));
   }
-  // 11-08: 새로 그리는 변환(일반)은 그래프 축·눈금 글자까지 그림에서 지운다. 그 글자는 라벨로 돌아오지 않아 사라졌다.
-  // 기본은 그림을 그리기 전에 멈추고 그래프 복원으로 넘긴다(AI_GRAPH_FIGURE). 사용자가 같은 작업에서 다시 변환하면(graphLabels:'restore')
-  // 그래프·세로쓰기 글자도 일반 라벨로 살려 이미지로 변환한다 — 어느 쪽이든 글자가 사라지지 않게.
-  const deferredLabels = (plan.excludedLabels || []).filter(label => label.scope === 'graph' || label.scope === 'non_graph_vertical_deferred');
-  if (workflow.imageKind === 'general' && workflow.labelResult === 'restore-editable' && !verifyOnly && deferredLabels.length) {
-    if (graphLabels === 'restore') {
-      const restored = deferredLabels.map(label => { const { owner, ...rest } = clone(label); return { ...rest, scope: 'general', ...(label.scope === 'graph' ? { restoredGraphLabel: true } : { restoredVerticalLabel: true }) }; });
-      plan = { ...plan, labels: [...plan.labels, ...restored], excludedLabels: (plan.excludedLabels || []).filter(label => !deferredLabels.includes(label)) };
-    } else if (deferredLabels.some(label => label.scope === 'graph')) {
+  // 11-09 사용자 결정: 그래프는 라벨 복원을 하지 않는다(「무조건 이미지만 라벨 복원」).
+  // 새로 그리는 변환(일반)에서 그래프가 든 그림은 그림을 그리기 전에 멈추고 그래프 복원으로 넘긴다(AI_GRAPH_FIGURE).
+  // 사용자가 그래도 같은 작업에서 다시 변환하면(graphLabels:'keep') 라벨 복원도 새로 그리기도 하지 않고 원본 그림을 그대로 둔다
+  // — 새로 그리면 그래프 글자가 지워지고 라벨로도 돌아오지 않아 통째로 사라지기 때문이다(전에는 이때 그래프 글자를 라벨로 살렸다).
+  const graphFigureLabels = (plan.excludedLabels || []).filter(label => label.scope === 'graph');
+  if (workflow.imageKind === 'general' && workflow.labelResult === 'restore-editable' && !verifyOnly && graphFigureLabels.length) {
+    const graphPlanSha256 = await imageLabelDigest(JSON.stringify(plan));
+    if (graphLabels !== 'keep') {
       await onObservation(clone({ version: IMAGE_LABEL_RUN_VERSION, contractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION, workflowVersion: workflow.version, imageKind: workflow.imageKind, sourceSha256, sourceFrame,
-        planSha256: await imageLabelDigest(JSON.stringify(plan)), plan: clone(plan), localRestoreAttempted: false }));
+        planSha256: graphPlanSha256, plan: clone(plan), localRestoreAttempted: false }));
       const error = new Error('그래프가 있는 그림이라 그래프 복원으로 옮겼습니다.');
-      error.code = 'AI_GRAPH_FIGURE'; error.graphLabelCount = deferredLabels.length;
+      error.code = 'AI_GRAPH_FIGURE'; error.graphLabelCount = graphFigureLabels.length;
       throw error;
     }
+    metrics.cacheStored = false; metrics.cacheSkipReason = 'graph-kept';
+    metrics.timings.total = Math.round(performance.now() - started);
+    return { version: IMAGE_LABEL_RUN_VERSION, accepted: false, status: 'graph-kept', data: source.data,
+      workflow, sourceSha256, sourceFrame, planSha256: graphPlanSha256, candidateSha256: sourceSha256, candidateFrame: sourceFrame,
+      sourceLabelPlan: clone(plan), targetPlacement: null, labelPlan: null, editableDraft: null,
+      removalReport: { status: 'graph-kept', changedPixels: 0, removedLabelIds: [], deferredLabels: [], graphControl: true, unchanged: true, issues: [] },
+      report: { verdict: 'uncertain', checks: [], issues: [], scopeOutcome: 'graph-figure-source-preserved' },
+      rendererPrompt: '', finalLabelComposite: null, labelVerificationPreview: null, labelProposals: null, metrics,
+      keptMessage: '그래프가 든 그림이라 라벨 복원을 하지 않고 원본 그림을 그대로 두었습니다(그래프 글자도 원본 그대로). 그래프는 「그래프 복원」에서 고칠 수 있습니다.' };
   }
   if (progress) progress.plan = clone(plan);
   const planSha256 = await imageLabelDigest(JSON.stringify(plan));

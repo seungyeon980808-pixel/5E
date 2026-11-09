@@ -22,8 +22,6 @@ const MAX_LABEL_TEXT = 80;
 
 export function editableLabelScope(label) {
   if (label.owner === 'graph' || label.scope === 'graph') return 'graph';
-  // 11-08: 사용자가 「이미지로 계속」해 살린 세로쓰기 라벨은 세로 글자로 그린다.
-  if (label.restoredVerticalLabel === true && label.scope === 'general') return 'general';
   if (label.scope === 'non_graph_vertical_deferred' || label.typography?.orientation === 'vertical') return 'non_graph_vertical_deferred';
   if (label.scope !== undefined && label.scope !== 'general') return 'unknown';
   return 'general';
@@ -281,9 +279,9 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
     // 11-08: AI가 「A (l)」처럼 상태 기호 앞에 띄어 읽은 것은 평가원 표기대로 붙인다((s)·(l)·(g)·(aq)).
     const scriptEligible = (!label.manualStyle || label.manualStyle.defaultFontPinned) && !formula && !scriptStyles.length;
     const tidied = scriptEligible && !label.manualStyle ? String(label.text).replace(/([A-Za-z0-9)₀-₉])\s+\((s|l|g|aq)\)/g, '$1($2)') : label.text;
-    const tidiedRuns = scriptEligible ? scriptLabelRuns(tidied, typography.role, typography.runs, { graph: label.restoredGraphLabel === true }) : null;
+    const tidiedRuns = scriptEligible ? scriptLabelRuns(tidied, typography.role, typography.runs) : null;
     const labelText = tidiedRuns ? tidied : label.text;
-    const scriptRuns = tidiedRuns || (scriptEligible && tidied !== label.text ? scriptLabelRuns(label.text, typography.role, typography.runs, { graph: label.restoredGraphLabel === true }) : null);
+    const scriptRuns = tidiedRuns || (scriptEligible && tidied !== label.text ? scriptLabelRuns(label.text, typography.role, typography.runs) : null);
     const object = {
       id: idFactory(),
       type: 'labeler',

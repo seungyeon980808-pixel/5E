@@ -4958,7 +4958,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
       const result = await executeImageLabelRun({ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection,
         generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
-        artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphLabelsRestore ? 'restore' : 'route',
+        artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphKeepOriginal ? 'keep' : 'route',
         onObservation: async observation => {
           if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
           tab.sourceLabelObservation = structuredClone(observation); currentRunInput.sourceLabelObservation = structuredClone(observation);
@@ -4982,10 +4982,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       currentTurnPerformance = { ...result.metrics, elapsedMs: result.metrics.timings.total, cacheHit: result.metrics.cacheHit };
       const outOfScope = result.status === 'out-of-scope';
       const fallbackResult = result.status === 'fallback';
+      const graphKept = result.status === 'graph-kept';
       const outOfScopeName = '범위 밖 · 원본 보존';
       const outOfScopeMessage = '원본 유지 · 일반 라벨 복원 대상이 0개이므로 원본을 그대로 보존했습니다.';
       const candidate = pendingRawCandidate || await addPreview(result.data, { alreadyEditable: true, isCurrent, rendererPrompt: result.rendererPrompt, labelPlan: result.labelPlan,
-        name: outOfScope ? outOfScopeName : fallbackResult ? (result.metrics?.fallback?.image === 'generated' ? '라벨 없이 · 다시 변환 가능' : '원본 유지 · 다시 변환 가능')
+        name: outOfScope ? outOfScopeName : graphKept ? '그래프 · 원본 그대로' : fallbackResult ? (result.metrics?.fallback?.image === 'generated' ? '라벨 없이 · 다시 변환 가능' : '원본 유지 · 다시 변환 가능')
           : result.removalReport?.unchanged && !result.accepted ? '원본 유지 · 라벨 제거 보류' : undefined,
         reviewState: result.accepted ? 'passed' : 'needs-attention', reviewReport: result.report, selectCandidate: true });
       if (!candidate || !isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
@@ -5014,7 +5015,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         batchOwnerRun.resolve({ ...batchOwnerRun.context.owner, operation: 'generate', candidateId: candidate.id, candidate: snapshotImageItem(candidate) });
       } else {
         setTaskState('completed'); taskTabs.get(originatingTaskId).generationNotice = candidate.reviewState === 'needs-attention' ? 'review' : null; renderTaskTabs(); setGenerating(false); setBusy(false);
-        setStatus(outOfScope ? outOfScopeMessage : fallbackResult ? result.fallbackMessage
+        setStatus(outOfScope ? outOfScopeMessage : graphKept ? result.keptMessage : fallbackResult ? result.fallbackMessage
           : candidate.reviewState === 'passed' ? (candidate.reviewReport?.advisory?.length ? `처리 완료 · 참고 사항 ${candidate.reviewReport.advisory.length}개는 결과 확인에서 볼 수 있습니다.` : '처리 완료 · 편집 가능한 결과를 준비했습니다.')
           : draftReady ? candidate.editableDraft?.presentation === 'external-list'
             ? `원본 유지 · 편집 라벨 목록 ${candidate.editableDraft.labelIds.length}개를 준비했습니다. 원본 글자는 남아 있습니다.`
@@ -5027,10 +5028,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       }
     } catch (error) {
       // 11-08: 그래프가 든 그림 → 그림을 그리기 전에 멈췄다. 보통 실패 처리(작업 상태·로딩 정리)를 그대로 거친 뒤
-      // 같은 그림으로 그래프 복원 창을 연다. 이 작업에서 다시 변환하면 그래프 글자도 라벨로 살린다(graphLabelsRestore).
+      // 같은 그림으로 그래프 복원 창을 연다. 11-09 사용자 결정(그래프는 라벨 복원 금지): 이 작업에서 그래도 다시 변환하면
+      // 라벨 복원 없이 원본 그림을 그대로 둔다(graphKeepOriginal — 그래프 글자를 지우지도 라벨로 바꾸지도 않음).
       if (error?.code === 'AI_GRAPH_FIGURE' && isCurrent()) {
-        const tab = taskTabs.get(originatingTaskId); if (tab) tab.graphLabelsRestore = true;
-        error.message = '그래프가 있는 그림이라 그래프 복원으로 옮겼습니다 · 이미지로 바꾸려면 이 작업에서 다시 「변환하기」(그래프 글자도 라벨로 살림)';
+        const tab = taskTabs.get(originatingTaskId); if (tab) tab.graphKeepOriginal = true;
+        error.message = '그래프가 있는 그림이라 그래프 복원으로 옮겼습니다 · 그래도 이미지로 두려면 이 작업에서 다시 「변환하기」(라벨 복원 없이 원본 그대로)';
         const hwpTarget = hwpInPlaceTargets.get(originatingTaskId), reference = { dataUrl: sources[0].data, name: sources[0].name || '원본' };
         setTimeout(() => window.dispatchEvent(new CustomEvent('5e:ai-open-reference', { detail: { reference, conversionKind: 'graph', ...(hwpTarget ? { hwpTarget: structuredClone(hwpTarget) } : {}) } })), 400);
         for (const ms of [900, 1800, 3500]) setTimeout(() => { try { syncSurfaceTitle(); } catch {} }, ms);
