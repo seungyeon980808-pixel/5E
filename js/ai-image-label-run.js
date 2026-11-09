@@ -1,6 +1,6 @@
 import { buildSourceTracingPrompt, SOURCE_TRACING_CONTRACT_VERSION } from './ai-source-tracing-contract.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, IMAGE_EMPHASIS_REMOVAL_CONTRACT } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
-import { removeExamLabelsFromDataUrl } from './ai-exam-label-removal.js?v=1.7.0-four-session-integration';
+import { removeExamLabelsFromDataUrl, localTextSearchFromGlyphInk } from './ai-exam-label-removal.js?v=1.7.0-four-session-integration';
 import { resolveGeneratedRaster } from './ai-raster-output.js?v=1.7.0-four-session-integration';
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
 import { APPROVED_FIRST_PROMPT, approvedFirstRequestText } from './ai-approved-first-png.js?v=1.7.0-four-session-integration';
@@ -65,13 +65,35 @@ function labelInkPerEm(text, font) {
     return h > 20 ? h / 200 : null;
   } catch { return null; }
 }
+// 11-09 라벨 안정화: 원본 글자 높이는 글자 잉크 덩어리로 먼저 잰다. 줄 잉크 방식(measureSourceLabelHeights)은 글자 둘레의
+// 화살표·점·이웃 글자까지 한 줄로 재어 크게(최대 2.7배) 또는 작게 재곤 했다(개발 세트 정답 대비 ±10% 안 64% → 글자 덩어리 88%).
+// 글자 덩어리를 못 찾으면(여러 줄·틀 안 글자 등) 줄 잉크 방식 값을 그대로 쓴다.
+async function glyphLabelHeights(sourceDataUrl, labels, signal) {
+  const out = new Map();
+  if (typeof document === 'undefined' || typeof Image === 'undefined' || !labels.length) return out;
+  try {
+    const image = new Image(); image.src = sourceDataUrl; await image.decode();
+    if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+    const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(image, 0, 0);
+    const data = context.getImageData(0, 0, canvas.width, canvas.height).data; canvas.width = canvas.height = 0;
+    for (const label of labels) {
+      if (String(label.text || '').includes('\n')) continue;
+      const found = localTextSearchFromGlyphInk({ data, width: image.naturalWidth, height: image.naturalHeight, label, plan: { labels } });
+      if (found?.glyphBounds?.h > 0) out.set(label.id, found.glyphBounds.h);
+    }
+  } catch (error) { if (error?.name === 'AbortError') throw error; }
+  return out;
+}
 export async function measuredLabelSizes(sourceDataUrl, labels = [], signal) {
   let measured = [];
   try { measured = await measureSourceLabelHeights({ sourceDataUrl, labels, signal }); } catch (error) { if (error?.name === 'AbortError') throw error; }
+  const glyphHeights = await glyphLabelHeights(sourceDataUrl, labels, signal);
   try { await prepareEditableLabelFonts(labels); } catch {}
   const glyph = new Map(measured.map(m => [m.id, m.h])), raw = [];
   for (const label of labels) {
-    const h = glyph.get(label.id) || (!String(label.text).includes('\n') && label.typography?.bounds?.h > 0 ? label.typography.bounds.h : 0);
+    const h = glyphHeights.get(label.id) || glyph.get(label.id) || (!String(label.text).includes('\n') && label.typography?.bounds?.h > 0 ? label.typography.bounds.h : 0);
     if (!(h > 0)) continue;
     const first = String(label.text).split('\n')[0].trim();
     const hangul = /[가-힣]/.test(first);
