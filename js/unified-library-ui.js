@@ -2401,13 +2401,25 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     stage.scrollTop = (initialPage - 1) * session.pageExtent;
   }
 
-  function showPreviewError(error) {
+  // 오류는 한국어로만 보이고(원문은 title에), 제목은 지금 고른 자료로 맞춘다 — 앞 자료 이름이 남지 않게.
+  function previewErrorText(error) {
+    const raw = String(error instanceof Error ? error.message : error || "");
+    if (navigator.onLine === false || /failed to fetch|networkerror|load failed|network|err_internet|err_name|timed? ?out/i.test(raw)) return "원본을 받아 오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.";
+    if (/[가-힣]/.test(raw)) return raw;
+    return "미리보기를 열지 못했습니다. 다시 시도하세요.";
+  }
+  function showPreviewError(error, result = selectedResult()) {
     clearPreviewLoading();
     stage.removeAttribute("aria-busy");
+    if (result) {
+      overlay.querySelector("[data-unilib-preview-title]").textContent = result.title || "미리보기";
+      overlay.querySelector("[data-unilib-preview-kind]").textContent = labelForKind(result.kind);
+    }
     const message = document.createElement("div");
     message.className = "unilib-preview-error";
     const text = document.createElement("p");
-    text.textContent = `미리보기 실패: ${error instanceof Error ? error.message : error}`;
+    text.textContent = previewErrorText(error);
+    text.title = String(error instanceof Error ? error.message : error || "");
     const retryButton = document.createElement("button");
     retryButton.type = "button";
     retryButton.className = "unilib-button";
@@ -4282,7 +4294,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (spacePress !== press || overlay.hidden || selectedId !== press.id || libraryResultIdentity(selectedActiveResult()) !== press.identity) return;
     const result = selectedActiveResult();
     if (result?.provenance?.provider !== "pdf" && (!currentMaterialized || currentMaterializedIdentity !== press.identity)) {
-      if (stage.textContent.startsWith("미리보기 실패:")) {
+      if (stage.querySelector(":scope > .unilib-preview-error")) {
         cancelSpacePress();
         return;
       }

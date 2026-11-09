@@ -37,7 +37,7 @@
 #exam-studio { position:relative; flex:1; min-width:0; background:#e9edf2; }
 #exam-studio iframe { width:100%; height:100%; border:0; display:block; }
 .exam-loading { padding:48px; text-align:center; }
-.exam-footer { display:flex; flex-direction:column; gap:6px; font-size:10px; padding:12px 0; margin-top:auto; border-top:1px solid var(--border); color:var(--text-secondary); }
+.exam-footer { display:flex; flex-direction:column; gap:6px; font-size:10px; padding:12px 16px; margin-top:auto; border-top:1px solid var(--border); color:var(--text-secondary); }
 #rhwp-exam-workspace .exam-footer button { display:flex; align-items:center; justify-content:center; gap:6px; min-height:34px; font-size:12px; color:var(--text-primary); }
 .exam-footer svg { width:16px; height:16px; }
 #exam-figures {padding-bottom:16px;}

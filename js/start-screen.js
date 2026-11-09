@@ -67,7 +67,7 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
      <button type="button" class="ss-o1" data-ss-open><span class="ss-k">open</span><span class="ss-nm">다른 파일 열기…</span><span class="ss-meta">${mod}O</span><span></span></button>
      <div data-ss-recent></div>
     </div></div>
-    <div class="ss-note"><i></i>자동 저장은 이 브라우저에만 남습니다 · 끄기 전에 ${mod}S로 파일에 저장하세요</div>
+    <div class="ss-note"><i></i>자동 저장은 ${globalThis.fiveEDesktop ? '이 컴퓨터의 5E 안에만' : '이 브라우저에만'} 남습니다 · 끄기 전에 ${mod}S로 파일에 저장하세요</div>
    </div></div>`;
   document.body.append(root);
   document.documentElement.classList.remove('ss-boot');
@@ -84,7 +84,8 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
   setStatus('작업 공간 준비 중…');
   // 업데이트 알림: 배포 채널에 더 새 버전이 있으면 「1.7.0 → 1.7.1 [설치]」
   const current = appVersion();
-  if (current) fetch(new URL('release-channels.json', document.baseURI), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(json => {
+  // 설치판은 앱 안 파일만 읽을 수 있어(허용 목록 밖이라 404) 새 버전을 알 수 없다 — 웹에서만 확인.
+  if (current && !globalThis.fiveEDesktop) fetch(new URL('release-channels.json', document.baseURI), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(json => {
     const versions = Object.values(json?.channels || {}).map(c => c?.version).filter(v => /^\d+\.\d+\.\d+$/.test(v || ''));
     const latest = versions.sort((a, b) => newer(a, b) ? -1 : 1)[0];
     if (!latest || !newer(latest, current)) return;
