@@ -164,7 +164,9 @@ export function searchIndex(index, options) {
     const firstOffset = Math.min(...terms.map(({ term }) => searchable.indexOf(term)).filter((offset) => offset >= 0));
     const start = Math.max(0, firstOffset - 48);
     const occurrences = terms.reduce((sum, { term }) => sum + searchable.split(term).length - 1, 0);
-    candidates.push({ entry, score: occurrences / terms.length, snippet: entry.text.slice(start, start + 160).trim() });
+    // 11-09: 낱말이 친 순서대로 붙어 있는 쪽·문항을 맨 위로(provider.js examSearchScore와 같은 규칙).
+    const adjacent = terms.length > 1 && searchable.includes(terms.map(({ term }) => term).join("")) ? 1000 : 0;
+    candidates.push({ entry, score: adjacent + occurrences / terms.length, snippet: entry.text.slice(start, start + 160).trim() });
   }
   candidates.sort((left, right) => right.score - left.score || left.entry.pageNumber - right.entry.pageNumber);
   const results = candidates.slice(0, limit).map(({ entry, score, snippet }) => {
