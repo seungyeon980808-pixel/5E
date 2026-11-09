@@ -113,12 +113,15 @@ export async function measuredLabelSizes(sourceDataUrl, labels = [], signal) {
 // 11-09 라벨 안정화: 기출 제거에서 실제 글자 잉크로 다시 찾아 지운 글자 라벨은 그 글자 자리(가운데·상자)를 원본 자리로 쓴다
 // (AI가 준 자리는 반 글자쯤 비켜 있곤 했다 — 지운 자리와 라벨 자리가 어긋나지 않게, 글자 크기도 이 상자로 잰다). 지시선 라벨은 그대로.
 export function labelsAtMeasuredGlyphs(labels = [], searches = []) {
-  const glyphOf = new Map((searches || []).filter(s => s?.glyphBounds).map(s => [s.labelId, s.glyphBounds]));
+  const searchOf = new Map((searches || []).filter(s => s?.glyphBounds).map(s => [s.labelId, s]));
   return labels.map(label => {
-    const g = glyphOf.get(label.id);
+    const search = searchOf.get(label.id), g = search?.glyphBounds;
     if (!g || label.mode !== 'text') return label;
     const center = { x: g.x + g.w / 2, y: g.y + g.h / 2 };
-    return { ...label, position: center, anchor: { ...center }, typography: { ...(label.typography || {}), bounds: { ...g } } };
+    // 11-09 라벨 안정화: 고리까지 함께 지운 동그라미 글자는 동그라미 글자(㉠·ⓐ)로 복원한다(AI가 읽은 ㄱ·a가 아니라).
+    const circled = search.text && search.text !== label.text ? { text: search.text } : null;
+    return { ...label, ...(circled || {}), position: center, anchor: { ...center },
+      typography: { ...(label.typography || {}), ...(circled ? { role: 'text' } : {}), bounds: { ...g } } };
   });
 }
 const withLabelSizes = (labels, sizes) => (labels || []).map(label => sizes?.has(label.id) ? { ...label, measuredSize: sizes.get(label.id) } : label);

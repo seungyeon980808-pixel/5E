@@ -75,3 +75,34 @@ test('legend marks, arrows and bars beside or under a Hangul label are kept whil
  for(const [x,y] of [[50,28],[63,30],[70,24],[83,38]])assert.equal(r.data[(y*width+x)*4],255,`${x},${y} 글자 획이 남음`);
  for(const [x,y] of [[39,31],[100,31],[60,47],[85,47]])assert.equal(r.data[(y*width+x)*4],0,`${x},${y} 구조가 지워짐`);
 });
+
+// 11-09 라벨 안정화(동그라미 글자): AI가 ㉢을 「ㄷ」으로 읽고 글자만 감싼 탐색 상자를 줘도, 고리까지 그 글자의 획으로 지우고
+// 동그라미 글자로 복원한다. 네모 틀 안 글자와 고리 안 대문자(물체·입자일 수 있음)는 틀·고리를 그대로 둔다.
+const ringFixture=({text='ㄷ',square=false}={})=>{
+ const width=100,height=80,data=new Uint8ClampedArray(width*height*4).fill(255),dark=(x,y)=>data.set([0,0,0,255],(y*width+x)*4);
+ const cx=50,cy=40,R=17,shape=new Set(),glyph=new Set();
+ if(square){for(let x=cx-R;x<=cx+R;x++)for(const y of [cy-R,cy-R+1,cy+R-1,cy+R])shape.add(y*width+x);for(let y=cy-R;y<=cy+R;y++)for(const x of [cx-R,cx-R+1,cx+R-1,cx+R])shape.add(y*width+x);}
+ else for(let y=0;y<height;y++)for(let x=0;x<width;x++){const d=Math.hypot(x-cx,y-cy);if(d>=R-1.2&&d<=R+.6)shape.add(y*width+x);}
+ for(let x=42;x<=58;x++)for(const y of [32,33,47,48])glyph.add(y*width+x);for(let y=32;y<=48;y++){glyph.add(y*width+42);glyph.add(y*width+43);}  // 「ㄷ」 비슷한 글자
+ for(const i of [...shape,...glyph])dark(i%width,Math.floor(i/width));
+ const label={id:'c',text,sourceRef:1,scope:'general',mode:'text',typography:{role:'symbol',bounds:{x:40/width,y:30/height,w:20/width,h:20/height}}};
+ const plan={labels:[label],uncertainties:[],protectedRegions:[],preservedMarks:[],removalRegions:[],
+  inkSearchRegions:[{id:'s1',labelId:'c',sourceRef:1,ownership:'confirmed',component:'text',backgroundMode:'sample-flat',background:[255,255,255,255],bounds:{x:.41,y:31/height,w:.19,h:19/height}}]};
+ return {width,height,data,plan,shape,glyph};
+};
+test('a single jamo inside a ring is a circled character: the ring is erased with the glyph and the label is restored as ㉢', async () => {
+ const {removeExamLabelPixels}=await api,f=ringFixture(),r=removeExamLabelPixels(f);
+ assert.deepEqual(r.removedLabelIds,['c']);
+ assert.equal(r.report.localTextSearches.find(s=>s.labelId==='c')?.text,'㉢');
+ for(const i of [...f.shape,...f.glyph])assert.equal(r.data[i*4],255);
+});
+test('a square frame around a jamo and a ring around a capital letter stay; only the glyph inside is erased', async () => {
+ const {removeExamLabelPixels}=await api;
+ for(const opt of [{square:true},{text:'A'}]){
+  const f=ringFixture(opt),r=removeExamLabelPixels(f);
+  assert.deepEqual(r.removedLabelIds,['c'],JSON.stringify(opt));
+  assert.equal(r.report.localTextSearches?.find(s=>s.labelId==='c')?.text,undefined,JSON.stringify(opt));
+  for(const i of f.shape)assert.deepEqual(r.data.slice(i*4,i*4+4),f.data.slice(i*4,i*4+4),JSON.stringify(opt));
+  for(const i of f.glyph)assert.equal(r.data[i*4],255,JSON.stringify(opt));
+ }
+});

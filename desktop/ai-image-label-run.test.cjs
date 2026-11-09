@@ -264,3 +264,13 @@ test('labels erased from measured glyph ink are restored at that glyph box; lead
  assert.deepEqual(out[1],labels[1]);assert.deepEqual(out[2],labels[2]);
  assert.deepEqual(labelsAtMeasuredGlyphs(labels,undefined),labels);
 });
+
+// 11-09 라벨 안정화(동그라미 글자): 고리까지 함께 지운 한 글자 라벨은 AI가 읽은 보통 글자(ㄷ)가 아니라 동그라미 글자(㉢)로 복원한다.
+test('a circled character restored from its ring takes the circled text and the plain text role; other labels keep their text',async()=>{
+ const {labelsAtMeasuredGlyphs}=await api;
+ const labels=[{id:'c',mode:'text',text:'ㄷ',position:{x:.5,y:.5},anchor:{x:.5,y:.5},typography:{role:'symbol',bounds:{x:.45,y:.45,w:.1,h:.1}}},
+  {id:'a',mode:'text',text:'A',position:{x:.2,y:.2},anchor:{x:.2,y:.2},typography:{role:'name',bounds:{x:.15,y:.15,w:.1,h:.1}}}];
+ const out=labelsAtMeasuredGlyphs(labels,[{labelId:'c',glyphBounds:{x:.4,y:.4,w:.2,h:.2},text:'㉢'},{labelId:'a',glyphBounds:{x:.1,y:.1,w:.1,h:.1}}]);
+ assert.equal(out[0].text,'㉢');assert.equal(out[0].typography.role,'text');assert.deepEqual(out[0].typography.bounds,{x:.4,y:.4,w:.2,h:.2});
+ assert.equal(out[1].text,'A');assert.equal(out[1].typography.role,'name');
+});

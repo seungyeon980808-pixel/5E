@@ -112,6 +112,12 @@ function addBounds(mask,items,width,height) {
 // 여러 줄 라벨, 큰 상자는 다시 찾지 않는다.
 const glyphWeight=ch=>/[\uAC00-\uD7A3\u3260-\u327F\u2460-\u2473]/.test(ch)?1:/[\u3131-\u318E\u2160-\u217F]/.test(ch)?.8
   :/[A-Za-z0-9]/.test(ch)?.65:/[\u2070-\u209C]/.test(ch)?.4:/\s/.test(ch)?.3:.45;
+// 11-09 라벨 안정화(동그라미 글자): 시험지 그림의 ㉠·㉡·ⓐ 같은 동그라미 글자를 AI는 보통 글자(ㄱ·ㄴ·a)로 읽는다. 고리 안의 한 글자 라벨은
+// 고리까지 그 글자의 획이므로 함께 지우고 동그라미 글자로 복원한다. 대문자·숫자는 고리 안에 있어도 물체(공·입자)일 수 있어 바꾸지 않는다.
+const CIRCLED_BASE=new Map([...[...'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ'].map((c,i)=>[c,String.fromCharCode(0x3260+i)]),
+  ...[...'가나다라마바사아자차카타파하'].map((c,i)=>[c,String.fromCharCode(0x326E+i)]),...[...'abcdefghijklmnopqrstuvwxyz'].map((c,i)=>[c,String.fromCharCode(0x24D0+i)])]);
+const CIRCLED_TEXT=new Set(CIRCLED_BASE.values());
+export function circledLabelText(text) {const t=String(text||'').trim();return CIRCLED_TEXT.has(t)?t:CIRCLED_BASE.get(t)||null;}
 export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   const t=label?.typography?.bounds,raw=String(label?.text||''),text=raw.replace(/[_^]\{([^{}]*)\}/g,'$1');
   if(!boundsOK(t) || !text.trim() || /\n/.test(raw) || t.h>.6 || t.w>.8 || t.h*height>160) return {rejected:'unsupported-observed-text-box'};
@@ -210,11 +216,32 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
     if(inside || (script || tail) && right && overlap>=hOf(c)*.3 || lead && left && overlap>=hOf(c)*.5) add(c);
   }
   // 다른 덩어리를 둘러싸는 덩어리(틀·원 테두리)가 섞이면 글자만 가려낼 수 없다.
-  const picked=[...chosen];
-  if(picked.some(o=>picked.some(c=>c!==o && o.x0<c.x0 && o.x1>c.x1 && o.y0<c.y0 && o.y1>c.y1))) return {rejected:'enclosing-frame'};
+  const picked=[...chosen],encloses=(o,c)=>o.x0<c.x0 && o.x1>c.x1 && o.y0<c.y0 && o.y1>c.y1;
+  // 동그라미 글자: 고른 글자 덩어리를 고리 하나가 둘러싸면 고리까지 이 글자의 획이다. 고리는 넓힌 영역 테두리에 닿지 않는 한 덩어리로,
+  // 가로세로 비 0.8~1.25, 속이 비고(채움 0.45 미만), 네 모서리가 비어 있으며(네모 틀이 아님), 글자가 가운데(지름의 15% 안)에 지름의 0.35~0.85 크기로 있다.
+  const circledTarget=circledLabelText(text);let circledText=null;
+  if(circledTarget) {
+    const glyphs=picked.filter(c=>!picked.some(o=>o!==c && encloses(c,o)));
+    const g=glyphs.reduce((u,c)=>u?{x0:Math.min(u.x0,c.x0),y0:Math.min(u.y0,c.y0),x1:Math.max(u.x1,c.x1),y1:Math.max(u.y1,c.y1)}:{x0:c.x0,y0:c.y0,x1:c.x1,y1:c.y1},null);
+    const ringShape=o=>{
+      const ow=o.x1-o.x0+1,oh=o.y1-o.y0+1,D=Math.max(ow,oh),gs=Math.max(g.x1-g.x0+1,g.y1-g.y0+1);
+      if(ow/oh<.8 || ow/oh>1.25 || o.n/(ow*oh)>=.45 || gs<D*.35 || gs>D*.85) return false;
+      if(Math.abs(g.x0+g.x1-o.x0-o.x1)/2>D*.15 || Math.abs(g.y0+g.y1-o.y0-o.y1)/2>D*.15) return false;
+      const id=comps.indexOf(o),k=Math.max(2,Math.round(D*.1));let corner=0;
+      for(const [cx0,cy0] of [[o.x0,o.y0],[o.x1-k+1,o.y0],[o.x0,o.y1-k+1],[o.x1-k+1,o.y1-k+1]])
+        for(let yy=cy0;yy<cy0+k;yy++) for(let xx=cx0;xx<cx0+k;xx++) if(seen[(yy-ey0)*ew+xx-ex0]===id) corner++;
+      return corner<=4;
+    };
+    const ring=g && comps.filter(o=>!o.edge && encloses(o,g) && ringShape(o)).sort((p,q)=>(p.x1-p.x0)-(q.x1-q.x0))[0];
+    if(ring && picked.every(c=>c===ring || glyphs.includes(c))) {
+      chosen.clear();glyphs.forEach(c=>chosen.add(c));chosen.add(ring);
+      box={x0:ring.x0,y0:ring.y0,x1:ring.x1,y1:ring.y1};circledText=circledTarget;
+    }
+  }
+  if(!circledText && picked.some(o=>picked.some(c=>c!==o && encloses(o,c)))) return {rejected:'enclosing-frame'};
   // 글자 수에 맞는 너비여야 한다(일부만 잡거나 이웃 라벨·구조를 삼키지 않게).
   const weight=[...text].reduce((s,ch)=>s+glyphWeight(ch),0),bw=box.x1-box.x0+1,bh=box.y1-box.y0+1;
-  if(bw<weight*H*.45 || bw>weight*H*1.35+H*.6) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
+  if(!circledText && (bw<weight*H*.45 || bw>weight*H*1.35+H*.6)) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
   // 찾은 덩어리가 AI가 본 글자 상자보다 높이·너비 모두 절반도 안 되면(점선 조각·점이 씨앗이 된 경우) 글자가 아니다.
   if(H<th*.5 && bw<tw*.5) return {rejected:'glyph-much-smaller-than-observed'};
   for(const other of plan?.labels || []) {
@@ -238,7 +265,7 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
     if(id<0 || !chosenIds.has(id)) continue;
     for(let dy=-3;dy<=3;dy++) for(let dx=-3;dx<=3;dx++) {const fx=xx+dx,fy=yy+dy;if(fx>=x && fy>=y && fx<r && fy<b) corridor.add(fy*width+fx);}
   }
-  return {bounds:{x:x/width,y:y/height,w:(r-x)/width,h:(b-y)/height},background:bg,foreignPixels:foreign,glyphPixels:corridor,glyphBounds:{x:box.x0/width,y:box.y0/height,w:bw/width,h:bh/height}};
+  return {bounds:{x:x/width,y:y/height,w:(r-x)/width,h:(b-y)/height},background:bg,foreignPixels:foreign,glyphPixels:corridor,glyphBounds:{x:box.x0/width,y:box.y0/height,w:bw/width,h:bh/height},...(circledText?{circledText}:{})};
 }
 /** Confirmed search boxes locate ink; only bounded, isolated components become masks.
  * Any connected ink escaping the declared owned union defers the whole label.
@@ -251,8 +278,18 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
   const protectedMask=new Uint8Array(width*height),uncertainMask=new Uint8Array(width*height),issues=[],regions=[];
   addBounds(protectedMask,[...(plan.protectedRegions||[]),...(plan.preservedMarks||[]),...(plan.excludedLabels||[]).filter(l=>l.scope==='graph')],width,height);
   addBounds(uncertainMask,plan.uncertainties,width,height);
+  // 11-09 라벨 안정화(동그라미 글자): 고리 안 한 글자 라벨은 AI 탐색 상자(보통 글자만 감쌈)로 지우면 고리가 남는다 —
+  // AI 탐색을 쓰지 않고 아래 다시 찾기 길(고리 포함)로만 지운다. 다시 찾기 조건(소속·원문 확실, 지시선 아님)은 그대로다.
+  const circledLocal=new Map();
+  for(const label of plan.labels || []) {
+    if(label.sourceRef!==1 || label.scope!=='general' || label.ownershipReviewRequired || label.mode!=='text' || !circledLabelText(label.text)) continue;
+    if((plan.uncertainties || []).some(u=>u.labelId===label.id && (u.domain!=='removal' || (u.component || 'text')!=='text')) || (plan.removalRegions || []).some(r=>r.labelId===label.id)) continue;
+    const local=localTextSearchFromGlyphInk({data,width,height,label,plan});
+    if(local.circledText) circledLocal.set(label.id,local);
+  }
   const grouped=new Map();
   for(const r of plan.inkSearchRegions || []) {
+    if(circledLocal.has(r.labelId)) continue;
     const label=plan.labels.find(l=>l.id===r.labelId && l.sourceRef===1 && l.scope==='general' && !l.ownershipReviewRequired);
     if(!label || r.sourceRef!==1 || r.ownership!=='confirmed' || !boundsOK(r.bounds) || !rgbaOK(r.background) || r.background[3]!==255 || !['text','leader','endpoint'].includes(r.component) || r.backgroundMode!==undefined && (r.backgroundMode!=='sample-flat' || r.component!=='text')) {issues.push({code:'unconfirmed-ink-search',id:r.id,labelId:r.labelId});continue;}
     let pixels;
@@ -338,7 +375,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     const own=(plan.uncertainties || []).filter(u=>u.labelId===label.id);
     if(own.some(u=>u.domain!=='removal' || (u.component || 'text')!=='text')) continue;
     if((plan.removalRegions || []).some(r=>r.labelId===label.id)) continue;
-    const local=localTextSearchFromGlyphInk({data,width,height,label,plan});
+    const local=circledLocal.get(label.id) || localTextSearchFromGlyphInk({data,width,height,label,plan});
     if(!local.bounds) {localTextSearchRejections.push({labelId:label.id,reason:local.rejected});continue;}
     const b=local.bounds,searchPixels=[],edgePixels=[];
     for(let y=Math.floor(b.y*height);y<Math.min(height,Math.ceil((b.y+b.h)*height));y++) for(let x=Math.floor(b.x*width);x<Math.min(width,Math.ceil((b.x+b.w)*width));x++) {
@@ -354,7 +391,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     if(!derive(label.id,[search],uMask,localIssues)) localTextSearchRejections.push({labelId:label.id,reason:`pixel-check:${localIssues[0]?.code || 'failed'}`,bounds:{...b}});
     else {
       for(let k=issues.length-1;k>=0;k--) if(issues[k].id===label.id || issues[k].labelId===label.id) issues.splice(k,1);
-      localTextSearches.push({labelId:label.id,bounds:{...b},glyphBounds:local.glyphBounds});
+      localTextSearches.push({labelId:label.id,bounds:{...b},glyphBounds:local.glyphBounds,...(local.circledText?{text:local.circledText}:{})});
     }
   }
   return {regions,issues,localTextSearches,localTextSearchRejections};
