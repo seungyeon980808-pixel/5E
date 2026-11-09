@@ -175,3 +175,27 @@ test('a cluster that swallowed a neighbouring frame is trimmed to the glyph inst
  for(const i of f.frame)assert.equal(r.data[i*4],0,'옆 네모 테두리는 그대로 남는다');
  assert.equal((r.report.localTextSearchRejections||[]).length,0,'넓다는 이유로 거절하지 않는다');
 });
+
+// 11-09 라벨 안정화(겹침): 두 라벨 상자가 겹치면 전에는 둘 다 포기했다(개발·검증에서 5건).
+// 이제 찾은 글자 덩어리를 더 많이 품은 쪽이 임자다. 저쪽이 더 많이 품거나 같으면 전처럼 포기한다.
+const overlapFixture=(otherBounds)=>{
+ const width=200,height=100,data=new Uint8ClampedArray(width*height*4).fill(255),dark=(x,y)=>data.set([0,0,0,255],(y*width+x)*4);
+ const glyph=new Set();
+ for(let y=30;y<=49;y++){for(let x=40;x<=42;x++)glyph.add(y*width+x);for(let x=51;x<=53;x++)glyph.add(y*width+x);}
+ for(let y=39;y<=40;y++)for(let x=43;x<=50;x++)glyph.add(y*width+x);
+ for(const i of glyph)dark(i%width,Math.floor(i/width));
+ const mine={id:'a',text:'A',sourceRef:1,scope:'general',mode:'text',typography:{role:'name',bounds:{x:40/width,y:30/height,w:14/width,h:20/height}}};
+ const other={id:'b',text:'B',sourceRef:1,scope:'general',mode:'text',typography:{role:'name',bounds:otherBounds(width,height)}};
+ return {width,height,data,plan:{labels:[mine,other],uncertainties:[],protectedRegions:[],preservedMarks:[],removalRegions:[],inkSearchRegions:[]},glyph};
+};
+test('when two label boxes overlap, the label that covers the found glyph more owns it; a label that covers it as much still defers', async () => {
+ const {removeExamLabelPixels}=await api;
+ const mineMore=overlapFixture((w,h)=>({x:48/w,y:30/h,w:28/w,h:20/h}));
+ const r1=removeExamLabelPixels(mineMore);
+ assert.ok(r1.removedLabelIds.includes('a'),'이 라벨이 더 많이 품었으면 지운다');
+ for(const i of mineMore.glyph)assert.equal(r1.data[i*4],255,'글자 획이 지워진다');
+ const otherMore=overlapFixture((w,h)=>({x:30/w,y:30/h,w:31/w,h:20/h}));
+ const r2=removeExamLabelPixels(otherMore);
+ assert.ok(!r2.removedLabelIds.includes('a'),'저쪽이 같거나 더 많이 품으면 전처럼 보류한다');
+ assert.deepEqual(r2.data,otherMore.data,'보류하면 원본이 1픽셀도 바뀌지 않는다');
+});

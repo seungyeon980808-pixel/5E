@@ -272,11 +272,15 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   // 그 안의 세로 화살표·막대를 글자로 잡아 지우는 일이 있었다(검증 p1_2023_04_14_1의 「S」 자리에서 아래 화살표 34px를 지움).
   // 받아 둔 관찰에서 바르게 지운 한 글자 라벨의 세로/가로 비는 최대 2.15였다(I·l·1·t처럼 원래 길쭉한 글자는 뺌).
   if(!/[Il1ijtf|/\\()\[\]!ΙⅠㅣ]/.test(text) && bh>bw*2.4) return {rejected:'glyph-shape-mismatch'};
-  for(const other of plan?.labels || []) {
-    if(other===label || other.id===label.id || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
-    const o=other.typography.bounds,iw=Math.min((o.x+o.w)*width,box.x1+1)-Math.max(o.x*width,box.x0),ih=Math.min((o.y+o.h)*height,box.y1+1)-Math.max(o.y*height,box.y0);
-    if(iw>0 && ih>0 && iw*ih>bw*bh*.3) return {rejected:'other-label-overlap'};
-  }
+  // 11-09 라벨 안정화: 두 라벨 상자가 겹쳐도 곧바로 포기하지 않는다. 찾은 글자 덩어리를 더 많이 품은 쪽이 임자다
+  // — 이 라벨이 본 자리와의 겹침이 다른 라벨 자리와의 겹침보다 크면 이 라벨 글자로 본다(둘이 같거나 저쪽이 크면 전처럼 포기).
+  {const ov=(ax0,ay0,ax1,ay1)=>Math.max(0,Math.min(ax1,box.x1+1)-Math.max(ax0,box.x0))*Math.max(0,Math.min(ay1,box.y1+1)-Math.max(ay0,box.y0));
+   const mine=ov(tx0,ty0,tx1+1,ty1+1);
+   for(const other of plan?.labels || []) {
+     if(other===label || other.id===label.id || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
+     const o=other.typography.bounds,area=ov(o.x*width,o.y*height,(o.x+o.w)*width,(o.y+o.h)*height);
+     if(area>bw*bh*.3 && area>=mine) return {rejected:'other-label-overlap'};
+   }}
   const x=Math.max(0,box.x0-3),y=Math.max(0,box.y0-3),r=Math.min(width,box.x1+4),b=Math.min(height,box.y1+4);
   // 상자 근처를 지나는 다른 잉크(구조선·점)는 이 라벨 것이 아니다 — 그 픽셀과 1px 둘레는 지울 범위에서 빼고, 닫힌 테두리의 단색 판정에서도 뺀다.
   // 글자 덩어리는 그것과 떨어져 있어야 하며(붙어 있으면 위 덩어리 단계에서 글자로 고르지 않는다), 지우는 것은 여전히 검증된 글자 잉크뿐이다.
