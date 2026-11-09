@@ -323,3 +323,28 @@ test('provider failure and timeout retain the actual label model and bound execu
  c.handleEvent({kind:'done',turnId:'source-turn',status:'failed',error:'모델 분석 응답 오류'});
  await assert.rejects(pending,e=>e.message==='모델 분석 응답 오류'&&e.aiRequest.turnId==='source-turn'&&e.aiRequest.model==='test'&&e.aiRequest.threadId==='source-thread');
 });
+
+// 11-09 라벨 안정화: 기출 관찰이 글자 후보가 있는데도 통째로 비면(라벨·빼 둔 라벨 0개) 한 번만 다시 관찰한다.
+test('an exam observation that returns no labels although text candidates exist is asked exactly once more',async()=>{
+ const {createSourceLabelController}=await modulePromise;
+ const empty=()=>raw([],{version:4,observationVersion:1,leaderObservationVersion:1,observationContractRevision:'1.4.0',removalOnlyItems:[],geometryLock});
+ const run=async({responses,imageKind='exam',candidates=1})=>{
+  const sent=[];let c;
+  c=createSourceLabelController({collectCandidates:async input=>({version:1,sourceRef:input.sourceRef,sourceSha256:input.sourceSha256,width:1,height:1,
+    candidates:Array.from({length:candidates},(_,i)=>({id:`s1-ocr-${i+1}`,text:'B',bounds:{x:.1+i*.1,y:.1,w:.05,h:.05},origin:'ocr'}))}),
+   transport:{send:async payload=>{sent.push(payload.text);const id='empty-'+sent.length;const text=responses[Math.min(sent.length,responses.length)-1]();
+    c.handleEvent({kind:'assistant',turnId:id,text});c.handleEvent({kind:'done',turnId:id,status:'completed'});return {turnId:id};}}});
+  const plan=await c.analyze({...selection,attachments,workflow:{imageKind,labelResult:'restore-editable'}});
+  return {plan,sent};
+ };
+ let r=await run({responses:[empty,observed]});
+ assert.equal(r.sent.length,2,'비면 한 번 더 묻는다');assert.equal(r.plan.labels.length,1);assert.notEqual(r.sent[1],r.sent[0],'다시 물을 때는 알림을 붙인다');
+ r=await run({responses:[empty,empty,observed]});
+ assert.equal(r.sent.length,2,'다시 물어도 비면 거기서 멈춘다');assert.equal(r.plan.labels.length,0);
+ r=await run({responses:[empty,observed],candidates:0});
+ assert.equal(r.sent.length,1,'글자 후보가 없으면 다시 묻지 않는다');
+ r=await run({responses:[empty,observed],imageKind:'general'});
+ assert.equal(r.sent.length,1,'교과서는 다시 묻지 않는다');
+ r=await run({responses:[observed,observed]});
+ assert.equal(r.sent.length,1,'라벨이 있으면 한 번만 묻는다');
+});

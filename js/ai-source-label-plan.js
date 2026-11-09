@@ -274,12 +274,20 @@ export function createSourceLabelController({ transport, timeoutMs = SOURCE_LABE
       const candidateBindings=await Promise.all(candidateSets.map(async set=>({sourceRef:set.sourceRef,sourceSha256:set.sourceSha256,candidateSha256:Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(set)))),b=>b.toString(16).padStart(2,'0')).join(''),count:set.candidates.length})));
       await options.onSourceCandidates?.({collections,candidateSets,errors:candidateErrors,totalMs:performance.now()-collectionStarted});
       ready(token);
-      const plan = await send({ ...selectionPayload(options), attachments, outputSchema: buildSourceObservationOutputSchema(attachments.length,candidateSets,options.workflow),
-        text: buildSourceLabelAnalysisPrompt({ request: options.request, referenceNames: attachments.map(a => a.name), workflow: options.workflow,candidateSets }) }, raw => {
+      const observationText = buildSourceLabelAnalysisPrompt({ request: options.request, referenceNames: attachments.map(a => a.name), workflow: options.workflow,candidateSets });
+      const observe = text => send({ ...selectionPayload(options), attachments, outputSchema: buildSourceObservationOutputSchema(attachments.length,candidateSets,options.workflow), text }, raw => {
         const observed = parseSourceLabelAnalysis(raw, attachments.length,candidateSets,{requireLeaderObservation:true,requireClassification:true,imageKind:options.workflow?.imageKind || null});
         if (!observed.geometryLock) throw new Error('현재 생성에는 원본 형태 관찰 명세가 필요합니다. 이전 버전의 응답으로 생성하지 않았습니다.');
         return observed;
       },token);
+      let plan = await observe(observationText);
+      // 11-09 라벨 안정화: 기출에서 글자 후보가 있는데 라벨도 빼 둔 라벨도 하나 없는 관찰이 돌아오면 한 번만 다시 관찰한다.
+      // 관찰이 통째로 비면 그 그림의 글자가 모두 원본으로 남았다(오늘 실제 AI 기출 408회 중 정답에 라벨이 있는 그림 10회, 한 번에 1~17개).
+      const candidateCount = candidateSets.reduce((n,set) => n + set.candidates.length, 0);
+      if (options.workflow?.imageKind === 'exam' && !plan.labels?.length && !plan.excludedLabels?.length && candidateCount) {
+        if (token.abort.signal.aborted) throw new DOMException('라벨 관찰이 취소되었습니다.','AbortError');
+        plan = await observe(`${observationText}\n앞선 관찰이 라벨을 하나도 돌려주지 않았다. 이 그림에는 글자 위치 후보가 ${candidateCount}개 있다. 기출 그림 규칙대로 그림 안과 바로 아래에 보이는 글자(점·물체 이름, 거리·수치·단위, 지형·등고선 표기, 기호 포함)를 모두 labels로 관찰한다. 원문이나 소속이 불확실한 부분은 uncertainties에 이유를 남기되 그 글자를 labels에서 빼지 않는다.`);
+      }
       return freezeLabelPlan({ ...copy(plan), frozen: true, sourceBindings: bindings,sourceTextCandidateBindings:candidateBindings });
       } finally { options.signal?.removeEventListener('abort',abortPreparation);release(token); }
     },
