@@ -118,6 +118,11 @@ const CIRCLED_BASE=new Map([...[...'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ']
   ...[...'가나다라마바사아자차카타파하'].map((c,i)=>[c,String.fromCharCode(0x326E+i)]),...[...'abcdefghijklmnopqrstuvwxyz'].map((c,i)=>[c,String.fromCharCode(0x24D0+i)])]);
 const CIRCLED_TEXT=new Set(CIRCLED_BASE.values());
 export function circledLabelText(text) {const t=String(text||'').trim();return CIRCLED_TEXT.has(t)?t:CIRCLED_BASE.get(t)||null;}
+// 11-09 라벨 안정화: AI가 준 보호·불확실 상자 가운데, 다시 찾은 글자(글자 덩어리만 지움)를 막아야 하는 것은 「소속이 불확실한 픽셀」과
+// 그림 일부를 가리키는 보호 상자뿐이다. 다른 라벨의 원문·지우기 불확실, 경로·배치 불확실은 그 라벨·그 경로의 일이고(AI가 라벨마다 넉넉한
+// 상자를 줘 이웃 글자를 막았다), 그림 넓이의 절반 넘게 덮는 보호 상자는 어느 픽셀이 구조인지 알려 주지 않는다.
+const ownershipUncertainty=u=>!u.domain || u.domain==='ownership';
+const informativeProtected=r=>!(boundsOK(r?.bounds) && r.bounds.w*r.bounds.h>.5);
 export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   const t=label?.typography?.bounds,raw=String(label?.text||''),text=raw.replace(/[_^]\{([^{}]*)\}/g,'$1');
   if(!boundsOK(t) || !text.trim() || /\n/.test(raw) || t.h>.6 || t.w>.8 || t.h*height>160) return {rejected:'unsupported-observed-text-box'};
@@ -306,7 +311,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     if(!pixels?.length || pixels.length>Math.min(200000,width*height*.2)) {issues.push({code:'invalid-ink-search-shape',id:r.id,labelId:r.labelId});continue;}
     const group=grouped.get(r.labelId)||[];group.push({...r,searchPixels:pixels,...(edgePixels?.length?{edgePixels}:{})});grouped.set(r.labelId,group);
   }
-  const derive=(labelId,searches,uMask,issues)=>{
+  const derive=(labelId,searches,uMask,issues,pMask=protectedMask)=>{
     const sampled=searches.some(r=>r.backgroundMode==='sample-flat');
     if(sampled && (searches.length!==1 || searches[0].component!=='text')) {issues.push({code:'unsupported-sampled-ink-search',id:labelId});return false;}
     const measured=sampled?sampleFlatTextBackground(data,searches[0],width,height):null;
@@ -334,7 +339,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
       const stack=[seed],component=[];visited.add(seed);
       while(stack.length && !unsafe) {
         const i=stack.pop(),x=i%width,y=Math.floor(i/width);component.push(i);
-        if(protectedMask[i] || uMask[i]) {unsafe='protected-or-uncertain-ink';break;}
+        if(pMask[i] || uMask[i]) {unsafe='protected-or-uncertain-ink';break;}
         // An edge-clipped component cannot establish a closed ownership boundary.
         if(x===0 || y===0 || x===width-1 || y===height-1) {unsafe='clipped-annotation-ink';break;}
         for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
@@ -370,6 +375,9 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
   // 11-09 라벨 안정화: 글자 라벨의 탐색이 없거나(AI가 삭제 가능성만 보류) 실패했으면, 실제 글자 잉크로 다시 찾은 좁은 상자로
   // 같은 픽셀 검사를 한 번 더 한다. 이 라벨 자신의 「삭제 가능성」 보류 영역만 검사에서 빼고, 다른 불확실 영역·보호 영역은 그대로다.
   const localTextSearches=[],localTextSearchRejections=[],derivedIds=new Set(regions.map(r=>r.labelId));
+  // 다시 찾은 글자의 픽셀 검사: 그림 절반 넘게 덮는 보호 상자는 빼고, 작은 보호 영역·보존 표식·그래프 라벨은 그대로 지킨다.
+  const localProtected=new Uint8Array(width*height);
+  addBounds(localProtected,[...(plan.protectedRegions || []).filter(informativeProtected),...(plan.preservedMarks || []),...(plan.excludedLabels || []).filter(l=>l.scope==='graph')],width,height);
   for(const label of plan.labels || []) {
     if(label.sourceRef!==1 || label.scope!=='general' || label.ownershipReviewRequired || label.mode!=='text' || derivedIds.has(label.id)) continue;
     const own=(plan.uncertainties || []).filter(u=>u.labelId===label.id);
@@ -386,9 +394,9 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     const search={id:`local-text-${label.id}`,labelId:label.id,sourceRef:1,ownership:'confirmed',component:'text',bounds:{...b},background:local.background,
       backgroundMode:'sample-flat',origin:'local-glyph-ink',ringIgnore:local.foreignPixels,searchPixels,...(edgePixels.length?{edgePixels}:{})};
     const uMask=new Uint8Array(width*height);
-    addBounds(uMask,(plan.uncertainties || []).filter(u=>u.labelId!==label.id),width,height);
+    addBounds(uMask,(plan.uncertainties || []).filter(u=>u.labelId!==label.id && ownershipUncertainty(u)),width,height);
     const localIssues=[];
-    if(!derive(label.id,[search],uMask,localIssues)) localTextSearchRejections.push({labelId:label.id,reason:`pixel-check:${localIssues[0]?.code || 'failed'}`,bounds:{...b}});
+    if(!derive(label.id,[search],uMask,localIssues,localProtected)) localTextSearchRejections.push({labelId:label.id,reason:`pixel-check:${localIssues[0]?.code || 'failed'}`,bounds:{...b}});
     else {
       for(let k=issues.length-1;k>=0;k--) if(issues[k].id===label.id || issues[k].labelId===label.id) issues.splice(k,1);
       localTextSearches.push({labelId:label.id,bounds:{...b},glyphBounds:local.glyphBounds,...(local.circledText?{text:local.circledText}:{})});
@@ -405,6 +413,10 @@ export function buildExamLabelRemovalMasks(plan,width,height,workflow) {
   const protectedMask=new Uint8Array(width*height),uncertainMask=new Uint8Array(width*height),mask=new Uint8Array(width*height),issues=[],regions=[];
   addBounds(protectedMask,[...(plan.protectedRegions || []),...(plan.preservedMarks || []),...(plan.excludedLabels || []).filter(l=>l.scope==='graph')],width,height);
   addBounds(uncertainMask,plan.uncertainties,width,height);
+  // 다시 찾은 글자 영역(origin local-glyph-ink)은 소속 불확실·그림 일부 보호 상자만 막는다(위 ownershipUncertainty·informativeProtected).
+  const localProtected=new Uint8Array(width*height),localUncertain=new Uint8Array(width*height);
+  addBounds(localProtected,[...(plan.protectedRegions || []).filter(informativeProtected),...(plan.preservedMarks || []),...(plan.excludedLabels || []).filter(l=>l.scope==='graph')],width,height);
+  addBounds(localUncertain,(plan.uncertainties || []).filter(ownershipUncertainty),width,height);
   const labels=new Map(plan.labels.filter(l=>l.scope==='general' && l.sourceRef===1 && !l.ownershipReviewRequired).map(l=>[l.id,l]));
   const raw=plan.removalMasks;
   const validRaw=raw?.version===1 && raw.coordinateSpace==='source-pixels' && raw.width===width && raw.height===height;
@@ -422,8 +434,9 @@ export function buildExamLabelRemovalMasks(plan,width,height,workflow) {
     if(validRaw && raw.regions?.includes(r)) pixels=Array.isArray(r.pixels)&&r.pixels.every(i=>Number.isInteger(i)&&i>=0&&i<mask.length)?[...new Set(r.pixels)]:null;
     else pixels=shapePixels(r,width,height);
     if(!pixels?.length) { issues.push({code:'invalid-or-empty-removal-shape',id:r.id,labelId:r.labelId}); continue; }
-    if(pixels.some(i=>uncertainMask[i])) { issues.push({code:'uncertain-overlap',id:r.id,labelId:r.labelId}); continue; }
-    const overlapsProtected=pixels.some(i=>protectedMask[i]);
+    const local=r.origin==='local-glyph-ink';
+    if(pixels.some(i=>(local?localUncertain:uncertainMask)[i])) { issues.push({code:'uncertain-overlap',id:r.id,labelId:r.labelId}); continue; }
+    const overlapsProtected=pixels.some(i=>(local?localProtected:protectedMask)[i]);
     const method=r.method==='local-restore'||overlapsProtected?'local-restore':'flat-background';
     regions.push({...r,pixels,method,overlapsProtected}); for(const i of pixels) mask[i]=1;
   }

@@ -106,3 +106,22 @@ test('a square frame around a jamo and a ring around a capital letter stay; only
   for(const i of f.glyph)assert.equal(r.data[i*4],255,JSON.stringify(opt));
  }
 });
+
+// 11-09 라벨 안정화: AI가 그림 거의 전체를 보호 상자 하나로 덮거나, 다른 라벨의 지우기·원문 불확실 상자가 넉넉해 이웃 글자에 걸쳐도
+// 다시 찾은 글자는 지운다. 그림 일부를 가리키는 작은 보호 상자와 소속이 불확실한 영역에 걸친 글자는 그대로 둔다.
+test('broad protection or another label\'s removal box does not block a re-found glyph; a small protected box or an ownership doubt still does', async () => {
+ const {removeExamLabelPixels}=await api;
+ const glyphBox={x:39/120,y:19/60,w:13/120,h:16/60};
+ const cases=[
+  ['whole-figure protection',p=>{p.protectedRegions=[{sourceRef:1,bounds:{x:0,y:0,w:1,h:1},reason:'그림 전체 보존'}];},true],
+  ['another label\'s removal box over this glyph',p=>{p.labels.push({id:'b',text:'U',sourceRef:1,scope:'general',mode:'text',typography:{bounds:{x:80/120,y:17/60,w:12/120,h:15/60}}});
+    p.uncertainties.push({sourceRef:1,labelId:'b',component:'text',domain:'removal',reason:'넉넉한 상자',bounds:{x:30/120,y:10/60,w:70/120,h:30/60}});},true],
+  ['small protected box on the glyph',p=>{p.protectedRegions=[{sourceRef:1,bounds:glyphBox,reason:'구조'}];},false],
+  ['ownership doubt on the glyph',p=>{p.uncertainties.push({sourceRef:1,domain:'ownership',reason:'그림 일부인지 모름',bounds:glyphBox});},false]];
+ for(const [name,edit,erased] of cases){
+  const f=fixture();edit(f.plan);const r=removeExamLabelPixels(f);
+  assert.equal(r.removedLabelIds.includes('a'),erased,name);
+  for(let i=0;i<f.width*f.height;i++){const x=i%f.width,y=Math.floor(i/f.width);
+   if(erased && glyph(x,y))assert.equal(r.data[i*4],255,name);else assert.deepEqual(r.data.slice(i*4,i*4+4),f.data.slice(i*4,i*4+4),name);}
+ }
+});
