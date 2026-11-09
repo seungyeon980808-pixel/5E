@@ -131,9 +131,9 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   for(let y=ey0;y<ey1;y++) for(let x=ex0;x<ex1;x++) {
     const li=(y-ey0)*ew+x-ex0;
     if(seen[li]>=0 || !isInk(y*width+x)) continue;
-    const id=comps.length,c={x0:x,y0:y,x1:x,y1:y,edge:false},stack=[li];seen[li]=id;
+    const id=comps.length,c={x0:x,y0:y,x1:x,y1:y,n:0,edge:false},stack=[li];seen[li]=id;
     while(stack.length) {
-      const k=stack.pop(),cx=ex0+k%ew,cy=ey0+Math.floor(k/ew);
+      const k=stack.pop(),cx=ex0+k%ew,cy=ey0+Math.floor(k/ew);c.n++;
       if(cx<c.x0)c.x0=cx;if(cx>c.x1)c.x1=cx;if(cy<c.y0)c.y0=cy;if(cy>c.y1)c.y1=cy;
       if(cx===ex0 || cy===ey0 || cx===ex1-1 || cy===ey1-1) c.edge=true;
       for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
@@ -147,6 +147,16 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   }
   // 넓힌 영역 테두리까지 이어진 덩어리는 구조선이다(글자가 거기에 붙어 있으면 그 글자는 다시 찾지 않는다).
   let inner=comps.filter(c=>!c.edge);const hOf=c=>c.y1-c.y0+1;
+  // 점선·파선: 크기가 비슷한 작은 덩어리가 같은 줄에 고르게 4개 이상 늘어서 있으면 선의 조각이다 — 글자로 묶거나 붙이지 않는다.
+  // 곡선(점선 호)도 잡도록: 크기가 비슷한 작은 덩어리끼리 조각 크기의 4배 안에 이어져 4개 이상 사슬을 이루면 선의 조각으로 본다.
+  {const small=inner.filter(c=>hOf(c)<=th*.3 && c.x1-c.x0+1<=th*.6),dotted=new Set();
+   const cx=c=>(c.x0+c.x1)/2,cy=c=>(c.y0+c.y1)/2,sz=c=>Math.max(hOf(c),c.x1-c.x0+1);
+   const near=(a,o)=>a!==o && Math.abs(hOf(o)-hOf(a))<=2 && Math.abs((o.x1-o.x0)-(a.x1-a.x0))<=3 && Math.hypot(cx(o)-cx(a),cy(o)-cy(a))<=4*Math.max(sz(a),sz(o));
+   const seenC=new Set();
+   for(const c of small){if(seenC.has(c))continue;const chain=[c],stack=[c];seenC.add(c);
+     while(stack.length){const k=stack.pop();for(const o of small)if(!seenC.has(o)&&near(k,o)){seenC.add(o);chain.push(o);stack.push(o);}}
+     if(chain.length>=4) chain.forEach(o=>dotted.add(o));}
+   if(dotted.size) inner=inner.filter(c=>!dotted.has(c));}
   // 한글 라벨: 한 글자 안에서 위아래로 쌓인 자모(「힘」의 ㅎ·ㅁ)는 한 덩어리로 묶는다 — 따로 두면 가장 큰 자모만 글자로 잡혀
   // 아래 받침이 남거나 글자 높이를 작게 잰다. 묶은 높이가 AI 글자 높이의 1.3배를 넘으면(글자 위 점·작은 원) 묶지 않는다.
   if(/[\uAC00-\uD7A3]/.test(text)) {
@@ -158,12 +168,19 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
         const inBand=o=>(o.y0+o.y1)/2>=ty0-th*.15 && (o.y0+o.y1)/2<=ty1+th*.15;
         if(!inBand(a) || !inBand(c)) continue;
         const u={x0:Math.min(a.x0,c.x0),y0:Math.min(a.y0,c.y0),x1:Math.max(a.x1,c.x1),y1:Math.max(a.y1,c.y1),edge:false,parts:[...(a.parts||[a]),...(c.parts||[c])]};
-        if(xo>=Math.min(a.x1-a.x0+1,c.x1-c.x0+1)*.5 && gap<=th*.35 && hOf(u)<=th*1.3) {inner=inner.filter((_,k)=>k!==i&&k!==j);inner.push(u);merged=true;break outer;}
+        if(xo>=Math.min(a.x1-a.x0+1,c.x1-c.x0+1)*.5 && gap<=th*.35 && hOf(u)<=th*1.3 && u.x1-u.x0+1<=th*1.3) {inner=inner.filter((_,k)=>k!==i&&k!==j);inner.push(u);merged=true;break outer;}
       }
     }
   }
   // 씨앗은 AI 글자 자리에 닿는 덩어리 가운데 글자 크기인 것만(글자를 둘러싼 상자·틀은 글자가 아니다).
-  const seeds=inner.filter(c=>c.x1>=tx0-th*.25 && c.x0<=tx1+th*.25 && c.y1>=ty0-th*.25 && c.y0<=ty1+th*.25 && hOf(c)<=th*1.6 && c.x1-c.x0+1<=tw+th*2);
+  // 범례 기호(●▲■)처럼 속이 찬 덩어리, 화살표·막대처럼 가로로 긴 덩어리는 글자가 아니다(원문에 그런 기호·긴 줄표가 있으면 예외).
+  const symbolText=/[●▲■◆▼►◀★◎※]/.test(text),wideText=/[—–→←↔⟶~]/.test(text);
+  const glyphLike=c=>{const w=c.x1-c.x0+1,h=hOf(c),fill=(c.parts||[c]).reduce((s,p)=>s+(p.n||0),0)/(w*h);
+    if(!symbolText && fill>.66 && w>3 && h>3 && w/h<2 && h/w<2) return false;
+    if(!wideText && w/h>2.2 && h>=4) return false;
+    return true;};
+  inner=inner.filter(glyphLike);
+  const seeds=inner.filter(c=>c.x1>=tx0-th*.25 && c.x0<=tx1+th*.25 && c.y1>=ty0-th*.25 && c.y0<=ty1+th*.25 && hOf(c)<=th*1.3 && c.x1-c.x0+1<=tw+th*2);
   if(!seeds.length) return {rejected:'no-glyph-at-observed-position'};
   const H=Math.max(...seeds.map(hOf));
   if(H<5) return {rejected:'glyph-too-small'};
@@ -198,12 +215,14 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   // 글자 수에 맞는 너비여야 한다(일부만 잡거나 이웃 라벨·구조를 삼키지 않게).
   const weight=[...text].reduce((s,ch)=>s+glyphWeight(ch),0),bw=box.x1-box.x0+1,bh=box.y1-box.y0+1;
   if(bw<weight*H*.45 || bw>weight*H*1.35+H*.6) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
+  // 찾은 덩어리가 AI가 본 글자 상자보다 높이·너비 모두 절반도 안 되면(점선 조각·점이 씨앗이 된 경우) 글자가 아니다.
+  if(H<th*.5 && bw<tw*.5) return {rejected:'glyph-much-smaller-than-observed'};
   for(const other of plan?.labels || []) {
     if(other===label || other.id===label.id || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
     const o=other.typography.bounds,iw=Math.min((o.x+o.w)*width,box.x1+1)-Math.max(o.x*width,box.x0),ih=Math.min((o.y+o.h)*height,box.y1+1)-Math.max(o.y*height,box.y0);
     if(iw>0 && ih>0 && iw*ih>bw*bh*.3) return {rejected:'other-label-overlap'};
   }
-  const x=Math.max(0,box.x0-2),y=Math.max(0,box.y0-2),r=Math.min(width,box.x1+3),b=Math.min(height,box.y1+3);
+  const x=Math.max(0,box.x0-3),y=Math.max(0,box.y0-3),r=Math.min(width,box.x1+4),b=Math.min(height,box.y1+4);
   // 상자 근처를 지나는 다른 잉크(구조선·점)는 이 라벨 것이 아니다 — 그 픽셀과 1px 둘레는 지울 범위에서 빼고, 닫힌 테두리의 단색 판정에서도 뺀다.
   // 글자 덩어리는 그것과 떨어져 있어야 하며(붙어 있으면 위 덩어리 단계에서 글자로 고르지 않는다), 지우는 것은 여전히 검증된 글자 잉크뿐이다.
   const chosenIds=new Set([...chosen].flatMap(c=>(c.parts||[c]).map(p=>comps.indexOf(p)))),foreign=new Set();
@@ -212,7 +231,14 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
     if(id<0 || chosenIds.has(id)) continue;
     for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {const fx=xx+dx,fy=yy+dy;if(fx>=0 && fy>=0 && fx<width && fy<height) foreign.add(fy*width+fx);}
   }
-  return {bounds:{x:x/width,y:y/height,w:(r-x)/width,h:(b-y)/height},background:bg,foreignPixels:foreign,glyphBounds:{x:box.x0/width,y:box.y0/height,w:bw/width,h:bh/height}};
+  // 지울 수 있는 범위는 고른 글자 덩어리와 그 3px 둘레뿐 — 상자 안의 다른 옅은 잉크(점선 조각 끝 등)는 넣지 않는다.
+  const corridor=new Set();
+  for(let yy=Math.max(ey0,y);yy<Math.min(ey1,b);yy++) for(let xx=Math.max(ex0,x);xx<Math.min(ex1,r);xx++) {
+    const id=seen[(yy-ey0)*ew+xx-ex0];
+    if(id<0 || !chosenIds.has(id)) continue;
+    for(let dy=-3;dy<=3;dy++) for(let dx=-3;dx<=3;dx++) {const fx=xx+dx,fy=yy+dy;if(fx>=x && fy>=y && fx<r && fy<b) corridor.add(fy*width+fx);}
+  }
+  return {bounds:{x:x/width,y:y/height,w:(r-x)/width,h:(b-y)/height},background:bg,foreignPixels:foreign,glyphPixels:corridor,glyphBounds:{x:box.x0/width,y:box.y0/height,w:bw/width,h:bh/height}};
 }
 /** Confirmed search boxes locate ink; only bounded, isolated components become masks.
  * Any connected ink escaping the declared owned union defers the whole label.
@@ -317,7 +343,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     const b=local.bounds,searchPixels=[],edgePixels=[];
     for(let y=Math.floor(b.y*height);y<Math.min(height,Math.ceil((b.y+b.h)*height));y++) for(let x=Math.floor(b.x*width);x<Math.min(width,Math.ceil((b.x+b.w)*width));x++) {
       const i=y*width+x;
-      if(local.foreignPixels.has(i)) continue;
+      if(local.foreignPixels.has(i) || !local.glyphPixels.has(i)) continue;
       if(x===0 || y===0 || x===width-1 || y===height-1) edgePixels.push(i); else searchPixels.push(i);
     }
     const search={id:`local-text-${label.id}`,labelId:label.id,sourceRef:1,ownership:'confirmed',component:'text',bounds:{...b},background:local.background,

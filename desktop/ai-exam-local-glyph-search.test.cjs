@@ -58,3 +58,20 @@ test('Hangul syllables made of stacked jamo are erased whole; a small circle abo
  for(const [x,y] of [[45,22],[40,30],[46,42],[56,30]])assert.equal(r.data[(y*width+x)*4],255,`${x},${y} 글자 획이 남음`);
  for(let i=0;i<width*height;i++){const x=i%width,y=Math.floor(i/width);if(y<=16)assert.deepEqual(r.data.slice(i*4,i*4+4),data.slice(i*4,i*4+4));}
 });
+
+// 11-09 라벨 안정화(L7 구조 훼손 막기): 글자 옆 범례 기호(속이 찬 점), 글자 옆 화살표, 글자 아래 긴 막대는 글자로 잡지 않는다.
+test('legend marks, arrows and bars beside or under a Hangul label are kept while the label glyphs are erased', async () => {
+ const {removeExamLabelPixels}=await api;
+ const width=160,height=80,data=new Uint8ClampedArray(width*height*4).fill(255),dark=(x,y)=>data.set([0,0,0,255],(y*width+x)*4);
+ const syl=x0=>{for(let x=x0;x<=x0+9;x++){dark(x,24);dark(x,32);}for(let y=24;y<=32;y++){dark(x0,y);dark(x0+9,y);}for(let y=22;y<=40;y++){dark(x0+13,y);dark(x0+14,y);}for(let x=x0;x<=x0+12;x++)dark(x,37);};
+ syl(50);syl(70);                                                       // 「열점」 비슷한 두 글자(각 15px 너비)
+ for(let y=28;y<=35;y++)for(let x=36;x<=43;x++)if((x-39.5)**2+(y-31.5)**2<=14)dark(x,y);   // 왼쪽 범례 점(●)
+ for(let x=92;x<=118;x++){dark(x,31);dark(x,32);}for(const [dx,dy] of [[-1,-1],[-2,-2],[-3,-3],[-1,1],[-2,2],[-3,3]])dark(118+dx,31+dy); // 오른쪽 화살표
+ for(let x=48;x<=88;x++)for(let y=46;y<=48;y++)dark(x,y);                // 아래 긴 막대
+ const label={id:'a',text:'열점',sourceRef:1,scope:'general',mode:'text',typography:{bounds:{x:48/160,y:20/80,w:40/160,h:22/80}}};
+ const plan={labels:[label],uncertainties:[{sourceRef:1,labelId:'a',component:'text',domain:'removal',reason:'x'}],protectedRegions:[],preservedMarks:[],removalRegions:[],inkSearchRegions:[]};
+ const r=removeExamLabelPixels({width,height,data,plan});
+ assert.deepEqual(r.removedLabelIds,['a']);
+ for(const [x,y] of [[50,28],[63,30],[70,24],[83,38]])assert.equal(r.data[(y*width+x)*4],255,`${x},${y} 글자 획이 남음`);
+ for(const [x,y] of [[39,31],[100,31],[60,47],[85,47]])assert.equal(r.data[(y*width+x)*4],0,`${x},${y} 구조가 지워짐`);
+});
