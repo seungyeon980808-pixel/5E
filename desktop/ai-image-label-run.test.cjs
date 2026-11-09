@@ -250,3 +250,17 @@ test('measured label sizes follow each source label; same-size labels share a si
  assert.ok(sizes.get('c')>sizes.get('a')*1.15,'원본에서 큰 글자는 라벨도 큼');
  assert.deepEqual(await measuredLabelSizes('data:,',[]),{ratio:null,sizes:new Map()});
 });
+
+// 11-09 라벨 안정화: 기출에서 실제 글자 잉크로 다시 찾아 지운 글자 라벨은 그 글자 자리에 복원한다(지시선 라벨·다시 찾지 않은 라벨은 AI 자리 그대로).
+test('labels erased from measured glyph ink are restored at that glyph box; leader and unmeasured labels keep the observed position',async()=>{
+ const {labelsAtMeasuredGlyphs}=await api;
+ const labels=[{id:'a',mode:'text',text:'A',position:{x:.5,y:.5},anchor:{x:.5,y:.5},typography:{role:'name',bounds:{x:.45,y:.45,w:.1,h:.1}}},
+  {id:'b',mode:'leader',text:'B',position:{x:.2,y:.2},anchor:{x:.3,y:.3},typography:{bounds:{x:.15,y:.15,w:.1,h:.1}}},
+  {id:'c',mode:'text',text:'C',position:{x:.8,y:.8},anchor:{x:.8,y:.8}}];
+ const out=labelsAtMeasuredGlyphs(labels,[{labelId:'a',glyphBounds:{x:.4,y:.42,w:.06,h:.08}},{labelId:'b',glyphBounds:{x:.1,y:.1,w:.05,h:.05}}]);
+ const near=(p,q)=>Math.abs(p.x-q.x)<1e-12&&Math.abs(p.y-q.y)<1e-12;
+ assert.ok(near(out[0].position,{x:.43,y:.46}),JSON.stringify(out[0].position));assert.deepEqual(out[0].anchor,out[0].position);
+ assert.deepEqual(out[0].typography,{role:'name',bounds:{x:.4,y:.42,w:.06,h:.08}});
+ assert.deepEqual(out[1],labels[1]);assert.deepEqual(out[2],labels[2]);
+ assert.deepEqual(labelsAtMeasuredGlyphs(labels,undefined),labels);
+});

@@ -88,6 +88,17 @@ export async function measuredLabelSizes(sourceDataUrl, labels = [], signal) {
   for (const g of groups) { const s = g.map(r => r.size); const m = s[Math.floor((s.length - 1) / 2)]; for (const r of g) sizes.set(r.id, m); }
   return { ratio: median, sizes };
 }
+// 11-09 라벨 안정화: 기출 제거에서 실제 글자 잉크로 다시 찾아 지운 글자 라벨은 그 글자 자리(가운데·상자)를 원본 자리로 쓴다
+// (AI가 준 자리는 반 글자쯤 비켜 있곤 했다 — 지운 자리와 라벨 자리가 어긋나지 않게, 글자 크기도 이 상자로 잰다). 지시선 라벨은 그대로.
+export function labelsAtMeasuredGlyphs(labels = [], searches = []) {
+  const glyphOf = new Map((searches || []).filter(s => s?.glyphBounds).map(s => [s.labelId, s.glyphBounds]));
+  return labels.map(label => {
+    const g = glyphOf.get(label.id);
+    if (!g || label.mode !== 'text') return label;
+    const center = { x: g.x + g.w / 2, y: g.y + g.h / 2 };
+    return { ...label, position: center, anchor: { ...center }, typography: { ...(label.typography || {}), bounds: { ...g } } };
+  });
+}
 const withLabelSizes = (labels, sizes) => (labels || []).map(label => sizes?.has(label.id) ? { ...label, measuredSize: sizes.get(label.id) } : label);
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError'); };
 // 11-09 사용자 원칙: AI 변환(이미지·그래프)은 어떤 경우에도 「실패」로 끝나면 안 된다.
@@ -573,7 +584,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         removedLabelIds: [...ids], restoredLabelIds: workflow.labelResult === 'restore-editable' ? [...ids] : [],
         maskSha256: await imageLabelDigest(JSON.stringify(mask)) };
       removalReport = { ...removalReport, removalBinding };
-      const restorationPlan = { ...clone(plan), labels: plan.labels.filter(label => ids.includes(label.id)).map(clone),
+      const restorationPlan = { ...clone(plan), labels: labelsAtMeasuredGlyphs(plan.labels.filter(label => ids.includes(label.id)).map(clone), removalReport.localTextSearches),
         relationGroups: (plan.relationGroups || []).filter(group => group.labelIds.every(id => ids.includes(id))).map(clone),
         ...(plan.sourceAssociations ? { sourceAssociations: plan.sourceAssociations.filter(row => ids.includes(row.labelId)).map(clone) } : {}),
         ...(plan.sourceLeaderObservations ? { sourceLeaderObservations: plan.sourceLeaderObservations.filter(row => ids.includes(row.labelId)).map(clone) } : {}),

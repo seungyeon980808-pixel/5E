@@ -48,7 +48,7 @@ function sampleFlatTextBackground(data, search, width, height) {
   }
   // The search perimeter may itself contain the last antialiased glyph pixel.
   // Measure the closed exterior ring; it grants no additional deletion pixels.
-  const border=[...outside];
+  const border=[...outside].filter(i=>!search.ringIgnore?.has(i));
   if(border.length<12 || border.some(i=>data[i*4+3]!==255)) return null;
   const quantile=(a,q)=>a.sort((a,b)=>a-b)[Math.floor((a.length-1)*q)];
   const bg=[0,1,2].map(k=>quantile(border.map(i=>data[i*4+k]),.5)).concat(255);
@@ -106,6 +106,99 @@ function addBounds(mask,items,width,height) {
       for(let x=Math.floor(b.x*width);x<Math.min(width,Math.ceil((b.x+b.w)*width));x++) mask[y*width+x]=1;
   }
 }
+// 11-09 라벨 안정화: AI 탐색 상자가 글자를 비켜 가거나(테두리가 구조선·글자를 지남) AI가 「삭제 가능성」만 보류한 글자 라벨은
+// AI가 본 글자 자리(typography.bounds)를 씨앗으로 실제 글자 잉크를 다시 찾아 좁은 탐색 상자를 만든다. 지울 권한은 그대로
+// 아래 픽셀 검사(닫힌 단색 테두리·고립 잉크·대비·긴 선 없음)가 준다. 원문·소속·구조가 불확실한 라벨, 지시선 라벨,
+// 여러 줄 라벨, 큰 상자는 다시 찾지 않는다.
+const glyphWeight=ch=>/[\uAC00-\uD7A3\u3260-\u327F\u2460-\u2473]/.test(ch)?1:/[\u3131-\u318E\u2160-\u217F]/.test(ch)?.8
+  :/[A-Za-z0-9]/.test(ch)?.65:/[\u2070-\u209C]/.test(ch)?.4:/\s/.test(ch)?.3:.45;
+export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
+  const t=label?.typography?.bounds,raw=String(label?.text||''),text=raw.replace(/[_^]\{([^{}]*)\}/g,'$1');
+  if(!boundsOK(t) || !text.trim() || /\n/.test(raw) || t.h>.6 || t.w>.8 || t.h*height>160) return {rejected:'unsupported-observed-text-box'};
+  const tx0=t.x*width,ty0=t.y*height,tx1=(t.x+t.w)*width,ty1=(t.y+t.h)*height,th=ty1-ty0,tw=tx1-tx0;
+  if(th<6) return {rejected:'observed-text-too-small'};
+  const pad=Math.max(6,Math.round(th));
+  const ex0=Math.max(0,Math.floor(tx0-pad-tw*.5)),ey0=Math.max(0,Math.floor(ty0-pad)),ex1=Math.min(width,Math.ceil(tx1+pad+tw*.5)),ey1=Math.min(height,Math.ceil(ty1+pad));
+  const ew=ex1-ex0,eh=ey1-ey0;
+  if(ew<4 || eh<4) return {rejected:'observed-text-too-small'};
+  const ring=[];
+  for(let x=ex0;x<ex1;x++) ring.push(ey0*width+x,(ey1-1)*width+x);
+  for(let y=ey0;y<ey1;y++) ring.push(y*width+ex0,y*width+ex1-1);
+  if(ring.some(i=>data[i*4+3]!==255)) return {rejected:'transparent-pixels'};
+  const med=k=>{const a=ring.map(i=>data[i*4+k]).sort((p,q)=>p-q);return a[Math.floor(a.length/2)];};
+  const bg=[med(0),med(1),med(2),255],isInk=i=>data[i*4+3]!==255 || rgbaDistance(data,i*4,bg)>48;
+  const seen=new Int32Array(ew*eh).fill(-1),comps=[];
+  for(let y=ey0;y<ey1;y++) for(let x=ex0;x<ex1;x++) {
+    const li=(y-ey0)*ew+x-ex0;
+    if(seen[li]>=0 || !isInk(y*width+x)) continue;
+    const id=comps.length,c={x0:x,y0:y,x1:x,y1:y,edge:false},stack=[li];seen[li]=id;
+    while(stack.length) {
+      const k=stack.pop(),cx=ex0+k%ew,cy=ey0+Math.floor(k/ew);
+      if(cx<c.x0)c.x0=cx;if(cx>c.x1)c.x1=cx;if(cy<c.y0)c.y0=cy;if(cy>c.y1)c.y1=cy;
+      if(cx===ex0 || cy===ey0 || cx===ex1-1 || cy===ey1-1) c.edge=true;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
+        const nx=cx+dx,ny=cy+dy;
+        if((!dx&&!dy) || nx<ex0 || ny<ey0 || nx>=ex1 || ny>=ey1) continue;
+        const nk=(ny-ey0)*ew+nx-ex0;
+        if(seen[nk]<0 && isInk(ny*width+nx)) {seen[nk]=id;stack.push(nk);}
+      }
+    }
+    comps.push(c);
+  }
+  // 넓힌 영역 테두리까지 이어진 덩어리는 구조선이다(글자가 거기에 붙어 있으면 그 글자는 다시 찾지 않는다).
+  const inner=comps.filter(c=>!c.edge),hOf=c=>c.y1-c.y0+1;
+  // 씨앗은 AI 글자 자리에 닿는 덩어리 가운데 글자 크기인 것만(글자를 둘러싼 상자·틀은 글자가 아니다).
+  const seeds=inner.filter(c=>c.x1>=tx0-th*.25 && c.x0<=tx1+th*.25 && c.y1>=ty0-th*.25 && c.y0<=ty1+th*.25 && hOf(c)<=th*1.6 && c.x1-c.x0+1<=tw+th*2);
+  if(!seeds.length) return {rejected:'no-glyph-at-observed-position'};
+  const H=Math.max(...seeds.map(hOf));
+  if(H<5) return {rejected:'glyph-too-small'};
+  // 가장 큰 글자 덩어리의 줄 높이에 절반 이상 걸치는 것만 같은 줄의 글자로 본다(글자 바로 위·아래의 점·작은 원 표시는 글자가 아니다).
+  const main=seeds.find(c=>hOf(c)===H),onLine=c=>Math.min(main.y1,c.y1)-Math.max(main.y0,c.y0)+1>=hOf(c)*.5;
+  const big=c=>hOf(c)>=H*.4,chosen=new Set();let box=null;
+  const add=c=>{chosen.add(c);box=box?{x0:Math.min(box.x0,c.x0),y0:Math.min(box.y0,c.y0),x1:Math.max(box.x1,c.x1),y1:Math.max(box.y1,c.y1)}:{x0:c.x0,y0:c.y0,x1:c.x1,y1:c.y1};};
+  seeds.filter(c=>big(c) && onLine(c)).forEach(add);
+  if(!box) return {rejected:'no-text-sized-glyph'};
+  // 같은 줄의 이웃 글자(글자 사이 0.6H 안)를 차례로 더한다 — AI 자리가 한 글자쯤 비켜 있어도 라벨 글자 전체를 잡는다.
+  for(let grew=true;grew;) {
+    grew=false;
+    for(const c of inner) {
+      if(chosen.has(c) || !big(c) || !onLine(c) || hOf(c)>H*1.25) continue;
+      const overlap=Math.min(box.y1,c.y1)-Math.max(box.y0,c.y0)+1,gap=Math.max(c.x0-box.x1,box.x0-c.x1);
+      if(overlap>=hOf(c)*.5 && gap<=H*.6) {add(c);grew=true;}
+    }
+  }
+  // 작은 덩어리(받침·점·쌍점)는 글자 줄 상자 안에 있을 때만 붙인다. 첨자·앞뒤 부호는 라벨 원문에 있을 때만 옆의 것을 붙인다
+  // (루이스 점, 글자 옆 위치 점처럼 글자 밖의 작은 구조는 그대로 둔다).
+  const line={...box},script=/[\u2070-\u209C]|[_^]\{/.test(raw),lead=/^[(\-−+:·.,]/.test(text.trim()),tail=/[)\-−+:·.,]$/.test(text.trim());
+  for(const c of inner) {
+    if(chosen.has(c)) continue;
+    const inside=c.x0>=line.x0-1 && c.x1<=line.x1+1 && c.y0>=line.y0-1 && c.y1<=line.y1+1;
+    const overlap=Math.min(line.y1,c.y1)-Math.max(line.y0,c.y0)+1;
+    const right=c.x0>line.x1 && c.x0-line.x1<=H*.35,left=c.x1<line.x0 && line.x0-c.x1<=H*.35;
+    if(inside || (script || tail) && right && overlap>=hOf(c)*.3 || lead && left && overlap>=hOf(c)*.5) add(c);
+  }
+  // 다른 덩어리를 둘러싸는 덩어리(틀·원 테두리)가 섞이면 글자만 가려낼 수 없다.
+  const picked=[...chosen];
+  if(picked.some(o=>picked.some(c=>c!==o && o.x0<c.x0 && o.x1>c.x1 && o.y0<c.y0 && o.y1>c.y1))) return {rejected:'enclosing-frame'};
+  // 글자 수에 맞는 너비여야 한다(일부만 잡거나 이웃 라벨·구조를 삼키지 않게).
+  const weight=[...text].reduce((s,ch)=>s+glyphWeight(ch),0),bw=box.x1-box.x0+1,bh=box.y1-box.y0+1;
+  if(bw<weight*H*.45 || bw>weight*H*1.35+H*.6) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
+  for(const other of plan?.labels || []) {
+    if(other===label || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
+    const o=other.typography.bounds,iw=Math.min((o.x+o.w)*width,box.x1+1)-Math.max(o.x*width,box.x0),ih=Math.min((o.y+o.h)*height,box.y1+1)-Math.max(o.y*height,box.y0);
+    if(iw>0 && ih>0 && iw*ih>bw*bh*.3) return {rejected:'other-label-overlap'};
+  }
+  const x=Math.max(0,box.x0-2),y=Math.max(0,box.y0-2),r=Math.min(width,box.x1+3),b=Math.min(height,box.y1+3);
+  // 상자 근처를 지나는 다른 잉크(구조선·점)는 이 라벨 것이 아니다 — 그 픽셀과 1px 둘레는 지울 범위에서 빼고, 닫힌 테두리의 단색 판정에서도 뺀다.
+  // 글자 덩어리는 그것과 떨어져 있어야 하며(붙어 있으면 위 덩어리 단계에서 글자로 고르지 않는다), 지우는 것은 여전히 검증된 글자 잉크뿐이다.
+  const chosenIds=new Set([...chosen].map(c=>comps.indexOf(c))),foreign=new Set();
+  for(let yy=Math.max(ey0,y-2);yy<Math.min(ey1,b+2);yy++) for(let xx=Math.max(ex0,x-2);xx<Math.min(ex1,r+2);xx++) {
+    const id=seen[(yy-ey0)*ew+xx-ex0];
+    if(id<0 || chosenIds.has(id)) continue;
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {const fx=xx+dx,fy=yy+dy;if(fx>=0 && fy>=0 && fx<width && fy<height) foreign.add(fy*width+fx);}
+  }
+  return {bounds:{x:x/width,y:y/height,w:(r-x)/width,h:(b-y)/height},background:bg,foreignPixels:foreign,glyphBounds:{x:box.x0/width,y:box.y0/height,w:bw/width,h:bh/height}};
+}
 /** Confirmed search boxes locate ink; only bounded, isolated components become masks.
  * Any connected ink escaping the declared owned union defers the whole label.
  * Legacy regions require exact background matching. sample-flat text regions
@@ -135,15 +228,15 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     if(!pixels?.length || pixels.length>Math.min(200000,width*height*.2)) {issues.push({code:'invalid-ink-search-shape',id:r.id,labelId:r.labelId});continue;}
     const group=grouped.get(r.labelId)||[];group.push({...r,searchPixels:pixels,...(edgePixels?.length?{edgePixels}:{})});grouped.set(r.labelId,group);
   }
-  for(const [labelId, searches] of grouped) {
+  const derive=(labelId,searches,uMask,issues)=>{
     const sampled=searches.some(r=>r.backgroundMode==='sample-flat');
-    if(sampled && (searches.length!==1 || searches[0].component!=='text')) {issues.push({code:'unsupported-sampled-ink-search',id:labelId});continue;}
+    if(sampled && (searches.length!==1 || searches[0].component!=='text')) {issues.push({code:'unsupported-sampled-ink-search',id:labelId});return false;}
     const measured=sampled?sampleFlatTextBackground(data,searches[0],width,height):null;
-    if(sampled && !measured) {issues.push({code:'non-flat-search-border',id:labelId});continue;}
+    if(sampled && !measured) {issues.push({code:'non-flat-search-border',id:labelId});return false;}
     // 가장자리에서 뺀 줄에 실제 글자 잉크가 있으면 잘린 글자다 — 지우지 않고 그대로 보류한다(지울 범위는 넓어지지 않음).
-    if(sampled && searches[0].edgePixels?.some(i=>data[i*4+3]!==255 || rgbaDistance(data,i*4,measured.background)>measured.inkTolerance)) {issues.push({code:'clipped-annotation-ink',id:labelId});continue;}
+    if(sampled && searches[0].edgePixels?.some(i=>data[i*4+3]!==255 || rgbaDistance(data,i*4,measured.background)>measured.inkTolerance)) {issues.push({code:'clipped-annotation-ink',id:labelId});return false;}
     const bg=measured?.background || searches[0].background;
-    if(!sampled && searches.some(r=>!r.background.every((v,k)=>v===bg[k]))) {issues.push({code:'inconsistent-ink-background',id:labelId});continue;}
+    if(!sampled && searches.some(r=>!r.background.every((v,k)=>v===bg[k]))) {issues.push({code:'inconsistent-ink-background',id:labelId});return false;}
     const strongInk=i=>data[i*4+3]!==255 || rgbaDistance(data,i*4,bg)>Math.max(20,measured?.backgroundTolerance||0);
     const isInk=i=>{
       if(!sampled) return !sameRGBA(data,i*4,bg);
@@ -163,7 +256,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
       const stack=[seed],component=[];visited.add(seed);
       while(stack.length && !unsafe) {
         const i=stack.pop(),x=i%width,y=Math.floor(i/width);component.push(i);
-        if(protectedMask[i] || uncertainMask[i]) {unsafe='protected-or-uncertain-ink';break;}
+        if(protectedMask[i] || uMask[i]) {unsafe='protected-or-uncertain-ink';break;}
         // An edge-clipped component cannot establish a closed ownership boundary.
         if(x===0 || y===0 || x===width-1 || y===height-1) {unsafe='clipped-annotation-ink';break;}
         for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
@@ -183,7 +276,7 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
         if(Math.max(cw/ch,ch/cw)>12 && Math.max(cw,ch)>8) {unsafe='unclassified-line-in-text-search';break;}
       }
     }
-    if(unsafe || !ink.size || ink.size>allowed.size*.75) {issues.push({code:unsafe||(!ink.size?'empty-annotation-ink':'non-flat-annotation-search'),id:labelId});continue;}
+    if(unsafe || !ink.size || ink.size>allowed.size*.75) {issues.push({code:unsafe||(!ink.size?'empty-annotation-ink':'non-flat-annotation-search'),id:labelId});return false;}
     const labelRegions=[];
     for(const r of searches) {
       const pixels=r.searchPixels.filter(i=>ink.has(i));
@@ -191,9 +284,39 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
       const {searchPixels,...observation}=r;
       labelRegions.push({...observation,...(measured?{background:measured.background,backgroundTolerance:measured.backgroundTolerance,backgroundEvidence:{borderPixels:measured.borderPixels,method:'closed-near-flat-border'}}:{}),method:'flat-background',pixels});
     }
-    if(labelRegions.length===searches.length) regions.push(...labelRegions);
+    if(labelRegions.length!==searches.length) return false;
+    regions.push(...labelRegions);
+    return true;
+  };
+  for(const [labelId, searches] of grouped) derive(labelId,searches,uncertainMask,issues);
+  // 11-09 라벨 안정화: 글자 라벨의 탐색이 없거나(AI가 삭제 가능성만 보류) 실패했으면, 실제 글자 잉크로 다시 찾은 좁은 상자로
+  // 같은 픽셀 검사를 한 번 더 한다. 이 라벨 자신의 「삭제 가능성」 보류 영역만 검사에서 빼고, 다른 불확실 영역·보호 영역은 그대로다.
+  const localTextSearches=[],localTextSearchRejections=[],derivedIds=new Set(regions.map(r=>r.labelId));
+  for(const label of plan.labels || []) {
+    if(label.sourceRef!==1 || label.scope!=='general' || label.ownershipReviewRequired || label.mode!=='text' || derivedIds.has(label.id)) continue;
+    const own=(plan.uncertainties || []).filter(u=>u.labelId===label.id);
+    if(own.some(u=>u.domain!=='removal' || (u.component || 'text')!=='text')) continue;
+    if((plan.removalRegions || []).some(r=>r.labelId===label.id)) continue;
+    const local=localTextSearchFromGlyphInk({data,width,height,label,plan});
+    if(!local.bounds) {localTextSearchRejections.push({labelId:label.id,reason:local.rejected});continue;}
+    const b=local.bounds,searchPixels=[],edgePixels=[];
+    for(let y=Math.floor(b.y*height);y<Math.min(height,Math.ceil((b.y+b.h)*height));y++) for(let x=Math.floor(b.x*width);x<Math.min(width,Math.ceil((b.x+b.w)*width));x++) {
+      const i=y*width+x;
+      if(local.foreignPixels.has(i)) continue;
+      if(x===0 || y===0 || x===width-1 || y===height-1) edgePixels.push(i); else searchPixels.push(i);
+    }
+    const search={id:`local-text-${label.id}`,labelId:label.id,sourceRef:1,ownership:'confirmed',component:'text',bounds:{...b},background:local.background,
+      backgroundMode:'sample-flat',origin:'local-glyph-ink',ringIgnore:local.foreignPixels,searchPixels,...(edgePixels.length?{edgePixels}:{})};
+    const uMask=new Uint8Array(width*height);
+    addBounds(uMask,(plan.uncertainties || []).filter(u=>u.labelId!==label.id),width,height);
+    const localIssues=[];
+    if(!derive(label.id,[search],uMask,localIssues)) localTextSearchRejections.push({labelId:label.id,reason:`pixel-check:${localIssues[0]?.code || 'failed'}`,bounds:{...b}});
+    else {
+      for(let k=issues.length-1;k>=0;k--) if(issues[k].id===label.id || issues[k].labelId===label.id) issues.splice(k,1);
+      localTextSearches.push({labelId:label.id,bounds:{...b},glyphBounds:local.glyphBounds});
+    }
   }
-  return {regions,issues};
+  return {regions,issues,localTextSearches,localTextSearchRejections};
 }
 /** Observation boxes never grant erasure authority. Only explicit label-owned shapes do. */
 export function buildExamLabelRemovalMasks(plan,width,height,workflow) {
@@ -276,7 +399,10 @@ export function removeExamLabelPixels({data,width,height,plan,workflow,signal}={
   if (!(data instanceof Uint8Array || data instanceof Uint8ClampedArray) || data.length!==width*height*4) throw new TypeError('RGBA 원본이 필요합니다.');
   const derived=deriveExamAnnotationInkMasks({data,width,height,plan});
   const existingMaskValid=!plan.removalMasks || plan.removalMasks.version===1 && plan.removalMasks.coordinateSpace==='source-pixels' && plan.removalMasks.width===width && plan.removalMasks.height===height;
-  const derivedPlan=derived.regions.length && existingMaskValid?{...plan,removalMasks:{version:1,coordinateSpace:'source-pixels',width,height,regions:[...(plan.removalMasks?.version===1 && plan.removalMasks.width===width && plan.removalMasks.height===height ? plan.removalMasks.regions||[]:[]),...derived.regions],protectedPixels:plan.removalMasks?.protectedPixels||[],uncertainPixels:plan.removalMasks?.uncertainPixels||[]}}:plan;
+  // 실제 글자 잉크로 다시 찾아 픽셀로 확인한 라벨은, 그 라벨 자신의 「삭제 가능성」 보류가 풀린 것으로 본다(원문·소속·구조 보류는 그대로).
+  const resolved=new Set((derived.localTextSearches || []).map(s=>s.labelId));
+  const basePlan=resolved.size?{...plan,uncertainties:(plan.uncertainties || []).filter(u=>!(resolved.has(u.labelId) && u.domain==='removal' && (u.component || 'text')==='text'))}:plan;
+  const derivedPlan=derived.regions.length && existingMaskValid?{...basePlan,removalMasks:{version:1,coordinateSpace:'source-pixels',width,height,regions:[...(plan.removalMasks?.version===1 && plan.removalMasks.width===width && plan.removalMasks.height===height ? plan.removalMasks.regions||[]:[]),...derived.regions],protectedPixels:plan.removalMasks?.protectedPixels||[],uncertainPixels:plan.removalMasks?.uncertainPixels||[]}}:plan;
   const built=buildExamLabelRemovalMasks(derivedPlan,width,height,workflow),output=new Uint8ClampedArray(data),pending=[],appliedMask=new Uint8Array(width*height),issues=[...built.issues,...derived.issues];
   const groups=new Map(plan.labels.filter(l=>l.sourceRef===1 && l.scope==='general').map(l=>[l.id,[]]));
   for(const region of built.regions) {
@@ -326,7 +452,7 @@ export function removeExamLabelPixels({data,width,height,plan,workflow,signal}={
     appliedRegions.push(...regions);
     if(label) removedLabelIds.push(key);
   }
-  const result={data:output,width,height,appliedMask,appliedRegions,pending,removedLabelIds,deferredLabels,report:{derivedInkRegions:derived.regions.length,issues:issues.map(issue=>({...issue,message:describeExamRemovalIssue(issue,plan)})),outsideMaskChanged:0},calls:{localRestore:0,fullGeneration:0}};
+  const result={data:output,width,height,appliedMask,appliedRegions,pending,removedLabelIds,deferredLabels,report:{derivedInkRegions:derived.regions.length,localTextSearches:derived.localTextSearches||[],localTextSearchRejections:derived.localTextSearchRejections||[],issues:issues.map(issue=>({...issue,message:describeExamRemovalIssue(issue,plan)})),outsideMaskChanged:0},calls:{localRestore:0,fullGeneration:0}};
   updateRemovalReport(result,data);
   return result;
 }
