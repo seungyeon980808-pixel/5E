@@ -334,7 +334,10 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
     }
     if (style) Object.assign(object, nativePresentationForLabelTypography(typography));
     // 11-07: 한글 그림 자리에 넣을 때는 원본 라벨 높이로 정한 크기(labelSizeMm)를 쓴다. 그 밖엔 3.7mm.
-    object.labelSize = style ? image.h * style.size : (Number.isFinite(labelSizeMm) && labelSizeMm > 0 ? labelSizeMm : DEFAULT_TEXT_SIZE_MM);
+    // 11-09 라벨 안정화: 결과 명세에 라벨마다 잰 원본 글자 크기(measuredSize, 그림 높이 대비)가 있으면 그것을 넣은 그림 높이에 곱해 쓴다
+    // (넣는 곳의 1.8mm 하한·그림 하나 크기 대신 — 규칙 5 원본 글자 높이 ±15%).
+    const measuredMm = Number.isFinite(label.measuredSize) && label.measuredSize > 0 ? Math.min(16, Math.max(0.5, label.measuredSize * image.h)) : null;
+    object.labelSize = style ? image.h * style.size : measuredMm ?? (Number.isFinite(labelSizeMm) && labelSizeMm > 0 ? labelSizeMm : DEFAULT_TEXT_SIZE_MM);
     if (style?.strokeLevel !== undefined) object.strokeLevel = style.strokeLevel;
     if (label.mode !== 'leader') {
       object.type = formula ? 'formula' : 'text';

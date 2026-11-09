@@ -236,3 +236,17 @@ test('graph figures route to graph restore, are never label-restored, and stay t
  assert.equal(kept.removalReport.changedPixels,0);assert.equal(kept.removalReport.unchanged,true);assert.equal(f.counts.generate,0);
  assert.match(kept.keptMessage,/원본/);
 });
+
+// 11-09 라벨 안정화(규칙 5): 라벨 크기는 라벨마다 원본 글자 높이를 따르고, 원본에서 같은 크기(10% 안)였던 라벨끼리는 같은 크기,
+// 크게 잘못 재진 것(가운데 값의 1.8배 넘음)은 가운데 값으로.
+test('measured label sizes follow each source label; same-size labels share a size and a mis-measured one falls back to the median',async()=>{
+ const {measuredLabelSizes}=await api;
+ const label=(id,h,text='A')=>({id,text,typography:{bounds:{x:.1,y:.1,w:.1,h}}});
+ const {ratio,sizes}=await measuredLabelSizes('data:,',[label('a',.036),label('b',.038),label('c',.045),label('d',.30)]);
+ // node에서는 픽셀·글꼴을 못 재어 AI 상자 높이와 기본 글자 높이 비(대문자 .72)로 잰다.
+ assert.ok(Math.abs(sizes.get('a')-sizes.get('b'))<1e-12,'10% 안은 같은 크기');
+ assert.ok(Math.abs(sizes.get('c')-.045/.72)<1e-9,String(sizes.get('c')));
+ assert.ok(Math.abs(sizes.get('d')-ratio)<1e-12,'1.8배 넘게 재진 것은 가운데 값');
+ assert.ok(sizes.get('c')>sizes.get('a')*1.15,'원본에서 큰 글자는 라벨도 큼');
+ assert.deepEqual(await measuredLabelSizes('data:,',[]),{ratio:null,sizes:new Map()});
+});

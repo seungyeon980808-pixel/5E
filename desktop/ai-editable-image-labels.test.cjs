@@ -469,3 +469,18 @@ test('inserts and replaces the raster plus auto labels in one undoable state cha
     globalThis.Image = previousImage;
   }
 });
+
+// 11-09 라벨 안정화(규칙 5): 결과 명세 라벨에 원본 글자 크기(measuredSize)가 있으면 넣는 곳의 크기(1.8mm 하한이 걸린 값)보다 앞선다.
+// 원본 명세 지문(대상 대응)은 이 값을 빼고 재므로 붙여도 깨지지 않는다.
+test('per-label measured size beats the clamped insertion size and does not break the target placement binding', async () => {
+  const { createEditableImageLabelObjects } = await import('../js/ai-editable-image-labels.js');
+  const { labelBindingJson } = await import('../js/ai-label-target-placement.js');
+  const label = { id: 'a', text: '파장', evidence: '파장', sourceKind: 'reference', sourceRef: 1, mode: 'text', labelType: 'label', contentMode: 'plain', anchor: { x: 0.5, y: 0.5 }, position: { x: 0.5, y: 0.5 } };
+  const image = { id: 'img', x: 0, y: 0, w: 60, h: 20, rotation: 0 };
+  let n = 0;
+  const [sized] = createEditableImageLabelObjects({ labels: [{ ...label, measuredSize: 0.05 }], image, labelSizeMm: 1.8, idFactory: () => 'l' + ++n });
+  assert.ok(Math.abs(sized.fontSize - 1.0) < 1e-9, String(sized.fontSize));
+  const [plain] = createEditableImageLabelObjects({ labels: [label], image, labelSizeMm: 1.8, idFactory: () => 'l' + ++n });
+  assert.equal(plain.fontSize, 1.8);
+  assert.equal(labelBindingJson([{ ...label, measuredSize: 0.05 }]), JSON.stringify([label]));
+});

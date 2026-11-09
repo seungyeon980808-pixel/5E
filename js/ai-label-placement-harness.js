@@ -1,3 +1,5 @@
+// 11-09 라벨 안정화: 라벨별 원본 글자 크기(measuredSize)는 결과 명세에만 붙는 표시 값이라 원본 라벨 지문에서 뺀다.
+const labelsJsonWithoutSizes = labels => JSON.stringify((labels || []).map(label => { if (!label || typeof label !== 'object' || !('measuredSize' in label)) return label; const { measuredSize, ...rest } = label; return rest; }));
 // Deterministic geometry proposals, never semantic target assignments.
 // All boxes use normalized RAW coordinates. Raster pixels are immutable RGBA.
 const copy = value => JSON.parse(JSON.stringify(value));
@@ -92,7 +94,7 @@ export function buildLabelPlacementCandidates({plan,measurements,raster,imageKin
     }
     return {...group,locked,candidates,...(!candidates.length?{reason:'no-clear-whole-group-candidate'}:{})};
   });
-  return {version:1,imageKind,policy,sourceLabelsJson:JSON.stringify(plan.labels),sourceGroupsJson:JSON.stringify(plan.relationGroups||[]),sourceAssociationsJson:JSON.stringify(plan.sourceAssociations||[]),sourceGeometryJson:JSON.stringify(plan.geometryLock||null),width:raster.width,height:raster.height,groups:rows};
+  return {version:1,imageKind,policy,sourceLabelsJson:labelsJsonWithoutSizes(plan.labels),sourceGroupsJson:JSON.stringify(plan.relationGroups||[]),sourceAssociationsJson:JSON.stringify(plan.sourceAssociations||[]),sourceGeometryJson:JSON.stringify(plan.geometryLock||null),width:raster.width,height:raster.height,groups:rows};
 }
 
 function association(plan,id) { return (plan.sourceAssociations || []).find(a=>(a.labelId??a.id)===id); }
@@ -136,7 +138,7 @@ export function buildCompactLabelPlacementPrompt(plan,proposals) {
 export function parseCompactLabelPlacementResponse(raw,plan,proposals) {
   if(typeof raw!=='string'||raw.length>100000)throw new TypeError('Invalid compact placement response');
   const data=JSON.parse(raw);
-  if(proposals.sourceLabelsJson!==JSON.stringify(plan.labels)||proposals.sourceGroupsJson!==JSON.stringify(plan.relationGroups||[])||proposals.sourceAssociationsJson!==JSON.stringify(plan.sourceAssociations||[])||proposals.sourceGeometryJson!==JSON.stringify(plan.geometryLock||null))throw new TypeError('Stale placement proposals');
+  if(proposals.sourceLabelsJson!==labelsJsonWithoutSizes(plan.labels)||proposals.sourceGroupsJson!==JSON.stringify(plan.relationGroups||[])||proposals.sourceAssociationsJson!==JSON.stringify(plan.sourceAssociations||[])||proposals.sourceGeometryJson!==JSON.stringify(plan.geometryLock||null))throw new TypeError('Stale placement proposals');
   if(data?.version!==1||!Array.isArray(data.groups)||data.groups.length!==proposals.groups.length)throw new TypeError('Incomplete placement groups');
   const seen=new Set(), rows=[];
   for(const row of data.groups) {

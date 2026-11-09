@@ -15,6 +15,7 @@ import { SOURCE_LABEL_POLICY_VERSION } from './ai-editable-image-labels.js?v=1.7
 import { externalLabelDraftIds } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-label-background.js?v=1.7.0-four-session-integration';
 import { fitCandidateToSource, measureSourceLabelHeights } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
+import { nativePresentationForLabelTypography, presentationRoleFor, prepareEditableLabelFonts } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 
 export const IMAGE_LABEL_RUN_VERSION = '1.6.1';
 export const IMAGE_LABEL_GENERATION_HARNESS = 'rhwp-approved-first-v1';
@@ -48,6 +49,46 @@ export async function measuredLabelSizeRatio(sourceDataUrl, labels = [], signal)
   // 잘못 재지는 쪽은 거의 늘 「크게」라서 작은 쪽을 쓴다. 홀수 개면 지금처럼 가운데 값.
   return sizes.length ? sizes[Math.floor((sizes.length - 1) / 2)] : null;
 }
+// 11-09 라벨 안정화(규칙 5 「라벨 글자 크기는 원본 글자 높이의 ±15%, 원본에서 같은 크기면 같은 크기」):
+// 그림 전체에 한 크기를 쓰면 원본에서 크기가 다른 글자(손 X선 「뼈 촬영」 29px·「A: X선」 36px)가 같은 크기가 되고,
+// 넣을 때의 하한(1.8mm) 때문에 작게 넣은 그림의 라벨이 원본보다 1.2~1.6배 커졌다(교과서 tb02·tb05 실측).
+// 라벨마다 원본에서 잰 첫 줄 높이를, 그 라벨을 그릴 글꼴의 실제 글자 높이 비(캔버스 측정)로 나눠 글자 크기(그림 높이 대비)를 정한다.
+// 크게 잘못 재진 것(두 줄을 한 줄로 받음 등, 가운데 값의 1.8배 넘음·0.55배 아래)은 가운데 값으로, 10% 안인 것끼리는 같은 크기로 맞춘다.
+let inkMeasureContext = null;
+function labelInkPerEm(text, font) {
+  if (typeof document === 'undefined' || !text) return null;
+  try {
+    inkMeasureContext ||= document.createElement('canvas').getContext('2d');
+    inkMeasureContext.font = `${font.italic ? 'italic ' : ''}${font.fontWeight || 'normal'} 200px ${font.fontFamily}`;
+    const m = inkMeasureContext.measureText(text);
+    const h = (m.actualBoundingBoxAscent || 0) + (m.actualBoundingBoxDescent || 0);
+    return h > 20 ? h / 200 : null;
+  } catch { return null; }
+}
+export async function measuredLabelSizes(sourceDataUrl, labels = [], signal) {
+  let measured = [];
+  try { measured = await measureSourceLabelHeights({ sourceDataUrl, labels, signal }); } catch (error) { if (error?.name === 'AbortError') throw error; }
+  try { await prepareEditableLabelFonts(labels); } catch {}
+  const glyph = new Map(measured.map(m => [m.id, m.h])), raw = [];
+  for (const label of labels) {
+    const h = glyph.get(label.id) || (!String(label.text).includes('\n') && label.typography?.bounds?.h > 0 ? label.typography.bounds.h : 0);
+    if (!(h > 0)) continue;
+    const first = String(label.text).split('\n')[0].trim();
+    const hangul = /[가-힣]/.test(first);
+    const font = nativePresentationForLabelTypography({ role: hangul ? 'text' : presentationRoleFor(label.typography?.role, label.text) });
+    const k = labelInkPerEm(first, font) ?? (hangul ? .88 : /^[A-Z0-9]+$/.test(first) ? .72 : .8);
+    raw.push({ id: label.id, size: h / k });
+  }
+  if (!raw.length) return { ratio: null, sizes: new Map() };
+  const sorted = raw.map(r => r.size).sort((a, b) => a - b), median = sorted[Math.floor((sorted.length - 1) / 2)];
+  const usable = raw.map(r => ({ ...r, size: r.size > median * 1.8 || r.size < median * .55 ? median : r.size })).sort((a, b) => a.size - b.size);
+  const groups = [];
+  for (const r of usable) { const g = groups.at(-1); if (g && r.size <= g[0].size * 1.1) g.push(r); else groups.push([r]); }
+  const sizes = new Map();
+  for (const g of groups) { const s = g.map(r => r.size); const m = s[Math.floor((s.length - 1) / 2)]; for (const r of g) sizes.set(r.id, m); }
+  return { ratio: median, sizes };
+}
+const withLabelSizes = (labels, sizes) => (labels || []).map(label => sizes?.has(label.id) ? { ...label, measuredSize: sizes.get(label.id) } : label);
 const cancelled = signal => { if (signal?.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError'); };
 // 11-09 사용자 원칙: AI 변환(이미지·그래프)은 어떤 경우에도 「실패」로 끝나면 안 된다.
 // 응답이 없거나 오류가 나면 같은 요청을 자동으로 다시 보내고(시도마다 응답 없음 시간 제한), 두 번째 시도부터는 Luna로 바꿔 보낸다.
@@ -550,9 +591,9 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         targetVerified: false, placementVerified: false }, { workflow, candidateSha256 }).report;
       report.mechanicalDiagnostics = [...clone(removalReport.issues || []), ...clone(composite?.report.issues || [])];
       if (composite) { report.compositeBindings = composite.bindings; report.compositeMeasurements = composite.report; }
-      const labelSizeRatio = workflow.labelResult === 'restore-editable' ? await measuredLabelSizeRatio(source.data, restorationPlan.labels || [], signal) : null;
-      const labelPlan = workflow.labelResult === 'restore-editable' ? { ...clone(restorationPlan), sourcePlan: clone(restorationPlan),
-        qualityReview: report, reviewRequired: true, targetPlacement: clone(placement), candidateSha256, ...(labelSizeRatio ? { measuredLabelSize: labelSizeRatio } : {}) } : null;
+      const sized = workflow.labelResult === 'restore-editable' ? await measuredLabelSizes(source.data, restorationPlan.labels || [], signal) : null;
+      const labelPlan = workflow.labelResult === 'restore-editable' ? { ...clone(restorationPlan), labels: withLabelSizes(clone(restorationPlan.labels), sized?.sizes), sourcePlan: clone(restorationPlan),
+        qualityReview: report, reviewRequired: true, targetPlacement: clone(placement), candidateSha256, ...(sized?.ratio ? { measuredLabelSize: sized.ratio } : {}) } : null;
       if (placement) removalReport.restorationPlanSha256 = placement.planSha256;
       metrics.cacheStored = false; metrics.cacheSkipReason = 'exam-removal-partial';
       metrics.timings.total = Math.round(performance.now() - started);
@@ -661,8 +702,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   report = acceptance.report;
   report.mechanicalDiagnostics = mechanicalDiagnostics;
   if (workflow.labelResult === 'restore-editable') {
-    const labelSizeRatio = await measuredLabelSizeRatio(source.data, plan.labels || [], signal);
-    labelPlan = { ...clone(plan), sourcePlan: clone(plan), qualityReview: report, reviewRequired: !acceptance.accepted, targetPlacement: clone(targetPlacement), candidateSha256, ...(labelSizeRatio ? { measuredLabelSize: labelSizeRatio } : {}) };
+    const sized = await measuredLabelSizes(source.data, plan.labels || [], signal);
+    labelPlan = { ...clone(plan), labels: withLabelSizes(clone(plan.labels), sized.sizes), sourcePlan: clone(plan), qualityReview: report, reviewRequired: !acceptance.accepted, targetPlacement: clone(targetPlacement), candidateSha256, ...(sized.ratio ? { measuredLabelSize: sized.ratio } : {}) };
   }
   metrics.timings.total = Math.round(performance.now() - started);
   const result = { version: IMAGE_LABEL_RUN_VERSION, accepted: acceptance.accepted, status: acceptance.accepted ? 'complete' : 'needs-attention', data, workflow, sourceSha256, sourceFrame, planSha256, candidateSha256, candidateFrame, sourceLabelPlan: clone(plan), targetPlacement,
