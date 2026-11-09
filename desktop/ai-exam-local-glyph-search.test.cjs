@@ -150,3 +150,28 @@ test('a tall narrow bar at the observed text position is not the glyph: it stays
  assert.deepEqual(rg.removedLabelIds,['s'],'원래 길쭉한 글자(I)는 그대로 지운다');
  for(const i of g.bar)assert.equal(rg.data[i*4],255);
 });
+
+// 11-09 라벨 안정화(넓음): AI가 준 글자 자리가 비켜 있어 옆 구조(네모 테두리 등)까지 한 덩어리로 집으면
+// 전에는 「글자 수에 맞는 너비가 아니다」며 통째로 보류했다(개발·검증 47장에서 11건). 이제 가장 먼 가장자리 덩어리를
+// 떼어 너비를 맞추고, 글자만 지운다 — 떼어 낸 구조는 1픽셀도 바뀌지 않는다.
+const wideFixture=()=>{
+ const width=200,height=100,data=new Uint8ClampedArray(width*height*4).fill(255),dark=(x,y)=>data.set([0,0,0,255],(y*width+x)*4);
+ const glyph=new Set(),frame=new Set();
+ for(let y=30;y<=49;y++){for(let x=40;x<=42;x++)glyph.add(y*width+x);for(let x=51;x<=53;x++)glyph.add(y*width+x);}
+ for(let y=39;y<=40;y++)for(let x=43;x<=50;x++)glyph.add(y*width+x);          // 글자(H 모양) 14x20
+ for(let x=62;x<=80;x++){frame.add(30*width+x);frame.add(49*width+x);}
+ for(let y=30;y<=49;y++){frame.add(y*width+62);frame.add(y*width+80);}        // 옆 네모 테두리 19x20
+ for(const i of glyph)dark(i%width,Math.floor(i/width));
+ for(const i of frame)dark(i%width,Math.floor(i/width));
+ // AI가 준 글자 자리가 비켜 넓게 잡혔다(글자 14px + 옆 테두리까지 41px) — 실제로 넓음 거절이 나던 모양.
+ const label={id:'a',text:'A',sourceRef:1,scope:'general',mode:'text',typography:{role:'name',bounds:{x:40/width,y:30/height,w:41/width,h:20/height}}};
+ return {width,height,data,plan:{labels:[label],uncertainties:[],protectedRegions:[],preservedMarks:[],removalRegions:[],inkSearchRegions:[]},glyph,frame};
+};
+test('a cluster that swallowed a neighbouring frame is trimmed to the glyph instead of being held, and the frame keeps every pixel', async () => {
+ const {removeExamLabelPixels}=await api;
+ const f=wideFixture(),r=removeExamLabelPixels(f);
+ assert.deepEqual(r.removedLabelIds,['a'],'보류하지 않고 글자를 지운다');
+ for(const i of f.glyph)assert.equal(r.data[i*4],255,'글자 획은 지워진다');
+ for(const i of f.frame)assert.equal(r.data[i*4],0,'옆 네모 테두리는 그대로 남는다');
+ assert.equal((r.report.localTextSearchRejections||[]).length,0,'넓다는 이유로 거절하지 않는다');
+});

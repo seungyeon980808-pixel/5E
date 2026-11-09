@@ -245,8 +245,27 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   }
   if(!circledText && picked.some(o=>picked.some(c=>c!==o && encloses(o,c)))) return {rejected:'enclosing-frame'};
   // 글자 수에 맞는 너비여야 한다(일부만 잡거나 이웃 라벨·구조를 삼키지 않게).
-  const weight=[...text].reduce((s,ch)=>s+glyphWeight(ch),0),bw=box.x1-box.x0+1,bh=box.y1-box.y0+1;
-  if(!circledText && (bw<weight*H*.45 || bw>weight*H*1.35+H*.6)) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
+  const weight=[...text].reduce((s,ch)=>s+glyphWeight(ch),0);
+  const boxOf=list=>list.reduce((u,c)=>u?{x0:Math.min(u.x0,c.x0),y0:Math.min(u.y0,c.y0),x1:Math.max(u.x1,c.x1),y1:Math.max(u.y1,c.y1)}:{x0:c.x0,y0:c.y0,x1:c.x1,y1:c.y1},null);
+  const minW=weight*H*.45,maxW=weight*H*1.35+H*.6;
+  // 11-09 라벨 안정화: 너비가 넘치면 곧바로 버리지 않는다. AI가 준 자리가 한 글자쯤 비켜 이웃 글자·구조까지 한 덩어리로
+  // 삼킨 경우이므로, 가장 큰 글자 덩어리에서 가로로 가장 먼 가장자리 덩어리를 하나씩 떼어 너비를 맞춘다.
+  // 라벨의 진짜 글자를 떼어 내면 너비가 minW 아래로 떨어지므로, 글자 수에 맞는 범위에 들어올 때만 받아들인다.
+  if(!circledText && box.x1-box.x0+1>maxW) {
+    const cx=(main.x0+main.x1)/2,far=c=>Math.max(Math.abs(c.x0-cx),Math.abs(c.x1-cx));
+    let list=[...chosen];
+    for(;;) {
+      const b=boxOf(list);
+      if(!b || b.x1-b.x0+1<=maxW) break;
+      const cand=list.filter(c=>c!==main).sort((q,r)=>far(r)-far(q))[0];
+      if(!cand) break;
+      list=list.filter(c=>c!==cand);
+    }
+    const b=boxOf(list);
+    if(b && b.x1-b.x0+1<=maxW && b.x1-b.x0+1>=minW) {chosen.clear();list.forEach(c=>chosen.add(c));box=b;}
+  }
+  const bw=box.x1-box.x0+1,bh=box.y1-box.y0+1;
+  if(!circledText && (bw<minW || bw>maxW)) return {rejected:bw<minW?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
   // 찾은 덩어리가 AI가 본 글자 상자보다 높이·너비 모두 절반도 안 되면(점선 조각·점이 씨앗이 된 경우) 글자가 아니다.
   if(H<th*.5 && bw<tw*.5) return {rejected:'glyph-much-smaller-than-observed'};
   // 11-09 라벨 안정화: 글자는 세로로 길쭉하지 않다. AI가 글자 자리를 엉뚱한 곳(그림 아래 받침대 등)으로 줬을 때
