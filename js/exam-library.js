@@ -390,8 +390,10 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     const before = hakpyeongRevision;
     await mountPackManagement();
     const work = hakpyeongTask.then(async () => {
-      if (hakpyeongAll || (filters.subject && hakpyeongSubjects.has(filters.subject))) return;
-      const subjects = filters.subject ? [...new Set([...hakpyeongSubjects, filters.subject])].sort() : [];
+      // 11-09: 고른 과목이 여럿이어도(기본 물리Ⅰ·Ⅱ) 그 과목만 읽는다 — 전에는 둘 이상이면 8과목을 다 읽었다.
+      const wanted = filters.subject ? [filters.subject] : Array.isArray(filters.subjects) ? filters.subjects.filter(Boolean) : [];
+      if (hakpyeongAll || (wanted.length && wanted.every(subject => hakpyeongSubjects.has(subject)))) return;
+      const subjects = wanted.length ? [...new Set([...hakpyeongSubjects, ...wanted])].sort() : [];
       const {loadHakpyeongPack} = await import("./pdf-library/hakpyeong-pack.js");
       hakpyeongPack = await loadHakpyeongPack(subjects);
       if (!subjects.length) hakpyeongAll = true;
@@ -517,6 +519,16 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     if (location.protocol !== "file:") typeof requestIdleCallback === "function" ? requestIdleCallback(preload, { timeout: 2500 }) : setTimeout(preload, 800);
   };
   openButton.addEventListener("click", () => void openLibrary(openButton));
+  // 11-09 사용자: 「처음 로딩에서 미리 다 불러 두고, 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 자료
+  // (기본 자료팩·학평 기본 범위 과목·검색 색인)를 미리 준비한다. 들어간 뒤 첫 검색에서 학평을 읽고 색인을 만드느라 멈칫하지 않게.
+  let warming = null;
+  const warmLibrary = () => warming ||= (async () => {
+    await mountPackManagement();
+    const filters = { ...(unifiedUi.defaultConditionFilters?.() ?? {}) };
+    await prepareHakpyeong({ query: "", filters: { ...filters, exam: "hak" }, questionSearch: true });
+    const provider = await getUnifiedProvider();
+    await provider.searchAsync?.({ query: "물체", kinds: ["crop"], filters, limit: 8 });
+  })().catch((error) => { warming = null; console.warn("라이브러리 미리 준비 실패", error); });
   registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, onClose, bindClose, trigger } = {}) => {
     void mountPackManagement().catch((error) => onStatus?.(error instanceof Error ? error.message : String(error), "error"));
     bindClose?.(() => unifiedUi.close());
@@ -524,6 +536,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   });
   return Object.freeze({
     openLibrary,
+    warmLibrary,
     registerUnifiedLibraryConsumer: (consumer) => unifiedConsumerRegistry.register(consumer),
     beginUnifiedLibrarySelection: (trigger) => unifiedConsumerRegistry.begin(trigger),
   });

@@ -34,7 +34,21 @@ function compactWordsOf(wordsBySubject, item, rect) {
   });
 }
 
-export async function loadHakpyeongPack(subjects = []) {
+// 처음 라이브러리 범위(물리Ⅰ·Ⅱ) — 시작 화면이 떠 있는 동안 이 과목 자료를 미리 읽어 둔다(js/main.js).
+export const DEFAULT_HAKPYEONG_SUBJECTS = Object.freeze(['p1', 'p2']);
+// 같은 과목 묶음은 한 번만 읽는다 — 시작 화면에서 미리 읽은 것을 첫 검색이 그대로 쓴다.
+const packCache = new Map();
+export function loadHakpyeongPack(subjects = []) {
+  const key = [...subjects].sort().join(',');
+  if (!packCache.has(key)) {
+    const work = loadHakpyeongPackNow(subjects);
+    packCache.set(key, work);
+    work.catch(() => packCache.delete(key));
+  }
+  return packCache.get(key);
+}
+
+async function loadHakpyeongPackNow(subjects = []) {
   const [{index, items}, wordsBySubject] = await Promise.all([
     loadPastQuestions(subjects, 'hakpyeong'),
     (async () => {

@@ -187,6 +187,12 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
       wrap.append(button, del);
       list.append(wrap);
     }
+    // 11-09: 들어가기 전에 무거운 준비(라이브러리 자료·검색 색인)를 끝낸다 — 들어간 뒤 멈칫하지 않게.
+    // 너무 오래 걸리면(네트워크 등) 15초에서 끊고 들어간다(준비는 뒤에서 계속).
+    for (const task of tasks) {
+      setStatus(task.label);
+      await Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 15000 - (performance.now() - started))))]);
+    }
     clearInterval(creep);
     bar.style.width = '100%'; setStatus('준비 완료');
     const wait = Math.max(0, MIN_INTRO - (performance.now() - started));
@@ -204,5 +210,8 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
     return new Promise(resolve => { resolveChoice = resolve; });
   }
 
-  return { choose, setStatus, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
+  // 시작 화면이 떠 있는 동안 할 준비를 맡긴다(바로 시작하고, 고르기 화면은 끝날 때까지 기다린다).
+  const tasks = [];
+  function waitFor(label, run) { let work; try { work = Promise.resolve(run()).catch(() => {}); } catch { work = Promise.resolve(); } tasks.push({ label, work }); return work; }
+  return { choose, setStatus, waitFor, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
 }
