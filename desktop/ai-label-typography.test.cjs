@@ -79,10 +79,28 @@ test('explicit ordinary mixed-run italic survives while scientific roles retain 
 
 test('11-09: lone lowercase or Greek symbols the AI calls chemical are italic quantities; real formulas stay chemical', async () => {
   const { scriptLabelRuns, presentationRoleFor } = await typography;
-  for (const text of ['t₁', 't₂', 'ε', 'v₀']) assert.deepEqual(scriptLabelRuns(text, 'chemical', [{ text, role: 'chemical' }]).map(r => [r.text, r.role]), [[text, 'quantity']]);
+  // 11-09 라벨 안정화(글씨체 표 2-1): 물리량 글자는 기울임, 아래 첨자 숫자는 수식 정체.
+  for (const text of ['t₁', 't₂', 'ε', 'v₀']) assert.deepEqual(scriptLabelRuns(text, 'chemical', [{ text, role: 'chemical' }]).map(r => [r.text, r.role]), text.length > 1 ? [[text[0], 'quantity'], [text.slice(1), 'number']] : [[text, 'quantity']]);
   assert.deepEqual(scriptLabelRuns('NaOH', 'chemical', [{ text: 'NaOH', role: 'chemical' }]).map(r => r.role), ['chemical']);
   assert.equal(presentationRoleFor('chemical', 'ε_A'), 'quantity');
   assert.equal(presentationRoleFor('chemical', 't_1'), 'quantity');
   assert.equal(presentationRoleFor('chemical', 'H_2O'), 'chemical');
   assert.equal(presentationRoleFor('chemical', 'e^-'), 'chemical');
+});
+
+// 11-09 라벨 안정화(규칙 6, 글씨체 표 2-1): 물리량 라벨 안의 숫자·아래 첨자·단위는 수식 정체, 변수 글자만 기울임.
+// 한글에 바로 붙은 영어(X선)는 한글 줄, 로마 숫자(영역 Ⅰ)는 영어 이름.
+test('numbers, subscript digits and units inside quantity labels stay upright; only the variable letters are italic', async () => {
+  const { scriptLabelRuns } = await typography;
+  const runs = (text, role) => scriptLabelRuns(text, role, []).filter(r => r.text.trim()).map(r => [r.text.trim(), r.role]);
+  assert.deepEqual(runs('2 M, 100 mL', 'quantity'), [['2', 'number'], ['M', 'unit'], [',', 'number'], ['100', 'number'], ['mL', 'unit']]);
+  assert.deepEqual(runs('a M, 100 mL', 'quantity'), [['a', 'quantity'], ['M', 'unit'], [',', 'number'], ['100', 'number'], ['mL', 'unit']]);
+  assert.deepEqual(runs('h₁ mm', 'quantity'), [['h', 'quantity'], ['₁', 'number'], ['mm', 'unit']]);
+  assert.deepEqual(runs('15h', 'quantity'), [['15', 'number'], ['h', 'quantity']]);
+  assert.deepEqual(runs('2d', 'text'), [['2', 'number'], ['d', 'quantity']]);
+  assert.deepEqual(runs('ρ₁', 'quantity'), [['ρ', 'quantity'], ['₁', 'number']]);
+  assert.deepEqual(runs('10 cm', 'text'), [['10 cm', 'unit']]);
+  assert.deepEqual(runs('NaOH', 'chemical'), [['NaOH', 'chemical']]);
+  assert.deepEqual(runs('A: X선', 'text'), [['A:', 'name'], ['X선', 'text']]);
+  assert.deepEqual(runs('영역 Ⅰ', 'text'), [['영역', 'text'], ['Ⅰ', 'name']]);
 });

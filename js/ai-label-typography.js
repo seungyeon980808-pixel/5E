@@ -61,7 +61,8 @@ export function presentationRoleFor(role, text) {
 //   AI가 물리량이라 한 영어 조각 → quantity(수식 글꼴 기울임)   AI가 화학식이라 한 조각 → chemical(정체)
 //   그 밖의 영어 글자(A·B·p·q·LED) → name(명조 정체)   기호만 → text
 const HANGUL = '가-힣ㄱ-ㅎㅏ-ㅣ㉠-㉻㈀-㈜';
-const HANGUL_CHUNK = new RegExp(`[(\\[〈「]*[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
+// 11-09 라벨 안정화: 한글에 바로 붙은 영어(「X선」)는 한글 줄 글꼴(규칙 2-1 「: X선」 한글 줄).
+const HANGUL_CHUNK = new RegExp(`[(\\[〈「]*(?:[A-Za-z]{1,3}(?=[${HANGUL}]))?[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
 const UNIT_AFTER_NUMBER = /^[+−-]?\d[\d.,]*\s*(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|°C?|%|kg)$/u;
 export function scriptLabelRuns(text, role, aiRuns) {
   const source = String(text ?? '');
@@ -84,7 +85,8 @@ export function scriptLabelRuns(text, role, aiRuns) {
   const runs = parts.filter(part => part.text).map(part => {
     const core = part.text.trim();
     let runRole;
-    if (part.hangul || !/[A-Za-z0-9α-ωΑ-Ω]/u.test(core)) runRole = 'text';
+    if (!part.hangul && /^[\u2160-\u217F]+$/u.test(core)) runRole = 'name'; // 로마 숫자(영역 Ⅰ의 Ⅰ)는 이름 — 영어 정체
+    else if (part.hangul || !/[A-Za-z0-9α-ωΑ-Ω]/u.test(core)) runRole = 'text';
     else if (UNIT_AFTER_NUMBER.test(core)) runRole = 'unit';
     else if (/^[+−-]?\d[\d.,]*$/.test(core)) runRole = 'number';
     else if ((chem.has('*') || [...chem].some(c => c && core.includes(c))) && LONE_QUANTITY_SYMBOL.test(core)) runRole = 'quantity';
@@ -95,8 +97,25 @@ export function scriptLabelRuns(text, role, aiRuns) {
     else runRole = 'name';
     return { text: part.text, role: runRole, contentMode: 'plain' };
   });
+  // 11-09 라벨 안정화(규칙 6, 글씨체 표 2-1): 물리량 조각 안의 숫자·아래 첨자 숫자·단위는 수식 정체, 변수 글자만 기울임
+  // (「2 M, 100 mL」·「h₁ mm」·「15h」·「2d」·「ρ₁」이 통째로 기울던 것).
+  const UNIT_WORD = /^(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|kg|mL)$/u;
+  const refined = runs.flatMap(run => {
+    if (run.role !== 'quantity' || !/[0-9₀-₉]/u.test(run.text)) return [run];
+    const tokens = run.text.match(/\s+|[+−-]?\d[\d.,]*|[₀-₉]+|[A-Za-zα-ωΑ-Ωθ]+[′']*|[^\sA-Za-z0-9α-ωΑ-Ωθ₀-₉]+/gu) || [run.text];
+    let prev = null, spaced = false;
+    return tokens.map(token => {
+      let role = run.role;
+      if (/^\s+$/u.test(token)) { spaced = true; return { ...run, text: token }; }
+      if (/^[+−-]?\d[\d.,]*$/u.test(token) || /^[₀-₉]+$/u.test(token)) role = 'number';
+      else if (/^[A-Za-zα-ωΑ-Ωθ]/u.test(token) && UNIT_WORD.test(token) && prev && (spaced || prev === 'number') && !(prev === 'number' && !spaced && /^[a-z]$/.test(token) && !/^[msgL]$/.test(token))) role = 'unit';
+      else if (/^[^\sA-Za-z0-9α-ωΑ-Ωθ₀-₉]+$/u.test(token)) role = prev === 'unit' || prev === 'number' ? 'number' : run.role;
+      prev = role === 'quantity' ? 'quantity' : role === 'unit' ? 'unit' : role === 'number' ? 'number' : prev; spaced = false;
+      return { ...run, text: token, role };
+    });
+  });
   // 11-08: 물질 상태 (l)의 l은 평가원처럼 기울임(액체). (s)·(g)·(aq)는 정체 그대로.
-  const split = runs.flatMap(run => {
+  const split = refined.flatMap(run => {
     if (run.role === 'text' || !/\(l\)/.test(run.text)) return [run];
     return run.text.split(/(\(l\))/).filter(Boolean).flatMap(piece => piece === '(l)'
       ? [{ text: '(', role: run.role, contentMode: 'plain' }, { text: 'l', role: 'quantity', contentMode: 'plain' }, { text: ')', role: run.role, contentMode: 'plain' }]
