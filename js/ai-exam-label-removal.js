@@ -249,6 +249,10 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
   if(!circledText && (bw<weight*H*.45 || bw>weight*H*1.35+H*.6)) return {rejected:bw<weight*H*.45?'glyphs-narrower-than-text':'glyphs-wider-than-text'};
   // 찾은 덩어리가 AI가 본 글자 상자보다 높이·너비 모두 절반도 안 되면(점선 조각·점이 씨앗이 된 경우) 글자가 아니다.
   if(H<th*.5 && bw<tw*.5) return {rejected:'glyph-much-smaller-than-observed'};
+  // 11-09 라벨 안정화: 글자는 세로로 길쭉하지 않다. AI가 글자 자리를 엉뚱한 곳(그림 아래 받침대 등)으로 줬을 때
+  // 그 안의 세로 화살표·막대를 글자로 잡아 지우는 일이 있었다(검증 p1_2023_04_14_1의 「S」 자리에서 아래 화살표 34px를 지움).
+  // 받아 둔 관찰에서 바르게 지운 한 글자 라벨의 세로/가로 비는 최대 2.15였다(I·l·1·t처럼 원래 길쭉한 글자는 뺌).
+  if(!/[Il1ijtf|/\\()\[\]!ΙⅠㅣ]/.test(text) && bh>bw*2.4) return {rejected:'glyph-shape-mismatch'};
   for(const other of plan?.labels || []) {
     if(other===label || other.id===label.id || other.sourceRef!==1 || !boundsOK(other.typography?.bounds)) continue;
     const o=other.typography.bounds,iw=Math.min((o.x+o.w)*width,box.x1+1)-Math.max(o.x*width,box.x0),ih=Math.min((o.y+o.h)*height,box.y1+1)-Math.max(o.y*height,box.y0);

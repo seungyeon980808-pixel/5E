@@ -125,3 +125,28 @@ test('broad protection or another label\'s removal box does not block a re-found
    if(erased && glyph(x,y))assert.equal(r.data[i*4],255,name);else assert.deepEqual(r.data.slice(i*4,i*4+4),f.data.slice(i*4,i*4+4),name);}
  }
 });
+
+
+// 11-09 라벨 안정화(글자 모양): AI가 글자 자리를 엉뚱한 곳(그림 아래 받침대 등)으로 주면 그 안의 세로 화살표·막대를 글자로 잡아
+// 지우는 일이 있었다(검증 p1_2023_04_14_1의 「S」 자리에서 아래 화살표 14x34px를 지워 원본이 144px 훼손됐다).
+// 글자는 세로로 길쭉하지 않다 — 세로/가로가 2.4배를 넘으면 그 글자가 아니다. 원래 길쭉한 글자(I·l·1·t 등)는 예외다.
+const barFixture=(text='S')=>{
+ const width=140,height=100,data=new Uint8ClampedArray(width*height*4).fill(255),dark=(x,y)=>data.set([0,0,0,255],(y*width+x)*4);
+ const bar=new Set();
+ for(let y=30;y<=63;y++)for(let x=62;x<=75;x++)bar.add(y*width+x);   // 세로 막대(화살표 몸통) 14x34
+ for(const i of bar)dark(i%width,Math.floor(i/width));
+ const label={id:'s',text,sourceRef:1,scope:'general',mode:'text',typography:{role:'name',bounds:{x:50/width,y:30/height,w:40/width,h:34/height}}};
+ const plan={labels:[label],uncertainties:[{sourceRef:1,labelId:'s',component:'text',domain:'removal',reason:'글자 영역과 배경을 확정하기 어렵다'}],
+  protectedRegions:[],preservedMarks:[],removalRegions:[],inkSearchRegions:[]};
+ return {width,height,data,plan,bar};
+};
+test('a tall narrow bar at the observed text position is not the glyph: it stays, while a naturally tall letter is still erased', async () => {
+ const {removeExamLabelPixels}=await api;
+ const f=barFixture('S'),r=removeExamLabelPixels(f);
+ assert.deepEqual(r.removedLabelIds,[],'세로 막대는 글자가 아니므로 지우지 않는다');
+ assert.deepEqual(r.data,f.data,'원본 픽셀이 1픽셀도 바뀌지 않는다');
+ assert.equal(r.report.localTextSearchRejections.find(x=>x.labelId==='s')?.reason,'glyph-shape-mismatch');
+ const g=barFixture('I'),rg=removeExamLabelPixels(g);
+ assert.deepEqual(rg.removedLabelIds,['s'],'원래 길쭉한 글자(I)는 그대로 지운다');
+ for(const i of g.bar)assert.equal(rg.data[i*4],255);
+});
