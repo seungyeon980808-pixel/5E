@@ -1905,7 +1905,9 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         } else changed = quick;
       }
       if (!searchIsCurrent(ownEpoch, signal)) return;
-      if (changed) await renderSources(() => searchIsCurrent(ownEpoch, signal));
+      // 11-09: 학평이 뒤늦게(0.15초 넘어) 합쳐진 뒤 다시 찾을 때도 자료 목록을 새로 — 전에는 changed가 false라 학평 자료가 목록에 없어 결과에서 빠졌다.
+      // 자료가 그대로면 renderSources는 바로 돌아온다.
+      if (changed || renderedSourceRevision !== (await provider()).revision) await renderSources(() => searchIsCurrent(ownEpoch, signal));
       const activeProvider = await provider();
       if (!enabledSources) await renderSources();
       // 11-05: 조건 칸 숫자 세기(facetCounts)는 문항 전체를 훑어 무겁다 — 결과를 먼저 그리고, 조건 상자가 열려 있을 때만 센다.
@@ -2499,6 +2501,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       );
       if (resolution.status === "stale") return;
       if (resolution.status === "failed") {
+        if (retry < 2 && /superseded|catalog changed while opening/iu.test(String(resolution.error?.message || resolution.error))) {
+          await renderPreview(retry + 1);
+          return;
+        }
         showPreviewError(resolution.error);
         return;
       }
@@ -2641,7 +2647,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       } else { showPreviewError(new Error("미리보기 이미지가 없습니다.")); }
     } catch (error) {
       if (ownEpoch !== previewEpoch) return;
-      if (retry < 1 && /superseded/iu.test(String(error?.message || error))) {
+      // 11-09: 여는 사이에 학평 자료가 합쳐지면(catalog changed) 오류 대신 바로 다시 연다.
+      if (retry < 2 && /superseded|catalog changed while opening/iu.test(String(error?.message || error))) {
         await renderPreview(retry + 1);
         return;
       }
