@@ -416,10 +416,11 @@
 
 <form class="card" id="form" autocomplete="off">
   <div class="head">
-    <div class="badge" style="gap:8px"><img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22 role=%22img%22 aria-label=%225E%22%3E %3Cdefs%3E %3CradialGradient id=%22bg%22 cx=%2250%25%22 cy=%2260%25%22 r=%2272%25%22%3E %3Cstop offset=%220%25%22 stop-color=%22%2323366b%22/%3E %3Cstop offset=%2266%25%22 stop-color=%22%230b1128%22/%3E %3C/radialGradient%3E %3C/defs%3E %3Crect width=%2296%22 height=%2296%22 rx=%2220%22 fill=%22url%28%23bg%29%22/%3E %3Ctext x=%2249%22 y=%2249%22 font-family=%22Georgia%2C 'Times New Roman'%2C serif%22 font-style=%22italic%22 font-weight=%22600%22 font-size=%2254%22 fill=%22%23f5f8ff%22 text-anchor=%22middle%22 dominant-baseline=%22central%22%3E5E%3C/text%3E %3C/svg%3E" alt="" style="width:22px;height:22px;border-radius:6px"><b style="color:var(--text);font-size:14px">5E_print</b> · 5e.ai.kr/print</div>
+    <div class="badge" style="gap:8px"><img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 96 96%22 role=%22img%22 aria-label=%225E%22%3E %3Cdefs%3E %3CradialGradient id=%22bg%22 cx=%2250%25%22 cy=%2260%25%22 r=%2272%25%22%3E %3Cstop offset=%220%25%22 stop-color=%22%2323366b%22/%3E %3Cstop offset=%2266%25%22 stop-color=%22%230b1128%22/%3E %3C/radialGradient%3E %3C/defs%3E %3Crect width=%2296%22 height=%2296%22 rx=%2220%22 fill=%22url%28%23bg%29%22/%3E %3Ctext x=%2249%22 y=%2249%22 font-family=%22Georgia%2C 'Times New Roman'%2C serif%22 font-style=%22italic%22 font-weight=%22600%22 font-size=%2254%22 fill=%22%23f5f8ff%22 text-anchor=%22middle%22 dominant-baseline=%22central%22%3E5E%3C/text%3E %3C/svg%3E" alt="" style="width:22px;height:22px;border-radius:6px"><b style="color:var(--text);font-size:14px">5E_print <small>v1.1.0</small></b> · 5e.ai.kr/print</div>
     <h1><em class="hl">교재</em> · <em class="hl">문항</em> 만들기</h1>
     <p class="intro">몇 가지만 고르면 AI(Claude 또는 GPT)가 내 자료로 <b>교재</b>와 <b>문항</b>(정답·해설까지)을 PDF로 만들어 드립니다.</p>
     <p class="easy">전혀 어렵지 않아요. <b>설문조사에 답한다고 생각하고</b> 차례대로 따라와 주세요.</p>
+    <p><a class="copy" href="?source=imyong" style="display:inline-flex;align-items:center;text-decoration:none">임용 기출 학습교재 만들기</a> <small>2점 4문항/쪽 · 4점 2문항/쪽</small></p>
     <nav class="steps" id="steps"></nav>
   </div>
 
@@ -1490,5 +1491,157 @@ addEventListener('pageshow', e => { if (e.persisted) syncCourse(); });
 setMode(null);
 if (document.fonts) document.fonts.ready.then(() => document.querySelectorAll('.frame').forEach(fit));
 </script>
+<!-- IMYONG PANEL START -->
+<!-- build_survey_imyong.py로 index.html에 넣는 단일 파일 배포용 원본 -->
+<style id="imyong-style">
+body.imyong-print .wrap{display:none}#imyong-print{max-width:1040px;margin:auto;padding:28px 24px 48px;color:var(--text);word-break:keep-all}#imyong-print[hidden]{display:none!important}
+#imyong-print h1{font-size:30px;line-height:1.3;margin:14px 0}#imyong-print h2{font-size:20px;margin:0 0 12px}#imyong-print p{max-width:72ch;line-height:1.7}#imyong-print a{color:var(--accent);text-underline-offset:4px}
+.im-nav{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}.im-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start;margin-top:28px}.im-form{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}.im-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px}.im-fields label{font-size:13px;display:grid;gap:6px}.im-fields .im-wide{grid-column:1/-1}.im-fields :is(select,input){height:44px;width:100%;min-width:0;padding:8px 10px;background:var(--field);color:var(--text);border:1px solid var(--line);border-radius:8px;font:inherit}.im-rule{padding:15px 0;border-bottom:1px solid var(--line);margin-bottom:18px}.im-rule b{display:block}.im-rule span{font-size:13px;color:var(--muted)}
+#imyong-print button,.im-btn{font:inherit;cursor:pointer;min-height:44px;padding:10px 16px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;text-decoration:none}#imyong-print .im-primary{background:var(--accent);color:var(--card);border-color:var(--accent)}#imyong-print button:hover,.im-btn:hover{filter:brightness(.96)}#imyong-print :focus-visible{outline:3px solid var(--accent);outline-offset:3px}#imyong-print ::selection{background:var(--accent-soft);color:var(--text)}.im-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.im-downloads{margin-top:36px}.im-booklist{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.im-booklist a{min-height:60px;display:flex;flex-direction:column;justify-content:center;padding:12px;border-bottom:1px solid var(--line);text-decoration:none}.im-booklist small{color:var(--muted)}.im-preview{background:#fff;color:#17323a;padding:16px;border:1px solid var(--line);border-radius:4px;aspect-ratio:1.414;display:grid;height:212px;grid-template-rows:1fr;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-content:start}.im-preview>div{min-width:0;min-height:0;border-bottom:1px solid #a7b8bd;padding-bottom:16px}.im-preview img{width:100%;height:140px;object-fit:contain;object-position:top}.im-preview small{font-size:10px;display:block;margin-bottom:8px}.im-caption{font-size:12px;color:var(--muted)}.im-output{margin-top:24px}.im-fields [hidden]{display:none!important}.im-topics{min-width:0;margin:0;padding:14px;border:1px solid var(--line);border-radius:8px}.im-topics legend{font-size:14px;font-weight:600}.im-topics legend small{font-weight:400;color:var(--muted)}.im-match{margin-top:20px;font-size:13px}.im-match ol{padding-left:20px;line-height:1.9}.im-match b{display:block}.im-fields small{font-size:12px;color:var(--muted)}
+.topic-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.topic-tools input{flex:1;min-width:140px!important;height:42px!important}.topic-tools output{font-size:12px;color:var(--muted)}.topic-tree{margin-top:12px;max-height:390px;overflow:auto;border-top:1px solid var(--line)}.topic-tree details{border-bottom:1px solid var(--line)}.topic-tree summary{padding:12px 0;cursor:pointer;font-size:13px;font-weight:600}.topic-tree label{display:flex;align-items:center;gap:8px;padding:7px 4px;font-size:12px;min-height:38px}.topic-tree input[type=checkbox]{width:17px!important;height:17px!important;flex:none;accent-color:var(--accent)}.topic-option small{margin-left:auto;white-space:nowrap}.topic-option[hidden],.topic-tree details[hidden]{display:none}.topic-note{font-size:12px;color:var(--muted);margin-bottom:0}
+#im-prompt{width:100%;min-height:240px;font:12px/1.7 monospace;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--field);color:var(--text)}.im-status{min-height:24px;font-size:13px}.im-version{font-size:12px;color:var(--muted);margin-top:28px}
+@media(max-width:760px){#imyong-print{padding:20px 16px}.im-layout{grid-template-columns:1fr}.im-layout aside{max-width:320px}.im-booklist{grid-template-columns:repeat(2,minmax(0,1fr))}.im-form{padding:18px}#imyong-print h1{font-size:26px}}
+</style>
+<main id="imyong-print" hidden>
+  <nav class="im-nav"><a href="?">교재·문항 만들기로</a><a id="im-study" href="https://www.5e.ai.kr/examlibrary/?view=study&amp;group=imyong">기출 학습 모드</a></nav>
+  <h1>임용 기출로 만드는 학습교재</h1>
+  <p>과학 4과목과 과학교육론을 원문 그대로 묶습니다. 수식과 그림을 유지하고, 배점에 맞춰 풀 공간을 남깁니다.</p>
+  <div class="im-layout"><section class="im-form" aria-labelledby="im-scope"><h2 id="im-scope">교재 범위</h2><div class="im-rule"><b>2점은 한 쪽에 4문항 · 4점은 한 쪽에 2문항</b><span>선택한 범위·정렬을 적용한 뒤 배점별로 나눕니다.</span></div>
+    <form id="im-form"><div class="im-fields">
+      <label>과목<select name="subject"><option value="">과학 4과목 전체</option><option value="t_physics">물리</option><option value="t_chemistry">화학</option><option value="t_biology">생물</option><option value="t_earth">지구과학</option></select></label>
+      <label>영역<select name="domain"><option value="">전공 내용 + 과학교육론</option><option value="pedagogy">과학교육론만</option><option value="content">전공 내용만</option></select></label>
+      <label>시작 학년도<select name="yearFrom"></select></label><label>끝 학년도<select name="yearTo"></select></label>
+      <label>수록 배점<select name="points"><option value="">2점 + 4점</option><option value="2">2점만</option><option value="4">4점만</option></select></label><label>용지<select name="paper"><option value="A3">A3 가로 · 권장</option><option value="B4">B4</option><option value="A4">A4</option></select></label>
+      <fieldset class="im-wide im-topics"><legend>단원·세부 주제 <small>여러 개 선택 가능</small></legend><div id="im-topics"></div></fieldset>
+      <label class="im-wide">본문 검색어<input name="q" placeholder="예: 개념 변화" maxlength="120"></label>
+      <label>제외할 단어<input name="excludeKeywords" maxlength="120" placeholder="예: 단진자"></label><label>전공 구분<select name="paperPart"><option value="">A·B 전체</option><option value="A">전공 A</option><option value="B">전공 B</option></select></label>
+      <label>최대 문항 수<input name="questionLimit" type="number" min="0" max="2588" step="1" value="0"><small>0은 조건에 맞는 문항 전체</small></label><label>문항 정렬<select name="sortMode"><option value="recent">최신 학년도순</option><option value="oldest">오래된 학년도순</option><option value="topic">주제별</option><option value="random">무작위</option></select></label>
+      <label id="im-seed-label" hidden>무작위 번호<input name="seed" value="5e" maxlength="80"><small>같은 번호면 같은 문항·순서</small></label><label>풀이 여백<select name="memoStyle"><option value="blank">빈 여백</option><option value="ruled">줄</option><option value="grid">모눈</option></select></label>
+      <label class="im-wide">교재 제목<input name="title" maxlength="80" placeholder="비우면 선택한 범위로 정합니다"></label><label class="im-wide">해설·개념 제작 요청<select name="answerConcept"><option value="solutions-concepts">뒤에 해설 + 필요한 개념만</option><option value="solutions">뒤에 해설만</option><option value="none">문제편만</option></select><small>AI 제작 단계에서 작성·대조합니다. 원문 합성 도구는 문제편을 만듭니다.</small></label>
+    </div><div class="im-match" aria-live="polite"><b id="im-match-count">범위에 맞는 문항을 확인하고 있습니다…</b><ol id="im-matches"></ol><button id="im-retry" type="button" hidden>문항 다시 불러오기</button></div><p class="im-caption">긴 문항은 작은 용지에서 글씨가 작아질 수 있어 확대본을 함께 만듭니다. 과학교육론은 원문 용어로 자동 분류했습니다. 완성 교재는 문제편입니다. 해설은 근거 확인 후 추가합니다.</p>
+    <div class="im-actions"><button class="im-primary" type="submit" disabled>교재 제작 요청 만들기</button></div></form>
+  </section><aside><div class="im-preview" aria-label="2점 문항 한 쪽 4개 배치 예시">
+    <div><small>01 · 2점</small><img src="https://seungyeon980808-pixel.github.io/exam-search/previews/imyong/t_physics_2026_A_01.webp" alt="2026학년도 물리 전공 A 1번 원문"></div>
+    <div><small>02 · 2점</small><img src="https://seungyeon980808-pixel.github.io/exam-search/previews/imyong/t_physics_2026_A_02.webp" alt="2026학년도 물리 전공 A 2번 원문"></div>
+    <div><small>03 · 2점</small><img src="https://seungyeon980808-pixel.github.io/exam-search/previews/imyong/t_physics_2026_A_03.webp" alt="2026학년도 물리 전공 A 3번 원문"></div>
+    <div><small>04 · 2점</small><img src="https://seungyeon980808-pixel.github.io/exam-search/previews/imyong/t_physics_2026_A_04.webp" alt="2026학년도 물리 전공 A 4번 원문"></div>
+  </div><p class="im-caption">A3 가로에 2점 4문항을 나란히 넣은 축소 예시입니다. 4점 문항은 한 쪽에 2개를 배치합니다.</p></aside></div>
+  <section id="im-output" class="im-output" hidden aria-labelledby="im-output-title"><h2 id="im-output-title">선택한 범위로 제작하기</h2><p>아래 요청을 Codex 또는 Claude Code에 붙여 넣으면 원문 PDF 교재를 만듭니다. 결과물은 PDF와 출처·배점·쪽수가 담긴 문항표입니다.</p><textarea id="im-prompt" aria-label="교재 제작 요청" readonly></textarea><div class="im-actions"><button id="im-copy" type="button" class="im-primary">제작 요청 복사</button><button id="im-download" type="button">브리프 내려받기</button></div></section>
+  <p id="im-status" class="im-status" role="status" aria-live="polite"></p>
+  <section class="im-downloads" aria-labelledby="im-books"><h2 id="im-books">완성 교재 바로 받기</h2><p class="im-caption">최근 10개 학년도 · A3 가로 문제편. 2017–2026학년도 중 배점이 확인되는 2점·4점 문항입니다. 과목별 교재에는 과학교육론도 포함되어 있습니다.</p><div class="im-booklist" id="im-booklist"></div><p><a id="im-manifest" href="https://5e-google-drive-gateway.5e-desktop.workers.dev/v1/google-drive/folders/1N46Woe4wIXs-PoUpVf0Uu4hPkSIUBqgX/public/학습교재/임용기출/20261109_과학임용_문항표_v2.xlsx">문항표·학습 기록 엑셀 받기</a></p></section>
+  <footer class="im-version">5E print v1.1.0 · 2026-11-09 · <a href="https://github.com/seungyeon980808-pixel/print/blob/main/CHANGELOG.md">변경 내역</a></footer>
+</main>
+<script id="imyong-script">
+(()=>{
+const p=new URLSearchParams(location.search);if(p.get('source')!=='imyong')return;
+// print 단일 파일과 기출 탐색기가 함께 쓰는 주제 선택·범위 계산.
+function topicIds(value) {
+  return Array.isArray(value) ? value : String(value || '').split(',').filter(Boolean);
+}
+function stableHash(value) {
+  let hash = 2166136261;
+  for (const byte of new TextEncoder().encode(value)) hash = Math.imul(hash ^ byte, 16777619) >>> 0;
+  return hash;
+}
+function selectImyong(items, filters, {limit = true} = {}) {
+  const normalize = value => String(value || '').normalize('NFKC').toLocaleLowerCase('ko').replace(/\s/gu, '');
+  const words = value => String(value || '').trim().split(/[\s,，#]+/u).filter(Boolean).map(normalize);
+  const tokens = words(filters.q), excluded = words(filters.excludeKeywords), topics = topicIds(filters.topics);
+  if (tokens.length > 3) throw Error('검색어는 세 단어까지 입력해 주세요.');
+  if (+filters.yearFrom > +filters.yearTo) throw Error('시작 학년도를 끝 학년도보다 작게 골라 주세요.');
+  const selected = items.filter(q => (!filters.subject || q.subject === filters.subject)
+    && (!filters.domain || q.domain === filters.domain)
+    && q.year >= +(filters.yearFrom || 2002) && q.year <= +(filters.yearTo || 2026)
+    && (!filters.points ? [2,4].includes(q.points) : q.points === +filters.points)
+    && (!filters.paperPart || q.paper === filters.paperPart)
+    && (!topics.length || topics.some(id => q.topicIds?.includes(id)))
+    && tokens.every(t => q._search.includes(t)) && !excluded.some(t => q._search.includes(t)));
+  const base = (a,b) => (filters.sortMode === 'oldest' ? a.year-b.year : b.year-a.year) || a.subject.localeCompare(b.subject,'en') || a.paper.localeCompare(b.paper,'en') || a.order-b.order;
+  const selectedTopic = q => q.topicIds?.find(t => !topics.length || topics.includes(t)) || '';
+  const compare = filters.sortMode === 'random' ? ((a,b) => stableHash((filters.seed || '5e')+'\0'+a.id)-stableHash((filters.seed || '5e')+'\0'+b.id) || a.id.localeCompare(b.id,'en')) : filters.sortMode === 'topic' ? ((a,b) => selectedTopic(a).localeCompare(selectedTopic(b),'en') || base(a,b)) : base;
+  selected.sort(compare);
+  const result = limit && +filters.questionLimit ? selected.slice(0,+filters.questionLimit) : selected;
+  return result.sort((a,b) => a.points-b.points || compare(a,b));
+}
+function mountTopicPicker(container, taxonomy, {selected = [], subject = '', domain = '', onChange = () => {}} = {}) {
+  let selection = new Set(topicIds(selected)), counts = {}, scope = {subject,domain};
+  const heading = document.createElement('div');heading.className = 'topic-tools';
+  const search = document.createElement('input');search.type='search';search.placeholder='단원·세부 주제 찾기';search.setAttribute('aria-label','단원·세부 주제 찾기');
+  const clear = document.createElement('button');clear.type='button';clear.textContent='선택 해제';
+  const state = document.createElement('output');state.setAttribute('aria-live','polite');
+  heading.append(search,clear,state);
+  const tree = document.createElement('div');tree.className='topic-tree';
+  const note = document.createElement('p');note.className='topic-note';note.textContent='선택하지 않으면 전체 범위입니다. 여러 주제는 하나라도 해당하면 포함합니다. 원문 용어에 따른 자동 분류로, 경계 문항은 본문 검색과 미분류에서도 확인해 주세요.';
+  container.replaceChildren(heading,tree,note);
+  const visibleUnits = () => taxonomy.units.filter(u => (!scope.subject || u.subject===scope.subject || u.subject==='pedagogy') && (scope.domain==='pedagogy'?u.subject==='pedagogy':scope.domain==='content'?u.subject!=='pedagogy':true));
+  const update = () => {
+    state.textContent=selection.size ? `${selection.size}개 주제 선택` : '전체 범위';
+    for (const details of tree.children) {
+      const checks=[...details.querySelectorAll('[data-topic]')], unit=details.querySelector('[data-unit]');
+      for (const c of checks) c.checked=selection.has(c.value);
+      unit.checked=checks.length>0&&checks.every(c=>c.checked);unit.indeterminate=checks.some(c=>c.checked)&&!unit.checked;
+    }
+  };
+  const find = () => {
+    const term=search.value.normalize('NFKC').toLocaleLowerCase('ko').trim();
+    for(const details of tree.children){let any=false;for(const row of details.querySelectorAll('.topic-option')){row.hidden=!!term&&!row.dataset.search.includes(term);if(!row.hidden)any=true;}details.hidden=!any;if(term&&any)details.open=true;}
+  };
+  const paint = () => {
+    const units=visibleUnits(),allowed=new Set(units.flatMap(u=>u.topics.map(t=>t.id)));
+    selection=new Set([...selection].filter(id=>allowed.has(id)));tree.replaceChildren();
+    for (const u of units) {
+      const details=document.createElement('details'),summary=document.createElement('summary');
+      summary.textContent=({t_physics:'물리',t_chemistry:'화학',t_biology:'생물',t_earth:'지구과학',pedagogy:'과학교육론'}[u.subject])+' · '+u.label;details.append(summary);
+      const allLabel=document.createElement('label');allLabel.className='topic-unit';const all=document.createElement('input');all.type='checkbox';all.dataset.unit=u.id;allLabel.append(all,document.createTextNode('이 단원 전체'));details.append(allLabel);
+      all.onchange=()=>{for(const t of u.topics)all.checked?selection.add(t.id):selection.delete(t.id);update();onChange([...selection]);};
+      for(const t of u.topics){const row=document.createElement('label');row.className='topic-option';row.dataset.search=(u.label+' '+t.label).normalize('NFKC').toLocaleLowerCase('ko');const c=document.createElement('input');c.type='checkbox';c.value=t.id;c.dataset.topic=t.id;const text=document.createElement('span');text.textContent=t.label;const count=document.createElement('small');count.dataset.count=t.id;count.textContent=counts[t.id]===undefined?'':`${counts[t.id]}문항`;row.append(c,text,count);details.append(row);c.onchange=()=>{c.checked?selection.add(t.id):selection.delete(t.id);update();onChange([...selection]);};}
+      if(u.topics.some(t=>selection.has(t.id)))details.open=true;tree.append(details);
+    }
+    update();find();
+  };
+  clear.onclick=()=>{selection.clear();update();onChange([]);};search.oninput=find;paint();
+  return {
+    read:()=>[...selection],
+    setScope(subject,domain){scope={subject,domain};paint();},
+    setCounts(items){counts={};for(const q of items)for(const id of q.topicIds||[])counts[id]=(counts[id]||0)+1;for(const el of tree.querySelectorAll('[data-count]'))el.textContent=`${counts[el.dataset.count]||0}문항`;},
+  };
+}
+
+const taxonomy={"version":"imyong-topics-v1","description":"원문 용어로 자동 분류한 학습용 주제. 공식 출제영역이나 확정 단원 분류가 아닙니다. 복수 주제를 허용합니다.","units":[{"id":"t_physics.mechanics","subject":"t_physics","label":"고전역학","topics":[{"id":"t_physics.mechanics.motion","label":"운동학·힘·에너지"},{"id":"t_physics.mechanics.rotation","label":"회전·강체·중심력"},{"id":"t_physics.mechanics.analytical","label":"해석역학·진동"}]},{"id":"t_physics.em","subject":"t_physics","label":"전자기학","topics":[{"id":"t_physics.em.electric","label":"정전기·전기장·전위"},{"id":"t_physics.em.magnetic","label":"자기장·전자기 유도"},{"id":"t_physics.em.circuit","label":"회로·교류·전자기파"}]},{"id":"t_physics.quantum","subject":"t_physics","label":"양자역학","topics":[{"id":"t_physics.quantum.wave","label":"파동함수·슈뢰딩거 방정식"},{"id":"t_physics.quantum.operators","label":"연산자·각운동량·스핀"},{"id":"t_physics.quantum.applications","label":"터널링·수소 원자·섭동"}]},{"id":"t_physics.thermal","subject":"t_physics","label":"열·통계물리","topics":[{"id":"t_physics.thermal.thermo","label":"열역학 법칙·열기관"},{"id":"t_physics.thermal.statistics","label":"통계역학·분포·분배함수"}]},{"id":"t_physics.waves","subject":"t_physics","label":"파동·광학","topics":[{"id":"t_physics.waves.wave","label":"진동·파동·음파"},{"id":"t_physics.waves.optics","label":"기하·파동광학"}]},{"id":"t_physics.modern","subject":"t_physics","label":"현대물리·물성·실험","topics":[{"id":"t_physics.modern.relativity","label":"상대성이론"},{"id":"t_physics.modern.atomic","label":"원자·핵·입자"},{"id":"t_physics.modern.solid","label":"고체·반도체·계측"}]},{"id":"t_physics.other","subject":"t_physics","label":"기타·미분류","topics":[{"id":"t_physics.other.unclassified","label":"주제 미분류 문항"}]},{"id":"t_chemistry.structure","subject":"t_chemistry","label":"원자·분자 구조","topics":[{"id":"t_chemistry.structure.atom","label":"원자 구조·양자화학"},{"id":"t_chemistry.structure.bond","label":"화학 결합·분자 대칭"}]},{"id":"t_chemistry.physical","subject":"t_chemistry","label":"물리화학","topics":[{"id":"t_chemistry.physical.thermo","label":"열역학·상평형"},{"id":"t_chemistry.physical.equilibrium","label":"화학평형·산염기"},{"id":"t_chemistry.physical.kinetics","label":"반응속도·반응 메커니즘"},{"id":"t_chemistry.physical.electro","label":"전기화학"}]},{"id":"t_chemistry.organic","subject":"t_chemistry","label":"유기화학","topics":[{"id":"t_chemistry.organic.stereo","label":"구조·입체화학·방향족성"},{"id":"t_chemistry.organic.reaction","label":"유기반응·작용기"},{"id":"t_chemistry.organic.synthesis","label":"합성·분광 구조 분석"}]},{"id":"t_chemistry.inorganic","subject":"t_chemistry","label":"무기화학","topics":[{"id":"t_chemistry.inorganic.periodic","label":"주기성·고체·결정"},{"id":"t_chemistry.inorganic.coordination","label":"배위·전이금속·착물"},{"id":"t_chemistry.inorganic.organometal","label":"유기금속·촉매"}]},{"id":"t_chemistry.analytical","subject":"t_chemistry","label":"분석화학·실험","topics":[{"id":"t_chemistry.analytical.wet","label":"적정·정량·오차"},{"id":"t_chemistry.analytical.instrument","label":"분광·분리·기기분석"}]},{"id":"t_chemistry.other","subject":"t_chemistry","label":"기타·미분류","topics":[{"id":"t_chemistry.other.unclassified","label":"주제 미분류 문항"}]},{"id":"t_biology.cell","subject":"t_biology","label":"세포생물학·생화학","topics":[{"id":"t_biology.cell.organelle","label":"세포 구조·막·수송"},{"id":"t_biology.cell.metabolism","label":"효소·대사·에너지"},{"id":"t_biology.cell.signal","label":"세포 신호·분열·사멸"}]},{"id":"t_biology.genetics","subject":"t_biology","label":"유전학·분자생물학","topics":[{"id":"t_biology.genetics.heredity","label":"멘델유전·염색체·연관"},{"id":"t_biology.genetics.expression","label":"DNA 복제·유전자 발현"},{"id":"t_biology.genetics.biotech","label":"유전공학·생명공학"}]},{"id":"t_biology.animal","subject":"t_biology","label":"동물생리·면역","topics":[{"id":"t_biology.animal.neural","label":"신경·감각·근육"},{"id":"t_biology.animal.homeostasis","label":"내분비·순환·호흡·배설"},{"id":"t_biology.animal.immune","label":"면역·감염"}]},{"id":"t_biology.plant","subject":"t_biology","label":"식물생리·발달","topics":[{"id":"t_biology.plant.transport","label":"식물 구조·수송·영양"},{"id":"t_biology.plant.development","label":"생식·발생·분화"}]},{"id":"t_biology.ecology","subject":"t_biology","label":"생태·진화·다양성","topics":[{"id":"t_biology.ecology.population","label":"개체군·군집·생태계"},{"id":"t_biology.ecology.evolution","label":"진화·집단유전·분류"}]},{"id":"t_biology.other","subject":"t_biology","label":"기타·미분류","topics":[{"id":"t_biology.other.unclassified","label":"주제 미분류 문항"}]},{"id":"t_earth.geology","subject":"t_earth","label":"지질학","topics":[{"id":"t_earth.geology.minerals","label":"광물·암석·지구화학"},{"id":"t_earth.geology.structure","label":"구조지질·판구조·지구물리"},{"id":"t_earth.geology.history","label":"지사·퇴적·고생물"}]},{"id":"t_earth.atmosphere","subject":"t_earth","label":"대기과학","topics":[{"id":"t_earth.atmosphere.thermo","label":"대기 열역학·구름·강수"},{"id":"t_earth.atmosphere.dynamics","label":"대기역학·기상 분석"},{"id":"t_earth.atmosphere.climate","label":"복사·기후·대기순환"}]},{"id":"t_earth.ocean","subject":"t_earth","label":"해양학","topics":[{"id":"t_earth.ocean.physical","label":"해수 성질·해류·파랑"},{"id":"t_earth.ocean.environment","label":"해양 화학·생물·환경"}]},{"id":"t_earth.astronomy","subject":"t_earth","label":"천문학","topics":[{"id":"t_earth.astronomy.observation","label":"천구·좌표·관측"},{"id":"t_earth.astronomy.solar","label":"태양계·천체역학"},{"id":"t_earth.astronomy.stars","label":"항성·별의 진화"},{"id":"t_earth.astronomy.universe","label":"은하·우주론"}]},{"id":"t_earth.other","subject":"t_earth","label":"기타·미분류","topics":[{"id":"t_earth.other.unclassified","label":"주제 미분류 문항"}]},{"id":"pedagogy.philosophy","subject":"pedagogy","label":"과학철학·과학사·과학의 본성","topics":[{"id":"pedagogy.philosophy.philosophy","label":"귀납·반증·과학혁명"},{"id":"pedagogy.philosophy.nature","label":"과학의 본성·과학사"}]},{"id":"pedagogy.learning","subject":"pedagogy","label":"학습이론·개념학습","topics":[{"id":"pedagogy.learning.theory","label":"인지·구성주의·사회적 학습"},{"id":"pedagogy.learning.concept","label":"오개념·개념변화"},{"id":"pedagogy.learning.motivation","label":"동기·메타인지·자기조절"}]},{"id":"pedagogy.teaching","subject":"pedagogy","label":"교수학습 모형·수업 설계","topics":[{"id":"pedagogy.teaching.models","label":"순환학습·탐구·발견·POE"},{"id":"pedagogy.teaching.strategies","label":"발문·논의·협동·비유·모형"},{"id":"pedagogy.teaching.curriculum","label":"교육과정·성취기준·융합"}]},{"id":"pedagogy.inquiry","subject":"pedagogy","label":"과학 탐구·실험 지도","topics":[{"id":"pedagogy.inquiry.process","label":"탐구 과정·변인·자료 해석"},{"id":"pedagogy.inquiry.practice","label":"실험 안전·교구·디지털 탐구"}]},{"id":"pedagogy.assessment","subject":"pedagogy","label":"과학교육 평가","topics":[{"id":"pedagogy.assessment.methods","label":"진단·형성·총괄·수행평가"},{"id":"pedagogy.assessment.quality","label":"평가 문항·타당도·신뢰도"}]},{"id":"pedagogy.other","subject":"pedagogy","label":"기타·미분류","topics":[{"id":"pedagogy.other.unclassified","label":"주제 미분류 문항"}]}]};
+document.body.classList.add('imyong-print');document.getElementById('imyong-print').hidden=false;document.title='임용 기출 학습교재 · 5E print';
+const form=document.getElementById('im-form'),status=document.getElementById('im-status'),out=document.getElementById('im-output'),prompt=document.getElementById('im-prompt'),match=document.getElementById('im-match-count'),submit=form.querySelector('[type=submit]');
+for(const n of ['yearFrom','yearTo'])for(let y=2002;y<=2026;y++)form.elements[n].add(new Option(y+'학년도',y));
+const defaults={yearFrom:'2017',yearTo:'2026',paper:'A3',questionLimit:'0',sortMode:'recent',seed:'5e',memoStyle:'blank',answerConcept:'solutions-concepts'};
+for(const n of ['subject','domain','yearFrom','yearTo','points','paper','q','excludeKeywords','paperPart','questionLimit','sortMode','seed','memoStyle','title','answerConcept']){const el=form.elements[n];el.value=p.get(n)??defaults[n]??'';if(el.tagName==='SELECT'&&!el.value&&defaults[n])el.value=defaults[n];}
+let brief='',items=null,hits=[];
+const picker=mountTopicPicker(document.getElementById('im-topics'),taxonomy,{selected:topicIds(p.get('topics')),subject:form.elements.subject.value,domain:form.elements.domain.value,onChange:()=>{invalidate();refresh();}});
+const label=n=>form.elements[n].selectedOptions?.[0]?.textContent||form.elements[n].value;
+const values=()=>({...Object.fromEntries(new FormData(form)),topics:picker.read()});
+function invalidate(){if(!out.hidden){out.hidden=true;status.textContent='범위가 바뀌었습니다. 제작 요청을 다시 만들어 주세요.';}}
+function params(v){const u=new URLSearchParams({source:'imyong'});for(const [k,value]of Object.entries(v))if(Array.isArray(value)?value.length:value)u.set(k,Array.isArray(value)?value.join(','):value);return u;}
+function studyLink(v,id){const u=params(v);for(const k of ['source','paper','title','answerConcept','memoStyle','questionLimit','sortMode','seed','paperPart','excludeKeywords'])u.delete(k);u.set('view','study');u.set('group','imyong');if(id)u.set('id',id);return 'https://www.5e.ai.kr/examlibrary/?'+u;}
+function refresh(){
+ const v=values();document.getElementById('im-seed-label').hidden=v.sortMode!=='random';document.getElementById('im-study').href=studyLink(v);
+ if(!items)return;
+ try{const total=selectImyong(items,v,{limit:false});hits=selectImyong(items,v);const twos=hits.filter(q=>q.points===2).length;match.textContent=hits.length?`범위 ${total.length}문항 → 수록 ${hits.length}문항 · 2점 ${twos}개 / 4점 ${hits.length-twos}개 · 문제편 약 ${1+Math.ceil(twos/4)+Math.ceil((hits.length-twos)/2)}쪽`:'조건에 맞는 문항이 없습니다. 주제나 검색 범위를 넓혀 주세요.';const list=document.getElementById('im-matches');list.replaceChildren();for(const q of hits.slice(0,4)){const li=document.createElement('li'),a=document.createElement('a');a.textContent=q.title+' · '+q.points+'점';a.href=studyLink(v,q.id);a.target='_blank';a.rel='noopener';li.append(a);list.append(li);}submit.disabled=!hits.length;picker.setCounts(selectImyong(items,{...v,topics:[]},{limit:false}));}catch(e){hits=[];match.textContent=e.message;submit.disabled=true;}
+}
+async function load(){submit.disabled=true;match.textContent='범위에 맞는 문항을 확인하고 있습니다…';document.getElementById('im-retry').hidden=true;try{const response=await fetch('https://seungyeon980808-pixel.github.io/exam-search/data/imyong/study.json.gz?v=1.1.0-topics');if(!response.ok)throw Error();const data=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();if(data.topicVersion!==taxonomy.version)throw Error();items=data.items;refresh();}catch{items=null;match.textContent='문항 수를 확인하지 못했습니다. 인터넷 연결을 확인하고 다시 불러와 주세요.';document.getElementById('im-retry').hidden=false;}}
+function build(){const v=values();if(!form.reportValidity()||!items||!hits.length)return false;const names=taxonomy.units.flatMap(u=>u.topics.map(t=>[t.id,u.label+' / '+t.label])).filter(([id])=>v.topics.includes(id)).map(([,name])=>name);
+const settings={subject:v.subject?[v.subject]:[],domain:v.domain,yearFrom:+v.yearFrom,yearTo:+v.yearTo,points:v.points?[+v.points]:[2,4],paper:v.paper,keywords:v.q,topicIds:v.topics,excludeKeywords:v.excludeKeywords,paperPart:v.paperPart,questionLimit:+v.questionLimit,sortMode:v.sortMode,seed:v.seed||'5e',memoStyle:v.memoStyle,title:v.title,authoring:{solutions:v.answerConcept==='none'?'none':'reviewed',concepts:v.answerConcept==='solutions-concepts'?'essential':'none'}};
+brief=`# 임용 기출 학습교재 제작 브리프\n\n과목: ${label('subject')}\n영역: ${label('domain')}\n단원·세부 주제: ${names.join(' / ')||'전체'}\n학년도: ${v.yearFrom}–${v.yearTo}\n배점: ${label('points')}\n전공 구분: ${label('paperPart')}\n수록 문항: ${hits.length}개(최대 ${+v.questionLimit||'전체'})\n정렬: ${label('sortMode')}${v.sortMode==='random'?' / 번호 '+v.seed:''}\n용지: ${label('paper')}\n풀이 여백: ${label('memoStyle')}\n본문 검색어(모든 단어 포함): ${v.q||'없음'}\n제외할 단어(하나라도 포함하면 제외): ${v.excludeKeywords||'없음'}\n해설·개념: ${label('answerConcept')}\n제목: ${v.title||'범위에 맞게'}\n\n- 2점은 한 페이지 4문항, 4점은 한 페이지 2문항. 선택 정렬 후 배점별로 나눌 것.\n- 원본 PDF의 수식·그림·발문을 벡터로 재사용. 긴 문항은 원래 영역 사이에서만 단을 나누고 확대본도 제공.\n- 원문 용어로 자동 분류한 주제이며 공식 출제영역 분류가 아님. 복수 주제 문항은 한 번만 수록. 경계 문항을 원문으로 검토할 것.\n- 총배점이 확인되는 문항만 수록. 원문 합성 CLI는 문제편만 생성함.\n${v.answerConcept==='none'?'- 해설·개념은 추가하지 않음.':'- 문제 뒤에 문항별 해설을 직접 작성하고 실제 참고 자료와 대조 상태를 표시. 미검증 답안을 공식 정답이나 검증 완료로 표시하지 말 것.'}\n${v.answerConcept==='solutions-concepts'?'- 개념은 각 문항 풀이에 필요한 부분만 간단히 정리. 새 개념 문항은 만들지 말 것.\n':''}- 완성 PDF·문항표(출처·배점·쪽수·주제와 분류 근거)·제작 설정을 저장하고 원문 누락을 확인할 것.\n- 원본 자료는 읽기만 하고 이전 판은 보존. 새 버전으로 내 자료 폴더에 저장.\n`;
+prompt.value=`print 스킬로 임용 학습용 교재를 완성해 줘.\n\n1. https://github.com/seungyeon980808-pixel/print 저장소를 작업용 폴더에 받고 SKILL.md의 임용 기출 학습교재 절을 읽어.\n2. 아래 설정 JSON을 작업 폴더에 저장하고 requirements-imyong.txt를 작업용 가상환경에 설치해. scripts/build_imyong_book.py --config 설정.json --output 새버전.pdf 로 문제편을 합성해.\n3. 해설·개념 요청이 있으면 별도 작성·대조 단계를 진행한 뒤 뒤쪽에 붙여. CLI가 해설을 만들었다고 보고하지 말 것.\n4. 선택한 범위 ${hits.length}문항과 실제 결과를 대조하고, 원문 누락·배치·수식·그림을 PDF 렌더링으로 확인해.\n\n설정 JSON:\n${JSON.stringify(settings,null,2)}\n\n${brief}`;
+out.hidden=false;status.textContent=`${hits.length}문항의 제작 요청이 준비되었습니다.`;history.replaceState(null,'','?'+params(v));return true;}
+form.addEventListener('submit',e=>{e.preventDefault();if(build())out.scrollIntoView({behavior:'auto',block:'start'});});
+form.addEventListener('change',e=>{if(['subject','domain'].includes(e.target.name))picker.setScope(form.elements.subject.value,form.elements.domain.value);invalidate();refresh();});form.addEventListener('input',e=>{if(e.target.name){invalidate();refresh();}});
+document.getElementById('im-retry').onclick=load;
+document.getElementById('im-copy').onclick=async()=>{try{await navigator.clipboard.writeText(prompt.value);status.textContent='복사했습니다. Codex 또는 Claude Code에 붙여 넣어 주세요.';}catch{prompt.focus();prompt.select();status.textContent='자동 복사가 차단되었습니다. 선택된 내용을 직접 복사해 주세요.';}};
+document.getElementById('im-download').onclick=()=>{const u=URL.createObjectURL(new Blob([brief+'\n\n'+prompt.value],{type:'text/markdown;charset=utf-8'})),a=document.createElement('a');a.href=u;a.download='임용-print-브리프.md';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
+const base='https://5e-google-drive-gateway.5e-desktop.workers.dev/v1/google-drive/folders/1N46Woe4wIXs-PoUpVf0Uu4hPkSIUBqgX/public/';
+for(const name of ['물리','화학','생물','지구과학','과학교육론']){const a=document.createElement('a');a.href=base+['학습교재','임용기출',`20261109_${name}_임용학습지_v2.pdf`].map(encodeURIComponent).join('/');a.target='_blank';a.rel='noopener';const b=document.createElement('b');b.textContent=name;const s=document.createElement('small');s.textContent='PDF · 원문 학습';a.append(b,s);const item=document.createElement('div');item.append(a);const ref=document.createElement('a');ref.href=a.href.replace('.pdf',encodeURIComponent('_원문확대본')+'.pdf');ref.target='_blank';ref.rel='noopener';ref.textContent='원문 확대본';item.append(ref);document.getElementById('im-booklist').append(item);}
+refresh();load();
+})();
+</script>
+
+<!-- IMYONG PANEL END -->
 </body>
 </html>
