@@ -1699,9 +1699,13 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const containers = new Set(["group", "category", "folder"]);
     if (!enabledSources) enabledSources = new Set(sources.filter((source) => !containers.has(source.kind)).map((source) => source.id));
     else if (!sourcesInitialized) {
-      // 처음 그릴 때: 저장해 둔 「이미 본 자료」에 없던 자료는 새 자료라 켠다. 예전 형식(known 없음)이면 학평만 새 자료로 본다
-      // (학평은 검색할 때 뒤늦게 들어와 예전 기록에 「이미 본 자료」로 남지 않았다).
-      const known = storedSources.known ?? new Set(sources.filter((source) => !String(source.id).includes("5e.hakpyeong") || enabledSources.has(source.id)).map((source) => source.id));
+      // 처음 그릴 때: 저장해 둔 「이미 본 자료」에 없던 자료는 새 자료라 켠다. 예전 형식(known 없음)이면 자료팩에서 온 자료
+      // (평가원·학평, 이름에 |4:pack|)는 모두 새 자료로 본다 — 예전에는 자료팩이 처음 그린 뒤에 들어와 늘 새 자료로 켜졌는데,
+      // 시작 때 미리 불러 두면서(11-09) 처음부터 들어와 있게 되어 평가원이 통째로 꺼진 채 남았다(「유도 기전력」 평가원 0개).
+      // 예전 형식의 폴더 제외도 비운다 — 예전에는 자료팩이 늦게 들어와 이 제외가 실제로 적용된 적이 없었다(사용자 설치본에 9월 말
+      // 「5E 제공 › 기출문제」 제외가 남아 있었는데 평가원 결과는 보였다). 지금 보던 화면 그대로 옮기고, 이후로는 새 형식으로 정확히 기억한다.
+      if (!storedSources.known) excludedSourceGroups.clear();
+      const known = storedSources.known ?? new Set(sources.filter((source) => !/\|4:pack\|/u.test(String(source.id)) || enabledSources.has(source.id)).map((source) => source.id));
       includeNewLibrarySources(enabledSources, known, sources, excludedSourceGroups);
       for (const id of known) knownSourceIds.add(id);
     } else {
