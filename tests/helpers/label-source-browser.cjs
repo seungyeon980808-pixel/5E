@@ -76,8 +76,10 @@ async function fixture(context, count, evidence, options = {}) {
 // insertion can already select the label, making its first click open an editor
 // and its next click a real detailed-edit gesture. Reset only that selection;
 // wait for the actual selected handle, never a double-click timing window.
-async function armSelection(page, id) {
-  await page.evaluate(async id => {
+// 11-10: handle 기본값 'p1'(지시선 라벨 끝점). 글자만 있는 라벨(text)은 선택해도 핸들을 그리지 않으므로
+// handle: null이면 선택 상태만 기다린다.
+async function armSelection(page, id, { handle = 'p1' } = {}) {
+  await page.evaluate(async ({ id, handle }) => {
     const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
     if (state.get().selectedIds.includes(id)) {
       state.update(s => { s.selectedIds = []; s.targetedId = null; });
@@ -88,7 +90,7 @@ async function armSelection(page, id) {
       function cleanup() { clearTimeout(timer); signals.listeners.delete(check); }
       function check() {
         const selected = state.get().selectedIds;
-        const completed = document.querySelector(`#handles [data-id="${id}"][data-handle="p1"]`);
+        const completed = handle === null || document.querySelector(`#handles [data-id="${id}"][data-handle="${handle}"]`);
         if (selected.length === 1 && selected[0] === id && completed) {
           cleanup(); resolve();
         }
@@ -96,7 +98,7 @@ async function armSelection(page, id) {
       signals.listeners.add(check);
       check();
     });
-  }, id);
+  }, { id, handle });
 }
 const selectionArrived = page => page.evaluate(() => window.__labelSourceSelection);
 

@@ -48,7 +48,8 @@ async function insertAndEdit(page,{restore}) {
   assert.equal(before.length,restore?1:0,'Only editable restoration creates native labels');
   if(!restore)return {nativeCount:0};
   const point=await page.evaluate(async id=>{const {worldToScreen}=await import('/js/viewport.js?v=1.7.0-four-session-integration');const s=window.__workflowQA.state.get(),o=s.objects.find(o=>o.id===id);const at=o.p2??{x:o.x,y:o.y};return worldToScreen(document.querySelector('#canvas'),s.viewBox,at.x,at.y);},before[0].id); // 11-10: 라벨은 글자 객체(x,y)
-  await armSelection(page,before[0].id);
+  // 11-10: 글자만 있는 라벨(text)은 선택해도 핸들이 없다(지시선 라벨만 끝점 핸들). 선택 상태만 기다린다.
+  await armSelection(page,before[0].id,{handle:before[0].type==='text'?null:'p1'});
   // Native output is an image/label group. Shift selects its individual label
   // before exercising the existing select-then-click text editing gesture.
   await page.keyboard.down('Shift');await page.mouse.click(point.x,point.y);await page.keyboard.up('Shift');await selectionArrived(page);
@@ -125,20 +126,21 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
 test('relation failures retain the exact changed connection in review without automatic regeneration',{timeout:90000},async t=>{
   const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-  // 11-10: 연결 오류 검수는 삭제 모드를 유지하되 관찰 없이 첫 생성·둘째 검수 응답을 제어.
-  await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'image');
-  await page.waitForFunction(()=>window.__task2.sends.length===2);
+  // 11-10: 예전 계약(legacy) 삭제 흐름은 원본 관찰 → 그림 생성 → 검수 세 요청이다(기본 경로의 삭제는 관찰·검수 없이 생성 한 번).
+  await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'assistant',JSON.stringify(verifiedPlan));
+  await page.waitForFunction(()=>window.__task2.sends.length===2);await emit(page,1,'image');
+  await page.waitForFunction(()=>window.__task2.sends.length===3);
   const failed=JSON.parse(report());failed.verdict='fail';
   const detail='원본 전원 오른쪽 단자→전류 센서 연결이 후보에서 전압 센서로 바뀌었습니다.';
   Object.assign(failed.checks.find(c=>c.id==='connections'),{status:'fail',detail});
   failed.issues=[{checkId:'connections',message:detail,severity:'critical'}];
-  // 11-10: 관찰 생략으로 연결 오류 검수 응답은 두 번째 요청에 전달.
-  await emit(page,1,'assistant',JSON.stringify(failed));
+  // 11-10: 세 번째 요청(검수) 응답으로 연결 오류를 전달.
+  await emit(page,2,'assistant',JSON.stringify(failed));
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
   const c=await candidate(page),requests=await sends(page);
   assert.equal(c.reviewState,'needs-attention');assert.equal(c.reviewReport.verdict,'fail');
-  // 11-10: 연결 오류를 그대로 남기고 자동 재생성 없이 생성·검수 두 요청에서 종료.
-  assert.ok(c.reviewReport.issues.some(issue=>issue.message===detail));assert.equal(requests.length,2);assert.equal(generations(requests).length,1);
+  // 11-10: 연결 오류를 그대로 남기고 자동 재생성 없이 관찰·생성·검수 세 요청에서 종료.
+  assert.ok(c.reviewReport.issues.some(issue=>issue.message===detail));assert.equal(requests.length,3);assert.equal(generations(requests).length,1);assert.equal(observations(requests).length,1);
   assert.equal(await page.locator('#ai-image-panel [data-ai-insert-selected]').isEnabled(),true,'the user still decides whether to adopt a reviewed result');
   assert.deepEqual(errors,[]);record(dir,{c,requests,errors});
 });
@@ -314,8 +316,8 @@ test('workflow mixed batch: exam remove and general editable retain independent 
   }
   await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().filter(j=>j.state==='completed').length===2);
   const tabs=await snapshot(page),requests=await sends(page);
-  // 11-10: 기출 삭제도 전체 생성하되 관찰을 생략해 혼합 작업은 관찰 1회·생성 2회, 총 5회.
-  assert.equal(tabs.length,2);assert.equal(requests.length,5);assert.equal(observations(requests).length,1);assert.equal(generations(requests).length,2);assert.equal(mappings(requests).length,0);
+  // 11-10: 예전 계약(legacy) 혼합 작업: 탭마다 원본 관찰 1회(2개), 그림 생성 2회, 기출 삭제 검수 1회, 일반 편집 고정 후보 검수(joint) 1회 = 총 6회.
+  assert.equal(tabs.length,2);assert.equal(requests.length,6);assert.equal(observations(requests).length,2);assert.equal(generations(requests).length,2);assert.equal(mappings(requests).length,0);
   const exam=tabs.find(t=>t.generated.at(-1).imageLabelWorkflow.imageKind==='exam').generated.at(-1);
   const general=tabs.find(t=>t.generated.at(-1).imageLabelWorkflow.imageKind==='general').generated.at(-1);
   assert.equal(exam.imageLabelWorkflow.labelResult,'remove');assert.ok(!exam.labelPlan?.labels?.length);
