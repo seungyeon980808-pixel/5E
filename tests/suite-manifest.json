@@ -1731,6 +1731,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-label-read-insert-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-READ-INSERT-MOVE"
+      ]
+    },
+    {
       "path": "tests/test-labeler-attached-leaders-browser.cjs",
       "findingIds": [
         "LABELER-NATIVE-ATTACHMENT",

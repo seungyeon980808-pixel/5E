@@ -118,6 +118,12 @@ async function checkLabelCandidateBytes(plan, src) {
 
 function applyLabelPlacementReview(image) {
   const plan = image.aiEditableLabelPlan;
+  // 11-10: 라벨 읽기로 만든 라벨인지(그 라벨만 sizeFromBox를 갖는다). 지운 뒤 고친 판과 사용자 검수 편집은 제외한다.
+  const isLabelReadPlan = candidate => {
+    const labels = candidate?.labels;
+    return Array.isArray(labels) && labels.length > 0 && labels.every(label => label?.sizeFromBox === true)
+      && !candidate.localEditOrigin && candidate.reviewDraft?.origin !== 'user-review-edit';
+  };
   const report = plan?.qualityReview;
   const size = report?.compositeBindings?.imageSize;
   // Legacy plans have no placement proof; keep their existing review requirement.
@@ -129,6 +135,12 @@ function applyLabelPlacementReview(image) {
     image.aiReviewDraft = true;
     image.aiReviewState = 'needs-attention';
     image.aiReviewReport = structuredClone(report);
+    return;
+  }
+  if (isLabelReadPlan(plan)) {
+    // 11-10: 라벨 읽기 결과는 검수를 하지 않는다. 검수 표시를 붙이지 않아 라벨은 검은 글자로 들어간다.
+    plan.reviewRequired = false;
+    if (plan.status === 'review') plan.status = 'ready';
     return;
   }
   if (!size) {
