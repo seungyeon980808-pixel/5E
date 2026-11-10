@@ -8,10 +8,11 @@ const runPromise = import('../js/ai-image-label-run.js');
 // 11-10 항목 2: 원본 종류를 나중에 고르면 기본 라벨 처리(기출 복원·교과서 삭제)를 맞춘다. 사용자가 직접 바꾼 작업은 그대로 둔다.
 test('label result follows the source kind unless the user touched the setting for this task', async () => {
   const { labelResultAfterKindChange } = await workflowPromise;
-  assert.equal(labelResultAfterKindChange({ imageKind: 'exam', current: '', touched: false }), 'restore-editable');
+  // 11-11 사용자 결정: 기출·교과서 모두 기본 끄기(remove).
+  assert.equal(labelResultAfterKindChange({ imageKind: 'exam', current: '', touched: false }), 'remove');
   assert.equal(labelResultAfterKindChange({ imageKind: 'general', current: '', touched: false }), 'remove');
   // 기출을 골랐는데 설정이 「끄기」(빈 값)로 남던 문제: 이제 기본값을 쓴다.
-  assert.equal(labelResultAfterKindChange({ imageKind: 'exam', current: 'remove', touched: false }), 'restore-editable');
+  assert.equal(labelResultAfterKindChange({ imageKind: 'exam', current: 'restore-editable', touched: false }), 'remove');
   // 사용자가 직접 정한 설정은 원본 종류가 바뀌어도 유지한다.
   assert.equal(labelResultAfterKindChange({ imageKind: 'exam', current: 'remove', touched: true }), 'remove');
   assert.equal(labelResultAfterKindChange({ imageKind: 'general', current: 'restore-editable', touched: true }), 'restore-editable');

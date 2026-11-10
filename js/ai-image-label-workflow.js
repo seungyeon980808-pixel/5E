@@ -22,8 +22,9 @@ export function normalizeImageLabelWorkflow(value, { requireExplicit = false } =
     hardText: ['auto', 'keep', 'erase', 'ai'].includes(v.hardText) ? v.hardText : 'auto', explicit });
 }
 // 11-10: 원본 종류별 기본 라벨 처리. 기출(exam)은 라벨 복원(켬), 교과서(general)는 라벨 삭제. 설정 화면 UI는 그대로 둔다.
+// 11-11 사용자 결정: 라벨 복원은 기출·교과서 모두 기본 끄기(베타). 켜는 것은 사용자가 직접.
 export function defaultLabelResultFor(imageKind) {
-  return imageKind === 'exam' ? 'restore-editable' : 'remove';
+  return 'remove';
 }
 // 11-10: 원본 종류를 고른 뒤에도 기본 라벨 처리를 맞춘다. 사용자가 이 작업의 라벨 복원 설정을 직접 바꾼 적이 있으면(touched) 그대로 둔다.
 export function labelResultAfterKindChange({ imageKind, current = '', touched = false } = {}) {

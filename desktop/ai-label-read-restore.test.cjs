@@ -160,8 +160,9 @@ test('label restore is the default and the legacy long prompt is not used by def
   assert.match(source, /legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng \} = \{\}\)/);
 });
 
-test('the default label result depends on the source kind', async () => {
+// 11-11 사용자 결정: 라벨 복원은 기출·교과서 모두 기본 끄기.
+test('the default label result is off for both source kinds', async () => {
   const { defaultLabelResultFor } = await import('../js/ai-image-label-workflow.js');
-  assert.equal(defaultLabelResultFor('exam'), 'restore-editable');
+  assert.equal(defaultLabelResultFor('exam'), 'remove');
   assert.equal(defaultLabelResultFor('general'), 'remove');
 });

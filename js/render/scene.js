@@ -614,9 +614,7 @@ export function render(state, change) {
     // 숨긴 레이어의 객체에는 핸들을 그리지 않는다(보이지 않는 객체가 변형되는 것 방지).
     const _hLayer = handleSel && (state.layers || []).find(l => l.id === (handleSel.layerId ?? 1));
     const _hVisible = !(_hLayer && _hLayer.visible === false);
-    // 11-10: 지목한 AI 지시선 라벨은 끝점 핸들만 보인다(끝점 끌기는 transform.js가 허용). 다른 지목 상태는 핸들을 숨긴다.
-    const _targetedLabelerEndpoints = !!state.targetedId && handleSel?.type === 'labeler' && handleSel.aiAutoLabel === true && handleSel.id === state.targetedId;
-    if (handleSel && handleSel.id !== _editingId && _hVisible && (!state.targetedId || _targetedLabelerEndpoints)) {
+    if (handleSel && handleSel.id !== _editingId && _hVisible && !state.targetedId) {
       if (isLabApparatus(handleSel)) {
         if (["V","rotate"].includes(state.activeTool)) renderLabApparatusHandles(handleSel, scene, selectionScale, state.activeTool);
       } else renderHandles(handleSel, scene, selectionScale, state.activeTool);

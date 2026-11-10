@@ -11,7 +11,7 @@ const preview = process.env.PREVIEW_URL;
 assert.ok(preview, 'PREVIEW_URL is required (run through tests/run-browser-tests.cjs)');
 const v = '?v=1.7.0-four-session-integration';
 
-test('label-read labels insert without review flags and a targeted label moves alone', { timeout: 120000 }, async () => {
+test('label-read labels insert without review flags and stay grouped with the image', { timeout: 120000 }, async () => {
   fs.mkdirSync(evidence, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -114,25 +114,10 @@ test('label-read labels insert without review flags and a targeted label moves a
       return { id, moved, before, after };
     };
 
-    // 1) 글자만 있는 라벨(text) 이동
+    // 11-11: 캔버스에서는 원래 5E 설계대로 지목한 묶음 객체는 이동이 잠긴다(라벨 위치는 변환기 안 「라벨 편집」에서 맞춤 — 사용자 결정).
     const textMove = await dragOne('물', 60, -30);
     fs.writeFileSync(path.join(evidence, 'text-move.json'), JSON.stringify(textMove, null, 2));
-    assert.deepEqual(textMove.moved, [textMove.id], 'only the targeted text label moved');
-    const textBefore = textMove.before.find(o => o.id === textMove.id), textAfter = textMove.after.find(o => o.id === textMove.id);
-    assert.ok(Math.abs(textAfter.x - textBefore.x) > 0.5 || Math.abs(textAfter.y - textBefore.y) > 0.5, 'text label position changed');
-
-    // 2) 지시선 라벨(labeler) 본체 이동
-    await page.evaluate(() => labelQA.state.update(s => { s.targetedId = null; s.selectedIds = []; }));
-    const labelerMove = await dragOne('온도계', 50, 20);
-    fs.writeFileSync(path.join(evidence, 'labeler-move.json'), JSON.stringify(labelerMove, null, 2));
-    assert.deepEqual(labelerMove.moved, [labelerMove.id], 'only the targeted labeler moved');
-
-    // 3) 지시선 끝점(labeler 핸들) 이동: 지목한 라벨 하나의 끝점만 옮긴다.
-    const leaderId = idOf('젓개');
-    await page.evaluate(() => labelQA.state.update(s => { s.targetedId = null; s.selectedIds = []; }));
-    const leaderDrag = await dragOne('젓개', -30, 25, { handle: true });
-    fs.writeFileSync(path.join(evidence, 'endpoint-move.json'), JSON.stringify(leaderDrag, null, 2));
-    assert.deepEqual(leaderDrag.moved, [leaderId], 'only the targeted labeler endpoint moved');
+    assert.deepEqual(textMove.moved, [], 'a targeted group member stays locked on the canvas');
 
     const finalState = await page.evaluate(() => labelQA.state.get().objects.map(o => ({ id: o.id, aiLabelReviewRequired: o.aiLabelReviewRequired })));
     assert.ok(finalState.every(o => o.aiLabelReviewRequired !== true), 'no label is review-flagged after moving');

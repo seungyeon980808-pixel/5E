@@ -30,13 +30,6 @@ import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlocking
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
-// 11-10: 지목(더블클릭) 상태에서 AI 라벨 하나만 고른 경우 — 그 라벨만 움직일 수 있다.
-function isTargetedAiLabel(s) {
-  const id = s.targetedId;
-  const o = (s.objects || []).find((x) => x.id === id);
-  return !!o && o.aiAutoLabel === true && (o.type === "text" || o.type === "labeler")
-    && (s.selectedIds || []).length === 1 && s.selectedIds[0] === id;
-}
 function objectById(s, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return s.imageEditSession || null;
   return s.objects.find((o) => o.id === id) || null;
@@ -1698,8 +1691,7 @@ export function initTransform(svg, state) {
     if (activeTool !== "V" && activeTool !== "rotate") return;
 
     // Targeted state: block all transforms; only Shift+G / inspector "揶쏆뮇猿???疫? allowed
-    // 11-10: 지목한 AI 라벨 하나(text·labeler)는 끌어서 옮길 수 있다. 그 밖의 지목 상태는 예전처럼 이동 잠금.
-    if (state.get().targetedId && !isTargetedAiLabel(state.get())) return;
+    if (state.get().targetedId) return;
 
     // Handle drag: only active when exactly one object is selected
     const hLabel = e.target.dataset && e.target.dataset.handle;
@@ -1745,8 +1737,7 @@ export function initTransform(svg, state) {
       }
     }
 
-    if (hLabel && hObjId && selectedIds0.length === 1 && selectedIds0.includes(hObjId)
-      && (!s0.targetedId || ["p0", "p1", "p2", "elbow"].includes(hLabel))) {
+    if (hLabel && hObjId && selectedIds0.length === 1 && selectedIds0.includes(hObjId)) {
       const s = s0;
       const obj = objectById(s, selectedIds0[0]);
       if (obj) {
@@ -1800,7 +1791,7 @@ export function initTransform(svg, state) {
     _moveStartWorld = screenToWorld(svg, vb, e.clientX, e.clientY);
     // Expand to all group members when selected objects share a group
     const _firstMoveObj = objectById(s, selectedIds[0]);
-    const _sharedGid = !s.targetedId && _firstMoveObj?.groupId &&
+    const _sharedGid = _firstMoveObj?.groupId &&
       selectedIds.every(id => objectById(s, id)?.groupId === _firstMoveObj.groupId)
       ? _firstMoveObj.groupId : null;
     let _moveIds = [...selectedIds];
