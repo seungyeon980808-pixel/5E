@@ -731,6 +731,7 @@ if (document.fonts && document.fonts.load) {
   Promise.all([
     document.fonts.load('16px "Latin Modern Roman"'),
     document.fonts.load('italic 16px "Latin Modern Roman"'),
+    document.fonts.load('16px "Latin Modern Math"'), // 11-10: 아래첨자 숫자 글꼴
   ]).then(() => render(state.get())).catch(() => {});
 }
 

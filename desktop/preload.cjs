@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   account: () => ipcRenderer.invoke("codex:account"),
   login: () => ipcRenderer.invoke("codex:login"),
   send: (payload) => ipcRenderer.invoke("codex:send", payload),
+  // 11-10: 원본 그림을 읽는 글자 호출(라벨 복원). 에이전트를 거치지 않는다.
+  readImageText: (payload) => ipcRenderer.invoke("codex:read-image-text", payload),
   interrupt: (payload) => ipcRenderer.invoke("codex:interrupt", payload),
   captureSources: () => ipcRenderer.invoke("capture:sources"),
   // 문항 라이브러리 「내 컴퓨터 폴더 연결」(11-04 되살림)

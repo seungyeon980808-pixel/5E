@@ -1,5 +1,5 @@
 // 11-09 라벨 안정화: 라벨별 원본 글자 크기(measuredSize)는 결과 명세에만 붙는 표시 값이라 원본 라벨 지문에서 뺀다.
-const labelsJsonWithoutSizes = labels => JSON.stringify((labels || []).map(label => { if (!label || typeof label !== 'object' || !('measuredSize' in label)) return label; const { measuredSize, ...rest } = label; return rest; }));
+const labelsJsonWithoutSizes = labels => JSON.stringify((labels || []).map(label => { if (!label || typeof label !== 'object' || !('measuredSize' in label || 'sizeFromBox' in label)) return label; const { measuredSize, sizeFromBox, ...rest } = label; return rest; }));
 // Deterministic geometry proposals, never semantic target assignments.
 // All boxes use normalized RAW coordinates. Raster pixels are immutable RGBA.
 const copy = value => JSON.parse(JSON.stringify(value));

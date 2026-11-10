@@ -17,6 +17,8 @@ const {
   TurnPerformanceRegistry,
 } = require("./codex-turn-runtime.cjs");
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
+// 11-10: 그림·글 읽기를 Codex 로그인으로 직접 부른다(에이전트 경로는 실패 시에만 쓴다).
+const { createDirectImageClient } = require("./ai-direct-image.cjs");
 const { snapshotAttachments } = require("./codex-attachment-audit.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
 const { startExamServer } = require('./exam-server.cjs');
@@ -430,6 +432,8 @@ async function interruptWorkspace(payload = {}) {
   const owner = workspaceRequests.get(workspaceScope(payload));
   if (!owner) return null;
   owner.cancelled = true;
+  // 11-10: 직접 그림 요청 중이면 그 연결부터 끊는다(취소는 끊긴 결과로 turn/completed interrupted를 보낸다).
+  if (owner.directAbort) { owner.directAbort.abort(); return { ok: true, direct: true }; }
   if (!owner.turnId) return { pending: true };
   const { threadId: activeTurnThreadId, turnId } = owner;
   if (!owner.interruptPromise) {
@@ -449,6 +453,93 @@ const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImages = createLocalImageAccess();
+// 11-10: 직접 호출 전송 방식. FIVE_E_IMAGE_TRANSPORT=agent 이면 예전 에이전트 경로만 쓴다.
+// 11-10: 직접 호출 한 번은 100초 안에 끝내고(렌더러 생성 시도 240초 안에 체인이 끝나도록), 재시도는 1번만 한다.
+const directImageClient = createDirectImageClient({ log: entry => appendAiTurnLog(entry), timeoutMs: 100_000, retries: 1 });
+const DIRECT_IMAGE_DEFAULT_MODEL = "gpt-6-luna";
+function directImageEnabled() { return process.env.FIVE_E_IMAGE_TRANSPORT !== "agent"; }
+// 11-10: 그림 요청의 참고 이미지 검사(파일을 쓰지 않는다). 형식·크기는 safeAttachment와 같다.
+function inlineImageBytes(data) {
+  if (typeof data !== "string" || !data.startsWith("data:image/")) throw new Error("이미지 첨부 형식이 올바르지 않습니다.");
+  if (data.length > 11_000_000) throw new Error("이미지는 8MB 이하만 첨부할 수 있습니다.");
+  const match = data.match(/^data:(image\/[\w.+-]+);base64,(.+)$/); if (!match) throw new Error("이미지 데이터를 읽을 수 없습니다.");
+  return Math.floor(match[2].length * 3 / 4);
+}
+// 11-10: 직접 그림 요청. 보내기 응답은 바로 돌려주고(합성 turnId), 생성은 뒤에서 진행해 끝나면 이벤트로 알린다.
+// 입력·로그인 확인(동기)이 실패하면 null을 돌려줘 에이전트 경로가 이어 받는다. 생성 중 실패는 실패 종료 이벤트로 알린다.
+function startDirectImageTurn(payload, owner, startedAt) {
+  if (!directImageEnabled()) return null;
+  const attachments = (Array.isArray(payload.attachments) ? payload.attachments : []).map(attachment => attachment?.data);
+  const model = typeof payload.model === "string" && payload.model ? payload.model : DIRECT_IMAGE_DEFAULT_MODEL;
+  try {
+    directImageClient.precheck({ model, text: payload.text, attachments, image: true });
+  } catch (error) {
+    appendAiTurnLog({ event: "direct-fallback", scope: owner.scope, code: error?.code || "DIRECT_UNKNOWN", status: error?.status ?? null });
+    return null;
+  }
+  const turnId = `direct-${require("node:crypto").randomUUID()}`;
+  const conversationId = typeof payload.conversationId === "string" && payload.conversationId.trim() ? payload.conversationId.trim() : null;
+  const controller = new AbortController();
+  owner.turnId = turnId;
+  owner.threadId = turnId;
+  owner.directAbort = controller;
+  owner.startedAt = startedAt;
+  owner.purpose = "image";
+  owner.model = model;
+  turnPerformance.register({ turnId, threadId: turnId, purpose: "image", startedAt, prepareEndedAt: startedAt, attachmentCount: attachments.length, attachmentBytes: 0 });
+  directImageClient.generate({ model, text: payload.text, attachments, signal: controller.signal }).then(
+    result => finishDirectImageTurn(owner, { turnId, imageDataUrl: result.imageDataUrl, error: null, attachmentCount: attachments.length }),
+    error => finishDirectImageTurn(owner, { turnId, imageDataUrl: null, error, attachmentCount: attachments.length }),
+  ).catch(() => {});
+  return {
+    threadId: null,
+    conversationId,
+    renderThreadId: turnId,
+    ephemeralRender: true,
+    purpose: "image",
+    turnId,
+    result: { turn: { id: turnId } },
+    performance: null,
+  };
+}
+// 11-10: 직접 그림 결과를 에이전트 경로와 같은 이벤트 모양으로 보낸다(성공·취소·실패 모두 turn/completed로 끝낸다).
+function finishDirectImageTurn(owner, { turnId, imageDataUrl, error, attachmentCount }) {
+  if (owner.done) return;
+  owner.directAbort = null;
+  owner.done = true;
+  if (workspaceRequests.get(owner.scope) === owner) workspaceRequests.delete(owner.scope);
+  const cancelled = !imageDataUrl && (owner.cancelled || error?.code === "DIRECT_ABORTED");
+  const turn = { id: turnId, status: imageDataUrl ? "completed" : cancelled ? "interrupted" : "failed" };
+  if (turn.status === "failed") {
+    turn.error = { message: "그림 생성에 실패했습니다. 다른 모델로 다시 시도합니다." };
+    appendAiTurnLog({ event: "direct-failed", scope: owner.scope, turnId, code: error?.code || "DIRECT_UNKNOWN", status: error?.status ?? null });
+  }
+  const messages = [];
+  if (imageDataUrl) messages.push({ method: "item/completed", params: { turnId, item: { type: "imageGeneration", status: "completed", imageDataUrl } } });
+  messages.push({ method: "turn/completed", params: { turn } });
+  appendAiTurnLog({ event: "turn-completed", scope: owner.scope, turnId, status: turn.status, ms: owner.startedAt ? Date.now() - owner.startedAt : null, purpose: "image", model: owner.model || null, attachments: attachmentCount });
+  for (const message of messages) {
+    send("codex:event", message, owner.scope);
+    const observation = turnPerformance.observe(message);
+    if (observation?.completed) {
+      send("codex:event", { method: "5e/performance", params: observation.performance }, owner.scope);
+      turnPerformance.delete(turnId);
+    }
+  }
+  if (imageDataUrl) send("codex:event", { method: "5e/image-finalization", params: { turnId, state: "confirmed", status: "completed" } }, owner.scope);
+}
+// 11-10: 그림 읽기(라벨 읽기 등) 전용 호출. 에이전트를 거치지 않는다.
+handleTrustedIpc("codex:read-image-text", (_event, payload = {}) => {
+  const { model, text, attachments = [] } = payload && typeof payload === "object" ? payload : {};
+  if (typeof text !== "string" || text.length > 1_000_000) throw new Error("잘못된 읽기 요청입니다.");
+  if (!Array.isArray(attachments) || attachments.length > 16) throw new Error("참고 이미지 수가 너무 많습니다.");
+  for (const attachment of attachments) inlineImageBytes(attachment);
+  return directImageClient.readText({
+    model: typeof model === "string" && model ? model : DIRECT_IMAGE_DEFAULT_MODEL,
+    text,
+    attachments,
+  }).then(result => ({ text: result.text }));
+});
 const SMOKE_FIXTURE_IMAGE_PATH = path.join(__dirname, "..", "tests", "fixtures", "rights-clear-smoke.png");
 
 function imageDataUrl({ extension: ext, bytes }) {
@@ -988,6 +1079,11 @@ async function sendWorkspaceTurn(payload, owner) {
   owner.startedAt = startedAt;
   const plan = resolveTurnPlan({ ...payload, conversationId, resetConversation });
   owner.attachmentDiagnostics = plan.purpose === "image" && payload.attachmentDiagnostics === true;
+  // 11-10: 그림 요청은 먼저 직접 호출로 보낸다. 입력·로그인 확인이 실패하면(동기) 아래 에이전트 경로가 이어 받는다.
+  if (plan.purpose === "image" && plan.ephemeralRender && !owner.cancelled) {
+    const direct = startDirectImageTurn(payload, owner, startedAt);
+    if (direct) return direct;
+  }
   const outputSchema = validatedSceneOutputSchema(payload.outputSchema, plan.purpose);
   startServer();
   await ensureInitialized();
@@ -1022,18 +1118,27 @@ async function sendWorkspaceTurn(payload, owner) {
   if (!plan.ephemeralRender) workspaceConversations.set(owner.scope, requestThreadId);
 
   const safeAttachments = Array.isArray(attachments) ? attachments : [];
-  const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
-  const failedAttachment = preparedResults.find((result) => result.status === "rejected");
-  if (failedAttachment) {
-    await Promise.all(preparedResults
-      .filter((result) => result.status === "fulfilled")
-      .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
-    throw failedAttachment.reason;
+  let preparedAttachments = [];
+  let paths = [];
+  let input;
+  if (plan.purpose === "image") {
+    // 11-10: 그림 요청의 참고 이미지는 파일 경로 대신 데이터 주소로 보낸다(에이전트가 잘못 쓸 경로가 없게 한다).
+    preparedAttachments = safeAttachments.map((attachment) => ({ file: null, bytes: inlineImageBytes(attachment.data), name: attachment.name || null }));
+    input = [{ type: "text", text }].concat(safeAttachments.map((attachment) => ({ type: "image", url: attachment.data })));
+  } else {
+    const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
+    const failedAttachment = preparedResults.find((result) => result.status === "rejected");
+    if (failedAttachment) {
+      await Promise.all(preparedResults
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
+      throw failedAttachment.reason;
+    }
+    preparedAttachments = preparedResults.map((result) => result.value);
+    paths = preparedAttachments.map((attachment) => attachment.file);
+    input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
   }
-  const preparedAttachments = preparedResults.map((result) => result.value);
-  const paths = preparedAttachments.map((attachment) => attachment.file);
   const attachmentBytes = preparedAttachments.reduce((sum, attachment) => sum + attachment.bytes, 0);
-  const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
   reportAttachmentSnapshot(owner, "before-turn-start", paths);
   let result;
   try {

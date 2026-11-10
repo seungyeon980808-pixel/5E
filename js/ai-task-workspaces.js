@@ -98,7 +98,7 @@ export function recoverTaskWorkspaceSnapshot(value, { dropInvalid = false } = {}
 export function createTaskBridge(base, clientScope) {
   if (!base) return undefined;
   const bridge = { ...base };
-  for (const method of ['status', 'start', 'stop', 'models', 'account', 'login', 'send', 'interrupt']) {
+  for (const method of ['status', 'start', 'stop', 'models', 'account', 'login', 'send', 'interrupt', 'readImageText']) {
     if (typeof base[method] === 'function') bridge[method] = (payload = {}) => base[method]({ ...payload, clientScope });
   }
   for (const method of ['onEvent', 'onState', 'onLog']) {

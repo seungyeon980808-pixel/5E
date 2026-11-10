@@ -9,7 +9,7 @@ import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-se
 import { manualLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
 import { createInlineLabelEditor } from './ai-inline-label-editor.js?v=1.7.0-four-session-integration';
 import { visibleImagePng } from './ai-visible-image-output.js?v=1.7.0-four-session-integration';
-import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=1.7.0-four-session-integration';
+import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry, isQuietLabelReadResult } from './ai-result-attention.js?v=1.7.0-four-session-integration';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
 import { describeGraphFailure } from './graph/reconstruction-error.js?v=1.7.0-four-session-integration';
@@ -58,7 +58,7 @@ import { parseEditableImageLabelPlan, withEditableImageLabelPlan, SOURCE_LABEL_P
 import { createSourceLabelController, withFrozenSourceLabelPlan, buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7.0-four-session-integration';
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
-import { normalizeImageLabelWorkflow } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
+import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { validateLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
@@ -3955,6 +3955,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (attachments.length === 1 && generatedImages.length === 0 && imageKindSelect) {
           sourceChoicePending = false;
           imageKindSelect.value = sourceImageKind(reference);
+          // 11-10: 기출은 라벨 복원(켬), 교과서는 라벨 삭제가 기본이다. 새 원본을 불러올 때만 정한다.
+          if (labelResultSelect && taskTabs.get(activeTaskTabId)?.labelResultTouched !== true) labelResultSelect.value = defaultLabelResultFor(imageKindSelect.value);
           imageKindSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
         if (attachments.length === 1 && generatedImages.length === 0) {
@@ -4075,7 +4077,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         sourceLabelControllers.add(job.labelController); sourceLabelControllers.add(job.rasterController);
         const onPhase = phase => updateBatchCard(job, `${job.name} · ${phase}`);
         const tab = taskTabs.get(job.taskTabId), sourceHash = await imageLabelDigest(job.source.data);
-        const result = await executeImageLabelRun({ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController,
+        const result = await executeImageLabelRun({ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
           selection: { model: job.model, effort: job.effort, serviceTier: job.serviceTier, models: availableModels }, artboard: { ...state.get().artboard }, signal: abort.signal,
           observation: tab?.sourceLabelObservations?.[sourceHash], onObservation: async observation => {
             if (abort.signal.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
@@ -4956,7 +4958,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const generationSource = workflow.imageKind === 'general' && !options.verifyOnly
         ? await prepareApprovedFirstAttachment({ ...sources[0] }) : undefined;
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
-      const result = await executeImageLabelRun({ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection,
+      const result = await executeImageLabelRun({ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
         generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
         artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphKeepOriginal ? 'keep' : 'route',
         onObservation: async observation => {
@@ -4977,6 +4979,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           captureActiveTaskTab();await taskPersistence.checkpoint();
         }, onPhase, onQueueWait, onAiRetry, onAiFailure: recordAiAttemptFailure, cache: outputCache, backgroundCache: labelBackgroundCache, previousCandidates: runInput.generated, bypassCache: options.bypassCache === true,
         preciseRestore: runInput.preciseRestore === true, verifyOnly: options.verifyOnly === true, previousCandidate,
+        // 11-10: 사용자가 다시 그리기(새 변형·재생성·다시 변환)를 요청한 생성만 Sol로 보낸다. 라벨 켬끔 전환은 해당 아님.
+        regenerate: options.regenerate === true || /새\s*변형|다시\s*생성|다르게\s*생성|재생성|다시\s*그리기|다시\s*변환/.test(request),
         localRestore: createExamLocalRestore({ observer, raster: imageLabelRaster, onPhase }) });
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
       currentTurnPerformance = { ...result.metrics, elapsedMs: result.metrics.timings.total, cacheHit: result.metrics.cacheHit };
@@ -5003,6 +5007,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if(pendingRawCandidate){const previousCard=candidate.card;previousCard?.replaceWith(makeImageCard(candidate));}
       ensureCompositePreviewControl(candidate); syncEditableLabelPlanButton(candidate);
       imageReceived = true; currentTurnCandidate = candidate; currentReviewCandidate = candidate;
+      candidate.quietCompletion = isQuietLabelReadResult(result, candidate); // 11-10: 라벨 읽기 성공은 「확인 필요」 없이 완료
       if (candidate.reviewState === 'needs-attention') taskTabs.get(originatingTaskId).generationNotice = 'review';
       const draftReady = canEditLabelReviewDraft(candidate);
       currentTurnDone = true; currentTerminalOutcome = 'completed'; serverTurnFinished = true; previewPending = false;
@@ -5016,6 +5021,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       } else {
         setTaskState('completed'); taskTabs.get(originatingTaskId).generationNotice = candidate.reviewState === 'needs-attention' ? 'review' : null; renderTaskTabs(); setGenerating(false); setBusy(false);
         setStatus(outOfScope ? outOfScopeMessage : graphKept ? result.keptMessage : fallbackResult ? result.fallbackMessage
+          : result.labelReadNotice ? result.labelReadNotice // 11-10: 글자 읽기 실패 → 그림만 넣고 안내
           : candidate.reviewState === 'passed' ? (candidate.reviewReport?.advisory?.length ? `처리 완료 · 참고 사항 ${candidate.reviewReport.advisory.length}개는 결과 확인에서 볼 수 있습니다.` : '처리 완료 · 편집 가능한 결과를 준비했습니다.')
           : draftReady ? candidate.editableDraft?.presentation === 'external-list'
             ? `원본 유지 · 편집 라벨 목록 ${candidate.editableDraft.labelIds.length}개를 준비했습니다. 원본 글자는 남아 있습니다.`
@@ -5930,9 +5936,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     captureActiveTaskTab(); persistTasks();
     panel.querySelector('[data-ai-source-kind-row]')?.classList.remove('ai-needs-choice');
     syncWhitePngUi();
+    // 11-10: 원본 종류를 나중에 골라도 기본 라벨 처리(기출 복원·교과서 삭제)를 맞춘다. 사용자가 라벨 설정을 직접 바꾼 작업은 그대로 둔다.
+    if (labelResultSelect) {
+      const nextLabelResult = labelResultAfterKindChange({ imageKind: imageKindSelect.value, current: labelResultSelect.value, touched: taskTabs.get(activeTaskTabId)?.labelResultTouched === true });
+      if (nextLabelResult !== labelResultSelect.value) { labelResultSelect.value = nextLabelResult; labelResultSelect.dispatchEvent(new Event('change', { bubbles: true })); } // 합성 이벤트라 touched로 기록되지 않는다
+    }
     if (sourceChoicePending && ['exam', 'general'].includes(imageKindSelect.value)) { sourceChoicePending = false; void submit('image'); }
   });
-  labelResultSelect?.addEventListener('change', () => {
+  labelResultSelect?.addEventListener('change', event => {
+    if (event.isTrusted && taskTabs.get(activeTaskTabId)) taskTabs.get(activeTaskTabId).labelResultTouched = true; // 사용자가 직접 고른 경우만 기록
     if (preserveSourceLabels) preserveSourceLabels.checked = labelResultSelect.value === 'restore-editable';
     captureActiveTaskTab(); persistTasks(); syncConversionSummary();
   });

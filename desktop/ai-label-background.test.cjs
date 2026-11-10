@@ -93,7 +93,7 @@ test('failed or aborted generation never becomes a stored background or an autom
   assert.equal((await store.stats()).entryCount, 0);
 });
 
-test('off → on → off uses one RAW despite workflow-cache bypass and uncertain review', async () => {
+test('off → on → off uses one RAW despite workflow-cache bypass', async () => {
   const { executeImageLabelRun, imageLabelDigest } = await runAPI;
   const { SOURCE_LABEL_POLICY_VERSION } = await import('../js/ai-editable-image-labels.js');
   const wire = await import('../js/ai-source-observation-wire.js');
@@ -111,9 +111,11 @@ test('off → on → off uses one RAW despite workflow-cache bypass and uncertai
     results.push(await executeImageLabelRun({ ...options, observation, previousCandidate: results.at(-1),
       workflow: { imageKind: 'general', labelResult, verificationMode: 'draft-first' } }));
   }
-  assert.equal(generations, 1); assert.equal(new Set(results.map(r => r.data)).size, 1);
+  // 11-10: 라벨 복원(기본)도 라벨 삭제와 같은 요청으로 그리므로 한 그림을 켬·끔이 함께 쓴다(11-08 원칙). 글자는 따로 읽는다.
+  assert.equal(generations, 1); assert.equal(results[0].data, results[1].data); assert.equal(results[0].data, results[2].data);
   assert.deepEqual(results.map(r => r.metrics.calls.fullGeneration), [1, 0, 0]);
-  assert.ok(results.every(r => r.accepted === false));
+  // 11-10: 라벨 삭제·라벨 복원 모두 검수 없이 그대로 받으므로 accepted.
+  assert.deepEqual(results.map(r => r.accepted), [true, true, true]);
   assert.equal(results[0].labelPlan, null); assert.ok(results[1].labelPlan); assert.equal(results[2].labelPlan, null);
   const separateTask = await executeImageLabelRun({ ...options, workflow: { imageKind: 'general', labelResult: 'remove' } });
   assert.equal(separateTask.data, results[0].data); assert.equal(separateTask.metrics.backgroundReused, 'storage');

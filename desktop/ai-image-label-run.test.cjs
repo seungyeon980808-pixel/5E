@@ -81,24 +81,24 @@ test('source analysis failure is retried with a Luna last attempt, recorded, and
  assert.equal(models.at(-1),'gpt-6-luna');
  assert.equal(f.counts.generate,0);
 });
-test('review timeout retains the generated RAW as needs-attention without generating a replacement',async()=>{
+// 11-10: 라벨 삭제 기본 흐름은 생성 뒤 검수를 부르지 않고 그림을 그대로 받는다(검수 시간 초과로 막히지 않는다).
+test('label removal is accepted as is without a review call, so a review timeout cannot block it',async()=>{
  const {executeImageLabelRun}=await api,f=await setup();
  f.options.observer.review=async()=>{throw Error('review timeout');};
  const result=await executeImageLabelRun(f.options);
- assert.equal(result.data,png);assert.equal(result.accepted,false);assert.equal(result.status,'needs-attention');
- assert.equal(f.counts.generate,1);assert.equal(result.metrics.calls.fullGeneration,1);
- assert.ok(result.report.issues.some(i=>i.message.includes('review timeout')));
+ assert.equal(result.data,png);assert.equal(result.accepted,true);assert.equal(result.status,'complete');
+ assert.equal(f.counts.generate,1);assert.equal(f.counts.review,0);assert.equal(result.metrics.calls.fullGeneration,1);assert.equal(result.metrics.reviewSkipped,true);
 });
 test('the generated RAW callback runs before verification and cannot silently mark it accepted',async()=>{
  const {executeImageLabelRun}=await api,f=await setup(),sequence=[];
  f.options.onRaster=async raw=>{sequence.push('raw');assert.equal(raw.data,png);assert.equal(raw.accepted,undefined);assert.equal(raw.metrics.calls.review,0);};
  const review=f.options.observer.review;f.options.observer.review=async options=>{sequence.push('review');return review(options);};
- await executeImageLabelRun(f.options);assert.deepEqual(sequence,['raw','review']);assert.equal(f.counts.generate,1);
+ await executeImageLabelRun(f.options);assert.deepEqual(sequence,['raw'],'11-10: 라벨 삭제 기본 흐름은 검수 호출 없이 끝난다');assert.equal(f.counts.generate,1);
 });
-test('runtime reuses immutable observation on retry while generating and reviewing once per general remove run',async()=>{
+test('runtime reuses immutable observation on retry while generating and never reviewing a general remove run',async()=>{
  const {executeImageLabelRun}=await api,f=await setup();const first=await executeImageLabelRun(f.options);
  const second=await executeImageLabelRun({...f.options,observation:f.observation,bypassCache:true});
- assert.deepEqual(f.counts,{analyze:1,generate:2,review:2});assert.equal(first.metrics.calls.fullGeneration,1);assert.equal(second.metrics.observationReused,true);assert.equal(second.metrics.calls.sourceAnalysis,0);assert.equal(second.labelPlan,null);assert.equal(second.metrics.calls.targetMapping,0);
+ assert.deepEqual(f.counts,{analyze:1,generate:2,review:0});assert.equal(first.metrics.calls.fullGeneration,1);assert.equal(second.metrics.observationReused,true);assert.equal(second.metrics.calls.sourceAnalysis,0);assert.equal(second.labelPlan,null);assert.equal(second.metrics.calls.targetMapping,0);
  const invalid=structuredClone(f.observation);invalid.plan.labels.push({id:'tampered'});await executeImageLabelRun({...f.options,observation:invalid});assert.equal(f.counts.analyze,2);
 });
 test('valid legacy ownership observation is reanalyzed and cannot reuse its cached output',async()=>{
@@ -117,7 +117,7 @@ test('valid legacy ownership observation is reanalyzed and cannot reuse its cach
  entries.clear();entries.set(legacyKey,{output:legacyOutput});queried.length=0;
  const result=await executeImageLabelRun({...f.options,cache,observation:legacy});
  assert.equal(result.metrics.observationReused,false);assert.equal(result.metrics.calls.sourceAnalysis,1);assert.equal(result.metrics.cacheHit,false);
- assert.deepEqual(f.counts,{analyze:2,generate:2,review:2});
+ assert.deepEqual(f.counts,{analyze:2,generate:2,review:0});
  assert.equal(f.observation.plan.policyVersion,4);assert.notEqual(result.planSha256,legacy.planSha256);
  assert.equal(saved.descriptor.outputOptions.sourceLabelPolicyVersion,4);assert.notEqual(saved.key,legacyKey);assert.ok(!queried.includes(legacyKey));
  assert.equal(JSON.stringify(legacy),before);assert.equal(JSON.stringify(legacyOutput),outputBefore);
@@ -141,13 +141,13 @@ test('a markerless saved observation cannot bypass current leader observation ev
 test('cache descriptor binds workflow, source, plan, model and candidate; changed candidate hash causes new work',async()=>{
  const {executeImageLabelRun,imageLabelDigest}=await api,f=await setup();const entries=new Map();let put;
  const cache={get:async key=>entries.has(key)?{hit:true,entry:entries.get(key)}:{hit:false},delete:async key=>entries.delete(key),put:async value=>{put=value;entries.set(value.key,{output:value.output});return {stored:true};}};
- const first=await executeImageLabelRun({...f.options,cache});assert.equal(put.descriptor.outputOptions.sourceSha256,await imageLabelDigest(png));assert.equal(put.descriptor.outputOptions.planSha256,first.planSha256);assert.equal(put.descriptor.generation.model,'test-model');assert.equal(put.output.bytes,new TextEncoder().encode(JSON.stringify({imageLabelRun:put.output.imageLabelRun})).byteLength);
- const hit=await executeImageLabelRun({...f.options,cache,observation:f.observation});assert.equal(hit.metrics.cacheHit,true);assert.deepEqual(f.counts,{analyze:1,generate:1,review:1});
+ const first=await executeImageLabelRun({...f.options,cache});assert.equal(put.descriptor.outputOptions.sourceSha256,await imageLabelDigest(png));assert.equal(put.descriptor.outputOptions.planSha256,first.planSha256);assert.equal(put.descriptor.generation.model,'gpt-6-luna','11-10: 기록되는 모델은 실제 그림 생성 모델(기본 Luna)');assert.equal(put.output.bytes,new TextEncoder().encode(JSON.stringify({imageLabelRun:put.output.imageLabelRun})).byteLength);
+ const hit=await executeImageLabelRun({...f.options,cache,observation:f.observation});assert.equal(hit.metrics.cacheHit,true);assert.deepEqual(f.counts,{analyze:1,generate:1,review:0});
  entries.get(put.key).output.imageLabelRun.candidateSha256='0'.repeat(64);
  const miss=await executeImageLabelRun({...f.options,cache,observation:f.observation});assert.equal(miss.metrics.cacheHit,false);assert.equal(f.counts.generate,2);
  const saved=entries.get(put.key).output.imageLabelRun;saved.targetPlacement={version:1,imageKind:'general',candidateSha256:saved.candidateSha256,planSha256:saved.planSha256,sourceLabelsJson:'[]',labels:[{id:'invented',status:'matched'}]};
  const repaired=await executeImageLabelRun({...f.options,cache,observation:f.observation});assert.equal(repaired.metrics.cacheHit,false);assert.equal(f.counts.generate,3);assert.equal(repaired.targetPlacement,null);
- await executeImageLabelRun({...f.options,cache,observation:f.observation,selection:{...selection,model:'other'}});assert.equal(f.counts.generate,4);
+ const viaOtherUi=await executeImageLabelRun({...f.options,cache,observation:f.observation,selection:{...selection,model:'other'}});assert.equal(viaOtherUi.metrics.cacheHit,true);assert.equal(f.counts.generate,3,'11-10: 화면 모델을 바꿔도 그림 생성 모델(Luna)이 같으면 같은 결과를 쓴다');
 });
 test('abort during observation persistence prevents generation and cache writes',async()=>{
  const {executeImageLabelRun}=await api,f=await setup(),controller=new AbortController();let writes=0;
@@ -165,9 +165,9 @@ test('failed exam local restoration reserves durable attempt and retry never cal
  let restores=0;const localRestore=async()=>{restores++;assert.equal(f.observation.localRestoreAttempted,true);throw Error('unavailable local service');};
  try{
   // 11-10: 기출 원본 픽셀 길(국소 복원 포함)은 이제 라벨 복원에서만 쓴다. 라벨 삭제는 새로 그린다(아래 검사).
-  const first=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'restore-editable'},localRestore});
+  const first=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'restore-editable'},legacyLabelPipeline:true,localRestore});
   assert.equal(first.metrics.calls.fullGeneration,0);assert.equal(first.metrics.attempts.localRestore,1);assert.equal(first.metrics.calls.localRestore,0);assert.equal(first.report.verdict,'uncertain');assert.equal(first.data,png);
-  const retry=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'restore-editable'},localRestore,observation:f.observation,bypassCache:true});
+  const retry=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'restore-editable'},legacyLabelPipeline:true,localRestore,observation:f.observation,bypassCache:true});
   assert.equal(restores,1);assert.equal(retry.metrics.calls.localRestore,0);assert.equal(retry.metrics.attempts.localRestore,0);assert.equal(retry.report.verdict,'uncertain');assert.equal(f.counts.analyze,2);assert.equal(retry.metrics.observationReused,false);assert.equal(f.counts.generate,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
 });
@@ -195,12 +195,12 @@ test('run AbortSignal cancels active observer and detaches after completion',asy
 });
 test('mapping transport failure retains RAW candidate with uncertain placement and no second generation',async()=>{
  const {executeImageLabelRun,imageLabelDigest}=await api,f=await setup();delete f.plan.observationVersion;f.plan.labels=[{id:'a',sourceRef:1,scope:'general',mode:'text',text:'원문',position:{x:.5,y:.5},anchor:{x:.5,y:.5},typography:{role:'name',bounds:{x:.4,y:.45,w:.2,h:.1}}}];
- const result=await executeImageLabelRun({...f.options,workflow:{imageKind:'general',labelResult:'restore-editable'},observer:{...f.options.observer,mapTargets:async()=>{throw Error('mapping offline');},reviewFinal:async()=>({verdict:'pass',checks:[],issues:[]})}});
+ const result=await executeImageLabelRun({...f.options,legacyLabelPipeline:true,workflow:{imageKind:'general',labelResult:'restore-editable'},observer:{...f.options.observer,mapTargets:async()=>{throw Error('mapping offline');},reviewFinal:async()=>({verdict:'pass',checks:[],issues:[]})}});
  assert.equal(result.data,png);assert.equal(result.candidateSha256,await imageLabelDigest(png));assert.equal(result.targetPlacement.status,'needs-attention');assert.equal(result.targetPlacement.labels[0].status,'uncertain');assert.equal(result.report.verdict,'uncertain');assert.equal(result.labelPlan.reviewRequired,true);assert.equal(f.counts.generate,1);assert.ok(result.report.issues.some(i=>i.code==='target-mapping-unavailable'));
 });
 test('aborted mapping does not become retained candidate success',async()=>{
  const {executeImageLabelRun}=await api,f=await setup(),signal=new AbortController();delete f.plan.observationVersion;let writes=0;
- await assert.rejects(executeImageLabelRun({...f.options,signal:signal.signal,workflow:{imageKind:'general',labelResult:'restore-editable'},observer:{...f.options.observer,mapTargets:async()=>{signal.abort();throw Error('cancel mapping');}},cache:{get:async()=>({hit:false}),put:async()=>{writes++;}}}),{name:'AbortError'});assert.equal(writes,0);
+ await assert.rejects(executeImageLabelRun({...f.options,legacyLabelPipeline:true,signal:signal.signal,workflow:{imageKind:'general',labelResult:'restore-editable'},observer:{...f.options.observer,mapTargets:async()=>{signal.abort();throw Error('cancel mapping');}},cache:{get:async()=>({hit:false}),put:async()=>{writes++;}}}),{name:'AbortError'});assert.equal(writes,0);
 });
 // 11-09 라벨 안정화: 그림 생성 AI는 정해진 크기로만 그리므로, 국소 영역을 흰 여백을 붙인 생성 틀(1024×1024 등) 가운데에 키워 보낸다.
 test('local restore sends the crop framed at a generation size, keeping each pixel color in place, and reaches scoped raster send',async()=>{
@@ -239,11 +239,11 @@ test('graph figures route to graph restore, are never label-restored, and stay t
  const restoreWorkflow={imageKind:'general',labelResult:'restore-editable'};
  for(const graphLabels of [undefined,'route','restore']){
   const f=await setup();graphPlan(f);
-  await assert.rejects(executeImageLabelRun({...f.options,workflow:restoreWorkflow,...(graphLabels?{graphLabels}:{})}),e=>e.code==='AI_GRAPH_FIGURE'&&e.graphLabelCount===1);
+  await assert.rejects(executeImageLabelRun({...f.options,workflow:restoreWorkflow,legacyLabelPipeline:true,...(graphLabels?{graphLabels}:{})}),e=>e.code==='AI_GRAPH_FIGURE'&&e.graphLabelCount===1);
   assert.equal(f.counts.generate,0);
  }
  const f=await setup();graphPlan(f);
- const kept=await executeImageLabelRun({...f.options,workflow:restoreWorkflow,graphLabels:'keep'});
+ const kept=await executeImageLabelRun({...f.options,workflow:restoreWorkflow,legacyLabelPipeline:true,graphLabels:'keep'});
  assert.equal(kept.status,'graph-kept');assert.equal(kept.data,f.options.source.data);assert.equal(kept.labelPlan,null);
  assert.equal(kept.removalReport.changedPixels,0);assert.equal(kept.removalReport.unchanged,true);assert.equal(f.counts.generate,0);
  assert.match(kept.keptMessage,/원본/);
@@ -287,38 +287,77 @@ test('a circled character restored from its ring takes the circled text and the 
  assert.equal(out[1].text,'A');assert.equal(out[1].typography.role,'name');
 });
 
-// 11-10 사용자 선택 「그림은 처음부터 Luna로」: 그림 생성만 첫 시도 Luna → 고른 모델 → Luna, 다른 단계는 고른 모델 → Luna → Luna.
-test('image generation starts with Luna and tries the chosen model second; other stages keep the chosen model first',async()=>{
- const {runAiWithRetry,AI_RETRY_FALLBACK_MODEL:luna}=await import('../js/ai-image-label-run.js');
- const order=async(stage,selection)=>{const seen=[],retries=[];
-  await assert.rejects(runAiWithRetry({stage,selection,attempts:3,backoffMs:[0,0],run:choice=>{seen.push(choice.model);throw new Error('실패');},onRetry:r=>retries.push(r.nextModel)}));
+// 11-10: 그림 생성은 고른 모델(기본 Luna, 다시 그리기는 Sol)을 한 번 보내고, 실패하면 반대 모델을 한 번만 보낸다. 라벨 읽기 등 다른 단계는 예전대로 고른 모델 → Luna → Luna.
+test('image generation sends the chosen model first and the other model second; other stages keep the chosen model first',async()=>{
+ const {runAiWithRetry,AI_RETRY_FALLBACK_MODEL:luna,AI_GENERATION_REGENERATE_MODEL:sol}=await import('../js/ai-image-label-run.js');
+ const order=async(stage,selection,attempts=3)=>{const seen=[],retries=[];
+  await assert.rejects(runAiWithRetry({stage,selection,attempts,backoffMs:[0,0],run:choice=>{seen.push(choice.model);throw new Error('실패');},onRetry:r=>retries.push(r.nextModel)}));
   return {seen,retries};};
- const sol={model:'gpt-6.1-sol',effort:'high'};
- assert.deepEqual(await order('generation',sol),{seen:[luna,'gpt-6.1-sol',luna],retries:['gpt-6.1-sol',luna]});
- assert.deepEqual((await order('sourceAnalysis',sol)).seen,['gpt-6.1-sol',luna,luna]);
- assert.deepEqual((await order('generation',{model:luna,effort:'high'})).seen,[luna,luna,luna],'Luna를 고르셨으면 그대로');
- let first=null; await runAiWithRetry({stage:'generation',selection:sol,attempts:3,backoffMs:[0,0],run:choice=>{first=choice;return 'ok';}});
- assert.deepEqual(first,{model:luna,effort:'medium'},'성공하면 Luna 한 번으로 끝난다');
+ const solSel={model:sol,effort:'high'};
+ assert.deepEqual(await order('generation',solSel,2),{seen:[sol,luna],retries:[luna]});
+ assert.deepEqual(await order('generation',{model:luna,effort:'high'},2),{seen:[luna,sol],retries:[sol]});
+ assert.deepEqual((await order('sourceAnalysis',solSel)).seen,[sol,luna,luna]);
+ let first=null; await runAiWithRetry({stage:'generation',selection:solSel,attempts:2,backoffMs:[0,0],run:choice=>{first=choice;return 'ok';}});
+ assert.deepEqual(first,solSel,'성공하면 고른 모델 한 번으로 끝난다');
 });
 
 // 11-10 사용자 선택 「라벨 삭제 때 라벨 읽기 건너뛰기」: 교과서(일반)를 라벨 없이 새로 그릴 때는 AI 글자 읽기를 부르지 않는다.
-test('general remove skips the AI label reading when the observer can make a blank plan, and reviews with that blank plan',async()=>{
+test('general remove skips the AI label reading when the observer can make a blank plan, and runs no review',async()=>{
  const {executeImageLabelRun}=await api,f=await setup();let blank=0,reviewed=null;const review=f.options.observer.review;
  f.options.observer.blankPlan=async()=>{blank++;return {...structuredClone(f.plan),labels:[],excludedLabels:[]};};
  f.options.observer.review=async o=>{reviewed=o.plan;return review(o);};
  const r=await executeImageLabelRun(f.options);
- assert.deepEqual(f.counts,{analyze:0,generate:1,review:1});assert.equal(blank,1);
- assert.equal(reviewed.labels.length,0);assert.equal(r.metrics.calls.sourceAnalysis,0);assert.equal(r.metrics.sourceAnalysisSkipped,true);
+ assert.deepEqual(f.counts,{analyze:0,generate:1,review:0});assert.equal(blank,1);
+ assert.equal(reviewed,null,'11-10: 라벨 삭제 기본 흐름은 검수를 부르지 않는다');assert.equal(r.metrics.calls.sourceAnalysis,0);assert.equal(r.metrics.sourceAnalysisSkipped,true);
 });
 
 // 11-10 사용자 결정: 기출 「라벨 삭제」는 원본 위 글자 지우기가 아니라, 글자를 뺀 선명한 그림을 글자 읽기 없이 한 번에 새로 그린다.
-test('exam remove redraws once without the pixel path or label reading, and is reviewed as a new drawing',async()=>{
+test('exam remove redraws once without the pixel path or label reading, and runs no review',async()=>{
  const {executeImageLabelRun}=await api,f=await setup();let blank=0,reviewedKind=null,genOpts=null,genText='';
  f.options.observer.blankPlan=async()=>{blank++;return {...structuredClone(f.plan),labels:[],excludedLabels:[]};};
  const review=f.options.observer.review;f.options.observer.review=async o=>{reviewedKind=o.workflow.imageKind;return review(o);};
  const gen=f.options.raster.generate;f.options.raster.generate=async(payload,opts)=>{genOpts=opts;genText=payload.text;return gen(payload,opts);};
  const r=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'remove'}});
- assert.deepEqual(f.counts,{analyze:0,generate:1,review:1});assert.equal(blank,1);
- assert.equal(genOpts.examRedraw,true);assert.equal(reviewedKind,'general');assert.match(genText,/기출 그림 새로 그리기/);
+ assert.deepEqual(f.counts,{analyze:0,generate:1,review:0});assert.equal(blank,1);
+ assert.equal(genOpts.examRedraw,true);assert.equal(reviewedKind,null);assert.match(genText,/글자·숫자·문자와, 글자를 가리키는 지시선만 지워 줘/);
  assert.ok(!r.removalReport);
+});
+
+// 11-10 사용자 결정(4차 실측): 기본 그림 프롬프트는 기출·교과서 짧은 문단 하나만 보낸다. 사용자 요청만 「사용자 요청:」으로 붙는다.
+test('default redraw prompts are the short approved texts and only the user request is appended',async()=>{
+ const {executeImageLabelRun,REDRAW_EXAM_PROMPT,REDRAW_TEXTBOOK_PROMPT}=await api,f=await setup();
+ const texts=[];const gen=f.options.raster.generate;f.options.raster.generate=async(payload,opts)=>{texts.push(payload.text);return gen(payload,opts);};
+ await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'remove'}});
+ await executeImageLabelRun({...f.options,workflow:{imageKind:'general',labelResult:'remove'}});
+ await executeImageLabelRun({...f.options,workflow:{imageKind:'general',labelResult:'remove'},generationInstructions:'글자 크기를 키워 줘'});
+ assert.equal(texts[0],REDRAW_EXAM_PROMPT);
+ assert.equal(texts[1],REDRAW_TEXTBOOK_PROMPT);
+ assert.equal(texts[2],REDRAW_TEXTBOOK_PROMPT+'\n\n사용자 요청: 글자 크기를 키워 줘');
+ assert.match(REDRAW_TEXTBOOK_PROMPT,/^첨부한 교과서 그림을 한국 수능\(평가원\) 시험지용 흑백 과학 그림으로 다시 그려 줘\./);
+ for(const text of texts) assert.doesNotMatch(text,/INPUT_SOURCE|스타일 계약|사용자 수정 요청/);
+});
+
+// 11-10: 첫 생성은 Luna, 사용자가 다시 그리기를 요청한 생성은 Sol.
+test('first generation uses Luna and an explicit regenerate uses Sol',async()=>{
+ const {executeImageLabelRun}=await api,f=await setup();const models=[];
+ const gen=f.options.raster.generate;f.options.raster.generate=async(payload,opts)=>{models.push(payload.model);return gen(payload,opts);};
+ await executeImageLabelRun({...f.options,selection:{model:'gpt-6.1-sol',effort:'high'}});
+ await executeImageLabelRun({...f.options,regenerate:true});
+ assert.deepEqual(models,['gpt-6-luna','gpt-6.1-sol']);
+});
+
+// 11-10 실패 금지: 그림 생성이 Luna에서 실패하면 Sol로 한 번 더 보내고, 그것도 실패하면 원본 그림을 결과로 돌려준다(실패 화면 없음).
+test('generation failure retries once with the other model and then returns the original picture with a notice',async()=>{
+ const {executeImageLabelRun,AI_GENERATION_FAILED_NOTICE}=await api,f=await setup();
+ const source='data:image/png;base64,'+Buffer.from([137,80,78,71,13,10,26,11]).toString('base64');
+ const quick={attempts:3,backoffMs:[0,0],analysisTimeoutMs:[0,0,0],generationTimeoutMs:[0,0,0]};
+ const models=[];f.options.raster.generate=async payload=>{models.push(payload.model);if(models.length===2) return {src:png,imageToolCalls:1,rendererPrompt:'render'};throw new Error('Luna 실패');};
+ const once=await executeImageLabelRun({...f.options,source:{name:'input',data:source},retryPolicy:quick});
+ assert.deepEqual(models,['gpt-6-luna','gpt-6.1-sol']);assert.equal(once.status,'complete');assert.equal(once.data,png);
+ models.length=0;f.options.raster.generate=async payload=>{models.push(payload.model);throw new Error('두 모델 실패');};
+ const fallback=await executeImageLabelRun({...f.options,source:{name:'input',data:source},retryPolicy:quick});
+ assert.deepEqual(models,['gpt-6-luna','gpt-6.1-sol']);
+ assert.equal(fallback.status,'fallback');assert.equal(fallback.data,source);assert.equal(fallback.accepted,false);
+ assert.equal(fallback.fallbackMessage,AI_GENERATION_FAILED_NOTICE);assert.equal(AI_GENERATION_FAILED_NOTICE,'변환이 잠시 안 되어 원본을 그대로 넣었습니다. 다시 그리기를 눌러 주세요.');
+ assert.equal(fallback.metrics.fallback.phase,'generation');assert.equal(fallback.metrics.fallback.image,'source');
 });

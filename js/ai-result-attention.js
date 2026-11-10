@@ -4,8 +4,15 @@ export function pendingResult(tab) {
   return typeof id === 'string' && tab.generated?.some(item => item.id === id && item.data) ? id : null;
 }
 
+// 11-10: 라벨 읽기 성공(라벨이 있고 검수 통과)은 「확인 필요」를 띄우지 않는다. 읽기 실패·빈 결과·원본 대체는 띄운다.
+export function isQuietLabelReadResult(result, candidate) {
+  return result?.status === 'complete' && Boolean(result.metrics?.labelRead) && !result.labelReadNotice
+    && Array.isArray(result.labelPlan?.labels) && result.labelPlan.labels.length > 0 && candidate?.reviewState === 'passed';
+}
+
 export function markResultReady(tab, candidate) {
   if (!tab || !candidate?.id || !candidate.data || candidate.kind !== 'generated') return false;
+  if (candidate.quietCompletion === true) return false;
   if (tab.resultAttention?.lastReadyCandidateId === candidate.id) return false;
   tab.resultAttention = { lastReadyCandidateId: candidate.id, pendingCandidateId: candidate.id };
   return true;

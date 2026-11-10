@@ -14,7 +14,7 @@ export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑�
 // Roman(= LaTeX 기본 수식체 Computer Modern의 오픈판)을 우선하고, 파일 부재 시 뒤쪽
 // HWP수식/Times로 fallback한다. @font-face 등록은 css/style.css. isEquationFontFamily가
 // 이 값을 그대로 비교하므로, 값만 바꾸면 이탤릭·자간 로직이 자동으로 따라온다.
-export const EQUATION_FONT_FAMILY = '"Latin Modern Roman", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
+export const EQUATION_FONT_FAMILY = '"Latin Modern Roman", "Latin Modern Math", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
 export const EQUATION_FONT_STYLE = "italic";
 export const EQUATION_LETTER_SPACING = "-0.04em";
 export const TOOL_LABEL_FONT_FAMILY = EQUATION_FONT_FAMILY;

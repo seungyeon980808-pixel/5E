@@ -4,6 +4,7 @@ import { deriveLabelLeaderGeometry } from '../label-leader-geometry.js?v=1.7.0-f
 
 import {
   SVG_NS,
+  LABEL_INK,
   applyDash,
   grayHex,
   makeArrowHead,
@@ -349,7 +350,10 @@ function renderLabeler(obj, { leadersOnly = false } = {}) {
   //    앵커는 top-left이므로 측정 폭/높이의 절반만큼 되끌어 중앙 정렬한다. id는 넘기지
   //    않는다(중첩 data-id가 픽/QA의 hit-twin 혼동을 다시 만들지 않도록).
   if (semantic) {
-    g.appendChild(renderLabelTypography(obj, b, color));
+    // 자동 라벨 글자는 선 색(strokeLevel)을 따르지 않고 검정(LABEL_INK)이다 — 일반 텍스트 경로와 같다.
+    // 검토 대상(aiTargetReviewRequired)으로 표시된 것만 기존처럼 선 색을 따른다.
+    const textInk = obj.aiAutoLabel === true && obj.aiTargetReviewRequired !== true ? LABEL_INK : color;
+    g.appendChild(renderLabelTypography(obj, b, textInk));
     return g;
   }
   if (fm) {

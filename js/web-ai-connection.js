@@ -29,13 +29,13 @@
       if (action === 'bridge-status') return { login: { loggedIn: false }, server: false };
       throw new Error('ChatGPT 로그인을 눌러 계정을 연결해 주세요.');
     }
-    if (!['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt'].includes(action)) throw new Error('허용되지 않은 요청입니다.');
+    if (!['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt', 'bridge-read-text'].includes(action)) throw new Error('허용되지 않은 요청입니다.');
     const pageScoped = local && scopedActions.has(action);
     const body = pageScoped ? { ...payload, clientScope: `${pageScope}:${payload.clientScope || ''}` } : payload;
     const response = await fetch(`${origin}/api/${action}`, {
       method: 'POST', credentials: 'omit',
       headers: { ...(local ? {} : {Authorization: `Bearer ${token}`}), 'X-5E-Request': '1', 'Content-Type': 'application/json' },
-      body: JSON.stringify(body), signal: AbortSignal.timeout(40000),
+      body: JSON.stringify(body), signal: AbortSignal.timeout(action === 'bridge-read-text' ? 150000 : 40000), // 11-10: 글 읽기는 15~20초, 여유를 둔다
     });
     if (!local && response.status === 401) {
       save('');

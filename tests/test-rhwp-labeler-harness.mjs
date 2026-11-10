@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { APPROVED_FIRST_PROMPT, approvedFirstRequestText } from '../js/ai-approved-first-png.js';
-import { executeImageLabelRun, imageLabelDigest, IMAGE_LABEL_GENERATION_HARNESS } from '../js/ai-image-label-run.js';
+import { executeImageLabelRun, imageLabelDigest, IMAGE_LABEL_GENERATION_HARNESS, REDRAW_TEXTBOOK_PROMPT } from '../js/ai-image-label-run.js';
 import { SOURCE_LABEL_POLICY_VERSION } from '../js/ai-editable-image-labels.js';
 import { SOURCE_LEADER_OBSERVATION_VERSION, SOURCE_OBSERVATION_CONTRACT_REVISION } from '../js/ai-source-observation-wire.js';
 import { buildImageReviewPrompt } from '../js/ai-image-review.js';
@@ -25,7 +25,8 @@ async function run({ labelResult = 'remove', geometry = 'old geometry', instruct
     leaderObservationVersion: SOURCE_LEADER_OBSERVATION_VERSION, observationContractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION,
     frozen: true, labels: [], excludedLabels: [], uncertainties: [], geometryLock: { note: geometry },
     sourceBindings: [{ transportSha256: await imageLabelDigest(png) }] };
-  const result = await executeImageLabelRun({ source, workflow: { imageKind: 'general', labelResult, ...marks },
+  // 11-10: 라벨 복원 요청 검사는 예전 계약 경로(내부 플래그)에서 본다. 기본 라벨 복원은 짧은 그림 요청을 쓴다.
+  const result = await executeImageLabelRun({ source, workflow: { imageKind: 'general', labelResult, ...marks }, legacyLabelPipeline: labelResult === 'restore-editable',
     request: '관찰 전용 요청', generationInstructions: instructions, generationSource: { name: baseline.attachmentName, data },
     selection: { model: 'gpt-6.1-sol', effort: 'high', serviceTier: 'priority' },
     observer: { analyze: async args => {
@@ -37,8 +38,9 @@ async function run({ labelResult = 'remove', geometry = 'old geometry', instruct
   return { payload: payloads[0], result, source, count: payloads.length };
 }
 
-test('label restore, observer geometry and semantic guesses cannot change the image generation request', async () => {
-  const a = await run();
+// 11-10: 라벨 복원(베타)은 예전 계약 프롬프트를 그대로 쓴다. 기본 라벨 삭제 요청은 아래 짧은 프롬프트 테스트가 본다.
+test('label restore, observer geometry and semantic guesses cannot change the beta restore request', async () => {
+  const a = await run({ labelResult: 'restore-editable' });
   const b = await run({ labelResult: 'restore-editable', geometry: 'Invented gradient and moved frame' });
   assert.deepEqual(a.payload, b.payload);
   assert.ok(a.payload.text.includes('\n\n'+APPROVED_FIRST_PROMPT+'\n\n[SOURCE-GRID-TRACING:'),'the approved style body remains byte-identical between the geometry contract and final check');
@@ -55,6 +57,17 @@ test('label restore, observer geometry and semantic guesses cannot change the im
   assert.doesNotMatch(a.payload.text, /geometryLock|5e-image-label-workflow|5e-kice-flat-style/);
 });
 
+// 11-10: 기본 라벨 삭제 요청은 짧은 문단 하나이며, 관찰 기하·의미 추측으로 바뀌지 않는다.
+test('default label removal sends only the short redraw prompt and ignores observer geometry', async () => {
+  const a = await run();
+  const b = await run({ geometry: 'Invented gradient and moved frame' });
+  assert.deepEqual(a.payload, b.payload);
+  assert.equal(a.payload.text, REDRAW_TEXTBOOK_PROMPT);
+  assert.equal(a.payload.model, 'gpt-6-luna'); assert.equal(a.payload.effort, 'medium');
+  assert.doesNotMatch(a.payload.text, /SOURCE-GRID|geometryLock|5e-image-label-workflow|5e-kice-flat-style|INPUT_SOURCE/);
+  assert.equal(a.count, 1); assert.equal(a.result.data, png);
+});
+
 test('the prepared generation copy is separate from the original analysis binding', async () => {
   const prepared = 'data:image/png;base64,iVBORw0KGgpBQkM=';
   const { payload, result, source } = await run({ data: prepared, instructions: '도선만 수정' });
@@ -62,10 +75,8 @@ test('the prepared generation copy is separate from the original analysis bindin
   assert.equal(source.data, png);
   assert.equal(result.sourceSha256, await imageLabelDigest(png));
   assert.equal(result.metrics.generationHarness.sourceSha256, await imageLabelDigest(prepared));
-  assert.ok(payload.text.includes('\n\n'+APPROVED_FIRST_PROMPT+'\n\n[SOURCE-GRID-TRACING:'));
-  assert.ok(payload.text.includes('\n\n사용자 수정 요청:\n도선만 수정'));
-  assert.match(payload.text, /사용자가 보조선 제거를 껐습니다/, 'the default preserves auxiliary marks alongside the explicit request');
-  assert.match(payload.text,/사용자가 대상·속성을 명시해 변경을 요청한 부분만 예외/);
+  // 11-10: 기본 라벨 삭제 요청은 짧은 프롬프트 + 「사용자 요청:」 한 줄이다.
+  assert.equal(payload.text, REDRAW_TEXTBOOK_PROMPT + '\n\n사용자 요청: 도선만 수정');
 });
 
 test('review permits the same restrained shading as the RHWP generation harness', () => {
@@ -76,7 +87,8 @@ test('review permits the same restrained shading as the RHWP generation harness'
 });
 
 test('explicit marker controls travel as content requests without replacing the approved image style', async () => {
-  const { payload } = await run({ marks: { scientificArrows: 'remove', auxiliaryMarks: 'keep' } });
+  // 11-10: 표시 설정(화살표·보조선)은 예전 계약 문장으로만 전달되므로 라벨 복원(베타) 경로에서 검사한다.
+  const { payload } = await run({ labelResult: 'restore-editable', marks: { scientificArrows: 'remove', auxiliaryMarks: 'keep' } });
   const approvedIndex=payload.text.indexOf(APPROVED_FIRST_PROMPT);
   assert.ok(approvedIndex>0);
   const content = payload.text.slice(payload.text.lastIndexOf('\n\n사용자 수정 요청:\n'));
@@ -88,7 +100,7 @@ test('explicit marker controls travel as content requests without replacing the 
 
 test('reviewing a saved candidate retains its actual generation provenance without a new image call', async () => {
   const { result, source } = await run({ labelResult: 'restore-editable', data: 'data:image/png;base64,iVBORw0KGgpBQkM=' });
-  const verify = previousCandidate => executeImageLabelRun({ source, workflow: result.workflow, verifyOnly: true,
+  const verify = previousCandidate => executeImageLabelRun({ source, workflow: result.workflow, verifyOnly: true, legacyLabelPipeline: true,
     previousCandidate, selection: { model: 'gpt-6.1-sol', effort: 'high', serviceTier: 'priority' },
     observer: { reviewFinal: async () => ({ verdict: 'uncertain', checks: [], issues: [] }) },
     raster: { generate: () => assert.fail('Optional review must never generate another image') } });

@@ -6,7 +6,7 @@
   async function request(action, payload = {}) {
     if (window.fiveEWebRequest) return window.fiveEWebRequest(action, { clientScope: "", ...payload });
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), action === 'bridge-read-text' ? 150000 : 30000); // 11-10: 글 읽기는 150초까지 기다린다
     try {
       const response = await fetch(`/api/${action}`, {
         method: 'POST', headers: { 'X-5E-Request': '1', 'Content-Type': 'application/json' },
@@ -101,6 +101,8 @@
       setTimeout(() => poll(scope, sequence), 0);
       return result;
     },
+    // 11-10: 라벨 복원용 글자 호출(그림 생성 대화 칸을 쓰지 않는다).
+    readImageText: payload => request('bridge-read-text', payload),
     interrupt,
     onEvent: callback => subscribe('event', callback),
     onState: callback => subscribe('state', callback),

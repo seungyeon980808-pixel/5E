@@ -18,7 +18,7 @@ const requestedPort = Number(process.env.PORT || 8795);
 let port = requestedPort;
 let origin = `http://127.0.0.1:${port}`;
 const types = { '.html':'text/html', '.mjs':'text/javascript', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.webp':'image/webp', '.woff2':'font/woff2', '.wasm':'application/wasm', '.pdf':'application/pdf' };
-const api = /^\/api\/(web-login-(start|status|cancel)|bridge-(status|models|account|send|events|interrupt))$/;
+const api = /^\/api\/(web-login-(start|status|cancel)|bridge-(status|models|account|send|events|interrupt|read-text))$/;
 async function previewRevision() {
   try {
     const read = async args => (await runFile('git', ['-C', root, ...args], { timeout:2000, maxBuffer:1024*1024 })).stdout.trim();

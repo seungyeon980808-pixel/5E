@@ -21,6 +21,15 @@ export function normalizeImageLabelWorkflow(value, { requireExplicit = false } =
     scientificArrows: ['keep', 'remove'].includes(v.scientificArrows) ? v.scientificArrows : 'keep',
     hardText: ['auto', 'keep', 'erase', 'ai'].includes(v.hardText) ? v.hardText : 'auto', explicit });
 }
+// 11-10: 원본 종류별 기본 라벨 처리. 기출(exam)은 라벨 복원(켬), 교과서(general)는 라벨 삭제. 설정 화면 UI는 그대로 둔다.
+export function defaultLabelResultFor(imageKind) {
+  return imageKind === 'exam' ? 'restore-editable' : 'remove';
+}
+// 11-10: 원본 종류를 고른 뒤에도 기본 라벨 처리를 맞춘다. 사용자가 이 작업의 라벨 복원 설정을 직접 바꾼 적이 있으면(touched) 그대로 둔다.
+export function labelResultAfterKindChange({ imageKind, current = '', touched = false } = {}) {
+  if (touched || !['exam', 'general'].includes(imageKind)) return current;
+  return defaultLabelResultFor(imageKind);
+}
 export function buildImageLabelWorkflowContract(value) {
   const p = normalizeImageLabelWorkflow(value, { requireExplicit: true });
   return `[5e-image-label-workflow v${p.version}]\n이미지 종류: ${p.imageKind}. 라벨 결과: ${p.labelResult}.\n${p.imageKind === 'exam'

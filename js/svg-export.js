@@ -101,6 +101,8 @@ export function getDefaultExportFilename(ext) {
 const EMBED_FONTS = [
   { family: "Latin Modern Roman", style: "normal", url: new URL("../fonts/lmroman10-regular.woff2", import.meta.url).href },
   { family: "Latin Modern Roman", style: "italic", url: new URL("../fonts/lmroman10-italic.woff2", import.meta.url).href },
+  // 11-10: 아래첨자 숫자(₀-₉)용 수식 글꼴. 파일이 없으면 조용히 건너뛴다.
+  { family: "Latin Modern Math", style: "normal", url: new URL("../vendor/rhwp-studio/fonts/LatinModernMath-Regular.woff2", import.meta.url).href },
 ];
 let _fontCss = "";          // 캐시된 @font-face CSS(base64). 사용 가능한 폰트가 없으면 "".
 let _fontCssPromise = null;

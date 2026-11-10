@@ -11,7 +11,8 @@ import { enforceImageLabelAcceptance } from './ai-image-review.js?v=1.7.0-four-s
 import { STYLE_CONTRACT_VERSION } from './ai-image-style-contract.js?v=1.7.0-four-session-integration';
 import { SOURCE_OBSERVATION_VERSION, SOURCE_LEADER_OBSERVATION_VERSION, SOURCE_OBSERVATION_CONTRACT_REVISION } from './ai-source-observation-wire.js?v=1.7.0-four-session-integration';
 import { prepareJointLabelVerification, retainFinalVerification } from './ai-label-verification.js?v=1.7.0-four-session-integration';
-import { SOURCE_LABEL_POLICY_VERSION } from './ai-editable-image-labels.js?v=1.7.0-four-session-integration';
+import { SOURCE_LABEL_POLICY_VERSION, EDITABLE_IMAGE_LABEL_PLAN_VERSION, freezeLabelPlan } from './ai-editable-image-labels.js?v=1.7.0-four-session-integration';
+import { LABEL_READ_PROMPT, parseLabelRead, labelReadToEditablePlan } from './ai-direct-label-plan.js?v=1.7.0-four-session-integration';
 import { externalLabelDraftIds } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-label-background.js?v=1.7.0-four-session-integration';
 import { fitCandidateToSource, measureSourceLabelHeights } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
@@ -33,6 +34,31 @@ export function selectedMarkInstructions(workflow) {
 // 11-09 사용자 결정: 교과서(일반) 그림은 평가원 스타일로 새로 그리되 주인공 물체만 남긴다.
 export const EXAM_REDRAW_INSTRUCTION = '기출 그림 새로 그리기: 원본의 모든 물체(사람·기구·장치 포함)·선·점선·화살표·직각 표시·기호와 그 위치·크기·개수를 그대로 두고, 글자 라벨(한글·영문·숫자·단위)과 글자를 가리키는 지시선만 지운다. 물체를 지우거나 새로 만들거나 꾸미지 않는다. 원본과 같은 구도·비율로 깔끔하고 선명한 선으로 다시 그린다.';
 export const TEXTBOOK_OBJECT_ONLY_CONTRACT = '교과서 그림 정리: 그림의 주인공 물체(예: 암석, 기관, 실험 기구, 지구본, 밧줄 파동)와 그 물체에 딸린 과학 표시(진행·진동·힘·운동·전류 방향 화살표, 파장·진폭 같은 치수선, 중심선·눈금)는 평가원 선화로 남긴다(화살표·보조선 설정이 지우라고 한 것만 지운다). 색 상자 안의 제목 딱지(예: 「화산암」), 쪽·그림 번호와 캡션, 배경 띠·색 줄·배경 면·배경 삽화, 그림과 그림 사이의 순서·변화를 가리키는 안내 화살표(예: 원래 암석 → 변성암), 말풍선과 그 안의 글, 캐릭터(그림 밖에서 설명하거나 말을 거는 안내 마스코트: 로봇·사람·동물 캐릭터), 그림 테두리·둥근 판·장식은 모두 지우고 그 자리는 흰 바탕으로 둔다. 장면 안에서 과학 현상에 참여하는 생물·물체(예: 물결 위에 뜬 개구리·나뭇잎, 실험하는 손, 관찰 대상 동물)는 캐릭터가 아니라 주인공 물체로 남긴다. 지운 자리에 흰 네모나 빈 상자를 남기지 않는다. 남은 물체의 크기·위치·간격은 원본 그대로 둔다. 물체 이름 글자도 그림에서 지운다(편집 라벨로 따로 복원된다).';
+// 11-10: 그림 변환 기본 프롬프트(사용자 4차 실측 결정: 짧을수록 빠르고 회색 음영·실패 화면이 줄었다).
+// 긴 계약 프롬프트(SOURCE-GRID·스타일·표시 계약)는 라벨 복원(베타) 경로에서만 쓰고, 기본 경로는 아래 한 문단만 보낸다.
+export const REDRAW_EXAM_PROMPT = '글자·숫자·문자와, 글자를 가리키는 지시선만 지워 줘. 글자가 들어 있던 네모 틀·계기 화면은 틀만 남기고 비워 둬. 길이·각도를 나타내는 치수선, 각도 호, 점선, 직각 표시, 화살표, 음영은 같은 자리에 그대로 둬. 지운 자리에는 아무것도 새로 그리지 말고 비워 둬. 원본 그대로 선명한 흑백 그림으로 다시 그려 줘.';
+export const REDRAW_TEXTBOOK_PROMPT = "첨부한 교과서 그림을 한국 수능(평가원) 시험지용 흑백 과학 그림으로 다시 그려 줘.\n- 원본 위에 겹쳤을 때 물체의 윤곽·위치·크기·비율·개수·연결이 같은 자리에 맞도록 원본을 따라 그린다. 다른 그림으로 다시 구성하지 않고, 없는 부품을 만들거나 있는 구조를 빼지 않는다.\n- 글자·숫자·단위·라벨, 글자를 가리키는 지시선, 말풍선, 캡션, 캐릭터, 배경 판·테두리·색 막대, 그림과 그림 사이의 변화·순서를 나타내는 화살표는 모두 지운다.\n- 파장·진폭·길이를 나타내는 치수선, 각도 호, 법선·중심선, 직각 표시, 물체에 붙은 운동·힘·빛의 화살표는 같은 자리에 그대로 남긴다.\n- 흰 바탕, 무채색(검정·흰색·회색)만 쓴다. 선명한 검정 윤곽선. 색으로 구분되던 물질·입자·층·부위는 서로 다른 회색 단계로 꼭 구분한다.\n- 암석·뼈처럼 사진 같은 물체는 표면 질감과 특징을 살린 선화로 그린다. 광택·반사·그라데이션·장식은 정리한다.\n- 원본과 같은 구도·여백·비율.";
+// 11-10: 그림 생성 모델. 첫 생성은 Luna, 같은 원본을 다시 그리는 요청(다시 그리기·정밀 복원)은 Sol. 실패하면 반대 모델로 한 번 더 보낸다.
+export const AI_GENERATION_PRIMARY_MODEL = 'gpt-6-luna';
+export const AI_GENERATION_REGENERATE_MODEL = 'gpt-6.1-sol';
+// 11-10: 두 모델 모두 실패하면 원본 그림을 결과로 돌리고 이 안내를 띄운다(실패 화면 없음).
+export const AI_GENERATION_FAILED_NOTICE = '변환이 잠시 안 되어 원본을 그대로 넣었습니다. 다시 그리기를 눌러 주세요.';
+export const redrawPromptFor = imageKind => imageKind === 'exam' ? REDRAW_EXAM_PROMPT : REDRAW_TEXTBOOK_PROMPT;
+// 사용자가 직접 쓴 수정·댓글 요청만 「사용자 요청:」으로 뒤에 붙인다.
+export function redrawRequestText({ imageKind, userRequest = '' } = {}) {
+  const request = String(userRequest || '').trim();
+  return request ? `${redrawPromptFor(imageKind)}\n\n사용자 요청: ${request}` : redrawPromptFor(imageKind);
+}
+// 11-10: 라벨 복원(기본)은 그림을 「라벨 삭제」와 같은 요청으로 새로 그리고, 원본 글자는 글 읽기 호출로 따로 읽는다(그림 생성과 병렬).
+export const AI_LABEL_READ_MODEL = 'gpt-6.1-sol';
+export const AI_LABEL_READ_NOTICE = '라벨 글자를 읽지 못해 그림만 넣었습니다. 라벨은 직접 추가할 수 있습니다.';
+// 11-10: 읽은 글자 → 검수 없이 쓰는 확정 라벨 명세(frozen). 편집 라벨 삽입·미리보기 경로가 그대로 쓴다.
+export function labelPlanFromRead(items) {
+  const { labels } = labelReadToEditablePlan(items);
+  return freezeLabelPlan({ version: EDITABLE_IMAGE_LABEL_PLAN_VERSION, policyVersion: SOURCE_LABEL_POLICY_VERSION, frozen: true,
+    status: labels.length ? 'ready' : 'empty', labels: labels.map(label => ({ ...label, scope: 'general' })), excludedLabels: [], preservedMarks: [],
+    uncertainties: [], reviewRequired: false, rejectedCount: 0, relationGroups: [], sourceBindings: [] });
+}
 const clone = value => structuredClone(value);
 // 11-08: 캔버스에 넣을 때도 라벨 크기를 원본에 맞춘다 — 원본 그림 픽셀에서 잰 글자 높이로 글자 크기(그림 높이에 대한 비율)를 정한다.
 // 한글 글자는 글자 크기의 약 0.88, 영어 대문자·숫자는 약 0.72, 그 밖은 0.8 높이(한글에 넣기와 같은 셈).
@@ -148,8 +174,10 @@ export async function runAiWithRetry({ stage, selection = {}, attempts = AI_RETR
   // 11-10(사용자 선택 「그림은 처음부터 Luna로」): 그림 생성은 첫 시도부터 Luna로 보낸다. Sol 6.1은 설치판에서 첨부 그림을 열지 못하고
   // 그림 없이 끝나는 일이 잦아(11-09 밤 교과서 첫 실행 8장 중 6장) 첫 시도가 늘 버려졌다. Luna가 실패하면 두 번째는 고른 모델, 세 번째는 다시 Luna.
   // 그 밖의 단계(글자 읽기 등)는 예전대로 고른 모델로 먼저 보내고, 실패하면 Luna로 보낸다.
+  // 11-10: 그림 생성은 고른 모델(기본 Luna)로 한 번, 실패하면 반대 모델(Luna↔Sol)로 한 번만 보낸다. 둘 다 실패하면 호출 쪽이 원본 그림을 돌려준다.
+  const otherGenerationModel = selection.model === AI_GENERATION_PRIMARY_MODEL ? AI_GENERATION_REGENERATE_MODEL : AI_GENERATION_PRIMARY_MODEL;
   const choiceFor = attempt => stage === 'generation'
-    ? (attempt === 2 ? selection : luna)
+    ? (attempt === 1 ? selection : { ...selection, model: otherGenerationModel, effort: 'medium' })
     : (total > 1 && attempt >= 2 ? luna : selection);
   for (let attempt = 1; attempt <= total; attempt++) {
     cancelled(signal);
@@ -341,7 +369,7 @@ async function fallbackImageLabelResult(options, progress, error) {
   const phaseName = error?.aiPhase || progress.phase || null;
   const message = useGenerated
     ? `라벨을 붙이지 못해 새로 그린 그림만 넣었습니다(원인: ${reason}). 다시 변환하면 라벨을 다시 붙입니다.`
-    : phaseName === 'generation' ? `AI가 그림을 끝내 만들지 못해 원본 그림을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`
+    : phaseName === 'generation' ? AI_GENERATION_FAILED_NOTICE // 11-10: 실패 화면 대신 원본 그림 + 안내
       : phaseName === 'sourceAnalysis' ? `AI가 라벨을 끝내 읽지 못해 원본 그림을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`
         : `변환을 끝내지 못해 원본 그림을 그대로 두었습니다(원인: ${reason}). 다시 변환할 수 있습니다.`;
   const metrics = clone(error?.workflowMetrics || { version: IMAGE_LABEL_RUN_VERSION, timings: {}, calls: {} });
@@ -362,7 +390,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   artboard, signal, observation, onObservation = () => {}, onPhase = () => {}, onSourceCandidates, onRaster = () => {}, cache,
   bypassCache = false, preciseRestore = false, verifyOnly = false, previousCandidate, localRestore,
   generationInstructions = request, generationSource, backgroundCache, previousCandidates = [], graphLabels = 'route',
-  progress = null, onAiFailure = () => {}, onAiRetry = () => {}, retryPolicy = AI_RETRY_POLICY } = {}) {
+  progress = null, onAiFailure = () => {}, onAiRetry = () => {}, retryPolicy = AI_RETRY_POLICY, regenerate = false,
+  readText = null, legacyLabelPipeline = false } = {}) { // 11-10: legacyLabelPipeline=true면 예전 계약 프롬프트·관찰·검수 경로(내부용)
   const started = performance.now();
   const labelSelection = { ...selection, model: 'gpt-6-luna', effort: 'medium' };
   const workflow = normalizeImageLabelWorkflow(rawWorkflow, { requireExplicit: true });
@@ -376,8 +405,16 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     attempts: { fullGeneration: 0, localRestore: 0 }, cacheHit: false, observationReused: false };
   // 11-10 사용자 결정(「기출 그림에서 라벨을 깔끔하게 지우고 선명하게 새로 그리는 것은 필수」): 「라벨 삭제」는 기출도 원본 위에서
   // 글자만 지우지 않고, 교과서처럼 글자를 뺀 선명한 그림을 한 번에 새로 그린다. 라벨 복원(편집 라벨)만 예전처럼 원본 픽셀을 지킨다.
-  const examRedraw = workflow.imageKind === 'exam' && workflow.labelResult === 'remove';
+  // 11-10: 라벨 복원(기본)도 기출은 「라벨 삭제」처럼 새로 그린다 — 켬·끔이 같은 그림을 쓰게 하려고.
+  const readLabels = workflow.labelResult === 'restore-editable' && !verifyOnly && !legacyLabelPipeline;
+  const examRedraw = workflow.imageKind === 'exam' && (workflow.labelResult === 'remove' || readLabels);
   const drawsNew = workflow.imageKind === 'general' || examRedraw;
+  // 11-10: 기본 그림 경로는 짧은 프롬프트만 보낸다. 예전 계약 프롬프트는 내부 플래그(legacyLabelPipeline)에서만 쓴다.
+  const legacyLabelPath = workflow.labelResult === 'restore-editable' && legacyLabelPipeline;
+  // 11-10: 라벨 삭제 기본 흐름은 생성 뒤 AI 검수를 하지 않고 결과를 그대로 받는다.
+  const reviewSkipped = workflow.labelResult === 'remove' && !verifyOnly;
+  // 11-10: 사용자가 다시 그리기(새 변형·재생성·정밀 복원)를 요청한 생성은 Sol, 나머지(첫 생성·라벨 켬끔 전환)는 Luna. 라벨 켬끔은 같은 그림을 재사용해야 하므로 이전 결과로 바꾸지 않는다.
+  const generationModel = !verifyOnly && (preciseRestore || regenerate === true) ? AI_GENERATION_REGENERATE_MODEL : AI_GENERATION_PRIMARY_MODEL;
   const phase = async (name, action) => {
     cancelled(signal); onPhase(name); if (progress) progress.phase = name; const t = performance.now();
     try { return await action(); }
@@ -394,7 +431,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   const imageSource = generationSource || { name: 'INPUT_SOURCE.png', data: source.data };
   if (!imageSource.data?.startsWith('data:image/')) throw new Error('이미지 생성 입력을 확인해야 합니다.');
   const generationFrame = imageSource.data === source.data ? sourceFrame : await imageFrame(imageSource.data,signal);
-  const generationPrompt = buildSourceTracingPrompt({ sourceFrame:generationFrame?.width ? {width:generationFrame.width,height:generationFrame.height} : undefined, preserveStyle:true });
+  // 11-10: 기본 경로는 짧은 기출·교과서 프롬프트. 예전 buildSourceTracingPrompt는 라벨 복원(베타)에서만 쓴다.
+  const generationPrompt = legacyLabelPath ? buildSourceTracingPrompt({ sourceFrame:generationFrame?.width ? {width:generationFrame.width,height:generationFrame.height} : undefined, preserveStyle:true }) : redrawPromptFor(workflow.imageKind);
   const generationPromptSha256 = await imageLabelDigest(generationPrompt);
   metrics.generationHarness = !drawsNew ? null
     : verifyOnly ? clone(previousCandidate?.workflowMetrics?.generationHarness || previousCandidate?.metrics?.generationHarness || null)
@@ -402,10 +440,11 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         sourceSha256: await imageLabelDigest(imageSource.data) };
   let generationPayload, backgroundContract;
   if (drawsNew && !verifyOnly) {
-    const instructions = [generationInstructions, selectedMarkInstructions(workflow), examRedraw ? EXAM_REDRAW_INSTRUCTION : '',
-      preciseRestore ? '사용자가 그림 정밀 복원을 선택했습니다. 수정 전 선택 버전에서 요청한 구조 오류만 원본과 대조해 수정합니다.' : '',
-    ].filter(Boolean).join('\n\n');
-    generationPayload = { ...selection, text: approvedFirstRequestText({ prompt:generationPrompt, instructions }),
+    const preciseNote = preciseRestore ? '사용자가 그림 정밀 복원을 선택했습니다. 수정 전 선택 버전에서 요청한 구조 오류만 원본과 대조해 수정합니다.' : '';
+    const text = legacyLabelPath
+      ? approvedFirstRequestText({ prompt:generationPrompt, instructions: [generationInstructions, selectedMarkInstructions(workflow), examRedraw ? EXAM_REDRAW_INSTRUCTION : '', preciseNote].filter(Boolean).join('\n\n') })
+      : redrawRequestText({ imageKind: workflow.imageKind, userRequest: [generationInstructions, preciseNote].filter(Boolean).join('\n\n') });
+    generationPayload = { ...selection, model: generationModel, effort: 'medium', text,
       attachments: [{ ...imageSource }, ...(preciseRestore && previousCandidate ? [{ name: '수정 전 선택 버전', data: previousCandidate.data }] : [])] };
     backgroundContract = await imageLabelBackgroundContract({ payload: generationPayload, sourceSha256, harness: metrics.generationHarness });
     metrics.generationHarness = backgroundContract.harness;
@@ -426,6 +465,72 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     observation = {sourceSha256,workflowVersion:workflow.version,imageKind:previousWorkflow.imageKind,
       contractRevision:savedPlan.observationContractRevision,planSha256:previousCandidate.planSha256,plan:savedPlan,
       localRestoreAttempted:observation?.sourceSha256 === sourceSha256 && observation.localRestoreAttempted === true};
+  }
+  // 11-10: 그림 생성 한 번. 라벨 삭제와 라벨 복원(기본)이 같은 요청을 쓰므로 배경 캐시에서 같은 그림을 다시 쓴다.
+  const generateBackground = () => phase('generation', () => resolveImageLabelBackground({ contract: backgroundContract,
+      candidates: [previousCandidate, ...previousCandidates], cache: backgroundCache, signal,
+      generate: async () => {
+        const result = await runAiWithRetry({ stage: 'generation', selection: { model: generationPayload.model, effort: generationPayload.effort }, signal,
+          attempts: 2, timeoutsMs: retryPolicy.generationTimeoutMs, backoffMs: retryPolicy.backoffMs, // 11-10: 고른 모델 → 반대 모델
+          cancel: () => raster.cancel?.(), onFailure: onAiFailure, onRetry: onAiRetry,
+          run: choice => {
+            metrics.attempts.fullGeneration++;
+            return raster.generate({ ...generationPayload, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, examRedraw, signal });
+          } });
+        metrics.calls.fullGeneration += result.imageToolCalls;
+        return { data: await resolveGeneratedRaster(result.src, { whitePng: true }), rendererPrompt: result.rendererPrompt };
+      } }));
+
+  if (readLabels) {
+    // 11-10: 라벨 복원(기본) — 그림 생성(라벨 삭제와 같은 그림)과 원본 글자 읽기를 Promise.all로 병렬 실행한다.
+    // 글자 읽기가 실패하거나 빈 답이면 그림은 그대로 두고 라벨 0개 + 안내만 남긴다(변환을 실패로 끝내지 않는다). 검수는 하지 않는다.
+    const readStarted = performance.now();
+    const readOriginal = async () => {
+      try {
+        if (typeof readText !== 'function') throw new Error('글자 읽기 연결이 없습니다.');
+        const read = await readText({ model: AI_LABEL_READ_MODEL, text: LABEL_READ_PROMPT, attachments: [source.data] });
+        cancelled(signal);
+        const text = typeof read?.text === 'string' ? read.text : '';
+        return { items: parseLabelRead(text), notice: text.trim() ? null : AI_LABEL_READ_NOTICE, error: null };
+      } catch (error) {
+        if (error?.name === 'AbortError' || signal?.aborted) throw error;
+        return { items: [], notice: AI_LABEL_READ_NOTICE, error: String(error?.message || error).slice(0, 200) };
+      } finally { metrics.timings.labelRead = Math.round(performance.now() - readStarted); }
+    };
+    const [background, read] = await Promise.all([generateBackground(), readOriginal()]);
+    let resultData = background.data;
+    metrics.backgroundReused = background.reused;
+    metrics.labelRead = { count: read.items.length, error: read.error };
+    // 글자 상자를 원본 판에 맞춘다(라벨 삭제 경로의 켬·끔 맞춤과 같은 방법).
+    if (background.reused !== 'candidate') {
+      try {
+        const frame = await fitCandidateToSource({ candidateDataUrl: resultData, sourceDataUrl: source.data,
+          textBoxes: read.items.map(item => ({ x: item.x, y: item.y, w: item.w, h: item.h })), signal });
+        if (frame.fitted) resultData = frame.data;
+        metrics.reframe = { fitted: frame.fitted, reason: frame.reason || null, transform: frame.transform || null };
+      } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { fitted: false, reason: String(error?.message || error).slice(0, 200) }; }
+    }
+    cancelled(signal);
+    const readPlan = labelPlanFromRead(read.items);
+    const planSha256 = await imageLabelDigest(JSON.stringify(readPlan));
+    const candidateSha256 = await imageLabelDigest(resultData);
+    const candidateFrame = await imageFrame(resultData, signal);
+    let sized = null;
+    if (readPlan.labels.length) {
+      try { sized = await measuredLabelSizes(source.data, readPlan.labels, signal); }
+      catch (error) { if (error?.name === 'AbortError' || signal?.aborted) throw error; }
+    }
+    const report = { verdict: 'pass', checks: [], issues: [], reviewSkipped: true };
+    metrics.reviewSkipped = true; metrics.cacheStored = false; metrics.cacheSkipReason = 'label-read-path';
+    metrics.timings.total = Math.round(performance.now() - started);
+    // 11-10: 라벨 크기는 readPlan의 라벨마다 정한 글자 상자 크기(measuredSize, sizeFromBox)를 그대로 쓴다. 잰 중앙값은 비율 기록용으로만 남긴다.
+    const labelPlan = { ...clone(readPlan), labels: clone(readPlan.labels), sourcePlan: clone(readPlan),
+      qualityReview: report, reviewRequired: false, targetPlacement: null, candidateSha256, ...(sized?.ratio ? { measuredLabelSize: sized.ratio } : {}) };
+    cancelled(signal);
+    return { version: IMAGE_LABEL_RUN_VERSION, accepted: true, status: 'complete', data: resultData, workflow, sourceSha256, sourceFrame,
+      planSha256, candidateSha256, candidateFrame, sourceLabelPlan: clone(readPlan), targetPlacement: null, labelPlan, removalReport: null,
+      report, rendererPrompt: background.rendererPrompt || '', labelVerificationPreview: null, labelProposals: null, finalLabelComposite: null, metrics,
+      ...(read.notice ? { labelReadNotice: read.notice } : {}) };
   }
   let plan;
   if (!(workflow.imageKind==='exam' && observation?.removalIncomplete) && observation?.sourceSha256 === sourceSha256 && observation.workflowVersion === workflow.version && observation.imageKind === workflow.imageKind && observation.contractRevision === SOURCE_OBSERVATION_CONTRACT_REVISION && observation.plan?.frozen
@@ -498,7 +603,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       rendererPrompt: '', finalLabelComposite: null, labelVerificationPreview: null, labelProposals: null, metrics };
   }
   const descriptor = buildExactOutputCacheDescriptor({ engineVersion: IMAGE_LABEL_RUN_VERSION, styleVersion: drawsNew ? STYLE_CONTRACT_VERSION : workflow.version,
-    mode: 'image-label-workflow', prompt: request, model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier || null,
+    mode: 'image-label-workflow', prompt: request, model: generationModel, effort: selection.effort, serviceTier: selection.serviceTier || null,
     outputOptions: { workflow, sourceSha256, planSha256, preciseRestore, sourceLabelPolicyVersion: SOURCE_LABEL_POLICY_VERSION, sourceObservationVersion: SOURCE_OBSERVATION_VERSION, sourceObservationContractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION, labelModel: labelSelection.model, labelEffort: labelSelection.effort,
       generationHarness: metrics.generationHarness, generationInstructions, styleContractVersion: drawsNew ? STYLE_CONTRACT_VERSION : null,
       previousCandidateSha256: preciseRestore && previousCandidate?.data ? await imageLabelDigest(previousCandidate.data) : null } });
@@ -506,11 +611,13 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   if (cache && !bypassCache && !verifyOnly && !draftFirst) {
     const hit = await cache.get(key);
     const saved = hit?.hit && hit.entry?.output?.imageLabelRun;
+    // 11-10: 검수를 건너뛴 라벨 삭제 결과(reviewSkipped)는 같은 설정이면 다시 쓸 수 있다.
+    const skippedRemoveResult = saved?.report?.reviewSkipped === true && workflow.labelResult === 'remove';
     let valid = saved && saved.version === IMAGE_LABEL_RUN_VERSION && saved.accepted === true
       && saved.workflow?.version === workflow.version && JSON.stringify(saved.workflow) === JSON.stringify(workflow)
       && saved.sourceSha256 === sourceSha256 && saved.planSha256 === planSha256 && saved.candidateSha256 === await imageLabelDigest(saved.data)
-      && enforceImageLabelAcceptance(saved.report, { workflow, candidateSha256: saved.candidateSha256 }).strictAccepted
-      && (workflow.imageKind === 'exam' || saved.report?.styleReview?.version === STYLE_CONTRACT_VERSION && saved.report.styleReview.candidateSha256 === saved.candidateSha256)
+      && (skippedRemoveResult || enforceImageLabelAcceptance(saved.report, { workflow, candidateSha256: saved.candidateSha256 }).strictAccepted)
+      && (skippedRemoveResult || workflow.imageKind === 'exam' || saved.report?.styleReview?.version === STYLE_CONTRACT_VERSION && saved.report.styleReview.candidateSha256 === saved.candidateSha256)
       && (workflow.labelResult !== 'restore-editable' || saved.targetPlacement && saved.labelPlan)
       && (!saved.targetPlacement || saved.targetPlacement.candidateSha256 === saved.candidateSha256 && saved.targetPlacement.planSha256 === planSha256);
     if (valid && saved.targetPlacement) {
@@ -563,19 +670,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       removalReport={...local.report,verifiedInkPixels:local.report.changedPixels||0,partialCandidateDiscarded:local.report.changedPixels>0,changedPixels:0,unchanged:true};
     } else data=local.dataUrl;
   } else {
-    const background = await phase('generation', () => resolveImageLabelBackground({ contract: backgroundContract,
-      candidates: [previousCandidate, ...previousCandidates], cache: backgroundCache, signal,
-      generate: async () => {
-        const result = await runAiWithRetry({ stage: 'generation', selection: { model: generationPayload.model, effort: generationPayload.effort }, signal,
-          attempts: retryPolicy.attempts, timeoutsMs: retryPolicy.generationTimeoutMs, backoffMs: retryPolicy.backoffMs,
-          cancel: () => raster.cancel?.(), onFailure: onAiFailure, onRetry: onAiRetry,
-          run: choice => {
-            metrics.attempts.fullGeneration++;
-            return raster.generate({ ...generationPayload, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, examRedraw, signal });
-          } });
-        metrics.calls.fullGeneration += result.imageToolCalls;
-        return { data: await resolveGeneratedRaster(result.src, { whitePng: true }), rendererPrompt: result.rendererPrompt };
-      } }));
+    const background = await generateBackground();
     data = background.data; rendererPrompt = background.rendererPrompt;
     metrics.backgroundReused = background.reused;
     // 11-08 사용자 결정: 라벨 켬·끔은 같은 그림이어야 한다. 원본 판(비율)을 재고 그 안에 같은 배율로만 맞춘다 —
@@ -723,7 +818,11 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     }
   }
   let report;
-  if (useJoint || draftFirst) {
+  if (reviewSkipped) {
+    // 11-10: 라벨 삭제 기본 흐름은 검수 호출 없이 생성 그림을 그대로 받는다.
+    metrics.reviewSkipped = true;
+    report = { verdict: 'pass', checks: [], issues: [], reviewSkipped: true };
+  } else if (useJoint || draftFirst) {
     report = jointPreview ? retainFinalVerification({report:jointReport,preview:jointPreview,composite,placement:targetPlacement}) : jointReport;
   } else try {
     report = await phase('review', () => {
@@ -750,7 +849,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     for (const issue of removalReport?.issues || []) report.issues.push({ ...issue, message: issue.message || issue.code, severity: 'major' });
     if (targetPlacement?.status === 'needs-attention') report.issues.push({ code: 'target-correspondence-uncertain', message: '연결 대상 대응을 확인해야 합니다.', severity: 'major' });
   }
-  const acceptance = enforceImageLabelAcceptance(report, { workflow, candidateSha256 });
+  // 11-10: 검수를 건너뛴 라벨 삭제 결과는 검수 기준으로 막지 않고 그대로 받는다(같은 설정이면 캐시에도 저장한다).
+  const acceptance = reviewSkipped ? { accepted: true, strictAccepted: true, state: 'passed', report } : enforceImageLabelAcceptance(report, { workflow, candidateSha256 });
   const mechanicalDiagnostics = [...placementIssues, ...(removalReport?.issues || []), ...(composite?.report.issues || []),
     ...report.issues.filter(issue=>issue.code==='final-composite-changed-after-review'||issue.code==='joint-verification-unavailable')];
   report = acceptance.report;

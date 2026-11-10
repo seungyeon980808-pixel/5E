@@ -42,6 +42,14 @@
   font-style: italic;
   font-display: swap;
 }
+/* 11-10: 화학식 아래첨자(₀-₉, U+2080-2089)는 lmroman10에 없다. 같은 Latin Modern 계열의 수식 글꼴을 바로 뒤에 두어 그 글자만 채운다. */
+@font-face {
+  font-family: "Latin Modern Math";
+  src: url("../vendor/rhwp-studio/fonts/LatinModernMath-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ===== THEME TOKENS (dark = default, light = opt-in via data-theme) ===== */
 /* Dark = "Cool Slate" (GitHub-dark lineage). Cool-tinted slate with clear
@@ -102,7 +110,7 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --ai-transparency-base: #b8bec6;
   --ai-transparency-tile: #9fa7b2;
   --font-normal-text: "돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
-  --font-tool-label: "Latin Modern Roman", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif;
+  --font-tool-label: "Latin Modern Roman", "Latin Modern Math", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif;
 
   --c-main: var(--accent);
   --c-sub: var(--text-label);

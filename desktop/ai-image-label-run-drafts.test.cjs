@@ -40,7 +40,8 @@ async function setup(removal) {
   const context = vm.createContext({...dependencies,crypto,performance,DOMException,structuredClone,TextEncoder,Uint8Array,setTimeout,clearTimeout});
   vm.runInContext(source.replace(/^import .*;\n/gm,'').replace(/^export /gm,''),context);
   let observation;
-  const options = {source:{data:png,name:'source'},workflow:{imageKind:'general',labelResult:'restore-editable',verificationMode:'draft-first'},
+  // 11-10: 이 검사들은 예전 라벨 복원 파이프라인(관찰·초안 우선 검수)을 명시적으로 켜고 확인한다.
+  const options = {legacyLabelPipeline:true,source:{data:png,name:'source'},workflow:{imageKind:'general',labelResult:'restore-editable',verificationMode:'draft-first'},
     selection:{model:'chosen-model',effort:'high'},artboard:{w:100,h:100},
     onObservation:value=>{observation=value;},
     observer:{analyze:async()=>{calls.analysis++;return structuredClone(plan);},

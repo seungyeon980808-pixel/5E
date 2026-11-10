@@ -51,7 +51,7 @@ export function parseLabelTargetPlacement(raw, plan) {
   return validateGroupedLabelPlacement(plan, labels);
 }
 // 11-09 라벨 안정화: 라벨별 원본 글자 크기(measuredSize)는 결과 명세에만 붙는 표시 값이라 원본 명세 지문에서 뺀다.
-export function labelBindingJson(labels) { return JSON.stringify((labels || []).map(label => { if (!label || typeof label !== 'object' || !('measuredSize' in label)) return label; const { measuredSize, ...rest } = label; return rest; })); }
+export function labelBindingJson(labels) { return JSON.stringify((labels || []).map(label => { if (!label || typeof label !== 'object' || !('measuredSize' in label || 'sizeFromBox' in label)) return label; const { measuredSize, sizeFromBox, ...rest } = label; return rest; })); }
 export async function bindLabelTargetPlacement({plan,candidateDataUrl,imageKind='general',labels}) {
   if (!plan?.frozen || !['exam','general'].includes(imageKind)) throw new Error('대상 대응에 확정 명세와 이미지 종류가 필요합니다.');
   const [planSha256,candidateSha256] = await Promise.all([labelBindingHash(JSON.stringify(plan)),labelBindingHash(candidateDataUrl)]);
