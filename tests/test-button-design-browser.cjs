@@ -195,6 +195,12 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   await assertWorkflowState(page,'ai-image-install-open',true,selected);
   await assertOriginalAppearance(page,'#ai-image-panel button');
   await page.screenshot({path:path.join(evidence,'ai-preparation.png')});
+  // 11-10: 라벨 삭제(기본) 성공은 「확인 필요」 없이 끝난다(quietCompletion). 이 시안은 확인 필요 단추 상태를 보므로,
+  // 라벨을 켜서 읽기 통로(이 검사에는 없음)가 실패해 확인이 필요한 결과가 되게 한다.
+  const labelSetting=page.locator('#ai-image-panel [data-ai-setting-key=labels]');
+  const sourceTreatment=page.locator('#ai-image-panel .ai-source-treatment');
+  if(!await sourceTreatment.evaluate(el=>el.open).catch(()=>true)) await sourceTreatment.locator('summary').click();
+  await labelSetting.getByRole('button',{name:'켜기',exact:true}).click();
   await page.locator(runButton).click();
   await page.waitForFunction(()=>window.__task2.generationSends.length===1);
   await page.evaluate(()=>{window.__task2.emitGeneration(0,'image');window.__task2.emitGeneration(0,'done');});

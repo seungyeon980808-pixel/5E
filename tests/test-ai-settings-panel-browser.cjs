@@ -285,7 +285,8 @@ test('historical PNG controller: background export pixels and complete original 
 });
 
 test('label restoration button uses Luna image generation and Luna joint verification, then inserts editable native labels', {timeout:90000},async t => {
-  const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
+  // 11-10: 관찰·검수 두 요청을 보내는 것은 예전 라벨 파이프라인 계약이므로 내부 플래그를 켠다(기본 경로는 글자 읽기 통로로 따로 읽음).
+  const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence,{beforeNavigate:p=>p.addInitScript(()=>{globalThis.__5eLegacyLabelPipeline=true;})});await fresh(page);
   await pair(page,'kind').getByRole('button',{name:'교과서',exact:true}).click();
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'verification').getByRole('button',{name:'자동 검수',exact:true}).click();

@@ -45,6 +45,8 @@ export const AI_GENERATION_REGENERATE_MODEL = 'gpt-6.1-sol';
 // 11-10: 두 모델 모두 실패하면 원본 그림을 결과로 돌리고 이 안내를 띄운다(실패 화면 없음).
 export const AI_GENERATION_FAILED_NOTICE = '변환이 잠시 안 되어 원본을 그대로 넣었습니다. 다시 그리기를 눌러 주세요.';
 export const redrawPromptFor = imageKind => imageKind === 'exam' ? REDRAW_EXAM_PROMPT : REDRAW_TEXTBOOK_PROMPT;
+// 11-10: 기본 그림 경로에서도 사용자가 고른 「화살표 제거」를 지킨다. 짧은 지시문에는 이 선택이 빠져 있었다(무시되던 결함).
+export const REDRAW_SCIENTIFIC_ARROW_NOTE = '사용자가 화살표 제거를 켰습니다. 이번 작업에서는 과학적 힘·운동·혈류·전류 화살표도 제거하세요. 실제 관·혈관·도선·물체 윤곽·눈금은 보존하세요.';
 // 사용자가 직접 쓴 수정·댓글 요청만 「사용자 요청:」으로 뒤에 붙인다.
 export function redrawRequestText({ imageKind, userRequest = '' } = {}) {
   const request = String(userRequest || '').trim();
@@ -413,7 +415,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   // 11-10: 기본 그림 경로는 짧은 프롬프트만 보낸다. 예전 계약 프롬프트는 내부 플래그(legacyLabelPipeline)에서만 쓴다.
   const legacyLabelPath = workflow.labelResult === 'restore-editable' && legacyLabelPipeline;
   // 11-10: 라벨 삭제 기본 흐름은 생성 뒤 AI 검수를 하지 않고 결과를 그대로 받는다.
-  const reviewSkipped = workflow.labelResult === 'remove' && !verifyOnly;
+  // 11-10: 예전 파이프라인(legacyLabelPipeline)은 라벨 삭제도 검수를 한다(내부 시험용).
+  const reviewSkipped = workflow.labelResult === 'remove' && !verifyOnly && !legacyLabelPipeline;
   // 11-10: 사용자가 다시 그리기(새 변형·재생성·정밀 복원)를 요청한 생성은 Sol, 나머지(첫 생성·라벨 켬끔 전환)는 Luna. 라벨 켬끔은 같은 그림을 재사용해야 하므로 이전 결과로 바꾸지 않는다.
   const generationModel = !verifyOnly && (preciseRestore || regenerate === true) ? AI_GENERATION_REGENERATE_MODEL : AI_GENERATION_PRIMARY_MODEL;
   const phase = async (name, action) => {
@@ -439,12 +442,14 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     : verifyOnly ? clone(previousCandidate?.workflowMetrics?.generationHarness || previousCandidate?.metrics?.generationHarness || null)
       : { id: IMAGE_LABEL_GENERATION_HARNESS, sourceTracingVersion:SOURCE_TRACING_CONTRACT_VERSION, promptSha256: generationPromptSha256,
         sourceSha256: await imageLabelDigest(imageSource.data) };
+  // 11-10: 기본 경로는 사용자가 고른 화살표 제거를 요청 본문에 넣는다(예전 계약 경로는 selectedMarkInstructions가 담당).
+  const arrowNote = !legacyLabelPath && workflow.scientificArrows === 'remove' ? REDRAW_SCIENTIFIC_ARROW_NOTE : '';
   let generationPayload, backgroundContract;
   if (drawsNew && !verifyOnly) {
     const preciseNote = preciseRestore ? '사용자가 그림 정밀 복원을 선택했습니다. 수정 전 선택 버전에서 요청한 구조 오류만 원본과 대조해 수정합니다.' : '';
     const text = legacyLabelPath
       ? approvedFirstRequestText({ prompt:generationPrompt, instructions: [generationInstructions, selectedMarkInstructions(workflow), examRedraw ? EXAM_REDRAW_INSTRUCTION : '', preciseNote].filter(Boolean).join('\n\n') })
-      : redrawRequestText({ imageKind: workflow.imageKind, userRequest: [generationInstructions, preciseNote].filter(Boolean).join('\n\n') });
+      : redrawRequestText({ imageKind: workflow.imageKind, userRequest: [generationInstructions, arrowNote, preciseNote].filter(Boolean).join('\n\n') });
     generationPayload = { ...selection, model: generationModel, effort: 'medium', text,
       attachments: [{ ...imageSource }, ...(preciseRestore && previousCandidate ? [{ name: '수정 전 선택 버전', data: previousCandidate.data }] : [])] };
     backgroundContract = await imageLabelBackgroundContract({ payload: generationPayload, sourceSha256, harness: metrics.generationHarness });
@@ -548,7 +553,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     && observation.plan.sourceBindings?.[0]?.transportSha256 === sourceSha256
     && observation.planSha256 === await imageLabelDigest(JSON.stringify(observation.plan))) {
     plan = clone(observation.plan); metrics.observationReused = true;
-  } else if (drawsNew && workflow.labelResult === 'remove' && !verifyOnly && typeof observer.blankPlan === 'function') {
+  } else if (drawsNew && workflow.labelResult === 'remove' && !verifyOnly && !legacyLabelPipeline && typeof observer.blankPlan === 'function') {
     // 11-10(사용자 선택 「라벨 삭제 때 라벨 읽기 건너뛰기」): 교과서를 라벨 없이 새로 그릴 때는 그림 생성이 읽은 글자 목록을 쓰지 않으므로
     // AI 글자 읽기(약 25~40초)를 건너뛴다(교과서·기출 모두 라벨 삭제일 때). 대신 검수가 「이 글자들을 다 지웠는지」를 하나씩 대조하지 못하고 그림 전체를 직접 본다(사용자가 알고 고름).
     plan = await observer.blankPlan({ attachments, workflow, signal });

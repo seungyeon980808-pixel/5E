@@ -55,6 +55,8 @@ function seedWorkspaces({count,unlabeled,selectedPartial,precisionMove}) {
     ]}),
     account:async()=>({rateLimits:{}}),login:async()=>{},
     send:async payload=>{const turnId=`turn-${sends.length}`,threadId=`thread-${sends.length}`;sends.push({payload,turnId,threadId});window.dispatchEvent(new Event('qa:bridge-send'));return{turnId,threadId};},
+    // 11-10: 라벨 복원(기본)은 그림 생성과 원본 글자 읽기를 병렬로 한다. 읽기 통로를 같은 원본 글자(전자)로 흉내 낸다.
+    readImageText:async()=>{window.__task2.labelReads=(window.__task2.labelReads||0)+1;return{text:JSON.stringify([{text:'전자',kind:'ko',x:317/512,y:222/384,w:37/512,h:17/384}])};},
     interrupt:async()=>({ok:true}),onEvent:callback=>{listeners.add(callback);return()=>listeners.delete(callback);},
     onState:()=>()=>{},onLog:()=>()=>{},setAiTaskShortcutActive(){},onAiCloseTaskShortcut:()=>()=>{},
   };
@@ -175,22 +177,25 @@ function jointResponse(text) {
   const placement={version:1,groups:groups.map(g=>({id:g.id,status:'matched',candidateId:g.candidates[0]?.candidateId,identities:g.labels.map(l=>({id:l.id,sourceObjectId:l.sourceAssociation.objectId})),reason:'Synthetic response confirming the rendered candidate for UI regression only'}))};
   return JSON.stringify({placement,review:JSON.parse(report())});
 }
-async function finish(page,{sourcePlan=verifiedPlan,startIndex=0}={}) {
+// 11-10: allowIdle=true면 그림 요청 없이 끝나는 변환(배경 캐시 재사용, 글자 읽기만)도 허용한다.
+// 바쁨 상태가 꺼져 있으면 끝난 것으로 본다(호출자가 결과 항목이 늘었는지 따로 확인한다).
+async function finish(page,{sourcePlan=verifiedPlan,startIndex=0,allowIdle=false}={}) {
   let next=startIndex;
   const seen=[];
   // Bridge events and exact busy-state mutations drive each phase, without timing delays.
   for(let step=0;step<30;step++) {
-    await page.evaluate(({next,allowDone})=>new Promise((resolve,reject)=>{
+    await page.evaluate(({next,allowDone,allowIdle})=>new Promise((resolve,reject)=>{
       const panel=document.querySelector('#ai-image-panel');
-      const ready=()=>window.__task2.sends.length>next || allowDone && panel.dataset.aiBusy==='false';
+      let sawBusy=panel.dataset.aiBusy==='true';
+      const ready=()=>window.__task2.sends.length>next || allowDone && panel.dataset.aiBusy==='false' || allowIdle && panel.dataset.aiBusy==='false';
       const observer=new MutationObserver(check);
-      const timeout=setTimeout(()=>{cleanup();reject(new Error('Bridge phase did not advance'));},10000);
+      const timeout=setTimeout(()=>{cleanup();reject(new Error('Bridge phase did not advance (busy='+panel.dataset.aiBusy+', sends='+window.__task2.sends.length+', next='+next+', reads='+(window.__task2.labelReads||0)+')'));},10000);
       function cleanup(){clearTimeout(timeout);observer.disconnect();window.removeEventListener('qa:bridge-send',check);}
-      function check(){if(ready()){cleanup();resolve();}}
+      function check(){if(panel.dataset.aiBusy==='true')sawBusy=true;if(ready()){cleanup();resolve();}}
       window.addEventListener('qa:bridge-send',check);
       observer.observe(panel,{attributes:true,attributeFilter:['data-ai-busy']});
       check();
-    }),{next,allowDone:next>startIndex});
+    }),{next,allowDone:next>startIndex,allowIdle});
     const requests=await sends(page);
     if(requests.length===next) break;
     const request=requests[next];seen.push(request);

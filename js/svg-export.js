@@ -117,6 +117,13 @@ async function _fileToBase64(url) {
   return btoa(bin);
 }
 
+// 11-10: URL별 base64 캐시. 실패(파일 없음·중단)는 null로 굳혀 건너뛴다.
+const _b64Cache = new Map();
+function _embedBase64(url) {
+  if (!_b64Cache.has(url)) _b64Cache.set(url, _fileToBase64(url).catch(() => null));
+  return _b64Cache.get(url);
+}
+
 // 폰트를 한 번만 받아 base64 @font-face로 캐시한다. export 전에 await하면 임베딩이 보장되고,
 // 캐시가 비어 있으면(첫 동기 호출 등) 임베딩 없이 기존처럼 폴백 렌더된다.
 export function ensureEmbeddedFonts() {
@@ -124,18 +131,19 @@ export function ensureEmbeddedFonts() {
   _fontCssPromise = (async () => {
     const parts = [];
     for (const f of EMBED_FONTS) {
-      try {
-        const b64 = await _fileToBase64(f.url);
-        parts.push(`@font-face{font-family:"${f.family}";font-style:${f.style};font-weight:normal;src:url(data:font/woff2;base64,${b64}) format("woff2");}`);
-      } catch (_) { /* 폰트 파일 없음 → 건너뜀(기존 폴백 유지) */ }
+      const b64 = await _embedBase64(f.url);
+      if (b64) parts.push(`@font-face{font-family:"${f.family}";font-style:${f.style};font-weight:normal;src:url(data:font/woff2;base64,${b64}) format("woff2");}`);
     }
     _fontCss = parts.join("\n");
     return _fontCss;
   })();
   return _fontCssPromise;
 }
-// 모듈 로드 시 미리 받아 두어(비동기) 이후 동기 export 경로도 캐시를 쓸 수 있게 한다.
-ensureEmbeddedFonts();
+// 모듈 로드 시에는 본문 글꼴(Latin Modern Roman)만 미리 받는다.
+// 11-10: 수식 아래첨자 글꼴(Latin Modern Math, 약 390KB)을 시작 때 받으면, 새로고침이나 시험지 시트
+// 로딩 중 그 요청이 중간에 끊겨 WebKit이 「access control checks」 페이지 오류를 띄운다(Safari에서도 같다).
+// 그래서 이 글꼴은 처음 내보낼 때(ensureEmbeddedFonts await) 받는다.
+for (const f of EMBED_FONTS) if (f.family === "Latin Modern Roman") _embedBase64(f.url);
 
 /* ----- a layer's visibility (mirrors render.js: hidden = visible === false) ----- */
 function isReferenceImage(obj) {

@@ -13,22 +13,25 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
     process.env.TASK2_ENGINE = engine;
     const dir = path.join(evidence, engine, initial); fs.mkdirSync(dir, { recursive: true });
     const { page, errors } = await fixture(t, 4, dir);
-    const convert = async (task, labels, request = '장치 연결을 보존해 변환해 주세요') => {
+    const convert = async (task, labels, request = '장치 연결을 보존해 변환해 주세요', { allowIdle = false } = {}) => { // 11-10: 배경 캐시 재사용(그림 요청 없음)을 허용하는 변환
       const selector = `${panel} .ai-task-tab[data-tab-id="task-${task}"] .ai-task-tab-select`;
       await page.locator(selector).click();
       await page.waitForFunction(selector => document.querySelector(selector)?.getAttribute('aria-pressed') === 'true', selector);
       await choose(page, 'general', labels);
       await page.locator(`${panel} [data-ai-input]`).fill(request);
       const startIndex = await page.evaluate(() => __task2.sends.length);
+      const before = (await snapshot(page)).find(tab => tab.id === `task-${task}`).generated.length;
       await page.locator(`${panel} [data-ai-comments-apply]`).click();
-      await finish(page, { sourcePlan: verifiedPlan, startIndex });
+      await finish(page, { sourcePlan: verifiedPlan, startIndex, allowIdle }); // 11-10: 캐시 재사용 변환은 그림 요청 없이 끝날 수 있다
+      // 11-10: 그림 요청이 없으면 결과 항목이 늘어날 때까지 기다린다(바쁨 해제 직후 목록 반영 순서 차이를 흡수).
+      for (let i = 0; allowIdle && i < 100 && (await snapshot(page)).find(tab => tab.id === `task-${task}`).generated.length <= before; i++) await page.waitForTimeout(100);
       const tabs = await snapshot(page);
       return tabs.find(tab => tab.id === `task-${task}`).generated.at(-1);
     };
     const imagesSent = () => page.evaluate(() => __task2.sends.filter(s => s.payload.purpose === 'image').length);
     const first = await convert(0, initial);
     const opposite = initial === 'remove' ? 'restore-editable' : 'remove';
-    const second = await convert(1, opposite);
+    const second = await convert(1, opposite, undefined, { allowIdle: true }); // 11-10: 두 번째는 저장된 그림을 재사용해 그림 요청이 없다
     assert.equal(await imagesSent(), 1, 'opposite label setting must not create a second picture');
     assert.equal(first.data, second.data, 'full PNG data URL is byte-identical');
     assert.equal(first.candidateSha256, second.candidateSha256);
@@ -43,7 +46,7 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
     await page.waitForFunction(() => window.__task2Manager);
     const reopened = await snapshot(page);
     assert.equal(reopened.find(tab => tab.id === 'task-0').generated.at(-1).data, first.data);
-    const restored = await convert(2, 'restore-editable');
+    const restored = await convert(2, 'restore-editable', undefined, { allowIdle: true }); // 11-10: 다시 열어도 그림 요청 없이 끝남
     assert.equal(await imagesSent(), 0, 'persistent RAW is reused after reload in another task');
     assert.equal(restored.data, first.data); assert.equal(restored.labelPlan.labels.length, 1);
     assert.equal(restored.workflowMetrics.backgroundReused, 'storage');
@@ -64,7 +67,9 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
     const center = () => page.evaluate(async id => {
       const { worldToScreen } = await import('/js/viewport.js?v=1.7.0-four-session-integration');
       const s = backgroundQA.state.get(), o = s.objects.find(o => o.id === id);
-      return worldToScreen(document.querySelector('#canvas'), s.viewBox, o.p2.x, o.p2.y);
+      // 11-10: 라벨은 이제 글자 객체(x,y)로 들어온다. 예전 지시선 라벨(p2)도 함께 받는다.
+      const at = o.p2 ?? { x: o.x, y: o.y };
+      return worldToScreen(document.querySelector('#canvas'), s.viewBox, at.x, at.y);
     }, native.labels[0].id);
     // 묶음 안 라벨은 한 번 누르면 묶음 전체가 골라지고, 두 번 누르면 그 라벨만 지목·바로 고치기가 열린다.
     let point = await center(); await page.mouse.click(point.x, point.y);

@@ -107,7 +107,8 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   // 편집기의 「캔버스로 내보내기」가 이미 수정본을 캔버스에 넣었다(AI 창은 닫혀 있다).
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   const types=await page.evaluate(()=>__candidateQA.state.get().objects.map(o=>o.type));
-  assert.ok(types.includes('image')&&types.includes('labeler')&&types.includes('coordplane')&&types.includes('funcgraph'));
+  // 11-10: AI 라벨은 이제 글자(text) 객체로 들어온다(지시선 라벨 labeler는 지시선이 있을 때만).
+  assert.ok(types.includes('image')&&(types.includes('labeler')||types.includes('text'))&&types.includes('coordplane')&&types.includes('funcgraph'), JSON.stringify(types));
   await page.screenshot({path:path.join(output,'labels-and-native-graph.png')});
 
   await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').evaluate(b=>b.click());

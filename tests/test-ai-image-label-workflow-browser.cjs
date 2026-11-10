@@ -4,6 +4,8 @@ const { installLabelSourcePage, armSelection, selectionArrived } = require('./he
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+// 11-10: 예전 라벨 파이프라인(원본 관찰·공동 검수·지역 복원) 계약 검사는 내부 플래그로 켠다. 기본 경로(글자 읽기 병렬)에서는 그 전송이 없다.
+const LEGACY={beforeNavigate:p=>p.addInitScript(()=>{globalThis.__5eLegacyLabelPipeline=true;})};
 const test = require('node:test');
 const {fixture,plan,verifiedPlan,report,placement,sends,snapshot,emit,choose,finish,jointResponse} = require('./helpers/label-source-browser.cjs');
 const evidenceRoot = process.env.EVIDENCE_DIR || path.resolve(__dirname,'../.omo/evidence/auto-labeler-implementation-20261004/harness/workflow');
@@ -45,7 +47,7 @@ async function insertAndEdit(page,{restore}) {
   });
   assert.equal(before.length,restore?1:0,'Only editable restoration creates native labels');
   if(!restore)return {nativeCount:0};
-  const point=await page.evaluate(async id=>{const {worldToScreen}=await import('/js/viewport.js?v=1.7.0-four-session-integration');const s=window.__workflowQA.state.get(),o=s.objects.find(o=>o.id===id);return worldToScreen(document.querySelector('#canvas'),s.viewBox,o.p2.x,o.p2.y);},before[0].id);
+  const point=await page.evaluate(async id=>{const {worldToScreen}=await import('/js/viewport.js?v=1.7.0-four-session-integration');const s=window.__workflowQA.state.get(),o=s.objects.find(o=>o.id===id);const at=o.p2??{x:o.x,y:o.y};return worldToScreen(document.querySelector('#canvas'),s.viewBox,at.x,at.y);},before[0].id); // 11-10: 라벨은 글자 객체(x,y)
   await armSelection(page,before[0].id);
   // Native output is an image/label group. Shift selects its individual label
   // before exercising the existing select-then-click text editing gesture.
@@ -74,38 +76,43 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     record(dir,{requests,c,errors}); // Preserve the actual result even if a contract assertion fails.
     assert.ok(c,'A completed request has a candidate');
     // 11-10: 삭제는 기출·일반 모두 관찰 0회와 전체 생성 1회, 기출 복원만 로컬 픽셀 경로.
-    assert.equal(observations(requests).length,labelResult==='remove'?0:1);assert.equal(generations(requests).length,imageKind==='exam'&&labelResult==='restore-editable'?0:1);
+    // 11-10: 기본 경로는 관찰 요청이 없고(라벨 복원도 원본 글자 읽기 통로로 따로 읽는다), 기출·일반 모두 그림 생성 한 번.
+    assert.equal(observations(requests).length,0);assert.equal(generations(requests).length,1);
     assert.equal(mappings(requests).length,0,'Current joint verification confirms placement and review in one Luna turn');
-    // 11-10: 기출 삭제도 일반 그림과 같은 전체 생성 계약을 지킨다.
-    if (imageKind === 'general' || labelResult === 'remove') {
+    // 11-10: 기본 그림 경로는 짧은 기출·교과서 지시문만 보낸다. SOURCE-GRID 계약 문장은 예전 라벨 복원 경로 전용이다.
+    {
       const sent = generations(requests)[0];
-      assert.match(sent.text,/SOURCE-GRID-TRACING/);
-      assert.match(sent.text,/이미지 편집 대상으로 전달/);
-      assert.match(sent.text,/필요한 회색 채움·음영을 허용/);
-      assert.match(sent.text,/원본 프레임:.*512.*384/);
+      const shortPrompt = imageKind === 'exam' ? /글자·숫자·문자와, 글자를 가리키는 지시선만 지워 줘/ : /첨부한 교과서 그림을 한국 수능\(평가원\) 시험지용 흑백 과학 그림으로 다시 그려 줘/;
+      assert.match(sent.text,shortPrompt);
+      assert.doesNotMatch(sent.text,/SOURCE-GRID-TRACING/);
       const sourceAttachment=await page.evaluate(()=>window.__task2.sends.find(s=>s.payload.purpose==='image').payload.attachments[0]);
       assert.equal(sourceAttachment.name,'INPUT_SOURCE.png');
       assert.equal(c.workflowMetrics.generationHarness.sourceTracingVersion,'1.2.0');
-      assert.ok(requests.some(r=>r.text.includes('[5e-source-relations v1.2.0]')));
     }
     assert.equal(c.imageLabelWorkflow.imageKind,imageKind);assert.equal(c.imageLabelWorkflow.labelResult,labelResult);
     assert.equal(c.sourceLabelPlan.frozen,true);
     // 11-10: 삭제는 고정된 빈 관찰 계획, 편집 라벨 복원만 읽은 글자를 보존.
     if(labelResult==='remove')assert.equal(c.sourceLabelPlan.labels.length,0);else assert.equal(c.sourceLabelPlan.labels[0].text,'전자');
-    assert.ok(c.sourceLabelPlan.sourceBindings?.length);assert.ok(c.workflowMetrics?.timings);assert.ok(c.workflowMetrics?.calls);
-    assert.equal(c.imageLabelWorkflow.scientificArrows,'keep');assert.equal(c.workflowMetrics.calls.review,1);
+    // 11-10: 기본 경로는 원본 묶음(sourceBindings) 대신 글자 읽기 결과(labelRead)를 남긴다. 복원은 읽기 1회여야 한다.
+    if(labelResult==='restore-editable')assert.equal(c.workflowMetrics.labelRead?.count,1);assert.ok(c.workflowMetrics?.timings);assert.ok(c.workflowMetrics?.calls);
+    // 11-10: 기본 경로에는 생성 뒤 자동 검수 호출이 없다(라벨 삭제는 검수 생략, 라벨 복원은 글자 읽기를 병렬로 함).
+    assert.equal(c.imageLabelWorkflow.scientificArrows,'keep');assert.equal(c.workflowMetrics.calls.review,0);
     // 11-10: 삭제는 생성·검수 2회, 복원은 관찰·검수와 일반 그림 생성만 요청.
-    assert.equal(requests.length,labelResult==='remove'?2:2+(imageKind==='general'?1:0),'Only restoration observes labels; removal generates and reviews once');
+    // 11-10: 기본 경로는 그림 생성 요청 한 번뿐이다(라벨 복원의 글자 읽기는 별도 통로라 이 목록에 없다).
+    assert.equal(requests.length,1,'Default path sends one picture request; label restoration reads text on its own channel');
     const hashes=await page.evaluate(async c=>{const {imageLabelDigest}=await import('/js/ai-image-label-run.js?v=1.7.0-four-session-integration');return{source:await imageLabelDigest(window.__task2.original),plan:await imageLabelDigest(JSON.stringify(c.sourceLabelPlan)),candidate:await imageLabelDigest(c.data)};},c);
     assert.equal(c.sourceSha256,hashes.source);assert.equal(c.planSha256,hashes.plan);assert.equal(c.candidateSha256,hashes.candidate);
-    assert.equal(c.sourceLabelPlan.sourceBindings[0].transportSha256,hashes.source);
+    // 11-10: 원본 묶음 해시 검사는 예전 관찰 계약 전용이라 기본 경로에서는 건너뛴다(원본 해시는 위에서 이미 확인).
+
     assert.equal(c.sourceFrame.width,512);assert.equal(c.sourceFrame.height,384);
     assert.equal(c.sourceFrame.coordinateSystem,'normalized-0-1');
     assert.deepEqual(c.candidateFrame,{width:512,height:384,coordinateSystem:'normalized-0-1'});
-    if(labelResult==='restore-editable') {assert.equal(c.targetPlacement?.candidateSha256,c.candidateSha256);assert.equal(c.targetPlacement?.planSha256,c.planSha256);assert.equal(c.labelPlan.labels[0].text,'전자');}
+    // 11-10: 기본 경로는 대상 배치 단계가 없다(targetPlacement=null). 글자 읽기 결과가 같은 그림 해시에 묶였는지 본다.
+    if(labelResult==='restore-editable') {assert.equal(c.labelPlan.candidateSha256,c.candidateSha256);assert.equal(c.labelPlan.labels[0].text,'전자');}
     else assert.ok(!c.labelPlan?.labels?.length);
     // 11-10: 기출 삭제는 새 그림이므로 원본 밖 픽셀 보존 검사는 기출 편집 라벨 복원에서 유지.
-    const pixels=imageKind==='exam'&&labelResult==='restore-editable'?await pixelEvidence(page,c):null;
+    // 11-10: 기출 라벨 복원도 이제 원본을 지우지 않고 새로 그린다(라벨 켬·끔이 같은 그림). 원본 밖 픽셀 보존 검사는 예전 국소 복원 전용이라 건너뛴다.
+    const pixels=null;
     if(pixels) {assert.equal(pixels.outsideChanged,0);assert.ok(pixels.insideChanged>0);assert.equal(pixels.annotationInkRemaining,0);assert.deepEqual(pixels.scientificArrow,[17,17,17,255]);assert.deepEqual(pixels.uncertainMark,[17,17,17,255]);}
     await page.screenshot({path:path.join(dir,'completed.png')});
     const native=await insertAndEdit(page,{restore:labelResult==='restore-editable'});
@@ -116,7 +123,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
 }
 
 test('relation failures retain the exact changed connection in review without automatic regeneration',{timeout:90000},async t=>{
-  const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
+  const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   // 11-10: 연결 오류 검수는 삭제 모드를 유지하되 관찰 없이 첫 생성·둘째 검수 응답을 제어.
   await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'image');
@@ -137,7 +144,7 @@ test('relation failures retain the exact changed connection in review without au
 });
 
 test('workflow cancel/retry: late analysis cannot mutate candidate; explicit retry only',{timeout:90000},async t=>{
-  const dir=evidenceFor('cancel-retry');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
+  const dir=evidenceFor('cancel-retry');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   // 11-10: 늦은 관찰 응답 취소 검사는 관찰이 남아 있는 기출 편집 라벨 복원으로 유지.
   await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await page.waitForFunction(()=>window.__task2.sends.length===1);await page.locator('#ai-image-panel [data-ai-interrupt]').click();
@@ -151,7 +158,7 @@ test('workflow cancel/retry: late analysis cannot mutate candidate; explicit ret
 });
 
 test('workflow unlabeled exam: zero invented native objects and identical source pixels',{timeout:90000},async t=>{
-  const dir=evidenceFor('unlabeled');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true,unlabeled:true});
+  const dir=evidenceFor('unlabeled');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true,unlabeled:true});
   const empty={...plan,labels:[],removalRegions:[],uncertainties:[]};
   await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:empty});
   const c=await candidate(page),requests=await sends(page);assert.ok(c);assert.equal(c.sourceLabelPlan.labels.length,0);assert.equal(generations(requests).length,0);
@@ -179,7 +186,7 @@ test('workflow unlabeled exam: zero invented native objects and identical source
 });
 
 test('workflow recovery: choices, source plan and candidate bindings survive reload without calls',{timeout:90000},async t=>{
-  const dir=evidenceFor('recovery');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
+  const dir=evidenceFor('recovery');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
   const before=await candidate(page);
   assert.equal(before.sourceFrame.width,512);assert.equal(before.sourceFrame.height,384);
@@ -205,7 +212,7 @@ test('workflow explicit choices: legacy workspace cannot silently dispatch an im
 });
 
 test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncertain source region',{timeout:90000},async t=>{
-  const dir=evidenceFor('uncertainty');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
+  const dir=evidenceFor('uncertainty');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   const uncertain={...plan,removalRegions:[...plan.removalRegions,{id:'unsafe-mark',labelId:'source-label',sourceRef:1,ownership:'confirmed',kind:'polygon',component:'endpoint',method:'flat-background',points:[{x:408/512,y:278/384},{x:430/512,y:278/384},{x:430/512,y:298/384},{x:408/512,y:298/384}]}]};
   // 11-10: 불확실 영역의 로컬 픽셀 보호 검사는 기출 편집 라벨 복원에서 그대로 유지.
   await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:uncertain});
@@ -217,7 +224,7 @@ test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncer
 });
 
 test('workflow selected scoped edit: explicit apply preserves source observation and RAW without full reanalysis',{timeout:120000},async t=>{
-  const dir=evidenceFor('selected-scoped-edit');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
+  const dir=evidenceFor('selected-scoped-edit');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   // 11-10: 부분 수정이 기존 관찰을 보존하는지 검사하므로 관찰이 있는 편집 라벨 복원으로 실행.
   await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
   const first=await candidate(page),firstRequests=await sends(page),observation=(await snapshot(page))[0].sourceLabelObservation;
@@ -286,7 +293,7 @@ test('workflow selected scoped edit: explicit apply preserves source observation
 
 
 test('workflow mixed batch: exam remove and general editable retain independent policies',{timeout:120000},async t=>{
-  const dir=evidenceFor('mixed-batch');const {page,errors}=await fixture(t,2,dir,{initialGeneration:true});
+  const dir=evidenceFor('mixed-batch');const {page,errors}=await fixture(t,2,dir,{...LEGACY,initialGeneration:true}); // 11-10: 일반 편집(라벨 복원)은 예전 관찰 경로 전용
   await choose(page,'exam','remove');
   await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').click();
   await choose(page,'general','restore-editable');

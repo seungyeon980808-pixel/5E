@@ -229,8 +229,9 @@ export const BLOCKING_REVIEW_CHECKS = Object.freeze(['object-counts', 'inside-ou
 // 두 판정 모두 그림을 다시 그리게 하지 않는다.
 export function enforceImageLabelAcceptance(report, { workflow = {}, candidateSha256 = null } = {}) {
   // 11-10: 라벨 삭제 기본 흐름은 검수를 건너뛰고 생성 그림을 그대로 받는다(run이 reviewSkipped로 표시). 검수 항목이 없어도 막지 않는다.
-  if (report?.reviewSkipped === true && workflow.labelResult === 'remove') {
-    return { accepted: true, strictAccepted: true, state: 'passed', report: { ...clone(report), verdict: 'pass', advisory: [] } };
+  // 11-10: 라벨 읽기(restore-editable) 성공도 검수를 건너뛴다(run의 reviewSkipped). 저장된 결과를 다시 불러올 때도 같은 판정이어야 한다.
+  if (report?.reviewSkipped === true) {
+    return { accepted: true, strictAccepted: true, state: 'passed', report: { ...clone(report), verdict: 'pass' } };
   }
   const general = workflow.imageKind !== 'exam';
   const parsed = parseImageReviewReport(JSON.stringify(report), {
@@ -275,7 +276,8 @@ export function enforceImageLabelAcceptance(report, { workflow = {}, candidateSh
 
 export function isImageLabelCandidateAccepted(candidate) {
   if (!candidate?.imageLabelWorkflow?.explicit) return true; // Scoped edits and other engines have their own contracts.
-  if (candidate.reviewReport?.reviewSkipped === true && candidate.imageLabelWorkflow.labelResult === 'remove') return candidate.reviewState === 'passed';
+  // 11-10: 검수를 건너뛴 결과(라벨 삭제·라벨 읽기 성공)는 저장 상태가 곧 판정이다.
+  if (candidate.reviewReport?.reviewSkipped === true) return candidate.reviewState === 'passed';
   const gate = enforceImageLabelAcceptance(candidate.reviewReport, { workflow: candidate.imageLabelWorkflow, candidateSha256: candidate.candidateSha256 });
   return candidate.reviewState === 'passed' && gate.accepted
     && (candidate.imageLabelWorkflow.imageKind === 'exam' || candidate.reviewReport?.styleReview?.version === STYLE_CONTRACT_VERSION
