@@ -45,7 +45,8 @@ async function setup(removal) {
     onObservation:value=>{observation=value;},
     observer:{analyze:async()=>{calls.analysis++;return structuredClone(plan);},
       verifyPlacement:async ({preview})=>{calls.verify++;return {placement:preview.placement,report:{verdict:'uncertain',checks:[],issues:[]}};}},
-    raster:{generate:async payload=>{calls.style++;assert.equal(payload.model,'chosen-model');assert.equal(payload.effort,'high');return {src:png,imageToolCalls:1};}},
+    // 11-10 사용자 선택 「그림은 처음부터 Luna로」: 그림 그리기 첫 시도는 고른 모델과 상관없이 Luna(medium)다.
+    raster:{generate:async payload=>{calls.style++;assert.equal(payload.model,'gpt-6-luna');assert.equal(payload.effort,'medium');return {src:png,imageToolCalls:1};}},
     cache:{get:async()=>({hit:false}),put:async()=>{calls.cache++;return {stored:true};}}};
   return {run:context.executeImageLabelRun,options,plan,png,calls,get observation(){return observation;}};
 }

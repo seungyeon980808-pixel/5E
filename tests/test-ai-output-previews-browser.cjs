@@ -429,8 +429,10 @@ for (const engine of ['chromium', 'webkit']) {
     });
     write(evidence, 'actual-modern-raw.json', { before, metrics, result, errors,
       provenance:'Real first workflow with parent controlled local transport; no provider quality claim. Encoded RAW comes from its actual generation event.' });
-    assert.deepEqual(result.stages, ['source-observation','image-generation','full-review']);
-    assert.equal(result.generations, 1); assert.equal(result.purposes[1], 'image');
+    // 11-10: 라벨 삭제는 관찰 없이 생성과 검수 두 단계만 실행.
+    assert.deepEqual(result.stages, ['image-generation','full-review']);
+    // 11-10: 관찰 생략으로 첫 요청이 유일한 그림 생성 요청.
+    assert.equal(result.generations, 1); assert.equal(result.purposes[0], 'image');
     // The modern source turn uses the immutable approved RHWP prefix, rather
     // than the legacy separated request's additional whole-frame instructions.
     assert.equal(result.approvedPrefixRetained, true, 'The real generation payload retains the entire canonical approved source contract');
@@ -453,7 +455,8 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(result.visible.alpha, [0,255], 'The visible general result follows the selected outside background removal');
     assert.deepEqual(result.raw.alpha, [255,255], 'Actual generated interior and exterior alpha are retained despite a connected source setting');
     assert.equal(result.workflow.explicit, true); assert.equal(result.reviewState, 'passed');
-    assert.equal(metrics.calls.sourceAnalysis, 1); assert.equal(metrics.calls.fullGeneration, 1); assert.equal(metrics.calls.review, 1);
+    // 11-10: 라벨 삭제의 원본 분석은 0회지만 생성·검수는 각각 1회 유지.
+    assert.equal(metrics.calls.sourceAnalysis, 0); assert.equal(metrics.calls.fullGeneration, 1); assert.equal(metrics.calls.review, 1);
     assert.deepEqual(result.counts, {'task-0':1,'task-1':1});
     // 11-08 사용자 결정: 일반 그림 변환 결과도 작업 뒤 「저장된 그림 처리」(배경·객체 분리)를 쓸 수 있다. 저장된 AI 원본은 그대로.
     assert.equal(result.historicalStillOriginal, true); assert.equal(result.legacyVisible, true);
@@ -661,8 +664,10 @@ async function qualifyModernAutoRaw(page,evidence,expected) {
 // explicitly instrumented native-decode and separation observers; they do not
 // certify a wholly uninstrumented module closure or provider quality.
 const rawTransitionCrypto = require('node:crypto');
-const rawTransitionOriginalBytes = 60338; // 11-08 사용자 결정(일반 결과도 고른 배경 처리를 따름)으로 앞부분 기대값 한 줄을 고쳐 다시 고정
-const rawTransitionOriginalSHA = 'f95dd2a9b28740690808a9686750c0e8e4f52b6307ce2e5434545b5271d2021c';
+// 11-10: 삭제 모드의 관찰 생략 기대값·주석이 늘어난 240바이트만 기존 보호 범위에 반영.
+const rawTransitionOriginalBytes = 60578;
+// 11-10: 생성·검수 두 단계와 관찰 0회로 바꾼 앞부분을 다시 고정하고 원문 보호 검사는 유지.
+const rawTransitionOriginalSHA = '0e20623d9bb451ecbb8497602e7104d7db4a565f52573912fad4a8da767a4e4f';
 const rawTransitionPrefix = fs.readFileSync(__filename).subarray(0, rawTransitionOriginalBytes);
 assert.equal(rawTransitionCrypto.createHash('sha256').update(rawTransitionPrefix).digest('hex'), rawTransitionOriginalSHA,
   'Every original test/assertion prefix is the reviewed unchanged source');
@@ -1152,8 +1157,9 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
 // Keep all preceding 32 cases, including the original 57,222-byte prefix.
 // ZIP fallback in Chromium has an explicit unsupported-directory capability
 // fixture. Neither engine's ZIP case certifies native picker/directory/desktop IO.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 100693)).digest('hex'),
-  'cd749a9a28eff51206baaadc103bb2cc6dd285cc7c777df956c156437f587ad8',
+// 11-10: 앞부분의 관찰 생략 기대값과 보호 해시 변경만 반영해 기존 32개 검사 보호 범위를 유지.
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 101046)).digest('hex'),
+  '2f024881e7036b302531792a46e10a668a56b7c76712cebe73e1db019e9a015e',
   'All 32 existing cases remain byte-for-byte preserved before the collective append');
 async function installCollectiveExportObservation(page, runtime, origin, evidence) {
   const foreign = [];
@@ -1569,8 +1575,9 @@ for (const engine of ['chromium', 'webkit']) for (const mode of ['selected', 'al
 }
 
 // COLLECTIVE-EXPORT-BUSY-STATUS-APPEND-06 — private, unexecuted proposal.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 132486)).digest('hex'),
-  '3798ffe0532fd936cf7f192297a537aecad5f32a9ab6f20bbc1f38f81b853872', 'All 40 existing cases remain byte-for-byte unchanged');
+// 11-10: 관찰 생략 기대값과 앞선 보호 해시 갱신만 반영해 기존 40개 검사 보호 범위를 유지.
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 132968)).digest('hex'),
+  '2a71dc7961f0b6fa97f68bbe9aa193b0ad99a1df3fbe3bf27730cff7584443e0', 'All 40 existing cases remain byte-for-byte unchanged');
 
 function observeCollectiveBusyUiCompletion(source) {
   const opening = "  collectiveExportButton.addEventListener('click', async () => {";
@@ -1844,8 +1851,9 @@ for (const engine of ['chromium', 'webkit']) {
 
 // PRIVATE08: actual native load/decode success/error across preview UI lifetimes.
 // Root only. Manager dispose is explicitly component-lifecycle coverage, not a UI delete claim.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 155104)).digest('hex'),
-  'eafdaf9a93769cdd55aa861a22a772dfb30dc57acf54a948251d81c7aff647de', 'PRIVATE08 retains all reviewed42 bytes');
+// 11-10: 관찰 생략 기대값과 앞선 보호 해시 갱신만 반영해 기존 42개 검사 보호 범위를 유지.
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 155709)).digest('hex'),
+  '42e30d0dbda5e202d099e0fb4c46ddc3e8c6a8744d1a2d748e88d0044b9c99f1', 'PRIVATE08 retains all reviewed42 bytes');
 
 function lifetimeReplaceOnce(source, from, to, label) {
   assert.equal(source.split(from).length-1,1,label);return source.replace(from,to);

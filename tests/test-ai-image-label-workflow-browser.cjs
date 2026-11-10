@@ -73,9 +73,11 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     const requests=await sends(page),c=await candidate(page);
     record(dir,{requests,c,errors}); // Preserve the actual result even if a contract assertion fails.
     assert.ok(c,'A completed request has a candidate');
-    assert.equal(observations(requests).length,1);assert.equal(generations(requests).length,imageKind==='exam'?0:1);
+    // 11-10: 삭제는 기출·일반 모두 관찰 0회와 전체 생성 1회, 기출 복원만 로컬 픽셀 경로.
+    assert.equal(observations(requests).length,labelResult==='remove'?0:1);assert.equal(generations(requests).length,imageKind==='exam'&&labelResult==='restore-editable'?0:1);
     assert.equal(mappings(requests).length,0,'Current joint verification confirms placement and review in one Luna turn');
-    if (imageKind === 'general') {
+    // 11-10: 기출 삭제도 일반 그림과 같은 전체 생성 계약을 지킨다.
+    if (imageKind === 'general' || labelResult === 'remove') {
       const sent = generations(requests)[0];
       assert.match(sent.text,/SOURCE-GRID-TRACING/);
       assert.match(sent.text,/이미지 편집 대상으로 전달/);
@@ -87,10 +89,13 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
       assert.ok(requests.some(r=>r.text.includes('[5e-source-relations v1.2.0]')));
     }
     assert.equal(c.imageLabelWorkflow.imageKind,imageKind);assert.equal(c.imageLabelWorkflow.labelResult,labelResult);
-    assert.equal(c.sourceLabelPlan.frozen,true);assert.equal(c.sourceLabelPlan.labels[0].text,'전자');
+    assert.equal(c.sourceLabelPlan.frozen,true);
+    // 11-10: 삭제는 고정된 빈 관찰 계획, 편집 라벨 복원만 읽은 글자를 보존.
+    if(labelResult==='remove')assert.equal(c.sourceLabelPlan.labels.length,0);else assert.equal(c.sourceLabelPlan.labels[0].text,'전자');
     assert.ok(c.sourceLabelPlan.sourceBindings?.length);assert.ok(c.workflowMetrics?.timings);assert.ok(c.workflowMetrics?.calls);
     assert.equal(c.imageLabelWorkflow.scientificArrows,'keep');assert.equal(c.workflowMetrics.calls.review,1);
-    assert.equal(requests.length,2+(imageKind==='general'?1:0),'Exactly one source analysis, one final verification and only the required generation');
+    // 11-10: 삭제는 생성·검수 2회, 복원은 관찰·검수와 일반 그림 생성만 요청.
+    assert.equal(requests.length,labelResult==='remove'?2:2+(imageKind==='general'?1:0),'Only restoration observes labels; removal generates and reviews once');
     const hashes=await page.evaluate(async c=>{const {imageLabelDigest}=await import('/js/ai-image-label-run.js?v=1.7.0-four-session-integration');return{source:await imageLabelDigest(window.__task2.original),plan:await imageLabelDigest(JSON.stringify(c.sourceLabelPlan)),candidate:await imageLabelDigest(c.data)};},c);
     assert.equal(c.sourceSha256,hashes.source);assert.equal(c.planSha256,hashes.plan);assert.equal(c.candidateSha256,hashes.candidate);
     assert.equal(c.sourceLabelPlan.sourceBindings[0].transportSha256,hashes.source);
@@ -99,7 +104,8 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     assert.deepEqual(c.candidateFrame,{width:512,height:384,coordinateSystem:'normalized-0-1'});
     if(labelResult==='restore-editable') {assert.equal(c.targetPlacement?.candidateSha256,c.candidateSha256);assert.equal(c.targetPlacement?.planSha256,c.planSha256);assert.equal(c.labelPlan.labels[0].text,'전자');}
     else assert.ok(!c.labelPlan?.labels?.length);
-    const pixels=imageKind==='exam'?await pixelEvidence(page,c):null;
+    // 11-10: 기출 삭제는 새 그림이므로 원본 밖 픽셀 보존 검사는 기출 편집 라벨 복원에서 유지.
+    const pixels=imageKind==='exam'&&labelResult==='restore-editable'?await pixelEvidence(page,c):null;
     if(pixels) {assert.equal(pixels.outsideChanged,0);assert.ok(pixels.insideChanged>0);assert.equal(pixels.annotationInkRemaining,0);assert.deepEqual(pixels.scientificArrow,[17,17,17,255]);assert.deepEqual(pixels.uncertainMark,[17,17,17,255]);}
     await page.screenshot({path:path.join(dir,'completed.png')});
     const native=await insertAndEdit(page,{restore:labelResult==='restore-editable'});
@@ -112,25 +118,28 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
 test('relation failures retain the exact changed connection in review without automatic regeneration',{timeout:90000},async t=>{
   const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
   await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-  await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'assistant',JSON.stringify(verifiedPlan));
-  await page.waitForFunction(()=>window.__task2.sends.length===2);await emit(page,1,'image');
-  await page.waitForFunction(()=>window.__task2.sends.length===3);
+  // 11-10: 연결 오류 검수는 삭제 모드를 유지하되 관찰 없이 첫 생성·둘째 검수 응답을 제어.
+  await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'image');
+  await page.waitForFunction(()=>window.__task2.sends.length===2);
   const failed=JSON.parse(report());failed.verdict='fail';
   const detail='원본 전원 오른쪽 단자→전류 센서 연결이 후보에서 전압 센서로 바뀌었습니다.';
   Object.assign(failed.checks.find(c=>c.id==='connections'),{status:'fail',detail});
   failed.issues=[{checkId:'connections',message:detail,severity:'critical'}];
-  await emit(page,2,'assistant',JSON.stringify(failed));
+  // 11-10: 관찰 생략으로 연결 오류 검수 응답은 두 번째 요청에 전달.
+  await emit(page,1,'assistant',JSON.stringify(failed));
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
   const c=await candidate(page),requests=await sends(page);
   assert.equal(c.reviewState,'needs-attention');assert.equal(c.reviewReport.verdict,'fail');
-  assert.ok(c.reviewReport.issues.some(issue=>issue.message===detail));assert.equal(requests.length,3);assert.equal(generations(requests).length,1);
+  // 11-10: 연결 오류를 그대로 남기고 자동 재생성 없이 생성·검수 두 요청에서 종료.
+  assert.ok(c.reviewReport.issues.some(issue=>issue.message===detail));assert.equal(requests.length,2);assert.equal(generations(requests).length,1);
   assert.equal(await page.locator('#ai-image-panel [data-ai-insert-selected]').isEnabled(),true,'the user still decides whether to adopt a reviewed result');
   assert.deepEqual(errors,[]);record(dir,{c,requests,errors});
 });
 
 test('workflow cancel/retry: late analysis cannot mutate candidate; explicit retry only',{timeout:90000},async t=>{
   const dir=evidenceFor('cancel-retry');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
-  await choose(page,'exam','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  // 11-10: 늦은 관찰 응답 취소 검사는 관찰이 남아 있는 기출 편집 라벨 복원으로 유지.
+  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await page.waitForFunction(()=>window.__task2.sends.length===1);await page.locator('#ai-image-panel [data-ai-interrupt]').click();
   await emit(page,0,'assistant',JSON.stringify(plan));await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
   assert.equal((await snapshot(page))[0].generated.length,0);assert.equal((await sends(page)).length,1);
@@ -198,7 +207,8 @@ test('workflow explicit choices: legacy workspace cannot silently dispatch an im
 test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncertain source region',{timeout:90000},async t=>{
   const dir=evidenceFor('uncertainty');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
   const uncertain={...plan,removalRegions:[...plan.removalRegions,{id:'unsafe-mark',labelId:'source-label',sourceRef:1,ownership:'confirmed',kind:'polygon',component:'endpoint',method:'flat-background',points:[{x:408/512,y:278/384},{x:430/512,y:278/384},{x:430/512,y:298/384},{x:408/512,y:298/384}]}]};
-  await choose(page,'exam','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:uncertain});
+  // 11-10: 불확실 영역의 로컬 픽셀 보호 검사는 기출 편집 라벨 복원에서 그대로 유지.
+  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:uncertain});
   const c=await candidate(page),pixels=await pixelEvidence(page,c);
   assert.equal(pixels.outsideChanged,0);assert.deepEqual(pixels.uncertainMark,[17,17,17,255]);assert.notEqual(c.reviewState,'passed');
   assert.ok(c.removalReport.issues.some(issue=>issue.code==='uncertain-overlap'));
@@ -208,7 +218,8 @@ test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncer
 
 test('workflow selected scoped edit: explicit apply preserves source observation and RAW without full reanalysis',{timeout:120000},async t=>{
   const dir=evidenceFor('selected-scoped-edit');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
-  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
+  // 11-10: 부분 수정이 기존 관찰을 보존하는지 검사하므로 관찰이 있는 편집 라벨 복원으로 실행.
+  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
   const first=await candidate(page),firstRequests=await sends(page),observation=(await snapshot(page))[0].sourceLabelObservation;
   assert.equal(generations(firstRequests).length,1);assert.equal(observations(firstRequests).length,1);
   assert.equal(await page.locator('#ai-image-panel [data-ai-send]').isVisible(),false,'Selected PNG uses the approved box-edit UI');
@@ -296,7 +307,8 @@ test('workflow mixed batch: exam remove and general editable retain independent 
   }
   await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().filter(j=>j.state==='completed').length===2);
   const tabs=await snapshot(page),requests=await sends(page);
-  assert.equal(tabs.length,2);assert.equal(requests.length,5);assert.equal(observations(requests).length,2);assert.equal(generations(requests).length,1);assert.equal(mappings(requests).length,0);
+  // 11-10: 기출 삭제도 전체 생성하되 관찰을 생략해 혼합 작업은 관찰 1회·생성 2회, 총 5회.
+  assert.equal(tabs.length,2);assert.equal(requests.length,5);assert.equal(observations(requests).length,1);assert.equal(generations(requests).length,2);assert.equal(mappings(requests).length,0);
   const exam=tabs.find(t=>t.generated.at(-1).imageLabelWorkflow.imageKind==='exam').generated.at(-1);
   const general=tabs.find(t=>t.generated.at(-1).imageLabelWorkflow.imageKind==='general').generated.at(-1);
   assert.equal(exam.imageLabelWorkflow.labelResult,'remove');assert.ok(!exam.labelPlan?.labels?.length);

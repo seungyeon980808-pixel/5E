@@ -261,8 +261,10 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   assert.equal(await page.locator('#canvas image').count(), 1);
   const transportCounts = await page.evaluate(() => window.__task6Mock.counts());
   assert.equal(transportCounts.sendCount, 2, 'Each original owner performs exactly one generation');
-  assert.equal(transportCounts.rawCount, 6, 'All actual source, image and review requests are counted');
-  assert.deepEqual(transportCounts.stages.reduce((counts, stage) => ({ ...counts, [stage]: (counts[stage] || 0) + 1 }), {}), { 'source-observation': 2, 'image-generation': 2, 'full-review': 2 });
+  // 11-10: 두 작업의 라벨 삭제는 관찰을 생략해 생성·검수 각 두 번, 총 네 요청.
+  assert.equal(transportCounts.rawCount, 4, 'Both owners count generation and review without source observation');
+  // 11-10: 라벨 삭제의 요청 단계에는 source-observation이 없다.
+  assert.deepEqual(transportCounts.stages.reduce((counts, stage) => ({ ...counts, [stage]: (counts[stage] || 0) + 1 }), {}), { 'image-generation': 2, 'full-review': 2 });
   fs.writeFileSync(path.join(evidenceDir, 'current-transport-counts.json'), JSON.stringify(transportCounts, null, 2));
   await page.screenshot({ path: path.join(evidenceDir, 'task-6-ai-browser.png'), fullPage: true });
   await page.close();

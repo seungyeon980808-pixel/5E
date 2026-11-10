@@ -61,7 +61,8 @@ test('task rows update when a completed image review notice changes', {timeout: 
             const row = page.locator('#ai-image-panel [data-tab-id="task-0"]');
             assert.equal(await row.getAttribute('data-work-state'), verdict === 'pass' ? 'completed' : 'review', 'Visible row must reflect the final stored review notice');
             assert.equal(await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').getAttribute('aria-pressed'), 'true', 'Other active owner remains selected');
-            assert.deepEqual(await page.evaluate(() => window.__task2.sends.map(send => send.stage)), ['source-observation', 'image-generation', 'full-review']);
+            // 11-10: 라벨 삭제는 원본 관찰 없이 그림 생성과 전체 검수만 요청.
+            assert.deepEqual(await page.evaluate(() => window.__task2.sends.map(send => send.stage)), ['image-generation', 'full-review']);
             assert.deepEqual(errors, []);
           } finally { await context.close(); }
         });

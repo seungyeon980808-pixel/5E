@@ -720,7 +720,8 @@ test('initial generation shows preparation before delayed status and completes i
   assert.deepEqual(result.counts, { 'task-0': 1, 'task-2': 1, 'task-3': 1, 'task-1': 1 });
   assert.equal(result.state, 'completed');
   assert.equal(result.sends, 1);
-  assert.deepEqual(result.transportStages, ['source-observation', 'image-generation', 'full-review'], 'All three real correlated transport stages are accounted for; exactly one generation occurs');
+  // 11-10: 라벨 삭제는 관찰을 생략하고 소유 작업에 생성·검수 두 단계만 기록.
+  assert.deepEqual(result.transportStages, ['image-generation', 'full-review'], 'Both real correlated transport stages are accounted for; exactly one generation occurs');
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(evidence, 'normal-generation.json'), JSON.stringify(result, null, 2));
 });

@@ -204,7 +204,8 @@ test('actual modern controller: policy payloads and exact RAW review/export/nati
   assert.ok(c);assert.equal(c.imageLabelWorkflow.labelResult,'remove');assert.equal(c.imageLabelWorkflow.scientificArrows,'remove');assert.equal(c.imageLabelWorkflow.auxiliaryMarks,'keep');
   assert.equal(requests.filter(r=>r.purpose==='image').length,1);assert.match(requests.find(r=>r.purpose==='image').text,/scientificArrows|科学|과학적/);
   const payloads=await page.evaluate(()=>window.__task2.sends.map(send=>send.payload));
-  assert.equal(payloads.find(payload=>payload.purpose==='image').model,'gpt-6.1-sol');
+  // 11-10: 그림 그리기는 고른 모델과 관계없이 첫 시도부터 Luna(medium).
+  assert.equal(payloads.find(payload=>payload.purpose==='image').model,'gpt-6-luna');
   assert.ok(payloads.every(payload=>payload.effort==='medium'&&payload.serviceTier==='priority'),'hidden fixed controls reach every request');
   const beforeCalls=requests.length;
   assert.equal(await page.locator(panel).getAttribute('data-ai-box-edit'),'true');
@@ -283,7 +284,7 @@ test('historical PNG controller: background export pixels and complete original 
   assert.deepEqual(errors,[]);fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({paidAiCalls:0,provenance,seed:'seedWorkspaces(selectedPartial:true) before product boot',c,exported,pixels,reviewRaw,providerCalls:beforeCalls,errors},null,2));
 });
 
-test('label restoration button uses Sol image generation and Luna joint verification, then inserts editable native labels', {timeout:90000},async t => {
+test('label restoration button uses Luna image generation and Luna joint verification, then inserts editable native labels', {timeout:90000},async t => {
   const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
   await pair(page,'kind').getByRole('button',{name:'교과서',exact:true}).click();
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
@@ -293,7 +294,8 @@ test('label restoration button uses Sol image generation and Luna joint verifica
   assert.ok(c);assert.equal(c.imageLabelWorkflow.labelResult,'restore-editable');assert.equal(c.reviewState,'passed');assert.equal(c.labelPlan.labels[0].text,'전자');
   const models=await page.evaluate(()=>window.__task2.sends.map(s=>({purpose:s.payload.purpose,model:s.payload.model,effort:s.payload.effort,serviceTier:s.payload.serviceTier})));
   assert.ok(models.every(m=>m.serviceTier==='priority'));
-  assert.equal(models.filter(m=>m.purpose==='image').length,1);assert.equal(models.find(m=>m.purpose==='image').model,'gpt-6.1-sol');assert.equal(models.filter(m=>m.purpose!=='image').length,2);assert.ok(models.filter(m=>m.purpose!=='image').every(m=>m.model==='gpt-6-luna'&&m.effort==='medium'));
+  // 11-10: 편집 라벨 복원도 그림은 첫 시도부터 Luna(medium), 관찰·검수 두 요청은 유지.
+  assert.equal(models.filter(m=>m.purpose==='image').length,1);assert.equal(models.find(m=>m.purpose==='image').model,'gpt-6-luna');assert.equal(models.find(m=>m.purpose==='image').effort,'medium');assert.equal(models.filter(m=>m.purpose!=='image').length,2);assert.ok(models.filter(m=>m.purpose!=='image').every(m=>m.model==='gpt-6-luna'&&m.effort==='medium'));
   await page.locator(`${panel} [data-ai-insert-selected]`).click();await page.waitForFunction(()=>document.querySelector('#ai-image-panel').hidden);
   const labels=await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return state.get().objects.filter(o=>o.aiAutoLabel).map(o=>({type:o.type,text:o.text,leaderRoutes:o.leaderRoutes}));});
   assert.equal(labels.length,1);assert.equal(labels[0].text,'전자');assert.ok(labels[0].leaderRoutes?.length);assert.deepEqual(errors,[]);

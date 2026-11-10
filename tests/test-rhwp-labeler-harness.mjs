@@ -47,7 +47,8 @@ test('label restore, observer geometry and semantic guesses cannot change the im
   assert.match(a.payload.text,/원본 첨부 없이 텍스트만으로 새 그림을 생성하지 않는다/);
   assert.match(a.payload.text,/명암 스타일 계약을 덮어쓰지 않는다/);
   assert.equal(a.count, 1); assert.equal(b.count, 1);
-  assert.equal(a.payload.model, 'gpt-6.1-sol'); assert.equal(a.payload.effort, 'high');
+  // 11-10 사용자 선택 「그림은 처음부터 Luna로」: 그림 그리기 첫 시도는 고른 모델(Sol 6.1)과 상관없이 Luna(medium)다.
+  assert.equal(a.payload.model, 'gpt-6-luna'); assert.equal(a.payload.effort, 'medium');
   assert.equal(a.payload.serviceTier, 'priority');
   assert.equal(a.result.data, png);
   assert.equal(a.result.metrics.generationHarness.id, IMAGE_LABEL_GENERATION_HARNESS);

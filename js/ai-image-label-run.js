@@ -31,6 +31,7 @@ export function selectedMarkInstructions(workflow) {
   ].filter(Boolean).join('\n');
 }
 // 11-09 사용자 결정: 교과서(일반) 그림은 평가원 스타일로 새로 그리되 주인공 물체만 남긴다.
+export const EXAM_REDRAW_INSTRUCTION = '기출 그림 새로 그리기: 원본의 모든 물체(사람·기구·장치 포함)·선·점선·화살표·직각 표시·기호와 그 위치·크기·개수를 그대로 두고, 글자 라벨(한글·영문·숫자·단위)과 글자를 가리키는 지시선만 지운다. 물체를 지우거나 새로 만들거나 꾸미지 않는다. 원본과 같은 구도·비율로 깔끔하고 선명한 선으로 다시 그린다.';
 export const TEXTBOOK_OBJECT_ONLY_CONTRACT = '교과서 그림 정리: 그림의 주인공 물체(예: 암석, 기관, 실험 기구, 지구본, 밧줄 파동)와 그 물체에 딸린 과학 표시(진행·진동·힘·운동·전류 방향 화살표, 파장·진폭 같은 치수선, 중심선·눈금)는 평가원 선화로 남긴다(화살표·보조선 설정이 지우라고 한 것만 지운다). 색 상자 안의 제목 딱지(예: 「화산암」), 쪽·그림 번호와 캡션, 배경 띠·색 줄·배경 면·배경 삽화, 그림과 그림 사이의 순서·변화를 가리키는 안내 화살표(예: 원래 암석 → 변성암), 말풍선과 그 안의 글, 캐릭터(그림 밖에서 설명하거나 말을 거는 안내 마스코트: 로봇·사람·동물 캐릭터), 그림 테두리·둥근 판·장식은 모두 지우고 그 자리는 흰 바탕으로 둔다. 장면 안에서 과학 현상에 참여하는 생물·물체(예: 물결 위에 뜬 개구리·나뭇잎, 실험하는 손, 관찰 대상 동물)는 캐릭터가 아니라 주인공 물체로 남긴다. 지운 자리에 흰 네모나 빈 상자를 남기지 않는다. 남은 물체의 크기·위치·간격은 원본 그대로 둔다. 물체 이름 글자도 그림에서 지운다(편집 라벨로 따로 복원된다).';
 const clone = value => structuredClone(value);
 // 11-08: 캔버스에 넣을 때도 라벨 크기를 원본에 맞춘다 — 원본 그림 픽셀에서 잰 글자 높이로 글자 크기(그림 높이에 대한 비율)를 정한다.
@@ -143,10 +144,16 @@ export async function runAiWithRetry({ stage, selection = {}, attempts = AI_RETR
   run, cancel, signal, onFailure = () => {}, onRetry = () => {} } = {}) {
   const total = Math.max(1, Math.floor(Number(attempts)) || 1);
   let lastError = null;
+  const luna = selection.model === AI_RETRY_FALLBACK_MODEL ? selection : { ...selection, model: AI_RETRY_FALLBACK_MODEL, effort: 'medium' };
+  // 11-10(사용자 선택 「그림은 처음부터 Luna로」): 그림 생성은 첫 시도부터 Luna로 보낸다. Sol 6.1은 설치판에서 첨부 그림을 열지 못하고
+  // 그림 없이 끝나는 일이 잦아(11-09 밤 교과서 첫 실행 8장 중 6장) 첫 시도가 늘 버려졌다. Luna가 실패하면 두 번째는 고른 모델, 세 번째는 다시 Luna.
+  // 그 밖의 단계(글자 읽기 등)는 예전대로 고른 모델로 먼저 보내고, 실패하면 Luna로 보낸다.
+  const choiceFor = attempt => stage === 'generation'
+    ? (attempt === 2 ? selection : luna)
+    : (total > 1 && attempt >= 2 ? luna : selection);
   for (let attempt = 1; attempt <= total; attempt++) {
     cancelled(signal);
-    const fallback = total > 1 && attempt >= 2;
-    const choice = fallback ? { ...selection, model: AI_RETRY_FALLBACK_MODEL, effort: 'medium' } : selection;
+    const choice = choiceFor(attempt);
     const startedAt = Date.now(), limit = Number(timeoutsMs[attempt - 1]) || 0;
     let timer = null;
     try {
@@ -167,7 +174,7 @@ export async function runAiWithRetry({ stage, selection = {}, attempts = AI_RETR
       try { onFailure(record); } catch {}
       if (attempt < total) {
         await waitMs(backoffMs[attempt - 1] ?? backoffMs.at(-1) ?? 0, signal);
-        try { onRetry({ ...record, nextAttempt: attempt + 1, nextModel: AI_RETRY_FALLBACK_MODEL, switchedModel: selection.model !== AI_RETRY_FALLBACK_MODEL }); } catch {}
+        try { const next = choiceFor(attempt + 1); onRetry({ ...record, nextAttempt: attempt + 1, nextModel: next.model || null, switchedModel: (next.model || null) !== (choice.model || null) }); } catch {}
       }
     } finally { clearTimeout(timer); }
   }
@@ -274,9 +281,9 @@ export function createImageLabelRasterController({ transport, timeoutMs = 600000
       if (!matches(r, e)) return false;
       route(r, e); return true;
     },
-    generate(payload, { imageKind = 'general', local = false, signal } = {}) {
+    generate(payload, { imageKind = 'general', local = false, examRedraw = false, signal } = {}) {
       cancelled(signal);
-      if (imageKind === 'exam' && !local) return Promise.reject(new Error('기출 전체 이미지 생성은 허용되지 않습니다.'));
+      if (imageKind === 'exam' && !local && !examRedraw) return Promise.reject(new Error('기출 전체 이미지 생성은 허용되지 않습니다.'));
       if (active && !active.done) return Promise.reject(new Error('이미지 처리가 이미 진행 중입니다.'));
       return new Promise((resolve, reject) => {
         const r = { resolve, reject, awaiting: true, queue: [], done: false, started: 0, images: 0, startedIds: new Set(), imageIds: new Set() }; active = r;
@@ -367,6 +374,10 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   const sourceFrame = { id: source.id || sourceSha256, name: source.name || '원본', ...(await imageFrame(source.data, signal)) };
   const metrics = { version: IMAGE_LABEL_RUN_VERSION, timings: {}, calls: { sourceAnalysis: 0, fullGeneration: 0, localRestore: 0, localReview: 0, targetMapping: 0, review: 0 },
     attempts: { fullGeneration: 0, localRestore: 0 }, cacheHit: false, observationReused: false };
+  // 11-10 사용자 결정(「기출 그림에서 라벨을 깔끔하게 지우고 선명하게 새로 그리는 것은 필수」): 「라벨 삭제」는 기출도 원본 위에서
+  // 글자만 지우지 않고, 교과서처럼 글자를 뺀 선명한 그림을 한 번에 새로 그린다. 라벨 복원(편집 라벨)만 예전처럼 원본 픽셀을 지킨다.
+  const examRedraw = workflow.imageKind === 'exam' && workflow.labelResult === 'remove';
+  const drawsNew = workflow.imageKind === 'general' || examRedraw;
   const phase = async (name, action) => {
     cancelled(signal); onPhase(name); if (progress) progress.phase = name; const t = performance.now();
     try { return await action(); }
@@ -385,13 +396,13 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   const generationFrame = imageSource.data === source.data ? sourceFrame : await imageFrame(imageSource.data,signal);
   const generationPrompt = buildSourceTracingPrompt({ sourceFrame:generationFrame?.width ? {width:generationFrame.width,height:generationFrame.height} : undefined, preserveStyle:true });
   const generationPromptSha256 = await imageLabelDigest(generationPrompt);
-  metrics.generationHarness = workflow.imageKind !== 'general' ? null
+  metrics.generationHarness = !drawsNew ? null
     : verifyOnly ? clone(previousCandidate?.workflowMetrics?.generationHarness || previousCandidate?.metrics?.generationHarness || null)
       : { id: IMAGE_LABEL_GENERATION_HARNESS, sourceTracingVersion:SOURCE_TRACING_CONTRACT_VERSION, promptSha256: generationPromptSha256,
         sourceSha256: await imageLabelDigest(imageSource.data) };
   let generationPayload, backgroundContract;
-  if (workflow.imageKind === 'general' && !verifyOnly) {
-    const instructions = [generationInstructions, selectedMarkInstructions(workflow),
+  if (drawsNew && !verifyOnly) {
+    const instructions = [generationInstructions, selectedMarkInstructions(workflow), examRedraw ? EXAM_REDRAW_INSTRUCTION : '',
       preciseRestore ? '사용자가 그림 정밀 복원을 선택했습니다. 수정 전 선택 버전에서 요청한 구조 오류만 원본과 대조해 수정합니다.' : '',
     ].filter(Boolean).join('\n\n');
     generationPayload = { ...selection, text: approvedFirstRequestText({ prompt:generationPrompt, instructions }),
@@ -425,6 +436,11 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     && observation.plan.sourceBindings?.[0]?.transportSha256 === sourceSha256
     && observation.planSha256 === await imageLabelDigest(JSON.stringify(observation.plan))) {
     plan = clone(observation.plan); metrics.observationReused = true;
+  } else if (drawsNew && workflow.labelResult === 'remove' && !verifyOnly && typeof observer.blankPlan === 'function') {
+    // 11-10(사용자 선택 「라벨 삭제 때 라벨 읽기 건너뛰기」): 교과서를 라벨 없이 새로 그릴 때는 그림 생성이 읽은 글자 목록을 쓰지 않으므로
+    // AI 글자 읽기(약 25~40초)를 건너뛴다(교과서·기출 모두 라벨 삭제일 때). 대신 검수가 「이 글자들을 다 지웠는지」를 하나씩 대조하지 못하고 그림 전체를 직접 본다(사용자가 알고 고름).
+    plan = await observer.blankPlan({ attachments, workflow, signal });
+    metrics.sourceAnalysisSkipped = true;
   } else {
     if (verifyOnly) throw new Error('최종 검수에는 같은 원본의 보존된 관찰이 필요합니다.');
     plan = await phase('sourceAnalysis', () => runAiWithRetry({ stage: 'sourceAnalysis', selection: labelSelection, signal,
@@ -466,7 +482,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     localRestoreAttempted: observation?.sourceSha256 === sourceSha256 && observation.localRestoreAttempted === true };
   await onObservation(clone(observationState));
   cancelled(signal);
-  if (workflow.imageKind === 'exam' && !plan.labels.length && !plan.removalOnlyItems?.length
+  // 새로 그리는 기출(라벨 삭제)은 글자를 읽지 않으므로 라벨이 0개여도 원본으로 돌려보내지 않고 그린다.
+  if (!drawsNew && workflow.imageKind === 'exam' && !plan.labels.length && !plan.removalOnlyItems?.length
     && (plan.excludedLabels?.length && plan.excludedLabels.every(label => label.scope === 'graph')
       && !plan.quarantinedItems?.some(item => item.scope === 'general')
       || !plan.rejectedCount && !plan.quarantinedItems?.length)) {
@@ -480,10 +497,10 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       report: { verdict: 'uncertain', checks: [], issues: [], scopeOutcome: 'no-general-labels-source-preserved' },
       rendererPrompt: '', finalLabelComposite: null, labelVerificationPreview: null, labelProposals: null, metrics };
   }
-  const descriptor = buildExactOutputCacheDescriptor({ engineVersion: IMAGE_LABEL_RUN_VERSION, styleVersion: workflow.imageKind === 'general' ? STYLE_CONTRACT_VERSION : workflow.version,
+  const descriptor = buildExactOutputCacheDescriptor({ engineVersion: IMAGE_LABEL_RUN_VERSION, styleVersion: drawsNew ? STYLE_CONTRACT_VERSION : workflow.version,
     mode: 'image-label-workflow', prompt: request, model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier || null,
     outputOptions: { workflow, sourceSha256, planSha256, preciseRestore, sourceLabelPolicyVersion: SOURCE_LABEL_POLICY_VERSION, sourceObservationVersion: SOURCE_OBSERVATION_VERSION, sourceObservationContractRevision: SOURCE_OBSERVATION_CONTRACT_REVISION, labelModel: labelSelection.model, labelEffort: labelSelection.effort,
-      generationHarness: metrics.generationHarness, generationInstructions, styleContractVersion: workflow.imageKind === 'general' ? STYLE_CONTRACT_VERSION : null,
+      generationHarness: metrics.generationHarness, generationInstructions, styleContractVersion: drawsNew ? STYLE_CONTRACT_VERSION : null,
       previousCandidateSha256: preciseRestore && previousCandidate?.data ? await imageLabelDigest(previousCandidate.data) : null } });
   const key = createExactOutputCacheKey(descriptor);
   if (cache && !bypassCache && !verifyOnly && !draftFirst) {
@@ -514,7 +531,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       throw new Error('보존된 원본 관찰과 RAW 후보의 바인딩을 확인할 수 없습니다.');
     }
     data = previousCandidate.data; rendererPrompt = previousCandidate.rendererPrompt || '';
-  } else if (workflow.imageKind === 'exam') {
+  } else if (workflow.imageKind === 'exam' && !examRedraw) {
     let local;
     try {
     local = await phase('pixelProcessing', () => removeExamLabelsFromDataUrl({ dataUrl: source.data, plan, workflow, signal,
@@ -554,7 +571,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
           cancel: () => raster.cancel?.(), onFailure: onAiFailure, onRetry: onAiRetry,
           run: choice => {
             metrics.attempts.fullGeneration++;
-            return raster.generate({ ...generationPayload, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, signal });
+            return raster.generate({ ...generationPayload, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, examRedraw, signal });
           } });
         metrics.calls.fullGeneration += result.imageToolCalls;
         return { data: await resolveGeneratedRaster(result.src, { whitePng: true }), rendererPrompt: result.rendererPrompt };
@@ -574,7 +591,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       } catch (error) { if (error?.name === 'AbortError') throw error; metrics.reframe = { fitted: false, reason: String(error?.message || error).slice(0, 200) }; }
     }
   }
-  if (progress && workflow.imageKind === 'general' && !verifyOnly) { progress.data = data; progress.rendererPrompt = rendererPrompt; }
+  if (progress && drawsNew && !verifyOnly) { progress.data = data; progress.rendererPrompt = rendererPrompt; }
   cancelled(signal);
   const candidateSha256 = await imageLabelDigest(data);
   const candidateFrame = await imageFrame(data, signal);
@@ -591,7 +608,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     catch (error) { if (error?.name === 'AbortError' || signal?.aborted) throw error; metrics.rasterPreviewError = String(error?.message || error).slice(0, 200); }
     cancelled(signal);
   }
-  if (workflow.imageKind === 'exam' && removalReport?.status !== 'complete') {
+  if (workflow.imageKind === 'exam' && !examRedraw && removalReport?.status !== 'complete') {
     if (removalReport.removedLabelIds?.length) {
       const ids = removalReport.removedLabelIds;
       if (new Set(ids).size !== ids.length || ids.some(id => !plan.labels.some(label =>
@@ -713,7 +730,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
       metrics.calls.review++;
       return workflow.labelResult === 'restore-editable'
         ? observer.reviewFinal({ ...labelSelection, attachments, plan, candidate: { name: '최종 후보', data }, composite, placement: targetPlacement, request, workflow })
-        : observer.review({ ...labelSelection, attachments, plan, candidate: { name: '최종 후보', data }, request, workflow });
+        // 새로 그린 기출은 원본 픽셀 보존이 아니라 새로 그린 그림 기준(교과서와 같은 검수)으로 본다.
+        : observer.review({ ...labelSelection, attachments, plan, candidate: { name: '최종 후보', data }, request, workflow: examRedraw ? { ...workflow, imageKind: 'general' } : workflow });
     });
   } catch (error) {
     cancelled(signal);

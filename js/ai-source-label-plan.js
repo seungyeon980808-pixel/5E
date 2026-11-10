@@ -233,6 +233,14 @@ export function createSourceLabelController({ transport, timeoutMs = SOURCE_LABE
       if (r.awaiting) { if (r.queue.length >= 512) finish(r, Error('라벨 관찰 이벤트 한도 초과')); else r.queue.push(e); return true; }
       if (!matches(r, e)) return false; route(r, e); return true;
     },
+    // 11-10(사용자 선택 「라벨 삭제 때 라벨 읽기 건너뛰기」): 교과서를 라벨 없이 새로 그릴 때 쓰는 「읽지 않은」 관찰.
+    // AI를 부르지 않고, 원본 연결(sourceBindings)만 있는 라벨 0개 명세를 만든다. 검수는 이 명세로 그림 전체를 직접 본다.
+    async blankPlan(options = {}) {
+      const attachments = snapshotAttachments(options.attachments);
+      const bindings = await Promise.all(attachments.map(async a => ({ name: a.name, transportSha256: Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(a.data))), b => b.toString(16).padStart(2, '0')).join('') })));
+      const plan = parseSourceLabelAnalysis(JSON.stringify({ version: 3, labels: [] }), attachments.length, [], { imageKind: options.workflow?.imageKind || null });
+      return freezeLabelPlan({ ...copy(plan), frozen: true, sourceBindings: bindings, sourceTextCandidateBindings: [] });
+    },
     async analyze(options = {}) {
       const token = reserve();
       const abortPreparation = () => {token.abort.abort();if(active?.preparationToken===token && !active.done){interrupt(active);finish(active,new DOMException('라벨 관찰이 취소되었습니다.','AbortError'));}};

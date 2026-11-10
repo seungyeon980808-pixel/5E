@@ -348,3 +348,14 @@ test('an exam observation that returns no labels although text candidates exist 
  r=await run({responses:[observed,observed]});
  assert.equal(r.sent.length,1,'라벨이 있으면 한 번만 묻는다');
 });
+
+// 11-10: 「읽지 않은」 빈 관찰은 AI를 부르지 않고, 원본 연결만 있는 라벨 0개 확정 명세다.
+test('blank plan is frozen, has no labels, binds the actual source bytes and never calls the AI',async()=>{
+ const {createSourceLabelController}=await import('../js/ai-source-label-plan.js');
+ let sent=0;const c=createSourceLabelController({transport:{send:()=>{sent++;throw Error('AI를 부르면 안 됩니다');},interrupt:()=>{}}});
+ const data='data:image/png;base64,iVBORw0KGgo=';
+ const p=await c.blankPlan({attachments:[{name:'원본',data}],workflow:{imageKind:'general',labelResult:'remove'}});
+ const crypto=require('node:crypto');
+ assert.equal(p.frozen,true);assert.deepEqual(p.labels,[]);assert.equal(sent,0);
+ assert.equal(p.sourceBindings[0].transportSha256,crypto.createHash('sha256').update(data).digest('hex'));
+});

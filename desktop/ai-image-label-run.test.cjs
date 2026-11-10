@@ -164,9 +164,10 @@ test('failed exam local restoration reserves durable attempt and retry never cal
  f.plan.labels=[{id:'a',sourceRef:1,scope:'general',mode:'text'}];f.plan.removalRegions=[{id:'local',labelId:'a',sourceRef:1,ownership:'confirmed',component:'text',kind:'ellipse',bounds:{x:.4,y:.4,w:.2,h:.2},method:'local-restore'}];
  let restores=0;const localRestore=async()=>{restores++;assert.equal(f.observation.localRestoreAttempted,true);throw Error('unavailable local service');};
  try{
-  const first=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'remove'},localRestore});
+  // 11-10: 기출 원본 픽셀 길(국소 복원 포함)은 이제 라벨 복원에서만 쓴다. 라벨 삭제는 새로 그린다(아래 검사).
+  const first=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'restore-editable'},localRestore});
   assert.equal(first.metrics.calls.fullGeneration,0);assert.equal(first.metrics.attempts.localRestore,1);assert.equal(first.metrics.calls.localRestore,0);assert.equal(first.report.verdict,'uncertain');assert.equal(first.data,png);
-  const retry=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'remove'},localRestore,observation:f.observation,bypassCache:true});
+  const retry=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'restore-editable'},localRestore,observation:f.observation,bypassCache:true});
   assert.equal(restores,1);assert.equal(retry.metrics.calls.localRestore,0);assert.equal(retry.metrics.attempts.localRestore,0);assert.equal(retry.report.verdict,'uncertain');assert.equal(f.counts.analyze,2);assert.equal(retry.metrics.observationReused,false);assert.equal(f.counts.generate,0);
  }finally{for(const [key,value] of Object.entries(originals)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
 });
@@ -284,4 +285,40 @@ test('a circled character restored from its ring takes the circled text and the 
  const out=labelsAtMeasuredGlyphs(labels,[{labelId:'c',glyphBounds:{x:.4,y:.4,w:.2,h:.2},text:'㉢'},{labelId:'a',glyphBounds:{x:.1,y:.1,w:.1,h:.1}}]);
  assert.equal(out[0].text,'㉢');assert.equal(out[0].typography.role,'text');assert.deepEqual(out[0].typography.bounds,{x:.4,y:.4,w:.2,h:.2});
  assert.equal(out[1].text,'A');assert.equal(out[1].typography.role,'name');
+});
+
+// 11-10 사용자 선택 「그림은 처음부터 Luna로」: 그림 생성만 첫 시도 Luna → 고른 모델 → Luna, 다른 단계는 고른 모델 → Luna → Luna.
+test('image generation starts with Luna and tries the chosen model second; other stages keep the chosen model first',async()=>{
+ const {runAiWithRetry,AI_RETRY_FALLBACK_MODEL:luna}=await import('../js/ai-image-label-run.js');
+ const order=async(stage,selection)=>{const seen=[],retries=[];
+  await assert.rejects(runAiWithRetry({stage,selection,attempts:3,backoffMs:[0,0],run:choice=>{seen.push(choice.model);throw new Error('실패');},onRetry:r=>retries.push(r.nextModel)}));
+  return {seen,retries};};
+ const sol={model:'gpt-6.1-sol',effort:'high'};
+ assert.deepEqual(await order('generation',sol),{seen:[luna,'gpt-6.1-sol',luna],retries:['gpt-6.1-sol',luna]});
+ assert.deepEqual((await order('sourceAnalysis',sol)).seen,['gpt-6.1-sol',luna,luna]);
+ assert.deepEqual((await order('generation',{model:luna,effort:'high'})).seen,[luna,luna,luna],'Luna를 고르셨으면 그대로');
+ let first=null; await runAiWithRetry({stage:'generation',selection:sol,attempts:3,backoffMs:[0,0],run:choice=>{first=choice;return 'ok';}});
+ assert.deepEqual(first,{model:luna,effort:'medium'},'성공하면 Luna 한 번으로 끝난다');
+});
+
+// 11-10 사용자 선택 「라벨 삭제 때 라벨 읽기 건너뛰기」: 교과서(일반)를 라벨 없이 새로 그릴 때는 AI 글자 읽기를 부르지 않는다.
+test('general remove skips the AI label reading when the observer can make a blank plan, and reviews with that blank plan',async()=>{
+ const {executeImageLabelRun}=await api,f=await setup();let blank=0,reviewed=null;const review=f.options.observer.review;
+ f.options.observer.blankPlan=async()=>{blank++;return {...structuredClone(f.plan),labels:[],excludedLabels:[]};};
+ f.options.observer.review=async o=>{reviewed=o.plan;return review(o);};
+ const r=await executeImageLabelRun(f.options);
+ assert.deepEqual(f.counts,{analyze:0,generate:1,review:1});assert.equal(blank,1);
+ assert.equal(reviewed.labels.length,0);assert.equal(r.metrics.calls.sourceAnalysis,0);assert.equal(r.metrics.sourceAnalysisSkipped,true);
+});
+
+// 11-10 사용자 결정: 기출 「라벨 삭제」는 원본 위 글자 지우기가 아니라, 글자를 뺀 선명한 그림을 글자 읽기 없이 한 번에 새로 그린다.
+test('exam remove redraws once without the pixel path or label reading, and is reviewed as a new drawing',async()=>{
+ const {executeImageLabelRun}=await api,f=await setup();let blank=0,reviewedKind=null,genOpts=null,genText='';
+ f.options.observer.blankPlan=async()=>{blank++;return {...structuredClone(f.plan),labels:[],excludedLabels:[]};};
+ const review=f.options.observer.review;f.options.observer.review=async o=>{reviewedKind=o.workflow.imageKind;return review(o);};
+ const gen=f.options.raster.generate;f.options.raster.generate=async(payload,opts)=>{genOpts=opts;genText=payload.text;return gen(payload,opts);};
+ const r=await executeImageLabelRun({...f.options,workflow:{imageKind:'exam',labelResult:'remove'}});
+ assert.deepEqual(f.counts,{analyze:0,generate:1,review:1});assert.equal(blank,1);
+ assert.equal(genOpts.examRedraw,true);assert.equal(reviewedKind,'general');assert.match(genText,/기출 그림 새로 그리기/);
+ assert.ok(!r.removalReport);
 });
