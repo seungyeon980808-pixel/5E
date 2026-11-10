@@ -9,7 +9,7 @@ import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-se
 import { manualLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
 import { createInlineLabelEditor } from './ai-inline-label-editor.js?v=1.7.0-four-session-integration';
 import { visibleImagePng } from './ai-visible-image-output.js?v=1.7.0-four-session-integration';
-import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry, isQuietLabelReadResult } from './ai-result-attention.js?v=1.7.0-four-session-integration';
+import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry, isQuietLabelReadResult, isQuietSkippedReviewResult } from './ai-result-attention.js?v=1.7.0-four-session-integration';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
 import { describeGraphFailure } from './graph/reconstruction-error.js?v=1.7.0-four-session-integration';
@@ -5007,7 +5007,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if(pendingRawCandidate){const previousCard=candidate.card;previousCard?.replaceWith(makeImageCard(candidate));}
       ensureCompositePreviewControl(candidate); syncEditableLabelPlanButton(candidate);
       imageReceived = true; currentTurnCandidate = candidate; currentReviewCandidate = candidate;
-      candidate.quietCompletion = isQuietLabelReadResult(result, candidate); // 11-10: 라벨 읽기 성공은 「확인 필요」 없이 완료
+      candidate.quietCompletion = isQuietLabelReadResult(result, candidate) || isQuietSkippedReviewResult(result, candidate); // 11-10: 라벨 읽기·라벨 삭제 성공은 「확인 필요」 없이 완료
       if (candidate.reviewState === 'needs-attention') taskTabs.get(originatingTaskId).generationNotice = 'review';
       const draftReady = canEditLabelReviewDraft(candidate);
       currentTurnDone = true; currentTerminalOutcome = 'completed'; serverTurnFinished = true; previewPending = false;

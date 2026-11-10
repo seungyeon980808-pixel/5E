@@ -157,7 +157,7 @@ test('the label read channel is wired through preload, the preview bridge, the w
 test('label restore is the default and the legacy long prompt is not used by default', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'js/ai-image-label-run.js'), 'utf8');
   assert.match(source, /const legacyLabelPath = workflow\.labelResult === 'restore-editable' && legacyLabelPipeline;/);
-  assert.match(source, /legacyLabelPipeline = false \} = \{\}\)/);
+  assert.match(source, /legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng \} = \{\}\)/);
 });
 
 test('the default label result depends on the source kind', async () => {

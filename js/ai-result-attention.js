@@ -10,6 +10,11 @@ export function isQuietLabelReadResult(result, candidate) {
     && Array.isArray(result.labelPlan?.labels) && result.labelPlan.labels.length > 0 && candidate?.reviewState === 'passed';
 }
 
+// 11-10: 검수를 건너뛴 라벨 삭제 성공 결과도 「확인 필요」 없이 완료한다.
+export function isQuietSkippedReviewResult(result, candidate) {
+  return result?.status === 'complete' && result.metrics?.reviewSkipped === true && !result.labelReadNotice && candidate?.reviewState === 'passed';
+}
+
 export function markResultReady(tab, candidate) {
   if (!tab || !candidate?.id || !candidate.data || candidate.kind !== 'generated') return false;
   if (candidate.quietCompletion === true) return false;

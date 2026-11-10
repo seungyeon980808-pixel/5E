@@ -57,6 +57,13 @@ export async function inspectPngDataUrl(dataUrl) {
 /** Necessary file gates, not proof of semantic correctness or background segmentation. */
 export function enforcePngAcceptance(detail, candidate) {
   if (detail?.state !== 'passed') return detail;
+  // 11-10: 검수를 건너뛴 라벨 삭제 결과는 시각 검수 없이 받으므로, 투명 픽셀만 막는다.
+  // 무채색 여부(교과서 원본 색 등)는 진단값으로만 두고 실패로 만들지 않는다. 검사가 없으면 막지 않는다.
+  if (detail?.report?.reviewSkipped === true) {
+    if (candidate?.pixelInspection?.opaque !== false) return detail;
+    return {...detail,state:'needs-attention',report:{...detail.report,verdict:'uncertain',
+      issues:[...(detail.report?.issues||[]),{message:'PNG에 투명 픽셀이 남아 있습니다.',severity:'major'}]}};
+  }
   const p = candidate?.pixelInspection;
   let message = null;
   if (candidate?.pixelInspectionError || !p || p.opaque == null || p.strictlyAchromatic == null) message = '파일 픽셀 검사를 완료하지 못했습니다.';

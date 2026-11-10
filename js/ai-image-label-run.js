@@ -17,6 +17,7 @@ import { externalLabelDraftIds } from './ai-label-review-draft.js?v=1.7.0-four-s
 import { imageLabelBackgroundContract, resolveImageLabelBackground } from './ai-label-background.js?v=1.7.0-four-session-integration';
 import { fitCandidateToSource, measureSourceLabelHeights } from './ai-label-reframe.js?v=1.7.0-four-session-integration';
 import { nativePresentationForLabelTypography, presentationRoleFor, prepareEditableLabelFonts } from './ai-label-typography.js?v=1.7.0-four-session-integration';
+import { grayscaleGeneratedPng } from './ai-grayscale-png.js?v=1.7.0-four-session-integration';
 
 export const IMAGE_LABEL_RUN_VERSION = '1.6.1';
 export const IMAGE_LABEL_GENERATION_HARNESS = 'rhwp-approved-first-v1';
@@ -391,7 +392,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   bypassCache = false, preciseRestore = false, verifyOnly = false, previousCandidate, localRestore,
   generationInstructions = request, generationSource, backgroundCache, previousCandidates = [], graphLabels = 'route',
   progress = null, onAiFailure = () => {}, onAiRetry = () => {}, retryPolicy = AI_RETRY_POLICY, regenerate = false,
-  readText = null, legacyLabelPipeline = false } = {}) { // 11-10: legacyLabelPipeline=true면 예전 계약 프롬프트·관찰·검수 경로(내부용)
+  readText = null, legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng } = {}) { // 11-10: legacyLabelPipeline=true면 예전 계약 프롬프트·관찰·검수 경로(내부용)
   const started = performance.now();
   const labelSelection = { ...selection, model: 'gpt-6-luna', effort: 'medium' };
   const workflow = normalizeImageLabelWorkflow(rawWorkflow, { requireExplicit: true });
@@ -478,7 +479,13 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
             return raster.generate({ ...generationPayload, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, examRedraw, signal });
           } });
         metrics.calls.fullGeneration += result.imageToolCalls;
-        return { data: await resolveGeneratedRaster(result.src, { whitePng: true }), rendererPrompt: result.rendererPrompt };
+        const raw = await resolveGeneratedRaster(result.src, { whitePng: true });
+        // 11-10: 새 기본 경로는 생성 PNG를 로컬에서 무채색으로 바꾼 뒤 캐시·맞춤·검사에 넘긴다(AI 호출 없음).
+        // 라벨 켬·끔이 같은 픽셀을 쓰도록 생성 직후 한 번만 적용한다. 예전 계약 경로(legacyLabelPipeline)는 그대로 둔다.
+        if (legacyLabelPipeline) return { data: raw, rendererPrompt: result.rendererPrompt };
+        const gray = await grayscale(raw, { signal });
+        metrics.grayscale = { applied: gray.applied, reason: gray.reason, ms: gray.ms };
+        return { data: gray.data, rendererPrompt: result.rendererPrompt };
       } }));
 
   if (readLabels) {
