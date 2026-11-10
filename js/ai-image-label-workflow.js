@@ -1,21 +1,25 @@
 /** Explicit input choices travel together through request, cache and recovery. */
-export const IMAGE_LABEL_WORKFLOW_VERSION = '1.2.0';
+export const IMAGE_LABEL_WORKFLOW_VERSION = '1.3.0';
 // 강조틀·확대 표시는 선택과 무관하게 항상 제거한다(1.2.0). 1.1.0으로 저장된 작업도 그대로 연다.
 export const IMAGE_EMPHASIS_REMOVAL_CONTRACT = '강조틀(원·타원·사각형 등 특정 부분을 둘러 강조하는 테두리)·확대 연결선·확대 범위를 나타내는 회색 면은 원본 교재의 강조 표시이므로 보조선·화살표 선택과 무관하게 항상 제거한다. 보존 표식이나 보존 목록에 있어도 제거하고, 강조틀이 둘러싼 실제 물체와 그 아래 가려진 실제 구조는 주변과 같게 이어 그린다.';
+// 1.3.0(11-10 사용자 결정 「라벨 켬·끔만 고르면 AI가 그림마다 가장 나은 방식으로 복구」): 지우기 어려운 글자 처리(hardText)를
+// 설정으로 고를 수 있게 하고, 기본값은 auto(막힌 까닭을 보고 코드가 고름)다.
 export function normalizeImageLabelWorkflow(value, { requireExplicit = false } = {}) {
   const v = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   const imageKind = ['exam', 'general'].includes(v.imageKind) ? v.imageKind : null;
   const labelResult = ['remove', 'restore-editable'].includes(v.labelResult) ? v.labelResult : null;
-  const validVersion = v.version === undefined || v.version === '1.0.0' || v.version === '1.1.0' || v.version === IMAGE_LABEL_WORKFLOW_VERSION;
+  const validVersion = v.version === undefined || ['1.0.0', '1.1.0', '1.2.0', IMAGE_LABEL_WORKFLOW_VERSION].includes(v.version);
   const validPolicies = (v.auxiliaryMarks === undefined || ['keep', 'remove'].includes(v.auxiliaryMarks))
     && (v.scientificArrows === undefined || ['keep', 'remove'].includes(v.scientificArrows))
-    && (v.verificationMode === undefined || ['full', 'draft-first'].includes(v.verificationMode));
+    && (v.verificationMode === undefined || ['full', 'draft-first'].includes(v.verificationMode))
+    && (v.hardText === undefined || ['auto', 'keep', 'erase', 'ai'].includes(v.hardText));
   const explicit = Boolean(imageKind && labelResult && validVersion && validPolicies && v.explicit !== false);
   if (requireExplicit && !explicit) throw new TypeError('이미지 종류와 라벨 처리 선택을 확인해야 합니다. 이전 작업의 처리 정책을 자동으로 추측하지 않습니다.');
   return Object.freeze({ version: IMAGE_LABEL_WORKFLOW_VERSION, imageKind, labelResult,
     verificationMode: v.verificationMode === 'draft-first' ? 'draft-first' : 'full',
     auxiliaryMarks: ['keep', 'remove'].includes(v.auxiliaryMarks) ? v.auxiliaryMarks : 'keep',
-    scientificArrows: ['keep', 'remove'].includes(v.scientificArrows) ? v.scientificArrows : 'keep', explicit });
+    scientificArrows: ['keep', 'remove'].includes(v.scientificArrows) ? v.scientificArrows : 'keep',
+    hardText: ['auto', 'keep', 'erase', 'ai'].includes(v.hardText) ? v.hardText : 'auto', explicit });
 }
 export function buildImageLabelWorkflowContract(value) {
   const p = normalizeImageLabelWorkflow(value, { requireExplicit: true });

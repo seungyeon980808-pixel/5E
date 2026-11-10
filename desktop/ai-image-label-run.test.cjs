@@ -201,9 +201,20 @@ test('aborted mapping does not become retained candidate success',async()=>{
  const {executeImageLabelRun}=await api,f=await setup(),signal=new AbortController();delete f.plan.observationVersion;let writes=0;
  await assert.rejects(executeImageLabelRun({...f.options,signal:signal.signal,workflow:{imageKind:'general',labelResult:'restore-editable'},observer:{...f.options.observer,mapTargets:async()=>{signal.abort();throw Error('cancel mapping');}},cache:{get:async()=>({hit:false}),put:async()=>{writes++;}}}),{name:'AbortError'});assert.equal(writes,0);
 });
-test('local restore serializes Uint8ClampedArray pixels and reaches scoped raster send',async()=>{
- const {createExamLocalRestore}=await api;const {decodeScopedPng}=await import('../js/ai-scoped-edit-png.js');let calls=0;const pixels=new Uint8ClampedArray([0,0,0,255,255,255,255,255,100,120,140,255,255,255,255,255]);
- const run=createExamLocalRestore({observer:{},raster:{generate:async(payload,options)=>{calls++;assert.equal(options.imageKind,'exam');assert.equal(options.local,true);assert.equal(payload.attachments.length,2);const decoded=await decodeScopedPng(new Uint8Array(Buffer.from(payload.attachments[0].data.split(',')[1],'base64')));assert.deepEqual([...decoded.data],[...pixels]);throw Error('scoped send reached');}}});
+// 11-09 라벨 안정화: 그림 생성 AI는 정해진 크기로만 그리므로, 국소 영역을 흰 여백을 붙인 생성 틀(1024×1024 등) 가운데에 키워 보낸다.
+test('local restore sends the crop framed at a generation size, keeping each pixel color in place, and reaches scoped raster send',async()=>{
+ const {createExamLocalRestore,localRestoreFrame}=await api;const {decodeScopedPng}=await import('../js/ai-scoped-edit-png.js');let calls=0;const pixels=new Uint8ClampedArray([0,0,0,255,255,255,255,255,100,120,140,255,255,255,255,255]);
+ const frame=localRestoreFrame(2,2);assert.deepEqual([frame.fw,frame.fh],[1024,1024]);
+ const run=createExamLocalRestore({observer:{},raster:{generate:async(payload,options)=>{calls++;assert.equal(options.imageKind,'exam');assert.equal(options.local,true);assert.equal(payload.attachments.length,2);
+  const src=await decodeScopedPng(new Uint8Array(Buffer.from(payload.attachments[0].data.split(',')[1],'base64')));
+  const msk=await decodeScopedPng(new Uint8Array(Buffer.from(payload.attachments[1].data.split(',')[1],'base64')));
+  assert.deepEqual([src.width,src.height,msk.width,msk.height],[frame.fw,frame.fh,frame.fw,frame.fh]);
+  const at=(img,x,y)=>[...img.data.slice((y*img.width+x)*4,(y*img.width+x)*4+3)];
+  const q=(cx,cy)=>[frame.dx+Math.floor(frame.dw*(cx*2+1)/4),frame.dy+Math.floor(frame.dh*(cy*2+1)/4)];
+  assert.deepEqual(at(src,...q(0,0)),[0,0,0]);assert.deepEqual(at(src,...q(1,0)),[255,255,255]);assert.deepEqual(at(src,...q(0,1)),[100,120,140]);
+  assert.deepEqual(at(msk,...q(0,0)),[255,255,255]);assert.deepEqual(at(msk,...q(1,1)),[0,0,0]);
+  assert.match(payload.text,new RegExp(`${frame.fw}×${frame.fh}`));
+  throw Error('scoped send reached');}}});
  await assert.rejects(run({data:pixels,width:2,height:2,mask:new Uint8Array([1,0,0,0])},{metrics:{calls:{}},selection}),/scoped send reached/);assert.equal(calls,1);
 });
 

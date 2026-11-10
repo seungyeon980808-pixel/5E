@@ -25,8 +25,8 @@ function seedRequestWorkspaces(count, initialGeneration = false, missingCapabili
     id: `task-${index}`, title: `검증 작업 ${index + 1}`, workState: 'idle', input: '선택 영역 안에 작은 사각형 추가',
     model: index ? 'gpt-6.1-sol' : 'gpt-6-luna', effort: 'medium', serviceTier: 'priority', separationMode: fixtureOptions.separationMode || 'off',
     generationMode: fixtureOptions.separationMode === 'auto' ? 'separated' : 'single',
-    // 워크플로 버전은 현재 1.2.0으로 정규화되고, 보조선 '제거'는 markPolicyChosen+markPolicy.leaders(js/ai-panel.js restoreMarkPolicy)가 있어야 유지된다.
-    imageLabelWorkflow: { version: '1.2.0', imageKind: 'general', labelResult: 'remove', verificationMode: 'full', auxiliaryMarks: 'remove', scientificArrows: 'keep', explicit: true },
+    // 워크플로 버전은 현재 1.3.0(지우기 어려운 글자 기본값 auto 포함)으로 정규화되고, 보조선 '제거'는 markPolicyChosen+markPolicy.leaders(js/ai-panel.js restoreMarkPolicy)가 있어야 유지된다.
+    imageLabelWorkflow: { version: '1.3.0', imageKind: 'general', labelResult: 'remove', verificationMode: 'full', auxiliaryMarks: 'remove', scientificArrows: 'keep', hardText: 'auto', explicit: true },
     markPolicyChosen: true, markPolicy: { arrows: 'keep', trendLines: 'keep', leaders: 'remove' },
     outputOptions: { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
     attachments: [{ id: `source-${index}`, kind: 'reference', name: `원본 ${index + 1}`, data: original, comments: [] }],

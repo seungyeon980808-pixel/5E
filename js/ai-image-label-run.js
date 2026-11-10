@@ -769,28 +769,70 @@ const pngUrl = async (data, width, height) => {
   let binary = ''; for (let i = 0; i < bytes.length; i += 8192) binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
   return `data:image/png;base64,${btoa(binary)}`;
 };
+// 11-09 라벨 안정화: 그림 생성 AI는 정해진 크기(1024×1024·1536×1024·1024×1536)로만 그린다. 잘라 낸 국소 영역(예: 81×29)을 그대로
+// 보내면 결과 크기가 늘 달라 국소 복원이 한 번도 적용되지 못하고 라벨이 보류됐다(실제 AI 3회: 그림 생성 1회 뒤 크기 검사에서 버림).
+// 잘라 낸 영역에 흰 여백을 붙여 가장 가까운 생성 비율로 키워 보내고, 결과를 같은 비율로 되돌려 원래 영역만 잘라 쓴다.
+const LOCAL_RESTORE_FRAMES = [[1024, 1024], [1536, 1024], [1024, 1536]];
+export function localRestoreFrame(width, height) {
+  const aspect = width / height, off = f => Math.abs(Math.log(f[0] / f[1] / aspect));
+  const [fw, fh] = LOCAL_RESTORE_FRAMES.reduce((best, f) => off(f) < off(best) ? f : best);
+  const scale = Math.min(fw / width, fh / height), dw = Math.round(width * scale), dh = Math.round(height * scale);
+  return { fw, fh, dx: Math.floor((fw - dw) / 2), dy: Math.floor((fh - dh) / 2), dw, dh };
+}
+/** 국소 영역을 생성 틀 가운데에 키워 담는다(원본은 이웃 픽셀 보간, 마스크는 그대로 늘림). 여백은 fill 색. */
+export function framedRgba(rgba, width, height, frame, fill, smooth) {
+  const out = new Uint8Array(frame.fw * frame.fh * 4);
+  for (let i = 0; i < frame.fw * frame.fh; i++) out.set(fill, i * 4);
+  const sx = width / frame.dw, sy = height / frame.dh;
+  for (let y = 0; y < frame.dh; y++) for (let x = 0; x < frame.dw; x++) {
+    const o = ((frame.dy + y) * frame.fw + frame.dx + x) * 4;
+    if (!smooth) {
+      const i = (Math.min(height - 1, Math.floor((y + .5) * sy)) * width + Math.min(width - 1, Math.floor((x + .5) * sx))) * 4;
+      out[o] = rgba[i]; out[o + 1] = rgba[i + 1]; out[o + 2] = rgba[i + 2]; out[o + 3] = 255; continue;
+    }
+    const fx = Math.min(width - 1, Math.max(0, (x + .5) * sx - .5)), fy = Math.min(height - 1, Math.max(0, (y + .5) * sy - .5));
+    const x0 = Math.floor(fx), y0 = Math.floor(fy), x1 = Math.min(width - 1, x0 + 1), y1 = Math.min(height - 1, y0 + 1), ax = fx - x0, ay = fy - y0;
+    for (let k = 0; k < 3; k++) {
+      const a = rgba[(y0 * width + x0) * 4 + k], b = rgba[(y0 * width + x1) * 4 + k], c = rgba[(y1 * width + x0) * 4 + k], d = rgba[(y1 * width + x1) * 4 + k];
+      out[o + k] = Math.round((a * (1 - ax) + b * ax) * (1 - ay) + (c * (1 - ax) + d * ax) * ay);
+    }
+    out[o + 3] = 255;
+  }
+  return out;
+}
 /** Send only the selected crop. Merge permission remains the caller's immutable mask. */
 export function createExamLocalRestore({ observer, raster, onPhase = () => {} }) {
-  return async ({ data, width, height, mask }, { metrics, selection, signal }) => {
+  return async ({ data, width, height, mask, texts = [] }, { metrics, selection, signal }) => {
     cancelled(signal); onPhase('localRestore');
     const source = await pngUrl(data, width, height);
     const rgbaMask = new Uint8Array(width * height * 4);
     for (let i = 0; i < mask.length; i++) { rgbaMask[i * 4] = rgbaMask[i * 4 + 1] = rgbaMask[i * 4 + 2] = mask[i] ? 255 : 0; rgbaMask[i * 4 + 3] = 255; }
     const maskUrl = await pngUrl(rgbaMask, width, height);
-    const restored = await raster.generate({ ...selection, attachments: [{ name: '원본 국소 영역', data: source }, { name: '흰색 부분만 제거하는 마스크', data: maskUrl }],
-      text: '기출 원본의 국소 주석 복원이다. 첨부 crop 크기·비율·과학 구조를 유지한다. 두 번째 마스크의 흰 영역에 소속된 글자·지시선·끝점만 제거하고 그 아래 확인 가능한 과학 구조를 복원한다. 마스크 밖 관·혈관·윤곽·눈금은 유지한다. 없는 구조를 추측하지 않는다. 이미지 생성 도구를 이 국소 영역에 한 번만 호출한다. 전체 그림 생성·스타일 변환·추가 재시도는 금지한다. PNG 하나를 반환한다.' }, { imageKind: 'exam', local: true, signal });
+    const frame = localRestoreFrame(width, height);
+    const framedSource = await pngUrl(framedRgba(data, width, height, frame, [255, 255, 255, 255], true), frame.fw, frame.fh);
+    const framedMask = await pngUrl(framedRgba(rgbaMask, width, height, frame, [0, 0, 0, 255], false), frame.fw, frame.fh);
+    const restored = await raster.generate({ ...selection, attachments: [{ name: '원본 국소 영역', data: framedSource }, { name: '흰색 부분만 제거하는 마스크', data: framedMask }],
+      text: '기출 원본의 국소 주석 복원이다. 첨부 crop 크기·비율·과학 구조를 유지한다. 두 번째 마스크의 흰 영역에 소속된 글자·지시선·끝점만 제거하고 그 아래 확인 가능한 과학 구조를 복원한다. 마스크 밖 관·혈관·윤곽·눈금은 유지한다. 없는 구조를 추측하지 않는다. 이미지 생성 도구를 이 국소 영역에 한 번만 호출한다. 전체 그림 생성·스타일 변환·추가 재시도는 금지한다. PNG 하나를 반환한다.' + ` 첨부 그림은 원본 국소 영역에 흰 여백을 붙여 ${frame.fw}×${frame.fh}로 키운 것이다. 같은 크기·같은 자리로 그린다.` + (texts.length ? ` 마스크 안에서 지울 것은 글자 ${texts.map(t => `「${t}」`).join('')}이다. 그 글자 획은 과학 구조가 아니다.` : '') }, { imageKind: 'exam', local: true, signal });
     metrics.calls.localRestore += restored.imageToolCalls;
     const src = await resolveGeneratedRaster(restored.src, { whitePng: true });
     const image = new Image(); image.src = src; await image.decode(); cancelled(signal);
-    if (image.naturalWidth !== width || image.naturalHeight !== height) throw new Error('국소 복원 결과 크기가 원본 영역과 달라 적용하지 않았습니다.');
+    const sameCrop = image.naturalWidth === width && image.naturalHeight === height;
+    if (!sameCrop && Math.abs(image.naturalWidth / image.naturalHeight / (frame.fw / frame.fh) - 1) > .02) throw new Error('국소 복원 결과 비율이 보낸 영역과 달라 적용하지 않았습니다.');
     const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-    const context = canvas.getContext('2d', { willReadFrequently: true }); context.drawImage(image, 0, 0, width, height);
-    const pixels = context.getImageData(0, 0, width, height).data, candidate = canvas.toDataURL('image/png'); canvas.width = canvas.height = 0;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (sameCrop) context.drawImage(image, 0, 0, width, height);
+    else { const kx = image.naturalWidth / frame.fw, ky = image.naturalHeight / frame.fh; context.drawImage(image, frame.dx * kx, frame.dy * ky, frame.dw * kx, frame.dh * ky, 0, 0, width, height); }
+    const pixels = context.getImageData(0, 0, width, height).data; canvas.width = canvas.height = 0;
+    // 마스크 밖 변화는 적용할 때 어차피 버려진다. 검수는 실제로 적용될 모습(마스크 밖은 원본, 안만 AI 결과)을 보낸 틀 크기로 키워 본다
+    // — 날것의 작은 결과를 보면 마스크 밖에서 바뀐 표식 때문에 거절하거나 작은 글자를 잘못 읽었다(11-09 실제 AI: 「A」를 지웠는데 「남아 있다」며 거절).
+    const merged = new Uint8ClampedArray(data);
+    for (let i = 0; i < mask.length; i++) if (mask[i]) merged.set(pixels.subarray(i * 4, i * 4 + 4), i * 4);
+    const candidate = await pngUrl(framedRgba(merged, width, height, frame, [255, 255, 255, 255], true), frame.fw, frame.fh);
     metrics.calls.localReview++; onPhase('localReview'); const reviewStarted = performance.now();
     let checked;
-    try { checked = await observer.reviewLocalRestore({ ...selection, model:'gpt-6-luna',effort:'medium', source: { name: '원본 국소 영역', data: source }, candidate: { name: '국소 복원 결과', data: candidate }, mask: { name: '삭제 소속 마스크', data: maskUrl } }); }
+    try { checked = await observer.reviewLocalRestore({ ...selection, model:'gpt-6-luna',effort:'medium', source: { name: '원본 국소 영역', data: framedSource }, candidate: { name: '국소 복원 결과', data: candidate }, mask: { name: '삭제 소속 마스크', data: framedMask }, removedTexts: texts }); }
     finally { metrics.timings.localReview = Math.round(performance.now() - reviewStarted); }
     cancelled(signal);
-    return { data: pixels, width, height, verified: checked.verified === true };
+    return { data: merged, width, height, verified: checked.verified === true };
   };
 }

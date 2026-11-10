@@ -50,5 +50,5 @@ test('emphasis frames and magnifier marks are always removed regardless of guide
  }
  for(const leaders of ['keep','remove']) assert.match(buildMarkPolicyContract({leaders}),/강조틀[^.]*확대 연결선[^.]*항상 제거한다/);
  // 1.1.0으로 저장된 작업은 계속 열리지만 새 버전으로 정규화되어 이전 캐시 결과를 쓰지 않는다.
- assert.equal(v,'1.2.0');assert.equal(n({imageKind:'general',labelResult:'remove',version:'1.1.0'},{requireExplicit:true}).version,'1.2.0');
+ assert.equal(v,'1.3.0');assert.equal(n({imageKind:'general',labelResult:'remove',version:'1.1.0'},{requireExplicit:true}).version,'1.3.0');
 });

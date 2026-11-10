@@ -296,7 +296,7 @@ export function createSourceLabelController({ transport, timeoutMs = SOURCE_LABE
       try {
         const attachments = snapshotAttachments([options.source, options.candidate, options.mask]);
         ready(token);
-        return await send({...selectionPayload(options),attachments,text:'첨부는 순서대로 원본 국소 crop, 복원된 동일 crop, 흰색이 편집 영역인 이진 마스크다. 전체 그림을 추측하지 말고 이 crop만 직접 대조한다. 글자·지시선·끝점 잔여 제거와 실제 관·혈관·물체 윤곽·연결 보존을 각각 확인한다. 마스크 안이라고 과학적 구조 변형을 허용하지 않는다. 확인할 수 없으면 uncertain. 도구 호출 없이 엄격한 JSON만 반환한다: {"annotationRemoved":true,"scientificStructurePreserved":true,"verdict":"pass|fail|uncertain","reason":"직접 대조한 근거"}.'},raw=>{
+        return await send({...selectionPayload(options),attachments,text:'첨부는 순서대로 원본 국소 crop, 복원된 동일 crop, 흰색이 편집 영역인 이진 마스크다. 전체 그림을 추측하지 말고 이 crop만 직접 대조한다. 글자·지시선·끝점 잔여 제거와 실제 관·혈관·물체 윤곽·연결 보존을 각각 확인한다. 마스크 안이라고 과학적 구조 변형을 허용하지 않는다. 확인할 수 없으면 uncertain. 도구 호출 없이 엄격한 JSON만 반환한다: {"annotationRemoved":true,"scientificStructurePreserved":true,"verdict":"pass|fail|uncertain","reason":"직접 대조한 근거"}.'+(Array.isArray(options.removedTexts)&&options.removedTexts.length?` 마스크 안에서 지울 대상은 글자 ${options.removedTexts.map(t=>`「${String(t).slice(0,40)}」`).join('')}이다. 이 글자의 획은 과학 구조가 아니므로 사라져야 한다.`:'')},raw=>{
           if (typeof raw !== 'string' || raw.length>10000) throw new Error('국소 복원 검수 응답이 잘못되었습니다.');
           let result; try {result=JSON.parse(raw);} catch {throw new Error('국소 복원 검수는 엄격한 JSON이어야 합니다.');}
           if (!result || typeof result.annotationRemoved!=='boolean' || typeof result.scientificStructurePreserved!=='boolean' || !['pass','fail','uncertain'].includes(result.verdict) || typeof result.reason!=='string' || !result.reason.trim() || result.reason.length>2000) throw new Error('국소 복원 검수 근거가 잘못되었습니다.');

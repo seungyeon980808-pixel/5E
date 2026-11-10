@@ -107,3 +107,35 @@ test('local crop area at fifty percent is deferred before dispatch; smaller crop
   else {assert.deepEqual(dispatched,[{width:9,height:20}]);assert.equal(r.calls.localRestore,1);}
  }
 });
+
+// 11-10 사용자 결정(「라벨 켬·끔만 고르면 AI가 그림마다 가장 나은 방식으로」): 배경을 단색으로 칠할 수 없어 예전에는 원본 글자로
+// 남기던 라벨을 설정에 따라 처리한다. 자동은 글자가 보호 영역·구조에 닿아 막혔으면 AI 복원, 그 밖에는 글자만 지움을 고른다.
+const hardFixture=(kind)=>{
+ const width=48,height=24,data=new Uint8ClampedArray(width*height*4).fill(255);
+ const put=(x,y,v)=>data.set([v,v,v,255],(y*width+x)*4);
+ for(let y=7;y<16;y++) for(let x=8;x<13;x++) if(x===8||x===12||y===7||y===15) put(x,y,0);
+ if(kind==='line') for(let y=5;y<18;y++) put(14,y,0);
+ const plan={labels:[{id:'a',text:'A',scope:'general',sourceRef:1,mode:'text',typography:{bounds:{x:7/width,y:6/height,w:7/width,h:11/height}}}],
+  uncertainties:[{labelId:'a',sourceRef:1,component:'text',domain:'removal',reason:'글자 둘레 확인 필요'}],
+  removalRegions:[],protectedRegions:kind==='protected'?[{sourceRef:1,bounds:{x:6/width,y:5/height,w:9/width,h:13/height}}]:[]};
+ return {data,width,height,plan};
+};
+test('hard-to-erase text follows the setting: keep holds, erase fills, ai repaints, and auto picks by why the pixel check failed',async()=>{
+ const {deriveExamAnnotationInkMasks}=await api;
+ const run=(kind,hardText)=>{const f=hardFixture(kind);const r=deriveExamAnnotationInkMasks({...f,hardText});
+  return {forced:r.regions.filter(x=>x.forced),rejected:(r.localTextSearchRejections||[]).map(x=>x.reason)};};
+ for(const kind of ['protected','line']) {
+  const kept=run(kind,'keep');
+  assert.deepEqual(kept.forced,[],'그대로를 고르면 예전처럼 원본 글자를 남긴다');
+  assert.equal(kept.rejected.length,1,'픽셀 검사에서 막힌 라벨이어야 이 설정이 쓰인다');
+  assert.equal(run(kind,'erase').forced[0]?.method,'forced-fill');
+  assert.equal(run(kind,'ai').forced[0]?.method,'local-restore');
+ }
+ assert.equal(run('protected','auto').forced[0]?.method,'local-restore','보호 영역·구조에 닿아 막혔으면 선을 이어 그릴 수 있는 AI 복원');
+ assert.equal(run('line','auto').forced[0]?.method,'forced-fill','그 밖의 까닭이면 글자만 지움');
+ // 지우는 픽셀은 찾은 글자 자리 안에만 있어야 한다(라벨 자리 밖 원본 훼손 금지).
+ const one=run('protected','erase').forced[0];
+ assert.ok(one.pixels.length>0);
+ for(const i of one.pixels) {const x=i%48,y=Math.floor(i/48);assert.ok(x>=6&&x<=15&&y>=5&&y<=17,`지울 픽셀이 글자 자리 밖입니다: ${x},${y}`);}
+ assert.ok(Array.isArray(one.fillColors)&&one.fillColors.length===one.pixels.length,'픽셀마다 메울 색을 함께 정한다');
+});

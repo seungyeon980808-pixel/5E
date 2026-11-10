@@ -304,7 +304,7 @@ export function localTextSearchFromGlyphInk({data,width,height,label,plan}={}) {
  * Legacy regions require exact background matching. sample-flat text regions
  * additionally require a closed, measured near-flat border and strong ink.
  */
-export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
+export function deriveExamAnnotationInkMasks({data,width,height,plan,hardText='keep'}={}) {
   dimensions(width,height);
   if (!(data instanceof Uint8Array || data instanceof Uint8ClampedArray) || data.length!==width*height*4) throw new TypeError('RGBA 원본이 필요합니다.');
   const protectedMask=new Uint8Array(width*height),uncertainMask=new Uint8Array(width*height),issues=[],regions=[];
@@ -423,7 +423,48 @@ export function deriveExamAnnotationInkMasks({data,width,height,plan}={}) {
     const uMask=new Uint8Array(width*height);
     addBounds(uMask,(plan.uncertainties || []).filter(u=>u.labelId!==label.id && ownershipUncertainty(u)),width,height);
     const localIssues=[];
-    if(!derive(label.id,[search],uMask,localIssues,localProtected)) localTextSearchRejections.push({labelId:label.id,reason:`pixel-check:${localIssues[0]?.code || 'failed'}`,bounds:{...b}});
+    if(!derive(label.id,[search],uMask,localIssues,localProtected)) {
+      localTextSearchRejections.push({labelId:label.id,reason:`pixel-check:${localIssues[0]?.code || 'failed'}`,bounds:{...b}});
+      // 「지우기 어려운 글자」(11-10 사용자 결정): 배경을 단색으로 칠할 수 없어 예전에는 원본 글자를 그대로 남기던(보류) 라벨을
+      // 설정에 따라 처리한다. keep=예전대로 보류 / erase=글자 획만 둘레 바탕색으로 메움 / ai=글자 자리만 AI가 다시 그림 /
+      // auto(기본)=글자가 그림 선·테두리·보호 영역에 붙었으면 AI 복원, 아니면 글자만 지움.
+      // 어느 쪽이든 찾은 글자가 AI가 본 자리 가운데 0.6글자 안일 때만 하고, 픽셀마다 가장 가까운 밝은 바탕색으로 메운다.
+      if(hardText!=='keep' && searchPixels.length) {
+        const tb=label.typography?.bounds,gb=local.glyphBounds||b,Hg=Math.max(4,gb.h*height);
+        const near=!tb || Math.hypot((tb.x+tb.w/2-gb.x-gb.w/2)*width,(tb.y+tb.h/2-gb.y-gb.h/2)*height)<=Math.max(4,Hg*.6);
+        const ovr=o=>{const ix=Math.max(0,Math.min(gb.x+gb.w,o.x+o.w)-Math.max(gb.x,o.x)),iy=Math.max(0,Math.min(gb.y+gb.h,o.y+o.h)-Math.max(gb.y,o.y));return ix*iy/((gb.w*gb.h)||1);};
+        // 찾은 글자가 다른 라벨이 본 자리와 겹치면(그 라벨의 글자일 수 있음) 강제로 지우지 않는다.
+        const clash=(plan.labels||[]).some(o=>o!==label && o.id!==label.id && o.sourceRef===1 && o.typography?.bounds && ovr(o.typography.bounds)>.2);
+        // AI가 이 글자에 준 상자가 글자 수에 비해 터무니없이 넓으면(예: 한 글자 「p」에 83px) 자리가 틀린 관찰이다 — 강제로 지우지 않는다.
+        const expW=[...String(label.text||'')].reduce((s2,ch)=>s2+glyphWeight(ch),0)*Hg*1.35+Hg*.6,sane=!tb || tb.w*width<=expW*1.6;
+        // 자동일 때 어느 쪽을 쓸지: 글자가 구조에 붙어 생긴 거절이면 선을 이어 그릴 수 있는 AI 복원, 그 밖에는 글자만 지움.
+        // 자동은 「글자만 지움」을 기본으로 한다(같은 관찰 비교: 보류 −20·복원 +20, 잃은 라벨 0). 다만 지켜야 할 과학 구조에
+        // 닿아 막힌 경우에만 AI가 그 자리를 다시 그리게 한다 — 획을 지우면 그 구조가 끊기기 때문이다(AI가 못 그리면 지움으로 돌아간다).
+        const structureHit=localIssues[0]?.code==='protected-or-uncertain-ink';
+        const forcedMethod=hardText==='ai' || hardText==='auto' && structureHit?'local-restore':'forced-fill';
+        if(near && !clash && sane) {
+          const lum=i=>.299*data[i*4]+.587*data[i*4+1]+.114*data[i*4+2],rad=Math.max(3,Math.round(Hg*.5)),ref=new Map();
+          const refOf=i=>{if(ref.has(i)) return ref.get(i);const x=i%width,y=Math.floor(i/width),v=[];
+            for(let yy=Math.max(0,y-rad);yy<=Math.min(height-1,y+rad);yy+=2) for(let xx=Math.max(0,x-rad);xx<=Math.min(width-1,x+rad);xx+=2) v.push(lum(yy*width+xx));
+            v.sort((p,q)=>p-q);const r=v[Math.floor(v.length*.85)];ref.set(i,r);return r;};
+          // 글자 상자(1px 여유) 안에서 주변보다 어두운 픽셀은 모두 글자로 본다(소수점 같은 작은 점 포함).
+          const gx0=Math.max(0,Math.floor(gb.x*width)-1),gy0=Math.max(0,Math.floor(gb.y*height)-1),gx1=Math.min(width-1,Math.ceil((gb.x+gb.w)*width)),gy1=Math.min(height-1,Math.ceil((gb.y+gb.h)*height)),E=new Set();
+          for(let y=gy0;y<=gy1;y++) for(let x=gx0;x<=gx1;x++){const i=y*width+x;if(refOf(i)-lum(i)>12) E.add(i);}
+          for(const thr of [5,3]) for(const i of [...E]){const x=i%width,y=Math.floor(i/width);for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=width||yy>=height) continue;const j=yy*width+xx;if(!E.has(j) && !local.foreignPixels.has(j) && refOf(j)-lum(j)>thr) E.add(j);}}   // 연한 테두리 2px까지
+          for(const i of [...E]){const x=i%width,y=Math.floor(i/width);for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=width||yy>=height) continue;const j=yy*width+xx;if(!E.has(j) && !local.foreignPixels.has(j)) E.add(j);}}   // 마지막 1px 고리는 밝기와 상관없이(번짐·연한 잔상)
+          if(E.size) {
+            const color=new Map(),queue=[];
+            for(const i of E){const x=i%width,y=Math.floor(i/width);for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=width||yy>=height) continue;const j=yy*width+xx;
+              if(!E.has(j) && !color.has(j) && refOf(j)-lum(j)<=3){color.set(j,[data[j*4],data[j*4+1],data[j*4+2],255]);queue.push(j);}}}
+            for(let q=0;q<queue.length;q++){const i=queue[q],x=i%width,y=Math.floor(i/width),c=color.get(i);for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=width||yy>=height) continue;const j=yy*width+xx;if(E.has(j) && !color.has(j)){color.set(j,c);queue.push(j);}}}
+            const pixels=[...E],fillColors=pixels.map(i=>color.get(i)||[255,255,255,255]);
+            regions.push({id:`forced-text-${label.id}`,labelId:label.id,sourceRef:1,ownership:'confirmed',component:'text',origin:'local-glyph-ink',method:forcedMethod,forced:true,background:fillColors[0],fillColors,pixels});
+            for(let k=issues.length-1;k>=0;k--) if(issues[k].id===label.id || issues[k].labelId===label.id) issues.splice(k,1);
+            localTextSearches.push({labelId:label.id,bounds:{...b},glyphBounds:local.glyphBounds,forced:true});
+          }
+        }
+      }
+    }
     else {
       for(let k=issues.length-1;k>=0;k--) if(issues[k].id===label.id || issues[k].labelId===label.id) issues.splice(k,1);
       localTextSearches.push({labelId:label.id,bounds:{...b},glyphBounds:local.glyphBounds,...(local.circledText?{text:local.circledText}:{})});
@@ -464,7 +505,7 @@ export function buildExamLabelRemovalMasks(plan,width,height,workflow) {
     const local=r.origin==='local-glyph-ink';
     if(pixels.some(i=>(local?localUncertain:uncertainMask)[i])) { issues.push({code:'uncertain-overlap',id:r.id,labelId:r.labelId}); continue; }
     const overlapsProtected=pixels.some(i=>(local?localProtected:protectedMask)[i]);
-    const method=r.method==='local-restore'||overlapsProtected?'local-restore':'flat-background';
+    const method=r.method==='forced-fill'?'forced-fill':r.method==='local-restore'||overlapsProtected?'local-restore':'flat-background';
     regions.push({...r,pixels,method,overlapsProtected}); for(const i of pixels) mask[i]=1;
   }
   for(const label of labels.values()) {
@@ -515,7 +556,8 @@ function updateRemovalReport(result,original) {
 export function removeExamLabelPixels({data,width,height,plan,workflow,signal}={}) {
   abort(signal); dimensions(width,height);
   if (!(data instanceof Uint8Array || data instanceof Uint8ClampedArray) || data.length!==width*height*4) throw new TypeError('RGBA 원본이 필요합니다.');
-  const derived=deriveExamAnnotationInkMasks({data,width,height,plan});
+  const hardText=normalizeImageLabelWorkflow(workflow || {imageKind:'exam',labelResult:'remove'}, {requireExplicit:true}).hardText;
+  const derived=deriveExamAnnotationInkMasks({data,width,height,plan,hardText});
   const existingMaskValid=!plan.removalMasks || plan.removalMasks.version===1 && plan.removalMasks.coordinateSpace==='source-pixels' && plan.removalMasks.width===width && plan.removalMasks.height===height;
   // 실제 글자 잉크로 다시 찾아 픽셀로 확인한 라벨은, 그 라벨 자신의 「삭제 가능성」 보류가 풀린 것으로 본다(원문·소속·구조 보류는 그대로).
   const resolved=new Set((derived.localTextSearches || []).map(s=>s.labelId));
@@ -559,20 +601,30 @@ export function removeExamLabelPixels({data,width,height,plan,workflow,signal}={
     if(reasons.length) {if(label) deferredLabels.push({labelId:key,reasons});continue;}
     const ownedMask=new Uint8Array(width*height);
     for(const r of regions) for(const i of r.pixels) ownedMask[i]=1;
-    const backgrounds=regions.map(r=>r.method==='flat-background'?flatBackground(data,r,width,height,ownedMask):null);
+    const backgrounds=regions.map(r=>r.method==='forced-fill'?r.background:r.method==='flat-background'?flatBackground(data,r,width,height,ownedMask):null);
     if(backgrounds.some(bg=>!bg)) {
       // Include already-flat companions in the same bounded restoration transaction.
       pending.push(...regions);
       if(label) deferredLabels.push({labelId:key,reasons:regions.filter((r,i)=>!backgrounds[i]).map(r=>({code:'label-component-needs-local-restore',id:r.id,labelId:key,component:r.component,message:describeExamRemovalIssue({labelId:key},plan)}))});
       continue;
     }
-    regions.forEach((r,k)=>{for(const i of r.pixels) {output.set(backgrounds[k],i*4);appliedMask[i]=1;}});
+    regions.forEach((r,k)=>{if(r.fillColors) r.pixels.forEach((i,j)=>{output.set(r.fillColors[j],i*4);appliedMask[i]=1;}); else for(const i of r.pixels) {output.set(backgrounds[k],i*4);appliedMask[i]=1;}});
     appliedRegions.push(...regions);
     if(label) removedLabelIds.push(key);
   }
   const result={data:output,width,height,appliedMask,appliedRegions,pending,removedLabelIds,deferredLabels,report:{derivedInkRegions:derived.regions.length,localTextSearches:derived.localTextSearches||[],localTextSearchRejections:derived.localTextSearchRejections||[],issues:issues.map(issue=>({...issue,message:describeExamRemovalIssue(issue,plan)})),outsideMaskChanged:0},calls:{localRestore:0,fullGeneration:0}};
   updateRemovalReport(result,data);
   return result;
+}
+function applyForcedFallback(result,plan){
+  const forced=result.pending.filter(r=>r.forced && r.fillColors),ids=new Set(forced.map(r=>r.labelId));
+  if(!forced.length) return;
+  const keep=result.pending.filter(r=>!ids.has(r.labelId));
+  for(const r of result.pending.filter(r=>ids.has(r.labelId))) r.pixels.forEach((i,j)=>{result.data.set(r.fillColors?.[j]||r.background||[255,255,255,255],i*4);result.appliedMask[i]=1;});
+  result.appliedRegions.push(...result.pending.filter(r=>ids.has(r.labelId)).map(r=>({...r,method:'forced-fill'})));
+  result.removedLabelIds.push(...ids); const order=new Map(plan.labels.map((label,i)=>[label.id,i]));
+  result.removedLabelIds.sort((a,b)=>(order.get(a)??Infinity)-(order.get(b)??Infinity));
+  result.deferredLabels=result.deferredLabels.filter(l=>!ids.has(l.labelId)); result.pending=keep;
 }
 /** One crop-only callback; it never receives or returns a full-frame regeneration. */
 export async function restoreExamLabelPixels({data,width,height,plan,workflow,signal,localRestore}={}) {
@@ -584,22 +636,31 @@ export async function restoreExamLabelPixels({data,width,height,plan,workflow,si
     const x=xs.reduce((a,b)=>Math.min(a,b),width),y=ys.reduce((a,b)=>Math.min(a,b),height),right=xs.reduce((a,b)=>Math.max(a,b),0)+1,bottom=ys.reduce((a,b)=>Math.max(a,b),0)+1;
     const w=right-x,h=bottom-y,areaRatio=w*h/(width*height);
     if ((w===width && h===height) || areaRatio>=EXAM_LOCAL_RESTORE_AREA_LIMIT) {
+      applyForcedFallback(result,plan);
       result.report.issues.push({code:'local-restore-region-too-large',labelIds:[...new Set(result.pending.map(r=>r.labelId).filter(Boolean))],reason:'분리된 제거 영역의 합집합이 국소 복원 한도를 초과하여 원본 전체 생성으로 처리하지 않았습니다.',crop:{x,y,width:w,height:h},source:{width,height},areaRatio,exclusiveAreaLimit:EXAM_LOCAL_RESTORE_AREA_LIMIT});
       updateRemovalReport(result,data);
       return result;
     }
-    const crop=new Uint8ClampedArray(w*h*4),mask=new Uint8Array(w*h);
-    for(let cy=0;cy<h;cy++) crop.set(data.subarray(((y+cy)*width+x)*4,((y+cy)*width+x+w)*4),cy*w*4);
-    for(const i of indices) mask[(Math.floor(i/width)-y)*w+i%width-x]=1;
+    // 11-09 라벨 안정화: AI가 둘레를 보고 판단하도록 국소 영역에 둘레 여백을 붙인다(바뀌는 픽셀은 여전히 마스크 안뿐).
+    // 글자만 꼭 맞게 잘라 보내면 검수가 「A」·「ε_B」의 획을 관·윤곽 구조로 읽고 거절했다(실제 AI 2회).
+    // 여백을 붙여도 그림 전체가 되거나 넓이 한도에 닿으면 여백을 줄인다(기출은 전체 생성 금지 — 이 약속은 그대로).
+    const frameOf=p=>{const X=Math.max(0,x-p),Y=Math.max(0,y-p);return {X,Y,Wc:Math.min(width,right+p)-X,Hc:Math.min(height,bottom+p)-Y};};
+    let pad=Math.min(64,Math.max(16,Math.round(Math.min(w,h)*.75))),fr=frameOf(pad);
+    while(pad>0 && ((fr.Wc===width && fr.Hc===height) || fr.Wc*fr.Hc/(width*height)>=EXAM_LOCAL_RESTORE_AREA_LIMIT)) {pad=Math.floor(pad/2);fr=frameOf(pad);}
+    const {X,Y,Wc,Hc}=fr;
+    const crop=new Uint8ClampedArray(Wc*Hc*4),mask=new Uint8Array(Wc*Hc);
+    for(let cy=0;cy<Hc;cy++) crop.set(data.subarray(((Y+cy)*width+X)*4,((Y+cy)*width+X+Wc)*4),cy*Wc*4);
+    for(const i of indices) mask[(Math.floor(i/width)-Y)*Wc+i%width-X]=1;
+    const texts=[...new Set(result.pending.map(r=>r.labelId).filter(Boolean))].map(id=>plan.labels?.find(l=>l.id===id)?.text).filter(t=>typeof t==='string' && t.trim());
     result.calls.localRestore=1;
     try {
-      const restored=await abortable(Promise.resolve().then(()=>localRestore({data:crop,width:w,height:h,mask:new Uint8Array(mask),origin:{x,y},signal,regions:result.pending.map(({pixels,...r})=>r),policy:'restore-label-owned-pixels-only; preserve-scientific-structure; no-global-generation'})),signal);
+      const restored=await abortable(Promise.resolve().then(()=>localRestore({data:crop,width:Wc,height:Hc,mask:new Uint8Array(mask),origin:{x:X,y:Y},texts,signal,regions:result.pending.map(({pixels,...r})=>r),policy:'restore-label-owned-pixels-only; preserve-scientific-structure; no-global-generation'})),signal);
       abort(signal);
-      if(!restored || restored.width!==w || restored.height!==h || !(restored.data instanceof Uint8ClampedArray || restored.data instanceof Uint8Array) || restored.data.length!==crop.length) throw new TypeError('국소 복원 결과의 픽셀 크기가 원본 영역과 다릅니다.');
+      if(!restored || restored.width!==Wc || restored.height!==Hc || !(restored.data instanceof Uint8ClampedArray || restored.data instanceof Uint8Array) || restored.data.length!==crop.length) throw new TypeError('국소 복원 결과의 픽셀 크기가 원본 영역과 다릅니다.');
       // A callback must explicitly report that it inspected remaining annotation and structure.
       if(restored.verified !== true) throw new Error('국소 복원의 잔여 주석·과학 구조 검증이 필요합니다.');
       for(let i=0;i<mask.length;i++) if(mask[i]) {
-        const dest=(y+Math.floor(i/w))*width+x+i%w;
+        const dest=(Y+Math.floor(i/Wc))*width+X+i%Wc;
         result.data.set(restored.data.subarray(i*4,i*4+4),dest*4);result.appliedMask[dest]=1;
       }
       const restoredIds=new Set(result.pending.filter(r=>(r.owner||'label')==='label').map(r=>r.labelId));
@@ -613,6 +674,7 @@ export async function restoreExamLabelPixels({data,width,height,plan,workflow,si
     } catch(error) {
       abort(signal);
       result.report.issues.push({code:'local-restore-failed',labelIds:[...new Set(result.pending.map(r=>r.labelId).filter(Boolean))],message:String(error.message||error)});
+      applyForcedFallback(result,plan);
     }
   }
   abort(signal);
