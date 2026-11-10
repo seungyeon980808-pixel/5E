@@ -108,6 +108,9 @@ initButtonDesign();
 // 시작 창(첫 장면 → 새로 만들기·이어서 하기)을 가장 먼저 띄운다 — 준비가 끝나면 자동 저장 기록을 받아 고르게 한다.
 const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ? DESKTOP_RELEASE_URL : "" });
 // 시작 창이 걷히기 직전(창이 다 커진 뒤) 도화지 크기를 한 번만 맞춘다 — 걷힌 뒤 도화지가 튀지 않게.
+// 11-09 사용자: 「처음 로딩에서 미리 불러 두고 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 기본 범위(물리Ⅰ·Ⅱ)
+// 학평 자료·낱말 위치를 읽어 둔다. 고르기 화면은 이 읽기가 끝난 뒤에 나온다(js/start-screen.js waitFor).
+if (startScreen) startScreen.waitFor("라이브러리 자료 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)));
 if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
 initAppSwitch();
 installAppLock();
@@ -498,7 +501,9 @@ const openIndependentAiReferences = async options => {
   const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
   return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.openIndependentReferences(prepared);
 };
-initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
+const examLibrary = initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
+// 11-09: 들어가자마자 읽어 둔 자료로 라이브러리 목록·검색 준비를 끝낸다(라이브러리를 처음 열 때·첫 검색 때 멈칫하지 않게).
+if (startScreen) void examLibrary.warmLibrary();
 // 11-06 결정 11-05e: 한글 그림 편집 창 「AI 변환」「복원」 — 그 그림을 원본으로 AI 작업대(이미지 변환 / 그래프 복원)를 한글 위에 연다. 결과는 「이 자리에 넣기」로 그 자리에(rhwp-exam-workspace.js inlineAi).
 window.addEventListener('5e:ai-open-reference', (event) => { const detail = event.detail || {}; if (detail.reference) void Promise.resolve(openAiWithReference({ reference: detail.reference, conversionKind: detail.conversionKind || 'image', ...(detail.hwpTarget ? { hwpTarget: detail.hwpTarget } : {}) })).catch(error => { if (!/로그인이 취소/.test(String(error?.message || error))) console.warn(error); }); });
 

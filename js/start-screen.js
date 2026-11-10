@@ -67,7 +67,7 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
      <button type="button" class="ss-o1" data-ss-open><span class="ss-k">open</span><span class="ss-nm">다른 파일 열기…</span><span class="ss-meta">${mod}O</span><span></span></button>
      <div data-ss-recent></div>
     </div></div>
-    <div class="ss-note"><i></i>자동 저장은 이 브라우저에만 남습니다 · 끄기 전에 ${mod}S로 파일에 저장하세요</div>
+    <div class="ss-note"><i></i>자동 저장은 ${globalThis.fiveEDesktop ? '이 컴퓨터의 5E 안에만' : '이 브라우저에만'} 남습니다 · 끄기 전에 ${mod}S로 파일에 저장하세요</div>
    </div></div>`;
   document.body.append(root);
   document.documentElement.classList.remove('ss-boot');
@@ -84,7 +84,8 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
   setStatus('작업 공간 준비 중…');
   // 업데이트 알림: 배포 채널에 더 새 버전이 있으면 「1.7.0 → 1.7.1 [설치]」
   const current = appVersion();
-  if (current) fetch(new URL('release-channels.json', document.baseURI), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(json => {
+  // 설치판은 앱 안 파일만 읽을 수 있어(허용 목록 밖이라 404) 새 버전을 알 수 없다 — 웹에서만 확인.
+  if (current && !globalThis.fiveEDesktop) fetch(new URL('release-channels.json', document.baseURI), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(json => {
     const versions = Object.values(json?.channels || {}).map(c => c?.version).filter(v => /^\d+\.\d+\.\d+$/.test(v || ''));
     const latest = versions.sort((a, b) => newer(a, b) ? -1 : 1)[0];
     if (!latest || !newer(latest, current)) return;
@@ -186,6 +187,12 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
       wrap.append(button, del);
       list.append(wrap);
     }
+    // 11-09: 들어가기 전에 무거운 준비(라이브러리 자료·검색 색인)를 끝낸다 — 들어간 뒤 멈칫하지 않게.
+    // 너무 오래 걸리면(네트워크 등) 15초에서 끊고 들어간다(준비는 뒤에서 계속).
+    for (const task of tasks) {
+      setStatus(task.label);
+      await Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 15000 - (performance.now() - started))))]);
+    }
     clearInterval(creep);
     bar.style.width = '100%'; setStatus('준비 완료');
     const wait = Math.max(0, MIN_INTRO - (performance.now() - started));
@@ -203,5 +210,8 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
     return new Promise(resolve => { resolveChoice = resolve; });
   }
 
-  return { choose, setStatus, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
+  // 시작 화면이 떠 있는 동안 할 준비를 맡긴다(바로 시작하고, 고르기 화면은 끝날 때까지 기다린다).
+  const tasks = [];
+  function waitFor(label, run) { let work; try { work = Promise.resolve(run()).catch(() => {}); } catch { work = Promise.resolve(); } tasks.push({ label, work }); return work; }
+  return { choose, setStatus, waitFor, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
 }

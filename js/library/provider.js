@@ -128,11 +128,21 @@ function matchesExamFacets(result, filters) {
   return true;
 }
 // 점수(exam 기출 검색과 같은 규칙): 낱말마다 제목 8 · 단원·태그(비슷한 말 포함) 5 · 본문 1.
+// 11-09 사용자: 띄어 쓴 낱말은 따로 찾되(「유도 기전력」 → 「유도되는 기전력」도), 낱말이 친 순서대로 붙어 있는 문항
+// (「전자기 유도」·「전자기유도」)을 맨 위로 — 「판 구조」에 「진동판 … 내부 구조」 같은 문항이 앞에 오지 않게.
+export const ADJACENT_TERMS_BONUS = 1000;
+function adjacentTermsBonus(result, queryTokens) {
+  if (queryTokens.length < 2) return 0;
+  const phrase = queryTokens.join("");
+  const text = normalizedText([result.title, result.searchText, result.matchText].join(" ")).replace(/\s+/gu, "");
+  return text.includes(phrase) ? ADJACENT_TERMS_BONUS : 0;
+}
+
 export function examSearchScore(result, queryTokens) {
   if (!queryTokens.length) return 0;
   const title = normalizedText(result.title), titleNoSpace = title.replace(/\s+/gu, "");
   const tags = examTagsOf(result);
-  let score = 0;
+  let score = adjacentTermsBonus(result, queryTokens);
   for (const token of queryTokens) {
     if (title.includes(token) || titleNoSpace.includes(token)) score += 8;
     if (tags && (tags.text.includes(token) || tags.textNoSpace.includes(token))) score += 5;

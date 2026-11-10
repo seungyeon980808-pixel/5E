@@ -718,13 +718,16 @@ function loadSourceState(storage) {
     if (parsed && Array.isArray(parsed.enabled)) return {
       enabled: new Set(parsed.enabled.filter((value) => typeof value === "string")),
       excludedGroups: new Set((parsed.excludedGroups || []).filter((value) => typeof value === "string")),
+      known: Array.isArray(parsed.known) ? new Set(parsed.known.filter((value) => typeof value === "string")) : null,
     };
   } catch {}
   return { enabled: null, excludedGroups: new Set() };
 }
 
-function saveEnabledSources(storage, sourceIds, excludedGroups) {
-  storage.setItem(SOURCE_STORAGE_KEY, JSON.stringify({ enabled: [...sourceIds], excludedGroups: [...excludedGroups] }));
+// 11-09: 이미 본 자료(known)도 함께 저장한다 — 라이브러리를 처음 그릴 때 이미 들어와 있던 새 자료(미리 불러 둔 학평)를
+// 「사용자가 끈 자료」와 가를 수 있게. 전에는 처음 그릴 때 새 자료를 꺼진 채로 두어 학평 결과가 통째로 빠졌다.
+function saveEnabledSources(storage, sourceIds, excludedGroups, known = null) {
+  storage.setItem(SOURCE_STORAGE_KEY, JSON.stringify({ enabled: [...sourceIds], excludedGroups: [...excludedGroups], ...(known ? { known: [...known] } : {}) }));
 }
 
 function loadExpandedSources(storage) {
@@ -1098,7 +1101,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   const examFilters = { subject: "", startYear: null, endYear: null, administration: "" };
   // 11-05: 왼쪽 「조건」 칸(시안 5e-design-mockups/library-1105.html) — 과목 바둑판 → 고른 과목의 단원 · 연도 막대와 끌기 · 시험 · 모양.
   // 개수는 지금 검색어·검색 위치에서 걸리는 문항 수(provider.facetCounts). 각 묶음은 자기 조건만 빼고 센다.
-  const conditions = { subjects: new Set(), parts: new Set(), startYear: null, endYear: null, exam: "", shapes: new Set() };
+  // 11-09 사용자: 처음 검색 범위는 물리Ⅰ·Ⅱ 최근 5개 학년도(지금 2023~2027학년도). 「지우기」로 전체를 볼 수 있다.
+  // 학년도는 3월부터 다음 해 학년도 시험이 시작된다(예: 2026년 11월 수능 = 2027학년도).
+  const LATEST_ACADEMIC_YEAR = new Date().getFullYear() + (new Date().getMonth() >= 2 ? 1 : 0);
+  const conditions = { subjects: new Set(["p1", "p2"]), parts: new Set(), startYear: LATEST_ACADEMIC_YEAR - 4, endYear: null, exam: "", shapes: new Set() };
   const conditionsHost = overlay.querySelector("[data-unilib-conditions]");
   const conditionsClear = overlay.querySelector("[data-unilib-conditions-clear]");
   const knownParts = new Map();
@@ -1377,13 +1383,15 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const yearSet = conditions.startYear != null || conditions.endYear != null;
     const subjectNames = [...conditions.subjects].map((code) => LIBRARY_SUBJECTS.find(([value]) => value === code)?.[1] ?? code);
     const shapeNames = [...conditions.shapes].map((key) => ({ figure: "그림", table: "표", bogi: "〈보기〉" })[key] ?? key);
-    const parts = [subjectNames.join("·"), yearSet ? `${conditions.startYear ?? knownYears[0] ?? ""}–${conditions.endYear ?? knownYears.at(-1) ?? ""}` : "", ({ kice: "수능·모평", hak: "학평" })[conditions.exam] ?? "", shapeNames.join("·")].filter(Boolean);
+    const parts = [subjectNames.join("·"), yearSet ? `${conditions.startYear ?? knownYears[0] ?? ""}–${conditions.endYear ?? knownYears.at(-1) ?? LATEST_ACADEMIC_YEAR}` : "", ({ kice: "수능·모평", hak: "학평" })[conditions.exam] ?? "", shapeNames.join("·")].filter(Boolean);
     condValue.textContent = !parts.length ? "전체" : parts.length === 1 ? parts[0] : `${parts[0]} 외 ${parts.length - 1}`;
     condValue.title = parts.join(" · ") || "조건 없음";
     condValue.classList.toggle("is-set", parts.length > 0);
     const badge = overlay.querySelector('[data-unilib-rail-badge="conditions"]');
     if (badge) { badge.hidden = !parts.length; badge.textContent = String(parts.length); }
-  }
+  }  // 처음 열 때도 기본 범위(물리Ⅰ·Ⅱ 최근 5년)가 요약에 보이게 — 전에는 조건 칸을 열기 전까지 「전체」로 보였다.
+  updateConditionSummary();
+
   // 접힌 칸(아이콘 줄)에서 조건·파일 위치를 누르면 옆에 떠서 열린다. 칸을 펴거나 Esc·바깥을 누르면 닫힌다.
   const setFly = (name) => {
     if (name) root.dataset.fly = name; else delete root.dataset.fly;
@@ -1690,7 +1698,17 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     yearEnd.value = years.includes(Number(selectedEnd)) ? selectedEnd : "";
     const containers = new Set(["group", "category", "folder"]);
     if (!enabledSources) enabledSources = new Set(sources.filter((source) => !containers.has(source.kind)).map((source) => source.id));
-    else if (sourcesInitialized) {
+    else if (!sourcesInitialized) {
+      // 처음 그릴 때: 저장해 둔 「이미 본 자료」에 없던 자료는 새 자료라 켠다. 예전 형식(known 없음)이면 자료팩에서 온 자료
+      // (평가원·학평, 이름에 |4:pack|)는 모두 새 자료로 본다 — 예전에는 자료팩이 처음 그린 뒤에 들어와 늘 새 자료로 켜졌는데,
+      // 시작 때 미리 불러 두면서(11-09) 처음부터 들어와 있게 되어 평가원이 통째로 꺼진 채 남았다(「유도 기전력」 평가원 0개).
+      // 예전 형식의 폴더 제외도 비운다 — 예전에는 자료팩이 늦게 들어와 이 제외가 실제로 적용된 적이 없었다(사용자 설치본에 9월 말
+      // 「5E 제공 › 기출문제」 제외가 남아 있었는데 평가원 결과는 보였다). 지금 보던 화면 그대로 옮기고, 이후로는 새 형식으로 정확히 기억한다.
+      if (!storedSources.known) excludedSourceGroups.clear();
+      const known = storedSources.known ?? new Set(sources.filter((source) => !/\|4:pack\|/u.test(String(source.id)) || enabledSources.has(source.id)).map((source) => source.id));
+      includeNewLibrarySources(enabledSources, known, sources, excludedSourceGroups);
+      for (const id of known) knownSourceIds.add(id);
+    } else {
       includeNewLibrarySources(enabledSources, knownSourceIds, sources, excludedSourceGroups);
     }
     for (const source of sources) if (!containers.has(source.kind)) knownSourceIds.add(source.id);
@@ -1905,7 +1923,9 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         } else changed = quick;
       }
       if (!searchIsCurrent(ownEpoch, signal)) return;
-      if (changed) await renderSources(() => searchIsCurrent(ownEpoch, signal));
+      // 11-09: 학평이 뒤늦게(0.15초 넘어) 합쳐진 뒤 다시 찾을 때도 자료 목록을 새로 — 전에는 changed가 false라 학평 자료가 목록에 없어 결과에서 빠졌다.
+      // 자료가 그대로면 renderSources는 바로 돌아온다.
+      if (changed || renderedSourceRevision !== (await provider()).revision) await renderSources(() => searchIsCurrent(ownEpoch, signal));
       const activeProvider = await provider();
       if (!enabledSources) await renderSources();
       // 11-05: 조건 칸 숫자 세기(facetCounts)는 문항 전체를 훑어 무겁다 — 결과를 먼저 그리고, 조건 상자가 열려 있을 때만 센다.
@@ -2401,13 +2421,25 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     stage.scrollTop = (initialPage - 1) * session.pageExtent;
   }
 
-  function showPreviewError(error) {
+  // 오류는 한국어로만 보이고(원문은 title에), 제목은 지금 고른 자료로 맞춘다 — 앞 자료 이름이 남지 않게.
+  function previewErrorText(error) {
+    const raw = String(error instanceof Error ? error.message : error || "");
+    if (navigator.onLine === false || /failed to fetch|networkerror|load failed|network|err_internet|err_name|timed? ?out/i.test(raw)) return "원본을 받아 오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도하세요.";
+    if (/[가-힣]/.test(raw)) return raw;
+    return "미리보기를 열지 못했습니다. 다시 시도하세요.";
+  }
+  function showPreviewError(error, result = selectedResult()) {
     clearPreviewLoading();
     stage.removeAttribute("aria-busy");
+    if (result) {
+      overlay.querySelector("[data-unilib-preview-title]").textContent = result.title || "미리보기";
+      overlay.querySelector("[data-unilib-preview-kind]").textContent = labelForKind(result.kind);
+    }
     const message = document.createElement("div");
     message.className = "unilib-preview-error";
     const text = document.createElement("p");
-    text.textContent = `미리보기 실패: ${error instanceof Error ? error.message : error}`;
+    text.textContent = previewErrorText(error);
+    text.title = String(error instanceof Error ? error.message : error || "");
     const retryButton = document.createElement("button");
     retryButton.type = "button";
     retryButton.className = "unilib-button";
@@ -2487,6 +2519,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       );
       if (resolution.status === "stale") return;
       if (resolution.status === "failed") {
+        if (retry < 2 && /superseded|catalog changed while opening/iu.test(String(resolution.error?.message || resolution.error))) {
+          await renderPreview(retry + 1);
+          return;
+        }
         showPreviewError(resolution.error);
         return;
       }
@@ -2629,7 +2665,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       } else { showPreviewError(new Error("미리보기 이미지가 없습니다.")); }
     } catch (error) {
       if (ownEpoch !== previewEpoch) return;
-      if (retry < 1 && /superseded/iu.test(String(error?.message || error))) {
+      // 11-09: 여는 사이에 학평 자료가 합쳐지면(catalog changed) 오류 대신 바로 다시 연다.
+      if (retry < 2 && /superseded|catalog changed while opening/iu.test(String(error?.message || error))) {
         await renderPreview(retry + 1);
         return;
       }
@@ -2786,7 +2823,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (!affected.length && source?.id) affected.push(source.id);
     affected.filter(Boolean).forEach((id) => input.checked ? enabledSources.add(id) : enabledSources.delete(id));
     if (["group", "category", "folder"].includes(source?.kind)) input.checked ? excludedSourceGroups.delete(source.id) : excludedSourceGroups.add(source.id);
-    saveEnabledSources(storage, enabledSources, excludedSourceGroups);
+    saveEnabledSources(storage, enabledSources, excludedSourceGroups, knownSourceIds);
     await renderSources();
     await runSearch();
   });
@@ -2816,7 +2853,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
           affected.forEach((id) => on ? enabledSources.add(id) : enabledSources.delete(id));
           on ? excludedSourceGroups.delete(root.id) : excludedSourceGroups.add(root.id);
         }
-        saveEnabledSources(storage, enabledSources, excludedSourceGroups);
+        saveEnabledSources(storage, enabledSources, excludedSourceGroups, knownSourceIds);
         if ((sourceGroupRoots[group] || []).some((root) => root.desktop)) await refreshDesktopSources(true);
         await renderSources();
         await runSearch();
@@ -4282,7 +4319,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (spacePress !== press || overlay.hidden || selectedId !== press.id || libraryResultIdentity(selectedActiveResult()) !== press.identity) return;
     const result = selectedActiveResult();
     if (result?.provenance?.provider !== "pdf" && (!currentMaterialized || currentMaterializedIdentity !== press.identity)) {
-      if (stage.textContent.startsWith("미리보기 실패:")) {
+      if (stage.querySelector(":scope > .unilib-preview-error")) {
         cancelSpacePress();
         return;
       }
@@ -4421,6 +4458,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       if (!overlay.hidden && searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
       if (searchReadiness === "ready" || searchReadiness === "error") void refreshCatalog();
     },
+    // 처음 검색 조건(물리Ⅰ·Ⅱ 최근 5개 학년도) — 시작 화면에서 라이브러리를 미리 준비할 때 같은 범위로 데운다.
+    defaultConditionFilters: () => conditionFilters(),
     applyCatalogUpdate(callback) {
       if (!cropDialog.hidden) return new Promise((resolve, reject) => catalogUpdates.push(() => Promise.resolve().then(callback).then(resolve, reject)));
       return Promise.resolve().then(callback);

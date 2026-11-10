@@ -1006,7 +1006,14 @@ function sheetBusy(n){
   return {update(p){last=p;paint();},done(){clearTimeout(timer);if(again){box?.remove();if(!n.querySelector('.pv-rechip'))n.classList.remove('pv-busy');}}};
 }
 let examPick=null,examSheetSeq=0;
-async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;const seq=++examSheetSeq;
+// 11-09: 5E가 출제 칸을 숨긴 채 미리 불러 둘 때(prewarm)는 쪽을 조판하지 않는다 — 시작 뒤 20초 동안 숨은 조판이
+// 같은 화면 줄을 8~9초 막아 라이브러리 검색·카드가 멈칫했다. 출제 칸이 화면에 보이면 그때 그린다(사용자 11-09 결정 「(나) 들어갈 때」).
+export function sheetFrameHidden(){try{const f=window.frameElement;return !!f&&!f.getClientRects().length;}catch{return false;}}
+let hiddenSheetWait=0;
+export function whenSheetShown(run){if(whenSheetShown.releasing||!sheetFrameHidden())return false;whenSheetShown.queue.push(run);
+  if(!hiddenSheetWait)hiddenSheetWait=setInterval(()=>{if(sheetFrameHidden())return;clearInterval(hiddenSheetWait);hiddenSheetWait=0;whenSheetShown.releasing=true;try{whenSheetShown.queue.splice(0).forEach(f=>f());}finally{whenSheetShown.releasing=false;}},250);return true;}
+whenSheetShown.queue=[];
+async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;if(whenSheetShown(()=>{const now=examById(data,exam.id);if(now)void fillExamSheet(now);}))return;const seq=++examSheetSeq;
   typesetter||=makeTypesetter();let view;
   // 학교 양식을 고른 시험지(10-29): 쪽을 그 양식 위에 묶은 모양 그대로 그린다(암호 걸린 양식은 보낼 때만 열 수 있어 5E 기본 쪽으로).
   const form=exam.formId?typesetForms.find(f=>f.id===exam.formId&&!f.encrypted):null;
@@ -1156,7 +1163,7 @@ const cardEditor=createCardEditor($('#card-view'),{
     else if(node.classList.contains('docked')){node.classList.remove('docked');node.hidden=true;docked.home.insertBefore(node,docked.next);}},
   ai:(q,req)=>void askAi(q,req),
   columnPreview:q=>columnPreview(q),find:id=>data.questions.find(x=>x.id===id)||null,
-  pageSheets:async(q,options)=>{typesetter||=makeTypesetter();const exam=examOf(data,q.id);return {title:exam?exam.title:'문항 보관함 · 이 문항만',...await typesetter.pageSheets(data,exam,q.id,options)};},
+  pageSheets:async(q,options)=>{await new Promise(r=>{if(!whenSheetShown(r))r();});if(options?.alive&&!options.alive())throw Object.assign(new Error('cancelled'),{cancelled:true});typesetter||=makeTypesetter();const exam=examOf(data,q.id);return {title:exam?exam.title:'문항 보관함 · 이 문항만',...await typesetter.pageSheets(data,exam,q.id,options)};},
   pagePlan:async q=>{const exam=examOf(data,q.id);if(!exam)return {title:'문항 보관함 · 이 문항만',pages:[{columns:[[q.id],[]]}]};const {examPlan}=await import('./exam-layout.js');const {pages}=examPlan(data,exam);return {title:exam.title,pages:pages.length?pages:[{columns:[[q.id],[]]}]};},
   cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),login:()=>window.parent.postMessage({channel:'5e-question-sheet',action:'login'},OWN),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
