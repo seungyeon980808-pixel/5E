@@ -5053,8 +5053,9 @@ ${chatText}` : ''}`;
     if (startGeneration === true && incoming.length >= 1) await submit("image");
     if (reveal) {
       if (openingCandidateId) acknowledgeVisibleResult(openingCandidateId);
-      if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
-      else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
+      // 11-12: v6에서 오른쪽 탭(data-ai-side-tab)이 숨겨져, 숨은 탭에 초점을 주느라 초점이 창 밖(여는 단추)에 남았다 → 보이는 단추 중에서 고름.
+      if (!panel.querySelector('[data-ai-chat-panel]')?.hidden && input.getClientRects().length) input.focus();
+      else { const focusables = panelFocusables(); (focusables.find(el => el.matches('[data-ai-side-tab="comments"]')) || focusables[0])?.focus(); }
     }
   };
   const close = ({ integratedEdit = false } = {}) => {
