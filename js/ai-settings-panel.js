@@ -12,6 +12,21 @@ export function initAISettingsPanel(panel, { signal, canChoose = () => true } = 
     helpButton?.setAttribute('aria-expanded', 'false');
     helpButton?.removeAttribute('aria-describedby'); helpButton = null;
   };
+  // 11-11: 객체 분리를 켜면 배경 제거를 자동으로 켜고 그 쌍을 잠근다. 끄면 이전 값으로 돌려놓는다.
+  let backgroundBeforeObjects = null;
+  const syncBackgroundForObjects = objectsValue => {
+    const background = controlFor('background');
+    if (!background) return;
+    if (objectsValue !== 'off') {
+      if (backgroundBeforeObjects === null) backgroundBeforeObjects = background.value;
+      if (background.value !== 'connected') { background.value = 'connected'; background.dispatchEvent(new Event('change', { bubbles: true })); }
+    } else if (backgroundBeforeObjects !== null) {
+      const restore = backgroundBeforeObjects;
+      backgroundBeforeObjects = null;
+      if (background.value !== restore) { background.value = restore; background.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+  };
+  const objectsOn = () => ['auto', 'grid', 'manual'].includes(controlFor('objects')?.value);
   const selectorFor = key => ({model:'[data-ai-model]', labels:'[data-ai-label-result]', verification:'[data-ai-label-verification]',
     background:'[data-ai-background-policy]', objects:'[data-ai-separation-mode]',
     arrows:'[data-ai-mark-arrows]', guides:'[data-ai-mark-leaders]', kind:'[data-ai-image-kind]'})[key];
@@ -34,7 +49,10 @@ export function initAISettingsPanel(panel, { signal, canChoose = () => true } = 
         }
         button.setAttribute('aria-pressed', String(selected));
         button.classList.toggle('is-on', selected);
+        const forcedByObjects = group.dataset.aiSettingKey === 'background' && objectsOn();
+        group.closest?.('.ai-setting-row')?.classList?.toggle('is-forced', forcedByObjects);
         const disabled = control.disabled || value === null || !canChoose(group.dataset.aiSettingKey, value) || panel.dataset.aiSharingMode === 'view'
+          || forcedByObjects
           || (group.dataset.aiSettingKey === 'verification' && controlFor('labels')?.value !== 'restore-editable');
         if (button.disabled !== disabled) button.disabled = disabled;
         if (button.dataset.aiModelChoice) button.title = value === null ? '연결 서버의 모델 목록에 이 모델이 없습니다.' : '';
@@ -56,8 +74,11 @@ export function initAISettingsPanel(panel, { signal, canChoose = () => true } = 
       // Repeating a legacy choice retries a failed real transform; source choices
       // keep their original no-op behavior. This never invokes generation.
       if (value === control.value && !settingsRoot.hasAttribute('data-ai-legacy-result-settings')) return;
+      // 11-11: 객체 분리를 켜기 직전의 배경 값을 먼저 기억한다(켜는 순간 앱이 배경을 바꾸므로).
+      if (group.dataset.aiSettingKey === 'objects' && value !== 'off' && backgroundBeforeObjects === null) backgroundBeforeObjects = controlFor('background')?.value ?? null;
       control.value = value;
       control.dispatchEvent(new Event('change', { bubbles: true }));
+      if (group.dataset.aiSettingKey === 'objects') syncBackgroundForObjects(value);
       sync();
       return;
     }

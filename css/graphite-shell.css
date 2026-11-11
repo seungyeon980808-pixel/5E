@@ -678,7 +678,7 @@
   }
   /* 선택된 칸 · 실행(주) 버튼 — 은은한 버튼 */
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
-    :is(button, summary, [role="tab"]):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):is(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]),
+    :is(button, summary, [role="tab"]):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *, .ai-workflow-switch > button, .ai-rail-actions > button):is(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]),
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
     :is(.modal-btn-primary, .unilib-primary) {
     border-color: transparent !important;

@@ -18,7 +18,8 @@ function route(item, launchSelected = () => false, workflowExplicit = false, con
 assert.deepEqual(route(null), [['transform', 'image', true]]);
 assert.deepEqual(route(null, () => false, true), [['transform', 'image', false]], 'An explicit image label workflow must allow its bound output cache');
 const emptyRaster = {kind:'generated',comments:[]};
-assert.deepEqual(route(emptyRaster), [['scoped',emptyRaster]], 'A raster without boxes must validate instead of regenerating the whole image');
+// 11-11: 수정 박스가 없는 결과에서 실행 단추는 「다시 그리기 · 정밀」 — 원본을 처음부터 다시 그린다(캐시 없이).
+assert.deepEqual(route(emptyRaster), [['transform', 'image', true]], 'A raster without boxes must redraw the whole image (다시 그리기 · 정밀)');
 const image = {kind:'generated',comments:[{type:'area',text:'컵만 수정'}]};
 assert.deepEqual(route(image), [['scoped',image]]);
 const unfinished = {kind:'generated',comments:[{type:'area',text:''}]};

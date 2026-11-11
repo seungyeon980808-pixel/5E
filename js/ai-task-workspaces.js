@@ -272,7 +272,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       active.panel.querySelector('[data-ai-tabs]').append(controls);
     }
     let count=active.panel.querySelector('[data-ai-selection-count]');
-    if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';active.panel.querySelector('[data-ai-tabs]').prepend(count);}
+    // 11-11: 「N개 선택」은 전체 선택·삭제 줄의 왼쪽에 둔다.
+    if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';(active.panel.querySelector('.ai-rail-selection-row')||active.panel.querySelector('[data-ai-tabs]')).prepend(count);}
     count.textContent = `${selectedTasks.values().length}개 선택`;
     active.controller?.refreshTaskSelection?.();
     const deleteSelected = active.panel.querySelector('[data-ai-tab-clear]');

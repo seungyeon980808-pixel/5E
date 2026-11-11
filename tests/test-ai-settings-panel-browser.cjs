@@ -8,6 +8,9 @@ const { fixture: sourceFixture, snapshot, sends, finish } = require('./helpers/l
 const root = process.env.EVIDENCE_DIR || path.resolve(__dirname,'../.omo/evidence/codex-continuation-20261010/label-current-contracts/ai-settings-panel');
 const panel = '#ai-image-panel';
 const pair = (page,key) => page.locator(`${panel} [data-ai-setting-key="${key}"]`);
+// 11-11: 출처 줄은 자동 판단이 정하면 숨는다. 숨은 단추도 같은 설정 상태를 바꾸도록 클릭 이벤트를 보낸다.
+// 11-11: 실행 단추는 대화 아래 독의 [data-ai-send](「변환하기」)이다. 옛 「코멘트 반영하기」(data-ai-comments-apply)는 숨겼고, 두 단추는 같은 실행 경로를 탄다.
+const pickKind = (page,name) => pair(page,'kind').getByRole('button',{name,exact:true,includeHidden:true}).dispatchEvent('click');
 async function fixture(context,count,evidence,options={}) {
   const beforeNavigate=options.beforeNavigate;
   return sourceFixture(context,count,evidence,{...options,beforeNavigate:async page=>{
@@ -176,7 +179,8 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'objects').getByRole('button',{name:'켜기',exact:true}).click();
   assert.equal((await active(page)).separationMode,'auto');assert.equal(await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).getAttribute('aria-pressed'),'true');// 11-09 사용자 원칙: 객체 분리 중에도 배경 단추는 묶이지 않는다(누르면 분리도 「한 장」으로 같이 바뀜).
-  assert.equal(await pair(page,'background').getByRole('button',{name:'끄기',exact:true}).isDisabled(),false);
+  // 11-11: 객체 분리를 켜면 배경 제거는 켜기로 잠긴다(끄기 불가). 끄면 이전 값으로 돌아가 다시 고칠 수 있다.
+  assert.equal(await pair(page,'background').getByRole('button',{name:'끄기',exact:true}).isDisabled(),true);
   await pair(page,'objects').getByRole('button',{name:'끄기',exact:true}).click();assert.equal(await pair(page,'background').getByRole('button',{name:'끄기',exact:true}).isEnabled(),true);
   assert.equal((await active(page)).serviceTier,'priority');
   const persisted=await active(page);
@@ -191,12 +195,12 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
 test('actual modern controller: policy payloads and exact RAW review/export/native insertion', {timeout:90000},async t => {
   const evidence=dir('request-and-background');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
   // 11-09: 출처를 모르는 그림은 변환 전에 출처(교과서/기출)를 고른다.
-  await pair(page,'kind').getByRole('button',{name:'교과서',exact:true}).click();
+  await pickKind(page,'교과서');
   await pair(page,'arrows').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'guides').getByRole('button',{name:'끄기',exact:true}).click();
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
   assert.equal((await active(page)).outputOptions.backgroundPolicy,'connected','live pre-generation background control reaches the actual task');
-  await page.locator(`${panel} [data-ai-comments-apply]`).click();
+  await page.locator(`${panel} [data-ai-send]`).click();
   await page.waitForFunction(()=>window.__task2.sends.length>0);
   assert.equal(await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).isDisabled(),true);
   await finish(page);
@@ -287,10 +291,10 @@ test('historical PNG controller: background export pixels and complete original 
 test('label restoration button uses Luna image generation and Luna joint verification, then inserts editable native labels', {timeout:90000},async t => {
   // 11-10: 관찰·검수 두 요청을 보내는 것은 예전 라벨 파이프라인 계약이므로 내부 플래그를 켠다(기본 경로는 글자 읽기 통로로 따로 읽음).
   const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence,{beforeNavigate:p=>p.addInitScript(()=>{globalThis.__5eLegacyLabelPipeline=true;})});await fresh(page);
-  await pair(page,'kind').getByRole('button',{name:'교과서',exact:true}).click();
+  await pickKind(page,'교과서');
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'verification').getByRole('button',{name:'자동 검수',exact:true}).click();
-  await page.locator(`${panel} [data-ai-comments-apply]`).click();await finish(page);
+  await page.locator(`${panel} [data-ai-send]`).click();await finish(page);
   const row=await active(page),c=row.generated.at(-1);
   assert.ok(c);assert.equal(c.imageLabelWorkflow.labelResult,'restore-editable');assert.equal(c.reviewState,'passed');assert.equal(c.labelPlan.labels[0].text,'전자');
   const models=await page.evaluate(()=>window.__task2.sends.map(s=>({purpose:s.payload.purpose,model:s.payload.model,effort:s.payload.effort,serviceTier:s.payload.serviceTier})));

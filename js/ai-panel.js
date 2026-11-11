@@ -20,6 +20,7 @@ import { prepareScopedEditContext, restoreScopedEditContext } from './ai-scoped-
 import { validateScopedEditChecks, evaluateScopedEditPrecision, scopedEditCorrectionFeedback } from './ai-scoped-edit-verification.js?v=1.7.0-four-session-integration';
 import { isHistoricalPngLocalResult, requiresRawImageOutput, canChooseLocalOutput, keepsRawImageOutput } from './ai-output-processing.js?v=1.7.0-four-session-integration';
 import { initAISettingsPanel, sourceImageKind } from "./ai-settings-panel.js?v=1.7.0-four-session-integration";
+import { detectImageSourceKind, SOURCE_DETECT_MAX_SIDE } from "./ai-source-detect.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 import { showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.7.0-four-session-integration';
@@ -1584,7 +1585,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     // 11-09: 출처를 모르는 그림이면 변환 단추 자리에서 「출처를 골라 주세요」라고 알린다(누르면 출처 줄로 데려가고, 고르면 바로 변환).
     const needsSource = !boxEdit && !brief && !isGraphWorkflow(conversionKind) && !isCreationWorkflow(conversionKind)
       && attachments.some(item => item.referenceRole !== 'STYLE_REFERENCE') && Boolean(imageKindSelect) && !['exam', 'general'].includes(imageKindSelect.value);
-    sendButton.textContent = boxEdit ? "수정하기" : brief ? '이미지 생성' : needsSource ? "출처를 골라 주세요" : "변환하기";
+    sendButton.textContent = boxEdit ? "다시 그리기 · 정밀" : brief ? '이미지 생성' : needsSource ? "출처를 골라 주세요" : "변환하기"; // 11-11: 결과가 있으면 다시 그리기(정밀)
     panel.dataset.aiNeedsSource = String(needsSource);
     commentController?.render();
     syncGraphWorkbenchUi();
@@ -2754,7 +2755,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if(repeat) repeat.hidden=graph;
     panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = panel.dataset.aiSharingMode === 'view' || (busy && !switchWorkflow); });
     if (graph) {
-      sendButton.textContent = graphTarget ? '그래프 수정하기' : graphCreate ? '그래프 생성' : '그래프 복원';
+      sendButton.textContent = graphCreate ? '그래프 생성' : '그래프 복원'; // 11-11: 공통 실행 글자
       sendButton.title = graphTarget ? `${graphTarget.name}에 추가 설명을 반영해 새 수정본을 만듭니다. 이전 결과도 유지됩니다.` : graphCreate ? '설명을 편집 가능한 그래프로 만듭니다.' : '원본과 수정 요청으로 편집 가능한 그래프를 복원합니다.';
       input.hidden = false; input.disabled = busy;
       input.placeholder = graphTarget ? '예: B만 점선으로 바꿔줘. 수식과 다른 표기는 유지해줘.' : graphCreate ? '예: 가로축 시간, 세로축 속도. 처음에는 직선으로 증가하다가 일정해짐. 숫자 없이.' : '예: 축 제목을 바꾸고, B 곡선의 점선을 더 굵게 해 주세요.';
@@ -2764,7 +2765,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       input.placeholder = brief ? '예: 빗면 위에 네모 A, 왼쪽 아래에 각도 θ' : '예: 숫자와 단위를 지우고 평가원식 흑백 선화로 정리해 주세요.';
       input.setAttribute('aria-label', brief ? '물체와 배치 설명' : '이미지 수정 요청');
     }
-    const compact = panel.querySelector('[data-ai-compact-settings]'); if (compact) compact.hidden = graph || brief;
+    const compact = panel.querySelector('[data-ai-compact-settings]'); if (compact) compact.hidden = graph;
+    // 11-11: 공통 구조 — 캡션(그림 설정·대화), 라벨 복원 행은 「이미지 생성」에서 숨김, 대화 자리표시 글.
+    const caption = panel.querySelector('[data-ai-conversation-caption]'); if (caption) caption.textContent = graph ? '대화' : '그림 설정';
+    const labelRow = panel.querySelector('[data-ai-label-row]'); if (labelRow) labelRow.hidden = brief || graph;
+    const hasResult = Boolean(selectedOutputItem());
+    if (chatInput) chatInput.placeholder = graph ? (graphCreate ? '어떤 그래프가 필요한지 말해 주세요' : '바꿀 조건이 있으면 말해 주세요 (선택)')
+      : conversionKind === 'image-create' ? '어떤 그림이 필요한지 말해 주세요' : hasResult ? '고칠 곳을 그림에 표시하고 말해 주세요' : '변환 전에 상의할 말 (선택)';
     const labelControl = panel.querySelector('.ai-source-label-control'); if (labelControl) labelControl.hidden = graph;
     const title = panel.querySelector('[data-ai-request-title]'); if (graph && title) title.textContent = graphTarget ? '추가 수정' : '그래프 요청';
     const hint = panel.querySelector('[data-ai-request-hint]'); if (graph && hint) hint.textContent = graphTarget ? `수정 대상: ${graphTarget.name}. 바꿀 내용만 적으세요. 이전 결과는 수정본 목록에 남습니다.` : graphCreate ? '축과 모양을 짧게 설명하세요. 수식·좌표도 입력할 수 있고, 생성 후 세부 편집으로 조정합니다.' : '원본을 편집 가능한 그래프로 복원합니다. 바꿀 조건도 함께 적을 수 있습니다.';
@@ -2875,7 +2882,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (panel.dataset.aiMode !== mode) panel.dataset.aiMode = mode;
     const title = panel.querySelector('#ai-image-title');
     const target = hwpInPlaceTargets.get(activeTaskTabId);
-    const text = target ? `${target.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target.label || '그림'}에서 엶` : graph ? '그래프 · AI' : 'AI 이미지';
+    // 11-11: 제목은 「AI 이미지」「AI 그래프」만 쓴다(5E_ 표기 없음). 한글에서 열었을 때만 뒤에 출처를 붙인다.
+    const text = target ? `${target.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target.label || '그림'}에서 엶` : graph ? 'AI 그래프' : 'AI 이미지';
     if (title && title.textContent !== text) title.textContent = text;
     const closeButton = panel.querySelector('[data-ai-close]');
     const closeLabel = `${graph ? '그래프 AI' : 'AI 이미지'} 닫기`;
@@ -3257,11 +3265,62 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   }
 
+  // 11-11: 파일·붙여넣기·캡처 그림의 출처를 색으로 자동 판단한다(js/ai-source-detect.js). 애매하면 출처 줄을 보여 준다.
+  let autoSourceDecision = null;
+  async function detectReferenceSourceKind(item) {
+    let kind = 'ambiguous';
+    try {
+      const image = new Image();
+      image.src = item.data;
+      await image.decode();
+      const scale = Math.min(1, SOURCE_DETECT_MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const pixels = context.getImageData(0, 0, canvas.width, canvas.height);
+      kind = detectImageSourceKind(pixels.data, canvas.width, canvas.height).kind;
+    } catch { kind = 'ambiguous'; }
+    applyDetectedSourceKind(item, kind);
+  }
+  function applyDetectedSourceKind(item, kind) {
+    if (!attachments.includes(item) || conversionKind !== 'image') return;
+    const row = panel.querySelector('[data-ai-source-kind-row]');
+    if (kind === 'ambiguous') { autoSourceDecision = null; if (row) row.hidden = false; syncSourceDecision(); return; }
+    if (imageKindSelect && !imageKindSelect.value) {
+      imageKindSelect.value = kind;
+      imageKindSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      autoSourceDecision = kind;
+    }
+    if (row) row.hidden = true;
+    syncSourceDecision();
+  }
+  // 11-11: 머리글 상태 줄「이미지 N개 · 기출로 판단 바꾸기」. 자동으로 정한 출처일 때만 보인다.
+  function syncSourceDecision() {
+    const box = panel.querySelector('[data-ai-source-decision]');
+    if (!box) return;
+    const kind = imageKindSelect?.value;
+    const show = Boolean(autoSourceDecision) && conversionKind === 'image' && attachments.length > 0 && ['exam', 'general'].includes(kind);
+    box.hidden = !show;
+    if (show) box.querySelector('[data-ai-source-decision-text]').textContent = `${kind === 'exam' ? '기출' : '교과서'}로 판단 `;
+  }
+  panel.querySelector('[data-ai-source-flip]')?.addEventListener('click', () => {
+    if (!imageKindSelect) return;
+    imageKindSelect.value = imageKindSelect.value === 'exam' ? 'general' : 'exam';
+    autoSourceDecision = imageKindSelect.value;
+    imageKindSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    syncSourceDecision();
+  });
+  panel.querySelector('[data-ai-separation-manual]')?.addEventListener('click', () => panel.querySelector('[data-ai-editable-groups]')?.click());
+
   const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto", source = null, sourceTextCandidates, referenceRole }) => {
     // 그래프 생성의 왼쪽 칸 그림은 복원할 원본이 아니라 모양 참고(10-22 A-3).
     if (conversionKind === 'graph-create' && referenceRole === undefined) referenceRole = 'STYLE_REFERENCE';
     const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind, source, ...(sourceTextCandidates?{sourceTextCandidates}:{}), referenceRole, comments: [], nextCommentNumber: 1 };
     attachments.push(item);
+    // 11-11: 출처를 모르는 외부 그림(파일·붙여넣기·캡처)은 색으로 자동 판단한다. 라이브러리 그림은 기존 출처를 쓴다.
+    if (conversionKind === 'image' && !sourceImageKind(item) && typeof data === 'string' && data.startsWith('data:image')) void detectReferenceSourceKind(item);
     attachmentList.appendChild(item.card || makeImageCard(item));
     syncReferenceSummary();
     const tab = taskTabs.get(activeTaskTabId);
@@ -3825,7 +3884,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const emptyLog = document.createElement("p");
       emptyLog.className = "ai-log-empty";
       emptyLog.dataset.aiLogEmpty = "";
-      emptyLog.textContent = "대화로 요구사항을 정리한 뒤 이미지를 생성하세요.";
+      emptyLog.textContent = "필요한 것을 말하거나 아래 단추를 바로 누르세요."; // 11-11: 네 작업 공통 안내
       log.appendChild(emptyLog);
     }
     resetVisualLists();
@@ -5936,6 +5995,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (preciseRestoreCheckbox) { preciseRestoreCheckbox.checked = false; preciseRestoreCheckbox.disabled = imageKindSelect.value !== 'general'; }
     captureActiveTaskTab(); persistTasks();
     panel.querySelector('[data-ai-source-kind-row]')?.classList.remove('ai-needs-choice');
+    if (['exam', 'general'].includes(imageKindSelect.value)) { const row = panel.querySelector('[data-ai-source-kind-row]'); if (row) row.hidden = true; }
+    syncSourceDecision();
     syncWhitePngUi();
     // 11-10: 원본 종류를 나중에 골라도 기본 라벨 처리(기출 복원·교과서 삭제)를 맞춘다. 사용자가 라벨 설정을 직접 바꾼 작업은 그대로 둔다.
     if (labelResultSelect) {
@@ -5993,7 +6054,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (candidateUsesAutomaticSeparation(item)) void startAutomaticSeparation(item);
     }
   });
-  chatButton.onclick = () => submit("chat");
+  chatButton.onclick = () => {
+    // 11-11: 결과에 표시한 코멘트(박스·점)가 있으면 대화 내용을 영역 수정 요청으로 보낸다. 없으면 Codex 대화로 간다.
+    const item = selectedOutputItem();
+    if (item && !item.sceneResult && !isGraphWorkflow(conversionKind) && Array.isArray(item.comments) && item.comments.length) {
+      const fromChat = composeRequestFromChat();
+      if (!fromChat) return;
+      input.value = fromChat;
+      chatInput.value = '';
+      sendButton.onclick();
+      return;
+    }
+    submit("chat");
+  };
   chatApplyButton?.addEventListener('click', () => {
     if (busy) return;
     if (input.hidden) {
@@ -6013,6 +6086,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     requestAnimationFrame(() => sendButton.focus());
   });
   sendButton.title = "대화와 코멘트를 반영해 새 이미지로 변환합니다.";
+  // 11-11: 이 작업의 사용자 대화(아직 안 보낸 입력 포함)를 요청 글로 쓴다. 옛 「첫 변환」 요청 칸을 대신한다.
+  const composeRequestFromChat = () => [
+    ...conversationMessages.filter(message => message.role === 'user').map(message => message.text),
+    chatInput?.value.trim(),
+  ].filter(Boolean).join('\n');
+  // 11-11: 실행 단추를 누르기 직전(캡처 단계)에 대화 내용을 요청 글로 옮긴다. 실행 본문은 그대로 둔다.
+  // 11-11: 요청 칸은 숨겨진 칸이라 대화가 바뀔 때마다 대화 내용을 그대로 옮겨 둔다(이미지 생성의 실행 단추 상태 검사도 이 칸을 본다).
+  const syncRequestFromChat = () => { input.value = composeRequestFromChat(); };
+  sendButton.addEventListener('click', syncRequestFromChat, true);
+  chatInput?.addEventListener('input', syncRequestFromChat);
   sendButton.onclick = () => {
     if (localEraseController?.getDraft(selectedOutputItem())) {
       setStatus('먼저 수정 저장을 눌러 편집을 완료하세요.', 'warn'); return;
@@ -6021,7 +6104,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (isGraphWorkflow(conversionKind)) { void submit('image'); return; }
     const item = selectedOutputItem();
     if (item && !item.sceneResult && !isExamBrief(taskTabs.get(activeTaskTabId))) {
-      void startScopedEdit(item);
+      // 11-11: 결과에 표시(박스·점)가 있으면 그 부분만 고치고, 표시가 없으면 「다시 그리기 · 정밀」(Sol로 원본을 처음부터 다시 그림).
+      if ((item.comments || []).length) { void startScopedEdit(item); return; }
+      void submit("image", { bypassCache: true, regenerate: true });
       return;
     }
     void submit("image", { bypassCache: !readImageLabelWorkflow().explicit });
@@ -6848,7 +6933,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     setStatus(saving ? '수정본을 저장하고 있습니다. 저장 완료 후 다시 시도하세요.' : '편집한 그림을 사용하려면 먼저 수정 저장을 누르세요.', 'warn');
     panel.querySelector('[data-ai-edit-save]')?.focus();
   }, { capture: true, signal: lifecycle.signal });
-  panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
+  // 11-11: 독의 실행 단추가 곧 [data-ai-comments-apply]라면 실행을 두 번 걸지 않도록 따로 잇지 않는다.
+  { const applyButton = panel.querySelector('[data-ai-comments-apply]'); if (applyButton && applyButton !== sendButton) applyButton.addEventListener('click', () => sendButton.onclick()); }
   // Selected-result actions stay in the fixed footer; per-card controls are hidden.
   const editableGroups = document.createElement('button');
   editableGroups.type = 'button';

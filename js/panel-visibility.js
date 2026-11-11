@@ -173,6 +173,8 @@ function setup(root, kind) {
     label.className = 'panel-toggle-label';
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
+    // 11-11: AI 이미지 창의 왼쪽 칸은 항상 펼쳐 둔다. 접기 단추는 숨기고(상태 처리는 그대로 둔다).
+    if (kind === 'image' && side === 'left') button.hidden = true;
     const headerStatus = kind === 'image' && side === 'right'
       ? toolbar.querySelector('.ai-head-status') : null;
     if (headerStatus) headerStatus.insertBefore(button, headerStatus.querySelector('.ai-close'));

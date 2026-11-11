@@ -187,7 +187,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       button.classList.toggle('is-on', active);
       button.setAttribute('aria-pressed', String(active));
     });
-    if (q('[data-ai-chat-panel]')) q('[data-ai-chat-panel]').hidden = !chat;
+    // 11-11: 옆 탭을 없앴다. 대화 칸은 항상 보이고(입력·실행이 그 아래 독에 있다), 코멘트 칸만 탭 상태를 따른다.
+    if (q('[data-ai-chat-panel]')) q('[data-ai-chat-panel]').hidden = false;
     if (q('[data-ai-comments-panel]')) q('[data-ai-comments-panel]').hidden = chat;
   }
 
@@ -448,8 +449,9 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || blocked > 0;
         apply.title = blocked > 0 ? `원본 없는 작업 ${blocked}개 — 원본을 넣거나 선택에서 빼세요.` : '';
       } else if (scopedTarget()) {
-        apply.textContent = '수정하기';
-        apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));
+        // 11-11: 수정 박스가 없으면 「다시 그리기 · 정밀」(결과 전체를 Sol로 다시 그림)로 바로 누를 수 있다.
+        apply.textContent = allEntries.length ? '수정하기' : '다시 그리기 · 정밀';
+        apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || (allEntries.length > 0 && (!areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment))));
       } else if (isTextCreation()) {
         apply.textContent = '이미지 생성';
         apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';

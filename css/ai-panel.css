@@ -3018,7 +3018,7 @@
 :is([data-ai-workflow="graph"],[data-ai-workflow="graph-create"]) .ai-setting-label:has([data-ai-effort]),
 :is([data-ai-workflow="graph"],[data-ai-workflow="graph-create"]) .ai-setting-label:has([data-ai-speed]),
 :is([data-ai-workflow="graph"],[data-ai-workflow="graph-create"]) [data-ai-model-refresh] { display:none !important; }
-:is([data-ai-workflow="graph"],[data-ai-workflow="graph-create"]) [data-ai-comments-apply] { display:none !important; }
+:is([data-ai-workflow="graph"],[data-ai-workflow="graph-create"]) [data-ai-comments-apply]:not([data-ai-send]) { display:none !important; }
 
 /* Local controls for historical PNGs do not reveal source conversion settings. */
 .ai-legacy-result-settings { margin:0 0 12px; padding:12px; border:1px solid var(--border); border-radius:8px; }
@@ -3290,3 +3290,93 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
   animation: ai-source-choice-pulse 1.1s ease-in-out 3;
 }
 @keyframes ai-source-choice-pulse { 50% { outline-color: color-mix(in srgb, var(--accent, #2f81f7) 25%, transparent); } }
+
+/* ===== 11-11: AI 작업대 공통 구조 (v6 승인 시안 기준, 이미지·그래프 같은 모양) ===== */
+#ai-image-panel { --ai-rail-w: 150px; --ai-row-h: 43px; }
+#ai-image-panel [hidden] { display: none !important; }
+/* 헤더: 제목은 왼쪽 칸 가운데, 전환 단추는 가운데 도구 묶음 왼쪽 끝에 맞춘다 */
+#ai-image-panel .ai-head { padding-left: 0; grid-template-columns: minmax(0, 1fr) auto; min-height: var(--ai-row-h); }
+#ai-image-panel .ai-title-line { position: relative; display: block; height: 100%; min-width: 0; }
+#ai-image-panel .ai-title-line .modal-title,
+#ai-image-panel #ai-image-title { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: var(--ai-rail-w); margin: 0; text-align: center; white-space: nowrap; font-size: 13px; font-weight: 600; }
+#ai-image-panel .ai-title-line .ai-workflow-switch { position: absolute; left: calc(var(--ai-rail-w) + 12px); top: 50%; transform: translateY(-50%); height: 30px; box-sizing: border-box; }
+#ai-image-panel .ai-workflow-switch button { height: 100%; padding: 0 14px; }
+#ai-image-panel .ai-head-status .ai-source-decision { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); margin-right: 8px; white-space: nowrap; }
+#ai-image-panel .ai-text-link { background: none; border: 0; border-radius: 0; padding: 0; margin: 0; box-shadow: none; color: var(--accent); font: inherit; font-size: 11px; cursor: pointer; }
+/* 왼쪽 칸 */
+#ai-image-panel .ai-workspace { grid-template-columns: var(--ai-rail-w) minmax(0, 1fr) 326px; }
+#ai-image-panel .ai-task-rail { flex-direction: column; }
+#ai-image-panel .ai-rail-heading { flex: 0 0 var(--ai-row-h); height: var(--ai-row-h); box-sizing: border-box; display: flex; align-items: center; padding: 0 12px; border-bottom: 1px solid var(--border); }
+#ai-image-panel .ai-rail-heading > strong { font-size: 12px; font-weight: 600; white-space: nowrap; }
+#ai-image-panel .ai-rail-selection-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 9px 10px 7px 12px; white-space: nowrap; }
+#ai-image-panel .ai-rail-selection-row output { font-size: 11px; color: var(--text-primary); }
+#ai-image-panel .ai-rail-actions { display: flex; align-items: center; gap: 2px; white-space: nowrap; }
+#ai-image-panel .ai-rail-actions button { height: auto; min-height: 0; padding: 2px 3px; border: 0; border-radius: 4px; background: none; box-shadow: none; color: var(--text-secondary); font: inherit; font-size: 11px; font-weight: 400; }
+#ai-image-panel .ai-rail-actions button:hover:not(:disabled) { color: var(--text-primary); border-color: transparent; }
+#ai-image-panel .ai-rail-actions button:disabled { opacity: .4; }
+#ai-image-panel .ai-rail-actions button.is-on,
+#ai-image-panel .ai-rail-actions button[aria-pressed="true"] { background: none; border: 0; color: var(--text-secondary); font-weight: 400; }
+#ai-image-panel .ai-rail-actions-dot { color: var(--text-secondary); opacity: .5; font-size: 11px; }
+/* 가운데 머리글 줄과 왼쪽 머리글 줄의 아래 선이 한 줄로 이어지게 */
+#ai-image-panel .ai-compare-heading { min-height: var(--ai-row-h); height: var(--ai-row-h); box-sizing: border-box; }
+/* 오른쪽 칸: 캡션 줄 → 설정 → 대화(남은 높이) → 독(입력·실행·출력) */
+#ai-image-panel .ai-conversation { display: flex; flex-direction: column; min-height: 0; padding-top: 0; margin-top: 0; }
+#ai-image-panel .ai-conversation-caption { flex: 0 0 var(--ai-row-h); height: var(--ai-row-h); box-sizing: border-box; display: flex; align-items: center; padding: 0 14px; border-bottom: 1px solid var(--border); }
+#ai-image-panel .ai-conversation-caption strong { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+#ai-image-panel .ai-side-tabs { display: none !important; }
+#ai-image-panel .ai-compact-settings { flex: 0 0 auto; padding: 12px 14px 8px; border-bottom: 1px solid var(--border); }
+#ai-image-panel .ai-compact-settings .ai-setting-row { margin: 0 0 8px; }
+#ai-image-panel .ai-compact-settings .ai-setting-row.is-forced { opacity: .5; }
+#ai-image-panel .ai-compact-settings > :is(.ai-settings-summary, [data-ai-output-processing-status], .ai-source-treatment, .ai-legacy-result-settings, .ai-settings-caption, .ai-settings-divider) { display: none !important; }
+#ai-image-panel .ai-settings-native-controls, #ai-image-panel .ai-conversation > .ai-output-processing { display: none !important; }
+#ai-image-panel .ai-beta-badge, #ai-image-panel .ai-compact-settings em.ai-beta-badge { font-style: normal; font-size: 9.5px; line-height: 15px; color: #c9a227; border: 1px solid #57491a; border-radius: 4px; padding: 0 4px; margin-left: 4px; }
+#ai-image-panel .ai-separation-note { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -2px 0 8px 84px; font-size: 11px; color: var(--text-secondary); }
+#ai-image-panel .ai-compact-settings .ai-setting-row.is-forced .ai-setting-pair button { cursor: default; }
+/* 11-11: 저장된 그림 처리(legacy)는 접근성을 위해 남기고, 첫 변환·검토 요약만 숨긴다. */
+#ai-image-panel .ai-comments-panel > :not(.ai-legacy-result-settings) { display: none !important; }
+#ai-image-panel .ai-side-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#ai-image-panel .ai-chat-panel { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; border: 0; padding: 0; }
+#ai-image-panel .ai-chat-panel > .ai-log { flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 14px; border: 0; background: transparent; }
+#ai-image-panel .ai-log .ai-msg { border: 0; background: transparent; padding: 0; margin: 0; max-width: 100%; font-size: 12.5px; line-height: 1.65; color: var(--text-primary); }
+#ai-image-panel .ai-log .ai-msg.user { align-self: flex-end; max-width: 86%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 12px 12px 3px 12px; padding: 7px 11px; }
+#ai-image-panel .ai-dock { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px 14px; border-top: 1px solid var(--border); }
+#ai-image-panel .ai-dock .ai-input { padding: 0; border: 0; margin: 0; }
+#ai-image-panel .ai-dock .ai-chat-composer textarea { min-height: 52px; }
+#ai-image-panel .ai-dock [data-ai-send] { width: 100%; height: 36px; min-height: 36px; margin: 0; border: 1px solid var(--accent); border-radius: 6px; background: var(--control-selected-bg); color: var(--text-primary); font: inherit; font-size: 13px; font-weight: 600; box-shadow: none; }
+#ai-image-panel .ai-dock [data-ai-send]:disabled { opacity: .5; }
+#ai-image-panel .ai-dock .ai-output-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; padding: 0; margin: 0; border: 0; }
+#ai-image-panel .ai-dock .ai-output-actions button { height: 28px; border: 0; border-radius: 6px; background: none; box-shadow: none; color: var(--text-primary); font: inherit; font-size: 12px; }
+#ai-image-panel .ai-dock .ai-output-actions button:hover:not(:disabled) { background: var(--bg-input); }
+#ai-image-panel .ai-dock .ai-output-actions button:disabled { opacity: .4; }
+/* 아래 줄(이전 실행·코멘트 반영 단추)은 필요할 때만: 작업 취소만 남긴다 */
+#ai-image-panel .ai-workbench-actions { display: none; }
+#ai-image-panel .ai-workbench-actions:has([data-ai-interrupt]:not([hidden])) { display: flex; }
+#ai-image-panel [data-ai-comments-apply]:not([data-ai-send]) { display: none !important; }
+/* 결과에 표시(코멘트)가 있어도 대화 칸과 설정 칸은 계속 보인다 */
+#ai-image-panel[data-ai-box-edit="true"] [data-ai-chat-panel] { display: flex !important; }
+#ai-image-panel[data-ai-box-edit="true"] .ai-compact-settings { display: block !important; }
+/* 가운데 머리글 줄의 「전체 선택」 단추는 토글처럼 보이지 않게 */
+#ai-image-panel [data-ai-tab-select-all].is-on, #ai-image-panel [data-ai-tab-select-all][aria-pressed="true"] { color: var(--text-secondary); background: none; border: 0; }
+#ai-image-panel .ai-rail-actions button { border: 0 !important; }
+#ai-image-panel .ai-rail-selection-row { gap: 4px; padding-right: 8px; }
+#ai-image-panel .ai-rail-selection-row output { white-space: nowrap; font-size: 10.5px; }
+#ai-image-panel #ai-image-title.has-drag-handle { left: 0 !important; padding: 0 !important; }
+#ai-image-panel #ai-image-title.has-drag-handle { justify-content: center; }
+#ai-image-panel .ai-title-line .ai-workflow-switch { left: calc(var(--ai-rail-w) + 8px); }
+#ai-image-panel .ai-rail-selection-row { padding: 9px 6px 7px 10px; gap: 2px; }
+#ai-image-panel .ai-rail-actions button { font-size: 10.5px; padding: 2px 2px; }
+#ai-image-panel .ai-rail-actions-dot { font-size: 10px; }
+
+/* 11-11: 전환 단추·왼쪽 글자 단추는 테두리 없이(다른 단추 규칙보다 우선), 설정 요약 줄은 숨김, 판단 문구 뒤 구분점 */
+#ai-image-panel .ai-head .ai-workflow-switch > button { border: 0 !important; box-shadow: none !important; outline: none !important; }
+#ai-image-panel .ai-head .ai-workflow-switch > button[aria-pressed="true"] { background: var(--bg-panel-hover) !important; color: var(--text-primary) !important; font-weight: 600; }
+#ai-image-panel .ai-head .ai-workflow-switch > button[aria-pressed="false"] { background: transparent !important; color: var(--text-secondary) !important; }
+#ai-image-panel .ai-head .ai-workflow-switch > button:focus-visible { outline: 2px solid var(--accent) !important; outline-offset: 1px; }
+#ai-image-panel .ai-rail-actions > button, #ai-image-panel .ai-rail-actions > button:is(.is-on,[aria-pressed="true"],[aria-selected="true"]) { border: 0 !important; background: none !important; box-shadow: none !important; outline: none !important; color: var(--text-secondary) !important; font-weight: 400 !important; }
+#ai-image-panel .ai-rail-actions > button:hover:not(:disabled) { color: var(--text-primary) !important; }
+#ai-image-panel [data-ai-output-processing-status] { display: none !important; }
+#ai-image-panel .ai-source-decision::after { content: "·"; margin-left: 6px; color: var(--text-secondary); opacity: .6; }
+#ai-image-panel .ai-log-empty { margin: auto 0; text-align: center; font-size: 11.5px; color: var(--text-secondary); }
+/* 11-11: 「전체 선택」은 실행 단추라 다 골라진 상태여도 눌린 바탕을 칠하지 않는다 */
+:root:not([data-mode="lite"]) #ai-image-panel#ai-image-panel .ai-rail-actions > button { background: none !important; outline: none !important; box-shadow: none !important; color: var(--text-secondary) !important; font-weight: 400 !important; }
+:root:not([data-mode="lite"]) #ai-image-panel#ai-image-panel .ai-rail-actions > button:hover:not(:disabled) { color: var(--text-primary) !important; }
