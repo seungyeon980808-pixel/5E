@@ -101,7 +101,7 @@ export async function chooseTaskExportDestination({
   desktopBatchOutput,
   directorySupported = FS_DIR_SUPPORTED,
   pickBrowserDirectory = pickDir,
-  confirmDownloads = message => window.confirm(message),
+  confirmDownloads = message => import('./ui-dialogs.js?v=1.7.0-four-session-integration').then(m => m.showConfirm(message, { title: 'ZIP으로 받기', okText: '받기', cancelText: '취소' })),
 } = {}) {
   if (desktopBatchOutput?.pickFolder && desktopBatchOutput?.save) {
     const result = await desktopBatchOutput.pickFolder();
@@ -112,7 +112,7 @@ export async function chooseTaskExportDestination({
     if (!directory || !(await ensureDirPermission(directory))) return null;
     return { kind: "browser-directory", directory };
   }
-  const confirmed = confirmDownloads("이 브라우저는 폴더 저장을 지원하지 않습니다. 결과를 한 폴더처럼 묶은 ZIP 다운로드를 요청할까요? 다운로드 완료 여부는 브라우저에서 확인해야 하며 현재 편집 내용은 유지됩니다.");
+  const confirmed = await confirmDownloads("이 브라우저는 폴더 저장을 지원하지 않습니다. 결과를 한 폴더처럼 묶은 ZIP 다운로드를 요청할까요? 다운로드 완료 여부는 브라우저에서 확인해야 하며 현재 편집 내용은 유지됩니다.");
   return confirmed ? { kind: "browser-zip" } : null;
 }
 

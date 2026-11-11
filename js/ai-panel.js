@@ -22,7 +22,7 @@ import { isHistoricalPngLocalResult, requiresRawImageOutput, canChooseLocalOutpu
 import { initAISettingsPanel, sourceImageKind } from "./ai-settings-panel.js?v=1.7.0-four-session-integration";
 import { detectImageSourceKind, SOURCE_DETECT_MAX_SIDE } from "./ai-source-detect.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
-import { showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { showAlert, showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.7.0-four-session-integration';
 import { mountRevisionComparison } from './ai-comparison.js?v=1.7.0-four-session-integration';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.7.0-four-session-integration';
@@ -2170,9 +2170,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     remove.disabled = busy;
     remove.textContent = "×";
     remove.title = "이미지 제거";
-    remove.onclick = () => {
+    remove.onclick = async () => {
       if (busy) return;
-      if (!window.confirm(`‘${item.name}’ 이미지를 작업에서 제거할까요? 원본 파일은 삭제하지 않습니다.`)) return;
+      // 11-11 사용자: 맥 기본 확인창 대신 5E 확인창.
+      if (!await showConfirm(`‘${item.name}’ 이미지를 작업에서 뺄까요? 원본 파일은 지우지 않습니다.`, { title: '이미지 빼기', okText: '빼기', cancelText: '취소' })) return;
       if (item.kind === "reference") {
         attachments = attachments.filter((candidate) => candidate !== item);
         referenceComposition = normalizeReferenceComposition(referenceComposition, attachments);
@@ -2260,7 +2261,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           return;
         }
         const target=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&!o.editableAssetRegionId&&o.aiTaskId===activeTaskTabId) : null;
-        if (target && !window.confirm(`선택한 페이지 이미지를 이 버전으로 교체할까요? 위치와 크기는 유지하고 기존 자동 라벨은 ${labelCount ? `새 라벨 ${labelCount}개로 교체` : "제거"}합니다. 취소하면 아무것도 변경하지 않습니다.`)) return;
+        // 11-11: 5E 확인창(비동기) — 예를 누르면 같은 단추 동작을 「확인됨」으로 다시 부른다(검사가 이 본문을 떼어 쓰므로 async로 바꾸지 않음).
+        const replaceConfirmed = output.dataset?.replaceConfirmed === 'true'; if (output.dataset) delete output.dataset.replaceConfirmed;
+        if (target && !replaceConfirmed) { void showConfirm(`선택한 페이지 이미지를 이 버전으로 교체할까요? 위치와 크기는 유지하고 기존 자동 라벨은 ${labelCount ? `새 라벨 ${labelCount}개로 교체` : "제거"}합니다. 취소하면 아무것도 변경하지 않습니다.`, { title: '이미지 교체', okText: '교체', cancelText: '취소' }).then(ok => { if (ok) { output.dataset.replaceConfirmed = 'true'; output.onclick(); } }); return; }
         const replace = Boolean(target);
         const taskId = activeTaskTabId;
         const candidateId = item.id;

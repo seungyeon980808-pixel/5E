@@ -9,6 +9,9 @@ export const IMAGE_SHORTCUTS = [
   ['[data-tool="RECT"]', 'S'], ['[data-tool="L"]', 'L'], ['[data-tool="P"]', 'P'], ['[data-tool="C"]', 'C'],
   ['[data-tool="F"]', 'D'], ['[data-tool="T"]', 'T'], ['[data-tool="CUT"]', 'E'], ['[data-tool="DELAYED_CUT"]', 'Mod+E'],
   ['[data-tool="ERASE"]', 'Shift+E'],
+  // 11-11: 아래 줄 네 기능(오브젝트·라이브러리·AI 그래프·AI 이미지) — ⇧⌘ + 첫 글자
+  ['[data-bottom-feature="object"]', 'Mod+Shift+O'], ['[data-bottom-feature="library"]', 'Mod+Shift+L'],
+  ['[data-bottom-feature="graph"]', 'Mod+Shift+G'], ['[data-bottom-feature="image"]', 'Mod+Shift+I'],
   ['[data-symbol="node"]', 'N'], ['[data-symbol="labeler"]', 'Shift+T'], ['[data-symbol="anglearc"]', 'A'], ['[data-symbol="rightangle"]', 'Shift+A'],
   ['[data-graph-entry="direct"]', 'F'],
   ['#center-view-btn', 'Mod+Space'], ['#fullscreen-toggle', 'Alt+Enter'],
@@ -30,7 +33,28 @@ export function formatShortcut(spec) {
 const baseName = el => el.dataset.scName ||= (el.getAttribute('title') || el.dataset.tip || el.dataset.shellTip || el.getAttribute('aria-label') || '')
   .replace(/\s*[(（][^()（）]*[)）]\s*$/, '').replace(/\s*·\s*[⌘⌥⇧\w+]+$/, '').trim();
 
+// 11-11 사용자 「텍스트·라벨러 단축키가 펼침 메뉴에 안 보인다」: 묶음 펼침 메뉴(.tool-chooser) 칸마다 오른쪽에 키를,
+// 묶음 단추(#tool-*-merged) 설명에는 「텍스트 (T) / 지시선 라벨 (⇧T)」처럼 칸 이름과 키를 모두 붙인다.
+function applyChooserKeys(table, root) {
+  const specOf = el => table.find(([selector]) => { try { return el.matches(selector); } catch { return false; } })?.[1];
+  for (const chooser of root.querySelectorAll('.tool-chooser')) {
+    const parts = [];
+    for (const opt of chooser.querySelectorAll('.tool-chooser-opt')) {
+      const spec = specOf(opt), name = opt.querySelector('.chooser-txt b')?.textContent?.trim() || opt.textContent.trim();
+      let key = opt.querySelector('.chooser-key');
+      if (!spec) { key?.remove(); parts.push(name); continue; }
+      if (!key) { key = document.createElement('kbd'); key.className = 'chooser-key'; key.setAttribute('aria-hidden', 'true'); opt.append(key); }
+      key.textContent = formatShortcut(spec);
+      opt.setAttribute('aria-keyshortcuts', spec.replace('Mod', IS_MAC ? 'Meta' : 'Control'));
+      parts.push(`${name} (${formatShortcut(spec)})`);
+    }
+    const trigger = root.getElementById?.(chooser.id.replace(/^chooser-/, 'tool-') + '-merged');
+    if (trigger && parts.length) { const tip = parts.join(' / '); trigger.setAttribute('title', tip); trigger.setAttribute('aria-label', tip); if (trigger.dataset.tip !== undefined) trigger.dataset.tip = tip; }
+  }
+}
+
 export function applyShortcutTips(table = IMAGE_SHORTCUTS, root = document) {
+  try { applyChooserKeys(table, root); } catch { /* 표시만 — 실패해도 단축키는 그대로 동작 */ }
   for (const [selector, spec] of table) {
     for (const el of root.querySelectorAll(selector)) {
       const name = baseName(el);

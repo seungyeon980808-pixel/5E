@@ -331,7 +331,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       if (!count) throw new Error('저장할 생성 결과가 없습니다.');
       const destination = await chooseTaskExportDestination({
         desktopBatchOutput: window.fiveEDesktop?.batchOutput,
-        confirmDownloads: message => window.confirm(message),
+        confirmDownloads: message => import('./ui-dialogs.js?v=1.7.0-four-session-integration').then(m => m.showConfirm(message, { title: 'ZIP으로 받기', okText: '받기', cancelText: '취소' })),
       });
       if (!destination) return { status: 'cancelled', count: 0, files: [] };
       const groups = await Promise.all(entries.map(entry => entry.controller.exportResults(normalizedMode,kind)));

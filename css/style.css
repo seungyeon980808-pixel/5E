@@ -530,6 +530,8 @@ body { zoom: var(--ui-zoom, 1); }
 .tool-chooser-opt.is-active { background: var(--control-selected-bg); border-color: var(--control-selected-border); color: var(--control-selected-text); }
 .tool-chooser-opt .chooser-ico { flex: 0 0 auto; display: inline-flex; }
 .tool-chooser-opt .chooser-ico svg { width: 22px; height: 22px; color: currentColor; }
+/* 11-11: 펼침 메뉴 칸 오른쪽 단축키(그래프 메뉴의 「F」와 같은 모양) */
+.tool-chooser-opt .chooser-key { margin-left: auto; padding-left: 12px; font: 500 11px/1 ui-monospace, "SF Mono", monospace; color: var(--text-secondary, #8b949e); background: none; border: 0; }
 .tool-chooser-opt .chooser-txt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .tool-chooser-opt .chooser-txt b { font-size: 13px; font-weight: 600; }
 .tool-chooser-opt .chooser-txt small { font-size: 11px; color: var(--c-sub); }

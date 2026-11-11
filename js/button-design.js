@@ -54,20 +54,23 @@ export function initButtonDesign(doc = document) {
     graph.title = 'AI 그래프 · 직접 만들기 · 사진에서 복원 · AI와 대화로 만들기'; graph.setAttribute('aria-label', 'AI 그래프');
     ai.before(graph);
   }
-  // 11-11: ⇧⌘L(윈도우 Ctrl+Shift+L) = 라이브러리. AI 창이 열려 있으면 AI 창이 처리한다(라이브러리에서 불러오기).
+  // 11-11 사용자: 아래 줄 네 기능 모두 단축키 — ⇧⌘ + 첫 글자(윈도우 Ctrl+Shift).
+  // O 오브젝트 · L 라이브러리 · G AI 그래프 · I AI 이미지. AI 창이 열려 있으면 ⇧⌘L은 AI 창이 처리한다(라이브러리에서 불러오기).
   if (hub && !doc.documentElement.dataset.libraryShortcut) {
     doc.documentElement.dataset.libraryShortcut = 'on';
+    const FEATURES = { o: ['object-window-open', 'object'], l: ['exam-library-open', 'library'], g: ['graph-tool-open', 'graph'], i: ['ai-image-install-open', 'image'] };
+    for (const [id, name] of Object.values(FEATURES)) doc.getElementById(id)?.setAttribute('data-bottom-feature', name);
     doc.addEventListener('keydown', event => {
-      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey || event.altKey) return;
-      if (event.code !== 'KeyL' && event.key?.toLowerCase() !== 'l') return;
+      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey || event.altKey || event.isComposing) return;
+      const letter = /^Key[A-Z]$/.test(event.code || '') ? event.code.slice(3).toLowerCase() : event.key?.toLowerCase();
+      const feature = FEATURES[letter];
+      if (!feature) return;
       const ai = doc.getElementById('ai-image-panel');
-      if (ai && !ai.hidden) return;
-      const library = doc.getElementById('exam-library-open');
-      if (!library || library.disabled || library.offsetParent === null) return;
-      event.preventDefault(); library.click();
+      if (letter === 'l' && ai && !ai.hidden) return;
+      const target = doc.getElementById(feature[0]);
+      if (!target || target.disabled || target.offsetParent === null) return;
+      event.preventDefault(); target.click();
     });
-    const library = doc.getElementById('exam-library-open');
-    if (library) library.title = `라이브러리 (${/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '') ? '⇧⌘L' : 'Ctrl+Shift+L'})`;
   }
   if (hub && !doc.getElementById('exam-pool-open')) {
     const examPool = doc.createElement('button');

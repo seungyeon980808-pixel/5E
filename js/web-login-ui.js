@@ -6,7 +6,7 @@ export function initWebLoginUi({ openAi }) {
   const aiButton = document.getElementById('ai-image-install-open');
   const badge = document.createElement('button');
   badge.className = 'topbar-btn web-account-status'; badge.type = 'button';
-  badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>ChatGPT 연결</span>';
+  badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>AI</span>';
   const badgeHost = document.querySelector('.app-shell-header .toolbar-inspector-controls .canvas-global-controls')
     || document.querySelector('.panel-utility-bar-right')
     || document.querySelector('.canvas-global-controls');
@@ -99,7 +99,7 @@ export function initWebLoginUi({ openAi }) {
     }
     if (next !== 'waiting') resetPairedLayout();
     // 11-04 시안 topbar-1104: 글자는 「ChatGPT」만, 상태는 점 색(연결됨 밝은 초록·안 됨 회색). 자세한 상태는 설명으로.
-    label.textContent = ['waiting', 'starting'].includes(next) ? '로그인 중…' : 'ChatGPT';
+    label.textContent = ['waiting', 'starting'].includes(next) ? '로그인 중…' : 'AI'; // 11-11 사용자: 「ChatGPT」 대신 「AI」(상태는 점 색)
     badge.title = connected ? 'ChatGPT 연결됨 · 계정과 이용 한도 보기' : next === 'error' ? 'ChatGPT 연결 확인 필요 · 눌러서 다시 연결' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : 'ChatGPT 연결 안 됨 · 눌러서 연결';
     badge.setAttribute('aria-label', badge.title);
     if (aiButton) {
@@ -285,11 +285,11 @@ export function initDesktopAccountBadge({ openAi }) {
   if (!host) return null;
   const badge = document.createElement('button');
   badge.className = 'topbar-btn web-account-status'; badge.type = 'button'; badge.dataset.state = 'idle';
-  badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>ChatGPT</span>';
+  badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>AI</span>'; // 11-11 사용자: 위쪽 연결 표시는 「AI」
   host.prepend(badge);
   const render = loggedIn => {
     badge.dataset.state = loggedIn ? 'connected' : 'idle';
-    badge.title = loggedIn ? 'ChatGPT 연결됨 · AI 작업대 열기' : 'ChatGPT 연결 안 됨 · 눌러서 연결';
+    badge.title = loggedIn ? 'AI 연결됨(ChatGPT 계정) · AI 작업대 열기' : 'AI 연결 안 됨 · 눌러서 ChatGPT 계정으로 연결';
     badge.setAttribute('aria-label', badge.title);
   };
   const refresh = async () => { try { render(Boolean((await desktop.status())?.login?.loggedIn)); } catch { render(false); } };

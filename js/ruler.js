@@ -31,6 +31,24 @@ const GUIDE_COLOR = "#0969da";
 const GUIDE_SELECTED_COLOR = "#0550ae";
 const GUIDE_HIT_PX = 6;
 
+// 11-11 사용자 「안내선 지우는 법이 안 보인다」: 이름표 옆 × · 눈금자로 끌어 놓기 · Delete 모두 같은 지우기(되돌리기 가능).
+function _deleteGuide(guideId) {
+  if (!_state || !guideId) return;
+  _state.update((s) => {
+    if (!(s.guides || []).some((guide) => guide.id === guideId)) return;
+    const snapshot = captureDocumentSnapshot(s);
+    s.guides = s.guides.filter((guide) => guide.id !== guideId);
+    if (s.selectedGuideId === guideId) s.selectedGuideId = null;
+    commitDocumentHistory(s, snapshot);
+  });
+}
+function _drawGuideDelete(ctx, x, y, hovered) {
+  ctx.fillStyle = hovered ? "#cf3f3f" : GUIDE_SELECTED_COLOR;
+  ctx.fillRect(x, y, 14, 14);
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(x + 4.5, y + 4.5); ctx.lineTo(x + 9.5, y + 9.5); ctx.moveTo(x + 9.5, y + 4.5); ctx.lineTo(x + 4.5, y + 9.5); ctx.stroke();
+}
+
 // Client(px) → world(mm) via the live SVG CTM (module-level so both the mousedown
 // selector and the hover-cursor helper share ONE implementation).
 function _worldFromClient(clientX, clientY) {
@@ -241,6 +259,7 @@ export function initRuler(svg, state) {
     canvas.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
       const badge = findBadgeAtPoint(canvas, axis, e.clientX, e.clientY);
+      if (badge?.kind === "delete") { e.preventDefault(); _suppressRulerClick = true; _deleteGuide(badge.guideId); return; }
       if (badge) {
         e.preventDefault();
         _suppressRulerClick = true;
@@ -264,7 +283,7 @@ export function initRuler(svg, state) {
     });
     canvas.addEventListener("mousemove", (e) => {
       const badge = findBadgeAtPoint(canvas, axis, e.clientX, e.clientY);
-      const hoveredId = badge ? badge.guideId : null;
+      const hoveredId = badge ? badge.guideId + (badge.kind === "delete" ? ":x" : "") : null;
       canvas.style.cursor = badge ? "pointer" : "";
       if (_hoveredBadgeGuideId === hoveredId) return;
       _hoveredBadgeGuideId = hoveredId;
@@ -323,12 +342,16 @@ export function initRuler(svg, state) {
       }
     });
   });
-  window.addEventListener("mouseup", () => {
+  window.addEventListener("mouseup", (e) => {
     // 자 바깥(작업 캔버스 위 등)에서 마우스를 놓으면 ruler canvas의 'click'이 발생하지
     // 않아 _suppressRulerClick이 리셋될 기회가 없다 — 여기서도 반드시 풀어줘야 다음
     // 자 클릭(안내선 추가)이 무시되지 않는다.
     _suppressRulerClick = false;
     if (!_dragGuideId) return;
+    // 11-11: 안내선을 눈금자 위로 끌어다 놓으면 지운다(피그마·일러스트레이터와 같게).
+    const dropped = _dragGuideId;
+    const overRuler = (canvas) => { if (!canvas) return false; const r = canvas.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
+    if (overRuler(_hCanvas) || overRuler(_vCanvas)) _deleteGuide(dropped);
     _dragGuideId = null;
     svg.style.cursor = ""; // hand back to tools.js's hover-cursor logic
     _scheduleDraw();
@@ -491,8 +514,8 @@ function _draw() {
       if (px < 0 || px > hw) continue;
       const selected = rulerState.selectedGuideId === guide.id;
       hx.strokeStyle = selected ? GUIDE_SELECTED_COLOR : GUIDE_COLOR;
-      hx.globalAlpha = selected ? 0.9 : 0.65;
-      hx.lineWidth = selected ? 1.5 : 1;
+      hx.globalAlpha = selected ? 1 : 0.65;
+      hx.lineWidth = selected ? 2.5 : 1;
       hx.beginPath();
       hx.moveTo(px, 0);
       hx.lineTo(px, hh);
@@ -512,6 +535,9 @@ function _draw() {
           hx.strokeRect(labelX + 0.5, 2.5, labelW - 1, 13);
         }
         _badgeHits.x.push({ guideId: guide.id, x: labelX, y: 2, w: labelW, h: 14 });
+        { const dx = labelX + labelW + 16 <= hw ? labelX + labelW + 2 : labelX - 16;
+          _drawGuideDelete(hx, dx, 2, _hoveredBadgeGuideId === guide.id + ":x");
+          _badgeHits.x.push({ guideId: guide.id, kind: "delete", x: dx, y: 2, w: 14, h: 14 }); }
         hx.fillStyle = "#fff";
         hx.textBaseline = "middle";
         hx.fillText(label, labelX + 4, 9);
@@ -607,8 +633,8 @@ function _draw() {
       if (py < 0 || py > vh) continue;
       const selected = rulerState.selectedGuideId === guide.id;
       vx.strokeStyle = selected ? GUIDE_SELECTED_COLOR : GUIDE_COLOR;
-      vx.globalAlpha = selected ? 0.9 : 0.65;
-      vx.lineWidth = selected ? 1.5 : 1;
+      vx.globalAlpha = selected ? 1 : 0.65;
+      vx.lineWidth = selected ? 2.5 : 1;
       vx.beginPath();
       vx.moveTo(0, py);
       vx.lineTo(vw, py);
@@ -642,6 +668,9 @@ function _draw() {
         vx.textBaseline = "middle";
         vx.fillText(label, 0, 0);
         vx.restore();
+        { const dy = labelY + labelW / 2 + 16 <= vh ? labelY + labelW / 2 + 2 : labelY - labelW / 2 - 16;
+          _drawGuideDelete(vx, vw / 2 - 7, dy, _hoveredBadgeGuideId === guide.id + ":x");
+          _badgeHits.y.push({ guideId: guide.id, kind: "delete", x: vw / 2 - 7, y: dy, w: 14, h: 14 }); }
       }
     }
 

@@ -344,8 +344,9 @@ export function render(state, change) {
     const line = document.createElementNS(SVG_NS, "line");
     setEnds(line);
     line.setAttribute("stroke", state.selectedGuideId === guide.id ? "#0550ae" : "#0969da");
-    line.setAttribute("stroke-width", state.selectedGuideId === guide.id ? "1.5" : "1");
-    line.setAttribute("stroke-opacity", state.selectedGuideId === guide.id ? "0.9" : "0.65");
+    // 11-11: 고른 안내선은 확실히 굵고 진하게(예전엔 색이 거의 같아 골랐는지 알기 어려웠다).
+    line.setAttribute("stroke-width", state.selectedGuideId === guide.id ? "2.5" : "1");
+    line.setAttribute("stroke-opacity", state.selectedGuideId === guide.id ? "1" : "0.65");
     line.setAttribute("vector-effect", "non-scaling-stroke");
     line.setAttribute("pointer-events", "none");
     group.appendChild(line);

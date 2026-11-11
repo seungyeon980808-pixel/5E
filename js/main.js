@@ -125,6 +125,12 @@ svg.addEventListener("pointerdown", (event) => {
   }
 });
 svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
+// 11-11 사용자: AI 창·편집 창을 닫고 돌아올 때 코드가 캔버스에 초점을 주면 파란 테두리가 생겼다.
+// 키보드 Tab으로 들어온 경우에만 테두리를 보이고, 그 밖의 초점(코드가 돌려준 것)은 마우스와 같이 조용히.
+let canvasTabFocus = false;
+document.addEventListener("keydown", (event) => { canvasTabFocus = event.key === "Tab"; }, true);
+document.addEventListener("pointerdown", () => { canvasTabFocus = false; }, true);
+svg.addEventListener("focus", () => { if (!canvasTabFocus) svg.classList.add("pointer-focused"); });
 const zoomReadout = document.getElementById("zoom-readout");
 // 캔버스 오른쪽 아래 확대 단추: − / 배율(누르면 100%) / + / 맞춤 — 100% = 도화지 전체가 보이는 크기
 {

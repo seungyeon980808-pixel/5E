@@ -43,12 +43,26 @@ export function mapQueryHighlights(entry, queryOrTerms) {
   return highlightsFromRuns(entry, terms, runs);
 }
 
+// 11-11 사용자 「색인 위치가 부정확하다」: 낱말 상자를 글자 수로 똑같이 나누면(띄어쓰기를 빼고 셈) 띄어쓰기 폭과
+// 한글·영문 폭 차이만큼 형광이 오른쪽으로 밀렸다. 글자마다 폭 비율(한글 1, 영문·숫자 0.55, 띄어쓰기 0.33, 문장부호 0.35)로
+// 나누고 띄어쓰기 폭도 넣어, 띄어쓰기를 뺀 글자 i의 왼쪽·오른쪽 끝을 낱말 폭 대비 비율로 돌려준다.
+const characterWidth = (ch) => /\s/u.test(ch) ? 0.33
+  : /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3\u3000-\u9fff\uff00-\uffef]/u.test(ch) ? 1
+  : /[A-Za-z0-9]/.test(ch) ? 0.55 : /[.,:;'"!?·()\[\]{}<>~\-]/.test(ch) ? 0.35 : 0.6;
+function characterEdges(full) {
+  const chars = [...full], total = chars.reduce((sum, ch) => sum + characterWidth(ch), 0) || 1;
+  const left = [], right = []; let at = 0;
+  for (const ch of chars) { const w = characterWidth(ch); if (!/\s/u.test(ch)) { left.push(at / total); right.push((at + w) / total); } at += w; }
+  return { left, right };
+}
+
 function entryWordRuns(entry) {
   const cached = entry && typeof entry === "object" ? wordRunsCache.get(entry) : undefined;
   if (cached) return cached;
   const words = (entry.words ?? []).flatMap((word) => {
-    const text = normalizedText(word.text).replace(/\s+/gu, "");
-    return text ? [{ text, characters: [...text], rect: word.rect }] : [];
+    const full = normalizedText(word.text);
+    const text = full.replace(/\s+/gu, "");
+    return text ? [{ text, characters: [...text], rect: word.rect, edges: characterEdges(full) }] : [];
   });
   const runs = [];
   for (const word of words) {
@@ -90,12 +104,9 @@ function highlightsFromRuns(entry, terms, runs) {
           const localStart = Math.max(0, start - part.start);
           const localEnd = Math.min(part.word.characters.length, end - part.start);
           const [x, y, width, height] = part.word.rect;
-          const rect = [
-            x + width * localStart / part.word.characters.length,
-            y,
-            width * (localEnd - localStart) / part.word.characters.length,
-            height,
-          ];
+          const edges = part.word.edges, count = part.word.characters.length;
+          const from = edges?.left?.[localStart] ?? localStart / count, to = edges?.right?.[localEnd - 1] ?? localEnd / count;
+          const rect = [x + width * from, y, width * Math.max(0, to - from), height];
           highlights.push(Object.freeze({
             ...term, coordinateSpace: "page-normalized",
             documentId: entry.documentId, pageNumber: entry.pageNumber,
