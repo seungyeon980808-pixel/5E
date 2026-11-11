@@ -781,7 +781,7 @@ export function initRhwpExamWorkspace(state, services) {
     if(!inlineSession)return;
     await flushInline(name==='close' || name==='original');const session=inlineSession;
     if(name==='close'){const failed=!!inlineFailure;await closeInline();scheduleSave();message(failed ? '원본 변경으로 반영하지 못한 라벨은 프로젝트의 초안으로 보관했습니다. 다시 열어 확인하세요.' : '라벨 수정은 작업 탭에 남아 있습니다.');return;}
-    if(name==='original'){const {id,ref}=session;await closeInline();await beginEdit(id,ref);return;}
+    if(name==='original'){const {id,ref}=session;await closeInline();await beginEdit(id,ref,{float:true});return;}/* 11-11: 자세히 = 한글 위에 뜨는 5E_image 창(5E_image로 넘어가지 않음) */
     // 11-06: 복원 = AI 그래프 복원 작업대(이 그림을 원본으로). 이미 그래프 객체인 그림은 그래프 편집 창.
     if(name==='restore')return session.graph ? inlineGraph(session) : inlineAi(session,'graph');
     if(name==='revert')return inlineRevert(session);
@@ -886,10 +886,12 @@ export function initRhwpExamWorkspace(state, services) {
     // 11-06: 5E_image로 넘어가지 않는다 — 한글 위에 AI 작업대(이미지 변환 / 그래프 복원)를 이 그림을 원본으로 열고,
     // 결과를 「이 자리에 넣기」하면 같은 자리·같은 폭으로 바뀐다(applyAiInPlace). 원래 그림은 「그림으로 되돌리기」용으로 붙여 둔다.
     await flushInline();const {id}=session,{source}=figurePageSource(session);
+    // 11-11: 이 그림에 이어진 같은 종류의 AI 작업이 있으면 그것을 연다(같은 그림 작업이 겹치지 않게).
+    const existing=connectedAi?.hwpTaskForFigure?.(id,kind==='graph'?'graph':'image');if(existing){await closeInline();await connectedAi.openHwpTask(existing);return;}
     const reference=await figureRaster(session,source);
     await closeInline();
     window.dispatchEvent(new CustomEvent('5e:ai-open-reference',{detail:{reference:{dataUrl:reference.data,name:reference.name,sourceKind:'exam-figure'},conversionKind:kind,hwpTarget:{figureId:id,generation:bridge.generation,label:session.figure?.name || '그림'}}}));
-    message(kind==='graph' ? 'AI 그래프 복원 작업대에서 복원한 뒤 「이 자리에 넣기」를 누르면 이 그림이 그래프 객체로 바뀝니다.' : 'AI 작업대에서 다시 그린 뒤 「이 자리에 넣기」를 누르면 이 그림 자리에 같은 폭으로 바뀝니다.');
+    message(kind==='graph' ? 'AI 그래프 창에서 복원한 뒤 「한글 파일에 넣기」를 누르면 이 그림이 그래프 객체로 바뀝니다.' : 'AI 이미지 창에서 다시 그린 뒤 「한글 파일에 넣기」를 누르면 이 그림 자리에 같은 폭으로 바뀝니다.');
   }
   async function applyAiInPlace(detail){
     const id=detail?.target?.figureId,figure=id&&figures.get(id),ref=id&&bridge?.findFigure(id);
@@ -1071,10 +1073,10 @@ export function initRhwpExamWorkspace(state, services) {
   }
   // 11-06 사용자: 한글에서 그림을 고칠 때 5E_image로 넘어가지 않는다. 두 번 누르기·연필 단추는 image와 똑같은 편집 화면을
   // 한글 위에 뜨는 창으로 연다(한글은 뒤에 어둡게). 그래프로 복원된 그림은 그래프 창이 바로 열린다(beginInline).
+  // 11-11 사용자 「예전에 만들어 놓은 편집기가 어디 갔냐」: 연필·두 번 누르기는 11-06에 만든 「그림 편집 중」 창
+  // (다섯 도구: AI 변환·복원·텍스트·라벨러·자르기, 적용/닫기)을 연다. 5E_image 전체 화면은 그 창의 「5E_image에서 자세히」로만.
   async function editPicture(id, ref = null) {
-    const figure = id && figures.get(id);
-    if (figure && getAnnotationPage(normalizeExamFigure(figure).source).objects.some(object => object.type === 'coordplane')) return beginInline(id, ref);
-    return beginEdit(id, ref, {float:true});
+    return beginInline(id, ref);
   }
   async function beginEdit(id, ref = null, {float = false} = {}) {
     if (editing) return;

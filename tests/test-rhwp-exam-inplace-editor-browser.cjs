@@ -46,9 +46,15 @@ async function selectPicture(page) {
   await page.locator('#exam-picture-controls .exam-picture-tools').waitFor({ state: 'visible' });
 }
 // 간단한 수정 = 5E_image와 똑같은 편집 화면이 한글 위에 뜨는 창(한글은 뒤에 어둡게, 5E_image로 넘어가지 않음).
-async function openFloat(page, how = 'pencil') {
+// 11-11 사용자: 연필·두 번 누르기 = 11-06 「그림 편집 중」 창(다섯 도구). 5E_image 화면은 그 창의 「5E_image에서 자세히」로만.
+async function openInline(page, how = 'pencil') {
   if (how === 'pencil') { await selectPicture(page); await page.locator('#exam-picture-controls [data-picture-modify]').click(); }
   else await h.doubleClick(page, 0);
+  await root(page).waitFor({ state: 'visible', timeout: 30000 }); await h.idle(page);
+}
+async function openFloat(page, how = 'pencil') {
+  await openInline(page, how);
+  await button(page, 'original').click();
   await page.waitForFunction(() => document.body.classList.contains('exam-float-edit') && !!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length, null, { timeout: 30000 }); await h.idle(page);
 }
 async function closeFloat(page) {
@@ -98,9 +104,13 @@ async function scenario(browser, origin, name) {
     const placed = (await h.pictures(page))[0];
     assert.deepEqual(types(placed.figure).filter(type => type !== 'labeler'), ['image'], 'the placed picture starts as an image object');
 
-    // ① 연필(간단한 수정)·두 번 누르기 → image와 같은 편집 화면이 한글 위 창으로(한글은 뒤에 보이고 잠김)
+    // ① 연필(간단한 수정)·두 번 누르기 → 「그림 편집 중」 창(다섯 도구), 「5E_image에서 자세히」 → image와 같은 편집 화면이 한글 위 창으로
     for (const how of ['pencil', 'double']) {
-      await openFloat(page, how);
+      await openInline(page, how);
+      assert.deepEqual(await root(page).locator('[data-inline-action]').evaluateAll(nodes => ['ai', 'restore', 'crop'].map(name => nodes.some(n => n.dataset.inlineAction === name))), [true, true, true], `${how}: the five-tool picture editor`);
+      if (how === 'pencil') await page.screenshot({ path: path.join(evidence, name + '-0-inline.png') });
+      await button(page, 'original').click();
+      await page.waitForFunction(() => document.body.classList.contains('exam-float-edit') && !!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length, null, { timeout: 30000 }); await h.idle(page);
       const shown = await page.evaluate(() => ({ hwp: getComputedStyle(document.querySelector('#rhwp-exam-workspace')).display, inert: document.querySelector('#rhwp-exam-workspace').inert, tools: !!document.querySelector('.tool-btn[data-tool="V"]')?.getClientRects().length, bg: [...document.querySelectorAll('#exam-edit-bar [data-edit-bg]')].map(b => b.textContent) }));
       assert.notEqual(shown.hwp, 'none', `${how}: the exam stays visible behind`); assert.equal(shown.inert, true); assert.equal(shown.tools, true, `${how}: the same 5E_image tools`);
       assert.deepEqual(shown.bg, ['흰 바탕', '투명 격자'], `${how}: background choice`);
@@ -174,7 +184,7 @@ async function scenario(browser, origin, name) {
     assert.ok(pageOf(converted.figure).meta.examRestoredFrom, 'the picture before AI is kept for revert');
 
     assert.deepEqual(errors, [], 'no runtime errors');
-    console.log(name + ': pencil/double-click open the 5E_image editor floating over the exam, graph restore opens the AI graph window over the exam and returns a graph object in place, graph double-click edit, revert, AI conversion returns in place (' + opened + ')');
+    console.log(name + ': pencil/double-click open the five-tool picture editor (5E_image only via 「자세히」), graph restore opens the AI graph window over the exam and returns a graph object in place, graph double-click edit, revert, AI conversion returns in place (' + opened + ')');
   } catch (error) {
     if (!page.isClosed()) await page.screenshot({ path: path.join(evidence, name + '-failure.png') }).catch(() => {});
     throw error;
