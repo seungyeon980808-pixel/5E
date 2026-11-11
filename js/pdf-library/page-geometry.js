@@ -19,7 +19,18 @@ function wordsInside(rect, words) {
   });
 }
 
+// 11-12 밤샘: 검색할 때마다 같은 쪽의 아래 경계를 다시 셌다(검색 한 번 CPU 270ms). 같은 낱말 배열이면 저장해 둔 값을 쓴다.
+const footerBoundaryCache = new WeakMap();
 function footerBoundary(words) {
+  if (words && typeof words === 'object') {
+    if (footerBoundaryCache.has(words)) return footerBoundaryCache.get(words);
+    const value = computeFooterBoundary(words);
+    footerBoundaryCache.set(words, value);
+    return value;
+  }
+  return computeFooterBoundary(words);
+}
+function computeFooterBoundary(words) {
   const footerWords = (words ?? []).filter((word) => {
     const text = String(word.text ?? "").normalize("NFKC");
     return word.rect?.[1] >= FOOTER_MIN_Y && FOOTER_MARKERS.some((marker) => text.includes(marker));

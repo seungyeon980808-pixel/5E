@@ -152,7 +152,10 @@ export function createSearchWorkerController() {
             }
             entries.push(...cached.entries);
           }
-          for (const key of prebuiltCache.keys()) if (!usedKeys.has(key)) prebuiltCache.delete(key);
+          // 11-12 밤샘: 화면이 두 문서 묶음으로 번갈아 검색하면, 안 쓰는 색인을 바로 지워 매번 33MB를 다시 받았다.
+          // 방금 쓴 것을 맨 뒤로 옮기고 최근 3개까지만 둔다(없으면 화면이 PREBUILT_MISSING을 받고 통째로 다시 보냄).
+          for (const key of usedKeys) { const value = prebuiltCache.get(key); if (value) { prebuiltCache.delete(key); prebuiltCache.set(key, value); } }
+          while (prebuiltCache.size > Math.max(3, usedKeys.size)) prebuiltCache.delete(prebuiltCache.keys().next().value);
           index = Object.freeze({ schemaVersion: "pdf-search-index-v1", entries: Object.freeze(entries) });
           warmSearchIndex(index);
           return { count: documents.size, entries: entries.length };

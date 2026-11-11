@@ -911,6 +911,12 @@
       "findingIds": [
         "HWP-SCIENCE-SCRIPTS"
       ]
+    },
+    {
+      "path": "tests/test-pdf-search-worker-prebuilt-cache.mjs",
+      "findingIds": [
+        "LIBRARY-SEARCH-NO-RESEND"
+      ]
     }
   ],
   "browser": [
