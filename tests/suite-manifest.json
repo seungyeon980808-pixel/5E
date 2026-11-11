@@ -911,6 +911,12 @@
       "findingIds": [
         "HWP-SCIENCE-SCRIPTS"
       ]
+    },
+    {
+      "path": "tests/test-graph-source-label-size.mjs",
+      "findingIds": [
+        "GRAPH-SOURCE-LABEL-SIZE"
+      ]
     }
   ],
   "browser": [

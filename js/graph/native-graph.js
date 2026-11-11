@@ -52,7 +52,9 @@ export function buildNativeGraph(input, options = {}) {
   const isDot = shape => /dot|disc|filled|circle/.test(String(shape||''));
   const fitMarker = (v, shape) => isDot(shape) ? Math.max(v, minMarker) : v; // 11-11: 찍힌 점(●)만 바닥을 둔다
   // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.3배 키운 뒤 바닥을 둔다.
-  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.min(maxLabel, Math.max(v * 1.3, minLabel)) : v;
+  // 11-12 밤샘: 원본 픽셀에서 직접 잰 글자 높이(source-label-size.js)는 이미 원본 크기이므로 1.3배 하지 않는다 — 46개 비교에서 원본보다 약 1.3배 컸다.
+  const labelBoost = style.fontSizeMeasured === true ? 1 : 1.3;
+  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.min(maxLabel, Math.max(v * labelBoost, minLabel)) : v;
   const labelSize = style.labelSize != null ? fitLabel(style.labelSize / 1.3) : (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : standardLabel * 1.12);
   const plane = { ...makeDefaultCoordplane({ x: 0, y: 0 }), x: box.x, y: box.y, w: box.w, h: box.h,
     xMin: x.min, xMax: x.max, yMin: y.min, yMax: y.max,
