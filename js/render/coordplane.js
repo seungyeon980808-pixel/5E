@@ -29,9 +29,12 @@ import { descriptionTitleLayout, descriptionTickLabelLanes } from '../graph/desc
 // Source restoration retains its legacy lettering. Newly described graphs use
 // italic quantities; the label renderer keeps units and numerals upright.
 // Point/series names explicitly request upright lettering at their call sites.
-const graphLabelUpright = (obj, requested) => requested ?? (!!obj.reconstruction && !obj.graphStyle?.descriptionLayout);
+// 11-11: 복원 그래프도 물리량(v₀·E₀·t₁·a)은 기울인 수식 글꼴. 숫자·단위·점 이름(A·B·C)은 렌더러·호출부가 정체로 둔다.
+const graphLabelUpright = (obj, requested) => requested ?? false;
+// 11-11: A·B·C처럼 대문자 한 글자(아래 첨자 숫자 허용)는 점·물체 이름이라 정체로 둔다.
+const isNameLabel = text => /^\s*[A-Z](?:_\{?\d+\}?|[0-9₀-₉′'])?\s*$/.test(String(text ?? ''));
 const graphLabelRenderer = obj => (text, options = {}) => {
-  const settings={parenthesesAreUnits:!obj.graphStyle?.descriptionLayout,...options,upright:graphLabelUpright(obj, options.upright),
+  const settings={parenthesesAreUnits:!obj.graphStyle?.descriptionLayout,...options,upright:graphLabelUpright(obj, options.upright ?? (isNameLabel(text) ? true : undefined)),
     sourceHeight:options.sourceHeight ?? (obj.reconstruction?.labelSizeMode==='source-height')};
   if (!isExamStyle(obj)) return renderBaseGraphLabel(text,settings);
   // Measure each font at ONE canonical size. Scaling that same vector label
@@ -314,10 +317,12 @@ function renderCoordplane(obj) {
       yLoK = Math.round(gYlo / ky.step); yHiK = Math.round(gYhi / ky.step);
     }
     // 격자 사각형 경계 = 마지막 눈금 + gridOver 칸(사진4: 데이터 밖으로 반 칸 더).
-    const rectLeft  = interiorBoxAxes || fullReconstructionGrid ? left : xBoth ? worldXFromMathX(P, (obj.gridBounds?.xMin ?? xLoK*kx.step) - goXN*kx.step) : worldX0;
-    const rectRight = fullReconstructionGrid ? right : worldXFromMathX(P, (obj.gridBounds?.xMax ?? xHiK*kx.step) + goXP*kx.step);
-    const rectTop   = fullReconstructionGrid ? top : worldYFromMathY(P, (obj.gridBounds?.yMax ?? yHiK*ky.step) + goYP*ky.step);
-    const rectBot   = interiorBoxAxes || fullReconstructionGrid ? bottom : yBoth ? worldYFromMathY(P, (obj.gridBounds?.yMin ?? yLoK*ky.step) - goYN*ky.step) : worldY0;
+    let rectLeft  = interiorBoxAxes || fullReconstructionGrid ? left : xBoth ? worldXFromMathX(P, (obj.gridBounds?.xMin ?? xLoK*kx.step) - goXN*kx.step) : worldX0;
+    let rectRight = fullReconstructionGrid ? right : worldXFromMathX(P, (obj.gridBounds?.xMax ?? xHiK*kx.step) + goXP*kx.step);
+    let rectTop   = fullReconstructionGrid ? top : worldYFromMathY(P, (obj.gridBounds?.yMax ?? yHiK*ky.step) + goYP*ky.step);
+    let rectBot   = interiorBoxAxes || fullReconstructionGrid ? bottom : yBoth ? worldYFromMathY(P, (obj.gridBounds?.yMin ?? yLoK*ky.step) - goYN*ky.step) : worldY0;
+    // 11-11: 박스형은 격자 점선이 박스 테두리까지만(넘치지 않고, 모자라지도 않게).
+    if (boxFrame) { rectLeft = Math.max(rectLeft, left); rectRight = Math.min(rectRight, right); rectTop = Math.max(rectTop, top); rectBot = Math.min(rectBot, bottom); }
     if (obj.showGridX !== false && kx.kEnd - kx.kStart <= GRID_MAX_LINES) {
       for (let k = xLoK; k <= xHiK; k++) {
         if ((!xBoth && k < 0) || skipTickX(k * kx.step)) continue;

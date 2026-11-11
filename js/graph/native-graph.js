@@ -43,7 +43,13 @@ export function buildNativeGraph(input, options = {}) {
   const styleScale = box.w / 70;
   const style = plan.style || {};
   const labelSizeMode = style.fontSizePx && style.labelSize === undefined ? 'source-height' : 'legacy';
-  const labelSize = style.labelSize ?? (style.fontSizePx ? style.fontSizePx * box.w / plan.source.plotBox.w : 5.4 * styleScale);
+  // 11-11: AI가 잰 원본 글자 높이는 대체로 작다(사용자 시험 8개 중 6개 「글씨가 작다」). 기출 표준 글자 높이의 0.92배를 바닥으로 둔다.
+  const minLabel = EXAM_STYLE.label * styleScale * 0.92, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
+  const isDot = shape => /dot|disc|filled|circle/.test(String(shape||''));
+  const fitMarker = (v, shape) => isDot(shape) ? Math.max(v, minMarker) : v; // 11-11: 찍힌 점(●)만 바닥을 둔다
+  // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.2배 키운 뒤 바닥을 둔다.
+  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.max(v * 1.2, minLabel) : v;
+  const labelSize = style.labelSize ?? (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : 5.4 * styleScale);
   const plane = { ...makeDefaultCoordplane({ x: 0, y: 0 }), x: box.x, y: box.y, w: box.w, h: box.h,
     xMin: x.min, xMax: x.max, yMin: y.min, yMax: y.max,
     xScale: observed ? 'linear' : x.scale, yScale: observed ? 'linear' : y.scale,
@@ -80,10 +86,10 @@ export function buildNativeGraph(input, options = {}) {
     showTickY2: !!y2.ticks?.length, explicitTicks: clone(y2.ticks || []), tickTextY2: [] };
   plane.graphAnnotations = plane.graphAnnotations.map((a) => {
     const series=plan.series.find(s=>s.id===a.seriesId);
-    if(a.kind==='point' && a.anchorX!==undefined && series?.observedPoints) a={...a,markerSize:a.markerSize ?? series.markerSize ?? .8*styleScale,strokeWidth:a.strokeWidth ?? series.strokeWidth ?? style.strokeWidth ?? .45*styleScale};
-    if (a.coordinateSpace !== 'normalized') return { ...a, text: a.displayMath ?? a.displayText ?? a.text, ...(a.fontSizePx ? { size: a.fontSizePx * box.w / plan.source.plotBox.w, labelSizeMode: 'source-height' } : {}) };
+    if(a.kind==='point' && a.anchorX!==undefined && series?.observedPoints) a={...a,markerSize:fitMarker(a.markerSize ?? series.markerSize ?? .8*styleScale,a.markerShape ?? series.markerShape ?? 'dot'),strokeWidth:a.strokeWidth ?? series.strokeWidth ?? style.strokeWidth ?? .45*styleScale};
+    if (a.coordinateSpace !== 'normalized') return { ...a, text: a.displayMath ?? a.displayText ?? a.text, ...(a.fontSizePx ? { size: fitLabel(a.fontSizePx * box.w / plan.source.plotBox.w), labelSizeMode: 'source-height' } : {}) };
     const p = a.axis === 'y2' ? planeAsY2(plane) : plane;
-    return { ...a, text: a.displayMath ?? a.displayText ?? a.text, ...(a.fontSizePx ? { size: a.fontSizePx * box.w / plan.source.plotBox.w, labelSizeMode: 'source-height' } : {}), ...(a.to ? { to: normalizedToMath(p,a.to) } : {}), ...(a.anchorX!==undefined?{anchorX:normalizedToMath(p,{x:a.anchorX,y:0}).x}:{}), ...normalizedToMath(p,a), coordinateSpace: 'data' };
+    return { ...a, text: a.displayMath ?? a.displayText ?? a.text, ...(a.fontSizePx ? { size: fitLabel(a.fontSizePx * box.w / plan.source.plotBox.w), labelSizeMode: 'source-height' } : {}), ...(a.to ? { to: normalizedToMath(p,a.to) } : {}), ...(a.anchorX!==undefined?{anchorX:normalizedToMath(p,{x:a.anchorX,y:0}).x}:{}), ...normalizedToMath(p,a), coordinateSpace: 'data' };
   });
   const frame = plan.frame || {};
   if (frame.variant) plane.axisVariant = frame.variant === 'none' ? 'quadrant' : frame.variant === 'x' ? 'single' : frame.variant;
@@ -97,7 +103,7 @@ export function buildNativeGraph(input, options = {}) {
     const p = s.axis === 'y2' ? planeAsY2(plane) : plane;
     const f = { type: 'funcgraph', closed: s.closed === true, strokeLevel: 0, strokeWidth: s.strokeWidth ?? style.strokeWidth ?? 0.45 * styleScale,
       dashLength: s.dashLength ?? (s.lineStyle === 'dashed' ? 1.2 * styleScale : 0), dashGap: s.dashGap ?? (s.lineStyle === 'dashed' ? 0.9 * styleScale : 0), locked: false, positionLocked: false,
-      lineVisible: s.lineVisible !== false, markerShape:s.markerShape || 'none', markerSize:s.markerSize ?? 0.8 * styleScale, ...(s.markerStrokeWidth !== undefined ? {markerStrokeWidth:s.markerStrokeWidth}:{}), ...(s.dashPattern ? {dashPattern:clone(s.dashPattern)}:{}),
+      lineVisible: s.lineVisible !== false, markerShape:s.markerShape || 'none', markerSize:fitMarker(s.markerSize ?? 0.8 * styleScale, s.markerShape), ...(s.markerStrokeWidth !== undefined ? {markerStrokeWidth:s.markerStrokeWidth}:{}), ...(s.dashPattern ? {dashPattern:clone(s.dashPattern)}:{}),
       axis: s.axis || 'y', curveStyle: s.curveStyle || 'straight', curvature: 1,
       label: '', labelShow: false, endLabel: s.endLabel ?? ((plan.annotations || []).some(a => a.text === s.label || a.seriesId === s.id && a.kind === 'text') || (plan.legends || []).some(l => l.rows.some(row => row.text === s.label)) ? '' : s.label || ''), endLabelSize: labelSize, labelWeight: style.labelWeight ?? 400,
       segmentModes: clone(s.segmentModes || []), arrowSpecs: clone(s.arrowSpecs || []),

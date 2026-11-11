@@ -276,11 +276,14 @@ function applyLegacyCfg(plane, cfg) {
   const padXP = Number.isFinite(cfg.padXPos) ? cfg.padXPos : PAD_X;
   const padXN = Number.isFinite(cfg.padXNeg) ? cfg.padXNeg : PAD_X;
   const padYP = Number.isFinite(cfg.padYPos) ? cfg.padYPos : PAD_Y;
-  const padYN = Number.isFinite(cfg.padYNeg) ? cfg.padYNeg : PAD_Y;
-  plane.xMin = xNeg > 0 ? -(xNeg + padXN) : 0;
-  plane.xMax = xPos + padXP;
+  const padYN0 = Number.isFinite(cfg.padYNeg) ? cfg.padYNeg : PAD_Y;
+  // 11-11: 박스형은 화살촉이 없으므로 화살표 여유 칸을 두지 않는다 — 박스 끝 = 범위 끝, 점선 격자가 테두리까지 이어진다.
+  const boxNoPad = cfg.variant === 'box';
+  const padYN = boxNoPad ? 0 : padYN0;
+  plane.xMin = xNeg > 0 ? -(xNeg + (boxNoPad ? 0 : padXN)) : 0;
+  plane.xMax = xPos + (boxNoPad ? 0 : padXP);
   plane.yMin = yNeg > 0 ? -(yNeg + padYN) : 0;
-  plane.yMax = yPos + padYP;
+  plane.yMax = yPos + (boxNoPad ? 0 : padYP);
   plane.padXPos = padXP; plane.padXNeg = padXN; plane.padYPos = padYP; plane.padYNeg = padYN;  // 재편집 복원용
   // 격자 간격(요구): 축이 덮는 값 범위(0~xPos)는 그대로 두고 **격자선을 그 간격마다** 긋는다.
   // 간격 0.5면 눈금이 0, 0.5, 1 … 로 촘촘해진다(칸이 2배). 라벨은 coordplane이 k×step으로

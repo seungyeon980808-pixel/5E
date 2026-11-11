@@ -18,6 +18,8 @@ export function tidyGraphValue(value) {
   if (value === 0) return 0;
   // 교과서 파동처럼 일부러 1/8 단위로 맞춘 값(0.125·0.375 등)은 그대로 둔다 — 반올림하면 오히려 다른 곡선이 된다.
   if (Math.abs(value * 8 - Math.round(value * 8)) < 1e-9) return Math.round(value * 8) / 8;
+  // 11-11: 소수 셋째 자리에서 딱 끝나는 수(1.125, 0.375, 2.005)는 셋째 자리까지 그대로 둔다.
+  if (Math.abs(value * 1000 - Math.round(value * 1000)) < 1e-6) return Math.round(value * 1000) / 1000;
   const rounded = Math.abs(value) < 0.1 ? Number(value.toPrecision(2)) : Math.round(value * 100) / 100;
   return Object.is(rounded, -0) ? 0 : Number(rounded.toPrecision(15));
 }
