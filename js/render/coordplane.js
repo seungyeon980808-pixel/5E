@@ -33,7 +33,7 @@ import { descriptionTitleLayout, descriptionTickLabelLanes } from '../graph/desc
 // 11-11(2차): 복원 그래프는 원본처럼 대부분 정체. 기울이는 것은 물리량 기호 한 개뿐 — 소문자 한 글자(a, k, t, x)나
 // 아래 첨자가 붙은 글자(E_0, v_0, t_1, 2E_0, 11k). 대문자 단독(A·B·C)·화학식(OH)·단위·한글·(가)는 정체.
 const isQuantityLabel = text => /^\s*[0-9.]*\s*(?:[a-z]|[A-Za-z](?=_)|\\lambda|\\theta|λ|θ)(?:_\{?[0-9a-z]+\}?)?\s*$/.test(String(text ?? ''));
-const graphLabelUpright = (obj, requested, text) => requested ?? (obj.reconstruction && !obj.graphStyle?.descriptionLayout ? !isQuantityLabel(text) : false);
+const graphLabelUpright = (obj, requested, text) => requested ?? (obj.reconstruction ? !isQuantityLabel(text) : false); // 11-11: 설명으로 만든 그래프도 같은 규칙
 // 11-11: A·B·C처럼 대문자 한 글자(아래 첨자 숫자 허용)는 점·물체 이름이라 정체로 둔다.
 const isNameLabel = text => /^\s*[A-Z](?:_\{?\d+\}?|[0-9₀-₉′'])?\s*$/.test(String(text ?? ''));
 const graphLabelRenderer = obj => (text, options = {}) => {

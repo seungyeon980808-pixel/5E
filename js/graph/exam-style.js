@@ -8,14 +8,15 @@ export const EXAM_STYLE = Object.freeze({
   axis: .3, curve: .5, guide: .15, tick: .24, tickLength: 1.2,
   arrowLength: 3.6, marker: .7, label: 4.8, dash: .8, gap: .6,
 });
-export const DESCRIPTION_EXAM_STYLE = Object.freeze({labelScale:.7,arrowScale:1.45,arrowWidthScale:.72});
+// 11-11: 설명으로 만든 그래프도 글씨는 기출 표준 크기(0.7배이던 것), 데이터 선은 축보다 확실히 굵게(1.4배).
+export const DESCRIPTION_EXAM_STYLE = Object.freeze({labelScale:1,arrowScale:1.45,arrowWidthScale:.72,curveScale:1.4});
 export const isExamStyle = value => value?.graphStyle?.preset === EXAM_STYLE.preset;
 const positive = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
 export function examMetrics(plane) {
   const style = plane.graphStyle || {};
   const scale = positive(plane.w, EXAM_STYLE.referenceWidth) / EXAM_STYLE.referenceWidth;
   const stroke = scale * positive(style.strokeScale, 1);
-  return { scale, axis: EXAM_STYLE.axis * stroke, curve: EXAM_STYLE.curve * stroke,
+  return { scale, axis: EXAM_STYLE.axis * stroke, curve: EXAM_STYLE.curve * stroke * positive(style.curveScale, 1),
     guide: EXAM_STYLE.guide * stroke, tick: EXAM_STYLE.tick * stroke,
     tickLength: EXAM_STYLE.tickLength * stroke,
     arrowLength: EXAM_STYLE.arrowLength * stroke * positive(style.arrowScale, 1),

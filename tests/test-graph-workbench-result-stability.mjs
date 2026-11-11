@@ -32,7 +32,7 @@ const normal=buildWorkbenchGraph(designed,designed.source);
 const creation=buildWorkbenchGraph(designed,designed.source,{descriptionLayout:true});
 const designedPlane=validateWorkbenchGraph(creation);
 assert.equal(designedPlane.graphStyle.arrowScale,1.45);
-assert.equal(designedPlane.axisLabelScale,.7);
+assert.equal(designedPlane.axisLabelScale,1); // 11-11: 설명 그래프 글씨를 0.7배에서 기출 표준(1배)으로
 
 const manuallyStyled=structuredClone(creation), manualPlane=manuallyStyled.objects[0];
 manualPlane.graphStyle.labelScale=.8;manualPlane.graphStyle.arrowScale=1.6;
@@ -63,7 +63,7 @@ assert.deepEqual(designedPlane.labelXPos,normal.objects[0].labelXPos,'Explicit m
 assert.equal(normal.objects[0].graphStyle.descriptionLayout,undefined,'Image reconstruction retains its existing style');
 assert.deepEqual(creation.objects.filter(o=>o.type==='funcgraph').map(o=>o.mathPoints),normal.objects.filter(o=>o.type==='funcgraph').map(o=>o.mathPoints));
 assert.deepEqual(designedPlane.graphAnnotations.filter(a=>a.kind==='text').map(a=>a.text),['A','B']);
-assert.ok(creation.objects.filter(o=>o.type==='funcgraph').every(o=>o.endLabel==='' && o.graphStyle.labelScale===.7));
+assert.ok(creation.objects.filter(o=>o.type==='funcgraph').every(o=>o.endLabel==='' && o.graphStyle.labelScale===1));
 assert.deepEqual(designed,beforeDesign,'Styling never rewrites the accepted physical plan');
 rows.push({name:'Description styling and label separation preserve physical coordinates and source plan',pass:true});
 const annotated = structuredClone(designed);
