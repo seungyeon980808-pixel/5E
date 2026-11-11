@@ -39,6 +39,16 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     onEdit: callback => {const listener = (_event,payload) => callback(payload);ipcRenderer.on('exam:edit',listener);return () => ipcRenderer.removeListener('exam:edit',listener);},
     onCancel: callback => {const listener = () => callback();ipcRenderer.on('exam:cancel',listener);return () => ipcRenderer.removeListener('exam:cancel',listener);},
   },
+  // 11-11: 출제 자료 파일 저장(~/Documents/5E/출제). 경로는 넘기지 않고 이름·종류만.
+  examFiles: {
+    autosave: text => ipcRenderer.invoke("exam-files:autosave", text),
+    readLatest: () => ipcRenderer.invoke("exam-files:read-latest"),
+    save: payload => ipcRenderer.invoke("exam-files:save", payload),
+    open: file => ipcRenderer.invoke("exam-files:open", file),
+    reveal: file => ipcRenderer.invoke("exam-files:reveal", file),
+    folder: () => ipcRenderer.invoke("exam-files:folder"),
+    openFolder: () => ipcRenderer.invoke("exam-files:open-folder"),
+  },
   examEvidence: (request) => ipcRenderer.invoke("exampool:evidence", request),
   status: () => ipcRenderer.invoke("codex:status"),
   start: () => ipcRenderer.invoke("codex:start"),

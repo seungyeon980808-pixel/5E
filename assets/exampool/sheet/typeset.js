@@ -1,3 +1,4 @@
+import {saveOut,savedText} from './save-out.js';
 import {renumberDocument} from '../../../js/rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
 import {attachGapView,questionElements} from './typeset-gaps.js';
 import {attachTypesetSettings} from './typeset-settings.js';
@@ -295,7 +296,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;
   }
   save.onclick=async()=>{save.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;message('조판 저장됨 · HWPX 재열기 후 모양 검수 완료');}catch(e){message(e.message,true);}finally{save.disabled=!ready;}};
-  download.onclick=async()=>{download.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;const a=window.document.createElement('a'),url=URL.createObjectURL(new Blob([fromBase64(s.bytes)],{type:'application/vnd.hancom.hwpx'}));a.href=url;a.download=`${q.managementId||q.number}번 문항.hwpx`;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);message('편집 가능한 HWPX를 내려받았습니다.');}catch(e){message(e.message,true);}finally{download.disabled=!ready;}};
+  download.onclick=async()=>{download.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;const saved=await saveOut(fromBase64(s.bytes),`${q.managementId||q.number}번 문항.hwpx`,'application/vnd.hancom.hwpx',{open:true});message(saved.desktop?savedText(saved,'편집 가능한 HWPX'):'편집 가능한 HWPX를 내려받았습니다.');}catch(e){message(e.message,true);}finally{download.disabled=!ready;}};
   const changeProfile=async()=>{
     if(!bridge||loading||!ready)return;loading=true;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;guide.hidden=true;
     try{const next=profile(),bytes=resizeQuestionDocument(document(),next,XLSX.CFB),cursor=bridge.input.getCursorPosition();

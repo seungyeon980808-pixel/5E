@@ -1850,6 +1850,8 @@ function createWindow() {
     });
   }
 }
+// 11-11: 설치판 출제 자료를 ~/Documents/5E/출제 에 파일로 쌓는다(자동 저장·백업·내보내기).
+require("./exam-files.cjs").registerExamFilesIpc({ handle: handleTrustedIpc, shell, documentsPath: () => app.getPath("documents") });
 // ExamPool 출제 대화의 근거 검색(읽기 전용). 입력은 종류·검색어·한도로 제한하고 경로·SQL·명령은 받지 않는다.
 handleTrustedIpc("exampool:evidence", async (_event, request) => require("./exampool-evidence.cjs").search(request && typeof request === "object" ? request : {}));
 handleTrustedIpc("codex:status", async () => ({ server: !!server, login: await loginStatus() }));

@@ -8,6 +8,7 @@ import {pickState,renderStep2,fillStep2,refreshCart,poolEntries,editMeta,normTag
 import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastData,loadPast} from './library-view.js';
 import {createCardEditor,clearPastBusy} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
+import {saveOut,savedText,desktopFiles} from './save-out.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
@@ -83,6 +84,13 @@ function remember({validated=false}={}){
 // 다음에 열 때 그 사이 다른 창이 저장하지 않았으면(판 번호가 그대로면) 이어 받는다. 4 MB를 넘으면(그림이 큰 문항) 남기지 않는다.
 const UNLOAD_KEY=CHANNEL+'5e-exampool-unload';let dirtyIds=new Set(),dirtyAll=false;
 function markDirty(only){if(only)dirtyIds.add(only.id);else dirtyAll=true;}
+// 11-11: 설치판은 저장소(IndexedDB)에 더해 ~/Documents/5E/출제/자동 저장/최근.json 에도 쓴다(2초 모아서, 10분마다 백업 한 벌).
+// 앱 저장소가 지워지거나 깨져도 다음에 열 때 이 파일에서 되살린다.
+let fileTimer=0;
+function writeFileSave(){fileTimer=0;const files=desktopFiles();if(!files||demo||!data)return;
+  try{const text=JSON.stringify({...data,_revision:revision,_savedAt:new Date().toISOString()});void files.autosave(text).catch(e=>console.warn('[5E_exam] 파일 자동 저장 실패',e));}catch(e){console.warn('[5E_exam] 파일 자동 저장 실패',e);}}
+function queueFileSave(){if(!desktopFiles()||demo)return;clearTimeout(fileTimer);fileTimer=setTimeout(writeFileSave,2000);}
+window.addEventListener('pagehide',()=>{if(fileTimer){clearTimeout(fileTimer);writeFileSave();}});
 let saveTimer=0;window.addEventListener('pagehide',()=>{if(!saveTimer)return;clearTimeout(saveTimer);
   if(!saveBlocked&&!demo)try{const json=JSON.stringify({base:revision,at:Date.now(),...(dirtyAll?{all:data}:{questions:data.questions.filter(q=>dirtyIds.has(q.id))})});
     if(json.length<4e6)localStorage.setItem(UNLOAD_KEY,json);}catch{}
@@ -99,7 +107,7 @@ function flushSave({now=false}={}){saveTimer=0;
     tx.oncomplete=()=>{revision++;if(stamp===saveStamp&&!saveTimer){dirtyIds.clear();dirtyAll=false;}resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   });
   if(now){const direct=run();saveQueue=saveQueue.then(()=>direct,()=>direct);}else saveQueue=saveQueue.catch(()=>{}).then(run);
-  void saveQueue.then(()=>{if(stamp===saveStamp&&$('#status').dataset.error!=='true')status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
+  void saveQueue.then(()=>{queueFileSave();if(stamp===saveStamp&&$('#status').dataset.error!=='true')status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
   const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();markDirty(only&&data.questions.includes(only)?only:null);demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
@@ -122,15 +130,19 @@ async function boot(){try{
     if(available.some(d=>d.name===CHANNEL+'5e-exampool-sheet-concept')){const oldDB=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+'5e-exampool-sheet-concept');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{raw=await new Promise((resolve,reject)=>{const r=oldDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});copied=!!raw;}finally{oldDB.close();}}
     if(!raw&&available.some(d=>d.name===CHANNEL+'5e-exampool')){const {listQuestions,listResources}=await import('../../../js/exampool-store.js?v=1.7.0-four-session-integration'),qs=await listQuestions(),docs=await listResources();if(qs.length){raw={format:FORMAT,questions:qs.map(fromLegacy),documents:docs.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))};copied=true;}}
   }
+  // 11-11: 설치판 파일 자동 저장에서 되살리기 — 앱 저장소가 비었거나 파일이 더 새것(판 번호가 큼)이면 파일을 쓴다.
+  let fromFile=false,storedRev=0;
+  if(!demo&&desktopFiles()){try{storedRev=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('rev');r.onsuccess=()=>resolve(r.result||0);r.onerror=()=>reject(r.error);});
+    const {text}=await desktopFiles().readLatest();if(text){const saved=JSON.parse(text);if(saved?.format&&Array.isArray(saved.questions)&&(!raw||(saved._revision||0)>(raw._revision||0))){raw=saved;copied=false;fromFile=true;}}}catch(e){console.warn('[5E_exam] 파일 자동 저장을 읽지 못했습니다',e);}}
   // 닫기 직전에 남긴 내용(M14). 그 뒤로 저장된 적이 없을 때만(판 번호가 같을 때만) 이어 받는다.
   let resumed=false;if(!demo){let unload=null;try{unload=JSON.parse(localStorage.getItem(UNLOAD_KEY)||'null');localStorage.removeItem(UNLOAD_KEY);}catch{}
     if(unload&&!copied&&unload.base===(raw?._revision||0)){
       if(unload.all?.format)raw={...unload.all,_revision:raw?._revision||0};
       else if(raw&&Array.isArray(unload.questions)&&unload.questions.length){const byId=new Map(unload.questions.map(q=>[q.id,q]));raw={...raw,questions:raw.questions.map(q=>byId.get(q.id)||q)};}
       resumed=raw!==null&&raw!==undefined;}}
-  if(raw){revision=copied?0:raw._revision||0;data=migrate(raw);if(resumed)remember();if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
+  if(raw){revision=copied?0:raw._revision||0;if(fromFile){revision=storedRev;}data=migrate(raw);if(fromFile)remember();if(resumed)remember();if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
   else if(demo){data=validate(await(await fetch(new URL('./examples.json',import.meta.url))).json());remember();}
-  current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else if(first){view.name='exam';view.examId=first.id;}else view.name='library';}renderAll();if(raw)status('저장한 문항을 열었습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
+  current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else if(first){view.name='exam';view.examId=first.id;}else view.name='library';}renderAll();if(raw)status('저장한 문항을 열었습니다.');if(fromFile)notice('앱 저장소보다 새로운 자동 저장 파일(문서/5E/출제)에서 되살렸습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
 }catch(e){// 열지 못한 이유는 사라지지 않게 둔다 — 6초 뒤 지워지면 빈 보관함만 남아 저장이 없어진 것처럼 보인다.
   saveBlocked=true;view.loadError='저장된 입력을 열지 못했습니다. 기존 저장은 보존했습니다. '+e.message;renderAll();status(view.loadError,true,{keep:true});}
   try{standards=await loadStandards();}catch{status('성취기준 자료를 불러오지 못했습니다. 자료 열람에서 다시 시도하세요.',true);}
@@ -522,8 +534,9 @@ $('#delete-question').onclick=()=>{if(current)askDelete(current.id);};
 $('#delete-confirm').onclick=()=>{const run=pendingDelete;pendingDelete=null;$('#delete-dialog').close();run?.();};
 $('#filter').oninput=()=>{renderRows();grid?.refresh();};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(grid?.finish()!==false)$('#export').click();return;}if((e.metaKey||e.ctrlKey)&&['z','y'].includes(e.key.toLowerCase())&&!e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea,select,[contenteditable]')){e.preventDefault();replay(e.shiftKey||e.key.toLowerCase()==='y'?'redo':'undo');return;}if(e.key==='Escape'&&!document.querySelector('dialog[open]'))closeSources();});
-function download(bytes,name,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){const url=URL.createObjectURL(new Blob([bytes],{type:mime})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
-$('#export').onclick=async()=>{try{status('엑셀 만드는 중…');const bytes=await exportExcel(window.XLSX,window.JSZip,data);download(bytes,'5E_exam-문항.xlsx');status('엑셀 내려받기 완료 · 구성·표·그림·자료와 5E 원본을 함께 보관합니다.');}catch(e){status(e.message,true);}};
+// 11-11: 설치판은 ~/Documents/5E/출제 에 날짜_시간 이름으로 저장(save-out.js), 웹은 내려받기.
+function download(bytes,name,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',options={}){return saveOut(bytes,name,mime,options);}
+$('#export').onclick=async()=>{try{status('엑셀 만드는 중…');const bytes=await exportExcel(window.XLSX,window.JSZip,data);const saved=await download(bytes,'5E_exam-문항.xlsx');status(savedText(saved,'엑셀')+' · 구성·표·그림·자료와 5E 원본을 함께 보관합니다.');}catch(e){status(e.message,true);}};
 $('#top-more').onclick=e=>{e.stopPropagation();const m=$('#top-menu');m.hidden=!m.hidden;
   // 카드 화면에서는 왼쪽 메뉴가 숨어 새 시험지를 못 찾았다(10-28) — 여기서 만들고, 보고 있는 문항을 바로 담는다.
   $('#top-new-exam').textContent=view.name==='card'&&current&&!examOf(data,current.id)?'이 문항으로 새 시험지 만들기':'새 시험지 만들기';$('#top-more').setAttribute('aria-expanded',String(!m.hidden));};
@@ -1101,11 +1114,11 @@ async function sendExamNow(exam,{download:asFile=false,variant=false,print=false
     if(variant){const {shuffledOrder,answerRows}=await import('./exam-review.js');const qs=exam.items.map(id=>data.questions.find(q=>q.id===id));
       const order=shuffledOrder(exam.items,variantSeed(exam));
       // 한 번에 파일 하나만(사파리는 연달아 내려받기를 막거나 허락을 묻는다) — 가·나형 대응은 이원목적분류표·정답표 엑셀의 세 번째 시트.
-      const bytes=await forHancom(await buildExamBytes(exam,{order}));download(bytes,`${exam.title} (나형).hwpx`,'application/vnd.hancom.hwpx');
-      status('나형 시험지(HWPX)를 내려받았습니다 · 가·나형 정답 대응은 「이원목적분류표·정답표(엑셀)」의 세 번째 시트에 있습니다.');return;}
+      const bytes=await forHancom(await buildExamBytes(exam,{order}));const saved=await download(bytes,`${exam.title} (나형).hwpx`,'application/vnd.hancom.hwpx',{open:true});
+      status(savedText(saved,'나형 시험지(HWPX)')+' · 가·나형 정답 대응은 「이원목적분류표·정답표(엑셀)」의 세 번째 시트에 있습니다.');return;}
     const bytes=await buildExamBytes(exam);
     if(print){await printExam(bytes,exam.title,print==='A4'?'A4':null);return;}
-    if(asFile||!embedded){download(await forHancom(bytes),`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
+    if(asFile||!embedded){const saved=await download(await forHancom(bytes),`${exam.title}.hwpx`,'application/vnd.hancom.hwpx',{open:true});status(saved.desktop?savedText(saved,'시험지 HWPX'):asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
     sendProgress.step('open','5E_hwp에서 시험지를 여는 중…',.4);
     examRequest=uid();window.parent.postMessage({channel:'5e-question-sheet',action:'exam-handoff',requestId:examRequest,bytes,title:exam.title,qid:exam.id},OWN);
   }catch(e){
@@ -1121,7 +1134,7 @@ async function downloadBlueprint(exam){try{const {blueprintRows,answerRows,shuff
   if(!qs.length){status('시험지에 문항을 넣은 뒤 내려받으세요.',true);return;}
   const X=window.XLSX,book=X.utils.book_new();X.utils.book_append_sheet(book,X.utils.aoa_to_sheet(blueprintRows(qs)),'이원목적분류표');X.utils.book_append_sheet(book,X.utils.aoa_to_sheet(answerRows(qs)),'정답표');
   {const order=shuffledOrder(exam.items,variantSeed(exam)),mark=['①','②','③','④','⑤'];X.utils.book_append_sheet(book,X.utils.aoa_to_sheet([['나형 번호','가형 번호','정답','배점'],...order.map((id,i)=>{const q=qs.find(x=>x.id===id);return [i+1,exam.items.indexOf(id)+1,q.type==='서술형'?'서술형':Number.isInteger(q.answer)?mark[q.answer]:'',Number(q.points)||0];})]),'가나형 대응');}
-  download(X.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 이원목적분류표·정답표.xlsx`);status('이원목적분류표·정답표(엑셀)를 내려받았습니다.');}catch(e){status(e.message,true);}}
+  const saved=await download(X.write(book,{type:'array',bookType:'xlsx'}),`${exam.title} 이원목적분류표·정답표.xlsx`);status(savedText(saved,'이원목적분류표·정답표(엑셀)'));}catch(e){status(e.message,true);}}
 // 인쇄·PDF: 엔진이 그린 쪽(SVG)을 실제 용지 크기로 인쇄 창에 — PDF는 인쇄 창의 「PDF로 저장」.
 // fit='A4': B4·A3 시험지를 통째로 A4에 줄여 찍는다(10-24 용지 원칙). 용지 비율이 같아 줄바꿈·그림 위치는 그대로, 크기만 약 82%(B4).
 async function printExam(bytes,title,fit=null){typesetter||=makeTypesetter();const drawn=await typesetter.examPagesSvg(bytes),{pages}=drawn;
