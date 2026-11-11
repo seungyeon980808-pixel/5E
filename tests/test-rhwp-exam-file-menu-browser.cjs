@@ -119,7 +119,7 @@ async function scenario(origin,engine,surface) {
     assert.match(await page.locator('.exam-figure span').textContent(),/미반영 수정/);
     await h.seedSourceLabel(page);
     // 11-06: 두 번 누르기 = 5E_image 편집 화면이 한글 위 창으로 — 그 안에서 라벨을 고쳐 「문서에 반영」.
-    await h.doubleClick(page);await page.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length);await h.idle(page);
+    await h.doubleClick(page);/* 11-11(18f26565): 「그림 편집 중」 창 → 「5E_image에서 자세히」 */await page.locator('[data-inline-action="original"]').click();await page.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length);await h.idle(page);
     await page.evaluate(async stateUrl=>{const {state}=await import(stateUrl);state.update(s=>{s.objects.find(o=>o.type==='labeler').text='외부 그림 라벨';});},h.runtime(page).stateUrl);
     await page.locator('[data-source-apply]').click();await h.recrop(page);
     const applied=(await h.pictures(page))[0];assert.equal(applied.figure.source.pages[0].objects.find(o=>o.type==='labeler').text,'외부 그림 라벨');

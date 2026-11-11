@@ -9,7 +9,7 @@ async function revealPicture(page){
   await h.waitForState(page,()=>!!window.cameraBridge.figureGeometry(window.cameraRef));
 }
 async function doubleClickPicture(page){const g=await page.evaluate(()=>window.cameraBridge.figureGeometry(window.cameraRef));assert.ok(g,'selected page is rendered');await page.mouse.dblclick(g.x+g.w*.4,g.y+g.h*.4);}
-async function openedFloat(page){await page.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length,null,{timeout:30000});await h.idle(page);}
+async function openedFloat(page){/* 11-11(18f26565): 두 번 누르기는 먼저 「그림 편집 중」 창 → 「5E_image에서 자세히」 */await page.locator('[data-inline-action="original"]').click({timeout:30000});await page.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length,null,{timeout:30000});await h.idle(page);}
 async function closeFloat(page){await page.locator('#exam-edit-bar button',{hasText:'돌아가기'}).click();await page.waitForFunction(()=>!document.body.classList.contains('exam-editing')&&!document.body.classList.contains('exam-float-edit'));await h.idle(page);}
 async function monitor(page){await page.evaluate(async()=>{
   const {RhwpExamBridge}=await import('/js/rhwp-exam-bridge.js?v=1.7.0-four-session-integration'),f=document.querySelector('#exam-studio iframe');
