@@ -207,7 +207,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
         await persist(run.snapshot);
         if (run.done || active !== run) return;
         publish(run.snapshot);
-        dispatch(run, buildGraphCorrectionPrompt(run.snapshot.source, { previousPlan: result.ok ? result.plan : safePlan || null, issues, validationErrors: result.errors, hasPreviousRender: !!image, attempt: attempt + 1, maxAttempts: run.maxAttempts }), image ? [run.snapshot.attachment, image] : [run.snapshot.attachment]);
+        dispatch(run, buildGraphCorrectionPrompt(run.snapshot.source, { previousPlan: result.ok ? result.plan : safePlan || null, issues, validationErrors: result.errors, hasPreviousRender: !!image, attempt: attempt + 1, maxAttempts: run.repairMode ? Math.min(3, Math.max(run.maxAttempts, attempt + 1)) : run.maxAttempts }), image ? [run.snapshot.attachment, image] : [run.snapshot.attachment]);
       })().catch(error => { if (!run.done) finish(run, error); });
     }
   };
