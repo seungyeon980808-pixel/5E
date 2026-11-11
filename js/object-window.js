@@ -13,6 +13,19 @@ import { OBJECT_SUBJECTS, objectFavorites, toggleObjectFavorite } from "./subjec
 import { assetLibraryItems, assetThumbUrl, insertAssetItem } from "./asset-library.js?v=1.7.0-four-session-integration";
 import { personalItems, personalThumbnail, selectedPersonalObjects, savePersonalObject, setPersonalStar, insertPersonalItem, PERSONAL_DEFAULT_CATEGORY } from "./personal-objects.js?v=1.7.0-four-session-integration";
 import { showAlert, showPrompt } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { LAB_APPARATUS } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+
+// 11-11 사용자 결정(조작 도구 A안, 「조작할 수 있는 값이 있으면 다 지정」): 놓은 뒤 끝점을 끌거나 속성 칸의 값으로 모양을 바꾸는 도구.
+// 오브젝트 창 「전체」에서는 맨 위 「조작 도구」 묶음으로 모은다(과목을 고르면 그 과목 묶음 안에 그대로 보인다).
+// 기본 도형(선·원·사각형·글자)과 값 칸이 없는 기구(도선·나침반·클램프 등)는 빠진다.
+const MANIPULABLE_TOOLS = new Set(["SPRING", "PENDULUM", "PARABOLA", "STANDINGWAVE", "CHARGEFIELD", "FIELDLINES", "OPTICS", "CIRCUIT", "VESSEL",
+  "CHEMMODEL", "CHEMGRAPH", "CHEMCHART", "PARTICLEBOX", "ORBITAL", "PERIODIC", "PEDIGREE", "NEURON", "CHROMOSOME", "LEGEND", "BUBBLE", "ELECTRODE", "GROUNDARC"]);
+export function isManipulableTemplate(def) {
+  const create = def?.create;
+  if (!create) return false;
+  if (create.tool === "APPARATUS") return Object.hasOwn(LAB_APPARATUS, create.kind) || create.kind === "optical_bench";
+  return MANIPULABLE_TOOLS.has(create.tool);
+}
 
 const E = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const ICON = {
@@ -47,6 +60,14 @@ export function initObjectWindow(state) {
       if (ids.length) out.push({ code, part: part.name, ids });
     }
     return out;
+  }
+  // 「전체」 보기: 조작 도구를 맨 위 한 묶음으로 옮기고 과목 묶음에서는 뺀다(A안).
+  function toolGroupsFor(cat) {
+    const groups = toolEntries();
+    if (cat !== "all") return groups.filter((g) => g.code === cat);
+    const manip = [];
+    const rest = groups.map((g) => ({ ...g, ids: g.ids.filter((id) => { if (!isManipulableTemplate(TEMPLATES[id])) return true; if (!manip.includes(id)) manip.push(id); return false; }) })).filter((g) => g.ids.length);
+    return manip.length ? [{ code: "manip", part: "조작 도구", note: "끌거나 값을 바꿔 모양을 조작", ids: manip }, ...rest] : rest;
   }
   const assetStars = () => new Set(readJson(ASSET_STAR_KEY, []));
   const myCats = () => {
@@ -149,10 +170,10 @@ export function initObjectWindow(state) {
 
   function toolMain() {
     const favs = new Set(objectFavorites()), cat = st.cat.tool;
-    const groups = toolEntries().filter((g) => cat === "all" || g.code === cat).map((g) => ({ ...g, ids: g.ids.filter((id) => (!st.starOnly || favs.has(id)) && (!st.q || matches(st.q, hay(TEMPLATES[id].label, g.part, TEMPLATES[id].category, SUBJECT_NAMES[g.code])))) })).filter((g) => g.ids.length);
+    const groups = toolGroupsFor(cat).map((g) => ({ ...g, ids: g.ids.filter((id) => (!st.starOnly || favs.has(id)) && (!st.q || matches(st.q, hay(TEMPLATES[id].label, g.part, TEMPLATES[id].category, SUBJECT_NAMES[g.code])))) })).filter((g) => g.ids.length);
     if (!groups.length) return empty(st.starOnly ? "별표 친 도구가 없습니다. 카드에 마우스를 올려 ☆를 누르세요." : "찾는 도구가 없습니다.");
     if (st.view.tool === "gal") return galStage("도구 훑어보기");
-    return groups.map((g) => `<section class="ow-grp"><h3>${E(g.part)}${cat === "all" ? ` <span class="ow-gs">${E(SUBJECT_NAMES[g.code])}</span>` : ""}<small>${g.ids.length}</small></h3>
+    return groups.map((g) => `<section class="ow-grp"><h3>${E(g.part)}${cat === "all" ? ` <span class="ow-gs">${E(g.note || SUBJECT_NAMES[g.code] || "")}</span>` : ""}<small>${g.ids.length}</small></h3>
       <div class="ow-grid tool">${g.ids.map((id) => `<div class="ow-card" data-ow-tool="${E(id)}" title="${E(TEMPLATES[id].label)} — 누르면 캔버스에 놓을 준비"><button type="button" class="ow-pick" data-ow-tool-pick="${E(id)}" aria-label="${E(TEMPLATES[id].label)}"><span class="ow-pic" data-ow-icon="${E(id)}"></span></button><span class="ow-name">${E(TEMPLATES[id].label)}</span>${star(favs.has(id), `data-ow-star-tool="${E(id)}"`)}</div>`).join("")}</div></section>`).join("");
   }
   // 훑어보기용 평평한 목록(도구): 지금 거르기(단원 · 별표만 · 찾기)를 그대로 따른다.
