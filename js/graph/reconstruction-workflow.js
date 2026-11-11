@@ -175,7 +175,12 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       run.validationMs = clock() - before;
       const sourceMismatch = result.errors.some(e => e.code === 'SOURCE_MISMATCH' || e.path.startsWith('source.'));
       if (result.ok && !result.blocked) run.lastAccepted = result;
-      if (sourceMismatch || run.snapshot.metrics.analysisCalls >= run.maxAttempts) {
+      // 11-12 밤샘: 「AI 변환은 실패로 끝나면 안 됨」 — 검증에 걸린 결과만 오류를 붙여 다시 받는다(repairInvalid 회).
+      // 잘 된 결과는 그대로 끝내 시간이 늘지 않는다. 그래도 안 되면 앞서 통과한 결과를 쓴다.
+      const repairing = !result.ok && !sourceMismatch && run.repairLeft > 0;
+      if (repairing) run.repairLeft -= 1;
+      if (!repairing && (sourceMismatch || run.snapshot.metrics.analysisCalls >= run.maxAttempts)) {
+        if (!result.ok && run.repairMode && !sourceMismatch && run.lastAccepted) return finish(run, null, run.lastAccepted);
         if (!result.ok) return finish(run, Object.assign(new Error(result.errors.map(e => `${e.path}: ${e.message}`).join('\n')), { code: 'GRAPH_INVALID_RESULT' }), result);
         if (!result.blocked) void cache(run.cacheKey, run.snapshot.source, result.plan, run.snapshot.attempts).catch(() => {});
         return finish(run, null, result);
@@ -269,7 +274,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       serial = Math.max(serial, Number.isSafeInteger(value.id) ? value.id : 0);
       publish(value); return copy(value);
     },
-    async analyze({ source, attachment, selection, catalog, force = false, maxAttempts = 1, renderCandidate, instructions = '', contextAttachment = null, styleAttachments = [], description = '', priorPlan = null, priorObjects = null } = {}) {
+    async analyze({ source, attachment, selection, catalog, force = false, maxAttempts = 1, repairInvalid = 0, renderCandidate, instructions = '', contextAttachment = null, styleAttachments = [], description = '', priorPlan = null, priorObjects = null } = {}) {
       if (active || preparing) throw new Error('그래프 분석이 이미 진행 중입니다.');
       const preparation = { cancelled: false };
       preparing = preparation;
@@ -323,7 +328,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       if (preparation.cancelled) { await persist({ ...value, status: 'interrupted', error: cancelled().message }); checkPreparation(); }
       publish(value);
       return new Promise((resolve, reject) => {
-        const run = { snapshot: value, cacheKey, resolve, reject, started: clock(), text: '', queue: [], awaiting: true, done: false, maxAttempts, renderCandidate };
+        const run = { snapshot: value, cacheKey, resolve, reject, started: clock(), text: '', queue: [], awaiting: true, done: false, maxAttempts, renderCandidate, repairLeft: Math.max(0, Math.min(3, Number(repairInvalid) || 0)), repairMode: Number(repairInvalid) > 0 };
         run.sourceRaster = sourceRaster;
         active = run;
         run.timer = setTimeout(() => { void interrupt(run); finish(run, Object.assign(new Error('그래프 분석 시간이 초과되었습니다. 자동 재시도하지 않았습니다.'), { code: 'GRAPH_TIMEOUT' })); }, timeoutMs);

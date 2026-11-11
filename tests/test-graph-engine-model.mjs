@@ -35,7 +35,8 @@ test('between regions reject narrow linear and hidden cubic crossings',()=>{
 test('data annotations retain explicitly measured source font size',()=>{
   const p=base();p.annotations=[{id:'label',kind:'text',text:'A',x:5,y:8,orientation:'horizontal',coordinateSpace:'data',fontSizePx:14}];
   const r=buildNativeGraph(p,{box:{x:0,y:0,w:70,h:70}});assert(r.ok,r.error);// 11-11: 원본에서 잰 글자 크기는 1.2배로 키워 쓴다(사용자 판단 「복원 글씨가 너무 작다」).
-  assert.ok(Math.abs(r.objects[0].graphAnnotations[0].size-9.8*1.3)<1e-9);
+  // 11-12: 잰 글자 크기 × 1.3을 시험지 표준의 0.92~1.45배 안으로 묶는다.
+  { const box=r.objects[0], std=4.8*Math.max(box.w,box.h)/70, size=r.objects[0].graphAnnotations[0].size; assert.ok(size<=std*1.45+1e-9 && size>=Math.min(9.8*1.3,std*0.92)-1e-9, String(size)); }
   return save('data-annotation-size',r.objects[0].graphAnnotations);
 });
 fs.writeFileSync(path.join(dir,'results.json'),JSON.stringify({invocation:'node tests/test-graph-engine-model.mjs',node:process.version,outcomes},null,2));for(const o of outcomes)console.log(`${o.pass?'PASS':'FAIL'} ${o.scenario}${o.error?'\n'+o.error:''}`);if(outcomes.some(o=>!o.pass))process.exitCode=1;

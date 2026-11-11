@@ -44,12 +44,15 @@ export function buildNativeGraph(input, options = {}) {
   const style = plan.style || {};
   const labelSizeMode = style.fontSizePx && style.labelSize === undefined ? 'source-height' : 'legacy';
   // 11-11: AI가 잰 원본 글자 높이는 대체로 작다(사용자 시험 8개 중 6개 「글씨가 작다」). 기출 표준 글자 높이의 0.92배를 바닥으로 둔다.
-  const minLabel = EXAM_STYLE.label * styleScale * 0.92, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
+  // 11-12 밤샘(기출 그래프 46개 복원 비교): 글자가 좁은 막대그래프에선 너무 작고(폭에만 비례), 어떤 그래프에선 틀 밖으로 잘릴 만큼 컸다(위 한계 없음).
+  // 기준 글자 크기는 그림 칸의 긴 변에 비례시키고, 시험지 표준의 0.92~1.45배 안으로 묶는다.
+  const textScale = Math.max(box.w, box.h) / 70, standardLabel = EXAM_STYLE.label * textScale;
+  const minLabel = standardLabel * 0.92, maxLabel = standardLabel * 1.45, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
   const isDot = shape => /dot|disc|filled|circle/.test(String(shape||''));
   const fitMarker = (v, shape) => isDot(shape) ? Math.max(v, minMarker) : v; // 11-11: 찍힌 점(●)만 바닥을 둔다
   // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.3배 키운 뒤 바닥을 둔다.
-  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.max(v * 1.3, minLabel) : v;
-  const labelSize = style.labelSize ?? (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : 5.4 * styleScale);
+  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.min(maxLabel, Math.max(v * 1.3, minLabel)) : v;
+  const labelSize = style.labelSize != null ? fitLabel(style.labelSize / 1.3) : (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : standardLabel * 1.12);
   const plane = { ...makeDefaultCoordplane({ x: 0, y: 0 }), x: box.x, y: box.y, w: box.w, h: box.h,
     xMin: x.min, xMax: x.max, yMin: y.min, yMax: y.max,
     xScale: observed ? 'linear' : x.scale, yScale: observed ? 'linear' : y.scale,
@@ -132,7 +135,7 @@ export function buildNativeGraph(input, options = {}) {
         points.push({ x: top.x, y: hiY }, { x: top.x, y: loY }, { x: base.x, y: loY }, { x: base.x, y: hiY });
         rects.push({ x: top.x, y: loY, w: base.x - top.x, h: hiY - loY, label: it.label || '', fillLevel:it.fillLevel ?? s.fillLevel ?? 220 });
       });
-      Object.assign(f, { points, breaks: [], bars: { items: rects, labelSize: 2.6, strokeWidth: 0.3, fillLevel: s.fillLevel ?? 220 },
+      Object.assign(f, { points, breaks: [], bars: { items: rects, labelSize: Math.max(2.6, labelSize * 0.9), strokeWidth: 0.3, fillLevel: s.fillLevel ?? 220 },
         barBase:s.base ?? 0, barItems: clone(s.items), barWidthRatio: widthRatio, barFill: 'gray', barPreserveValues: true });
     } else {
       const protectedIndices=[...(s.fit?.protectedIndices || []),...(s.endpoints || []).map(e=>e.index),...(plan.annotations || []).filter(a=>a.seriesId===s.id && Number.isInteger(a.pointIndex)).map(a=>a.pointIndex)];
