@@ -955,8 +955,10 @@ export function initRhwpExamWorkspace(state, services) {
   const aiWord=(kind,state)=>kind==='graph'?(state==='busy'?'그래프 복원 중':state==='failed'?'복원 실패':'복원 끝'):(state==='busy'?'이미지 변환 중':state==='failed'?'변환 실패':'변환 끝');
   const clock=ms=>{const t=Math.max(0,Math.floor(ms/1000));return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
   function openAiJob(id){const job=aiJobs.get(id);if(!job)return;hideAiToast(id);
-    if(!connectedAi?.hasHwpTask?.(job.taskId)){aiJobs.delete(id);paintAiJobs();message('이 AI 작업은 이미 닫혔습니다. 그림 단추에서 다시 시작해주세요.',true);return;}
-    void Promise.resolve(connectedAi.openHwpTask(job.taskId)).catch(error=>message(error.message || 'AI 창을 열지 못했습니다.',true));}
+    // 11-11: 작업 id로 못 찾으면 이 그림에 이어진 다른 작업(보내기·전환으로 옮겨 간 것)을 찾고, 그것도 없으면 거부하지 않고 이 그림으로 AI 창을 새로 연다.
+    const taskId=connectedAi?.hasHwpTask?.(job.taskId)?job.taskId:connectedAi?.hwpTaskForFigure?.(id);
+    if(!taskId){aiJobs.delete(id);paintAiJobs();void pictureAiFor(id,job.kind==='graph'?'graph':'image').catch(error=>message(error.message || 'AI 창을 열지 못했습니다.',true));return;}
+    void Promise.resolve(connectedAi.openHwpTask(taskId)).catch(error=>message(error.message || 'AI 창을 열지 못했습니다.',true));}
   function hideAiToast(id=null){if(id===null||aiToast.dataset.figureId===id){aiToast.hidden=true;delete aiToast.dataset.figureId;}}
   aiToast.addEventListener('click',event=>{const id=aiToast.dataset.figureId;if(event.target.closest('[data-ai-toast-close]'))hideAiToast();else if(event.target.closest('[data-ai-toast-open]')&&id)openAiJob(id);});
   aiLayer.addEventListener('click',event=>{const id=event.target.closest('[data-ai-job]')?.dataset.aiJob;if(id&&aiJobs.get(id)?.state!=='busy')openAiJob(id);});
@@ -970,6 +972,7 @@ export function initRhwpExamWorkspace(state, services) {
       let node=[...aiLayer.children].find(child=>child.dataset.aiJob===id);
       if(!node){node=document.createElement('div');node.className='exam-ai-job';node.dataset.aiJob=id;node.innerHTML='<button type="button" class="exam-ai-job-label"></button>';aiLayer.append(node);}
       node.dataset.state=job.state;
+      if(job.flash&&Date.now()-job.flash<2600)node.dataset.flash='true';else delete node.dataset.flash;
       let g=null,v=null;try{const ref=bridge.findFigure(id);g=ref&&bridge.figureGeometry(ref);v=ref&&bridge.figureViewport(ref);}catch{}
       const shown=!!g&&!!v&&g.x+g.w>v.x&&g.y+g.h>v.y&&g.x<v.x+v.w&&g.y<v.y+v.h;
       node.hidden=!shown;if(!shown)continue;
@@ -986,9 +989,11 @@ export function initRhwpExamWorkspace(state, services) {
     if(workState==='busy')aiJobs.set(id,{taskId,kind:target.kind,label:target.label,state:'busy',startedAt:previous?.taskId===taskId&&previous.state==='busy'?previous.startedAt:Date.now()});
     else if(workState==='completed'||workState==='failed'){
       if(previous?.taskId!==taskId && workState==='failed')return;
-      aiJobs.set(id,{taskId,kind:target.kind,label:target.label,state:workState,startedAt:previous?.startedAt||Date.now()});
-      // AI 창이 열려 있으면 결과가 바로 보이므로 아래 알림은 창이 닫혀 있을 때만.
-      if(!document.querySelector('#ai-image-panel:not([hidden])')){aiToast.dataset.figureId=id;aiToast.dataset.state=workState;
+      // 11-11: 끝나면 문서 속 그 그림이 반짝여(3번) 어디가 끝났는지 바로 보이게 한다.
+      const flash=workState==='completed'&&previous?.state!=='completed'?Date.now():previous?.flash||0;
+      aiJobs.set(id,{taskId,kind:target.kind,label:target.label,state:workState,startedAt:previous?.startedAt||Date.now(),flash});
+      // 11-11: AI 창이 열려 있어도 알린다(다른 그림 작업이 끝났을 수 있다).
+      {aiToast.dataset.figureId=id;aiToast.dataset.state=workState;
         aiToast.querySelector('[data-ai-toast-text]').textContent=`${target.label || '그림'} — ${target.kind==='graph'?'AI 그래프 복원':'AI 이미지 변환'}${workState==='failed'?'에 실패했습니다':'이 끝났습니다'}`;aiToast.hidden=false;}
     }else return;
     paintAiJobs();
@@ -997,6 +1002,13 @@ export function initRhwpExamWorkspace(state, services) {
   async function pictureAi(kind){
     const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image')throw new Error('시험지에서 그림을 선택해주세요.');
     let id=bridge.selectedFigureId();if(!id||!figures.get(id))id=(await registerPicture(ref,'register')).id;
+    // 11-11: 이 그림에 이미 이어진 AI 작업이 있으면 새로 만들지 않고 그 작업을 연다(같은 그림을 두 번 눌러 작업이 겹치지 않게).
+    const existing=connectedAi?.hwpTaskForFigure?.(id,kind==='graph'?'graph':'image');
+    if(existing){nativeRegion.hide();await connectedAi.openHwpTask(existing);return;}
+    return pictureAiFor(id,kind,ref);
+  }
+  async function pictureAiFor(id,kind,ref=null){
+    if(!figures.get(id))throw new Error('이 그림을 문서에서 찾지 못했습니다. 그림을 다시 선택해주세요.');
     const figure=figures.get(id),target=bridge.findFigure(id)||ref,prepared=normalizeExamFigure(figure);
     const session={id,figure:prepared,ref:target,generation:bridge.generation,render:{...figure.render,bounds:figureBounds(figure,target),options:figure.render?.options || {includeReferenceImages:true,excludeAllImages:false}}};
     const reference=await figureRaster(session,clone(prepared.source));

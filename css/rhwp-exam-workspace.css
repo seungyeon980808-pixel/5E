@@ -303,7 +303,14 @@ body.exam-float-edit.exam-edit-checker #canvas #exam-source-crop-fill, body.exam
 .exam-ai-job[data-state="failed"] .exam-ai-job-label {pointer-events:auto;cursor:pointer;color:#f0d2bd;border-color:#c98a5b;}
 .exam-ai-job-label:focus-visible {outline:2px solid #6ba4f8;outline-offset:2px;}
 @keyframes exam-ai-breathe {0%,100%{box-shadow:0 0 0 0 rgba(111,147,196,.0);border-color:rgba(111,147,196,.55)}50%{box-shadow:0 0 0 5px rgba(111,147,196,.28);border-color:#6f93c4}}
-@media (prefers-reduced-motion: reduce) {.exam-ai-job {animation:none;}}
+/* 11-11: 끝나는 순간 그 그림이 반짝인다(초록 빛 3번 + 모서리 ✦). */
+.exam-ai-job[data-flash="true"] {animation:exam-ai-done .8s ease-in-out 3;}
+.exam-ai-job[data-flash="true"]::before, .exam-ai-job[data-flash="true"]::after {content:"✦";position:absolute;color:#8fd4a6;font-size:16px;line-height:1;text-shadow:0 0 8px rgba(143,212,166,.9);animation:exam-ai-twinkle .8s ease-in-out 3;pointer-events:none;}
+.exam-ai-job[data-flash="true"]::before {right:-9px;top:-10px;}
+.exam-ai-job[data-flash="true"]::after {left:-8px;bottom:-9px;font-size:12px;animation-delay:.25s;}
+@keyframes exam-ai-done {0%,100% {box-shadow:0 0 0 3px rgba(91,138,109,.22);} 50% {box-shadow:0 0 0 7px rgba(91,138,109,.38),0 0 22px 4px rgba(143,212,166,.55);}}
+@keyframes exam-ai-twinkle {0%,100% {opacity:0;transform:scale(.4) rotate(0deg);} 50% {opacity:1;transform:scale(1.15) rotate(25deg);}}
+@media (prefers-reduced-motion: reduce) {.exam-ai-job {animation:none;} .exam-ai-job[data-flash="true"], .exam-ai-job[data-flash="true"]::before, .exam-ai-job[data-flash="true"]::after {animation:none;}}
 .exam-ai-toast {position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:1060;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:10px;background:rgba(22,27,34,.97);border:1px solid #5b8a6d;color:#e6edf3;font:13px/1.4 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.4);}
 .exam-ai-toast[hidden] {display:none;}
 .exam-ai-toast[data-state="failed"] {border-color:#c98a5b;}

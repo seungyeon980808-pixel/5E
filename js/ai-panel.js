@@ -770,7 +770,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   let attachments = [];
   let generatedImages = [];
   let conversionKind = 'image';
-  const hwpInPlaceTargets = new Map();
+  // 11-11: 한글 그림 ↔ AI 작업 연결은 작업 탭 안(tab.hwpTarget)에 둔다 — 작업 저장과 함께 남아 앱을 다시 열어도 이어진다
+  // (예전엔 메모리 표라 다시 열면 모든 연결이 사라지고 「한글 파일에 넣기」·끝 알림이 없어졌다).
+  const hwpInPlaceTargets = {
+    get: id => taskTabs.get(id)?.hwpTarget || undefined,
+    has: id => Boolean(taskTabs.get(id)?.hwpTarget),
+    set: (id, target) => { const tab = taskTabs.get(id); if (tab && target) tab.hwpTarget = structuredClone(target); },
+    delete: id => { const tab = taskTabs.get(id); if (tab) delete tab.hwpTarget; },
+  };
   let graphSubmitting = false;
   let graphOwnerEpoch = 0;
   const graphWorkflow = createGraphReconstructionWorkflow({transport:desktop || {send:async()=>{throw new Error('AI 연결을 확인해 주세요.');}}});
@@ -2818,9 +2825,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     if (!AI_WORKFLOW_KINDS.includes(kind) || kind === conversionKind || busy || graphSubmitting || panel.dataset.aiSharingMode === 'view') return;
     if (attachments.length || generatedImages.length || conversationMessages.length) {
-      const sources = attachments.map(snapshotImageItem);
+      const sources = attachments.map(snapshotImageItem), hwpTarget = hwpInPlaceTargets.get(activeTaskTabId);
       createTaskTab({ kind });
       for (const source of sources) addReferenceData(source);
+      // 11-11: 한글 그림에서 연 작업을 이미지↔그래프로 바꿔도 한글 연결을 그대로 잇는다.
+      if (hwpTarget) { hwpInPlaceTargets.set(activeTaskTabId, { ...structuredClone(hwpTarget), kind: isGraphWorkflow(kind) ? 'graph' : 'image' }); notifyHwpTask(activeTaskTabId, 'idle'); }
     } else { conversionKind = kind; }
     syncLiteModeUi(); syncWhitePngUi(); syncGraphWorkbenchUi(); syncSelectedOutputActions();
     captureActiveTaskTab(); persistTasks();
@@ -2899,7 +2908,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const title = panel.querySelector('#ai-image-title');
     const target = hwpInPlaceTargets.get(activeTaskTabId);
     // 11-11: 제목은 「AI 이미지」「AI 그래프」만 쓴다(5E_ 표기 없음). 한글에서 열었을 때만 뒤에 출처를 붙인다.
-    const text = target ? `${target.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target.label || '그림'}에서 엶` : graph ? 'AI 그래프' : 'AI 이미지';
+    const text = `${graph ? 'AI 그래프' : 'AI 이미지'}${target ? ` · 한글 ${target.label || '그림'}에서 엶` : ''}`; // 11-11: 종류는 지금 작업이 정한다(연결에 남은 옛 종류 X)
     // 11-11: 제목은 오브젝트 창처럼 아이콘 + 글자. 끌기 손잡이(modal-drag)는 그대로 둔다.
     if (title) {
       let label = title.querySelector('[data-ai-title-text]');
@@ -4917,7 +4926,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         .filter((result) => result.status === "fulfilled")
         .map((result) => result.value.source);
       addReferencesAsTasks(readyReferences, { prompt, placement, groups, kind:kind || conversionKind });
-      if (hwpTarget && activeTaskTabId && readyReferences.length) { hwpInPlaceTargets.set(activeTaskTabId, { ...structuredClone(hwpTarget), kind: kind === 'graph' ? 'graph' : 'image' }); syncSelectedOutputActions();
+      if (hwpTarget && activeTaskTabId && readyReferences.length) { hwpInPlaceTargets.set(activeTaskTabId, { ...structuredClone(hwpTarget), kind: isGraphWorkflow(kind || conversionKind) ? 'graph' : 'image' }); syncSelectedOutputActions(); persistTasks();
         // 11-07: 한글 그림(라벨 있는 기출)에서 연 이미지 작업은 라벨 복원을 켠 채로 시작한다(끄면 AI가 글자를 제 글씨로 그려 넣음).
         if (kind !== 'graph' && labelResultSelect && [...labelResultSelect.options].some(o => o.value === 'restore-editable' && !o.disabled)
           && labelResultSelect.value !== 'restore-editable') { labelResultSelect.value = 'restore-editable'; labelResultSelect.dispatchEvent(new Event('change', { bubbles: true })); } notifyHwpTask(activeTaskTabId, taskTabs.get(activeTaskTabId)?.workState || 'idle'); }
@@ -7169,7 +7178,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const detail = { target, name: item.name || 'AI 결과', ...(item.graphResult ? { graph: structuredClone(item.graphResult) } : { image: { data: item.data, width: item.width, height: item.height },
         ...(item.labelPlan?.labels?.length ? { labelPlan: structuredClone(item.labelPlan), aiTaskId: activeTaskTabId, aiCandidateId: item.id } : {}) }) };
       if (!detail.graph && !String(detail.image.data || '').startsWith('data:image/')) { setStatus('넣을 결과 그림을 찾지 못했습니다.', 'error'); return; }
-      hwpInPlaceTargets.delete(activeTaskTabId); syncSelectedOutputActions();
+      // 11-11: 넣은 뒤에도 연결을 남긴다 — 다른 버전을 다시 넣거나 이어 고칠 수 있게.
       close();
       window.dispatchEvent(new CustomEvent('5e:hwp-inplace-ai', { detail }));
       return;
@@ -7465,6 +7474,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     // 11-06 D5: 한글 그림 위 「끝 · 눌러서 보기」·알림 [결과 보기] — 그 작업 탭을 다시 연다.
     openHwpTask: taskId => taskTabs.has(taskId) ? open({ taskId }) : null,
     hasHwpTask: taskId => hwpInPlaceTargets.has(taskId) && taskTabs.has(taskId),
+    // 11-11: 다른 작업대로 보내거나 복제할 때 한글 그림 연결을 함께 넘긴다.
+    hwpTargetOf: taskId => { const target = hwpInPlaceTargets.get(taskId); return target ? structuredClone(target) : null; },
+    // 한글 그림 id로 그 그림의 작업을 찾는다(작업 id가 바뀌었거나 연결이 옮겨 갔을 때).
+    hwpTaskForFigure: (figureId, kind = null) => [...taskTabs.values()].filter(tab => tab.hwpTarget?.figureId === figureId && (!kind || tab.hwpTarget.kind === kind)).at(-1)?.id || null,
+    // 11-11: 이 작업대가 지금 AI를 돌리는 중인지(한글에서 다른 그림을 열면 바쁜 작업대 대신 새 작업대로).
+    isBusy: () => Boolean(busy || preflightRun || graphSubmitting),
     taskVisibleImage: async id => {
       if (id === activeTaskTabId) captureActiveTaskTab();
       const owner = taskTabs.get(id);

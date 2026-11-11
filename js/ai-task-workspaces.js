@@ -466,20 +466,22 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       const image = await entry.controller.taskVisibleImage(taskId);
       if (!image?.data) throw new Error('보낼 이미지가 없습니다.');
       if (entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode === 'view') return;
+      // 11-11: 한글 그림에서 연 작업이면 보낸 곳에도 그 한글 그림 연결을 넘긴다(「한글 파일에 넣기」·끝 알림이 이어지게).
+      const hwpTarget = entry.controller.hwpTargetOf?.(taskId) || null;
       const target = add(crypto.randomUUID(),false);
       await target.controller.ready;
-      await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false});
+      await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false,...(hwpTarget?{hwpTarget}:{})});
       await target.controller.checkpointForClose();saveRegistry();revealCreatedTask(target,kind);
     },
     duplicate: async ({entry,taskId}) => {
       if(entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode==='view') return;
-      const kind=taskKind(entry,taskId),image=await entry.controller.taskVisibleImage(taskId);
+      const kind=taskKind(entry,taskId),image=await entry.controller.taskVisibleImage(taskId),hwpTarget=entry.controller.hwpTargetOf?.(taskId)||null;
       if(!image?.data) throw new Error('추가할 이미지가 없습니다.');
       if(entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode==='view')return;
       const target=add(crypto.randomUUID(),false);
       try {
         await target.controller.ready;
-        await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false});
+        await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false,...(hwpTarget?{hwpTarget}:{})});
         await target.controller.checkpointForClose();saveRegistry();revealCreatedTask(target,kind);
       } catch(error) {target.tabs=[];disposeEntry(target);throw error;}
     },
@@ -944,6 +946,17 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       }
       return active.controller.open({reveal:true});
     },
+    // 11-11: 한글 쪽은 작업대 묶음을 받는다 — 어느 작업대에 있든 그 한글 그림 작업을 찾고 연다.
+    // (예전엔 이 두 함수가 창 하나에만 있어 그림 위 「끝 · 눌러서 보기」가 늘 「이미 닫혔습니다」로 거부됐다.)
+    hasHwpTask: taskId => entries.some(entry => !entry.disposed && entry.controller.hasHwpTask?.(taskId)),
+    hwpTaskForFigure: (figureId, kind = null) => { for (const entry of [...entries].reverse()) { const id = !entry.disposed && entry.controller.hwpTaskForFigure?.(figureId, kind); if (id) return id; } return null; },
+    openHwpTask: async taskId => {
+      await ready;
+      const owner = entries.find(entry => !entry.disposed && entry.controller.ownsTask?.(taskId));
+      if (!owner) return null;
+      activate(owner);
+      return owner.controller.openHwpTask(taskId);
+    },
     open: async options => {
       await ready;
       // Creation drafts must never inherit the selected image's task, references,
@@ -970,7 +983,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           if (!options.conversionKind) options = { ...options, conversionKind: surfaceKinds[surface] };
         }
       }
-      const target = owner || (hasReference && active.panel.dataset.aiSharingMode === 'view' ? add(crypto.randomUUID()) : active);
+      // 11-11: 한글 그림에서 연 요청인데 지금 작업대가 다른 그림을 돌리는 중이면 새 작업대에서 연다 — 두 그림이 동시에 돌고 서로 엇갈리지 않게.
+      const busyForHwp = hasReference && options?.hwpTarget && active.controller.isBusy?.();
+      const target = owner || (hasReference && (active.panel.dataset.aiSharingMode === 'view' || busyForHwp) ? add(crypto.randomUUID()) : active);
       if (hasReference) saveRegistry();
       activate(target);
       return active.controller.open(options);
