@@ -450,7 +450,9 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         apply.title = blocked > 0 ? `원본 없는 작업 ${blocked}개 — 원본을 넣거나 선택에서 빼세요.` : '';
       } else if (scopedTarget()) {
         // 11-11: 수정 박스가 없으면 「다시 그리기 · 정밀」(결과 전체를 Sol로 다시 그림)로 바로 누를 수 있다.
-        apply.textContent = allEntries.length ? '수정하기' : '다시 그리기 · 정밀';
+        // 11-11: 박스가 없어도 대화 칸에 고칠 말을 쓰면 「수정하기」(그림 전체를 원본과 함께 읽고 고침).
+        const chatText = q('[data-ai-chat-input]')?.value.trim();
+        apply.textContent = allEntries.length || chatText ? '수정하기' : '다시 그리기 · 정밀';
         apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || (allEntries.length > 0 && (!areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment))));
       } else if (panel.dataset.aiWorkflow === 'graph-create') {
         // 11-11: 그래프 생성은 원본 그림 없이 설명(대화)만으로 실행한다.
@@ -469,7 +471,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     if (applyHint) {
       const areas = allEntries.filter(({comment}) => comment.type === 'area');
       applyHint.hidden = !scopedTarget() || selectedTaskCount() >= 2;
-      applyHint.textContent = !areas.length ? '수정 박스로 영역을 지정하세요.'
+      applyHint.textContent = !areas.length ? (q('[data-ai-chat-input]')?.value.trim() ? '그림 전체를 원본과 함께 읽고 고칩니다 · 박스를 그리면 그 안만' : '고칠 내용을 대화로 쓰거나 박스로 영역을 정하세요 · 비우면 처음부터 다시 그리기')
         : areas.some(({comment}) => !commentText(comment).trim()) ? '각 박스에 바꿀 내용을 적으세요.' : `박스 ${areas.length}개 · 밖은 그대로 유지`;
     }
     panel.querySelectorAll('[data-ai-comment-tool]').forEach(button => {

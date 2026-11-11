@@ -2794,7 +2794,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const labelRow = panel.querySelector('[data-ai-label-row]'); if (labelRow) labelRow.hidden = brief || graph;
     const hasResult = Boolean(selectedOutputItem());
     if (chatInput) chatInput.placeholder = graph ? (graphCreate ? '어떤 그래프가 필요한지 말해 주세요' : '바꿀 조건이 있으면 말해 주세요 (선택)')
-      : conversionKind === 'image-create' ? '어떤 그림이 필요한지 말해 주세요' : hasResult ? '고칠 곳을 그림에 표시하고 말해 주세요' : '변환 전에 상의할 말 (선택)';
+      : conversionKind === 'image-create' ? '어떤 그림이 필요한지 말해 주세요' : hasResult ? '고칠 내용을 말해 주세요 · 박스로 표시하면 그 안만 고칩니다' : '변환 전에 상의할 말 (선택)';
     const labelControl = panel.querySelector('.ai-source-label-control'); if (labelControl) labelControl.hidden = graph;
     const title = panel.querySelector('[data-ai-request-title]'); if (graph && title) title.textContent = graphTarget ? '추가 수정' : '그래프 요청';
     const hint = panel.querySelector('[data-ai-request-hint]'); if (graph && hint) hint.textContent = graphTarget ? `수정 대상: ${graphTarget.name}. 바꿀 내용만 적으세요. 이전 결과는 수정본 목록에 남습니다.` : graphCreate ? '축과 모양을 짧게 설명하세요. 수식·좌표도 입력할 수 있고, 생성 후 세부 편집으로 조정합니다.' : '원본을 편집 가능한 그래프로 복원합니다. 바꿀 조건도 함께 적을 수 있습니다.';
@@ -3006,6 +3006,77 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   }
 
+  // 11-11 사용자: 부분 수정은 AI가 원본·지금 그림·그 안의 지정 영역을 모두 읽고 의도를 파악해야 한다.
+  // 지금 그림 위에 허용 박스를 빨간 테두리·번호로 그린 안내 그림(돌려받는 그림에는 그리지 말라고 지시).
+  async function markScopedRegions(dataUrl, rectangles) {
+    const image = new Image(); image.src = dataUrl; await image.decode();
+    const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth || image.width; canvas.height = image.naturalHeight || image.height;
+    const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0);
+    const line = Math.max(2, Math.round(Math.min(canvas.width, canvas.height) / 250));
+    rectangles.forEach((rect, index) => {
+      ctx.save(); ctx.strokeStyle = '#e5222b'; ctx.lineWidth = line; ctx.setLineDash([line * 4, line * 2]);
+      if (rect.polygon?.length > 2) { ctx.beginPath(); rect.polygon.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.closePath(); ctx.stroke(); }
+      else ctx.strokeRect(rect.x0 + line / 2, rect.y0 + line / 2, Math.max(1, rect.x1 - rect.x0 - line), Math.max(1, rect.y1 - rect.y0 - line));
+      const size = Math.max(14, line * 9), label = String(index + 1);
+      ctx.setLineDash([]); ctx.fillStyle = '#e5222b'; ctx.fillRect(rect.x0, Math.max(0, rect.y0 - size - 2), size * 0.9, size + 2);
+      ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(size * 0.8)}px sans-serif`; ctx.textBaseline = 'top'; ctx.fillText(label, rect.x0 + size * 0.2, Math.max(0, rect.y0 - size - 2) + size * 0.12);
+      ctx.restore();
+    });
+    return canvas.toDataURL('image/png');
+  }
+  async function fitScopedCandidate(bytes, width, height) {
+    let bitmap;
+    try { bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' })); } catch { return bytes; }
+    try {
+      if (bitmap.width === width && bitmap.height === height) return bytes;
+      const target = width / height, actual = bitmap.width / bitmap.height;
+      let sx = 0, sy = 0, sw = bitmap.width, sh = bitmap.height;
+      if (Math.abs(actual - target) / target > 0.04) {
+        if (actual > target) { sw = Math.round(bitmap.height * target); sx = Math.round((bitmap.width - sw) / 2); }
+        else { sh = Math.round(bitmap.width / target); sy = Math.round((bitmap.height - sh) / 2); }
+      }
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, width, height);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      return blob ? new Uint8Array(await blob.arrayBuffer()) : bytes;
+    } finally { bitmap.close?.(); }
+  }
+  async function keepMeaningfulChanges(currentPng, candidatePng) {
+    try {
+      const decode = async bytes => { const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' })); const c = document.createElement('canvas'); c.width = bitmap.width; c.height = bitmap.height; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(bitmap, 0, 0); bitmap.close?.(); return { c, x, data: x.getImageData(0, 0, c.width, c.height) }; };
+      const a = await decode(currentPng), b = await decode(candidatePng);
+      if (a.c.width !== b.c.width || a.c.height !== b.c.height) return candidatePng;
+      const w = a.c.width, h = a.c.height, A = a.data.data, B = b.data.data;
+      let mask = new Uint8Array(w * h);
+      for (let i = 0, p = 0; p < mask.length; p++, i += 4) mask[p] = Math.max(Math.abs(A[i] - B[i]), Math.abs(A[i + 1] - B[i + 1]), Math.abs(A[i + 2] - B[i + 2])) > 12 ? 1 : 0;
+      // 열기(지우기→넓히기)로 흩어진 점 같은 잡음은 지우고, 넓히기 한 번 더로 바뀐 덩어리 가장자리를 살린다.
+      const morph = (src, r, grow) => { const tmp = new Uint8Array(src.length), out = new Uint8Array(src.length);
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = grow ? 0 : 1; for (let k = -r; k <= r && (grow ? !v : v); k++) { const xx = Math.min(w - 1, Math.max(0, x + k)); v = src[y * w + xx]; } tmp[y * w + x] = v; }
+        for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let v = grow ? 0 : 1; for (let k = -r; k <= r && (grow ? !v : v); k++) { const yy = Math.min(h - 1, Math.max(0, y + k)); v = tmp[yy * w + x]; } out[y * w + x] = v; }
+        return out; };
+      mask = morph(morph(morph(mask, 2, false), 2, true), 3, true);
+      let kept = 0;
+      for (let i = 0, p = 0; p < mask.length; p++, i += 4) if (mask[p]) { kept++; } else { B[i] = A[i]; B[i + 1] = A[i + 1]; B[i + 2] = A[i + 2]; B[i + 3] = A[i + 3]; }
+      if (!kept) return candidatePng; // 걸러 낼 게 없으면(아주 옅은 변화뿐) AI 결과 그대로
+      b.x.putImageData(b.data, 0, 0);
+      const blob = await new Promise(resolve => b.c.toBlob(resolve, 'image/png'));
+      return blob ? new Uint8Array(await blob.arrayBuffer()) : candidatePng;
+    } catch { return candidatePng; }
+  }
+  const scopedSourceReference = item => attachments.find(source => source.id === item?.sourceReferenceId && source.data)
+    || attachments.find(source => isInputReference(source) && source.data) || null;
+  const scopedInputRolesText = ({ hasSource, chatText }) => `
+
+ATTACHED IMAGES, IN THIS ORDER:
+${hasSource ? `1) ORIGINAL SOURCE - the printed exam/textbook figure this drawing was redrawn from. Reference only: read it to understand what the user means (for example "like the original" = copy its fill, gray shading, line style, shape or text exactly as it appears there). Never return this image.
+2) CURRENT VERSION - the image you must edit and return, at exactly the same pixel size.
+3) CURRENT VERSION WITH THE PERMITTED BOXES outlined in red and numbered - shows where each numbered instruction applies. Never draw these red outlines or numbers in your result.`
+  : `1) CURRENT VERSION - the image you must edit and return, at exactly the same pixel size.
+2) CURRENT VERSION WITH THE PERMITTED BOXES outlined in red and numbered - shows where each numbered instruction applies. Never draw these red outlines or numbers in your result.`}
+Read all images first, work out the user's intent, then make that change in the CURRENT VERSION only. Prefer the most likely interpretation over replying EDIT_INSTRUCTION_UNCLEAR; the user can ask again.${chatText ? `
+
+THE USER'S CHAT MESSAGE (applies to the boxes above; follow it together with each box instruction):
+${chatText}` : ''}`;
   async function startScopedEdit(item, captured = null) {
     if (busy || preflightRun || !desktop) return;
     if ((!captured && selectedOutputItem() !== item) || !item || item.kind !== 'generated' || item.sceneResult) {
@@ -3079,7 +3150,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
             'correction-confirmation':'교정 승인 대기', 'candidate-review': '후보 비교 대기',
             'registration-display': '등록·표시' }[phase] || '처리';
           const outcomeLabel = { completed: '완료', cancelled: '취소', failed: '실패' }[outcome] || outcome;
-          addLog(`선택 영역 수정 계측 · ${label} ${Math.round(durationMs)}ms · ${outcomeLabel}`);
+          // 11-11: 개발용 시간 기록은 대화창에 띄우지 않는다(버그 보고 기록·콘솔에만).
+          try { console.debug(`[5E 부분 수정] ${label} ${Math.round(durationMs)}ms · ${outcomeLabel}`); } catch {}
         },
         // The box-edit click authorizes the drawn scope; application still needs review.
         confirmBounds: async () => true,
@@ -3124,6 +3196,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
               {session,comments:requestComments,candidateId:item.id,context,checks,
                 sourceMeasurements:history.sourceVerification?.checks.map(check=>check.metrics)||[]});
           const inputData = context ? scopedPngData(context.inputPng) : item.data;
+          // 11-11: 원본(출처 그림) + 지금 그림 + 박스 표시 그림을 함께 보낸다. 박스 밖은 어차피 합성 단계에서 원래대로 되돌린다.
+          const sourceRef = scopedSourceReference(item);
+          let markedData = null;
+          try { markedData = await markScopedRegions(item.data, session.rectangles); } catch { markedData = null; }
+          const scopedAttachments = [
+            ...(sourceRef ? [{ name: `원본-${sourceRef.name || 'source'}`, data: sourceRef.data }] : []),
+            { name: item.name, data: inputData },
+            ...(markedData ? [{ name: `${item.name}-영역표시`, data: markedData }] : []),
+          ];
+          const chatText = String(captured?.chatText ?? chatInput?.value ?? '').trim();
+          const requestText = `${text}${markedData ? scopedInputRolesText({ hasSource: Boolean(sourceRef), chatText }) : chatText ? `\n\nTHE USER'S CHAT MESSAGE:\n${chatText}` : ''}`;
           const digest = async bytes => [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
             .map(value=>value.toString(16).padStart(2,'0')).join('');
           history.sourceSha256 ||= await digest(originalPng);
@@ -3177,7 +3260,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           setStatus('박스 안의 요청한 부분만 수정 중 · 박스 밖은 원본 유지', 'busy');
           desktop.send({ purpose: 'image', ephemeralRender: true, conversationId: null,
             ...selection,
-            attachments: [{ name: item.name, data: inputData }], text
+            attachments: scopedAttachments, text: requestText
           }).then(result => {
             if (!requestStates.bind(token, result)) { finish(new Error('생성 요청이 취소되었거나 작업 ID가 없습니다.')); return; }
             turnId = result.turnId; threadId = result.renderThreadId || result.threadId;
@@ -3188,7 +3271,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           });
           record.endedAt=Date.now(); record.status='raw-returned';
           await persistScopedHistory();
-          return context ? restoreScopedEditContext(context, candidate) : candidate;
+          // 11-11: AI 그림 도구는 정해진 크기(1024 등)로 돌려준다 — 예전엔 1픽셀만 달라도 「크기 차이」로 막혀 부분 수정이 거의 늘 실패했다.
+          // 돌려받은 그림을 지금 그림 크기에 맞춘다(가로세로 비율이 다르면 가운데를 같은 비율로 잘라 맞춤). 박스 밖은 합성 단계에서 원본으로 되돌린다.
+          if (context) return restoreScopedEditContext(context, candidate);
+          const fitted = await fitScopedCandidate(candidate, session.width, session.height);
+          // 대화만으로 고친 경우(그림 전체가 허용 범위): AI가 다시 그리며 생긴 미세한 차이는 버리고 실제로 바뀐 덩어리만 남긴다.
+          return captured?.wholeImage ? keepMeaningfulChanges(originalPng, fitted) : fitted;
           } catch (error) {
             record.endedAt=Date.now(); record.status='failed'; record.error=String(error.message||error);
             await persistScopedHistory(); throw error;
@@ -6146,6 +6234,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (item && !item.sceneResult && !isExamBrief(taskTabs.get(activeTaskTabId))) {
       // 11-11: 결과에 표시(박스·점)가 있으면 그 부분만 고치고, 표시가 없으면 「다시 그리기 · 정밀」(Sol로 원본을 처음부터 다시 그림).
       if ((item.comments || []).length) { void startScopedEdit(item); return; }
+      // 11-11 사용자: 박스 없이 대화로만 「동그라미 안을 원본처럼 회색으로」라고 해도 고쳐야 한다 —
+      // 대화 글이 있으면 그림 전체를 허용 범위로 한 부분 수정(원본·지금 그림을 함께 읽음), 없으면 처음부터 다시 그리기.
+      const chatText = typeof chatInput === 'undefined' ? '' : chatInput?.value.trim(); // 검사가 이 본문만 떼어 돌린다
+      if (chatText) { chatInput.value = ''; void startScopedEdit(item, { comments: [{ type: 'area', id: `chat-${Date.now()}`, imageId: item.id, x: 0, y: 0, w: 100, h: 100, text: chatText }], chatText: '', wholeImage: true }); return; }
       void submit("image", { bypassCache: true, regenerate: true });
       return;
     }
