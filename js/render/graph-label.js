@@ -240,6 +240,12 @@ export function renderGraphLabel(source, opts = {}) {
   if (opts.orientation === 'vertical') {
     // Korean syllables stack upright; a formula run stays intact (fractions/scripts
     // must not be split into individual braces or operators).
+    // 11-11: 수식이 없는 글은 영어·숫자도 한 자씩 세워 쓰고, 괄호는 세로쓰기 괄호(︵ ︶)로 바꾼다(평가원 세로 축 이름).
+    if (!/[\\_^{}]/.test(text)) {
+      const vmap = { '(': '︵', ')': '︶', '[': '﹇', ']': '﹈', '{': '︷', '}': '︸', '〈': '︿', '〉': '﹀', '<': '︿', '>': '﹀' };
+      const chars = [...text].filter(ch => ch.trim()).map(ch => vmap[ch] ?? ch);
+      return renderGraphLabel(chars.join('\n'), { ...opts, orientation: 'horizontal', upright: true });
+    }
     const tokens = text.split(/([가-힣ᄀ-ᇿ㄰-㆏])/u).map(t => t.trim()).filter(Boolean);
     return renderGraphLabel(tokens.join('\n'), { ...opts, orientation: 'horizontal' });
   }

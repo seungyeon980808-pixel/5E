@@ -30,11 +30,14 @@ import { descriptionTitleLayout, descriptionTickLabelLanes } from '../graph/desc
 // italic quantities; the label renderer keeps units and numerals upright.
 // Point/series names explicitly request upright lettering at their call sites.
 // 11-11: 복원 그래프도 물리량(v₀·E₀·t₁·a)은 기울인 수식 글꼴. 숫자·단위·점 이름(A·B·C)은 렌더러·호출부가 정체로 둔다.
-const graphLabelUpright = (obj, requested) => requested ?? false;
+// 11-11(2차): 복원 그래프는 원본처럼 대부분 정체. 기울이는 것은 물리량 기호 한 개뿐 — 소문자 한 글자(a, k, t, x)나
+// 아래 첨자가 붙은 글자(E_0, v_0, t_1, 2E_0, 11k). 대문자 단독(A·B·C)·화학식(OH)·단위·한글·(가)는 정체.
+const isQuantityLabel = text => /^\s*[0-9.]*\s*(?:[a-z]|[A-Za-z](?=_)|\\lambda|\\theta|λ|θ)(?:_\{?[0-9a-z]+\}?)?\s*$/.test(String(text ?? ''));
+const graphLabelUpright = (obj, requested, text) => requested ?? (obj.reconstruction && !obj.graphStyle?.descriptionLayout ? !isQuantityLabel(text) : false);
 // 11-11: A·B·C처럼 대문자 한 글자(아래 첨자 숫자 허용)는 점·물체 이름이라 정체로 둔다.
 const isNameLabel = text => /^\s*[A-Z](?:_\{?\d+\}?|[0-9₀-₉′'])?\s*$/.test(String(text ?? ''));
 const graphLabelRenderer = obj => (text, options = {}) => {
-  const settings={parenthesesAreUnits:!obj.graphStyle?.descriptionLayout,...options,upright:graphLabelUpright(obj, options.upright ?? (isNameLabel(text) ? true : undefined)),
+  const settings={parenthesesAreUnits:!obj.graphStyle?.descriptionLayout,...options,upright:graphLabelUpright(obj, options.upright ?? (isNameLabel(text) ? true : undefined), text),
     sourceHeight:options.sourceHeight ?? (obj.reconstruction?.labelSizeMode==='source-height')};
   if (!isExamStyle(obj)) return renderBaseGraphLabel(text,settings);
   // Measure each font at ONE canonical size. Scaling that same vector label
@@ -408,7 +411,8 @@ function renderCoordplane(obj) {
   // ----- TICK LABELS (숫자 또는 기호) -----
   const numSize = Math.max(obj.tickLabelSize || 2.6, 1);
   // 축↔라벨 간격: 눈금이 안쪽으로만 뻗으니 라벨을 축 바로 밑에 더 바짝(요구: 여전히 낮다).
-  const tickGap = numSize * 0.04 + sw * 1.5;
+  // 11-11: 복원 그래프는 숫자가 축에 닿지 않게 글자 높이의 22%를 띄운다(사용자 판단 「라벨이 축과 겹친다」).
+  const tickGap = numSize * (obj.reconstruction ? 0.22 : 0.04) + sw * 1.5;
   const descriptionXTicks = [];
   // 눈금 숫자 이동(요구 ②): 숫자마다 {dx,dy} 오프셋을 적용하고, data-tick으로 태깅한다
   // (모달 미리보기가 그 태그를 잡아 드래그로 오프셋을 조정). tag=`${axis}:${ord}`.

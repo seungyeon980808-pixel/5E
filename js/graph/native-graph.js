@@ -47,8 +47,8 @@ export function buildNativeGraph(input, options = {}) {
   const minLabel = EXAM_STYLE.label * styleScale * 0.92, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
   const isDot = shape => /dot|disc|filled|circle/.test(String(shape||''));
   const fitMarker = (v, shape) => isDot(shape) ? Math.max(v, minMarker) : v; // 11-11: 찍힌 점(●)만 바닥을 둔다
-  // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.2배 키운 뒤 바닥을 둔다.
-  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.max(v * 1.2, minLabel) : v;
+  // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.3배 키운 뒤 바닥을 둔다.
+  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.max(v * 1.3, minLabel) : v;
   const labelSize = style.labelSize ?? (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : 5.4 * styleScale);
   const plane = { ...makeDefaultCoordplane({ x: 0, y: 0 }), x: box.x, y: box.y, w: box.w, h: box.h,
     xMin: x.min, xMax: x.max, yMin: y.min, yMax: y.max,
