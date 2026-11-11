@@ -141,7 +141,8 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       }
       // Keep the provider's observation intact. Only a separately validated,
       // bounded approximation becomes the editable result and cached plan.
-      if (result.ok && !result.blocked && !run.snapshot.description) {
+      // 11-11: 설명으로 만든 그래프도 같은 「식 맞추기」를 거친다(사인·지수·포화 곡선이 점을 이은 자유곡선으로 나오던 문제).
+      if (result.ok && !result.blocked) {
         const attempt = run.snapshot.attempts.at(-1);
         try {
           const sourceFrame = run.sourceRaster ? matchSourceFrame(result.plan, run.sourceRaster) : null;
@@ -153,7 +154,9 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
           const sourceStyle = run.sourceRaster ? matchSourceAxisArrowSize(sourceGuides?.plan || sourceGrid?.plan || result.plan, run.sourceRaster) : null;
           if (sourceStyle?.applied) attempt.sourceArrowSize = { version: sourceStyle.version, measurements: sourceStyle.measurements };
           const styledPlan = sourceStyle?.plan || sourceGuides?.plan || sourceGrid?.plan || result.plan;
-          const fitted = styledPlan.variant === 'axis-break' ? { plan: styledPlan, conversions: [], rejected: [] } : preferAnalyticGraphPlan(styledPlan, { requirePhysics: true, relativeDiagrams: true });
+          const fitted = styledPlan.variant === 'axis-break' ? { plan: styledPlan, conversions: [], rejected: [] } : preferAnalyticGraphPlan(styledPlan, { requirePhysics: !run.snapshot.description, relativeDiagrams: true });
+          // 11-11: 설명 생성에서는 식으로 못 맞춘 곡선을 막지 않고 자유곡선으로 둔다(활동 전위·적정처럼 원래 식이 없는 곡선).
+          if (run.snapshot.description) for (const s of fitted.plan.series || []) delete s.analyticFitFailure;
           const checked = validateGraphPlan(fitted.plan, { source: binding(run.snapshot.source) });
           if (checked.ok && !checked.blocked) {
             result = checked;
