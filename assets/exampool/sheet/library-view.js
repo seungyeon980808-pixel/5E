@@ -109,7 +109,7 @@ export function renderLibraryView(root, data, view, api) {
   else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
   else if (s.mode === 'list') body = `<ol class="lv-list${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<li class="${picked(x) ? 'sel' : ''}">${check(x, n)}<button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
   else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
-      <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>
+      <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>${x.kind === 'mine' && !picking ? `<button type="button" class="lv-cdel" data-lv-del="${E(x.id)}" aria-label="문항 삭제" title="문항 삭제 (⌫) — 되돌리기로 살릴 수 있습니다"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ''}
       <div class="lv-meta">${kt(x)}${x.kind === 'mine' ? mineMark(x.q) : ''}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
   root.innerHTML = head.replace('<!--addbar-->', selbar || addbar) + body + more;
@@ -258,6 +258,8 @@ export function installLibraryView(root, api) {
     if (t.closest('[data-lv-new]')) { api.newCard?.(); return; }
     if (t.closest('[data-lv-import]')) { api.importExcel?.(); return; }
     const star = t.closest('[data-lv-star]'); if (star) { e.stopPropagation(); toggleStar(star.dataset.lvStar); return; }
+    // 11-11 사용자: 문항 카드를 카드 보기에서 바로 지운다(확인 창 → 되돌리기 가능).
+    const del = t.closest('[data-lv-del]'); if (del) { e.stopPropagation(); api.askDelete(del.dataset.lvDel); return; }
     const ck = t.closest('[data-lv-check]'); if (ck) { e.stopPropagation(); pick(ck.dataset.lvCheck, Number(ck.dataset.n), e.shiftKey); return; }
     const bk = t.closest('[data-lv-bulk]'); if (bk) { bulk(bk.dataset.lvBulk, bk); return; }
     const oc = t.closest('[data-open-card]'); if (oc) { e.stopPropagation(); closeViewer(api); api.openCard(oc.dataset.openCard); return; }
@@ -291,6 +293,8 @@ export function installLibraryView(root, api) {
     const st = s();
     if (!root.isConnected || root.closest('[hidden]') || (modal && !modal.hidden) || st.mode === 'one' || document.querySelector('dialog[open]') || /^(TEXTAREA|INPUT|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'a') { e.preventDefault(); bulk('all'); return; }
+    // 11-11: 고른 것이 없을 때 초점 둔 카드에서 ⌫·Delete → 그 문항 삭제(확인 창).
+    if (!st.sel.size && (e.key === 'Delete' || e.key === 'Backspace') && !e.metaKey && !e.ctrlKey && !e.altKey) { const del = e.target.closest?.('.lv-card')?.querySelector('[data-lv-del]'); if (del) { e.preventDefault(); api.askDelete(del.dataset.lvDel); return; } }
     if (!st.sel.size || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'Escape') { e.preventDefault(); bulk('clear'); }
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); bulk('delete'); }

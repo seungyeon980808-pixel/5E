@@ -315,7 +315,20 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   // order: 나형처럼 문항 순서를 바꿔 묶을 때(문항 id 순서) — 묶은 뒤 번호를 다시 매긴다.
   // 그림 아래로 내려간 줄을 단 폭으로(widenBelowPictures, 11-02) — 학교 양식으로 새로 조판한 문항에. 보낼 때(buildExam)와 시험지 미리보기(pageSheetsNow)가 같은 모양이 되게 한 곳에서.
   const widenForForm=(Document,bytes,s)=>widenBelowPictures(Document,bytes,XLSX.CFB,s.fit?.on?{low:s.fit.low,high:s.fit.high,shortLastLine:s.fit.shortLastLine,base:s.text?.spacing}:null);
+  // 11-11 사용자 「hwp로 보내는 게 왜 이렇게 오래 걸리냐」: 같은 시험지·같은 내용이면 묶은 결과를 다시 쓴다(두 번째 보내기부터 바로).
+  // 키에는 문항 순서·나형 순서·양식·쪽 띄움과 각 문항의 내용·조판(저장된 조판 크기·판)·틀을 넣는다 — 하나라도 바뀌면 새로 묶는다.
+  const builtExams=new Map();
+  const examBuildKey=(data,examSet,form,order)=>{try{return JSON.stringify({i:examSet.items,o:order,f:form?.id||null,a:examSet.after||null,b:examSet.breaks||null,
+    q:examSet.items.map(id=>{const v=data.questions.find(x=>x.id===id);return v?[contentKey(v),v.typeset?.bytes?.length||0,typeof v.typeset?.bytes==='string'?v.typeset.bytes.slice(-96):0,v.typeset?.revision||v.typeset?.savedAt||0,JSON.stringify(v.typeset?.profile||null),stdKey(v)]:null;})});}catch{return null;}};
   async function buildExam(data,examSet,{form=null,password='',order=null}={}){
+    const key=examBuildKey(data,examSet,form,order),hit=key&&builtExams.get(key);
+    if(hit){console.debug('[5E_exam] 시험지 묶기: 같은 내용이라 앞서 묶은 결과를 씀');return new Uint8Array(hit);}
+    const t0=performance.now(),bytes=await buildExamFresh(data,examSet,{form,password,order});
+    console.debug(`[5E_exam] 시험지 묶기 ${Math.round(performance.now()-t0)}ms · ${examSet.items.length}문항${form?' · 학교 양식':''}`);
+    if(key){builtExams.clear();builtExams.set(key,new Uint8Array(bytes));}
+    return bytes;
+  }
+  async function buildExamFresh(data,examSet,{form=null,password='',order=null}={}){
     if(order)examSet={...examSet,items:[...order]};
     await ensure();const Document=document().constructor,template=form?await openForm(form.bytes,password):null;
     // 단 폭이 섞인 시험지(빈 시험지): 배치·점검 화면과 같게, 시험지 단 폭과 다른 문항만 그 단 폭으로 새로 조판해 묶는다.

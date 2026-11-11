@@ -530,6 +530,11 @@
 .lv-card:hover .lv-cstar,.lv-cstar.on,.lv-cstar:focus-visible{opacity:1}
 .lv-cstar.on{color:var(--lv-star)}.lv-cstar.on svg,.lv-vstar.on svg{fill:currentColor}
 .lv-cstar svg{width:16px!important;height:16px!important}
+/* 11-11: 카드 삭제 — 별표 왼쪽, 마우스를 올렸을 때만 */
+.lv-cdel{position:absolute;top:6px;right:40px;width:28px;height:28px;border-radius:14px;border:0;padding:0;background:rgba(13,17,23,.75);color:var(--ds-ink-3,#7d8590);display:grid;place-items:center;opacity:0;transition:opacity .15s,color .15s;cursor:pointer}
+.lv-card:hover .lv-cdel,.lv-cdel:focus-visible{opacity:1}
+.lv-cdel:hover{color:#e5534b}
+.lv-cdel svg{width:15px;height:15px}
 .lv-meta{position:relative}
 .lv-open{position:absolute;right:8px;top:50%;transform:translateY(-50%);height:22px;padding:0 8px;border-radius:6px;border:0;background:var(--ds-hover,#1f2630);color:var(--ds-ink,#e6edf3);font:inherit;font-size:12px;cursor:pointer;opacity:0;transition:opacity .12s}
 .lv-card:hover .lv-open,.lv-open:focus-visible{opacity:1}

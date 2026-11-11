@@ -101,6 +101,12 @@ export function initQuestionSheet(state,services,examWorkspace){
     setTimeout(async()=>{open();const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
       frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);});
+  // 11-11: AI 창 「문항 카드에 넣기」 → 그 카드의 그림 자리로(그래프 결과는 그림으로 넣을 수 없어 안내만).
+  window.addEventListener('5e:hwp-inplace-ai',async event=>{const d=event.detail,card=d?.target?.examCard;if(!card||!frame?.contentWindow)return;
+    if(!d.image?.data){frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:card.qid,key:card.key,error:'그래프 결과는 문항 카드에 그림으로 넣을 수 없습니다. AI 이미지 변환을 쓰세요.'},OWN);return;}
+    let {width,height}=d.image;if(!(width>0&&height>0)){try{const i=new Image();i.src=d.image.data;await i.decode();width=i.naturalWidth;height=i.naturalHeight;}catch{}}
+    host.hidden=false;syncAppLock?.();
+    frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'figure-ready',qid:card.qid,key:card.key,figure:{name:d.name||'AI 결과',data:d.image.data,width,height}},OWN);});
   window.addEventListener('message',async e=>{
     if((!FILE_MODE&&e.origin!==location.origin)||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},OWN);
@@ -109,6 +115,9 @@ export function initQuestionSheet(state,services,examWorkspace){
     // 출제 대화: 시간이 오래 걸리므로 다른 전송 작업을 막지 않는다. 문항별 작업 범위로 따로 실행한다.
     if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>send({action:'author-ready',error:error.message||String(error),cancelled:!!error.cancelled}));return;}
     if(m.action==='login'){window.dispatchEvent(new Event('5e:web-login-request'));return;}
+    // 11-11 사용자: 문항 카드 그림에서도 한글처럼 바로 AI 이미지 변환으로 — 결과는 「문항 카드에 넣기」로 그 그림 자리에 돌아온다.
+    if(m.action==='ai-figure'){const f=m.figure;if(!f?.data){send({error:'변환할 그림이 없습니다.'});return;}
+      window.dispatchEvent(new CustomEvent('5e:ai-open-reference',{detail:{reference:{dataUrl:f.data,name:m.label||'그림',sourceKind:'exam-figure'},conversionKind:m.kind==='graph'?'graph':'image',hwpTarget:{examCard:{qid:m.qid,key:m.key},label:m.label||'그림'}}}));return;}
     if(m.action==='author-cancel'){void authoring().then(h=>h.cancel(m.cancelId));return;}
     // 문항의 그림·그래프 만들기·그래프 세부 편집도 오래 걸리므로 전송 잠금 밖에서 실행한다.
     // 5E 라이브러리(공유 폴더·자료팩·기출 PDF)에서 고르기: 문항 창을 잠시 내리고 5E 라이브러리 선택기를 연다.

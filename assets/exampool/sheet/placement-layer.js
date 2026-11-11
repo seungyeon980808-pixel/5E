@@ -178,7 +178,9 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     const item=hover;if(!item)return;const linked=!!item.block.figure?.editable?.source,empty=!item.block.figure;
     menu.innerHTML=`<button type="button" role="menuitem" data-place-action="pick">${empty?'5E 그림에서 잘라 넣기':'5E 그림에서 다시 잘라 넣기'}<small>5E 화면에서 영역을 정해 이 자리에 넣기</small></button>`+
       (linked?'<button type="button" role="menuitem" data-place-action="edit">편집기에서 수정<small>5E 그림 편집기에서 원본을 고친 뒤 반영</small></button>':'')+
-      (empty?'':'<button type="button" role="menuitem" data-place-action="file">파일에서 넣기<small>PNG·JPEG 그림 파일로 바꾸기</small></button>');
+      (empty?'':'<button type="button" role="menuitem" data-place-action="file">파일에서 넣기<small>PNG·JPEG 그림 파일로 바꾸기</small></button>')+
+      // 11-11 사용자: 한글처럼 문항 카드 그림에서도 바로 AI 이미지 변환으로(결과는 「문항 카드에 넣기」로 이 자리에).
+      (empty?'':'<button type="button" role="menuitem" data-place-action="ai-image">AI 이미지 변환<small>AI 이미지 창에서 다시 그린 뒤 이 자리로</small></button>');
     const r=tools.getBoundingClientRect(),h=host.getBoundingClientRect();Object.assign(menu.style,{left:`${r.right-h.left}px`,top:`${r.bottom-h.top+4}px`});
     menu.hidden=false;tools.querySelector('[data-place-tool="modify"]').setAttribute('aria-expanded','true');
   }

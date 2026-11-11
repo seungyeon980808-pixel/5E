@@ -2611,7 +2611,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // D1: 한글에서 연 AI 창은 전환 줄 없이 제목만 — 「AI 이미지 / AI 그래프 · 한글 n번 그림에서 엶」.
       syncSurfaceTitle();
       if (copy) copy.textContent = inPlace ? '클립보드로 복사' : '이미지 복사';
-      examSend.textContent = inPlace ? '한글 파일에 넣기' : '한글로 보내기';
+      const examCardTarget = Boolean(hwpInPlaceTargets.get(activeTaskTabId)?.examCard);
+      examSend.textContent = inPlace ? (examCardTarget ? '문항 카드에 넣기' : '한글 파일에 넣기') : '한글로 보내기';
       examSend.title = inPlace ? '고른 결과를 한글 시험지의 원래 그림 자리에 같은 폭으로 넣습니다(원래 그림은 「그림으로 되돌리기」로 돌아갈 수 있음).' : '현재 선택한 결과의 영역을 확인해 한글 문서에 넣습니다. 작업별 연결을 보존합니다.';
     }
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
@@ -2908,7 +2909,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const title = panel.querySelector('#ai-image-title');
     const target = hwpInPlaceTargets.get(activeTaskTabId);
     // 11-11: 제목은 「AI 이미지」「AI 그래프」만 쓴다(5E_ 표기 없음). 한글에서 열었을 때만 뒤에 출처를 붙인다.
-    const text = `${graph ? 'AI 그래프' : 'AI 이미지'}${target ? ` · 한글 ${target.label || '그림'}에서 엶` : ''}`; // 11-11: 종류는 지금 작업이 정한다(연결에 남은 옛 종류 X)
+    const text = `${graph ? 'AI 그래프' : 'AI 이미지'}${target ? ` · ${target.examCard ? '문항 카드' : '한글'} ${target.label || '그림'}에서 엶` : ''}`; // 11-11: 종류는 지금 작업이 정한다(연결에 남은 옛 종류 X)
     // 11-11: 제목은 오브젝트 창처럼 아이콘 + 글자. 끌기 손잡이(modal-drag)는 그대로 둔다.
     if (title) {
       let label = title.querySelector('[data-ai-title-text]');

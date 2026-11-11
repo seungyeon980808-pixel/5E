@@ -142,7 +142,7 @@ async function boot(){try{
       resumed=raw!==null&&raw!==undefined;}}
   if(raw){revision=copied?0:raw._revision||0;if(fromFile){revision=storedRev;}data=migrate(raw);if(fromFile)remember();if(resumed)remember();if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
   else if(demo){data=validate(await(await fetch(new URL('./examples.json',import.meta.url))).json());remember();}
-  current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else if(first){view.name='exam';view.examId=first.id;}else view.name='library';}renderAll();if(raw)status('저장한 문항을 열었습니다.');if(fromFile)notice('앱 저장소보다 새로운 자동 저장 파일(문서/5E/출제)에서 되살렸습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
+  current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else{void first;view.name='library';Object.assign(libState(view),{pool:'drafting'});}}/* 11-11 사용자: 들어가면 「출제 중인 문항」부터 — 마지막 시험지 배치·점검을 열어 그때서야 조판하지 않게 */renderAll();if(raw)status('저장한 문항을 열었습니다.');if(fromFile)notice('앱 저장소보다 새로운 자동 저장 파일(문서/5E/출제)에서 되살렸습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
 }catch(e){// 열지 못한 이유는 사라지지 않게 둔다 — 6초 뒤 지워지면 빈 보관함만 남아 저장이 없어진 것처럼 보인다.
   saveBlocked=true;view.loadError='저장된 입력을 열지 못했습니다. 기존 저장은 보존했습니다. '+e.message;renderAll();status(view.loadError,true,{keep:true});}
   try{standards=await loadStandards();}catch{status('성취기준 자료를 불러오지 못했습니다. 자료 열람에서 다시 시도하세요.',true);}
@@ -173,6 +173,8 @@ function slotAction(action,q,id){
   if(action==='file'){imageTarget={qid:q.id,key:'block:'+id};$('#figure-file').click();return;}
   if(action==='edit'){window.parent.postMessage({channel:'5e-question-sheet',action:'edit-figure',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure||null},OWN);return;}
   if(action==='table')return openSlots(q,id);
+  // 11-11: 카드 그림 → AI 이미지 변환(5E 창). 결과는 figure-ready로 이 자리에 돌아온다.
+  if(action==='ai-image'){if(!b.figure?.data){status('먼저 그림을 넣은 뒤 변환하세요.',true);return;}if(!embedded){status('AI 이미지 변환은 5E 안에서 연 문항 창에서 쓸 수 있습니다.',true);return;}window.parent.postMessage({channel:'5e-question-sheet',action:'ai-figure',kind:'image',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure},OWN);status('AI 이미지 창에서 다시 그린 뒤 「문항 카드에 넣기」를 누르면 이 그림 자리에 바뀝니다.');return;}
 }
 function resizeTable(t,rows,cols,headerRows){
   const cells=Array.from({length:rows},(_,r)=>Array.from({length:cols},(_,c)=>t.cells[r]?.[c]||{value:''}));
