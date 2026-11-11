@@ -588,6 +588,7 @@ function renderCoordplane(obj) {
     const off = which === "x" ? offX : offY;
     const pos = which === "x" ? posX : posY;
     let auto = null;
+    const koTitle = /[가-힣]/.test(String(text ?? '')) && (obj.graphStyle?.descriptionLayout || obj.reconstruction) ? 1.3 : 1;
     const source = obj.reconstruction?.source;
     if (!pos && obj.graphStyle?.descriptionLayout && source?.plotBox) {
       const b = source.plotBox, scale = obj.w / b.w;
@@ -597,7 +598,7 @@ function renderCoordplane(obj) {
         {parenthesesAreUnits:false,unit:obj.reconstruction?.axes?.[which]?.unit});
       auto = descriptionTitleLayout({ which, left, right:tipRight, top:tipTop, axisX:worldX0, axisY:worldY0,
         viewport:{left:obj.x-b.x*scale,right:obj.x+(source.width-b.x)*scale,top:obj.y-b.y*scale,bottom:obj.y+(source.height-b.y)*scale},
-        width:metric.w*nameSize/EXAM_STYLE.label,height:metric.h*nameSize/EXAM_STYLE.label,gap:nameSize*.55,
+        width:metric.w*nameSize*koTitle/EXAM_STYLE.label,height:metric.h*nameSize*koTitle/EXAM_STYLE.label,gap:nameSize*.55,
         tickClearance:obj.showTickLabels || obj.tickLabelMode === 'text' ? Math.max(numSize + tickGap,descriptionXTickDepth) + nameSize*.55 : 0 });
     }
     const px = pos ? obj.x + pos.fx * obj.w : (auto?.x ?? lx) + (off.dx || 0);
@@ -606,7 +607,8 @@ function renderCoordplane(obj) {
     const requestedAnchor = which === "x" ? obj.labelXAnchor : obj.labelYAnchor;
     const anc = ["start", "middle", "end"].includes(requestedAnchor) ? requestedAnchor : (pos ? "middle" : auto?.anchor ?? anchor);
     const bl = pos || auto ? "middle" : baseline;
-    const titleSize = nameSize * (auto?.sizeScale ?? 1);
+    // 11-11: 한글 축 이름은 같은 크기여도 수식 글자보다 작아 보여 1.3배로(설명·복원 그래프, 사용자 「축 라벨 더 키워야」).
+    const titleSize = nameSize * koTitle * (auto?.sizeScale ?? 1);
     let el = null;
     if (rich) el = renderGraphLabel(text, { x: px, y: py, size: titleSize, color, anchor: anc, vAlign: baselineToVAlign(bl), unit:obj.graphStyle?.descriptionLayout ? obj.reconstruction?.axes?.[which]?.unit : undefined, orientation: obj.reconstruction?.axes?.[which]?.orientation, halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
     else {

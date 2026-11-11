@@ -19,7 +19,9 @@ export function descriptionTitleLayout({ which, right, top, axisX, axisY, viewpo
   const below = Math.max(gap, tickClearance);
   const availableHeight = which === 'x' ? viewport.bottom - axisY - below - gap : viewport.bottom - viewport.top - 2 * gap;
   // 11-11: 아래쪽 높이가 모자라도 축 이름을 0.9배 아래로 줄이지 않는다(글씨를 키운 뒤 x 이름만 아주 작아지던 문제). 폭은 지금처럼 맞춘다.
-  const sizeScale = Math.min(1, Math.max(0, availableWidth) / Math.max(width, 1e-12), Math.max(0.9, Math.max(0, availableHeight) / Math.max(height, 1e-12)));
+  const widthFit = Math.max(0, availableWidth) / Math.max(width, 1e-12);
+  // 11-11: 조금 넘치는 정도(60% 이상 들어감)면 0.9배까지만 줄인다. 아주 긴 제목만 끝까지 맞춘다.
+  const sizeScale = Math.min(1, widthFit >= 0.6 ? Math.max(0.9, widthFit) : widthFit, Math.max(0.9, Math.max(0, availableHeight) / Math.max(height, 1e-12)));
   const w = width * sizeScale, h = height * sizeScale;
   if (which === 'x') return {
     x: Math.max(viewport.left + gap + w / 2, Math.min(viewport.right - gap - w / 2, right)),
