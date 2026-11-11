@@ -3797,7 +3797,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         });
         continue;
       }
-      if (item.reviewState === 'passed' && (item.imageLabelWorkflow?.labelResult === 'remove' ? !parseImageReviewReport(JSON.stringify(item.reviewReport), { requireLabelChecks: true, labelOutcome: 'remove' }).ok : item.labelPlan?.frozen ? !sourceReportVerified(item.reviewReport) : !parseImageReviewReport(JSON.stringify(item.reviewReport)).ok)) {
+      // 11-10: 검수를 건너뛴 라벨 읽기·삭제 결과는 다시 불러와도 검수 기준 변경으로 바꾸지 않는다(ai-image-review.js isImageLabelCandidateAccepted와 같은 판정).
+      if (item.reviewState === 'passed' && item.reviewReport?.reviewSkipped !== true && (item.imageLabelWorkflow?.labelResult === 'remove' ? !parseImageReviewReport(JSON.stringify(item.reviewReport), { requireLabelChecks: true, labelOutcome: 'remove' }).ok : item.labelPlan?.frozen ? !sourceReportVerified(item.reviewReport) : !parseImageReviewReport(JSON.stringify(item.reviewReport)).ok)) {
         item.reviewState = 'needs-attention';
         item.reviewReport = { verdict: 'uncertain', checks: [], issues: [{ message: '검수 기준이 변경되어 그림과 편집 라벨의 최종 화면을 다시 확인해야 합니다.', severity: 'major' }] };
       }

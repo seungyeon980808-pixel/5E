@@ -1737,6 +1737,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-label-read-hwp-send-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-READ-HWP-SEND"
+      ]
+    },
+    {
       "path": "tests/test-labeler-attached-leaders-browser.cjs",
       "findingIds": [
         "LABELER-NATIVE-ATTACHMENT",

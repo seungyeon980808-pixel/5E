@@ -102,6 +102,8 @@ export function moveLeaderHandle(label, part, dx, dy) {
 export function userOutputLabelPlan(candidate) {
   if (!candidate.labelPlan && candidate.editableDraft?.presentation !== 'external-list') return null;
   const plan = manualLabelPlan(candidate);
+  // 11-10: 검수를 건너뛴 라벨 읽기 결과(reviewSkipped, 통과)는 캔버스·한글로 보낼 때도 「검토 필요」를 붙이지 않는다(742a44c4와 같은 판정).
+  if (candidate.reviewReport?.reviewSkipped === true && candidate.reviewState === 'passed') { plan.reviewRequired = false; plan.status = 'ready'; }
   plan.bundleWithImage = true;
   plan.manualReview = { origin:'user-output', candidateId:candidate.id, reviewState:candidate.reviewState || 'idle' };
   // 11-09: 기출 글자를 하나도 지우지 못한 결과(원본 글자가 그대로 남음)를 검수 없이 넣을 때도 편집 라벨을 원본 글자 위에
