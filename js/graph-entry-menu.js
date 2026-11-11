@@ -27,7 +27,7 @@ export function initGraphEntryMenu({ button = document.getElementById('graph-too
       <span class="graph-entry-ico" data-tone="${row.kind === 'direct' ? 'direct' : 'ai'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[row.kind]}</svg></span>
       <span class="graph-entry-text"><strong>${row.title}</strong><span>${row.detail}</span></span>
       ${row.shortcut ? `<kbd class="graph-entry-key" data-graph-entry-key>${formatShortcut(row.shortcut)}</kbd>` : ''}
-    </button>`).join('') + '<div class="graph-entry-foot">세 길 모두 결과는 그래프 편집기에서 고칩니다</div>';
+    </button>`).join(''); // 11-11: 아래 설명 줄 삭제
   document.body.append(menu);
   button.setAttribute('aria-haspopup', 'menu');
   button.setAttribute('aria-controls', menu.id);

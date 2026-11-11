@@ -3380,3 +3380,54 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 /* 11-11: 「전체 선택」은 실행 단추라 다 골라진 상태여도 눌린 바탕을 칠하지 않는다 */
 :root:not([data-mode="lite"]) #ai-image-panel#ai-image-panel .ai-rail-actions > button { background: none !important; outline: none !important; box-shadow: none !important; color: var(--text-secondary) !important; font-weight: 400 !important; }
 :root:not([data-mode="lite"]) #ai-image-panel#ai-image-panel .ai-rail-actions > button:hover:not(:disabled) { color: var(--text-primary) !important; }
+/* ===== 11-11 (시안 v7): 왼쪽 칸을 창 맨 위까지 잇기 · 제목 아이콘 · 불러오기 단추 · 글씨 한 단계 키우기 ===== */
+#ai-image-panel .ai-head { position: relative; border-bottom-color: transparent !important; box-shadow: none !important; }
+#ai-image-panel .ai-head::before { content: ""; position: absolute; left: 0; top: 0; bottom: -1px; width: var(--ai-rail-w); box-sizing: border-box; background: var(--bg-panel); border-right: 1px solid var(--border); pointer-events: none; z-index: 0; }
+#ai-image-panel .ai-head::after { content: ""; position: absolute; left: var(--ai-rail-w); right: 0; bottom: 0; height: 1px; background: var(--border); pointer-events: none; }
+#ai-image-panel .ai-head > * { position: relative; z-index: 1; }
+#ai-image-panel .ai-title-line .modal-title,
+#ai-image-panel #ai-image-title,
+#ai-image-panel #ai-image-title.has-drag-handle { left: 14px !important; width: calc(var(--ai-rail-w) - 20px) !important; display: flex !important; align-items: center; gap: 8px; justify-content: flex-start !important; text-align: left !important; font-size: 16px !important; font-weight: 700 !important; z-index: 1; }
+#ai-image-panel #ai-image-title .ai-title-icon { display: inline-flex; flex: none; color: var(--text-primary); }
+#ai-image-panel #ai-image-title .ai-title-icon svg { width: 19px; height: 19px; }
+#ai-image-panel #ai-image-title [data-ai-title-text] { overflow: hidden; text-overflow: ellipsis; }
+/* 왼쪽 머리 줄: 「이미지 작업대」 글자는 화면에서 빼고(읽기 도구용으로 남김) 선택 줄을 놓는다 */
+#ai-image-panel .ai-rail-heading { justify-content: space-between; padding: 0 6px 0 14px !important; }
+#ai-image-panel .ai-rail-heading > strong { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#ai-image-panel .ai-rail-heading > .ai-rail-selection-row { flex: 1 1 auto; min-width: 0; padding: 0 !important; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+/* 빈 칸 불러오기: 큰 단추(라이브러리) + ＋(파일·클립보드) */
+#ai-image-panel .ai-stage-import { position: relative; display: inline-flex; margin-top: 14px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-input); }
+#ai-image-panel .ai-stage-import > button { display: inline-flex; align-items: center; gap: 8px; height: 36px; margin: 0; border: 0 !important; border-radius: 0; background: transparent !important; color: var(--text-primary) !important; font: inherit; font-size: 13.5px; font-weight: 600; box-shadow: none !important; outline: none; cursor: pointer; }
+#ai-image-panel .ai-stage-import > .ai-stage-import-main { padding: 0 14px; border-radius: 6px 0 0 6px; }
+#ai-image-panel .ai-stage-import > .ai-stage-import-more { width: 36px; justify-content: center; padding: 0; border-left: 1px solid var(--border) !important; border-radius: 0 6px 6px 0; font-size: 17px; font-weight: 400; color: var(--text-secondary) !important; }
+#ai-image-panel .ai-stage-import > button:hover:not(:disabled) { background: var(--bg-panel-hover) !important; }
+#ai-image-panel .ai-stage-import > button:focus-visible { outline: 1px solid var(--ds-soft-line, #6ba4f8) !important; outline-offset: -1px; }
+#ai-image-panel .ai-stage-import svg { width: 16px; height: 16px; flex: none; opacity: .85; }
+#ai-image-panel .ai-stage-import-menu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); min-width: max-content; padding: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-panel); box-shadow: 0 10px 28px rgba(0,0,0,.45); text-align: left; z-index: 20; }
+#ai-image-panel .ai-stage-import-menu[hidden] { display: none !important; }
+#ai-image-panel .ai-stage-import-menu > button { display: flex; align-items: center; gap: 9px; width: 100%; height: 34px; padding: 0 10px; border: 0 !important; border-radius: 5px; background: transparent !important; color: var(--text-primary) !important; font: inherit; font-size: 13px; font-weight: 400; text-align: left; white-space: nowrap; box-shadow: none !important; cursor: pointer; }
+#ai-image-panel .ai-stage-import-menu > button:hover { background: var(--bg-panel-hover) !important; }
+#ai-image-panel .ai-stage-import-menu kbd { margin-left: auto; padding-left: 14px; font: inherit; font-size: 11.5px; color: var(--text-secondary); background: none; border: 0; }
+/* 글씨 한 단계 키우기(줄 높이는 그대로) */
+#ai-image-panel .ai-head .ai-workflow-switch > button { font-size: 13.5px !important; }
+#ai-image-panel .ai-compare-heading :is(button, summary, output, span) { font-size: 13px; }
+#ai-image-panel .ai-rail-selection-row output { font-size: 13px !important; }
+#ai-image-panel .ai-rail-actions > button, #ai-image-panel .ai-rail-actions-dot { font-size: 12px !important; }
+#ai-image-panel .ai-task-tab-list { font-size: 13px; }
+#ai-image-panel .ai-conversation-caption strong { font-size: 13.5px; }
+#ai-image-panel .ai-compact-settings .ai-setting-row > span { font-size: 13px; }
+#ai-image-panel .ai-compact-settings .ai-setting-pair button { font-size: 13px; }
+#ai-image-panel .ai-log .ai-msg { font-size: 13.5px; }
+#ai-image-panel .ai-log-empty { font-size: 12.5px; }
+#ai-image-panel .ai-dock .ai-chat-composer textarea { font-size: 13px; }
+#ai-image-panel .ai-dock [data-ai-send] { font-size: 14px; }
+#ai-image-panel .ai-dock .ai-output-actions button { font-size: 12.5px; }
+#ai-image-panel .ai-head-status, #ai-image-panel .ai-head-status .ai-source-decision, #ai-image-panel .ai-text-link { font-size: 12.5px; }
+#ai-image-panel .ai-stage-empty > strong { font-size: 15px; }
+#ai-image-panel .ai-stage-empty > span { font-size: 13px; }
+#ai-image-panel .ai-rail-heading .ai-rail-actions { gap: 3px !important; flex: none; }
+#ai-image-panel .ai-rail-heading .ai-rail-actions-dot { display: inline !important; opacity: .5; }
+#ai-image-panel .ai-rail-heading .ai-rail-actions > button { padding: 2px 2px !important; font-size: 11.5px !important; }
+#ai-image-panel .ai-rail-heading { padding: 0 8px 0 12px !important; }
+#ai-image-panel .ai-rail-heading .ai-rail-selection-row output { font-size: 12px !important; }
+#ai-image-panel .ai-rail-heading .ai-rail-actions > button { font-size: 11px !important; }

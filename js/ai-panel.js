@@ -144,6 +144,18 @@ import {
 const GRAPH_TO_EDITOR_LABEL = '편집기로 가져오기';
 const GRAPH_TO_EDITOR_TITLE = '결과를 그래프 편집기로 가져옵니다. 편집기에서 캔버스로 내보내거나 한글에 넣습니다.';
 
+// 11-11: AI 창 제목 아이콘(아래 도구 줄의 AI 이미지·AI 그래프와 같은 모양)
+const AI_TITLE_ICON_IMAGE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="13" height="13" rx="1.5"/><path d="m4.5 18 4-4 3 3 2-2 3 3"/><circle cx="8" cy="10.5" r="1"/><path d="M19.5 2.5v4M17.5 4.5h4"/></svg>';
+const AI_TITLE_ICON_GRAPH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 4v16h16"/><path d="M6 16c2.3-6.2 4.5-8 6.4-5.3s3.1 .9 4.4-3.2"/><path d="M19.5 2.5v4M17.5 4.5h4"/></svg>';
+const AI_IMPORT_ICONS = {
+  library: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><rect x="5" y="5" width="3.2" height="15" rx=".6"/><rect x="9.6" y="5" width="3.2" height="15" rx=".6"/><path d="m14.4 6.3 3-.8 3 13.4-3 .8z"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg>',
+  clip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4.5" width="12" height="16" rx="2"/><path d="M9.5 4.5V3h5v1.5"/></svg>',
+};
+const AI_IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+const aiKey = mac => AI_IS_MAC ? mac : mac.replace('⇧⌘', 'Ctrl+Shift+').replace('⌘', 'Ctrl+');
+// 11-11: 빈 칸 불러오기 — 큰 단추는 바로 라이브러리, 옆 ＋는 파일·클립보드
+const aiEmptyImportHtml = () => `<div class="ai-stage-import"><button type="button" class="ai-stage-import-main" data-ai-empty-library title="라이브러리에서 불러오기 (${aiKey('⇧⌘L')})">${AI_IMPORT_ICONS.library}<span>라이브러리에서 불러오기</span></button><button type="button" class="ai-stage-import-more" data-ai-empty-more aria-haspopup="menu" aria-expanded="false" title="다른 곳에서 불러오기" aria-label="다른 곳에서 불러오기">＋</button><div class="ai-stage-import-menu" role="menu" hidden><button type="button" role="menuitem" data-ai-empty-file>${AI_IMPORT_ICONS.file}<span>파일에서 불러오기</span><kbd>${aiKey('⌘O')}</kbd></button><button type="button" role="menuitem" data-ai-empty-paste>${AI_IMPORT_ICONS.clip}<span>클립보드에서 붙여넣기</span><kbd>${aiKey('⌘V')}</kbd></button></div></div>`;
 export function scopedPngBytes(data) {
   if (!/^data:image\/png;base64,/i.test(data)) throw new Error('원본 PNG만 지원합니다. PNG 형식을 확인하세요.');
   return Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), c => c.charCodeAt(0));
@@ -599,7 +611,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   };
   const renderEmptySource = (empty) => {
     empty.classList.add('ai-stage-empty');
-    empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>이미지를 끌어놓거나 파일을 선택하세요.</span><select class="ai-stage-add" data-ai-empty-import aria-label="작업 이미지 불러오기"><option value="">이미지 불러오기</option><option value="library">라이브러리에서 불러오기</option><option value="file">파일 탐색기에서 불러오기</option></select>';
+    empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>라이브러리에서 고르거나, 이미지를 끌어놓으세요.</span>' + aiEmptyImportHtml();
   };
   renderEmptyResult(previews?.querySelector("[data-ai-empty]"));
   const initialEmptySource = panel.querySelector('[data-ai-reference-empty]');
@@ -2785,7 +2797,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     setText('.ai-compare-controls [data-ai-layout-mode="result"]', creation ? '결과' : '수정본');
     // 빈 칸 안내는 제목·설명 글만 바꾼다(안의 「이미지 불러오기」 선택 메뉴는 그대로 — 통째로 글을 바꾸면 메뉴가 지워졌다).
     setText('[data-ai-reference-empty] > strong', creation ? `${refName}(선택 사항 · 최대 ${CREATION_REFERENCE_LIMIT}개)` : '작업할 이미지를 추가하세요');
-    setText('[data-ai-reference-empty] > span', creation ? '모양·배치·화풍을 참고합니다. 그대로 베끼지 않고, 오른쪽 설명이 우선합니다.' : '이미지를 끌어놓거나 파일을 선택하세요.');
+    setText('[data-ai-reference-empty] > span', creation ? '모양·배치·화풍을 참고합니다. 그대로 베끼지 않고, 오른쪽 설명이 우선합니다.' : '라이브러리에서 고르거나, 이미지를 끌어놓으세요.');
     const refSummary = panel.querySelector('.ai-reference-section > summary')?.firstChild; if (refSummary?.nodeType === 3) refSummary.nodeValue = creation ? `${refName} ` : '원본 이미지 ';
     const addLabel = panel.querySelector('[data-ai-source-menu-trigger] .ds-glyph-plus')?.nextSibling; if (addLabel?.nodeType === 3) addLabel.nodeValue = creation ? ` ${refName} 추가 ` : ' 소스 추가 ';
     const processing = panel.querySelector('[data-ai-output-processing]'); if (processing) processing.hidden = graph;
@@ -2884,7 +2896,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const target = hwpInPlaceTargets.get(activeTaskTabId);
     // 11-11: 제목은 「AI 이미지」「AI 그래프」만 쓴다(5E_ 표기 없음). 한글에서 열었을 때만 뒤에 출처를 붙인다.
     const text = target ? `${target.kind === 'graph' ? 'AI 그래프' : 'AI 이미지'} · 한글 ${target.label || '그림'}에서 엶` : graph ? 'AI 그래프' : 'AI 이미지';
-    if (title && title.textContent !== text) title.textContent = text;
+    // 11-11: 제목은 오브젝트 창처럼 아이콘 + 글자. 끌기 손잡이(modal-drag)는 그대로 둔다.
+    if (title) {
+      let label = title.querySelector('[data-ai-title-text]');
+      if (!label) {
+        for (const node of [...title.childNodes]) if (node.nodeType === 3) node.remove();
+        const icon = document.createElement('span'); icon.className = 'ai-title-icon'; icon.setAttribute('aria-hidden', 'true');
+        label = document.createElement('span'); label.dataset.aiTitleText = '';
+        title.append(icon, label);
+      }
+      if (title.dataset.aiTitleIcon !== mode) {
+        title.querySelector('.ai-title-icon').innerHTML = graph ? AI_TITLE_ICON_GRAPH : AI_TITLE_ICON_IMAGE;
+        title.dataset.aiTitleIcon = mode;
+      }
+      if (label.textContent !== text) label.textContent = text;
+    }
     const closeButton = panel.querySelector('[data-ai-close]');
     const closeLabel = `${graph ? '그래프 AI' : 'AI 이미지'} 닫기`;
     if (closeButton && closeButton.getAttribute('aria-label') !== closeLabel) closeButton.setAttribute('aria-label', closeLabel);
@@ -6117,6 +6143,28 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       chatButton.click();
     }
   });
+  // 11-11: 빈 칸 불러오기 단추 — 큰 단추는 바로 라이브러리, ＋는 파일·클립보드 메뉴. 단축키 ⇧⌘L(라이브러리)·⌘O(파일).
+  const openLibraryImport = trigger => void openPdfReferencePicker({...createUnifiedAiSourceConsumer({addReferencesAsTasks,setStatus}),trigger}).catch(error=>setStatus(error instanceof Error ? error.message : String(error),'error'));
+  const closeEmptyImportMenus = () => panel.querySelectorAll('.ai-stage-import-menu').forEach(menu => { if (!menu.hidden) { menu.hidden = true; menu.parentElement?.querySelector('[data-ai-empty-more]')?.setAttribute('aria-expanded', 'false'); } });
+  panel.addEventListener('click', event => {
+    const target = event.target.closest?.('[data-ai-empty-library],[data-ai-empty-more],[data-ai-empty-file],[data-ai-empty-paste]');
+    if (!target) { if (!event.target.closest?.('.ai-stage-import')) closeEmptyImportMenus(); return; }
+    if (target.matches('[data-ai-empty-more]')) {
+      const menu = target.parentElement.querySelector('.ai-stage-import-menu'); const open = menu.hidden;
+      closeEmptyImportMenus(); menu.hidden = !open; target.setAttribute('aria-expanded', String(open)); return;
+    }
+    closeEmptyImportMenus();
+    if (busy) return;
+    if (target.matches('[data-ai-empty-library]')) openLibraryImport(target);
+    else if (target.matches('[data-ai-empty-file]')) { if (!file.disabled) file.click(); }
+    else if (target.matches('[data-ai-empty-paste]')) void pasteClipboardImage();
+  });
+  document.addEventListener('keydown', event => {
+    if (panel.hidden || busy || !(event.metaKey || event.ctrlKey) || event.altKey) return;
+    if (event.target?.closest?.('input, textarea, [contenteditable="true"]') && !event.shiftKey) return;
+    if (event.shiftKey && (event.code === 'KeyL' || event.key?.toLowerCase() === 'l')) { event.preventDefault(); event.stopPropagation(); openLibraryImport(referenceSearchButton || panel); }
+    else if (!event.shiftKey && (event.code === 'KeyO' || event.key?.toLowerCase() === 'o')) { event.preventDefault(); event.stopPropagation(); if (!file.disabled) file.click(); }
+  }, { capture: true, signal: lifecycle.signal });
   panel.addEventListener('change', event => {
     const control=event.target.closest?.('[data-ai-empty-import]');if(!control || busy)return;
     const selected=control.value;control.value='';

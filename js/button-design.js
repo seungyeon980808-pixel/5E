@@ -49,9 +49,25 @@ export function initButtonDesign(doc = document) {
     graph.classList.remove('advanced-tool-btn');
     graph.classList.add('object-search-trigger');
     // 10-24 시안 20: 좌표축 + 곡선 아이콘. 11-07(시안 graph-hub-1107 G1): 이름 「그래프」 — 올리거나 누르면 세 갈래.
-    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v16h16"/><path d="M6.5 16c2.5-7 5-9 7-6s3.5 1 5-4"/></svg><span class="search-trigger-label">그래프</span>';
-    graph.title = '그래프 · 직접 만들기 · 사진에서 복원 · AI와 대화로 만들기'; graph.setAttribute('aria-label', '그래프');
+    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4v16h16"/><path d="M6 16c2.3-6.2 4.5-8 6.4-5.3s3.1 .9 4.4-3.2"/><path d="M19.5 2.5v4M17.5 4.5h4"/></svg><span class="search-trigger-label">AI 그래프</span>';
+    // 11-11: 이름 「AI 그래프」(AI 이미지와 짝), 아이콘에 같은 반짝임 표시.
+    graph.title = 'AI 그래프 · 직접 만들기 · 사진에서 복원 · AI와 대화로 만들기'; graph.setAttribute('aria-label', 'AI 그래프');
     ai.before(graph);
+  }
+  // 11-11: ⇧⌘L(윈도우 Ctrl+Shift+L) = 라이브러리. AI 창이 열려 있으면 AI 창이 처리한다(라이브러리에서 불러오기).
+  if (hub && !doc.documentElement.dataset.libraryShortcut) {
+    doc.documentElement.dataset.libraryShortcut = 'on';
+    doc.addEventListener('keydown', event => {
+      if (!(event.metaKey || event.ctrlKey) || !event.shiftKey || event.altKey) return;
+      if (event.code !== 'KeyL' && event.key?.toLowerCase() !== 'l') return;
+      const ai = doc.getElementById('ai-image-panel');
+      if (ai && !ai.hidden) return;
+      const library = doc.getElementById('exam-library-open');
+      if (!library || library.disabled || library.offsetParent === null) return;
+      event.preventDefault(); library.click();
+    });
+    const library = doc.getElementById('exam-library-open');
+    if (library) library.title = `라이브러리 (${/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '') ? '⇧⌘L' : 'Ctrl+Shift+L'})`;
   }
   if (hub && !doc.getElementById('exam-pool-open')) {
     const examPool = doc.createElement('button');
