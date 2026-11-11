@@ -2763,8 +2763,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const railTitle = rail?.querySelector('.ai-rail-heading > strong');
     if (railTitle) railTitle.textContent = graph ? '그래프 작업대' : '이미지 작업대';
     panel.querySelector('[data-ai-tabs]')?.setAttribute('aria-label', graph ? '그래프 작업대' : '이미지 작업대');
-    const repeat=panel.querySelector('[data-ai-comments-apply]');
+    // 11-11: 실행 단추(data-ai-send)도 data-ai-comments-apply를 갖게 됐으므로, 그래프에서 숨기는 것은 예전 「코멘트 반영」 단추만.
+    const repeat=panel.querySelector('[data-ai-comments-apply]:not([data-ai-send])');
     if(repeat) repeat.hidden=graph;
+    sendButton.hidden=false;
     panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = panel.dataset.aiSharingMode === 'view' || (busy && !switchWorkflow); });
     if (graph) {
       sendButton.textContent = graphCreate ? '그래프 생성' : '그래프 복원'; // 11-11: 공통 실행 글자
