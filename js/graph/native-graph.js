@@ -46,8 +46,9 @@ export function buildNativeGraph(input, options = {}) {
   // 11-11: AI가 잰 원본 글자 높이는 대체로 작다(사용자 시험 8개 중 6개 「글씨가 작다」). 기출 표준 글자 높이의 0.92배를 바닥으로 둔다.
   // 11-12 밤샘(기출 그래프 46개 복원 비교): 글자가 좁은 막대그래프에선 너무 작고(폭에만 비례), 어떤 그래프에선 틀 밖으로 잘릴 만큼 컸다(위 한계 없음).
   // 기준 글자 크기는 그림 칸의 긴 변에 비례시키고, 시험지 표준의 0.92~1.45배 안으로 묶는다.
-  const textScale = Math.max(box.w, box.h) / 70, standardLabel = EXAM_STYLE.label * textScale;
-  const minLabel = standardLabel * 0.92, maxLabel = standardLabel * 1.45, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
+  // 기준은 칸 넓이(폭×높이의 제곱근, 기준 칸 70 × 52.5) — 긴 변 기준이면 납작한 그래프는 하한이, 긴 그래프는 상한이 너무 높았다.
+  const textScale = Math.sqrt(Math.max(1, box.w) * Math.max(1, box.h)) / (70 * Math.sqrt(0.75)), standardLabel = EXAM_STYLE.label * textScale;
+  const minLabel = standardLabel * 0.85, maxLabel = standardLabel * 1.3, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
   const isDot = shape => /dot|disc|filled|circle/.test(String(shape||''));
   const fitMarker = (v, shape) => isDot(shape) ? Math.max(v, minMarker) : v; // 11-11: 찍힌 점(●)만 바닥을 둔다
   // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.3배 키운 뒤 바닥을 둔다.

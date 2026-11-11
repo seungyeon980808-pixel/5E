@@ -44,6 +44,10 @@ function examArrow(plane, m, relative) {
 export function examPlaneStyle(plane) {
   if (!isExamStyle(plane)) return plane;
   const m = examMetrics(plane), relative = plane.w / positive(plane.graphStyle.referenceWidth, EXAM_STYLE.referenceWidth);
+  // 11-12 밤샘: 사진에서 복원한 그래프는 원본에서 잰 글자 크기(복원 때 시험지 표준의 0.92~1.45배로 묶음)를 쓴다 —
+  // 표준 크기로 덮어쓰면 작은 막대그래프는 글자가 너무 작고 넓은 그래프는 너무 컸다. 글로 만든 그래프는 지금처럼 표준.
+  const ownLabel = plane.reconstruction?.labelSizeMode === 'source-height' && !plane.graphStyle?.descriptionLayout && Number.isFinite(plane.axisLabelSize) && plane.axisLabelSize > 0 ? plane.axisLabelSize : null;
+  if (ownLabel) m.label = ownLabel;
   const guide = { strokeWidth: m.guide, dashLength: m.dash, dashGap: m.gap };
   const annotation = a => ({ ...a, size: m.label, fontSize: m.label, labelSizeMode: 'source-height',
     markerSize: m.marker, strokeWidth: a.kind === 'guide' ? m.guide : m.axis,
