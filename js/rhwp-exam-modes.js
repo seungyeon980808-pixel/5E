@@ -711,7 +711,7 @@ export function installExamModes(panel, services) {
     clearInterval(syncTimer);
     scheduleOutline();
     if (mode === 'focus') { inspector.sync(true); left.render(); }
-    if (announce) message(mode === 'basic' ? '기본 모드: 한글 리본 그대로(모든 기능)' : mode === 'focus' ? '집중 모드: 시험지·학습지에 필요한 도구 + 팔레트' : '없음: 도구 없이 종이만 · 「도구 보기」나 ⌘⌥2로 돌아옴');
+    if (announce) message(mode === 'basic' ? '기본 모드: 한글 리본 그대로(모든 기능)' : mode === 'focus' ? '집중 모드: 시험지·학습지에 필요한 도구 + 팔레트' : `없음: 도구 없이 종이만 · 「도구 보기」나 ${appKeyLabel(5)}로 돌아옴`);
   }
   modes.addEventListener('click', event => { const b = event.target.closest('[data-exam-mode]'); if (b) setMode(b.dataset.examMode); });
   peek.addEventListener('click', () => setMode('focus'));
