@@ -101,6 +101,8 @@ export class ExamInlineEditor {
     // 11-06: 두 번 누르기로 열어도 다섯 도구를 모두 보인다(예전 「간단 편집」은 라벨 글자만 고쳤다).
     this.root.querySelector('.exam-edit-badge').textContent = session.graph ? '그래프 그림 편집 중' : '그림 편집 중';
     this.root.querySelector('[data-inline-restore-label]').textContent = session.graph ? '그래프 편집' : '복원';
+    // 11-11: 그래프 그림이면 눌러야 할 단추(그래프 편집)를 눈에 띄게.
+    this.button('restore').classList.toggle('is-suggested', !!session.graph);
     this.button('restore').title = session.graph ? '그래프 창에서 이 그래프 객체를 고칩니다' : '그림 속 그래프를 고칠 수 있는 그래프 객체로 되살립니다 — 그래프 창에서 원본을 깔고 맞춥니다';
     this.button('revert').hidden = !session.restored;
     this.busy=false;this.root.querySelectorAll('button,input,textarea,select').forEach(control=>control.disabled=false);

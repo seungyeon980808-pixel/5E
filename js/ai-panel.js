@@ -2616,6 +2616,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (copy) copy.textContent = inPlace ? '클립보드로 복사' : '이미지 복사';
       const examCardTarget = Boolean(hwpInPlaceTargets.get(activeTaskTabId)?.examCard);
       examSend.textContent = inPlace ? (examCardTarget ? '문항 카드에 넣기' : '한글 파일에 넣기') : '한글로 보내기';
+      // 11-11 사용자: 결과는 저절로 넣지 않고 확인 뒤 직접 누른다 — 그래서 눌러야 할 단추를 눈에 띄게.
+      examSend.classList.toggle('is-suggested', inPlace && !!item && !outputBusy);
       examSend.title = inPlace ? '고른 결과를 한글 시험지의 원래 그림 자리에 같은 폭으로 넣습니다(원래 그림은 「그림으로 되돌리기」로 돌아갈 수 있음).' : '현재 선택한 결과의 영역을 확인해 한글 문서에 넣습니다. 작업별 연결을 보존합니다.';
     }
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');

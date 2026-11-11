@@ -16,7 +16,8 @@ import { embedEditablePng, readEditablePng, validateFigureRender, EDITABLE_PNG_M
 import { normalizeExamFigure, forkExamFigure, validateExamLink, validateExamContext, renameExamFigure } from './rhwp-exam-links.js?v=1.7.0-four-session-integration';
 import { createExamSourceTabs, createExamDraftChecker } from './rhwp-exam-source-tabs.js?v=1.7.0-four-session-integration';
 import { fitViewToBounds } from './viewport.js?v=1.7.0-four-session-integration';
-import { annotationsFor, getAnnotationPage, mergeAnnotationPatch, validateAnnotationPatch } from './rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
+import { annotationsFor, getAnnotationPage, mergeAnnotationPatch, validateAnnotationPatch, convertTextLabelsToLabelers } from './rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
+import { nativeLabelCenter } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 import { ExamInlineEditor, chooseInlineCrop } from './rhwp-exam-inline-editor.js?v=1.7.0-four-session-integration';
 // 11-04: 설치형도 한글 편집기를 앱 안에서 연다. 예전처럼 별도 「5E 시험지」 창으로 보내는 것은 window.__fiveEHwpSeparateWindow를 켤 때만.
 const hwpInSeparateWindow = () => location.protocol === 'file:' && !!window.__fiveEHwpSeparateWindow;
@@ -723,6 +724,10 @@ export function initRhwpExamWorkspace(state, services) {
     if(editing)return;
     await flushInline(true);await closeInline();refreshFigureNames();
     const figure=figures.get(id);
+    // 11-11: 예전에 넣은 그림의 선 없는 AI 라벨(글자 객체)도 열 때 지시선 라벨로 바꿔 이 창에서 고칠 수 있게 한다.
+    if(figure){try{let changed=0;try{changed+=convertTextLabelsToLabelers(figure.source,nativeLabelCenter);}catch{}
+      const tabPage=tabs.pageForLink?.(figure.link);if(tabPage?.objects){try{changed+=convertTextLabelsToLabelers(tabPage,nativeLabelCenter);}catch{}}
+      if(changed)scheduleSave?.();}catch{}}
     if(!figure){if(ref)return registerPicture(ref,'inline');throw new Error('시험지에서 그림을 선택해주세요.');}
     const target=ref || bridge.findFigure(id);if(!target)throw new Error('시험지에서 그림을 찾지 못했습니다.');
     cancelPlacement();await services.whenReady?.();await aiReady;
@@ -750,8 +755,9 @@ export function initRhwpExamWorkspace(state, services) {
     opening.graph=graphFigure;
     inlineEditor.open({simple:false,graph:graphFigure,restored:!!page0.meta?.examRestoredFrom,bridge,ref:target,labels:recovery?.edited || reading.draft,bounds:shownRender.bounds,baseUrl,recovery:!!recovery,layers:page0.layers,layerId:page0.layers.find(layer=>layer.visible!==false)?.id || 1});
     inlineEditor.position();
-    message(recovery ? '보관한 라벨 초안입니다. 적용하면 원본 라벨을 이 초안으로 교체합니다.' : graphFigure ? '그래프 그림입니다. 그래프 창에서 고치고 적용하면 같은 자리에 바뀝니다.' : '그림을 그 자리에서 고칩니다 — AI 변환 · 복원 · 텍스트 · 라벨러 · 자르기. 적용하면 같은 자리·같은 크기로 바뀝니다.');
-    if(graphFigure && !recovery)await inlineAction('restore');
+    message(recovery ? '보관한 라벨 초안입니다. 적용하면 원본 라벨을 이 초안으로 교체합니다.' : graphFigure ? '그래프 그림입니다 · 고치려면 왼쪽 빛나는 「그래프 편집」을 누르세요(적용하면 같은 자리에 바뀝니다).' : '그림을 그 자리에서 고칩니다 — AI 변환 · 복원 · 텍스트 · 라벨러 · 자르기. 적용하면 같은 자리·같은 크기로 바뀝니다.');
+    // 11-11 사용자: 그래프 그림을 열자마자 그래프 편집기를 저절로 띄우지 않는다 — 보고 확인한 뒤 「그래프 편집」을 직접 누른다(단추를 눈에 띄게).
+    void recovery;
   }
   function queueInlineChange(labels,bounds) {
     const session=inlineSession;if(!session)return;
@@ -937,6 +943,8 @@ export function initRhwpExamWorkspace(state, services) {
         const labelSizeMm=heights.length?Math.min(5,Math.max(1.8,heights[Math.floor(heights.length/2)])):undefined;
         const made=await prepareImageCandidateRevision(imageObject,data,{editableLabelPlan:detail.labelPlan,aiTaskId:detail.aiTaskId,aiCandidateId:detail.aiCandidateId,labelSizeMm});
         page.objects=[{...made.image,layerId},...made.labels.map(label=>({...label,layerId}))];page.groups=[];
+        // 11-11: 선 없는 AI 라벨도 그림 편집 창에서 고칠 수 있게 「선 없는 지시선 라벨」로(모양은 같음).
+        convertTextLabelsToLabelers(source,nativeLabelCenter);
         // 원래 칸(여백 포함)보다 줄이지 않는다 — 줄이면 한글이 같은 폭으로 늘려 그림·라벨이 커진다. 라벨이 칸 밖으로 나가면 그만큼만 넓힌다.
         const c=getContentBounds({...state.get(),...page,objects:page.objects},render.options,1),x0=Math.min(b.x,c.x),y0=Math.min(b.y,c.y);
         bounds={x:x0,y:y0,w:Math.max(b.x+b.w,c.x+c.w)-x0,h:Math.max(b.y+b.h,c.y+c.h)-y0};

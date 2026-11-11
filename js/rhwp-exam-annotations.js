@@ -63,6 +63,26 @@ export function validateAnnotationPatch(baseline, edited) {
   return true;
 }
 
+// 11-11 사용자 「라벨 복원으로 골랐는데 그림 편집 창에서 왜 못 만지냐」: 라벨 복원은 선 없는 라벨을 글자(text·formula) 객체로
+// 넣는데, 그림 편집 창은 지시선 라벨(labeler)만 다룬다. 선 없는 AI 라벨은 「선 없는 지시선 라벨」(p1 = p2 = 글자 가운데)로 바꿔 둔다 —
+// 그리는 모양은 같고(지시선 길이 0이면 선을 긋지 않음) 편집 창에서 두 번 눌러 고치기·옮기기·크기 바꾸기가 된다.
+export function textLabelAsLabeler(object, centerOf) {
+  if (!record(object) || object.aiAutoLabel !== true || !['text','formula'].includes(object.type)) return null;
+  const center = centerOf(object);
+  if (!point(center)) return null;
+  const { x, y, w, h, fontSize, rotation, ...rest } = object;
+  void x; void y; void w; void h;
+  return { ...rest, type: 'labeler', p1: { ...center }, p2: { ...center }, labelSize: fontSize, textRotation: rotation || 0,
+    ...(object.type === 'formula' && rest.contentMode !== 'formula' ? { contentMode: 'formula' } : {}) };
+}
+// 그림 원본의 활성 페이지에서 선 없는 AI 글자 라벨을 지시선 라벨로 바꾼다. 바꾼 개수를 돌려준다(원본을 그 자리에서 고침).
+export function convertTextLabelsToLabelers(source, centerOf) {
+  const page = getAnnotationPage(source);
+  let changed = 0;
+  page.objects = page.objects.map(object => { const next = textLabelAsLabeler(object, centerOf); if (next) { changed++; return next; } return object; });
+  return changed;
+}
+
 export function annotationsFor(source) {
   return copyExamData(validateLabels(getAnnotationPage(source).objects.filter(object => object?.type === 'labeler')));
 }

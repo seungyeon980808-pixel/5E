@@ -138,8 +138,12 @@ async function scenario(browser, origin, name) {
     assert.equal(restored.control.paraIdx, placed.control.paraIdx, 'same place in the document');
     await page.screenshot({ path: path.join(evidence, name + '-3-restored.png') });
 
-    // ③ 그래프 그림을 두 번 누르면 바로 그래프 창(편집) → 고쳐서 적용
+    // ③ 그래프 그림을 두 번 누르면 편집 창(「그래프 편집」 강조) → 눌러서 그래프 창 → 고쳐서 적용
     await h.doubleClick(page, 0);
+    // 11-11 사용자: 그래프 그림을 열어도 그래프 창을 저절로 띄우지 않는다 — 눈에 띄는 「그래프 편집」을 직접 누른다.
+    await root(page).waitFor({ state: 'visible' }); assert.equal(await button(page, 'restore').evaluate(b => b.classList.contains('is-suggested')), true, 'the graph edit button is highlighted');
+    assert.equal(await page.locator('#graph-modal-overlay').isVisible(), false, 'no automatic graph window');
+    await button(page, 'restore').click();
     await page.locator('#graph-modal-overlay').waitFor({ state: 'visible' });
     assert.equal((await page.locator('#gm-title').textContent()).trim(), '그래프 편집');
     await page.locator('#gm-variant-sel button[data-variant="cross"]').click();
@@ -154,6 +158,10 @@ async function scenario(browser, origin, name) {
 
     // ④ 그래프 창을 닫으면 편집기가 남고, 「그림으로 되돌리기」로 원래 그림
     await h.doubleClick(page, 0);
+    // 11-11 사용자: 그래프 그림을 열어도 그래프 창을 저절로 띄우지 않는다 — 눈에 띄는 「그래프 편집」을 직접 누른다.
+    await root(page).waitFor({ state: 'visible' }); assert.equal(await button(page, 'restore').evaluate(b => b.classList.contains('is-suggested')), true, 'the graph edit button is highlighted');
+    assert.equal(await page.locator('#graph-modal-overlay').isVisible(), false, 'no automatic graph window');
+    await button(page, 'restore').click();
     await page.locator('#graph-modal-overlay').waitFor({ state: 'visible' });
     await page.locator('#gm-cancel').click();
     await page.locator('#graph-modal-overlay').waitFor({ state: 'hidden' });

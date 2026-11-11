@@ -3435,3 +3435,8 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 /* 11-11: 그래프 결과 「캔버스에 넣기」는 내보내기 묶음 맨 아래 한 줄 */
 #ai-image-panel .ai-dock .ai-output-actions > [data-ai-graph-canvas] { grid-column: 1 / -1; }
 #ai-image-panel .ai-dock .ai-output-actions > [data-ai-graph-canvas][hidden] { display: none !important; }
+
+/* 11-11: 한글·문항 카드에서 연 작업 — 결과가 나오면 「한글 파일에 넣기」「문항 카드에 넣기」를 눈에 띄게(확인 뒤 직접 누름) */
+#ai-image-panel [data-ai-exam-send].is-suggested:not(:disabled) {color:var(--ds-ink,#e6edf3)!important;background:var(--ds-selected,#1b2a40)!important;box-shadow:inset 0 0 0 1.5px #6f93c4!important;border-radius:8px;font-weight:600;animation:ai-suggest 1.4s ease-in-out 3;}
+@keyframes ai-suggest {0%,100%{box-shadow:inset 0 0 0 1.5px #6f93c4} 50%{box-shadow:inset 0 0 0 1.5px #9db8e0,0 0 0 4px rgba(111,147,196,.25)}}
+@media (prefers-reduced-motion: reduce) {#ai-image-panel [data-ai-exam-send].is-suggested {animation:none;}}
