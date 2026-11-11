@@ -54,11 +54,22 @@ export async function loadPast() {
 export const examLabel = (y, m) => `${String(y).slice(2)}년 ${{ 6: '6평', 9: '9평', 11: '수능' }[m] || m + '월'}`;
 
 // ── 목록 만들기 ──
+// 11-11 사용자: 분류 기준 — 날짜순(만든 날·고친 날)과 완성도순으로 정렬. 날짜가 없는 예전 문항은 만든 순서(목록 순서)로 본다.
+export const SORTS = ['최근 고친 순', '만든 날짜순(최신)', '만든 날짜순(오래된)', '완성도 높은 순', '완성도 낮은 순'];
+function sortEntries(list, s) {
+  if (!s.sort) return list;
+  const at = (x, key, i) => { const t = Date.parse(x.q?.[key] || ''); return Number.isFinite(t) ? t : i; };
+  const rows = list.map((x, i) => ({ x, i, made: at(x, 'createdAt', i), edited: Math.max(at(x, 'updatedAt', -1), at(x, 'createdAt', i)), progress: x.q ? (progressOf(x.q) ?? 0) : 0 }));
+  const by = { '최근 고친 순': (a, b) => b.edited - a.edited, '만든 날짜순(최신)': (a, b) => b.made - a.made, '만든 날짜순(오래된)': (a, b) => a.made - b.made,
+    '완성도 높은 순': (a, b) => b.progress - a.progress, '완성도 낮은 순': (a, b) => a.progress - b.progress }[s.sort];
+  return by ? rows.sort((a, b) => by(a, b) || a.i - b.i).map(r => r.x) : list;
+}
 function entries(data, s) {
   const stars = store.get('stars', {}), memos = store.get('memos', {}), words = splitWords(s.query || '');
   const mine = s.kind === 'past' ? [] : poolQuestions(data, s.pool).map(q => ({ kind: 'mine', key: 'q:' + q.id, id: q.id, q, title: questionTitle(q), pt: q.points, subject: '', part: [q.unitLarge, q.unitMiddle].filter(Boolean).join(' · '), exam: '' }));
   const pasts = s.kind === 'mine' || !past.items ? [] : past.items.map(i => ({ kind: 'past', key: 'past:' + i.id, id: i.id, i, title: i.short, pt: null, subject: i.subjectLabel, part: i.parts.join(' · '), exam: examLabel(i.year, i.month) }));
-  return [...mine, ...pasts].filter(x =>
+  const sorted = sortEntries([...mine, ...pasts], s);
+  return sorted.filter(x =>
     (!s.mark || (s.mark === 'star' ? stars[x.key] : memos[x.key])) &&
     (!s.subject || x.subject === s.subject) && (!s.part || x.part.split(' · ').includes(s.part)) && (!s.exam || x.exam === s.exam) &&
     (!words.length || words.every(w => norm(x.kind === 'past' ? [x.title, x.i.title, x.i.text, ...x.i.tags, ...x.i.parts].join(' ') : [x.title, x.q.ask, x.q.passage, x.part, x.q.source].join(' ')).includes(w))));
@@ -91,6 +102,7 @@ export function renderLibraryView(root, data, view, api) {
         <button type="button" data-lv-mark="memo" aria-pressed="${s.mark === 'memo'}">메모<small>${memoN}</small></button>
       </span>
       ${chipSel('part', '단원', parts)}
+      ${chipSel('sort', '정렬', SORTS).replace('정렬 전체', '기본 순서')}
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
   // 문항 추가 줄 하나(시안 2판 3): 「출제 중」 칸에서만, 문항이 있든 없든 제목 바로 아래 같은 자리.

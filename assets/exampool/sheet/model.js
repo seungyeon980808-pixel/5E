@@ -29,7 +29,7 @@ export function block(kind,parent=null,label=KINDS[kind]) {
   return b;
 }
 export function newQuestion(number='1',type='객관식',preset='글·수식',style=type==='합답형'?'조합':'문장·수식') {
-  const q={id:uid(),number:String(number),type,preset,style,standardCode:'',ask:'',points:3,answer:null,modelAnswer:'',explanation:'',intent:'',source:'',references:[],blocks:[],choices:Array.from({length:5},()=>({id:uid(),text:'',figure:null})),choiceTable:makeTable(6,3,'선지표')};
+  const q={id:uid(),number:String(number),type,preset,style,standardCode:'',ask:'',points:3,answer:null,modelAnswer:'',explanation:'',intent:'',source:'',references:[],blocks:[],choices:Array.from({length:5},()=>({id:uid(),text:'',figure:null})),choiceTable:makeTable(6,3,'선지표'),createdAt:new Date().toISOString()};/* 11-11: 날짜순 정렬용 */
   applyPreset(q,preset); if(type==='합답형')q.blocks.push(block('bogi'));
   return q;
 }

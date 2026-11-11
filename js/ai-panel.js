@@ -2914,7 +2914,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const title = panel.querySelector('#ai-image-title');
     const target = hwpInPlaceTargets.get(activeTaskTabId);
     // 11-11: 제목은 「AI 이미지」「AI 그래프」만 쓴다(5E_ 표기 없음). 한글에서 열었을 때만 뒤에 출처를 붙인다.
-    const text = `${graph ? 'AI 그래프' : 'AI 이미지'}${target ? ` · ${target.examCard ? '문항 카드' : '한글'} ${target.label || '그림'}에서 엶` : ''}`; // 11-11: 종류는 지금 작업이 정한다(연결에 남은 옛 종류 X)
+    // 11-11 사용자 「말줄임표는 뭐냐」: 제목은 「AI 이미지」「AI 그래프」만, 어디에 이어졌는지는 아래 작은 줄로 따로(왼쪽 칸 폭에 잘리지 않게).
+    const text = graph ? 'AI 그래프' : 'AI 이미지';
+    const linkText = target ? `↳ ${target.examCard ? '문항 카드' : '한글'} · ${target.label || '그림'}` : '';
     // 11-11: 제목은 오브젝트 창처럼 아이콘 + 글자. 끌기 손잡이(modal-drag)는 그대로 둔다.
     if (title) {
       let label = title.querySelector('[data-ai-title-text]');
@@ -2929,6 +2931,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         title.dataset.aiTitleIcon = mode;
       }
       if (label.textContent !== text) label.textContent = text;
+      let link = title.querySelector('[data-ai-title-link]');
+      if (!link) { link = document.createElement('span'); link.dataset.aiTitleLink = ''; label.after(link); }
+      if (link.textContent !== linkText) link.textContent = linkText;
+      link.hidden = !linkText;
+      const full = linkText ? `${text} — ${target.examCard ? '문항 카드' : '한글'} ${target.label || '그림'}에서 열었습니다. 결과를 확인한 뒤 「${target.examCard ? '문항 카드에 넣기' : '한글 파일에 넣기'}」를 누르세요.` : text;
+      if (title.title !== full) title.title = full;
     }
     const closeButton = panel.querySelector('[data-ai-close]');
     const closeLabel = `${graph ? '그래프 AI' : 'AI 이미지'} 닫기`;

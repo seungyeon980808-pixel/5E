@@ -198,12 +198,16 @@
       </div>
         <!-- 화면 확대 단추(11-04): 노트북 트랙패드가 불편할 때 — 맨 위 줄 가운데 칸 오른쪽 끝(옛 「zoom 1.00×」 자리) -->
         <div class="canvas-zoom" role="group" aria-label="화면 배율" data-shortcut-label-fixed>
-          <button type="button" data-canvas-zoom="out" title="축소" aria-label="축소">−</button>
+          <button type="button" data-canvas-zoom="out" title="축소" aria-label="축소" hidden>−</button>
           <button type="button" id="zoom-readout" class="zoom-readout" data-canvas-zoom="menu" title="배율 고르기" aria-label="현재 화면 배율 · 누르면 배율 목록" aria-haspopup="menu" aria-expanded="false">82%</button>
-          <button type="button" data-canvas-zoom="in" title="확대" aria-label="확대">+</button>
-          <button type="button" data-canvas-zoom="default" title="기본 크기(82%)로" aria-label="기본 크기로"><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
-          <button type="button" data-canvas-zoom="fit" title="도화지 맞춤" aria-label="도화지 맞춤"><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg></button>
+          <button type="button" data-canvas-zoom="in" title="확대" aria-label="확대" hidden>+</button>
+          <button type="button" data-canvas-zoom="default" title="기본 크기(82%)로" aria-label="기본 크기로" hidden><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/></svg></button>
+          <button type="button" data-canvas-zoom="fit" title="도화지 맞춤" aria-label="도화지 맞춤" hidden><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg></button>
+          <!-- 11-11 사용자 결정(배율 B안): 위쪽에는 「82% ▾」 칩 하나만, 확대·축소·맞춤·배율은 이 메뉴 안에서 -->
           <div class="canvas-zoom-menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-zoom-set="in"><span>확대</span><kbd data-sc="Mod+="></kbd></button>
+            <button type="button" role="menuitem" data-zoom-set="out"><span>축소</span><kbd data-sc="Mod+-"></kbd></button>
+            <span class="canvas-zoom-menu-sep" aria-hidden="true"></span>
             <button type="button" role="menuitem" data-zoom-set="fit"><span>도화지 맞춤</span><kbd data-sc="Shift+1"></kbd></button>
             <button type="button" role="menuitem" data-zoom-set="sel"><span>고른 것에 맞춤</span><kbd data-sc="Shift+2"></kbd></button>
             <span class="canvas-zoom-menu-sep" aria-hidden="true"></span>

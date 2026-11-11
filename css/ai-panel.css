@@ -3440,3 +3440,8 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel [data-ai-exam-send].is-suggested:not(:disabled) {color:var(--ds-ink,#e6edf3)!important;background:var(--ds-selected,#1b2a40)!important;box-shadow:inset 0 0 0 1.5px #6f93c4!important;border-radius:8px;font-weight:600;animation:ai-suggest 1.4s ease-in-out 3;}
 @keyframes ai-suggest {0%,100%{box-shadow:inset 0 0 0 1.5px #6f93c4} 50%{box-shadow:inset 0 0 0 1.5px #9db8e0,0 0 0 4px rgba(111,147,196,.25)}}
 @media (prefers-reduced-motion: reduce) {#ai-image-panel [data-ai-exam-send].is-suggested {animation:none;}}
+
+/* 11-11: 제목 아래 연결 줄(문항 카드·한글 어디에서 열었는지) — 제목은 짧게, 연결은 작은 줄로 */
+#ai-image-panel #ai-image-title {flex-wrap:wrap;row-gap:0;}
+#ai-image-panel #ai-image-title [data-ai-title-link] {flex-basis:100%;display:block;margin-top:1px;font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ds-ink-3,#8b949e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+#ai-image-panel #ai-image-title [data-ai-title-link][hidden] {display:none;}

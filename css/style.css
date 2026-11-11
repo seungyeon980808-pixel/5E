@@ -3735,3 +3735,6 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-offset-hint { font-size:12px; color:var(--text-secondary); }
 /* 그래프 편집기 위에서 묻는 확인 창(11-07 G3: AI 창으로 갈 때) */
 .modal-overlay.gm-above-graph { z-index: 10040; }
+
+/* 11-11 배율 B안: 위쪽엔 「82% ▾」 칩 하나 */
+.canvas-zoom > button[data-canvas-zoom][hidden] { display: none !important; }

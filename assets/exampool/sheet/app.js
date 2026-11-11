@@ -1,6 +1,6 @@
 import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
-import {renderNav,renderExams,renderExam,setFrameNames} from './pool-views.js';
+import {renderNav,renderExams,renderExam,setFrameNames,isBlank} from './pool-views.js';
 import {applyFrame,goalOf,frameOf,frameKey,openRegister,openNewExam,openFramePicker} from './exam-flow.js';
 import {placeState,checkMarkup} from './exam-place.js';
 import {examPlan} from './exam-layout.js';
@@ -86,9 +86,12 @@ const UNLOAD_KEY=CHANNEL+'5e-exampool-unload';let dirtyIds=new Set(),dirtyAll=fa
 function markDirty(only){if(only)dirtyIds.add(only.id);else dirtyAll=true;}
 // 11-11: 설치판은 저장소(IndexedDB)에 더해 ~/Documents/5E/출제/자동 저장/최근.json 에도 쓴다(2초 모아서, 10분마다 백업 한 벌).
 // 앱 저장소가 지워지거나 깨져도 다음에 열 때 이 파일에서 되살린다.
+// 11-11 사용자: 아무것도 적지 않은 문항 카드는 저장하지 않는다. 시험지에 담긴 것과 지금 쓰고 있는 카드는 남긴다(쓰다 만 카드가 사라지지 않게).
+function persistable(value){const used=new Set(value.exams.flatMap(e=>e.items));const keep=value.questions.filter(q=>!isBlank(q)||used.has(q.id)||q.id===current?.id);
+  return keep.length===value.questions.length?value:{...value,questions:keep};}
 let fileTimer=0;
 function writeFileSave(){fileTimer=0;const files=desktopFiles();if(!files||demo||!data)return;
-  try{const text=JSON.stringify({...data,_revision:revision,_savedAt:new Date().toISOString()});void files.autosave(text).catch(e=>console.warn('[5E_exam] 파일 자동 저장 실패',e));}catch(e){console.warn('[5E_exam] 파일 자동 저장 실패',e);}}
+  try{const text=JSON.stringify({...persistable(data),_revision:revision,_savedAt:new Date().toISOString()});void files.autosave(text).catch(e=>console.warn('[5E_exam] 파일 자동 저장 실패',e));}catch(e){console.warn('[5E_exam] 파일 자동 저장 실패',e);}}
 function queueFileSave(){if(!desktopFiles()||demo)return;clearTimeout(fileTimer);fileTimer=setTimeout(writeFileSave,2000);}
 window.addEventListener('pagehide',()=>{if(fileTimer){clearTimeout(fileTimer);writeFileSave();}});
 let saveTimer=0;window.addEventListener('pagehide',()=>{if(!saveTimer)return;clearTimeout(saveTimer);
@@ -102,7 +105,7 @@ function flushSave({now=false}={}){saveTimer=0;
     // 다른 창 저장 확인은 작은 판 번호('rev')만 읽는다(예전엔 저장마다 문항 전체(그림 포함 수십 MB)를 읽어 풀었다). 'rev'가 없는 예전 저장은 문항에서 읽는다.
     // 넣을 때 복제하지 않고 지금 데이터를 바로 넣는다(put이 그 자리에서 복사한다).
     const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('rev');let failure;
-    const write=stored=>{if((stored||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');store.put(revision+1,'rev');};
+    const write=stored=>{const saved=persistable(data);if((stored||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...saved,_revision:revision+1},'draft');store.put(revision+1,'rev');};
     r.onsuccess=()=>{if(r.result!==undefined){write(r.result);return;}const d=store.get('draft');d.onsuccess=()=>write(d.result?._revision);};
     tx.oncomplete=()=>{revision++;if(stamp===saveStamp&&!saveTimer){dirtyIds.clear();dirtyAll=false;}resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   });
@@ -110,7 +113,7 @@ function flushSave({now=false}={}){saveTimer=0;
   void saveQueue.then(()=>{queueFileSave();if(stamp===saveStamp&&$('#status').dataset.error!=='true')status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
-  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();markDirty(only&&data.questions.includes(only)?only:null);demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();{const touched=only&&data.questions.includes(only)?only:current&&data.questions.includes(current)?current:null;if(touched)touched.updatedAt=new Date().toISOString();}/* 11-11: 고친 날짜(정렬용) */markDirty(only&&data.questions.includes(only)?only:null);demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 let typesetStandards=[],typesetForms=[];
 // 시험지 양식(학교 양식 파일 그대로): {id,name,fileName,encrypted,bytes,structure,standardId,createdAt}. 같은 state 저장소 'typesetForms' 칸.
 async function saveTypesetForms(list){typesetForms=list;await new Promise((resolve,reject)=>{const t=database.transaction('state','readwrite');t.objectStore('state').put(typesetForms,'typesetForms');t.oncomplete=resolve;t.onerror=()=>reject(t.error);});return typesetForms;}
@@ -1079,19 +1082,26 @@ document.addEventListener('change',e=>{const c=e.target.closest('[data-exam-brea
 let examRequest=null,examRequestTimer=0;
 // 11-06 사용자: 「5E_hwp로 보내기」는 단추 안에서만 돌지 말고 화면 전체로 「5E_hwp로 옮기는 중」을 알린다.
 // 단계(문항 조판 확인 → 시험지 만들기 → 5E_hwp에서 열기)·진행 막대·경과 시간. 실패하면 안내를 닫고 그 문항 카드로 데려간다(막다른 경고 금지).
-const sendProgress=(()=>{let el=null,clock=0,started=0;
+// 11-11 사용자: 진행 막대가 단계마다 뚝뚝 끊기지 말고, 느리더라도 천천히 쭉 나가게. 막대는 지금 단계 끝(조금 못 미친 자리)을 향해
+// 계속 조금씩 다가가고(기다리는 동안에도 움직임), 다음 단계가 오면 그 자리부터 이어서 간다. 절대 뒤로 가지 않는다.
+const sendProgress=(()=>{let el=null,clock=0,started=0,shown=0,floor=0,ceil=.5,creep=0;
   const ensure=()=>{if(el)return el;el=document.createElement('div');el.className='send-progress';el.hidden=true;el.setAttribute('role','status');el.setAttribute('aria-live','polite');
     el.innerHTML='<div class="sp-card"><div class="sp-head"><span class="sp-spin" aria-hidden="true"></span><b>5E_hwp로 옮기는 중</b><time class="sp-time">00:00</time></div><p class="sp-title"></p><ol class="sp-steps"><li data-step="typeset">문항 조판 확인</li><li data-step="build">시험지 만들기</li><li data-step="open">5E_hwp에서 열기</li></ol><div class="sp-bar"><i></i></div><p class="sp-detail"></p></div>';
     document.body.append(el);return el;};
   const tick=()=>{if(!el)return;const t=Math.floor((performance.now()-started)/1000);el.querySelector('.sp-time').textContent=`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
   const order=['typeset','build','open'],span={typeset:[0,.55],build:[.55,.85],open:[.85,1]};
+  const paint=()=>{const bar=el?.querySelector('.sp-bar i');if(bar)bar.style.width=`${(shown*100).toFixed(2)}%`;};
+  function startCreep(){if(creep||!el)return;let last=performance.now();const frame=now=>{creep=0;if(!el||el.hidden)return;const dt=Math.min(.1,(now-last)/1000);last=now;
+    // 받은 진행값(floor)까지는 빨리 따라가고, 그 뒤로는 단계 끝(ceil)을 향해 남은 거리의 약 6%/초씩 — 끝에 가까울수록 느려져 멈춘 듯 보이지 않으면서도 넘지 않는다.
+    if(shown<floor)shown=Math.min(floor,shown+Math.max(.002,(floor-shown)*dt*6));else if(shown<ceil)shown+=Math.max(0,(ceil-shown)*dt*.06);
+    paint();creep=requestAnimationFrame(frame);};creep=requestAnimationFrame(frame);}
   return {
     start(title){ensure();started=performance.now();el.querySelector('.sp-title').textContent=title||'';el.hidden=false;document.body.classList.add('sending-exam');this.step('typeset','확인하는 중…',0);tick();clearInterval(clock);clock=setInterval(tick,500);},
     step(name,detail='',fraction=0){if(!el||el.hidden)return;const at=order.indexOf(name);
       el.querySelectorAll('[data-step]').forEach((li,i)=>{li.dataset.state=i<at?'done':i===at?'active':'';});
-      const [a,b]=span[name];el.querySelector('.sp-bar i').style.width=`${Math.round((a+(b-a)*Math.max(0,Math.min(1,fraction)))*100)}%`;
+      const [a,b]=span[name];floor=Math.max(shown,a+(b-a)*Math.max(0,Math.min(1,fraction)));ceil=a+(b-a)*.96;startCreep();
       el.querySelector('.sp-bar').dataset.waiting=String(name==='open');el.querySelector('.sp-detail').textContent=detail;},
-    hide(){clearInterval(clock);clock=0;if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
+    hide(){clearInterval(clock);clock=0;cancelAnimationFrame(creep);creep=0;shown=0;floor=0;if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
   };})();
 async function sendExam(exam,options={}){
   const toHwp=!options.download&&!options.variant&&!options.print&&embedded&&exam.items.length>0;

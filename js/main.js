@@ -148,6 +148,8 @@ const zoomReadout = document.getElementById("zoom-readout");
   };
   zoomBox?.addEventListener("click", (event) => {
     const set = event.target.closest?.("[data-zoom-set]")?.dataset.zoomSet;
+    // 확대·축소는 메뉴를 열어 둔 채 여러 번 누를 수 있게(배율 B안), 나머지는 고르면 닫는다.
+    if (set === "in" || set === "out") { zoomByStep(state, set === "in" ? 1 : -1); return; }
     if (set) { applyZoom(set); setMenu(false); return; }
     const action = event.target.closest?.("[data-canvas-zoom]")?.dataset.canvasZoom;
     if (action === "in" || action === "out") zoomByStep(state, action === "in" ? 1 : -1);
@@ -163,7 +165,7 @@ const zoomReadout = document.getElementById("zoom-readout");
     if (event.code === "Digit1") { event.preventDefault(); fitArtboard(state); }
     else if (event.code === "Digit2") { event.preventDefault(); fitSelected(); }
   });
-  for (const kbd of zoomMenu?.querySelectorAll("kbd[data-sc]") || []) kbd.textContent = IS_MAC_ZOOM ? kbd.dataset.sc.replace("Shift+", "⇧").replace("Mod+", "⌘") : kbd.dataset.sc.replace("Mod+", "Ctrl+");
+  for (const kbd of zoomMenu?.querySelectorAll("kbd[data-sc]") || []) kbd.textContent = IS_MAC_ZOOM ? kbd.dataset.sc.replace("Shift+", "⇧").replace("Mod+", "⌘").replace("=", "+").replace(/-$/, "−") : kbd.dataset.sc.replace("Mod+", "Ctrl+").replace("+=", "++").replace(/-$/, "−");
 }
 
 /* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
