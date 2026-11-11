@@ -2791,6 +2791,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       input.setAttribute('aria-label', graphCreate ? '그래프 설명' : '그래프 복원·수정 요청');
       const note = panel.querySelector('[data-ai-request-note]'); if (note) note.hidden = true;
     } else {
+      // 11-12: 그래프 화면에서 돌아와도 그래프용 설명이 남고, 이미지 생성에서도 「변환합니다」로 보이던 것 — 화면마다 맞춤.
+      sendButton.title = brief || conversionKind === 'image-create' ? '대화 내용으로 새 그림을 만듭니다.' : '대화와 코멘트를 반영해 새 이미지로 변환합니다.';
       input.placeholder = brief ? '예: 빗면 위에 네모 A, 왼쪽 아래에 각도 θ' : '예: 숫자와 단위를 지우고 평가원식 흑백 선화로 정리해 주세요.';
       input.setAttribute('aria-label', brief ? '물체와 배치 설명' : '이미지 수정 요청');
     }
@@ -5054,8 +5056,8 @@ ${chatText}` : ''}`;
     if (reveal) {
       if (openingCandidateId) acknowledgeVisibleResult(openingCandidateId);
       // 11-12: v6에서 오른쪽 탭(data-ai-side-tab)이 숨겨져, 숨은 탭에 초점을 주느라 초점이 창 밖(여는 단추)에 남았다 → 보이는 단추 중에서 고름.
-      if (!panel.querySelector('[data-ai-chat-panel]')?.hidden && input.getClientRects().length) input.focus();
-      else { const focusables = panelFocusables(); (focusables.find(el => el.matches('[data-ai-side-tab="comments"]')) || focusables[0])?.focus(); }
+      if (!panel.querySelector('[data-ai-chat-panel]')?.hidden && (input.getClientRects?.().length ?? 1)) input.focus();
+      else { const focusables = typeof panelFocusables === 'function' ? panelFocusables() : []; (focusables.find(el => el.matches('[data-ai-side-tab="comments"]')) || focusables[0] || panel.querySelector('[data-ai-side-tab="comments"]'))?.focus(); }
     }
   };
   const close = ({ integratedEdit = false } = {}) => {
