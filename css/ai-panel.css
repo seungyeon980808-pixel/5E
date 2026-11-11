@@ -3431,3 +3431,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-rail-heading { padding: 0 8px 0 12px !important; }
 #ai-image-panel .ai-rail-heading .ai-rail-selection-row output { font-size: 12px !important; }
 #ai-image-panel .ai-rail-heading .ai-rail-actions > button { font-size: 11px !important; }
+
+/* 11-11: 그래프 결과 「캔버스에 넣기」는 내보내기 묶음 맨 아래 한 줄 */
+#ai-image-panel .ai-dock .ai-output-actions > [data-ai-graph-canvas] { grid-column: 1 / -1; }
+#ai-image-panel .ai-dock .ai-output-actions > [data-ai-graph-canvas][hidden] { display: none !important; }

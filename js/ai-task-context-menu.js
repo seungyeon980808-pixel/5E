@@ -27,19 +27,20 @@ export function createTaskContextMenu({ copy, send, duplicate, remove, onError }
   menu.addEventListener('click', event => {
     const button = event.target.closest('[data-task-action]');
     if (!button || button.disabled || !owner) return;
-    if (button.dataset.taskAction === 'send') { expand(); return; }
+    // 11-11: 이미지 작업대에서는 「그래프 복원으로」, 그래프 작업대에서는 「이미지 변환으로」 바로 보낸다(하위 메뉴 없이).
+    if (button.dataset.taskAction === 'send' && !button.dataset.direct) { expand(); return; }
     const target = owner; close();
     // copy() begins clipboard.write synchronously within this user gesture.
     try {
       const operation = button.dataset.taskAction === 'copy' ? copy(target)
         : button.dataset.taskAction === 'duplicate' ? duplicate(target)
-        : button.dataset.taskAction === 'delete' ? remove(target) : send(target,button.dataset.taskAction);
+        : button.dataset.taskAction === 'delete' ? remove(target) : send(target,button.dataset.taskAction === 'send' ? button.dataset.direct : button.dataset.taskAction);
       Promise.resolve(operation).catch(onError);
     } catch (error) { onError(error); }
   });
   menu.addEventListener('keydown', event => {
     if (event.key === 'Escape' || event.key === 'Tab') { if(event.key==='Escape')event.preventDefault();event.stopPropagation();close({focus:true});return; }
-    if ((event.key === 'ArrowRight' || event.key === 'Enter') && event.target === sendButton) {event.preventDefault();expand();return;}
+    if ((event.key === 'ArrowRight' || event.key === 'Enter') && event.target === sendButton && !sendButton.dataset.direct) {event.preventDefault();expand();return;}
     if (event.key === 'ArrowLeft' && event.target.closest('[data-task-submenu]')) {event.preventDefault();submenu.hidden=true;sendButton.setAttribute('aria-expanded','false');position();sendButton.focus();return;}
     if (!['ArrowDown','ArrowUp','Home','End'].includes(event.key)) return;
     event.preventDefault();
@@ -57,6 +58,9 @@ export function createTaskContextMenu({ copy, send, duplicate, remove, onError }
       event.preventDefault();event.stopPropagation();close();owner=target;opener=event.currentTarget?.querySelector('.ai-task-tab-select') || event.target.closest('.ai-task-tab-select');
       menu.querySelector('[data-task-action="copy"]').disabled=!canCopy;
       sendButton.disabled=readOnly || !canCopy;
+      const mode=document.getElementById('ai-image-panel')?.dataset.aiMode==='graph'?'graph':'image', direct=mode==='graph'?'image':'graph';
+      sendButton.dataset.direct=direct; sendButton.removeAttribute('aria-haspopup'); sendButton.removeAttribute('aria-expanded');
+      sendButton.textContent=direct==='graph'?'그래프 복원으로 보내기':'이미지 변환으로 보내기';
       duplicateButton.disabled=readOnly || !canCopy;
       menu.querySelector('[data-task-action="delete"]').disabled=readOnly || running;
       menu.hidden=false;

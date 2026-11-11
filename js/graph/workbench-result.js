@@ -3,6 +3,7 @@ import { EXAM_STYLE, DESCRIPTION_EXAM_STYLE, examMetrics } from './exam-style.js
 import { preserveDescriptionPresentation } from './description-presentation.js?v=1.7.0-four-session-integration';
 import { descriptionAxisTitle, descriptionSeriesLabelPositions } from './description-layout.js?v=1.7.0-four-session-integration';
 import { mathFromWorld, planeAsY2 } from '../function-graph/coords.js?v=1.7.0-four-session-integration';
+import { avoidLabelCurveOverlap } from './label-avoid.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SCHEMA, validateWorkbenchGraph } from './workbench-validate.js?v=1.7.0-four-session-integration';
 import { auditGraphReconstructionQuality } from './reconstruction-quality.js?v=1.7.0-four-session-integration';
 import { auditGraphDescriptionQuality } from './description-quality.js?v=1.7.0-four-session-integration';
@@ -46,6 +47,11 @@ export function buildWorkbenchGraph(plan, source, { descriptionLayout = false, p
       plane.graphAnnotations.push({id:`description-label-guide-${series.id}`,kind:'leader',text:'',...at,to,axis:series.axis,coordinateSpace:'data'});
       series.endLabel='';
     }
+  }
+  if (descriptionLayout) {
+    // 11-11: 글자가 곡선과 겹치지 않게 가까운 빈자리로 옮긴다(곡선·값은 그대로).
+    const plane = built.objects.find(o => o.type === 'coordplane');
+    if (plane) avoidLabelCurveOverlap(plane, built.objects.filter(o => o.type === 'funcgraph'), { labelSize: examMetrics(plane).label });
   }
   const quality = descriptionLayout ? auditGraphDescriptionQuality(plan) : auditGraphReconstructionQuality(plan);
   const result = { schema: GRAPH_WORKBENCH_SCHEMA, source: copy(source), plan: copy(plan), quality, objects: copy(built.objects), groups: copy(built.groups) };

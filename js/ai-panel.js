@@ -1954,6 +1954,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   // 11-07 G9: 그래프 결과는 「편집기로 가져오기」(한글 그림 자리에서 연 작업은 예전처럼 「한글 파일에 넣기」).
   const graphToEditor = item => Boolean(item?.graphResult) && !hwpInPlaceTargets.has(activeTaskTabId);
+  let forceGraphCanvas = false;
   const syncEditableLabelPlanButton = (item) => {
     const output = item?.card?.querySelector("[data-ai-canvas-output]");
     if (!output) return;
@@ -2225,7 +2226,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       output.onclick = () => {
         if (busy || output.disabled) return;
         // 11-07 G9: 그래프 결과는 캔버스에 바로 넣지 않고 그래프 편집기로 가져온다(편집기에서 캔버스로 내보내기·한글에 넣기).
-        if (graphToEditor(item)) { if (panel.dataset.aiSharingMode !== 'view') void editGraphCandidate(item, { toCanvas:true }); return; }
+        // 11-11: 「캔버스에 넣기」(data-ai-graph-canvas)로 누른 경우는 편집기를 거치지 않고 바로 캔버스에 넣는다.
+        if (graphToEditor(item) && !forceGraphCanvas) { if (panel.dataset.aiSharingMode !== 'view') void editGraphCandidate(item, { toCanvas:true }); return; }
         const includeLabels = labelPreviewState(item).included !== false;
         const labelCount = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
         if (candidateUsesSeparatedAssets(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) { void openGroupsForItem(item, true, false, true); return; }
@@ -2889,6 +2891,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       .then(result => { addLog('그래프를 캔버스에 넣었습니다.'); captureActiveTaskTab(); persistTasks(); return { pageId, planeId:result?.planeId, ids:result?.ids }; })
       .catch(error => { addLog(`캔버스 삽입 실패: ${error.message}`, 'error'); void showAlert(`그래프를 캔버스에 넣지 못했습니다.\n${error.message}`); return null; });
   }
+  // 11-11: 라이브러리에서 그래프로 바로 보낼 때처럼 다른 길로 작업 종류가 바뀌어도 제목(AI 이미지/AI 그래프)을 늘 다시 맞춘다.
+  new MutationObserver(() => { try { syncSurfaceTitle(); } catch {} }).observe(panel, { attributes: true, attributeFilter: ['data-ai-workflow', 'hidden'] });
   function syncSurfaceTitle() {
     // 11-07 G2·G4: 창의 모양은 지금 작업 종류가 정한다 — 이미지 작업이면 「AI 이미지」(이미지 탭 둘), 그래프 작업이면 「그래프 · AI」(그래프 탭 둘).
     const graph = isGraphWorkflow(conversionKind);
@@ -7135,6 +7139,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       return { ...record, item: capturedItem, dataUrl: currentDataUrl(), currentDataUrl };
     }));
   };
+  // 11-11: 그래프 결과도 편집기를 거치지 않고 바로 캔버스에 넣는 단추(사용자 「그래프에 캔버스로 내보내기가 없다」).
+  const graphCanvasButton = document.createElement('button');
+  graphCanvasButton.type = 'button'; graphCanvasButton.dataset.aiGraphCanvas = ''; graphCanvasButton.textContent = '캔버스에 넣기';
+  graphCanvasButton.title = '그래프를 편집 가능한 그래프 객체로 캔버스에 바로 넣습니다.';
+  panel.querySelector('[data-ai-insert-selected]')?.after(graphCanvasButton);
+  const syncGraphCanvasButton = () => { const item = selectedOutputItem(); graphCanvasButton.hidden = !isGraphWorkflow(conversionKind); graphCanvasButton.disabled = busy || !item?.graphResult; };
+  new MutationObserver(syncGraphCanvasButton).observe(panel, { attributes: true, attributeFilter: ['data-ai-workflow', 'data-ai-stage'], subtree: false });
+  panel.querySelector('[data-ai-insert-selected]') && new MutationObserver(syncGraphCanvasButton).observe(panel.querySelector('[data-ai-insert-selected]'), { attributes: true, attributeFilter: ['disabled'] });
+  graphCanvasButton.addEventListener('click', () => {
+    const output = selectedOutputItem()?.card?.querySelector('.ai-canvas-output');
+    if (busy || !output) return;
+    forceGraphCanvas = true; try { output.click(); } finally { forceGraphCanvas = false; }
+  });
+  syncGraphCanvasButton();
   panel.querySelector('[data-ai-insert-selected]')?.addEventListener('click', () => {
     if (!busy) selectedOutputItem()?.card?.querySelector('.ai-canvas-output')?.click();
   });

@@ -1505,6 +1505,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   let actionRevision = 0;
   let spaceAssignmentIdentity = null;
   let draftCrop = null;
+  // 11-11: 처음 미리 잡아 준 문항 영역(아직 손대지 않음)은 안쪽 아무 곳을 눌러도 새로 그리기로 시작한다.
+  let draftCropIsSuggested = false;
   let providedRetry = null;
   let cropGesture = null;
   let cropSession = null;
@@ -3863,7 +3865,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     // Existing question bounds determine the view, never an unconfirmed crop.
     draftCrop = null;
     // 11-05 시안 v13: 문항 카드를 두 번 누르거나 Space로 크게 보면 그 문항 영역을 임시 영역으로 잡아 둔다(Enter·Space로 추가, 끌면 다시 고름).
-    if (draftQuestion && existingCrop?.length === 4) draftCrop = [...existingCrop];
+    draftCropIsSuggested = false;
+    if (draftQuestion && existingCrop?.length === 4) { draftCrop = [...existingCrop]; draftCropIsSuggested = true; }
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;
@@ -4220,7 +4223,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       draftCrop = [...entry.result.provenance.rect];
     } else if (!event.target.closest("[data-unilib-crop-box]")) editingAcceptedId = null;
     const inside = marker || event.target.closest("[data-unilib-crop-box]");
-    cropGesture = { pointerId: event.pointerId, start: cropPoint(event), previous: draftCrop, mode: inside ? (handle ? "resize" : "move") : "draw", handle, drawing: false };
+    const freshDraw = draftCropIsSuggested && !marker && !handle;
+    cropGesture = { pointerId: event.pointerId, start: cropPoint(event), previous: draftCrop, mode: inside && !freshDraw ? (handle ? "resize" : "move") : "draw", handle, drawing: false };
     paintCrop();
   });
   cropStage.addEventListener("pointermove", (event) => {
@@ -4259,6 +4263,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       return;
     }
     draftCrop = cropRectFromGesture(cropGesture.previous, cropGesture.start, cropPoint(event), cropGesture.mode, cropGesture.handle);
+    draftCropIsSuggested = false; // 실제로 새로 그리거나 옮긴 뒤부터는 보통 영역처럼(안쪽을 끌면 옮기기)
     cropGesture = null;
     paintCrop();
     if (!draftCrop) setStatus("자를 영역은 너비와 높이가 있어야 합니다.", true);
