@@ -3,6 +3,10 @@
 export function descriptionAxisTitle(axis, which = 'y') {
   let caption = String(axis.displayTitle ?? axis.displayMath ?? axis.title ?? '').trim();
   const unit = String(axis.unit ?? '').trim();
+  // 11-12 밤샘(그래프 생성 20개): 「낙하 거리」「유도 기전력」처럼 띄어 쓴 한글 세로축 이름은 왼쪽 여백 폭에 맞추느라
+  // 아주 작게 줄었다. 기출처럼 띄어쓰기에서 줄을 나눠 폭을 줄인다(글자·뜻은 그대로, 편집기에서 고칠 수 있음).
+  if (which !== 'x' && /[가-힣]/.test(caption) && /\s/.test(caption) && !/[\\{}^_]/.test(caption) && caption.replace(/\s/g, '').length >= 3)
+    caption = caption.split(/\s+/).join('\n');
   if (!unit) return caption;
   // Some plans redundantly include the same unit in the caption. Remove only
   // the declared unit, never guess that a function's argument is a unit.

@@ -207,7 +207,14 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
         await persist(run.snapshot);
         if (run.done || active !== run) return;
         publish(run.snapshot);
-        dispatch(run, buildGraphCorrectionPrompt(run.snapshot.source, { previousPlan: result.ok ? result.plan : safePlan || null, issues, validationErrors: result.errors, hasPreviousRender: !!image, attempt: attempt + 1, maxAttempts: run.repairMode ? Math.min(3, Math.max(run.maxAttempts, attempt + 1)) : run.maxAttempts }), image ? [run.snapshot.attachment, image] : [run.snapshot.attachment]);
+        // 11-12 밤샘: 설명으로 만들기(생성)는 원본 그림이 없다 — 원본 비교용 고침 지시문 대신 처음 설명 지시문에 검증 오류를 붙이고,
+        // 빈 첨부(null)를 보내지 않는다(전에는 「Cannot read properties of null (reading 'data')」로 실패).
+        if (run.snapshot.description && !result.ok) {
+          const errors = result.errors.map(e => `- ${e.path}: ${e.message}`).join('\n');
+          dispatch(run, `${buildGraphDescriptionPrompt(run.snapshot.source, run.snapshot.description, run.snapshot.priorPlan, run.snapshot.priorObjects)}\n\n[다시 보내기 ${attempt + 1}] 직전 응답 JSON이 아래 검증 오류로 거부되었습니다. 같은 설명을 지키면서 오류를 모두 고친 완전한 JSON 하나만 다시 반환하십시오.\n${errors}${safePlan ? `\n직전 응답:\n${JSON.stringify(safePlan).slice(0, 12000)}` : ''}`, []);
+          return;
+        }
+        dispatch(run, buildGraphCorrectionPrompt(run.snapshot.source, { previousPlan: result.ok ? result.plan : safePlan || null, issues, validationErrors: result.errors, hasPreviousRender: !!image, attempt: attempt + 1, maxAttempts: run.repairMode ? Math.min(3, Math.max(run.maxAttempts, attempt + 1)) : run.maxAttempts }), [run.snapshot.attachment, image].filter(Boolean));
       })().catch(error => { if (!run.done) finish(run, error); });
     }
   };
