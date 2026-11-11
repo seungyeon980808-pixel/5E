@@ -196,7 +196,8 @@ export function buildNativeGraph(input, options = {}) {
   const regions=[];
   for(const spec of plan.regions || []) {
     const geometry=buildRegionGeometry(spec,plane,objects.slice(1));
-    if(!geometry.ok)return fail(geometry.error,review);
+    // 11-12 밤샘(「AI 변환은 실패로 끝나면 안 됨」): 영역 하나를 못 만들면 그래프 전체를 버리지 않고 그 영역만 빼고 검토 메모를 남긴다.
+    if(!geometry.ok){(review||[]).push?.({path:'regions',reason:`색칠 영역 하나를 그리지 못해 뺐습니다: ${geometry.error}`});continue;}
     regions.push({type:'funcgraph',sourceKind:'region',axis:spec.axis || 'y',regionSpec:clone(spec),regionFillLevel:spec.level ?? 220,regionOpacity:spec.opacity ?? 1,closed:true,lineVisible:false,strokeWidth:0,mathPoints:geometry.mathPoints,points:geometry.points,breaks:[],curveStyle:'straight',locked:false,positionLocked:false});
   }
   objects.splice(1,0,...regions);
