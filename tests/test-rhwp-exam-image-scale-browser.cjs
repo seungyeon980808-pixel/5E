@@ -66,7 +66,7 @@ async function standalone(origin,engine,name){
    const image=await pattern(page,w,hgt),id=c.id+'-'+w+'x'+hgt;
    ref=await page.evaluate(({ref,image,id})=>{const b=scaleBridge;const old=b.figureId(ref);b.replaceFigure(old,{...image,bytes:new Uint8Array(image.bytes)},id,ref);return b.findFigure(id);},{ref,image,id});
    const m=await shown(page,ref,name+'/'+id,{pixels:!c.rotation,flipH:!!c.flipH,flipV:!!c.flipV});
-   near(m.props.width,before.width,'document width',0);near(m.props.height,Math.round(before.width*hgt/w),'document aspect',0);
+   {/* 11-11(84fb029b) 승인: 바꿔 넣은 그림은 처음 그림 칸 안에 비율을 지켜 맞춘다 — 더 길면 높이를 지키고 폭을 줄임(여러 번 바꿔도 처음 칸 기준) */const tall=Math.round(before.width*hgt/w)>before.height*1.02;near(m.props.width,tall?Math.round(before.height*w/hgt):before.width,'document width',0);near(m.props.height,tall?before.height:Math.round(before.width*hgt/w),'document aspect',0);}
    for(const key of ['treatAsChar','horzOffset','vertOffset','rotationAngle','horzFlip','vertFlip','textWrap'])assert.equal(m.props[key],before[key],key);
    assert.equal(m.bitmap.w,w);assert.equal(m.bitmap.h,hgt);assert.equal(!!ref.cellPath?.length,!!c.table);
   }
@@ -136,7 +136,7 @@ async function workflow(origin,browser,name,surface){
  ref={sec:after.control.secIdx,ppi:after.control.paraIdx,ci:after.control.controlIdx,type:'image'};await shown(p,ref,name+'/'+surface+'recrop',{pixels:false});
  // 11-06: 두 번 누르기 = 5E_image 편집 화면이 한글 위 창으로 — 라벨을 고쳐 반영해도 그림의 실제 크기는 그대로.
  await h.seedSourceLabel(p);
- await h.doubleClick(p);await p.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length);await h.idle(p);
+ await h.doubleClick(p);/* 11-11(18f26565): 두 번 누르기는 먼저 「그림 편집 중」 창 → 「5E_image에서 자세히」로 넘어감 */await p.locator('[data-inline-action="original"]').click();await p.waitForFunction(()=>document.body.classList.contains('exam-float-edit')&&!!document.querySelector('#exam-edit-bar:not([hidden])')?.getClientRects().length);await h.idle(p);
  await p.evaluate(async stateUrl=>{const {state}=await import(stateUrl);state.update(s=>{const label=s.objects.find(o=>o.type==='labeler');label.text='scale check';});},h.runtime(p).stateUrl);
  await p.locator('[data-source-apply]').click();await h.recrop(p);
  const labelled=(await h.pictures(p))[0];assert.equal(labelled.props.width,after.props.width);assert.equal(labelled.props.height,after.props.height);assert.deepEqual(labelled.figure.link,link);await shown(p,ref,name+'/'+surface+'labels',{pixels:false});

@@ -526,8 +526,14 @@ export class RhwpExamBridge {
       // 11-11 사용자 「조판에 여유가 있는데 왜 밀리냐」: 예전엔 폭은 그대로·높이는 새 비율대로라, 새 그림(예: 세로축 제목을 세로로 쌓은 AI 그래프)이
       // 세로로 더 길면 문항이 길어져 선지 줄이 다음 단으로, 다음 문항은 다음 쪽으로 밀렸다. 이제 원래 그림 칸(폭·높이) 안에 비율을 지켜 맞춘다 —
       // 새 그림이 더 길면 높이는 원래대로 두고 폭을 줄인다(문항 높이가 늘지 않음). 더 납작하면 예전처럼 폭 그대로.
-      const fitted=()=>{const ratio=image.pixelHeight/image.pixelWidth,height=Math.max(1,Math.round(width*ratio)),old=Number(props.height);
-        if(!(old>0)||height<=old*1.02)return {height};return {width:Math.max(1,Math.round(old/ratio)),height:Math.round(old)};};
+      // 11-12 밤샘: 「원래 칸」은 바로 전 그림이 아니라 처음 그림 칸이다 — 전엔 넓적한 그림을 넣은 뒤 길쭉한 그림을 넣으면
+      // 바로 전(납작해진) 칸에 맞춰 13×20mm처럼 점점 쪼그라들었다(다른 버전 다시 넣기). 처음 칸을 그림 연결을 따라 기억한다.
+      this._originBox ||= new Map();
+      const origin=this._originBox.get(id) || {width:Number(width),height:Number(props.height)};
+      if(nextId!==id)this._originBox.delete(id);
+      this._originBox.set(nextId,origin);
+      const fitted=()=>{const ratio=image.pixelHeight/image.pixelWidth,w0=origin.width>0?origin.width:width,h0=origin.height,height=Math.max(1,Math.round(w0*ratio));
+        if(!(h0>0)||height<=h0*1.02)return {width:Math.round(w0),height};return {width:Math.max(1,Math.round(h0/ratio)),height:Math.round(h0)};};
       // size: 「그림으로 되돌리기」처럼 처음 문서 속 크기로 정확히 돌려놓을 때.
       const geometry=region ? regionGeometry(region.before,region.after,props) : size?.width>0&&size?.height>0 ? {width:Math.round(size.width),height:Math.round(size.height)} : fitted();
       this.setProperties(ref,geometry);if(region?.layout)this.writePictureLayout(ref,region.layout);return result;
