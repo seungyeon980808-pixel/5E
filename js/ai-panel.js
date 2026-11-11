@@ -6121,7 +6121,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   ].filter(Boolean).join('\n');
   // 11-11: 실행 단추를 누르기 직전(캡처 단계)에 대화 내용을 요청 글로 옮긴다. 실행 본문은 그대로 둔다.
   // 11-11: 요청 칸은 숨겨진 칸이라 대화가 바뀔 때마다 대화 내용을 그대로 옮겨 둔다(이미지 생성의 실행 단추 상태 검사도 이 칸을 본다).
-  const syncRequestFromChat = () => { input.value = composeRequestFromChat(); };
+  // 11-11: 값을 옮긴 뒤 input 이벤트를 보내 실행 단추 상태(글자·누를 수 있는지)가 바로 다시 계산되게 한다.
+  const syncRequestFromChat = () => { const next = composeRequestFromChat(); if (input.value !== next) { input.value = next; input.dispatchEvent(new Event('input', { bubbles: true })); } };
   sendButton.addEventListener('click', syncRequestFromChat, true);
   chatInput?.addEventListener('input', syncRequestFromChat);
   sendButton.onclick = () => {

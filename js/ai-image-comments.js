@@ -452,6 +452,10 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         // 11-11: 수정 박스가 없으면 「다시 그리기 · 정밀」(결과 전체를 Sol로 다시 그림)로 바로 누를 수 있다.
         apply.textContent = allEntries.length ? '수정하기' : '다시 그리기 · 정밀';
         apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || (allEntries.length > 0 && (!areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment))));
+      } else if (panel.dataset.aiWorkflow === 'graph-create') {
+        // 11-11: 그래프 생성은 원본 그림 없이 설명(대화)만으로 실행한다.
+        apply.textContent = '그래프 생성';
+        apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
       } else if (isTextCreation()) {
         apply.textContent = '이미지 생성';
         apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
