@@ -513,7 +513,7 @@ export class RhwpExamBridge {
     return null;
   }
 
-  replaceFigure(id, image, nextId = id, selectedRef = null, region = null) {
+  replaceFigure(id, image, nextId = id, selectedRef = null, region = null, size = null) {
     const ref = selectedRef && this.figureId(selectedRef)===id ? selectedRef : this.findFigure(id);
     if (!ref) throw new Error('연결된 그림을 찾지 못했습니다. 그림이 삭제되었거나 연결이 바뀌었습니다.');
     if (this.figureId(ref) !== id) throw new Error('그림 연결이 바뀌었습니다. 다시 선택해주세요.');
@@ -523,7 +523,13 @@ export class RhwpExamBridge {
       // The PNG already contains the chosen crop. Preserve the native anchor and
       // width; only its aspect ratio changes. Crop UI amounts use shape units,
       // not the source-image coordinates used by the renderer.
-      const geometry=region ? regionGeometry(region.before,region.after,props) : {height:Math.max(1,Math.round(width*image.pixelHeight/image.pixelWidth))};
+      // 11-11 사용자 「조판에 여유가 있는데 왜 밀리냐」: 예전엔 폭은 그대로·높이는 새 비율대로라, 새 그림(예: 세로축 제목을 세로로 쌓은 AI 그래프)이
+      // 세로로 더 길면 문항이 길어져 선지 줄이 다음 단으로, 다음 문항은 다음 쪽으로 밀렸다. 이제 원래 그림 칸(폭·높이) 안에 비율을 지켜 맞춘다 —
+      // 새 그림이 더 길면 높이는 원래대로 두고 폭을 줄인다(문항 높이가 늘지 않음). 더 납작하면 예전처럼 폭 그대로.
+      const fitted=()=>{const ratio=image.pixelHeight/image.pixelWidth,height=Math.max(1,Math.round(width*ratio)),old=Number(props.height);
+        if(!(old>0)||height<=old*1.02)return {height};return {width:Math.max(1,Math.round(old/ratio)),height:Math.round(old)};};
+      // size: 「그림으로 되돌리기」처럼 처음 문서 속 크기로 정확히 돌려놓을 때.
+      const geometry=region ? regionGeometry(region.before,region.after,props) : size?.width>0&&size?.height>0 ? {width:Math.round(size.width),height:Math.round(size.height)} : fitted();
       this.setProperties(ref,geometry);if(region?.layout)this.writePictureLayout(ref,region.layout);return result;
     });
   }

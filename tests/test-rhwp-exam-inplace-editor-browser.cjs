@@ -134,7 +134,9 @@ async function scenario(browser, origin, name) {
     assert.ok(!types(restored.figure).includes('image'), 'the image object is replaced');
     assert.ok(pageOf(restored.figure).meta.examRestoredFrom?.objects.some(object => object.type === 'image'), 'the original picture is kept for revert');
     assert.equal(restored.figure.version, placed.figure.version + 1);
-    assert.equal(restored.props.width, placed.props.width, 'same width in the document');
+    // 11-11: 바꿔 넣는 그림은 원래 그림 칸 안에 맞춘다(새 그림이 더 길면 폭을 줄여 높이를 지킴 — 문항이 길어져 밀리지 않게).
+    const fitsBox = (fig, label) => { assert.ok(fig.props.width <= placed.props.width + 1, label + ': width within the original box'); assert.ok(fig.props.height <= placed.props.height * 1.02 + 1, label + ': height within the original box'); };
+    fitsBox(restored, 'graph restore');
     assert.equal(restored.control.paraIdx, placed.control.paraIdx, 'same place in the document');
     await page.screenshot({ path: path.join(evidence, name + '-3-restored.png') });
 
@@ -154,7 +156,7 @@ async function scenario(browser, origin, name) {
     const edited = (await h.pictures(page))[0];
     assert.equal(edited.figure.version, restored.figure.version + 1, 'graph edit replaced the picture');
     assert.equal(pageOf(edited.figure).objects.find(object => object.type === 'coordplane').axisVariant, 'cross');
-    assert.equal(edited.props.width, placed.props.width);
+    fitsBox(edited, 'graph edit');
 
     // ④ 그래프 창을 닫으면 편집기가 남고, 「그림으로 되돌리기」로 원래 그림
     await h.doubleClick(page, 0);
@@ -188,7 +190,7 @@ async function scenario(browser, origin, name) {
     const converted = (await h.pictures(page))[0];
     assert.deepEqual(types(converted.figure).filter(type => type !== 'labeler'), ['image'], 'the AI result is an image object in place');
     assert.equal(converted.figure.version, texted.figure.version + 1);
-    assert.equal(converted.props.width, placed.props.width, 'same width after AI conversion');
+    fitsBox(converted, 'AI conversion');
     assert.ok(pageOf(converted.figure).meta.examRestoredFrom, 'the picture before AI is kept for revert');
 
     assert.deepEqual(errors, [], 'no runtime errors');

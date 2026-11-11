@@ -834,7 +834,9 @@ export function initRhwpExamWorkspace(state, services) {
       activeLayerId:layerId,activePageId:page.id,undoStack:[],redoStack:[],selectedIds:[],targetedId:null,activeTool:'V'};
     return {draft,state:{get:()=>draft,update:fn=>fn(draft)}};
   }
-  async function applyInPlaceSource(session,source,bounds,scope,note){
+  // 11-11: 바꿔 넣기 전 그림의 문서 속 크기(되돌릴 때 정확히 그 크기로).
+  function nativeSizeOf(ref){try{const p=bridge.properties(ref);return p?.width>0&&p?.height>0?{width:p.width,height:p.height}:null;}catch{return null;}}
+  async function applyInPlaceSource(session,source,bounds,scope,note,nativeSize=null){
     if(session.generation!==bridge.generation || bridge.figureId(session.ref)!==session.id)throw new Error('시험지의 그림이 바뀌었습니다. 다시 선택해주세요.');
     if(figures.size>=500)throw new Error('그림 수정 이력을 500개까지 보관할 수 있습니다.');
     if(!(bounds?.w>0 && bounds?.h>0))throw new Error('그림 영역을 찾지 못했습니다.');
@@ -844,7 +846,7 @@ export function initRhwpExamWorkspace(state, services) {
     const image=await imageFor(source,figure);
     if((!session.detached && inlineSession!==session) || session.generation!==bridge.generation || bridge.figureId(session.ref)!==session.id)throw new Error('시험지의 그림이 바뀌었습니다. 다시 선택해주세요.');
     // 폭과 자리는 그대로, 높이만 새 그림 비율로(같은 자리·같은 크기).
-    bridge.replaceFigure(session.id,image,nextId,session.ref);
+    bridge.replaceFigure(session.id,image,nextId,session.ref,null,nativeSize);
     figures.set(nextId,figure);
     if(!session.detached || inlineSession)await closeInline();changed();
     try{await stableSave();message(note);}catch(error){message(`그림을 바꿨지만 자동 저장에 실패했습니다. 작업 저장을 다시 눌러주세요. ${error.message}`,true);}
@@ -873,7 +875,7 @@ export function initRhwpExamWorkspace(state, services) {
       // 복원: 새로 만든 그래프 객체만 남기고, 원래 그림은 「그림으로 되돌리기」용으로 붙여 둔다.
       const made=objects.filter(object=>!before.has(object.id));
       if(!made.some(object=>object.type==='coordplane'))throw new Error('그래프를 만들지 못했습니다. 그래프 창에서 다시 시도하세요.');
-      nextPage.meta={...nextPage.meta,examRestoredFrom:{objects:clone(page.objects),groups:clone(page.groups || []),bounds:clone(session.render.bounds)}};
+      nextPage.meta={...nextPage.meta,examRestoredFrom:{objects:clone(page.objects),groups:clone(page.groups || []),bounds:clone(session.render.bounds),nativeSize:nativeSizeOf(session.ref)}};
       objects=made;nextPage.groups=clone((draft.groups || []).filter(group=>group.memberIds?.every(id=>made.some(object=>object.id===id))));
     } else nextPage.groups=clone(draft.groups || []);
     nextPage.objects=clone(objects);
@@ -886,7 +888,7 @@ export function initRhwpExamWorkspace(state, services) {
     const next=clone(source),nextPage=getAnnotationPage(next);
     nextPage.objects=clone(saved.objects);nextPage.groups=clone(saved.groups || []);
     const meta={...nextPage.meta};delete meta.examRestoredFrom;nextPage.meta=meta;
-    return applyInPlaceSource(session,next,saved.bounds,'inline-revert','복원하기 전 그림으로 되돌렸습니다 · 되돌리기 ⌘Z');
+    return applyInPlaceSource(session,next,saved.bounds,'inline-revert','복원하기 전 그림으로 되돌렸습니다 · 되돌리기 ⌘Z',saved.nativeSize);
   }
   async function inlineAi(session,kind='image'){
     // 11-06: 5E_image로 넘어가지 않는다 — 한글 위에 AI 작업대(이미지 변환 / 그래프 복원)를 이 그림을 원본으로 열고,
@@ -908,7 +910,7 @@ export function initRhwpExamWorkspace(state, services) {
     const session={id,figure:prepared,ref,generation:bridge.generation,render,detached:true};
     const source=clone(prepared.source),page=getAnnotationPage(source),layerId=page.layers?.find(layer=>layer.visible!==false)?.id || page.layers?.[0]?.id || 1;
     // 원래 그림(처음 것)은 되돌리기용으로 하나만 붙여 둔다 — AI를 여러 번 거쳐도 처음 그림으로 돌아간다.
-    const restoredFrom=page.meta?.examRestoredFrom || {objects:clone(page.objects),groups:clone(page.groups || []),bounds:clone(render.bounds)};
+    const restoredFrom=page.meta?.examRestoredFrom || {objects:clone(page.objects),groups:clone(page.groups || []),bounds:clone(render.bounds),nativeSize:nativeSizeOf(ref)};
     let bounds;
     if(detail.graph){
       const objects=clone(detail.graph.objects || []).map(object=>({...object,layerId}));
