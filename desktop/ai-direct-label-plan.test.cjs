@@ -168,13 +168,13 @@ test('each read label carries its own box-height font size (box h × 0.85), not 
   assert.ok(water.fontSize < temp.fontSize);
 });
 
-test('sizeFromBox labels clamp to 1.8 mm at the small end; plain measured sizes keep the old 0.5 mm floor', async () => {
+test('sizeFromBox labels clamp to 2.6 mm at the small end (11-11 인쇄 최소); plain measured sizes keep the old 0.5 mm floor', async () => {
   const { createEditableImageLabelObjects } = await editablePromise;
   const base = { id: 'a', text: '물', evidence: '물', sourceKind: 'reference', sourceRef: 1, mode: 'text', labelType: 'label', contentMode: 'plain', anchor: { x: 0.5, y: 0.5 }, position: { x: 0.5, y: 0.5 } };
   const image = { id: 'img', x: 0, y: 0, w: 60, h: 20, rotation: 0 };
   let n = 0;
   const [boxed] = createEditableImageLabelObjects({ labels: [{ ...base, measuredSize: 0.02, sizeFromBox: true }], image, labelSizeMm: 3.7, idFactory: () => 'l' + ++n });
-  assert.equal(boxed.fontSize, 1.8);
+  assert.equal(boxed.fontSize, 2.6);
   const [plain] = createEditableImageLabelObjects({ labels: [{ ...base, measuredSize: 0.02 }], image, labelSizeMm: 3.7, idFactory: () => 'l' + ++n });
   assert.equal(plain.fontSize, 0.5); // 0.02 × 20mm = 0.4mm → 기존 0.5mm 하한
 });

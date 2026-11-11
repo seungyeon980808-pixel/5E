@@ -338,7 +338,7 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
     // (넣는 곳의 1.8mm 하한·그림 하나 크기 대신 — 규칙 5 원본 글자 높이 ±15%).
     // 11-10: sizeFromBox(라벨 복원 읽기 결과)는 1.8~8mm, 그 밖의 측정 크기는 기존 범위(0.5~16mm)를 쓴다.
     const measuredMm = Number.isFinite(label.measuredSize) && label.measuredSize > 0
-      ? (label.sizeFromBox === true ? Math.min(8, Math.max(1.8, label.measuredSize * image.h)) : Math.min(16, Math.max(0.5, label.measuredSize * image.h))) : null;
+      ? (label.sizeFromBox === true ? Math.min(8, Math.max(2.6, label.measuredSize * image.h)) /* 11-11: 인쇄에서 읽히는 최소 2.6mm(≈7.4pt) */ : Math.min(16, Math.max(0.5, label.measuredSize * image.h))) : null;
     object.labelSize = style ? image.h * style.size : measuredMm ?? (Number.isFinite(labelSizeMm) && labelSizeMm > 0 ? labelSizeMm : DEFAULT_TEXT_SIZE_MM);
     if (style?.strokeLevel !== undefined) object.strokeLevel = style.strokeLevel;
     if (label.mode !== 'leader') {

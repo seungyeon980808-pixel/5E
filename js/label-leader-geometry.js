@@ -29,7 +29,8 @@ export function deriveLabelLeaderGeometry(obj) {
     return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
   };
   const label = { center: { ...center }, w, h, rotation, polygon, bounds: box(polygon) };
-  const gap = Number.isFinite(obj.labelGap) && obj.labelGap >= 0 ? obj.labelGap : 0;
+  // 11-11: 지시선과 글자 사이를 조금 띄운다(글자 크기의 15%) — 선이 글자에 닿아 보이지 않게.
+  const gap = Number.isFinite(obj.labelGap) && obj.labelGap >= 0 ? obj.labelGap : size * 0.15;
   const routes = attachLeaderRoutesToLabel(obj.leaderRoutes, { ...label, gap });
   const points = [...polygon, ...leaderRoutePoints(routes)];
   for (const route of routes) {

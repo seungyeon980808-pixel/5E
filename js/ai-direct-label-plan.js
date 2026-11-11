@@ -81,7 +81,9 @@ export function labelReadToEditablePlan(items) {
   return { labels };
 }
 
-export const LABEL_BOX_FONT_RATIO = 0.85;
+// 11-11 사용자 「라벨 글씨가 작다」: 읽은 글자 상자 높이는 글꼴 크기(em)보다 작다(한글 ≈ 0.95em, 영문 대문자 ≈ 0.7em) —
+// 0.85를 곱하면 원본보다 작게 나왔다. 1.05로 원본 글자 크기에 맞춘다(규칙: 원본 ±15%).
+export const LABEL_BOX_FONT_RATIO = 1.05;
 // 글자 상자 높이(그림 높이 비율, 여러 줄이면 한 줄 높이) × 0.85. 상자 높이가 없으면 null.
 export function labelBoxFontRatio(item) {
   const h = Number(item?.h ?? item?.typography?.bounds?.h);

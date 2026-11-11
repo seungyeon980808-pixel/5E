@@ -281,7 +281,7 @@ function renderLabeler(obj, { leadersOnly = false } = {}) {
   // is upright and centered on b (matching makeUprightLabel), so its axis-aligned
   // bounds are valid under any labeler rotation (which rotates a/b in world space).
   // Small visual gap (~2-4px equivalent) between the leader tip and the text edge.
-  const pad = Number.isFinite(obj.labelGap) && obj.labelGap >= 0 ? obj.labelGap : 0;
+  const pad = Number.isFinite(obj.labelGap) && obj.labelGap >= 0 ? obj.labelGap : size * 0.15; // 11-11: 글자와 조금 띄움
   // Formula label: EXACT measured box (measureFormula); plain text: the same
   // over-estimating multiline block the plain renderer has always used.
   const hw = geometry.label.bounds.w / 2 + pad, hh = geometry.label.bounds.h / 2 + pad;

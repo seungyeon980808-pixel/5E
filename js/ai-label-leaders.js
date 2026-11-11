@@ -27,7 +27,11 @@ export function attachLeaderRoutesToLabel(routes, { center, w, h, rotation = 0, 
   const hw = w / 2 + gap, hh = h / 2 + gap;
   return (routes || []).map(route => {
     let start = { ...route.start };
-    if (route.attachment === 'label') {
+    // 11-11 사용자: 지시선은 늘 글자 상자 바깥(조금 띄운 자리)에서 시작한다. 라벨에 붙은 선이 아니어도
+    // 시작점이 글자 상자 안에 들어와 있으면(글자를 키우거나 옮긴 뒤 등) 상자 가장자리로 옮긴다.
+    const local = point => { const dx = point.x - center.x, dy = point.y - center.y; return { x: c * dx + s * dy, y: -s * dx + c * dy }; };
+    const startInside = (() => { const p = local(start); return Math.abs(p.x) < hw && Math.abs(p.y) < hh; })();
+    if (route.attachment === 'label' || startInside) {
       // A repeated control at the label center has no direction. Use the first
       // following observed point; never manufacture or relocate a target.
       const toward = [...route.controls, route.target, route.start]
