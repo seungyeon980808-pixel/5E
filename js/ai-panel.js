@@ -778,6 +778,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     set: (id, target) => { const tab = taskTabs.get(id); if (tab && target) tab.hwpTarget = structuredClone(target); },
     delete: id => { const tab = taskTabs.get(id); if (tab) delete tab.hwpTarget; },
   };
+  // 11-12: 한글 쪽이 결과를 넣으면 그림 id가 바뀐다 — 그 그림에 이어진 작업들의 연결을 새 id로 옮긴다.
+  window.addEventListener('5e:hwp-figure-replaced', event => {
+    const { from, to, generation } = event.detail || {};
+    if (!from || !to) return;
+    let moved = false;
+    for (const tab of taskTabs.values()) if (tab.hwpTarget?.figureId === from) { tab.hwpTarget = { ...tab.hwpTarget, figureId: to, ...(generation !== undefined ? { generation } : {}) }; moved = true; }
+    if (moved) persistTasks();
+  });
   let graphSubmitting = false;
   let graphOwnerEpoch = 0;
   const graphWorkflow = createGraphReconstructionWorkflow({transport:desktop || {send:async()=>{throw new Error('AI 연결을 확인해 주세요.');}}});
@@ -2913,7 +2921,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const graph = isGraphWorkflow(conversionKind);
     const mode = graph ? 'graph' : 'image';
     if (panel.dataset.aiMode !== mode) panel.dataset.aiMode = mode;
-    const title = panel.querySelector('#ai-image-title');
+    // 11-12: 두 번째부터의 작업대는 복제하며 id에 꼬리표가 붙는다(ai-image-title-<scope>) — 원래 id로만 찾아 제목·한글 연결 줄이 늘 「AI 이미지」로 남았다.
+    const title = panel.querySelector('#ai-image-title, [id^="ai-image-title-"]');
     const target = hwpInPlaceTargets.get(activeTaskTabId);
     // 11-11: 제목은 「AI 이미지」「AI 그래프」만 쓴다(5E_ 표기 없음). 한글에서 열었을 때만 뒤에 출처를 붙인다.
     // 11-11 사용자 「말줄임표는 뭐냐」: 제목은 「AI 이미지」「AI 그래프」만, 어디에 이어졌는지는 아래 작은 줄로 따로(왼쪽 칸 폭에 잘리지 않게).

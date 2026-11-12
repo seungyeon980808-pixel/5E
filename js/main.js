@@ -503,6 +503,9 @@ const prepareLibraryAiDestination = async (options = {}) => {
 };
 const openAiWithReference = async options => {
   const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
+  // 11-12: 한글 그림·문항 카드 그림에서 연 요청(hwpTarget)은 웹에서도 로그인만 확인하고 설치판과 같은 길로 연다.
+  // 로그인 대기 경로는 연결 정보를 버리고 그림마다 새 작업대를 만들어 「한글 파일에 넣기」·진행 표시·같은 그림 다시 열기가 빠졌다.
+  if (prepared.hwpTarget && webLogin) return webLogin.requireAi(()=>aiPanel?.open(prepared));
   return aiLoginHandoff ? aiLoginHandoff.open(prepared) : (prepared.groupKinds ? aiPanel?.openIndependentReferences(prepared) : aiPanel?.open(prepared));
 };
 const openIndependentAiReferences = async options => {

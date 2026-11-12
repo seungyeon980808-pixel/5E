@@ -958,7 +958,10 @@ export function initRhwpExamWorkspace(state, services) {
     page.meta={...page.meta,examRestoredFrom:restoredFrom};
     return applyInPlaceSource(session,source,bounds,detail.graph?'ai-restore':'ai-image',detail.graph?'AI로 복원한 그래프를 이 자리에 넣었습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z':'AI 결과를 이 자리에 같은 폭으로 넣었습니다 · 「그림으로 되돌리기」로 돌아갈 수 있습니다 · 되돌리기 ⌘Z');
   }
-  window.addEventListener('5e:hwp-inplace-ai',event=>{if(event.detail?.target?.examCard)return;/* 11-11: 문항 카드 그림은 5E_exam 쪽이 받는다 */const id=event.detail?.target?.figureId;void run(async()=>{const result=await applyAiInPlace(event.detail);if(id){aiJobs.delete(id);hideAiToast(id);paintAiJobs();}return result;});});
+  window.addEventListener('5e:hwp-inplace-ai',event=>{if(event.detail?.target?.examCard)return;/* 11-11: 문항 카드 그림은 5E_exam 쪽이 받는다 */const id=event.detail?.target?.figureId;void run(async()=>{const result=await applyAiInPlace(event.detail);if(id){aiJobs.delete(id);hideAiToast(id);paintAiJobs();}
+    // 11-12: 넣으면 그림 id가 새로 바뀐다 — AI 작업 쪽 연결도 새 id로 옮겨야 같은 그림 ✦가 그 작업을 열고, 다른 버전을 다시 넣을 수 있다.
+    if(id&&result?.id&&result.id!==id)window.dispatchEvent(new CustomEvent('5e:hwp-figure-replaced',{detail:{from:id,to:result.id,generation:bridge.generation}}));
+    return result;});});
   // 11-06 D3~D5: 한글 그림에서 연 AI 작업은 AI 창을 닫아도(Esc·×) 뒤에서 계속 돈다.
   // 도는 동안 문서 속 그 그림에 파란 테두리가 숨 쉬고 「● 그래프 복원 중 · 00:14」, 끝나면 초록 테두리 「복원 끝 · 눌러서 보기」와 아래 알림 [결과 보기].
   const aiJobs=new Map(),aiLayer=document.createElement('div');aiLayer.className='exam-ai-jobs';document.body.append(aiLayer);
