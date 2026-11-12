@@ -383,6 +383,8 @@ if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
+// 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
+if (userDataOverride && process.env.FIVE_E_DEV_DOCUMENTS) app.setPath("documents", path.resolve(process.env.FIVE_E_DEV_DOCUMENTS));
 if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
