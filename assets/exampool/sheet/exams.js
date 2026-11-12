@@ -7,6 +7,8 @@ export function newExam(title='새 시험지'){return {id:crypto.randomUUID(),ti
 // 예전 데이터: 시험지 구성 하나(examSet)를 '출제 중인 시험지 1'로 옮긴다.
 export function normalizeExams(data){
   if(!Array.isArray(data.exams)){data.exams=[];if(data.examSet?.items){data.exams.push({...newExam(data.examSet.title||'출제 중인 시험지 1'),items:[...data.examSet.items]});}}
+  // 아이디어 판(11-12): 없으면 빈 목록. 판 안 내용은 검사하지 않는다(문항이 아니므로).
+  if(!Array.isArray(data.ideas))data.ideas=[];
   delete data.examSet;return data;
 }
 export function validateExams(data){

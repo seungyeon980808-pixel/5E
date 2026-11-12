@@ -46,8 +46,10 @@ export function renderNav(root,data,view){
   // 지금 보는 문항 칸: 보관함이면 고른 칸, 시험지 밖 문항 카드면 그 문항이 든 칸.
   const pool=view.name==='library'?view.lib?.pool||'drafting':view.name==='card'&&!view.examId&&view.cardPool?view.cardPool:'';
   const poolItem=(k,icon)=>`<button type="button" class="nav" data-nav="library" data-pool="${k}" aria-current="${pool===k?'true':'false'}">${icon}<span>${POOLS[k]}</span><b>${poolQuestions(data,k).length}</b></button>`;
+  // 11-12: 맨 위 「아이디어」(¼ 빨강) — 판 모음. 문항 카드에서 판이 열려 있으면 빨간 점.
+  const ideaItem=`<button type="button" class="nav nav-idea${view.ideaOpen&&view.name==='card'?' open':''}" data-nav="ideas" aria-current="${view.name==='ideas'}" title="아이디어 판 모음">${qIcon('idea',.25,{title:false})}<span>아이디어</span><b>${(data.ideas||[]).length}</b></button>`;
   root.innerHTML=`<p class="side-label">문항</p>
-    ${poolItem('drafting',qIcon('work',.5,{title:false}))}${poolItem('done',qIcon('done',1,{title:false}))}${poolItem('inexam',qIcon('used',1,{title:false}))}
+    ${ideaItem}${poolItem('drafting',qIcon('work',.5,{title:false}))}${poolItem('done',qIcon('done',1,{title:false}))}${poolItem('inexam',qIcon('used',1,{title:false}))}
     <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${examIcon('new',0,{title:false})}</button></p>
     <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${examsOn('drafting')}">${examIcon('work',.5,{title:false})}<span>출제 중</span><b>${drafting.length}</b></button>
     <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${examsOn('done')}">${examIcon('done',1,{title:false})}<span>출제 완료</span><b>${done.length}</b></button>`;

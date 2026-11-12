@@ -9,7 +9,7 @@ import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastDa
 import {createCardEditor,clearPastBusy} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {saveOut,savedText,desktopFiles} from './save-out.js';
-import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf} from './exams.js';
+import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf,poolQuestions} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {exportExcel,importExcel,keepAppOnly} from './excel.js';
@@ -26,6 +26,8 @@ import {createNewQuestionDialog} from './new-question.js';
 import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText,importStandard} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
 import {ask} from './ask-dialog.js';
+import {createIdeaBoard,renderIdeasList,newBoard,nextBoardTitle,boardMeta,ideaIcon} from './idea-board.js';
+import {qIcon,questionState,progressOf} from './status-icons.js';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 import {loadStandards} from './standards-data.js';
 let grid=null,future=[];
@@ -256,7 +258,8 @@ function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.quest
 let view={name:'library',status:'drafting',query:'',type:'',stage:'all',examId:null};
 const appView=()=>view;// 쪽 그리기 안에서 지역 이름 view(그린 쪽)와 겹치지 않게
 function renderView(){
-  const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view'};
+  const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view',ideas:'#ideas-view'};
+  if(view.name!=='card')cardEditor.resetIdea?.();
   for(const [name,sel] of Object.entries(panes))$(sel).hidden=view.name!==name;
   // 한글 조판 창은 한 번 미리보기에 붙으면 그 자리에 둔다(옮기면 편집기 프레임을 처음부터 다시 읽고 간결 화면이 풀린다). 카드를 떠나면 닫기만 한다.
   if(view.name!=='card'&&$('#preview-dialog').classList.contains('docked')&&!$('#preview-dialog').hidden)void requestTypeset(null);
@@ -266,6 +269,7 @@ function renderView(){
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
+  if(view.name==='ideas')renderIdeasView();else if(ideaBoard.el.closest('#ideas-view'))ideaBoard.el.remove();
   if(view.name==='exam'){const ex=examById(data,view.examId);
     // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
     // 시험지를 열면: 문항이 있으면 배치·점검, 없으면 문항 고르기(10-24 시안 17 — ① 틀·속성은 「새 시험지」 창과 머리의 「틀」 표로).
@@ -282,10 +286,10 @@ function renderView(){
   {const ex=view.name==='card'&&current?examOf(data,current.id):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
   // 경로는 지금 고른 칸을 그대로 말한다(10-28 출제 지적 1): 「문항 · 출제 중」.
-  $('#crumb-view').textContent=view.name==='library'?`문항 · ${POOLS[libState(view).pool]}`:view.name==='card'&&!exam?`문항 · ${POOLS[view.cardPool||'drafting']}`:view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
-  {const q=['desk','card'].includes(view.name)&&current;$('#crumb-question').textContent=q?questionTitle(current):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!q;}
+  $('#crumb-view').textContent=view.name==='ideas'?'아이디어':view.name==='library'?`문항 · ${POOLS[libState(view).pool]}`:view.name==='card'&&!exam?`문항 · ${POOLS[view.cardPool||'drafting']}`:view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
+  {const q=['desk','card'].includes(view.name)&&current,ib=view.name==='ideas'&&view.board&&data.ideas.find(b=>b.id===view.board),ic=view.name==='card'&&cardEditor.ideaState?.(),icb=ic&&data.ideas.find(b=>b.id===ic.id);$('#crumb-question').textContent=ib?ib.title:q?questionTitle(current)+(icb?` + 아이디어 「${icb.title}」`:''):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!(q||ib);}
   // 이동 줄 앞 단계는 그 화면으로 가는 단추: 시험지 문항이면 그 시험지, 아니면 문항 보관함(보관함·시험지 목록 화면에서는 지금 화면이라 누를 일 없음).
-  $('#crumb-view').disabled=!['card','desk'].includes(view.name);$('#crumb-view').title=$('#crumb-view').disabled?'':exam?'이 시험지 열기':'문항 보관함 열기';
+  $('#crumb-view').disabled=!['card','desk'].includes(view.name)&&!(view.name==='ideas'&&view.board);$('#crumb-view').title=$('#crumb-view').disabled?'':exam?'이 시험지 열기':'문항 보관함 열기';
   $('#question-position').textContent=list.length?`${at+1} / ${list.length}`:'0 / 0';
   $('#question-prev').disabled=at<=0;$('#question-next').disabled=at<0||at>=list.length-1;
   document.querySelector('.crumb-step').hidden=view.name!=='desk';
@@ -495,7 +499,7 @@ $('#new').onclick=()=>newDialog.open();
 $('#edit-detail').onclick=()=>openDetail();
 $('#detail-dialog').addEventListener('close',()=>{grid?.finish();renderRows();renderSheetView();grid?.refresh({questionId:current?.id});});
 $('#add').onclick=()=>{addParent=null;$('#add-dialog').showModal();};$('#duplicate').onclick=()=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=duplicateQuestion(current);current.number=nextNumber();data.questions.push(current);});
-function replay(which){grid?.finish(true);const source=which==='redo'?future:history,destination=which==='redo'?history:future,old=source.pop();if(!old)return;destination.push(copyTree(data));const id=current?.id;data=old;current=data.questions.find(q=>q.id===id)||data.questions[0]||null;editKey='';renderAll();remember();}
+function replay(which){grid?.finish(true);const source=which==='redo'?future:history,destination=which==='redo'?history:future,old=source.pop();if(!old)return;destination.push(copyTree(data));const id=current?.id,ideas=data.ideas;data=old;if(ideas)data.ideas=ideas;current=data.questions.find(q=>q.id===id)||data.questions[0]||null;editKey='';renderAll();remember();}
 $('#undo').onclick=()=>replay('undo');$('#redo').onclick=()=>replay('redo');
 // 열 머리 우클릭: 조판 보기 · 복제 · 삭제. (휴지통을 열 머리에 두면 '조판 보기'를 누르다 삭제가 눌린다.)
 const ctx=document.createElement('div');ctx.id='ctx-menu';ctx.setAttribute('role','menu');ctx.hidden=true;document.body.append(ctx);
@@ -822,6 +826,7 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
   const nav=b.dataset.nav;if(!nav)return;
   if(nav==='library'){view.examId=null;Object.assign(libState(view),{pool:b.dataset.pool||'drafting',limit:40,open:-1});show('library');}
   else if(nav==='exams')show('exams',{status:b.dataset.status||'drafting'});
+  else if(nav==='ideas')show('ideas',{board:null});
   else if(nav==='exam'){view.examId=b.dataset.exam;show('exam');}
   else if(nav==='new-exam')newExamDialog();
 });
@@ -1161,8 +1166,13 @@ async function printExam(bytes,title,fit=null){typesetter||=makeTypesetter();con
 const docked={home:null,next:null};
 const hwpDock={home:null,next:null};
 recordPaneListeners($('#card-view'));// 11-05 칸 분리: 카드 편집기가 듣기를 걸기 전에 기록
+// 아이디어 판(11-12, idea-board.js): 판 화면 하나를 판 모음·문항 카드 사이에 옮겨 붙인다. 판 고침은 문항 되돌리기와 따로(판 안 ⌘Z).
+const ideaBoard=createIdeaBoard({data:()=>data,save:()=>{markDirty(null);remember({validated:true});},status:(m,err)=>status(m,err),aim:f=>cardEditor?.aimField?.(f)});
 const cardEditor=createCardEditor($('#card-view'),{
   question:()=>current,
+  data:()=>data,ideaBoard,boardMeta:b=>boardMeta(b),
+  ideaSend:(field,payload,board)=>ideaSend(field,payload,board),ideaCreate:qid=>ideaCreate(qid),showIdeas:(id=null)=>show('ideas',{board:id}),
+  ideaChanged:st=>{const open=!!st;if(view.ideaOpen!==open){view.ideaOpen=open;renderNav($('.side'),data,view);}if(view.name==='card'&&current){const ic=st&&data.ideas.find(b=>b.id===st.id);$('#crumb-question').textContent=questionTitle(current)+(ic?` + 아이디어 「${ic.title}」`:'');}},
   context:()=>{const exam=view.examId&&examById(data,view.examId);return exam?{label:exam.title,numbered:true,questions:exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean)}:{label:'문항 보관함',numbered:false,questions:libraryQuestions(data)};},
   open:id=>openCard(id),
   newQuestion:()=>$('#new').click(),
@@ -1196,6 +1206,64 @@ const cardEditor=createCardEditor($('#card-view'),{
   cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),login:()=>window.parent.postMessage({channel:'5e-question-sheet',action:'login'},OWN),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
+// ── 아이디어 판 ──
+const IDEA_FIELD={passage:'지문',ask:'발문',bogi:'보기',figure:'자료',ref:'근거'};
+function linkBoard(boardId,qid){const b=data.ideas.find(x=>x.id===boardId);if(b&&qid&&!b.questionIds.includes(qid))b.questionIds.push(qid);}
+// 판에서 고른 글·그림을 지금 문항 카드로: 지문·발문은 끝에 한 줄 덧붙이고, 보기는 빈 줄을 채우거나 한 줄 더, 그림은 빈 자료 칸(없으면 새 칸), 근거는 「근거」 표에.
+function ideaSend(field,payload,board){const q=current;if(!q)return false;const text=String(payload.text||'').trim();
+  const ok=mutate(()=>{
+    if(field==='passage'||field==='ask'){const old=fieldValue(q,field);writeField(q,field,[old,text].filter(v=>String(v||'').trim()).join('\n'));}
+    else if(field==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(!b)writeField(q,'bogi',text);else{const empty=b.lines.find(l=>!l.text.trim());if(empty)empty.text=text;else{if(b.lines.length>=30)throw Error('보기는 30줄까지 넣을 수 있습니다.');const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ'];b.lines.push({id:crypto.randomUUID(),label:L[b.lines.length]||String(b.lines.length+1),text});}}}
+    else if(field==='figure'){if(!payload.figure?.data)throw Error('보낼 그림이 없습니다.');let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure);if(!slot){slot=block('figure',null,nextMaterialLabel(q,null,'figure'));q.blocks.push(slot);}slot.figure={name:payload.figure.name.slice(0,200),data:payload.figure.data};}
+    else if(field==='ref'){q.references.push({target:'question',label:('아이디어 · '+board.title).slice(0,300),quote:text.slice(0,2000)});}
+    else throw Error('보낼 자리를 모릅니다.');
+    linkBoard(board.id,q.id);});
+  if(ok)status(`문항 카드 「${IDEA_FIELD[field]}」에 넣었습니다 · ⌘Z로 되돌리기 · 판과 이 문항이 이어졌습니다.`);return ok;}
+function ideaCreate(qid){let id=null;const q=qid&&data.questions.find(x=>x.id===qid);
+  mutate(()=>{const b=newBoard(q?`${questionTitle(q)} 아이디어`:nextBoardTitle(data));if(qid)b.questionIds.push(qid);data.ideas.push(b);id=b.id;},{render:false});return id;}
+function openBoardWithCard(boardId,qid){if(!data.questions.some(q=>q.id===qid))return;openCard(qid);cardEditor.openIdea(boardId,'ic','ideas');renderView();}
+var ideaQuery='',ideaPop=null;
+const CARD_ICO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
+const qMark=x=>{const st=questionState(x,data);return qIcon(st,st==='work'?progressOf(x):1,{title:false});};
+function renderIdeasView(){const root=$('#ideas-view'),b=view.board&&data.ideas.find(x=>x.id===view.board);
+  if(view.board&&!b)view.board=null;
+  if(b){if(root.dataset.board!==b.id||!root.querySelector('.iv-board')){ideaBoard.el.remove();root.innerHTML=`<div class="iv-board"><div class="iv-pane" data-ivslot></div><button type="button" class="iv-rail" data-iv-card title="이 판과 같이 볼 문항 카드 고르기">${CARD_ICO}<span>문항 카드 ◂ 열기</span></button></div>`;root.dataset.board=b.id;}
+    ideaBoard.mount(root.querySelector('[data-ivslot]'),b.id,{where:'ideas',cardButton:{html:`${CARD_ICO}<span class="lb">문항 카드</span>`,on:false,title:'이 판과 같이 볼 문항 카드 고르기'},canSend:()=>false,
+      onCard:()=>ideaQPicker(root.querySelector('[data-iv-card]'),b),onClose:()=>show('ideas',{board:null}),onRename:()=>renderView()});return;}
+  root.dataset.board='';if(ideaBoard.el.closest('#ideas-view'))ideaBoard.el.remove();
+  if(!root.querySelector('.iv-box'))root.innerHTML='<div class="iv-box"></div>';
+  renderIdeasList(root.querySelector('.iv-box'),data,{query:ideaQuery,qIcon:qMark,qTitle:x=>questionTitle(x)});}
+function closeIdeaPop(){ideaPop?.remove();ideaPop=null;}
+function popAt(anchor,html,left=false){closeIdeaPop();const m=document.createElement('div');m.className='cv-idea-menu';m.setAttribute('role','menu');m.innerHTML=html;document.body.append(m);ideaPop=m;
+  const r=anchor.getBoundingClientRect();m.style.left=(left?Math.max(8,r.left-298):Math.max(8,Math.min(r.left,innerWidth-298)))+'px';m.style.top=Math.max(8,Math.min(left?r.top:r.bottom+6,innerHeight-m.offsetHeight-8))+'px';return m;}
+// 판에서 「문항 카드」: 이어진 문항 · 새 문항 카드 · 출제 중 문항에 잇기.
+function ideaQPicker(anchor,board){const qs=board.questionIds.map(id=>data.questions.find(x=>x.id===id)).filter(Boolean);
+  const m=popAt(anchor,`<div class="sec"><h5>이 판과 이어진 문항</h5>${qs.length?`<div class="list">${qs.map(x=>`<button type="button" class="row" data-q="${x.id}">${qMark(x)}<span>${E(questionTitle(x))}</span><small>${E(POOLS[poolOf(data,x)]||'')}</small></button>`).join('')}</div>`:'<p class="none">아직 없습니다.</p>'}</div>
+    <div class="sec"><button type="button" class="row" data-newq>＋ 새 문항 카드<small>이 판과 이어짐</small></button><button type="button" class="row" data-pick>출제 중 문항에 잇기…</button></div>`,anchor.classList.contains('iv-rail'));
+  m.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
+    if(t.dataset.q){closeIdeaPop();if(!board.questionIds.includes(t.dataset.q))mutate(()=>linkBoard(board.id,t.dataset.q),{render:false});openBoardWithCard(board.id,t.dataset.q);return;}
+    if(t.dataset.newq!==undefined){closeIdeaPop();let id=null;if(data.questions.length>=500){status('문항은 500개까지 만들 수 있습니다.',true);return;}
+      if(mutate(()=>{const q=newQuestion(nextNumber());data.questions.push(q);current=q;id=q.id;linkBoard(board.id,q.id);},{render:false})){openBoardWithCard(board.id,id);status('새 문항 카드를 만들어 이 판과 이었습니다.');}return;}
+    if(t.dataset.pick!==undefined){const list=poolQuestions(data,'drafting').filter(x=>!board.questionIds.includes(x.id));
+      m.innerHTML=`<div class="sec"><h5>출제 중 문항 — 고르면 이 판과 이어집니다</h5>${list.length?`<div class="list">${list.map(x=>`<button type="button" class="row" data-q="${x.id}">${qMark(x)}<span>${E(questionTitle(x))}</span><small>${E(questionSubtitle(x)).slice(0,24)}</small></button>`).join('')}</div>`:'<p class="none">출제 중 문항이 없습니다.</p>'}</div>`;}});}
+document.addEventListener('pointerdown',e=>{if(ideaPop&&!e.target.closest?.('.cv-idea-menu,[data-iv-card],.ib-card'))closeIdeaPop();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ideaPop){e.preventDefault();closeIdeaPop();}});
+$('#ideas-view').addEventListener('input',e=>{if(!e.target.matches('[data-iv-search]'))return;ideaQuery=e.target.value;const pos=e.target.selectionStart;renderIdeasView();const n=$('#ideas-view [data-iv-search]');n.focus();try{n.setSelectionRange(pos,pos);}catch{}});
+$('#ideas-view').addEventListener('click',e=>{
+  if(e.target.closest('[data-iv-new]')){const id=ideaCreate(null);if(id)show('ideas',{board:id});return;}
+  if(e.target.closest('[data-iv-card]')){const b=data.ideas.find(x=>x.id===view.board);if(b)ideaQPicker(e.target.closest('[data-iv-card]'),b);return;}
+  const chip=e.target.closest('.iv-chip');if(chip){const b=data.ideas.find(x=>x.id===chip.dataset.ivBoard);if(!b)return;if(chip.dataset.ivQ)openBoardWithCard(b.id,chip.dataset.ivQ);else{show('ideas',{board:b.id});setTimeout(()=>{const a=$('#ideas-view [data-iv-card]');if(a)ideaQPicker(a,b);},50);}return;}
+  const c=e.target.closest('.iv-card');if(c){$('#ideas-view').querySelectorAll('.iv-card.hit').forEach(n=>n.classList.remove('hit'));c.classList.add('hit');}});
+$('#ideas-view').addEventListener('dblclick',e=>{const c=e.target.closest('.iv-card');if(c&&!e.target.closest('.iv-chip'))show('ideas',{board:c.dataset.ivOpen});});
+$('#ideas-view').addEventListener('keydown',e=>{const c=e.target.closest?.('.iv-card');if(c&&e.key==='Enter')show('ideas',{board:c.dataset.ivOpen});});
+$('#ideas-view').addEventListener('contextmenu',e=>{const c=e.target.closest('.iv-card');if(!c)return;e.preventDefault();const b=data.ideas.find(x=>x.id===c.dataset.ivOpen);if(!b)return;
+  const m=popAt({getBoundingClientRect:()=>({left:e.clientX,right:e.clientX,top:e.clientY,bottom:e.clientY-6})},`<div class="sec"><button type="button" class="row" data-a="open">열기<small>두 번 누르기</small></button><button type="button" class="row" data-a="rename">이름 바꾸기</button></div><div class="sec"><button type="button" class="row" data-a="del" style="color:#f08a80">판 지우기</button></div>`);
+  m.addEventListener('click',async ev=>{const a=ev.target.closest('[data-a]')?.dataset.a;if(!a)return;closeIdeaPop();
+    if(a==='open')show('ideas',{board:b.id});
+    if(a==='rename'){const n=c.querySelector('.iv-meta b span');n.contentEditable='true';n.focus();const r=document.createRange();r.selectNodeContents(n);getSelection().removeAllRanges();getSelection().addRange(r);
+      const done=ok=>{n.onblur=null;n.removeAttribute('contenteditable');const t=n.textContent.trim().slice(0,80);if(ok&&t&&t!==b.title)mutate(()=>{b.title=t;b.updatedAt=new Date().toISOString();});else renderIdeasView();};
+      n.onkeydown=k=>{if(k.key==='Enter'){k.preventDefault();done(true);}if(k.key==='Escape'){k.preventDefault();done(false);}};n.onblur=()=>done(true);}
+    if(a==='del'&&await ask(`「${b.title}」 판을 지울까요? 판 안의 메모·그림도 함께 지워집니다. 문항 카드는 그대로입니다. (⌘Z로 되돌릴 수 있습니다)`,{title:'판 지우기',ok:'지우기'})){mutate(()=>{data.ideas=data.ideas.filter(x=>x.id!==b.id);});status(`「${b.title}」 판을 지웠습니다 · ⌘Z로 되돌리기`);}});});
 // 11-05 칸 분리: 참고 자료·문항 카드·조건 창을 별도 창으로 떼어 쓴다(pane-detach.js).
 window.fiveEPaneDetach=initPaneDetach($('#card-view'),{render:()=>cardEditor.render(),refreshLibrary:()=>cardEditor.refreshLibrary()});
 // ── 출제 대화(대화형 출제·검토) ──

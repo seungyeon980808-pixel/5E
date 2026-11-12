@@ -18,7 +18,7 @@ export function questionState(q,data){
   if(data?.exams?.some(e=>e.items.includes(q.id)))return 'used';
   return workflowOf(q)==='complete'?'done':'work';
 }
-const NAME={work:'출제 중',done:'출제 완료',used:'시험지에 넣음',new:'문항 추가'};
+const NAME={idea:'아이디어',work:'출제 중',done:'출제 완료',used:'시험지에 넣음',new:'문항 추가'};
 const pie=p=>{if(p<=0)return '';if(p>=1)return '<circle cx="12" cy="12" r="6.6"/>';const a=p*2*Math.PI,x=12+6.6*Math.sin(a),y=12-6.6*Math.cos(a);return `<path d="M12 12V5.4A6.6 6.6 0 ${p>.5?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z"/>`;};
 export function qIcon(state,p=0,{title=true}={}){
   const full=state==='done'||state==='used';

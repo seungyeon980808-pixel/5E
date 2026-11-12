@@ -16,6 +16,7 @@ import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
+import {ideaIcon,boardsFor} from './idea-board.js';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
@@ -39,6 +40,9 @@ export function createCardEditor(root,api){
   // 기출 여러 개 고르기(11-03): 그림 왼쪽 위 동그라미. 하나라도 고르면 그림을 누르기만 해도 골라지고, Shift 범위·⌘A 모두·Esc 취소. 아래 띠의 「N개 변형」으로 줄에 넣는다.
   const pastPick=new Set();let pastAnchor=-1;
   const q=()=>api.question();
+  // 아이디어 판(11-12): 열려 있으면 {id, mode:'ic'(아이디어 2 : 카드 1)|'i'(아이디어만), origin:'card'|'ideas'(판 모음에서 옴)}.
+  // 열려 있는 동안 참고 자료·미리보기 칸은 접어 두고(설정은 그대로), 닫으면 원래 칸이 돌아온다.
+  let idea=null;
 
   // 위쪽 번호 탭: 문항마다 완성도 고리·단계 색·검토 의견 표시. 접힌 목록 대신 번호가 늘 보인다.
   function tabsHtml(){
@@ -222,7 +226,8 @@ export function createCardEditor(root,api){
   const railHtml=(side,name)=>`<button type="button" class="pane-rail ${side}" data-cv="${side==='left'?'toggle-lib':'toggle-right'}" aria-pressed="false" title="${name} 열기" aria-label="${name} 열기">${side==='left'?ICON.panelL:ICON.panelR}<span>${name}</span></button>`;
   // 가운데 머리줄: 칸 이름, 번호 탭. 「이 문항 | 시험지 전체」 전환은 오른쪽 조판 칸에서 한다(10-22 안 B).
   function barHtml(){
-    return `<div class="cv-bar">${paneRole('card','문항 카드')}${tabsHtml()}</div>`;
+    const x=q(),linked=x?boardsFor(api.data(),x.id).length:0;
+    return `<div class="cv-bar">${paneRole('card','문항 카드')}${tabsHtml()}${x?`<button type="button" class="cv-ideabtn" data-cv="idea-menu" aria-pressed="${!!idea}" aria-haspopup="menu" title="이 문항의 아이디어 판 (⌥I)">${ideaIcon()}<span>아이디어${linked>1?` ${linked}`:''}</span></button>`:''}</div>`;
   }
   // 시험지 전체 보기: 조판 칸(미리보기)이 열려 있을 때만. 그때 가운데 문항 카드는 세로 띠로 접히고 조판 칸이 그 자리까지 넓어진다.
   const sheetView=()=>panels.view==='page'&&panels.rightOpen&&panels.right==='paper'&&!!q();
@@ -259,6 +264,17 @@ export function createCardEditor(root,api){
     const wide=sheetView();root.classList.toggle('is-sheet-view',wide);
     const center=x?formHtml(x):'<div class="cv-writer"><p class="pv-empty">위의 ＋로 새 문항을 만들거나 번호를 고르세요.</p></div>';
     const middle=wide?`<button type="button" class="pane-rail mid" data-cvview="card" aria-pressed="false" title="문항 카드로 돌아가기" aria-label="문항 카드 열기">${ICON.card}<span>문항 카드</span></button>`:`<section class="cv-center">${barHtml()}${center}</section>`;
+    if(idea&&!(api.data().ideas||[]).some(b=>b.id===idea.id))idea=null;
+    root.classList.toggle('idea-on',!!idea);
+    if(idea){api.ideaBoard.el.remove();// 다시 그릴 때 판 화면이 같이 지워지지 않게 떼어 둔다
+      const cardPart=idea.mode==='ic'?`<section class="cv-center">${barHtml()}${center}</section>`:`<button type="button" class="pane-rail right" data-cvidea="ic" title="문항 카드 펼치기" aria-label="문항 카드 펼치기">${ICON.card}<span>${x?E((x.number?x.number+'번 ':'')+'문항'):'문항 카드'} ◂ 펼치기</span></button>`;
+      root.innerHTML=`<section class="cv-idea" data-ideaslot></section>`+splitHtml('idea')+cardPart;
+      mountIdea();placeHwp(false);api.ideaChanged?.(idea);
+      if(idea.mode==='ic'&&same)root.querySelector('.cv-writer').scrollTop=keep;renderedFor=x?.id;fitAll();taWatch();
+      root.querySelectorAll('.cv-writer textarea').forEach(fit);
+      if(focused){const n=root.querySelector(focused.sel);if(n&&document.activeElement!==n){n.focus({preventScroll:true});try{if(caret[0]!=null)n.setSelectionRange(caret[0],caret[1]);}catch{}}}
+      return;}
+    api.ideaChanged?.(null);
     root.innerHTML=(panels.lib?'':railHtml('left','참고 자료'))+libHtml()+(panels.lib?splitHtml('left'):'')+middle+(panels.rightOpen&&!wide?splitHtml('right'):'')+rightHtml()+(panels.rightOpen?'':railHtml('right','AI · 조판'));
     if(same&&!wide)root.querySelector('.cv-writer').scrollTop=keep;
     renderedFor=x?.id;
@@ -272,6 +288,47 @@ export function createCardEditor(root,api){
     root.querySelectorAll('.cv-writer textarea').forEach(fit);
     if(focused){const n=root.querySelector(focused.sel);if(n&&document.activeElement!==n){n.focus({preventScroll:true});try{if(caret[0]!=null)n.setSelectionRange(caret[0],caret[1]);}catch{}}}
   }
+  // ── 아이디어 판 ──
+  function mountIdea(){const slot=root.querySelector('[data-ideaslot]');if(!slot||!idea)return;
+    api.ideaBoard.mount(slot,idea.id,{where:'card',
+      cardButton:{html:`${ICON.card}<span class="lb">문항 카드</span>`,on:idea.mode==='ic',title:idea.mode==='ic'?'문항 카드 접기 (아이디어만 크게)':'문항 카드 펼치기'},
+      canSend:()=>!!q(),
+      send:(field,payload,board)=>{const ok=api.ideaSend(field,payload,board);if(ok)flashField(field);},
+      onCard:()=>setIdeaMode(idea.mode==='ic'?'i':'ic'),
+      onClose:()=>closeIdea(),
+      onRename:()=>{}});}
+  function openIdea(id,mode='ic',origin='card'){const had=!idea&&(panels.lib||panels.rightOpen);idea={id,mode,origin};closeIdeaMenu();render();
+    if(had&&origin==='card')api.status('아이디어를 열었습니다 · 참고 자료와 미리보기는 잠시 접어 둡니다 · 닫으면(× 또는 ⌥I) 그대로 돌아옵니다.');}
+  function closeIdea(){if(!idea)return;const from=idea.origin;api.ideaBoard.endEdit?.();idea=null;closeIdeaMenu();
+    if(from==='ideas'){api.showIdeas?.();return;}render();anim(root.querySelector('.cv-center'),'ep-reflow');}
+  function setIdeaMode(m){if(!idea||idea.mode===m)return;idea.mode=m;render();}
+  const AIM={passage:'[data-cvf="passage"]',ask:'[data-cvf="ask"]',bogi:'[data-cvline="bogi"],[data-cvline-add="bogi"]',figure:'.cv-tiles,.cv-add-row',ref:'.cv-evtab,.cv-ev'};
+  function fieldNode(f){const n=root.querySelector(`.cv-writer ${AIM[f]?.split(',').join(',.cv-writer ')}`);return n?.closest('.f-field')||n;}
+  function aimField(f){root.querySelectorAll('.idea-aim').forEach(n=>n.classList.remove('idea-aim'));if(!f||idea?.mode!=='ic')return;const n=fieldNode(f);if(n){n.classList.add('idea-aim');n.scrollIntoView({block:'nearest',behavior:'smooth'});}}
+  function flashField(f){aimField(null);setTimeout(()=>{if(idea?.mode!=='ic'){api.status('문항 카드에 넣었습니다 · 카드는 접혀 있어 오른쪽 띠를 누르면 보입니다.');return;}const n=fieldNode(f);if(!n)return;n.scrollIntoView({block:'nearest',behavior:'smooth'});n.classList.remove('idea-flash');void n.offsetWidth;n.classList.add('idea-flash');},60);}
+  let ideaMenu=null;
+  function closeIdeaMenu(){ideaMenu?.remove();ideaMenu=null;}
+  function openIdeaMenu(btn){if(ideaMenu){closeIdeaMenu();return;}const x=q();if(!x)return;const list=boardsFor(api.data(),x.id);
+    const m=document.createElement('div');m.className='cv-idea-menu';m.setAttribute('role','menu');
+    m.innerHTML=`<div class="sec"><h5>이 문항과 이어진 판</h5>${list.length?`<div class="list">${list.map(b=>`<button type="button" class="row" data-board="${b.id}">${ideaIcon()}<span>${E(b.title)}</span><small>${idea?.id===b.id?'열려 있음':E(api.boardMeta(b))}</small></button>`).join('')}</div>`:'<p class="none">아직 이어진 판이 없습니다.</p>'}</div>
+      <div class="sec">${list.length?'':'<button type="button" class="row" data-new>＋ 이 문항의 아이디어 판 만들기</button>'}<button type="button" class="row go" data-all>판 모음으로 가기 ›</button>${idea?'<button type="button" class="row" data-close>아이디어 닫기<small>⌥I</small></button>':''}</div>`;
+    document.body.append(m);ideaMenu=m;const r=btn.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.right-290,innerWidth-298))+'px';m.style.top=(r.bottom+6)+'px';
+    m.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+      if(b.dataset.board){openIdea(b.dataset.board,'ic',idea?.origin||'card');return;}
+      if(b.dataset.new!==undefined){const id=api.ideaCreate?.(x.id);if(id)openIdea(id,'ic','card');return;}
+      if(b.dataset.all!==undefined){closeIdeaMenu();idea=null;api.showIdeas?.();return;}
+      if(b.dataset.close!==undefined)closeIdea();});}
+  document.addEventListener('pointerdown',e=>{if(ideaMenu&&!e.target.closest?.('.cv-idea-menu,[data-cv="idea-menu"]'))closeIdeaMenu();},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ideaMenu){e.preventDefault();closeIdeaMenu();return;}
+    if(e.altKey&&!e.metaKey&&!e.ctrlKey&&e.code==='KeyI'&&!root.hidden&&!root.closest('[hidden]')){e.preventDefault();if(idea){closeIdea();return;}const x=q();if(!x)return;const list=boardsFor(api.data(),x.id);if(list.length===1)openIdea(list[0].id,'ic','card');else{const b=root.querySelector('[data-cv="idea-menu"]');if(b)openIdeaMenu(b);}}});
+  // 아이디어 | 카드 경계: 2:1 자리와 3:0 자리에만 붙는다(아이디어는 1칸이 될 수 없음).
+  root.addEventListener('pointerdown',e=>{const sp=e.target.closest('.cv-split[data-cvsplit="idea"]');if(!sp||!idea)return;e.preventDefault();e.stopImmediatePropagation();sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('cv-dragging');
+    const cs=getComputedStyle(root),rect=root.getBoundingClientRect(),pl=parseFloat(cs.paddingLeft)||0,pr=parseFloat(cs.paddingRight)||0,gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8;
+    const L0=rect.left+pl,W=rect.width-pl-pr,g=document.createElement('div');g.className='cv-idea-ghost';g.innerHTML='<span></span>';Object.assign(g.style,{top:(rect.top+(parseFloat(cs.paddingTop)||0))+'px',height:(rect.height-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0))+'px'});document.body.append(g);
+    let to=idea.mode;const mv=ev=>{const x=ev.clientX-L0;to=x>W*.84?'i':'ic';g.style.left=(to==='i'?L0+W-32-gut/2-1:L0+(W-gut)*2/3+gut/2-1)+'px';g.classList.toggle('to-i',to==='i');
+      g.firstChild.textContent=to==='i'?'3 : 0 · 아이디어만':x<W*.5?'2 : 1 · 아이디어는 1칸이 될 수 없습니다':'2 : 1';};mv(e);
+    const up=()=>{sp.removeEventListener('pointermove',mv);sp.removeEventListener('pointerup',up);sp.classList.remove('drag');document.body.classList.remove('cv-dragging');g.remove();setIdeaMode(to);};
+    sp.addEventListener('pointermove',mv);sp.addEventListener('pointerup',up);},true);
   // 가운데 보기 전환: 한글 조판에서 나가면 한글 창을 닫는다(조판 저장은 창의 「조판 저장」으로).
   function setView(v){panels.view=v==='page'?'page':'card';store.set('view',panels.view);if(panels.view==='page'&&!panels.rightOpen){panels.rightOpen=true;store.set('rightOpen',true);}if(panels.view==='page'&&panels.right!=='paper'){panels.right='paper';store.set('right','paper');}
     render();anim(root.querySelector(sheetView()?'#cv-page':'.cv-center .cv-writer'),'ep-swap');}
@@ -634,6 +691,8 @@ export function createCardEditor(root,api){
   root.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;const x=q(),d=b.dataset;
     if(d.cvOpen){api.open(d.cvOpen);return;}
+    if(d.cv==='idea-menu'){openIdeaMenu(b);return;}
+    if(d.cvidea){setIdeaMode(d.cvidea);return;}
     if(d.cvtab){setPanel('tab',d.cvtab);return;}
     if(d.cvright){panels.rightOpen=true;store.set('rightOpen',true);setPanel('right',d.cvright);return;}
     if(d.cvview){setView(d.cvview);return;}
@@ -810,7 +869,7 @@ export function createCardEditor(root,api){
     if(pastZoom>=0&&root.querySelector('.lp-zoom')){if(e.key==='Escape'){e.preventDefault();zoomTo(-1);return;}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){if(e.target.matches?.('input,textarea,select'))return;e.preventDefault();zoomTo(pastZoom+(e.key==='ArrowRight'?1:-1));return;}}
     if(pastAdvOpen&&e.key==='Escape'){pastAdvOpen=false;const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=true;root.querySelector('[data-cvadv]')?.setAttribute('aria-expanded','false');}
   });
-  root.addEventListener('dblclick',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;store.set(sp.dataset.cvsplit==='left'?'lw':'rw',null);render();});
+  root.addEventListener('dblclick',e=>{const sp=e.target.closest('.cv-split');if(!sp||sp.dataset.cvsplit==='idea')return;store.set(sp.dataset.cvsplit==='left'?'lw':'rw',null);render();});
   // 시험지 전체 보기: 다른 문항을 한 번 누르면 그 문항 자리에 옅은 테(고르기만), 두 번 누르면 그 문항 카드로 돌아간다.
   root.addEventListener('click',e=>{const hit=e.target.closest('.pg-q-hit');if(!hit)return;root.querySelectorAll('.pg-q-hit.is-picked').forEach(n=>n!==hit&&n.classList.remove('is-picked'));hit.classList.toggle('is-picked');});
   root.addEventListener('dblclick',e=>{const hit=e.target.closest('.pg-q-hit');if(!hit)return;panels.view='card';store.set('view','card');api.open(hit.dataset.cvpgQ);});
@@ -823,6 +882,7 @@ export function createCardEditor(root,api){
       if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
+    openIdea,closeIdea,ideaState:()=>idea,aimField,resetIdea(){if(idea){api.ideaBoard.endEdit?.();idea=null;closeIdeaMenu();}},
     refreshTabs(){const tabs=root.querySelector('.cv-qtabs');if(tabs){const sc=tabs.scrollLeft;tabs.outerHTML=tabsHtml();root.querySelector('.cv-qtabs').scrollLeft=sc;}},
     clearSourceSearch(){srcQuery[panels.tab]='';store.set('srcq',srcQuery);const n=root.querySelector('[data-cvsrc]');if(n)n.value='';},refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},
     // 「보내기 → ExamPool」로 받은 자료가 보이게: 라이브러리 칸을 열고 기출·교과서 탭이 아니면 기출 탭으로(가져온 자료는 목록 맨 위).
