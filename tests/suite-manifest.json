@@ -929,6 +929,12 @@
       "findingIds": [
         "LIBRARY-QUESTION-CROP-LAST-LINE"
       ]
+    },
+    {
+      "path": "tests/test-library-bookmarks.mjs",
+      "findingIds": [
+        "LIBRARY-BOOKMARKS-LEVELS"
+      ]
     }
   ],
   "browser": [
