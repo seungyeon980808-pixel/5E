@@ -37,7 +37,7 @@
 .ib-memo{padding:12px 14px 14px;font-size:13px;line-height:1.6}
 .ib-mt{margin:0 0 4px;font-size:13.5px;font-weight:600;color:#f3f4f6;padding-right:12px;min-height:0;outline:none;word-break:break-word}
 .ib-mt:empty{display:none}
-.ib-mb{white-space:pre-wrap;word-break:break-word;outline:none;user-select:text;-webkit-user-select:text;cursor:text}
+.ib-mb{white-space:pre-wrap;word-break:break-word;outline:none;user-select:none;-webkit-user-select:none;cursor:inherit}.ib-it.editing .ib-mb{user-select:text;-webkit-user-select:text;cursor:text}
 .ib-mb::selection,.ib-mb ::selection{background:rgba(111,156,230,.38);color:#fff}
 .ib-it.editing{cursor:default;outline:1.5px solid #8fb4ff;outline-offset:2px}
 .ib-it.editing .ib-mt{display:block;min-height:1.4em}.ib-it.editing [contenteditable]{cursor:text;user-select:text;-webkit-user-select:text}
@@ -80,7 +80,7 @@
 .ib-pop{width:300px;padding:10px}
 .ib-linkform{display:flex;flex-direction:column;gap:8px}.ib-linkform label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:#80868e}
 .ib-linkform input{height:30px;border-radius:6px;border:1px solid #3a3f46;background:#16181b;color:#e8eaed;font:inherit;font-size:13px;padding:0 8px;outline:none}.ib-linkform input:focus{border-color:#4b6fa8}
-.ib-pop-acts{display:flex;justify-content:flex-end;gap:6px}.ib-pop-acts button{height:28px;padding:0 12px;border-radius:6px;border:1px solid #3a3f46;background:#2a2e34;color:#e6e8eb;font:inherit;font-size:12.5px;cursor:pointer}.ib-pop-acts .go{background:#2f6fd0;border-color:#2f6fd0;color:#fff}
+.ib-pop-acts{display:flex;justify-content:flex-end;gap:6px}.ib-pop-acts button{height:28px;padding:0 12px;border-radius:6px;border:1px solid #3a3f46;background:#2a2e34;color:#e6e8eb;font:inherit;font-size:12.5px;cursor:pointer}.ib-pop-acts .go{background:#152137;border-color:#6ba4f8;color:#cfe1ff}.ib-pop-acts .go:hover{background:#1a2a45}
 
 /* ── 문항 카드 화면 안: 아이디어 2칸 : 카드 1칸 / 아이디어만 3칸 ── */
 #card-view .cv-idea{flex:2 1 0;min-width:0;display:flex;flex-direction:column;min-height:0;border-radius:var(--cv-pane-radius,12px);overflow:hidden;box-shadow:0 0 0 1px #2a2d33}
@@ -205,3 +205,15 @@
 .ib-it.editing .ib-tbl td[contenteditable]:focus{background:rgba(143,180,255,.14);box-shadow:inset 0 0 0 1px #8fb4ff}
 .ib-tblops{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 4px 6px}
 .ib-tblops button{height:28px;border-radius:6px;border:1px solid #3a3f46;background:#2a2e34;color:#e6e8eb;font:inherit;font-size:12px;cursor:pointer}.ib-tblops button:hover{background:#343940}
+/* 11-13: 카드 머리 줄 — 단추는 줄지 않고, 넘치면 「문항 이름」만 아랫줄(가로 전체). fitHead()가 cv-head-wrap을 붙인다. */
+#card-view .cv-writer>.w-head{flex-wrap:wrap;row-gap:8px}
+#card-view .cv-writer>.w-head>:is(.qno,.cv-shape-wrap,.cv-pts,.stage){flex:none}
+#card-view .cv-writer>.w-head .cv-qname{flex:1 1 160px;min-width:160px}
+#card-view .cv-writer>.w-head.cv-head-wrap .cv-qname{order:99;flex:1 0 100%;min-width:0}
+/* 11-13: 판 카드 맞춤 안내선 */
+.ib-guide{position:absolute;z-index:6;pointer-events:none;background:#e5534b}.ib-guide.v{width:1px}.ib-guide.h{height:1px}
+/* 11-13: 접힌 메뉴 — 덩어리(라이브러리 / 문항 / 시험지) 사이에 보이는 선 하나만. 구분선과 제목 선이 겹쳐 붕 떠 보이던 것. */
+.shell-body.nav-off>.side .side-div{display:none}
+.shell-body.nav-off>.side .side-label{width:22px;height:1px;margin:7px auto;background:#3a424d}
+/* 11-13: 서랍 그림을 자료 칸 위로 끌고 왔을 때 */
+#card-view .cv-grid .cv-matrow.cv-drop-on{box-shadow:inset 0 0 0 2px #6ba4f8;background:#f6f9ff}

@@ -1,4 +1,5 @@
 import { buildFiveEProject, parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
+import { isDrawerDrag, drawerFromDrop } from "./drawer.js?v=1113";
 import { validateAnnotationPatch } from "./rhwp-exam-annotations.js?v=1.7.0-four-session-integration";
 import { readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from "./editable-png.js?v=1.7.0-four-session-integration";
 /* ===== PROJECT I/O (save / open editable 5E project source) ===== */
@@ -1032,6 +1033,16 @@ export function initProjectIO(state, svg) {
     svg.addEventListener("drop", (e) => {
       e.preventDefault();
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!file && isDrawerDrag(e.dataTransfer)) {
+        // 서랍(11-13)에서 끌어 온 그림: 놓은 자리에 그림 객체로.
+        const pos = screenToWorld(svg, state.get().viewBox, e.clientX, e.clientY);
+        drawerFromDrop(e.dataTransfer).then(async (it) => {
+          if (!it) return;
+          const blob = await (await fetch(it.src)).blob();
+          readImageFile(new File([blob], `${it.name || "서랍 그림"}.png`, { type: blob.type || "image/png" }), pos, state);
+        }).catch(() => {});
+        return;
+      }
       if (!file) return;
       // 5E 프로젝트 파일과 기존 JSON 프로젝트 파일도 드래그앤드랍 지원.
       // 일부 OS에서 사용자 정의 확장자의 MIME이 비어 있으므로 확장자도 함께 본다.

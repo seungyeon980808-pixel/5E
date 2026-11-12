@@ -1,4 +1,5 @@
 import { loadAnswerBook, acceptedAnswers, answersShown, setAnswersShown, onAnswersShown, CIRCLED, ANSWER_COLOR } from "../assets/exampool/answers/answers.js?v=1107";
+import { drawerAdd } from "./drawer.js?v=1113";
 import { createLibraryLoading } from './loading/library-controller.js?v=1.7.0-four-session-integration';
 import { createLibraryPreviewLoading } from './loading/library-preview.js?v=1.7.0-four-session-integration';
 import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
@@ -1053,6 +1054,12 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const button=document.createElement('button');button.type='button';button.className='unilib-button';
     button.setAttribute(attribute,'');button.disabled=true;button.textContent=attribute==='data-unilib-crop-insert'?'캔버스에 넣기':'좌표/함수 생성';
     overlay.querySelector(anchor).after(button);
+  }
+  { // 서랍(11-13): 자른 영역을 담아 두고 5E_exam 자료 칸·아이디어 판·캔버스로 끌어 쓴다.
+    const button=document.createElement('button');button.type='button';button.className='unilib-button';
+    button.setAttribute('data-unilib-crop-drawer','');button.disabled=true;button.textContent='서랍에 담기';
+    button.title='자른 그림을 서랍에 담아 두고, 문항 카드 자료 칸·아이디어 판·캔버스로 끌어 씁니다.';
+    overlay.querySelector('[data-unilib-crop-cancel]').after(button);
   }
   const help = overlay.querySelector("[data-unilib-help]");
   const tree = overlay.querySelector("[data-unilib-tree]");
@@ -3722,6 +3729,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     }
     overlay.querySelector("[data-unilib-crop-workbench]").disabled = !available;
     syncSpaceAction();
+    { const d = overlay.querySelector('[data-unilib-crop-drawer]'); if (d) d.disabled = !available || cropActionBusy; }
     const canvasButton = overlay.querySelector('[data-unilib-crop-insert]');
     canvasButton.hidden = Boolean(referenceConsumer) || typeof insertMaterialized !== 'function';
     canvasButton.disabled = !available || (cropDocumentEntries().length > 1 && !activeAcceptedCropId);
@@ -4299,6 +4307,31 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       await deliverGraphReference(entry.result,materialized,isCurrent);}
     catch(error){if(isCurrent())overlay.querySelector('[data-unilib-crop-selection]').textContent=`원본 연결 실패: ${error.message}`;}
     finally{cropActionBusy=false;if(!cropDialog.hidden)setCropActionAvailability();}
+  });
+  overlay.querySelector('[data-unilib-crop-drawer]').addEventListener('click', async () => {
+    if (cropActionBusy || !cropReady || !cropSession) return;
+    const entries = cropDocumentEntries(); if (!entries.length) return;
+    const button = overlay.querySelector('[data-unilib-crop-drawer]'), base = (cropTitle.textContent || '라이브러리').replace(/\s*·\s*\d+쪽\s*$/, '');
+    cropActionBusy = true; setCropActionAvailability();
+    commitAcceptedCropSession({acceptedAssets, acceptedCrops, documentId:cropSession.documentId, pageNumber:cropSession.pageNumber});
+    let done = 0;
+    try {
+      const activeProvider = await provider();
+      for (const [index, entry] of entries.entries()) {
+        const asset = await materializeLibraryAction(entry.result, activeProvider, {...getPartOptions(), acceptedAssets, representation:'manual'});
+        const src = asset?.dataUrl || asset?.dataUri || asset?.url;
+        if (!src) continue;
+        await drawerAdd({ src, name: entries.length > 1 ? `${base} ${index + 1}` : base, w: asset.width || 0, h: asset.height || 0 });
+        done++;
+      }
+      overlay.querySelector('[data-unilib-crop-selection]').textContent = done ? `서랍에 ${done}개 담았습니다 · 서랍 단추로 열어 끌어 쓰세요` : '서랍에 담을 그림을 만들지 못했습니다.';
+      button.textContent = '담았습니다 ✓'; setTimeout(() => { button.textContent = '서랍에 담기'; }, 1200);
+    } catch (error) {
+      overlay.querySelector('[data-unilib-crop-selection]').textContent = `서랍에 담지 못했습니다: ${error.message}`;
+    } finally {
+      cropActionBusy = false;
+      if (!cropDialog.hidden) setCropActionAvailability();
+    }
   });
   overlay.querySelector('[data-unilib-crop-insert]').addEventListener('click', async () => {
     if (cropActionBusy || !cropReady || !cropSession || typeof insertMaterialized !== 'function') return;

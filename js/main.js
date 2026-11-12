@@ -1,4 +1,5 @@
 import { initFigureStudio } from './figure-studio.js?v=1.7.0-four-session-integration';
+import { mountDrawer } from "./drawer.js?v=1113";
 import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
 import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integration';
@@ -814,4 +815,17 @@ if (_APP_DEBUG_ENABLED) {
       "  phyDraw.state.get().activeTool   // 'V' after each draw (auto-return)\n" +
       "Wheel = zoom, Space/middle-drag = pan ??shapes stay anchored in world space."
   );
+}
+
+/* ----- 서랍(11-13): 위쪽 막대 서랍 단추 → 화면 아래 띠. 그림을 캔버스로 끌어 놓는다(project-io.js 놓기 처리). ----- */
+{
+  const btn = document.getElementById("drawer-btn");
+  if (btn) {
+    const drawer = mountDrawer(document, { onToggle: (on) => btn.setAttribute("aria-pressed", String(on)) });
+    btn.addEventListener("click", () => {
+      const left = document.querySelector("#canvas")?.getBoundingClientRect().left;
+      drawer.el.style.setProperty("--dw-left", `${Math.round((left || 48) + 16)}px`);
+      drawer.toggle();
+    });
+  }
 }

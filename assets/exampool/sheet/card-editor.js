@@ -16,6 +16,7 @@ import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
+import {isDrawerDrag,drawerFromDrop} from '../../../js/drawer.js?v=1113';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
@@ -49,9 +50,12 @@ export function createCardEditor(root,api){
       return `<button type="button" class="cv-qtab st-${workflowOf(x)}" data-cv-open="${x.id}" aria-current="${x.id===q()?.id}" title="${E((ctx.numbered?`${i+1}번 · `:'')+questionSubtitle(x))} · ${WORKFLOWS[workflowOf(x)]} · 완성도 ${pct}%${stale?' · 다시 확인 '+stale:''}${warn?' · 조판 확인: '+E(warn):''}"><span class="ring" style="--p:${pct}"><span class="num">${ctx.numbered?i+1:E(x.number||i+1)}</span></span>${stale||open||warn?'<i class="flag">!</i>':''}</button>`;}).join('')}<button type="button" class="cv-qtab add" data-cv="new" title="새 문항">${ICON.plus}</button></nav>`;
   }
   // 자료 배치(10-27): 「자/료」 이름표 칸 아래에 위치·개수·배열. 섞인 모양(상자·묶음 속 묶음)이면 단추를 두지 않는다.
-  function matSet(x){const L=materialLayout(x);if(!L)return '';
+  function matSet(x){let L=materialLayout(x);if(L&&slotsOf(x).length!==L.count)L=null;// 상자 안 자료가 섞여 있으면 위치·배열 단추 없이 ＋만
+    if(!L)return `<div class="cv-matset"><button type="button" class="cv-plus cv-matadd" data-cvslot-act="add-figure" title="자료 칸 추가" aria-label="자료 칸 추가">${ICON.plus}</button></div>`;
     const seg=(k,name,opts,cur,off)=>`<span class="cv-matseg" role="group" aria-label="${name}">${opts.map(([v,t,tip])=>`<button type="button" data-cvmat="${k}:${v}" aria-pressed="${String(cur)===String(v)}" title="${tip}"${off?' disabled':''}>${t}</button>`).join('')}</span>`;
-    return `<div class="cv-matset">${seg('place','자료 위치',[['below','아래','글 아래에 단 폭으로'],['side','옆','글 오른쪽 옆(어울림) — 자료 1개일 때']],L.place,L.count>1)}${seg('count','자료 개수',[[1,'1','자료 1개'],[2,'2','자료 2개 (가)(나)'],[3,'3','자료 3개 (가)(나)(다)']],L.count)}${seg('dir','자료 배열',[['row','가로','나란히 가로로'],['col','세로','위아래로']],L.dir,L.count<2)}</div>`;}
+    return `<div class="cv-matset">${seg('place','자료 위치',[['below','아래','글 아래에 단 폭으로'],['side','옆','글 오른쪽 옆(어울림) — 자료 1개일 때']],L.place,L.count>1)}${seg('dir','자료 배열',[['row','가로','나란히 가로로'],['col','세로','위아래로']],L.dir,L.count<2)}${addBtn(L.count>=3?'':`count:${L.count+1}`)}</div>`;}
+  // 11-13: 자료 칸 더하기는 이름표 아래 ＋ 하나(숫자 1·2·3과 아래 「자료 칸 추가」 줄을 합침). 3개면 흐리게, 줄이기는 칸 위 「지우기」.
+  function addBtn(mat){return `<button type="button" class="cv-plus cv-matadd"${mat?` data-cvmat="${mat}"`:' disabled'} title="${mat?'자료 칸 추가 — 빈 칸이 생기고, 칸에서 그림을 가져오거나 표를 만듭니다':'자료 칸은 3개까지입니다'}" aria-label="자료 칸 추가">${ICON.plus}</button>`;}
   function slotsHtml(x){
     // 10-22 「나」안: 칸은 같은 폭·같은 높이로 나란히(넷부터 다음 줄), 이름표 (가)(나)는 칸 아래 가운데,
     // 바꾸기·지우기는 칸에 마우스를 올리면 오른쪽 위. 빈 칸의 두 동작은 같은 옅은 테(한쪽만 단추처럼 보이지 않게).
@@ -64,14 +68,17 @@ export function createCardEditor(root,api){
       return `<div class="cv-tile empty"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="pick" data-cvslot="${b.id}">${ICON.pic}<span>그림 넣기</span></button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}">${ICON.table}<span>표 만들기</span></button></span>${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
     }).join('');
     // 칸 더하기는 하나: 빈 칸이 생기고, 그림을 가져올지 표를 만들지는 그 칸 안에서 고른다.
-    return `${tiles?`<div class="cv-tiles" style="--cv-tiles:${Math.min(list.length,3)}">${tiles}</div>`:''}<button type="button" class="cv-add-row" data-cvslot-act="add-figure">${ICON.plus}자료 칸 추가<span>빈 칸이 생기고, 칸에서 그림을 가져오거나 표를 만듭니다</span></button>`;
+    return tiles?`<div class="cv-tiles" style="--cv-tiles:${Math.min(list.length,3)}">${tiles}</div>`:'<div class="cv-empty-hint">자료 없음 — 왼쪽 ＋로 칸을 만듭니다</div>';
   }
   function linesHtml(b,key,ph){
     const ox=(l,i)=>key!=='bogi'?'':`<span class="ox" role="group" aria-label="${E(l.label)} 옳음·틀림"><button type="button" class="o" data-cvtruth="${i}" data-v="1" aria-pressed="${l.truth===true}" title="옳은 보기">○</button><button type="button" class="x" data-cvtruth="${i}" data-v="0" aria-pressed="${l.truth===false}" title="틀린 보기">×</button></span>`;
     // 10-27 카드 정리(W7 안 B-2): 줄 끝 지우기 ×를 없애고 줄 맨 왼쪽 ⋮ 메뉴(위로·아래로·지우기). 근거 표시는 아래 「문항 정보」의 근거로만.
-    return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig${key==='bogi'&&l.truth!==undefined?(l.truth?' t-o':' t-x'):''}"><span>${E(l.label)}</span><textarea data-cvline="${key}" data-i="${i}" rows="1" aria-label="${E(l.label)}">${E(l.text)}</textarea>${ox(l,i)}<button type="button" class="ig-h" data-cvline-menu="${key}" data-i="${i}" aria-haspopup="menu" aria-expanded="false" title="이 줄: 위로 · 아래로 · 지우기" aria-label="${E(l.label)} 줄 메뉴">⋮</button></div>`).join('')}
-      <button type="button" class="link add" data-cvline-add="${key}">+ ${key==='bogi'?'보기':key==='steps'?'과정':'대화'} 추가</button></div>`;
+    return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig${key==='bogi'&&l.truth!==undefined?(l.truth?' t-o':' t-x'):''}"><span>${E(l.label)}</span><textarea data-cvline="${key}" data-i="${i}" rows="1" aria-label="${E(l.label)}">${E(l.text)}</textarea>${ox(l,i)}<button type="button" class="ig-h" data-cvline-menu="${key}" data-i="${i}" aria-haspopup="menu" aria-expanded="false" title="이 줄: 위로 · 아래로 · 지우기" aria-label="${E(l.label)} 줄 메뉴">⋮</button></div>`).join('')}</div>`;
   }
+  // 11-13: 줄 더하기는 맨 아래 「+ 보기 추가」 줄 대신 왼쪽 이름표 아래 ＋(자료 칸과 같은 자리).
+  function lineRow(row,name,b,key,ph,tip){const full=key==='bogi'&&b.lines.length>=5,what=key==='bogi'?'보기':key==='steps'?'과정':'대화';
+    const plus=`<button type="button" class="cv-plus cv-lineadd" data-cvline-add="${key}"${full?' disabled':''} title="${full?'보기는 ㅁ까지입니다':what+' 줄 추가'}" aria-label="${what} 줄 추가">${ICON.plus}</button>`;
+    return row(name,linesHtml(b,key,ph),tip,'cv-linerow').replace('<div class="cv-v">',`<div class="cv-lineset">${plus}</div><div class="cv-v">`);}
   function choicesHtml(x){
     if(x.type==='서술형')return `<div class="f-field"><label for="cv-model">모범 답안</label><textarea id="cv-model" data-cvf="answer" rows="3">${E(x.modelAnswer)}</textarea></div>`;
     if(x.style==='대응표'){
@@ -169,11 +176,11 @@ export function createCardEditor(root,api){
       <form class="sheet-form cv-grid" onsubmit="return false">
         <section class="f-sec" aria-label="문항 내용">
           ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" aria-label="지문">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'')}
-          ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다. 이름표 아래 단추로 위치(글 아래·글 옆)·개수·배열(가로·세로)을 바꿉니다.','cv-matrow').replace('<div class="cv-v">',matSet(x)+'<div class="cv-v">')}
-          ${steps?row('실험과정',linesHtml(steps,'steps','과정을 입력하세요'),'(가)·(나)는 자동으로 붙습니다.'):''}
-          ${talk?row('대화',linesHtml(talk,'dialogue','말을 입력하세요'),'이름 칸에 학생 이름, 오른쪽에 말'):''}
+          ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다. 이름표 아래 단추로 위치(글 아래·글 옆)·배열(가로·세로)을 바꾸고, ＋로 칸을 더합니다(3개까지).','cv-matrow').replace('<div class="cv-v">',matSet(x)+'<div class="cv-v">')}
+          ${steps?lineRow(row,'실험과정',steps,'steps','과정을 입력하세요','(가)·(나)는 자동으로 붙습니다.'):''}
+          ${talk?lineRow(row,'대화',talk,'dialogue','말을 입력하세요','이름 칸에 학생 이름, 오른쪽에 말'):''}
           ${row('발문',`<textarea id="cv-ask" data-cvf="ask" rows="1" aria-label="발문">${E(x.ask)}</textarea>`,'학생에게 묻는 문장')}
-          ${isCombo(x)||bogi?row('보기',bogi?linesHtml(bogi,'bogi','보기 내용'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다. 줄 왼쪽 ⋮로 위로·아래로·지우기.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄 왼쪽 ⋮에서 지우세요.'):''}
+          ${isCombo(x)||bogi?(bogi?lineRow(row,'보기',bogi,'bogi','보기 내용',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다. 줄 왼쪽 ⋮로 위로·아래로·지우기.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄 왼쪽 ⋮에서 지우세요.'):row('보기','<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다. 줄 왼쪽 ⋮로 위로·아래로·지우기.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄 왼쪽 ⋮에서 지우세요.')):''}
           ${choicesHtml(x)}
         </section>
         <div class="cv-more"><div class="cv-more-h">문항 정보 <span>시험지에는 찍히지 않습니다</span></div><div class="cv-more-chips">${moreChipsHtml(x)}</div>
@@ -326,7 +333,7 @@ export function createCardEditor(root,api){
   async function confirmBoardSwitch(nextId){const b=(api.data().ideas||[]).find(v=>v.id===bench.board);if(!b||b.id===nextId||boardSnap?.id!==b.id||boardJson(b)===boardSnap.json)return true;
     api.ideaBoard.endEdit?.();const a=await askSave(`아이디어 「${b.title}」`);if(a==='cancel')return false;if(a==='discard')api.restoreBoard?.(b.id,JSON.parse(boardSnap.json));boardSnap=null;return true;}
   function openBoard(id){if(bench.board!==id){bench.board=id;bench.fold=false;boardSnap=null;}}
-  const AIM={passage:'[data-cvf="passage"]',ask:'[data-cvf="ask"]',bogi:'[data-cvline="bogi"],[data-cvline-add="bogi"]',figure:'.cv-tiles,.cv-add-row',table:'.cv-tiles,.cv-add-row',ref:'.cv-evtab,.cv-ev'};
+  const AIM={passage:'[data-cvf="passage"]',ask:'[data-cvf="ask"]',bogi:'[data-cvline="bogi"],[data-cvline-add="bogi"]',figure:'.cv-tiles,.cv-matadd,.cv-empty-hint',table:'.cv-tiles,.cv-matadd,.cv-empty-hint',ref:'.cv-evtab,.cv-ev'};
   const cardShown=()=>!!root.querySelector('.cv-center .cv-writer');
   function fieldNode(f){const n=root.querySelector(`.cv-writer ${AIM[f]?.split(',').join(',.cv-writer ')}`);return n?.closest('.f-field')||n;}
   function aimField(f){root.querySelectorAll('.idea-aim').forEach(n=>n.classList.remove('idea-aim'));if(!f||!cardShown())return;const n=fieldNode(f);if(n){n.classList.add('idea-aim');n.scrollIntoView({block:'nearest',behavior:'smooth'});}}
@@ -365,7 +372,11 @@ export function createCardEditor(root,api){
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
   function fit(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,30)+'px';}
   // 글 칸 높이는 칠 때만 맞추면, 처음 그릴 때와 칸 폭이 줄어 줄이 늘 때 글이 아래로 잘렸다. 그때도 맞춘다(폭이 바뀔 때만, 한 프레임에 한 번).
-  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);}
+  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();}
+  // 11-13: 머리 줄은 단추(유형·배점·단계)를 절대 줄이지 않는다. 한 줄에 다 안 들어가면 「문항 이름」 칸만 아랫줄로 내려 가로를 다 쓴다.
+  function fitHead(){const h=root.querySelector('.cv-writer>.w-head');if(!h)return;h.classList.remove('cv-head-wrap');
+    const kids=[...h.children].filter(c=>!c.classList.contains('sp')&&c.offsetHeight>0);if(!kids.length)return;const top=Math.min(...kids.map(c=>c.offsetTop));
+    if(kids.some(c=>c.offsetTop>top+8))h.classList.add('cv-head-wrap');}
   // 글 칸 폭 감시: 가운데 칸이 좁아지면 줄이 늘어난 만큼 칸도 아래로 늘어난다(잘려 보이지 않게). 높이만 바뀐 것은 무시.
   const taRO=new ResizeObserver(es=>{for(const e of es){const w=Math.round(e.contentRect.width);if(e.target._w!==w){e.target._w=w;fit(e.target);}}});
   function taWatch(){taRO.disconnect();root.querySelectorAll('.cv-writer textarea').forEach(t=>{t._w=Math.round(t.clientWidth);taRO.observe(t);});}
@@ -861,6 +872,20 @@ export function createCardEditor(root,api){
   function refreshZoomAnswers(){const z=root.querySelector('.lp-zoom');if(!z)return;z.querySelector('[data-cvanswers]')?.setAttribute('aria-pressed',String(answersShown()));
     const id=[...root.querySelectorAll('.cv-left .past-list figure.past')][pastZoom]?.querySelector('[data-cvlink]')?.dataset.cvlink,item=id&&pastItem(id),zimg=z.querySelector('.lp-zoom-pic img');if(item?.publicPath&&Array.isArray(item.box)&&zimg)zoomSharp(item,zimg);}
   onAnswersShown(()=>refreshZoomAnswers());
+  // 서랍(11-13)에서 끌어 온 그림을 자료 칸에 놓기: 빈 칸 위면 그 칸, 아니면 빈 칸을 찾고 없으면 칸을 하나 더 만든다(3개까지).
+  root.addEventListener('dragover',e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();e.dataTransfer.dropEffect='copy';
+    root.querySelectorAll('.cv-drop-on').forEach(n=>n!==r&&n.classList.remove('cv-drop-on'));r.classList.add('cv-drop-on');});
+  root.addEventListener('dragleave',e=>{const r=e.target.closest?.('.cv-matrow');if(r&&!r.contains(e.relatedTarget))r.classList.remove('cv-drop-on');});
+  root.addEventListener('drop',async e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();r.classList.remove('cv-drop-on');
+    const tileId=e.target.closest('.cv-tile')?.querySelector('[data-cvslot]')?.dataset.cvslot;let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}
+    const x=q();if(!it||!x){api.status?.('서랍 그림을 읽지 못했습니다.',true);return;}
+    try{api.edit(()=>{let slot=tileId&&x.blocks.find(b=>b.id===tileId&&b.kind==='figure'&&!b.figure);
+      if(!slot)slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);
+      if(!slot){const L=materialLayout(x);if(!L||slotsOf(x).length!==L.count)throw Error('자료가 상자·묶음 안에 섞여 있어 여기에 놓을 수 없습니다.');if(L.count>=3)throw Error('자료 칸은 3개까지입니다. 빈 칸을 만들거나 칸 하나를 지운 뒤 놓으세요.');
+        setMaterialLayout(x,{count:L.count+1});slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);}
+      if(!slot)throw Error('빈 자료 칸을 만들지 못했습니다.');
+      slot.figure={name:`${it.name||'서랍 그림'}.png`.slice(0,200),data:it.src,...(it.w?{width:it.w,height:it.h}:{})};});}
+    catch(err){api.status?.(err.message,true);}});
   root.addEventListener('click',e=>{if(!e.target.closest('[data-cvanswers]'))return;e.stopPropagation();setAnswersShown(!answersShown());});
   // 고르는 중에는 그림을 누르기만 해도 골라진다(두 번 눌러 크게 보기는 고르기를 마친 뒤).
   root.addEventListener('click',e=>{if(!pastPick.size)return;const f=e.target.closest('.cv-left .past-list figure.past');if(!f||e.target.closest('button,a,input,textarea,select'))return;const id=f.querySelector('[data-cvpick]')?.dataset.cvpick;if(id)togglePick(id,e.shiftKey);});

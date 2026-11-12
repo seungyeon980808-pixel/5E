@@ -41,6 +41,7 @@ const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.
 // 별표는 칸이 아니라 목록 위 「모두 / 별표 / 메모」 거르기로만 쓴다.
 const TRASH_ICO='<svg class="st-ico st-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.3 1.3 0 0 0 1.3 1.2h6.6a1.3 1.3 0 0 0 1.3-1.2L17.5 7"/><path d="M10.2 10.8v6M13.8 10.8v6"/></svg>';
 const LIB_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h3v15H5zM10 4.5h3v15h-3z"/><path d="m15.2 5.4 2.9-.8 3.6 14.4-2.9.8z"/></svg>';
+const DRAWER_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.8"/><path d="M3.5 12h17M10 8.2h4M10 15.7h4"/></svg>';
 const NAVTOG_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M9 4.5v15"/></svg>';
 // 왼쪽 메뉴(11-12 시안 exam-panes-1112): 맨 위 메뉴 접기 · 라이브러리(켜고 끄기, 켜지면 바탕+점) · 문항(아이디어 · 출제 중 · 출제 완료 · 시험지에 담김 · 휴지통) · 시험지(출제 중 · 출제 완료 · 시험 종료 · 휴지통).
 // 문항 카드·아이디어 판이 열려 있는데 목록을 보고 있으면 맨 아래 「지금 작업으로」.
@@ -63,7 +64,9 @@ export function renderNav(root,data,view){
     <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${examsOn('done')}" title="출제 완료">${examIcon('done',1,{title:false})}<span>출제 완료</span><b>${by('done').length}</b></button>
     <button type="button" class="nav" data-nav="exams" data-status="ended" aria-current="${examsOn('ended')}" title="시험 종료">${examIcon('ended',1,{title:false})}<span>시험 종료</span><b>${by('ended').length}</b></button>
     <button type="button" class="nav nav-trash" data-nav="trash" data-trash="e" aria-current="${view.name==='trash'&&view.kind==='e'}" title="휴지통 — 14일 뒤 자동으로 비워집니다">${TRASH_ICO}<span>휴지통</span><b>${trash.exams.length}</b></button>
-    ${view.benchBusy&&view.name!=='card'?`<span class="side-sp"></span><button type="button" class="nav nav-bench" data-nav="bench" title="열어 둔 문항 카드·아이디어 판으로">${CARD_ICON.card}<span>지금 작업으로</span></button>`:''}`;
+    <span class="side-sp"></span>
+    ${view.benchBusy&&view.name!=='card'?`<button type="button" class="nav nav-bench" data-nav="bench" title="열어 둔 문항 카드·아이디어 판으로">${CARD_ICON.card}<span>지금 작업으로</span></button>`:''}
+    <button type="button" class="nav nav-drawer" data-nav="drawer" aria-pressed="${!!view.drawerOn}" title="서랍 — 라이브러리에서 담아 둔 그림을 끌어다 씁니다">${DRAWER_ICO}<span>서랍</span></button>`;
 }
 
 // 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.

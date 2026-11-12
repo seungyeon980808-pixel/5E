@@ -1254,9 +1254,10 @@
   position: absolute;
   z-index: 7;
   inset: 0;
-  background: rgb(1 4 9 / 48%);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  /* 11-13: 흐리게 덮으면 어디를 잘라야 할지 안 보인다 — 흐림 없이 어둡게만(55%). */
+  background: rgb(1 4 9 / 55%);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 .unified-library-overlay .unilib-crop-tray.is-expanded {
   position: fixed;

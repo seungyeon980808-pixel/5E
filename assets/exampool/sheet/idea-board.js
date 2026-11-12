@@ -5,6 +5,7 @@
 //  · 판 카드 위에는 단추를 두지 않는다. 오른쪽 단추 = 차림표(보내기·모양·색·잇기·복제·삭제), 왼쪽 단추 = 고르기·옮기기.
 //  · 칸이 좁아지면 판을 자르지 않고 통째로 비율로 줄인다(75%까지). ⌘+휠로 바꾸면 그 배율을 지키고 「맞춤」이면 다시 자동.
 import {qIcon} from './status-icons.js';
+import {isDrawerDrag,drawerFromDrop} from '../../../js/drawer.js?v=1113';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>new Date().toISOString();
@@ -161,10 +162,21 @@ export function createIdeaBoard(app){
       wrap.addEventListener('pointermove',mv);wrap.addEventListener('pointerup',up);return;}
     const id=n.dataset.id;if(editing&&editing!==id)endEdit();pick(id);
     if(editing===id||e.target.closest('.ib-open'))return;
-    if(n.classList.contains('ib-memo')&&e.target.closest('.ib-mb')&&!n.classList.contains('st-compact'))return;// 메모 글은 글 고르기
-    e.preventDefault();const i=item(id),x0=e.clientX,y0=e.clientY,l0=i.x,t0=i.y,s=scale();let moved=false;wrap.setPointerCapture(e.pointerId);
-    const mv=ev=>{const dx=(ev.clientX-x0)/s,dy=(ev.clientY-y0)/s;if(!moved&&Math.abs(dx)+Math.abs(dy)<3)return;if(!moved){snap();moved=true;n.classList.add('moving');}i.x=Math.round(l0+dx);i.y=Math.round(t0+dy);n.style.left=i.x+'px';n.style.top=i.y+'px';drawLinks();};
-    const up=()=>{wrap.removeEventListener('pointermove',mv);wrap.removeEventListener('pointerup',up);n.classList.remove('moving');if(moved){save();if(zoomMan==null)fit();}};
+    // 11-13: 메모 글 위를 잡아도 옮긴다. 글 고르기·고치기는 두 번 눌러 고치기 상태에서.
+    e.preventDefault();const i=item(id),x0=e.clientX,y0=e.clientY,l0=i.x,t0=i.y,s=scale(),p0={...pan};let moved=false,last=e,raf=0;wrap.setPointerCapture(e.pointerId);
+    // 11-13: 놓아도 배율은 그대로(맞춤은 배율 단추로만) · 가장자리로 끌면 판이 따라 밀림 · 다른 카드 끝·가운데에 맞으면 안내선과 함께 붙음
+    const clearGuides=()=>world.querySelectorAll('.ib-guide').forEach(g=>g.remove());
+    const guide=(v,at,a,b)=>{const g=document.createElement('div');g.className='ib-guide '+(v?'v':'h');Object.assign(g.style,v?{left:at+'px',top:a-8+'px',height:b-a+16+'px'}:{top:at+'px',left:a-8+'px',width:b-a+16+'px'});world.appendChild(g);};
+    const placeAt=ev=>{let nx=l0+(ev.clientX-x0-(pan.x-p0.x))/s,ny=t0+(ev.clientY-y0-(pan.y-p0.y))/s;clearGuides();const w=n.offsetWidth,h=n.offsetHeight,tol=6/s;let gx=null,gy=null;
+      for(const o of board.items){if(o.id===id)continue;const b=box(o.id);if(!b)continue;
+        if(gx==null)for(const [a,c] of [[nx,b.x],[nx+w/2,b.x+b.w/2],[nx+w,b.x+b.w],[nx,b.x+b.w],[nx+w,b.x]])if(Math.abs(a-c)<tol){nx+=c-a;gx=[c,Math.min(ny,b.y),Math.max(ny+h,b.y+b.h)];break;}
+        if(gy==null)for(const [a,c] of [[ny,b.y],[ny+h/2,b.y+b.h/2],[ny+h,b.y+b.h],[ny,b.y+b.h],[ny+h,b.y]])if(Math.abs(a-c)<tol){ny+=c-a;gy=[c,Math.min(nx,b.x),Math.max(nx+w,b.x+b.w)];break;}}
+      if(gx)guide(true,...gx);if(gy)guide(false,...gy);
+      i.x=Math.round(nx);i.y=Math.round(ny);n.style.left=i.x+'px';n.style.top=i.y+'px';drawLinks();};
+    const edge=()=>{const r=wrap.getBoundingClientRect(),m=36;let vx=0,vy=0;if(last.clientX<r.left+m)vx=8;else if(last.clientX>r.right-m)vx=-8;if(last.clientY<r.top+m)vy=8;else if(last.clientY>r.bottom-m)vy=-8;
+      if(vx||vy){pan={x:pan.x+vx,y:pan.y+vy};fit();placeAt(last);}raf=requestAnimationFrame(edge);};
+    const mv=ev=>{last=ev;if(!moved&&Math.abs(ev.clientX-x0)+Math.abs(ev.clientY-y0)<3)return;if(!moved){snap();moved=true;n.classList.add('moving');raf=requestAnimationFrame(edge);}placeAt(ev);};
+    const up=()=>{cancelAnimationFrame(raf);clearGuides();wrap.removeEventListener('pointermove',mv);wrap.removeEventListener('pointerup',up);n.classList.remove('moving');if(moved)save();};
     wrap.addEventListener('pointermove',mv);wrap.addEventListener('pointerup',up);});
   world.addEventListener('click',e=>{const o=e.target.closest('[data-ib-open]');if(!o)return;const i=item(o.closest('.ib-it').dataset.id);if(i?.url)window.open(i.url,'_blank','noopener');});
 
@@ -198,7 +210,7 @@ export function createIdeaBoard(app){
 
   // ── 메모 글 고르기 → 위에 뜨는 줄 ──
   document.addEventListener('pointerup',e=>{if(!el.isConnected||e.target.closest?.('.ib-sel'))return;setTimeout(()=>{const s=getSelection(),a=s.anchorNode&&(s.anchorNode.nodeType===1?s.anchorNode:s.anchorNode.parentElement),f=$('.ib-sel');
-    if(!s.isCollapsed&&a&&el.contains(a)&&a.closest('.ib-mb')&&!a.closest('.editing')){selText=s.toString().trim();if(!selText){f.classList.remove('show');return;}const r=s.getRangeAt(0).getBoundingClientRect(),can=ctx.canSend?.();
+    if(!s.isCollapsed&&a&&el.contains(a)&&a.closest('.ib-mb')){selText=s.toString().trim();if(!selText){f.classList.remove('show');return;}const r=s.getRangeAt(0).getBoundingClientRect(),can=ctx.canSend?.();
       f.innerHTML=`<span class="ib-sel-l">고른 글 → 문항 카드</span><i></i>${[['passage','지문'],['ask','발문'],['bogi','보기 한 줄']].map(([k,t])=>`<button type="button" data-send="${k}"${can?'':' disabled title="문항 카드를 열면 보낼 수 있습니다"'}>${t}</button>`).join('')}`;
       place(f,r.left-10,r.top-44);f.querySelectorAll('[data-send]').forEach(b=>{b.onmouseenter=()=>app.aim?.(b.dataset.send);b.onmouseleave=()=>app.aim?.(null);b.onclick=()=>{f.classList.remove('show');send(b.dataset.send,{text:selText});getSelection().removeAllRanges();};});}
     else f.classList.remove('show');},0);});
@@ -217,9 +229,10 @@ export function createIdeaBoard(app){
     const done=ok=>{n.removeAttribute('contenteditable');const t=n.textContent.trim().slice(0,80);if(ok&&t&&t!==board.title){board.title=t;save();ctx.onRename?.();}n.textContent=board.title;};
     n.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();n.blur();}if(e.key==='Escape'){e.preventDefault();n.onblur=null;done(false);}};n.onblur=()=>done(true);});
   file.onchange=()=>{void addImages(file.files);file.value='';};
-  wrap.addEventListener('dragover',e=>{if([...e.dataTransfer.types].some(t=>t==='Files'||t==='text/uri-list'||t==='text/plain')){e.preventDefault();wrap.classList.add('drop');}});
+  wrap.addEventListener('dragover',e=>{if([...e.dataTransfer.types].some(t=>t==='Files'||t==='text/uri-list'||t==='text/plain'||t==='application/x-5e-drawer')){e.preventDefault();wrap.classList.add('drop');}});
   wrap.addEventListener('dragleave',()=>wrap.classList.remove('drop'));
   wrap.addEventListener('drop',e=>{e.preventDefault();wrap.classList.remove('drop');const p=toWorld(e.clientX,e.clientY);if(e.dataTransfer.files.length){void addImages(e.dataTransfer.files,p);return;}
+    if(isDrawerDrag(e.dataTransfer)){void drawerFromDrop(e.dataTransfer).then(it=>{if(!it)return;const w=Math.min(280,Math.max(140,it.w||200));add({type:'image',x:Math.round(p.x),y:Math.round(p.y),w,src:it.src,title:(it.name||'').slice(0,80),nw:it.w||w,nh:it.h||w});}).catch(err=>say(err.message,true));return;}
     const u=e.dataTransfer.getData('text/uri-list')||'',t=e.dataTransfer.getData('text/plain')||'';if(/^https?:\/\//.test(u||t.trim()))add({type:'link',x:Math.round(p.x),y:Math.round(p.y),w:250,url:(u||t).trim().split('\n')[0],title:''});else if(t.trim())add({type:'memo',x:Math.round(p.x),y:Math.round(p.y),w:240,title:'',text:t.slice(0,20000)});});
   document.addEventListener('paste',e=>{if(!el.isConnected||!el.contains(document.activeElement)||editing||document.activeElement.isContentEditable)return;const files=[...e.clipboardData.files];
     if(files.length){e.preventDefault();void addImages(files);return;}const t=e.clipboardData.getData('text/plain');if(!t.trim())return;e.preventDefault();const c=center();

@@ -820,14 +820,22 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-more>.f-sec.cv-more-rows .cv-row{margin-top:8px;border:0;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px #dde2e8;overflow:hidden}
 /* 자료 배치(10-27): 「자/료」 이름표 칸 아래 위치·개수·배열 — 좁은 칸에 세로로 쌓는다 */
 #card-view .cv-grid .cv-matrow{position:relative}
-#card-view .cv-grid .cv-matrow>label{justify-content:flex-start;padding-top:14px}
+#card-view .cv-grid :is(.cv-matrow,.cv-linerow)>label{justify-content:flex-start;padding-top:14px}
 #card-view .cv-matset{position:absolute;left:0;top:58px;width:36px;display:flex;flex-direction:column;align-items:center;gap:7px;z-index:1}
 #card-view .cv-matseg{display:flex;flex-direction:column;gap:1px;width:30px;padding:2px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e4e8);background:#fff}
 #card-view .cv-matseg button{height:18px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:var(--ds-doc-ink-3,#8c959f);font:500 10.5px/18px 'Pretendard Variable',-apple-system,sans-serif;letter-spacing:-.3px;cursor:pointer}
 #card-view .cv-matseg button:hover:not(:disabled){background:#eef1f4;color:var(--ds-doc-ink,#1f2328)}
 #card-view .cv-matseg button[aria-pressed=true]{background:#eef1f4;color:var(--ds-doc-ink,#1f2328);font-weight:700}
 #card-view .cv-matseg button:disabled{opacity:.35;cursor:default}
-#card-view .cv-grid .cv-matrow{min-height:240px}
+#card-view .cv-grid .cv-matrow{min-height:182px}
+/* 11-13: 칸·줄 더하기 ＋ — 이름표 아래(자료는 위치·배열 단추 밑, 보기·과정·대화는 이름 밑) */
+#card-view .cv-grid .cv-linerow{position:relative;min-height:96px}
+#card-view .cv-lineset{position:absolute;left:0;top:58px;width:36px;display:flex;justify-content:center;z-index:1}
+#card-view .cv-plus{width:30px;height:26px;min-height:0;display:grid;place-items:center;padding:0;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e4e8);background:#fff;color:var(--ds-doc-ink-3,#8c959f);cursor:pointer}
+#card-view .cv-plus .ico{width:15px;height:15px}
+#card-view .cv-plus:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8);color:var(--go-line,#2f6fd6);background:#f6f9ff}
+#card-view .cv-plus:disabled{opacity:.35;cursor:default}
+#card-view .cv-empty-hint{padding:8px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
 /* 라이브러리 칸이 좁으면(380px 이하) 「조건」 글자는 빼고 아이콘만 — 검색 칸 자리를 남긴다 */
 @container lib (max-width:380px){
   #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-36px;padding:0 6px}
