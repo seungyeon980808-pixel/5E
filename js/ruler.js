@@ -21,6 +21,7 @@ let _vCanvas = null; // vertical ruler canvas (left)
 let _mouseX  = null; // current mouse screen X, null when off-canvas
 let _mouseY  = null;
 let _dragGuideId = null;
+let _downAt = null; // 11-12: 안내선을 실제로 끌었는지(누르기만 하면 눈금자 위라도 지우지 않음)
 let _guideIdCounter = 0;
 let _suppressRulerClick = false;
 let _hoveredBadgeGuideId = null;
@@ -342,16 +343,21 @@ export function initRuler(svg, state) {
       }
     });
   });
+  window.addEventListener("mousedown", (e) => { _downAt = { x: e.clientX, y: e.clientY }; }, true);
   window.addEventListener("mouseup", (e) => {
     // 자 바깥(작업 캔버스 위 등)에서 마우스를 놓으면 ruler canvas의 'click'이 발생하지
     // 않아 _suppressRulerClick이 리셋될 기회가 없다 — 여기서도 반드시 풀어줘야 다음
     // 자 클릭(안내선 추가)이 무시되지 않는다.
-    _suppressRulerClick = false;
+    // 11-12: 같은 눈금자 위에서 놓으면 그 click이 곧 와서 표시를 푼다 — 여기서 먼저 풀면 × 지우기·이름표 고르기
+    // 클릭이 「안내선 추가」로도 처리돼 그 자리에 새 안내선이 생겼다(mouseup이 click보다 먼저 온다).
+    if (e.target !== _hCanvas && e.target !== _vCanvas) _suppressRulerClick = false;
+    else setTimeout(() => { _suppressRulerClick = false; }, 0);
     if (!_dragGuideId) return;
     // 11-11: 안내선을 눈금자 위로 끌어다 놓으면 지운다(피그마·일러스트레이터와 같게).
     const dropped = _dragGuideId;
     const overRuler = (canvas) => { if (!canvas) return false; const r = canvas.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
-    if (overRuler(_hCanvas) || overRuler(_vCanvas)) _deleteGuide(dropped);
+    const moved = !_downAt || Math.hypot(e.clientX - _downAt.x, e.clientY - _downAt.y) > 4;
+    if (moved && (overRuler(_hCanvas) || overRuler(_vCanvas))) _deleteGuide(dropped);
     _dragGuideId = null;
     svg.style.cursor = ""; // hand back to tools.js's hover-cursor logic
     _scheduleDraw();
