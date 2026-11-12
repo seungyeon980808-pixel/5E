@@ -131,16 +131,28 @@ function matchesExamFacets(result, filters) {
 // 11-09 사용자: 띄어 쓴 낱말은 따로 찾되(「유도 기전력」 → 「유도되는 기전력」도), 낱말이 친 순서대로 붙어 있는 문항
 // (「전자기 유도」·「전자기유도」)을 맨 위로 — 「판 구조」에 「진동판 … 내부 구조」 같은 문항이 앞에 오지 않게.
 export const ADJACENT_TERMS_BONUS = 1000;
+// 11-12 밤샘: 점수 매길 때 결과마다 제목·본문을 검색할 때마다 다시 정리했다 — 결과마다 한 번만(결과 객체는 얼려 있어 바뀌지 않음).
+const scoreTextCache = new WeakMap();
+function scoreTexts(result) {
+  let forms = scoreTextCache.get(result);
+  if (!forms) {
+    const title = normalizedText(result.title);
+    forms = { title, titleNoSpace: title.replace(/\s+/gu, ""), joined: null };
+    scoreTextCache.set(result, forms);
+  }
+  return forms;
+}
 function adjacentTermsBonus(result, queryTokens) {
   if (queryTokens.length < 2) return 0;
   const phrase = queryTokens.join("");
-  const text = normalizedText([result.title, result.searchText, result.matchText].join(" ")).replace(/\s+/gu, "");
+  const forms = scoreTexts(result);
+  const text = forms.joined ??= normalizedText([result.title, result.searchText, result.matchText].join(" ")).replace(/\s+/gu, "");
   return text.includes(phrase) ? ADJACENT_TERMS_BONUS : 0;
 }
 
 export function examSearchScore(result, queryTokens) {
   if (!queryTokens.length) return 0;
-  const title = normalizedText(result.title), titleNoSpace = title.replace(/\s+/gu, "");
+  const { title, titleNoSpace } = scoreTexts(result);
   const tags = examTagsOf(result);
   let score = adjacentTermsBonus(result, queryTokens);
   for (const token of queryTokens) {
@@ -671,7 +683,15 @@ export function createUnifiedLibraryProvider(input = {}) {
 
 // Keep the same crop/source validators, yielding between small document batches
 // so an arriving search index cannot freeze opening, closing or pointer input.
+// 11-12 밤샘: 라이브러리 화면은 검색으로 찾은 PDF 문항이 바뀔 때마다 제공자를 다시 만든다 — 그때마다 수천 쪽의
+// PDF 문항 목록을 처음부터 다시 정리해(글자 정리·쪽 아래 경계) 검색 한 번에 주 스레드가 0.3~0.4초 멈췄다.
+// 같은 PDF 목록(색인 객체가 그대로이고 판 표시 revision이 같음 — 문서 배열은 매번 복사되어 옴)이면 앞서 만든 목록을 다시 쓴다.
+const preparedPdfCache = new WeakMap();
 export async function createUnifiedLibraryProviderAsync(input = {}) {
+  const cacheIndex = input.pdfSearchIndex && typeof input.pdfSearchIndex === 'object' ? input.pdfSearchIndex : null;
+  const cached = cacheIndex ? preparedPdfCache.get(cacheIndex) : null;
+  const cacheRevision = typeof input.revision === 'string' && input.revision ? input.revision : null;
+  if (cached && cacheRevision && cached.revision === cacheRevision) return createProvider(input, cached.pdf);
   const documents = uniquePdfDocuments(input.pdfDocuments), index = input.pdfSearchIndex;
   const grouped = groupIndexEntries(index), pdf = { results: [], sources: [], files: [] };
   let sliceStart = performance.now();
@@ -684,6 +704,7 @@ export async function createUnifiedLibraryProviderAsync(input = {}) {
       sliceStart = performance.now();
     }
   }
+  if (cacheIndex && cacheRevision) preparedPdfCache.set(cacheIndex, { revision: cacheRevision, pdf });
   return createProvider(input,pdf);
 }
 

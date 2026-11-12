@@ -4,6 +4,22 @@ import { createRenderScheduler } from "./render-scheduler.js?v=1.7.0-four-sessio
 import { importRejectionMessage, partitionLibraryImports } from "../library-import-policy.js?v=1.7.0-four-session-integration";
 import { createCropSource } from "./contract.js?v=1.7.0-four-session-integration";
 
+const prebuiltSubsetCache = new WeakMap();
+function prebuiltSubset(index, ids) {
+  let bySignature = prebuiltSubsetCache.get(index);
+  if (!bySignature) prebuiltSubsetCache.set(index, bySignature = new Map());
+  const signature = ids.join('\u0000');
+  let subset = bySignature.get(signature);
+  if (!subset) {
+    const allowed = new Set(ids);
+    subset = { ...index, entries: index.entries.filter((entry) => allowed.has(entry.documentId)) };
+    bySignature.set(signature, subset);
+    while (bySignature.size > 4) bySignature.delete(bySignature.keys().next().value);
+  }
+  return subset;
+}
+
+
 const MAX_SELECTIONS = 10;
 const THUMBNAIL_DPI = 96;
 const PREVIEW_DPI = 144;
@@ -1374,10 +1390,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const allowedIds = new Set(documentIds);
       const searchedDocuments = allowedIds.size ? docs.filter((document) => allowedIds.has(document.id)) : docs;
       const indexedPackIds = [...packDocumentIds].filter((id) => !updatedPackDocumentIds.has(id) && (!allowedIds.size || allowedIds.has(id)));
-      const prebuiltIndex = packSearchIndex ? {
-        ...packSearchIndex,
-        entries: packSearchIndex.entries.filter((entry) => indexedPackIds.includes(entry.documentId)),
-      } : null;
+      // 11-12 밤샘: 검색마다 색인 일부를 새 객체로 걸러 만들어(문서 수 × 항목 수 includes) 일꾼 쪽 「한 번만 보내기」 열쇠가 매번 달라졌다 —
+      // 같은 색인·같은 문서 묶음이면 같은 객체를 다시 쓴다.
+      const prebuiltIndex = packSearchIndex ? prebuiltSubset(packSearchIndex, indexedPackIds) : null;
       return searchDocuments(searchedDocuments, query, {
         filters,
         prebuiltIndexes: prebuiltIndex ? [{ documents: docs.filter((document) => indexedPackIds.includes(document.id)).map(({ id, pageCount }) => ({ id, pageCount })), index: prebuiltIndex }] : [],

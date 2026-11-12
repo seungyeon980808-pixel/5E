@@ -134,7 +134,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
             pdfPrebuiltSent.clear();
             await workerSearch(message(true));
           }
-          pdfPrebuiltSent.clear();
+          // 11-12: 보낸 열쇠를 지우지 않는다 — 일꾼이 최근 색인 몇 개를 들고 있으므로, 번갈아 검색할 때 열쇠만 보낸다.
           keyed.forEach(({ key: sourceKey }) => pdfPrebuiltSent.add(sourceKey));
           pdfSearchWorkerKey = key;
         }

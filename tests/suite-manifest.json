@@ -917,6 +917,12 @@
       "findingIds": [
         "GRAPH-SOURCE-LABEL-SIZE"
       ]
+    },
+    {
+      "path": "tests/test-pdf-search-worker-prebuilt-cache.mjs",
+      "findingIds": [
+        "LIBRARY-SEARCH-NO-RESEND"
+      ]
     }
   ],
   "browser": [
