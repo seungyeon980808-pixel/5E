@@ -1114,7 +1114,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     bookmarkCache = loadBookmarks();
     list.querySelectorAll("[data-unilib-bm]").forEach((button) => {
       const result = results.find((item) => item.id === button.dataset.unilibBm);
-      if (result) paintStar(button, isBookmarked(result, undefined, bookmarkCache) || Boolean(button.dataset.unilibStar && examStars()[`past:${button.dataset.unilibStar}`]));
+      if (result) paintStar(button, isBookmarked(result, undefined, bookmarkCache));
     });
     const previewStar = overlay.querySelector("[data-unilib-preview-star]"), current = selectedResult();
     if (previewStar) {
@@ -1164,8 +1164,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     else if (remove) { event.stopPropagation(); if (!removeBookmark(remove.dataset.unilibBmRemove)) setStatus("별표를 빼지 못했습니다.", true); }
   });
   overlay.querySelector("[data-unilib-preview-star]")?.addEventListener("click", (event) => {
-    const button = event.currentTarget;
-    toggleResultBookmark(selectedResult(), !button.classList.contains("is-on"));
+    const current = selectedResult();
+    if (current) toggleResultBookmark(current, !isBookmarked(current));
   });
   // S: 고른 자료 별표 켜기·끄기(입력 칸에서 글을 쓰는 중이면 그대로 글자).
   overlay.addEventListener("keydown", (event) => {
@@ -2317,7 +2317,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         star.type = "button"; star.className = "unilib-star"; star.dataset.unilibBm = result.id;
         if (pastId) star.dataset.unilibStar = pastId;
         star.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>';
-        paintStar(star, isBookmarked(result, undefined, bookmarkCache) || Boolean(pastId && examStars()[`past:${pastId}`]));
+        paintStar(star, isBookmarked(result, undefined, bookmarkCache));
         item.append(star);
         if (bookmarkView) {
           const level = bookmarkLevel(result), chip = document.createElement("span");
@@ -3084,7 +3084,9 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const star = event.target.closest("[data-unilib-bm]");
     if (!star) return;
     event.preventDefault(); event.stopPropagation();
-    toggleResultBookmark(results.find((item) => item.id === star.dataset.unilibBm), !star.classList.contains("is-on"));
+    // 11-12: 화면에 칠해진 상태가 아니라 저장된 별표 기록을 기준으로 켜고 끈다(결과가 다시 그려지는 순간 눌러도 꼬이지 않게).
+    const target = results.find((item) => item.id === star.dataset.unilibBm);
+    if (target) toggleResultBookmark(target, !isBookmarked(target));
   }, true);
   list.addEventListener('dblclick', event => {
     if (!event.target.closest('[data-result-id]')) return;
