@@ -995,7 +995,7 @@ function compareRecent(left, right) {
 const PROVIDED_ROOT_LABELS = /^(5E 공유 자료|학력평가|과학 부품)/u;
 function libraryRootGroup(source) {
   if (source.origin === "local") return "local";
-  return PROVIDED_ROOT_LABELS.test(String(source.label ?? "")) ? "provided" : "drive";
+  return source.providedPack === true || PROVIDED_ROOT_LABELS.test(String(source.label ?? "")) ? "provided" : "drive";
 }
 // 11-05 시안 v13: 기출 문항 별표는 5E_exam과 같은 저장 칸을 쓴다(assets/exampool/sheet/card-shared.js의 store와 같은 이름).
 const EXAM_STORE_PREFIX = `${/^\/preview(?:\/|$)/u.test(globalThis.location?.pathname || "") ? "5e.preview:" : ""}exampool-card:`;
