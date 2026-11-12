@@ -2463,6 +2463,19 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     stage.replaceChildren(message);
   }
 
+  // 보여 줄 표시 범위(문항 전체·내용·그림)를 자료를 받기 전에 미리 정한다 — 종이 비율이 처음부터 최종 그림과 같게.
+  let pendingThumbRatio = null;
+  function previewTargetFor(result) {
+    try {
+      const representations = representationsForResult(result);
+      const id = representations.length ? (isValidQuestionRepresentation(result, activeRepresentation) ? activeRepresentation : representations[0].id) : (result?.variants?.manual ? "manual" : "full");
+      return resultForRepresentation(result, id) || result;
+    } catch { return result; }
+  }
+  function aspectNumber(value) {
+    const match = /^\s*([\d.]+)\s*\/\s*([\d.]+)\s*$/u.exec(String(value || ""));
+    return match && Number(match[2]) > 0 ? Number(match[1]) / Number(match[2]) : null;
+  }
   async function renderPreview(retry = 0) {
     const ownEpoch = ++previewEpoch;
     let result = selectedResult();
@@ -2475,8 +2488,14 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     stage.querySelector(".unilib-preview-loading")?.remove();
     let pendingPaper = null;
     if (result) {
-      pendingPaper = createPreviewPaper(result);
+      // 11-12 사용자 「작게 떴다가 뾱 커진다」: 종이를 전체 문항 상자 비율로 먼저 깔고(자료를 받은 뒤에야 표시 범위 비율로 고침),
+      // 그 안에 다르게 자른 카드 썸네일을 맞춰 넣어 크기가 두 번 튀었다 → 처음부터 보여 줄 범위의 비율로 종이를 깔고,
+      // 비율이 다른 썸네일은 깔지 않는다(점 로딩만 → 최종 그림이 같은 칸에 그대로 나타남).
+      // 자료를 받기 전에는 보여 줄 범위의 비율을 모를 수 있다 → 그동안 종이는 숨기고(로딩 점만), 비율이 정해지면 보인다.
+      pendingPaper = createPreviewPaper(previewTargetFor(result));
+      pendingPaper.classList.add("is-sizing");
       const thumbnail = list.querySelector(`[data-result-id="${CSS.escape(result.id)}"] .unilib-thumb img`);
+      pendingThumbRatio = thumbnail?.naturalWidth && thumbnail?.naturalHeight ? thumbnail.naturalWidth / thumbnail.naturalHeight : null;
       const thumbnailSrc = thumbnail?.currentSrc || resultImage(result);
       const mountLoading = () => {
         previewLoadingTimer = 0;
@@ -2547,7 +2566,14 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (!representations.length) activeRepresentation = result?.variants?.manual ? "manual" : "full";
     const materializeResult = resultForRepresentation(result, activeRepresentation);
     // 종이를 갈아끼우지 않고 비율만 맞춘다(두 번째 교체가 깜빡임이었다).
-    if (pendingPaper) pendingPaper.style.aspectRatio = createPreviewPaper(materializeResult).style.aspectRatio || "";
+    if (pendingPaper) {
+      pendingPaper.style.aspectRatio = createPreviewPaper(materializeResult).style.aspectRatio || "";
+      // 비율이 정해졌다 — 다르게 자른 카드 썸네일이면 깔지 않는다(최종 그림이 같은 칸에 한 번만 나타나게).
+      const ratio = aspectNumber(pendingPaper.style.aspectRatio);
+      if (ratio && pendingThumbRatio && Math.abs(pendingThumbRatio / ratio - 1) > 0.04) previewLoading?.setPaper?.(pendingPaper, "");
+      // 쪽 크기 정보가 없어 비율을 모르면(기본 3:4 종이가 됨) 끝까지 숨겨 둔다 — 최종 그림이 그 자리에 바로 나타난다.
+      if (ratio) pendingPaper.classList.remove("is-sizing");
+    }
     const representationHost = overlay.querySelector("[data-unilib-representations]");
     representationHost.hidden = representations.length === 0;
     representationHost.replaceChildren(...representations.map((option) => {

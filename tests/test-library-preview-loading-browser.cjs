@@ -28,7 +28,9 @@ test('question/PDF preview covers resolve, materialize, decode, failure/retry an
  await ui.locator('[data-unilib-type="question"]').click();
  await ui.locator('[data-result-id="q1"]').click();
  await stage.locator('.unilib-preview-loading').waitFor();
- await stage.locator('.br-layer').first().waitFor();
+ // 11-12 사용자 「작게 떴다가 뾱 커진다」: 보여 줄 범위의 비율을 알기 전에는 종이·흐린 썸네일을 숨긴다(로딩 표시만).
+ await stage.locator('.br-layer').first().waitFor({state:'attached'});
+ assert.equal(await stage.locator('.unilib-preview-paper.is-sizing').count(),1,'paper stays hidden until its final aspect is known');
  const assertVisible=async()=>{
   const boxes=await stage.evaluate(n=>{const h=n.getBoundingClientRect(),s=n.querySelector('.unilib-preview-loading').getBoundingClientRect();return {top:h.top,bottom:h.bottom,y:s.top,end:s.bottom};});
   assert.ok(boxes.y>=boxes.top&&boxes.end<=boxes.bottom,'loading stays inside the visible reader: '+JSON.stringify(boxes));

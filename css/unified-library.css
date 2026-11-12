@@ -1636,3 +1636,6 @@
 .unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle[aria-pressed="true"]::before { background: #ffd400; box-shadow: none; }
 .unified-library-overlay .unilib .unilib-preview-heading .unilib-answer-toggle:hover { color: var(--ds-ink) !important; }
 .unified-library-overlay[data-answers-off="true"] .unilib-match-rect.is-answer { display: none; }
+
+/* 11-12: 보여 줄 범위의 비율이 정해지기 전 종이는 숨긴다(작게 떴다가 커지던 것) */
+.unified-library-overlay .unilib-preview-paper.is-sizing { visibility: hidden; }
