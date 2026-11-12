@@ -3900,7 +3900,12 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     draftCrop = null;
     // 11-05 시안 v13: 문항 카드를 두 번 누르거나 Space로 크게 보면 그 문항 영역을 임시 영역으로 잡아 둔다(Enter·Space로 추가, 끌면 다시 고름).
     draftCropIsSuggested = false;
-    if (draftQuestion && existingCrop?.length === 4) { draftCrop = [...existingCrop]; draftCropIsSuggested = true; }
+    // 11-12 사용자: 보이는 범위는 문항 그대로, 미리 잡아 두는 임시 영역은 문항 전체가 아니라 그림 영역(자르러 들어오는 건 그림이므로).
+    // 손으로 잡은 영역 → 같은 쪽의 첫 그림 후보 → (그림이 없으면) 문항 영역 순.
+    const samePage = (candidate) => candidate?.source?.rect?.length === 4 && (candidate.source.pageNumber == null || candidate.source.pageNumber === session.pageNumber);
+    const suggestedFigure = [result.variants?.manual, ...(result.variants?.figures ?? [])].find(samePage)?.source?.rect;
+    const suggested = suggestedFigure || existingCrop;
+    if (draftQuestion && suggested?.length === 4) { draftCrop = [...suggested]; draftCropIsSuggested = true; }
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;
