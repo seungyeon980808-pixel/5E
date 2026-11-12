@@ -10,7 +10,8 @@ export const workflowOf=q=>q.workflow||'draft';
 export const TITLES={draft:'초안',review:'검토 중',complete:'완성'};
 const ICON={up:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>',down:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',remove:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',add:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'};
 
-export function questionTitle(q){return q.managementId||`${q.number||'번호 미입력'}번 문항`;}
+// 11-12: 문항 이름(q.name)이 있으면 이름 먼저.
+export function questionTitle(q){return String(q.name||'').trim()||q.managementId||`${q.number||'번호 미입력'}번 문항`;}
 export function questionSubtitle(q){return q.unitSmall||q.unitMiddle||q.ask||'발문을 입력하세요';}
 
 
@@ -46,7 +47,7 @@ async function preview(q){
 
 export function filteredQuestions(data,{status,query,type}){
   const text=String(query||'').toLowerCase();
-  return data.questions.filter(q=>workflowOf(q)===status&&(!type||q.type===type)&&(!text||[q.number,q.ask,q.managementId,q.unitLarge,q.unitMiddle,q.unitSmall,...(q.concepts||[])].join(' ').toLowerCase().includes(text)));
+  return data.questions.filter(q=>workflowOf(q)===status&&(!type||q.type===type)&&(!text||[q.number,q.name,q.ask,q.managementId,q.unitLarge,q.unitMiddle,q.unitSmall,...(q.concepts||[])].join(' ').toLowerCase().includes(text)));
 }
 
 

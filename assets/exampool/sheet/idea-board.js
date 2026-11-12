@@ -14,6 +14,7 @@ const SVG=p=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>
 const IC={
   plus:SVG('<path d="M12 5v14M5 12h14"/>'),
   pic:SVG('<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4.5 18 5-5 3.5 3.5 2.5-2.5 4 4"/>'),
+  table:SVG('<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15"/>'),
   link:SVG('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
   close:SVG('<path d="M6 6l12 12M18 6 6 18"/>'),
   doc:SVG('<path d="M7 3.5h7l4 4V20.5H7z"/><path d="M14 3.5v4h4"/>'),
@@ -37,24 +38,29 @@ export function readImage(file){return new Promise((resolve,reject)=>{const r=ne
 
 const hostOf=u=>{try{return new URL(u).hostname.replace(/^www\./,'');}catch{return u;}};
 
-// 판 모음 화면.
+// 판 모음 화면(11-12): 「출제 중인 문항」과 같은 틀 — 제목·개수 · 보기 바꾸기(카드 / 파일 이름) · 점선 줄(새 판) · 찾기 · 카드 격자 또는 줄 목록.
+// 판은 문항에 묶이지 않는다. 두 번 누르면 작업 칸에 올라간다(문항 카드가 열려 있으면 그 옆에 판 2 : 카드 1).
 export function renderIdeasList(root,data,api){
-  const q=(api.query||'').trim().toLowerCase();
-  const list=[...(data.ideas||[])].sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).filter(b=>!q||b.title.toLowerCase().includes(q)||b.items.some(i=>`${i.title||''} ${i.text||''}`.toLowerCase().includes(q)));
+  const q=(api.query||'').trim().toLowerCase(),all=data.ideas||[];
+  const list=[...all].sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).filter(b=>!q||b.title.toLowerCase().includes(q)||b.items.some(i=>`${i.title||''} ${i.text||''}`.toLowerCase().includes(q)));
   const thumb=b=>{const its=b.items.slice(0,30);if(!its.length)return '<span class="iv-th-empty">빈 판</span>';
     const hOf=i=>i.h||(i.type==='image'&&i.nw?(i.w||200)*i.nh/i.nw+30:i.type==='link'?52:110);
     const x0=Math.min(...its.map(i=>i.x)),y0=Math.min(...its.map(i=>i.y));
-    // 판 모음 작은 그림 칸은 가로:세로 ≈ 2:1 — 판 내용을 그 비율 상자에 통째로 넣는다(가로·세로 같은 배율).
-    let W=Math.max(400,Math.max(...its.map(i=>i.x-x0+(i.w||240)))+40),H=Math.max(200,Math.max(...its.map(i=>i.y-y0+hOf(i)))+40);W=Math.max(W,H*2);H=Math.max(H,W/2);
+    let W=Math.max(400,Math.max(...its.map(i=>i.x-x0+(i.w||240)))+40),H=Math.max(200,Math.max(...its.map(i=>i.y-y0+hOf(i)))+40);W=Math.max(W,H*8/9);H=Math.max(H,W*8/9);
     return its.map(i=>{const st=`left:${(i.x-x0+20)/W*100}%;top:${(i.y-y0+20)/H*100}%;width:${(i.w||240)/W*100}%;height:${Math.max(4,hOf(i)/H*100)}%`;
       return i.type==='image'?`<i class="img" style="${st}"><img src="${E(i.src)}" alt=""></i>`:`<i class="${i.style==='light'?'w':''}" style="${st}"></i>`;}).join('');};
-  const chips=b=>{const qs=(b.questionIds||[]).map(id=>data.questions.find(x=>x.id===id)).filter(Boolean);
-    return qs.length?qs.map(x=>`<button type="button" class="iv-chip" data-iv-q="${x.id}" data-iv-board="${b.id}" title="판과 이 문항 카드를 같이 열기">${api.qIcon(x)}<span>${E(api.qTitle(x))}</span></button>`).join(''):`<button type="button" class="iv-chip none" data-iv-q="" data-iv-board="${b.id}" title="판을 열고 문항 카드를 고르거나 새로 만들기">문항 카드 아직 없음</button>`;};
-  root.innerHTML=`<div class="iv-head"><span class="iv-title">${ideaIcon()}<b>아이디어 판 모음</b><small>${(data.ideas||[]).length}</small></span><span class="sp"></span>
-    <label class="iv-search"><input data-iv-search value="${E(api.query||'')}" placeholder="판 이름·메모 찾기" aria-label="판 찾기"></label><button type="button" class="iv-new" data-iv-new>${IC.plus}새 판</button></div>
-    <p class="iv-hint">판을 <b>두 번 누르면</b> 판만 크게 열립니다 · 아래 <b>문항 이름표</b>를 누르면 판과 그 문항 카드를 <b>같이</b> 엽니다 · 오른쪽 단추 = 이름 바꾸기·지우기</p>
-    ${list.length?`<div class="iv-grid">${list.map(b=>`<div class="iv-card" data-iv-open="${b.id}" tabindex="0"><div class="iv-th">${thumb(b)}</div><div class="iv-meta"><b>${ideaIcon()}<span>${E(b.title)}</span></b><small>${E(boardMeta(b))}</small><div class="iv-chips">${chips(b)}</div></div></div>`).join('')}</div>`
-      :`<div class="iv-empty">${q?'찾는 판이 없습니다.':'아직 아이디어 판이 없습니다. 「새 판」으로 시작하세요.'}</div>`}`;
+  const day=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.getMonth()+1}-${String(d.getDate()).padStart(2,'0')}`:'';};
+  const cnt=(b,t)=>b.items.filter(i=>i.type===t).length;
+  const mode=api.mode==='rows'?'rows':'grid';
+  const GRID='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>';
+  const ROWS='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>';
+  const body=!list.length?`<p class="lv-emptyline">${q?'찾는 판이 없습니다.':'아직 아이디어 판이 없습니다. 「새 아이디어 판」으로 시작하세요.'}</p>`
+    :mode==='grid'?`<div class="lv-grid iv-grid">${list.map(b=>`<div class="lv-card iv-card" data-iv-open="${b.id}" tabindex="0" title="두 번 누르면 엽니다"><div class="lv-thumb iv-th">${thumb(b)}</div><div class="lv-meta">${ideaIcon()}<span class="lv-title" data-iv-name>${E(b.title)}</span><small>${day(b.updatedAt||b.createdAt)}</small></div></div>`).join('')}</div>`
+    :`<div class="iv-rows"><div class="iv-r iv-hd"><span></span><span>이름</span><span>메모</span><span>그림</span><span>고친 날</span></div>${list.map(b=>`<div class="iv-r" data-iv-open="${b.id}" tabindex="0" title="두 번 누르면 엽니다">${ideaIcon()}<span data-iv-name>${E(b.title)}</span><small>${cnt(b,'memo')}</small><small>${cnt(b,'image')}</small><small>${day(b.updatedAt||b.createdAt)}</small></div>`).join('')}</div>`;
+  root.innerHTML=`<div class="lv-head"><h1>아이디어 판</h1><p>${all.length}개</p><div class="lv-vt" role="group" aria-label="보기 방식"><button type="button" data-iv-mode="grid" aria-pressed="${mode==='grid'}" title="카드 모아 보기">${GRID}</button><button type="button" data-iv-mode="rows" aria-pressed="${mode==='rows'}" title="파일 이름으로 보기">${ROWS}</button></div></div>
+    <div class="lv-addbar"><button type="button" class="lv-add go" data-iv-new>${IC.plus}새 아이디어 판</button><span class="lv-addhint">두 번 누르면 엽니다${api.benchCard?` · 지금 열린 「${E(api.benchCard)}」 옆에 판 2 : 카드 1로`:''} · 오른쪽 단추 = 이름 바꾸기·지우기</span></div>
+    <div class="lv-chips"><label class="lv-search"><input data-iv-search value="${E(api.query||'')}" placeholder="판 이름·메모 찾기" aria-label="판 찾기"></label></div>
+    ${body}`;
 }
 
 // 판 화면(하나만 만들어 옮겨 붙임).
@@ -63,6 +69,7 @@ export function createIdeaBoard(app){
   el.innerHTML=`<div class="ib-head"><span class="ib-title" title="두 번 눌러 이름 바꾸기">${ideaIcon()}<span class="ib-name"></span></span><span class="ib-sep"></span>
     <button type="button" class="ib-tb primary" data-ib="memo" title="새 메모 (N)">${IC.plus}<span class="lb">메모</span><kbd>N</kbd></button>
     <button type="button" class="ib-tb" data-ib="image" title="그림 넣기 · 끌어다 놓거나 ⌘V로 붙여도 됩니다">${IC.pic}<span class="lb">그림</span></button>
+    <button type="button" class="ib-tb" data-ib="table" title="표 넣기 · 두 번 눌러 칸에 적기">${IC.table}<span class="lb">표</span></button>
     <button type="button" class="ib-tb" data-ib="link" title="링크 넣기">${IC.link}<span class="lb">링크</span></button>
     <span class="sp"></span>
     <button type="button" class="ib-tb ib-card" data-ib="card"></button><span class="ib-sep"></span>
@@ -88,6 +95,7 @@ export function createIdeaBoard(app){
   function itemHtml(i){const acc=i.color?`<i class="ib-acc" style="background:${E(i.color)}"></i>`:'';const cls=`ib-it ib-${i.type}${i.style?' st-'+i.style:''}${picked===i.id?' picked':''}`;
     const pos=`left:${i.x}px;top:${i.y}px;${i.w?`width:${i.w}px;`:''}`;
     if(i.type==='image')return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<img src="${E(i.src)}" alt="" draggable="false"><div class="ib-cap">${E(i.title||'')}</div></div>`;
+    if(i.type==='table'){const cells=i.cells||[];return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<table class="ib-tbl">${cells.map(row=>`<tr>${row.map(c=>`<td>${E(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;}
     if(i.type==='link')return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<span class="ib-li">${IC.link}</span><div class="ib-lt"><b>${E(i.title||hostOf(i.url))}</b><small>${E(hostOf(i.url))}</small></div><button type="button" class="ib-open" data-ib-open title="${E(i.url)}">열기</button></div>`;
     return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<h4 class="ib-mt">${E(i.title||'')}</h4><div class="ib-mb">${E(i.text||'')}</div></div>`;}
   function draw(){if(!board)return;world.querySelectorAll('.ib-it').forEach(n=>n.remove());world.insertAdjacentHTML('beforeend',board.items.map(itemHtml).join(''));
@@ -130,7 +138,7 @@ export function createIdeaBoard(app){
 
   // ── 메모 쓰기(두 번 눌러) ──
   function startEdit(id,fresh=false){const n=node(id),i=item(id);if(!n||!i)return;editing=id;n.classList.add('editing');
-    const parts=i.type==='memo'?[n.querySelector('.ib-mt'),n.querySelector('.ib-mb')]:i.type==='image'?[n.querySelector('.ib-cap')]:[n.querySelector('.ib-lt b')];
+    const parts=i.type==='memo'?[n.querySelector('.ib-mt'),n.querySelector('.ib-mb')]:i.type==='image'?[n.querySelector('.ib-cap')]:i.type==='table'?[...n.querySelectorAll('td')]:[n.querySelector('.ib-lt b')];
     parts.forEach(p=>{p.contentEditable='plaintext-only';if(p.contentEditable!=='plaintext-only')p.contentEditable='true';});
     if(i.type==='memo'){const t=n.querySelector('.ib-mt');t.dataset.ph='제목';n.querySelector('.ib-mb').dataset.ph='생각을 적으세요';(fresh?t:n.querySelector('.ib-mb')).focus();}else parts[0].focus();
     if(!fresh){const s=getSelection(),r=document.createRange();r.selectNodeContents(document.activeElement);r.collapse(false);s.removeAllRanges();s.addRange(r);}}
@@ -138,6 +146,7 @@ export function createIdeaBoard(app){
     const txt=s=>(n.querySelector(s)?.innerText||'').replace(/ /g,' ').replace(/\n+$/,'');
     let changed=false;const set=(k,v)=>{if((i[k]||'')!==v){if(!changed)snap();changed=true;i[k]=v;}};
     if(i.type==='memo'){set('title',txt('.ib-mt').trim().slice(0,200));set('text',txt('.ib-mb').slice(0,20000));if(!i.title&&!i.text){board.items=board.items.filter(x=>x!==i);board.links=board.links.filter(([a,b])=>a!==id&&b!==id);draw();save();return;}}
+    else if(i.type==='table'){const next=[...n.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\u00a0/g,' ').trim().slice(0,500)));if(JSON.stringify(next)!==JSON.stringify(i.cells)){snap();changed=true;i.cells=next;}}
     else if(i.type==='image')set('title',txt('.ib-cap').trim().slice(0,120));else set('title',txt('.ib-lt b').trim().slice(0,120));
     if(changed){drawLinks();save();}}
   el.addEventListener('focusout',e=>{if(!editing)return;const n=node(editing);if(n&&e.relatedTarget&&n.contains(e.relatedTarget))return;setTimeout(()=>{const n2=node(editing);if(n2&&n2.contains(document.activeElement))return;endEdit();},0);});
@@ -160,9 +169,9 @@ export function createIdeaBoard(app){
   world.addEventListener('click',e=>{const o=e.target.closest('[data-ib-open]');if(!o)return;const i=item(o.closest('.ib-it').dataset.id);if(i?.url)window.open(i.url,'_blank','noopener');});
 
   // ── 문항 카드로 보내기 ──
-  const SEND={memo:[['passage','지문'],['ask','발문'],['bogi','보기 한 줄'],['ref','근거로 남기기']],image:[['figure','자료 칸에 넣기'],['ref','근거로 남기기']],link:[['ref','근거로 남기기']]};
-  const payloadOf=i=>i.type==='image'?{figure:{name:(i.title||'아이디어 그림').slice(0,200)+(/png/.test(i.src.slice(0,30))?'.png':'.jpg'),data:i.src},text:i.title||''}:i.type==='link'?{text:`${i.title||hostOf(i.url)} ${i.url}`.trim()}:{text:[i.title,i.text].filter(Boolean).join('\n')};
-  function send(field,payload){if(!ctx.canSend?.()){ctx.onCard?.();say('문항 카드를 먼저 여세요 · 판 머리의 「문항 카드」',true);return;}if(!payload.text&&!payload.figure){say('보낼 글이 없습니다.',true);return;}ctx.send?.(field,payload,board);}
+  const SEND={memo:[['passage','지문'],['ask','발문'],['bogi','보기 한 줄'],['ref','근거로 남기기']],image:[['figure','자료 칸에 넣기'],['ref','근거로 남기기']],table:[['table','자료 칸에 표로 넣기']],link:[['ref','근거로 남기기']]};
+  const payloadOf=i=>i.type==='table'?{table:i.cells,text:(i.cells||[]).flat().join(' ')}:i.type==='image'?{figure:{name:(i.title||'아이디어 그림').slice(0,200)+(/png/.test(i.src.slice(0,30))?'.png':'.jpg'),data:i.src},text:i.title||''}:i.type==='link'?{text:`${i.title||hostOf(i.url)} ${i.url}`.trim()}:{text:[i.title,i.text].filter(Boolean).join('\n')};
+  function send(field,payload){if(!ctx.canSend?.()){ctx.onCard?.();say('문항 카드를 먼저 여세요 · 판 머리의 「문항 카드」',true);return;}if(!payload.text&&!payload.figure&&!payload.table){say('보낼 글이 없습니다.',true);return;}ctx.send?.(field,payload,board);}
 
   // ── 오른쪽 단추 차림표 ──
   wrap.addEventListener('contextmenu',e=>{const n=e.target.closest('.ib-it');e.preventDefault();if(!n){const p=toWorld(e.clientX,e.clientY);const f=$('.ib-menu');f.innerHTML=`<div class="ib-sec"><button type="button" class="row" data-m="memo">새 메모<small>두 번 누르기</small></button><button type="button" class="row" data-m="image">그림 넣기…</button></div>`;place(f,e.clientX+2,e.clientY+2);
@@ -172,9 +181,11 @@ export function createIdeaBoard(app){
     f.innerHTML=`<div class="ib-sec"><h5>문항 카드로 보내기${can?'':' · 카드가 닫혀 있음'}</h5>${SEND[i.type].map(([k,t])=>`<button type="button" class="row" data-send="${k}"${can?'':' disabled'}>${t}</button>`).join('')}${can?'':'<button type="button" class="row go" data-m="card">문항 카드 열기</button>'}</div>
       <div class="ib-sec"><h5>모양</h5><div class="ib-styles">${STYLES.map(([k,t])=>`<button type="button" data-style="${k}" aria-pressed="${(i.style||'')===k}"><i class="ib-sw ib-sw-${k||'base'}"></i>${t}</button>`).join('')}</div>
       <h5>색 점</h5><div class="ib-dots">${COLORS.map(c=>`<button type="button" data-color="${c}" aria-pressed="${(i.color||'')===c}" style="${c?`background:${c}`:''}" title="${c?'색 점':'없음'}"></button>`).join('')}</div></div>
-      <div class="ib-sec"><button type="button" class="row" data-m="link">잇기 시작<small>다음에 누르는 카드로</small></button>${i.type!=='link'?`<button type="button" class="row" data-m="edit">${i.type==='memo'?'고쳐 쓰기':'이름 고치기'}<small>두 번 누르기</small></button>`:''}<button type="button" class="row" data-m="dup">복제<small>⌘D</small></button><button type="button" class="row danger" data-m="del">지우기<small>⌫</small></button></div>`;
+      ${i.type==='table'?`<div class="ib-sec"><h5>표</h5><div class="ib-tblops"><button type="button" data-t="r+">＋ 줄</button><button type="button" data-t="c+">＋ 칸</button><button type="button" data-t="r-">− 줄</button><button type="button" data-t="c-">− 칸</button></div></div>`:''}
+      <div class="ib-sec"><button type="button" class="row" data-m="link">잇기 시작<small>다음에 누르는 카드로</small></button>${i.type!=='link'?`<button type="button" class="row" data-m="edit">${i.type==='memo'?'고쳐 쓰기':i.type==='table'?'칸에 적기':'이름 고치기'}<small>두 번 누르기</small></button>`:''}<button type="button" class="row" data-m="dup">복제<small>⌘D</small></button><button type="button" class="row danger" data-m="del">지우기<small>⌫</small></button></div>`;
     place(f,e.clientX+2,e.clientY+2);
     f.querySelectorAll('[data-send]').forEach(b=>{b.onmouseenter=()=>app.aim?.(b.dataset.send);b.onmouseleave=()=>app.aim?.(null);b.onclick=()=>{closeFloats();send(b.dataset.send,payloadOf(i));};});
+    f.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{const c=i.cells,op=b.dataset.t;snap();if(op==='r+'&&c.length<20)c.push(c[0].map(()=>''));if(op==='c+'&&c[0].length<10)c.forEach(row=>row.push(''));if(op==='r-'&&c.length>1)c.pop();if(op==='c-'&&c[0].length>1)c.forEach(row=>row.pop());closeFloats();draw();save();});
     f.querySelectorAll('[data-style]').forEach(b=>b.onclick=()=>{snap();i.style=b.dataset.style;closeFloats();draw();save();});
     f.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{snap();i.color=b.dataset.color;closeFloats();draw();save();});
     f.querySelector('[data-m="card"]')?.addEventListener('click',()=>{closeFloats();ctx.onCard?.();});
@@ -198,6 +209,7 @@ export function createIdeaBoard(app){
     if(k==='memo'){const c=center();newMemo(c.x-120,c.y-50);}
     else if(k==='image')file.click();
     else if(k==='link')addLinkPop();
+    else if(k==='table'){const c=center();add({type:'table',x:Math.round(c.x-150),y:Math.round(c.y-50),w:300,cells:[['','',''],['','',''],['','','']]},{edit:true});}
     else if(k==='fit'){zoomMan=null;pan={x:0,y:0};live();fit();}
     else if(k==='close'){endEdit();ctx.onClose?.();}
     else if(k==='card')ctx.onCard?.(b);});
@@ -212,7 +224,8 @@ export function createIdeaBoard(app){
   document.addEventListener('paste',e=>{if(!el.isConnected||!el.contains(document.activeElement)||editing||document.activeElement.isContentEditable)return;const files=[...e.clipboardData.files];
     if(files.length){e.preventDefault();void addImages(files);return;}const t=e.clipboardData.getData('text/plain');if(!t.trim())return;e.preventDefault();const c=center();
     if(/^https?:\/\/\S+$/.test(t.trim()))add({type:'link',x:Math.round(c.x-125),y:Math.round(c.y),w:250,url:t.trim(),title:''});else add({type:'memo',x:Math.round(c.x-120),y:Math.round(c.y-40),w:240,title:'',text:t.slice(0,20000)});});
-  el.addEventListener('keydown',e=>{if(editing){if(e.key==='Escape'){e.preventDefault();endEdit();el.focus();}return;}if(e.target.closest('input,textarea,[contenteditable]'))return;
+  el.addEventListener('keydown',e=>{if(editing){if(e.key==='Escape'){e.preventDefault();endEdit();el.focus();return;}
+      if(e.key==='Tab'&&e.target.tagName==='TD'){e.preventDefault();const tds=[...node(editing).querySelectorAll('td')],k=tds.indexOf(e.target)+(e.shiftKey?-1:1);const t=tds[(k+tds.length)%tds.length];t.focus();const rg=document.createRange();rg.selectNodeContents(t);getSelection().removeAllRanges();getSelection().addRange(rg);}return;}if(e.target.closest('input,textarea,[contenteditable]'))return;
     const m=e.metaKey||e.ctrlKey;
     if(m&&e.key.toLowerCase()==='z'&&!e.shiftKey){e.preventDefault();e.stopPropagation();const u=undo.pop();if(u){board.items=u.items;board.links=u.links;picked=null;draw();save();}else say('판에서 되돌릴 것이 없습니다.');return;}
     if(m&&e.key.toLowerCase()==='d'&&picked){e.preventDefault();const i=item(picked);if(i)dup(i);return;}

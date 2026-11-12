@@ -29,30 +29,41 @@ const ICON={
   card:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
 };
 // 상태 아이콘(11-04): 문항은 원이 완성도만큼 채워짐 · 시험지에 넣으면 파랑 + 체크. 시험지는 2단 칸이 목표 문항 수만큼 채워짐.
-const dot=(q,data)=>{const st=questionState(q,data);return qIcon(st,st==='work'?progressOf(q):1);};
+// 11-12: 단계만큼 ¼씩(출제 중 ½ · 출제 완료 ¾ · 시험지에 담김 가득+체크). 완성도는 카드 번호 고리에서 본다.
+const STAGE_P={work:.5,done:.75,used:1};
+const dot=(q,data)=>{const st=questionState(q,data);return qIcon(st,STAGE_P[st]);};
 const stage=(q,data)=>`${dot(q,data)}${WORKFLOWS[workflowOf(q)]}`;
 const examProgress=e=>{const g=goalOf(e,[]),goal=(Number(g.nObj)||0)+(Number(g.nEssay)||0)||20;return e.items.length/goal;};
-const examMark=e=>e.status==='done'?examIcon('done'):examIcon('work',examProgress(e));
+const examMark=e=>e.status==='ended'?examIcon('ended'):e.status==='done'?examIcon('done'):examIcon('work',.5);
 const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.getMonth()+1}월 ${d.getDate()}일`:'';};
 
 // 왼쪽 메뉴(10-28 출제 지적 1, 시안 exam-weekend-1031/library-start 2판): 문항(출제 중 · 출제 완료 · 시험지에 담김) · 시험지(출제 중 · 출제 완료).
 // 별표는 칸이 아니라 목록 위 「모두 / 별표 / 메모」 거르기로만 쓴다.
+const TRASH_ICO='<svg class="st-ico st-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.3 1.3 0 0 0 1.3 1.2h6.6a1.3 1.3 0 0 0 1.3-1.2L17.5 7"/><path d="M10.2 10.8v6M13.8 10.8v6"/></svg>';
+const LIB_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h3v15H5zM10 4.5h3v15h-3z"/><path d="m15.2 5.4 2.9-.8 3.6 14.4-2.9.8z"/></svg>';
+const NAVTOG_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M9 4.5v15"/></svg>';
+// 왼쪽 메뉴(11-12 시안 exam-panes-1112): 맨 위 메뉴 접기 · 라이브러리(켜고 끄기, 켜지면 바탕+점) · 문항(아이디어 · 출제 중 · 출제 완료 · 시험지에 담김 · 휴지통) · 시험지(출제 중 · 출제 완료 · 시험 종료 · 휴지통).
+// 문항 카드·아이디어 판이 열려 있는데 목록을 보고 있으면 맨 아래 「지금 작업으로」.
 export function renderNav(root,data,view){
-  const drafting=data.exams.filter(e=>e.status==='drafting'),done=data.exams.filter(e=>e.status==='done');
-  // 11-05: 시험지 이름을 왼쪽 줄 아래에 끼워 넣지 않는다 — 문항처럼 「출제 중 / 출제 완료」만 두고, 고르면 가운데에서 시험지를 고른다.
-  // 시험지 안(시험지 화면·그 문항 카드)에 있을 때는 그 시험지의 단계 칸이 켜져 있다.
+  const by=k=>data.exams.filter(e=>e.status===k);
   const openExam=view.examId&&['exam','card','desk'].includes(view.name)?data.exams.find(e=>e.id===view.examId):null;
-  const examsOn=k=>view.name==='exams'?(k==='done')===(view.status==='done'):openExam?(k==='done')===(openExam.status==='done'):false;
-  // 지금 보는 문항 칸: 보관함이면 고른 칸, 시험지 밖 문항 카드면 그 문항이 든 칸.
-  const pool=view.name==='library'?view.lib?.pool||'drafting':view.name==='card'&&!view.examId&&view.cardPool?view.cardPool:'';
-  const poolItem=(k,icon)=>`<button type="button" class="nav" data-nav="library" data-pool="${k}" aria-current="${pool===k?'true':'false'}">${icon}<span>${POOLS[k]}</span><b>${poolQuestions(data,k).length}</b></button>`;
-  // 11-12: 맨 위 「아이디어」(¼ 빨강) — 판 모음. 문항 카드에서 판이 열려 있으면 빨간 점.
-  const ideaItem=`<button type="button" class="nav nav-idea${view.ideaOpen&&view.name==='card'?' open':''}" data-nav="ideas" aria-current="${view.name==='ideas'}" title="아이디어 판 모음">${qIcon('idea',.25,{title:false})}<span>아이디어</span><b>${(data.ideas||[]).length}</b></button>`;
-  root.innerHTML=`<p class="side-label">문항</p>
-    ${ideaItem}${poolItem('drafting',qIcon('work',.5,{title:false}))}${poolItem('done',qIcon('done',1,{title:false}))}${poolItem('inexam',qIcon('used',1,{title:false}))}
+  const examsOn=k=>view.name==='exams'?(view.status||'drafting')===k:view.name==='exam'&&openExam?openExam.status===k:false;
+  const pool=view.name==='library'?view.lib?.pool||'drafting':'';
+  const poolItem=(k,icon)=>`<button type="button" class="nav" data-nav="library" data-pool="${k}" aria-current="${pool===k?'true':'false'}" title="${POOLS[k]}">${icon}<span>${POOLS[k]}</span><b>${poolQuestions(data,k).length}</b></button>`;
+  const trash=data.trash||{questions:[],exams:[]};
+  root.innerHTML=`<div class="side-top" aria-hidden="true"></div>
+    <button type="button" class="nav nav-lib" data-nav="lib" aria-pressed="${!!view.libOn}" title="${view.libOn?'라이브러리 끄기':'라이브러리 켜기'}">${LIB_ICO}<span>라이브러리</span>${view.libOn?'<i class="nav-led" aria-hidden="true"></i>':''}</button>
+    <div class="side-div"></div>
+    <p class="side-label">문항</p>
+    <button type="button" class="nav nav-idea" data-nav="ideas" aria-current="${view.name==='ideas'}" title="아이디어">${qIcon('idea',.25,{title:false})}<span>아이디어</span><b>${(data.ideas||[]).length}</b></button>
+    ${poolItem('drafting',qIcon('work',.5,{title:false}))}${poolItem('done',qIcon('done',.75,{title:false}))}${poolItem('inexam',qIcon('used',1,{title:false}))}
+    <button type="button" class="nav nav-trash" data-nav="trash" data-trash="q" aria-current="${view.name==='trash'&&view.kind==='q'}" title="휴지통 — 14일 뒤 자동으로 비워집니다">${TRASH_ICO}<span>휴지통</span><b>${trash.questions.length}</b></button>
     <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${examIcon('new',0,{title:false})}</button></p>
-    <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${examsOn('drafting')}">${examIcon('work',.5,{title:false})}<span>출제 중</span><b>${drafting.length}</b></button>
-    <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${examsOn('done')}">${examIcon('done',1,{title:false})}<span>출제 완료</span><b>${done.length}</b></button>`;
+    <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${examsOn('drafting')}" title="출제 중">${examIcon('work',.5,{title:false})}<span>출제 중</span><b>${by('drafting').length}</b></button>
+    <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${examsOn('done')}" title="출제 완료">${examIcon('done',1,{title:false})}<span>출제 완료</span><b>${by('done').length}</b></button>
+    <button type="button" class="nav" data-nav="exams" data-status="ended" aria-current="${examsOn('ended')}" title="시험 종료">${examIcon('ended',1,{title:false})}<span>시험 종료</span><b>${by('ended').length}</b></button>
+    <button type="button" class="nav nav-trash" data-nav="trash" data-trash="e" aria-current="${view.name==='trash'&&view.kind==='e'}" title="휴지통 — 14일 뒤 자동으로 비워집니다">${TRASH_ICO}<span>휴지통</span><b>${trash.exams.length}</b></button>
+    ${view.benchBusy&&view.name!=='card'?`<span class="side-sp"></span><button type="button" class="nav nav-bench" data-nav="bench" title="열어 둔 문항 카드·아이디어 판으로">${CARD_ICON.card}<span>지금 작업으로</span></button>`:''}`;
 }
 
 // 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.
@@ -90,7 +101,7 @@ export function renderLibrary(root,data,view){
 // 시험지 목록(11-05 시안 layout-1105.html ②): 왼쪽에서 고른 단계(출제 중 / 출제 완료)의 시험지를 첫 쪽 미리보기 카드로.
 // 첫 쪽은 담긴 앞 문항들의 미리보기를 2단 종이 모양에 작게 앉힌 것이다(누르면 그 시험지로 들어간다). 최근 고친 순.
 export function renderExams(root,data,view){
-  const doneView=view.status==='done',list=data.exams.filter(e=>e.status===(doneView?'done':'drafting')).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
+  const st=['done','ended'].includes(view.status)?view.status:'drafting',doneView=st!=='drafting',list=data.exams.filter(e=>e.status===st).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
   const card=e=>{const qs=e.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean),half=Math.ceil(Math.min(qs.length,4)/2);
     const col=items=>items.map(q=>isBlank(q)?'<i class="pv-pq is-blank"></i>':`<div class="pv-pq"><div class="pv-doc" data-preview="${q.id}"></div></div>`).join('');
     return `<article class="pv-ecard" data-exam-row="${e.id}">
@@ -115,7 +126,7 @@ export function renderExam(root,data,examId,{forms=[],step=3,step2=null,place=nu
   root.innerHTML=`<div class="pv-head ef-head1"><div class="pv-title"><input id="exam-title" style="width:${titleEm(exam.title)}em" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
       <span class="ef-hsep"></span><div class="ef-stepbar">${stepsMarkup(step,{n:items.length,pages:pages.length})}</div>
       <div class="pv-tools"><button type="button" class="ef-pill" data-ef-framepick title="틀 바꾸기">틀 · ${E(frameOf(exam,forms).name)}</button><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
-        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="variant" title="문항 순서를 섞은 나형 시험지(HWPX, 번호 다시 매김)와 가·나형 정답 대응표">나형(순서 섞기) 내려받기</button><button type="button" role="menuitem" data-exam-act="print" title="한글 엔진이 그린 쪽 그대로 인쇄 창을 엽니다. PDF는 인쇄 창의 「PDF로 저장」">인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="print-a4" title="B4 시험지를 통째로 A4에 줄여 찍습니다(줄바꿈·그림 위치 그대로, 크기 약 82%). PDF는 인쇄 창의 「PDF로 저장」">A4로 줄여 인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="blueprint" title="이원목적분류표와 정답표를 엑셀 한 파일(두 시트)로">이원목적분류표·정답표(엑셀)</button><button type="button" role="menuitem" data-exam-act="duplicate" title="담긴 문항도 함께 복제합니다">시험지 복제</button><button type="button" role="menuitem" class="danger" data-exam-act="delete-exam" title="담긴 문항은 지우지 않고 보관함으로 돌려보냅니다">시험지 삭제…</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
+        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="variant" title="문항 순서를 섞은 나형 시험지(HWPX, 번호 다시 매김)와 가·나형 정답 대응표">나형(순서 섞기) 내려받기</button><button type="button" role="menuitem" data-exam-act="print" title="한글 엔진이 그린 쪽 그대로 인쇄 창을 엽니다. PDF는 인쇄 창의 「PDF로 저장」">인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="print-a4" title="B4 시험지를 통째로 A4에 줄여 찍습니다(줄바꿈·그림 위치 그대로, 크기 약 82%). PDF는 인쇄 창의 「PDF로 저장」">A4로 줄여 인쇄·PDF</button><button type="button" role="menuitem" data-exam-act="blueprint" title="이원목적분류표와 정답표를 엑셀 한 파일(두 시트)로">이원목적분류표·정답표(엑셀)</button><button type="button" role="menuitem" data-exam-act="duplicate" title="담긴 문항도 함께 복제합니다">시험지 복제</button><button type="button" role="menuitem" class="danger" data-exam-act="delete-exam" title="담긴 문항은 지우지 않고 보관함으로 돌려보냅니다">시험지 삭제…</button><button type="button" role="menuitem" data-exam-act="status:${exam.status==='drafting'?'done':exam.status==='done'?'ended':'done'}">${exam.status==='drafting'?'출제 완료로 옮기기':exam.status==='done'?'시험 종료로 옮기기':'출제 완료로 되돌리기'}</button>${exam.status==='done'?'<button type="button" role="menuitem" data-exam-act="status:drafting">출제 중으로 되돌리기</button>':''}</div></div>
       <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
     ${step===1?renderStep1(exam,data,forms):step===2&&step2?step2(exam):''}
     ${step===3?renderStep3(exam,data,forms,items,place||{lv:'list',zoom:'page',noGoal:false}):''}`;

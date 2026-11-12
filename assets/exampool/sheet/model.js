@@ -152,7 +152,7 @@ export function validate(data,{only=null}={}) {
     // 조판 기준(10-22): 없으면 시험지 기준 → 수능 틀.
     if(q.standardId!==undefined&&!id(q.standardId))throw Error('조판 기준 표시를 확인하세요.');
     for(const k of ['askGap','choicesGap'])if(q[k]!==undefined&&!(Number.isFinite(q[k])&&q[k]>=0&&q[k]<=20))throw Error('발문·선지 앞 간격은 0~20mm로 적어 주세요.');
-    for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
+    for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey','name'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
     if(q.form!==undefined&&!FORM_KEYS.includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
     // 보관함 분류(10-24 시험지 만들기 ②): 해시태그 30개 이내 · 난이도 상·중·하.

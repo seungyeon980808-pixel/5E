@@ -142,3 +142,66 @@
 /* 왼쪽 메뉴: 아이디어가 열려 있으면 빨간 점 */
 .side .nav.nav-idea{position:relative}
 .side .nav.nav-idea.open::after{content:'';position:absolute;left:21px;top:5px;width:6px;height:6px;border-radius:50%;background:#c0716a;box-shadow:0 0 0 2px var(--ds-panel,#0d1117)}
+
+/* ── 11-12 왼쪽 메뉴: 맨 위 줄은 메뉴 접기 단추 자리(단추는 #toggle-nav가 그 자리에 뜸) · 라이브러리 켜기(바탕 + 점) · 휴지통 · 지금 작업으로 ── */
+.side .side-top{flex:none;height:30px}
+.shell-body.nav-off>.side .side-top{display:none}
+.side .nav-lib[aria-pressed=true]{background:var(--ds-selected);color:var(--ds-selected-ink)}
+.side .nav-lib .nav-led{margin-left:auto;width:7px;height:7px;border-radius:50%;background:#6ba4f8;box-shadow:0 0 0 3px rgba(107,164,248,.18),0 0 8px rgba(107,164,248,.6);flex:none}
+.shell-body.nav-off>.side .nav-lib .nav-led{display:none}
+.side .side-div{height:1px;background:var(--ds-line);margin:6px 4px 2px;flex:none}
+.side .nav-trash{color:var(--ds-ink-3)}.side .nav-trash .st-ico{color:var(--st-trash,#8b949e)}
+.side .side-sp{flex:1}
+.side .nav-bench{border-top:1px solid var(--ds-line)!important;border-radius:0!important;margin-top:6px}
+/* ── 11-12 작업 칸(시안 exam-panes-1112): 라이브러리 1 · 판 2 · 카드(1·2) · 조판 1, 칸 사이 틈, 칸이 바뀔 때 폭이 부드럽게 ── */
+#card-view.bench{gap:var(--cv-gutter,8px)}
+#card-view.bench .cv-left{flex:1 1 0px!important;width:auto!important;min-width:0}
+#card-view.bench .cv-idea{flex:2 1 0px!important;min-width:0}
+#card-view.bench .cv-center{flex:var(--g,2) 1 0px!important;min-width:0}
+#card-view.bench .cv-right{flex:1 1 0px!important;min-width:0}
+#card-view.bench.is-sheet-view .cv-right{flex:3 1 0px!important}
+#card-view.bench .pane-rail.mid{flex:0 0 34px!important}
+#card-view.bench .cv-foldrail{flex:0 0 36px!important;margin:0!important;gap:8px}
+#card-view.bench .cv-foldrail small{writing-mode:vertical-rl;font-size:11px;color:var(--ds-ink-3);letter-spacing:1px}
+#card-view.bench .cv-foldrail span{max-height:46%;overflow:hidden;text-overflow:ellipsis}
+#card-view .cv-bar .sp{flex:1}
+#card-view .cv-bar .cv-headbtn{width:30px;height:28px;flex:none;display:grid;place-items:center;border-radius:7px;border:1px solid transparent;background:none;color:var(--ds-ink-3);padding:0;cursor:pointer}
+#card-view .cv-bar .cv-headbtn .ico{width:17px;height:17px}
+#card-view .cv-bar .cv-headbtn:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .cv-bar .cv-tsbtn{border-color:var(--ds-line-strong,#30363d);color:var(--ds-ink-2)}
+#card-view .cv-bar .cv-tsbtn.on{background:var(--ds-soft-bg,#152137);border-color:var(--ds-soft-line,#6ba4f8);color:var(--ds-ink)}
+#card-view .cv-bar .cv-headbtn:disabled{opacity:.35;cursor:default}
+#card-view.bench .cv-right{border-top-left-radius:0;border-bottom-left-radius:0}
+.cv-save-ask .dialog-actions{display:flex;gap:8px;justify-content:flex-end}
+/* 문항 이름 칸 */
+#card-view .cv-qname{flex:1 1 160px;min-width:120px;height:30px;border:1px solid #d5dbe3;border-radius:6px;padding:0 9px;font:inherit;font-size:13px;color:#1d1d1f;background:#fbfcfd}
+#card-view .cv-qname::placeholder{color:#9aa3ad}#card-view .cv-qname:focus{outline:none;border-color:#6ba4f8;background:#fff}
+/* ── 11-12 판 모음(보관함 틀) · 휴지통 ── */
+#ideas-view,#trash-view{overflow:auto}
+#ideas-view .iv-box,#trash-view .tv-box{background:transparent;box-shadow:none;border-radius:0;display:block}
+#ideas-view svg:not(.st-ico),#trash-view svg:not(.st-ico){width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#ideas-view .lv-meta .st-ico{width:18px;height:18px;flex:none}
+#ideas-view .iv-th{background:#1b1d20 radial-gradient(#2c3036 1px,transparent 1.2px) 0 0/12px 12px;border-bottom:0;height:auto}
+#ideas-view .iv-card.hit,#ideas-view .iv-r.hit{border-color:var(--ds-soft-line,#6ba4f8)}
+#ideas-view .iv-rows,#trash-view .tv-rows{margin:0 20px 30px;border:1px solid var(--ds-line-strong,#30363d);border-radius:10px;overflow:hidden}
+#ideas-view .iv-r{display:grid;grid-template-columns:28px 1fr 80px 80px 90px;align-items:center;height:40px;padding:0 12px;border-bottom:1px solid var(--ds-line,#21262d);gap:8px;color:var(--ds-ink);font-size:13px;cursor:default;border-left:1px solid transparent}
+#ideas-view .iv-r:last-child{border-bottom:0}#ideas-view .iv-r:hover{background:var(--ds-hover)}#ideas-view .iv-r small{color:var(--ds-ink-3)}
+#ideas-view .iv-r .st-ico{width:18px;height:18px}
+#ideas-view .iv-hd,#trash-view .tv-hd{height:32px!important;color:var(--ds-ink-3)!important;font-size:12px!important;background:var(--ds-raise,#161b22)}
+#trash-view .tv-r{display:grid;grid-template-columns:1fr 90px 80px 200px;align-items:center;min-height:44px;padding:0 12px;border-bottom:1px solid var(--ds-line,#21262d);gap:8px;color:var(--ds-ink-2);font-size:13px}
+#trash-view .tv-r:last-child{border-bottom:0}
+#trash-view .tv-n{display:flex;flex-direction:column;min-width:0}#trash-view .tv-n b{color:var(--ds-ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#trash-view .tv-n small{color:var(--ds-ink-3);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#trash-view .tv-acts{display:flex;gap:6px;justify-content:flex-end}
+#trash-view .tv-acts button,#trash-view .tv-empty-btn{height:28px;padding:0 11px;border-radius:6px;border:1px solid var(--ds-line-strong,#30363d);background:none;color:var(--ds-ink-2);font:inherit;font-size:12.5px;cursor:pointer}
+#trash-view .tv-acts button:hover,#trash-view .tv-empty-btn:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#trash-view .tv-acts .danger:hover,#trash-view .tv-empty-btn:hover{color:#f08a80}
+#trash-view .tv-empty-btn{margin-left:auto}
+
+/* 판의 표 */
+.ib-table{padding:8px}
+.ib-tbl{border-collapse:collapse;width:100%;font-size:12.5px;color:var(--g-ink)}
+.ib-tbl td{border:1px solid #444a52;padding:5px 7px;min-width:40px;height:26px;vertical-align:top;white-space:pre-wrap;word-break:break-word;outline:none}
+.ib-it.st-light .ib-tbl{color:#222}.ib-it.st-light .ib-tbl td{border-color:#b9bec5}
+.ib-it.editing .ib-tbl td[contenteditable]:focus{background:rgba(143,180,255,.14);box-shadow:inset 0 0 0 1px #8fb4ff}
+.ib-tblops{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 4px 6px}
+.ib-tblops button{height:28px;border-radius:6px;border:1px solid #3a3f46;background:#2a2e34;color:#e6e8eb;font:inherit;font-size:12px;cursor:pointer}.ib-tblops button:hover{background:#343940}

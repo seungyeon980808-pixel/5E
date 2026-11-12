@@ -2,10 +2,10 @@
 /* ── 문항 보관함 · 시험지 · 문항 카드 ───────────────────────────── */
 :root{--st-draft:var(--ds-ink-3);--st-review:#b89a55;--st-complete:#5b8a6d;
   /* 상태 아이콘 색(11-04 확정 시안 status-icons-1104-v3): 문항 출제 중 · 출제 완료 · 시험지에 넣음, 시험지 출제 중 · 출제 완료 */
-  --st-q-idea:#c0716a;--st-q-work:#b89a55;--st-q-done:#5b8a6d;--st-q-used:#6f93c4;--st-e-work:#b89a55;--st-e-done:#6f93c4}
+  --st-q-idea:#c0716a;--st-q-work:#b89a55;--st-q-done:#5b8a6d;--st-q-used:#6f93c4;--st-e-work:#b89a55;--st-e-done:#5b8a6d;--st-e-ended:#6f93c4;--st-trash:#8b949e}
 .st-ico{width:18px;height:18px;flex:none;display:inline-block;vertical-align:-4px}
 .st-q-idea{color:var(--st-q-idea)}.st-q-work{color:var(--st-q-work)}.st-q-done{color:var(--st-q-done)}.st-q-used{color:var(--st-q-used)}
-.st-e-work{color:var(--st-e-work)}.st-e-done{color:var(--st-e-done)}.st-q-new,.st-e-new{color:var(--ds-ink-3)}
+.st-e-work{color:var(--st-e-work)}.st-e-done{color:var(--st-e-done)}.st-e-ended{color:var(--st-e-ended)}.st-trash{color:var(--st-trash)}.st-q-new,.st-e-new{color:var(--ds-ink-3)}
 .st-ico .st-mark{stroke:var(--ds-panel)}
 .side .nav .st-ico{width:18px;height:18px}.side .nav.sub .st-ico{width:15px;height:15px}.side .side-add .st-ico{width:16px;height:16px}
 .pv-st .st-ico{width:15px;height:15px;margin-right:4px}.pv-exam>.st-ico{width:22px;height:22px}

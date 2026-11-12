@@ -9,7 +9,7 @@ import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastDa
 import {createCardEditor,clearPastBusy} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {saveOut,savedText,desktopFiles} from './save-out.js';
-import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf,poolQuestions} from './exams.js';
+import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf,poolQuestions,EXAM_STATUS,TRASH_DAYS} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {exportExcel,importExcel,keepAppOnly} from './excel.js';
@@ -251,15 +251,15 @@ function renderTable(t,id,full){let html=`<div class="table-card" data-table="${
 function renderDetail(){if(!current)return;$('#question-title').textContent=`${current.number||'번호 미입력'}번 문항`;$('#structure-count').textContent=current.blocks.length+'개 구성';$('#ask').value=current.ask;renderBlocks();renderChoices();$('#tables').innerHTML=current.blocks.filter(b=>b.kind==='table').map(b=>renderTable(b.table,b.id,true)).join('')+(current.style==='대응표'?renderTable(current.choiceTable,'choices',true):'')||'<p class="muted">구성 추가에서 표를 추가하세요. 그림을 표 안의 셀에도 넣을 수 있습니다.</p>';renderEvidence();switchTab(activeTab);grid?.refresh();}
 // 완성한 문항의 내용이 바뀌면 점검으로 돌린다(상태는 내용이 아니다).
 // 태그·난이도(보관함 분류)는 내용이 아니므로 바꿔도 완성 상태를 유지한다.
-const contentOf=q=>{const {typeset,references,workflow,reviews,authoring,tags,difficulty,...c}=q;return JSON.stringify(c);};
+const contentOf=q=>{const {typeset,references,workflow,reviews,authoring,tags,difficulty,name,...c}=q;return JSON.stringify(c);};
 function completeKeys(only=null){const m=new Map();for(const q of only?[only]:data.questions)if(q.workflow==='complete')m.set(q.id,contentOf(q));return m;}
 function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.questions.find(x=>x.id===id);if(q?.workflow==='complete'&&contentOf(q)!==k){q.workflow='review';n++;}}if(n)setTimeout(()=>status(`완성한 문항 ${n}개의 내용이 바뀌어 점검할 문항으로 옮겼습니다.`),0);}
 // 화면: cards(분류별 카드) · desk(5E_cell·5E_hwp 작업대) · exam(시험지 구성). 처음에는 문항이 있으면 카드로 연다.
 let view={name:'library',status:'drafting',query:'',type:'',stage:'all',examId:null};
 const appView=()=>view;// 쪽 그리기 안에서 지역 이름 view(그린 쪽)와 겹치지 않게
 function renderView(){
-  const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view',ideas:'#ideas-view'};
-  if(view.name!=='card')cardEditor.resetIdea?.();
+  const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view',ideas:'#ideas-view',trash:'#trash-view'};
+  view.libOn=!!cardEditor.libOn?.();view.benchBusy=!!cardEditor.benchBusy?.();
   for(const [name,sel] of Object.entries(panes))$(sel).hidden=view.name!==name;
   // 한글 조판 창은 한 번 미리보기에 붙으면 그 자리에 둔다(옮기면 편집기 프레임을 처음부터 다시 읽고 간결 화면이 풀린다). 카드를 떠나면 닫기만 한다.
   if(view.name!=='card'&&$('#preview-dialog').classList.contains('docked')&&!$('#preview-dialog').hidden)void requestTypeset(null);
@@ -269,7 +269,8 @@ function renderView(){
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
-  if(view.name==='ideas')renderIdeasView();else if(ideaBoard.el.closest('#ideas-view'))ideaBoard.el.remove();
+  if(view.name==='ideas')renderIdeasView();
+  if(view.name==='trash')renderTrash();
   if(view.name==='exam'){const ex=examById(data,view.examId);
     // 시험지를 처음 열 때 단계: 문항이 없으면 ① 틀 · 속성, 있으면 ③ 배치 · 점검(10-24 세 단계).
     // 시험지를 열면: 문항이 있으면 배치·점검, 없으면 문항 고르기(10-24 시안 17 — ① 틀·속성은 「새 시험지」 창과 머리의 「틀」 표로).
@@ -286,8 +287,8 @@ function renderView(){
   {const ex=view.name==='card'&&current?examOf(data,current.id):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
   // 경로는 지금 고른 칸을 그대로 말한다(10-28 출제 지적 1): 「문항 · 출제 중」.
-  $('#crumb-view').textContent=view.name==='ideas'?'아이디어':view.name==='library'?`문항 · ${POOLS[libState(view).pool]}`:view.name==='card'&&!exam?`문항 · ${POOLS[view.cardPool||'drafting']}`:view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
-  {const q=['desk','card'].includes(view.name)&&current,ib=view.name==='ideas'&&view.board&&data.ideas.find(b=>b.id===view.board),ic=view.name==='card'&&cardEditor.ideaState?.(),icb=ic&&data.ideas.find(b=>b.id===ic.id);$('#crumb-question').textContent=ib?ib.title:q?questionTitle(current)+(icb?` + 아이디어 「${icb.title}」`:''):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!(q||ib);}
+  $('#crumb-view').textContent=view.name==='trash'?(view.kind==='e'?'시험지 · 휴지통':'문항 · 휴지통'):view.name==='ideas'?'아이디어 판':view.name==='library'?`문항 · ${POOLS[libState(view).pool]}`:view.name==='card'&&!exam?`문항 · ${POOLS[view.cardPool||'drafting']}`:view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
+  {const cardOn=view.name!=='card'||cardEditor.cardOn?.(),q=['desk','card'].includes(view.name)&&cardOn&&current,ib=null,ic=view.name==='card'&&cardEditor.ideaState?.(),icb=ic&&data.ideas.find(b=>b.id===ic.id);$('#crumb-question').textContent=[icb?`아이디어 「${icb.title}」`:'',q?questionTitle(current):''].filter(Boolean).join(' + ');$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!(q||icb);}
   // 이동 줄 앞 단계는 그 화면으로 가는 단추: 시험지 문항이면 그 시험지, 아니면 문항 보관함(보관함·시험지 목록 화면에서는 지금 화면이라 누를 일 없음).
   $('#crumb-view').disabled=!['card','desk'].includes(view.name)&&!(view.name==='ideas'&&view.board);$('#crumb-view').title=$('#crumb-view').disabled?'':exam?'이 시험지 열기':'문항 보관함 열기';
   $('#question-position').textContent=list.length?`${at+1} / ${list.length}`:'0 / 0';
@@ -516,17 +517,17 @@ function askDelete(arg){const ids=[].concat(arg).filter(id=>data.questions.some(
   // 여러 문항(11-02 시안 select-delete-1102 ④): 지울 문항 이름, 시험지에 담긴 문항은 시험지에서도 빠진다는 것, ⌘Z 한 번에 되살림.
   const qs=ids.map(id=>data.questions.find(q=>q.id===id)),name=q=>q.managementId||q.number+'번 문항',held=qs.filter(q=>examOf(data,q.id)).length,msg=$('#delete-message');
   $('#delete-dialog h2').textContent='문항 삭제';
-  if(ids.length===1&&!held)msg.textContent=`${name(qs[0])}을 삭제합니다. 되돌리기(⌘Z)로 복원할 수 있습니다.`;
-  else msg.innerHTML=`<b>${ids.length===1?E(name(qs[0])):`문항 ${ids.length}개`}를 삭제할까요?</b>${ids.length>1?`<br><span class="muted">${qs.slice(0,6).map(q=>E(name(q))).join(' · ')}${ids.length>6?` 외 ${ids.length-6}개`:''}</span>`:''}${held?`<br>시험지에 담긴 문항 ${held}개는 시험지에서도 빠집니다.`:''}<br>되돌리기(⌘Z)로 ${ids.length>1?'한 번에 ':''}복원할 수 있습니다.`;
+  if(ids.length===1&&!held)msg.textContent=`${name(qs[0])}을 휴지통으로 옮깁니다. ${TRASH_DAYS}일 동안 휴지통에서 되살릴 수 있습니다.`;
+  else msg.innerHTML=`<b>${ids.length===1?E(name(qs[0])):`문항 ${ids.length}개`}를 삭제할까요?</b>${ids.length>1?`<br><span class="muted">${qs.slice(0,6).map(q=>E(name(q))).join(' · ')}${ids.length>6?` 외 ${ids.length-6}개`:''}</span>`:''}${held?`<br>시험지에 담긴 문항 ${held}개는 시험지에서도 빠집니다.`:''}<br>휴지통으로 옮깁니다 · ${TRASH_DAYS}일 동안 되살릴 수 있고, 그 뒤 자동으로 지워집니다.`;
   pendingDelete=()=>{const gone=new Set(ids),at=data.questions.findIndex(q=>gone.has(q.id));
-    if(!mutate(()=>{data.questions=data.questions.filter(q=>!gone.has(q.id));for(const id of ids)removeFromExam(data,id);for(const e of data.exams)renumberExam(data,e.id);if(current&&gone.has(current.id))current=data.questions[Math.min(at,data.questions.length-1)]||null;}))return;
-    status(`${ids.length>1?`문항 ${ids.length}개를`:'문항을'} 삭제했습니다 · 되돌리기(⌘Z)로 복원할 수 있습니다.`);};
+    if(!mutate(()=>{const at2=new Date().toISOString();for(const q of qs)data.trash.questions.unshift({q,at:at2,examId:examOf(data,q.id)?.id||null});data.questions=data.questions.filter(q=>!gone.has(q.id));for(const id of ids)removeFromExam(data,id);for(const e of data.exams)renumberExam(data,e.id);if(current&&gone.has(current.id))current=data.questions[Math.min(at,data.questions.length-1)]||null;}))return;
+    if(current&&gone.has(current.id))cardEditor.closeCardQuiet?.();status(`${ids.length>1?`문항 ${ids.length}개를`:'문항을'} 휴지통으로 옮겼습니다 · 왼쪽 「휴지통」에서 ${TRASH_DAYS}일 동안 되살릴 수 있습니다.`);};
   $('#delete-dialog').showModal();}
 // 시험지 삭제(11-02 시안 ⑥): 담긴 문항은 지우지 않고 보관함(출제 중·출제 완료)으로 돌려보낸다. ⌘Z로 되살림.
 function askDeleteExam(id){const exam=examById(data,id);if(!exam)return;
   $('#delete-dialog h2').textContent='시험지 삭제';
-  $('#delete-message').innerHTML=`<b>「${E(exam.title)}」 시험지를 삭제할까요?</b><br>${exam.items.length?`담긴 문항 ${exam.items.length}개는 지우지 않고 「출제 중인 문항」(완성한 문항은 「출제 완료」)으로 돌아갑니다.<br>`:''}되돌리기(⌘Z)로 복원할 수 있습니다.`;
-  pendingDelete=()=>{if(!mutate(()=>{data.exams=data.exams.filter(e=>e.id!==id);}))return;if(view.examId===id){view.examId=null;show('exams',{status:exam.status});}status(`「${exam.title}」 시험지를 삭제했습니다 · 담긴 문항은 보관함으로 돌아갔습니다 · 되돌리기(⌘Z)로 복원할 수 있습니다.`);};
+  $('#delete-message').innerHTML=`<b>「${E(exam.title)}」 시험지를 휴지통으로 옮길까요?</b><br>${exam.items.length?`담긴 문항 ${exam.items.length}개는 지우지 않고 「출제 중인 문항」(완성한 문항은 「출제 완료」)으로 돌아갑니다.<br>`:''}${TRASH_DAYS}일 동안 휴지통에서 되살릴 수 있습니다.`;
+  pendingDelete=()=>{if(!mutate(()=>{data.trash.exams.unshift({e:exam,at:new Date().toISOString()});data.exams=data.exams.filter(e=>e.id!==id);}))return;if(view.examId===id){view.examId=null;show('exams',{status:exam.status});}status(`「${exam.title}」 시험지를 휴지통으로 옮겼습니다 · 담긴 문항은 보관함으로 돌아갔습니다.`);};
   $('#delete-dialog').showModal();}
 // 시험지 복제(11-02 시안 ⑤): 문항은 한 시험지에만 담기므로 담긴 문항도 함께 복제한다(번호·여백·단 나누기 그대로).
 function duplicateExam(id){const exam=examById(data,id);if(!exam)return;let copy=null;
@@ -819,11 +820,17 @@ $('#question-prev').onclick=()=>{const list=sheetScope(),at=list.indexOf(current
 $('#question-next').onclick=()=>{const list=sheetScope(),at=list.indexOf(current);if(at>=0&&at<list.length-1&&grid?.finish()!==false)choose(list[at+1]);};
 $('#workflow').onchange=e=>{if(!current)return;const v=e.target.value;if(mutate(()=>{if(v==='draft')delete current.workflow;else current.workflow=v;}))status(`${questionTitle(current)} → ${TITLES[v]}`);};
 // ── 문항 보관함 · 시험지 · 문항 카드 ──────────────────────────────────────────
-function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(grid?.finish()===false)return;current=q;const exam=examOf(data,id);view.examId=exam?.id||null;show('card');}
+function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(grid?.finish()===false)return;
+  // 11-12: 문항 카드를 작업 칸에 올린다(아이디어 판이 열려 있으면 판 옆에). 쓰던 다른 카드에 고친 것이 있으면 먼저 묻는다.
+  void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;current=q;cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
 // 왼쪽 메뉴(다시 그려지므로 위임으로 받는다).
 $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   const nav=b.dataset.nav;if(!nav)return;
+  if(nav==='toggle-nav'){$('#toggle-nav').click();return;}
+  if(nav==='lib'){cardEditor.toggleLib();renderNav($('.side'),data,view);return;}
+  if(nav==='bench'){show('card');return;}
+  if(nav==='trash'){show('trash',{kind:b.dataset.trash||'q'});return;}
   if(nav==='library'){view.examId=null;Object.assign(libState(view),{pool:b.dataset.pool||'drafting',limit:40,open:-1});show('library');}
   else if(nav==='exams')show('exams',{status:b.dataset.status||'drafting'});
   else if(nav==='ideas')show('ideas',{board:null});
@@ -860,7 +867,7 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   const act=b.dataset.examAct;if(!act)return;
   if(act==='cards'){if(exam.items[0])openCard(current&&exam.items.includes(current.id)?current.id:exam.items[0]);else $('#new').click();}
   else if(act==='sheet'){if(exam.items[0]&&!exam.items.includes(current?.id))current=data.questions.find(q=>q.id===exam.items[0]);show('desk');}
-  else if(act==='status')mutate(()=>{exam.status=exam.status==='done'?'drafting':'done';exam.updatedAt=new Date().toISOString();});
+  else if(act.startsWith('status:')){const to=act.slice(7);if(mutate(()=>{exam.status=to;exam.updatedAt=new Date().toISOString();}))status(`「${exam.title}」을(를) 「${EXAM_STATUS[to]}」로 옮겼습니다.`);}
   else if(act==='duplicate')duplicateExam(exam.id);
   else if(act==='delete-exam')askDeleteExam(exam.id);
   else if(act==='new')$('#new').click();
@@ -1172,7 +1179,10 @@ const cardEditor=createCardEditor($('#card-view'),{
   question:()=>current,
   data:()=>data,ideaBoard,boardMeta:b=>boardMeta(b),
   ideaSend:(field,payload,board)=>ideaSend(field,payload,board),ideaCreate:qid=>ideaCreate(qid),showIdeas:(id=null)=>show('ideas',{board:id}),
-  ideaChanged:st=>{const open=!!st;if(view.ideaOpen!==open){view.ideaOpen=open;renderNav($('.side'),data,view);}if(view.name==='card'&&current){const ic=st&&data.ideas.find(b=>b.id===st.id);$('#crumb-question').textContent=questionTitle(current)+(ic?` + 아이디어 「${ic.title}」`:'');}},
+  benchEmpty:kind=>{if(view.name!=='card')return;if(kind==='board')show('ideas',{board:null});else{view.examId=null;show('library');}},
+  restoreQuestion:snap=>{const i=data.questions.findIndex(x=>x.id===snap.id);if(i<0)return;mutate(()=>{data.questions[i]=snap;if(current?.id===snap.id)current=snap;},{render:false});},
+  restoreBoard:(id,snap)=>{const b=data.ideas.find(x=>x.id===id);if(!b)return;Object.assign(b,snap);markDirty(null);remember({validated:true});},
+  ideaChanged:st=>{const open=!!st;if(view.ideaOpen!==open){view.ideaOpen=open;renderNav($('.side'),data,view);}if(view.name==='card'){const ic=st&&data.ideas.find(b=>b.id===st.id),cq=cardEditor.cardOn?.()&&current;$('#crumb-question').textContent=[ic?`아이디어 「${ic.title}」`:'',cq?questionTitle(current):''].filter(Boolean).join(' + ');document.querySelector('.crumb-sep').hidden=!(ic||cq);}},
   context:()=>{const exam=view.examId&&examById(data,view.examId);return exam?{label:exam.title,numbered:true,questions:exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean)}:{label:'문항 보관함',numbered:false,questions:libraryQuestions(data)};},
   open:id=>openCard(id),
   newQuestion:()=>$('#new').click(),
@@ -1207,7 +1217,7 @@ const cardEditor=createCardEditor($('#card-view'),{
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
 // ── 아이디어 판 ──
-const IDEA_FIELD={passage:'지문',ask:'발문',bogi:'보기',figure:'자료',ref:'근거'};
+const IDEA_FIELD={passage:'지문',ask:'발문',bogi:'보기',figure:'자료',table:'자료(표)',ref:'근거'};
 function linkBoard(boardId,qid){const b=data.ideas.find(x=>x.id===boardId);if(b&&qid&&!b.questionIds.includes(qid))b.questionIds.push(qid);}
 // 판에서 고른 글·그림을 지금 문항 카드로: 지문·발문은 끝에 한 줄 덧붙이고, 보기는 빈 줄을 채우거나 한 줄 더, 그림은 빈 자료 칸(없으면 새 칸), 근거는 「근거」 표에.
 function ideaSend(field,payload,board){const q=current;if(!q)return false;const text=String(payload.text||'').trim();
@@ -1215,52 +1225,52 @@ function ideaSend(field,payload,board){const q=current;if(!q)return false;const 
     if(field==='passage'||field==='ask'){const old=fieldValue(q,field);writeField(q,field,[old,text].filter(v=>String(v||'').trim()).join('\n'));}
     else if(field==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(!b)writeField(q,'bogi',text);else{const empty=b.lines.find(l=>!l.text.trim());if(empty)empty.text=text;else{if(b.lines.length>=30)throw Error('보기는 30줄까지 넣을 수 있습니다.');const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ'];b.lines.push({id:crypto.randomUUID(),label:L[b.lines.length]||String(b.lines.length+1),text});}}}
     else if(field==='figure'){if(!payload.figure?.data)throw Error('보낼 그림이 없습니다.');let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure);if(!slot){slot=block('figure',null,nextMaterialLabel(q,null,'figure'));q.blocks.push(slot);}slot.figure={name:payload.figure.name.slice(0,200),data:payload.figure.data};}
+    else if(field==='table'){const cells=payload.table||[];if(!cells.length)throw Error('보낼 표가 없습니다.');const rows=Math.min(30,cells.length),cols=Math.min(12,Math.max(...cells.map(r=>r.length)));
+      const b=block('table',null,nextMaterialLabel(q,null,'table'));b.table=resizeTable(b.table,rows,cols,Math.min(1,rows));for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)b.table.cells[r][c]={value:String(cells[r]?.[c]??'')};q.blocks.push(b);}
     else if(field==='ref'){q.references.push({target:'question',label:('아이디어 · '+board.title).slice(0,300),quote:text.slice(0,2000)});}
     else throw Error('보낼 자리를 모릅니다.');
-    linkBoard(board.id,q.id);});
-  if(ok)status(`문항 카드 「${IDEA_FIELD[field]}」에 넣었습니다 · ⌘Z로 되돌리기 · 판과 이 문항이 이어졌습니다.`);return ok;}
+  });
+  if(ok)status(`문항 카드 「${IDEA_FIELD[field]}」에 넣었습니다 · ⌘Z로 되돌리기`);return ok;}
 function ideaCreate(qid){let id=null;const q=qid&&data.questions.find(x=>x.id===qid);
   mutate(()=>{const b=newBoard(q?`${questionTitle(q)} 아이디어`:nextBoardTitle(data));if(qid)b.questionIds.push(qid);data.ideas.push(b);id=b.id;},{render:false});return id;}
-function openBoardWithCard(boardId,qid){if(!data.questions.some(q=>q.id===qid))return;openCard(qid);cardEditor.openIdea(boardId,'ic','ideas');renderView();}
-var ideaQuery='',ideaPop=null;
+// ── 휴지통(11-12): 문항·시험지 각각. 14일 뒤 자동으로 비워짐(exams.js normalizeExams). ──
+const daysLeft=at=>Math.max(0,Math.ceil((Date.parse(at)+TRASH_DAYS*864e5-Date.now())/864e5));
+function renderTrash(){const root=$('#trash-view'),k=view.kind==='e'?'e':'q',list=k==='q'?data.trash.questions:data.trash.exams;
+  const when=at=>{const d=new Date(at);return `${d.getMonth()+1}-${String(d.getDate()).padStart(2,'0')}`;};
+  root.innerHTML=`<div class="tv-box"><div class="lv-head"><h1>${k==='q'?'문항':'시험지'} 휴지통</h1><p>${list.length}개 · 지운 날부터 ${TRASH_DAYS}일 뒤 자동으로 지워집니다</p>${list.length?'<button type="button" class="tv-empty-btn" data-tv="empty">휴지통 비우기</button>':''}</div>
+    ${list.length?`<div class="tv-rows"><div class="tv-r tv-hd"><span>이름</span><span>지운 날</span><span>남은 날</span><span></span></div>${list.map((t,i)=>{const nm=k==='q'?questionTitle(t.q):t.e.title,sub=k==='q'?questionSubtitle(t.q):`${t.e.items.length}문항`;
+      return `<div class="tv-r"><span class="tv-n"><b>${E(nm)}</b><small>${E(sub)}</small></span><span>${when(t.at)}</span><span>${daysLeft(t.at)}일</span><span class="tv-acts"><button type="button" data-tv="restore" data-i="${i}">되살리기</button><button type="button" class="danger" data-tv="purge" data-i="${i}">영구 삭제</button></span></div>`;}).join('')}</div>`
+      :`<p class="lv-emptyline">휴지통이 비어 있습니다.</p>`}</div>`;}
+$('#trash-view').addEventListener('click',async e=>{const b=e.target.closest('[data-tv]');if(!b)return;const k=view.kind==='e'?'exams':'questions',i=Number(b.dataset.i),t=data.trash[k][i];
+  if(b.dataset.tv==='restore'&&t){if(k==='questions'){if(data.questions.length>=500){status('문항은 500개까지 둘 수 있습니다.',true);return;}
+      if(mutate(()=>{data.trash.questions.splice(i,1);data.questions.push(t.q);const ex=t.examId&&examById(data,t.examId);if(ex&&!examOf(data,t.q.id)){addToExam(data,ex.id,t.q.id);renumberExam(data,ex.id);}}))status(`「${questionTitle(t.q)}」을(를) 되살렸습니다.`);}
+    else if(mutate(()=>{data.trash.exams.splice(i,1);const ids=new Set(data.questions.map(q=>q.id));t.e.items=t.e.items.filter(id=>ids.has(id)&&!examOf(data,id));data.exams.push(t.e);}))status(`「${t.e.title}」 시험지를 되살렸습니다.`);return;}
+  if(b.dataset.tv==='purge'&&t){if(!await ask(`「${k==='questions'?questionTitle(t.q):t.e.title}」을(를) 영구 삭제할까요? 되살릴 수 없습니다.`,{title:'영구 삭제',ok:'영구 삭제'}))return;mutate(()=>{data.trash[k].splice(i,1);});status('영구 삭제했습니다.');return;}
+  if(b.dataset.tv==='empty'){if(!await ask(`휴지통의 ${data.trash[k].length}개를 모두 영구 삭제할까요? 되살릴 수 없습니다.`,{title:'휴지통 비우기',ok:'모두 지우기'}))return;mutate(()=>{data.trash[k]=[];});status('휴지통을 비웠습니다.');}});
+// 판 열기(11-12): 작업 칸에 판을 올린다. 문항 카드가 열려 있으면 그 옆에(판 2 : 카드 1), 아니면 판만.
+function openBoardOnBench(id){void cardEditor.confirmBoardSwitch(id).then(ok=>{if(!ok)return;cardEditor.openBoard(id);show('card');});}
+var ideaQuery='',ideaPop=null,ideaListMode=cardStore.get('ideaList','grid');
 const CARD_ICO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>';
-const qMark=x=>{const st=questionState(x,data);return qIcon(st,st==='work'?progressOf(x):1,{title:false});};
-function renderIdeasView(){const root=$('#ideas-view'),b=view.board&&data.ideas.find(x=>x.id===view.board);
-  if(view.board&&!b)view.board=null;
-  if(b){if(root.dataset.board!==b.id||!root.querySelector('.iv-board')){ideaBoard.el.remove();root.innerHTML=`<div class="iv-board"><div class="iv-pane" data-ivslot></div><button type="button" class="iv-rail" data-iv-card title="이 판과 같이 볼 문항 카드 고르기">${CARD_ICO}<span>문항 카드 ◂ 열기</span></button></div>`;root.dataset.board=b.id;}
-    ideaBoard.mount(root.querySelector('[data-ivslot]'),b.id,{where:'ideas',cardButton:{html:`${CARD_ICO}<span class="lb">문항 카드</span>`,on:false,title:'이 판과 같이 볼 문항 카드 고르기'},canSend:()=>false,
-      onCard:()=>ideaQPicker(root.querySelector('[data-iv-card]'),b),onClose:()=>show('ideas',{board:null}),onRename:()=>renderView()});return;}
-  root.dataset.board='';if(ideaBoard.el.closest('#ideas-view'))ideaBoard.el.remove();
+function renderIdeasView(){const root=$('#ideas-view');if(ideaBoard.el.closest('#ideas-view'))ideaBoard.el.remove();
   if(!root.querySelector('.iv-box'))root.innerHTML='<div class="iv-box"></div>';
-  renderIdeasList(root.querySelector('.iv-box'),data,{query:ideaQuery,qIcon:qMark,qTitle:x=>questionTitle(x)});}
+  renderIdeasList(root.querySelector('.iv-box'),data,{query:ideaQuery,mode:ideaListMode,benchCard:cardEditor.benchBusy?.()&&current?questionTitle(current):''});}
 function closeIdeaPop(){ideaPop?.remove();ideaPop=null;}
-function popAt(anchor,html,left=false){closeIdeaPop();const m=document.createElement('div');m.className='cv-idea-menu';m.setAttribute('role','menu');m.innerHTML=html;document.body.append(m);ideaPop=m;
-  const r=anchor.getBoundingClientRect();m.style.left=(left?Math.max(8,r.left-298):Math.max(8,Math.min(r.left,innerWidth-298)))+'px';m.style.top=Math.max(8,Math.min(left?r.top:r.bottom+6,innerHeight-m.offsetHeight-8))+'px';return m;}
-// 판에서 「문항 카드」: 이어진 문항 · 새 문항 카드 · 출제 중 문항에 잇기.
-function ideaQPicker(anchor,board){const qs=board.questionIds.map(id=>data.questions.find(x=>x.id===id)).filter(Boolean);
-  const m=popAt(anchor,`<div class="sec"><h5>이 판과 이어진 문항</h5>${qs.length?`<div class="list">${qs.map(x=>`<button type="button" class="row" data-q="${x.id}">${qMark(x)}<span>${E(questionTitle(x))}</span><small>${E(POOLS[poolOf(data,x)]||'')}</small></button>`).join('')}</div>`:'<p class="none">아직 없습니다.</p>'}</div>
-    <div class="sec"><button type="button" class="row" data-newq>＋ 새 문항 카드<small>이 판과 이어짐</small></button><button type="button" class="row" data-pick>출제 중 문항에 잇기…</button></div>`,anchor.classList.contains('iv-rail'));
-  m.addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;
-    if(t.dataset.q){closeIdeaPop();if(!board.questionIds.includes(t.dataset.q))mutate(()=>linkBoard(board.id,t.dataset.q),{render:false});openBoardWithCard(board.id,t.dataset.q);return;}
-    if(t.dataset.newq!==undefined){closeIdeaPop();let id=null;if(data.questions.length>=500){status('문항은 500개까지 만들 수 있습니다.',true);return;}
-      if(mutate(()=>{const q=newQuestion(nextNumber());data.questions.push(q);current=q;id=q.id;linkBoard(board.id,q.id);},{render:false})){openBoardWithCard(board.id,id);status('새 문항 카드를 만들어 이 판과 이었습니다.');}return;}
-    if(t.dataset.pick!==undefined){const list=poolQuestions(data,'drafting').filter(x=>!board.questionIds.includes(x.id));
-      m.innerHTML=`<div class="sec"><h5>출제 중 문항 — 고르면 이 판과 이어집니다</h5>${list.length?`<div class="list">${list.map(x=>`<button type="button" class="row" data-q="${x.id}">${qMark(x)}<span>${E(questionTitle(x))}</span><small>${E(questionSubtitle(x)).slice(0,24)}</small></button>`).join('')}</div>`:'<p class="none">출제 중 문항이 없습니다.</p>'}</div>`;}});}
-document.addEventListener('pointerdown',e=>{if(ideaPop&&!e.target.closest?.('.cv-idea-menu,[data-iv-card],.ib-card'))closeIdeaPop();},true);
+function popAt(anchor,html){closeIdeaPop();const m=document.createElement('div');m.className='cv-idea-menu';m.setAttribute('role','menu');m.innerHTML=html;document.body.append(m);ideaPop=m;
+  const r=anchor.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.left,innerWidth-298))+'px';m.style.top=Math.max(8,Math.min(r.bottom+6,innerHeight-m.offsetHeight-8))+'px';return m;}
+document.addEventListener('pointerdown',e=>{if(ideaPop&&!e.target.closest?.('.cv-idea-menu'))closeIdeaPop();},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ideaPop){e.preventDefault();closeIdeaPop();}});
 $('#ideas-view').addEventListener('input',e=>{if(!e.target.matches('[data-iv-search]'))return;ideaQuery=e.target.value;const pos=e.target.selectionStart;renderIdeasView();const n=$('#ideas-view [data-iv-search]');n.focus();try{n.setSelectionRange(pos,pos);}catch{}});
 $('#ideas-view').addEventListener('click',e=>{
-  if(e.target.closest('[data-iv-new]')){const id=ideaCreate(null);if(id)show('ideas',{board:id});return;}
-  if(e.target.closest('[data-iv-card]')){const b=data.ideas.find(x=>x.id===view.board);if(b)ideaQPicker(e.target.closest('[data-iv-card]'),b);return;}
-  const chip=e.target.closest('.iv-chip');if(chip){const b=data.ideas.find(x=>x.id===chip.dataset.ivBoard);if(!b)return;if(chip.dataset.ivQ)openBoardWithCard(b.id,chip.dataset.ivQ);else{show('ideas',{board:b.id});setTimeout(()=>{const a=$('#ideas-view [data-iv-card]');if(a)ideaQPicker(a,b);},50);}return;}
-  const c=e.target.closest('.iv-card');if(c){$('#ideas-view').querySelectorAll('.iv-card.hit').forEach(n=>n.classList.remove('hit'));c.classList.add('hit');}});
-$('#ideas-view').addEventListener('dblclick',e=>{const c=e.target.closest('.iv-card');if(c&&!e.target.closest('.iv-chip'))show('ideas',{board:c.dataset.ivOpen});});
-$('#ideas-view').addEventListener('keydown',e=>{const c=e.target.closest?.('.iv-card');if(c&&e.key==='Enter')show('ideas',{board:c.dataset.ivOpen});});
-$('#ideas-view').addEventListener('contextmenu',e=>{const c=e.target.closest('.iv-card');if(!c)return;e.preventDefault();const b=data.ideas.find(x=>x.id===c.dataset.ivOpen);if(!b)return;
+  if(e.target.closest('[data-iv-new]')){const id=ideaCreate(null);if(id)openBoardOnBench(id);return;}
+  const m=e.target.closest('[data-iv-mode]');if(m){ideaListMode=m.dataset.ivMode;cardStore.set('ideaList',ideaListMode);renderIdeasView();return;}
+  const c=e.target.closest('[data-iv-open]');if(c){$('#ideas-view').querySelectorAll('.hit').forEach(n=>n.classList.remove('hit'));c.classList.add('hit');}});
+$('#ideas-view').addEventListener('dblclick',e=>{const c=e.target.closest('[data-iv-open]');if(c)openBoardOnBench(c.dataset.ivOpen);});
+$('#ideas-view').addEventListener('keydown',e=>{const c=e.target.closest?.('[data-iv-open]');if(c&&e.key==='Enter')openBoardOnBench(c.dataset.ivOpen);});
+$('#ideas-view').addEventListener('contextmenu',e=>{const c=e.target.closest('[data-iv-open]');if(!c)return;e.preventDefault();const b=data.ideas.find(x=>x.id===c.dataset.ivOpen);if(!b)return;
   const m=popAt({getBoundingClientRect:()=>({left:e.clientX,right:e.clientX,top:e.clientY,bottom:e.clientY-6})},`<div class="sec"><button type="button" class="row" data-a="open">열기<small>두 번 누르기</small></button><button type="button" class="row" data-a="rename">이름 바꾸기</button></div><div class="sec"><button type="button" class="row" data-a="del" style="color:#f08a80">판 지우기</button></div>`);
   m.addEventListener('click',async ev=>{const a=ev.target.closest('[data-a]')?.dataset.a;if(!a)return;closeIdeaPop();
-    if(a==='open')show('ideas',{board:b.id});
-    if(a==='rename'){const n=c.querySelector('.iv-meta b span');n.contentEditable='true';n.focus();const r=document.createRange();r.selectNodeContents(n);getSelection().removeAllRanges();getSelection().addRange(r);
+    if(a==='open')openBoardOnBench(b.id);
+    if(a==='rename'){const n=c.querySelector('[data-iv-name]');n.contentEditable='true';n.focus();const r=document.createRange();r.selectNodeContents(n);getSelection().removeAllRanges();getSelection().addRange(r);
       const done=ok=>{n.onblur=null;n.removeAttribute('contenteditable');const t=n.textContent.trim().slice(0,80);if(ok&&t&&t!==b.title)mutate(()=>{b.title=t;b.updatedAt=new Date().toISOString();});else renderIdeasView();};
       n.onkeydown=k=>{if(k.key==='Enter'){k.preventDefault();done(true);}if(k.key==='Escape'){k.preventDefault();done(false);}};n.onblur=()=>done(true);}
     if(a==='del'&&await ask(`「${b.title}」 판을 지울까요? 판 안의 메모·그림도 함께 지워집니다. 문항 카드는 그대로입니다. (⌘Z로 되돌릴 수 있습니다)`,{title:'판 지우기',ok:'지우기'})){mutate(()=>{data.ideas=data.ideas.filter(x=>x.id!==b.id);});status(`「${b.title}」 판을 지웠습니다 · ⌘Z로 되돌리기`);}});});

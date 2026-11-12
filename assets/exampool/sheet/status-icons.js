@@ -18,19 +18,20 @@ export function questionState(q,data){
   if(data?.exams?.some(e=>e.items.includes(q.id)))return 'used';
   return workflowOf(q)==='complete'?'done':'work';
 }
-const NAME={idea:'아이디어',work:'출제 중',done:'출제 완료',used:'시험지에 넣음',new:'문항 추가'};
+const NAME={idea:'아이디어',work:'출제 중',ended:'시험 종료',done:'출제 완료',used:'시험지에 넣음',new:'문항 추가'};
 const pie=p=>{if(p<=0)return '';if(p>=1)return '<circle cx="12" cy="12" r="6.6"/>';const a=p*2*Math.PI,x=12+6.6*Math.sin(a),y=12-6.6*Math.cos(a);return `<path d="M12 12V5.4A6.6 6.6 0 ${p>.5?1:0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z"/>`;};
 export function qIcon(state,p=0,{title=true}={}){
-  const full=state==='done'||state==='used';
+  const full=state==='used';// 11-12: 단계만큼 ¼씩 — 아이디어 ¼ · 출제 중 ½ · 출제 완료 ¾ · 시험지에 담김 가득+체크
   return `<svg class="st-ico st-q-${state}" viewBox="0 0 24 24" aria-hidden="true">${title?`<title>${NAME[state]}${state==='work'?` · 완성도 ${Math.round(p*100)}%`:''}</title>`:''}
 <circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="1.5"${state==='new'?' stroke-dasharray="2.2 2.2"':''}/>
 <g fill="currentColor">${full?pie(1):state==='new'?'':pie(p)}</g>${state==='used'?'<path class="st-mark" d="m8.8 12.2 2.2 2.2 4.3-4.4" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>':''}${state==='new'?'<path d="M12 8.6v6.8M8.6 12h6.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>':''}</svg>`;
 }
 export function examIcon(state,p=0,{title=true}={}){
-  const full=state==='done',f=full?1:Math.max(0,Math.min(1,p));
+  // 11-12: 출제 중 절반 · 출제 완료 가득 · 시험 종료 가득+체크
+  const full=state==='done'||state==='ended',f=full?1:state==='work'?.5:Math.max(0,Math.min(1,p));
   const cells=[[6.6,9.2],[6.6,14.4],[12.6,9.2],[12.6,14.4]],w=4.8,h=4.2;
   const body=cells.map(([x,y],i)=>{const v=Math.max(0,Math.min(1,f*4-i));if(v<=0)return '';const hh=h*v;return `<rect x="${x}" y="${(y+h-hh).toFixed(2)}" width="${w}" height="${hh.toFixed(2)}" rx=".8"/>`;}).join('');
-  return `<svg class="st-ico st-e-${state}" viewBox="0 0 24 24" aria-hidden="true">${title?`<title>${state==='new'?'새 시험지':state==='done'?'출제 완료':`출제 중 · ${Math.round(f*100)}%`}</title>`:''}
+  return `<svg class="st-ico st-e-${state}" viewBox="0 0 24 24" aria-hidden="true">${title?`<title>${state==='new'?'새 시험지':state==='done'?'출제 완료':state==='ended'?'시험 종료':'출제 중'}</title>`:''}
 <g fill="none" stroke="currentColor" stroke-linejoin="round"><path d="M5 3.5h10.5L19.5 7.5V19.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1z" stroke-width="1.5"${state==='new'?' stroke-dasharray="2.2 2.2"':''}/><path d="M15.5 3.5v3a1 1 0 0 0 1 1h3" stroke-width="1.3"/><path d="M6.6 6.6h6.4" stroke-width="1.3" stroke-linecap="round"/>${state==='new'?'<path d="M12 10.5v6M9 13.5h6" stroke-width="1.6" stroke-linecap="round"/>':'<path d="M12 9.2v9.4" stroke-width=".9" opacity=".55"/>'}</g>
-<g fill="currentColor">${body}</g></svg>`;
+<g fill="currentColor">${state==='ended'?'<rect x="6.2" y="8.8" width="11.6" height="10.2" rx="1.2"/>':body}</g>${state==='ended'?'<path class="st-mark" d="m9 13.9 2 2 4-4" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>':''}</svg>`;
 }

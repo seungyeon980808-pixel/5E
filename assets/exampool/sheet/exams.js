@@ -1,14 +1,19 @@
 // 시험지와 문항 보관함. 문항은 시험지 하나에 속하거나(시험지 순서 = 시험지 구성) 어디에도 속하지 않는다(보관함).
 // 출제 완료한 시험지도 고칠 수 있다. 상태는 목록을 나누는 데만 쓴다.
 import {validFrame} from './exam-flow.js';
-export const EXAM_STATUS={drafting:'출제 중',done:'출제 완료'};
+export const EXAM_STATUS={drafting:'출제 중',done:'출제 완료',ended:'시험 종료'};// 11-12: 시험 종료(세 번째 단계)
 const now=()=>new Date().toISOString();
+export const TRASH_DAYS=14;
 export function newExam(title='새 시험지'){return {id:crypto.randomUUID(),title,status:'drafting',items:[],createdAt:now(),updatedAt:now()};}
 // 예전 데이터: 시험지 구성 하나(examSet)를 '출제 중인 시험지 1'로 옮긴다.
 export function normalizeExams(data){
   if(!Array.isArray(data.exams)){data.exams=[];if(data.examSet?.items){data.exams.push({...newExam(data.examSet.title||'출제 중인 시험지 1'),items:[...data.examSet.items]});}}
   // 아이디어 판(11-12): 없으면 빈 목록. 판 안 내용은 검사하지 않는다(문항이 아니므로).
   if(!Array.isArray(data.ideas))data.ideas=[];
+  // 휴지통(11-12): 지운 문항·시험지를 14일 두었다가 자동으로 비운다. {questions:[{q,at,examId}], exams:[{e,at}]}
+  if(!data.trash||typeof data.trash!=='object')data.trash={questions:[],exams:[]};
+  for(const k of ['questions','exams'])if(!Array.isArray(data.trash[k]))data.trash[k]=[];
+  {const cut=Date.now()-TRASH_DAYS*864e5;for(const k of ['questions','exams'])if(data.trash[k].some(t=>Date.parse(t.at)<cut))data.trash[k]=data.trash[k].filter(t=>!(Date.parse(t.at)<cut));}
   delete data.examSet;return data;
 }
 export function validateExams(data){
