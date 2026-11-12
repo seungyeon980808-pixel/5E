@@ -39,6 +39,8 @@ export function queryHighlightTerms(query) {
 
 export function mapQueryHighlights(entry, queryOrTerms) {
   const terms = Array.isArray(queryOrTerms) ? queryOrTerms : queryHighlightTerms(queryOrTerms);
+  // 11-12: 검색어가 없으면(과목 칩만 누름) 형광도 없다 — 문항마다 낱말 줄을 다시 세던 것(칩 한 번에 수십 ms)을 건너뛴다.
+  if (!terms.length) return Object.freeze({ terms, highlights: Object.freeze([]), misses: Object.freeze([]) });
   const runs = entryWordRuns(entry);
   return highlightsFromRuns(entry, terms, runs);
 }
@@ -57,7 +59,9 @@ function characterEdges(full) {
 }
 
 function entryWordRuns(entry) {
-  const cached = entry && typeof entry === "object" ? wordRunsCache.get(entry) : undefined;
+  // 11-12: 부르는 쪽(provider.js)이 검색마다 새 entry 객체를 만들어 캐시가 늘 빗나갔다 — 바뀌지 않는 낱말 배열을 열쇠로.
+  const cacheKey = Array.isArray(entry?.words) ? entry.words : entry;
+  const cached = cacheKey && typeof cacheKey === "object" ? wordRunsCache.get(cacheKey) : undefined;
   if (cached) return cached;
   const words = (entry.words ?? []).flatMap((word) => {
     const full = normalizedText(word.text);
@@ -85,7 +89,7 @@ function entryWordRuns(entry) {
     run.length += word.characters.length;
     run.offsets.push({ word, start, end: start + word.characters.length });
   }
-  if (entry && typeof entry === "object") wordRunsCache.set(entry, runs);
+  if (cacheKey && typeof cacheKey === "object") wordRunsCache.set(cacheKey, runs);
   return runs;
 }
 

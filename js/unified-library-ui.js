@@ -1161,11 +1161,19 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       const code = subject.dataset.condSubject;
       if (conditions.subjects.has(code)) { conditions.subjects.delete(code); for (const key of [...conditions.parts]) if (key.startsWith(`${code}|`)) conditions.parts.delete(key); }
       else conditions.subjects.add(code);
-    } else if (exam) conditions.exam = exam.dataset.condExam;
-    else if (clear) { conditions.subjects.clear(); conditions.parts.clear(); }
+      // 11-12 사용자 「빠릿빠릿하지 못하다」: 검색·칸 다시 그리기(0.1~0.2초)가 끝난 뒤에야 눌림 표시가 바뀌었다 → 누른 즉시 바꾼다.
+      const on = conditions.subjects.has(code); subject.classList.toggle("is-on", on); subject.setAttribute("aria-pressed", String(on));
+    } else if (exam) { conditions.exam = exam.dataset.condExam; conditionsHost.querySelectorAll("[data-cond-exam]").forEach((button) => button.setAttribute("aria-pressed", String(button === exam))); }
+    else if (clear) { conditions.subjects.clear(); conditions.parts.clear(); conditionsHost.querySelectorAll("[data-cond-subject]").forEach((button) => { button.classList.remove("is-on"); button.setAttribute("aria-pressed", "false"); }); }
     else return;
-    void runSearch();
+    scheduleConditionSearch();
   });
+  // 눌림 표시를 먼저 그린 다음(다음 프레임) 검색한다. 빠르게 여러 번 누르면 마지막 한 번만 검색.
+  let conditionSearchFrame = 0;
+  function scheduleConditionSearch() {
+    if (conditionSearchFrame) return;
+    conditionSearchFrame = requestAnimationFrame(() => setTimeout(() => { conditionSearchFrame = 0; void runSearch(); }, 0));
+  }
   conditionsHost?.addEventListener("change", (event) => {
     const part = event.target.closest("[data-cond-part]"), shape = event.target.closest("[data-cond-shape]"), year = event.target.closest("[data-cond-year]");
     if (part) part.checked ? conditions.parts.add(part.dataset.condPart) : conditions.parts.delete(part.dataset.condPart);
@@ -1176,7 +1184,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       conditions.startYear = lo === knownYears[0] ? null : lo;
       conditions.endYear = hi === knownYears.at(-1) ? null : hi;
     } else return;
-    void runSearch();
+    scheduleConditionSearch();
   });
   // 끄는 동안에는 숫자·막대만 바로 바꾸고, 놓을 때(change) 검색한다.
   conditionsHost?.addEventListener("input", (event) => {
