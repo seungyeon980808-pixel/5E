@@ -17,7 +17,7 @@ export function describeGraphFailure(error) {
     GRAPH_MODEL_UNAVAILABLE: 'Sol 6.1 / medium을 사용할 수 없습니다. 모델 목록과 연결 상태를 확인하세요.',
     GRAPH_TIMEOUT: '그래프 분석 시간이 초과되었습니다. 다시 시도할 수 있습니다.',
     GRAPH_CONNECTION: 'AI 연결이 끊겼습니다. 연결을 확인한 뒤 다시 시도하세요.',
-    GRAPH_INVALID_RESULT: '복원 결과가 그래프 검증을 통과하지 못했습니다.',
+    GRAPH_INVALID_RESULT: '그래프 결과가 검증을 통과하지 못했습니다.', // 11-12: 생성에도 쓰이므로 「복원」을 뺌
     GRAPH_DESCRIPTION_REJECTED: detail,
   };
   return { code, detail, message: `${messages[code] || detail} 원본과 이전 결과는 유지하며 자동 재전송하지 않습니다.`, automaticRetry: false };

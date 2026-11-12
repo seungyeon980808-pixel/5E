@@ -24,9 +24,12 @@ export function buildRegionGeometry(spec, plane, series = []) {
     const find=id=>series.find(s=>s.id===id || s.reconstruction?.seriesId===id || s.seriesId===id);
     const sourceUpper=find(spec.upperSeriesId),sourceLower=find(spec.lowerSeriesId);
     const worldSeries=s=>{if(!s)return s;const pts=s.points || s.mathPoints.map(q=>worldFromMath(p,q.x,q.y));const hs=s.handles || s.mathPoints.map((q,i)=>{const h=s.handlesMath?.[i];if(!h)return null;const a=worldFromMath(p,q.x+h.ix,q.y+h.iy),b=worldFromMath(p,q.x+h.ox,q.y+h.oy);return {inX:a.x,inY:a.y,outX:b.x,outY:b.y};});return {...s,mathPoints:pts,handlesMath:hs.every(Boolean)?hs.map((h,i)=>({ix:h.inX-pts[i].x,iy:h.inY-pts[i].y,ox:h.outX-pts[i].x,oy:h.outY-pts[i].y})):[]};};
-    const upper=worldSeries(sourceUpper),lower=worldSeries(sourceLower);
+    // 11-12 밤샘: AI가 준 계열에 x가 같거나 거꾸로 가는 점이 한두 개 섞이면 영역 전체를 버렸다 — 그런 점만 빼고 x가 커지는 점으로 영역을 만든다.
+    const monotone=s=>{if(!s?.mathPoints?.length)return s;const keep=[];let last=-Infinity;s.mathPoints.forEach((q,i)=>{if(q.x>last){keep.push(i);last=q.x;}});if(keep.length===s.mathPoints.length)return s;
+      const pick=a=>Array.isArray(a)&&a.length===s.mathPoints.length?keep.map(i=>a[i]):undefined;return {...s,mathPoints:pick(s.mathPoints),points:pick(s.points),handles:pick(s.handles),handlesMath:pick(s.handlesMath),segmentModes:undefined};};
+    const upper=worldSeries(monotone(sourceUpper)),lower=worldSeries(monotone(sourceLower));
     if (!upper || !lower || sourceUpper===sourceLower) return fail('서로 다른 두 계열이 필요합니다.');
-    if ([upper,lower].some(s=>(s.axis||'y')!==(spec.axis||'y') || s.breaks?.length || s.closed || !s.mathPoints?.length || s.mathPoints.some((q,i,a)=>i&&q.x<=a[i-1].x))) return fail('동일 축의 연속 증가 x 계열만 영역을 만들 수 있습니다.');
+    if ([upper,lower].some(s=>(s.axis||'y')!==(spec.axis||'y') || s.breaks?.length || s.closed || !(s.mathPoints?.length>1) || s.mathPoints.some((q,i,a)=>i&&q.x<=a[i-1].x))) return fail('동일 축의 연속 증가 x 계열만 영역을 만들 수 있습니다.');
     if (!(Number.isFinite(spec.from)&&Number.isFinite(spec.to)&&spec.to>spec.from)) return fail('두 곡선의 공통 구간을 지정하십시오.');
     const from=worldFromMath(p,map({x:spec.from,y:ymin}).x,p.yMin).x,to=worldFromMath(p,map({x:spec.to,y:ymin}).x,p.yMin).x;
     if ([upper,lower].some(s=>from<s.mathPoints[0].x || to>s.mathPoints.at(-1).x)) return fail('두 계열의 공통 범위를 벗어났습니다.');

@@ -12,6 +12,11 @@ export const EXAM_STYLE = Object.freeze({
 export const DESCRIPTION_EXAM_STYLE = Object.freeze({labelScale:1,arrowScale:1.45,arrowWidthScale:.72,curveScale:1.4});
 export const isExamStyle = value => value?.graphStyle?.preset === EXAM_STYLE.preset;
 const positive = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
+function textScale(plane, widthScale) {
+  const w = positive(plane.w, EXAM_STYLE.referenceWidth), h = positive(plane.h, w * 0.75);
+  const area = Math.sqrt(w * h) / (EXAM_STYLE.referenceWidth * Math.sqrt(0.75));
+  return Math.min(widthScale * 1.5, Math.max(widthScale * 0.8, area));
+}
 export function examMetrics(plane) {
   const style = plane.graphStyle || {};
   const scale = positive(plane.w, EXAM_STYLE.referenceWidth) / EXAM_STYLE.referenceWidth;
@@ -20,7 +25,9 @@ export function examMetrics(plane) {
     guide: EXAM_STYLE.guide * stroke, tick: EXAM_STYLE.tick * stroke,
     tickLength: EXAM_STYLE.tickLength * stroke,
     arrowLength: EXAM_STYLE.arrowLength * stroke * positive(style.arrowScale, 1),
-    marker: EXAM_STYLE.marker * stroke, label: EXAM_STYLE.label * stroke * positive(style.labelScale, 1),
+    // 11-12 밤샘(기출 그래프 46개 비교): 글자를 폭에만 비례시키면 좁고 긴 막대그래프는 글자가 작고 넓고 납작한 그래프는 글자가 틀 밖으로 잘렸다.
+    // 글자는 칸의 폭·높이를 함께 본 크기(넓이의 제곱근, 기준 칸은 폭 × 0.75 높이)에 비례시키고 폭 기준의 0.8~1.5배 안으로 묶는다.
+    marker: EXAM_STYLE.marker * stroke, label: EXAM_STYLE.label * positive(style.strokeScale, 1) * positive(style.labelScale, 1) * textScale(plane, scale),
     dash: EXAM_STYLE.dash * stroke, gap: EXAM_STYLE.gap * stroke };
 }
 const offset = (value, scale) => value ? Object.fromEntries(Object.entries(value).map(([k,v]) => [k, Number.isFinite(v) ? v * scale : v])) : value;
@@ -37,6 +44,10 @@ function examArrow(plane, m, relative) {
 export function examPlaneStyle(plane) {
   if (!isExamStyle(plane)) return plane;
   const m = examMetrics(plane), relative = plane.w / positive(plane.graphStyle.referenceWidth, EXAM_STYLE.referenceWidth);
+  // 11-12 밤샘: 사진에서 복원한 그래프는 원본에서 잰 글자 크기(복원 때 시험지 표준의 0.92~1.45배로 묶음)를 쓴다 —
+  // 표준 크기로 덮어쓰면 작은 막대그래프는 글자가 너무 작고 넓은 그래프는 너무 컸다. 글로 만든 그래프는 지금처럼 표준.
+  const ownLabel = plane.reconstruction?.labelSizeMode === 'source-height' && !plane.graphStyle?.descriptionLayout && Number.isFinite(plane.axisLabelSize) && plane.axisLabelSize > 0 ? plane.axisLabelSize : null;
+  if (ownLabel) m.label = ownLabel;
   const guide = { strokeWidth: m.guide, dashLength: m.dash, dashGap: m.gap };
   const annotation = a => ({ ...a, size: m.label, fontSize: m.label, labelSizeMode: 'source-height',
     markerSize: m.marker, strokeWidth: a.kind === 'guide' ? m.guide : m.axis,

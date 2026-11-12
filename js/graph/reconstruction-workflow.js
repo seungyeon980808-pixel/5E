@@ -175,7 +175,12 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       run.validationMs = clock() - before;
       const sourceMismatch = result.errors.some(e => e.code === 'SOURCE_MISMATCH' || e.path.startsWith('source.'));
       if (result.ok && !result.blocked) run.lastAccepted = result;
-      if (sourceMismatch || run.snapshot.metrics.analysisCalls >= run.maxAttempts) {
+      // 11-12 밤샘: 「AI 변환은 실패로 끝나면 안 됨」 — 검증에 걸린 결과만 오류를 붙여 다시 받는다(repairInvalid 회).
+      // 잘 된 결과는 그대로 끝내 시간이 늘지 않는다. 그래도 안 되면 앞서 통과한 결과를 쓴다.
+      const repairing = !result.ok && !sourceMismatch && run.repairLeft > 0;
+      if (repairing) run.repairLeft -= 1;
+      if (!repairing && (sourceMismatch || run.snapshot.metrics.analysisCalls >= run.maxAttempts)) {
+        if (!result.ok && run.repairMode && !sourceMismatch && run.lastAccepted) return finish(run, null, run.lastAccepted);
         if (!result.ok) return finish(run, Object.assign(new Error(result.errors.map(e => `${e.path}: ${e.message}`).join('\n')), { code: 'GRAPH_INVALID_RESULT' }), result);
         if (!result.blocked) void cache(run.cacheKey, run.snapshot.source, result.plan, run.snapshot.attempts).catch(() => {});
         return finish(run, null, result);
@@ -202,7 +207,14 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
         await persist(run.snapshot);
         if (run.done || active !== run) return;
         publish(run.snapshot);
-        dispatch(run, buildGraphCorrectionPrompt(run.snapshot.source, { previousPlan: result.ok ? result.plan : safePlan || null, issues, validationErrors: result.errors, hasPreviousRender: !!image, attempt: attempt + 1, maxAttempts: run.maxAttempts }), image ? [run.snapshot.attachment, image] : [run.snapshot.attachment]);
+        // 11-12 밤샘: 설명으로 만들기(생성)는 원본 그림이 없다 — 원본 비교용 고침 지시문 대신 처음 설명 지시문에 검증 오류를 붙이고,
+        // 빈 첨부(null)를 보내지 않는다(전에는 「Cannot read properties of null (reading 'data')」로 실패).
+        if (run.snapshot.description && !result.ok) {
+          const errors = result.errors.map(e => `- ${e.path}: ${e.message}`).join('\n');
+          dispatch(run, `${buildGraphDescriptionPrompt(run.snapshot.source, run.snapshot.description, run.snapshot.priorPlan, run.snapshot.priorObjects)}\n\n[다시 보내기 ${attempt + 1}] 직전 응답 JSON이 아래 검증 오류로 거부되었습니다. 같은 설명을 지키면서 오류를 모두 고친 완전한 JSON 하나만 다시 반환하십시오.\n${errors}${safePlan ? `\n직전 응답:\n${JSON.stringify(safePlan).slice(0, 12000)}` : ''}`, []);
+          return;
+        }
+        dispatch(run, buildGraphCorrectionPrompt(run.snapshot.source, { previousPlan: result.ok ? result.plan : safePlan || null, issues, validationErrors: result.errors, hasPreviousRender: !!image, attempt: attempt + 1, maxAttempts: run.repairMode ? Math.min(3, Math.max(run.maxAttempts, attempt + 1)) : run.maxAttempts }), [run.snapshot.attachment, image].filter(Boolean));
       })().catch(error => { if (!run.done) finish(run, error); });
     }
   };
@@ -269,7 +281,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       serial = Math.max(serial, Number.isSafeInteger(value.id) ? value.id : 0);
       publish(value); return copy(value);
     },
-    async analyze({ source, attachment, selection, catalog, force = false, maxAttempts = 1, renderCandidate, instructions = '', contextAttachment = null, styleAttachments = [], description = '', priorPlan = null, priorObjects = null } = {}) {
+    async analyze({ source, attachment, selection, catalog, force = false, maxAttempts = 1, repairInvalid = 0, renderCandidate, instructions = '', contextAttachment = null, styleAttachments = [], description = '', priorPlan = null, priorObjects = null } = {}) {
       if (active || preparing) throw new Error('그래프 분석이 이미 진행 중입니다.');
       const preparation = { cancelled: false };
       preparing = preparation;
@@ -323,7 +335,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       if (preparation.cancelled) { await persist({ ...value, status: 'interrupted', error: cancelled().message }); checkPreparation(); }
       publish(value);
       return new Promise((resolve, reject) => {
-        const run = { snapshot: value, cacheKey, resolve, reject, started: clock(), text: '', queue: [], awaiting: true, done: false, maxAttempts, renderCandidate };
+        const run = { snapshot: value, cacheKey, resolve, reject, started: clock(), text: '', queue: [], awaiting: true, done: false, maxAttempts, renderCandidate, repairLeft: Math.max(0, Math.min(3, Number(repairInvalid) || 0)), repairMode: Number(repairInvalid) > 0 };
         run.sourceRaster = sourceRaster;
         active = run;
         run.timer = setTimeout(() => { void interrupt(run); finish(run, Object.assign(new Error('그래프 분석 시간이 초과되었습니다. 자동 재시도하지 않았습니다.'), { code: 'GRAPH_TIMEOUT' })); }, timeoutMs);

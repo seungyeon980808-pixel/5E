@@ -2987,10 +2987,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (pendingLoading) pendingLoading.source = data;
       requestPhase('generating');
       const clockId = `graph-${epoch}`; currentTurnId = clockId; startGenerationClock(clockId);
-      const restored = await graphWorkflow.analyze({ source, ...(creating ? { description: instructions, priorPlan: priorGraph?.graphResult?.plan || null, priorObjects: priorGraph?.graphResult?.objects || null } : { attachment: { id, name, data }, instructions, contextAttachment, ...(contextAttachment ? {priorPlan:priorGraph.graphResult.plan,priorObjects:priorGraph.graphResult.objects} : {}), styleAttachments: styles.map(item => ({ id: item.id, name: item.name, data: item.data })) }), selection: GRAPH_WORKBENCH_SELECTION, catalog, force: true });
+      const restored = await graphWorkflow.analyze({ source, ...(creating ? { description: instructions, priorPlan: priorGraph?.graphResult?.plan || null, priorObjects: priorGraph?.graphResult?.objects || null } : { attachment: { id, name, data }, instructions, contextAttachment, ...(contextAttachment ? {priorPlan:priorGraph.graphResult.plan,priorObjects:priorGraph.graphResult.objects} : {}), styleAttachments: styles.map(item => ({ id: item.id, name: item.name, data: item.data })) }), selection: GRAPH_WORKBENCH_SELECTION, catalog, force: true, repairInvalid: 2 }); // 11-12: 복원·생성 모두 검증에 걸리면 오류를 붙여 최대 두 번 더
       if (!isCurrent()) return;
       if (restored.blocked) throw Object.assign(new Error(restored.quality?.issues?.filter(i => i.severity === 'critical').map(i => i.message).join('\n') || '확인하지 못한 축 또는 계열이 있습니다.'), { code: 'GRAPH_INVALID_RESULT' });
       requestPhase('validating');
+      // 11-12: 복원은 원본 눈금 숫자 높이를 직접 재어 AI가 어림한 글자 크기를 바로잡는다(source-label-size.js).
+      if (!creating) { try { const { calibratePlanLabelSizeFromImage } = await import('./graph/source-label-size.js?v=1.7.0-four-session-integration'); const calibrated = await calibratePlanLabelSizeFromImage(restored.plan, data); restored.plan = calibrated.plan; globalThis.__fiveEGraphLabelCalibration?.push?.({ ...calibrated.report, plan: restored.plan }); } catch {} if (!isCurrent()) return; }
       const graphResult = buildWorkbenchGraph(creating ? prepareGraphDescriptionPlan(restored.plan) : restored.plan, source, { descriptionLayout: creating, priorResult:priorGraph?.graphResult || null, ...(creating&&priorGraph?{request:options.requestOverride ?? input.value}:{}) });
       // Freeze the actual analyzed pixels, including composed inputs. Replacing
       // an attachment later must not silently change the tracing reference.

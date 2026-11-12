@@ -44,12 +44,18 @@ export function buildNativeGraph(input, options = {}) {
   const style = plan.style || {};
   const labelSizeMode = style.fontSizePx && style.labelSize === undefined ? 'source-height' : 'legacy';
   // 11-11: AI가 잰 원본 글자 높이는 대체로 작다(사용자 시험 8개 중 6개 「글씨가 작다」). 기출 표준 글자 높이의 0.92배를 바닥으로 둔다.
-  const minLabel = EXAM_STYLE.label * styleScale * 0.92, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
+  // 11-12 밤샘(기출 그래프 46개 복원 비교): 글자가 좁은 막대그래프에선 너무 작고(폭에만 비례), 어떤 그래프에선 틀 밖으로 잘릴 만큼 컸다(위 한계 없음).
+  // 기준 글자 크기는 그림 칸의 긴 변에 비례시키고, 시험지 표준의 0.92~1.45배 안으로 묶는다.
+  // 기준은 칸 넓이(폭×높이의 제곱근, 기준 칸 70 × 52.5) — 긴 변 기준이면 납작한 그래프는 하한이, 긴 그래프는 상한이 너무 높았다.
+  const textScale = Math.sqrt(Math.max(1, box.w) * Math.max(1, box.h)) / (70 * Math.sqrt(0.75)), standardLabel = EXAM_STYLE.label * textScale;
+  const minLabel = standardLabel * 0.85, maxLabel = standardLabel * 1.3, minMarker = EXAM_STYLE.marker * styleScale * 1.3;
   const isDot = shape => /dot|disc|filled|circle/.test(String(shape||''));
   const fitMarker = (v, shape) => isDot(shape) ? Math.max(v, minMarker) : v; // 11-11: 찍힌 점(●)만 바닥을 둔다
   // 11-11: 원본 대비 작게 나오는 만큼(사용자 판단 「너무 작다」) 1.3배 키운 뒤 바닥을 둔다.
-  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.max(v * 1.3, minLabel) : v;
-  const labelSize = style.labelSize ?? (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : 5.4 * styleScale);
+  // 11-12 밤샘: 원본 픽셀에서 직접 잰 글자 높이(source-label-size.js)는 이미 원본 크기이므로 1.3배 하지 않는다 — 46개 비교에서 원본보다 약 1.3배 컸다.
+  const labelBoost = style.fontSizeMeasured === true ? 1 : 1.3;
+  const fitLabel = v => Number.isFinite(v) && v > 0 ? Math.min(maxLabel, Math.max(v * labelBoost, minLabel)) : v;
+  const labelSize = style.labelSize != null ? fitLabel(style.labelSize / 1.3) : (style.fontSizePx ? fitLabel(style.fontSizePx * box.w / plan.source.plotBox.w) : standardLabel * 1.12);
   const plane = { ...makeDefaultCoordplane({ x: 0, y: 0 }), x: box.x, y: box.y, w: box.w, h: box.h,
     xMin: x.min, xMax: x.max, yMin: y.min, yMax: y.max,
     xScale: observed ? 'linear' : x.scale, yScale: observed ? 'linear' : y.scale,
@@ -132,7 +138,7 @@ export function buildNativeGraph(input, options = {}) {
         points.push({ x: top.x, y: hiY }, { x: top.x, y: loY }, { x: base.x, y: loY }, { x: base.x, y: hiY });
         rects.push({ x: top.x, y: loY, w: base.x - top.x, h: hiY - loY, label: it.label || '', fillLevel:it.fillLevel ?? s.fillLevel ?? 220 });
       });
-      Object.assign(f, { points, breaks: [], bars: { items: rects, labelSize: 2.6, strokeWidth: 0.3, fillLevel: s.fillLevel ?? 220 },
+      Object.assign(f, { points, breaks: [], bars: { items: rects, labelSize: Math.max(2.6, labelSize * 0.9), strokeWidth: 0.3, fillLevel: s.fillLevel ?? 220 },
         barBase:s.base ?? 0, barItems: clone(s.items), barWidthRatio: widthRatio, barFill: 'gray', barPreserveValues: true });
     } else {
       const protectedIndices=[...(s.fit?.protectedIndices || []),...(s.endpoints || []).map(e=>e.index),...(plan.annotations || []).filter(a=>a.seriesId===s.id && Number.isInteger(a.pointIndex)).map(a=>a.pointIndex)];
@@ -193,7 +199,8 @@ export function buildNativeGraph(input, options = {}) {
   const regions=[];
   for(const spec of plan.regions || []) {
     const geometry=buildRegionGeometry(spec,plane,objects.slice(1));
-    if(!geometry.ok)return fail(geometry.error,review);
+    // 11-12 밤샘(「AI 변환은 실패로 끝나면 안 됨」): 영역 하나를 못 만들면 그래프 전체를 버리지 않고 그 영역만 빼고 검토 메모를 남긴다.
+    if(!geometry.ok){(review||[]).push?.({path:'regions',reason:`색칠 영역 하나를 그리지 못해 뺐습니다: ${geometry.error}`});continue;}
     regions.push({type:'funcgraph',sourceKind:'region',axis:spec.axis || 'y',regionSpec:clone(spec),regionFillLevel:spec.level ?? 220,regionOpacity:spec.opacity ?? 1,closed:true,lineVisible:false,strokeWidth:0,mathPoints:geometry.mathPoints,points:geometry.points,breaks:[],curveStyle:'straight',locked:false,positionLocked:false});
   }
   objects.splice(1,0,...regions);
