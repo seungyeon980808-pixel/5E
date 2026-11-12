@@ -25,6 +25,7 @@ import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
 import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText,importStandard} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
+import {ask} from './ask-dialog.js';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 import {loadStandards} from './standards-data.js';
 let grid=null,future=[];
@@ -908,7 +909,9 @@ $('#examd-view').addEventListener('change',e=>{const exam=examNow(),t=e.target;i
 });
 // 시험지 화면 문항 카드 · 미리보기 = 한글 엔진이 그린 문항(10-24 지적 10, 가운데 조판 쪽과 같은 모양). 한 번에 하나씩 줄 세워 그린다.
 let engineQueue=Promise.resolve();
-function engineCard(node,q){node.classList.add('is-engine','is-loading');engineQueue=engineQueue.then(async()=>{if(!node.isConnected)return;try{typesetter||=makeTypesetter();const r=await typesetter.questionSvg(q);if(node.isConnected)node.innerHTML=r.svg;}catch(e){if(node.isConnected)node.innerHTML=`<p class="ep-fail">미리보기를 그리지 못했습니다: ${E(e.message)}</p>`;}finally{node.classList.remove('is-loading');}});return engineQueue;}
+function engineCard(node,q){node.classList.add('is-engine','is-loading');engineQueue=engineQueue.then(async()=>{if(!node.isConnected)return;try{typesetter||=makeTypesetter();const r=await typesetter.questionSvg(q);if(node.isConnected)node.innerHTML=r.svg;}catch(e){console.error('[5E_exam] 문항 미리보기 실패',q?.id,e);if(node.isConnected){node.innerHTML=`<p class="ep-fail" role="button" tabindex="0" title="눌러서 다시 그리기">미리보기를 그리지 못했습니다: ${E(failReason(e))} · 눌러서 다시 그리기</p>`;const p=node.querySelector('.ep-fail'),again=ev=>{if(ev.type==='keydown'&&ev.key!=='Enter'&&ev.key!==' ')return;ev.preventDefault();ev.stopPropagation();engineCard(node,q);};p.addEventListener('click',again);p.addEventListener('keydown',again);}}finally{node.classList.remove('is-loading');}});return engineQueue;}
+// 11-12: 한글 엔진(wasm)은 오류를 Error가 아니라 글 한 줄로 던지기도 해서 e.message가 비어 「…못했습니다:」 뒤가 빈칸이었다.
+function failReason(e){const m=e?.message||(typeof e==='string'?e:'')||e?.name||String(e??'');return m&&m!=='[object Object]'?m:'알 수 없는 오류';}
 function fillEngineCards(root){for(const n of root.querySelectorAll('.ep-doc[data-preview]')){const q=data.questions.find(x=>x.id===n.dataset.preview);if(q)engineCard(n,q);}}
 // ② 문항 고르기(exam-pick.js): 보관함 거르기 · 담기 · 분류·태그 창 · 여러 개 고르기.
 function pickCart(){const exam=view.name==='exam'&&view.examStep===2&&examNow();if(exam)refreshCart($('#examd-view'),exam,data,typesetForms,pastBusy);}
@@ -1329,7 +1332,7 @@ async function decideProposal(q,id,action,{force=false}={}){
   // 기록했다(M26). 적용 직전에 지금 내용의 버전을 직접 계산해 비교한다.
   let stale=p.state!=='current';
   if(!stale){const {version}=await reviewVersion(q);stale=version!==q.authoring?.contentHash;}
-  if(stale&&!force&&!confirm('이 변경안은 지난 버전을 기준으로 만들어졌습니다. 지금 내용 위에 적용할까요?'))return;
+  if(stale&&!force&&!await ask('이 변경안은 지난 버전을 기준으로 만들어졌습니다. 지금 내용 위에 적용할까요?',{title:'AI 변경안 적용',ok:'적용'}))return;
   q=data.questions.find(x=>x.id===q.id);p=q?.authoring?.proposals.find(x=>x.id===id);if(!p)return;
   let applied=null;const ok=mutate(()=>{applied=applyProposal(q,id,{force:true});});
   if(ok){status(`AI 변경안을 적용했습니다${applied.errors.length?` · 적용 못 한 변경 ${applied.errors.length}개: ${applied.errors[0].message}`:''} · 되돌리기(⌘Z)로 취소할 수 있습니다.`);
@@ -1338,8 +1341,8 @@ async function decideProposal(q,id,action,{force=false}={}){
       const live=data.questions.find(x=>x.id===q.id);if(!live||!p.review||applied.errors.length||stale)return;
       mutate(()=>{recordReview(live,{review:p.review.review,solve:p.review.solve,evidenceUsed:p.review.evidenceUsed},{evidence:new Map(p.review.evidence||[])});},{render:false});cardEditor.refreshAi?.();});}
 }
-function revertAuthoring(q,revision){
-  if(!confirm(`버전 ${revision}의 내용으로 되돌릴까요? 지금 내용은 이력에 남습니다.`))return;
+async function revertAuthoring(q,revision){
+  if(!await ask(`버전 ${revision}의 내용으로 되돌릴까요? 지금 내용은 이력에 남습니다.`,{title:'버전 되돌리기',ok:'되돌리기'}))return;
   if(mutate(()=>{restoreRevision(q,revision);}))void syncAuthoring(q.id,{by:'revert',summary:`버전 ${revision}으로 되돌림`});
 }
 // 출제 답은 같은 원점 + 이 창이 만든 요청 ID일 때만 받는다(WebKit은 비동기 응답의 e.source가 부모 창이 아닐 수 있다).

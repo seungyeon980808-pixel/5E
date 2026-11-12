@@ -259,6 +259,7 @@ details.ef-more summary::-webkit-details-marker{display:none}
 @keyframes ep-shimmer{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.ep-doc.is-engine.is-loading{animation:none}}
 .ep-fail{margin:8px;color:#7d8590;font:12px/1.4 -apple-system,"Apple SD Gothic Neo",sans-serif}
+.ep-fail[role=button]{pointer-events:auto;cursor:pointer}.ep-fail[role=button]:hover{color:#c9d1d9;text-decoration:underline}
 .ex-tip .ep-doc.is-engine{padding:10px}
 .ex-cm .ex-no{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-right:6px;padding:0 5px;border-radius:10px;background:var(--ds-field-raise);color:var(--ds-ink);font-size:11.5px;font-weight:600;vertical-align:1px}
 

@@ -114,9 +114,11 @@ h.withServer(async origin => {
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .cv-shape-menu').count(),0,'Esc closes the menu');
       // 보기에 글이 있으면 지울지 묻고, 취소하면 그대로.
       await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','운동량은 보존된다.');
-      let asked='';page.once('dialog',d=>{asked=d.message();void d.dismiss();});
+      // 11-12: 맥 기본 확인창 대신 5E 확인창(.ask-dialog)으로 묻는다.
       await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="single"]');
-      assert.match(asked,/보기 1줄을 지웁니다/);assert.match(await sheet.locator('#card-view .cv-shape').textContent(),/^합답형/);
+      await sheet.waitForSelector('.ask-dialog[open]');
+      assert.match(await sheet.locator('.ask-dialog .ask-message').textContent(),/보기 1줄을 지웁니다/);
+      await sheet.click('.ask-dialog [data-ask="no"] >> nth=1');await sheet.waitForFunction(()=>!document.querySelector('.ask-dialog'));assert.match(await sheet.locator('#card-view .cv-shape').textContent(),/^합답형/);
       await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','');
       await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="single"]');
       await sheet.waitForFunction(()=>/^일반 정답형/.test(document.querySelector('#card-view .cv-shape').textContent));

@@ -15,6 +15,7 @@ import {MONTH,norm,splitWords,pastScore} from './past-search.js';
 import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
+import {ask} from './ask-dialog.js';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
@@ -677,8 +678,9 @@ export function createCardEditor(root,api){
     if(!x)return;
     if(d.cv==='shape'){setShape(!shapeOpen);if(shapeOpen)root.querySelector('.cv-shape-menu [aria-checked="true"]')?.focus();return;}
     if(d.cvform){const k=d.cvform;setShape(false);if(k===formOf(x))return;
-      const lost=formLosses(x,k);if(lost.length){const n=lost.reduce((s,b)=>s+b.lines.filter(l=>l.text.trim()).length,0);if(!confirm(`${FORMS[k].name}(으)로 바꾸면 ${lost[0].kind==='bogi'?'보기':'대화'} ${n}줄을 지웁니다. 바꿀까요?`))return;}
-      if(api.edit(()=>applyForm(x,k)))api.status?.(`${FORMS[k].name}(으)로 바꿨습니다.`);return;}
+      const change=()=>{if(api.edit(()=>applyForm(x,k)))api.status?.(`${FORMS[k].name}(으)로 바꿨습니다.`);};
+      const lost=formLosses(x,k);if(lost.length){const n=lost.reduce((s,b)=>s+b.lines.filter(l=>l.text.trim()).length,0);void ask(`${FORMS[k].name}(으)로 바꾸면 ${lost[0].kind==='bogi'?'보기':'대화'} ${n}줄을 지웁니다. 바꿀까요?`,{title:'양식 바꾸기',ok:'바꾸기',doc:root.ownerDocument}).then(yes=>{if(yes)change();});return;}
+      change();return;}
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct){api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}

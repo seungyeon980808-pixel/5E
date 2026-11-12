@@ -5,6 +5,7 @@
 // 미리보기: 초안 틀로 이 문항을 새로 조판한 깨끗한 쪽 그림(편집용 칸 테두리 없음) 위에 고른 부분 파란 띠·나머지 흐리게,
 // 조판 부호(고정 띄어쓰기 큰 빨간 V · 내어쓰기 기준선·안 여백 초록 선), 간격 보기(초록 띠)를 겹쳐 그린다.
 import {KICE_STANDARD,KICE_ID} from './typeset-standard.js';
+import {ask} from './ask-dialog.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const get=(o,path)=>path.split('.').reduce((v,k)=>v?.[k],o);
@@ -138,7 +139,7 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   function refresh(delay=300){clearTimeout(timer);timer=setTimeout(async()=>{const my=++seq,{q}=context();if(!q||!draft)return;
     // 수능 틀 열쇠(kice) 그대로면 조판이 「수능 틀이니 기본값」으로 보고 초안 값을 무시한다 — 미리보기에는 따로 열쇠를 준다(10-24).
     try{const d=structuredClone(draft);if(d.id===KICE_ID)d.id='draft-preview';const r=await preview(q,d);if(my!==seq||back.hidden)return;sheet=r;paint();}
-    catch(e){if(my===seq){const p=back.querySelector('.tsx-paper');if(p)p.innerHTML=`<p class="tsx-wait error">미리보기를 그리지 못했습니다: ${E(e.message)}</p>`;}}},delay);}
+    catch(e){console.error('[5E_exam] 조판 틀 미리보기 실패',e);if(my===seq){const p=back.querySelector('.tsx-paper');const why=e?.message||(typeof e==='string'?e:'')||e?.name||'알 수 없는 오류';if(p)p.innerHTML=`<p class="tsx-wait error">미리보기를 그리지 못했습니다: ${E(why)}</p>`;}}},delay);}
   function paint(){
     const paper=back.querySelector('.tsx-paper');if(!paper||!sheet)return;
     const W=sheet.width,H=sheet.height,pg=sheet.page,mL=pg.marginLeft/75,mR=pg.marginRight/75,mT=pg.marginTop/75;
@@ -200,7 +201,7 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   }
   function close(force=false){
     if(back.hidden)return;
-    if(!force&&dirty()&&!doc.defaultView.confirm('적용하지 않은 값이 있습니다. 적용하지 않고 닫을까요?'))return;
+    if(!force&&dirty()){void ask('적용하지 않은 값이 있습니다. 적용하지 않고 닫을까요?',{title:'조판 설정 닫기',ok:'버리고 닫기',doc}).then(yes=>{if(yes)close(true);});return;}
     back.hidden=true;back.innerHTML='';opener.setAttribute('aria-expanded','false');draft=null;sheet=null;
   }
   function commit(p,v){
@@ -230,7 +231,7 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   });
   back.addEventListener('change',e=>{
     const t=e.target;
-    if(t.matches('[data-std-pick]')){if(dirty()&&!doc.defaultView.confirm('적용하지 않은 값은 버리고 다른 틀로 바꿀까요?'))return render();close(true);onStandard?.({pick:t.value});return;}
+    if(t.matches('[data-std-pick]')){const pick=()=>{close(true);onStandard?.({pick:t.value});};if(dirty()){void ask('적용하지 않은 값은 버리고 다른 틀로 바꿀까요?',{title:'다른 틀로 바꾸기',ok:'버리고 바꾸기',doc}).then(yes=>yes?pick():render());return;}pick();return;}
     if(t.matches('[data-zoom]')){view.zoom=t.value;return render();}
     if(t.matches('[data-exception]')){exception=t.checked;return render();}
     if(t.matches('[data-std-file]')){const file=t.files?.[0];if(file){close(true);onStandard?.({importFile:file});}t.value='';return;}
