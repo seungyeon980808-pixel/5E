@@ -3,7 +3,7 @@ import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest
 import { deriveExamMetadata, examMetadataMatches, isRecognizedExamSourceName, parseCompactExamCode } from "./exam-code.js?v=1.7.0-four-session-integration";
 import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.7.0-four-session-integration";
 import { createCropSource } from "../pdf-library/contract.js?v=1.7.0-four-session-integration";
-import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-four-session-integration";
+import { extendQuestionRectToWords, isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-four-session-integration";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-four-session-integration";
 import { connectionName } from "./connection-names.js";
 
@@ -477,11 +477,11 @@ function ownedCropSource(document, pageNumber, source) {
 function securedPdfEntry(document, entry) {
   const originalSource = ownedCropSource(document, entry.pageNumber, entry.source);
   if (!originalSource) return null;
-  const repairedRect = trimQuestionRectAtFooter(originalSource.rect, entry.words ?? []);
+  const repairedRect = extendQuestionRectToWords(trimQuestionRectAtFooter(originalSource.rect, entry.words ?? []), entry.words ?? []);
   const source = createCropSource({ ...originalSource, rect: repairedRect });
   const originalContent = ownedCropSource(document, entry.pageNumber, entry.contentSource);
   const contentRect = originalContent
-    ? trimQuestionRectAtFooter(originalContent.rect, entry.words ?? [])
+    ? extendQuestionRectToWords(trimQuestionRectAtFooter(originalContent.rect, entry.words ?? []), entry.words ?? [])
     : repairedRect;
   const contentSource = originalContent ? createCropSource({ ...originalContent, rect: contentRect }) : source;
   const figureCandidates = (entry.figureCandidates ?? []).flatMap((candidate) => {

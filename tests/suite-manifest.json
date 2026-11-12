@@ -923,6 +923,12 @@
       "findingIds": [
         "LIBRARY-SEARCH-NO-RESEND"
       ]
+    },
+    {
+      "path": "tests/test-question-rect-extend.mjs",
+      "findingIds": [
+        "LIBRARY-QUESTION-CROP-LAST-LINE"
+      ]
     }
   ],
   "browser": [
