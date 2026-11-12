@@ -1503,11 +1503,9 @@ export function initRhwpExamWorkspace(state, services) {
     const owner = event.target?.ownerDocument || document;
     if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')]
       .some(node => node !== panel && !node.hidden && node.getClientRects().length)) return;
-    event.preventDefault(); event.stopImmediatePropagation();
-    if (placement) { cancelPlacement(); message('그림 보내기를 취소했습니다.'); return; }
-    void run(actions.close).then(() => {
-      if (panel.hidden && !window.fiveEExam) document.querySelector('.app-switch-image [data-app-switch="hwp"]')?.focus();
-    });
+    if (placement) { event.preventDefault(); event.stopImmediatePropagation(); cancelPlacement(); message('그림 보내기를 취소했습니다.'); return; }
+    // 11-12 사용자: 5E_image·5E_exam·5E_hwp는 서로 호환되는 각각 다른 프로그램 — Esc로 한글 화면을 닫고 5E_image로 넘어가지 않는다.
+    // (예전엔 그림 선택이 풀린 상태에서 Esc 한 번에 한글 화면이 닫히고 5E_image 편집으로 넘어갔다.) 프로그램 전환은 ⌥⌘1~3·로고 메뉴로만.
   }
   document.addEventListener('keydown',closeWorkspaceWithEscape);
   panel.addEventListener('keydown', event => {

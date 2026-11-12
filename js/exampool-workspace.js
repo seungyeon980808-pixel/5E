@@ -235,7 +235,7 @@ export function initExamPoolWorkspace(state, services, examWorkspace) {
   entry.addEventListener('click',() => void open());
   panel.addEventListener('keydown',event => {
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {event.preventDefault();event.stopPropagation();void run(persist);}
-    if (event.key === 'Escape' && !event.isComposing) {event.preventDefault();event.stopPropagation();void run(actions.close);}
+    // 11-12 사용자: Esc로 프로그램을 닫거나 넘기지 않는다(세 프로그램은 각각 다른 프로그램).
     if (event.key === 'Tab') {
       const controls = [...panel.querySelectorAll('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"],summary')].filter(node => node.getClientRects().length);
       const edge = event.shiftKey ? controls[0] : controls.at(-1);
