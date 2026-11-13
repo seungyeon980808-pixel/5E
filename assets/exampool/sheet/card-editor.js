@@ -35,7 +35,7 @@ export function completeness(q){
 }
 
 export function createCardEditor(root,api){
-  const panels={nav:store.get('nav',true),lib:store.get('lib',false)/* 11-12: 라이브러리는 왼쪽 메뉴에서 켜고 끈다(기억함) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:false/* 11-13: 조판 미리보기는 처음엔 늘 닫힘(자간·문단 간격 조정 때 카드 머리 단추로 엶) */,view:store.get('view','card')==='page'?'page':'card'};
+  const panels={nav:store.get('nav',true),lib:store.get('lib',false)/* 11-12: 라이브러리는 왼쪽 메뉴에서 켜고 끈다(기억함) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:true/* 11-14: 문항 카드를 열면 조판 미리보기도 같이 열림(카드 2 : 조판 1). 접으면 다음 카드를 열 때까지 접혀 있음 */,view:store.get('view','card')==='page'?'page':'card'};
   let pastIndex=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[],bookq:''}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
   if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   // 기출 여러 개 고르기(11-03): 그림 왼쪽 위 동그라미. 하나라도 고르면 그림을 누르기만 해도 골라지고, Shift 범위·⌘A 모두·Esc 취소. 아래 띠의 「N개 변형」으로 줄에 넣는다.
@@ -242,8 +242,9 @@ export function createCardEditor(root,api){
   }
   // 시험지 전체 보기: 조판 칸(미리보기)이 열려 있을 때만. 그때 가운데 문항 카드는 세로 띠로 접히고 조판 칸이 그 자리까지 넓어진다.
   // 11-13 밤: 조판 미리보기는 문항 카드에 딸린 서랍 — 라이브러리·판이 열려 있으면 카드 뒤에 접혀 있다(열어 둔 것은 기억).
-  const tsOn=()=>panels.rightOpen&&!panels.lib&&!(bench.board&&!bench.bfold);
-  function openTs(){panels.rightOpen=true;store.set('rightOpen',true);if(panels.lib){panels.lib=false;store.set('lib',false);api.navChanged?.();}}
+  // 11-14: 라이브러리·문항 카드·조판은 함께 볼 수 있다(예전: 조판을 열면 라이브러리를 접음).
+  const tsOn=()=>panels.rightOpen&&!(bench.board&&!bench.bfold);
+  function openTs(){panels.rightOpen=true;store.set('rightOpen',true);}
   const sheetView=()=>panels.view==='page'&&panels.rightOpen&&panels.right==='paper'&&!!q();
   const scopeHtml=()=>`<span class="ts-scope" role="group" aria-label="조판 보기"><button type="button" data-cvview="card" aria-pressed="${!sheetView()}">이 문항</button><button type="button" data-cvview="page" aria-pressed="${sheetView()}">시험지 전체</button></span>`;
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
@@ -274,7 +275,11 @@ export function createCardEditor(root,api){
   const PANE_EASE='cubic-bezier(.32,.72,0,1)',PANE_MS=340;
   const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   let paneRun=null,hwpFrozen=false;
-  function paneWidths(){const m={};root.querySelectorAll(':scope>[data-pane]').forEach(n=>{const r=n.getBoundingClientRect();m[n.dataset.pane]={x:r.left,w:r.width,y:r.top,h:r.height,node:n,kids:[...n.children].map(c=>c.getBoundingClientRect().width)};});return m;}
+  function paneWidths(){const m={};root.querySelectorAll(':scope>[data-pane]').forEach(n=>{const r=n.getBoundingClientRect();m[n.dataset.pane]={x:r.left,w:r.width,y:r.top,h:r.height,node:n,kids:[...n.children].map(c=>{const q=c.getBoundingClientRect();return {w:q.width,h:q.height};}),bg:paneFill(n)};});return m;}
+  // 칸 바탕을 안 칸들(머리 줄·흰 면)의 색 띠로 칠해 둔다 — 움직이는 동안 안 내용은 마지막 폭이라, 가림 안쪽에 남는 자리가 검게 비어 보였다(11-14 ②).
+  function paneFill(n){const R=n.getBoundingClientRect(),own=getComputedStyle(n).backgroundColor,clear=c=>!c||c==='transparent'||/rgba\([^)]*,\s*0\)$/.test(c),stops=[];
+    for(const c of n.children){const q=c.getBoundingClientRect(),bg=getComputedStyle(c).backgroundColor;if(q.height<1||clear(bg))continue;stops.push(`transparent ${q.top-R.top}px`,`${bg} ${q.top-R.top}px`,`${bg} ${q.bottom-R.top}px`,`transparent ${q.bottom-R.top}px`);}
+    return stops.length?`linear-gradient(to bottom,${stops.join(',')}),${clear(own)?'transparent':own}`:'';}
   function finishPanes(){const r=paneRun;if(!r)return;paneRun=null;clearTimeout(r.timer);r.done();}
   function animateFrom(before,opt={}){
     if(!Object.keys(before).length||root.hidden||root.closest('[hidden]')||reduceMotion())return false;
@@ -283,13 +288,15 @@ export function createCardEditor(root,api){
     const R=root.getBoundingClientRect(),gut=parseFloat(getComputedStyle(root).getPropertyValue('--cv-gutter'))||8;
     const c0=before.card||null,c1=now.card||null,Z={lib:1,board:1,ts:2,card:3,rail:3,brail:3},PAIR={card:'rail',rail:'card',board:'brail',brail:'board'},RAIL={rail:1,brail:1};
     const o={duration:PANE_MS,easing:PANE_EASE,fill:'both'},anims=[],undo=[];let tsF=null,tsT=null;
-    const place=(n,box,z)=>{const prev=n.getAttribute('style');Object.assign(n.style,{position:'absolute',left:(box.x-R.left)+'px',top:(box.y-R.top)+'px',width:box.w+'px',height:box.h+'px',margin:'0',flex:'none',zIndex:String(z),maxWidth:'none',minWidth:'0'});
+    // 판 화면 칸 규칙(idea-board.css)이 flex·width를 !important로 정해 두어, 그냥 넣은 폭이 무시되고 새로 들어오는 라이브러리 칸이 폭 0으로 안 보였다(11-14) — 모두 important로 넣는다.
+    const place=(n,box,z)=>{const prev=n.getAttribute('style');for(const [k,v] of Object.entries({position:'absolute',left:(box.x-R.left)+'px',top:(box.y-R.top)+'px',width:box.w+'px',height:box.h+'px',margin:'0',flex:'none','z-index':String(z),'max-width':'none','min-width':'0'}))n.style.setProperty(k,v,'important');
       undo.push(()=>{if(prev==null)n.removeAttribute('style');else n.setAttribute('style',prev);});};
-    const lockKids=(n,ws)=>[...n.children].forEach((c,i)=>{const w=ws?.[i];if(!(w>0))return;const prev=c.getAttribute('style');c.style.setProperty('width',w+'px','important');c.style.setProperty('flex','none','important');c.style.setProperty('max-width','none','important');c.style.setProperty('min-width','0','important');
+    // 안 칸은 폭과 높이를 모두 잰 값으로 묶는다 — 폭만 묶고 flex를 끄면 흰 면이 내용 높이로 줄었다가 끝에 툭 늘어났다(11-14 ①).
+    const lockKids=(n,ws)=>[...n.children].forEach((c,i)=>{const w=ws?.[i]?.w,h=ws?.[i]?.h;if(!(w>0))return;const prev=c.getAttribute('style');c.style.setProperty('width',w+'px','important');if(h>0)c.style.setProperty('height',h+'px','important');c.style.setProperty('flex','none','important');c.style.setProperty('max-width','none','important');c.style.setProperty('min-width','0','important');
       undo.push(()=>{if(prev==null)c.removeAttribute('style');else c.setAttribute('style',prev);});});
     // f(시작 상자)→t(마지막 상자): 상자는 둘을 다 덮게 두고 보이는 폭은 가림으로, 안 내용(폭 cw)은 덜 움직이는 쪽 가장자리에 붙여 위치로 옮긴다.
     function slide(n,f,t,z,{cw=t.w,fade}={}){const L=Math.min(f.x,t.x),Rr=Math.max(f.x+f.w,t.x+t.w),anchorL=Math.abs(t.x-f.x)<=Math.abs(t.x+t.w-f.x-f.w),rad=getComputedStyle(n).borderTopLeftRadius||'0px';
-      place(n,{x:L,y:t.y,w:Rr-L,h:t.h},z);
+      place(n,{x:L,y:t.y,w:Rr-L,h:t.h},z);const fill=t.bg||f.bg;if(fill)n.style.background=fill;
       anims.push(n.animate([{clipPath:`inset(0 ${Rr-f.x-f.w}px 0 ${f.x-L}px round ${rad})`},{clipPath:`inset(0 ${Rr-t.x-t.w}px 0 ${t.x-L}px round ${rad})`}],o));
       const k0=(anchorL?f.x:f.x+f.w-cw)-L,k1=(anchorL?t.x:t.x+t.w-cw)-L;
       for(const c of n.children)anims.push(c.animate([{transform:`translateX(${k0}px)`},{transform:`translateX(${k1}px)`}],o));
@@ -313,7 +320,9 @@ export function createCardEditor(root,api){
       const toLeft=f.x+f.w/2<R.left+R.width/2,dx=toLeft?R.left-(f.x+f.w)-gut:R.right-f.x+gut;
       place(g,f,0);anims.push(g.animate([{transform:'none'},{transform:`translateX(${dx}px)`}],o));}
     // 3) 조판 미리보기 층: 칸과 같은 길로, 카드 뒤에 있는 만큼 가림
-    if(tsF&&tsT&&!hwpLayer.hidden){const lr=hwpLayer.getBoundingClientRect(),leave=!now.ts,base=leave?tsF.x:tsT.x,d0=tsF.x-base,d1=tsT.x-base,cr0=c0?c0.x+c0.w:null,cr1=c1?c1.x+c1.w:null,ks=[];
+    if(tsF&&tsT&&!hwpLayer.hidden){const lr=hwpLayer.getBoundingClientRect(),leave=!now.ts,set=leave?tsF:tsT,anchorL=Math.abs(tsT.x-tsF.x)<=Math.abs(tsT.x+tsT.w-tsF.x-tsF.w),
+        off=box=>anchorL?box.x-set.x:box.x+box.w-set.x-set.w,d0=off(tsF),d1=off(tsT),// 칸 안 내용과 같은 쪽 가장자리에 붙여 옮긴다(폭이 바뀔 때 오른쪽에 검은 띠가 생겼다)
+        cr0=c0?c0.x+c0.w:null,cr1=c1?c1.x+c1.w:null,ks=[];
       for(let i=0;i<=20;i++){const p=i/20,d=d0+(d1-d0)*p,left=lr.left+d,hide=cr0==null||cr1==null?0:Math.max(0,Math.min(lr.width,cr0+(cr1-cr0)*p-left));ks.push({offset:p,transform:`translateX(${d}px)`,clipPath:`inset(0 0 0 ${hide}px)`});}
       anims.push(hwpLayer.animate(ks,o));}
     hwpFrozen=true;
@@ -335,7 +344,7 @@ export function createCardEditor(root,api){
     if(!cardOn&&!board){api.ideaBoard.el.remove();root.innerHTML='';placeHwp(false);api.ideaChanged?.(null);const lc=lastClose;lastClose='';setTimeout(()=>api.benchEmpty?.(lc),0);return;}
     // 11-13 밤: 판과 카드는 짝지을 때(접힌 띠를 눌러 펼 때)만 나란히. 판을 열면 카드는 오른쪽 띠로, 문항을 열면 판은 왼쪽 띠로 접힌다.
     const boardOn=!!(board&&!bench.bfold),brail=!!(board&&bench.bfold&&cardOn);
-    const lib=panels.lib,fold=!!(boardOn&&cardOn&&(lib||bench.fold)),ts=!!(cardOn&&!boardOn&&panels.rightOpen&&!lib),wide=ts&&sheetView();
+    const lib=panels.lib,fold=!!(boardOn&&cardOn&&(lib||bench.fold)),ts=!!(cardOn&&!boardOn&&panels.rightOpen),wide=ts&&sheetView();
     root.classList.toggle('is-sheet-view',wide);
     finishPanes();const before=paneWidths();
     api.ideaBoard.el.remove();// 다시 그릴 때 판 화면이 같이 지워지지 않게 떼어 둔다
@@ -344,7 +353,7 @@ export function createCardEditor(root,api){
     if(boardOn)h+='<section class="cv-idea" data-pane="board" data-ideaslot></section>';
     if(brail){const bb=(api.data().ideas||[]).find(v=>v.id===board);h+=`<button type="button" class="pane-rail left cv-foldrail" data-pane="brail" data-cv="board-unfold" title="눌러서 아이디어 판을 카드 옆에 펴기" aria-label="아이디어 판 펴기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M7 8.5h4v3H7zM13 8.5h4M13 11.5h3M7 14.5h10"/></svg><span>${E(bb?.title||'아이디어 판')}</span><small>눌러서 펴기</small></button>`;}
     if(cardOn&&!fold)h+=wide?`<button type="button" class="pane-rail mid" data-pane="card" data-cvview="card" aria-pressed="false" title="문항 카드로 돌아가기" aria-label="문항 카드 열기">${ICON.card}<span>문항 카드</span></button>`
-      :`<section class="cv-center" data-pane="card" style="--g:${boardOn?1:lib&&ts?1:2}">${barHtml()}${formHtml(x)}</section>`;
+      :`<section class="cv-center" data-pane="card" style="--g:${boardOn?1:2}">${barHtml()}${formHtml(x)}</section>`;
     if(ts)h+=rightHtml().replace('<aside class="cv-right"','<aside data-pane="ts" class="cv-right"');
     if(fold)h+=`<button type="button" class="pane-rail right cv-foldrail" data-pane="rail" data-cv="card-unfold" title="${lib&&!bench.fold?'눌러서 문항 카드 펴기 — 판은 2칸이 필요해 라이브러리가 접힙니다':'눌러서 문항 카드 펴기'}" aria-label="문항 카드 펴기">${ICON.card}<span>${E(questionTitle(x))}</span><small>${lib&&!bench.fold?'눌러서 펴기 · 라이브러리는 접힘':'눌러서 펴기'}</small></button>`;
     root.innerHTML=h;
@@ -424,8 +433,10 @@ export function createCardEditor(root,api){
   let hwpSlotWatch=null,hwpWanted=false;
   function alignHwp(){if(hwpFrozen)return;const slot=root.querySelector('#cv-hwp');const show=hwpWanted&&slot&&!root.hidden&&!root.closest('[hidden]');hwpLayer.hidden=!show;if(!show)return;
     const r=slot.getBoundingClientRect();Object.assign(hwpLayer.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
+  // 한글 창이 이미 이 문항을 그려 두었으면 바로 연다(가벼움: 맞춤만 다시) — 늦춰 열면 빈 종이가 미끄러져 들어온 뒤 한 번 더 깜빡였다(11-14 ③).
+  // 다른 문항을 새로 그려야 할 때만 움직임이 끝난 뒤로 미룬다(무거운 조판이 움직임을 끊지 않게).
   function placeHwp(show,{defer=false}={}){hwpWanted=show;hwpSlotWatch?.disconnect();clearTimeout(placeHwp.t);
-    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(()=>requestAnimationFrame(alignHwp));hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);if(defer)placeHwp.t=setTimeout(()=>{if(hwpWanted)api.hwpOpen?.();},PANE_MS+60);else api.hwpOpen?.();}else api.hwpClose?.();
+    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(()=>requestAnimationFrame(alignHwp));hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);if(defer&&!api.hwpCurrent?.())placeHwp.t=setTimeout(()=>{if(hwpWanted)api.hwpOpen?.();},PANE_MS+60);else api.hwpOpen?.();}else api.hwpClose?.();
     alignHwp();}
   new MutationObserver(alignHwp).observe(root,{attributes:true,attributeFilter:['hidden']});window.addEventListener('resize',alignHwp);
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
@@ -787,7 +798,7 @@ export function createCardEditor(root,api){
     if(d.cvpastview){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';pastFilter.view=d.cvpastview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cv==='to-page'){setView('page');return;}
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
-    if(d.cv==='toggle-right'){if(tsOn()){setPanel('rightOpen',false);return;}const hadLib=panels.lib;openTs();render();if(hadLib)api.status?.('라이브러리를 접고 조판 미리보기를 열었습니다.');return;}
+    if(d.cv==='toggle-right'){if(tsOn()){setPanel('rightOpen',false);return;}openTs();render();return;}
     if(d.cv==='hwp-download'||d.cv==='hwp-save'){hwpLayer.querySelector(d.cv==='hwp-save'?'#typeset-save':'#typeset-download')?.click();return;}
     if(d.cv==='new'){api.newQuestion();return;}
     if(d.cvadv!==undefined){pastAdvOpen=!pastAdvOpen;b.setAttribute('aria-expanded',pastAdvOpen);const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=!pastAdvOpen;return;}
@@ -972,7 +983,7 @@ export function createCardEditor(root,api){
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
-    confirmSwitch,confirmBoardSwitch,setCard(on){bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
+    confirmSwitch,confirmBoardSwitch,setCard(on){if(on&&!bench.card){panels.rightOpen=true;store.set('rightOpen',true);}/* 11-14: 문항 카드를 열면 조판도 같이 연다(카드 2 : 조판 1이 기본) */bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
     toggleLib(){panels.lib=!panels.lib;store.set('lib',panels.lib);if(!root.hidden&&!root.closest('[hidden]'))render();},libOn:()=>!!panels.lib,cardOn:()=>bench.card&&!!q(),
     benchBusy:()=>!!bench.board||(bench.card&&!!q()),ideaState:()=>bench.board?{id:bench.board}:null,aimField,resetIdea(){},
     refreshTabs(){const tabs=root.querySelector('.cv-qtabs');if(tabs){const sc=tabs.scrollLeft;tabs.outerHTML=tabsHtml();root.querySelector('.cv-qtabs').scrollLeft=sc;}},

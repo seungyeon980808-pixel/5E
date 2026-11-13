@@ -935,6 +935,12 @@
       "findingIds": [
         "LIBRARY-BOOKMARKS-LEVELS"
       ]
+    },
+    {
+      "path": "tests/test-eq-hwp-latex.mjs",
+      "findingIds": [
+        "EQ-HWP-LATEX-CONVERT"
+      ]
     }
   ],
   "browser": [
@@ -2432,6 +2438,12 @@
       "findingIds": [
         "HWP-MODES-FOCUS-TOOLS"
       ]
+    },
+    {
+      "path": "tests/test-exam-sheet-skip-browser.cjs",
+      "findingIds": [
+        "EXAM-SHEET-SKIP-NONPRINTED"
+      ]
     }
   ],
   "deferred": [
@@ -2636,6 +2648,13 @@
       ],
       "reason": "Manual profiling harness requires an explicit HWP_FILE and comparison setup; not an automatic browser regression.",
       "classificationRationale": "Restore the source profiling-only classification. This harness reports WebKit synthetic input metrics and has no pass/fail latency oracle or baseline comparison; RHWP_DOCUMENT is optional (the source reason names HWP_FILE). The required test-rhwp-exam-typing-browser.cjs remains browser."
+    },
+    {
+      "path": "tests/test-exam-send-1106-repro.cjs",
+      "findingIds": [
+        "EXAM-SEND-1106-REPRO"
+      ],
+      "reason": "Repro harness needs a read-only export of a user exam (E1106_JSON/E1106_OUT); skipped without it."
     }
   ]
 }

@@ -1238,7 +1238,7 @@ const cardEditor=createCardEditor($('#card-view'),{
   libraryAction:(act,i)=>{const p=libraryPicks[i],q=current;if(!p||!q)return;const where=[p.source?.documentTitle||p.name,p.source?.pageNumber?p.source.pageNumber+'쪽':''].filter(Boolean).join(' ');
     if(act==='link'){mutate(()=>{q.references.push({target:'question',label:('5E 라이브러리 · '+where).slice(0,300),quote:(p.source?.title&&p.source.title!==p.source.documentTitle?p.source.title:'').slice(0,2000)});},{render:false});cardEditor.render();status(`${where}을(를) 이 문항의 근거로 연결했습니다.`);return;}
     let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure);mutate(()=>{if(!slot){slot=block('figure',null,'그림');q.blocks.push(slot);}slot.figure={name:(where||'라이브러리 그림').slice(0,200)+'.png',data:p.data};});status(`${slot?.label||'그림 칸'}에 넣었습니다 · 출처: ${where}`);},
-  hwpDock:container=>dockHwp(container),hwpOpen:()=>void openTypeset(),hwpClose:()=>{if(!$('#preview-dialog').hidden)void requestTypeset(null);},
+  hwpDock:container=>dockHwp(container),hwpOpen:()=>void openTypeset(),hwpCurrent:()=>!!(typesetter&&current&&typesetter.matches(current)),hwpClose:()=>{if(!$('#preview-dialog').hidden)void requestTypeset(null);},
   dock:(tab,container)=>{const node=$('#sources');if(!docked.home){docked.home=node.parentElement;docked.next=node.nextSibling;}
     if(tab&&container){container.append(node);node.hidden=false;node.classList.add('docked');sourceTarget='question';sourceTab=tab;renderSources();}
     else if(node.classList.contains('docked')){node.classList.remove('docked');node.hidden=true;docked.home.insertBefore(node,docked.next);}},
