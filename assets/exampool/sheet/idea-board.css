@@ -154,7 +154,7 @@
 .side .side-sp{flex:1}
 .side .nav-bench{border-top:1px solid var(--ds-line)!important;border-radius:0!important;margin-top:6px}
 /* ── 11-12 작업 칸(시안 exam-panes-1112): 라이브러리 1 · 판 2 · 카드(1·2) · 조판 1, 칸 사이 틈, 칸이 바뀔 때 폭이 부드럽게 ── */
-#card-view.bench{gap:var(--cv-gutter,8px)}
+#card-view.bench{gap:var(--cv-gutter,8px);position:relative}
 #card-view.bench .cv-left{flex:1 1 0px!important;width:auto!important;min-width:0}
 #card-view.bench .cv-idea{flex:2 1 0px!important;min-width:0}
 #card-view.bench .cv-center{flex:var(--g,2) 1 0px!important;min-width:0}
@@ -168,8 +168,10 @@
 #card-view .cv-bar .cv-headbtn{width:30px;height:28px;flex:none;display:grid;place-items:center;border-radius:7px;border:1px solid transparent;background:none;color:var(--ds-ink-3);padding:0;cursor:pointer}
 #card-view .cv-bar .cv-headbtn .ico{width:17px;height:17px}
 #card-view .cv-bar .cv-headbtn:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
-#card-view .cv-bar .cv-tsbtn{border-color:var(--ds-line-strong,#30363d);color:var(--ds-ink-2)}
-#card-view .cv-bar .cv-tsbtn.on{background:var(--ds-soft-bg,#152137);border-color:var(--ds-soft-line,#6ba4f8);color:var(--ds-ink)}
+/* 11-13 밤: 조판 단추 = 쪽 그림 + 「조판」, 켜지면 눌린 회색 */
+#card-view .cv-bar .cv-tsbtn{width:auto;display:inline-flex;align-items:center;gap:5px;padding:0 10px 0 8px;font:inherit;font-size:12.5px;font-weight:600;border-color:var(--ds-line-strong,#30363d);color:var(--ds-ink-2)}
+#card-view .cv-bar .cv-tsbtn .ico{width:15px;height:15px}
+#card-view .cv-bar .cv-tsbtn.on{background:var(--ds-pressed,#2a3140);border-color:var(--ds-line-strong,#3a4352);color:var(--ds-ink);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
 #card-view .cv-bar .cv-headbtn:disabled{opacity:.35;cursor:default}
 #card-view.bench .cv-right{border-top-left-radius:0;border-bottom-left-radius:0}
 .cv-save-ask .dialog-actions{display:flex;gap:8px;justify-content:flex-end}

@@ -113,13 +113,13 @@ h.withServer(async origin => {
       for(const [k,want] of [['ArrowDown','single'],['ArrowDown','pair'],['ArrowUp','single'],['End','essay'],['Home','combo']]){await page.keyboard.press(k);assert.equal(await sheet.evaluate(()=>document.activeElement?.dataset?.cvform),want,'arrow keys move within the type menu');}
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .cv-shape-menu').count(),0,'Esc closes the menu');
       // 보기에 글이 있으면 지울지 묻고, 취소하면 그대로.
-      await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','운동량은 보존된다.');
+      await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"] + .eq-ce','운동량은 보존된다.');
       // 11-12: 맥 기본 확인창 대신 5E 확인창(.ask-dialog)으로 묻는다.
       await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="single"]');
       await sheet.waitForSelector('.ask-dialog[open]');
       assert.match(await sheet.locator('.ask-dialog .ask-message').textContent(),/보기 1줄을 지웁니다/);
       await sheet.click('.ask-dialog [data-ask="no"] >> nth=1');await sheet.waitForFunction(()=>!document.querySelector('.ask-dialog'));assert.match(await sheet.locator('#card-view .cv-shape').textContent(),/^합답형/);
-      await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','');
+      await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"] + .eq-ce','');
       await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="single"]');
       await sheet.waitForFunction(()=>/^일반 정답형/.test(document.querySelector('#card-view .cv-shape').textContent));
       assert.equal(await sheet.locator('#card-view [data-cvline="bogi"]').count(),0,'the empty bogi is gone with the form');
@@ -159,7 +159,7 @@ h.withServer(async origin => {
       await page.waitForSelector('.web-login-dialog[open]',{timeout:5000});await page.locator('.web-login-dialog .web-login-close').click();
       await sheet.click('#card-view [data-cvright="paper"]');
       // 완성한 문항을 고치면 단계 단추도 검토 중으로 바뀐다(다시 그리지 않는 입력에서도).
-      await sheet.click('#card-view [data-cvstage="complete"]');await sheet.click('#cv-ask');await page.keyboard.press('End');await page.keyboard.type('!');
+      await sheet.click('#card-view [data-cvstage="complete"]');await sheet.click('#cv-ask + .eq-ce');await page.keyboard.press('End');await page.keyboard.type('!');
       await sheet.waitForFunction(()=>document.querySelector('#card-view [data-cvstage][aria-pressed="true"]')?.dataset.cvstage==='review');
       // 미리보기(한글 창)가 다시 그려져도 초점을 가져가지 않아 ⌘Z·⇧⌘Z가 카드에 닿는다.
       await sheet.locator('#card-view .w-head .qno').click();const askEdited=await sheet.locator('#cv-ask').inputValue();
@@ -167,7 +167,7 @@ h.withServer(async origin => {
       await sheet.waitForTimeout(800);await typesetReady(sheet);await sheet.waitForTimeout(500);
       assert.notEqual(await sheet.evaluate(()=>document.activeElement?.tagName),'IFRAME','redrawing the HWP preview keeps focus out of the editor');
       await page.keyboard.press('ControlOrMeta+Shift+z');await sheet.waitForFunction(v=>document.querySelector('#cv-ask').value===v,askEdited);
-      await sheet.fill('#cv-ask',askEdited.slice(0,-1));await sheet.click('#card-view [data-cvstage="draft"]');
+      await sheet.fill('#cv-ask + .eq-ce',askEdited.slice(0,-1));await sheet.click('#card-view [data-cvstage="draft"]');
       // 위쪽 막대: 이동 줄 끝은 문항 이름만(전체 발문은 풍선), 「문항 보관함」·로고는 눌러서 보관함으로 간다.
       assert.ok(!(await sheet.locator('#crumb-question').textContent()).includes(' · '),'the crumb shows only the question name');
       assert.match(await sheet.locator('#crumb-question').getAttribute('title'),/ · /,'the full ask is in the tooltip');
@@ -263,14 +263,14 @@ h.withServer(async origin => {
       // 카드 발문 칸에 입력하면 한글 창의 같은 문단에 바로 들어간다. 다시 그리지 않는다.
       const nativeText=()=>sheet.evaluate(()=>document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText());
       await sheet.evaluate(()=>{window.__busySeen=false;const p=document.querySelector('#preview-dialog');window.__busyWatch?.disconnect();window.__busyWatch=new MutationObserver(()=>{if(p.getAttribute('aria-busy')==='true')window.__busySeen=true;});window.__busyWatch.observe(p,{attributes:true,attributeFilter:['aria-busy']});});
-      await sheet.click('#cv-ask');await sheet.evaluate(()=>{const t=document.querySelector('#cv-ask');t.setSelectionRange(t.value.length,t.value.length);});
+      await sheet.click('#cv-ask + .eq-ce');await sheet.evaluate(()=>{const c=document.querySelector('#cv-ask + .eq-ce'),r=document.createRange();r.selectNodeContents(c);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);});
       await page.keyboard.type(' 실시간');
       await sheet.waitForFunction(()=>/실시간/.test(document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText()),null,{timeout:10000});
       assert.match(await nativeText(),/OK[\s\S]*실시간/,'the card edit reaches the HWP paragraph after the HWP edit');
       assert.equal(await passageCard(),'다음은 실험이다. OK','the HWP edit survives the card edit');
       // 한글에 나오지 않는 칸(해설)을 고쳐도 한글 창은 그대로다.
-      if(!await sheet.locator('#card-view [data-cvf="explanation"]').isVisible())await sheet.click('#card-view [data-cvmore="exp"]');// 해설은 「문항 정보」 단추로 연다(10-27 카드 정리)
-      await sheet.click('#card-view [data-cvf="explanation"]');await page.keyboard.type('해설만 바꿈');
+      if(!await sheet.locator('#card-view [data-cvf="explanation"] + .eq-ce').isVisible())await sheet.click('#card-view [data-cvmore="exp"]');// 해설은 「문항 정보」 단추로 연다(10-27 카드 정리)
+      await sheet.click('#card-view [data-cvf="explanation"] + .eq-ce');await page.keyboard.type('해설만 바꿈');
       await sheet.waitForTimeout(900);
       assert.equal(await sheet.evaluate(()=>window.__busySeen),false,'text edits and non-printed fields never redraw the HWP window');
       assert.equal(await sheet.locator('#typeset-refresh').isHidden(),true,'the HWP window matches the card');
@@ -356,7 +356,7 @@ h.withServer(async origin => {
       await page.evaluate(()=>{window.__release=null;window.__authorHold=new Promise(r=>window.__release=r);});
       await sheet.fill('#cv-ai-input','ㄴ을 참으로 바꿔줘');await sheet.click('#card-view [data-cv="ai-send"]');
       await sheet.waitForSelector('#card-view .msg.ai.pending');
-      await sheet.fill('#cv-ask','교사가 직접 고친 발문');await sheet.waitForTimeout(900);
+      await sheet.fill('#cv-ask + .eq-ce','교사가 직접 고친 발문');await sheet.waitForTimeout(900);
       await page.evaluate(()=>window.__release());
       await sheet.waitForSelector('#card-view .proposal.old',{timeout:20000});
       assert.equal(await sheet.locator('#cv-ask').inputValue(),'교사가 직접 고친 발문','a late answer never overwrites the teacher edit');

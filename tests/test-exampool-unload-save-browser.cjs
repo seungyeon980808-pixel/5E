@@ -14,13 +14,13 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const page=await browser.newPage({viewport:{width:1440,height:960}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);let sheet=await openSheet(page);
   await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
-  await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');
+  await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask + .eq-ce');
   // 새 문항 만들기(전체 변경)와 카드 입력(그 문항만 변경) 두 경우를 차례로.
-  await sheet.fill('#cv-ask','첫 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);
+  await sheet.fill('#cv-ask + .eq-ce','첫 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);
   await sheet.waitForFunction(()=>true);await sheet.waitForTimeout(800);assert.deepEqual(await stored(sheet),['첫 입력'],'new question and its text survive an immediate reload');
   // 10-23 보관함: 카드를 누르면 문항 보기 창, 카드 오른쪽 아래 「열기」로 바로 카드 화면.
-  await sheet.locator('.lv-card:has-text("첫 입력") [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');
-  await sheet.fill('#cv-ask','둘째 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);await sheet.waitForTimeout(800);
+  await sheet.locator('.lv-card:has-text("첫 입력") [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask + .eq-ce');
+  await sheet.fill('#cv-ask + .eq-ce','둘째 입력');await page.reload();await h.ready(page);sheet=await openSheet(page);await sheet.waitForTimeout(800);
   assert.deepEqual(await stored(sheet),['둘째 입력'],'a card edit right before reload survives');
   assert.deepEqual(errors,[]);
  });

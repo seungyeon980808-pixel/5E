@@ -62,7 +62,7 @@ h.withServer(async origin=>{
       await page.evaluate(()=>window.__answer.resolve({response:{reply:'변경안입니다',proposal:{summary:'발문 변경',changes:[{path:'ask',value:'AI가 고친 발문'}]}},evidence:[],meta:{live:false}}));
       await sheet.waitForSelector('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(900);
       const dialogs=[];page.on('dialog',d=>{dialogs.push(d.message());void d.dismiss();});
-      await sheet.fill('#cv-ask','교사가 방금 고친 발문');await sheet.click('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(400);
+      await sheet.fill('#cv-ask + .eq-ce','교사가 방금 고친 발문');await sheet.click('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(400);
       assert.equal(dialogs.length,1,'applying right after a teacher edit asks first');assert.match(dialogs[0],/지난 버전/);
       assert.equal(await sheet.locator('#cv-ask').inputValue(),'교사가 방금 고친 발문','declining keeps the teacher text');
       // 4-2) M18: 탭을 바꿔 카드를 다시 그려도 AI 입력창에 쓰던 초안은 남는다.

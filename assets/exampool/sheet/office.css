@@ -374,7 +374,7 @@ button.q-status:hover{background:var(--ds-hover)}
 .send-progress .sp-steps li[data-state="done"]{color:#9aa4b2}
 .send-progress .sp-steps li[data-state="done"]::before{border-color:#5b8a6d;background:#5b8a6d}
 .send-progress .sp-bar{height:6px;border-radius:3px;background:#262c35;overflow:hidden}
-.send-progress .sp-bar i{display:block;height:100%;width:0;border-radius:3px;background:#6f93c4}/* 11-11: 너비는 스크립트가 매 프레임 조금씩(전환 효과 없이 끊김 없게) */
+.send-progress .sp-bar i{display:block;height:100%;width:100%;border-radius:3px;background:#6f93c4;transform-origin:0 50%;transform:scaleX(0);will-change:transform}/* 11-11: 너비는 스크립트가 매 프레임 조금씩(전환 효과 없이 끊김 없게) */
 .send-progress .sp-bar[data-waiting="true"] i{background:linear-gradient(90deg,#6f93c4 0%,#9cb6dc 50%,#6f93c4 100%);background-size:200% 100%;animation:sp-wave 1.2s linear infinite}
 .send-progress .sp-detail{margin:10px 0 0;min-height:1.5em;color:#9aa4b2;font-size:13px}
 @keyframes sp-in{from{opacity:0}to{opacity:1}}

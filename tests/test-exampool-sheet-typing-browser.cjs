@@ -13,7 +13,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
   // 카드(한글 미리보기 열림)에서 문항을 만든 뒤, 시험지 → 시트로 바로 넘어가 친다.
   await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
-  await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask');await sheet.fill('#cv-ask','앞 문항');
+  await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask + .eq-ce');await sheet.fill('#cv-ask + .eq-ce','앞 문항');
   await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   await sheet.click('.side [data-nav="new-exam"]');/* 새 시험지는 ① 틀 · 속성에서 열림 → ② 「담기」(10-24) */await h.pickIntoExam(sheet,null,1);

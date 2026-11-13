@@ -234,12 +234,16 @@ export function createCardEditor(root,api){
   const railHtml=(side,name)=>`<button type="button" class="pane-rail ${side}" data-cv="${side==='left'?'toggle-lib':'toggle-right'}" aria-pressed="false" title="${name} 열기" aria-label="${name} 열기">${side==='left'?ICON.panelL:ICON.panelR}<span>${name}</span></button>`;
   // 가운데 머리줄: 칸 이름, 번호 탭. 「이 문항 | 시험지 전체」 전환은 오른쪽 조판 칸에서 한다(10-22 안 B).
   // 11-12 칸 구조(시안 exam-panes-1112): 문항 카드 머리 = 이름 · 조판 켜고 끄기(아이콘) · (판이 열려 있으면) 카드 접기 · 닫기. 번호 줄은 두지 않는다(다른 문항은 「출제 중」 목록에서).
-  const TS_ICO=on=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M14 4.5v15"/>${on?'<rect x="14" y="4.5" width="6.5" height="15" fill="currentColor" fill-opacity=".35" stroke="none"/>':''}</svg>`;
+  // 11-13 밤(시안 exam-fixes-1113 B ①): 조판 단추는 칸 그림 대신 쪽 그림 + 「조판」 글자. 켜지면 눌린 회색.
+  const TS_ICO=()=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`;
   const FOLD_ICO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M15 4.5v15M10 9.5l2.5 2.5L10 14.5"/></svg>';
-  function barHtml(){const dis=!!bench.board,on=panels.rightOpen&&!dis;
-    return `<div class="cv-bar">${paneRole('card','문항 카드')}<span class="sp"></span><button type="button" class="cv-headbtn cv-tsbtn${on?' on':''}" data-cv="toggle-right" aria-pressed="${on}"${dis?' disabled':''} title="${dis?'아이디어 판과 같이 쓸 때는 조판이 접혀 있습니다':on?'조판 접기':'조판 펼치기'}" aria-label="조판 켜고 끄기">${TS_ICO(on)}</button>${bench.board?`<button type="button" class="cv-headbtn" data-cv="card-fold" title="문항 카드 접기 (판을 넓게)" aria-label="문항 카드 접기">${FOLD_ICO}</button>`:''}<button type="button" class="cv-headbtn" data-cv="card-close" title="문항 카드 닫기" aria-label="문항 카드 닫기">${ICON.close}</button></div>`;
+  function barHtml(){const dis=!!(bench.board&&!bench.bfold),on=tsOn();
+    return `<div class="cv-bar">${paneRole('card','문항 카드')}<span class="sp"></span><button type="button" class="cv-headbtn cv-tsbtn${on?' on':''}" data-cv="toggle-right" aria-pressed="${on}"${dis?' disabled':''} title="${dis?'아이디어 판과 나란히 쓸 때는 조판 미리보기가 카드 뒤에 접혀 있습니다':on?'조판 미리보기 접기':'조판 미리보기 열기 — 시험지에 찍힐 모양·자간·문단 간격'}" aria-label="조판 미리보기 켜고 끄기">${TS_ICO()}<span>조판</span></button>${dis?`<button type="button" class="cv-headbtn" data-cv="card-fold" title="문항 카드 접기 (판을 넓게)" aria-label="문항 카드 접기">${FOLD_ICO}</button>`:''}<button type="button" class="cv-headbtn" data-cv="card-close" title="문항 카드 닫기" aria-label="문항 카드 닫기">${ICON.close}</button></div>`;
   }
   // 시험지 전체 보기: 조판 칸(미리보기)이 열려 있을 때만. 그때 가운데 문항 카드는 세로 띠로 접히고 조판 칸이 그 자리까지 넓어진다.
+  // 11-13 밤: 조판 미리보기는 문항 카드에 딸린 서랍 — 라이브러리·판이 열려 있으면 카드 뒤에 접혀 있다(열어 둔 것은 기억).
+  const tsOn=()=>panels.rightOpen&&!panels.lib&&!(bench.board&&!bench.bfold);
+  function openTs(){panels.rightOpen=true;store.set('rightOpen',true);if(panels.lib){panels.lib=false;store.set('lib',false);api.navChanged?.();}}
   const sheetView=()=>panels.view==='page'&&panels.rightOpen&&panels.right==='paper'&&!!q();
   const scopeHtml=()=>`<span class="ts-scope" role="group" aria-label="조판 보기"><button type="button" data-cvview="card" aria-pressed="${!sheetView()}">이 문항</button><button type="button" data-cvview="page" aria-pressed="${sheetView()}">시험지 전체</button></span>`;
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
@@ -248,75 +252,111 @@ export function createCardEditor(root,api){
     return {lw:store.get('lw',Math.round(Math.min(1100,Math.max(300,w*0.34)))),rw:store.get('rw',Math.round(Math.min(1000,Math.max(340,w*0.31))))};}
   // 창이 좁아지면 가운데 칸 최소 폭(300)을 남기도록 양쪽 칸을 비율대로 줄인다(저장한 폭은 그대로, 창이 넓어지면 되돌아감).
   // 칸 폭을 열 때 한 번만 정해, 넓은 창에서 연 뒤 창을 줄이면 오른쪽 칸이 창 밖으로 밀려 잘렸다.
-  function applyWidths(){let {lw,rw}=widths();const cs=getComputedStyle(root),gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8;
-    const room=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)-gut*((panels.lib?1:0)+(panels.rightOpen?1:0))-300,l=panels.lib?lw:0,r=panels.rightOpen?rw:0;
-    if(room>0&&l+r>room){const k=room/(l+r);if(panels.lib)lw=Math.max(240,Math.round(lw*k));if(panels.rightOpen)rw=Math.max(300,Math.round(rw*k));}
+  function applyWidths(){let {lw,rw}=widths();const rOpen=tsOn();const cs=getComputedStyle(root),gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8;
+    const room=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)-gut*((panels.lib?1:0)+(rOpen?1:0))-300,l=panels.lib?lw:0,r=rOpen?rw:0;
+    if(room>0&&l+r>room){const k=room/(l+r);if(panels.lib)lw=Math.max(240,Math.round(lw*k));if(rOpen)rw=Math.max(300,Math.round(rw*k));}
     // 한쪽 칸을 접으면 남은 두 칸이 비워진 자리를 지금 비율 그대로 나눠 갖는다(저장한 폭은 세 칸이 다 열렸을 때의 기준값).
     scaleL=scaleR=1;
-    if(panels.lib!==panels.rightOpen){const inner=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0),rail=30+gut,c0=Math.max(300,inner-2*gut-lw-rw),avail=inner-gut-rail;
-      if(panels.rightOpen){const n=Math.max(300,Math.round(avail*rw/(c0+rw)));scaleR=rw/n;rw=n;}else{const n=Math.max(240,Math.round(avail*lw/(c0+lw)));scaleL=lw/n;lw=n;}}
+    if(panels.lib!==rOpen){const inner=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0),rail=30+gut,c0=Math.max(300,inner-2*gut-lw-rw),avail=inner-gut-rail;
+      if(rOpen){const n=Math.max(300,Math.round(avail*rw/(c0+rw)));scaleR=rw/n;rw=n;}else{const n=Math.max(240,Math.round(avail*lw/(c0+lw)));scaleL=lw/n;lw=n;}}
     root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');}
   let scaleL=1,scaleR=1;
   // 카드 전체 다시 그리기(탭 전환·AI 그림 도착·진행 메시지)가 입력 중인 칸의 초점과 커서를 날렸다(M18). 같은 문항이면 되돌린다.
   const FOCUS_KEYS=['cvf','cvline','i','cvchoice','cvct'];
   // AI 입력창 초안은 문항마다 따로 둔다. 예전에는 카드를 다시 그릴 때마다 새 입력창이 비어 초안이 지워졌다(M18).
   const aiDrafts=new Map();
-  function focusKey(n){if(!n||!root.contains(n)||!n.matches?.('input,textarea'))return null;if(n.id)return {sel:'#'+CSS.escape(n.id)};
+  function focusKey(n){n=mathFields?.fieldOf(n)||n;if(!n||!root.contains(n)||!n.matches?.('input,textarea'))return null;if(n.id)return {sel:'#'+CSS.escape(n.id)};
     const attrs=FOCUS_KEYS.filter(k=>n.dataset[k]!==undefined).map(k=>`[data-${k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())}="${CSS.escape(n.dataset[k])}"]`);return attrs.length?{sel:n.tagName.toLowerCase()+attrs.join('')}:null;}
-  // 칸이 바뀔 때 폭이 부드럽게 바뀌게: 다시 그리기 전 폭에서 새 폭으로(칸마다 data-pane 이름으로 짝지음).
-  // 11-13: 칸이 바뀔 때 — 「처음엔 빠르게, 끝은 천천히」 한 곡선으로. 칸 안 내용은 마지막 폭으로 먼저 그려 두고(움직이는 동안 줄바꿈이 다시 일어나지 않게)
-  // 칸의 보이는 폭만 바꾼다. 새로 생기는 맨 왼쪽 칸(라이브러리)은 왼쪽에서 밀려 나오고, 오른쪽 칸은 오른쪽에서 들어온다.
-  // 사라지는 칸은 그 자리에 잠깐 남겨(유령) 바깥쪽으로 밀어 내보낸다 — 순간 교체로 판이 튀던 것(영상 11-13).
+  // 11-13 밤(시안 exam-panes-motion-1113): 칸 움직임. 칸 안은 마지막 모습으로 한 번 그려 두고 위치(transform)·가림(clip)만 한 곡선으로 움직인다
+  // — 움직이는 동안 다시 배치(줄바꿈)가 없어 버벅이지 않는다. 남는 칸은 지금 자리에서 새 자리로 미끄러지고, 새 칸은 바깥(왼쪽 칸은 왼쪽, 오른쪽 칸은 오른쪽)에서,
+  // 조판 미리보기는 카드 뒤에서 나온다. 사라지는 칸은 그 자리에 남겨(잔상) 같은 길로 나간다. 문항 카드 ↔ 접힌 띠는 한 칸이 줄고 펴지는 것으로 본다.
+  // 조판 미리보기 층(한글 엔진, 칸 밖에 떠 있음)도 같은 곡선으로 따라가고 카드 뒤에 있는 만큼 가린다.
   const PANE_EASE='cubic-bezier(.32,.72,0,1)',PANE_MS=340;
   const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function paneWidths(){const m={};root.querySelectorAll('[data-pane]').forEach(n=>{m[n.dataset.pane]={w:n.getBoundingClientRect().width,r:n.getBoundingClientRect(),node:n};});return m;}
-  function animateFrom(m){if(!Object.keys(m).length||root.hidden||reduceMotion())return;const ns=[...root.querySelectorAll('[data-pane]')];if(!ns.length)return;
-    const names=new Set(ns.map(n=>n.dataset.pane)),leaving=Object.entries(m).filter(([k])=>!names.has(k));
-    if(!leaving.length&&ns.every(n=>m[n.dataset.pane]&&Math.abs(m[n.dataset.pane].w-n.getBoundingClientRect().width)<1))return;
-    const rootR=root.getBoundingClientRect(),locked=[];
-    for(const n of ns){const kids=[...n.children];for(const c of kids){const w=c.getBoundingClientRect().width;if(w>0){c.style.setProperty('width',w+'px','important');c.style.setProperty('flex','none','important');locked.push(c);}}}
-    const finals=new Map(ns.map(n=>[n,n.getBoundingClientRect().width]));
-    for(const n of ns){n.style.setProperty('transition','none','important');n.style.setProperty('overflow','hidden','important');n.style.setProperty('flex',`0 0 ${m[n.dataset.pane]?.w??0}px`,'important');n.style.setProperty('min-width','0','important');}
-    void root.offsetWidth;
-    for(const n of ns){n.style.setProperty('transition',`flex ${PANE_MS}ms ${PANE_EASE}`,'important');n.style.setProperty('flex',`0 0 ${finals.get(n)}px`,'important');// 마지막 폭(px)으로 — 늘어나는 비율끼리 섞여 넘쳤다 돌아오지 않게
-      // 새로 생긴 맨 왼쪽 칸: 내용을 오른쪽 끝에 붙여 왼쪽에서 밀려 나오게
-      if(!m[n.dataset.pane]&&n===ns[0]){const W=finals.get(n);for(const c of n.children)c.animate([{transform:`translateX(${-W}px)`},{transform:'none'}],{duration:PANE_MS,easing:PANE_EASE});}}
-    for(const [k,{r,node}] of leaving){if(!node||r.width<2)continue;const g=node;g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));g.removeAttribute('data-pane');g.setAttribute('inert','');g.setAttribute('aria-hidden','true');
-      Object.assign(g.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0',zIndex:'5',pointerEvents:'none',flex:'none'});document.body.appendChild(g);
-      const toLeft=r.left+r.width/2<rootR.left+rootR.width/2&&r.left<=rootR.left+2;
-      g.animate([{transform:'none',opacity:1},{transform:`translateX(${toLeft?-r.width:r.width}px)`,opacity:0}],{duration:PANE_MS,easing:PANE_EASE,fill:'forwards'}).finished.then(()=>g.remove(),()=>g.remove());}
-    clearTimeout(animateFrom.t);animateFrom.t=setTimeout(()=>{ns.forEach(n=>{n.style.removeProperty('transition');n.style.removeProperty('flex');n.style.removeProperty('overflow');n.style.removeProperty('min-width');});locked.forEach(c=>{c.style.removeProperty('width');c.style.removeProperty('flex');});},PANE_MS+40);}
+  let paneRun=null,hwpFrozen=false;
+  function paneWidths(){const m={};root.querySelectorAll(':scope>[data-pane]').forEach(n=>{const r=n.getBoundingClientRect();m[n.dataset.pane]={x:r.left,w:r.width,y:r.top,h:r.height,node:n,kids:[...n.children].map(c=>c.getBoundingClientRect().width)};});return m;}
+  function finishPanes(){const r=paneRun;if(!r)return;paneRun=null;clearTimeout(r.timer);r.done();}
+  function animateFrom(before,opt={}){
+    if(!Object.keys(before).length||root.hidden||root.closest('[hidden]')||reduceMotion())return false;
+    const now=paneWidths(),names=Object.keys(now),leaving=Object.keys(before).filter(k=>!now[k]);
+    if(!leaving.length&&names.every(k=>before[k]&&Math.abs(before[k].x-now[k].x)<1&&Math.abs(before[k].w-now[k].w)<1))return false;
+    const R=root.getBoundingClientRect(),gut=parseFloat(getComputedStyle(root).getPropertyValue('--cv-gutter'))||8;
+    const c0=before.card||null,c1=now.card||null,Z={lib:1,board:1,ts:2,card:3,rail:3,brail:3},PAIR={card:'rail',rail:'card',board:'brail',brail:'board'},RAIL={rail:1,brail:1};
+    const o={duration:PANE_MS,easing:PANE_EASE,fill:'both'},anims=[],undo=[];let tsF=null,tsT=null;
+    const place=(n,box,z)=>{const prev=n.getAttribute('style');Object.assign(n.style,{position:'absolute',left:(box.x-R.left)+'px',top:(box.y-R.top)+'px',width:box.w+'px',height:box.h+'px',margin:'0',flex:'none',zIndex:String(z),maxWidth:'none',minWidth:'0'});
+      undo.push(()=>{if(prev==null)n.removeAttribute('style');else n.setAttribute('style',prev);});};
+    const lockKids=(n,ws)=>[...n.children].forEach((c,i)=>{const w=ws?.[i];if(!(w>0))return;const prev=c.getAttribute('style');c.style.setProperty('width',w+'px','important');c.style.setProperty('flex','none','important');c.style.setProperty('max-width','none','important');c.style.setProperty('min-width','0','important');
+      undo.push(()=>{if(prev==null)c.removeAttribute('style');else c.setAttribute('style',prev);});});
+    // f(시작 상자)→t(마지막 상자): 상자는 둘을 다 덮게 두고 보이는 폭은 가림으로, 안 내용(폭 cw)은 덜 움직이는 쪽 가장자리에 붙여 위치로 옮긴다.
+    function slide(n,f,t,z,{cw=t.w,fade}={}){const L=Math.min(f.x,t.x),Rr=Math.max(f.x+f.w,t.x+t.w),anchorL=Math.abs(t.x-f.x)<=Math.abs(t.x+t.w-f.x-f.w),rad=getComputedStyle(n).borderTopLeftRadius||'0px';
+      place(n,{x:L,y:t.y,w:Rr-L,h:t.h},z);
+      anims.push(n.animate([{clipPath:`inset(0 ${Rr-f.x-f.w}px 0 ${f.x-L}px round ${rad})`},{clipPath:`inset(0 ${Rr-t.x-t.w}px 0 ${t.x-L}px round ${rad})`}],o));
+      const k0=(anchorL?f.x:f.x+f.w-cw)-L,k1=(anchorL?t.x:t.x+t.w-cw)-L;
+      for(const c of n.children)anims.push(c.animate([{transform:`translateX(${k0}px)`},{transform:`translateX(${k1}px)`}],o));
+      if(fade)anims.push(n.animate(fade,o));}
+    // 1) 모든 칸의 마지막 자리·안 폭을 잰 값으로 고정(하나를 띄우면 다른 칸 흐름이 바뀌므로 먼저 다 잰 값을 쓴다)
+    for(const k of names){const t=now[k],n=t.node,f=before[k],z=Z[k]||1;lockKids(n,t.kids);
+      if(f){slide(n,f,t,z);if(k==='ts'){tsF=f;tsT=t;}continue;}
+      if(k==='ts'&&c1){const cs=c0||c1,ff={x:Math.max(cs.x,t.x-t.w-gut),w:t.w};slide(n,ff,t,z);tsF=ff;tsT=t;continue;}
+      const pr=before[PAIR[k]];
+      if(pr&&!RAIL[k]){slide(n,{x:pr.x,w:pr.w},t,z);continue;}// 띠에서 칸이 펴짐
+      if(pr&&RAIL[k]){place(n,t,4);anims.push(n.animate([{opacity:0},{opacity:0,offset:.5},{opacity:1}],o));continue;}
+      const fromLeft=t.x+t.w/2<R.left+R.width/2,dx=fromLeft?R.left-(t.x+t.w)-gut:R.right-t.x+gut;
+      place(n,t,z);anims.push(n.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o));}
+    // 2) 사라지는 칸: 잔상을 같은 곳(#card-view 안)에 남겨 바깥으로 — 화면 틀 밖으로 옮기면 모양 규칙이 빠져 1px로 쪼그라들었다
+    for(const k of leaving){const f=before[k],g=f.node;if(!g||f.w<2)continue;
+      g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));g.removeAttribute('data-pane');g.setAttribute('inert','');g.setAttribute('aria-hidden','true');g.style.pointerEvents='none';root.appendChild(g);undo.push(()=>g.remove());lockKids(g,f.kids);
+      if(k==='ts'&&c1){const to={x:Math.max(c1.x,f.x-f.w-gut),w:f.w,y:f.y,h:f.h};slide(g,f,to,Z.ts);tsF=f;tsT=to;continue;}
+      const pn=now[PAIR[k]];
+      if(pn&&!RAIL[k]){slide(g,f,{x:pn.x,w:pn.w,y:f.y,h:f.h},Z[k]||1,{cw:f.w,fade:[{opacity:1},{opacity:1,offset:.45},{opacity:0}]});continue;}// 칸이 띠로 줄어듦
+      if(pn&&RAIL[k]){place(g,f,4);anims.push(g.animate([{opacity:1},{opacity:0,offset:.35},{opacity:0}],o));continue;}
+      const toLeft=f.x+f.w/2<R.left+R.width/2,dx=toLeft?R.left-(f.x+f.w)-gut:R.right-f.x+gut;
+      place(g,f,0);anims.push(g.animate([{transform:'none'},{transform:`translateX(${dx}px)`}],o));}
+    // 3) 조판 미리보기 층: 칸과 같은 길로, 카드 뒤에 있는 만큼 가림
+    if(tsF&&tsT&&!hwpLayer.hidden){const lr=hwpLayer.getBoundingClientRect(),leave=!now.ts,base=leave?tsF.x:tsT.x,d0=tsF.x-base,d1=tsT.x-base,cr0=c0?c0.x+c0.w:null,cr1=c1?c1.x+c1.w:null,ks=[];
+      for(let i=0;i<=20;i++){const p=i/20,d=d0+(d1-d0)*p,left=lr.left+d,hide=cr0==null||cr1==null?0:Math.max(0,Math.min(lr.width,cr0+(cr1-cr0)*p-left));ks.push({offset:p,transform:`translateX(${d}px)`,clipPath:`inset(0 0 0 ${hide}px)`});}
+      anims.push(hwpLayer.animate(ks,o));}
+    hwpFrozen=true;
+    const done=()=>{anims.forEach(a=>a.cancel());undo.reverse().forEach(f=>f());hwpFrozen=false;if(opt.hwpLeaving)placeHwp(false);else alignHwp();opt.after?.();};
+    paneRun={done,timer:setTimeout(()=>{if(paneRun?.done===done){paneRun=null;done();}},PANE_MS+30)};
+    return true;}
   function render(){shapeOpen=false;
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
-    const active=document.activeElement,focused=same?focusKey(active):null,caret=focused?[active.selectionStart,active.selectionEnd]:null;
+    const active=document.activeElement,focused=same?focusKey(active):null,caret=focused&&active.matches?.('input,textarea')?[active.selectionStart,active.selectionEnd]:[null,null];
     api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람을 원래 자리로 돌려놓는다(같이 지워지지 않게).
     if(['standards','references'].includes(panels.tab)){const src=document.querySelector('#source-search');if(src)src.value=srcQuery[panels.tab]||'';}
     if(bench.board&&!(api.data().ideas||[]).some(b=>b.id===bench.board))bench.board=null;
     const cardOn=bench.card&&!!x,board=bench.board;
     if(cardOn&&cardSnap?.id!==x.id)cardSnap={id:x.id,json:JSON.stringify(x)};
-    store.set('bench',{board,card:bench.card,fold:bench.fold});
+    if(board&&bench.bfold&&!cardOn)bench.bfold=false;// 카드가 없으면 판은 접어 둘 까닭이 없다
+    store.set('bench',{board,card:bench.card,fold:bench.fold,bfold:bench.bfold});
     root.classList.add('bench');
     if(!cardOn&&!board){api.ideaBoard.el.remove();root.innerHTML='';placeHwp(false);api.ideaChanged?.(null);const lc=lastClose;lastClose='';setTimeout(()=>api.benchEmpty?.(lc),0);return;}
-    const lib=panels.lib,fold=!!(board&&cardOn&&(lib||bench.fold)),ts=!!(cardOn&&!board&&panels.rightOpen),wide=ts&&sheetView();
+    // 11-13 밤: 판과 카드는 짝지을 때(접힌 띠를 눌러 펼 때)만 나란히. 판을 열면 카드는 오른쪽 띠로, 문항을 열면 판은 왼쪽 띠로 접힌다.
+    const boardOn=!!(board&&!bench.bfold),brail=!!(board&&bench.bfold&&cardOn);
+    const lib=panels.lib,fold=!!(boardOn&&cardOn&&(lib||bench.fold)),ts=!!(cardOn&&!boardOn&&panels.rightOpen&&!lib),wide=ts&&sheetView();
     root.classList.toggle('is-sheet-view',wide);
-    const before=paneWidths();
+    finishPanes();const before=paneWidths();
     api.ideaBoard.el.remove();// 다시 그릴 때 판 화면이 같이 지워지지 않게 떼어 둔다
     let h='';
     if(lib)h+=libHtml().replace('<aside class="cv-lib cv-left"','<aside data-pane="lib" class="cv-lib cv-left"');
-    if(board)h+='<section class="cv-idea" data-pane="board" data-ideaslot></section>';
+    if(boardOn)h+='<section class="cv-idea" data-pane="board" data-ideaslot></section>';
+    if(brail){const bb=(api.data().ideas||[]).find(v=>v.id===board);h+=`<button type="button" class="pane-rail left cv-foldrail" data-pane="brail" data-cv="board-unfold" title="눌러서 아이디어 판을 카드 옆에 펴기" aria-label="아이디어 판 펴기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M7 8.5h4v3H7zM13 8.5h4M13 11.5h3M7 14.5h10"/></svg><span>${E(bb?.title||'아이디어 판')}</span><small>눌러서 펴기</small></button>`;}
     if(cardOn&&!fold)h+=wide?`<button type="button" class="pane-rail mid" data-pane="card" data-cvview="card" aria-pressed="false" title="문항 카드로 돌아가기" aria-label="문항 카드 열기">${ICON.card}<span>문항 카드</span></button>`
-      :`<section class="cv-center" data-pane="card" style="--g:${board?1:lib&&ts?1:2}">${barHtml()}${formHtml(x)}</section>`;
+      :`<section class="cv-center" data-pane="card" style="--g:${boardOn?1:lib&&ts?1:2}">${barHtml()}${formHtml(x)}</section>`;
     if(ts)h+=rightHtml().replace('<aside class="cv-right"','<aside data-pane="ts" class="cv-right"');
     if(fold)h+=`<button type="button" class="pane-rail right cv-foldrail" data-pane="rail" data-cv="card-unfold" title="${lib&&!bench.fold?'눌러서 문항 카드 펴기 — 판은 2칸이 필요해 라이브러리가 접힙니다':'눌러서 문항 카드 펴기'}" aria-label="문항 카드 펴기">${ICON.card}<span>${E(questionTitle(x))}</span><small>${lib&&!bench.fold?'눌러서 펴기 · 라이브러리는 접힘':'눌러서 펴기'}</small></button>`;
     root.innerHTML=h;
-    if(board)mountIdea();
+    if(boardOn)mountIdea();
     if(cardOn&&!fold&&same&&!wide){const w=root.querySelector('.cv-writer');if(w)w.scrollTop=keep;}
     renderedFor=x?.id;
     if(lib)api.dock?.(['standards','references'].includes(panels.tab)?panels.tab:null,root.querySelector('[data-cvbody="docked"]'));
     if(lib&&['past','textbooks'].includes(panels.tab))renderPast();
-    placeHwp(ts&&panels.right==='paper'&&!wide);syncHwpActs();
-    animateFrom(before);
+    // 조판 미리보기가 닫힐 때는 층을 움직임이 끝날 때까지 두었다가 닫는다(내용이 먼저 사라지고 빈 틀만 나가던 것). 열 때 무거운 조판은 움직임 뒤에.
+    const hwpShow=ts&&panels.right==='paper'&&!wide,hwpLeaving=!hwpShow&&!!before.ts&&!hwpLayer.hidden,willMove=Object.keys(before).length>0&&!reduceMotion();
+    if(!hwpLeaving)placeHwp(hwpShow,{defer:willMove});syncHwpActs();
+    if(!animateFrom(before,{hwpLeaving})&&hwpLeaving)placeHwp(false);
     if(ts&&panels.right==='ai'){renderAi();markAiSeen();}
     if(wide)void renderPage();
     fitAll();taWatch();
@@ -326,7 +366,7 @@ export function createCardEditor(root,api){
   }
   // ── 작업 칸: 문항 카드 · 아이디어 판 · 라이브러리 · 조판(카드에 딸림) ──
   const benchSaved=store.get('bench',{board:null,card:false,fold:false});
-  const bench={board:benchSaved?.board||null,card:!!benchSaved?.card,fold:!!benchSaved?.fold};
+  const bench={board:benchSaved?.board||null,card:!!benchSaved?.card,fold:!!benchSaved?.fold,bfold:!!benchSaved?.bfold};
   let cardSnap=null,boardSnap=null,lastClose='';
   const boardJson=b=>JSON.stringify({title:b.title,items:b.items,links:b.links});
   function mountIdea(){const slot=root.querySelector('[data-ideaslot]');if(!slot||!bench.board)return;
@@ -342,23 +382,23 @@ export function createCardEditor(root,api){
     d.addEventListener('close',()=>{d.remove();resolve(ans);},{once:true});document.body.append(d);d.showModal();d.querySelector('.ask-ok').focus();});}
   async function closeCard(){const x=q();
     if(x&&cardSnap?.id===x.id&&JSON.stringify(x)!==cardSnap.json){const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.json));}
-    bench.card=false;bench.fold=false;cardSnap=null;lastClose='card';render();}
+    bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;lastClose='card';render();if(x)api.dropIfBlank?.(x.id);}
   async function closeBoard(){api.ideaBoard.endEdit?.();const b=(api.data().ideas||[]).find(v=>v.id===bench.board);
     if(b&&boardSnap?.id===b.id&&boardJson(b)!==boardSnap.json){const a=await askSave(`아이디어 「${b.title}」`);if(a==='cancel')return;if(a==='discard')api.restoreBoard?.(b.id,JSON.parse(boardSnap.json));}
-    bench.board=null;bench.fold=false;boardSnap=null;lastClose='board';render();}
+    bench.board=null;bench.fold=false;bench.bfold=false;boardSnap=null;lastClose='board';render();}
   // 다른 문항 카드로 바꿀 때도 고친 것이 있으면 묻는다. 돌려줌: 바꿔도 되면 true.
   async function confirmSwitch(nextId){const x=q();if(!bench.card||!x||x.id===nextId||cardSnap?.id!==x.id||JSON.stringify(x)===cardSnap.json)return true;
     const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return false;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.json));cardSnap=null;return true;}
   async function confirmBoardSwitch(nextId){const b=(api.data().ideas||[]).find(v=>v.id===bench.board);if(!b||b.id===nextId||boardSnap?.id!==b.id||boardJson(b)===boardSnap.json)return true;
     api.ideaBoard.endEdit?.();const a=await askSave(`아이디어 「${b.title}」`);if(a==='cancel')return false;if(a==='discard')api.restoreBoard?.(b.id,JSON.parse(boardSnap.json));boardSnap=null;return true;}
-  function openBoard(id){if(bench.board!==id){bench.board=id;bench.fold=false;boardSnap=null;}}
+  function openBoard(id){if(bench.board!==id){bench.board=id;boardSnap=null;}bench.bfold=false;bench.fold=!!(bench.card&&q());}// 판만 보이고, 열려 있던 카드는 오른쪽 띠로
   const AIM={passage:'[data-cvf="passage"]',ask:'[data-cvf="ask"]',bogi:'[data-cvline="bogi"],[data-cvline-add="bogi"]',figure:'.cv-tiles,.cv-matadd,.cv-empty-hint',table:'.cv-tiles,.cv-matadd,.cv-empty-hint',ref:'.cv-evtab,.cv-ev'};
   const cardShown=()=>!!root.querySelector('.cv-center .cv-writer');
   function fieldNode(f){const n=root.querySelector(`.cv-writer ${AIM[f]?.split(',').join(',.cv-writer ')}`);return n?.closest('.f-field')||n;}
   function aimField(f){root.querySelectorAll('.idea-aim').forEach(n=>n.classList.remove('idea-aim'));if(!f||!cardShown())return;const n=fieldNode(f);if(n){n.classList.add('idea-aim');n.scrollIntoView({block:'nearest',behavior:'smooth'});}}
   function flashField(f){aimField(null);setTimeout(()=>{if(!cardShown()){api.status('문항 카드에 넣었습니다 · 카드는 접혀 있어 오른쪽 띠를 누르면 보입니다.');return;}const n=fieldNode(f);if(!n)return;n.scrollIntoView({block:'nearest',behavior:'smooth'});n.classList.remove('idea-flash');void n.offsetWidth;n.classList.add('idea-flash');},60);}
   // 가운데 보기 전환: 한글 조판에서 나가면 한글 창을 닫는다(조판 저장은 창의 「조판 저장」으로).
-  function setView(v){panels.view=v==='page'?'page':'card';store.set('view',panels.view);if(panels.view==='page'&&!panels.rightOpen){panels.rightOpen=true;store.set('rightOpen',true);}if(panels.view==='page'&&panels.right!=='paper'){panels.right='paper';store.set('right','paper');}
+  function setView(v){panels.view=v==='page'?'page':'card';store.set('view',panels.view);if(panels.view==='page'&&!tsOn())openTs();if(panels.view==='page'&&panels.right!=='paper'){panels.right='paper';store.set('right','paper');}
     render();anim(root.querySelector(sheetView()?'#cv-page':'.cv-center .cv-writer'),'ep-swap');}
   // 한글 조판 창(5E_hwp)은 안에 편집기 프레임이 있어 DOM에서 옮기면 처음부터 다시 읽는다(문항 전환 15초).
   // 그래서 카드를 다시 그려도 지워지지 않는 층 하나에 한 번만 붙이고, 그 층을 미리보기 칸(#cv-hwp) 위에 겹쳐 둔다.
@@ -382,10 +422,10 @@ export function createCardEditor(root,api){
     const back=lastFocus?.isConnected&&!lastFocus.closest('[hidden]')&&lastFocus!==document.body?lastFocus:root;back.focus({preventScroll:true});},0);
   window.addEventListener('blur',reclaim);document.addEventListener('focusout',reclaim,true);
   let hwpSlotWatch=null,hwpWanted=false;
-  function alignHwp(){const slot=root.querySelector('#cv-hwp');const show=hwpWanted&&slot&&!root.hidden&&!root.closest('[hidden]');hwpLayer.hidden=!show;if(!show)return;
+  function alignHwp(){if(hwpFrozen)return;const slot=root.querySelector('#cv-hwp');const show=hwpWanted&&slot&&!root.hidden&&!root.closest('[hidden]');hwpLayer.hidden=!show;if(!show)return;
     const r=slot.getBoundingClientRect();Object.assign(hwpLayer.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
-  function placeHwp(show){hwpWanted=show;hwpSlotWatch?.disconnect();
-    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(()=>requestAnimationFrame(alignHwp));hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);api.hwpOpen?.();}else api.hwpClose?.();
+  function placeHwp(show,{defer=false}={}){hwpWanted=show;hwpSlotWatch?.disconnect();clearTimeout(placeHwp.t);
+    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(()=>requestAnimationFrame(alignHwp));hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);if(defer)placeHwp.t=setTimeout(()=>{if(hwpWanted)api.hwpOpen?.();},PANE_MS+60);else api.hwpOpen?.();}else api.hwpClose?.();
     alignHwp();}
   new MutationObserver(alignHwp).observe(root,{attributes:true,attributeFilter:['hidden']});window.addEventListener('resize',alignHwp);
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
@@ -690,8 +730,6 @@ export function createCardEditor(root,api){
   // 화면 구조는 바로 바뀌고(검사·키보드 그대로) 모양만 움직인다. 「동작 줄이기」 설정이면 CSS에서 모두 끈다.
   function anim(el,c){if(!el)return;el.classList.remove(c);void el.offsetWidth;el.classList.add(c);el.addEventListener('animationend',()=>el.classList.remove(c),{once:true});}
   function motion(k,v){
-    if(k==='lib')anim(root.querySelector(v?'.cv-left':'.cv-center'),v?'ep-pane-in':'ep-reflow');
-    if(k==='rightOpen'){anim(root.querySelector(v?'.cv-right':'.cv-center'),v?'ep-pane-in':'ep-reflow');if(v)anim(hwpLayer,'ep-pane-in');}
     if(k==='right')anim(panels.right==='paper'?hwpLayer:root.querySelector('.cv-rbody'),'ep-swap');
     if(k==='tab')anim(root.querySelector('.cv-left .lp-body:not([hidden])'),'ep-swap');
   }
@@ -728,9 +766,10 @@ export function createCardEditor(root,api){
     if(d.cvOpen){api.open(d.cvOpen);return;}
     if(d.cv==='card-close'){void closeCard();return;}
     if(d.cv==='card-fold'){bench.fold=true;render();return;}
+    if(d.cv==='board-unfold'){bench.bfold=false;bench.fold=false;if(panels.lib){panels.lib=false;store.set('lib',false);api.navChanged?.();}render();return;}
     if(d.cv==='card-unfold'){if(bench.fold)bench.fold=false;else{panels.lib=false;store.set('lib',false);api.navChanged?.();api.status('문항 카드를 폈습니다 · 라이브러리는 접었습니다(왼쪽 메뉴에서 다시 켜기).');}render();return;}
     if(d.cvtab){setPanel('tab',d.cvtab);return;}
-    if(d.cvright){panels.rightOpen=true;store.set('rightOpen',true);setPanel('right',d.cvright);return;}
+    if(d.cvright){openTs();setPanel('right',d.cvright);return;}
     if(d.cvview){setView(d.cvview);return;}
     if(d.cvbookview){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';pastFilter.bookview=d.cvbookview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cvbookstep){const n=Number(root.querySelector('[data-cvslot="pageno"]')?.textContent.match(/\d+/)?.[0])||1;Object.assign(pastFilter,{bookpage:Math.max(1,n+Number(d.cvbookstep)),query:''});store.set('past',pastFilter);renderPast();return;}
@@ -748,7 +787,7 @@ export function createCardEditor(root,api){
     if(d.cvpastview){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';pastFilter.view=d.cvpastview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cv==='to-page'){setView('page');return;}
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
-    if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}
+    if(d.cv==='toggle-right'){if(tsOn()){setPanel('rightOpen',false);return;}const hadLib=panels.lib;openTs();render();if(hadLib)api.status?.('라이브러리를 접고 조판 미리보기를 열었습니다.');return;}
     if(d.cv==='hwp-download'||d.cv==='hwp-save'){hwpLayer.querySelector(d.cv==='hwp-save'?'#typeset-save':'#typeset-download')?.click();return;}
     if(d.cv==='new'){api.newQuestion();return;}
     if(d.cvadv!==undefined){pastAdvOpen=!pastAdvOpen;b.setAttribute('aria-expanded',pastAdvOpen);const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=!pastAdvOpen;return;}
@@ -810,7 +849,7 @@ export function createCardEditor(root,api){
     if(d.cv==='sheet'){api.sheet();return;}
     if(d.cvctCol){const add=Number(d.cvctCol)>0;api.edit(()=>{const t=x.choiceTable;if(add&&t.cols<6){t.cells.forEach(r=>r.push({value:''}));t.cols++;}else if(!add&&t.cols>1){t.cells.forEach(r=>r.pop());t.cols--;t.merges=t.merges.filter(m=>m.c+m.cs<=t.cols);}});return;}
     if(d.cv==='typeset'){api.typeset();return;}
-    if(d.cv==='review'){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();api.ai(x,{kind:'review',text:'검토해 줘'});return;}
+    if(d.cv==='review'){openTs();panels.right='ai';store.set('right','ai');render();api.ai(x,{kind:'review',text:'검토해 줘'});return;}
     if(d.aiQuick){const kind=d.aiQuick==='검토해 줘'?'review':d.aiQuick==='새 문항 초안'?'draft':'chat';api.ai(x,{kind,text:d.aiQuick==='새 문항 초안'?'지금까지 정한 요구사항으로 새 문항 초안을 만들어 줘. 정하지 않은 것은 가정으로 남겨 줘.':d.aiQuick});return;}
     if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;input.value='';aiDrafts.delete(x.id);api.ai(x,{kind:/^검토/.test(text)?'review':'chat',text});return;}
     if(d.cv==='ai-cancel'){api.cancelAi?.(x);return;}
@@ -844,7 +883,7 @@ export function createCardEditor(root,api){
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.
   root.addEventListener('pointerdown',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;e.preventDefault();sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('cv-dragging');
-    const k=sp.dataset.cvsplit,rect=root.getBoundingClientRect(),min=k==='left'?240:300,max=Math.max(min,rect.width-440-(k==='left'?(panels.rightOpen?root.querySelector('.cv-right').offsetWidth:0):(panels.lib?root.querySelector('.cv-left').offsetWidth:0)));
+    const k=sp.dataset.cvsplit,rect=root.getBoundingClientRect(),min=k==='left'?240:300,max=Math.max(min,rect.width-440-(k==='left'?(root.querySelector('.cv-right')?.offsetWidth||0):(panels.lib?root.querySelector('.cv-left').offsetWidth:0)));
     // 잡은 곳에서 움직인 만큼만 폭을 바꾼다(바깥 여백이 있어도 잡는 순간 칸이 튀지 않음).
     const x0=e.clientX,w0=root.querySelector(k==='left'?'.cv-left':'.cv-right').getBoundingClientRect().width;
     // 창이 좁아 지금 폭이 이미 상한보다 넓으면, 상한을 지금 폭으로 둔다(잡는 순간 줄어들지 않고 줄이는 쪽으로만 움직임).
@@ -927,17 +966,25 @@ export function createCardEditor(root,api){
   hwpLayer.addEventListener('click',e=>{const b=e.target.closest('.ts-scope [data-cvview]');if(b)setView(b.dataset.cvview);});
   // 한글 창에서 고친 글을 카드 칸에 옮긴다(입력 중인 칸은 건드리지 않는다). 카드 전체를 다시 그리지 않아 한글 창 입력이 끊기지 않는다.
   function syncFields(target){const x=q();if(!x||x!==target)return;
-    for(const t of root.querySelectorAll('[data-cvf]')){if(t===document.activeElement)continue;const f=t.dataset.cvf;
+    for(const t of root.querySelectorAll('[data-cvf]')){if(t===document.activeElement||t._eqce?.contains(document.activeElement))continue;const f=t.dataset.cvf;
       const v=f==='passage'?(x.blocks.find(b=>b.kind==='text')?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
-      if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}
+      if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}mathFields?.refresh();
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
-    confirmSwitch,confirmBoardSwitch,setCard(on){bench.card=!!on;if(!on){bench.fold=false;cardSnap=null;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;cardSnap=null;},
+    confirmSwitch,confirmBoardSwitch,setCard(on){bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
     toggleLib(){panels.lib=!panels.lib;store.set('lib',panels.lib);if(!root.hidden&&!root.closest('[hidden]'))render();},libOn:()=>!!panels.lib,cardOn:()=>bench.card&&!!q(),
     benchBusy:()=>!!bench.board||(bench.card&&!!q()),ideaState:()=>bench.board?{id:bench.board}:null,aimField,resetIdea(){},
     refreshTabs(){const tabs=root.querySelector('.cv-qtabs');if(tabs){const sc=tabs.scrollLeft;tabs.outerHTML=tabsHtml();root.querySelector('.cv-qtabs').scrollLeft=sc;}},
     clearSourceSearch(){srcQuery[panels.tab]='';store.set('srcq',srcQuery);const n=root.querySelector('[data-cvsrc]');if(n)n.value='';},refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},
     // 「보내기 → ExamPool」로 받은 자료가 보이게: 라이브러리 칸을 열고 기출·교과서 탭이 아니면 기출 탭으로(가져온 자료는 목록 맨 위).
-    showPicks(){panels.lib=true;store.set('lib',true);if(!['past','textbooks'].includes(panels.tab)){panels.tab='past';store.set('tab','past');}render();},showHwp(){panels.rightOpen=true;panels.right='paper';store.set('rightOpen',true);store.set('right','paper');render();},refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
+    // 11-13 밤: 다른 화면(라이브러리·판 목록)에서 들어올 때 — 고른 문항·판 그림 자리에서 커지며 열린다(화면 전체 흐림 대신).
+    enterFrom(rect){finishPanes();if(root.hidden||root.closest('[hidden]'))return;root.getAnimations().forEach(a=>a.cancel());if(reduceMotion())return;
+      const o={duration:PANE_MS,easing:PANE_EASE,fill:'both'},main=root.querySelector(':scope>[data-pane="board"]')||root.querySelector(':scope>[data-pane="card"]');
+      const fade=n=>n.animate([{opacity:0},{opacity:0,offset:.4},{opacity:1}],o);
+      if(!main||!rect||!(rect.width>4)){root.animate([{opacity:0},{opacity:1}],{duration:220,easing:PANE_EASE});return;}
+      const r=main.getBoundingClientRect();main.animate([{transformOrigin:'0 0',transform:`translate(${rect.left-r.left}px,${rect.top-r.top}px) scale(${rect.width/r.width},${rect.height/r.height})`},{transformOrigin:'0 0',transform:'none'}],o);
+      for(const c of main.children)c.animate([{opacity:0},{opacity:0,offset:.3},{opacity:1}],o);
+      root.querySelectorAll(':scope>[data-pane]').forEach(n=>{if(n!==main)fade(n);});if(!hwpLayer.hidden)fade(hwpLayer);},
+    showPicks(){panels.lib=true;store.set('lib',true);if(!['past','textbooks'].includes(panels.tab)){panels.tab='past';store.set('tab','past');}render();},showHwp(){openTs();panels.right='paper';store.set('right','paper');render();},refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){openTs();panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
 }

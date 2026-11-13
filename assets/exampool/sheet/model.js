@@ -33,6 +33,17 @@ export function newQuestion(number='1',type='객관식',preset='글·수식',sty
   applyPreset(q,preset); if(type==='합답형')q.blocks.push(block('bogi'));
   return q;
 }
+// 11-13 밤(시안 exam-fixes-1113 F): 아무것도 안 쓴 문항 카드인가 — 닫거나 다른 카드로 넘어갈 때 저장하지 않는다.
+// 유형·배점·단계만 바꾼 것도 빈 카드로 본다. 틀이 미리 채운 것(보기 ㄱㄴㄷ 표시, 합답형 선지 「ㄱ, ㄴ」, 대응표 머리 A·B·C)은 쓴 것으로 치지 않는다.
+export function isBlankQuestion(q){
+  const t=v=>String(v??'').trim(),combo=/^[\sㄱ-ㅎ,·①-⑤]*$/;
+  if([q.name,q.ask,q.modelAnswer,q.explanation,q.intent,q.standardCode,q.unitSmall,q.unitMiddle].some(t))return false;
+  if((q.references||[]).length||q.answer!=null&&q.answer!=='')return false;
+  const cellsUsed=tb=>(tb?.cells||[]).some((row,r)=>(row||[]).some(c=>{const v=t(c?.value);return v&&!(r===0&&/^[A-C]$/.test(v));}));
+  for(const b of q.blocks||[]){if(t(b.text)||(b.lines||[]).some(l=>t(l.text))||b.figure||cellsUsed(b.table))return false;}
+  if((q.choices||[]).some(c=>{const v=t(c.text);return (v&&!combo.test(v))||c.figure;}))return false;
+  return !cellsUsed(q.choiceTable);
+}
 // 문항 유형(새 문항 창의 ① 유형): 합답형·일반 정답형·대응·짝·학생 대화·서술형. q.form은 type·style과 함께 움직인다.
 export const FORM_KEYS=['combo','single','pair','talk','essay'];
 const FORM_TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식',essay:'서술형'};

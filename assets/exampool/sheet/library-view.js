@@ -58,14 +58,21 @@ export const examLabel = (y, m) => `${String(y).slice(2)}년 ${{ 6: '6평', 9: '
 
 // ── 목록 만들기 ──
 // 11-11 사용자: 분류 기준 — 날짜순(만든 날·고친 날)과 완성도순으로 정렬. 날짜가 없는 예전 문항은 만든 순서(목록 순서)로 본다.
-export const SORTS = ['최근 고친 순', '만든 날짜순(최신)', '만든 날짜순(오래된)', '완성도 높은 순', '완성도 낮은 순'];
+// 11-13 밤(시안 exam-fixes-1113 G): 정렬은 「최근 고친 순」(기본)과 「완성도순」(초안 먼저 — 손볼 것이 위에) 두 단추. 고른 정렬은 기억한다.
+// 최근 고친 순은 오늘·어제·이번 주·이전으로, 완성도순은 초안·검토 중·완성으로 묶음 제목을 붙인다.
+export const SORTS = ['최근 고친 순', '완성도순'];
+const STAGE_ORDER = { draft: 0, review: 1, complete: 2 };
+const editedAt = (x, i) => { const t = Math.max(Date.parse(x.q?.updatedAt || '') || 0, Date.parse(x.q?.createdAt || '') || 0); return t || -1 - i; };
 function sortEntries(list, s) {
-  if (!s.sort) return list;
-  const at = (x, key, i) => { const t = Date.parse(x.q?.[key] || ''); return Number.isFinite(t) ? t : i; };
-  const rows = list.map((x, i) => ({ x, i, made: at(x, 'createdAt', i), edited: Math.max(at(x, 'updatedAt', -1), at(x, 'createdAt', i)), progress: x.q ? (progressOf(x.q) ?? 0) : 0 }));
-  const by = { '최근 고친 순': (a, b) => b.edited - a.edited, '만든 날짜순(최신)': (a, b) => b.made - a.made, '만든 날짜순(오래된)': (a, b) => a.made - b.made,
-    '완성도 높은 순': (a, b) => b.progress - a.progress, '완성도 낮은 순': (a, b) => a.progress - b.progress }[s.sort];
-  return by ? rows.sort((a, b) => by(a, b) || a.i - b.i).map(r => r.x) : list;
+  const rows = list.map((x, i) => ({ x, i, edited: editedAt(x, i), stage: x.q ? STAGE_ORDER[workflowOf(x.q)] ?? 0 : 3, progress: x.q ? (progressOf(x.q) ?? 0) : 0 }));
+  const by = s.sort === '완성도순' ? (a, b) => a.stage - b.stage || a.progress - b.progress || b.edited - a.edited : (a, b) => b.edited - a.edited;
+  return rows.sort((a, b) => by(a, b) || a.i - b.i).map(r => r.x);
+}
+function groupOf(x, s, now = new Date()) {
+  if (s.sort === '완성도순') return x.q ? WORKFLOWS[workflowOf(x.q)] || '초안' : '기출';
+  const t = Math.max(Date.parse(x.q?.updatedAt || '') || 0, Date.parse(x.q?.createdAt || '') || 0); if (!t) return '이전';
+  const day = d => { const v = new Date(d); v.setHours(0, 0, 0, 0); return v.getTime(); }, d0 = day(now), d = day(t);
+  return d >= d0 ? '오늘' : d >= d0 - 864e5 ? '어제' : d >= d0 - 6 * 864e5 ? '이번 주' : '이전';
 }
 function entries(data, s) {
   const stars = store.get('stars', {}), memos = store.get('memos', {}), words = splitWords(s.query || '');
@@ -80,7 +87,7 @@ function entries(data, s) {
 
 // 보관함 상태는 app의 view.lib에 둔다(다시 그려도 남게).
 // 10-26 사용자 지적: 기출은 말 그대로 기출 — 보관함에는 내 문항만(기출은 문항 카드의 「기출문제」 칸·시험지 담기에서 본다).
-export function libState(view) { const s = view.lib ||= { pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.sel ||= new Set(); s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] ? s.pool : 'drafting'; return s; }
+export function libState(view) { const s = view.lib ||= { sort: SORTS.includes(store.get('libSort', '')) ? store.get('libSort', '') : SORTS[0], pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.sel ||= new Set(); s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] ? s.pool : 'drafting'; return s; }
 
 export function renderLibraryView(root, data, view, api) {
   const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
@@ -105,7 +112,7 @@ export function renderLibraryView(root, data, view, api) {
         <button type="button" data-lv-mark="memo" aria-pressed="${s.mark === 'memo'}">메모<small>${memoN}</small></button>
       </span>
       ${chipSel('part', '단원', parts)}
-      ${chipSel('sort', '정렬', SORTS).replace('정렬 전체', '기본 순서')}
+      <span class="lv-seg lv-sortseg" role="group" aria-label="정렬">${SORTS.map(o => `<button type="button" data-lv-sort="${o}" aria-pressed="${s.sort === o}">${o}</button>`).join('')}</span>
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
   // 문항 추가 줄 하나(시안 2판 3): 「출제 중」 칸에서만, 문항이 있든 없든 제목 바로 아래 같은 자리.
@@ -115,6 +122,8 @@ export function renderLibraryView(root, data, view, api) {
   const mineMark = q => { const st = questionState(q, data); return qIcon(st, st === 'work' ? progressOf(q) : 1); };
   const kt = x => x.kind === 'mine' ? '' : `<span class="lv-kt ${x.kind}">기출</span>`;
   const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
+  // 묶음 제목: 앞 문항과 묶음이 바뀌는 자리에만
+  const groups = shown.map(x => groupOf(x, s)), grp = (x, n) => (n === 0 || groups[n] !== groups[n - 1]) && s.kind === 'mine' ? groups[n] : '';
   let body;
   // 보관함을 읽지 못했으면(저장소 오류) 그 까닭을 먼저 보인다(예전 보관함과 같은 자리·같은 글).
   if (view.loadError && !libraryQuestions(data).length) body = `<p class="lv-empty pv-empty">${E(view.loadError)}</p>`;
@@ -122,8 +131,8 @@ export function renderLibraryView(root, data, view, api) {
   else if (!list.length && !poolQuestions(data, s.pool).length) body = `<div class="lv-emptyline">${POOL_EMPTY[s.pool]}<div class="lv-flow"><em>문항 쓰기</em>→<em>시험지에 담기</em>→<em>5E_hwp로 조판·인쇄</em></div></div>`;
   else if (!list.length) body = `<p class="lv-empty pv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
   else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
-  else if (s.mode === 'list') body = `<ol class="lv-list${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<li class="${picked(x) ? 'sel' : ''}">${check(x, n)}<button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
-  else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
+  else if (s.mode === 'list') body = `<ol class="lv-list${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `${grp(x, n) ? `<li class="lv-grp" aria-hidden="true">${grp(x, n)}</li>` : ''}<li class="${picked(x) ? 'sel' : ''}">${check(x, n)}<button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
+  else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `${grp(x, n) ? `<div class="lv-grp" aria-hidden="true">${grp(x, n)}</div>` : ''}<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
       <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>${x.kind === 'mine' && !picking ? `<button type="button" class="lv-cdel" data-lv-del="${E(x.id)}" aria-label="문항 삭제" title="문항 삭제 (⌫) — 되돌리기로 살릴 수 있습니다"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ''}
       <div class="lv-meta">${kt(x)}${x.kind === 'mine' ? mineMark(x.q) : ''}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
@@ -284,6 +293,7 @@ export function installLibraryView(root, api) {
     const stp = t.closest('[data-lv-step]'); if (stp) { step(Number(stp.dataset.lvStep)); return; }
     const a = t.closest('[data-lv-act]'); if (a) { void act(a.dataset.lvAct, a); return; }
     const k = t.closest('[data-lv-kind]'); if (k) { Object.assign(s(), { kind: k.dataset.lvKind, limit: PAGE, open: -1 }); if (k.dataset.lvKind === 'mine') Object.assign(s(), { subject: '', exam: '' }); api.rerender(); return; }
+    const so = t.closest('[data-lv-sort]'); if (so) { Object.assign(s(), { sort: so.dataset.lvSort, limit: PAGE, open: -1 }); store.set('libSort', so.dataset.lvSort); api.rerender(); return; }
     const m = t.closest('[data-lv-mark]'); if (m) { Object.assign(s(), { mark: m.dataset.lvMark, limit: PAGE, open: -1 }); api.rerender(); api.navChanged?.(); return; }
     const mo = t.closest('[data-lv-mode]'); if (mo) { Object.assign(s(), { mode: mo.dataset.lvMode, open: mo.dataset.lvMode === 'one' ? Math.max(0, s().open) : -1 }); api.rerender(); if (mo.dataset.lvMode === 'one') fillViewer(root, list(), api.data(), api); return; }
     if (t.closest('[data-lv-more]')) { s().limit += PAGE; api.rerender(); return; }

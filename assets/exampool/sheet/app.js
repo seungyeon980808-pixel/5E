@@ -1,4 +1,4 @@
-import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
+import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion,isBlankQuestion} from './model.js';
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderExams,renderExam,setFrameNames,isBlank} from './pool-views.js';
 import {applyFrame,goalOf,frameOf,frameKey,openRegister,openNewExam,openFramePicker} from './exam-flow.js';
@@ -279,8 +279,11 @@ function renderView(){
     const keep=$('#examd-view .ep-grid')?.scrollTop||0,oldSheet=$('#exam-sheet'),oldPages=oldSheet?.dataset.exam===String(ex?.id)&&oldSheet.querySelector('.pv-pg')?[...oldSheet.childNodes]:null,deskScroll=$('#examd-view .ex-desk')?.scrollTop||0;
     renderExam($('#examd-view'),data,view.examId,{forms:typesetForms,step:view.examStep||3,step2:e=>renderStep2(e,data,typesetForms,pickState(view),{busy:pastBusy}),place:placeState(view)});// 다시 그려도 이미 그린 쪽은 그대로 두고, 새 조판이 끝나면 한 번에 바꾼다 — 「그리는 중…」으로 비었다가 다시 나타나 깜빡였다(10-27 지적).
     if((view.examStep||3)===3){const n=$('#exam-sheet');if(n&&oldPages){n.replaceChildren(...oldPages);const d=$('#examd-view .ex-desk');if(d)d.scrollTop=deskScroll;}void fillExamSheet(ex);}fillEngineCards($('#examd-view'));if(view.examStep===2){fillStep2($('#examd-view'),data);if(!pastData.items)loadPast().then(()=>{if(view.name==='exam'&&view.examStep===2)renderView();}).catch(e=>status(e.message,true));const g=$('#examd-view .ep-grid');if(g)g.scrollTop=keep;}}
-  if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
-  else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
+  // 11-13 밤: 화면을 바꿀 때 메뉴 접기·펴기도 메뉴 단추와 같은 곡선으로(뚝 접히던 것), 카드·판은 고른 자리에서 커지며 열린다.
+  {let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}const off=view.name==='card'?(pref===null||pref==='0'):pref==='0',entering=view.name==='card'&&lastViewName!=='card';
+    if(view.name==='card'){if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();if(entering)cardEditor.enterFrom(takeZoomSource());}
+    if(document.querySelector('.shell-body').classList.contains('nav-off')!==off)navTo(off,{animate:lastViewName!==view.name});}
+  lastViewName=view.name;
   $('#toggle-lib').hidden=true;
   // 위쪽 막대: 카드 화면에서는 단계 칩이 카드에 있으므로 상태 선택을 숨기고, 시험지 문항이면 5E_hwp로 보내기를 보인다.
   // 시험지 화면에는 머리 줄에 같은 단추가 있으므로 위쪽 막대에는 두지 않는다(같은 단추 두 개).
@@ -495,8 +498,9 @@ async function convertPast(item,{go=false}={}){
 // 학교 양식 틀(10-29): 등록한 학교 양식(학습지 제외)과 그 조판 기준.
 setFrameNames(id=>{const s=typesetStandards.find(x=>x.id===id);return s?.source?.kind==='hwp'?s.name:'';});
 const schoolFrames=()=>typesetForms.filter(f=>f.kind!=='sheet'&&f.standardId&&typesetStandards.some(s=>s.id===f.standardId)).map(f=>({id:f.standardId,name:f.name}));
-const newDialog=createNewQuestionDialog($('#new-dialog'),{frames:schoolFrames,onCreate:shape=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,nextNumber());
-  if(shape.frame&&shape.frame!==KICE_ID){const s=typesetStandards.find(x=>x.id===shape.frame);if(s){current.standardId=s.id;if(s.paper?.size)current.paper=s.paper.size;}}data.questions.push(current);activeTab='composition';const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,current.id);renumberExam(data,exam.id);}})&&(show('card'),true)});
+// 11-13 밤: 새 문항은 문항 카드로 바로 연다(작업 칸에 카드가 없으면 열리지 않던 결함). 앞 카드가 빈 카드면 저장하지 않는다.
+const newDialog=createNewQuestionDialog($('#new-dialog'),{frames:schoolFrames,onCreate:shape=>{const prevId=cardEditor.cardOn?.()?current?.id:null;return mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,nextNumber());
+  if(shape.frame&&shape.frame!==KICE_ID){const s=typesetStandards.find(x=>x.id===shape.frame);if(s){current.standardId=s.id;if(s.paper?.size)current.paper=s.paper.size;}}data.questions.push(current);activeTab='composition';const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,current.id);renumberExam(data,exam.id);}})&&(cardEditor.setCard(true),prevId&&prevId!==current.id&&dropIfBlank(prevId),show('card'),true);}});
 $('#new').onclick=()=>newDialog.open();
 $('#edit-detail').onclick=()=>openDetail();
 $('#detail-dialog').addEventListener('close',()=>{grid?.finish();renderRows();renderSheetView();grid?.refresh({questionId:current?.id});});
@@ -828,9 +832,12 @@ $('#question-prev').onclick=()=>{const list=sheetScope(),at=list.indexOf(current
 $('#question-next').onclick=()=>{const list=sheetScope(),at=list.indexOf(current);if(at>=0&&at<list.length-1&&grid?.finish()!==false)choose(list[at+1]);};
 $('#workflow').onchange=e=>{if(!current)return;const v=e.target.value;if(mutate(()=>{if(v==='draft')delete current.workflow;else current.workflow=v;}))status(`${questionTitle(current)} → ${TITLES[v]}`);};
 // ── 문항 보관함 · 시험지 · 문항 카드 ──────────────────────────────────────────
+function dropIfBlank(id){const q=data.questions.find(x=>x.id===id);if(!q||!isBlankQuestion(q))return false;
+  mutate(()=>{data.questions=data.questions.filter(x=>x.id!==id);removeFromExam(data,id);for(const e of data.exams)renumberExam(data,e.id);},{render:false});
+  if(current?.id===id)current=null;status('빈 문항 카드는 저장하지 않았습니다.');return true;}
 function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(grid?.finish()===false)return;
   // 11-12: 문항 카드를 작업 칸에 올린다(아이디어 판이 열려 있으면 판 옆에). 쓰던 다른 카드에 고친 것이 있으면 먼저 묻는다.
-  void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;current=q;cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
+  void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;const prev=cardEditor.cardOn?.()?current:null;current=q;if(prev&&prev.id!==id)dropIfBlank(prev.id);cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
 // 서랍(11-13): 라이브러리에서 담아 둔 그림 — 왼쪽 메뉴 맨 아래 단추로 띠를 열고, 그림을 자료 칸·아이디어 판으로 끌어 놓는다.
 const drawer=mountDrawer(document,{onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);}});
@@ -1037,13 +1044,13 @@ $('#examd-view').addEventListener('dragend',()=>{dragId=null;document.querySelec
 // 다시 그릴 때는 옛 쪽을 흐리게 둔 채 위에 작은 「다시 조판 중」(기억한 결과면 0.4초라 잠깐 기다렸다 띄워 깜빡이지 않게).
 const SHEET_STAGE={items:['문항 조판','문항을 하나씩 한글 조판으로 만듭니다'],form:['학교 양식에 맞추는 중','양식 틀로 조판하지 않은 문항만 다시 조판합니다'],place:['쪽에 배치하는 중','단·쪽을 나눕니다'],draw:['쪽을 그리는 중','화면 그림을 만듭니다']};
 const STAGE_SPAN={items:[0,.45],form:[.45,.7],place:[.7,.92],draw:[.92,1]};
-function sheetBusy(n){
-  const again=!!n.querySelector('.pv-pg');let box=null,last=null,timer=0;
+function sheetBusy(n,{fromPage=0}={}){
+  const again=!!n.querySelector('.pv-pg'),label=fromPage>0?`${fromPage+1}쪽부터 다시 배치 중`:'다시 조판 중';let box=null,last=null,timer=0;
   const paint=()=>{if(!box||!last)return;const [what,why]=SHEET_STAGE[last.stage]||SHEET_STAGE.items,[a,b]=STAGE_SPAN[last.stage]||[0,1],f=a+(b-a)*(last.n?(last.i-1)/last.n:0);
     if(again){box.querySelector('small').textContent=last.n?`${last.i} / ${last.n}`:what;return;}
     box.querySelector('b').textContent=last.n?`${what} ${last.i} / ${last.n}`:what;box.querySelector('small').textContent=why;box.querySelector('.pv-bar i').style.width=(f*100).toFixed(1)+'%';};
   const show=()=>{
-    if(again){n.classList.add('pv-busy');box=document.createElement('div');box.className='pv-rechip';box.setAttribute('role','status');box.innerHTML='<i class="pv-spin" aria-hidden="true"></i><span>다시 조판 중</span><small></small>';n.prepend(box);}
+    if(again){n.classList.add('pv-busy');n.querySelectorAll(':scope > figure.pv-pg').forEach((f,i)=>f.classList.toggle('pv-stale',i>=fromPage));box=document.createElement('div');box.className='pv-rechip';box.setAttribute('role','status');box.innerHTML=`<i class="pv-spin" aria-hidden="true"></i><span>${label}</span><small></small>`;n.prepend(box);}
     else{n.innerHTML='<div class="pv-load" role="status"><i class="pv-spin" aria-hidden="true"></i><b>조판 준비 중</b><span class="pv-bar"><i></i></span><small>한글 조판으로 쪽을 그립니다</small></div><div class="pv-ghost" aria-hidden="true"></div>';box=n.querySelector('.pv-load');}
     paint();};
   if(again)timer=setTimeout(show,250);else show();
@@ -1057,18 +1064,29 @@ let hiddenSheetWait=0;
 export function whenSheetShown(run){if(whenSheetShown.releasing||!sheetFrameHidden())return false;whenSheetShown.queue.push(run);
   if(!hiddenSheetWait)hiddenSheetWait=setInterval(()=>{if(sheetFrameHidden())return;clearInterval(hiddenSheetWait);hiddenSheetWait=0;whenSheetShown.releasing=true;try{whenSheetShown.queue.splice(0).forEach(f=>f());}finally{whenSheetShown.releasing=false;}},250);return true;}
 whenSheetShown.queue=[];
-async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;if(whenSheetShown(()=>{const now=examById(data,exam.id);if(now)void fillExamSheet(now);}))return;const seq=++examSheetSeq;
+// 11-13 밤(시안 exam-fixes-1113 H): 지면에 안 나오는 값(단계·이름·정답·해설·출제의도·단원·근거·메모)만 바뀌었으면 다시 묶지 않는다.
+// 나오는 값이 바뀌면 그 문항이 있던 쪽부터 옅게 두고 「N쪽부터 다시 배치 중」 — 앞쪽은 그대로 보고 고칠 수 있다.
+const NOT_PRINTED=new Set(['workflow','name','answer','modelAnswer','explanation','intent','standardCode','unitLarge','unitMiddle','unitSmall','references','reviews','updatedAt','createdAt','memo','managementId']);
+const printKey=q=>q?JSON.stringify(q,(k,v)=>NOT_PRINTED.has(k)?undefined:v):'';
+const examKey=exam=>JSON.stringify({e:JSON.stringify(exam,(k,v)=>['title','status','updatedAt','createdAt'].includes(k)?undefined:v),f:typesetForms.map(f=>f.id).join(','),s:typesetStandards.map(s=>JSON.stringify(s)).join('|').length});
+async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;if(whenSheetShown(()=>{const now=examById(data,exam.id);if(now)void fillExamSheet(now);}))return;
+  const ek=examKey(exam),qk=Object.fromEntries(exam.items.map(id=>[id,printKey(data.questions.find(q=>q.id===id))]));
+  if(lastSheet&&lastSheet.examId===exam.id&&lastSheet.ek===ek&&exam.items.every(id=>lastSheet.qk[id]===qk[id])&&n.querySelector('.pv-pg')){
+    lastSheet.n=n;{const c=document.querySelector('#exam-check');if(c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(appView()),lastSheet.view);}
+    repaintExamPick(exam);return;}// 쪽 그림이 바뀌지 않는 수정 — 바로 끝
+  let fromPage=0;if(lastSheet&&lastSheet.examId===exam.id&&lastSheet.ek===ek){const changed=new Set(exam.items.filter(id=>lastSheet.qk[id]!==qk[id]));const at=lastSheet.view.pages.findIndex(p=>(p.boxes||[]).some(b=>changed.has(b.id)));if(at>0)fromPage=at;}
+  const seq=++examSheetSeq;
   typesetter||=makeTypesetter();let view;
   // 학교 양식을 고른 시험지(10-29): 쪽을 그 양식 위에 묶은 모양 그대로 그린다(암호 걸린 양식은 보낼 때만 열 수 있어 5E 기본 쪽으로).
   const form=exam.formId?typesetForms.find(f=>f.id===exam.formId&&!f.encrypted):null;
-  const busy=sheetBusy(n);
+  const busy=sheetBusy(n,{fromPage});
   try{view=await typesetter.pageSheets(data,exam,examPick||exam.items[0],{form,alive:()=>seq===examSheetSeq&&n.isConnected,progress:p=>{if(seq===examSheetSeq)busy.update(p);}});}catch(e){busy.done();if(e.cancelled)return;if(seq===examSheetSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e?.message||String(e))}</p>`;return;}
   busy.done();if(seq!==examSheetSeq||!n.isConnected)return;
   // 배치 점검은 실제로 그린 쪽(한글 조판 높이) 기준으로 다시 쓴다(시험지 화면 처음 그릴 때는 어림 높이).
   {const c=document.querySelector('#exam-check');if(c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(appView()),view);const info=document.querySelector('#exam-sheet-info');if(info)info.textContent=`${view.pages.length}쪽 · 한글 조판 그대로 · ${view.paper} ${view.columns}단${exam.formId?(view.form?' · 학교 양식 그대로':' · 학교 양식 위 모양은 보낼 때 확인'):''}`;}
   // 쪽 그림은 칸(.pv-pgart)에 넣어, 화면 밖 쪽은 브라우저가 그리지 않게 한다(content-visibility · 11-03: 12쪽이면 SVG 4MB·요소 1만 2천 개).
   n.innerHTML=view.pages.map((p,i)=>`<figure class="pv-pg" style="aspect-ratio:${p.width}/${p.height}"><div class="pv-pgart" style="aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}</div>${examBoxesHtml(exam,view,p)}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`).join('');
-  lastSheet={examId:exam.id,view,n};}
+  lastSheet={examId:exam.id,view,n,ek,qk};}
 // 쪽 위 문항 자리(누르는 단추)·여백 빗금·고른 문항의 여백 막대. 문항을 고를 때는 이것만 다시 그린다(11-03: 예전에는 시험지 전체를 다시
 // 조판하고 쪽 그림 12장을 다시 넣어 1~2초 멈추고 맨 위로 튀었다).
 let lastSheet=null;
@@ -1110,24 +1128,25 @@ let examRequest=null,examRequestTimer=0;
 // 단계(문항 조판 확인 → 시험지 만들기 → 5E_hwp에서 열기)·진행 막대·경과 시간. 실패하면 안내를 닫고 그 문항 카드로 데려간다(막다른 경고 금지).
 // 11-11 사용자: 진행 막대가 단계마다 뚝뚝 끊기지 말고, 느리더라도 천천히 쭉 나가게. 막대는 지금 단계 끝(조금 못 미친 자리)을 향해
 // 계속 조금씩 다가가고(기다리는 동안에도 움직임), 다음 단계가 오면 그 자리부터 이어서 간다. 절대 뒤로 가지 않는다.
-const sendProgress=(()=>{let el=null,clock=0,started=0,shown=0,floor=0,ceil=.5,creep=0;
+const sendProgress=(()=>{let el=null,clock=0,started=0,barAnim=null;
   const ensure=()=>{if(el)return el;el=document.createElement('div');el.className='send-progress';el.hidden=true;el.setAttribute('role','status');el.setAttribute('aria-live','polite');
     el.innerHTML='<div class="sp-card"><div class="sp-head"><span class="sp-spin" aria-hidden="true"></span><b>5E_hwp로 옮기는 중</b><time class="sp-time">00:00</time></div><p class="sp-title"></p><ol class="sp-steps"><li data-step="typeset">문항 조판 확인</li><li data-step="build">시험지 만들기</li><li data-step="open">5E_hwp에서 열기</li></ol><div class="sp-bar"><i></i></div><p class="sp-detail"></p></div>';
     document.body.append(el);return el;};
   const tick=()=>{if(!el)return;const t=Math.floor((performance.now()-started)/1000);el.querySelector('.sp-time').textContent=`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
   const order=['typeset','build','open'],span={typeset:[0,.55],build:[.55,.85],open:[.85,1]};
-  const paint=()=>{const bar=el?.querySelector('.sp-bar i');if(bar)bar.style.width=`${(shown*100).toFixed(2)}%`;};
-  function startCreep(){if(creep||!el)return;let last=performance.now();const frame=now=>{creep=0;if(!el||el.hidden)return;const dt=Math.min(.1,(now-last)/1000);last=now;
-    // 받은 진행값(floor)까지는 빨리 따라가고, 그 뒤로는 단계 끝(ceil)을 향해 남은 거리의 약 6%/초씩 — 끝에 가까울수록 느려져 멈춘 듯 보이지 않으면서도 넘지 않는다.
-    if(shown<floor)shown=Math.min(floor,shown+Math.max(.002,(floor-shown)*dt*6));else if(shown<ceil)shown+=Math.max(0,(ceil-shown)*dt*.06);
-    paint();creep=requestAnimationFrame(frame);};creep=requestAnimationFrame(frame);}
+  // 11-13 밤(시안 exam-fixes-1113 D): 막대는 그래픽 처리 장치가 그리는 움직임(transform)으로 — 조판이 화면 일꾼을 붙잡아도 멈추지 않는다.
+  // 받은 진행값까지는 0.3초에 빨리, 그 뒤로는 단계 끝(조금 못 미친 자리)을 향해 25초 동안 점점 느리게. 절대 뒤로 가지 않는다.
+  const barNow=()=>{const i=el?.querySelector('.sp-bar i');if(!i)return 0;const m=getComputedStyle(i).transform;try{return m&&m!=='none'?new DOMMatrixReadOnly(m).a:0;}catch{return 0;}};
+  function glide(floor,ceil){const i=el.querySelector('.sp-bar i'),from=barNow(),f=Math.max(from,floor),c=Math.max(f,ceil),FAST=300,SLOW=25000;
+    barAnim?.cancel();i.style.transform=`scaleX(${c})`;
+    barAnim=i.animate([{transform:`scaleX(${from})`,easing:'cubic-bezier(.3,.7,.3,1)'},{transform:`scaleX(${f})`,offset:FAST/(FAST+SLOW),easing:'cubic-bezier(.15,.55,.25,1)'},{transform:`scaleX(${c})`}],{duration:FAST+SLOW,fill:'both'});}
   return {
-    start(title){ensure();started=performance.now();el.querySelector('.sp-title').textContent=title||'';el.hidden=false;document.body.classList.add('sending-exam');this.step('typeset','확인하는 중…',0);tick();clearInterval(clock);clock=setInterval(tick,500);},
+    start(title){ensure();started=performance.now();el.querySelector('.sp-title').textContent=title||'';el.hidden=false;document.body.classList.add('sending-exam');this.step('typeset','확인하는 중…',0);tick();clearInterval(clock);clock=setInterval(tick,250);},
     step(name,detail='',fraction=0){if(!el||el.hidden)return;const at=order.indexOf(name);
       el.querySelectorAll('[data-step]').forEach((li,i)=>{li.dataset.state=i<at?'done':i===at?'active':'';});
-      const [a,b]=span[name];floor=Math.max(shown,a+(b-a)*Math.max(0,Math.min(1,fraction)));ceil=a+(b-a)*.96;startCreep();
+      const [a,b]=span[name];glide(a+(b-a)*Math.max(0,Math.min(1,fraction)),a+(b-a)*.96);tick();
       el.querySelector('.sp-bar').dataset.waiting=String(name==='open');el.querySelector('.sp-detail').textContent=detail;},
-    hide(){clearInterval(clock);clock=0;cancelAnimationFrame(creep);creep=0;shown=0;floor=0;if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
+    hide(){clearInterval(clock);clock=0;barAnim?.cancel();barAnim=null;const i=el?.querySelector('.sp-bar i');if(i)i.style.transform='scaleX(0)';if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
   };})();
 async function sendExam(exam,options={}){
   const toHwp=!options.download&&!options.variant&&!options.print&&embedded&&exam.items.length>0;
@@ -1142,6 +1161,7 @@ async function sendExamNow(exam,{download:asFile=false,variant=false,print=false
     for(const id of exam.items){const q=data.questions.find(x=>x.id===id);if(q&&!(form&&typesetter.retypesForForm(q,form))&&!(q.typeset?.verified&&await typesetMatches(q.typeset,q)))need.push(q);}
     if(need.length){typesetter||=makeTypesetter();
       for(const [i,q] of need.entries()){status(`조판 만드는 중 ${i+1}/${need.length} · ${q.number}번`);sendProgress.step('typeset',`${q.number}번 조판 만드는 중 · ${i+1}/${need.length}`,i/need.length);
+        await new Promise(r=>setTimeout(r,0));// 문항 사이 숨 쉴 틈 — 시간 숫자·안내가 문항마다 바뀐다
         try{const t=await typesetter.autoTypeset(q);mutate(()=>{q.typeset=t;},{render:false});}catch(e){const why=`${q.number}번 문항을 조판하지 못해 시험지를 만들지 않았습니다: ${e.message} — 카드에서 고친 뒤 다시 보내세요.`;typesetFailed={id:q.id,key:typesetFailKey(q),message:why};status(why,true);current=q;openCard(q.id);cardEditor.showHwp?.();return;}}
       await saveQueue;}}
   // 순서를 바꾸면 문항 번호가 바뀌어 저장한 조판과 맞지 않게 된다. 예전에는 만드는 도중 번호 없는 오류로 실패했다(M9). 먼저 모두 확인해 알린다.
@@ -1190,6 +1210,8 @@ const cardEditor=createCardEditor($('#card-view'),{
   question:()=>current,
   data:()=>data,ideaBoard,boardMeta:b=>boardMeta(b),
   ideaSend:(field,payload,board)=>ideaSend(field,payload,board),ideaCreate:qid=>ideaCreate(qid),showIdeas:(id=null)=>show('ideas',{board:id}),
+  // 11-13 밤: 아무것도 안 쓴 문항 카드는 닫거나 넘어갈 때 저장하지 않는다(목록에 빈 카드가 쌓이지 않게).
+  dropIfBlank:id=>dropIfBlank(id),
   benchEmpty:kind=>{if(view.name!=='card')return;if(kind==='board')show('ideas',{board:null});else{view.examId=null;show('library');}},
   restoreQuestion:snap=>{const i=data.questions.findIndex(x=>x.id===snap.id);if(i<0)return;mutate(()=>{data.questions[i]=snap;if(current?.id===snap.id)current=snap;},{render:false});},
   restoreBoard:(id,snap)=>{const b=data.ideas.find(x=>x.id===id);if(!b)return;Object.assign(b,snap);markDirty(null);remember({validated:true});},
@@ -1466,18 +1488,23 @@ for(const [top,src] of [['#top-undo','#undo'],['#top-redo','#redo']]){const t=$(
 $('#crumb-view').onclick=()=>{if(view.name==='library'){libView.close();renderView();return;}if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;if(current)libState(view).pool=poolOf(data,current);show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
 // 11-13: 접고 펼 때 — 메뉴 폭은 감속 곡선으로, 오른쪽 화면은 마지막 폭으로 먼저 그린 채 같은 곡선으로 밀고, 아이콘·접기 단추는 제자리에서 미끄러지게(FLIP).
-const NAV_EASE='cubic-bezier(.32,.72,0,1)',NAV_MS=320;
-$('#toggle-nav').onclick=()=>{const body=document.querySelector('.shell-body'),side=body.querySelector(':scope>.side'),tog=$('#toggle-nav');
-  const off=!body.classList.contains('nav-off'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function navTo(off,{save=false,animate=true}={}){const NAV_EASE='cubic-bezier(.32,.72,0,1)',NAV_MS=320;const body=document.querySelector('.shell-body'),side=body.querySelector(':scope>.side'),tog=$('#toggle-nav');
+  const still=!animate||matchMedia('(prefers-reduced-motion: reduce)').matches;
   const w0=side.getBoundingClientRect().width,t0=tog.getBoundingClientRect(),icons=[...side.querySelectorAll('button.nav')].map(b=>b.querySelector('svg')).filter(Boolean),i0=icons.map(i=>i.getBoundingClientRect());
   const mains=[...body.children].filter(c=>c!==side&&c.getClientRects().length),m0=mains.map(c=>c.getBoundingClientRect().left);
-  body.classList.toggle('nav-off',off);placeNavToggle();tog.setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}
-  if(still)return;const o={duration:NAV_MS,easing:NAV_EASE};
+  body.classList.toggle('nav-off',off);placeNavToggle();tog.setAttribute('aria-pressed',String(!off));if(save)try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}
+  if(still||!(w0>0))return;const o={duration:NAV_MS,easing:NAV_EASE};
   side.animate([{width:w0+'px',minWidth:w0+'px',maxWidth:w0+'px'},{width:side.getBoundingClientRect().width+'px',minWidth:side.getBoundingClientRect().width+'px',maxWidth:side.getBoundingClientRect().width+'px'}],{...o});
-  mains.forEach((c,k)=>{const dx=m0[k]-c.getBoundingClientRect().left;if(Math.abs(dx)>.5)c.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o);});
+  mains.forEach((c,k)=>{const dx=m0[k]-c.getBoundingClientRect().left;if(Math.abs(dx)>.5&&m0[k]>0)c.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o);});
   icons.forEach((i,k)=>{const r=i.getBoundingClientRect(),dx=i0[k].left-r.left,dy=i0[k].top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)i.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);});
   {const r=tog.getBoundingClientRect(),dx=t0.left-r.left,dy=t0.top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)tog.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);}
-  if(!off)side.querySelectorAll('.nav>span,.nav>b,.side-label,.side-add').forEach(n=>n.animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],o));};
+  if(!off)side.querySelectorAll('.nav>span,.nav>b,.side-label,.side-add').forEach(n=>n.animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],o));}
+$('#toggle-nav').onclick=()=>navTo(!document.querySelector('.shell-body').classList.contains('nav-off'),{save:true});
+// 11-13 밤: 카드·판을 연 자리(라이브러리 문항·문항 보기·판 목록 그림) — 작업 칸이 그 자리에서 커지며 열린다.
+var lastViewName='',zoomSource=null;
+function takeZoomSource(){const z=zoomSource;zoomSource=null;return z&&performance.now()-z.t<4000?z.rect:null;}
+for(const ev of ['pointerdown','keydown'])document.addEventListener(ev,e=>{const n=e.target?.closest?.('[data-iv-open],.lv-card,.lv-list li,.lv-viewer [data-lv-act="card"]');if(!n)return;
+  const src=n.matches('[data-lv-act]')?(n.closest('.lv-viewer')?.querySelector('.lv-vbody,.lv-pic,img,canvas')||n.closest('.lv-viewer')):n;const r=src?.getBoundingClientRect();if(r&&r.width>4)zoomSource={rect:r,t:performance.now()};},true);
 // 11-04: 접힌 상태면 ▢를 44px 줄 맨 위로(펼친 상태는 「문항」 머리줄 오른쪽)
 function placeNavToggle(){const off=document.querySelector('.shell-body').classList.contains('nav-off');const t=$('#toggle-nav');if(t)t.style.left=off?'8px':'';}
 new MutationObserver(placeNavToggle).observe(document.querySelector('.shell-body'),{attributes:true,attributeFilter:['class']});

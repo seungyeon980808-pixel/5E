@@ -448,7 +448,7 @@
 .pv-ghost::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);transform:translateX(-100%);animation:pv-sheen 1.6s linear infinite}
 .pv-ghost::after{content:"";position:absolute;top:8%;bottom:6%;left:50%;width:1px;background:var(--ds-line)}
 @keyframes pv-sheen{to{transform:translateX(100%)}}
-.pv-busy .pv-pg{opacity:.45;transition:opacity .3s}
+.pv-busy .pv-pg.pv-stale{opacity:.45;transition:opacity .3s}/* 11-13 밤: 다시 묶는 쪽만 옅게 */
 .pv-rechip{position:sticky;top:12px;z-index:5;margin-bottom:-40px;display:flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--ds-line-strong);border-radius:20px;background:var(--ds-raise);color:var(--ds-ink);font-size:12px;box-shadow:var(--ds-shadow-float,0 6px 18px rgba(0,0,0,.4))}
 .pv-rechip .pv-spin{width:14px;height:14px}.pv-rechip small{color:var(--ds-ink-3)}
 @media (prefers-reduced-motion:reduce){.pv-spin,.pv-ghost::before{animation:none}}
@@ -696,3 +696,8 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 .lv-ans::before{content:"";width:10px;height:10px;border-radius:2px;box-shadow:inset 0 0 0 1px var(--ds-line,#30363d)}
 .lv-ans[aria-pressed="true"]{color:var(--ds-ink,#e6edf3)}.lv-ans[aria-pressed="true"]::before{background:#ffd400;box-shadow:none}
 .lv-ans:not([hidden])+.lv-pos{margin-left:0}
+
+/* 11-13 밤: 정렬 묶음 제목(오늘·어제·이번 주·이전 / 초안·검토 중·완성) */
+#library-view .lv-grid>.lv-grp{grid-column:1/-1;margin:6px 0 -2px;font-size:12px;font-weight:600;color:var(--ds-ink-3,#8b949e);letter-spacing:.02em}
+#library-view .lv-grid>.lv-grp:first-child{margin-top:0}
+#library-view .lv-list>.lv-grp{list-style:none;padding:8px 10px 4px;font-size:12px;font-weight:600;color:var(--ds-ink-3,#8b949e)}
