@@ -15,6 +15,9 @@ import {qIcon,questionState,progressOf} from './status-icons.js';
 
 const PAGE = 40;
 const SVG = {
+  trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.3 1.3 0 0 0 1.3 1.2h6.6a1.3 1.3 0 0 0 1.3-1.2L17.5 7"/></svg>',
+  toexam: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M12 11v6M9 14h6"/></svg>',
+  card: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
   check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
   star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
   memo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/></svg>',
@@ -167,7 +170,7 @@ function viewerHtml(list, n, inline, api) {
     ? `${x.i.publicPath ? `<a class="lv-btn" href="${E(pdfHref(x.i.publicPath, x.i.page))}" target="_blank" rel="noopener" title="이 문항이 있는 시험지 쪽을 원본 PDF로 봅니다">시험지 쪽에서 보기</a><a class="lv-btn" href="${E(pdfHref(x.i.publicPath, 1))}" target="_blank" rel="noopener" title="시험지 PDF 원본">PDF</a>` : ''}<span class="sp"></span>
        <button type="button" class="lv-btn" data-lv-act="link" title="문항 카드를 연 상태에서 그 카드의 근거로 연결합니다">${SVG.link}근거로 연결</button>
        <button type="button" class="lv-btn soft" data-lv-act="convert" ${job ? 'disabled' : ''} title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 만듭니다(AI 없음)">${job ? '변형 중…' : '변형'}</button>`
-    : `<span class="sp"></span><button type="button" class="lv-btn danger" data-lv-act="delete">삭제</button><button type="button" class="lv-btn" data-lv-act="toexam">시험지에 넣기…</button><button type="button" class="lv-btn soft" data-lv-act="card">카드 열기</button>`;
+    : `<span class="sp"></span><button type="button" class="lv-btn danger lv-icon" data-lv-act="delete" title="휴지통으로" aria-label="휴지통으로">${SVG.trash}</button><button type="button" class="lv-btn" data-lv-act="toexam">${SVG.toexam}시험지에 넣기</button><button type="button" class="lv-btn soft" data-lv-act="card">${SVG.card}카드 열기</button>`;
   const at = job ? stepOf(job.stage) : 0;
   return `<div class="lv-viewer" data-lv-viewer data-n="${n}"><div class="lv-vhead"><h3>${E(x.title)}</h3>${x.kind === 'mine' ? '' : '<span class="lv-kt past">기출</span>'}
       <button type="button" class="lv-ib lv-vstar${on ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${on}" title="별표 (S)" aria-label="별표">${SVG.star}</button>

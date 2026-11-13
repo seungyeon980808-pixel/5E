@@ -12,7 +12,7 @@ const now=()=>new Date().toISOString();
 const uid=()=>crypto.randomUUID();
 export const ideaIcon=(title=false)=>qIcon('idea',.25,{title});
 const SVG=p=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
-const IC={
+const IC={memo:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h14v10l-5 5H5z"/><path d="M14 19.5v-5h5M8.5 9h7M8.5 12.5h4"/></svg>',home:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7v8.5H4z"/><path d="M10 19.5v-5h4v5"/></svg>',
   plus:SVG('<path d="M12 5v14M5 12h14"/>'),
   pic:SVG('<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4.5 18 5-5 3.5 3.5 2.5-2.5 4 4"/>'),
   table:SVG('<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9.5 4.5v15"/>'),
@@ -68,17 +68,17 @@ export function renderIdeasList(root,data,api){
 export function createIdeaBoard(app){
   const el=document.createElement('section');el.className='ib';el.tabIndex=-1;el.setAttribute('aria-label','아이디어 판');
   el.innerHTML=`<div class="ib-head"><span class="ib-title" title="두 번 눌러 이름 바꾸기">${ideaIcon()}<span class="ib-name"></span></span><span class="ib-sep"></span>
-    <button type="button" class="ib-tb primary" data-ib="memo" title="새 메모 · N">${IC.plus}<span class="lb">메모</span></button>
+    <button type="button" class="ib-tb" data-ib="memo" title="새 메모 · N">${IC.memo}<span class="lb">메모</span></button>
     <button type="button" class="ib-tb" data-ib="image" title="그림 넣기 · 끌어다 놓거나 ⌘V로 붙여도 됩니다">${IC.pic}<span class="lb">그림</span></button>
     <button type="button" class="ib-tb" data-ib="table" title="표 넣기 · 두 번 눌러 칸에 적기">${IC.table}<span class="lb">표</span></button>
     <button type="button" class="ib-tb" data-ib="link" title="링크 넣기">${IC.link}<span class="lb">링크</span></button>
     <span class="sp"></span>
-    <button type="button" class="ib-tb ib-card" data-ib="card"></button><span class="ib-sep"></span>
-    <button type="button" class="ib-zoom" data-ib="fit" title="판 전체가 보이게 맞춤 · ⌘+휠로 확대·축소"><b>100%</b><i></i><span>맞춤</span></button>
+    <button type="button" class="ib-tb ib-card" data-ib="card"></button><span class="ib-tone" role="group" aria-label="메모 기본 색">${[["gray","회색"],["navy","남색"],["paper","종이"]].map(([k,t])=>`<button type="button" data-tone="${k}" title="메모 기본 색 · ${t} (색을 따로 정하지 않은 메모)" aria-label="메모 기본 색 ${t}"><i class="tw-${k}"></i></button>`).join("")}</span><button type="button" class="ib-tb ib-home" data-ib="home" title="메인 판으로 · ⌘0" hidden>${IC.home}<span class="lb">메인 판</span></button><span class="ib-sep"></span>
+    <button type="button" class="ib-zoom" data-ib="fit" title="카드가 모두 보이게 맞춤 · ⌘+휠로 확대·축소"><b>100%</b><i></i><span>맞춤</span></button>
     <button type="button" class="ib-x" data-ib="close" title="아이디어 닫기 (⌥I)" aria-label="아이디어 닫기">${IC.close}</button></div>
     <div class="ib-wrap"><div class="ib-world"><svg class="ib-links"><defs><marker id="ib-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z"/></marker></defs><g></g></svg></div>
       <p class="ib-empty" hidden>빈 곳을 두 번 눌러 메모를 쓰세요 · 그림은 끌어다 놓거나 ⌘V</p>
-      <p class="ib-hint">빈 곳 두 번 = 새 메모 · 오른쪽 단추 = 차림표 · 메모 글 고르기 = 문항 카드로 · ⌘+휠 = 확대·축소</p></div>
+      <button type="button" class="ib-homefloat" data-ib="home" tabindex="-1">${IC.home}메인 판으로</button><p class="ib-hint">빈 곳 두 번 = 새 메모 · 오른쪽 단추 = 차림표 · 메모 글 고르기 = 문항 카드로 · ⌘+휠 = 확대·축소</p></div>
     <input type="file" accept="image/*" multiple hidden>
     <div class="ib-float ib-menu" role="menu"></div><div class="ib-float ib-sel"></div><div class="ib-float ib-pop"></div>`;
   const $=s=>el.querySelector(s),wrap=$('.ib-wrap'),world=$('.ib-world'),linksG=$('.ib-links g'),file=$('input[type=file]');
@@ -96,7 +96,7 @@ export function createIdeaBoard(app){
   function itemHtml(i){const acc=i.color?`<i class="ib-acc" style="background:${E(i.color)}"></i>`:'';const cls=`ib-it ib-${i.type}${i.style?' st-'+i.style:''}${picked===i.id?' picked':''}`;
     const pos=`left:${i.x}px;top:${i.y}px;${i.w?`width:${i.w}px;`:''}`;
     if(i.type==='image')return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<img src="${E(i.src)}" alt="" draggable="false"><div class="ib-cap">${E(i.title||'')}</div></div>`;
-    if(i.type==='table'){const cells=i.cells||[];return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<table class="ib-tbl">${cells.map(row=>`<tr>${row.map(c=>`<td>${E(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;}
+    if(i.type==='table'){const cells=i.cells||[];return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<div class="ib-tname${i.name?'':' empty'}" data-ph="표 이름 (두 번 눌러 적기)">${E(i.name||'')}</div><table class="ib-tbl">${cells.map(row=>`<tr>${row.map(c=>`<td>${E(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;}
     if(i.type==='link')return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<span class="ib-li">${IC.link}</span><div class="ib-lt"><b>${E(i.title||hostOf(i.url))}</b><small>${E(hostOf(i.url))}</small></div><button type="button" class="ib-open" data-ib-open title="${E(i.url)}">열기</button></div>`;
     return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<h4 class="ib-mt">${E(i.title||'')}</h4><div class="ib-mb">${E(i.text||'')}</div></div>`;}
   function draw(){if(!board)return;world.querySelectorAll('.ib-it').forEach(n=>n.remove());world.insertAdjacentHTML('beforeend',board.items.map(itemHtml).join(''));
@@ -112,10 +112,15 @@ export function createIdeaBoard(app){
   // ── 배율: 자르지 않고 비율로(75%까지) ──
   const bounds=()=>{let w=600,h=380;for(const i of board?.items||[]){const b=box(i.id);if(!b)continue;w=Math.max(w,b.x+b.w);h=Math.max(h,b.y+b.h);}return {w:w+24,h:h+24};};
   const autoS=()=>{const b=bounds();return Math.max(.75,Math.min(1,(wrap.clientWidth-24)/b.w,(wrap.clientHeight-40)/b.h));};
-  const scale=()=>zoomMan??autoS();
+  const scale=()=>zoomMan??1;// 11-13: 배율은 자동으로 바뀌지 않는다(기본 100%). 맞춤은 단추로만.
   function fit(){if(!wrap.clientWidth)return;const s=scale();world.style.transform=`translate(${12+pan.x}px,${10+pan.y}px) scale(${s.toFixed(3)})`;
-    $('.ib-zoom b').textContent=Math.round(s*100)+'%';$('.ib-zoom').classList.toggle('man',zoomMan!=null||pan.x!==0||pan.y!==0);}
-  new ResizeObserver(()=>{if(zoomMan==null&&autoS()>.75)pan={x:0,y:0};fit();}).observe(wrap);
+    $('.ib-zoom b').textContent=Math.round(s*100)+'%';{const away=Math.abs(pan.x)>60||Math.abs(pan.y)>60;$('.ib-home').hidden=!away;el.classList.toggle('away',away);}$('.ib-zoom').classList.toggle('man',zoomMan!=null||pan.x!==0||pan.y!==0);}
+  new ResizeObserver(()=>fit()).observe(wrap);
+  // 11-13: 「맞춤」 = 카드가 모두 보이게 배율·위치를 한 번 맞춤. 「메인 판」 = 처음 자리(0,0)로 부드럽게 돌아옴(배율은 그대로).
+  function glide(){world.classList.add('glide');clearTimeout(glide.t);glide.t=setTimeout(()=>world.classList.remove('glide'),460);}
+  function fitAll(){if(!board?.items.length){zoomMan=1;pan={x:0,y:0};glide();fit();return;}let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;for(const i of board.items){const b=box(i.id);if(!b)continue;x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.w);y1=Math.max(y1,b.y+b.h);}
+    const W=wrap.clientWidth-48,H=wrap.clientHeight-64,s=Math.max(.4,Math.min(1,W/(x1-x0||1),H/(y1-y0||1)));zoomMan=s;pan={x:-x0*s+12,y:-y0*s+14};glide();fit();}
+  function goHome(){pan={x:0,y:0};glide();fit();}
   const live=()=>{world.classList.add('live');clearTimeout(live.t);live.t=setTimeout(()=>world.classList.remove('live'),160);};
   const toWorld=(cx,cy)=>{const r=wrap.getBoundingClientRect(),s=scale();return {x:(cx-r.left-12-pan.x)/s,y:(cy-r.top-10-pan.y)/s};};
   wrap.addEventListener('wheel',e=>{e.preventDefault();live();if(e.metaKey||e.ctrlKey){zoomMan=Math.max(.4,Math.min(2,scale()*(1-e.deltaY*.004)));}else{pan.x-=e.deltaX;pan.y-=e.deltaY;}fit();},{passive:false});
@@ -139,15 +144,16 @@ export function createIdeaBoard(app){
 
   // ── 메모 쓰기(두 번 눌러) ──
   function startEdit(id,fresh=false){const n=node(id),i=item(id);if(!n||!i)return;editing=id;n.classList.add('editing');
-    const parts=i.type==='memo'?[n.querySelector('.ib-mt'),n.querySelector('.ib-mb')]:i.type==='image'?[n.querySelector('.ib-cap')]:i.type==='table'?[...n.querySelectorAll('td')]:[n.querySelector('.ib-lt b')];
+    const parts=i.type==='memo'?[n.querySelector('.ib-mt'),n.querySelector('.ib-mb')]:i.type==='image'?[n.querySelector('.ib-cap')]:i.type==='table'?[...n.querySelectorAll('td'),n.querySelector('.ib-tname')].filter(Boolean):[n.querySelector('.ib-lt b')];
     parts.forEach(p=>{p.contentEditable='plaintext-only';if(p.contentEditable!=='plaintext-only')p.contentEditable='true';});
     if(i.type==='memo'){const t=n.querySelector('.ib-mt');t.dataset.ph='제목';n.querySelector('.ib-mb').dataset.ph='생각을 적으세요';(fresh?t:n.querySelector('.ib-mb')).focus();}else parts[0].focus();
+    if(i.type==='table'&&startEdit.at==='name'){n.querySelector('.ib-tname')?.focus();}startEdit.at=null;
     if(!fresh){const s=getSelection(),r=document.createRange();r.selectNodeContents(document.activeElement);r.collapse(false);s.removeAllRanges();s.addRange(r);}}
   function endEdit(){if(!editing)return;const id=editing;editing=null;const n=node(id),i=item(id);if(!n||!i)return;n.classList.remove('editing');n.querySelectorAll('[contenteditable]').forEach(p=>p.removeAttribute('contenteditable'));
     const txt=s=>(n.querySelector(s)?.innerText||'').replace(/ /g,' ').replace(/\n+$/,'');
     let changed=false;const set=(k,v)=>{if((i[k]||'')!==v){if(!changed)snap();changed=true;i[k]=v;}};
     if(i.type==='memo'){set('title',txt('.ib-mt').trim().slice(0,200));set('text',txt('.ib-mb').slice(0,20000));if(!i.title&&!i.text){board.items=board.items.filter(x=>x!==i);board.links=board.links.filter(([a,b])=>a!==id&&b!==id);draw();save();return;}}
-    else if(i.type==='table'){const next=[...n.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\u00a0/g,' ').trim().slice(0,500)));if(JSON.stringify(next)!==JSON.stringify(i.cells)){snap();changed=true;i.cells=next;}}
+    else if(i.type==='table'){set('name',txt('.ib-tname').trim().slice(0,120));n.querySelector('.ib-tname')?.classList.toggle('empty',!i.name);const next=[...n.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\u00a0/g,' ').trim().slice(0,500)));if(JSON.stringify(next)!==JSON.stringify(i.cells)){snap();changed=true;i.cells=next;}}
     else if(i.type==='image')set('title',txt('.ib-cap').trim().slice(0,120));else set('title',txt('.ib-lt b').trim().slice(0,120));
     if(changed){drawLinks();save();}}
   el.addEventListener('focusout',e=>{if(!editing)return;const n=node(editing);if(n&&e.relatedTarget&&n.contains(e.relatedTarget))return;setTimeout(()=>{const n2=node(editing);if(n2&&n2.contains(document.activeElement))return;endEdit();},0);});
@@ -156,8 +162,9 @@ export function createIdeaBoard(app){
   // 11-13: 카드를 누르면 판이 포인터를 붙잡아(setPointerCapture) 두 번째 누름의 대상이 판으로 잡혔다 → 카드를 두 번 눌러도 새 메모가 생김.
   // 대상 대신 누른 자리 아래에 카드가 있는지로 가린다. 카드 위·가장자리에서는 새 메모를 만들지 않는다.
   const itemAt=(x,y)=>document.elementsFromPoint(x,y).map(t=>t.closest?.('.ib-it')).find(t=>t&&world.contains(t))||null;
-  wrap.addEventListener('dblclick',e=>{const n=e.target.closest('.ib-it')||itemAt(e.clientX,e.clientY);if(n){if(!e.target.closest('.ib-open'))startEdit(n.dataset.id);return;}const p=toWorld(e.clientX,e.clientY);newMemo(p.x-20,p.y-14);});
-  wrap.addEventListener('pointerdown',e=>{if(e.button!==0)return;closeFloats();el.focus({preventScroll:true});const n=e.target.closest('.ib-it');
+  wrap.addEventListener('dblclick',e=>{const n=e.target.closest('.ib-it')||itemAt(e.clientX,e.clientY);if(n){if(!e.target.closest('.ib-open')){startEdit.at=e.target.closest?.('.ib-tname')?'name':null;startEdit(n.dataset.id);}return;}const p=toWorld(e.clientX,e.clientY);newMemo(p.x-20,p.y-14);});
+  el.querySelector('.ib-homefloat').addEventListener('click',()=>goHome());
+  wrap.addEventListener('pointerdown',e=>{if(e.button!==0||e.target.closest('.ib-homefloat'))return;closeFloats();el.focus({preventScroll:true});const n=e.target.closest('.ib-it');
     if(linking&&n&&n.dataset.id!==linking){snap();if(!board.links.some(([a,b])=>a===linking&&b===n.dataset.id))board.links.push([linking,n.dataset.id]);linking=null;el.classList.remove('linking');drawLinks();save();e.preventDefault();return;}
     if(linking){linking=null;el.classList.remove('linking');}
     if(!n){if(editing)endEdit();pick(null);const x0=e.clientX,y0=e.clientY,p0={...pan};wrap.setPointerCapture(e.pointerId);wrap.classList.add('panning');
@@ -226,9 +233,12 @@ export function createIdeaBoard(app){
     else if(k==='image')file.click();
     else if(k==='link')addLinkPop();
     else if(k==='table'){const c=center();add({type:'table',x:Math.round(c.x-150),y:Math.round(c.y-50),w:300,cells:[['','',''],['','',''],['','','']]},{edit:true});}
-    else if(k==='fit'){zoomMan=null;pan={x:0,y:0};live();fit();}
+    else if(k==='fit')fitAll();
+    else if(k==='home')goHome();
     else if(k==='close'){endEdit();ctx.onClose?.();}
     else if(k==='card')ctx.onCard?.(b);});
+  el.querySelector('.ib-tone').addEventListener('click',e=>{const b=e.target.closest('[data-tone]');if(!b||!board)return;board.tone=b.dataset.tone==='gray'?'':b.dataset.tone;applyTone();save();});
+  function applyTone(){const t=board?.tone||'gray';el.classList.remove('tone-navy','tone-paper');if(t!=='gray')el.classList.add('tone-'+t);el.querySelectorAll('[data-tone]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tone===t)));}
   $('.ib-title').addEventListener('dblclick',()=>{const n=$('.ib-name');n.contentEditable='true';n.focus();const r=document.createRange();r.selectNodeContents(n);getSelection().removeAllRanges();getSelection().addRange(r);
     const done=ok=>{n.removeAttribute('contenteditable');const t=n.textContent.trim().slice(0,80);if(ok&&t&&t!==board.title){board.title=t;save();ctx.onRename?.();}n.textContent=board.title;};
     n.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();n.blur();}if(e.key==='Escape'){e.preventDefault();n.onblur=null;done(false);}};n.onblur=()=>done(true);});
@@ -244,6 +254,7 @@ export function createIdeaBoard(app){
   el.addEventListener('keydown',e=>{if(editing){if(e.key==='Escape'){e.preventDefault();endEdit();el.focus();return;}
       if(e.key==='Tab'&&e.target.tagName==='TD'){e.preventDefault();const tds=[...node(editing).querySelectorAll('td')],k=tds.indexOf(e.target)+(e.shiftKey?-1:1);const t=tds[(k+tds.length)%tds.length];t.focus();const rg=document.createRange();rg.selectNodeContents(t);getSelection().removeAllRanges();getSelection().addRange(rg);}return;}if(e.target.closest('input,textarea,[contenteditable]'))return;
     const m=e.metaKey||e.ctrlKey;
+    if(m&&e.key==='0'&&!editing){e.preventDefault();e.stopPropagation();goHome();return;}
     if(m&&e.key.toLowerCase()==='z'&&!e.shiftKey){e.preventDefault();e.stopPropagation();const u=undo.pop();if(u){board.items=u.items;board.links=u.links;picked=null;draw();save();}else say('판에서 되돌릴 것이 없습니다.');return;}
     if(m&&e.key.toLowerCase()==='d'&&picked){e.preventDefault();const i=item(picked);if(i)dup(i);return;}
     if((e.key==='Backspace'||e.key==='Delete')&&picked){e.preventDefault();e.stopPropagation();remove(picked);return;}
@@ -254,7 +265,7 @@ export function createIdeaBoard(app){
 
   // ── 붙이기 ──
   function mount(parent,boardId,options={}){const b=(app.data().ideas||[]).find(x=>x.id===boardId);if(!b){parent.textContent='판을 찾지 못했습니다.';return false;}
-    if(board?.id!==b.id){if(editing)endEdit();board=b;undo=[];picked=null;zoomMan=null;pan={x:0,y:0};linking=null;}else board=b;
+    if(board?.id!==b.id){if(editing)endEdit();board=b;undo=[];picked=null;zoomMan=null;pan={x:0,y:0};linking=null;}else board=b;applyTone();
     ctx=options;$('.ib-name').textContent=b.title;
     const cb=$('.ib-card');cb.hidden=!options.cardButton;if(options.cardButton){cb.innerHTML=options.cardButton.html;cb.classList.toggle('on',!!options.cardButton.on);cb.title=options.cardButton.title||'';}
     if(el.parentElement!==parent)parent.append(el);draw();requestAnimationFrame(()=>{drawLinks();fit();});return true;}

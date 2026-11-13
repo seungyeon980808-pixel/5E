@@ -247,3 +247,68 @@ dialog:modal{animation:ep-modal-in 300ms var(--ease-out)}
 ::-webkit-scrollbar-thumb{background-color:transparent;border:3px solid transparent;background-clip:padding-box;border-radius:6px}
 :hover::-webkit-scrollbar-thumb{background-color:rgba(139,148,158,.32)}
 ::-webkit-scrollbar-thumb:hover{background-color:rgba(139,148,158,.55)}
+/* ── 11-13 시안 decide-1113 ── */
+/* 10: 판 칸이 뒤 화면 위에 은은하게 떠 보이게 */
+#card-view .cv-idea{border-radius:12px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px rgba(255,255,255,.07),0 18px 40px rgba(0,0,0,.45),0 3px 8px rgba(0,0,0,.35)}
+/* 10: 머리 단추는 단추 모양(옅은 면 + 윗선 빛 + 테) */
+.ib-head .ib-tb:not(.ib-card){background:#23272e;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px rgba(255,255,255,.07);color:#d6dbe1}
+.ib-head .ib-tb:not(.ib-card):hover{background:#2b3038;color:#fff}.ib-head .ib-tb:not(.ib-card):active{background:#20242a}
+.ib-head .ib-tb[data-ib="image"],.ib-head .ib-tb[data-ib="table"],.ib-head .ib-tb[data-ib="link"]{margin-left:2px}
+/* 15: 메모 기본 색 — 회색(기본) · 남색 · 종이. 메모마다 고른 색(st-light·st-outline·색 점)은 그대로 */
+.ib-memo:not(.st-light):not(.st-outline){background:#2b2f37;border-color:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 10px 24px rgba(0,0,0,.38),0 2px 4px rgba(0,0,0,.3);color:#dfe3e8}
+.ib.tone-navy .ib-memo:not(.st-light):not(.st-outline){background:#232c3a;border-color:rgba(120,160,220,.16);color:#dfe6f0}
+.ib.tone-paper .ib-memo:not(.st-light):not(.st-outline){background:#e9ebee;border-color:rgba(0,0,0,.18);color:#1f2328}
+.ib.tone-paper .ib-memo:not(.st-light):not(.st-outline) .ib-mt{color:#111418}
+.ib-tone{display:flex;gap:2px;padding:2px;border-radius:7px;background:#15181c;box-shadow:0 0 0 1px rgba(255,255,255,.06);flex:none;margin-right:4px}
+.ib-tone button{width:22px;height:20px;border:0;border-radius:5px;background:none;display:grid;place-items:center;cursor:pointer;padding:0}
+.ib-tone button[aria-pressed=true]{background:#2b3038}
+.ib-tone i{width:10px;height:10px;border-radius:3px;display:block}.tw-gray{background:#2b2f37;box-shadow:0 0 0 1px #5a606a}.tw-navy{background:#232c3a;box-shadow:0 0 0 1px #4a5a72}.tw-paper{background:#e9ebee}
+/* 17: 고치는 중은 빨간 계열 — 고를 때(파란 테)와 한눈에 구별 */
+.ib .ib-it.editing,.ib .ib-it.editing:not(.st-light):not(.st-outline){outline:none;box-shadow:0 0 0 2px #e5534b,0 0 0 6px rgba(229,83,75,.16),0 14px 30px rgba(0,0,0,.45);caret-color:#ff7b72;z-index:4}
+.ib-memo.editing:not(.st-light):not(.st-outline){background:#33302f}
+.ib.tone-paper .ib-memo.editing:not(.st-light):not(.st-outline){background:#f6eeec}
+.ib-it.editing::after{content:"고치는 중";position:absolute;left:10px;top:-10px;padding:0 6px;border-radius:5px;background:#e5534b;color:#fff;font-size:10.5px;font-weight:700;line-height:17px;pointer-events:none}
+/* 11: 메인 판 — 벗어나면 아래 가운데 「메인 판으로」 */
+.ib-world.glide{transition:transform .45s var(--ease-out,cubic-bezier(.32,.72,0,1))}
+.ib-homefloat{position:absolute;left:50%;bottom:40px;z-index:6;height:32px;display:inline-flex;align-items:center;gap:6px;padding:0 13px;border-radius:9px;border:1px solid #6ba4f8;background:#152137;color:#cfe1ff;font:inherit;font-size:12.5px;cursor:pointer;opacity:0;pointer-events:none;transform:translate(-50%,10px);transition:opacity .25s var(--ease-out,ease),transform .35s var(--ease-out,ease)}
+.ib-homefloat .ico{width:15px;height:15px}
+.ib.away .ib-homefloat{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.ib-tb.ib-home[hidden]{display:none}
+/* 13: 표 이름 — 비면 안 보이고, 고르면 옅은 자리, 두 번 눌러 적기 */
+.ib-tname{font-size:12.5px;font-weight:600;color:var(--g-ink);margin:0 0 6px 2px;outline:none;min-height:1.3em}
+.ib-tname.empty{display:none}
+.ib-it.picked .ib-tname.empty,.ib-it.editing .ib-tname.empty{display:block}
+.ib-tname:empty::before{content:attr(data-ph);color:#59636e;font-weight:500}
+.ib-it.editing .ib-tname:focus:empty::before{content:"표 이름"}
+/* 9: 보기 판정 — ㄱ·ㄴ·ㄷ 글자가 곧 단추. 옳음 = 글자 둘레 초록 동그라미, 틀림 = 글자 위에 빨간 × */
+#card-view .cv-tk{position:relative;width:26px;height:22px;min-height:0;padding:0;border:0;border-radius:11px;background:none;color:#3a3f46;font:inherit;font-size:14px;cursor:pointer;display:grid;place-items:center}
+#card-view .cv-tk:hover{box-shadow:inset 0 0 0 1px #c9ced6}
+#card-view .cv-tk.o{box-shadow:inset 0 0 0 1.6px #5b8a6d;color:#2f6b4a}
+#card-view .cv-tk.x::before,#card-view .cv-tk.x::after{content:"";position:absolute;left:50%;top:50%;width:19px;height:1.6px;margin:-.8px 0 0 -9.5px;border-radius:1px;background:rgba(209,84,74,.85);transform:rotate(45deg)}
+#card-view .cv-tk.x::after{transform:rotate(-45deg)}
+/* 8: 자료 위치·배열 아이콘 단추, 칸 아래 (가)(나)(다)는 조판이 붙이므로 카드에선 숨김, 이름표 높이에 맞춰 빈 공간 줄임 */
+#card-view .cv-matseg button{height:24px;display:grid;place-items:center}
+#card-view .cv-matseg button svg{width:18px;height:14px}
+#card-view .cv-grid .cv-tile .cap{display:none}
+#card-view .cv-grid .cv-matrow{min-height:142px}
+/* 5: 문항 보기 창 — 작게(화면 약 75%), 문항 그림은 왼쪽, 정보·메모·단추는 오른쪽 300px 세로 칸 */
+.lv-modal-bg{align-items:center;padding:20px 0}
+.lv-modal{width:min(1180px,78vw)}
+.lv-modal .lv-viewer{display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:52px auto auto minmax(0,1fr);grid-template-areas:"head head" "stage im" "stage strip" "stage btns";column-gap:14px;padding-bottom:14px;max-height:84vh}
+.lv-modal .lv-vhead{grid-area:head}
+.lv-modal .lv-stage{grid-area:stage;padding:0 0 0 14px;overflow:auto;min-height:0;scrollbar-width:thin}
+.lv-modal .lv-im{grid-area:im;display:flex;flex-direction:column;gap:10px;padding:0 14px 0 0}
+.lv-modal .lv-strip{grid-area:strip;margin:10px 14px 0 0}
+.lv-modal .lv-btns{grid-area:btns;align-self:end;display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px 0 0}
+.lv-modal .lv-btns .sp{display:none}
+.lv-modal .lv-btns .lv-btn{flex:1 1 auto;justify-content:center;height:34px;font-size:12.5px}
+.lv-btn svg{width:15px!important;height:15px!important}
+.lv-btn.lv-icon{flex:0 0 34px!important;width:34px;padding:0}
+.lv-btn.danger:hover{background:rgba(229,83,75,.12)}
+/* ‹ › 작고 옅게, 마우스를 올리면 진해짐 */
+.lv-side{width:26px;height:44px;margin-top:-22px;border-radius:8px;background:rgba(13,17,23,.10);color:rgba(13,17,23,.45);opacity:1}
+.lv-side svg{width:16px!important;height:16px!important}
+.lv-side[data-lv-step="-1"]{left:10px}.lv-side[data-lv-step="1"]{right:10px}
+.lv-stage:hover .lv-side:not(:disabled){opacity:1;background:rgba(13,17,23,.16);color:rgba(13,17,23,.7)}
+.lv-side:hover,.lv-side:focus-visible{background:rgba(13,17,23,.3)!important;color:#fff!important}
+.lv-modal .lv-side[data-lv-step="-1"]{left:24px}
