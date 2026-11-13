@@ -261,12 +261,28 @@ export function createCardEditor(root,api){
   function focusKey(n){if(!n||!root.contains(n)||!n.matches?.('input,textarea'))return null;if(n.id)return {sel:'#'+CSS.escape(n.id)};
     const attrs=FOCUS_KEYS.filter(k=>n.dataset[k]!==undefined).map(k=>`[data-${k.replace(/[A-Z]/g,c=>'-'+c.toLowerCase())}="${CSS.escape(n.dataset[k])}"]`);return attrs.length?{sel:n.tagName.toLowerCase()+attrs.join('')}:null;}
   // 칸이 바뀔 때 폭이 부드럽게 바뀌게: 다시 그리기 전 폭에서 새 폭으로(칸마다 data-pane 이름으로 짝지음).
-  function paneWidths(){const m={};root.querySelectorAll('[data-pane]').forEach(n=>{m[n.dataset.pane]=n.getBoundingClientRect().width;});return m;}
-  function animateFrom(m){if(!Object.keys(m).length||root.hidden)return;const ns=[...root.querySelectorAll('[data-pane]')];
-    for(const n of ns){n.style.setProperty('transition','none','important');n.style.setProperty('flex',`0 0 ${m[n.dataset.pane]??0}px`,'important');}
+  // 11-13: 칸이 바뀔 때 — 「처음엔 빠르게, 끝은 천천히」 한 곡선으로. 칸 안 내용은 마지막 폭으로 먼저 그려 두고(움직이는 동안 줄바꿈이 다시 일어나지 않게)
+  // 칸의 보이는 폭만 바꾼다. 새로 생기는 맨 왼쪽 칸(라이브러리)은 왼쪽에서 밀려 나오고, 오른쪽 칸은 오른쪽에서 들어온다.
+  // 사라지는 칸은 그 자리에 잠깐 남겨(유령) 바깥쪽으로 밀어 내보낸다 — 순간 교체로 판이 튀던 것(영상 11-13).
+  const PANE_EASE='cubic-bezier(.32,.72,0,1)',PANE_MS=340;
+  const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function paneWidths(){const m={};root.querySelectorAll('[data-pane]').forEach(n=>{m[n.dataset.pane]={w:n.getBoundingClientRect().width,r:n.getBoundingClientRect(),node:n};});return m;}
+  function animateFrom(m){if(!Object.keys(m).length||root.hidden||reduceMotion())return;const ns=[...root.querySelectorAll('[data-pane]')];if(!ns.length)return;
+    const names=new Set(ns.map(n=>n.dataset.pane)),leaving=Object.entries(m).filter(([k])=>!names.has(k));
+    if(!leaving.length&&ns.every(n=>m[n.dataset.pane]&&Math.abs(m[n.dataset.pane].w-n.getBoundingClientRect().width)<1))return;
+    const rootR=root.getBoundingClientRect(),locked=[];
+    for(const n of ns){const kids=[...n.children];for(const c of kids){const w=c.getBoundingClientRect().width;if(w>0){c.style.setProperty('width',w+'px','important');c.style.setProperty('flex','none','important');locked.push(c);}}}
+    const finals=new Map(ns.map(n=>[n,n.getBoundingClientRect().width]));
+    for(const n of ns){n.style.setProperty('transition','none','important');n.style.setProperty('overflow','hidden','important');n.style.setProperty('flex',`0 0 ${m[n.dataset.pane]?.w??0}px`,'important');n.style.setProperty('min-width','0','important');}
     void root.offsetWidth;
-    for(const n of ns){n.style.setProperty('transition','flex .38s cubic-bezier(.3,.7,.2,1)','important');n.style.removeProperty('flex');}
-    clearTimeout(animateFrom.t);animateFrom.t=setTimeout(()=>ns.forEach(n=>n.style.removeProperty('transition')),450);}
+    for(const n of ns){n.style.setProperty('transition',`flex ${PANE_MS}ms ${PANE_EASE}`,'important');n.style.setProperty('flex',`0 0 ${finals.get(n)}px`,'important');// 마지막 폭(px)으로 — 늘어나는 비율끼리 섞여 넘쳤다 돌아오지 않게
+      // 새로 생긴 맨 왼쪽 칸: 내용을 오른쪽 끝에 붙여 왼쪽에서 밀려 나오게
+      if(!m[n.dataset.pane]&&n===ns[0]){const W=finals.get(n);for(const c of n.children)c.animate([{transform:`translateX(${-W}px)`},{transform:'none'}],{duration:PANE_MS,easing:PANE_EASE});}}
+    for(const [k,{r,node}] of leaving){if(!node||r.width<2)continue;const g=node;g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));g.removeAttribute('data-pane');g.setAttribute('inert','');g.setAttribute('aria-hidden','true');
+      Object.assign(g.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0',zIndex:'5',pointerEvents:'none',flex:'none'});document.body.appendChild(g);
+      const toLeft=r.left+r.width/2<rootR.left+rootR.width/2&&r.left<=rootR.left+2;
+      g.animate([{transform:'none',opacity:1},{transform:`translateX(${toLeft?-r.width:r.width}px)`,opacity:0}],{duration:PANE_MS,easing:PANE_EASE,fill:'forwards'}).finished.then(()=>g.remove(),()=>g.remove());}
+    clearTimeout(animateFrom.t);animateFrom.t=setTimeout(()=>{ns.forEach(n=>{n.style.removeProperty('transition');n.style.removeProperty('flex');n.style.removeProperty('overflow');n.style.removeProperty('min-width');});locked.forEach(c=>{c.style.removeProperty('width');c.style.removeProperty('flex');});},PANE_MS+40);}
   function render(){shapeOpen=false;
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
@@ -291,13 +307,13 @@ export function createCardEditor(root,api){
     if(ts)h+=rightHtml().replace('<aside class="cv-right"','<aside data-pane="ts" class="cv-right"');
     if(fold)h+=`<button type="button" class="pane-rail right cv-foldrail" data-pane="rail" data-cv="card-unfold" title="${lib&&!bench.fold?'눌러서 문항 카드 펴기 — 판은 2칸이 필요해 라이브러리가 접힙니다':'눌러서 문항 카드 펴기'}" aria-label="문항 카드 펴기">${ICON.card}<span>${E(questionTitle(x))}</span><small>${lib&&!bench.fold?'눌러서 펴기 · 라이브러리는 접힘':'눌러서 펴기'}</small></button>`;
     root.innerHTML=h;
-    animateFrom(before);
     if(board)mountIdea();
     if(cardOn&&!fold&&same&&!wide){const w=root.querySelector('.cv-writer');if(w)w.scrollTop=keep;}
     renderedFor=x?.id;
     if(lib)api.dock?.(['standards','references'].includes(panels.tab)?panels.tab:null,root.querySelector('[data-cvbody="docked"]'));
     if(lib&&['past','textbooks'].includes(panels.tab))renderPast();
     placeHwp(ts&&panels.right==='paper'&&!wide);syncHwpActs();
+    animateFrom(before);
     if(ts&&panels.right==='ai'){renderAi();markAiSeen();}
     if(wide)void renderPage();
     fitAll();taWatch();

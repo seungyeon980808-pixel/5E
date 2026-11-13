@@ -68,7 +68,7 @@ export function renderIdeasList(root,data,api){
 export function createIdeaBoard(app){
   const el=document.createElement('section');el.className='ib';el.tabIndex=-1;el.setAttribute('aria-label','아이디어 판');
   el.innerHTML=`<div class="ib-head"><span class="ib-title" title="두 번 눌러 이름 바꾸기">${ideaIcon()}<span class="ib-name"></span></span><span class="ib-sep"></span>
-    <button type="button" class="ib-tb primary" data-ib="memo" title="새 메모 (N)">${IC.plus}<span class="lb">메모</span><kbd>N</kbd></button>
+    <button type="button" class="ib-tb primary" data-ib="memo" title="새 메모 · N">${IC.plus}<span class="lb">메모</span></button>
     <button type="button" class="ib-tb" data-ib="image" title="그림 넣기 · 끌어다 놓거나 ⌘V로 붙여도 됩니다">${IC.pic}<span class="lb">그림</span></button>
     <button type="button" class="ib-tb" data-ib="table" title="표 넣기 · 두 번 눌러 칸에 적기">${IC.table}<span class="lb">표</span></button>
     <button type="button" class="ib-tb" data-ib="link" title="링크 넣기">${IC.link}<span class="lb">링크</span></button>
@@ -153,17 +153,21 @@ export function createIdeaBoard(app){
   el.addEventListener('focusout',e=>{if(!editing)return;const n=node(editing);if(n&&e.relatedTarget&&n.contains(e.relatedTarget))return;setTimeout(()=>{const n2=node(editing);if(n2&&n2.contains(document.activeElement))return;endEdit();},0);});
 
   // ── 누르기·끌기 ──
-  wrap.addEventListener('dblclick',e=>{const n=e.target.closest('.ib-it');if(n){if(!e.target.closest('.ib-open'))startEdit(n.dataset.id);return;}const p=toWorld(e.clientX,e.clientY);newMemo(p.x-20,p.y-14);});
+  // 11-13: 카드를 누르면 판이 포인터를 붙잡아(setPointerCapture) 두 번째 누름의 대상이 판으로 잡혔다 → 카드를 두 번 눌러도 새 메모가 생김.
+  // 대상 대신 누른 자리 아래에 카드가 있는지로 가린다. 카드 위·가장자리에서는 새 메모를 만들지 않는다.
+  const itemAt=(x,y)=>document.elementsFromPoint(x,y).map(t=>t.closest?.('.ib-it')).find(t=>t&&world.contains(t))||null;
+  wrap.addEventListener('dblclick',e=>{const n=e.target.closest('.ib-it')||itemAt(e.clientX,e.clientY);if(n){if(!e.target.closest('.ib-open'))startEdit(n.dataset.id);return;}const p=toWorld(e.clientX,e.clientY);newMemo(p.x-20,p.y-14);});
   wrap.addEventListener('pointerdown',e=>{if(e.button!==0)return;closeFloats();el.focus({preventScroll:true});const n=e.target.closest('.ib-it');
     if(linking&&n&&n.dataset.id!==linking){snap();if(!board.links.some(([a,b])=>a===linking&&b===n.dataset.id))board.links.push([linking,n.dataset.id]);linking=null;el.classList.remove('linking');drawLinks();save();e.preventDefault();return;}
     if(linking){linking=null;el.classList.remove('linking');}
     if(!n){if(editing)endEdit();pick(null);const x0=e.clientX,y0=e.clientY,p0={...pan};wrap.setPointerCapture(e.pointerId);wrap.classList.add('panning');
       const mv=ev=>{pan={x:p0.x+ev.clientX-x0,y:p0.y+ev.clientY-y0};live();fit();};const up=()=>{wrap.removeEventListener('pointermove',mv);wrap.removeEventListener('pointerup',up);wrap.classList.remove('panning');};
       wrap.addEventListener('pointermove',mv);wrap.addEventListener('pointerup',up);return;}
-    const id=n.dataset.id;if(editing&&editing!==id)endEdit();pick(id);
+    const id=n.dataset.id,was=picked===id;if(editing&&editing!==id)endEdit();pick(id);
     if(editing===id||e.target.closest('.ib-open'))return;
-    // 11-13: 메모 글 위를 잡아도 옮긴다. 글 고르기·고치기는 두 번 눌러 고치기 상태에서.
-    e.preventDefault();const i=item(id),x0=e.clientX,y0=e.clientY,l0=i.x,t0=i.y,s=scale(),p0={...pan};let moved=false,last=e,raf=0;wrap.setPointerCapture(e.pointerId);
+    // 11-13: 고르지 않은 메모는 글 위를 잡아도 옮긴다. 이미 고른 메모는 글 위를 끌면 문장 고르기(→ 문항 카드로 보내기), 옮기기는 테두리·제목 줄로.
+    if(was&&n.classList.contains('ib-memo')&&e.target.closest('.ib-mb')&&!n.classList.contains('st-compact'))return;
+    e.preventDefault();const i=item(id),x0=e.clientX,y0=e.clientY,l0=i.x,t0=i.y,s=scale(),p0={...pan},pid=e.pointerId;let moved=false,last=e,raf=0;
     // 11-13: 놓아도 배율은 그대로(맞춤은 배율 단추로만) · 가장자리로 끌면 판이 따라 밀림 · 다른 카드 끝·가운데에 맞으면 안내선과 함께 붙음
     const clearGuides=()=>world.querySelectorAll('.ib-guide').forEach(g=>g.remove());
     const guide=(v,at,a,b)=>{const g=document.createElement('div');g.className='ib-guide '+(v?'v':'h');Object.assign(g.style,v?{left:at+'px',top:a-8+'px',height:b-a+16+'px'}:{top:at+'px',left:a-8+'px',width:b-a+16+'px'});world.appendChild(g);};
@@ -175,7 +179,7 @@ export function createIdeaBoard(app){
       i.x=Math.round(nx);i.y=Math.round(ny);n.style.left=i.x+'px';n.style.top=i.y+'px';drawLinks();};
     const edge=()=>{const r=wrap.getBoundingClientRect(),m=36;let vx=0,vy=0;if(last.clientX<r.left+m)vx=8;else if(last.clientX>r.right-m)vx=-8;if(last.clientY<r.top+m)vy=8;else if(last.clientY>r.bottom-m)vy=-8;
       if(vx||vy){pan={x:pan.x+vx,y:pan.y+vy};fit();placeAt(last);}raf=requestAnimationFrame(edge);};
-    const mv=ev=>{last=ev;if(!moved&&Math.abs(ev.clientX-x0)+Math.abs(ev.clientY-y0)<3)return;if(!moved){snap();moved=true;n.classList.add('moving');raf=requestAnimationFrame(edge);}placeAt(ev);};
+    const mv=ev=>{last=ev;if(!moved&&Math.abs(ev.clientX-x0)+Math.abs(ev.clientY-y0)<3)return;if(!moved){snap();moved=true;n.classList.add('moving');try{wrap.setPointerCapture(pid);}catch{}raf=requestAnimationFrame(edge);}placeAt(ev);};
     const up=()=>{cancelAnimationFrame(raf);clearGuides();wrap.removeEventListener('pointermove',mv);wrap.removeEventListener('pointerup',up);n.classList.remove('moving');if(moved)save();};
     wrap.addEventListener('pointermove',mv);wrap.addEventListener('pointerup',up);});
   world.addEventListener('click',e=>{const o=e.target.closest('[data-ib-open]');if(!o)return;const i=item(o.closest('.ib-it').dataset.id);if(i?.url)window.open(i.url,'_blank','noopener');});

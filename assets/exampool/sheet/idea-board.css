@@ -217,3 +217,33 @@
 .shell-body.nav-off>.side .side-label{width:22px;height:1px;margin:7px auto;background:#3a424d}
 /* 11-13: 서랍 그림을 자료 칸 위로 끌고 왔을 때 */
 #card-view .cv-grid .cv-matrow.cv-drop-on{box-shadow:inset 0 0 0 2px #6ba4f8;background:#f6f9ff}
+/* 11-13: 고른 메모는 글을 끌어 문장을 고를 수 있다(문항 카드로 보내기). 옮기기는 테두리·제목 줄. */
+.ib-it.picked.ib-memo:not(.st-compact) .ib-mb{user-select:text;-webkit-user-select:text;cursor:text}
+.ib-it.picked.ib-memo .ib-mt{cursor:grab}
+/* 11-13: 판 이름 칸은 폭 고정 — 고칠 때 글자 따라 늘어나 뒤 단추(메모·그림·표·링크)가 밀리던 것. 고칠 때도 크기 같게(테두리는 안쪽). */
+.ib-title{flex:0 0 200px;width:200px}
+.ib-name{flex:1 1 auto;min-width:0;white-space:nowrap;padding:0 4px;border-radius:4px}
+.ib-name[contenteditable]{padding:0 4px;box-shadow:inset 0 0 0 1px #4b6fa8;text-overflow:clip;overflow-x:auto;scrollbar-width:none}
+.ib-name[contenteditable]::-webkit-scrollbar{display:none}
+/* 11-13: 반응 움직임 한 곡선 — 「처음엔 빠르게, 끝은 천천히」(애플식 감속). 너무 빨라 정신없던 즉시 전환을 부드럽게. */
+:root{--ease-out:cubic-bezier(.32,.72,0,1);--ease-ms:200ms}
+:where(button,.nav,.lv-card,.ib-it,.cv-plus,[role=button]){transition:background-color var(--ease-ms) var(--ease-out),color var(--ease-ms) var(--ease-out),border-color var(--ease-ms) var(--ease-out),box-shadow var(--ease-ms) var(--ease-out),opacity var(--ease-ms) var(--ease-out)}
+/* 화면(목록·카드·시험지…)이 바뀔 때: 살짝 아래에서 떠오르며 나타남 */
+@keyframes vp-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.shell-body>.view-pane{animation:vp-in 280ms var(--ease-out)}
+/* 창은 튀는(넘쳤다 돌아오는) 움직임 대신 같은 감속으로 */
+@keyframes ep-modal-in{from{opacity:0;scale:.97}to{opacity:1;scale:1}}
+dialog:modal{animation:ep-modal-in 300ms var(--ease-out)}
+@media (prefers-reduced-motion:reduce){.shell-body>.view-pane,dialog:modal{animation:none}}
+/* 11-13: 「＋ 메모」만 바탕·테두리·단축키 배지로 튀던 것 — 그림·표·링크와 같은 모양(단축키는 설명에) */
+.ib-tb.primary{background:none;box-shadow:none;color:#c4c8ce}.ib-tb.primary:hover{background:#25292f;color:#fff}
+/* 11-13: 라이브러리는 문항 카드·아이디어 판에서만 켜진다 — 그 밖에서는 흐리게(눌러도 반응 없는 단추를 두지 않음) */
+.side .nav-lib:disabled{opacity:.38;cursor:default;background:none!important}
+/* 11-13: 메뉴 접기 단추 켜짐 — 은은한 남색 바탕 + 파란 아이콘(시인성) */
+.top .top-cell #toggle-nav[aria-pressed="false"]{background:#152137!important;color:#6ba4f8!important;box-shadow:inset 0 0 0 1px rgba(107,164,248,.45)}
+/* 11-13: 스크롤 막대 — 가늘고 둥글게, 평소엔 숨었다가 그 칸에 마우스를 올리면 보임 */
+::-webkit-scrollbar{width:10px;height:10px;background:transparent}
+::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}
+::-webkit-scrollbar-thumb{background-color:transparent;border:3px solid transparent;background-clip:padding-box;border-radius:6px}
+:hover::-webkit-scrollbar-thumb{background-color:rgba(139,148,158,.32)}
+::-webkit-scrollbar-thumb:hover{background-color:rgba(139,148,158,.55)}

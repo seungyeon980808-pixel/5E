@@ -548,6 +548,13 @@ $('#filter').oninput=()=>{renderRows();grid?.refresh();};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(grid?.finish()!==false)$('#export').click();return;}if((e.metaKey||e.ctrlKey)&&['z','y'].includes(e.key.toLowerCase())&&!e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea,select,[contenteditable]')){e.preventDefault();replay(e.shiftKey||e.key.toLowerCase()==='y'?'redo':'undo');return;}if(e.key==='Escape'&&!document.querySelector('dialog[open]'))closeSources();});
 // 11-11: 설치판은 ~/Documents/5E/출제 에 날짜_시간 이름으로 저장(save-out.js), 웹은 내려받기.
 function download(bytes,name,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',options={}){return saveOut(bytes,name,mime,options);}
+// 11-13: 「엑셀 양식 받기」 — 예시 문항 1개가 든 빈 5E 문항 시트. 내 문항은 넣지 않는다(내 문항 전부 내보내기는 메뉴의 엑셀 내보내기).
+async function excelTemplate(){try{status('엑셀 양식 만드는 중…');const ex=newQuestion('1','합답형');
+    writeField(ex,'passage','(예시) 지문이 있으면 여기에 적습니다. 없으면 비워 둡니다.');writeField(ex,'ask','(예시) 이에 대한 설명으로 옳은 것만을 <보기>에서 있는 대로 고른 것은?');
+    writeField(ex,'bogi','(예시) 첫 번째 보기\n(예시) 두 번째 보기\n(예시) 세 번째 보기');
+    const sample={...clone(data),questions:[ex],exams:[],ideas:[],trash:{questions:[],exams:[]}};
+    const bytes=await exportExcel(window.XLSX,window.JSZip,sample);const saved=await download(bytes,'5E_exam-문항-양식.xlsx');
+    status(savedText(saved,'엑셀 양식')+' · 열마다 문항 하나 — 예시 열을 고쳐 쓰고 오른쪽 열에 이어서 적은 뒤 「엑셀 올리기」로 올립니다.');}catch(e){status(e.message,true);}}
 $('#export').onclick=async()=>{try{status('엑셀 만드는 중…');const bytes=await exportExcel(window.XLSX,window.JSZip,data);const saved=await download(bytes,'5E_exam-문항.xlsx');status(savedText(saved,'엑셀')+' · 구성·표·그림·자료와 5E 원본을 함께 보관합니다.');}catch(e){status(e.message,true);}};
 $('#top-more').onclick=e=>{e.stopPropagation();const m=$('#top-menu');m.hidden=!m.hidden;
   // 카드 화면에서는 왼쪽 메뉴가 숨어 새 시험지를 못 찾았다(10-28) — 여기서 만들고, 보고 있는 문항을 바로 담는다.
@@ -844,7 +851,7 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 // 문항 보관함.
 // 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023): 기출 + 내 문항 한 목록, 문항 보기 창. 동작은 library-view.js.
 const libApi={data:()=>data,view:()=>view,engine:(node,q)=>engineCard(node,q),rerender:()=>{if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);},status:(m,err)=>status(m,err),
-  newCard:()=>$('#new').click(),importExcel:()=>$('#excel-file').click(),openCard:id=>openCard(id),askDelete:ids=>askDelete(ids),convertPast:item=>pastQueued(item.id)?unqueuePast(item.id):queuePast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
+  newCard:()=>$('#new').click(),importExcel:()=>$('#excel-file').click(),excelTemplate:()=>void excelTemplate(),openCard:id=>openCard(id),askDelete:ids=>askDelete(ids),convertPast:item=>pastQueued(item.id)?unqueuePast(item.id):queuePast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
   // 위쪽 경로: 문항 보기 창이 열려 있으면 「문항 보관함 › 제목」, 앞 단계를 누르면 창을 닫는다.
   crumb:title=>{if(view.name!=='library')return;$('#crumb-question').textContent=title;$('#crumb-question').title=title;document.querySelector('.crumb-sep').hidden=!title;$('#crumb-view').disabled=!title;$('#crumb-view').title=title?'문항 보관함으로 돌아가기':'';},
   toExamMenu:(qid,button)=>{const exams=data.exams.filter(e=>e.status==='drafting'),sel=document.createElement('select');sel.className='lv-btn';sel.setAttribute('aria-label','시험지에 넣기');
@@ -1458,7 +1465,19 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('button[data-ap
 for(const [top,src] of [['#top-undo','#undo'],['#top-redo','#redo']]){const t=$(top),o=$(src);if(!t||!o)continue;t.onclick=()=>o.click();const sync=()=>{t.disabled=o.disabled;};sync();new MutationObserver(sync).observe(o,{attributes:true,attributeFilter:['disabled']});}
 $('#crumb-view').onclick=()=>{if(view.name==='library'){libView.close();renderView();return;}if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;if(current)libState(view).pool=poolOf(data,current);show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
-$('#toggle-nav').onclick=()=>{setTimeout(placeNavToggle,0);const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}};
+// 11-13: 접고 펼 때 — 메뉴 폭은 감속 곡선으로, 오른쪽 화면은 마지막 폭으로 먼저 그린 채 같은 곡선으로 밀고, 아이콘·접기 단추는 제자리에서 미끄러지게(FLIP).
+const NAV_EASE='cubic-bezier(.32,.72,0,1)',NAV_MS=320;
+$('#toggle-nav').onclick=()=>{const body=document.querySelector('.shell-body'),side=body.querySelector(':scope>.side'),tog=$('#toggle-nav');
+  const off=!body.classList.contains('nav-off'),still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const w0=side.getBoundingClientRect().width,t0=tog.getBoundingClientRect(),icons=[...side.querySelectorAll('button.nav')].map(b=>b.querySelector('svg')).filter(Boolean),i0=icons.map(i=>i.getBoundingClientRect());
+  const mains=[...body.children].filter(c=>c!==side&&c.getClientRects().length),m0=mains.map(c=>c.getBoundingClientRect().left);
+  body.classList.toggle('nav-off',off);placeNavToggle();tog.setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}
+  if(still)return;const o={duration:NAV_MS,easing:NAV_EASE};
+  side.animate([{width:w0+'px',minWidth:w0+'px',maxWidth:w0+'px'},{width:side.getBoundingClientRect().width+'px',minWidth:side.getBoundingClientRect().width+'px',maxWidth:side.getBoundingClientRect().width+'px'}],{...o});
+  mains.forEach((c,k)=>{const dx=m0[k]-c.getBoundingClientRect().left;if(Math.abs(dx)>.5)c.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o);});
+  icons.forEach((i,k)=>{const r=i.getBoundingClientRect(),dx=i0[k].left-r.left,dy=i0[k].top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)i.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);});
+  {const r=tog.getBoundingClientRect(),dx=t0.left-r.left,dy=t0.top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)tog.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);}
+  if(!off)side.querySelectorAll('.nav>span,.nav>b,.side-label,.side-add').forEach(n=>n.animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],o));};
 // 11-04: 접힌 상태면 ▢를 44px 줄 맨 위로(펼친 상태는 「문항」 머리줄 오른쪽)
 function placeNavToggle(){const off=document.querySelector('.shell-body').classList.contains('nav-off');const t=$('#toggle-nav');if(t)t.style.left=off?'8px':'';}
 new MutationObserver(placeNavToggle).observe(document.querySelector('.shell-body'),{attributes:true,attributeFilter:['class']});

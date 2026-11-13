@@ -106,7 +106,7 @@ export function renderLibraryView(root, data, view, api) {
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
   // 문항 추가 줄 하나(시안 2판 3): 「출제 중」 칸에서만, 문항이 있든 없든 제목 바로 아래 같은 자리.
-  const addbar = s.pool === 'drafting' ? `<div class="lv-addbar"><button type="button" class="lv-add go" data-lv-new>${qIcon('new',0,{title:false})}새 문항 카드 열기</button><button type="button" class="lv-add" data-lv-import>${SVG.sheet}엑셀로 여러 문항 올리기</button><span class="lv-addhint">카드는 유형·자료 구조를 고르면 바로 열립니다 · 엑셀은 5E 문항 시트(.xlsx)</span></div>` : '';
+  const addbar = s.pool === 'drafting' ? `<div class="lv-addbar"><button type="button" class="lv-add go" data-lv-new title="유형·자료 구조를 고르면 바로 열립니다">${qIcon('new',0,{title:false})}새 문항 카드</button><button type="button" class="lv-add" data-lv-import title="5E 문항 시트(.xlsx)로 여러 문항을 한 번에 올립니다">${SVG.sheet}엑셀 올리기</button><button type="button" class="lv-add" data-lv-template title="예시 문항 1개가 든 빈 5E 문항 시트를 받습니다">${SVG.sheet}엑셀 양식 받기</button></div>` : '';
   // 보관함은 내 문항만이라 카드마다 「내 문항」 표시는 겹치는 정보 — 기출일 때만 표시.
   // 내 문항 상태 아이콘(11-04): 원이 완성도만큼 채워짐 · 출제 완료는 초록 가득 · 시험지에 넣으면 파랑 + 체크.
   const mineMark = q => { const st = questionState(q, data); return qIcon(st, st === 'work' ? progressOf(q) : 1); };
@@ -269,6 +269,7 @@ export function installLibraryView(root, api) {
     const t = e.target;
     if (t.closest('[data-lv-new]')) { api.newCard?.(); return; }
     if (t.closest('[data-lv-import]')) { api.importExcel?.(); return; }
+    if (t.closest('[data-lv-template]')) { api.excelTemplate?.(); return; }
     const star = t.closest('[data-lv-star]'); if (star) { e.stopPropagation(); toggleStar(star.dataset.lvStar); return; }
     // 11-11 사용자: 문항 카드를 카드 보기에서 바로 지운다(확인 창 → 되돌리기 가능).
     const del = t.closest('[data-lv-del]'); if (del) { e.stopPropagation(); api.askDelete(del.dataset.lvDel); return; }

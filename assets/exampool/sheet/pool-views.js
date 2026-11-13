@@ -53,7 +53,7 @@ export function renderNav(root,data,view){
   const poolItem=(k,icon)=>`<button type="button" class="nav" data-nav="library" data-pool="${k}" aria-current="${pool===k?'true':'false'}" title="${POOLS[k]}">${icon}<span>${POOLS[k]}</span><b>${poolQuestions(data,k).length}</b></button>`;
   const trash=data.trash||{questions:[],exams:[]};
   root.innerHTML=`<div class="side-top" aria-hidden="true"></div>
-    <button type="button" class="nav nav-lib" data-nav="lib" aria-pressed="${!!view.libOn}" title="${view.libOn?'라이브러리 끄기':'라이브러리 켜기'}">${LIB_ICO}<span>라이브러리</span>${view.libOn?'<i class="nav-led" aria-hidden="true"></i>':''}</button>
+    <button type="button" class="nav nav-lib" data-nav="lib" aria-pressed="${!!view.libOn}"${view.name==='card'?'':' disabled aria-disabled="true"'} title="${view.name!=='card'?'문항 카드나 아이디어 판을 열면 라이브러리를 켤 수 있습니다':view.libOn?'라이브러리 끄기':'라이브러리 켜기'}">${LIB_ICO}<span>라이브러리</span>${view.libOn?'<i class="nav-led" aria-hidden="true"></i>':''}</button>
     <div class="side-div"></div>
     <p class="side-label">문항</p>
     <button type="button" class="nav nav-idea" data-nav="ideas" aria-current="${view.name==='ideas'}" title="아이디어">${qIcon('idea',.25,{title:false})}<span>아이디어</span><b>${(data.ideas||[]).length}</b></button>
