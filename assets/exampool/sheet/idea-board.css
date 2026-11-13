@@ -312,3 +312,4 @@ dialog:modal{animation:ep-modal-in 300ms var(--ease-out)}
 .lv-stage:hover .lv-side:not(:disabled){opacity:1;background:rgba(13,17,23,.16);color:rgba(13,17,23,.7)}
 .lv-side:hover,.lv-side:focus-visible{background:rgba(13,17,23,.3)!important;color:#fff!important}
 .lv-modal .lv-side[data-lv-step="-1"]{left:24px}
+.ib-it.editing .ib-mb:focus,.ib-it.editing .ib-mb:focus-visible{outline:none!important;box-shadow:none!important}

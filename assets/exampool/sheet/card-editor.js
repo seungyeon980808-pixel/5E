@@ -17,6 +17,7 @@ import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersSho
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
 import {isDrawerDrag,drawerFromDrop} from '../../../js/drawer.js?v=1113';
+import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1113';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
@@ -34,7 +35,7 @@ export function completeness(q){
 }
 
 export function createCardEditor(root,api){
-  const panels={nav:store.get('nav',true),lib:store.get('lib',false)/* 11-12: 라이브러리는 왼쪽 메뉴에서 켜고 끈다(기억함) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:store.get('rightOpen',true),view:store.get('view','card')==='page'?'page':'card'};
+  const panels={nav:store.get('nav',true),lib:store.get('lib',false)/* 11-12: 라이브러리는 왼쪽 메뉴에서 켜고 끈다(기억함) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:false/* 11-13: 조판 미리보기는 처음엔 늘 닫힘(자간·문단 간격 조정 때 카드 머리 단추로 엶) */,view:store.get('view','card')==='page'?'page':'card'};
   let pastIndex=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[],bookq:''}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
   if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   // 기출 여러 개 고르기(11-03): 그림 왼쪽 위 동그라미. 하나라도 고르면 그림을 누르기만 해도 골라지고, Shift 범위·⌘A 모두·Esc 취소. 아래 띠의 「N개 변형」으로 줄에 넣는다.
@@ -390,7 +391,10 @@ export function createCardEditor(root,api){
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
   function fit(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,30)+'px';}
   // 글 칸 높이는 칠 때만 맞추면, 처음 그릴 때와 칸 폭이 줄어 줄이 늘 때 글이 아래로 잘렸다. 그때도 맞춘다(폭이 바뀔 때만, 한 프레임에 한 번).
-  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();}
+  let mathFields=null;
+  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();}
+  // 11-13: 카드 글 칸에 글 속 수식 띠($·⌘E), 안 고칠 때는 그려진 수식
+  mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice]'});
   // 11-13: 머리 줄은 단추(유형·배점·단계)를 절대 줄이지 않는다. 한 줄에 다 안 들어가면 「문항 이름」 칸만 아랫줄로 내려 가로를 다 쓴다.
   function fitHead(){const h=root.querySelector('.cv-writer>.w-head');if(!h)return;h.classList.remove('cv-head-wrap');
     const kids=[...h.children].filter(c=>!c.classList.contains('sp')&&c.offsetHeight>0);if(!kids.length)return;const top=Math.min(...kids.map(c=>c.offsetTop));

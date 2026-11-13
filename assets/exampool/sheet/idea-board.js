@@ -6,6 +6,7 @@
 //  · 칸이 좁아지면 판을 자르지 않고 통째로 비율로 줄인다(75%까지). ⌘+휠로 바꾸면 그 배율을 지키고 「맞춤」이면 다시 자동.
 import {qIcon} from './status-icons.js';
 import {isDrawerDrag,drawerFromDrop} from '../../../js/drawer.js?v=1113';
+import {mathToHtml,htmlToMath,attachMathInput,loadMath,renderTex,hasMath} from '../../../js/eq/eq-input.js?v=1113';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>new Date().toISOString();
@@ -82,7 +83,7 @@ export function createIdeaBoard(app){
     <input type="file" accept="image/*" multiple hidden>
     <div class="ib-float ib-menu" role="menu"></div><div class="ib-float ib-sel"></div><div class="ib-float ib-pop"></div>`;
   const $=s=>el.querySelector(s),wrap=$('.ib-wrap'),world=$('.ib-world'),linksG=$('.ib-links g'),file=$('input[type=file]');
-  let board=null,ctx={},picked=null,zoomMan=null,pan={x:0,y:0},undo=[],linking=null,selText='',editing=null;
+  let mathCtl=null,board=null,ctx={},picked=null,zoomMan=null,pan={x:0,y:0},undo=[],linking=null,selText='',editing=null;
 
   // ── 저장 ──
   // 저장할 때 카드 높이를 같이 적어 둔다(판 모음의 작은 그림을 실제 모양대로 그리려고).
@@ -98,8 +99,9 @@ export function createIdeaBoard(app){
     if(i.type==='image')return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<img src="${E(i.src)}" alt="" draggable="false"><div class="ib-cap">${E(i.title||'')}</div></div>`;
     if(i.type==='table'){const cells=i.cells||[];return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<div class="ib-tname${i.name?'':' empty'}" data-ph="표 이름 (두 번 눌러 적기)">${E(i.name||'')}</div><table class="ib-tbl">${cells.map(row=>`<tr>${row.map(c=>`<td>${E(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;}
     if(i.type==='link')return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<span class="ib-li">${IC.link}</span><div class="ib-lt"><b>${E(i.title||hostOf(i.url))}</b><small>${E(hostOf(i.url))}</small></div><button type="button" class="ib-open" data-ib-open title="${E(i.url)}">열기</button></div>`;
-    return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<h4 class="ib-mt">${E(i.title||'')}</h4><div class="ib-mb">${E(i.text||'')}</div></div>`;}
+    return `<div class="${cls}" data-id="${E(i.id)}" style="${pos}">${acc}<h4 class="ib-mt">${E(i.title||'')}</h4><div class="ib-mb">${mathToHtml(i.text||'')}</div></div>`;}// 11-13: 메모 안 $…$는 그려진 수식
   function draw(){if(!board)return;world.querySelectorAll('.ib-it').forEach(n=>n.remove());world.insertAdjacentHTML('beforeend',board.items.map(itemHtml).join(''));
+    if(board.items.some(i=>i.type==='memo'&&hasMath(i.text)))loadMath(document).then(()=>world.querySelectorAll('.ib-mb .eq-chip').forEach(c=>{c.innerHTML=renderTex(c.dataset.tex);}));
     $('.ib-empty').hidden=board.items.length>0;world.querySelectorAll('.ib-image img').forEach(img=>{if(!img.complete)img.addEventListener('load',()=>{drawLinks();fit();},{once:true});});
     drawLinks();fit();}
   function box(id){const n=node(id),i=item(id);if(!n||!i)return null;return {x:i.x,y:i.y,w:n.offsetWidth,h:n.offsetHeight};}
@@ -145,18 +147,20 @@ export function createIdeaBoard(app){
   // ── 메모 쓰기(두 번 눌러) ──
   function startEdit(id,fresh=false){const n=node(id),i=item(id);if(!n||!i)return;editing=id;n.classList.add('editing');
     const parts=i.type==='memo'?[n.querySelector('.ib-mt'),n.querySelector('.ib-mb')]:i.type==='image'?[n.querySelector('.ib-cap')]:i.type==='table'?[...n.querySelectorAll('td'),n.querySelector('.ib-tname')].filter(Boolean):[n.querySelector('.ib-lt b')];
-    parts.forEach(p=>{p.contentEditable='plaintext-only';if(p.contentEditable!=='plaintext-only')p.contentEditable='true';});
+    parts.forEach(p=>{if(p.classList.contains('ib-mb')){p.contentEditable='true';return;}p.contentEditable='plaintext-only';if(p.contentEditable!=='plaintext-only')p.contentEditable='true';});
+    if(i.type==='memo'){mathCtl?.detach();mathCtl=attachMathInput(n.querySelector('.ib-mb'));}// 11-13: $·⌘E로 글 속 수식 띠
     if(i.type==='memo'){const t=n.querySelector('.ib-mt');t.dataset.ph='제목';n.querySelector('.ib-mb').dataset.ph='생각을 적으세요';(fresh?t:n.querySelector('.ib-mb')).focus();}else parts[0].focus();
     if(i.type==='table'&&startEdit.at==='name'){n.querySelector('.ib-tname')?.focus();}startEdit.at=null;
     if(!fresh){const s=getSelection(),r=document.createRange();r.selectNodeContents(document.activeElement);r.collapse(false);s.removeAllRanges();s.addRange(r);}}
   function endEdit(){if(!editing)return;const id=editing;editing=null;const n=node(id),i=item(id);if(!n||!i)return;n.classList.remove('editing');n.querySelectorAll('[contenteditable]').forEach(p=>p.removeAttribute('contenteditable'));
     const txt=s=>(n.querySelector(s)?.innerText||'').replace(/ /g,' ').replace(/\n+$/,'');
     let changed=false;const set=(k,v)=>{if((i[k]||'')!==v){if(!changed)snap();changed=true;i[k]=v;}};
-    if(i.type==='memo'){set('title',txt('.ib-mt').trim().slice(0,200));set('text',txt('.ib-mb').slice(0,20000));if(!i.title&&!i.text){board.items=board.items.filter(x=>x!==i);board.links=board.links.filter(([a,b])=>a!==id&&b!==id);draw();save();return;}}
+    if(i.type==='memo'){mathCtl?.detach();mathCtl=null;set('title',txt('.ib-mt').trim().slice(0,200));set('text',htmlToMath(n.querySelector('.ib-mb')).slice(0,20000));if(!i.title&&!i.text){board.items=board.items.filter(x=>x!==i);board.links=board.links.filter(([a,b])=>a!==id&&b!==id);draw();save();return;}}
     else if(i.type==='table'){set('name',txt('.ib-tname').trim().slice(0,120));n.querySelector('.ib-tname')?.classList.toggle('empty',!i.name);const next=[...n.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.innerText.replace(/\u00a0/g,' ').trim().slice(0,500)));if(JSON.stringify(next)!==JSON.stringify(i.cells)){snap();changed=true;i.cells=next;}}
     else if(i.type==='image')set('title',txt('.ib-cap').trim().slice(0,120));else set('title',txt('.ib-lt b').trim().slice(0,120));
     if(changed){drawLinks();save();}}
-  el.addEventListener('focusout',e=>{if(!editing)return;const n=node(editing);if(n&&e.relatedTarget&&n.contains(e.relatedTarget))return;setTimeout(()=>{const n2=node(editing);if(n2&&n2.contains(document.activeElement))return;endEdit();},0);});
+  el.addEventListener('focusout',e=>{if(!editing||document.querySelector('.eq-back'))return;// 큰 수식 편집기가 떠 있으면 고치기를 끝내지 않음
+  const n=node(editing);if(n&&e.relatedTarget&&n.contains(e.relatedTarget))return;setTimeout(()=>{const n2=node(editing);if(n2&&n2.contains(document.activeElement))return;endEdit();},0);});
 
   // ── 누르기·끌기 ──
   // 11-13: 카드를 누르면 판이 포인터를 붙잡아(setPointerCapture) 두 번째 누름의 대상이 판으로 잡혔다 → 카드를 두 번 눌러도 새 메모가 생김.
