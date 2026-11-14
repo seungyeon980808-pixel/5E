@@ -598,6 +598,7 @@ function normalizeFormulaSource(src) {
     .replace(/\+-/g, "±")
     .replace(/->/g, "→")
     .replace(/<-/g, "←")
+    .replace(/(?<![-<])-(?![->])/g, "−")
     .replace(/\btheta\b/g, "θ")
     .replace(/\blambda\b/g, "λ")
     .replace(/\bDelta\b/g, "Δ")

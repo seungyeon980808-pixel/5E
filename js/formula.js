@@ -76,6 +76,44 @@ const SYMBOLS = {
   angle: "∠", perp: "⊥", parallel: "∥", circ: "∘", pm2: "±",
 };
 
+// 11-14: 수식 간격은 친 띄어쓰기가 아니라 수식 규칙으로 — 함수 이름(sin…) 뒤는 좁게(0.17em),
+// 이항 기호(+ − × = ± · → < > ≤ ≥ ÷) 둘레는 같은 너비(0.22em, 등호·화살표 0.28em). 기호 옆 띄어쓰기는 지운다.
+// 맨 앞이나 여는 괄호·다른 기호 바로 뒤의 + −는 부호라 띄우지 않는다. 그 밖의 띄어쓰기(0.5 m 같은 단위 앞)는 그대로.
+const BIN_OPS = new Set(["+", "−", "-", "×", "±", "∓", "·", "÷"]);
+const REL_OPS = new Set(["=", "≠", "≈", "<", ">", "≤", "≥", "→", "←", "⇒", "∝"]);
+function tidySpacing(items) {
+  const isSpace = n => n && n.type === "text" && /^\s+$/.test(n.value);
+  const opOf = n => n && n.type === "text" && (BIN_OPS.has(n.value) || REL_OPS.has(n.value)) ? n.value : null;
+  const out = [];
+  for (let k = 0; k < items.length; k++) {
+    const n = items[k];
+    if (isSpace(n)) {
+      const prev = out[out.length - 1], next = items.slice(k + 1).find(x => !isSpace(x));
+      if (opOf(next) || (prev && (prev.type === "func" || prev.opSpaced))) continue;
+      if (prev && isSpace(prev)) continue;
+      out.push(n); continue;
+    }
+    const op = opOf(n);
+    if (op) {
+      const prev = [...out].reverse().find(x => !isSpace(x));
+      while (out.length && isSpace(out[out.length - 1])) out.pop();
+      const unary = BIN_OPS.has(op) && (op === "+" || op === "−" || op === "-") && (!prev || opOf(prev) || prev.opSpaced || (prev.type === "text" && /^[([{,]$/.test(prev.value)));
+      const node = op === "-" ? { ...n, value: "−" } : n;
+      if (unary) { out.push(node); continue; }
+      const em = REL_OPS.has(op) ? 0.28 : 0.22;
+      // 기울임 보정: 기울어진 문자(θ·t·v…)는 끝이 오른쪽으로 삐져나와 뒤 기호에 붙어 보인다 — 그만큼 왼쪽을 더 띄운다.
+      const tail = prev && (prev.type === "text" ? prev.value : prev.type === "script" && prev.base?.type === "text" && !prev.sub && !prev.sup ? prev.base.value : "");
+      const lean = typeof tail === "string" && /[A-Za-zα-ω]$/.test(tail) ? Math.max(0.09, italicCorrection(tail.slice(-1))) : prev?.type === "script" ? 0.06 : 0;
+      out.push({ type: "space", em: em + lean }, node, { type: "space", em, opSpaced: true });
+      continue;
+    }
+    if (n.type === "func") { out.push(n); const next = items[k + 1]; if (next && !isSpace(next) && next.type !== "script" && !(next.type === "text" && /^[([{]$/.test(next.value))) out.push({ type: "space", em: 0.12, opSpaced: true }); else if (isSpace(next)) { out.push({ type: "space", em: 0.12, opSpaced: true }); } continue; }
+    out.push(n);
+  }
+  while (out.length && isSpace(out[out.length - 1])) out.pop();
+  return out;
+}
+
 function parseFormula(src) {
   const s = String(src == null ? "" : src);
   let i = 0;
@@ -111,7 +149,7 @@ function parseFormula(src) {
       if (i === before) i++;          // never stall
       if (++guard > 100000) break;    // hard safety
     }
-    return { type: "row", items };
+    return { type: "row", items: tidySpacing(items) };
   }
 
   function parseScriptUnit(depth) {
@@ -259,20 +297,20 @@ function _ctx() {
   if (!_measureCanvas) _measureCanvas = document.createElement("canvas");
   return _measureCanvas.getContext("2d");
 }
-// 수식 글꼴 이탤릭에서 숫자는 정자(upright)로 — draw/advance가 동일 분할을 써야
-// 첨자·본문 폭이 어긋나지 않는다(정렬 보증). 분리 불필요 시 null.
-// [{text, style}] 반환: 숫자 런=normal, 나머지=italic.
+// 수식 글꼴 이탤릭에서 기울이는 것은 문자(영문·그리스 소문자)뿐 — 숫자·+·−·×·=·괄호·한글 등은 정자(upright)로(11-14 사용자:
+// 「플러스나 곱하기는 기울임이 들어가면 안 된다」). draw/advance가 동일 분할을 써야 첨자·본문 폭이 어긋나지 않는다(정렬 보증).
+// [{text, style}] 반환: 문자 런=italic, 나머지=normal. 분리 불필요 시 null.
+const ITALIC_CHAR = /[A-Za-zα-ωϑϕϵ\u{1D400}-\u{1D7FF}]/u;
 function numberStyleRuns(str, font) {
-  if (!(font.style === "italic" && isEquationFontFamily(font.family)) || !/\d/.test(str)) return null;
-  const re = /\d+(?:[.,]\d+)*/g;
+  if (!(font.style === "italic" && isEquationFontFamily(font.family))) return null;
+  const chars = Array.from(str);
+  if (chars.every(ch => ITALIC_CHAR.test(ch))) return null;
   const runs = [];
-  let last = 0, m;
-  while ((m = re.exec(str))) {
-    if (m.index > last) runs.push({ text: str.slice(last, m.index), style: "italic" });
-    runs.push({ text: m[0], style: "normal" });
-    last = m.index + m[0].length;
+  for (const ch of chars) {
+    const style = ITALIC_CHAR.test(ch) ? "italic" : "normal";
+    if (runs.length && runs[runs.length - 1].style === style) runs[runs.length - 1].text += ch;
+    else runs.push({ text: ch, style });
   }
-  if (last < str.length) runs.push({ text: str.slice(last), style: "italic" });
   return runs;
 }
 
@@ -373,6 +411,9 @@ function layoutRow(node, F, font) {
   };
 }
 
+// 기울임 보정값(em, 11-14): 기울어진 글자 꼭대기가 오른쪽으로 나오는 만큼. 대문자·f·v처럼 위가 넓은 글자는 크게, x·c·a는 거의 없다.
+const ITALIC_CORRECTION = { I: 0.16, V: 0.16, W: 0.15, Y: 0.16, T: 0.14, F: 0.14, P: 0.12, U: 0.12, X: 0.1, H: 0.1, N: 0.1, M: 0.1, K: 0.1, f: 0.12, v: 0.05, y: 0.05, r: 0.05, q: 0.04, j: 0.06, l: 0.04, d: 0.04 };
+function italicCorrection(ch) { return ITALIC_CORRECTION[ch] ?? (/[A-Z]/.test(ch) ? 0.08 : 0.02); }
 function layoutScript(node, F, font) {
   const base = layout(node.base, F, font);
   const sf = F * 0.66;
@@ -382,7 +423,11 @@ function layoutScript(node, F, font) {
   } : font;
   const sub = node.sub ? layout(node.sub, sf, scriptFont("sub")) : null;
   const sup = node.sup ? layout(node.sup, sf, scriptFont("sup")) : null;
-  const scriptW = Math.max(sub ? sub.w : 0, sup ? sup.w : 0);
+  // 기울임 보정(11-14): 기울어진 문자(I·f·V…) 위첨자는 글자 꼭대기가 오른쪽으로 나와 겹친다 — 위첨자만 그만큼 오른쪽으로.
+  const last = node.base?.type === "text" ? String(node.base.value || "").slice(-1) : "";
+  const leans = /[A-Za-zα-ω]/.test(last) && font.style === "italic" && !font.forceUpright;
+  const supShift = sup && leans ? F * italicCorrection(last) : 0;
+  const scriptW = Math.max(sub ? sub.w : 0, sup ? sup.w + supShift : 0);
   const w = base.w + scriptW + F * 0.04;
   const supDrop = F * 0.42; // sup baseline raised this far above the main baseline
   const subDrop = F * 0.20; // sub baseline lowered this far below it
@@ -394,7 +439,7 @@ function layoutScript(node, F, font) {
     draw(g, x, baseY) {
       base.draw(g, x, baseY);
       const sx = x + base.w + F * 0.02;
-      if (sup) sup.draw(g, sx, baseY - supDrop);
+      if (sup) sup.draw(g, sx + supShift, baseY - supDrop);
       if (sub) sub.draw(g, sx, baseY + subDrop);
     },
   };
