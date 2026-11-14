@@ -643,7 +643,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
             if(c.kind==='figure'){
               if(!c.figure&&ghost.figures.has(c.id)&&ghostFigure){const w=sizedWidth(c,cellW);c.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),c.label);}
               // 11-05: 자료 칸((가)·(나) 등) 안 그림은 크기를 따로 정하지 않았으면 칸 폭에 꽉 채운다(원본이 작아도).
-              if(c.figure){const tall=ratioOf(i)>TALL;inner=await picture(c.figure,cellW,undefined,{kind:'block',id:c.id},{prepared:prepared[i]||null,maxHeight:tall?(refH||cellW*TALL):Infinity});heights.push(Number(inner.match(/height="(\d+)"/)?.[1])||0);}
+              // 11-14 지적 13: 미리보기 「설정」에서 크기(%)를 정했으면 칸 폭 대비 그 크기로(전에는 늘 칸 폭이라 바꿔도 그대로였다).
+              if(c.figure){const tall=ratioOf(i)>TALL;inner=await picture(c.figure,sizedWidth(c,cellW),undefined,{kind:'block',id:c.id},{prepared:prepared[i]||null,maxHeight:tall?(refH||cellW*TALL):Infinity});heights.push(Number(inner.match(/height="(\d+)"/)?.[1])||0);}
             }else{
               // 표 아래 설명(예 「0은 실제 값…」)은 칸 안이 아니라 나란한 자료 전체 아래 줄로(10-22 10번 「나」안 조판 쪽).
               // 짧은 설명(칸 폭에 한 줄로 드는 「(○: 있음, ×: 없음)」)은 평가원처럼 그 표 바로 아래 가운데(10-25 16번). 긴 설명만 묶음 아래 줄로.

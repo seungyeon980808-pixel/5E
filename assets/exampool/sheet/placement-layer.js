@@ -8,7 +8,9 @@ const SIDE={left:'왼쪽',right:'오른쪽',before:'위',after:'아래'};
 const KIND={figure:'그림',table:'표'};
 const keyOf=c=>JSON.stringify(c.stableIndex||[c.secIdx,c.paraIdx,c.controlIdx]);
 // 문서 순서: 쪽 → 위 → (같은 높이면) 바깥 표 먼저 → 왼쪽. 엔진의 순서 번호는 겹친 표에서 문서 순서와 다르다.
-const order=(a,b)=>a.page-b.page||Math.round((a.y-b.y)*2)/2||(b.w*b.h-a.w*a.h)||a.x-b.x;
+// 같은 줄에 나란히 놓인 것(세로로 겹치고 가로로는 안 겹침)은 왼쪽부터 — 칸 가운데 맞춤으로 작은 그림이 조금 내려가도 (가)(나) 순서가 뒤바뀌지 않게(11-14).
+const sideBySide=(a,b)=>a.y<b.y+b.h&&b.y<a.y+a.h&&(a.x+a.w<=b.x+1||b.x+b.w<=a.x+1);
+const order=(a,b)=>a.page-b.page||(sideBySide(a,b)?a.x-b.x:Math.round((a.y-b.y)*2)/2||(b.w*b.h-a.w*a.h)||a.x-b.x);
 const inside=(r,p,pad=0)=>p.x>=r.x-pad&&p.x<=r.x+r.w+pad&&p.y>=r.y-pad&&p.y<=r.y+r.h+pad;
 
 export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivate}){
@@ -81,7 +83,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     Object.assign(grip.style,{left:`${item.rect.x-22}px`,top:`${item.rect.y}px`});
     Object.assign(sizer.style,{left:`${item.rect.x+item.rect.w-5}px`,top:`${item.rect.y+item.rect.h-5}px`});
   }
-  function refresh(){rebuild();paintDividers();if(hover)showHover(items.find(x=>x.id===hover.id)||null);}
+  function refresh(){const open=!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null;rebuild();paintDividers();if(hover)showHover(items.find(x=>x.id===hover.id)||null);if(open){keepSettings=open;reopenSettings();}}
 
   // 놓을 자리: 대상의 왼쪽·오른쪽 1/3이면 옆(가로 묶음), 가운데면 위/아래(세로 순서).
   function dropAt(p){
@@ -216,16 +218,28 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     menu.innerHTML=`<div class="ps-row"><span class="ps-k">크기</span><span class="ps-size"><button type="button" data-set-size="-5" aria-label="5% 작게">−</button><output>${size===100?'자동':size+'%'}</output><button type="button" data-set-size="5" aria-label="5% 크게">＋</button><button type="button" data-set-size="auto" class="ps-auto"${size===100?' disabled':''}>자동</button></span></div>
       <div class="ps-row"><span class="ps-k">위치</span><span class="ps-seg">${['왼쪽','가운데','오른쪽'].map(seg).join('')}</span></div>
       <p class="ps-note">그림을 고치려면 두 번 누르세요 — 문항 카드의 그 칸으로 갑니다.</p>`;
-    menu.hidden=false;const r=tools.getBoundingClientRect(),h=host.getBoundingClientRect(),mw=menu.offsetWidth||248;
-    // 미리보기 칸이 좁아도 잘리지 않게 칸 안으로 맞춘다(오른쪽 끝을 단추에 맞추되 왼쪽이 넘치면 밀어 넣음).
-    Object.assign(menu.style,{transform:'none',left:`${Math.max(8,Math.min(h.width-mw-8,r.right-h.left-mw))}px`,top:`${r.bottom-h.top+4}px`});
-    menu._item=item;tools.querySelector('[data-place-tool]')?.setAttribute('aria-expanded','true');
+    menu.hidden=false;menu._item=item;placeSettings(item);tools.querySelector('[data-place-tool]')?.setAttribute('aria-expanded','true');
   }
+  // 11-14 지적 13: 설정 창은 그림 밖에 붙인다 — 아래 → 오른쪽 → 왼쪽 → 위 순서로 그림과 겹치지 않는 자리. 미리보기 칸 밖으로는 안 나간다.
+  function placeSettings(item){
+    const h=host.getBoundingClientRect(),mw=menu.offsetWidth||248,mh=menu.offsetHeight||120,r=item.rect,g=6,W=h.width,H=h.height;
+    const clampX=x=>Math.max(8,Math.min(W-mw-8,x)),clampY=y=>Math.max(8,Math.min(H-mh-8,y));
+    let left,top;
+    if(r.y+r.h+g+mh<=H-8){top=r.y+r.h+g;left=clampX(r.x+r.w/2-mw/2);}
+    else if(r.x+r.w+g+mw<=W-8){left=r.x+r.w+g;top=clampY(r.y+r.h-mh);}
+    else if(r.x-g-mw>=8){left=r.x-g-mw;top=clampY(r.y+r.h-mh);}
+    else{top=Math.max(8,r.y-g-mh);left=clampX(r.x+r.w/2-mw/2);}
+    Object.assign(menu.style,{transform:'none',left:`${Math.round(left)}px`,top:`${Math.round(top)}px`});
+  }
+  // 크기·위치를 바꾸면 창을 닫지 않고, 다시 조판된 그림 아래로 따라간다(크기를 보며 여러 번 누를 수 있게).
+  let keepSettings=null;
+  function reopenSettings(){const id=keepSettings;keepSettings=null;if(!id)return;const it=items.find(x=>x.id===id);if(!it)return;showHover(it);openSettings(it);}
   menu.addEventListener('click',e=>{const item=menu._item;if(!item||!menu.classList.contains('place-settings'))return;const b=item.block;
     const sz=e.target.closest('[data-set-size]')?.dataset.setSize,al=e.target.closest('[data-set-align]')?.dataset.setAlign;if(!sz&&!al)return;e.stopPropagation();
     const available=availableWidth(item);
-    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));closeMenu();onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`);return;}
-    closeMenu();onApply(q=>{const x=q.blocks.find(v=>v.id===item.id);if(!x)return false;const def=x.layout==='어울림'?'오른쪽':'가운데';if((x.align||def)===al)return false;if(al===def)delete x.align;else x.align=al;return true;},`${b.label||'그림'} 위치 ${al}`);});
+    keepSettings=item.id;
+    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`);return;}
+    onApply(q=>{const x=q.blocks.find(v=>v.id===item.id);if(!x)return false;const def=x.layout==='어울림'?'오른쪽':'가운데';if((x.align||def)===al)return false;if(al===def)delete x.align;else x.align=al;return true;},`${b.label||'그림'} 위치 ${al}`);});
   function bindFrame(){
     const next=bridge.editor.element.contentDocument;if(next===frameDoc)return;
     if(frameDoc){frameDoc.removeEventListener('dblclick',onFrameDouble,true);frameDoc.removeEventListener('pointermove',onFrameMove,true);frameDoc.removeEventListener('pointerdown',onFrameDown,true);frameDoc.removeEventListener('pointerup',onFrameUp,true);frameDoc.removeEventListener('keydown',onFrameKey,true);}
@@ -236,7 +250,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
 
   return {
     // 문서를 새로 불러온 뒤: 이 문항과, 문서 순서대로의 그림·표 주인 목록을 알려 준다.
-    setModel(next){model=next;enabled=!!next;host.append(layer);bindFrame();showHover(null);refresh();},
+    setModel(next){model=next;enabled=!!next;host.append(layer);bindFrame();const keep=keepSettings||(!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null);showHover(null);refresh();if(keep&&enabled){keepSettings=keep;reopenSettings();}},
     clear(){model=null;enabled=false;endDrag(false);showHover(null);items=[];dividers=[];paintDividers();say();},
     refresh(){if(enabled&&!drag)refresh();},
     // 한글 엔진이 받은 그림 두 번 누르기(onEdit) → 그 그림의 칸으로(11-14).

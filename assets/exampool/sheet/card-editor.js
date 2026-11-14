@@ -293,7 +293,9 @@ export function createCardEditor(root,api){
     if(!leaving.length&&names.every(k=>before[k]&&Math.abs(before[k].x-now[k].x)<1&&Math.abs(before[k].w-now[k].w)<1))return false;
     const R=root.getBoundingClientRect(),gut=parseFloat(getComputedStyle(root).getPropertyValue('--cv-gutter'))||8;
     const c0=before.card||null,c1=now.card||null,Z={lib:1,board:1,ts:2,card:3,rail:3,brail:3},PAIR={card:'rail',rail:'card',board:'brail',brail:'board'},RAIL={rail:1,brail:1};
-    const o={duration:PANE_MS,easing:PANE_EASE,fill:'both'},anims=[],undo=[];let tsF=null,tsT=null;
+    // 떼어 둔 칸을 다시 붙일 때(pane-detach): 양옆 칸이 벌어지고 그 사이로 카드가 들어온다 — 평소보다 길고 끝이 느린 곡선.
+    const merging=performance.now()-(window.__fiveEPaneMerge||0)<800;if(merging)window.__fiveEPaneMerge=0;
+    const o={duration:merging?480:PANE_MS,easing:merging?'cubic-bezier(.22,.75,.2,1)':PANE_EASE,fill:'both'},anims=[],undo=[];let tsF=null,tsT=null,tsPush=null;
     // 판 화면 칸 규칙(idea-board.css)이 flex·width를 !important로 정해 두어, 그냥 넣은 폭이 무시되고 새로 들어오는 라이브러리 칸이 폭 0으로 안 보였다(11-14) — 모두 important로 넣는다.
     const place=(n,box,z)=>{const prev=n.getAttribute('style');for(const [k,v] of Object.entries({position:'absolute',left:(box.x-R.left)+'px',top:(box.y-R.top)+'px',width:box.w+'px',height:box.h+'px',margin:'0',flex:'none','z-index':String(z),'max-width':'none','min-width':'0'}))n.style.setProperty(k,v,'important');
       undo.push(()=>{if(prev==null)n.removeAttribute('style');else n.setAttribute('style',prev);});};
@@ -301,7 +303,7 @@ export function createCardEditor(root,api){
     const lockKids=(n,ws)=>[...n.children].forEach((c,i)=>{const w=ws?.[i]?.w,h=ws?.[i]?.h;if(!(w>0))return;const prev=c.getAttribute('style');c.style.setProperty('width',w+'px','important');if(h>0)c.style.setProperty('height',h+'px','important');c.style.setProperty('flex','none','important');c.style.setProperty('max-width','none','important');c.style.setProperty('min-width','0','important');
       undo.push(()=>{if(prev==null)c.removeAttribute('style');else c.setAttribute('style',prev);});});
     // f(시작 상자)→t(마지막 상자): 상자는 둘을 다 덮게 두고 보이는 폭은 가림으로, 안 내용(폭 cw)은 덜 움직이는 쪽 가장자리에 붙여 위치로 옮긴다.
-    function slide(n,f,t,z,{cw=t.w,fade}={}){const L=Math.min(f.x,t.x),Rr=Math.max(f.x+f.w,t.x+t.w),anchorL=Math.abs(t.x-f.x)<=Math.abs(t.x+t.w-f.x-f.w),rad=getComputedStyle(n).borderTopLeftRadius||'0px';
+    function slide(n,f,t,z,{cw=t.w,fade,push}={}){const L=Math.min(f.x,t.x),Rr=Math.max(f.x+f.w,t.x+t.w),anchorL=push?push==='left':Math.abs(t.x-f.x)<=Math.abs(t.x+t.w-f.x-f.w),rad=getComputedStyle(n).borderTopLeftRadius||'0px';
       place(n,{x:L,y:t.y,w:Rr-L,h:t.h},z);const fill=t.bg||f.bg;if(fill)n.style.background=fill;
       anims.push(n.animate([{clipPath:`inset(0 ${Rr-f.x-f.w}px 0 ${f.x-L}px round ${rad})`},{clipPath:`inset(0 ${Rr-t.x-t.w}px 0 ${t.x-L}px round ${rad})`}],o));
       const k0=(anchorL?f.x:f.x+f.w-cw)-L,k1=(anchorL?t.x:t.x+t.w-cw)-L;
@@ -315,12 +317,15 @@ export function createCardEditor(root,api){
         n.style.left=(t.x-R.left)+'px';n.style.width=t.w+'px';undo.push(()=>{if(prev==null)n.removeAttribute('style');else n.setAttribute('style',prev);});
         anims.push(n.animate([{left:(f.x-R.left)+'px',width:f.w+'px'},{left:(t.x-R.left)+'px',width:t.w+'px'}],o));continue;}
       lockKids(n,t.kids);
-      if(f){slide(n,f,t,z);if(k==='ts'){tsF=f;tsT=t;}continue;}
+      // 붙일 때는 옆 칸 내용이 비켜나는 쪽으로 함께 밀려 간다(가림만 줄면 내용이 제자리에 있고 가장자리만 깎여 「밀려나는」 느낌이 없었다).
+      if(f){const push=merging&&f.w>t.w+1?(t.x>f.x+1?'left':(t.x+t.w<f.x+f.w-1?'right':null)):null;slide(n,f,t,z,{push});if(k==='ts'){tsF=f;tsT=t;tsPush=push;}continue;}
       // 11-14 사용자: 「한 칸씩 쭉 밀리는 느낌」 — 조판은 카드 뒤에서 나오지 않고 화면 오른쪽 끝에서 들어오며 카드를 민다(나머지 새 칸과 같은 길).
       if(k==='ts'){const dx=R.right-t.x+gut;place(n,t,z);anims.push(n.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o));tsF={x:t.x+dx,w:t.w};tsT=t;continue;}
       const pr=before[PAIR[k]];
       if(pr&&!RAIL[k]){slide(n,{x:pr.x,w:pr.w},t,z);continue;}// 띠에서 칸이 펴짐
       if(pr&&RAIL[k]){place(n,t,4);anims.push(n.animate([{opacity:0},{opacity:0,offset:.5},{opacity:1}],o));continue;}
+      // 붙이는 카드: 화면 끝에서 날아오지 않고 벌어지는 자리 가운데에서 양쪽으로 펴지며 들어온다.
+      if(merging&&k==='card'){place(n,t,z);const rad=getComputedStyle(n).borderTopLeftRadius||'0px';anims.push(n.animate([{clipPath:`inset(0 50% 0 50% round ${rad})`,opacity:.25,transform:'scale(.98)'},{clipPath:`inset(0 0 0 0 round ${rad})`,opacity:1,transform:'none'}],o));continue;}
       const fromLeft=t.x+t.w/2<R.left+R.width/2,dx=fromLeft?R.left-(t.x+t.w)-gut:R.right-t.x+gut;
       place(n,t,z);anims.push(n.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o));}
     // 2) 사라지는 칸: 잔상을 같은 곳(#card-view 안)에 남겨 바깥으로 — 화면 틀 밖으로 옮기면 모양 규칙이 빠져 1px로 쪼그라들었다
@@ -333,14 +338,14 @@ export function createCardEditor(root,api){
       const toLeft=f.x+f.w/2<R.left+R.width/2,dx=toLeft?R.left-(f.x+f.w)-gut:R.right-f.x+gut;
       place(g,f,0);anims.push(g.animate([{transform:'none'},{transform:`translateX(${dx}px)`}],o));}
     // 3) 조판 미리보기 층: 칸과 같은 길로, 카드 뒤에 있는 만큼 가림
-    if(tsF&&tsT&&!hwpLayer.hidden){const lr=hwpLayer.getBoundingClientRect(),leave=!now.ts,set=leave?tsF:tsT,anchorL=Math.abs(tsT.x-tsF.x)<=Math.abs(tsT.x+tsT.w-tsF.x-tsF.w),
+    if(tsF&&tsT&&!hwpLayer.hidden){const lr=hwpLayer.getBoundingClientRect(),leave=!now.ts,set=leave?tsF:tsT,anchorL=tsPush?tsPush==='left':Math.abs(tsT.x-tsF.x)<=Math.abs(tsT.x+tsT.w-tsF.x-tsF.w),
         off=box=>anchorL?box.x-set.x:box.x+box.w-set.x-set.w,d0=off(tsF),d1=off(tsT),// 칸 안 내용과 같은 쪽 가장자리에 붙여 옮긴다(폭이 바뀔 때 오른쪽에 검은 띠가 생겼다)
         cr0=c0?c0.x+c0.w:null,cr1=c1?c1.x+c1.w:null,ks=[];
       for(let i=0;i<=20;i++){const p=i/20,d=d0+(d1-d0)*p,left=lr.left+d,hide=cr0==null||cr1==null?0:Math.max(0,Math.min(lr.width,cr0+(cr1-cr0)*p-left));ks.push({offset:p,transform:`translateX(${d}px)`,clipPath:`inset(0 0 0 ${hide}px)`});}
       anims.push(hwpLayer.animate(ks,o));}
     hwpFrozen=true;
     const done=()=>{anims.forEach(a=>a.cancel());undo.reverse().forEach(f=>f());hwpFrozen=false;if(opt.hwpLeaving)placeHwp(false);else alignHwp();opt.after?.();};
-    paneRun={done,timer:setTimeout(()=>{if(paneRun?.done===done){paneRun=null;done();}},PANE_MS+30)};
+    paneRun={done,timer:setTimeout(()=>{if(paneRun?.done===done){paneRun=null;done();}},o.duration+30)};
     return true;}
   function render(){shapeOpen=false;
     const x=q();

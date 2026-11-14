@@ -196,7 +196,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ds-panel,#0d1117
     // 조건 창은 원래 자리(참고 자료 칸)로 옮겨 두고 닫는다. 칸들은 다시 그려서 제자리에 둔다.
     if (key === 'adv') { const pop = origQS.call(entry.host, PANES.adv.sel); const lib = findPane('left'); const foot = lib && origQS.call(lib, '.lp-one'); if (pop && foot) { pop.hidden = true; foot.after(document.adoptNode(pop)); } }
     if (!fromPopup) { try { entry.win.close(); } catch {} }
-    // 붙이면 다시 그리며 카드가 평소 칸 움직임으로 제자리에 커지며 들어온다(card-editor animateFrom — 떼어 낸 창 안 칸은 세지 않음).
+    // 붙이면 양옆 칸이 벌어지고 그 사이로 카드가 펴지며 들어온다(card-editor animateFrom merging — 떼어 낸 창 안 칸은 세지 않음).
+    window.__fiveEPaneMerge = performance.now();
     render();
     sync();
   }

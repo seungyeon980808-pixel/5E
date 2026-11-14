@@ -3,6 +3,8 @@ import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, TEXT_FONTS } from './state.js?
 import { syncDraftRunsToText, setDraftWholeTextStyle } from './text-run-editing.js?v=1.7.0-four-session-integration';
 import { hasLabelTypography, reconcileLabelTypography } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 
+import { keyLabel } from './platform.js?v=1.7.0-four-session-integration';
+
 const NS = 'http://www.w3.org/2000/svg';
 const copy = value => structuredClone(value);
 const el = (tag, attrs = {}) => {
@@ -23,15 +25,15 @@ export class ExamInlineEditor {
     // AI 변환 · 복원(그래프 객체로) · 텍스트 · 라벨러 · 자르기. 정밀 작업은 작은 「5E_image에서 자세히」로만 넘어간다.
     const icon = path => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
     this.root.innerHTML = `<div class="exam-inline-clip"><div class="exam-inline-picture"><svg class="exam-inline-canvas" aria-label="그림 편집 영역" tabindex="0"></svg></div></div>
-      <div class="exam-inline-image-heading"><span class="exam-edit-badge">그림 편집 중</span><div><button type="button" data-inline-action="apply" class="exam-primary" title="같은 자리·같은 크기로 반영 (되돌리기 ⌘Z)">적용</button><button type="button" data-inline-action="close" title="닫기 (Esc)">닫기</button></div></div>
+      <div class="exam-inline-image-heading"><span class="exam-edit-badge">그림 편집 중</span><div><button type="button" data-inline-action="apply" class="exam-primary" title="${keyLabel('같은 자리·같은 크기로 반영 (⌘Enter · 되돌리기 ⌘Z)')}">적용</button><button type="button" data-inline-action="close" title="닫기 (Esc)">닫기</button></div></div>
       <div class="exam-inline-toolbar" role="toolbar" aria-label="그림 편집 도구">
         <p class="exam-inline-recovery" hidden>보관한 초안을 표시합니다. 적용하면 원본의 현재 라벨을 이 내용으로 바꿉니다.</p>
         <div class="exam-inline-tools exam-inline-five">
           <button type="button" class="exam-inline-tool" data-inline-action="ai" title="AI로 이 그림을 다시 그립니다 — 5E_image AI 작업대(이미지 변환)가 이 그림을 참고 그림으로 열립니다">${icon('<path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>')}<span>AI 변환</span></button>
           <button type="button" class="exam-inline-tool" data-inline-action="restore" title="그림 속 그래프를 고칠 수 있는 그래프 객체로 되살립니다 — 그래프 창에서 원본을 깔고 맞춥니다">${icon('<path d="M4 4v16h16M7 15c3-1 4-8 6-8s3 5 7 5"/>')}<span data-inline-restore-label>복원</span></button>
-          <button type="button" class="exam-inline-tool" data-inline-action="add-label" title="글자 라벨 넣기 — 그림을 눌러 자리를 고릅니다">${icon('<path d="M5 6h14M12 6v13M9 19h6"/>')}<span>텍스트</span></button>
-          <button type="button" class="exam-inline-tool" data-inline-action="add-leader" title="지시선 라벨 넣기 — 가리킬 곳과 글자 자리를 차례로 누릅니다">${icon('<circle cx="7" cy="17" r="2"/><path d="M8.5 15.5 15 9h5"/>')}<span>라벨러</span></button>
-          <button type="button" class="exam-inline-tool" data-inline-action="crop" title="보이는 영역 다시 고르기">${icon('<path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/>')}<span>자르기</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="add-label" title="글자 라벨 넣기 (T) — 그림을 눌러 자리를 고릅니다">${icon('<path d="M5 6h14M12 6v13M9 19h6"/>')}<span>텍스트</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="add-leader" title="지시선 라벨 넣기 (L) — 가리킬 곳과 글자 자리를 차례로 누릅니다">${icon('<circle cx="7" cy="17" r="2"/><path d="M8.5 15.5 15 9h5"/>')}<span>라벨러</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="crop" title="자르기 (C) — 보이는 영역 다시 고르기">${icon('<path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/>')}<span>자르기</span></button>
         </div>
         <div class="exam-inline-sub">
           <span class="exam-inline-hint" data-inline-hint>도구를 고르세요 · 글자를 두 번 누르면 바로 고칩니다</span>
@@ -84,7 +86,11 @@ export class ExamInlineEditor {
         if (!event.repeat) { if (this.mode) {this.mode=null;this.anchor=null;this.render();} else void this.action('close'); }
         return;
       }
-      if (event.target.matches('input,textarea,select')) return;
+      // 11-14 지적 9: ⌘Enter 적용(글자 칸 안에서도), T 텍스트·L 지시선·C 자르기(글자 칸 밖에서만).
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {event.preventDefault();event.stopPropagation();if(!event.repeat)void this.action('apply');return;}
+      if (event.target.matches('input,textarea,select,[contenteditable="true"]')) return;
+      const one = !event.metaKey && !event.ctrlKey && !event.altKey && !this.session?.simple && {KeyT:'add-label',KeyL:'add-leader',KeyC:'crop'}[event.code];
+      if (one && !this.button(one)?.hidden && !this.button(one)?.disabled) {event.preventDefault();event.stopPropagation();if(!event.repeat)void this.action(one);return;}
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {event.preventDefault();void this.action(event.shiftKey ? 'redo' : 'undo');}
       else if (!this.session?.simple && (event.key === 'Delete' || event.key === 'Backspace')) {event.preventDefault();void this.action('delete');}
       // 간단 편집 중의 Delete·Backspace가 창 밖으로 흘러 뒤에 숨은 그림의 객체를 지우지 않게(H3)
