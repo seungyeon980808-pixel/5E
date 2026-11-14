@@ -37,7 +37,7 @@ function when(ts) {
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
-export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
+export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {}) {
   const desktopWindow = window.fiveEDesktop?.startWindow;
   if (!startScreenEnabled()) { document.documentElement.classList.remove('ss-boot'); void desktopWindow?.expand?.().catch?.(() => {}); return null; }
   const mod = IS_MAC ? '⌘' : 'Ctrl+';
@@ -134,6 +134,8 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
     else if (m && !event.shiftKey && !event.altKey && (event.key === 'o' || event.code === 'KeyO')) { event.preventDefault(); event.stopPropagation(); finish({ kind: 'open' }); }
   };
   document.addEventListener('keydown', onKey, true);
+  // Lite는 그림(image)과 라이브러리만 쓴다 — exam·hwp 카드를 빼고 image 카드 하나만 넓게 둔다(11-14).
+  if (lite) { root.querySelectorAll('[data-ss-new]:not([data-ss-new="image"])').forEach(card => card.remove()); const cards = root.querySelector('.ss-cards'); if (cards) cards.style.gridTemplateColumns = '1fr'; }
   root.addEventListener('click', event => {
     const card = event.target.closest('[data-ss-new]');
     if (card) return finish({ kind: 'new', app: card.dataset.ssNew });

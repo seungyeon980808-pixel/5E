@@ -62,7 +62,7 @@ import { initCommandPalette } from "./command-palette.js?v=1.7.0-four-session-in
 import { initSubjectObjects } from "./subject-objects.js?v=1.7.0-four-session-integration";
 import { initToolHint } from "./tool-hint.js?v=1.7.0-four-session-integration";
 import { initTooltips } from "./tooltip.js?v=1.7.0-four-session-integration";
-import { initViewMode } from "./view-mode.js?v=1.7.0-four-session-integration";
+import { initViewMode, loadMode } from "./view-mode.js?v=1.7.0-four-session-integration";
 import { initPersonalObjects } from "./personal-objects.js?v=1.7.0-four-session-integration";
 import { initAssetLibrary } from "./asset-library.js?v=1.7.0-four-session-integration";
 import { initObjectWindow } from "./object-window.js?v=1.7.0-four-session-integration";
@@ -109,7 +109,7 @@ import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integrat
 const svg = document.getElementById("canvas");
 initButtonDesign();
 // 시작 창(첫 장면 → 새로 만들기·이어서 하기)을 가장 먼저 띄운다 — 준비가 끝나면 자동 저장 기록을 받아 고르게 한다.
-const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ? DESKTOP_RELEASE_URL : "" });
+const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ? DESKTOP_RELEASE_URL : "", lite: loadMode() === "lite" });
 // 시작 창이 걷히기 직전(창이 다 커진 뒤) 도화지 크기를 한 번만 맞춘다 — 걷힌 뒤 도화지가 튀지 않게.
 // 11-09 사용자: 「처음 로딩에서 미리 불러 두고 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 기본 범위(물리Ⅰ·Ⅱ)
 // 학평 자료·낱말 위치를 읽어 둔다. 고르기 화면은 이 읽기가 끝난 뒤에 나온다(js/start-screen.js waitFor).

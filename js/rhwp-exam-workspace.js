@@ -1610,7 +1610,7 @@ export function initRhwpExamWorkspace(state, services) {
   panel.dataset.examReady = 'true';
   // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
   // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
-  window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;void run(open);});
+  window.addEventListener('5e:hwp-open',event=>{if(busy||document.documentElement.dataset.mode==='lite')return;if(event.detail)event.detail.accepted=true;void run(open);});
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   // 다른 창에서 보내 온 요청은 조판 창이 바쁘면 예전에는 알림 없이 버려졌다(점검 하). 버리는 대신 이유를 알린다.
   const sendFromElsewhere = task => {

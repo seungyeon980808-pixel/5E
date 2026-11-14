@@ -718,6 +718,12 @@ function openProject(state, file) {
       if (png && !figure) throw new Error("이 PNG에는 5E 원본이 없습니다. 이미지 불러오기로 넣어주세요.");
       const portable = !png && !executable ? parseFiveEProject(reader.result,prepareLoadedProject) : null;
       if (!png && !executable && (!portable || portable.kind === 'exam')) {
+        // Lite는 그림(image)만 연다 — 시험지는 막다른 경고 대신 Pro로 바꾸는 길로 이어 준다(11-14).
+        if (document.documentElement.dataset.mode === 'lite') {
+          const toPro = await showConfirm("Lite에서는 그림 파일만 열 수 있습니다.\n이 시험지는 Pro에서 열립니다. Pro로 바꾼 뒤 다시 열어 주세요.", { title: "시험지 프로젝트", okText: "Pro로 바꾸기", cancelText: "닫기" });
+          if (toPro) document.getElementById('mode-toggle-btn')?.click();
+          return;
+        }
         if (!portableProjectIO.openExam) throw new Error('시험지 작업 공간을 준비해주세요.');
         // 시험지 종류 .5e도 그림 프로젝트 열기와 같이 먼저 묻는다 — 묻지 않고 그림 페이지·되돌리기 기록이 통째로 바뀌던 것(H4).
         const okExam = await showConfirm(

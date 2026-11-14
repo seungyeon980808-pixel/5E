@@ -29,7 +29,7 @@ let _state = null;
 let _btn = null;
 let _savedLayerId = null; // Lite 진입 직전 activeLayerId(Pro 복귀 시 복원용)
 
-function loadMode() {
+export function loadMode() {
   const params = new URLSearchParams(window.location.search);
   const requestedMode = params.get("mode");
   if (MODES.includes(requestedMode)) return requestedMode;

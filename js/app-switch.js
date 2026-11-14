@@ -79,6 +79,8 @@ export function initAppSwitch(doc = document) {
   // 이름을 빠르게 두 번 누르면 둘째 클릭이 새 화면에서 「방금 떠나온 프로그램」을 눌러 원래 화면으로 튕겨 돌아갔다.
   const bounce = target => target === last.from && performance.now() - last.at < 350;
   const go = async target => {
+    // Lite는 그림(image)과 라이브러리만 쓴다 — 출제·조판으로 가는 모든 길(이름·목록·단축키·안쪽 화면 신호)을 여기서 막는다(11-14).
+    if (target !== 'image' && doc.documentElement.dataset.mode === 'lite') return;
     if (bounce(target)) return;
     if (switching) { queued = target; return; }
     const from = currentApp(doc);

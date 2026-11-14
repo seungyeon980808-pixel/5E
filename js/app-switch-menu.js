@@ -23,6 +23,8 @@ const CSS = `
 .app-menu-trigger:hover .app-menu-caret,.app-menu-trigger.is-open .app-menu-caret{color:var(--ds-ink,#e6edf3)}
 .app-menu-trigger.is-open .app-menu-caret{transform:rotate(180deg)}
 nav.app-switch.has-app-menu{display:none!important}
+/* Lite는 그림(image)과 라이브러리만 쓴다 — 다른 프로그램으로 가는 목록·화살표를 보이지 않는다(11-14). */
+:root[data-mode="lite"] .app-menu-trigger .app-menu-caret,:root[data-mode="lite"] .app-menu{display:none!important}
 /* hwp 로고(글자 칸)도 image·exam처럼 열린 동안 둥근 바탕이 보이게 — 자리를 밀지 않도록 그림자로 넓힌다 */
 .exam-brand.app-menu-trigger{border-radius:6px}
 .exam-brand.app-menu-trigger:hover,.exam-brand.app-menu-trigger.is-open{background:var(--ds-hover,#1d2633);box-shadow:0 0 0 6px var(--ds-hover,#1d2633)}
@@ -61,7 +63,7 @@ export function attachAppMenu(brand, current, { guide = GUIDE_URL, toggleOnClick
   let timer = 0;
   const inset = brand.classList.contains('exam-brand') ? 6 : 0;// hwp 로고 바탕은 그림자로 6px 넓혔으니 목록도 그 바탕 왼쪽에 맞춘다
   const place = () => { const r = brand.getBoundingClientRect(); menu.style.left = `${Math.max(6, r.left - inset)}px`; menu.style.top = `${r.bottom + 6}px`; };
-  const open = () => { clearTimeout(timer); place(); menu.classList.add('is-open'); brand.classList.add('is-open'); brand.setAttribute('aria-expanded', 'true'); };
+  const open = () => { if (doc.documentElement.dataset.mode === 'lite') return; clearTimeout(timer); place(); menu.classList.add('is-open'); brand.classList.add('is-open'); brand.setAttribute('aria-expanded', 'true'); };
   const close = () => { clearTimeout(timer); menu.classList.remove('is-open'); brand.classList.remove('is-open'); brand.setAttribute('aria-expanded', 'false'); };
   const later = (fn, ms) => { clearTimeout(timer); timer = win.setTimeout(fn, ms); };
   brand.addEventListener('mouseenter', () => later(open, 120));
