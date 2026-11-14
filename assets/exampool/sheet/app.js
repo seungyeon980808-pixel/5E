@@ -48,7 +48,7 @@ if(embedded)$('[data-change-summary]').hidden=true;
 // 루트(로컬 실행)는 지금까지 쓰던 이름 그대로 — 사용자가 로컬에 만든 문항이 그대로 보인다.
 const CHANNEL=/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'';
 let database=null,revision=0,saveQueue=Promise.resolve(),saveStamp=0,saveBlocked=false,history=[],editKey='',cellNode=null,pending=null,imageTarget=null,selection=null,activeTab='composition',sourceTab='standards',sourceTarget='question',doc=null,page=1,sourceSeq=0,selectedStandard=null;
-let data={format:FORMAT,questions:[],documents:[],exams:[]},current=null,standards=null;
+let data={format:FORMAT,questions:[],documents:[],exams:[],ideas:[],trash:{questions:[],exams:[]}},current=null,standards=null;
 // 아래 상태 막대. 빨간 글(오류)은 6초 뒤 지운다 — 그 사이 다른 문장이 오면 그 문장을 둔다.
 let statusTimer=0;
 // 오래 걸리는 일의 진행 표시: '…'로 끝나는 진행 문장(자동 저장 「저장 중…」 제외)이 오면 방금 누른 단추를

@@ -39,6 +39,8 @@ export function isBlankQuestion(q){
   const t=v=>String(v??'').trim(),combo=/^[\sㄱ-ㅎ,·①-⑤]*$/;
   if([q.name,q.ask,q.modelAnswer,q.explanation,q.intent,q.standardCode,q.unitSmall,q.unitMiddle].some(t))return false;
   if((q.references||[]).length||q.answer!=null&&q.answer!=='')return false;
+  // 11-14: 카드 AI와 대화한 기록(목표·요구·쟁점·변경안·그림·AI 버전)이 있으면 글이 비어도 빈 카드가 아니다 — 대화가 통째로 버려지던 것.
+  {const a=q.authoring;if(a&&(a.target&&Object.keys(a.target).length||['explicit','assumed','pending'].some(k=>a.requirements?.[k]?.length)||a.issues?.length||a.proposals?.length||a.figures?.length||a.history?.some(h=>h.by==='ai')))return false;}
   const cellsUsed=tb=>(tb?.cells||[]).some((row,r)=>(row||[]).some(c=>{const v=t(c?.value);return v&&!(r===0&&/^[A-C]$/.test(v));}));
   for(const b of q.blocks||[]){if(t(b.text)||(b.lines||[]).some(l=>t(l.text))||b.figure||cellsUsed(b.table))return false;}
   if((q.choices||[]).some(c=>{const v=t(c.text);return (v&&!combo.test(v))||c.figure;}))return false;
