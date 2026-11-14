@@ -7197,7 +7197,7 @@ ${chatText}` : ''}`;
   outputActions?.replaceChildren(panel.querySelector('[data-ai-save-selected]'),copySelected,
     panel.querySelector('[data-ai-insert-selected]'),hwpSelected);
   const moreOutputs = document.createElement('details'); moreOutputs.className = 'ai-output-more';
-  moreOutputs.innerHTML = '<summary>고급 출력</summary>';
+  moreOutputs.innerHTML = '<summary>결과 다듬기</summary>';// 11-14(시안 review-1114 2-5): 출력이 아니라 결과를 다듬는 도구들
   moreOutputs.append(editableGroups,separatedRecovery,outputDetails,selectedOutputNote);
   outputActions?.after(moreOutputs);
   syncSelectedOutputActions();

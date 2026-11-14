@@ -933,7 +933,7 @@ function buildShell() {
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head unilib-preview-heading"><div class="unilib-preview-heading-main"><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div><button type="button" class="unilib-preview-star" data-unilib-preview-star hidden aria-pressed="false" title="별표 (S)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>별표</span></button><button type="button" class="unilib-answer-toggle" data-unilib-answers hidden aria-pressed="true" title="정답 선지 형광펜 보이기/숨기기 — 화면 표시만">정답</button></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev aria-label="이전 일치" title="이전 일치">‹</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next aria-label="다음 일치" title="다음 일치">›</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-clip disabled title="고른 그림을 5E 클립보드에 넣습니다 — 캔버스·문항 카드·한글에서 ⌘V로 꺼냅니다">클립보드에 넣기</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
@@ -1445,13 +1445,14 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     }
     const nonPast = [...pickedQuestions.values()].filter((result) => !pastQuestionId(result));
     if (action === "card" && nonPast.length) {
-      // 학평처럼 exam 기출 목록에 없는 문항은 지금처럼 그림으로 「가져온 자료」에 보낸다.
+      // 11-14(시안 review-1114 2-2): 학평처럼 exam 기출 목록에 없는 문항은 그림을 클립보드에 넣는다 — 문항 카드에서 ⌘V(또는 자료 칸 「그림 넣기 → 클립보드에서」).
       for (const result of nonPast) {
         if (selectedId !== result.id) list.querySelector(`[data-result-id="${CSS.escape(result.id)}"]`)?.click();
         await new Promise((resolve) => requestAnimationFrame(resolve));
-        overlay.querySelector('[data-unilib-send-to="exampool"]')?.click();
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        overlay.querySelector('[data-unilib-clip]')?.click();
+        await new Promise((resolve) => setTimeout(resolve, 600));
       }
+      setStatus?.(`그림 ${nonPast.length}개를 클립보드에 넣었습니다 · 문항 카드에서 ⌘V로 넣으세요`);
     }
     const sent = sendPast(action === "sheet");
     if (sent || (action === "card" && nonPast.length)) {
@@ -1638,7 +1639,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       : activePdfPageResult(result, pdfMatchIndex);
   };
   const selectedVariantResult = () => resultForRepresentation(selectedResult(), activeRepresentation);
-  const actionButtons = () => [...overlay.querySelectorAll("[data-unilib-insert],[data-unilib-send],[data-unilib-ai],[data-unilib-graph]")];
+  const actionButtons = () => [...overlay.querySelectorAll("[data-unilib-insert],[data-unilib-clip],[data-unilib-send],[data-unilib-ai],[data-unilib-graph]")];
   const acceptedAssetsKey = () => [...acceptedAssets.keys()].join("\u0000");
   const invalidateAction = () => { actionRevision += 1; };
   const activePageNumber = () => continuousView && continuousView.resultId === selectedId ? continuousView.visiblePage : null;
@@ -2765,6 +2766,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     const insertRepresentation = selectedInsertRepresentation(result, activeRepresentation, activeFigureRepresentation);
     const actionAllowed = canInsertLibraryResult(result, insertRepresentation);
     insert.disabled = actionBusy || !actionAllowed;
+    { const c = overlay.querySelector('[data-unilib-clip]'); if (c) c.disabled = actionBusy || !actionAllowed; }
     insert.title = result?.kind === "crop" && !insert.disabled ? "선택한 이미지만 캔버스에 삽입" : result?.kind === "crop" ? "이미지를 선택해야 삽입할 수 있습니다" : "";
     overlay.querySelector("[data-unilib-send]").disabled = actionBusy || !actionAllowed || typeof sendTo !== "function";
     if (overlay.querySelector("[data-unilib-send]").disabled) closeSendMenu();
@@ -3345,6 +3347,23 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
       if (!isCurrent()) return;
       await insertMaterialized(effectiveResult, materialized, snapshot.options, { isCurrent });
       if (isCurrent()) close();
+    });
+  });
+  // 11-14(시안 review-1114 2-1): 라이브러리 미리보기는 「클립보드에 넣기」 하나로 — 캔버스에는 라이브러리를 닫고 ⌘V.
+  overlay.querySelector("[data-unilib-clip]")?.addEventListener("click", async () => {
+    const button = overlay.querySelector("[data-unilib-clip]");
+    await runLibraryAction(async (snapshot, isCurrent) => {
+      const result = resultForActionSnapshot(snapshot);
+      const representation = selectedInsertRepresentation(result, snapshot.representation, snapshot.selectedFigure);
+      if (!result || !canInsertLibraryResult(result, representation)) return;
+      const effectiveResult = resultForRepresentation(result, representation);
+      const activeProvider = await provider();
+      if (!isCurrent()) return;
+      const asset = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
+      const src = asset?.dataUrl || asset?.dataUri || asset?.url || asset?.assets?.[0]?.dataUrl || asset?.assets?.[0]?.src;
+      if (!src) throw new Error("클립보드에 넣을 그림을 만들지 못했습니다.");
+      await drawerAdd({ src, name: result.title || result.label || "라이브러리 그림", w: asset.width || 0, h: asset.height || 0, source: "라이브러리" });
+      if (button) { button.textContent = "넣었습니다 · ⌘V"; setTimeout(() => { button.textContent = "클립보드에 넣기"; }, 1400); }
     });
   });
   // 보내기: 「이미지 객체화」 자리. 고른 그림(PDF에서 자른 영역·문항 그림)을 한글 시험지(작업대에 넣고 기존 「한글로 보내기」)나

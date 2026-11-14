@@ -3289,7 +3289,7 @@ function build() {
         <div class="gm-left" style="flex:1;min-width:0;">
           <div class="gm-preview-toolbar"><div id="gm-trace-toolbar-host"></div>
           <span class="gm-ai-entries" id="gm-ai-entries"><button type="button" class="modal-btn gm-ai-entry" data-gm-ai="graph" title="사진에서 복원 · 기출 그림을 그래프로 되살립니다"><span class="gm-ai-spark" aria-hidden="true">✦</span> 사진에서 복원</button><button type="button" class="modal-btn gm-ai-entry" data-gm-ai="graph-create" title="AI와 대화로 만들기 · 말로 설명하면 그려 줍니다"><span class="gm-ai-spark" aria-hidden="true">✦</span> AI와 대화로 만들기</button></span>
-          <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-undo" disabled title="실행 취소 (⌘/Ctrl+Z)">실행 취소</button><button type="button" class="modal-btn" id="gm-redo" disabled title="다시 실행 (⌘/Ctrl+Shift+Z)">다시 실행</button><button type="button" class="modal-btn" id="gm-send-exam">한글에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
+          <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-undo" disabled title="실행 취소 (⌘/Ctrl+Z)">실행 취소</button><button type="button" class="modal-btn" id="gm-redo" disabled title="다시 실행 (⌘/Ctrl+Shift+Z)">다시 실행</button><button type="button" class="modal-btn" id="gm-send-exam" title="그래프를 5E 클립보드에 넣습니다 — 한글·문항 카드·캔버스에서 ⌘V로 꺼냅니다">클립보드에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스에 넣기</button></div>
           </div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
           <div id="gm-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:4px;"></div>
@@ -4440,13 +4440,20 @@ function build() {
     return _mode === "edit" ? commitEdit() : commitCreate();
   };
   _els.confirm.addEventListener("click", commitValidated);
-  overlay.querySelector('#gm-send-exam').addEventListener('click', () => {
-    if (_overlay.hidden || (_editingContext && !_editingContext.examSend) || !document.querySelector('#rhwp-exam-workspace')) return;
-    const context = _editingContext; _contextApplyOutcome = undefined;
-    const result = commitValidated();
-    // AI 결과 편집기: 적용하면 부르는 쪽(onApply)이 캔버스에 넣고 그 자리를 돌려준다 — 그 그래프를 한글로 보낸다.
-    const target = context?.examSend ? (result ? _contextApplyOutcome : null) : result;
-    if (target) void Promise.resolve(target).then(sent => { if (sent?.planeId) window.dispatchEvent(new CustomEvent('5e:exam-send-graph',{detail:{pageId:sent.pageId,planeId:sent.planeId}})); }).catch(() => {});
+  // 11-14: 클립보드에 넣기 — 캔버스는 건드리지 않고 임시 판에 그래프를 만든 뒤 그 객체만 클립보드에(⌘C와 같은 길).
+  overlay.querySelector('#gm-send-exam').addEventListener('click', async () => {
+    if (_overlay.hidden) return;
+    const saved = _editingContext, main = editorState().get(), copyOf = v => JSON.parse(JSON.stringify(v ?? null));
+    const draft = { objects: _mode === 'edit' ? copyOf(main.objects) : [], groups: copyOf(main.groups || []), layers: copyOf(main.layers || []), artboard: copyOf(main.artboard), viewBox: { ...main.viewBox },
+      activeLayerId: main.activeLayerId, activePageId: main.activePageId, undoStack: [], redoStack: [], selectedIds: [], targetedId: null, activeTool: 'V' };
+    const before = new Set(draft.objects.map(o => o.id)), planeId = _planeId;
+    _editingContext = { ...(saved || {}), state: { get: () => draft, update: fn => fn(draft) }, onApply: null, onClose: null };
+    commitValidated();
+    if (!_overlay.hidden) { _editingContext = saved; return; }// 입력 확인에 걸려 창이 그대로면 원래대로
+    saved?.onClose?.();
+    const objects = _mode === 'edit' && planeId ? draft.objects.filter(o => o.id === planeId || o.planeId === planeId) : draft.objects.filter(o => !before.has(o.id));
+    const { copyObjectsToClip } = await import('../editor-clipboard.js?v=1.7.0-four-session-integration');
+    if (!copyObjectsToClip(objects, { ...main, objects: draft.objects })) window.dispatchEvent(new CustomEvent('5e:toast', { detail: { text: '클립보드가 아직 준비되지 않았습니다.' } }));
   });
 
   _els.cancel.addEventListener("click", hide);
@@ -4881,12 +4888,13 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   // 11-07 G1: 새로 만들 때도 고칠 때도 창 제목은 「그래프」(한글 쪽처럼 부르는 쪽이 제목을 주면 그것을 쓴다).
   _els.title.textContent = editingContext?.title || "그래프";
   // 11-06: 한글 그 자리 편집(복원)처럼 캔버스가 아닌 곳에 반영할 때는 부르는 쪽이 단추 이름을 준다.
-  _els.confirm.textContent = editingContext?.confirmLabel || (_mode === "edit" ? "적용" : "캔버스로 내보내기");
+  _els.confirm.textContent = editingContext?.confirmLabel || (_mode === "edit" ? "적용" : "캔버스에 넣기");
   _els.confirm.classList.add('modal-btn-primary');
   // 11-07 G3: 편집기 위 AI 입구 두 개. 한글 그림 자리 편집처럼 부르는 쪽이 따로 있는 창에서는 숨긴다.
   _overlay.querySelector('#gm-ai-entries').hidden = !!editingContext && !editingContext.aiEntries;
   // AI 결과를 가져온 편집기(editingContext.examSend)는 「한글에 넣기」도 그대로 쓴다.
-  _overlay.querySelector('#gm-send-exam').hidden=(!!editingContext && !editingContext.examSend) || !document.querySelector('#rhwp-exam-workspace');
+  // 11-14(시안 review-1114 2-3): 「한글에 넣기」 → 「클립보드에 넣기」(어디서든 ⌘V). 부르는 쪽이 따로 있는 창(한글·카드 그 자리 편집)에서는 숨긴다.
+  _overlay.querySelector('#gm-send-exam').hidden=!!editingContext && !editingContext.examSend;
   _els.error.textContent = "";
   _overlay.querySelectorAll("input, textarea, select").forEach(input => input.setCustomValidity(""));
   _overlay.hidden = false;

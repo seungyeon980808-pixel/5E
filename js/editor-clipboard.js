@@ -8,6 +8,8 @@ let cloneSequence = 0;
 // 5E 클립보드(11-14): ⌘C·⌘X로 고른 객체를 클립보드 저장소에도 넣고(작은 그림 + 객체 원본), ⌘X로 넣은 것은 붙이면 클립보드에서 뺀다.
 let clipHook = null, insertRef = null;
 export function setClipboardHook(hook) { clipHook = hook; }
+// 캔버스 밖에서 만든 객체(그래프 편집기 「클립보드에 넣기」 등)를 ⌘C와 같은 길로 클립보드에 넣는다(11-14).
+export function copyObjectsToClip(objects, state) { if (!clipHook || !objects?.length) return false; clipHook.copied(JSON.parse(JSON.stringify(objects)), { cutting: false, clipRef: null, state }); return true; }
 // 클립보드 「넣기」: 저장해 둔 5E 객체를 지금 캔버스(마우스 자리 또는 가운데)에 넣는다.
 export function insertClipObjects(objects) { if (!insertRef) throw new Error('캔버스가 아직 준비되지 않았습니다.'); insertRef(JSON.parse(JSON.stringify(objects))); }
 
