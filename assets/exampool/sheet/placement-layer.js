@@ -238,7 +238,8 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     const sz=e.target.closest('[data-set-size]')?.dataset.setSize,al=e.target.closest('[data-set-align]')?.dataset.setAlign;if(!sz&&!al)return;e.stopPropagation();
     const available=availableWidth(item);
     keepSettings=item.id;
-    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`);return;}
+    // 11-14 2차 25: 다시 조판하는 동안 덮어 두는 화면(typeset.js freeze)에서 이 그림만 새 크기로 부드럽게 줄어들게 알려 둔다.
+    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));host.__fiveEResizeHint={rect:{...item.rect},scale:next/cur,align:b.align||(b.layout==='어울림'?'오른쪽':'가운데'),at:performance.now()};onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`);return;}
     onApply(q=>{const x=q.blocks.find(v=>v.id===item.id);if(!x)return false;const def=x.layout==='어울림'?'오른쪽':'가운데';if((x.align||def)===al)return false;if(al===def)delete x.align;else x.align=al;return true;},`${b.label||'그림'} 위치 ${al}`);});
   function bindFrame(){
     const next=bridge.editor.element.contentDocument;if(next===frameDoc)return;

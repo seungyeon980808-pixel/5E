@@ -2,6 +2,7 @@ import {KICE_STANDARD,layoutValues,mmToPx,gapRole} from './typeset-standard.js';
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts} from './typeset-model.js?v=1014-compact-panel';
 import {splitWidths,sizedWidth,choiceColumns} from './placement.js';
+import {explanationParts,OX_WORD} from './explanation.js';
 import {tidyEquationScript,joinTildeEquations,tailOf,kiceTailOf} from './equation-script.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -754,6 +755,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const bodyIndent=prefix&&!sideText?Math.round(L.numberIndent):0,askIndent=Math.round(FS*4/3);
   // 본문 글은 줄바꿈을 넣지 않는다. 한글 엔진이 어절 단위로 나누고 양쪽 정렬로 오른쪽 끝을 맞춘다(평가원 지면).
   const asIs=v=>v;
+  // 11-14 시안 review-1114c 3번(A·A): 「해설만(해설지)」 — 번호·정답·해설만. 해설이 빈 문항도 번호·정답과 「해설 없음」 한 줄을 남긴다.
+  if(standard?.print?.explanation==='only'){const ans=Number.isInteger(q.answer)&&q.answer>=0?labels[q.answer]||'':String(q.modelAnswer||'').trim();
+    let h=`<p style="margin:0;text-align:justify"><span style="font-weight:bold">${E(numberMark||'')}</span> ${text(`정답 ${ans||'-'}`,null,FS,asIs,null)}</p>`;
+    const body=explanationBlock(q,{box:false});h+=body||`<p style="margin:0">${text('해설 없음',null,FS-1,asIs,null)}</p>`;
+    return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${h}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,placeSegments,cellFloats,bodyIndent:0,askIndent,askLead:'',floats:[],floatTable:null};}
   const firstFloats=sideText?'':await floatImages('first',width-bodyIndent);
   const first=sideText?'':`<p style="margin:0;text-align:justify">${firstFloats}${text(prefix+(firstText?firstText.text:ask),null,FS,asIs,{...(firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:askOwner(prefix.length)),number:numberMark})}</p>`;
   width-=bodyIndent;
@@ -799,11 +805,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     }
   }
   // 11-14 시안 review-1114b 3번(③ ①·④ A·⑤ A): 「문항 + 해설」로 인쇄할 때만 선지 아래에 평가원 해설지풍 해설 — 정답 네모 + [해설], 한 줄 요약(쓴 때만), ㄱ·ㄴ·ㄷ마다 문단.
-  if(standard?.print?.explanation==='with'){const body=String(q.explanation||'').trim(),sum=String(q.explanationSummary||'').trim(),ans=Number.isInteger(q.answer)&&q.answer>=0?labels[q.answer]||'':String(q.modelAnswer||'').trim();
-    if(body||sum||ans){html+=gapHtml(3);recordTable(1,2,[],{kind:'layout'});
-      html+=`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:1px solid #000;width:62px;padding:2px 6px;text-align:center"><p style="margin:0"><span style="font-size:${FS-1}pt;font-weight:bold">정답 ${E(ans||'-')}</span></p></td><td style="border:none;width:${width-62}px;padding:2px 8px"><p style="margin:0"><span style="font-size:${FS-1}pt;font-weight:bold">해설</span></p></td></tr></table>`;
-      if(sum)html+=`<p style="margin:0;text-align:justify"><span style="font-size:${FS-1}pt;font-weight:bold">핵심 — </span>${text(sum,width,FS-1,v=>v,null)}</p>`;
-      for(const line of body.split(/\n+/).map(v=>v.trim()).filter(Boolean))html+=`<p style="margin:0;text-align:justify;line-height:150%">${text(line,width,FS-1,v=>v,null)}</p>`;}}
+  // 11-14 시안 review-1114c 2번: 해설 칸 구조(합답형 ㄱ·ㄴ·ㄷ + 옳다/옳지 않다, 그 밖 1. 2.)와 하위 번호 1) 2).
+  function explanationBlock(q,{box=true}={}){const ex=explanationParts(q),sum=String(q.explanationSummary||'').trim(),ans=Number.isInteger(q.answer)&&q.answer>=0?labels[q.answer]||'':String(q.modelAnswer||'').trim();
+    const parts=ex.parts.filter(p=>p.text.trim()||p.subs.some(v=>v.trim()));if(!parts.length&&!sum&&!ans)return '';
+    let out='';if(box){out+=gapHtml(3);recordTable(1,2,[],{kind:'layout'});
+    out+=`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:1px solid #000;width:62px;padding:2px 6px;text-align:center"><p style="margin:0"><span style="font-size:${FS-1}pt;font-weight:bold">정답 ${E(ans||'-')}</span></p></td><td style="border:none;width:${width-62}px;padding:2px 8px"><p style="margin:0"><span style="font-size:${FS-1}pt;font-weight:bold">해설</span></p></td></tr></table>`;}
+    if(sum)out+=`<p style="margin:0;text-align:justify"><span style="font-size:${FS-1}pt;font-weight:bold">핵심 — </span>${text(sum,width,FS-1,v=>v,null)}</p>`;
+    for(const p of parts){const ox=ex.mode==='bogi'&&p.ox&&!/옳(다|지 않다)\.?$/.test(p.text.trim())?` → ${OX_WORD[p.ox]}.`:'';
+      out+=`<p style="margin:0;text-align:justify;line-height:150%">${text(`${p.key}. ${p.text.trim()}${ox}`,width,FS-1,v=>v,null)}</p>`;
+      p.subs.filter(v=>v.trim()).forEach((v,k)=>{out+=`<p style="margin:0;text-align:justify;line-height:150%">${text(`　　${k+1}) ${v.trim()}`,width,FS-1,v=>v,null)}</p>`;});}
+    return out;}
+  if(standard?.print?.explanation==='with'){html+=explanationBlock(q);}
   const askLead=firstText||sideText?String(ask).replace(/\s+/g,' ').trim().slice(0,12):'';
   return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations:equations.map(({shrink,...e})=>shrink?{...e,fontSize:Math.round(e.fontSize*shrink)}:e),warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,placeSegments,cellFloats,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
 }

@@ -1077,8 +1077,8 @@ whenSheetShown.queue=[];
 // 나오는 값이 바뀌면 그 문항이 있던 쪽부터 옅게 두고 「N쪽부터 다시 배치 중」 — 앞쪽은 그대로 보고 고칠 수 있다.
 const NOT_PRINTED=new Set(['workflow','name','answer','modelAnswer','explanation','intent','standardCode','unitLarge','unitMiddle','unitSmall','references','reviews','updatedAt','createdAt','memo','managementId']);
 // 11-14: 「문항 + 해설」로 인쇄하는 틀이 있으면 해설·한 줄 요약·정답도 찍히는 내용이다.
-const EXP_KEYS=new Set(['explanation','explanationSummary','answer','modelAnswer']);
-const printKey=q=>{if(!q)return '';const exp=typesetStandards.some(s=>s?.print?.explanation==='with');return JSON.stringify(q,(k,v)=>NOT_PRINTED.has(k)&&!(exp&&EXP_KEYS.has(k))||k==='explanationSummary'&&!exp?undefined:v);};
+const EXP_KEYS=new Set(['explanation','explanationSummary','explanationParts','answer','modelAnswer']);
+const printKey=q=>{if(!q)return '';const exp=typesetStandards.some(s=>['with','only'].includes(s?.print?.explanation));return JSON.stringify(q,(k,v)=>NOT_PRINTED.has(k)&&!(exp&&EXP_KEYS.has(k))||(k==='explanationSummary'||k==='explanationParts')&&!exp?undefined:v);};
 const examKey=exam=>JSON.stringify({e:JSON.stringify(exam,(k,v)=>['title','status','updatedAt','createdAt'].includes(k)?undefined:v),f:typesetForms.map(f=>f.id).join(','),s:typesetStandards.map(s=>JSON.stringify(s)).join('|').length});
 async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;if(whenSheetShown(()=>{const now=examById(data,exam.id);if(now)void fillExamSheet(now);}))return;
   const ek=examKey(exam),qk=Object.fromEntries(exam.items.map(id=>[id,printKey(data.questions.find(q=>q.id===id))]));

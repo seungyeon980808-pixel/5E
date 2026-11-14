@@ -989,3 +989,46 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-exp-h .mini{margin-left:auto}
 #card-view .cv-exp-sum{width:100%;height:28px;margin-bottom:6px;padding:0 8px;border:1px solid #e1e4e8;border-radius:6px;background:#fff;font:inherit;font-size:12.5px}
 #card-view .cv-exp textarea{width:100%;min-height:52px}
+/* 11-14 2차 30: 합답형 선지 칸의 「ㄱ, ㄴ, ㄷ」은 한 줄 — 칸이 좁으면 글자를 줄이고 넘치면 가로로만 밀린다(아래로 떨어지지 않음). */
+#card-view .cv-combos .combo-row .eq-ce{flex:1;min-width:0;white-space:nowrap;overflow:hidden;line-height:28px;height:28px}
+#card-view .cv-combos.tight .combo-row .eq-ce,#card-view .cv-combos .combo-row .eq-ce.cv-long{font-size:12px;letter-spacing:-.06em}
+/* 11-14 2차 29: 카드가 넓어져도 자료 칸 그림은 칸 안에 늘 다 보인다(칸 높이에 맞춰 줄임). */
+#card-view .cv-grid .cv-tile .pic{overflow:hidden}
+#card-view .cv-grid .cv-tile .pic img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;min-height:0}
+#card-view .cv-grid .cv-tile .pic:has(>img){max-height:280px}
+/* 끝·실패 표시가 그림 아래를 덮지 않게 그 높이만큼 칸 아래를 비운다. */
+#card-view .cv-grid .cv-tile .pic:has(>.cv-ai-job:not([data-state="busy"])){padding-bottom:44px}
+/* 11-14 시안 review-1114c 1번: 표 칸 안 편집 */
+#card-view .cv-grid .cv-tile.is-tedit{flex:2 1 0}
+#card-view .cv-grid .cv-tile .pic.cv-tedit{display:flex;flex-direction:column;align-items:stretch;gap:8px;max-height:none;min-height:0;padding:10px 10px 8px;box-shadow:inset 0 0 0 2px #2f6fd6;cursor:default}
+#card-view .cv-tedit-wrap{position:relative;align-self:center;padding:0 22px 22px 0;max-width:100%;overflow:auto}
+#card-view .cv-tedit table{border-collapse:collapse;font-family:"HCR Batang","함초롬바탕",serif;font-size:13px;background:#fff}
+#card-view .cv-tedit td,#card-view .cv-tedit th{border:1px solid #8f959e;min-width:56px;height:28px;padding:0;font-weight:400;vertical-align:middle}
+#card-view .cv-tedit th{background:#f1f3f5}
+#card-view .cv-tedit [data-tc]{min-height:26px;padding:4px 7px;text-align:center;outline:none;white-space:pre-wrap;cursor:text}
+#card-view .cv-tedit [data-tc]:focus{box-shadow:inset 0 0 0 2px #2f6fd6;background:#f4f8ff}
+#card-view .cv-tedit .sel{background:#e3ecf8}
+#card-view .cv-tedit-add{position:absolute;display:grid;place-items:center;width:20px;height:20px;min-height:0;padding:0;border-radius:50%;border:1px solid #c7ccd3;background:#fff;color:#4a5260;font-size:13px;line-height:1;cursor:pointer}
+#card-view .cv-tedit-add.col{right:0;top:calc(50% - 21px)}#card-view .cv-tedit-add.row{bottom:0;left:calc(50% - 21px)}
+#card-view .cv-tedit-add:hover{border-color:#2f6fd6;color:#2f6fd6}
+#card-view .cv-tedit-bar{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:4px;border-radius:8px;background:#161b22}
+#card-view .cv-tedit-bar button{height:26px;min-height:0;padding:0 9px;border:0;border-radius:6px;background:transparent;color:#c9d1d9;font:inherit;font-size:12px;cursor:pointer}
+#card-view .cv-tedit-bar button:hover{background:#1d2633}
+#card-view .cv-tedit-bar button[aria-pressed="true"]{background:#13243d;color:#dce9ff}
+#card-view .cv-tedit-bar button.pri{background:#2f3a4a;color:#fff}
+#card-view .cv-tile.is-tedit .cap small{color:#7a808a;font-weight:400;margin-left:6px}
+#card-view .cv-tedit [data-tc]{white-space:pre;min-width:44px}
+/* 11-14 시안 review-1114c 2번: 해설 칸 ㄱ·ㄴ·ㄷ·번호 */
+#card-view .cv-exp-rows{display:flex;flex-direction:column}
+#card-view .cv-exp-row{display:grid;grid-template-columns:28px 1fr 78px;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #e3e6ea}
+#card-view .cv-exp-rows[data-mode="num"] .cv-exp-row{grid-template-columns:28px 1fr 24px}
+#card-view .cv-exp-row:first-child{border-top:0}
+#card-view .cv-exp-row>.k{padding-top:6px;text-align:center;font-family:"HCR Batang","함초롬바탕",serif;font-size:14px;color:#1b1e23}
+#card-view .cv-exp textarea[data-cvexp]{width:100%;min-height:32px;field-sizing:content;resize:none;overflow:hidden;padding:6px 9px;border:1px solid #d9dce1;border-radius:7px;background:#fff;font:inherit;font-size:13px;line-height:1.5}
+#card-view .cv-exp-row .ox{padding-top:8px;font-size:12px;color:#3f6d52;white-space:nowrap}#card-view .cv-exp-row .ox.x{color:#a8443d}
+#card-view .cv-exp-sub{display:grid;grid-template-columns:24px 1fr 22px;gap:4px;align-items:start;margin-top:5px}
+#card-view .cv-exp-sub>.k{padding-top:7px;text-align:right;font-size:12px;color:#6a7079}
+#card-view .cv-exp .x{width:22px;height:22px;min-height:0;margin-top:5px;padding:0;border:0;border-radius:5px;background:none;color:#8a9099;cursor:pointer}
+#card-view .cv-exp .x:hover{background:#f1f3f6;color:#1b1e23}
+#card-view .cv-exp-addsub{height:24px;min-height:0;margin-top:4px;padding:0 6px;border:0;border-radius:5px;background:none;color:#4a6fa5;font:inherit;font-size:12px;cursor:pointer}
+#card-view .cv-exp-addsub:hover{background:#eef3fa}

@@ -27,8 +27,10 @@ window.addEventListener("DOMContentLoaded", () => {
   // 출제 칸 같은 안쪽 문서(iframe)는 마우스 움직임이 바깥으로 오지 않는다 — 같은 출처 문서면 안에서도 듣고, 로고 밀림 모양도 넣는다.
   // 11-14 밤 지적 15: 밀 것은 로고만 — 바로 옆 접기 단추와 겹치지 않게 오른쪽 끝을 기준으로 살짝 줄이며 비켜난다(신호등 자리 확보).
   // 지적 16: 머리줄 빈 자리는 창 끌기 자리(단추·입력칸은 뺌).
-  const SLIDE_CSS = '.top #brand-home{transition:transform .15s cubic-bezier(.32,.72,0,1);transform-origin:right center}html.desktop-lights-on .top #brand-home{transform:scale(.62);transition-duration:.2s}'
-    + '.top{-webkit-app-region:drag}.top *{-webkit-app-region:no-drag}.top :is(.top-cell,.crumbs,.top-actions){-webkit-app-region:drag}';
+  // 11-14 2차 지적 26: 로고가 줄어도 마우스가 닿는 자리는 원래 크기 그대로(::after가 줄어든 만큼 왼쪽을 덮음) — 줄어든 로고 밖으로 커서가 빠져
+  // 드롭다운·신호등이 꺼지던 것. 로고 칸(.top-cell)은 끌기 자리가 아니다(끌기 자리에서는 마우스 움직임이 앱에 오지 않는다).
+  const SLIDE_CSS = '.top #brand-home{position:relative;transition:transform .15s cubic-bezier(.32,.72,0,1);transform-origin:right center}.top #brand-home::after{content:"";position:absolute;inset:0 0 0 -62%}html.desktop-lights-on .top #brand-home{transform:scale(.62);transition-duration:.2s}'
+    + '.top{-webkit-app-region:drag}.top *{-webkit-app-region:no-drag}.top :is(.crumbs,.top-actions){-webkit-app-region:drag}';
   const hooked = new WeakSet();
   const hook = (frame) => { try {
     const doc = frame.contentDocument; if (!doc || hooked.has(doc)) return; hooked.add(doc);
@@ -48,7 +50,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const doc = frame.contentDocument, top = doc?.querySelector("header.top"); if (!top) continue;
       const fr = frame.getBoundingClientRect(), r = top.getBoundingClientRect(); if (!fr.width || !r.width || !r.height) continue;
       const busy = [...top.querySelectorAll(INTERACTIVE)].map((n) => n.getBoundingClientRect()).filter((b) => b.width && b.height).map((b) => [b.left - 4, b.right + 4]).sort((a, b) => a[0] - b[0]);
-      let x = r.left; const gaps = [];
+      let x = Math.max(r.left, 230); const gaps = []; // 로고·신호등 칸(왼쪽 230px)은 끌기 띠를 두지 않는다
       for (const [a, b] of busy) { if (a - x >= 12) gaps.push([x, a]); x = Math.max(x, b); }
       if (r.right - x >= 12) gaps.push([x, r.right]);
       for (const [a, b] of gaps) {

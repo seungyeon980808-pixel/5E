@@ -32,7 +32,7 @@ export class ExamInlineEditor {
           <button type="button" class="exam-inline-tool" data-inline-action="ai" title="AI로 이 그림을 다시 그립니다 — 5E_image AI 작업대(이미지 변환)가 이 그림을 참고 그림으로 열립니다">${icon('<path d="M12 3l1.6 4.6L18 9l-4.4 1.4L12 15l-1.6-4.6L6 9l4.4-1.4zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/>')}<span>AI 변환</span></button>
           <button type="button" class="exam-inline-tool" data-inline-action="restore" title="그림 속 그래프를 고칠 수 있는 그래프 객체로 되살립니다 — 그래프 창에서 원본을 깔고 맞춥니다">${icon('<path d="M4 4v16h16M7 15c3-1 4-8 6-8s3 5 7 5"/>')}<span data-inline-restore-label>복원</span></button>
           <button type="button" class="exam-inline-tool" data-inline-action="add-label" title="글자 라벨 넣기 (T) — 그림을 눌러 자리를 고릅니다">${icon('<path d="M5 6h14M12 6v13M9 19h6"/>')}<span>텍스트</span></button>
-          <button type="button" class="exam-inline-tool" data-inline-action="add-leader" title="지시선 라벨 넣기 (L) — 가리킬 곳과 글자 자리를 차례로 누릅니다">${icon('<circle cx="7" cy="17" r="2"/><path d="M8.5 15.5 15 9h5"/>')}<span>라벨러</span></button>
+          <button type="button" class="exam-inline-tool" data-inline-action="add-leader" title="지시선 라벨 넣기 (⇧T) — 가리킬 곳과 글자 자리를 차례로 누릅니다">${icon('<circle cx="7" cy="17" r="2"/><path d="M8.5 15.5 15 9h5"/>')}<span>라벨러</span></button>
           <button type="button" class="exam-inline-tool" data-inline-action="crop" title="자르기 (C) — 보이는 영역 다시 고르기">${icon('<path d="M6 3v13a2 2 0 0 0 2 2h13M3 6h13a2 2 0 0 1 2 2v13"/>')}<span>자르기</span></button>
         </div>
         <div class="exam-inline-sub">
@@ -83,13 +83,15 @@ export class ExamInlineEditor {
       if (event.isComposing || event.keyCode === 229) return;
       if (event.key === 'Escape') {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (!event.repeat) { if (this.mode) {this.mode=null;this.anchor=null;this.render();} else void this.action('close'); }
+        if (!event.repeat) { if (this.mode) {this.mode=null;this.anchor=null;this.draftPts=[];this.hover=null;this.render();} else void this.action('close'); }
         return;
       }
-      // 11-14 지적 9: ⌘Enter 적용(글자 칸 안에서도), T 텍스트·L 지시선·C 자르기(글자 칸 밖에서만).
+      // 11-14 지적 9: ⌘Enter 적용(글자 칸 안에서도), T 텍스트·⇧T 지시선·C 자르기(글자 칸 밖에서만).
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {event.preventDefault();event.stopPropagation();if(!event.repeat)void this.action('apply');return;}
       if (event.target.matches('input,textarea,select,[contenteditable="true"]')) return;
-      const one = !event.metaKey && !event.ctrlKey && !event.altKey && !this.session?.simple && {KeyT:'add-label',KeyL:'add-leader',KeyC:'crop'}[event.code];
+      if (this.mode==='leader' && (this.draftPts?.length||0)>=2 && (event.key==='Enter'||event.code==='Space')) {event.preventDefault();event.stopPropagation();this.commitPlacement();return;}
+      // 11-14 2차 23: 텍스트 T, 지시선 라벨 ⇧T, 자르기 C.
+      const one = !event.metaKey && !event.ctrlKey && !event.altKey && !this.session?.simple && (event.code === 'KeyT' ? (event.shiftKey ? 'add-leader' : 'add-label') : event.code === 'KeyC' && !event.shiftKey ? 'crop' : null);
       if (one && !this.button(one)?.hidden && !this.button(one)?.disabled) {event.preventDefault();event.stopPropagation();if(!event.repeat)void this.action(one);return;}
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {event.preventDefault();void this.action(event.shiftKey ? 'redo' : 'undo');}
       else if (!this.session?.simple && (event.key === 'Delete' || event.key === 'Backspace')) {event.preventDefault();void this.action('delete');}
@@ -200,6 +202,10 @@ export class ExamInlineEditor {
       }
       this.svg.append(group);
     }
+    if (this.mode==='leader' && this.draftPts?.length && this.hover) {
+      const pts=[...this.draftPts,this.hover],draft=renderLabeler({id:'draft',type:'labeler',p1:pts[0],p2:pts.at(-1),...(pts.length>=3?{elbow:pts[1]}:{}),text:'',labelType:'label',fontFamily:DEFAULT_TEXT_FONT,labelSize:DEFAULT_TEXT_SIZE_MM,strokeWidth:.2,strokeLevel:0});
+      draft.setAttribute('opacity','.6');draft.style.pointerEvents='none';this.svg.append(draft);
+    }
     const label=this.selectedLabel();
     if (label && !this.session.simple) {
       const radius = Math.max(.25,b.w/Math.max(1,this.picture.clientWidth)*4);
@@ -228,7 +234,7 @@ export class ExamInlineEditor {
     this.button('delete').disabled=!label;this.button('elbow').disabled=!label || !!label.leaderRoutes?.length;
     this.button('elbow').title=label?.leaderRoutes?.length ? '경로의 제어점을 직접 드래그하세요.' : '꺾임점 추가 또는 제거';
     this.button('undo').disabled=!this.undo.length;this.button('redo').disabled=!this.redo.length;
-    this.root.querySelector('[data-inline-hint]').textContent=this.mode==='label' ? '그림에서 글자를 놓을 자리를 누르세요 · Esc 그만두기' : this.mode==='leader' ? (this.anchor ? '글자를 놓을 자리를 누르세요 · Esc 그만두기' : '지시선이 가리킬 곳을 누르세요 · Esc 그만두기') : label ? '글자는 아래 칸에서 고치고, 라벨·지시선의 점은 끌어 옮깁니다' : '도구를 고르세요 · 글자를 두 번 누르면 바로 고칩니다';
+    this.root.querySelector('[data-inline-hint]').textContent=this.mode==='label' ? '그림에서 글자를 놓을 자리를 누르세요 · Esc 그만두기' : this.mode==='leader' ? (this.anchor ? (this.draftPts?.length>=2?'글자 자리를 누르거나 Enter로 끝내세요 · Esc 그만두기':'꺾일 곳이나 글자 자리를 누르세요 · Esc 그만두기') : '지시선이 가리킬 곳을 누르세요 · Esc 그만두기') : label ? '글자는 아래 칸에서 고치고, 라벨·지시선의 점은 끌어 옮깁니다' : '도구를 고르세요 · 글자를 두 번 누르면 바로 고칩니다';
     this.syncTools();
     this.svg.dataset.placing=String(!!this.mode);
   }
@@ -265,10 +271,9 @@ export class ExamInlineEditor {
     if(event.button!==0 || this.busy)return;event.preventDefault();this.svg.focus({preventScroll:true});
     const point=this.point(event);
     if(this.mode) {
-      if(this.mode==='leader' && !this.anchor) {this.anchor=point;this.render();return;}
-      this.remember();
-      const label={id:`label_${crypto.randomUUID()}`,type:'labeler',p1:copy(this.anchor || point),p2:point,text:'라벨',labelType:'label',fontFamily:DEFAULT_TEXT_FONT,labelSize:DEFAULT_TEXT_SIZE_MM,strokeWidth:.2,strokeLevel:0,layerId:this.session.layerId || 1,order:Math.max(0,...this.labels.map(l=>l.order || 0))+1,locked:false,positionLocked:false};
-      this.labels.push(label);this.selected=label.id;this.mode=null;this.anchor=null;this.render();this.publish();this.field('text').focus();this.field('text').select();return;
+      // 11-14 2차 24: 5E_image와 같은 순서 — 지시선은 가리킬 곳 → (꺾일 곳) → 글자 자리, 두 점부터 Enter·Space로 끝냄. 끝나면 그 자리에서 바로 글자를 쓴다.
+      if(this.mode==='leader'){this.draftPts=[...(this.draftPts||[]),point];this.anchor=this.draftPts[0];if(this.draftPts.length<3){this.render();return;}}
+      this.commitPlacement(point);return;
     }
     const target=event.target.closest('[data-annotation-id]');
     if(!target) {this.selected=null;this.render();return;}
@@ -284,7 +289,28 @@ export class ExamInlineEditor {
     this.drag={pointerId:event.pointerId,start:point,before:this.snapshot(),handle:target.dataset.inlineHandle || 'p2'};
     this.svg.setPointerCapture(event.pointerId);this.render();
   }
+  commitPlacement(last=null){
+    const pts=this.mode==='leader'?[...(this.draftPts||[])]:[last];if(!pts.length||!pts.at(-1))return;
+    this.remember();
+    const p1=copy(pts[0]),p2=copy(pts.at(-1)),elbow=pts.length>=3?copy(pts[1]):null;
+    const label={id:`label_${crypto.randomUUID()}`,type:'labeler',p1:this.mode==='leader'?p1:copy(p2),p2,...(elbow?{elbow}:{}),text:'',labelType:'label',fontFamily:DEFAULT_TEXT_FONT,labelSize:DEFAULT_TEXT_SIZE_MM,strokeWidth:.2,strokeLevel:0,layerId:this.session.layerId || 1,order:Math.max(0,...this.labels.map(l=>l.order || 0))+1,locked:false};
+    this.labels.push(label);this.selected=label.id;this.mode=null;this.anchor=null;this.draftPts=[];this.hover=null;this.render();this.openInPlace(label);
+  }
+  // 그림 위 그 자리에서 글자 쓰기(5E_image 라벨 편집과 같은 느낌). Enter 끝, ⇧Enter 줄바꿈, Esc 그만두기 — 비어 있으면 그 라벨을 지운다.
+  openInPlace(label){
+    this.inPlace?.remove();const ctm=this.svg.getScreenCTM();if(!ctm)return;
+    const at=new DOMPoint(label.p2.x,label.p2.y).matrixTransform(ctm),px=Math.max(11,(label.labelSize||DEFAULT_TEXT_SIZE_MM)*ctm.a*0.95);
+    const box=document.createElement('textarea');box.className='exam-inline-inplace';box.rows=1;box.setAttribute('aria-label','라벨 글자');
+    Object.assign(box.style,{position:'fixed',left:`${at.x}px`,top:`${at.y}px`,transform:'translate(-50%,-50%)',zIndex:'2000',minWidth:'3em',fontSize:`${px}px`,lineHeight:'1.2',padding:'1px 4px',border:'1.5px solid #6ba4f8',borderRadius:'4px',background:'rgba(255,255,255,.96)',color:'#111',resize:'none',outline:'none',fontFamily:'inherit',textAlign:'center'});
+    const fit=()=>{box.style.width=`${Math.max(3,[...box.value.split('\n')].reduce((m,l)=>Math.max(m,l.length),0)+1.5)}em`;box.style.height='auto';box.style.height=`${box.scrollHeight}px`;};
+    let done=false;const finish=save=>{if(done)return;done=true;const value=box.value.trim()?box.value:'';box.remove();this.inPlace=null;
+      if(!save||!value){this.labels=this.labels.filter(l=>l.id!==label.id);this.selected=null;this.undo.pop?.();this.render();this.publish();return;}
+      this.selected=label.id;this.render();const f=this.field('text');f.value=value;this.changeField(f);this.svg.focus({preventScroll:true});};
+    box.addEventListener('input',fit);box.addEventListener('keydown',e=>{e.stopPropagation();if(e.isComposing||e.keyCode===229)return;if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();finish(true);}else if(e.key==='Escape'){e.preventDefault();finish(false);}});
+    box.addEventListener('blur',()=>finish(true));document.body.append(box);this.inPlace=box;fit();box.focus();
+  }
   pointerMove(event) {
+    if(this.mode==='leader'&&this.draftPts?.length&&!this.drag){this.hover=this.point(event);this.render();return;}
     if(this.busy || !this.drag || event.pointerId!==this.drag.pointerId)return;
     const point=this.point(event),label=this.selectedLabel(),before=this.drag.before.find(l=>l.id===label.id),name=this.drag.handle;
     const dx=point.x-this.drag.start.x,dy=point.y-this.drag.start.y;
@@ -321,7 +347,7 @@ export class ExamInlineEditor {
   }
   async action(name) {
     if (!this.active || this.busy) return;
-    if(name==='add-label' || name==='add-leader') {this.mode=name==='add-label' ? 'label' : 'leader';this.anchor=null;this.render();this.svg.focus();return;}
+    if(name==='add-label' || name==='add-leader') {this.mode=name==='add-label' ? 'label' : 'leader';this.anchor=null;this.draftPts=[];this.hover=null;this.render();this.svg.focus();return;}
     if(name==='delete') {if(!this.selected)return;this.remember();this.lastDeleted=this.selected;this.labels=this.labels.filter(l=>l.id!==this.selected);this.selected=null;this.render();this.publish();return;}
     if(name==='elbow') {const l=this.selectedLabel();if(!l)return;this.remember();if(l.elbow)delete l.elbow;else l.elbow={x:l.p1.x,y:l.p2.y};this.render();this.publish();return;}
     if(name==='undo' || name==='redo') {const from=name==='undo'?this.undo:this.redo,to=name==='undo'?this.redo:this.undo;if(!from.length)return;to.push(this.snapshot());this.labels=from.pop();

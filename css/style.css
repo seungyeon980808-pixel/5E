@@ -3755,4 +3755,5 @@ textarea.unified-text-input {
 .desktop-shell.platform-darwin .desktop-titlebar { display: none; }
 .desktop-shell.platform-darwin :is(.app-shell-header, #rhwp-exam-workspace .exam-topbar, #ai-image-panel .ai-head) { -webkit-app-region: drag; }
 .desktop-shell.platform-darwin :is(.app-shell-header, #rhwp-exam-workspace .exam-topbar, #ai-image-panel .ai-head) * { -webkit-app-region: no-drag; }
-.desktop-shell.platform-darwin :is(.app-shell-header :is(.canvas-toolbar, .toolbar-history, .toolbar-canvas, .toolbar-inspector-controls, .panel-shell-toggles), #rhwp-exam-workspace .exam-topbar :is(.exam-top-cell, .exam-heading), #ai-image-panel .ai-head :is(.ai-title-line, .ai-head-status)) { -webkit-app-region: drag; }
+/* 로고·제목 칸(신호등이 뜨는 왼쪽)은 끌기 자리에서 뺀다 — 끌기 자리에서는 마우스 움직임이 앱에 오지 않아 신호등·로고 목록이 꺼졌다(11-14 2차 26). */
+.desktop-shell.platform-darwin :is(.app-shell-header :is(.toolbar-canvas, .toolbar-inspector-controls), #rhwp-exam-workspace .exam-topbar .exam-heading, #ai-image-panel .ai-head .ai-head-status) { -webkit-app-region: drag; }
