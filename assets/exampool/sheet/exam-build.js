@@ -27,7 +27,7 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
   const target=template||Document.createEmpty(),ranges=new Map();
   try{
     // at: 다음 문항을 넣을 문단 자리. 빈 시험지·꼬리 없는 양식은 늘 끝(문단 수).
-    let at=-1;
+    let at=-1,breaksAdded=false;
     if(template){const start=clearFormBody(target,bodyStart,tailStart);if(start<target.getParagraphCount(0))at=start;}
     else{target.createBlankDocument();
       const config=pageProfile({paper:sheet.paper,columns:sheet.columns});
@@ -38,6 +38,20 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
     for(const [i,item] of items.entries()){
       const source=await open(item);
       try{
+        // 11-14 빈 시험지: 단 나누기는 문항 문단을 쪼개지 않고, 앞 문항 끝에 폭 없는 1pt 글자를 둔 뒤 그 뒤에서 나눠 생긴 빈 문단에 건다.
+        // 문항 첫 문단(옆 그림·수식 개체가 든)을 쪼개면 엔진이 개체 자리·줄 배치를 어긋내 글이 벌어지고 그림 밑으로 숨었다(1106 시험지 5·8번).
+        let preBroken=false;
+        if(!template&&i>0&&starts.has(item.id)){
+          // 앞 문항 끝 문단은 표(선지)만 든 경우가 많아 거기서 나누면 표 앞에서 나뉜다 — 끝에 새 빈 문단을 따로 만들어 그 문단에서 나눈다.
+          const idx=target.getParagraphCount(0);target.insertParagraph(0,idx);
+          target.insertText(0,idx,0,'\u2060');target.applyCharFormat(0,idx,0,1,JSON.stringify({fontSize:100}));
+          target.applyParaFormat(0,idx,JSON.stringify({lineSpacingType:'Percent',lineSpacing:100,spacingBefore:0,spacingAfter:0,keepWithNext:true}));
+          const r=parse(target.insertColumnBreak(0,idx,0));
+          if(r&&r.ok===false)throw Error('시험지의 단 나누기를 넣지 못했습니다.');
+          // 나누기 앞에 남은 빈 문단은 앞 단 끝에 한 줄을 차지하므로 지운다(양식의 10-31 처리와 같음).
+          if(r?.paraIdx===idx+1&&!target.getParagraphLength(0,idx))target.deleteParagraph(0,idx);
+          preBroken=true;breaksAdded=true;
+        }
         const before=at>=0?at:target.getParagraphCount(0),count0=target.getParagraphCount(0);
         const result=parse(target.importParagraphBlock(source,nativeInsertOptions(source,0,before)));
         if(!result?.operationResult?.result?.inserted&&result?.ok===false)throw Error(`${item.q.number}번 문항을 시험지에 넣지 못했습니다.`);
@@ -47,14 +61,16 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
         // 글 길이가 0이라 표 앞에서 나뉘어 앞 문항의 선지가 다음 단·쪽으로 넘어갔다.
         // OmO 작성: 첫 쪽의 어느 단에도 들어가지 않는 첫 문항은 다음 쪽에서 시작한다. 문단을 쪼개지 않아 개체도 함께 간다.
         if(template&&i===0&&firstPage)target.applyParaFormat(0,before,JSON.stringify({pageBreakBefore:true}));
+        else if(preBroken)target.applyParaFormat(0,before,JSON.stringify({spacingBefore:0}));
         else if(template?breaks?.has(item.id):i>0&&starts.has(item.id)){
           // 학교 양식(10-30): 첫 문단이 글 없이 그림·표만 든 문단(글 옆 그림 문항)이면 엔진이 나눌 때 개체를 앞 단에 남긴다 —
           // 폭 없는 글자(U+2060)를 맨 앞에 두면 개체까지 새 단으로 같이 간다(9·25번 실측).
-          if(template&&!target.getParagraphLength(0,before))target.insertText(0,before,0,'\u2060');
+          // 11-14: 빈 시험지(양식 없음)도 같은 일이 생겼다 — 1106 시험지 5·8번(단 맨 위 문항, 맨 앞 옆 그림)에서 수식이 한 칸씩 밀려 빈 틈·「…것이다.B」. 양식과 같이 막는다.
+          if(!target.getParagraphLength(0,before))target.insertText(0,before,0,'\u2060');
           // 글이 있어도 맨 앞이 개체(글 옆 그림 문항은 그림 자리 글자가 번호 앞에 옴)면, 그 앞에서 나눌 때 엔진이 개체를 한 칸씩 뒤로 밀어
           // 수식 내용이 바뀌었다(11-02 실측: 「단색광 A, B를 … 중심이 O인」 → 「단색광 , A를 … 중심이 B인」). 1pt 폭 없는 글자를 먼저 둔다.
-          else if(template){target.insertText(0,before,0,'\u2060');target.applyCharFormat(0,before,0,1,JSON.stringify({fontSize:100}));}
-          const r=parse(target.insertColumnBreak(0,before,0));
+          else{target.insertText(0,before,0,'\u2060');target.applyCharFormat(0,before,0,1,JSON.stringify({fontSize:100}));}
+          const r=parse(target.insertColumnBreak(0,before,0));breaksAdded=true;
           if(r&&r.ok===false)throw Error('시험지의 단 나누기를 넣지 못했습니다.');
           // 학교 양식(10-31): 문단 맨 앞에서 나누면 빈 앞 문단이 남아 앞 단 끝에 한 줄을 차지한다 — 앞 단이 꽉 차면 그 빈 줄만 다음 단으로 넘어가고
           // 나누기가 단을 하나 더 넘겨 단이 통째로 비었다(14번). 나누기는 뒤 문단에 걸리므로 빈 앞 문단은 지운다.
@@ -71,6 +87,9 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
       }finally{source.free();}
       if(between&&i<items.length-1)await between();
     }
+    // 11-14: 들여온 문단은 문항 문서에서 잰 줄 배치를 그대로 가져온다 — 단 나누기·폭 없는 글자를 넣은 문단(단 맨 위 옆 그림 문항)은
+    // 줄 시작 자리가 한 칸씩 어긋나 글이 벌어지고 그림 밑으로 숨었다(1106 시험지 5·8번). 다 넣은 뒤 한 번 다시 잰다.
+    if(breaksAdded)target.reflowLinesegs?.();
     return {document:target,ranges};
   }catch(e){target.free();throw e;}
 }
