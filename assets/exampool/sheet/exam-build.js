@@ -90,6 +90,7 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
     // 11-14: 들여온 문단은 문항 문서에서 잰 줄 배치를 그대로 가져온다 — 단 나누기·폭 없는 글자를 넣은 문단(단 맨 위 옆 그림 문항)은
     // 줄 시작 자리가 한 칸씩 어긋나 글이 벌어지고 그림 밑으로 숨었다(1106 시험지 5·8번). 다 넣은 뒤 한 번 다시 잰다.
     if(breaksAdded)target.reflowLinesegs?.();
+    realignAnchoredTables(target);
     return {document:target,ranges};
   }catch(e){target.free();throw e;}
 }
@@ -97,6 +98,27 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open,betw
 // 그린 결과로 본 문항 자리(10-23 지적 2): 문항마다 맨 바깥 글 줄·그림·표가 놓인 첫 자리와 끝 자리(쪽 × 단 수 + 단).
 // 어림 높이로 나눈 단이 실제와 달라 선지만 다음 단·쪽으로 흘러가는지 여기서 잡는다.
 // skip(10-30): 문항 자리로 치지 않을 맨 바깥 개체(「다음 면에 계속」 표시 표 — 문항 끝 문단에 달려 쪽 바닥에 떠 있다).
+// 11-14(1106 시험지 6·7번): 글 옆 자료 묶음(번호 문단 바로 앞 빈 문단에 붙은 떠 있는 표)은 문항 조판에서 빈 문단 높이만큼 내려
+// 번호 줄과 위를 맞춰 둔다(typeset-model). 시험지에 들이면 빈 문단 높이가 달라져 표가 한 줄 아래로 내려가 글과 겹치고,
+// 엔진이 그 어긋난 자리를 피하느라 뒤 〈보기〉를 표 높이만큼 밀었다. 시험지 안에서 다시 번호 줄 위에 맞춘다.
+export function realignAnchoredTables(doc){
+  let moved=0;
+  for(let page=0;page<doc.pageCount();page++){
+    const runs=(parse(doc.getPageTextLayout(page)).runs||[]).filter(r=>!(r.cellPath||[]).length);
+    for(const c of parse(doc.getPageControlLayout(page)).controls||[]){
+      if(c.type!=='table'||(c.cellPath||[]).length||Number.isInteger(c.cellIdx))continue;
+      if(doc.getParagraphLength(c.secIdx,c.paraIdx))continue;
+      let t;try{t=parse(doc.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx));}catch{continue;}
+      if(t.treatAsChar||t.vertRelTo!=='Para'||t.textWrap!=='InFrontOfText')continue;
+      const next=runs.filter(r=>r.secIdx===c.secIdx&&r.paraIdx===c.paraIdx+1);if(!next.length)continue;
+      const anchorY=c.y-(t.vertOffset||0)/75,want=Math.max(0,Math.round((Math.min(...next.map(r=>r.y))-anchorY)*75));
+      if(Math.abs(want-(t.vertOffset||0))<=40)continue;
+      doc.setTableProperties(c.secIdx,c.paraIdx,c.controlIdx,JSON.stringify({vertOffset:want}));moved++;
+    }
+  }
+  if(moved)doc.reflowLinesegs?.();
+  return moved;
+}
 export function itemPlaces(doc,ranges,columns,skip=null){
   const out=new Map();
   for(const [id,pieces] of itemBoxes(doc,ranges,columns,skip,{blank:false})){const at=[...pieces.keys()];out.set(id,{first:Math.min(...at),last:Math.max(...at)});}
