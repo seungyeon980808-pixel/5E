@@ -68,8 +68,9 @@ export function isBookmarked(result, storage = globalThis.localStorage, list = l
 }
 
 // 켜기/끄기. 돌려줌: { on, ok }. 바뀌면 창에 알린다(카드·미리보기·별표 상자가 함께 바뀌게).
-export function toggleBookmark(result, { storage = globalThis.localStorage, on = null, now = Date.now() } = {}) {
+export function toggleBookmark(result, { storage = globalThis.localStorage, on = null, now = Date.now(), folder = undefined } = {}) {
   const bookmark = bookmarkFor(result, now);
+  if (bookmark) { const prev = loadBookmarks(storage).find((item) => item.key === bookmark.key); bookmark.folder = folder !== undefined ? (folder || null) : (prev?.folder ?? (lastFolder(storage) || null)); }
   if (!bookmark) return { on: false, ok: false };
   const list = loadBookmarks(storage);
   const exists = list.some((item) => item.key === bookmark.key);
@@ -85,4 +86,42 @@ export function removeBookmark(key, storage = globalThis.localStorage) {
   const ok = saveBookmarks(next, storage);
   if (ok) try { globalThis.dispatchEvent?.(new CustomEvent(BOOKMARK_EVENT, { detail: { key, on: false } })); } catch {}
   return ok;
+}
+
+// 11-14(시안 review-1114 3번): 별표 폴더. 별표마다 folder(폴더 id, 없으면 「분류 안 함」). 기출·라이브러리 자료만 — 내 문항 카드는 섞지 않는다.
+export const BOOKMARK_FOLDER_KEY = `${PREFIX}5e.library.bookmarkFolders.v1`;
+const LAST_FOLDER_KEY = `${PREFIX}5e.library.bookmarkLastFolder`;
+const notify = (detail = {}) => { try { globalThis.dispatchEvent?.(new CustomEvent(BOOKMARK_EVENT, { detail })); } catch {} };
+export function loadFolders(storage = globalThis.localStorage) {
+  try { const v = JSON.parse(storage?.getItem(BOOKMARK_FOLDER_KEY) || "[]"); return Array.isArray(v) ? v.filter((f) => f && typeof f.id === "string" && typeof f.name === "string") : []; } catch { return []; }
+}
+function saveFolders(list, storage) { try { storage?.setItem(BOOKMARK_FOLDER_KEY, JSON.stringify(list.slice(0, 200))); return true; } catch { return false; } }
+export function createFolder(name, storage = globalThis.localStorage) {
+  const clean = String(name || "").trim().slice(0, 40); if (!clean) return null;
+  const list = loadFolders(storage), same = list.find((f) => f.name === clean); if (same) return same;
+  const folder = { id: `f${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name: clean, at: Date.now() };
+  if (!saveFolders([...list, folder], storage)) return null; notify({ folder: folder.id }); return folder;
+}
+export function renameFolder(id, name, storage = globalThis.localStorage) {
+  const clean = String(name || "").trim().slice(0, 40); if (!clean) return false;
+  const list = loadFolders(storage), folder = list.find((f) => f.id === id); if (!folder) return false;
+  folder.name = clean; const ok = saveFolders(list, storage); if (ok) notify({ folder: id }); return ok;
+}
+// 폴더를 지우면 그 안 별표는 「분류 안 함」으로(별표는 그대로).
+export function deleteFolder(id, storage = globalThis.localStorage) {
+  const ok = saveFolders(loadFolders(storage).filter((f) => f.id !== id), storage);
+  const marks = loadBookmarks(storage).map((m) => m.folder === id ? { ...m, folder: null } : m); saveBookmarks(marks, storage);
+  if (ok) notify({ folder: id }); return ok;
+}
+export function setBookmarkFolder(key, folderId, storage = globalThis.localStorage) {
+  const list = loadBookmarks(storage), mark = list.find((m) => m.key === key); if (!mark) return false;
+  mark.folder = folderId || null; const ok = saveBookmarks(list, storage);
+  if (ok) { setLastFolder(folderId || "", storage); notify({ key, on: true }); } return ok;
+}
+export function lastFolder(storage = globalThis.localStorage) { try { return storage?.getItem(LAST_FOLDER_KEY) || ""; } catch { return ""; } }
+export function setLastFolder(id, storage = globalThis.localStorage) { try { storage?.setItem(LAST_FOLDER_KEY, id || ""); } catch {} }
+// 폴더별 개수: [{id,name,count}] + 「분류 안 함」 개수.
+export function folderCounts(marks = loadBookmarks(), folders = loadFolders()) {
+  const ids = new Set(folders.map((f) => f.id));
+  return { folders: folders.map((f) => ({ ...f, count: marks.filter((m) => m.folder === f.id).length })), loose: marks.filter((m) => !m.folder || !ids.has(m.folder)).length };
 }

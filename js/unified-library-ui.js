@@ -8,7 +8,7 @@ import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four
 import { animateLibraryAiHandoff } from './library-ai-motion.js?v=1.7.0-four-session-integration';
 import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.7.0-four-session-integration";
 import { targetPageGeometry, fittedPageSize, createPreviewPaper, createLoadingDots } from "./library/page-loading.js?v=1.7.0-four-session-integration";
-import { BOOKMARK_EVENT, BOOKMARK_LEVELS, bookmarkLevel, bookmarkPath, isBookmarked, loadBookmarks, removeBookmark, toggleBookmark } from "./library/bookmarks.js?v=1.7.0-four-session-integration";
+import { BOOKMARK_EVENT, BOOKMARK_LEVELS, bookmarkLevel, bookmarkPath, isBookmarked, loadBookmarks, removeBookmark, toggleBookmark, loadFolders, createFolder, renameFolder, setBookmarkFolder, lastFolder, folderCounts } from "./library/bookmarks.js?v=1.7.0-four-session-integration";
 import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.7.0-four-session-integration";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
@@ -1108,7 +1108,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   // 11-12 별표(북마크): bookmarkView가 있으면 결과 칸은 별표한 것만(검색어·종류·조건과 상관없이, 별표한 순).
   let bookmarkView = null;
   let bookmarkCache = loadBookmarks();
-  function toggleResultBookmark(result, on) {
+  function toggleResultBookmark(result, on, anchor = null) {
     if (!result) return;
     const pastId = pastQuestionId(result);
     const saved = toggleBookmark(result, { on });
@@ -1116,7 +1116,35 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (pastId) setExamStar(pastId, saved.on);
     const level = BOOKMARK_LEVELS[bookmarkLevel(result)]?.label || "";
     setStatus(saved.on ? `${level} 단위로 별표했습니다 · 왼쪽 「★ 별표」${pastId ? "와 5E_exam 「★ 별표만」" : ""}에 모입니다` : "별표를 뺐습니다");
+    // 11-14(시안 review-1114 3번 S2): 별표를 켜면 작은 폴더 고르기가 바로 뜬다. 마지막에 고른 폴더가 골라져 있어 Enter면 같은 폴더.
+    if (saved.on) openFolderPicker(`${bookmarkLevel(result)}:${result.id}`, anchor);
   }
+  let folderPicker = null;
+  function closeFolderPicker() { folderPicker?.remove(); folderPicker = null; }
+  function openFolderPicker(key, anchor) {
+    closeFolderPicker();
+    const folders = loadFolders(), current = loadBookmarks().find((m) => m.key === key)?.folder || "", last = current || lastFolder();
+    const box = document.createElement("div"); box.className = "unilib-folder-pick"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", "별표 폴더 고르기");
+    const row = (id, name) => `<button type="button" role="option" data-fold="${escapeAttr(id)}" aria-selected="${id === last}">${escapeHtml(name)}</button>`;
+    box.innerHTML = `<p class="ufp-head">★ 별표 · 어느 폴더에?</p><div class="ufp-list" role="listbox">${folders.map((f) => row(f.id, f.name)).join("")}${row("", "분류 안 함")}</div>
+      <form class="ufp-new"><input type="text" maxlength="40" placeholder="＋ 새 폴더 이름" aria-label="새 폴더 이름"></form>`;
+    overlay.append(box); folderPicker = box;
+    const r = (anchor || overlay.querySelector("[data-unilib-preview-star]"))?.getBoundingClientRect(), o = overlay.getBoundingClientRect();
+    const left = r ? Math.min(o.right - 240, Math.max(o.left + 8, r.left - 100)) : o.left + o.width / 2 - 110, top = r ? Math.min(o.bottom - 260, r.bottom + 6) : o.top + 120;
+    Object.assign(box.style, { left: `${Math.round(left - o.left)}px`, top: `${Math.round(top - o.top)}px` });
+    const choose = (id) => { setBookmarkFolder(key, id); closeFolderPicker(); const f = loadFolders().find((x) => x.id === id); setStatus(`별표를 「${f ? f.name : "분류 안 함"}」에 넣었습니다`); };
+    box.addEventListener("click", (e) => { const b = e.target.closest("[data-fold]"); if (b) choose(b.dataset.fold); });
+    box.querySelector(".ufp-new").addEventListener("submit", (e) => { e.preventDefault(); const f = createFolder(e.target.querySelector("input").value); if (f) choose(f.id); });
+    box.addEventListener("keydown", (e) => {
+      e.stopPropagation();
+      const opts = [...box.querySelectorAll("[data-fold]")], at = opts.indexOf(document.activeElement);
+      if (e.key === "Escape") { e.preventDefault(); closeFolderPicker(); }
+      else if ((e.key === "ArrowDown" || e.key === "ArrowUp") && !e.target.matches("input")) { e.preventDefault(); opts[(at + (e.key === "ArrowDown" ? 1 : opts.length - 1)) % opts.length]?.focus(); }
+      else if (e.key === "Enter" && !e.target.matches("input") && !e.target.closest("[data-fold]")) { e.preventDefault(); choose(last); }
+    });
+    (box.querySelector('[aria-selected="true"]') || box.querySelector("[data-fold]"))?.focus();
+  }
+  overlay.addEventListener("pointerdown", (e) => { if (folderPicker && !e.target.closest(".unilib-folder-pick")) closeFolderPicker(); }, true);
   function syncBookmarkMarks() {
     bookmarkCache = loadBookmarks();
     list.querySelectorAll("[data-unilib-bm]").forEach((button) => {
@@ -1134,19 +1162,23 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     }
     renderBookmarkBox();
   }
-  // 왼쪽 「★ 별표」 상자: 최근 별표 5개(위계: 파일 › 쪽 › 문항) + 모두 보기.
+  // 왼쪽 「★ 별표」 상자(11-14 시안 review-1114 3번 S1 안 B): 폴더 줄(개수) + 최근 별표 3개 + 모두 보기.
+  // 폴더를 누르면 그 폴더 별표만 결과 칸에, 두 번 누르면 이름 고치기. 별표 줄의 ×는 별표 빼기.
   function renderBookmarkBox() {
     const host = overlay.querySelector("[data-unilib-bm-box]");
     if (!host) return;
-    const marks = bookmarkCache, shown = marks.slice(0, 5);
+    const marks = bookmarkCache, shown = marks.slice(0, 3), { folders, loose } = folderCounts(marks, loadFolders());
     const chip = (level) => `<span class="unilib-bm-level is-${level}">${BOOKMARK_LEVELS[level]?.label || ""}</span>`;
+    const on = (id) => bookmarkView && (bookmarkView.folder ?? null) === id;
+    const folderRow = (id, name, count, editable) => `<li><button type="button" class="unilib-bm-folder${on(id) ? " is-on" : ""}" data-unilib-bm-folder="${escapeAttr(id ?? "*")}"${editable ? ` data-unilib-bm-rename="${escapeAttr(id)}" title="눌러서 이 폴더만 보기 · 두 번 눌러 이름 고치기"` : ' title="폴더에 넣지 않은 별표"'}><span class="unilib-bm-ficon" aria-hidden="true">▸</span><span class="unilib-bm-fname">${escapeHtml(name)}</span><span class="unilib-bm-fcount">${count}</span></button></li>`;
     host.innerHTML = `<div class="unilib-bm-head"><span class="unilib-bm-icon" aria-hidden="true">★</span><strong>별표</strong><span class="unilib-bm-count">${marks.length}</span>${marks.length ? `<button type="button" class="unilib-link-button" data-unilib-bm-all aria-pressed="${Boolean(bookmarkView)}">${bookmarkView ? "별표 보기 나가기" : "모두 보기 ›"}</button>` : ""}</div>`
-      + (shown.length ? `<ul class="unilib-bm-list">${shown.map((mark) => `<li><button type="button" class="unilib-bm-row" data-unilib-bm-open="${escapeAttr(mark.key)}" title="${escapeAttr(bookmarkPath(mark))}">${chip(mark.level)}<span class="unilib-bm-path">${escapeHtml(bookmarkPath(mark))}</span></button><button type="button" class="unilib-bm-remove" data-unilib-bm-remove="${escapeAttr(mark.key)}" aria-label="별표 빼기" title="별표 빼기">×</button></li>`).join("")}</ul>${marks.length > shown.length ? `<p class="unilib-bm-more">외 ${marks.length - shown.length}개 · 모두 보기에서</p>` : ""}`
-        : `<p class="unilib-bm-empty">카드나 미리보기의 ☆(S)를 누르면 여기 모입니다. 문항·쪽·파일 단위로 별표할 수 있습니다.</p>`);
+      + (marks.length || folders.length ? `<ul class="unilib-bm-folders">${folders.map((f) => folderRow(f.id, f.name, f.count, true)).join("")}${loose ? folderRow("", "분류 안 함", loose, false) : ""}<li><button type="button" class="unilib-bm-newfolder" data-unilib-bm-newfolder>＋ 새 폴더</button></li></ul>` : "")
+      + (shown.length ? `<p class="unilib-bm-sub">최근</p><ul class="unilib-bm-list">${shown.map((mark) => `<li><button type="button" class="unilib-bm-row" data-unilib-bm-open="${escapeAttr(mark.key)}" title="${escapeAttr(bookmarkPath(mark))}">${chip(mark.level)}<span class="unilib-bm-path">${escapeHtml(bookmarkPath(mark))}</span></button><button type="button" class="unilib-bm-remove" data-unilib-bm-remove="${escapeAttr(mark.key)}" aria-label="별표 빼기" title="별표 빼기">×</button></li>`).join("")}</ul>`
+        : `<p class="unilib-bm-empty">카드나 미리보기의 ☆(S)를 누르면 여기 모입니다. 별표할 때 폴더를 고를 수 있습니다.</p>`);
   }
-  function openBookmarks(focusKey = null) {
+  function openBookmarks(focusKey = null, folder = undefined) {
     const mark = focusKey ? bookmarkCache.find((item) => item.key === focusKey) : null;
-    bookmarkView = { focus: mark?.resultId ?? null };
+    bookmarkView = { focus: mark?.resultId ?? null, ...(folder !== undefined ? { folder } : {}) };
     // 별표 보기는 종류와 상관없이 「전체」와 같은 카드 배치(PDF 파일 목록 줄 배치를 물려받지 않게). 종류 탭은 눌리지 않은 상태로.
     activeTypes = [...LIBRARY_TYPES];
     updateTypeControls();
@@ -1165,14 +1197,25 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   }
   globalThis.addEventListener?.(BOOKMARK_EVENT, () => { syncBookmarkMarks(); if (bookmarkView && !overlay.hidden) void runSearch({ preservePreview: true, preserveResultOrder: true }); });
   overlay.querySelector("[data-unilib-bm-box]")?.addEventListener("click", (event) => {
+    const folderBtn = event.target.closest("[data-unilib-bm-folder]"), newFolder = event.target.closest("[data-unilib-bm-newfolder]");
+    if (folderBtn) { const id = folderBtn.dataset.unilibBmFolder === "*" ? null : folderBtn.dataset.unilibBmFolder; if (bookmarkView && (bookmarkView.folder ?? null) === (id || "") ) leaveBookmarks({ search: true }); else openBookmarks(null, id || ""); return; }
+    if (newFolder) { const name = globalThis.prompt?.("새 폴더 이름"); if (name && createFolder(name)) syncBookmarkMarks(); return; }
     const all = event.target.closest("[data-unilib-bm-all]"), open = event.target.closest("[data-unilib-bm-open]"), remove = event.target.closest("[data-unilib-bm-remove]");
     if (all) { if (bookmarkView) leaveBookmarks({ search: true }); else openBookmarks(); }
     else if (open) openBookmarks(open.dataset.unilibBmOpen);
     else if (remove) { event.stopPropagation(); if (!removeBookmark(remove.dataset.unilibBmRemove)) setStatus("별표를 빼지 못했습니다.", true); }
   });
+  overlay.querySelector("[data-unilib-bm-box]")?.addEventListener("dblclick", (event) => {
+    const b = event.target.closest("[data-unilib-bm-rename]"); if (!b) return;
+    const name = b.querySelector(".unilib-bm-fname"), old = name.textContent, input = document.createElement("input");
+    input.className = "unilib-bm-finput"; input.value = old; input.maxLength = 40; name.replaceWith(input); input.focus(); input.select();
+    const done = (save) => { if (save && input.value.trim() && input.value.trim() !== old) renameFolder(b.dataset.unilibBmRename, input.value); syncBookmarkMarks(); };
+    input.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); done(true); } if (e.key === "Escape") { e.preventDefault(); done(false); } });
+    input.addEventListener("blur", () => done(true), { once: true });
+  });
   overlay.querySelector("[data-unilib-preview-star]")?.addEventListener("click", (event) => {
     const current = selectedResult();
-    if (current) toggleResultBookmark(current, !isBookmarked(current));
+    if (current) toggleResultBookmark(current, !isBookmarked(current), event.currentTarget);
   });
   // S: 고른 자료 별표 켜기·끄기(입력 칸에서 글을 쓰는 중이면 그대로 글자).
   overlay.addEventListener("keydown", (event) => {
@@ -2130,7 +2173,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
 
   // 별표 보기: 검색어·종류·조건과 상관없이 별표한 자료만, 별표한 순서(최근 먼저)로. 꺼 둔 파일 위치의 자료는 찾지 못한다.
   async function runBookmarkSearch(activeProvider, { ownEpoch, signal, requestId }) {
-    const marks = loadBookmarks(), sourceIds = [...(enabledSources || [])];
+    const folderIds = new Set(loadFolders().map((f) => f.id)), inFolder = (m) => bookmarkView?.folder === undefined ? true : bookmarkView.folder ? m.folder === bookmarkView.folder : !m.folder || !folderIds.has(m.folder);
+    const marks = loadBookmarks().filter(inFolder), sourceIds = [...(enabledSources || [])];
     const needRegular = marks.some((mark) => mark.kind !== "pdf"), needPdf = marks.some((mark) => mark.kind === "pdf");
     const base = { query: "", sourceIds, filters: {}, limit: Number.MAX_SAFE_INTEGER, requestId, signal };
     const [regular, files] = await Promise.all([
@@ -3095,7 +3139,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     event.preventDefault(); event.stopPropagation();
     // 11-12: 화면에 칠해진 상태가 아니라 저장된 별표 기록을 기준으로 켜고 끈다(결과가 다시 그려지는 순간 눌러도 꼬이지 않게).
     const target = results.find((item) => item.id === star.dataset.unilibBm);
-    if (target) toggleResultBookmark(target, !isBookmarked(target));
+    if (target) toggleResultBookmark(target, !isBookmarked(target), star);
   }, true);
   list.addEventListener('dblclick', event => {
     if (!event.target.closest('[data-result-id]')) return;
