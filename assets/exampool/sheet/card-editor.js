@@ -36,7 +36,7 @@ export function completeness(q){
 
 export function createCardEditor(root,api){
   const panels={nav:store.get('nav',true),lib:store.get('lib',false)/* 11-12: 라이브러리는 왼쪽 메뉴에서 켜고 끈다(기억함) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:true/* 11-14: 문항 카드를 열면 조판 미리보기도 같이 열림(카드 2 : 조판 1). 접으면 다음 카드를 열 때까지 접혀 있음 */,view:store.get('view','card')==='page'?'page':'card'};
-  let pastIndex=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[],bookq:''}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
+  let pastIndex=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[],bookq:''}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null,tileSel=null;
   if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   // 기출 여러 개 고르기(11-03): 그림 왼쪽 위 동그라미. 하나라도 고르면 그림을 누르기만 해도 골라지고, Shift 범위·⌘A 모두·Esc 취소. 아래 띠의 「N개 변형」으로 줄에 넣는다.
   const pastPick=new Set();let pastAnchor=-1;
@@ -63,12 +63,15 @@ export function createCardEditor(root,api){
     // 10-22 「나」안: 칸은 같은 폭·같은 높이로 나란히(넷부터 다음 줄), 이름표 (가)(나)는 칸 아래 가운데,
     // 바꾸기·지우기는 칸에 마우스를 올리면 오른쪽 위. 빈 칸의 두 동작은 같은 옅은 테(한쪽만 단추처럼 보이지 않게).
     const list=slotsOf(x);
-    const tools=(b,acts)=>`<span class="cv-tile-tools">${acts}<button type="button" class="mini" data-cvslot-act="remove" data-cvslot="${b.id}" title="이 자리 지우기">지우기</button></span>`;
+    // 11-14(시안 review-1114 1-3): 칸 도구는 아이콘만(이름은 풍선) — 연필(편집)·바꾸기·지우기.
+    const tool=(act,id,ico,tip)=>`<button type="button" class="mini cv-ti" data-cvslot-act="${act}" data-cvslot="${id}" title="${tip}" aria-label="${tip}">${ico}</button>`;
+    const tools=(b,acts)=>`<span class="cv-tile-tools">${acts}${tool('remove',b.id,ICON.trash,'이 자리 지우기')}</span>`;
     const tiles=list.map(b=>{
       const name=E(b.label||KINDS[b.kind]);
-      if(b.kind==='figure'&&b.figure)return `<div class="cv-tile" title="${name} · 그림${b.figure.editable?.source?' · 5E':''}"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,`<button type="button" class="mini" data-cvslot-act="pick" data-cvslot="${b.id}" title="5E에서 다시 잘라 넣기">바꾸기</button>`)}</div><div class="cap"><b>${name}</b></div></div>`;
-      if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" title="${name} · 표 ${t.rows}×${t.cols}"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${E(c.value).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table>${tools(b,`<button type="button" class="mini" data-cvslot-act="table" data-cvslot="${b.id}">표 편집</button>`)}</div><div class="cap"><b>${name}</b></div></div>`;}
-      return `<div class="cv-tile empty"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="pick" data-cvslot="${b.id}">${ICON.pic}<span>그림 넣기</span></button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}">${ICON.table}<span>표 만들기</span></button></span>${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
+      if(b.kind==='figure'&&b.figure)return `<div class="cv-tile${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="${name} · 그림 · 두 번 누르면 편집"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,tool('edit',b.id,ICON.pencil,'편집 (두 번 누르기)')+tool('swap',b.id,ICON.swap,'바꾸기 — 클립보드·파일'))}${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}</div><div class="cap"><b>${name}</b></div></div>`;
+      if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" title="${name} · 표 ${t.rows}×${t.cols}"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${E(c.value).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
+      // 11-14(시안 1-1·2-4): 빈 칸은 아이콘 둘만(이름은 풍선). 그림 넣기를 누르면 클립보드·파일 중 고른다. 칸 빈 곳을 누르면 넣을 칸으로 골라진다.
+      return `<div class="cv-tile empty${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="눌러서 넣을 칸으로 고르기"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="add-pic" data-cvslot="${b.id}" title="그림 넣기 — 클립보드·파일" aria-label="그림 넣기">${ICON.pic}</button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}" title="표 만들기" aria-label="표 만들기">${ICON.table}</button></span>${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
     }).join('');
     // 칸 더하기는 하나: 빈 칸이 생기고, 그림을 가져올지 표를 만들지는 그 칸 안에서 고른다.
     return tiles?`<div class="cv-tiles" style="--cv-tiles:${Math.min(list.length,3)}">${tiles}</div>`:'<div class="cv-empty-hint">자료 없음 — 왼쪽 ＋로 칸을 만듭니다</div>';
@@ -834,7 +837,8 @@ export function createCardEditor(root,api){
       const lost=formLosses(x,k);if(lost.length){const n=lost.reduce((s,b)=>s+b.lines.filter(l=>l.text.trim()).length,0);void ask(`${FORMS[k].name}(으)로 바꾸면 ${lost[0].kind==='bogi'?'보기':'대화'} ${n}줄을 지웁니다. 바꿀까요?`,{title:'양식 바꾸기',ok:'바꾸기',doc:root.ownerDocument}).then(yes=>{if(yes)change();});return;}
       change();return;}
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
-    if(d.cvslotAct){api.slot(d.cvslotAct,x,d.cvslot);return;}
+    if(d.cvslotAct==='add-pic'||d.cvslotAct==='swap'){tileMenu(b,x,d.cvslot);return;}
+    if(d.cvslotAct){if(d.cvslotAct==='remove'&&tileSel===d.cvslot)setTileSel(null);api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}
       // 새 줄 하나만 끝에 덧붙인다(H7). 예전에는 모든 줄 글을 이어 붙였다가 줄바꿈으로 다시 나눠서, 한 줄 안에 줄바꿈이 있으면
       // 줄이 늘어나며 ○×·근거·id가 줄 순서대로 다른 문장에 다시 씌워졌다.
@@ -952,22 +956,50 @@ export function createCardEditor(root,api){
     const id=[...root.querySelectorAll('.cv-left .past-list figure.past')][pastZoom]?.querySelector('[data-cvlink]')?.dataset.cvlink,item=id&&pastItem(id),zimg=z.querySelector('.lp-zoom-pic img');if(item?.publicPath&&Array.isArray(item.box)&&zimg)zoomSharp(item,zimg);}
   onAnswersShown(()=>refreshZoomAnswers());
   // 서랍(11-13)에서 끌어 온 그림을 자료 칸에 놓기: 빈 칸 위면 그 칸, 아니면 빈 칸을 찾고 없으면 칸을 하나 더 만든다(3개까지).
-  root.addEventListener('dragover',e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();e.dataTransfer.dropEffect='copy';
-    root.querySelectorAll('.cv-drop-on').forEach(n=>n!==r&&n.classList.remove('cv-drop-on'));r.classList.add('cv-drop-on');});
-  root.addEventListener('dragleave',e=>{const r=e.target.closest?.('.cv-matrow');if(r&&!r.contains(e.relatedTarget))r.classList.remove('cv-drop-on');});
-  // 클립보드(11-14): 자료 칸에 그림 넣기 — 끌어 놓기와 클립보드 「넣기」가 같이 쓴다. tileId가 빈 칸이면 그 칸, 아니면 빈 칸, 없으면 칸을 하나 더(3개까지).
-  function insertClipFigure(it,tileId){const x=q();if(!it||!x)throw Error('문항 카드를 연 뒤 넣으세요.');
-    const ok=api.edit(()=>{let slot=tileId&&x.blocks.find(b=>b.id===tileId&&b.kind==='figure'&&!b.figure);
+  // 11-14(시안 review-1114 1-2): 넣을 칸 고르기·끌어 놓기·붙여넣기.
+  // · 클립보드 그림을 잡으면 넣을 수 있는 칸이 모두 옅게 켜지고, 그림이 가까이 간 칸 하나가 진하게 밝아진다(칸 밖이어도 가장 가까운 칸).
+  // · 칸을 골라 두지 않고 넣기(넣기 단추·두 번 누르기)하면 왼쪽 빈 칸부터 채운다. 칸을 골라 두면 그 칸에 넣는다(그림이 있으면 바꾼다, ⌘Z로 되돌림).
+  function setTileSel(id){tileSel=id||null;root.querySelectorAll('.cv-tile[data-cvtile]').forEach(t=>{const on=t.dataset.cvtile===tileSel;t.classList.toggle('is-target',on);let tag=t.querySelector('.cv-target-tag');if(on&&!tag){tag=document.createElement('span');tag.className='cv-target-tag';tag.textContent='여기에 넣기';t.querySelector('.pic')?.append(tag);}if(!on)tag?.remove();});window.fiveEClipboard?.sync?.();}
+  function tileName(id){const x=q(),b=x&&x.blocks.find(v=>v.id===id);return b?(b.label||KINDS[b.kind]):'';}
+  function clipLabel(){return tileSel&&tileName(tileSel)?`자료 칸 ${tileName(tileSel)}에 넣기`:'자료 칸에 넣기';}
+  root.addEventListener('click',e=>{const t=e.target.closest?.('.cv-tile[data-cvtile]');if(!t||e.target.closest('button,a,input,textarea,select'))return;
+    const b=q()?.blocks.find(v=>v.id===t.dataset.cvtile);if(!b||b.kind!=='figure')return;setTileSel(tileSel===b.id?null:b.id);});
+  root.addEventListener('dblclick',e=>{const img=e.target.closest?.('.cv-tile[data-cvtile] .pic img');if(!img)return;e.preventDefault();const x=q();if(x)api.slot('edit',x,img.closest('.cv-tile').dataset.cvtile);});
+  // 그림 넣기·바꾸기 메뉴: 클립보드에서 / 파일에서
+  let tileMenuEl=null;const closeTileMenu=()=>{tileMenuEl?.remove();tileMenuEl=null;};
+  function tileMenu(btn,x,id){closeTileMenu();const r=btn.getBoundingClientRect();tileMenuEl=document.createElement('div');tileMenuEl.className='cv-tile-menu';tileMenuEl.setAttribute('role','menu');
+    tileMenuEl.innerHTML=`<button type="button" role="menuitem" data-tm="clip">${ICON.pic}<span>클립보드에서<small>클립보드를 열고 이 칸에 넣기</small></span></button><button type="button" role="menuitem" data-tm="file">${ICON.page||ICON.pic}<span>파일에서<small>PNG·JPEG 그림 파일</small></span></button>`;
+    Object.assign(tileMenuEl.style,{left:`${Math.round(r.left)}px`,top:`${Math.round(r.bottom+4)}px`});document.body.append(tileMenuEl);
+    tileMenuEl.addEventListener('click',ev=>{const k=ev.target.closest('[data-tm]')?.dataset.tm;if(!k)return;closeTileMenu();if(k==='file'){api.slot('file',x,id);return;}setTileSel(id);window.fiveEClipboard?.open?.();});
+    tileMenuEl.querySelector('button')?.focus();}
+  document.addEventListener('pointerdown',e=>{if(tileMenuEl&&!e.target.closest('.cv-tile-menu'))closeTileMenu();},true);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tileMenuEl){e.preventDefault();closeTileMenu();}});
+  // 끌기: 잡는 순간 칸들을 켜고, 가까운 칸을 밝힌다.
+  const liveTiles=()=>[...root.querySelectorAll('.cv-tile[data-cvtile]')].filter(t=>q()?.blocks.find(v=>v.id===t.dataset.cvtile)?.kind==='figure');
+  function nearTile(e){const tiles=liveTiles();if(!tiles.length)return null;const box=tiles.map(t=>t.getBoundingClientRect()),M=90;
+    const L=Math.min(...box.map(r=>r.left)),R=Math.max(...box.map(r=>r.right)),T=Math.min(...box.map(r=>r.top)),B=Math.max(...box.map(r=>r.bottom));
+    if(e.clientX<L-M||e.clientX>R+M||e.clientY<T-M||e.clientY>B+M)return null;
+    let best=null,bd=Infinity;tiles.forEach((t,i)=>{const r=box[i],dx=Math.max(r.left-e.clientX,0,e.clientX-r.right),dy=Math.max(r.top-e.clientY,0,e.clientY-r.bottom),d=dx*dx+dy*dy;if(d<bd){bd=d;best=t;}});return best;}
+  const clearNear=()=>root.querySelectorAll('.cv-drop-near').forEach(n=>n.classList.remove('cv-drop-near'));
+  document.addEventListener('dragstart',e=>{if(isDrawerDrag(e.dataTransfer))root.classList.add('cv-drag-live');});
+  document.addEventListener('dragend',()=>{root.classList.remove('cv-drag-live');clearNear();});
+  root.addEventListener('dragover',e=>{if(!isDrawerDrag(e.dataTransfer))return;root.classList.add('cv-drag-live');const t=nearTile(e);if(t&&t.classList.contains('cv-drop-near')){e.preventDefault();e.dataTransfer.dropEffect='copy';return;}clearNear();if(!t)return;e.preventDefault();e.dataTransfer.dropEffect='copy';t.classList.add('cv-drop-near');});
+  root.addEventListener('dragleave',e=>{if(!root.contains(e.relatedTarget))clearNear();});
+  // 클립보드(11-14): 자료 칸에 그림 넣기 — 끌어 놓기와 클립보드 「넣기」가 같이 쓴다.
+  // tileId(끌어 놓은 칸) → 골라 둔 칸 → 왼쪽 빈 칸 → 칸을 하나 더(3개까지). 고른 칸에 그림이 있으면 바꾼다.
+  function insertClipFigure(it,tileId=tileSel){const x=q();if(!it||!x)throw Error('문항 카드를 연 뒤 넣으세요.');tileSel=null;// 넣은 뒤 다시 그릴 때 「고른 칸」 표시가 남지 않게 먼저 푼다
+    const ok=api.edit(()=>{let slot=tileId&&x.blocks.find(b=>b.id===tileId&&b.kind==='figure');
       if(!slot)slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);
-      if(!slot){const L=materialLayout(x);if(!L||slotsOf(x).length!==L.count)throw Error('자료가 상자·묶음 안에 섞여 있어 여기에 넣을 수 없습니다.');if(L.count>=3)throw Error('자료 칸은 3개까지입니다. 빈 칸을 만들거나 칸 하나를 지운 뒤 넣으세요.');
+      if(!slot){const L=materialLayout(x);if(!L||slotsOf(x).length!==L.count)throw Error('자료가 상자·묶음 안에 섞여 있어 여기에 넣을 수 없습니다.');if(L.count>=3)throw Error('자료 칸은 3개까지입니다. 칸을 골라 바꾸거나 칸 하나를 지운 뒤 넣으세요.');
         setMaterialLayout(x,{count:L.count+1});slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);}
       if(!slot)throw Error('빈 자료 칸을 만들지 못했습니다.');
       slot.figure={name:`${it.name||'클립보드 그림'}.png`.slice(0,200),data:it.src,...(it.w?{width:it.w,height:it.h}:{})};});
-    if(ok===false)throw Error('자료 칸에 넣지 못했습니다 — 아래 상태 줄의 이유를 확인하세요.');}
-  root.addEventListener('drop',async e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();r.classList.remove('cv-drop-on');
-    const tileId=e.target.closest('.cv-tile')?.querySelector('[data-cvslot]')?.dataset.cvslot;let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}
+    if(ok===false)throw Error('자료 칸에 넣지 못했습니다 — 아래 상태 줄의 이유를 확인하세요.');
+    tileSel=null;window.fiveEClipboard?.sync?.();}
+  root.addEventListener('drop',async e=>{if(!isDrawerDrag(e.dataTransfer))return;const t=nearTile(e);root.classList.remove('cv-drag-live');clearNear();if(!t)return;e.preventDefault();
+    let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}
     if(!it){api.status?.('클립보드 그림을 읽지 못했습니다.',true);return;}
-    try{insertClipFigure(it,tileId);if(it.moving)void clipConsume(it.id);}catch(err){api.status?.(err.message,true);}});
+    try{insertClipFigure(it,t.dataset.cvtile);if(it.moving)void clipConsume(it.id);}catch(err){api.status?.(err.message,true);}});
   root.addEventListener('click',e=>{if(!e.target.closest('[data-cvanswers]'))return;e.stopPropagation();setAnswersShown(!answersShown());});
   // 고르는 중에는 그림을 누르기만 해도 골라진다(두 번 눌러 크게 보기는 고르기를 마친 뒤).
   root.addEventListener('click',e=>{if(!pastPick.size)return;const f=e.target.closest('.cv-left .past-list figure.past');if(!f||e.target.closest('button,a,input,textarea,select'))return;const id=f.querySelector('[data-cvpick]')?.dataset.cvpick;if(id)togglePick(id,e.shiftKey);});
@@ -993,7 +1025,7 @@ export function createCardEditor(root,api){
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
-    insertClipFigure,clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
+    insertClipFigure,clipLabel,clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
     confirmSwitch,confirmBoardSwitch,setCard(on){if(on&&!bench.card){panels.rightOpen=true;store.set('rightOpen',true);}/* 11-14: 문항 카드를 열면 조판도 같이 연다(카드 2 : 조판 1이 기본) */bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
     toggleLib(){panels.lib=!panels.lib;store.set('lib',panels.lib);if(!root.hidden&&!root.closest('[hidden]'))render();},libOn:()=>!!panels.lib,cardOn:()=>bench.card&&!!q(),
     benchBusy:()=>!!bench.board||(bench.card&&!!q()),ideaState:()=>bench.board?{id:bench.board}:null,aimField,resetIdea(){},

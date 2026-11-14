@@ -148,7 +148,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     body.querySelectorAll('.clp-i').forEach(n => n.setAttribute('aria-selected', String(n.dataset.clpId === sel)));
     const h = host(), it = items.find(i => i.id === sel), go = el.querySelector('[data-clp="go"]');
     go.disabled = !h || !it || (h.accepts && !h.accepts(it));
-    go.textContent = picking ? '고르기' : h ? h.label : '넣기';// 「넣기 · 캔버스에 넣기」처럼 겹치던 말을 하나로
+    go.textContent = picking ? '고르기' : h ? labelOf(h) : '넣기';// 「넣기 · 캔버스에 넣기」처럼 겹치던 말을 하나로
     go.title = !h ? '지금 화면에는 넣을 자리가 없습니다 — 끌어서 원하는 칸에 놓거나, 넣을 화면을 연 뒤 넣기' : 'Enter · 두 번 누르기';
   }
   const visible = () => items.filter(i => (!filters.kind || i.kind === filters.kind) && (!filters.src || i.source === filters.src) && (!filters.q || `${i.name} ${i.source}`.toLowerCase().includes(filters.q.toLowerCase())) && (!picking?.kinds || picking.kinds.includes(i.kind)));
@@ -168,18 +168,20 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     grid.classList.toggle('multi', chosen.length > 0);
     big.querySelector('.clpb-acts').hidden = !chosen.length;// 아무것도 안 골랐을 때는 계속 두기·지우기·선택 해제를 숨긴다(11-14: 무슨 단추인지 가늠 안 됨)
     big.querySelector('[data-clpb="pin"] span').textContent = chosen.length && chosen.every(i => i.pinned) ? '계속 두기 풀기' : '계속 두기';
-    go.textContent = picking ? (picking.label || '고르기') : h ? h.label : '넣기';
+    go.textContent = picking ? (picking.label || '고르기') : h ? labelOf(h) : '넣기';
     go.disabled = !chosen.length || (!picking && (!h || (h.accepts && chosen.some(i => !h.accepts(i)))));
   }
+  // 넣을 자리 이름이 상황에 따라 바뀌는 곳(문항 카드에서 고른 칸 등)은 label을 함수로 준다(11-14).
+  const labelOf = h => typeof h.label === 'function' ? h.label() : h.label;
   async function refresh() { await load(); if (open) drawSide(); if (bigOn) drawBig(); onCount?.(items.length); }
   let onCount = null;
   onClipChange(() => void refresh());
   async function insert(list) {
     if (picking) { const p = picking; picking = null; closeBig(); p.resolve(list); return; }
     const h = host(); if (!h) { say('지금 화면에는 넣을 자리가 없습니다 — 원하는 칸으로 끌어 놓으세요'); return; }
-    let done = 0;
+    let done = 0; const name = labelOf(h);
     for (const it of list) { if (h.accepts && !h.accepts(it)) continue; try { await h.insert(it); done++; await clipConsume(it.id); } catch (e) { say(e?.message || '넣지 못했습니다'); return; } }
-    if (done) say(`${h.label.replace(/에 넣기$/, '')}에 넣었습니다 · ${clipKey('⌘Z')}로 되돌리기`);
+    if (done) say(`${name.replace(/에 넣기$/, '')}에 넣었습니다 · ${clipKey('⌘Z')}로 되돌리기`);
   }
   function set(v) { open = v; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
   function openBig({ pick = null } = {}) { picking = pick; multi.clear(); if (pick) filters = { kind: '', src: '', q: '' }; bigOn = true; big.classList.add('show'); void refresh(); requestAnimationFrame(() => grid.focus({ preventScroll: true })); if (!pick) void followOS?.(); }
@@ -247,6 +249,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     // 가져오기 자리의 「클립보드에서」: 크게 보기를 고르기 모드로 열어 고른 항목을 돌려준다.
     pick: ({ kinds = ['img', 'graph', 'obj'], multiple = false, label = '고르기' } = {}) => new Promise(resolve => { if (open) set(false); openBig({ pick: { kinds, multiple, label, resolve } }); }),
     onCount: fn => { onCount = fn; fn(items.length); }, refresh,
+    sync: () => { if (open) syncSide(); if (bigOn) syncBig(); },
   };
 }
 

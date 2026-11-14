@@ -178,7 +178,10 @@ function slotAction(action,q,id){
   const b=q.blocks.find(x=>x.id===id);if(!b)return;
   if(action==='pick')return pickFigure(q,id);
   if(action==='file'){imageTarget={qid:q.id,key:'block:'+id};$('#figure-file').click();return;}
-  if(action==='edit'){window.parent.postMessage({channel:'5e-question-sheet',action:'edit-figure',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure||null},OWN);return;}
+  // 11-14: 편집 = 카드 위에 떠오르는 「그림 편집 중」 창(그래프 객체면 그래프 창). 칸 자리에서 떠오르도록 칸 위치를 같이 보낸다.
+  if(action==='edit'){if(!b.figure?.data){status('먼저 그림을 넣은 뒤 편집하세요.',true);return;}if(!embedded){status('그림 편집은 5E 안에서 연 문항 창에서 쓸 수 있습니다.',true);return;}
+    const r=document.querySelector(`[data-cvtile="${id}"] .pic`)?.getBoundingClientRect();
+    window.parent.postMessage({channel:'5e-question-sheet',action:'edit-figure',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure,rect:r?{x:r.left,y:r.top,w:r.width,h:r.height}:null},OWN);return;}
   if(action==='table')return openSlots(q,id);
   // 11-11: 카드 그림 → AI 이미지 변환(5E 창). 결과는 figure-ready로 이 자리에 돌아온다.
   if(action==='ai-image'){if(!b.figure?.data){status('먼저 그림을 넣은 뒤 변환하세요.',true);return;}if(!embedded){status('AI 이미지 변환은 5E 안에서 연 문항 창에서 쓸 수 있습니다.',true);return;}window.parent.postMessage({channel:'5e-question-sheet',action:'ai-figure',kind:'image',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure},OWN);status('AI 이미지 창에서 다시 그린 뒤 「문항 카드에 넣기」를 누르면 이 그림 자리에 바뀝니다.');return;}
@@ -841,7 +844,7 @@ function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
 // 5E 클립보드(11-14, 옛 서랍): 왼쪽 메뉴 맨 아래 「클립보드」·⇧⌘V로 여는 오른쪽 서랍. 넣는 자리 = 열린 문항 카드의 자료 칸, 아니면 열린 아이디어 판.
 const clipboard=mountClipboard(document,{top:52,onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);},hosts:[
-  {active:()=>view.name==='card'&&!!cardEditor?.clipCardOn?.(),label:'자료 칸에 넣기',accepts:it=>!!it.src,insert:it=>cardEditor.insertClipFigure(it)},
+  {active:()=>view.name==='card'&&!!cardEditor?.clipCardOn?.(),label:()=>cardEditor.clipLabel?.()||'자료 칸에 넣기',accepts:it=>!!it.src,insert:it=>cardEditor.insertClipFigure(it)},
   {active:()=>(view.name==='card'&&!!cardEditor?.clipBoardOn?.())||(view.name==='ideas'&&!!ideaBoard?.boardId?.()&&ideaBoard.el.isConnected),label:'판에 넣기',insert:it=>{ideaBoard.addClip(it);}},
 ]});
 window.fiveEClipboard=clipboard;clipboard.onCount(n=>{if(view.clipCount!==n){view.clipCount=n;renderNav($('.side'),data,view);}});
@@ -1232,6 +1235,7 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(act==='remove'){mutate(()=>{q.blocks=q.blocks.filter(b=>b.id!==id);q.references=q.references.filter(r=>r.target!==id);});return;}
     if(act==='add-figure'||act==='add-table'){const kind=act==='add-figure'?'figure':'table',side=q.blocks.find(b=>b.kind==='group'&&b.layout==='나란히'&&q.blocks.some(c=>c.parent===b.id&&(c.kind==='figure'||c.kind==='table'))),parent=side?.id||null;let made=null;
       if(mutate(()=>{made=block(kind,parent,nextMaterialLabel(q,parent,kind));q.blocks.push(made);})&&kind==='table')openSlots(q,made.id);return;}
+    return slotAction(act,q,id);// 편집·파일·AI 변환(11-14)
   },
   sheet:()=>show('desk'),
   choiceTable:()=>{sheetView='tables';show('desk');renderSheetView();},

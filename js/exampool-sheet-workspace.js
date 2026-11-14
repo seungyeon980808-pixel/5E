@@ -107,6 +107,10 @@ export function initQuestionSheet(state,services,examWorkspace){
     let {width,height}=d.image;if(!(width>0&&height>0)){try{const i=new Image();i.src=d.image.data;await i.decode();width=i.naturalWidth;height=i.naturalHeight;}catch{}}
     host.hidden=false;syncAppLock?.();
     frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'figure-ready',qid:card.qid,key:card.key,figure:{name:d.name||'AI 결과',data:d.image.data,width,height}},OWN);});
+  // 5E_image에서 자세히(정밀 편집): 원본을 5E 그림 화면에 열고 「5E_exam에 반영」으로 이 자리에 다시 넣는다.
+  async function detailEdit(m,send){const source=m.figure?.editable?.source;if(!source)throw Error('이 그림에는 5E 원본이 없습니다.');const assetId=m.key.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,80),linked=state.get().pages.find(p=>p.meta?.exampoolLink?.questionId===m.qid&&p.meta.exampoolLink.assetId===assetId);if(linked)services.switchPage(state,linked.id);else{const page=services.prepareLoadedProject(copy(source)).active;page.id='pool_'+crypto.randomUUID();page.meta={...page.meta,exampoolLink:{questionId:m.qid,assetId}};state.update(v=>v.pages.push(page));services.switchPage(state,page.id);}services.centerView();
+        // 편집기에서 수정: 5E 그림 편집기로 넘어가 원본을 고친 뒤, 보낼 영역을 확인하고 '5E_exam에 반영'으로 그 자리에 다시 넣는다.
+        await pickFigure(m,send,{bounds:m.figure?.editable?.render?.bounds,apply:'5E_exam에 반영',cancel:'돌아가기'});}
   window.addEventListener('message',async e=>{
     if((!FILE_MODE&&e.origin!==location.origin)||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},OWN);
@@ -124,6 +128,8 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(m.action==='library-pick'){void pickFromLibrary(m,send);return;}
     if(m.action==='figure-create'){engines().then(e=>m.kind==='graph'?e.graph({qid:m.qid,description:m.description,prior:m.prior?.graph||null}):e.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[],prior:m.prior?.data||null})).then(result=>send({action:'figure-made',result:{kind:m.kind,...result}}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
     if(m.action==='figure-edit-graph'){engines().then(e=>e.editGraph(m.graph)).then(result=>send({action:'figure-made',result:result?{kind:'graph',edited:true,...result}:null,cancelled:!result}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
+    // 11-14(시안 review-1114 1-4·1-5): 카드 칸 그림 편집 — 그래프 객체면 그래프 창, 아니면 5E_hwp와 같은 「그림 편집 중」 창.
+    if(m.action==='edit-figure'){import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration').then(x=>x.editCardFigure(m,{send,state,services,frame,onDetail:d=>{if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;detailEdit(d,send).catch(err=>send({error:err.message})).finally(()=>{busy=false;});}})).catch(err=>send({error:err.message||String(err)}));return;}
     if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;
     try {
       if(m.action==='exam-handoff'){
@@ -141,9 +147,7 @@ export function initQuestionSheet(state,services,examWorkspace){
       if(m.action==='capture'){await captureFigure(m,send);}
       if(m.action==='pick-figure'){await pickFigure(m,send);return;}
       if(m.action==='read-figure'){const figure=copy(m.figure),bytes=Uint8Array.from(atob(figure.data.split(',')[1]),c=>c.charCodeAt(0)),original=readEditablePng(bytes,services.prepareLoadedProject);if(original)figure.editable={...original,png:figure.data};send({action:'figure-ready',figure});}
-      if(m.action==='edit-figure'){const source=m.figure?.editable?.source;if(!source)throw Error('이 그림에는 5E 원본이 없습니다.');const assetId=m.key.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,80),linked=state.get().pages.find(p=>p.meta?.exampoolLink?.questionId===m.qid&&p.meta.exampoolLink.assetId===assetId);if(linked)services.switchPage(state,linked.id);else{const page=services.prepareLoadedProject(copy(source)).active;page.id='pool_'+crypto.randomUUID();page.meta={...page.meta,exampoolLink:{questionId:m.qid,assetId}};state.update(v=>v.pages.push(page));services.switchPage(state,page.id);}services.centerView();
-        // 편집기에서 수정: 5E 그림 편집기로 넘어가 원본을 고친 뒤, 보낼 영역을 확인하고 '5E_exam에 반영'으로 그 자리에 다시 넣는다.
-        await pickFigure(m,send,{bounds:m.figure?.editable?.render?.bounds,apply:'5E_exam에 반영',cancel:'돌아가기'});return;}
+      if(m.action==='edit-figure-detail'){await detailEdit(m,send);return;}
     }catch(error){send({error:error.message});}finally{busy=false;}
   });
   if(new URLSearchParams(location.search).get('sheet')==='1')open();
