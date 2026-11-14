@@ -51,7 +51,7 @@ export function initButtonDesign(doc = document) {
     // 10-24 시안 20: 좌표축 + 곡선 아이콘. 11-07(시안 graph-hub-1107 G1): 이름 「그래프」 — 올리거나 누르면 세 갈래.
     graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4v16h16"/><path d="M6 16c2.3-6.2 4.5-8 6.4-5.3s3.1 .9 4.4-3.2"/><path d="M19.5 2.5v4M17.5 4.5h4"/></svg><span class="search-trigger-label">AI 그래프</span>';
     // 11-11: 이름 「AI 그래프」(AI 이미지와 짝), 아이콘에 같은 반짝임 표시.
-    graph.title = 'AI 그래프 · 직접 만들기 · 사진에서 복원 · AI와 대화로 만들기'; graph.setAttribute('aria-label', 'AI 그래프');
+    graph.title = 'AI 그래프 — 사진에서 복원 (대화로 만들기·직접은 AI 창 위 줄에서)'; graph.setAttribute('aria-label', 'AI 그래프');
     ai.before(graph);
   }
   // 11-11 사용자: 아래 줄 네 기능 모두 단축키 — ⇧⌘ + 첫 글자(윈도우 Ctrl+Shift).

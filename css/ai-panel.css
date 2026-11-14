@@ -3453,3 +3453,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel #ai-image-title {flex-wrap:wrap;row-gap:0;}
 #ai-image-panel #ai-image-title [data-ai-title-link] {flex-basis:100%;display:block;margin-top:1px;font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ds-ink-3,#8b949e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 #ai-image-panel #ai-image-title [data-ai-title-link][hidden] {display:none;}
+
+/* 11-14(시안 review-1114 5번 G4): 그래프 쪽 전환 줄은 「복원 · 대화로 만들기 · 직접」. 「직접」은 빈 그래프 편집기(전환 탭이 아니라 바로 여는 단추). */
+[data-ai-mode="image"] .ai-workflow-switch [data-ai-graph-direct] { display:none; }
+.ai-workflow-switch [data-ai-graph-direct] { margin-left:4px; box-shadow: inset 1px 0 0 var(--border); border-radius:0 5px 5px 0; }

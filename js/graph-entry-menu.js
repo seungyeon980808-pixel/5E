@@ -29,7 +29,9 @@ export function initGraphEntryMenu({ button = document.getElementById('graph-too
       ${row.shortcut ? `<kbd class="graph-entry-key" data-graph-entry-key>${formatShortcut(row.shortcut)}</kbd>` : ''}
     </button>`).join(''); // 11-11: 아래 설명 줄 삭제
   document.body.append(menu);
-  button.setAttribute('aria-haspopup', 'menu');
+  // 그래프 전환 줄의 「직접」 → 빈 그래프 편집기(11-14).
+  document.addEventListener('click', event => { if (event.target.closest?.('[data-ai-graph-direct]')) { event.preventDefault(); openGraphModal(); } });
+  if (false) button.setAttribute('aria-haspopup', 'menu');
   button.setAttribute('aria-controls', menu.id);
   button.setAttribute('aria-expanded', 'false');
   const rows = [...menu.querySelectorAll('[data-graph-entry]')];
@@ -86,8 +88,11 @@ export function initGraphEntryMenu({ button = document.getElementById('graph-too
     else openAiWorkflow?.(kind);
   }
 
+  // 11-14(시안 review-1114 5번 G3): 세 갈래 메뉴를 없애고 「AI 그래프」 하나 — 누르면 AI 창이 늘 「복원」으로 열린다.
+  // 대화로 만들기·직접은 AI 창 그래프 전환 줄에서. Lite·모바일은 예전처럼 편집기를 바로 연다.
+  const ONE_ENTRY = true;
   button.addEventListener('pointerenter', event => {
-    if (event.pointerType !== 'mouse' || !canShowMenu()) return;
+    if (ONE_ENTRY || event.pointerType !== 'mouse' || !canShowMenu()) return;
     keepOpen();
     if (!isOpen() && !openTimer) openTimer = setTimeout(() => { openTimer = 0; open('hover'); }, HOVER_OPEN_MS);
   });
@@ -96,6 +101,7 @@ export function initGraphEntryMenu({ button = document.getElementById('graph-too
   menu.addEventListener('pointerleave', event => { if (event.pointerType === 'mouse') scheduleClose(); });
   button.addEventListener('click', event => {
     if (!canShowMenu()) { close(); openGraphModal(); return; }
+    if (ONE_ENTRY) { close(); openAiWorkflow?.('graph'); return; }
     const keyboard = event.detail === 0;
     if (isOpen()) {
       // 올려서 막 펼쳐진 메뉴를 바로 누르면 닫지 않는다(올림 → 누름이 한 동작처럼 이어지게).
@@ -106,7 +112,7 @@ export function initGraphEntryMenu({ button = document.getElementById('graph-too
     open(keyboard ? 'keyboard' : 'click', { focus: keyboard });
   });
   button.addEventListener('keydown', event => {
-    if (!['ArrowUp', 'ArrowDown'].includes(event.key) || !canShowMenu()) return;
+    if (ONE_ENTRY || !['ArrowUp', 'ArrowDown'].includes(event.key) || !canShowMenu()) return;
     event.preventDefault();
     open('keyboard', { focus: true });
     if (event.key === 'ArrowUp') rows.at(-1)?.focus();
