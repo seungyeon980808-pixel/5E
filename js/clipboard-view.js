@@ -10,13 +10,13 @@ const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(naviga
 export const clipKey = mac => IS_MAC ? mac : mac.replace('⇧⌘', 'Ctrl+Shift+').replace('⌘', 'Ctrl+');
 const OS_NAME = IS_MAC ? '맥' : '윈도우';
 const PIN = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3z"/><path d="M12 14v6"/></svg>';
+const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3.5 8.5 3 3 6-7"/></svg>';
 const KIND = { img: '그림', graph: '그래프', eq: '수식', text: '글', obj: '5E 그림' };
 const FOLLOW_KEY = 'fivee-clip-follow', SIG_KEY = 'fivee-clip-os-sig';
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch { } } };
 export const clipFollowOn = () => store.get(FOLLOW_KEY, '1') !== '0';
 const E = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ago = t => { const m = Math.round((Date.now() - t) / 60000); if (m < 1) return '방금'; if (m < 60) return `${m}분 전`; const h = Math.round(m / 60); if (h < 24) return `${h}시간 전`; if (h < 48) return '어제'; const d = new Date(t); return `${d.getMonth() + 1}월 ${d.getDate()}일`; };
-const editable = t => !!t?.closest?.('input,textarea,select,[contenteditable=""],[contenteditable="true"],[contenteditable="plaintext-only"]');
 export const isOpenClipKey = e => (IS_MAC ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey) && e.shiftKey && !e.altKey && (e.code === 'KeyV' || e.key === 'V' || e.key === 'v');
 const readAsDataUrl = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
 const sizeOf = src => new Promise(res => { const i = new Image(); i.onload = () => res([i.naturalWidth, i.naturalHeight]); i.onerror = () => res([0, 0]); i.src = src; });
@@ -27,68 +27,82 @@ export async function clipAddFiles(files, source = '밖에서') {
 }
 
 const CSS = `
-.clp{--c-bg:var(--ds-raise,#161b22);--c-panel:var(--ds-panel,#0d1117);--c-line:var(--ds-line,#30363d);--c-ink:var(--ds-ink,#e6edf3);--c-ink3:var(--ds-ink-3,#7d8590);--c-sel:var(--ds-selected,rgba(177,186,196,.12));--c-acc:#58a6ff;
-  position:fixed;z-index:10100;top:var(--clp-top,56px);right:12px;bottom:12px;width:340px;max-width:calc(100vw - 24px);display:flex;flex-direction:column;border-radius:12px;background:var(--c-bg);border:1px solid var(--c-line);box-shadow:0 18px 44px rgba(0,0,0,.45);color:var(--c-ink);font:13px/1.4 -apple-system,'Apple SD Gothic Neo','Pretendard',sans-serif;
+/* 11-14 사용자: 색·곡률·단추를 프로그램 값(design-tokens)에 맞춤 — 곡률 4·6·10, 꽉 찬 파랑 단추 대신 투명 바탕 + 옅은 파랑 섞인 테두리 */
+.clp,.clpb-p{--c-bg:var(--ds-raise,#161b22);--c-line:var(--ds-line,#21262d);--c-line2:var(--ds-line-strong,#30363d);--c-ink:var(--ds-ink,#e6edf3);--c-ink2:var(--ds-ink-2,#b1bac4);--c-ink3:var(--ds-ink-3,#7d8590);
+  --c-sel:var(--ds-selected,rgba(47,129,247,.15));--c-acc:var(--ds-accent,#2f81f7);--c-acc-ink:var(--ds-accent-ink,#fff);--c-soft:var(--ds-selected-icon,#58a6ff);--c-r-sm:var(--ds-radius-sm,4px);--c-r:var(--ds-radius,6px);--c-r-lg:var(--ds-radius-lg,10px);
+  color:var(--c-ink);font:13px/1.4 -apple-system,'Apple SD Gothic Neo','Pretendard',sans-serif;-webkit-user-select:none;user-select:none}
+.clp input,.clpb-p input{-webkit-user-select:text;user-select:text}
+.clp :focus,.clpb :focus{outline:none}
+.clp button:focus-visible,.clpb button:focus-visible{outline:2px solid var(--ds-focus,rgba(88,166,255,.7));outline-offset:-2px}
+.clp .clip-ico{width:16px;height:16px;flex:none;color:var(--c-ink2)}
+.clp{position:fixed;z-index:10100;top:var(--clp-top,56px);right:12px;bottom:12px;width:340px;max-width:calc(100vw - 24px);display:flex;flex-direction:column;border-radius:var(--c-r-lg);background:var(--c-bg);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));
   opacity:0;visibility:hidden;transform:translateX(24px);pointer-events:none;transition:opacity .26s cubic-bezier(.32,.72,0,1),transform .32s cubic-bezier(.32,.72,0,1),visibility 0s linear .32s}
 .clp.show{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition-delay:0s}
-.clp .clip-ico{width:16px;height:16px;flex:none}
-.clp-h{display:flex;align-items:center;gap:6px;height:44px;padding:0 6px 0 12px;border-bottom:1px solid var(--c-line);flex:none}
-.clp-h b{font-weight:600}.clp-h .clp-n{color:var(--c-ink3);font-size:12px;margin-right:auto}
-.clp-ib{height:28px;min-width:28px;padding:0 8px;border:0;border-radius:7px;background:none;color:var(--c-ink3);cursor:pointer;font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:4px}
+.clp-h{display:flex;align-items:center;gap:4px;height:44px;padding:0 6px 0 12px;border-bottom:1px solid var(--c-line);flex:none}
+.clp-h b{font-weight:600;margin-left:4px}.clp-h .clp-n{color:var(--c-ink3);font-size:12px;margin:0 auto 0 4px}
+.clp-ib{height:28px;min-width:28px;padding:0 8px;border:0;border-radius:var(--c-r);background:none;color:var(--c-ink3);cursor:pointer;font:inherit;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center;gap:4px}
 .clp-ib:hover{background:var(--c-sel);color:var(--c-ink)}.clp-ib[aria-pressed=true]{background:var(--c-sel);color:var(--c-ink)}
-.clp-menu{position:absolute;top:40px;right:8px;z-index:2;min-width:230px;padding:6px;border-radius:9px;background:var(--c-bg);border:1px solid var(--c-line);box-shadow:0 12px 30px rgba(0,0,0,.4)}
-.clp-menu label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:6px;cursor:pointer}.clp-menu label:hover{background:var(--c-sel)}
+.clp-menu{position:absolute;top:40px;right:8px;z-index:2;min-width:230px;padding:4px;border-radius:var(--c-r);background:var(--c-bg);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55))}
+.clp-menu label{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--c-r-sm);cursor:pointer}.clp-menu label:hover{background:var(--c-sel)}
 .clp-menu small{display:block;padding:2px 8px 6px;color:var(--c-ink3);font-size:11.5px}
-.clp-b{flex:1;min-height:0;overflow:auto;padding:6px 8px 8px;outline:none}
+.clp-b{flex:1;min-height:0;overflow:auto;padding:6px 8px 8px}
 .clp-g{padding:8px 6px 4px;color:var(--c-ink3);font-size:11.5px}
-.clp-i{position:relative;display:flex;gap:10px;align-items:center;padding:6px;border-radius:9px;cursor:pointer;outline:none}
-.clp-i:hover{background:var(--c-sel)}.clp-i[aria-selected=true]{background:var(--c-sel);box-shadow:inset 0 0 0 1px var(--c-acc)}
-.clp-t{flex:none;width:64px;height:48px;border-radius:6px;background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px var(--c-line)}
+.clp-i{position:relative;display:flex;gap:10px;align-items:center;padding:6px;border-radius:var(--c-r);cursor:pointer}
+.clp-i:hover{background:var(--c-sel)}.clp-i[aria-selected=true]{background:var(--c-sel);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c-soft) 55%,transparent)}
+.clp-t{flex:none;width:64px;height:48px;border-radius:var(--c-r-sm);background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px var(--c-line)}
 .clp-t img{max-width:100%;max-height:100%;pointer-events:none}
 .clp-m{flex:1;min-width:0}.clp-m b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .clp-m span{display:flex;gap:6px;align-items:center;margin-top:3px;color:var(--c-ink3);font-size:11.5px;white-space:nowrap;overflow:hidden}
-.clp-k{padding:0 6px;border-radius:4px;background:var(--c-sel);color:var(--c-ink);font-size:11px;line-height:18px}
-.clp-mv{padding:0 6px;border-radius:4px;background:rgba(210,153,34,.18);color:#d29922;font-size:11px;line-height:18px}
+.clp-k{padding:0 5px;border-radius:var(--c-r-sm);background:var(--c-sel);color:var(--c-ink2);font-size:11px;line-height:18px}
+.clp-mv{padding:0 5px;border-radius:var(--c-r-sm);background:rgba(210,153,34,.16);color:#d29922;font-size:11px;line-height:18px}
 .clp-a{display:flex;flex-direction:column;gap:2px;opacity:0;transition:opacity .12s}.clp-i:hover .clp-a,.clp-i[aria-selected=true] .clp-a,.clp-a .on{opacity:1}
-.clp-a button{display:grid;place-items:center;width:24px;height:22px;border:0;border-radius:5px;background:none;color:var(--c-ink3);cursor:pointer;font-size:12px}.clp-a button:hover{background:var(--c-sel);color:var(--c-ink)}
-.clp-a button.on{color:var(--c-acc)}
+.clp-a button{display:grid;place-items:center;width:24px;height:22px;border:0;border-radius:var(--c-r-sm);background:none;color:var(--c-ink3);cursor:pointer;font-size:12px}.clp-a button:hover{background:var(--c-sel);color:var(--c-ink)}
+.clp-a button.on{color:var(--c-soft)}
 .clp-e{padding:28px 14px;color:var(--c-ink3);font-size:12.5px;line-height:1.7;text-align:center}
 .clp-f{flex:none;border-top:1px solid var(--c-line);padding:10px}
-.clp-go{width:100%;height:34px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font:inherit;font-weight:600;cursor:pointer}
-.clp-go:disabled{background:var(--c-sel);color:var(--c-ink3);cursor:default;font-weight:500}
+.clp-go,.clpb-go{height:32px;border:1px solid color-mix(in srgb,var(--c-acc) 42%,var(--c-line2));border-radius:var(--c-r);background:transparent;color:var(--c-ink);font:inherit;font-weight:600;cursor:pointer;transition:background .12s,border-color .12s}
+.clp-go{width:100%}.clpb-go{padding:0 16px}
+.clp-go:hover:not(:disabled),.clpb-go:hover:not(:disabled){background:var(--c-sel);border-color:color-mix(in srgb,var(--c-acc) 65%,var(--c-line2))}
+.clp-go:disabled,.clpb-go:disabled{border-color:var(--c-line);color:var(--c-ink3);font-weight:500;cursor:default}
 .clp-f p{margin:7px 2px 0;color:var(--c-ink3);font-size:11.5px;line-height:1.5}
-.clp.drop,.clpb.drop .clpb-p{box-shadow:0 0 0 2px var(--c-acc),0 18px 44px rgba(0,0,0,.45)}
-.clpb{position:fixed;inset:0;z-index:10120;display:grid;place-items:center;background:rgba(1,4,9,.55);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s cubic-bezier(.32,.72,0,1),visibility 0s linear .22s;font:13px/1.4 -apple-system,'Apple SD Gothic Neo','Pretendard',sans-serif}
+.clp.drop,.clpb.drop .clpb-p{box-shadow:0 0 0 2px var(--c-soft),0 12px 32px rgba(0,0,0,.55)}
+.clpb{position:fixed;inset:0;z-index:10120;display:grid;place-items:center;background:rgba(1,4,9,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .22s cubic-bezier(.32,.72,0,1),visibility 0s linear .22s}
 .clpb.show{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s}
-.clpb-p{--c-bg:var(--ds-raise,#161b22);--c-line:var(--ds-line,#30363d);--c-ink:var(--ds-ink,#e6edf3);--c-ink3:var(--ds-ink-3,#7d8590);--c-sel:var(--ds-selected,rgba(177,186,196,.12));--c-acc:#58a6ff;
-  width:min(1240px,94vw);height:min(860px,88vh);display:flex;flex-direction:column;border-radius:14px;background:var(--c-bg);border:1px solid var(--c-line);box-shadow:0 30px 80px rgba(0,0,0,.55);color:var(--c-ink);transform:scale(.97);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+.clpb-p{position:relative;width:min(1240px,94vw);height:min(860px,88vh);display:flex;flex-direction:column;border-radius:var(--c-r-lg);background:var(--c-bg);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));transform:scale(.97);transition:transform .32s cubic-bezier(.32,.72,0,1)}
 .clpb.show .clpb-p{transform:none}
-.clpb-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 12px 10px 16px;border-bottom:1px solid var(--c-line)}
-.clpb-h b{font-weight:600;font-size:14px;margin-right:6px}
-.clpb-q{height:30px;width:200px;padding:0 10px;border-radius:7px;border:1px solid var(--c-line);background:transparent;color:var(--c-ink);font:inherit}
-.clpb-c{height:28px;padding:0 10px;border-radius:7px;border:0;background:none;color:var(--c-ink3);cursor:pointer;font:inherit;font-size:12.5px}
+.clpb-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 10px 10px 16px;border-bottom:1px solid var(--c-line)}
+.clpb-h b{font-weight:600;font-size:14px;margin-right:8px}
+.clpb-q{height:30px;width:200px;padding:0 10px;border-radius:var(--c-r);border:1px solid var(--c-line2);background:transparent;color:var(--c-ink);font:inherit}
+.clpb-q:focus{border-color:color-mix(in srgb,var(--c-acc) 55%,var(--c-line2))}
+.clpb-c{height:28px;padding:0 10px;border-radius:var(--c-r);border:0;background:none;color:var(--c-ink3);cursor:pointer;font:inherit;font-size:12.5px}
 .clpb-c:hover{color:var(--c-ink);background:var(--c-sel)}.clpb-c[aria-pressed=true]{background:var(--c-sel);color:var(--c-ink)}
+.clpb-kinds,.clpb-srcs{display:inline-flex;gap:2px}.clpb-srcs{padding-left:8px;margin-left:4px;border-left:1px solid var(--c-line)}.clpb-srcs:empty{display:none}
 .clpb-sp{flex:1}
-.clpb-g{outline:none;flex:1;min-height:0;overflow:auto;padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));grid-auto-rows:max-content;gap:14px}
-.clpb-i{position:relative;border-radius:10px;padding:8px;cursor:pointer;outline:none}
-.clpb-i:hover{background:var(--c-sel)}.clpb-i[aria-selected=true]{background:var(--c-sel);box-shadow:inset 0 0 0 1.5px var(--c-acc)}
-.clpb-i .clpb-t{height:150px;border-radius:7px;background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px var(--c-line)}
+.clpb-g{flex:1;min-height:0;overflow:auto;padding:14px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));grid-auto-rows:max-content;gap:14px}
+.clpb-i{position:relative;border-radius:var(--c-r-lg);padding:8px;cursor:pointer}
+.clpb-i:hover{background:var(--c-sel)}.clpb-i[aria-selected=true]{background:var(--c-sel);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c-soft) 60%,transparent)}
+.clpb-i .clpb-t{height:150px;border-radius:var(--c-r);background:#fff;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 0 1px var(--c-line)}
 .clpb-i .clpb-t img{max-width:100%;max-height:100%;pointer-events:none}
 .clpb-i b{display:block;margin-top:7px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .clpb-i span{display:flex;gap:6px;align-items:center;margin-top:3px;color:var(--c-ink3);font-size:11.5px;white-space:nowrap;overflow:hidden}
-.clpb-x{position:absolute;top:13px;left:13px;width:18px;height:18px;border-radius:5px;border:1.5px solid #8b949e;background:rgba(255,255,255,.9);display:grid;place-items:center;font-size:12px;color:#fff}
-.clpb-i[aria-selected=true] .clpb-x{background:#1f6feb;border-color:#1f6feb}
-.clpb-pin{position:absolute;top:12px;right:12px;font-size:12px;color:var(--c-acc)}
+.clpb-x{position:absolute;top:14px;left:14px;width:18px;height:18px;border-radius:var(--c-r-sm);border:1.5px solid color-mix(in srgb,var(--c-ink3) 80%,transparent);background:color-mix(in srgb,var(--c-bg) 70%,transparent);display:grid;place-items:center;color:var(--c-acc-ink);opacity:0;transition:opacity .12s}
+.clpb-x svg{width:12px;height:12px}
+.clpb-i:hover .clpb-x,.clpb-i[aria-selected=true] .clpb-x,.clpb-g.multi .clpb-x{opacity:1}
+.clpb-i[aria-selected=true] .clpb-x{background:var(--c-acc);border-color:var(--c-acc)}
+.clpb-pin{position:absolute;top:14px;right:14px;color:var(--c-soft)}
 .clpb-e{grid-column:1/-1;padding:60px 0;text-align:center;color:var(--c-ink3)}
-.clpb-f{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--c-line)}
-.clpb-f .clpb-n{color:var(--c-ink3);margin-right:auto}
-.clpb-go{height:32px;padding:0 16px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font:inherit;font-weight:600;cursor:pointer}.clpb-go:disabled{background:var(--c-sel);color:var(--c-ink3);cursor:default}
-.clpb-one{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(1,4,9,.82);z-index:2}
-.clpb-one.show{display:flex}.clpb-one img{max-width:86vw;max-height:76vh;background:#fff;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.clpb-f{display:flex;align-items:center;gap:6px;min-height:52px;padding:8px 12px 8px 16px;border-top:1px solid var(--c-line)}
+.clpb-f .clpb-n{color:var(--c-ink2);font-weight:500;margin-right:6px}
+.clpb-acts{display:inline-flex;gap:2px}.clpb-acts[hidden]{display:none}
+.clpb-acts .clpb-c{display:inline-flex;align-items:center;gap:5px}
+.clpb-acts .clpb-c svg{width:13px;height:13px}
+.clpb-hint{margin-left:auto;margin-right:10px;color:var(--c-ink3);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clpb-one{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(1,4,9,.82);border-radius:var(--c-r-lg);z-index:2}
+.clpb-one.show{display:flex}.clpb-one img{max-width:86%;max-height:76%;background:#fff;border-radius:var(--c-r);box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .clpb-one p{color:#e6edf3;margin:0}
-.clp-toast{position:fixed;z-index:10200;left:50%;bottom:28px;transform:translate(-50%,8px);opacity:0;padding:9px 14px;border-radius:9px;background:#161b22;color:#e6edf3;border:1px solid #30363d;box-shadow:0 12px 30px rgba(0,0,0,.4);font:13px -apple-system,'Apple SD Gothic Neo',sans-serif;transition:opacity .2s,transform .28s cubic-bezier(.32,.72,0,1);pointer-events:none}
+.clp-toast{position:fixed;z-index:10200;left:50%;bottom:28px;transform:translate(-50%,8px);opacity:0;padding:9px 14px;border-radius:var(--ds-radius,6px);background:var(--ds-raise,#161b22);color:var(--ds-ink,#e6edf3);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));font:13px -apple-system,'Apple SD Gothic Neo',sans-serif;transition:opacity .2s,transform .28s cubic-bezier(.32,.72,0,1);pointer-events:none}
 .clp-toast.show{opacity:1;transform:translate(-50%,0)}
-:root[data-mode="lite"] .clp,:root[data-mode="lite"] .clpb-p{--c-bg:#fff;--c-line:#d8dee4;--c-ink:#1f2328;--c-ink3:#656d76;--c-sel:rgba(9,105,218,.08)}
+:root[data-mode="lite"] .clp,:root[data-mode="lite"] .clpb-p{--c-bg:#fff;--c-line:#e2e3e6;--c-line2:#d5d8dd;--c-ink:#1b1e23;--c-ink2:#2f343a;--c-ink3:#666b73;--c-sel:rgba(9,105,218,.08);--c-acc:#0969da;--c-soft:#0969da}
 @media (prefers-reduced-motion:reduce){.clp,.clpb,.clpb-p,.clp-toast{transition:none}}
 `;
 
@@ -110,7 +124,8 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     <span class="clpb-kinds"></span><span class="clpb-srcs"></span><span class="clpb-sp"></span>
     <button type="button" class="clpb-c" data-clpb="side" title="옆 서랍으로 (Esc)">옆 서랍으로</button><button type="button" class="clpb-c" data-clpb="close" aria-label="닫기">×</button></div>
     <div class="clpb-g" role="listbox" aria-multiselectable="true" tabindex="0"></div>
-    <div class="clpb-f"><span class="clpb-n"></span><button type="button" class="clpb-c" data-clpb="pin">고정</button><button type="button" class="clpb-c" data-clpb="del">빼기</button><button type="button" class="clpb-c" data-clpb="clear">고르기 풀기</button><button type="button" class="clpb-go" data-clpb="go" disabled>넣기</button></div>
+    <div class="clpb-f"><span class="clpb-n"></span><span class="clpb-acts" hidden><button type="button" class="clpb-c" data-clpb="pin" title="고른 것을 계속 둡니다 — 50개가 넘어도 지워지지 않음">${PIN}<span>계속 두기</span></button><button type="button" class="clpb-c" data-clpb="del" title="고른 것을 클립보드에서 지웁니다 (Delete)">클립보드에서 지우기</button><button type="button" class="clpb-c" data-clpb="clear" title="고른 것을 모두 풉니다">선택 해제</button></span>
+      <span class="clpb-hint">${clipKey('⌘')}·⇧ 누르며 고르면 여러 개 · Space 한 장 크게 · 두 번 누르면 바로 넣기</span><button type="button" class="clpb-go" data-clpb="go" disabled>넣기</button></div>
     <div class="clpb-one" aria-hidden="true"><img alt=""><p></p></div></section>`;
   doc.body.appendChild(big);
   const toast = doc.createElement('div'); toast.className = 'clp-toast'; toast.setAttribute('role', 'status'); doc.body.appendChild(toast);
@@ -128,7 +143,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
       : `<div class="clp-e">비어 있음<br>객체를 고르고 ${clipKey('⌘C')}(복사)·${clipKey('⌘X')}(잘라내기)로 넣거나,<br>라이브러리에서 「클립보드에 넣기」, 그림 파일을 여기로 끌어 오세요.</div>`;
     const h = host(), it = items.find(i => i.id === sel), go = el.querySelector('[data-clp="go"]');
     go.disabled = !h || !it || (h.accepts && !h.accepts(it));
-    go.textContent = picking ? '고르기' : h ? `넣기 · ${h.label}` : '넣기';
+    go.textContent = picking ? '고르기' : h ? h.label : '넣기';// 「넣기 · 캔버스에 넣기」처럼 겹치던 말을 하나로
     go.title = !h ? '지금 화면에는 넣을 자리가 없습니다 — 끌어서 원하는 칸에 놓거나, 넣을 화면을 연 뒤 넣기' : 'Enter · 두 번 누르기';
   }
   const visible = () => items.filter(i => (!filters.kind || i.kind === filters.kind) && (!filters.src || i.source === filters.src) && (!filters.q || `${i.name} ${i.source}`.toLowerCase().includes(filters.q.toLowerCase())) && (!picking?.kinds || picking.kinds.includes(i.kind)));
@@ -137,13 +152,15 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     big.querySelector('.clpb-kinds').innerHTML = `<button type="button" class="clpb-c" data-clpb-kind="" aria-pressed="${!filters.kind}">전체</button>${kinds.map(k => `<button type="button" class="clpb-c" data-clpb-kind="${k}" aria-pressed="${filters.kind === k}">${E(KIND[k] || k)}</button>`).join('')}`;
     big.querySelector('.clpb-srcs').innerHTML = srcs.length > 1 ? `<button type="button" class="clpb-c" data-clpb-src="" aria-pressed="${!filters.src}">모든 출처</button>${srcs.map(s => `<button type="button" class="clpb-c" data-clpb-src="${E(s)}" aria-pressed="${filters.src === s}">${E(s)}</button>`).join('')}` : '';
     const list = visible();
-    grid.innerHTML = list.length ? list.map(it => `<div class="clpb-i" role="option" draggable="true" tabindex="-1" data-clp-id="${E(it.id)}" aria-selected="${multi.has(it.id)}" title="${E(it.name)} — ⌘·⇧ 누르기로 여러 개, Space 한 장 크게"><div class="clpb-t"><img src="${E(it.src)}" alt=""></div><span class="clpb-x">${multi.has(it.id) ? '✓' : ''}</span>${it.pinned ? `<span class="clpb-pin">${PIN}</span>` : ''}<b>${E(it.name)}</b><span>${meta(it)}</span></div>`).join('')
+    grid.innerHTML = list.length ? list.map(it => `<div class="clpb-i" role="option" draggable="true" tabindex="-1" data-clp-id="${E(it.id)}" aria-selected="${multi.has(it.id)}" title="${E(it.name)}"><div class="clpb-t"><img src="${E(it.src)}" alt=""></div><span class="clpb-x">${multi.has(it.id) ? CHECK : ''}</span>${it.pinned ? `<span class="clpb-pin">${PIN}</span>` : ''}<b>${E(it.name)}</b><span>${meta(it)}</span></div>`).join('')
       : `<div class="clpb-e">${items.length ? '조건에 맞는 항목이 없습니다' : '비어 있음 — 그림 파일을 여기로 끌어 오면 넣어 둡니다'}</div>`;
     const h = host(), chosen = items.filter(i => multi.has(i.id)), go = big.querySelector('[data-clpb="go"]');
     big.querySelector('.clpb-n').textContent = chosen.length ? `${chosen.length}개 고름` : `${list.length}개`;
-    go.textContent = picking ? (picking.label || '고르기') : h ? `넣기 · ${h.label}` : '넣기';
+    grid.classList.toggle('multi', chosen.length > 0);
+    big.querySelector('.clpb-acts').hidden = !chosen.length;// 아무것도 안 골랐을 때는 계속 두기·지우기·선택 해제를 숨긴다(11-14: 무슨 단추인지 가늠 안 됨)
+    big.querySelector('[data-clpb="pin"] span').textContent = chosen.length && chosen.every(i => i.pinned) ? '계속 두기 풀기' : '계속 두기';
+    go.textContent = picking ? (picking.label || '고르기') : h ? h.label : '넣기';
     go.disabled = !chosen.length || (!picking && (!h || (h.accepts && chosen.some(i => !h.accepts(i)))));
-    for (const k of ['pin', 'del', 'clear']) big.querySelector(`[data-clpb="${k}"]`).disabled = !chosen.length;
   }
   async function refresh() { await load(); if (open) drawSide(); if (bigOn) drawBig(); onCount?.(items.length); }
   let onCount = null;
@@ -192,7 +209,8 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   big.querySelector('.clpb-q').addEventListener('input', e => { filters.q = e.target.value.trim(); drawBig(); });
   // 열쇠: ⇧⌘V 열기·한 번 더 = 크게 보기, 서랍·크게 보기 안 움직임
   doc.addEventListener('keydown', e => {
-    if (isOpenClipKey(e)) { if (editable(e.target) && !el.contains(e.target) && !big.contains(e.target)) return; e.preventDefault(); e.stopPropagation();
+    // 11-14 사용자: 그림을 붙일 수 있는 곳이면 어디서든(글 입력칸에 커서가 있어도) ⇧⌘V로 연다 — 5E 입력칸은 글자만 받아 「서식 없이 붙이기」가 필요 없다.
+    if (isOpenClipKey(e)) { e.preventDefault(); e.stopPropagation();
       if (bigOn) { closeBig(); set(true); } else if (open) { set(false); openBig(); } else set(true); return; }
     if (bigOn) {
       if (e.target.closest?.('.clpb-q')) { if (e.key === 'Escape') { e.preventDefault(); e.target.blur(); } return; }

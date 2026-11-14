@@ -27,14 +27,21 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     assert.deepEqual((await list())[0],{name:'사각형',kind:'obj',source:'5E_image',moving:false,objects:true});
     await page.keyboard.press(MOD+'+KeyX');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).some(i=>i.moving);});
     await page.keyboard.press(MOD+'+KeyV');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return !(await m.clipList()).some(i=>i.moving);});
+    // 글 입력칸에 커서가 있어도 ⇧⌘V로 열린다(11-14: AI 그래프 창은 열자마자 입력칸에 커서가 있어 안 열렸다).
+    await page.evaluate(()=>{const i=document.createElement('input');i.id='clip-probe';i.style.cssText='position:fixed;left:300px;top:300px;z-index:5';document.body.append(i);i.focus();});
+    await page.keyboard.press(MOD+'+Shift+KeyV');await page.waitForSelector('.clp.show');await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.clp').classList.contains('show'));
+    await page.evaluate(()=>document.getElementById('clip-probe').remove());
     // ⇧⌘V 열기 → 한 번 더 = 크게 보기 → Esc = 옆 서랍 → Esc = 닫기
     await page.mouse.click(900,600);await page.keyboard.press(MOD+'+Shift+KeyV');await page.waitForSelector('.clp.show');
     await page.keyboard.press(MOD+'+Shift+KeyV');await page.waitForSelector('.clpb.show');
+    // 아무것도 안 골랐을 때는 계속 두기·지우기·선택 해제가 숨어 있고, 고르면 나온다. 뒤 화면은 흐리게.
+    assert.equal(await page.locator('.clpb-acts').isHidden(),true);await page.locator('.clpb-i').first().click();assert.equal(await page.locator('.clpb-acts').isVisible(),true);
+    assert.match(await page.locator('.clpb').evaluate(n=>getComputedStyle(n).backdropFilter||getComputedStyle(n).webkitBackdropFilter),/blur/);
     await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.clpb').classList.contains('show'));assert.equal(await page.locator('.clp.show').count(),1,'Esc in big view returns to the side drawer');
     await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.clp').classList.contains('show'));
     // 넣기(캔버스)
     await page.click('#clipboard-open');await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).click();
-    assert.equal((await page.locator('.clp-go').textContent()).trim(),'넣기 · 캔버스에 넣기');
+    assert.equal((await page.locator('.clp-go').textContent()).trim(),'캔버스에 넣기');
     const images=()=>page.evaluate(()=>document.querySelectorAll('#canvas image').length);const n0=await images();
     await page.locator('.clp-go').click();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n0);
     await page.keyboard.press('Escape');
@@ -47,7 +54,7 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     assert.match(await sheet.locator('[data-nav="drawer"]').getAttribute('title'),/^클립보드/);
     const figs=()=>sheet.evaluate(()=>document.querySelectorAll('#card-view .cv-tile img').length);const f0=await figs();
     await sheet.click('[data-nav="drawer"]');await sheet.locator('.clp-i',{hasText:'옛 서랍 그림'}).click();
-    assert.equal((await sheet.locator('.clp-go').textContent()).trim(),'넣기 · 자료 칸에 넣기');
+    assert.equal((await sheet.locator('.clp-go').textContent()).trim(),'자료 칸에 넣기');
     await sheet.locator('.clp-go').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile img').length>n,f0);
     assert.doesNotMatch(await sheet.evaluate(()=>document.querySelector('#status').textContent),/확인하세요/);
     await sheet.locator('.clp [data-clp="close"]').click();
@@ -58,7 +65,7 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     await page.waitForFunction(()=>window.fiveEClipHostHwp?.ready?.(),null,{timeout:120000});
     const svgLen=()=>page.evaluate(()=>window.fiveEHwpPalette.native.bridge().wasm.borrowDocumentHandle().renderPageSvg(0).length);const s0=await svgLen();
     await page.evaluate(()=>document.querySelector('[data-el-act="clip"]').click());await page.waitForSelector('.clp.show');
-    await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).click();assert.equal((await page.locator('.clp-go').textContent()).trim(),'넣기 · 커서 자리에 넣기');
+    await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).click();assert.equal((await page.locator('.clp-go').textContent()).trim(),'커서 자리에 넣기');
     await page.locator('.clp-go').click();await page.waitForFunction(n=>window.fiveEHwpPalette.native.bridge().wasm.borrowDocumentHandle().renderPageSvg(0).length>n+500,s0);
     assert.deepEqual(errors,[]);
   });
