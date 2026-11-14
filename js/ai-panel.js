@@ -6222,9 +6222,11 @@ ${chatText}` : ''}`;
     if (item && !item.sceneResult && !isGraphWorkflow(conversionKind) && Array.isArray(item.comments) && item.comments.length) {
       const fromChat = composeRequestFromChat();
       if (!fromChat) return;
+      // 11-14: 대화 글을 박스 수정에 직접 넘긴다 — 예전엔 대화 칸을 비운 뒤 박스 수정이 빈 대화 칸을 읽어 글이 통째로 빠졌다.
+      if (localEraseController?.getDraft(item)) { setStatus('먼저 수정 저장을 눌러 편집을 완료하세요.', 'warn'); return; }
       input.value = fromChat;
       chatInput.value = '';
-      sendButton.onclick();
+      void startScopedEdit(item, { chatText: fromChat });
       return;
     }
     submit("chat");
