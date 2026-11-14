@@ -302,7 +302,13 @@ export function createCardEditor(root,api){
       for(const c of n.children)anims.push(c.animate([{transform:`translateX(${k0}px)`},{transform:`translateX(${k1}px)`}],o));
       if(fade)anims.push(n.animate(fade,o));}
     // 1) 모든 칸의 마지막 자리·안 폭을 잰 값으로 고정(하나를 띄우면 다른 칸 흐름이 바뀌므로 먼저 다 잰 값을 쓴다)
-    for(const k of names){const t=now[k],n=t.node,f=before[k],z=Z[k]||1;lockKids(n,t.kids);
+    for(const k of names){const t=now[k],n=t.node,f=before[k],z=Z[k]||1;
+      // 11-14 사용자(설치판 녹화): 카드 글이 누르는 순간 마지막 폭으로 바뀌고 한쪽에 붙어, 반대쪽에 빈 흰 여백이 생겼다 사라졌다.
+      // 문항 카드는 칸 폭 자체를 같은 곡선으로 줄이고 늘려 글이 함께 자연스럽게 다시 배치되게 한다(카드 배치는 가벼워 프레임마다 해도 된다).
+      if(k==='card'&&f&&Math.abs(f.w-t.w)>=1){const prev=n.getAttribute('style');for(const [kk,v] of Object.entries({position:'absolute',top:(t.y-R.top)+'px',height:t.h+'px',margin:'0',flex:'none','z-index':String(z),'max-width':'none','min-width':'0'}))n.style.setProperty(kk,v,'important');
+        n.style.left=(t.x-R.left)+'px';n.style.width=t.w+'px';undo.push(()=>{if(prev==null)n.removeAttribute('style');else n.setAttribute('style',prev);});
+        anims.push(n.animate([{left:(f.x-R.left)+'px',width:f.w+'px'},{left:(t.x-R.left)+'px',width:t.w+'px'}],o));continue;}
+      lockKids(n,t.kids);
       if(f){slide(n,f,t,z);if(k==='ts'){tsF=f;tsT=t;}continue;}
       // 11-14 사용자: 「한 칸씩 쭉 밀리는 느낌」 — 조판은 카드 뒤에서 나오지 않고 화면 오른쪽 끝에서 들어오며 카드를 민다(나머지 새 칸과 같은 길).
       if(k==='ts'){const dx=R.right-t.x+gut;place(n,t,z);anims.push(n.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o));tsF={x:t.x+dx,w:t.w};tsT=t;continue;}
@@ -354,7 +360,7 @@ export function createCardEditor(root,api){
     if(boardOn)h+='<section class="cv-idea" data-pane="board" data-ideaslot></section>';
     if(brail){const bb=(api.data().ideas||[]).find(v=>v.id===board);h+=`<button type="button" class="pane-rail left cv-foldrail" data-pane="brail" data-cv="board-unfold" title="눌러서 아이디어 판을 카드 옆에 펴기" aria-label="아이디어 판 펴기"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M7 8.5h4v3H7zM13 8.5h4M13 11.5h3M7 14.5h10"/></svg><span>${E(bb?.title||'아이디어 판')}</span><small>눌러서 펴기</small></button>`;}
     if(cardOn&&!fold)h+=wide?`<button type="button" class="pane-rail mid" data-pane="card" data-cvview="card" aria-pressed="false" title="문항 카드로 돌아가기" aria-label="문항 카드 열기">${ICON.card}<span>문항 카드</span></button>`
-      :`<section class="cv-center" data-pane="card" style="--g:${boardOn?1:2}">${barHtml()}${formHtml(x)}</section>`;
+      :`<section class="cv-center" data-pane="card" style="--g:${boardOn||lib&&ts?1:2}">${barHtml()}${formHtml(x)}</section>`;
     if(ts)h+=rightHtml().replace('<aside class="cv-right"','<aside data-pane="ts" class="cv-right"');
     if(fold)h+=`<button type="button" class="pane-rail right cv-foldrail" data-pane="rail" data-cv="card-unfold" title="${lib&&!bench.fold?'눌러서 문항 카드 펴기 — 판은 2칸이 필요해 라이브러리가 접힙니다':'눌러서 문항 카드 펴기'}" aria-label="문항 카드 펴기">${ICON.card}<span>${E(questionTitle(x))}</span><small>${lib&&!bench.fold?'눌러서 펴기 · 라이브러리는 접힘':'눌러서 펴기'}</small></button>`;
     root.innerHTML=h;
