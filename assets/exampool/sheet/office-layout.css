@@ -936,6 +936,13 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .cv-tile-menu button:hover,.cv-tile-menu button:focus-visible{background:#f1f3f6;outline:none}
 .cv-tile-menu .ico{width:16px;height:16px;flex:0 0 16px;margin-top:2px;fill:none;stroke:currentColor;stroke-width:1.6;color:#5a606a}
 .cv-tile-menu button>span{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.cv-table-grid{min-width:0;padding:10px 12px 9px}.cv-table-grid:focus{outline:none}
+.cv-table-grid .ctg-title{margin:0 0 8px;font-size:12.5px;font-weight:600;color:#1b1e23;font-variant-numeric:tabular-nums}
+.cv-table-grid .ctg-cells{display:grid;gap:3px}
+.cv-table-grid .ctg-cells button{width:16px;height:16px;min-height:0;padding:0;border:1px solid #d3d7dd;border-radius:3px;background:#fff;cursor:pointer}
+.cv-table-grid .ctg-cells button.on{border-color:#5b7fb8;background:#e3ecf8}
+.cv-table-grid .ctg-head{display:flex;align-items:center;gap:6px;margin:9px 0 0;font-size:12px;color:#3c4148}
+.cv-table-grid .ctg-hint{margin:4px 0 0;font-size:11px;color:#8a9099}
 .cv-tile-menu small{display:block;margin-top:1px;font-size:11.5px;color:#6a7079}
 @media (prefers-reduced-motion:reduce){#card-view .cv-grid .cv-tile[data-cvtile]{transition:none}#card-view.cv-drag-live .cv-grid .cv-tile.cv-drop-near{transform:none}}
 @keyframes cv-tile-flash{0%,100%{box-shadow:0 0 0 0 rgba(47,111,214,0)}20%,60%{box-shadow:0 0 0 3px #2f6fd6,0 0 0 8px rgba(47,111,214,.18)}40%,80%{box-shadow:0 0 0 1px rgba(47,111,214,.3)}}
@@ -944,3 +951,41 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 
 /* 11-14(지적 8): 그림이 든 칸을 고르면 「바꿀 칸」을 왼쪽 아래 작게 — 그림·도구 위를 덮지 않게 */
 #card-view .cv-grid .cv-tile:not(.empty) .cv-target-tag{left:8px;bottom:8px;transform:none;padding:1px 7px;font-size:10.5px;opacity:.92}
+
+/* 11-14 시안 review-1114b 2번: 문항 카드 칸 위 AI 작업 표시 */
+.cv-tile .pic:has(>.cv-ai-job){position:relative}
+.cv-ai-job{position:absolute;inset:0;z-index:3;border-radius:inherit;display:flex;align-items:flex-end;cursor:pointer}
+.cv-ai-job[data-state="busy"]{backdrop-filter:blur(2px) saturate(.7);-webkit-backdrop-filter:blur(2px) saturate(.7);background:rgba(255,255,255,.45);box-shadow:inset 0 0 0 2px #5b8fd8;animation:cv-ai-breathe 1.8s ease-in-out infinite}
+@keyframes cv-ai-breathe{50%{box-shadow:inset 0 0 0 2px rgba(91,143,216,.35)}}
+.cv-ai-job[data-state="completed"]{box-shadow:inset 0 0 0 2px #5b8a6d}
+.cv-ai-job[data-state="failed"]{box-shadow:inset 0 0 0 2px #c4574f}
+.cv-ai-job[data-flash]{animation:cv-ai-flash .85s ease-in-out 3}
+@keyframes cv-ai-flash{50%{box-shadow:inset 0 0 0 3px #5b8a6d,0 0 0 4px rgba(91,138,109,.25)}}
+.cv-ai-band{width:100%;padding:6px 8px 7px;background:rgba(20,24,31,.82);color:#fff;font-size:11.5px;border-radius:0 0 7px 7px}
+.cv-ai-band .cv-ai-t{display:block;font-variant-numeric:tabular-nums;margin-bottom:5px}
+.cv-ai-steps{display:grid;grid-template-columns:1fr 1.5fr 1fr 1fr;gap:3px}
+.cv-ai-steps i{display:block;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
+.cv-ai-steps b{display:block;height:100%;width:0;background:#8fb4ea;transition:width .3s linear}
+.cv-ai-done{display:flex;align-items:center;gap:5px;width:100%;padding:5px 6px;background:rgba(255,255,255,.94);border-top:1px solid #e3e6ea;border-radius:0 0 7px 7px;font-size:11.5px;color:#1b1e23;cursor:default}
+.cv-ai-done .cv-ai-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.cv-ai-job[data-state="completed"] .cv-ai-t{color:#3f6d52}.cv-ai-job[data-state="failed"] .cv-ai-t{color:#a8443d}
+.cv-ai-done button{height:24px;min-height:0;padding:0 8px;border:1px solid #d3d7dd;border-radius:6px;background:#fff;color:#1b1e23;font:inherit;font-size:11.5px;cursor:pointer}
+.cv-ai-done button.pri{border-color:#2f3a4a;background:#2f3a4a;color:#fff}
+.cv-ai-done button.x{width:24px;padding:0;border-color:transparent;color:#7a808a}
+@media (prefers-reduced-motion:reduce){.cv-ai-job{animation:none!important}}
+.place-ai{position:absolute;pointer-events:none;border-radius:3px;box-shadow:0 0 0 2px #5b8fd8;background:rgba(255,255,255,.35);display:flex;align-items:flex-end;justify-content:center}
+.place-ai[data-state="completed"]{box-shadow:0 0 0 2px #5b8a6d;background:none}.place-ai[data-state="failed"]{box-shadow:0 0 0 2px #c4574f;background:none}
+.place-ai span{margin-bottom:-22px;padding:2px 7px;border-radius:5px;background:rgba(20,24,31,.85);color:#fff;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cv-ai-job:not([data-state="busy"]){pointer-events:none}.cv-ai-job .cv-ai-done{pointer-events:auto}
+/* 11-14 시안 review-1114b 3번: 선지 아래 흐린 점선 뒤 해설 칸 */
+#card-view .cv-exp{margin:14px 2px 0;padding-top:12px;border-top:1px dashed #cfd5dc}
+#card-view .cv-exp.is-empty{padding-top:8px}
+#card-view .cv-exp-add{height:28px;min-height:0;padding:0 8px;border:0;background:none;color:#5a6270;font:inherit;font-size:12.5px;cursor:pointer;border-radius:6px}
+#card-view .cv-exp-add:hover{background:#f1f3f6;color:#1b1e23}
+#card-view .cv-exp-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12.5px}
+#card-view .cv-exp-h b{font-weight:700;color:#1b1e23}
+#card-view .cv-exp-ans{padding:1px 7px;border:1px solid #1b1e23;border-radius:4px;font-weight:600;font-size:12px;color:#1b1e23}
+#card-view .cv-exp-ans.none{border-color:#d3d7dd;color:#8a9099;font-weight:400}
+#card-view .cv-exp-h .mini{margin-left:auto}
+#card-view .cv-exp-sum{width:100%;height:28px;margin-bottom:6px;padding:0 8px;border:1px solid #e1e4e8;border-radius:6px;background:#fff;font:inherit;font-size:12.5px}
+#card-view .cv-exp textarea{width:100%;min-height:52px}

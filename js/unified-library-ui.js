@@ -1702,7 +1702,8 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     overlay.querySelector("[data-unilib-ai]").disabled = actionBusy || !aiAllowed || (typeof openAi !== "function" && typeof openIndependentReferences !== "function");
     const graphMode = referenceConsumer?.kind === 'graph';
     const graph = overlay.querySelector('[data-unilib-graph]');
-    graph.hidden = !graphMode && (!!referenceConsumer || typeof openGraph !== 'function');
+    // 11-14 시안 review-1114b 17번: 「좌표/함수 생성」은 뺀다 — 그래프 원본을 고르러 온 때(「그래프 원본으로 선택」)만 보인다.
+    graph.hidden = !graphMode;
     graph.textContent = graphMode ? '그래프 원본으로 선택' : '좌표/함수 생성';
     graph.disabled = actionBusy || !aiAllowed;
     overlay.querySelector('[data-unilib-ai]').hidden = graphMode;
@@ -3798,7 +3799,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     canvasButton.disabled = !available || (cropDocumentEntries().length > 1 && !activeAcceptedCropId);
     canvasButton.title = '캔버스에 넣을 크롭 이미지 하나를 선택하세요.';
     const graph = overlay.querySelector('[data-unilib-crop-graph]');
-    graph.hidden = referenceConsumer?.kind !== 'graph' && (!!referenceConsumer || typeof openGraph !== 'function');
+    graph.hidden = referenceConsumer?.kind !== 'graph';
     graph.textContent = referenceConsumer?.kind === 'graph' ? '그래프 원본으로 선택' : '좌표/함수 생성';
     graph.disabled = !available;
     graph.title = '비교할 크롭 이미지 하나를 선택해 그래프를 만듭니다.';

@@ -85,6 +85,14 @@ export function createCardEditor(root,api){
   function lineRow(row,name,b,key,ph,tip){const full=key==='bogi'&&b.lines.length>=5,what=key==='bogi'?'보기':key==='steps'?'과정':'대화';
     const plus=`<button type="button" class="cv-plus cv-lineadd" data-cvline-add="${key}"${full?' disabled':''} title="${full?'보기는 ㅁ까지입니다':what+' 줄 추가'}" aria-label="${what} 줄 추가">${ICON.plus}</button>`;
     return row(name,linesHtml(b,key,ph),tip,'cv-linerow').replace('<div class="cv-v">',`<div class="cv-lineset">${plus}</div><div class="cv-v">`);}
+  // 11-14 시안 review-1114b 3번(① A·② A): 선지 아래 흐린 점선 뒤 「해설」 칸. 머리에 정답(선지에서 자동), 한 줄 요약은 쓰면 조판에 들어간다.
+  // 비어 있으면 「＋ 해설 쓰기」 한 줄만. 해설 글은 다른 칸처럼 $로 수식, 「보기 ○×·근거로 뼈대」로 줄을 만든다.
+  let expOpen=false;
+  function explanationHtml(x){const body=String(x.explanation||'').trim(),sum=String(x.explanationSummary||'').trim(),ans=Number.isInteger(x.answer)&&x.answer>=0?NUM[x.answer]:'';
+    if(!body&&!sum&&!expOpen)return `<section class="cv-exp is-empty" aria-label="해설"><button type="button" class="cv-exp-add" data-cv="exp-open">＋ 해설 쓰기</button></section>`;
+    return `<section class="cv-exp" aria-label="해설"><div class="cv-exp-h"><b>해설</b>${ans?`<span class="cv-exp-ans">정답 ${ans}</span><span class="cv-auto">선지에서 자동</span>`:'<span class="cv-exp-ans none">정답을 고르면 여기 나옵니다</span>'}<button type="button" class="mini" data-cv="exp-skeleton" title="정답과 보기 ○×, 연결한 근거 인용문으로 해설 줄을 만듭니다">${ICON.star}보기 ○×·근거로 뼈대</button></div>
+      <input class="cv-exp-sum" data-cvf="explanationSummary" value="${E(x.explanationSummary||'')}" maxlength="200" placeholder="한 줄 요약(쓰면 조판에 「핵심 —」으로 들어갑니다)" aria-label="해설 한 줄 요약">
+      <textarea data-cvf="explanation" rows="2" aria-label="해설" placeholder="ㄱ. … 옳다.&#10;ㄴ. … ($로 수식)">${E(x.explanation)}</textarea></section>`;}
   function choicesHtml(x){
     if(x.type==='서술형')return `<div class="f-field"><label for="cv-model">모범 답안</label><textarea id="cv-model" data-cvf="answer" rows="3">${E(x.modelAnswer)}</textarea></div>`;
     if(x.style==='대응표'){
@@ -141,7 +149,7 @@ export function createCardEditor(root,api){
   // 문항 정보(시험지에 안 찍히는 것): 항목별 단추를 눌러 연 것만 보인다. 연 상태는 이 기기에 남는다. 추천 조합도 접어 둔다.
   const moreOpen=new Set(store.get('cvMore',[])||[]);let suggOpen=!!store.get('cvSugg',false);
   function moreChipsHtml(x){const refs=x.references||[],cut=(s,n=10)=>{s=String(s||'').trim().replace(/\s+/g,' ');return s.length>n?s.slice(0,n)+'…':s;};
-    const items=[['std','성취기준·단원',x.standardCode||cut(x.unitLarge)],['intent','출제의도',cut(x.intent)],['exp','해설',String(x.explanation||'').trim()?'있음':''],['ev','근거',refs.length?String(refs.length):''],['src','출처',sourceKind(x)]];
+    const items=[['std','성취기준·단원',x.standardCode||cut(x.unitLarge)],['intent','출제의도',cut(x.intent)],['ev','근거',refs.length?String(refs.length):''],['src','출처',sourceKind(x)]];
     return items.map(([k,n,v])=>`<button type="button" class="cv-more-chip${v?' has':''}" data-cvmore="${k}" aria-expanded="${moreOpen.has(k)}">${n}<small>${E(v||'비어 있음')}</small></button>`).join('');}
   function relabel(blk,key){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'],C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];
     if(key==='bogi')blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));else if(key==='steps')blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}
@@ -189,11 +197,11 @@ export function createCardEditor(root,api){
           ${isCombo(x)||bogi?(bogi?lineRow(row,'보기',bogi,'bogi','보기 내용',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다. 줄 왼쪽 ⋮로 위로·아래로·지우기.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄 왼쪽 ⋮에서 지우세요.'):row('보기','<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다. 줄 왼쪽 ⋮로 위로·아래로·지우기.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄 왼쪽 ⋮에서 지우세요.')):''}
           ${choicesHtml(x)}
         </section>
+        ${explanationHtml(x)}
         <div class="cv-more"><div class="cv-more-h">문항 정보 <span>시험지에는 찍히지 않습니다</span></div><div class="cv-more-chips">${moreChipsHtml(x)}</div>
         <section class="f-sec plan cv-more-rows" aria-label="문항 정보">
           ${more('std',row('성취기준',`<div class="pick">${x.standardCode?`<b>${E(x.standardCode)}</b>`:'<span class="ph">고르지 않음</span>'}<button type="button" class="link" data-cv="open-standards">${x.standardCode?'바꾸기':'찾기'}</button></div>`,'왼쪽 참고 자료 칸을 「성취기준·교육과정」으로 바꿔 골라 연결합니다. 「찾기」를 눌러도 열립니다.')+row('단원',(()=>{const auto=unitOf(x.standardCode);return `<div class="cv-unit">${!x.unitLarge&&auto?`<span class="cv-auto">성취기준에서 자동</span><b>${E(auto)}</b><button type="button" class="link" data-cvunit="${E(auto)}">넣기</button>`:`<input data-cvf="unitLarge" value="${E(x.unitLarge||'')}" placeholder="${auto?E(auto):'대단원 (성취기준을 고르면 자동)'}" aria-label="대단원">`}<input class="cv-mid" data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}" placeholder="중단원(선택)" aria-label="중단원"></div>`;})(),'성취기준을 고르면 교육과정 자료의 「과목 › 대단원」이 채워집니다. 중단원은 필요하면 적습니다.'))}
           ${more('intent',row('출제의도',`<textarea id="cv-intent" data-cvf="intent" rows="1" aria-label="출제의도">${E(x.intent)}</textarea>`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단'))}
-          ${more('exp',row('해설',`<div class="cv-exp-tools"><button type="button" class="mini" data-cv="exp-skeleton" title="정답과 보기 ○×, 연결한 근거 인용문으로 해설 줄을 만듭니다">${ICON.star}보기 ○×·근거로 해설 뼈대 만들기</button></div><textarea data-cvf="explanation" rows="1" aria-label="해설">${E(x.explanation)}</textarea>`,'정답 근거와 풀이. 「뼈대 만들기」는 보기 ○×와 근거 인용문으로 줄을 만들고, 이미 쓴 해설이 있으면 그 아래에 붙입니다.'))}
           ${more('ev',row('근거',evTable,'이 문항의 근거: 교과서·기출 쪽에서 글을 끌어 고르거나 「이 쪽을 근거로」, 기출 크게 보기의 「근거로 연결」. 줄을 누르면 그 쪽이 열립니다. 한글 조판에는 찍히지 않습니다.','cv-evrow'))}
           ${more('src',row('출처',(()=>{const k=sourceKind(x),orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label)),books=[...new Set((x.references||[]).filter(r=>r.source?.kind==='textbook').map(r=>r.label))];
             const note=k==='기출 변형'?(String(x.source).replace(/^기출 변형\s*·?\s*/,'')||orig?.label.replace(/^원본 기출 · /,'')||''):k==='교과서'?(String(x.source).replace(/^교과서\s*·?\s*/,'')||books.join(' · ')):'';
@@ -771,7 +779,7 @@ export function createCardEditor(root,api){
     if(t.matches('textarea'))fit(t);
     if(t.id==='cv-ai-input'){aiDrafts.set(x.id,t.value);return;}
     if(t.dataset.cvf==='points')t.style.width=t.value.trim()?`${t.value.trim().length+.6}ch`:'';
-    if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else if(f==='name'){if(t.value.trim())x.name=t.value.slice(0,240);else delete x.name;}else writeField(x,f,t.value);});return;}
+    if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else if(f==='name'){if(t.value.trim())x.name=t.value.slice(0,240);else delete x.name;}else if(f==='explanationSummary'){if(t.value.trim())x.explanationSummary=t.value.slice(0,200);else delete x.explanationSummary;}else writeField(x,f,t.value);});return;}
     if(t.dataset.cvline){const key=t.dataset.cvline,b=x.blocks.find(v=>v.kind===key),i=Number(t.dataset.i);edit(key,()=>{b.lines[i].text=t.value;});return;}
     if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
     if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);{const g=t.closest('.cv-combos');if(g)g.classList.toggle('tight',[...g.querySelectorAll('[data-cvchoice]')].some(n=>n.value.length>=7));}edit('choices',()=>{x.choices[i].text=t.value;});return;}
@@ -846,6 +854,7 @@ export function createCardEditor(root,api){
       change();return;}
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct==='add-pic'||d.cvslotAct==='swap'){tileMenu(b,x,d.cvslot);return;}
+    if(d.cvslotAct==='to-table'){tableGrid(b,x,d.cvslot);return;}
     if(d.cvslotAct){if(d.cvslotAct==='remove'&&tileSel===d.cvslot)setTileSel(null);api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}
       // 새 줄 하나만 끝에 덧붙인다(H7). 예전에는 모든 줄 글을 이어 붙였다가 줄바꿈으로 다시 나눠서, 한 줄 안에 줄바꿈이 있으면
@@ -867,6 +876,7 @@ export function createCardEditor(root,api){
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
     if(d.cvunit){cardEdit('unit',()=>{x.unitLarge=d.cvunit;});return;}
     if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));cardEdit('source',()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}
+    if(d.cv==='exp-open'){expOpen=true;render();setTimeout(()=>root.querySelector('.cv-exp textarea[data-cvf="explanation"]')?.focus(),0);return;}
     if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)cardEdit('explanation',()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
     if(d.cvmat){const [k,v]=d.cvmat.split(':');try{api.edit(()=>{setMaterialLayout(x,{[k]:k==='count'?Number(v):v});});}catch(e){api.status?.(e.message,true);}return;}
     if(d.cvpoints){cardEdit('points',()=>{x.points=Number(d.cvpoints);});return;}
@@ -986,6 +996,21 @@ export function createCardEditor(root,api){
     tileMenuEl.addEventListener('click',ev=>{const k=ev.target.closest('[data-tm]')?.dataset.tm;if(!k)return;closeTileMenu();if(k==='file'){api.slot('file',x,id);return;}setTileSel(id);const clip=window.fiveEClipboard;if(clip?.pickInto)clip.pickInto(`자료 칸 ${tileName(id)}`,it=>insertClipFigure(it,id),{accepts:it=>!!it.src,cancel:()=>setTileSel(null)});else clip?.open?.();});
     tileMenuEl.querySelector('button')?.focus();}
   document.addEventListener('pointerdown',e=>{if(tileMenuEl&&!e.target.closest('.cv-tile-menu'))closeTileMenu();},true);
+  // 11-14 시안 review-1114b 1번(A·A·A): 빈 칸의 표 단추 → 그 칸 바로 아래에 붙는 작은 판. 격자를 끌어(올려) 행×열을 고르고 누르면 만든다.
+  // 첫 줄 머리 행은 처음에 켬. 끝 줄·끝 칸에 올리면 격자가 늘어난다(행 20·열 12까지). 화살표로 고르고 Enter, Esc로 닫음.
+  function tableGrid(btn,x,id){closeTileMenu();const r=btn.closest('.cv-tile')?.getBoundingClientRect()||btn.getBoundingClientRect();
+    let R=6,C=6,sel={r:3,c:3};const el=tileMenuEl=document.createElement('div');el.className='cv-tile-menu cv-table-grid';el.setAttribute('role','dialog');el.setAttribute('aria-label','표 만들기');el.tabIndex=-1;
+    const paint=()=>{el.querySelector('.ctg-title').textContent=`표 만들기 · ${sel.r} × ${sel.c}`;const g=el.querySelector('.ctg-cells');g.style.gridTemplateColumns=`repeat(${C},16px)`;
+      if(g.children.length!==R*C){g.innerHTML='';for(let i=0;i<R;i++)for(let j=0;j<C;j++){const c=document.createElement('button');c.type='button';c.dataset.r=i+1;c.dataset.c=j+1;c.tabIndex=-1;c.setAttribute('aria-label',`${i+1}행 ${j+1}열`);g.append(c);}}
+      for(const c of g.children)c.classList.toggle('on',+c.dataset.r<=sel.r&&+c.dataset.c<=sel.c);};
+    el.innerHTML='<p class="ctg-title"></p><div class="ctg-cells"></div><label class="ctg-head"><input type="checkbox" checked> 첫 줄은 머리 행</label><p class="ctg-hint">격자를 끌어 고르고 누르면 만듭니다</p>';
+    Object.assign(el.style,{left:`${Math.round(Math.min(r.left,innerWidth-260))}px`,top:`${Math.round(Math.min(r.bottom+6,innerHeight-260))}px`});document.body.append(el);paint();el.focus();
+    const grow=(r1,c1)=>{let ch=false;if(r1>=R&&R<20){R++;ch=true;}if(c1>=C&&C<12){C++;ch=true;}if(ch){el.querySelector('.ctg-cells').innerHTML='';}sel={r:r1,c:c1};paint();};
+    const make=()=>{const head=el.querySelector('.ctg-head input').checked,{r:rows,c:cols}=sel;closeTileMenu();api.slot('make-table',x,id,{rows,cols,head});};
+    el.addEventListener('pointerover',e=>{const c=e.target.closest('.ctg-cells button');if(c)grow(+c.dataset.r,+c.dataset.c);});
+    el.addEventListener('click',e=>{if(e.target.closest('.ctg-cells button'))make();});
+    el.addEventListener('keydown',e=>{if(e.target.matches('input'))return;const k={ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0]}[e.key];
+      if(k){e.preventDefault();e.stopPropagation();grow(Math.max(1,Math.min(20,sel.r+k[0])),Math.max(1,Math.min(12,sel.c+k[1])));}else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();make();}});}
   // 11-14(지적 6): 고른 칸은 아무 곳이나 누르면 풀린다 — 그 칸 자신·클립보드 창(넣으려는 동작)·칸 메뉴를 누를 때만 그대로.
   document.addEventListener('pointerdown',e=>{if(!tileSel)return;const t=e.target;if(t.closest?.(`.cv-tile[data-cvtile="${CSS.escape(tileSel)}"]`)||t.closest?.('.clp,.clpb,.cv-tile-menu'))return;
     if(window.fiveEClipboard?.isOpen?.()&&!t.closest?.('.cv-tile[data-cvtile]')){window.fiveEClipboard.close();return;}// 고르기 중이던 클립보드도 닫으며 풀림(닫힘 → 고른 표시 풀기)
@@ -1026,6 +1051,37 @@ export function createCardEditor(root,api){
     if(placed&&Array.isArray(it.objects)&&it.objects.some(o=>o?.type==='coordplane')&&window.parent!==window){const own=location.protocol==='file:'?'*':location.origin;
       window.parent.postMessage({channel:'5e-question-sheet',action:'graph-figure',qid:x.id,key:'block:'+placed,name:it.name||'그래프',graph:{objects:it.objects,groups:[]}},own);}
     tileSel=null;window.fiveEClipboard?.sync?.();}
+  // 11-14 시안 review-1114b 2번(A·A·A): 칸에서 연 AI 작업 표시. 도는 동안 = 그림 흐림 + 파란 숨쉬는 테두리 + 아래 띠(작업·시간·4칸 단계),
+  // 끝 = 초록 테두리 + 「결과 보기 · 이 칸에 넣기」, 실패 = 빨간 테두리 + 「다시 하기」. 저절로 넣지 않는다(11-11). 단계 칸은 AI 창 로딩과 같은 시간 기준.
+  const aiJobs=new Map(),AI_STEPS={graph:[['축·눈금 읽기',12],['곡선·점 찾기',30],['편집 객체로',15],['검증',8]],image:[['원본 읽기',12],['그림 새로 그리기',50],['배경 정리',5],['결과 확인',6]]};
+  const aiWord=(k,st)=>k==='graph'?(st==='busy'?'그래프 복원 중':st==='failed'?'복원 실패':'복원 끝'):(st==='busy'?'이미지 변환 중':st==='failed'?'변환 실패':'변환 끝');
+  const aiClock=ms=>{const t=Math.max(0,Math.floor(ms/1000));return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
+  const toParent=msg=>window.parent!==window&&window.parent.postMessage({channel:'5e-question-sheet',...msg},location.protocol==='file:'?'*':location.origin);
+  let aiRaf=0;
+  function paintAiJobs(){cancelAnimationFrame(aiRaf);aiRaf=0;const x=q();
+    root.querySelectorAll('.cv-ai-job').forEach(n=>{const id=n.closest('.cv-tile')?.dataset.cvtile,j=id&&aiJobs.get(id);if(!j||j.qid!==x?.id)n.remove();});
+    document.dispatchEvent(new CustomEvent('cv-ai-jobs',{detail:{qid:x?.id,jobs:[...aiJobs].filter(([,j])=>j.qid===x?.id).map(([id,j])=>({id,state:j.state,kind:j.kind,text:j.state==='busy'?`● ${aiWord(j.kind,'busy')} · ${aiClock(Date.now()-j.startedAt)}`:aiWord(j.kind,j.state)}))}}));
+    if(!x)return;let busy=false;
+    for(const [id,j] of aiJobs){if(j.qid!==x.id)continue;const tile=root.querySelector(`.cv-tile[data-cvtile="${CSS.escape(id)}"]`),pic=tile?.querySelector('.pic');if(!pic)continue;
+      let n=pic.querySelector('.cv-ai-job');if(!n){n=document.createElement('div');n.className='cv-ai-job';pic.append(n);}
+      if(n.dataset.state!==j.state){n.dataset.state=j.state;
+        n.innerHTML=j.state==='busy'?`<div class="cv-ai-band"><span class="cv-ai-t"></span><span class="cv-ai-steps">${AI_STEPS[j.kind].map(([nm])=>`<i title="${nm}"><b></b></i>`).join('')}</span></div>`
+          :`<div class="cv-ai-done"><span class="cv-ai-t">${aiWord(j.kind,j.state)}</span>${j.state==='failed'?'<button type="button" data-ai-job-act="open">다시 하기</button>':'<button type="button" data-ai-job-act="open">결과 보기</button><button type="button" class="pri" data-ai-job-act="send">이 칸에 넣기</button>'}<button type="button" class="x" data-ai-job-act="dismiss" aria-label="표시 지우기" title="표시 지우기">×</button></div>`;
+        n.title=j.state==='busy'?'AI 창을 닫아도 작업은 계속됩니다 · 눌러서 AI 창의 그 작업 보기':'';}
+      if(j.flash&&Date.now()-j.flash<2600)n.dataset.flash='true';else delete n.dataset.flash;
+      if(j.state==='busy'){busy=true;const el=Date.now()-j.startedAt,steps=AI_STEPS[j.kind];n.querySelector('.cv-ai-t').textContent=`● ${aiWord(j.kind,'busy')} · ${aiClock(el)}`;
+        let t=el/1000;n.querySelectorAll('.cv-ai-steps b').forEach((b,i)=>{const sec=steps[i][1],last=i===steps.length-1,f=last?Math.min(.92,Math.max(0,t)/sec):Math.min(1,Math.max(0,t)/sec);b.style.width=`${Math.round(f*100)}%`;t-=sec;});}
+      else if(j.flash&&Date.now()-j.flash<2600)busy=true;}
+    if(busy)aiRaf=requestAnimationFrame(()=>setTimeout(paintAiJobs,250));}
+  window.addEventListener('message',e=>{const m=e.data;if(e.source!==window.parent||m?.channel!=='5e-question-sheet')return;
+    if(m.action==='ai-job'&&typeof m.key==='string'&&m.key.startsWith('block:')){const id=m.key.slice(6),prev=aiJobs.get(id);
+      aiJobs.set(id,{qid:m.qid,taskId:m.taskId,kind:m.kind,state:m.state,startedAt:m.state==='busy'&&prev?.taskId===m.taskId&&prev.state==='busy'?prev.startedAt:m.state==='busy'?Date.now():prev?.startedAt||Date.now(),flash:m.state==='completed'&&prev?.state!=='completed'?Date.now():prev?.flash||0});paintAiJobs();}
+    else if(m.action==='figure-ready'&&typeof m.key==='string'&&m.key.startsWith('block:')&&aiJobs.has(m.key.slice(6))&&aiJobs.get(m.key.slice(6)).state!=='busy'){aiJobs.delete(m.key.slice(6));paintAiJobs();}
+    else if(m.action==='ai-job-gone'){for(const [id,j] of aiJobs)if(j.taskId===m.taskId)aiJobs.delete(id);paintAiJobs();}});
+  root.addEventListener('click',e=>{const job=e.target.closest?.('.cv-ai-job');if(!job)return;e.preventDefault();e.stopPropagation();const id=job.closest('.cv-tile')?.dataset.cvtile,j=id&&aiJobs.get(id);if(!j)return;
+    const act=e.target.closest('[data-ai-job-act]')?.dataset.aiJobAct||'open';if(act==='dismiss'){aiJobs.delete(id);paintAiJobs();return;}
+    toParent({action:act==='send'?'ai-job-send':'ai-job-open',qid:j.qid,key:'block:'+id,taskId:j.taskId});},true);
+  new MutationObserver(()=>{if(aiJobs.size&&!aiRaf)paintAiJobs();}).observe(root,{childList:true,subtree:true});
   root.addEventListener('drop',async e=>{if(!isDrawerDrag(e.dataTransfer))return;const t=nearTile(e);root.classList.remove('cv-drag-live');clearNear();if(!t)return;e.preventDefault();
     let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}
     if(!it){api.status?.('클립보드 그림을 읽지 못했습니다.',true);return;}

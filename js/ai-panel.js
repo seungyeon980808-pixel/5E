@@ -7633,6 +7633,8 @@ ${chatText}` : ''}`;
     deleteTask,
     // 11-06 D5: 한글 그림 위 「끝 · 눌러서 보기」·알림 [결과 보기] — 그 작업 탭을 다시 연다.
     openHwpTask: taskId => taskTabs.has(taskId) ? open({ taskId }) : null,
+    // 11-14 시안 review-1114b 2번: 문항 카드 칸 아래 「이 칸에 넣기」 — 그 작업을 열고 고른 결과를 그 칸으로 보낸다(보내면 창은 닫힌다).
+    sendHwpTask: async taskId => { if (!taskTabs.has(taskId)) return false; await open({ taskId }); const send = panel.querySelector('[data-ai-exam-send]'); if (!send || send.disabled || send.hidden) return false; send.click(); return true; },
     hasHwpTask: taskId => hwpInPlaceTargets.has(taskId) && taskTabs.has(taskId),
     // 11-11: 다른 작업대로 보내거나 복제할 때 한글 그림 연결을 함께 넘긴다.
     hwpTargetOf: taskId => { const target = hwpInPlaceTargets.get(taskId); return target ? structuredClone(target) : null; },

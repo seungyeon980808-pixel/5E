@@ -798,6 +798,12 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       html+='</table>';
     }
   }
+  // 11-14 시안 review-1114b 3번(③ ①·④ A·⑤ A): 「문항 + 해설」로 인쇄할 때만 선지 아래에 평가원 해설지풍 해설 — 정답 네모 + [해설], 한 줄 요약(쓴 때만), ㄱ·ㄴ·ㄷ마다 문단.
+  if(standard?.print?.explanation==='with'){const body=String(q.explanation||'').trim(),sum=String(q.explanationSummary||'').trim(),ans=Number.isInteger(q.answer)&&q.answer>=0?labels[q.answer]||'':String(q.modelAnswer||'').trim();
+    if(body||sum||ans){html+=gapHtml(3);recordTable(1,2,[],{kind:'layout'});
+      html+=`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:1px solid #000;width:62px;padding:2px 6px;text-align:center"><p style="margin:0"><span style="font-size:${FS-1}pt;font-weight:bold">정답 ${E(ans||'-')}</span></p></td><td style="border:none;width:${width-62}px;padding:2px 8px"><p style="margin:0"><span style="font-size:${FS-1}pt;font-weight:bold">해설</span></p></td></tr></table>`;
+      if(sum)html+=`<p style="margin:0;text-align:justify"><span style="font-size:${FS-1}pt;font-weight:bold">핵심 — </span>${text(sum,width,FS-1,v=>v,null)}</p>`;
+      for(const line of body.split(/\n+/).map(v=>v.trim()).filter(Boolean))html+=`<p style="margin:0;text-align:justify;line-height:150%">${text(line,width,FS-1,v=>v,null)}</p>`;}}
   const askLead=firstText||sideText?String(ask).replace(/\s+/g,' ').trim().slice(0,12):'';
   return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations:equations.map(({shrink,...e})=>shrink?{...e,fontSize:Math.round(e.fontSize*shrink)}:e),warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,placeSegments,cellFloats,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
 }

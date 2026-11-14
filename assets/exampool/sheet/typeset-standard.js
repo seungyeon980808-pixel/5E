@@ -11,6 +11,8 @@ export const pxToMm = px => Math.round(px * 25.4 / 96 * 10000) / 10000;
 export const KICE_STANDARD = deepFreeze({
   format: STANDARD_FORMAT, id: KICE_ID, name: '수능 틀', version: 1, base: null, source: { kind: 'builtin' },
   paper: { size: 'A4', columns: 2, columnGap: 8, margin: { top: 15, bottom: 15, left: 15, right: 15 } },
+  // 11-14 시안 review-1114b 3번 ④: 인쇄할 것 — 'none' 문항만 · 'with' 문항 + 해설(선지 아래 평가원 해설지풍).
+  print: { explanation: 'none' },
   text: { font: '함초롬바탕', size: 11, ratio: 95, spacing: -5, lineSpacing: 160, align: 'justify', break: 'word' },
   // 〈보기〉 상자 안쪽: 마지막 줄 아래 14px(반 줄쯤), 좌우 6px. 간격 보기·조절(9단계)이 이 값을 고친다.
   // text·material·bogi·ask·choices: 지문·자료(그림·표·묶음)·〈보기〉·발문·선지 앞에 더 두는 간격(mm). 수능 틀은 0(조판이 정한 기본 간격만).

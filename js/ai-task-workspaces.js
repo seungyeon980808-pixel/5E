@@ -950,6 +950,13 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     // (예전엔 이 두 함수가 창 하나에만 있어 그림 위 「끝 · 눌러서 보기」가 늘 「이미 닫혔습니다」로 거부됐다.)
     hasHwpTask: taskId => entries.some(entry => !entry.disposed && entry.controller.hasHwpTask?.(taskId)),
     hwpTaskForFigure: (figureId, kind = null) => { for (const entry of [...entries].reverse()) { const id = !entry.disposed && entry.controller.hwpTaskForFigure?.(figureId, kind); if (id) return id; } return null; },
+    sendHwpTask: async taskId => {
+      await ready;
+      const owner = entries.find(entry => !entry.disposed && entry.controller.ownsTask?.(taskId));
+      if (!owner) return false;
+      activate(owner);
+      return owner.controller.sendHwpTask?.(taskId) ?? false;
+    },
     openHwpTask: async taskId => {
       await ready;
       const owner = entries.find(entry => !entry.disposed && entry.controller.ownsTask?.(taskId));

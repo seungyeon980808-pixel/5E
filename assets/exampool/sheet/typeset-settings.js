@@ -55,6 +55,7 @@ export const PARTS=[
       G('기호',[[T('parts.labelSpace','「ㄱ.」「①」 뒤 고정 띄어쓰기','fixed','space')]]),G('앞 간격(더함)',[[N('gaps.choices','선지 앞','mm',.1,0,20,'gap')]])]}},
   {k:'gaps',name:'간격',match:null,tabs:{'간격':[G('요소 앞에 더하는 간격',[[N('gaps.text','지문','mm',.1,0,20,'gap'),N('gaps.material','자료','mm',.1,0,20,'gap')],[N('gaps.ask','발문','mm',.1,0,20,'gap'),N('gaps.bogi','〈보기〉','mm',.1,0,20,'gap')],[N('gaps.choices','선지','mm',.1,0,20,'gap')]],'간격의 주인은 하나 — 앞 요소 아래와 더하지 않습니다'),
       G('자료 뒤 간격',[[N('gaps.after','상자·표·그림 뒤','mm',.1,0,20,'gap')]])]}},
+  {k:'print',name:'인쇄',match:null,tabs:{'인쇄':[G('인쇄할 것',[[S('print.explanation','해설',[['none','문항만'],['with','문항 + 해설']])]],'문항 + 해설: 선지 아래에 정답 네모와 ㄱ·ㄴ·ㄷ 문단으로 해설을 찍습니다(한 줄 요약은 쓴 문항만). 미리보기도 이때만 해설이 보입니다.')]}},
   {k:'paper',name:'쪽·단',match:null,tabs:{'편집 용지':[G('단',[[S('paper.columns','단 수',[[2,'2단'],[1,'1단'],[3,'3단'],[4,'4단']]),N('paper.columnGap','단 간격','mm',.5,0,30)]]),
       G('여백',[[N('paper.margin.top','위','mm',1,5,40),N('paper.margin.bottom','아래','mm',1,5,40)],[N('paper.margin.left','왼쪽','mm',1,5,40),N('paper.margin.right','오른쪽','mm',1,5,40)]])]}},
 ];

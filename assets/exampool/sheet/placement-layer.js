@@ -83,7 +83,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     Object.assign(grip.style,{left:`${item.rect.x-22}px`,top:`${item.rect.y}px`});
     Object.assign(sizer.style,{left:`${item.rect.x+item.rect.w-5}px`,top:`${item.rect.y+item.rect.h-5}px`});
   }
-  function refresh(){const open=!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null;rebuild();paintDividers();if(hover)showHover(items.find(x=>x.id===hover.id)||null);if(open){keepSettings=open;reopenSettings();}}
+  function refresh(){queueMicrotask(()=>paintAiMarks?.());const open=!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null;rebuild();paintDividers();if(hover)showHover(items.find(x=>x.id===hover.id)||null);if(open){keepSettings=open;reopenSettings();}}
 
   // 놓을 자리: 대상의 왼쪽·오른쪽 1/3이면 옆(가로 묶음), 가운데면 위/아래(세로 순서).
   function dropAt(p){
@@ -246,6 +246,14 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     frameDoc=next;frameDoc.addEventListener('dblclick',onFrameDouble,true);frameDoc.addEventListener('pointermove',onFrameMove,true);frameDoc.addEventListener('pointerdown',onFrameDown,true);frameDoc.addEventListener('pointerup',onFrameUp,true);frameDoc.addEventListener('keydown',onFrameKey,true);
   }
   doc.addEventListener('keydown',onFrameKey,true);
+  // 11-14 시안 review-1114b 2번 ③: 카드 칸에서 연 AI 작업을 조판 미리보기의 그 그림에도 같은 말로 표시한다(누르기는 카드 칸에서).
+  let aiMarks=[];const aiNodes=new Map();
+  function paintAiMarks(){const want=new Set();
+    for(const j of aiMarks){const it=enabled&&model?.question?.id===j.qid?items.find(x=>x.id===j.id):null;if(!it)continue;want.add(j.id);
+      let n=aiNodes.get(j.id);if(!n){n=doc.createElement('div');n.className='place-ai';n.innerHTML='<span></span>';layer.append(n);aiNodes.set(j.id,n);}
+      n.dataset.state=j.state;n.firstChild.textContent=j.text;place(n,it.rect);}
+    for(const [id,n] of aiNodes)if(!want.has(id)){n.remove();aiNodes.delete(id);}}
+  doc.addEventListener('cv-ai-jobs',e=>{aiMarks=(e.detail?.jobs||[]).map(j=>({...j,qid:e.detail.qid}));paintAiMarks();});
   host.addEventListener('pointerleave',e=>{if(!drag&&!menu.contains(e.relatedTarget)&&!tools.contains(e.relatedTarget))showHover(null);});
 
   return {

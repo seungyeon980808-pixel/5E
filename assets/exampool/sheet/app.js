@@ -1076,7 +1076,9 @@ whenSheetShown.queue=[];
 // 11-13 밤(시안 exam-fixes-1113 H): 지면에 안 나오는 값(단계·이름·정답·해설·출제의도·단원·근거·메모)만 바뀌었으면 다시 묶지 않는다.
 // 나오는 값이 바뀌면 그 문항이 있던 쪽부터 옅게 두고 「N쪽부터 다시 배치 중」 — 앞쪽은 그대로 보고 고칠 수 있다.
 const NOT_PRINTED=new Set(['workflow','name','answer','modelAnswer','explanation','intent','standardCode','unitLarge','unitMiddle','unitSmall','references','reviews','updatedAt','createdAt','memo','managementId']);
-const printKey=q=>q?JSON.stringify(q,(k,v)=>NOT_PRINTED.has(k)?undefined:v):'';
+// 11-14: 「문항 + 해설」로 인쇄하는 틀이 있으면 해설·한 줄 요약·정답도 찍히는 내용이다.
+const EXP_KEYS=new Set(['explanation','explanationSummary','answer','modelAnswer']);
+const printKey=q=>{if(!q)return '';const exp=typesetStandards.some(s=>s?.print?.explanation==='with');return JSON.stringify(q,(k,v)=>NOT_PRINTED.has(k)&&!(exp&&EXP_KEYS.has(k))||k==='explanationSummary'&&!exp?undefined:v);};
 const examKey=exam=>JSON.stringify({e:JSON.stringify(exam,(k,v)=>['title','status','updatedAt','createdAt'].includes(k)?undefined:v),f:typesetForms.map(f=>f.id).join(','),s:typesetStandards.map(s=>JSON.stringify(s)).join('|').length});
 async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet');if(!n||!exam?.items.length)return;if(whenSheetShown(()=>{const now=examById(data,exam.id);if(now)void fillExamSheet(now);}))return;
   const ek=examKey(exam),qk=Object.fromEntries(exam.items.map(id=>[id,printKey(data.questions.find(q=>q.id===id))]));
@@ -1230,8 +1232,11 @@ const cardEditor=createCardEditor($('#card-view'),{
   newQuestion:()=>$('#new').click(),
   status,
   edit:(fn,{key,light}={})=>{const ok=mutate(fn,light?{render:false,key}:{});if(ok&&light)renderNav($('.side'),data,view);return ok;},
-  slot:(act,q,id)=>{
+  slot:(act,q,id,opt={})=>{
     if(act==='pick')return pickFigure(q,id);
+    // 11-14 시안 review-1114b 1번: 칸 아래 작은 판에서 행·열·머리 행을 정해 바로 표 칸으로(옛 「자료 넣기」 창 없이).
+    if(act==='make-table'){const rows=opt.rows|0,cols=opt.cols|0,head=opt.head?1:0;
+      return mutate(()=>{if(rows<1||rows>20||cols<1||cols>12)throw Error('행은 1~20, 열은 1~12로 정하세요.');let b=q.blocks.find(x=>x.id===id);if(b&&b.kind!=='table'){applyPartChange(q,id,'kind',KINDS.table);b=q.blocks.find(x=>x.id===id);}if(!b||b.kind!=='table')throw Error('표 칸으로 바꾸지 못했습니다.');b.table=resizeTable(b.table,rows,cols,head);})&&(status(`${q.blocks.find(x=>x.id===id)?.label||'자료'}를 ${rows}행 × ${cols}열 표로 만들었습니다 · 연필(표 편집)로 내용을 채우세요 · ⌘Z로 되돌림`),true);}
     if(act==='table')return openSlots(q,id);
     if(act==='to-table'){if(mutate(()=>applyPartChange(q,id,'kind',KINDS.table)))openSlots(q,id);return;}
     // 11-14(지적 1): 칸을 지우면 남은 칸 이름을 (가)(나)(다) 차례로 다시 매긴다(⌘Z 한 번으로 되돌림). 글 속 이름은 그대로.
