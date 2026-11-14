@@ -113,7 +113,7 @@ const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ?
 // 시작 창이 걷히기 직전(창이 다 커진 뒤) 도화지 크기를 한 번만 맞춘다 — 걷힌 뒤 도화지가 튀지 않게.
 // 11-09 사용자: 「처음 로딩에서 미리 불러 두고 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 기본 범위(물리Ⅰ·Ⅱ)
 // 학평 자료·낱말 위치를 읽어 둔다. 고르기 화면은 이 읽기가 끝난 뒤에 나온다(js/start-screen.js waitFor).
-if (startScreen) startScreen.waitFor("라이브러리 자료 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)));
+if (startScreen) startScreen.waitFor("라이브러리 자료(학평·평가원) 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)), 1.3);
 if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
 initAppSwitch();
 installAppLock();
@@ -391,6 +391,9 @@ const examWorkspace = initRhwpExamWorkspace(state, { configurePortableProjectIO,
   whenReady:() => autosaveReady,
 });
 
+// 11-14 라이브러리: 시작 고르기 대기 앞에서 만들어 로딩 동안 자료팩·학평·검색 색인을 준비한다 — 예전엔 대기 뒤라 들어간 뒤에 돌며 프레임을 끊었다.
+// AI 창 연결(openAiWithReference 등)은 아래에서 정의되므로 누를 때 찾아 쓰게 감싼다(눌리는 건 들어간 뒤라 그때는 정의되어 있다).
+const examLibrary = initExamLibrary(state, { openAi: (...args) => openAiWithReference(...args), openIndependentReferences: (...args) => openIndependentAiReferences(...args) });
 // 11-14: 출제 화면은 시작 고르기를 기다리는 대기(await autosaveReady) 앞에서 만든다 — 그래야 시작 로딩 동안 미리 열어 둘 수 있다.
 initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys,
   commitActiveText, switchPage, centerView:() => centerView(state)}, examWorkspace);
@@ -398,18 +401,19 @@ initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFon
 // 할 일이 없더라도 여기서 번 시간이 나중에 앱이 무거워졌을 때 처음 열리는 버벅임의 완충지대가 된다(마지막 「마무리」 단계).
 if (startScreen) {
   const prep = [];
-  const step = (label, run) => { const work = startScreen.waitFor(label, run); prep.push(work); return work; };
-  step("출제 화면 준비 중…", () => window.fiveEPrewarmExam?.());
-  step("조판 엔진 준비 중…", () => examWorkspace?.prewarm?.());
-  step("글꼴 준비 중…", () => Promise.all([ensureEmbeddedFonts(), ...['16px "Latin Modern Math"', 'italic 16px "Latin Modern Roman"', '16px "Latin Modern Roman"', '16px "Pretendard Variable"', '16px Pretendard']
-    .map(font => document.fonts?.load?.(font).catch(() => {}))]));
-  step("클립보드 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1114"); const items = await clipList();
-    await Promise.all(items.slice(0, 24).map(item => { const img = new Image(); img.src = item.src; return img.decode().catch(() => {}); })); });
+  const step = (label, run, weight = 1) => { const work = startScreen.waitFor(label, run, weight); prep.push(work); return work; };
+  step("기출 문항·검색 색인 준비 중…", () => startScreen ? examLibrary.warmLibrary() : null, 1.7);
+  step("출제 화면 미리 여는 중…", () => window.fiveEPrewarmExam?.(), 1.4);
+  step("한글 조판 엔진 띄우는 중…", () => examWorkspace?.prewarm?.(), 1.2);
+  step("수식·본문 글꼴 불러오는 중…", () => Promise.all([ensureEmbeddedFonts(), ...['16px "Latin Modern Math"', 'italic 16px "Latin Modern Roman"', '16px "Latin Modern Roman"', '16px "Pretendard Variable"', '16px Pretendard']
+    .map(font => document.fonts?.load?.(font).catch(() => {}))]), 0.6);
+  step("클립보드 그림 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1114"); const items = await clipList();
+    await Promise.all(items.slice(0, 24).map(item => { const img = new Image(); img.src = item.src; return img.decode().catch(() => {}); })); }, 0.5);
   // 마무리: 위 준비가 끝난 뒤 화면 그리기가 0.6초 동안 끊기지 않을 때까지(최대 4초) 기다린다 — 들어가자마자 남은 일이 몰려 버벅이지 않게.
-  step("마무리 중…", async () => { await Promise.all([...prep]);
+  step("화면 안정화하는 중…", async () => { await Promise.all([...prep]);
     await new Promise(resolve => { const t0 = performance.now(); let last = t0, calm = t0;
       const tick = now => { if (now - last > 50) calm = now; last = now; if (now - calm >= 600 || now - t0 > 4000) resolve(); else requestAnimationFrame(tick); };
-      requestAnimationFrame(tick); }); });
+      requestAnimationFrame(tick); }); }, 0.8);
 }
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
@@ -534,9 +538,7 @@ const openIndependentAiReferences = async options => {
   const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
   return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.openIndependentReferences(prepared);
 };
-const examLibrary = initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
-// 11-09: 들어가자마자 읽어 둔 자료로 라이브러리 목록·검색 준비를 끝낸다(라이브러리를 처음 열 때·첫 검색 때 멈칫하지 않게).
-if (startScreen) void examLibrary.warmLibrary();
+// examLibrary는 시작 고르기 대기 앞에서 만든다(위 「11-14 라이브러리」) — 로딩 동안 자료·검색 색인을 미리 준비하게.
 // 11-06 결정 11-05e: 한글 그림 편집 창 「AI 변환」「복원」 — 그 그림을 원본으로 AI 작업대(이미지 변환 / 그래프 복원)를 한글 위에 연다. 결과는 「이 자리에 넣기」로 그 자리에(rhwp-exam-workspace.js inlineAi).
 window.addEventListener('5e:ai-open-reference', (event) => { const detail = event.detail || {}; if (detail.reference) void Promise.resolve(openAiWithReference({ reference: detail.reference, conversionKind: detail.conversionKind || 'image', ...(detail.hwpTarget ? { hwpTarget: detail.hwpTarget } : {}) })).catch(error => { if (!/로그인이 취소/.test(String(error?.message || error))) console.warn(error); }); });
 

@@ -1,14 +1,14 @@
 // 시작 창(11-04 확정 시안 5e-design-mockups/app-final-1104.html · css/start-screen.css).
 //  1) 첫 장면: 큰 「5E」 + E를 세로로 맞춘 다섯 단어(sciEnce Educational Evaluation Exam Editor) + 한글 문구 + 진행 줄.
-//     11-14: 최소 3초 — 그동안 출제 화면·조판 엔진·글꼴·클립보드를 미리 준비한다(main.js). 준비가 길면 25초까지 기다린다.
+//     11-14: 최소 6초 — 그동안 출제 화면·조판 엔진·글꼴·클립보드를 미리 준비하고(main.js), 단계 이름을 차례로 보인다. 준비가 길면 25초까지 기다린다.
 //  2) 고르기: 새로 만들기(image·exam·hwp) / 이어서 하기(자동 저장 기록) / 다른 파일 열기(⌘O·끌어다 놓기).
 //     예전 「작업 복구 / 새로 시작」 확인창 대신 여기서 고른다(autosave.js의 chooseStart).
 //  검사 브라우저(navigator.webdriver)·출제/조판 안쪽 화면·모바일에서는 띄우지 않는다(?start=1이면 강제로, ?start=0이면 끔).
 import { IS_MAC } from './platform.js?v=1.7.0-four-session-integration';
 
 const WORDS = [['sci', 'nce'], ['', 'ducational'], ['', 'valuation'], ['', 'xam'], ['', 'ditor']];
-// 11-14 사용자: 로딩을 조금 더 길게 — 미리 준비할 시간을 주고, 할 일이 적어도 들어간 뒤 버벅임의 완충지대가 되게 최소 3초.
-const MIN_INTRO = 3000;
+// 11-14 사용자: 로딩을 6초 → 7초로(「조금 더 늘려도 된다」) — 미리 준비할 시간을 주고, 할 일이 적어도 들어간 뒤 버벅임의 완충지대가 되게. 단계마다 무엇을 하는지 보인다.
+const MIN_INTRO = 7000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function startScreenEnabled() {
@@ -79,8 +79,9 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
   const sweep = colEl.cloneNode(true); sweep.classList.add('ss-sl'); colEl.append(sweep);
   const bar = root.querySelector('.ss-bar i'), status = root.querySelector('.ss-st');
   const started = performance.now();
-  let progress = 0.15; bar.style.width = '15%';
-  const creep = setInterval(() => { progress = Math.min(0.9, progress + (0.9 - progress) * 0.18); bar.style.width = `${progress * 100}%`; }, 160);
+  // 단계 목록이 오기 전에는 12%까지만 천천히(가끔 멈칫) — 단계 막대가 뒤로 가지 않게.
+  let progress = 0.03; bar.style.width = '3%';
+  const creep = setInterval(() => { if (Math.random() < 0.3) return; progress = Math.min(0.12, progress + (0.12 - progress) * (0.05 + Math.random() * 0.15)); bar.style.width = `${(progress * 100).toFixed(2)}%`; }, 120);
   const setStatus = text => { status.textContent = text; };
   setStatus('작업 공간 준비 중…');
   // 업데이트 알림: 배포 채널에 더 새 버전이 있으면 「1.7.0 → 1.7.1 [설치]」
@@ -190,11 +191,26 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
     }
     // 11-09: 들어가기 전에 무거운 준비(라이브러리 자료·검색 색인)를 끝낸다 — 들어간 뒤 멈칫하지 않게.
     // 너무 오래 걸리면(네트워크 등) 15초에서 끊고 들어간다(준비는 뒤에서 계속).
-    for (const task of tasks) {
-      setStatus(task.label);
-      await Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 25000 - (performance.now() - started))))]);// 25초에서 끊고 들어감(준비는 뒤에서 계속)
-    }
+    // 단계마다 이름을 보이고, 최소 시간(MIN_INTRO)을 단계 무게대로 나눠 머문다 — 일이 빨리 끝나도 무엇을 준비하는지 읽을 수 있게.
+    // 11-14 사용자: 0.8초씩 똑같이 오르니 답답 — 단계마다 머무는 시간에 무게·흔들림을 주고, 막대도 들쭉날쭉(가끔 멈칫) 차오르게.
     clearInterval(creep);
+    let target = Math.max(progress, 0.12);
+    const drift = setInterval(() => { if (Math.random() < 0.18) return; progress += (target - progress) * (0.04 + Math.random() * 0.2); bar.style.width = `${(progress * 100).toFixed(2)}%`; }, 90);
+    const totalWeight = () => tasks.reduce((sum, t) => sum + (t.weight || 1), 0);
+    let done = 0;
+    for (let i = 0; i < tasks.length; i++) {
+      const task = tasks[i], w = task.weight || 1;
+      setStatus(task.label);
+      const budget = Math.max(0, MIN_INTRO - 700 - (performance.now() - started)), restWeight = Math.max(w, totalWeight() - done);
+      const slot = budget * (w / restWeight) * (0.75 + Math.random() * 0.5);
+      target = 0.12 + 0.8 * (done + w) / totalWeight();
+      await Promise.all([
+        Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 25000 - (performance.now() - started))))]),// 25초에서 끊고 들어감(준비는 뒤에서 계속)
+        new Promise(r => setTimeout(r, slot)),
+      ]);
+      done += w;
+    }
+    clearInterval(drift);
     bar.style.width = '100%'; setStatus('준비 완료');
     const wait = Math.max(0, MIN_INTRO - (performance.now() - started));
     await new Promise(r => setTimeout(r, wait));
@@ -213,6 +229,6 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
 
   // 시작 화면이 떠 있는 동안 할 준비를 맡긴다(바로 시작하고, 고르기 화면은 끝날 때까지 기다린다).
   const tasks = [];
-  function waitFor(label, run) { let work; try { work = Promise.resolve(run()).catch(() => {}); } catch { work = Promise.resolve(); } tasks.push({ label, work }); return work; }
+  function waitFor(label, run, weight = 1) { let work; try { work = Promise.resolve(run()).catch(() => {}); } catch { work = Promise.resolve(); } tasks.push({ label, work, weight }); return work; }
   return { choose, setStatus, waitFor, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
 }

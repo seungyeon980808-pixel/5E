@@ -1480,12 +1480,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     pendingLoading = null;
     loading.reset();
     requestToken = requestStates.begin(activeTaskTabId, selectedCandidateId);
-    if (type !== 'chat' && !isCreationWorkflow(conversionKind)) {
+    if (type !== 'chat' && (!isCreationWorkflow(conversionKind) || conversionKind === 'graph-create')) {
       const source = loadingSource || attachments.find(isInputReference)?.data || attachments[0]?.data;
       const selectedModel = isGraphWorkflow(conversionKind) ? GRAPH_WORKBENCH_SELECTION.model : modelSelect.value;
       const history = [...taskTabs.values()].filter(tab => (tab.conversionKind || 'image') === conversionKind && tab.model === selectedModel)
         .flatMap(tab => (tab.generated || []).map(item => item.workflowMetrics?.timings?.total || item.generationTiming?.elapsedMs));
-      pendingLoading = { token: requestToken, source, kind: conversionKind, model: selectedModel, startedAt: Date.now(), expectedMs: estimateLoadingMs(conversionKind, selectedModel, history) };
+      pendingLoading = { token: requestToken, source, kind: conversionKind, model: selectedModel, startedAt: Date.now(), expectedMs: estimateLoadingMs(conversionKind, selectedModel, history), ...(isGraphWorkflow(conversionKind) ? { plan: conversionKind, phased: true } : {}) };
     }
     setBusy(true);
     stopGenerationTimingTimer();
@@ -2954,6 +2954,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (closeButton && closeButton.getAttribute('aria-label') !== closeLabel) closeButton.setAttribute('aria-label', closeLabel);
   }
 
+  function blankGraphSheet() {
+    const c = document.createElement('canvas'); c.width = 800; c.height = 600;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 800, 600);
+    return c.toDataURL('image/png');
+  }
+
   async function runGraphRestore(options = {}) {
     if (busy || graphSubmitting || panel.dataset.aiSharingMode === 'view') return;
     const creating = (options.runInputSnapshot?.conversionKind || conversionKind) === 'graph-create';
@@ -2993,7 +2999,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!isCurrent()) return;
       const contextAttachment = !creating && priorGraph?.graphResult?.source?.hash === source.hash ? await workbenchGraphContextAttachment(priorGraph.graphResult, priorGraph.id) : null;
       if (!isCurrent()) return;
-      if (pendingLoading) pendingLoading.source = data;
+      // 그래프 생성은 원본 그림이 없다 — 빈 4:3 종이를 흐림 틀로 써서 단계 막대·문구를 똑같이 보인다.
+      if (pendingLoading) pendingLoading.source = data || blankGraphSheet();
       requestPhase('generating');
       const clockId = `graph-${epoch}`; currentTurnId = clockId; startGenerationClock(clockId);
       const restored = await graphWorkflow.analyze({ source, ...(creating ? { description: instructions, priorPlan: priorGraph?.graphResult?.plan || null, priorObjects: priorGraph?.graphResult?.objects || null } : { attachment: { id, name, data }, instructions, contextAttachment, ...(contextAttachment ? {priorPlan:priorGraph.graphResult.plan,priorObjects:priorGraph.graphResult.objects} : {}), styleAttachments: styles.map(item => ({ id: item.id, name: item.name, data: item.data })) }), selection: GRAPH_WORKBENCH_SELECTION, catalog, force: true, repairInvalid: 2 }); // 11-12: 복원·생성 모두 검증에 걸리면 오류를 붙여 최대 두 번 더

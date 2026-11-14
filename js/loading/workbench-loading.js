@@ -6,6 +6,7 @@ import { coveringApp } from '../app-lock.js?v=1.7.0-four-session-integration';
 const COPY = Object.freeze({
   image: { start: '시험지 스타일로 다시 그리고 있어요', slow: '평소보다 조금 더 걸리고 있어요', verySlow: '아직 작업 중이에요 · 원본은 그대로 있어요', done: '시험지 스타일로 바꿨어요', failed: '변환하지 못했어요 · 원본은 그대로예요' },
   graph: { start: '그래프에서 축과 눈금을 읽고 있어요', slow: '조금 더 걸리고 있어요 · 계속 진행 중', done: '이제 직접 고칠 수 있어요', failed: '그래프를 읽지 못했어요 · 원본은 그대로예요' },
+  'graph-create': { start: '설명을 읽고 있어요', slow: '조금 더 걸리고 있어요 · 계속 진행 중', done: '이제 직접 고칠 수 있어요', failed: '그래프를 만들지 못했어요 · 설명을 조금 바꿔 다시 해 보세요' },
 });
 // 실제 작업 신호(phase)를 사용자에게 보이는 4단계로 묶는다. sec는 기록이 없을 때 진행 기준.
 // 칸 폭은 시간 비율이 아니라 고정 비율: 그림 그리기 칸이 너무 길면 답답해 보인다.
@@ -16,6 +17,20 @@ const STAGE_PLANS = Object.freeze({
     { short: '라벨 자리 맞추기', name: '라벨이 들어갈 자리를 맞추고 있어요', sec: 15, phases: ['targetMapping', 'labelProposals', 'finalVerification'] },
     { short: '라벨 넣고 확인', name: '라벨을 넣고 결과를 확인하고 있어요', sec: 12, phases: ['labelPlacement', 'review', 'validating'] },
   ],
+  // 11-14: 그래프 복원·생성도 이미지 변환처럼 단계 막대와 문구를 보인다. 그래프 작업은 단계 신호를 보내지 않아(검증만 옴)
+  // 시간이 차면 다음 칸으로 넘어간다(auto). 마지막 칸은 끝날 때까지 머문다. 기록이 쌓이면 칸마다 보통 걸린 시간을 쓴다.
+  graph: Object.assign([
+    { short: '축·눈금 읽기', name: '그래프에서 축과 눈금을 읽고 있어요', sec: 12, phases: [] },
+    { short: '곡선·점 찾기', name: '곡선과 점을 찾고 있어요', sec: 30, phases: [] },
+    { short: '편집 객체로', name: '고칠 수 있는 그래프로 옮기고 있어요', sec: 15, phases: [] },
+    { short: '검증', name: '눈금과 모양이 맞는지 확인하고 있어요', sec: 8, phases: ['validating'] },
+  ], { auto: true }),
+  'graph-create': Object.assign([
+    { short: '설명 읽기', name: '설명을 읽고 있어요', sec: 8, phases: [] },
+    { short: '축·관계 정하기', name: '축과 관계를 정하고 있어요', sec: 20, phases: [] },
+    { short: '그래프 그리기', name: '고칠 수 있는 그래프로 그리고 있어요', sec: 15, phases: [] },
+    { short: '검증', name: '모양이 설명과 맞는지 확인하고 있어요', sec: 8, phases: ['validating'] },
+  ], { auto: true }),
   image: [
     { short: '원본 읽기', name: '원본을 읽고 있어요', sec: 12, phases: ['sourceAnalysis'] },
     { short: '그림 새로 그리기', name: '그림을 새로 그리고 있어요', sec: 50, phases: ['pixelProcessing', 'generation', 'localRestore'] },
@@ -113,6 +128,8 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
     if (run.settled) return;
     // 남은 시간 예측은 들쭉날쭉해(같은 그림도 81~146초) 보여 주지 않는다. 시작부터 흐른 시간만 1초마다 올린다.
     meta.textContent = `${run.stage + 1}/${run.plan.length} · ${clock(elapsed(run))}`;
+    if (run.plan.auto && run.stage < run.plan.length - 2 && inStage >= run.expected[run.stage]) { advanceStage(run, run.stage + 1); return; }
+    if (run.plan.auto && run.stage === run.plan.length - 2 && inStage >= run.expected[run.stage] && run.message !== '조금 더 걸리고 있어요') { setPhase('조금 더 걸리고 있어요'); return; }
     if (late && run.message !== '조금 더 걸리고 있어요') setPhase('조금 더 걸리고 있어요');
   };
   const advanceStage = (run, index) => {
