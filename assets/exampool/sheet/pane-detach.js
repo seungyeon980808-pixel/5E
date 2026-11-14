@@ -5,8 +5,8 @@
 //    root·document에서 요소를 찾을 때 떼어 낸 창도 찾게 해 단추·입력이 그대로 돈다.
 //  · 오른쪽 「AI · 조판」 칸은 한글 엔진 창이 이 창에 붙어 있어 아직 떼지 않는다.
 const PANES = {
-  left: { sel: ':scope > .cv-left', name: '참고 자료', w: 520, h: 820, head: '.lp-one', before: '.pane-close' },
-  center: { sel: ':scope > .cv-center', name: '문항 카드', w: 680, h: 880, head: '.cv-bar' },
+  left: { sel: ':scope > .cv-left:not([inert])', name: '참고 자료', w: 520, h: 820, head: '.lp-one', before: '.pane-close' },
+  center: { sel: ':scope > .cv-center:not([inert])', name: '문항 카드', w: 680, h: 880, head: '.cv-bar' },
   adv: { sel: '[data-cvslot="adv"]', name: '조건', w: 360, h: 380, head: '.lp-adv-foot' },
 };
 const KEY = k => `5e.exam.paneDetach.${k}`;
@@ -115,7 +115,13 @@ export function initPaneDetach(root, { render, refreshLibrary }) {
       if (!entry) continue;
       const pane = findPane(key);
       if (pane && pane.parentNode !== entry.host) {
+        // 11-14(지적 11): 처음 떼어 낼 때는 남은 칸이 평소 칸 움직임(곡선 0.34초)으로 빈자리를 채운다 — 뚝 바뀌며 깜빡이던 것.
+        const anim = entry.fresh && pane.ownerDocument === document ? window.__fiveEPaneAnim : null, before = anim?.widths();
+        // 사라지는 칸 잔상은 복사본으로 — 떼어 낸 창으로 옮기는 진짜 칸을 잔상으로 쓰면 다시 이 창으로 끌려와 떼어 낸 창이 비었다.
+        if (before) for (const k of Object.keys(before)) if (before[k].node === pane) before[k].node = pane.cloneNode(true);
+        entry.fresh = false;
         entry.host.replaceChildren(entry.doc.adoptNode(pane));
+        if (anim && before) anim.animate(before);
         if (key === 'adv') pane.hidden = false;
         // 옮긴 목록은 그 창의 관찰자로 다시 살펴야 그림이 불려 온다 — 목록만 한 번 다시 채운다.
         if (key === 'left') queueMicrotask(() => refreshLibrary?.());
@@ -170,7 +176,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ds-panel,#0d1117
     const attrs = new MutationObserver(() => { for (const { name, value } of document.documentElement.attributes) doc.documentElement.setAttribute(name, value); host.className = `${root.className} pane-host`; });
     attrs.observe(document.documentElement, { attributes: true }); attrs.observe(root, { attributes: true, attributeFilter: ['class'] });
     const inner = new MutationObserver(later); inner.observe(host, { childList: true, subtree: true });
-    live[key] = { win, doc, host, attrs, inner, closing: false };
+    live[key] = { win, doc, host, attrs, inner, closing: false, fresh: true };
     const remember = () => write(KEY(key), { x: win.screenX, y: win.screenY, w: win.innerWidth, h: win.innerHeight });
     win.addEventListener('resize', remember);
     win.addEventListener('pagehide', () => { if (!live[key]?.closing) merge(key, { fromPopup: true }); });
@@ -190,6 +196,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--ds-panel,#0d1117
     // 조건 창은 원래 자리(참고 자료 칸)로 옮겨 두고 닫는다. 칸들은 다시 그려서 제자리에 둔다.
     if (key === 'adv') { const pop = origQS.call(entry.host, PANES.adv.sel); const lib = findPane('left'); const foot = lib && origQS.call(lib, '.lp-one'); if (pop && foot) { pop.hidden = true; foot.after(document.adoptNode(pop)); } }
     if (!fromPopup) { try { entry.win.close(); } catch {} }
+    // 붙이면 다시 그리며 카드가 평소 칸 움직임으로 제자리에 커지며 들어온다(card-editor animateFrom — 떼어 낸 창 안 칸은 세지 않음).
     render();
     sync();
   }

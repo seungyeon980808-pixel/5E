@@ -21,7 +21,7 @@ import {ROWS,fieldValue,writeField,applyVerticalValues} from './vertical.js';
 import {ensureAuthoring,syncRevision,restoreRevision,makeRequest,classifyResponse,storeProposal,applyProposal,rejectProposal,proposalChanges,recordReview,recordConversation,previewStructure,labelOf} from '../authoring/session.js';
 import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
-import {questionFromShape} from './templates.js';
+import {questionFromShape,relabelMaterials} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
 import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText,importStandard} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
@@ -845,7 +845,7 @@ function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(
   void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;const prev=cardEditor.cardOn?.()?current:null;current=q;if(prev&&prev.id!==id)dropIfBlank(prev.id);cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
 // 5E 클립보드(11-14, 옛 서랍): 왼쪽 메뉴 맨 아래 「클립보드」·⇧⌘V로 여는 오른쪽 서랍. 넣는 자리 = 열린 문항 카드의 자료 칸, 아니면 열린 아이디어 판.
-const clipboard=mountClipboard(document,{top:52,onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);},hosts:[
+const clipboard=mountClipboard(document,{top:52,onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);if(!v)cardEditor?.clearTileSel?.();},hosts:[
   {active:()=>view.name==='card'&&!!cardEditor?.clipCardOn?.(),label:()=>cardEditor.clipLabel?.()||'자료 칸에 넣기',accepts:it=>!!it.src,insert:it=>cardEditor.insertClipFigure(it)},
   {active:()=>(view.name==='card'&&!!cardEditor?.clipBoardOn?.())||(view.name==='ideas'&&!!ideaBoard?.boardId?.()&&ideaBoard.el.isConnected),label:'판에 넣기',insert:it=>{ideaBoard.addClip(it);}},
 ]});
@@ -1234,7 +1234,8 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(act==='pick')return pickFigure(q,id);
     if(act==='table')return openSlots(q,id);
     if(act==='to-table'){if(mutate(()=>applyPartChange(q,id,'kind',KINDS.table)))openSlots(q,id);return;}
-    if(act==='remove'){mutate(()=>{q.blocks=q.blocks.filter(b=>b.id!==id);q.references=q.references.filter(r=>r.target!==id);});return;}
+    // 11-14(지적 1): 칸을 지우면 남은 칸 이름을 (가)(나)(다) 차례로 다시 매긴다(⌘Z 한 번으로 되돌림). 글 속 이름은 그대로.
+    if(act==='remove'){let r={changes:[],texts:0};if(mutate(()=>{q.blocks=q.blocks.filter(b=>b.id!==id);q.references=q.references.filter(r=>r.target!==id);r=relabelMaterials(q);})&&r.changes.length)setTimeout(()=>status(`자료 이름을 ${r.changes.map(c=>`${c.from}→${c.to}`).join(' · ')}로 다시 매겼습니다 · ⌘Z로 되돌리기`),900);return;}
     if(act==='add-figure'||act==='add-table'){const kind=act==='add-figure'?'figure':'table',side=q.blocks.find(b=>b.kind==='group'&&b.layout==='나란히'&&q.blocks.some(c=>c.parent===b.id&&(c.kind==='figure'||c.kind==='table'))),parent=side?.id||null;let made=null;
       if(mutate(()=>{made=block(kind,parent,nextMaterialLabel(q,parent,kind));q.blocks.push(made);})&&kind==='table')openSlots(q,made.id);return;}
     return slotAction(act,q,id);// 편집·파일·AI 변환(11-14)

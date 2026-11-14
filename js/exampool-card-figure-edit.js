@@ -87,7 +87,8 @@ export async function editCardFigure(m, { send, state, services, frame, onDetail
   const bridge = { figureRect: tileRect, figureGeometry: tileRect, watchView: fn => { addEventListener('resize', fn); return () => removeEventListener('resize', fn); } };
   let bounds = copy(render.bounds), labels = annotationsFor(source);
   const preview = async b => (await raster(source, b, services, state, { dpi: 150, labels: false })).toDataURL('image/png');
-  const finish = () => { editor.close(); };
+  // 닫으면 키보드 초점을 출제 칸으로 돌려준다 — 바깥 문서에 남으면 카드의 ⌘Enter·Delete가 닿지 않았다.
+  const finish = () => { editor.close(); try { frame?.contentWindow?.focus(); } catch {} };
   const options = {
     onChange: (next, b) => { labels = next; bounds = b; },
     onError: error => send({ error: error.message || String(error) }),

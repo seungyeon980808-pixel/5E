@@ -68,7 +68,7 @@ export function createCardEditor(root,api){
     const tools=(b,acts)=>`<span class="cv-tile-tools">${acts}${tool('remove',b.id,ICON.trash,'이 자리 지우기')}</span>`;
     const tiles=list.map(b=>{
       const name=E(b.label||KINDS[b.kind]);
-      if(b.kind==='figure'&&b.figure)return `<div class="cv-tile${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="${name} · 그림 · 두 번 누르면 편집"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,tool('edit',b.id,ICON.pencil,'편집 (두 번 누르기)')+tool('swap',b.id,ICON.swap,'바꾸기 — 클립보드·파일'))}${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}</div><div class="cap"><b>${name}</b></div></div>`;
+      if(b.kind==='figure'&&b.figure)return `<div class="cv-tile${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="${name} · 그림 · 두 번 누르기·⌘Enter로 편집"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,tool('edit',b.id,ICON.pencil,'편집 (두 번 누르기 · ⌘Enter)')+tool('swap',b.id,ICON.swap,'바꾸기 — 클립보드·파일'))}${tileSel===b.id?'<span class="cv-target-tag">바꿀 칸</span>':''}</div><div class="cap"><b>${name}</b></div></div>`;
       if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" title="${name} · 표 ${t.rows}×${t.cols}"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${E(c.value).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
       // 11-14(시안 1-1·2-4): 빈 칸은 아이콘 둘만(이름은 풍선). 그림 넣기를 누르면 클립보드·파일 중 고른다. 칸 빈 곳을 누르면 넣을 칸으로 골라진다.
       return `<div class="cv-tile empty${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="눌러서 넣을 칸으로 고르기"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="add-pic" data-cvslot="${b.id}" title="그림 넣기 — 클립보드·파일" aria-label="그림 넣기">${ICON.pic}</button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}" title="표 만들기" aria-label="표 만들기">${ICON.table}</button></span>${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
@@ -278,14 +278,17 @@ export function createCardEditor(root,api){
   const PANE_EASE='cubic-bezier(.32,.72,0,1)',PANE_MS=340;
   const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
   let paneRun=null,hwpFrozen=false;
-  function paneWidths(){const m={};root.querySelectorAll(':scope>[data-pane]').forEach(n=>{const r=n.getBoundingClientRect();m[n.dataset.pane]={x:r.left,w:r.width,y:r.top,h:r.height,node:n,kids:[...n.children].map(c=>{const q=c.getBoundingClientRect();return {w:q.width,h:q.height};}),bg:paneFill(n)};});return m;}
+  // 떼어 낸 창(pane-detach)으로 옮긴 칸은 세지 않는다 — 다른 창 좌표가 섞여 붙일 때 카드가 엉뚱한 자리에서 미끄러져 들어왔다(11-14).
+  function paneWidths(){const m={};root.querySelectorAll(':scope>[data-pane]').forEach(n=>{if(n.ownerDocument!==document||n.parentElement!==root)return;const r=n.getBoundingClientRect();m[n.dataset.pane]={x:r.left,w:r.width,y:r.top,h:r.height,node:n,kids:[...n.children].map(c=>{const q=c.getBoundingClientRect();return {w:q.width,h:q.height};}),bg:paneFill(n)};});return m;}
   // 칸 바탕을 안 칸들(머리 줄·흰 면)의 색 띠로 칠해 둔다 — 움직이는 동안 안 내용은 마지막 폭이라, 가림 안쪽에 남는 자리가 검게 비어 보였다(11-14 ②).
   function paneFill(n){const R=n.getBoundingClientRect(),own=getComputedStyle(n).backgroundColor,clear=c=>!c||c==='transparent'||/rgba\([^)]*,\s*0\)$/.test(c),stops=[];
     for(const c of n.children){const q=c.getBoundingClientRect(),bg=getComputedStyle(c).backgroundColor;if(q.height<1||clear(bg))continue;stops.push(`transparent ${q.top-R.top}px`,`${bg} ${q.top-R.top}px`,`${bg} ${q.bottom-R.top}px`,`transparent ${q.bottom-R.top}px`);}
     return stops.length?`linear-gradient(to bottom,${stops.join(',')}),${clear(own)?'transparent':own}`:'';}
   function finishPanes(){const r=paneRun;if(!r)return;paneRun=null;clearTimeout(r.timer);r.done();}
+  window.__fiveEPaneAnim={widths:()=>paneWidths(),animate:before=>animateFrom(before)};
   function animateFrom(before,opt={}){
     if(!Object.keys(before).length||root.hidden||root.closest('[hidden]')||reduceMotion())return false;
+
     const now=paneWidths(),names=Object.keys(now),leaving=Object.keys(before).filter(k=>!now[k]);
     if(!leaving.length&&names.every(k=>before[k]&&Math.abs(before[k].x-now[k].x)<1&&Math.abs(before[k].w-now[k].w)<1))return false;
     const R=root.getBoundingClientRect(),gut=parseFloat(getComputedStyle(root).getPropertyValue('--cv-gutter'))||8;
@@ -964,7 +967,7 @@ export function createCardEditor(root,api){
       t.scrollIntoView({block:'nearest',behavior:'smooth'});t.classList.remove('cv-tile-flash');void t.offsetWidth;t.classList.add('cv-tile-flash');setTimeout(()=>t.classList.remove('cv-tile-flash'),1600);
       api.status?.(`그림은 문항 카드에서 고칩니다 · 자료 ${name}로 이동`);};
     if(!cardShown()&&panels.view==='page'){setView('card');setTimeout(go,380);}else go();}
-  function setTileSel(id){tileSel=id||null;root.querySelectorAll('.cv-tile[data-cvtile]').forEach(t=>{const on=t.dataset.cvtile===tileSel;t.classList.toggle('is-target',on);let tag=t.querySelector('.cv-target-tag');if(on&&!tag){tag=document.createElement('span');tag.className='cv-target-tag';tag.textContent='여기에 넣기';t.querySelector('.pic')?.append(tag);}if(!on)tag?.remove();});window.fiveEClipboard?.sync?.();}
+  function setTileSel(id){tileSel=id||null;root.querySelectorAll('.cv-tile[data-cvtile]').forEach(t=>{const on=t.dataset.cvtile===tileSel;t.classList.toggle('is-target',on);let tag=t.querySelector('.cv-target-tag');if(on&&!tag){tag=document.createElement('span');tag.className='cv-target-tag';tag.textContent=t.classList.contains('empty')?'여기에 넣기':'바꿀 칸';t.querySelector('.pic')?.append(tag);}if(!on)tag?.remove();});window.fiveEClipboard?.sync?.();}
   function tileName(id){const x=q(),b=x&&x.blocks.find(v=>v.id===id);return b?(b.label||KINDS[b.kind]):'';}
   function clipLabel(){return tileSel&&tileName(tileSel)?`자료 칸 ${tileName(tileSel)}에 넣기`:'자료 칸에 넣기';}
   root.addEventListener('click',e=>{const t=e.target.closest?.('.cv-tile[data-cvtile]');if(!t||e.target.closest('button,a,input,textarea,select'))return;
@@ -975,10 +978,24 @@ export function createCardEditor(root,api){
   function tileMenu(btn,x,id){closeTileMenu();const r=btn.getBoundingClientRect();tileMenuEl=document.createElement('div');tileMenuEl.className='cv-tile-menu';tileMenuEl.setAttribute('role','menu');
     tileMenuEl.innerHTML=`<button type="button" role="menuitem" data-tm="clip">${ICON.pic}<span>클립보드에서<small>클립보드를 열고 이 칸에 넣기</small></span></button><button type="button" role="menuitem" data-tm="file">${ICON.page||ICON.pic}<span>파일에서<small>PNG·JPEG 그림 파일</small></span></button>`;
     Object.assign(tileMenuEl.style,{left:`${Math.round(r.left)}px`,top:`${Math.round(r.bottom+4)}px`});document.body.append(tileMenuEl);
-    tileMenuEl.addEventListener('click',ev=>{const k=ev.target.closest('[data-tm]')?.dataset.tm;if(!k)return;closeTileMenu();if(k==='file'){api.slot('file',x,id);return;}setTileSel(id);window.fiveEClipboard?.open?.();});
+    tileMenuEl.addEventListener('click',ev=>{const k=ev.target.closest('[data-tm]')?.dataset.tm;if(!k)return;closeTileMenu();if(k==='file'){api.slot('file',x,id);return;}setTileSel(id);const clip=window.fiveEClipboard;if(clip?.pickInto)clip.pickInto(`자료 칸 ${tileName(id)}`,it=>insertClipFigure(it,id),{accepts:it=>!!it.src,cancel:()=>setTileSel(null)});else clip?.open?.();});
     tileMenuEl.querySelector('button')?.focus();}
   document.addEventListener('pointerdown',e=>{if(tileMenuEl&&!e.target.closest('.cv-tile-menu'))closeTileMenu();},true);
+  // 11-14(지적 6): 고른 칸은 아무 곳이나 누르면 풀린다 — 그 칸 자신·클립보드 창(넣으려는 동작)·칸 메뉴를 누를 때만 그대로.
+  document.addEventListener('pointerdown',e=>{if(!tileSel)return;const t=e.target;if(t.closest?.(`.cv-tile[data-cvtile="${CSS.escape(tileSel)}"]`)||t.closest?.('.clp,.clpb,.cv-tile-menu'))return;
+    if(window.fiveEClipboard?.isOpen?.()&&!t.closest?.('.cv-tile[data-cvtile]')){window.fiveEClipboard.close();return;}// 고르기 중이던 클립보드도 닫으며 풀림(닫힘 → 고른 표시 풀기)
+    setTileSel(null);},true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tileMenuEl){e.preventDefault();closeTileMenu();}});
+  // 11-14(지적 8): 고른 칸 — Delete·⌫는 휴지통 단추와 같이 그 칸을 지움(⌘Z로 되돌림), Esc는 고르기만 풂. 글을 쓰는 중이면 건드리지 않는다.
+  // 11-14(지적 10): ⌘Enter(윈도우 Ctrl+Enter) — 고른 칸(없으면 마우스가 올라간 칸)이 그림이면 편집 창, 표면 표 편집, 빈 칸이면 그림 넣기 메뉴.
+  let hoverTile=null;root.addEventListener('pointerover',e=>{hoverTile=e.target.closest?.('.cv-tile[data-cvtile]')?.dataset.cvtile||null;});
+  document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!(e.metaKey||e.ctrlKey)||e.isComposing||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
+    const id=tileSel||hoverTile,x=q(),b=id&&x?.blocks.find(v=>v.id===id);if(!b)return;e.preventDefault();e.stopPropagation();
+    if(b.kind==='table'){api.slot('table',x,id);return;}if(b.kind==='figure'&&b.figure){api.slot('edit',x,id);return;}
+    const btn=root.querySelector(`.cv-tile[data-cvtile="${CSS.escape(id)}"] [data-cvslot-act="add-pic"]`);if(btn)tileMenu(btn,x,id);},true);
+  document.addEventListener('keydown',e=>{if(!tileSel||e.isComposing||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
+    if(e.key==='Escape'&&!window.fiveEClipboard?.isOpen?.()){e.preventDefault();setTileSel(null);return;}
+    if((e.key==='Delete'||e.key==='Backspace')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const x=q(),id=tileSel;if(!x)return;e.preventDefault();e.stopPropagation();setTileSel(null);api.slot('remove',x,id);}});
   // 끌기: 잡는 순간 칸들을 켜고, 가까운 칸을 밝힌다.
   const liveTiles=()=>[...root.querySelectorAll('.cv-tile[data-cvtile]')].filter(t=>q()?.blocks.find(v=>v.id===t.dataset.cvtile)?.kind==='figure');
   function nearTile(e){const tiles=liveTiles();if(!tiles.length)return null;const box=tiles.map(t=>t.getBoundingClientRect()),M=90;
@@ -1030,7 +1047,7 @@ export function createCardEditor(root,api){
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
-    insertClipFigure,clipLabel,flashTile,clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
+    insertClipFigure,clipLabel,flashTile,clearTileSel:()=>{if(tileSel)setTileSel(null);},clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
     confirmSwitch,confirmBoardSwitch,setCard(on){if(on&&!bench.card){panels.rightOpen=true;store.set('rightOpen',true);}/* 11-14: 문항 카드를 열면 조판도 같이 연다(카드 2 : 조판 1이 기본) */bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
     toggleLib(){panels.lib=!panels.lib;store.set('lib',panels.lib);if(!root.hidden&&!root.closest('[hidden]'))render();},libOn:()=>!!panels.lib,cardOn:()=>bench.card&&!!q(),
     benchBusy:()=>!!bench.board||(bench.card&&!!q()),ideaState:()=>bench.board?{id:bench.board}:null,aimField,resetIdea(){},

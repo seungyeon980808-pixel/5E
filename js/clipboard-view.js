@@ -138,7 +138,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   doc.body.appendChild(big);
   const toast = doc.createElement('div'); toast.className = 'clp-toast'; toast.setAttribute('role', 'status'); doc.body.appendChild(toast);
   const body = el.querySelector('.clp-b'), grid = big.querySelector('.clpb-g'), one = big.querySelector('.clpb-one');
-  let open = false, bigOn = false, items = [], sel = null, multi = new Set(), filters = { kind: '', src: '', q: '' }, picking = null, oneIdx = -1;
+  let pickOnce = null, open = false, bigOn = false, items = [], sel = null, multi = new Set(), filters = { kind: '', src: '', q: '' }, picking = null, oneIdx = -1;
   const host = () => hosts.find(h => { try { return h.active(); } catch { return false; } }) || null;
   // 11-14(시안 review-1114 6번): 떼어 쓰기 — 떠 있는 작은 창. 머리를 끌어 옮기고 ⇲로 다시 서랍에. 위치·상태를 기억한다.
   // 떼어 둔 동안 ⇧⌘V는 창을 앞으로 불러 반짝인다(크게 보기로 넘어가지 않음). Esc로는 닫히지 않는다(× 로 닫음).
@@ -169,8 +169,8 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   function syncSide() {
     body.querySelectorAll('.clp-i').forEach(n => n.setAttribute('aria-selected', String(n.dataset.clpId === sel)));
     const h = host(), it = items.find(i => i.id === sel), go = el.querySelector('[data-clp="go"]');
-    go.disabled = !h || !it || (h.accepts && !h.accepts(it));
-    go.textContent = picking ? '고르기' : h ? labelOf(h) : '넣기';// 「넣기 · 캔버스에 넣기」처럼 겹치던 말을 하나로
+    go.disabled = !!pickOnce || !h || !it || (h.accepts && !h.accepts(it));
+    go.textContent = pickOnce ? `${pickOnce.label}에 넣을 그림을 누르세요` : picking ? '고르기' : h ? labelOf(h) : '넣기';// 「넣기 · 캔버스에 넣기」처럼 겹치던 말을 하나로
     go.title = !h ? '지금 화면에는 넣을 자리가 없습니다 — 끌어서 원하는 칸에 놓거나, 넣을 화면을 연 뒤 넣기' : 'Enter · 두 번 누르기';
   }
   const visible = () => items.filter(i => (!filters.kind || i.kind === filters.kind) && (!filters.src || i.source === filters.src) && (!filters.q || `${i.name} ${i.source}`.toLowerCase().includes(filters.q.toLowerCase())) && (!picking?.kinds || picking.kinds.includes(i.kind)));
@@ -204,18 +204,25 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     let done = 0; const name = labelOf(h);
     for (const it of list) { if (h.accepts && !h.accepts(it)) continue; try { await h.insert(it); done++; await clipConsume(it.id); } catch (e) { say(e?.message || '넣지 못했습니다'); return; } }
     if (done) say(`${name.replace(/에 넣기$/, '')}에 넣었습니다 · ${clipKey('⌘Z')}로 되돌리기`);
+    // 11-14(지적 7): 넣으면 클립보드는 닫힌다(넣기 단추·두 번 누르기·크게 보기 넣기). 떼어 둔 창은 계속 쓰려고 띄운 것이라 그대로.
+    if (done && !detached) { if (bigOn) closeBig(); if (open) set(false); }
   }
-  function set(v) { if (v) { const d = store.get('5e.clp.detached', '0') === '1'; if (d !== detached) setDetached(d); else if (detached) place(); } open = v; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
+  function set(v) { if (!v && pickOnce) { const p = pickOnce; pickOnce = null; p.cancel?.(); } if (v) { const d = store.get('5e.clp.detached', '0') === '1'; if (d !== detached) setDetached(d); else if (detached) place(); } open = v; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
   function openBig({ pick = null } = {}) { picking = pick; multi.clear(); if (pick) filters = { kind: '', src: '', q: '' }; bigOn = true; big.classList.add('show'); void refresh(); requestAnimationFrame(() => grid.focus({ preventScroll: true })); if (!pick) void followOS?.(); }
   function closeBig() { bigOn = false; big.classList.remove('show'); one.classList.remove('show'); oneIdx = -1; if (picking) { const p = picking; picking = null; p.resolve([]); } }
   function showOne(i) { const list = visible(); if (!list.length) return; oneIdx = (i + list.length) % list.length; const it = list[oneIdx]; one.querySelector('img').src = it.src; one.querySelector('p').textContent = `${it.name} · ${KIND[it.kind] || '그림'} · ${it.source} — ← → 넘기기 · Esc 돌아가기`; one.classList.add('show'); }
   // 서랍: 고르기·넣기·고정·빼기·끌기
   body.addEventListener('click', e => { const r = e.target.closest('.clp-i'); if (!r) return; const id = r.dataset.clpId;
     if (e.target.closest('[data-clp-pin]')) { void clipPin(id); return; } if (e.target.closest('[data-clp-del]')) { void clipRemove(id); return; }
+    // 11-14(지적 4): 자료 칸에서 「클립보드에서」로 연 고르기 — 누르는 즉시 그 칸에 넣고 닫는다.
+    if (pickOnce) { const it = items.find(i => i.id === id), p = pickOnce; if (!it || (p.accepts && !p.accepts(it))) return; pickOnce = null; set(false); void Promise.resolve(p.fn(it)).then(() => { say(`${p.label}에 넣었습니다 · ${clipKey('⌘Z')}로 되돌리기`); return clipConsume(it.id); }).catch(e => say(e?.message || '넣지 못했습니다')); return; }
     sel = id; syncSide(); });
   body.addEventListener('dblclick', e => { const r = e.target.closest('.clp-i'); if (!r || e.target.closest('button')) return; const it = items.find(i => i.id === r.dataset.clpId); if (it) void insert([it]); });
   const dragStart = e => { const r = e.target.closest?.('[data-clp-id]'); if (!r) return; e.dataTransfer.setData(CLIP_MIME, r.dataset.clpId); e.dataTransfer.effectAllowed = 'copy'; const img = r.querySelector('img'); if (img) e.dataTransfer.setDragImage(img, 20, 20); };
   body.addEventListener('dragstart', dragStart); grid.addEventListener('dragstart', dragStart);
+  // 11-14: 끌어서 어딘가에 놓아 넣었으면(놓은 곳이 받아 줌) 넣기 단추와 같이 클립보드를 닫는다. 떼어 둔 창은 그대로.
+  const dragEnd = e => { if (detached || e.dataTransfer?.dropEffect === 'none') return; if (bigOn) closeBig(); if (open) set(false); };
+  body.addEventListener('dragend', dragEnd); grid.addEventListener('dragend', dragEnd);
   el.addEventListener('click', e => { const b = e.target.closest('[data-clp]'); if (!b) return; const k = b.dataset.clp;
     if (k === 'close') set(false); else if (k === 'detach') { setDetached(!detached); if (open) body.focus({ preventScroll: true }); } else if (k === 'big') openBig(); else if (k === 'go') { const it = items.find(i => i.id === sel); if (it) void insert([it]); }
     else if (k === 'menu') { const m = el.querySelector('.clp-menu'); m.hidden = !m.hidden; b.setAttribute('aria-expanded', String(!m.hidden)); m.querySelector('[data-clp="follow"]').checked = clipFollowOn(); } });
@@ -256,6 +263,9 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
       if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); if (multi.size) { void clipRemoveMany([...multi]); multi.clear(); } return; }
       if (/^Arrow/.test(e.key) && list.length) { e.preventDefault(); const cols = Math.max(1, Math.floor(grid.clientWidth / 214)); const d = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[e.key]; const n = list[Math.min(list.length - 1, Math.max(0, i + d))]; multi.clear(); multi.add(n.id); drawBig(); grid.querySelector(`[data-clp-id="${CSS.escape(n.id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
       return; }
+    // 11-14(지적 5): 서랍(붙인 클립보드)은 초점이 어디 있든 Esc 한 번이면 닫힌다 — 카드 칸을 누른 뒤 초점이 카드에 있으면 안 닫혔다.
+    // 떼어 둔 창은 Esc로 닫지 않는다. 글을 쓰는 중(입력칸)이면 그 칸의 Esc가 먼저.
+    if (open && !detached && e.key === 'Escape' && !el.contains(e.target) && !e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]')) { e.preventDefault(); e.stopPropagation(); set(false); return; }
     if (!open || !(el.contains(e.target) || e.target === doc.body)) return;
     if (e.key === 'Escape') { if (detached) { e.preventDefault(); body.blur(); return; } e.preventDefault(); set(false); return; }
     const i = items.findIndex(x => x.id === sel);
@@ -273,6 +283,8 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     pick: ({ kinds = ['img', 'graph', 'obj'], multiple = false, label = '고르기' } = {}) => new Promise(resolve => { if (open) set(false); openBig({ pick: { kinds, multiple, label, resolve } }); }),
     onCount: fn => { onCount = fn; fn(items.length); }, refresh,
     sync: () => { if (open) syncSide(); if (bigOn) syncBig(); },
+    // 한 번 누르면 바로 넣는 고르기(서랍): label = 「자료 칸 (나)」, fn(item) 넣기, cancel() 닫히면.
+    pickInto: (label, fn, { cancel = null, accepts = null } = {}) => { if (bigOn) closeBig(); if (pickOnce) { const p = pickOnce; pickOnce = null; p.cancel?.(); } pickOnce = { label, fn, cancel, accepts }; if (open) syncSide(); else set(true); },
   };
 }
 

@@ -123,5 +123,21 @@ export function setMaterialLayout(q,{place,count,dir}={}){
   else{const g=m.group||block('group',null,'자료');g.parent=null;g.layout=dir==='row'?'나란히':'세로';g.boxed=false;
     items.forEach((b,i)=>{b.parent=g.id;if(b.layout===WRAP||!b.layout)b.layout='세로';/* 11-14: 지우면 저장 검사(구성의 종류·이름·ID)에 걸려 「자료 칸 추가」가 실패했다 */if(b.size===40)delete b.size;if(!b.label||b.label==='자료')b.label=CAPS[i];});insert=[g,...items];}
   q.blocks.splice(at,0,...insert);
+  relabelMaterials(q);
   return materialLayout(q);
+}
+
+// 11-14(지적 1): 자료 칸 이름은 자리 순서로 — 지우기·더하기·배열 바꾸기 뒤 (가)(나)(다)를 차례로 다시 매긴다.
+// 직접 지은 이름(「그림 1」 등)은 건드리지 않는다(가~하 꼴만). 글 속 이름은 바꾸지 않는다(11-14 사용자).
+// 돌려줌: [{from,to}] 바뀐 이름(글을 바꿨는지는 texts 개수).
+const HANGUL_CAPS=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)','(카)','(타)','(파)','(하)'];
+export function relabelMaterials(q){
+  const m=materialsOf(q);if(!m||m.items.length<2)return {changes:[],texts:0};
+  const changes=[];
+  m.items.forEach((b,i)=>{const want=HANGUL_CAPS[i];if(!want||!HANGUL_CAPS.includes(b.label)||b.label===want)return;changes.push({from:b.label,to:want,block:b});});
+  if(!changes.length)return {changes:[],texts:0};
+  for(const c of changes)c.block.label=c.to;
+  // 11-14 사용자: 글 속 「(나)」 자동 바꾸기는 뺌(불필요) — 칸 이름만 다시 매긴다.
+  const texts=0;
+  return {changes:changes.map(({from,to})=>({from,to})),texts};
 }
