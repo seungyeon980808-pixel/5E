@@ -34,7 +34,7 @@ let grid=null,future=[];
 let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
 import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
-import {mountDrawer} from '../../../js/drawer.js?v=1113';
+import {mountClipboard} from '../../../js/clipboard-view.js?v=1114';
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — 그때는 '*'로 보내고, 받을 때는 부모 창에서 왔는지로 가린다.
 const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin,fromOwn=e=>FILE_MODE?e.source===window.parent:e.origin===location.origin;
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
@@ -839,15 +839,19 @@ function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(
   // 11-12: 문항 카드를 작업 칸에 올린다(아이디어 판이 열려 있으면 판 옆에). 쓰던 다른 카드에 고친 것이 있으면 먼저 묻는다.
   void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;const prev=cardEditor.cardOn?.()?current:null;current=q;if(prev&&prev.id!==id)dropIfBlank(prev.id);cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
-// 서랍(11-13): 라이브러리에서 담아 둔 그림 — 왼쪽 메뉴 맨 아래 단추로 띠를 열고, 그림을 자료 칸·아이디어 판으로 끌어 놓는다.
-const drawer=mountDrawer(document,{onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);}});
+// 5E 클립보드(11-14, 옛 서랍): 왼쪽 메뉴 맨 아래 「클립보드」·⇧⌘V로 여는 오른쪽 서랍. 넣는 자리 = 열린 문항 카드의 자료 칸, 아니면 열린 아이디어 판.
+const clipboard=mountClipboard(document,{top:52,onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);},hosts:[
+  {active:()=>view.name==='card'&&!!cardEditor?.clipCardOn?.(),label:'자료 칸에 넣기',accepts:it=>!!it.src,insert:it=>cardEditor.insertClipFigure(it)},
+  {active:()=>(view.name==='card'&&!!cardEditor?.clipBoardOn?.())||(view.name==='ideas'&&!!ideaBoard?.boardId?.()&&ideaBoard.el.isConnected),label:'판에 넣기',insert:it=>{ideaBoard.addClip(it);}},
+]});
+window.fiveEClipboard=clipboard;clipboard.onCount(n=>{if(view.clipCount!==n){view.clipCount=n;renderNav($('.side'),data,view);}});
 // 왼쪽 메뉴(다시 그려지므로 위임으로 받는다).
 $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   const nav=b.dataset.nav;if(!nav)return;
   if(nav==='toggle-nav'){$('#toggle-nav').click();return;}
   if(nav==='lib'){cardEditor.toggleLib();renderNav($('.side'),data,view);return;}
   if(nav==='bench'){show('card');return;}
-  if(nav==='drawer'){drawer.el.style.setProperty('--dw-left',Math.round($('.side').getBoundingClientRect().right+12)+'px');drawer.toggle();return;}
+  if(nav==='drawer'){clipboard.toggle();return;}
   if(nav==='trash'){show('trash',{kind:b.dataset.trash||'q'});return;}
   if(nav==='library'){view.examId=null;Object.assign(libState(view),{pool:b.dataset.pool||'drafting',limit:40,open:-1});show('library');}
   else if(nav==='exams')show('exams',{status:b.dataset.status||'drafting'});

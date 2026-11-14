@@ -5,7 +5,7 @@
 //  · 판 카드 위에는 단추를 두지 않는다. 오른쪽 단추 = 차림표(보내기·모양·색·잇기·복제·삭제), 왼쪽 단추 = 고르기·옮기기.
 //  · 칸이 좁아지면 판을 자르지 않고 통째로 비율로 줄인다(75%까지). ⌘+휠로 바꾸면 그 배율을 지키고 「맞춤」이면 다시 자동.
 import {qIcon} from './status-icons.js';
-import {isDrawerDrag,drawerFromDrop} from '../../../js/drawer.js?v=1113';
+import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1114';
 import {mathToHtml,htmlToMath,attachMathInput,loadMath,renderTex,hasMath} from '../../../js/eq/eq-input.js?v=1113';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -250,7 +250,7 @@ export function createIdeaBoard(app){
   wrap.addEventListener('dragover',e=>{if([...e.dataTransfer.types].some(t=>t==='Files'||t==='text/uri-list'||t==='text/plain'||t==='application/x-5e-drawer')){e.preventDefault();wrap.classList.add('drop');}});
   wrap.addEventListener('dragleave',()=>wrap.classList.remove('drop'));
   wrap.addEventListener('drop',e=>{e.preventDefault();wrap.classList.remove('drop');const p=toWorld(e.clientX,e.clientY);if(e.dataTransfer.files.length){void addImages(e.dataTransfer.files,p);return;}
-    if(isDrawerDrag(e.dataTransfer)){void drawerFromDrop(e.dataTransfer).then(it=>{if(!it)return;const w=Math.min(280,Math.max(140,it.w||200));add({type:'image',x:Math.round(p.x),y:Math.round(p.y),w,src:it.src,title:(it.name||'').slice(0,80),nw:it.w||w,nh:it.h||w});}).catch(err=>say(err.message,true));return;}
+    if(isDrawerDrag(e.dataTransfer)){void drawerFromDrop(e.dataTransfer).then(it=>{if(!it)return;if(it.moving)void clipConsume(it.id);const w=Math.min(280,Math.max(140,it.w||200));add({type:'image',x:Math.round(p.x),y:Math.round(p.y),w,src:it.src,title:(it.name||'').slice(0,80),nw:it.w||w,nh:it.h||w});}).catch(err=>say(err.message,true));return;}
     const u=e.dataTransfer.getData('text/uri-list')||'',t=e.dataTransfer.getData('text/plain')||'';if(/^https?:\/\//.test(u||t.trim()))add({type:'link',x:Math.round(p.x),y:Math.round(p.y),w:250,url:(u||t).trim().split('\n')[0],title:''});else if(t.trim())add({type:'memo',x:Math.round(p.x),y:Math.round(p.y),w:240,title:'',text:t.slice(0,20000)});});
   document.addEventListener('paste',e=>{if(!el.isConnected||!el.contains(document.activeElement)||editing||document.activeElement.isContentEditable)return;const files=[...e.clipboardData.files];
     if(files.length){e.preventDefault();void addImages(files);return;}const t=e.clipboardData.getData('text/plain');if(!t.trim())return;e.preventDefault();const c=center();
@@ -273,5 +273,7 @@ export function createIdeaBoard(app){
     ctx=options;$('.ib-name').textContent=b.title;
     const cb=$('.ib-card');cb.hidden=!options.cardButton;if(options.cardButton){cb.innerHTML=options.cardButton.html;cb.classList.toggle('on',!!options.cardButton.on);cb.title=options.cardButton.title||'';}
     if(el.parentElement!==parent)parent.append(el);draw();requestAnimationFrame(()=>{drawLinks();fit();});return true;}
-  return {el,mount,refresh:()=>{if(board&&el.isConnected){board=(app.data().ideas||[]).find(x=>x.id===board.id)||board;$('.ib-name').textContent=board.title;draw();}},boardId:()=>board?.id||null,endEdit};
+  // 클립보드(11-14) 「넣기」: 판 가운데에 그림 카드로(글 항목은 메모로).
+  const addClip=it=>{if(!board)throw Error('아이디어 판을 연 뒤 넣으세요.');const p=center(),w=Math.min(280,Math.max(140,it.w||200));if(it.kind==='text'&&it.text)return add({type:'memo',x:Math.round(p.x-120),y:Math.round(p.y-40),w:240,title:'',text:it.text.slice(0,20000)});return add({type:'image',x:Math.round(p.x-w/2),y:Math.round(p.y-w/3),w,src:it.src,title:(it.name||'').slice(0,80),nw:it.w||w,nh:it.h||w});};
+  return {el,mount,addClip,refresh:()=>{if(board&&el.isConnected){board=(app.data().ideas||[]).find(x=>x.id===board.id)||board;$('.ib-name').textContent=board.title;draw();}},boardId:()=>board?.id||null,endEdit};
 }

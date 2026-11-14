@@ -2444,6 +2444,12 @@
       "findingIds": [
         "EXAM-SHEET-SKIP-NONPRINTED"
       ]
+    },
+    {
+      "path": "tests/test-clipboard-hub-browser.cjs",
+      "findingIds": [
+        "CLIPBOARD-HUB-1114"
+      ]
     }
   ],
   "deferred": [

@@ -1,5 +1,5 @@
 import { loadAnswerBook, acceptedAnswers, answersShown, setAnswersShown, onAnswersShown, CIRCLED, ANSWER_COLOR } from "../assets/exampool/answers/answers.js?v=1107";
-import { drawerAdd } from "./drawer.js?v=1113";
+import { drawerAdd } from "./drawer.js?v=1114";
 import { createLibraryLoading } from './loading/library-controller.js?v=1.7.0-four-session-integration';
 import { createLibraryPreviewLoading } from './loading/library-preview.js?v=1.7.0-four-session-integration';
 import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
@@ -1055,10 +1055,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     button.setAttribute(attribute,'');button.disabled=true;button.textContent=attribute==='data-unilib-crop-insert'?'캔버스에 넣기':'좌표/함수 생성';
     overlay.querySelector(anchor).after(button);
   }
-  { // 서랍(11-13): 자른 영역을 담아 두고 5E_exam 자료 칸·아이디어 판·캔버스로 끌어 쓴다.
+  { // 클립보드(11-14, 옛 서랍): 자른 영역을 넣어 두고 5E_exam 자료 칸·아이디어 판·캔버스·5E_hwp에서 꺼내 쓴다.
     const button=document.createElement('button');button.type='button';button.className='unilib-button';
-    button.setAttribute('data-unilib-crop-drawer','');button.disabled=true;button.textContent='서랍에 담기';
-    button.title='자른 그림을 서랍에 담아 두고, 문항 카드 자료 칸·아이디어 판·캔버스로 끌어 씁니다.';
+    button.setAttribute('data-unilib-crop-drawer','');button.disabled=true;button.textContent='클립보드에 넣기';
+    button.title='자른 그림을 5E 클립보드에 넣어 두고, 세 프로그램 어디서나 꺼내 씁니다(⇧⌘V로 열기).';
     overlay.querySelector('[data-unilib-crop-cancel]').after(button);
   }
   const help = overlay.querySelector("[data-unilib-help]");
@@ -4324,10 +4324,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
         await drawerAdd({ src, name: entries.length > 1 ? `${base} ${index + 1}` : base, w: asset.width || 0, h: asset.height || 0 });
         done++;
       }
-      overlay.querySelector('[data-unilib-crop-selection]').textContent = done ? `서랍에 ${done}개 담았습니다 · 서랍 단추로 열어 끌어 쓰세요` : '서랍에 담을 그림을 만들지 못했습니다.';
-      button.textContent = '담았습니다 ✓'; setTimeout(() => { button.textContent = '서랍에 담기'; }, 1200);
+      overlay.querySelector('[data-unilib-crop-selection]').textContent = done ? `클립보드에 ${done}개 넣었습니다 · ⇧⌘V로 열어 꺼내 쓰세요` : '클립보드에 넣을 그림을 만들지 못했습니다.';
+      button.textContent = '넣었습니다'; setTimeout(() => { button.textContent = '클립보드에 넣기'; }, 1200);
     } catch (error) {
-      overlay.querySelector('[data-unilib-crop-selection]').textContent = `서랍에 담지 못했습니다: ${error.message}`;
+      overlay.querySelector('[data-unilib-crop-selection]').textContent = `클립보드에 넣지 못했습니다: ${error.message}`;
     } finally {
       cropActionBusy = false;
       if (!cropDialog.hidden) setCropActionAvailability();

@@ -182,10 +182,7 @@
             </div>
           </div>
         </div>
-        <button id="drawer-btn" class="topbar-btn shell-icon-button" type="button"
-                aria-label="서랍" aria-pressed="false" data-shell-tip="서랍 · 라이브러리에서 담아 둔 그림을 캔버스로 끌어 놓기">
-          <svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.8"/><path d="M3.5 12h17M10 8.2h4M10 15.7h4"/></svg>
-        </button>
+        <!-- 11-14: 위쪽 「서랍」 단추는 빼고 「작업 도구 › 클립보드」로 옮김 -->
         <button id="quick-capture-btn" class="topbar-btn shell-icon-button" type="button"
                 aria-label="빠른 캡처" aria-pressed="false" aria-keyshortcuts="Alt+C"
                 data-shell-tip="빠른 캡처 · Alt+C">
@@ -385,8 +382,9 @@
           </div>
         </div>
         <div class="tool-section" id="advanced-section">
-          <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-header">작업 도구 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
+            <button id="clipboard-open" class="advanced-tool-btn" type="button" aria-pressed="false">클립보드<b class="clip-count"></b></button>
             <button id="personal-object-save" class="advanced-tool-btn" type="button">오브젝트 저장</button>
             <button id="image-objectify-open" class="advanced-tool-btn" type="button" title="이미지 객체화">이미지 객체화</button>
             <button id="bulk-edit-open" class="advanced-tool-btn" type="button">전체 통일/수정</button>
@@ -513,7 +511,7 @@
                     aria-haspopup="menu" aria-controls="ai-source-menu" aria-expanded="false"><span class="ds-glyph-plus" aria-hidden="true">＋</span> 소스 추가 <span class="ds-glyph-caret" aria-hidden="true">▾</span></button>
             <div id="ai-source-menu" class="ai-source-menu" role="menu" data-ai-source-menu hidden>
               <button type="button" role="menuitem" data-ai-source-action="file">파일에서 추가</button>
-              <button type="button" role="menuitem" data-ai-source-action="clipboard">클립보드에서 붙여넣기 <kbd data-ai-paste-shortcut>Ctrl+V</kbd></button>
+              <button type="button" role="menuitem" data-ai-source-action="clipboard">클립보드에서</button>
               <button type="button" role="menuitem" class="ai-search-trigger" data-ai-source-action="library" data-ai-reference-search>자료 라이브러리에서 찾기</button>
             </div>
           </div>

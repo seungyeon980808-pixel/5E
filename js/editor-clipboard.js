@@ -5,6 +5,11 @@ import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
 const MIME = "application/x-5e-objects+json";
 const FORMAT = "5e-clipboard";
 let cloneSequence = 0;
+// 5E 클립보드(11-14): ⌘C·⌘X로 고른 객체를 클립보드 저장소에도 넣고(작은 그림 + 객체 원본), ⌘X로 넣은 것은 붙이면 클립보드에서 뺀다.
+let clipHook = null, insertRef = null;
+export function setClipboardHook(hook) { clipHook = hook; }
+// 클립보드 「넣기」: 저장해 둔 5E 객체를 지금 캔버스(마우스 자리 또는 가운데)에 넣는다.
+export function insertClipObjects(objects) { if (!insertRef) throw new Error('캔버스가 아직 준비되지 않았습니다.'); insertRef(JSON.parse(JSON.stringify(objects))); }
 
 export function cloneClipboardObjects(objects) {
   const stamp = `${Date.now().toString(36)}_${++cloneSequence}`;
@@ -53,10 +58,12 @@ function readObjects(data) {
   if (!objects.length || objects.some(obj => !obj || typeof obj.id !== "string" || !OBJECT_TYPE_IDS.includes(obj.type))) return null;
   if (new Set(objects.map(obj => obj.id)).size !== objects.length) return null;
   if (!objects.every(validGeometry)) throw new Error("invalid clipboard geometry");
+  objects.clipRef = typeof payload.clipRef === "string" ? payload.clipRef : null;
   return objects;
 }
 
 export function initObjectClipboard(state, insert, rebuildGroups) {
+  insertRef = insert;
   const copy = (event, cutting) => {
     if (blocked(event)) return;
     const s = state.get();
@@ -76,7 +83,9 @@ export function initObjectClipboard(state, insert, rebuildGroups) {
     event.preventDefault();
     try {
       if (!event.clipboardData) throw new Error("clipboard unavailable");
-      const payload = JSON.stringify({ format: FORMAT, version: 1, objects });
+      const clipRef = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+      const payload = JSON.stringify({ format: FORMAT, version: 1, objects, clipRef });
+      try { clipHook?.copied?.(objects, { cutting, clipRef, state: state.get() }); } catch { }
       event.clipboardData.setData("text/plain", payload);
       event.clipboardData.setData(MIME, payload);
     } catch {
@@ -103,6 +112,7 @@ export function initObjectClipboard(state, insert, rebuildGroups) {
       if (!objects) return;
       event.preventDefault();
       insert(objects);
+      if (objects.clipRef) try { clipHook?.pasted?.(objects.clipRef); } catch { }
     } catch {
       event.preventDefault();
       void showAlert("복사한 객체 데이터가 올바르지 않습니다. 원본에서 다시 복사해 주세요.", { title: "붙여넣기 실패" });

@@ -1,5 +1,7 @@
 import { initFigureStudio } from './figure-studio.js?v=1.7.0-four-session-integration';
-import { mountDrawer } from "./drawer.js?v=1113";
+import { clipAdd, clipConsumeRef } from "./drawer.js?v=1114";
+import { mountClipboard, makeOSFollower, isOpenClipKey, clipKey, CLIP_ICON } from "./clipboard-view.js?v=1114";
+import { setClipboardHook, insertClipObjects } from "./editor-clipboard.js?v=1.7.0-four-session-integration";
 import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
 import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integration';
@@ -817,15 +819,39 @@ if (_APP_DEBUG_ENABLED) {
   );
 }
 
-/* ----- 서랍(11-13): 위쪽 막대 서랍 단추 → 화면 아래 띠. 그림을 캔버스로 끌어 놓는다(project-io.js 놓기 처리). ----- */
+/* ----- 5E 클립보드(11-14, 옛 서랍): 「작업 도구」 맨 위 줄·⇧⌘V로 여는 오른쪽 서랍. 5E_image·5E_hwp는 이 문서의 것을, 5E_exam은 iframe 안의 것을 쓴다. ----- */
 {
-  const btn = document.getElementById("drawer-btn");
-  if (btn) {
-    const drawer = mountDrawer(document, { onToggle: (on) => btn.setAttribute("aria-pressed", String(on)) });
-    btn.addEventListener("click", () => {
-      const left = document.querySelector("#canvas")?.getBoundingClientRect().left;
-      drawer.el.style.setProperty("--dw-left", `${Math.round((left || 48) + 16)}px`);
-      drawer.toggle();
-    });
-  }
+  const hosts = [];
+  const appNow = () => document.getElementById("exampool-sheet-workspace")?.hidden === false ? "exam" : document.getElementById("rhwp-exam-workspace")?.hidden === false ? "hwp" : "image";
+  const viewCenter = () => { const v = state.get().viewBox; return { x: v.x + v.w / 2, y: v.y + v.h / 2 }; };
+  hosts.push({ active: () => appNow() === "image", label: "캔버스에 넣기",
+    insert: async item => { if (item.objects?.length) insertClipObjects(item.objects); else await insertImageFromSrc(state, item.src, { at: viewCenter() }); } });
+  hosts.push({ active: () => appNow() === "hwp" && !!window.fiveEClipHostHwp?.ready(), label: "커서 자리에 넣기", accepts: item => !!item.src, insert: item => window.fiveEClipHostHwp.insert(item) });
+  const desktop = window.fiveEDesktop;
+  const follow = makeOSFollower(desktop?.readClipboardImageInfo);
+  const clip = mountClipboard(document, { hosts, followOS: follow, top: 60,
+    onToggle: on => document.getElementById("clipboard-open")?.setAttribute("aria-pressed", String(on)) });
+  window.fiveEClipboard = { ...clip, hosts };
+  const row = document.getElementById("clipboard-open");
+  if (row) { row.title = `클립보드 — 넣어 둔 그림·객체를 꺼내 쓰기 (${clipKey("⇧⌘V")})`; row.addEventListener("click", () => clip.toggle());
+    clip.onCount(n => { const b = row.querySelector("b"); if (b) b.textContent = n ? String(n) : ""; }); }
+  // 5E_exam이 보일 때는 그 안의 클립보드가 받는다(넣을 자리가 그쪽에 있음).
+  const examClip = () => document.querySelector("#exampool-sheet-workspace iframe")?.contentWindow?.fiveEClipboard || null;
+  document.addEventListener("keydown", e => { if (!isOpenClipKey(e) || appNow() !== "exam") return; const other = examClip(); if (!other) return; e.preventDefault(); e.stopImmediatePropagation(); other.toggle(); }, true);
+  // 5E로 돌아올 때 맥·윈도우 클립보드의 그림을 「밖에서 · 캡처」로(설치판, 켜고 끄기).
+  if (follow) { window.addEventListener("focus", () => void follow()); window.addEventListener("5e:clip-os-sync", () => void follow({ force: true })); }
+  // ⌘C·⌘X: 고른 객체를 작은 그림 + 원본으로 넣는다. ⌘X 것은 「옮기는 중」 — 한 번 넣으면 빠진다.
+  setClipboardHook({
+    copied: (objects, { cutting, clipRef, state: s }) => { void (async () => {
+      const snap = { ...s, objects }, bounds = getContentBounds(snap, {}, 2);
+      if (!bounds || !(bounds.w > 0) || !(bounds.h > 0)) return;
+      await ensureEmbeddedFonts().catch(() => {});
+      const { canvas } = await rasterizeExportCanvas(snap, { dpi: 150, bounds });
+      const graph = objects.some(o => o.type === "funcgraph" || o.type === "coordplane");
+      await clipAdd({ src: canvas.toDataURL("image/png"), w: canvas.width, h: canvas.height, kind: graph ? "graph" : "obj", source: "5E_image",
+        name: graph ? "그래프" : objects.length === 1 && objects[0].type === "image" ? "그림" : `5E 그림 · 객체 ${objects.length}개`, objects, moving: cutting, ref: clipRef });
+      clip.say(cutting ? `잘라 내어 클립보드에 넣었습니다 · ${clipKey("⌘V")} 붙이기 · ${clipKey("⌘Z")} 제자리로` : `클립보드에 넣었습니다 · ${clipKey("⇧⌘V")} 열기`, 1800);
+    })().catch(() => {}); },
+    pasted: ref => void clipConsumeRef(ref),
+  });
 }

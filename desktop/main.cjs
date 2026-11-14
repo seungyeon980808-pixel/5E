@@ -1855,6 +1855,16 @@ function createWindow() {
 // 11-11: 설치판 출제 자료를 ~/Documents/5E/출제 에 파일로 쌓는다(자동 저장·백업·내보내기).
 require("./exam-files.cjs").registerExamFilesIpc({ handle: handleTrustedIpc, shell, documentsPath: () => app.getPath("documents") });
 // ExamPool 출제 대화의 근거 검색(읽기 전용). 입력은 종류·검색어·한도로 제한하고 경로·SQL·명령은 받지 않는다.
+// 5E 클립보드(11-14): 5E로 돌아올 때 맥·윈도우 클립보드의 그림을 「밖에서 · 캡처」로 넣는다. 서명(sig)으로 같은 그림은 한 번만.
+handleTrustedIpc("clipboard:read-image", () => {
+  const { clipboard } = require("electron");
+  const image = clipboard.readImage();
+  if (!image || image.isEmpty()) return null;
+  const png = image.toPNG(), size = image.getSize();
+  if (!png.length || png.length > 40 * 1024 * 1024) return null;
+  const sig = require("node:crypto").createHash("sha1").update(png).digest("hex");
+  return { dataUrl: `data:image/png;base64,${png.toString("base64")}`, width: size.width, height: size.height, sig };
+});
 handleTrustedIpc("exampool:evidence", async (_event, request) => require("./exampool-evidence.cjs").search(request && typeof request === "object" ? request : {}));
 handleTrustedIpc("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
 handleTrustedIpc("codex:start", () => startServer());

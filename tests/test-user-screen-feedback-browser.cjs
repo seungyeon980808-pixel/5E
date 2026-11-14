@@ -67,7 +67,7 @@ const out=path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/screen-
   const link=page.locator('.canvas-global-controls .bug-report-open');assert.equal(await link.getAttribute('href'),'https://5e.ai.kr/bug/');assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await page.locator('#bug-report-dialog').count(),0);
   // Help stays in the headings even with every image classified.
   await page.evaluate(async version=>{const{chooseWorkbenchAssignment}=await import('/js/library/workbench-assignment.js'+version);const c=document.createElement('canvas');c.width=100;c.height=70;window.__assignment=chooseWorkbenchAssignment({references:[{name:'그림',data:c.toDataURL()},{name:'그래프',data:c.toDataURL()}]});},version);
-  const bench=page.locator('.workbench-assignment');await bench.waitFor();assert.equal(await bench.locator('.workbench-assignment-instructions').count(),0);assert.equal(await bench.locator('h3 button[title]').count(),3);
+  const bench=page.locator('.workbench-assignment');await bench.waitFor();assert.equal(await bench.locator('.workbench-assignment-instructions').count(),0);assert.equal(await bench.locator('h3 button.workbench-assignment-help[title]').count(),3);// 11-14: 예비 작업대 머리에 「클립보드에서」 단추가 더해져 도움말 단추만 센다
   await bench.locator('[data-classify-reference="0"][data-conversion-kind="image"]').click();await bench.locator('[data-classify-reference="1"][data-conversion-kind="graph"]').click();
   const tops=await bench.locator('h3').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().top));assert(Math.max(...tops)-Math.min(...tops)<1);
   await page.screenshot({path:path.join(out,name+'-workbench.png')});await bench.locator('[data-action="cancel"]').first().click();

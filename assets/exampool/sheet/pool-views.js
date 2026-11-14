@@ -41,7 +41,8 @@ const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.
 // 별표는 칸이 아니라 목록 위 「모두 / 별표 / 메모」 거르기로만 쓴다.
 const TRASH_ICO='<svg class="st-ico st-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.3 1.3 0 0 0 1.3 1.2h6.6a1.3 1.3 0 0 0 1.3-1.2L17.5 7"/><path d="M10.2 10.8v6M13.8 10.8v6"/></svg>';
 const LIB_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4.5h3v15H5zM10 4.5h3v15h-3z"/><path d="m15.2 5.4 2.9-.8 3.6 14.4-2.9.8z"/></svg>';
-const DRAWER_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.8"/><path d="M3.5 12h17M10 8.2h4M10 15.7h4"/></svg>';
+// 클립보드(11-14, 옛 서랍) 아이콘: 집게 달린 판 위에 겹친 카드(시안 clipboard-hub-1114).
+const DRAWER_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.6 4.6H6.6a2.1 2.1 0 0 0-2.1 2.1v12.2a2.1 2.1 0 0 0 2.1 2.1h10.8a2.1 2.1 0 0 0 2.1-2.1V6.7a2.1 2.1 0 0 0-2.1-2.1h-2"/><rect x="8.6" y="2.8" width="6.8" height="3.6" rx="1.2"/><path d="M10.4 10.4v-.3c0-.5.4-.9.9-.9h4.4c.5 0 .9.4.9.9v3.6c0 .5-.4.9-.9.9h-.4"/><rect x="7.8" y="11.4" width="6.8" height="5.6" rx=".9"/><circle cx="9.9" cy="13.4" r=".75" fill="currentColor" stroke="none"/></svg>';
 const NAVTOG_ICO='<svg class="st-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M9 4.5v15"/></svg>';
 // 왼쪽 메뉴(11-12 시안 exam-panes-1112): 맨 위 메뉴 접기 · 라이브러리(켜고 끄기, 켜지면 바탕+점) · 문항(아이디어 · 출제 중 · 출제 완료 · 시험지에 담김 · 휴지통) · 시험지(출제 중 · 출제 완료 · 시험 종료 · 휴지통).
 // 문항 카드·아이디어 판이 열려 있는데 목록을 보고 있으면 맨 아래 「지금 작업으로」.
@@ -66,7 +67,7 @@ export function renderNav(root,data,view){
     <button type="button" class="nav nav-trash" data-nav="trash" data-trash="e" aria-current="${view.name==='trash'&&view.kind==='e'}" title="휴지통 — 14일 뒤 자동으로 비워집니다">${TRASH_ICO}<span>휴지통</span><b>${trash.exams.length}</b></button>
     <span class="side-sp"></span>
     ${view.benchBusy&&view.name!=='card'?`<button type="button" class="nav nav-bench" data-nav="bench" title="열어 둔 문항 카드·아이디어 판으로">${CARD_ICON.card}<span>지금 작업으로</span></button>`:''}
-    <button type="button" class="nav nav-drawer" data-nav="drawer" aria-pressed="${!!view.drawerOn}" title="서랍 — 라이브러리에서 담아 둔 그림을 끌어다 씁니다">${DRAWER_ICO}<span>서랍</span></button>`;
+    <button type="button" class="nav nav-drawer" data-nav="drawer" aria-pressed="${!!view.drawerOn}" title="클립보드 — 넣어 둔 그림·객체를 꺼내 쓰기 (${/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent||'')?'⇧⌘V':'Ctrl+Shift+V'})">${DRAWER_ICO}<span>클립보드</span>${view.clipCount?`<b>${view.clipCount}</b>`:''}</button>`;
 }
 
 // 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.

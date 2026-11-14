@@ -332,8 +332,9 @@
   :root:not([data-mode="lite"]) .app-footer .bug-report-open:hover { background: var(--ds-selected); }
 }
 
-/* 고급 기능 줄 아이콘(15px, 마크업 그대로) */
+/* 작업 도구 줄 아이콘(15px, 마크업 그대로) */
 @media (min-width: 768px) {
+  :root:not([data-mode="lite"]) #tool-list [id="clipboard-open"].advanced-tool-btn { --ds-row-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8.6 4.6H6.6a2.1 2.1 0 0 0-2.1 2.1v12.2a2.1 2.1 0 0 0 2.1 2.1h10.8a2.1 2.1 0 0 0 2.1-2.1V6.7a2.1 2.1 0 0 0-2.1-2.1h-2'/%3E%3Crect x='8.6' y='2.8' width='6.8' height='3.6' rx='1.2'/%3E%3Cpath d='M10.4 10.4v-.3c0-.5.4-.9.9-.9h4.4c.5 0 .9.4.9.9v3.6c0 .5-.4.9-.9.9h-.4'/%3E%3Crect x='7.8' y='11.4' width='6.8' height='5.6' rx='.9'/%3E%3Ccircle cx='9.9' cy='13.4' r='.75' fill='black' stroke='none'/%3E%3C/svg%3E"); }
   :root:not([data-mode="lite"]) #tool-list [id="personal-object-save"].advanced-tool-btn { --ds-row-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4h11l3 3v13H5z'/%3E%3Cpath d='M8 4v5h7V4M8 20v-6h8v6'/%3E%3C/svg%3E"); }
   :root:not([data-mode="lite"]) #tool-list [id="image-objectify-open"].advanced-tool-btn { --ds-row-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Ccircle cx='9' cy='10' r='1.6'/%3E%3Cpath d='m21 16-5-5-8 8'/%3E%3C/svg%3E"); }
   :root:not([data-mode="lite"]) #tool-list [id="bulk-edit-open"].advanced-tool-btn { --ds-row-ico: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h10M18 7h2M4 17h4M12 17h8'/%3E%3Ccircle cx='16' cy='7' r='2'/%3E%3Ccircle cx='10' cy='17' r='2'/%3E%3C/svg%3E"); }
@@ -946,3 +947,7 @@
   :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .canvas-global-controls .web-account-status { margin-right: 4px; position: relative; }
   :root:not([data-mode="lite"]) .app.pf-on .app-shell-header .canvas-global-controls .web-account-status::after { content: ""; position: absolute; right: -6px; top: 50%; width: 1px; height: 18px; margin-top: -9px; background: var(--ds-line-strong, #2b3442); }
 }
+
+/* 5E 클립보드 줄(11-14): 개수는 오른쪽 끝에 흐리게, 열려 있으면 눌린 회색 */
+#tool-list #clipboard-open .clip-count { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--ds-ink-3); }
+#tool-list #clipboard-open[aria-pressed="true"] { background: var(--ds-selected); color: var(--ds-ink); }

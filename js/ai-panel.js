@@ -155,7 +155,7 @@ const AI_IMPORT_ICONS = {
 const AI_IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
 const aiKey = mac => AI_IS_MAC ? mac : mac.replace('⇧⌘', 'Ctrl+Shift+').replace('⌘', 'Ctrl+');
 // 11-11: 빈 칸 불러오기 — 큰 단추는 바로 라이브러리, 옆 ＋는 파일·클립보드
-const aiEmptyImportHtml = () => `<div class="ai-stage-import"><button type="button" class="ai-stage-import-main" data-ai-empty-library title="라이브러리에서 불러오기 (${aiKey('⇧⌘L')})">${AI_IMPORT_ICONS.library}<span>라이브러리에서 불러오기</span></button><button type="button" class="ai-stage-import-more" data-ai-empty-more aria-haspopup="menu" aria-expanded="false" title="다른 곳에서 불러오기" aria-label="다른 곳에서 불러오기">＋</button><div class="ai-stage-import-menu" role="menu" hidden><button type="button" role="menuitem" data-ai-empty-file>${AI_IMPORT_ICONS.file}<span>파일에서 불러오기</span><kbd>${aiKey('⌘O')}</kbd></button><button type="button" role="menuitem" data-ai-empty-paste>${AI_IMPORT_ICONS.clip}<span>클립보드에서 붙여넣기</span><kbd>${aiKey('⌘V')}</kbd></button></div></div>`;
+const aiEmptyImportHtml = () => `<div class="ai-stage-import"><button type="button" class="ai-stage-import-main" data-ai-empty-library title="라이브러리에서 불러오기 (${aiKey('⇧⌘L')})">${AI_IMPORT_ICONS.library}<span>라이브러리에서 불러오기</span></button><button type="button" class="ai-stage-import-more" data-ai-empty-more aria-haspopup="menu" aria-expanded="false" title="다른 곳에서 불러오기" aria-label="다른 곳에서 불러오기">＋</button><div class="ai-stage-import-menu" role="menu" hidden><button type="button" role="menuitem" data-ai-empty-file>${AI_IMPORT_ICONS.file}<span>파일에서 불러오기</span><kbd>${aiKey('⌘O')}</kbd></button><button type="button" role="menuitem" data-ai-empty-paste>${AI_IMPORT_ICONS.clip}<span>클립보드에서</span><kbd>${aiKey('⌘V')}</kbd></button></div></div>`;
 export function scopedPngBytes(data) {
   if (!/^data:image\/png;base64,/i.test(data)) throw new Error('원본 PNG만 지원합니다. PNG 형식을 확인하세요.');
   return Uint8Array.from(atob(data.slice(data.indexOf(',') + 1)), c => c.charCodeAt(0));
@@ -6084,7 +6084,7 @@ ${chatText}` : ''}`;
     if (!action) return;
     closeSourceMenu();
     if (action === 'file' && !file.disabled) file.click();
-    if (action === 'clipboard') void pasteClipboardImage();
+    if (action === 'clipboard') void pickFromClipboard();
   });
   document.addEventListener('mousedown', (event) => {
     if (!sourceMenu?.hidden && !event.target.closest('.ai-source-menu-shell')) closeSourceMenu();
@@ -6291,7 +6291,7 @@ ${chatText}` : ''}`;
     if (busy) return;
     if (target.matches('[data-ai-empty-library]')) openLibraryImport(target);
     else if (target.matches('[data-ai-empty-file]')) { if (!file.disabled) file.click(); }
-    else if (target.matches('[data-ai-empty-paste]')) void pasteClipboardImage();
+    else if (target.matches('[data-ai-empty-paste]')) void pickFromClipboard();
   });
   document.addEventListener('keydown', event => {
     if (panel.hidden || busy || !(event.metaKey || event.ctrlKey) || event.altKey) return;
@@ -6946,6 +6946,16 @@ ${chatText}` : ''}`;
   }));
   panel.querySelector("[data-ai-close]").addEventListener("click", close);
   panel.addEventListener("mousedown", (event) => { if (event.target === panel) close(); });
+  // 11-14 5E 클립보드: 「클립보드에서」는 5E 클립보드를 고르기 모드로 연다(밖에서 캡처한 그림도 거기 맨 위에 있음). 고른 그림들이 원본이 된다.
+  const pickFromClipboard = async () => {
+    if (disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') return;
+    const clip = window.fiveEClipboard;
+    if (!clip?.pick) { void pasteClipboardImage(); return; }
+    const picked = await clip.pick({ kinds: ['img', 'graph', 'obj'], multiple: true, label: '원본으로 쓰기' });
+    if (!picked?.length || disposed) return;
+    addReferencesAsTasks(picked.map(item => ({ data: item.src, name: item.name || '클립보드 그림', sourceKind: 'clipboard' })));
+    setStatus(`클립보드에서 ${picked.length}개를 원본으로 가져왔습니다.`, 'ok');
+  };
   const pasteClipboardImage = async (event = null) => {
     if (disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') return;
     const owner = captureSourceRead();
@@ -7208,7 +7218,11 @@ ${chatText}` : ''}`;
     void (async () => {
       try {
         await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
-        if (output.isCurrent()) setStatus('현재 보이는 이미지와 라벨을 복사했습니다.','ok');
+        if (output.isCurrent()) setStatus('현재 보이는 이미지와 라벨을 복사했습니다 · 5E 클립보드에도 넣었습니다.','ok');
+        // 11-14 5E 클립보드: AI 결과 복사 = 클립보드에 넣기. 맥 클립보드에 쓴 같은 그림을 「밖에서」로 다시 넣지 않게 서명을 기억한다.
+        void (async () => { const data = await output.png; const [{ clipAdd }, view] = await Promise.all([import('./drawer.js?v=1114'), import('./clipboard-view.js?v=1114')]);
+          await clipAdd({ src: data, name: item.name || 'AI 결과', source: '5E_image', kind: String(conversionKind).startsWith('graph') ? 'graph' : 'img' });
+          const info = await window.fiveEDesktop?.readClipboardImageInfo?.().catch(() => null); view.markOSClipboardOwn(info?.sig); })().catch(() => {});
       } catch (error) {
         if (output.isCurrent()) setStatus(`이미지 복사 실패: ${error.message} PNG 저장을 사용할 수 있습니다.`,'error');
       } finally {

@@ -16,7 +16,7 @@ import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
-import {isDrawerDrag,drawerFromDrop} from '../../../js/drawer.js?v=1113';
+import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1114';
 import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1113';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
@@ -955,16 +955,19 @@ export function createCardEditor(root,api){
   root.addEventListener('dragover',e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();e.dataTransfer.dropEffect='copy';
     root.querySelectorAll('.cv-drop-on').forEach(n=>n!==r&&n.classList.remove('cv-drop-on'));r.classList.add('cv-drop-on');});
   root.addEventListener('dragleave',e=>{const r=e.target.closest?.('.cv-matrow');if(r&&!r.contains(e.relatedTarget))r.classList.remove('cv-drop-on');});
-  root.addEventListener('drop',async e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();r.classList.remove('cv-drop-on');
-    const tileId=e.target.closest('.cv-tile')?.querySelector('[data-cvslot]')?.dataset.cvslot;let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}
-    const x=q();if(!it||!x){api.status?.('서랍 그림을 읽지 못했습니다.',true);return;}
-    try{api.edit(()=>{let slot=tileId&&x.blocks.find(b=>b.id===tileId&&b.kind==='figure'&&!b.figure);
+  // 클립보드(11-14): 자료 칸에 그림 넣기 — 끌어 놓기와 클립보드 「넣기」가 같이 쓴다. tileId가 빈 칸이면 그 칸, 아니면 빈 칸, 없으면 칸을 하나 더(3개까지).
+  function insertClipFigure(it,tileId){const x=q();if(!it||!x)throw Error('문항 카드를 연 뒤 넣으세요.');
+    const ok=api.edit(()=>{let slot=tileId&&x.blocks.find(b=>b.id===tileId&&b.kind==='figure'&&!b.figure);
       if(!slot)slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);
-      if(!slot){const L=materialLayout(x);if(!L||slotsOf(x).length!==L.count)throw Error('자료가 상자·묶음 안에 섞여 있어 여기에 놓을 수 없습니다.');if(L.count>=3)throw Error('자료 칸은 3개까지입니다. 빈 칸을 만들거나 칸 하나를 지운 뒤 놓으세요.');
+      if(!slot){const L=materialLayout(x);if(!L||slotsOf(x).length!==L.count)throw Error('자료가 상자·묶음 안에 섞여 있어 여기에 넣을 수 없습니다.');if(L.count>=3)throw Error('자료 칸은 3개까지입니다. 빈 칸을 만들거나 칸 하나를 지운 뒤 넣으세요.');
         setMaterialLayout(x,{count:L.count+1});slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);}
       if(!slot)throw Error('빈 자료 칸을 만들지 못했습니다.');
-      slot.figure={name:`${it.name||'서랍 그림'}.png`.slice(0,200),data:it.src,...(it.w?{width:it.w,height:it.h}:{})};});}
-    catch(err){api.status?.(err.message,true);}});
+      slot.figure={name:`${it.name||'클립보드 그림'}.png`.slice(0,200),data:it.src,...(it.w?{width:it.w,height:it.h}:{})};});
+    if(ok===false)throw Error('자료 칸에 넣지 못했습니다 — 아래 상태 줄의 이유를 확인하세요.');}
+  root.addEventListener('drop',async e=>{const r=e.target.closest?.('.cv-matrow');if(!r||!isDrawerDrag(e.dataTransfer))return;e.preventDefault();r.classList.remove('cv-drop-on');
+    const tileId=e.target.closest('.cv-tile')?.querySelector('[data-cvslot]')?.dataset.cvslot;let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}
+    if(!it){api.status?.('클립보드 그림을 읽지 못했습니다.',true);return;}
+    try{insertClipFigure(it,tileId);if(it.moving)void clipConsume(it.id);}catch(err){api.status?.(err.message,true);}});
   root.addEventListener('click',e=>{if(!e.target.closest('[data-cvanswers]'))return;e.stopPropagation();setAnswersShown(!answersShown());});
   // 고르는 중에는 그림을 누르기만 해도 골라진다(두 번 눌러 크게 보기는 고르기를 마친 뒤).
   root.addEventListener('click',e=>{if(!pastPick.size)return;const f=e.target.closest('.cv-left .past-list figure.past');if(!f||e.target.closest('button,a,input,textarea,select'))return;const id=f.querySelector('[data-cvpick]')?.dataset.cvpick;if(id)togglePick(id,e.shiftKey);});
@@ -990,6 +993,7 @@ export function createCardEditor(root,api){
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
+    insertClipFigure,clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
     confirmSwitch,confirmBoardSwitch,setCard(on){if(on&&!bench.card){panels.rightOpen=true;store.set('rightOpen',true);}/* 11-14: 문항 카드를 열면 조판도 같이 연다(카드 2 : 조판 1이 기본) */bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
     toggleLib(){panels.lib=!panels.lib;store.set('lib',panels.lib);if(!root.hidden&&!root.closest('[hidden]'))render();},libOn:()=>!!panels.lib,cardOn:()=>bench.card&&!!q(),
     benchBusy:()=>!!bench.board||(bench.card&&!!q()),ideaState:()=>bench.board?{id:bench.board}:null,aimField,resetIdea(){},

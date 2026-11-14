@@ -399,6 +399,18 @@ export function initRhwpExamWorkspace(state, services) {
     figures.set(id, figure); changed();
     message('그림을 넣었습니다. 더블클릭해서 수정해보세요.');
   }
+  // 5E 클립보드(11-14): 「넣기」 = 지금 커서 자리에 그림으로. 화면 그림(약 200dpi로 보고 한 단 폭 80mm까지)으로 넣는다.
+  window.fiveEClipHostHwp = {
+    ready: () => !!bridge && !busy && !placement && !editing,
+    insert: async item => {
+      if (!bridge || busy || placement || editing) throw new Error('한글 편집기가 준비된 뒤 다시 넣으세요.');
+      const png = new Uint8Array(await (await fetch(item.src)).arrayBuffer());
+      let w = item.w, h = item.h; if (!(w > 0 && h > 0)) { const img = new Image(); img.src = item.src; await img.decode(); w = img.naturalWidth; h = img.naturalHeight; }
+      const dpi = 200, raw = new Uint8Array(insertPngPhys(png.buffer, dpi)), wMm = w / dpi * 25.4, scale = Math.min(1, 80 / wMm);
+      bridge.insertFigure({ id: crypto.randomUUID(), bytes: raw, pixelWidth: w, pixelHeight: h, widthMm: wMm * scale, heightMm: h / dpi * 25.4 * scale });
+      changed(); message('클립보드 그림을 커서 자리에 넣었습니다.');
+    },
+  };
   function cancelPlacement() {
     if (placement?.url) URL.revokeObjectURL(placement.url);
     placement = null; panel.querySelector('.exam-placement').hidden = true; delete panel.dataset.placing;
@@ -1267,6 +1279,8 @@ export function initRhwpExamWorkspace(state, services) {
     });
     bridge.editor.element.contentDocument.addEventListener('focusin',preserveMenuFocus,true);
     bridge.editor.element.contentDocument.addEventListener('keydown', saveShortcut, true);
+    // 5E 클립보드(11-14): 한글 편집기 안에서도 ⇧⌘V로 클립보드를 연다(편집기 iframe의 열쇠는 위 문서로 올라오지 않음).
+    bridge.editor.element.contentDocument.addEventListener('keydown', event => { if (!(/Mac|iPhone|iPad/.test(navigator.platform || '') ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey) || !event.shiftKey || event.altKey || event.code !== 'KeyV') return; event.preventDefault(); event.stopPropagation(); window.fiveEClipboard?.toggle(); }, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', closeOpenMenu, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', confirmPlacementWithKey, true);
     // 편집기 안에 글쇠가 있어도 프로그램 전환 ⌥⌘1~3(윈도우 Ctrl+Alt+1~3)이 되게 — 전환은 app-switch.js가 받는다.

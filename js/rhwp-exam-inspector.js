@@ -21,6 +21,7 @@ const SVG = {
   grid: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
   form: '<path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/>',
   photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/>',
+  clip: '<path d="M8.6 4.6H6.6a2.1 2.1 0 0 0-2.1 2.1v12.2a2.1 2.1 0 0 0 2.1 2.1h10.8a2.1 2.1 0 0 0 2.1-2.1V6.7a2.1 2.1 0 0 0-2.1-2.1h-2"/><rect x="8.6" y="2.8" width="6.8" height="3.6" rx="1.2"/><path d="M10.4 10.4v-.3c0-.5.4-.9.9-.9h4.4c.5 0 .9.4.9.9v3.6c0 .5-.4.9-.9.9h-.4"/><rect x="7.8" y="11.4" width="6.8" height="5.6" rx=".9"/>',
   fit: '<path d="M4 6h16M4 12h11M4 18h16"/><path d="M18 10l2 2-2 2"/>',
   oneline: '<path d="M4 12h16"/><path d="M7 9l-3 3 3 3M17 9l3 3-3 3"/>',
   sub: '<path d="M4 6l7 9M11 6l-7 9"/><path d="M15 15h4l-4 4h4"/>',
@@ -111,7 +112,7 @@ export function leftToolsMarkup() {
       <div class="ei-seg el-seg" role="tablist">${MODES.map(([k, l]) => `<button type="button" role="tab" data-exam-ltab="${k}" aria-pressed="false">${l}</button>`).join('')}</div>
       <p class="el-note" data-el-note></p></div>
     <div class="ei-body el-body">
-      ${sec('내용 넣기', '밖에서 가져오기', tiles([['md', '마크다운', '고른 마크다운을 한글 문서로 (팔레트)', 'md'], ['excel', '문항 엑셀', '엑셀 표에 채워 문항 만들기 (팔레트)', 'grid'], ['form', '양식 채우기', '양식 빈칸을 채워 새 문서로 (팔레트)', 'form'], ['photo', '사진', '그림 파일을 커서 자리에 (팔레트 사진)', 'photo']]) + '<button type="button" class="el-more" data-el-act="palette">조판 팔레트로 가기 ↓</button>')}
+      ${sec('내용 넣기', '밖에서 가져오기', tiles([['md', '마크다운', '고른 마크다운을 한글 문서로 (팔레트)', 'md'], ['excel', '문항 엑셀', '엑셀 표에 채워 문항 만들기 (팔레트)', 'grid'], ['form', '양식 채우기', '양식 빈칸을 채워 새 문서로 (팔레트)', 'form'], ['photo', '사진', '그림 파일을 커서 자리에 (팔레트 사진)', 'photo'], ['clip', '클립보드', '5E 클립보드에서 골라 커서 자리에 넣기 (⇧⌘V)', 'clip']]) + '<button type="button" class="el-more" data-el-act="palette">조판 팔레트로 가기 ↓</button>')}
       ${sec('자동 다듬기', '고른 곳에 적용', tiles([['fit', '자간 맞춤', '줄 끝에서 단어가 잘리지 않게 — 넘친 한두 글자를 자간으로 줄 안에 (팔레트 자간 맞춤)', 'fit'], ['oneline', '한 줄에 맞추기', '고른 문단을 한 줄에 들어가게 자간으로 (팔레트 한 줄 맞춤)', 'oneline'], ['chem', '화학식 첨자', 'H2O → H₂O 숫자를 아래 첨자로(문서 전체)', 'sub'], ['renum', '문항 번호', '문항 번호를 1부터 순서대로 다시 매기기', 'num']]))}
       <div class="ei-sec el-figs-slot"></div>
       <div class="ei-sec el-mode"><h4 data-el-modetitle>문항 쓰기<em>지금 모드</em></h4><div class="ei-tiles" data-el-modetools></div><button type="button" class="el-more" data-el-more title="이 모드의 나머지 기능(문항을 그림으로·고른 문항만 새 파일로·㉠㉡ 빈칸 학생용 등)">⋯ 더 보기</button></div>
@@ -319,7 +320,7 @@ export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, 
   if (figures) root.querySelector('.el-figs-slot').append(...figures);
   const ACT = {
     new: () => actions.newDocument(),
-    md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => palette?.tool('photo'), palette: () => {},
+    md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => palette?.tool('photo'), clip: () => window.fiveEClipboard?.toggle(), palette: () => {},
     fit: () => palette?.tool('spacing_fit'), oneline: () => palette?.tool('spacing_fit'),
     chem: () => ctx.withBridge(b => { const n = applyScienceScripts(b); ctx.message(n ? `첨자 ${n}곳을 입혔습니다(되돌리기 ⌘Z).` : '첨자를 입힐 화학식·단위를 찾지 못했습니다.'); }),
     renum: () => ctx.withBridge(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`)),

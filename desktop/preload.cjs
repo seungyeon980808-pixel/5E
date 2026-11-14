@@ -24,6 +24,9 @@ window.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("mouseleave", () => { if (shown) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); } });
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
+  // 5E 클립보드(11-14): 맥·윈도우 클립보드 그림 읽기 — {dataUrl,width,height,sig} 또는 null. readClipboardImage는 AI 붙여넣기용(data:URL).
+  readClipboardImageInfo: () => ipcRenderer.invoke("clipboard:read-image"),
+  readClipboardImage: () => ipcRenderer.invoke("clipboard:read-image").then(r => r?.dataUrl || null),
   exam: {
     annotationsReply:payload=>ipcRenderer.invoke('exam:annotations-reply',payload),
     onAnnotationsRequest:callback=>{const listener=(_event,payload)=>callback(payload);ipcRenderer.on('exam:annotations-request',listener);return()=>ipcRenderer.removeListener('exam:annotations-request',listener);},

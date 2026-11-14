@@ -91,7 +91,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
 
       <div class="workbench-assignment-advanced" data-classification>
         <section class="workbench-assignment-reference-panel" data-drop-target="pending" tabindex="0" role="group" aria-label="예비 작업대로 이동">
-          <h3>예비 작업대 <button type="button" class="workbench-assignment-help" aria-label="예비 작업대 도움말" title="이미지 안의 버튼으로 분류하거나 원하는 영역으로 끌어놓으세요. 이곳으로 되돌리면 분류를 바꿀 수 있습니다.">?</button><span data-pending-count></span></h3><div class="workbench-assignment-references" data-references></div>
+          <h3>예비 작업대 <button type="button" class="workbench-assignment-help" aria-label="예비 작업대 도움말" title="이미지 안의 버튼으로 분류하거나 원하는 영역으로 끌어놓으세요. 이곳으로 되돌리면 분류를 바꿀 수 있습니다.">?</button><span data-pending-count></span><button type="button" class="workbench-assignment-clip" data-action="from-clipboard" title="5E 클립보드에서 골라 예비 작업대에 올리기">클립보드에서</button></h3><div class="workbench-assignment-references" data-references></div>
         </section>
         <section class="workbench-assignment-bench-panel" data-image-destination>
           <h3>AI 이미지 변환 <button type="button" class="workbench-assignment-help" aria-label="AI 이미지 변환 도움말" title="이미지를 놓으면 새 작업대가 생깁니다. 함께 쓸 이미지는 같은 작업대 안에 놓으세요.">?</button><span data-image-count></span></h3><div class="workbench-assignment-benches" data-benches></div>
@@ -216,6 +216,17 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       const button = event.target.closest('button');
       if (button?.disabled) return;
       if (button?.dataset.action === 'cancel') { finish(null); return; }
+      // 11-14 5E 클립보드: 작업대(AI 처리)와 클립보드(옮기기)가 만나는 곳 — 고른 그림을 예비 작업대에 올리고 지금처럼 이미지/그래프로 나눈다.
+      if (button?.dataset.action === 'from-clipboard') {
+        const clip = window.fiveEClipboard; if (!clip?.pick) { showError('클립보드를 열 수 없습니다.'); return; }
+        overlay.style.visibility = 'hidden';
+        void clip.pick({ kinds: ['img', 'graph', 'obj'], multiple: true, label: '예비 작업대에 올리기' }).then(picked => {
+          overlay.style.visibility = '';
+          for (const item of picked || []) { items.push({ name: item.name || '클립보드 그림', dataUrl: item.src, src: item.src, source: 'clipboard' }); kinds.push(null); }
+          if (picked?.length) { remember(); render(); }
+        });
+        return;
+      }
       if (button?.dataset.classifyReference !== undefined) { move([Number(button.dataset.classifyReference)], button.dataset.conversionKind); return; }
       if (button?.dataset.unassign !== undefined) { move([Number(button.dataset.unassign)], 'pending'); return; }
       if (button?.dataset.selectReference !== undefined) {

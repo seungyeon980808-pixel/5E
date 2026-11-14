@@ -119,9 +119,9 @@ export function setMaterialLayout(q,{place,count,dir}={}){
   for(const b of items)q.blocks=q.blocks.filter(x=>x!==b);
   const firstText=q.blocks.find(b=>!b.parent&&b.kind==='text'),at=firstText?q.blocks.indexOf(firstText)+1:0;
   let insert;
-  if(count===1){const b=items[0];b.parent=null;if(place==='side'){b.layout=WRAP;b.size=b.size&&b.size<=70?b.size:40;}else{delete b.layout;if(b.size===40)delete b.size;}if(!b.label||CAPS.includes(b.label))b.label='자료';insert=[b];}
+  if(count===1){const b=items[0];b.parent=null;if(place==='side'){b.layout=WRAP;b.size=b.size&&b.size<=70?b.size:40;}else{b.layout='세로';if(b.size===40)delete b.size;}if(!b.label||CAPS.includes(b.label))b.label='자료';insert=[b];}
   else{const g=m.group||block('group',null,'자료');g.parent=null;g.layout=dir==='row'?'나란히':'세로';g.boxed=false;
-    items.forEach((b,i)=>{b.parent=g.id;if(b.layout===WRAP)delete b.layout;if(b.size===40)delete b.size;if(!b.label||b.label==='자료')b.label=CAPS[i];});insert=[g,...items];}
+    items.forEach((b,i)=>{b.parent=g.id;if(b.layout===WRAP||!b.layout)b.layout='세로';/* 11-14: 지우면 저장 검사(구성의 종류·이름·ID)에 걸려 「자료 칸 추가」가 실패했다 */if(b.size===40)delete b.size;if(!b.label||b.label==='자료')b.label=CAPS[i];});insert=[g,...items];}
   q.blocks.splice(at,0,...insert);
   return materialLayout(q);
 }
