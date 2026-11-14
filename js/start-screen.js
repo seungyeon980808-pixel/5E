@@ -1,13 +1,14 @@
 // 시작 창(11-04 확정 시안 5e-design-mockups/app-final-1104.html · css/start-screen.css).
 //  1) 첫 장면: 큰 「5E」 + E를 세로로 맞춘 다섯 단어(sciEnce Educational Evaluation Exam Editor) + 한글 문구 + 진행 줄.
-//     일부러 늦추지 않는다 — 앱 준비가 끝나면(choose가 불리면) 바로 다음 장면. 단어가 다 나오는 1.2초만 기다린다.
+//     11-14: 최소 3초 — 그동안 출제 화면·조판 엔진·글꼴·클립보드를 미리 준비한다(main.js). 준비가 길면 25초까지 기다린다.
 //  2) 고르기: 새로 만들기(image·exam·hwp) / 이어서 하기(자동 저장 기록) / 다른 파일 열기(⌘O·끌어다 놓기).
 //     예전 「작업 복구 / 새로 시작」 확인창 대신 여기서 고른다(autosave.js의 chooseStart).
 //  검사 브라우저(navigator.webdriver)·출제/조판 안쪽 화면·모바일에서는 띄우지 않는다(?start=1이면 강제로, ?start=0이면 끔).
 import { IS_MAC } from './platform.js?v=1.7.0-four-session-integration';
 
 const WORDS = [['sci', 'nce'], ['', 'ducational'], ['', 'valuation'], ['', 'xam'], ['', 'ditor']];
-const MIN_INTRO = 1200;
+// 11-14 사용자: 로딩을 조금 더 길게 — 미리 준비할 시간을 주고, 할 일이 적어도 들어간 뒤 버벅임의 완충지대가 되게 최소 3초.
+const MIN_INTRO = 3000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function startScreenEnabled() {
@@ -191,7 +192,7 @@ export function createStartScreen({ desktopReleaseUrl = '' } = {}) {
     // 너무 오래 걸리면(네트워크 등) 15초에서 끊고 들어간다(준비는 뒤에서 계속).
     for (const task of tasks) {
       setStatus(task.label);
-      await Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 15000 - (performance.now() - started))))]);
+      await Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 25000 - (performance.now() - started))))]);// 25초에서 끊고 들어감(준비는 뒤에서 계속)
     }
     clearInterval(creep);
     bar.style.width = '100%'; setStatus('준비 완료');

@@ -1857,5 +1857,6 @@ export function initRhwpExamWorkspace(state, services) {
       return {warnings:plan.warnings};
     }finally{setBusy(false);}
   }
-  return { receiveQuestion,receiveStructuredQuestion,receiveExamDocument, getAutosaveSnapshot:() => state.get(),setAiPanel:panel => {connectedAi = panel;resolveAi();observeSourceAi();syncTabNames();} };
+  // 11-14: 시작 로딩에서 한글 조판 엔진(편집기·wasm)을 미리 띄워 둔다 — 처음 5E_hwp로 넘어갈 때 기다리지 않게. 칸은 숨긴 채.
+  return { prewarm: () => (bridge ? Promise.resolve() : (opening ||= ensureBridge().finally(() => { opening = null; }))), receiveQuestion,receiveStructuredQuestion,receiveExamDocument, getAutosaveSnapshot:() => state.get(),setAiPanel:panel => {connectedAi = panel;resolveAi();observeSourceAi();syncTabNames();} };
 }

@@ -148,6 +148,8 @@ export function initQuestionSheet(state,services,examWorkspace){
   });
   if(new URLSearchParams(location.search).get('sheet')==='1')open();
   // 작업 화면이 뜬 뒤 한가할 때(2초 뒤) 출제 칸을 숨긴 채 미리 불러 둔다 — 처음 exam 전환이 바로 열리게.
-  if(!navigator.webdriver)setTimeout(()=>(window.requestIdleCallback||(f=>setTimeout(f,0)))(()=>prewarm()),2000);
+  // 11-14 사용자: 「로딩을 조금 더 느리게 해서 미리 준비할 수 있는 건 다 준비」 — 시작 화면이 있으면 그 로딩에서 미리 연다(main.js). 없을 때만 예전처럼 2초 뒤.
+  window.fiveEPrewarmExam=()=>{prewarm();const f=host?.querySelector('iframe');return new Promise(res=>{const t0=performance.now(),tick=()=>{const d=f?.contentDocument;if((d?.querySelector('.side [data-pool]')&&d.querySelector('#status')?.textContent!=='준비 중')||performance.now()-t0>20000)res();else setTimeout(tick,120);};tick();});};
+  if(!navigator.webdriver&&!document.getElementById('start-screen'))setTimeout(()=>(window.requestIdleCallback||(f=>setTimeout(f,0)))(()=>prewarm()),2000);
   return {open,close,prewarm};
 }

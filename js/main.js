@@ -391,6 +391,27 @@ const examWorkspace = initRhwpExamWorkspace(state, { configurePortableProjectIO,
   whenReady:() => autosaveReady,
 });
 
+// 11-14: 출제 화면은 시작 고르기를 기다리는 대기(await autosaveReady) 앞에서 만든다 — 그래야 시작 로딩 동안 미리 열어 둘 수 있다.
+initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys,
+  commitActiveText, switchPage, centerView:() => centerView(state)}, examWorkspace);
+// 11-14 사용자: 「로딩을 조금 더 느리게 해서 미리 준비할 수 있는 건 다 준비」 — 들어간 뒤 처음 쓰는 순간의 기다림·버벅임을 시작 로딩으로 옮긴다.
+// 할 일이 없더라도 여기서 번 시간이 나중에 앱이 무거워졌을 때 처음 열리는 버벅임의 완충지대가 된다(마지막 「마무리」 단계).
+if (startScreen) {
+  const prep = [];
+  const step = (label, run) => { const work = startScreen.waitFor(label, run); prep.push(work); return work; };
+  step("출제 화면 준비 중…", () => window.fiveEPrewarmExam?.());
+  step("조판 엔진 준비 중…", () => examWorkspace?.prewarm?.());
+  step("글꼴 준비 중…", () => Promise.all([ensureEmbeddedFonts(), ...['16px "Latin Modern Math"', 'italic 16px "Latin Modern Roman"', '16px "Latin Modern Roman"', '16px "Pretendard Variable"', '16px Pretendard']
+    .map(font => document.fonts?.load?.(font).catch(() => {}))]));
+  step("클립보드 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1114"); const items = await clipList();
+    await Promise.all(items.slice(0, 24).map(item => { const img = new Image(); img.src = item.src; return img.decode().catch(() => {}); })); });
+  // 마무리: 위 준비가 끝난 뒤 화면 그리기가 0.6초 동안 끊기지 않을 때까지(최대 4초) 기다린다 — 들어가자마자 남은 일이 몰려 버벅이지 않게.
+  step("마무리 중…", async () => { await Promise.all([...prep]);
+    await new Promise(resolve => { const t0 = performance.now(); let last = t0, calm = t0;
+      const tick = now => { if (now - last > 50) calm = now; last = now; if (now - calm >= 600 || now - t0 > 4000) resolve(); else requestAnimationFrame(tick); };
+      requestAnimationFrame(tick); }); });
+}
+
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog, chooseStart: startScreen?.choose });
@@ -410,8 +431,6 @@ if (!startScreen) requestAnimationFrame(() => { fitDefault(state); window.dispat
 }
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });
 examWorkspace.setAiPanel(aiPanel);
-initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys,
-  commitActiveText, switchPage, centerView:() => centerView(state)}, examWorkspace);
 initFigureStudio(state, { aiPanel, onInserted: () => centerView(state) });
 window.addEventListener('5e:lite-ai-open', async () => {
   await aiPanel?.open({ acknowledge:true });
