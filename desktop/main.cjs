@@ -116,7 +116,7 @@ async function openExamWindow(payload = {}) {
   window.webContents.on('will-navigate',(event,url)=>{ if (new URL(url).origin !== host.origin || new URL(url).pathname !== '/') event.preventDefault(); });
   window.webContents.setWindowOpenHandler(({url})=>{ if (/^https:\/\//i.test(url)) void shell.openExternal(url); return {action:'deny'}; });
   window.webContents.on('will-prevent-unload', event => {
-    const answer = dialog.showMessageBoxSync(window,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
+    const answer = confirmLeave(window,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
       title:'시험지 편집 중',message:'저장하지 않은 그림 편집이나 시험지 변경이 있습니다. 창을 닫을까요?'});
     if (answer === 1) event.preventDefault();
   });
@@ -1276,7 +1276,7 @@ function createWindow() {
   // 화면이 닫기를 막으면(저장 안 한 지우개·라벨 초안, 출제·조판 변경) Electron은 알림 없이 닫기를 취소한다.
   // 주 창에는 묻는 창이 없어, 작업을 지운 뒤에는 강제 종료밖에 없었다(M40). 시험지 창과 같이 묻는다.
   win.webContents.on('will-prevent-unload', event => {
-    const answer = dialog.showMessageBoxSync(win,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
+    const answer = confirmLeave(win,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
       title:'저장하지 않은 편집',message:'저장하지 않은 편집이 있습니다. 창을 닫을까요?'});
     if (answer === 1) event.preventDefault();
   });
@@ -1995,8 +1995,23 @@ handleTrustedIpc("local-images:read", async (event, filePath) => {
 // URL. Install on the default session before any loadFile; the auxiliary exam
 // partition retains its separate loopback server and protocol policy.
 app.on('ready', () => protocol.handle('file', createDesktopEntryProtocolHandler()));
+// 11-14: 맥은 앱 메뉴가 없으면 ⌘Q(끝내기)·⌘H(가리기)가 먹지 않는다 — 앱 메뉴 하나만 둔다.
+// 편집 메뉴는 두지 않는다: 메뉴 단축키가 화면의 ⌘C·⌘V·⌘Z(5E 클립보드·되돌리기)를 가로채기 때문.
+function installAppMenu() {
+  if (process.platform !== 'darwin' || typeof Menu.buildFromTemplate !== 'function') { Menu.setApplicationMenu(null); return; }
+  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: app.name, submenu: [
+    { role: 'about', label: '5E 정보' }, { type: 'separator' },
+    { role: 'hide', label: '5E 가리기' }, { role: 'hideOthers', label: '기타 가리기' }, { role: 'unhide', label: '모두 보기' },
+    { type: 'separator' }, { role: 'quit', label: '5E 끝내기' },
+  ] }]));
+}
+// 저장 확인 창은 창에 붙어 뜬다 — 창이 가려졌거나 내려가 있으면 확인 창도 안 보여 앱이 멈춘 것처럼 보였다(11-14). 먼저 창을 앞으로.
+function confirmLeave(target, options) {
+  try { if (target.isMinimized()) target.restore(); target.show(); target.focus(); if (process.platform === 'darwin') app.focus({ steal: true }); } catch {}
+  return dialog.showMessageBoxSync(target, options);
+}
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
+  installAppMenu();
   if (process.platform === "darwin" && app.dock) app.dock.setIcon(APP_ICON_PATH);
   createWindow();
 });
