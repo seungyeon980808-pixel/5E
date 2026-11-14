@@ -183,6 +183,8 @@ function slotAction(action,q,id){
     const r=document.querySelector(`[data-cvtile="${id}"] .pic`)?.getBoundingClientRect();
     window.parent.postMessage({channel:'5e-question-sheet',action:'edit-figure',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure,rect:r?{x:r.left,y:r.top,w:r.width,h:r.height}:null},OWN);return;}
   if(action==='table')return openSlots(q,id);
+  // 11-14: 조판 미리보기에서 그림·표를 두 번 누르면 문항 카드의 그 칸으로 가서 깜빡인다(고치는 곳은 카드).
+  if(action==='jump'){cardEditor.flashTile?.(id);return;}
   // 11-11: 카드 그림 → AI 이미지 변환(5E 창). 결과는 figure-ready로 이 자리에 돌아온다.
   if(action==='ai-image'){if(!b.figure?.data){status('먼저 그림을 넣은 뒤 변환하세요.',true);return;}if(!embedded){status('AI 이미지 변환은 5E 안에서 연 문항 창에서 쓸 수 있습니다.',true);return;}window.parent.postMessage({channel:'5e-question-sheet',action:'ai-figure',kind:'image',qid:q.id,key:'block:'+id,label:b.label||'그림',figure:b.figure},OWN);status('AI 이미지 창에서 다시 그린 뒤 「문항 카드에 넣기」를 누르면 이 그림 자리에 바뀝니다.');return;}
 }

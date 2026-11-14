@@ -541,7 +541,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         // 칸 안(상자·묶음)에서는 가운데 문단 대신 테두리 없는 한 칸 표로 감싸 가운데에 둔다(2×N 표 칸과 같은 방식).
         // 칸 안(상자·묶음)은 HTML에서 가운데 문단으로 감싸면 한글 엔진이 줄 배치를 빠뜨리므로, 한글 문서를 만든 뒤 그 문단만 가운데로 바꾼다(typeset.js centerCellPictures).
         // 칸 안(상자·묶음·나란히) 그림은 칸 폭에 좌우맞춤(10-24 지적 2·3) — 원본 비율로 줄인 크기(size)를 쓰지 않는다.
-        if(b.figure)html+=((nested||inBox)?await picture(b.figure,Number(b.figure.widthPt)>0?Math.min(Math.max(35,width-10),figWidth(b,width)):Math.max(35,width-10),undefined,{kind:'block',id:b.id}):await picture(b.figure,figWidth(b,width),'가운데',{kind:'block',id:b.id}))+(/^\(.+\)$/.test(b.label)||b.text?(b.text?p:pc)((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,FS,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
+        if(b.figure)html+=((nested||inBox)?await picture(b.figure,Number(b.figure.widthPt)>0?Math.min(Math.max(35,width-10),figWidth(b,width)):Math.max(35,width-10),undefined,{kind:'block',id:b.id}):await picture(b.figure,figWidth(b,width),['왼쪽','오른쪽'].includes(b.align)?b.align:'가운데',{kind:'block',id:b.id}))+(/^\(.+\)$/.test(b.label)||b.text?(b.text?p:pc)((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,FS,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
       }else if(b.kind==='table')html+=heading(b)+await table(b.table,sizedWidth(b,width),false,'가운데',{kind:'block',id:b.id},b.size===undefined,width);
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;

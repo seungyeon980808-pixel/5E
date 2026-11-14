@@ -937,3 +937,6 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .cv-tile-menu .ico{width:16px;height:16px;flex:0 0 16px;margin-top:2px;fill:none;stroke:currentColor;stroke-width:1.6;color:#5a606a}
 .cv-tile-menu small{display:block;margin-top:1px;font-size:11.5px;color:#6a7079}
 @media (prefers-reduced-motion:reduce){#card-view .cv-grid .cv-tile[data-cvtile]{transition:none}#card-view.cv-drag-live .cv-grid .cv-tile.cv-drop-near{transform:none}}
+@keyframes cv-tile-flash{0%,100%{box-shadow:0 0 0 0 rgba(47,111,214,0)}20%,60%{box-shadow:0 0 0 3px #2f6fd6,0 0 0 8px rgba(47,111,214,.18)}40%,80%{box-shadow:0 0 0 1px rgba(47,111,214,.3)}}
+#card-view .cv-grid .cv-tile.cv-tile-flash{animation:cv-tile-flash 1.5s ease}
+@media (prefers-reduced-motion:reduce){#card-view .cv-grid .cv-tile.cv-tile-flash{animation:none;box-shadow:0 0 0 3px #2f6fd6}}

@@ -959,6 +959,11 @@ export function createCardEditor(root,api){
   // 11-14(시안 review-1114 1-2): 넣을 칸 고르기·끌어 놓기·붙여넣기.
   // · 클립보드 그림을 잡으면 넣을 수 있는 칸이 모두 옅게 켜지고, 그림이 가까이 간 칸 하나가 진하게 밝아진다(칸 밖이어도 가장 가까운 칸).
   // · 칸을 골라 두지 않고 넣기(넣기 단추·두 번 누르기)하면 왼쪽 빈 칸부터 채운다. 칸을 골라 두면 그 칸에 넣는다(그림이 있으면 바꾼다, ⌘Z로 되돌림).
+  function flashTile(id){const b=q()?.blocks.find(v=>v.id===id),name=b?(b.label||KINDS[b.kind]):'자료';
+    const go=()=>{const t=root.querySelector(`.cv-tile[data-cvtile="${id}"]`);if(!t){api.status?.(`그림은 문항 카드에서 고칩니다 · 자료 ${name}`);return;}
+      t.scrollIntoView({block:'nearest',behavior:'smooth'});t.classList.remove('cv-tile-flash');void t.offsetWidth;t.classList.add('cv-tile-flash');setTimeout(()=>t.classList.remove('cv-tile-flash'),1600);
+      api.status?.(`그림은 문항 카드에서 고칩니다 · 자료 ${name}로 이동`);};
+    if(!cardShown()&&panels.view==='page'){setView('card');setTimeout(go,380);}else go();}
   function setTileSel(id){tileSel=id||null;root.querySelectorAll('.cv-tile[data-cvtile]').forEach(t=>{const on=t.dataset.cvtile===tileSel;t.classList.toggle('is-target',on);let tag=t.querySelector('.cv-target-tag');if(on&&!tag){tag=document.createElement('span');tag.className='cv-target-tag';tag.textContent='여기에 넣기';t.querySelector('.pic')?.append(tag);}if(!on)tag?.remove();});window.fiveEClipboard?.sync?.();}
   function tileName(id){const x=q(),b=x&&x.blocks.find(v=>v.id===id);return b?(b.label||KINDS[b.kind]):'';}
   function clipLabel(){return tileSel&&tileName(tileSel)?`자료 칸 ${tileName(tileSel)}에 넣기`:'자료 칸에 넣기';}
@@ -1025,7 +1030,7 @@ export function createCardEditor(root,api){
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
-    insertClipFigure,clipLabel,clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
+    insertClipFigure,clipLabel,flashTile,clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
     confirmSwitch,confirmBoardSwitch,setCard(on){if(on&&!bench.card){panels.rightOpen=true;store.set('rightOpen',true);}/* 11-14: 문항 카드를 열면 조판도 같이 연다(카드 2 : 조판 1이 기본) */bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
     toggleLib(){panels.lib=!panels.lib;store.set('lib',panels.lib);if(!root.hidden&&!root.closest('[hidden]'))render();},libOn:()=>!!panels.lib,cardOn:()=>bench.card&&!!q(),
     benchBusy:()=>!!bench.board||(bench.card&&!!q()),ideaState:()=>bench.board?{id:bench.board}:null,aimField,resetIdea(){},
