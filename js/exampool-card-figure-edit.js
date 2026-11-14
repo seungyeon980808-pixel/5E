@@ -48,6 +48,23 @@ async function figureFrom(source, bounds, name, services, state) {
   return { name: `${name}.png`.slice(0, 200), data: png, width: canvas.width, height: canvas.height, editable: { id, name, png, source, render } };
 }
 
+// 11-14 지적 19·20: AI 그래프 복원 결과(객체) → 카드 칸 그림. 그래프 원본을 품은 PNG라 칸을 열면 그래프 편집 창으로 간다.
+export async function graphFigure(graph, name, { state, services }) {
+  const objects = copy(graph?.objects || []);
+  if (!objects.some(o => o.type === 'coordplane')) throw new Error('그래프 결과가 비어 있습니다 — AI 창에서 그래프를 다시 만든 뒤 넣으세요.');
+  const source = copy(services.serialize(state.get()));
+  source.pages = source.pages.filter(p => p.id === source.activePageId);
+  services.prepareLoadedProject(source);
+  const page = source.pages[0], id = crypto.randomUUID(), layerId = page.layers?.find(l => l.visible !== false)?.id || page.layers?.[0]?.id || 1;
+  page.id = `card_${id}`; source.activePageId = page.id; page.name = String(name || 'AI 그래프').replace(/\.png$/i, '');
+  page.guides = []; page.meta = { number: '', points: '' };
+  page.objects = objects.map(o => ({ ...o, layerId })); page.groups = copy(graph.groups || []);
+  // 영역은 축 이름·눈금 숫자·라벨까지 실제 그려진 범위 전체(여백 2mm) — 잘리지 않게(지적 21).
+  const bounds = getContentBounds({ ...state.get(), ...page, objects: page.objects }, OPTIONS, 2);
+  if (!bounds) throw new Error('그래프 영역을 잡지 못했습니다.');
+  return figureFrom(source, bounds, page.name, services, state);
+}
+
 function draftOf(page, bounds) {
   const layerId = page.layers?.find(l => l.visible !== false)?.id || page.layers?.[0]?.id || 1;
   const draft = { objects: copy(page.objects), groups: copy(page.groups || []), layers: copy(page.layers || []), artboard: copy(page.artboard), viewBox: { ...bounds },

@@ -101,9 +101,15 @@ export function initQuestionSheet(state,services,examWorkspace){
     setTimeout(async()=>{open();const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
       frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);});
-  // 11-11: AI 창 「문항 카드에 넣기」 → 그 카드의 그림 자리로(그래프 결과는 그림으로 넣을 수 없어 안내만).
+  // 11-11: AI 창 「문항 카드에 넣기」 → 그 카드의 그림 자리로.
   window.addEventListener('5e:hwp-inplace-ai',async event=>{const d=event.detail,card=d?.target?.examCard;if(!card||!frame?.contentWindow)return;
-    if(!d.image?.data){frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:card.qid,key:card.key,error:'그래프 결과는 문항 카드에 그림으로 넣을 수 없습니다. AI 이미지 변환을 쓰세요.'},OWN);return;}
+    // 11-14 지적 19·20: 그래프 결과는 객체를 그림으로 그리고 그래프 원본을 품어 넣는다(칸을 열면 그래프 편집 창).
+    if(d.graph){host.hidden=false;syncAppLock?.();
+      try{const {graphFigure}=await import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration');const figure=await graphFigure(d.graph,d.name||'AI 그래프',{state,services});
+        frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'figure-ready',qid:card.qid,key:card.key,figure},OWN);}
+      catch(error){frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:card.qid,key:card.key,error:`그래프를 칸에 넣지 못했습니다: ${error.message||error} — AI 창의 「캔버스에 넣기」로 그래프를 고친 뒤 다시 넣어 보세요.`},OWN);}
+      return;}
+    if(!d.image?.data){frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:card.qid,key:card.key,error:'넣을 결과 그림을 찾지 못했습니다. AI 창에서 결과를 다시 고른 뒤 넣으세요.'},OWN);return;}
     let {width,height}=d.image;if(!(width>0&&height>0)){try{const i=new Image();i.src=d.image.data;await i.decode();width=i.naturalWidth;height=i.naturalHeight;}catch{}}
     host.hidden=false;syncAppLock?.();
     frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'figure-ready',qid:card.qid,key:card.key,figure:{name:d.name||'AI 결과',data:d.image.data,width,height}},OWN);});
@@ -129,6 +135,8 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(m.action==='figure-create'){engines().then(e=>m.kind==='graph'?e.graph({qid:m.qid,description:m.description,prior:m.prior?.graph||null}):e.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[],prior:m.prior?.data||null})).then(result=>send({action:'figure-made',result:{kind:m.kind,...result}}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
     if(m.action==='figure-edit-graph'){engines().then(e=>e.editGraph(m.graph)).then(result=>send({action:'figure-made',result:result?{kind:'graph',edited:true,...result}:null,cancelled:!result}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
     // 11-14(시안 review-1114 1-4·1-5): 카드 칸 그림 편집 — 그래프 객체면 그래프 창, 아니면 5E_hwp와 같은 「그림 편집 중」 창.
+    // 11-14 지적 22: 클립보드의 그래프(객체)를 카드 칸에 넣은 뒤 — 그래프 원본을 품은 그림으로 바꿔 돌려준다.
+    if(m.action==='graph-figure'){import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration').then(x=>x.graphFigure(m.graph,m.name,{state,services})).then(figure=>send({action:'figure-ready',figure}),error=>send({error:`그래프 원본을 붙이지 못했습니다(그림으로는 들어갔습니다): ${error.message||error}`}));return;}
     if(m.action==='edit-figure'){import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration').then(x=>x.editCardFigure(m,{send,state,services,frame,onDetail:d=>{if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;detailEdit(d,send).catch(err=>send({error:err.message})).finally(()=>{busy=false;});}})).catch(err=>send({error:err.message||String(err)}));return;}
     if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;
     try {

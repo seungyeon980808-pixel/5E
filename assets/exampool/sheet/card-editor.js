@@ -1014,14 +1014,17 @@ export function createCardEditor(root,api){
   root.addEventListener('dragleave',e=>{if(!root.contains(e.relatedTarget))clearNear();});
   // 클립보드(11-14): 자료 칸에 그림 넣기 — 끌어 놓기와 클립보드 「넣기」가 같이 쓴다.
   // tileId(끌어 놓은 칸) → 골라 둔 칸 → 왼쪽 빈 칸 → 칸을 하나 더(3개까지). 고른 칸에 그림이 있으면 바꾼다.
-  function insertClipFigure(it,tileId=tileSel){const x=q();if(!it||!x)throw Error('문항 카드를 연 뒤 넣으세요.');tileSel=null;// 넣은 뒤 다시 그릴 때 「고른 칸」 표시가 남지 않게 먼저 푼다
+  function insertClipFigure(it,tileId=tileSel){const x=q();if(!it||!x)throw Error('문항 카드를 연 뒤 넣으세요.');let placed=null;tileSel=null;// 넣은 뒤 다시 그릴 때 「고른 칸」 표시가 남지 않게 먼저 푼다
     const ok=api.edit(()=>{let slot=tileId&&x.blocks.find(b=>b.id===tileId&&b.kind==='figure');
       if(!slot)slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);
       if(!slot){const L=materialLayout(x);if(!L||slotsOf(x).length!==L.count)throw Error('자료가 상자·묶음 안에 섞여 있어 여기에 넣을 수 없습니다.');if(L.count>=3)throw Error('자료 칸은 3개까지입니다. 칸을 골라 바꾸거나 칸 하나를 지운 뒤 넣으세요.');
         setMaterialLayout(x,{count:L.count+1});slot=slotsOf(x).find(b=>b.kind==='figure'&&!b.figure);}
       if(!slot)throw Error('빈 자료 칸을 만들지 못했습니다.');
-      slot.figure={name:`${it.name||'클립보드 그림'}.png`.slice(0,200),data:it.src,...(it.w?{width:it.w,height:it.h}:{})};});
+      slot.figure={name:`${it.name||'클립보드 그림'}.png`.slice(0,200),data:it.src,...(it.w?{width:it.w,height:it.h}:{})};placed=slot.id;});
     if(ok===false)throw Error('자료 칸에 넣지 못했습니다 — 아래 상태 줄의 이유를 확인하세요.');
+    // 11-14 지적 22: 그래프 객체가 든 클립보드 항목은 그림을 먼저 넣고, 5E가 그래프 원본을 품은 그림으로 바꿔 준다(칸을 열면 그래프 편집 창).
+    if(placed&&Array.isArray(it.objects)&&it.objects.some(o=>o?.type==='coordplane')&&window.parent!==window){const own=location.protocol==='file:'?'*':location.origin;
+      window.parent.postMessage({channel:'5e-question-sheet',action:'graph-figure',qid:x.id,key:'block:'+placed,name:it.name||'그래프',graph:{objects:it.objects,groups:[]}},own);}
     tileSel=null;window.fiveEClipboard?.sync?.();}
   root.addEventListener('drop',async e=>{if(!isDrawerDrag(e.dataTransfer))return;const t=nearTile(e);root.classList.remove('cv-drag-live');clearNear();if(!t)return;e.preventDefault();
     let it=null;try{it=await drawerFromDrop(e.dataTransfer);}catch{}

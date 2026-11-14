@@ -414,6 +414,8 @@ function renderCoordplane(obj) {
   // 11-11: 복원 그래프는 숫자가 축에 닿지 않게 글자 높이의 22%를 띄운다(사용자 판단 「라벨이 축과 겹친다」).
   const tickGap = numSize * (obj.reconstruction ? 0.22 : 0.04) + sw * 1.5;
   const descriptionXTicks = [];
+  // 11-14 지적 21: 눈금 숫자가 차지하는 끝(세로축 숫자의 왼쪽 끝·가로축 숫자의 아래 끝) — 복원 그래프 축 이름이 숫자와 겹치지 않게 비켜 놓는 데 쓴다.
+  let yTickLeft = Infinity, xTickBottom = -Infinity;
   // 눈금 숫자 이동(요구 ②): 숫자마다 {dx,dy} 오프셋을 적용하고, data-tick으로 태깅한다
   // (모달 미리보기가 그 태그를 잡아 드래그로 오프셋을 조정). tag=`${axis}:${ord}`.
   const addNumber = (text, nx, ny, anchor, baseline, tag, tickValue) => {
@@ -439,6 +441,11 @@ function renderCoordplane(obj) {
     if (node && tag) node.setAttribute("data-tick", tag);
     // 눈금 값도 단다. 자동 눈금의 순번(tickOrd)은 편집기의 눈금 목록 순번과 축 모양에 따라 달라, 값으로 맞춰야 한다(M34).
     if (node && Number.isFinite(tickValue)) node.setAttribute("data-tick-value", String(tickValue));
+    if (node && obj.reconstruction && (tag?.startsWith('y:') || tag?.startsWith('x:'))) {
+      const m = measureGraphLabel(text,EXAM_STYLE.label,false,obj.labelWeight ?? 400,true,{parenthesesAreUnits:false});
+      if (tag.startsWith('y:') && anchor === 'end') yTickLeft = Math.min(yTickLeft, nx - m.w*numSize/EXAM_STYLE.label);
+      if (tag.startsWith('x:') && baseline === 'hanging') xTickBottom = Math.max(xTickBottom, ny + m.h*numSize/EXAM_STYLE.label);
+    }
     if (node && tag?.startsWith('x:') && obj.graphStyle?.descriptionLayout) {
       const metric = measureGraphLabel(text,EXAM_STYLE.label,false,obj.labelWeight ?? 400,true,{parenthesesAreUnits:false});
       const off = obj.tickOffX?.[Number(tag.slice(2))];
@@ -588,7 +595,8 @@ function renderCoordplane(obj) {
     const off = which === "x" ? offX : offY;
     const pos = which === "x" ? posX : posY;
     let auto = null;
-    const koTitle = /[가-힣]/.test(String(text ?? '')) && (obj.graphStyle?.descriptionLayout || obj.reconstruction) ? 1.3 : 1;
+    // 11-14 지적 21: 원본에서 글자 높이를 잰 복원 그래프(labelSizeMode 'source-height')는 이미 원본 크기 — 1.3배를 더하면 원본보다 훨씬 커져 눈금 숫자와 겹쳤다.
+    const koTitle = /[가-힣]/.test(String(text ?? '')) && (obj.graphStyle?.descriptionLayout || obj.reconstruction) && obj.reconstruction?.labelSizeMode !== 'source-height' ? 1.3 : 1;
     const source = obj.reconstruction?.source;
     if (!pos && obj.graphStyle?.descriptionLayout && source?.plotBox) {
       const b = source.plotBox, scale = obj.w / b.w;
@@ -601,8 +609,16 @@ function renderCoordplane(obj) {
         width:metric.w*nameSize*koTitle/EXAM_STYLE.label,height:metric.h*nameSize*koTitle/EXAM_STYLE.label,gap:nameSize*.55,
         tickClearance:obj.showTickLabels || obj.tickLabelMode === 'text' ? Math.max(numSize + tickGap,descriptionXTickDepth) + nameSize*.55 : 0 });
     }
-    const px = pos ? obj.x + pos.fx * obj.w : (auto?.x ?? lx) + (off.dx || 0);
-    const py = pos ? obj.y + pos.fy * obj.h : (auto?.y ?? ly) + (off.dy || 0);
+    let px = pos ? obj.x + pos.fx * obj.w : (auto?.x ?? lx) + (off.dx || 0);
+    let py = pos ? obj.y + pos.fy * obj.h : (auto?.y ?? ly) + (off.dy || 0);
+    // 11-14 지적 21: 원본에서 잰 자리(분율)에 둔 복원 그래프 축 이름이 여기 그린 눈금 숫자와 겹치면 숫자 바깥으로 비켜 놓는다(크기·글자는 그대로).
+    if (pos && obj.reconstruction && text) {
+      const vertical = obj.reconstruction?.axes?.[which]?.orientation === 'vertical', s0 = nameSize * koTitle;
+      const m = measureGraphLabel(text, EXAM_STYLE.label, true, obj.labelWeight ?? 400, true, {parenthesesAreUnits:false});
+      const w = vertical ? s0 * 1.05 : m.w * s0 / EXAM_STYLE.label, h = vertical ? s0 * 1.05 * [...String(text).replace(/\s/g, '')].length : m.h * s0 / EXAM_STYLE.label, gap = s0 * 0.35;
+      if (which === 'y' && Number.isFinite(yTickLeft) && px < worldX0 && px + w / 2 > yTickLeft - gap) px = yTickLeft - gap - w / 2;
+      if (which === 'x' && Number.isFinite(xTickBottom) && py > worldY0 && py - h / 2 < xTickBottom + gap) py = xTickBottom + gap + h / 2;
+    }
     // 분율 위치는 라벨 '중심'을 그 점에 맞춘다(모달 드래그가 중심 분율을 저장하므로 튐 없음).
     const requestedAnchor = which === "x" ? obj.labelXAnchor : obj.labelYAnchor;
     const anc = ["start", "middle", "end"].includes(requestedAnchor) ? requestedAnchor : (pos ? "middle" : auto?.anchor ?? anchor);
