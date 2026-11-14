@@ -1,15 +1,19 @@
+import { getFormulaScriptSpans } from './formula.js?v=1.7.0-four-session-integration';
 // 11-10: 원본 그림 한 장을 AI에 보내 글자 묶음 목록을 받는 텍스트 전용 호출의 순수 로직.
 // 브라우저·DOM 의존이 없어 Node 테스트에서 바로 돌린다. 캔버스 삽입은 createEditableImageLabelObjects가 한다.
 
 export const LABEL_READ_PROMPT = `최우선 규칙: 글자는 그림에 보이는 그대로 옮긴다. 「스타이로폼」을 「스티로폼」으로 고치지 않는 것처럼, 맞춤법·띄어쓰기·외래어 표기를 절대 바꾸지 않는다.
 이 시험 그림 속 글자 묶음을 모두 찾아 JSON 배열로만 답해. 다른 말은 쓰지 마.
-각 항목: {"text": 원래 글자 그대로(첨자는 ₁ ² 같은 유니코드, 원문자는 ㉠ ⓐ처럼), "kind": "ko"(한글) | "en"(위치·사물 이름인 영어 대문자·소문자, 예: A, p) | "qty"(물리량 기호, 예: ρ₁, v, m) | "math"(숫자·단위·화학식, 예: 0.5 m, 22°C, H₂O(s)), "x","y","w","h": 글자만 감싸는 상자(그림 왼쪽 위 기준 0~1 비율), "leader": 이 글자에서 나가 다른 물체를 가리키는 지시선이 있으면 {"x1","y1": 글자 쪽 끝, "x2","y2": 가리키는 쪽 끝}(0~1 비율), 없으면 null}.
+각 항목: {"text": 원래 글자 그대로(숫자 첨자는 ₁ ² 같은 유니코드, 글자 첨자는 아래첨자 _{ }·위첨자 ^{ }로, 예: I_{직}, v_{x}, E_{p}, 원문자는 ㉠ ⓐ처럼), "kind": "ko"(한글) | "en"(점·물체 이름인 영어 대문자·소문자, 예: A, B, p) | "qty"(물리량 기호, 대문자도 포함, 예: R, V, I, F, ρ₁, v, m, I_{직}) | "math"(숫자·단위·화학식, 예: 0.5 m, 22°C, H₂O(s)), "x","y","w","h": 글자만 감싸는 상자(그림 왼쪽 위 기준 0~1 비율), "leader": 이 글자에서 나가 다른 물체를 가리키는 지시선이 있으면 {"x1","y1": 글자 쪽 끝, "x2","y2": 가리키는 쪽 끝}(0~1 비율), 없으면 null}.
 길이·각도를 나타내는 치수선이나 각도 호는 지시선이 아니다.`;
 
 export const DIRECT_LABEL_KINDS = Object.freeze(['ko', 'en', 'qty', 'math']);
 export const DIRECT_LABEL_MAX_ITEMS = 128;
 const MAX_TEXT = 80;
 const CHEMICAL_RE = /[A-Z][a-z]?[₀-₉]|\((s|l|g|aq)\)/;
+// 11-14: 글자 첨자(_{ }·^{ })가 있는 라벨은 수식 라벨로 — 「I직」처럼 평평한 정체로 나오던 것(I_{직}: 기울임 I + 정체 아래첨자 「직」).
+const MATH_SCRIPT_RE = /[_^](?:\{[^}]+\}|[^\s{}])/;
+const scriptRole = text => /[가-힣]/.test(text) ? 'text' : /^[+−-]?[\d.,]+$/.test(text) ? 'number' : 'quantity';
 const BARE_NUMBER_RE = /^[+−-]?\d+(?:[.,]\d+)*$/;
 
 const clamp01 = value => Math.min(1, Math.max(0, value));
@@ -63,15 +67,18 @@ export function labelReadToEditablePlan(items) {
   const labels = (Array.isArray(items) ? items : []).slice(0, DIRECT_LABEL_MAX_ITEMS).map((item, index) => {
     const position = { x: item.x + item.w / 2, y: item.y + item.h / 2 };
     const leader = item.leader;
+    const formula = MATH_SCRIPT_RE.test(item.text);
+    const role = formula ? (CHEMICAL_RE.test(item.text) ? 'chemical' : 'quantity') : directLabelRole(item);
+    const scriptStyles = formula ? getFormulaScriptSpans(item.text).map(span => ({ start: span.start, end: span.end, kind: span.kind, role: scriptRole(span.text) })) : null;
     return {
       id: 'L' + index,
       scope: 'general',
-      contentMode: 'text',
+      contentMode: formula ? 'formula' : 'plain',
       mode: leader ? 'leader' : 'text',
       text: item.text,
       position,
       anchor: leader ? { x: leader.x2, y: leader.y2 } : position,
-      typography: { role: directLabelRole(item), bounds: { x: item.x, y: item.y, w: item.w, h: item.h } },
+      typography: { role, bounds: { x: item.x, y: item.y, w: item.w, h: item.h }, ...(scriptStyles?.length ? { scriptStyles } : {}) },
       // 11-10: 라벨마다 자기 원본 글자 상자 높이로 글자 크기를 정한다(상자 높이 × 0.85 ≈ 글자 높이, 그림 높이 비율).
       // sizeFromBox: 넣을 때 1.8~8mm로 자른다(createEditableImageLabelObjects).
       measuredSize: labelBoxFontRatio(item),

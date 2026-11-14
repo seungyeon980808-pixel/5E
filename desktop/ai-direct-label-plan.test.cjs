@@ -96,7 +96,7 @@ test('leader items use the pointed object end as anchor and the label box centre
   const first = labels[0];
   assert.equal(first.mode, 'leader');
   assert.equal(first.scope, 'general');
-  assert.equal(first.contentMode, 'text');
+  assert.equal(first.contentMode, 'plain');
   assert.ok(Math.abs(first.position.x - (0.007 + 0.242 / 2)) < 1e-9);
   assert.ok(Math.abs(first.position.y - (0.52 + 0.19 / 2)) < 1e-9);
   assert.deepEqual(first.anchor, { x: 0.373, y: 0.599 });
@@ -177,4 +177,19 @@ test('sizeFromBox labels clamp to 2.6 mm at the small end (11-11 인쇄 최소);
   assert.equal(boxed.fontSize, 2.6);
   const [plain] = createEditableImageLabelObjects({ labels: [{ ...base, measuredSize: 0.02 }], image, labelSizeMm: 3.7, idFactory: () => 'l' + ++n });
   assert.equal(plain.fontSize, 0.5); // 0.02 × 20mm = 0.4mm → 기존 0.5mm 하한
+});
+
+test('11-14: 글자 첨자 라벨(I_{직})은 수식 라벨 — 기울임 I + 정체 아래첨자', async () => {
+  const { labelReadToEditablePlan } = await modulePromise;
+  const { labels } = labelReadToEditablePlan([
+    { text: 'I_{직}', kind: 'qty', x: 0.1, y: 0.1, w: 0.05, h: 0.04, leader: null },
+    { text: 'R', kind: 'qty', x: 0.3, y: 0.1, w: 0.03, h: 0.04, leader: null },
+    { text: 'v^{2}', kind: 'qty', x: 0.5, y: 0.1, w: 0.04, h: 0.04, leader: null },
+  ]);
+  assert.equal(labels[0].contentMode, 'formula');
+  assert.equal(labels[0].typography.role, 'quantity');
+  assert.deepEqual(labels[0].typography.scriptStyles, [{ start: 3, end: 4, kind: 'sub', role: 'text' }]);
+  assert.equal(labels[1].contentMode, 'plain');
+  assert.equal(labels[1].typography.role, 'quantity');
+  assert.equal(labels[2].typography.scriptStyles[0].role, 'number');
 });

@@ -63,6 +63,8 @@ export function presentationRoleFor(role, text) {
 const HANGUL = '가-힣ㄱ-ㅎㅏ-ㅣ㉠-㉻㈀-㈜';
 // 11-09 라벨 안정화: 한글에 바로 붙은 영어(「X선」)는 한글 줄 글꼴(규칙 2-1 「: X선」 한글 줄).
 const HANGUL_CHUNK = new RegExp(`[(\\[〈「]*(?:[A-Za-z]{1,3}(?=[${HANGUL}]))?[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
+// 11-14: 물리량 라벨(「I직」처럼 첨자를 평평하게 읽은 것)은 한글 앞 영어를 한글 조각에 흡수하지 않는다 — I는 기울임 물리량으로 남긴다.
+const HANGUL_ONLY_CHUNK = new RegExp(`[(\\[〈「]*[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
 const UNIT_AFTER_NUMBER = /^[+−-]?\d[\d.,]*\s*(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|°C?|%|kg)$/u;
 export function scriptLabelRuns(text, role, aiRuns) {
   const source = String(text ?? '');
@@ -76,7 +78,7 @@ export function scriptLabelRuns(text, role, aiRuns) {
   }
   const parts = [];
   let last = 0;
-  for (const match of source.matchAll(HANGUL_CHUNK)) {
+  for (const match of source.matchAll(role === 'quantity' ? HANGUL_ONLY_CHUNK : HANGUL_CHUNK)) {
     if (match.index > last) parts.push({ text: source.slice(last, match.index), hangul: false });
     parts.push({ text: match[0], hangul: true });
     last = match.index + match[0].length;
