@@ -17,10 +17,12 @@ window.addEventListener("DOMContentLoaded", () => {
     if (next) lightTimer = setTimeout(() => ipcRenderer.invoke("window:traffic-lights", true).catch(() => {}), 120);
     else ipcRenderer.invoke("window:traffic-lights", false).catch(() => {});
   };
-  const inLogo = (x, y) => x >= 0 && x <= 190 && y >= 0 && y <= 52;
+  // 11-14 3차: 로고 칸 전체가 아니라 왼쪽 위 모서리(신호등 자리)에 갔을 때만 — 로고 목록으로 프로그램을 바꾸려 할 때 튀어나와 불편했다.
+  // 켜진 뒤에는 신호등을 누르러 가는 동안 꺼지지 않게 조금 넓게 본다.
+  const inCorner = (x, y) => x >= 0 && x <= 76 && y >= 0 && y <= 34;
   const track = (x, y) => {
     if (document.getElementById("start-screen")) return;
-    lightsOn(inLogo(x, y) || (lights && x <= 230 && y <= 64));
+    lightsOn(inCorner(x, y) || (lights && x <= 96 && y <= 46));
   };
   document.addEventListener("mousemove", (event) => track(event.clientX, event.clientY), { passive: true });
   document.addEventListener("mouseleave", () => lightsOn(false));

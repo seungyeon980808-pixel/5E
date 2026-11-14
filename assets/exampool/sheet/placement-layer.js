@@ -239,7 +239,11 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     const available=availableWidth(item);
     keepSettings=item.id;
     // 11-14 2차 25: 다시 조판하는 동안 덮어 두는 화면(typeset.js freeze)에서 이 그림만 새 크기로 부드럽게 줄어들게 알려 둔다.
-    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));host.__fiveEResizeHint={rect:{...item.rect},scale:next/cur,align:b.align||(b.layout==='어울림'?'오른쪽':'가운데'),at:performance.now()};onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`);return;}
+    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));
+      // 11-14 3차 36: 문서를 다시 열지 않는다 — 열린 한글 문서에서 그 그림만 같은 비율로 바꾸고(모서리 손잡이와 같은 길), 데이터만 맞춘다. 다시 열기가 없으니 깜빡임도 없다.
+      let native=false;try{let pr=bridge.properties?.(item.ref);if(typeof pr==='string')pr=JSON.parse(pr);if(pr&&pr.width>0&&pr.height>0&&cur>0&&next!==cur){const k=next/cur;bridge.transaction('resize-picture',()=>{bridge.setProperties(item.ref,{width:Math.round(pr.width*k),height:Math.round(pr.height*k)});return true;});native=true;}}catch{native=false;}
+      if(!native)host.__fiveEResizeHint={rect:{...item.rect},scale:next/cur,align:b.align||(b.layout==='어울림'?'오른쪽':'가운데'),at:performance.now()};
+      onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`,native?{native:true}:undefined);return;}
     onApply(q=>{const x=q.blocks.find(v=>v.id===item.id);if(!x)return false;const def=x.layout==='어울림'?'오른쪽':'가운데';if((x.align||def)===al)return false;if(al===def)delete x.align;else x.align=al;return true;},`${b.label||'그림'} 위치 ${al}`);});
   function bindFrame(){
     const next=bridge.editor.element.contentDocument;if(next===frameDoc)return;
@@ -262,6 +266,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     setModel(next){model=next;enabled=!!next;host.append(layer);bindFrame();const keep=keepSettings||(!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null);showHover(null);refresh();if(keep&&enabled){keepSettings=keep;reopenSettings();}},
     clear(){model=null;enabled=false;endDrag(false);showHover(null);items=[];dividers=[];paintDividers();say();},
     refresh(){if(enabled&&!drag)refresh();},
+    itemOf(id){if(!enabled)return null;if(!items.length)refresh();return items.find(x=>x.id===id)||null;},
     // 한글 엔진이 받은 그림 두 번 누르기(onEdit) → 그 그림의 칸으로(11-14).
     jumpRef(ref){if(!enabled||!onActivate)return false;if(!items.length)refresh();
       const same=i=>i.ref.sec===(ref.sec??ref.secIdx)&&i.ref.ppi===(ref.ppi??ref.paraIdx)&&i.ref.ci===(ref.ci??ref.controlIdx)&&JSON.stringify(i.ref.cellPath||[])===JSON.stringify(ref.cellPath||[]);
@@ -275,7 +280,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
       const placement=bridge.pagePlacement(item.ref.pageIndex??0);if(!placement)return false;
       const a=bridge.parentPoint(placement.x,placement.y),width=widthHu/75*placement.scale*a.scaleX,available=availableWidth(item);
       const size=snapSize(width/available*100);
-      onApply(q=>resizeTo(q,item.id,available*size/100,available),`${item.block.label} 크기 ${size===100?'자동(칸 폭)':size+'%'}`);
+      onApply(q=>resizeTo(q,item.id,available*size/100,available),`${item.block.label} 크기 ${size===100?'자동(칸 폭)':size+'%'}`,{native:true});// 손잡이로 이미 문서에서 바뀜 — 다시 열지 않음
       return true;
     },
   };

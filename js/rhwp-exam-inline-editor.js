@@ -3,7 +3,9 @@ import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, TEXT_FONTS } from './state.js?
 import { syncDraftRunsToText, setDraftWholeTextStyle } from './text-run-editing.js?v=1.7.0-four-session-integration';
 import { hasLabelTypography, reconcileLabelTypography } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 
-import { keyLabel } from './platform.js?v=1.7.0-four-session-integration';
+import { keyLabel, snapKey } from './platform.js?v=1.7.0-four-session-integration';
+import { snapAngle } from './geometry.js?v=1.7.0-four-session-integration';
+import { createPointerMagnifier, svgMagnifierSample } from './tools/pointer-magnifier.js?v=1.7.0-four-session-integration';
 
 const NS = 'http://www.w3.org/2000/svg';
 const copy = value => structuredClone(value);
@@ -70,6 +72,11 @@ export class ExamInlineEditor {
       if (action) void this.action(action);
     });
     for (const field of this.root.querySelectorAll('[data-inline-field]')) field.addEventListener('change', () => this.changeField(field));
+    // 11-14 3차 39: 5E_image처럼 점을 찍거나 끝점을 끌 때 확대경(그림+라벨만 확대, 손잡이는 빼고).
+    this.sceneId=`exam-inline-scene-${crypto.randomUUID()}`;
+    this.magnifier=createPointerMagnifier({surface:this.svg,id:'exam-inline-magnifier',
+      available:()=>this.active&&!this.session?.simple&&(!!this.mode||!!(this.drag&&this.drag.handle!=='position')),
+      sample:pointer=>this.svg.querySelector(`#${this.sceneId}`)?{...svgMagnifierSample(this.svg,pointer),href:`#${this.sceneId}`}:null});
     this.svg.addEventListener('pointerdown', event => this.pointerDown(event));
     this.svg.addEventListener('pointermove', event => this.pointerMove(event));
     this.svg.addEventListener('pointerup', event => this.pointerUp(event));
@@ -122,6 +129,7 @@ export class ExamInlineEditor {
     this.svg.focus({preventScroll:true});
   }
   close() {
+    this.magnifier?.hide();this.inPlace?.remove();this.inPlace=null;
     this.stopPosition?.();this.stopPosition=null;this.resizeObserver?.disconnect();
     if(this.session&&!this.root.hidden)this.settleBack();
     this.root.classList.remove('is-in');
@@ -206,6 +214,11 @@ export class ExamInlineEditor {
       const pts=[...this.draftPts,this.hover],draft=renderLabeler({id:'draft',type:'labeler',p1:pts[0],p2:pts.at(-1),...(pts.length>=3?{elbow:pts[1]}:{}),text:'',labelType:'label',fontFamily:DEFAULT_TEXT_FONT,labelSize:DEFAULT_TEXT_SIZE_MM,strokeWidth:.2,strokeLevel:0});
       draft.setAttribute('opacity','.6');draft.style.pointerEvents='none';this.svg.append(draft);
     }
+    if (!this.session.simple && (this.mode || this.drag)) {
+      const defs=el('defs'),scene=el('g');scene.id=this.sceneId;
+      for (const node of [...this.svg.children]) if (node.tagName!=='defs') scene.append(node.cloneNode(true));
+      defs.append(scene);this.svg.prepend(defs);
+    }
     const label=this.selectedLabel();
     if (label && !this.session.simple) {
       const radius = Math.max(.25,b.w/Math.max(1,this.picture.clientWidth)*4);
@@ -272,7 +285,7 @@ export class ExamInlineEditor {
     const point=this.point(event);
     if(this.mode) {
       // 11-14 2차 24: 5E_image와 같은 순서 — 지시선은 가리킬 곳 → (꺾일 곳) → 글자 자리, 두 점부터 Enter·Space로 끝냄. 끝나면 그 자리에서 바로 글자를 쓴다.
-      if(this.mode==='leader'){this.draftPts=[...(this.draftPts||[]),point];this.anchor=this.draftPts[0];if(this.draftPts.length<3){this.render();return;}}
+      if(this.mode==='leader'){const prev=this.draftPts?.at(-1);const pt=prev&&snapKey(event)?snapAngle(prev,point):point;this.draftPts=[...(this.draftPts||[]),pt];this.anchor=this.draftPts[0];if(this.draftPts.length<3){this.render();return;}}
       this.commitPlacement(point);return;
     }
     const target=event.target.closest('[data-annotation-id]');
@@ -310,7 +323,7 @@ export class ExamInlineEditor {
     box.addEventListener('blur',()=>finish(true));document.body.append(box);this.inPlace=box;fit();box.focus();
   }
   pointerMove(event) {
-    if(this.mode==='leader'&&this.draftPts?.length&&!this.drag){this.hover=this.point(event);this.render();return;}
+    if(this.mode==='leader'&&this.draftPts?.length&&!this.drag){const p=this.point(event),prev=this.draftPts.at(-1);this.hover=snapKey(event)?snapAngle(prev,p):p;this.render();this.magnifier?.move({x:event.clientX,y:event.clientY});return;}
     if(this.busy || !this.drag || event.pointerId!==this.drag.pointerId)return;
     const point=this.point(event),label=this.selectedLabel(),before=this.drag.before.find(l=>l.id===label.id),name=this.drag.handle;
     const dx=point.x-this.drag.start.x,dy=point.y-this.drag.start.y;
@@ -335,7 +348,9 @@ export class ExamInlineEditor {
     const key=name.startsWith('extra-') ? null : name;
     const p=key ? before[key] : before.extraAnchors[Number(name.slice(6))];
     if (!p) return;
-    const moved={x:p.x+dx,y:p.y+dy};
+    let moved={x:p.x+dx,y:p.y+dy};
+    // ⌃(맥)/Ctrl: 이웃 점을 기준으로 15° 단위로 끊어 맞춤(5E_image와 같은 규칙).
+    if (key && snapKey(event)) {const other=key==='p1'?(before.elbow||before.p2):key==='p2'?(before.elbow||before.p1):key==='elbow'?before.p1:null;if(other&&!(other.x===p.x&&other.y===p.y))moved=snapAngle(other,moved);}
     if (key) label[key]=moved;else label.extraAnchors[Number(name.slice(6))]=moved;
     if(name==='p2' && before.p1.x===before.p2.x && before.p1.y===before.p2.y)label.p1=copy(moved);
     this.render();

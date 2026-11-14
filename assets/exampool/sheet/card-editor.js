@@ -19,6 +19,7 @@ import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_
 import {ask} from './ask-dialog.js';
 import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1114';
 import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1113';
+import {mathToHtml} from '../../../js/eq/eq-input.js?v=1113';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
@@ -71,7 +72,7 @@ export function createCardEditor(root,api){
       const name=E(b.label||KINDS[b.kind]);
       if(b.kind==='figure'&&b.figure)return `<div class="cv-tile${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="${name} · 그림 · 두 번 누르기·⌘Enter로 편집"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,tool('edit',b.id,ICON.pencil,'편집 (두 번 누르기 · ⌘Enter)')+tool('swap',b.id,ICON.swap,'바꾸기 — 클립보드·파일'))}${tileSel===b.id?'<span class="cv-target-tag">바꿀 칸</span>':''}</div><div class="cap"><b>${name}</b></div></div>`;
       if(b.kind==='table'&&tableEdit===b.id)return tableEditHtml(b,name);
-      if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" title="${name} · 표 ${t.rows}×${t.cols}"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${E(c.value).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
+      if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" data-cvtile="${b.id}" title="${name} · 표 ${t.rows}×${t.cols} · 눌러서 고치기"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${/\$/.test(String(c.value??''))?mathToHtml(String(c.value).slice(0,40)):E(String(c.value??'')).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
       // 11-14(시안 1-1·2-4): 빈 칸은 아이콘 둘만(이름은 풍선). 그림 넣기를 누르면 클립보드·파일 중 고른다. 칸 빈 곳을 누르면 넣을 칸으로 골라진다.
       return `<div class="cv-tile empty${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="눌러서 넣을 칸으로 고르기"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="add-pic" data-cvslot="${b.id}" title="그림 넣기 — 클립보드·파일" aria-label="그림 넣기">${ICON.pic}</button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}" title="표 만들기" aria-label="표 만들기">${ICON.table}</button></span>${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
     }).join('');
@@ -89,14 +90,17 @@ export function createCardEditor(root,api){
     return row(name,linesHtml(b,key,ph),tip,'cv-linerow').replace('<div class="cv-v">',`<div class="cv-lineset">${plus}</div><div class="cv-v">`);}
   // 11-14 시안 review-1114b 3번(① A·② A): 선지 아래 흐린 점선 뒤 「해설」 칸. 머리에 정답(선지에서 자동), 한 줄 요약은 쓰면 조판에 들어간다.
   // 비어 있으면 「＋ 해설 쓰기」 한 줄만. 해설 글은 다른 칸처럼 $로 수식, 「보기 ○×·근거로 뼈대」로 줄을 만든다.
-  let expOpen=false;
+  let expOpen=!!store.get('cvExpOpen',false);
   function explanationHtml(x){const ex=explanationParts(x),has=ex.parts.some(p=>p.text.trim()||p.subs.some(v=>v.trim())),sum=String(x.explanationSummary||'').trim(),ans=Number.isInteger(x.answer)&&x.answer>=0?NUM[x.answer]:'';
     if(!has&&!sum&&!expOpen)return `<section class="cv-exp is-empty" aria-label="해설"><button type="button" class="cv-exp-add" data-cv="exp-open">＋ 해설 쓰기</button></section>`;
+    // 11-14 3차 38: 해설은 늘 펼쳐 둘 필요가 없다 — 머리의 ▾로 접고 펴고, 접으면 한 줄만(상태는 기억).
+    if(!expOpen){const filled=ex.parts.filter(p=>p.text.trim()||p.subs.some(v=>v.trim())).map(p=>p.key);
+      return `<section class="cv-exp is-folded" aria-label="해설"><button type="button" class="cv-exp-fold" data-cv="exp-toggle" aria-expanded="false"><i aria-hidden="true">▸</i><b>해설</b>${ans?`<span class="cv-exp-ans">정답 ${ans}</span>`:''}<span class="cv-exp-peek">${sum?E(sum.slice(0,40))+' · ':''}${filled.length?`${ex.mode==='bogi'?filled.join(' '):filled.length+'문단'} 씀`:'비어 있음'}</span></button></section>`;}
     const ta=(k,v,ph)=>`<textarea rows="1" data-cvexp="${k}" placeholder="${ph}" aria-label="해설 ${k}">${E(v)}</textarea>`;
     const rows=ex.parts.map((p,i)=>`<div class="cv-exp-row"><span class="k">${E(p.key)}${ex.mode==='num'?'.':''}</span><div class="cv-exp-body">${ta(i,p.text,ex.mode==='bogi'?`보기 ${p.key} 해설`:'풀이 한 단계')}
       ${p.subs.map((v,j)=>`<div class="cv-exp-sub"><span class="k">${j+1})</span>${ta(`${i}:${j}`,v,'하위 설명')}<button type="button" class="x" data-cvexp-del="${i}:${j}" aria-label="하위 번호 지우기" title="지우기">×</button></div>`).join('')}
       <button type="button" class="cv-exp-addsub" data-cvexp-sub="${i}">＋ 하위 번호</button></div>${ex.mode==='bogi'?`<span class="ox ${p.ox||''}">${p.ox?'→ '+OX_WORD[p.ox]:''}</span>`:`<button type="button" class="x" data-cvexp-del="${i}" aria-label="문단 지우기" title="문단 지우기"${ex.parts.length<=1?' hidden':''}>×</button>`}</div>`).join('');
-    return `<section class="cv-exp" aria-label="해설"><div class="cv-exp-h"><b>해설</b>${ans?`<span class="cv-exp-ans">정답 ${ans}</span><span class="cv-auto">선지에서 자동</span>`:'<span class="cv-exp-ans none">정답을 고르면 여기 나옵니다</span>'}<button type="button" class="mini" data-cv="exp-skeleton" title="정답과 보기 ○×, 연결한 근거 인용문으로 해설 줄을 만듭니다">${ICON.star}보기 ○×·근거로 뼈대</button></div>
+    return `<section class="cv-exp" aria-label="해설"><div class="cv-exp-h"><button type="button" class="cv-exp-fold" data-cv="exp-toggle" aria-expanded="true" title="해설 접기"><i aria-hidden="true">▾</i><b>해설</b></button>${ans?`<span class="cv-exp-ans">정답 ${ans}</span><span class="cv-auto">선지에서 자동</span>`:'<span class="cv-exp-ans none">정답을 고르면 여기 나옵니다</span>'}<button type="button" class="mini" data-cv="exp-skeleton" title="정답과 보기 ○×, 연결한 근거 인용문으로 해설 줄을 만듭니다">${ICON.star}보기 ○×·근거로 뼈대</button></div>
       <input class="cv-exp-sum" data-cvf="explanationSummary" value="${E(x.explanationSummary||'')}" maxlength="200" placeholder="한 줄 요약(쓰면 조판에 「핵심 —」으로 들어갑니다)" aria-label="해설 한 줄 요약">
       <div class="cv-exp-rows" data-mode="${ex.mode}">${rows}</div>${ex.mode==='num'?'<button type="button" class="cv-exp-addsub" data-cvexp-add>＋ 문단</button>':''}</section>`;}
   // 해설 칸 고치기: 칸 구조는 explanationParts가 정하고, 저장할 때 글 하나(explanation)도 같이 맞춘다.
@@ -485,7 +489,7 @@ export function createCardEditor(root,api){
   let mathFields=null;
   function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();}
   // 11-13: 카드 글 칸에 글 속 수식 띠($·⌘E), 안 고칠 때는 그려진 수식
-  mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice]'});
+  mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice],.cv-writer textarea[data-tc],.cv-writer textarea[data-cvexp]'});
   // 11-13: 머리 줄은 단추(유형·배점·단계)를 절대 줄이지 않는다. 한 줄에 다 안 들어가면 「문항 이름」 칸만 아랫줄로 내려 가로를 다 쓴다.
   function fitHead(){const h=root.querySelector('.cv-writer>.w-head');if(!h)return;h.classList.remove('cv-head-wrap');
     const kids=[...h.children].filter(c=>!c.classList.contains('sp')&&c.offsetHeight>0);if(!kids.length)return;const top=Math.min(...kids.map(c=>c.offsetTop));
@@ -891,7 +895,8 @@ export function createCardEditor(root,api){
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
     if(d.cvunit){cardEdit('unit',()=>{x.unitLarge=d.cvunit;});return;}
     if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));cardEdit('source',()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}
-    if(d.cv==='exp-open'){expOpen=true;render();setTimeout(()=>root.querySelector('.cv-exp textarea[data-cvf="explanation"]')?.focus(),0);return;}
+    if(d.cv==='exp-toggle'){expOpen=!expOpen;store.set('cvExpOpen',expOpen);render();return;}
+    if(d.cv==='exp-open'){expOpen=true;store.set('cvExpOpen',true);render();setTimeout(()=>root.querySelector('.cv-exp textarea[data-cvf="explanation"]')?.focus(),0);return;}
     if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)cardEdit('explanation',()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;delete x.explanationParts;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
     if(d.cvmat){const [k,v]=d.cvmat.split(':');try{api.edit(()=>{setMaterialLayout(x,{[k]:k==='count'?Number(v):v});});}catch(e){api.status?.(e.message,true);}return;}
     if(d.cvpoints){cardEdit('points',()=>{x.points=Number(d.cvpoints);});return;}
@@ -1001,7 +1006,10 @@ export function createCardEditor(root,api){
   function tileName(id){const x=q(),b=x&&x.blocks.find(v=>v.id===id);return b?(b.label||KINDS[b.kind]):'';}
   function clipLabel(){return tileSel&&tileName(tileSel)?`자료 칸 ${tileName(tileSel)}에 넣기`:'자료 칸에 넣기';}
   root.addEventListener('click',e=>{const t=e.target.closest?.('.cv-tile[data-cvtile]');if(!t||e.target.closest('button,a,input,textarea,select'))return;
-    const b=q()?.blocks.find(v=>v.id===t.dataset.cvtile);if(!b||b.kind!=='figure')return;setTileSel(tileSel===b.id?null:b.id);});
+    const b=q()?.blocks.find(v=>v.id===t.dataset.cvtile);
+    // 11-14 3차 33: 표 칸은 누른 칸에서 바로 고치기 시작(편집 모양은 고칠 때만).
+    if(b?.kind==='table'&&!t.classList.contains('is-tedit')){const cell=e.target.closest('td,th');let at='0:0';if(cell){const tr=cell.parentElement;at=`${[...tr.parentElement.children].indexOf(tr)}:${[...tr.children].indexOf(cell)}`;}startTableEdit(b.id,at);return;}
+    if(!b||b.kind!=='figure')return;setTileSel(tileSel===b.id?null:b.id);});
   root.addEventListener('dblclick',e=>{const img=e.target.closest?.('.cv-tile[data-cvtile] .pic img');if(!img)return;e.preventDefault();const x=q();if(x)api.slot('edit',x,img.closest('.cv-tile').dataset.cvtile);});
   // 그림 넣기·바꾸기 메뉴: 클립보드에서 / 파일에서
   let tileMenuEl=null;const closeTileMenu=()=>{tileMenuEl?.remove();tileMenuEl=null;};
@@ -1016,12 +1024,13 @@ export function createCardEditor(root,api){
   let tableEdit=null,tableSel=null,tableFocus=null;
   function tableEditHtml(b,name){const t=b.table;let rows='';
     for(let r=0;r<t.rows;r++){rows+='<tr>';for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(v=>v.r===r&&v.c===c),tag=r<t.headerRows?'th':'td',sel=tableSel&&r>=Math.min(tableSel[0],tableSel[2])&&r<=Math.max(tableSel[0],tableSel[2])&&c>=Math.min(tableSel[1],tableSel[3])&&c<=Math.max(tableSel[1],tableSel[3]);
-      rows+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} class="${sel?'sel':''}"><div contenteditable="plaintext-only" spellcheck="false" data-tc="${r}:${c}">${E(String(t.cells[r][c].value??''))}</div></${tag}>`;}rows+='</tr>';}
+      rows+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} class="${sel?'sel':''}"><textarea rows="1" spellcheck="false" data-tc="${r}:${c}" aria-label="${r+1}행 ${c+1}열">${E(String(t.cells[r][c].value??''))}</textarea></${tag}>`;}rows+='</tr>';}
     return `<div class="cv-tile is-tedit" data-cvtile="${b.id}"><div class="pic table-pic cv-tedit"><div class="cv-tedit-wrap"><table>${rows}</table><button type="button" class="cv-tedit-add col" data-tedit="add-col" title="열 추가" aria-label="열 추가">＋</button><button type="button" class="cv-tedit-add row" data-tedit="add-row" title="행 추가" aria-label="행 추가">＋</button></div>
       <div class="cv-tedit-bar"><button type="button" data-tedit="head" aria-pressed="${t.headerRows>0}">머리 행</button><button type="button" data-tedit="merge" title="⇧를 누른 채 칸을 눌러 범위를 고른 뒤">칸 합치기</button><button type="button" data-tedit="unmerge">합치기 풀기</button><button type="button" data-tedit="del-row">줄 지우기</button><button type="button" data-tedit="del-col">칸 지우기</button><button type="button" class="pri" data-tedit="done" title="⌘Enter · Esc">완료</button></div></div><div class="cap"><b>${name}</b> <small>표 편집 중 · ${t.rows} × ${t.cols} · Tab 다음 칸 · $로 수식</small></div></div>`;}
   const refocusTable=()=>requestAnimationFrame(()=>requestAnimationFrame(focusTableCell));
   function startTableEdit(id,focus='0:0'){tableEdit=id;tableSel=null;tableFocus=focus;render();refocusTable();}
-  function focusTableCell(){const k=tableFocus;if(!k)return;const n=root.querySelector(`.cv-tedit [data-tc="${k}"]`);if(!n)return;n.focus();const sel=getSelection(),rg=document.createRange();rg.selectNodeContents(n);rg.collapse(false);sel.removeAllRanges();sel.addRange(rg);}
+  const tcOf=el=>{const f=el?.closest?.('.eq-ce')?._field||el;return f?.matches?.('.cv-tedit textarea[data-tc]')?f:null;};
+  function focusTableCell(){const k=tableFocus;if(!k)return;const f=root.querySelector(`.cv-tedit textarea[data-tc="${k}"]`);if(!f)return;mathFields?.decorate?.();const n=f._eqce||f;n.focus();const sel=getSelection(),rg=document.createRange();rg.selectNodeContents(n);rg.collapse(false);sel.removeAllRanges();sel.addRange(rg);}
   function tableOp(op){const x=q(),b=x?.blocks.find(v=>v.id===tableEdit);if(!b||b.kind!=='table')return;const [fr,fc]=(tableFocus||'0:0').split(':').map(Number);
     if(op==='done'){tableEdit=null;tableSel=null;render();return;}
     const ok=api.edit(()=>{const t=b.table,blank=()=>({value:''});
@@ -1033,17 +1042,19 @@ export function createCardEditor(root,api){
       else if(op==='merge'){if(!tableSel)throw Error('⇧를 누른 채 칸을 눌러 합칠 범위를 먼저 고르세요.');const [a,b2,c2,d]=tableSel;mergeCells(t,[Math.min(a,c2),Math.min(b2,d),Math.max(a,c2),Math.max(b2,d)]);}
       else if(op==='unmerge'){const before=t.merges.length;t.merges=t.merges.filter(m=>!(fr>=m.r&&fr<m.r+m.rs&&fc>=m.c&&fc<m.c+m.cs));if(before===t.merges.length)throw Error('합친 칸 안을 누른 뒤 푸세요.');}});
     if(ok!==false){if(op==='del-row')tableFocus=`${Math.max(0,Math.min(fr,b.table.rows-1))}:${fc}`;if(op==='del-col')tableFocus=`${fr}:${Math.max(0,Math.min(fc,b.table.cols-1))}`;if(op==='add-row')tableFocus=`${b.table.rows-1}:0`;if(op==='add-col')tableFocus=`0:${b.table.cols-1}`;tableSel=null;render();refocusTable();}}
-  root.addEventListener('input',e=>{const n=e.target.closest?.('.cv-tedit [data-tc]');if(!n)return;const x=q(),b=x?.blocks.find(v=>v.id===tableEdit);if(!b)return;const [r,c]=n.dataset.tc.split(':').map(Number);
-    api.edit(()=>{b.table.cells[r][c].value=n.textContent.slice(0,2000);},{key:`tc:${b.id}:${r}:${c}`,light:true});});
-  root.addEventListener('focusin',e=>{const n=e.target.closest?.('.cv-tedit [data-tc]');if(n)tableFocus=n.dataset.tc;});
-  root.addEventListener('pointerdown',e=>{const n=e.target.closest?.('.cv-tedit [data-tc]');if(!n||!e.shiftKey)return;const [r,c]=n.dataset.tc.split(':').map(Number),[fr,fc]=(tableFocus||n.dataset.tc).split(':').map(Number);e.preventDefault();tableSel=[fr,fc,r,c];
-    root.querySelectorAll('.cv-tedit td,.cv-tedit th').forEach(cell=>{const d=cell.querySelector('[data-tc]');if(!d)return;const [y,x]=d.dataset.tc.split(':').map(Number);cell.classList.toggle('sel',y>=Math.min(fr,r)&&y<=Math.max(fr,r)&&x>=Math.min(fc,c)&&x<=Math.max(fc,c));});},true);
+  root.addEventListener('input',e=>{const n=e.target.matches?.('.cv-tedit textarea[data-tc]')?e.target:null;if(!n)return;const x=q(),b=x?.blocks.find(v=>v.id===tableEdit);if(!b)return;const [r,c]=n.dataset.tc.split(':').map(Number);
+    api.edit(()=>{b.table.cells[r][c].value=n.value.slice(0,2000);},{key:`tc:${b.id}:${r}:${c}`,light:true});});
+  root.addEventListener('focusin',e=>{const n=tcOf(e.target);if(n)tableFocus=n.dataset.tc;});
+  // 11-14 3차 33: 표 바깥을 누르면 편집을 끝낸다(표는 고칠 때만 편집 모양).
+  document.addEventListener('pointerdown',e=>{if(!tableEdit||e.target.closest?.('.cv-tile.is-tedit'))return;tableEdit=null;tableSel=null;render();},true);
+  root.addEventListener('pointerdown',e=>{const n=tcOf(e.target);if(!n||!e.shiftKey)return;const [r,c]=n.dataset.tc.split(':').map(Number),[fr,fc]=(tableFocus||n.dataset.tc).split(':').map(Number);e.preventDefault();tableSel=[fr,fc,r,c];
+    root.querySelectorAll('.cv-tedit td,.cv-tedit th').forEach(cell=>{const d=cell.querySelector('textarea[data-tc]');if(!d)return;const [y,x]=d.dataset.tc.split(':').map(Number);cell.classList.toggle('sel',y>=Math.min(fr,r)&&y<=Math.max(fr,r)&&x>=Math.min(fc,c)&&x<=Math.max(fc,c));});},true);
   root.addEventListener('click',e=>{const k=e.target.closest?.('[data-tedit]')?.dataset.tedit;if(!k||!tableEdit)return;e.preventDefault();e.stopPropagation();tableOp(k);},true);
-  root.addEventListener('keydown',e=>{if(!tableEdit)return;const n=e.target.closest?.('.cv-tedit [data-tc]');
+  root.addEventListener('keydown',e=>{if(!tableEdit)return;
     if(e.key==='Escape'||(e.key==='Enter'&&(e.metaKey||e.ctrlKey))){e.preventDefault();e.stopPropagation();tableOp('done');return;}
-    if(!n||e.isComposing||e.keyCode===229)return;const x=q(),t=x?.blocks.find(v=>v.id===tableEdit)?.table;if(!t)return;let [r,c]=n.dataset.tc.split(':').map(Number);
+    const n=tcOf(e.target);if(!n||e.isComposing||e.keyCode===229)return;const x=q(),t=x?.blocks.find(v=>v.id===tableEdit)?.table;if(!t)return;let [r,c]=n.dataset.tc.split(':').map(Number);const host=e.target;
     const go=(dr,dc)=>{let y=r,z=c;for(let i=0;i<60;i++){z+=dc;y+=dr;if(z>=t.cols){z=0;y++;}if(z<0){z=t.cols-1;y--;}if(y<0||y>=t.rows)return false;if(!tableCovered(t,y,z))break;}tableFocus=`${y}:${z}`;focusTableCell();return true;};
-    const caret=getSelection(),atEnd=caret.rangeCount&&caret.focusOffset>=(caret.focusNode?.textContent?.length||0),atStart=caret.rangeCount&&caret.focusOffset===0;
+    const caret=getSelection(),txt=host.textContent||'',atEnd=caret.rangeCount&&caret.isCollapsed&&(caret.focusNode===host?caret.focusOffset>=host.childNodes.length:caret.focusOffset>=(caret.focusNode?.textContent?.length||0)&&!caret.focusNode?.nextSibling),atStart=caret.rangeCount&&caret.isCollapsed&&caret.focusOffset===0&&!caret.focusNode?.previousSibling;void txt;
     if(e.key==='Tab'){e.preventDefault();e.stopPropagation();if(!go(0,e.shiftKey?-1:1)&&!e.shiftKey)tableOp('add-row');return;}
     if(e.key==='Enter'){e.preventDefault();e.stopPropagation();go(1,0);return;}
     if(e.key==='ArrowDown'){e.preventDefault();go(1,0);}else if(e.key==='ArrowUp'){e.preventDefault();go(-1,0);}else if(e.key==='ArrowRight'&&atEnd){e.preventDefault();go(0,1);}else if(e.key==='ArrowLeft'&&atStart){e.preventDefault();go(0,-1);}},true);
