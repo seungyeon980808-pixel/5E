@@ -32,7 +32,7 @@ export function createNewQuestionDialog(dialog,{onCreate,frames=()=>[]}){
 <section class="nq-col" data-nq="steps"></section>
 <section class="nq-preview"><div class="nq-pv"><div class="nq-preview-head"><span>예시 문항</span><span data-nq="match"></span></div><div data-nq="paper"></div><div class="nq-sources" data-nq="sources"></div></div></section>
 <aside class="nq-cells"><h3>문항 카드에서 채울 칸</h3><p class="nq-muted">틀을 확정하면 이 칸만 흰색으로 열립니다. ①·ㄱ. 같은 번호는 적지 않습니다.</p><div class="nq-sheet" data-nq="sheet"></div></aside>
-<footer class="nq-foot"><div class="nq-summary" data-nq="summary"></div><div class="nq-spacer"></div><span class="nq-frame" data-nq="frame" hidden></span><button type="button" class="nq-tool" data-nq="reset">처음부터</button><button type="button" class="nq-go" data-nq="go" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>엑셀에서 작성 <span class="nq-kbd">Enter</span></button></footer>`;
+<footer class="nq-foot"><div class="nq-summary" data-nq="summary"></div><div class="nq-spacer"></div><span class="nq-frame" data-nq="frame" hidden></span><button type="button" class="nq-tool" data-nq="reset">처음부터</button><button type="button" class="nq-go" data-nq="go" disabled><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>문항 카드로 만들기 <span class="nq-kbd">Enter</span></button></footer>`;
   dialog.setAttribute('aria-labelledby','nq-title');
   const part=k=>dialog.querySelector(`[data-nq="${k}"]`);
   const pick={form:null,struct:null},info={form:false,struct:false};let hover=null,frame='kice';const subject='all';

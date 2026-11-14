@@ -701,3 +701,4 @@ select.lv-btn{appearance:auto;padding:0 10px;background:var(--ds-field,#010409)}
 #library-view .lv-grid>.lv-grp{grid-column:1/-1;margin:6px 0 -2px;font-size:12px;font-weight:600;color:var(--ds-ink-3,#8b949e);letter-spacing:.02em}
 #library-view .lv-grid>.lv-grp:first-child{margin-top:0}
 #library-view .lv-list>.lv-grp{list-style:none;padding:8px 10px 4px;font-size:12px;font-weight:600;color:var(--ds-ink-3,#8b949e)}
+.lv-meta small.lv-date{margin-left:6px;font-variant-numeric:tabular-nums}/* 11-14: 묶음 제목 대신 카드 아래 날짜 */
