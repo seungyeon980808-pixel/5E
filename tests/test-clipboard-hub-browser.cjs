@@ -70,3 +70,36 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     assert.deepEqual(errors,[]);
   });
 });
+
+// 11-14 사용자: 「이미지 변환에도 끌어서 들어가져야」 — 그림을 받는 창마다 클립보드 「넣기」가 그 창으로 가고, 클립보드 항목을 끌어 놓을 수 있어야 한다.
+test('5E clipboard: every image-accepting window takes insert and drag (AI image, objectify, hwp)',{timeout:600000},async t=>{
+  await h.withServer(async origin=>{
+    const browser=await chromium.launch();t.after(()=>browser.close());
+    const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
+    await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
+    const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=300;c.height=200;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,300,200);x.strokeRect(20,20,260,160);return c.toDataURL('image/png');});
+    const id=await page.evaluate(async src=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipAdd({src,name:'시험 그림',w:300,h:200,source:'라이브러리'})).id;},png);
+    const dropOn=(frame,selector,pt)=>frame.evaluate(({selector,id,pt})=>{const el=selector?document.querySelector(selector):document.elementFromPoint(pt.x,pt.y);const r=el.getBoundingClientRect();
+      const dt=new DataTransfer();dt.setData('application/x-5e-drawer',id);const o={bubbles:true,cancelable:true,composed:true,clientX:pt?pt.x:r.left+r.width/2,clientY:pt?pt.y:r.top+r.height/2,dataTransfer:dt};
+      const over=new DragEvent('dragover',o);el.dispatchEvent(over);el.dispatchEvent(new DragEvent('drop',o));return over.defaultPrevented;},{selector,id,pt});
+    const label=async()=>{await page.evaluate(()=>window.fiveEClipboard.open());await page.locator('.clp-i').first().click();const v=(await page.locator('.clp-go').textContent()).trim();await page.evaluate(()=>window.fiveEClipboard.close());return v;};
+    // AI 이미지: 넣기 = 원본으로 쓰기, 끌어 놓기도 원본
+    await page.click('#ai-image-install-open');await page.waitForSelector('#ai-image-panel:not([hidden])');
+    assert.equal(await label(),'원본으로 쓰기');assert.equal(await dropOn(page.mainFrame(),'#ai-image-panel'),true);
+    await page.waitForFunction(()=>/클립보드 그림을 원본으로/.test(document.querySelector('[data-ai-status]')?.textContent||''));
+    await page.evaluate(()=>{const x=document.getElementById('ai-image-panel');x.querySelector('[data-ai-close], .ai-close, [aria-label="닫기"]')?.click();});await page.waitForFunction(()=>document.getElementById('ai-image-panel').hidden);
+    // 이미지 객체화: 넣기 = 원본으로 쓰기, 끌어 놓으면 원본이 읽힌다
+    await page.evaluate(()=>document.getElementById('image-objectify-open').click());await page.waitForFunction(()=>window.fiveEObjectifyClip?.open());
+    assert.equal(await label(),'원본으로 쓰기');assert.equal(await dropOn(page.mainFrame(),'#objectify-stage'),true);
+    await page.waitForFunction(()=>!document.getElementById('objectify-tools').hidden);
+    // 창을 열어 둔 채 다른 프로그램으로 가도 그쪽 자리로 넣는다(5E_image일 때만 객체화 창이 받는다).
+
+    // 5E_hwp: 넣기 = 커서 자리에 넣기, 문서로 끌어 놓으면 그림이 들어간다
+    await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b=>b.click());await page.waitForFunction(()=>window.fiveEClipHostHwp?.ready?.(),null,{timeout:120000});
+    assert.equal(await label(),'커서 자리에 넣기');
+    const len=()=>page.evaluate(()=>window.fiveEHwpPalette.native.bridge().wasm.borrowDocumentHandle().renderPageSvg(0).length);const l0=await len();
+    const editor=page.frames().find(f=>f!==page.mainFrame()&&/rhwp|studio/i.test(f.url()));assert.ok(editor,'hwp editor frame');
+    assert.equal(await dropOn(editor,null,{x:400,y:300}),true);await page.waitForFunction(n=>window.fiveEHwpPalette.native.bridge().wasm.borrowDocumentHandle().renderPageSvg(0).length>n+300,l0);
+    assert.deepEqual(errors,[]);
+  });
+});

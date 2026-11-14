@@ -1293,6 +1293,11 @@ export function initRhwpExamWorkspace(state, services) {
     const nativeFileTitle=bridge.editor.element.contentDocument.querySelector('[data-menu="file"] .menu-title');
     if (nativeFileTitle) {nativeFileTitle.removeAttribute('data-i18n');nativeFileTitle.textContent='문서 설정';}
     bridge.editor.element.contentDocument.addEventListener('pointerdown',closeMenus,true);
+    // 11-14 5E 클립보드: 클립보드 항목을 한글 문서로 끌어 놓으면 커서 자리에 그림으로 넣는다(편집기 iframe 안).
+    { const doc=bridge.editor.element.contentDocument,isClip=event=>[...(event.dataTransfer?.types||[])].includes('application/x-5e-drawer');
+      doc.addEventListener('dragover',event=>{if(isClip(event)){event.preventDefault();event.dataTransfer.dropEffect='copy';}},true);
+      doc.addEventListener('drop',event=>{if(!isClip(event)||event.dataTransfer.files?.length)return;event.preventDefault();event.stopImmediatePropagation();const id=event.dataTransfer.getData('application/x-5e-drawer');
+        void import('./drawer.js?v=1114').then(async m=>{const item=await m.clipGet(id);await window.fiveEClipHostHwp.insert(item);if(item?.moving)await m.clipConsume(item.id);}).catch(error=>message(error?.message||'클립보드 그림을 넣지 못했습니다.',true));},true); }
     bridge.editor.element.contentDocument.addEventListener('drop',event=>{
       const file=event.dataTransfer?.files?.[0];if(!file || !/\.(5e|5exam|json|hwp|hwpx)$/i.test(file.name)) return;
       event.preventDefault();event.stopImmediatePropagation();

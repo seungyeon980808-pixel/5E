@@ -826,7 +826,10 @@ if (_APP_DEBUG_ENABLED) {
   const viewCenter = () => { const v = state.get().viewBox; return { x: v.x + v.w / 2, y: v.y + v.h / 2 }; };
   // AI 이미지·AI 그래프 창이 열려 있으면 그 창의 원본으로(캔버스는 그 뒤에 가려 있다).
   hosts.push({ active: () => document.getElementById("ai-image-panel")?.hidden === false && typeof window.fiveEAiAddSource === "function", label: "원본으로 쓰기", accepts: item => !!item.src, insert: item => window.fiveEAiAddSource(item) });
-  hosts.push({ active: () => appNow() === "image", label: "캔버스에 넣기",
+  hosts.push({ active: () => appNow() === "image" && !!window.fiveEObjectifyClip?.open(), label: "원본으로 쓰기", accepts: item => !!item.src, insert: item => window.fiveEObjectifyClip.load(item) });
+  // 캔버스: 다른 창(라이브러리·그래프·내보내기 등 .modal-overlay)이 캔버스를 덮고 있으면 넣지 않는다 — 넣으면 보이지 않는 뒤쪽에 들어갔다(11-14).
+  const canvasCovered = () => [...document.querySelectorAll(".modal-overlay:not([hidden]):not([inert])")].length > 0 || !!document.getElementById("start-screen");
+  hosts.push({ active: () => appNow() === "image" && !canvasCovered(), label: "캔버스에 넣기",
     insert: async item => { if (item.objects?.length) insertClipObjects(item.objects); else await insertImageFromSrc(state, item.src, { at: viewCenter() }); } });
   hosts.push({ active: () => appNow() === "hwp" && !!window.fiveEClipHostHwp?.ready(), label: "커서 자리에 넣기", accepts: item => !!item.src, insert: item => window.fiveEClipHostHwp.insert(item) });
   const desktop = window.fiveEDesktop;

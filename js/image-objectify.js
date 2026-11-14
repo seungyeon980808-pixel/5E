@@ -1070,6 +1070,8 @@ export function initImageObjectify(state) {
     const blob = await (await fetch(item.src)).blob();
     loadFile(new File([blob], `${item.name || "클립보드 그림"}.png`, { type: blob.type || "image/png" }));
   };
+  // 11-14 5E 클립보드: 이 창이 열려 있으면 클립보드 「넣기」가 원본으로(main.js 받는 자리).
+  window.fiveEObjectifyClip = { open: () => !overlay.hidden, load: item => loadClipItem(item) };
   const pickFromClipboard = async () => {
     const clip = window.fiveEClipboard; if (!clip?.pick) return;
     const [item] = await clip.pick({ kinds: ["img", "graph", "obj"], multiple: false, label: "원본으로 쓰기" });
