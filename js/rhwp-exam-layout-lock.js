@@ -14,6 +14,7 @@ export const LAYOUT_LOCK_MESSAGE='구조 잠금 중 · 줄 간격·글꼴·크�
 const LAYOUT_COMMANDS=new Set(['format:char-shape','format:para-shape','format:line-spacing','format:line-spacing-increase','format:line-spacing-decrease','format:char-ratio-increase','format:char-ratio-decrease','format:font-size-increase','format:font-size-decrease','format:style-dialog','format:apply-style',
   'page:setup','page:section-settings','page:col-1','page:col-2','page:col-3','page:col-left','page:col-right','page:col-settings']);
 export const isLayoutCommand=id=>LAYOUT_COMMANDS.has(String(id||''));
+const TABLE_DATA_COMMANDS=new Set(['table:cell-merge','table:cell-split','table:insert-row-above','table:insert-row-below','table:insert-col-left','table:insert-col-right','table:delete-row','table:delete-col']);
 export const LAYOUT_OPERATIONS=new Set(['pageSetup','pageMargin','columnSettings','applyStyle']);
 export function isStructureCommand(id){
   id=String(id||'');
@@ -27,6 +28,29 @@ export function isStructureCommand(id){
 export const STRUCTURE_OPERATIONS=new Set(['objectProps','insertTableRow','insertTableColumn','deleteTableRow','deleteTableColumn','deleteTable','cutTable','createTable',
   'splitTable','splitTableCell','mergeTableCells','mergeTableWithNext','resizeTableProportional','resizeTableCells','pasteTableCellsTransposed','formatCopyCellProps',
   'insertPicture','assignPictureImage','pasteImage','pasteControl','cutObject','deleteObject','setColumnDef']);
+// 명령 전달기는 엔진이 다 뜬 뒤에 생길 수 있어, 잠금을 켤 때마다 아직 안 감싼 전달기를 감싼다(11-14: 단축키 M·S가 그대로 지나갔다).
+const wrappedDispatchers=new WeakSet();
+function wrapDispatcher(input){  const notice=()=>input.examStructureNotice?.(STRUCTURE_LOCK_MESSAGE);
+  const dispatcher=input.dispatcher;if(!dispatcher||wrappedDispatchers.has(dispatcher))return;wrappedDispatchers.add(dispatcher);
+  if(dispatcher&&typeof dispatcher.dispatchWithResult==='function'){
+    const run=dispatcher.dispatchWithResult.bind(dispatcher);
+    dispatcher.dispatchWithResult=(id,...args)=>{
+      // 11-14(시안 review-1114d 35번 A): 문항 자료 표에서는 한글 표 명령(M 합치기·S 나누기·줄/칸 넣기·지우기)을 문항 데이터로 바꿔 실행한다 — 표 안의 표도 된다.
+      if(input.examTableLayoutLocked&&TABLE_DATA_COMMANDS.has(String(id))&&typeof input.examTableEdit==='function'){const r=input.examTableEdit(String(id));if(r)return{ok:true};}
+      if(input.examTableLayoutLocked&&isStructureCommand(id)){notice();return{ok:false,reason:'structure-locked',message:STRUCTURE_LOCK_MESSAGE};}
+      if(input.examTableLayoutLocked&&input.examLayoutRules&&isLayoutCommand(id)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return{ok:false,reason:'layout-locked',message:LAYOUT_LOCK_MESSAGE};}
+      return run(id,...args);
+    };
+  }
+  // 단축키(셀 블록 중 M·S)는 dispatch로 바로 간다 — 같은 규칙으로 문항 자료 표면 데이터로 바꿔 실행한다.
+  if(dispatcher&&typeof dispatcher.dispatch==='function'){
+    const plain=dispatcher.dispatch.bind(dispatcher);
+    dispatcher.dispatch=(id,...args)=>{
+      if(input.examTableLayoutLocked&&TABLE_DATA_COMMANDS.has(String(id))&&typeof input.examTableEdit==='function'&&input.examTableEdit(String(id)))return true;
+      return plain(id,...args);
+    };
+  }
+}
 function installStructureGuard(input){
   if(structureGuards.has(input))return;structureGuards.add(input);
   const notice=()=>input.examStructureNotice?.(STRUCTURE_LOCK_MESSAGE);
@@ -38,15 +62,7 @@ function installStructureGuard(input){
       return execute(operation,...args);
     };
   }
-  const dispatcher=input.dispatcher;
-  if(dispatcher&&typeof dispatcher.dispatchWithResult==='function'){
-    const run=dispatcher.dispatchWithResult.bind(dispatcher);
-    dispatcher.dispatchWithResult=(id,...args)=>{
-      if(input.examTableLayoutLocked&&isStructureCommand(id)){notice();return{ok:false,reason:'structure-locked',message:STRUCTURE_LOCK_MESSAGE};}
-      if(input.examTableLayoutLocked&&input.examLayoutRules&&isLayoutCommand(id)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return{ok:false,reason:'layout-locked',message:LAYOUT_LOCK_MESSAGE};}
-      return run(id,...args);
-    };
-  }
+  wrapDispatcher(input);
   // 마우스로 그림·표를 옮기고 돌리고 크기를 바꾸는 중간 단계, 화살표로 선택 개체를 옮기는 것도 막는다.
   for(const name of ['updatePictureMoveDrag','updatePictureRotateDrag','updatePictureResizeDrag','updateMoveDrag','moveSelectedPicture','resizeSelectedPicture','moveSelectedTable','resizeCellByKeyboard','resizeTableProportional']){
     if(typeof input[name]!=='function')continue;
@@ -69,7 +85,7 @@ function installStructureGuard(input){
 export function setTableLayoutLocked(input,locked){
   if(!input)return;
   input.examTableLayoutLocked=!!locked;
-  installStructureGuard(input);
+  installStructureGuard(input);wrapDispatcher(input);
   // Geometry-only hosts (and tests) expose no table resize runtime to guard.
   if(typeof input.setTableResizeRenderer!=='function')return;
   if(!installed.has(input)){

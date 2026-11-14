@@ -10,6 +10,7 @@ import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
 import {explanationParts,explanationText,bogiKeys,OX_WORD} from './explanation.js';
+import {applyTableCommand} from './table-ops.js';
 import {markedQuestion,croppedQuestion,renderPage as renderPdfPage,pdfHref} from './past-pdf.js';
 
 import {MONTH,norm,splitWords,pastScore} from './past-search.js';
@@ -1021,7 +1022,8 @@ export function createCardEditor(root,api){
   document.addEventListener('pointerdown',e=>{if(tileMenuEl&&!e.target.closest('.cv-tile-menu'))closeTileMenu();},true);
   // 11-14 시안 review-1114c 1번(A·A·A): 만든 표는 그 칸 안에서 바로 채운다. 칸을 눌러 쓰기(Tab·화살표 이동, $ 수식), 가장자리 ＋로 줄·칸 늘리기,
   // 아래 작은 줄에서 머리 행·칸 합치기(⇧+누르기로 범위)·줄/칸 지우기·완료(⌘Enter·Esc). 옛 「자료 넣기」 창은 열지 않는다.
-  let tableEdit=null,tableSel=null,tableFocus=null;
+  let tableEdit=null,tableSel=null,tableFocus=null,tableBlock=false;
+  function paintTableSel(){const s=tableSel;root.querySelectorAll('.cv-tedit td,.cv-tedit th').forEach(cell=>{const d=cell.querySelector('textarea[data-tc]');if(!d)return;const [y,x]=d.dataset.tc.split(':').map(Number);cell.classList.toggle('sel',!!s&&y>=Math.min(s[0],s[2])&&y<=Math.max(s[0],s[2])&&x>=Math.min(s[1],s[3])&&x<=Math.max(s[1],s[3]));});}
   function tableEditHtml(b,name){const t=b.table;let rows='';
     for(let r=0;r<t.rows;r++){rows+='<tr>';for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(v=>v.r===r&&v.c===c),tag=r<t.headerRows?'th':'td',sel=tableSel&&r>=Math.min(tableSel[0],tableSel[2])&&r<=Math.max(tableSel[0],tableSel[2])&&c>=Math.min(tableSel[1],tableSel[3])&&c<=Math.max(tableSel[1],tableSel[3]);
       rows+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} class="${sel?'sel':''}"><textarea rows="1" spellcheck="false" data-tc="${r}:${c}" aria-label="${r+1}행 ${c+1}열">${E(String(t.cells[r][c].value??''))}</textarea></${tag}>`;}rows+='</tr>';}
@@ -1039,8 +1041,8 @@ export function createCardEditor(root,api){
       else if(op==='head'){t.headerRows=t.headerRows>0?0:1;}
       else if(op==='del-row'){if(t.rows<=1)throw Error('줄이 하나뿐입니다.');t.cells.splice(fr,1);t.rows--;t.headerRows=Math.min(t.headerRows,t.rows);t.merges=t.merges.filter(m=>!(fr>=m.r&&fr<m.r+m.rs)).map(m=>m.r>fr?{...m,r:m.r-1}:m);}
       else if(op==='del-col'){if(t.cols<=1)throw Error('칸이 하나뿐입니다.');t.cells.forEach(r=>r.splice(fc,1));t.cols--;t.merges=t.merges.filter(m=>!(fc>=m.c&&fc<m.c+m.cs)).map(m=>m.c>fc?{...m,c:m.c-1}:m);}
-      else if(op==='merge'){if(!tableSel)throw Error('⇧를 누른 채 칸을 눌러 합칠 범위를 먼저 고르세요.');const [a,b2,c2,d]=tableSel;mergeCells(t,[Math.min(a,c2),Math.min(b2,d),Math.max(a,c2),Math.max(b2,d)]);}
-      else if(op==='unmerge'){const before=t.merges.length;t.merges=t.merges.filter(m=>!(fr>=m.r&&fr<m.r+m.rs&&fc>=m.c&&fc<m.c+m.cs));if(before===t.merges.length)throw Error('합친 칸 안을 누른 뒤 푸세요.');}});
+      else if(op==='merge'){if(!tableSel)throw Error('F5(또는 ⇧+누르기)로 합칠 칸을 먼저 고르세요.');applyTableCommand(t,'table:cell-merge',tableSel);}
+      else if(op==='unmerge'){applyTableCommand(t,'table:cell-split',[fr,fc,fr,fc]);}});
     if(ok!==false){if(op==='del-row')tableFocus=`${Math.max(0,Math.min(fr,b.table.rows-1))}:${fc}`;if(op==='del-col')tableFocus=`${fr}:${Math.max(0,Math.min(fc,b.table.cols-1))}`;if(op==='add-row')tableFocus=`${b.table.rows-1}:0`;if(op==='add-col')tableFocus=`0:${b.table.cols-1}`;tableSel=null;render();refocusTable();}}
   root.addEventListener('input',e=>{const n=e.target.matches?.('.cv-tedit textarea[data-tc]')?e.target:null;if(!n)return;const x=q(),b=x?.blocks.find(v=>v.id===tableEdit);if(!b)return;const [r,c]=n.dataset.tc.split(':').map(Number);
     api.edit(()=>{b.table.cells[r][c].value=n.value.slice(0,2000);},{key:`tc:${b.id}:${r}:${c}`,light:true});});
@@ -1051,6 +1053,15 @@ export function createCardEditor(root,api){
     root.querySelectorAll('.cv-tedit td,.cv-tedit th').forEach(cell=>{const d=cell.querySelector('textarea[data-tc]');if(!d)return;const [y,x]=d.dataset.tc.split(':').map(Number);cell.classList.toggle('sel',y>=Math.min(fr,r)&&y<=Math.max(fr,r)&&x>=Math.min(fc,c)&&x<=Math.max(fc,c));});},true);
   root.addEventListener('click',e=>{const k=e.target.closest?.('[data-tedit]')?.dataset.tedit;if(!k||!tableEdit)return;e.preventDefault();e.stopPropagation();tableOp(k);},true);
   root.addEventListener('keydown',e=>{if(!tableEdit)return;
+    // 11-14(시안 review-1114d 35번 ③): 한글처럼 F5로 칸 고르기 → 화살표로 넓히기 → M 합치기 · S 나누기. Esc는 고르기부터 푼다.
+    if(e.key==='F5'){e.preventDefault();e.stopPropagation();const [r,c]=(tableFocus||'0:0').split(':').map(Number);tableBlock=true;tableSel=[r,c,r,c];paintTableSel();return;}
+    if(tableBlock){const k=String(e.key).toLowerCase();
+      if(e.key==='Escape'){e.preventDefault();e.stopPropagation();tableBlock=false;tableSel=null;paintTableSel();return;}
+      const mv={ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0]}[e.key];const t=q()?.blocks.find(v=>v.id===tableEdit)?.table;
+      if(mv&&t){e.preventDefault();e.stopPropagation();tableSel=[tableSel[0],tableSel[1],Math.max(0,Math.min(t.rows-1,tableSel[2]+mv[0])),Math.max(0,Math.min(t.cols-1,tableSel[3]+mv[1]))];paintTableSel();return;}
+      if(k==='m'||e.key==='ㅡ'||e.code==='KeyM'){e.preventDefault();e.stopPropagation();tableBlock=false;tableOp('merge');return;}
+      if(k==='s'||e.key==='ㄴ'||e.code==='KeyS'){e.preventDefault();e.stopPropagation();tableBlock=false;const [r,c]=tableSel;tableFocus=`${r}:${c}`;tableSel=null;tableOp('unmerge');return;}
+      if(!['Shift','Meta','Control','Alt'].includes(e.key)){tableBlock=false;tableSel=null;paintTableSel();}}
     if(e.key==='Escape'||(e.key==='Enter'&&(e.metaKey||e.ctrlKey))){e.preventDefault();e.stopPropagation();tableOp('done');return;}
     const n=tcOf(e.target);if(!n||e.isComposing||e.keyCode===229)return;const x=q(),t=x?.blocks.find(v=>v.id===tableEdit)?.table;if(!t)return;let [r,c]=n.dataset.tc.split(':').map(Number);const host=e.target;
     const go=(dr,dc)=>{let y=r,z=c;for(let i=0;i<60;i++){z+=dc;y+=dr;if(z>=t.cols){z=0;y++;}if(z<0){z=t.cols-1;y--;}if(y<0||y>=t.rows)return false;if(!tableCovered(t,y,z))break;}tableFocus=`${y}:${z}`;focusTableCell();return true;};

@@ -207,7 +207,11 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     if(item){e.preventDefault();e.stopPropagation();beginMove(item,p);}
   };
   const onFrameUp=e=>{if(drag?.mode==='move'){if(drag.moved){e.stopPropagation();e.preventDefault();}endDrag(true);}};
-  const onFrameKey=e=>{if(e.key==='Escape'&&drag){e.stopPropagation();endDrag(false);}};
+  const onFrameKey=e=>{if(e.key==='Escape'&&drag){e.stopPropagation();endDrag(false);return;}
+    // 11-14(시안 review-1114d 35번): 셀 블록(F5) 중 M 합치기·S 나누기 — 문항 자료 표면 문항 데이터로 바꿔 실행(표 안의 표도).
+    if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing||e.keyCode===229||!bridge.input?.cursor?.isInCellSelectionMode?.())return;
+    const k=String(e.key).toLowerCase(),id=k==='m'||e.key==='ㅡ'||e.code==='KeyM'?'table:cell-merge':k==='s'||e.key==='ㄴ'||e.code==='KeyS'?'table:cell-split':null;
+    if(id&&bridge.input.examTableEdit?.(id)){e.preventDefault();e.stopImmediatePropagation();}};
   // 더블클릭: 그림 자리는 5E에서 잘라 넣기, 표 자리는 표 만들기·크기 창.
   const onFrameDouble=e=>{if(!enabled||!onActivate)return;const p=fromFrame(e),item=items.find(x=>inside(x.rect,p));if(!item)return;e.preventDefault();e.stopPropagation();onActivate('jump',item.block,item.ref);};
   // 설정(크기·위치): 그림 위 작은 창. 크기는 칸 폭 대비 %(자동 = 칸 폭), 위치는 왼쪽·가운데·오른쪽(기본 가운데). 글 옆 그림은 왼쪽·오른쪽만.
@@ -266,6 +270,10 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     setModel(next){model=next;enabled=!!next;host.append(layer);bindFrame();const keep=keepSettings||(!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null);showHover(null);refresh();if(keep&&enabled){keepSettings=keep;reopenSettings();}},
     clear(){model=null;enabled=false;endDrag(false);showHover(null);items=[];dividers=[];paintDividers();say();},
     refresh(){if(enabled&&!drag)refresh();},
+    // 커서가 든 문항 자료 표(카드 표 칸이 주인인 표)와 그 안 칸(줄·칸). 표 안의 표도 찾는다.
+    // 커서가 든 문항 자료 표(카드 표 칸이 주인인 표). 표 안의 표는 엔진 위치 정보가 커서와 달라, 커서가 그려진 자리를 감싸는 가장 작은 표로 찾는다.
+    tableAt(pos){if(!enabled||!pos?.cellPath?.length||!pos.cursorRect)return null;if(!items.length)refresh();const c=pos.cursorRect,p=toLayer(c.pageIndex??0,{x:c.x,y:c.y+(c.height||0)/2,w:1,h:1});if(!p)return null;
+      return items.filter(x=>x.kind==='table'&&inside(x.rect,p)).sort((a,b)=>a.rect.w*a.rect.h-b.rect.w*b.rect.h)[0]||null;},
     itemOf(id){if(!enabled)return null;if(!items.length)refresh();return items.find(x=>x.id===id)||null;},
     // 한글 엔진이 받은 그림 두 번 누르기(onEdit) → 그 그림의 칸으로(11-14).
     jumpRef(ref){if(!enabled||!onActivate)return false;if(!items.length)refresh();
