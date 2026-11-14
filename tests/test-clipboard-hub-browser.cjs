@@ -24,7 +24,7 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     await page.mouse.click(154,196);await page.mouse.move(600,350);await page.mouse.down();await page.mouse.move(760,470,{steps:6});await page.mouse.up();
     await page.mouse.click(35,160);await page.mouse.click(600,350);
     await page.keyboard.press(MOD+'+KeyC');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).length===2;});
-    assert.deepEqual((await list())[0],{name:'5E 그림 · 객체 1개',kind:'obj',source:'5E_image',moving:false,objects:true});
+    assert.deepEqual((await list())[0],{name:'사각형',kind:'obj',source:'5E_image',moving:false,objects:true});
     await page.keyboard.press(MOD+'+KeyX');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).some(i=>i.moving);});
     await page.keyboard.press(MOD+'+KeyV');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return !(await m.clipList()).some(i=>i.moving);});
     // ⇧⌘V 열기 → 한 번 더 = 크게 보기 → Esc = 옆 서랍 → Esc = 닫기

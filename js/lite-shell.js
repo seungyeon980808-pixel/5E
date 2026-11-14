@@ -34,7 +34,16 @@ export function initLiteShell(state) {
   graph.setAttribute('aria-label', '좌표·함수');
   graph.innerHTML = `${icon('<path d="M4 16V4M4 16h12M6 14c2-5 5-7 10-9"/>')}<span>좌표·함수</span>`;
   graph.addEventListener('click', () => document.getElementById('graph-tool-open')?.click());
-  quickActions.append(graph);
+  // 11-14 5E 클립보드: Lite도 같은 클립보드(넣기는 캔버스, ⇧⌘V). 정식판과 같은 아이콘.
+  const clip = document.createElement('button');
+  clip.id = 'lite-clip-open';
+  clip.type = 'button';
+  clip.className = 'lite-quick-action';
+  clip.setAttribute('aria-label', '클립보드');
+  clip.title = `클립보드 — 넣어 둔 그림을 꺼내 쓰기 (${/Mac|iPhone|iPad/.test(navigator.platform || '') ? '⇧⌘V' : 'Ctrl+Shift+V'})`;
+  clip.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.6 4.6H6.6a2.1 2.1 0 0 0-2.1 2.1v12.2a2.1 2.1 0 0 0 2.1 2.1h10.8a2.1 2.1 0 0 0 2.1-2.1V6.7a2.1 2.1 0 0 0-2.1-2.1h-2"/><rect x="8.6" y="2.8" width="6.8" height="3.6" rx="1.2"/><path d="M10.4 10.4v-.3c0-.5.4-.9.9-.9h4.4c.5 0 .9.4.9.9v3.6c0 .5-.4.9-.9.9h-.4"/><rect x="7.8" y="11.4" width="6.8" height="5.6" rx=".9"/></svg><span>클립보드</span>`;
+  clip.addEventListener('click', () => window.fiveEClipboard?.toggle());
+  quickActions.append(graph, clip);
 
   const hintShell = document.createElement('div');
   hintShell.className = 'lite-hint-shell lite-main-only';

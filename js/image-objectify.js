@@ -1060,8 +1060,20 @@ export function initImageObjectify(state) {
   }
 
   /* ===== 이벤트 배선 ===== */
+  // 11-14 5E 클립보드: 원본을 「클립보드에서」 고를 수 있다(크게 보기 고르기 모드). 클립보드 항목을 끌어 놓아도 된다.
   const updatePasteHint = () => {
-    dropzone.textContent = keyLabel("PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기");
+    dropzone.innerHTML = `<span>${keyLabel("PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기")}</span>`
+      + `<button type="button" class="modal-btn objectify-clip" data-objectify-clip title="5E 클립보드에서 원본 고르기 (${/Mac|iPhone|iPad/.test(navigator.platform || "") ? "⇧⌘V" : "Ctrl+Shift+V"})">클립보드에서</button>`;
+  };
+  const loadClipItem = async item => {
+    if (!item?.src) return;
+    const blob = await (await fetch(item.src)).blob();
+    loadFile(new File([blob], `${item.name || "클립보드 그림"}.png`, { type: blob.type || "image/png" }));
+  };
+  const pickFromClipboard = async () => {
+    const clip = window.fiveEClipboard; if (!clip?.pick) return;
+    const [item] = await clip.pick({ kinds: ["img", "graph", "obj"], multiple: false, label: "원본으로 쓰기" });
+    await loadClipItem(item).catch(() => {});
   };
   updatePasteHint();
   window.addEventListener("5e:shortcut-platform-change", updatePasteHint);
@@ -1121,7 +1133,7 @@ export function initImageObjectify(state) {
   }, true);
 
   removeImageButton.addEventListener("click", clearSourceImage);
-  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("click", (event) => { if (event.target.closest?.("[data-objectify-clip]")) { void pickFromClipboard(); return; } fileInput.click(); });
   dropzone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
   });
@@ -1133,7 +1145,11 @@ export function initImageObjectify(state) {
   for (const type of ["dragleave", "drop"]) {
     stage.addEventListener(type, (event) => { event.preventDefault(); stage.classList.remove("is-dragover"); });
   }
-  stage.addEventListener("drop", (event) => loadFile(event.dataTransfer.files?.[0]));
+  stage.addEventListener("drop", (event) => {
+    const clipId = event.dataTransfer.getData("application/x-5e-drawer");
+    if (clipId && !event.dataTransfer.files?.length) { void import("./drawer.js?v=1114").then(m => m.clipGet(clipId)).then(loadClipItem).catch(() => {}); return; }
+    loadFile(event.dataTransfer.files?.[0]);
+  });
 
   // 슬라이더 값 표시 + 자동 재분석 (250ms 디바운스)
   const sliderUnits = { dilate: "px", minarea: "px²", textsize: "px", eps: "" };

@@ -848,8 +848,18 @@ if (_APP_DEBUG_ENABLED) {
       await ensureEmbeddedFonts().catch(() => {});
       const { canvas } = await rasterizeExportCanvas(snap, { dpi: 150, bounds });
       const graph = objects.some(o => o.type === "funcgraph" || o.type === "coordplane");
+      // 항목 이름 = 객체 종류(11-14): 하나면 「사각형」, 같은 것 여럿이면 「사각형 3개」, 섞이면 「사각형 외 2개」. 글 객체는 그 글을 앞에 보인다.
+      const TYPE_NAME = { rect: "사각형", ellipse: "원", line: "직선", polyline: "꺾은선", curve: "곡선", freehand: "자유선", text: "글", image: "그림", funcgraph: "그래프", coordplane: "좌표평면", axes: "좌표축",
+        arrow: "화살표", spring: "용수철", circuit: "회로", optics: "광학 기구", solid3d: "입체", labeler: "라벨", brace: "묶음 괄호", anglearc: "각", rightangle: "직각 표시", parabola: "포물선",
+        chargefield: "전기장", fieldlines: "자기력선", standingwave: "정상파", groundarc: "지면", triangle: "삼각형", formula: "수식", svgAsset: "그림", apparatus: "실험 기구", pendulum: "진자",
+        gauge: "계기", chromosome: "염색체", bilayer: "막", neuron: "뉴런", legend: "범례", pedigree: "가계도", vessel: "용기", chemmodel: "분자 모형", particlebox: "입자 모형", orbital: "오비탈",
+        bondgroup: "결합", chemchart: "도표", axisbreak: "축 생략", chemgraph: "화학 그래프", electrode: "전극", periodic: "주기율표", bubble: "말풍선" };
+      const main = objects.filter(o => !(graph && o.type === "coordplane" && objects.some(x => x.type === "funcgraph")));
+      const nameOf = o => (o.type === "text" || o.type === "formula") && typeof o.text === "string" && o.text.trim() ? `${o.type === "formula" ? "수식" : "글"} 「${o.text.trim().slice(0, 14)}」` : TYPE_NAME[o.type] || "5E 객체";
+      const first = nameOf(main[0] || objects[0]), same = main.every(o => o.type === (main[0] || objects[0]).type);
+      const itemName = graph && !main.some(o => o.type !== "funcgraph" && o.type !== "coordplane") ? "그래프" : main.length <= 1 ? first : same ? `${TYPE_NAME[main[0].type] || "5E 객체"} ${main.length}개` : `${first} 외 ${main.length - 1}개`;
       await clipAdd({ src: canvas.toDataURL("image/png"), w: canvas.width, h: canvas.height, kind: graph ? "graph" : "obj", source: "5E_image",
-        name: graph ? "그래프" : objects.length === 1 && objects[0].type === "image" ? "그림" : `5E 그림 · 객체 ${objects.length}개`, objects, moving: cutting, ref: clipRef });
+        name: itemName, objects, moving: cutting, ref: clipRef });
       clip.say(cutting ? `잘라 내어 클립보드에 넣었습니다 · ${clipKey("⌘V")} 붙이기 · ${clipKey("⌘Z")} 제자리로` : `클립보드에 넣었습니다 · ${clipKey("⇧⌘V")} 열기`, 1800);
     })().catch(() => {}); },
     pasted: ref => void clipConsumeRef(ref),

@@ -1809,6 +1809,9 @@ body { zoom: var(--ui-zoom, 1); }
   text-align: center;
 }
 .objectify-dropzone.is-dragover { border-color: var(--accent); background: var(--btn-tool-hover); }
+/* 11-14 5E 클립보드: 끌어 놓기 칸 안 「클립보드에서」 — 안내 글 아래 가운데 */
+.objectify-dropzone:has(.objectify-clip) { flex-direction: column; gap: 10px; }
+.objectify-dropzone .objectify-clip { min-height: 28px; padding: 0 12px; font-size: 12.5px; }
 .objectify-preview {
   display: block;
   width: 100%;

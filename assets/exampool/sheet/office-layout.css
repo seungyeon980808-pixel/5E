@@ -821,7 +821,8 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 /* 자료 배치(10-27): 「자/료」 이름표 칸 아래 위치·개수·배열 — 좁은 칸에 세로로 쌓는다 */
 #card-view .cv-grid .cv-matrow{position:relative}
 #card-view .cv-grid :is(.cv-matrow,.cv-linerow)>label{justify-content:flex-start;padding-top:14px}
-#card-view .cv-matset{position:absolute;left:0;top:58px;width:36px;display:flex;flex-direction:column;align-items:center;gap:7px;z-index:1}
+/* 11-14 사용자: 자료 줄(최소 142)에서 ＋ 단추가 줄 아래 경계를 넘어 발문 줄로 튀어나왔다 — 묶음을 6px 올리고 사이를 5px로(빈 공간은 늘리지 않음). */
+#card-view .cv-matset{position:absolute;left:0;top:52px;width:36px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:1}
 #card-view .cv-matseg{display:flex;flex-direction:column;gap:1px;width:30px;padding:2px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e4e8);background:#fff}
 #card-view .cv-matseg button{height:18px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:var(--ds-doc-ink-3,#8c959f);font:500 10.5px/18px 'Pretendard Variable',-apple-system,sans-serif;letter-spacing:-.3px;cursor:pointer}
 #card-view .cv-matseg button:hover:not(:disabled){background:#eef1f4;color:var(--ds-doc-ink,#1f2328)}
