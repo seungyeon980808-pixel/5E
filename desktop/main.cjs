@@ -1236,7 +1236,7 @@ function createWindow() {
   }
   // 11-04: 따로 뜨던 작은 로딩 창(splash.html)은 쓰지 않는다 — 앱 창 안의 시작 창(js/start-screen.js)이 첫 장면을 맡는다.
   const platformWindowOptions = process.platform === "darwin"
-    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 12, y: 8 } }
+    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 14, y: 16 } }
     : {
         titleBarStyle: "hidden",
         titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },

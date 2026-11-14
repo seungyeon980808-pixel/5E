@@ -3741,3 +3741,10 @@ textarea.unified-text-input {
 
 /* 11-11 배율 B안: 위쪽엔 「82% ▾」 칩 하나 */
 .canvas-zoom > button[data-canvas-zoom][hidden] { display: none !important; }
+
+/* 11-14(시안 review-1114 7번 안 B): 맥 — 로고 칸에 올리면 로고가 오른쪽으로 밀리고 그 자리에 신호등 단추(preload.cjs). */
+.desktop-shell.platform-darwin .app-shell-header .app-brand,
+.desktop-shell.platform-darwin #rhwp-exam-workspace .exam-top-cell > * { transition: transform .15s cubic-bezier(.32,.72,0,1); }
+.desktop-shell.platform-darwin.desktop-lights-on .app-shell-header .app-brand { transform: translateX(44px); transition-duration: .2s; }
+.desktop-shell.platform-darwin.desktop-lights-on #rhwp-exam-workspace .exam-top-cell > * { transform: translateX(60px); transition-duration: .2s; }
+@media (prefers-reduced-motion: reduce) { .desktop-shell.platform-darwin .app-shell-header .app-brand, .desktop-shell.platform-darwin #rhwp-exam-workspace .exam-top-cell > * { transition: none; } }

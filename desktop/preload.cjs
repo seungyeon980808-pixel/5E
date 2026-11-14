@@ -16,12 +16,37 @@ window.addEventListener("DOMContentLoaded", () => {
     root.classList.toggle("desktop-titlebar-open", next && !document.querySelector(".unified-library-overlay:not([hidden])"));
     ipcRenderer.invoke("window:traffic-lights", next).catch(() => {});
   };
-  document.addEventListener("mousemove", (event) => {
-    if (event.clientY <= 6 && !document.getElementById("start-screen")) set(true);
-    else if (shown && event.clientY > 34) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); }
+  // 11-14(시안 review-1114 7번 안 B): 로고 칸(왼쪽 위)에 마우스를 올리면 로고가 오른쪽으로 0.2초 밀리고, 비운 자리에 진짜 신호등 단추가 0.12초 뒤 켜진다.
+  // 벗어나면 단추를 바로 끄고 로고는 0.15초에 돌아온다. 창 끌기용 제목 줄(맨 위 6px)은 예전대로 둔다.
+  let lights = false, lightTimer = 0;
+  const lightsOn = (next) => {
+    if (lights === next || shown) return;
+    lights = next; clearTimeout(lightTimer);
+    root.classList.toggle("desktop-lights-on", next);
+    for (const frame of document.querySelectorAll("iframe")) { try { frame.contentDocument?.documentElement.classList.toggle("desktop-lights-on", next); } catch {} }
+    if (next) lightTimer = setTimeout(() => ipcRenderer.invoke("window:traffic-lights", true).catch(() => {}), 120);
+    else ipcRenderer.invoke("window:traffic-lights", false).catch(() => {});
+  };
+  const inLogo = (x, y) => x >= 0 && x <= 190 && y >= 0 && y <= 52;
+  const track = (x, y) => {
+    if (document.getElementById("start-screen")) return;
+    if (y <= 6) { lightsOn(false); set(true); return; }
+    if (shown && y > 34) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); }
     else if (shown) clearTimeout(timer);
-  }, { passive: true });
-  document.addEventListener("mouseleave", () => { if (shown) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); } });
+    if (!shown) lightsOn(inLogo(x, y) || (lights && x <= 230 && y <= 64));
+  };
+  document.addEventListener("mousemove", (event) => track(event.clientX, event.clientY), { passive: true });
+  document.addEventListener("mouseleave", () => { lightsOn(false); if (shown) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); } });
+  // 출제 칸 같은 안쪽 문서(iframe)는 마우스 움직임이 바깥으로 오지 않는다 — 같은 출처 문서면 안에서도 듣고, 로고 밀림 모양도 넣는다.
+  const SLIDE_CSS = 'html{--lights-gap:60px}.top .top-cell>*{transition:transform .15s cubic-bezier(.32,.72,0,1)}html.desktop-lights-on .top .top-cell>*{transform:translateX(var(--lights-gap));transition-duration:.2s}';
+  const hooked = new WeakSet();
+  const hook = (frame) => { try {
+    const doc = frame.contentDocument; if (!doc || hooked.has(doc)) return; hooked.add(doc);
+    const st = doc.createElement("style"); st.textContent = SLIDE_CSS; (doc.head || doc.documentElement).append(st);
+    doc.addEventListener("mousemove", (e) => { const r = frame.getBoundingClientRect(); track(e.clientX + r.left, e.clientY + r.top); }, { passive: true });
+  } catch {} };
+  const scan = () => document.querySelectorAll("iframe").forEach((f) => { hook(f); f.addEventListener("load", () => hook(f)); });
+  new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true }); scan();
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
   // 5E 클립보드(11-14): 맥·윈도우 클립보드 그림 읽기 — {dataUrl,width,height,sig} 또는 null. readClipboardImage는 AI 붙여넣기용(data:URL).
