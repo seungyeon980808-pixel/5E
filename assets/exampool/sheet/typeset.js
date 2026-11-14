@@ -13,6 +13,7 @@ import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {applyTableCommand} from './table-ops.js';
+import {snapshotTableAt,tableFromSnapshot} from './table-read.js';
 import {PictureSettings} from '../../../js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
 import {applyTightBogi,applyKiceTallLines,questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,growCellsToContent,applyCellFloatingPictures,settleFloatingPictures,applyFloatingTable,centerBogiBoxes,applyLiftTallEquations,anchorRaisedTables,anchorRaisedTablesOpen,widenBelowPictures,resettleBesidePictures,LAYOUT_VERSION,centerCellPictures,fixedLabelSpaces} from './typeset-model.js?v=1014-compact-panel';
@@ -156,11 +157,19 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       // 11-14(시안 review-1114 1-7): 미리보기에서 그림을 두 번 누르면 고치는 곳(문항 카드의 그 칸)으로 간다 — 옛 그림 설정 창은 열지 않는다.
       if(placer?.jumpRef?.(ref))return;bridge.selectPicture(ref);
     }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);bridge.setPictureResizeAllowed(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});settings=attachTypesetSettings({panel:host.parentElement,context:()=>({q,standard:std(q),standards:standardsOf()}),preview:(value,standard)=>previewSheet(value,standard),onApply:a=>onSetting?.({apply:a.standard,exception:a.exception}),onStandard});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text,opt)=>{/* 11-14 3차 36: 문서에서 이미 바꾼 변경(그림 크기)은 이 문서의 문항에도 바로 반영해 「다시 조판」 판정이 일어나지 않게 하고, 저장할 모양으로 표시 */if(opt?.native&&q){try{fn(q);dirty=true;userDirty=true;requestAnimationFrame(()=>placer?.refresh());}catch{}}return onPlacement?.(fn,text,q?.id,opt);},canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});bridge.onPictureResized=(ref,width)=>placer?.nativeResized(ref,width);
-{/* 11-15: 한글처럼 표 줄 높이를 바꾸면(⌘↓·테두리 끌기) 그 높이를 문항 표 데이터(minRowPx)로 옮기고 데이터로 다시 조판한다.
-   엔진이 그 자리에서 바꾸면 바깥 자료 칸이 표보다 한 번에 크게 늘었고(첫 번에 +36px), 저장·다시 조판하면 높이가 사라졌다. */
-  const inp=bridge.input;if(inp&&!inp.__fiveERowHook){inp.__fiveERowHook=true;const run=inp.executeOperation.bind(inp);
-    inp.executeOperation=(op,...a)=>{const pos=/^resizeTable(Cells|Proportional)$|^5e-exam:shortcut-track-(height|width)$/.test(op?.operationType||'')?inp.getCursorPosition?.():null;const r=run(op,...a);if(pos)queueRowHeights(pos);return r;};}};
-bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const pos=bridge.input.getCursorPosition?.(),item=placer?.tableAt?.(pos);if(!item?.block||item.block.kind!=='table')return false;
+{/* 11-15: 미리보기 자료 표에서 되는 일(글·⌘화살표 칸 크기·굵게·정렬)은 그 자리에서 문서만 바꾸고 다시 조판하지 않는다.
+   칸 크기를 바꾸면 바깥 자료 칸 줄 자리를 바로 다시 잡고(엔진이 옛 높이를 남겨 칸이 크게 늘었다: 표 +20px에 바깥 +151px),
+   잠시 뒤 표 전체(칸 글·열 폭·줄 높이·칸 모양)를 읽어 카드 표 자료로 옮긴다 — 다시 조판해도 같은 표가 나온다.
+   줄·칸 넣기·지우기·합치기 같은 표 모양 명령은 표 편집 창으로 연다(엔진이 표 안의 표는 이 명령을 바깥 틀 표에 적용한다). */
+  const inp=bridge.input;if(inp&&!inp.__fiveETableHook){inp.__fiveETableHook=true;const run=inp.executeOperation.bind(inp);
+    inp.executeOperation=(op,...a)=>{const here=ready&&!loading&&q?dataTableHere():null;if(!here)return run(op,...a);
+      const type=op?.kind==='command'?op.command?.type:op?.operationType;rememberBefore(here);
+      if(op?.kind==='snapshot'&&typeof op.operation==='function'){const f=op.operation;op={...op,operation:(...b)=>{const r=f(...b);settleTable(here);return r;}};}
+      const r=run(op,...a);
+      if(!/^(insertText|deleteText|insertTab|splitParagraph|mergeParagraph)/.test(String(type||'')))queueTableSync(here.block.id);
+      return r;};}};
+bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const here=dataTableHere();if(here){bridge.input.exitCellSelectionMode?.();onSlot?.('table-window',here.block,q.id);return true;}}// 11-15: 표 모양 명령은 표 편집 창으로.
+  const pos=bridge.input.getCursorPosition?.(),item=placer?.tableAt?.(pos);if(!item?.block||item.block.kind!=='table')return false;
   let range=null;const sel=bridge.input.getSelectedCellRange?.();if(sel&&Number.isInteger(sel.startRow))range=[sel.startRow,sel.startCol,sel.endRow,sel.endCol];
   if(!range){const boxes=JSON.parse(bridge.wasm.borrowDocumentHandle().getTableCellBboxesByPath(pos.sectionIndex??0,pos.parentParaIndex,JSON.stringify(pos.cellPath))||'[]'),last=pos.cellPath.at(-1),box=boxes.find(b=>b.cellIdx===(last.cellIndex??last.cellIdx));if(!box)return false;range=[box.row,box.col,box.row,box.col];}
   let text='';const blockId=item.block.id;try{const probe=JSON.parse(JSON.stringify(item.block.table));text=applyTableCommand(probe,id,range);}catch(e){message(e.message,true);bridge.input.exitCellSelectionMode?.();return true;}
@@ -201,6 +210,7 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const po
     }finally{d.free();}
     return {bytes,owners};
   }
+  // 11-15 표 편집 창: 문항 안 표 하나만 담은 한글 문서 — 문항 조판 때와 같은 폭·글자·열 폭·수식(조판 계획에서 그 표가 받은 폭 그대로).
   async function open(value){
     const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
     try{await ensure();if(seq!==opening)return;const next=structuredClone(value),nextFingerprint=await questionFingerprint(next);
@@ -239,16 +249,61 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const po
     }finally{if(seq===opening){loading=false;save.disabled=!ready;download.disabled=!ready;paper.disabled=!ready;columns.disabled=!ready;if(ready){fitLive();drawGuide();}}}
   }
   // 한글 창에서 고친 글을 잠시 뒤 시트 칸에 반영한다. 반영하면 이 문항의 기준 글도 새 글로 바뀐다.
-  let rowTimer=0,rowPos=null;
-  function queueRowHeights(pos){rowPos=pos;clearTimeout(rowTimer);rowTimer=setTimeout(saveRowHeights,650);}
-  function saveRowHeights(){try{const pos=rowPos;if(!pos||!q)return;if(!ready||loading){clearTimeout(rowTimer);rowTimer=setTimeout(saveRowHeights,400);return;}rowPos=null;
-    // 칸 고르기 중에는 커서 자리가 없어 표 칸 상자 자리로 표를 찾는다.
-    const boxes=parse(bridge.wasm.borrowDocumentHandle().getTableCellBboxesByPath(pos.sectionIndex??0,pos.parentParaIndex,JSON.stringify(pos.cellPath)))||[],b0=boxes[0];if(!b0)return;
-    placer?.refresh?.();const item=placer?.tableAt?.({...pos,cursorRect:{pageIndex:b0.pageIndex??0,x:b0.x+b0.w/2,y:b0.y,height:b0.h}});if(!item?.block||item.block.kind!=='table')return;const t=item.block.table;
-    const rows=Array.from({length:t.rows},(_,r)=>{const one=boxes.filter(b=>b.row===r&&(b.rowSpan??1)===1);return one.length?Math.round(Math.max(...one.map(b=>b.h))*10)/10:null;});
-    if(rows.some(v=>v==null))return;const blockId=item.block.id;
-    onPlacement?.(x=>{const b=x.blocks.find(v=>v.id===blockId);if(!b||b.kind!=='table')return false;if(JSON.stringify(b.table.minRowPx)===JSON.stringify(rows))return false;b.table.minRowPx=rows;return true;},`${item.block.label||'표'} 줄 높이`,q.id);
-  }catch{}}
+  // ── 11-15 미리보기 자료 표 직접 고치기 ──
+  const stepKey=st=>[st.controlIndex??st.controlIdx,st.cellIndex??st.cellIdx,st.cellParaIndex??st.cellParaIdx??0].join(':');
+  const stepOf=st=>({controlIndex:st.controlIndex??st.controlIdx,cellIndex:st.cellIndex??st.cellIdx,cellParaIndex:st.cellParaIndex??st.cellParaIdx??0});
+  // 지금 커서(칸 고르기 포함)가 든 문항 자료 표 — 화면 자리로 배치 층의 표를 찾고(tableAt), 표의 엔진 경로(바깥 칸 경로·개체 번호)는 커서에서 얻는다.
+  // (엔진 배치 정보는 바깥 칸 안 표의 경로를 주지 않아 자리로만 짝지을 수 있다.)
+  const tablePlaces=new Map();
+  function dataTableHere(){try{const inp=bridge.input,cur=inp.cursor,doc=document();
+      const blk=cur?.isInCellSelectionMode?.()?inp.getSelectedCellBlock?.():null;
+      let sec,ppi,path,rect;
+      if(blk?.cellPath?.length){sec=blk.sec??0;ppi=blk.ppi;path=blk.cellPath;const boxes=parse(doc.getTableCellBboxesByPath(sec,ppi,JSON.stringify(path)))||[],b0=boxes[0];if(!b0)return null;rect={pageIndex:b0.pageIndex??0,x:b0.x+b0.w/2,y:b0.y,height:b0.h};}
+      else{const pos=inp.getCursorPosition?.();if(!pos?.cellPath?.length||!pos.cursorRect)return null;sec=pos.sectionIndex??0;ppi=pos.parentParaIndex;path=pos.cellPath;rect=pos.cursorRect;}
+      const item=placer?.tableAt?.({cellPath:path,cursorRect:rect});if(!item?.block||item.block.kind!=='table')return null;
+      const last=path.at(-1),place={sec,ppi,ci:last.controlIndex??last.controlIdx,prefix:path.slice(0,-1).map(stepOf)};tablePlaces.set(item.block.id,place);
+      return {block:item.block,item,place};}catch{return null;}}
+  const tableBefore=new Map();let tableTimer=0;const tableQueue=new Set();
+  function rememberBefore(here){if(tableBefore.has(here.block.id))return;try{tableBefore.set(here.block.id,snapshotTableAt(document(),here.place));}catch{}}
+  // 바깥 칸(표를 품은 칸부터 맨 바깥까지)의 문단을 한 번씩 건드려 엔진이 줄 자리를 새 표 높이로 다시 잡게 한다(실측: 표 +20px에 바깥 칸 +151px → +20px).
+  function settleTable(here){try{const doc=document(),{sec,ppi,ci,prefix}=here.place,J=JSON.stringify;
+      for(let d=prefix.length-1;d>=0;d--){const base=prefix.slice(0,d+1).map((st,i)=>i===d?{...st,cellParaIndex:0}:st),n=Number(doc.getCellParagraphCountByPath(sec,ppi,J(base)))||0;
+        for(let i=0;i<n;i++){const path=J(base.map((st,k)=>k===d?{...st,cellParaIndex:i}:st));doc.insertTextInCellByPath(sec,ppi,path,0,'\u200b');doc.deleteTextInCellByPath(sec,ppi,path,0,1);}}
+      // 표 구조가 바뀌면 배치 층이 표를 다시 찾을 수 있게 표 모양(줄·칸 수)을 바로 맞춘다.
+      const dims=parse(doc.getTableCellBboxesByPath(sec,ppi,J([...prefix,{controlIndex:ci,cellIndex:0,cellParaIndex:0}])))||[];
+      if(dims.length&&owners?.tables){const i=owners.tables.findIndex(o=>o?.kind==='block'&&o.id===here.block.id);if(i>=0&&owners.shapes?.[i])owners.shapes[i]={...owners.shapes[i],rows:Math.max(...dims.map(b=>b.row+(b.rowSpan||1))),cols:Math.max(...dims.map(b=>b.col+(b.colSpan||1)))};}
+    }catch(e){console.warn('[5E_exam] 표 바깥 칸 다시 잡기 실패',e);}}
+  function queueTableSync(id){tableQueue.add(id);clearTimeout(tableTimer);tableTimer=setTimeout(()=>{const ids=[...tableQueue];tableQueue.clear();for(const x of ids)void syncTable(x);},380);}
+  async function syncTable(id){try{if(!ready||loading||!q||!onTextEdit)return;const place=tablePlaces.get(id),b=q.blocks.find(x=>x.id===id);if(!place||!b||b.kind!=='table')return;placer?.refresh?.();
+      const snap=snapshotTableAt(document(),place),before=tableBefore.get(id)||snap,next=tableFromSnapshot(b.table,before,snap);
+      tableBefore.set(id,snap);if(JSON.stringify(next)===JSON.stringify(b.table))return;
+      b.table=next;
+      // 한글 창 글 짝짓기(textMap): 이 표 칸 조각을 새 칸 글로 바꾼다(줄·칸이 늘거나 줄어도 글 짝짓기가 이어진다).
+      const encoded=parse(document().getTextFileText()),raw=decodeNativeText(encoded);
+      if(textMap){const segs=textMap.segments.filter(x=>!(x.owner?.kind==='cell'&&x.owner.table===id)),at=textMap.segments.findIndex(x=>x.owner?.kind==='cell'&&x.owner.table===id);
+        const mine=[];snap.cells.forEach((row,r)=>row.forEach((cell,c)=>{if(cell.text)mine.push({owner:{kind:'cell',table:id,r,c},value:cell.text});}));
+        segs.splice(at<0?segs.length:at,0,...mine);textMap=buildTextMap(raw,segs);}
+      baselineText=normalized(encoded);fingerprint=await questionFingerprint(q);dirty=true;userDirty=true;
+      onTextEdit([{owner:{kind:'tableAll',id},value:structuredClone(next)}],q.id);message(`${b.label||'표'} 표를 문항 카드에 반영했습니다 · 조판은 자동 저장됩니다.`);
+    }catch(e){console.warn('[5E_exam] 표 읽기 실패',e);}}
+  // 11-15 표 편집 창: 문항 안 표 하나만 담은 작은 한글 문서 — 문항 조판 때와 같은 폭·글자·열 폭·수식(조판 계획에서 그 표가 받은 폭 그대로).
+  // 쪽은 표 폭 + 좁은 여백이라 창에서 표가 쪽 폭 가득 크게 보인다.
+  let DocumentClass=null;
+  async function tableDoc(value,id){await ensure();
+    for(let i=0;i<80&&!DocumentClass;i++){const d=document();if(d)DocumentClass=d.constructor;else await new Promise(r=>setTimeout(r,100));}
+    if(!DocumentClass)throw Error('한글 엔진이 아직 준비되지 않았습니다 — 잠시 뒤 다시 눌러 주세요.');
+    const prof=profileFor(value),stdv=standardForPaper(std(value),prof.paper),config=questionPageProfile(prof,1200,stdv),Document=DocumentClass,measureText=measurerFor(Document,stdv);
+    const blank=async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100});
+    const full=await buildQuestionHtml(value,blank,config.width,{native:true,measureText,...SKELETON,standard:stdv});
+    const args=full.tableArgs?.[id]||{width:config.width,room:config.width};
+    const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText,...SKELETON,standard:stdv,tableOnly:{id,...args}});
+    const hu=px=>Math.round(px*75),margin=hu(12),page={...config.page,width:hu(args.room)+2*margin,height:Math.max(hu(260),hu(args.room)),marginLeft:margin,marginRight:margin,marginTop:margin,marginBottom:margin,marginHeader:0,marginFooter:0};
+    const d=Document.createEmpty();
+    try{d.createBlankDocument();d.setPageDef(0,JSON.stringify(page));d.setColumnDef(0,1,0,true,0);
+      const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('표 문서를 만들지 못했습니다.');
+      const bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip,{standard:stdv}),plan.equations);
+      return {bytes,room:args.room,width:args.width};
+    }finally{d.free();}}
   function scheduleTextSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>void syncText(),80);}
   function cellEditAtCursor(){try{const pos=bridge.input.getCursorPosition?.(),item=placer?.tableAt?.(pos);if(!item?.block||item.block.kind!=='table'||!pos?.cellPath?.length)return null;
     const doc=bridge.wasm.borrowDocumentHandle(),sec=pos.sectionIndex??0,path=JSON.stringify(pos.cellPath),last=pos.cellPath.at(-1);
@@ -634,5 +689,5 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const po
       if(pr?.width>0&&Math.abs(a.h/a.w-n.h/n.w)>.002)bridge.setProperties(item.ref,{width:pr.width,height:Math.round(pr.width*n.h/n.w)});return true;});
     b.figure=JSON.parse(JSON.stringify(figure));dirty=true;userDirty=true;requestAnimationFrame(()=>placer?.refresh());return true;
   }catch{return false;}}
-  return {swapFigure,retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},takeSkipped(){const v=skipped;skipped=null;return v;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  return {tableDoc,swapFigure,retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},takeSkipped(){const v=skipped;skipped=null;return v;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

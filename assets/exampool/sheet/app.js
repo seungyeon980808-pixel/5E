@@ -176,6 +176,7 @@ function pickFigure(q,id){
 }
 function slotAction(action,q,id){
   const b=q.blocks.find(x=>x.id===id);if(!b)return;
+  if(action==='table-window')return openTableEditor(q,id);
   if(action==='pick')return pickFigure(q,id);
   if(action==='file'){imageTarget={qid:q.id,key:'block:'+id};$('#figure-file').click();return;}
   // 11-14: 편집 = 카드 위에 떠오르는 「그림 편집 중」 창(그래프 객체면 그래프 창). 칸 자리에서 떠오르도록 칸 위치를 같이 보낸다.
@@ -192,6 +193,13 @@ function resizeTable(t,rows,cols,headerRows){
   const cells=Array.from({length:rows},(_,r)=>Array.from({length:cols},(_,c)=>t.cells[r]?.[c]||{value:''}));
   return {...t,rows,cols,headerRows:Math.min(headerRows,rows),cells,merges:t.merges.filter(m=>m.r+m.rs<=rows&&m.c+m.cs<=cols)};
 }
+// 11-15 표 편집 창: 그 표 하나만 담은 작은 한글 창(엔진이 표 안의 표는 줄·칸 넣기·합치기를 못 해 따로 연다).
+// 완료하면 카드 표 자료로 바꾸고(⌘Z 한 번으로 되돌림) 미리보기는 그 문항만 다시 조판한다(멈춘 그림으로 덮어 깜빡임 없이).
+async function openTableEditor(q,id){const b=q.blocks.find(x=>x.id===id&&x.kind==='table');if(!b){status('표를 찾지 못했습니다.',true);return false;}
+  typesetter||=makeTypesetter();const {openTableWindow}=await import('./table-window.js');const name=b.label||'표';
+  openTableWindow({title:`${q.number}번 문항 · ${name}`,base:clone(b.table),status,load:()=>typesetter.tableDoc(clone(q),id),
+    apply:t=>{const ok=mutate(()=>{const cur=q.blocks.find(x=>x.id===id);if(!cur||cur.kind!=='table')throw Error('표 칸이 사라졌습니다.');cur.table=t;});if(ok)status(`${name} 표를 고쳤습니다 · ⌘Z로 되돌립니다`);return ok;}});
+  return true;}
 function openSlots(q,focusId){
   if(!q)return;const list=slotBlocks(q),pane=$('#slot-list');
   if(!list.length){pane.innerHTML='<p class="muted">이 문항에는 그림·표 자리가 없습니다. \'구성\' 시트의 「+ 구성 추가」로 자리를 만드세요.</p>';}
@@ -1238,6 +1246,8 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(act==='make-table'){const rows=opt.rows|0,cols=opt.cols|0,head=opt.head?1:0;
       return mutate(()=>{if(rows<1||rows>20||cols<1||cols>12)throw Error('행은 1~20, 열은 1~12로 정하세요.');let b=q.blocks.find(x=>x.id===id);if(b&&b.kind!=='table'){applyPartChange(q,id,'kind',KINDS.table);b=q.blocks.find(x=>x.id===id);}if(!b||b.kind!=='table')throw Error('표 칸으로 바꾸지 못했습니다.');b.table=resizeTable(b.table,rows,cols,head);})&&(status(`${q.blocks.find(x=>x.id===id)?.label||'자료'}를 ${rows}행 × ${cols}열 표로 만들었습니다 · 연필(표 편집)로 내용을 채우세요 · ⌘Z로 되돌림`),true);}
     if(act==='table')return openSlots(q,id);
+    // 11-15(사용자: 작은 한글 창으로 표 편집기): 카드 표 칸의 연필·누르기·표 만들기 → 표 편집 창.
+    if(act==='table-window')return openTableEditor(q,id);
     if(act==='to-table'){if(mutate(()=>applyPartChange(q,id,'kind',KINDS.table)))openSlots(q,id);return;}
     // 11-14(지적 1): 칸을 지우면 남은 칸 이름을 (가)(나)(다) 차례로 다시 매긴다(⌘Z 한 번으로 되돌림). 글 속 이름은 그대로.
     if(act==='remove'){let r={changes:[],texts:0};if(mutate(()=>{q.blocks=q.blocks.filter(b=>b.id!==id);q.references=q.references.filter(r=>r.target!==id);r=relabelMaterials(q);})&&r.changes.length)setTimeout(()=>status(`자료 이름을 ${r.changes.map(c=>`${c.from}→${c.to}`).join(' · ')}로 다시 매겼습니다 · ⌘Z로 되돌리기`),900);return;}

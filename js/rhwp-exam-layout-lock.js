@@ -36,7 +36,8 @@ function wrapDispatcher(input){  const notice=()=>input.examStructureNotice?.(ST
     const run=dispatcher.dispatchWithResult.bind(dispatcher);
     dispatcher.dispatchWithResult=(id,...args)=>{
       // 11-14(시안 review-1114d 35번 A): 문항 자료 표에서는 한글 표 명령(M 합치기·S 나누기·줄/칸 넣기·지우기)을 문항 데이터로 바꿔 실행한다 — 표 안의 표도 된다.
-      if(input.examTableLayoutLocked&&TABLE_DATA_COMMANDS.has(String(id))&&typeof input.examTableEdit==='function'){const r=input.examTableEdit(String(id));if(r)return{ok:true};}
+      // 11-15: 그 밖의 표 모양 명령(칸 테두리·배경·나누기 등)도 문항 자료 표면 같은 길(표 편집 창)로.
+      if(input.examTableLayoutLocked&&(TABLE_DATA_COMMANDS.has(String(id))||isStructureCommand(id)&&String(id).startsWith('table:'))&&typeof input.examTableEdit==='function'){const r=input.examTableEdit(String(id));if(r)return{ok:true};}
       if(input.examTableLayoutLocked&&isStructureCommand(id)){notice();return{ok:false,reason:'structure-locked',message:STRUCTURE_LOCK_MESSAGE};}
       if(input.examTableLayoutLocked&&input.examLayoutRules&&isLayoutCommand(id)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return{ok:false,reason:'layout-locked',message:LAYOUT_LOCK_MESSAGE};}
       return run(id,...args);
@@ -46,7 +47,7 @@ function wrapDispatcher(input){  const notice=()=>input.examStructureNotice?.(ST
   if(dispatcher&&typeof dispatcher.dispatch==='function'){
     const plain=dispatcher.dispatch.bind(dispatcher);
     dispatcher.dispatch=(id,...args)=>{
-      if(input.examTableLayoutLocked&&TABLE_DATA_COMMANDS.has(String(id))&&typeof input.examTableEdit==='function'&&input.examTableEdit(String(id)))return true;
+      if(input.examTableLayoutLocked&&(TABLE_DATA_COMMANDS.has(String(id))||isStructureCommand(id)&&String(id).startsWith('table:'))&&typeof input.examTableEdit==='function'&&input.examTableEdit(String(id)))return true;
       return plain(id,...args);
     };
   }
@@ -68,8 +69,11 @@ function installStructureGuard(input){
     if(typeof input[name]!=='function')continue;
     const original=input[name].bind(input);let warned=0;
     const picture=name==='updatePictureResizeDrag'||name==='resizeSelectedPicture';
+    const table=name==='resizeCellByKeyboard'||name==='resizeTableProportional';
     input[name]=(...args)=>{
       if(!input.examTableLayoutLocked||picture&&input.examPictureResizeAllowed)return original(...args);
+      // 11-15: 문항 자료 표의 칸 크기(⌘·⌃화살표)도 표 모양을 바꾸는 일 → 표 편집 창으로(잠금 안내 대신).
+      if(table&&typeof input.examTableEdit==='function'&&input.examTableEdit('table:resize'))return;
       const now=Date.now();if(now-warned>1500){warned=now;notice();}
     };
   }

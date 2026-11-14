@@ -96,6 +96,8 @@ export function applyTextEdit(q,owner,value){
   const tableOf=id=>id==='choices'?q.choiceTable:blockOf(id).table;
   switch(owner.kind){
     case 'ask':q.ask=value;return true;
+    // 11-15: 미리보기에서 한글처럼 고친 자료 표 전체(칸 글·합친 칸·열 폭·줄 높이·칸 모양).
+    case 'tableAll':{const b=blockOf(owner.id);if(b.kind!=='table')throw Error('고친 표를 찾지 못했습니다.');b.table=value;return true;}
     case 'block':blockOf(owner.id).text=value;return true;
     case 'label':{const v=value.trim();if(!v)throw Error('묶음 이름을 비울 수 없습니다.');blockOf(owner.id).label=v;return true;}
     // 상자 안 항목 줄(handoff ITEM_LEAD): 원래 앞머리(keep)를 그대로 두고 그 줄만 바꾼다.

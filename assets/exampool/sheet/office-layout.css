@@ -1060,3 +1060,11 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-tedit table{width:100%;table-layout:fixed}
 #card-view .cv-tedit td,#card-view .cv-tedit th{min-width:0}
 #card-view .cv-tedit textarea[data-tc],#card-view .cv-tedit .eq-ce{min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+/* 11-15(시안 review-1115 1번): 보기 줄 ⋮와 ㄱ 사이 30px → 19px(실측) — ㄱ 칸을 판정 동그라미 폭(26px)으로 */
+#card-view .cv-grid .rows>.ig:has(.cv-tk){padding-left:8px}
+#card-view .cv-grid .rows>.ig:has(.cv-tk)>span:first-child{width:26px;min-width:26px;flex:none}
+/* 11-15(지적 30): 합답형 선지 칸 「ㄱ, ㄴ, ㄷ」가 한 줄에 — 수식 칸(eq-ce)이 줄을 바꿔 칸 위로 삐져나왔다 */
+#card-view .cv-combos .combo-row .eq-ce{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+/* 11-15(시안 review-1115 안 A): 카드 표 머리 행은 조판처럼 — 회색 바탕 없이 돋움 */
+#card-view .cv-grid .cv-tile .table-pic th{background:transparent;font-weight:400;font-family:-apple-system,"Apple SD Gothic Neo",sans-serif}
+#card-view .cv-grid .cv-tile[data-cvtile] .table-pic{cursor:pointer}

@@ -318,6 +318,8 @@ export function installDocumentShortcuts(bridge) {
     // 구조 잠금(rhwp-exam-layout-lock.js)이 켜져 있으면 칸 크기·맞춤은 바꾸지 않는다. 줄·칸·합치기는 명령 전달기에서 막힌다.
     const structureLocked = () => {
       if (!input.examTableLayoutLocked) return false;
+      // 11-15: 문항 자료 표면 잠금 안내 대신 표 편집 창(작은 한글 창)을 연다.
+      if (typeof input.examTableEdit === 'function' && input.examTableEdit('table:resize')) return true;
       if (input.examStructureNotice) input.examStructureNotice('구조 잠금 중 · 표·그림의 크기나 틀은 구조 잠금을 풀고 바꾸세요. 글은 그대로 고칠 수 있습니다.');
       return true;
     };
@@ -346,6 +348,8 @@ export function runDocumentAction(bridge, action, { notify = message => bridge.o
   context ||= { inCell:cursor.isInCell() && !cursor.isInTextBox(), cellSelection:cursor.isInCellSelectionMode() };
   const structureLocked = () => {
     if (!input.examTableLayoutLocked) return false;
+      // 11-15: 문항 자료 표면 잠금 안내 대신 표 편집 창(작은 한글 창)을 연다.
+      if (typeof input.examTableEdit === 'function' && input.examTableEdit('table:resize')) return true;
     if (input.examStructureNotice) input.examStructureNotice('구조 잠금 중 · 표·그림의 크기나 틀은 구조 잠금을 풀고 바꾸세요. 글은 그대로 고칠 수 있습니다.');
     return true;
   };

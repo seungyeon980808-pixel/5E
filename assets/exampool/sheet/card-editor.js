@@ -192,8 +192,10 @@ export function createCardEditor(root,api){
   // 11-15: 둘째 이후 글(상자 안 「조건」 글 등)도 카드에 줄로 보인다 — 전에는 첫 지문만 그려, 조판에는 있는데 카드에는 없는 자료처럼 보였다.
   function extraTextRows(x,row){const texts=x.blocks.filter(b=>b.kind==='text').slice(1);if(!texts.length)return '';
     return texts.map(b=>{const g=b.parent&&x.blocks.find(v=>v.id===b.parent),boxed=!!g&&(g.boxed===true||g.boxed===undefined&&g.label==='실험');
-      const name=String(b.label||'').trim()&&b.label!=='지문'?b.label:'지문';
-      return row(name,`<div class="cv-xtext${boxed?' boxed':''}">${boxed?'<span class="cv-xtag">상자</span>':''}<textarea data-cvblock="${b.id}" rows="1" aria-label="${E(name)}">${E(b.text||'')}</textarea></div>`,boxed?'상자 안에 찍히는 글입니다. 여기서 바로 고칩니다.':'첫 지문 다음에 오는 글입니다. 여기서 바로 고칩니다.');}).join('');}
+      // 11-15 사용자: 문항에 「조건」 같은 칸은 없다 — 상자 안 글도 지문이다. 칸 이름은 늘 「지문」, 상자면 테두리와 「상자」 표시(상자 제목이 있으면 함께).
+      // (b.label 「조건」은 틀(설명·조건 상자)이 붙인 안쪽 이름이라 시험지에 찍히지 않는다.)
+      const name='지문',tag=boxed?(String(g.label||'').trim()?`상자 · ${E(g.label)}`:'상자'):'';
+      return row(name,`<div class="cv-xtext${boxed?' boxed':''}">${tag?`<span class="cv-xtag">${tag}</span>`:''}<textarea data-cvblock="${b.id}" rows="1" aria-label="${E(name)}">${E(b.text||'')}</textarea></div>`,boxed?'상자 안에 찍히는 글입니다. 여기서 바로 고칩니다.':'첫 지문 다음에 오는 글입니다. 여기서 바로 고칩니다.');}).join('');}
   function formHtml(x){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
     const passages=x.blocks.filter(b=>b.kind==='text');
@@ -880,7 +882,8 @@ export function createCardEditor(root,api){
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct==='add-pic'||d.cvslotAct==='swap'){tileMenu(b,x,d.cvslot);return;}
     if(d.cvslotAct==='to-table'){tableGrid(b,x,d.cvslot);return;}
-    if(d.cvslotAct==='table'){startTableEdit(d.cvslot);return;}
+    // 11-15(시안 review-1115 안 A): 표 편집은 따로 창(한글 엔진)에서.
+    if(d.cvslotAct==='table'){focusPreviewTable(d.cvslot);return;}
     if(d.cvslotAct){if(d.cvslotAct==='remove'&&tileSel===d.cvslot)setTileSel(null);api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}
       // 새 줄 하나만 끝에 덧붙인다(H7). 예전에는 모든 줄 글을 이어 붙였다가 줄바꿈으로 다시 나눠서, 한 줄 안에 줄바꿈이 있으면
@@ -1014,8 +1017,8 @@ export function createCardEditor(root,api){
   function clipLabel(){return tileSel&&tileName(tileSel)?`자료 칸 ${tileName(tileSel)}에 넣기`:'자료 칸에 넣기';}
   root.addEventListener('click',e=>{const t=e.target.closest?.('.cv-tile[data-cvtile]');if(!t||e.target.closest('button,a,input,textarea,select'))return;
     const b=q()?.blocks.find(v=>v.id===t.dataset.cvtile);
-    // 11-14 3차 33: 표 칸은 누른 칸에서 바로 고치기 시작(편집 모양은 고칠 때만).
-    if(b?.kind==='table'&&!t.classList.contains('is-tedit')){const cell=e.target.closest('td,th');let at='0:0';if(cell){const tr=cell.parentElement;at=`${[...tr.parentElement.children].indexOf(tr)}:${[...tr.children].indexOf(cell)}`;}startTableEdit(b.id,at);return;}
+    // 11-15(시안 review-1115 안 A): 표 칸을 누르면 표 편집 창(한글 엔진)이 뜬다 — 카드 칸 안에서는 고치지 않는다.
+    if(b?.kind==='table'&&!t.classList.contains('is-tedit')){focusPreviewTable(b.id);return;}
     if(!b||b.kind!=='figure')return;setTileSel(tileSel===b.id?null:b.id);});
   root.addEventListener('dblclick',e=>{const img=e.target.closest?.('.cv-tile[data-cvtile] .pic img');if(!img)return;e.preventDefault();const x=q();if(x)api.slot('edit',x,img.closest('.cv-tile').dataset.cvtile);});
   // 그림 넣기·바꾸기 메뉴: 클립보드에서 / 파일에서
@@ -1029,9 +1032,20 @@ export function createCardEditor(root,api){
   // 11-14 시안 review-1114c 1번(A·A·A): 만든 표는 그 칸 안에서 바로 채운다. 칸을 눌러 쓰기(Tab·화살표 이동, $ 수식), 가장자리 ＋로 줄·칸 늘리기,
   // 아래 작은 줄에서 머리 행·칸 합치기(⇧+누르기로 범위)·줄/칸 지우기·완료(⌘Enter·Esc). 옛 「자료 넣기」 창은 열지 않는다.
   // 11-15: 카드 표 칸 미리보기 — 조판과 같은 표 데이터(모든 줄·칸, 합친 칸, 머리 행)로 그린다. 전에는 앞 4×4만 잘라 그리고 합친 칸을 무시했다.
-  function tableViewRows(t){let out='';for(let r=0;r<t.rows;r++){out+='<tr>';for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(v=>v.r===r&&v.c===c),tag=r<t.headerRows?'th':'td',v=String(t.cells[r]?.[c]?.value??'');
-    out+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''}>${/\$/.test(v)?mathToHtml(v):E(v).replace(/\n/g,'<br>')}</${tag}>`;}out+='</tr>';}return out;}
+  // 11-15(시안 review-1115 안 A): 카드 칸 표는 조판과 같은 열 폭 비율(표 편집 창에서 정한 colRatio, 기출 표는 원본 열 폭)·칸 모양으로 그린다.
+  const CSSLINE={solid:'solid',dotted:'dotted',dashed:'dashed',double:'double'};
+  function cellCss(st){if(!st)return '';let s='';const ok=v=>/^#[0-9a-f]{6}$/i.test(v||'');
+    if(ok(st.bg))s+=`background:${st.bg};`;if(st.bold)s+='font-weight:700;';if(st.italic)s+='font-style:italic;';if(st.underline)s+='text-decoration:underline;';if(ok(st.color))s+=`color:${st.color};`;
+    if(['left','right','justify','center'].includes(st.align))s+=`text-align:${st.align};`;if(['top','bottom'].includes(st.valign))s+=`vertical-align:${st.valign};`;
+    if(st.lines)for(const k of ['top','right','bottom','left']){const l=st.lines[k];s+=!l||l.type==='none'?`border-${k}:0;`:`border-${k}:${l.width>3?2:1}px ${CSSLINE[l.type]||'solid'} ${ok(l.color)?l.color:'#000'};`;}
+    return s?` style="${s}"`:'';}
+  function tableViewRows(t){const ratio=[t.colRatio,t.colWidths,t.viewRatio].find(v=>Array.isArray(v)&&v.length===t.cols&&v.every(x=>Number(x)>0))||null,sum=ratio?ratio.reduce((a,b)=>a+Number(b),0):0;
+    let out=ratio&&sum>0?`<colgroup>${ratio.map(v=>`<col style="width:${(Number(v)/sum*100).toFixed(2)}%">`).join('')}</colgroup>`:'';
+    for(let r=0;r<t.rows;r++){out+='<tr>';for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(v=>v.r===r&&v.c===c),tag=r<t.headerRows?'th':'td',cell=t.cells[r]?.[c],v=String(cell?.value??'');
+    out+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''}${cellCss(cell?.style)}>${/\$/.test(v)?mathToHtml(v):E(v).replace(/\n/g,'<br>')}</${tag}>`;}out+='</tr>';}return out;}
   let tableEdit=null,tableSel=null,tableFocus=null,tableBlock=false;
+  // 11-15(사용자: 작은 한글 창으로 표 편집기): 카드 표 칸을 누르거나 연필·표 만들기 → 표 편집 창(그 표 하나만 담은 작은 한글 창).
+  function focusPreviewTable(id){const x=q();if(x)api.slot('table-window',x,id);}
   function paintTableSel(){const s=tableSel;root.querySelectorAll('.cv-tedit td,.cv-tedit th').forEach(cell=>{const d=cell.querySelector('textarea[data-tc]');if(!d)return;const [y,x]=d.dataset.tc.split(':').map(Number);cell.classList.toggle('sel',!!s&&y>=Math.min(s[0],s[2])&&y<=Math.max(s[0],s[2])&&x>=Math.min(s[1],s[3])&&x<=Math.max(s[1],s[3]));});}
   function tableEditHtml(b,name){const t=b.table;let rows='';
     for(let r=0;r<t.rows;r++){rows+='<tr>';for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(v=>v.r===r&&v.c===c),tag=r<t.headerRows?'th':'td',sel=tableSel&&r>=Math.min(tableSel[0],tableSel[2])&&r<=Math.max(tableSel[0],tableSel[2])&&c>=Math.min(tableSel[1],tableSel[3])&&c<=Math.max(tableSel[1],tableSel[3]);
@@ -1090,7 +1104,7 @@ export function createCardEditor(root,api){
     el.innerHTML='<p class="ctg-title"></p><div class="ctg-cells"></div><label class="ctg-head"><input type="checkbox" checked> 첫 줄은 머리 행</label><p class="ctg-hint">격자를 끌어 고르고 누르면 만듭니다</p>';
     Object.assign(el.style,{left:`${Math.round(Math.min(r.left,innerWidth-260))}px`,top:`${Math.round(Math.min(r.bottom+6,innerHeight-260))}px`});document.body.append(el);paint();el.focus();
     const grow=(r1,c1)=>{let ch=false;if(r1>=R&&R<20){R++;ch=true;}if(c1>=C&&C<12){C++;ch=true;}if(ch){el.querySelector('.ctg-cells').innerHTML='';}sel={r:r1,c:c1};paint();};
-    const make=()=>{const head=el.querySelector('.ctg-head input').checked,{r:rows,c:cols}=sel;closeTileMenu();if(api.slot('make-table',x,id,{rows,cols,head}))startTableEdit(id);};
+    const make=()=>{const head=el.querySelector('.ctg-head input').checked,{r:rows,c:cols}=sel;closeTileMenu();if(api.slot('make-table',x,id,{rows,cols,head}))focusPreviewTable(id);};
     el.addEventListener('pointerover',e=>{const c=e.target.closest('.ctg-cells button');if(c)grow(+c.dataset.r,+c.dataset.c);});
     el.addEventListener('click',e=>{if(e.target.closest('.ctg-cells button'))make();});
     el.addEventListener('keydown',e=>{if(e.target.matches('input'))return;const k={ArrowRight:[0,1],ArrowLeft:[0,-1],ArrowDown:[1,0],ArrowUp:[-1,0]}[e.key];

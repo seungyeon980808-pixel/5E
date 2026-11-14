@@ -54,7 +54,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivat
     const {question:q,owners}=model,{images,tables}=nativeControls();
     if(images.length!==owners.images.length||tables.length!==owners.tables.length){say('배치 · 저장된 조판이 문항 데이터와 달라 끌어서 배치할 수 없습니다. 문항 새로고침 후 다시 시도하세요.');return;}
     for(const [i,t] of tables.entries())if(t.rowCount!==owners.shapes[i].rows||t.colCount!==owners.shapes[i].cols){say('배치 · 표 구조가 문항 데이터와 달라 끌어서 배치할 수 없습니다.');return;}
-    const add=(c,owner,kind)=>{if(owner?.kind!=='block')return;const b=q.blocks.find(x=>x.id===owner.id);if(!b)return;const rect=toLayer(c.page,c);if(rect)items.push({id:b.id,kind,block:b,rect,ref:{sec:c.secIdx,ppi:c.paraIdx,ci:c.controlIdx,type:c.type,pageIndex:c.page,...(c.cellPath?.length?{cellPath:c.cellPath}:{})}});};
+    const add=(c,owner,kind)=>{if(owner?.kind!=='block')return;const b=q.blocks.find(x=>x.id===owner.id);if(!b)return;const rect=toLayer(c.page,c);if(rect)items.push({id:b.id,kind,block:b,rect,page:{index:c.page,x:c.x,y:c.y,w:c.w,h:c.h},ref:{sec:c.secIdx,ppi:c.paraIdx,ci:c.controlIdx,type:c.type,pageIndex:c.page,...(c.cellPath?.length?{cellPath:c.cellPath}:{})}});};
     images.forEach((c,i)=>add(c,owners.images[i],'figure'));
     tables.forEach((c,i)=>add(c,owners.tables[i],'table'));
     // 가로 묶음 안 이웃한 두 그림·표 사이의 폭 나누기 손잡이.
