@@ -156,6 +156,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       // 11-14(시안 review-1114 1-7): 미리보기에서 그림을 두 번 누르면 고치는 곳(문항 카드의 그 칸)으로 간다 — 옛 그림 설정 창은 열지 않는다.
       if(placer?.jumpRef?.(ref))return;bridge.selectPicture(ref);
     }}).then(async b=>{bridge=b;bridge.setLayoutRules(true);bridge.setPictureResizeAllowed(true);await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);gaps=attachGapView({bridge,host,panel:host.parentElement,context:()=>({ready:ready&&!loading,q,owners,standard:std(q),standards:standardsOf()}),onGap,onStandard});settings=attachTypesetSettings({panel:host.parentElement,context:()=>({q,standard:std(q),standards:standardsOf()}),preview:(value,standard)=>previewSheet(value,standard),onApply:a=>onSetting?.({apply:a.standard,exception:a.exception}),onStandard});placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text,opt)=>{/* 11-14 3차 36: 문서에서 이미 바꾼 변경(그림 크기)은 이 문서의 문항에도 바로 반영해 「다시 조판」 판정이 일어나지 않게 하고, 저장할 모양으로 표시 */if(opt?.native&&q){try{fn(q);dirty=true;userDirty=true;requestAnimationFrame(()=>placer?.refresh());}catch{}}return onPlacement?.(fn,text,q?.id,opt);},canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});bridge.onPictureResized=(ref,width)=>placer?.nativeResized(ref,width);
+{/* 11-15: 한글처럼 표 줄 높이를 바꾸면(⌘↓·테두리 끌기) 그 높이를 문항 표 데이터(minRowPx)로 옮기고 데이터로 다시 조판한다.
+   엔진이 그 자리에서 바꾸면 바깥 자료 칸이 표보다 한 번에 크게 늘었고(첫 번에 +36px), 저장·다시 조판하면 높이가 사라졌다. */
+  const inp=bridge.input;if(inp&&!inp.__fiveERowHook){inp.__fiveERowHook=true;const run=inp.executeOperation.bind(inp);
+    inp.executeOperation=(op,...a)=>{const pos=/^resizeTable(Cells|Proportional)$|^5e-exam:shortcut-track-(height|width)$/.test(op?.operationType||'')?inp.getCursorPosition?.():null;const r=run(op,...a);if(pos)queueRowHeights(pos);return r;};}};
 bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const pos=bridge.input.getCursorPosition?.(),item=placer?.tableAt?.(pos);if(!item?.block||item.block.kind!=='table')return false;
   let range=null;const sel=bridge.input.getSelectedCellRange?.();if(sel&&Number.isInteger(sel.startRow))range=[sel.startRow,sel.startCol,sel.endRow,sel.endCol];
   if(!range){const boxes=JSON.parse(bridge.wasm.borrowDocumentHandle().getTableCellBboxesByPath(pos.sectionIndex??0,pos.parentParaIndex,JSON.stringify(pos.cellPath))||'[]'),last=pos.cellPath.at(-1),box=boxes.find(b=>b.cellIdx===(last.cellIndex??last.cellIdx));if(!box)return false;range=[box.row,box.col,box.row,box.col];}
@@ -235,12 +239,37 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const po
     }finally{if(seq===opening){loading=false;save.disabled=!ready;download.disabled=!ready;paper.disabled=!ready;columns.disabled=!ready;if(ready){fitLive();drawGuide();}}}
   }
   // 한글 창에서 고친 글을 잠시 뒤 시트 칸에 반영한다. 반영하면 이 문항의 기준 글도 새 글로 바뀐다.
+  let rowTimer=0,rowPos=null;
+  function queueRowHeights(pos){rowPos=pos;clearTimeout(rowTimer);rowTimer=setTimeout(saveRowHeights,650);}
+  function saveRowHeights(){try{const pos=rowPos;if(!pos||!q)return;if(!ready||loading){clearTimeout(rowTimer);rowTimer=setTimeout(saveRowHeights,400);return;}rowPos=null;
+    // 칸 고르기 중에는 커서 자리가 없어 표 칸 상자 자리로 표를 찾는다.
+    const boxes=parse(bridge.wasm.borrowDocumentHandle().getTableCellBboxesByPath(pos.sectionIndex??0,pos.parentParaIndex,JSON.stringify(pos.cellPath)))||[],b0=boxes[0];if(!b0)return;
+    placer?.refresh?.();const item=placer?.tableAt?.({...pos,cursorRect:{pageIndex:b0.pageIndex??0,x:b0.x+b0.w/2,y:b0.y,height:b0.h}});if(!item?.block||item.block.kind!=='table')return;const t=item.block.table;
+    const rows=Array.from({length:t.rows},(_,r)=>{const one=boxes.filter(b=>b.row===r&&(b.rowSpan??1)===1);return one.length?Math.round(Math.max(...one.map(b=>b.h))*10)/10:null;});
+    if(rows.some(v=>v==null))return;const blockId=item.block.id;
+    onPlacement?.(x=>{const b=x.blocks.find(v=>v.id===blockId);if(!b||b.kind!=='table')return false;if(JSON.stringify(b.table.minRowPx)===JSON.stringify(rows))return false;b.table.minRowPx=rows;return true;},`${item.block.label||'표'} 줄 높이`,q.id);
+  }catch{}}
   function scheduleTextSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>void syncText(),80);}
+  function cellEditAtCursor(){try{const pos=bridge.input.getCursorPosition?.(),item=placer?.tableAt?.(pos);if(!item?.block||item.block.kind!=='table'||!pos?.cellPath?.length)return null;
+    const doc=bridge.wasm.borrowDocumentHandle(),sec=pos.sectionIndex??0,path=JSON.stringify(pos.cellPath),last=pos.cellPath.at(-1);
+    const boxes=parse(doc.getTableCellBboxesByPath(sec,pos.parentParaIndex,path))||[],box=boxes.find(b=>b.cellIdx===(last.cellIndex??last.cellIdx));if(!box)return null;
+    const len=doc.getCellParagraphLengthByPath(sec,pos.parentParaIndex,path),got=doc.getTextInCellByPath(sec,pos.parentParaIndex,path,0,len);let t;try{t=JSON.parse(got);}catch{t=got;}
+    const text=(t&&typeof t==='object'?t.text:t)||'',value=String(text).replace(/[\u200b\u2060]/g,'').trim();
+    const was=String(item.block.table?.cells?.[box.row]?.[box.col]?.value??'');
+    return {owner:{kind:'cell',table:item.block.id,r:box.row,c:box.col},value,raw:value,formula:was.includes('$')};}catch{return null;}}
   async function syncText(){
     if(!ready||loading||!textMap||!onTextEdit||!q)return;
     // 시트와 잇는 글은 문자 참조(&#9702;)를 글자로 되돌린 것, 저장 비교용 기준 글(baselineText)은 엔진이 꺼낸 그대로.
     const encoded=parse(document().getTextFileText()),raw=decodeNativeText(encoded),result=mapTextEdit(textMap,raw);
     if(result.unchanged)return;
+    // 11-15: 표 칸에 쓴 글은 커서가 든 칸으로 짝짓는다. 빈 칸은 비교할 글이 없어 글 비교가 앞 칸(「구분」·지문) 끝에 붙였다.
+    // 글 비교가 실패했거나 다른 칸을 골랐을 때만 커서 칸을 쓴다. 수식($)이 든 칸은 엔진 글에 수식 원문이 없어 덮어쓰지 않는다.
+    const cur=cellEditAtCursor(),same=(a,b)=>a?.kind==='cell'&&b?.kind==='cell'&&a.table===b.table&&a.r===b.r&&a.c===b.c;
+    if(cur&&!cur.formula&&(!result.ok||!result.changes.some(c=>same(c.owner,cur.owner)))){
+      const id=q.id,changes=[{owner:cur.owner,value:cur.value}];applyTextEdit(q,cur.owner,cur.value);
+      const segs=textMap.segments.map(x=>same(x.owner,cur.owner)?{...x,value:cur.raw}:x);if(!segs.some(x=>same(x.owner,cur.owner)))segs.push({owner:cur.owner,value:cur.raw});
+      textMap=buildTextMap(raw,segs);baselineText=normalized(encoded);fingerprint=await questionFingerprint(q);
+      onDiverge?.(false);if(onTextEdit(changes,id))message('한글에서 쓴 표 칸 글을 문항 카드 표에 반영했습니다.');return;}
     if(!result.ok){message(result.reason,true);onDiverge?.(true);return;}
     onDiverge?.(false);
     const id=q.id,changes=result.changes.map(c=>({owner:c.owner,value:c.value}));
@@ -598,9 +627,11 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;const po
   async function swapFigure(id,figure){try{
     if(!bridge||!ready||loading||!q||!figure?.data)return false;const b=q.blocks.find(v=>v.id===id);if(!b?.figure?.data)return false;const item=placer?.itemOf?.(id);if(!item)return false;
     const size=async src=>{const i=new Image();i.src=src;await i.decode();return {w:i.naturalWidth,h:i.naturalHeight};};const [a,n]=await Promise.all([size(b.figure.data),size(figure.data)]);
-    if(!(a.w>0&&n.w>0)||Math.abs(a.h/a.w-n.h/n.w)>.02*(a.h/a.w))return false;
+    if(!(a.w>0&&n.w>0))return false;
     const bin=atob(String(figure.data).split(',')[1]||''),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-    bridge.transaction('swap-figure',()=>{bridge.writeFigure(item.ref,{bytes,pixelWidth:n.w,pixelHeight:n.h},'card-'+id);return true;});
+    // 11-15: 라벨로 그림 영역 비율이 바뀌어도 다시 조판하지 않는다 — 폭은 그대로 두고 높이만 새 비율로 맞춘다(전에는 2% 넘게 바뀌면 문서 전체를 다시 조판해 느렸다).
+    bridge.transaction('swap-figure',()=>{const pr=parse(bridge.properties(item.ref));bridge.writeFigure(item.ref,{bytes,pixelWidth:n.w,pixelHeight:n.h},'card-'+id);
+      if(pr?.width>0&&Math.abs(a.h/a.w-n.h/n.w)>.002)bridge.setProperties(item.ref,{width:pr.width,height:Math.round(pr.width*n.h/n.w)});return true;});
     b.figure=JSON.parse(JSON.stringify(figure));dirty=true;userDirty=true;requestAnimationFrame(()=>placer?.refresh());return true;
   }catch{return false;}}
   return {swapFigure,retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},takeSkipped(){const v=skipped;skipped=null;return v;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};

@@ -112,9 +112,11 @@ export async function editCardFigure(m, { send, state, services, frame, onDetail
     onAction: async action => {
       if (action === 'close') { finish(); return; }
       if (action === 'apply') {
-        const merged = mergeAnnotationPatch(copy(source), annotationsFor(source), editor.snapshot());
-        const out = await figureFrom(merged, editor.bounds || bounds, name, services, state);
-        finish(); send({ action: 'figure-ready', figure: out }); return;
+        // 11-15: 창을 먼저 닫고(닫히는 움직임이 끝난 뒤) 그림을 만든다 — 그림 만들기와 닫는 움직임이 겹쳐 버벅였다.
+        const merged = mergeAnnotationPatch(copy(source), annotationsFor(source), editor.snapshot()), at = copy(editor.bounds || bounds);
+        finish(); await new Promise(r => setTimeout(r, 280));
+        const out = await figureFrom(merged, at, name, services, state);
+        send({ action: 'figure-ready', figure: out }); return;
       }
       if (action === 'crop') {
         const a = page.artboard, content = getContentBounds({ ...state.get(), ...page }, OPTIONS, 3);

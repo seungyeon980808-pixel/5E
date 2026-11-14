@@ -446,6 +446,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     const PITCH=1.15,origRows=original&&Array.isArray(t.rowHeights)&&t.rowHeights.length===t.rows?t.rowHeights.map(v=>orig(Number(v))):null;
     // 학교 양식에서 원본 줄 높이를 단 비율로 줄이면 글자(7pt 아래로 안 줄어듦)보다 낮아졌다(11-01 밤샘 3단 f09 6번) — 한 줄 글이 들어가는 높이는 지킨다.
     const rowHeights=origRows?origRows.map(v=>Math.round((kiceFrame?v:Math.max(v,fontSize*4/3*PITCH+2*L.cellPad+2))*100)/100):Array(t.rows).fill(Math.ceil(fontSize*4/3*PITCH+6));
+    // 11-15: 조판 미리보기에서 한글처럼 키운 줄 높이(minRowPx) — 글이 들어가는 높이보다 작게는 줄이지 않는다.
+    if(!origRows&&Array.isArray(t.minRowPx)&&t.minRowPx.length===t.rows)t.minRowPx.forEach((v,r)=>{if(Number(v)>0)rowHeights[r]=Math.max(rowHeights[r],Number(v));});
     for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
       if(tableCovered(t,r,c))continue;
       const m=t.merges.find(m=>m.r===r&&m.c===c),span=m?.rs||1;

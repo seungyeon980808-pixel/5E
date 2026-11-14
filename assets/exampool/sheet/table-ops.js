@@ -10,11 +10,11 @@ export function mergeRange(t,range){let [r1,c1,r2,c2]=grow(t,norm(range));if(r1=
   t.cells[r1][c1]={...t.cells[r1][c1],value:texts.join('\n')};
   t.merges=t.merges.filter(m=>!(m.r>=r1&&m.r<=r2&&m.c>=c1&&m.c<=c2));t.merges.push({r:r1,c:c1,rs:r2-r1+1,cs:c2-c1+1});}
 export function splitAt(t,r,c){const m=t.merges.find(m=>r>=m.r&&r<m.r+m.rs&&c>=m.c&&c<m.c+m.cs);if(!m)throw Error('합친 칸 안에서 S를 누르면 나눕니다.');t.merges=t.merges.filter(x=>x!==m);}
-export function insertRow(t,at){if(t.rows>=30)throw Error('표는 30줄까지입니다.');t.cells.splice(at,0,Array.from({length:t.cols},blank));t.rows++;
+export function insertRow(t,at){if(t.rows>=30)throw Error('표는 30줄까지입니다.');t.cells.splice(at,0,Array.from({length:t.cols},blank));t.rows++;if(Array.isArray(t.minRowPx))t.minRowPx.splice(at,0,null);
   t.merges=t.merges.map(m=>m.r>=at?{...m,r:m.r+1}:m.r+m.rs>at?{...m,rs:m.rs+1}:m);if(at<t.headerRows)t.headerRows++;}
 export function insertCol(t,at){if(t.cols>=12)throw Error('표는 12칸까지입니다.');t.cells.forEach(row=>row.splice(at,0,blank()));t.cols++;
   t.merges=t.merges.map(m=>m.c>=at?{...m,c:m.c+1}:m.c+m.cs>at?{...m,cs:m.cs+1}:m);}
-export function deleteRow(t,at){if(t.rows<=1)throw Error('줄이 하나뿐입니다.');t.cells.splice(at,1);t.rows--;
+export function deleteRow(t,at){if(t.rows<=1)throw Error('줄이 하나뿐입니다.');t.cells.splice(at,1);t.rows--;if(Array.isArray(t.minRowPx))t.minRowPx.splice(at,1);
   t.merges=t.merges.flatMap(m=>at<m.r?[{...m,r:m.r-1}]:at<m.r+m.rs?(m.rs>1?[{...m,rs:m.rs-1}]:[]):[m]).filter(m=>m.rs*m.cs>1);t.headerRows=Math.min(t.headerRows,t.rows);}
 export function deleteCol(t,at){if(t.cols<=1)throw Error('칸이 하나뿐입니다.');t.cells.forEach(row=>row.splice(at,1));t.cols--;
   t.merges=t.merges.flatMap(m=>at<m.c?[{...m,c:m.c-1}]:at<m.c+m.cs?(m.cs>1?[{...m,cs:m.cs-1}]:[]):[m]).filter(m=>m.rs*m.cs>1);}

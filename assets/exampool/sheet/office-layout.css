@@ -1047,3 +1047,16 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-tedit-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;justify-content:flex-start;align-self:center;max-width:100%;opacity:0;pointer-events:none;transition:opacity .12s}
 #card-view .cv-tedit:focus-within .cv-tedit-bar,#card-view .cv-tedit-bar:hover{opacity:1;pointer-events:auto}
 #card-view .cv-tedit-bar button{flex:none;white-space:nowrap}
+/* 11-15: 둘째 이후 글·상자 안 글 */
+#card-view .cv-xtext{position:relative}
+#card-view .cv-xtext.boxed{padding:8px 10px;border:1px solid #9aa0a8;border-radius:2px;background:#fff}
+#card-view .cv-xtag{position:absolute;top:-9px;left:8px;padding:0 6px;background:#fff;color:#6a7079;font-size:11px;line-height:16px}
+#card-view .cv-xtext textarea{width:100%}
+/* 11-15: 카드 표 — 미리보기·편집 모두 칸 폭 안에(넘쳐 잘리지 않게), 합친 칸 그대로 */
+#card-view .cv-grid .cv-tile .table-pic table{width:100%;table-layout:fixed;border-collapse:collapse}
+#card-view .cv-grid .cv-tile .table-pic th,#card-view .cv-grid .cv-tile .table-pic td{text-align:center;vertical-align:middle;overflow:hidden;overflow-wrap:anywhere;word-break:keep-all;line-height:1.35}
+#card-view .cv-grid .cv-tile .table-pic:not(.cv-tedit){overflow:hidden}
+#card-view .cv-tedit-wrap{align-self:stretch;width:100%;overflow:visible}
+#card-view .cv-tedit table{width:100%;table-layout:fixed}
+#card-view .cv-tedit td,#card-view .cv-tedit th{min-width:0}
+#card-view .cv-tedit textarea[data-tc],#card-view .cv-tedit .eq-ce{min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}

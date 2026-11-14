@@ -65,7 +65,8 @@ export function mapTextEdit(map,docText){
       out.push({r,ins});}
     return out;};
   const order=rightBreak&&!leftBreak?[...slides(-1),{r:d0,ins:ins0},...slides(1)]:[{r:d0,ins:ins0},...slides(1),...slides(-1)];
-  const within=r=>map.spans.filter(sp=>r.start>=sp.start&&r.endOld<=sp.end);
+  // 11-15: 새 문단(빈 표 칸 등)에 처음 쓴 글은 바로 앞 칸 끝이나 다음 칸 앞에 붙이지 않는다 — 빈 표 칸에 쓴 수식이 지문 끝에 붙었다.
+  const within=r=>map.spans.filter(sp=>r.start>=sp.start&&r.endOld<=sp.end&&!(r.start===r.endOld&&((r.start===sp.end&&leftBreak&&sp.end>sp.start)||(r.start===sp.start&&rightBreak&&sp.end>sp.start))));
   const fits=({r})=>{const h=within(r);if(h.length!==1)return false;const seg=map.segments[h[0].index];if(!seg.owner)return false;const pn=normMap(seg.value).idx.filter(i=>i<(seg.owner.prefix||0)).length;return r.start-h[0].start>=pn;};
   const pick=order.find(fits)||order.find(c=>within(c.r).length===1)||{r:d0,ins:ins0};
   const d=pick.r,inserted=pick.ins,hit=within(d);

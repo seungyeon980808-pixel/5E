@@ -73,7 +73,7 @@ export function createCardEditor(root,api){
       const name=E(b.label||KINDS[b.kind]);
       if(b.kind==='figure'&&b.figure)return `<div class="cv-tile${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="${name} · 그림 · 두 번 누르기·⌘Enter로 편집"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,tool('edit',b.id,ICON.pencil,'편집 (두 번 누르기 · ⌘Enter)')+tool('swap',b.id,ICON.swap,'바꾸기 — 클립보드·파일'))}${tileSel===b.id?'<span class="cv-target-tag">바꿀 칸</span>':''}</div><div class="cap"><b>${name}</b></div></div>`;
       if(b.kind==='table'&&tableEdit===b.id)return tableEditHtml(b,name);
-      if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" data-cvtile="${b.id}" title="${name} · 표 ${t.rows}×${t.cols} · 눌러서 고치기"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${/\$/.test(String(c.value??''))?mathToHtml(String(c.value).slice(0,40)):E(String(c.value??'')).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
+      if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" data-cvtile="${b.id}" title="${name} · 표 ${t.rows}×${t.cols} · 눌러서 고치기"><div class="pic table-pic"><table>${tableViewRows(t)}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
       // 11-14(시안 1-1·2-4): 빈 칸은 아이콘 둘만(이름은 풍선). 그림 넣기를 누르면 클립보드·파일 중 고른다. 칸 빈 곳을 누르면 넣을 칸으로 골라진다.
       return `<div class="cv-tile empty${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="눌러서 넣을 칸으로 고르기"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="add-pic" data-cvslot="${b.id}" title="그림 넣기 — 클립보드·파일" aria-label="그림 넣기">${ICON.pic}</button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}" title="표 만들기" aria-label="표 만들기">${ICON.table}</button></span>${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
     }).join('');
@@ -189,6 +189,11 @@ export function createCardEditor(root,api){
     const r=m.getBoundingClientRect(),over=r.right-(col.right-8);if(over>0)m.style.left=-Math.min(over,r.left-(col.left+8))+'px';}
   // 문항 카드(시안 32): 엑셀처럼 왼쪽 이름표 칸 + 오른쪽 내용, 안내 글은 ? 도움말 안, 입력칸은 내용 높이만큼, 배점은 맨 위(설계할 때 정함).
   const help=(t,l='도움말')=>`<button type="button" class="help" aria-label="${E(l)}" data-tip="${E(t)}">?</button>`;
+  // 11-15: 둘째 이후 글(상자 안 「조건」 글 등)도 카드에 줄로 보인다 — 전에는 첫 지문만 그려, 조판에는 있는데 카드에는 없는 자료처럼 보였다.
+  function extraTextRows(x,row){const texts=x.blocks.filter(b=>b.kind==='text').slice(1);if(!texts.length)return '';
+    return texts.map(b=>{const g=b.parent&&x.blocks.find(v=>v.id===b.parent),boxed=!!g&&(g.boxed===true||g.boxed===undefined&&g.label==='실험');
+      const name=String(b.label||'').trim()&&b.label!=='지문'?b.label:'지문';
+      return row(name,`<div class="cv-xtext${boxed?' boxed':''}">${boxed?'<span class="cv-xtag">상자</span>':''}<textarea data-cvblock="${b.id}" rows="1" aria-label="${E(name)}">${E(b.text||'')}</textarea></div>`,boxed?'상자 안에 찍히는 글입니다. 여기서 바로 고칩니다.':'첫 지문 다음에 오는 글입니다. 여기서 바로 고칩니다.');}).join('');}
   function formHtml(x){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
     const passages=x.blocks.filter(b=>b.kind==='text');
@@ -208,8 +213,9 @@ export function createCardEditor(root,api){
         <div class="stage" role="group" aria-label="문항 단계">${Object.entries(WORKFLOWS).map(([k,v])=>`<button type="button" data-cvstage="${k}" aria-pressed="${workflowOf(x)===k}" title="${v}"><i class="dot st-${k}"></i>${v}</button>`).join('')}</div></div>
       <form class="sheet-form cv-grid" onsubmit="return false">
         <section class="f-sec" aria-label="문항 내용">
-          ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" aria-label="지문">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'')}
+          ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" aria-label="지문">${E(passages[0]?.text||'')}</textarea>`,'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.')}
           ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다. 이름표 아래 단추로 위치(글 아래·글 옆)·배열(가로·세로)을 바꾸고, ＋로 칸을 더합니다(3개까지).','cv-matrow').replace('<div class="cv-v">',matSet(x)+'<div class="cv-v">')}
+          ${extraTextRows(x,row)}
           ${steps?lineRow(row,'실험과정',steps,'steps','과정을 입력하세요','(가)·(나)는 자동으로 붙습니다.'):''}
           ${talk?lineRow(row,'대화',talk,'dialogue','말을 입력하세요','이름 칸에 학생 이름, 오른쪽에 말'):''}
           ${row('발문',`<textarea id="cv-ask" data-cvf="ask" rows="1" aria-label="발문">${E(x.ask)}</textarea>`,'학생에게 묻는 문장')}
@@ -490,7 +496,7 @@ export function createCardEditor(root,api){
   let mathFields=null;
   function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();}
   // 11-13: 카드 글 칸에 글 속 수식 띠($·⌘E), 안 고칠 때는 그려진 수식
-  mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice],.cv-writer textarea[data-tc],.cv-writer textarea[data-cvexp]'});
+  mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice],.cv-writer textarea[data-tc],.cv-writer textarea[data-cvexp],.cv-writer textarea[data-cvblock]'});
   // 11-13: 머리 줄은 단추(유형·배점·단계)를 절대 줄이지 않는다. 한 줄에 다 안 들어가면 「문항 이름」 칸만 아랫줄로 내려 가로를 다 쓴다.
   function fitHead(){const h=root.querySelector('.cv-writer>.w-head');if(!h)return;h.classList.remove('cv-head-wrap');
     const kids=[...h.children].filter(c=>!c.classList.contains('sp')&&c.offsetHeight>0);if(!kids.length)return;const top=Math.min(...kids.map(c=>c.offsetTop));
@@ -1022,6 +1028,9 @@ export function createCardEditor(root,api){
   document.addEventListener('pointerdown',e=>{if(tileMenuEl&&!e.target.closest('.cv-tile-menu'))closeTileMenu();},true);
   // 11-14 시안 review-1114c 1번(A·A·A): 만든 표는 그 칸 안에서 바로 채운다. 칸을 눌러 쓰기(Tab·화살표 이동, $ 수식), 가장자리 ＋로 줄·칸 늘리기,
   // 아래 작은 줄에서 머리 행·칸 합치기(⇧+누르기로 범위)·줄/칸 지우기·완료(⌘Enter·Esc). 옛 「자료 넣기」 창은 열지 않는다.
+  // 11-15: 카드 표 칸 미리보기 — 조판과 같은 표 데이터(모든 줄·칸, 합친 칸, 머리 행)로 그린다. 전에는 앞 4×4만 잘라 그리고 합친 칸을 무시했다.
+  function tableViewRows(t){let out='';for(let r=0;r<t.rows;r++){out+='<tr>';for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c))continue;const m=t.merges.find(v=>v.r===r&&v.c===c),tag=r<t.headerRows?'th':'td',v=String(t.cells[r]?.[c]?.value??'');
+    out+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''}>${/\$/.test(v)?mathToHtml(v):E(v).replace(/\n/g,'<br>')}</${tag}>`;}out+='</tr>';}return out;}
   let tableEdit=null,tableSel=null,tableFocus=null,tableBlock=false;
   function paintTableSel(){const s=tableSel;root.querySelectorAll('.cv-tedit td,.cv-tedit th').forEach(cell=>{const d=cell.querySelector('textarea[data-tc]');if(!d)return;const [y,x]=d.dataset.tc.split(':').map(Number);cell.classList.toggle('sel',!!s&&y>=Math.min(s[0],s[2])&&y<=Math.max(s[0],s[2])&&x>=Math.min(s[1],s[3])&&x<=Math.max(s[1],s[3]));});}
   function tableEditHtml(b,name){const t=b.table;let rows='';
@@ -1044,6 +1053,8 @@ export function createCardEditor(root,api){
       else if(op==='merge'){if(!tableSel)throw Error('F5(또는 ⇧+누르기)로 합칠 칸을 먼저 고르세요.');applyTableCommand(t,'table:cell-merge',tableSel);}
       else if(op==='unmerge'){applyTableCommand(t,'table:cell-split',[fr,fc,fr,fc]);}});
     if(ok!==false){if(op==='del-row')tableFocus=`${Math.max(0,Math.min(fr,b.table.rows-1))}:${fc}`;if(op==='del-col')tableFocus=`${fr}:${Math.max(0,Math.min(fc,b.table.cols-1))}`;if(op==='add-row')tableFocus=`${b.table.rows-1}:0`;if(op==='add-col')tableFocus=`0:${b.table.cols-1}`;tableSel=null;render();refocusTable();}}
+  root.addEventListener('input',e=>{const t=e.target.matches?.('textarea[data-cvblock]')?e.target:null;if(!t)return;const x=q(),b=x?.blocks.find(v=>v.id===t.dataset.cvblock);if(!b)return;
+    api.edit(()=>{b.text=t.value;},{key:'xtext:'+b.id,light:true});});
   root.addEventListener('input',e=>{const n=e.target.matches?.('.cv-tedit textarea[data-tc]')?e.target:null;if(!n)return;const x=q(),b=x?.blocks.find(v=>v.id===tableEdit);if(!b)return;const [r,c]=n.dataset.tc.split(':').map(Number);
     api.edit(()=>{b.table.cells[r][c].value=n.value.slice(0,2000);},{key:`tc:${b.id}:${r}:${c}`,light:true});});
   root.addEventListener('focusin',e=>{const n=tcOf(e.target);if(n)tableFocus=n.dataset.tc;});
@@ -1181,6 +1192,9 @@ export function createCardEditor(root,api){
     for(const t of root.querySelectorAll('[data-cvf]')){if(t===document.activeElement||t._eqce?.contains(document.activeElement))continue;const f=t.dataset.cvf;
       const v=f==='passage'?(x.blocks.find(b=>b.kind==='text')?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
       if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}mathFields?.refresh();
+    for(const t of root.querySelectorAll('textarea[data-cvblock]')){if(t===document.activeElement||t._eqce?.contains(document.activeElement))continue;const v=x.blocks.find(b=>b.id===t.dataset.cvblock)?.text||'';if(t.value!==v){t.value=v;fit(t);}}
+    // 11-15: 한글 창에서 고친 표 칸 글도 카드 자료 칸에 바로 보이게(전에는 입력칸만 맞추고 자료 칸 그림은 옛 모양 그대로였다). 표 편집 중인 칸은 건드리지 않는다.
+    const mat=root.querySelector('.cv-matrow .cv-v');if(mat&&!mat.contains(document.activeElement)&&!tableEdit){const html=slotsHtml(x);if(mat.innerHTML!==html)mat.innerHTML=html;}
     refreshLight();}
   return {render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
