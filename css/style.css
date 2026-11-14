@@ -3742,9 +3742,17 @@ textarea.unified-text-input {
 /* 11-11 배율 B안: 위쪽엔 「82% ▾」 칩 하나 */
 .canvas-zoom > button[data-canvas-zoom][hidden] { display: none !important; }
 
-/* 11-14(시안 review-1114 7번 안 B): 맥 — 로고 칸에 올리면 로고가 오른쪽으로 밀리고 그 자리에 신호등 단추(preload.cjs). */
-.desktop-shell.platform-darwin .app-shell-header .app-brand,
-.desktop-shell.platform-darwin #rhwp-exam-workspace .exam-top-cell > * { transition: transform .15s cubic-bezier(.32,.72,0,1); }
+/* 11-14(시안 review-1114 7번 안 B): 맥 — 로고 칸에 올리면 로고가 비켜나고 그 자리에 신호등 단추(preload.cjs).
+   11-14 밤 지적 15: 밀 것은 로고만(접기 단추는 제자리). 5E_hwp는 로고 왼쪽이 이미 비어 있어 움직이지 않는다.
+   지적 18: 창을 다 덮는 AI 작업대도 같은 규칙 — 제목이 비켜나고, 머리줄 위아래 여백으로 글씨가 창 모서리에 잘리지 않게. */
+.desktop-shell.platform-darwin :is(.app-shell-header .app-brand, #ai-image-panel .ai-head .ai-title-line) { transition: transform .15s cubic-bezier(.32,.72,0,1); }
 .desktop-shell.platform-darwin.desktop-lights-on .app-shell-header .app-brand { transform: translateX(44px); transition-duration: .2s; }
-.desktop-shell.platform-darwin.desktop-lights-on #rhwp-exam-workspace .exam-top-cell > * { transform: translateX(60px); transition-duration: .2s; }
-@media (prefers-reduced-motion: reduce) { .desktop-shell.platform-darwin .app-shell-header .app-brand, .desktop-shell.platform-darwin #rhwp-exam-workspace .exam-top-cell > * { transition: none; } }
+.desktop-shell.platform-darwin.desktop-lights-on #ai-image-panel .ai-head .ai-title-line { transform: translateX(66px); transition-duration: .2s; }
+.desktop-shell.platform-darwin #ai-image-panel .ai-head { min-height: 52px; padding-block: 5px; align-items: center; }
+.desktop-shell.platform-darwin #ai-image-panel .ai-head .modal-title { line-height: 1.25; }
+@media (prefers-reduced-motion: reduce) { .desktop-shell.platform-darwin :is(.app-shell-header .app-brand, #ai-image-panel .ai-head .ai-title-line) { transition: none; } }
+/* 11-14 밤 지적 16: 위에서 내려오는 제목 줄 대신 머리줄 빈 자리가 창 끌기 자리(두 번 누르면 창 크게). 단추·입력칸·로고 목록은 끌기에서 뺀다. */
+.desktop-shell.platform-darwin .desktop-titlebar { display: none; }
+.desktop-shell.platform-darwin :is(.app-shell-header, #rhwp-exam-workspace .exam-topbar, #ai-image-panel .ai-head) { -webkit-app-region: drag; }
+.desktop-shell.platform-darwin :is(.app-shell-header, #rhwp-exam-workspace .exam-topbar, #ai-image-panel .ai-head) * { -webkit-app-region: no-drag; }
+.desktop-shell.platform-darwin :is(.app-shell-header :is(.canvas-toolbar, .toolbar-history, .toolbar-canvas, .toolbar-inspector-controls, .panel-shell-toggles), #rhwp-exam-workspace .exam-topbar :is(.exam-top-cell, .exam-heading), #ai-image-panel .ai-head :is(.ai-title-line, .ai-head-status)) { -webkit-app-region: drag; }

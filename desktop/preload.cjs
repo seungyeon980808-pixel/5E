@@ -4,23 +4,13 @@ window.addEventListener("DOMContentLoaded", () => {
   // 시작 창이 뜨지 않는 경우(검사·화면 오류)에도 창이 작은 채로 남지 않게: 6초 안에 시작 창이 없으면 바로 키운다.
   setTimeout(() => { if (!document.getElementById("start-screen")) ipcRenderer.invoke("window:start-expand").catch(() => {}); }, 6000);
   if (process.platform !== "darwin") return;
-  // 맥 제목 줄: 평소엔 숨김. 마우스가 맨 위 6px 안에 오면 얇은 줄(창 끌기 자리)과 신호등 단추가 내려오고,
-  // 줄 아래로 벗어나면 0.4초 뒤 다시 올라간다(11-04 사용자: 가까이 가야 내려오게, 문구 없이).
+  // 11-14 지적 16: 위에서 내려오는 제목 줄은 없앴다 — 신호등은 로고 칸 감지로만 켜고, 창 끌기는 머리줄 빈 자리(-webkit-app-region)로 한다.
   const root = document.documentElement;
-  let shown = false, timer = 0;
-  const set = (next) => {
-    clearTimeout(timer);
-    if (shown === next) return;
-    shown = next;
-    // 11-05: 라이브러리처럼 창을 다 덮는 화면은 자기 머리줄을 창 끌기 자리로 쓴다 — 제목 줄을 내리지 않고 신호등 단추만 보인다.
-    root.classList.toggle("desktop-titlebar-open", next && !document.querySelector(".unified-library-overlay:not([hidden])"));
-    ipcRenderer.invoke("window:traffic-lights", next).catch(() => {});
-  };
   // 11-14(시안 review-1114 7번 안 B): 로고 칸(왼쪽 위)에 마우스를 올리면 로고가 오른쪽으로 0.2초 밀리고, 비운 자리에 진짜 신호등 단추가 0.12초 뒤 켜진다.
-  // 벗어나면 단추를 바로 끄고 로고는 0.15초에 돌아온다. 창 끌기용 제목 줄(맨 위 6px)은 예전대로 둔다.
+  // 벗어나면 단추를 바로 끄고 로고는 0.15초에 돌아온다.
   let lights = false, lightTimer = 0;
   const lightsOn = (next) => {
-    if (lights === next || shown) return;
+    if (lights === next) return;
     lights = next; clearTimeout(lightTimer);
     root.classList.toggle("desktop-lights-on", next);
     for (const frame of document.querySelectorAll("iframe")) { try { frame.contentDocument?.documentElement.classList.toggle("desktop-lights-on", next); } catch {} }
@@ -30,22 +20,55 @@ window.addEventListener("DOMContentLoaded", () => {
   const inLogo = (x, y) => x >= 0 && x <= 190 && y >= 0 && y <= 52;
   const track = (x, y) => {
     if (document.getElementById("start-screen")) return;
-    if (y <= 6) { lightsOn(false); set(true); return; }
-    if (shown && y > 34) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); }
-    else if (shown) clearTimeout(timer);
-    if (!shown) lightsOn(inLogo(x, y) || (lights && x <= 230 && y <= 64));
+    lightsOn(inLogo(x, y) || (lights && x <= 230 && y <= 64));
   };
   document.addEventListener("mousemove", (event) => track(event.clientX, event.clientY), { passive: true });
-  document.addEventListener("mouseleave", () => { lightsOn(false); if (shown) { clearTimeout(timer); timer = setTimeout(() => set(false), 400); } });
+  document.addEventListener("mouseleave", () => lightsOn(false));
   // 출제 칸 같은 안쪽 문서(iframe)는 마우스 움직임이 바깥으로 오지 않는다 — 같은 출처 문서면 안에서도 듣고, 로고 밀림 모양도 넣는다.
-  const SLIDE_CSS = 'html{--lights-gap:60px}.top .top-cell>*{transition:transform .15s cubic-bezier(.32,.72,0,1)}html.desktop-lights-on .top .top-cell>*{transform:translateX(var(--lights-gap));transition-duration:.2s}';
+  // 11-14 밤 지적 15: 밀 것은 로고만 — 바로 옆 접기 단추와 겹치지 않게 오른쪽 끝을 기준으로 살짝 줄이며 비켜난다(신호등 자리 확보).
+  // 지적 16: 머리줄 빈 자리는 창 끌기 자리(단추·입력칸은 뺌).
+  const SLIDE_CSS = '.top #brand-home{transition:transform .15s cubic-bezier(.32,.72,0,1);transform-origin:right center}html.desktop-lights-on .top #brand-home{transform:scale(.62);transition-duration:.2s}'
+    + '.top{-webkit-app-region:drag}.top *{-webkit-app-region:no-drag}.top :is(.top-cell,.crumbs,.top-actions){-webkit-app-region:drag}';
   const hooked = new WeakSet();
   const hook = (frame) => { try {
     const doc = frame.contentDocument; if (!doc || hooked.has(doc)) return; hooked.add(doc);
     const st = doc.createElement("style"); st.textContent = SLIDE_CSS; (doc.head || doc.documentElement).append(st);
     doc.addEventListener("mousemove", (e) => { const r = frame.getBoundingClientRect(); track(e.clientX + r.left, e.clientY + r.top); }, { passive: true });
   } catch {} };
-  const scan = () => document.querySelectorAll("iframe").forEach((f) => { hook(f); f.addEventListener("load", () => hook(f)); });
+  // 안쪽 문서(5E_exam 출제 칸)의 -webkit-app-region은 창 끌기에 안 잡힐 수 있다 — 바깥 문서에 머리줄 빈 자리만 덮는 투명 끌기 띠를 둔다.
+  // 띠 자리마다 바깥·안쪽 문서 모두 맨 위가 그 머리줄일 때만 둔다(AI 작업대·라이브러리·창 안 대화상자가 덮으면 띠 없음).
+  const strips = document.createElement("div"); strips.id = "fivee-drag-strips";
+  strips.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;z-index:2147483000";
+  let stripRaf = 0;
+  const INTERACTIVE = "button,a,input,select,textarea,label,summary,[role=button],[role=tab],[tabindex],#brand-home,.crumb-step,.workflow-pick";
+  const layoutStrips = () => { stripRaf = 0; try {
+    if (!strips.isConnected) document.body?.append(strips);
+    strips.style.display = "none"; const boxes = [];
+    for (const frame of document.querySelectorAll("iframe")) {
+      const doc = frame.contentDocument, top = doc?.querySelector("header.top"); if (!top) continue;
+      const fr = frame.getBoundingClientRect(), r = top.getBoundingClientRect(); if (!fr.width || !r.width || !r.height) continue;
+      const busy = [...top.querySelectorAll(INTERACTIVE)].map((n) => n.getBoundingClientRect()).filter((b) => b.width && b.height).map((b) => [b.left - 4, b.right + 4]).sort((a, b) => a[0] - b[0]);
+      let x = r.left; const gaps = [];
+      for (const [a, b] of busy) { if (a - x >= 12) gaps.push([x, a]); x = Math.max(x, b); }
+      if (r.right - x >= 12) gaps.push([x, r.right]);
+      for (const [a, b] of gaps) {
+        const cx = (a + b) / 2, cy = r.top + r.height / 2;
+        if (document.elementFromPoint(fr.left + cx, fr.top + cy) !== frame) continue;
+        const inner = doc.elementFromPoint(cx, cy); if (!inner || !top.contains(inner)) continue;
+        boxes.push({ x: fr.left + a, y: fr.top + r.top, w: b - a, h: r.height });
+      }
+    }
+    strips.replaceChildren(...boxes.map((b) => { const d = document.createElement("div"); d.style.cssText = `position:fixed;left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px;-webkit-app-region:drag`; return d; }));
+    strips.style.display = "";
+  } catch {} };
+  const queueStrips = () => { if (!stripRaf) stripRaf = requestAnimationFrame(layoutStrips); };
+  window.addEventListener("resize", queueStrips);
+  new MutationObserver((list) => { if (list.some((m) => !strips.contains(m.target))) queueStrips(); }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class", "style"] });
+  const watched = new WeakSet();
+  const watchFrame = (frame) => { try { const doc = frame.contentDocument; if (!doc || watched.has(doc)) return; watched.add(doc);
+    new MutationObserver(queueStrips).observe(doc.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class", "open"] });
+    doc.defaultView?.addEventListener("resize", queueStrips); queueStrips(); } catch {} };
+  const scan = () => document.querySelectorAll("iframe").forEach((f) => { hook(f); watchFrame(f); f.addEventListener("load", () => { hook(f); watchFrame(f); }); });
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true }); scan();
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
