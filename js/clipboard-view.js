@@ -103,7 +103,14 @@ const CSS = `
 .clp-toast{position:fixed;z-index:10200;left:50%;bottom:28px;transform:translate(-50%,8px);opacity:0;padding:9px 14px;border-radius:var(--ds-radius,6px);background:var(--ds-raise,#161b22);color:var(--ds-ink,#e6edf3);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));font:13px -apple-system,'Apple SD Gothic Neo',sans-serif;transition:opacity .2s,transform .28s cubic-bezier(.32,.72,0,1);pointer-events:none}
 .clp-toast.show{opacity:1;transform:translate(-50%,0)}
 :root[data-mode="lite"] .clp,:root[data-mode="lite"] .clpb-p{--c-bg:#fff;--c-line:#e2e3e6;--c-line2:#d5d8dd;--c-ink:#1b1e23;--c-ink2:#2f343a;--c-ink3:#666b73;--c-sel:rgba(9,105,218,.08);--c-acc:#0969da;--c-soft:#0969da}
-@media (prefers-reduced-motion:reduce){.clp,.clpb,.clpb-p,.clp-toast{transition:none}}
+.clp.detached{top:var(--clp-y,120px);left:var(--clp-x,auto);right:auto;bottom:auto;width:280px;height:min(440px,calc(100vh - 40px));z-index:10150;transform:translateY(6px)}
+.clp.detached.show{transform:none}
+.clp.detached .clp-h{cursor:grab}.clp.detached.dragging .clp-h{cursor:grabbing}
+.clp.detached .clp-f p{display:none}
+.clp .clp-grip{display:none;color:var(--c-ink3);font-size:11px;letter-spacing:-2px;margin-right:2px}.clp.detached .clp-grip{display:inline}
+@keyframes clp-flash{0%,100%{box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d)}35%{box-shadow:0 0 0 2px var(--c-acc),0 0 0 8px rgba(47,129,247,.22)}}
+.clp.detached.flash{animation:clp-flash .9s ease 1}
+@media (prefers-reduced-motion:reduce){.clp,.clpb,.clpb-p,.clp-toast{transition:none}.clp.detached.flash{animation:none}}
 `;
 
 // 지금 화면이 받는 자리. hosts는 [{active(), label, accepts?(item), insert(item)}] — 앞의 것부터 active()인 것 하나를 쓴다.
@@ -111,7 +118,8 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   if (!doc.getElementById('clp-style')) { const st = doc.createElement('style'); st.id = 'clp-style'; st.textContent = CSS; doc.head.appendChild(st); }
   const el = doc.createElement('aside'); el.className = 'clp'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title); el.tabIndex = -1;
   if (top != null) el.style.setProperty('--clp-top', typeof top === 'number' ? `${top}px` : top);
-  el.innerHTML = `<div class="clp-h">${CLIP_ICON}<b>${E(title)}</b><span class="clp-n"></span>
+  el.innerHTML = `<div class="clp-h"><span class="clp-grip" aria-hidden="true">⋮⋮</span>${CLIP_ICON}<b>${E(title)}</b><span class="clp-n"></span>
+    <button type="button" class="clp-ib" data-clp="detach" title="떼어 쓰기 — 화면 위에 작은 창으로 띄워 둡니다(머리를 끌어 옮김)" aria-label="떼어 쓰기">⇱</button>
     <button type="button" class="clp-ib" data-clp="big" title="크게 보기 (${clipKey('⇧⌘V')} 한 번 더)">크게 보기</button>
     ${followOS ? `<button type="button" class="clp-ib" data-clp="menu" aria-haspopup="true" aria-expanded="false" title="클립보드 설정" aria-label="클립보드 설정">⋯</button>` : ''}
     <button type="button" class="clp-ib" data-clp="close" title="닫기 (Esc)" aria-label="닫기">×</button></div>
@@ -132,6 +140,20 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   const body = el.querySelector('.clp-b'), grid = big.querySelector('.clpb-g'), one = big.querySelector('.clpb-one');
   let open = false, bigOn = false, items = [], sel = null, multi = new Set(), filters = { kind: '', src: '', q: '' }, picking = null, oneIdx = -1;
   const host = () => hosts.find(h => { try { return h.active(); } catch { return false; } }) || null;
+  // 11-14(시안 review-1114 6번): 떼어 쓰기 — 떠 있는 작은 창. 머리를 끌어 옮기고 ⇲로 다시 서랍에. 위치·상태를 기억한다.
+  // 떼어 둔 동안 ⇧⌘V는 창을 앞으로 불러 반짝인다(크게 보기로 넘어가지 않음). Esc로는 닫히지 않는다(× 로 닫음).
+  let detached = store.get('5e.clp.detached', '0') === '1';
+  const place = () => { let pos = {}; try { pos = JSON.parse(store.get('5e.clp.pos', '{}')) || {}; } catch {} const w = 280, x = Math.max(8, Math.min((doc.defaultView.innerWidth || 1200) - w - 8, Number.isFinite(pos.x) ? pos.x : (doc.defaultView.innerWidth || 1200) - w - 24)), y = Math.max(8, Math.min((doc.defaultView.innerHeight || 800) - 160, Number.isFinite(pos.y) ? pos.y : 120)); el.style.setProperty('--clp-x', `${x}px`); el.style.setProperty('--clp-y', `${y}px`); };
+  function setDetached(v) { detached = !!v; store.set('5e.clp.detached', detached ? '1' : '0'); el.classList.toggle('detached', detached); el.setAttribute('role', detached ? 'complementary' : 'dialog');
+    const b = el.querySelector('[data-clp="detach"]'); if (b) { b.textContent = detached ? '⇲' : '⇱'; b.title = detached ? '서랍으로 붙이기' : '떼어 쓰기 — 화면 위에 작은 창으로 띄워 둡니다(머리를 끌어 옮김)'; b.setAttribute('aria-label', detached ? '서랍으로 붙이기' : '떼어 쓰기'); }
+    if (detached) place(); }
+  function flash() { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 950); }
+  setDetached(detached);
+  el.querySelector('.clp-h').addEventListener('pointerdown', e => { if (!detached || e.button !== 0 || e.target.closest('button')) return; e.preventDefault();
+    const r = el.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top; el.classList.add('dragging'); el.setPointerCapture?.(e.pointerId);
+    const move = ev => { el.style.setProperty('--clp-x', `${Math.round(Math.max(0, Math.min(doc.defaultView.innerWidth - 80, ev.clientX - dx)))}px`); el.style.setProperty('--clp-y', `${Math.round(Math.max(0, Math.min(doc.defaultView.innerHeight - 44, ev.clientY - dy)))}px`); };
+    const up = () => { el.classList.remove('dragging'); el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); const nr = el.getBoundingClientRect(); store.set('5e.clp.pos', JSON.stringify({ x: Math.round(nr.left), y: Math.round(nr.top) })); };
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); });
   const say = (msg, ms = 2400) => { toast.textContent = msg; toast.classList.add('show'); clearTimeout(say.t); say.t = setTimeout(() => toast.classList.remove('show'), ms); };
   const meta = it => `<span class="clp-k">${E(KIND[it.kind] || '그림')}</span>${it.moving ? '<span class="clp-mv" title="잘라 낸 것 — 한 번 넣으면 클립보드에서 빠집니다">옮기는 중</span>' : ''}<span>${E(it.source === '밖에서' ? '밖에서' : it.source)} · ${ago(it.at)}</span>`;
   const row = it => `<div class="clp-i" role="option" draggable="true" tabindex="-1" data-clp-id="${E(it.id)}" aria-selected="${sel === it.id}" title="${E(it.name)} — 두 번 누르면 넣기, 끌어서 놓기"><div class="clp-t"><img src="${E(it.src)}" alt=""></div><div class="clp-m"><b>${E(it.name)}</b><span>${meta(it)}</span></div><div class="clp-a"><button type="button" data-clp-pin class="${it.pinned ? 'on' : ''}" title="${it.pinned ? '고정 풀기' : '고정 — 50개 규칙에서 빠지지 않음'}" aria-label="고정">${PIN}</button><button type="button" data-clp-del title="빼기 (Delete)" aria-label="빼기">×</button></div></div>`;
@@ -183,7 +205,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     for (const it of list) { if (h.accepts && !h.accepts(it)) continue; try { await h.insert(it); done++; await clipConsume(it.id); } catch (e) { say(e?.message || '넣지 못했습니다'); return; } }
     if (done) say(`${name.replace(/에 넣기$/, '')}에 넣었습니다 · ${clipKey('⌘Z')}로 되돌리기`);
   }
-  function set(v) { open = v; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
+  function set(v) { if (v) { const d = store.get('5e.clp.detached', '0') === '1'; if (d !== detached) setDetached(d); else if (detached) place(); } open = v; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
   function openBig({ pick = null } = {}) { picking = pick; multi.clear(); if (pick) filters = { kind: '', src: '', q: '' }; bigOn = true; big.classList.add('show'); void refresh(); requestAnimationFrame(() => grid.focus({ preventScroll: true })); if (!pick) void followOS?.(); }
   function closeBig() { bigOn = false; big.classList.remove('show'); one.classList.remove('show'); oneIdx = -1; if (picking) { const p = picking; picking = null; p.resolve([]); } }
   function showOne(i) { const list = visible(); if (!list.length) return; oneIdx = (i + list.length) % list.length; const it = list[oneIdx]; one.querySelector('img').src = it.src; one.querySelector('p').textContent = `${it.name} · ${KIND[it.kind] || '그림'} · ${it.source} — ← → 넘기기 · Esc 돌아가기`; one.classList.add('show'); }
@@ -195,7 +217,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   const dragStart = e => { const r = e.target.closest?.('[data-clp-id]'); if (!r) return; e.dataTransfer.setData(CLIP_MIME, r.dataset.clpId); e.dataTransfer.effectAllowed = 'copy'; const img = r.querySelector('img'); if (img) e.dataTransfer.setDragImage(img, 20, 20); };
   body.addEventListener('dragstart', dragStart); grid.addEventListener('dragstart', dragStart);
   el.addEventListener('click', e => { const b = e.target.closest('[data-clp]'); if (!b) return; const k = b.dataset.clp;
-    if (k === 'close') set(false); else if (k === 'big') openBig(); else if (k === 'go') { const it = items.find(i => i.id === sel); if (it) void insert([it]); }
+    if (k === 'close') set(false); else if (k === 'detach') { setDetached(!detached); if (open) body.focus({ preventScroll: true }); } else if (k === 'big') openBig(); else if (k === 'go') { const it = items.find(i => i.id === sel); if (it) void insert([it]); }
     else if (k === 'menu') { const m = el.querySelector('.clp-menu'); m.hidden = !m.hidden; b.setAttribute('aria-expanded', String(!m.hidden)); m.querySelector('[data-clp="follow"]').checked = clipFollowOn(); } });
   el.querySelector('[data-clp="follow"]')?.addEventListener('change', e => { store.set(FOLLOW_KEY, e.target.checked ? '1' : '0'); say(e.target.checked ? `${OS_NAME} 클립보드 그림을 따라 넣습니다` : `${OS_NAME} 클립보드는 따라 넣지 않습니다`); if (e.target.checked) void followOS?.(); });
   // 파일 끌어 놓기(서랍·크게 보기)
@@ -222,6 +244,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   doc.addEventListener('keydown', e => {
     // 11-14 사용자: 그림을 붙일 수 있는 곳이면 어디서든(글 입력칸에 커서가 있어도) ⇧⌘V로 연다 — 5E 입력칸은 글자만 받아 「서식 없이 붙이기」가 필요 없다.
     if (isOpenClipKey(e)) { e.preventDefault(); e.stopPropagation();
+      if (detached && !bigOn) { if (!open) set(true); else { body.focus({ preventScroll: true }); } flash(); return; }
       if (bigOn) { closeBig(); set(true); } else if (open) { set(false); openBig(); } else set(true); return; }
     if (bigOn) {
       if (e.target.closest?.('.clpb-q')) { if (e.key === 'Escape') { e.preventDefault(); e.target.blur(); } return; }
@@ -234,7 +257,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
       if (/^Arrow/.test(e.key) && list.length) { e.preventDefault(); const cols = Math.max(1, Math.floor(grid.clientWidth / 214)); const d = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }[e.key]; const n = list[Math.min(list.length - 1, Math.max(0, i + d))]; multi.clear(); multi.add(n.id); drawBig(); grid.querySelector(`[data-clp-id="${CSS.escape(n.id)}"]`)?.scrollIntoView({ block: 'nearest' }); }
       return; }
     if (!open || !(el.contains(e.target) || e.target === doc.body)) return;
-    if (e.key === 'Escape') { e.preventDefault(); set(false); return; }
+    if (e.key === 'Escape') { if (detached) { e.preventDefault(); body.blur(); return; } e.preventDefault(); set(false); return; }
     const i = items.findIndex(x => x.id === sel);
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const pinned = items.filter(x => x.pinned), order = [...pinned, ...items.filter(x => !x.pinned)]; const j = order.findIndex(x => x.id === sel); const n = order[Math.min(order.length - 1, Math.max(0, j + (e.key === 'ArrowDown' ? 1 : -1)))]; if (n) { sel = n.id; drawSide(); body.querySelector(`[data-clp-id="${CSS.escape(n.id)}"]`)?.scrollIntoView({ block: 'nearest' }); } return; }
     if (i < 0) return; const it = items[i];
@@ -242,7 +265,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   }, true);
   // 공통 Esc 처리기(escape-layers)가 「닫기」 단추를 대신 누르지 않게 직접 등록: 크게 보기 Esc = 옆 서랍으로(고르기 중이면 그냥 닫기), 서랍 Esc = 닫기.
   registerEscapeLayer(big, () => { if (!bigOn) { if (open) set(false); return; } if (one.classList.contains('show')) { one.classList.remove('show'); return; } const p = picking; closeBig(); if (!p) set(true); });
-  registerEscapeLayer(el, () => { if (bigOn) { closeBig(); if (!picking) set(true); return; } set(false); });// 사라지는 중(0.2초)에 또 누른 Esc도 지금 상태대로
+  registerEscapeLayer(el, () => { if (bigOn) { closeBig(); if (!picking) set(true); return; } if (detached) return; set(false); });// 사라지는 중(0.2초)에 또 누른 Esc도 지금 상태대로
   void refresh();
   return {
     open: () => set(true), close: () => set(false), toggle: () => set(!open), isOpen: () => open, openBig, el, say,
