@@ -1856,12 +1856,19 @@ function createWindow() {
 require("./exam-files.cjs").registerExamFilesIpc({ handle: handleTrustedIpc, shell, documentsPath: () => app.getPath("documents") });
 // ExamPool 출제 대화의 근거 검색(읽기 전용). 입력은 종류·검색어·한도로 제한하고 경로·SQL·명령은 받지 않는다.
 // 5E 클립보드(11-14): 5E로 돌아올 때 맥·윈도우 클립보드의 그림을 「밖에서 · 캡처」로 넣는다. 서명(sig)으로 같은 그림은 한 번만.
-handleTrustedIpc("clipboard:read-image", () => {
+// Electron 44부터 clipboard는 W3C 꼴(비동기 read() → ClipboardItem.getType)이다. 옛 readImage()가 있으면 그것을 쓴다.
+handleTrustedIpc("clipboard:read-image", async () => {
   const { clipboard } = require("electron");
-  const image = clipboard.readImage();
-  if (!image || image.isEmpty()) return null;
-  const png = image.toPNG(), size = image.getSize();
-  if (!png.length || png.length > 40 * 1024 * 1024) return null;
+  let png = null;
+  if (typeof clipboard.readImage === "function") { const image = clipboard.readImage(); if (image && !image.isEmpty()) png = image.toPNG(); }
+  else if (typeof clipboard.read === "function") {
+    const items = await clipboard.read().catch(() => []);
+    const item = (items || []).find(entry => (entry.types || []).includes("image/png")) || (items || []).find(entry => (entry.types || []).some(type => /^image\//.test(type)));
+    if (item) { const type = item.types.includes("image/png") ? "image/png" : item.types.find(t => /^image\//.test(t)); const blob = await item.getType(type).catch(() => null);
+      if (blob && typeof blob.arrayBuffer === "function") { const buf = Buffer.from(await blob.arrayBuffer()); png = type === "image/png" ? buf : nativeImage.createFromBuffer(buf).toPNG(); } }
+  }
+  if (!png || !png.length || png.length > 40 * 1024 * 1024) return null;
+  const size = nativeImage.createFromBuffer(png).getSize();
   const sig = require("node:crypto").createHash("sha1").update(png).digest("hex");
   return { dataUrl: `data:image/png;base64,${png.toString("base64")}`, width: size.width, height: size.height, sig };
 });
