@@ -44,6 +44,8 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     assert.equal((await page.locator('.clp-go').textContent()).trim(),'캔버스에 넣기');
     const images=()=>page.evaluate(()=>document.querySelectorAll('#canvas image').length);const n0=await images();
     await page.locator('.clp-go').click();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n0);
+    // 더블클릭으로도 넣는다(11-14: 고를 때 목록을 다시 그려 더블클릭이 안 되던 것).
+    const n1=await images();await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).locator('.clp-t').dblclick();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n1);
     await page.keyboard.press('Escape');
     // 5E_exam: 왼쪽 메뉴 「클립보드」, 문항 카드 자료 칸에 넣기
     await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();

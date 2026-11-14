@@ -141,6 +141,11 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     const pinned = items.filter(i => i.pinned), rest = items.filter(i => !i.pinned);
     body.innerHTML = items.length ? `${pinned.length ? `<div class="clp-g">고정</div>${pinned.map(row).join('')}` : ''}${rest.length ? `<div class="clp-g">최근 · ${clipKey('⌘V')}는 맨 위 것</div>${rest.map(row).join('')}` : ''}`
       : `<div class="clp-e">비어 있음<br>객체를 고르고 ${clipKey('⌘C')}(복사)·${clipKey('⌘X')}(잘라내기)로 넣거나,<br>라이브러리에서 「클립보드에 넣기」, 그림 파일을 여기로 끌어 오세요.</div>`;
+    syncSide();
+  }
+  // 고른 표시·넣기 단추만 고친다 — 누를 때마다 목록을 다시 그리면 두 번째 클릭이 다른 요소에 닿아 더블클릭이 일어나지 않았다(11-14).
+  function syncSide() {
+    body.querySelectorAll('.clp-i').forEach(n => n.setAttribute('aria-selected', String(n.dataset.clpId === sel)));
     const h = host(), it = items.find(i => i.id === sel), go = el.querySelector('[data-clp="go"]');
     go.disabled = !h || !it || (h.accepts && !h.accepts(it));
     go.textContent = picking ? '고르기' : h ? h.label : '넣기';// 「넣기 · 캔버스에 넣기」처럼 겹치던 말을 하나로
@@ -154,6 +159,10 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     const list = visible();
     grid.innerHTML = list.length ? list.map(it => `<div class="clpb-i" role="option" draggable="true" tabindex="-1" data-clp-id="${E(it.id)}" aria-selected="${multi.has(it.id)}" title="${E(it.name)}"><div class="clpb-t"><img src="${E(it.src)}" alt=""></div><span class="clpb-x">${multi.has(it.id) ? CHECK : ''}</span>${it.pinned ? `<span class="clpb-pin">${PIN}</span>` : ''}<b>${E(it.name)}</b><span>${meta(it)}</span></div>`).join('')
       : `<div class="clpb-e">${items.length ? '조건에 맞는 항목이 없습니다' : '비어 있음 — 그림 파일을 여기로 끌어 오면 넣어 둡니다'}</div>`;
+    syncBig(list);
+  }
+  function syncBig(list = visible()) {
+    grid.querySelectorAll('.clpb-i').forEach(n => { const on = multi.has(n.dataset.clpId); n.setAttribute('aria-selected', String(on)); const x = n.querySelector('.clpb-x'); if (x) x.innerHTML = on ? CHECK : ''; });
     const h = host(), chosen = items.filter(i => multi.has(i.id)), go = big.querySelector('[data-clpb="go"]');
     big.querySelector('.clpb-n').textContent = chosen.length ? `${chosen.length}개 고름` : `${list.length}개`;
     grid.classList.toggle('multi', chosen.length > 0);
@@ -179,7 +188,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
   // 서랍: 고르기·넣기·고정·빼기·끌기
   body.addEventListener('click', e => { const r = e.target.closest('.clp-i'); if (!r) return; const id = r.dataset.clpId;
     if (e.target.closest('[data-clp-pin]')) { void clipPin(id); return; } if (e.target.closest('[data-clp-del]')) { void clipRemove(id); return; }
-    sel = id; drawSide(); });
+    sel = id; syncSide(); });
   body.addEventListener('dblclick', e => { const r = e.target.closest('.clp-i'); if (!r || e.target.closest('button')) return; const it = items.find(i => i.id === r.dataset.clpId); if (it) void insert([it]); });
   const dragStart = e => { const r = e.target.closest?.('[data-clp-id]'); if (!r) return; e.dataTransfer.setData(CLIP_MIME, r.dataset.clpId); e.dataTransfer.effectAllowed = 'copy'; const img = r.querySelector('img'); if (img) e.dataTransfer.setDragImage(img, 20, 20); };
   body.addEventListener('dragstart', dragStart); grid.addEventListener('dragstart', dragStart);
@@ -204,7 +213,7 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     if (picking && !picking.multiple) { multi.clear(); multi.add(id); }
     else if (e.metaKey || e.ctrlKey || e.shiftKey || e.target.closest('.clpb-x')) { multi.has(id) ? multi.delete(id) : multi.add(id); }
     else { const only = multi.size === 1 && multi.has(id); multi.clear(); if (!only) multi.add(id); }
-    drawBig(); });
+    syncBig(); });
   big.addEventListener('dblclick', e => { const card = e.target.closest('.clpb-i'); if (!card) return; const it = items.find(i => i.id === card.dataset.clpId); if (it) void insert([it]); });
   big.querySelector('.clpb-q').addEventListener('input', e => { filters.q = e.target.value.trim(); drawBig(); });
   // 열쇠: ⇧⌘V 열기·한 번 더 = 크게 보기, 서랍·크게 보기 안 움직임
