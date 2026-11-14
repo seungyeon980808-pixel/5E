@@ -410,6 +410,15 @@ let _textSizeInput = null;
 let _textItalicInput = null;
 let _textBoldInput = null;
 let _textFormulaMode = false;
+// 11-14: 한글 조합 중인지(기호 단추를 조합 중에 누르면 마지막 음절이 사라지거나 두 번 들어가던 것 — 조합을 먼저 끝낸 뒤 넣는다).
+let _textComposing = false;
+function _afterComposition(run) {
+  if (!_textComposing || !_textEditor) return false;
+  const editor = _textEditor;
+  editor.addEventListener('compositionend', () => setTimeout(() => { if (_textEditor === editor) { _cacheTextSelection(); run(); } }, 0), { once: true });
+  editor.blur(); editor.focus();
+  return true;
+}
 let _textPlainOnly = false; // true for labeler edits: never treat content as formula
 let _textAnchor = null;     // world-space {x,y} of the text origin
 let _textCancelled = false; // set by ESC so blur doesn't double-commit
@@ -579,6 +588,16 @@ const EDITOR_FONT_OPTIONS = [
 
 function normalizeFormulaSource(src) {
   return String(src || "")
+    // 11-14: 한글(HWP) 수식 말도 받는다 — sin·cos·tan은 정체 함수, times·+-·->·over·cdot·deg.
+    .replace(/\{([^{}]*)\}\s*over\s*\{([^{}]*)\}/g, "frac{$1}{$2}")
+    .replace(/(^|[\s(=])([A-Za-z0-9.]+)\s+over\s+([A-Za-z0-9.]+)(?=$|[\s)=])/g, "$1frac{$2}{$3}")
+    .replace(/(^|[^\\A-Za-z])(sin|cos|tan|log|ln|exp)(?![A-Za-z])/g, "$1\\$2")
+    .replace(/\btimes\b/g, "×")
+    .replace(/\bcdot\b/g, "·")
+    .replace(/\bdeg\b/g, "°")
+    .replace(/\+-/g, "±")
+    .replace(/->/g, "→")
+    .replace(/<-/g, "←")
     .replace(/\btheta\b/g, "θ")
     .replace(/\blambda\b/g, "λ")
     .replace(/\bDelta\b/g, "Δ")
@@ -600,6 +619,8 @@ function looksLikeFormula(src) {
   // 문자·줄이 소실되므로, 일반 문장("실험_1\n온도" 등)이 수식으로 오판되지 않게 한다.
   if (/\n/.test(value)) return false;
   const hasSyntax = /\\[a-zA-Z]/.test(value) || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
+  // 11-14: 글꼴을 「수식」으로 고르면 수식으로 쓴다는 뜻 — 문법 기호가 없어도(sin theta) 수식으로 그린다.
+  if (_state?.get?.().draftText?.fontFamily === EQUATION_FONT_FAMILY && value.trim()) return true;
   // 수식 문법이 전혀 없으면 팔레트 클릭으로 켜졌던 수식 모드 플래그를 자동 해제한다
   // (한 번 켜지면 세션 내내 순수 한글 문장까지 수식으로 저장되던 버그 방지).
   if (!hasSyntax) _textFormulaMode = false;
@@ -810,6 +831,7 @@ function _labelAwareContentMode(raw, draft) {
 
 function _insertIntoUnifiedText(value, cursorOffset = null) {
   if (!_textEditor) return;
+  if (_afterComposition(() => _insertIntoUnifiedText(value, cursorOffset))) return;
   const start = _textEditor.selectionStart ?? _textEditor.value.length;
   const end = _textEditor.selectionEnd ?? _textEditor.value.length;
   _textEditor.value = _textEditor.value.slice(0, start) + value + _textEditor.value.slice(end);
@@ -848,8 +870,15 @@ function _insertFormulaTemplate(template) {
  * replacing it. Never routes through the plain-text flattener. */
 function _insertStyledRun(text, symbolStyle) {
   if (!_textEditor) return;
+  if (_afterComposition(() => _insertStyledRun(text, symbolStyle))) return;
   const draft = _state.get().draftText;
   if (!draft) return;
+  // 11-14: 수식으로 쓰는 중이면 Ⅰ·Ⅱ·Ⅲ도 수식 안에 넣는다 — 서식 조각으로 넣으면 수식 전체가 일반 글로 떨어졌다.
+  if (draft.contentMode === "formula" || looksLikeFormula(_textEditor.value)) {
+    const roman = { I: "Ⅰ", II: "Ⅱ", III: "Ⅲ", IV: "Ⅳ" }[String(text)];
+    _insertIntoUnifiedText(roman || String(text));
+    return;
+  }
   const value = _textEditor.value;
   const sel = _textSelection || { start: value.length, end: value.length };
   const start = Math.max(0, Math.min(sel.start, value.length));
@@ -1355,9 +1384,10 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   const editor = _textEditor;
   let composing = false;
   let commitAfterComposition = false;
-  editor.addEventListener("compositionstart", () => { composing = true; });
+  editor.addEventListener("compositionstart", () => { composing = true; _textComposing = true; });
   editor.addEventListener("compositionend", () => {
-    composing = false;
+    composing = false; _textComposing = false;
+    _cacheTextSelection();
     if (!commitAfterComposition) return;
     commitAfterComposition = false;
     setTimeout(() => { if (_textEditor === editor) _commitText(); }, 0);
@@ -1366,6 +1396,8 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
     ke.stopPropagation();
     if (composing || ke.isComposing || ke.keyCode === 229) {
       if ((ke.key === "Enter" || ke.code === "Enter" || ke.code === "NumpadEnter") && !ke.ctrlKey && !ke.metaKey) commitAfterComposition = true;
+      // 조합 중 Tab은 다음 단추로 넘어가지 않게 — 조합만 끝낸다(11-14).
+      if (ke.key === "Tab") ke.preventDefault();
       return;
     }
     if (ke.key === "Escape") { ke.preventDefault(); _textCancelled = true; _cancelText(); }

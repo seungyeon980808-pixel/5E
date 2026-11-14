@@ -139,7 +139,11 @@ function parseFormula(src) {
     if (c === "\\") { i++; return commandAtom(readWord(), depth, true); }  // 백슬래시 명령(\sin \theta \frac)
     if (isLetter(c)) return commandAtom(readWord(), depth, false);         // bare word(하위호환: theta·frac 등)
     if (isDigit(c)) return { type: "text", value: readNumber() };
-    i++; return { type: "text", value: c }; // space, operators, parens, unicode glyph
+    // 11-14: 𝜃 같은 BMP 밖 글자(두 칸)와 뒤따르는 결합 문자(위 점·화살 등)는 한 글자로 — 반으로 쪼개져 깨지던 것.
+    const cp = s.codePointAt(i);
+    let glyph = String.fromCodePoint(cp); i += glyph.length;
+    while (i < s.length && /[\u0300-\u036f\u20d0-\u20ff\ufe0e\ufe0f]/.test(s[i])) glyph += s[i++];
+    return { type: "text", value: glyph }; // space, operators, parens, unicode glyph
   }
 
   // 명령/단어 하나를 원자로 변환. isCommand = 백슬래시로 시작했는지.
