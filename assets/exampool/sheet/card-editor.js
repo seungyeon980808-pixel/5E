@@ -304,7 +304,8 @@ export function createCardEditor(root,api){
     // 1) 모든 칸의 마지막 자리·안 폭을 잰 값으로 고정(하나를 띄우면 다른 칸 흐름이 바뀌므로 먼저 다 잰 값을 쓴다)
     for(const k of names){const t=now[k],n=t.node,f=before[k],z=Z[k]||1;lockKids(n,t.kids);
       if(f){slide(n,f,t,z);if(k==='ts'){tsF=f;tsT=t;}continue;}
-      if(k==='ts'&&c1){const cs=c0||c1,ff={x:Math.max(cs.x,t.x-t.w-gut),w:t.w};slide(n,ff,t,z);tsF=ff;tsT=t;continue;}
+      // 11-14 사용자: 「한 칸씩 쭉 밀리는 느낌」 — 조판은 카드 뒤에서 나오지 않고 화면 오른쪽 끝에서 들어오며 카드를 민다(나머지 새 칸과 같은 길).
+      if(k==='ts'){const dx=R.right-t.x+gut;place(n,t,z);anims.push(n.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o));tsF={x:t.x+dx,w:t.w};tsT=t;continue;}
       const pr=before[PAIR[k]];
       if(pr&&!RAIL[k]){slide(n,{x:pr.x,w:pr.w},t,z);continue;}// 띠에서 칸이 펴짐
       if(pr&&RAIL[k]){place(n,t,4);anims.push(n.animate([{opacity:0},{opacity:0,offset:.5},{opacity:1}],o));continue;}
@@ -313,7 +314,7 @@ export function createCardEditor(root,api){
     // 2) 사라지는 칸: 잔상을 같은 곳(#card-view 안)에 남겨 바깥으로 — 화면 틀 밖으로 옮기면 모양 규칙이 빠져 1px로 쪼그라들었다
     for(const k of leaving){const f=before[k],g=f.node;if(!g||f.w<2)continue;
       g.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));g.removeAttribute('data-pane');g.setAttribute('inert','');g.setAttribute('aria-hidden','true');g.style.pointerEvents='none';root.appendChild(g);undo.push(()=>g.remove());lockKids(g,f.kids);
-      if(k==='ts'&&c1){const to={x:Math.max(c1.x,f.x-f.w-gut),w:f.w,y:f.y,h:f.h};slide(g,f,to,Z.ts);tsF=f;tsT=to;continue;}
+      if(k==='ts'){const dx=R.right-f.x+gut;place(g,f,Z.ts);anims.push(g.animate([{transform:'none'},{transform:`translateX(${dx}px)`}],o));tsF=f;tsT={x:f.x+dx,w:f.w,y:f.y,h:f.h};continue;}// 오른쪽 밖으로 밀려 나감
       const pn=now[PAIR[k]];
       if(pn&&!RAIL[k]){slide(g,f,{x:pn.x,w:pn.w,y:f.y,h:f.h},Z[k]||1,{cw:f.w,fade:[{opacity:1},{opacity:1,offset:.45},{opacity:0}]});continue;}// 칸이 띠로 줄어듦
       if(pn&&RAIL[k]){place(g,f,4);anims.push(g.animate([{opacity:1},{opacity:0,offset:.35},{opacity:0}],o));continue;}
