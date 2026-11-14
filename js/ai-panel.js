@@ -6983,13 +6983,28 @@ ${chatText}` : ''}`;
     event.stopImmediatePropagation();
     void pasteClipboardImage(event);
   }, { capture: true, signal: lifecycle.signal });
+  // 11-14 5E 클립보드: 클립보드 항목(application/x-5e-drawer)을 끌어 놓아도 원본이 된다. 「넣기」도 AI 창이 열려 있으면 원본으로(window.fiveEAiAddSource).
+  const isClipDrag = event => [...(event.dataTransfer?.types || [])].includes('application/x-5e-drawer');
+  window.fiveEAiAddSource = item => {
+    if (disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') throw new Error('AI 작업이 끝난 뒤 다시 넣으세요.');
+    if (!item?.src) throw new Error('넣을 그림이 없습니다.');
+    addReferencesAsTasks([{ data: item.src, name: item.name || '클립보드 그림', sourceKind: 'clipboard' }]);
+    setStatus('클립보드 그림을 원본으로 가져왔습니다.', 'ok');
+  };
   panel.addEventListener("dragover", (event) => {
-    if (Array.from(event.dataTransfer?.items || []).some((item) => item.kind === "file")) event.preventDefault();
+    if (isClipDrag(event) || Array.from(event.dataTransfer?.items || []).some((item) => item.kind === "file")) event.preventDefault();
   });
   panel.addEventListener('dragstart', event => {
     if (event.target.closest?.('.ai-preview-stage')) event.preventDefault();
   });
   panel.addEventListener("drop", (event) => {
+    if (isClipDrag(event) && !event.dataTransfer.files?.length) {
+      event.preventDefault();
+      const id = event.dataTransfer.getData('application/x-5e-drawer');
+      void import('./drawer.js?v=1114').then(async m => { const item = await m.clipGet(id); window.fiveEAiAddSource(item); if (item?.moving) await m.clipConsume(item.id); })
+        .catch(error => setStatus(error?.message || '클립보드 그림을 가져오지 못했습니다.', 'warn'));
+      return;
+    }
     const dropped = Array.from(event.dataTransfer?.files || []).filter((item) => item.type.startsWith("image/"));
     if (!dropped.length) return;
     event.preventDefault();

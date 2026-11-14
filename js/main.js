@@ -824,6 +824,8 @@ if (_APP_DEBUG_ENABLED) {
   const hosts = [];
   const appNow = () => document.getElementById("exampool-sheet-workspace")?.hidden === false ? "exam" : document.getElementById("rhwp-exam-workspace")?.hidden === false ? "hwp" : "image";
   const viewCenter = () => { const v = state.get().viewBox; return { x: v.x + v.w / 2, y: v.y + v.h / 2 }; };
+  // AI 이미지·AI 그래프 창이 열려 있으면 그 창의 원본으로(캔버스는 그 뒤에 가려 있다).
+  hosts.push({ active: () => document.getElementById("ai-image-panel")?.hidden === false && typeof window.fiveEAiAddSource === "function", label: "원본으로 쓰기", accepts: item => !!item.src, insert: item => window.fiveEAiAddSource(item) });
   hosts.push({ active: () => appNow() === "image", label: "캔버스에 넣기",
     insert: async item => { if (item.objects?.length) insertClipObjects(item.objects); else await insertImageFromSrc(state, item.src, { at: viewCenter() }); } });
   hosts.push({ active: () => appNow() === "hwp" && !!window.fiveEClipHostHwp?.ready(), label: "커서 자리에 넣기", accepts: item => !!item.src, insert: item => window.fiveEClipHostHwp.insert(item) });
