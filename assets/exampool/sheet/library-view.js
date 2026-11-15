@@ -128,7 +128,8 @@ export function libState(view) { const s = view.lib ||= { sort: SORTS.includes(s
 export function renderLibraryView(root, data, view, api) {
   const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
   if (s.kind !== 'mine' && !past.items) loadPast().then(() => { if (root.isConnected) api.rerender(); }).catch(e => api.status?.(e.message, true));
-  const list = entries(data, s), shown = s.mode === 'one' ? list : list.slice(0, s.limit);
+  // 11-15(승인 7): 「모든 문항」을 묶어 볼 때는 40줄 제한 없이(뒤 묶음이 잘렸다).
+  const list = entries(data, s), shown = s.mode === 'one' || s.mode === 'list' && s.scope === 'all' && s.group ? list : list.slice(0, s.limit);
   // 여러 문항 고르기(11-02 시안 select-delete-1102): 지운 문항·지금 칸에 없는 문항은 고른 것에서 뺀다.
   { const here = new Set(list.map(x => x.id)); for (const id of [...s.sel]) if (!here.has(id)) s.sel.delete(id); }
   const picking = s.mode !== 'one' && s.sel.size > 0, picked = x => s.sel.has(x.id);

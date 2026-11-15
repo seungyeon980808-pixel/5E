@@ -110,7 +110,14 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     c.style.cssText=`position:absolute;left:${fr.left-hr.left}px;top:${fr.top-hr.top}px;width:${fr.width}px;height:${fr.height}px;z-index:15;pointer-events:none;transition:opacity 140ms ease-out`;
     const g=c.getContext('2d');g.scale(dpr,dpr);g.fillStyle=getComputedStyle(sc).backgroundColor||'#fff';g.fillRect(0,0,fr.width,fr.height);
     for(const cv of sc.querySelectorAll('canvas')){const r=cv.getBoundingClientRect();if(r.bottom<0||r.top>fr.height||!r.width)continue;try{g.drawImage(cv,r.left,r.top,r.width,r.height);}catch{}}
+    // 11-15: 엔진 창 위에 얹힌 그림(빈 자료 칸 「자료」, 칸 그림 등 img)도 덮개에 — 덮개 동안 빠져 보였다.
+    for(const im of sc.querySelectorAll('img')){const r=im.getBoundingClientRect();if(!im.complete||!im.naturalWidth||r.bottom<0||r.top>fr.height||!r.width||getComputedStyle(im).visibility==='hidden')continue;try{g.drawImage(im,r.left,r.top,r.width,r.height);}catch{}}
     if(getComputedStyle(host).position==='static')host.style.position='relative';host.append(c);
+    // 11-15(사용자 승인 8): 덮개에 조판 부호(빨간 V·초록 선, 엔진 창 안 SVG)와 간격 띠(점선, ts-gap-layer)도 함께 — 덮개 동안 부호가 사라졌다 나타났다.
+    {const extra=[],ox=fr.left-hr.left,oy=fr.top-hr.top;
+      const marks=inner?.querySelector('[data-exam-marks]');if(marks&&getComputedStyle(marks).display!=='none'){const m=marks.cloneNode(true);m.removeAttribute('data-exam-marks');m.style.position='absolute';m.style.left=(ox+(parseFloat(marks.style.left)||0))+'px';m.style.top=(oy+(parseFloat(marks.style.top)||0))+'px';m.style.zIndex='15';m.style.transition='opacity 140ms ease-out';host.append(m);extra.push(m);}
+      for(const layer of host.querySelectorAll('.ts-gap-layer,.placement-layer')){if(layer.hidden||!layer.childElementCount)continue;const k=layer.cloneNode(true);k.classList.add('ts-gap-frozen');k.style.zIndex='15';k.style.pointerEvents='none';k.style.transition='opacity 140ms ease-out';layer.after(k);extra.push(k);}
+      c._extra=extra;}
     // 11-14 2차 25: 그림 크기를 바꾼 직후면 그 그림만 떼어 새 크기로 부드럽게 줄이고(0.26초), 새 쪽이 그려지면 함께 걷는다.
     const hint=host.__fiveEResizeHint;host.__fiveEResizeHint=null;
     if(hint&&performance.now()-hint.at<1500&&Math.abs(hint.scale-1)>.001){const r=hint.rect,ox=fr.left-hr.left,oy=fr.top-hr.top,p=globalThis.document.createElement('canvas');
@@ -120,7 +127,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       p.style.cssText=`position:absolute;left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;z-index:16;pointer-events:none;transform-origin:${origin};transition:transform 260ms cubic-bezier(.22,.75,.2,1),opacity 140ms ease-out`;
       host.append(p);requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.transform=`scale(${hint.scale})`;}));c._piece=p;}
     return c;}catch{return null;}}
-  const thaw=c=>{if(!c)return;const p=c._piece;setTimeout(()=>requestAnimationFrame(()=>{c.style.opacity='0';if(p)p.style.opacity='0';setTimeout(()=>{c.remove();p?.remove();},160);}),p?280:160);};
+  const thaw=c=>{if(!c)return;const p=c._piece,x=c._extra||[];setTimeout(()=>requestAnimationFrame(()=>{c.style.opacity='0';if(p)p.style.opacity='0';for(const n of x)n.style.opacity='0';setTimeout(()=>{c.remove();p?.remove();for(const n of x)n.remove();},160);}),p?280:160);};
   const loadKeepingFocus=async(bytes,name)=>{const snap=freeze();try{return await keepingFocus(()=>bridge.load(bytes,name));}finally{thaw(snap);}};
   // 학교 양식 틀이면 양식 여백·단 간격(frame)을 함께 — 문항마다 다르므로 그 문항(value)의 틀로.
   const profileFor=value=>({paper:paper.value,columns:Number(columns.value),...frameProfile(value&&std(value))}),profile=()=>profileFor(q);
