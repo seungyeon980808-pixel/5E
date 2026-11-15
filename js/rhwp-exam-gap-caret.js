@@ -28,14 +28,16 @@ export function installGapCaret(bridge, { status = () => {} } = {}) {
     let point; try { point = input.pagePointFromClientPoint(event.clientX, event.clientY); } catch { return null; }
     if (!point) return null;
     const { pageIdx: page, pageX: x, pageY: y } = point, d = raw();
-    const pd = parse(d.getPageDef(page)), W = pd.width / 75, mL = pd.marginLeft / 75, mR = pd.marginRight / 75;
+    // getPageDef는 쪽이 아니라 구역 번호를 받는다(쪽 번호를 넣어 2쪽부터 「구역 N 범위 초과」로 커서가 안 떴다 — 11-15 검진).
+    const info = parse(d.getPageInfo(page)), sec = Number.isInteger(info?.sectionIndex) ? info.sectionIndex : 0;
+    const pd = parse(d.getPageDef(sec)), W = pd.width / 75, mL = pd.marginLeft / 75, mR = pd.marginRight / 75;
     const top = (pd.marginTop + pd.marginHeader) / 75, bottom = (pd.height - pd.marginBottom - pd.marginFooter) / 75;
     if (x < mL || x > W - mR || y < top || y > bottom) return null;
-    const cols = Math.max(1, (parse(d.getPageInfo(page)).columns || []).length || 1), colW = (W - mL - mR) / cols, col = Math.min(cols - 1, Math.floor((x - mL) / colW));
+    const cols = Math.max(1, (info.columns || []).length || 1), colW = (W - mL - mR) / cols, col = Math.min(cols - 1, Math.floor((x - mL) / colW));
     const inCol = b => { const c = b.x + (b.w || 0) / 2; return Math.min(cols - 1, Math.max(0, Math.floor((c - mL) / colW))) === col; };
     const boxes = [];
-    for (const r of parse(d.getPageTextLayout(page)).runs || []) if (!(r.cellPath || []).length && Number.isFinite(r.y) && (r.secIdx ?? 0) === 0) boxes.push({ p: r.paraIdx, x: r.x, w: r.w || 1, top: r.y, bottom: r.y + (r.h || r.fontSize || 12) });
-    for (const c of parse(d.getPageControlLayout(page)).controls || []) if (!(c.cellPath || []).length && Number.isFinite(c.y) && (c.secIdx ?? 0) === 0 && c.plane !== 1) boxes.push({ p: c.paraIdx, x: c.x, w: c.w, top: c.y, bottom: c.y + c.h, ctl: true });
+    for (const r of parse(d.getPageTextLayout(page)).runs || []) if (!(r.cellPath || []).length && Number.isFinite(r.y) && (r.secIdx ?? 0) === sec) boxes.push({ p: r.paraIdx, x: r.x, w: r.w || 1, top: r.y, bottom: r.y + (r.h || r.fontSize || 12) });
+    for (const c of parse(d.getPageControlLayout(page)).controls || []) if (!(c.cellPath || []).length && Number.isFinite(c.y) && (c.secIdx ?? 0) === sec && c.plane !== 1) boxes.push({ p: c.paraIdx, x: c.x, w: c.w, top: c.y, bottom: c.y + c.h, ctl: true });
     const mine = boxes.filter(inCol);
     if (mine.some(b => b.top - 1 <= y && y <= b.bottom + 1)) return null; // 글줄·표·그림 위 — 엔진에 맡긴다
     const above = mine.filter(b => b.bottom < y).sort((a, b) => b.bottom - a.bottom)[0];
@@ -43,7 +45,7 @@ export function installGapCaret(bridge, { status = () => {} } = {}) {
     if (!above || !Number.isInteger(above.p)) return null;
     if (below && below.top - above.bottom < MIN_GAP) return null;
     // 앞 문단 = 누른 자리 바로 위에서 끝나는 줄·개체의 문단.
-    return { page, x, y, col, para: above.p, lineH: 15 };
+    return { page, sec, x, y, col, para: above.p, lineH: 15 };
   }
 
   function draw(event, g) {
@@ -59,7 +61,7 @@ export function installGapCaret(bridge, { status = () => {} } = {}) {
   }
 
   function onDown(event) {
-    const g = hit(event);
+    let g = null; try { g = hit(event); } catch { g = null; }
     if (!g) { if (gap) clear(); return; }
     event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
     gap = g; draw(event, g);
@@ -74,17 +76,17 @@ export function installGapCaret(bridge, { status = () => {} } = {}) {
     try {
       bridge.transaction('gap-line', input => {
         const d = raw(), at = g.para + 1;
-        d.insertParagraph(0, at);
+        d.insertParagraph(g.sec, at);
         // 빈 줄은 앞쪽 글 문단(발문 등)의 문단 모양을 따르되 위아래 간격·나누기는 없앤다.
-        let src = g.para; for (let i = g.para; i >= Math.max(0, g.para - 12); i--) { if (d.getParagraphLength(0, i) > 0) { src = i; break; } }
-        try { const pp = parse(d.getParaPropertiesAt(0, src, 0));
-          d.applyParaFormat(0, at, JSON.stringify({ alignment: pp.alignment, lineSpacingType: pp.lineSpacingType, lineSpacing: pp.lineSpacing, marginLeft: 0, marginRight: 0, indent: 0, spacingBefore: 0, spacingAfter: 0, keepWithNext: false, pageBreakBefore: false })); } catch {}
+        let src = g.para; for (let i = g.para; i >= Math.max(0, g.para - 12); i--) { if (d.getParagraphLength(g.sec, i) > 0) { src = i; break; } }
+        try { const pp = parse(d.getParaPropertiesAt(g.sec, src, 0));
+          d.applyParaFormat(g.sec, at, JSON.stringify({ alignment: pp.alignment, lineSpacingType: pp.lineSpacingType, lineSpacing: pp.lineSpacing, marginLeft: 0, marginRight: 0, indent: 0, spacingBefore: 0, spacingAfter: 0, keepWithNext: false, pageBreakBefore: false })); } catch {}
         // 글자 모양도 앞 글 문단 첫 글자와 같게(빈 문단은 기본 글자 모양이라 다른 글씨체로 써졌다). 빈 범위에 걸어 두면 이어 치는 글이 따른다.
-        try { const cp = parse(d.getCharPropertiesAt(0, src, 0)), keep = {};
+        try { const cp = parse(d.getCharPropertiesAt(g.sec, src, 0)), keep = {};
           for (const k of ['fontName', 'fontNames', 'fontSize', 'ratio', 'spacing', 'textColor', 'bold', 'italic']) if (cp[k] !== undefined) keep[k] = cp[k];
-          d.insertText(0, at, 0, '\u200b'); d.applyCharFormat(0, at, 0, 1, JSON.stringify(keep)); d.deleteText(0, at, 0, 1); } catch {}
+          d.insertText(g.sec, at, 0, '\u200b'); d.applyCharFormat(g.sec, at, 0, 1, JSON.stringify(keep)); d.deleteText(g.sec, at, 0, 1); } catch {}
         d.reflowLinesegs?.();
-        input.cursor.moveTo({ sectionIndex: 0, paragraphIndex: at, charOffset: 0 });
+        input.cursor.moveTo({ sectionIndex: g.sec, paragraphIndex: at, charOffset: 0 });
         return true;
       });
     } catch (error) { status(`빈 줄을 넣지 못했습니다: ${error.message}`, true); clear(); return; }
