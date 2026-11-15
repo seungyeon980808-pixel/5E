@@ -276,9 +276,9 @@ function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.quest
 let view={name:'library',status:'drafting',query:'',type:'',stage:'all',examId:null};
 const appView=()=>view;// 쪽 그리기 안에서 지역 이름 view(그린 쪽)와 겹치지 않게
 // 11-15(시안 문항목록-시험지 C): 시험지 문항 카드 — 위쪽 경로 옆 ‹ 3/32 › 로 시험지 순서대로 넘기고, 「시험지로 돌아가기」.
-function paintExamStep(){const el=$('#crumb-step');if(!el)return;const exam=view.name==='card'&&view.examId?examById(data,view.examId):null,at=exam&&current?exam.items.indexOf(current.id):-1;
+function paintExamStep(){const el=$('#crumb-examstep');if(!el)return;const exam=view.name==='card'&&view.examId?examById(data,view.examId):null,at=exam&&current?exam.items.indexOf(current.id):-1;
   el.hidden=at<0;if(at<0)return;el.querySelector('b').textContent=`${at+1} / ${exam.items.length}`;el.querySelector('[data-step="-1"]').disabled=at<=0;el.querySelector('[data-step="1"]').disabled=at>=exam.items.length-1;}
-$('#crumb-step')?.addEventListener('click',e=>{const b=e.target.closest('[data-step]');const exam=view.examId&&examById(data,view.examId);if(!b||!exam||!current)return;
+$('#crumb-examstep')?.addEventListener('click',e=>{const b=e.target.closest('[data-step]');const exam=view.examId&&examById(data,view.examId);if(!b||!exam||!current)return;
   if(b.dataset.step==='back'){show('exam');return;}const at=exam.items.indexOf(current.id),to=exam.items[at+Number(b.dataset.step)];if(to)openCard(to);});
 function renderView(){queueMicrotask(paintLockBar);queueMicrotask(paintExamStep);
   const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view',ideas:'#ideas-view',trash:'#trash-view'};
@@ -291,7 +291,7 @@ function renderView(){queueMicrotask(paintLockBar);queueMicrotask(paintExamStep)
   document.dispatchEvent(new Event('ex-rerender'));
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);else closeViewer(libApi);
-  if(view.name==='exams')renderExams($('#exams-view'),data,view);
+  if(view.name==='exams'){view.formNames=Object.fromEntries(typesetForms.map(f=>[f.id,f.name]));renderExams($('#exams-view'),data,view);void ensureBuiltinForms();}
   if(view.name==='ideas')renderIdeasView();
   if(view.name==='trash')renderTrash();
   if(view.name==='exam'){const ex=examById(data,view.examId);
@@ -995,13 +995,24 @@ async function previewFormSample({draft,standard,keep}){typesetter||=makeTypeset
   const qs=sampleQuestions(),exam={...newExam('견본'),items:qs.map(q=>q.id)},sample={questions:qs,exams:[exam],documents:[]};
   const bytes=await typesetter.buildExam(sample,exam,{form:{bytes:draft.bytes,structure:draft.read.structure,keep,standard},password:draft.password||''});
   return typesetter.examPagesSvg(bytes);}
+// 11-15(사용자): 기본 학교 원안지 양식 3개 — 처음 쓸 때 한 번 앱 안 파일(assets/exampool/forms)을 읽어 이 기기 양식 목록에 등록한다(같은 ID면 그대로).
+const BUILTIN_FORMS=[{id:'form_builtin_daewang',std:'std_builtin_daewang',name:'대왕중학교 원안지',file:'daewang-middle.hwpx'},{id:'form_builtin_haesong',std:'std_builtin_haesong',name:'해송고등학교 원안지(B4)',file:'haesong-high-b4.hwpx'},{id:'form_builtin_yukmingwan',std:'std_builtin_yukmingwan',name:'육민관고등학교 원안지',file:'yukmingwan-high.hwp'}];
+let builtinForms=null;
+function ensureBuiltinForms(){return builtinForms||=(async()=>{let added=0;
+  for(const b of BUILTIN_FORMS){if(typesetForms.some(f=>f.id===b.id))continue;
+    try{const res=await fetch(new URL('../forms/'+b.file,import.meta.url));if(!res.ok)throw Error('양식 파일을 찾지 못했습니다');const buf=await res.arrayBuffer();typesetter||=makeTypesetter();
+      const read=await typesetter.readSchoolForm(buf,b.file,'');const s={...read.standard,id:b.std,name:b.name};validateStandard(s);
+      if(!typesetStandards.some(x=>x.id===s.id))await saveTypesetStandards([...typesetStandards,s]);
+      await saveTypesetForms([...typesetForms,{id:b.id,name:b.name,kind:'school',builtin:true,fileName:b.file,encrypted:false,bytes:new Uint8Array(buf),structure:read.structure,standardId:s.id,createdAt:new Date().toISOString()}]);added++;}
+    catch(e){console.warn('[5E_exam] 기본 학교 양식 등록 실패',b.name,e);}}
+  if(added&&['exams','exam'].includes(view.name))renderView();return added;})();}
 function registerForm(onSaved,kind){openRegister({kind,status:(m,err)=>status(m,err),readForm:readFormFile,previewForm:previewFormSample,saveForm:async({name,kind,draft,keep,standard})=>{
   const s={...(standard||draft.read.standard),name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);const id='form_'+uid();
   await saveTypesetForms([...typesetForms,{id,name,kind,fileName:draft.fileName,encrypted:draft.encrypted,bytes:draft.bytes,structure:draft.read.structure,standardId:s.id,...(kind==='school'&&keep?{keep}:{}),createdAt:new Date().toISOString()}]);
   onSaved(id);}});}
 // 「틀 바꾸기」(10-24 결정 2): 틀만 바꾸고 핵심 목표(문항 수 · 총점 · 시간 · 과목 · 범위 · 규칙)는 그대로 둔다.
 function changeFrame(exam,key){const g=goalOf(exam,typesetForms);applyFrame(exam,key,typesetForms);exam.goal={...exam.goal,subject:g.subject,range:g.range,nObj:g.nObj,nEssay:g.nEssay,total:g.total,time:g.time,points:g.points,diff:g.diff,rule:g.rule,edited:g.edited};exam.updatedAt=new Date().toISOString();}
-function framePicker(exam){openFramePicker({forms:()=>typesetForms,current:frameKey(exam),
+async function framePicker(exam){if(BUILTIN_FORMS.some(b=>!typesetForms.some(f=>f.id===b.id))){status('기본 학교 양식을 준비하는 중…');await ensureBuiltinForms();status('기본 학교 양식(대왕중·해송고·육민관고)을 쓸 수 있습니다.');}openFramePicker({forms:()=>typesetForms,current:frameKey(exam),
   pick:key=>{mutate(()=>changeFrame(exam,key));status(`틀을 「${frameOf(exam,typesetForms).name}」(으)로 바꿨습니다 — 핵심 목표는 그대로입니다.`);},
   register:()=>registerForm(id=>{mutate(()=>changeFrame(exam,'form:'+id));status('내 틀을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.');})});}
 // 「새 시험지」 창(10-24 시안 17 안 A): 이름 · 틀 · 핵심 목표 → 「만들기」 → 바로 문항 고르기.
