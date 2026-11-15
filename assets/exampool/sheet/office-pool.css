@@ -761,3 +761,6 @@ body.card-locked #card-view .cv-grid textarea,body.card-locked #card-view .cv-gr
 .ex-retype button:disabled{opacity:.6;cursor:default}
 #card-view .cv-bar .cv-savebtn{margin-right:6px;padding-left:8px}
 #card-view .cv-bar .cv-savebtn .ico{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2}
+/* 11-15 여백 표시 끄기: 반영된 여백 빗금만 숨긴다 — 아직 조판 전(주황)은 반영할 것이 남았다는 표시라 그대로 둔다. */
+#exam-sheet.ex-nogaps .pv-gapz:not(.pend){visibility:hidden}
+.ex-gapseg{margin-right:8px}

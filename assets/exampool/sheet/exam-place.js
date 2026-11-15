@@ -29,7 +29,9 @@ export function chipsOf(q) {
 const answerText = q => !objective(q) ? '서술형' : Number.isInteger(q.answer) ? `정답 ${ANSWER_MARK[q.answer]}` : '<span class="wn">정답 없음</span>';
 
 // 11-05(시안 layout-1105.html ③): 문항 순서는 작은 그림 카드가 기본, 점검 칸은 접힌 줄(「확인할 것 N」)이 기본.
-export function placeState(view) { return view.place ||= { lv: 'card', zoom: 'page', noGoal: false, checkOpen: false }; }
+// 11-15 사용자: 여백 빗금 보기 켜고 끄기(쪽 머리 줄) — 이 컴퓨터에 기억한다.
+const gapPref = () => { try { return localStorage.getItem('5e-exam-show-gaps') !== '0'; } catch { return true; } };
+export function placeState(view) { return view.place ||= { lv: 'card', zoom: 'page', noGoal: false, checkOpen: false, gaps: gapPref() }; }
 
 export function renderStep3(exam, data, forms, items, st) {
   const qs = items.map(x => x.q);
@@ -47,8 +49,9 @@ export function renderStep3(exam, data, forms, items, st) {
     <div class="ef-foot"><button type="button" class="ef-btn" data-ef-step="2">＋ 문항 더 담기</button><span class="sp"></span><span class="mu" style="font-size:11.5px">끌어서 순서 바꾸기</span></div></section>
   <section class="ef-pane ex-sheetpane"><div class="ef-ph"><b>쪽</b><small id="exam-sheet-info"></small><span class="sp"></span>
       <span class="ex-retype" id="exam-retype" hidden><span class="n"><i aria-hidden="true"></i><span data-n></span></span><button type="button" data-ex-retype title="바꾼 여백·단 나눔을 쪽에 반영합니다 (${MODK}Enter)"><span>새로 조판</span></button></span>
+      <div class="ef-seg ex-gapseg" role="group" aria-label="여백 표시"><button type="button" data-ex-gaps aria-pressed="${st.gaps !== false}" title="문항 아래 여백 빗금 보기 켜고 끄기">여백 표시</button></div>
       <div class="ef-seg ex-zoom" role="group" aria-label="쪽 보기"><button type="button" data-ex-zoom="page" aria-pressed="${st.zoom === 'page'}">쪽 맞춤</button><button type="button" data-ex-zoom="width" aria-pressed="${st.zoom === 'width'}">폭 맞춤</button></div></div>
-    <div class="ex-desk"><div class="pv-sheet ex-zoom-${st.zoom}" id="exam-sheet" data-exam="${E(exam.id)}" style="--ex-scale:${st.scale || 1}"><p class="pv-empty">${items.length ? '한글 조판으로 쪽을 그리는 중…' : '문항을 넣으면 실제 쪽이 보입니다.'}</p></div></div>
+    <div class="ex-desk"><div class="pv-sheet ex-zoom-${st.zoom}${st.gaps === false ? ' ex-nogaps' : ''}" id="exam-sheet" data-exam="${E(exam.id)}" style="--ex-scale:${st.scale || 1}"><p class="pv-empty">${items.length ? '한글 조판으로 쪽을 그리는 중…' : '문항을 넣으면 실제 쪽이 보입니다.'}</p></div></div>
     <div class="ex-zoomctl" role="group" aria-label="쪽 배율"><button type="button" data-ex-scale="-1" title="축소" aria-label="축소">−</button><button type="button" class="pct" data-ex-scale="0" title="맞춤 크기(100%)로" aria-label="쪽 배율 · 누르면 100%">${Math.round((st.scale || 1) * 100)}%</button><button type="button" data-ex-scale="1" title="확대" aria-label="확대">+</button></div></section>
   <section class="ef-pane ex-checkpane" data-open="${st.checkOpen ? 'true' : 'false'}"><div class="ef-ph"><b>점검</b><span class="sp"></span><label class="ex-swl"><input type="checkbox" data-ex-nogoal ${st.noGoal ? 'checked' : ''}><span class="sw"></span>목표 없이 보기</label><button type="button" class="ex-checkfold" data-ex-check-toggle title="점검 접기" aria-label="점검 접기">${SVG.out}</button></div>
     <div class="ex-rp" id="exam-check">${checkMarkup(exam, data, forms, items, st, null)}</div></section>

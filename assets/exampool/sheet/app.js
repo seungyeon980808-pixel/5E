@@ -1102,6 +1102,7 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),t=e.target;if
   if(fold||rail){st.checkOpen=!fold;const pane=document.querySelector('#examd-view .ex-checkpane');pane?.setAttribute('data-open',String(st.checkOpen));pane?.closest('.ex-s3')?.toggleAttribute('data-check-open',st.checkOpen);return;}
   // 쪽 배율 −·+(11-04): 쪽 맞춤/폭 맞춤 크기에 곱한다(50~250%, 10%씩). 가운데 숫자를 누르면 100%.
   const sc=t.closest('[data-ex-scale]');if(sc){const d=Number(sc.dataset.exScale);st.scale=d?Math.min(2.5,Math.max(.5,Math.round(((st.scale||1)+d*.1)*10)/10)):1;$('#exam-sheet')?.style.setProperty('--ex-scale',st.scale);const p=document.querySelector('.ex-zoomctl .pct');if(p)p.textContent=`${Math.round(st.scale*100)}%`;return;}
+  const gp=t.closest('[data-ex-gaps]');if(gp){st.gaps=st.gaps===false;$('#exam-sheet')?.classList.toggle('ex-nogaps',!st.gaps);gp.setAttribute('aria-pressed',String(st.gaps));try{localStorage.setItem('5e-exam-show-gaps',st.gaps?'1':'0');}catch{}return;}
   const zm=t.closest('[data-ex-zoom]');if(zm){st.zoom=zm.dataset.exZoom;const n=$('#exam-sheet');n?.classList.toggle('ex-zoom-page',st.zoom==='page');n?.classList.toggle('ex-zoom-width',st.zoom==='width');document.querySelectorAll('[data-ex-zoom]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.exZoom===st.zoom)));return;}
   if(t.closest('[data-ex-ai]')){status('AI 내용 검토는 아직 연결 전입니다 — 지금은 문항 카드의 AI 검토를 문항마다 써 주세요.');return;}
   const oc=t.closest('div[data-open-card]');if(oc){openCard(oc.dataset.openCard);return;}
