@@ -1137,11 +1137,11 @@ function sheetBusy(n,{fromPage=0}={}){
     if(again){box.querySelector('small').textContent=last.n?`${last.i} / ${last.n}`:what;return;}
     box.querySelector('b').textContent=last.n?`${what} ${last.i} / ${last.n}`:what;box.querySelector('small').textContent=why;box.querySelector('.pv-bar i').style.width=(f*100).toFixed(1)+'%';};
   const show=()=>{
-    if(again){n.classList.add('pv-busy');n.querySelectorAll(':scope > figure.pv-pg').forEach((f,i)=>f.classList.toggle('pv-stale',i>=fromPage));box=document.createElement('div');box.className='pv-rechip';box.setAttribute('role','status');box.innerHTML=`<i class="pv-spin" aria-hidden="true"></i><span>${label}</span><small></small>`;n.prepend(box);}
+    if(again){/* 11-15: 옛 쪽을 흐리게 하지 않는다(흐려졌다 돌아오는 것이 깜빡임) — 구석 작은 표시만 */box=document.createElement('div');box.className='pv-rechip';box.setAttribute('role','status');box.innerHTML=`<i class="pv-spin" aria-hidden="true"></i><span>${label}</span><small></small>`;n.prepend(box);}
     else{n.innerHTML='<div class="pv-load" role="status"><i class="pv-spin" aria-hidden="true"></i><b>조판 준비 중</b><span class="pv-bar"><i></i></span><small>한글 조판으로 쪽을 그립니다</small></div><div class="pv-ghost" aria-hidden="true"></div>';box=n.querySelector('.pv-load');}
     paint();};
   if(again)timer=setTimeout(show,250);else show();
-  return {update(p){last=p;paint();},done(){clearTimeout(timer);if(again){box?.remove();if(!n.querySelector('.pv-rechip'))n.classList.remove('pv-busy');}}};
+  return {update(p){last=p;paint();},done(){clearTimeout(timer);if(again){box?.remove();if(!n.querySelector('.pv-rechip'))n.classList.remove('pv-busy');n.querySelectorAll('.pv-stale').forEach(f=>f.classList.remove('pv-stale'));}}};
 }
 let examPick=null,examSheetSeq=0;
 // 11-09: 5E가 출제 칸을 숨긴 채 미리 불러 둘 때(prewarm)는 쪽을 조판하지 않는다 — 시작 뒤 20초 동안 숨은 조판이
@@ -1174,11 +1174,22 @@ async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet')
   // 배치 점검은 실제로 그린 쪽(한글 조판 높이) 기준으로 다시 쓴다(시험지 화면 처음 그릴 때는 어림 높이).
   {const c=document.querySelector('#exam-check');if(c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(appView()),view);const info=document.querySelector('#exam-sheet-info');if(info)info.textContent=`${view.pages.length}쪽 · 한글 조판 그대로 · ${view.paper} ${view.columns}단${exam.formId?(view.form?' · 학교 양식 그대로':' · 학교 양식 위 모양은 보낼 때 확인'):''}`;}
   // 쪽 그림은 칸(.pv-pgart)에 넣어, 화면 밖 쪽은 브라우저가 그리지 않게 한다(content-visibility · 11-03: 12쪽이면 SVG 4MB·요소 1만 2천 개).
-  n.innerHTML=view.pages.map((p,i)=>`<figure class="pv-pg" style="aspect-ratio:${p.width}/${p.height}"><div class="pv-pgart" style="aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}</div>${examBoxesHtml(exam,view,p)}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`).join('');
+  // 11-15(사용자: 여백 늘릴 때 깜빡이지 않게): 다시 그릴 때는 그림이 바뀐 쪽만 갈아 끼운다 — 쪽 전체를 한꺼번에 바꾸면 그림을 새로 그리느라 깜빡였다.
+  {const html=view.pages.map((p,i)=>`<figure class="pv-pg" data-pg-sig="${p.svg.length}:${hashStr(p.svg)}" style="aspect-ratio:${p.width}/${p.height}"><div class="pv-pgart" style="aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}</div>${examBoxesHtml(exam,view,p)}<figcaption>${i+1} / ${view.pages.length}</figcaption></figure>`);
+    const old=[...n.querySelectorAll(':scope > figure.pv-pg')];
+    if(!old.length){n.innerHTML=html.join('');}
+    else{n.querySelectorAll(':scope > :not(figure.pv-pg)').forEach(x=>{if(!x.classList.contains('pv-rechip'))x.remove();});
+      const tpl=document.createElement('template');
+      html.forEach((h,i)=>{tpl.innerHTML=h;const fresh=tpl.content.firstElementChild,was=old[i];
+        if(!was){n.append(fresh);return;}
+        if(was.dataset.pgSig===fresh.dataset.pgSig){const b=fresh.querySelectorAll(':scope > :not(.pv-pgart)');was.querySelectorAll(':scope > :not(.pv-pgart)').forEach(x=>x.remove());b.forEach(x=>was.append(x));return;}
+        was.replaceWith(fresh);});
+      old.slice(html.length).forEach(f=>f.remove());}}
   lastSheet={examId:exam.id,view,n,ek,qk};}
 // 쪽 위 문항 자리(누르는 단추)·여백 빗금·고른 문항의 여백 막대. 문항을 고를 때는 이것만 다시 그린다(11-03: 예전에는 시험지 전체를 다시
 // 조판하고 쪽 그림 12장을 다시 넣어 1~2초 멈추고 맨 위로 튀었다).
 let lastSheet=null;
+const hashStr=s=>{let h=2166136261;for(let i=0;i<s.length;i+=7)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0).toString(36);};
 function examBoxesHtml(exam,view,p){const pct=v=>(v*100).toFixed(3)+'%',moved=new Set(view.moved||[]);
   return (p.boxes||[]).map(b=>{const no=exam.items.indexOf(b.id)+1,picked=b.id===examPick,after=Number(exam.after?.[b.id])||0;
     // 여백(10-24 지적 12): 문항 아래 늘린 여백 자리를 빗금으로 — 아래에 밀려날 문항이 없어도 보인다. 쪽 높이(px)는 96dpi, 1mm = 96/25.4px.
@@ -1199,7 +1210,8 @@ document.addEventListener('click',e=>{const g=e.target.closest('[data-exam-gap]'
 // 한글 조판은 마지막으로 누른 뒤 1.5초에 한 번(11-04: 0.35초라 천천히 여러 번 누르면 누를 때마다 다시 조판했다) — 다른 문항을 고르면 기다리지 않고 바로.
 // 조판 중에 또 누르면 하던 조판은 멈추고(examSheetSeq) 마지막 값으로 한 번 더.
 let examSheetTimer=0;
-function queueExamSheet(exam){clearTimeout(examSheetTimer);examSheetTimer=setTimeout(()=>{examSheetTimer=0;void fillExamSheet(exam);},1500);}
+// 11-15(사용자 승인 1): 여백·나눔을 바꾼 뒤 기다림 1.5초 → 0.3초(조판 결과를 저장해 다시 묶기가 빨라졌다). 빠르게 여러 번 누르면 앞 묶기는 취소된다.
+function queueExamSheet(exam){clearTimeout(examSheetTimer);examSheetTimer=setTimeout(()=>{examSheetTimer=0;void fillExamSheet(exam);},300);}
 function flushExamSheet(exam){if(!examSheetTimer)return false;clearTimeout(examSheetTimer);examSheetTimer=0;void fillExamSheet(exam);return true;}
 function growGap(id,after){
   const bar=document.querySelector('#exam-sheet .pv-gapbar'),fig=bar?.closest('.pv-pg');if(!fig)return;

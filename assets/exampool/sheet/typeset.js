@@ -485,6 +485,16 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
   // 쪽 전체: 문항마다 한글 문서를 구해(열린 문항은 지금 한글 창, 저장한 조판, 아니면 미리보기 칸과 같은 새 조판)
   // 시험지를 만들 때와 같은 방식으로 한 문서에 합친 뒤 쪽마다 SVG로 그린다. HTML로 흉내 내지 않는다.
   const fresh=new Map();
+  // 11-15(사용자 승인 2): 조판 결과를 이 기기에 저장 — 문항 조판(틀·용지·조판 기준별)과 묶은 시험지 문서. 껐다 켜도 다시 조판하지 않는다.
+  // 열쇠 = 문항 지면 내용(contentKey)·용지·조판 기준 전체 + 저장 판(TYPESET_CACHE_VERSION). 하나라도 다르면 새로 조판한다(옛 결과를 쓰지 않게).
+  // ※ 조판 엔진·조판 규칙(handoff·exam-build 등)을 고치면 TYPESET_CACHE_VERSION을 올려 저장한 결과를 모두 버린다.
+  const TYPESET_CACHE_VERSION='1.7.0-1115a|'+LAYOUT_VERSION;
+  const tcache=(()=>{let dbp=null;const open=()=>dbp||=new Promise(res=>{try{const r=indexedDB.open('5e-typeset-cache',1);r.onupgradeneeded=()=>{for(const n of ['q','a'])if(!r.result.objectStoreNames.contains(n))r.result.createObjectStore(n);};r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}catch{res(null);}});
+    const tx=async(store,mode,fn)=>{const db=await open();if(!db)return null;return new Promise(res=>{try{const t=db.transaction(store,mode),st=t.objectStore(store),r=fn(st);t.oncomplete=()=>res(r?.result??null);t.onerror=t.onabort=()=>res(null);}catch{res(null);}});};
+    const LIMIT={q:600,a:8};let writes=0;
+    const prune=async store=>{const db=await open();if(!db)return;try{const t=db.transaction(store,'readwrite'),st=t.objectStore(store),all=st.getAll(),keys=st.getAllKeys();t.oncomplete=null;all.onsuccess=()=>{keys.onsuccess=()=>{const rows=keys.result.map((k,i)=>[k,all.result[i]?.at||0]).sort((x,y)=>y[1]-x[1]);const t2=db.transaction(store,'readwrite');for(const [k] of rows.slice(LIMIT[store]))t2.objectStore(store).delete(k);};};}catch{}};
+    return {get:async(store,slot,key)=>{const v=await tx(store,'readonly',st=>st.get(slot));return v&&v.key===TYPESET_CACHE_VERSION+'|'+key?v:null;},
+      put:(store,slot,key,val)=>{void tx(store,'readwrite',st=>st.put({...val,key:TYPESET_CACHE_VERSION+'|'+key,at:Date.now()},slot)).then(()=>{if(++writes%25===0)void prune(store);});}};})();
   // 문항·쪽 하나마다 잠깐 쉬어 그사이 화면 그리기·입력을 받는다(문항 많은 시험지에서 화면이 통째로 멈추지 않게).
   const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
   // 쉬는 사이 쪽 전체를 떠났으면(alive가 false) 남은 일을 하지 않는다.
@@ -499,8 +509,10 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
     if((!standardOverride||std(value).id===standardOverride.id)&&t?.verified&&t.layoutVersion===LAYOUT_VERSION&&t.pageMode===QUESTION_PAGE_MODE&&t.profile?.paper===own.paper&&await typesetMatches(t,value))return {bytes:fromBase64(t.bytes),profile:t.profile,height:t.metrics?.usedHeightMm,saved:true};
     // 기억 칸은 문항·용지·틀마다 따로(11-02): 한 칸을 기본 틀과 학교 양식 틀이 번갈아 덮어써 쪽을 그릴 때마다 모든 문항을 두 번씩 새로 조판했다(20문항 21.6초→12.9초).
     const slot=value.id+'|'+own.paper+'|'+(standardOverride?.id||''),key=contentKey(value)+'|'+own.paper+(standardOverride?'|'+JSON.stringify(standardOverride):''),hit=fresh.get(slot);
-    if(hit?.key!==key){const {bytes}=await generate(structuredClone(value),own,{quiet:true,standard:standardOverride}),doc=new Document(bytes);
-      try{fresh.set(slot,{key,bytes,height:questionPageMetrics(doc,own).usedHeightMm});}finally{doc.free();}}
+    if(hit?.key!==key){const stored=await tcache.get('q',slot,key);
+      if(stored?.bytes)fresh.set(slot,{key,bytes:stored.bytes,height:stored.height});
+      else{const {bytes}=await generate(structuredClone(value),own,{quiet:true,standard:standardOverride}),doc=new Document(bytes);
+        try{fresh.set(slot,{key,bytes,height:questionPageMetrics(doc,own).usedHeightMm});}finally{doc.free();}const e=fresh.get(slot);tcache.put('q',slot,key,{bytes:e.bytes,height:e.height});}}
     const entry=fresh.get(slot);return {bytes:entry.bytes,profile:own,height:entry.height,saved:false};
   }
   // 문항 하나를 한글 엔진이 그린 그림(SVG)으로(10-24 지적 10): 시험지 화면의 문항 카드·미리보기가 가운데 조판 쪽과 똑같아 보이게.
@@ -553,6 +565,7 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
       for(const [k,x] of items.entries()){if(std(x.q).id===fstd.id&&x.saved&&x.profile?.paper===fstd.paper.size){x.bytes=widenForForm(Document,x.bytes,fstd);continue;}progress({stage:'form',i:k+1,n:items.length});await step();const e=await sheetEntry(Document,x.q,fstd.paper.size,fstd);Object.assign(x,{bytes:widenForForm(Document,e.bytes,fstd),profile:e.profile,height:(Number.isFinite(e.height)?e.height:60)+x.after,saved:false});rewidth.push(x.q.number);}
       // 묶은 결과 기억(11-02): 묶기·점검이 쪽 그리기 시간의 대부분(20문항 약 10초)이라, 문항·양식이 그대로면 지난번 묶은 문서를 다시 연다.
       const akey=JSON.stringify([form.id||'',form.bytes?.length||0,form.keep||{},fstd,items.map(x=>[x.id,contentKey(x.q),x.bytes?.length||0,x.after,x.breakBefore])]);
+      if(assembled?.key!==akey){const st=await tcache.get('a','form|'+(exam?.id||'')+'|'+(form.id||''),akey);if(st?.bytes)assembled={key:akey,bytes:st.bytes,meta:st.meta,columns:st.columns};}
       if(assembled?.key===akey){sheet={...sheet,paper:fstd.paper.size,columns:assembled.columns};built={...assembled.meta,document:new Document(assembled.bytes),pages:[]};}
       else{progress({stage:'place'});
       const first=await openForm(form.bytes,'');let structure;try{structure=formStructure(first);}finally{first.free();}
@@ -563,7 +576,7 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
       let againBytes;try{againBytes=exportLayoutHwpx(b.document,XLSX.CFB);}finally{b.document.free();}
       // 표만 든 문단이 앞 글보다 위로 올라가는 양식(원안지 r01)은 그 문단에 줄 정보를 준다(anchorRaisedTables, 11-02). 보낼 때와 같은 처리.
       againBytes=anchorRaisedTables(againBytes,XLSX.CFB,Document);
-      const {document:_,...meta}=b;assembled={key:akey,bytes:againBytes,meta,columns:sheet.columns};
+      const {document:_,...meta}=b;assembled={key:akey,bytes:againBytes,meta,columns:sheet.columns};try{tcache.put('a','form|'+(exam?.id||'')+'|'+(form.id||''),akey,{bytes:againBytes,meta,columns:sheet.columns});}catch{}
       built={...b,document:new Document(againBytes),pages:[]};
       }
     }else{
@@ -572,9 +585,10 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
     // 11-06(11-04 지적): 기본 틀 시험지도 묶은 결과를 기억한다 — 정답·해설·성취기준처럼 지면에 안 나오는 값만 고치면 다시 묶지 않는다
     // (열쇠 = 쪽 모양·문항별 지면 내용·조판 크기·여백·나눔). 학교 양식 쪽(assembled)과 같은 방식.
     const pkey=JSON.stringify([sheet,items.map(x=>[x.id,contentKey(x.q),x.bytes?.length||0,x.after,x.breakBefore])]);
+    if(assembledPlain?.key!==pkey){const st=await tcache.get('a','plain|'+(exam?.id||''),pkey);if(st?.bytes)assembledPlain={key:pkey,bytes:st.bytes,meta:st.meta};}
     if(assembledPlain?.key===pkey)built={...assembledPlain.meta,document:new Document(assembledPlain.bytes),pages:[]};
     else{progress({stage:'place'});built=await assembleExamChecked(Document,{items,sheet,open:item=>new Document(item.bytes),between:step});
-      try{const {document:_,...meta}=built;assembledPlain={key:pkey,bytes:exportLayoutHwpx(built.document,XLSX.CFB),meta};}catch{assembledPlain=null;}}
+      try{const {document:_,...meta}=built;assembledPlain={key:pkey,bytes:exportLayoutHwpx(built.document,XLSX.CFB),meta};tcache.put('a','plain|'+(exam?.id||''),pkey,{bytes:assembledPlain.bytes,meta});}catch{assembledPlain=null;}}
     }
     const {document:target,ranges,pages,moved,tall}=built;
     try{
