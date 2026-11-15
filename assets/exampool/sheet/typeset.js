@@ -739,6 +739,8 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
     if(!bridge||!ready||loading||!q||!figure?.data)return false;const b=q.blocks.find(v=>v.id===id);if(!b?.figure?.data)return false;const item=placer?.itemOf?.(id);if(!item)return false;
     const size=async src=>{const i=new Image();i.src=src;await i.decode();return {w:i.naturalWidth,h:i.naturalHeight};};const [a,n]=await Promise.all([size(b.figure.data),size(figure.data)]);
     if(!(a.w>0&&n.w>0))return false;
+    // 11-15: 비율이 많이(8% 넘게) 바뀐 그림(AI 복원 결과 등 — 납작한 그림 → 4:3)은 빠른 길로 끼우면 높이만 늘어 아래 글과 겹쳤다 → 그 문항을 다시 조판한다.
+    {const ra=a.h/a.w,rn=n.h/n.w;if(Math.abs(rn-ra)/ra>.08)return false;}
     const bin=atob(String(figure.data).split(',')[1]||''),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
     // 11-15: 라벨로 그림 영역 비율이 바뀌어도 다시 조판하지 않는다 — 폭은 그대로 두고 높이만 새 비율로 맞춘다(전에는 2% 넘게 바뀌면 문서 전체를 다시 조판해 느렸다).
     bridge.transaction('swap-figure',()=>{const pr=parse(bridge.properties(item.ref));bridge.writeFigure(item.ref,{bytes,pixelWidth:n.w,pixelHeight:n.h},'card-'+id);

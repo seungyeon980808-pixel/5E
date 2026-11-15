@@ -65,6 +65,41 @@ export async function graphFigure(graph, name, { state, services }) {
   return figureFrom(source, bounds, page.name, services, state);
 }
 
+// 11-15(시안 flow-1115 C): AI 이미지 결과 + 라벨 계획 → 카드 칸 그림. 한글에 넣을 때(rhwp-exam-workspace applyAiInPlace)와 같은 함수로
+// 그림(바탕) + 편집할 수 있는 5E 라벨 객체를 만들고, 그 원본을 품은 PNG로 넣는다 — 간이 편집기에서 라벨을 골라 바로 고칠 수 있다.
+// (예전에는 결과 그림 한 장만 넣어 라벨이 그림에 박혔다.)
+export async function labeledImageFigure(detail, name, { state, services, originalSrc = null }) {
+  const { data } = detail.image || {};
+  if (!String(data || '').startsWith('data:image/')) throw new Error('넣을 결과 그림을 읽지 못했습니다.');
+  const { width, height } = await imageSize(data);
+  const source = copy(services.serialize(state.get()));
+  source.pages = source.pages.filter(p => p.id === source.activePageId);
+  services.prepareLoadedProject(source);
+  const page = source.pages[0], id = crypto.randomUUID(), layerId = page.layers?.find(l => l.visible !== false)?.id || page.layers?.[0]?.id || 1;
+  const w = 100, h = 100 * height / Math.max(1, width);
+  page.id = `card_${id}`; source.activePageId = page.id; page.name = String(name || 'AI 결과').replace(/\.png$/i, '');
+  page.artboard = { w, h }; page.guides = []; page.meta = { number: '', points: '' };
+  const imageObject = { id: `image_${id}`, type: 'image', src: data, x: -w / 2, y: -h / 2, w, h, rotation: 0, mode: 'edit', opacity: 1, exportable: true, aspectLocked: true, cutouts: [], layerId, order: 0, locked: false };
+  const plan = detail.labelPlan;
+  if (!plan?.labels?.length) { page.objects = [imageObject]; page.groups = []; return figureFrom(source, { x: -w / 2, y: -h / 2, w, h }, page.name, services, state); }
+  const { prepareImageCandidateRevision } = await import('./image-paste.js?v=1.7.0-four-session-integration');
+  // 라벨 크기: 원본 그림에서 잰 라벨 글자 높이(없으면 AI 상자 높이) × 그림 높이(mm). 한 그림 안은 한 크기(중앙값) — 한글 쪽과 같은 규칙.
+  let measured = [];
+  if (originalSrc) { try { const { measureSourceLabelHeights } = await import('./ai-label-reframe.js?v=1.7.0-four-session-integration'); measured = await measureSourceLabelHeights({ sourceDataUrl: originalSrc, labels: plan.labels }); } catch { measured = []; } }
+  const glyph = new Map(measured.map(m => [m.id, m.h]));
+  const heights = plan.labels.filter(l => glyph.get(l.id) > 0 || !String(l.text).includes('\n') && l.typography?.bounds?.h > 0).map(l => {
+    const hangul = /[가-힣]/.test(l.text), hn = glyph.get(l.id) || l.typography.bounds.h;
+    return hn * h / (hangul ? .88 : /^[A-Z0-9]+$/.test(String(l.text).trim()) ? .72 : .8); }).sort((a, b) => a - b);
+  const labelSizeMm = heights.length ? Math.min(5, Math.max(1.8, heights[Math.floor(heights.length / 2)])) : undefined;
+  const made = await prepareImageCandidateRevision(imageObject, data, { editableLabelPlan: plan, aiTaskId: detail.aiTaskId, aiCandidateId: detail.aiCandidateId, labelSizeMm });
+  page.objects = [{ ...made.image, layerId }, ...made.labels.map(label => ({ ...label, layerId }))]; page.groups = [];
+  // 선 없는 AI 라벨도 간이 편집기의 라벨러로 고칠 수 있게 「선 없는 지시선 라벨」로(모양은 같음).
+  try { const { convertTextLabelsToLabelers } = await import('./rhwp-exam-annotations.js?v=1.7.0-four-session-integration'); const { nativeLabelCenter } = await import('./ai-label-typography.js?v=1.7.0-four-session-integration'); convertTextLabelsToLabelers(source, nativeLabelCenter); } catch {}
+  const c = getContentBounds({ ...state.get(), ...page, objects: page.objects }, OPTIONS, 1) || { x: -w / 2, y: -h / 2, w, h };
+  const x0 = Math.min(-w / 2, c.x), y0 = Math.min(-h / 2, c.y);
+  return figureFrom(source, { x: x0, y: y0, w: Math.max(w / 2, c.x + c.w) - x0, h: Math.max(h / 2, c.y + c.h) - y0 }, page.name, services, state);
+}
+
 function draftOf(page, bounds) {
   const layerId = page.layers?.find(l => l.visible !== false)?.id || page.layers?.[0]?.id || 1;
   const draft = { objects: copy(page.objects), groups: copy(page.groups || []), layers: copy(page.layers || []), artboard: copy(page.artboard), viewBox: { ...bounds },

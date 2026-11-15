@@ -102,6 +102,8 @@ export function initQuestionSheet(state,services,examWorkspace){
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
       frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);});
   // 11-14 시안 review-1114b 2번: 문항 카드 칸에서 연 AI 작업의 상태(도는 중·끝·실패)를 출제 칸에 알려 칸 위에 표시한다.
+  // 카드 그림에서 AI 창을 연 원본 그림(라벨 크기를 원본 글자 높이로 맞출 때 씀). 열쇠 = 문항|칸.
+  const cardRefs=new Map();window.addEventListener('5e:ai-open-reference',e=>{const c=e.detail?.hwpTarget?.examCard,src=e.detail?.reference?.dataUrl;if(c&&src){cardRefs.set(c.qid+'|'+c.key,src);if(cardRefs.size>40)cardRefs.delete(cardRefs.keys().next().value);}});
   window.addEventListener('5e:hwp-ai-task',e=>{const {taskId,workState,target}=e.detail||{},card=target?.examCard;if(!card||!taskId||!frame?.contentWindow)return;
     if(!['busy','completed','failed'].includes(workState))return;
     frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'ai-job',qid:card.qid,key:card.key,taskId,state:workState,kind:target.kind==='graph'?'graph':'image',label:target.label||''},OWN);});
@@ -114,6 +116,11 @@ export function initQuestionSheet(state,services,examWorkspace){
       catch(error){frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:card.qid,key:card.key,error:`그래프를 칸에 넣지 못했습니다: ${error.message||error} — AI 창의 「캔버스에 넣기」로 그래프를 고친 뒤 다시 넣어 보세요.`},OWN);}
       return;}
     if(!d.image?.data){frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:card.qid,key:card.key,error:'넣을 결과 그림을 찾지 못했습니다. AI 창에서 결과를 다시 고른 뒤 넣으세요.'},OWN);return;}
+    // 11-15(시안 flow-1115 C): 라벨 복원 결과면 그림 + 편집할 수 있는 라벨 객체(원본을 품은 그림)로 — 간이 편집기에서 라벨을 바로 고친다.
+    if(d.labelPlan?.labels?.length){host.hidden=false;syncAppLock?.();
+      try{const {labeledImageFigure}=await import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration');const figure=await labeledImageFigure(d,d.name||'AI 결과',{state,services,originalSrc:cardRefs.get(card.qid+'|'+card.key)||null});
+        frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'figure-ready',qid:card.qid,key:card.key,figure},OWN);return;}
+      catch(error){console.warn('[5E_exam] 라벨 객체로 넣지 못해 그림으로 넣습니다',error);}}
     let {width,height}=d.image;if(!(width>0&&height>0)){try{const i=new Image();i.src=d.image.data;await i.decode();width=i.naturalWidth;height=i.naturalHeight;}catch{}}
     host.hidden=false;syncAppLock?.();
     frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'figure-ready',qid:card.qid,key:card.key,figure:{name:d.name||'AI 결과',data:d.image.data,width,height}},OWN);});
