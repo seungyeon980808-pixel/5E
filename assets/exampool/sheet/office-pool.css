@@ -765,12 +765,15 @@ body.card-locked #card-view .cv-grid textarea,body.card-locked #card-view .cv-gr
 #exam-sheet.ex-nogaps .pv-gapz:not(.pend){visibility:hidden}
 .ex-gapseg{margin-right:8px}
 /* 11-15 시험지 로딩 창(sheet-loading.js): 흐린 쪽 그림 + 단계 이름 + 쉬지 않는 막대 + 단계 줄 */
-.pv-load2{gap:12px;padding:26px 0 8px}
-.pv-load2 .pv-blur{width:min(560px,82%);aspect-ratio:520/368;border-radius:8px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.35)}
-.pv-load2 .pv-blur .br-bar{display:none}
-.pv-load2 b{font-size:14px;margin-top:4px}
-.pv-load2 .pv-bar{width:min(420px,70%);height:4px}
-.pv-load2 .pv-bar i{width:100%;transform:scaleX(0);transform-origin:left center;transition:none}
+/* 11-15(시안 로딩창-1115): 흐린 쪽 그림은 진짜 쪽과 같은 자리·크기(.pv-ldpg는 .pv-pg 폭 규칙을 함께 씀), 단계 글씨는 가운데 작은 판 */
+#exam-sheet.pv-loading{position:relative}
+.pv-ldpg{position:relative;margin:0;width:min(100%,640px);border-radius:4px;overflow:hidden;background:#2a3038;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.pv-ldpg .pv-blur{position:absolute;inset:0}
+.pv-ldpg .pv-blur .br-bar{display:none}
+.pv-ldpill{position:absolute;left:50%;transform:translate(-50%,-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:7px;padding:12px 20px 10px;border-radius:12px;background:rgba(13,17,23,.8);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 6px 24px rgba(0,0,0,.4);color:var(--ds-ink);pointer-events:none}
+.pv-ldpill b{font-size:14px;font-weight:600}
+.pv-ldpill .pv-bar{width:220px;height:4px}
+.pv-ldpill .pv-bar i{width:100%;transform:scaleX(0);transform-origin:left center;transition:none}
 .pv-steps{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;font-size:11.5px;color:var(--ds-ink-3)}
 .pv-steps em{font-style:normal;opacity:.6}.pv-steps .on{color:var(--ds-ink)}.pv-steps .done{color:#7ee787}
 /* 11-15 위쪽 줄 AI 그림 작업 알림(ai-jobs-top.js) — 은은한 단추 */

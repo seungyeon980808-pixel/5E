@@ -206,8 +206,8 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-desk{flex:1;overflow:auto;background:#1b2028;padding:20px 16px 40px;container-type:size}
 .ex-desk .pv-sheet{gap:26px}
 .ex-zoom-page{flex-direction:row!important;flex-wrap:wrap;justify-content:center;align-items:flex-start!important}
-.ex-zoom-page .pv-pg{width:calc(min(calc(100cqw - 32px),calc((100cqh - 56px) * .707)) * var(--ex-scale,1))}
-.ex-zoom-width .pv-pg{width:calc(min(100%,760px) * var(--ex-scale,1));max-width:none}
+.ex-zoom-page :is(.pv-pg,.pv-ldpg){width:calc(min(calc(100cqw - 32px),calc((100cqh - 56px) * .707)) * var(--ex-scale,1))}
+.ex-zoom-width :is(.pv-pg,.pv-ldpg){width:calc(min(100%,760px) * var(--ex-scale,1));max-width:none}
 .ex-rp{flex:1;overflow:auto}
 .ex-sum{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--ds-line)}
 .ex-sum .big{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
@@ -251,7 +251,7 @@ details.ef-more summary::-webkit-details-marker{display:none}
 .ex-aib .ai-ic .ico{width:16px;height:16px}
 .ex-aib b{font-size:12.5px;font-weight:500;display:block;color:var(--ds-ink)}.ex-aib small{color:var(--ds-ink-3);font-size:11.5px}
 .ex-aib .go2{margin-left:auto;color:var(--ds-ink-3)}
-@media (max-width:1100px){.ex-s3{grid-template-columns:1fr;height:auto}.ex-desk{container-type:normal;min-height:600px}.ex-zoom-page .pv-pg{width:min(100%,640px)}}
+@media (max-width:1100px){.ex-s3{grid-template-columns:1fr;height:auto}.ex-desk{container-type:normal;min-height:600px}.ex-zoom-page :is(.pv-pg,.pv-ldpg){width:min(100%,640px)}}
 /* 한글 엔진이 그린 문항 카드(10-24 지적 10): 그림이 카드 폭에 맞음 — HTML 미리보기의 축소(zoom)를 쓰지 않는다 */
 .ep-doc.is-engine{zoom:1!important;padding:6px 6px 4px;width:auto!important;min-height:0}
 .ep-doc.is-engine svg{display:block;width:100%;height:auto}
@@ -403,6 +403,7 @@ div.ef-new-l{flex-direction:row;align-items:baseline;gap:8px;margin-top:6px}.ef-
   .ex-s3 .ex-cgrid{grid-template-columns:1fr}
   .ex-s3 .ef-pane:first-child .ef-ph small{display:none}
   .ex-zoom-page:has(.pv-pg ~ .pv-pg) .pv-pg{width:calc(min(calc((100cqw - 58px) / 2),calc((100cqh - 56px) * .707)) * var(--ex-scale,1))}
+  .ex-zoom-page:has(.pv-ldpg ~ .pv-ldpg) .pv-ldpg{width:calc(min(calc((100cqw - 58px) / 2),calc((100cqh - 56px) * .707)) * var(--ex-scale,1))}
   .ex-s3 .ex-cc .ex-th{max-height:132px;overflow:hidden}
 }
 .ex-checkfold{display:grid;place-items:center;width:26px;height:26px;margin-left:4px;padding:0;border:0;border-radius:6px;background:none;color:var(--ds-ink-3);cursor:pointer}
