@@ -282,8 +282,10 @@ export function createCardEditor(root,api){
   // 11-13 밤(시안 exam-fixes-1113 B ①): 조판 단추는 칸 그림 대신 쪽 그림 + 「조판」 글자. 켜지면 눌린 회색.
   const TS_ICO=()=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`;
   const FOLD_ICO='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M15 4.5v15M10 9.5l2.5 2.5L10 14.5"/></svg>';
-  function barHtml(){const dis=!!(bench.board&&!bench.bfold),on=tsOn();
-    return `<div class="cv-bar">${paneRole('card','문항 카드')}<span class="sp"></span><button type="button" class="cv-headbtn cv-tsbtn${on?' on':''}" data-cv="toggle-right" aria-pressed="${on}"${dis?' disabled':''} title="${dis?'아이디어 판과 나란히 쓸 때는 조판 미리보기가 카드 뒤에 접혀 있습니다':on?'조판 미리보기 접기':'조판 미리보기 열기 — 시험지에 찍힐 모양·자간·문단 간격'}" aria-label="조판 미리보기 켜고 끄기">${TS_ICO()}<span>조판</span></button>${dis?`<button type="button" class="cv-headbtn" data-cv="card-fold" title="문항 카드 접기 (판을 넓게)" aria-label="문항 카드 접기">${FOLD_ICO}</button>`:''}<button type="button" class="cv-headbtn" data-cv="card-close" title="문항 카드 닫기" aria-label="문항 카드 닫기">${ICON.close}</button></div>`;
+  function barHtml(){const dis=!!(bench.board&&!bench.bfold),on=tsOn(),x=bench.card?q():null;
+    // 11-15(시안 regap-1115 B): 「✓ 저장하고 시험지로」(시험지에서 연 카드) · 「✓ 저장하고 닫기」(그 밖) — 지금 내용을 저장으로 확정하고 돌아간다(⌘Enter).
+    const back=x?api.saveBackLabel?.(x):'',mk=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent||'')?'⌘':'Ctrl';
+    return `<div class="cv-bar">${paneRole('card','문항 카드')}<span class="sp"></span>${back?`<button type="button" class="cv-savebtn" data-cv="save-back" title="고친 내용을 저장하고 ${back==='저장하고 시험지로'?'시험지의 이 문항 자리로 돌아갑니다':'카드를 닫습니다'} (${mk}Enter)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>${back}</span><kbd>${mk}Enter</kbd></button>`:''}<button type="button" class="cv-headbtn cv-tsbtn${on?' on':''}" data-cv="toggle-right" aria-pressed="${on}"${dis?' disabled':''} title="${dis?'아이디어 판과 나란히 쓸 때는 조판 미리보기가 카드 뒤에 접혀 있습니다':on?'조판 미리보기 접기':'조판 미리보기 열기 — 시험지에 찍힐 모양·자간·문단 간격'}" aria-label="조판 미리보기 켜고 끄기">${TS_ICO()}<span>조판</span></button>${dis?`<button type="button" class="cv-headbtn" data-cv="card-fold" title="문항 카드 접기 (판을 넓게)" aria-label="문항 카드 접기">${FOLD_ICO}</button>`:''}<button type="button" class="cv-headbtn" data-cv="card-close" title="문항 카드 닫기" aria-label="문항 카드 닫기">${ICON.close}</button></div>`;
   }
   // 시험지 전체 보기: 조판 칸(미리보기)이 열려 있을 때만. 그때 가운데 문항 카드는 세로 띠로 접히고 조판 칸이 그 자리까지 넓어진다.
   // 11-13 밤: 조판 미리보기는 문항 카드에 딸린 서랍 — 라이브러리·판이 열려 있으면 카드 뒤에 접혀 있다(열어 둔 것은 기억).
@@ -454,6 +456,9 @@ export function createCardEditor(root,api){
   async function closeCard(){const x=q();
     if(x&&cardSnap?.id===x.id&&snapJson(x)!==cardSnap.json){const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.full||cardSnap.json));}
     bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;lastClose='card';render();if(x)api.dropIfBlank?.(x.id);}
+  // 저장하고 돌아가기: 지금 내용을 기준본으로 삼아(닫을 때 묻지 않음) 시험지로 돌아가거나 카드를 닫는다.
+  function saveBack(){const x=q();if(!x)return;cardSnap={id:x.id,json:snapJson(x),full:JSON.stringify(x)};
+    if(api.saveBackLabel?.(x)==='저장하고 시험지로'){api.saveBack?.(x.id);return;}void closeCard();api.status?.('저장했습니다.');}
   async function closeBoard(){api.ideaBoard.endEdit?.();const b=(api.data().ideas||[]).find(v=>v.id===bench.board);
     if(b&&boardSnap?.id===b.id&&boardJson(b)!==boardSnap.json){const a=await askSave(`아이디어 「${b.title}」`);if(a==='cancel')return;if(a==='discard')api.restoreBoard?.(b.id,JSON.parse(boardSnap.json));}
     bench.board=null;bench.fold=false;bench.bfold=false;boardSnap=null;lastClose='board';render();}
@@ -838,6 +843,7 @@ export function createCardEditor(root,api){
     const b=e.target.closest('button');if(!b)return;const x=q(),d=b.dataset;
     if(d.cvOpen){api.open(d.cvOpen);return;}
     if(d.cv==='card-close'){void closeCard();return;}
+    if(d.cv==='save-back'){saveBack();return;}
     if(d.cv==='card-fold'){bench.fold=true;render();return;}
     if(d.cv==='board-unfold'){bench.bfold=false;bench.fold=false;if(panels.lib){panels.lib=false;store.set('lib',false);api.navChanged?.();}render();return;}
     if(d.cv==='card-unfold'){if(bench.fold)bench.fold=false;else{panels.lib=false;store.set('lib',false);api.navChanged?.();api.status('문항 카드를 폈습니다 · 라이브러리는 접었습니다(왼쪽 메뉴에서 다시 켜기).');}render();return;}
@@ -1220,7 +1226,7 @@ export function createCardEditor(root,api){
     // 11-15: 한글 창에서 고친 표 칸 글도 카드 자료 칸에 바로 보이게(전에는 입력칸만 맞추고 자료 칸 그림은 옛 모양 그대로였다). 표 편집 중인 칸은 건드리지 않는다.
     const mat=root.querySelector('.cv-matrow .cv-v');if(mat&&!mat.contains(document.activeElement)&&!tableEdit){const html=slotsHtml(x);if(mat.innerHTML!==html)mat.innerHTML=html;}
     refreshLight();}
-  return {render,refreshLight,setView,syncFields,
+  return {saveBack,render,refreshLight,setView,syncFields,
     // 11-12 작업 칸
     insertClipFigure,clipLabel,flashTile,clearTileSel:()=>{if(tileSel)setTileSel(null);},clipCardOn:()=>!!(bench.card&&q())&&!(bench.board&&!bench.bfold&&(panels.lib||bench.fold)),clipBoardOn:()=>!!(bench.board&&!bench.bfold),
     confirmSwitch,confirmBoardSwitch,setCard(on){if(on&&!bench.card){panels.rightOpen=true;store.set('rightOpen',true);}/* 11-14: 문항 카드를 열면 조판도 같이 연다(카드 2 : 조판 1이 기본) */bench.card=!!on;if(!on){bench.fold=false;bench.bfold=false;cardSnap=null;}else if(bench.board){bench.bfold=true;bench.fold=false;}},openBoard,closeCard,closeBoard,closeCardQuiet(){bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;},
