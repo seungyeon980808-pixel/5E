@@ -43,7 +43,7 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
         <label>표현<select data-label-content aria-label="라벨 표현"><option value="plain">텍스트</option><option value="formula">수식</option></select></label>
         <label>종류<select data-label-role aria-label="라벨 종류"></select></label>
         <label class="ai-label-edit-wide">글꼴<select data-label-font aria-label="라벨 글꼴"><option value="">종류에 맞게</option></select></label>
-        <label>크기(px)<input type="number" min="1" max="1000" step="1" data-label-size aria-label="라벨 크기"></label>
+        <label title="그림의 모든 라벨이 같이 바뀝니다 · ⌥를 누른 채 바꾸면 이 라벨만">크기(pt)<input type="number" min="3" max="72" step="0.5" data-label-size aria-label="라벨 크기(pt)"></label>
         <label>회전(°)<input type="number" min="-180" max="180" step="1" data-label-rotation aria-label="라벨 회전"></label>
       </div>
       <div class="ai-label-edit-tools"><button type="button" data-label-bold aria-pressed="false">굵게</button><button type="button" data-label-italic aria-pressed="false">기울임</button><button type="button" data-label-sub>아래첨자</button><button type="button" data-label-sup>위첨자</button></div>
@@ -61,7 +61,12 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
       </div></details>
       <div class="ai-label-edit-tools ai-label-edit-removal"><button type="button" data-label-duplicate>복제</button><button type="button" data-label-delete>라벨 삭제</button></div>
     </div>`;
-  panel.querySelector('.ai-side-tabs')?.after(section);
+  // 11-15: 오른쪽 칸이 「그림 설정」으로 바뀌며 옛 탭 줄(.ai-side-tabs)이 없어져 편집 칸이 붙지 않았다(「라벨 편집」을 누르면 오른쪽이 텅 빔) — 칸 제목 아래에 붙인다.
+  { const tabs = panel.querySelector('.ai-side-tabs'); if (tabs) tabs.after(section); else (panel.querySelector('.ai-conversation-caption') || panel.querySelector('.ai-conversation')?.firstElementChild)?.after(section); }
+  // 크기는 pt — 카드·한글에 넣을 때와 같은 기준(그림 폭 100mm)으로 바꿔 보인다. 저장은 지금처럼 그림 높이에 대한 비율.
+  const ptOf = r => +(r * 100 * image.naturalHeight / image.naturalWidth * 72 / 25.4).toFixed(1);
+  const ratioOf = pt => pt * 25.4 / 72 / (100 * image.naturalHeight / image.naturalWidth);
+  let altHeld = false;
   const q = name => section.querySelector(`[data-label-${name}]`);
   for (const [value,label] of roles) for (const name of ['role','script-role']) {
     const option = doc.createElement('option'); option.value = value; option.textContent = label; q(name).append(option);
@@ -178,7 +183,7 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
     const typography = label.typography || {};
     const values = { text:label.text, content:label.contentMode, role:typography.role || object?.aiLabelRole || 'text',
       font:label.manualStyle ? typography.font || '' : TEXT_FONTS.find(font => font.css === object?.fontFamily)?.label || '',
-      size:Math.round((label.manualStyle?.size || (object?.fontSize || object?.labelSize || 3.5)/frame.h)*image.naturalHeight),
+      size:ptOf(label.manualStyle?.size || (object?.fontSize || object?.labelSize || 3.5)/frame.h),
       rotation:typography.rotation || 0, x:+(label.position.x*100).toFixed(1), y:+(label.position.y*100).toFixed(1),
       spacing:object?.letterSpacing || 0, 'line-height':object?.labelLineHeight || 1.2, mode:label.mode,
       arrow:label.leaderRoutes?.[0]?.end || (label.leaderArrowHead === 'target' ? 'filled-arrow' : 'none'), dash:label.leaderDash || 'solid',
@@ -274,11 +279,13 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
         manualStyle:{size:24/image.naturalHeight},leaderArrowHead:'none' });
     });
   }
+  listen(doc,'keydown',event => { if (event.key === 'Alt') altHeld = true; },true); listen(doc,'keyup',event => { if (event.key === 'Alt') altHeld = false; },true);
+  listen(win,'blur',() => { altHeld = false; });
   listen(entry,'click',() => setActive(!active)); listen(q('close'),'click',() => setActive(false));
   listen(q('add'),'click',() => void add(false)); listen(q('add-leader'),'click',() => void add(true));
   listen(q('text'),'change',() => void changeSelected(label => changeLabelText(label,q('text').value)));
   for (const key of ['content','role','font','size','rotation','spacing','line-height','mode','arrow','dash','x','y','anchor-x','anchor-y']) {
-    listen(q(key),'change',() => void changeSelected(label => {
+    listen(q(key),'change',() => void changeSelected((label,plan) => {
       const value = q(key).value;
       if (q(key).type === 'number' && (!value.trim() || !q(key).checkValidity())) throw new Error('입력 범위 안의 숫자를 입력하세요.');
       if (key === 'content') { label.contentMode = value; delete label.typography.runs; delete label.typography.letterSpacing; }
@@ -293,7 +300,8 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
         delete label.typography.fontProfile; delete label.manualStyle.defaultFontPinned;
         if (value) label.typography.font = value; else delete label.typography.font;
       }
-      else if (key === 'size') label.manualStyle.size = Number(value)/image.naturalHeight;
+      // 한 그림 안은 한 크기(11-15 결정): 크기를 바꾸면 모든 라벨이 같이 바뀐다. ⌥를 누른 채 바꾸면 이 라벨만.
+      else if (key === 'size') { const r = ratioOf(Number(value)); if (altHeld) label.manualStyle.size = r; else for (const other of plan.labels) { other.manualStyle ||= { size:r }; other.manualStyle.size = r; } }
       else if (key === 'rotation') label.typography.rotation = Number(value);
       else if (key === 'spacing') label.typography.letterSpacing = Number(value);
       else if (key === 'line-height') label.typography.lineHeight = Number(value);
