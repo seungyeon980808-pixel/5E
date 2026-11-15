@@ -64,11 +64,7 @@
     "workflow": ".github/workflows/web-release.yml",
     "requiresSeparateDeploymentApproval": true,
     "candidateVersion": "1.7.0",
-    "preservePaths": [
-      "preview",
-      "mobile",
-      "1.6.0"
-    ],
+    "preservePaths": [],
     "buildType": "workflow"
   },
   "previousWebDeployment": {
