@@ -271,7 +271,12 @@ function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.quest
 // 화면: cards(분류별 카드) · desk(5E_cell·5E_hwp 작업대) · exam(시험지 구성). 처음에는 문항이 있으면 카드로 연다.
 let view={name:'library',status:'drafting',query:'',type:'',stage:'all',examId:null};
 const appView=()=>view;// 쪽 그리기 안에서 지역 이름 view(그린 쪽)와 겹치지 않게
-function renderView(){
+// 11-15(시안 문항목록-시험지 C): 시험지 문항 카드 — 위쪽 경로 옆 ‹ 3/32 › 로 시험지 순서대로 넘기고, 「시험지로 돌아가기」.
+function paintExamStep(){const el=$('#crumb-step');if(!el)return;const exam=view.name==='card'&&view.examId?examById(data,view.examId):null,at=exam&&current?exam.items.indexOf(current.id):-1;
+  el.hidden=at<0;if(at<0)return;el.querySelector('b').textContent=`${at+1} / ${exam.items.length}`;el.querySelector('[data-step="-1"]').disabled=at<=0;el.querySelector('[data-step="1"]').disabled=at>=exam.items.length-1;}
+$('#crumb-step')?.addEventListener('click',e=>{const b=e.target.closest('[data-step]');const exam=view.examId&&examById(data,view.examId);if(!b||!exam||!current)return;
+  if(b.dataset.step==='back'){show('exam');return;}const at=exam.items.indexOf(current.id),to=exam.items[at+Number(b.dataset.step)];if(to)openCard(to);});
+function renderView(){queueMicrotask(paintLockBar);queueMicrotask(paintExamStep);
   const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view',ideas:'#ideas-view',trash:'#trash-view'};
   view.libOn=!!cardEditor.libOn?.();view.benchBusy=!!cardEditor.benchBusy?.();
   for(const [name,sel] of Object.entries(panes))$(sel).hidden=view.name!==name;
@@ -314,6 +319,17 @@ function renderView(){
   $('#workflow').disabled=!current||view.name!=='desk';$('#workflow').value=current?workflowOf(current):'draft';
   document.querySelector('.workflow-pick').hidden=view.name!=='desk';
 }
+// 11-15(시안 문항목록-시험지 D): 시험 종료한 시험지의 문항은 읽기 전용 — 문항마다 마감은 두지 않고 시험지 상태 하나로만 잠근다.
+// 카드를 열면 위에 띠: 「복제해서 작업대로 꺼내기」(복제본을 열어 고침) · 「출제 중으로 되돌리기」.
+const lockedExam=q=>{const e=q&&examOf(data,q.id);return e&&e.status==='ended'?e:null;};
+function lockedNotice(q){const e=lockedExam(q);if(!e)return false;status(`「${e.title}」은(는) 시험이 끝난 시험지라 문항은 읽기 전용입니다 — 위 띠에서 「복제해서 작업대로 꺼내기」나 「출제 중으로 되돌리기」를 누르세요.`,true);return true;}
+function paintLockBar(){let bar=document.getElementById('lock-bar');const e=view.name==='card'?lockedExam(current):null;
+  if(!e){bar?.remove();document.body.classList.remove('card-locked');return;}
+  if(!bar){bar=document.createElement('div');bar.id='lock-bar';bar.setAttribute('role','status');document.body.append(bar);
+    bar.addEventListener('click',ev=>{const b=ev.target.closest('[data-lock]');if(!b||!current)return;const ex=lockedExam(current);if(!ex)return;
+      if(b.dataset.lock==='reopen'){if(mutate(()=>{ex.status='drafting';ex.updatedAt=new Date().toISOString();}))status(`「${ex.title}」을(를) 출제 중으로 되돌렸습니다 · 이제 고칠 수 있습니다`);}
+      else{const c=duplicateQuestion(current);c.workflow='draft';c.createdAt=c.updatedAt=new Date().toISOString();delete c.origin;if(mutate(()=>{data.questions.push(c);})){status(`복제본을 작업대(출제 중)에 만들었습니다 · 원래 문항은 「${ex.title}」에 그대로 있습니다`);view.examId=null;openCard(c.id);}}});}
+  bar.innerHTML=`<span>🔒 「${E(e.title)}」은(는) 시험이 끝난 시험지라 문항은 읽기 전용입니다.</span><button type="button" data-lock="dup">복제해서 작업대로 꺼내기</button><button type="button" data-lock="reopen">출제 중으로 되돌리기</button>`;document.body.classList.add('card-locked');}
 function show(name,extra={}){if(name!=='desk'&&grid?.finish()===false)return;view={...view,...extra,name};if(name==='desk'&&deskStale)renderDesk();renderView();if(name==='desk'){grid?.refresh({questionId:current?.id});}}
 // 엑셀식 시트(줄·세부·표 시트·격자)는 그 화면이 보일 때만 그린다. 다른 화면에서는 미뤄 두었다가 show('desk')에서 그린다
 // (문항 150개면 카드에서 단추 하나 누를 때마다 숨은 시트를 다시 그리느라 50ms·느린 컴퓨터 300ms가 들었다).
@@ -541,6 +557,14 @@ function askDelete(arg){const ids=[].concat(arg).filter(id=>data.questions.some(
     if(!mutate(()=>{const at2=new Date().toISOString();for(const q of qs)data.trash.questions.unshift({q,at:at2,examId:examOf(data,q.id)?.id||null});data.questions=data.questions.filter(q=>!gone.has(q.id));for(const id of ids)removeFromExam(data,id);for(const e of data.exams)renumberExam(data,e.id);if(current&&gone.has(current.id))current=data.questions[Math.min(at,data.questions.length-1)]||null;}))return;
     if(current&&gone.has(current.id))cardEditor.closeCardQuiet?.();status(`${ids.length>1?`문항 ${ids.length}개를`:'문항을'} 휴지통으로 옮겼습니다 · 왼쪽 「휴지통」에서 ${TRASH_DAYS}일 동안 되살릴 수 있습니다.`);};
   $('#delete-dialog').showModal();}
+// 11-15(시안 문항목록-시험지 9): 묶음 통째로 휴지통 — 시험지와 거기 든 문항(또는 한 파일에서 불러온 문항)을 함께. ⌘Z·휴지통에서 되살림.
+function askDeleteGroup(examId,ids){const exam=examId?examById(data,examId):null;ids=ids.filter(id=>data.questions.some(q=>q.id===id));if(!exam&&!ids.length)return;
+  $('#delete-dialog h2').textContent='묶음 통째로 휴지통';
+  $('#delete-message').innerHTML=`<b>${exam?`시험지 「${E(exam.title)}」와 문항 ${ids.length}개`:`문항 ${ids.length}개`}를 휴지통으로 옮길까요?</b><br>${TRASH_DAYS}일 동안 휴지통에서 되살릴 수 있고, ⌘Z로 바로 되돌릴 수 있습니다.`;
+  pendingDelete=()=>{const gone=new Set(ids);if(!mutate(()=>{const at=new Date().toISOString();for(const q of data.questions.filter(q=>gone.has(q.id)))data.trash.questions.unshift({q,at,examId:exam?.id||examOf(data,q.id)?.id||null});data.questions=data.questions.filter(q=>!gone.has(q.id));for(const id of ids)removeFromExam(data,id);
+      if(exam){data.trash.exams.unshift({e:exam,at});data.exams=data.exams.filter(e=>e.id!==exam.id);}if(current&&gone.has(current.id))current=data.questions[0]||null;}))return;
+    if(exam&&view.examId===exam.id)view.examId=null;status(`${exam?`시험지 「${exam.title}」와 `:''}문항 ${ids.length}개를 휴지통으로 옮겼습니다 · ⌘Z로 되돌립니다`);};
+  $('#delete-dialog').showModal();}
 // 시험지 삭제(11-02 시안 ⑥): 담긴 문항은 지우지 않고 보관함(출제 중·출제 완료)으로 돌려보낸다. ⌘Z로 되살림.
 function askDeleteExam(id){const exam=examById(data,id);if(!exam)return;
   $('#delete-dialog h2').textContent='시험지 삭제';
@@ -582,16 +606,34 @@ $('#top-new-exam').addEventListener('click',()=>newExamDialog({seed:view.name===
 $('#send-hwp').onclick=()=>{const exam=examById(data,$('#send-hwp').dataset.exam);if(exam)void sendExam(exam);};
 $('#import').onclick=()=>$('#excel-file').click();$('#excel-file').onchange=async()=>{const file=$('#excel-file').files[0];if(!file)return;try{
   status('파일 확인 중…');if(/\.xlsx$/i.test(file.name))pending=await importExcel(window.XLSX,window.JSZip,await file.arrayBuffer());else{if(file.size>32*1024*1024)throw Error('32 MB 이하의 문항 파일을 선택하세요.');const v=JSON.parse(await file.text());if(v.format===FORMAT)pending={...validate(v),exams:Array.isArray(v.exams)?v.exams.map(e=>({...e,items:(e.items||[]).filter(id=>v.questions.some(q=>q.id===id))})):[],backedIds:v.questions.map(q=>q.id),warnings:[]};else{const {decodePoolBundle}=await import('../../../js/exampool-model.js?v=1.7.0-four-session-integration');const pack=decodePoolBundle(JSON.stringify(v));pending=validate({format:FORMAT,questions:pack.items.map(fromLegacy),documents:pack.resources.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))});pending.backedIds=pack.items.map(q=>q.id);pending.warnings=[];}}
-  const matches=pending.questions.filter(q=>data.questions.some(x=>x.id===q.id)).length;$('#import-count').textContent=`${pending.questions.length}문항 · ${pending.documents.length}자료${pending.exams?.length?` · 시험지 ${pending.exams.length}개`:''} · 기존 문항과 일치 ${matches}개${pending.warnings?.length?' · '+pending.warnings.join(' '):''}`;$('#import-preview').innerHTML='<table><thead><tr><th>번호</th><th>답안형</th><th>구성</th><th>발문</th></tr></thead><tbody>'+pending.questions.slice(0,20).map(q=>`<tr><td>${E(q.number)}</td><td>${E(q.type)}</td><td>${q.blocks.length}개</td><td>${E(q.ask)}</td></tr>`).join('')+'</tbody></table>';$('#import-dialog').showModal();status('불러올 내용을 확인하세요. 적용 전에는 기존 입력이 바뀌지 않습니다.');
+  // 11-15(시안 문항목록-시험지 E): 어느 파일에서 왔는지(출처 「외부 등록」), 시험지 파일에 든 학교 양식·조판 기준.
+  pending.fileName=file.name;if(!/\.xlsx$/i.test(file.name)){try{const v=JSON.parse(await file.text());pending.forms=Array.isArray(v.forms)?v.forms.filter(f=>f&&typeof f.id==='string'&&typeof f.base64==='string'):[];pending.standards=Array.isArray(v.standards)?v.standards.filter(x=>x&&typeof x.id==='string'):[];}catch{}}
+  $('#import-exam-opt').hidden=!pending.exams?.length;$('#import-no-exam').checked=false;
+  const matches=pending.questions.filter(q=>data.questions.some(x=>x.id===q.id)).length;$('#import-count').textContent=`${pending.questions.length}문항 · ${pending.documents.length}자료${pending.exams?.length?` · 시험지 ${pending.exams.length}개(시험지로 등록 — 문항은 그 시험지 안에)`:''}${pending.forms?.length?` · 학교 양식 ${pending.forms.length}개`:''} · 기존 문항과 일치 ${matches}개${pending.warnings?.length?' · '+pending.warnings.join(' '):''}`;$('#import-preview').innerHTML='<table><thead><tr><th>번호</th><th>답안형</th><th>구성</th><th>발문</th></tr></thead><tbody>'+pending.questions.slice(0,20).map(q=>`<tr><td>${E(q.number)}</td><td>${E(q.type)}</td><td>${q.blocks.length}개</td><td>${E(q.ask)}</td></tr>`).join('')+'</tbody></table>';$('#import-dialog').showModal();status('불러올 내용을 확인하세요. 적용 전에는 기존 입력이 바뀌지 않습니다.');
 }catch(e){pending=null;status(e.message,true);}finally{$('#excel-file').value='';}};
 $('#apply-import').onclick=()=>{if(!pending)return;const applied=mutate(()=>{const update=$('input[name="import-mode"]:checked').value==='update',docMap=new Map();for(const incoming of pending.documents){const existing=data.documents.find(d=>d.id===incoming.id);if(existing&&JSON.stringify(existing)!==JSON.stringify(incoming)){const d=clone(incoming);d.id=uid();data.documents.push(d);docMap.set(incoming.id,d.id);}else if(!existing)data.documents.push(clone(incoming));}
-  const qidMap=new Map();for(const incoming of pending.questions){const q=update?clone(incoming):duplicateQuestion(incoming);qidMap.set(incoming.id,q.id);q.references.forEach(r=>{if(docMap.has(r.documentId))r.documentId=docMap.get(r.documentId);});const at=data.questions.findIndex(v=>v.id===q.id);if(update&&at>=0)data.questions[at]=keepAppOnly(q,data.questions[at]);else data.questions.push(q);current=data.questions[update&&at>=0?at:data.questions.length-1];}
+  const qidMap=new Map(),batch=uid(),at0=new Date().toISOString(),noExam=$('#import-no-exam').checked;for(const incoming of pending.questions){const q=update?clone(incoming):duplicateQuestion(incoming);qidMap.set(incoming.id,q.id);if(!data.questions.some(v=>v.id===q.id))q.origin={kind:'import',file:String(pending.fileName||'불러온 파일').slice(0,120),at:at0,batch};q.references.forEach(r=>{if(docMap.has(r.documentId))r.documentId=docMap.get(r.documentId);});const at=data.questions.findIndex(v=>v.id===q.id);if(update&&at>=0)data.questions[at]=keepAppOnly(q,data.questions[at]);else data.questions.push(q);current=data.questions[update&&at>=0?at:data.questions.length-1];}
   // 시험지도 함께 들여온다(H5): 문항 ID가 새로 매겨졌으면(복사본) 새 ID로 옮기고, 한 문항은 한 시험지에만 있게 다른 시험지에서는 뺀다.
-  for(const incoming of pending.exams||[]){const items=incoming.items.map(id=>qidMap.get(id)).filter(Boolean);if(!items.length)continue;
+  for(const incoming of noExam?[]:pending.exams||[]){const items=incoming.items.map(id=>qidMap.get(id)).filter(Boolean);if(!items.length)continue;
+    // 11-15: 양식·틀·목표·문항 아래 여백·단 나누기도 같이(문항 ID는 새 ID로).
+    const remap=o=>o&&typeof o==='object'?Object.fromEntries(Object.entries(o).map(([k,v])=>[qidMap.get(k),v]).filter(([k])=>k)):undefined,extra={...(incoming.formId?{formId:incoming.formId}:{}),...(incoming.frame?{frame:incoming.frame}:{}),...(incoming.goal?{goal:incoming.goal}:{}),...(incoming.after?{after:remap(incoming.after)}:{}),...(incoming.breaks?{breaks:remap(incoming.breaks)}:{})};
     for(const e of data.exams)e.items=e.items.filter(id=>!items.includes(id));
     const same=update?data.exams.find(e=>e.id===incoming.id):null;
-    if(same)Object.assign(same,{title:incoming.title,status:incoming.status,items,updatedAt:new Date().toISOString()});
-    else data.exams.push({...newExam(incoming.title),status:incoming.status||'drafting',items,...(incoming.sentAt?{sentAt:incoming.sentAt}:{})});}if(data.questions.length>500||data.documents.length>40)throw Error('문항 500개 또는 자료 40개를 초과합니다.');});if(applied){$('#import-dialog').close();pending=null;}else $('#import-count').textContent=$('#status').textContent;};
+    if(same)Object.assign(same,{title:incoming.title,status:incoming.status,items,...extra,updatedAt:new Date().toISOString()});
+    else data.exams.push({...newExam(incoming.title),status:incoming.status||'drafting',items,...extra,...(incoming.sentAt?{sentAt:incoming.sentAt}:{})});}if(data.questions.length>500||data.documents.length>40)throw Error('문항 500개 또는 자료 40개를 초과합니다.');});if(applied){const forms=pending.forms||[],stds=pending.standards||[];$('#import-dialog').close();pending=null;void importFormsAndStandards(forms,stds);}else $('#import-count').textContent=$('#status').textContent;};
+// 11-15(시안 문항목록-시험지 E): 시험지 파일에 든 학교 양식·조판 기준을 이 기기에 등록한다(같은 ID가 있으면 그대로 둠) — 불러온 시험지가 양식째 바로 쓰인다.
+async function importFormsAndStandards(forms,stds){try{
+  const newStd=stds.filter(x=>x.id!=='kice'&&!typesetStandards.some(t=>t.id===x.id));if(newStd.length)await saveTypesetStandards([...typesetStandards,...newStd]);
+  const newForms=forms.filter(f=>!typesetForms.some(t=>t.id===f.id)).map(({base64,...f})=>({...f,bytes:Uint8Array.from(atob(base64),c=>c.charCodeAt(0))}));
+  if(newForms.length){await saveTypesetForms([...typesetForms,...newForms]);status(`학교 양식 ${newForms.length}개를 함께 등록했습니다 · 시험지에 바로 쓰입니다`);}
+}catch(e){status('학교 양식을 등록하지 못했습니다: '+e.message,true);}}
+// 11-15: 시험지 파일로 저장 — 문항·순서·그림·자료·학교 양식·조판 기준을 한 파일(.exampool)에. 다른 기기에서 「시험지로 등록」으로 통째로 들어온다.
+async function saveExamFile(exam){try{const qs=exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean),docIds=new Set(qs.flatMap(q=>(q.references||[]).map(r=>r.documentId)));
+  const form=exam.formId?typesetForms.find(f=>f.id===exam.formId):null,b64=bytes=>{const u=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s);};
+  const std=form?.standardId?typesetStandards.find(s=>s.id===form.standardId):null;
+  const out={format:FORMAT,questions:qs,documents:data.documents.filter(d=>docIds.has(d.id)),exams:[exam],...(form?{forms:[{...Object.fromEntries(Object.entries(form).filter(([k])=>k!=='bytes')),base64:b64(form.bytes)}]}:{}),...(std?{standards:[std]}:{})};
+  const saved=await download(new TextEncoder().encode(JSON.stringify(out)),`${exam.title.replace(/[\\/:*?"<>|]/g,'_')}.exampool`,'application/json');status(savedText(saved,'시험지 파일')+` · 문항 ${qs.length}개${form?' · 학교 양식 포함':''}`);
+}catch(e){status('시험지 파일을 저장하지 못했습니다: '+e.message,true);}}
 function fileData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('파일을 읽지 못했습니다.'));r.readAsDataURL(file);});}
 $('#figure-file').onchange=async()=>{const file=$('#figure-file').files[0],owner=imageTarget;if(!file||!owner)return;try{if(file.size>5*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('5 MB 이하의 PNG·JPEG·WebP 그림을 선택하세요.');const value=await fileData(file),image=await loadImage(value);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('그림 크기를 줄여주세요.');const figure={name:file.name,data:value,width:image.naturalWidth,height:image.naturalHeight};if(file.type==='image/png'&&embedded){window.parent.postMessage({channel:'5e-question-sheet',action:'read-figure',qid:owner.qid,key:owner.key,figure},OWN);return;}mutate(()=>{const q=data.questions.find(q=>q.id===owner.qid),holder=imageHolder(q,owner.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=figure;});}catch(e){status(e.message,true);}finally{$('#figure-file').value='';imageTarget=null;}};
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;if(m.error){if(m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;}status(m.error,true);return;}if(m.action==='handoff-ready'&&m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;status('한글로 보내기 완료'+(m.warnings?.length?' · '+m.warnings.join(' '):''));return;}if(m.action==='pick-cancelled'){status('그림 가져오기를 취소했습니다.');return;}if(m.action==='figure-ready'){/* 11-14 3차 37: 열린 조판 문서에 같은 그림 자리가 있으면 그 그림만 바꿔 끼워 문서 전체 다시 조판(버벅임)을 피한다 */const swap=String(m.key||'').startsWith('block:')&&typesetter?.questionId===m.qid?typesetter.swapFigure?.(m.key.slice(6),m.figure):null;Promise.resolve(swap).catch(()=>false).then(()=>mutate(()=>{const q=data.questions.find(q=>q.id===m.qid),holder=q&&imageHolder(q,m.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=m.figure;}));}});
@@ -761,6 +803,7 @@ function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,
           if(snapshot.fingerprint!==await questionFingerprint(target))throw Error('시트 내용과 저장 전 조판 수정이 함께 바뀌었습니다. 시트 수정을 되돌린 뒤 조판을 저장하세요. 기존 조판 수정은 유지됩니다.');
           if(!mutate(()=>target.typeset=snapshot))throw Error('조판을 저장하지 못했습니다.');await saveQueue;
         },onDiverge:diverged=>{$('#typeset-discard').hidden=!diverged;},onTextEdit:(changes,questionId)=>{
+          if(lockedNotice(data.questions.find(q=>q.id===questionId)))return false;
           // 한글 창에서 고친 글: 같은 문항의 해당 칸만 바꾼다. 한글 창은 이미 그 글을 보여 주므로 다시 그리지 않는다.
           const target=data.questions.find(q=>q.id===questionId);if(!target)return false;
           // 시트 전체를 다시 그리면 입력 위치가 시트 칸으로 넘어가 한글 창 입력이 끊긴다. 그 문항 열의 칸 값만 바꾼다.
@@ -877,6 +920,10 @@ $('.side').addEventListener('click',e=>{const b=e.target.closest('button');if(!b
 // 문항 보관함.
 // 문항 보관함(10-23 다시 하기, 시안 exampool-viewer-1023): 기출 + 내 문항 한 목록, 문항 보기 창. 동작은 library-view.js.
 const libApi={data:()=>data,view:()=>view,engine:(node,q)=>engineCard(node,q),rerender:()=>{if(view.name==='library')renderLibraryView($('#library-view'),data,view,libApi);},status:(m,err)=>status(m,err),
+  // 11-15(시안 문항목록-시험지 B): 시험지 열기 · 고른 문항 작업대로 복제 · 묶음(시험지 + 거기 든 문항, 또는 한 파일에서 불러온 문항) 통째로 휴지통.
+  openExam:id=>{if(!examById(data,id))return;view.examId=id;show('exam');},
+  duplicateMany:ids=>{const src=ids.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean);if(!src.length)return;let made=0;if(mutate(()=>{for(const q of src){const c=duplicateQuestion(q);c.workflow=q.workflow==='complete'?'complete':'draft';c.createdAt=c.updatedAt=new Date().toISOString();delete c.origin;data.questions.push(c);made++;}}))status(`문항 ${made}개를 복제해 작업대에 두었습니다 · ⌘Z로 되돌립니다`);},
+  trashGroup:(examId,ids)=>askDeleteGroup(examId,ids),
   newCard:()=>$('#new').click(),importExcel:()=>$('#excel-file').click(),excelTemplate:()=>void excelTemplate(),openCard:id=>openCard(id),askDelete:ids=>askDelete(ids),convertPast:item=>pastQueued(item.id)?unqueuePast(item.id):queuePast(item),pastBusy:()=>pastBusy,navChanged:()=>renderNav($('.side'),data,view),
   // 위쪽 경로: 문항 보기 창이 열려 있으면 「문항 보관함 › 제목」, 앞 단계를 누르면 창을 닫는다.
   crumb:title=>{if(view.name!=='library')return;$('#crumb-question').textContent=title;$('#crumb-question').title=title;document.querySelector('.crumb-sep').hidden=!title;$('#crumb-view').disabled=!title;$('#crumb-view').title=title?'문항 보관함으로 돌아가기':'';},
@@ -891,6 +938,8 @@ $('#exams-view').addEventListener('click',e=>{const b=e.target.closest('button')
 document.addEventListener('click',e=>{if(e.target.closest('#exams-view .pv-more'))return;document.querySelectorAll('#exams-view .top-menu:not([hidden])').forEach(m=>{m.hidden=true;m.previousElementSibling?.setAttribute('aria-expanded','false');});});
 // 시험지 안.
 const examNow=()=>view.examId&&examById(data,view.examId);
+// 11-15(시안 문항목록-시험지 C): 시험지 「배치·점검」의 문항 줄·쪽 미리보기 문항을 두 번 누르면 그 자리에서 문항 카드 — 카드 위 번호 줄로 시험지 순서대로 넘어간다.
+$('#examd-view').addEventListener('dblclick',e=>{const exam=examNow();if(!exam)return;const t=e.target;if(t.closest('button,input,select,textarea'))return;const row=t.closest('[data-order]')||t.closest('[data-exam-pick]');const id=row?.dataset.order||row?.dataset.examPick;if(!id||!exam.items.includes(id))return;e.preventDefault();view.examId=exam.id;openCard(id);});
 $('#examd-view').addEventListener('change',e=>{const exam=examNow();if(!exam)return;
   if(e.target.id==='exam-title'){const title=e.target.value.trim()||exam.title;mutate(()=>{exam.title=title;exam.updatedAt=new Date().toISOString();});return;}
   if(e.target.id==='exam-from-library'&&e.target.value){const qid=e.target.value;mutate(()=>{addToExam(data,exam.id,qid);renumberExam(data,exam.id);});}
@@ -910,6 +959,7 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   else if(act==='new')$('#new').click();
   else if(act==='send')void sendExam(exam);
   else if(act==='download')void sendExam(exam,{download:true});
+  else if(act==='save-file')void saveExamFile(exam);
   else if(act==='blueprint')void downloadBlueprint(exam);
   else if(act==='variant')void sendExam(exam,{download:true,variant:true});
   else if(act==='print')void sendExam(exam,{print:true});
@@ -1241,8 +1291,9 @@ const cardEditor=createCardEditor($('#card-view'),{
   open:id=>openCard(id),
   newQuestion:()=>$('#new').click(),
   status,
-  edit:(fn,{key,light}={})=>{const ok=mutate(fn,light?{render:false,key}:{});if(ok&&light)renderNav($('.side'),data,view);return ok;},
+  edit:(fn,{key,light}={})=>{if(lockedNotice(current))return false;const ok=mutate(fn,light?{render:false,key}:{});if(ok&&light)renderNav($('.side'),data,view);return ok;},
   slot:(act,q,id,opt={})=>{
+    if(lockedNotice(q))return false;
     if(act==='pick')return pickFigure(q,id);
     // 11-14 시안 review-1114b 1번: 칸 아래 작은 판에서 행·열·머리 행을 정해 바로 표 칸으로(옛 「자료 넣기」 창 없이).
     if(act==='make-table'){const rows=opt.rows|0,cols=opt.cols|0,head=opt.head?1:0;

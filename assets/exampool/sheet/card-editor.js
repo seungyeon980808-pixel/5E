@@ -396,7 +396,7 @@ export function createCardEditor(root,api){
     if(['standards','references'].includes(panels.tab)){const src=document.querySelector('#source-search');if(src)src.value=srcQuery[panels.tab]||'';}
     if(bench.board&&!(api.data().ideas||[]).some(b=>b.id===bench.board))bench.board=null;
     const cardOn=bench.card&&!!x,board=bench.board;
-    if(cardOn&&cardSnap?.id!==x.id)cardSnap={id:x.id,json:JSON.stringify(x)};
+    if(cardOn&&cardSnap?.id!==x.id)cardSnap={id:x.id,json:snapJson(x),full:JSON.stringify(x)};
     if(board&&bench.bfold&&!cardOn)bench.bfold=false;// 카드가 없으면 판은 접어 둘 까닭이 없다
     store.set('bench',{board,card:bench.card,fold:bench.fold,bfold:bench.bfold});
     root.classList.add('bench');
@@ -444,19 +444,21 @@ export function createCardEditor(root,api){
       send:(field,payload,board)=>{const ok=api.ideaSend(field,payload,board);if(ok)flashField(field);},
       onCard:()=>{},onClose:()=>void closeBoard(),onRename:()=>{}});}
   // 닫을 때: 연 뒤 고친 것이 있으면 묻는다(저장하고 닫기 · 저장 안 함 = 연 때로 되돌림 · 취소).
+  // 11-15: 「고친 내용」 비교에서 조판 저장(typeset)·고친 시각·출처 기록은 뺀다 — 카드를 열면 미리보기가 조판을 자동 저장해, 시험지 순서대로 넘길 때마다 저장 창이 떴다.
+  const snapJson=x=>JSON.stringify({...x,typeset:undefined,updatedAt:undefined});
   function askSave(name){return new Promise(resolve=>{const d=document.createElement('dialog');d.className='ask-dialog cv-save-ask';
     d.innerHTML=`<div class="dialog-head"><h2>고친 내용을 저장할까요?</h2></div><p class="ask-message">${E(name)}에 고친 내용이 있습니다.</p><div class="dialog-actions"><button type="button" data-a="cancel">취소</button><button type="button" data-a="discard">저장 안 함</button><button type="button" class="primary ask-ok" data-a="save">저장하고 닫기</button></div>`;
     let ans='cancel';d.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;ans=b.dataset.a;d.close();});
     d.addEventListener('close',()=>{d.remove();resolve(ans);},{once:true});document.body.append(d);d.showModal();d.querySelector('.ask-ok').focus();});}
   async function closeCard(){const x=q();
-    if(x&&cardSnap?.id===x.id&&JSON.stringify(x)!==cardSnap.json){const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.json));}
+    if(x&&cardSnap?.id===x.id&&snapJson(x)!==cardSnap.json){const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.full||cardSnap.json));}
     bench.card=false;bench.fold=false;bench.bfold=false;cardSnap=null;lastClose='card';render();if(x)api.dropIfBlank?.(x.id);}
   async function closeBoard(){api.ideaBoard.endEdit?.();const b=(api.data().ideas||[]).find(v=>v.id===bench.board);
     if(b&&boardSnap?.id===b.id&&boardJson(b)!==boardSnap.json){const a=await askSave(`아이디어 「${b.title}」`);if(a==='cancel')return;if(a==='discard')api.restoreBoard?.(b.id,JSON.parse(boardSnap.json));}
     bench.board=null;bench.fold=false;bench.bfold=false;boardSnap=null;lastClose='board';render();}
   // 다른 문항 카드로 바꿀 때도 고친 것이 있으면 묻는다. 돌려줌: 바꿔도 되면 true.
-  async function confirmSwitch(nextId){const x=q();if(!bench.card||!x||x.id===nextId||cardSnap?.id!==x.id||JSON.stringify(x)===cardSnap.json)return true;
-    const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return false;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.json));cardSnap=null;return true;}
+  async function confirmSwitch(nextId){const x=q();if(!bench.card||!x||x.id===nextId||cardSnap?.id!==x.id||snapJson(x)===cardSnap.json)return true;
+    const a=await askSave(`「${questionTitle(x)}」`);if(a==='cancel')return false;if(a==='discard')api.restoreQuestion?.(JSON.parse(cardSnap.full||cardSnap.json));cardSnap=null;return true;}
   async function confirmBoardSwitch(nextId){const b=(api.data().ideas||[]).find(v=>v.id===bench.board);if(!b||b.id===nextId||boardSnap?.id!==b.id||boardJson(b)===boardSnap.json)return true;
     api.ideaBoard.endEdit?.();const a=await askSave(`아이디어 「${b.title}」`);if(a==='cancel')return false;if(a==='discard')api.restoreBoard?.(b.id,JSON.parse(boardSnap.json));boardSnap=null;return true;}
   function openBoard(id){if(bench.board!==id){bench.board=id;boardSnap=null;}bench.bfold=false;bench.fold=!!(bench.card&&q());}// 판만 보이고, 열려 있던 카드는 오른쪽 띠로

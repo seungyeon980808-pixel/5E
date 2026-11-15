@@ -74,12 +74,48 @@ function groupOf(x, s, now = new Date()) {
   const day = d => { const v = new Date(d); v.setHours(0, 0, 0, 0); return v.getTime(); }, d0 = day(now), d = day(t);
   return d >= d0 ? '오늘' : d >= d0 - 864e5 ? '어제' : d >= d0 - 6 * 864e5 ? '이번 주' : '이전';
 }
+// ── 11-15(시안 문항목록-시험지 A·B): 표 열 · 범위 · 묶기 ──
+// 출처: 불러온 파일(q.origin.kind==='import') = 외부 등록, 기출 라이브러리에서 변형(q.source 「기출 변형」) = 기출 변형, 그 밖 = 직접 제작.
+export const SOURCE_KINDS = ['직접 제작', '기출 변형', '외부 등록'];
+export function sourceOf(q) {
+  if (q?.origin?.kind === 'import') return { kind: '외부 등록', label: q.origin.file || '불러온 파일' };
+  const src = String(q?.source || '');
+  if (/^기출 변형/.test(src)) return { kind: '기출 변형', label: src.replace(/^기출 변형\s*·\s*/, '') };
+  return { kind: '직접 제작', label: '' };
+}
+// 자료 구조: 글 · 그림 n · 표 n · 자료 상자 n · 〈보기〉 · 대화 · 과정
+export function structOf(q) {
+  const b = q?.blocks || [], n = k => b.filter(k).length, out = [];
+  if (b.some(x => x.kind === 'text' && !x.box && String(x.text || '').trim())) out.push('글');
+  const fig = n(x => x.kind === 'figure'), tb = n(x => x.kind === 'table'), box = n(x => x.kind === 'text' && x.box);
+  if (fig) out.push('그림' + fig); if (tb) out.push('표' + tb); if (box) out.push('상자' + box);
+  if (b.some(x => x.kind === 'bogi')) out.push('〈보기〉'); if (b.some(x => x.kind === 'dialogue')) out.push('대화'); if (b.some(x => x.kind === 'steps')) out.push('과정');
+  return out.join(' ');
+}
+const tOf = v => Date.parse(v || '') || 0;
+const stamp = t => { if (!t) return '—'; const d = new Date(t), p = v => String(v).padStart(2, '0'); return `${d.getMonth() + 1}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+export const COLS = [['title', '번호·발문'], ['src', '출처'], ['struct', '자료 구조'], ['part', '단원'], ['pt', '배점'], ['progress', '완성도'], ['created', '만든 때'], ['edited', '마지막 편집'], ['exam', '들어간 시험지']];
+function colValue(x, k) {
+  switch (k) {
+    case 'title': return [Number(x.q?.number) || 9999, x.title];
+    case 'src': return [SOURCE_KINDS.indexOf(x.src.kind), x.src.label];
+    case 'struct': return x.struct; case 'part': return x.part; case 'pt': return Number(x.pt) || 0;
+    case 'progress': return [STAGE_ORDER[workflowOf(x.q)] ?? 0, progressOf(x.q) ?? 0];
+    case 'created': return tOf(x.q?.createdAt); case 'edited': return Math.max(tOf(x.q?.updatedAt), tOf(x.q?.createdAt));
+    case 'exam': return [x.examTitle || '\uffff', x.examNo || 0];
+  }
+  return '';
+}
+const cmp = (a, b) => Array.isArray(a) ? a.reduce((r, v, i) => r || cmp(v, b[i]), 0) : typeof a === 'number' ? a - b : String(a).localeCompare(String(b), 'ko');
+function sortByCol(list, s) { const dir = s.dir === 'asc' ? 1 : -1; return list.map((x, i) => ({ x, i })).sort((a, b) => cmp(colValue(a.x, s.col), colValue(b.x, s.col)) * dir || a.i - b.i).map(r => r.x); }
 function entries(data, s) {
   const stars = store.get('stars', {}), memos = store.get('memos', {}), words = splitWords(s.query || '');
-  const mine = s.kind === 'past' ? [] : poolQuestions(data, s.pool).map(q => ({ kind: 'mine', key: 'q:' + q.id, id: q.id, q, title: questionTitle(q), pt: q.points, subject: '', part: [q.unitLarge, q.unitMiddle].filter(Boolean).join(' · '), exam: '' }));
+  const examOfQ = new Map(); for (const e of data.exams || []) e.items.forEach((id, i) => examOfQ.set(id, { e, no: i + 1 }));
+  const pool = s.scope === 'all' ? data.questions : poolQuestions(data, s.pool);
+  const mine = s.kind === 'past' ? [] : pool.map(q => { const inE = examOfQ.get(q.id); return { kind: 'mine', key: 'q:' + q.id, id: q.id, q, title: questionTitle(q), pt: q.points, subject: '', part: [q.unitLarge, q.unitMiddle].filter(Boolean).join(' · '), exam: '', src: sourceOf(q), struct: structOf(q), examId: inE?.e.id || '', examTitle: inE?.e.title || '', examNo: inE?.no || 0, examStatus: inE?.e.status || '' }; });
   const pasts = s.kind === 'mine' || !past.items ? [] : past.items.map(i => ({ kind: 'past', key: 'past:' + i.id, id: i.id, i, title: i.short, pt: null, subject: i.subjectLabel, part: i.parts.join(' · '), exam: examLabel(i.year, i.month) }));
-  const sorted = sortEntries([...mine, ...pasts], s);
-  return sorted.filter(x =>
+  const sorted = s.col ? sortByCol([...mine, ...pasts], s) : sortEntries([...mine, ...pasts], s);
+  return sorted.filter(x => (!s.src || x.src?.kind === s.src) &&
     (!s.mark || (s.mark === 'star' ? stars[x.key] : memos[x.key])) &&
     (!s.subject || x.subject === s.subject) && (!s.part || x.part.split(' · ').includes(s.part)) && (!s.exam || x.exam === s.exam) &&
     (!words.length || words.every(w => norm(x.kind === 'past' ? [x.title, x.i.title, x.i.text, ...x.i.tags, ...x.i.parts].join(' ') : [x.title, x.q.ask, x.q.passage, x.part, x.q.source].join(' ')).includes(w))));
@@ -87,7 +123,7 @@ function entries(data, s) {
 
 // 보관함 상태는 app의 view.lib에 둔다(다시 그려도 남게).
 // 10-26 사용자 지적: 기출은 말 그대로 기출 — 보관함에는 내 문항만(기출은 문항 카드의 「기출문제」 칸·시험지 담기에서 본다).
-export function libState(view) { const s = view.lib ||= { sort: SORTS.includes(store.get('libSort', '')) ? store.get('libSort', '') : SORTS[0], pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.sel ||= new Set(); s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] ? s.pool : 'drafting'; return s; }
+export function libState(view) { const s = view.lib ||= { sort: SORTS.includes(store.get('libSort', '')) ? store.get('libSort', '') : SORTS[0], pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.sel ||= new Set(); s.collapsed ||= new Set(); s.scope ||= 'bench'; s.group ??= 'exam'; s.dir ||= 'desc'; s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] && s.pool !== 'inexam' ? s.pool : (s.pool === 'inexam' ? (s.scope = 'all', 'drafting') : 'drafting'); return s; }
 
 export function renderLibraryView(root, data, view, api) {
   const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
@@ -97,13 +133,16 @@ export function renderLibraryView(root, data, view, api) {
   { const here = new Set(list.map(x => x.id)); for (const id of [...s.sel]) if (!here.has(id)) s.sel.delete(id); }
   const picking = s.mode !== 'one' && s.sel.size > 0, picked = x => s.sel.has(x.id);
   const check = (x, n) => x.kind === 'mine' ? `<button type="button" class="lv-check" data-lv-check="${E(x.id)}" data-n="${n}" aria-pressed="${picked(x)}" aria-label="${picked(x) ? '고르기 빼기' : '고르기'}" title="고르기 (Shift: 범위)">${SVG.check}</button>` : '';
-  const selbar = picking ? `<div class="lv-selbar" role="toolbar" aria-label="고른 문항"><b>${s.sel.size}개 선택</b><button type="button" class="lv-btn" data-lv-bulk="toexam">시험지에 넣기…</button><button type="button" class="lv-btn danger" data-lv-bulk="delete">삭제…</button><span class="sp"></span><button type="button" class="lv-btn" data-lv-bulk="all">보이는 것 모두 (⌘A)</button><button type="button" class="lv-btn" data-lv-bulk="clear">선택 해제 (Esc)</button></div>` : '';
+  const selbar = picking ? `<div class="lv-selbar" role="toolbar" aria-label="고른 문항"><b>${s.sel.size}개 선택</b><button type="button" class="lv-btn" data-lv-bulk="dup" title="고른 문항을 복제해 작업대(출제 중)에 둡니다 — 시험지 안 문항도 그대로 둡니다">작업대로 복제</button><button type="button" class="lv-btn" data-lv-bulk="toexam">다른 시험지에 담기…</button><button type="button" class="lv-btn" data-lv-bulk="star">별표</button><button type="button" class="lv-btn danger" data-lv-bulk="delete">휴지통으로…</button><span class="sp"></span><button type="button" class="lv-btn" data-lv-bulk="all">보이는 것 모두 (⌘A)</button><button type="button" class="lv-btn" data-lv-bulk="clear">선택 해제 (Esc)</button></div>` : '';
   const starN = Object.keys(stars).filter(k => k.startsWith('q:') && stars[k]).length, memoN = Object.keys(memos).filter(k => k.startsWith('q:') && memos[k]).length;
   const subjects = past.index ? past.index.subjects.map(v => v[1]) : [], partPool = list.flatMap(x => x.part ? x.part.split(' · ') : []), parts = [...new Set(partPool)].sort().slice(0, 300);
   const exams = past.items ? [...new Set(past.items.filter(i => !s.subject || i.subjectLabel === s.subject).map(i => examLabel(i.year, i.month)))] : [];
   const chipSel = (k, label, opts) => `<label class="lv-chip lv-sel${s[k] ? ' on' : ''}"><span>${E(s[k] || label)}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-lv-sel="${k}" aria-label="${label}"><option value="">${label} 전체</option>${opts.map(o => `<option${s[k] === o ? ' selected' : ''}>${E(o)}</option>`).join('')}</select></label>`;
   // 제목은 고른 칸을 그대로 말한다(10-28 출제 지적 1): 「출제 중인 문항 N개」.
-  const head = `<div class="lv-head"><h1>${POOL_TITLE[s.pool]}</h1><p>${list.length.toLocaleString()}개</p>
+  const inExamN = (data.questions || []).length - poolQuestions(data, 'drafting').length - poolQuestions(data, 'done').length;
+  const scopeSeg = `<span class="lv-seg lv-scope" role="group" aria-label="범위"><button type="button" data-lv-scope="bench" aria-pressed="${s.scope !== 'all'}" title="아직 시험지에 안 들어간 문항">작업대</button><button type="button" data-lv-scope="all" aria-pressed="${s.scope === 'all'}" title="시험지 안 문항까지 모두">모든 문항<small>${(data.questions || []).length}</small></button></span>`;
+  const groupSel = s.scope === 'all' ? `<label class="lv-chip lv-sel on"><span>묶기: ${E({ '': '없음', exam: '시험지별', batch: '불러온 묶음별', part: '단원별' }[s.group] || '없음')}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-lv-sel="group" aria-label="묶기">${[['', '없음'], ['exam', '시험지별'], ['batch', '불러온 묶음별'], ['part', '단원별']].map(([v, t]) => `<option value="${v}"${s.group === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>` : '';
+  const head = `<div class="lv-head"><h1>${s.scope === 'all' ? '모든 문항' : POOL_TITLE[s.pool]}</h1><p>${list.length.toLocaleString()}개${s.scope === 'all' && inExamN > 0 ? ` · 시험지 안 ${inExamN}` : ''}</p>${scopeSeg}
       <div class="lv-vt" role="group" aria-label="보기 방식">${[['grid', '카드 모아 보기', 'grid'], ['list', '목록', 'list'], ['one', '한 문항씩 보기', 'one']].map(([m, t, ic]) => `<button type="button" data-lv-mode="${m}" aria-pressed="${s.mode === m}" title="${t}" aria-label="${t}">${SVG[ic]}</button>`).join('')}</div></div>
     <!--addbar--><div class="lv-chips">
       <span class="lv-seg" role="group" aria-label="거르기">
@@ -111,7 +150,7 @@ export function renderLibraryView(root, data, view, api) {
         <button type="button" data-lv-mark="star" aria-pressed="${s.mark === 'star'}">${SVG.star.replace('<svg ', '<svg class="lv-segstar" ')}별표<small>${starN}</small></button>
         <button type="button" data-lv-mark="memo" aria-pressed="${s.mark === 'memo'}">메모<small>${memoN}</small></button>
       </span>
-      ${chipSel('part', '단원', parts)}
+      ${chipSel('part', '단원', parts)}${chipSel('src', '출처', SOURCE_KINDS)}${groupSel}
       <span class="lv-seg lv-sortseg" role="group" aria-label="정렬">${SORTS.map(o => `<button type="button" data-lv-sort="${o}" aria-pressed="${s.sort === o}">${o}</button>`).join('')}</span>
       <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
     </div>`;
@@ -133,7 +172,7 @@ export function renderLibraryView(root, data, view, api) {
   else if (!list.length && !poolQuestions(data, s.pool).length) body = `<div class="lv-emptyline">${POOL_EMPTY[s.pool]}<div class="lv-flow"><em>문항 쓰기</em>→<em>시험지에 담기</em>→<em>5E_hwp로 조판·인쇄</em></div></div>`;
   else if (!list.length) body = `<p class="lv-empty pv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
   else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
-  else if (s.mode === 'list') body = `<ol class="lv-list${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `${grp(x, n) ? `<li class="lv-grp" aria-hidden="true">${grp(x, n)}</li>` : ''}<li class="${picked(x) ? 'sel' : ''}">${check(x, n)}<button type="button" class="lv-row" data-lv-open="${n}">${kt(x)}<b>${E(x.title)}</b><span>${E(x.part || x.subject)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : x.exam}</small></button><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" title="별표">${SVG.star}</button></li>`).join('')}</ol>`;
+  else if (s.mode === 'list') body = tableHtml(shown, s, { picked, picking, stars, memos, mineMark, data });
   else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `${grp(x, n) ? `<div class="lv-grp" aria-hidden="true">${grp(x, n)}</div>` : ''}<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
       <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>${x.kind === 'mine' && !picking ? `<button type="button" class="lv-cdel" data-lv-del="${E(x.id)}" aria-label="문항 삭제" title="문항 삭제 (⌫) — 되돌리기로 살릴 수 있습니다"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ''}
       <div class="lv-meta">${kt(x)}${x.kind === 'mine' ? mineMark(x.q) : ''}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' && when(x.q) ? `<small class="lv-date" title="마지막으로 고친 때">${when(x.q)}</small>` : ''}${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
@@ -151,6 +190,39 @@ export function renderLibraryView(root, data, view, api) {
 const plainOf = q => [...(q.blocks || []).flatMap(b => [b.text, ...(b.lines || []).map(l => l.text)]), q.ask, ...(q.choices || []).map(c => c.text)]
   .filter(Boolean).join(' ').replace(/\$([^$]*)\$/g, '$1').replace(/\s+/g, ' ').trim().slice(0, 600);
 let ownSeen = null;
+// 11-15(시안 문항목록-시험지 A·B): 목록 = 열이 있는 표. 열 제목을 누르면 줄 세우기(한 번 더 누르면 반대), 줄을 누르면 문항 보기, 「열기」·두 번 누르면 카드.
+// 「모든 문항」 범위에서는 「들어간 시험지」 열과 묶기(시험지별·불러온 묶음별·단원별) — 묶음 줄은 접고 펴고, 시험지 열기·묶음 통째로 휴지통.
+function tableHtml(shown, s, { picked, picking, stars, memos, mineMark, data }) {
+  const all = s.scope === 'all', cols = COLS.filter(([k]) => all || k !== 'exam');
+  const th = cols.map(([k, t]) => `<th scope="col"><button type="button" class="lv-th${s.col === k ? ' on' : ''}" data-lv-col="${k}" aria-sort="${s.col === k ? (s.dir === 'asc' ? 'ascending' : 'descending') : 'none'}" title="${t} 기준으로 줄 세우기">${t}${s.col === k ? (s.dir === 'asc' ? ' ▲' : ' ▼') : ''}</button></th>`).join('');
+  const row = (x, n) => { const q = x.q, chk = `<button type="button" class="lv-check" data-lv-check="${E(x.id)}" data-n="${n}" aria-pressed="${picked(x)}" aria-label="${picked(x) ? '고르기 빼기' : '고르기'}" title="고르기 (Shift: 범위)">${SVG.check}</button>`;
+    const cell = k => { switch (k) {
+      case 'title': return `<td class="c-title"><button type="button" class="lv-row" data-lv-open="${n}" title="문항 보기"><b>${E(q.number ? q.number + '번' : '')}</b> ${E(String(q.ask || x.title).slice(0, 60))}</button>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}</td>`;
+      case 'src': return `<td><span class="lv-src s${SOURCE_KINDS.indexOf(x.src.kind)}">${x.src.kind}</span>${x.src.label ? `<small title="${E(x.src.label)}">${E(x.src.label.slice(0, 22))}</small>` : ''}</td>`;
+      case 'struct': return `<td class="c-struct">${E(x.struct) || '—'}</td>`;
+      case 'part': return `<td>${E(x.part) || '—'}</td>`;
+      case 'pt': return `<td class="c-num">${x.pt ? x.pt : '—'}</td>`;
+      case 'progress': return `<td class="c-prog">${mineMark(q)}<span>${E(WORKFLOWS[workflowOf(q)] || '')}</span></td>`;
+      case 'created': return `<td class="c-time">${stamp(tOf(q.createdAt))}</td>`;
+      case 'edited': return `<td class="c-time">${stamp(Math.max(tOf(q.updatedAt), tOf(q.createdAt)))}</td>`;
+      case 'exam': return `<td>${x.examTitle ? `${E(x.examTitle)} <small>${x.examNo}번</small>` : '<small>작업대</small>'}</td>`;
+    } return '<td></td>'; };
+    return `<tr class="${picked(x) ? 'sel' : ''}" data-lv-row="${n}"><td class="c-chk">${chk}</td>${cols.map(([k]) => cell(k)).join('')}<td class="c-act"><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button><button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기">열기</button></td></tr>`; };
+  let bodyRows = '';
+  const keyOf = x => s.group === 'exam' ? (x.examId ? 'e:' + x.examId : 'bench') : s.group === 'batch' ? (x.q.origin?.batch ? 'b:' + x.q.origin.batch : 'own') : s.group === 'part' ? 'p:' + (x.part || '') : '';
+  if (all && s.group) {
+    const groups = new Map(); shown.forEach((x, n) => { const k = keyOf(x); if (!groups.has(k)) groups.set(k, []); groups.get(k).push([x, n]); });
+    for (const [k, rows] of groups) {
+      const first = rows[0][0], open = !s.collapsed.has(k), ended = first.examStatus === 'ended';
+      const label = k === 'bench' ? '작업대(시험지에 안 들어감)' : k === 'own' ? '직접 만든 문항' : k.startsWith('e:') ? `${ended ? '🔒 ' : ''}${first.examTitle}` : k.startsWith('b:') ? `${first.src.label} · ${stamp(tOf(first.q.origin?.at))}` : (first.part || '단원 없음');
+      const meta = k.startsWith('e:') ? `${rows.length}문항 · ${{ drafting: '출제 중', done: '출제 완료', ended: '시험 종료 — 읽기 전용' }[first.examStatus] || ''}` : `${rows.length}문항`;
+      const acts = k.startsWith('e:') ? `<button type="button" class="lv-btn" data-lv-gopen="${E(first.examId)}">시험지 열기</button><button type="button" class="lv-btn danger" data-lv-gtrash="${E(k)}" title="시험지와 거기 든 문항을 함께 휴지통으로(14일 동안 되살림)">묶음 통째로 휴지통</button>` : k.startsWith('b:') ? `<button type="button" class="lv-btn danger" data-lv-gtrash="${E(k)}" title="이 파일에서 불러온 문항을 함께 휴지통으로(14일 동안 되살림)">묶음 통째로 휴지통</button>` : '';
+      bodyRows += `<tr class="lv-gr"><td colspan="${cols.length + 2}"><button type="button" class="lv-gtoggle" data-lv-gtoggle="${E(k)}" aria-expanded="${open}">${open ? '▾' : '▸'} <b>${E(label)}</b> <span>${meta}</span></button><span class="lv-gacts">${acts}</span></td></tr>`;
+      if (open) bodyRows += rows.map(([x, n]) => row(x, n)).join('');
+    }
+  } else bodyRows = shown.map((x, n) => row(x, n)).join('');
+  return `<div class="lv-tablewrap"><table class="lv-table${picking ? ' lv-picking' : ''}"><thead><tr><th class="c-chk"></th>${th}<th class="c-act"></th></tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+}
 function fillOwn(root, data, api) {
   const draw = n => { const q = data.questions.find(x => x.id === n.dataset.preview); if (!q) return;
     if (api?.engine) { n.classList.add('lv-eng'); api.engine(n, q).then(() => { if (n.isConnected) n.insertAdjacentHTML('beforeend', `<span class="sr-only">${E(plainOf(q))}</span>`); }); } else previewHtml(q).then(h => { if (n.isConnected) n.innerHTML = h; }); };
@@ -277,6 +349,8 @@ export function installLibraryView(root, api) {
     if (kind === 'all') { for (const x of list().slice(0, st.limit)) if (x.kind === 'mine') st.sel.add(x.id); api.rerender(); return; }
     if (!ids.length) return;
     if (kind === 'delete') api.askDelete(ids);
+    else if (kind === 'dup') api.duplicateMany?.(ids);
+    else if (kind === 'star') { const stars = store.get('stars', {}), on = ids.some(id => !stars['q:' + id]); for (const id of ids) { if (on) stars['q:' + id] = true; else delete stars['q:' + id]; } store.set('stars', stars); api.rerender(); api.navChanged?.(); }
     else if (kind === 'toexam') api.toExamMenu(ids, button);
   }
   const onClick = e => {
@@ -289,6 +363,11 @@ export function installLibraryView(root, api) {
     const del = t.closest('[data-lv-del]'); if (del) { e.stopPropagation(); api.askDelete(del.dataset.lvDel); return; }
     const ck = t.closest('[data-lv-check]'); if (ck) { e.stopPropagation(); pick(ck.dataset.lvCheck, Number(ck.dataset.n), e.shiftKey); return; }
     const bk = t.closest('[data-lv-bulk]'); if (bk) { bulk(bk.dataset.lvBulk, bk); return; }
+    const sc = t.closest('[data-lv-scope]'); if (sc) { Object.assign(s(), { scope: sc.dataset.lvScope, limit: PAGE, open: -1 }); if (sc.dataset.lvScope === 'all') s().mode = 'list'; api.rerender(); return; }
+    const col = t.closest('[data-lv-col]'); if (col) { const st = s(), k = col.dataset.lvCol; if (st.col === k) st.dir = st.dir === 'asc' ? 'desc' : 'asc'; else { st.col = k; st.dir = ['title', 'src', 'struct', 'part', 'exam'].includes(k) ? 'asc' : 'desc'; } api.rerender(); return; }
+    const gt = t.closest('[data-lv-gtoggle]'); if (gt) { const c = s().collapsed, k = gt.dataset.lvGtoggle; if (c.has(k)) c.delete(k); else c.add(k); api.rerender(); return; }
+    const go = t.closest('[data-lv-gopen]'); if (go) { api.openExam?.(go.dataset.lvGopen); return; }
+    const gx = t.closest('[data-lv-gtrash]'); if (gx) { const k = gx.dataset.lvGtrash, rows = (s().list || []).filter(x => x.kind === 'mine' && (k.startsWith('e:') ? x.examId === k.slice(2) : x.q.origin?.batch === k.slice(2))); api.trashGroup?.(k.startsWith('e:') ? k.slice(2) : null, rows.map(x => x.id)); return; }
     const oc = t.closest('[data-open-card]'); if (oc) { e.stopPropagation(); closeViewer(api); api.openCard(oc.dataset.openCard); return; }
     if (t.closest('[data-lv-answers]')) { setAnswersShown(!answersShown()); return; }
     if (t.closest('[data-lv-close]')) { s().open = -1; closeViewer(api); return; }
@@ -305,6 +384,8 @@ export function installLibraryView(root, api) {
   root.addEventListener('click', onClick);
   document.addEventListener('click', e => { if (!modal || modal.hidden || !modal.contains(e.target)) return; if (e.target === modal) { s().open = -1; closeViewer(api); return; } onClick(e); });
   document.addEventListener('mousedown', e => { if (modal && !modal.hidden && e.target === modal) { s().open = -1; closeViewer(api); } });
+  // 11-15: 표 줄을 두 번 누르면 카드를 연다(지금처럼).
+  root.addEventListener('dblclick', e => { const r = e.target.closest?.('[data-lv-row]'); if (!r || e.target.closest('button:not(.lv-row)')) return; const x = list()[Number(r.dataset.lvRow)]; if (x?.kind === 'mine') { e.preventDefault(); closeViewer(api); api.openCard(x.id); } });
   root.addEventListener('keydown', e => { const o = e.target.closest?.('[data-lv-open]'); if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); o.click(); } });
   root.addEventListener('change', e => { const sel = e.target.closest('[data-lv-sel]'); if (!sel) return; s()[sel.dataset.lvSel] = sel.value; if (sel.dataset.lvSel === 'subject') { s().part = ''; s().exam = ''; } s().limit = PAGE; api.rerender(); });
   // 한글 조합 중에는 다시 그리지 않는다 — 검색칸이 새로 만들어져 「ㄱ」만 남고 조합이 끊겼다(코드 점검 10-21 하). 조합이 끝나면(compositionend) 그린다.
