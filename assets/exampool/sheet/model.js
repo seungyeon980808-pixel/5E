@@ -149,6 +149,9 @@ export function jsonSize(v){
   let n=2,first=true;for(const key of Object.keys(v)){const x=v[key],k=typeof x;if(x===undefined||k==='function'||k==='symbol')continue;n+=(first?0:1)+JSON.stringify(key).length+1+jsonSize(x);first=false;}return n;
 }
 // only: 이 문항만 자세히 검사(카드에서 한 문항의 글만 고칠 때). 다른 문항은 ID 중복만 본다.
+// 보관함(문항·시험지·휴지통·자료 전체를 한 칸에 저장) 크기 한도. 10-16에 24 MB로 정했으나, 그림이 든 시험지 하나(9.5 MB)를
+// 시험지 파일로 열 때 기존 보관함과 합쳐 넘어 열리지 않았다(11-15) → 128 MB. 시험지를 파일 단위로 여는 구조는 1.7.1 확장자 통일에서.
+export const STORE_LIMIT_MB=128;
 export function validate(data,{only=null}={}) {
   const str=(v,max=32767)=>typeof v==='string'&&v.length<=max;
   const id=v=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(v);
@@ -190,7 +193,7 @@ export function validate(data,{only=null}={}) {
   const dids=new Set();for(const d of data.documents){if(!d||!id(d.id)||dids.has(d.id)||!str(d.name,240)||!['textbooks','references','past'].includes(d.kind)||!['application/pdf','image/png','image/jpeg','image/webp','text/plain'].includes(d.mime)||!str(d.data,8*1024*1024)||!d.data.startsWith(`data:${d.mime};base64,`)||!/^data:[^;]+;base64,[A-Za-z0-9+/]*={0,2}$/.test(d.data)||!Array.isArray(d.pages)||!d.pages.length||d.pages.length>3000||!d.pages.every(p=>str(p,1000000)))throw Error('참고자료 파일이 올바르지 않습니다.');dids.add(d.id);}
   for(const q of data.questions)for(const ref of q.references)if(ref.documentId){const d=data.documents.find(x=>x.id===ref.documentId);if(!d||!Number.isInteger(ref.page)||ref.page>d.pages.length)throw Error('자료 원문 또는 쪽수 연결이 끊겼습니다.');}
   normalizeExams(data);validateExams(data);
-  if(jsonSize(data)>24*1024*1024)throw Error('문항과 자료는 합쳐서 24 MB까지 저장할 수 있습니다.');
+  if(jsonSize(data)>STORE_LIMIT_MB*1024*1024)throw Error(`문항과 자료는 합쳐서 ${STORE_LIMIT_MB} MB까지 저장할 수 있습니다.`);
   return data;
 }
 export function duplicateQuestion(q) {
