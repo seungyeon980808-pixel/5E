@@ -140,8 +140,9 @@ export function createCardEditor(root,api){
         <div class="cv-combos${x.choices.some(c=>String(c.text||'').length>=7)?' tight':''}">${x.choices.map((c,i)=>`<label class="combo-row${x.answer===i?' on':''}${ri===i?' right':''}" title="번호를 누르면 정답"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답"><span class="no">${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" aria-label="${NUM[i]} 조합"></label>`).join('')}</div>${note}</div></div>`;
     }
     const lay=x.choiceLayout||'';
-    return `<div class="f-field"><label title="값·식·낱말·문장을 한 줄씩 · 동그라미로 정답">선지<span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
-      <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" aria-label="${NUM[i]} 선지"></label>`).join('')}</div></div>`;
+    // 11-15: 다른 칸(지문·발문·보기)처럼 왼쪽 세로 이름 칸 + 오른쪽 내용. 배치(자동·한 줄·2열·세로)는 내용 위 오른쪽 작은 줄.
+    return `<div class="f-field cv-row cv-choice"><label data-tip="값·식·낱말·문장을 한 줄씩 씁니다. 왼쪽 동그라미가 정답입니다." tabindex="0" aria-label="선지"><span class="vt">선지</span></label><div class="cv-v"><div class="cv-lay"><span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></div>
+      <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" aria-label="${NUM[i]} 선지"></label>`).join('')}</div></div></div>`;
   }
   // 단원 자동(시안 35): 성취기준 코드 → 교육과정 자료의 대단원(「과목 › 대단원」). 자료에 중단원은 없어 중단원은 선택 입력.
   let stdData=null;loadStandards().then(d=>{stdData=d;if(q()?.standardCode&&!q()?.unitLarge)render();}).catch(()=>{});

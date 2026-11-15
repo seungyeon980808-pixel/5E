@@ -1213,8 +1213,11 @@ function repaintExamPick(exam){const L=lastSheet;if(!L||L.examId!==exam.id||!L.n
   const figs=L.n.querySelectorAll(':scope > figure.pv-pg');if(figs.length!==L.view.pages.length)return false;
   L.view.pages.forEach((p,i)=>{const f=figs[i];f.querySelectorAll(':scope > .pv-pg-q, :scope > .pv-gapz, :scope > .pv-gapbar').forEach(x=>x.remove());f.querySelector(':scope > figcaption').insertAdjacentHTML('beforebegin',examBoxesHtml(exam,L.view,p));});
   return true;}
-document.addEventListener('click',e=>{const pick=e.target.closest('[data-exam-pick]');if(!pick)return;examPick=pick.dataset.examPick===examPick?null:pick.dataset.examPick;
-  const exam=view.examId&&examById(data,view.examId);if(exam&&!flushExamSheet(exam)&&!repaintExamPick(exam))fillExamSheet(exam);});
+// 11-15 사용자: 쪽에서 문항을 (두 번) 누르면 왼쪽 문항 순서 카드도 그 문항까지 부드럽게 따라 올라온다. 두 번 누르기의 둘째 누름은 고르기를 풀지 않는다.
+document.addEventListener('click',e=>{const pick=e.target.closest('[data-exam-pick]');if(!pick)return;const id=pick.dataset.examPick;examPick=id===examPick&&e.detail<2?null:id;
+  const exam=view.examId&&examById(data,view.examId);if(exam&&!flushExamSheet(exam)&&!repaintExamPick(exam))fillExamSheet(exam);
+  let row=null;document.querySelectorAll('#exam-order [data-order]').forEach(r=>{const on=!!examPick&&r.dataset.order===examPick;r.classList.toggle('on',on);if(on)row=r;});
+  row?.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});});
 document.addEventListener('click',e=>{const g=e.target.closest('[data-exam-gap]');if(!g||!examPick)return;const exam=view.examId&&examById(data,view.examId);if(!exam)return;
   if(!mutate(()=>{exam.after={...(exam.after||{})};const v=Math.max(0,(Number(exam.after[examPick])||0)+Number(g.dataset.examGap));if(v)exam.after[examPick]=v;else delete exam.after[examPick];exam.updatedAt=new Date().toISOString();},{render:false}))return;
   growGap(examPick,Number(exam.after?.[examPick])||0);queueExamSheet(exam);});

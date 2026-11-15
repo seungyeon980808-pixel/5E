@@ -345,6 +345,8 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-autoans.ok{color:var(--ds-success)}#card-view .cv-autoans.bad{color:var(--ds-danger)}
 #card-view .cv-grid .ig{display:flex;align-items:center;gap:2px}
 #card-view .cv-grid .ig>input{flex:1;min-width:0}
+/* 11-15: 정답 동그라미는 늘이지 않는다 — 선지 글 칸이 수식 칸(eq-ce)으로 바뀐 뒤 동그라미만 남은 폭을 차지해 줄 가운데로 밀렸다. */
+#card-view .cv-grid .ig>input[type=radio]{flex:none}
 #card-view .cv-grid .ig .ig-x{position:static;flex:none;width:24px;height:24px;min-height:0;padding:0;opacity:0;transform:none}
 #card-view .cv-grid .ig:hover .ig-x,#card-view .cv-grid .ig:focus-within .ig-x{opacity:1}
 #card-view .ox button{flex:none;min-width:26px}
@@ -1083,3 +1085,10 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-boxtile .box-pic textarea{flex:1;width:100%;min-height:90px;border:1px solid #444;border-radius:2px;padding:8px 10px;font:14px/1.6 'HCR Batang','함초롬바탕','AppleMyungjo',serif;color:#24292f;background:#fff;resize:none}
 #card-view .cv-boxtile .box-pic textarea:focus{outline:0;box-shadow:0 0 0 2px rgba(47,111,214,.25)}
 #card-view .cv-boxtile .box-pic .eq-ce{flex:1;min-height:90px;border:1px solid #444;border-radius:2px;padding:8px 10px}
+/* 11-15 선지 칸(일반 정답형): 다른 칸처럼 왼쪽 이름 칸, 줄은 ○ ① 글 한 줄로 가운데 맞춤, 번호는 회색 상자 없이(보기 ㄱ·ㄴ·ㄷ와 같은 모양). */
+#card-view .cv-choice .cv-lay{display:flex;justify-content:flex-end;height:22px;margin:2px 0 -2px}
+#card-view .cv-choice .cv-lay .lay{font-size:12px}
+#card-view .cv-grid .cv-choice .choice-row{align-items:center;gap:6px}
+#card-view .cv-grid .cv-choice .choice-row>input[type=radio]{width:15px;height:15px;margin:0 2px 0 0}
+#card-view .cv-grid .cv-choice .choice-row>span{width:auto;min-width:22px;padding:0;background:transparent;border:0;border-radius:0;font-family:'HCR Batang','함초롬바탕','AppleMyungjo',serif;font-size:15px;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-grid .cv-choice .choice-row.on>span{background:transparent;color:#2f6fd6;font-weight:700}
