@@ -419,6 +419,14 @@
     {
       "path": "tests/test-clipboard-hub-browser.cjs",
       "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.dblclick: Timeout 60000ms exceeded."
+    },
+    {
+      "path": "tests/test-shortcut-simplification-browser.cjs",
+      "reason": "2026-11-16 출시 갈래 전체 검사: 흔들림 — 혼자 돌리면 4번 중 3번 통과, 전체 실행 부하에서 찾기 창 Esc 뒤 보임 판정(34줄)이 늦게 맞음. 코드 변화 없음"
+    },
+    {
+      "path": "tests/test-user-screen-feedback-browser.cjs",
+      "reason": "2026-11-16 출시 갈래 전체 검사: 흔들림 — WebKit에서 그래프 축 이름 끌기 위치가 가끔 튐(크롬 통과). 11-15 검진 갈래(737f80c5)에서도 3번 중 2번 같은 실패, 코드 변화 없음. 1.7.1에서 원인 조사"
     }
   ]
 }
