@@ -1,3 +1,13 @@
+# 1.7.0 정식 출시 승인 — 웹·설치판
+
+The 1.7.0 candidate is **CLEARED**.
+
+2026-11-15 사용자(소유자)가 1.7.0 정식 출시를 승인했습니다: main 통합·push·v1.7.0 태그·Windows·Mac 설치 파일을 GitHub 릴리스 에셋으로 게시·정식 도메인(https://www.5e.ai.kr/) 웹 배포. 설치 파일은 코드 서명 없이 게시하며(설치 안내에 우회 방법 기재), Windows 서명·실기기 검증·서버 인증·실계정 AI 항목(`release-channels.json`의 releaseHolds)은 외부 확인 대기(PENDING_EXTERNAL) 상태를 그대로 둡니다. v1.5.8 체크섬 정정 기록(OPEN_PENDING_PUBLICATION)과 sample 7 권리 확인(UNVERIFIED)도 그대로입니다.
+
+검사: 단위 검사(출시 서류 외 실패 0), 필수 화면 묶음 크롬·사파리 통과, 전체 화면 228묶음은 1.7.0 막바지 변경으로 새로 깨진 검사 0 — 남은 실패는 `tests/known-failures.json`에 이유와 함께 적었습니다(2026-11-15 측정).
+
+## Historical preparation records
+
 # 1.6.3 웹 게시 승인 — 설치판 HOLD 유지
 
 2026-10-07 사용자가 검증한 라이브러리 초기 표시 개선과 A1 범위의 1.6.3 웹 릴리즈를 승인했습니다. main 통합·push·v1.6.3 태깅·검증된 웹 산출물 배포·웹 릴리즈 노트 게시를 진행합니다. 설치판은 HOLD이며 서명·기기 설치·실계정 AI 검증 보류는 해제하지 않습니다.
