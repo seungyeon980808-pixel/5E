@@ -168,7 +168,8 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   assert.equal(await page.locator('#exam-document-menu').count(),0);
   // 11-04: 프로그램 전환은 로고 「5E_image ▾」 목록(app-switch-menu.js)으로 — 예전 글자 줄은 숨는다.
   assert.ok(await page.locator('.app-menu [data-app-switch="hwp"]').count()>=1);
-  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
+  // 11-14: 「그래프」 단추는 메뉴 없이 AI 창을 연다(ONE_ENTRY) — 직접 만들기는 명령 팔레트·F와 같은 5e:graph-entry로 연다.
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('5e:graph-entry',{detail:{kind:'direct'}})));await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
   await assertWorkflowState(page,'graph-tool-open',true,selected);
   await assertOriginalAppearance(page,'#graph-modal-overlay button');
   await page.locator('#gm-variant-sel button[data-variant="cross"]').click();await page.mouse.move(400,400);
@@ -188,7 +189,7 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   await assertWorkflowState(page,'exam-library-open',false,selected);
   // 이미지 변환 화면의 주 실행 버튼은 아래쪽 실행 줄의 버튼이다(준비 영역의 [data-ai-send]는 그래프 복원에서만 보인다).
   // 이 버튼은 [data-ai-send]의 동작을 그대로 부른다(js/ai-panel.js).
-  const runButton='#ai-image-panel [data-ai-comments-apply]';
+  const runButton='#ai-image-panel [data-ai-send][data-ai-comments-apply]'; // 11-11: 실행 단추가 [data-ai-send]와 함께 갖는다(예전 「코멘트 반영하기」 단추도 같은 표시라 구분).
   await page.locator('#ai-image-install-open').click();await page.locator(runButton).waitFor({state:'visible'});
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-workflow'),'image');
   assert.equal(await page.locator('#ai-image-panel .ai-preparation > [data-ai-send]').isVisible(),false,'image workflow shows one primary action');
@@ -199,7 +200,7 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   // 라벨을 켜서 읽기 통로(이 검사에는 없음)가 실패해 확인이 필요한 결과가 되게 한다.
   const labelSetting=page.locator('#ai-image-panel [data-ai-setting-key=labels]');
   const sourceTreatment=page.locator('#ai-image-panel .ai-source-treatment');
-  if(!await sourceTreatment.evaluate(el=>el.open).catch(()=>true)) await sourceTreatment.locator('summary').click();
+  if(!await sourceTreatment.evaluate(el=>el.open).catch(()=>true) && await sourceTreatment.locator('summary').isVisible()) await sourceTreatment.locator('summary').click(); // 11월: 접힌 「원본 처리 방식」 머리줄이 숨는 화면도 있다.
   await labelSetting.getByRole('button',{name:'켜기',exact:true}).click();
   await page.locator(runButton).click();
   await page.waitForFunction(()=>window.__task2.generationSends.length===1);
