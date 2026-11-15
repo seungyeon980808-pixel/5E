@@ -941,6 +941,12 @@
       "findingIds": [
         "EQ-HWP-LATEX-CONVERT"
       ]
+    },
+    {
+      "path": "tests/test-publication-receipt.cjs",
+      "findingIds": [
+        "PREVIEW-RECEIPT-PATH"
+      ]
     }
   ],
   "browser": [
