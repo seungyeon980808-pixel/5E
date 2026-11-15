@@ -52,7 +52,7 @@ test('semantic label no-op and size-only edits retain imported formula mode and 
     const data = { objects: [object], undoStack: [], redoStack: [{ retained: true }] };
     const before = structuredClone(data);
     const context = vm.createContext({ ...typography, resolveTextFontStyle,
-      structuredClone, DEFAULT_TEXT_FONT: 'Arial', _textPlainOnly: false, _textFormulaMode: false });
+      structuredClone, DEFAULT_TEXT_FONT: 'Arial', _textPlainOnly: false, _textFormulaMode: false, _state: null, EQUATION_FONT_FAMILY: 'HancomEQN' });
     vm.runInContext(detection + '\n' + contentMode + '\n' + commit, context);
     assert.equal(context._labelAwareContentMode(raw, draft), mode);
     assert.equal(context._commitSemanticLabel(data, draft, raw, mode === 'formula'), true);

@@ -9,7 +9,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
-const channels = ['codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
+const channels = ['clipboard:read-image', 'codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
   'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
   'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence','exam-files:autosave','exam-files:read-latest','exam-files:save','exam-files:open','exam-files:reveal','exam-files:folder','exam-files:open-folder'];
 const pdfLibraryChannels=['pdf-library:pick-folder','pdf-library:ensure-default-folder','pdf-library:connections','pdf-library:folder-tree','pdf-library:set-folder-selection','pdf-library:disconnect','pdf-library:sync','pdf-library:cancel','pdf-library:list','pdf-library:read','pdf-library:read-image','pdf-library:open-folder','pdf-library:reveal-item','pdf-library:save-index','pdf-library:load-index','pdf-library:index-state','pdf-library:save-index-state','pdf-library:retry-index','pdf-library:list-corrections','pdf-library:save-correction','pdf-library:delete-correction','pdf-library:capabilities','pdf-library:bundled-pack','pdf-library:read-bundled-pack'];
@@ -106,6 +106,7 @@ for (const channel of [...channels, ...pdfLibraryChannels]) {
     // Given a trusted main frame and a folder explicitly selected through the dialog.
     const h = harness(t);
     if (channel.startsWith('pdf-library:')) return;
+    if (channel === 'clipboard:read-image') return; // 11-14 클립보드 채널: 창 확인(위 거절 검사)만 여기서 본다 — 모의 electron에 clipboard가 없다
     if (channel.startsWith('exam-files:')) return; // 출제 파일 저장 채널도 창 확인만 여기서 본다(동작은 exam-files.test.cjs 몫) // 폴더 연결 채널은 믿을 수 있는 창 확인만 이 검사에서 본다(동작은 pdf-library 검사 몫)
     if (channel.startsWith('local-images:')) await h.call('local-images:pick-folder');
     // When the production handler runs, then it returns its successful result.
