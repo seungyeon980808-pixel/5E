@@ -749,16 +749,15 @@ body.card-locked #card-view .cv-grid textarea,body.card-locked #card-view .cv-gr
 .crumb-examstep[hidden]{display:none!important}
 .pv-eform{display:inline-block;margin:2px 0 1px;padding:1px 7px;border-radius:9px;background:rgba(227,179,65,.16);color:#e3b341;font-style:normal;font-size:11.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pv-head .pv-openfile{border:1px solid var(--ds-line-strong,#30363d);border-radius:8px;background:none;color:var(--ds-ink,#e6edf3);font-size:13px;cursor:pointer}.pv-head .pv-openfile:hover{background:var(--ds-hover,#1f2630)}
-/* 11-15(시안 regap-1115): 조판 전 여백 = 주황 빗금, 쪽 머리 줄 「바뀐 곳 N · 새로 조판」 */
+/* 11-15(시안 regap-1115): 조판 전 여백 = 주황 빗금, 쪽 머리 줄 「바뀐 곳 N · 새로 조판」.
+   단추는 은은한 단추(화면 색 토큰 --ds-soft-bg·--ds-soft-line) — 진한 파란 면·흰 글자·단축키 알약 금지, 단축키는 단추 설명(title)에. */
 .pv-gapz.pend{background:repeating-linear-gradient(135deg,rgba(214,133,47,.20) 0 6px,rgba(214,133,47,.05) 6px 12px);border-top:1px dashed #d6852f;z-index:2}
 .pv-gapz.pend span{color:#b86514;background:rgba(255,255,255,.92);border-radius:3px;margin:0 2px 2px 0;padding:0 4px}
 .ex-retype{display:flex;align-items:center;gap:10px;margin-right:10px}
 .ex-retype[hidden]{display:none}
 .ex-retype .n{color:#f0b37e;font-size:12.5px;white-space:nowrap}
 .ex-retype .n i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d6852f;margin-right:6px;vertical-align:1px}
-.ex-retype button{display:flex;align-items:center;gap:7px;height:28px;padding:0 12px;border:0;border-radius:7px;background:#2f6fd6;color:#fff;font:600 12.5px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;cursor:pointer;white-space:nowrap}
-.ex-retype button:hover{background:#2a62bf}.ex-retype button:disabled{background:#3b4a63;cursor:default}
-.ex-retype kbd,.cv-savebtn kbd{font:600 10.5px -apple-system,sans-serif;background:rgba(255,255,255,.2);border-radius:4px;padding:1px 5px}
-#card-view .cv-bar .cv-savebtn{display:flex;align-items:center;gap:6px;height:28px;flex:none;padding:0 10px 0 8px;margin-right:6px;border:0;border-radius:7px;background:#2f6fd6;color:#fff;font:600 12.5px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;cursor:pointer;white-space:nowrap}
-#card-view .cv-bar .cv-savebtn:hover{background:#2a62bf}
-#card-view .cv-bar .cv-savebtn .ico{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.4}
+.ex-retype button,#card-view .cv-bar .cv-savebtn{display:flex;align-items:center;gap:6px;height:28px;flex:none;padding:0 11px;border:0;border-radius:7px;background:var(--ds-soft-bg,#152137);box-shadow:inset 0 0 0 1px var(--ds-soft-line,#6ba4f8);color:var(--ds-ink,#e6edf3);font:500 12.5px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;cursor:pointer;white-space:nowrap}
+.ex-retype button:disabled{opacity:.6;cursor:default}
+#card-view .cv-bar .cv-savebtn{margin-right:6px;padding-left:8px}
+#card-view .cv-bar .cv-savebtn .ico{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2}
