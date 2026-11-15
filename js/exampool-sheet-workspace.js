@@ -143,6 +143,8 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(m.action==='ai-job-open'||m.action==='ai-job-send'){const ai=examWorkspace?.getAiPanel?.();
       Promise.resolve(!ai||!ai.hasHwpTask?.(m.taskId)?false:m.action==='ai-job-send'?ai.sendHwpTask?.(m.taskId):Promise.resolve(ai.openHwpTask(m.taskId)).then(()=>true)).then(ok=>{if(!ok)send({action:'ai-job-gone',taskId:m.taskId,error:'그 AI 작업 창이 이미 닫혔습니다 — 칸 그림을 두 번 눌러 AI를 다시 여세요.'});},error=>send({action:'ai-job-gone',taskId:m.taskId,error:error.message||String(error)}));return;}
     if(m.action==='graph-figure'){import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration').then(x=>x.graphFigure(m.graph,m.name,{state,services})).then(figure=>send({action:'figure-ready',figure}),error=>send({error:`그래프 원본을 붙이지 못했습니다(그림으로는 들어갔습니다): ${error.message||error}`}));return;}
+    // 11-15(시안 material-1115 Q3): 카드 빈 자료 칸 「그래프」 — 빈 좌표 평면으로 그래프 편집 창, 적용하면 그 칸에 그래프 그림.
+    if(m.action==='new-graph'){import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration').then(x=>x.newCardGraph(m,{send,state,services})).catch(err=>send({error:err.message||String(err)}));return;}
     if(m.action==='edit-figure'){import('./exampool-card-figure-edit.js?v=1.7.0-four-session-integration').then(x=>x.editCardFigure(m,{send,state,services,frame,onDetail:d=>{if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;detailEdit(d,send).catch(err=>send({error:err.message})).finally(()=>{busy=false;});}})).catch(err=>send({error:err.message||String(err)}));return;}
     if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;
     try {

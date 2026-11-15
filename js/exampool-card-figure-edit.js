@@ -86,6 +86,20 @@ async function editGraph({ source, render, name, plane, send, services, state })
   send({ action: 'figure-ready', figure: await figureFrom(next, nextBounds, name, services, state) });
 }
 
+// 11-15(시안 material-1115 Q3): 빈 자료 칸 「그래프」 — 기본 좌표 평면 하나로 그래프 편집 창을 열고, 적용하면 그래프 원본을 품은 그림을 칸에 보낸다.
+export async function newCardGraph(m, { send, state, services }) {
+  const { makeDefaultCoordplane } = await import('./function-graph/defaults.js?v=1.7.0-four-session-integration');
+  const source = copy(services.serialize(state.get()));
+  source.pages = source.pages.filter(p => p.id === source.activePageId);
+  services.prepareLoadedProject(source);
+  const page = source.pages[0], id = crypto.randomUUID(), layerId = page.layers?.find(l => l.visible !== false)?.id || page.layers?.[0]?.id || 1;
+  page.id = `card_${id}`; source.activePageId = page.id; page.name = String(m.label || '그래프'); page.guides = []; page.meta = { number: '', points: '' };
+  const plane = { rotation: 0, order: 0, locked: false, ...makeDefaultCoordplane({ x: 0, y: 0 }), id: `plane_${id}`, layerId };
+  page.objects = [plane]; page.groups = [];
+  const bounds = getContentBounds({ ...state.get(), ...page, objects: page.objects }, OPTIONS, 2) || { x: -60, y: -45, w: 120, h: 90 };
+  return editGraph({ source, render: { bounds, options: OPTIONS }, name: page.name, plane, send, services, state });
+}
+
 export async function editCardFigure(m, { send, state, services, frame, onDetail }) {
   const figure = m.figure;
   if (!figure?.data) throw new Error('편집할 그림이 없습니다.');

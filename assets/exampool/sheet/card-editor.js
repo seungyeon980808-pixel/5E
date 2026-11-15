@@ -53,6 +53,7 @@ export function createCardEditor(root,api){
     return `<nav class="cv-qtabs" aria-label="${E(ctx.label)} 문항">${list.map((x,i)=>{const {items}=completeness(x),warn=api.layoutWarn?.(x.id)||'',pct=Math.round(items.filter(v=>v[1]).length/items.length*100),open=x.authoring?.issues?.filter(v=>v.status==='open').length||0,stale=x.authoring?.stale?.length||0;
       return `<button type="button" class="cv-qtab st-${workflowOf(x)}" data-cv-open="${x.id}" aria-current="${x.id===q()?.id}" title="${E((ctx.numbered?`${i+1}번 · `:'')+questionSubtitle(x))} · ${WORKFLOWS[workflowOf(x)]} · 완성도 ${pct}%${stale?' · 다시 확인 '+stale:''}${warn?' · 조판 확인: '+E(warn):''}"><span class="ring" style="--p:${pct}"><span class="num">${ctx.numbered?i+1:E(x.number||i+1)}</span></span>${stale||open||warn?'<i class="flag">!</i>':''}</button>`;}).join('')}<button type="button" class="cv-qtab add" data-cv="new" title="새 문항">${ICON.plus}</button></nav>`;
   }
+  const GRAPH_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4v16h16"/><path d="M6 16c3-8 6-8 12-10"/></svg>',BOX_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14"/><path d="M7 10h10M7 14h7"/></svg>';
   const MAT_ICO={below:'<svg viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M3 3h14M3 6h14"/><rect x="5" y="8.5" width="10" height="5.5" rx="1"/></svg>',side:'<svg viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M3 3h7M3 6h7M3 9h7M3 12h7"/><rect x="12" y="3" width="6" height="9" rx="1"/></svg>',row:'<svg viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2" y="4" width="7" height="8" rx="1"/><rect x="11" y="4" width="7" height="8" rx="1"/></svg>',col:'<svg viewBox="0 0 20 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="5" y="1.5" width="10" height="5.5" rx="1"/><rect x="5" y="9" width="10" height="5.5" rx="1"/></svg>'};
   // 자료 배치(10-27): 「자/료」 이름표 칸 아래에 위치·개수·배열. 섞인 모양(상자·묶음 속 묶음)이면 단추를 두지 않는다.
   function matSet(x){let L=materialLayout(x);if(L&&slotsOf(x).length!==L.count)L=null;// 상자 안 자료가 섞여 있으면 위치·배열 단추 없이 ＋만
@@ -72,13 +73,18 @@ export function createCardEditor(root,api){
     const tiles=list.map(b=>{
       const name=E(b.label||KINDS[b.kind]);
       if(b.kind==='figure'&&b.figure)return `<div class="cv-tile${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="${name} · 그림 · 두 번 누르기·⌘Enter로 편집"><div class="pic"><img src="${E(b.figure.data)}" alt="${name}">${tools(b,tool('edit',b.id,ICON.pencil,'편집 (두 번 누르기 · ⌘Enter)')+tool('swap',b.id,ICON.swap,'바꾸기 — 클립보드·파일'))}${tileSel===b.id?'<span class="cv-target-tag">바꿀 칸</span>':''}</div><div class="cap"><b>${name}</b></div></div>`;
+      // 11-15(시안 material-1115): 자료 상자 — 테두리 글 상자, 칸 안에서 바로 고친다($로 수식).
+      if(b.kind==='text')return `<div class="cv-tile cv-boxtile" data-cvtile="${b.id}" title="${name} · 자료 상자"><div class="pic box-pic"><textarea data-cvblock="${b.id}" rows="3" placeholder="자료 상자 글 — 조건·설명을 씁니다($로 수식)" aria-label="${name} 자료 상자">${E(b.text||'')}</textarea>${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
       if(b.kind==='table'&&tableEdit===b.id)return tableEditHtml(b,name);
       if(b.kind==='table'){const t=b.table;return `<div class="cv-tile" data-cvtile="${b.id}" title="${name} · 표 ${t.rows}×${t.cols} · 눌러서 고치기"><div class="pic table-pic"><table>${tableViewRows(t)}</table>${tools(b,tool('table',b.id,ICON.pencil,'표 편집'))}</div><div class="cap"><b>${name}</b></div></div>`;}
       // 11-14(시안 1-1·2-4): 빈 칸은 아이콘 둘만(이름은 풍선). 그림 넣기를 누르면 클립보드·파일 중 고른다. 칸 빈 곳을 누르면 넣을 칸으로 골라진다.
-      return `<div class="cv-tile empty${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="눌러서 넣을 칸으로 고르기"><div class="pic"><span class="cv-picks"><button type="button" class="cv-pick" data-cvslot-act="add-pic" data-cvslot="${b.id}" title="그림 넣기 — 클립보드·파일" aria-label="그림 넣기">${ICON.pic}</button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}" title="표 만들기" aria-label="표 만들기">${ICON.table}</button></span>${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
+      return `<div class="cv-tile empty${tileSel===b.id?' is-target':''}" data-cvtile="${b.id}" title="눌러서 넣을 칸으로 고르기"><div class="pic"><span class="cv-picks four"><button type="button" class="cv-pick" data-cvslot-act="add-pic" data-cvslot="${b.id}" title="그림 넣기 — 클립보드·파일" aria-label="그림 넣기">${ICON.pic}<small>그림</small></button><button type="button" class="cv-pick" data-cvslot-act="new-graph" data-cvslot="${b.id}" title="그래프 만들기 — 빈 좌표 평면" aria-label="그래프 만들기">${GRAPH_ICO}<small>그래프</small></button><button type="button" class="cv-pick" data-cvslot-act="to-table" data-cvslot="${b.id}" title="표 만들기" aria-label="표 만들기">${ICON.table}<small>표</small></button><button type="button" class="cv-pick" data-cvslot-act="to-box" data-cvslot="${b.id}" title="자료 상자 — 테두리 글 상자(조건·설명)" aria-label="자료 상자 만들기">${BOX_ICO}<small>자료 상자</small></button></span>${tileSel===b.id?'<span class="cv-target-tag">여기에 넣기</span>':''}${tools(b,'')}</div><div class="cap"><b>${name}</b></div></div>`;
     }).join('');
     // 칸 더하기는 하나: 빈 칸이 생기고, 그림을 가져올지 표를 만들지는 그 칸 안에서 고른다.
-    return tiles?`<div class="cv-tiles" style="--cv-tiles:${Math.min(list.length,3)}">${tiles}</div>`:'<div class="cv-empty-hint">자료 없음 — 왼쪽 ＋로 칸을 만듭니다</div>';
+    // 11-15(시안 material-1115 Q1): 자료가 둘 이상(자료 묶음)이면 머리에 (가)(나) 이름표 스위치 하나 — 끄면 칸 아래 이름표가 흐려지고 조판에도 안 찍힌다.
+    const g=list.length>1&&list[0].parent&&list.every(v=>v.parent===list[0].parent)?x.blocks.find(v=>v.id===list[0].parent):null,capsOn=g?.captions!==false;
+    const head=g?`<div class="cv-mathead"><button type="button" class="cv-capsw${capsOn?' on':''}" data-cvcaps="${g.id}" role="switch" aria-checked="${capsOn}" title="자료 아래 (가)·(나) 이름표 — 조판에도 그대로"><i aria-hidden="true"></i>(가)(나) 이름표</button></div>`:'';
+    return tiles?`${head}<div class="cv-tiles${g&&!capsOn?' caps-off':''}" style="--cv-tiles:${Math.min(list.length,3)}">${tiles}</div>`:'<div class="cv-empty-hint">자료 없음 — 왼쪽 ＋로 칸을 만듭니다</div>';
   }
   function linesHtml(b,key,ph){
     const ox=()=>'';// 11-13: 판정은 ㄱ·ㄴ·ㄷ 글자 단추(cv-tk)로 — 오른쪽 ○× 칸 없앰
@@ -190,7 +196,7 @@ export function createCardEditor(root,api){
   // 문항 카드(시안 32): 엑셀처럼 왼쪽 이름표 칸 + 오른쪽 내용, 안내 글은 ? 도움말 안, 입력칸은 내용 높이만큼, 배점은 맨 위(설계할 때 정함).
   const help=(t,l='도움말')=>`<button type="button" class="help" aria-label="${E(l)}" data-tip="${E(t)}">?</button>`;
   // 11-15: 둘째 이후 글(상자 안 「조건」 글 등)도 카드에 줄로 보인다 — 전에는 첫 지문만 그려, 조판에는 있는데 카드에는 없는 자료처럼 보였다.
-  function extraTextRows(x,row){const texts=x.blocks.filter(b=>b.kind==='text').slice(1);if(!texts.length)return '';
+  function extraTextRows(x,row){const texts=x.blocks.filter(b=>b.kind==='text'&&!b.box).slice(1);if(!texts.length)return '';
     return texts.map(b=>{const g=b.parent&&x.blocks.find(v=>v.id===b.parent),boxed=!!g&&(g.boxed===true||g.boxed===undefined&&g.label==='실험');
       // 11-15 사용자: 문항에 「조건」 같은 칸은 없다 — 상자 안 글도 지문이다. 칸 이름은 늘 「지문」, 상자면 테두리와 「상자」 표시(상자 제목이 있으면 함께).
       // (b.label 「조건」은 틀(설명·조건 상자)이 붙인 안쪽 이름이라 시험지에 찍히지 않는다.)
@@ -198,7 +204,7 @@ export function createCardEditor(root,api){
       return row(name,`<div class="cv-xtext${boxed?' boxed':''}">${tag?`<span class="cv-xtag">${tag}</span>`:''}<textarea data-cvblock="${b.id}" rows="1" aria-label="${E(name)}">${E(b.text||'')}</textarea></div>`,boxed?'상자 안에 찍히는 글입니다. 여기서 바로 고칩니다.':'첫 지문 다음에 오는 글입니다. 여기서 바로 고칩니다.');}).join('');}
   function formHtml(x){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
-    const passages=x.blocks.filter(b=>b.kind==='text');
+    const passages=x.blocks.filter(b=>b.kind==='text'&&!b.box);
     const {items,done}=completeness(x);
     // 이름표(시안 33): 두 글자는 세로로(지/문), 네 글자는 두 글자씩 두 줄(성취/기준). 안내는 이름표에 마우스를 올리면.
     const tag=n=>{const t=n.replace(/\s+/g,'');return t.length<=2?`<span class="vt">${E(t)}</span>`:`<span class="hz">${E(t.slice(0,2))}<br>${E(t.slice(2))}</span>`;};
@@ -806,7 +812,7 @@ export function createCardEditor(root,api){
     if(t.matches('textarea'))fit(t);
     if(t.id==='cv-ai-input'){aiDrafts.set(x.id,t.value);return;}
     if(t.dataset.cvf==='points')t.style.width=t.value.trim()?`${t.value.trim().length+.6}ch`:'';
-    if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else if(f==='name'){if(t.value.trim())x.name=t.value.slice(0,240);else delete x.name;}else if(f==='explanationSummary'){if(t.value.trim())x.explanationSummary=t.value.slice(0,200);else delete x.explanationSummary;}else writeField(x,f,t.value);});return;}
+    if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text'&&!v.box);if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else if(f==='name'){if(t.value.trim())x.name=t.value.slice(0,240);else delete x.name;}else if(f==='explanationSummary'){if(t.value.trim())x.explanationSummary=t.value.slice(0,200);else delete x.explanationSummary;}else writeField(x,f,t.value);});return;}
     if(t.dataset.cvline){const key=t.dataset.cvline,b=x.blocks.find(v=>v.kind===key),i=Number(t.dataset.i);edit(key,()=>{b.lines[i].text=t.value;});return;}
     if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
     if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);{const g=t.closest('.cv-combos');if(g)g.classList.toggle('tight',[...g.querySelectorAll('[data-cvchoice]')].some(n=>n.value.length>=7));}edit('choices',()=>{x.choices[i].text=t.value;});return;}
@@ -884,6 +890,7 @@ export function createCardEditor(root,api){
     if(d.cvslotAct==='to-table'){tableGrid(b,x,d.cvslot);return;}
     // 11-15(시안 review-1115 안 A): 표 편집은 따로 창(한글 엔진)에서.
     if(d.cvslotAct==='table'){focusPreviewTable(d.cvslot);return;}
+    if(d.cvcaps){const g=x.blocks.find(v=>v.id===d.cvcaps);if(g)api.edit(()=>{if(g.captions===false)delete g.captions;else g.captions=false;});return;}
     if(d.cvslotAct){if(d.cvslotAct==='remove'&&tileSel===d.cvslot)setTileSel(null);api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}
       // 새 줄 하나만 끝에 덧붙인다(H7). 예전에는 모든 줄 글을 이어 붙였다가 줄바꿈으로 다시 나눠서, 한 줄 안에 줄바꿈이 있으면
@@ -1204,7 +1211,7 @@ export function createCardEditor(root,api){
   // 한글 창에서 고친 글을 카드 칸에 옮긴다(입력 중인 칸은 건드리지 않는다). 카드 전체를 다시 그리지 않아 한글 창 입력이 끊기지 않는다.
   function syncFields(target){const x=q();if(!x||x!==target)return;
     for(const t of root.querySelectorAll('[data-cvf]')){if(t===document.activeElement||t._eqce?.contains(document.activeElement))continue;const f=t.dataset.cvf;
-      const v=f==='passage'?(x.blocks.find(b=>b.kind==='text')?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
+      const v=f==='passage'?(x.blocks.find(b=>b.kind==='text'&&!b.box)?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
       if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}mathFields?.refresh();
     for(const t of root.querySelectorAll('textarea[data-cvblock]')){if(t===document.activeElement||t._eqce?.contains(document.activeElement))continue;const v=x.blocks.find(b=>b.id===t.dataset.cvblock)?.text||'';if(t.value!==v){t.value=v;fit(t);}}
     // 11-15: 한글 창에서 고친 표 칸 글도 카드 자료 칸에 바로 보이게(전에는 입력칸만 맞추고 자료 칸 그림은 옛 모양 그대로였다). 표 편집 중인 칸은 건드리지 않는다.

@@ -21,7 +21,7 @@ import {ROWS,fieldValue,writeField,applyVerticalValues} from './vertical.js';
 import {ensureAuthoring,syncRevision,restoreRevision,makeRequest,classifyResponse,storeProposal,applyProposal,rejectProposal,proposalChanges,recordReview,recordConversation,previewStructure,labelOf} from '../authoring/session.js';
 import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
-import {questionFromShape,relabelMaterials} from './templates.js';
+import {questionFromShape,relabelMaterials,adoptBoxMaterial} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
 import {validateStandard,standardFor,copyStandard,KICE_STANDARD,KICE_ID,exportStandard as exportStandardText,importStandard} from './typeset-standard.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
@@ -850,7 +850,9 @@ function dropIfBlank(id){const q=data.questions.find(x=>x.id===id);if(!q||!isBla
   if(current?.id===id)current=null;status('빈 문항 카드는 저장하지 않았습니다.');return true;}
 function openCard(id){const q=data.questions.find(x=>x.id===id);if(!q)return;if(grid?.finish()===false)return;
   // 11-12: 문항 카드를 작업 칸에 올린다(아이디어 판이 열려 있으면 판 옆에). 쓰던 다른 카드에 고친 것이 있으면 먼저 묻는다.
-  void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;const prev=cardEditor.cardOn?.()?current:null;current=q;if(prev&&prev.id!==id)dropIfBlank(prev.id);cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
+  void cardEditor.confirmSwitch(id).then(ok=>{if(!ok)return;const prev=cardEditor.cardOn?.()?current:null;current=q;
+    // 11-15(시안 material-1115 Q4): 자료 아래 따로 있던 상자 → 자료 상자 칸(⌘Z로 되돌림).
+    {const probe=clone(q);if(adoptBoxMaterial(probe)&&mutate(()=>adoptBoxMaterial(q),{render:false}))status('자료 아래 따로 있던 상자를 자료 상자 칸으로 옮겼습니다 · ⌘Z로 되돌립니다');}if(prev&&prev.id!==id)dropIfBlank(prev.id);cardEditor.setCard(true);const exam=examOf(data,id);view.examId=exam?.id||null;show('card');});}
 function createExam(title){let exam;if(mutate(()=>{exam=newExam(title||`새 시험지 ${data.exams.length+1}`);data.exams.push(exam);}))return exam;return null;}
 // 5E 클립보드(11-14, 옛 서랍): 왼쪽 메뉴 맨 아래 「클립보드」·⇧⌘V로 여는 오른쪽 서랍. 넣는 자리 = 열린 문항 카드의 자료 칸, 아니면 열린 아이디어 판.
 const clipboard=mountClipboard(document,{top:52,onToggle:v=>{view.drawerOn=v;renderNav($('.side'),data,view);if(!v)cardEditor?.clearTileSel?.();},hosts:[
@@ -1248,6 +1250,11 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(act==='table')return openSlots(q,id);
     // 11-15(사용자: 작은 한글 창으로 표 편집기): 카드 표 칸의 연필·누르기·표 만들기 → 표 편집 창.
     if(act==='table-window')return openTableEditor(q,id);
+    // 11-15(시안 material-1115): 빈 자료 칸 → 자료 상자(글 상자) / 그래프(빈 좌표 평면으로 그래프 편집 창, 결과는 figure-ready로 이 칸에).
+    if(act==='to-box'){const name=q.blocks.find(x=>x.id===id)?.label||'자료';const ok=mutate(()=>{const b=q.blocks.find(x=>x.id===id);if(!b)throw Error('자료 칸을 찾지 못했습니다.');b.kind='text';b.box=true;b.text='';delete b.figure;delete b.table;delete b.size;b.layout='세로';});
+      if(ok){status(`${name} 자료 상자를 만들었습니다 · 칸 안에 바로 쓰세요`);requestAnimationFrame(()=>document.querySelector(`textarea[data-cvblock="${id}"]`)?.focus());}return ok;}
+    if(act==='new-graph'){if(!embedded){status('그래프 만들기는 5E 안에서 연 문항 창에서 쓸 수 있습니다.',true);return false;}const b=q.blocks.find(x=>x.id===id);
+      window.parent.postMessage({channel:'5e-question-sheet',action:'new-graph',qid:q.id,key:'block:'+id,label:b?.label||'그래프'},OWN);status('빈 좌표 평면으로 그래프 창을 엽니다 · 「적용」하면 이 칸에 들어갑니다');return true;}
     if(act==='to-table'){if(mutate(()=>applyPartChange(q,id,'kind',KINDS.table)))openSlots(q,id);return;}
     // 11-14(지적 1): 칸을 지우면 남은 칸 이름을 (가)(나)(다) 차례로 다시 매긴다(⌘Z 한 번으로 되돌림). 글 속 이름은 그대로.
     if(act==='remove'){let r={changes:[],texts:0};if(mutate(()=>{q.blocks=q.blocks.filter(b=>b.id!==id);q.references=q.references.filter(r=>r.target!==id);r=relabelMaterials(q);})&&r.changes.length)setTimeout(()=>status(`자료 이름을 ${r.changes.map(c=>`${c.from}→${c.to}`).join(' · ')}로 다시 매겼습니다 · ⌘Z로 되돌리기`),900);return;}

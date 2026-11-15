@@ -30,7 +30,8 @@ const ICON={
 };
 // 시안 4: 왼쪽 라이브러리(기출·교과서·기준·자료) · 가운데 문항 카드(쪽 전체로 바꿔 보기) · 오른쪽 미리보기|AI.
 const TABS=[['past','기출문제'],['textbooks','교과서'],['standards','성취기준·교육과정'],['references','자료']];
-const slotsOf=q=>{const out=[];const walk=p=>{for(const b of q.blocks.filter(x=>x.parent===p)){if(b.kind==='figure'||b.kind==='table')out.push(b);walk(b.id);}};walk(null);return out;};
+const slotsOf=q=>{const out=[];const walk=p=>{for(const b of q.blocks.filter(x=>x.parent===p)){if(b.kind==='figure'||b.kind==='table'||b.kind==='text'&&b.box)out.push(b);// 11-15: 자료 상자(글 상자)도 자료 칸
+walk(b.id);}};walk(null);return out;};
 // 유형·자료 구조는 새 문항 창에서 정한다. 카드 머리 줄에는 이름표로만 보이고, 눌렀을 때만 유형 바꾸기 메뉴가 열린다.
 const STRUCT_SHORT={two:'자료 2개',big:'큰 자료 1개',small:'작은 자료 1개',condition:'조건 상자',many:'자료 3개 이상',experiment:'실험 상자',none:'글만'};
 const shapeIco=k=>`<svg class="ico shape" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_ICONS[k]||''}</svg>`;

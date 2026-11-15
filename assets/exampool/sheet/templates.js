@@ -91,11 +91,13 @@ export function sheetCells(form,struct){
 // ── 자료 배치(10-27): 카드 「자/료」 이름표 칸에서 위치(글 아래·글 옆)·개수(1~3)·배열(가로·세로)을 고른다 ──
 // 다루는 자료: 맨 바깥의 그림·표, 또는 맨 바깥 「자료」 묶음(상자 아님) 안의 그림·표. 실험·조건 상자 안 자료는 건드리지 않는다.
 const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험';
+// 11-15(시안 material-1115): 자료 칸에 넣는 것은 그림·그래프(그림 칸)·표·자료 상자(글 상자, text + box).
+const isMat=b=>b.kind==='figure'||b.kind==='table'||b.kind==='text'&&b.box===true;
 function materialsOf(q){
   const top=q.blocks.filter(b=>!b.parent);
-  const group=top.find(b=>b.kind==='group'&&!isBoxed(b)&&q.blocks.some(x=>x.parent===b.id&&(x.kind==='figure'||x.kind==='table'))&&!q.blocks.some(x=>x.parent===b.id&&x.kind==='group'));
-  const loose=top.filter(b=>b.kind==='figure'||b.kind==='table');
-  if(group&&!loose.length)return {group,items:q.blocks.filter(b=>b.parent===group.id&&(b.kind==='figure'||b.kind==='table'))};
+  const group=top.find(b=>b.kind==='group'&&!isBoxed(b)&&q.blocks.some(x=>x.parent===b.id&&isMat(x))&&!q.blocks.some(x=>x.parent===b.id&&x.kind==='group'));
+  const loose=top.filter(isMat);
+  if(group&&!loose.length)return {group,items:q.blocks.filter(b=>b.parent===group.id&&isMat(b))};
   if(!group)return {group:null,items:loose};
   return null; // 섞인 모양(묶음 + 낱 자료, 묶음 속 묶음)은 여기서 바꾸지 않는다
 }
@@ -104,7 +106,7 @@ export function materialLayout(q){
   const n=m.items.length,first=m.items[0];
   return {count:n,place:n===1&&first?.layout===WRAP?'side':'below',dir:m.group?.layout==='나란히'?'row':'col'};
 }
-const filled=b=>b.kind==='figure'?!!b.figure:b.kind==='table'?b.table?.cells?.some(r=>r.some(c=>c.value||c.figure)):false;
+const filled=b=>b.kind==='figure'?!!b.figure:b.kind==='table'?b.table?.cells?.some(r=>r.some(c=>c.value||c.figure)):b.kind==='text'?!!String(b.text||'').trim():false;
 // 채운 자료는 지우지 않는다: 개수를 줄일 때는 뒤쪽 빈 칸만 뺀다. 줄일 수 없으면 Error(이유와 할 일).
 export function setMaterialLayout(q,{place,count,dir}={}){
   const m=materialsOf(q);if(!m)throw Error('자료가 상자·묶음 안에 섞여 있어 여기서 배치를 바꿀 수 없습니다. 조판 설정에서 바꾸세요.');
@@ -117,7 +119,7 @@ export function setMaterialLayout(q,{place,count,dir}={}){
   const keep=new Set(items.map(b=>b.id));
   q.blocks=q.blocks.filter(b=>!(m.items.includes(b)&&!keep.has(b.id))&&b!==m.group);
   for(const b of items)q.blocks=q.blocks.filter(x=>x!==b);
-  const firstText=q.blocks.find(b=>!b.parent&&b.kind==='text'),at=firstText?q.blocks.indexOf(firstText)+1:0;
+  const firstText=q.blocks.find(b=>!b.parent&&b.kind==='text'&&!b.box),at=firstText?q.blocks.indexOf(firstText)+1:0;
   let insert;
   if(count===1){const b=items[0];b.parent=null;if(place==='side'){b.layout=WRAP;b.size=b.size&&b.size<=70?b.size:40;}else{b.layout='세로';if(b.size===40)delete b.size;}if(!b.label||CAPS.includes(b.label))b.label='자료';insert=[b];}
   else{const g=m.group||block('group',null,'자료');g.parent=null;g.layout=dir==='row'?'나란히':'세로';g.boxed=false;
@@ -127,6 +129,20 @@ export function setMaterialLayout(q,{place,count,dir}={}){
   return materialLayout(q);
 }
 
+// 11-15(시안 material-1115 Q4): 기출 변형처럼 자료 아래에 따로 있는 제목 없는 상자(글 하나뿐)를 자료 상자 칸으로 옮긴다.
+// 빈 자료 칸이 있으면 그 칸에, 없으면 칸을 하나 더(3칸까지). 옮겼으면 true. 실험 상자·제목 있는 상자·자료가 섞인 상자는 그대로.
+export function adoptBoxMaterial(q){
+  const box=q.blocks.find(b=>!b.parent&&b.kind==='group'&&b.boxed===true&&!String(b.label||'').trim());if(!box)return false;
+  const kids=q.blocks.filter(b=>b.parent===box.id);if(kids.length!==1||kids[0].kind!=='text'||!String(kids[0].text||'').trim())return false;
+  const m=materialsOf(q);if(!m||!m.items.length)return false;
+  let slot=m.items.find(b=>b.kind==='figure'&&!b.figure);
+  if(!slot){if(m.items.length>=3)return false;setMaterialLayout(q,{count:m.items.length+1,dir:'row'});slot=materialsOf(q)?.items.find(b=>b.kind==='figure'&&!b.figure);if(!slot)return false;}
+  const text=kids[0].text;q.blocks=q.blocks.filter(b=>b!==box&&b!==kids[0]);
+  slot.kind='text';slot.box=true;slot.text=text;delete slot.figure;delete slot.table;delete slot.size;slot.layout='세로';
+  // 단 폭 기준으로 정해 둔 기출 그림 크기(%)는 나란한 칸에서 그림을 작게 만든다 — 칸 폭에 맞추게 지운다.
+  for(const b of materialsOf(q)?.items||[])if(b.kind==='figure')delete b.size;
+  return true;
+}
 // 11-14(지적 1): 자료 칸 이름은 자리 순서로 — 지우기·더하기·배열 바꾸기 뒤 (가)(나)(다)를 차례로 다시 매긴다.
 // 직접 지은 이름(「그림 1」 등)은 건드리지 않는다(가~하 꼴만). 글 속 이름은 바꾸지 않는다(11-14 사용자).
 // 돌려줌: [{from,to}] 바뀐 이름(글을 바꿨는지는 texts 개수).

@@ -1068,3 +1068,18 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 /* 11-15(시안 review-1115 안 A): 카드 표 머리 행은 조판처럼 — 회색 바탕 없이 돋움 */
 #card-view .cv-grid .cv-tile .table-pic th{background:transparent;font-weight:400;font-family:-apple-system,"Apple SD Gothic Neo",sans-serif}
 #card-view .cv-grid .cv-tile[data-cvtile] .table-pic{cursor:pointer}
+/* 11-15(시안 material-1115): 자료 칸 네 가지 · (가)(나) 이름표 스위치 · 자료 상자 칸 */
+#card-view .cv-picks.four{display:grid;grid-template-columns:repeat(2,auto);gap:6px}
+#card-view .cv-picks.four .cv-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:62px;height:52px}
+#card-view .cv-picks.four .cv-pick small{font-size:11px;line-height:1.1;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-picks.four .cv-pick svg{width:18px;height:18px}
+#card-view .cv-mathead{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+#card-view .cv-capsw{display:inline-flex;align-items:center;gap:6px;height:24px;min-height:0;padding:0 10px 0 4px;border:1px solid #d0d7de;border-radius:12px;background:#fff;color:#24292f;font:12px -apple-system,sans-serif;cursor:pointer}
+#card-view .cv-capsw i{width:24px;height:14px;border-radius:8px;background:#c9ced6;position:relative;display:inline-block;transition:background .15s}
+#card-view .cv-capsw i::after{content:"";position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:left .15s}
+#card-view .cv-capsw.on i{background:var(--go-line,#2f6fd6)}#card-view .cv-capsw.on i::after{left:12px}
+#card-view .cv-tiles.caps-off .cv-tile .cap b{color:#c2c8cf;text-decoration:line-through}
+#card-view .cv-boxtile .box-pic{display:flex;align-items:stretch;padding:6px;background:#fff}
+#card-view .cv-boxtile .box-pic textarea{flex:1;width:100%;min-height:90px;border:1px solid #444;border-radius:2px;padding:8px 10px;font:14px/1.6 'HCR Batang','함초롬바탕','AppleMyungjo',serif;color:#24292f;background:#fff;resize:none}
+#card-view .cv-boxtile .box-pic textarea:focus{outline:0;box-shadow:0 0 0 2px rgba(47,111,214,.25)}
+#card-view .cv-boxtile .box-pic .eq-ce{flex:1;min-height:90px;border:1px solid #444;border-radius:2px;padding:8px 10px}

@@ -77,7 +77,7 @@ export function applyPreset(q,preset) {
   if(!PRESETS.includes(preset))throw Error('자료 구성을 선택하세요.');
   q.preset=preset;
   const additions=[];
-  if(!q.blocks.some(b=>b.kind==='text'&&!b.parent))additions.push(block('text',null,'자료 설명'));
+  if(!q.blocks.some(b=>b.kind==='text'&&!b.parent&&!b.box))additions.push(block('text',null,'자료 설명'));
   if(preset==='그림')additions.push(block('figure'));
   if(preset==='그림 비교'||preset==='그림·표') {
     const g=block('group',null,preset);g.layout='나란히';additions.push(g,block('figure',g.id,'(가)'),block(preset==='그림 비교'?'figure':'table',g.id,'(나)'));
@@ -88,9 +88,9 @@ export function applyPreset(q,preset) {
   q.blocks.push(...additions);return q;
 }
 // 글 옆 자료(가로 묶음이 문항 맨 앞): 묶음의 첫 글이 문항 번호가 붙는 첫 지문이다.
-export function openingSideText(q){const o=q.blocks.find(b=>!b.parent);if(o?.kind!=='group'||o.layout!=='나란히'||o.boxed===true)return null;const c=q.blocks.find(b=>b.parent===o.id);return c?.kind==='text'?c:null;}
+export function openingSideText(q){const o=q.blocks.find(b=>!b.parent);if(o?.kind!=='group'||o.layout!=='나란히'||o.boxed===true)return null;const c=q.blocks.find(b=>b.parent===o.id);return c?.kind==='text'&&!c.box?c:null;}
 // 시트의 '지문' 칸: 맨 앞 글 옆 지문과 묶음 밖 설명들.
-export const passageBlocks=q=>{const side=openingSideText(q);return [...(side?[side]:[]),...q.blocks.filter(b=>b.kind==='text'&&!b.parent)];};
+export const passageBlocks=q=>{const side=openingSideText(q);return [...(side?[side]:[]),...q.blocks.filter(b=>b.kind==='text'&&!b.parent&&!b.box)];};
 export function parentOptions(q,b) {
   const descendants=new Set([b.id]);let changed=true;
   while(changed){changed=false;for(const x of q.blocks)if(descendants.has(x.parent)&&!descendants.has(x.id)){descendants.add(x.id);changed=true;}}
