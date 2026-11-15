@@ -182,6 +182,7 @@ export function openRegister(api) {
     }
     return `<div class="ef-rb sfx"><section class="sfx-left">
       <label class="ef-f"><span class="n">이름</span><input data-reg-name value="${E(st.name)}" maxlength="40" style="text-align:left"></label>
+      ${st.draft?.slim?`<label class="ef-slim" title="문항 자리(첫 문항~꼬리 앞)의 그림·개체만 뺍니다. 머리 표·배점·꼬리말·쪽 설정은 그대로 · 원본 파일은 건드리지 않습니다"><input type="checkbox" data-reg-slim${st.draft.useSlim?' checked':''}> 가볍게 저장 — 문항 자리 그림·개체 ${st.draft.slim.removed}개 빼기 (${(st.draft.slim.before/1048576).toFixed(1)}MB → ${Math.max(1,Math.round(st.draft.slim.after/1024))}KB)</label>`:''}
       <div class="tsx-body"><div class="tsx-parts" role="tablist" aria-label="부분">${nav.map(([k, n]) => `<button type="button" role="tab" data-reg-part="${k}" aria-selected="${k === st.part}">${E(n)}${PARTS.some(x => x.k === k) && k !== 'paper' && partChanged(k, value) ? '<i class="d" title="수능 틀과 다른 값 있음"></i>' : ''}</button>`).join('')}</div>${inner}</div>
       <div class="sfx-foot"><span class="mu">파란 점 = 수능 틀과 다른 값(처음 값은 양식에서 읽음)</span><span class="sp"></span><button type="button" class="ef-btn" data-reg-revert>되돌리기</button></div></section>
       <section class="sfx-right"><div class="sfx-ph"><b>견본 시험지</b><span class="mu" data-sfx-state></span><span class="sp"></span><span class="mu">1쪽 · 2쪽</span></div><div class="sfx-pages" data-sfx-pages></div></section></div>`;
@@ -214,7 +215,9 @@ export function openRegister(api) {
   back.addEventListener('dragover', e => { if (e.target.closest('[data-reg-drop]')) e.preventDefault(); });
   back.addEventListener('drop', e => { if (!e.target.closest('[data-reg-drop]')) return; e.preventDefault(); read(e.dataTransfer.files?.[0]); });
   back.addEventListener('input', e => { if (e.target.matches('[data-reg-name]')) st.name = e.target.value; });
-  back.addEventListener('change', e => { const t = e.target, k = t.dataset?.regKeep; if (k) { st.keep[k] = t.checked; render(); return schedulePreview(); }
+  back.addEventListener('change', e => { const t = e.target, k = t.dataset?.regKeep;
+    // 11-15: 가볍게 저장 켜고 끄기 — 견본을 그 양식으로 다시 묶어 보여 준다.
+    if (t.matches?.('[data-reg-slim]') && st.draft?.slim) { const d = st.draft, on = t.checked, src = on ? d.slim : d.slim.original; d.useSlim = on; d.bytes = src.bytes; d.fileName = src.fileName; d.read = { ...d.read, structure: src.structure }; render(); return schedulePreview(0); } if (k) { st.keep[k] = t.checked; render(); return schedulePreview(); }
     const p = t.dataset?.p; if (!p || !st.std) return; const v = fieldValue(p, t.value, t.checked); if (v === undefined) return render();
     setStandardPath(st.std, p, v); render(); schedulePreview(); });
   back.addEventListener('click', async e => {

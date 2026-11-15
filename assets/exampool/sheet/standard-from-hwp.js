@@ -10,7 +10,7 @@ const mm = hu => Math.round(hu / HU * 2) / 2;
 // 「1.」「1)」에 더해 「Q1.」「문 1.」「[1]」 번호도 문항으로 본다(11-02 밤샘 가짜 양식 f14·f05·f08 — 예시 문항이 안 지워지고 남았음).
 const QUESTION = /^\s*(?:문\s*|Q\s*|\[\s*)?(\d{1,2})\s*[.)．\]]\s*\S/;
 // 문항 문단: 「1.」처럼 번호를 글자로 적었거나, 한글 「문단 번호」(headType Number)로 번호가 붙은 문단(10-29 대왕중 양식: 1~15번은 문단 번호, 16번부터 글자).
-const numbered = doc => (p, len) => { if (len >= 3 && QUESTION.test(doc.getTextRange(0, p, 0, Math.min(len, 40)))) return 'text'; try { const pp = J(doc.getParaPropertiesAt(0, p)); if (len && String(pp.headType).toLowerCase() === 'number' && !pp.paraLevel) return 'auto'; } catch {} return ''; };
+const numbered = doc => (p, len) => { if (len >= 3 && QUESTION.test(doc.getTextRange(0, p, 0, Math.min(len, 40)))) return 'text'; try { const pp = J(doc.getParaPropertiesAt(0, p)); if (len && ['number', 'outline'].includes(String(pp.headType).toLowerCase()) && !pp.paraLevel/* 11-15: 육민관고 원안지는 문항 번호를 개요 번호(첫 수준)로 붙였다 */) return 'auto'; } catch {} return ''; };
 // 문항 뒤 꼬리(「◇ 끝 ◇」, 답지 안내 등): 마지막 문항 뒤 짧은 「끝」 문단부터 끝까지는 양식으로 남긴다.
 const TAIL = /^[\s◇◆○●□■<>〈〉\-─―=*※()（）\[\]【】]*끝[\s◇◆○●□■<>〈〉\-─―=*.()（）\[\]【】]*$/;
 const NEXT = /(다음|뒷)\s*(면|쪽|장)\s*에?\s*계속/;

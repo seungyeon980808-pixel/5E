@@ -632,6 +632,36 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
     try{read=readSchoolDocument(d,{fileName});structure=formStructure(d);try{sample=questionSample(d,structure);}catch{}}finally{d.free();}
     let empty=null;try{empty=await emptyForm(bytes,password,structure);}catch{}
     return {...read,structure,sample,empty};}
+  // 11-15(사용자: 양식에 필요한 것만 남기기): 학교 양식 가볍게 — 문항 자리(첫 문항 문단 ~ 꼬리 앞)의 그림·그리기 개체를 빼고,
+  // 아무 데서도 쓰지 않게 된 그림 파일을 지운다. 머리 표·배점·꼬리말·쪽 설정·글꼴·문항 글(조판 기준 읽기에 씀)은 그대로.
+  // 뺀 뒤 양식 구조(첫 문항·꼬리·단·머리 표)가 원본과 같은지 엔진으로 다시 읽어 확인하고, 다르면 null(원본 그대로 쓴다).
+  async function slimForm(bytes,fileName='양식.hwpx',password=''){
+    const d=await openForm(bytes,password);let hwpx,structure;
+    try{structure=formStructure(d);hwpx=d.exportHwpx();}finally{d.free();}
+    if(!(structure.firstQuestion>=0))return null;
+    // 엔진(다른 창)이 돌려준 바이트는 이 창의 압축 도구가 못 읽어 이 창 배열로 복사한다.
+    const zip=await JSZip.loadAsync(new Uint8Array(hwpx)),secName=Object.keys(zip.files).find(n=>/(^|\/)Contents\/section0\.xml$/i.test(n));if(!secName)return null;
+    let xml=await zip.file(secName).async('string');
+    const tops=[];{let depth=0,cur=null;const re=/<hp:p\b[^>]*>|<\/hp:p>/g;let m;while((m=re.exec(xml))){if(m[0][1]==='/'){depth--;if(depth===0&&cur){cur.end=m.index+m[0].length;tops.push(cur);cur=null;}}else{if(depth===0)cur={start:m.index};depth++;}}}
+    const from=structure.firstQuestion,to=structure.tailStart>=0?Math.min(structure.tailStart,tops.length):tops.length;if(from>=to)return null;
+    const OBJ=/<hp:(pic|container|ole|rect|ellipse|arc|polygon|curve|line|connectLine|textart|chart)\b[\s\S]*?<\/hp:\1>/g;let removed=0;
+    for(let i=to-1;i>=from;i--){const p=tops[i],seg=xml.slice(p.start,p.end),out=seg.replace(OBJ,()=>{removed++;return '';});if(out!==seg)xml=xml.slice(0,p.start)+out+xml.slice(p.end);}
+    if(!removed)return null;
+    zip.file(secName,xml);
+    // 쓰지 않게 된 그림 파일·목록 지우기
+    const used=new Set();for(const n of Object.keys(zip.files))if(/\.xml$/i.test(n)){const t=n===secName?xml:await zip.file(n).async('string');for(const m of t.matchAll(/binaryItemIDRef="([^"]+)"/g))used.add(m[1]);}
+    const hpfName=Object.keys(zip.files).find(n=>/content\.hpf$/i.test(n));
+    if(hpfName){let hpf=await zip.file(hpfName).async('string');const drop=[];
+      hpf=hpf.replace(/<opf:item\b[^>]*\/>/g,tag=>{const id=tag.match(/\bid="([^"]+)"/)?.[1],href=tag.match(/\bhref="([^"]+)"/)?.[1]||'';if(/^BinData\//i.test(href)&&id&&!used.has(id)){drop.push(href);return '';}return tag;});
+      zip.file(hpfName,hpf);for(const h of drop){const n=Object.keys(zip.files).find(x=>x.endsWith(h));if(n)zip.remove(n);}}
+    if(zip.files.mimetype)zip.file('mimetype',await zip.file('mimetype').async('string'),{compression:'STORE'});
+    const out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+    // 확인: 다시 열어 구조가 같은지
+    const Document=document().constructor,check=new Document(out);let s2;try{s2=formStructure(check);}finally{check.free();}
+    const same=['firstQuestion','tailStart','columns','headTables'].every(k=>s2[k]===structure[k])&&(s2.parts||[]).length===(structure.parts||[]).length;
+    if(!same){console.warn('[5E_exam] 양식 가볍게: 구조가 달라 원본을 씁니다',structure,s2);return null;}
+    return {bytes:out,structure:s2,removed,before:bytes.byteLength??bytes.length,after:out.length,fileName:String(fileName).replace(/\.hwpx?$/i,'')+'.hwpx'};
+  }
   // 양식 등록 창 견본(10-29 시안 ①): 원본 첫 문항이 그려진 자리만 잘라 낸 쪽 그림.
   // 견본은 그림 없는 짧은 문항(한 쪽 한 단 안, 다른 문단과 겹치지 않음) 가운데 첫 것 — 없으면 첫 문항.
   function questionSample(d,structure){
@@ -710,5 +740,5 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
       if(pr?.width>0&&Math.abs(a.h/a.w-n.h/n.w)>.002)bridge.setProperties(item.ref,{width:pr.width,height:Math.round(pr.width*n.h/n.w)});return true;});
     b.figure=JSON.parse(JSON.stringify(figure));dirty=true;userDirty=true;requestAnimationFrame(()=>placer?.refresh());return true;
   }catch{return false;}}
-  return {tableDoc,swapFigure,retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},takeSkipped(){const v=skipped;skipped=null;return v;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  return {slimForm,tableDoc,swapFigure,retypesForForm,questionSvg,previewSheet,autoTypeset,examPagesSvg,readSchoolForm,open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},takeSkipped(){const v=skipped;skipped=null;return v;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value)&&qStd===stdKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

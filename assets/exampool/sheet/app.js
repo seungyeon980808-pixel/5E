@@ -996,23 +996,32 @@ async function previewFormSample({draft,standard,keep}){typesetter||=makeTypeset
   const bytes=await typesetter.buildExam(sample,exam,{form:{bytes:draft.bytes,structure:draft.read.structure,keep,standard},password:draft.password||''});
   return typesetter.examPagesSvg(bytes);}
 // 11-15(사용자): 기본 학교 원안지 양식 3개 — 처음 쓸 때 한 번 앱 안 파일(assets/exampool/forms)을 읽어 이 기기 양식 목록에 등록한다(같은 ID면 그대로).
+const BUILTIN_VER=2;// 11-15: 양식 읽는 규칙이 바뀌면 올린다 — 이미 등록한 기본 양식을 다시 읽는다(육민관고: 개요 번호 문항).
 const BUILTIN_FORMS=[{id:'form_builtin_daewang',std:'std_builtin_daewang',name:'대왕중학교 원안지',file:'daewang-middle.hwpx'},{id:'form_builtin_haesong',std:'std_builtin_haesong',name:'해송고등학교 원안지(B4)',file:'haesong-high-b4.hwpx'},{id:'form_builtin_yukmingwan',std:'std_builtin_yukmingwan',name:'육민관고등학교 원안지',file:'yukmingwan-high.hwp'}];
 let builtinForms=null;
 function ensureBuiltinForms(){return builtinForms||=(async()=>{let added=0;
-  for(const b of BUILTIN_FORMS){if(typesetForms.some(f=>f.id===b.id))continue;
-    try{const res=await fetch(new URL('../forms/'+b.file,import.meta.url));if(!res.ok)throw Error('양식 파일을 찾지 못했습니다');const buf=await res.arrayBuffer();typesetter||=makeTypesetter();
+  for(const b of BUILTIN_FORMS){if(typesetForms.some(f=>f.id===b.id&&f.builtinVer===BUILTIN_VER))continue;
+    try{const res=await fetch(new URL('../forms/'+b.file,import.meta.url));if(!res.ok)throw Error('양식 파일을 찾지 못했습니다');let buf=await res.arrayBuffer();typesetter||=makeTypesetter();
       const read=await typesetter.readSchoolForm(buf,b.file,'');const s={...read.standard,id:b.std,name:b.name};validateStandard(s);
-      if(!typesetStandards.some(x=>x.id===s.id))await saveTypesetStandards([...typesetStandards,s]);
-      await saveTypesetForms([...typesetForms,{id:b.id,name:b.name,kind:'school',builtin:true,fileName:b.file,encrypted:false,bytes:new Uint8Array(buf),structure:read.structure,standardId:s.id,createdAt:new Date().toISOString()}]);added++;}
+      await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);
+      await saveTypesetForms([...typesetForms.filter(f=>f.id!==b.id),{builtinVer:BUILTIN_VER,id:b.id,name:b.name,kind:'school',builtin:true,fileName:b.file,encrypted:false,bytes:new Uint8Array(buf),structure:read.structure,standardId:s.id,createdAt:new Date().toISOString()}]);added++;}
     catch(e){console.warn('[5E_exam] 기본 학교 양식 등록 실패',b.name,e);}}
-  if(added&&['exams','exam'].includes(view.name))renderView();return added;})();}
+  if(added&&['exams','exam'].includes(view.name))renderView();
+  // 11-15: 이미 등록한 무거운 양식(문항 그림이 남은 실제 시험지)도 한 번 가볍게 — 구조가 같을 때만 바꾸고, 아니면 그대로.
+  try{let slimmed=0,saved=0;const next=[];for(const f of typesetForms){if(f.slimmed||f.encrypted||!f.bytes||(f.bytes.byteLength??f.bytes.length)<300*1024){next.push(f);continue;}
+      let s=null;try{s=await typesetter.slimForm(f.bytes,f.fileName||'양식.hwpx','');}catch{}
+      if(s){next.push({...f,bytes:s.bytes,fileName:s.fileName,structure:{...f.structure,...s.structure},slimmed:{removed:s.removed,before:s.before,after:s.after,at:new Date().toISOString()}});slimmed++;saved+=s.before-s.after;}
+      else next.push({...f,slimmed:{removed:0,at:new Date().toISOString()}});}
+    if(next.some((f,i)=>f!==typesetForms[i])){await saveTypesetForms(next);if(slimmed)status(`등록한 학교 양식 ${slimmed}개를 가볍게 했습니다(문항 자리 그림 빼기 · ${(saved/1048576).toFixed(1)}MB 줄임) — 시험지 묶기가 빨라집니다.`);}}
+  catch(e){console.warn('[5E_exam] 등록한 양식 가볍게 만들기 실패',e);}
+  return added;})();}
 function registerForm(onSaved,kind){openRegister({kind,status:(m,err)=>status(m,err),readForm:readFormFile,previewForm:previewFormSample,saveForm:async({name,kind,draft,keep,standard})=>{
   const s={...(standard||draft.read.standard),name};validateStandard(s);await saveTypesetStandards([...typesetStandards,s]);const id='form_'+uid();
   await saveTypesetForms([...typesetForms,{id,name,kind,fileName:draft.fileName,encrypted:draft.encrypted,bytes:draft.bytes,structure:draft.read.structure,standardId:s.id,...(kind==='school'&&keep?{keep}:{}),createdAt:new Date().toISOString()}]);
   onSaved(id);}});}
 // 「틀 바꾸기」(10-24 결정 2): 틀만 바꾸고 핵심 목표(문항 수 · 총점 · 시간 · 과목 · 범위 · 규칙)는 그대로 둔다.
 function changeFrame(exam,key){const g=goalOf(exam,typesetForms);applyFrame(exam,key,typesetForms);exam.goal={...exam.goal,subject:g.subject,range:g.range,nObj:g.nObj,nEssay:g.nEssay,total:g.total,time:g.time,points:g.points,diff:g.diff,rule:g.rule,edited:g.edited};exam.updatedAt=new Date().toISOString();}
-async function framePicker(exam){if(BUILTIN_FORMS.some(b=>!typesetForms.some(f=>f.id===b.id))){status('기본 학교 양식을 준비하는 중…');await ensureBuiltinForms();status('기본 학교 양식(대왕중·해송고·육민관고)을 쓸 수 있습니다.');}openFramePicker({forms:()=>typesetForms,current:frameKey(exam),
+async function framePicker(exam){if(BUILTIN_FORMS.some(b=>!typesetForms.some(f=>f.id===b.id&&f.builtinVer===BUILTIN_VER))){status('기본 학교 양식을 준비하는 중…');await ensureBuiltinForms();status('기본 학교 양식(대왕중·해송고·육민관고)을 쓸 수 있습니다.');}openFramePicker({forms:()=>typesetForms,current:frameKey(exam),
   pick:key=>{mutate(()=>changeFrame(exam,key));status(`틀을 「${frameOf(exam,typesetForms).name}」(으)로 바꿨습니다 — 핵심 목표는 그대로입니다.`);},
   register:()=>registerForm(id=>{mutate(()=>changeFrame(exam,'form:'+id));status('내 틀을 등록하고 이 시험지에 썼습니다 — 이 브라우저에 저장했습니다.');})});}
 // 「새 시험지」 창(10-24 시안 17 안 A): 이름 · 틀 · 핵심 목표 → 「만들기」 → 바로 문항 고르기.
@@ -1110,7 +1119,10 @@ $('#examd-view').addEventListener('change',e=>{if(!e.target.matches('[data-ex-no
 async function readFormFile(file){typesetter||=makeTypesetter();const buffer=await file.arrayBuffer();let read=null,password='';
   for(;;){try{read=await typesetter.readSchoolForm(buffer,file.name,password);break;}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null){status('한글 파일 열기를 그만두었습니다.');return null;}}}
   // 암호는 등록 창이 열려 있는 동안 견본을 묶을 때만 쓴다(저장하지 않음 — saveForm은 이 값을 담지 않는다).
-  const encrypted=!!password;return {read,bytes:new Uint8Array(buffer),fileName:file.name,encrypted,password};}
+  const encrypted=!!password,d={read,bytes:new Uint8Array(buffer),fileName:file.name,encrypted,password};
+  // 11-15(사용자): 등록할 때 양식을 가볍게 — 문항 자리 그림·개체를 뺀 복사본을 기본으로 쓴다(등록 창에서 「원본 그대로」를 고를 수 있음). 원본 파일은 건드리지 않는다.
+  if(!encrypted)try{const s=await typesetter.slimForm(buffer,file.name,'');if(s){d.slim={...s,original:{bytes:d.bytes,fileName:d.fileName,structure:read.structure}};d.useSlim=true;d.bytes=s.bytes;d.fileName=s.fileName;d.read={...read,structure:s.structure};}}catch(e){console.warn('[5E_exam] 양식 가볍게 만들기 실패',e);}
+  return d;}
 // 시험지 양식 고르기: 5E 기본 / 등록한 학교 양식 / 새로 등록.
 $('#examd-view').addEventListener('change',e=>{if(e.target.id!=='exam-form')return;const exam=examNow();if(!exam)return;const v=e.target.value;
   // 새로 등록(11-02): 옛 창 대신 새 등록 창(조판 확정)으로. 등록하면 이 시험지 틀로 쓴다.
