@@ -403,7 +403,9 @@ const pdfLibraryService = new Proxy({}, {
   },
 });
 const bundledPdfPackPath = app.isPackaged ? path.join(process.resourcesPath, "pdf-library", "recent-three-pack") : process.env.FIVE_E_BUNDLED_PDF_PACK_SOURCE;
-const bundledPdfPack = bundledPdfPackPath ? createBundledPdfPackReader({ root: bundledPdfPackPath, expectedIdentity: RECENT_THREE_PACK_IDENTITY }) : null;
+// 11-15(1.7.0 출시 점검): 설치판에 기본 기출 묶음(recent-three-pack)을 넣는 설정은 1.7.0 갈래에 없다(기출 PDF는 Cloudflare 정적 주소에서 받음).
+// 묶음 폴더가 없는데 읽기기를 만들면 ENOENT로 시작하자마자 오류 창이 떠 설치판이 켜지지 않았다 → 폴더가 있을 때만.
+const bundledPdfPack = bundledPdfPackPath && fs.existsSync(bundledPdfPackPath) ? createBundledPdfPackReader({ root: bundledPdfPackPath, expectedIdentity: RECENT_THREE_PACK_IDENTITY }) : null;
 let server;
 let rpcId = 0;
 let recoveryTerminatingTurnId = null;
