@@ -517,7 +517,7 @@ export function fillFormPageCount(doc){
 }
 
 // rewidth: 시험지 단 폭과 다르게 조판한 문항을 그 단 폭으로 새로 조판한 것(문항 id → {bytes,height}). 저장한 조판은 그대로 둔다.
-export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between,template=null,openTemplate=null,columns=2,bodyStart=-1,tailStart=-1,rewidth=null,structure=null,keep={},settle=null,settleOpen=null}={}){
+export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between,template=null,openTemplate=null,columns=2,bodyStart=-1,tailStart=-1,rewidth=null,structure=null,keep={},settle=null,settleOpen=null,fill=true,seed=null}={}){
   const plan=examPlan(data,exam),{pages,page:sheet,missing,mixed}=plan;
   const items=rewidth?plan.items.map(x=>rewidth.has(x.id)?{...x,height:rewidth.get(x.id).height+x.after}:x):plan.items;
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
@@ -527,7 +527,9 @@ export async function buildExamDocument(Document,data,exam=data.exams?.[0],{betw
   const open=item=>rewidth?.has(item.id)?Promise.resolve(new Document(rewidth.get(item.id).bytes))
     :openApprovedQuestion(Document,item.q,item.q.typeset).catch(e=>{throw Error(`${item.q.number}번 문항: ${e.message}`);});
   // 학교 양식 위에서는 양식이 흘리는 대로(「다음 문단과 함께」만), 빈 시험지는 그린 결과로 확인해 문항을 통째로 넘긴다.
-  if(openTemplate){const built=await assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure,keep,settle,settleOpen});try{fillFormPageCount(built.document);}catch{}return {document:built.document,ranges:built.ranges,pages,moved:built.moved,tall:built.tall,marks:built.marks,count:items.length};}
+  // fill 거짓(11-15, 5E_hwp·한글에서 고칠 파일): 「단 아래 채우기」의 큰 문단 아래 간격을 넣지 않는다 — 고쳐서 한 줄만 늘어도 그 간격이 다음 단으로 밀려
+  // 뒤 단·쪽이 줄줄이 무너졌다. 단 나눔은 같다(채우기는 쪽·단 나눔이 그대로일 때만 넣는 꾸밈이었음). 인쇄·미리보기는 그대로 채운다.
+  if(openTemplate){const built=await assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure,keep,settle,settleOpen,fill,seed});try{fillFormPageCount(built.document);}catch{}return {document:built.document,ranges:built.ranges,pages,moved:built.moved,tall:built.tall,marks:built.marks,count:items.length};}
   if(template){const {document,ranges}=await assembleExamDocument(Document,{items,pages,sheet,template,bodyStart,tailStart,open,between});return {document,ranges,pages,count:items.length};}
   const built=await assembleExamChecked(Document,{items,sheet,open,between});
   return {document:built.document,pages:built.pages,count:items.length};

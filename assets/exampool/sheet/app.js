@@ -830,10 +830,11 @@ function makeTypesetter(){return createTypesetter({standardOf:typesetStandardOf,
           let changed=false;if(mutate(()=>{changed=fn(target)!==false;})){status(changed?text+' · 구성 시트에 반영':'배치가 그대로입니다.');if(changed&&!opt?.native){clearTimeout(redrawTimer);void requestTypeset(target);}}
         }});}
 // 시험지 HWPX: 문항 조판 문서를 모은다. 한글 엔진은 조판 창과 같은 것을 쓴다.
-async function buildExamBytes(exam,{order=null}={}){typesetter ||= makeTypesetter();
+// fill 거짓: 5E_hwp·한글에서 고칠 파일 — 단 아래 채우기 간격을 넣지 않는다(고치면 뒤 단이 무너지던 문제, 11-15). 인쇄는 채움.
+async function buildExamBytes(exam,{order=null,fill=false}={}){typesetter ||= makeTypesetter();
   const form=exam.formId?typesetForms.find(f=>f.id===exam.formId):null;if(exam.formId&&!form)throw Error('이 시험지에 고른 양식을 찾지 못했습니다. 시험지 화면에서 양식을 다시 고르세요.');
-  if(!form)return typesetter.buildExam(data,exam,{order});
-  let password='';for(;;){try{return await typesetter.buildExam(data,exam,{form,password,order});}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null)throw Error('양식 암호를 넣지 않아 시험지를 만들지 않았습니다.');}finally{password='';}}}
+  if(!form)return typesetter.buildExam(data,exam,{order,fill});
+  let password='';for(;;){try{return await typesetter.buildExam(data,exam,{form,password,order,fill});}catch(error){if(!error.needsPassword)throw error;password=await askPassword(error.message);if(password===null)throw Error('양식 암호를 넣지 않아 시험지를 만들지 않았습니다.');}finally{password='';}}}
 // Serialize loads and saves. Fast column clicks keep the last request without
 // allowing an older load or a save to bind to the newly selected question.
 // 같은 문항·같은 내용으로 조판이 한 번 실패하면 다시 시도하지 않는다(10-27 D1): 실패 → 카드 다시 그리기 → 한글 칸이 다시 조판 요청 → 또 실패가
@@ -1315,7 +1316,7 @@ async function sendExamNow(exam,{download:asFile=false,variant=false,print=false
       // 한 번에 파일 하나만(사파리는 연달아 내려받기를 막거나 허락을 묻는다) — 가·나형 대응은 이원목적분류표·정답표 엑셀의 세 번째 시트.
       const bytes=await forHancom(await buildExamBytes(exam,{order}));const saved=await download(bytes,`${exam.title} (나형).hwpx`,'application/vnd.hancom.hwpx',{open:true});
       status(savedText(saved,'나형 시험지(HWPX)')+' · 가·나형 정답 대응은 「이원목적분류표·정답표(엑셀)」의 세 번째 시트에 있습니다.');return;}
-    const bytes=await buildExamBytes(exam);
+    const bytes=await buildExamBytes(exam,{fill:!!print});
     if(print){await printExam(bytes,exam.title,print==='A4'?'A4':null);return;}
     if(asFile||!embedded){const saved=await download(await forHancom(bytes),`${exam.title}.hwpx`,'application/vnd.hancom.hwpx',{open:true});status(saved.desktop?savedText(saved,'시험지 HWPX'):asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
     sendProgress.step('open','5E_hwp에서 시험지를 여는 중…',.4);
