@@ -82,7 +82,11 @@ async function saveAndReopen(page, origin, modules, label, createContext) {
   assert.equal(download.suggestedFilename().normalize('NFC'), `${label}.5e`);
   const projectFile = path.join(evidence, `${label}.5e`);
   await download.saveAs(projectFile);
-  const saved = JSON.parse(fs.readFileSync(projectFile, 'utf8'));
+  // 1.7.0부터 .5e는 묶음(zip) 프로젝트 파일 — 게시된 fivee-project.js로 읽는다(예전 JSON 파일도 같은 함수가 읽음).
+  const { parseFiveEProject } = await import(require('node:url').pathToFileURL(path.join(site, 'js/fivee-project.js')).href);
+  const project = parseFiveEProject(fs.readFileSync(projectFile));
+  assert.equal(project?.kind, 'drawing', 'the download is a drawing project');
+  const saved = project.drawing;
   assert.deepEqual(saved, before, 'the download contains the complete persistent document');
 
   // A fresh tab/context proves recovery from the file rather than retained memory.

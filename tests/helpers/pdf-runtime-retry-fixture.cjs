@@ -94,7 +94,9 @@ async function runPdfRuntimeRetryCases({ origin, evidence, sourceRoot = path.res
           const ui = page.locator('.unified-library-overlay').last();
           await page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready');
           await ui.locator('[data-unilib-type="question"]').click();
-          await ui.locator('[data-result-kind="crop"]').first().click();
+          // 11-15: 라이브러리에 학평이 들어와 맨 앞 결과가 학평 문항(가짜 자료 밖)이 되었다 — 가짜 평가원 문항을 찾아 고른다.
+          await ui.locator('[data-unilib-query]').fill('module retry');
+          await ui.locator('[data-result-kind="crop"][data-result-id*="5e.shared.drive"]').first().click();
           const stage = ui.locator('[data-unilib-stage]');
           if (scenario === 'manual-retry') {
             const retry = stage.getByRole('button', { name: '다시 시도', exact: true });

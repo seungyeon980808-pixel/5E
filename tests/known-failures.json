@@ -133,10 +133,6 @@
       "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 10000ms exceeded."
     },
     {
-      "path": "tests/test-pdf-runtime-retry-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
       "path": "tests/test-stable-library-startup-browser.cjs",
       "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: web listing has no parts/PDF runtime gate"
     },
