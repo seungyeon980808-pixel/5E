@@ -26,6 +26,7 @@ import { registerTopMenu } from './top-menu.js?v=1.7.0-four-session-integration'
 import { showExamDocumentChoice } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
 import { syncAppLock } from './app-lock.js?v=1.7.0-four-session-integration';
+import { installGapCaret } from './rhwp-exam-gap-caret.js?v=1.7.0-four-session-integration';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const safeName = name => (name.trim() || '새 시험지').replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);
@@ -1279,6 +1280,8 @@ export function initRhwpExamWorkspace(state, services) {
     });
     bridge.editor.element.contentDocument.addEventListener('focusin',preserveMenuFocus,true);
     bridge.editor.element.contentDocument.addEventListener('keydown', saveShortcut, true);
+    // 11-15: 문항 사이 빈칸을 누르면 그 자리에 커서, 엔터면 빈 줄(rhwp-exam-gap-caret.js).
+    installGapCaret(bridge);
     // 5E 클립보드(11-14): 한글 편집기 안에서도 ⇧⌘V로 클립보드를 연다(편집기 iframe의 열쇠는 위 문서로 올라오지 않음).
     bridge.editor.element.contentDocument.addEventListener('keydown', event => { if (!(/Mac|iPhone|iPad/.test(navigator.platform || '') ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey) || !event.shiftKey || event.altKey || event.code !== 'KeyV') return; event.preventDefault(); event.stopPropagation(); window.fiveEClipboard?.toggle(); }, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', closeOpenMenu, true);
