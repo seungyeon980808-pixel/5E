@@ -106,7 +106,10 @@ export function initQuestionSheet(state,services,examWorkspace){
   const cardRefs=new Map();window.addEventListener('5e:ai-open-reference',e=>{const c=e.detail?.hwpTarget?.examCard,src=e.detail?.reference?.dataUrl;if(c&&src){cardRefs.set(c.qid+'|'+c.key,src);if(cardRefs.size>40)cardRefs.delete(cardRefs.keys().next().value);}});
   window.addEventListener('5e:hwp-ai-task',e=>{const {taskId,workState,target}=e.detail||{},card=target?.examCard;if(!card||!taskId||!frame?.contentWindow)return;
     if(!['busy','completed','failed'].includes(workState))return;
-    frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'ai-job',qid:card.qid,key:card.key,taskId,state:workState,kind:target.kind==='graph'?'graph':'image',label:target.label||''},OWN);});
+    frame.contentWindow.postMessage({channel:'5e-question-sheet',action:'ai-job',qid:card.qid,key:card.key,taskId,state:workState,kind:target.kind==='graph'?'graph':'image',label:target.label||''},OWN);
+    // 11-15(시안 flow-1115 A 결정 2): 프로그램이 뒤에 있을 때(다른 앱 사용 중) 끝나면 맥 알림도 — 누르면 5E를 앞으로.
+    if(workState!=='busy'&&!document.hasFocus()&&typeof Notification==='function')try{const go=()=>{const n=new Notification(workState==='failed'?'5E · AI 그림 작업 실패':'5E · AI 그림 작업 끝',{body:`${target.label||'그림'} — 5E로 돌아와 결과를 확인하세요.`,silent:false});n.onclick=()=>{try{window.focus();}catch{}n.close();};};
+      if(Notification.permission==='granted')go();else if(Notification.permission!=='denied')Notification.requestPermission().then(p=>{if(p==='granted')go();}).catch(()=>{});}catch{}});
   // 11-11: AI 창 「문항 카드에 넣기」 → 그 카드의 그림 자리로.
   window.addEventListener('5e:hwp-inplace-ai',async event=>{const d=event.detail,card=d?.target?.examCard;if(!card||!frame?.contentWindow)return;
     // 11-14 지적 19·20: 그래프 결과는 객체를 그림으로 그리고 그래프 원본을 품어 넣는다(칸을 열면 그래프 편집 창).

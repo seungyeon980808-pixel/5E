@@ -36,6 +36,7 @@ import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?
 import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
 import {mountClipboard} from '../../../js/clipboard-view.js?v=1114';
 import {sheetLoader,rememberSheet} from './sheet-loading.js';
+import {initAiJobsTop} from './ai-jobs-top.js';
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — 그때는 '*'로 보내고, 받을 때는 부모 창에서 왔는지로 가린다.
 const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin,fromOwn=e=>FILE_MODE?e.source===window.parent:e.origin===location.origin;
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
@@ -288,6 +289,9 @@ function backToExamQuestion(id){const exam=view.examId&&examById(data,view.examI
     q.scrollIntoView({block:'center',behavior:'smooth'});document.querySelectorAll('#exam-order [data-order]').forEach(r=>{const on=r.dataset.order===id;r.classList.toggle('on',on);if(on)r.scrollIntoView({block:'center',behavior:'smooth'});});
     if(!q.classList.contains('is-picked'))repaintExamPick(exam);};
   setTimeout(go,60);}
+// 11-15(시안 flow-1115 A): 어느 화면에서든 위쪽 줄에 AI 그림 작업 진행·끝 알림. 「결과 보기」 = 그 문항 카드 + AI 창의 그 결과.
+initAiJobsTop({host:$('#ai-jobs-top'),numberOf:qid=>data.questions.find(q=>q.id===qid)?.number||'',
+  open:j=>{if(data.questions.some(q=>q.id===j.qid))openCard(j.qid);window.parent!==window&&window.parent.postMessage({channel:'5e-question-sheet',action:'ai-job-open',qid:j.qid,key:j.key,taskId:j.taskId},location.protocol==='file:'?'*':location.origin);}});
 function renderView(){queueMicrotask(paintLockBar);queueMicrotask(paintExamStep);queueMicrotask(paintRetype);
   const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view',ideas:'#ideas-view',trash:'#trash-view'};
   view.libOn=!!cardEditor.libOn?.();view.benchBusy=!!cardEditor.benchBusy?.();
