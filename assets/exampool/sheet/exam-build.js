@@ -356,7 +356,9 @@ export function nextMarkPages(doc,text){
 export function alignFormTop(doc,{bodyStart,columns,gap=8}){
   const pd=parse(doc.getPageDef(0)),mL=pd.marginLeft/75,colW=(pd.width-pd.marginLeft-pd.marginRight)/75/columns,colOf=x=>Math.max(0,Math.min(columns-1,Math.floor((x+1-mL)/colW)));
   const ctl=(parse(doc.getPageControlLayout(0)).controls||[]).filter(c=>!(c.cellPath||[]).length&&[c.x,c.y,c.w,c.h].every(Number.isFinite)&&(c.secIdx??0)===0);
-  const wide=ctl.filter(c=>c.paraIdx<bodyStart&&c.w>colW*1.5);if(!wide.length)return 0;
+  // 머리 표는 쪽 위쪽 절반에 있는 넓은 표만 — 쪽 맨 아래 꼬리 표(11-15 육민관고 원안지: 맨 앞 문단에 딸린 쪽 기준 표)를 머리로 보면
+  // 첫 문단 위에 쪽 높이만큼 간격을 붙여 1쪽 본문이 통째로 비었다.
+  const half=pd.height/75/2,wide=ctl.filter(c=>c.paraIdx<bodyStart&&c.w>colW*1.5&&c.y+c.h<half);if(!wide.length)return 0;
   const head=Math.max(...wide.map(c=>c.y+c.h)),runs=(parse(doc.getPageTextLayout(0)).runs||[]).filter(r=>!(r.cellPath||[]).length&&(r.secIdx??0)===0&&String(r.text||'').replace(/\u2060/g,'').trim());
   let moved=0;
   for(let col=0;col<columns;col++){

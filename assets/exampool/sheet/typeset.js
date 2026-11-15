@@ -488,7 +488,7 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
   // 11-15(사용자 승인 2): 조판 결과를 이 기기에 저장 — 문항 조판(틀·용지·조판 기준별)과 묶은 시험지 문서. 껐다 켜도 다시 조판하지 않는다.
   // 열쇠 = 문항 지면 내용(contentKey)·용지·조판 기준 전체 + 저장 판(TYPESET_CACHE_VERSION). 하나라도 다르면 새로 조판한다(옛 결과를 쓰지 않게).
   // ※ 조판 엔진·조판 규칙(handoff·exam-build 등)을 고치면 TYPESET_CACHE_VERSION을 올려 저장한 결과를 모두 버린다.
-  const TYPESET_CACHE_VERSION='1.7.0-1115a|'+LAYOUT_VERSION;
+  const TYPESET_CACHE_VERSION='1.7.0-1115b|'+LAYOUT_VERSION;
   const tcache=(()=>{let dbp=null;const open=()=>dbp||=new Promise(res=>{try{const r=indexedDB.open('5e-typeset-cache',1);r.onupgradeneeded=()=>{for(const n of ['q','a'])if(!r.result.objectStoreNames.contains(n))r.result.createObjectStore(n);};r.onsuccess=()=>res(r.result);r.onerror=()=>res(null);}catch{res(null);}});
     const tx=async(store,mode,fn)=>{const db=await open();if(!db)return null;return new Promise(res=>{try{const t=db.transaction(store,mode),st=t.objectStore(store),r=fn(st);t.oncomplete=()=>res(r?.result??null);t.onerror=t.onabort=()=>res(null);}catch{res(null);}});};
     const LIMIT={q:600,a:8};let writes=0;
