@@ -3114,7 +3114,12 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-label-edit-entry { height:24px; min-height:24px; padding:0 7px; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; font-size:11px; white-space:nowrap; cursor:pointer; }
 #ai-image-panel .ai-label-edit-entry[aria-pressed="true"] { border-color:var(--accent); background:var(--control-selected-bg); }
 #ai-image-panel .ai-label-edit-entry:disabled { opacity:.5; cursor:default; }
-#ai-image-panel[data-ai-label-editing="true"] .ai-conversation > :is(.ai-compact-settings,.ai-side-content,.ai-advanced-settings) { display:none !important; }
+#ai-image-panel[data-ai-label-editing="true"] .ai-conversation > :is(.ai-compact-settings,.ai-advanced-settings) { display:none !important; }
+/* 11-15: 라벨을 고치는 동안에도 결과 단추 줄(PNG 저장·캔버스에 삽입·카드에 넣기)은 남긴다 — 예전엔 오른쪽 칸 전체를 숨겨 편집을 닫아야만 넣을 수 있었다. */
+#ai-image-panel[data-ai-label-editing="true"] :is(.ai-side-content,.ai-chat-panel,.ai-dock) { flex:none !important; min-height:0 !important; }
+#ai-image-panel[data-ai-label-editing="true"] .ai-side-content > :not(.ai-chat-panel),
+#ai-image-panel[data-ai-label-editing="true"] .ai-chat-panel > :not(.ai-dock),
+#ai-image-panel[data-ai-label-editing="true"] .ai-dock > :not(.ai-output-actions) { display:none !important; }
 #ai-image-panel .ai-label-edit-panel { flex:1; min-height:0; padding:12px 13px; overflow:auto; color:var(--text-primary); font-size:12px; }
 #ai-image-panel .ai-label-edit-panel[hidden] { display:none; }
 #ai-image-panel .ai-label-edit-panel > header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }

@@ -221,7 +221,7 @@ test('inline labels and erasing share draft history; visible PNG and native outp
   const change=async(key,value)=>{await field(key).fill(value);await field(key).blur();await ready();};
   const select=async(key,value)=>{await field(key).selectOption(value);await ready();};
   assert.equal(await panel.locator('[data-ai-insert-selected]').isEnabled(),true,'automatic QA does not prevent the user from adopting a result');
-  assert.deepEqual(await panel.locator('.ai-output-actions > button').allTextContents(),['PNG 저장','이미지 복사','캔버스에 삽입','한글로 보내기']);
+  assert.deepEqual(await panel.locator('.ai-output-actions > button:not([hidden])').allTextContents(),['PNG 저장','이미지 복사','캔버스에 삽입','한글로 보내기']);
   assert.equal(await panel.locator('.ai-generated-card [data-action="canvas-output"]').first().isVisible(),false);
   assert.equal(await panel.locator('.ai-output-more .ai-task-export-controls').isVisible(),false);
   await panel.locator('[data-ai-label-edit]').click();await ready();
@@ -277,7 +277,7 @@ test('inline labels and erasing share draft history; visible PNG and native outp
   assert.equal(saved.length,2);assert.deepEqual(saved[0],original);
   assert.equal(child.labelPlan.labels[0].text,'속도 v_A');assert.equal(child.labelPlan.labels[0].contentMode,'formula');
   assert.equal(child.labelPlan.labels[0].typography.fontWeight,'bold');
-  assert.equal(child.labelPlan.labels[0].manualStyle.size,24/384);
+  assert.equal(child.labelPlan.labels[0].manualStyle.size,24*25.4/72/(100*384/512),'크기 칸은 pt(그림 폭 100mm 기준, 11-15)');
   assert.equal(child.labelPlan.qualityReview,undefined);assert.equal(child.labelPlan.targetPlacement,undefined);
   assert.equal(child.scopedEditHistory.length,1,'one saved version combines all label changes and the one eraser stroke');
   await panel.locator('[data-ai-label-edit]').click();await ready();
