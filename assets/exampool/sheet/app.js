@@ -35,6 +35,7 @@ let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
 import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
 import {mountClipboard} from '../../../js/clipboard-view.js?v=1114';
+import {sheetLoader,rememberSheet} from './sheet-loading.js';
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — 그때는 '*'로 보내고, 받을 때는 부모 창에서 왔는지로 가린다.
 const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin,fromOwn=e=>FILE_MODE?e.source===window.parent:e.origin===location.origin;
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
@@ -1149,9 +1150,12 @@ $('#examd-view').addEventListener('dragend',()=>{dragId=null;document.querySelec
 // 시험지 쪽 배치(10-23 지적 8·9): 실제 한글 조판으로 합친 쪽을 그리고, 문항을 누르면 바로 아래에 얇은 여백 막대.
 // 조판 중 표시(11-02 시안 exam-loading-1102): 처음 그릴 때는 도는 표시·지금 하는 일·진행 막대·빈 종이 모양,
 // 다시 그릴 때는 옛 쪽을 흐리게 둔 채 위에 작은 「다시 조판 중」(기억한 결과면 0.4초라 잠깐 기다렸다 띄워 깜빡이지 않게).
-const SHEET_STAGE={items:['문항 조판','문항을 하나씩 한글 조판으로 만듭니다'],form:['학교 양식에 맞추는 중','양식 틀로 조판하지 않은 문항만 다시 조판합니다'],place:['쪽에 배치하는 중','단·쪽을 나눕니다'],draw:['쪽을 그리는 중','화면 그림을 만듭니다']};
+const SHEET_STAGE={items:['문항 조판','문항을 하나씩 한글 조판으로 만듭니다'],form:['학교 양식에 맞추는 중','양식 틀로 조판하지 않은 문항만 다시 조판합니다'],place:['쪽에 배치하는 중','단·쪽을 나눕니다'],check:['걸친 문항 확인','걸친 문항을 다음 단으로 옮깁니다'],fill:['단 아래 채우기','단 끝을 맞춥니다'],draw:['쪽을 그리는 중','화면 그림을 만듭니다']};
 const STAGE_SPAN={items:[0,.45],form:[.45,.7],place:[.7,.92],draw:[.92,1]};
-function sheetBusy(n,{fromPage=0}={}){
+function sheetBusy(n,{fromPage=0,kind='plain',examId=''}={}){
+  // 11-15(시안 flow-1115 D): 처음 그릴 때는 흐린 쪽 그림이 걷히는 로딩 창(sheet-loading.js). 0.2초 안에 끝나면(저장한 결과) 띄우지 않는다.
+  if(!n.querySelector('.pv-pg')){let L=null,last=null,end=false;const t=setTimeout(()=>{if(end)return;L=sheetLoader(n,{kind,examId});if(last)L.update(last);},200);
+    return {update(p){last=p;L?.update(p);},done(ok=true){end=true;clearTimeout(t);L?.done(ok);}};}
   const again=!!n.querySelector('.pv-pg'),label=fromPage>0?`${fromPage+1}쪽부터 다시 배치 중`:'다시 조판 중';let box=null,last=null,timer=0;
   const paint=()=>{if(!box||!last)return;const [what,why]=SHEET_STAGE[last.stage]||SHEET_STAGE.items,[a,b]=STAGE_SPAN[last.stage]||[0,1],f=a+(b-a)*(last.n?(last.i-1)/last.n:0);
     if(again){box.querySelector('small').textContent=last.n?`${last.i} / ${last.n}`:what;return;}
@@ -1189,9 +1193,9 @@ async function fillExamSheet(exam){const n=document.querySelector('#exam-sheet')
   typesetter||=makeTypesetter();let view;
   // 학교 양식을 고른 시험지(10-29): 쪽을 그 양식 위에 묶은 모양 그대로 그린다(암호 걸린 양식은 보낼 때만 열 수 있어 5E 기본 쪽으로).
   const form=exam.formId?typesetForms.find(f=>f.id===exam.formId&&!f.encrypted):null;
-  const busy=sheetBusy(n,{fromPage});
-  try{view=await typesetter.pageSheets(data,exam,examPick||exam.items[0],{form,alive:()=>seq===examSheetSeq&&n.isConnected,progress:p=>{if(seq===examSheetSeq)busy.update(p);}});}catch(e){busy.done();if(e.cancelled)return;if(seq===examSheetSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e?.message||String(e))}</p>`;return;}
-  busy.done();if(seq!==examSheetSeq||!n.isConnected)return;
+  const busy=sheetBusy(n,{fromPage,kind:form?'form':'plain',examId:exam.id});
+  try{view=await typesetter.pageSheets(data,exam,examPick||exam.items[0],{form,alive:()=>seq===examSheetSeq&&n.isConnected,progress:p=>{if(seq===examSheetSeq)busy.update(p);}});}catch(e){busy.done(false);if(e.cancelled)return;if(seq===examSheetSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e?.message||String(e))}</p>`;return;}
+  busy.done();if(seq!==examSheetSeq||!n.isConnected)return;rememberSheet(exam.id,view.pages);
   // 배치 점검은 실제로 그린 쪽(한글 조판 높이) 기준으로 다시 쓴다(시험지 화면 처음 그릴 때는 어림 높이).
   {const c=document.querySelector('#exam-check');if(c)c.innerHTML=checkMarkup(exam,data,typesetForms,examPlan(data,exam).items,placeState(appView()),view);const info=document.querySelector('#exam-sheet-info');if(info)info.textContent=`${view.pages.length}쪽 · 한글 조판 그대로 · ${view.paper} ${view.columns}단${exam.formId?(view.form?' · 학교 양식 그대로':' · 학교 양식 위 모양은 보낼 때 확인'):''}`;}
   // 쪽 그림은 칸(.pv-pgart)에 넣어, 화면 밖 쪽은 브라우저가 그리지 않게 한다(content-visibility · 11-03: 12쪽이면 SVG 4MB·요소 1만 2천 개).

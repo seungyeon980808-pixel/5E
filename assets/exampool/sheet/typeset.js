@@ -546,6 +546,8 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
     }finally{d.free();}
   }
   let assembled=null,skipped=null,assembledPlain=null;
+  // 지난번 단 나눔(시험지·양식별) — 다음 묶기를 거기서 시작한다(assembleFormChecked seed). 이 컴퓨터에 작게 기억.
+  const planSeed={get(k){try{return JSON.parse(localStorage.getItem('5e.sheet.plan.'+k)||'null');}catch{return null;}},set(k,v){try{if(v)localStorage.setItem('5e.sheet.plan.'+k,JSON.stringify(v));}catch{}}};
   const pageSheets=(...args)=>serial(()=>pageSheetsNow(...args));
   // progress(11-02 조판 중 표시): {stage:'items'|'form'|'place'|'draw', i, n} — 시험지 화면이 단계·진행 막대를 그린다.
   async function pageSheetsNow(data,exam,focusId,{alive=()=>true,form=null,progress=()=>{}}={}){
@@ -570,7 +572,10 @@ bridge.input.examTableEdit=id=>{try{if(!ready||loading||!q)return false;{const h
       else{progress({stage:'place'});
       const first=await openForm(form.bytes,'');let structure;try{structure=formStructure(first);}finally{first.free();}
       sheet={...sheet,paper:fstd.paper.size,columns:structure.columns||2};
-      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settleOpen:d=>anchorRaisedTablesOpen(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document)});
+      const skey='form|'+(exam?.id||'')+'|'+(form.id||'');
+      const b=await assembleFormChecked(Document,{items,openTemplate:()=>openForm(form.bytes,''),bodyStart:structure.firstQuestion,tailStart:structure.tailStart,columns:sheet.columns,open:item=>new Document(item.bytes),between:step,structure,keep:form.keep||{},settleOpen:d=>anchorRaisedTablesOpen(exportLayoutHwpx(d,XLSX.CFB),XLSX.CFB,Document),
+        seed:planSeed.get(skey),onPhase:name=>progress({stage:name})});
+      planSeed.set(skey,b.plan);
       try{fillFormPageCount(b.document);}catch{}
       // 양식 위에 넣은 직후의 문서는 엔진이 머리 표·〈보기〉 자리를 옛 위치로 그린다(10-29 실측: 2번이 제목 표와 겹침). 저장한 모양으로 다시 열어 그린다 — 문단 번호는 같다.
       let againBytes;try{againBytes=exportLayoutHwpx(b.document,XLSX.CFB);}finally{b.document.free();}

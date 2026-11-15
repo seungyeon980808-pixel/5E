@@ -427,7 +427,10 @@ export function fillColumns(doc,items,ranges,boxes,{columns,pad=16,only=null}){
 // 그래도 걸치는 문항이 있으면 그 문항은 반드시 새 단에서 시작하게 하고 높이를 다시 재 계획한다(보통 2~3번).
 // 양식 문서는 묶을 때마다 새로 연다(openTemplate). 한 단보다 긴 문항은 단 맨 위에서 흘러가게 두고 tall로 알린다.
 // settle(10-30): 양식 위에 넣은 직후 문서는 엔진이 옛 자리로 그린다 — 저장했다 다시 연 문서(화면·보낸 파일과 같은 모양)로 잰다.
-export async function assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure=null,keep={},settle=null,settleOpen=null}){
+// seed(11-15 사용자 「쪽에 배치」가 답답함): 지난번 같은 시험지·양식에서 찾은 단 나눔 {breaks,forced,firstStart,anchors}로 시작한다 —
+// 맞으면 한 번 묶고 끝나고(대왕중 32문항 5.1초 → 2.1초), 틀리면 아래 확인 고리가 예전처럼 고친다. 결과의 plan을 다음 seed로 기억한다.
+// onPhase(name): 'place'(첫 묶기) · 'check'(걸친 문항 보고 다시 묶기) · 'fill'(단 아래 채우기) — 진행 표시용.
+export async function assembleFormChecked(Document,{items,openTemplate,bodyStart,tailStart,columns,open,between,structure=null,keep={},settle=null,settleOpen=null,seed=null,onPhase=null,fill=true}){
   // settleOpen(11-03): 저장했다 다시 연 결과를 {바이트, 이미 연 문서(없으면 null)}로 돌려주는 settle — 같은 바이트를 두 번 열지 않고,
   // 단 아래 채우기에서 같은 문서의 사본을 여러 번 만들 때 바이트를 한 번만 만든다.
   if(settleOpen)settle=d=>{const r=settleOpen(d);return r.doc||new Document(r.bytes);};
@@ -465,7 +468,9 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
   // 걸침(단·쪽에 걸친 문항)과 표시 자리 닿음: 표시는 글 앞에 떠 있어 자리를 차지하지 않는다 — 마지막 쪽이 아닌 쪽의 오른쪽 단에서 표시 자리에 닿는 문항은 걸친 것으로 본다.
   const badOf=(b,tall)=>{const hits=Number.isFinite(b.stripTop)?stripHits(b.doc,b.measure,b.stripTop,b.mid):new Set();
     return items.filter(x=>{const p=b.boxes.get(x.id);return p&&(p.size>1||hits.has(x.id))&&!tall.has(x.id);});};
-  const forced=new Set();let breaks=new Set(),tall=new Set(),firstStart=0,b=await build(breaks,firstStart);
+  const ids=new Set(items.map(x=>x.id)),okSeed=seed&&[...(seed.breaks||[]),...(seed.forced||[]),...(seed.anchors||[])].every(id=>ids.has(id))?seed:null;
+  if(okSeed)for(const id of okSeed.anchors||[])tableAnchors.add(id);
+  const forced=new Set(okSeed?.forced||[]);let breaks=new Set(okSeed?.breaks||[]),tall=new Set(),firstStart=Number(okSeed?.firstStart)||0;onPhase?.('place');let b=await build(breaks,firstStart);
   for(let round=0;round<8;round++){
     const bad=badOf(b,tall);
         if(round>0&&!bad.length)break;
@@ -473,11 +478,11 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
     for(const x of bad)if(breaks.has(x.id)&&b.boxes.get(x.id).size>1)tableAnchors.add(x.id);
     const plan=planFormBreaks(b.doc,items,b.boxes,{columns,stripTop:b.stripTop,forced,firstStart});
     if(!bad.length&&plan.firstStart===firstStart&&plan.breaks.size===breaks.size&&[...plan.breaks].every(id=>breaks.has(id)))break;
-    breaks=plan.breaks;tall=plan.tall;firstStart=plan.firstStart;b.doc.free();b=await build(breaks,firstStart);
+    breaks=plan.breaks;tall=plan.tall;firstStart=plan.firstStart;b.doc.free();onPhase?.('check');b=await build(breaks,firstStart);
   }
   // 단 아래 채우기 — 채운 뒤 쪽 수·문항 자리가 바뀌거나 새로 걸치는 문항이 생기면 그 채우기는 버린다(11-01 사용자 사진: 채움 간격이
   // 커서 〈보기〉 뒤 선지만 다음 쪽으로 밀렸다). 한꺼번에 채워 안 되면 단마다 하나씩 채워 보고 되는 단만 남긴다.
-  if(settle){
+  if(settle&&fill){onPhase?.('fill');
     const key=m=>JSON.stringify(items.map(x=>[...(m.get(x.id)?.keys()||[])])),before=new Set(badOf(b,new Set()).map(x=>x.id));
     // 단마다 채워 볼 때 바탕 문서(b.doc)는 받아들인 채우기가 없는 한 그대로다 — 그 사본 바이트를 한 번만 만들어 다시 연다(11-03: 시험지 전체를 매번 HWPX로 썼다 열어 40초 걸린 시험지).
     let base=null;const copyOf=()=>{if(!settleOpen)return settle(b.doc);if(base?.doc!==b.doc){const r=settleOpen(b.doc);base={doc:b.doc,bytes:r.bytes};return r.doc||new Document(r.bytes);}return new Document(base.bytes);};
@@ -493,7 +498,7 @@ export async function assembleFormChecked(Document,{items,openTemplate,bodyStart
   for(let round=0;round<3&&dropRaisedPictures(b.doc);round++)b.doc=again(b.doc);
   if(spaceBelowTableEquations(b.doc))b.doc=again(b.doc);
   const left=badOf(b,new Set());
-  return {document:b.doc,ranges:b.ranges,moved:[...breaks],tall:left.map(x=>x.id),marks:b.marks};
+  return {document:b.doc,ranges:b.ranges,moved:[...breaks],tall:left.map(x=>x.id),marks:b.marks,plan:{breaks:[...breaks],forced:[...forced],firstStart,anchors:[...tableAnchors]}};
 }
 
 // 양식 머리말·꼬리말의 「총( 7 )쪽」(10-29): 양식을 만들 때 적은 쪽수를 실제로 묶은 쪽수로 바꾼다. 숫자만 바꾸고 나머지 글·서식은 그대로.

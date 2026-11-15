@@ -764,3 +764,12 @@ body.card-locked #card-view .cv-grid textarea,body.card-locked #card-view .cv-gr
 /* 11-15 여백 표시 끄기: 반영된 여백 빗금만 숨긴다 — 아직 조판 전(주황)은 반영할 것이 남았다는 표시라 그대로 둔다. */
 #exam-sheet.ex-nogaps .pv-gapz:not(.pend){visibility:hidden}
 .ex-gapseg{margin-right:8px}
+/* 11-15 시험지 로딩 창(sheet-loading.js): 흐린 쪽 그림 + 단계 이름 + 쉬지 않는 막대 + 단계 줄 */
+.pv-load2{gap:12px;padding:26px 0 8px}
+.pv-load2 .pv-blur{width:min(560px,82%);aspect-ratio:520/368;border-radius:8px;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+.pv-load2 .pv-blur .br-bar{display:none}
+.pv-load2 b{font-size:14px;margin-top:4px}
+.pv-load2 .pv-bar{width:min(420px,70%);height:4px}
+.pv-load2 .pv-bar i{width:100%;transform:scaleX(0);transform-origin:left center;transition:none}
+.pv-steps{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;font-size:11.5px;color:var(--ds-ink-3)}
+.pv-steps em{font-style:normal;opacity:.6}.pv-steps .on{color:var(--ds-ink)}.pv-steps .done{color:#7ee787}
