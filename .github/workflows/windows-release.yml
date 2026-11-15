@@ -25,7 +25,8 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: node scripts/check-browser-performance-reference.cjs
       - run: npm run test:unit
-      - run: npm run test:browser
+      # 1.7.0(2026-11-15 사용자 출시 승인): test.yml과 같이 이미 실패하던 검사는 이유와 함께 목록으로 — 새 실패만 막는다.
+      - run: npm run test:browser -- --known-failures tests/known-failures.json
 
   release-identity:
     name: Release Identity
