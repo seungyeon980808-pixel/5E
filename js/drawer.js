@@ -18,6 +18,8 @@ const tx = async (mode, fn) => { const d = await db(); return new Promise((resol
 }); };
 const listeners = new Set();
 const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('5e-drawer') : null;
+// Node(검사)에서는 이 채널이 프로세스를 붙잡아 검사가 끝나지 않는다 — 브라우저엔 unref가 없어 그대로.
+try { channel?.unref?.(); } catch {}
 channel?.addEventListener('message', () => listeners.forEach(f => f()));
 const changed = () => { listeners.forEach(f => f()); channel?.postMessage('change'); };
 const KINDS = new Set(['img', 'graph', 'eq', 'text', 'obj']);
