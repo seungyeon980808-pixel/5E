@@ -28,7 +28,8 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /FIVE_E_DEV_USER_DATA/);
   assert.match(main, /FIVE_E_DISABLE_GPU/);
   assert.match(main, /nodeIntegration: false/);
-  assert.match(main, /Menu\.setApplicationMenu\(null\)/);
+  // 1.7.1: 메뉴 막대 정의는 app-menu.cjs(맥 아닌 곳은 메뉴 없음)
+  assert.match(fs.readFileSync(path.join(__dirname, "app-menu.cjs"), "utf8"), /Menu\.setApplicationMenu\(null\)/);
   assert.match(main, /win\.setMenu\(null\)/);
   assert.match(main, /win\.setMenuBarVisibility\(false\)/);
   // 11-04: 작은 로딩 창 대신 앱 창 안 시작 창(js/start-screen.js)
