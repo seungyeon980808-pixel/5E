@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
-const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/?mode=lite';
+const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/?mode=lite';
 const evidence = process.env.EVIDENCE_DIR || '.omo/evidence/lite-persistent-four-pane-0924/integrated';
 const fixture = path.resolve('tests/fixtures/rights-clear-smoke.png');
 const fixtureDataUrl = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;

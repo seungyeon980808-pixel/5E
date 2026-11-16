@@ -24,12 +24,12 @@ async function main() {
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));
 
-  await page.goto(`${baseUrl}/preview/`, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+  await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 20_000 });
   console.log('loaded preview');
   const welcome = page.locator('.tut-banner-no');
   await welcome.waitFor({ state: 'visible' });
   await welcome.click();
-  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+  await require('./helpers/graph-entry.cjs').openGraphDirect(page);
   console.log('clicked graph tool');
   await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
   if (await welcome.count()) await welcome.click({ force: true });

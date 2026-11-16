@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 
-const BASE_URL = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/?mode=lite';
+const BASE_URL = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/?mode=lite';
 const EVIDENCE = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/lite-four-pane-0924');
 const FIXTURE = path.resolve('tests/fixtures/rights-clear-smoke.png');
 const FIXTURE_DATA_URL = `data:image/png;base64,${fs.readFileSync(FIXTURE).toString('base64')}`;
@@ -206,8 +206,8 @@ async function scenarioLibraryPdfCrop() {
     await page.evaluate(async () => {
       document.querySelectorAll('.unified-library-overlay').forEach(node => node.remove());
       const [{ createUnifiedLibraryProvider }, { createUnifiedLibraryUi }] = await Promise.all([
-        import('/preview/js/library/provider.js'),
-        import('/preview/js/unified-library-ui.js'),
+        import('/js/library/provider.js'),
+        import('/js/unified-library-ui.js'),
       ]);
       const documents = [{ id: 'lite-qa-pdf', title: 'Lite QA PDF', pageCount: 2, source: { displayName: 'lite-qa.pdf', kind: 'pack' } }];
       const entries = [1, 2].map((itemNumber) => ({ documentId: 'lite-qa-pdf', pageNumber: 1, itemNumber, itemId: `q${itemNumber}`, text: `Lite QA question ${itemNumber}`, source: { documentId: 'lite-qa-pdf', pageNumber: 1, rect: [0.1, 0.1, 0.6, 0.45], fullPageFallback: false } }));

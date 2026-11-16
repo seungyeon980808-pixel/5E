@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8800/preview/?mode=lite';
+const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8800/?mode=lite';
 const evidence = process.env.EVIDENCE_DIR || '/tmp/5e-lite-hybrid-qa';
 fs.mkdirSync(evidence, { recursive: true });
 const projection = page => page.locator('#canvas').evaluate(svg => {

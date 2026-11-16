@@ -5,7 +5,7 @@ const evidence = process.env.EVIDENCE_DIR || "/tmp/5e-lite-hybrid-qa";
 fs.mkdirSync(evidence, { recursive: true });
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
-const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?local=LITE-TOOLS-0922";
+const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/?local=LITE-TOOLS-0922";
 
 (async () => {
   for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {

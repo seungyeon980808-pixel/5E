@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { chromium, webkit, devices } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '../..');
 const output = process.env.MOBILE_QA_OUT || '/tmp/5e-mobile-0918/qa';
-const basePath = process.env.MOBILE_QA_BASE_PATH || '/preview/';
+const basePath = process.env.MOBILE_QA_BASE_PATH || '/';
 fs.mkdirSync(output, {recursive:true});
 const types = {'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.woff2':'font/woff2','.otf':'font/otf','.wasm':'application/wasm'};
 const server = http.createServer((req,res) => {
@@ -28,7 +28,7 @@ const report = {
     boundaryPointerCancel: 'Playwright mouse plus synthetic DOM PointerEvent(pointercancel)',
   },
   scenarios: [], errors: [], runs: [], measurements: [],
-  source: Object.fromEntries(['DESIGN.md', 'tests/manual/mobile-image-qa.cjs', 'preview/index.html', 'preview/css/mobile-image.css', 'preview/js/ai-panel.js', 'preview/js/main.js', 'preview/js/mobile-entry.js', 'preview/js/mobile-image.js', 'preview/js/panel-visibility.js', 'preview/js/web-login-ui.js']
+  source: Object.fromEntries(['DESIGN.md', 'tests/manual/mobile-image-qa.cjs', 'index.html', 'css/mobile-image.css', 'js/ai-panel.js', 'js/main.js', 'js/mobile-entry.js', 'js/mobile-image.js', 'js/panel-visibility.js', 'js/web-login-ui.js']
     .map(file => [file, require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')])),
 };
 const fixture = path.join(root,'tests/fixtures/rights-clear-smoke.png');

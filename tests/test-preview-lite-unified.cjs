@@ -4,7 +4,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
-const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8800/preview/?mode=lite';
+const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8800/?mode=lite';
 const evidence = process.env.EVIDENCE_DIR || '.omo/evidence/unified-lite-0922/final';
 const fixture = path.resolve('tests/fixtures/rights-clear-smoke.png');
 const fixtureDataUrl = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;
@@ -99,7 +99,7 @@ const projection = page => page.locator('#canvas').evaluate(canvas => {
 });
 
 (async () => {
-  const { createScopedEditSession } = await import(pathToFileURL(path.resolve('preview/js/ai-scoped-edit-session.js')).href);
+  const { createScopedEditSession } = await import(pathToFileURL(path.resolve('js/ai-scoped-edit-session.js')).href);
   await assert.rejects(
     createScopedEditSession({ candidateId: 'candidate', epoch: 0, rectangles: [{ coordinateSpace: 'reference-pixels', x0: 0, y0: 0, x1: 1, y1: 1 }], selectionRevision: 0, sourcePng: new Uint8Array([1]), taskId: 'task' }),
     /Only selected-result-pixels rectangles are accepted/,
