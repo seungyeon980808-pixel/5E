@@ -25,10 +25,6 @@
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 242줄 「＋ 그래프 추가」가 안 보임 — 원인 미확인"
     },
     {
-      "path": "tests/test-rhwp-exam-workspace-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 59줄 한글 undo 뒤 이전 수정본(y=10)이 아닌 y=4를 엶, js/rhwp-exam-source-tabs.js:216-224"
-    },
-    {
       "path": "tests/test-rhwp-exam-graph-zoom-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 검사 낡음: 「한글로 보내기」가 「클립보드에 넣기」로 바뀜(86f9b7df) — 클립보드→붙여넣기로 재작성 필요"
     },
@@ -42,7 +38,7 @@
     },
     {
       "path": "tests/test-stable-library-startup-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 웹 / 첫 목록에서 /js/pdf-library/pdf-runtime.js를 1회 요청(목록만 볼 땐 안 불러야 함)"
+      "reason": "2026-11-17 1.7.1 BL9: 결정 필요 — pdf-runtime.js는 목록을 막지 않는다. 첫 목록이 고른 기출 문항 미리보기에서 그림 후보를 찾느라(unified-library-ui.js renderPreview → pdf-library-ui.js resolveResult → ensureDocumentOpen) 불러옴. 안 부르려면 그림 후보 찾기를 미루는 화면 변경이 필요(BL9 보고서)"
     },
     {
       "path": "tests/test-ai-batch-source-browser.cjs",
@@ -109,36 +105,12 @@
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 「이미지로 보내기」 경로 사라짐, 163줄 task-0 탭 없음"
     },
     {
-      "path": "tests/test-feedback-linked-document-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: hwp-escape와 같은 뿌리 — 배치 패널이 Esc로 안 닫힘(BL7 뒤 재확인 필요)"
-    },
-    {
-      "path": "tests/test-canvas-brush-erase-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 지우개 끌기 중 Esc 뒤 설정 칸이 남음(erase-tool.js:204·207은 Esc로 닫히게 만듦)"
-    },
-    {
       "path": "tests/test-blur-reveal-product-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
     {
-      "path": "tests/test-teacher-flow-library-send-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 보내기 메뉴가 단추가 아니라 컨테이너 기준으로 뜸(gap 50, css/unified-library.css:599)"
-    },
-    {
-      "path": "tests/test-teacher-flow-ai-image-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결과 크기 386×257(기대 480×320) — 미판정"
-    },
-    {
       "path": "tests/test-teacher-flow-label-export-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: CI에서만(D): teacher-flow 헬퍼에 CI일 때만 대기 3배 넣음 — CI에서 확인 필요"
-    },
-    {
-      "path": "tests/test-teacher-flow-graph-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 크롬 통과, WebKit에서 그래프 모달이 안 열림 — 미판정"
-    },
-    {
-      "path": "tests/test-teacher-flow-hwp-exam-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 크롬 통과, WebKit에서 .unified-text-editor가 안 보임 — 미판정"
     },
     {
       "path": "tests/test-clipboard-hub-browser.cjs",
@@ -147,10 +119,6 @@
     {
       "path": "tests/test-ai-workbench-polish-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: CI에서만(D): CI일 때만 기준 완화 넣음. 로컬은 성능 입력이 커밋 전이라 확인 못 함"
-    },
-    {
-      "path": "tests/test-unified-library-page-scroll-browser.cjs",
-      "reason": "2026-11-17 1.7.1: preview/ 삭제 뒤 옛 /preview/js 사본 대신 실제 js/unified-library-ui.js를 읽자 272줄에서 실패(옛 사본으로만 통과해 왔음). 의심: js/unified-library-ui.js 1988-2013 waitForFirstResultPaint·2409-2424 prepareVisibleThumbnails(11-05 화면 개편). 버그 갈래 판정 필요."
     }
   ]
 }

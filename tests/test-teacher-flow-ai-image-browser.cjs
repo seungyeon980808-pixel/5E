@@ -65,7 +65,10 @@ flow.runEngines('ai-image', {
     const saved = await flow.download(page, () => panel.locator('[data-ai-save-selected]').click(), evidence, `${engine}-ai-result.png`);
     assert.match(saved.suggested, /\.png$/);
     const result = flow.inkStats(saved.bytes), source = flow.inkStats(fs.readFileSync(sourceFile));
-    assert.deepEqual([result.width, result.height], [source.width, source.height], '결과는 원본과 같은 크기');
+    // 11-08·11-10 원본 판 맞춤(js/ai-label-reframe.js fitCandidateToSource): 판은 원본과 같은 「비율」이고, 크기는 새 그림의
+    // 해상도(그림 영역 폭 ÷ 원본 그림 영역 비율)로 정한다 — 원본 픽셀 크기와 같을 필요는 없다(예: 480×320 → 386×257).
+    assert.ok(Math.abs(result.width / result.height - source.width / source.height) / (source.width / source.height) < .01,
+      `결과는 원본과 같은 비율: ${result.width}×${result.height} / ${source.width}×${source.height}`);
     assert.ok(paperRatio(fs.readFileSync(sourceFile)) > .8 && paperRatio(saved.bytes) < .01, '종이 배경이 흰 배경으로 바뀌었다');
     assert.ok(result.inkRatio > .02 && result.inkRatio < .3, `선이 남아 있다(먹 비율 ${result.inkRatio.toFixed(3)})`);
 

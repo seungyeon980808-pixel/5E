@@ -185,6 +185,10 @@ const { chromium, webkit } = require("playwright");
     assert.equal(await ui.locator('.unilib-crop-load-paper').isVisible(), true, 'unavailable target thumbnail should leave a neutral paper placeholder');
     await page.evaluate(() => window.pageDelay.release());
     await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: 'hidden' });
+    // 썸네일은 아직 붙잡혀 있다(thumbnailDelay 미해제) — 그동안 원문 2쪽이 뜨면 「썸네일을 기다리지 않음」이 맞다.
+    // 불러옴 표시가 사라진 바로 그 순간에 src를 읽으면 한 박자 앞서 1쪽을 읽는 때가 있어(4번 중 1번) 2쪽이 될 때까지 기다린다.
+    await page.waitForFunction(() => /%3E2%3C/.test([...document.querySelectorAll('.unified-library-overlay')].at(-1)?.querySelector('[data-unilib-crop-image]')?.getAttribute('src') || ''), null, { timeout: 10_000 })
+      .catch(() => {});
     assert.match(await ui.locator('[data-unilib-crop-image]').getAttribute('src'), /%3E2%3C/, 'original must become ready without waiting for the thumbnail');
     await ui.locator('[data-unilib-crop-cancel]').click();
     await ui.locator('[data-unilib-type="question"]').click();
@@ -269,13 +273,18 @@ const { chromium, webkit } = require("playwright");
     await page.evaluate(() => window.releaseLoadingProvider());
     await loadingUi.locator('[data-result-id="book"]').waitFor();
     await page.evaluate(async () => { for (let frame = 0; frame < 8; frame++) await new Promise(requestAnimationFrame); });
-    assert.equal(await loadingUi.locator('[data-unilib-result-state]').isVisible(), true, 'initial loading must wait for the second visible thumbnail even after the first is ready');
-    assert.equal(await loadingUi.locator('[data-result-id="book"] img').evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    // 11-05(70bd7c98, 시안 v8): 결과 카드가 보이면 「불러오는 중」 띠는 CSS로 숨긴다(머리줄 아래 얇은 막대만) — 그래서 띠가 보이는지가
+    // 아니라 상태(data-state·aria-busy)로 「두 번째 보이는 썸네일까지 기다리는 중」을 확인한다.
+    // 썸네일이 뜰 때 blur-reveal(js/loading/blur-reveal.js)이 잠깐 같은 그림(.br-final)을 하나 더 얹으므로 카드 안 그림을 모두 본다.
+    const loadingState = () => loadingUi.evaluate((root) => ({ hidden: root.querySelector('[data-unilib-result-state]').hidden, state: root.querySelector('[data-unilib-result-state]').dataset.state, busy: root.querySelector('[data-unilib-results]').getAttribute('aria-busy') }));
+    assert.deepEqual(await loadingState(), { hidden: false, state: 'loading', busy: 'true' }, 'initial loading must wait for the second visible thumbnail even after the first is ready');
+    assert.equal(await loadingUi.locator('[data-result-id="book"] img').evaluateAll((images) => images.length > 0 && images.every((image) => image.complete && image.naturalWidth > 0)), true);
     if (process.env.EVIDENCE_DIR) await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, 'library-first-loading.png') });
     await page.evaluate(() => { window.releaseFirstThumbnail(); });
-    await loadingUi.locator('[data-unilib-result-state]').waitFor({ state: 'hidden' });
-    assert.equal(await loadingUi.locator('[data-result-id="book"] img').evaluate((image) => image.complete && image.naturalWidth > 0), true);
-    assert.equal(await loadingUi.locator('[data-result-id="book-1"] img').evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    await page.waitForFunction(() => [...document.querySelectorAll('.unified-library-overlay')].at(-1)?.querySelector('[data-unilib-result-state]')?.dataset.state === 'ready');
+    assert.deepEqual(await loadingState(), { hidden: true, state: 'ready', busy: 'false' });
+    assert.equal(await loadingUi.locator('[data-result-id="book"] img').evaluateAll((images) => images.length > 0 && images.every((image) => image.complete && image.naturalWidth > 0)), true);
+    assert.equal(await loadingUi.locator('[data-result-id="book-1"] img').evaluateAll((images) => images.length > 0 && images.every((image) => image.complete && image.naturalWidth > 0)), true);
     assert.equal(await loadingUi.locator('[data-result-id="book-2"] .unilib-thumb').getAttribute('data-thumbnail-state'), 'error', 'failed visible thumbnail should settle into its error placeholder');
     assert.equal(await page.evaluate(() => window.initialThumbnailLoads.includes(19)), false, 'offscreen thumbnails must remain lazy');
     if (process.env.EVIDENCE_DIR) await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, 'library-first-settled.png') });

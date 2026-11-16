@@ -29,8 +29,10 @@ nav.app-switch.has-app-menu{display:none!important}
 .exam-brand.app-menu-trigger{border-radius:6px}
 .exam-brand.app-menu-trigger:hover,.exam-brand.app-menu-trigger.is-open{background:var(--ds-hover,#1d2633);box-shadow:0 0 0 6px var(--ds-hover,#1d2633)}
 .app-menu{position:fixed;z-index:3000;width:280px;box-sizing:border-box;font:400 16px/normal "IBM Plex Sans KR",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;letter-spacing:normal;text-align:left;background:#141a23;border:1px solid #2b3442;border-radius:12px;padding:6px;box-shadow:0 14px 34px rgba(0,0,0,.5);
-  opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .18s ease,transform .18s ease}
-.app-menu.is-open{opacity:1;transform:none;pointer-events:auto}
+  opacity:0;transform:translateY(-6px);pointer-events:none;visibility:hidden;transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s}
+.app-menu.is-open{opacity:1;transform:none;pointer-events:auto;visibility:visible;transition-delay:0s}
+/* 1.7.1: 닫힌 목록은 visibility도 숨긴다 — 투명하기만 하면 Esc 층(escape-layers.js)이 보이는 메뉴로 보고 맨 위 층으로 골라
+   (z-index 3000) 지우개 설정·배치 칸 같은 아래 층의 Esc 닫기를 막았고, Tab으로 안 보이는 항목에 초점이 갔다. */
 .app-menu::before{content:'';position:absolute;left:0;right:0;top:-10px;height:10px}
 .app-menu button,.app-menu a{box-sizing:border-box;display:flex;align-items:baseline;gap:12px;width:100%;height:auto;min-height:0;margin:0;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:#e6edf3;font:inherit;line-height:normal;box-shadow:none;text-align:left;text-decoration:none;cursor:pointer}
 .app-menu button:hover,.app-menu button:focus-visible,.app-menu a:hover{background:#1d2633;outline:none}

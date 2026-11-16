@@ -3423,6 +3423,10 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
   sendButton.addEventListener("click", () => {
     if (!sendMenu.hidden) { closeSendMenu(); return; }
     sendMenu.hidden = false; sendButton.setAttribute("aria-expanded", "true");
+    // 1.7.1: 메뉴는 「보내기」 단추 바로 위 6px에 단추 폭만큼 뜬다. 「클립보드에 넣기」가 들어오며(86f9b7df) 단추가 둘째 줄 왼쪽으로
+    // 옮겨 가서, 칸(.unilib-actions) 오른쪽 위에 붙이던 CSS만으로는 메뉴가 옆 단추 위에 떴다 — 단추 자리를 읽어 붙인다.
+    if (sendButton.offsetParent === sendMenu.offsetParent) Object.assign(sendMenu.style, { left: `${sendButton.offsetLeft}px`, right: "auto", width: `${sendButton.offsetWidth}px`,
+      bottom: `${sendMenu.offsetParent.clientHeight - sendButton.offsetTop + 6}px` });
     // 메뉴가 열린 동안 단추 설명 풍선이 메뉴 항목을 덮지 않게 설명을 잠시 뗀다(포커스만으로도 풍선이 뜸).
     sendButton.dataset.sendTitle = sendButton.title; sendButton.removeAttribute("title"); document.querySelector(".app-tooltip")?.classList.remove("is-visible");
     if (lastInteractionWasKeyboard) sendMenu.querySelector("button")?.focus();

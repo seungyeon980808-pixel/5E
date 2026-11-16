@@ -50,6 +50,22 @@ export function createExamSourceTabs(state, services) {
     page.meta = revisionMetadata(page,figure);
   }
 
+  // Annotation commits (including undo back to their full-source parent) keep
+  // the tab's drafts; any other revision change replaces the tab's source.
+  const isSourceTransition = (page, figure) => !!(page.meta?.examRevisionId && page.meta.examRevisionId !== figure.id
+    && figure.editScope !== 'annotations' && page.meta.examEditScope !== 'annotations');
+
+  // Native document undo chooses a previous source revision in the same tab.
+  function restoreSourceRevision(page, figure) {
+    const prepared = services.prepareLoadedProject(copyExamData(figure.source));
+    state.update(value => {
+      Object.assign(page,{objects:prepared.active.objects,guides:prepared.active.guides,layers:prepared.active.layers,artboard:prepared.active.artboard});
+      if (value.activePageId === page.id) Object.assign(value,{objects:page.objects,guides:page.guides,layers:page.layers,artboard:page.artboard,undoStack:[],redoStack:[]});
+      rememberRevision(page,figure);
+    });
+    services.resetPageHistory(state,page);
+  }
+
   function newLinkedPage(figure, source = figure.source) {
     const page = services.prepareLoadedProject(copyExamData(source)).active;
     if (state.get().pages.some(existing => existing.id === page.id)) page.id = `exam_${crypto.randomUUID()}`;
@@ -102,6 +118,13 @@ export function createExamSourceTabs(state, services) {
     const figure = normalizeExamFigure(raw);
     annotationsFor(figure.source);
     let page = pageForLink(figure.link);
+    // 1.7.1: 한글 되돌리기로 문서 그림이 다른 원본 수정본이 되었으면(라벨만 바뀐 사이가 아님) 라벨만 합치지 않고
+    // 탭 원본을 그 수정본으로 바꾼다. 라벨만 합쳐 수정본 표시만 옮기면, 뒤이은 「자세히」(activate)가 같은 수정본으로 보고
+    // 옛 원본(되돌리기 전 그림)을 그대로 연다.
+    if (page && isSourceTransition(page,figure)) {
+      restoreSourceRevision(page,figure);
+      return {labels:annotationsFor(livePage(page))};
+    }
     const merged = page ? revisionMerge(page,figure) : null;
     if (!page) {
       page = newLinkedPage(figure);
@@ -213,14 +236,7 @@ export function createExamSourceTabs(state, services) {
       // retain unapplied background/geometry drafts and the page's undo stacks.
       markAnnotationRevision(figure);
     } else if (page.meta.examRevisionId && page.meta.examRevisionId !== figure.id) {
-      // Native document undo chooses a previous source revision in the same tab.
-      const prepared = services.prepareLoadedProject(copyExamData(figure.source));
-      state.update(value => {
-        Object.assign(page,{objects:prepared.active.objects,guides:prepared.active.guides,layers:prepared.active.layers,artboard:prepared.active.artboard});
-        if (value.activePageId === page.id) Object.assign(value,{objects:page.objects,guides:page.guides,layers:page.layers,artboard:page.artboard,undoStack:[],redoStack:[]});
-        rememberRevision(page,figure);
-      });
-      services.resetPageHistory(state,page);
+      restoreSourceRevision(page,figure);
     }
     if (!page.meta.examRevisionId || !page.meta.examAnnotationBaseline) state.update(()=>{rememberRevision(page,figure);});
     services.switchPage(state,page.id);
