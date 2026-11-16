@@ -587,14 +587,33 @@ const EDITOR_FONT_OPTIONS = [
 ];
 
 function normalizeFormulaSource(src) {
+  // 1.7.1 B10: 제곱근 뒤 묶음 하나 — {…} 또는 띄어쓰기 없는 낱말·숫자(「sqrt 2gh」).
+  const ROOT_BODY = String.raw`(\{[^{}]*\}|[A-Za-z0-9.αβγδεθλμπρσφωΔΩ]+)`;
+  const braced = (body) => body.startsWith("{") ? body : `{${body}}`;
   return String(src || "")
     // 11-14: 한글(HWP) 수식 말도 받는다 — sin·cos·tan은 정체 함수, times·+-·->·over·cdot·deg.
     .replace(/\{([^{}]*)\}\s*over\s*\{([^{}]*)\}/g, "frac{$1}{$2}")
     .replace(/(^|[\s(=])([A-Za-z0-9.]+)\s+over\s+([A-Za-z0-9.]+)(?=$|[\s)=])/g, "$1frac{$2}{$3}")
+    // 1.7.1 B10: 제곱근 — 「root 2 of x」(2제곱근만, formula.js는 n제곱근 첨자가 없음)·「sqrt x」·「SQRT {x}」.
+    .replace(new RegExp(String.raw`\broot\s*\{?\s*2\s*\}?\s*of\s*` + ROOT_BODY, "g"), (_m, body) => `sqrt${braced(body)}`)
+    .replace(new RegExp(String.raw`(^|[^\\A-Za-z])(?:sqrt|SQRT)\s+` + ROOT_BODY, "g"), (_m, pre, body) => `${pre}sqrt${braced(body)}`)
+    .replace(/(^|[^\\A-Za-z])SQRT(?=\{)/g, "$1sqrt")
     .replace(/(^|[^\\A-Za-z])(sin|cos|tan|log|ln|exp)(?![A-Za-z])/g, "$1\\$2")
-    .replace(/\btimes\b/g, "×")
+    .replace(/\b(?:times|TIMES)\b/g, "×")
     .replace(/\bcdot\b/g, "·")
-    .replace(/\bdeg\b/g, "°")
+    .replace(/\b(?:deg|DEG)\b/g, "°")
+    // 1.7.1 B10: 비교·근사·무한대 — 한글 수식 말(LEQ GEQ NEQ approx inf)과 글자 기호(<= >= != <=> =>).
+    .replace(/\b(?:LEQ|leq)\b/g, "≤")
+    .replace(/\b(?:GEQ|geq)\b/g, "≥")
+    .replace(/\b(?:NEQ|neq)\b/g, "≠")
+    .replace(/\b(?:approx|APPROX)\b/g, "≈")
+    .replace(/\b(?:inf|INF|infty)\b/g, "∞")
+    .replace(/<=>/g, "⇔")
+    .replace(/<->/g, "↔")
+    .replace(/<=/g, "≤")
+    .replace(/>=/g, "≥")
+    .replace(/!=/g, "≠")
+    .replace(/=>/g, "⇒")
     .replace(/\+-/g, "±")
     .replace(/->/g, "→")
     .replace(/<-/g, "←")
