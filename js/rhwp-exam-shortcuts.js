@@ -266,7 +266,7 @@ export function installDocumentShortcuts(bridge) {
   installed.add(doc);
   let pending = null;
   const clear = () => { pending = null; };
-  const notify = message => bridge.onChange?.(new Error(message));
+  const notify = (message, code) => bridge.onChange?.(Object.assign(new Error(message), code ? { code } : {}));
   const consume = event => { event.preventDefault(); event.stopImmediatePropagation(); };
   doc.addEventListener('focusout', clear, true);
   doc.addEventListener('compositionstart', clear, true);
@@ -342,9 +342,10 @@ export function installDocumentShortcuts(bridge) {
 }
 
 // 단축키와 5E_hwp 집중 도구 줄이 같은 동작을 쓰도록, 단축키 이름(action) 하나를 실행하는 부분을 따로 둔다.
-export function runDocumentAction(bridge, action, { notify = message => bridge.onChange?.(new Error(message)), context } = {}) {
+export function runDocumentAction(bridge, action, { notify = (message, code) => bridge.onChange?.(Object.assign(new Error(message), code ? { code } : {})), context } = {}) {
   const input = bridge.input, cursor = input?.cursor;
-  if (!cursor) { notify('먼저 시험지를 여세요.'); return false; }
+  // 1.7.1 B6: 「문서 없음」은 code를 붙여 알린다 — 5E_hwp가 경고 대신 파일 메뉴(새 시험지·열기)를 펼친다.
+  if (!cursor) { notify('먼저 시험지를 여세요.', 'no-document'); return false; }
   context ||= { inCell:cursor.isInCell() && !cursor.isInTextBox(), cellSelection:cursor.isInCellSelectionMode() };
   const structureLocked = () => {
     if (!input.examTableLayoutLocked) return false;

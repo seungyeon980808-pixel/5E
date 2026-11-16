@@ -15,7 +15,8 @@ const CAPTIONS = ['(가)', '(나)', '(다)', '(라)', '(마)', '(바)', '(사)',
 
 function requireDocument(bridge) {
   const input = bridge?.input;
-  if (!input?.cursor) throw new Error('먼저 시험지를 여세요.');
+  // 1.7.1 B6: code로 「문서 없음」을 알려, 화면 쪽이 경고만 띄우지 않고 파일 메뉴(새 시험지·열기)를 펼치게 한다.
+  if (!input?.cursor) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' });
   return { input, wasm: bridge.wasm, doc: bridge.wasm.borrowDocumentHandle() };
 }
 

@@ -2452,6 +2452,12 @@
       "findingIds": [
         "BL6-R1-TABLE-QUESTION-DELETE"
       ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-dead-end-browser.cjs",
+      "findingIds": [
+        "BL6-B6-HWP-DEAD-END"
+      ]
     }
   ],
   "deferred": [

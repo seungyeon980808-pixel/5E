@@ -18,7 +18,7 @@ const tableCellCount = (doc, sec, para, ci) => { try { return parse(doc.getTable
 
 function requireInput(bridge) {
   const input = bridge?.input;
-  if (!input?.cursor) throw new Error('먼저 시험지를 여세요.');
+  if (!input?.cursor) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' }); // 1.7.1 B6: 화면 쪽이 파일 메뉴를 펼친다
   return input;
 }
 

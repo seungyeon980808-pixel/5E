@@ -66,7 +66,7 @@ function readFormula(text, from) {
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 문서 전체(본문 문단 + 본문 표의 칸)에 첨자를 입힌다. 고친 곳 수를 돌려준다.
 export function applyScienceScripts(bridge) {
-  if (!bridge?.input?.cursor) throw new Error('먼저 시험지를 여세요.');
+  if (!bridge?.input?.cursor) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' }); // 1.7.1 B6: 화면 쪽이 파일 메뉴를 펼친다
   const doc = bridge.wasm.borrowDocumentHandle(), work = [];
   const style = kind => JSON.stringify(kind === 'sub' ? { subscript: true, superscript: false } : { superscript: true, subscript: false });
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
@@ -119,7 +119,7 @@ export function unitGapIssues(doc) {
   return out;
 }
 export function fixUnitGaps(bridge) {
-  if (!bridge?.input?.cursor) throw new Error('먼저 시험지를 여세요.');
+  if (!bridge?.input?.cursor) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' }); // 1.7.1 B6: 화면 쪽이 파일 메뉴를 펼친다
   const doc = bridge.wasm.borrowDocumentHandle(), list = unitGapIssues(doc);
   let count = 0;
   if (!list.length) return 0;

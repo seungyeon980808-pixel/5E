@@ -181,7 +181,8 @@ export function installExamModes(panel, services) {
   panel.append(pop);
   const closePop = () => { pop.hidden = true; pop.innerHTML = ''; };
 
-  const bridgeOrThrow = () => { const b = getBridge(); if (!b?.input) throw new Error('시험지 편집기를 준비하는 중입니다. 잠시 뒤 다시 누르세요.'); return b; };
+  // 1.7.1 B6: 편집기는 떴는데 문서가 없으면 code를 붙여 던진다 — 5E_hwp가 파일 메뉴(새 시험지·열기)를 펼친다.
+  const bridgeOrThrow = () => { const b = getBridge(); if (!b) throw new Error('시험지 편집기를 준비하는 중입니다. 잠시 뒤 다시 누르세요.'); if (!b.input) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' }); return b; };
   // 조판 부호(빨간 V·초록 선) — 화면에만. 편집기가 새로 뜨면 그 편집기에 다시 붙인다.
   const marksToggle = bar.querySelector('[data-exam-marks]');
   const syncMarksButton = on => marksToggle?.setAttribute('aria-pressed', String(on));
@@ -229,8 +230,8 @@ export function installExamModes(panel, services) {
     command(action) {
       const b = bridgeOrThrow();
       let failure = null;
-      runDocumentAction(b, action, { notify: text => { failure = text; } });
-      if (failure) throw new Error(failure);
+      runDocumentAction(b, action, { notify: (text, code) => { failure = Object.assign(new Error(text), code ? { code } : {}); } });
+      if (failure) throw failure;
       refocus();
     },
     highlight(color) { const b = bridgeOrThrow(); b.deps.eventBus.emit('format-char', { shadeColor: color }); refocus(); },
@@ -494,7 +495,7 @@ export function installExamModes(panel, services) {
     const kind = b.dataset.examFx;
     if (!pop.hidden && pop.dataset.kind === kind) { closePop(); return; }
     pop.dataset.kind = kind;
-    if (kind === 'symbols') { try { bridgeOrThrow(); openSymbols(b); } catch (error) { message(error.message, true); } }
+    if (kind === 'symbols') { try { bridgeOrThrow(); openSymbols(b); } catch (error) { if (error.code === 'no-document' && services.offerDocument) services.offerDocument(); else message(error.message, true); } }
     else if (kind === 'check') void run(async () => openCheck(b));
     else if (kind === 'capture') { closePop(); services.palette?.tool('capture'); }
   };

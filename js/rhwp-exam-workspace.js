@@ -101,15 +101,15 @@ export function initRhwpExamWorkspace(state, services) {
   const palette = initPaletteWorkspace(panel, {
     getBridge:() => bridge,run,notify:(...args)=>message(...args),download,
     withBusy:async task => { if (busy) throw new Error('진행 중인 작업이 끝난 뒤 다시 실행해주세요.');setBusy(true);try{return await task();}finally{setBusy(false);} },
-    replaceDocument:async(bytes,name,anchor)=>{if(palette.contentEditing)throw new Error('조각 편집을 저장하거나 돌아간 뒤 새 양식을 열어주세요.');await stableSave();await loadDocument(bytes,`${safeName(name)}.hwpx`);if(anchor&&!anchor.hf)bridge.input.cursor.moveTo(anchor);},
-    beginContentEdit:async(bytes,name)=>{if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');const previous=new Uint8Array(await (await stableSave()).arrayBuffer());await loadDocument(bytes,`${safeName(name)}.hwpx`);return async()=>{await stableSave();await loadProject(previous);};},
+    replaceDocument:async function replaceDocument(bytes,name,anchor){if(palette.contentEditing)throw contentEditingError(()=>replaceDocument(bytes,name,anchor));/* 1.7.1 B6: 막지 않고 묻고 이어서 */await stableSave();await loadDocument(bytes,`${safeName(name)}.hwpx`);if(anchor&&!anchor.hf)bridge.input.cursor.moveTo(anchor);},
+    beginContentEdit:async(bytes,name)=>{if(palette.contentEditing)throw contentEditingError(null);/* 1.7.1 B6: 앞 조각을 저장/버리기 고른 뒤 다시 누르게 */const previous=new Uint8Array(await (await stableSave()).arrayBuffer());await loadDocument(bytes,`${safeName(name)}.hwpx`);return async()=>{await stableSave();await loadProject(previous);};},
   });
   // A small public capability surface also makes standalone port regressions
   // exercise the same instances the user operates.
   window.fiveEHwpPalette = palette; // 화면 색(graphite-shell)의 window.fiveEPalette와 이름이 겹쳐 덮어쓰이던 것을 피함
   // 도구 모드 3개(기본·집중·없음)와 집중 도구 줄. 동작(actions)·그림 설정은 아래에서 정의되므로 누를 때 찾는다.
   const toolModes = installExamModes(panel, { getBridge:() => bridge, palette, message:(...args) => message(...args), run:task => run(task),
-    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), loadExam:async(bytes,title) => { if (bridge?.input) await stableSave(); await loadDocument(new Uint8Array(bytes),`${String(title||'시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`); }, openPictureSettings:anchor => openPictureSettings(anchor) });
+    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, offerDocument:() => offerDocument(), download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), loadExam:async(bytes,title) => { if (bridge?.input) await stableSave(); await loadDocument(new Uint8Array(bytes),`${String(title||'시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`); }, openPictureSettings:anchor => openPictureSettings(anchor) });
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onFit:() => void run(cyclePictureFit),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
@@ -179,9 +179,62 @@ export function initRhwpExamWorkspace(state, services) {
   async function run(task) {
     if (busy) return;
     setBusy(true);
+    let next=null;
     try { await task(); }
-    catch (error) { const text=error.message || '작업을 완료하지 못했습니다.';message(text,true);if(panel.hidden)void services.reportError?.(text); }
+    catch (error) {
+      // 1.7.1 B6 막다른 경고 없애기: 문서가 없으면 파일 메뉴로, 조각 편집 중이면 저장/버리기를 물은 뒤 이어서.
+      if(error?.code==='no-document')next=offerDocument;
+      else if(error?.code==='content-editing')next=()=>continueAfterContentEdit(error.retry);
+      else {const text=error.message || '작업을 완료하지 못했습니다.';message(text,true);if(panel.hidden)void services.reportError?.(text);}
+    }
     finally { setBusy(false); }
+    next?.();
+  }
+  // 열린 시험지가 없을 때: 경고만 띄우지 않고 파일 메뉴(새 시험지·한글 파일 열기·프로젝트 열기·ExamPool 시험지)를 펼친다.
+  function offerDocument() {
+    if(busy){setTimeout(offerDocument,50);return;}
+    message('열린 시험지가 없습니다. 파일 메뉴에서 새 시험지를 만들거나 시험지를 여세요.');
+    const file=panel.querySelector('[data-exam-menu="file"]');
+    if(file && !file.disabled && !panel.hidden)openMenu(file,true);
+  }
+  // 조각 편집 중에 다른 문서로 바꾸려 할 때: 막지 않고 묻는다(기존 「자동 저장한 프로젝트」 창 모양).
+  const contentEditingError=retry=>Object.assign(new Error('조각 편집을 마친 뒤 이어서 합니다.'),{code:'content-editing',retry});
+  function askContentEdit() {
+    return new Promise(resolve=>{
+      const box=document.createElement('dialog');box.className='exam-draft-dialog exam-content-edit-dialog';
+      const heading=document.createElement('h3');heading.textContent='조각을 편집하는 중입니다';
+      const note=document.createElement('p');note.textContent='이어서 하려면 지금 편집한 조각을 어떻게 할지 고르세요.';
+      box.append(heading,note);
+      const finish=value=>{if(box.open)box.close();box.remove();resolve(value);};
+      for(const [value,label] of [['save','수정 저장하고 계속'],['discard','저장하지 않고 계속'],[null,'취소']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>finish(value);box.append(button);}
+      box.addEventListener('cancel',event=>{event.preventDefault();finish(null);});
+      document.body.append(box);box.showModal();box.querySelector('button')?.focus();
+    });
+  }
+  const until=async(test,ms=60000)=>{const end=Date.now()+ms;while(!test()&&Date.now()<end)await new Promise(r=>setTimeout(r,30));return test();};
+  // 조각 편집을 팔레트의 「수정 저장하고 돌아가기 / 돌아가기」로 마치고, 그 뒤 열리는 팔레트 창은 닫는다. 이어서 해도 되면 true.
+  async function finishContentEdit() {
+    if(!palette.contentEditing)return true;
+    closeMenus();
+    const choice=await askContentEdit();
+    if(!choice){message('조각 편집을 이어서 합니다.');return false;}
+    await until(()=>!busy);
+    const button=panel.querySelector(`.palette-content-edit [data-palette-action="${choice==='save'?'content-save':'content-cancel'}"]`);
+    if(!button){message('조각 편집 막대를 찾지 못했습니다. 막대의 「돌아가기」를 누른 뒤 다시 해 주세요.',true);return false;}
+    message(choice==='save'?'조각을 저장하고 돌아가는 중…':'조각 편집을 닫는 중…');
+    button.click();
+    // 팔레트는 조각을 마치는 순간(restoreContent=null) 팔레트 창을 다시 연다 — 그때까지 기다린다. 실패하면(오류 표시) 거기서 멈춘다.
+    // 바쁨(busy)만 보면 안 된다: 문서를 되돌려 여는 중에 바쁨이 잠깐 풀려 창이 열리기 전에 지나갔다.
+    await until(()=>!palette.contentEditing || (!busy && status.dataset.error==='true'));
+    await until(()=>!busy);
+    if(palette.contentEditing){message('조각을 저장하지 못했습니다. 조각 편집 막대에서 다시 해 주세요.',true);return false;}
+    panel.querySelector('#palette-manager [data-palette-action="manager-close"]')?.click();
+    return true;
+  }
+  async function continueAfterContentEdit(retry) {
+    if(!await finishContentEdit())return;
+    if(retry){await until(()=>!busy);await run(retry);}
+    else message('앞 조각 편집을 마쳤습니다. 하려던 일을 다시 눌러 주세요.');
   }
   const thumbnails = new Map(), remoteNames = new Map();
   const linkKey = link => `${link.tabId}:${link.assetId}`;
@@ -1259,7 +1312,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
 
   async function importFile(file) {
-    if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');
+    if(palette.contentEditing)throw contentEditingError(()=>importFile(file));
     if (file.size>EXAM_PROJECT_MAX_BYTES) throw new Error('최대 128 MiB 파일을 열 수 있습니다.');
     const bytes=new Uint8Array(await file.arrayBuffer());
     await stableSave();
@@ -1272,7 +1325,7 @@ export function initRhwpExamWorkspace(state, services) {
     panel.querySelector('#exam-studio').replaceChildren();
     bridge = await RhwpExamBridge.create(panel.querySelector('#exam-studio'), {
       validateSource:prepareLoadedProject,
-      onChange:error=>{if(error)message(error.message,true);else documentChanged();},
+      onChange:error=>{if(error?.code==='no-document')offerDocument();else if(error)message(error.message,true);else documentChanged();},
       onBeforeReplace:stableSave,
       onReplace:()=>{
         if(initializing) return;
@@ -1490,8 +1543,21 @@ export function initRhwpExamWorkspace(state, services) {
     const button = event.target.closest('[data-exam-action]');
     if (button && !button.disabled) {
       const action=button.dataset.examAction;
-      if(palette.contentEditing&&['close','new','open-hwp','open-project','demo','restore'].includes(action)){
-        message('조각 편집을 저장하거나 돌아간 뒤 실행해주세요.',true);
+      // 1.7.1 B6: 조각 편집 중이면 막지 않고 「수정 저장하고 계속 / 저장하지 않고 계속 / 취소」를 물은 뒤 이어서 한다.
+      if(palette.contentEditing&&['close','new','open-hwp','open-project','open-exampool','demo','restore'].includes(action)){
+        closeMenus();
+        void finishContentEdit().then(async ok=>{
+          if(!ok)return;
+          await until(()=>!busy);
+          // 파일 고르는 창은 누른 순간에만 열린다(Safari) — 기다린 뒤에는 파일 메뉴를 다시 펼쳐 그 항목에 커서를 둔다.
+          if(['open-hwp','open-project'].includes(action)){
+            const file=panel.querySelector('[data-exam-menu="file"]');openMenu(file);
+            panel.querySelector(`#exam-file-menu [data-exam-action="${action}"]`)?.focus();
+            message(`조각 편집을 마쳤습니다. 「${button.textContent.trim()}」를 다시 누르면 파일을 고릅니다.`);
+            return;
+          }
+          void run(() => actions[action]?.());
+        });
         return;
       }
       closeMenus();
