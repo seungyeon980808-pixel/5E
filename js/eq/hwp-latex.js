@@ -136,7 +136,8 @@ export function latexToHwp(src, o = null) {
   function group() { ws(); if (s[i] === '{') { i++; const e = seq('}'); if (s[i] === '}') i++; return e; } return one(); }
   function opt() { ws(); if (s[i] !== '[') return null; let d = 0, j = i; for (; j < s.length; j++) { if (s[j] === '[') d++; else if (s[j] === ']' && !--d) break; } const inner = s.slice(i + 1, j); i = j + 1; return latexToHwp(inner, o); }
   function cmd() { let j = i + 1; if (/[A-Za-z]/.test(s[j] || '')) { while (j < s.length && /[A-Za-z*]/.test(s[j])) j++; } else j++; const name = s.slice(i + 1, j); i = j; return name; }
-  const wrap = x => /^[A-Za-z0-9]+$/.test(x) || /^\{.*\}$/.test(x) ? x : '{' + x + '}';
+  // 한글 파일용(o.hancom)은 숫자만·글자만일 때만 묶음을 뺀다 — 한글은 2a를 2와 a 두 항으로 읽어 x_2a의 a가 첨자에서 빠진다.
+  const wrap = x => (o?.hancom ? /^([A-Za-z]+|[0-9.]+)$/ : /^[A-Za-z0-9]+$/).test(x) || /^\{.*\}$/.test(x) ? x : '{' + x + '}';
   function delim() { ws(); if (s[i] === '\\') { const n = cmd(); return DELIM_L2H['\\' + n] ?? n; } return s[i++] || '.'; }
   function one() {
     ws(); const c = s[i]; if (c === undefined) return '';
