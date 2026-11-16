@@ -7,32 +7,39 @@ const playwrightPath = process.env.PLAYWRIGHT_MODULE
   || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright';
 const { chromium, webkit } = require(playwrightPath);
 const root = path.resolve(__dirname, '..');
-const { loadForHostedCi } = require('./helpers/performance-reference.cjs');
+const { loadForHostedCi, timingCheck } = require('./helpers/performance-reference.cjs');
 const physicalReference = loadForHostedCi(root);
+const { entryConfiguration, inspectEntry } = require('./helpers/four-session-entry.cjs');
+const { startServer, stopServer } = require('./run-browser-tests.cjs');
+const { mixedCandidate, assertCandidateUnion } = require('./fixtures/candidate-union.cjs');
+const entryConfig = entryConfiguration(process.env);
+const runtime = { ...entryConfig, moduleBase: entryConfig.moduleBase ?? '/js/', moduleQuery: entryConfig.moduleQuery ?? '?v=1.7.0-four-session-integration' };
+const runtimeInit = { base: runtime.moduleBase, query: runtime.moduleQuery };
 
 test('ARCH-160-01: 100 empty workspace removals dispose DOM, controller, and registry state', async (context) => {
   const browser = await chromium.launch({ headless: true });
   context.after(() => browser.close());
   const page = await browser.newPage();
+  await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
   await page.route('https://workspace-lifecycle.invalid/', (route) => route.fulfill({
     contentType: 'text/html',
     body: '<!doctype html><body></body>',
   }));
-  await page.route('**/preview/js/**', route => { const file=path.join(root,new URL(route.request().url()).pathname);return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(file,'utf8')}); });
+  await page.route('**/js/**', route => { const file=path.join(root,new URL(route.request().url()).pathname);return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(file,'utf8')}); });
   await page.goto('https://workspace-lifecycle.invalid/');
 
-  const managerSource = fs.readFileSync(path.join(root, 'preview/js/ai-task-workspaces.js'), 'utf8');
+  const managerSource = fs.readFileSync(path.join(root, 'js/ai-task-workspaces.js'), 'utf8');
   const createTaskWorkspaces = managerSource
     .slice(managerSource.indexOf('export function createTaskWorkspaces('))
     .replace(/^export /, '');
-  const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
+  const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const result = await page.evaluate(async ({ createTaskWorkspaces, indexSource }) => {
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
     const template = parsed.getElementById('ai-image-panel');
     template.dataset.lifecyclePanel = 'true';
     document.body.innerHTML = template.outerHTML;
 
-    const factory = (await import('/preview/js/ai-task-workspaces.js')).createTaskWorkspaces;
+    const factory = (await import(window.__runtime.base + 'ai-task-workspaces.js' + window.__runtime.query)).createTaskWorkspaces;
     let created = 0;
     let disposed = 0;
     const controllers = [];
@@ -103,25 +110,31 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
   const browser = await chromium.launch({ headless: true });
   context.after(() => browser.close());
   const page = await browser.newPage();
+  await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
   await page.route('https://workspace-ready-race.invalid/', (route) => route.fulfill({
     contentType: 'text/html',
     body: '<!doctype html><body></body>',
   }));
-  await page.route('**/preview/js/**', route => { const file=path.join(root,new URL(route.request().url()).pathname);return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(file,'utf8')}); });
+  await page.route('**/js/**', route => { const file=path.join(root,new URL(route.request().url()).pathname);return route.fulfill({contentType:'text/javascript',body:fs.readFileSync(file,'utf8')}); });
   await page.goto('https://workspace-ready-race.invalid/');
 
-  const managerSource = fs.readFileSync(path.join(root, 'preview/js/ai-task-workspaces.js'), 'utf8');
+  const managerSource = fs.readFileSync(path.join(root, 'js/ai-task-workspaces.js'), 'utf8');
   const createTaskWorkspaces = managerSource
     .slice(managerSource.indexOf('export function createTaskWorkspaces('))
     .replace(/^export /, '');
-  const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
+  const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   const result = await page.evaluate(async ({ createTaskWorkspaces, indexSource }) => {
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
     const template = parsed.getElementById('ai-image-panel');
     document.body.innerHTML = template.outerHTML;
-    const factory = (await import('/preview/js/ai-task-workspaces.js')).createTaskWorkspaces;
+    const factory = (await import(window.__runtime.base + 'ai-task-workspaces.js' + window.__runtime.query)).createTaskWorkspaces;
     const controllers = [];
     const activationEvents = [];
+    const workflowWrites = [];
+    const unhandledRejections = [];
+    window.addEventListener('unhandledrejection',event=>{
+      unhandledRejections.push(String(event.reason));event.preventDefault();
+    });
     window.addEventListener('5e:ai-workspace-activate', (event) => activationEvents.push({
       scope: event.detail.scope,
       connected: event.detail.panel.isConnected,
@@ -151,6 +164,7 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
         batchOwner: id => ({scope:{sessionId:'5e',workspaceId:options.clientScope||'main'},taskId:id}),
         ownsBatchOwner: owner => tabs.some(tab=>tab.dataset.tabId===owner.taskId)&&owner.scope.workspaceId===(options.clientScope||'main'),
         selectTask() {}, dispose() {}, close() {}, attachReference() {}, open: async () => {},
+        setEmptyWorkflow(kind) { options.panel.dataset.aiWorkflow=kind;workflowWrites.push({scope:options.clientScope,connected:options.panel.isConnected,kind});return true; },
         sharingSnapshot: async () => ({ tabs: tabs.map((tab) => ({ id: tab.dataset.tabId })) }),
         deleteAll() {
           tabs = [];
@@ -179,6 +193,7 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
     rejecting.rejectReady(new Error('synthetic recovery rejection'));
     await Promise.resolve();
     await Promise.resolve();
+    await new Promise(resolve=>setTimeout(resolve,0));
 
     const afterStalePanel = document.getElementById('ai-image-panel');
     const afterStale = {
@@ -204,35 +219,42 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
       afterStale,
       liveActivation,
       primaryRestored: document.getElementById('ai-image-panel') === controllers[0].options.panel,
+      liveRetained: document.getElementById('ai-image-panel') === livePanel && !livePanel.hidden && livePanel.isConnected,
       resolvingConnected: resolvingPanel.isConnected,
       rejectingConnected: rejectingPanel.isConnected,
       staleActivation: activationEvents.some((event) => !event.connected),
+      staleWorkflowWrite: workflowWrites.some(write=>!write.connected),
+      workflowWrites:workflowWrites.length,
+      unhandledRejections,
       registryEntries: JSON.parse(localStorage.getItem('5e.aiParallelWorkspaces.v1') || '[]').length,
     };
   }, { createTaskWorkspaces, indexSource });
 
   assert.deepEqual(result.afterStale, { activeConnected: true, activeIsPrimary: true, primaryVisible: true });
   assert.deepEqual(result.liveActivation, { connected: true, active: true, visible: true });
-  assert.equal(result.primaryRestored, true);
+  assert.equal(result.primaryRestored, false,'deleting the active empty workspace keeps its own conversion workflow visible');
+  assert.equal(result.liveRetained, true);
   assert.equal(result.resolvingConnected, false);
   assert.equal(result.rejectingConnected, false);
   assert.equal(result.staleActivation, false);
-  assert.equal(result.registryEntries, 0);
+  assert.equal(result.staleWorkflowWrite, false,'disposed workspaces cannot persist workflow changes');
+  assert.equal(result.workflowWrites, 1,'only the live workspace is initialized');
+  assert.deepEqual(result.unhandledRejections,[],'a disposed recovery rejection is consumed without an application error');
+  assert.equal(result.registryEntries, 1,'the visible empty workspace remains recoverable');
 });
 
 test('ARCH-160-01: 100 real workbench disposals release listeners and observers', async (context) => {
   const browser = await chromium.launch({ headless: true });
   context.after(() => browser.close());
   const page = await browser.newPage();
-  await page.setContent('<!doctype html><body></body>');
-  const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
-  const rawWorkbench = fs.readFileSync(path.join(root, 'preview/js/ai-workbench.js'), 'utf8');
-  const workbenchSource = rawWorkbench
-    .replace(/^import .*;\n/gm, '')
-    .replace(/^export /gm, '')
-    .slice(0, rawWorkbench.replace(/^import .*;\n/gm, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
+  await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
+  await page.route('https://workbench-component.invalid/', route => route.fulfill({contentType:'text/html',body:'<!doctype html><body></body>'}));
+  await page.route('**/js/**', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,new URL(route.request().url()).pathname),'utf8')}));
+  await page.goto('https://workbench-component.invalid/');
+  const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
-  const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
+  const result = await page.evaluate(async ({ indexSource }) => {
+    const { setupAiWorkbench: setup } = await import(window.__runtime.base + 'ai-workbench.js' + window.__runtime.query);
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
     const markup = parsed.getElementById('ai-image-panel').outerHTML;
     const listeners = [];
@@ -257,7 +279,6 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
       observe() { this.record.active = true; }
       disconnect() { this.record.active = false; }
     };
-    const setup = new Function('composeReferenceImages', `${workbenchSource}; return setupAiWorkbench;`)(async () => null);
     for (let cycle = 0; cycle < 100; cycle += 1) {
       const host = document.createElement('div');
       host.innerHTML = markup;
@@ -275,7 +296,7 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
       totalListeners: listeners.length,
       totalObservers: observers.length,
     };
-  }, { indexSource, workbenchSource });
+  }, { indexSource });
 
   assert.ok(result.totalListeners > 0);
   assert.ok(result.totalObservers > 0);
@@ -288,15 +309,14 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
   const browser = await chromium.launch({ headless: true });
   context.after(() => browser.close());
   const page = await browser.newPage();
-  await page.setContent('<!doctype html><body></body>');
-  const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
-  const rawWorkbench = fs.readFileSync(path.join(root, 'preview/js/ai-workbench.js'), 'utf8');
-  const workbenchSource = rawWorkbench
-    .replace(/^import .*;\n/gm, '')
-    .replace(/^export /gm, '')
-    .slice(0, rawWorkbench.replace(/^import .*;\n/gm, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
+  await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
+  await page.route('https://workbench-component.invalid/', route => route.fulfill({contentType:'text/html',body:'<!doctype html><body></body>'}));
+  await page.route('**/js/**', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,new URL(route.request().url()).pathname),'utf8')}));
+  await page.goto('https://workbench-component.invalid/');
+  const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 
-  const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
+  const result = await page.evaluate(async ({ indexSource }) => {
+    const { setupAiWorkbench: setup } = await import(window.__runtime.base + 'ai-workbench.js' + window.__runtime.query);
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
     const panel = parsed.getElementById('ai-image-panel');
     document.body.append(panel);
@@ -307,12 +327,16 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
       disconnect() { this.active = false; }
     };
     const writes = [];
+    // 2026-10-16(83201a54)부터 머리 줄 높이 = 조절 줄 높이 + 머리 줄의 실제 위아래 여백·테두리(예전 고정 +8px 대신).
+    const measuredHeadHeight = Math.max(0,...Array.from(panel.querySelectorAll('.ai-pane-head-controls'),control=>{
+      const style=getComputedStyle(control.parentElement);
+      return control.offsetHeight+['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'].reduce((total,key)=>total+(parseFloat(style[key])||0),0);
+    }));
     const nativeSetProperty = panel.style.setProperty.bind(panel.style);
     panel.style.setProperty = (name, value, priority) => {
       if (name === '--ai-pane-head-height') writes.push(value);
       nativeSetProperty(name, value, priority);
     };
-    const setup = new Function('composeReferenceImages', `${workbenchSource}; return setupAiWorkbench;`)(async () => null);
     setup(panel);
     const headObserver = observers[0];
     headObserver.callback([]);
@@ -327,20 +351,21 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
     return {
       duringDelivery,
       afterDelivery,
+      measuredHeadHeight,
       writesAfterFirstDelivery,
       writesAfterUnchangedDelivery,
       disconnected: headObserver.active === false,
     };
-  }, { indexSource, workbenchSource });
+  }, { indexSource });
 
   assert.equal(result.duringDelivery, '');
-  assert.equal(result.afterDelivery, '16px');
+  assert.equal(result.afterDelivery, `${Math.ceil(result.measuredHeadHeight)}px`,'one shared header includes its measured controls and spacing');
   assert.equal(result.writesAfterFirstDelivery, 1);
   assert.equal(result.writesAfterUnchangedDelivery, 1);
   assert.equal(result.disconnected, true);
 });
 
-function seedRequestWorkspaces(count, initialGeneration = false) {
+function seedRequestWorkspaces(count, initialGeneration = false, mixedCandidate) {
   localStorage.setItem('5e.tutorial.bannerSeen', 'true');
   localStorage.setItem('5e.aiReviewDefaultsVersion', '1');
   const listeners = new Set();
@@ -354,17 +379,51 @@ function seedRequestWorkspaces(count, initialGeneration = false) {
   const modified = canvas.toDataURL('image/png');
   const tabs = Array.from({ length: count }, (_, index) => ({
     id: `task-${index}`, title: `검증 작업 ${index + 1}`, workState: 'idle', input: '선택 영역 안에 작은 사각형 추가',
-    model: 'gpt-6-sol', effort: 'medium', serviceTier: '', separationMode: 'off',
+    model: 'gpt-6.1-sol', effort: 'medium', serviceTier: '', separationMode: 'off',
     outputOptions: { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
     attachments: [{ id: `source-${index}`, kind: 'reference', name: `원본 ${index + 1}`, data: original, comments: [] }],
     generated: [{ id: `candidate-${index}`, kind: 'generated', name: `결과 ${index + 1}`, data: original,
       comments: [{ id: `area-${index}`, imageId: `candidate-${index}`, type: 'area', number: 1, x: 25, y: 25, w: 25, h: 25, text: '사각형 추가' }], reviewState: 'idle' }],
     selectedCandidateId: `candidate-${index}`, conversationMessages: [], uiMessages: [],
   }));
-  if (initialGeneration) { tabs[0].generated = []; tabs[0].selectedCandidateId = null; }
+  for (const tab of mixedCandidate ? tabs : []) {
+    tab.conversionKind = 'graph';
+    for (const item of tab.generated) {
+      const { id, name, comments } = item;
+      Object.assign(item, mixedCandidate(original), { id, name, comments });
+    }
+  }
+  window.__task5Expected = structuredClone(tabs);
+  if (initialGeneration) {
+    tabs[0].generated = []; tabs[0].selectedCandidateId = null;
+    tabs[0].imageLabelWorkflow = { version: '1.1.0', imageKind: 'general', labelResult: 'remove', verificationMode: 'full', auxiliaryMarks: 'remove', scientificArrows: 'keep', explicit: true };
+  }
+  const generationSends = [];
+  const sourceObservation = {
+    version: 4, observationVersion: 1, leaderObservationVersion: 1, observationContractRevision: '1.4.0',
+    removalOnlyItems: [], reviewRequired: false,
+    geometryLock: { version: 1, objects: [{ id: 'frame', sourceRef: 1, role: 'scientific-object', description: 'Controlled original frame', bounds: { x: 40/512, y: 50/384, w: 420/512, h: 280/384 }, relations: [] }] },
+    labels: [], removalRegions: [], protectedRegions: [], preservedMarks: [], uncertainties: [],
+  };
+  const reviewIds = ['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','kice-flat-style','flat-gray-regions','raster-label-removal','editable-label-coverage','leader-relations','label-overlay-alignment','label-typography','leader-overlay'];
+  const sourceReview = { verdict: 'pass', checks: reviewIds.map(id => ({ id, label: id, status: 'pass', detail: 'Controlled transport for request ownership; not provider quality evidence' })), issues: [] };
+  const deliver = (send, method, params) => {
+    for (const listener of listeners) listener({ clientScope: send.payload.clientScope || '', method, params });
+  };
+  const observerReply = send => {
+    const text = String(send.payload.text || '');
+    let response;
+    if (text.includes('입력 원본 라벨 관찰')) { send.stage = 'source-observation'; response = sourceObservation; }
+    else if (text.includes('검수') || text.includes('FINAL_NATIVE_OVERLAY')) { send.stage = 'full-review'; response = sourceReview; }
+    else throw new Error('Unexpected controlled observer request: ' + text.slice(0, 200));
+    setTimeout(() => {
+      deliver(send, 'item/completed', { turnId: send.turnId, item: { type: 'agentMessage', phase: 'final_answer', text: JSON.stringify(response) } });
+      deliver(send, 'turn/completed', { turn: { id: send.turnId, status: 'completed' } });
+    }, 0);
+  };
   let statusGate = null;
   window.__task2 = {
-    original, modified, sends, longTasks: [],
+    original, modified, sends, generationSends, longTasks: [],
     delayStatus() { statusGate = {}; statusGate.promise = new Promise(resolve => { statusGate.resolve = resolve; }); },
     releaseStatus() { statusGate?.resolve({ login: { loggedIn: true }, server: true }); statusGate = null; },
     emit(index, kind) {
@@ -382,9 +441,15 @@ function seedRequestWorkspaces(count, initialGeneration = false) {
   window.fiveEDesktop = {
     web: true, status: async () => statusGate ? statusGate.promise : ({ login: { loggedIn: true }, server: true }),
     start: async () => ({ ok: true }), stop: async () => ({ ok: true }),
-    models: async () => ({ data: [{ model: 'gpt-6-sol', displayName: 'Sol', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }] }),
+    models: async () => ({ data: [{ model: 'gpt-6.1-sol', displayName: 'Sol', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }, { model: 'gpt-6-luna', displayName: 'Luna', defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }] }),
     account: async () => ({ rateLimits: {} }), login: async () => {},
-    send: async payload => { const turnId = `turn-${sends.length}`; const threadId = `thread-${sends.length}`; sends.push({ payload, turnId, threadId }); return { turnId, threadId }; },
+    send: async payload => {
+      const turnId = `turn-${sends.length}`, threadId = `thread-${sends.length}`;
+      const send = { payload, turnId, threadId }; sends.push(send);
+      if (payload.purpose === 'image') { send.stage = 'image-generation'; generationSends.push(send); }
+      else observerReply(send);
+      return { turnId, threadId };
+    },
     interrupt: async () => ({ ok: true }),
     onEvent: callback => { listeners.add(callback); return () => listeners.delete(callback); },
     onState: () => () => {}, onLog: () => () => {}, setAiTaskShortcutActive() {}, onAiCloseTaskShortcut: () => () => {},
@@ -403,19 +468,11 @@ function seedRequestWorkspaces(count, initialGeneration = false) {
   });
 }
 
-async function requestBrowserFixture(context, count, evidence, { initialGeneration = false } = {}) {
-  const http = require('node:http');
-  const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
-  const server = http.createServer((request, response) => {
-    let file = path.resolve(root, `.${new URL(request.url, 'http://localhost').pathname}`);
-    if (!file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
-    if (file.endsWith('/preview') || request.url.split('?')[0].endsWith('/')) file = path.join(file, 'index.html');
-    fs.readFile(file, (error, body) => {
-      response.writeHead(error ? 404 : 200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
-      response.end(error ? 'missing' : body);
-    });
-  });
-  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+async function requestBrowserFixture(context, count, evidence, { initialGeneration = false, union = false } = {}) {
+  const { fixtureContext, installAiMain } = require(path.join(root, 'tests/helpers/canonical-fixture-adapter.cjs'));
+  const { runtime, runtimeInit, inspectEntry, startServer, stopServer, mixedCandidate } = fixtureContext(root);
+  const server = process.env.PREVIEW_URL ? null : startServer();
+  const origin = process.env.PREVIEW_URL ? new URL(process.env.PREVIEW_URL).origin : await server.ready;
   const engine = process.env.TASK2_ENGINE === 'webkit' ? webkit : chromium;
   const browser = await engine.launch({ headless: true });
   const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
@@ -430,20 +487,19 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
     if (tracing) await browserContext.tracing.stop({ path: path.join(evidence, `trace-${count}.zip`) });
     await browserContext.close();
     await browser.close();
-    const port = server.address()?.port;
-    await new Promise(resolve => server.close(resolve));
-    fs.writeFileSync(path.join(evidence, `cleanup-${count}.json`), JSON.stringify({ engine: process.env.TASK2_ENGINE || 'chromium', browserVersion: browser.version(), browserContextClosed: true, browserClosed: !browser.isConnected(), serverClosed: !server.listening, serverPort: port }));
+    const port = new URL(origin).port;
+    if (server) await stopServer(server.child);
+    fs.writeFileSync(path.join(evidence, `cleanup-${count}.json`), JSON.stringify({ engine: process.env.TASK2_ENGINE || 'chromium', browserVersion: browser.version(), browserContextClosed: true, browserClosed: !browser.isConnected(), serverClosed: server ? server.child.exitCode !== null || server.child.signalCode !== null : null, officialServerReused: !server, serverPort: port }));
   });
   const page = await browserContext.newPage();
+  await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
   page.setDefaultTimeout(30_000);
   const errors = [];
   page.on('pageerror', error => { errors.push(error.message); console.error('TASK2 PAGE ERROR', error.message); });
-  await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration})` });
-  await page.route('**/preview/js/main.js*', route => route.fulfill({ contentType: 'text/javascript', body:
-    'await window.__seedReady;\n' + fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8').replace(
-      'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });',
-      'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager = aiPanel;') }));
-  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'networkidle' });
+  await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration}, ${union ? mixedCandidate.toString() : 'null'})` });
+  await installAiMain(page, root, {}, evidence);
+  const entryReceipt = await inspectEntry(page, origin, runtime);
+  fs.writeFileSync(path.join(evidence, 'entry-' + count + '.json'), JSON.stringify(entryReceipt, null, 2));
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
@@ -464,7 +520,7 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
 
 for (const count of [1, 10, 30]) {
   test(`request ownership and decoded cached selection with ${count} populated tasks`, { timeout: 120_000 }, async context => {
-    const evidence = process.env.TASK2_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
+    const evidence = process.env.TASK2_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
     fs.mkdirSync(evidence, { recursive: true });
     const { page, errors, pauseTracing, resumeTracing } = await requestBrowserFixture(context, count, evidence);
     const task = index => `#ai-image-panel [data-tab-id="task-${index}"] .ai-task-tab-select`;
@@ -476,7 +532,7 @@ for (const count of [1, 10, 30]) {
       await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
     }
     await pauseTracing();
-    await page.waitForTimeout(100);
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
     await page.evaluate(() => { window.__task2.longTasks = []; window.__task2.warmStarted = performance.now(); });
     for (let index = 0; index < 6; index += 1) {
       const target = index % count;
@@ -496,9 +552,8 @@ for (const count of [1, 10, 30]) {
     await page.locator(task(0)).click();
     await page.screenshot({ path: path.join(evidence, `populated-${count}.png`) });
     await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-    await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).waitFor();
     assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
-    await page.getByRole('button', { name: '이 범위로 생성', exact: true }).click();
+    assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0, 'The explicit primary scope action already authorizes the captured bounds');
     await page.waitForFunction(() => window.__task2.sends.length === 1);
     if (count > 1) await page.locator(task(1)).click();
     await page.evaluate(() => { window.__task2.emit(0, 'image'); window.__task2.emit(0, 'done'); });
@@ -508,7 +563,7 @@ for (const count of [1, 10, 30]) {
       assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(), 1);
       await page.locator(task(0)).click();
     }
-    await page.getByRole('dialog', { name: '선택 영역 수정 후보 · 아직 미적용' }).waitFor();
+    await page.getByRole('dialog', { name: '수정 전후 비교' }).waitFor();
     const restoredPhase = await page.evaluate(() => ({
       phase: document.querySelector('#ai-image-panel').dataset.aiRequestPhase,
       row: document.querySelector('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-time').textContent,
@@ -539,15 +594,15 @@ for (const count of [1, 10, 30]) {
       }, null, 2));
       console.log(`${scenario}: functional ownership/content assertions remain live; hosted VM timing is diagnostic; strict physical reference enforces <100ms samples and no >50ms long tasks.`);
     } else {
-      assert.equal(longTasks.filter(entry => entry.duration > 50).length, 0, 'Warm task switching has no long tasks over 50ms');
-      assert.ok(timings.every(value => value < 100), `Cached selection exceeded 100ms: ${timings}`);
+      timingCheck(longTasks.filter(entry => entry.duration > 50).length === 0, `Warm task switching has no long tasks over 50ms: ${longTasks.filter(entry => entry.duration > 50).length}`);
+      timingCheck(timings.every(value => value < 100), `Cached selection exceeded 100ms: ${timings}`);
     }
     assert.deepEqual(errors, []);
   });
 }
 
 test('cancel/retry isolates late A1 events while scoped A2 and B await approval with C active', { timeout: 90_000 }, async context => {
-  const evidence = process.env.TASK2_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
+  const evidence = process.env.TASK2_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 3, evidence);
   const select = async index => {
@@ -556,7 +611,6 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
   };
   const start = async count => {
     await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-    await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).getByRole('button', { name: '이 범위로 생성', exact: true }).click();
     await page.waitForFunction(count => window.__task2.sends.length === count, count);
   };
   await start(1);
@@ -589,12 +643,12 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
   await page.screenshot({ path: path.join(evidence, 'a-b-waiting-c-active.png') });
   for (const index of [0, 1]) {
     await select(index);
-    await page.getByRole('dialog', { name: '선택 영역 수정 후보 · 아직 미적용' }).getByRole('button', { name: '적용', exact: true }).click();
+    await page.getByRole('dialog', { name: '수정 전후 비교' }).getByRole('button', { name: '적용', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 2 && document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
   }
   const result = await page.evaluate(async () => {
     const tabs = (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace => workspace.tabs);
-    const { decodeScopedPng } = await import('/preview/js/ai-scoped-edit-png.js');
+    const { decodeScopedPng } = await import(window.__runtime.base + 'ai-scoped-edit-png.js' + window.__runtime.query);
     const bytes = data => Uint8Array.from(atob(data.split(',')[1]), c => c.charCodeAt(0));
     const original = await decodeScopedPng(bytes(window.__task2.original));
     let outsideUnchanged = true;
@@ -628,12 +682,11 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
 });
 
 test('a hung scoped response expires without success or automatic resend', { timeout: 60_000 }, async context => {
-  const evidence = process.env.TASK2_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
+  const evidence = process.env.TASK2_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 2, evidence);
   await page.clock.install();
   await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-  await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).getByRole('button', { name: '이 범위로 생성', exact: true }).click();
   await page.waitForFunction(() => window.__task2.sends.length === 1);
   await page.clock.fastForward(181_000);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
@@ -645,28 +698,287 @@ test('a hung scoped response expires without success or automatic resend', { tim
 });
 
 test('initial generation shows preparation before delayed status and completes in A while B stays selected', { timeout: 60_000 }, async context => {
-  const evidence = process.env.TASK2_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
+  const evidence = process.env.TASK2_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 4, evidence, { initialGeneration: true });
   await page.evaluate(() => window.__task2.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-request-phase'), 'preparing');
   await page.screenshot({ path: path.join(evidence, 'normal-preparation.png') });
   await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').click();
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId === 'candidate-1');
   await page.evaluate(() => window.__task2.releaseStatus());
-  await page.waitForFunction(() => window.__task2.sends.length === 1);
-  await page.evaluate(() => { window.__task2.emit(0, 'image'); window.__task2.emit(0, 'done'); });
+  await page.waitForFunction(() => window.__task2.generationSends.length === 1);
+  await page.evaluate(() => { const index = window.__task2.sends.indexOf(window.__task2.generationSends[0]); window.__task2.emit(index, 'image'); window.__task2.emit(index, 'done'); });
   await page.waitForFunction(() => [...document.querySelectorAll('[data-ai-request-phase]')].some(panel => panel.dataset.aiRequestPhase === 'completed'));
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-selected-candidate-id'), 'candidate-1');
   const result = await page.evaluate(async () => {
     const tasks = (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace => workspace.tabs);
-    return { counts: Object.fromEntries(tasks.map(task => [task.id, task.generated.length])), state: tasks.find(task => task.id === 'task-0').workState, sends: window.__task2.sends.length };
+    return { counts: Object.fromEntries(tasks.map(task => [task.id, task.generated.length])), state: tasks.find(task => task.id === 'task-0').workState, sends: window.__task2.generationSends.length, transportStages: window.__task2.sends.map(send => send.stage) };
   });
   assert.deepEqual(result.counts, { 'task-0': 1, 'task-2': 1, 'task-3': 1, 'task-1': 1 });
   assert.equal(result.state, 'completed');
   assert.equal(result.sends, 1);
+  // 11-10: 라벨 삭제는 관찰을 생략하고 소유 작업에 생성·검수 두 단계만 기록.
+  assert.deepEqual(result.transportStages, ['image-generation', 'full-review'], 'Both real correlated transport stages are accounted for; exactly one generation occurs');
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(evidence, 'normal-generation.json'), JSON.stringify(result, null, 2));
+});
+
+test('X13: actual sharing, exam, project and root-preview-root writers retain the complete union', { timeout: 90_000 }, async context => {
+  const evidence = process.env.EVIDENCE_DIR || process.env.TASK2_EVIDENCE || path.join(root, '.omo/evidence/task5-union');
+  fs.mkdirSync(evidence, { recursive: true });
+  const { page, errors } = await requestBrowserFixture(context, 5, evidence, { union: true });
+  const expected = await page.evaluate(() => window.__task5Expected[0].generated[0]);
+  const records = [];
+  const prove = (boundary, value) => {
+    assertCandidateUnion(assert, value, expected);
+    records.push({ boundary, status: 'PASS', fields: Object.keys(expected), actual: value });
+  };
+  const shared = await page.evaluate(async () => (await window.__task2Manager.sharingSnapshot()).workspaces[0]);
+  prove('sharingSnapshot', shared.tabs.find(tab => tab.id === 'task-0').generated[0]);
+  assert.equal(shared.tabs[0].conversionKind, 'graph');
+  const checkpoint = await page.evaluate(async () => {
+    await window.__task2Manager.checkpointForClose();
+    return new Promise((resolve, reject) => {
+      const opening = indexedDB.open('5e.preview:5e-ai-image-tasks', 1);
+      opening.onerror = () => reject(opening.error);
+      opening.onsuccess = () => {
+        const db = opening.result, tx = db.transaction('tasks', 'readonly');
+        let saved;
+        tx.oncomplete = () => { db.close(); resolve(saved); };
+        tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
+        const request = tx.objectStore('tasks').get('workspace');
+        request.onsuccess = () => { saved = request.result; };
+      };
+    });
+  });
+  prove('active task checkpoint / actual IndexedDB', checkpoint.tabs.find(tab => tab.id === 'task-0').generated[0]);
+
+  const imported = await page.evaluate(async snapshot => {
+    await window.__task2Manager.openSharingDocument('union-share', { mode: 'edit', workspaces: [snapshot], activeWorkspace: 0 });
+    return window.__task2Manager.captureExamTask();
+  }, shared);
+  prove('importSharingSnapshot / restored task', imported.snapshot.tabs[0].generated[0]);
+  prove('captureExamTask / examTaskSnapshot', imported.snapshot.tabs[0].generated[0]);
+  assert.equal(imported.snapshot.tabs[0].selectedCandidateId, expected.id);
+
+  const examInput = structuredClone(imported);
+  examInput.taskId = 'task-exam-independent';
+  examInput.snapshot.activeTaskTabId = examInput.taskId;
+  examInput.snapshot.tabs[0].id = examInput.taskId;
+  examInput.snapshot.tabs[0].examLink = { tabId: 'independent-exam-tab', assetId: 'independent-exam-asset' };
+  const examRestored = await page.evaluate(value => window.__task2Manager.restoreExamTask(value), examInput);
+  prove('restoreExamTask independent scope', examRestored.snapshot.tabs[0].generated[0]);
+
+  const project = { workspaces: [structuredClone(shared)], activeWorkspace: 0 };
+  project.workspaces[0].tabs = [project.workspaces[0].tabs[0]];
+  project.workspaces[0].tabs[0].id = 'project-union-task';
+  project.workspaces[0].tabs[0].examLink = { tabId: 'project-source-tab', assetId: 'project-source-asset' };
+  project.workspaces[0].activeTaskTabId = 'project-union-task';
+  const restoredProject = await page.evaluate(async value => {
+    await window.__task2Manager.restoreProjectSnapshot(value);
+    return window.__task2Manager.captureExamTask();
+  }, project);
+  prove('restoreProjectSnapshot independent scope', restoredProject.snapshot.tabs[0].generated[0]);
+  const replacement = structuredClone(project);
+  replacement.workspaces[0].tabs[0].generated[0].graphEdit.revision.id = 'replacement-native-revision';
+  replacement.workspaces[0].tabs[0].generated[0].editableDraft.annotationDrafts[0].after.x = .79;
+  const matching = await page.evaluate(async value => {
+    await window.__task2Manager.restoreProjectSnapshot(value);
+    return window.__task2Manager.captureExamTask();
+  }, replacement);
+  assertCandidateUnion(assert, matching.snapshot.tabs[0].generated[0], replacement.workspaces[0].tabs[0].generated[0]);
+  records.push({ boundary: 'restoreProjectSnapshot matching workspace reimport', status: 'PASS', actual: matching.snapshot.tabs[0].generated[0] });
+  const rejected = structuredClone(replacement);
+  rejected.workspaces[0].tabs[0].generated[0].sourceFrame.width = -5;
+  await assert.rejects(page.evaluate(value => window.__task2Manager.restoreProjectSnapshot(value), rejected), /source\/frame/);
+  const preserved = await page.evaluate(() => window.__task2Manager.captureExamTask());
+  assertCandidateUnion(assert, preserved.snapshot.tabs[0].generated[0], replacement.workspaces[0].tabs[0].generated[0]);
+
+  const origin = new URL(page.url()).origin;
+  for (const entry of [runtime.entry === '/' ? '/preview/' : '/', runtime.entry]) {
+    await page.evaluate(() => window.__task2Manager.checkpointForClose());
+    const receipt = await inspectEntry(page, origin, { ...runtime, entry });
+    assert.equal(receipt.resources.some(resource => /\/preview\/js\//.test(resource.url)), false);
+    const reloaded = await page.evaluate(async () => {
+      await window.__task2Manager.checkpointForClose();
+      return window.__task2Manager.sharingSnapshot();
+    });
+    const original = reloaded.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'task-0');
+    prove(`same-origin ${entry} checkpoint and reload`, original.generated[0]);
+    fs.writeFileSync(path.join(evidence, entry === '/' ? 'union-root-runtime.json' : 'union-preview-runtime.json'), JSON.stringify(receipt, null, 2));
+  }
+  const identities = await page.evaluate(async () => {
+    const q = window.__runtime.query, result = {};
+    const keys = { state: 'state', store: 'createStore', 'text-editor': 'commitActiveText', 'ai-panel': 'snapshotImageItem', 'ai-task-workspaces': 'createTaskWorkspaces', 'ai-label-background': 'resolveImageLabelBackground' };
+    const loadedBefore = performance.getEntriesByType('resource').map(entry => entry.name);
+    for (const [file, key] of Object.entries(keys)) {
+      const canonical = await import(window.__runtime.base + file + '.js' + q);
+      const alias = await import('/preview/js/' + file + '.js');
+      result[file] = canonical[key] === alias[key];
+    }
+    return { result, loadedBefore };
+  });
+  assert.ok(Object.values(identities.result).every(Boolean), 'compatibility aliases must forward identical live exports');
+  for (const name of ['main', 'state', 'text-editor', 'ai-label-background']) {
+    assert.ok(identities.loadedBefore.includes(`${origin}/js/${name}.js${runtime.moduleQuery}`), `actual boot loaded ${name}`);
+  }
+  assert.deepEqual(errors, []);
+  const paneSelectors = {
+    source: '#ai-image-panel:not([hidden]) .is-ai-active-source .ai-preview-stage > img',
+    result: '#ai-image-panel:not([hidden]) .is-ai-active-candidate .ai-preview-stage > img',
+  };
+  await page.evaluate(selectors => {
+    window.__task5VisibleRasters = new Promise((resolve, reject) => {
+      const watched = new WeakSet();
+      let images = [];
+      const events = ['load', 'animationend', 'animationcancel', 'transitionend', 'transitioncancel'];
+      const cleanup = () => {
+        clearTimeout(timer);
+        resize.disconnect();
+        mutations.disconnect();
+        for (const event of events) document.removeEventListener(event, check, true);
+      };
+      const check = () => {
+        const panel = document.querySelector('#ai-image-panel:not([hidden])');
+        if (!panel) return;
+        images = Object.entries(selectors).map(([name, selector]) => ({ name, image: document.querySelector(selector) }));
+        if (images.some(({ image }) => !image)) return;
+        for (const { image } of images) for (const node of [image, image.parentElement]) {
+          if (!watched.has(node)) { watched.add(node); resize.observe(node); }
+        }
+        if (panel.getAnimations({ subtree: true }).some(animation =>
+          animation.effect.getComputedTiming().iterations !== Infinity
+          && !['finished', 'idle'].includes(animation.playState))) return;
+        const panes = [];
+        for (const { name, image } of images) {
+          const stage = image.parentElement;
+          if (!image.complete || image.naturalWidth !== 512 || image.naturalHeight !== 384
+            || !(Number(stage.dataset.aiFitWidth) > 0) || !(Number(stage.dataset.aiFitHeight) > 0)) return;
+          const rect = image.getBoundingClientRect();
+          if (!(rect.width > 0 && rect.height > 0)) return;
+          let left = Math.max(0, rect.left), top = Math.max(0, rect.top);
+          let right = Math.min(innerWidth, rect.right), bottom = Math.min(innerHeight, rect.bottom);
+          for (let node = image; node; node = node.parentElement) {
+            const style = getComputedStyle(node), bounds = node.getBoundingClientRect();
+            if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) !== 1) return;
+            if (/(auto|scroll|hidden|clip)/.test(style.overflowX)) {
+              left = Math.max(left, bounds.left); right = Math.min(right, bounds.right);
+            }
+            if (/(auto|scroll|hidden|clip)/.test(style.overflowY)) {
+              top = Math.max(top, bounds.top); bottom = Math.min(bottom, bounds.bottom);
+            }
+          }
+          if (right - left < rect.width - 1 || bottom - top < rect.height - 1) return;
+          panes.push({ name, x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+            region: image.closest('.ai-image-pane').getBoundingClientRect().toJSON() });
+        }
+        cleanup();
+        resolve({ panes, viewport: { width: innerWidth, height: innerHeight } });
+      };
+      const resize = new ResizeObserver(check);
+      const mutations = new MutationObserver(check);
+      const timer = setTimeout(() => {
+        const diagnostic = images.filter(({ image }) => image).map(({ name, image }) => ({
+          name, connected: image.isConnected, current: image === document.querySelector(selectors[name]),
+          decoded: [image.naturalWidth, image.naturalHeight], bounds: image.getBoundingClientRect().toJSON(),
+          fit: { ...image.parentElement?.dataset },
+        }));
+        cleanup();
+        reject(new Error(`Source/result rasters did not become fitted and visible: ${JSON.stringify(diagnostic)}`));
+      }, 10_000);
+      mutations.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'style', 'src', 'data-ai-fit-width', 'data-ai-fit-height'] });
+      for (const event of events) document.addEventListener(event, check, true);
+    });
+  }, paneSelectors);
+  await page.locator('#ai-image-install-open').click();
+  await page.locator('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img').evaluate(image => image.decode());
+  await page.locator('#ai-image-panel .ai-reference-card .ai-preview-stage > img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+  const visibility = await page.evaluate(() => window.__task5VisibleRasters);
+  assert.ok(await page.locator('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img')
+    .evaluate(image => image.naturalWidth === 512 && image.getBoundingClientRect().width > 0), 'restored workbench raster is decoded and visibly laid out');
+  const capturePaint = async filename => {
+    const screenshot = await page.screenshot({ path: path.join(evidence, filename) });
+    return page.evaluate(async ({ png, visibility, selectors }) => {
+      // Opening/restoring can change horizontal versus vertical comparison.
+      // Sample the pane regions at capture time, not an earlier layout frame.
+      visibility = {viewport:{width:innerWidth,height:innerHeight},panes:visibility.panes.map(pane=>({
+        ...pane,region:document.querySelector(selectors[pane.name]).getBoundingClientRect().toJSON()
+      }))};
+      const { decodeScopedPng } = await import(window.__runtime.base + 'ai-scoped-edit-png.js' + window.__runtime.query);
+      const pixels = await decodeScopedPng(Uint8Array.from(atob(png), character => character.charCodeAt(0)));
+      // Sample the existing fixture's rectangle edges and white interior, not pane chrome.
+      const samples = [[250, 50, 'dark'], [250, 330, 'dark'], [40, 190, 'dark'], [460, 190, 'dark'],
+        [80, 80, 'white'], [350, 250, 'white']];
+      return Object.fromEntries(visibility.panes.map(pane => {
+        const scaleX = pixels.width / visibility.viewport.width, scaleY = pixels.height / visibility.viewport.height;
+        const left = Math.max(0, Math.ceil(pane.region.left * scaleX));
+        const right = Math.min(pixels.width, Math.floor(pane.region.right * scaleX));
+        const top = Math.max(0, Math.ceil(pane.region.top * scaleY));
+        const bottom = Math.min(pixels.height, Math.floor(pane.region.bottom * scaleY));
+        let paperLeft = right, paperRight = -1, paperTop = bottom, paperBottom = -1;
+        for (let y = top; y < bottom; y += 1) {
+          let white = 0, first = right, last = -1;
+          for (let x = left; x < right; x += 1) {
+            const offset = (y * pixels.width + x) * 4;
+            if (pixels.data[offset + 3] === 255 && pixels.data[offset] > 235
+              && pixels.data[offset + 1] > 235 && pixels.data[offset + 2] > 235) {
+              white += 1; first = Math.min(first, x); last = x;
+            }
+          }
+          if (white > (right - left) / 2) {
+            paperLeft = Math.min(paperLeft, first); paperRight = Math.max(paperRight, last);
+            paperTop = Math.min(paperTop, y); paperBottom = y;
+          }
+        }
+        if (paperRight < paperLeft || paperBottom < paperTop) return [pane.name, { paper: null, samples: [] }];
+        const paper = { x: paperLeft, y: paperTop, width: paperRight - paperLeft + 1, height: paperBottom - paperTop + 1 };
+        const cssBounds = { x: paper.x / scaleX, y: paper.y / scaleY, width: paper.width / scaleX, height: paper.height / scaleY };
+        return [pane.name, { paper, cssBounds, samples: samples.map(([x, y, kind]) => {
+          const sx = Math.round(paper.x + paper.width * x / 512);
+          const sy = Math.round(paper.y + paper.height * y / 384);
+          let matches = 0;
+          for (let dy = -2; dy <= 2; dy += 1) for (let dx = -2; dx <= 2; dx += 1) {
+            const px = sx + dx, py = sy + dy;
+            if (px < 0 || py < 0 || px >= pixels.width || py >= pixels.height) continue;
+            const offset = (py * pixels.width + px) * 4;
+            const rgb = pixels.data.subarray(offset, offset + 3);
+            if (pixels.data[offset + 3] === 255 && (kind === 'dark' ? rgb.every(value => value < 80) : rgb.every(value => value > 235))) matches += 1;
+          }
+          return { x, y, kind, matches };
+        }) }];
+      }));
+    }, { png: screenshot.toString('base64'), visibility, selectors:paneSelectors });
+  };
+  const assertPainted = (paint, pane) => assert.ok(paint[pane].paper
+    && Math.abs(paint[pane].paper.width / paint[pane].paper.height - 512 / 384) < .02
+    && paint[pane].samples.length === 6 && paint[pane].samples.every(sample => sample.matches > 0),
+  `${pane} captured raster must contain the fixture border and interior: ${JSON.stringify(paint[pane])}`);
+  const painted = await capturePaint('union-restored-ui.png');
+  assertPainted(painted, 'source');
+  assertPainted(painted, 'result');
+  const blankNegatives = [];
+  for (const pane of visibility.panes) {
+    await page.evaluate(bounds => {
+      const cover = document.createElement('div');
+      cover.dataset.task5BlankPane = bounds.name;
+      Object.assign(cover.style, { position: 'fixed', left: `${bounds.x}px`, top: `${bounds.y}px`,
+        width: `${bounds.width}px`, height: `${bounds.height}px`, background: '#fff', zIndex: '2147483647', pointerEvents: 'none' });
+      document.body.append(cover);
+    }, { ...painted[pane.name].cssBounds, name: pane.name });
+    try {
+      assert.ok(await page.locator(paneSelectors[pane.name])
+        .evaluate(image => image.naturalWidth === 512 && image.getBoundingClientRect().width > 0));
+      const blank = await capturePaint(`union-blank-${pane.name}.png`);
+      assert.throws(() => assertPainted(blank, pane.name), { code: 'ERR_ASSERTION' });
+      assertPainted(blank, pane.name === 'source' ? 'result' : 'source');
+      blankNegatives.push({ pane: pane.name, oldWidthGuardPassed: true, capturedPixelGuardRejected: true, samples: blank[pane.name] });
+    } finally {
+      await page.evaluate(() => document.querySelector('[data-task5-blank-pane]').remove());
+    }
+  }
+  assert.deepEqual(errors, []);
+  fs.writeFileSync(path.join(evidence, 'union-live-boundaries.json'), JSON.stringify({ records, identities, errors, visibility, painted, blankNegatives }, null, 2));
 });

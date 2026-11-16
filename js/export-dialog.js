@@ -11,15 +11,16 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.6.1-remediation-0929";
-import { openBatchExport } from "./export-batch.js?v=1.6.1-remediation-0929";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { openBatchExport } from "./export-batch.js?v=1.7.0-four-session-integration";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
-} from "./export-dir.js?v=1.6.1-remediation-0929";
-import { showAlert } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { registerTopMenu } from "./top-menu.js?v=1.6.1-remediation-0929";
-import { screenToWorld } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { openExamPreview } from "./exam-preview.js?v=1.6.1-remediation-0929";
+} from "./export-dir.js?v=1.7.0-four-session-integration";
+import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
+import { registerTopMenu } from "./top-menu.js?v=1.7.0-four-session-integration";
+import { screenToWorld, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
+import { openExamPreview } from "./exam-preview.js?v=1.7.0-four-session-integration";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -99,6 +100,7 @@ function buildModal() {
         <input type="checkbox" id="export-include-reference-images" checked />
         <span class="modal-label">배경/참고 이미지 포함</span>
       </label>
+      <button type="button" class="modal-btn" id="export-comparison-settings">인쇄 비교 이미지 관리…</button>
 
       <label class="modal-field modal-field-row" for="export-fit-content"
              title="아트보드 전체가 아니라 그려진 것에 딱 맞춰 내보냅니다.&#10;[영역 지정]으로 손수 잡지 않아도 여백이 사라집니다.">
@@ -158,19 +160,21 @@ function segValue(group, attr) {
  * 크기(mm)가 실시간 표시된다. Enter로 확정(화면 사각형 → world 좌표 → onDone(bounds)),
  * Esc/우클릭으로 취소(onDone(null)). world 1단위=1mm이므로 라벨은 mm.
  * 미리보기·영역지정(export) 둘 다 이 한 함수를 쓴다. */
-export function runAreaCapture(svg, state, onDone, hintText) {
+export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
+  window.dispatchEvent(new Event('5e:canvas-interaction-cancel'));
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
+  if (options.purpose === "hwp") overlay.dataset.capturePurpose = "hwp";
   /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
    *   9000 이던 시절엔 튜토리얼이 도는 동안 흐림 4장이 마우스를 먼저 먹어
    *   '영역 지정'을 눌러도 **캔버스에서 드래그가 되지 않았다**(사용자 지적).
    *   설명 창(100012)보다는 아래에 둬서 안내는 계속 읽히게 한다. */
   overlay.style.cssText =
     "position:fixed;inset:0;z-index:100011;cursor:crosshair;" +
-    "background:rgba(0,0,0,0.35);user-select:none;";
+    "background:rgba(0,0,0,0.35);user-select:none;font-family:var(--shell-control-font-family,system-ui,sans-serif);";
 
   const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
-  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · [내보내기] 또는 Enter 로 확정 · Esc 취소";
+  const HINT_ADJUST = `핸들로 크기 조절 · 드래그로 이동 · [${options.confirmText || '지정'}] 또는 Enter로 확정 · Esc 취소`;
   const hint = document.createElement("div");
   hint.textContent = HINT_DRAW;
   hint.style.cssText =
@@ -184,12 +188,14 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   rect.style.cssText =
     "position:absolute;border:1.5px solid #4aa3ff;background:rgba(74,163,255,0.18);" +
     "display:none;box-sizing:border-box;";
+  rect.className = "capture-box";
   overlay.appendChild(rect);
 
   // 실제 크기(mm) 라벨 — 클릭해 숫자를 직접 입력할 수 있다: 가로 입력 → Tab → 세로,
   // Enter로 확정. 입력을 위해 pointer-events를 켠다(overlay onDown은 이 영역 클릭을 통과시킴).
   const dim = document.createElement("div");
   dim.dataset.dim = "1";
+  dim.className = "capture-dim";
   dim.style.cssText =
     "position:absolute;display:none;z-index:3;padding:2px 6px;border-radius:3px;cursor:text;" +
     "background:var(--accent);color:#fff;font-size: 12px;font-weight:600;" +
@@ -198,8 +204,10 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     "width:46px;text-align:right;font:inherit;color:#fff;border:0;border-radius:3px;" +
     "background:rgba(255,255,255,0.18);padding:1px 4px;outline:none;";
   const wInput = document.createElement("input");
+  wInput.className = "capture-size-input";
   wInput.type = "text"; wInput.inputMode = "decimal"; wInput.style.cssText = INP;
   const hInput = document.createElement("input");
+  hInput.className = "capture-size-input";
   hInput.type = "text"; hInput.inputMode = "decimal"; hInput.style.cssText = INP;
   const sepX = document.createElement("span"); sepX.textContent = " × "; sepX.style.pointerEvents = "none";
   const sepU = document.createElement("span"); sepU.textContent = " mm"; sepU.style.pointerEvents = "none";
@@ -213,7 +221,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   okBtn.style.cssText =
     "margin-left:8px;padding:2px 10px;border:0;border-radius:3px;cursor:pointer;" +
     "background:#fff;color:var(--accent);font:inherit;font-weight:700;pointer-events:auto;";
-  okBtn.textContent = "지정";
+  okBtn.textContent = options.confirmText || "지정";
   okBtn.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
   okBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
   dim.append(wInput, sepX, hInput, sepU, okBtn);
@@ -240,6 +248,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   for (const [id] of HANDLES) {
     const h = document.createElement("div");
     h.dataset.h = id;
+    h.className = "capture-handle";
     h.style.cssText =
       "position:absolute;width:11px;height:11px;margin:-6px 0 0 -6px;display:none;z-index:4;" +
       "background:#fff;border:1.5px solid var(--accent);border-radius:2px;box-sizing:border-box;cursor:" + CURSORS[id] + ";";
@@ -315,7 +324,11 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     if (document.activeElement !== hInput) hInput.value = ws.h.toFixed(1);
     dim.style.display = "block";
     let dy = t - 26; if (dy < 4) dy = t + 4;
-    dim.style.left = l + "px"; dim.style.top = dy + "px";
+    // 상자가 화면 가장자리에 붙으면 크기 표시와 확정 단추가 화면 밖으로 나가 누를 수 없었다 — 넘칠 때만 안으로 당긴다.
+    const ov = overlay.getBoundingClientRect();
+    const dl = Math.max(4, Math.min(l, ov.width - dim.offsetWidth - 4));
+    const dt = Math.max(4, Math.min(dy, ov.height - dim.offsetHeight - 4));
+    dim.style.left = dl + "px"; dim.style.top = dt + "px";
   }
 
   function cleanup() {
@@ -326,12 +339,21 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     overlay.removeEventListener("contextmenu", onCtx);
     overlay.remove();
   }
-  function finish(bounds) { cleanup(); onDone(bounds); }
+  let finished = false;
+  function finish(bounds) {
+    if (finished) return;
+    finished = true; cleanup();
+    window.dispatchEvent(new Event('5e:canvas-interaction-cancel'));
+    onDone(bounds);
+  }
   function cancel() { finish(null); }
   function confirm() {
     if (!box) return;
     normBox();
     if ((box.r - box.l) < 4 || (box.b - box.t) < 4) return; // 너무 작으면 무시
+    // 처음 받은 영역을 손대지 않고 확인하면 그 값을 그대로 돌려준다 — 화면 좌표를 거쳐 다시 셈하면 소수 끝자리가 달라져
+    // 「다시 보내기는 이전 자른 영역에서 시작」이 어긋났다(그래프 확대 검사, 10-26).
+    if (initialWorld && initialBox && box.l === initialBox.l && box.t === initialBox.t && box.r === initialBox.r && box.b === initialBox.b) { finish({ ...initialWorld }); return; }
     const vb = state.get().viewBox;
     const w1 = screenToWorld(svg, vb, box.l, box.t);
     const w2 = screenToWorld(svg, vb, box.r, box.b);
@@ -387,12 +409,24 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     render();
   }
   function onKey(e) {
+    if (e.isComposing || e.keyCode === 229 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
     // 캡처 단계 + stopPropagation: 뒤의 다이얼로그/앱 단축키가 함께 발동하지 않게.
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancel(); }
-    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); confirm(); }
+    else if (e.key === 'Enter' || e.key === ' ' && !e.target.closest?.('input,textarea,select,[contenteditable="true"]')) {
+      consumeConfirmationPress(e);
+      if (!e.repeat) confirm();
+    }
   }
   function onCtx(e) { e.preventDefault(); cancel(); }
 
+  let initialBox = null, initialWorld = null;
+  if (options.initialBounds) {
+    const b=options.initialBounds;
+    if ([b.x,b.y,b.w,b.h].every(Number.isFinite) && b.w>0 && b.h>0) {
+      const vb=state.get().viewBox, a=worldToScreen(svg,vb,b.x,b.y), z=worldToScreen(svg,vb,b.x+b.w,b.y+b.h);
+      box={l:a.x,t:a.y,r:z.x,b:z.y};initialBox={...box};initialWorld={x:b.x,y:b.y,w:b.w,h:b.h};phase="adjust";hint.textContent=HINT_ADJUST;render();
+    }
+  }
   overlay.addEventListener("mousedown", onDown);
   window.addEventListener("mousemove", onMove);
   window.addEventListener("mouseup", onUp);
@@ -405,6 +439,10 @@ export function initExportDialog(state, svg) {
   initFileMenu();
 
   const overlay = buildModal();
+  overlay.querySelector('#export-comparison-settings').addEventListener('click', () => {
+    hideModal();
+    window.dispatchEvent(new Event('5e:open-print-comparison-settings'));
+  });
   const formatGroup = overlay.querySelector("#export-format");
   const dpiGroup = overlay.querySelector("#export-dpi");
   const dpiField = overlay.querySelector("#export-dpi-field");

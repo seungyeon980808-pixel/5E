@@ -1,0 +1,206 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "reference-1",
+    "hash": "sha256:f5fbffa2986a0f7686235081b38cac3e6532ff82be73bf0bc5886c9b096b1966",
+    "width": 956,
+    "height": 478,
+    "plotBox": {
+      "x": 616,
+      "y": 15,
+      "w": 328,
+      "h": 363
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0.45179
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "x",
+      "displayTitle": "x",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.96951,
+        "y": 0.39945
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "자기장",
+      "displayTitle": "자기장",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.02744,
+        "y": 0.95868
+      },
+      "titleAnchor": "end"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.04878,
+          "y": 0.91736
+        },
+        {
+          "x": 0.05183,
+          "y": 0.85124
+        },
+        {
+          "x": 0.05488,
+          "y": 0.77961
+        },
+        {
+          "x": 0.06098,
+          "y": 0.71074
+        },
+        {
+          "x": 0.06707,
+          "y": 0.65014
+        },
+        {
+          "x": 0.07927,
+          "y": 0.58402
+        },
+        {
+          "x": 0.09756,
+          "y": 0.51791
+        },
+        {
+          "x": 0.11585,
+          "y": 0.46006
+        },
+        {
+          "x": 0.1372,
+          "y": 0.41873
+        },
+        {
+          "x": 0.16463,
+          "y": 0.39118
+        },
+        {
+          "x": 0.19512,
+          "y": 0.37466
+        },
+        {
+          "x": 0.23171,
+          "y": 0.36777
+        },
+        {
+          "x": 0.27439,
+          "y": 0.36501
+        },
+        {
+          "x": 0.32927,
+          "y": 0.36639
+        },
+        {
+          "x": 0.39329,
+          "y": 0.37052
+        },
+        {
+          "x": 0.46341,
+          "y": 0.37466
+        },
+        {
+          "x": 0.53659,
+          "y": 0.37934
+        },
+        {
+          "x": 0.6128,
+          "y": 0.38402
+        },
+        {
+          "x": 0.68902,
+          "y": 0.38843
+        },
+        {
+          "x": 0.75915,
+          "y": 0.39256
+        },
+        {
+          "x": 0.82012,
+          "y": 0.39532
+        },
+        {
+          "x": 0.8811,
+          "y": 0.39945
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "strokeWidth": 0.64,
+      "markerShape": "none"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": -0.05488,
+      "y": 0.44766,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 35,
+      "fontWeight": 400
+    }
+  ],
+  "regions": [],
+  "legends": [],
+  "style": {
+    "fontSizePx": 35,
+    "labelWeight": 400,
+    "strokeWidth": 0.64,
+    "guideStyle": {
+      "strokeWidth": 0.21,
+      "dashLength": 0.85,
+      "dashGap": 0.64
+    }
+  },
+  "frame": {
+    "variant": "cross",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowY2": false,
+    "tickTop": false,
+    "tickRight": false,
+    "arrowLength": 4.27,
+    "arrowWidth": 2.77,
+    "strokeWidth": 0.32
+  },
+  "review": []
+}

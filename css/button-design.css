@@ -1,0 +1,141 @@
+/* Keep the existing controls. Only the four workflow entries get an edge glint. */
+@property --ui-button-orbit { syntax:"<angle>"; initial-value:0deg; inherits:false; }
+.ui-core-action {
+  --ui-button-accent:var(--accent);
+  --ui-button-orbit-duration:3.2s;
+  position:relative;
+  isolation:isolate;
+  overflow:visible;
+}
+.image-workflow-hub .ui-core-action {
+  height:27px;
+  min-height:27px;
+  padding:3px 7px;
+  gap:5px;
+  border:1px solid color-mix(in srgb,var(--accent) 24%,var(--border));
+  border-radius:6px;
+  color:var(--c-sub);
+  background:transparent;
+  font-size:10.5px;
+  font-weight:500;
+  line-height:1.3;
+}
+.image-workflow-hub .ui-core-action > svg {
+  width:15px;
+  height:15px;
+  stroke-width:1.6;
+  flex:none;
+}
+.image-workflow-hub #exam-send {
+  --ui-button-accent:var(--ds-soft-line,#6ba4f8);
+}
+/* The three view controls share the settings/file/share shell geometry and states. */
+.app-shell-header .canvas-view-controls { gap:inherit; }
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+  width:var(--shell-control-size);
+  height:var(--shell-control-size);
+  min-height:var(--shell-control-size);
+  padding:4px;
+  border:1px solid var(--border);
+  border-radius:var(--shell-control-radius);
+  color:var(--text-primary);
+  background:var(--btn-tool-bg);
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn) svg {
+  display:block;
+  width:var(--shell-icon-size);
+  height:var(--shell-icon-size);
+  stroke-width:1.55;
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn):hover {
+  background:var(--btn-tool-hover);
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn)[aria-pressed="true"] {
+  color:var(--control-selected-text);
+  background:var(--control-selected-bg);
+  border-color:var(--control-selected-border);
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn):focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
+.ui-core-action::before {
+  content:""; position:absolute; inset:-1px; padding:1px; border-radius:inherit; pointer-events:none;
+  background:conic-gradient(from var(--ui-button-orbit), transparent 0deg 220deg,
+    color-mix(in srgb,var(--ui-button-accent) 20%,transparent) 250deg,
+    var(--ui-button-accent) 278deg, color-mix(in srgb,var(--ui-button-accent) 12%,#fff) 304deg,
+    var(--ui-button-accent) 314deg, transparent 344deg 360deg);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor; mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); mask-composite:exclude;
+  opacity:0; transition:opacity 160ms ease;
+}
+@media(hover:hover) and (pointer:fine) {
+  .ui-core-action:not(:disabled):not([aria-busy="true"]):not([data-workflow-open="true"]):not([data-result-attention="true"]):hover::before { opacity:1; animation:ui-button-orbit var(--ui-button-orbit-duration) linear infinite; }
+  .image-workflow-hub .ui-core-action:not(:disabled):not([aria-busy="true"]):not([data-workflow-open="true"]):hover {
+    border-color:var(--ui-button-accent);
+    box-shadow:0 2px 10px color-mix(in srgb,var(--ui-button-accent) 14%,transparent);
+  }
+}
+.image-workflow-hub .ui-core-action[data-workflow-open="true"] {
+  color:var(--control-selected-text);
+  background:var(--control-selected-bg);
+  border-color:var(--control-selected-border);
+  box-shadow:none;
+}
+@keyframes ui-button-orbit { to { --ui-button-orbit:360deg; } }
+.ai-task-tab-select[data-result-attention="true"] { position:relative; }
+.ai-task-tab-select[data-result-attention="true"]::before {
+  content:""; position:absolute; inset:0; border:1px solid var(--accent); border-radius:inherit; pointer-events:none;
+}
+.ui-core-action[data-result-attention="true"]::before,
+.ai-task-tab-select[data-result-attention="true"]::before {
+  opacity:1; animation:ui-result-attention 1.8s ease-in-out infinite;
+}
+.ui-core-action[data-result-attention="true"]::before { background:var(--ui-button-accent); }
+.ai-result-notice { color:var(--accent) !important; }
+@keyframes ui-result-attention { 0%,100% { opacity:.2; } 50% { opacity:1; } }
+:root[data-ui-motion-paused="true"] :is(.ui-core-action,.ai-task-tab-select)::before { animation-play-state:paused !important; }
+@media(prefers-reduced-motion:reduce) {
+  .ui-core-action::before { transition:none; }
+  .ui-core-action:hover::before { animation:none !important; }
+  :is(.ui-core-action,.ai-task-tab-select)[data-result-attention="true"]::before { animation:none !important; opacity:1; }
+}
+
+/* 11-07 G0(시안 graph-hub-1107): 아래 「그래프」 세 갈래 — 단추 바로 위로 펼침. 색은 떠 있는 메뉴 토큰만 쓴다. */
+.graph-entry-menu {
+  position:fixed; z-index:2400; width:300px; box-sizing:border-box; padding:6px;
+  display:flex; flex-direction:column; gap:2px;
+  background:var(--ds-raise,#161b22); color:var(--ds-ink,#e6edf3);
+  border-radius:var(--ds-radius-lg,10px); box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));
+  font:13px/1.35 var(--ds-font,-apple-system,"Apple SD Gothic Neo",sans-serif);
+  animation:graph-entry-in 120ms cubic-bezier(.2,.8,.2,1);
+}
+.graph-entry-menu[hidden] { display:none; }
+@keyframes graph-entry-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+.graph-entry-row {
+  display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:8px 10px; box-sizing:border-box;
+  border:0; border-radius:var(--ds-radius,6px); background:transparent; color:inherit; text-align:left; cursor:pointer; font:inherit;
+}
+.graph-entry-row:hover, .graph-entry-row:focus-visible { background:var(--ds-hover,rgba(177,186,196,.08)); outline:none; }
+.graph-entry-row:focus-visible { box-shadow:inset 0 0 0 1px var(--ds-focus,rgba(88,166,255,.7)); }
+.graph-entry-ico {
+  flex:none; width:28px; height:28px; display:grid; place-items:center; border-radius:var(--ds-radius,6px);
+  color:var(--ds-selected-icon,var(--ds-accent,#58a6ff)); background:var(--ds-selected,rgba(47,129,247,.15));
+}
+.graph-entry-ico[data-tone="direct"] { color:var(--ds-success,#4f9a6c); background:color-mix(in srgb,var(--ds-success,#4f9a6c) 20%,transparent); }
+.graph-entry-ico svg { width:16px; height:16px; }
+.graph-entry-text { flex:1; min-width:0; display:flex; flex-direction:column; gap:1px; }
+.graph-entry-text strong { font-weight:600; font-size:13.5px; color:var(--ds-ink,#e6edf3); }
+.graph-entry-text span { font-size:12px; color:var(--ds-ink-3,#7d8590); }
+.graph-entry-key {
+  flex:none; min-width:18px; padding:1px 5px; border-radius:4px; text-align:center;
+  font:500 11px/1.4 var(--ds-font,inherit); color:var(--ds-ink-3,#7d8590);
+  background:var(--ds-kbd,#21262d); border:1px solid var(--ds-line-strong,#30363d);
+}
+.graph-entry-foot { margin:4px 6px 0; padding:7px 4px 3px; border-top:1px solid var(--ds-line,#21262d); font-size:11.5px; color:var(--ds-ink-3,#7d8590); }
+.image-workflow-hub #graph-tool-open[data-graph-menu-open="true"] { background:var(--ds-selected) !important; color:var(--ds-selected-ink,var(--ds-ink)) !important; }
+@media (prefers-reduced-motion:reduce) { .graph-entry-menu { animation:none; } }

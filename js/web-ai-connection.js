@@ -3,7 +3,12 @@
   if (window.fiveEDesktop) return;
   const origin = location.hostname === '127.0.0.1' ? location.origin : 'https://five-e-ai-runtime-probe.onrender.com';
   const key = '5e:web-ai-session';
+  const localReady = location.hostname === '127.0.0.1' ? fetch('/api/local-ai-config',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(r=>r.local===true).catch(()=>false) : Promise.resolve(false);
   let popup, token = '', loginTicket = '', loginTimer, attempt = 0;
+  // 11-09: 이 맥의 로컬 AI 서버 하나를 여러 창(탭)이 함께 쓸 때 작업 칸 이름이 겹치지 않게 창마다 고유 앞머리를 붙인다.
+  // (서버는 같은 칸에 새 요청이 오면 앞 요청을 끊고 보내므로, 다른 창의 요청을 끊지 않게 한다.)
+  const pageScope = String(window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`).slice(0, 36);
+  const scopedActions = new Set(['bridge-send', 'bridge-events', 'bridge-interrupt']);
   let authUrl = '', preparing = false, positioning = false, positionTimer, positionDeadline;
   const closeLoginWindows = () => {
     positioning = false; clearTimeout(positionTimer); clearTimeout(positionDeadline);
@@ -19,23 +24,29 @@
     window.dispatchEvent(new Event('5e:web-ai-status'));
   };
   window.fiveEWebRequest = async (action, payload = {}) => {
-    if (!token) {
+    const local=await localReady;
+    if (!token && !local) {
       if (action === 'bridge-status') return { login: { loggedIn: false }, server: false };
       throw new Error('ChatGPT 로그인을 눌러 계정을 연결해 주세요.');
     }
-    if (!['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt'].includes(action)) throw new Error('허용되지 않은 요청입니다.');
+    if (!['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt', 'bridge-read-text'].includes(action)) throw new Error('허용되지 않은 요청입니다.');
+    const pageScoped = local && scopedActions.has(action);
+    const body = pageScoped ? { ...payload, clientScope: `${pageScope}:${payload.clientScope || ''}` } : payload;
     const response = await fetch(`${origin}/api/${action}`, {
       method: 'POST', credentials: 'omit',
-      headers: { Authorization: `Bearer ${token}`, 'X-5E-Request': '1', 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload), signal: AbortSignal.timeout(40000),
+      headers: { ...(local ? {} : {Authorization: `Bearer ${token}`}), 'X-5E-Request': '1', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body), signal: AbortSignal.timeout(action === 'bridge-read-text' ? 150000 : 40000), // 11-10: 글 읽기는 15~20초, 여유를 둔다
     });
-    if (response.status === 401) {
+    if (!local && response.status === 401) {
       save('');
       if (action === 'bridge-status') return { login: { loggedIn: false }, server: false };
     }
     const result = await response.json();
-    if (action === 'bridge-status' && result.login?.loggedIn === false && token) save('');
+    if (!local && action === 'bridge-status' && result.login?.loggedIn === false && token) save('');
     if (!response.ok) throw Object.assign(new Error(result.error || '서버 연결에 실패했습니다.'), { status: response.status });
+    if (pageScoped && action === 'bridge-events' && Array.isArray(result.events)) {
+      for (const event of result.events) if (event && typeof event === 'object') event.clientScope = payload.clientScope || '';
+    }
     return result;
   };
   const loginRequest = async (action, ticket) => {
@@ -76,11 +87,13 @@
     const availableWidth = screen.availWidth || screen.width || 1280;
     const availableHeight = screen.availHeight || screen.height || 800;
     const viewport = Math.min(window.innerWidth || availableWidth, availableWidth);
-    const paired = viewport >= 840;
-    const width = paired ? Math.min(480, Math.floor((viewport - 48) * .56)) : Math.min(480, availableWidth);
-    const codeWidth = Math.min(420, viewport - width - 48);
+    // The provider input window and local copy guide have independent sizes.
+    // Pair only when both can retain readable widths without shrinking the guide.
+    const width = Math.max(1, Math.min(720, availableWidth - 32));
+    const codeWidth = Math.max(1, Math.min(480, viewport - 32));
+    const paired = viewport >= width + codeWidth + 48;
     const codeLeft = Math.max(16, Math.round((viewport - codeWidth - width - 16) / 2));
-    const height = Math.max(1, Math.min(640, availableHeight - 32));
+    const height = Math.max(1, Math.min(1080, availableHeight - 32));
     const screenLeft = screen.availLeft || 0, screenTop = screen.availTop || 0;
     const left = paired ? Math.min(screenLeft + availableWidth - width, Math.max(screenLeft, (window.screenX || 0) + codeLeft + codeWidth + 16))
       : screenLeft + Math.round((availableWidth - width) / 2);

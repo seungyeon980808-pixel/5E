@@ -1,0 +1,32 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+const { createExamFiles, safeName } = require('./exam-files.cjs');
+
+test('exam files: autosave, backups, named exports stay inside 5E/출제', async t => {
+  const docs = fs.mkdtempSync(path.join(os.tmpdir(), '5e-exam-files-'));
+  t.after(() => fs.rmSync(docs, { recursive: true, force: true }));
+  let clock = new Date(2026, 10, 11, 21, 30);
+  const files = createExamFiles({ documentsPath: docs, now: () => clock });
+  const root = path.join(docs, '5E', '출제');
+  assert.equal((await files.readLatest()).text, null);
+  await files.autosave('{"a":1}');
+  assert.equal(fs.readFileSync(path.join(root, '자동 저장', '최근.json'), 'utf8'), '{"a":1}');
+  assert.ok(fs.existsSync(path.join(root, '자동 저장', '백업', '2026-11-11', '2130.json')));
+  clock = new Date(2026, 10, 11, 21, 35); await files.autosave('{"a":2}');
+  assert.ok(!fs.existsSync(path.join(root, '자동 저장', '백업', '2026-11-11', '2135.json')), 'backup at most every 10 minutes');
+  clock = new Date(2026, 10, 11, 21, 41); await files.autosave('{"a":3}');
+  assert.ok(fs.existsSync(path.join(root, '자동 저장', '백업', '2026-11-11', '2141.json')));
+  assert.equal((await files.readLatest()).text, '{"a":3}');
+  const one = await files.save({ name: '20번 문항.hwpx', ext: 'hwpx', bytes: new Uint8Array([1, 2]) });
+  assert.equal(one.name, '2026-11-11_2141_20번 문항.hwpx');
+  assert.equal(path.dirname(one.path), path.join(root, '한글'));
+  const two = await files.save({ name: '20번 문항', ext: 'hwpx', bytes: new Uint8Array([3]) });
+  assert.equal(two.name, '2026-11-11_2141_20번 문항 (2).hwpx');
+  const evil = await files.save({ name: '../../x', ext: 'xlsx', bytes: new Uint8Array([1]) });
+  assert.equal(path.dirname(evil.path), path.join(root, '엑셀'));
+  await assert.rejects(files.save({ name: 'a', ext: 'exe', bytes: new Uint8Array([1]) }));
+  assert.throws(() => files.inside(path.join(docs, 'other.txt')));
+  assert.equal(files.inside(one.path), one.path);
+  assert.equal(safeName('a/b:c'), 'a_b_c');
+});

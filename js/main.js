@@ -1,9 +1,27 @@
-import { initLiteShell } from "./lite-shell.js?v=1.6.1-remediation-0929";
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.1-remediation-0929';
-import { initMobileImage } from './mobile-image.js?v=1.6.1-preview-mobile-golden-0922';
-import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { initAiSharing } from './ai-sharing-ui.js?v=1.6.1-remediation-0929';
+import { initFigureStudio } from './figure-studio.js?v=1.7.0-four-session-integration';
+import { clipAdd, clipConsumeRef } from "./drawer.js?v=1114";
+import { mountClipboard, makeOSFollower, isOpenClipKey, clipKey, CLIP_ICON } from "./clipboard-view.js?v=1114";
+import { setClipboardHook, insertClipObjects } from "./editor-clipboard.js?v=1.7.0-four-session-integration";
+import './ai-label-background.js?v=1.7.0-four-session-integration';
+import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
+import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integration';
+import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
+import { getColorMode, nextColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-four-session-integration';
+import { initButtonDesign } from './button-design.js?v=1.7.0-four-session-integration';
+import { initGraphEntryMenu } from './graph-entry-menu.js?v=1.7.0-four-session-integration';
+import { initAppSwitch } from './app-switch.js?v=1.7.0-four-session-integration';
+import { createStartScreen } from "./start-screen.js?v=1.7.0-four-session-integration";
+import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
+import { installAppLock } from './app-lock.js?v=1.7.0-four-session-integration';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
+import { initWebLoginUi, initDesktopAccountBadge } from './web-login-ui.js?v=1.7.0-four-session-integration';
+import { createAiLoginHandoff, LOGIN_INTENT_SESSION_KEY } from './ai-login-handoff.js?v=1.7.0-four-session-integration';
+import { idbGet, idbSet, idbDel } from './idb-store.js?v=1.7.0-four-session-integration';
+import { chooseWorkbenchAssignment } from './library/workbench-assignment.js?v=1.7.0-four-session-integration';
+import { initQuickCapture } from './quick-capture.js?v=1.7.0-four-session-integration';
+import { initMobileImage } from './mobile-image.js?v=1.7.0-four-session-integration';
+import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { initAiSharing } from './ai-sharing-ui.js?v=1.7.0-four-session-integration';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -13,69 +31,94 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.1-remediation-0929';
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=1.6.1-remediation-0929";
-import { render } from "./render.js?v=1.6.1-remediation-0929";
-import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=task10-160";
-import { initTools } from "./tools.js?v=1.6.1-remediation-0929";
-import { initCutTool } from "./cut-tool.js?v=1.6.1-remediation-0929";
-import { initEraseTool } from "./erase-tool.js?v=1.6.1-remediation-0929";
-import { initTransform, undo, redo } from "./transform.js?v=1.6.1-remediation-0929";
-import { initArtboardResize } from "./artboard-resize.js?v=1.6.1-remediation-0929";
-import { initInspector } from "./inspector.js?v=1.6.1-remediation-0929";
-import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.3-project-file-size";
-import { initExportDialog } from "./export-dialog.js?v=1.6.1-remediation-0929";
-import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.1-remediation-0929";
-import { initSettings } from "./settings.js?v=1.6.3-project-file-size";
-import { initImageObjectify } from "./image-objectify.js?v=1.6.1-remediation-0929";
-import { initImagePaste } from "./image-paste.js?v=1.6.1-remediation-0929";
-import { initImageCutout } from "./image-cutout.js?v=1.6.1-preview-lite-hybrid-0922";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.1-preview-lite-hybrid-0922";
-import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.1-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.3-pdf-runtime-retry";
-import { initTemplates } from "./templates.js?v=1.6.1-remediation-0929";
-import { initObjectSearch } from "./search.js?v=1.6.1-remediation-0929";
-import { initCommandPalette } from "./command-palette.js?v=1.6.1-remediation-0929";
-import { initSubjectObjects } from "./subject-objects.js?v=1.6.1-remediation-0929";
-import { initToolHint } from "./tool-hint.js?v=1.6.1-remediation-0929";
-import { initTooltips } from "./tooltip.js?v=1.6.1-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=1.6.3-project-file-size";
-import { initPersonalObjects } from "./personal-objects.js?v=1.6.1-remediation-0929";
-import { initBulkEdit } from "./bulk-edit.js?v=1.6.1-remediation-0929";
-import { initDataPlot } from "./data-plot.js?v=1.6.1-remediation-0929";
-import { initGaugeSection } from "./inspector/section-gauge.js?v=1.6.1-preview-labeler-0917-1111";
-import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.6.1-remediation-0929";
-import { initParabolaSection } from "./inspector/section-parabola.js?v=1.6.1-preview-labeler-0917-1111";
-import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.1-remediation-0929";
+import { state } from "./state.js?v=1.7.0-four-session-integration";
+import { render, setSmartGuides } from "./render.js?v=1.7.0-four-session-integration";
+import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode, zoomPercent, zoomByStep, fitArtboard, fitDefault, setZoomPercent, fitBounds } from "./viewport.js?v=1.7.0-four-session-integration";
+import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=1.7.0-four-session-integration";
+import { initTools } from "./tools.js?v=1.7.0-four-session-integration";
+import { initLabApparatusEditing } from "./tools/lab-apparatus.js?v=1.7.0-four-session-integration";
+import { initOpticalBenchEditing } from "./tools/optical-bench.js?v=1.7.0-four-session-integration";
+import { initCutTool } from "./cut-tool.js?v=1.7.0-four-session-integration";
+import { initEraseTool } from "./erase-tool.js?v=1.7.0-four-session-integration";
+import { initTransform, undo, redo, rebuildGroups, objectsBBox, translateObject } from "./transform.js?v=1.7.0-four-session-integration";
+import { initArtboardResize } from "./artboard-resize.js?v=1.7.0-four-session-integration";
+import { initInspector } from "./inspector.js?v=1.7.0-four-session-integration";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, configurePortableProjectIO, saveProject, serialize, applyLoaded, prepareLoadedProject } from "./project-io.js?v=1.7.0-four-session-integration";
+import { ensureEmbeddedFonts, getContentBounds, rasterizeExportCanvas, insertPngPhys } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { initExportDialog, runAreaCapture } from "./export-dialog.js?v=1.7.0-four-session-integration";
+import { initRuler, setRulerVisible } from "./ruler.js?v=1.7.0-four-session-integration";
+import { initSettings } from "./settings.js?v=1.7.0-four-session-integration";
+import { initImageObjectify } from "./image-objectify.js?v=1.7.0-four-session-integration";
+import { initImagePaste, insertImageFromSrc, prepareImageCandidateRevision } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { createCandidateMaterializer } from "./ai-candidate-materializer.js?v=1.7.0-four-session-integration";
+import { validateWorkbenchGraph, insertWorkbenchGraph } from "./graph/workbench-result.js?v=1.7.0-four-session-integration";
+import { initImageCutout } from "./image-cutout.js?v=1.7.0-four-session-integration";
+import { renderCanvasImageForAi } from "./image-cutout.js?v=1.7.0-four-session-integration";
+import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.7.0-four-session-integration";
+import { initExamLibrary } from "./exam-library.js?v=1.7.0-four-session-integration";
+import { initTemplates } from "./templates.js?v=1.7.0-four-session-integration";
+import { initObjectSearch } from "./search.js?v=1.7.0-four-session-integration";
+import { initCommandPalette } from "./command-palette.js?v=1.7.0-four-session-integration";
+import { initSubjectObjects } from "./subject-objects.js?v=1.7.0-four-session-integration";
+import { initToolHint } from "./tool-hint.js?v=1.7.0-four-session-integration";
+import { initTooltips } from "./tooltip.js?v=1.7.0-four-session-integration";
+import { initViewMode, loadMode } from "./view-mode.js?v=1.7.0-four-session-integration";
+import { initPersonalObjects } from "./personal-objects.js?v=1.7.0-four-session-integration";
+import { initAssetLibrary } from "./asset-library.js?v=1.7.0-four-session-integration";
+import { initObjectWindow } from "./object-window.js?v=1.7.0-four-session-integration";
+import { initBulkEdit } from "./bulk-edit.js?v=1.7.0-four-session-integration";
+import { initDataPlot } from "./data-plot.js?v=1.7.0-four-session-integration";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=1.7.0-four-session-integration";
+import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.7.0-four-session-integration";
+import { initParabolaSection } from "./inspector/section-parabola.js?v=1.7.0-four-session-integration";
+import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.7.0-four-session-integration";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { initBraceSection } from "./inspector/section-brace.js?v=1.6.1-preview-labeler-0917-1111";
-import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.6.1-preview-labeler-0917-1111";
-import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.6.1-remediation-0929";
-import { initNeuronSection } from "./inspector/section-neuron.js?v=1.6.1-preview-labeler-0917-1111";
-import { initLegendSection } from "./inspector/section-legend.js?v=1.6.1-remediation-0929";
-import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.6.1-preview-labeler-0917-1111";
+import { initBraceSection } from "./inspector/section-brace.js?v=1.7.0-four-session-integration";
+import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.7.0-four-session-integration";
+import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.7.0-four-session-integration";
+import { initNeuronSection } from "./inspector/section-neuron.js?v=1.7.0-four-session-integration";
+import { initLegendSection } from "./inspector/section-legend.js?v=1.7.0-four-session-integration";
+import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.7.0-four-session-integration";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
-import { initVesselSection } from "./inspector/section-vessel.js?v=1.6.1-remediation-0929";
-import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.6.1-remediation-0929";
-import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.6.1-remediation-0929";
-import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.6.1-remediation-0929";
-import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.6.1-remediation-0929";
-import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.6.1-remediation-0929";
-import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.1-preview-labeler-0917-1111";
-import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.1-remediation-0929";
-import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.1-remediation-0929";
-import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.1-preview-labeler-0917-1111";
-import { initAutosave } from "./autosave.js?v=1.6.3-project-file-size";
-import { initPages } from "./pages.js?v=1.6.1-remediation-0929";
-import { localizeShortcutLabels } from "./platform.js?v=1.6.1-remediation-0929";
-import { initModalDrag } from "./modal-drag.js?v=1.6.1-remediation-0929";
-import { initSteppers } from "./stepper.js?v=1.6.1-preview-labeler-0917-1111";
-import { initReferenceWindows } from "./reference-window.js?v=1.6.1-remediation-0929";
-import { initTutorial } from "./tutorial.js?v=1.6.1-remediation-0929";
-import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.1-remediation-0929";
-import { initAiPanel } from "./ai-panel.js?v=1.6.1-remediation-0929";
+import { initVesselSection } from "./inspector/section-vessel.js?v=1.7.0-four-session-integration";
+import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.7.0-four-session-integration";
+import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.7.0-four-session-integration";
+import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.7.0-four-session-integration";
+import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.7.0-four-session-integration";
+import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.7.0-four-session-integration";
+import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.7.0-four-session-integration";
+import { initBubbleSection } from "./inspector/section-bubble.js?v=1.7.0-four-session-integration";
+import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.7.0-four-session-integration";
+import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.7.0-four-session-integration";
+import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.7.0-four-session-integration";
+import { initAutosave } from "./autosave.js?v=1.7.0-four-session-integration";
+import { initPages, switchPage, resetPageHistory } from "./pages.js?v=1.7.0-four-session-integration";
+import { localizeShortcutLabels, blocksCanvasShortcut, IS_MAC as IS_MAC_ZOOM } from "./platform.js?v=1.7.0-four-session-integration";
+import { initModalDrag } from "./modal-drag.js?v=1.7.0-four-session-integration";
+import { initSteppers } from "./stepper.js?v=1.7.0-four-session-integration";
+import { initRangeFill } from "./range-fill.js?v=1.7.0-four-session-integration";
+import { initReferenceWindows } from "./reference-window.js?v=1.7.0-four-session-integration";
+import { initShortcutTips } from "./shortcut-table.js?v=1.7.0-four-session-integration";
+import { initTutorial } from "./tutorial.js?v=1.7.0-four-session-integration";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
+import { initAiPanel } from "./ai-panel.js?v=1.7.0-four-session-integration";
+import { initRhwpExamWorkspace } from "./rhwp-exam-workspace.js?v=1.7.0-four-session-integration";
+import { initExamPoolWorkspace } from "./exampool-workspace.js?v=1.7.0-four-session-integration";
+import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integration";
 
 const svg = document.getElementById("canvas");
+initButtonDesign();
+// 시작 창(첫 장면 → 새로 만들기·이어서 하기)을 가장 먼저 띄운다 — 준비가 끝나면 자동 저장 기록을 받아 고르게 한다.
+const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ? DESKTOP_RELEASE_URL : "", lite: loadMode() === "lite" });
+// 시작 창이 걷히기 직전(창이 다 커진 뒤) 도화지 크기를 한 번만 맞춘다 — 걷힌 뒤 도화지가 튀지 않게.
+// 11-09 사용자: 「처음 로딩에서 미리 불러 두고 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 기본 범위(물리Ⅰ·Ⅱ)
+// 학평 자료·낱말 위치를 읽어 둔다. 고르기 화면은 이 읽기가 끝난 뒤에 나온다(js/start-screen.js waitFor).
+if (startScreen) startScreen.waitFor("라이브러리 자료(학평·평가원) 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)), 1.3);
+if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
+initAppSwitch();
+installAppLock();
+initVisitorStats();
+initBugReporter(state);
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
 svg.setAttribute("tabindex", "0");
 svg.addEventListener("pointerdown", (event) => {
@@ -85,7 +128,48 @@ svg.addEventListener("pointerdown", (event) => {
   }
 });
 svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
+// 11-11 사용자: AI 창·편집 창을 닫고 돌아올 때 코드가 캔버스에 초점을 주면 파란 테두리가 생겼다.
+// 키보드 Tab으로 들어온 경우에만 테두리를 보이고, 그 밖의 초점(코드가 돌려준 것)은 마우스와 같이 조용히.
+let canvasTabFocus = false;
+document.addEventListener("keydown", (event) => { canvasTabFocus = event.key === "Tab"; }, true);
+document.addEventListener("pointerdown", () => { canvasTabFocus = false; }, true);
+svg.addEventListener("focus", () => { if (!canvasTabFocus) svg.classList.add("pointer-focused"); });
 const zoomReadout = document.getElementById("zoom-readout");
+// 캔버스 오른쪽 아래 확대 단추: − / 배율(누르면 100%) / + / 맞춤 — 100% = 도화지 전체가 보이는 크기
+{
+  // 확대 묶음(11-04): − 82%▾ + ⤢ — 숫자를 누르면 배율 목록(맞춤·고른 것·82% 기본·50~200%)
+  const zoomBox = document.querySelector(".canvas-zoom"), zoomMenu = zoomBox?.querySelector(".canvas-zoom-menu");
+  const setMenu = open => { if (!zoomMenu) return; zoomMenu.hidden = !open; zoomReadout?.setAttribute("aria-expanded", String(open)); };
+  const fitSelected = () => {
+    const s = state.get(), ids = new Set(s.selectedIds || []);
+    if (!ids.size) return fitArtboard(state);
+    const b = getContentBounds({ ...s, objects: s.objects.filter(o => ids.has(o.id)) });
+    return b ? fitBounds(state, b) : fitArtboard(state);
+  };
+  const applyZoom = key => {
+    if (key === "fit") fitArtboard(state); else if (key === "sel") fitSelected(); else setZoomPercent(state, Number(key));
+  };
+  zoomBox?.addEventListener("click", (event) => {
+    const set = event.target.closest?.("[data-zoom-set]")?.dataset.zoomSet;
+    // 확대·축소는 메뉴를 열어 둔 채 여러 번 누를 수 있게(배율 B안), 나머지는 고르면 닫는다.
+    if (set === "in" || set === "out") { zoomByStep(state, set === "in" ? 1 : -1); return; }
+    if (set) { applyZoom(set); setMenu(false); return; }
+    const action = event.target.closest?.("[data-canvas-zoom]")?.dataset.canvasZoom;
+    if (action === "in" || action === "out") zoomByStep(state, action === "in" ? 1 : -1);
+    else if (action === "menu") setMenu(zoomMenu?.hidden);
+    else if (action === "fit") fitArtboard(state);
+    else if (action === "default") fitDefault(state);
+  });
+  document.addEventListener("pointerdown", event => { if (zoomMenu && !zoomMenu.hidden && !zoomBox.contains(event.target)) setMenu(false); }, true);
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && zoomMenu && !zoomMenu.hidden) { setMenu(false); event.stopPropagation(); } }, true);
+  // ⇧1 도화지 맞춤 · ⇧2 고른 것에 맞춤(Figma·Photoshop과 같은 키)
+  window.addEventListener("keydown", event => {
+    if (!event.shiftKey || event.metaKey || event.ctrlKey || event.altKey || blocksCanvasShortcut(event)) return;
+    if (event.code === "Digit1") { event.preventDefault(); fitArtboard(state); }
+    else if (event.code === "Digit2") { event.preventDefault(); fitSelected(); }
+  });
+  for (const kbd of zoomMenu?.querySelectorAll("kbd[data-sc]") || []) kbd.textContent = IS_MAC_ZOOM ? kbd.dataset.sc.replace("Shift+", "⇧").replace("Mod+", "⌘").replace("=", "+").replace(/-$/, "−") : kbd.dataset.sc.replace("Mod+", "Ctrl+").replace("+=", "++").replace(/-$/, "−");
+}
 
 /* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
 (function initFullscreen() {
@@ -152,6 +236,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   });
 })();
 
+let graphEntryMenu = null;
 (function initGraphLauncherState() {
   const btn = document.getElementById("graph-tool-open");
   if (!btn) return;
@@ -159,7 +244,8 @@ const zoomReadout = document.getElementById("zoom-readout");
   const syncButton = () => {
     const active = Boolean(document.querySelector("#graph-modal-overlay:not([hidden])"));
     btn.classList.toggle("is-open", active);
-    btn.setAttribute("aria-expanded", String(active));
+    // aria-expanded는 「그래프」 세 갈래 메뉴가 쓴다(11-07). 편집기가 열리면 메뉴는 접는다.
+    if (active) graphEntryMenu?.close();
   };
 
   const observeOverlay = () => {
@@ -184,35 +270,28 @@ const zoomReadout = document.getElementById("zoom-readout");
 /* ===== THEME TOGGLE (dark/light; persisted in localStorage 'theme') ===== */
 (function initTheme() {
   const root = document.documentElement;
-  const saved = localStorage.getItem("theme");
+  let saved;
+  try { saved = localStorage.getItem("theme"); } catch { /* Use the default when storage is blocked. */ }
   root.setAttribute("data-theme", saved === "light" || saved === "dark" ? saved : "dark");
 
   const btn = document.getElementById("theme-toggle");
-  function syncIcon() {
-    if (!btn) return;
-    const dark = root.getAttribute("data-theme") === "dark";
-    btn.setAttribute("aria-pressed", String(dark));
-    btn.setAttribute("aria-label", dark ? "흑백 모드 끄기" : "흑백 모드 켜기");
-    btn.title = dark ? "흑백 모드 끄기" : "흑백 모드 켜기";
-  }
-  syncIcon();
+  // 누를 때마다 다크네이비(기본) → 그라파이트 → 화이트 순서로 바뀐다(color-mode.js).
+  syncThemeButton(root);
 
   if (btn) {
     btn.addEventListener("click", () => {
       if (root.dataset.mode === "lite") return;
-      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      root.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
-      syncIcon();
+      setColorMode(nextColorMode(getColorMode(root)), root);
     });
   }
 })();
 
 /* ----- projection of viewBox onto the SVG element ----- */
-function applyViewBox(s) {
+function applyViewBox(s, change) {
+  if (change === 'native-text-input' && s.draftText?.nativeEditor) return;
   const { x, y, w, h } = s.viewBox;
   svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
-  if (zoomReadout) zoomReadout.textContent = `zoom ${getZoom().toFixed(2)}×`;
+  if (zoomReadout) zoomReadout.textContent = `${zoomPercent(state)}%`;
 }
 
 /* ----- subscribe: every state.update() repaints + re-projects viewBox ----- */
@@ -229,6 +308,8 @@ initZoomReadoutLifecycle({ target: svg, refresh: () => applyViewBox(state.get())
 
 /* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);
+initOpticalBenchEditing(svg, state);
+initLabApparatusEditing(svg, state);
 
 /* ----- cut tool: 생성 후 캔버스에서 객체 자르기(가위/칼/올가미) ----- */
 initCutTool(svg, state);
@@ -271,6 +352,7 @@ initOrbitalSection(state);
 initBondGroupSection(state);
 initChemChartSection(state);
 initAxisBreakSection(state);
+initBubbleSection(state);
 initChemGraphSection(state);
 initElectrodeSection(state);
 initPeriodicSection(state);
@@ -301,40 +383,112 @@ initProjectIO(state, svg);
 
 /* ----- 다중 페이지: 하단 탭 바(추가/복제/이름변경/순서/삭제) + 스왑 전환 ----- */
 initPages(state);
+const materializeCandidate = createCandidateMaterializer(state,{insertImageFromSrc,prepareImageCandidateRevision,validateWorkbenchGraph,insertWorkbenchGraph,rebuildGroups,objectsBBox,translateObject});
+const examWorkspace = initRhwpExamWorkspace(state, { configurePortableProjectIO,
+  serialize, applyLoaded, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys, commitActiveText,
+  runAreaCapture, switchPage, resetPageHistory, insertImageFromSrc, materializeCandidate, centerView:() => centerView(state),
+  reportError:message => showAlert(message,{title:'시험지 보내기'}),
+  whenReady:() => autosaveReady,
+});
+
+// 11-14 라이브러리: 시작 고르기 대기 앞에서 만들어 로딩 동안 자료팩·학평·검색 색인을 준비한다 — 예전엔 대기 뒤라 들어간 뒤에 돌며 프레임을 끊었다.
+// AI 창 연결(openAiWithReference 등)은 아래에서 정의되므로 누를 때 찾아 쓰게 감싼다(눌리는 건 들어간 뒤라 그때는 정의되어 있다).
+const examLibrary = initExamLibrary(state, { openAi: (...args) => openAiWithReference(...args), openIndependentReferences: (...args) => openIndependentAiReferences(...args) });
+// 11-14: 출제 화면은 시작 고르기를 기다리는 대기(await autosaveReady) 앞에서 만든다 — 그래야 시작 로딩 동안 미리 열어 둘 수 있다.
+initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys,
+  commitActiveText, switchPage, centerView:() => centerView(state)}, examWorkspace);
+// 11-14 사용자: 「로딩을 조금 더 느리게 해서 미리 준비할 수 있는 건 다 준비」 — 들어간 뒤 처음 쓰는 순간의 기다림·버벅임을 시작 로딩으로 옮긴다.
+// 할 일이 없더라도 여기서 번 시간이 나중에 앱이 무거워졌을 때 처음 열리는 버벅임의 완충지대가 된다(마지막 「마무리」 단계).
+if (startScreen) {
+  const prep = [];
+  const step = (label, run, weight = 1) => { const work = startScreen.waitFor(label, run, weight); prep.push(work); return work; };
+  step("기출 문항·검색 색인 준비 중…", () => startScreen ? examLibrary.warmLibrary() : null, 1.7);
+  step("출제 화면 미리 여는 중…", () => window.fiveEPrewarmExam?.(), 1.4);
+  step("한글 조판 엔진 띄우는 중…", () => examWorkspace?.prewarm?.(), 1.2);
+  step("수식·본문 글꼴 불러오는 중…", () => Promise.all([ensureEmbeddedFonts(), ...['16px "Latin Modern Math"', 'italic 16px "Latin Modern Roman"', '16px "Latin Modern Roman"', '16px "Pretendard Variable"', '16px Pretendard']
+    .map(font => document.fonts?.load?.(font).catch(() => {}))]), 0.6);
+  step("클립보드 그림 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1114"); const items = await clipList();
+    await Promise.all(items.slice(0, 24).map(item => { const img = new Image(); img.src = item.src; return img.decode().catch(() => {}); })); }, 0.5);
+  // 마무리: 위 준비가 끝난 뒤 화면 그리기가 0.6초 동안 끊기지 않을 때까지(최대 4초) 기다린다 — 들어가자마자 남은 일이 몰려 버벅이지 않게.
+  step("화면 안정화하는 중…", async () => { await Promise.all([...prep]);
+    await new Promise(resolve => { const t0 = performance.now(); let last = t0, calm = t0;
+      const tick = now => { if (now - last > 50) calm = now; last = now; if (now - calm >= 600 || now - t0 > 4000) resolve(); else requestAnimationFrame(tick); };
+      requestAnimationFrame(tick); }); }, 0.8);
+}
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog });
+const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog, chooseStart: startScreen?.choose });
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
-const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+// 시작 창 없이 열린 경우에도 처음 크기는 82%(기본)
+if (!startScreen) requestAnimationFrame(() => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); });
+// 시작 창에서 고른 것: exam·hwp로 가기, 파일 열기(끌어다 놓은 파일이면 그 파일로)
+{
+  const picked = startScreen?.choice;
+  if (picked?.kind === "new" && picked.app !== "image") setTimeout(() => document.querySelector(`button[data-app-switch="${picked.app}"]`)?.click(), 0);
+  else if (picked?.kind === "open") setTimeout(() => {
+    const input = document.getElementById("project-source-file");
+    if (picked.file && input) { const dt = new DataTransfer(); dt.items.add(picked.file); input.files = dt.files; input.dispatchEvent(new Event("change", { bubbles: true })); }
+    else document.getElementById("project-open")?.click();
+  }, 0);
+}
+const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });
+examWorkspace.setAiPanel(aiPanel);
+initFigureStudio(state, { aiPanel, onInserted: () => centerView(state) });
 window.addEventListener('5e:lite-ai-open', async () => {
-  await aiPanel?.open();
+  await aiPanel?.open({ acknowledge:true });
   window.dispatchEvent(new Event('5e:lite-ai-opened'));
 });
 initMobileImage(aiPanel);
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
+// 11-07 G2: 「AI 이미지」 단추는 이미지 작업으로 연다(그래프 작업은 아래 「그래프」에서).
 const openSelectedAi = () => {
   if (document.documentElement.classList.contains("mobile-image-mode")) {
-    void aiPanel?.open();
+    void aiPanel?.open({ acknowledge:true, surface:'image' });
     return;
   }
   void handSelectedCanvasImageToAi(state, {
-    renderImage: renderSessionToDataUrl,
-    openPanel: options => aiPanel?.open(options),
-  reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+    renderImage: renderCanvasImageForAi,
+    renderComposition: async snapshot => {
+      await ensureEmbeddedFonts();
+      const bounds = getContentBounds(snapshot, {}, 1);
+      if (!bounds) throw new Error('AI로 보낼 그림의 영역을 확인할 수 없습니다.');
+      const dpi = Math.min(300, 4096 * 25.4 / Math.max(bounds.w,bounds.h));
+      const { canvas } = await rasterizeExportCanvas(snapshot, {bounds, dpi});
+      return canvas.toDataURL('image/png');
+    },
+    openPanel: options => aiPanel?.open({ ...options, acknowledge:true, surface:'image' }),
+  reportError: error => window.alert(`AI 이미지를 열 수 없습니다.\n${error.message}`),
     });
 };
 const webLogin = initWebLoginUi({ openAi: openSelectedAi });
-if (aiEntryButton) {
-  aiEntryButton.title = "AI 이미지 변환";
-  aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
-  const label = aiEntryButton.querySelector(".search-trigger-label");
-  if (label) label.textContent = "AI 이미지 변환";
-  aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
+if (!webLogin) initDesktopAccountBadge({ openAi: openSelectedAi });// 설치형도 맨 위 줄에 「● ChatGPT」
+const aiLoginHandoff = webLogin ? createAiLoginHandoff({
+  read:idbGet,write:idbSet,remove:idbDel,session:window.sessionStorage,
+  prepare:options=>aiPanel.openIndependentReferences(options),
+  reveal:(receipt,options)=>aiPanel.revealImportedReferences(receipt,options),
+  requireAi:action=>webLogin.requireAi(action),
+}) : null;
+if (aiLoginHandoff) {
+  if (recoveryChoice === 'fresh') window.sessionStorage.removeItem(LOGIN_INTENT_SESSION_KEY);
+  else void aiLoginHandoff.recover().catch(error=>{
+    if(error?.name!=='AbortError')void showAlert(`로그인 전 이미지 작업을 복원하지 못했습니다.\n${error.message}`);
+  });
 }
+if (aiEntryButton) {
+  aiEntryButton.title = "AI 이미지 · 선택한 객체 조합, 선택이 없으면 전체 그림";
+  aiEntryButton.setAttribute("aria-label", "AI 이미지");
+  const label = aiEntryButton.querySelector(".search-trigger-label");
+  if (label) label.textContent = "AI 이미지";
+  aiEntryButton.addEventListener("click", openSelectedAi);
+}
+// 11-07 G0·G3: 「그래프」 세 갈래 메뉴와 그래프 편집기의 AI 단추 — AI 창을 그래프 탭(사진에서 복원·AI와 대화로 만들기)으로 연다.
+const openGraphAi = kind => void Promise.resolve(aiPanel?.openWorkflow(kind)).catch(error => window.alert(`그래프 AI를 열 수 없습니다.\n${error.message}`));
+graphEntryMenu = initGraphEntryMenu({ openAiWorkflow: openGraphAi });
+window.addEventListener('5e:graph-ai-open', event => openGraphAi(event.detail?.kind === 'graph-create' ? 'graph-create' : 'graph'));
 const desktopHandoff = initAiInstallGuide({
   saveProject: () => saveProject(state),
   openDesktopPanel: () => aiPanel?.open(),
@@ -352,6 +506,7 @@ window.addEventListener("5e:local-folder-intent", () => desktopHandoff.reportLoc
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
 initExportDialog(state, svg);
+initQuickCapture(state, svg);
 
 /* ----- rulers: top + left ruler canvases synced to viewport ----- */
 initRuler(svg, state);
@@ -366,13 +521,26 @@ initImageObjectify(state);
 initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
-const openAiWithReference = (options) => webLogin
-  ? webLogin.requireAi(() => aiPanel?.open(options))
-  : aiPanel?.open(options);
-const openIndependentAiReferences = (options) => webLogin
-  ? webLogin.requireAi(() => aiPanel?.openIndependentReferences(options))
-  : aiPanel?.openIndependentReferences(options);
-initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
+const prepareLibraryAiDestination = async (options = {}) => {
+  const references=[options.reference,...(options.references || [])].filter(Boolean);
+  if(options.conversionKind || !references.length)return options;
+  const assignment=await chooseWorkbenchAssignment({references:references.map(reference=>({...reference,dataUrl:reference.dataUrl || reference.data || reference.src}))});
+  return assignment ? {...options,reference:undefined,references,conversionKind:assignment.conversionKind,placement:assignment.placement,groups:assignment.groups,groupKinds:assignment.groupKinds} : null;
+};
+const openAiWithReference = async options => {
+  const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
+  // 11-12: 한글 그림·문항 카드 그림에서 연 요청(hwpTarget)은 웹에서도 로그인만 확인하고 설치판과 같은 길로 연다.
+  // 로그인 대기 경로는 연결 정보를 버리고 그림마다 새 작업대를 만들어 「한글 파일에 넣기」·진행 표시·같은 그림 다시 열기가 빠졌다.
+  if (prepared.hwpTarget && webLogin) return webLogin.requireAi(()=>aiPanel?.open(prepared));
+  return aiLoginHandoff ? aiLoginHandoff.open(prepared) : (prepared.groupKinds ? aiPanel?.openIndependentReferences(prepared) : aiPanel?.open(prepared));
+};
+const openIndependentAiReferences = async options => {
+  const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
+  return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.openIndependentReferences(prepared);
+};
+// examLibrary는 시작 고르기 대기 앞에서 만든다(위 「11-14 라이브러리」) — 로딩 동안 자료·검색 색인을 미리 준비하게.
+// 11-06 결정 11-05e: 한글 그림 편집 창 「AI 변환」「복원」 — 그 그림을 원본으로 AI 작업대(이미지 변환 / 그래프 복원)를 한글 위에 연다. 결과는 「이 자리에 넣기」로 그 자리에(rhwp-exam-workspace.js inlineAi).
+window.addEventListener('5e:ai-open-reference', (event) => { const detail = event.detail || {}; if (detail.reference) void Promise.resolve(openAiWithReference({ reference: detail.reference, conversionKind: detail.conversionKind || 'image', ...(detail.hwpTarget ? { hwpTarget: detail.hwpTarget } : {}) })).catch(error => { if (!/로그인이 취소/.test(String(error?.message || error))) console.warn(error); }); });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);
@@ -408,12 +576,16 @@ initModalDrag();
 /* ----- .gm-step ▲▼ 스테퍼 (어느 화면에 놓이든 동작) ----- */
 initSteppers();
 
+/* ----- 슬라이더 채운 부분 표시 (모양만, 값은 그대로) ----- */
+initRangeFill();
+
 /* ----- 참고 문항 창(별도 브라우저 창) — 최소화 칩 막대 준비 ----- */
 initReferenceWindows(state);
 
 /* ----- 따라하기: 상단바 단추 + 첫 방문 제안 배너 -----
    페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
-initTutorial();
+if (new URLSearchParams(location.search).get('exam') !== '1' && new URLSearchParams(location.search).get('sheet') !== '1') initTutorial();
+initShortcutTips();// 단추 설명에 「이름 (단축키)」 — 표는 shortcut-table.js 하나
 
 /* Canvas and crop views own their zoom; surrounding UI keeps browser zoom. */
 const ownsZoom = target => target instanceof Element && target.closest("#ruler-container, [data-unilib-crop-stage]");
@@ -421,11 +593,21 @@ window.addEventListener("wheel", (e) => {
   if ((e.ctrlKey || e.metaKey) && ownsZoom(e.target)) e.preventDefault();
 }, { passive: false });
 window.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key) && ownsZoom(e.target)) e.preventDefault();
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || !["+", "-", "=", "0"].includes(e.key)) return;
+  // ⌘=·⌘−·⌘0(윈도우 Ctrl): 브라우저 화면 배율 대신 캔버스 배율(11-04 확대 단추와 같은 동작). 입력 중·창이 덮였을 땐 그대로.
+  const blocked = blocksCanvasShortcut(e) || document.documentElement.dataset.mode === "lite";
+  if (ownsZoom(e.target)) e.preventDefault();
+  if (blocked) return;
+  e.preventDefault();
+  if (e.key === "0") fitDefault(state);
+  else zoomByStep(state, e.key === "-" ? -1 : 1);
 });
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);
+/* ----- 에셋 라이브러리: 과목별 투명 PNG 에셋 검색·삽입 ----- */
+initAssetLibrary(state);
+initObjectWindow(state);  // 10-24 시안 20: 아래 「오브젝트」 탭 → 도구 · 그림 · 내 오브젝트 창
 
 /* ----- 전체 수정: 선택(없으면 전체) 오브젝트 속성 일괄 통일/증감 ----- */
 initBulkEdit(state);
@@ -454,7 +636,30 @@ initDataPlot();
   });
 })();
 
-/* ===== GRID CONTROLS (canvas bottom bar) ===== */
+/* ===== CANVAS VIEW CONTROLS ===== */
+(function initAutoSnapControl() {
+  const button = document.getElementById('auto-snap-btn');
+  if (!button) return;
+  try { state.update(s => { s.autoSnap = localStorage.getItem('5e.autoSnap') === 'true'; }); } catch (_) {}
+  let last;
+  const sync = () => {
+    const on = state.get().autoSnap !== false;
+    if (on === last) return;
+    last = on;
+    button.setAttribute('aria-pressed', String(on));
+    button.setAttribute('aria-label', `자동 스냅 · ${on ? '켜짐' : '꺼짐'}`);
+    button.title = `자동 정렬 ${on ? '켜짐' : '꺼짐'} · 클릭하여 전환 · Shift를 누르면 수동 스냅`;
+  };
+  button.addEventListener('click', () => {
+    const on = state.get().autoSnap === false;
+    if (!on) setSmartGuides([]);
+    state.update(s => { s.autoSnap = on; });
+    try { localStorage.setItem('5e.autoSnap', String(on)); } catch (_) {}
+  });
+  state.subscribe(sync);
+  sync();
+})();
+
 (function initGridControls() {
   const gridBtn  = document.getElementById("grid-btn");
   const detail   = document.getElementById("grid-detail");
@@ -495,7 +700,7 @@ initDataPlot();
       current: "현재 위치 고정",
       coordinate: "기준 좌표 고정",
     };
-    let mode = "coordinate";
+    let mode = "free";
     const point = () => ({ x: Number(xInput.value) || 0, y: Number(yInput.value) || 0 });
     const closeMenu = () => {
       menu.hidden = true;
@@ -537,7 +742,10 @@ initDataPlot();
       e.preventDefault();
       centerBtn.click();
     }, true);
+    // 기본은 「기준 좌표 고정」(도화지가 화면 가운데에 고정) — 10-13에 「자유 이동」으로 바뀌었던 것을 11-04 사용자 요청으로 되돌림.
     applyCanvasLock("coordinate");
+    // 설치형 시작 창이 끝나 창이 커지면 가운데 기준을 새 창 크기로 다시 잡는다.
+    window.addEventListener("5e:start-screen-done", () => { if (mode !== "free") applyCanvasLock(mode); });
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);
@@ -558,6 +766,7 @@ if (document.fonts && document.fonts.load) {
   Promise.all([
     document.fonts.load('16px "Latin Modern Roman"'),
     document.fonts.load('italic 16px "Latin Modern Roman"'),
+    document.fonts.load('16px "Latin Modern Math"'), // 11-10: 아래첨자 숫자 글꼴
   ]).then(() => render(state.get())).catch(() => {});
 }
 
@@ -629,4 +838,56 @@ if (_APP_DEBUG_ENABLED) {
       "  phyDraw.state.get().activeTool   // 'V' after each draw (auto-return)\n" +
       "Wheel = zoom, Space/middle-drag = pan ??shapes stay anchored in world space."
   );
+}
+
+/* ----- 5E 클립보드(11-14, 옛 서랍): 「작업 도구」 맨 위 줄·⇧⌘V로 여는 오른쪽 서랍. 5E_image·5E_hwp는 이 문서의 것을, 5E_exam은 iframe 안의 것을 쓴다. ----- */
+{
+  const hosts = [];
+  const appNow = () => document.getElementById("exampool-sheet-workspace")?.hidden === false ? "exam" : document.getElementById("rhwp-exam-workspace")?.hidden === false ? "hwp" : "image";
+  const viewCenter = () => { const v = state.get().viewBox; return { x: v.x + v.w / 2, y: v.y + v.h / 2 }; };
+  // AI 이미지·AI 그래프 창이 열려 있으면 그 창의 원본으로(캔버스는 그 뒤에 가려 있다).
+  hosts.push({ active: () => document.getElementById("ai-image-panel")?.hidden === false && typeof window.fiveEAiAddSource === "function", label: "원본으로 쓰기", accepts: item => !!item.src, insert: item => window.fiveEAiAddSource(item) });
+  hosts.push({ active: () => appNow() === "image" && !!window.fiveEObjectifyClip?.open(), label: "원본으로 쓰기", accepts: item => !!item.src, insert: item => window.fiveEObjectifyClip.load(item) });
+  // 캔버스: 다른 창(라이브러리·그래프·내보내기 등 .modal-overlay)이 캔버스를 덮고 있으면 넣지 않는다 — 넣으면 보이지 않는 뒤쪽에 들어갔다(11-14).
+  const canvasCovered = () => [...document.querySelectorAll(".modal-overlay:not([hidden]):not([inert])")].length > 0 || !!document.getElementById("start-screen");
+  hosts.push({ active: () => appNow() === "image" && !canvasCovered(), label: "캔버스에 넣기",
+    insert: async item => { if (item.objects?.length) insertClipObjects(item.objects); else await insertImageFromSrc(state, item.src, { at: viewCenter() }); } });
+  hosts.push({ active: () => appNow() === "hwp" && !!window.fiveEClipHostHwp?.ready(), label: "커서 자리에 넣기", accepts: item => !!item.src, insert: item => window.fiveEClipHostHwp.insert(item) });
+  const desktop = window.fiveEDesktop;
+  const follow = makeOSFollower(desktop?.readClipboardImageInfo);
+  const clip = mountClipboard(document, { hosts, followOS: follow, top: 60,
+    onToggle: on => document.getElementById("clipboard-open")?.setAttribute("aria-pressed", String(on)) });
+  window.fiveEClipboard = { ...clip, hosts };
+  const row = document.getElementById("clipboard-open");
+  if (row) { row.title = `클립보드 — 넣어 둔 그림·객체를 꺼내 쓰기 (${clipKey("⇧⌘V")})`; row.addEventListener("click", () => clip.toggle());
+    clip.onCount(n => { const b = row.querySelector("b"); if (b) b.textContent = n ? String(n) : ""; }); }
+  // 5E_exam이 보일 때는 그 안의 클립보드가 받는다(넣을 자리가 그쪽에 있음).
+  const examClip = () => document.querySelector("#exampool-sheet-workspace iframe")?.contentWindow?.fiveEClipboard || null;
+  document.addEventListener("keydown", e => { if (!isOpenClipKey(e) || appNow() !== "exam") return; const other = examClip(); if (!other) return; e.preventDefault(); e.stopImmediatePropagation(); other.toggle(); }, true);
+  // 5E로 돌아올 때 맥·윈도우 클립보드의 그림을 「밖에서 · 캡처」로(설치판, 켜고 끄기).
+  if (follow) { window.addEventListener("focus", () => void follow()); window.addEventListener("5e:clip-os-sync", () => void follow({ force: true })); }
+  // ⌘C·⌘X: 고른 객체를 작은 그림 + 원본으로 넣는다. ⌘X 것은 「옮기는 중」 — 한 번 넣으면 빠진다.
+  setClipboardHook({
+    copied: (objects, { cutting, clipRef, state: s }) => { void (async () => {
+      const snap = { ...s, objects }, bounds = getContentBounds(snap, {}, 2);
+      if (!bounds || !(bounds.w > 0) || !(bounds.h > 0)) return;
+      await ensureEmbeddedFonts().catch(() => {});
+      const { canvas } = await rasterizeExportCanvas(snap, { dpi: 150, bounds });
+      const graph = objects.some(o => o.type === "funcgraph" || o.type === "coordplane");
+      // 항목 이름 = 객체 종류(11-14): 하나면 「사각형」, 같은 것 여럿이면 「사각형 3개」, 섞이면 「사각형 외 2개」. 글 객체는 그 글을 앞에 보인다.
+      const TYPE_NAME = { rect: "사각형", ellipse: "원", line: "직선", polyline: "꺾은선", curve: "곡선", freehand: "자유선", text: "글", image: "그림", funcgraph: "그래프", coordplane: "좌표평면", axes: "좌표축",
+        arrow: "화살표", spring: "용수철", circuit: "회로", optics: "광학 기구", solid3d: "입체", labeler: "라벨", brace: "묶음 괄호", anglearc: "각", rightangle: "직각 표시", parabola: "포물선",
+        chargefield: "전기장", fieldlines: "자기력선", standingwave: "정상파", groundarc: "지면", triangle: "삼각형", formula: "수식", svgAsset: "그림", apparatus: "실험 기구", pendulum: "진자",
+        gauge: "계기", chromosome: "염색체", bilayer: "막", neuron: "뉴런", legend: "범례", pedigree: "가계도", vessel: "용기", chemmodel: "분자 모형", particlebox: "입자 모형", orbital: "오비탈",
+        bondgroup: "결합", chemchart: "도표", axisbreak: "축 생략", chemgraph: "화학 그래프", electrode: "전극", periodic: "주기율표", bubble: "말풍선" };
+      const main = objects.filter(o => !(graph && o.type === "coordplane" && objects.some(x => x.type === "funcgraph")));
+      const nameOf = o => (o.type === "text" || o.type === "formula") && typeof o.text === "string" && o.text.trim() ? `${o.type === "formula" ? "수식" : "글"} 「${o.text.trim().slice(0, 14)}」` : TYPE_NAME[o.type] || "5E 객체";
+      const first = nameOf(main[0] || objects[0]), same = main.every(o => o.type === (main[0] || objects[0]).type);
+      const itemName = graph && !main.some(o => o.type !== "funcgraph" && o.type !== "coordplane") ? "그래프" : main.length <= 1 ? first : same ? `${TYPE_NAME[main[0].type] || "5E 객체"} ${main.length}개` : `${first} 외 ${main.length - 1}개`;
+      await clipAdd({ src: canvas.toDataURL("image/png"), w: canvas.width, h: canvas.height, kind: graph ? "graph" : "obj", source: "5E_image",
+        name: itemName, objects, moving: cutting, ref: clipRef });
+      clip.say(cutting ? `잘라 내어 클립보드에 넣었습니다 · ${clipKey("⌘V")} 붙이기 · ${clipKey("⌘Z")} 제자리로` : `클립보드에 넣었습니다 · ${clipKey("⇧⌘V")} 열기`, 1800);
+    })().catch(() => {}); },
+    pasted: ref => void clipConsumeRef(ref),
+  });
 }

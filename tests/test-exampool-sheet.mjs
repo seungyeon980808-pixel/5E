@@ -1,0 +1,142 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {createRequire} from 'node:module';
+import {FORMAT,newQuestion,block,applyPreset,validate,duplicateQuestion,mergeCells,migrate,cellValue,jsonSize} from '../assets/exampool/sheet/model.js';
+import {project,exportExcel,importExcel} from '../assets/exampool/sheet/excel.js';
+const require=createRequire(import.meta.url),XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
+const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
+const data=()=>structuredClone(examples);
+const roundtrip=d=>exportExcel(XLSX,JSZip,d).then(bytes=>importExcel(XLSX,JSZip,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)));
+import {ROWS as SHEET_ROWS} from '../assets/exampool/sheet/vertical.js';
+// 세로 시트의 첫 문항 열(B)에서 항목 칸 주소. 1행은 머리글이다.
+const cellOf=key=>'B'+(SHEET_ROWS.findIndex(r=>r.key===key)+2);
+test('ordered experimental hierarchy, merges, numeric zero, unknown, trailing zero and 5 graph choices roundtrip',async()=>{
+ const d=data();const t=d.questions[2].blocks.find(b=>b.kind==='table').table;t.cells[1][0].figure=structuredClone(d.questions[2].choices[0].figure);t.cells[1][0].figure.editable={source:{pages:[{id:'source-1',objects:[]}]},render:{bounds:{w:10,h:12}}};
+ t.cells[2][1].raw='\\alpha_{0}';t.diagonal={row:'물체',col:'구간'};
+ const got=await roundtrip(d);assert.deepEqual(got.questions,d.questions);assert.deepEqual(got.documents,d.documents);
+ const raw=await exportExcel(XLSX,JSZip,d),zip=await JSZip.loadAsync(raw),xml=await zip.file('xl/worksheets/sheet1.xml').async('string');assert.match(xml,/state="frozen"/);assert.match(xml,/dataValidations count="3"/);assert.match(await zip.file('xl/workbook.xml').async('string'),/state="hidden"/);
+ const count=(await zip.file('xl/drawings/drawing2.xml').async('string')).match(/<xdr:pic>/g).length;assert.equal(count,5);
+});
+test('Excel edits override visible cells, native table merges and graph picture bytes while literals stay strings',async()=>{
+ const d=data(),{wb,pack}=project(XLSX,d);wb.Sheets['문항'][cellOf('ask')]={t:'s',v:'=literal 😀\n발문'};wb.Sheets['문항'][cellOf('points')]={t:'n',v:0};const x=pack.excel.indices[0],rg=XLSX.utils.decode_range(x.range);wb.Sheets['표'][XLSX.utils.encode_cell({r:rg.s.r+3,c:1})]={t:'s',v:'001'};
+ const {enhanceZip}=await import('../assets/exampool/sheet/excel.js'),p=project(XLSX,d),zip=await JSZip.loadAsync(XLSX.write(wb,{bookType:'xlsx',type:'array'}));await enhanceZip(zip,wb.SheetNames,p.images,pack.excel.indices);const bytes=await zip.generateAsync({type:'arraybuffer'}),got=await importExcel(XLSX,JSZip,bytes);assert.equal(got.questions[0].ask,'=literal 😀\n발문');assert.equal(got.questions[0].points,0);assert.equal(got.questions[0].blocks.find(b=>b.kind==='table').table.cells[3][1].value,'001');
+ wb.Sheets['문항'][cellOf('answer')]={t:'n',v:2,f:'1+1'};await assert.rejects(importExcel(XLSX,JSZip,XLSX.write(wb,{bookType:'xlsx',type:'array'})),/수식/);
+});
+test('disconnected block hierarchy and overlapping table merges reject before mutation',()=>{
+ const d=data(),g=d.questions[0].blocks.find(b=>b.kind==='group');g.parent=g.id;assert.throws(()=>validate(d),/순환/);
+ const bad=data(),t=bad.questions[0].blocks.find(b=>b.kind==='table').table;t.merges.push({r:0,c:0,rs:1,cs:1});assert.throws(()=>validate(bad),/겹칩니다/);
+});
+test('preset/type migration and duplicate IDs preserve content and per-block evidence',()=>{
+ const q=newQuestion('001','합답형','실험');q.blocks[0].text='preserve';applyPreset(q,'그림·표');assert.equal(q.blocks[0].text,'preserve');assert.equal(q.blocks.filter(b=>b.kind==='table').length,2);
+ q.references.push({target:q.blocks[0].id,label:'근거',quote:'preserve'});const n=duplicateQuestion(q);assert.notEqual(n.id,q.id);assert.equal(n.references[0].target,n.blocks[0].id);validate({format:FORMAT,questions:[q,n],documents:[]});
+ const legacy={questions:[{id:'legacy',type:'합답형',number:'01',passage:'P',ask:'A',bogi:['x','y','z'],bogiVisible:true,choices:['1','2','3','4','5'],points:0,answer:0,modelAnswer:'',intent:'',explanation:'',standardCode:'',figure:null,references:[]}],documents:[]};const migrated=migrate(legacy);assert.equal(migrated.questions[0].blocks.filter(b=>b.kind==='bogi').length,1);assert.equal(migrated.questions[0].number,'01');assert.equal(migrated.questions[0].points,0);
+});
+test('merge refuses nonempty covered cells and literal conversion preserves distinctions',()=>{
+ const q=newQuestion(),b=block('table');b.table.cells[0][1].value='must keep';assert.throws(()=>mergeCells(b.table,[0,0,0,1]),/보존/);assert.equal(b.table.cells[0][1].value,'must keep');b.table.cells[0][1].value='';mergeCells(b.table,[0,0,0,1]);assert.deepEqual(b.table.merges,[{r:0,c:0,rs:1,cs:2}]);
+ assert.equal(cellValue('0'),0);assert.equal(cellValue('1.0'),'1.0');assert.equal(cellValue('001'),'001');assert.equal(cellValue('㉠'),'㉠');assert.equal(cellValue('=1+1'),'=1+1');assert.equal(cellValue(''),'');
+});
+test('connected textbook file and per-choice page/quote preserve through import',async()=>{
+ const d=data(),doc={id:'document',name:'교과서.txt',kind:'textbooks',mime:'text/plain',data:'data:text/plain;base64,VEVTVA==',pages:['TEST']};d.documents.push(doc);d.questions[0].references.push({target:d.questions[0].choices[1].id,label:'교과서.txt 1쪽',documentId:doc.id,page:1,quote:'TEST'});const got=await roundtrip(d);assert.deepEqual(got.documents,d.documents);assert.deepEqual(got.questions[0].references,d.questions[0].references);
+});
+test('two tables in one experiment, per-statement evidence, and reordered Excel tabs stay connected',async()=>{
+ const d=data(),q=d.questions[0],group=q.blocks.find(b=>b.kind==='group'),extra=block('table',group.id,'두 번째 결과');extra.table.cells[1][1].value='㉡';q.blocks.push(extra);const line=q.blocks.find(b=>b.kind==='bogi').lines[1];q.references.push({target:line.id,label:'보기 ㄴ 근거',quote:'연결 유지',standardCode:'[9과01-01]'});
+ const duplicate=duplicateQuestion(q);assert.equal(duplicate.references.at(-1).target,duplicate.blocks.find(b=>b.kind==='bogi').lines[1].id);
+ const raw=await exportExcel(XLSX,JSZip,d),zip=await JSZip.loadAsync(raw),xml=await zip.file('xl/workbook.xml').async('string'),tags=xml.match(/<sheet\b[^>]*\/>/g);zip.file('xl/workbook.xml',xml.replace(/<sheets>[\s\S]*?<\/sheets>/,`<sheets>${[tags[0],tags[3],tags[2],tags[1],tags[4]].join('')}</sheets>`));const got=await importExcel(XLSX,JSZip,await zip.generateAsync({type:'arraybuffer'}));assert.deepEqual(got.questions,d.questions);
+});
+
+// 카드 입력 성능(밤샘 점검): 키마다 도는 validate가 그림 data URL 정규식과 JSON.stringify(전체)를 매번 하지 않는다.
+test('jsonSize equals JSON.stringify length without building the string', () => {
+  const q=newQuestion('1');applyPreset(q,'그림');q.ask='따옴표" 줄\n바꿈 \\ 한글';q.blocks.find(b=>b.kind==='figure').figure={name:'그림.png',data:'data:image/png;base64,'+'A'.repeat(9000)};
+  const cases=[{format:FORMAT,questions:[q],documents:[],exams:[]},{a:[1,undefined,null,()=>1],b:undefined,c:NaN,d:-0.25,e:1e21,f:new Date(0),g:'가'.repeat(5000),h:true}];
+  for(const c of cases)assert.equal(jsonSize(c),JSON.stringify(c).length);
+});
+test('validate checks a figure data URL once, but still rejects a changed bad one', () => {
+  const q=newQuestion('1');applyPreset(q,'그림');const f={name:'그림.png',data:'data:image/png;base64,'+'A'.repeat(2_000_000)};q.blocks.find(b=>b.kind==='figure').figure=f;
+  const data={format:FORMAT,questions:[q],documents:[],exams:[]};
+  let t=performance.now();validate(data);const first=performance.now()-t;
+  t=performance.now();for(let i=0;i<20;i++)validate(data);const again=(performance.now()-t)/20;
+  assert.ok(again<first,'a figure already checked is not re-scanned');
+  f.data='data:image/png;base64,@@not-base64';assert.throws(()=>validate(data));
+});
+
+test('excel round trip keeps exams (H5): titles, order, status and only questions still in the sheet', async () => {
+  const d=data(),[a,b]=d.questions.map(q=>q.id);
+  d.exams=[{id:'exam_h5',title:'중간고사',status:'drafting',items:[b,a],createdAt:'2026-10-21T00:00:00.000Z',updatedAt:'2026-10-21T00:00:00.000Z'}];
+  const back=await roundtrip(d);
+  assert.equal(back.exams.length,1,'the exam survives the excel round trip');
+  assert.equal(back.exams[0].title,'중간고사');assert.deepEqual(back.exams[0].items,[b,a]);assert.equal(back.exams[0].status,'drafting');
+});
+
+test('선지 다섯 줄 끝의 줄바꿈은 여섯째 줄로 세지 않는다(M10)', async () => {
+  const {writeField} = await import('../assets/exampool/sheet/vertical.js');
+  const q = newQuestion('1', '단답형', '글·수식');
+  writeField(q, 'choices', '가\n나\n다\n라\n마\n');
+  assert.deepEqual(q.choices.map(c => c.text), ['가', '나', '다', '라', '마']);
+  assert.throws(() => writeField(q, 'choices', '가\n나\n다\n라\n마\n바'), /다섯 줄/);
+});
+
+test('그림이 남은 선지를 시트에서 고쳐도 「 [그림]」이 글에 쌓이지 않는다(M15)', async () => {
+  const {writeField, fieldValue} = await import('../assets/exampool/sheet/vertical.js');
+  const q = newQuestion('1', '단답형', '글·수식');
+  writeField(q, 'choices', '가\n나\n다\n라\n마');
+  q.choices[1].figure = {name: 'f.png', mime: 'image/png', data: 'data:image/png;base64,AAAA'};
+  for (let i = 0; i < 3; i++) writeField(q, 'choices', fieldValue(q, 'choices'));
+  assert.equal(q.choices[1].text, '나');
+  assert.equal(fieldValue(q, 'choices').split('\n')[1], '나 [그림]');
+});
+
+test('그림 300장이 든 문항 묶음도 엑셀로 내려받고 다시 올린다(M13)', async () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const questions = Array.from({length: 60}, (_, i) => { const q = newQuestion(String(i + 1)); q.ask = '발문' + i; q.choices.forEach((c, k) => { c.text = '선지' + k; c.figure = {name: `q${i}-${k}.png`, data: png}; }); return q; });
+  const data = {format: FORMAT, questions, documents: [], exams: []};
+  validate(data);
+  const bytes = await exportExcel(XLSX, JSZip, data);
+  const back = await importExcel(XLSX, JSZip, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+  assert.equal(back.questions.length, 60);
+  assert.equal(back.questions.flatMap(q => q.choices).filter(c => c.figure).length, 300);
+});
+
+test('「같은 문항은 업데이트」는 엑셀에 없는 조판·대화·단계를 지금 값으로 둔다(M11)', async () => {
+  const {keepAppOnly} = await import('../assets/exampool/sheet/excel.js');
+  const now = newQuestion('1'); now.ask = '화면'; now.workflow = 'review'; now.reviews = [{role: 'me', text: '내보낸 뒤 대화'}];
+  const fromExcel = structuredClone(now); fromExcel.ask = '엑셀에서 고친 발문'; fromExcel.workflow = 'draft'; delete fromExcel.reviews; fromExcel.typeset = {stale: true};
+  const merged = keepAppOnly(fromExcel, now);
+  assert.equal(merged.ask, '엑셀에서 고친 발문');
+  assert.equal(merged.workflow, 'review');
+  assert.deepEqual(merged.reviews, [{role: 'me', text: '내보낸 뒤 대화'}]);
+  assert.equal('typeset' in merged, false, '지금 문항에 없는 조판은 엑셀의 옛 값으로 되살리지 않는다');
+});
+
+test('엑셀에서 근거가 걸린 줄을 지워도 불러오기가 실패하지 않고 근거를 문항으로 옮긴다(M12)', async () => {
+  const q = newQuestion('7'); applyPreset(q, '실험'); q.ask = '발문';
+  const steps = q.blocks.find(b => b.kind === 'steps') || (() => { const b = block('steps'); q.blocks.push(b); return b; })();
+  steps.lines.forEach((l, i) => { l.text = '과정' + i; });
+  const gone = steps.lines.at(-1);
+  q.references.push({target: gone.id, label: '근거', quote: '인용'});
+  const data = {format: FORMAT, questions: [q], documents: [], exams: []}; validate(data);
+  const bytes = await exportExcel(XLSX, JSZip, data);
+  const wb = XLSX.read(bytes, {type: 'array'}), ws = wb.Sheets['구성'], range = XLSX.utils.decode_range(ws['!ref']);
+  let blanked = 0;
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const row = Array.from({length: range.e.c + 1}, (_, c) => ws[XLSX.utils.encode_cell({r, c})]?.v);
+    if (row.includes(gone.id)) { for (let c = 0; c <= range.e.c; c++) delete ws[XLSX.utils.encode_cell({r, c})]; blanked++; }
+  }
+  assert.equal(blanked, 1, '지운 줄 하나');
+  const edited = XLSX.write(wb, {bookType: 'xlsx', type: 'array'});
+  const back = await importExcel(XLSX, JSZip, edited);
+  const bq = back.questions[0];
+  assert.equal(bq.blocks.find(b => b.kind === 'steps').lines.some(l => l.id === gone.id), false);
+  assert.equal(bq.references.find(r => r.quote === '인용').target, 'question');
+  assert.match(back.warnings.join(' '), /7번 문항: 지운 줄·칸에 걸린 근거 1개/);
+});
+
+test('보기 묶음이 둘인 문항은 보기 칸에서 고쳐도 줄이 겹치지 않는다(점검 하)', async () => {
+  const {writeField, fieldValue} = await import('../assets/exampool/sheet/vertical.js');
+  const q = newQuestion('1'); writeField(q, 'bogi', 'ㄱ. 가\nㄴ. 나');
+  const second = block('bogi'); second.lines = [{id: 'x1', label: 'ㄱ', text: '다'}]; q.blocks.push(second);
+  const before = fieldValue(q, 'bogi');
+  writeField(q, 'bogi', before);
+  assert.deepEqual(q.blocks.filter(b => b.kind === 'bogi').map(b => b.lines.length), [2, 1]);
+  assert.throws(() => writeField(q, 'bogi', before + '\n라'), /여러 개/);
+});

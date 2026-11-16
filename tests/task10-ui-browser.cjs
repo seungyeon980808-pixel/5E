@@ -60,7 +60,7 @@ async function resetDatabases(page) {
 
 async function setProject(page, project) {
   await page.evaluate(async payload => {
-    const { state } = await import('./js/state.js?v=1.6.0-remediation-0929');
+    const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
     const active = payload.pages.find(candidate => candidate.id === payload.activePageId);
     state.update(current => {
       current.pages = structuredClone(payload.pages);
@@ -80,8 +80,8 @@ async function setProject(page, project) {
 
 async function projectSnapshot(page) {
   return page.evaluate(async () => {
-    const { state } = await import('./js/state.js?v=1.6.0-remediation-0929');
-    const { serialize } = await import('./js/project-io.js?v=1.6.0-preview-lite-hybrid-0922');
+    const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
+    const { serialize } = await import('/js/project-io.js?v=1.7.0-four-session-integration');
     const data = serialize(state.get());
     return { pages: data.pages, activePageId: data.activePageId };
   });
@@ -191,7 +191,7 @@ async function run() {
     for (let save = 1; save <= 9; save += 1) {
       await page.evaluate(value => {
         window.dispatchEvent(new Event('keydown'));
-        return import('./js/state.js?v=1.6.0-remediation-0929').then(({ state }) => {
+        return import('/js/state.js?v=1.7.0-four-session-integration').then(({ state }) => {
           state.update(current => { current.objects[0].p1.x = value; });
           window.dispatchEvent(new Event('pagehide'));
         });
@@ -272,7 +272,7 @@ async function run() {
       return { style: style.outlineStyle, width: style.outlineWidth, color: style.outlineColor };
     });
     assert.equal(keyboardOutline.style, 'solid');
-    assert.equal(keyboardOutline.width, '3px');
+    assert.equal(keyboardOutline.width, '1px'); // 10-28 출제 지적 3: 키보드 초점은 은은한 1px 선 하나(css/focus-calm.css)
     await page.screenshot({ path: path.join(evidenceDir, 'canvas-keyboard-focus.png') });
     const box = await canvas.boundingBox();
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
@@ -330,7 +330,7 @@ async function run() {
       document.getElementById('ai-image-panel').hidden = true;
     });
     await mobile.waitForFunction(() => document.getElementById('canvas').getBoundingClientRect().width > 0);
-    await mobile.waitForFunction(() => document.getElementById('zoom-readout').textContent !== 'zoom 0.00×');
+    await mobile.waitForFunction(() => document.getElementById('zoom-readout').textContent !== '0%');
     await waitFrames(mobile, 20);
     const reveal = await mobile.evaluate(() => ({
       width: document.getElementById('canvas').getBoundingClientRect().width,

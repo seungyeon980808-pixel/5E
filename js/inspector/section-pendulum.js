@@ -3,7 +3,9 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { addEndpointControls } from "./science-controls.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 export function buildPendulumSection(ctx) {
   const { state } = ctx;
@@ -13,6 +15,7 @@ export function buildPendulumSection(ctx) {
    * quantity label — see render.js renderPendulum, which reuses makeUprightLabel
    * with labelType "quantity", exactly like line/dimension labels). */
   const secPendBody = document.createElement("div");
+  addEndpointControls(secPendBody, state, "pendulum", true);
 
   function makePendCheckbox(labelText, prop) {
     const row = document.createElement("div");
@@ -29,7 +32,7 @@ export function buildPendulumSection(ctx) {
     cb.addEventListener("change", () => {
       const s = state.get();
       if (!(s.selectedIds || []).length) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       const val = cb.checked;
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
@@ -60,7 +63,7 @@ export function buildPendulumSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = pendLabelInp.value;
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
@@ -99,7 +102,7 @@ export function buildPendulumSection(ctx) {
     const raw = pendBobInp.value.trim();
     const val = raw === "" ? null : parseFloat(raw);
     if (val !== null && (!isFinite(val) || val <= 0)) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "pendulum" || o.locked) return;

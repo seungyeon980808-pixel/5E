@@ -1,4 +1,5 @@
-import { previewStorage as localStorage } from '../preview-storage.js?v=1.6.1-remediation-0929';
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { previewStorage as localStorage } from '../preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== INSPECTOR SECTION — 입체(solid3d) =====
  *
  * section-gauge.js와 같은 자체 구독형(self-subscribing) 섹션이다:
@@ -18,7 +19,7 @@ import { previewStorage as localStorage } from '../preview-storage.js?v=1.6.1-re
  * 만들 입체의 기본값"(localStorage)을 함께 제공한다. 실사용상 전역과 같고 비용은 0.
  */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 const DEFAULTS_KEY = "phyDraw.defaults";
 const SHADE_LABELS = [["0", "없음(흰 면)"], ["1", "옅게"], ["2", "기본"]];
@@ -176,7 +177,7 @@ export function initSolid3dSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;
@@ -262,7 +263,7 @@ export function initSolid3dSection(state) {
       localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
     } catch (_) { /* 저장 실패해도 현재 페이지 적용은 계속한다 */ }
     const s = state.get();
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     let changed = 0;
     state.update((s2) => {
       s2.objects.forEach((t) => {

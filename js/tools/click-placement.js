@@ -18,24 +18,26 @@
 // its getters/exports. clearClickLocals is exported back so setActiveTool (tools.js)
 // can discard an in-progress draft when another tool is armed. */
 
-import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.6.1-preview-labeler-0917-1111";
-import { setSnapPreview } from "../render.js?v=1.6.1-remediation-0929";
-import { resolveEndpointSnap } from "../snap.js?v=1.6.1-remediation-0929";
-import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.6.1-remediation-0929";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.1-remediation-0929";
-import { nextObjectId } from "./id.js?v=1.6.1-preview-labeler-0917-1111";
-import { initLabelerMagnifier } from "./labeler-magnifier.js?v=1.6.1-remediation-0929";
-import { initLabelerBranches } from "./labeler-branches.js?v=1.6.1-preview-lite-hybrid-0922";
-import { openLabelerTextEditor } from "../text-editor.js?v=1.6.1-remediation-0929";
-import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.6.1-preview-labeler-0917-1111";
-import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.6.1-preview-labeler-0917-1111";
-import { snapKey } from "../platform.js?v=1.6.1-remediation-0929";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { screenToWorld, getRenderScale } from "../viewport.js?v=1.7.0-four-session-integration";
+import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.7.0-four-session-integration";
+import { setSnapPreview } from "../render.js?v=1.7.0-four-session-integration";
+import { resolveEndpointSnap } from "../snap.js?v=1.7.0-four-session-integration";
+import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.7.0-four-session-integration";
+import { loadDefaults, applyToolDefaultsToNewObject } from "../tool-defaults.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.7.0-four-session-integration";
+import { nextObjectId } from "./id.js?v=1.7.0-four-session-integration";
+import { initLabelerMagnifier } from "./labeler-magnifier.js?v=1.7.0-four-session-integration";
+import { initLabelerBranches } from "./labeler-branches.js?v=1.7.0-four-session-integration";
+import { openLabelerTextEditor } from "../text-editor.js?v=1.7.0-four-session-integration";
+import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.7.0-four-session-integration";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.7.0-four-session-integration";
+import { snapKey } from "../platform.js?v=1.7.0-four-session-integration";
 import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable, getSymbolProps,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
-} from "../tools.js?v=1.6.1-remediation-0929";
+} from "../tools.js?v=1.7.0-four-session-integration";
 
 // SERIES(계열 추가): 클릭으로 점을 찍어 좌표평면 위에 직선/꺾은선 계열(funcgraph,
 // sourceKind:"points")을 만든다. 폴리라인(P)과 같은 클릭 라이프사이클(더블클릭/Enter로
@@ -48,6 +50,17 @@ let _state = null;
 let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C"/"CIRCUIT") while drafting, else null
 let draftPoints = [];     // world-space vertices placed so far
 let mouseWorld = null;    // last mouse world pos, for the rubber-band segment
+let clickDefaults = null;
+
+function styleClickShape(shape) {
+  if (!clickDefaults || !['L', 'P', 'C', 'CIRCUIT'].includes(clickTool)) return shape;
+  const styled = applyToolDefaultsToNewObject(shape, clickDefaults);
+  if (['L', 'P', 'C'].includes(clickTool)) {
+    const props = getSymbolProps();
+    if (props) Object.assign(styled, props);
+  }
+  return styled;
+}
 
 export function setupClickDrawing(svg, state) {
   _svg = svg;
@@ -75,6 +88,7 @@ export function setupClickDrawing(svg, state) {
     } else if (snapKey(e) && (tool === "L" || tool === "P" || tool === "CIRCUIT") && draftPoints.length > 0) {
       cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
     }
+    if (draftPoints.length === 0) clickDefaults = loadDefaults();
     draftPoints.push(cur);
     clickTool = tool;
 
@@ -152,11 +166,11 @@ function updateDraftPreview() {
   if (clickTool === "CIRCUIT") {
     // Live preview: leads + body, rebuilt from p1 and the floating mouse (p2).
     const end = mouseWorld || draftPoints[0];
-    _state.update((s) => { s.draft = makeCircuit(draftPoints[0], end); });
+    _state.update((s) => { s.draft = styleClickShape(makeCircuit(draftPoints[0], end)); });
     return;
   }
   const pts = mouseWorld ? [...draftPoints, mouseWorld] : draftPoints.slice();
-  _state.update((s) => { s.draft = clickTool === "C" ? makeCurve(pts) : makePolyline(pts); });
+  _state.update((s) => { s.draft = styleClickShape(clickTool === "C" ? makeCurve(pts) : makePolyline(pts)); });
 }
 
 // LINE: exactly two clicks. Commit a real line object, or cancel a zero-length one.
@@ -347,8 +361,10 @@ function updateLabelerPreview() {
 }
 
 function commitLabeler() {
-  const lab = makeLabelerDraft(draftPoints[0], mouseWorld || draftPoints[0]);
-  if (draftPoints.length >= 2) lab.elbow = { ...draftPoints[1] };
+  if (draftPoints.length < 2) { resetClickDraft(); return; }
+  // The floating endpoint previews another click; only placed points are committed.
+  const lab = makeLabelerDraft(draftPoints[0], draftPoints[draftPoints.length - 1]);
+  if (draftPoints.length >= 3) lab.elbow = { ...draftPoints[1] };
   const d = Math.hypot(lab.p2.x - lab.p1.x, lab.p2.y - lab.p1.y);
   if (d < MIN_SIZE) { resetClickDraft(); return; } // zero-length placement: discard
   lab.id = nextObjectId();
@@ -389,7 +405,7 @@ function commitSeries() {
   const worldPts = mathPoints.map((m) => worldFromMath(plane, m.x, m.y));
 
   _state.update((st) => {
-    const snap = JSON.parse(JSON.stringify(st.objects));
+    const snap = jsonClone(st.objects);
     let planeId;
     if (newPlane) {
       newPlane.id = nextObjectId();
@@ -431,6 +447,7 @@ function commitSeries() {
 // Push a finished click-to-click shape through the SAME store path as the drag
 // flow (id + z-order assigned on commit), then auto-return to V (DESIGN 4-3).
 function commitClickShape(shape) {
+  shape = styleClickShape(shape);
   /* 팔레트가 지정한 추가 필드를 얹는다(전선 기호·등치선 값·산점 등).
    * 드래그로 그리는 도형은 tools.js makeShape 안에서 이미 같은 일을 한다 —
    * 클릭배치만 commit이 이 파일에 있어 빠져 있었다. 선·꺾은선·곡선에만 적용해
@@ -441,7 +458,7 @@ function commitClickShape(shape) {
   }
   _state.update((s) => {
     // Snapshot the pre-creation objects so a single Ctrl+Z removes this shape.
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     shape.id = nextObjectId();
     shape.order = s.objects.length;
     shape.layerId = s.activeLayerId;
@@ -460,6 +477,7 @@ export function clearClickLocals() {
   draftPoints = [];
   clickTool = null;
   mouseWorld = null;
+  clickDefaults = null;
   setSnapPreview(null); // drop any transient endpoint-snap overlay
 }
 

@@ -1,3 +1,5 @@
+import { jsonClone } from "./json-clone.js?v=1.7.0-four-session-integration";
+import { mapLeaderRoutes, leaderRoutePoints } from './ai-label-leaders.js?v=1.7.0-four-session-integration';
 /* ===== TRANSFORM (DESIGN 吏? select-tool MOVE + snapshot-based Undo/Redo) ===== */
 //
 // Owns two concerns:
@@ -13,18 +15,18 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.1-remediation-0929";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.1-remediation-0929";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.1-remediation-0929";
-import { isObjectSelectable } from "./pick.js?v=1.6.1-remediation-0929";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.1-preview-lite-hybrid-0922";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.7.0-four-session-integration";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.7.0-four-session-integration";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.7.0-four-session-integration";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.7.0-four-session-integration";
+import { isObjectSelectable } from "./pick.js?v=1.7.0-four-session-integration";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.7.0-four-session-integration";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
-         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
+         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.7.0-four-session-integration";
 
-import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.6.1-preview-labeler-0917-1111";
-import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.1-remediation-0929";
-import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.6.1-remediation-0929";
+import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.7.0-four-session-integration";
+import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.7.0-four-session-integration";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.7.0-four-session-integration";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -113,7 +115,7 @@ function getRotPivot(obj, corner) {
 /* ===== UNDO / REDO ENGINE ===== */
 
 function cloneObjects(objects) {
-  return JSON.parse(JSON.stringify(objects));
+  return jsonClone(objects);
 }
 
 function isDocumentHistoryEntry(entry) {
@@ -405,7 +407,7 @@ export function instantiateObjectsAt(state, srcObjs, target) {
     obj.layerId = state.get().activeLayerId;
   });
   state.update((s2) => {
-    s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
+    s2.undoStack.push(jsonClone(s2.objects));
     s2.redoStack = [];
     newObjs.forEach((o) => s2.objects.push(o));
     s2.selectedIds = newObjs.map((o) => o.id);
@@ -433,6 +435,7 @@ function clipboardBBox(objs) {
     } else if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
       if (o.type === "labeler") {
+        leaderRoutePoints(o.leaderRoutes).forEach(point => acc(point.x, point.y));
         if (o.elbow) acc(o.elbow.x, o.elbow.y);
         if (o.p3) acc(o.p3.x, o.p3.y);
         (o.extraAnchors || []).forEach(point => acc(point.x, point.y));
@@ -450,6 +453,27 @@ function clipboardBBox(objs) {
  * 리사이즈 때 좌표에서 떨어져 나온다(요구: 함께 묶여 이동). fn(pt{x,y}) → pt{x,y}. */
 function mapFgElements(obj, orig, fn) {
   if (obj.type !== "funcgraph") return;
+  // Shading stores world coordinates too. Keep its baseline and interval with
+  // the curve during insertion, paste, movement and group resizing.
+  if (orig.area && Number.isFinite(orig.area.baseY)) {
+    const a = orig.area;
+    const frame = a.frame || [1, 0, 0, 1, 0, 0];
+    const origin = fn({ x: frame[4], y: frame[5] });
+    const ux = fn({ x: frame[4] + frame[0], y: frame[5] + frame[1] });
+    const uy = fn({ x: frame[4] + frame[2], y: frame[5] + frame[3] });
+    const nextFrame = [ux.x - origin.x, ux.y - origin.y, uy.x - origin.x, uy.y - origin.y, origin.x, origin.y];
+    // A rotated baseline is no longer one horizontal y value. Keep its local
+    // frame so clipping, shading, edge lines and labels remain a rigid unit.
+    if (a.frame || Math.abs(nextFrame[1]) > 1e-9 || Math.abs(nextFrame[2]) > 1e-9) {
+      obj.area = { ...a, frame: nextFrame };
+    } else {
+      const from = fn({ x: Number.isFinite(a.worldFrom) ? a.worldFrom : (orig.points?.[0]?.x ?? 0), y: a.baseY });
+      const to = fn({ x: Number.isFinite(a.worldTo) ? a.worldTo : (orig.points?.at(-1)?.x ?? 0), y: a.baseY });
+      obj.area = { ...a, baseY: from.y,
+        ...(Number.isFinite(a.worldFrom) ? { worldFrom: from.x } : {}),
+        ...(Number.isFinite(a.worldTo) ? { worldTo: to.x } : {}) };
+    }
+  }
   if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
   if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
   if (orig.arrowPolys) obj.arrowPolys = orig.arrowPolys.map((ap) => ({ ...ap, points: ap.points.map((p) => fn(p)) }));
@@ -503,6 +527,7 @@ function applyDelta(obj, orig, dx, dy) {
       if (orig.elbow) obj.elbow = { x: orig.elbow.x + dx, y: orig.elbow.y + dy };
       if (orig.p3) obj.p3 = { x: orig.p3.x + dx, y: orig.p3.y + dy };
       if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => ({ x: point.x + dx, y: point.y + dy }));
+      if (orig.leaderRoutes) obj.leaderRoutes = mapLeaderRoutes(orig.leaderRoutes, point => ({ x: point.x + dx, y: point.y + dy }));
     }
   } else if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") {
     const tr = (p) => ({ x: p.x + dx, y: p.y + dy });
@@ -513,6 +538,8 @@ function applyDelta(obj, orig, dx, dy) {
 
 /* ----- line-like endpoint handle <-> point bridge (for endpoint-priority snap) ----- */
 function handleEndpointPoint(obj, handle) {
+  const route = /^route-(\d+)-(start|target|control)-(\d+)$/.exec(handle || '');
+  if (obj.type === 'labeler' && route) { const r=obj.leaderRoutes?.[+route[1]]; return route[2]==='control'?r?.controls[+route[3]]:r?.[route[2]]; }
   if (obj.type === "labeler" && handle?.startsWith("anchor-")) return obj.extraAnchors?.[Number(handle.slice(7))];
   if (obj.type === "labeler" && handle === "elbow") return obj.elbow;
   if (obj.type === "labeler" && handle === "p2") return obj.p3;
@@ -529,6 +556,12 @@ function handleEndpointPoint(obj, handle) {
 
 function setHandleEndpointPoint(obj, handle, pt) {
   const next = { x: pt.x, y: pt.y };
+  const route = /^route-(\d+)-(start|target|control)-(\d+)$/.exec(handle || '');
+  if (obj.type === 'labeler' && route) { const r=obj.leaderRoutes?.[+route[1]]; if(r) { if(route[2]==='control')r.controls[+route[3]]=next;else r[route[2]]=next; obj.p1={...obj.leaderRoutes[0].target}; } return; }
+  if (obj.type === 'labeler' && obj.leaderRoutes?.length) {
+    if (handle === 'p0') obj.leaderRoutes[0].target = {...next};
+    if (handle === 'p1') for (const r of obj.leaderRoutes) if (r.attachment === 'label') { r.start.x += next.x-obj.p2.x; r.start.y += next.y-obj.p2.y; }
+  }
   if (obj.type === "labeler" && handle?.startsWith("anchor-")) { obj.extraAnchors[Number(handle.slice(7))] = next; return; }
   if (obj.type === "labeler" && handle === "elbow") { obj.elbow = next; return; }
   if (obj.type === "labeler" && handle === "p2") { obj.p3 = next; return; }
@@ -580,6 +613,9 @@ function objectCenter(obj) {
  * 아는 곳이 applyDelta 하나뿐이도록 이걸 공유한다 — 드래그 밖에서 이동이 필요한 곳
  * (bulk-edit의 간격 통일 등)도 이걸 쓴다. 분기를 복사하면 새 타입이 생겼을 때 한쪽만
  * 고쳐져 "그 타입만 조용히 안 움직이는" 버그가 난다. */
+// 객체 묶음의 경계 상자(mm). 없으면 null.
+export function objectsBBox(objs) { return Array.isArray(objs) && objs.length ? clipboardBBox(objs) : null; }
+
 export function translateObject(obj, dx, dy) {
   const orig = JSON.parse(JSON.stringify(obj));
   applyDelta(obj, orig, dx, dy);
@@ -654,6 +690,23 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // 목록은 object-types.js의 endpointHandles가 정본이다(용수철·장 그림·정상파·포물선·
   // 원호까지 전부 그 표에서 온다). 예전엔 이 리터럴 목록이 네 벌 복사돼 있었다.
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {
+    if (obj.type === 'labeler' && orig.leaderRoutes?.length) {
+      obj.leaderRoutes = mapLeaderRoutes(orig.leaderRoutes, p => ({...p}));
+      const match = /^route-(\d+)-(start|target|control)-(\d+)$/.exec(handle || '');
+      if (match) {
+        const r = obj.leaderRoutes[Number(match[1])];
+        if (!r) return;
+        const point = match[2] === 'control' ? r.controls[Number(match[3])] : r[match[2]];
+        if (point) { point.x += dx; point.y += dy; }
+        obj.p1 = {...obj.leaderRoutes[0].target};
+        return;
+      }
+      if (handle === 'p0') {
+        obj.leaderRoutes[0].target = {x:orig.leaderRoutes[0].target.x+dx,y:orig.leaderRoutes[0].target.y+dy};
+
+      }
+    }
+
     if (obj.type === "labeler" && handle?.startsWith("anchor-")) {
       const index = Number(handle.slice(7));
       const base = orig.extraAnchors[index];
@@ -679,6 +732,13 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
     } else {
       const dragged = { x: orig.p2.x + dx, y: orig.p2.y + dy };
       obj.p2 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p1, dragged) : dragged;
+    }
+    if (obj.type === 'labeler' && obj.leaderRoutes?.length) {
+      if (handle === 'p0') obj.leaderRoutes[0].target = {...obj.p1};
+      if (handle === 'p1') for (const r of obj.leaderRoutes) if (r.attachment === 'label') {
+        r.start.x += obj.p2.x - orig.p2.x;
+        r.start.y += obj.p2.y - orig.p2.y;
+      }
     }
     return;
   }
@@ -877,6 +937,7 @@ function groupBBox(objs, svg) {
 
 /* ----- Smart alignment guides: edge/center matching while dragging ----- */
 function resolveSmartAlignment(moveObjIds, origObjs, raw, scale, state, svg) {
+  if (state.get().autoSnap === false) return { dx: raw.dx, dy: raw.dy, guides: [] };
   const moving = moveObjIds.map((id) => origObjs[id]).filter(Boolean);
   const base = groupBBox(moving, svg);
   if (!base) return { dx: raw.dx, dy: raw.dy, guides: [] };
@@ -1003,6 +1064,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
         if (orig.elbow) obj.elbow = mapPt(orig.elbow.x, orig.elbow.y);
         if (orig.p3) obj.p3 = mapPt(orig.p3.x, orig.p3.y);
         if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => mapPt(point.x, point.y));
+        if (orig.leaderRoutes) obj.leaderRoutes = mapLeaderRoutes(orig.leaderRoutes, point => mapPt(point.x, point.y));
       }
     } else if (orig.type === "pendulum") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
@@ -1018,6 +1080,86 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
       translateObject(obj, before.x - after.x, before.y - after.y);
     }
   }
+}
+
+// Share the same box and affine operations with numeric inspector controls.
+// Group fields describe the whole selection; mutating only its first member
+// separates linked graphs and labels even though the displayed box is shared.
+export function groupGeometry(objects, svg) {
+  const box = groupBBox(objects, svg);
+  if (!box) return null;
+  const rotations = objects.filter(o => Number.isFinite(o.rotation)
+    && !ENDPOINT_HANDLE_TYPES.has(o.type) && !POINT_ARRAY_TYPES.has(o.type)
+    && o.type !== 'rightangle' && o.type !== 'anglearc').map(o => o.rotation);
+  let rotation = rotations.length ? rotations.reduce((a, b) => a + b, 0) / rotations.length : null;
+  // Lines and curves bake rotation into their points. When a group contains
+  // only these objects, derive its reference direction from real geometry so
+  // an absolute angle does not reset to zero and accumulate on every commit.
+  if (rotation === null) {
+    for (const o of objects) {
+      const first = o.p1 || o.points?.[0];
+      const next = o.p2 || o.points?.find(p => first && Math.hypot(p.x - first.x, p.y - first.y) > 1e-9);
+      if (first && next && Math.hypot(next.x - first.x, next.y - first.y) > 1e-9) {
+        rotation = Math.atan2(next.y - first.y, next.x - first.x) * 180 / Math.PI;
+        break;
+      }
+      if (o.type === 'rightangle' && Number.isFinite(o.angle)) { rotation = o.angle; break; }
+      if (o.type === 'anglearc' && Number.isFinite(o.startAngle)) { rotation = -o.startAngle; break; }
+    }
+  }
+  return { ...box, rotation: rotation ?? 0 };
+}
+
+export function commitGroupGeometry(state, prop, value, svg) {
+  const s = state.get(), ids = s.selectedIds || [];
+  const members = ids.map(id => s.objects.find(o => o.id === id)).filter(Boolean);
+  const gid = members[0]?.groupId;
+  if (members.length < 2 || !gid || !members.every(o => o.groupId === gid)) return false;
+  if (!['x', 'y', 'w', 'h', 'rotation'].includes(prop)) return false;
+  if (members.some(o => o.locked) || !Number.isFinite(value)) return true;
+  if ((prop === 'x' || prop === 'y') && members.some(o => o.positionLocked)) return true;
+  const box = groupGeometry(members, svg);
+  if (!box) return true;
+  const current = prop === 'x' ? box.x + box.w / 2 : prop === 'y' ? box.y + box.h / 2 : box[prop];
+  if (Math.abs(current - value) < 1e-8 || ((prop === 'w' || prop === 'h') && value < MIN_SIZE)) return true;
+  const snapshot = jsonClone(s.objects);
+  const originals = Object.fromEntries(snapshot.map(o => [o.id, o]));
+  state.update(next => {
+    const live = members.map(o => next.objects.find(item => item.id === o.id));
+    if (prop === 'x' || prop === 'y') {
+      for (const o of live) translateObject(o, prop === 'x' ? value - current : 0, prop === 'y' ? value - current : 0);
+    } else if (prop === 'w' || prop === 'h') {
+      applyGroupResize(live, originals, box, prop === 'w' ? 'e' : 's', prop === 'w' ? value - current : 0, prop === 'h' ? value - current : 0);
+    } else {
+      const delta = value - current, px = box.x + box.w / 2, py = box.y + box.h / 2;
+      for (const o of live) {
+        const orig = originals[o.id], center = objectCenter(orig);
+        const pivot = orig.positionLocked ? center : { x: px, y: py };
+        const rot = p => rotPt(p.x, p.y, pivot.x, pivot.y, delta);
+        if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
+          o.p1 = rot(orig.p1); o.p2 = rot(orig.p2);
+          if (o.type === 'labeler') {
+            if (orig.elbow) o.elbow = rot(orig.elbow);
+            if (orig.p3) o.p3 = rot(orig.p3);
+            if (orig.extraAnchors) o.extraAnchors = orig.extraAnchors.map(rot);
+            if (orig.leaderRoutes) o.leaderRoutes = mapLeaderRoutes(orig.leaderRoutes, rot);
+          }
+        } else if (POINT_ARRAY_TYPES.has(o.type)) {
+          o.points = orig.points.map(rot); mapFgElements(o, orig, rot);
+        } else if (o.type === 'anglearc' || o.type === 'rightangle') {
+          const p = rot(orig); o.x = p.x; o.y = p.y;
+          if (o.type === 'anglearc') o.startAngle = (orig.startAngle || 0) - delta;
+          else o.angle = (orig.angle || 0) + delta;
+        } else {
+          const p = rot(center);
+          o.x = p.x - (orig.w || 0) / 2; o.y = p.y - (orig.h || 0) / 2;
+          o.rotation = (orig.rotation || 0) + delta;
+        }
+      }
+    }
+    next.undoStack.push(snapshot); next.redoStack = [];
+  });
+  return true;
 }
 
 /* ===== PUBLIC: wire all event listeners ===== */
@@ -1090,7 +1232,7 @@ export function initTransform(svg, state) {
       const hasApplicableAngle = angle != null && isFinite(angle);
       if (!hasApplicableAngle && (!props || Object.keys(props).length === 0)) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         let changed = false;
         (s2.selectedIds || []).forEach((id) => {
@@ -1125,7 +1267,7 @@ export function initTransform(svg, state) {
     if (e.key === "Delete" || e.key === "Backspace") {
       if (!selectedIds.length) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         // locked objects are never deleted; remove only selected + mutable ones
         const before = s2.objects.length;
@@ -1156,7 +1298,7 @@ export function initTransform(svg, state) {
       const shiftArrowKey = "Shift+" + e.key;
       const isFirst = !_arrowKeysHeld.has(shiftArrowKey);
       if (isFirst) _arrowKeysHeld.add(shiftArrowKey);
-      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      const snap = isFirst ? jsonClone(s.objects) : null;
       state.update((s2) => {
         if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
         (s2.selectedIds || []).forEach((id) => {
@@ -1176,7 +1318,7 @@ export function initTransform(svg, state) {
       if (s.activeTool === "rotate") {
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         const flipAxis = (e.key === "ArrowLeft" || e.key === "ArrowRight") ? "flipX" : "flipY";
         state.update((s2) => {
           const ids = s2.selectedIds || [];
@@ -1200,7 +1342,7 @@ export function initTransform(svg, state) {
       const dy = e.key === "ArrowUp"   ? -nudge : e.key === "ArrowDown"  ? nudge : 0;
       const isFirst = !_arrowKeysHeld.has(e.key);
       if (isFirst) _arrowKeysHeld.add(e.key);
-      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      const snap = isFirst ? jsonClone(s.objects) : null;
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
@@ -1224,7 +1366,7 @@ export function initTransform(svg, state) {
         const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         // Whole-group rotation: when every selected object shares one groupId,
         // rotate all members about the COMBINED bbox center (group pivot) instead
         // of each object spinning about its own center.
@@ -1254,13 +1396,16 @@ export function initTransform(svg, state) {
                     if (obj.elbow) obj.elbow = rot(obj.elbow.x, obj.elbow.y);
                     if (obj.p3) obj.p3 = rot(obj.p3.x, obj.p3.y);
                     if (obj.extraAnchors) obj.extraAnchors = obj.extraAnchors.map(point => rot(point.x, point.y));
+                    if (obj.leaderRoutes) obj.leaderRoutes = mapLeaderRoutes(obj.leaderRoutes, point => rot(point.x, point.y));
                   }
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
                   // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
                   // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
                   // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
-                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                  const original = JSON.parse(JSON.stringify(obj));
+                  obj.points = original.points.map((p) => rot(p.x, p.y));
+                  mapFgElements(obj, original, p => rot(p.x, p.y));
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
@@ -1301,7 +1446,7 @@ export function initTransform(svg, state) {
         });
         return;
       }
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         // Process from highest index downward to avoid index collision
@@ -1329,7 +1474,7 @@ export function initTransform(svg, state) {
         const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         // Whole-group rotation: when every selected object shares one groupId,
         // rotate all members about the COMBINED bbox center (group pivot) instead
         // of each object spinning about its own center.
@@ -1359,13 +1504,16 @@ export function initTransform(svg, state) {
                     if (obj.elbow) obj.elbow = rot(obj.elbow.x, obj.elbow.y);
                     if (obj.p3) obj.p3 = rot(obj.p3.x, obj.p3.y);
                     if (obj.extraAnchors) obj.extraAnchors = obj.extraAnchors.map(point => rot(point.x, point.y));
+                    if (obj.leaderRoutes) obj.leaderRoutes = mapLeaderRoutes(obj.leaderRoutes, point => rot(point.x, point.y));
                   }
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
                   // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
                   // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
                   // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
-                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                  const original = JSON.parse(JSON.stringify(obj));
+                  obj.points = original.points.map((p) => rot(p.x, p.y));
+                  mapFgElements(obj, original, p => rot(p.x, p.y));
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
@@ -1406,7 +1554,7 @@ export function initTransform(svg, state) {
         });
         return;
       }
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         // Process from lowest index upward to avoid index collision
@@ -1434,7 +1582,7 @@ export function initTransform(svg, state) {
       });
       if (!triangleIds.length) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         triangleIds.forEach(id => {
           const o = s2.objects.find((o) => o.id === id);
@@ -1450,7 +1598,7 @@ export function initTransform(svg, state) {
     if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "k") {
       if (!selectedIds.length || s.activeTool !== "V") return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         ids.forEach(id => {
@@ -1467,7 +1615,7 @@ export function initTransform(svg, state) {
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey && shortcutKey(e) === "g") {
       if (s.activeTool !== "V" || selectedIds.length < 2) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const groupId = Date.now().toString();
         // locked objects are excluded from the group; need ?? mutable members left
@@ -1497,7 +1645,7 @@ export function initTransform(svg, state) {
         return o && o.groupId === _gid;
       })) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const grp = s2.groups.find((g) => g.id === _gid);
         if (grp) grp.memberIds.forEach(id => {
@@ -1606,14 +1754,14 @@ export function initTransform(svg, state) {
             ? objectCenter(obj) : getRotPivot(obj, hLabel);
           const mouse     = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
           _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
-          _rotPendingSnap = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
+          _rotPendingSnap = isTempImageId(obj.id) ? null : jsonClone(s.objects);
           _rotDidMove     = false;
         } else {
           _handleDragging   = true;
           _handleId         = hLabel;
           _handleOrigObj    = JSON.parse(JSON.stringify(obj));
           _handleStartWorld = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
-          _pendingSnapshot  = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
+          _pendingSnapshot  = isTempImageId(obj.id) ? null : jsonClone(s.objects);
           _didMove = false;
         }
         e.preventDefault();
@@ -1633,7 +1781,8 @@ export function initTransform(svg, state) {
     // state.get().selectedIds를 다시 읽으면 방금 새로 선택된 객체도 항상 포함돼
     // 판정이 무력화된다. 클릭 "이전" 선택 상태(_prevSelectedIds)와 비교해야
     // "원래부터 선택돼 있던 객체를 눌렀는가"를 정확히 가릴 수 있다.
-    if (!clickedId || !_prevSelectedIds.includes(clickedId)) return;
+    const aiLabel = pickedObj?.aiAutoLabel === true && !!pickedObj.aiParentImageId;
+    if (!clickedId || (!_prevSelectedIds.includes(clickedId) && !aiLabel)) return;
 
     const selectedIds = s.selectedIds || []; // move는 클릭 이후(현재) 선택 집합을 대상으로 함
     const obj = pickedObj || s.objects.find((o) => o.id === clickedId);
@@ -1667,7 +1816,7 @@ export function initTransform(svg, state) {
       const o = objectById(s, id);
       if (o) _moveOrigObjs[id] = JSON.parse(JSON.stringify(o));
     });
-    _pendingSnapshot = _moveIds.some(isTempImageId) ? null : JSON.parse(JSON.stringify(s.objects)); // pre-move state for undo
+    _pendingSnapshot = _moveIds.some(isTempImageId) ? null : jsonClone(s.objects); // pre-move state for undo
     _didMove = false;
 
     svg.style.cursor = "grabbing";
@@ -1724,6 +1873,7 @@ export function initTransform(svg, state) {
           if (_rotOrigObj.elbow) obj.elbow = rp(_rotOrigObj.elbow);
           if (_rotOrigObj.p3) obj.p3 = rp(_rotOrigObj.p3);
           if (_rotOrigObj.extraAnchors) obj.extraAnchors = _rotOrigObj.extraAnchors.map(rp);
+          if (_rotOrigObj.leaderRoutes) obj.leaderRoutes = mapLeaderRoutes(_rotOrigObj.leaderRoutes, rp);
         });
         if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
         return;
@@ -1806,6 +1956,7 @@ export function initTransform(svg, state) {
               if (orig.elbow) obj.elbow = memberRot(orig.elbow.x, orig.elbow.y);
               if (orig.p3) obj.p3 = memberRot(orig.p3.x, orig.p3.y);
               if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => memberRot(point.x, point.y));
+              if (orig.leaderRoutes) obj.leaderRoutes = mapLeaderRoutes(orig.leaderRoutes, point => memberRot(point.x, point.y));
             }
           } else if (POINT_ARRAY_TYPES.has(orig.type)) { // polyline / curve / funcgraph
             obj.points = orig.points.map((p) => memberRot(p.x, p.y));

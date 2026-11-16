@@ -28,9 +28,9 @@
   --tut-t-track: 520ms;
   /* '됐습니다'의 색. 앱 토큰에 성공색이 따로 없어 여기서 정한다(GitHub green).
      앱 규칙대로 dark 가 기본이고 light 를 덮어쓴다(css/style.css 46행). */
-  --tut-ok: #3fb950;
+  --tut-ok: var(--ds-success);
 }
-:root[data-theme="light"] { --tut-ok: #1a7f37; }
+:root[data-theme="light"] { --tut-ok: var(--ds-success); }
 
 /* 한국어 줄바꿈 — 어절 중간에서 끊지 않는다.
    ⚠ 튜토리얼 레이어는 body 가 아니라 documentElement 에 붙으므로(머리말 참고)
@@ -102,15 +102,15 @@
 .tut-guide-shape { transition: stroke 140ms ease, stroke-width 140ms ease, opacity 140ms ease; }
 .tut-guide[data-near="close"] .tut-guide-shape { stroke-width: 2.2; opacity: 1; }
 .tut-guide[data-near="hit"] .tut-guide-shape {
-  stroke: var(--tut-ok, #1a7f37);
+  stroke: var(--tut-ok, var(--ds-success));
   stroke-width: 2.4;
   stroke-dasharray: none;
   opacity: 1;
 }
 .tut-guide[data-near="hit"] .tut-guide-shape.is-closed {
-  fill: color-mix(in srgb, var(--tut-ok, #1a7f37) 14%, transparent);
+  fill: color-mix(in srgb, var(--tut-ok, var(--ds-success)) 14%, transparent);
 }
-.tut-guide[data-near="hit"] .tut-guide-note { fill: var(--tut-ok, #1a7f37); }
+.tut-guide[data-near="hit"] .tut-guide-note { fill: var(--tut-ok, var(--ds-success)); }
 .tut-guide-note {
   fill: var(--accent);
   font-family: "IBM Plex Sans KR", sans-serif;

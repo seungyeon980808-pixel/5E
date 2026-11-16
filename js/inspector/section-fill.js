@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { makeColorPicker, makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 export function buildFillSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;

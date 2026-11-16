@@ -46,9 +46,16 @@ function fixturePack() {
   return { pack, checksums, catalog, search, pdf };
 }
 
-async function runPdfRuntimeRetryCases({ origin, evidence }) {
+async function runPdfRuntimeRetryCases({ origin, evidence, sourceRoot = path.resolve(__dirname, '../..') }) {
   fs.mkdirSync(evidence, { recursive: true });
   const results = [], fixture = fixturePack();
+  // A publication can preserve a stable root while replacing only preview.
+  // Read the runtime we actually serve, rather than the test checkout's one.
+  const root = path.resolve(sourceRoot);
+  const loader = fs.readFileSync(path.join(root,'js/pdf-library/runtime-loader.js'),'utf8');
+  const defaults = [...loader.matchAll(/moduleUrl\s*=\s*new URL\("([^"\n]+)", import\.meta\.url\)/g)];
+  assert.equal(defaults.length,1,'the served PDF loader has one explicit default module URL');
+  const expectedModule = new URL(defaults[0][1],new URL('js/pdf-library/runtime-loader.js',origin));
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch({ headless: true });
     try {
@@ -66,7 +73,7 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
         });
         page.on('pageerror', error => errors.push(error.message));
         await context.route('**/assets/pdf-library/catalog-bootstrap.json', route => route.fulfill({ status: 404, body: 'force verified remote fixture' }));
-        await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
+        await context.route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
           const url = decodeURIComponent(new URL(route.request().url()).pathname);
           const body = url.endsWith('/pack.json') ? json(fixture.pack)
             : url.endsWith('/checksums.json') ? json(fixture.checksums)
@@ -87,7 +94,9 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
           const ui = page.locator('.unified-library-overlay').last();
           await page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready');
           await ui.locator('[data-unilib-type="question"]').click();
-          await ui.locator('[data-result-kind="crop"]').first().click();
+          // 11-15: 라이브러리에 학평이 들어와 맨 앞 결과가 학평 문항(가짜 자료 밖)이 되었다 — 가짜 평가원 문항을 찾아 고른다.
+          await ui.locator('[data-unilib-query]').fill('module retry');
+          await ui.locator('[data-result-kind="crop"][data-result-id*="5e.shared.drive"]').first().click();
           const stage = ui.locator('[data-unilib-stage]');
           if (scenario === 'manual-retry') {
             const retry = stage.getByRole('button', { name: '다시 시도', exact: true });
@@ -97,15 +106,15 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
             await page.screenshot({ path: path.join(evidence, `${name}-retry-visible.png`) });
             offline = false;
             await retry.click();
-            await stage.locator('.unilib-preview-image img').waitFor();
+            await stage.locator('.unilib-preview-image img:not(.br-final)').waitFor();
             assert.ok(moduleRequests.length > before, 'manual retry actually fetches a fresh module');
           }
-          const preview = stage.locator('.unilib-preview-image img');
+          const preview = stage.locator('.unilib-preview-image img:not(.br-final)');
           await preview.waitFor();
           await preview.evaluate(img => img.decode());
           assert.ok(await preview.evaluate(img => img.naturalWidth > 100));
           assert.equal(new Set(moduleRequests).size, moduleRequests.length, 'no failed module URL is reused');
-          assert.equal(new URL(moduleRequests[0]).searchParams.get('v'), '1.6.3-pdf-runtime-retry');
+          assert.equal(moduleRequests[0],expectedModule.href,'first request uses the actual served PDF loader default, independent of state module version');
           if (scenario === 'normal') assert.equal(moduleRequests.length, 1);
           if (scenario === 'automatic-retry') assert.equal(moduleRequests.length, 2);
 
@@ -154,4 +163,4 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
   return results;
 }
 
-module.exports = { runPdfRuntimeRetryCases };
+module.exports = { runPdfRuntimeRetryCases, fixturePack };

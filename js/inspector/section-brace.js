@@ -6,7 +6,8 @@
  * section-groundarc.js 의 selected() / commit() / sync() 3함수 패턴을 그대로 따른다.
  */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 function row(labelText) {
   const r = document.createElement("div");
@@ -96,7 +97,7 @@ export function initBraceSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

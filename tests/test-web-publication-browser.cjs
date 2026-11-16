@@ -82,7 +82,11 @@ async function saveAndReopen(page, origin, modules, label, createContext) {
   assert.equal(download.suggestedFilename().normalize('NFC'), `${label}.5e`);
   const projectFile = path.join(evidence, `${label}.5e`);
   await download.saveAs(projectFile);
-  const saved = JSON.parse(fs.readFileSync(projectFile, 'utf8'));
+  // 1.7.0부터 .5e는 묶음(zip) 프로젝트 파일 — 게시된 fivee-project.js로 읽는다(예전 JSON 파일도 같은 함수가 읽음).
+  const { parseFiveEProject } = await import(require('node:url').pathToFileURL(path.join(site, 'js/fivee-project.js')).href);
+  const project = parseFiveEProject(fs.readFileSync(projectFile));
+  assert.equal(project?.kind, 'drawing', 'the download is a drawing project');
+  const saved = project.drawing;
   assert.deepEqual(saved, before, 'the download contains the complete persistent document');
 
   // A fresh tab/context proves recovery from the file rather than retained memory.
@@ -172,7 +176,7 @@ async function freshContext(browser, errors, origin) {
   const server = await startServer();
   const results = [];
   try {
-    for (const engine of [chromium, webkit]) {
+    for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
       const browser = await engine.launch({ headless: true });
       const errors = [];
       let page;
@@ -197,7 +201,8 @@ async function freshContext(browser, errors, origin) {
         const exports = await exportImages(page, `${engine.name()}-왕복검증`);
         await page.screenshot({ path: path.join(evidence, `${engine.name()}-root.png`), fullPage: true });
 
-        // Check the preserved public preview independently from stable root.
+        // Check the preserved public preview independently from stable root(1.7.0부터는 preservePaths에 있을 때만 올라간다).
+        if (fs.existsSync(path.join(site, 'preview'))) {
         const preview = await (await freshContext(browser, errors, server.origin)).newPage();
         await preview.goto(`${server.origin}/preview/?mode=pro&mobile=0`, { waitUntil: 'load' });
         await preview.locator('#canvas').waitFor({ state: 'visible' });
@@ -209,6 +214,8 @@ async function freshContext(browser, errors, origin) {
         assert.equal((await documentData(preview, previewModules)).pages[0].objects.length, 0);
         await preview.screenshot({ path: path.join(evidence, `${engine.name()}-preserved-preview.png`), fullPage: true });
         assert.deepEqual(errors, [], `${engine.name()} has no runtime or local resource failures`);
+        }
+        if (fs.existsSync(path.join(site, '1.6.0'))) {
         const pinnedStable = await (await freshContext(browser, errors, server.origin)).newPage();
         await pinnedStable.goto(`${server.origin}/1.6.0/?mode=pro&mobile=0`, { waitUntil: 'load' });
         await pinnedStable.locator('#canvas').waitFor({ state: 'visible' });
@@ -219,7 +226,8 @@ async function freshContext(browser, errors, origin) {
         await pinnedStable.locator('#undo-btn').click();
         assert.equal((await documentData(pinnedStable, pinnedModules)).pages[0].objects.length, 0);
         assert.deepEqual(errors, [], `${engine.name()} has no runtime or local resource failures`);
-        results.push({ engine: engine.name(), stable: candidateVersion, preview: '1.7.0', pinnedStable: '1.6.0', drawingUndoRedo: true, savedReopened: true, exports, errors, passed: true });
+        }
+        results.push({ engine: engine.name(), stable: candidateVersion, preview: fs.existsSync(path.join(site, 'preview')) ? '1.7.0' : null, pinnedStable: fs.existsSync(path.join(site, '1.6.0')) ? '1.6.0' : null, drawingUndoRedo: true, savedReopened: true, exports, errors, passed: true });
       } catch (error) {
         if (page && !page.isClosed()) await page.screenshot({ path: path.join(evidence, `${engine.name()}-failure.png`), fullPage: true }).catch(() => {});
         results.push({ engine: engine.name(), passed: false, error: error.stack, errors });
@@ -229,7 +237,7 @@ async function freshContext(browser, errors, origin) {
         fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2) + '\n');
       }
     }
-    await runPdfRuntimeRetryCases({ origin: `${server.origin}/`, evidence: path.join(evidence, 'pdf-runtime-retry') });
+    await runPdfRuntimeRetryCases({ origin: `${server.origin}/`, sourceRoot:site, evidence: path.join(evidence, 'pdf-runtime-retry') });
     console.log(JSON.stringify(results, null, 2));
   } finally {
     server.child.kill('SIGTERM');

@@ -28,13 +28,14 @@ import {
   resolveTextFontStyle,
   resolveTextLetterSpacing,
   isEquationFontFamily,
-} from "./state.js?v=1.6.1-remediation-0929";
+} from "./state.js?v=1.7.0-four-session-integration";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 // Glyph + rule ink. Mirrors renderText(), which always paints #0d1117 (text has
 // no stroke-color control); formulas follow the same single ink convention.
 const INK = "#0d1117";
 const MAX_DEPTH = 8; // recursion guard for nested frac/sqrt/vec
+const SCRIPT_ROLES = new Set(["text", "name", "quantity", "chemical", "unit", "number", "symbol"]);
 
 /* ----- Greek names → glyphs (whole-word match only; unknown words pass through) ----- */
 const GREEK = {
@@ -75,9 +76,48 @@ const SYMBOLS = {
   angle: "∠", perp: "⊥", parallel: "∥", circ: "∘", pm2: "±",
 };
 
+// 11-14: 수식 간격은 친 띄어쓰기가 아니라 수식 규칙으로 — 함수 이름(sin…) 뒤는 좁게(0.17em),
+// 이항 기호(+ − × = ± · → < > ≤ ≥ ÷) 둘레는 같은 너비(0.22em, 등호·화살표 0.28em). 기호 옆 띄어쓰기는 지운다.
+// 맨 앞이나 여는 괄호·다른 기호 바로 뒤의 + −는 부호라 띄우지 않는다. 그 밖의 띄어쓰기(0.5 m 같은 단위 앞)는 그대로.
+const BIN_OPS = new Set(["+", "−", "-", "×", "±", "∓", "·", "÷"]);
+const REL_OPS = new Set(["=", "≠", "≈", "<", ">", "≤", "≥", "→", "←", "⇒", "∝"]);
+function tidySpacing(items) {
+  const isSpace = n => n && n.type === "text" && /^\s+$/.test(n.value);
+  const opOf = n => n && n.type === "text" && (BIN_OPS.has(n.value) || REL_OPS.has(n.value)) ? n.value : null;
+  const out = [];
+  for (let k = 0; k < items.length; k++) {
+    const n = items[k];
+    if (isSpace(n)) {
+      const prev = out[out.length - 1], next = items.slice(k + 1).find(x => !isSpace(x));
+      if (opOf(next) || (prev && (prev.type === "func" || prev.opSpaced))) continue;
+      if (prev && isSpace(prev)) continue;
+      out.push(n); continue;
+    }
+    const op = opOf(n);
+    if (op) {
+      const prev = [...out].reverse().find(x => !isSpace(x));
+      while (out.length && isSpace(out[out.length - 1])) out.pop();
+      const unary = BIN_OPS.has(op) && (op === "+" || op === "−" || op === "-") && (!prev || opOf(prev) || prev.opSpaced || (prev.type === "text" && /^[([{,]$/.test(prev.value)));
+      const node = op === "-" ? { ...n, value: "−" } : n;
+      if (unary) { out.push(node); continue; }
+      const em = REL_OPS.has(op) ? 0.28 : 0.22;
+      // 기울임 보정: 기울어진 문자(θ·t·v…)는 끝이 오른쪽으로 삐져나와 뒤 기호에 붙어 보인다 — 그만큼 왼쪽을 더 띄운다.
+      const tail = prev && (prev.type === "text" ? prev.value : prev.type === "script" && prev.base?.type === "text" && !prev.sub && !prev.sup ? prev.base.value : "");
+      const lean = typeof tail === "string" && /[A-Za-zα-ω]$/.test(tail) ? Math.max(0.09, italicCorrection(tail.slice(-1))) : prev?.type === "script" ? 0.06 : 0;
+      out.push({ type: "space", em: em + lean }, node, { type: "space", em, opSpaced: true });
+      continue;
+    }
+    if (n.type === "func") { out.push(n); const next = items[k + 1]; if (next && !isSpace(next) && next.type !== "script" && !(next.type === "text" && /^[([{]$/.test(next.value))) out.push({ type: "space", em: 0.12, opSpaced: true }); else if (isSpace(next)) { out.push({ type: "space", em: 0.12, opSpaced: true }); } continue; }
+    out.push(n);
+  }
+  while (out.length && isSpace(out[out.length - 1])) out.pop();
+  return out;
+}
+
 function parseFormula(src) {
   const s = String(src == null ? "" : src);
   let i = 0;
+  const groupRanges = new WeakMap();
 
   const isLetter = (c) => c >= "a" && c <= "z" || c >= "A" && c <= "Z";
   const isDigit = (c) => c >= "0" && c <= "9";
@@ -89,8 +129,12 @@ function parseFormula(src) {
   function parseGroup(depth) {
     // Caller guarantees s[i] === "{".
     i++; // consume "{"
+    const start = i;
     const node = parseSeq(depth + 1, true);
-    if (s[i] === "}") i++; // consume matching "}" (tolerate a missing one)
+    const end = i;
+    const closed = s[i] === "}";
+    if (closed) i++; // consume matching "}" (tolerate a missing one)
+    groupRanges.set(node, closed && end > start ? { start, end } : null);
     return node;
   }
 
@@ -105,16 +149,25 @@ function parseFormula(src) {
       if (i === before) i++;          // never stall
       if (++guard > 100000) break;    // hard safety
     }
-    return { type: "row", items };
+    return { type: "row", items: tidySpacing(items) };
   }
 
   function parseScriptUnit(depth) {
-    if (s[i] === "{") return parseGroup(depth);
+    if (s[i] === "{") {
+      const node = parseGroup(depth);
+      return { node, range: groupRanges.get(node) };
+    }
+    const start = i;
     const c = s[i];
-    if (c === undefined) return { type: "row", items: [] };
-    if (isLetter(c)) { const w = readWord(); return { type: "text", value: GREEK[w] || w }; }
-    if (isDigit(c)) return { type: "text", value: readNumber() };
-    i++; return { type: "text", value: c };
+    if (c === undefined) return { node: { type: "row", items: [] }, range: null };
+    let node;
+    if (isLetter(c)) { const w = readWord(); node = { type: "text", value: GREEK[w] || w }; }
+    else if (isDigit(c)) node = { type: "text", value: readNumber() };
+    else { i++; node = { type: "text", value: c }; }
+    // A malformed delimiter or half of a surrogate pair may still render via
+    // the tolerant legacy parser; it must never receive an inferred style.
+    const valid = c !== "}" && c !== "_" && c !== "^" && !/[\uD800-\uDFFF]/.test(c);
+    return { node, range: valid ? { start, end: i } : null };
   }
 
   function parseAtom(depth) {
@@ -124,7 +177,11 @@ function parseFormula(src) {
     if (c === "\\") { i++; return commandAtom(readWord(), depth, true); }  // 백슬래시 명령(\sin \theta \frac)
     if (isLetter(c)) return commandAtom(readWord(), depth, false);         // bare word(하위호환: theta·frac 등)
     if (isDigit(c)) return { type: "text", value: readNumber() };
-    i++; return { type: "text", value: c }; // space, operators, parens, unicode glyph
+    // 11-14: 𝜃 같은 BMP 밖 글자(두 칸)와 뒤따르는 결합 문자(위 점·화살 등)는 한 글자로 — 반으로 쪼개져 깨지던 것.
+    const cp = s.codePointAt(i);
+    let glyph = String.fromCodePoint(cp); i += glyph.length;
+    while (i < s.length && /[\u0300-\u036f\u20d0-\u20ff\ufe0e\ufe0f]/.test(s[i])) glyph += s[i++];
+    return { type: "text", value: glyph }; // space, operators, parens, unicode glyph
   }
 
   // 명령/단어 하나를 원자로 변환. isCommand = 백슬래시로 시작했는지.
@@ -142,6 +199,10 @@ function parseFormula(src) {
     }
     // 함수명·기호는 백슬래시로 입력했을 때만 특수 처리 — bare "sin"은 이탤릭 리터럴
     if (isCommand) {
+      if (w === "quad" || w === "qquad") {
+        skipSpaces(); // 명령 뒤 공백은 구분자이며 별도 글자 간격으로 더하지 않는다.
+        return { type: "space", em: w === "qquad" ? 2 : 1 };
+      }
       if (FUNCTION_NAMES.has(w)) return { type: "func", value: w };        // \sin \cos… → 정자(로만)
       if (SYMBOLS[w] != null) return { type: "text", value: SYMBOLS[w] };   // \pm \times \to …
     }
@@ -153,15 +214,81 @@ function parseFormula(src) {
     const base = parseAtom(depth);
     if (!base) return null;
     let sub = null, sup = null;
+    let subRange = null, supRange = null;
     while (s[i] === "_" || s[i] === "^") {
       const kind = s[i]; i++;
       const unit = parseScriptUnit(depth);
-      if (kind === "_") { if (!sub) sub = unit; } else if (!sup) sup = unit;
+      if (kind === "_") {
+        if (!sub) { sub = unit.node; subRange = unit.range; }
+      } else if (!sup) { sup = unit.node; supRange = unit.range; }
     }
-    return (sub || sup) ? { type: "script", base, sub, sup } : base;
+    return (sub || sup) ? { type: "script", base, sub, sup, subRange, supRange } : base;
   }
 
   return parseSeq(0, false);
+}
+
+// Ranges refer to canonical UTF-16 source, excluding the marker and enclosing
+// braces. Matching a parsed node prevents offsets in stale/edited metadata from
+// applying a style to an unrelated glyph or only part of a script.
+function visitScripts(node, visit) {
+  if (!node) return;
+  if (node.type === "script") {
+    visit(node);
+    visitScripts(node.base, visit);
+    visitScripts(node.sub, visit);
+    visitScripts(node.sup, visit);
+  } else if (node.type === "row") node.items.forEach(child => visitScripts(child, visit));
+  else if (node.type === "frac") { visitScripts(node.num, visit); visitScripts(node.den, visit); }
+  else if (node.type === "vec" || node.type === "sqrt") visitScripts(node.body, visit);
+}
+
+function scriptSpans(tree) {
+  const spans = [];
+  visitScripts(tree, node => {
+    for (const kind of ["sub", "sup"]) {
+      if (node[`${kind}Range`]) spans.push({ ...node[`${kind}Range`], kind });
+    }
+  });
+  return spans.sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
+export function getFormulaScriptSpans(source) {
+  const value = String(source == null ? "" : source);
+  return scriptSpans(parseFormula(value)).map(span => ({ ...span, text: value.slice(span.start, span.end) }));
+}
+
+function validScriptStyles(tree, styles) {
+  if (!Array.isArray(styles) || styles.length > 64) return [];
+  const spans = scriptSpans(tree);
+  const selections = new Map();
+  for (const style of styles) {
+    if (!style || !Number.isInteger(style.start) || !Number.isInteger(style.end) ||
+      !SCRIPT_ROLES.has(style.role) || !spans.some(span => span.start === style.start && span.end === style.end && span.kind === style.kind)) continue;
+    const key = `${style.kind}:${style.start}:${style.end}`;
+    const previous = selections.get(key);
+    // Reject conflicting duplicates instead of relying on their order.
+    selections.set(key, previous === null || (previous && previous.role !== style.role)
+      ? null : { start: style.start, end: style.end, kind: style.kind, role: style.role });
+  }
+  return [...selections.values()].filter(Boolean).sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
+export function normalizeFormulaScriptStyles(source, styles) {
+  return validScriptStyles(parseFormula(source), styles);
+}
+
+function styledFormulaTree(source, styles) {
+  const tree = parseFormula(source);
+  const selected = validScriptStyles(tree, styles);
+  if (selected.length) visitScripts(tree, node => {
+    for (const kind of ["sub", "sup"]) {
+      const range = node[`${kind}Range`];
+      const match = range && selected.find(style => style.kind === kind && style.start === range.start && style.end === range.end);
+      if (match) node[`${kind}Role`] = match.role;
+    }
+  });
+  return tree;
 }
 
 /* ===== MEASUREMENT (offline canvas; linear in font-size so px ≡ world-mm units) ===== */
@@ -170,20 +297,20 @@ function _ctx() {
   if (!_measureCanvas) _measureCanvas = document.createElement("canvas");
   return _measureCanvas.getContext("2d");
 }
-// 수식 글꼴 이탤릭에서 숫자는 정자(upright)로 — draw/advance가 동일 분할을 써야
-// 첨자·본문 폭이 어긋나지 않는다(정렬 보증). 분리 불필요 시 null.
-// [{text, style}] 반환: 숫자 런=normal, 나머지=italic.
+// 수식 글꼴 이탤릭에서 기울이는 것은 문자(영문·그리스 소문자)뿐 — 숫자·+·−·×·=·괄호·한글 등은 정자(upright)로(11-14 사용자:
+// 「플러스나 곱하기는 기울임이 들어가면 안 된다」). draw/advance가 동일 분할을 써야 첨자·본문 폭이 어긋나지 않는다(정렬 보증).
+// [{text, style}] 반환: 문자 런=italic, 나머지=normal. 분리 불필요 시 null.
+const ITALIC_CHAR = /[A-Za-zα-ωϑϕϵ\u{1D400}-\u{1D7FF}]/u;
 function numberStyleRuns(str, font) {
-  if (!(font.style === "italic" && isEquationFontFamily(font.family)) || !/\d/.test(str)) return null;
-  const re = /\d+(?:[.,]\d+)*/g;
+  if (!(font.style === "italic" && isEquationFontFamily(font.family))) return null;
+  const chars = Array.from(str);
+  if (chars.every(ch => ITALIC_CHAR.test(ch))) return null;
   const runs = [];
-  let last = 0, m;
-  while ((m = re.exec(str))) {
-    if (m.index > last) runs.push({ text: str.slice(last, m.index), style: "italic" });
-    runs.push({ text: m[0], style: "normal" });
-    last = m.index + m[0].length;
+  for (const ch of chars) {
+    const style = ITALIC_CHAR.test(ch) ? "italic" : "normal";
+    if (runs.length && runs[runs.length - 1].style === style) runs[runs.length - 1].text += ch;
+    else runs.push({ text: ch, style });
   }
-  if (last < str.length) runs.push({ text: str.slice(last), style: "italic" });
   return runs;
 }
 
@@ -224,7 +351,7 @@ function layoutText(value, F, font) {
       t.setAttribute("font-size", F);
       t.setAttribute("font-family", font.family);
       if (font.weight && font.weight !== "normal") t.setAttribute("font-weight", font.weight);
-      t.setAttribute("font-style", resolveTextFontStyle({ fontFamily: font.family, fontStyle: font.style }));
+      t.setAttribute("font-style", font.forceUpright ? "normal" : resolveTextFontStyle({ fontFamily: font.family, fontStyle: font.style }));
       const letterSpacing = resolveTextLetterSpacing({ fontFamily: font.family });
       if (letterSpacing) t.setAttribute("letter-spacing", letterSpacing);
       t.setAttribute("fill", INK);
@@ -284,12 +411,23 @@ function layoutRow(node, F, font) {
   };
 }
 
+// 기울임 보정값(em, 11-14): 기울어진 글자 꼭대기가 오른쪽으로 나오는 만큼. 대문자·f·v처럼 위가 넓은 글자는 크게, x·c·a는 거의 없다.
+const ITALIC_CORRECTION = { I: 0.16, V: 0.16, W: 0.15, Y: 0.16, T: 0.14, F: 0.14, P: 0.12, U: 0.12, X: 0.1, H: 0.1, N: 0.1, M: 0.1, K: 0.1, f: 0.12, v: 0.05, y: 0.05, r: 0.05, q: 0.04, j: 0.06, l: 0.04, d: 0.04 };
+function italicCorrection(ch) { return ITALIC_CORRECTION[ch] ?? (/[A-Z]/.test(ch) ? 0.08 : 0.02); }
 function layoutScript(node, F, font) {
   const base = layout(node.base, F, font);
   const sf = F * 0.66;
-  const sub = node.sub ? layout(node.sub, sf, font) : null;
-  const sup = node.sup ? layout(node.sup, sf, font) : null;
-  const scriptW = Math.max(sub ? sub.w : 0, sup ? sup.w : 0);
+  const scriptFont = kind => node[`${kind}Role`] ? {
+    ...font, style: node[`${kind}Role`] === "quantity" ? "italic" : "normal",
+    forceUpright: node[`${kind}Role`] !== "quantity",
+  } : font;
+  const sub = node.sub ? layout(node.sub, sf, scriptFont("sub")) : null;
+  const sup = node.sup ? layout(node.sup, sf, scriptFont("sup")) : null;
+  // 기울임 보정(11-14): 기울어진 문자(I·f·V…) 위첨자는 글자 꼭대기가 오른쪽으로 나와 겹친다 — 위첨자만 그만큼 오른쪽으로.
+  const last = node.base?.type === "text" ? String(node.base.value || "").slice(-1) : "";
+  const leans = /[A-Za-zα-ω]/.test(last) && font.style === "italic" && !font.forceUpright;
+  const supShift = sup && leans ? F * italicCorrection(last) : 0;
+  const scriptW = Math.max(sub ? sub.w : 0, sup ? sup.w + supShift : 0);
   const w = base.w + scriptW + F * 0.04;
   const supDrop = F * 0.42; // sup baseline raised this far above the main baseline
   const subDrop = F * 0.20; // sub baseline lowered this far below it
@@ -301,7 +439,7 @@ function layoutScript(node, F, font) {
     draw(g, x, baseY) {
       base.draw(g, x, baseY);
       const sx = x + base.w + F * 0.02;
-      if (sup) sup.draw(g, sx, baseY - supDrop);
+      if (sup) sup.draw(g, sx + supShift, baseY - supDrop);
       if (sub) sub.draw(g, sx, baseY + subDrop);
     },
   };
@@ -410,6 +548,7 @@ function layout(node, F, font) {
   switch (node && node.type) {
     case "row": return layoutRow(node, F, font);
     case "text": return layoutText(node.value, F, font);
+    case "space": return { w: F * node.em, ascent: 0, descent: 0, draw() {} };
     case "func": return layoutFunc(node.value, F, font);
     case "script": return layoutScript(node, F, font);
     case "frac": return layoutFrac(node, F, font);
@@ -423,7 +562,8 @@ function fontOf(obj) {
   return {
     family: obj.fontFamily || DEFAULT_TEXT_FONT,
     weight: obj.fontWeight || "normal",
-    style: resolveTextFontStyle(obj),
+    style: obj.forceUpright ? "normal" : resolveTextFontStyle(obj),
+    forceUpright: obj.forceUpright === true,
   };
 }
 
@@ -432,7 +572,7 @@ export function measureFormula(source, fontSize, fontHint) {
   const F = fontSize || DEFAULT_TEXT_SIZE_MM;
   const font = fontHint || { family: DEFAULT_TEXT_FONT, weight: "normal", style: "normal" };
   let L;
-  try { L = layout(parseFormula(source), F, font); }
+  try { L = layout(styledFormulaTree(source, fontHint?.scriptStyles), F, font); }
   catch (_) { L = layoutText(String(source || ""), F, font); }
   return { w: L.w, ascent: L.ascent, descent: L.descent, h: L.ascent + L.descent };
 }
@@ -445,7 +585,7 @@ export function renderFormula(obj) {
   if (obj.id) g.dataset.id = obj.id;
 
   let L;
-  try { L = layout(parseFormula(obj.source || ""), F, font); }
+  try { L = layout(styledFormulaTree(obj.source || "", obj.scriptStyles), F, font); }
   catch (_) { L = layoutText(String(obj.source || ""), F, font); }
 
   const left = obj.x;

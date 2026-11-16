@@ -2,8 +2,8 @@ import {
   FS_DIR_SUPPORTED,
   ensureDirPermission,
   pickDir,
-} from "./export-dir.js?v=1.6.1-remediation-0929";
-import { zipStore } from "./backup-zip.js?v=1.6.1-preview-labeler-0917-1111";
+} from "./export-dir.js?v=1.7.0-four-session-integration";
+import { zipStore } from "./backup-zip.js?v=1.7.0-four-session-integration";
 
 export const TASK_EXPORT_MODES = Object.freeze({
   SELECTED: "selected",
@@ -101,7 +101,7 @@ export async function chooseTaskExportDestination({
   desktopBatchOutput,
   directorySupported = FS_DIR_SUPPORTED,
   pickBrowserDirectory = pickDir,
-  confirmDownloads = message => window.confirm(message),
+  confirmDownloads = message => import('./ui-dialogs.js?v=1.7.0-four-session-integration').then(m => m.showConfirm(message, { title: 'ZIP으로 받기', okText: '받기', cancelText: '취소' })),
 } = {}) {
   if (desktopBatchOutput?.pickFolder && desktopBatchOutput?.save) {
     const result = await desktopBatchOutput.pickFolder();
@@ -112,7 +112,7 @@ export async function chooseTaskExportDestination({
     if (!directory || !(await ensureDirPermission(directory))) return null;
     return { kind: "browser-directory", directory };
   }
-  const confirmed = confirmDownloads("이 브라우저는 폴더 저장을 지원하지 않습니다. 결과를 한 폴더처럼 묶은 ZIP 다운로드를 요청할까요? 다운로드 완료 여부는 브라우저에서 확인해야 하며 현재 편집 내용은 유지됩니다.");
+  const confirmed = await confirmDownloads("이 브라우저는 폴더 저장을 지원하지 않습니다. 결과를 한 폴더처럼 묶은 ZIP 다운로드를 요청할까요? 다운로드 완료 여부는 브라우저에서 확인해야 하며 현재 편집 내용은 유지됩니다.");
   return confirmed ? { kind: "browser-zip" } : null;
 }
 
@@ -122,14 +122,17 @@ export async function writeTaskExports(destination, records, {
   if (!destination) return { status: "cancelled", count: 0, files: [] };
   const files = [];
   const zipEntries = [];
+  // Plain public records remain supported; managed records check their live owner.
+  const currentDataUrl = record => typeof record.currentDataUrl === 'function'
+    ? record.currentDataUrl() : record.dataUrl;
   for (const record of records || []) {
-    const extension = imageExtension(record.dataUrl);
+    const extension = imageExtension(currentDataUrl(record));
     if (!extension) throw new Error(`‘${record.sourceName || "결과"}’의 이미지 형식을 저장할 수 없습니다.`);
     if (destination.kind === "desktop") {
       const result = await destination.writer.save({
         outputDirectory: destination.folder,
         sourceName: record.sourceName,
-        dataUrl: record.dataUrl,
+        dataUrl: currentDataUrl(record),
         extension,
         appendConverted: false,
       });
@@ -138,13 +141,26 @@ export async function writeTaskExports(destination, records, {
     }
     if (destination.kind === "browser-directory") {
       const name = await nextAvailableBrowserName(destination.directory, record.sourceName, extension);
+      currentDataUrl(record); // Name lookup may have awaited a permission/filesystem boundary.
       const handle = await destination.directory.getFileHandle(name, { create: true });
-      const writable = await handle.createWritable();
+      let writable;
       try {
-        await writable.write(dataUrlBlob(record.dataUrl));
+        currentDataUrl(record);
+        writable = await handle.createWritable();
+        const dataUrl = currentDataUrl(record);
+        await writable.write(dataUrlBlob(dataUrl));
+        // A RAW transition while writing must abort the uncommitted transformed stream.
+        if (currentDataUrl(record) !== dataUrl) {
+          throw new Error('저장 중 결과의 RAW 보존 조건이 변경되었습니다. 다시 저장해 주세요.');
+        }
         await writable.close();
       } catch (error) {
-        await writable.abort?.().catch(() => {});
+        if (writable) await writable.abort().catch(abortError => {
+          if (error && typeof error === 'object') error.taskExportAbortError = String(abortError?.message || abortError);
+        });
+        // create:true is not exclusive creation. Never remove a possibly external file.
+        // Abort prevents a stale staged stream from closing; an empty entry may remain.
+        if (error && typeof error === 'object') error.taskExportPreparedFile = name;
         throw error;
       }
       files.push(name);
@@ -158,7 +174,7 @@ export async function writeTaskExports(destination, records, {
       name = `${sanitizeTaskExportName(record.sourceName)}${marker}${extension}`;
       sequence += 1;
     } while (zipEntries.some(entry => entry.name === `5E-AI-결과/${name}`));
-    zipEntries.push({ name: `5E-AI-결과/${name}`, data: dataUrlBytes(record.dataUrl) });
+    zipEntries.push({ name: `5E-AI-결과/${name}`, data: dataUrlBytes(currentDataUrl(record)) });
     files.push(name);
   }
   if (destination.kind === "browser-zip" && zipEntries.length) {

@@ -1,4 +1,4 @@
-import { modKey, shortcutKey, blocksCanvasShortcut, keyLabel, IS_MAC } from './platform.js?v=1.6.1-remediation-0929';
+import { modKey, shortcutKey, blocksCanvasShortcut, keyLabel, IS_MAC } from './platform.js?v=1.7.0-four-session-integration';
 
 export const SETTINGS_COMMANDS = [
   { id: 'open-screen', label: '환경 설정', key: ',', alt: false, shift: false, shortcut: 'Ctrl+,' },

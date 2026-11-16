@@ -6,13 +6,19 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
-const playwright = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const root = process.env.TASK9_ROOT || process.cwd();
-const evidenceRoot = path.resolve(process.env.TASK9_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task9-polish/browser'));
-const { installCropFixture, pointerOnImage } = require(path.join(root, 'tests/helpers/crop-loading-fixture.cjs'));
+const playwright = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root = path.resolve(process.env.TASK9_ROOT || path.join(__dirname, '..'));
+const { fixtureContext, installAiMain } = require(path.join(root, 'tests/helpers/canonical-fixture-adapter.cjs'));
+const { runtime, inspectEntry } = fixtureContext(root);
+const evidenceRoot = path.resolve(process.env.TASK9_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task9-polish/browser'));
+const { installCropFixture, pointerOnImage, captureCropEvidence, releaseCropFixture } = require(path.join(root, 'tests/helpers/crop-loading-fixture.cjs'));
 const { identity, loadForHostedCi } = require('./helpers/performance-reference.cjs');
 const physicalReference = loadForHostedCi(root);
 const active = '#ai-image-panel';
+const canonicalRuntime = runtime.moduleBase === '/js/';
+const visibleCommentSelector = canonicalRuntime
+  ? '.is-ai-active-candidate [data-ai-comment-marker]'
+  : '.ai-workbench-comment';
 const taskButton = index => `${active} [data-tab-id="task-${index}"] .ai-task-tab-select`;
 const write = (dir, name, value) => fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2));
 // Reuse the existing IDB/desktop fixture without importing its node:test registrations.
@@ -21,7 +27,9 @@ const seedStart = lifecycleFixture.indexOf('function seedRequestWorkspaces(');
 const seedEnd = lifecycleFixture.indexOf('\nasync function requestBrowserFixture(', seedStart);
 assert.ok(seedStart >= 0 && seedEnd > seedStart, 'populated lifecycle fixture must be available');
 const seed = lifecycleFixture.slice(seedStart, seedEnd);
-const sourceFiles = ['preview/js/ai-panel.js', 'preview/js/ai-task-workspaces.js', 'preview/js/ai-workspace-batch.js', 'preview/js/ai-comparison.js', 'preview/js/unified-library-ui.js', 'preview/js/tools/pointer-magnifier.js', 'preview/css/ai-panel.css', 'preview/css/ai-comparison.css', 'preview/css/unified-library.css', 'preview/index.html', 'preview/js/main.js', 'tests/test-ai-workspace-lifecycle-browser.cjs', 'tests/helpers/crop-loading-fixture.cjs', 'tests/test-ai-workbench-polish-browser.cjs', 'tests/helpers/performance-reference.cjs', 'package-lock.json'];
+const legacySourceFiles = ['preview/js/ai-panel.js', 'preview/js/ai-task-workspaces.js', 'preview/js/ai-workspace-batch.js', 'preview/js/ai-comparison.js', 'preview/js/unified-library-ui.js', 'preview/js/tools/pointer-magnifier.js', 'preview/css/ai-panel.css', 'preview/css/ai-comparison.css', 'preview/css/unified-library.css', 'preview/index.html', 'preview/js/main.js', 'tests/test-ai-workspace-lifecycle-browser.cjs', 'tests/helpers/crop-loading-fixture.cjs', 'tests/test-ai-workbench-polish-browser.cjs', 'tests/helpers/performance-reference.cjs', 'package-lock.json'];
+const canonicalSources = ['js', 'css'].flatMap(dir => fs.readdirSync(path.join(root, dir), { recursive: true }).filter(file => /\.(?:js|mjs|css)$/.test(file)).map(file => `${dir}/${file}`));
+const sourceFiles = [...new Set([...legacySourceFiles, ...canonicalSources, 'index.html', 'tests/helpers/canonical-fixture-adapter.cjs', 'tests/helpers/four-session-entry.cjs', 'tests/fixtures/candidate-union.cjs', 'tests/run-browser-tests.cjs'])].sort();
 const hashes = () => Object.fromEntries(sourceFiles.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')]));
 
 async function fixture(t, engine, name, count = null) {
@@ -30,8 +38,8 @@ async function fixture(t, engine, name, count = null) {
   const errors = [];
   const server = http.createServer((request, response) => {
     let file = path.resolve(root, `.${new URL(request.url, 'http://localhost').pathname}`);
-    if (!file.startsWith(root + path.sep)) return response.writeHead(403).end();
     if (file.endsWith('/preview') || request.url.split('?')[0].endsWith('/')) file = path.join(file, 'index.html');
+    if (!file.startsWith(root + path.sep)) return response.writeHead(403).end();
     const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
     fs.readFile(file, (error, body) => { response.writeHead(error ? 404 : 200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' }); response.end(error ? 'missing' : body); });
   });
@@ -39,7 +47,11 @@ async function fixture(t, engine, name, count = null) {
   const resources = { engine, pid: process.pid, serverPort: null, browserStarted: false, contextStarted: false, serverClosed: false, browserClosed: false, contextClosed: false };
   t.after(async () => {
     try {
-      if (page && !page.isClosed()) await page.screenshot({ path: path.join(evidence, 'final.png') });
+      if (page && !page.isClosed()) {
+        write(evidence, 'crop-events.json', await captureCropEvidence(page));
+        await releaseCropFixture(page);
+        await page.screenshot({ path: path.join(evidence, 'final.png') });
+      }
       if (tracing) {
         let deadline;
         try {
@@ -69,14 +81,22 @@ async function fixture(t, engine, name, count = null) {
   write(evidence, 'environment.json', { node: process.version, executable: process.execPath, engine, browserVersion: browser.version(), headless, measuredOutsideGitHubActions: process.env.GITHUB_ACTIONS !== 'true', performanceIdentity: identity(root), platform: os.platform(), release: os.release(), arch: os.arch(), cpu: os.cpus()[0]?.model, cpuCount: os.cpus().length, totalMemory: os.totalmem(), loadAverage: os.loadavg(), viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2, head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), dirtyStatus: execFileSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' }), sourceHashes: sourceBefore, service: 'deterministic desktop fixture; no authenticated provider request', measurement: 'trusted pointer click event through decoded selected target plus two animation frames; automation actionability time excluded' });
   if (count !== null) {
     await page.addInitScript({ content: `${seed}\nseedRequestWorkspaces(${count}); localStorage.setItem('5e.preview:5e.mode','pro'); localStorage.setItem('5e.preview:theme','light'); localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true'); window.fiveEDesktop.captureSources=async()=>[{name:'검증 캡처',data:window.__task2.original}];` });
-    await page.route('**/preview/js/main.js*', route => {
-      const source = fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8');
-      const original = 'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });';
-      assert.ok(source.includes(original));
-      return route.fulfill({ contentType: 'text/javascript', body: 'await window.__seedReady;\n' + source.replace(original, 'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager=aiPanel;') });
+    await page.addInitScript(() => {
+      let actual;
+      window.__task2ManagerReady = new Promise(resolve => {
+        Object.defineProperty(window, '__task2Manager', { configurable: true, get: () => actual, set(value) { actual = value; resolve(value); } });
+      });
     });
-    await page.goto(`${origin}/preview/`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => Boolean(window.__task2Manager));
+    await installAiMain(page, root, { seedReady: true, manager: '__task2Manager', state: '__integrationState' }, evidence);
+    const entry = await inspectEntry(page, origin, runtime);
+    write(evidence, 'entry-runtime.json', entry);
+    await page.evaluate(async () => {
+      let deadline;
+      try {
+        const manager = await Promise.race([window.__task2ManagerReady, new Promise((_resolve, reject) => { deadline = setTimeout(() => reject(new Error('Actual canonical manager initialization deadline exceeded')), 10000); })]);
+        await manager.sharingSnapshot();
+      } finally { clearTimeout(deadline); }
+    });
     const welcome = page.locator('.tut-welcome-overlay .tut-banner-no'); if (await welcome.isVisible()) await welcome.click();
     await page.click('#ai-image-install-open');
     await selected(page, 0);
@@ -93,19 +113,24 @@ async function fixture(t, engine, name, count = null) {
   };
 }
 async function selected(page, index) {
-  await page.waitForFunction(index => {
+  // Comment markers are hidden by default and each task keeps its own marker visibility (83201a54 / ai-image-comments.js restoreViewState):
+  // once this task is the selected one with its image decoded, press the real 「코멘트」 toggle while it still reports hidden.
+  await page.waitForFunction(({ index, selector, canonical }) => {
     const panel = document.querySelector('#ai-image-panel');
-    return panel?.dataset.aiSelectedCandidateId === `candidate-${index}` && [...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) && [...panel.querySelectorAll('.ai-workbench-comment')].some(row => row.getBoundingClientRect().height > 0);
-  }, index);
+    if (panel?.dataset.aiSelectedCandidateId !== `candidate-${index}` || ![...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512)) return false;
+    if (canonical && panel.dataset.aiCommentsVisible === 'false') panel.querySelector('[data-ai-comment-visibility]')?.click();
+    return [...panel.querySelectorAll(selector)].some(row => row.getBoundingClientRect().height > 0);
+  }, { index, selector: visibleCommentSelector, canonical: canonicalRuntime });
 }
 async function select(page, index) { await page.click(taskButton(index)); await selected(page, index); }
 async function content(page, count) {
-  const snapshot = await page.evaluate(async () => {
+  const snapshot = await page.evaluate(async selector => {
     const tabs = (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w => w.tabs);
     const panel = document.querySelector('#ai-image-panel');
-    return { tabs: tabs.map(tab => ({ id: tab.id, originals: tab.attachments.length, revisions: tab.generated.length, comments: tab.generated.reduce((n, item) => n + item.comments.length, 0), originalUnchanged: tab.attachments[0].data === window.__task2.original })), rows: panel.querySelectorAll('.ai-task-tab-select').length, selected: panel.dataset.aiSelectedCandidateId, decoded: [...panel.querySelectorAll('.ai-image-card img')].filter(img => img.complete && img.naturalWidth === 512).length, visibleComments: [...panel.querySelectorAll('.ai-workbench-comment')].filter(el => el.getBoundingClientRect().height > 0).length };
-  });
+    return { tabs: tabs.map(tab => ({ id: tab.id, originals: tab.attachments.length, revisions: tab.generated.length, comments: tab.generated.reduce((n, item) => n + item.comments.length, 0), originalUnchanged: tab.attachments[0].data === window.__task2.original })), rows: panel.querySelectorAll('.ai-task-tab-select').length, navigationCopiesInDocument: document.querySelectorAll('[data-ai-tab-list] > [data-ai-workspace-link]').length, selected: panel.dataset.aiSelectedCandidateId, decoded: [...panel.querySelectorAll('.ai-image-card img')].filter(img => img.complete && img.naturalWidth === 512).length, visibleComments: [...panel.querySelectorAll(selector)].filter(el => el.getBoundingClientRect().height > 0).length };
+  }, visibleCommentSelector);
   assert.equal(snapshot.tabs.length, count); assert.equal(snapshot.rows, count);
+  if (canonicalRuntime) assert.equal(snapshot.navigationCopiesInDocument, count, 'Only the visible workspace contributes navigation copies to the document');
   assert.ok(snapshot.tabs.every(tab => tab.originals === 1 && tab.revisions === 1 && tab.comments === 1 && tab.originalUnchanged));
   assert.ok(snapshot.decoded >= 2); assert.ok(snapshot.visibleComments >= 1, 'selected populated task must display its comment');
   return snapshot;
@@ -116,11 +141,41 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     const { page, evidence, errors, pauseTracing, resumeTracing } = await fixture(t, engine, `tasks-${count}`, count);
     // Given: every fixture task has an original, revision and area comment; warm every task through the real controls.
     const before = await content(page, count);
+    if (canonicalRuntime) {
+      const marker = page.locator(`${active} ${visibleCommentSelector}`).first();
+      await marker.focus(); await marker.press('Enter');
+      const popup = page.locator(`${active} [data-ai-comment-popover]`);
+      await popup.waitFor({ state: 'visible' });
+      assert.ok((await popup.locator('[data-ai-inline-editor]').inputValue()).length > 0, 'The visible marker opens the stored comment editor');
+      await popup.locator('.ai-comment-popover-close').click();
+    }
     const cold = [];
     for (let index = 0; index < count; index++) { const start = performance.now(); await select(page, index); cold.push(performance.now() - start); }
     await page.screenshot({ path: path.join(evidence, 'populated-last.png') });
     write(evidence, 'last-task-content.json', await content(page, count));
     await select(page, 0);
+    if (canonicalRuntime && count > 1) {
+      await page.evaluate(() => {
+        window.__closedWorkspaceMutations = [];
+        const panels = [...document.querySelectorAll('[id^="ai-workspace-"], #ai-image-panel')]
+          .filter(node => node.hidden && node.inert && node.dataset.aiSelectedCandidateId !== 'candidate-1');
+        window.__closedWorkspaceCount = panels.length;
+        window.__closedWorkspaceObserver = new MutationObserver(records => {
+          window.__closedWorkspaceMutations.push(...records.map(row => ({ id: row.target.id, attribute: row.attributeName })));
+        });
+        for (const node of panels) window.__closedWorkspaceObserver.observe(node, { attributes: true,
+          attributeFilter: ['id', 'hidden', 'inert', 'style', 'aria-hidden', 'data-modal-motion-state'] });
+      });
+      await select(page, 1);
+      const closed = await page.evaluate(() => {
+        window.__closedWorkspaceObserver.disconnect();
+        return { count: window.__closedWorkspaceCount, mutations: window.__closedWorkspaceMutations };
+      });
+      assert.ok(closed.count >= count - 2, 'The check covers retained closed workspaces');
+      assert.deepEqual(closed.mutations, [], 'Task switching does not restyle already closed workspaces');
+      write(evidence, 'closed-workspace-mutations.json', closed);
+      await select(page, 0);
+    }
     const screenshots = [];
     const capture = async name => { const file = path.join(evidence, `${name}.png`); await page.screenshot({ path: file }); screenshots.push({ file, content: await content(page, count) }); };
     await capture('populated-light');
@@ -128,8 +183,8 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     // click-to-paint latency. Preserve traces on either side of the benchmark.
     await pauseTracing();
     await page.bringToFront();
-    await page.waitForTimeout(100);
-    await page.evaluate(() => {
+    await page.locator(active).evaluate(async node => { await document.fonts.ready; await Promise.all(node.getAnimations().map(animation => animation.finished)); });
+    await page.evaluate(selector => {
       window.__polish = { samples: [], gaps: [], stop: false, last: performance.now(), started: performance.now() };
       window.__task2.longTasks = [];
       const tick = time => { if (window.__polish.stop) return; window.__polish.gaps.push(time - window.__polish.last); window.__polish.last = time; requestAnimationFrame(tick); }; requestAnimationFrame(tick);
@@ -139,13 +194,13 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
         const start = performance.now();
         const inspect = () => {
           const panel = document.querySelector('#ai-image-panel');
-          if (panel?.dataset.aiSelectedCandidateId !== id.replace('task-', 'candidate-') || ![...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) || ![...panel.querySelectorAll('.ai-workbench-comment')].some(row => row.getBoundingClientRect().height > 0)) {
+          if (panel?.dataset.aiSelectedCandidateId !== id.replace('task-', 'candidate-') || ![...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) || ![...panel.querySelectorAll(selector)].some(row => row.getBoundingClientRect().height > 0)) {
             if (performance.now() - start < 1000) requestAnimationFrame(inspect); else window.__polish.samples.push({ id, ms: performance.now() - start, ready: false }); return;
           }
           requestAnimationFrame(() => window.__polish.samples.push({ id, ms: performance.now() - start, ready: true }));
         }; requestAnimationFrame(inspect);
       }, true);
-    });
+    }, visibleCommentSelector);
     // When: trusted cached selection clicks repeatedly cycle across the populated task set.
     for (let sample = 0; sample < 20; sample++) {
       const index = count === 1 ? 0 : (sample * 7 + 1) % count;
@@ -172,6 +227,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
     assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true);
     await capture('populated-dark-reduced');
+    if (canonicalRuntime) await page.locator(`${active} .ai-compare-menu summary`).click();
     await page.click(`${active} [data-ai-compare]`);
     await page.waitForFunction(() => [...document.querySelectorAll('.ai-comparison-pane image')].length === 2 && [...document.querySelectorAll('.ai-comparison-pane image')].every(img => img.hasAttribute('href')));
     assert.equal(await page.getByLabel('왼쪽 비교 버전', { exact: true }).inputValue(), 'source-0');
@@ -185,6 +241,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await page.getByRole('slider').focus(); await page.keyboard.press('Home'); await page.keyboard.press('Shift+ArrowRight');
     assert.equal(await page.getByRole('slider').getAttribute('aria-valuenow'), '10');
     await page.screenshot({ path: path.join(evidence, 'compare-dark-retina-zoompan.png') });
+    if (canonicalRuntime) await page.locator(`${active} .ai-compare-menu summary`).click();
     await page.click(`${active} [data-ai-compare]`);
     assert.equal(await page.locator(`${active} [data-ai-capture]`).count(), 0, 'retired capture entry is absent');
     write(evidence, 'visual-content.json', { before, screenshots, comparison: { fitViews, zoomViews, left: 'source-0', right: 'candidate-0' }, errors, sends: await page.evaluate(() => window.__task2.sends.length) });
@@ -195,7 +252,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
 for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motion crop preserves target geometry through slow decode, retry and reopen`, { timeout: 90000 }, async t => {
   const { page, evidence, errors, origin, pauseTracing, resumeTracing } = await fixture(t, engine, 'loading');
   process.env.PREVIEW_URL = origin;
-  const ui = await installCropFixture(page);
+  const ui = await installCropFixture(page, { root, evidence, held: ['original-2', 'thumbnail-2', 'continuous-2'] });
   await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   const load = ui.locator('[data-unilib-crop-load-state]');
@@ -209,7 +266,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await pointerOnImage(page, ui, .9);
   await ui.locator('[data-unilib-crop-canvas]').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
   await page.screenshot({ path: path.join(evidence, 'dark-zoom-edge-lens.png') });
-  await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+  await page.evaluate(() => { window.cropActionAfter = window.cropFixtureLog.length; for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) if (window.cropGates[key]?.released !== false) throw new Error(`Missing pre-armed gate ${key}`); });
   await pauseTracing();
   await ui.locator('[data-unilib-crop-page-next]').click(); await load.waitFor({ state: 'visible' });
   await ui.locator('.unilib-crop-load-paper').waitFor({ state: 'visible' });
@@ -232,12 +289,13 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await page.evaluate(() => window.cropGates['thumbnail-2'].release());
   await ui.locator('.unilib-crop-load-preview').waitFor({ state: 'visible' });
   await page.evaluate(() => { window.holdCrop('decode-2'); window.cropGates['original-2'].release(); });
-  await page.evaluate(async () => { for (let n = 0; n < 4; n++) await new Promise(requestAnimationFrame); });
+  await page.evaluate(async () => { await window.waitCropEvent({ phase: 'editor-decode-start', number: 2, kind: 'original' }, window.cropActionAfter); await window.waitCropEvent({ phase: 'decode-held', number: 2 }, window.cropActionAfter); });
   assert.equal(await load.isVisible(), true);
   await ui.locator('[data-unilib-crop-canvas]').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
   await page.screenshot({ path: path.join(evidence, 'decode-pending-target-only.png') });
   await page.evaluate(() => window.cropGates['decode-2'].release()); await load.waitFor({ state: 'hidden' });
   assert.equal(await image.evaluate(img => img.naturalWidth), 800);
+  await page.evaluate(() => window.cropGates['continuous-2'].release());
   await page.evaluate(() => { window.cropBrokenPage = 3; });
   await ui.locator('[data-unilib-crop-page-next]').click();
   await ui.locator('[data-unilib-crop-load-state][data-state="error"]').waitFor();
@@ -245,10 +303,13 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await page.screenshot({ path: path.join(evidence, 'decode-failed.png') });
   await page.evaluate(() => { window.cropBrokenPage = null; }); await ui.locator('[data-unilib-crop-retry]').click(); await load.waitFor({ state: 'hidden' });
   assert.equal(await image.evaluate(img => img.naturalWidth), 700);
-  await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+  await page.evaluate(() => { window.cropActionAfter = window.cropFixtureLog.length; for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) window.holdCrop(key); });
   await ui.locator('[data-unilib-crop-page-prev]').click(); await load.waitFor({ state: 'visible' });
+  const canceledOperations = await page.evaluate(() => window.cropFixtureLog.filter(row => row.phase === 'editor-start' && row.number === 2 && row.sequence > window.cropActionAfter).map(row => row.sequence));
+  assert.ok(canceledOperations.length > 0, 'The canceled page has an actual started editor operation');
   await ui.locator('[data-unilib-crop-cancel]').click(); await ui.locator('[data-result-id="geometry-book:page:1"]').click(); await ui.locator('[data-unilib-adjust]').click(); await load.waitFor({ state: 'hidden' });
-  await page.evaluate(async () => { window.cropGates['original-2'].release(); window.cropGates['thumbnail-2'].release(); for (let n = 0; n < 4; n++) await new Promise(requestAnimationFrame); });
+  await page.evaluate(async operations => { for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) window.cropGates[key].release(); await Promise.all(operations.flatMap(operation => ['editor-settled', 'editor-original-settled', 'editor-fast-settled'].map(phase => window.waitCropEvent({ phase, operation })))); }, canceledOperations);
+  write(evidence, 'loading-gate-events.json', await captureCropEvidence(page));
   assert.equal(await image.evaluate(img => img.naturalWidth), 600);
   const pointer = await pointerOnImage(page, ui);
   await page.touchscreen.tap(pointer.point.x, pointer.point.y); await page.locator('#library-crop-magnifier').waitFor({ state: 'hidden' });

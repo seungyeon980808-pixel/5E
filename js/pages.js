@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 /* ===== PAGES (다중 아트보드 — 하단 탭 + 스왑 방식 전환) =====
  *
  * 설계 핵심(FEATURE_PROPOSALS "다중 아트보드"): 기존 수십 모듈이 참조하는
@@ -11,9 +12,9 @@
  * (meta 필드는 하위호환을 위해 로드/저장 시 보존만 하고 UI에는 노출하지 않는다.)
  */
 
-import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { rebuildGroups } from "./transform.js?v=1.6.1-remediation-0929";
-import { savePageRuntime, restorePageRuntime } from "./page-history.js?v=1.6.1-preview-labeler-0917-1111";
+import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { rebuildGroups } from "./transform.js?v=1.7.0-four-session-integration";
+import { savePageRuntime, restorePageRuntime } from "./page-history.js?v=1.7.0-four-session-integration";
 
 let _seq = 0;
 function newPageId() {
@@ -83,7 +84,7 @@ export function initPages(state) {
 }
 
 function pagesSignature(s) {
-  return JSON.stringify((s.pages || []).map((p) => [p.id, p.name]))
+  return JSON.stringify((s.pages || []).map((p) => [p.id, p.name, p.meta?.examLink?.tabId || null, p.meta?.examLink?.assetId || null, p.meta?.examRevisionId || null]))
     + "|" + s.activePageId;
 }
 
@@ -115,6 +116,14 @@ export function switchPage(state, targetId) {
 }
 
 /* ----- 추가(빈 페이지) ----- */
+export function resetPageHistory(state, page) {
+  savePageRuntime({undoStack:[],redoStack:[],selectedIds:[],selectedGuideId:null,activeLayerId:page.layers[0]?.id},page);
+  if (state.get().activePageId === page.id) state.update(s => {
+    s.undoStack = []; s.redoStack = []; s.selectedIds = []; s.selectedGuideId = null;
+    rebuildGroups(s);
+  });
+}
+
 export function addPage(state) {
   const id = newPageId();
   state.update((s) => {
@@ -144,6 +153,9 @@ function duplicatePage(state) {
       objects: cur.objects, guides: cur.guides, layers: cur.layers,
       artboard: cur.artboard, meta: cur.meta,
     }));
+    delete clone.meta?.examLink;
+    delete clone.meta?.examPendingLink;
+    delete clone.meta?.examRevisionId;
     const idx = s.pages.indexOf(cur);
     s.pages.splice(idx + 1, 0, {
       id,
@@ -278,12 +290,14 @@ function renderTabs(state) {
   const active = s.activePageId;
   const tabs = (s.pages || []).map((p) => {
     const isActive = p.id === active;
+    const isLinked = !!(p.meta?.examLink && p.meta?.examRevisionId);
     const tab = document.createElement("div");
-    tab.className = `page-tab${isActive ? " is-active" : ""}`;
+    tab.className = `page-tab${isActive ? " is-active" : ""}${isLinked ? " is-exam-linked" : ""}`;
     tab.dataset.id = p.id;
     tab.setAttribute("role", "tab");
     tab.setAttribute("aria-selected", String(isActive));
     tab.title = `${p.name} · 더블클릭 또는 Enter로 이름 변경·삭제`;
+    if (isLinked) tab.title = `${p.name} · 문서 그림 연결됨 · 연결 해제 전까지 유지`;
     const name = document.createElement("span");
     name.className = "page-tab-name";
     name.textContent = p.name;
@@ -310,10 +324,23 @@ function _onDocKey(e) { if (e.key === "Escape") closeContextMenu(); }
 
 function openContextMenu(state, id, tab, x) {
   closeContextMenu();
+  // Switching to an inactive page rebuilds the tabs before this handler runs.
+  // Measure the live replacement; the former tab reports an empty rectangle.
+  tab = [...(_tabsEl?.children || [])].find(candidate => candidate.dataset.id === id);
+  if (!tab) return;
   const s = state.get();
   const idx = (s.pages || []).findIndex((p) => p.id === id);
   const count = (s.pages || []).length;
   const items = [
+    ...(s.pages[idx]?.meta?.examLink && s.pages[idx]?.meta?.examRevisionId ? [
+      { label: '연결된 문서 그림 편집', act: () => {switchPage(state,id);window.dispatchEvent(new Event('5e:exam-edit-linked-page'));} },
+      { label: '문서 그림 연결 해제', act: () => {
+        const link=structuredClone(s.pages[idx].meta.examLink);
+        state.update(value=>{const page=findPage(value,id);if(!page)return;for(const key of ['examLink','examRevisionId','examRender','examDraftRender','examAnnotationBaseline','examEditScope'])delete page.meta[key];});
+        window.dispatchEvent(new CustomEvent('5e:exam-unlink-page',{detail:{link}}));
+      } },
+      {sep:true},
+    ] : []),
     { label: "이름 변경", act: () => renamePage(state, id) },
     { label: "복제", act: () => duplicatePage(state) },
     { sep: true },
@@ -327,7 +354,7 @@ function openContextMenu(state, id, tab, x) {
   menu.className = "text-ctx-menu page-ctx-menu";
   menu.innerHTML = items.map((it, i) =>
     it.sep ? `<div class="page-ctx-sep"></div>`
-      : `<button type="button" class="text-ctx-item${it.danger ? " is-danger" : ""}" data-i="${i}"${it.disabled ? " disabled" : ""}>${it.label}</button>`
+      : `<button type="button" class="text-ctx-item${it.danger ? " is-danger" : ""}" data-i="${i}"${it.disabled ? " disabled" : ""}>${escapeHtml(it.label)}</button>`
   ).join("");
   document.body.appendChild(menu);
 

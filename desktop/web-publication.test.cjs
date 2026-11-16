@@ -110,6 +110,18 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(site, 'ourdocs/index.html'), 'utf8'), '<iframe title="OurDocs"></iframe>');
   assert.equal(fs.readFileSync(path.join(site, '404.html'), 'utf8'), '<title>Named route recovery</title>');
   verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
+  // 1.7.0(11-15): preservePaths가 빈 목록이면 예전 판(preview·mobile·1.6.0)을 올리지 않고 1.7.0 본체만.
+  write('release-channels.json', JSON.stringify({ candidate: { version: '1.6.1' }, webPublication: { preservePreviewSourceSha: preservedSha, preservePaths: [] } }));
+  git(['add', 'release-channels.json']);
+  commit();
+  const bare = path.join(temporary, 'site-no-preserved');
+  const bareReceipt = stage({ output: bare, preservedRoot: sourceRoot, sourceRoot });
+  for (const route of ['preview', 'mobile', '1.6.0']) assert.equal(fs.existsSync(path.join(bare, route)), false, `${route} is not published when preservePaths is empty`);
+  assert.equal(fs.readFileSync(path.join(bare, 'memo/index.html'), 'utf8'), '<title>memo</title>');
+  verifyArtifact(bare, bareReceipt, { expectedSha: bareReceipt.sourceCommit, requireClean: true });
+  write('release-channels.json', JSON.stringify({ candidate: { version: '1.6.1' }, webPublication: { preservePreviewSourceSha: preservedSha } }));
+  git(['add', 'release-channels.json']);
+  commit();
   const routeSite = path.join(temporary, 'route-site');
   fs.cpSync(site, routeSite, { recursive: true });
   write('examlibrary/index.html', '<iframe title="기출 탐색기" src="https://example.invalid/"></iframe>');
@@ -166,7 +178,10 @@ test('web publication requires successful validation and a separate manual main-
   const upload = steps.findIndex(step => step.uses === 'actions/upload-pages-artifact@v3');
   assert.ok(build >= 0 && browser > build && verify > browser && upload > verify);
   assert.ok(steps.some(step => step.run === 'npm run test:unit'));
-  assert.ok(workflow.jobs['source-test'].steps.some(step => step.run === 'npm run test:browser'));
+  assert.ok(workflow.jobs['source-test'].steps.some(step => step.run === 'npm run test:browser -- --known-failures tests/known-failures.json'));
+  const sourceBrowserGate = workflow.jobs['source-test'].steps.find(step => step.run === 'npm run test:browser -- --known-failures tests/known-failures.json');
+  assert.equal(require('../tests/helpers/four-session-entry.cjs').entryConfiguration(sourceBrowserGate.env).entry, '/',
+    'the source gate must validate the shipped root entry rather than inherit the preserved preview default');
   assert.match(steps[browser].env.FIVE_E_SITE_ROOT, /web-release\/site$/);
   assert.deepEqual(workflow.jobs.publish.steps.map(step => step.uses), ['actions/deploy-pages@v4']);
 });

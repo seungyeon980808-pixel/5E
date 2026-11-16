@@ -1,0 +1,506 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "source": {
+    "id": "chemistry",
+    "hash": "sha256:56643ddc3d9f79ab5b61955d5ff53812075b4048c356d5e059809df64b8a4639",
+    "width": 800,
+    "height": 534,
+    "plotBox": {
+      "x": 285,
+      "y": 15,
+      "w": 492,
+      "h": 376
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "혼합 용액의 [Na⁺]",
+      "unit": "M",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 0.05555555555555555,
+          "label": "1/18",
+          "position": 0.209,
+          "displayMath": "\\frac{1}{18}"
+        },
+        {
+          "value": 0.14285714285714285,
+          "label": "1/7",
+          "position": 0.718,
+          "displayMath": "\\frac{1}{7}"
+        },
+        {
+          "value": 0.16666666666666666,
+          "label": "1/6",
+          "position": 0.837,
+          "displayMath": "\\frac{1}{6}"
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 1.02,
+        "y": -0.3
+      },
+      "titleAnchor": "end",
+      "displayTitle": "혼합 용액의 [Na^+](M)"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "[HA]/[A⁻] 또는 [HB]/[B⁻]",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 3,
+          "label": "3",
+          "position": 0.468
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.34,
+        "y": 0.88
+      },
+      "titleAnchor": "middle",
+      "displayTitle": "\\frac{[HA]}{[A^-]} 또는 \\frac{[HB]}{[B^-]}"
+    }
+  },
+  "series": [
+    {
+      "id": "ha",
+      "label": "HA",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "lineStyle": "dashed",
+      "points": [
+        {
+          "x": 0.106,
+          "y": 0.837
+        },
+        {
+          "x": 0.122,
+          "y": 0.752
+        },
+        {
+          "x": 0.142,
+          "y": 0.665
+        },
+        {
+          "x": 0.163,
+          "y": 0.588
+        },
+        {
+          "x": 0.185,
+          "y": 0.519
+        },
+        {
+          "x": 0.209,
+          "y": 0.468
+        },
+        {
+          "x": 0.238,
+          "y": 0.408
+        },
+        {
+          "x": 0.268,
+          "y": 0.357
+        },
+        {
+          "x": 0.295,
+          "y": 0.309
+        },
+        {
+          "x": 0.339,
+          "y": 0.259
+        },
+        {
+          "x": 0.386,
+          "y": 0.211
+        },
+        {
+          "x": 0.437,
+          "y": 0.17
+        },
+        {
+          "x": 0.488,
+          "y": 0.135
+        },
+        {
+          "x": 0.549,
+          "y": 0.101
+        },
+        {
+          "x": 0.61,
+          "y": 0.074
+        },
+        {
+          "x": 0.663,
+          "y": 0.051
+        },
+        {
+          "x": 0.703,
+          "y": 0.037
+        },
+        {
+          "x": 0.76,
+          "y": 0.027
+        },
+        {
+          "x": 0.823,
+          "y": 0.016
+        }
+      ],
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 5,
+          "kind": "closed"
+        },
+        {
+          "index": 16,
+          "kind": "closed"
+        }
+      ],
+      "curveStyle": "smooth",
+      "segmentModes": [
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ]
+    },
+    {
+      "id": "hb",
+      "label": "HB",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "lineStyle": "solid",
+      "points": [
+        {
+          "x": 0.423,
+          "y": 0.816
+        },
+        {
+          "x": 0.447,
+          "y": 0.764
+        },
+        {
+          "x": 0.478,
+          "y": 0.709
+        },
+        {
+          "x": 0.514,
+          "y": 0.651
+        },
+        {
+          "x": 0.555,
+          "y": 0.593
+        },
+        {
+          "x": 0.6,
+          "y": 0.538
+        },
+        {
+          "x": 0.65,
+          "y": 0.483
+        },
+        {
+          "x": 0.703,
+          "y": 0.433
+        },
+        {
+          "x": 0.754,
+          "y": 0.39
+        },
+        {
+          "x": 0.799,
+          "y": 0.353
+        },
+        {
+          "x": 0.837,
+          "y": 0.311
+        },
+        {
+          "x": 0.89,
+          "y": 0.277
+        },
+        {
+          "x": 0.949,
+          "y": 0.25
+        }
+      ],
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 10,
+          "kind": "closed"
+        }
+      ],
+      "curveStyle": "smooth",
+      "segmentModes": [
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "label-ha",
+      "kind": "text",
+      "text": "HA",
+      "x": 0.087,
+      "y": 0.901,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "ha",
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "label-hb",
+      "kind": "text",
+      "text": "HB",
+      "x": 0.41,
+      "y": 0.901,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "hb",
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "label-p",
+      "kind": "text",
+      "text": "P",
+      "x": 0.855,
+      "y": 0.378,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "hb",
+      "pointIndex": 10,
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "label-q",
+      "kind": "text",
+      "text": "Q",
+      "x": 0.718,
+      "y": 0.111,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "ha",
+      "pointIndex": 16,
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "symbolic-y-tick",
+      "kind": "text",
+      "text": "y",
+      "x": -0.042,
+      "y": 0.311,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "guide-ha-horizontal",
+      "kind": "guide",
+      "text": "",
+      "x": 0.209,
+      "y": 0.468,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "ha",
+      "pointIndex": 5,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-ha-vertical",
+      "kind": "guide",
+      "text": "",
+      "x": 0.209,
+      "y": 0.468,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "ha",
+      "pointIndex": 5,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-p-horizontal",
+      "kind": "guide",
+      "text": "",
+      "x": 0.837,
+      "y": 0.311,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "hb",
+      "pointIndex": 10,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-p-vertical",
+      "kind": "guide",
+      "text": "",
+      "x": 0.837,
+      "y": 0.311,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "hb",
+      "pointIndex": 10,
+      "endStyle": "none"
+    }
+  ],
+  "review": [
+    {
+      "path": "axes.x",
+      "reason": "세 수치 눈금 사이의 간격은 선형 배치와 부합하지만 축 교점의 수치는 표시되지 않았다. 교점을 0으로 확정하지 않으며 축 최솟값·최댓값·눈금 간격은 미확정이다.",
+      "sourceBox": {
+        "x": 277,
+        "y": 382,
+        "w": 503,
+        "h": 92
+      }
+    },
+    {
+      "path": "axes.y",
+      "reason": "수치 눈금은 3 하나이고 다른 높이는 기호 y이다. 수치 범위와 척도를 확정할 수 없어 곡선과 보조선은 관찰된 정규화 좌표로 기록했다.",
+      "sourceBox": {
+        "x": 249,
+        "y": 198,
+        "w": 38,
+        "h": 95
+      }
+    },
+    {
+      "path": "axes.y",
+      "reason": "축 수치를 읽을 수 없습니다. 눈금과 범위를 확인하십시오."
+    },
+    {
+      "path": "series.0",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "series.1",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "annotations.0",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.1",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.2",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.3",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.4",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.5",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.6",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.7",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.8",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    }
+  ],
+  "coordinateMode": "observed",
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "style": {
+    "fontSizePx": 39,
+    "labelWeight": 300,
+    "strokeWidth": 0.32,
+    "guideStyle": {
+      "strokeWidth": 0.15,
+      "dashLength": 1.2,
+      "dashGap": 0.9
+    }
+  },
+  "provenance": {
+    "kind": "source-reviewed-graph-capability-fixture",
+    "rawObservationSchema": "5e.graph-reconstruction/v1",
+    "modelCurvePointsUnchanged": true,
+    "modelCallsThisRevision": 0,
+    "sourceReviewAdditions": [
+      "표시 좌표 모드",
+      "원본 눈금·축 제목 위치",
+      "글자·선 스타일",
+      "쌓인 분수",
+      "HA 파선",
+      "수식 제목"
+    ]
+  }
+}

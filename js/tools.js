@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== TOOLS (DESIGN 짠3 tool selection + the rectangle draw pipeline) ===== */
 //
 // Two responsibilities, both routed through the store so data stays the truth:
@@ -12,8 +12,9 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-rem
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
+import { loadDefaults, applyToolDefaultsToNewObject } from './tool-defaults.js?v=1.7.0-four-session-integration';
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -21,56 +22,58 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=1.6.1-remediation-0929";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.6.1-remediation-0929";
-import { resolveEndpointSnap } from "./snap.js?v=1.6.1-remediation-0929";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.1-remediation-0929";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.6.1-remediation-0929";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.6.1-remediation-0929";
-import { getSvgAsset } from "./svg-assets.js?v=1.6.1-preview-labeler-0917-1111";
-import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.6.1-remediation-0929";
-import { openGraphModal } from "./graph/graph-modal.js?v=1.6.1-remediation-0929";
-import { nextObjectId } from "./tools/id.js?v=1.6.1-preview-labeler-0917-1111";
-import { setupFreeDraw } from "./tools/free-draw.js?v=1.6.1-remediation-0929";
-import { setupNodePlacement } from "./tools/node-placement.js?v=1.6.1-remediation-0929";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.6.1-remediation-0929";
+} from "./state.js?v=1.7.0-four-session-integration";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.7.0-four-session-integration";
+import { resolveEndpointSnap } from "./snap.js?v=1.7.0-four-session-integration";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.7.0-four-session-integration";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.7.0-four-session-integration";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.7.0-four-session-integration";
+import { getSvgAsset } from "./svg-assets.js?v=1.7.0-four-session-integration";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.7.0-four-session-integration";
+import { openGraphModal } from "./graph/graph-modal.js?v=1.7.0-four-session-integration";
+import { nextObjectId } from "./tools/id.js?v=1.7.0-four-session-integration";
+import { LAB_APPARATUS, labSettings } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { OPTICAL_BENCH_DEFAULTS } from "./optical-bench.js?v=1.7.0-four-session-integration";
+import { setupFreeDraw } from "./tools/free-draw.js?v=1.7.0-four-session-integration";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.7.0-four-session-integration";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.7.0-four-session-integration";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
-} from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
+} from "./geometry.js?v=1.7.0-four-session-integration";
 // 각도 이산 변환 대상 목록의 정본(리터럴 5종을 대체) — object-types.js의 angleSnap.
-import { ANGLE_SNAP_TYPES } from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
+import { ANGLE_SNAP_TYPES } from "./object-types.js?v=1.7.0-four-session-integration";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
-  getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=1.6.1-remediation-0929";
+  getObjectBBox, marqueeHitsObject, isLabelerTextPoint,
+} from "./pick.js?v=1.7.0-four-session-integration";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.6.1-remediation-0929";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.7.0-four-session-integration";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
 // _textEditor reads in setupDrawing; cancelActive*Editor are called by setActiveTool.
 import {
-  initTextEditing, isTextEditorOpen,
+  initTextEditing, isTextEditorOpen, isInlineLabelClickPending,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=1.6.1-remediation-0929";
+} from "./text-editor.js?v=1.7.0-four-session-integration";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.6.1-remediation-0929";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.7.0-four-session-integration";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=1.6.1-remediation-0929";
-import { SELECTION_COLOR, SELECTION_MARQUEE_FILL } from "./selection-visuals.js?v=1.6.1-preview-labeler-0917-1111";
+import { guideCursorAt } from "./ruler.js?v=1.7.0-four-session-integration";
+import { SELECTION_COLOR, SELECTION_MARQUEE_FILL } from "./selection-visuals.js?v=1.7.0-four-session-integration";
 
-import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.1-remediation-0929";
+import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.7.0-four-session-integration";
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
@@ -125,7 +128,7 @@ const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET
   "BRACE", "CHROMOSOME", "BILAYER", "NEURON", "LEGEND", "PEDIGREE",
   // 화학 부품 (2026-07-31) — docs/CHEM_PARTS_SPEC.md
   "VESSEL", "CHEMMODEL", "PARTICLEBOX", "ORBITAL", "BONDGROUP",
-  "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC"]);
+  "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC", "BUBBLE"]);
 const TOOL_CHOOSER_GROUPS = [
   { btn: "tool-text-merged", chooser: "chooser-text", persistent: true, tools: ["T", "LABELER"] },
   { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true, tools: ["ARC", "RIGHTANGLE"] },
@@ -154,8 +157,7 @@ export function initTools(svg, state) {
   setupNodePlacement(_svg, _state);
   initTextEditing(_svg, _state); // text tool + click-to-edit + shortcuts + context menu
 
-  // 고급 기능의 "좌표(중간점)함수" 버튼 → 통합 그래프 모달(요구: 함수 기능을 고급으로 이동).
-  document.getElementById("graph-tool-open")?.addEventListener("click", () => openGraphModal());
+  // 아래 「그래프」 단추는 11-07부터 세 갈래 메뉴를 연다(js/graph-entry-menu.js — 직접 만들기가 이 편집기).
 
   // Keep the tool buttons in sync with state.activeTool on every change.
   state.subscribe((s) => syncButtons(s.activeTool));
@@ -444,7 +446,7 @@ const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics"
   VESSEL: "vessel", CHEMMODEL: "chemmodel", PARTICLEBOX: "particlebox",
   ORBITAL: "orbital", BONDGROUP: "bondgroup", CHEMCHART: "chemchart",
   AXISBREAK: "axisbreak", CHEMGRAPH: "chemgraph", ELECTRODE: "electrode",
-  PERIODIC: "periodic" };
+  PERIODIC: "periodic", BUBBLE: "bubble" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -452,6 +454,7 @@ let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
 let drawType = null;   // type being drawn for the current drag
+let drawDefaults = null;
 let spaceHeld = false; // mirror viewport's Space-pan so we never draw while panning
 // text-editor.js reads Space-held state in its "don't act while panning" guards.
 // Exposed as a getter (setupDrawing owns the keydown/keyup tracker) so the editor
@@ -541,13 +544,36 @@ function setupDrawing() {
     if (spaceHeld) return;                        // Space+left = pan, not select
     const _at = _state.get().activeTool;
     if (_at !== "V" && _at !== "rotate") return;  // select or rotate tool picks
+    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
+    // Selecting a labeler redraws its endpoint handle over the glyph body. On
+    // the second press, resolve the text beneath that handle before handing
+    // ordinary handle presses to transform.js (group handles identify a frame,
+    // not an individual object).
+    if (e.detail >= 2 && !e.shiftKey && !isInlineLabelClickPending()) {
+      const current = _state.get();
+      const pickedId = pickSelectableObjectAtPoint(current, p);
+      let labeler = current.objects.find((o) => o.id === pickedId);
+      if (!labeler && e.target?.dataset?.handle) {
+        const glyphObjects = current.objects.filter((o) => o.type === "labeler" && isLabelerTextPoint(o, p));
+        const glyphId = pickSelectableObjectAtPoint({ ...current, objects: glyphObjects }, p);
+        labeler = glyphObjects.find((o) => o.id === glyphId);
+      }
+      if (labeler?.type === "labeler" && isLabelerTextPoint(labeler, p)) {
+        _state.update((s) => {
+          s.selectedIds = [labeler.id];
+          s.targetedId = labeler.groupId ? labeler.id : null;
+        });
+        e.preventDefault();
+        openLabelerTextEditor(labeler.id, null, { detailed: true });
+        return;
+      }
+    }
     // A click on a selection handle means "manipulate the selected object",
     // NOT "change selection". Handles can sit OUTSIDE the shape outline
     // (ellipse/triangle corners), where hitTest finds empty space and would
     // wrongly clear selectedIds ??breaking transform.js's handle-drag guard.
     const tgt = e.target;
     if (tgt && tgt.dataset && tgt.dataset.handle) return;
-    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
     const shiftHeld = e.shiftKey;
     let hitId = null;
     _state.update((s) => {
@@ -562,7 +588,8 @@ function setupDrawing() {
         const domId = e.target?.closest?.("[data-id]")?.dataset?.id;
         const domObj = domId && s.objects.find((o) => o.id === domId);
         const domLayer = domObj && (s.layers || []).find((layer) => layer.id === (domObj.layerId ?? 1));
-        if (domObj && domLayer && domLayer.visible !== false && (domObj.layerId ?? 1) === s.activeLayerId) hitId = domId;
+        if (domObj && !(domObj.type === "image" && (domObj.imageSelectionLocked === true || (domObj.mode === "background" && domObj.locked === true)))
+          && domLayer && domLayer.visible !== false && (domObj.layerId ?? 1) === s.activeLayerId) hitId = domId;
       }
       if (hitId === null) {
         if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
@@ -599,20 +626,24 @@ function setupDrawing() {
     // group-member targeting above, detected via e.detail since re-render detaches
     // the node before a real dblclick can fire).
     if (hitId !== null && e.detail >= 2 && !shiftHeld) {
+      if (isInlineLabelClickPending()) return;
       const _ho = _state.get().objects.find((o) => o.id === hitId);
       if (_ho && _ho.type === "text") {
         if (isTextEditorOpen()) return; // already editing (e.g. opened by click-to-edit on press #1)
-        startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }); return;
+        startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }, { detailed: true }); return;
       }
       if (_ho && _ho.type === "formula") {
         if (isTextEditorOpen()) return;
-        startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }); return;
+        startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }, { detailed: true }); return;
       }
       if (_ho && _ho.type === "labeler") {
-        openLabelerTextEditor(hitId); return;
+        openLabelerTextEditor(hitId, null, { detailed: true }); return;
       }
       if (_ho && _ho.type === "anglearc") {
         openAngleArcLabelEditor(hitId); return;
+      }
+      if (_ho && _ho.type === "funcgraph" && _ho.planeId) {
+        openGraphModal(_ho.planeId,'func');return;
       }
       if (_ho && _ho.type === "coordplane") {
         // 그래프 도구로 만든 평면(richLabels)은 통합 그래프 모달(좌표+계열 한 화면)로,
@@ -651,6 +682,7 @@ function setupDrawing() {
     const vb = _state.get().viewBox;
     startWorld = screenToWorld(_svg, vb, e.clientX, e.clientY);
     drawing = true;
+    drawDefaults = loadDefaults();
     drawType = type;
     _drawKind = GAUGE_KIND[_state.get().activeTool] || null; // gauge일 때만 유효
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, startWorld); });
@@ -729,6 +761,9 @@ function setupDrawing() {
     const start = _marqueeStart;
     _marqueeStart = null;
     if (_marqueeEl) { _marqueeEl.remove(); _marqueeEl = null; }
+    // A rapid second press can open an editor after the SVG glyph is replaced.
+    // Its release belongs to that editor, not an empty-canvas selection gesture.
+    if (_state.get().draftText?.editingId) return;
 
     const dist = Math.hypot(cur.x - start.x, cur.y - start.y);
     if (dist < 2) {
@@ -756,14 +791,16 @@ function setupDrawing() {
     });
   });
 
-  window.addEventListener("pointercancel", () => {
+  const cancelCanvasGesture = () => {
     drawing = false;
     startWorld = null;
     drawType = null;
     _marqueeStart = null;
     if (_marqueeEl) { _marqueeEl.remove(); _marqueeEl = null; }
-    _state.update((s) => { s.draft = null; });
-  });
+    if (_state.get().draft) _state.update((s) => { s.draft = null; });
+  };
+  window.addEventListener("pointercancel", cancelCanvasGesture);
+  window.addEventListener('5e:canvas-interaction-cancel', cancelCanvasGesture);
 
   // NOTE: targeting a group member on double-click is handled in the mousedown
   // handler above (e.detail >= 2). A dblclick listener can't be used here: every
@@ -794,6 +831,16 @@ export function isCommittable(shape) {
 // DESIGN 2-1 branch A (size-based): x/y is the top-left, w/h are positive.
 // `type` is "rect" | "ellipse" | "triangle"; all share this identical structure.
 function makeShape(type, a, b) {
+  const geometry = makeShapeGeometry(type, a, b);
+  const styled = applyToolDefaultsToNewObject(geometry, drawDefaults || loadDefaults());
+  // A chosen palette variant carries its own explicit appearance.
+  for (const key of ['strokeWidth', 'strokeLevel', 'fillLevel']) {
+    if (_symbolProps && Object.hasOwn(_symbolProps, key)) styled[key] = geometry[key];
+  }
+  return styled;
+}
+
+function makeShapeGeometry(type, a, b) {
   if (type === "line") return makeLine(a, b);
   if (type === "pendulum") return makePendulum(a, b);
   if (type === "spring") return makeSpring(a, b);
@@ -879,7 +926,13 @@ function makeShape(type, a, b) {
     shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
     shape.fillNone = true;
     shape.label = "";
-    if (shape.kind === "wire") {
+    if (shape.kind === "optical_bench") {
+      Object.assign(shape, OPTICAL_BENCH_DEFAULTS);
+      shape.lockAspect = true;
+    } else if (Object.hasOwn(LAB_APPARATUS, shape.kind)) {
+      Object.assign(shape, labSettings(shape));
+      shape.lockAspect = true;
+    } else if (shape.kind === "wire") {
       shape.length = Math.max(shape.w, 18);
       shape.thickness = 1.8;
       shape.gap = shape.thickness;
@@ -1384,6 +1437,11 @@ const CHEM_DEFAULTS = {
     showRatio: true, showTick: false,
   }],
   axisbreak: [30, 4, { dir: "horizontal", amp: 0.5, gap: 1.6, period: 3.0 }],
+  // 말풍선 — 몸통 상자를 끌어 만든다. 기본 크기는 기출 대화 그림의 말풍선(약 40×12 mm).
+  bubble: [40, 12, {
+    radius: 2.2, tailSide: "bottom", tailPos: 0.3, tailWidth: 3, tailLength: 3.2, tailSkew: -0.6,
+    fillLevel: 255, fillNone: false, dashLength: 0, dashGap: 0,
+  }],
   chemgraph: [44, 34, {
     kind: "energy", reactant: 0.42, product: 0.2, peak: 0.85,
     showCatalyst: false, showMarks: true,

@@ -10,8 +10,9 @@
  * 상자를 키우면 같은 값이라도 같은 비율로 커진다. 그래서 단위를 붙이지 않는다.
  */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { BOND_MOLECULES, DEFAULT_MOLECULE } from "../render/bondgroup.js?v=1.6.1-remediation-0929";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { BOND_MOLECULES, DEFAULT_MOLECULE } from "../render/bondgroup.js?v=1.7.0-four-session-integration";
 
 function row(labelText) {
   const r = document.createElement("div");
@@ -93,7 +94,7 @@ export function initBondGroupSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

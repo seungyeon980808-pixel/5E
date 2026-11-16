@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== EXAM PREVIEW (내보낼 그림을 실제 시험지 위에 실제 크기로 미리보기) =====
  *
  * 목적: 이미지로 내보내기 전에, 그림을 실제 시험지(수능 8절 272×394mm) 위 "실제 인쇄 크기"로
@@ -18,8 +18,8 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-rem
  * 포함될 수 있어 .gitignore 처리 — 공개 배포 전 자작 목업으로 교체할 것.
  */
 
-import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.6.1-remediation-0929";
-import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=1.6.1-remediation-0929";
+import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=1.7.0-four-session-integration";
 
 /* ----- 배경 양식 목록 -----
  * 각 항목은 실제 인쇄 물리 크기(mm)를 가진다. 이 값으로 그림을 정확한 배율로
@@ -226,9 +226,10 @@ async function renderStage() {
     bgImg = await loadBackground(bg);
   } catch (_) {
     if (myGen !== _renderGen) return;
-    info.innerHTML =
-      `배경 이미지를 불러오지 못했습니다: <code>${bg.src}</code><br>` +
-      "로컬 자산(.gitignore)이라 저장소를 새로 받은 경우 없을 수 있습니다.";
+    fillInfo(info, [
+      "배경 이미지를 불러오지 못했습니다: ", { tag: "code", text: bg.src }, { tag: "br" },
+      "로컬 자산(.gitignore)이라 저장소를 새로 받은 경우 없을 수 있습니다.",
+    ]);
     return;
   }
   if (myGen !== _renderGen) return; // 최신 호출이 아니면 아래 DOM 갱신을 건너뛴다
@@ -274,10 +275,22 @@ async function renderStage() {
   wireDrag(artBox, stageW, stageH, artW, artH);
   placeArtwork(true); // 기본 위치로 배치
 
-  info.innerHTML =
-    `그림 실제 크기 <strong>${art.widthMm.toFixed(0)} × ${art.heightMm.toFixed(0)} mm</strong>` +
-    ` · 페이지 ${bg.label} <strong>${bg.pageWidthMm.toFixed(0)} × ${bg.pageHeightMm.toFixed(0)} mm</strong>` +
-    `<br>그림을 드래그해 위치를 옮겨 보세요. 크기는 실제 인쇄 크기로 고정됩니다.`;
+  // bg.label은 사용자가 등록한 배경 이름(이름 칸을 비우면 파일 이름)이라 HTML로 넣지 않는다.
+  fillInfo(info, [
+    "그림 실제 크기 ", { tag: "strong", text: `${art.widthMm.toFixed(0)} × ${art.heightMm.toFixed(0)} mm` },
+    ` · 페이지 ${bg.label} `, { tag: "strong", text: `${bg.pageWidthMm.toFixed(0)} × ${bg.pageHeightMm.toFixed(0)} mm` },
+    { tag: "br" }, "그림을 드래그해 위치를 옮겨 보세요. 크기는 실제 인쇄 크기로 고정됩니다.",
+  ]);
+}
+
+/* 안내문을 글자 노드와 굵은 글씨·줄바꿈 요소로만 채운다(innerHTML 없이). */
+function fillInfo(info, parts) {
+  info.replaceChildren(...parts.map((part) => {
+    if (typeof part === "string") return document.createTextNode(part);
+    const el = document.createElement(part.tag);
+    if (part.text != null) el.textContent = part.text;
+    return el;
+  }));
 }
 
 /* ----- 그림을 기본 위치(왼쪽 단 상단쯤) 또는 현재 위치로 배치 ----- */

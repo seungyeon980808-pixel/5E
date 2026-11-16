@@ -1,7 +1,24 @@
-import { createCropOverrideStore } from "./crop-overrides.js?v=1.6.1-remediation-0929";
-import { createRenderScheduler } from "./render-scheduler.js?v=1.6.1-preview-labeler-0917-1111";
-import { importRejectionMessage, partitionLibraryImports } from "../library-import-policy.js?v=1.6.1-remediation-0929";
-import { createCropSource } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { createPdfSourceTextCandidates } from "../ai-source-label-candidates.js?v=1.7.0-four-session-integration";
+import { createCropOverrideStore } from "./crop-overrides.js?v=1.7.0-four-session-integration";
+import { createRenderScheduler } from "./render-scheduler.js?v=1.7.0-four-session-integration";
+import { importRejectionMessage, partitionLibraryImports } from "../library-import-policy.js?v=1.7.0-four-session-integration";
+import { createCropSource } from "./contract.js?v=1.7.0-four-session-integration";
+
+const prebuiltSubsetCache = new WeakMap();
+function prebuiltSubset(index, ids) {
+  let bySignature = prebuiltSubsetCache.get(index);
+  if (!bySignature) prebuiltSubsetCache.set(index, bySignature = new Map());
+  const signature = ids.join('\u0000');
+  let subset = bySignature.get(signature);
+  if (!subset) {
+    const allowed = new Set(ids);
+    subset = { ...index, entries: index.entries.filter((entry) => allowed.has(entry.documentId)) };
+    bySignature.set(signature, subset);
+    while (bySignature.size > 4) bySignature.delete(bySignature.keys().next().value);
+  }
+  return subset;
+}
+
 
 const MAX_SELECTIONS = 10;
 const THUMBNAIL_DPI = 96;
@@ -349,6 +366,18 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   let thumbnailJobs = [];
   let previewAbort = null;
   let materializePreviewAbort = null;
+  const materializedImages=new Map();
+  let materializedBytes=0;
+  const rememberMaterialized=(key,value)=>{
+    const size=value.bytes?.byteLength || 0;
+    if(size>8*1024*1024)return;
+    materializedImages.set(key,value);materializedBytes+=size;
+    while(materializedBytes>32*1024*1024 || materializedImages.size>24){
+      const oldest=materializedImages.keys().next().value;
+      materializedBytes-=materializedImages.get(oldest).bytes?.byteLength || 0;
+      materializedImages.delete(oldest);
+    }
+  };
   let returnFocus = null;
   let ocrController = null;
   let referenceConsumer = null;
@@ -780,7 +809,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     }
   }
 
-  async function replacePackCatalog({ documents: nextDocuments, openDocument, downloadDocument = null, canDownloadDocument = () => true, searchIndex = null }) {
+  async function replacePackCatalog({ documents: nextDocuments, openDocument, downloadDocument = null, canDownloadDocument = () => true, searchIndex = null, notify = true }) {
     const ownEpoch = ++packSyncEpoch;
     const nextIds = new Set(nextDocuments.map((document) => document.id));
     const removedIds = [...packDocumentIds].filter((id) => !nextIds.has(id));
@@ -803,12 +832,12 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     packSearchIndex = searchIndex;
     searchIndexRevision += 1;
     catalogChanged();
-    onCatalogChange?.();
+    if (notify) onCatalogChange?.();
     refreshPackFilters();
     invalidateSearch?.();
     closePreview();
     refreshOcrControls();
-    if (host.isConnected) await runSearch();
+    if (notify && host.isConnected) await runSearch();
   }
 
   async function recognizeScans() {
@@ -818,7 +847,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     ocrController = operation.controller;
     refreshOcrControls();
     try {
-      const { createPdfOcrService } = await import("./ocr.js?v=1.6.1-preview-crop-quality-0920-1806");
+      const { createPdfOcrService } = await import("./ocr.js?v=1.7.0-four-session-integration");
       const ocr = createPdfOcrService({ runtime });
       for (const document of targets) {
         const expectedSource = JSON.stringify(document.source);
@@ -1083,12 +1112,16 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const references = [];
       for (const result of selected) {
         const source = normalizedSource(result);
-        const render = await withRuntimeLock(async () => {
-          await ensureDocumentOpen(source.documentId);
-          return runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+        const { render, document } = await withRuntimeLock(async () => {
+          const document = await ensureDocumentOpen(source.documentId);
+          const render = await runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+          return { render, document };
         });
+        const data = await pngDataUrl(render.bytes);
+        const sourceTextCandidates = await createPdfSourceTextCandidates({ document, page: document?.pages?.find(page => page.pageNumber === source.pageNumber), render, data });
         references.push({
-          dataUrl: await pngDataUrl(render.bytes),
+          dataUrl: data,
+          sourceTextCandidates,
           name: resultTitle(result),
           source: { ...source, title: resultTitle(result), documentTitle: result.documentTitle || result.sourceName || "원본 PDF" },
         });
@@ -1110,13 +1143,17 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const additions = [];
       for (const result of selected) {
         const source = normalizedSource(result);
-        const render = await withRuntimeLock(async () => {
-          await ensureDocumentOpen(source.documentId);
-          return runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+        const { render, document } = await withRuntimeLock(async () => {
+          const document = await ensureDocumentOpen(source.documentId);
+          const render = await runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+          return { render, document };
         });
+        const data = await pngDataUrl(render.bytes);
+        const sourceTextCandidates = await createPdfSourceTextCandidates({ document, page: document?.pages?.find(page => page.pageNumber === source.pageNumber), render, data });
         additions.push({
           name: resultTitle(result),
-          data: await pngDataUrl(render.bytes),
+          data,
+          sourceTextCandidates,
           sourceKind: "pdf-library",
           source: sourceMetadata(result),
         });
@@ -1353,10 +1390,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const allowedIds = new Set(documentIds);
       const searchedDocuments = allowedIds.size ? docs.filter((document) => allowedIds.has(document.id)) : docs;
       const indexedPackIds = [...packDocumentIds].filter((id) => !updatedPackDocumentIds.has(id) && (!allowedIds.size || allowedIds.has(id)));
-      const prebuiltIndex = packSearchIndex ? {
-        ...packSearchIndex,
-        entries: packSearchIndex.entries.filter((entry) => indexedPackIds.includes(entry.documentId)),
-      } : null;
+      // 11-12 밤샘: 검색마다 색인 일부를 새 객체로 걸러 만들어(문서 수 × 항목 수 includes) 일꾼 쪽 「한 번만 보내기」 열쇠가 매번 달라졌다 —
+      // 같은 색인·같은 문서 묶음이면 같은 객체를 다시 쓴다.
+      const prebuiltIndex = packSearchIndex ? prebuiltSubset(packSearchIndex, indexedPackIds) : null;
       return searchDocuments(searchedDocuments, query, {
         filters,
         prebuiltIndexes: prebuiltIndex ? [{ documents: docs.filter((document) => indexedPackIds.includes(document.id)).map(({ id, pageCount }) => ({ id, pageCount })), index: prebuiltIndex }] : [],
@@ -1367,6 +1403,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const owningDocument = docs.find((document) => document.id === source?.documentId);
       source = assertPdfMaterializationSource(result, source, owningDocument?.pageCount);
       const dpi = pdfRenderDpi(options);
+      const cacheKey=JSON.stringify([catalogRevision,packSyncEpoch,source.documentId,owningDocument?.source?.sha256 || owningDocument?.source?.locator || null,source.pageNumber,options.original?[0,0,1,1]:source.rect,dpi,options.previewPixelWidth || null]);
+      const cached=materializedImages.get(cacheKey);
+      if(cached){materializedImages.delete(cacheKey);materializedImages.set(cacheKey,cached);return {...cached,result};}
       const replaceablePreview = options.preview && !options.continuous;
       if (replaceablePreview) materializePreviewAbort?.abort(new DOMException("Preview was superseded", "AbortError"));
       const previewController = replaceablePreview ? new AbortController() : null;
@@ -1394,9 +1433,12 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       if (previewController && materializePreviewAbort !== previewController) {
         throw new DOMException("Preview was superseded", "AbortError");
       }
-      return { bytes: rendered.bytes, dataUrl, source: normalized, result };
+      const value={ bytes: rendered.bytes, dataUrl, source: normalized, result };
+      rememberMaterialized(cacheKey,value);
+      return value;
     },
     async clearPreviewCache() {
+      materializedImages.clear();materializedBytes=0;
       clearGrid();
       await withRuntimeLock(() => runtime?.clearCache());
     },

@@ -7,6 +7,9 @@ import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExter
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.6.0-remediation-0929";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
+// Results are immutable. Reuse their searchable text across keystrokes without
+// retaining results from a replaced catalog.
+const searchableResultText = new WeakMap();
 
 async function providedPagePreview(document, source, result, options = {}) {
   if ((options.original && !options.continuous) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
@@ -455,8 +458,17 @@ function pdfResults(documents, index) {
   return { results, sources, files };
 }
 
-function resultMatches(result, query, compact) {
-  if (!compact) return matchesText(result.searchText, tokens(query));
+function resultMatches(result, queryTokens, compact) {
+  if (!compact) {
+    if (!queryTokens.length) return true;
+    let searchable = searchableResultText.get(result);
+    if (!searchable) {
+      const text = normalizedText([result.title, result.searchText].join(" "));
+      searchable = [text, text.replace(/\s+/gu, "")];
+      searchableResultText.set(result, searchable);
+    }
+    return queryTokens.every((token) => searchable.some((text) => text.includes(token)));
+  }
   const actual = result.metadata;
   if (!examMetadataMatches(actual, compact)) return false;
   if (compact.itemNumber === null) return true;
@@ -545,6 +557,16 @@ export function createUnifiedLibraryProvider(input = {}) {
   });
   const materializers = input.materializers ?? {};
 
+  function groupPdfResultsBySource() {
+    const grouped = new Map();
+    for (const result of pdf.results) {
+      if (!grouped.has(result.sourceId)) grouped.set(result.sourceId, []);
+      grouped.get(result.sourceId).push(result);
+    }
+    return grouped;
+  }
+  let pdfResultsBySource = groupPdfResultsBySource();
+
   async function loadPdfPage(file, pageNumber = 1, options = {}) {
     const document = documents.find((candidate) => candidate.id === file.documentId);
     const page = Number(pageNumber);
@@ -578,6 +600,7 @@ export function createUnifiedLibraryProvider(input = {}) {
 
   function search(options = {}) {
     const compact = parseCompactExamCode(options.query);
+    const queryTokens = compact ? [] : tokens(options.query ?? "");
     const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
     const allowedKinds = normalizedKinds(options.kinds);
     let found = allResults().filter((result) =>
@@ -585,7 +608,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       && (!allowedKinds || allowedKinds.has(result.kind))
       && matchesFilters(result, options.filters)
       && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true)
-      && resultMatches(result, options.query ?? "", compact));
+      && resultMatches(result, queryTokens, compact));
     if (!allowedKinds && compact?.itemNumber !== null && found.some((result) => result.kind === "crop")) {
       found = found.filter((result) => result.kind === "crop");
     }
@@ -639,12 +662,13 @@ export function createUnifiedLibraryProvider(input = {}) {
       const compact = parseCompactExamCode(options.query);
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const queryText = options.query ?? "";
+      const queryTokens = compact ? [] : tokens(queryText);
       const found = pdf.files.filter((file) => {
         if (allowedSources && !allowedSources.has(file.sourceId)) return false;
         if (!matchesPdfInventoryFilters(file, options.filters)) return false;
         if (!String(queryText).trim()) return true;
-        return pdf.results.some((result) => result.sourceId === file.sourceId
-          && resultMatches(result, queryText, compact));
+        return resultMatches(file, queryTokens, compact) || (pdfResultsBySource.get(file.sourceId) ?? [])
+          .some((result) => resultMatches(result, queryTokens, compact));
       });
       return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
         ...file,
@@ -719,7 +743,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         }
         for (const miss of entry.misses ?? []) if (!current.misses.includes(miss)) current.misses.push(miss);
       }
-      return Object.freeze([...matchesByDocument].slice(0, boundedLimit(options.limit)).map(([documentId, pages]) => {
+      const found = [...matchesByDocument].map(([documentId, pages]) => {
         const matches = [...pages.values()].sort((left, right) => left.pageNumber - right.pageNumber).map((match) => Object.freeze({
           ...match,
           terms: Object.freeze(match.terms), highlights: Object.freeze(match.highlights), misses: Object.freeze(match.misses),
@@ -738,16 +762,21 @@ export function createUnifiedLibraryProvider(input = {}) {
           getPageGeometry: (pageNumber = matches[0].pageNumber) => pageGeometry(documents.find((document) => document.id === file.documentId), pageNumber),
           loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
         });
-      }));
+      });
+      // Keep title matches even when the full-text worker finds no body text.
+      const titleMatches = this.listPdfFiles(options).filter(file =>
+        !matchesByDocument.has(file.documentId));
+      return Object.freeze([...found, ...titleMatches].slice(0, boundedLimit(options.limit)));
     },
     listPdfPages(options = {}) {
       const compact = parseCompactExamCode(options.query);
+      const queryTokens = compact ? [] : tokens(options.query ?? "");
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const found = pdf.results.filter((result) => result.kind === "page"
         && (!allowedSources || allowedSources.has(result.sourceId))
         && (!options.sourceId || result.sourceId === options.sourceId)
         && matchesFilters(result, options.filters)
-        && resultMatches(result, options.query ?? "", compact))
+        && resultMatches(result, queryTokens, compact))
         .map((result) => contextualized(result, options.query ?? ""));
       const limit = Number.isInteger(options.limit) && options.limit > 0 ? boundedLimit(options.limit) : found.length;
       return Object.freeze(found.sort(compareExamResults).slice(0, limit));
@@ -772,8 +801,7 @@ export function createUnifiedLibraryProvider(input = {}) {
           && matchesFilters({ metadata: deriveExamMetadata({ metadata: document.metadata, source: document.source }) }, options.filters)).map((document) => document.id),
         filters: {}, limit: boundedLimit(options.limit),
       });
-      const nonPdf = local.filter((result) => result.provenance?.provider !== "pdf");
-      const merged = dedupeResults([...nonPdf, ...normalizeWorkerEntries(workerEntries ?? [])]).filter((result) =>
+      const merged = dedupeResults([...normalizeWorkerEntries(workerEntries ?? []), ...local]).filter((result) =>
         (!allowedSources || allowedSources.has(result.sourceId))
         && (!allowedKinds || allowedKinds.has(result.kind))
         && matchesFilters(result, options.filters)
@@ -785,6 +813,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       searchIndex = next.searchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
       revision = String(next.revision ?? next.catalogRevision ?? revision);
       pdf = pdfResults(documents, searchIndex);
+      pdfResultsBySource = groupPdfResultsBySource();
     },
     getSources() {
       return createHierarchicalSourceNodes([...images.sources, ...pdf.sources]);

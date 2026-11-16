@@ -223,7 +223,7 @@
 :root[data-mode="lite"] .canvas-wrap,:root[data-mode="lite"] .ruler-container{background:var(--lite-color-canvas)}
 :root[data-mode="lite"] .ruler-container{--ruler-size:0px}
 :root[data-mode="lite"] .ruler,:root[data-mode="lite"] .ruler-corner{display:none}
-:root[data-mode="lite"] :is(#grid-btn,#grid-detail,.canvas-lock-control,#zoom-readout){display:none!important}
+:root[data-mode="lite"] :is(#grid-btn,#grid-detail,.canvas-lock-control){display:none!important}
 :root[data-mode="lite"] .canvas-bottom-bar{display:none!important}
 :root[data-mode="lite"] #page-tab-bar{display:flex;background:var(--lite-color-surface)}
 :root[data-mode="lite"] .page-tab.is-active{background:var(--lite-sky-200);color:var(--lite-color-text-accent)}
@@ -339,5 +339,5 @@
 :root[data-mode="lite"] .app[data-panel-layout]>.panel{box-shadow:none}
 @media(max-width:700px){:root[data-mode="lite"] #ai-image-panel .ai-comparison-grid{grid-template-columns:minmax(0,1fr)!important}}
 
-:root[data-mode="lite"] :is(.unilib-header-panel-toggle,[data-unilib-objectify]){display:none!important}
+:root[data-mode="lite"] :is(.unilib-header-panel-toggle,[data-unilib-send],.unilib-send-menu){display:none!important}
 :root[data-mode="lite"] #ai-image-panel :is(.panel-shell-toggles,.panel-collapse-close){display:none!important}

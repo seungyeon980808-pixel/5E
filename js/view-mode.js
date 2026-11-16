@@ -1,9 +1,10 @@
-import { animateModeChange } from './mode-transition.js?v=calm-blur-0925';
-import { checkpointBeforeModeSwitch } from './autosave.js?v=1.6.3-project-file-size';
-import { serialize, applyLoaded } from './project-io.js?v=1.6.3-project-file-size';
-import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.6.1-remediation-0929';
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
-import { setActiveTool } from './tools.js?v=1.6.1-remediation-0929';
+import { animateModeChange } from './mode-transition.js?v=1.7.0-four-session-integration';
+import { checkpointBeforeModeSwitch } from './autosave.js?v=1.7.0-four-session-integration';
+import { serialize, applyLoaded } from './project-io.js?v=1.7.0-four-session-integration';
+import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
+import { setActiveTool } from './tools.js?v=1.7.0-four-session-integration';
+import { shortcutKey } from './platform.js?v=1.7.0-four-session-integration';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
  *
  * 단축키를 모르면 쓰기 어려운 기능이 많아, 입문용 'Lite' 모드를 둔다.
@@ -28,7 +29,7 @@ let _state = null;
 let _btn = null;
 let _savedLayerId = null; // Lite 진입 직전 activeLayerId(Pro 복귀 시 복원용)
 
-function loadMode() {
+export function loadMode() {
   const params = new URLSearchParams(window.location.search);
   const requestedMode = params.get("mode");
   if (MODES.includes(requestedMode)) return requestedMode;
@@ -61,8 +62,8 @@ function applyMode(mode, persist = true, detail = {}) {
   const empty = document.getElementById("inspector-empty");
   if (empty) {
     empty.textContent = m === "lite"
-      ? "선·꺾은선·텍스트·지시선 라벨을 선택하면 필요한 속성만 표시됩니다."
-      : "선택된 오브젝트 없음";
+      ? "선·꺾은선·텍스트·지시선 라벨·광학대·실험장치를 선택하면 필요한 속성만 표시됩니다."
+      : "";
   }
   // Lite에서는 레이어 1만 보이므로, 활성 레이어를 1로 고정한다.
   if (m === "lite" && _state) {
@@ -160,7 +161,8 @@ export function initViewMode(state, { prepareNewAiWork } = {}) {
   window.addEventListener("keydown", (event) => {
     if (document.documentElement.dataset.mode !== "lite") return;
     if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable='true']")) return;
-    const key = String(event.key || "").toLowerCase();
+    // 키 자리(KeyV…)로 읽는다 — 한글 입력 상태의 「ㅍ」도 V로(10-24, 그림 도구 단축키와 같은 규칙).
+    const key = shortcutKey(event);
     if (LITE_SHORTCUT_KEYS.has(key) && !(key === "e" && (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey))) return;
     if (!/^[a-z]$/.test(key) || ((event.metaKey || event.ctrlKey || event.altKey) && key !== "e")) return;
     event.preventDefault();

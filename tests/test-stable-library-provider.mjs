@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createUnifiedLibraryProvider } from "../js/library/provider.js";
+import { createUnifiedLibraryProvider, createUnifiedLibraryProviderAsync } from "../js/library/provider.js";
 
 const filters = { subject: "p1", academicYear: 2025, startYear: 2025, endYear: 2025, administration: "06" };
 const documents = [
@@ -11,6 +11,50 @@ const documents = [
 const entries = documents.map(document => ({ documentId: document.id, pageNumber: 2, itemId: "q1", itemNumber: 1,
   text: "힘 운동", source: { documentId: document.id, pageNumber: 2, rect: [0.1, 0.1, 0.8, 0.4], fullPageFallback: false } }));
 const makeProvider = (options = {}) => createUnifiedLibraryProvider({ pdfDocuments: documents, pdfSearchIndex: { entries }, ...options });
+
+// OmO 작성 · 별도 학평 자료팩에서도 표시한 시험 이름·월과 원본 파일이 일치한다.
+test("학평 자료팩 문항을 월별로 찾고 원본 식별자를 보존한다", async () => {
+  const months = ["03", "04", "05", "07", "10"];
+  const docs = months.map(month => ({
+    ...documents[1], id: `학평-${month}`,
+    source: { kind: "pack", locator: `5e.hakpyeong/물리1/문제/p1_2027_${month}.pdf`, displayName: `p1_2027_${month}.pdf` },
+  }));
+  const index = docs.map(document => ({
+    ...entries[1], documentId: document.id, itemId: `${document.id}-1`,
+    source: { ...entries[1].source, documentId: document.id },
+  }));
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: docs, pdfSearchIndex: { entries: index } });
+  for (const month of months) {
+    const found = await provider.searchAsync({ query: `${Number(month)}월 학평`, filters: { administration: month }, kinds: ["crop"] });
+    assert.deepEqual(found.map(item => item.provenance.documentId), [`학평-${month}`]);
+    assert.equal(found[0].title, `물리1 27년 ${Number(month)}월 학평 1번`);
+    assert.equal(found[0].provenance.locator, `5e.hakpyeong/물리1/문제/p1_2027_${month}.pdf`);
+  }
+});
+
+test("visible exam titles remain searchable before and after the full-text worker is ready", async () => {
+  const provider = makeProvider({ searchPdf: async () => [] });
+  for (const query of ["물리1", "물리1 25년 6평", "물리1 힘"]) {
+    const options = { query, filters, kinds: ["crop"] };
+    assert.deepEqual(provider.search(options).map(result => result.provenance.documentId), ["exam"]);
+    assert.deepEqual((await provider.searchAsync(options)).map(result => result.provenance.documentId), ["exam"]);
+    assert.deepEqual(provider.listPdfFiles({ query, filters }).map(result => result.documentId), ["exam"]);
+    assert.deepEqual((await provider.searchPdfFiles({ query, filters })).map(result => result.documentId), ["exam"]);
+  }
+  const source = provider.listPdfFiles().find(file => file.documentId === "old").sourceId;
+  assert.deepEqual(await provider.searchAsync({ query: "물리1 25년 6평", sourceIds: [source], kinds: ["crop"] }), []);
+  assert.deepEqual(await provider.searchPdfFiles({ query: "물리1 25년 6평", sourceIds: [source] }), []);
+});
+
+test('yielding PDF catalog preserves search, inventory and source ownership validation', async () => {
+  const input={pdfDocuments:[...documents,documents[0]],pdfSearchIndex:{entries:[...entries,{...entries[1],itemId:'foreign',source:{...entries[0].source}}]},revision:'async:1'};
+  const original=structuredClone(input),sync=createUnifiedLibraryProvider(input),asyncProvider=await createUnifiedLibraryProviderAsync(input);
+  assert.deepEqual(asyncProvider.search({query:'힘',kinds:['crop','page']}),sync.search({query:'힘',kinds:['crop','page']}));
+  assert.deepEqual(asyncProvider.getSources(),sync.getSources());
+  assert.deepEqual(asyncProvider.listPdfFiles().map(f=>f.documentId),sync.listPdfFiles().map(f=>f.documentId));
+  assert.equal(asyncProvider.search({kinds:['crop']}).some(r=>r.provenance.itemId==='foreign'),false);
+  assert.deepEqual(input,original);
+});
 
 test("PDF inventory uses pdf kind while page and question search retain their kinds", () => {
   const provider = makeProvider();

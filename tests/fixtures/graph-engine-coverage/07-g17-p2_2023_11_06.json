@@ -1,0 +1,515 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "g17-p2_2023_11_06",
+    "hash": "sha256:10af9abcef79bc7106253094301b4e194352ddfb32960982205a53a42ad8791c",
+    "width": 1025,
+    "height": 333,
+    "plotBox": {
+      "x": 656,
+      "y": 15,
+      "w": 354,
+      "h": 215
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0.0023
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0.5353
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "전압",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": null,
+          "label": "−V₁",
+          "displayMath": "-V_1",
+          "position": 0.1073
+        },
+        {
+          "value": null,
+          "label": "−V₂",
+          "displayMath": "-V_2",
+          "position": 0.2881
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.9124,
+        "y": -0.1233
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "광전류",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.3644,
+        "y": 0.9256
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "sA",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.1073,
+          "y": 0
+        },
+        {
+          "x": 0.18,
+          "y": 0.035
+        },
+        {
+          "x": 0.26,
+          "y": 0.12
+        },
+        {
+          "x": 0.35,
+          "y": 0.275
+        },
+        {
+          "x": 0.44,
+          "y": 0.44
+        },
+        {
+          "x": 0.5353,
+          "y": 0.59
+        },
+        {
+          "x": 0.61,
+          "y": 0.653
+        },
+        {
+          "x": 0.68,
+          "y": 0.6674
+        },
+        {
+          "x": 0.79,
+          "y": 0.6674
+        },
+        {
+          "x": 0.8955,
+          "y": 0.6674
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.82,
+      "manualPreviousObservationPoints": [
+        {
+          "x": 0.1073,
+          "y": 0.0023
+        },
+        {
+          "x": 0.1299,
+          "y": 0.014
+        },
+        {
+          "x": 0.1525,
+          "y": 0.0326
+        },
+        {
+          "x": 0.1751,
+          "y": 0.0605
+        },
+        {
+          "x": 0.1977,
+          "y": 0.093
+        },
+        {
+          "x": 0.226,
+          "y": 0.1395
+        },
+        {
+          "x": 0.2542,
+          "y": 0.1907
+        },
+        {
+          "x": 0.2825,
+          "y": 0.2465
+        },
+        {
+          "x": 0.3107,
+          "y": 0.3023
+        },
+        {
+          "x": 0.339,
+          "y": 0.3628
+        },
+        {
+          "x": 0.3672,
+          "y": 0.4233
+        },
+        {
+          "x": 0.3955,
+          "y": 0.4791
+        },
+        {
+          "x": 0.4237,
+          "y": 0.5302
+        },
+        {
+          "x": 0.452,
+          "y": 0.5721
+        },
+        {
+          "x": 0.4802,
+          "y": 0.614
+        },
+        {
+          "x": 0.5085,
+          "y": 0.6465
+        },
+        {
+          "x": 0.5353,
+          "y": 0.6674
+        },
+        {
+          "x": 0.565,
+          "y": 0.6605
+        },
+        {
+          "x": 0.5932,
+          "y": 0.6698
+        },
+        {
+          "x": 0.6215,
+          "y": 0.6744
+        },
+        {
+          "x": 0.6497,
+          "y": 0.6791
+        },
+        {
+          "x": 0.7062,
+          "y": 0.6791
+        },
+        {
+          "x": 0.791,
+          "y": 0.6791
+        },
+        {
+          "x": 0.8955,
+          "y": 0.6791
+        }
+      ],
+      "segmentModes": [
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ]
+    },
+    {
+      "id": "sB",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.1073,
+          "y": 0.0023
+        },
+        {
+          "x": 0.1356,
+          "y": 0.007
+        },
+        {
+          "x": 0.1638,
+          "y": 0.0186
+        },
+        {
+          "x": 0.1921,
+          "y": 0.0349
+        },
+        {
+          "x": 0.2203,
+          "y": 0.0535
+        },
+        {
+          "x": 0.2486,
+          "y": 0.0767
+        },
+        {
+          "x": 0.2768,
+          "y": 0.1023
+        },
+        {
+          "x": 0.3051,
+          "y": 0.1279
+        },
+        {
+          "x": 0.3333,
+          "y": 0.1558
+        },
+        {
+          "x": 0.3616,
+          "y": 0.1837
+        },
+        {
+          "x": 0.3898,
+          "y": 0.2116
+        },
+        {
+          "x": 0.4181,
+          "y": 0.2395
+        },
+        {
+          "x": 0.4463,
+          "y": 0.2651
+        },
+        {
+          "x": 0.4746,
+          "y": 0.286
+        },
+        {
+          "x": 0.5028,
+          "y": 0.3093
+        },
+        {
+          "x": 0.5353,
+          "y": 0.3302
+        },
+        {
+          "x": 0.565,
+          "y": 0.3488
+        },
+        {
+          "x": 0.5932,
+          "y": 0.3651
+        },
+        {
+          "x": 0.6215,
+          "y": 0.3767
+        },
+        {
+          "x": 0.6497,
+          "y": 0.3814
+        },
+        {
+          "x": 0.7062,
+          "y": 0.3814
+        },
+        {
+          "x": 0.791,
+          "y": 0.3814
+        },
+        {
+          "x": 0.8955,
+          "y": 0.3814
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "dashed",
+      "dashLength": 3,
+      "dashGap": 1,
+      "markerSize": 0.82
+    },
+    {
+      "id": "sC",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.2881,
+          "y": 0.0023
+        },
+        {
+          "x": 0.3107,
+          "y": 0.0093
+        },
+        {
+          "x": 0.3333,
+          "y": 0.0233
+        },
+        {
+          "x": 0.3559,
+          "y": 0.0419
+        },
+        {
+          "x": 0.3785,
+          "y": 0.0605
+        },
+        {
+          "x": 0.4011,
+          "y": 0.0837
+        },
+        {
+          "x": 0.4237,
+          "y": 0.107
+        },
+        {
+          "x": 0.4463,
+          "y": 0.1302
+        },
+        {
+          "x": 0.4689,
+          "y": 0.1512
+        },
+        {
+          "x": 0.4915,
+          "y": 0.1721
+        },
+        {
+          "x": 0.5141,
+          "y": 0.1907
+        },
+        {
+          "x": 0.5353,
+          "y": 0.2047
+        },
+        {
+          "x": 0.5593,
+          "y": 0.2186
+        },
+        {
+          "x": 0.5819,
+          "y": 0.2279
+        },
+        {
+          "x": 0.6102,
+          "y": 0.2326
+        },
+        {
+          "x": 0.6497,
+          "y": 0.2326
+        },
+        {
+          "x": 0.7062,
+          "y": 0.2326
+        },
+        {
+          "x": 0.791,
+          "y": 0.2326
+        },
+        {
+          "x": 0.8955,
+          "y": 0.2326
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "dashed",
+      "dashLength": 1.05,
+      "dashGap": 0.75,
+      "markerSize": 0.82
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": 0.5353,
+      "y": -0.1093,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 34
+    },
+    {
+      "id": "labelA",
+      "kind": "text",
+      "text": "A",
+      "x": 0.9463,
+      "y": 0.6791,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "sA",
+      "pointIndex": 9,
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "labelB",
+      "kind": "text",
+      "text": "B",
+      "x": 0.9463,
+      "y": 0.386,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "sB",
+      "pointIndex": 22,
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "labelC",
+      "kind": "text",
+      "text": "C",
+      "x": 0.9463,
+      "y": 0.2186,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "sC",
+      "pointIndex": 18,
+      "endStyle": "none",
+      "fontSizePx": 38
+    }
+  ],
+  "style": {
+    "fontSizePx": 36,
+    "labelWeight": 400,
+    "strokeWidth": 0.45,
+    "guideStyle": {
+      "strokeWidth": 0.14,
+      "dashLength": 0.55,
+      "dashGap": 0.4
+    }
+  },
+  "review": [],
+  "frame": {
+    "variant": "cross",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowLength": 3.1,
+    "arrowWidth": 2.05,
+    "strokeWidth": 0.22
+  }
+}

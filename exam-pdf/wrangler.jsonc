@@ -1,0 +1,8 @@
+{
+  // 기출 PDF 정적 내보내기(11-03) — site/는 build-site.mjs가 만드는 링크 묶음(저장소에 넣지 않음).
+  "name": "5e-exam-pdf",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "account_id": "a6dd35b7aa385514042f9003bc937b92",
+  "assets": { "directory": "./site", "not_found_handling": "none" }
+}

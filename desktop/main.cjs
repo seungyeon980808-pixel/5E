@@ -1,10 +1,10 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage, protocol, net } = require("electron");
 const { desktopSmokePasses } = require("./smoke-contract.cjs");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
 const fs = require("node:fs");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
+const { pathToFileURL, fileURLToPath } = require("node:url");
 const {
   LOCAL_IMAGE_EXTENSIONS,
   createLocalImageAccess,
@@ -17,8 +17,361 @@ const {
   TurnPerformanceRegistry,
 } = require("./codex-turn-runtime.cjs");
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
+// 11-10: 그림·글 읽기를 Codex 로그인으로 직접 부른다(에이전트 경로는 실패 시에만 쓴다).
+const { createDirectImageClient } = require("./ai-direct-image.cjs");
+const { snapshotAttachments } = require("./codex-attachment-audit.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
+const { startExamServer } = require('./exam-server.cjs');
+// 문항 라이브러리 「내 컴퓨터 폴더 연결」(11-04 백업 갈래에서 되살림)
+const { createPdfLibraryService } = require("./pdf-library-service.cjs");
+const { registerPdfLibraryIpc } = require("./pdf-library-ipc.cjs");
+const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bundled-pdf-pack.cjs");
 
+const DESKTOP_RESOURCE_DIRECTORIES = new Set(['js', 'css', 'vendor', 'assets', 'fonts']);
+const DESKTOP_RESOURCE_FILES = new Set([
+  'manifest.json',
+  'docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md',
+  'docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md',
+  'docs/IMAGE_COMPLEXITY_MODE_SPEC.md',
+  'experiments/web-codex-auth/editor-bridge.js',
+]);
+function resolveSmokeStateModuleUrl(root = path.join(__dirname, '..')) {
+  const entry = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const mainSource = fs.readFileSync(path.join(root, 'js', 'main.js'), 'utf8');
+  const mainEntry = entry.match(/<script\b[^>]*\bsrc=["']((?:\.\/|\/)?js\/main\.js(?:\?[^"']*)?)["']/)?.[1];
+  const stateImport = mainSource.match(/import\s*\{\s*state\s*\}\s*from\s*["']([^"']+)["']/)?.[1];
+  if (!mainEntry || !stateImport) throw new Error('Cannot resolve the live renderer state module for desktop smoke');
+  // Include the exact dependency query and the entry's URL base: another URL
+  // creates another singleton even when Electron serves the same source bytes.
+  return new URL(stateImport, new URL(mainEntry, pathToFileURL(path.join(root, 'index.html')))).href;
+}
+function relativeInside(root, target) {
+  const relative = path.relative(root, target);
+  return relative && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep) ? relative : null;
+}
+function isDesktopResource(relative, allowEntry) {
+  const parts = relative.split(path.sep);
+  if (parts.some(part => !part || part.startsWith('.') || part.includes(':'))) return false;
+  const portable = parts.join('/');
+  return DESKTOP_RESOURCE_DIRECTORIES.has(parts[0]) || DESKTOP_RESOURCE_FILES.has(portable)
+    || (allowEntry && (portable === 'index.html' || portable === 'desktop/splash.html'));
+}
+function resolveDesktopEntryResource(requestUrl, root = path.join(__dirname, '..')) {
+  try {
+    // Inspect the path before URL normalization. Encoded separators and dot
+    // segments must not turn a private path into an approved public alias.
+    const rawPath = /^file:\/\/[^/]*([^?#]*)/.exec(requestUrl)?.[1];
+    if (!rawPath || /\\|%2f|%5c|%00/i.test(rawPath)) return null;
+    const decoded = decodeURIComponent(rawPath);
+    if (decoded.split('/').some(part => part === '.' || part === '..') || decoded.includes('\0')) return null;
+    const url = new URL(requestUrl);
+    if (url.protocol !== 'file:' || url.hostname || url.username || url.password || url.port) return null;
+    const requested = fileURLToPath(url), appRoot = path.resolve(root);
+    let relative = relativeInside(appRoot, requested), allowEntry = relative !== null;
+    if (!allowEntry) relative = relativeInside(path.parse(appRoot).root, requested);
+    if (!relative || !isDesktopResource(relative, allowEntry)) return null;
+    const realRoot = fs.realpathSync(appRoot), file = fs.realpathSync(path.join(appRoot, relative));
+    const realRelative = relativeInside(realRoot, file);
+    if (!realRelative || !isDesktopResource(realRelative, allowEntry) || !fs.statSync(file).isFile()) return null;
+    return file;
+  } catch {
+    return null;
+  }
+}
+function createDesktopEntryProtocolHandler(root = path.join(__dirname, '..'), fetchFile = (url, options) => net.fetch(url, options)) {
+  return async request => {
+    if (request.method !== 'GET' && request.method !== 'HEAD') return new Response(null, {status:405, headers:{Allow:'GET, HEAD'}});
+    const file = resolveDesktopEntryResource(request.url, root);
+    if (!file) return new Response(null, {status:404});
+    try {
+      // Keep Chromium's requested /js URL (and query) as the module identity.
+      // Delegate only the validated file to Electron's built-in file loader,
+      // retaining MIME/ASAR support without recursing through this handler.
+      return await fetchFile(pathToFileURL(file).href, {
+        method:request.method, headers:request.headers, signal:request.signal, bypassCustomProtocolHandlers:true,
+      });
+    } catch {
+      return new Response(null, {status:404});
+    }
+  };
+}
+let examServerPromise, examWindow, examWindowReady, examOrigin, examEdit;
+let examTabNames = [];
+
+async function openExamWindow(payload = {}) {
+  if (!examServerPromise) examServerPromise = startExamServer({root:path.join(__dirname,'..'), port:Number(process.env.FIVE_E_EXAM_PORT || 39821)}).catch(error => { examServerPromise = null; throw error; });
+  const host = await examServerPromise, seed = host.seed(payload); examOrigin = host.origin;
+  if (examWindow && !examWindow.isDestroyed()) {
+    await examWindowReady;
+    await examWindow.webContents.executeJavaScript(`window.dispatchEvent(new CustomEvent('5e:exam-source-url',{detail:${JSON.stringify('/exam-seed/' + seed)}}))`);
+    examWindow.show(); examWindow.focus(); return {ok:true};
+  }
+  const target = new URL('/?mode=pro&mobile=0&exam=1', host.origin); target.searchParams.set('examSeed',seed);
+  const window = new BrowserWindow({width:1440,height:950,minWidth:900,minHeight:650,show:false,title:'5E 시험지',
+    webPreferences:{preload:path.join(__dirname,'exam-preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,partition:'persist:5e-exam-workspace'}});
+  examWindow = window; window.setMenu(null); window.once('ready-to-show',()=>window.show());
+  window.on('closed',()=>{ if (examWindow === window) {examWindow = null;cancelExamEdit('시험지 창을 닫았습니다.');cancelExamAnnotations('시험지 창을 닫았습니다.');} });
+  window.webContents.on('did-start-navigation',(_event,_url,inPlace,isMainFrame)=>{if(isMainFrame) {cancelExamEdit('시험지를 다시 열었습니다.');if(!inPlace)cancelExamAnnotations('시험지를 다시 열었습니다.');}});
+  window.webContents.on('render-process-gone',()=>cancelExamAnnotations('시험지 창의 연결이 끊겼습니다.'));
+  window.webContents.on('will-navigate',(event,url)=>{ if (new URL(url).origin !== host.origin || new URL(url).pathname !== '/') event.preventDefault(); });
+  window.webContents.setWindowOpenHandler(({url})=>{ if (/^https:\/\//i.test(url)) void shell.openExternal(url); return {action:'deny'}; });
+  window.webContents.on('will-prevent-unload', event => {
+    const answer = confirmLeave(window,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
+      title:'시험지 편집 중',message:'저장하지 않은 그림 편집이나 시험지 변경이 있습니다. 창을 닫을까요?'});
+    if (answer === 1) event.preventDefault();
+  });
+  examWindowReady = (async () => {
+    await window.loadURL(target.href);
+    await window.webContents.executeJavaScript(`new Promise((resolve,reject) => {
+      let attempts = 0;
+      const check = () => document.getElementById('exam-workspace-open') ? resolve() :
+        ++attempts > 300 ? reject(new Error('시험지 화면을 준비하지 못했습니다.')) : setTimeout(check,100);
+      check();
+    })`);
+  })();
+  await examWindowReady; return {ok:true};
+}
+
+function assertExamSender(event) {
+  if (!isTrustedIpcSender(event,examWindow,examOrigin + '/')) throw new Error('Untrusted exam IPC sender.');
+}
+function boundedExamPayload(payload) {
+  if (!payload || typeof payload !== 'object' || Buffer.byteLength(JSON.stringify(payload)) > 128 * 1024 * 1024) throw new Error('그림 연결 요청이 올바르지 않거나 너무 큽니다.');
+  return payload;
+}
+function cancelExamEdit(message) {
+  if (!examEdit) return;
+  const pendingEdit = examEdit; examEdit = null;
+  pendingEdit.reject?.(new Error(message));
+  if (win && !win.isDestroyed()) win.webContents.send('exam:cancel');
+}
+async function revealExamSource() {
+  if (!win || win.isDestroyed()) createWindow();
+  await win.webContents.executeJavaScript(`new Promise((resolve,reject) => {
+    let attempts=0;const ready=()=>document.getElementById('exam-send') ? resolve() : ++attempts>300 ? reject(new Error('5E 작업 탭을 준비하지 못했습니다.')) : setTimeout(ready,100);ready();
+  })`);
+  win.show();win.focus();return {ok:true};
+}
+ipcMain.handle('exam:request-edit',async (event,payload) => {
+  assertExamSender(event); boundedExamPayload(payload);
+  if (!/^[a-f0-9-]{36}$/.test(payload.requestId || '') || !payload.figure?.source || !payload.figure?.link) throw new Error('그림 편집 연결이 올바르지 않습니다.');
+  if (examEdit) throw new Error('현재 그림 편집을 마친 뒤 다시 여세요.');
+  await revealExamSource(); examEdit = {requestId:payload.requestId,link:payload.figure.link};
+  win.webContents.send('exam:edit',payload);return {ok:true};
+});
+ipcMain.handle('exam:get-names',event => {assertExamSender(event);return examTabNames;});
+ipcMain.handle('exam:return-source',async event => {assertExamSender(event);return revealExamSource();});
+ipcMain.handle('exam:ack',(event,payload) => {
+  assertExamSender(event);boundedExamPayload(payload);
+  if (!examEdit || payload.requestId !== examEdit.requestId) return {ok:false};
+  const pendingEdit = examEdit;
+  if (payload.error) {pendingEdit.reject?.(new Error(payload.error));delete pendingEdit.resolve;delete pendingEdit.reject;return {ok:false};}
+  examEdit = null; pendingEdit.resolve?.({ok:true,...(payload.figure ? {figure:payload.figure} : {})});
+  if (examWindow && !examWindow.isDestroyed()) {examWindow.show();examWindow.focus();}
+  return {ok:true};
+});
+
+// Annotation RPC carries data only. It never reveals/activates the primary
+// editor; its renderer merges labelers and crop metadata into the linked page.
+const examAnnotationRequests = new Map();
+const EXAM_ANNOTATION_MAX_BYTES = 64 * 1024 * 1024;
+const EXAM_ANNOTATION_LABEL_MAX_BYTES = 2 * 1024 * 1024;
+const EXAM_ANNOTATION_MAX_PENDING = 8;
+let examAnnotationSchema;
+let examAnnotationGeneration = 0;
+let examAnnotationValidating = 0;
+function annotationRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+}
+function annotationFields(value, allowed) {
+  if (!annotationRecord(value) || Object.keys(value).some(key => !allowed.includes(key))) throw new Error('라벨 연결 필드가 올바르지 않습니다.');
+}
+function boundedAnnotationData(value, maxBytes = EXAM_ANNOTATION_MAX_BYTES) {
+  const visit = (item, depth) => {
+    if (depth > 100 || (typeof item === 'number' && !Number.isFinite(item))) throw new Error('라벨 연결 데이터가 올바르지 않습니다.');
+    if (item === null || ['string','boolean','number','undefined'].includes(typeof item)) return;
+    if (!Array.isArray(item) && !annotationRecord(item)) throw new Error('라벨 연결 데이터가 올바르지 않습니다.');
+    for (const child of Object.values(item)) visit(child, depth + 1);
+  };
+  visit(value, 0);
+  if (Buffer.byteLength(JSON.stringify(value) || '') > maxBytes) throw new Error('라벨 연결 데이터가 너무 큽니다.');
+}
+function validateAnnotationLabels(labels, schema) {
+  if (!Array.isArray(labels) || labels.length > 10000) throw new Error('라벨 목록이 올바르지 않습니다.');
+  boundedAnnotationData(labels, EXAM_ANNOTATION_LABEL_MAX_BYTES);
+  const ids = new Set();
+  for (const label of labels) {
+    if (!annotationRecord(label) || label.type !== 'labeler' || typeof label.id !== 'string' || !label.id || label.id.length > 200 || ids.has(label.id) ||
+        ![label.p1?.x,label.p1?.y,label.p2?.x,label.p2?.y].every(Number.isFinite) || (label.text !== undefined && typeof label.text !== 'string')) throw new Error('라벨 객체가 올바르지 않습니다.');
+    ids.add(label.id);
+  }
+  schema.validateAnnotationPatch(labels, labels);
+}
+function validateAnnotationRender(render, schema) {
+  annotationFields(render, ['bounds','options','layout','layoutDraft']);
+  if (render.bounds !== null) annotationFields(render.bounds, ['x','y','w','h']);
+  annotationFields(render.options, ['includeReferenceImages','excludeAllImages']);
+  if (render.layout !== undefined) annotationFields(render.layout, ['treatAsChar','alignment','textWrap','top','bottom','left','right']);
+  schema.validateFigureRender(render);
+}
+function validateAnnotationFigure(figure, schema) {
+  if (!annotationRecord(figure) || !/^[a-zA-Z0-9_-]{1,80}$/.test(figure.id || '') ||
+      typeof figure.name !== 'string' || figure.name.length > 200 || !Number.isSafeInteger(figure.version) || figure.version < 1 ||
+      !annotationRecord(figure.source) || typeof figure.source.activePageId !== 'string' ||
+      !Array.isArray(figure.source.pages) || figure.source.pages.length !== 1 || !annotationRecord(figure.link)) throw new Error('라벨 그림 원본이 올바르지 않습니다.');
+  annotationFields(figure.link, ['tabId','assetId']);
+  schema.validateExamLink(figure.link); schema.validateExamContext(figure.context);
+  boundedAnnotationData(figure.source, 32 * 1024 * 1024);
+  if (figure.context !== undefined) boundedAnnotationData(figure.context, 32 * 1024 * 1024);
+  if (figure.render !== undefined) validateAnnotationRender(figure.render, schema);
+  if (figure.nativeCropIncluded !== undefined && typeof figure.nativeCropIncluded !== 'boolean') throw new Error('그림 영역 정보가 올바르지 않습니다.');
+  if (figure.editScope !== undefined && figure.editScope !== 'annotations') throw new Error('라벨 편집 범위가 올바르지 않습니다.');
+  const page = figure.source.pages[0];
+  if (!annotationRecord(page) || page.id !== figure.source.activePageId || !page.id || page.id.length > 200 ||
+      !Array.isArray(page.objects) || page.objects.length > 100000 || !Array.isArray(page.layers) || page.layers.length > 10000 ||
+      ![page.artboard?.w,page.artboard?.h].every(value => Number.isFinite(value) && value > 0)) throw new Error('라벨 그림 페이지가 올바르지 않습니다.');
+  const layerId = value => (typeof value === 'string' && !!value && value.length <= 200) || (typeof value === 'number' && Number.isFinite(value));
+  const layers = new Set();
+  for (const layer of page.layers) {
+    if (!annotationRecord(layer) || !layerId(layer.id) || layers.has(layer.id)) throw new Error('그림 레이어가 올바르지 않습니다.');
+    layers.add(layer.id);
+  }
+  const ids = new Set();
+  const point = value => annotationRecord(value) && Number.isFinite(value.x) && Number.isFinite(value.y);
+  for (const object of page.objects) {
+    if (!annotationRecord(object) || typeof object.id !== 'string' || !object.id || object.id.length > 200 || ids.has(object.id) ||
+        !schema.OBJECT_TYPE_IDS.includes(object.type) || (object.layerId != null && !layerId(object.layerId)) ||
+        (object.groupId != null && (typeof object.groupId !== 'string' || !object.groupId || object.groupId.length > 200)) ||
+        (schema.SIZE_TYPES.has(object.type) && ![object.x,object.y,object.w,object.h].every(Number.isFinite)) ||
+        (schema.ENDPOINT_HANDLE_TYPES.has(object.type) && (!point(object.p1) || !point(object.p2))) ||
+        (schema.POINT_ARRAY_TYPES.has(object.type) && (!Array.isArray(object.points) || !object.points.every(point))) ||
+        ((schema.TEXT_MEASURED_TYPES.has(object.type) || ['anglearc','rightangle'].includes(object.type)) && ![object.x,object.y].every(Number.isFinite))) throw new Error('그림 객체가 올바르지 않습니다.');
+    ids.add(object.id);
+  }
+  validateAnnotationLabels(page.objects.filter(object => object.type === 'labeler'), schema);
+}
+async function annotationSchema() {
+  examAnnotationSchema ||= Promise.all([
+    import(pathToFileURL(path.join(__dirname,'..','js','editable-png.js')).href),
+    import(pathToFileURL(path.join(__dirname,'..','js','rhwp-exam-links.js')).href),
+    import(pathToFileURL(path.join(__dirname,'..','js','rhwp-exam-annotations.js')).href),
+    import(pathToFileURL(path.join(__dirname,'..','js','object-types.js')).href),
+  ]).then(([render,links,annotations,types]) => ({...render,...links,...annotations,...types}));
+  return examAnnotationSchema;
+}
+async function validateAnnotationRequest(request) {
+  const fields = {read:['kind','figure'],patch:['kind','figure','baseline','edited','render'],revision:['kind','figure']};
+  if (!annotationRecord(request) || !Object.hasOwn(fields, request.kind)) throw new Error('지원하지 않는 라벨 연결 요청입니다.');
+  annotationFields(request, fields[request.kind]); boundedAnnotationData(request);
+  const schema = await annotationSchema();
+  validateAnnotationFigure(request.figure, schema);
+  if (request.kind === 'patch') {
+    validateAnnotationLabels(request.baseline, schema); validateAnnotationLabels(request.edited, schema);
+    if (request.render !== undefined) validateAnnotationRender(request.render, schema);
+  }
+  return schema;
+}
+function settleExamAnnotations(requestId, error, value) {
+  const pending = examAnnotationRequests.get(requestId);
+  if (!pending) return false;
+  clearTimeout(pending.timeout); examAnnotationRequests.delete(requestId);
+  if (error) pending.reject(error); else pending.resolve(value);
+  return true;
+}
+function cancelExamAnnotations(message) {
+  examAnnotationGeneration++;
+  for (const requestId of examAnnotationRequests.keys()) settleExamAnnotations(requestId, new Error(message));
+}
+ipcMain.handle('exam:annotations', async (event, request) => {
+  assertExamSender(event);
+  if (examAnnotationRequests.size + examAnnotationValidating >= EXAM_ANNOTATION_MAX_PENDING) throw new Error('라벨 연결 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.');
+  const generation = examAnnotationGeneration;
+  let schema;
+  examAnnotationValidating++;
+  try { schema = await validateAnnotationRequest(request); }
+  finally { examAnnotationValidating--; }
+  assertExamSender(event); // Validation may yield while a window reloads/closes.
+  if (generation !== examAnnotationGeneration) throw new Error('라벨 연결 요청이 만료되었습니다. 그림을 다시 열어주세요.');
+  if (!win || win.isDestroyed()) throw new Error('5E 작업 창을 먼저 열어주세요.');
+  assertTrustedSender({sender:win.webContents,senderFrame:win.webContents.mainFrame});
+  const requestId = require('node:crypto').randomUUID();
+  return new Promise((resolve,reject) => {
+    const timeout = setTimeout(() => settleExamAnnotations(requestId, new Error('5E 라벨 응답 시간이 초과했습니다.')), 30000);
+    examAnnotationRequests.set(requestId, {resolve,reject,timeout,kind:request.kind,schema});
+    try { win.webContents.send('exam:annotations-request', {requestId,...request}); }
+    catch (error) { settleExamAnnotations(requestId, error); }
+  });
+});
+handleTrustedIpc('exam:annotations-reply', (_event, payload) => {
+  annotationFields(payload, ['requestId','value','error']);
+  if (typeof payload.requestId !== 'string') throw new Error('라벨 응답 연결이 올바르지 않습니다.');
+  const pending = examAnnotationRequests.get(payload.requestId);
+  if (!pending) return {ok:false};
+  try {
+    boundedAnnotationData(payload, 2 * EXAM_ANNOTATION_LABEL_MAX_BYTES + 8192);
+    if (payload.error !== undefined && payload.error !== null) {
+      if (typeof payload.error !== 'string' || !payload.error || payload.error.length > 4096) throw new Error('라벨 응답 오류가 올바르지 않습니다.');
+      settleExamAnnotations(payload.requestId, new Error(payload.error));
+    } else {
+      if (pending.kind === 'read') {
+        annotationFields(payload.value, ['baseline','draft','render']);
+        validateAnnotationLabels(payload.value.baseline, pending.schema); validateAnnotationLabels(payload.value.draft, pending.schema);
+        if (payload.value.render !== undefined) validateAnnotationRender(payload.value.render, pending.schema);
+      } else {
+        annotationFields(payload.value, ['labels']); validateAnnotationLabels(payload.value.labels, pending.schema);
+      }
+      settleExamAnnotations(payload.requestId, null, payload.value);
+    }
+    return {ok:true};
+  } catch (error) { settleExamAnnotations(payload.requestId, error); return {ok:false}; }
+});
+
+// The isolated RHWP window obtains a reviewed data snapshot from the primary
+// renderer. Replies are correlated and restricted to the primary window.
+function validateExamOwnerProof(value) {
+  const exact = (object,fields) => annotationRecord(object) && Object.keys(object).length === fields.length && fields.every(field=>Object.hasOwn(object,field));
+  const text = (value,max) => typeof value === 'string' && value.length > 0 && value.length <= max;
+  const id = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(value);
+  if (!exact(value,['pageId','activePageId','link','ai']) || !text(value.activePageId,200) || !(value.pageId === null || text(value.pageId,200)) || (value.pageId === null) !== (value.link === null) ||
+      !(value.link === null || exact(value.link,['tabId','assetId']) && id(value.link.tabId) && id(value.link.assetId)) ||
+      !(value.ai === null || exact(value.ai,['scope','taskId']) && typeof value.ai.scope === 'string' && value.ai.scope.length <= 256 && (value.ai.taskId === null || text(value.ai.taskId,256)))) throw new Error('그림 소유 확인 응답이 올바르지 않습니다.');
+  return value;
+}
+const examWorkspaceRequests=new Map();
+function requestPrimaryWorkspace(restore, ownerRequest) {
+  if(!win || win.isDestroyed()) throw new Error('5E 작업 창을 먼저 열어주세요.');
+  const requestId=require('node:crypto').randomUUID();
+  return new Promise((resolve,reject)=>{
+    const timeout=setTimeout(()=>{examWorkspaceRequests.delete(requestId);reject(new Error('5E 작업 원본 응답 시간이 초과했습니다.'));},30000);
+    examWorkspaceRequests.set(requestId,{resolve,reject,timeout,ownerRequest});
+    win.webContents.send('exam:workspace-request',{requestId,...(restore?{restore}:{}),...(ownerRequest?{ownerRequest}:{})});
+  });
+}
+ipcMain.handle('exam:workspace-snapshot',async (event,payload)=>{
+  assertExamSender(event);
+  if (payload === undefined) return requestPrimaryWorkspace();
+  boundedExamPayload(payload);
+  if (!annotationRecord(payload) || Object.keys(payload).length !== 1 || !Object.hasOwn(payload,'editRequestId') || typeof payload.editRequestId !== 'string' || !/^[a-f0-9-]{36}$/.test(payload.editRequestId)) throw new Error('그림 소유 확인 요청이 올바르지 않습니다.');
+  const session = examEdit;
+  if (!session?.resolve || payload.editRequestId !== session.requestId) throw new Error('시험지 편집 연결이 만료되었습니다.');
+  const value = await requestPrimaryWorkspace(undefined,{editRequestId:session.requestId,link:session.link});
+  assertExamSender(event);
+  if (examEdit !== session || !session.resolve) throw new Error('시험지 편집 연결이 만료되었습니다.');
+  return value;
+});
+ipcMain.handle('exam:workspace-restore',(event,payload)=>{assertExamSender(event);boundedExamPayload(payload);return requestPrimaryWorkspace(payload);});
+const examProjectRequests=new Map();
+ipcMain.handle('exam:project-snapshot-reply',(event,payload)=>{
+  assertExamSender(event);
+  const pending=examProjectRequests.get(payload?.requestId);if(!pending)return {ok:false};
+  clearTimeout(pending.timeout);examProjectRequests.delete(payload.requestId);
+  if(payload.error)pending.reject(new Error(payload.error));
+  else if(pending.kind==='open')pending.resolve({ok:true});
+  else if(!(payload.bytes instanceof ArrayBuffer) || payload.bytes.byteLength>128*1024*1024)pending.reject(new Error('프로젝트 파일이 올바르지 않습니다.'));
+  else pending.resolve(payload.bytes);
+  return {ok:true};
+});
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(
   __dirname,
@@ -30,10 +383,29 @@ if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
+// 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
+if (userDataOverride && process.env.FIVE_E_DEV_DOCUMENTS) app.setPath("documents", path.resolve(process.env.FIVE_E_DEV_DOCUMENTS));
 if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
 let splash;
+// 자료 목록 서비스는 처음 쓸 때 만든다(파일을 읽는 순간 app.getPath를 부르면 검사용 가짜 app에서 깨진다).
+let pdfLibraryServiceInstance = null;
+const pdfLibraryService = new Proxy({}, {
+  get(_target, key) {
+    pdfLibraryServiceInstance ||= createPdfLibraryService({
+      storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
+      documentsPath: app.getPath("documents"),
+      onProgress: (progress) => { if (win && !win.isDestroyed()) win.webContents.send("pdf-library:progress", progress); },
+    });
+    const value = pdfLibraryServiceInstance[key];
+    return typeof value === "function" ? value.bind(pdfLibraryServiceInstance) : value;
+  },
+});
+const bundledPdfPackPath = app.isPackaged ? path.join(process.resourcesPath, "pdf-library", "recent-three-pack") : process.env.FIVE_E_BUNDLED_PDF_PACK_SOURCE;
+// 11-15(1.7.0 출시 점검): 설치판에 기본 기출 묶음(recent-three-pack)을 넣는 설정은 1.7.0 갈래에 없다(기출 PDF는 Cloudflare 정적 주소에서 받음).
+// 묶음 폴더가 없는데 읽기기를 만들면 ENOENT로 시작하자마자 오류 창이 떠 설치판이 켜지지 않았다 → 폴더가 있을 때만.
+const bundledPdfPack = bundledPdfPackPath && fs.existsSync(bundledPdfPackPath) ? createBundledPdfPackReader({ root: bundledPdfPackPath, expectedIdentity: RECENT_THREE_PACK_IDENTITY }) : null;
 let server;
 let rpcId = 0;
 let recoveryTerminatingTurnId = null;
@@ -64,6 +436,8 @@ async function interruptWorkspace(payload = {}) {
   const owner = workspaceRequests.get(workspaceScope(payload));
   if (!owner) return null;
   owner.cancelled = true;
+  // 11-10: 직접 그림 요청 중이면 그 연결부터 끊는다(취소는 끊긴 결과로 turn/completed interrupted를 보낸다).
+  if (owner.directAbort) { owner.directAbort.abort(); return { ok: true, direct: true }; }
   if (!owner.turnId) return { pending: true };
   const { threadId: activeTurnThreadId, turnId } = owner;
   if (!owner.interruptPromise) {
@@ -83,6 +457,93 @@ const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImages = createLocalImageAccess();
+// 11-10: 직접 호출 전송 방식. FIVE_E_IMAGE_TRANSPORT=agent 이면 예전 에이전트 경로만 쓴다.
+// 11-10: 직접 호출 한 번은 100초 안에 끝내고(렌더러 생성 시도 240초 안에 체인이 끝나도록), 재시도는 1번만 한다.
+const directImageClient = createDirectImageClient({ log: entry => appendAiTurnLog(entry), timeoutMs: 100_000, retries: 1 });
+const DIRECT_IMAGE_DEFAULT_MODEL = "gpt-6-luna";
+function directImageEnabled() { return process.env.FIVE_E_IMAGE_TRANSPORT !== "agent"; }
+// 11-10: 그림 요청의 참고 이미지 검사(파일을 쓰지 않는다). 형식·크기는 safeAttachment와 같다.
+function inlineImageBytes(data) {
+  if (typeof data !== "string" || !data.startsWith("data:image/")) throw new Error("이미지 첨부 형식이 올바르지 않습니다.");
+  if (data.length > 11_000_000) throw new Error("이미지는 8MB 이하만 첨부할 수 있습니다.");
+  const match = data.match(/^data:(image\/[\w.+-]+);base64,(.+)$/); if (!match) throw new Error("이미지 데이터를 읽을 수 없습니다.");
+  return Math.floor(match[2].length * 3 / 4);
+}
+// 11-10: 직접 그림 요청. 보내기 응답은 바로 돌려주고(합성 turnId), 생성은 뒤에서 진행해 끝나면 이벤트로 알린다.
+// 입력·로그인 확인(동기)이 실패하면 null을 돌려줘 에이전트 경로가 이어 받는다. 생성 중 실패는 실패 종료 이벤트로 알린다.
+function startDirectImageTurn(payload, owner, startedAt) {
+  if (!directImageEnabled()) return null;
+  const attachments = (Array.isArray(payload.attachments) ? payload.attachments : []).map(attachment => attachment?.data);
+  const model = typeof payload.model === "string" && payload.model ? payload.model : DIRECT_IMAGE_DEFAULT_MODEL;
+  try {
+    directImageClient.precheck({ model, text: payload.text, attachments, image: true });
+  } catch (error) {
+    appendAiTurnLog({ event: "direct-fallback", scope: owner.scope, code: error?.code || "DIRECT_UNKNOWN", status: error?.status ?? null });
+    return null;
+  }
+  const turnId = `direct-${require("node:crypto").randomUUID()}`;
+  const conversationId = typeof payload.conversationId === "string" && payload.conversationId.trim() ? payload.conversationId.trim() : null;
+  const controller = new AbortController();
+  owner.turnId = turnId;
+  owner.threadId = turnId;
+  owner.directAbort = controller;
+  owner.startedAt = startedAt;
+  owner.purpose = "image";
+  owner.model = model;
+  turnPerformance.register({ turnId, threadId: turnId, purpose: "image", startedAt, prepareEndedAt: startedAt, attachmentCount: attachments.length, attachmentBytes: 0 });
+  directImageClient.generate({ model, text: payload.text, attachments, signal: controller.signal }).then(
+    result => finishDirectImageTurn(owner, { turnId, imageDataUrl: result.imageDataUrl, error: null, attachmentCount: attachments.length }),
+    error => finishDirectImageTurn(owner, { turnId, imageDataUrl: null, error, attachmentCount: attachments.length }),
+  ).catch(() => {});
+  return {
+    threadId: null,
+    conversationId,
+    renderThreadId: turnId,
+    ephemeralRender: true,
+    purpose: "image",
+    turnId,
+    result: { turn: { id: turnId } },
+    performance: null,
+  };
+}
+// 11-10: 직접 그림 결과를 에이전트 경로와 같은 이벤트 모양으로 보낸다(성공·취소·실패 모두 turn/completed로 끝낸다).
+function finishDirectImageTurn(owner, { turnId, imageDataUrl, error, attachmentCount }) {
+  if (owner.done) return;
+  owner.directAbort = null;
+  owner.done = true;
+  if (workspaceRequests.get(owner.scope) === owner) workspaceRequests.delete(owner.scope);
+  const cancelled = !imageDataUrl && (owner.cancelled || error?.code === "DIRECT_ABORTED");
+  const turn = { id: turnId, status: imageDataUrl ? "completed" : cancelled ? "interrupted" : "failed" };
+  if (turn.status === "failed") {
+    turn.error = { message: "그림 생성에 실패했습니다. 다른 모델로 다시 시도합니다." };
+    appendAiTurnLog({ event: "direct-failed", scope: owner.scope, turnId, code: error?.code || "DIRECT_UNKNOWN", status: error?.status ?? null });
+  }
+  const messages = [];
+  if (imageDataUrl) messages.push({ method: "item/completed", params: { turnId, item: { type: "imageGeneration", status: "completed", imageDataUrl } } });
+  messages.push({ method: "turn/completed", params: { turn } });
+  appendAiTurnLog({ event: "turn-completed", scope: owner.scope, turnId, status: turn.status, ms: owner.startedAt ? Date.now() - owner.startedAt : null, purpose: "image", model: owner.model || null, attachments: attachmentCount });
+  for (const message of messages) {
+    send("codex:event", message, owner.scope);
+    const observation = turnPerformance.observe(message);
+    if (observation?.completed) {
+      send("codex:event", { method: "5e/performance", params: observation.performance }, owner.scope);
+      turnPerformance.delete(turnId);
+    }
+  }
+  if (imageDataUrl) send("codex:event", { method: "5e/image-finalization", params: { turnId, state: "confirmed", status: "completed" } }, owner.scope);
+}
+// 11-10: 그림 읽기(라벨 읽기 등) 전용 호출. 에이전트를 거치지 않는다.
+handleTrustedIpc("codex:read-image-text", (_event, payload = {}) => {
+  const { model, text, attachments = [] } = payload && typeof payload === "object" ? payload : {};
+  if (typeof text !== "string" || text.length > 1_000_000) throw new Error("잘못된 읽기 요청입니다.");
+  if (!Array.isArray(attachments) || attachments.length > 16) throw new Error("참고 이미지 수가 너무 많습니다.");
+  for (const attachment of attachments) inlineImageBytes(attachment);
+  return directImageClient.readText({
+    model: typeof model === "string" && model ? model : DIRECT_IMAGE_DEFAULT_MODEL,
+    text,
+    attachments,
+  }).then(result => ({ text: result.text }));
+});
 const SMOKE_FIXTURE_IMAGE_PATH = path.join(__dirname, "..", "tests", "fixtures", "rights-clear-smoke.png");
 
 function imageDataUrl({ extension: ext, bytes }) {
@@ -306,8 +767,18 @@ function send(event, payload, trustedScope, targetScopes) {
   }
 }
 function rejectPending(error) { for (const p of pending.values()) p.reject(error); pending.clear(); }
+function reportAttachmentSnapshot(owner, stage, paths) {
+  if (!owner?.attachmentDiagnostics) return;
+  send("codex:event", { method: "5e/attachment-diagnostics", params: {
+    turnId: owner.turnId, stage, observedAt: Date.now(), attachments: snapshotAttachments(paths),
+  } }, owner.scope);
+}
 function cleanupAttachments(id) {
-  for (const file of turnAttachmentPaths.get(id) || []) void fs.promises.unlink(file).catch(() => {});
+  const paths = turnAttachmentPaths.get(id) || [];
+  const owner = turnOwners.get(id);
+  reportAttachmentSnapshot(owner, "before-cleanup", paths);
+  void Promise.all(paths.map(file => fs.promises.unlink(file).catch(() => {})))
+    .then(() => reportAttachmentSnapshot(owner, "after-cleanup", paths));
   turnAttachmentPaths.delete(id);
 }
 function cleanupAllAttachments() {
@@ -332,6 +803,7 @@ function handleServerProcessTermination(child, {
   signal = null,
 } = {}) {
   if (server !== child) return;
+  appendAiTurnLog({ event: "codex-stopped", state, code, signal, message: error ? String(error.message || error).slice(0, 300) : null });
   const affectedScopes = new Set([...workspaceRequests.keys(), ...workspaceConversations.keys()]);
   let failure;
   for (const owner of [...workspaceRequests.values()]) {
@@ -386,7 +858,13 @@ function processTurnEvent(msg) {
     send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
     turnPerformance.delete(performanceObservation.performance.turnId);
   }
-  if (msg.method === "turn/completed" && msg.params?.turn?.id) releaseActiveTurn(owner.turnId);
+  if (msg.method === "error") appendAiTurnLog({ event: "turn-error", scope: owner.scope, turnId: owner.turnId, message: String(msg.params?.error?.message || "").slice(0, 300) });
+  if (msg.method === "turn/completed" && msg.params?.turn?.id) {
+    const turn = msg.params.turn;
+    appendAiTurnLog({ event: "turn-completed", scope: owner.scope, turnId: owner.turnId, status: turn.status || null,
+      error: turn.error ? String(turn.error.message || turn.error).slice(0, 300) : null, ms: owner.startedAt ? Date.now() - owner.startedAt : null });
+    releaseActiveTurn(owner.turnId);
+  }
 }
 
 function startServer() {
@@ -442,6 +920,7 @@ function rpc(method, params) {
     const timer = setTimeout(() => {
       const error = new Error(`${method} timeout`);
       error.code = "RPC_TIMEOUT";
+      appendAiTurnLog({ event: "rpc-timeout", method });
       // Optional metadata does not own any turn. Recovery reads and mutations
       // retain the fatal deadline because their remote state may be uncertain.
       if (["model/list", "account/read", "account/rateLimits/read", "account/usage/read"].includes(method)) {
@@ -517,17 +996,75 @@ async function safeAttachment(data, name) {
   await fs.promises.writeFile(file, buffer);
   return { file, bytes: buffer.length, name: name || path.basename(file) };
 }
+// 11-09: AI 요청 기록(실패 원인 확인용). 설치판 기록 폴더의 ai-turns.log, 5MB가 넘으면 .1로 넘긴다.
+function appendAiTurnLog(entry) {
+  try {
+    const dir = app.getPath("logs"), file = path.join(dir, "ai-turns.log");
+    fs.mkdirSync(dir, { recursive: true });
+    try { if (fs.statSync(file).size > 5e6) fs.renameSync(file, file + ".1"); } catch {}
+    fs.appendFileSync(file, JSON.stringify({ at: new Date().toISOString(), ...entry }) + "\n");
+  } catch {}
+}
+// 11-09 시험 스위치(밤샘 지시 「일부러 끊기」 실패 시험용): FIVEE_AI_FAULT=error-odd로 켠 경우에만 홀수 번째 AI 요청을 일부러 실패시킨다.
+// 평소(환경 변수 없음)에는 아무 일도 하지 않는다.
+let injectedFaultCount = 0;
+function injectedSendFault() {
+  if (process.env.FIVEE_AI_FAULT !== "error-odd") return null;
+  injectedFaultCount += 1;
+  return injectedFaultCount % 2 === 1 ? new Error("시험용: 일부러 끊은 AI 요청") : null;
+}
 async function sendTurn(payload = {}) {
   const scope = workspaceScope(payload);
+  const fault = injectedSendFault();
+  if (fault) { appendAiTurnLog({ event: "injected-fault", scope }); throw fault; }
+  // 11-09 사용자 원칙: AI 요청은 실패로 끝내지 않는다. 화면이 앞 요청을 이미 끊은(취소한) 칸에 다시 보내면
+  // (응답이 없어 자동으로 다시 보내는 경우) 오류로 돌려보내지 않고 앞 요청이 정리되기를 최대 8초 기다린 뒤,
+  // 그래도 남아 있으면 정리하고 보낸다. 끊지 않은 같은 칸 겹침은 예전처럼 거절한다.
+  const previous = workspaceRequests.get(scope);
+  if (previous?.cancelled) {
+    appendAiTurnLog({ event: "takeover", scope, turnId: previous.turnId || null });
+    const deadline = Date.now() + 8000;
+    while (workspaceRequests.get(scope) === previous && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 100));
+    if (workspaceRequests.get(scope) === previous) {
+      previous.done = true;
+      if (previous.turnId) releaseActiveTurn(previous.turnId);
+      if (workspaceRequests.get(scope) === previous) workspaceRequests.delete(scope);
+    }
+  }
   if (workspaceRequests.has(scope)) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
   const owner = { scope, threadId: null, turnId: null, done: false, cancelled: false };
   workspaceRequests.set(scope, owner);
-  try { return await sendWorkspaceTurn(payload, owner); }
-  catch (error) {
+  try {
+    const result = await sendWorkspaceTurn(payload, owner);
+    appendAiTurnLog({ event: "send", scope, turnId: owner.turnId || null, purpose: payload.purpose || null, model: payload.model || null, effort: payload.effort || null,
+      attachments: Array.isArray(payload.attachments) ? payload.attachments.length : 0 });
+    return result;
+  } catch (error) {
+    appendAiTurnLog({ event: "send-failed", scope, message: String(error?.message || error).slice(0, 300) });
     if (workspaceRequests.get(scope) === owner) workspaceRequests.delete(scope);
     owner.done = true;
     throw error;
   }
+}
+// JSON schema is current-turn-only and never a capability/profile override.
+function validatedSceneOutputSchema(value, purpose) {
+  if (value === undefined) return undefined;
+  if (purpose !== "scene" || !value || typeof value !== "object" || Array.isArray(value) || Object.getPrototypeOf(value) !== Object.prototype) throw new TypeError("outputSchema는 scene JSON 객체만 허용합니다.");
+  let encoded, nodes = 0;
+  const ancestors = new Set();
+  const visit = (item, depth = 0) => {
+    if (++nodes > 20000 || depth > 64 || item === undefined || typeof item === "function" || typeof item === "symbol" || typeof item === "bigint" || typeof item === "number" && !Number.isFinite(item)) throw new TypeError("JSON schema 값이 잘못되었습니다.");
+    if (item && typeof item === "object") {
+      if ((!Array.isArray(item) && Object.getPrototypeOf(item) !== Object.prototype) || ancestors.has(item)) throw new TypeError("JSON schema 객체가 잘못되었습니다.");
+      ancestors.add(item);
+      for (const child of Object.values(item)) visit(child, depth + 1);
+      ancestors.delete(item);
+    }
+  };
+  try { visit(value); encoded = JSON.stringify(value); }
+  catch { throw new TypeError("outputSchema는 직렬화 가능한 JSON 객체여야 합니다."); }
+  if (Buffer.byteLength(encoded, "utf8") > 200000) throw new TypeError("outputSchema 크기가 200KB를 초과합니다.");
+  return JSON.parse(encoded);
 }
 async function sendWorkspaceTurn(payload, owner) {
   let threadId = workspaceConversations.get(owner.scope) || null;
@@ -543,7 +1080,15 @@ async function sendWorkspaceTurn(payload, owner) {
   } = payload;
   if (turnId) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
   const startedAt = Date.now();
+  owner.startedAt = startedAt;
   const plan = resolveTurnPlan({ ...payload, conversationId, resetConversation });
+  owner.attachmentDiagnostics = plan.purpose === "image" && payload.attachmentDiagnostics === true;
+  // 11-10: 그림 요청은 먼저 직접 호출로 보낸다. 입력·로그인 확인이 실패하면(동기) 아래 에이전트 경로가 이어 받는다.
+  if (plan.purpose === "image" && plan.ephemeralRender && !owner.cancelled) {
+    const direct = startDirectImageTurn(payload, owner, startedAt);
+    if (direct) return direct;
+  }
+  const outputSchema = validatedSceneOutputSchema(payload.outputSchema, plan.purpose);
   startServer();
   await ensureInitialized();
   if (plan.resetChatThread) threadId = null;
@@ -577,23 +1122,33 @@ async function sendWorkspaceTurn(payload, owner) {
   if (!plan.ephemeralRender) workspaceConversations.set(owner.scope, requestThreadId);
 
   const safeAttachments = Array.isArray(attachments) ? attachments : [];
-  const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
-  const failedAttachment = preparedResults.find((result) => result.status === "rejected");
-  if (failedAttachment) {
-    await Promise.all(preparedResults
-      .filter((result) => result.status === "fulfilled")
-      .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
-    throw failedAttachment.reason;
+  let preparedAttachments = [];
+  let paths = [];
+  let input;
+  if (plan.purpose === "image") {
+    // 11-10: 그림 요청의 참고 이미지는 파일 경로 대신 데이터 주소로 보낸다(에이전트가 잘못 쓸 경로가 없게 한다).
+    preparedAttachments = safeAttachments.map((attachment) => ({ file: null, bytes: inlineImageBytes(attachment.data), name: attachment.name || null }));
+    input = [{ type: "text", text }].concat(safeAttachments.map((attachment) => ({ type: "image", url: attachment.data })));
+  } else {
+    const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
+    const failedAttachment = preparedResults.find((result) => result.status === "rejected");
+    if (failedAttachment) {
+      await Promise.all(preparedResults
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
+      throw failedAttachment.reason;
+    }
+    preparedAttachments = preparedResults.map((result) => result.value);
+    paths = preparedAttachments.map((attachment) => attachment.file);
+    input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
   }
-  const preparedAttachments = preparedResults.map((result) => result.value);
-  const paths = preparedAttachments.map((attachment) => attachment.file);
   const attachmentBytes = preparedAttachments.reduce((sum, attachment) => sum + attachment.bytes, 0);
-  const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
+  reportAttachmentSnapshot(owner, "before-turn-start", paths);
   let result;
   try {
     if (owner.done || owner.cancelled) throw new Error("AI 작업이 취소되었습니다.");
     // Exactly one backend turn is started. Any image retry must be an explicit agent/tool decision.
-    result = await rpc("turn/start", { threadId: requestThreadId, input, model: model || null, effort: effort || null, serviceTier: serviceTier || null });
+    result = await rpc("turn/start", { threadId: requestThreadId, input, model: model || null, effort: effort || null, serviceTier: serviceTier || null, ...(outputSchema !== undefined ? { outputSchema } : {}) });
   } catch (error) {
     await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
     throw error;
@@ -644,35 +1199,56 @@ async function sendWorkspaceTurn(payload, owner) {
   };
 }
 
+const START_WINDOW = { width: 960, height: 560 };
+let startExpanded = true;
+// 시작 창 → 작업 화면: 화면 가운데에서 1520×960(화면보다 크면 화면에 맞춤)으로 부드럽게 커진다.
+function expandMainWindow(animate = true) {
+  if (startExpanded || !win || win.isDestroyed()) return false;
+  startExpanded = true;
+  const { screen } = require("electron");
+  const area = screen?.getDisplayMatching ? screen.getDisplayMatching(win.getBounds()).workArea : null;
+  const width = area ? Math.min(1520, area.width) : 1520, height = area ? Math.min(960, area.height) : 960;
+  const x = area ? Math.round(area.x + (area.width - width) / 2) : undefined, y = area ? Math.round(area.y + (area.height - height) / 2) : undefined;
+  if (typeof win.setResizable === "function") win.setResizable(true);
+  if (typeof win.setBounds === "function") win.setBounds(area ? { x, y, width, height } : { width, height }, animate && process.platform === "darwin");
+  if (typeof win.setMinimumSize === "function") win.setMinimumSize(1100, 700);
+  return true;
+}
+
+// 11-06: 시작 창이 다시 뜨면(새로 고침·처음 화면으로) 창을 시작 창 크기(960×560)로 되돌린다 — 작업 화면 크기 그대로 두면 시작 창이 과하게 크게 보였다.
+function shrinkMainWindow(animate = true) {
+  if (!startExpanded || !win || win.isDestroyed()) return false;
+  if (typeof win.isFullScreen === "function" && win.isFullScreen()) return false;
+  startExpanded = false;
+  if (typeof win.isMaximized === "function" && win.isMaximized() && typeof win.unmaximize === "function") win.unmaximize();
+  const { screen } = require("electron");
+  const area = screen?.getDisplayMatching ? screen.getDisplayMatching(win.getBounds()).workArea : null;
+  const { width, height } = START_WINDOW;
+  const x = area ? Math.round(area.x + (area.width - width) / 2) : undefined, y = area ? Math.round(area.y + (area.height - height) / 2) : undefined;
+  if (typeof win.setMinimumSize === "function") win.setMinimumSize(width, height);
+  if (typeof win.setBounds === "function") win.setBounds(area ? { x, y, width, height } : { width, height }, animate && process.platform === "darwin");
+  if (typeof win.setResizable === "function") win.setResizable(false);
+  return true;
+}
+
 function createWindow() {
   if (win && !win.isDestroyed()) {
     win.show();
     return;
   }
-  const splashStartedAt = Date.now();
-  splash = new BrowserWindow({
-    width: 520,
-    height: 310,
-    frame: false,
-    resizable: false,
-    alwaysOnTop: true,
-    center: true,
-    backgroundColor: "#111820",
-    icon: APP_ICON_PATH,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
-  });
-  splash.loadFile(path.join(__dirname, "splash.html"));
+  // 11-04: 따로 뜨던 작은 로딩 창(splash.html)은 쓰지 않는다 — 앱 창 안의 시작 창(js/start-screen.js)이 첫 장면을 맡는다.
   const platformWindowOptions = process.platform === "darwin"
-    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 12, y: 7 } }
+    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 14, y: 16 } }
     : {
         titleBarStyle: "hidden",
         titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
       };
+  // 11-04: 처음엔 시작 창 카드 크기(960×560)로만 열고, 시작 창에서 고르면 원래 크기로 부드럽게 커진다(window:start-expand).
   win = new BrowserWindow({
-    width: 1520,
-    height: 960,
-    minWidth: 1100,
-    minHeight: 700,
+    width: START_WINDOW.width,
+    height: START_WINDOW.height,
+    resizable: false,
+    center: true,
     show: false,
     backgroundColor: "#0e1512",
     icon: APP_ICON_PATH,
@@ -681,23 +1257,40 @@ function createWindow() {
   });
   win.setMenu(null);
   win.setMenuBarVisibility(false);
+  // 맥: 빨강·노랑·초록 단추는 평소 숨기고, 마우스가 맨 위 가장자리에 가면 얇은 줄과 함께 내려온다(11-04 사용자).
+  if (process.platform === "darwin" && typeof win.setWindowButtonVisibility === "function") win.setWindowButtonVisibility(false);
   const revealMainWindow = () => {
-    const reveal = () => {
-      if (splash && !splash.isDestroyed()) splash.destroy();
-      splash = null;
-      if (win && !win.isDestroyed()) win.show();
-    };
-    const remaining = Math.max(0, 900 - (Date.now() - splashStartedAt));
-    if (remaining) setTimeout(reveal, remaining); else reveal();
+    if (splash && !splash.isDestroyed()) splash.destroy();
+    splash = null;
+    if (win && !win.isDestroyed()) win.show();
   };
   win.once("ready-to-show", revealMainWindow);
+  startExpanded = false;
   win.webContents.once("did-fail-load", revealMainWindow);
-  win.on("closed", () => { win = null; });
+  win.on("closed", () => {
+    win = null;
+    if (examEdit && examWindow && !examWindow.isDestroyed()) examWindow.webContents.send('exam:result',{requestId:examEdit.requestId,error:'5E 작업 창을 닫았습니다. 그림을 다시 더블클릭해서 여세요.'});
+    cancelExamEdit('5E 작업 창을 닫았습니다.');
+    cancelExamAnnotations('5E 작업 창을 닫았습니다.');
+  });
+  win.webContents.on('did-start-navigation',(_event,_url,inPlace,isMainFrame)=>{if(isMainFrame && !inPlace)cancelExamAnnotations('5E 작업 창을 다시 열었습니다.');});
+  win.webContents.on('render-process-gone',()=>cancelExamAnnotations('5E 작업 창의 연결이 끊겼습니다.'));
+  // 화면이 닫기를 막으면(저장 안 한 지우개·라벨 초안, 출제·조판 변경) Electron은 알림 없이 닫기를 취소한다.
+  // 주 창에는 묻는 창이 없어, 작업을 지운 뒤에는 강제 종료밖에 없었다(M40). 시험지 창과 같이 묻는다.
+  win.webContents.on('will-prevent-unload', event => {
+    const answer = confirmLeave(win,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
+      title:'저장하지 않은 편집',message:'저장하지 않은 편집이 있습니다. 창을 닫을까요?'});
+    if (answer === 1) event.preventDefault();
+  });
   const entryUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   win.webContents.on("will-navigate", (event, url) => {
     if (String(url).split(/[?#]/, 1)[0] !== entryUrl) event.preventDefault();
   });
-  win.webContents.setWindowOpenHandler(({ url }) => {
+  win.webContents.setWindowOpenHandler(({ url, frameName }) => {
+    // 칸 분리(11-05, assets/exampool/sheet/pane-detach.js): 빈 창(about:blank)에 출제 칸을 옮겨 담는 창만 허용한다.
+    if (String(url) === "about:blank" && /^five-e-pane-(left|center|adv)$/.test(String(frameName || ""))) {
+      return { action: "allow", overrideBrowserWindowOptions: { autoHideMenuBar: true, backgroundColor: "#0d1117", minWidth: 200, minHeight: 300, title: "5E" } };
+    }
     if (/^https:\/\//i.test(String(url))) void shell.openExternal(url);
     return { action: "deny" };
   });
@@ -707,6 +1300,7 @@ function createWindow() {
       try {
         const codexSendsBeforeSmoke = codexSendInvocationCount;
         const smokeFixtureImageDataUrl = readSmokeFixtureImageDataUrl();
+        const smokeStateModuleUrl = resolveSmokeStateModuleUrl();
         const result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(async () => {
             const shortcutModifiersForPlatform = ${shortcutModifiersForPlatform.toString()};
@@ -845,7 +1439,7 @@ function createWindow() {
             await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
               !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
                 .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
-            const stateModule = await import("./js/state.js?v=1.6.1-remediation-0929");
+            const stateModule = await import(${JSON.stringify(smokeStateModuleUrl)});
             const textChooser = document.getElementById("chooser-text");
             const textChooserButton = document.getElementById("tool-text-merged");
             const angleChooser = document.getElementById("chooser-angle");
@@ -1260,8 +1854,79 @@ function createWindow() {
     });
   }
 }
+// 11-11: 설치판 출제 자료를 ~/Documents/5E/출제 에 파일로 쌓는다(자동 저장·백업·내보내기).
+require("./exam-files.cjs").registerExamFilesIpc({ handle: handleTrustedIpc, shell, documentsPath: () => app.getPath("documents") });
+// ExamPool 출제 대화의 근거 검색(읽기 전용). 입력은 종류·검색어·한도로 제한하고 경로·SQL·명령은 받지 않는다.
+// 5E 클립보드(11-14): 5E로 돌아올 때 맥·윈도우 클립보드의 그림을 「밖에서 · 캡처」로 넣는다. 서명(sig)으로 같은 그림은 한 번만.
+// Electron 44부터 clipboard는 W3C 꼴(비동기 read() → ClipboardItem.getType)이다. 옛 readImage()가 있으면 그것을 쓴다.
+handleTrustedIpc("clipboard:read-image", async () => {
+  const { clipboard } = require("electron");
+  let png = null;
+  if (typeof clipboard.readImage === "function") { const image = clipboard.readImage(); if (image && !image.isEmpty()) png = image.toPNG(); }
+  else if (typeof clipboard.read === "function") {
+    const items = await clipboard.read().catch(() => []);
+    const item = (items || []).find(entry => (entry.types || []).includes("image/png")) || (items || []).find(entry => (entry.types || []).some(type => /^image\//.test(type)));
+    if (item) { const type = item.types.includes("image/png") ? "image/png" : item.types.find(t => /^image\//.test(t)); const blob = await item.getType(type).catch(() => null);
+      if (blob && typeof blob.arrayBuffer === "function") { const buf = Buffer.from(await blob.arrayBuffer()); png = type === "image/png" ? buf : nativeImage.createFromBuffer(buf).toPNG(); } }
+  }
+  if (!png || !png.length || png.length > 40 * 1024 * 1024) return null;
+  const size = nativeImage.createFromBuffer(png).getSize();
+  const sig = require("node:crypto").createHash("sha1").update(png).digest("hex");
+  return { dataUrl: `data:image/png;base64,${png.toString("base64")}`, width: size.width, height: size.height, sig };
+});
+handleTrustedIpc("exampool:evidence", async (_event, request) => require("./exampool-evidence.cjs").search(request && typeof request === "object" ? request : {}));
 handleTrustedIpc("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
 handleTrustedIpc("codex:start", () => startServer());
+handleTrustedIpc('exam:open-project',(_event,bytes)=>{
+  if(!(bytes instanceof ArrayBuffer) || bytes.byteLength>128*1024*1024)throw new Error('프로젝트 파일이 올바르지 않습니다.');
+  if(!examWindow || examWindow.isDestroyed())throw new Error('시험지 창을 먼저 열어주세요.');
+  cancelExamEdit('다른 프로젝트를 열었습니다.');
+  const requestId=require('node:crypto').randomUUID();
+  return new Promise((resolve,reject)=>{
+    const timeout=setTimeout(()=>{examProjectRequests.delete(requestId);reject(new Error('시험지 프로젝트 열기 응답 시간이 초과했습니다.'));},30000);
+    examProjectRequests.set(requestId,{kind:'open',resolve,reject,timeout});examWindow.webContents.send('exam:project-open',{requestId,bytes});
+  });
+});
+handleTrustedIpc('exam:project-snapshot',()=>{
+  if(!examWindow || examWindow.isDestroyed())return null;
+  const requestId=require('node:crypto').randomUUID();
+  return new Promise((resolve,reject)=>{
+    const timeout=setTimeout(()=>{examProjectRequests.delete(requestId);reject(new Error('시험지 프로젝트 응답 시간이 초과했습니다.'));},30000);
+    examProjectRequests.set(requestId,{resolve,reject,timeout});examWindow.webContents.send('exam:project-snapshot',{requestId});
+  });
+});
+handleTrustedIpc('exam:workspace-reply',(_event,payload)=>{
+  boundedExamPayload(payload);
+  const pending=examWorkspaceRequests.get(payload.requestId);if(!pending) return {ok:false};
+  clearTimeout(pending.timeout);examWorkspaceRequests.delete(payload.requestId);
+  if (pending.ownerRequest) {
+    try {
+      const errorReply = Object.hasOwn(payload,'error');
+      const fields = errorReply ? ['requestId','error'] : ['requestId','value'];
+      if (!annotationRecord(payload) || Object.keys(payload).length !== 2 || !fields.every(field=>Object.hasOwn(payload,field)) || Buffer.byteLength(JSON.stringify(payload)) > 4096 || errorReply && (typeof payload.error !== 'string' || !payload.error || payload.error.length > 1024)) throw new Error('그림 소유 확인 응답이 올바르지 않습니다.');
+      if (errorReply) pending.reject(new Error(payload.error));else pending.resolve(validateExamOwnerProof(payload.value));
+    } catch (error) {pending.reject(error);return {ok:false};}
+  } else if(payload.error) pending.reject(new Error(payload.error));else pending.resolve(payload.value);
+  return {ok:true};
+});
+handleTrustedIpc('exam:workspace-changed',()=>{if(examWindow && !examWindow.isDestroyed()) examWindow.webContents.send('exam:workspace-changed');return {ok:true};});
+handleTrustedIpc('exam:save-workspace',()=>{if(!examWindow || examWindow.isDestroyed()) throw new Error('시험지 창을 먼저 열어주세요.');examWindow.webContents.send('exam:save-workspace');return {ok:true};});
+handleTrustedIpc('exam:publish-names', (_event,names) => {
+  if (!Array.isArray(names) || names.length > 1000 || names.some(value => !value ||
+      !/^[a-zA-Z0-9_-]{1,80}$/.test(value.link?.tabId || '') || !/^[a-zA-Z0-9_-]{1,80}$/.test(value.link?.assetId || '') ||
+      typeof value.name !== 'string' || !value.name.trim() || value.name.length > 200)) throw new Error('작업 탭 이름 정보가 올바르지 않습니다.');
+  examTabNames = names.map(({link,name}) => ({link:{tabId:link.tabId,assetId:link.assetId},name}));
+  if (examWindow && !examWindow.isDestroyed()) examWindow.webContents.send('exam:names',examTabNames);
+  return {ok:true};
+});
+handleTrustedIpc('exam:open', (_event,payload) => openExamWindow(payload));
+handleTrustedIpc('exam:finish', (_event,payload) => {
+  boundedExamPayload(payload);
+  if (!examEdit || payload.requestId !== examEdit.requestId || !examWindow || examWindow.isDestroyed()) throw new Error('시험지 편집 연결이 만료되었습니다.');
+  if (payload.apply && (payload.captured?.link?.tabId !== examEdit.link.tabId || payload.captured?.link?.assetId !== examEdit.link.assetId)) throw new Error('다른 작업 탭의 그림은 반영할 수 없습니다.');
+  if (examEdit.resolve) throw new Error('그림을 반영하고 있습니다.');
+  return new Promise((resolve,reject) => {examEdit.resolve = resolve;examEdit.reject = reject;examWindow.webContents.send('exam:result',payload);});
+});
 handleTrustedIpc("codex:stop", (_event, payload = {}) => workspaceScope(payload) ? interruptWorkspace(payload) : stopServer());
 handleTrustedIpc("codex:models", () => listModels());
 handleTrustedIpc("codex:account", () => accountOverview());
@@ -1292,6 +1957,14 @@ handleTrustedIpc("capture:sources", async () => {
   });
   return sources.map((source) => ({ id: source.id, name: source.name, data: source.thumbnail.toDataURL() }));
 });
+registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack, handle: handleTrustedIpc });
+handleTrustedIpc("window:start-expand", () => { expandMainWindow(true); return true; });
+handleTrustedIpc("window:start-shrink", () => { shrinkMainWindow(true); return true; });
+handleTrustedIpc("window:traffic-lights", (_event, visible) => {
+  if (process.platform === "darwin" && win && !win.isDestroyed() && typeof win.setWindowButtonVisibility === "function") win.setWindowButtonVisibility(Boolean(visible));
+  return true;
+});
+
 handleTrustedIpc("local-images:pick-folder", async (event) => {
   const result = await dialog.showOpenDialog(win, {
     title: "검색할 로컬 이미지 폴더 선택",
@@ -1320,8 +1993,27 @@ handleTrustedIpc("local-images:thumbnail", async (event, filePath) => {
 handleTrustedIpc("local-images:read", async (event, filePath) => {
   return imageDataUrl(localImages.read(filePath));
 });
+// The primary must remain file: for the native RHWP routes and exact IPC trust
+// URL. Install on the default session before any loadFile; the auxiliary exam
+// partition retains its separate loopback server and protocol policy.
+app.on('ready', () => protocol.handle('file', createDesktopEntryProtocolHandler()));
+// 11-14: 맥은 앱 메뉴가 없으면 ⌘Q(끝내기)·⌘H(가리기)가 먹지 않는다 — 앱 메뉴 하나만 둔다.
+// 편집 메뉴는 두지 않는다: 메뉴 단축키가 화면의 ⌘C·⌘V·⌘Z(5E 클립보드·되돌리기)를 가로채기 때문.
+function installAppMenu() {
+  if (process.platform !== 'darwin' || typeof Menu.buildFromTemplate !== 'function') { Menu.setApplicationMenu(null); return; }
+  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: app.name, submenu: [
+    { role: 'about', label: '5E 정보' }, { type: 'separator' },
+    { role: 'hide', label: '5E 가리기' }, { role: 'hideOthers', label: '기타 가리기' }, { role: 'unhide', label: '모두 보기' },
+    { type: 'separator' }, { role: 'quit', label: '5E 끝내기' },
+  ] }]));
+}
+// 저장 확인 창은 창에 붙어 뜬다 — 창이 가려졌거나 내려가 있으면 확인 창도 안 보여 앱이 멈춘 것처럼 보였다(11-14). 먼저 창을 앞으로.
+function confirmLeave(target, options) {
+  try { if (target.isMinimized()) target.restore(); target.show(); target.focus(); if (process.platform === 'darwin') app.focus({ steal: true }); } catch {}
+  return dialog.showMessageBoxSync(target, options);
+}
 app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
+  installAppMenu();
   if (process.platform === "darwin" && app.dock) app.dock.setIcon(APP_ICON_PATH);
   createWindow();
 });
@@ -1332,5 +2024,6 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 app.on("before-quit", stopServer);
+app.on('before-quit',()=>{ if (examServerPromise) void examServerPromise.then(host=>host.close()).catch(()=>{}); });
 
-module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest, shortcutModifiersForPlatform };
+module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest, shortcutModifiersForPlatform, resolveDesktopEntryResource, createDesktopEntryProtocolHandler, resolveSmokeStateModuleUrl };

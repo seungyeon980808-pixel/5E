@@ -1,0 +1,369 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "reference-1",
+    "hash": "sha256:680ace8aec4975411dc256230f92f889ee3c2ffb9c0aee5d3557b7b266bd10d8",
+    "width": 1289,
+    "height": 288,
+    "plotBox": {
+      "x": 169,
+      "y": 16,
+      "w": 557,
+      "h": 261
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0.41379
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0.07181
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "x(m)",
+      "displayTitle": "x(m)",
+      "unit": "m",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 1,
+          "label": "1",
+          "position": 0.21544
+        },
+        {
+          "value": null,
+          "label": "",
+          "position": 0.35907
+        },
+        {
+          "value": 3,
+          "label": "3",
+          "position": 0.50269
+        },
+        {
+          "value": null,
+          "label": "",
+          "position": 0.64811
+        },
+        {
+          "value": 5,
+          "label": "5",
+          "position": 0.79174
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.93,
+        "y": 0.2854
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "linear",
+      "title": "A의 변위(m)",
+      "displayTitle": "A의 변위(m)",
+      "unit": "m",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": -1.5,
+          "label": "−1.5",
+          "position": 0.08812
+        },
+        {
+          "value": 1.5,
+          "label": "1.5",
+          "position": 0.73563
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.1167,
+        "y": 0.9579
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "wave-a",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.0018,
+          "y": 0.64751
+        },
+        {
+          "x": 0.02334,
+          "y": 0.69157
+        },
+        {
+          "x": 0.04668,
+          "y": 0.72222
+        },
+        {
+          "x": 0.07181,
+          "y": 0.73563
+        },
+        {
+          "x": 0.09695,
+          "y": 0.72414
+        },
+        {
+          "x": 0.12208,
+          "y": 0.69349
+        },
+        {
+          "x": 0.14722,
+          "y": 0.63985
+        },
+        {
+          "x": 0.17235,
+          "y": 0.5728
+        },
+        {
+          "x": 0.1939,
+          "y": 0.49617
+        },
+        {
+          "x": 0.21544,
+          "y": 0.41379
+        },
+        {
+          "x": 0.24057,
+          "y": 0.32184
+        },
+        {
+          "x": 0.26571,
+          "y": 0.24138
+        },
+        {
+          "x": 0.29084,
+          "y": 0.17241
+        },
+        {
+          "x": 0.31418,
+          "y": 0.12452
+        },
+        {
+          "x": 0.33752,
+          "y": 0.09579
+        },
+        {
+          "x": 0.35907,
+          "y": 0.08812
+        },
+        {
+          "x": 0.3842,
+          "y": 0.10153
+        },
+        {
+          "x": 0.40934,
+          "y": 0.13793
+        },
+        {
+          "x": 0.43447,
+          "y": 0.19349
+        },
+        {
+          "x": 0.45961,
+          "y": 0.26628
+        },
+        {
+          "x": 0.48115,
+          "y": 0.340996
+        },
+        {
+          "x": 0.50269,
+          "y": 0.41379
+        },
+        {
+          "x": 0.52783,
+          "y": 0.51149
+        },
+        {
+          "x": 0.55296,
+          "y": 0.59387
+        },
+        {
+          "x": 0.5781,
+          "y": 0.66092
+        },
+        {
+          "x": 0.60323,
+          "y": 0.70881
+        },
+        {
+          "x": 0.62657,
+          "y": 0.72989
+        },
+        {
+          "x": 0.64811,
+          "y": 0.73563
+        },
+        {
+          "x": 0.67325,
+          "y": 0.71648
+        },
+        {
+          "x": 0.69838,
+          "y": 0.67433
+        },
+        {
+          "x": 0.72352,
+          "y": 0.61303
+        },
+        {
+          "x": 0.74865,
+          "y": 0.5364
+        },
+        {
+          "x": 0.7702,
+          "y": 0.4636
+        },
+        {
+          "x": 0.79174,
+          "y": 0.41379
+        },
+        {
+          "x": 0.81149,
+          "y": 0.340996
+        },
+        {
+          "x": 0.82944,
+          "y": 0.28736
+        }
+      ],
+      "curveStyle": "smooth",
+      "candidateFamily": "sinusoid",
+      "candidateExpression": "1.5*cos(pi*x/2)",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerShape": "none",
+      "strokeWidth": 0.49
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": 0.03232,
+      "y": 0.31609,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 35,
+      "fontWeight": 400
+    },
+    {
+      "id": "upper-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.64811,
+      "y": 0.73563,
+      "to": {
+        "x": 0.07181,
+        "y": 0.73563
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "wave-a",
+      "pointIndex": 27,
+      "endStyle": "none",
+      "strokeWidth": 0.176,
+      "dashLength": 0.88,
+      "dashGap": 0.5
+    },
+    {
+      "id": "lower-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.35907,
+      "y": 0.08812,
+      "to": {
+        "x": 0.07181,
+        "y": 0.08812
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "wave-a",
+      "pointIndex": 15,
+      "endStyle": "none",
+      "strokeWidth": 0.176,
+      "dashLength": 0.88,
+      "dashGap": 0.5
+    },
+    {
+      "id": "direction-label",
+      "kind": "text",
+      "text": "진행 방향",
+      "x": 0.36445,
+      "y": 0.94636,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 34,
+      "fontWeight": 400
+    },
+    {
+      "id": "direction-arrow",
+      "kind": "arrow",
+      "text": "",
+      "x": 0.31957,
+      "y": 0.81992,
+      "to": {
+        "x": 0.39677,
+        "y": 0.81992
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "strokeWidth": 0.24
+    }
+  ],
+  "regions": [],
+  "legends": [],
+  "style": {
+    "fontSizePx": 35,
+    "labelWeight": 400,
+    "strokeWidth": 0.2,
+    "guideStyle": {
+      "strokeWidth": 0.176,
+      "dashLength": 0.88,
+      "dashGap": 0.5
+    }
+  },
+  "frame": {
+    "variant": "cross",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowY2": false,
+    "tickTop": false,
+    "tickRight": false,
+    "arrowLength": 2.5,
+    "arrowWidth": 1.5,
+    "strokeWidth": 0.2
+  },
+  "review": []
+}

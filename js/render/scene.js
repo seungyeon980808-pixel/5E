@@ -1,3 +1,5 @@
+import { leaderRoutePoints } from '../ai-label-leaders.js?v=1.7.0-four-session-integration';
+import { deriveLabelLeaderGeometry } from '../label-leader-geometry.js?v=1.7.0-four-session-integration';
 /* ===== RENDER (DESIGN 1-1: SVG is a projection of state.objects) ===== */
 //
 // render(state) repaints the <g id="scene"> from data. It is registered as a
@@ -7,10 +9,11 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.1-remediation-0929";
-import { renderText } from "./labels.js?v=1.6.1-remediation-0929";
-import { makeFillPattern } from "./fill.js?v=1.6.1-remediation-0929";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.7.0-four-session-integration";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.7.0-four-session-integration";
+import { renderText } from "./labels.js?v=1.7.0-four-session-integration";
+import { hasLabelTypography, measureLabelTypography, renderNativeLabelTypography, nativeLabelBounds } from "../ai-label-typography.js?v=1.7.0-four-session-integration";
+import { makeFillPattern } from "./fill.js?v=1.7.0-four-session-integration";
 import {
   renderRect,
   renderEllipse,
@@ -20,44 +23,51 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=1.6.1-remediation-0929";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.1-remediation-0929";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.1-remediation-0929";
-import { renderCircuit } from "./circuit.js?v=1.6.1-remediation-0929";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.1-remediation-0929";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.6.1-remediation-0929";
-import { renderSpring, springBBox } from "./spring.js?v=1.6.1-remediation-0929";
-import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.6.1-remediation-0929";
-import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.6.1-remediation-0929";
-import { renderGauge } from "./gauge.js?v=1.6.1-remediation-0929";
-import { renderSolid3d } from "./solid3d.js?v=1.6.1-remediation-0929";
-import { renderParabola, parabolaBBox } from "./parabola.js?v=1.6.1-remediation-0929";
-import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.6.1-remediation-0929";
+  setImageHrefResolver,
+} from "./shapes.js?v=1.7.0-four-session-integration";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.7.0-four-session-integration";
+import { labelerTargetDots } from "../labeler-target.js?v=1.7.0-four-session-integration";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.7.0-four-session-integration";
+import { renderCircuit } from "./circuit.js?v=1.7.0-four-session-integration";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.7.0-four-session-integration";
+import { renderOpticalBenchHandles } from "./optical-bench.js?v=1.7.0-four-session-integration";
+import { isLabApparatus, labBBox, labWorldPoint } from "../lab-apparatus.js?v=1.7.0-four-session-integration";
+import { renderLabApparatusHandles } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { isOpticalBench } from "../optical-bench.js?v=1.7.0-four-session-integration";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.7.0-four-session-integration";
+import { renderSpring, springBBox } from "./spring.js?v=1.7.0-four-session-integration";
+import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.7.0-four-session-integration";
+import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.7.0-four-session-integration";
+import { renderGauge } from "./gauge.js?v=1.7.0-four-session-integration";
+import { renderSolid3d } from "./solid3d.js?v=1.7.0-four-session-integration";
+import { renderParabola, parabolaBBox } from "./parabola.js?v=1.7.0-four-session-integration";
+import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.7.0-four-session-integration";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { renderBrace, braceBBox } from "./brace.js?v=1.6.1-remediation-0929";
-import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.6.1-remediation-0929";
-import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.6.1-remediation-0929";
-import { renderNeuron, neuronBBox } from "./neuron.js?v=1.6.1-remediation-0929";
-import { renderLegend, legendBBox } from "./legend.js?v=1.6.1-remediation-0929";
-import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.6.1-remediation-0929";
+import { renderBrace, braceBBox } from "./brace.js?v=1.7.0-four-session-integration";
+import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.7.0-four-session-integration";
+import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.7.0-four-session-integration";
+import { renderNeuron, neuronBBox } from "./neuron.js?v=1.7.0-four-session-integration";
+import { renderLegend, legendBBox } from "./legend.js?v=1.7.0-four-session-integration";
+import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.7.0-four-session-integration";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
 // 전부 크기박스 계열이라 bbox 는 SIZE_TYPES 경로가 자동 처리한다 → 렌더 함수만 가져온다.
-import { renderVessel } from "./vessel.js?v=1.6.1-remediation-0929";
-import { renderChemModel } from "./chemmodel.js?v=1.6.1-remediation-0929";
-import { renderParticleBox } from "./particlebox.js?v=1.6.1-remediation-0929";
-import { renderOrbital } from "./orbital.js?v=1.6.1-remediation-0929";
-import { renderBondGroup } from "./bondgroup.js?v=1.6.1-remediation-0929";
-import { renderChemChart } from "./chemchart.js?v=1.6.1-remediation-0929";
-import { renderAxisBreak } from "./axisbreak.js?v=1.6.1-remediation-0929";
-import { renderChemGraph } from "./chemgraph.js?v=1.6.1-remediation-0929";
-import { renderElectrode } from "./electrode.js?v=1.6.1-remediation-0929";
-import { renderPeriodic } from "./periodic.js?v=1.6.1-remediation-0929";
-import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.6.1-remediation-0929";
+import { renderVessel } from "./vessel.js?v=1.7.0-four-session-integration";
+import { renderChemModel } from "./chemmodel.js?v=1.7.0-four-session-integration";
+import { renderParticleBox } from "./particlebox.js?v=1.7.0-four-session-integration";
+import { renderOrbital } from "./orbital.js?v=1.7.0-four-session-integration";
+import { renderBondGroup } from "./bondgroup.js?v=1.7.0-four-session-integration";
+import { renderChemChart } from "./chemchart.js?v=1.7.0-four-session-integration";
+import { renderAxisBreak } from "./axisbreak.js?v=1.7.0-four-session-integration";
+import { renderBubble } from "./bubble.js?v=1.7.0-four-session-integration";
+import { renderChemGraph } from "./chemgraph.js?v=1.7.0-four-session-integration";
+import { renderElectrode } from "./electrode.js?v=1.7.0-four-session-integration";
+import { renderPeriodic } from "./periodic.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.7.0-four-session-integration";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
-         zOrderObjects } from "../object-types.js?v=1.6.1-preview-labeler-0917-1111";
-import { resolveObjectStyle } from "../style-mode.js?v=1.6.1-remediation-0929";
-import { renderFormula } from "../formula.js?v=1.6.1-remediation-0929";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.1-preview-lite-hybrid-0922";
+         zOrderObjects } from "../object-types.js?v=1.7.0-four-session-integration";
+import { resolveObjectStyle } from "../style-mode.js?v=1.7.0-four-session-integration";
+import { renderFormula } from "../formula.js?v=1.7.0-four-session-integration";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.7.0-four-session-integration";
 import {
   SELECTION_COLOR,
   SELECTION_DASH_PX,
@@ -65,7 +75,7 @@ import {
   SELECTION_STROKE_PX,
   selectionScaleForSvg,
   selectionVisualMetrics,
-} from "../selection-visuals.js?v=1.6.1-preview-labeler-0917-1111";
+} from "../selection-visuals.js?v=1.7.0-four-session-integration";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
@@ -164,12 +174,46 @@ function renderSnapPreview(scene, zoom) {
   scene.appendChild(group);
 }
 
+/* ----- 편집 화면의 그림: data URL → blob URL 재사용 -----
+ * 장면을 매번 지우고 다시 그리므로 <image>도 매번 새로 생긴다. Safari(WebKit)는 data: 그림을 새 <image>마다 다시
+ * 풀어(디코드) 큰 그림 8장이면 끌기 한 걸음에 1초 넘게 멈췄다. 같은 data URL에는 같은 blob URL을 주면 브라우저가
+ * 풀어 둔 그림을 다시 쓴다. 편집 화면(#scene)에만 쓴다 — 내보내기·저장은 renderObject/obj.src를 그대로 쓴다. */
+const imageUrlCache = new Map(); // data URL -> { url, generation }
+let imageUrlGeneration = 0;
+function cachedImageUrl(src) {
+  if (typeof src !== "string" || src.length < 2048 || !/^data:image\/[\w.+-]+;base64,/.test(src)) return src;
+  let entry = imageUrlCache.get(src);
+  if (!entry) {
+    try {
+      const comma = src.indexOf(","), binary = atob(src.slice(comma + 1)), bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      entry = { url: URL.createObjectURL(new Blob([bytes], { type: src.slice(5, src.indexOf(";")) })) };
+    } catch { return src; }
+    imageUrlCache.set(src, entry);
+  }
+  entry.generation = imageUrlGeneration;
+  return entry.url;
+}
+// 장면에서 빠진 그림의 blob URL은 몇 번의 그리기 뒤에 놓아 준다(되돌리기로 금방 다시 쓰일 수 있어 바로 놓지 않음).
+function releaseUnusedImageUrls() {
+  if (imageUrlCache.size <= 24) return;
+  for (const [src, entry] of imageUrlCache) {
+    if (imageUrlGeneration - entry.generation > 50) { URL.revokeObjectURL(entry.url); imageUrlCache.delete(src); }
+  }
+}
+
 /* ----- main draw: clear the scene group, repaint from state ----- */
-export function render(state) {
+export function render(state, change) {
+  if (change === 'native-text-input' && state.draftText?.nativeEditor) return;
   const scene = document.getElementById("scene");
   if (!scene) return;
   const selectionScale = selectionScaleForSvg(scene.ownerSVGElement, state.viewBox);
+  // 배율은 한 번만 읽는다. getZoom()은 getScreenCTM()이라, 아래에서 장면을 고치는 도중에 부르면 매번 레이아웃을
+  // 다시 계산한다(오브젝트 120개면 끌기 한 걸음에 60ms+). 장면 안 자식을 바꿔도 배율은 그대로다.
+  const zoom = getZoom();
 
+  imageUrlGeneration += 1;
+  releaseUnusedImageUrls();
   // Simplest correct projection: wipe and rebuild. Fine at this scale; a
   // keyed/diffing pass can replace this once object counts grow.
   scene.replaceChildren();
@@ -221,17 +265,22 @@ export function render(state) {
   // 단, text/formula는 항상 최상단(zOrderObjects) — 픽(pick.js hitTest)도 같은
   // view를 쓰므로 보이는 순서와 클릭 순서가 일치한다.
   const _editingId = state.draftText && state.draftText.editingId;
+  setImageHrefResolver(cachedImageUrl);
+  try {
   for (const obj of zOrderObjects(state.objects)) {
     // The object being re-edited is drawn by the draftText preview instead, so
     // skip its committed render to avoid double text while editing.
-    if (_editingId && obj.id === _editingId) continue;
+    if (_editingId && obj.id === _editingId) {
+      if (obj.type === 'labeler') scene.appendChild(renderLabeler(obj, { leadersOnly: true }));
+      continue;
+    }
     // A formula being re-edited is replaced by its inline editor overlay; skip
     // its committed render so the old glyphs don't show behind the input.
     if (state.editingFormulaId && obj.id === state.editingFormulaId) continue;
     const _layerId = obj.layerId ?? 1;
     const _layer = (state.layers || []).find(l => l.id === _layerId);
     if (_layer && _layer.visible === false) continue;
-    const el = renderObject(obj);
+    const el = renderObject(obj, state.objects);
     if (!el) continue;
     // 지연 자르기 가이드는 별도의 빨간 점선 레이어가 그립니다.
     // 기본 렌더를 그대로 노출하면 일반 곡선 스타일(검은 선/면)이 섞여
@@ -248,7 +297,7 @@ export function render(state) {
     // The twin width is HIT_PX / getZoom(), so a zoom/viewBox change recomputes it via
     // the store subscribe → render path (main.js: state.subscribe(render)).
     if (_isActive && !isLockedTracingImage(obj)) {
-      const twin = makeHitTwin(obj);
+      const twin = makeHitTwin(obj, zoom);
       if (twin) {
         el.setAttribute("pointer-events", "none"); // only the twin receives events
         scene.appendChild(twin);
@@ -264,6 +313,10 @@ export function render(state) {
       temp.dataset.ui = "image-edit-session";
       scene.appendChild(temp);
     }
+  }
+
+  } finally {
+    setImageHrefResolver(null);
   }
 
   // ----- ruler guides: editing aids only; export builds from objects separately -----
@@ -291,8 +344,9 @@ export function render(state) {
     const line = document.createElementNS(SVG_NS, "line");
     setEnds(line);
     line.setAttribute("stroke", state.selectedGuideId === guide.id ? "#0550ae" : "#0969da");
-    line.setAttribute("stroke-width", state.selectedGuideId === guide.id ? "1.5" : "1");
-    line.setAttribute("stroke-opacity", state.selectedGuideId === guide.id ? "0.9" : "0.65");
+    // 11-11: 고른 안내선은 확실히 굵고 진하게(예전엔 색이 거의 같아 골랐는지 알기 어려웠다).
+    line.setAttribute("stroke-width", state.selectedGuideId === guide.id ? "2.5" : "1");
+    line.setAttribute("stroke-opacity", state.selectedGuideId === guide.id ? "1" : "0.65");
     line.setAttribute("vector-effect", "non-scaling-stroke");
     line.setAttribute("pointer-events", "none");
     group.appendChild(line);
@@ -349,13 +403,22 @@ export function render(state) {
 
   for (const _sid of _selIds) {
     const sel = renderObjectById(state, _sid);
-    if (!sel) continue;
+    if (!sel || sel.id === _editingId) continue;
     const _selLayer = (state.layers || []).find(l => l.id === (sel.layerId ?? 1));
     if (_selLayer && _selLayer.visible === false) continue;
-    if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
+    if (sel.positionLocked) renderPositionLockMarker(sel, scene, zoom);
     const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
     const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
-    if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum" || sel.type === "spring"
+    if (sel.type === 'labeler') {
+      const guide = renderLabeler(sel, { leadersOnly: true });
+      guide.removeAttribute('data-id');
+      guide.dataset.ui = 'labeler-selection';
+      guide.setAttribute('pointer-events', 'none');
+      for (const part of guide.querySelectorAll('line, path, polyline, circle')) {
+        styleSelectionFrame(part, _frameKind, _selColor);
+      }
+      scene.appendChild(guide);
+    } else if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
         || sel.type === "parabola" || sel.type === "groundarc"
         // 생명과학 p1/p2 계열 — 두 점을 잇는 점선 복제가 선택 표시다(위와 같은 규칙)
@@ -435,7 +498,9 @@ export function render(state) {
       if (textEl) {
         try {
           // getBBox()는 요소 자신의 transform 미반영 → 장평(가로 배율)을 먼저 보정.
-          const bb = scaleBBoxForWidth(sel, textEl.getBBox());
+          const measured = hasLabelTypography(sel) ? nativeLabelBounds(sel) : null;
+          const bb = measured ? { x: measured.x, y: measured.y, width: measured.w, height: measured.h }
+            : scaleBBoxForWidth(sel, textEl.getBBox());
           const box = document.createElementNS(SVG_NS, "rect");
           box.setAttribute("x", bb.x);
           box.setAttribute("y", bb.y);
@@ -449,7 +514,7 @@ export function render(state) {
           // getBBox()는 요소 자신의 rotate 변환을 반영하지 않으므로 회전된 텍스트/수식은
           // 선택 외곽선이 회전 전 위치에 남는다 → 렌더와 동일한 rotate를 박스에도 적용.
           // (text는 앵커 obj.x/obj.y, formula는 박스 중심이 피벗)
-          if (sel.rotation) {
+          if (sel.rotation && !hasLabelTypography(sel)) {
             const px = sel.type === "formula" ? sel.x + (sel.w || 0) / 2 : sel.x;
             const py = sel.type === "formula" ? sel.y + (sel.h || 0) / 2 : sel.y;
             box.setAttribute("transform", `rotate(${sel.rotation} ${px} ${py})`);
@@ -527,10 +592,11 @@ export function render(state) {
       }
     } else {
       const box = document.createElementNS(SVG_NS, "rect");
-      box.setAttribute("x", sel.x);
-      box.setAttribute("y", sel.y);
-      box.setAttribute("width", sel.w);
-      box.setAttribute("height", sel.h);
+      const frame = isLabApparatus(sel) ? labBBox(sel) : sel;
+      box.setAttribute("x", frame.x);
+      box.setAttribute("y", frame.y);
+      box.setAttribute("width", frame.w);
+      box.setAttribute("height", frame.h);
       box.setAttribute("fill", "none");
       box.setAttribute("stroke-width", "0.4"); // world units
       box.setAttribute("stroke-dasharray", "0.6 0.6");
@@ -549,8 +615,13 @@ export function render(state) {
     // 숨긴 레이어의 객체에는 핸들을 그리지 않는다(보이지 않는 객체가 변형되는 것 방지).
     const _hLayer = handleSel && (state.layers || []).find(l => l.id === (handleSel.layerId ?? 1));
     const _hVisible = !(_hLayer && _hLayer.visible === false);
-    if (handleSel && _hVisible && !state.targetedId) {
-      renderHandles(handleSel, scene, selectionScale, state.activeTool);
+    if (handleSel && handleSel.id !== _editingId && _hVisible && !state.targetedId) {
+      if (isLabApparatus(handleSel)) {
+        if (["V","rotate"].includes(state.activeTool)) renderLabApparatusHandles(handleSel, scene, selectionScale, state.activeTool);
+      } else renderHandles(handleSel, scene, selectionScale, state.activeTool);
+      if (isOpticalBench(handleSel) && !handleSel.locked && state.activeTool === "V") {
+        renderOpticalBenchHandles(handleSel, scene, selectionScale);
+      }
     }
   } else if (_selIds.length > 1 && !state.targetedId) {
     const _members = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
@@ -566,8 +637,8 @@ export function render(state) {
   }
 
   /* ===== SNAP PREVIEW OVERLAY HOOK: same transient layer as selection handles ===== */
-  renderSmartGuides(scene, getZoom());
-  renderSnapPreview(scene, getZoom());
+  renderSmartGuides(scene, zoom);
+  renderSnapPreview(scene, zoom);
 
   // ----- live drag preview (ephemeral; not in state.objects yet) -----
   if (state.draft) {
@@ -780,7 +851,7 @@ function isLockedTracingImage(obj) {
   return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
 }
 
-function makeHitTwin(obj) {
+function makeHitTwin(obj, zoom = getZoom()) {
   let twin = null;
   if (obj.type === "line") {
     twin = document.createElementNS(SVG_NS, "line");
@@ -802,10 +873,11 @@ function makeHitTwin(obj) {
              obj.type === "image" || obj.type === "svgAsset" || obj.type === "axes" || obj.type === "coordplane" || obj.type === "optics" ||
              obj.type === "apparatus") {
     twin = document.createElementNS(SVG_NS, "rect");
-    twin.setAttribute("x", obj.x);
-    twin.setAttribute("y", obj.y);
-    twin.setAttribute("width", obj.w);
-    twin.setAttribute("height", obj.h);
+    const bb = isLabApparatus(obj) ? labBBox(obj) : obj;
+    twin.setAttribute("x", bb.x);
+    twin.setAttribute("y", bb.y);
+    twin.setAttribute("width", bb.w);
+    twin.setAttribute("height", bb.h);
     if (obj.rotation) {
       const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
       twin.setAttribute("transform", `rotate(${obj.rotation} ${cx} ${cy})`);
@@ -825,22 +897,39 @@ function makeHitTwin(obj) {
     twin.setAttribute("width", r * 2);
     twin.setAttribute("height", r * 2);
   } else if (obj.type === "labeler") {
-    const a = obj.p1 || { x: 0, y: 0 }, b = obj.p2 || a;
-    const joint = obj.elbow || b;
-    twin = document.createElementNS(SVG_NS, "path");
-    let d = `M ${a.x} ${a.y} L ${joint.x} ${joint.y}`;
-    if (obj.elbow) d += ` L ${b.x} ${b.y}`;
-    for (const point of [obj.p3, ...(obj.extraAnchors || [])].filter(Boolean)) {
-      d += ` M ${point.x} ${point.y} L ${joint.x} ${joint.y}`;
+    twin = renderLabeler(obj, { leadersOnly: true });
+    for (const part of twin.querySelectorAll('line, path, polyline, circle')) {
+      part.setAttribute('stroke', 'transparent');
+      part.setAttribute('fill', 'none');
+      part.setAttribute('stroke-width', HIT_PX / zoom);
+      part.setAttribute('pointer-events', 'stroke');
     }
-    twin.setAttribute("d", d);
+    // The glyph body remains clickable independently of the leader geometry.
+    let labelHit;
+    if (obj.leaderRoutes?.length) {
+      const { label } = deriveLabelLeaderGeometry(obj);
+      labelHit = document.createElementNS(SVG_NS, 'polygon');
+      labelHit.setAttribute('points', label.polygon.map(p => `${p.x},${p.y}`).join(' '));
+    } else {
+      const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
+      const m = measureLabelTypography(obj, size);
+      const w = Math.max(m.rotatedW, size), h = Math.max(m.rotatedH, size);
+      labelHit = document.createElementNS(SVG_NS, 'rect');
+      labelHit.setAttribute('x', obj.p2.x - w / 2);
+      labelHit.setAttribute('y', obj.p2.y - h / 2);
+      labelHit.setAttribute('width', w);
+      labelHit.setAttribute('height', h);
+    }
+    labelHit.setAttribute('fill', 'transparent');
+    labelHit.setAttribute('pointer-events', 'all');
+    twin.appendChild(labelHit);
   } else {
     return null; // not an open path → no twin (closed shapes grab via fill)
   }
   const isRectTwin = twin.tagName.toLowerCase() === "rect";
   twin.setAttribute("fill", isRectTwin ? "transparent" : "none");
   twin.setAttribute("stroke", "transparent");
-  twin.setAttribute("stroke-width", HIT_PX / getZoom()); // zoom-invariant screen px
+  twin.setAttribute("stroke-width", HIT_PX / zoom); // zoom-invariant screen px
   twin.setAttribute("stroke-linecap", "round");
   twin.setAttribute("stroke-linejoin", "round");
   twin.setAttribute("pointer-events", isRectTwin ? "all" : "stroke");
@@ -852,7 +941,7 @@ function makeHitTwin(obj) {
 /* ----- per-object dispatch (one branch per shape type) ----- */
 // Exported so SVG export reuses the exact same per-object node builders
 // (no duplicated shape-drawing code; DESIGN 1-1 projection stays single-source).
-export function renderObject(obj) {
+export function renderObject(obj, objects = []) {
   obj = resolveObjectStyle(obj);
   switch (obj.type) {
     case "rect":
@@ -868,9 +957,9 @@ export function renderObject(obj) {
     case "curve":
       return renderCurve(obj);
     case "text":
-      return renderText(obj);
+      return hasLabelTypography(obj) ? renderNativeLabelTypography(obj) : renderText(obj);
     case "formula":
-      return renderFormula(obj);
+      return hasLabelTypography(obj) ? renderNativeLabelTypography(obj) : renderFormula(obj);
     case "image":
       return renderImage(obj);
     case "svgAsset":
@@ -880,7 +969,7 @@ export function renderObject(obj) {
     case "coordplane":
       return renderCoordplane(obj);
     case "funcgraph":
-      return renderFuncgraph(obj);
+      return renderFuncgraph(obj, objects.find(o => o.id === obj.planeId && o.type === 'coordplane'));
     case "anglearc":
       return renderAngleArc(obj);
     case "rightangle":
@@ -938,6 +1027,8 @@ export function renderObject(obj) {
       return renderChemChart(obj);
     case "axisbreak":
       return renderAxisBreak(obj);
+    case "bubble":
+      return renderBubble(obj);
     case "chemgraph":
       return renderChemGraph(obj);
     case "electrode":
@@ -951,6 +1042,11 @@ export function renderObject(obj) {
 
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
+  if (isLabApparatus(o)) {
+    const b = labBBox(o), points = [[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]].map(([x,y])=>labWorldPoint(o,{x,y}));
+    const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
+    return {x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
+  }
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
   if (SIZE_TYPES.has(o.type)) {
     const deg = o.rotation || 0;
@@ -1000,11 +1096,17 @@ export function singleObjBBox(o, scene) {
     };
   }
   if (o.type === "labeler") {
+    if (o.leaderRoutes?.length) return deriveLabelLeaderGeometry(o).bounds;
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const sz = (o.labelSize || DEFAULT_TEXT_SIZE_MM) * 0.7; // pad for the label glyph
-    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
-    const minX = Math.min(...points.map(p => p.x), b.x - sz), minY = Math.min(...points.map(p => p.y), b.y - sz);
-    const maxX = Math.max(...points.map(p => p.x), b.x + sz), maxY = Math.max(...points.map(p => p.y), b.y + sz);
+    const typography = hasLabelTypography(o) ? measureLabelTypography(o) : null;
+    const hw = typography ? typography.rotatedW / 2 : sz, hh = typography ? typography.rotatedH / 2 : sz;
+    const points = [...leaderRoutePoints(o.leaderRoutes), a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    for (const dot of labelerTargetDots(o)) {
+      points.push({ x: dot.x - dot.r, y: dot.y - dot.r }, { x: dot.x + dot.r, y: dot.y + dot.r });
+    }
+    const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
+    const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (o.type === "pendulum") {
@@ -1227,13 +1329,29 @@ function renderHandles(sel, scene, zoom, activeTool) {
     // 용수철·전기력선·자기력선·정상파도 같은 핸들을 쓴다 — 만든 뒤 끝점을 끌어
     // 길이·방향을 고칠 수 있어야 한다(2026-07-26 교사 지시).
     // 포물선은 p1/p2가 바닥의 출발점·도달점, 원호는 중심·시작점이다.
-    makeHandle(sel.p1.x, sel.p1.y, "p0", true);
-    makeHandle(sel.p2.x, sel.p2.y, "p1", true);
+    const labelGeometry = sel.type === 'labeler' && sel.leaderRoutes?.length ? deriveLabelLeaderGeometry(sel) : null;
+    if (sel.type === 'labeler') {
+      if (!sel.leaderRoutes?.length && (sel.elbow || sel.p3 || sel.extraAnchors?.length
+        || Math.hypot(sel.p1.x - sel.p2.x, sel.p1.y - sel.p2.y) > 0.05)) {
+        makeHandle(sel.p1.x, sel.p1.y, "p0", true);
+      }
+      makeHandle(sel.p2.x, sel.p2.y, "p1", true);
+    } else {
+      makeHandle(sel.p1.x, sel.p1.y, "p0", true);
+      makeHandle(sel.p2.x, sel.p2.y, "p1", true);
+    }
     // 라벨러의 두 번째 지시선: 세 번째 핸들.
-    if (sel.type === "labeler" && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
-    if (sel.type === "labeler" && sel.elbow) makeHandle(sel.elbow.x, sel.elbow.y, "elbow", true);
+    if (sel.type === "labeler" && !labelGeometry && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
+    if (sel.type === "labeler" && !labelGeometry && sel.elbow) makeHandle(sel.elbow.x, sel.elbow.y, "elbow", true);
     if (sel.type === "labeler") {
-      (sel.extraAnchors || []).forEach((point, index) => makeHandle(point.x, point.y, `anchor-${index}`, true));
+      (labelGeometry?.routes || []).forEach((r,i) => {
+        // Moving p1 repositions the label and its attachment together. A free
+        // start handle would misleadingly edit an observation that is projected.
+        if (r.attachment === 'frame') makeHandle(r.start.x,r.start.y,`route-${i}-start-0`,true);
+        makeHandle(r.target.x,r.target.y,`route-${i}-target-0`,true);
+        r.controls.forEach((p,j)=>makeHandle(p.x,p.y,`route-${i}-control-${j}`,true));
+      });
+      if (!labelGeometry) (sel.extraAnchors || []).forEach((point, index) => makeHandle(point.x, point.y, `anchor-${index}`, true));
     }
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
     sel.points.forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));

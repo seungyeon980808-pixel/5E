@@ -5,14 +5,14 @@
 // is automatically accounted for. Y labels are inverted (math Y: up = positive)
 // to match the inspector display.
 
-import { getRenderScale } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
+import { getRenderScale } from "./viewport.js?v=1.7.0-four-session-integration";
 // Guide click-to-select over the artboard: objects always win, so the guide is
 // only picked when NO object sits under the point (pick.js is the same oracle
 // tools.js selection uses). tools.js also owns the Space-pan tracker.
-import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.1-remediation-0929";
-import { isSpaceHeld } from "./tools.js?v=1.6.1-remediation-0929";
-import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.1-preview-labeler-0917-1111";
-import { hasBlockingModal } from "./platform.js?v=1.6.1-remediation-0929";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=1.7.0-four-session-integration";
+import { isSpaceHeld } from "./tools.js?v=1.7.0-four-session-integration";
+import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.7.0-four-session-integration";
+import { hasBlockingModal } from "./platform.js?v=1.7.0-four-session-integration";
 
 let _svg    = null;
 let _state  = null;
@@ -21,6 +21,7 @@ let _vCanvas = null; // vertical ruler canvas (left)
 let _mouseX  = null; // current mouse screen X, null when off-canvas
 let _mouseY  = null;
 let _dragGuideId = null;
+let _downAt = null; // 11-12: 안내선을 실제로 끌었는지(누르기만 하면 눈금자 위라도 지우지 않음)
 let _guideIdCounter = 0;
 let _suppressRulerClick = false;
 let _hoveredBadgeGuideId = null;
@@ -30,6 +31,24 @@ const _badgeHits = { x: [], y: [] };
 const GUIDE_COLOR = "#0969da";
 const GUIDE_SELECTED_COLOR = "#0550ae";
 const GUIDE_HIT_PX = 6;
+
+// 11-11 사용자 「안내선 지우는 법이 안 보인다」: 이름표 옆 × · 눈금자로 끌어 놓기 · Delete 모두 같은 지우기(되돌리기 가능).
+function _deleteGuide(guideId) {
+  if (!_state || !guideId) return;
+  _state.update((s) => {
+    if (!(s.guides || []).some((guide) => guide.id === guideId)) return;
+    const snapshot = captureDocumentSnapshot(s);
+    s.guides = s.guides.filter((guide) => guide.id !== guideId);
+    if (s.selectedGuideId === guideId) s.selectedGuideId = null;
+    commitDocumentHistory(s, snapshot);
+  });
+}
+function _drawGuideDelete(ctx, x, y, hovered) {
+  ctx.fillStyle = hovered ? "#cf3f3f" : GUIDE_SELECTED_COLOR;
+  ctx.fillRect(x, y, 14, 14);
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(x + 4.5, y + 4.5); ctx.lineTo(x + 9.5, y + 9.5); ctx.moveTo(x + 9.5, y + 4.5); ctx.lineTo(x + 4.5, y + 9.5); ctx.stroke();
+}
 
 // Client(px) → world(mm) via the live SVG CTM (module-level so both the mousedown
 // selector and the hover-cursor helper share ONE implementation).
@@ -103,6 +122,9 @@ export function initRuler(svg, state) {
 
   // Redraw whenever the store changes (viewport zoom/pan mutates viewBox via state.update)
   state.subscribe(_scheduleDraw);
+  // 화면 색(테마·팔레트)이 바뀌면 바로 다시 그린다. 예전에는 다음 문서 변경·마우스 움직임까지 이전 색이 남았다.
+  new MutationObserver(_scheduleDraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-palette', 'class', 'style'] });
+  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change', _scheduleDraw);
 
   const worldPoint = (clientX, clientY) => {
     const matrix = svg.getScreenCTM();
@@ -238,6 +260,7 @@ export function initRuler(svg, state) {
     canvas.addEventListener("mousedown", (e) => {
       if (e.button !== 0) return;
       const badge = findBadgeAtPoint(canvas, axis, e.clientX, e.clientY);
+      if (badge?.kind === "delete") { e.preventDefault(); _suppressRulerClick = true; _deleteGuide(badge.guideId); return; }
       if (badge) {
         e.preventDefault();
         _suppressRulerClick = true;
@@ -261,7 +284,7 @@ export function initRuler(svg, state) {
     });
     canvas.addEventListener("mousemove", (e) => {
       const badge = findBadgeAtPoint(canvas, axis, e.clientX, e.clientY);
-      const hoveredId = badge ? badge.guideId : null;
+      const hoveredId = badge ? badge.guideId + (badge.kind === "delete" ? ":x" : "") : null;
       canvas.style.cursor = badge ? "pointer" : "";
       if (_hoveredBadgeGuideId === hoveredId) return;
       _hoveredBadgeGuideId = hoveredId;
@@ -320,12 +343,21 @@ export function initRuler(svg, state) {
       }
     });
   });
-  window.addEventListener("mouseup", () => {
+  window.addEventListener("mousedown", (e) => { _downAt = { x: e.clientX, y: e.clientY }; }, true);
+  window.addEventListener("mouseup", (e) => {
     // 자 바깥(작업 캔버스 위 등)에서 마우스를 놓으면 ruler canvas의 'click'이 발생하지
     // 않아 _suppressRulerClick이 리셋될 기회가 없다 — 여기서도 반드시 풀어줘야 다음
     // 자 클릭(안내선 추가)이 무시되지 않는다.
-    _suppressRulerClick = false;
+    // 11-12: 같은 눈금자 위에서 놓으면 그 click이 곧 와서 표시를 푼다 — 여기서 먼저 풀면 × 지우기·이름표 고르기
+    // 클릭이 「안내선 추가」로도 처리돼 그 자리에 새 안내선이 생겼다(mouseup이 click보다 먼저 온다).
+    if (e.target !== _hCanvas && e.target !== _vCanvas) _suppressRulerClick = false;
+    else setTimeout(() => { _suppressRulerClick = false; }, 0);
     if (!_dragGuideId) return;
+    // 11-11: 안내선을 눈금자 위로 끌어다 놓으면 지운다(피그마·일러스트레이터와 같게).
+    const dropped = _dragGuideId;
+    const overRuler = (canvas) => { if (!canvas) return false; const r = canvas.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; };
+    const moved = !_downAt || Math.hypot(e.clientX - _downAt.x, e.clientY - _downAt.y) > 4;
+    if (moved && (overRuler(_hCanvas) || overRuler(_vCanvas))) _deleteGuide(dropped);
     _dragGuideId = null;
     svg.style.cursor = ""; // hand back to tools.js's hover-cursor logic
     _scheduleDraw();
@@ -367,6 +399,9 @@ export function initRuler(svg, state) {
   const rulerContainer = document.getElementById("ruler-container")
                       || _hCanvas.parentElement || _hCanvas;
   _ro.observe(rulerContainer);
+  // 화면 색(테마·팔레트)을 바꾸면 눈금 색도 바로 다시 그린다.
+  new MutationObserver(() => { _scheduleDraw(); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-palette"] });
 
   _draw();
 }
@@ -402,7 +437,15 @@ function _draw() {
   const pxPerMm = Math.abs(m.a);
   // Finest tick step based on zoom: >3px/mm=1mm, 1.5–3=5mm, <1.5=10mm
   const fineStep = pxPerMm > 3 ? 1 : pxPerMm >= 1.5 ? 5 : 10;
-  const TICK_COLOR = "rgba(255,255,255,0.7)";
+  // 화이트 테마에서는 다크용 흰 눈금·검은 띠가 반대로 보인다 — 테마에 맞춰 뒤집는다.
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  // 다크네이비(classic)는 시안대로 패널과 같은 바탕에 어두운 눈금·숫자만 둔다(띠 없음).
+  const isNavy = !isLight && document.documentElement.getAttribute("data-palette") === "classic";
+  const TICK_COLOR = isNavy ? "#30363d" : isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const RULER_TEXT = isNavy ? "#6e7681" : TICK_COLOR;
+  const RULER_BG = isNavy ? (_cssVar("--ds-panel") || bgColor) : bgColor;
+  const RULER_TINT = isNavy ? "transparent" : isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.15)";
+  const ARTBOARD_BAND = isNavy ? "transparent" : isLight ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.35)";
 
   // Helpers: world mm → ruler-canvas local pixel
   // ruler-h left edge = svgRect.left, ruler-v top edge = svgRect.top
@@ -424,11 +467,11 @@ function _draw() {
     const hx = _hCanvas.getContext("2d");
     hx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    hx.fillStyle = bgColor;
+    hx.fillStyle = RULER_BG;
     hx.fillRect(0, 0, hw, hh);
 
     // Artboard range highlight on H ruler
-    hx.fillStyle = "rgba(255,255,255,0.15)";
+    hx.fillStyle = RULER_TINT;
     hx.fillRect(0, 0, hw, hh);
     const { w: _abW } = _state.get().artboard;
     const _abHL = wxToHpx(-_abW / 2);
@@ -436,7 +479,7 @@ function _draw() {
     const _hClipL = Math.max(0, _abHL);
     const _hClipR = Math.min(hw, _abHR);
     if (_hClipR > _hClipL) {
-      hx.fillStyle = "rgba(0,0,0,0.35)";
+      hx.fillStyle = ARTBOARD_BAND;
       hx.fillRect(_hClipL, 0, _hClipR - _hClipL, hh);
     }
 
@@ -457,7 +500,7 @@ function _draw() {
       else                    { tickLen = 3;  lineW = 0.5; }
 
       hx.strokeStyle = TICK_COLOR;
-      hx.fillStyle   = TICK_COLOR;
+      hx.fillStyle   = RULER_TEXT;
       hx.lineWidth   = lineW;
       hx.beginPath();
       hx.moveTo(px, hh);
@@ -477,8 +520,8 @@ function _draw() {
       if (px < 0 || px > hw) continue;
       const selected = rulerState.selectedGuideId === guide.id;
       hx.strokeStyle = selected ? GUIDE_SELECTED_COLOR : GUIDE_COLOR;
-      hx.globalAlpha = selected ? 0.9 : 0.65;
-      hx.lineWidth = selected ? 1.5 : 1;
+      hx.globalAlpha = selected ? 1 : 0.65;
+      hx.lineWidth = selected ? 2.5 : 1;
       hx.beginPath();
       hx.moveTo(px, 0);
       hx.lineTo(px, hh);
@@ -498,6 +541,9 @@ function _draw() {
           hx.strokeRect(labelX + 0.5, 2.5, labelW - 1, 13);
         }
         _badgeHits.x.push({ guideId: guide.id, x: labelX, y: 2, w: labelW, h: 14 });
+        { const dx = labelX + labelW + 16 <= hw ? labelX + labelW + 2 : labelX - 16;
+          _drawGuideDelete(hx, dx, 2, _hoveredBadgeGuideId === guide.id + ":x");
+          _badgeHits.x.push({ guideId: guide.id, kind: "delete", x: dx, y: 2, w: 14, h: 14 }); }
         hx.fillStyle = "#fff";
         hx.textBaseline = "middle";
         hx.fillText(label, labelX + 4, 9);
@@ -534,11 +580,11 @@ function _draw() {
     const vx = _vCanvas.getContext("2d");
     vx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    vx.fillStyle = bgColor;
+    vx.fillStyle = RULER_BG;
     vx.fillRect(0, 0, vw, vh);
 
     // Artboard range highlight on V ruler
-    vx.fillStyle = "rgba(255,255,255,0.15)";
+    vx.fillStyle = RULER_TINT;
     vx.fillRect(0, 0, vw, vh);
     const { h: _abH } = _state.get().artboard;
     const _abVT = wyToVpx(-_abH / 2);
@@ -546,7 +592,7 @@ function _draw() {
     const _vClipT = Math.max(0, _abVT);
     const _vClipB = Math.min(vh, _abVB);
     if (_vClipB > _vClipT) {
-      vx.fillStyle = "rgba(0,0,0,0.35)";
+      vx.fillStyle = ARTBOARD_BAND;
       vx.fillRect(0, _vClipT, vw, _vClipB - _vClipT);
     }
 
@@ -566,7 +612,7 @@ function _draw() {
       else                    { tickLen = 3;  lineW = 0.5; }
 
       vx.strokeStyle = TICK_COLOR;
-      vx.fillStyle   = TICK_COLOR;
+      vx.fillStyle   = RULER_TEXT;
       vx.lineWidth   = lineW;
       vx.beginPath();
       vx.moveTo(vw, py);
@@ -593,8 +639,8 @@ function _draw() {
       if (py < 0 || py > vh) continue;
       const selected = rulerState.selectedGuideId === guide.id;
       vx.strokeStyle = selected ? GUIDE_SELECTED_COLOR : GUIDE_COLOR;
-      vx.globalAlpha = selected ? 0.9 : 0.65;
-      vx.lineWidth = selected ? 1.5 : 1;
+      vx.globalAlpha = selected ? 1 : 0.65;
+      vx.lineWidth = selected ? 2.5 : 1;
       vx.beginPath();
       vx.moveTo(0, py);
       vx.lineTo(vw, py);
@@ -628,6 +674,9 @@ function _draw() {
         vx.textBaseline = "middle";
         vx.fillText(label, 0, 0);
         vx.restore();
+        { const dy = labelY + labelW / 2 + 16 <= vh ? labelY + labelW / 2 + 2 : labelY - labelW / 2 - 16;
+          _drawGuideDelete(vx, vw / 2 - 7, dy, _hoveredBadgeGuideId === guide.id + ":x");
+          _badgeHits.y.push({ guideId: guide.id, kind: "delete", x: vw / 2 - 7, y: dy, w: 14, h: 14 }); }
       }
     }
 

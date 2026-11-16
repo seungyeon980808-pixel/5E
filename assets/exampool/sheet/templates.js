@@ -1,0 +1,159 @@
+import {newQuestion,block,makeTable,WRAP} from './model.js';
+import {RECORDS as RAW} from './shape-stats.js';
+
+// 새 문항 틀: ① 유형 → ② 자료 구조, 클릭 2번. 배치는 고르지 않고 기출에서 가장 많이 쓰인 배치로 정한다.
+// 그림·그래프·표는 모두 '자료'다. 무엇을 넣을지는 틀을 만든 뒤 엑셀(구성 편집)에서 칸마다 고른다.
+export const SUBJECTS={all:'전체 8과목',p1:'물리학Ⅰ',p2:'물리학Ⅱ',c1:'화학Ⅰ',c2:'화학Ⅱ',b1:'생명과학Ⅰ',b2:'생명과학Ⅱ',e1:'지구과학Ⅰ',e2:'지구과학Ⅱ'};
+export const FORMS={
+  combo:{name:'합답형',desc:'<보기> ㄱ·ㄴ·ㄷ 중 옳은 것을 모두 고른다'},
+  single:{name:'일반 정답형',desc:'값·식·낱말·문장 중 하나를 고른다'},
+  pair:{name:'대응·짝 고르기형',desc:'A·B·C에 들어갈 것을 짝지어 고른다'},
+  talk:{name:'학생 대화·발표형',desc:'옳게 말한 학생을 고른다'},
+  essay:{name:'서술형',desc:'선지 없이 모범 답안을 쓴다'}
+};
+export const STRUCTS={
+  two:{name:'자료 2개 (가)·(나)',desc:'자료 두 칸. 칸마다 그림·그래프·표 중 하나'},
+  big:{name:'큰 자료 1개',desc:'글 아래 단 폭. 그림·그래프·표 중 하나'},
+  small:{name:'작은 자료 1개',desc:'글 옆. 그림·그래프·표 중 하나'},
+  condition:{name:'설명·조건 상자',desc:'제목 없는 상자에 조건·설명, 자료도 넣을 수 있다'},
+  many:{name:'자료 3개 이상',desc:'(가)·(나)·(다) 세 칸. 칸 추가·묶기는 만든 뒤에'},
+  experiment:{name:'실험 상자',desc:'[실험 과정]·[실험 결과], 장치 그림·결과 자료'},
+  none:{name:'자료 없이 글만',desc:'그림·표 없이 글과 발문만'}
+};
+export const LAYOUTS={below:'글 아래',row:'가로',side:'글 옆',stack:'위아래',mix:'혼합'};
+
+// 조사 기록의 자료 1개(표 하나 포함)는 글 옆이면 작은 자료, 그 밖이면 큰 자료. 자료 3개와 묶음 속 자료는 '자료 3개 이상'.
+export const RECORDS=RAW.map(r=>{const s=r[2]==='one'||r[2]==='table'?(r[3]==='side'?'small':'big'):r[2]==='three'||r[2]==='complex'?'many':r[2];return [r[0],r[1],s,...r.slice(3)];});
+export const recordsFor=(subject='all')=>subject==='all'?RECORDS:RECORDS.filter(r=>r[0]===subject);
+const filter=(rs,{form,struct}={})=>rs.filter(r=>(!form||r[1]===form)&&(!struct||r[2]===struct));
+const tally=(rs,i)=>{const m={};for(const r of rs)m[r[i]]=(m[r[i]]||0)+1;return m;};
+// 많은 순서. 같으면 정의 순서. 추천은 문항이 있는 위 두 개.
+function ranked(keys,counts){return keys.map((k,i)=>({k,i,n:counts[k]||0})).sort((a,b)=>b.n-a.n||a.i-b.i).map(({k,n},i)=>({k,n,rec:i<2&&n>0}));}
+export function rankForms(subject){const rs=recordsFor(subject);return {total:rs.length,list:ranked(Object.keys(FORMS),tally(rs,1))};}
+export function rankStructs(subject,form){const rs=filter(recordsFor(subject),{form});return {total:rs.length,list:ranked(Object.keys(STRUCTS),tally(rs,2))};}
+export const sameShape=(subject,form,struct)=>filter(recordsFor(subject),{form,struct});
+// 작은 자료는 글 옆, 큰 자료는 글 아래, 나머지는 같은 과목·유형·구조에서 가장 많이 쓰인 배치.
+export function autoLayout(subject,form,struct){
+  if(!struct||struct==='none')return null;
+  if(struct==='small')return 'side';if(struct==='big')return 'below';
+  const counts=tally(sameShape(subject,form,struct),3);delete counts.none;
+  const best=Object.keys(LAYOUTS).map(k=>[k,counts[k]||0]).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1])[0];
+  return best?best[0]:['two','many'].includes(struct)?'row':'below';
+}
+
+const TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식',essay:'서술형'};
+const STYLE={combo:'조합',single:'문장·수식',pair:'대응표',talk:'조합',essay:'문장·수식'};
+const PRESET={none:'글·수식',condition:'글·수식',big:'그림',small:'그림',two:'그림 비교',many:'그림 비교',experiment:'실험'};
+const CAPS=['(가)','(나)','(다)'];
+// 유형·자료 구조 → 문항 틀. 블록 순서가 한글 문서의 순서다(보기는 발문 뒤에 찍힌다).
+export function questionFromShape({form,struct,subject='all'},number){
+  if(!FORMS[form])throw Error('유형을 고르세요.');if(!STRUCTS[struct])throw Error('자료 구조를 고르세요.');
+  const layout=autoLayout(subject,form,struct);
+  const q=newQuestion(number,TYPE[form]);
+  q.preset=form==='talk'?'대화':PRESET[struct];q.style=STYLE[form];q.form=form;q.structure=struct;q.templateKey=`${form}/${struct}`;
+  // 평가원 문항은 대부분 2점이다. 3점이면 발문 끝에 [3점]이 찍힌다.
+  q.points=2;q.blocks=[];
+  const add=(kind,parent,label)=>{const b=block(kind,parent?.id||null,label);q.blocks.push(b);return b;};
+  const group=(parent,label,side)=>{const g=add('group',parent,label);g.layout=side?'나란히':'세로';g.boxed=false;return g;};
+  add('text',null,'지문');
+  // 글 옆 작은 자료: 평가원처럼 첫 지문 문단에 붙은 어울림 그림(오른쪽, 글이 왼쪽·아래로 흐름). 폭은 단의 40%.
+  if(struct==='small'){const f=add('figure',null,'자료');f.layout=WRAP;f.size=40;}
+  if(struct==='big')add('figure',null,'자료');
+  if(struct==='two'||struct==='many'){
+    const n=struct==='two'?2:3;
+    if(layout==='mix'){const g=group(null,'자료',false);add('figure',g,CAPS[0]);const row=group(g,'자료 묶음',true);for(let i=1;i<n;i++)add('figure',row,CAPS[i]);}
+    else{const g=group(null,'자료',layout!=='stack');for(let i=0;i<n;i++)add('figure',g,CAPS[i]);}
+  }
+  if(struct==='condition'){const g=add('group',null,'');g.boxed=true;add('text',g,'조건');}
+  if(struct==='experiment'){
+    // 평가원 실험 상자: 제목 없이 〔실험 과정〕·〔실험 결과〕 머리로 나눈다.
+    const g=add('group',null,'');g.boxed=true;
+    const s=add('steps',g,'실험 과정');s.lines=['(가)','(나)','(다)'].map(label=>({id:crypto.randomUUID(),label,text:''}));
+    add('figure',g,'실험 장치');const r=add('table',g,'실험 결과');r.heading=true;r.table=makeTable(3,4);
+  }
+  if(form==='talk'){const d=add('dialogue',null,'대화');d.lines.forEach(l=>l.label='학생 '+l.label);}
+  if(form==='combo')add('bogi',null,'보기');
+  if(form==='pair'){q.choiceTable=makeTable(6,3,'선지표');['A','B','C'].forEach((v,c)=>q.choiceTable.cells[0][c].value=v);}
+  return q;
+}
+// 엑셀에서 채울 칸(창 오른쪽 안내). group: 어느 단계와 연결되는지.
+export function sheetCells(form,struct){
+  const c=[['발문','묻는 문장 ([3점] 자동)','type']];
+  const m={small:[['자료','그림·그래프·표 중 하나']],big:[['자료','그림·그래프·표 중 하나']],many:[['자료','(가)·(나)·(다) 칸마다 하나']],two:[['자료 (가)','그림·그래프·표 중 하나'],['자료 (나)','그림·그래프·표 중 하나']],condition:[['상자','조건·설명 한 줄씩, 자료 선택']],experiment:[['실험 과정','(가)(나)(다) 한 줄씩'],['실험 결과','표·그래프·그림 중 하나']],none:[['지문','글']]}[struct]||[];
+  c.push(...m.map(r=>[...r,'struct']));
+  if(form==='combo')c.push(['보기','ㄱ·ㄴ·ㄷ 진술 한 줄씩','type'],['선지','ㄱㄴ처럼 입력 → ㄱ, ㄴ','type']);
+  if(form==='single')c.push(['선지','값 다섯 개','type']);
+  if(form==='pair')c.push(['선지 표','A·B·C 열 + 다섯 줄','type']);
+  if(form==='talk')c.push(['학생 말','A·B·C 한 줄씩','type'],['선지','AB처럼 입력 → A, B','type']);
+  if(form==='essay')c.push(['모범 답안','채점 기준이 되는 답','type']);else c.push(['정답','번호 하나','type']);return c;
+}
+
+// ── 자료 배치(10-27): 카드 「자/료」 이름표 칸에서 위치(글 아래·글 옆)·개수(1~3)·배열(가로·세로)을 고른다 ──
+// 다루는 자료: 맨 바깥의 그림·표, 또는 맨 바깥 「자료」 묶음(상자 아님) 안의 그림·표. 실험·조건 상자 안 자료는 건드리지 않는다.
+const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험';
+// 11-15(시안 material-1115): 자료 칸에 넣는 것은 그림·그래프(그림 칸)·표·자료 상자(글 상자, text + box).
+const isMat=b=>b.kind==='figure'||b.kind==='table'||b.kind==='text'&&b.box===true;
+function materialsOf(q){
+  const top=q.blocks.filter(b=>!b.parent);
+  const group=top.find(b=>b.kind==='group'&&!isBoxed(b)&&q.blocks.some(x=>x.parent===b.id&&isMat(x))&&!q.blocks.some(x=>x.parent===b.id&&x.kind==='group'));
+  const loose=top.filter(isMat);
+  if(group&&!loose.length)return {group,items:q.blocks.filter(b=>b.parent===group.id&&isMat(b))};
+  if(!group)return {group:null,items:loose};
+  return null; // 섞인 모양(묶음 + 낱 자료, 묶음 속 묶음)은 여기서 바꾸지 않는다
+}
+export function materialLayout(q){
+  const m=materialsOf(q);if(!m)return null;
+  const n=m.items.length,first=m.items[0];
+  return {count:n,place:n===1&&first?.layout===WRAP?'side':'below',dir:m.group?.layout==='나란히'?'row':'col'};
+}
+const filled=b=>b.kind==='figure'?!!b.figure:b.kind==='table'?b.table?.cells?.some(r=>r.some(c=>c.value||c.figure)):b.kind==='text'?!!String(b.text||'').trim():false;
+// 채운 자료는 지우지 않는다: 개수를 줄일 때는 뒤쪽 빈 칸만 뺀다. 줄일 수 없으면 Error(이유와 할 일).
+export function setMaterialLayout(q,{place,count,dir}={}){
+  const m=materialsOf(q);if(!m)throw Error('자료가 상자·묶음 안에 섞여 있어 여기서 배치를 바꿀 수 없습니다. 조판 설정에서 바꾸세요.');
+  let items=[...m.items];const cur=materialLayout(q);
+  count=Math.max(1,Math.min(3,Number(count??cur.count)||1));place=place||cur.place;dir=dir||cur.dir;
+  if(count>1&&place==='side')place='below';
+  while(items.length<count)items.push(block('figure',null,CAPS[items.length]||'자료'));
+  while(items.length>count){const i=items.map(filled).lastIndexOf(false);if(i<0)throw Error(`채운 자료가 ${items.length}개라 ${count}개로 줄이지 않았습니다. 지울 자료 칸에 마우스를 올려 「지우기」를 누르세요.`);items.splice(i,1);}
+  // 자리: 첫 지문 바로 뒤(지문이 없으면 맨 앞)에 놓는다.
+  const keep=new Set(items.map(b=>b.id));
+  q.blocks=q.blocks.filter(b=>!(m.items.includes(b)&&!keep.has(b.id))&&b!==m.group);
+  for(const b of items)q.blocks=q.blocks.filter(x=>x!==b);
+  const firstText=q.blocks.find(b=>!b.parent&&b.kind==='text'&&!b.box),at=firstText?q.blocks.indexOf(firstText)+1:0;
+  let insert;
+  if(count===1){const b=items[0];b.parent=null;if(place==='side'){b.layout=WRAP;b.size=b.size&&b.size<=70?b.size:40;}else{b.layout='세로';if(b.size===40)delete b.size;}if(!b.label||CAPS.includes(b.label))b.label='자료';insert=[b];}
+  else{const g=m.group||block('group',null,'자료');g.parent=null;g.layout=dir==='row'?'나란히':'세로';g.boxed=false;
+    items.forEach((b,i)=>{b.parent=g.id;if(b.layout===WRAP||!b.layout)b.layout='세로';/* 11-14: 지우면 저장 검사(구성의 종류·이름·ID)에 걸려 「자료 칸 추가」가 실패했다 */if(b.size===40)delete b.size;if(!b.label||b.label==='자료')b.label=CAPS[i];});insert=[g,...items];}
+  q.blocks.splice(at,0,...insert);
+  relabelMaterials(q);
+  return materialLayout(q);
+}
+
+// 11-15(시안 material-1115 Q4): 기출 변형처럼 자료 아래에 따로 있는 제목 없는 상자(글 하나뿐)를 자료 상자 칸으로 옮긴다.
+// 빈 자료 칸이 있으면 그 칸에, 없으면 칸을 하나 더(3칸까지). 옮겼으면 true. 실험 상자·제목 있는 상자·자료가 섞인 상자는 그대로.
+export function adoptBoxMaterial(q){
+  const box=q.blocks.find(b=>!b.parent&&b.kind==='group'&&b.boxed===true&&!String(b.label||'').trim());if(!box)return false;
+  const kids=q.blocks.filter(b=>b.parent===box.id);if(kids.length!==1||kids[0].kind!=='text'||!String(kids[0].text||'').trim())return false;
+  const m=materialsOf(q);if(!m||!m.items.length)return false;
+  let slot=m.items.find(b=>b.kind==='figure'&&!b.figure);
+  if(!slot){if(m.items.length>=3)return false;setMaterialLayout(q,{count:m.items.length+1,dir:'row'});slot=materialsOf(q)?.items.find(b=>b.kind==='figure'&&!b.figure);if(!slot)return false;}
+  const text=kids[0].text;q.blocks=q.blocks.filter(b=>b!==box&&b!==kids[0]);
+  slot.kind='text';slot.box=true;slot.text=text;delete slot.figure;delete slot.table;delete slot.size;slot.layout='세로';
+  // 단 폭 기준으로 정해 둔 기출 그림 크기(%)는 나란한 칸에서 그림을 작게 만든다 — 칸 폭에 맞추게 지운다.
+  for(const b of materialsOf(q)?.items||[])if(b.kind==='figure')delete b.size;
+  return true;
+}
+// 11-14(지적 1): 자료 칸 이름은 자리 순서로 — 지우기·더하기·배열 바꾸기 뒤 (가)(나)(다)를 차례로 다시 매긴다.
+// 직접 지은 이름(「그림 1」 등)은 건드리지 않는다(가~하 꼴만). 글 속 이름은 바꾸지 않는다(11-14 사용자).
+// 돌려줌: [{from,to}] 바뀐 이름(글을 바꿨는지는 texts 개수).
+const HANGUL_CAPS=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)','(카)','(타)','(파)','(하)'];
+export function relabelMaterials(q){
+  const m=materialsOf(q);if(!m||m.items.length<2)return {changes:[],texts:0};
+  const changes=[];
+  m.items.forEach((b,i)=>{const want=HANGUL_CAPS[i];if(!want||!HANGUL_CAPS.includes(b.label)||b.label===want)return;changes.push({from:b.label,to:want,block:b});});
+  if(!changes.length)return {changes:[],texts:0};
+  for(const c of changes)c.block.label=c.to;
+  // 11-14 사용자: 글 속 「(나)」 자동 바꾸기는 뺌(불필요) — 칸 이름만 다시 매긴다.
+  const texts=0;
+  return {changes:changes.map(({from,to})=>({from,to})),texts};
+}

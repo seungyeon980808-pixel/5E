@@ -1,5 +1,5 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
-import { modKey, shortcutKey, isComposingKey } from "./platform.js?v=1.6.1-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
+import { modKey, shortcutKey, isComposingKey } from "./platform.js?v=1.7.0-four-session-integration";
 
 /* ===== OBJECT SEARCH (registry filtering + modal interaction only) ===== */
 
@@ -7,9 +7,9 @@ import {
   TEMPLATES,
   activateTemplate,
   buildSymbolIcon,
-  sizeIconViewBox,
-} from "./templates.js?v=1.6.1-remediation-0929";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.1-remediation-0929";
+  sizeIconViewBoxes,
+} from "./templates.js?v=1.7.0-four-session-integration";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.7.0-four-session-integration";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -20,6 +20,10 @@ function isTypingTarget(target) {
 }
 
 export function initObjectSearch() {
+  // 한 번 만들고 크기를 맞춘 아이콘은 다시 쓰고(열 때마다 139개를 새로 만들어 getBBox로 재지 않게),
+  // 첫 화면에 보이는 줄만 바로 붙이고 나머지는 다음 프레임에 붙인다 — 창이 뜨는 모션 첫 프레임이 60–90ms 멈췄다.
+  const iconCache = new Map(), FIRST_ROWS = 24;
+  let restFrame = 0;
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.hidden = true;
@@ -74,15 +78,21 @@ export function initObjectSearch() {
     matches = Object.entries(TEMPLATES)
       .filter(([, def]) => [def.label, ...(def.keywords || [])]
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
-      .map(([id, def]) => ({ id, def }))
-      .sort((a, b) => rank(a.def.category) - rank(b.def.category));
+      .map(([id, def]) => ({ id, def }));
+    // 이름이 검색어와 정확히 같은 것을 맨 위에(그 묶음을 먼저, 묶음 안에서도 먼저). 예: '용수철' → 용수철, 그다음 용수철 저울
+    const exact = (def) => String(def.label).toLocaleLowerCase() === query;
+    const exactCategories = new Set(matches.filter(({ def }) => exact(def)).map(({ def }) => def.category));
+    const groupRank = (c) => exactCategories.has(c) ? -1 : rank(c);
+    matches.sort((a, b) => groupRank(a.def.category) - groupRank(b.def.category) || exact(b.def) - exact(a.def));
     for (const it of listPersonalItems()) {
       if (![it.name, it.category].some((v) => String(v).toLocaleLowerCase().includes(query))) continue;
       matches.push({ id: it.id, personal: true,
         def: { label: it.name, category: `내 오브젝트 · ${it.category}`, kind: "atomic" } });
     }
     highlighted = matches.length ? 0 : -1;
+    cancelAnimationFrame(restFrame); restFrame = 0;
     results.replaceChildren();
+    const nodes = [];
 
     if (!matches.length) {
       const empty = document.createElement("p");
@@ -92,7 +102,8 @@ export function initObjectSearch() {
       return;
     }
 
-    const categories = [...CATEGORY_ORDER, ...new Set(matches.map(({ def }) => def.category))];
+    const icons = [];
+    const categories = [...exactCategories, ...CATEGORY_ORDER, ...new Set(matches.map(({ def }) => def.category))];
     for (const category of [...new Set(categories)]) {
       const group = matches.filter(({ def }) => def.category === category);
       if (!group.length) continue;
@@ -101,7 +112,7 @@ export function initObjectSearch() {
       heading.className = "object-search-category";
       heading.setAttribute("role", "presentation");
       heading.textContent = category;
-      results.appendChild(heading);
+      nodes.push(heading);
 
       for (const match of group) {
         const index = matches.indexOf(match);
@@ -121,8 +132,9 @@ export function initObjectSearch() {
           letter.style.cssText = "font-weight:700;font-size: 13px;";
           iconBox.appendChild(letter);
         } else {
-          icon = buildSymbolIcon(match.id, match.def);
-          iconBox.appendChild(icon);
+          const cached = iconCache.get(match.id);
+          if (!cached) { icon = buildSymbolIcon(match.id, match.def); icon.dataset.iconFor = match.id; }
+          iconBox.appendChild(cached || icon);
         }
 
         const label = document.createElement("span");
@@ -131,11 +143,19 @@ export function initObjectSearch() {
         badge.className = "object-search-badge";
         badge.textContent = match.personal ? "내 오브젝트" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
-        results.appendChild(row);
-        if (icon) sizeIconViewBox(icon);
+        nodes.push(row);
+        if (icon) icons.push(icon);
       }
     }
+    const sizeAttached = () => {
+      const ready = icons.filter((svg) => svg.isConnected && !svg.dataset.sized);
+      sizeIconViewBoxes(ready);
+      for (const svg of ready) { svg.dataset.sized = "1"; if (svg.getAttribute("viewBox")) iconCache.set(svg.dataset.iconFor, svg); }
+    };
+    results.append(...nodes.slice(0, FIRST_ROWS));
+    sizeAttached();
     syncHighlight();
+    if (nodes.length > FIRST_ROWS) restFrame = requestAnimationFrame(() => { restFrame = 0; results.append(...nodes.slice(FIRST_ROWS)); sizeAttached(); });
   }
 
   function open() {
@@ -190,4 +210,29 @@ export function initObjectSearch() {
   // toolbar button (the shortcut alone was undiscoverable). Optional-chained so
   // the search still works if the button markup is ever absent.
   document.getElementById("object-search-trigger")?.addEventListener("click", open);
+
+  // 첫 열기도 매끄럽게: 앱이 한가할 때 아이콘을 8개씩 미리 만들어 크기를 재 둔다(보이지 않는 자리에서).
+  // 20개씩이면 한 묶음이 약 50ms라 첫 화면 직후 멈춤(긴 작업)이 되었다 — 8개면 한 묶음 20ms 안쪽.
+  // 한 번에 다 하면 그 자체가 긴 작업이 되므로 한가한 틈마다 조금씩. 창이 먼저 열리면 거기서 이어 만든다.
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 200));
+  const pending = Object.entries(TEMPLATES).filter(([, def]) => !def.hidden);
+  const warm = () => {
+    if (!overlay.hidden || !pending.length) return;
+    const holder = document.createElement("div");
+    holder.setAttribute("aria-hidden", "true");
+    holder.style.cssText = "position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none";
+    document.body.appendChild(holder);
+    const built = [];
+    for (const [id, def] of pending.splice(0, 8)) {
+      if (iconCache.has(id)) continue;
+      const svg = buildSymbolIcon(id, def); svg.dataset.iconFor = id;
+      const box = document.createElement("span"); box.className = "object-search-icon"; box.appendChild(svg);
+      holder.appendChild(box); built.push(svg);
+    }
+    sizeIconViewBoxes(built);
+    for (const svg of built) { svg.dataset.sized = "1"; if (svg.getAttribute("viewBox")) iconCache.set(svg.dataset.iconFor, svg); svg.remove(); }
+    holder.remove();
+    if (pending.length) idle(warm, { timeout: 4000 });
+  };
+  idle(warm, { timeout: 4000 });
 }

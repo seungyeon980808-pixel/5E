@@ -10,9 +10,12 @@
 }
 .ai-comparison-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border, #d4d9e1); }
 .ai-comparison { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; gap: 8px; padding: 12px; color: var(--text-primary, #202630); font-family: "IBM Plex Sans KR", system-ui, sans-serif; }
-.ai-comparison-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.ai-comparison-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; align-items: center; align-content: start; gap: 4px 8px; }
-.ai-comparison-choice label { display: flex; grid-column: 1 / -1; min-width: 0; flex-direction: column; gap: 4px; font-size: 12px; }
+.ai-comparison-controls { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; flex:none; }
+.ai-comparison-selectors { display:flex; flex:1 1 340px; min-width:0; gap:12px; }
+.ai-comparison-choice { display:flex; flex:1 1 0; min-width:0; align-items:center; gap:6px; flex-wrap:wrap; }
+.ai-comparison-choice label { display:flex; flex:1 1 120px; min-width:0; align-items:center; gap:6px; font-size:12px; white-space:nowrap; }
+.ai-comparison-status:empty { display:none; }
+.ai-comparison-status { font-size:11px; color:var(--text-secondary); }
 .ai-comparison select { height: 32px; width: 100%; min-width: 0; text-overflow: ellipsis; }
 .ai-comparison button, .ai-comparison select, .ai-comparison-header button {
   min-height: 32px; padding: 4px 8px; border: 1px solid var(--border, #d4d9e1); border-radius: 8px;

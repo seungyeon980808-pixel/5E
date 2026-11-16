@@ -14,9 +14,25 @@
 /* ----- derived scale: mm per one math unit on each axis ----- */
 // A degenerate range (xMax === xMin) would divide by zero; we return unit 0 so
 // the mapping collapses to the box origin instead of producing NaN/Infinity.
+function axisLog(P, axis) { return P[`${axis}Scale`] === 'log'; }
+function logRangeValid(min, max) { return Number.isFinite(min) && Number.isFinite(max) && min > 0 && max > min; }
+function coordinateTicks(P, axis, step = 1) {
+  const min = P[`${axis}Min`], max = P[`${axis}Max`];
+  if (axisLog(P, axis)) {
+    if (!logRangeValid(min, max)) return [];
+    const ticks = [];
+    for (let exponent = Math.ceil(Math.log10(min) - 1e-12); exponent <= Math.floor(Math.log10(max) + 1e-12); exponent++) ticks.push(10 ** exponent);
+    return ticks;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max) || !(step > 0) || !Number.isFinite(step)) return [];
+  const ticks = [];
+  for (let i = Math.ceil(min / step); i <= Math.floor(max / step) && ticks.length < 2000; i++) ticks.push(i * step);
+  return ticks;
+}
+
 function planeUnits(P) {
-  const dx = P.xMax - P.xMin;
-  const dy = P.yMax - P.yMin;
+  const dx = axisLog(P, "x") ? Math.log10(P.xMax) - Math.log10(P.xMin) : P.xMax - P.xMin;
+  const dy = axisLog(P, "y") ? Math.log10(P.yMax) - Math.log10(P.yMin) : P.yMax - P.yMin;
   return {
     unitX: dx !== 0 ? P.w / dx : 0,   // mm per math x-unit
     unitY: dy !== 0 ? P.h / dy : 0,   // mm per math y-unit
@@ -25,10 +41,14 @@ function planeUnits(P) {
 
 /* ----- math → world (per axis) ----- */
 function worldXFromMathX(P, mx) {
+  if (axisLog(P, 'x')) return logRangeValid(P.xMin, P.xMax) && mx > 0 && Number.isFinite(mx)
+    ? P.x + (Math.log10(mx) - Math.log10(P.xMin)) * P.w / (Math.log10(P.xMax) - Math.log10(P.xMin)) : NaN;
   const dx = P.xMax - P.xMin;
   return P.x + (dx !== 0 ? (mx - P.xMin) * (P.w / dx) : 0);
 }
 function worldYFromMathY(P, my) {
+  if (axisLog(P, 'y')) return logRangeValid(P.yMin, P.yMax) && my > 0 && Number.isFinite(my)
+    ? P.y + (Math.log10(P.yMax) - Math.log10(my)) * P.h / (Math.log10(P.yMax) - Math.log10(P.yMin)) : NaN;
   const dy = P.yMax - P.yMin;
   // y flip: math yMax sits at the TOP of the box (smaller SVG y).
   return P.y + (dy !== 0 ? (P.yMax - my) * (P.h / dy) : 0);
@@ -40,9 +60,13 @@ function worldFromMath(P, mx, my) {
 /* ----- world → math (per axis) — inverse of the above ----- */
 // Used by the 정의역 드래그(화면→수학 x 환산) and hit-mapping.
 function mathXFromWorldX(P, wx) {
+  if (axisLog(P, 'x')) return logRangeValid(P.xMin, P.xMax)
+    ? (P.w !== 0 ? 10 ** (Math.log10(P.xMin) + (wx - P.x) / P.w * (Math.log10(P.xMax) - Math.log10(P.xMin))) : P.xMin) : NaN;
   return P.w !== 0 ? P.xMin + (wx - P.x) * ((P.xMax - P.xMin) / P.w) : P.xMin;
 }
 function mathYFromWorldY(P, wy) {
+  if (axisLog(P, 'y')) return logRangeValid(P.yMin, P.yMax)
+    ? (P.h !== 0 ? 10 ** (Math.log10(P.yMax) - (wy - P.y) / P.h * (Math.log10(P.yMax) - Math.log10(P.yMin))) : P.yMax) : NaN;
   return P.h !== 0 ? P.yMax - (wy - P.y) * ((P.yMax - P.yMin) / P.h) : P.yMax;
 }
 function mathFromWorld(P, wx, wy) {
@@ -65,14 +89,10 @@ function y2RangeOf(P) {
   };
 }
 function worldYFromMathY2(P, my) {
-  const r = y2RangeOf(P);
-  const dy = r.max - r.min;
-  // 왼쪽 축과 같은 y 반전 규약: y2Max가 판의 위쪽(작은 SVG y).
-  return P.y + (dy !== 0 ? (r.max - my) * (P.h / dy) : 0);
+  return worldYFromMathY(planeAsY2(P), my);
 }
 function mathY2FromWorldY(P, wy) {
-  const r = y2RangeOf(P);
-  return P.h !== 0 ? r.max - (wy - P.y) * ((r.max - r.min) / P.h) : r.max;
+  return mathYFromWorldY(planeAsY2(P), wy);
 }
 // y2 축을 '왼쪽 축인 척' 하는 평면 뷰로 바꿔 준다. 계열을 y2 스케일로 굽는 코드(샘플러·
 // 베이크·미리보기)가 worldFromMath 등 기존 함수를 그대로 쓰게 하는 얇은 어댑터다 —
@@ -82,18 +102,18 @@ function planeAsY2(P) {
   const c = (P && P.y2) || {};
   const gs = Number.isFinite(c.gridStepY2) && c.gridStepY2 > 0 ? c.gridStepY2 : (P.gridStepY || 1);
   const ts = Number.isFinite(c.tickStepY2) && c.tickStepY2 > 0 ? c.tickStepY2 : gs;
-  return { ...P, yMin: r.min, yMax: r.max, gridStepY: gs, tickStepY: ts };
+  return { ...P, yMin: r.min, yMax: r.max, yScale: c.scale || 'linear', gridStepY: gs, tickStepY: ts };
 }
 
 /* ----- world coords of the math origin (0,0) ----- */
 // The axis crosses the visible box only when 0 is inside the corresponding range;
 // callers that draw the axis lines test that separately (0 in [xMin,xMax] etc.).
 function originWorld(P) {
-  return { x: worldXFromMathX(P, 0), y: worldYFromMathY(P, 0) };
+  return { x: worldXFromMathX(P, axisLog(P, 'x') ? P.xMin : 0), y: worldYFromMathY(P, axisLog(P, 'y') ? P.yMin : 0) };
 }
 
 export {
-  planeUnits,
+  planeUnits, coordinateTicks, logRangeValid,
   worldFromMath, worldXFromMathX, worldYFromMathY,
   mathFromWorld, mathXFromWorldX, mathYFromWorldY,
   originWorld,

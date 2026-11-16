@@ -33,6 +33,8 @@ export const OBJECT_TYPE_IDS = [
   // 화학 부품(2026-07-31) — 기출 280장 전수 분해 결과. 규격은 docs/CHEM_PARTS_SPEC.md
   "vessel", "chemmodel", "particlebox", "orbital", "bondgroup",
   "chemchart", "axisbreak", "chemgraph", "electrode", "periodic",
+  // 표시·주석 — 대화 그림의 말풍선(물리 기출 21장)
+  "bubble",
 ];
 
 // Per-type classification flags. Each flag names a behavior-class that some
@@ -140,6 +142,9 @@ export const OBJECT_TYPES = {
   chemgraph:   { sizeBox: 1, boxFace: 1 },
   electrode:   { sizeBox: 1, boxFace: 1 },
   periodic:    { sizeBox: 1, boxFace: 1 },
+  // 말풍선: 몸통이 크기박스라 이동·리사이즈·저장은 SIZE_TYPES 경로를 그대로 탄다.
+  // 꼬리는 상자 밖으로 나가지만 클릭·선택은 몸통 상자 기준이면 충분하다.
+  bubble:      { sizeBox: 1, boxFace: 1 },
 };
 
 // Derive the Set of type ids whose row has `flag` truthy.

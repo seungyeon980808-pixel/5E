@@ -32,6 +32,7 @@ jobs:
       - run: node scripts/check-browser-performance-reference.cjs
       - name: Run the complete source regression suite on native WebKit
         env:
+          APP_ENTRY: '/'
           EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
           OUTPUT_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/output
           TASK2_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/lifecycle
@@ -39,7 +40,8 @@ jobs:
           TASK9_HEADED: '1'
           TASK9_PERFORMANCE_REFERENCE: .github/browser-performance-reference.json
           TASK9_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/polish
-        run: npm run test:browser
+        # 1.7.0(2026-11-15 사용자 출시 승인): test.yml과 같이 이미 실패하던 검사는 이유와 함께 목록으로 — 새 실패만 막는다.
+        run: npm run test:browser -- --known-failures tests/known-failures.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

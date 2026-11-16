@@ -1,5 +1,5 @@
-import { createSharingDocument, receiveSharingDocument } from './ai-sharing-document.mjs?v=1.6.1-preview-sharing-0918-2108';
-import { idbGet, idbSet } from './idb-store.js?v=1.6.1-remediation-0929';
+import { createSharingDocument, receiveSharingDocument } from './ai-sharing-document.mjs?v=1.7.0-four-session-integration';
+import { idbGet, idbSet } from './idb-store.js?v=1.7.0-four-session-integration';
 
 const DEFAULT_SERVER = 'https://five-e-ai-runtime-probe.onrender.com';
 function serverBase() {

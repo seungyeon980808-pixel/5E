@@ -1,15 +1,16 @@
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.1-remediation-0929";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.1-remediation-0929";
+import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { openGraphModal } from './graph/graph-modal.js?v=1.7.0-four-session-integration';
 
-import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.3-library-startup";
-import { createPdfRuntimeLoader } from "./pdf-library/runtime-loader.js?v=1.6.3-pdf-runtime-retry";
-import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.1-preview-labeler-0917-1111";
-import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.1-preview-labeler-0917-1111";
-import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.1-preview-labeler-0917-1111";
-import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.1-preview-labeler-0917-1111";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.3-library-startup";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.3-library-startup";
-import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.1-preview-labeler-0917-1111";
+import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.7.0-four-session-integration";
+import { createPdfRuntimeLoader } from "./pdf-library/runtime-loader.js?v=1.7.0-four-session-integration";
+import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.7.0-four-session-integration";
+import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.7.0-four-session-integration";
+import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.7.0-four-session-integration";
+import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.7.0-four-session-integration";
+import { createUnifiedLibraryProviderAsync, setLibraryExamTags } from "./library/provider.js?v=1.7.0-four-session-integration";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.7.0-four-session-integration";
+import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.7.0-four-session-integration";
+import { setConnectionNames } from "./library/connection-names.js";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
 export function unifiedImageInsertionOptions(result, asset) {
@@ -60,6 +61,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let pdfSearchWorker = null;
   let pdfSearchRequestId = 0;
   let pdfSearchWorkerKey = "";
+  const pdfPrebuiltSent = new Set();
+  const pdfPrebuiltIds = new WeakMap();
+  let pdfPrebuiltSerial = 0;
   const pdfSearchRequests = new Map();
   let pdfSearchKey = "";
   const workerSearch = (message) => new Promise((resolve, reject) => {
@@ -69,7 +73,24 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   });
   const ensurePdfSearchWorker = () => {
     if (pdfSearchWorker) return pdfSearchWorker;
-    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.6.1-preview-common-year-login-0918-1302", import.meta.url), { type: "module" });
+    // 설치형(file://)은 모듈 일꾼을 띄울 수 없어(주소가 없는 문서) 「PDF 검색 작업이 중단되었습니다」가 났다(11-04) —
+    // 같은 검색 코드를 화면 쪽에서 직접 돌리는 대역을 쓴다(일꾼과 같은 메시지 약속).
+    if (location.protocol === "file:") {
+      const listeners = [];
+      const controllerReady = import("./pdf-library/search-worker.js?v=1.7.0-four-session-integration").then(m => m.createSearchWorkerController());
+      pdfSearchWorker = {
+        addEventListener: (type, fn) => { if (type === "message") listeners.push(fn); },
+        postMessage: (data) => { void controllerReady.then(controller => {
+          let reply;
+          try { reply = { id: data.id, ok: true, result: controller.handle(data) }; }
+          catch (error) { reply = { id: data.id, ok: false, error: { code: "PDF_SEARCH_ERROR", message: error instanceof Error ? error.message : String(error) } }; }
+          setTimeout(() => listeners.forEach(fn => fn({ data: reply })), 0);
+        }); },
+      };
+      // 11-08: 대역도 답을 받는 쪽(아래 message 처리)을 붙여야 한다 — 빠져 있어서 설치판에서는 검색어를 넣으면 결과가 영영 안 왔다.
+    } else {
+      pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.7.0-four-session-integration", import.meta.url), { type: "module" });
+    }
     pdfSearchWorker.addEventListener("message", (event) => {
       const request = pdfSearchRequests.get(event.data?.id);
       if (!request) return;
@@ -99,7 +120,22 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         pdfSearchKey = key;
         const worker = ensurePdfSearchWorker();
         if (pdfSearchWorkerKey !== key) {
-          await workerSearch({ type: "replace", documents: dynamicDocuments, prebuilt: prebuiltIndexes });
+          // 11-08: 미리 만든 색인(33MB)은 일꾼에 한 번만 보내고, 그 뒤 교체 때는 열쇠만 보낸다(매번 통째 복사하느라 화면이 멈췄다).
+          // 열쇠는 색인 객체마다 하나(내용이 바뀌면 새 객체이므로 새 열쇠) — 글자 수·쪽 수만으로는 내용이 바뀐 것을 놓친다.
+          const keyed = prebuiltIndexes.map((source) => {
+            if (!pdfPrebuiltIds.has(source.index)) pdfPrebuiltIds.set(source.index, `prebuilt:${++pdfPrebuiltSerial}`);
+            return { source, key: `${pdfPrebuiltIds.get(source.index)}:${source.documents.map((document) => `${document.id}:${document.pageCount}`).join(",")}` };
+          });
+          const message = (full) => ({ type: "replace", documents: dynamicDocuments,
+            prebuilt: keyed.map(({ source, key: sourceKey }) => (!full && pdfPrebuiltSent.has(sourceKey) ? { key: sourceKey } : { key: sourceKey, documents: source.documents, index: source.index })) });
+          try { await workerSearch(message(false)); }
+          catch (error) {
+            if (!/PREBUILT_MISSING/.test(error?.message || "")) throw error;
+            pdfPrebuiltSent.clear();
+            await workerSearch(message(true));
+          }
+          // 11-12: 보낸 열쇠를 지우지 않는다 — 일꾼이 최근 색인 몇 개를 들고 있으므로, 번갈아 검색할 때 열쇠만 보낸다.
+          keyed.forEach(({ key: sourceKey }) => pdfPrebuiltSent.add(sourceKey));
           pdfSearchWorkerKey = key;
         }
       }
@@ -112,18 +148,23 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     insertImage: insertImageFromSrc,
     openIndependentReferences,
     loadDesktopAdapter: async (runtime) => {
-      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js?v=1.6.1-preview-crop-quality-0920-1806");
+      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js?v=1.7.0-four-session-integration");
       return hasDesktopPdfLibrary() ? createDesktopPdfLibraryAdapter({ runtime }) : null;
     },
     onCatalogChange: () => void unifiedUi?.refresh(),
   });
-  const isDesktopLibrary = Boolean(globalThis.fiveEDesktop?.pdfLibrary);
+  // 11-04: 설치형도 웹과 같은 자료(구글 드라이브 「5E 공유 자료」 + 미리 변환한 기출)를 기본으로 쓴다. 9월 설치형 전용 묶음(제공 자료·옛 이미지)은 쓰지 않고,
+  // 설치형 기능(fiveEDesktop.pdfLibrary)은 「내 컴퓨터 폴더 연결」에만 쓴다.
+  const isDesktopLibrary = false;
   let packManagement = null;
   let packManagementLoading = null;
   let installedPackDocuments = [];
   let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
   let defaultPack = null;
   let drivePack = null;
+  let hakpyeongPack = null, hakpyeongRevision = 0, hakpyeongAll = false;
+  let hakpyeongTask = Promise.resolve(), syncProvidedCatalog;
+  const hakpyeongSubjects = new Set();
   let drivePackDocumentIds = new Set();
   const mountPackManagement = () => {
     if (packManagementLoading) return packManagementLoading;
@@ -137,50 +178,64 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       { loadRemotePack },
       { loadCatalogFirst },
       { PROVIDED_CATALOG_BOOTSTRAP },
-      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
+      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl, googleDrivePackBaseUrl },
+      { createStaticMirrorFetcher },
     ] = await Promise.all([
-      import("./pdf-library/pack-store.js?v=1.6.1-preview-labeler-0917-1111"),
-      import("./pdf-library/pack-management.js?v=1.6.1-preview-library-popup-0919-1630"),
-      import("./pdf-library/remote-pack.js?v=1.6.3-library-startup"),
-      import("./pdf-library/catalog-startup.js?v=1.6.3-library-startup"),
-      import("./pdf-library/catalog-bootstrap.js?v=1.6.3-library-startup"),
-      import("./pdf-library/google-drive.js?v=1.6.3-library-startup"),
+      import("./pdf-library/pack-store.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/pack-management.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/remote-pack.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/catalog-startup.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/catalog-bootstrap.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/google-drive.js?v=1.7.0-four-session-integration"),
+      import("./pdf-library/static-mirror.js?v=1.7.0-four-session-integration"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();
     const gatewayBaseUrl = await configuredGoogleDriveGatewayUrl();
-    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl });
+    // 11-05: 「5E 제공」 공유 폴더(웹 기본 제공·설치본에서 직접 연결 모두)는 빠른 주소에서 먼저 받는다(static-mirror.js).
+    let providedRoot = "";
+    try { providedRoot = gatewayBaseUrl ? googleDrivePackBaseUrl(gatewayBaseUrl, PROVIDED_DRIVE_FOLDER_URL) : ""; } catch {}
+    const fetcher = createStaticMirrorFetcher(providedRoot);
+    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl, fetcher });
     let startup = null;
-    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null,
+    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null, fetcher,
       loadPack: isDesktopLibrary ? loadRemotePack : async options => {
         startup = await loadCatalogFirst({ ...options, bootstrap: PROVIDED_CATALOG_BOOTSTRAP });
         return startup.pack;
       },
     });
     const isProvidedFolder = (url) => Boolean(url) && parseGoogleDriveFolderUrl(url).folderId === parseGoogleDriveFolderUrl(PROVIDED_DRIVE_FOLDER_URL).folderId;
-    const syncPackCatalog = () => {
-      const currentDefault = defaultPack, currentDrive = drivePack;
+    const syncPackCatalog = (notify = true) => {
+      const currentDefault = defaultPack, currentDrive = drivePack, currentHakpyeong = hakpyeongPack;
+      const hakpyeongIds = new Set(currentHakpyeong?.documents.map(document => document.id) || []);
       const currentDriveIds = new Set(drivePackDocumentIds);
       const preferredRemote = mergePreferredCatalogs(defaultPack, drivePack);
-      const merged = mergePreferredCatalogs(
+      const baseMerged = mergePreferredCatalogs(
         preferredRemote,
         isDesktopLibrary ? { documents: installedPackDocuments, searchIndex: installedPackSearchIndex } : null,
       );
+      const merged = currentHakpyeong ? mergePreferredCatalogs(baseMerged, currentHakpyeong) : baseMerged;
       return pdfUi.syncPackCatalog({
+        notify,
         documents: merged.documents,
         searchIndex: merged.searchIndex,
-        openDocument: (runtime, document) => merged.installedDocumentIds.has(document.id)
+        openDocument: (runtime, document) => hakpyeongIds.has(document.id)
+          ? currentHakpyeong.openDocument(runtime, document)
+          : baseMerged.installedDocumentIds.has(document.id)
           ? store.openDocument(runtime, document)
           : currentDriveIds.has(document.id)
             ? currentDrive.openDocument(runtime, document)
             : currentDefault.openDocument(runtime, document),
-        downloadDocument: (document) => currentDriveIds.has(document.id)
+        downloadDocument: (document) => hakpyeongIds.has(document.id)
+          ? currentHakpyeong.downloadDocument(document)
+          : currentDriveIds.has(document.id)
           ? currentDrive.downloadDocument(document)
           : currentDefault?.downloadDocument?.(document),
-        canDownloadDocument: (document) => !merged.installedDocumentIds.has(document.id)
-          && (currentDriveIds.has(document.id) || typeof currentDefault?.downloadDocument === "function"),
+        canDownloadDocument: (document) => hakpyeongIds.has(document.id) || (!baseMerged.installedDocumentIds.has(document.id)
+          && (currentDriveIds.has(document.id) || typeof currentDefault?.downloadDocument === "function")),
       });
     };
+    syncProvidedCatalog = () => syncPackCatalog(false);
     packManagement = mount({
       host: pdfUi.getPackHost(),
       driveHost: pdfUi.getDriveHost(),
@@ -245,7 +300,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
             const index = await pack.loadSearchIndex();
             if (epoch !== providedEpoch) return;
             defaultPack = Object.freeze({ ...defaultPack, searchIndex: index });
-            pdfUi.syncPackSearchIndex(mergePreferredCatalogs(defaultPack, drivePack).searchIndex, { notify: false });
+            pdfUi.syncPackSearchIndex(mergePreferredCatalogs(mergePreferredCatalogs(defaultPack, drivePack), hakpyeongPack).searchIndex, { notify: false });
             unifiedUi?.setSearchReadiness("ready");
             packManagement.setProvidedStatus(`${defaultPack.documentCount}개 PDF · 본문 검색 가능`);
           };
@@ -302,8 +357,12 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let importedImages = [];
   let unifiedProviderCache = null;
   let unifiedProviderCacheKey = "";
+  // 11-05: 문항 단원·태그·모양 색인(exam 기출 검색과 같은 수준). 한 번만 읽고, 못 읽어도 검색은 본문으로 그대로 된다.
+  let examTagsLoading = null;
+  const loadExamTags = () => examTagsLoading ||= fetch(new URL("../assets/exampool/convert/data/library-tags.json", import.meta.url))
+    .then((response) => response.ok ? response.json() : null).then(setLibraryExamTags).catch(() => {});
   async function ensureUnifiedManifests() {
-    if (isDesktopLibrary && !partsManifest) partsManifest = await loadPartsManifest();
+    await Promise.all([isDesktopLibrary && !partsManifest ? loadPartsManifest().then((manifest) => { partsManifest = manifest; }) : null, loadExamTags()]);
   }
 
   async function materializeImportedImage({ result, item }) {
@@ -319,6 +378,35 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     return { dataUrl: await urlToDataUrl(result.preview.url), result };
   }
 
+  async function prepareHakpyeong({query, filters, questionSearch, providedEnabled = true}) {
+    // 11-05: 「5E 제공」 묶음을 껐거나 시험을 「수능·모평」으로 거르면 학평 자료는 불러오지 않는다.
+    if (!providedEnabled || filters.exam === "kice") return false;
+    if (["06", "09", "11"].includes(filters.administration)) return false;
+    if (!filters.subject && Array.isArray(filters.subjects) && filters.subjects.length === 1) filters = { ...filters, subject: filters.subjects[0] };
+    const explicit = /학평|학력평가|(?:^|\D)(?:3|4|5|7|10)월|[pbce][12]_?\d{2,4}_?(?:03|04|05|07|10)/i.test(query)
+      || ["03", "04", "05", "07", "10"].includes(filters.administration) || filters.exam === "hak";
+    if (!explicit && (!questionSearch || /6평|9평|수능/.test(query))) return false;
+    if (!query && !filters.subject && !filters.startYear && !filters.endYear && !filters.administration && !filters.exam && !filters.subjects?.length) return false;
+    const before = hakpyeongRevision;
+    await mountPackManagement();
+    const work = hakpyeongTask.then(async () => {
+      // 11-09: 고른 과목이 여럿이어도(기본 물리Ⅰ·Ⅱ) 그 과목만 읽는다 — 전에는 둘 이상이면 8과목을 다 읽었다.
+      const wanted = filters.subject ? [filters.subject] : Array.isArray(filters.subjects) ? filters.subjects.filter(Boolean) : [];
+      if (hakpyeongAll || (wanted.length && wanted.every(subject => hakpyeongSubjects.has(subject)))) return;
+      const subjects = wanted.length ? [...new Set([...hakpyeongSubjects, ...wanted])].sort() : [];
+      const {loadHakpyeongPack} = await import("./pdf-library/hakpyeong-pack.js");
+      hakpyeongPack = await loadHakpyeongPack(subjects);
+      if (!subjects.length) hakpyeongAll = true;
+      subjects.forEach(subject => hakpyeongSubjects.add(subject));
+      hakpyeongRevision++;
+      await unifiedUi.applyCatalogUpdate(syncProvidedCatalog);
+    });
+    // 호출자는 오류를 받고, 다음 검색은 이전 실패에 막히지 않는다.
+    hakpyeongTask = work.catch(() => {});
+    await work;
+    return hakpyeongRevision !== before;
+  }
+
   async function getUnifiedProvider() {
     await ensureUnifiedManifests();
     const catalog = pdfUi.getCatalog();
@@ -330,7 +418,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     ]);
     if (unifiedProviderCache && unifiedProviderCacheKey === cacheKey) return unifiedProviderCache;
     unifiedProviderCacheKey = cacheKey;
-    unifiedProviderCache = createUnifiedLibraryProvider({
+    const pending = createUnifiedLibraryProviderAsync({
       partsManifest: isDesktopLibrary ? partsManifest : null,
       pdfDocuments: catalog.documents,
       pdfSearchIndex: catalog.searchIndex,
@@ -345,7 +433,14 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         importedImage: materializeImportedImage,
       },
     });
-    return unifiedProviderCache;
+    unifiedProviderCache = pending;
+    try {
+      const provider = await pending;
+      return pending === unifiedProviderCache ? provider : getUnifiedProvider();
+    } catch (error) {
+      if (pending === unifiedProviderCache) {unifiedProviderCache=null;unifiedProviderCacheKey='';}
+      throw error;
+    }
   }
 
   async function insertUnifiedResult(result, asset, options, context = {}) {
@@ -366,21 +461,27 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
 
   unifiedUi = createUnifiedLibraryUi({
     getProvider: getUnifiedProvider,
+    prepareSearch: prepareHakpyeong,
     initialSearchReadiness: isDesktopLibrary ? "ready" : "loading",
     insertMaterialized: insertUnifiedResult,
-    openObjectify: async (result, asset, context = {}) => {
+    // 「보내기」: 한글 시험지로 = 작업대에 넣은 뒤 기존 「한글로 보내기」(영역 확인 → 한글에서 놓을 자리 고르기),
+    // ExamPool로 = 문항 창을 열고 왼쪽 라이브러리 칸 「가져온 자료」에 넣는다(「5E 라이브러리에서 고르기」가 돌려받는 길과 같음).
+    sendTo: async (target, result, asset, options, context = {}) => {
+      if (target === "hwp") {
+        await insertUnifiedResult(result, asset, options, context);
+        return () => window.dispatchEvent(new CustomEvent("5e:exam-send-canvas"));
+      }
       const transfer = unifiedLibraryTransfer(result, asset);
-      const dataUrl = transfer.dataUrl;
-      if (!dataUrl) throw new Error("객체화할 이미지 데이터를 만들지 못했습니다.");
-      const response = await fetch(dataUrl);
-      if (context.isCurrent && !context.isCurrent()) return;
-      const blob = await response.blob();
-      if (context.isCurrent && !context.isCurrent()) return;
-      const safeName = `${String(result.title || "library-image").replace(/[\\/:*?"<>|]+/gu, "-")}.png`;
-      if (!openObjectifyWithFile(new File([blob], safeName, { type: blob.type || "image/png" }), { sourceMetadata: transfer.source })) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+      if (!/^data:image\/(png|jpeg|webp);base64,/.test(transfer.dataUrl || "")) throw new Error("보낼 그림 데이터를 만들지 못했습니다.");
+      const item = { data: transfer.dataUrl, name: String(result.title || "라이브러리 자료").slice(0, 200), source: transfer.source ? { documentTitle: transfer.source.documentTitle || "", title: transfer.source.title || "", pageNumber: Number.isInteger(transfer.source.pageNumber) ? transfer.source.pageNumber : null } : null };
+      // 받는 쪽(exampool-sheet-workspace.js)이 accepted를 켜고, 라이브러리 창이 닫힌 뒤 문항 창을 연다. 없으면 이 창에 오류로 남긴다.
+      const request = { items: [item], accepted: false };
+      window.dispatchEvent(new CustomEvent("5e:exampool-receive", { detail: request }));
+      if (!request.accepted) throw new Error("5E_exam을 열 수 없습니다.");
     },
     openAi,
     openIndependentReferences,
+    openGraph:reference=>openGraphModal(null,'coord',{traceReference:reference}),
     pdfUi,
     onImportedImages: async (files) => {
       const records = [];
@@ -391,13 +492,14 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       importedImages = [...importedImages, ...records];
     },
     onDesktopSnapshot: (snapshot) => {
+      setConnectionNames(snapshot?.connections || []);
       const browserImports = importedImages.filter((item) => !item.imageId);
       const desktopImages = (snapshot?.images || []).map((item) => ({
         ...item,
         id: item.imageId,
         fileName: item.name,
         sourceId: item.connectionId || "desktop",
-        sourceLabel: "연결한 폴더",
+        sourceLabel: "그림",
       }));
       importedImages = [...browserImports, ...desktopImages];
     },
@@ -410,14 +512,31 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     const opening = unifiedUi.open(trigger || openButton);
     void mountPackManagement().catch((error) => pdfUi.setSourceStatus(`자료팩 관리 열기 실패: ${error instanceof Error ? error.message : error}`, true));
     await opening;
+    // 11-08: 학평 자료는 첫 검색 때 불러오느라 검색이 4~7초 걸렸다 — 라이브러리를 연 뒤 한가할 때 미리 불러 둔다.
+    // 다 불러오면 목록을 한 번 새로 고쳐(지금 보던 자리 유지) 검색 준비(문항 색인·PDF 본문 색인)를 미리 끝낸다.
+    const preload = () => { void prepareHakpyeong({ query: "", filters: { exam: "hak" }, questionSearch: true }).then((changed) => { if (changed) return unifiedUi.refresh(); }).catch(() => {}); };
+    // 설치판(file://)은 일꾼이 없어 미리 불러오기·색인 교체가 모두 화면 쪽에서 돌아 오히려 검색을 붙잡았다(연 뒤 3초 검색 3.8→9.1초) — 웹에서만.
+    if (location.protocol !== "file:") typeof requestIdleCallback === "function" ? requestIdleCallback(preload, { timeout: 2500 }) : setTimeout(preload, 800);
   };
   openButton.addEventListener("click", () => void openLibrary(openButton));
-  registerPdfReferencePicker(async ({ onAdd, onAddMany, onStatus, trigger } = {}) => {
+  // 11-09 사용자: 「처음 로딩에서 미리 다 불러 두고, 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 자료
+  // (기본 자료팩·학평 기본 범위 과목·검색 색인)를 미리 준비한다. 들어간 뒤 첫 검색에서 학평을 읽고 색인을 만드느라 멈칫하지 않게.
+  let warming = null;
+  const warmLibrary = () => warming ||= (async () => {
+    await mountPackManagement();
+    const filters = { ...(unifiedUi.defaultConditionFilters?.() ?? {}) };
+    await prepareHakpyeong({ query: "", filters: { ...filters, exam: "hak" }, questionSearch: true });
+    const provider = await getUnifiedProvider();
+    await provider.searchAsync?.({ query: "물체", kinds: ["crop"], filters, limit: 8 });
+  })().catch((error) => { warming = null; console.warn("라이브러리 미리 준비 실패", error); });
+  registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, onClose, bindClose, trigger } = {}) => {
     void mountPackManagement().catch((error) => onStatus?.(error instanceof Error ? error.message : String(error), "error"));
-    await unifiedUi.beginReferenceSelection({ onAdd, onAddMany, onStatus, onComplete: unifiedUi.close }, trigger || openButton);
+    bindClose?.(() => unifiedUi.close());
+    await unifiedUi.beginReferenceSelection({ kind, onAdd, onAddMany, onStatus, onClose, onComplete: unifiedUi.close }, trigger || openButton);
   });
   return Object.freeze({
     openLibrary,
+    warmLibrary,
     registerUnifiedLibraryConsumer: (consumer) => unifiedConsumerRegistry.register(consumer),
     beginUnifiedLibrarySelection: (trigger) => unifiedConsumerRegistry.begin(trigger),
   });

@@ -2,15 +2,15 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const moduleUrl = pathToFileURL(path.resolve(__dirname, '../preview/js/ai-comparison.js')).href;
+const moduleUrl = pathToFileURL(path.resolve(__dirname, '../js/ai-comparison.js')).href;
 const revisions = () => [
   { id: 'original', label: '원본', src: 'original.png', kind: 'original', width: 400, height: 200 },
   ...[1, 2, 3, 4].map(i => ({ id: `r${i}`, label: `수정본 ${i}`, src: `r${i}.png`, width: 200, height: 400 })),
 ];
-test('selected older revision wins over latest; previous revision or original is baseline', async () => {
+test('opening comparison always selects earliest original and latest revision', async () => {
   const { comparisonDefaults } = await import(moduleUrl);
-  assert.deepEqual(comparisonDefaults(revisions(), 'r2'), { leftRevisionId: 'r1', rightRevisionId: 'r2' });
-  assert.deepEqual(comparisonDefaults(revisions(), 'r1'), { leftRevisionId: 'original', rightRevisionId: 'r1' });
+  assert.deepEqual(comparisonDefaults(revisions(), 'r2'), { leftRevisionId: 'original', rightRevisionId: 'r4' });
+  assert.deepEqual(comparisonDefaults(revisions(), 'r1'), { leftRevisionId: 'original', rightRevisionId: 'r4' });
   assert.deepEqual(comparisonDefaults(revisions().slice(0, 2), 'r1'), { leftRevisionId: 'original', rightRevisionId: 'r1' });
 });
 test('descriptor snapshot is immutable, detached, rejects ambiguous IDs and malformed dimensions', async () => {
@@ -37,7 +37,7 @@ test('comparison keeps comments on their own revision and rejects invalid positi
   ];
   const snapshot = snapshotComparisonRevisions(input);
   assert.deepEqual(snapshot[0].comments.map(comment => comment.number), [1]);
-  assert.deepEqual(snapshot[1].comments.map(comment => comment.number), [2]);
+  assert.deepEqual(snapshot[1].comments.map(comment => comment.number), [1]);
   input[1].comments[0].x = 5;
   assert.equal(snapshot[1].comments[0].x, 60);
   assert.ok(Object.isFrozen(snapshot[1].comments) && Object.isFrozen(snapshot[1].comments[0]));

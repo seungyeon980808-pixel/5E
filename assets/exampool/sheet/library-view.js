@@ -1,0 +1,422 @@
+// 문항 보관함(10-23 다시 하기, 시안 5e-design-mockups/exampool-viewer-1023.html 그대로).
+// 기출과 내 문항을 한 목록으로: 위쪽 「전체 / 기출 / 내 문항」 · 「모두 · ★ 별표만 · 메모 있음」 · 과목 · 단원 · 시험 칩, 오른쪽 보기 단추 셋(카드 · 목록 · 한 문항).
+// 카드를 누르면 「문항 보기」 창: 제목 줄 별표·위치·닫기, 문항 좌우 큰 ‹ ›(← →, 0.32초 미끄러짐), 단추 줄, 변형 단계 띠, 문항 정보 · 내 메모.
+// 별표·메모는 이 기기에만(store stars·memos, 열쇠 past:<id> · q:<id>) — 카드 화면 라이브러리 칸과 같은 저장소.
+import {F,MONTH,shortTitle,norm,splitWords} from './past-search.js';
+import {croppedQuestion,pdfHref} from './past-pdf.js';
+import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
+import {croppedPastImage} from './past-crop.js';
+import {store,ICON,E} from './card-shared.js';
+import {libraryQuestions,POOLS,poolQuestions} from './exams.js';
+import {questionTitle,previewHtml,workflowOf} from './views.js';
+import {WORKFLOWS} from './model.js';
+import {isBlank} from './pool-views.js';
+import {qIcon,questionState,progressOf} from './status-icons.js';
+
+const PAGE = 40;
+const SVG = {
+  trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.3 1.3 0 0 0 1.3 1.2h6.6a1.3 1.3 0 0 0 1.3-1.2L17.5 7"/></svg>',
+  toexam: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M12 11v6M9 14h6"/></svg>',
+  card: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
+  check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
+  memo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
+  list: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="5" cy="6" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="18" r="1"/></svg>',
+  one: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3.5" width="12" height="17" rx="1.5"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+  prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>',
+  next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  sheet: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M10 4v16"/></svg>',
+  close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  link: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+};
+const POOL_TITLE = { drafting: '출제 중인 문항', done: '출제 완료한 문항', inexam: '시험지에 담긴 문항' };
+const POOL_EMPTY = {
+  drafting: '아직 출제 중인 문항이 없습니다. 위 줄에서 카드를 열거나 엑셀을 올리면 여기에 쌓입니다.',
+  done: '아직 출제 완료한 문항이 없습니다. 카드에서 단계를 「완성」으로 바꾸면 여기로 옮겨집니다.',
+  inexam: '아직 시험지에 담은 문항이 없습니다. 카드나 「시험지 ＋」에서 시험지에 담으면 여기에 모입니다.',
+};
+const STEPS = ['문항을 스캔하는 중', '문항 카드를 작성하는 중', '한글 조판을 작성하는 중'];
+const stepOf = stage => /카드|여는/.test(stage || '') ? 1 : /조판/.test(stage || '') ? 2 : 0;
+
+// ── 기출 자료(과목 파일은 처음 기출을 볼 때 읽는다) ──
+export const past = { index: null, items: null, loading: null };
+export async function loadPast() {
+  if (past.items) return past.items;
+  past.loading ||= (async () => {
+    past.index = await fetch(new URL('../convert/data/index.json', import.meta.url)).then(r => { if (!r.ok) throw Error('기출 목록을 불러오지 못했습니다.'); return r.json(); });
+    const lists = await Promise.all(past.index.subjects.map(([code, label]) => fetch(new URL(`../convert/data/${code}.json`, import.meta.url)).then(r => r.ok ? r.json() : []).then(rows => rows.map(row => ({ code, label, row })))));
+    past.items = lists.flat().map(({ code, label, row }) => ({ id: row[F.id], subject: code, subjectLabel: label, year: row[F.year], month: row[F.month], no: row[F.no], page: row[F.page], box: row[F.box], pdfFile: row[F.pdfFile], publicPath: past.index.files[row[F.pdfFile]], parts: row[F.parts] || [], tags: row[F.tags] || [], hasFigure: !!row[F.hasFigure], record: row[F.record], text: row[F.text] || '',
+      title: `${row[F.year]}학년도 ${MONTH[row[F.month]] || row[F.month] + '월'} ${label} ${row[F.no]}번`, short: shortTitle(row[F.year], row[F.month], label, row[F.no]) }))
+      .sort((a, b) => b.year - a.year || String(a.month).localeCompare(String(b.month)) || a.subject.localeCompare(b.subject) || (+a.no) - (+b.no));
+    return past.items;
+  })();
+  try { return await past.loading; } catch (e) { past.loading = null; throw e; }
+}
+export const examLabel = (y, m) => `${String(y).slice(2)}년 ${{ 6: '6평', 9: '9평', 11: '수능' }[m] || m + '월'}`;
+
+// ── 목록 만들기 ──
+// 11-11 사용자: 분류 기준 — 날짜순(만든 날·고친 날)과 완성도순으로 정렬. 날짜가 없는 예전 문항은 만든 순서(목록 순서)로 본다.
+// 11-13 밤(시안 exam-fixes-1113 G): 정렬은 「최근 고친 순」(기본)과 「완성도순」(초안 먼저 — 손볼 것이 위에) 두 단추. 고른 정렬은 기억한다.
+// 최근 고친 순은 오늘·어제·이번 주·이전으로, 완성도순은 초안·검토 중·완성으로 묶음 제목을 붙인다.
+export const SORTS = ['최근 고친 순', '완성도순'];
+const STAGE_ORDER = { draft: 0, review: 1, complete: 2 };
+const editedAt = (x, i) => { const t = Math.max(Date.parse(x.q?.updatedAt || '') || 0, Date.parse(x.q?.createdAt || '') || 0); return t || -1 - i; };
+function sortEntries(list, s) {
+  const rows = list.map((x, i) => ({ x, i, edited: editedAt(x, i), stage: x.q ? STAGE_ORDER[workflowOf(x.q)] ?? 0 : 3, progress: x.q ? (progressOf(x.q) ?? 0) : 0 }));
+  const by = s.sort === '완성도순' ? (a, b) => a.stage - b.stage || a.progress - b.progress || b.edited - a.edited : (a, b) => b.edited - a.edited;
+  return rows.sort((a, b) => by(a, b) || a.i - b.i).map(r => r.x);
+}
+function groupOf(x, s, now = new Date()) {
+  if (s.sort === '완성도순') return x.q ? WORKFLOWS[workflowOf(x.q)] || '초안' : '기출';
+  const t = Math.max(Date.parse(x.q?.updatedAt || '') || 0, Date.parse(x.q?.createdAt || '') || 0); if (!t) return '이전';
+  const day = d => { const v = new Date(d); v.setHours(0, 0, 0, 0); return v.getTime(); }, d0 = day(now), d = day(t);
+  return d >= d0 ? '오늘' : d >= d0 - 864e5 ? '어제' : d >= d0 - 6 * 864e5 ? '이번 주' : '이전';
+}
+// ── 11-15(시안 문항목록-시험지 A·B): 표 열 · 범위 · 묶기 ──
+// 출처: 불러온 파일(q.origin.kind==='import') = 외부 등록, 기출 라이브러리에서 변형(q.source 「기출 변형」) = 기출 변형, 그 밖 = 직접 제작.
+export const SOURCE_KINDS = ['직접 제작', '기출 변형', '외부 등록'];
+export function sourceOf(q) {
+  if (q?.origin?.kind === 'import') return { kind: '외부 등록', label: q.origin.file || '불러온 파일' };
+  const src = String(q?.source || '');
+  if (/^기출 변형/.test(src)) return { kind: '기출 변형', label: src.replace(/^기출 변형\s*·\s*/, '') };
+  return { kind: '직접 제작', label: '' };
+}
+// 자료 구조: 글 · 그림 n · 표 n · 자료 상자 n · 〈보기〉 · 대화 · 과정
+export function structOf(q) {
+  const b = q?.blocks || [], n = k => b.filter(k).length, out = [];
+  if (b.some(x => x.kind === 'text' && !x.box && String(x.text || '').trim())) out.push('글');
+  const fig = n(x => x.kind === 'figure'), tb = n(x => x.kind === 'table'), box = n(x => x.kind === 'text' && x.box);
+  if (fig) out.push('그림' + fig); if (tb) out.push('표' + tb); if (box) out.push('상자' + box);
+  if (b.some(x => x.kind === 'bogi')) out.push('〈보기〉'); if (b.some(x => x.kind === 'dialogue')) out.push('대화'); if (b.some(x => x.kind === 'steps')) out.push('과정');
+  return out.join(' ');
+}
+const tOf = v => Date.parse(v || '') || 0;
+const stamp = t => { if (!t) return '—'; const d = new Date(t), p = v => String(v).padStart(2, '0'); return `${d.getMonth() + 1}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+export const COLS = [['title', '번호·발문'], ['src', '출처'], ['struct', '자료 구조'], ['part', '단원'], ['pt', '배점'], ['progress', '완성도'], ['created', '만든 때'], ['edited', '마지막 편집'], ['exam', '들어간 시험지']];
+function colValue(x, k) {
+  switch (k) {
+    case 'title': return [Number(x.q?.number) || 9999, x.title];
+    case 'src': return [SOURCE_KINDS.indexOf(x.src.kind), x.src.label];
+    case 'struct': return x.struct; case 'part': return x.part; case 'pt': return Number(x.pt) || 0;
+    case 'progress': return [STAGE_ORDER[workflowOf(x.q)] ?? 0, progressOf(x.q) ?? 0];
+    case 'created': return tOf(x.q?.createdAt); case 'edited': return Math.max(tOf(x.q?.updatedAt), tOf(x.q?.createdAt));
+    case 'exam': return [x.examTitle || '\uffff', x.examNo || 0];
+  }
+  return '';
+}
+const cmp = (a, b) => Array.isArray(a) ? a.reduce((r, v, i) => r || cmp(v, b[i]), 0) : typeof a === 'number' ? a - b : String(a).localeCompare(String(b), 'ko');
+function sortByCol(list, s) { const dir = s.dir === 'asc' ? 1 : -1; return list.map((x, i) => ({ x, i })).sort((a, b) => cmp(colValue(a.x, s.col), colValue(b.x, s.col)) * dir || a.i - b.i).map(r => r.x); }
+function entries(data, s) {
+  const stars = store.get('stars', {}), memos = store.get('memos', {}), words = splitWords(s.query || '');
+  const examOfQ = new Map(); for (const e of data.exams || []) e.items.forEach((id, i) => examOfQ.set(id, { e, no: i + 1 }));
+  const pool = s.scope === 'all' ? data.questions : poolQuestions(data, s.pool);
+  const mine = s.kind === 'past' ? [] : pool.map(q => { const inE = examOfQ.get(q.id); return { kind: 'mine', key: 'q:' + q.id, id: q.id, q, title: questionTitle(q), pt: q.points, subject: '', part: [q.unitLarge, q.unitMiddle].filter(Boolean).join(' · '), exam: '', src: sourceOf(q), struct: structOf(q), examId: inE?.e.id || '', examTitle: inE?.e.title || '', examNo: inE?.no || 0, examStatus: inE?.e.status || '' }; });
+  const pasts = s.kind === 'mine' || !past.items ? [] : past.items.map(i => ({ kind: 'past', key: 'past:' + i.id, id: i.id, i, title: i.short, pt: null, subject: i.subjectLabel, part: i.parts.join(' · '), exam: examLabel(i.year, i.month) }));
+  const sorted = s.col ? sortByCol([...mine, ...pasts], s) : sortEntries([...mine, ...pasts], s);
+  return sorted.filter(x => (!s.src || x.src?.kind === s.src) &&
+    (!s.mark || (s.mark === 'star' ? stars[x.key] : memos[x.key])) &&
+    (!s.subject || x.subject === s.subject) && (!s.part || x.part.split(' · ').includes(s.part)) && (!s.exam || x.exam === s.exam) &&
+    (!words.length || words.every(w => norm(x.kind === 'past' ? [x.title, x.i.title, x.i.text, ...x.i.tags, ...x.i.parts].join(' ') : [x.title, x.q.ask, x.q.passage, x.part, x.q.source].join(' ')).includes(w))));
+}
+
+// 보관함 상태는 app의 view.lib에 둔다(다시 그려도 남게).
+// 10-26 사용자 지적: 기출은 말 그대로 기출 — 보관함에는 내 문항만(기출은 문항 카드의 「기출문제」 칸·시험지 담기에서 본다).
+export function libState(view) { const s = view.lib ||= { sort: SORTS.includes(store.get('libSort', '')) ? store.get('libSort', '') : SORTS[0], pool: 'drafting', kind: 'mine', mark: '', subject: '', part: '', exam: '', query: '', mode: 'grid', limit: PAGE, open: -1 }; s.sel ||= new Set(); s.collapsed ||= new Set(); s.scope ||= 'bench'; s.group ??= 'exam'; s.dir ||= 'desc'; s.kind = 'mine'; s.subject = ''; s.exam = ''; s.pool = POOLS[s.pool] && s.pool !== 'inexam' ? s.pool : (s.pool === 'inexam' ? (s.scope = 'all', 'drafting') : 'drafting'); return s; }
+
+export function renderLibraryView(root, data, view, api) {
+  const s = libState(view), stars = store.get('stars', {}), memos = store.get('memos', {});
+  if (s.kind !== 'mine' && !past.items) loadPast().then(() => { if (root.isConnected) api.rerender(); }).catch(e => api.status?.(e.message, true));
+  // 11-15(승인 7): 「모든 문항」을 묶어 볼 때는 40줄 제한 없이(뒤 묶음이 잘렸다).
+  const list = entries(data, s), shown = s.mode === 'one' || s.mode === 'list' && s.scope === 'all' && s.group ? list : list.slice(0, s.limit);
+  // 여러 문항 고르기(11-02 시안 select-delete-1102): 지운 문항·지금 칸에 없는 문항은 고른 것에서 뺀다.
+  { const here = new Set(list.map(x => x.id)); for (const id of [...s.sel]) if (!here.has(id)) s.sel.delete(id); }
+  const picking = s.mode !== 'one' && s.sel.size > 0, picked = x => s.sel.has(x.id);
+  const check = (x, n) => x.kind === 'mine' ? `<button type="button" class="lv-check" data-lv-check="${E(x.id)}" data-n="${n}" aria-pressed="${picked(x)}" aria-label="${picked(x) ? '고르기 빼기' : '고르기'}" title="고르기 (Shift: 범위)">${SVG.check}</button>` : '';
+  const selbar = picking ? `<div class="lv-selbar" role="toolbar" aria-label="고른 문항"><b>${s.sel.size}개 선택</b><button type="button" class="lv-btn" data-lv-bulk="dup" title="고른 문항을 복제해 작업대(출제 중)에 둡니다 — 시험지 안 문항도 그대로 둡니다">작업대로 복제</button><button type="button" class="lv-btn" data-lv-bulk="toexam">다른 시험지에 담기…</button><button type="button" class="lv-btn" data-lv-bulk="star">별표</button><button type="button" class="lv-btn danger" data-lv-bulk="delete">휴지통으로…</button><span class="sp"></span><button type="button" class="lv-btn" data-lv-bulk="all">보이는 것 모두 (⌘A)</button><button type="button" class="lv-btn" data-lv-bulk="clear">선택 해제 (Esc)</button></div>` : '';
+  const starN = Object.keys(stars).filter(k => k.startsWith('q:') && stars[k]).length, memoN = Object.keys(memos).filter(k => k.startsWith('q:') && memos[k]).length;
+  const subjects = past.index ? past.index.subjects.map(v => v[1]) : [], partPool = list.flatMap(x => x.part ? x.part.split(' · ') : []), parts = [...new Set(partPool)].sort().slice(0, 300);
+  const exams = past.items ? [...new Set(past.items.filter(i => !s.subject || i.subjectLabel === s.subject).map(i => examLabel(i.year, i.month)))] : [];
+  const chipSel = (k, label, opts) => `<label class="lv-chip lv-sel${s[k] ? ' on' : ''}"><span>${E(s[k] || label)}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-lv-sel="${k}" aria-label="${label}"><option value="">${label} 전체</option>${opts.map(o => `<option${s[k] === o ? ' selected' : ''}>${E(o)}</option>`).join('')}</select></label>`;
+  // 제목은 고른 칸을 그대로 말한다(10-28 출제 지적 1): 「출제 중인 문항 N개」.
+  const inExamN = (data.questions || []).length - poolQuestions(data, 'drafting').length - poolQuestions(data, 'done').length;
+  const scopeSeg = `<span class="lv-seg lv-scope" role="group" aria-label="범위"><button type="button" data-lv-scope="bench" aria-pressed="${s.scope !== 'all'}" title="아직 시험지에 안 들어간 문항">작업대</button><button type="button" data-lv-scope="all" aria-pressed="${s.scope === 'all'}" title="시험지 안 문항까지 모두">모든 문항<small>${(data.questions || []).length}</small></button></span>`;
+  const groupSel = s.scope === 'all' ? `<label class="lv-chip lv-sel on"><span>묶기: ${E({ '': '없음', exam: '시험지별', batch: '불러온 묶음별', part: '단원별' }[s.group] || '없음')}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select data-lv-sel="group" aria-label="묶기">${[['', '없음'], ['exam', '시험지별'], ['batch', '불러온 묶음별'], ['part', '단원별']].map(([v, t]) => `<option value="${v}"${s.group === v ? ' selected' : ''}>${t}</option>`).join('')}</select></label>` : '';
+  const head = `<div class="lv-head"><h1>${s.scope === 'all' ? '모든 문항' : POOL_TITLE[s.pool]}</h1><p>${list.length.toLocaleString()}개${s.scope === 'all' && inExamN > 0 ? ` · 시험지 안 ${inExamN}` : ''}</p>${scopeSeg}
+      <div class="lv-vt" role="group" aria-label="보기 방식">${[['grid', '카드 모아 보기', 'grid'], ['list', '목록', 'list'], ['one', '한 문항씩 보기', 'one']].map(([m, t, ic]) => `<button type="button" data-lv-mode="${m}" aria-pressed="${s.mode === m}" title="${t}" aria-label="${t}">${SVG[ic]}</button>`).join('')}</div></div>
+    <!--addbar--><div class="lv-chips">
+      <span class="lv-seg" role="group" aria-label="거르기">
+        <button type="button" data-lv-mark="" aria-pressed="${!s.mark}">모두</button>
+        <button type="button" data-lv-mark="star" aria-pressed="${s.mark === 'star'}">${SVG.star.replace('<svg ', '<svg class="lv-segstar" ')}별표<small>${starN}</small></button>
+        <button type="button" data-lv-mark="memo" aria-pressed="${s.mark === 'memo'}">메모<small>${memoN}</small></button>
+      </span>
+      ${chipSel('part', '단원', parts)}${chipSel('src', '출처', SOURCE_KINDS)}${groupSel}
+      <span class="lv-seg lv-sortseg" role="group" aria-label="정렬">${SORTS.map(o => `<button type="button" data-lv-sort="${o}" aria-pressed="${s.sort === o}">${o}</button>`).join('')}</span>
+      <label class="lv-search"><input id="lib-query" value="${E(s.query)}" placeholder="내용·단원 찾기" aria-label="보관함 찾기"></label>
+    </div>`;
+  // 문항 추가 줄 하나(시안 2판 3): 「출제 중」 칸에서만, 문항이 있든 없든 제목 바로 아래 같은 자리.
+  const addbar = s.pool === 'drafting' ? `<div class="lv-addbar"><button type="button" class="lv-add go" data-lv-new title="유형·자료 구조를 고르면 바로 열립니다">${qIcon('new',0,{title:false})}새 문항 카드</button><button type="button" class="lv-add" data-lv-import title="5E 문항 시트(.xlsx)로 여러 문항을 한 번에 올립니다">${SVG.sheet}엑셀 올리기</button><button type="button" class="lv-add" data-lv-template title="예시 문항 1개가 든 빈 5E 문항 시트를 받습니다">${SVG.sheet}엑셀 양식 받기</button></div>` : '';
+  // 보관함은 내 문항만이라 카드마다 「내 문항」 표시는 겹치는 정보 — 기출일 때만 표시.
+  // 내 문항 상태 아이콘(11-04): 원이 완성도만큼 채워짐 · 출제 완료는 초록 가득 · 시험지에 넣으면 파랑 + 체크.
+  const mineMark = q => { const st = questionState(q, data); return qIcon(st, st === 'work' ? progressOf(q) : 1); };
+  const kt = x => x.kind === 'mine' ? '' : `<span class="lv-kt ${x.kind}">기출</span>`;
+  const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
+  // 묶음 제목: 앞 문항과 묶음이 바뀌는 자리에만
+  // 11-14(시안 review-1114 4번 L1): 묶음 제목(오늘·이번 주·이전 / 초안·검토 중)을 없애고 한 격자로 잇는다 — 날짜는 카드 아래.
+  const grp = () => '';
+  const when = q => { const t = Math.max(Date.parse(q?.updatedAt || '') || 0, Date.parse(q?.createdAt || '') || 0); if (!t) return ''; const d = new Date(t), now = new Date(), same = d.toDateString() === now.toDateString(); return same ? `오늘 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : `${d.getMonth() + 1}. ${d.getDate()}.`; };
+  let body;
+  // 보관함을 읽지 못했으면(저장소 오류) 그 까닭을 먼저 보인다(예전 보관함과 같은 자리·같은 글).
+  if (view.loadError && !libraryQuestions(data).length) body = `<p class="lv-empty pv-empty">${E(view.loadError)}</p>`;
+  // 빈 칸(시안 2판 4): 큰 칸 없이 안내 한 줄 + 흐름 한 줄. 거르기·찾기로 비었으면 그대로 「조건에 맞는 문항이 없습니다」.
+  else if (!list.length && !poolQuestions(data, s.pool).length) body = `<div class="lv-emptyline">${POOL_EMPTY[s.pool]}<div class="lv-flow"><em>문항 쓰기</em>→<em>시험지에 담기</em>→<em>5E_hwp로 조판·인쇄</em></div></div>`;
+  else if (!list.length) body = `<p class="lv-empty pv-empty">${s.kind !== 'mine' && !past.items ? '기출을 불러오는 중입니다…' : '조건에 맞는 문항이 없습니다.'}</p>`;
+  else if (s.mode === 'one') body = `<div class="lv-inline">${viewerHtml(list, Math.max(0, Math.min(list.length - 1, s.open < 0 ? 0 : s.open)), true, api)}</div>`;
+  else if (s.mode === 'list') body = tableHtml(shown, s, { picked, picking, stars, memos, mineMark, data });
+  else body = `<div class="lv-grid${picking ? ' lv-picking' : ''}">${shown.map((x, n) => `${grp(x, n) ? `<div class="lv-grp" aria-hidden="true">${grp(x, n)}</div>` : ''}<article class="lv-card${picked(x) ? ' sel' : ''}" data-lv-open="${n}" tabindex="0" aria-label="${E(x.title)} ${picking ? '고르기' : '보기'}"><div class="lv-thumb">${thumb(x)}</div>${check(x, n)}
+      <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>${x.kind === 'mine' && !picking ? `<button type="button" class="lv-cdel" data-lv-del="${E(x.id)}" aria-label="문항 삭제" title="문항 삭제 (⌫) — 되돌리기로 살릴 수 있습니다"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ''}
+      <div class="lv-meta">${kt(x)}${x.kind === 'mine' ? mineMark(x.q) : ''}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' && when(x.q) ? `<small class="lv-date" title="마지막으로 고친 때">${when(x.q)}</small>` : ''}${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
+  const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
+  root.innerHTML = head.replace('<!--addbar-->', selbar || addbar) + body + more;
+  fillOwn(root, data, api);
+  loadThumbs(root);
+  view.lib.list = list;
+  if (s.open >= 0 && s.mode !== 'one') openViewer(root, list, s.open, api);
+}
+
+// 내 문항 카드·열어 보기 = 한글 엔진이 조판한 그림(시험지 화면 카드와 같은 모양, 10-26 지적 U1).
+// 어림 HTML은 수식($5h$)·〈보기〉 틀이 실제와 달라 보였다. 엔진은 한 번에 하나씩 그리니 화면에 들어온 카드만 그린다.
+// 엔진 그림(SVG) 글은 글자 조각으로 흩어져 있어 읽기 프로그램·찾기(⌘F)가 읽지 못한다 — 같은 글을 숨은 글로 붙인다.
+const plainOf = q => [...(q.blocks || []).flatMap(b => [b.text, ...(b.lines || []).map(l => l.text)]), q.ask, ...(q.choices || []).map(c => c.text)]
+  .filter(Boolean).join(' ').replace(/\$([^$]*)\$/g, '$1').replace(/\s+/g, ' ').trim().slice(0, 600);
+let ownSeen = null;
+// 11-15(시안 문항목록-시험지 A·B): 목록 = 열이 있는 표. 열 제목을 누르면 줄 세우기(한 번 더 누르면 반대), 줄을 누르면 문항 보기, 「열기」·두 번 누르면 카드.
+// 「모든 문항」 범위에서는 「들어간 시험지」 열과 묶기(시험지별·불러온 묶음별·단원별) — 묶음 줄은 접고 펴고, 시험지 열기·묶음 통째로 휴지통.
+function tableHtml(shown, s, { picked, picking, stars, memos, mineMark, data }) {
+  const all = s.scope === 'all', cols = COLS.filter(([k]) => all || k !== 'exam');
+  const th = cols.map(([k, t]) => `<th scope="col"><button type="button" class="lv-th${s.col === k ? ' on' : ''}" data-lv-col="${k}" aria-sort="${s.col === k ? (s.dir === 'asc' ? 'ascending' : 'descending') : 'none'}" title="${t} 기준으로 줄 세우기">${t}${s.col === k ? (s.dir === 'asc' ? ' ▲' : ' ▼') : ''}</button></th>`).join('');
+  const row = (x, n) => { const q = x.q, chk = `<button type="button" class="lv-check" data-lv-check="${E(x.id)}" data-n="${n}" aria-pressed="${picked(x)}" aria-label="${picked(x) ? '고르기 빼기' : '고르기'}" title="고르기 (Shift: 범위)">${SVG.check}</button>`;
+    const cell = k => { switch (k) {
+      case 'title': return `<td class="c-title"><button type="button" class="lv-row" data-lv-open="${n}" title="문항 보기"><b>${E(q.number ? q.number + '번' : '')}</b> ${E(String(q.ask || x.title).slice(0, 60))}</button>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}</td>`;
+      case 'src': return `<td><span class="lv-src s${SOURCE_KINDS.indexOf(x.src.kind)}">${x.src.kind}</span>${x.src.label ? `<small title="${E(x.src.label)}">${E(x.src.label.slice(0, 22))}</small>` : ''}</td>`;
+      case 'struct': return `<td class="c-struct">${E(x.struct) || '—'}</td>`;
+      case 'part': return `<td>${E(x.part) || '—'}</td>`;
+      case 'pt': return `<td class="c-num">${x.pt ? x.pt : '—'}</td>`;
+      case 'progress': return `<td class="c-prog">${mineMark(q)}<span>${E(WORKFLOWS[workflowOf(q)] || '')}</span></td>`;
+      case 'created': return `<td class="c-time">${stamp(tOf(q.createdAt))}</td>`;
+      case 'edited': return `<td class="c-time">${stamp(Math.max(tOf(q.updatedAt), tOf(q.createdAt)))}</td>`;
+      case 'exam': return `<td>${x.examTitle ? `${E(x.examTitle)} <small>${x.examNo}번</small>` : '<small>작업대</small>'}</td>`;
+    } return '<td></td>'; };
+    return `<tr class="${picked(x) ? 'sel' : ''}" data-lv-row="${n}"><td class="c-chk">${chk}</td>${cols.map(([k]) => cell(k)).join('')}<td class="c-act"><button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button><button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기">열기</button></td></tr>`; };
+  let bodyRows = '';
+  const keyOf = x => s.group === 'exam' ? (x.examId ? 'e:' + x.examId : 'bench') : s.group === 'batch' ? (x.q.origin?.batch ? 'b:' + x.q.origin.batch : 'own') : s.group === 'part' ? 'p:' + (x.part || '') : '';
+  if (all && s.group) {
+    const groups = new Map(); shown.forEach((x, n) => { const k = keyOf(x); if (!groups.has(k)) groups.set(k, []); groups.get(k).push([x, n]); });
+    for (const [k, rows] of groups) {
+      const first = rows[0][0], open = !s.collapsed.has(k), ended = first.examStatus === 'ended';
+      const label = k === 'bench' ? '작업대(시험지에 안 들어감)' : k === 'own' ? '직접 만든 문항' : k.startsWith('e:') ? `${ended ? '🔒 ' : ''}${first.examTitle}` : k.startsWith('b:') ? `${first.src.label} · ${stamp(tOf(first.q.origin?.at))}` : (first.part || '단원 없음');
+      const meta = k.startsWith('e:') ? `${rows.length}문항 · ${{ drafting: '출제 중', done: '출제 완료', ended: '시험 종료 — 읽기 전용' }[first.examStatus] || ''}` : `${rows.length}문항`;
+      const acts = k.startsWith('e:') ? `<button type="button" class="lv-btn" data-lv-gopen="${E(first.examId)}">시험지 열기</button><button type="button" class="lv-btn danger" data-lv-gtrash="${E(k)}" title="시험지와 거기 든 문항을 함께 휴지통으로(14일 동안 되살림)">묶음 통째로 휴지통</button>` : k.startsWith('b:') ? `<button type="button" class="lv-btn danger" data-lv-gtrash="${E(k)}" title="이 파일에서 불러온 문항을 함께 휴지통으로(14일 동안 되살림)">묶음 통째로 휴지통</button>` : '';
+      bodyRows += `<tr class="lv-gr"><td colspan="${cols.length + 2}"><button type="button" class="lv-gtoggle" data-lv-gtoggle="${E(k)}" aria-expanded="${open}">${open ? '▾' : '▸'} <b>${E(label)}</b> <span>${meta}</span></button><span class="lv-gacts">${acts}</span></td></tr>`;
+      if (open) bodyRows += rows.map(([x, n]) => row(x, n)).join('');
+    }
+  } else bodyRows = shown.map((x, n) => row(x, n)).join('');
+  return `<div class="lv-tablewrap"><table class="lv-table${picking ? ' lv-picking' : ''}"><thead><tr><th class="c-chk"></th>${th}<th class="c-act"></th></tr></thead><tbody>${bodyRows}</tbody></table></div>`;
+}
+function fillOwn(root, data, api) {
+  const draw = n => { const q = data.questions.find(x => x.id === n.dataset.preview); if (!q) return;
+    if (api?.engine) { n.classList.add('lv-eng'); api.engine(n, q).then(() => { if (n.isConnected) n.insertAdjacentHTML('beforeend', `<span class="sr-only">${E(plainOf(q))}</span>`); }); } else previewHtml(q).then(h => { if (n.isConnected) n.innerHTML = h; }); };
+  ownSeen?.disconnect();
+  ownSeen = typeof IntersectionObserver === 'function' ? new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) { ownSeen.unobserve(e.target); draw(e.target); } }, { rootMargin: '300px' }) : null;
+  root.querySelectorAll('[data-preview]').forEach(n => { if (n.closest('[data-lv-viewer]') || !ownSeen) draw(n); else ownSeen.observe(n); });
+}
+
+export function loadThumbs(root) {
+  // 그림을 못 받으면(인터넷 없음 등) 깨진 그림 대신 제목만 옅게 보인다. 로컬 그림이 있으면 그것으로.
+  const miss = img => { if (img.dataset.fallback && img.src !== img.dataset.fallback) { img.src = img.dataset.fallback; return; } img.closest('.lv-thumb,.lv-qbox')?.setAttribute('data-missing', img.alt || ''); img.remove(); };
+  const show = img => { if (img.dataset.loading) return; img.dataset.loading = '1'; img.onerror = () => miss(img);
+    croppedPastImage(img.dataset.lvCard).then(src => { if (img.isConnected) img.src = src; }).catch(() => miss(img)); };
+  const imgs = root.querySelectorAll('img[data-lv-card]');
+  if (!('IntersectionObserver' in window)) { imgs.forEach(show); return; }
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); show(e.target); } }), { rootMargin: '400px 0px' });
+  imgs.forEach(img => io.observe(img));
+}
+
+// ── 문항 보기(창·한 문항 공통) ──
+function viewerHtml(list, n, inline, api) {
+  const x = list[n], stars = store.get('stars', {}), memos = store.get('memos', {}), memoAt = store.get('memoAt', {}), on = !!stars[x.key];
+  const busy = api.pastBusy?.(), job = x.kind === 'past' && busy && busy.id === x.id ? busy : null;
+  const info = x.kind === 'past'
+    ? [['출처', `${x.i.title}`], ['과목', x.subject], ['단원', x.part || '—'], ['유형', x.i.tags.slice(0, 4).map(t => `<span class="lv-tagp">${E(t)}</span>`).join('') || '—', true], ['연결', '원본 PDF 있음']]
+    : [['출처', x.q.source || '내가 만든 문항'], ['단원', x.part || '—'], ['배점 · 정답', `${x.q.points ? x.q.points + '점' : '배점 없음'} · ${x.q.answer || '정답 없음'}`], ['유형', `<span class="lv-tagp">${E(x.q.type || '')}</span><span class="lv-tagp">${E(WORKFLOWS[workflowOf(x.q)] || '')}</span>`, true], ['연결', `근거 ${(x.q.references || []).length}개`]];
+  const btns = x.kind === 'past'
+    ? `${x.i.publicPath ? `<a class="lv-btn" href="${E(pdfHref(x.i.publicPath, x.i.page))}" target="_blank" rel="noopener" title="이 문항이 있는 시험지 쪽을 원본 PDF로 봅니다">시험지 쪽에서 보기</a><a class="lv-btn" href="${E(pdfHref(x.i.publicPath, 1))}" target="_blank" rel="noopener" title="시험지 PDF 원본">PDF</a>` : ''}<span class="sp"></span>
+       <button type="button" class="lv-btn" data-lv-act="link" title="문항 카드를 연 상태에서 그 카드의 근거로 연결합니다">${SVG.link}근거로 연결</button>
+       <button type="button" class="lv-btn soft" data-lv-act="convert" ${job ? 'disabled' : ''} title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 만듭니다(AI 없음)">${job ? '변형 중…' : '변형'}</button>`
+    : `<span class="sp"></span><button type="button" class="lv-btn danger lv-icon" data-lv-act="delete" title="휴지통으로" aria-label="휴지통으로">${SVG.trash}</button><button type="button" class="lv-btn" data-lv-act="toexam">${SVG.toexam}시험지에 넣기</button><button type="button" class="lv-btn soft" data-lv-act="card">${SVG.card}카드 열기</button>`;
+  const at = job ? stepOf(job.stage) : 0;
+  return `<div class="lv-viewer" data-lv-viewer data-n="${n}"><div class="lv-vhead"><h3>${E(x.title)}</h3>${x.kind === 'mine' ? '' : '<span class="lv-kt past">기출</span>'}
+      <button type="button" class="lv-ib lv-vstar${on ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${on}" title="별표 (S)" aria-label="별표">${SVG.star}</button>
+      ${x.kind === 'past' ? `<button type="button" class="lv-ans" data-lv-answers hidden aria-pressed="${answersShown()}" title="정답 선지 형광펜 보이기/숨기기 — 화면 표시만">정답</button>` : ''}<span class="lv-pos">${n + 1} / ${list.length.toLocaleString()}</span>${inline ? '' : `<button type="button" class="lv-ib" data-lv-close title="닫기 (Esc)" aria-label="닫기">${SVG.close}</button>`}</div>
+    <div class="lv-stage"><button type="button" class="lv-side" data-lv-step="-1" title="이전 (←)" aria-label="이전 문항" ${n <= 0 ? 'disabled' : ''}>${SVG.prev}</button>
+      <div class="lv-qbox">${x.kind === 'mine' ? `<div class="lv-own pv-doc" data-preview="${x.id}"></div>` : `<img alt="${E(x.title)}" data-lv-full="${E(x.id)}">`}</div>
+      <button type="button" class="lv-side" data-lv-step="1" title="다음 (→)" aria-label="다음 문항" ${n >= list.length - 1 ? 'disabled' : ''}>${SVG.next}</button></div>
+    <div class="lv-btns">${btns}</div>
+    <div class="lv-strip${job ? ' on' : ''}">${job ? `<div class="lv-jmsg"><span class="lv-spin"></span><b>${STEPS[at]}…</b><small>${at + 1} / 3 · 다른 문항을 봐도 계속됩니다</small></div><div class="lv-steps">${STEPS.map((_, k) => `<span class="${k < at ? 'done' : k === at ? 'run' : ''}"></span>`).join('')}</div>` : ''}</div>
+    <div class="lv-im"><div class="lv-box"><h4>문항 정보</h4><dl class="lv-kv">${info.map(([k, v, html]) => `<dt>${k}</dt><dd>${html ? v : E(v)}</dd>`).join('')}</dl></div>
+      <div class="lv-box"><h4>${SVG.memo}내 메모 <em>이 기기에 저장</em></h4><textarea data-lv-memo="${E(x.key)}" placeholder="이 문항에 대한 메모 — 쓰는 대로 저장됩니다">${E(memos[x.key] || '')}</textarea><div class="lv-saved">${memoAt[x.key] ? '마지막 저장 ' + E(memoAt[x.key]) : ''}</div></div></div></div>`;
+}
+function fillViewer(host, list, data, api) {
+  const v = host.querySelector('[data-lv-viewer]'); if (!v) return;
+  const x = list[Number(v.dataset.n)];
+  fillOwn(v, data, api);
+  const img = v.querySelector('img[data-lv-full]');
+  if (img && x?.i) { img.onerror = () => { if (!img.dataset.sharp) { img.closest('.lv-qbox')?.setAttribute('data-missing', '그림을 불러오지 못했습니다 — 인터넷 연결을 확인하세요'); img.remove(); } }; croppedPastImage(past.index.cards.replace('{id}', encodeURIComponent(x.id))).then(src => { if (img.isConnected && !img.dataset.sharp) img.src = src; }).catch(() => {});
+    if (x.i.publicPath && Array.isArray(x.i.box)) sharpPast(img, x.i);
+    // 11-07 정답 형광펜(평가원·학력평가): 정답 자료가 있는 문항에서만 「정답」 단추를 보인다.
+    const ans = v.querySelector('[data-lv-answers]');
+    if (ans) loadAnswerBook().then(book => { const acc = acceptedAnswers(book, x.i.pdfFile, x.i.no); ans.hidden = !(Array.isArray(acc) && acc.length); }); }
+}
+const pastItemOf = id => past.items?.find(i => i.id === id);
+onAnswersShown(() => refreshAnswers());
+function sharpPast(img, item) {
+  croppedQuestion(item, [], { answers: answersShown() }).then(r => { if (r && img.isConnected) { img.dataset.sharp = '1'; img.src = r.url; } }).catch(() => {});
+}
+// 정답 표시를 바꾸면(여기서나 라이브러리에서) 열린 문항 보기 그림을 다시 받는다.
+function refreshAnswers() {
+  for (const v of document.querySelectorAll('[data-lv-viewer]')) {
+    v.querySelector('[data-lv-answers]')?.setAttribute('aria-pressed', String(answersShown()));
+    const img = v.querySelector('img[data-lv-full]'), item = img && pastItemOf(img.dataset.lvFull);
+    if (item?.publicPath && Array.isArray(item.box)) sharpPast(img, item);
+  }
+}
+let modal = null;
+function openViewer(root, list, n, api) {
+  modal ||= Object.assign(document.createElement('div'), { className: 'lv-modal-bg' });
+  if (!modal.isConnected) document.body.append(modal);
+  modal.innerHTML = `<div class="lv-modal" role="dialog" aria-modal="true" aria-label="문항 보기">${viewerHtml(list, n, false, api)}</div>`;
+  modal.hidden = false; fillViewer(modal, list, api.data(), api); api.crumb?.(list[n].title);
+  modal.querySelector('[data-lv-close]')?.focus({ preventScroll: true });
+}
+export function closeViewer(api) { if (modal && !modal.hidden) { modal.hidden = true; modal.innerHTML = ''; api?.crumb?.(''); } }
+
+// ── 동작(한 번만 붙인다) ──
+export function installLibraryView(root, api) {
+  const s = () => libState(api.view()), list = () => api.view().lib?.list || [];
+  const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function step(d) {
+    const st = s(), host = st.mode === 'one' ? root : modal, cur = Number(host?.querySelector('[data-lv-viewer]')?.dataset.n ?? st.open), n = cur + d, l = list();
+    if (n < 0 || n >= l.length) return;
+    const old = host.querySelector('.lv-qbox'), rect = old?.getBoundingClientRect(), ghost = old?.cloneNode(true);
+    st.open = n;
+    if (st.mode === 'one') api.rerender(); else { openViewer(root, l, n, api); }
+    const h2 = st.mode === 'one' ? root : modal, box = h2.querySelector('.lv-qbox');
+    if (st.mode === 'one') fillViewer(root, l, api.data(), api);
+    if (!box || !ghost || reduce()) return;
+    // 옛 문항은 밀려 나가며 흐려지고, 새 문항은 반대쪽에서 미끄러져 들어온다(0.32초).
+    const E2 = 'cubic-bezier(.22,.8,.24,1)', T = 320, D = 64 * d, stage = box.parentElement; stage.style.position = 'relative';
+    ghost.style.cssText = `position:absolute;left:${box.offsetLeft}px;top:${box.offsetTop}px;width:${rect.width}px;pointer-events:none;z-index:2`;
+    stage.append(ghost);
+    ghost.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: `translateX(${-D}px)`, opacity: 0 }], { duration: T, easing: E2 }).onfinish = () => ghost.remove();
+    box.animate([{ transform: `translateX(${D}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }], { duration: T, easing: E2 });
+  }
+  function toggleStar(key) {
+    const st = store.get('stars', {}); if (st[key]) delete st[key]; else st[key] = Date.now(); store.set('stars', st);
+    const on = !!st[key];
+    document.querySelectorAll(`[data-lv-star="${CSS.escape(key)}"]`).forEach(b => { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+    if (s().mark === 'star' && modal?.hidden !== false) api.rerender(); else api.navChanged?.();
+  }
+  const current = () => { const st = s(), host = st.mode === 'one' ? root : modal, v = host?.querySelector('[data-lv-viewer]'); return v ? list()[Number(v.dataset.n)] : null; };
+  async function act(kind, button) {
+    const x = current(); if (!x) return;
+    if (kind === 'convert') { api.convertPast(x.i); setTimeout(() => refreshJob(), 50); return; }
+    if (kind === 'link') { api.status('근거로 연결은 문항 카드를 연 뒤 카드 왼쪽 라이브러리 칸에서 할 수 있습니다. 「변형」으로 새 카드를 만들 수도 있습니다.'); return; }
+    if (kind === 'card') { closeViewer(api); api.openCard(x.id); return; }
+    if (kind === 'delete') { closeViewer(api); api.askDelete(x.id); return; }
+    if (kind === 'toexam') api.toExamMenu(x.id, button);
+  }
+  function refreshJob() { const st = s(); if (st.mode === 'one') api.rerender(); else if (modal && !modal.hidden) { const n = Number(modal.querySelector('[data-lv-viewer]')?.dataset.n); if (Number.isFinite(n)) { modal.querySelector('.lv-modal').innerHTML = viewerHtml(list(), n, false, api); fillViewer(modal, list(), api.data(), api); } } }
+  // 여러 문항 고르기(11-02 시안 select-delete-1102): 체크 상자·Shift 범위·⌘A·Esc·Delete. 하나라도 고르면 카드를 눌러도 열지 않고 고르기만 한다.
+  function pick(id, n, range) {
+    const st = s(), shown = list().slice(0, st.limit);
+    if (range && Number.isFinite(st.anchor)) { for (let k = Math.min(st.anchor, n); k <= Math.max(st.anchor, n); k++) if (shown[k]?.kind === 'mine') st.sel.add(shown[k].id); }
+    else { if (st.sel.has(id)) st.sel.delete(id); else st.sel.add(id); st.anchor = n; }
+    api.rerender();
+  }
+  function bulk(kind, button) {
+    const st = s(), ids = [...st.sel];
+    if (kind === 'clear') { st.sel.clear(); api.rerender(); return; }
+    if (kind === 'all') { for (const x of list().slice(0, st.limit)) if (x.kind === 'mine') st.sel.add(x.id); api.rerender(); return; }
+    if (!ids.length) return;
+    if (kind === 'delete') api.askDelete(ids);
+    else if (kind === 'dup') api.duplicateMany?.(ids);
+    else if (kind === 'star') { const stars = store.get('stars', {}), on = ids.some(id => !stars['q:' + id]); for (const id of ids) { if (on) stars['q:' + id] = true; else delete stars['q:' + id]; } store.set('stars', stars); api.rerender(); api.navChanged?.(); }
+    else if (kind === 'toexam') api.toExamMenu(ids, button);
+  }
+  const onClick = e => {
+    const t = e.target;
+    if (t.closest('[data-lv-new]')) { api.newCard?.(); return; }
+    if (t.closest('[data-lv-import]')) { api.importExcel?.(); return; }
+    if (t.closest('[data-lv-template]')) { api.excelTemplate?.(); return; }
+    const star = t.closest('[data-lv-star]'); if (star) { e.stopPropagation(); toggleStar(star.dataset.lvStar); return; }
+    // 11-11 사용자: 문항 카드를 카드 보기에서 바로 지운다(확인 창 → 되돌리기 가능).
+    const del = t.closest('[data-lv-del]'); if (del) { e.stopPropagation(); api.askDelete(del.dataset.lvDel); return; }
+    const ck = t.closest('[data-lv-check]'); if (ck) { e.stopPropagation(); pick(ck.dataset.lvCheck, Number(ck.dataset.n), e.shiftKey); return; }
+    const bk = t.closest('[data-lv-bulk]'); if (bk) { bulk(bk.dataset.lvBulk, bk); return; }
+    const sc = t.closest('[data-lv-scope]'); if (sc) { Object.assign(s(), { scope: sc.dataset.lvScope, limit: PAGE, open: -1 }); if (sc.dataset.lvScope === 'all') s().mode = 'list'; api.rerender(); return; }
+    const col = t.closest('[data-lv-col]'); if (col) { const st = s(), k = col.dataset.lvCol; if (st.col === k) st.dir = st.dir === 'asc' ? 'desc' : 'asc'; else { st.col = k; st.dir = ['title', 'src', 'struct', 'part', 'exam'].includes(k) ? 'asc' : 'desc'; } api.rerender(); return; }
+    const gt = t.closest('[data-lv-gtoggle]'); if (gt) { const c = s().collapsed, k = gt.dataset.lvGtoggle; if (c.has(k)) c.delete(k); else c.add(k); api.rerender(); return; }
+    const go = t.closest('[data-lv-gopen]'); if (go) { api.openExam?.(go.dataset.lvGopen); return; }
+    const gx = t.closest('[data-lv-gtrash]'); if (gx) { const k = gx.dataset.lvGtrash, rows = (s().list || []).filter(x => x.kind === 'mine' && (k.startsWith('e:') ? x.examId === k.slice(2) : x.q.origin?.batch === k.slice(2))); api.trashGroup?.(k.startsWith('e:') ? k.slice(2) : null, rows.map(x => x.id)); return; }
+    const oc = t.closest('[data-open-card]'); if (oc) { e.stopPropagation(); closeViewer(api); api.openCard(oc.dataset.openCard); return; }
+    if (t.closest('[data-lv-answers]')) { setAnswersShown(!answersShown()); return; }
+    if (t.closest('[data-lv-close]')) { s().open = -1; closeViewer(api); return; }
+    const stp = t.closest('[data-lv-step]'); if (stp) { step(Number(stp.dataset.lvStep)); return; }
+    const a = t.closest('[data-lv-act]'); if (a) { void act(a.dataset.lvAct, a); return; }
+    const k = t.closest('[data-lv-kind]'); if (k) { Object.assign(s(), { kind: k.dataset.lvKind, limit: PAGE, open: -1 }); if (k.dataset.lvKind === 'mine') Object.assign(s(), { subject: '', exam: '' }); api.rerender(); return; }
+    const so = t.closest('[data-lv-sort]'); if (so) { Object.assign(s(), { sort: so.dataset.lvSort, limit: PAGE, open: -1 }); store.set('libSort', so.dataset.lvSort); api.rerender(); return; }
+    const m = t.closest('[data-lv-mark]'); if (m) { Object.assign(s(), { mark: m.dataset.lvMark, limit: PAGE, open: -1 }); api.rerender(); api.navChanged?.(); return; }
+    const mo = t.closest('[data-lv-mode]'); if (mo) { Object.assign(s(), { mode: mo.dataset.lvMode, open: mo.dataset.lvMode === 'one' ? Math.max(0, s().open) : -1 }); api.rerender(); if (mo.dataset.lvMode === 'one') fillViewer(root, list(), api.data(), api); return; }
+    if (t.closest('[data-lv-more]')) { s().limit += PAGE; api.rerender(); return; }
+    const o = t.closest('[data-lv-open]'); if (o && root.contains(o) && s().sel.size && s().mode !== 'one') { const n = Number(o.dataset.lvOpen), x = list()[n]; if (x?.kind === 'mine') pick(x.id, n, e.shiftKey); return; }
+    if (o && root.contains(o)) { s().open = Number(o.dataset.lvOpen); openViewer(root, list(), s().open, api); }
+  };
+  root.addEventListener('click', onClick);
+  document.addEventListener('click', e => { if (!modal || modal.hidden || !modal.contains(e.target)) return; if (e.target === modal) { s().open = -1; closeViewer(api); return; } onClick(e); });
+  document.addEventListener('mousedown', e => { if (modal && !modal.hidden && e.target === modal) { s().open = -1; closeViewer(api); } });
+  // 11-15: 표 줄을 두 번 누르면 카드를 연다(지금처럼).
+  root.addEventListener('dblclick', e => { const r = e.target.closest?.('[data-lv-row]'); if (!r || e.target.closest('button:not(.lv-row)')) return; const x = list()[Number(r.dataset.lvRow)]; if (x?.kind === 'mine') { e.preventDefault(); closeViewer(api); api.openCard(x.id); } });
+  root.addEventListener('keydown', e => { const o = e.target.closest?.('[data-lv-open]'); if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); o.click(); } });
+  root.addEventListener('change', e => { const sel = e.target.closest('[data-lv-sel]'); if (!sel) return; s()[sel.dataset.lvSel] = sel.value; if (sel.dataset.lvSel === 'subject') { s().part = ''; s().exam = ''; } s().limit = PAGE; api.rerender(); });
+  // 한글 조합 중에는 다시 그리지 않는다 — 검색칸이 새로 만들어져 「ㄱ」만 남고 조합이 끊겼다(코드 점검 10-21 하). 조합이 끝나면(compositionend) 그린다.
+  const searchAgain = t => { clearTimeout(t._t); t._t = setTimeout(() => { if (t._composing) return; s().limit = PAGE; api.rerender(); const n = root.querySelector('#lib-query'); n?.focus(); n?.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  root.addEventListener('compositionstart', e => { if (e.target.id === 'lib-query') e.target._composing = true; });
+  root.addEventListener('compositionend', e => { if (e.target.id !== 'lib-query') return; e.target._composing = false; s().query = e.target.value; searchAgain(e.target); });
+  root.addEventListener('input', e => { if (e.target.id !== 'lib-query') return; s().query = e.target.value; if (e.isComposing || e.target._composing) return; searchAgain(e.target); });
+  // 메모: 쓰는 대로 저장(이 기기). 카드의 메모 표시·「메모 있음」 수는 창을 닫을 때 다시 그린다.
+  const memoInput = e => { const t = e.target.closest?.('[data-lv-memo]'); if (!t) return; const m = store.get('memos', {}), at = store.get('memoAt', {}), k = t.dataset.lvMemo;
+    if (t.value.trim()) { m[k] = t.value; const d = new Date(); at[k] = `${d.getMonth() + 1}-${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; } else { delete m[k]; delete at[k]; }
+    store.set('memos', m); store.set('memoAt', at); const n = t.parentElement.querySelector('.lv-saved'); if (n) n.textContent = at[k] ? '저장됨 · ' + at[k] : ''; };
+  document.addEventListener('input', memoInput);
+  document.addEventListener('keydown', e => {
+    const st = s();
+    if (!root.isConnected || root.closest('[hidden]') || (modal && !modal.hidden) || st.mode === 'one' || document.querySelector('dialog[open]') || /^(TEXTAREA|INPUT|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'a') { e.preventDefault(); bulk('all'); return; }
+    // 11-11: 고른 것이 없을 때 초점 둔 카드에서 ⌫·Delete → 그 문항 삭제(확인 창).
+    if (!st.sel.size && (e.key === 'Delete' || e.key === 'Backspace') && !e.metaKey && !e.ctrlKey && !e.altKey) { const del = e.target.closest?.('.lv-card')?.querySelector('[data-lv-del]'); if (del) { e.preventDefault(); api.askDelete(del.dataset.lvDel); return; } }
+    if (!st.sel.size || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'Escape') { e.preventDefault(); bulk('clear'); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); bulk('delete'); }
+  });
+  // 키: ← → 넘기기 · S 별표 · Esc 닫기(메모를 쓰는 중에는 꺼짐)
+  document.addEventListener('keydown', e => {
+    const st = s(), active = (modal && !modal.hidden) || (st.mode === 'one' && root.isConnected && !root.closest('[hidden]'));
+    if (!active || /^(TEXTAREA|INPUT|SELECT)$/.test(e.target.tagName) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+    else if (e.key === 'Escape' && modal && !modal.hidden) { e.preventDefault(); st.open = -1; closeViewer(api); api.rerender(); }
+    else if (e.key.toLowerCase() === 's') { const x = current(); if (x) toggleStar(x.key); }
+  });
+  return { refreshJob, close: () => { s().open = -1; closeViewer(api); } };
+}

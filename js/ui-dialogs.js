@@ -1,4 +1,6 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
+import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
 
 /* ===== 공용 다이얼로그: 프로그램 양식의 알림/확인 창 =====
  * 브라우저 기본 alert()/confirm() 대신 앱 모달과 같은 모양을 쓴다.
@@ -9,9 +11,6 @@ import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929
 // title/message에는 페이지·오브젝트·배경 이름 등 사용자가 자유 입력한 문자열이 그대로
 // 섞여 들어온다(예: pages.js의 삭제 확인 "'{이름}' 페이지를 삭제할까요?"). innerHTML에
 // 이스케이프 없이 꽂으면 그 이름에 담긴 HTML/스크립트가 그대로 실행된다 — 반드시 이스케이프.
-function escapeHtml(s) {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
 
 let dialogSequence = 0;
 
@@ -20,11 +19,12 @@ function dialogIdentity() {
   return { titleId: `${id}-title`, descriptionId: `${id}-description` };
 }
 
-function buildDialog({ title, message, buttons, wide = false, dismissValue = buttons[0].value }) {
+function buildDialog({ title, message, buttons, wide = false, dismissValue = buttons[0].value, purpose }) {
   return new Promise((resolve) => {
     const { titleId, descriptionId } = dialogIdentity();
     const overlay = document.createElement("div");
     overlay.className = wide ? "modal-overlay mode-switch-dialog" : "modal-overlay";
+    if (purpose === 'hwp') overlay.dataset.dialogPurpose = 'hwp';
     const btnHtml = buttons.map((b, i) =>
       `<button type="button" class="modal-btn${b.primary ? " modal-btn-primary" : ""}" data-i="${i}">${escapeHtml(b.label)}</button>`
     ).join("");
@@ -38,22 +38,26 @@ function buildDialog({ title, message, buttons, wide = false, dismissValue = but
       </div>`;
     document.body.appendChild(overlay);
     const previousFocus = document.activeElement;
-    const done = (value) => { overlay.remove(); previousFocus?.focus(); resolve(value); };
+    let settled = false, unregisterEscape;
+    const done = (value) => { if (settled) return; settled = true; unregisterEscape?.(); overlay.remove(); previousFocus?.focus({preventScroll:true}); resolve(value); };
     const dialog = overlay.querySelector('[role="dialog"], [role="alertdialog"]');
-    registerEscapeLayer(dialog, () => done(dismissValue));
+    unregisterEscape = registerEscapeLayer(dialog, () => done(dismissValue));
     overlay.querySelectorAll(".modal-btn").forEach((b) => {
       b.addEventListener("click", () => done(buttons[Number(b.dataset.i)].value));
     });
     overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(dismissValue); });
     overlay.addEventListener("keydown", (e) => {
-      if (wide && e.key === 'Tab') {
+      if (e.key === 'Tab') {
         const controls = [...overlay.querySelectorAll('.modal-btn')];
         const index = controls.indexOf(document.activeElement);
         e.preventDefault();
         controls[index < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
       }
       if (e.key === "Escape") { e.stopPropagation(); done(dismissValue); }
-      if (!wide && e.key === "Enter" && !e.target.closest("button")) { e.preventDefault(); done(buttons[buttons.length - 1].value); }
+      if (!e.isComposing && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && ['Enter', ' '].includes(e.key)) {
+        const button = e.target.closest('button.modal-btn') || (purpose === 'hwp' && e.target === dialog ? overlay.querySelector('.modal-btn-primary') : null);
+        if (button) { if (purpose === 'hwp') consumeConfirmationPress(e); else { e.preventDefault(); e.stopImmediatePropagation(); } button.click(); }
+      }
     });
     if (wide) dialog.focus({ preventScroll: true });
     else overlay.querySelector(".modal-btn:last-child")?.focus();
@@ -90,8 +94,8 @@ export function showPrompt(message, { title = "입력", value = "", placeholder 
           <input type="text" class="modal-input" />
         </div>
         <div class="modal-actions">
-          <button type="button" class="modal-btn" data-act="cancel">${cancelText}</button>
-          <button type="button" class="modal-btn modal-btn-primary" data-act="ok">${okText}</button>
+          <button type="button" class="modal-btn" data-act="cancel">${escapeHtml(cancelText)}</button>
+          <button type="button" class="modal-btn modal-btn-primary" data-act="ok">${escapeHtml(okText)}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);
@@ -122,6 +126,20 @@ export function showModeSwitch(target) {
       { label: '취소', value: 'cancel' },
       { label: '새 작업으로 전환', value: 'new' },
       { label: '유지하고 전환', value: 'keep', primary: true },
+    ],
+  });
+}
+
+export function showExamDocumentChoice() {
+  return buildDialog({
+    purpose:'hwp',
+    title:'한글 문서 선택',
+    message:'이미지를 넣을 한글 문서를 먼저 열어주세요. 선택한 이미지 영역은 유지됩니다.',
+    wide:true,
+    buttons:[
+      {label:'취소',value:'cancel'},
+      {label:'기존 문서 열기',value:'open'},
+      {label:'새 문서 만들기',value:'new',primary:true},
     ],
   });
 }

@@ -1,0 +1,174 @@
+// 보이지 않는 조판 표시(조판 부호, 10-22 시안 exampool-1022 17번). ExamPool 조판 칸과 5E_hwp가 함께 쓴다.
+// - 고정 띄어쓰기(nbsp U+00A0, 한글 고정폭 빈칸 U+2007, 좁은 고정 빈칸 U+202F): 글자 사이에 얇고 큰 빨간 V.
+// - 내어쓰기 기준점: 내어쓰기가 걸린 문단마다(한 줄이어도) 둘째 줄이 시작할 x에 1px 초록 세로선 + 위 작은 삼각형.
+//   문단 모양의 내어쓰기 값(indentOf)이 있으면 그것으로, 없으면 둘째 줄 위치에서 거꾸로 찾는다.
+// rhwp 화면(캔버스)은 건드리지 않고 편집기 문서 위에 투명한 층을 하나 얹는다. 화면에만 보이고 인쇄·HWPX·한글로 보내기에는 나가지 않는다.
+// 위치는 rhwp 조판 글자 정보(getPageTextLayout: 글자마다 charX)에서 읽고, 스크롤·확대·글 고침마다 다시 그린다.
+const NS = 'http://www.w3.org/2000/svg';
+export const MARKS_KEY = '5e.typeset.marks';
+export const FIXED_SPACE = /[   ]/;
+const RED = '#da3633', GREEN = 'rgba(46,160,67,.8)';
+
+export function marksEnabled() { try { return localStorage.getItem(MARKS_KEY) !== 'off'; } catch { return true; } }
+export function setMarksEnabled(on) {
+  try { if (on) localStorage.removeItem(MARKS_KEY); else localStorage.setItem(MARKS_KEY, 'off'); } catch {}
+  window.dispatchEvent(new CustomEvent('5e:typeset-marks', { detail: { on } }));
+  // 같은 출처의 다른 문서(ExamPool iframe ↔ 바깥 5E_hwp)에도 알린다.
+  try { window.top?.dispatchEvent(new CustomEvent('5e:typeset-marks', { detail: { on } })); } catch {}
+  for (const frame of document.querySelectorAll('iframe')) { try { frame.contentWindow?.dispatchEvent(new CustomEvent('5e:typeset-marks', { detail: { on } })); } catch {} }
+}
+
+// 쪽 하나의 부호 자리(쪽 좌표, 확대 1). 순수 함수 — 검사에서 그대로 쓴다.
+export function marksForRuns(runs, indentOf = null) {
+  const spaces = [], indents = [], paras = new Map();
+  for (const r of runs || []) {
+    if (![r.x, r.y, r.w, r.h].every(Number.isFinite)) continue;
+    const text = String(r.text || ''), xs = Array.isArray(r.charX) ? r.charX : null;
+    [...text].forEach((ch, i) => {
+      if (!FIXED_SPACE.test(ch)) return;
+      const a = xs?.[i] ?? (r.w * i) / Math.max(1, text.length), b = xs?.[i + 1] ?? (r.w * (i + 1)) / Math.max(1, text.length);
+      spaces.push({ x: r.x + (a + b) / 2, y: r.y, h: r.h, size: r.fontSize || r.h });
+    });
+    // 표 칸 글자는 paraIdx가 칸 안 문단 번호라, 표가 든 문단 번호(parentParaIdx)까지 넣어야 다른 표의 같은 칸과 섞이지 않는다(11-06: (나) 그림 칸과 〈보기〉 제목이 한 문단으로 묶여 긴 초록 선).
+    // 글자 없는 조각(그림 줄)은 내어쓰기 판단에서 뺀다 — 키 큰 그림 줄이 「줄 사이가 벌어지면 다른 문단」 판단을 무디게 했다.
+    if (!text.trim()) continue;
+    const key = `${r.secIdx}:${r.paraIdx}:${r.parentParaIdx ?? ''}:${JSON.stringify(r.cellPath || [])}`;
+    let p = paras.get(key); if (!p) paras.set(key, p = []);
+    p.push(r);
+  }
+  for (const runs of paras.values()) {
+    // 줄 = 높이가 반 이상 겹치는 글자 조각들(크기가 다른 글자·괄호가 섞여도 한 줄로).
+    const lines = [];
+    for (const r of [...runs].sort((a, b) => a.y - b.y || a.x - b.x)) {
+      const line = lines.find(l => Math.min(l.b, r.y + r.h) - Math.max(l.y, r.y) > Math.min(l.b - l.y, r.h) * 0.5);
+      if (line) Object.assign(line, { x: Math.min(line.x, r.x), r: Math.max(line.r, r.x + r.w), y: Math.min(line.y, r.y), b: Math.max(line.b, r.y + r.h) });
+      else lines.push({ x: r.x, r: r.x + r.w, y: r.y, b: r.y + r.h });
+    }
+    lines.sort((a, b) => a.y - b.y);
+    // 글자 정보에는 표가 든 문단 번호가 없어, 다른 표의 같은 칸 번호가 한 문단으로 섞인다 → 줄 사이가 줄 높이보다 크게 벌어지면 다른 문단.
+    const groups = [];
+    for (const line of lines) { const g = groups.at(-1), prev = g?.at(-1); if (prev && line.y - prev.b <= (prev.b - prev.y) * 1.2) g.push(line); else groups.push([line]); }
+    const hang = indentOf ? Number(indentOf(runs[0])) : NaN, hasText = runs.some(r => String(r.text || '').trim());
+    // 누르면 해제할 문단(11-06): 문단 모양의 내어쓰기 값이 있을 때만(글 배치로 생긴 선은 해제할 값이 없다).
+    const r0 = runs[0], para = Number.isFinite(hang) && hang < -0.5 ? { secIdx: r0.secIdx, paraIdx: r0.paraIdx, parentParaIdx: r0.parentParaIdx, controlIdx: r0.controlIdx, cellIdx: r0.cellIdx, cellParaIdx: r0.cellParaIdx, cellPath: r0.cellPath || [] } : null;
+    for (const group of groups) {
+      if (inferIndent(group, para)) continue;
+      // 한 줄·짧은 문단(〈보기〉 ㄴ·ㄷ, 선지 칸)도 내어쓰기 값이 있으면 둘째 줄이 시작할 자리에 긋는다(10-27).
+      if (hasText && Number.isFinite(hang) && hang < -0.5) indents.push({ x: group[0].x - hang, top: group[0].y, bottom: group.at(-1).b, ...(para ? { para } : {}) });
+    }
+  }
+  function inferIndent(lines, para = null) {
+    if (lines.length < 2) return false;
+    const [first, second] = lines, rest = lines.slice(1);
+    // 내어쓰기: 둘째 줄부터 모두 같은 x에서 시작하고 첫 줄보다 안쪽. 가운데 정렬(줄 가운데가 같음)은 빼고.
+    if (second.x <= first.x + 0.5 || rest.some(l => Math.abs(l.x - second.x) > 0.5)) return false;
+    if (Math.abs((first.x + first.r) / 2 - (second.x + second.r) / 2) <= 1.5) return false;
+    indents.push({ x: second.x, top: first.y, bottom: lines.at(-1).b, ...(para ? { para } : {}) });
+    return true;
+  }
+  return { spaces, indents };
+}
+
+// 켜고 끄기 단축키: 맥 ⌥⌘8, 윈도우 Ctrl+Alt+8(10-22 제안 — Safari·크롬의 ⌘8 탭 전환과 겹치지 않게).
+export const MARKS_SHORTCUT_LABEL = /Mac|iPhone|iPad/.test(globalThis.navigator?.platform || globalThis.navigator?.userAgent || '') ? '⌥⌘8' : 'Ctrl+Alt+8';
+export const isMarksShortcut = e => e.code === 'Digit8' && e.altKey && !e.shiftKey && (e.metaKey ? !e.ctrlKey : e.ctrlKey);
+const keyDocs = new WeakSet();
+export function installMarksShortcut(doc) {
+  if (!doc || keyDocs.has(doc)) return; keyDocs.add(doc);
+  doc.addEventListener('keydown', event => { if (!isMarksShortcut(event)) return; event.preventDefault(); event.stopPropagation(); setMarksEnabled(!marksEnabled()); }, true);
+}
+export function installExamMarks(bridge, { onToggle, onIndent } = {}) {
+  let layer = null, svg = null, frame = 0, cacheKey = '', cache = new Map(), on = marksEnabled(), disposed = false, hits = [];
+  const doc = () => bridge?.editor?.element?.contentDocument;
+  const input = () => bridge?.input;
+  function ensureLayer() {
+    const d = doc(); if (!d?.body) return null;
+    if (layer?.isConnected && layer.ownerDocument === d) return layer;
+    layer = d.createElement('div'); layer.className = 'rhwp-exam-marks'; layer.setAttribute('aria-hidden', 'true');
+    layer.dataset.examMarks = '';
+    Object.assign(layer.style, { position: 'fixed', pointerEvents: 'none', overflow: 'hidden', zIndex: '6', left: '0', top: '0', width: '0', height: '0' });
+    svg = d.createElementNS(NS, 'svg'); Object.assign(svg.style, { position: 'absolute', left: '0', top: '0', overflow: 'visible' });
+    layer.append(svg); d.body.append(layer);
+    svg.addEventListener('pointerdown', event => { const hit = event.target.closest?.('[data-mark-hit]'); if (!hit) return; event.preventDefault(); event.stopPropagation(); }, true);
+    svg.addEventListener('click', event => {
+      const hit = event.target.closest?.('[data-mark-hit]'), para = hit && hits[Number(hit.dataset.markHit)]; if (!para || !onIndent) return;
+      event.preventDefault(); event.stopPropagation();
+      const frameRect = bridge?.editor?.element?.getBoundingClientRect?.() || { left: 0, top: 0 };
+      onIndent(para, { x: frameRect.left + event.clientX, y: frameRect.top + event.clientY });
+    });
+    return layer;
+  }
+  // 글자 조각이 속한 문단의 내어쓰기 값(화면 px, 음수=내어쓰기). 표 칸 안 문단도 같은 방식으로 읽는다.
+  function paraIndent(r) {
+    const w = bridge?.wasm; if (!w || !r) return NaN;
+    try {
+      const p = r.cellPath?.length ? w.getCellParaPropertiesAt(r.secIdx, r.parentParaIdx ?? r.paraIdx, r.controlIdx, r.cellIdx, r.cellParaIdx) : w.getParaPropertiesAt(r.secIdx, r.paraIdx);
+      return Number(p?.indent);
+    } catch { return NaN; }
+  }
+  function pageMarks(handle, page) {
+    const key = `${bridge.generation}:${bridge.revision}`;
+    if (key !== cacheKey) { cacheKey = key; cache = new Map(); }
+    if (!cache.has(page)) { let runs = []; try { runs = JSON.parse(handle.getPageTextLayout(page)).runs || []; } catch {} cache.set(page, marksForRuns(runs, paraIndent)); }
+    return cache.get(page);
+  }
+  function draw() {
+    frame = 0;
+    if (disposed) return;
+    const box = ensureLayer(); if (!box) return;
+    svg.replaceChildren(); hits = [];
+    const inp = input(), manager = inp?.viewportManager, virtual = inp?.virtualScroll, container = inp?.container;
+    if (!on || !manager || !virtual || !container?.getClientRects().length) { box.hidden = true; return; }
+    let handle; try { handle = bridge.wasm.borrowDocumentHandle(); } catch { box.hidden = true; return; }
+    const rect = container.getBoundingClientRect();
+    Object.assign(box.style, { left: `${rect.left + container.clientLeft}px`, top: `${rect.top + container.clientTop}px`, width: `${container.clientWidth}px`, height: `${container.clientHeight}px` });
+    box.hidden = false;
+    const zoom = manager.getZoom(), sx = manager.getScrollX(), sy = manager.getScrollY();
+    const total = Math.max(manager.getViewportSize().width, virtual.getTotalWidth()), count = handle.pageCount?.() ?? bridge.wasm.pageCount ?? 0;
+    const h = container.clientHeight, parts = [];
+    for (let page = 0; page < count; page++) {
+      const top = virtual.getPageOffset(page) - sy, height = virtual.getPageHeight(page);
+      if (top > h) break; if (top + height < 0) continue;
+      const left = virtual.getPageLeftResolved(page, total) - sx, X = v => left + v * zoom, Y = v => top + v * zoom;
+      const { spaces, indents } = pageMarks(handle, page);
+      for (const s of spaces) {
+        const w = s.size * 0.62 * zoom, vh = s.size * 0.6 * zoom, cx = X(s.x), base = Y(s.y + s.h) - s.h * 0.12 * zoom, stroke = Math.max(0.6, s.size * zoom * 0.7 / 12);
+        parts.push(`<path d="M${cx - w / 2} ${base - vh}L${cx} ${base}L${cx + w / 2} ${base - vh}" fill="none" stroke="${RED}" stroke-width="${stroke.toFixed(2)}" stroke-linejoin="round" data-mark="space"/>`);
+      }
+      for (const i of indents) {
+        const x = Math.round(X(i.x)) + .5, y1 = Y(i.top), y2 = Y(i.bottom);
+        parts.push(`<path d="M${x} ${y1}V${y2}" stroke="${GREEN}" stroke-width="1" data-mark="indent"/><path d="M${x - 3} ${y1 - 3}L${x + 3} ${y1 - 3}L${x} ${y1}Z" fill="${GREEN}"/>`);
+        // 11-06: 초록 선을 누르면 해제 메뉴(들여쓰기 해제 / 이 문항 전체 해제). 선 둘레 9px를 누를 자리로.
+        if (onIndent && i.para) { hits.push(i.para); parts.push(`<rect x="${x - 4.5}" y="${y1 - 6}" width="9" height="${Math.max(8, y2 - y1 + 6)}" fill="transparent" style="pointer-events:all;cursor:pointer" data-mark-hit="${hits.length - 1}"><title>눌러서 내어쓰기 해제</title></rect>`); }
+      }
+    }
+    svg.setAttribute('width', String(container.clientWidth)); svg.setAttribute('height', String(container.clientHeight));
+    svg.innerHTML = parts.join('');
+  }
+  const schedule = () => { if (!frame && !disposed) frame = requestAnimationFrame(draw); };
+  const bus = bridge?.deps?.eventBus;
+  for (const event of ['document-changed', 'document-layout-refreshed', 'document-mutated', 'document-swapped', 'zoom-changed', 'zoom-raster-ready', 'viewport-scroll', 'viewport-resize', 'page-view-settings-changed']) bus?.on?.(event, schedule);
+  const scrollHost = () => input()?.container;
+  let hooked = null;
+  const hookScroll = () => { const c = scrollHost(); if (c && c !== hooked) { hooked?.removeEventListener('scroll', schedule); c.addEventListener('scroll', schedule, { passive: true }); hooked = c; } };
+  const toggle = event => { on = event.detail?.on ?? marksEnabled(); onToggle?.(on); schedule(); };
+  window.addEventListener('5e:typeset-marks', toggle);
+  const resize = () => schedule(); window.addEventListener('resize', resize);
+  const tick = setInterval(() => { hookScroll(); }, 1000);
+  hookScroll(); schedule();
+  // 단축키는 편집기 안(글 쓰는 중)과 이 문서 둘 다에서 받는다.
+  installMarksShortcut(document); const keyTick = setInterval(() => installMarksShortcut(doc()), 1000); installMarksShortcut(doc());
+  return {
+    redraw: schedule,
+    get on() { return on; },
+    set(value) { on = !!value; setMarksEnabled(on); onToggle?.(on); schedule(); },
+    dispose() { disposed = true; clearInterval(tick); clearInterval(keyTick); window.removeEventListener('5e:typeset-marks', toggle); window.removeEventListener('resize', resize); hooked?.removeEventListener('scroll', schedule); layer?.remove(); },
+  };
+}
+
+// 켜고 끄는 단추(기본 켜짐). 조판 칸·도구 줄에 같은 모양으로 넣는다.
+export const MARKS_ICON = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.5 5 11.5 7.5 6.5" stroke="#da3633"/><path d="M11.5 3.5v9" stroke="rgba(46,160,67,.9)"/><path d="M9.8 3.5h3.4" stroke="rgba(46,160,67,.9)"/></svg>';
+export function marksButtonHtml(className = '') {
+  const on = marksEnabled();
+  return `<button type="button" class="${className}" data-exam-marks aria-pressed="${on}" aria-label="조판 부호" title="조판 부호(${MARKS_SHORTCUT_LABEL}) — 고정 띄어쓰기(빨간 V)·내어쓰기 기준점(초록 선)을 화면에만 표시합니다. 인쇄·HWPX에는 나가지 않습니다.">${MARKS_ICON}<span>조판 부호</span></button>`;
+}

@@ -72,7 +72,11 @@ async function cycle(page, key) {
     await cycle(page, 'Shift+Tab');
     await page.locator('[data-ai-close]').focus();
     await page.keyboard.press('Escape');
-    assert.equal(await panel.isHidden(), true, 'Escape closes the AI workbench');
+    assert.equal(await panel.getAttribute('aria-hidden'), 'true', 'Escape immediately removes the closing workbench from accessibility');
+    assert.equal(await panel.getAttribute('inert') !== null, true, 'Escape immediately disables the closing workbench');
+    assert.equal(await page.evaluate(() => document.activeElement?.id), 'ai-image-install-open', 'Escape immediately restores focus');
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel').hidden === true);
+    assert.equal(await panel.isHidden(), true, 'Escape closes the AI workbench after its motion settles');
     assert.equal(await page.evaluate(() => document.activeElement?.id), 'ai-image-install-open', 'Escape restores focus to the button that opened the workbench');
     if (evidence) await page.screenshot({ path: path.join(evidence, 'ai-focus-browser.png'), fullPage: true });
   } finally {

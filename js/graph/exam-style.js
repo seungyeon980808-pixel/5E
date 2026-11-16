@@ -1,0 +1,96 @@
+/* One physical style for graph creation, editing, canvas and export.
+ * Geometry and scientific values are never changed by these projections.
+ * The reference width is the distance between the two ends of the plot box,
+ * not the outer bounds including labels. See DESIGN.md for measured sources.
+ */
+export const EXAM_STYLE = Object.freeze({
+  preset: 'kice-v1', referenceWidth: 70, defaultWidth: 50,
+  axis: .3, curve: .5, guide: .15, tick: .24, tickLength: 1.2,
+  arrowLength: 3.6, marker: .7, label: 4.8, dash: .8, gap: .6,
+});
+// 11-11: 설명으로 만든 그래프도 글씨는 기출 표준 크기(0.7배이던 것), 데이터 선은 축보다 확실히 굵게(1.4배).
+export const DESCRIPTION_EXAM_STYLE = Object.freeze({labelScale:1,arrowScale:1.45,arrowWidthScale:.72,curveScale:1.4});
+export const isExamStyle = value => value?.graphStyle?.preset === EXAM_STYLE.preset;
+const positive = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
+function textScale(plane, widthScale) {
+  const w = positive(plane.w, EXAM_STYLE.referenceWidth), h = positive(plane.h, w * 0.75);
+  const area = Math.sqrt(w * h) / (EXAM_STYLE.referenceWidth * Math.sqrt(0.75));
+  return Math.min(widthScale * 1.5, Math.max(widthScale * 0.8, area));
+}
+export function examMetrics(plane) {
+  const style = plane.graphStyle || {};
+  const scale = positive(plane.w, EXAM_STYLE.referenceWidth) / EXAM_STYLE.referenceWidth;
+  const stroke = scale * positive(style.strokeScale, 1);
+  return { scale, axis: EXAM_STYLE.axis * stroke, curve: EXAM_STYLE.curve * stroke * positive(style.curveScale, 1),
+    guide: EXAM_STYLE.guide * stroke, tick: EXAM_STYLE.tick * stroke,
+    tickLength: EXAM_STYLE.tickLength * stroke,
+    arrowLength: EXAM_STYLE.arrowLength * stroke * positive(style.arrowScale, 1),
+    // 11-12 밤샘(기출 그래프 46개 비교): 글자를 폭에만 비례시키면 좁고 긴 막대그래프는 글자가 작고 넓고 납작한 그래프는 글자가 틀 밖으로 잘렸다.
+    // 글자는 칸의 폭·높이를 함께 본 크기(넓이의 제곱근, 기준 칸은 폭 × 0.75 높이)에 비례시키고 폭 기준의 0.8~1.5배 안으로 묶는다.
+    marker: EXAM_STYLE.marker * stroke, label: EXAM_STYLE.label * positive(style.strokeScale, 1) * positive(style.labelScale, 1) * textScale(plane, scale),
+    dash: EXAM_STYLE.dash * stroke, gap: EXAM_STYLE.gap * stroke };
+}
+const offset = (value, scale) => value ? Object.fromEntries(Object.entries(value).map(([k,v]) => [k, Number.isFinite(v) ? v * scale : v])) : value;
+// 원본 그림에서 복원한 그래프는 원본에서 잰 화살표 길이·폭을 따른다(10-28 결정: 평가원 모양 고정 크기 17×10px 대신 원본 19×13px).
+// 글로 만든 설명 그래프(descriptionLayout)와 크기를 모르는 그래프는 지금처럼 평가원 크기로 통일한다. 「크게·작게」 요청(arrowScale)은 둘 다 반영.
+const EXAM_HEAD_RATIO = 0.7314 / 1.1551; // smoothArrowHead 기본 모양의 폭/길이(ARROW_TRACE 최대 폭 2×0.3657, 길이 1.1551)
+function examArrow(plane, m, relative) {
+  const style = plane.graphStyle || {}, widthScale = positive(style.arrowWidthScale, 1);
+  const own = !style.descriptionLayout && plane.axisArrowLength > 0 && plane.axisArrowWidth > 0;
+  if (!own) return { axisArrowLength: m.arrowLength, axisArrowWidthScale: widthScale };
+  return { axisArrowLength: plane.axisArrowLength * relative * positive(style.arrowScale, 1),
+    axisArrowWidthScale: plane.axisArrowWidth / plane.axisArrowLength / EXAM_HEAD_RATIO * widthScale };
+}
+export function examPlaneStyle(plane) {
+  if (!isExamStyle(plane)) return plane;
+  const m = examMetrics(plane), relative = plane.w / positive(plane.graphStyle.referenceWidth, EXAM_STYLE.referenceWidth);
+  // 11-12 밤샘: 사진에서 복원한 그래프는 원본에서 잰 글자 크기(복원 때 시험지 표준의 0.92~1.45배로 묶음)를 쓴다 —
+  // 표준 크기로 덮어쓰면 작은 막대그래프는 글자가 너무 작고 넓은 그래프는 너무 컸다. 글로 만든 그래프는 지금처럼 표준.
+  const ownLabel = plane.reconstruction?.labelSizeMode === 'source-height' && !plane.graphStyle?.descriptionLayout && Number.isFinite(plane.axisLabelSize) && plane.axisLabelSize > 0 ? plane.axisLabelSize : null;
+  if (ownLabel) m.label = ownLabel;
+  const guide = { strokeWidth: m.guide, dashLength: m.dash, dashGap: m.gap };
+  const annotation = a => ({ ...a, size: m.label, fontSize: m.label, labelSizeMode: 'source-height',
+    markerSize: m.marker, strokeWidth: a.kind === 'guide' ? m.guide : m.axis,
+    ...(a.kind === 'guide' ? {dashLength:m.dash,dashGap:m.gap} : {}),
+    ...(a.customStyle && Number.isFinite(a.size) ? {fontSize:a.size*plane.w/positive(a.customStyleWidth,plane.graphStyle.referenceWidth||EXAM_STYLE.referenceWidth)} : {}),
+    ...(a.customStyle ? Object.fromEntries(['strokeWidth','dashLength','dashGap','size','fontSize','markerSize'].filter(k=>Number.isFinite(a[k])).map(k=>[k,a[k]*plane.w/positive(a.customStyleWidth,plane.graphStyle.referenceWidth||EXAM_STYLE.referenceWidth)])) : {}) });
+  const customGuide=a=>a.customStyle?{...a,...Object.fromEntries(['strokeWidth','dashLength','dashGap'].filter(k=>Number.isFinite(a[k])).map(k=>[k,a[k]*plane.w/positive(a.customStyleWidth,plane.graphStyle.referenceWidth||EXAM_STYLE.referenceWidth)]))}:a;
+  const result = { ...plane, richLabels: true, strokeWidth: m.axis, tickStrokeWidth: m.tick,
+    tickLength: m.tickLength, axisLabelSize: m.label, tickLabelSize: m.label, originLabelSize: m.label,
+    axisArrowShape: 'exam', ...examArrow(plane, m, relative),
+    guideStyle: guide, markerSize: m.marker,
+    graphAnnotations: (plane.graphAnnotations || []).map(annotation),
+    annGuides: (plane.annGuides || []).map(customGuide),
+    guideLines: (plane.guideLines || []).map(customGuide),
+    annLabelPoints: (plane.annLabelPoints || []).map(a=>({...a,size:m.label,dist:positive(a.dist,5)*relative})),
+    legends: (plane.legends || []).map(l=>({...l,size:m.label,swatch:positive(l.swatch,EXAM_STYLE.label*2.4)*relative,pad:Number.isFinite(l.pad)?l.pad*relative:m.label*.5,strokeWidth:m.axis,rows:(l.rows||[]).map(r=>({...r,dash:Array.isArray(r.dash)?r.dash.map(v=>v*relative):r.dash,markerSize:m.marker,markerStrokeWidth:m.axis,strokeWidth:m.curve}))})),
+    labelXOffset: offset(plane.labelXOffset,relative), labelYOffset: offset(plane.labelYOffset,relative),
+    tickOffX: (plane.tickOffX || []).map(v=>offset(v,relative)), tickOffY: (plane.tickOffY || []).map(v=>offset(v,relative)),
+  };
+  // A solid grid carries meaning in some source figures. Preserve that choice.
+  result.gridStyle = { ...plane.gridStyle, ...guide, ...(plane.gridStyle?.dashLength === 0 ? {dashLength:0,dashGap:0} : {}) };
+  return result;
+}
+export function examSeriesStyle(series, plane) {
+  const frame = plane || { w: series.graphStyleWidth, graphStyle: series.graphStyle };
+  if (!isExamStyle(frame)) return series;
+  const m = examMetrics(frame), relative = frame.w / positive(series.graphStyleWidth,EXAM_STYLE.referenceWidth);
+  const result = { ...series, graphStyle:frame.graphStyle, strokeWidth:series.sourceKind==='region'?series.strokeWidth:m.curve,
+    endLabelSize:m.label, markerSize:m.marker, markerStrokeWidth:m.axis, guideStyle:{strokeWidth:m.guide,dashLength:m.dash,dashGap:m.gap},
+    arrowMarks:(series.arrowMarks||[]).map(a=>({...a,strokeWidth:m.axis,examLength:m.arrowLength})),
+    endpointMarkers:(series.endpointMarkers||[]).map(a=>({...a,markerSize:m.marker})),
+    ...(series.bars ? {bars:{...series.bars,strokeWidth:m.axis,labelSize:m.label}} : {}),
+    ...(series.area ? {area:{...series.area,labelSize:m.label}} : {}),
+    ...(series.regionSpec ? {regionSpec:{...series.regionSpec,strokeWidth:Number.isFinite(series.regionSpec.strokeWidth)?series.regionSpec.strokeWidth*relative:0}} : {}),
+  };
+  if (series.customStyle && !series.styleOverrides) for(const key of ['strokeWidth','markerSize','markerStrokeWidth','endLabelSize']) if(Number.isFinite(series[key]))result[key]=series[key]*frame.w/positive(series.customStyleWidth,series.graphStyleWidth||EXAM_STYLE.referenceWidth);
+  for (const [key,spec] of Object.entries(series.styleOverrides || {})) if(['strokeWidth','markerSize','markerStrokeWidth','endLabelSize'].includes(key) && Number.isFinite(spec.value))result[key]=spec.value*frame.w/positive(spec.width,frame.w);
+  for (const key of ['dashLength','dashGap']) if(Number.isFinite(series[key]))result[key]=series[key]*frame.w/positive(series.customStyleWidth,series.graphStyleWidth||EXAM_STYLE.referenceWidth);
+  if(Array.isArray(series.dashPattern))result.dashPattern=series.dashPattern.map(v=>v*relative);
+  return result;
+}
+export function graphSizeAdvice(width) {
+  if (width < 50) return '작은 출력 · 라벨 가독성을 확인하세요. 권장 축 영역 폭 50–70 mm';
+  if (width > 70) return '큰 출력 · 전체 크기와 여백을 확인하세요. 권장 축 영역 폭 50–70 mm';
+  return '권장 크기 · 축 영역 폭 50–70 mm. 라벨을 포함한 전체 크기도 확인하세요.';
+}

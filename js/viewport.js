@@ -48,9 +48,6 @@ export function getRenderScale() {
   const m = _svgRef.getScreenCTM();
   return (m && m.a) ? m.a : getZoom();
 }
-
-const VIEW_CENTER_OFFSET_X_MM = 5;
-
 let canvasLock = { mode: "free", worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
 
 function liteMode() {
@@ -183,14 +180,17 @@ export function initViewport(svg, state, onChange) {
   };
   let projection = readProjection();
   let retainModeProjection = false;
+  let modeProjection = null;
   window.addEventListener('5e:mode-switch-start', event => {
     retainModeProjection = event.detail?.preserveWork === true;
     const current = readProjection();
     if (current.width > 0 && current.height > 0) projection = current;
+    modeProjection = retainModeProjection ? { ...projection } : null;
   });
   const sameBox = (a, b) => a.left === b.left && a.top === b.top
     && a.width === b.width && a.height === b.height;
-  state.subscribe(() => {
+  state.subscribe((s, change) => {
+    if (change === "native-text-input" && s.draftText?.nativeEditor) return;
     const vb = state.get().viewBox;
     if (liteMode() && !retainModeProjection && (Math.abs(vb.x + vb.w / 2) > 1e-8 || Math.abs(vb.y + vb.h / 2) > 1e-8)) {
       centerView(state);
@@ -199,10 +199,12 @@ export function initViewport(svg, state, onChange) {
     const next = readProjection();
     if (sameBox(projection, next)) projection = next;
   });
+  let layoutAnimation = null;
   const preserveProjection = () => {
     const next = readProjection();
-    if (sameBox(projection, next)) return;
-    const previous = projection;
+    const previous = modeProjection || projection;
+    if (sameBox(previous, next) && (!modeProjection ||
+      (previous.x === next.x && previous.y === next.y && previous.scale === next.scale))) return;
     if (next.width <= 0 || next.height <= 0) return;
     if (!(previous.scale > 0)) {
       projection = next;
@@ -211,18 +213,35 @@ export function initViewport(svg, state, onChange) {
     state.update((s) => {
       s.viewBox.w = next.width / previous.scale;
       s.viewBox.h = next.height / previous.scale;
-      s.viewBox.x = liteMode() && !retainModeProjection ? -s.viewBox.w / 2 : (next.left - previous.x) / previous.scale;
-      s.viewBox.y = liteMode() && !retainModeProjection ? -s.viewBox.h / 2 : (next.top - previous.y) / previous.scale;
+      // "Keep work" retains the actual screen projection even when the mode
+      // changes the tool panel width. Ordinary layout changes still center.
+      s.viewBox.x = modeProjection ? (next.left - previous.x) / previous.scale : -s.viewBox.w / 2;
+      s.viewBox.y = modeProjection ? (next.top - previous.y) / previous.scale : -s.viewBox.h / 2;
     });
+    reapplyPendingFit();
+    layoutAnimation?.cancel();
     projection = readProjection();
     commit();
+    // One model update, followed by a compositor-only translation. The large
+    // scene is never rebuilt on each frame of a panel/fullscreen transition.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.animate) {
+      const cssScale = projection.width / (svg.clientWidth || projection.width);
+      const dx = (previous.x - projection.x) / cssScale, dy = (previous.y - projection.y) / cssScale;
+      if (Math.hypot(dx, dy) > .5) layoutAnimation = svg.animate([
+        {translate: `${dx}px ${dy}px`}, {translate:'0px 0px'},
+      ], {duration:300, easing:'cubic-bezier(.22,1,.36,1)'});
+    }
   };
+  for (const name of ['pointerdown', 'wheel']) svg.addEventListener(name, () => { pendingFit = null; layoutAnimation?.cancel(); projection = readProjection(); }, {capture:true, passive:true});
   const layoutObserver = new ResizeObserver(preserveProjection);
   layoutObserver.observe(svg);
   window.addEventListener("5e:panel-layout-did-change", preserveProjection);
   window.addEventListener("5e:view-mode-change", () => {
     if (liteMode() && !retainModeProjection) centerView(state);
-    requestAnimationFrame(preserveProjection);
+    requestAnimationFrame(() => {
+      preserveProjection();
+      modeProjection = null;
+    });
   });
 
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---
@@ -393,9 +412,92 @@ export function initViewport(svg, state, onChange) {
 }
 
 /* ----- centerView: restore the default visual alignment ----- */
+// 주어진 범위(세계 좌표 {x,y,w,h})가 캔버스의 fill 비율에 들어오게 확대하고 가운데로(10-24 지적 19: 그림 편집을 열 때).
+// top: 캔버스 위쪽을 덮는 막대 높이(px) — 그만큼 아래로 내려 가운데. 확대 한계(clampZoom)를 먼저 적용한 뒤 가운데를 정한다.
+// 화면 배치가 바뀌는 중(칸이 숨거나 나타남)에 맞추면 바로 뒤 배치 보존(preserveProjection)이 원점 가운데로 되돌린다 —
+// 맞춤 요청을 기억해 배치 보존 뒤에 다시 적용한다 — 사용자가 캔버스를 만지거나(누르기·휠) 10초가 지나면 잊는다.
+// 11-04: 1.5초만 기억했더니 Safari에서 프로그램 전환(흐림 등장)이 늦게 끝나면 맞춤이 사라져 그림이 화면보다 크게 보였다.
+let pendingFit = null;
+export function fitViewToBounds(state, b, options = {}) {
+  pendingFit = { state, b, options, until: Date.now() + 10000 };
+  return applyFit(state, b, options);
+}
+function reapplyPendingFit() {
+  if (!pendingFit) return;
+  if (Date.now() > pendingFit.until) { pendingFit = null; return; }
+  applyFit(pendingFit.state, pendingFit.b, pendingFit.options);
+}
+function applyFit(state, b, { fill = 0.8, top = 0 } = {}) {
+  const svg = document.querySelector('#canvas');
+  if (!svg || !b || !(b.w > 0 && b.h > 0)) return false;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  state.update((s) => {
+    const z = Math.min(rect.width * fill / b.w, (rect.height - top) * fill / b.h);
+    s.viewBox.w = rect.width / z;
+    s.viewBox.h = rect.height / z;
+    clampZoom(svg, s);
+    const zoom = rect.width / s.viewBox.w;
+    s.viewBox.x = b.x + b.w / 2 - s.viewBox.w / 2;
+    s.viewBox.y = b.y + b.h / 2 - (top / 2) / zoom - s.viewBox.h / 2;
+    clampViewBox(s);
+  });
+  return true;
+}
+
 export function centerView(state) {
   state.update((s) => {
-    s.viewBox.x = -s.viewBox.w / 2 - (liteMode() ? 0 : VIEW_CENTER_OFFSET_X_MM);
+    s.viewBox.x = -s.viewBox.w / 2;
     s.viewBox.y = -s.viewBox.h / 2;
   });
+}
+
+/* ----- 화면 확대 단추(11-04): 캔버스 가운데를 기준으로 배율을 바꾼다 ----- */
+// 100% = 도화지 전체가 캔버스의 90%에 들어오는 크기(「맞춤」). 도화지가 작아 실제 크기(1mm=3.78px)는 최소 배율보다 작다.
+export function fitZoom(state) {
+  const svg = _svgRef, ab = state.get().artboard;
+  const rect = svg?.getBoundingClientRect();
+  if (!rect?.width || !rect?.height || !ab?.w || !ab?.h) return 0;
+  return Math.min(rect.width * 0.9 / ab.w, rect.height * 0.9 / ab.h);
+}
+export function zoomPercent(state) {
+  const fit = fitZoom(state);
+  return fit ? Math.round(getZoom() / fit * 100) : 100;
+}
+export function setZoomLevel(state, zoom) {
+  const svg = _svgRef;
+  if (!svg || !(zoom > 0)) return false;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+  pendingFit = null;
+  state.update((s) => {
+    const vb = s.viewBox, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2, factor = zoom / currentZoom(svg, vb);
+    vb.w /= factor;
+    vb.h /= factor;
+    clampZoom(svg, s);
+    vb.x = cx - vb.w / 2;
+    vb.y = cy - vb.h / 2;
+    clampViewBox(s);
+  });
+  return true;
+}
+export function zoomByStep(state, direction) {
+  return setZoomLevel(state, getZoom() * (direction > 0 ? 1.1 : 1 / 1.1));
+}
+// 처음 여는 크기(11-04 사용자 사진 기준): 도화지 전체 보기(100%)의 80% — 도화지 둘레에 여유가 남는 크기.
+export const DEFAULT_ZOOM_PERCENT = 82;
+export function setZoomPercent(state, percent) {
+  const fit = fitZoom(state);
+  return fit ? setZoomLevel(state, fit * percent / 100) : false;
+}
+// 고른 것에 맞춤: 세계 좌표 범위 b가 화면의 80%에 들어오게
+export function fitBounds(state, b) { return b && b.w > 0 && b.h > 0 ? applyFit(state, b, { fill: 0.8 }) : false; }
+export function fitDefault(state) {
+  if (!fitArtboard(state)) return false;
+  const fit = fitZoom(state);
+  return fit ? setZoomLevel(state, fit * DEFAULT_ZOOM_PERCENT / 100) : false;
+}
+export function fitArtboard(state) {
+  const ab = state.get().artboard;
+  return ab ? applyFit(state, { x: -ab.w / 2, y: -ab.h / 2, w: ab.w, h: ab.h }, { fill: 0.9 }) : false;
 }

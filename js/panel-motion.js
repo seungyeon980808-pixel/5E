@@ -61,20 +61,17 @@ export function createPanelMotion({
 }) {
   let panelAnimation = null;
   let surfaceAnimation = null;
-  let trackTimer = null;
   let revision = 0;
 
   function cancel() {
     revision += 1;
     panelAnimation?.cancel();
     surfaceAnimation?.cancel();
-    if (trackTimer !== null) clearTimeout(trackTimer);
     if (surfaceAnimation && surfaceAnimations.get(surface) === surfaceAnimation) {
       surfaceAnimations.delete(surface);
     }
     panelAnimation = null;
     surfaceAnimation = null;
-    trackTimer = null;
   }
 
   function commit(expanded, overlayOnly = false, notifyLayout = false) {
@@ -91,26 +88,6 @@ export function createPanelMotion({
   }
 
   function setExpanded(expanded, { overlayOnly = false } = {}) {
-    if (trackRoot && !overlayOnly && !reducedMotion()) {
-      cancel();
-      setAccessibleExpanded(expanded);
-      beforeLayout();
-      panel.hidden = false;
-      panel.inert = !expanded;
-      trackRoot.classList.add('is-panel-track-moving');
-      trackRoot.getBoundingClientRect();
-      mutateLayout(expanded);
-      const currentRevision = revision;
-      trackTimer = setTimeout(() => {
-        if (currentRevision !== revision) return;
-        trackTimer = null;
-        trackRoot.classList.remove('is-panel-track-moving');
-        if (!expanded) panel.hidden = true;
-        panel.inert = !expanded;
-        afterLayout();
-      }, RESPONSE_MS);
-      return;
-    }
     if (reducedMotion() || typeof panel.animate !== 'function') {
       commit(expanded, overlayOnly, true);
       return;
@@ -153,7 +130,10 @@ export function createPanelMotion({
       easing: 'linear',
       fill: 'both',
     });
-    if (!overlayOnly && surface && liveSurfaceLeft !== null) {
+    // The editor keeps objects at their screen coordinates via viewBox.
+    // Commit its grid once and animate only the panel; animating grid tracks
+    // caused ResizeObserver -> state.update -> full scene paint every frame.
+    if (!trackRoot && !overlayOnly && surface && liveSurfaceLeft !== null) {
       surfaceAnimations.get(surface)?.cancel();
       surface.classList.add('is-panel-surface-moving');
       surfaceAnimation = surface.animate(panelMotionKeyframes(

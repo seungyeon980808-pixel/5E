@@ -47,11 +47,11 @@ export function resolveAIModelSelection(selection, catalog) {
 /** Defaults only initialize absent preferences; stale explicit values must be surfaced. */
 export function defaultAIModelSelection(catalog, preference = {}) {
   const entries = readAIModelCatalog(catalog);
-  const model = Object.hasOwn(preference, 'model') ? preference.model : (entries.find(entry => entry.isDefault)?.model ?? entries[0]?.model);
+  const model = Object.hasOwn(preference, 'model') ? preference.model : (entries.find(entry => entry.model === 'gpt-6.1-sol')?.model ?? entries.find(entry => entry.isDefault)?.model ?? entries[0]?.model);
   const entry = entries.find(item => item.model === model);
   return resolveAIModelSelection({
     model,
-    effort: Object.hasOwn(preference, 'effort') ? preference.effort : entry?.defaultEffort,
+    effort: Object.hasOwn(preference, 'effort') ? preference.effort : model === 'gpt-6.1-sol' && entry?.efforts.includes('medium') ? 'medium' : entry?.defaultEffort,
     serviceTier: Object.hasOwn(preference, 'serviceTier') ? preference.serviceTier : entry?.defaultServiceTier ?? null,
   }, catalog);
 }

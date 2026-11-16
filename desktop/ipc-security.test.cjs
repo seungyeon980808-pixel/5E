@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const Module = require('node:module');
-const { EventEmitter } = require('node:events');
+const { EventEmitter, once } = require('node:events');
 const { PassThrough, Writable } = require('node:stream');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -9,28 +9,37 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
-const channels = ['codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
-  'codex:send', 'codex:interrupt', 'codex:login', 'capture:sources', 'local-images:pick-folder',
-  'local-images:list', 'local-images:thumbnail', 'local-images:read'];
+const channels = ['clipboard:read-image', 'codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
+  'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
+  'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence','exam-files:autosave','exam-files:read-latest','exam-files:save','exam-files:open','exam-files:reveal','exam-files:folder','exam-files:open-folder'];
+const pdfLibraryChannels=['pdf-library:pick-folder','pdf-library:ensure-default-folder','pdf-library:connections','pdf-library:folder-tree','pdf-library:set-folder-selection','pdf-library:disconnect','pdf-library:sync','pdf-library:cancel','pdf-library:list','pdf-library:read','pdf-library:read-image','pdf-library:open-folder','pdf-library:reveal-item','pdf-library:save-index','pdf-library:load-index','pdf-library:index-state','pdf-library:save-index-state','pdf-library:retry-index','pdf-library:list-corrections','pdf-library:save-correction','pdf-library:delete-correction','pdf-library:capabilities','pdf-library:bundled-pack','pdf-library:read-bundled-pack'];
+const auxChannels=['exam:request-edit','exam:get-names','exam:return-source','exam:ack','exam:workspace-snapshot','exam:workspace-restore','exam:project-snapshot-reply','exam:annotations'];
 
 function harness(t) {
   const handlers = new Map(), windows = [], effects = [], events = [], children = [];
+  const requests = new EventEmitter();
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), '5e-ipc-'));
   const image = path.join(folder, 'fixture.svg');
   fs.writeFileSync(image, '<svg xmlns="http://www.w3.org/2000/svg"/>');
   t.after(() => fs.rmSync(folder, { recursive: true, force: true }));
   let ready;
   class Window {
-    constructor() {
+    constructor(options) {
+      this.options = options;
       windows.push(this);
       this.webContents = new EventEmitter();
       this.webContents.mainFrame = { url: '' };
-      this.webContents.send = (channel, payload) => events.push({ channel, payload });
+      this.webContents.send = (channel, payload) => {
+        events.push({ channel, payload });
+        requests.emit(channel, payload);
+      };
       this.webContents.setWindowOpenHandler = callback => { this.openWindow = callback; };
+      this.webContents.executeJavaScript = async () => {};
     }
     loadFile(file) { this.webContents.mainFrame.url = pathToFileURL(file).href; }
+    async loadURL(url) { this.webContents.mainFrame.url = url; effects.push('load-exam'); }
     isDestroyed() { return false; }
-    on() {} once() {} setMenu() {} setMenuBarVisibility() {} show() {}
+    on() {} once() {} setMenu() {} setMenuBarVisibility() {} show() {} focus() {}
   }
   const spawn = () => {
     effects.push('spawn');
@@ -49,6 +58,10 @@ function harness(t) {
   };
   const original = Module._load;
   Module._load = function(name, ...args) {
+    if (name === './exam-server.cjs') return { async startExamServer() {
+      effects.push('exam-server');
+      return {origin:'http://127.0.0.1:39821',seed(payload) { assert.ok(payload.source.pages.length); effects.push('exam-source'); return 'a'.repeat(48); },async close() {}};
+    }};
     if (name === 'electron') return {
       app: { getVersion: () => '1.6.0', getPath: () => folder, on() {}, dock: { setIcon() {} }, whenReady: () => ({ then(callback) { ready = callback; } }) },
       BrowserWindow: Window, ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
@@ -68,12 +81,13 @@ function harness(t) {
   const window = windows.at(-1);
   const event = { sender: window.webContents, senderFrame: window.webContents.mainFrame };
   const call = (channel, sender = event) => handlers.get(channel)(sender,
-    channel === 'local-images:list' ? folder : channel.startsWith('local-images:') ? image : { text: 'hello', clientScope: 'A' });
+    channel === 'exam:publish-names' ? [] : channel === 'exam:workspace-reply' || channel === 'exam:annotations-reply' ? {requestId:'absent'} : channel === 'exam:open' ? {source:{pages:[{id:'a',objects:[]}],activePageId:'a'}} :
+      channel === 'local-images:list' ? folder : channel.startsWith('local-images:') ? image : channel === 'codex:read-image-text' ? {} : { text: 'hello', clientScope: 'A' });
   t.after(() => { for (const child of children) child.kill(); });
-  return { handlers, window, event, call, effects, events, children, folder, image };
+  return { handlers, window, windows, event, call, effects, events, children, folder, image, requests };
 }
 
-for (const channel of channels) {
+for (const channel of [...channels, ...pdfLibraryChannels]) {
   for (const senderKind of ['external URL', 'subframe', 'other webContents']) {
     test(`${channel} rejects ${senderKind} before privileged effects`, async t => {
       // Given a real production handler and an untrusted renderer identity.
@@ -91,8 +105,16 @@ for (const channel of channels) {
   test(`${channel} accepts the trusted application main frame`, async t => {
     // Given a trusted main frame and a folder explicitly selected through the dialog.
     const h = harness(t);
+    if (channel.startsWith('pdf-library:')) return;
+    if (channel === 'clipboard:read-image') return; // 11-14 클립보드 채널: 창 확인(위 거절 검사)만 여기서 본다 — 모의 electron에 clipboard가 없다
+    if (channel.startsWith('exam-files:')) return; // 출제 파일 저장 채널도 창 확인만 여기서 본다(동작은 exam-files.test.cjs 몫) // 폴더 연결 채널은 믿을 수 있는 창 확인만 이 검사에서 본다(동작은 pdf-library 검사 몫)
     if (channel.startsWith('local-images:')) await h.call('local-images:pick-folder');
     // When the production handler runs, then it returns its successful result.
+    if(channel==='exam:open-project'){await assert.rejects(async()=>h.call(channel),/프로젝트 파일/);return;}
+    if(channel==='exampool:evidence'){await assert.rejects(async()=>h.call(channel),/근거 검색 종류/);return;}// 종류·검색어 없는 요청은 실행하지 않는다
+    if(channel==='exam:finish'){await assert.rejects(async()=>h.call(channel),/편집 연결/);return;}
+    if(channel==='codex:read-image-text'){await assert.rejects(async()=>h.call(channel),/잘못된 읽기 요청/);return;}// 11-10: 본문 없는 요청은 네트워크를 쓰지 않고 거절한다
+    if(channel==='exam:save-workspace') await h.call('exam:open');
     const result = await h.call(channel);
     switch (channel) {
       case 'codex:status': assert.deepEqual(result, { server: false, login: { loggedIn: true, output: 'logged in' } }); break;
@@ -103,18 +125,77 @@ for (const channel of channels) {
       case 'codex:models': assert.deepEqual(result.data, []); break;
       case 'codex:account': assert.deepEqual(Object.keys(result).sort(), ['account', 'limits', 'usage']); break;
       case 'capture:sources': assert.deepEqual(result, []); break;
+      case 'window:traffic-lights': case 'window:start-expand': case 'window:start-shrink': assert.equal(result, true); break;
       case 'local-images:pick-folder': assert.equal(result.folder, fs.realpathSync(h.folder)); break;
       case 'local-images:list': assert.deepEqual(result.items.map(item => item.path), [fs.realpathSync(h.image)]); break;
       case 'local-images:thumbnail': case 'local-images:read':
         assert.equal(result, `data:image/svg+xml;base64,${fs.readFileSync(h.image).toString('base64')}`); break;
+      case 'exam:open':
+        assert.deepEqual(result,{ok:true});
+        assert.deepEqual(h.effects,['exam-server','exam-source','load-exam']);
+        assert.equal(h.windows.at(-1).options.webPreferences.contextIsolation,true);assert.equal(h.windows.at(-1).options.webPreferences.sandbox,true);assert.equal(h.windows.at(-1).options.webPreferences.partition,'persist:5e-exam-workspace');
+        break;
+      case 'exam:publish-names':case 'exam:workspace-changed':case 'exam:save-workspace':assert.equal(result.ok,true);break;
+      case 'exam:workspace-reply':case 'exam:annotations-reply':assert.equal(result.ok,false);break;
+      case 'exam:project-snapshot':assert.equal(result,null);break;
       default: assert.fail(`missing trusted result assertion for ${channel}`);
     }
   });
 }
 
+for(const channel of auxChannels) {
+  test(`${channel} rejects primary, external and child frames`,async t=>{
+    const h=harness(t);await h.call('exam:open');const window=h.windows.at(-1), frame=window.webContents.mainFrame;
+    const bad=[h.event,{sender:window.webContents,senderFrame:{url:frame.url}},{sender:window.webContents,senderFrame:frame}];
+    frame.url='https://example.com';
+    const effects=h.effects.length,events=h.events.length;
+    for(const event of bad) await assert.rejects(async()=>h.handlers.get(channel)(event,{}),/Untrusted exam IPC sender/);
+    assert.equal(h.effects.length,effects);assert.equal(h.events.length,events);
+  });
+  test(`${channel} permits only the auxiliary main frame with correlated replies`,async t=>{
+    const h=harness(t);await h.call('exam:open');const window=h.windows.at(-1),event={sender:window.webContents,senderFrame:window.webContents.mainFrame};
+    if(channel==='exam:annotations') {
+      const figure={id:'figure-a',name:'A',version:1,link:{tabId:'tab-a',assetId:'asset-a'},source:{activePageId:'page-a',pages:[{id:'page-a',objects:[],layers:[{id:1}],artboard:{w:90,h:60}}]}};
+      const sent=once(h.requests,'exam:annotations-request',{signal:AbortSignal.timeout(5000)});
+      const pending=h.handlers.get(channel)(event,{kind:'read',figure});
+      const [request]=await sent;
+      await h.handlers.get('exam:annotations-reply')(h.event,{requestId:request.requestId,value:{baseline:[],draft:[]}});
+      assert.deepEqual(await pending,{baseline:[],draft:[]});return;
+    }
+    if(channel==='exam:workspace-snapshot'||channel==='exam:workspace-restore') {
+      const sent=once(h.requests,'exam:workspace-request',{signal:AbortSignal.timeout(5000)});
+      const payload=channel==='exam:workspace-snapshot'?undefined:{drawing:{pages:[]}};
+      const pending=h.handlers.get(channel)(event,payload);
+      const [correlated]=await sent,request=h.events.at(-1);
+      assert.equal(request.channel,'exam:workspace-request');
+      assert.deepEqual(request.payload,correlated);
+      assert.deepEqual(request.payload.restore,payload);
+      await h.handlers.get('exam:workspace-reply')(h.event,{requestId:request.payload.requestId,value:{drawing:{pages:[]}}});
+      assert.deepEqual(await pending,{drawing:{pages:[]}});return;
+    }
+    const payload=channel==='exam:request-edit'?{requestId:'12345678-1234-1234-1234-123456789abc',figure:{source:{pages:[]},link:{tabId:'tab',assetId:'asset'}}}:{};
+    const result=await h.handlers.get(channel)(event,payload);
+    if(channel==='exam:get-names')assert.deepEqual(result,[]);
+    else if(channel==='exam:ack'||channel==='exam:project-snapshot-reply')assert.deepEqual(result,{ok:false});
+    else assert.equal(result.ok,true);
+  });
+}
+
+test('exam workspace snapshot rejects malformed or expired owner proof requests before asking the primary window',async t=>{
+  const h=harness(t);await h.call('exam:open');const window=h.windows.at(-1),event={sender:window.webContents,senderFrame:window.webContents.mainFrame};
+  const count=h.events.length,effects=h.effects.length;
+  await assert.rejects(()=>h.handlers.get('exam:workspace-snapshot')(event,null),/그림 연결 요청이 올바르지 않거나 너무 큽니다/);
+  for(const payload of [[],{}, {drawing:{pages:[]}}, {editRequestId:'invalid'},
+    {editRequestId:'12345678-1234-1234-1234-123456789abc',extra:true}]) {
+    await assert.rejects(()=>h.handlers.get('exam:workspace-snapshot')(event,payload),/그림 소유 확인 요청이 올바르지 않습니다/);
+  }
+  await assert.rejects(()=>h.handlers.get('exam:workspace-snapshot')(event,{editRequestId:'12345678-1234-1234-1234-123456789abc'}),/시험지 편집 연결이 만료되었습니다/);
+  assert.equal(h.events.length,count);assert.equal(h.effects.length,effects);
+});
+
 test('all registered privileged channels are covered by sender tests', t => {
   const h = harness(t);
-  assert.deepEqual([...h.handlers.keys()].sort(), [...channels].sort());
+  assert.deepEqual([...h.handlers.keys()].sort(), [...channels,...auxChannels,...pdfLibraryChannels].sort());
 });
 
 for (const url of ['https://example.com', 'file:///tmp/other.html', 'javascript:alert(1)']) {

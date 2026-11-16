@@ -1,4 +1,6 @@
 const test = require('node:test');
+// 11-10: 이 검사는 app-server 경로(에이전트)의 이벤트 순서를 본다. 그림 직접 호출은 끄고 실행한다.
+process.env.FIVE_E_IMAGE_TRANSPORT = 'agent';
 const assert = require('node:assert/strict');
 const Module = require('node:module');
 const { pathToFileURL } = require('node:url');

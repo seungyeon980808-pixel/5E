@@ -1,6 +1,6 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
 
-import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC } from "./platform.js?v=1.6.1-remediation-0929";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC } from "./platform.js?v=1.7.0-four-session-integration";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
  * Ctrl+F는 오브젝트만 찾는다. 이 팔레트는 같은 창에서 "명령"(실행취소·그룹묶기·
@@ -16,10 +16,10 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC 
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.1-remediation-0929";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.1-remediation-0929";
-import { state } from "./state.js?v=1.6.1-remediation-0929";
-import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.1-remediation-0929";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBoxes } from "./templates.js?v=1.7.0-four-session-integration";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.7.0-four-session-integration";
+import { state } from "./state.js?v=1.7.0-four-session-integration";
+import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.7.0-four-session-integration";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -91,8 +91,15 @@ const COMMANDS = [
   { id: "objectSearch", label: "오브젝트 검색 열기", keywords: ["object", "오브젝트", "검색", "찾기"], shortcutLabel: "Ctrl+F",     run: () => clickById("object-search-trigger") },
   { id: "examSearch",  label: "라이브러리 열기", keywords: ["exam", "기출", "문항", "검색", "라이브러리"], shortcutLabel: "", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
+  // 10-22: 아래 막대 「도식 만들기」 대신 — AI 없는 흐름도·측정값 그래프는 명령 팔레트에서만 연다.
+  { id: "flowchart",   label: "흐름도 만들기",     keywords: ["flow", "흐름도", "순서도", "과정", "도식"], shortcutLabel: "",         run: () => window.dispatchEvent(new CustomEvent("5e:figure-studio-open", { detail: { mode: "flow" } })) },
+  { id: "dataPlot",    label: "데이터 그래프 만들기", keywords: ["plot", "데이터", "측정", "그래프", "표", "csv", "엑셀"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:figure-studio-open", { detail: { mode: "plot" } })) },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
-  { id: "aiImage", label: "AI 이미지 변환", keywords: ["ai", "인공지능", "이미지 변환", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
+  // 11-07: 「AI 이미지/그래프」를 둘로 — 이미지는 AI 이미지 창, 그래프는 「그래프」 세 갈래(js/graph-entry-menu.js)와 같은 길.
+  { id: "aiImage", label: "AI 이미지", keywords: ["ai", "인공지능", "이미지 변환", "이미지 생성", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
+  { id: "graphDirect", label: "그래프 · 직접 만들기", keywords: ["graph", "그래프", "좌표", "함수", "직접", "만들기"], shortcutLabel: "F", run: () => window.dispatchEvent(new CustomEvent("5e:graph-entry", { detail: { kind: "direct" } })) },
+  { id: "graphRestore", label: "그래프 · 사진에서 복원", keywords: ["graph", "그래프", "복원", "사진", "기출", "ai"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:graph-entry", { detail: { kind: "graph" } })) },
+  { id: "graphCreate", label: "그래프 · AI와 대화로 만들기", keywords: ["graph", "그래프", "생성", "대화", "ai", "인공지능"], shortcutLabel: "", run: () => window.dispatchEvent(new CustomEvent("5e:graph-entry", { detail: { kind: "graph-create" } })) },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.
   { id: "trimMargins", label: "이미지 여백 정리",  keywords: ["trim", "여백", "정리", "상자", "맞춤", "crop"], shortcutLabel: "",  run: () => {
     const n = trimSelectedBoxMargins();
@@ -103,6 +110,7 @@ const COMMANDS = [
 ];
 
 export function initCommandPalette() {
+  const iconCache = new Map();
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.hidden = true;
@@ -172,8 +180,12 @@ export function initCommandPalette() {
       // def.hidden=true는 좌측 팔레트에서 의도적으로 숨긴 항목(예: graph) — 검색에도 노출하지 않는다.
       .filter(([, def]) => !def.hidden && [def.label, ...(def.keywords || [])]
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
-      .map(([id, def]) => ({ kind: "template", id, def }))
-      .sort((a, b) => rank(a.def.category) - rank(b.def.category));
+      .map(([id, def]) => ({ kind: "template", id, def }));
+    // 이름이 검색어와 정확히 같은 오브젝트를 맨 위에(search.js와 같은 규칙)
+    const exact = (def) => String(def.label).toLocaleLowerCase() === query;
+    const exactCategories = new Set(objMatches.filter(({ def }) => exact(def)).map(({ def }) => def.category));
+    const groupRank = (c) => exactCategories.has(c) ? -1 : rank(c);
+    objMatches.sort((a, b) => groupRank(a.def.category) - groupRank(b.def.category) || exact(b.def) - exact(a.def));
     for (const it of listPersonalItems()) {
       if (![it.name, it.category].some((v) => String(v).toLocaleLowerCase().includes(query))) continue;
       objMatches.push({ kind: "personal", id: it.id,
@@ -229,7 +241,10 @@ export function initCommandPalette() {
 
     // ----- 오브젝트 그룹 (search.js와 동일한 카테고리 정렬) -----
     const objRows = matches.filter((m) => m.kind !== "command");
-    const categories = [...new Set([...CATEGORY_ORDER, ...objRows.map((m) => m.def.category)])];
+    const icons = [];
+    // 한 번 만들고 크기를 맞춘 아이콘은 다시 쓴다 — 열 때·글자 칠 때마다 139개를 새로 만들고
+    // getBBox로 재면 창이 뜨는 모션 중 한 프레임이 60ms 넘게 멈췄다.
+    const categories = [...new Set([...exactCategories, ...CATEGORY_ORDER, ...objRows.map((m) => m.def.category)])];
     for (const category of categories) {
       const group = objRows.filter((m) => m.def.category === category);
       if (!group.length) continue;
@@ -258,8 +273,8 @@ export function initCommandPalette() {
           letter.style.cssText = "font-weight:700;font-size: 13px;";
           iconBox.appendChild(letter);
         } else {
-          icon = buildSymbolIcon(match.id, match.def);
-          iconBox.appendChild(icon);
+          const cached = iconCache.get(match.id);
+          iconBox.appendChild(cached || (icon = buildSymbolIcon(match.id, match.def)));
         }
 
         const label = document.createElement("span");
@@ -269,9 +284,11 @@ export function initCommandPalette() {
         badge.textContent = match.kind === "personal" ? "퍼스널" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
         results.appendChild(row);
-        if (icon) sizeIconViewBox(icon);
+        if (icon) { icon.dataset.iconFor = match.id; icons.push(icon); }
       }
     }
+    sizeIconViewBoxes(icons);
+    for (const svg of icons) if (svg.getAttribute("viewBox")) iconCache.set(svg.dataset.iconFor, svg);
     syncHighlight();
   }
 

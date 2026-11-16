@@ -28,9 +28,9 @@
   --tut-t-track: 520ms;
   /* '됐습니다'의 색. 앱 토큰에 성공색이 따로 없어 여기서 정한다(GitHub green).
      앱 규칙대로 dark 가 기본이고 light 를 덮어쓴다(css/style.css 46행). */
-  --tut-ok: #3fb950;
+  --tut-ok: var(--ds-success);
 }
-:root[data-theme="light"] { --tut-ok: #1a7f37; }
+:root[data-theme="light"] { --tut-ok: var(--ds-success); }
 
 /* 한국어 줄바꿈 — 어절 중간에서 끊지 않는다.
    ⚠ 튜토리얼 레이어는 body 가 아니라 documentElement 에 붙으므로(머리말 참고)
@@ -102,15 +102,15 @@
 .tut-guide-shape { transition: stroke 140ms ease, stroke-width 140ms ease, opacity 140ms ease; }
 .tut-guide[data-near="close"] .tut-guide-shape { stroke-width: 2.2; opacity: 1; }
 .tut-guide[data-near="hit"] .tut-guide-shape {
-  stroke: var(--tut-ok, #1a7f37);
+  stroke: var(--tut-ok, var(--ds-success));
   stroke-width: 2.4;
   stroke-dasharray: none;
   opacity: 1;
 }
 .tut-guide[data-near="hit"] .tut-guide-shape.is-closed {
-  fill: color-mix(in srgb, var(--tut-ok, #1a7f37) 14%, transparent);
+  fill: color-mix(in srgb, var(--tut-ok, var(--ds-success)) 14%, transparent);
 }
-.tut-guide[data-near="hit"] .tut-guide-note { fill: var(--tut-ok, #1a7f37); }
+.tut-guide[data-near="hit"] .tut-guide-note { fill: var(--tut-ok, var(--ds-success)); }
 .tut-guide-note {
   fill: var(--accent);
   font-family: "IBM Plex Sans KR", sans-serif;
@@ -261,9 +261,8 @@
  * 평상시(창 크기 추적)엔 부드러운 이동, 단계 전환 땐 새 자리에서 pop 으로 뜬다. */
 .tut-halo {
   position: fixed;
-  border: 2px solid var(--accent);
+  border: 1px solid var(--ds-soft-line, #6ba4f8); /* 은은한 선 하나(10-28 출제 지적 3) — 2px 진한 선·안쪽 흰 선은 뺌 */
   border-radius: 6px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
   pointer-events: none;
   transition: left var(--tut-t-track) var(--tut-ease-in-out),
               top var(--tut-t-track) var(--tut-ease-in-out),
@@ -446,15 +445,15 @@
   padding: 0.63em 1em;
   border: 1px solid var(--accent);
   border-radius: 7px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--control-selected-bg);
+  color: var(--control-selected-text);
   font-family: inherit;
   font-size: 0.94em;
   font-weight: 600;
   cursor: pointer;
   transition: transform 160ms var(--tut-ease-out), background 160ms ease;
 }
-.tut-coach-auto:hover { background: var(--accent-hover); }
+.tut-coach-auto:hover { background: var(--control-selected-bg);  border:1px solid var(--control-selected-border);}
 .tut-coach-auto:active { transform: scale(0.98); }
 .tut-coach-auto[hidden] { display: none; }
 .tut-coach-do[hidden] { display: none; }
@@ -507,10 +506,10 @@
 
 .tut-btn-primary {
   border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+  background: var(--control-selected-bg);
+  color: var(--control-selected-text);
 }
-.tut-btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.tut-btn-primary:hover:not(:disabled) { background: var(--control-selected-bg); border-color: var(--control-selected-border); }
 
 .tut-btn-quit { color: var(--text-secondary); }
 

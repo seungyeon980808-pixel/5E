@@ -3,6 +3,7 @@ import { safeAiErrorText } from '../js/ai-error-log.js';
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const STATES = new Set(['new', 'investigating', 'needs-info', 'fixed']);
 const MAX_BODY = 18 * 1024 * 1024;
+const MB = 1024 * 1024, HOUR = 3600000, DAY = 86400000;
 const encoder = new TextEncoder();
 const text = (value, limit = 4000) => safeAiErrorText(value).slice(0, limit).trim();
 const fail = (status, message) => { throw Object.assign(new Error(message), { status }); };
@@ -64,7 +65,12 @@ const DEFAULT_FAQS = [
   { id:'default-password', question:'글 비밀번호를 잊어버렸어요.', answer:'비밀번호는 다시 보여드릴 수 없습니다. 해당 글의 접수 번호를 적어 새 신고로 관리자에게 문의해 주세요.' },
 ];
 
-export function createBoardApi({ store, adminToken, allowedOrigins, clock = Date.now, rateSecret = adminToken }) {
+// 남용 상한(보안 점검 M2·L1·L2). 첨부는 하루(첫 기록부터 24시간) 전체·주소별 합계, 비밀번호는 주소와 상관없이 글별 실패 횟수.
+export const ABUSE_LIMITS = Object.freeze({ dailyAttachmentBytes: 200 * MB, clientDailyAttachmentBytes: 40 * MB,
+  passwordFailuresPerHour: 20, votesPerReportPerDay: 3, votesPerDay: 30 });
+
+export function createBoardApi({ store, adminToken, allowedOrigins, clock = Date.now, rateSecret = adminToken, limits = {} }) {
+  const caps = { ...ABUSE_LIMITS, ...limits };
   const origins = new Set(allowedOrigins);
   const isAdmin = async request => Boolean(adminToken?.length >= 24 && await equal(request.headers.get('authorization') || '', `Bearer ${adminToken}`));
   return async function handle(request, { clientIp = 'local' } = {}) {
@@ -82,9 +88,10 @@ export function createBoardApi({ store, adminToken, allowedOrigins, clock = Date
       const mutates = !['GET','HEAD'].includes(request.method);
       if (mutates && (!origins.has(origin) || request.headers.get('x-5e-report') !== '1')) fail(403, '게시판에서 다시 시도해 주세요.');
       const admin = await isAdmin(request), now = clock(), timestamp = new Date(now).toISOString();
+      // perClient=false면 접속 주소와 상관없이 하나로 센다(주소를 바꿔 가며 우회하는 것을 막는 전체 상한).
+      const fingerprint = (scope, perClient = true) => digest(`${rateSecret}:${scope}:${perClient ? clientIp : '*'}`);
       const limit = async (scope, maximum = 10, period = 60000) => {
-        const fingerprint = await digest(`${rateSecret}:${scope}:${clientIp}`);
-        if (!await store.rate(fingerprint, maximum, period, now)) fail(429, '요청이 많습니다. 잠시 후 다시 시도해 주세요.');
+        if (!await store.rate(await fingerprint(scope), maximum, period, now)) fail(429, '요청이 많습니다. 잠시 후 다시 시도해 주세요.');
       };
       if (mutates) await limit('write', 30);
       if (parts[0] === 'admin' && parts[1] === 'session' && request.method === 'POST') {
@@ -135,6 +142,11 @@ export function createBoardApi({ store, adminToken, allowedOrigins, clock = Date
           return { ...result, id:crypto.randomUUID(), name:text(image.name,160) || '화면 캡처', public:image.public === true };
         });
         if (total > 12 * 1024 * 1024) fail(413, '첨부 이미지의 합계는 12MB 이하로 줄여 주세요.');
+        if (total) {
+          const busy = '오늘 받은 첨부 이미지가 많습니다. 이미지를 빼고 글만 보내 주시거나 내일 다시 시도해 주세요.';
+          if (!await store.usage(await fingerprint('attachments-day'), total, caps.clientDailyAttachmentBytes, DAY, now)) fail(429, busy);
+          if (!await store.usage(await fingerprint('attachments-day', false), total, caps.dailyAttachmentBytes, DAY, now)) fail(429, busy);
+        }
         const written = [];
         try {
           const images = [];
@@ -157,7 +169,12 @@ export function createBoardApi({ store, adminToken, allowedOrigins, clock = Date
       const authorize = async input => {
         if (admin) return;
         await limit(`password:${id}`, 5);
-        if (!await checkPassword(input.password, row.author_hash)) fail(401, '글 비밀번호를 확인해 주세요.');
+        const failures = await fingerprint(`password-failures:${id}`, false);
+        if (await store.hits(failures, HOUR, now) >= caps.passwordFailuresPerHour) fail(429, '글 비밀번호를 여러 번 틀려 이 글은 1시간 동안 잠겼습니다. 잠시 후 다시 시도해 주세요.');
+        if (!await checkPassword(input.password, row.author_hash)) {
+          await store.rate(failures, caps.passwordFailuresPerHour, HOUR, now);
+          fail(401, '글 비밀번호를 확인해 주세요.');
+        }
       };
       if (parts[1] === 'images' && parts.length === 3 && request.method === 'GET') {
         const image = row.images.find(value => value.id === parts[2]);
@@ -215,6 +232,7 @@ export function createBoardApi({ store, adminToken, allowedOrigins, clock = Date
       }
       if (parts[1] === 'vote' && parts.length === 2 && request.method === 'POST') {
         const input = await readJson(request); if (!UUID.test(input.visitor)) fail(400,'다시 시도해 주세요.');
+        await limit(`vote:${id}`, caps.votesPerReportPerDay, DAY); await limit('vote-day', caps.votesPerDay, DAY);
         const votes = await store.vote(id,await digest(`${rateSecret}:${id}:${input.visitor}`)); return json({ votes });
       }
       fail(405, '지원하지 않는 요청입니다.');

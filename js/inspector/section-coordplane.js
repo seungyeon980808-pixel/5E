@@ -8,10 +8,11 @@
  *   - 내보내기 포함 : exportable 토글(요구 6 잔존 기능).
  * 더블클릭 재편집도 같은 분기를 탄다(tools.js). */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { openPlaneModal } from "../function-graph/plane-modal.js?v=1.6.1-remediation-0929";
-import { openGraphModal } from "../graph/graph-modal.js?v=1.6.1-remediation-0929";
-import { state } from "../state.js?v=1.6.1-remediation-0929";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=1.7.0-four-session-integration";
+import { openGraphModal } from "../graph/graph-modal.js?v=1.7.0-four-session-integration";
+import { state } from "../state.js?v=1.7.0-four-session-integration";
 
 
 /* 라벨 가림(할로) 굵기 — 글자 크기 대비 배율. 비우면 기본값(0.13)을 쓴다.
@@ -36,7 +37,7 @@ function makeHaloRow(body, state, typeOf) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== typeOf || o.locked) return;
@@ -61,7 +62,7 @@ export function buildCoordplaneSection(ctx) {
   editBtn.type = "button";
   editBtn.textContent = "그래프 편집…";
   editBtn.title = "좌표 틀과 그 위의 함수·직선/꺾은선을 한 화면에서 편집합니다 (더블클릭과 동일)";
-  editBtn.style.cssText = "width:100%;margin-bottom:8px;font-size: 12px;padding:6px;border:1px solid var(--accent);border-radius:6px;background:color-mix(in srgb, var(--accent) 22%, var(--bg-input));color:var(--text-primary);cursor:pointer;";
+  editBtn.style.cssText = "width:100%;margin-bottom:8px;font-size: 12px;padding:6px;border:1px solid var(--accent);border-radius:6px;background:var(--control-selected-bg);color:var(--text-primary);cursor:pointer;";
   editBtn.addEventListener("click", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];

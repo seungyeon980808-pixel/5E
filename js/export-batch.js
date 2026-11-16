@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 /* ===== BATCH EXPORT (페이지 일괄 내보내기 — 폴더 연결 + 페이지 선택) =====
  *
  * "전체 페이지" 버튼이 바로 파일을 쏟아내던 동작을 중간 단계로 바꾼다.
@@ -15,12 +16,12 @@
  * 쓴다. 페이지별로 그 페이지의 4필드를 담은 스냅샷 상태를 만들어 넘긴다.
  */
 
-import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.1-remediation-0929";
-import { commitActivePage } from "./pages.js?v=1.6.1-remediation-0929";
-import { showAlert } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
+import { rasterizeExportCanvas } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { commitActivePage } from "./pages.js?v=1.7.0-four-session-integration";
+import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir,
-} from "./export-dir.js?v=1.6.1-remediation-0929";
+} from "./export-dir.js?v=1.7.0-four-session-integration";
 
 /* 저장 폴더는 js/export-dir.js 가 관리한다(단일 내보내기와 같은 폴더를 쓰기 위해).
  * 예전에는 이 파일 안에 있었는데, 단일 내보내기에서도 같은 폴더를 써야 해서 옮겼다. */
@@ -255,8 +256,3 @@ function downloadBlob(blob, name) {
   URL.revokeObjectURL(url);
 }
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => (
-    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-  ));
-}

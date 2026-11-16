@@ -1,4 +1,5 @@
-import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.1-remediation-0929";
+import { jsonClone } from "./json-clone.js?v=1.7.0-four-session-integration";
+import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.7.0-four-session-integration";
 /* ===== CUT TOOL — 삽입(생성) 후 캔버스에서 객체 자르기 (가위 하나) =====
 //
 // activeTool === "CUT" 또는 "DELAYED_CUT" 일 때 동작한다.
@@ -12,15 +13,15 @@ import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mount
 // 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
 // 스토어 교체(Undo 1스텝)만 담당. */
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.6.1-preview-labeler-0917-1111";
-import { snapAngle } from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
-import { simplifyRDP } from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.1-remediation-0929";
-import { resolveEndpointSnap } from "./snap.js?v=1.6.1-remediation-0929";
-import { setSnapPreview } from "./render.js?v=1.6.1-remediation-0929";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.7.0-four-session-integration";
+import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.7.0-four-session-integration";
+import { snapAngle } from "./geometry.js?v=1.7.0-four-session-integration";
+import { simplifyRDP } from "./geometry.js?v=1.7.0-four-session-integration";
+import { getObjectBBox } from "./pick.js?v=1.7.0-four-session-integration";
+import { resolveEndpointSnap } from "./snap.js?v=1.7.0-four-session-integration";
+import { setSnapPreview } from "./render.js?v=1.7.0-four-session-integration";
 
-import { snapKey } from "./platform.js?v=1.6.1-remediation-0929";
+import { snapKey } from "./platform.js?v=1.7.0-four-session-integration";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CUT_CURSOR = "crosshair";
 const MIN_STEP_PX = 2;   // 화면 2px 이상 움직여야 새 자유점 기록
@@ -303,7 +304,7 @@ function applyDelayedCuts() {
   const remainingIds = new Set(remaining.map((c) => c.objectId));
   working.push(...JSON.parse(JSON.stringify(original)).filter((o) => remainingIds.has(o.id)));
   _state.update((s) => {
-    s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+    s.undoStack.push(jsonClone(s.objects));
     s.redoStack = [];
     s.objects = working;
     s.selectedIds = addedIds;
@@ -402,7 +403,7 @@ function commitDelayedDraft() {
       // 자유곡선은 일반 자르기와 같은 매끄러운 curve 객체로 저장합니다.
       : { type: "curve", points: path.map((p) => ({ ...p })), closed: false };
   Object.assign(obj, { id: `obj_${Date.now().toString(36)}_delayed${++_idc}`, rotation: 0, strokeLevel: 0, strokeWidth: 0.35, fillNone: true, dashLength: 0, dashGap: 0, arrowHead: "none", locked: false, positionLocked: false, delayedCut: true, layerId: _state.get().activeLayerId, order: _state.get().objects.length });
-  _state.update((s) => { s.undoStack.push(JSON.parse(JSON.stringify(s.objects))); s.redoStack = []; s.objects.push(obj); s.selectedIds = [obj.id]; s.targetedId = null; });
+  _state.update((s) => { s.undoStack.push(jsonClone(s.objects)); s.redoStack = []; s.objects.push(obj); s.selectedIds = [obj.id]; s.targetedId = null; });
   _pendingCuts.push({ id: `delayed-cut-${++_pendingSeq}`, objectId: obj.id });
   _delayedDraft = null; renderDelayedCuts(); updateDelayedAction();
 }
@@ -622,7 +623,7 @@ function applyCut(path) {
 
   const stamp = Date.now().toString(36);
   _state.update((s) => {
-    const snapshot = JSON.parse(JSON.stringify(s.objects));
+    const snapshot = jsonClone(s.objects);
     const map = new Map(results.map((r) => [r.id, r.pieces]));
     const out = [];
     const addedPieces = [];

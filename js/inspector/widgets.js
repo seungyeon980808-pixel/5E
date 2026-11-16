@@ -154,6 +154,29 @@ export function makeColorPicker(onInput, onStart, onCommit) {
 }
 
 /* ----- Collapsible section wrapper ----- */
+export function makeTextDetailButton(onEdit) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "insp-text-detail-btn";
+  button.dataset.textDetailEdit = "";
+  button.title = "텍스트 상세 편집 · 글꼴, 기호, 수식";
+  button.setAttribute("aria-label", "텍스트 상세 편집");
+  button.setAttribute("aria-haspopup", "dialog");
+  button.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 15.5 6 4.5l3.5 11M3.7 12h4.6M11 16l.7-3.3 5-5a1.4 1.4 0 0 1 2 2l-5 5L11 16Zm4.5-7.1 2 2"/></svg>';
+  button.addEventListener("keydown", (event) => {
+    // Preserve native button activation; canvas Enter/Space shortcuts must not
+    // intercept a focused inspector control.
+    if (event.key === "Enter" || event.code === "Space") event.stopPropagation();
+  });
+  button.addEventListener("click", (event) => {
+    // A button inside summary opens the editor, without collapsing the section.
+    event.preventDefault();
+    event.stopPropagation();
+    onEdit();
+  });
+  return button;
+}
+
 export function makeSection(title, bodyEl) {
   const details = document.createElement("details");
   details.open = true;

@@ -1,0 +1,659 @@
+{
+  "id": "p2_2027_06_16",
+  "provenance": "recorded-actual-provider-response",
+  "expectedAnalyticSeries": [
+    "trajectory-A",
+    "trajectory-B"
+  ],
+  "plan": {
+    "schema": "5e.graph-reconstruction/v1",
+    "variant": "cartesian",
+    "coordinateMode": "observed",
+    "source": {
+      "id": "reference-1",
+      "hash": "sha256:8b1959be732be62b1930ad2457e8e061dbad3ff2d95135b4240026257e3887aa",
+      "width": 524,
+      "height": 504,
+      "plotBox": {
+        "x": 64,
+        "y": 15,
+        "w": 446,
+        "h": 438
+      }
+    },
+    "axisPlacement": {
+      "x": {
+        "mode": "fraction",
+        "value": 0
+      },
+      "y": {
+        "mode": "fraction",
+        "value": 0
+      }
+    },
+    "frame": {
+      "variant": "quadrant",
+      "arrowX": true,
+      "arrowY": true,
+      "arrowY2": false,
+      "tickTop": false,
+      "tickRight": false,
+      "arrowLength": 2.5,
+      "arrowWidth": 1.8,
+      "strokeWidth": 0.3
+    },
+    "axes": {
+      "x": {
+        "scale": "unknown",
+        "title": "x",
+        "displayTitle": "x",
+        "unit": "",
+        "min": null,
+        "max": null,
+        "step": null,
+        "ticks": [
+          {
+            "value": null,
+            "label": "2L",
+            "position": 0.3879,
+            "displayMath": "2L"
+          },
+          {
+            "value": null,
+            "label": "4L",
+            "position": 0.7735,
+            "displayMath": "4L"
+          }
+        ],
+        "orientation": "horizontal",
+        "titlePosition": {
+          "x": 0.975,
+          "y": -0.048
+        },
+        "titleAnchor": "middle"
+      },
+      "y": {
+        "scale": "unknown",
+        "title": "y",
+        "displayTitle": "y",
+        "unit": "",
+        "min": null,
+        "max": null,
+        "step": null,
+        "ticks": [
+          {
+            "value": null,
+            "label": "3L",
+            "position": 0.589,
+            "displayMath": "3L"
+          },
+          {
+            "value": null,
+            "label": "4L",
+            "position": 0.7865,
+            "displayMath": "4L"
+          }
+        ],
+        "orientation": "horizontal",
+        "titlePosition": {
+          "x": -0.043,
+          "y": 0.984
+        },
+        "titleAnchor": "middle"
+      }
+    },
+    "series": [
+      {
+        "id": "trajectory-A",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "normalized",
+        "label": "",
+        "endLabel": "",
+        "points": [
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 0.0045,
+            "y": 0.0685
+          },
+          {
+            "x": 0.0157,
+            "y": 0.1347
+          },
+          {
+            "x": 0.0336,
+            "y": 0.2009
+          },
+          {
+            "x": 0.0583,
+            "y": 0.2671
+          },
+          {
+            "x": 0.0852,
+            "y": 0.3219
+          },
+          {
+            "x": 0.1188,
+            "y": 0.3767
+          },
+          {
+            "x": 0.1547,
+            "y": 0.4247
+          },
+          {
+            "x": 0.1951,
+            "y": 0.468
+          },
+          {
+            "x": 0.2377,
+            "y": 0.5046
+          },
+          {
+            "x": 0.2825,
+            "y": 0.5365
+          },
+          {
+            "x": 0.3318,
+            "y": 0.5639
+          },
+          {
+            "x": 0.3879,
+            "y": 0.589
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateFamily": "none",
+        "breaks": [],
+        "endpoints": [
+          {
+            "index": 0,
+            "kind": "closed",
+            "markerSize": 0.95
+          },
+          {
+            "index": 12,
+            "kind": "closed",
+            "markerSize": 0.9
+          }
+        ],
+        "lineStyle": "dashed",
+        "strokeWidth": 0.3,
+        "dashLength": 2.1,
+        "dashGap": 1.1,
+        "markerShape": "none"
+      },
+      {
+        "id": "trajectory-B",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "normalized",
+        "label": "",
+        "endLabel": "",
+        "points": [
+          {
+            "x": 0.3879,
+            "y": 0.589
+          },
+          {
+            "x": 0.3924,
+            "y": 0.621
+          },
+          {
+            "x": 0.4036,
+            "y": 0.653
+          },
+          {
+            "x": 0.4193,
+            "y": 0.6804
+          },
+          {
+            "x": 0.4395,
+            "y": 0.7032
+          },
+          {
+            "x": 0.4641,
+            "y": 0.7237
+          },
+          {
+            "x": 0.4933,
+            "y": 0.742
+          },
+          {
+            "x": 0.5247,
+            "y": 0.7557
+          },
+          {
+            "x": 0.5583,
+            "y": 0.7671
+          },
+          {
+            "x": 0.5942,
+            "y": 0.7763
+          },
+          {
+            "x": 0.63,
+            "y": 0.7831
+          },
+          {
+            "x": 0.6682,
+            "y": 0.7865
+          },
+          {
+            "x": 0.7063,
+            "y": 0.7877
+          },
+          {
+            "x": 0.74,
+            "y": 0.7865
+          },
+          {
+            "x": 0.7735,
+            "y": 0.7865
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateFamily": "none",
+        "breaks": [],
+        "endpoints": [
+          {
+            "index": 14,
+            "kind": "closed",
+            "markerSize": 0.9
+          }
+        ],
+        "lineStyle": "dashed",
+        "strokeWidth": 0.3,
+        "dashLength": 2.1,
+        "dashGap": 1.1,
+        "markerShape": "none"
+      },
+      {
+        "id": "ring-A",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "normalized",
+        "points": [
+          {
+            "x": 0.025,
+            "y": 0
+          },
+          {
+            "x": 0.0177,
+            "y": 0.018
+          },
+          {
+            "x": 0,
+            "y": 0.0255
+          },
+          {
+            "x": -0.0177,
+            "y": 0.018
+          },
+          {
+            "x": -0.025,
+            "y": 0
+          },
+          {
+            "x": -0.0177,
+            "y": -0.018
+          },
+          {
+            "x": 0,
+            "y": -0.0255
+          },
+          {
+            "x": 0.0177,
+            "y": -0.018
+          },
+          {
+            "x": 0.025,
+            "y": 0
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateFamily": "none",
+        "closed": true,
+        "breaks": [],
+        "endpoints": [],
+        "lineStyle": "dashed",
+        "strokeWidth": 0.25,
+        "dashLength": 0.75,
+        "dashGap": 0.55,
+        "markerShape": "none"
+      },
+      {
+        "id": "ring-q",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "normalized",
+        "points": [
+          {
+            "x": 0.4126,
+            "y": 0.589
+          },
+          {
+            "x": 0.4054,
+            "y": 0.6068
+          },
+          {
+            "x": 0.3879,
+            "y": 0.6141
+          },
+          {
+            "x": 0.3704,
+            "y": 0.6068
+          },
+          {
+            "x": 0.3632,
+            "y": 0.589
+          },
+          {
+            "x": 0.3704,
+            "y": 0.5712
+          },
+          {
+            "x": 0.3879,
+            "y": 0.5639
+          },
+          {
+            "x": 0.4054,
+            "y": 0.5712
+          },
+          {
+            "x": 0.4126,
+            "y": 0.589
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateFamily": "none",
+        "closed": true,
+        "breaks": [],
+        "endpoints": [],
+        "lineStyle": "solid",
+        "strokeWidth": 0.3,
+        "markerShape": "none"
+      },
+      {
+        "id": "ring-p",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "normalized",
+        "points": [
+          {
+            "x": 0.7982,
+            "y": 0.7865
+          },
+          {
+            "x": 0.791,
+            "y": 0.8043
+          },
+          {
+            "x": 0.7735,
+            "y": 0.8116
+          },
+          {
+            "x": 0.756,
+            "y": 0.8043
+          },
+          {
+            "x": 0.7488,
+            "y": 0.7865
+          },
+          {
+            "x": 0.756,
+            "y": 0.7687
+          },
+          {
+            "x": 0.7735,
+            "y": 0.7614
+          },
+          {
+            "x": 0.791,
+            "y": 0.7687
+          },
+          {
+            "x": 0.7982,
+            "y": 0.7865
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateFamily": "none",
+        "closed": true,
+        "breaks": [],
+        "endpoints": [],
+        "lineStyle": "dashed",
+        "strokeWidth": 0.25,
+        "dashLength": 0.75,
+        "dashGap": 0.5,
+        "markerShape": "none"
+      }
+    ],
+    "annotations": [
+      {
+        "id": "origin",
+        "kind": "text",
+        "text": "O",
+        "x": -0.052,
+        "y": -0.055,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "label-A",
+        "kind": "text",
+        "text": "A",
+        "x": 0.065,
+        "y": 0.05,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "label-B",
+        "kind": "text",
+        "text": "B",
+        "x": 0.7735,
+        "y": 0.861,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "label-q",
+        "kind": "text",
+        "text": "q",
+        "x": 0.341,
+        "y": 0.657,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "label-p",
+        "kind": "text",
+        "text": "p",
+        "x": 0.835,
+        "y": 0.795,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "velocity-A",
+        "kind": "arrow",
+        "text": "",
+        "x": 0.0045,
+        "y": 0.028,
+        "to": {
+          "x": 0.0045,
+          "y": 0.16
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "strokeWidth": 0.45
+      },
+      {
+        "id": "velocity-A-label",
+        "kind": "text",
+        "text": "v",
+        "x": -0.047,
+        "y": 0.126,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "velocity-B",
+        "kind": "arrow",
+        "text": "",
+        "x": 0.7377,
+        "y": 0.7865,
+        "to": {
+          "x": 0.6121,
+          "y": 0.7865
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal",
+        "strokeWidth": 0.45
+      },
+      {
+        "id": "velocity-B-label",
+        "kind": "text",
+        "text": "v",
+        "x": 0.66,
+        "y": 0.845,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal"
+      },
+      {
+        "id": "guide-q-horizontal",
+        "kind": "guide",
+        "text": "",
+        "x": 0.3879,
+        "y": 0.589,
+        "to": {
+          "x": 0,
+          "y": 0.589
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal",
+        "seriesId": "trajectory-A",
+        "pointIndex": 12,
+        "strokeWidth": 0.2,
+        "dashLength": 1.05,
+        "dashGap": 0.65
+      },
+      {
+        "id": "guide-q-vertical",
+        "kind": "guide",
+        "text": "",
+        "x": 0.3879,
+        "y": 0.589,
+        "to": {
+          "x": 0.3879,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "seriesId": "trajectory-A",
+        "pointIndex": 12,
+        "strokeWidth": 0.2,
+        "dashLength": 1.05,
+        "dashGap": 0.65
+      },
+      {
+        "id": "guide-p-horizontal",
+        "kind": "guide",
+        "text": "",
+        "x": 0.7735,
+        "y": 0.7865,
+        "to": {
+          "x": 0,
+          "y": 0.7865
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal",
+        "seriesId": "trajectory-B",
+        "pointIndex": 14,
+        "strokeWidth": 0.2,
+        "dashLength": 1.05,
+        "dashGap": 0.65
+      },
+      {
+        "id": "guide-p-vertical",
+        "kind": "guide",
+        "text": "",
+        "x": 0.7735,
+        "y": 0.7865,
+        "to": {
+          "x": 0.7735,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "seriesId": "trajectory-B",
+        "pointIndex": 14,
+        "strokeWidth": 0.2,
+        "dashLength": 1.05,
+        "dashGap": 0.65
+      }
+    ],
+    "regions": [],
+    "style": {
+      "fontSizePx": 36,
+      "labelWeight": 400,
+      "strokeWidth": 0.3,
+      "guideStyle": {
+        "strokeWidth": 0.2,
+        "dashLength": 1.05,
+        "dashGap": 0.65
+      }
+    },
+    "review": []
+  },
+  "responseFile": "outputs/graph-restoration-20261008/live/p2_2027_06_16/response.txt",
+  "responseSha256": "7fe02502e762fc20e8bd00dfa83e66f9c093f5599071edee5ca3cf86f14f5a35",
+  "sourceFile": "outputs/graph-restoration-20261008/live/p2_2027_06_16/source.png",
+  "expectedValues": [
+    {
+      "seriesId": "trajectory-A",
+      "x": 0,
+      "y": 0,
+      "tolerance": 1e-06
+    },
+    {
+      "seriesId": "trajectory-A",
+      "x": 2,
+      "y": 3,
+      "tolerance": 1e-06
+    },
+    {
+      "seriesId": "trajectory-B",
+      "x": 2,
+      "y": 3,
+      "tolerance": 1e-06
+    },
+    {
+      "seriesId": "trajectory-B",
+      "x": 4,
+      "y": 4,
+      "tolerance": 1e-06
+    }
+  ]
+}

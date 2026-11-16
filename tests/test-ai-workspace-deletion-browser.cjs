@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const root = path.resolve(__dirname, '..');
-const evidenceRoot = process.env.DELETION_EVIDENCE || path.join(root, '.omo/evidence/ai-followup-0928/deletion/after');
+const evidenceRoot = process.env.DELETION_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-followup-0928/deletion/after');
 function seedRequestWorkspaces(count, initialGeneration = false, missingCapabilities = false, mode = 'pro') {
   localStorage.setItem('5e.tutorial.bannerSeen', 'true');
   localStorage.setItem('5e.preview:5e.mode', mode);
@@ -78,11 +78,13 @@ function seedRequestWorkspaces(count, initialGeneration = false, missingCapabili
 }
 
 async function requestBrowserFixture(context, count, evidence, { transferGate = '', initialGeneration = false, missingCapabilities = false, mode = 'pro' } = {}) {
+  const { fixtureContext, installAiMain } = require(path.join(root, 'tests/helpers/canonical-fixture-adapter.cjs'));
+  const { runtime, runtimeInit, inspectEntry, startServer, stopServer, mixedCandidate } = fixtureContext(root);
   const http = require('node:http');
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
   const server = http.createServer((request, response) => {
     let file = path.resolve(root, `.${new URL(request.url, 'http://localhost').pathname}`);
-    if (!file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
+    if (file !== root && !file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
     if (file.endsWith('/preview') || request.url.split('?')[0].endsWith('/')) file = path.join(file, 'index.html');
     fs.readFile(file, (error, body) => {
       response.writeHead(error ? 404 : 200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
@@ -109,29 +111,29 @@ async function requestBrowserFixture(context, count, evidence, { transferGate = 
     fs.writeFileSync(path.join(evidence, `cleanup-${count}.json`), JSON.stringify({ engine: process.env.TASK2_ENGINE || 'chromium', browserVersion: browser.version(), browserContextClosed: true, browserClosed: !browser.isConnected(), serverClosed: !server.listening, serverPort: port }));
   });
   const page = await browserContext.newPage();
-  // CI traces show the third-party font CSS body can stall DOMContentLoaded.
-  // This data/ownership suite uses platform fonts; font/pixel/performance suites
-  // retain their own real rendering inputs and strict checks.
-  await page.route('https://fonts.googleapis.com/**', route => route.fulfill({contentType:'text/css',body:''}));
   page.setDefaultTimeout(10_000);
   const errors = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('pageerror', error => { errors.push(error.message); console.error('DELETION PAGE ERROR', error.stack); });
   await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration}, ${missingCapabilities}, ${JSON.stringify(mode)})` });
-  await page.route('**/preview/js/main.js*', route => route.fulfill({ contentType: 'text/javascript', body:
-    'await window.__seedReady;\n' + fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8').replace(
-      'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });',
-      'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager = aiPanel; window.__integrationState = state;') }));
-  await page.route('**/preview/js/ai-panel.js*', route => {
-    let source = fs.readFileSync(path.join(root, 'preview/js/ai-panel.js'), 'utf8');
-    if (transferGate === 'snapshot') source = source.replace("return structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial });", "const snapshot = structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial }); window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; }); return snapshot;");
-    if (transferGate === 'import') source = source.replace("await taskStore.put({ ...snapshot, key: 'workspace', sharingMode: mode || null });", "await taskStore.put({ ...snapshot, key: 'workspace', sharingMode: mode || null }); window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; });");
+  await installAiMain(page, root, {}, evidence);
+  await page.route('**/js/ai-panel.js*', route => {
+    let source = fs.readFileSync(path.join(root, 'js/ai-panel.js'), 'utf8');
+    if (transferGate === 'snapshot') {
+      assert.equal(source.split("return structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial });").length - 1, 1);
+      source = source.replace("return structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial });", "const snapshot = structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial }); window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; }); return snapshot;");
+    }
+    if (transferGate === 'import') {
+      const seam = "await taskPersistence.replace({ ...recovered, key: 'workspace', sharingMode: mode || null }, () => {";
+      assert.equal(source.split(seam).length - 1, 1);
+      source = source.replace(seam, "window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; }); " + seam);
+    }
     return route.fulfill({contentType:'text/javascript',body:source});
   });
-  await page.route('**/preview/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:
-    fs.readFileSync(path.join(root,'preview/js/ai-task-workspaces.js'),'utf8').replace('pendingSelections.delete(key);','pendingSelections.delete(key); window.__transferSettled = true;')}));
-  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'domcontentloaded' });
-  await page.waitForFunction(() => Boolean(window.__task2Manager));
+  await page.route('**/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:
+    fs.readFileSync(path.join(root,'js/ai-task-workspaces.js'),'utf8').replace('pendingSelections.delete(key);','pendingSelections.delete(key); window.__transferSettled = true;')}));
+  const entryReceipt = await inspectEntry(page, `http://127.0.0.1:${server.address().port}`, runtime);
+  fs.writeFileSync(path.join(evidence, 'entry-' + count + '.json'), JSON.stringify(entryReceipt, null, 2));
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
@@ -146,10 +148,11 @@ const active = '#ai-image-panel';
 async function advanced(page) { const details = page.locator(`${active} .ai-advanced-settings`); if (!await details.evaluate(node => node.open)) await details.locator('summary').click(); }
 async function task(page, index) { await page.locator(`${active} [data-tab-id="task-${index}"] .ai-task-tab-select`).click(); await page.waitForFunction(index => document.querySelector('#ai-image-panel [data-tab-id="task-'+index+'"] .ai-task-tab-select')?.getAttribute('aria-pressed') === 'true', index); }
 async function chooseRevision(page, id) { await page.click(`${active} [data-ai-version-button]`); await page.click(`${active} [data-ai-candidate-option="${id}"]`); }
-async function openPanel(page) { await page.waitForFunction(() => Boolean(window.__task2Manager)); await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
+async function openPanel(page) { await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
 async function objects(page) { return page.evaluate(() => structuredClone(window.__integrationState.get().objects)); }
 async function removeTask(page, id) {
-  await page.click(`${active} [data-tab-id="${id}"] .ai-task-delete`);
+  await page.click(`${active} [data-tab-id="${id}"] .ai-task-tab-select`, { button: 'right' });
+  await page.getByRole('menuitem', { name: '작업대에서 삭제', exact: true }).click();
   await page.getByRole('dialog', {name:'작업 삭제',exact:true}).waitFor();
   await page.click(`${active} .ai-confirm-accept`);
   await page.locator('.ai-confirm-dialog').waitFor({state:'detached'});
@@ -192,7 +195,7 @@ for (const count of [1,3]) {
     assert.notEqual(result.selection?.taskId,'task-0');
     if(count===3){await task(page,2);await record(page,evidence,'remaining-open');}
     await page.evaluate(()=>window.__task2Manager.checkpointForClose());
-    await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
+    await page.reload({waitUntil:'networkidle'});await openPanel(page);
     const reloaded=await record(page,evidence,'reloaded');
     assert.deepEqual(reloaded.cards,count===1?[]:['task-2']);
     assert.equal(reloaded.sends,0);
@@ -213,7 +216,7 @@ for (const transferGate of ['snapshot','import']) {
     const result=await record(page,evidence,'callback-settled');
     assert.deepEqual(result.cards,['task-0'],'late callback must not resurrect a deleted task');
     assert.equal(result.selection.taskId,'task-0');assert.deepEqual(result.transfers,[]);
-    await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
+    await page.reload({waitUntil:'networkidle'});await openPanel(page);
     const reloaded=await record(page,evidence,'reloaded');assert.deepEqual(reloaded.cards,['task-0']);
     await task(page,0);assert.deepEqual(errors,[]);assert.deepEqual(alerts,[]);
   });
@@ -225,7 +228,7 @@ test('deleting a transferred workspace persists its empty state before disposal'
   const result=await record(page,evidence,'workspace-deleted');assert.deepEqual(result.cards,['task-0']);
   await task(page,0);await removeTask(page,'task-0');
   await page.evaluate(()=>window.__task2Manager.checkpointForClose());
-  await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
+  await page.reload({waitUntil:'networkidle'});await openPanel(page);
   const reloaded=await record(page,evidence,'all-deleted-reloaded');assert.deepEqual(reloaded.cards,[]);assert.deepEqual(errors,[]);
 });
 test('deleting the primary workspace preserves remaining task after reload', {timeout:60000},async context=>{
@@ -235,8 +238,43 @@ test('deleting the primary workspace preserves remaining task after reload', {ti
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select')?.getAttribute('aria-pressed')==='true');
   const result=await record(page,evidence,'primary-deleted');assert.deepEqual(result.cards,['task-1']);
   assert.equal(result.selection.taskId,'task-1');
-  await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
+  await page.reload({waitUntil:'networkidle'});await openPanel(page);
   const reloaded=await record(page,evidence,'reloaded');assert.deepEqual(reloaded.cards,['task-1']);
   await task(page,1);assert.equal(await page.locator(`${active} [data-ai-input]`).inputValue(),'선택 영역 안에 작은 사각형 추가');
   assert.deepEqual(errors,[]);
+});
+
+for (const engine of ['chromium', 'webkit']) test(`${engine}: completed task transfer survives a receipt cleanup storage failure`, {timeout:60000}, async context => {
+  process.env.TASK2_ENGINE = engine;
+  const evidence = path.join(evidenceRoot, 'receipt-cleanup', engine);
+  fs.mkdirSync(evidence, {recursive:true});
+  const {page,errors} = await requestBrowserFixture(context,2,evidence);
+  const alerts = [];
+  page.on('dialog', async dialog => { alerts.push(dialog.message()); await dialog.dismiss(); });
+  await page.evaluate(() => {
+    const set = Storage.prototype.setItem;
+    window.__cleanupFailures = 0;
+    Storage.prototype.setItem = function(key,value) {
+      if (this === localStorage && key === '5e.aiTaskTransfers.v1' && value === '[]' && !window.__cleanupFailures) {
+        window.__cleanupFailures++;
+        throw new DOMException('synthetic receipt cleanup storage failure', 'QuotaExceededError');
+      }
+      return set.call(this,key,value);
+    };
+  });
+  await page.click(`${active} [data-tab-id="task-1"] .ai-task-tab-select`);
+  await page.waitForFunction(() => window.__transferSettled === true);
+  assert.equal(await page.evaluate(() => window.__cleanupFailures), 1);
+  const result = await record(page,evidence,'cleanup-failed');
+  assert.deepEqual([...result.cards].sort(),['task-0','task-1'],'a completed durable transfer stays accessible');
+  assert.equal(result.selection.taskId,'task-1');
+  assert.equal(result.sends,0);
+  await page.reload({waitUntil:'networkidle'});
+  await openPanel(page);
+  const reloaded = await record(page,evidence,'reloaded');
+  assert.deepEqual([...reloaded.cards].sort(),['task-0','task-1']);
+  assert.deepEqual(reloaded.transfers,[],'recovery completes only the durable receipt');
+  assert.equal(reloaded.sends,0);
+  assert.deepEqual(errors,[]);
+  assert.deepEqual(alerts,[],'an already saved task is not reported as lost');
 });

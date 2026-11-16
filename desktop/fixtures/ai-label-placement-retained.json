@@ -1,0 +1,436 @@
+{
+  "general-soil-development": {
+    "resultSha256": "f8ba93b1d9b6b04bcc284a52ef3d6c9bfedc13ae11e9808ff6931e06a65db55c",
+    "labels": [
+      {
+        "text": "오랜 시간 동안 풍화 작용을 받아 식물이 자라고 동물\n이 생활할 수 있는 흙인 토양이 만들어진다.",
+        "evidence": "오랜 시간 동안 풍화 작용을 받아 식물이 자라고 동물\n이 생활할 수 있는 흙인 토양이 만들어진다.",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.2193,
+          "y": 0.0572
+        },
+        "position": {
+          "x": 0.2193,
+          "y": 0.0572
+        },
+        "typography": {
+          "role": "text",
+          "bounds": {
+            "x": 0.0199,
+            "y": 0.0066,
+            "w": 0.5043,
+            "h": 0.0945
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-1"
+      }
+    ],
+    "measurements": [
+      {
+        "id": "label-1",
+        "glyphBounds": {
+          "x": -0.03284908026755853,
+          "y": 0.019449139729198848,
+          "w": 0.5042224080267559,
+          "h": 0.08004659935548732
+        },
+        "layoutBounds": {
+          "x": -0.03285000000000002,
+          "y": 0.022390492707345746,
+          "w": 0.5043,
+          "h": 0.06961901458530852
+        }
+      }
+    ]
+  },
+  "general-solenoid-field": {
+    "resultSha256": "ca983b1abd84fd051530132e83a7383eee2de0d492fe3f47124cd847c558f658",
+    "labels": [
+      {
+        "text": "그림 16 | 전류가 흐르는 코일 주위의 자기장",
+        "evidence": "그림 16 | 전류가 흐르는 코일 주위의 자기장",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.417,
+          "y": 0.961
+        },
+        "position": {
+          "x": 0.417,
+          "y": 0.961
+        },
+        "typography": {
+          "role": "text",
+          "bounds": {
+            "x": 0.006,
+            "y": 0.927,
+            "w": 0.821,
+            "h": 0.058
+          },
+          "rotation": 0,
+          "runs": [
+            {
+              "text": "그림 ",
+              "role": "text",
+              "contentMode": "plain"
+            },
+            {
+              "text": "16",
+              "role": "number",
+              "contentMode": "plain"
+            },
+            {
+              "text": " | 전류가 흐르는 코일 주위의 자기장",
+              "role": "text",
+              "contentMode": "plain"
+            }
+          ]
+        },
+        "scope": "general",
+        "id": "label-3"
+      }
+    ],
+    "measurements": [
+      {
+        "id": "label-3",
+        "glyphBounds": {
+          "x": 0.006502261656228254,
+          "y": 0.9130456933147831,
+          "w": 0.8082702679192763,
+          "h": 0.09041095890410959
+        },
+        "layoutBounds": {
+          "x": 0.006500000000000009,
+          "y": 0.9332117483415389,
+          "w": 0.821,
+          "h": 0.0555765033169224
+        }
+      }
+    ]
+  },
+  "general-plant-storage": {
+    "resultSha256": "1db9c9b7e9ee5ab0ba055e7c6960f663e669cdf404660dc8538a03581b3a20e7",
+    "labels": [
+      {
+        "text": "물",
+        "evidence": "물",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.176,
+          "y": 0.455
+        },
+        "position": {
+          "x": 0.176,
+          "y": 0.455
+        },
+        "typography": {
+          "role": "text",
+          "bounds": {
+            "x": 0.158,
+            "y": 0.432,
+            "w": 0.036,
+            "h": 0.046
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-1"
+      },
+      {
+        "text": "+",
+        "evidence": "+",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.205,
+          "y": 0.456
+        },
+        "position": {
+          "x": 0.205,
+          "y": 0.456
+        },
+        "typography": {
+          "role": "symbol",
+          "bounds": {
+            "x": 0.198,
+            "y": 0.441,
+            "w": 0.014,
+            "h": 0.03
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-2"
+      },
+      {
+        "text": "이산화 탄소",
+        "evidence": "이산화 탄소",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.259,
+          "y": 0.455
+        },
+        "position": {
+          "x": 0.259,
+          "y": 0.455
+        },
+        "typography": {
+          "role": "text",
+          "bounds": {
+            "x": 0.211,
+            "y": 0.432,
+            "w": 0.097,
+            "h": 0.046
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-3"
+      },
+      {
+        "text": "→",
+        "evidence": "→",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.318,
+          "y": 0.457
+        },
+        "position": {
+          "x": 0.318,
+          "y": 0.457
+        },
+        "typography": {
+          "role": "symbol",
+          "bounds": {
+            "x": 0.31,
+            "y": 0.445,
+            "w": 0.018,
+            "h": 0.025
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-4"
+      },
+      {
+        "text": "포도당",
+        "evidence": "포도당",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.367,
+          "y": 0.455
+        },
+        "position": {
+          "x": 0.367,
+          "y": 0.455
+        },
+        "typography": {
+          "role": "text",
+          "bounds": {
+            "x": 0.339,
+            "y": 0.432,
+            "w": 0.057,
+            "h": 0.046
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-5"
+      },
+      {
+        "text": "+",
+        "evidence": "+",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.408,
+          "y": 0.456
+        },
+        "position": {
+          "x": 0.408,
+          "y": 0.456
+        },
+        "typography": {
+          "role": "symbol",
+          "bounds": {
+            "x": 0.401,
+            "y": 0.441,
+            "w": 0.014,
+            "h": 0.03
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-6"
+      },
+      {
+        "text": "산소",
+        "evidence": "산소",
+        "sourceKind": "reference",
+        "sourceRef": 1,
+        "mode": "text",
+        "labelType": "label",
+        "contentMode": "plain",
+        "anchor": {
+          "x": 0.443,
+          "y": 0.455
+        },
+        "position": {
+          "x": 0.443,
+          "y": 0.455
+        },
+        "typography": {
+          "role": "text",
+          "bounds": {
+            "x": 0.42,
+            "y": 0.432,
+            "w": 0.047,
+            "h": 0.046
+          },
+          "rotation": 0
+        },
+        "scope": "general",
+        "id": "label-7"
+      }
+    ],
+    "measurements": [
+      {
+        "id": "label-1",
+        "glyphBounds": {
+          "x": 0.15837777303754266,
+          "y": 0.42450332286084574,
+          "w": 0.03523890784982935,
+          "h": 0.06710152746024581
+        },
+        "layoutBounds": {
+          "x": 0.15838021825739465,
+          "y": 0.432,
+          "w": 0.0352395634852107,
+          "h": 0.046
+        }
+      },
+      {
+        "id": "label-2",
+        "glyphBounds": {
+          "x": 0.1980002133105802,
+          "y": 0.4347856989111283,
+          "w": 0.014003839590443686,
+          "h": 0.04193849021435228
+        },
+        "layoutBounds": {
+          "x": 0.198,
+          "y": 0.4455274338204362,
+          "w": 0.014,
+          "h": 0.02094513235912764
+        }
+      },
+      {
+        "id": "label-3",
+        "glyphBounds": {
+          "x": 0.2105002133105802,
+          "y": 0.4394987449397134,
+          "w": 0.09699232081911263,
+          "h": 0.034482758620689655
+        },
+        "layoutBounds": {
+          "x": 0.2105,
+          "y": 0.4423855687956067,
+          "w": 0.097,
+          "h": 0.02522886240878662
+        }
+      },
+      {
+        "id": "label-4",
+        "glyphBounds": {
+          "x": 0.30900170648464165,
+          "y": 0.4351783603124272,
+          "w": 0.018003412969283275,
+          "h": 0.04193849021435228
+        },
+        "layoutBounds": {
+          "x": 0.30900000000000005,
+          "y": 0.4471347575810974,
+          "w": 0.017999999999999995,
+          "h": 0.01973048483780528
+        }
+      },
+      {
+        "id": "label-5",
+        "glyphBounds": {
+          "x": 0.14650170648464164,
+          "y": 0.3430392788818587,
+          "w": 0.056985921501706484,
+          "h": 0.036346691519105315
+        },
+        "layoutBounds": {
+          "x": 0.1465,
+          "y": 0.34595438130635126,
+          "w": 0.057,
+          "h": 0.026091237387297486
+        }
+      },
+      {
+        "id": "label-6",
+        "glyphBounds": {
+          "x": 0.6170008532423208,
+          "y": 0.44078568798964646,
+          "w": 0.014003839590443686,
+          "h": 0.04193846177299336
+        },
+        "layoutBounds": {
+          "x": 0.6169999999999999,
+          "y": 0.4515274338204362,
+          "w": 0.014,
+          "h": 0.02094513235912764
+        }
+      },
+      {
+        "id": "label-7",
+        "glyphBounds": {
+          "x": 0.557497866894198,
+          "y": 0.3395815775534424,
+          "w": 0.04700298634812287,
+          "h": 0.04473438956197577
+        },
+        "layoutBounds": {
+          "x": 0.5575,
+          "y": 0.34330974294282535,
+          "w": 0.04700000000000001,
+          "h": 0.03138051411434929
+        }
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 /** Review-only, byte-preserving comparison for a scoped-edit proposal. */
-import { deriveRgbaChangeMask } from './ai-scoped-edit.js?v=1.6.1-preview-labeler-0917-1111';
-import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.1-remediation-0929';
+import { deriveRgbaChangeMask } from './ai-scoped-edit.js?v=1.7.0-four-session-integration';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 
 function copyPng(value, label) {
   if (!(value instanceof Uint8Array) || !value.length
@@ -86,11 +86,13 @@ export async function createScopedEditComparison(originalRawPng, proposalPreview
 
   const tools = makeElement('div', 'ai-scoped-edit-comparison-tools');
   tools.style.cssText = 'display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-block:1px solid var(--border,#30363d);padding:7px 0;';
-  const metric = makeElement('strong', '', `실제 RGBA 변경 ${number(changes.changedPixelCount)} px`);
+  // 11-11 사용자: 개발자 말투(RGBA·마스크·좌표) 대신 교사가 읽는 말로.
+  const share = original.width * original.height ? changes.changedPixelCount / (original.width * original.height) : 0;
+  const metric = makeElement('strong', '', changes.changedPixelCount ? `그림의 ${share < 0.01 ? '1% 미만' : Math.round(share * 100) + '%'}가 바뀜` : '바뀐 곳 없음');
   const bounds = changes.bounds
     ? `x [${changes.bounds.x0}, ${changes.bounds.x1}), y [${changes.bounds.y0}, ${changes.bounds.y1})`
     : '변경 없음';
-  const detail = makeElement('span', '', `${original.width} × ${original.height} px · ${bounds}`);
+  const detail = makeElement('span', '', ''); void bounds;
   detail.style.color = 'var(--text-secondary,#8b949e)';
   const zoomLabel = makeElement('label', '', '확대');
   const zoom = makeElement('input');
@@ -102,20 +104,20 @@ export async function createScopedEditComparison(originalRawPng, proposalPreview
 
   const originalImage = makeElement('img'); originalImage.alt = '원본 PNG';
   const previewImage = makeElement('img'); previewImage.alt = '수정 후 후보 PNG';
-  const maskCanvas = makeElement('canvas'); maskCanvas.setAttribute('aria-label', '실제 RGBA 변경 마스크');
+  const maskCanvas = makeElement('canvas'); maskCanvas.setAttribute('aria-label', '바뀐 곳');
   const originalUrl = URL.createObjectURL(new Blob([originalPng], { type: 'image/png' }));
   const previewUrl = URL.createObjectURL(new Blob([previewPng], { type: 'image/png' }));
   originalImage.src = originalUrl; previewImage.src = previewUrl;
 
   const originalPane = viewPane('원본', originalImage, original.width, original.height);
   const previewPane = viewPane('수정 후', previewImage, original.width, original.height);
-  const maskPane = viewPane('실제 변경 마스크', maskCanvas, original.width, original.height);
+  const maskPane = viewPane('바뀐 곳', maskCanvas, original.width, original.height);
   // Assigning canvas width/height clears its bitmap, even if unchanged.
   setCanvasMask(maskCanvas, original.width, original.height, changes.mask);
   const grid = makeElement('div', 'ai-scoped-edit-comparison-grid');
   grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:680px;';
   grid.append(originalPane.pane, previewPane.pane, maskPane.pane);
-  const legend = makeElement('p', '', '파란색은 원본과 수정 후 PNG의 RGBA 값이 실제로 다른 픽셀입니다. 마스크는 별도 Canvas이며 두 PNG 파일을 다시 인코딩하거나 변경하지 않습니다.');
+  const legend = makeElement('p', '', '파랗게 칠한 곳이 수정으로 바뀐 부분입니다.');
   legend.style.cssText = 'margin:0;color:var(--text-secondary,#8b949e);font-size:11px;line-height:1.4;';
   root.append(tools, grid, legend);
 

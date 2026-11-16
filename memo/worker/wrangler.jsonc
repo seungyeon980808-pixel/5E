@@ -16,5 +16,9 @@
       "migrations_dir": "migrations"
     }
   ],
+  "ratelimits": [
+    { "name": "MEMO_CREATE_LIMITER", "namespace_id": "5101", "simple": { "limit": 10, "period": 60 } },
+    { "name": "MEMO_WRITE_LIMITER", "namespace_id": "5102", "simple": { "limit": 30, "period": 60 } }
+  ],
   "account_id": "a6dd35b7aa385514042f9003bc937b92"
 }

@@ -1,9 +1,11 @@
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
 export const PRESERVE_UNREQUESTED = '\n수정 계약: 코멘트와 이번 요청에 명시된 변경만 허용한다. 명시되지 않은 물체·개수·연결·안팎·액체 위치·배치·색조는 선택한 수정 대상 버전대로 보존한다. 최초 원본은 과학적 의미의 근거로 함께 대조한다. 요청하지 않은 변화는 검수 실패 또는 확인 필요로 보고한다. 코멘트 표시와 번호는 출력 그림에 그리지 않는다.';
 
 const BOX_KEYS = ['x', 'y', 'w', 'h'];
-const TOOL_NAMES = new Set(['pan', 'point', 'area']);
+const TOOL_NAMES = new Set(['select', 'pan', 'point', 'area', 'free']);
 const clamp = value => Math.max(0, Math.min(100, value));
-const commentKey = (item, comment) => `${item.id}:${comment.number}`;
+const commentKey = (item, comment) => `${item.id}:${commentDisplayNumber(item, comment)}`;
+export const commentDisplayNumber = (item, comment) => (item.comments || []).indexOf(comment) + 1;
 const commentText = comment => String(comment?.text || '');
 
 export function normalizeCommentBox(value) {
@@ -49,7 +51,7 @@ export function mapImageCommentToComposite(comment, sourceRect) {
     w: box.w / 100 * rect.w,
     h: box.h / 100 * rect.h,
   });
-  return mapped ? { ...comment, ...mapped } : null;
+  return mapped ? { ...comment, ...mapped, ...(comment.polygon ? {polygon:comment.polygon.map(p=>({x:rect.x+p.x/100*rect.w,y:rect.y+p.y/100*rect.h}))} : {}) } : null;
 }
 
 export function buildCommentRequest(images = [], { sourceRectsById } = {}) {
@@ -66,7 +68,7 @@ export function buildCommentRequest(images = [], { sourceRectsById } = {}) {
       const projected = hasSourceRect ? mapImageCommentToComposite(comment, sourceRect) : comment;
       const box = projected ? normalizeCommentBox(projected) : null;
       if (!commentText(comment).trim() || !box) continue;
-      lines.push(`[${item.kind === 'reference' ? '원본' : '선택 버전'} ${item.name}; 이미지ID ${item.id}] ${comment.type === 'point' ? '점' : '영역'} ${comment.number} (x=${box.x}%, y=${box.y}%, w=${box.w}%, h=${box.h}%): ${commentText(comment).trim()}`);
+      lines.push(`[${item.kind === 'reference' ? '원본' : '선택 버전'} ${item.name}; 이미지ID ${item.id}] ${comment.type === 'point' ? '점' : comment.polygon ? '자유 영역' : '박스'} ${commentDisplayNumber(item, comment)} (x=${box.x}%, y=${box.y}%, w=${box.w}%, h=${box.h}%${projected.polygon ? '; polygon=' + JSON.stringify(projected.polygon) : ''}): ${commentText(comment).trim()}`);
     }
   }
   return lines.length ? `\n\n위치별 코멘트:\n${lines.join('\n')}` : '';
@@ -96,19 +98,73 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, changed, viewChanged }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, selectedTaskBlocked = () => 0, isTextCreation = () => false, changed, viewChanged, areaOnlyForSelected = false }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
   const bindings = new Map();
   const cleanup = [];
-  let tool = 'pan';
-  let markersVisible = true;
+  let tool = 'select';
+  const scopedTarget = () => areaOnlyForSelected && !isTextCreation() && images().find(item => item.kind === 'generated' && item.id === getSelectedId() && !item.graphResult && !item.sceneResult);
+  let markersVisible = false;
   let selected = null;
-  let geometrySelection = null;
-  let geometry = null;
   let frame = null;
   let destroyed = false;
+  const erasing = () => panel.dataset.aiLocalEraseActive === 'true';
+  const precisionOpen = new Set();
+  // Reuse the anchored editor through marker redraws so typing and caret survive.
+  let closeTimer = null;
+  let editing = false;
+  const popover = doc.createElement('section');
+  popover.className = 'ai-comment-popover'; popover.dataset.aiCommentPopover = '';
+  popover.setAttribute('role', 'dialog'); popover.setAttribute('aria-label', '위치 코멘트 편집');
+  popover.hidden = true;
+  const closePopoverButton = doc.createElement('button');
+  closePopoverButton.type = 'button'; closePopoverButton.className = 'ai-comment-popover-close';
+  closePopoverButton.textContent = '×'; closePopoverButton.setAttribute('aria-label', '코멘트 닫기');
+  const deletePopoverButton = doc.createElement('button');
+  deletePopoverButton.type = 'button'; deletePopoverButton.dataset.aiInlineDelete = '';
+  deletePopoverButton.textContent = '삭제'; deletePopoverButton.setAttribute('aria-label', '선택 코멘트 삭제');
+  const popoverActions = doc.createElement('div'); popoverActions.className = 'ai-comment-popover-actions';
+  popoverActions.append(deletePopoverButton, closePopoverButton);
+  const inlineList = doc.createElement('div'); inlineList.dataset.aiComments = '';
+  popover.append(popoverActions, inlineList); panel.append(popover);
+  let editorKey = null;
+  const cancelClose = () => { win.clearTimeout(closeTimer); closeTimer = null; };
+  function hidePopover() {
+    cancelClose(); editing = false; popover.hidden = true;
+    delete panel.dataset.aiCommentEditing;
+    scheduleMarkers();
+  }
+  function scheduleClose() {
+    cancelClose();
+    if (editing || popover.contains(doc.activeElement)) return;
+    closeTimer = win.setTimeout(hidePopover, 180);
+  }
+  function positionPopover() {
+    if (popover.hidden) return;
+    const active = current();
+    const pin = bindings.get(active?.item)?.pins?.get(active?.comment.number);
+    if (!pin?.isConnected || !markersVisible || panel.hidden) { hidePopover(); return; }
+    const bounds = panel.getBoundingClientRect();
+    const area = (q('.ai-results') || panel).getBoundingClientRect();
+    const anchor = pin.getBoundingClientRect();
+    const scale = bounds.width / (panel.offsetWidth || bounds.width) || 1;
+    const margin = 8 * scale;
+    const left = Math.max(bounds.left, area.left) + margin;
+    const right = Math.min(bounds.right, area.right) - margin;
+    const top = Math.max(bounds.top, area.top) + margin;
+    const bottom = Math.min(bounds.bottom, area.bottom) - margin;
+    if (anchor.bottom < top || anchor.top > bottom || anchor.right < left || anchor.left > right) { hidePopover(); return; }
+    popover.style.width = `${Math.max(1, Math.min(420, (right - left) / scale))}px`;
+    popover.style.maxHeight = `${Math.max(1, (bottom - top) / scale)}px`;
+    const size = popover.getBoundingClientRect();
+    const x = Math.max(left, Math.min(anchor.left, right - size.width));
+    const below = anchor.bottom + margin;
+    const y = Math.max(top, Math.min(below + size.height <= bottom ? below : anchor.top - margin - size.height, bottom - size.height));
+    popover.style.left = `${(x - bounds.left) / scale}px`;
+    popover.style.top = `${(y - bounds.top) / scale}px`;
+  }
 
   function listen(target, event, handler, options) {
     target?.addEventListener(event, handler, options);
@@ -118,7 +174,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   }
 
   function images() { return getImages() || []; }
-  function allowed() { return images().filter(item => isImageCommentTarget(item, getSelectedId())); }
+  function allowed() { const result = scopedTarget(); return result ? [result] : images().filter(item => isImageCommentTarget(item, getSelectedId())); }
   function entries() {
     return allowed().flatMap(item => (item.comments || []).map(comment => ({ item, comment })));
   }
@@ -131,17 +187,21 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       button.classList.toggle('is-on', active);
       button.setAttribute('aria-pressed', String(active));
     });
-    if (q('[data-ai-chat-panel]')) q('[data-ai-chat-panel]').hidden = !chat;
+    // 11-11: 옆 탭을 없앴다. 대화 칸은 항상 보이고(입력·실행이 그 아래 독에 있다), 코멘트 칸만 탭 상태를 따른다.
+    if (q('[data-ai-chat-panel]')) q('[data-ai-chat-panel]').hidden = false;
     if (q('[data-ai-comments-panel]')) q('[data-ai-comments-panel]').hidden = chat;
   }
 
-  function select(item, comment) {
+  function select(item, comment, { focus = false } = {}) {
     if (isBusy()) return;
+    cancelClose();
+    if (selected !== commentKey(item, comment)) editing = false;
     selected = commentKey(item, comment);
-    activateTab('comments');
+    markersVisible = true;
+    popover.hidden = false; panel.dataset.aiCommentEditing = 'true';
     render();
-    panel.tabIndex = -1;
-    panel.focus({ preventScroll: true });
+    positionPopover();
+    if (focus) { editing = true; popover.querySelector('[data-ai-inline-editor]')?.focus({ preventScroll: true }); }
   }
 
   function positionBox(element, box, imageGeometry) {
@@ -157,7 +217,10 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const entry = bindings.get(item);
     if (!entry) return;
     const { stage, img } = entry;
-    stage.querySelectorAll('[data-ai-comment-marker]').forEach(marker => marker.remove());
+    stage.querySelectorAll('.ai-comment-region[data-ai-comment-marker]').forEach(marker => marker.remove());
+    entry.pins ||= new Map();
+    const numbers = new Set((item.comments || []).map(comment => comment.number));
+    for (const [number, pin] of entry.pins) if (!numbers.has(number) || !isImageCommentTarget(item, getSelectedId())) { pin.remove(); entry.pins.delete(number); }
     if (!isImageCommentTarget(item, getSelectedId())) return;
     const imageGeometry = getImageStageGeometry(stage, img);
     if (!imageGeometry) return;
@@ -172,23 +235,33 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         outline.setAttribute('aria-hidden', 'true');
         outline.style.pointerEvents = 'none';
         positionBox(outline, box, imageGeometry);
+        if (comment.polygon) drawPolygon(outline,comment.polygon,box);
         stage.append(outline);
       }
-      const pin = doc.createElement('button');
-      pin.type = 'button';
+      let pin = entry.pins.get(comment.number);
+      if (!pin) {
+        pin = doc.createElement('button'); pin.type = 'button'; entry.pins.set(comment.number, pin);
+
+      }
       pin.dataset.aiCommentMarker = '';
       pin.className = `ai-comment-marker${active ? ' is-active' : ''}`;
-      pin.textContent = String(comment.number);
-      pin.title = commentText(comment) || '코멘트 입력';
+      if (pin.textContent !== String(commentDisplayNumber(item, comment))) pin.textContent = String(commentDisplayNumber(item, comment));
+      pin.setAttribute('aria-expanded', String(active && !popover.hidden));
       pin.disabled = isBusy();
-      pin.setAttribute('aria-label', `${item.name} 코멘트 ${comment.number}`);
+      pin.setAttribute('aria-label', `${item.name} 코멘트 ${commentDisplayNumber(item, comment)}`);
       pin.setAttribute('aria-pressed', String(active));
       Object.assign(pin.style, {
         left: `${imageGeometry.left + box.x / 100 * imageGeometry.width}px`,
         top: `${imageGeometry.top + box.y / 100 * imageGeometry.height}px`,
       });
-      pin.onclick = event => { event.stopPropagation(); select(item, comment); };
-      stage.append(pin);
+      pin.onpointerenter = event => {
+        if (event.pointerType === 'touch' || editing && selected !== commentKey(item, comment)) return;
+        select(item, comment);
+      };
+      pin.onpointerleave = event => { if (!popover.contains(event.relatedTarget)) scheduleClose(); };
+      pin.onclick = event => { event.stopPropagation(); select(item, comment, {focus: event.detail === 0}); };
+      pin.setAttribute('aria-haspopup', 'dialog');
+      if (pin.parentElement !== stage) stage.append(pin);
     }
     if (entry.drag?.type === 'area' && entry.drag.box) drawPreview(entry, entry.drag.box);
   }
@@ -198,6 +271,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const callback = () => {
       frame = null;
       for (const item of images()) renderMarkers(item);
+      positionPopover();
     };
     frame = win.requestAnimationFrame ? win.requestAnimationFrame(callback) : setTimeout(callback, 0);
   }
@@ -224,6 +298,13 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   function renderList(allEntries) {
     const list = q('[data-ai-comments]');
     if (!list) return;
+    const activeEntries = allEntries.filter(({item, comment}) => commentKey(item, comment) === selected);
+    const key = activeEntries.map(({item, comment}) => commentKey(item, comment) + commentDisplayNumber(item, comment) + JSON.stringify(comment.precisionCheck || null)).join();
+    if (editorKey === key && list.children.length) {
+      list.querySelectorAll('textarea, button, input, select').forEach(control => { control.disabled = isBusy(); });
+      return;
+    }
+    editorKey = key;
     list.replaceChildren();
     if (!allEntries.length) {
       const text = doc.createElement('p');
@@ -231,25 +312,20 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       const historical = getImages().filter(item => item.kind === 'generated' && item.id !== getSelectedId() && item.comments?.length);
       text.textContent = historical.length
         ? '이 버전에는 새 코멘트가 없습니다. 이전 코멘트는 원래 버전에 보관되어 있습니다. 버전 목록에서 확인할 수 있습니다.'
+        : scopedTarget() ? '수정 박스를 그리고 각 박스에 바꿀 내용을 적으세요. 박스 밖은 원본 그대로 유지됩니다.'
         : '점 또는 영역 도구로 그림에 코멘트를 남기세요. 지정하지 않은 부분은 보존합니다.';
       list.append(text);
     }
-    for (const { item, comment } of allEntries) {
+    for (const { item, comment } of activeEntries) {
       const row = doc.createElement('article');
       row.className = `ai-workbench-comment${commentKey(item, comment) === selected ? ' is-active' : ''}`;
       row.dataset.aiCommentRow = '';
       row.dataset.active = String(commentKey(item, comment) === selected);
-      const choose = doc.createElement('button');
-      choose.type = 'button';
-      choose.setAttribute('aria-pressed', String(commentKey(item, comment) === selected));
-      choose.disabled = isBusy();
-      choose.textContent = `${comment.number}. ${item.kind === 'reference' ? '원본' : '선택 버전'} · ${comment.type === 'point' ? '점' : '영역'}`;
-      choose.onclick = () => select(item, comment);
       const editor = doc.createElement('textarea');
       editor.dataset.aiInlineEditor = '';
       editor.value = commentText(comment);
       editor.placeholder = '이 위치에서 바꿀 내용을 입력하세요.';
-      editor.setAttribute('aria-label', `코멘트 ${comment.number} 내용`);
+      editor.setAttribute('aria-label', `코멘트 ${commentDisplayNumber(item, comment)} 내용`);
       editor.disabled = isBusy();
       editor.oninput = () => {
         if (isBusy()) return;
@@ -258,14 +334,89 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         changed();
         updateControls(entries());
       };
-      const remove = doc.createElement('button');
-      remove.type = 'button';
-      remove.dataset.aiInlineDelete = '';
-      remove.textContent = '삭제';
-      remove.setAttribute('aria-label', `코멘트 ${comment.number} 삭제`);
-      remove.disabled = isBusy();
-      remove.onclick = () => { selected = commentKey(item, comment); deleteSelectedComment(); };
-      row.append(choose, editor, remove);
+      row.append(editor);
+      if (scopedTarget() === item && comment.type === 'area') {
+        const details = doc.createElement('details');
+        details.dataset.aiPrecisionSettings = '';
+        const key = commentKey(item, comment);
+        details.open = precisionOpen.has(key);
+        const summary = doc.createElement('summary');
+        summary.textContent = comment.precisionCheck ? '고급 · 수치 검증 설정됨' : '고급 · 수치 검증 실험';
+        details.addEventListener('toggle', () => { if (details.isConnected) {
+          if (details.open) precisionOpen.add(key); else precisionOpen.delete(key);
+        } });
+        const typeLabel = doc.createElement('label');
+        typeLabel.textContent = '검증할 수정';
+        const type = doc.createElement('select');
+        type.dataset.aiPrecisionKind = '';
+        type.dataset.aiInputMutator = '';
+        type.setAttribute('aria-label', `박스 ${commentDisplayNumber(item, comment)} 검증할 수정`);
+        for (const [value,text] of [['','사람 검토만'],['move','이동'],['circles','원 추가'],['disconnect','가로선 끊기']]) {
+          const option = doc.createElement('option'); option.value=value; option.textContent=text; type.append(option);
+        }
+        type.value = comment.precisionCheck?.kind || '';
+        const img = bindings.get(item)?.img;
+        type.disabled = isBusy() || !img?.naturalWidth || !img?.naturalHeight;
+        type.onchange = () => {
+          if (isBusy()) return;
+          if (!type.value) delete comment.precisionCheck;
+          else {
+            const r = {x0:Math.ceil(comment.x/100*img.naturalWidth),y0:Math.ceil(comment.y/100*img.naturalHeight),
+              x1:Math.floor((comment.x+comment.w)/100*img.naturalWidth),y1:Math.floor((comment.y+comment.h)/100*img.naturalHeight)};
+            comment.precisionCheck = {kind:type.value,search:r,
+              ...(type.value==='move'?{dx:0,dy:0}:type.value==='disconnect'?{gap:30}:
+                {diameter:0,centers:[{x:Math.floor((r.x0+r.x1)/2),y:Math.floor((r.y0+r.y1)/2)}]})};
+          }
+          changed(); render();
+        };
+        typeLabel.append(type); details.append(summary,typeLabel);
+        const check = comment.precisionCheck;
+        if (check) {
+          const fields = doc.createElement('div'); fields.dataset.aiPrecisionFields='';
+          const numeric = (name,value,update,{min,step=1,max}={}) => {
+            const label = doc.createElement('label'); label.textContent=name;
+            const input = doc.createElement('input'); input.type='number'; input.value=String(value);
+            input.dataset.aiInputMutator='';
+            input.inputMode=min===undefined?'text':step<1?'decimal':'numeric';
+            input.step=String(step); if(min!==undefined)input.min=String(min);
+            if(max!==undefined)input.max=String(max);
+            input.setAttribute('aria-label',`박스 ${commentDisplayNumber(item, comment)} ${name}`);
+            input.disabled=isBusy();
+            input.onchange=()=>{
+              if(isBusy())return;
+              const next=input.value.trim()?Number(input.value):NaN;
+              if(!Number.isFinite(next)||!input.validity.valid){input.value=String(value);return;}
+              value=next;update(next);changed();
+            };
+            label.append(input); fields.append(label); return input;
+          };
+          if (check.kind==='move') {
+            numeric('가로 이동 px',check.dx,v=>check.dx=v);
+            numeric('세로 이동 px',check.dy,v=>check.dy=v);
+          } else if (check.kind==='circles') {
+            numeric('추가 개수',check.centers.length,v=>{
+              check.centers=Array.from({length:v},(_,i)=>check.centers[i]||{x:0,y:0}); render();
+            },{min:1,max:8});
+            numeric('지름 px',check.diameter,v=>check.diameter=v,{min:1});
+            check.centers.forEach((center,index)=>{
+              numeric(`중심 ${index+1} 가로 px`,center.x,v=>center.x=v,{min:0,step:0.5});
+              numeric(`중심 ${index+1} 세로 px`,center.y,v=>center.y=v,{min:0,step:0.5});
+            });
+          } else if (check.kind==='disconnect') numeric('끊을 간격 px',check.gap,v=>check.gap=v,{min:1});
+          const searchTitle = doc.createElement('p'); searchTitle.textContent='대상 탐색 범위 · 원본 픽셀';
+          fields.append(searchTitle);
+          for (const [key,name] of [['x0','왼쪽 px'],['y0','위쪽 px'],['x1','오른쪽 px'],['y1','아래쪽 px']]) {
+            numeric(name,check.search[key],v=>check.search[key]=v,{min:0});
+          }
+          const note = doc.createElement('p');
+          const permissionNote=doc.createElement('span');
+          permissionNote.textContent='수정 박스를 넓히지 않습니다.';
+          permissionNote.style.whiteSpace='nowrap';
+          note.append('탐색은 읽기 전용입니다. ',permissionNote,' 숫자 통과 후에도 외관과 다른 대상의 보존을 확인하세요.');
+          details.append(fields,note);
+        }
+        row.append(details);
+      }
       list.append(row);
     }
   }
@@ -273,6 +424,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   function updateControls(allEntries) {
     const active = current();
     const busy = isBusy();
+    deletePopoverButton.disabled = busy || !active;
     const visibility = q('[data-ai-comment-visibility]');
     if (visibility) {
       visibility.setAttribute('aria-pressed', String(markersVisible));
@@ -283,88 +435,91 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     if (count) count.textContent = String(allEntries.length);
     const status = q('[data-ai-comment-status]');
     if (status) status.textContent = active
-      ? `#${active.comment.number} · ${active.item.kind === 'reference' ? '원본' : active.item.name || '선택 버전'} · ${active.comment.type === 'point' ? '점' : '영역'}${busy ? ' · 작업 중 편집 잠김' : ' · 입력 자동 보관'}`
+      ? `#${commentDisplayNumber(active.item, active.comment)} · ${active.item.kind === 'reference' ? '원본' : active.item.name || '선택 버전'} · ${active.comment.type === 'point' ? '점' : '영역'}${busy ? ' · 작업 중 편집 잠김' : ' · 입력 자동 보관'}`
       : '그림이나 목록에서 코멘트를 선택하세요.';
     const completeCount = allEntries.filter(({ comment }) => commentText(comment).trim() && normalizeCommentBox(comment)).length;
     const apply = q('[data-ai-comments-apply]');
     if (apply) {
-      apply.textContent = '변환/선택 영역 수정';
-      apply.disabled = busy || !allowed().length;
+      const areas = allEntries.filter(({comment}) => comment.type === 'area');
+      const selectedCount = selectedTaskCount();
+      if (Number.isInteger(selectedCount) && selectedCount >= 2) {
+        apply.textContent = `선택한 작업 ${selectedCount}개 변환하기`;
+        // 원본 없는 작업이 섞여 있으면 미리 끈다 — 누른 뒤에야 오류 목록이 떴다(I6, 10-25).
+        const blocked = selectedTaskBlocked();
+        apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || blocked > 0;
+        apply.title = blocked > 0 ? `원본 없는 작업 ${blocked}개 — 원본을 넣거나 선택에서 빼세요.` : '';
+      } else if (scopedTarget()) {
+        // 11-11: 수정 박스가 없으면 「다시 그리기 · 정밀」(결과 전체를 Sol로 다시 그림)로 바로 누를 수 있다.
+        // 11-11: 박스가 없어도 대화 칸에 고칠 말을 쓰면 「수정하기」(그림 전체를 원본과 함께 읽고 고침).
+        const chatText = q('[data-ai-chat-input]')?.value.trim();
+        apply.textContent = allEntries.length || chatText ? '수정하기' : '다시 그리기 · 정밀';
+        apply.disabled = busy || panel.dataset.aiSharingMode === 'view' || (allEntries.length > 0 && (!areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment))));
+      } else if (panel.dataset.aiWorkflow === 'graph-create') {
+        // 11-11: 그래프 생성은 원본 그림 없이 설명(대화)만으로 실행한다.
+        apply.textContent = '그래프 생성';
+        apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
+      } else if (isTextCreation()) {
+        apply.textContent = '이미지 생성';
+        apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
+      } else {
+        // 11-09: 출처(교과서/기출)를 모르는 그림이면 「출처를 골라 주세요」(누르면 출처 줄로 데려가고, 고르면 바로 변환).
+        apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : panel.dataset.aiNeedsSource === 'true' ? '출처를 골라 주세요' : '변환하기';
+        apply.disabled = busy || !allowed().length;
+      }
+    }
+    const applyHint = q('[data-ai-scoped-apply-hint]');
+    if (applyHint) {
+      const areas = allEntries.filter(({comment}) => comment.type === 'area');
+      applyHint.hidden = !scopedTarget() || selectedTaskCount() >= 2;
+      applyHint.textContent = !areas.length ? (q('[data-ai-chat-input]')?.value.trim() ? '그림 전체를 원본과 함께 읽고 고칩니다 · 박스를 그리면 그 안만' : '고칠 내용을 대화로 쓰거나 박스로 영역을 정하세요 · 비우면 처음부터 다시 그리기')
+        : areas.some(({comment}) => !commentText(comment).trim()) ? '각 박스에 바꿀 내용을 적으세요.' : `박스 ${areas.length}개 · 밖은 그대로 유지`;
     }
     panel.querySelectorAll('[data-ai-comment-tool]').forEach(button => {
       button.disabled = busy;
-      button.classList.toggle('is-on', button.dataset.aiCommentTool === tool);
-      button.setAttribute('aria-pressed', String(button.dataset.aiCommentTool === tool));
+      button.hidden = false;
+      button.classList.toggle('is-on', !erasing() && button.dataset.aiCommentTool === tool);
+      button.setAttribute('aria-pressed', String(!erasing() && button.dataset.aiCommentTool === tool));
     });
-    renderGeometry(active, busy);
+    const toolbar = q('.ai-annotation-toolbar');
+    toolbar?.toggleAttribute('data-escape-layer', tool !== 'select' || Boolean(selected && markersVisible));
   }
 
-  function renderGeometry(active, busy) {
-    const editor = q('[data-ai-comment-row][data-active="true"] [data-ai-inline-editor]')
-      || q('[data-ai-comment-row] [data-ai-inline-editor]');
-    if (!geometry) {
-      geometry = doc.createElement('div');
-      geometry.dataset.aiCommentGeometry = '';
-    }
-    if (editor && geometry.parentElement !== editor.parentElement) editor.after(geometry);
-    if (!geometry) return;
-    if (geometrySelection !== selected || (!active && geometry.children.length)) {
-      geometry.replaceChildren();
-      geometrySelection = selected;
-      if (active) {
-        for (const key of BOX_KEYS) {
-          if (active.comment.type === 'point' && (key === 'w' || key === 'h')) continue;
-          const label = doc.createElement('label');
-          label.textContent = `${({ x: '가로', y: '세로', w: '너비', h: '높이' })[key]} %`;
-          const input = doc.createElement('input');
-          input.type = 'number';
-          input.dataset.aiGeometryKey = key;
-          input.min = key === 'w' || key === 'h' ? '0.1' : '0';
-          input.max = '100';
-          input.step = '0.1';
-          input.setAttribute('aria-label', `코멘트 ${label.textContent}`);
-          input.onchange = () => {
-            const entry = current();
-            if (!entry || isBusy()) return;
-            const next = input.value.trim() ? normalizeCommentBox({ ...entry.comment, [key]: input.value }) : null;
-            if (!next) {
-              input.value = String(Number(Number(entry.comment[key]).toFixed(2)));
-              const status = q('[data-ai-comment-status]');
-              if (status) status.textContent = '영역은 양수 크기여야 하며 이미지 경계를 벗어날 수 없습니다.';
-              return;
-            }
-            Object.assign(entry.comment, next);
-            changed();
-            render();
-          };
-          label.append(input);
-          geometry.append(label);
-        }
-      }
-    }
-    geometry.hidden = !active;
-    geometry.querySelectorAll('input').forEach(input => {
-      input.disabled = busy;
-      if (active && doc.activeElement !== input) input.value = String(Number(Number(active.comment[input.dataset.aiGeometryKey]).toFixed(2)));
-    });
-  }
 
   function render() {
     if (destroyed) return;
+    const resultId = scopedTarget()?.id || null;
+
+    if (resultId) activateTab('comments');
     for (const [item, entry] of bindings) {
       if (entry.img.isConnected === false) { entry.dispose(); bindings.delete(item); }
     }
     for (const item of images()) renderMarkers(item);
     const allEntries = entries();
-    if (!allEntries.some(({ item, comment }) => commentKey(item, comment) === selected)) selected = null;
+    if (!allEntries.some(({ item, comment }) => commentKey(item, comment) === selected)) { selected = null; hidePopover(); }
     renderList(allEntries);
     updateControls(allEntries);
+    positionPopover();
   }
 
   function imagePoint(event, img) {
     const rect = img.getBoundingClientRect();
     if (!(rect.width > 0 && rect.height > 0)) return null;
     return { x: clamp((event.clientX - rect.left) / rect.width * 100), y: clamp((event.clientY - rect.top) / rect.height * 100) };
+  }
+
+  function polygonBox(points) {
+    const xs = points.map(p => p.x), ys = points.map(p => p.y);
+    return {x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs)-Math.min(...xs), h: Math.max(...ys)-Math.min(...ys)};
+  }
+  function drawPolygon(node,points,box) {
+    const ns='http://www.w3.org/2000/svg';
+    let svg=node.querySelector('svg');
+    if(!svg) {svg=doc.createElementNS(ns,'svg');const path=doc.createElementNS(ns,'polygon');path.setAttribute('vector-effect','non-scaling-stroke');svg.append(path);node.append(svg);}
+    node.style.border='0';node.style.background='transparent';
+    svg.setAttribute('viewBox',`${box.x} ${box.y} ${Math.max(.001,box.w)} ${Math.max(.001,box.h)}`);svg.setAttribute('preserveAspectRatio','none');
+    Object.assign(svg.style,{width:'100%',height:'100%',overflow:'visible'});
+    svg.firstChild.setAttribute('points',points.map(p=>`${p.x},${p.y}`).join(' '));
+    svg.firstChild.setAttribute('fill','var(--ai-comment-region-fill, #2f81f711)');svg.firstChild.setAttribute('stroke','var(--accent, #2f81f7)');svg.firstChild.setAttribute('stroke-width','1');
   }
 
   function dragBox(from, to) {
@@ -381,7 +536,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     };
     bindings.set(item, entry);
     on(stage, 'pointerdown', event => {
-      if (isBusy() || !allowed().includes(item) || (event.button != null && event.button !== 0) || event.isPrimary === false) return;
+      if (tool === 'select') return;
+      if (erasing() || isBusy() || !allowed().includes(item) || (event.button != null && event.button !== 0) || event.isPrimary === false) return;
       if (event.target.closest?.('[data-ai-comment-marker]')) return;
       if (event.target !== img && event.target !== stage) return;
       const point = imagePoint(event, img);
@@ -392,17 +548,24 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       const rect = scrollTarget.getBoundingClientRect();
       entry.drag = tool === 'pan'
         ? { type: 'pan', pointerId: event.pointerId, x: event.clientX, y: event.clientY, scrollTarget, left: scrollTarget.scrollLeft, top: scrollTarget.scrollTop, scaleX: rect.width / (scrollTarget.offsetWidth || rect.width), scaleY: rect.height / (scrollTarget.offsetHeight || rect.height) }
-        : { type: tool, pointerId: event.pointerId, from: point };
+        : { type: tool, pointerId: event.pointerId, from: point, points: [point] };
       try { stage.setPointerCapture?.(event.pointerId); } catch { /* detached pointer */ }
     });
     on(stage, 'pointermove', event => {
       const drag = entry.drag;
       if (!drag || drag.pointerId !== event.pointerId) return;
-      if (isBusy()) { clearDrag(entry); return; }
+      if (erasing() || isBusy() || !allowed().includes(item)) { clearDrag(entry); return; }
       if (drag.type === 'pan') {
         drag.scrollTarget.scrollLeft = drag.left - (event.clientX - drag.x) / drag.scaleX;
         drag.scrollTarget.scrollTop = drag.top - (event.clientY - drag.y) / drag.scaleY;
         return;
+      }
+      if (drag.type === 'free') {
+        const to = imagePoint(event, img);
+        if (to && drag.points.length < 4096) drag.points.push(to);
+        drag.box = polygonBox(drag.points);
+        drawPreview(entry, drag.box);
+        drawPolygon(entry.preview,drag.points,drag.box);
       }
       if (drag.type === 'area') {
         const to = imagePoint(event, img);
@@ -413,22 +576,20 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       const drag = entry.drag;
       if (!drag || drag.pointerId !== event.pointerId) return;
       clearDrag(entry);
-      if (drag.type === 'pan' || isBusy()) return;
+      if (drag.type === 'pan' || erasing() || isBusy() || !allowed().includes(item)) return;
       const to = imagePoint(event, img);
       if (!to) return;
-      const box = drag.type === 'point' ? { ...to, w: 0, h: 0 } : dragBox(drag.from, to);
-      if (drag.type === 'area' && (box.w < 0.1 || box.h < 0.1)) return;
+      if (drag.type === 'free') drag.points.push(to);
+      const box = drag.type === 'point' ? { ...to, w: 0, h: 0 } : drag.type === 'free' ? polygonBox(drag.points) : dragBox(drag.from, to);
+      if (drag.type !== 'point' && (box.w < 0.1 || box.h < 0.1)) return;
       if (!normalizeCommentBox({ ...box, type: drag.type })) return;
       item.comments ||= [];
       const number = Math.max(Number(item.nextCommentNumber) || 1, ...item.comments.map(comment => (Number(comment.number) || 0) + 1));
-      const comment = { number, type: drag.type, ...box, text: '', imageId: item.id };
+      const comment = { number, type: drag.type === 'free' ? 'area' : drag.type, ...box, text: '', imageId: item.id, ...(drag.type === 'free' ? { polygon: drag.points } : {}) };
       item.nextCommentNumber = number + 1;
       item.comments.push(comment);
-      selected = commentKey(item, comment);
       changed();
-      activateTab('comments');
-      render();
-      q('[data-ai-comment-row][data-active="true"] [data-ai-inline-editor]')?.focus();
+      select(item, comment);
     });
     on(stage, 'pointercancel', () => clearDrag(entry));
     on(stage, 'lostpointercapture', () => clearDrag(entry));
@@ -450,19 +611,50 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     renderMarkers(item);
   }
 
+  function closeCommentMode() {
+    hidePopover(); tool = 'select';
+    for (const entry of bindings.values()) clearDrag(entry);
+    updateControls(entries()); viewChanged?.();
+  }
+  const escapeComment = () => { deleteSelectedComment(); closeCommentMode(); };
+  cleanup.push(registerEscapeLayer(popover, escapeComment));
+  const commentToolbar = q('.ai-annotation-toolbar');
+  if (commentToolbar) cleanup.push(registerEscapeLayer(commentToolbar, escapeComment));
+
+  listen(deletePopoverButton, 'click', deleteSelectedComment);
+  listen(popover, 'pointerenter', cancelClose);
+  listen(popover, 'pointerleave', scheduleClose);
+  listen(popover, 'focusin', () => { cancelClose(); editing = true; });
+  listen(doc, 'pointerdown', event => {
+    if (!popover.hidden && !popover.contains(event.target) && !event.target.closest?.('[data-ai-comment-marker]')) hidePopover();
+  });
+
+  listen(closePopoverButton, 'click', () => {
+    const active = current();
+    hidePopover(); bindings.get(active?.item)?.pins?.get(active?.comment.number)?.focus({preventScroll:true});
+  });
+  listen(popover, 'keydown', event => {
+    if (event.key === 'Escape') {
+      event.stopImmediatePropagation();
+      if (!event.isComposing) { event.preventDefault(); escapeComment(); }
+    }
+  });
   listen(panel, 'click', event => {
     if (event.target.closest?.('[data-ai-comment-visibility]')) {
       markersVisible = !markersVisible;
+      if (!markersVisible) hidePopover();
       updateControls(entries());
       viewChanged?.();
       return;
     }
     const button = event.target.closest?.('[data-ai-comment-tool]');
     if (button && !isBusy() && TOOL_NAMES.has(button.dataset.aiCommentTool)) {
-      tool = button.dataset.aiCommentTool;
-      if (tool !== 'pan') markersVisible = true;
+
+      tool = tool === button.dataset.aiCommentTool ? 'select' : button.dataset.aiCommentTool;
+      if (tool !== 'pan' && tool !== 'select') markersVisible = true;
       for (const entry of bindings.values()) clearDrag(entry);
       updateControls(entries());
+      viewChanged?.();
     }
     const tab = event.target.closest?.('[data-ai-side-tab]');
     if (tab) activateTab(tab.dataset.aiSideTab);
@@ -471,7 +663,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const active = current();
     if (!active || isBusy()) return;
     active.item.comments = active.item.comments.filter(comment => comment !== active.comment);
-    selected = null;
+    selected = null; hidePopover();
     changed();
     render();
   }
@@ -482,7 +674,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     event.preventDefault(); event.stopPropagation();
     deleteSelectedComment();
   });
-  listen(panel, '5e:ai-candidate-select', () => { selected = null; render(); });
+  listen(panel, '5e:ai-local-erase-tool-change', () => { for (const entry of bindings.values()) clearDrag(entry); updateControls(entries()); });
+  listen(panel, '5e:ai-candidate-select', () => { for (const entry of bindings.values()) clearDrag(entry); selected = null; render(); });
   listen(win, 'resize', scheduleMarkers);
   if (win.MutationObserver) {
     const layout = new win.MutationObserver(scheduleMarkers);
@@ -496,17 +689,21 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   return {
     bind,
     render,
-    getViewState: () => ({tool,selected,markersVisible,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
+    cancelTool: closeCommentMode,
+    refreshControls: () => updateControls(entries()),
+    getViewState: () => ({version:2,tool,selected,markersVisible,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
     restoreViewState(value) {
-      tool=panel.dataset.aiSharingMode==='view'?'pan':TOOL_NAMES.has(value?.tool)?value.tool:'pan';
+      tool = panel.dataset.aiSharingMode === 'view' ? 'select'
+        : value?.tool === 'pan' && value.version !== 2 ? 'select'
+        : TOOL_NAMES.has(value?.tool) ? value.tool : 'select';
       selected=typeof value?.selected==='string'?value.selected:null;
-      markersVisible=value?.markersVisible !== false;
+      markersVisible=value?.markersVisible === true;
       activateTab(value?.tab);
       render();
     },
-    reset() { selected = null; activateTab('comments'); render(); },
+    reset() { for (const entry of bindings.values()) clearDrag(entry); selected = null; activateTab('comments'); render(); },
     destroy() {
-      destroyed = true;
+      destroyed = true; cancelClose(); popover.remove();
       if (frame != null) {
         if (win.cancelAnimationFrame) win.cancelAnimationFrame(frame);
         else clearTimeout(frame);

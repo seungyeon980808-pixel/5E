@@ -1,0 +1,288 @@
+{
+  "id": "cos-square-exact",
+  "provenance": "synthetic-regression-only",
+  "expectedAnalyticSeries": [
+    "periodic"
+  ],
+  "plan": {
+    "schema": "5e.graph-reconstruction/v1",
+    "variant": "cartesian",
+    "coordinateMode": "data",
+    "source": {
+      "id": "cos-square-exact",
+      "hash": "synthetic-wave-v1",
+      "width": 800,
+      "height": 440,
+      "plotBox": {
+        "x": 95,
+        "y": 55,
+        "w": 635,
+        "h": 300
+      }
+    },
+    "axes": {
+      "x": {
+        "scale": "linear",
+        "title": "t",
+        "unit": "",
+        "min": 0,
+        "max": 3.4,
+        "step": 1,
+        "ticks": [
+          {
+            "value": 1,
+            "label": "t_0",
+            "valueSource": "tick-label",
+            "sourcePosition": 0.29411764705882354
+          },
+          {
+            "value": 2,
+            "label": "2t_0",
+            "valueSource": "tick-label",
+            "sourcePosition": 0.5882352941176471
+          },
+          {
+            "value": 3,
+            "label": "3t_0",
+            "valueSource": "tick-label",
+            "sourcePosition": 0.8823529411764706
+          }
+        ]
+      },
+      "y": {
+        "scale": "linear",
+        "title": "h",
+        "unit": "",
+        "min": 0,
+        "max": 1.4,
+        "step": 0.5,
+        "ticks": [
+          {
+            "value": 1,
+            "label": "h_0",
+            "valueSource": "tick-label",
+            "sourcePosition": 0.7142857142857143
+          }
+        ]
+      }
+    },
+    "frame": {
+      "variant": "quadrant",
+      "arrowX": true,
+      "arrowY": true
+    },
+    "series": [
+      {
+        "id": "periodic",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "data",
+        "points": [
+          {
+            "x": 0.0,
+            "y": 1.0
+          },
+          {
+            "x": 0.125,
+            "y": 0.8535533905932737
+          },
+          {
+            "x": 0.25,
+            "y": 0.5000000000000001
+          },
+          {
+            "x": 0.375,
+            "y": 0.1464466094067263
+          },
+          {
+            "x": 0.5,
+            "y": 3.749399456654644e-33
+          },
+          {
+            "x": 0.625,
+            "y": 0.1464466094067262
+          },
+          {
+            "x": 0.75,
+            "y": 0.4999999999999999
+          },
+          {
+            "x": 0.875,
+            "y": 0.8535533905932737
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          },
+          {
+            "x": 1.125,
+            "y": 0.853553390593274
+          },
+          {
+            "x": 1.25,
+            "y": 0.5000000000000002
+          },
+          {
+            "x": 1.375,
+            "y": 0.14644660940672666
+          },
+          {
+            "x": 1.5,
+            "y": 3.374459510989179e-32
+          },
+          {
+            "x": 1.625,
+            "y": 0.1464466094067264
+          },
+          {
+            "x": 1.75,
+            "y": 0.4999999999999998
+          },
+          {
+            "x": 1.875,
+            "y": 0.8535533905932733
+          },
+          {
+            "x": 2.0,
+            "y": 1.0
+          },
+          {
+            "x": 2.125,
+            "y": 0.8535533905932735
+          },
+          {
+            "x": 2.25,
+            "y": 0.5000000000000002
+          },
+          {
+            "x": 2.375,
+            "y": 0.14644660940672677
+          },
+          {
+            "x": 2.5,
+            "y": 9.373498641636612e-32
+          },
+          {
+            "x": 2.625,
+            "y": 0.14644660940672632
+          },
+          {
+            "x": 2.75,
+            "y": 0.49999999999999883
+          },
+          {
+            "x": 2.875,
+            "y": 0.8535533905932731
+          },
+          {
+            "x": 3.0,
+            "y": 1.0
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateExpression": "cos(pi*x)^2",
+        "candidateFamily": "sinusoid",
+        "breaks": [],
+        "endpoints": [],
+        "lineStyle": "solid",
+        "markerShape": "none"
+      }
+    ],
+    "annotations": [
+      {
+        "id": "peak-guide-1",
+        "kind": "guide",
+        "x": 1,
+        "y": 1,
+        "to": {
+          "x": 1,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "data",
+        "orientation": "vertical",
+        "seriesId": "periodic",
+        "pointIndex": 8,
+        "text": ""
+      },
+      {
+        "id": "peak-guide-2",
+        "kind": "guide",
+        "x": 2,
+        "y": 1,
+        "to": {
+          "x": 2,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "data",
+        "orientation": "vertical",
+        "seriesId": "periodic",
+        "pointIndex": 16,
+        "text": ""
+      },
+      {
+        "id": "peak-guide-3",
+        "kind": "guide",
+        "x": 3,
+        "y": 1,
+        "to": {
+          "x": 3,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "data",
+        "orientation": "vertical",
+        "seriesId": "periodic",
+        "pointIndex": 24,
+        "text": ""
+      }
+    ],
+    "review": []
+  },
+  "expectedValues": [
+    {
+      "seriesId": "periodic",
+      "x": 0.0,
+      "y": 1,
+      "tolerance": 0.014
+    },
+    {
+      "seriesId": "periodic",
+      "x": 0.5,
+      "y": 0,
+      "tolerance": 0.014
+    },
+    {
+      "seriesId": "periodic",
+      "x": 1.0,
+      "y": 1,
+      "tolerance": 0.014
+    },
+    {
+      "seriesId": "periodic",
+      "x": 1.5,
+      "y": 0,
+      "tolerance": 0.014
+    },
+    {
+      "seriesId": "periodic",
+      "x": 2.0,
+      "y": 1,
+      "tolerance": 0.014
+    },
+    {
+      "seriesId": "periodic",
+      "x": 2.5,
+      "y": 0,
+      "tolerance": 0.014
+    },
+    {
+      "seriesId": "periodic",
+      "x": 3.0,
+      "y": 1,
+      "tolerance": 0.014
+    }
+  ]
+}

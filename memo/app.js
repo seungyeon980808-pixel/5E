@@ -139,7 +139,7 @@ async function loadArchive(append) {
   archiveEntries=append?[...archiveEntries,...result.entries]:result.entries;archiveMore=result.more;renderArchive();
 }
 function mutationError(error) {
-  return error.code==='40001'?'다른 기기에서 수정한 메모예요. 내 수정을 다시 저장하려면 다시 시도를 누르세요.':error.code==='42501'?'24시간이 지나 주인장 보관함으로 이동했어요.':error.code==='P0002'?'다른 기기에서 삭제한 메모예요.':'저장하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.';
+  return error.code==='40001'?'다른 기기에서 수정한 메모예요. 내 수정을 다시 저장하려면 다시 시도를 누르세요.':error.code==='42501'?'24시간이 지나 주인장 보관함으로 이동했어요.':error.code==='P0002'?'다른 기기에서 삭제한 메모예요.':error.code==='RATE_LIMITED'?'잠깐 사이에 너무 많이 저장했어요. 1분 뒤 다시 시도해 주세요.':error.code==='DAILY_LIMIT'?'오늘 작업판에 메모가 너무 많아요. 내일 다시 시도해 주세요.':'저장하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.';
 }
 function queue(note,patch) {
   Object.assign(note,patch);

@@ -25,13 +25,13 @@
 import {
   state, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
-} from "./state.js?v=1.6.1-remediation-0929";
-import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.6.1-remediation-0929";
-import { TEMPLATES } from "./templates.js?v=1.6.1-remediation-0929";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.1-remediation-0929";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.1-remediation-0929";
+} from "./state.js?v=1.7.0-four-session-integration";
+import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.7.0-four-session-integration";
+import { TEMPLATES } from "./templates.js?v=1.7.0-four-session-integration";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.7.0-four-session-integration";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.7.0-four-session-integration";
 
-import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.6.1-remediation-0929";
+import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.7.0-four-session-integration";
 
 const objects = () => state.get().objects || [];
 
@@ -564,7 +564,7 @@ const BASICS = {
         "· 공통 도구 — 선·도형·글자. 과목과 상관없이 늘 씁니다\n" +
         "· 과목별 오브젝트 — 빗면·도르래·회로처럼 과목 전용 부품\n" +
         "· 퍼스널 오브젝트 — 내가 저장해 둔 것\n" +
-        "· 고급 기능 — 전체 통일/수정, 좌표/함수 생성 등\n\n" +
+        "· 작업 도구 — 클립보드, 이미지 객체화, 전체 통일/수정 등\n\n" +
         "맨 위 과목 상자를 바꾸면 목록이 통째로 바뀝니다.",
     },
     {
@@ -1461,7 +1461,7 @@ const EXAM_SEARCH = {
       chapter: "저장하고 다시 쓰기",
       title: "⑤ 퍼스널 오브젝트로 저장하기 — [오브젝트 저장]",
       text:
-        "왼쪽 맨 아래 '고급 기능' 묶음에 [오브젝트 저장]이 있습니다. 눌러 주세요.\n\n" +
+        "왼쪽 맨 아래 '작업 도구' 묶음에 [오브젝트 저장]이 있습니다. 눌러 주세요.\n\n" +
         "· 이것이 '퍼스널 오브젝트'를 만드는 유일한 길입니다 — 지금 골라 둔 것이 그대로 담깁니다\n" +
         "· 저장한 것은 왼쪽 '퍼스널 오브젝트' 칸과 오브젝트 검색(Ctrl+F) 양쪽에서 나옵니다\n" +
         "· 이 컴퓨터의 브라우저에 저장되므로, 다음에 열어도 그대로 있습니다",
@@ -1942,7 +1942,7 @@ const ALIGN_SPACE = {
       target: () => "#bulk-edit-open",
       title: "② [전체 통일/수정] 열기",
       text:
-        "왼쪽 맨 아래 '고급 기능' 묶음에 있습니다. 눌러 주세요.\n\n" +
+        "왼쪽 맨 아래 '작업 도구' 묶음에 있습니다. 눌러 주세요.\n\n" +
         "· 골라 둔 것들을 한 방에 다루는 창입니다\n" +
         "· 색·굵기를 한꺼번에 통일할 때도 같은 창을 씁니다",
       demo: () => ({ kind: "clicks", at: ["#bulk-edit-open"] }),
@@ -2308,7 +2308,7 @@ const TASKS = [
     intro: "좌표평면을 만들고 그 위에 그래프를 그립니다. 넓이가 이동 거리인 그 그림입니다.",
     figure: [{ pts: T.box(-30, -20, 56, 40), close: true, note: "좌표평면" }],
     parts: [
-      { tool: "GRAPH_MODAL", type: "coordplane", name: "좌표/함수 생성", selectName: "좌표/함수 생성", where: "왼쪽 맨 아래 '고급 기능'의 [좌표/함수 생성] 입니다.", target: "#graph-tool-open", selectDemo: { kind: "clicks", at: ["#graph-tool-open"] }, selectUntil: () => !!vis("#gm-tab-coord-btn"),
+      { tool: "GRAPH_MODAL", type: "coordplane", name: "그래프", selectName: "그래프 → 직접 만들기", where: "아래 [그래프]를 누르고 [직접 만들기]를 고릅니다.", target: "#graph-tool-open", selectDemo: { kind: "clicks", at: ["#graph-tool-open", '[data-graph-entry="direct"]'] }, selectUntil: () => !!vis("#gm-tab-coord-btn"),
         tip: "그래프 만들기 창에서 축 범위를 확인합니다", placeTarget: "#gm-confirm", placeDemo: { kind: "clicks", at: ["#gm-confirm"] }, place: "그래프 만들기 창에서 [만들기]를 누르세요." },
       { tool: "P", type: "polyline", name: "그래프(꺾은선)", where: "왼쪽 도구 3번째 줄 가운데입니다.",
         at: [[-26, 14], [-8, -8], [10, -8], [24, 14]], close: false,
@@ -2865,7 +2865,7 @@ const EXAM_TASK_INCLINE = {
         "· 마찰 구간 띠가 지형선에 붙어 있는지 봅니다",
     },
     {
-      target: () => "#menu-file",
+      target: () => "#file-menu-btn",   // 10-25 P3: 파일 단추 id가 바뀌어 가리킬 곳이 없었음
       title: "마지막 — 내보내기",
       text:
         "그림은 파일 → 이미지로 내보내기로 뽑아 한글·워드에 붙입니다.\n" +
@@ -3334,7 +3334,7 @@ function graphEditButton() { return selectedRichGraph() ? byText("그래프 편�
 const ADVANCED_GRAPH = {
   id:"advanced-graph", title:"5 · 좌표평면과 함수 그래프", desc:"물리 문제에 쓰는 좌표·함수 그래프 만들기", minutes:9, practice:true, keepPracticeOnFinish:true, next:["advanced-graph-annot"],
   steps:[
-    {chapter:"좌표평면",practice:true,title:"좌표·함수 생성을 열어 주세요",text:"왼쪽 고급 기능에서 ‘좌표/함수 생성’을 누릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"좌표/함수 생성을 눌러 주세요"}},
+    {chapter:"좌표평면",practice:true,title:"그래프 편집기를 열어 주세요",text:"아래 ‘그래프’를 누르고 ‘직접 만들기’를 고릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open",'[data-graph-entry="direct"]']}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"그래프 → 직접 만들기를 눌러 주세요"}},
     {chapter:"좌표평면",title:"물리 그래프의 축과 눈금을 검토합니다",text:"x축과 y축 범위, 격자 간격, 눈금 간격을 확인합니다. 기본값을 그대로 써도 됩니다. 확인한 뒤 [다음]을 누르세요.",target:()=>"#gm-tab-coord",allowNext:true},
     {chapter:"함수",title:"함수 탭을 열어 주세요",text:"함수 탭에서 두 식을 추가합니다.",target:()=>"#gm-tab-func-btn",demo:()=>({kind:"clicks",at:["#gm-tab-func-btn"]}),wait:{until:()=>!!vis("#gm-add-series"),hint:"함수 탭을 눌러 주세요"}},
     {chapter:"함수",title:"사인 함수를 입력합니다",text:"‘함수식 추가’를 누른 뒤 sin(x)를 입력합니다.",target:()=>"#gm-add-series",auto:{label:"sin(x) 입력하기",run:()=>addModalExpr("sin(x)")},wait:{until:()=>modalHasExpr("sin(x)"),hint:"sin(x) 계열이 칩으로 보이는지 확인해 주세요"}},

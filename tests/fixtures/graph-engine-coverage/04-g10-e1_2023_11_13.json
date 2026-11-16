@@ -1,0 +1,421 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "data",
+  "source": {
+    "id": "g10-e1_2023_11_13",
+    "hash": "sha256:ff54ad225f878e757940c22cc1d69a6d854c62774ac339b2c7ca6d6545833e9c",
+    "width": 592,
+    "height": 433,
+    "plotBox": {
+      "x": 124,
+      "y": 32,
+      "w": 453,
+      "h": 303
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "반지름",
+      "unit": "태양=1",
+      "displayTitle": "반지름(태양=1)",
+      "min": 0.49,
+      "max": 6.412,
+      "step": null,
+      "ticks": [
+        {
+          "value": 1,
+          "label": "1"
+        },
+        {
+          "value": 3,
+          "label": "3"
+        },
+        {
+          "value": 5,
+          "label": "5"
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.4967,
+        "y": -0.2277
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "log",
+      "title": "광도",
+      "unit": "태양=1",
+      "displayTitle": "",
+      "min": 0.1,
+      "max": 100,
+      "step": null,
+      "ticks": [
+        {
+          "value": 0.1,
+          "label": "10⁻¹",
+          "displayMath": "10^{-1}"
+        },
+        {
+          "value": 1,
+          "label": "1",
+          "displayMath": "1"
+        },
+        {
+          "value": 10,
+          "label": "10",
+          "displayMath": "10"
+        },
+        {
+          "value": 100,
+          "label": "10²",
+          "displayMath": "10^{2}"
+        }
+      ],
+      "orientation": "vertical",
+      "titlePosition": {
+        "x": -0.2119,
+        "y": 0.5017
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "data",
+      "label": "",
+      "points": [
+        {
+          "x": 1.0650262000000001,
+          "y": 0.8331054969176099
+        },
+        {
+          "x": 1.117732,
+          "y": 0.7605013686927006
+        },
+        {
+          "x": 1.1568171999999999,
+          "y": 0.6785783509504072
+        },
+        {
+          "x": 1.2089308,
+          "y": 0.57849551996509
+        },
+        {
+          "x": 1.2610444,
+          "y": 0.5045451083827375
+        },
+        {
+          "x": 1.3267786,
+          "y": 0.45019430828243107
+        },
+        {
+          "x": 1.3919205999999997,
+          "y": 0.5527134079444348
+        },
+        {
+          "x": 1.4837116,
+          "y": 0.7102316143008659
+        },
+        {
+          "x": 1.6009672,
+          "y": 0.9126410517675103
+        },
+        {
+          "x": 1.7448717999999999,
+          "y": 1.1997755298713837
+        },
+        {
+          "x": 1.9018047999999999,
+          "y": 1.5069540152263532
+        },
+        {
+          "x": 2.0717662,
+          "y": 1.8084229089365111
+        },
+        {
+          "x": 2.2547559999999995,
+          "y": 2.073480712904681
+        },
+        {
+          "x": 2.4507741999999997,
+          "y": 2.3238067025176448
+        },
+        {
+          "x": 2.6734413999999997,
+          "y": 2.6043539045516892
+        },
+        {
+          "x": 2.9867152,
+          "y": 2.9860701078165275
+        },
+        {
+          "x": 3.3663154000000004,
+          "y": 3.5050966680669298
+        },
+        {
+          "x": 3.7713802000000003,
+          "y": 4.206297636505622
+        },
+        {
+          "x": 4.176445,
+          "y": 5.047775135009473
+        },
+        {
+          "x": 4.5684814,
+          "y": 6.057591738749945
+        },
+        {
+          "x": 4.96111,
+          "y": 7.105587633694735
+        },
+        {
+          "x": 5.3401179999999995,
+          "y": 8.527073373436284
+        },
+        {
+          "x": 5.719126,
+          "y": 9.776873589674212
+        },
+        {
+          "x": 6.0590488,
+          "y": 11.732754947195547
+        },
+        {
+          "x": 6.412,
+          "y": 13.76258454802492
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 2,
+          "kind": "closed"
+        },
+        {
+          "index": 5,
+          "kind": "closed"
+        },
+        {
+          "index": 22,
+          "kind": "closed"
+        }
+      ],
+      "lineStyle": "solid",
+      "markerSize": 0.95
+    }
+  ],
+  "annotations": [
+    {
+      "id": "label-a",
+      "kind": "text",
+      "text": "A",
+      "x": 0.1347,
+      "y": 0.4653,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 2,
+      "fontSizePx": 36,
+      "endStyle": "none"
+    },
+    {
+      "id": "leader-a",
+      "kind": "leader",
+      "text": "",
+      "x": 0.1302,
+      "y": 0.4092,
+      "to": {
+        "x": 0.1126,
+        "y": 0.2772
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 2,
+      "endStyle": "none"
+    },
+    {
+      "id": "label-b",
+      "kind": "text",
+      "text": "B",
+      "x": 0.2583,
+      "y": 0.1452,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 5,
+      "fontSizePx": 36,
+      "endStyle": "none"
+    },
+    {
+      "id": "leader-b",
+      "kind": "leader",
+      "text": "",
+      "x": 0.2274,
+      "y": 0.1518,
+      "to": {
+        "x": 0.1413,
+        "y": 0.2178
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 5,
+      "endStyle": "none"
+    },
+    {
+      "id": "label-c",
+      "kind": "text",
+      "text": "C",
+      "x": 0.883,
+      "y": 0.4752,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 22,
+      "fontSizePx": 36,
+      "endStyle": "none"
+    },
+    {
+      "id": "leader-c",
+      "kind": "leader",
+      "text": "",
+      "x": 0.883,
+      "y": 0.5479,
+      "to": {
+        "x": 0.883,
+        "y": 0.6634
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 22,
+      "endStyle": "none"
+    },
+    {
+      "id": "vertical-title-0",
+      "kind": "text",
+      "text": "광",
+      "x": -0.205,
+      "y": 0.815,
+      "orientation": "horizontal",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-1",
+      "kind": "text",
+      "text": "도",
+      "x": -0.205,
+      "y": 0.723,
+      "orientation": "horizontal",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-2",
+      "kind": "text",
+      "text": ")",
+      "x": -0.205,
+      "y": 0.631,
+      "orientation": "rotate",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-3",
+      "kind": "text",
+      "text": "태",
+      "x": -0.205,
+      "y": 0.5389999999999999,
+      "orientation": "horizontal",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-4",
+      "kind": "text",
+      "text": "양",
+      "x": -0.205,
+      "y": 0.44699999999999995,
+      "orientation": "horizontal",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-5",
+      "kind": "text",
+      "text": "=",
+      "x": -0.205,
+      "y": 0.355,
+      "orientation": "rotate",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-6",
+      "kind": "text",
+      "text": "1",
+      "x": -0.205,
+      "y": 0.2629999999999999,
+      "orientation": "horizontal",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    },
+    {
+      "id": "vertical-title-7",
+      "kind": "text",
+      "text": "(",
+      "x": -0.205,
+      "y": 0.17099999999999993,
+      "orientation": "rotate",
+      "coordinateSpace": "normalized",
+      "fontSizePx": 32
+    }
+  ],
+  "style": {
+    "fontSizePx": 36,
+    "labelWeight": 400,
+    "strokeWidth": 0.45,
+    "guideStyle": {
+      "strokeWidth": 0.14,
+      "dashLength": 0.55,
+      "dashGap": 0.4
+    }
+  },
+  "review": [],
+  "frame": {
+    "variant": "box",
+    "arrowX": false,
+    "arrowY": false,
+    "arrowLength": 2.4,
+    "arrowWidth": 1.65,
+    "strokeWidth": 0.22,
+    "tickTop": false,
+    "tickRight": false
+  }
+}

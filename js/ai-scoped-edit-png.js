@@ -1,5 +1,5 @@
 /** Strict browser PNG v1 adapter for byte-exact RGBA scoped edits. */
-import { compositeRgbaWithinMask, deriveRgbaChangeMask, isRgbaOutsideMaskUnchanged, validateRgbaImage, validateBinaryMask } from './ai-scoped-edit.js?v=1.6.1-preview-labeler-0917-1111';
+import { compositeRgbaWithinMask, deriveRgbaChangeMask, isRgbaOutsideMaskUnchanged, validateRgbaImage, validateBinaryMask } from './ai-scoped-edit.js?v=1.7.0-four-session-integration';
 
 const SIGNATURE = Uint8Array.of(137,80,78,71,13,10,26,10);
 const MAX_PNG_BYTES = 64 * 1024 * 1024;
@@ -33,7 +33,34 @@ function crc32(a, start = 0, end = a.length) { if (!crcTable) { crcTable = new U
 function concat(parts) { const size = parts.reduce((n,p) => n + p.length, 0); const out = new Uint8Array(size); let o=0; for(const p of parts){out.set(p,o);o+=p.length;} return out; }
 function equal(a,b) { return a.length === b.length && a.every((v,i)=>v===b[i]); }
 function chunk(type, data) { const payload=bytes(data,'chunk data'); const out=new Uint8Array(payload.length+12); put32(out,0,payload.length); out.set(ascii(type),4); out.set(payload,8); put32(out,out.length-4,crc32(out,4,out.length-4)); return out; }
-async function transform(input, mode) { if (typeof CompressionStream !== 'function' || typeof DecompressionStream !== 'function') fail('CompressionStream/DecompressionStream is unavailable.'); const stream = new Blob([input]).stream().pipeThrough(mode === 'inflate' ? new DecompressionStream('deflate') : new CompressionStream('deflate')); const reader=stream.getReader(); const parts=[]; let total=0; for (;;) { const {value,done}=await reader.read(); if(done) break; total+=value.length; if(total>MAX_RAW_BYTES) fail(`${mode} output exceeds ${MAX_RAW_BYTES} bytes.`); parts.push(value); } return concat(parts); }
+async function transform(input, mode, maximum = MAX_RAW_BYTES) {
+ if (typeof CompressionStream !== 'function' || typeof DecompressionStream !== 'function') fail('CompressionStream/DecompressionStream is unavailable.');
+ // WebKit can return all output for one compressed input chunk. Feed small
+ // declared images incrementally so rejecting excess output also stops input.
+ let offset = 0;
+ const step = Math.max(64, Math.min(65536, maximum));
+ const source = mode === 'inflate' ? new ReadableStream({ pull(controller) {
+  if (offset === input.length) { controller.close(); return; }
+  const end = Math.min(input.length, offset + step);
+  controller.enqueue(input.subarray(offset, end)); offset = end;
+ } }) : new Blob([input]).stream();
+ const stream = source.pipeThrough(mode === 'inflate' ? new DecompressionStream('deflate') : new CompressionStream('deflate'));
+ const reader = stream.getReader(), parts = []; let total = 0, complete = false;
+ try {
+  for (;;) {
+   const { value, done } = await reader.read();
+   if (done) { complete = true; break; }
+   total += value.length;
+   if (total > maximum) fail(`${mode} output exceeds ${maximum} bytes.`);
+   parts.push(value);
+  }
+  return concat(parts);
+ } finally {
+  // Stop the producer on overflow or malformed input, and release every reader.
+  if (!complete) { try { await reader.cancel(); } catch {} }
+  reader.releaseLock();
+ }
+}
 function metadataCompatible(a,b) { return a.length===b.length && a.every((x,i)=>x.type===b[i].type && equal(x.data,b[i].data)); }
 function isValidPngKeyword(data, length) {
  if (length < 1 || length > 79) return false;
@@ -115,7 +142,7 @@ export async function decodeScopedPng(input) {
  }
  if(phase!=='done') fail('IEND is missing.'); metadata=validateMetadata(metadata,colorType); if(colorType===2) metadata=metadata.map(item=>item.type==='sBIT'?{type:item.type,data:Uint8Array.of(...item.data,8)}:item);
  const compressedPixels=concat(idat); await validateIccProfile(metadata);
- const row=width*channels, expected=height*(row+1); if(expected>MAX_RAW_BYTES) fail('inflated image exceeds limit.'); const raw=await transform(compressedPixels,'inflate'); if(raw.length!==expected) fail(`inflated data length ${raw.length} does not equal expected ${expected}.`);
+ const row=width*channels, expected=height*(row+1); if(expected>MAX_RAW_BYTES) fail('inflated image exceeds limit.'); const raw=await transform(compressedPixels,'inflate',expected); if(raw.length!==expected) fail(`inflated data length ${raw.length} does not equal expected ${expected}.`);
  const scan=new Uint8Array(height*row); for(let y=0;y<height;y+=1){const f=raw[y*(row+1)], src=y*(row+1)+1, dst=y*row; if(f>4)fail(`invalid filter ${f}.`); for(let x=0;x<row;x+=1){const left=x>=channels?scan[dst+x-channels]:0, up=y?scan[dst-row+x]:0, ul=y&&x>=channels?scan[dst-row+x-channels]:0, v=raw[src+x]; scan[dst+x]=(v+(f===0?0:f===1?left:f===2?up:f===3?Math.floor((left+up)/2):paeth(left,up,ul)))&255;}}
  const rgba=new Uint8Array(width*height*4); for(let p=0,s=0,d=0;p<width*height;p+=1,s+=channels,d+=4){rgba[d]=scan[s];rgba[d+1]=scan[s+1];rgba[d+2]=scan[s+2];rgba[d+3]=channels===4?scan[s+3]:255;}
  return {width,height,data:rgba,metadata,metadataDisposition:hasCaBX ? 'caBX-recognized-not-preserved' : hasExif ? 'eXIf-recognized-not-preserved' : hasPhys ? 'pHYs-recognized-not-preserved' : 'supported-metadata-preserved',removedMetadata:[...(hasCaBX ? ['caBX'] : []), ...(hasExif ? ['eXIf'] : []), ...(hasPhys ? ['pHYs'] : [])]};
@@ -126,12 +153,81 @@ export async function encodeScopedPng(image,{metadata=[]}={}) {
  const ihdr=new Uint8Array(13);put32(ihdr,0,checked.width);put32(ihdr,4,checked.height);ihdr[8]=8;ihdr[9]=6;
  return concat([SIGNATURE,chunk('IHDR',ihdr),...preservedMetadata.map((m)=>chunk(m.type,m.data)),chunk('IDAT',compressed),chunk('IEND',new Uint8Array())]);
 }
+function borderFailure(code, message, details) {
+ const error = new RangeError(message);
+ error.code = code;
+ error.details = Object.freeze(details);
+ throw error;
+}
+
+/** Only a right/bottom border discrepancy is supported. This deliberately does not
+ * estimate a transform: every unmasked RGBA pixel in the overlap must be identical.
+ * Two visible edge directions provide spatial anchors; flat/transparent overlaps
+ * are inconclusive. AI redraws/background drift may therefore remain blocked.
+ */
+function matchCandidateBorder(original, candidate, mask) {
+ const dimensions = { originalWidth: original.width, originalHeight: original.height,
+  candidateWidth: candidate.width, candidateHeight: candidate.height };
+ if (original.width === candidate.width && original.height === candidate.height) {
+  return { image: candidate, geometry: Object.freeze({ kind: 'same-size', ...dimensions }) };
+ }
+ if (Math.abs(original.width - candidate.width) > 1 || Math.abs(original.height - candidate.height) > 1) {
+  borderFailure('SCOPED_EDIT_DIMENSIONS', 'original and candidate dimensions differ by more than one border pixel; resize is forbidden.', dimensions);
+ }
+ const width = Math.min(original.width, candidate.width), height = Math.min(original.height, candidate.height);
+ let checkedPixels = 0, firstMismatch = null, horizontalAnchor = false, verticalAnchor = false;
+ const visibleEdge = (a, b) => {
+  // Compare premultiplied colour: hidden RGB in transparent pixels is not an anchor.
+  for (let c = 0; c < 3; c += 1) {
+   if (Math.abs(original.data[a + c] * original.data[a + 3] / 255
+    - original.data[b + c] * original.data[b + 3] / 255) >= 64) return true;
+  }
+  return false;
+ };
+ for (let y = 0; y < original.height; y += 1) {
+  for (let x = 0; x < original.width; x += 1) {
+   const pixel = y * original.width + x;
+   if (x >= width || y >= height) {
+    if (mask[pixel]) borderFailure('SCOPED_EDIT_MISSING_ALLOWED_PIXELS',
+     'candidate is missing pixels inside the allowed mask; padding an edit is forbidden.', { ...dimensions, x, y });
+    continue;
+   }
+   if (mask[pixel]) continue;
+   checkedPixels += 1;
+   const sourceOffset = pixel * 4, candidateOffset = (y * candidate.width + x) * 4;
+   for (let c = 0; c < 4; c += 1) {
+    if (original.data[sourceOffset + c] !== candidate.data[candidateOffset + c] && !firstMismatch) {
+     firstMismatch = { x, y };
+    }
+   }
+   if (!horizontalAnchor && x > 0 && !mask[pixel - 1]) horizontalAnchor = visibleEdge(sourceOffset, sourceOffset - 4);
+   if (!verticalAnchor && y > 0 && !mask[pixel - original.width]) verticalAnchor = visibleEdge(sourceOffset, sourceOffset - original.width * 4);
+  }
+ }
+ if (firstMismatch) borderFailure('SCOPED_EDIT_ALIGNMENT_UNCONFIRMED',
+  'candidate size and preserved RGBA pixels both changed; zero-offset alignment is unconfirmed.', { ...dimensions, ...firstMismatch, checkedPixels });
+ if (!horizontalAnchor || !verticalAnchor) borderFailure('SCOPED_EDIT_ALIGNMENT_UNCONFIRMED',
+  'candidate border alignment lacks visible anchors in both directions.', { ...dimensions, checkedPixels });
+ // Copy rows at their original integer coordinates. No canvas, interpolation,
+ // translation or scaling. Missing unmasked border bytes stay from the original.
+ const data = new Uint8Array(original.data);
+ for (let y = 0; y < height; y += 1) {
+  data.set(candidate.data.subarray(y * candidate.width * 4, (y * candidate.width + width) * 4), y * original.width * 4);
+ }
+ return { image: { width: original.width, height: original.height, data },
+  geometry: Object.freeze({ kind: 'verified-border-only', ...dimensions,
+   checkedPixels, horizontalAnchor, verticalAnchor }) };
+}
+
 export async function applyScopedPngEdit(originalPng,candidatePng,mask) {
  const sourceBytes=bytes(originalPng,'originalPng');
  if(usesSharedBuffer(sourceBytes)) throw new TypeError('originalPng must be a non-shared Uint8Array.');
  const candidateBytes=snapshotBytes(candidatePng,'candidatePng'), capturedMask=snapshotMask(mask);
  const original=await decodeScopedPng(sourceBytes), candidate=await decodeScopedPng(candidateBytes);
  const removedMetadata=(original.removedMetadata.includes('caBX') || candidate.removedMetadata.includes('caBX')) ? ['caBX'] : [];
- const metadataDisposition=removedMetadata.length ? 'caBX-removed-after-edit-invalidates-C2PA-provenance; no replacement signature was generated' : 'supported-metadata-preserved'; if(original.width!==candidate.width||original.height!==candidate.height) throw new RangeError('original and candidate dimensions must match exactly; resize is forbidden.'); validateBinaryMask(capturedMask,original.width,original.height); if(!metadataCompatible(original.metadata,candidate.metadata)) fail('candidate color-profile metadata does not exactly match original; implicit color conversion is forbidden.');
- const result={width:original.width,height:original.height,data:compositeRgbaWithinMask(original,candidate,capturedMask)}; if(!isRgbaOutsideMaskUnchanged(original,result,capturedMask)) fail('internal outside-mask invariant failed.'); const png=await encodeScopedPng(result,{metadata:original.metadata}); const decoded=await decodeScopedPng(png); if(!isRgbaOutsideMaskUnchanged(original,decoded,capturedMask)) fail('encoded PNG changed pixels outside mask.'); const changes=deriveRgbaChangeMask(original,decoded); return {png,width:original.width,height:original.height,changedPixelCount:changes.changedPixelCount,changedBounds:changes.bounds,outsideUnchanged:true,metadataDisposition,removedMetadata};
+ const metadataDisposition=removedMetadata.length ? 'caBX-removed-after-edit-invalidates-C2PA-provenance; no replacement signature was generated' : 'supported-metadata-preserved';
+ validateBinaryMask(capturedMask,original.width,original.height);
+ if(!metadataCompatible(original.metadata,candidate.metadata)) fail('candidate color-profile metadata does not exactly match original; implicit color conversion is forbidden.');
+ const aligned = matchCandidateBorder(original,candidate,capturedMask);
+ const result={width:original.width,height:original.height,data:compositeRgbaWithinMask(original,aligned.image,capturedMask)}; if(!isRgbaOutsideMaskUnchanged(original,result,capturedMask)) fail('internal outside-mask invariant failed.'); const png=await encodeScopedPng(result,{metadata:original.metadata}); const decoded=await decodeScopedPng(png); if(!isRgbaOutsideMaskUnchanged(original,decoded,capturedMask)) fail('encoded PNG changed pixels outside mask.'); const changes=deriveRgbaChangeMask(original,decoded); return {png,width:original.width,height:original.height,changedPixelCount:changes.changedPixelCount,changedBounds:changes.bounds,outsideUnchanged:true,metadataDisposition,removedMetadata,geometry:aligned.geometry};
 }

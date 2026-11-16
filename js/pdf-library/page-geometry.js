@@ -1,4 +1,4 @@
-import { normalizedRect } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { normalizedRect } from "./contract.js?v=1.7.0-four-session-integration";
 
 const FOOTER_MIN_Y = 0.85;
 const FOOTER_MARKERS = ["문제지에", "저작권", "한국교육과정평가원"];
@@ -19,7 +19,18 @@ function wordsInside(rect, words) {
   });
 }
 
+// 11-12 밤샘: 검색할 때마다 같은 쪽의 아래 경계를 다시 셌다(검색 한 번 CPU 270ms). 같은 낱말 배열이면 저장해 둔 값을 쓴다.
+const footerBoundaryCache = new WeakMap();
 function footerBoundary(words) {
+  if (words && typeof words === 'object') {
+    if (footerBoundaryCache.has(words)) return footerBoundaryCache.get(words);
+    const value = computeFooterBoundary(words);
+    footerBoundaryCache.set(words, value);
+    return value;
+  }
+  return computeFooterBoundary(words);
+}
+function computeFooterBoundary(words) {
   const footerWords = (words ?? []).filter((word) => {
     const text = String(word.text ?? "").normalize("NFKC");
     return word.rect?.[1] >= FOOTER_MIN_Y && FOOTER_MARKERS.some((marker) => text.includes(marker));
@@ -46,6 +57,39 @@ export function trimQuestionRectAtFooter(rect, words) {
   const bottom = parsed[1] + parsed[3];
   if (boundary === null || boundary <= parsed[1] || boundary >= bottom) return parsed;
   return normalizedRect([parsed[0], parsed[1], parsed[2], boundary - parsed[1]]);
+}
+
+// 11-12: 미리 정한 문항 상자는 쪽 아래 한계에 맞춰 잘려 있어, 마지막 줄(선지 ①~⑤)이 조금 낮으면 글자 아랫부분이
+// 잘린 채 미리보기·작업대·시험지로 들어갔다(예: 생명Ⅰ 27년 6평 6번, 줄이 상자 아래로 0.0012 삐져나옴).
+// 상자 안에서 시작한 글자 줄이 아래로 삐져나가면 그 줄 끝 + 여백까지 늘린다. 쪽 아래 글(footer)과
+// 다음 문항(상자 아래에서 시작하는 줄)은 넘보지 않고, 늘리는 폭은 최대 2%.
+export const QUESTION_BOTTOM_PAD = 0.004;
+export const QUESTION_MAX_EXTEND = 0.02;
+const QUESTION_LINE_MAX_HEIGHT = 0.03;
+export function extendQuestionRectToWords(rect, words) {
+  const parsed = normalizedRect(rect);
+  const [x, y, width, height] = parsed, right = x + width, bottom = y + height;
+  const overflowing = (words ?? []).filter((word) => {
+    const r = word?.rect;
+    return Array.isArray(r) && r.length === 4 && r.every(Number.isFinite) && r[3] > 0
+      && r[0] < right && r[0] + r[2] > x && r[1] >= y && r[1] + r[3] > bottom
+      // 줄 대부분(가운데)이 상자 안인 것만 — 아래 문항 첫 줄이 살짝 걸친 것·옆 단 세로 띠(「화학」 같은 긴 상자)는 뺀다.
+      && r[1] + r[3] / 2 < bottom && r[3] <= QUESTION_LINE_MAX_HEIGHT;
+  });
+  // 옆 단 띠(「화」「학」「II」가 한 글자씩 세로로 쌓인 것)는 좁고 같은 높이에 다른 글이 없다 — 그런 외톨이 글자는 뺀다.
+  // 쪽 아래 「※ 확인 사항」·저작권 줄은 문항 글이 아니다.
+  const lines = overflowing.filter((word) => !/확인\s*사항|문제지에|저작권|한국교육과정평가원/u.test(String(word.text ?? "").normalize("NFKC"))).filter((word) => word.rect[2] >= 0.03 || (words ?? []).some((other) => other !== word
+    && Array.isArray(other?.rect) && other.rect[0] < right && other.rect[0] + other.rect[2] > x
+    && Math.min(other.rect[1] + other.rect[3], word.rect[1] + word.rect[3]) - Math.max(other.rect[1], word.rect[1]) > word.rect[3] / 2));
+  if (!lines.length) return parsed;
+  const boundary = footerBoundary(words);
+  const limit = Math.min(1, bottom + QUESTION_MAX_EXTEND, boundary !== null && boundary > bottom ? boundary : 1);
+  const wanted = Math.max(...lines.map((word) => word.rect[1] + word.rect[3])) + QUESTION_BOTTOM_PAD;
+  // 상자 아래에서 시작하는 다른 글(다음 줄·다음 문항) 바로 위까지만 — 늘린 자리에 아래 줄 윗부분이 걸치지 않게.
+  const below = (words ?? []).filter((word) => Array.isArray(word?.rect) && word.rect[0] < right && word.rect[0] + word.rect[2] > x
+    && word.rect[1] >= bottom && !lines.includes(word)).map((word) => word.rect[1] - 0.001);
+  const next = Math.min(limit, wanted, ...below);
+  return next > bottom ? normalizedRect([x, y, width, next - y]) : parsed;
 }
 
 export function isAnswerChoiceBoxCandidate(candidate, words) {

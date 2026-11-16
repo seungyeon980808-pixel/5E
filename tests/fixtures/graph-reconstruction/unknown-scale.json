@@ -1,0 +1,60 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "source": {
+    "id": "synthetic-linear",
+    "hash": "synthetic-v1-linear",
+    "width": 400,
+    "height": 300,
+    "plotBox": {
+      "x": 40,
+      "y": 20,
+      "w": 320,
+      "h": 240
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "",
+      "unit": "",
+      "min": 0,
+      "max": 4,
+      "step": 1
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0.5,
+          "y": 0.8
+        },
+        {
+          "x": 1,
+          "y": 0.4
+        }
+      ],
+      "breaks": [],
+      "endpoints": []
+    }
+  ],
+  "annotations": [],
+  "review": []
+}

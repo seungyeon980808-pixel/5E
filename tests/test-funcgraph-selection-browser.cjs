@@ -7,11 +7,11 @@ const base = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/';
 const evidence = process.env.EVIDENCE_DIR || path.join(__dirname, '..', '.omo', 'evidence', 'task-12-funcgraph-selection');
 
 async function snapshot(page) {
-  return page.evaluate(() => import('./js/state.js?v=1.6.0-remediation-0929').then(({ state }) => structuredClone(state.get())));
+  return page.evaluate(() => import('/js/state.js?v=1.7.0-four-session-integration').then(({ state }) => structuredClone(state.get())));
 }
 
 async function waitForFuncgraph(page) {
-  const store = await page.evaluateHandle(() => import('./js/state.js?v=1.6.0-remediation-0929').then(({ state }) => state));
+  const store = await page.evaluateHandle(() => import('/js/state.js?v=1.7.0-four-session-integration').then(({ state }) => state));
   try {
     await page.waitForFunction((state) => state.get().objects.some((object) => object.type === 'funcgraph'), store);
   } finally {
@@ -47,7 +47,7 @@ async function assertFiniteFuncgraphFrame(page, graph, label) {
 }
 
 async function createFuncgraph(page) {
-  await page.locator('#graph-tool-open').click();
+  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
   await page.locator('#gm-tab-func-btn').click();
   await page.locator('#gm-add-series').click();
   await page.locator('#gm-expr').last().fill('x^2');

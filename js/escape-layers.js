@@ -1,4 +1,4 @@
-const DIALOGS = 'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], .modal-overlay, .tool-chooser, details[open][data-unilib-help]';
+const DIALOGS = '[data-escape-layer], dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], .modal-overlay, .tool-chooser, details[open][data-unilib-help]';
 const callbacks = new WeakMap();
 const openers = new WeakMap();
 let installed = false;

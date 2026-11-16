@@ -8,7 +8,7 @@ const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwrigh
 const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?local=LITE-TOOLS-0922";
 
 (async () => {
-  for (const engine of [chromium, webkit]) {
+  for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -108,7 +108,7 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?lo
       assert.equal(await page.locator("html").getAttribute("data-lite-inspector"), "line");
       assert.deepEqual(await page.locator("#inspector [data-lite-control]:visible")
         .evaluateAll(controls => controls.map(control => control.dataset.liteControl)),
-      ["color", "stroke-width", "line-style", "leader-label"],
+      ["color", "stroke-width", "line-style", "leader-label", "leader-target-marker"],
       `${engine.name()} leader-label inspector must expose line controls and its direct label editor`);
       await page.locator('[data-lite-control="line-style"] button[title="점선1"]').click();
       assert.ok(await page.locator("#scene g[data-id] line[stroke-dasharray]").count() > 0,

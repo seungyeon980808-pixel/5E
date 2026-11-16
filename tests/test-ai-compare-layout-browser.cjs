@@ -10,10 +10,12 @@ const fixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromiu
 for (const engine of ['chromium', 'webkit']) {
   test(`${engine}: comparison aligns images and keeps controls beside their context`, { timeout: 90000 }, async t => {
     process.env.TASK2_ENGINE = engine;
-    const evidence = path.join(root, '.omo/evidence/ai-followup-0928/layout', process.env.QA_PHASE || 'green', engine);
+    const evidence = path.join(process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-followup-0928/layout', process.env.QA_PHASE || 'green'), engine);
     fs.mkdirSync(evidence, { recursive: true });
     const { page, errors } = await fixture(t, 2, evidence);
     const panel = '#ai-image-panel';
+    // 좌우 비교는 '비교 ▾' 메뉴 안에 있다.
+    await page.click(`${panel} .ai-compare-menu summary`);
     await page.click(`${panel} [data-ai-layout-mode="side-by-side"]`);
     async function geometry(name) {
       await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card:not([hidden]) .ai-preview-stage > img')].every(img => img.complete));
@@ -30,9 +32,41 @@ for (const engine of ['chromium', 'webkit']) {
       assert.ok(Math.abs(result.source.width - result.result.width) <= 1, 'Both comparison frames must have the same width: ' + JSON.stringify(result));
       assert.ok(result.picker.x - (result.title.x + result.title.width) < 15, 'revision picker sits immediately beside its heading');
     }
+    await page.click(`${panel} [data-ai-comment-tool="pan"]`);
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-comment-tool="pan"]').getAttribute('aria-pressed') === 'true');
+    // 10-22 위 도구 줄: 묶음 4개(보기·확대·주석 도구·코멘트 표시), 확대 묶음은 가운데 선 왼쪽 8px에서 끝, 주석은 오른쪽 끝.
+    const toolbar = await page.evaluate(() => {
+      const panel = document.querySelector('#ai-image-panel');
+      const r = el => el.getBoundingClientRect();
+      const heading = panel.querySelector('.ai-compare-heading'), grid = r(panel.querySelector('.ai-comparison-grid'));
+      const frames = [panel.querySelector('.ai-compare-controls'), ...heading.querySelectorAll('.ai-tool-seg')];
+      const pressed = heading.querySelector('.ai-compare-controls > .ai-compare-menu > summary');
+      const soft = getComputedStyle(document.documentElement).getPropertyValue('--ds-soft-bg').trim();
+      const probe = document.createElement('i'); probe.style.background = soft; document.body.append(probe);
+      const softColor = getComputedStyle(probe).backgroundColor; probe.remove();
+      return { frames: frames.map(el => ({ radius: getComputedStyle(el).borderTopLeftRadius, h: r(el).height })),
+        center: grid.x + grid.width / 2, gridRight: grid.right, headingH: r(heading).height,
+        zoomRight: r(heading.querySelector('.ai-pane-zoom .ai-tool-seg')).right, help: r(heading.querySelector('.ai-zoom-help')).right,
+        annRight: r(heading.querySelector('.ai-annotation-toolbar')).right, annLeft: r(heading.querySelector('.ai-annotation-toolbar .ai-tool-seg')).left,
+        pressedBg: getComputedStyle(pressed).backgroundColor, onBg: [...heading.querySelectorAll('.ai-tool-seg button[aria-pressed="true"], .ai-compare-controls > button[aria-pressed="true"]')].map(b => getComputedStyle(b).backgroundColor), softColor };
+    });
+    fs.writeFileSync(path.join(evidence, 'toolbar.json'), JSON.stringify(toolbar, null, 2));
+    assert.equal(toolbar.frames.length, 4, 'four tool groups: view, zoom, annotation, comment visibility');
+    assert.ok(toolbar.frames.every(f => f.radius === '8px' && Math.abs(f.h - 30) <= 1), JSON.stringify(toolbar.frames));
+    assert.ok(Math.abs(toolbar.help - (toolbar.center - 8)) <= 1.5, 'zoom group ends 8px left of the centre line: ' + JSON.stringify(toolbar));
+    assert.ok(Math.abs(toolbar.annRight - (toolbar.gridRight - 8)) <= 1.5 && toolbar.annLeft > toolbar.center, 'annotation groups sit in the right half, right-aligned');
+    assert.equal(toolbar.pressedBg, toolbar.softColor, 'active compare mode uses the soft selected surface');
+    assert.ok(toolbar.onBg.length >= 1 && toolbar.onBg.every(bg => bg === toolbar.softColor), 'every pressed tool uses the soft selected surface: ' + JSON.stringify(toolbar.onBg));
+    assert.ok(toolbar.headingH <= 42, 'heading keeps its 41px height');
     await geometry('same-ratio');
     assert.equal(await page.locator(`${panel} [data-ai-capture]`).count(), 0);
-    assert.equal(await page.locator(`${panel} .ai-conversation [data-ai-comment-visibility]`).count(), 1);
+    // 코멘트 표시 단추는 코멘트 도구 줄(.ai-annotation-toolbar)에 한 개 있다.
+    assert.equal(await page.locator(`${panel} [data-ai-comment-visibility]`).count(), 1);
+    assert.equal(await page.locator(`${panel} .ai-annotation-toolbar [data-ai-comment-visibility]`).count(), 1);
+    // 코멘트 표시는 처음에 꺼져 있다. 단추는 켜고 끄기를 바꾼다.
+    assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
+    await page.click(`${panel} [data-ai-comment-visibility]`);
+    assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'true');
     await page.click(`${panel} [data-ai-comment-visibility]`);
     assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
     // Different aspect ratios share one frame, while each image keeps its own proportions.
@@ -89,14 +123,35 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(colors[0].image, ['255,255,255'], 'opaque original stays white');
     assert.ok(colors[1].image.includes('184,190,198') && colors[1].image.includes('159,167,178'), 'transparent output uses both medium gray tones');
     assert.ok(colors[1].image.every(value => [[184,190,198],[159,167,178]].some(expected => value.split(',').every((channel,i) => Math.abs(Number(channel)-expected[i])<=1))), 'only checker tones and one-level rendering rounding are present');
-    await page.click(`${panel} [data-ai-comment-tool="point"]`);
+    // 2026-10-12(24219c8a)부터 수정본에서도 점 코멘트를 쓸 수 있다(숨김 규칙 삭제).
+    assert.equal(await page.locator(`${panel} [data-ai-comment-tool="point"]`).isVisible(), true,
+      'Scoped generated revisions expose point and area comments');
+    await page.click(`${panel} [data-ai-comment-tool="area"]`);
     const imageBox = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
-    await page.mouse.click(imageBox.x + imageBox.width * .6, imageBox.y + imageBox.height * .6);
+    // Same image-relative 60%,60% origin oracle; real area input also proves extent.
+    await page.mouse.move(imageBox.x + imageBox.width * .6, imageBox.y + imageBox.height * .6);
+    await page.mouse.down();
+    await page.mouse.move(imageBox.x + imageBox.width * .68, imageBox.y + imageBox.height * .68);
+    await page.mouse.up();
     const addedComment = await page.evaluate(async () => {
       const snapshot = await window.__task2Manager.sharingSnapshot();
       return snapshot.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'task-0').generated[0].comments.at(-1);
     });
     assert.ok(Math.abs(addedComment.x - 60) < .5 && Math.abs(addedComment.y - 60) < .5, 'comment clicks use actual image coordinates');
+    assert.equal(addedComment.type, 'area');
+    assert.ok(Math.abs(addedComment.w - 8) < .5 && Math.abs(addedComment.h - 8) < .5,
+      'Scoped area extent uses the same real image coordinates');
+    const pointApi = await page.evaluate(async () => {
+      const url = window.__runtime.base + 'ai-image-comments.js' + window.__runtime.query;
+      const { normalizeCommentBox } = await import(url);
+      return { url, value: normalizeCommentBox({ type: 'point', x: 60, y: 60, w: 0, h: 0 }),
+        coverage: 'actual component point input validation; not selected-output point UI creation' };
+    });
+    assert.deepEqual(pointApi.value, { x: 60, y: 60, w: 0, h: 0 });
+    fs.writeFileSync(path.join(evidence, 'comment-input-contract.json'), JSON.stringify({
+      actualUiAction: 'scoped area drag', origin: { x: 60, y: 60 }, extent: { w: 8, h: 8 },
+      retiredUiAction: 'selected generated point creation', addedComment, pointApi,
+    }, null, 2));
     await page.click(`${panel} [data-ai-comment-tool="pan"]`);
     await page.click(`${panel} [data-ai-zoom-action="in"]`);
     await geometry('linked-zoom');

@@ -1,0 +1,11 @@
+default-src 'self';
+script-src 'self' 'wasm-unsafe-eval' 'sha256-6J13xoNSozd2mH1AJl3KuLPsdiB1hD3ZvL7QP+gJZ6k=' 'sha256-+c+fChzr4b4A9xVtNKq3Yfmcbli9o3ahnUjLndo441s=';
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net;
+img-src 'self' data: blob:;
+connect-src 'self' data: blob: https://5e-visitor-stats.5e-desktop.workers.dev https://5e-bug-api.5e-desktop.workers.dev https://five-e-ai-runtime-probe.onrender.com https://raw.githubusercontent.com http://127.0.0.1:*;
+worker-src 'self' blob:;
+frame-src 'self';
+object-src 'none';
+base-uri 'self';
+form-action 'self'

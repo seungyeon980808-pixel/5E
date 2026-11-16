@@ -1,0 +1,109 @@
+// Fixed label source: 6e2c55012461859cdc8afb4d9596d3f08d5409b4; assertions and fixtures retained.
+const { installLabelSourcePage, armSelection, selectionArrived } = require('./helpers/label-source-browser.cjs');
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { fixture, choose, finish, verifiedPlan, snapshot } = require('./helpers/label-source-browser.cjs');
+const evidence = process.env.EVIDENCE_DIR || path.resolve(__dirname, '../.omo/evidence/label-background-invariance-20261010/browser');
+const panel = '#ai-image-panel';
+
+for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'restore-editable']) {
+  test(`${engine}: ${initial} and opposite label choice preserve identical RAW through reload and native editing`, { timeout: 120000 }, async t => {
+    process.env.TASK2_ENGINE = engine;
+    const dir = path.join(evidence, engine, initial); fs.mkdirSync(dir, { recursive: true });
+    const { page, errors } = await fixture(t, 4, dir);
+    const convert = async (task, labels, request = '장치 연결을 보존해 변환해 주세요', { allowIdle = false } = {}) => { // 11-10: 배경 캐시 재사용(그림 요청 없음)을 허용하는 변환
+      const selector = `${panel} .ai-task-tab[data-tab-id="task-${task}"] .ai-task-tab-select`;
+      await page.locator(selector).click();
+      await page.waitForFunction(selector => document.querySelector(selector)?.getAttribute('aria-pressed') === 'true', selector);
+      await choose(page, 'general', labels);
+      await page.locator(`${panel} [data-ai-input]`).fill(request);
+      const startIndex = await page.evaluate(() => __task2.sends.length);
+      const before = (await snapshot(page)).find(tab => tab.id === `task-${task}`).generated.length;
+      await page.locator(`${panel} [data-ai-comments-apply]`).click();
+      await finish(page, { sourcePlan: verifiedPlan, startIndex, allowIdle }); // 11-10: 캐시 재사용 변환은 그림 요청 없이 끝날 수 있다
+      // 11-10: 그림 요청이 없으면 결과 항목이 늘어날 때까지 기다린다(바쁨 해제 직후 목록 반영 순서 차이를 흡수).
+      for (let i = 0; allowIdle && i < 100 && (await snapshot(page)).find(tab => tab.id === `task-${task}`).generated.length <= before; i++) await page.waitForTimeout(100);
+      const tabs = await snapshot(page);
+      return tabs.find(tab => tab.id === `task-${task}`).generated.at(-1);
+    };
+    const imagesSent = () => page.evaluate(() => __task2.sends.filter(s => s.payload.purpose === 'image').length);
+    const first = await convert(0, initial);
+    const opposite = initial === 'remove' ? 'restore-editable' : 'remove';
+    const second = await convert(1, opposite, undefined, { allowIdle: true }); // 11-10: 두 번째는 저장된 그림을 재사용해 그림 요청이 없다
+    assert.equal(await imagesSent(), 1, 'opposite label setting must not create a second picture');
+    assert.equal(first.data, second.data, 'full PNG data URL is byte-identical');
+    assert.equal(first.candidateSha256, second.candidateSha256);
+    assert.equal(second.workflowMetrics.calls.fullGeneration, 0);
+    assert.equal(second.workflowMetrics.backgroundReused, 'storage');
+    assert.equal(first.labelPlan?.labels.length || 0, initial === 'remove' ? 0 : 1);
+    assert.equal(second.labelPlan?.labels.length || 0, opposite === 'remove' ? 0 : 1);
+    await page.screenshot({ path: path.join(dir, 'opposite-option.png') });
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('#ai-image-install-open').click();
+    await page.waitForFunction(() => window.__task2Manager);
+    const reopened = await snapshot(page);
+    assert.equal(reopened.find(tab => tab.id === 'task-0').generated.at(-1).data, first.data);
+    const restored = await convert(2, 'restore-editable', undefined, { allowIdle: true }); // 11-10: 다시 열어도 그림 요청 없이 끝남
+    assert.equal(await imagesSent(), 0, 'persistent RAW is reused after reload in another task');
+    assert.equal(restored.data, first.data); assert.equal(restored.labelPlan.labels.length, 1);
+    assert.equal(restored.workflowMetrics.backgroundReused, 'storage');
+    await page.locator(`${panel} [data-ai-insert-selected]`).click();
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel').hidden);
+    const native = await page.evaluate(async () => {
+      const v = '?v=1.7.0-four-session-integration';
+      const { state } = await import('/js/state.js' + v);
+      const { serialize, applyLoaded } = await import('/js/project-io.js' + v);
+      window.backgroundQA = { state, serialize, applyLoaded };
+      const objects = state.get().objects;
+      return { image: objects.find(o => o.type === 'image'), labels: objects.filter(o => o.aiAutoLabel) };
+    });
+    // 4dbdd0b8(10-13)부터 결과는 이미지+라벨 한 묶음으로 들어가고 이미지 선택 잠금은 풀린다(묶음으로 함께 옮기기).
+    assert.equal(native.image.src, first.data); assert.equal(native.image.imageSelectionLocked, false);
+    assert.equal(native.image.groupId, `${native.image.id}_image_labels`); assert.ok(native.labels.every(l => l.groupId === native.image.groupId));
+    assert.equal(native.labels.length, 1); assert.ok(!native.labels[0].locked);
+    const center = () => page.evaluate(async id => {
+      const { worldToScreen } = await import('/js/viewport.js?v=1.7.0-four-session-integration');
+      const s = backgroundQA.state.get(), o = s.objects.find(o => o.id === id);
+      // 11-10: 라벨은 이제 글자 객체(x,y)로 들어온다. 예전 지시선 라벨(p2)도 함께 받는다.
+      const at = o.p2 ?? { x: o.x, y: o.y };
+      return worldToScreen(document.querySelector('#canvas'), s.viewBox, at.x, at.y);
+    }, native.labels[0].id);
+    // 묶음 안 라벨은 한 번 누르면 묶음 전체가 골라지고, 두 번 누르면 그 라벨만 지목·바로 고치기가 열린다.
+    let point = await center(); await page.mouse.click(point.x, point.y);
+    await page.waitForFunction(id => window.backgroundQA.state.get().selectedIds.includes(id), native.labels[0].id);
+    point = await center(); await page.mouse.dblclick(point.x, point.y);
+    // 지목한 라벨은 통합 글자 편집 창으로 바로 고친다(묶음이 아닌 라벨은 예전처럼 .ai-inline-label-editor).
+    const inline = page.locator('.ai-inline-label-editor, .unified-text-input.text-formula-source-input').first(); await inline.waitFor({ state: 'visible' });
+    await inline.fill('수정된 라벨'); await inline.press('Enter');
+    const saved = await page.evaluate(() => {
+      const q = backgroundQA;
+      const before = q.state.get().objects.find(o => o.aiAutoLabel);
+      q.applyLoaded(q.state, JSON.parse(JSON.stringify(q.serialize(q.state.get()))));
+      return { text: before.text, image: q.state.get().objects.find(o => o.type === 'image').src,
+        reopenedText: q.state.get().objects.find(o => o.aiAutoLabel).text };
+    });
+    assert.equal(saved.text, '수정된 라벨'); assert.equal(saved.reopenedText, saved.text); assert.equal(saved.image, first.data);
+    await page.screenshot({ path: path.join(dir, 'same-background-native-edited.png') });
+    await page.locator('#ai-image-install-open').click();
+    // A content change remains a real new image request. Return a different
+    // controlled PNG so accidental reuse is observable rather than hidden.
+    await page.evaluate(() => {
+      const emit = __task2.emit;
+      __task2.emit = (index, kind, text) => emit(index, kind, kind === 'image' ? __task2.original : text);
+    });
+    const changed = await convert(3, 'remove', '장치 연결을 보존하고 왼쪽 부품만 수정해 주세요');
+    assert.equal(await imagesSent(), 1);
+    assert.notEqual(changed.data, first.data);
+    assert.notEqual(changed.workflowMetrics.generationHarness.key, first.workflowMetrics.generationHarness.key);
+    assert.deepEqual(errors, []);
+    fs.writeFileSync(path.join(dir, 'result.json'), JSON.stringify({ engine, initial,
+      initialImageCalls: 1, oppositeImageCalls: second.workflowMetrics.calls.fullGeneration,
+      afterReloadImageCalls: restored.workflowMetrics.calls.fullGeneration, changedRequestImageCalls: changed.workflowMetrics.calls.fullGeneration,
+      byteIdentical: first.data === second.data && first.data === restored.data,
+      rawSha256: first.candidateSha256, nativeLabelCount: native.labels.length, editedText: saved.reopenedText,
+      backgroundPreservedAfterEditing: saved.image === first.data, paidCalls: 0 }, null, 2));
+  });
+}

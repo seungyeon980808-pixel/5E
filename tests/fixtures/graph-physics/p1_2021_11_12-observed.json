@@ -1,0 +1,333 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "reference-1",
+    "hash": "sha256:2e2c63d5629de66b26ebf3955b4de4ba69994e176cc8040e0052b3fc25ffe608",
+    "width": 432,
+    "height": 381,
+    "plotBox": {
+      "x": 87,
+      "y": 16,
+      "w": 329,
+      "h": 310
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "부피",
+      "displayTitle": "부피",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.915,
+        "y": -0.09
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "압력",
+      "displayTitle": "압력",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.137,
+        "y": 0.955
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "cycle",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.1641,
+          "y": 0.7032
+        },
+        {
+          "x": 0.3617,
+          "y": 0.7032
+        },
+        {
+          "x": 0.3708,
+          "y": 0.6516
+        },
+        {
+          "x": 0.3891,
+          "y": 0.5968
+        },
+        {
+          "x": 0.4134,
+          "y": 0.5452
+        },
+        {
+          "x": 0.4407,
+          "y": 0.4968
+        },
+        {
+          "x": 0.4772,
+          "y": 0.4484
+        },
+        {
+          "x": 0.5137,
+          "y": 0.4065
+        },
+        {
+          "x": 0.5562,
+          "y": 0.3645
+        },
+        {
+          "x": 0.6079,
+          "y": 0.3226
+        },
+        {
+          "x": 0.6626,
+          "y": 0.2839
+        },
+        {
+          "x": 0.7204,
+          "y": 0.2548
+        },
+        {
+          "x": 0.5046,
+          "y": 0.2548
+        },
+        {
+          "x": 0.4529,
+          "y": 0.2806
+        },
+        {
+          "x": 0.4043,
+          "y": 0.3129
+        },
+        {
+          "x": 0.3587,
+          "y": 0.3516
+        },
+        {
+          "x": 0.3161,
+          "y": 0.3968
+        },
+        {
+          "x": 0.2766,
+          "y": 0.4452
+        },
+        {
+          "x": 0.2401,
+          "y": 0.5032
+        },
+        {
+          "x": 0.2067,
+          "y": 0.5677
+        },
+        {
+          "x": 0.1793,
+          "y": 0.6355
+        },
+        {
+          "x": 0.1641,
+          "y": 0.7032
+        }
+      ],
+      "curveStyle": "smooth",
+      "closed": true,
+      "segmentModes": [
+        "line",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "line",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ],
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 0,
+          "kind": "closed",
+          "markerSize": 1.17
+        },
+        {
+          "index": 1,
+          "kind": "closed",
+          "markerSize": 1.17
+        },
+        {
+          "index": 11,
+          "kind": "closed",
+          "markerSize": 1.28
+        },
+        {
+          "index": 12,
+          "kind": "closed",
+          "markerSize": 1.28
+        }
+      ],
+      "lineStyle": "solid",
+      "strokeWidth": 0.74,
+      "markerShape": "none",
+      "arrowSpecs": [
+        {
+          "segmentIndex": 0,
+          "t": 0.62,
+          "dir": 1,
+          "strokeWidth": 0.78
+        },
+        {
+          "segmentIndex": 5,
+          "t": 0.75,
+          "dir": 1,
+          "strokeWidth": 0.78
+        },
+        {
+          "segmentIndex": 11,
+          "t": 0.63,
+          "dir": 1,
+          "strokeWidth": 0.78
+        },
+        {
+          "segmentIndex": 16,
+          "t": 0.85,
+          "dir": 1,
+          "strokeWidth": 0.78
+        }
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": -0.052,
+      "y": -0.058,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 35,
+      "fontWeight": 400
+    },
+    {
+      "id": "label-a",
+      "kind": "text",
+      "text": "A",
+      "x": 0.092,
+      "y": 0.713,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 0,
+      "fontSizePx": 38,
+      "fontWeight": 400
+    },
+    {
+      "id": "label-b",
+      "kind": "text",
+      "text": "B",
+      "x": 0.427,
+      "y": 0.713,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 1,
+      "fontSizePx": 38,
+      "fontWeight": 400
+    },
+    {
+      "id": "label-c",
+      "kind": "text",
+      "text": "C",
+      "x": 0.778,
+      "y": 0.197,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 11,
+      "fontSizePx": 38,
+      "fontWeight": 400
+    },
+    {
+      "id": "label-d",
+      "kind": "text",
+      "text": "D",
+      "x": 0.447,
+      "y": 0.197,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 12,
+      "fontSizePx": 38,
+      "fontWeight": 400
+    }
+  ],
+  "regions": [],
+  "legends": [],
+  "style": {
+    "fontSizePx": 30,
+    "labelWeight": 400,
+    "strokeWidth": 0.32,
+    "guideStyle": {
+      "strokeWidth": 0.21,
+      "dashLength": 0.85,
+      "dashGap": 0.64
+    }
+  },
+  "frame": {
+    "variant": "quadrant",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowY2": false,
+    "tickTop": false,
+    "tickRight": false,
+    "arrowLength": 4.04,
+    "arrowWidth": 2.55,
+    "strokeWidth": 0.32
+  },
+  "review": []
+}

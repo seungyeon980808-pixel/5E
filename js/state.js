@@ -7,19 +7,18 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createCanvasStore } from "./canvas-image-bounds.js?v=1.6.1-preview-labeler-0917-1111";
+import { createCanvasStore } from "./canvas-image-bounds.js?v=1.7.0-four-session-integration";
 
 export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif';
 // 수식 글꼴: "수식" 글꼴 옵션(EDITOR_FONT_OPTIONS)과 formula 렌더가 쓴다. Latin Modern
 // Roman(= LaTeX 기본 수식체 Computer Modern의 오픈판)을 우선하고, 파일 부재 시 뒤쪽
 // HWP수식/Times로 fallback한다. @font-face 등록은 css/style.css. isEquationFontFamily가
 // 이 값을 그대로 비교하므로, 값만 바꾸면 이탤릭·자간 로직이 자동으로 따라온다.
-export const EQUATION_FONT_FAMILY = '"Latin Modern Roman", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
+export const EQUATION_FONT_FAMILY = '"Latin Modern Roman", "Latin Modern Math", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
 export const EQUATION_FONT_STYLE = "italic";
 export const EQUATION_LETTER_SPACING = "-0.04em";
 export const TOOL_LABEL_FONT_FAMILY = EQUATION_FONT_FAMILY;
 export const VARIABLE_LABEL_FONT_STYLE = "italic";
-export const CALLOUT_LABEL_FONT_STYLE = "normal";
 export const OBJECT_LABEL_TYPES = ["quantity", "label"];
 // 물리량(quantity) 객체 라벨 = 텍스트 도구의 "수식" 글꼴(EQUATION_FONT_FAMILY)과 동일.
 // 단일 출처: 수식 글꼴을 그대로 재사용하므로 자동 라벨링과 텍스트 "수식"이 항상 일치한다
@@ -73,11 +72,6 @@ export function splitRomanRuns(text) {
   }
   if (last < s.length) push(s.slice(last), false);
   return runs;
-}
-
-// 텍스트에 세리프 처리가 필요한 로마 숫자가 하나라도 있는지.
-export function hasRomanNumeral(text) {
-  return splitRomanRuns(text).some((r) => r.roman);
 }
 
 function normalizeFontFamily(value) {
@@ -378,6 +372,8 @@ export const state = createCanvasStore({
 
   // grid: canvas reference grid (never exported). opacity maps 1-10 → 0.05-1.0.
   grid: { visible: false, opacity: 3, interval: 10 },
+  // Editor preference: automatic edge/center alignment; Shift remains explicit.
+  autoSnap: false,
 
   // ===== 다중 페이지(아트보드) — 스왑 방식 =====
   // 활성 페이지의 데이터는 위 s.objects/s.guides/s.layers/s.artboard(그 자리 그대로)에

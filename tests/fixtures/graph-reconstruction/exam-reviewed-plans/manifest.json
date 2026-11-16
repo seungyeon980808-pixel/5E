@@ -1,0 +1,113 @@
+{
+  "schema": "5e.reviewed-exam-graphs/v1",
+  "modelCalls": 0,
+  "automaticExtractionAcceptance": false,
+  "cases": [
+    {
+      "id": "membrane",
+      "title": "2024학년도 수능 생명과학Ⅰ 10번 · 막전위",
+      "plan": "membrane.json",
+      "sourceAsset": "assets/exam-library/images/b1_2024_11_10.png",
+      "crop": [
+        665,
+        305,
+        1219,
+        788
+      ],
+      "sourceSHA256": "eecb1a462c7679b3cd9271a5815ffe7d3d9dacd234de88978baecabed3d0760f",
+      "observedPointsSHA256": "db9f287ca414fb6644d9b9028044035d42840c6ad91d834de8059a6a72deae73",
+      "sourceReviewAdditions": [
+        "표시 좌표 모드",
+        "원본 눈금·축 제목 위치",
+        "글자·선 스타일",
+        "하단 시간축",
+        "세로 제목·단위 분리",
+        "자극 화살표"
+      ]
+    },
+    {
+      "id": "wave",
+      "title": "2025학년도 수능 물리학Ⅰ 11번 · 파동",
+      "plan": "wave.json",
+      "sourceAsset": "assets/exam-library/images/p1_2025_11_11.png",
+      "crop": [
+        390,
+        0,
+        858,
+        345
+      ],
+      "sourceSHA256": "be324625a85bf84bd79017458aa96ce41c200a161c48c78f7f7fd5d691e656a3",
+      "observedPointsSHA256": "c307af581aa087a9848528ddb5cf1189150fa5093e504ef775aa8cdcacba8b52",
+      "sourceReviewAdditions": [
+        "표시 좌표 모드",
+        "원본 눈금·축 제목 위치",
+        "글자·선 스타일",
+        "관찰된 영점의 축선 위치"
+      ]
+    },
+    {
+      "id": "interference",
+      "title": "2024학년도 수능 물리학Ⅱ 3번 · 두 곡선",
+      "plan": "interference.json",
+      "sourceAsset": "assets/exam-library/images/p2_2024_11_03.png",
+      "crop": [
+        670,
+        0,
+        1129,
+        275
+      ],
+      "sourceSHA256": "6f63423ee360358b9f966c090cec87c0b9e1872d6fed56223efa3bb30e345eeb",
+      "observedPointsSHA256": "fc1fc78d414a97bedb7be339c6c8a91c54b3e6216638d18851f2c15c89556cb5",
+      "sourceReviewAdditions": [
+        "표시 좌표 모드",
+        "원본 눈금·축 제목 위치",
+        "글자·선 스타일",
+        "B 파선",
+        "A/B 라벨 지시선"
+      ]
+    },
+    {
+      "id": "chemistry",
+      "title": "2025학년도 수능 화학Ⅱ 17번 · 감소 곡선",
+      "plan": "chemistry.json",
+      "sourceAsset": "assets/exam-library/images/c2_2025_11_17.png",
+      "crop": [
+        0,
+        0,
+        800,
+        534
+      ],
+      "sourceSHA256": "04f9d14eb1c51dfdc4474392f348e515501f437a0c1f9cc147e07a267d730573",
+      "observedPointsSHA256": "6a7c65610285a8009b079ad4d6c45f294787cd011ccf6e57132f184f25e95d89",
+      "sourceReviewAdditions": [
+        "표시 좌표 모드",
+        "원본 눈금·축 제목 위치",
+        "글자·선 스타일",
+        "쌓인 분수",
+        "HA 파선",
+        "수식 제목"
+      ]
+    },
+    {
+      "id": "cycle",
+      "title": "2025학년도 수능 물리학Ⅰ 15번 · 순환",
+      "plan": "cycle.json",
+      "sourceAsset": "assets/exam-library/images/p1_2025_11_15.png",
+      "crop": [
+        0,
+        0,
+        402,
+        353
+      ],
+      "sourceSHA256": "3d6853617c01bb6cbe4b73b5f871a5d09244190ce72685388a4a0f435e5e68ee",
+      "observedPointsSHA256": "7f146afcb7666e35c55f5fed3b0bedd2a7a3347889afe23b8ede4faed3a2fc3d",
+      "sourceReviewAdditions": [
+        "표시 좌표 모드",
+        "원본 눈금·축 제목 위치",
+        "글자·선 스타일",
+        "닫힌 경로의 직선·곡선 구간",
+        "진행 화살표 4개"
+      ]
+    }
+  ]
+}

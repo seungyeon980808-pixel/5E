@@ -7,7 +7,8 @@
  * 구조는 section-groundarc.js 의 selected() / commit() / sync() 3함수 패턴 그대로.
  */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 function row(labelText) {
   const r = document.createElement("div");
@@ -42,6 +43,12 @@ export function initNeuronSection(state) {
 
   const body = document.createElement("div");
   body.className = "insp-body";
+
+  const styleRow = row("그림 표현"), styleSel = document.createElement("select");
+  styleSel.className = "insp-input";
+  [["diagram", "단순 도식"], ["exam", "기출형 가지 구조"]].forEach(([v, label]) => { const op = document.createElement("option"); op.value = v; op.textContent = label; styleSel.appendChild(op); });
+  styleRow.appendChild(styleSel); body.appendChild(styleRow);
+  styleSel.addEventListener("change", () => commit(t => { t.illustrationStyle = styleSel.value; }));
 
   /* ----- 세포체 크기 ----- */
   const somaRow = row("세포체 크기");
@@ -120,7 +127,7 @@ export function initNeuronSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;
@@ -168,6 +175,8 @@ export function initNeuronSection(state) {
     const o = selected();
     if (!o) { section.style.display = "none"; return; }
     section.style.display = "";
+    if (document.activeElement !== styleSel) styleSel.value = o.illustrationStyle || "diagram";
+    body.querySelectorAll("input, select").forEach(inp => { inp.disabled = !!o.locked; });
 
     if (document.activeElement !== somaInp) somaInp.value = Number.isFinite(o.somaRadius) ? o.somaRadius : 3.4;
     if (document.activeElement !== dendInp) dendInp.value = Number.isFinite(o.dendrites) ? o.dendrites : 5;

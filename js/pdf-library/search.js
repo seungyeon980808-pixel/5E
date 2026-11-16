@@ -1,10 +1,22 @@
-import { createCropSource } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
-import { deriveExamMetadata } from "../library/exam-code.js?v=1.6.1-remediation-0929";
-export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js?v=1.6.1-preview-labeler-0917-1111";
+import { createCropSource } from "./contract.js?v=1.7.0-four-session-integration";
+import { deriveExamMetadata } from "../library/exam-code.js?v=1.7.0-four-session-integration";
+export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js?v=1.7.0-four-session-integration";
 
 function normalizedText(value) {
   return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
 }
+
+// 11-08: 검색마다 8천여 쪽 본문을 처음부터 다시 정규화하던 것을 쪽(entry)마다 한 번만 하고 재사용한다.
+const searchableCache = new WeakMap();
+function searchableText(entry) {
+  let value = searchableCache.get(entry);
+  if (value === undefined) {
+    value = normalizedText(entry.normalized ?? entry.text).replace(/\s+/gu, "");
+    searchableCache.set(entry, value);
+  }
+  return value;
+}
+const wordRunsCache = new WeakMap();
 
 const BASE_HIGHLIGHT_COLORS = Object.freeze(["#ffcf4a", "#5fd3ff", "#ff7ab8", "#83e377", "#b59cff", "#ff9866", "#63e6be", "#f783ff"]);
 
@@ -27,9 +39,34 @@ export function queryHighlightTerms(query) {
 
 export function mapQueryHighlights(entry, queryOrTerms) {
   const terms = Array.isArray(queryOrTerms) ? queryOrTerms : queryHighlightTerms(queryOrTerms);
+  // 11-12: 검색어가 없으면(과목 칩만 누름) 형광도 없다 — 문항마다 낱말 줄을 다시 세던 것(칩 한 번에 수십 ms)을 건너뛴다.
+  if (!terms.length) return Object.freeze({ terms, highlights: Object.freeze([]), misses: Object.freeze([]) });
+  const runs = entryWordRuns(entry);
+  return highlightsFromRuns(entry, terms, runs);
+}
+
+// 11-11 사용자 「색인 위치가 부정확하다」: 낱말 상자를 글자 수로 똑같이 나누면(띄어쓰기를 빼고 셈) 띄어쓰기 폭과
+// 한글·영문 폭 차이만큼 형광이 오른쪽으로 밀렸다. 글자마다 폭 비율(한글 1, 영문·숫자 0.55, 띄어쓰기 0.33, 문장부호 0.35)로
+// 나누고 띄어쓰기 폭도 넣어, 띄어쓰기를 뺀 글자 i의 왼쪽·오른쪽 끝을 낱말 폭 대비 비율로 돌려준다.
+const characterWidth = (ch) => /\s/u.test(ch) ? 0.33
+  : /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3\u3000-\u9fff\uff00-\uffef]/u.test(ch) ? 1
+  : /[A-Za-z0-9]/.test(ch) ? 0.55 : /[.,:;'"!?·()\[\]{}<>~\-]/.test(ch) ? 0.35 : 0.6;
+function characterEdges(full) {
+  const chars = [...full], total = chars.reduce((sum, ch) => sum + characterWidth(ch), 0) || 1;
+  const left = [], right = []; let at = 0;
+  for (const ch of chars) { const w = characterWidth(ch); if (!/\s/u.test(ch)) { left.push(at / total); right.push((at + w) / total); } at += w; }
+  return { left, right };
+}
+
+function entryWordRuns(entry) {
+  // 11-12: 부르는 쪽(provider.js)이 검색마다 새 entry 객체를 만들어 캐시가 늘 빗나갔다 — 바뀌지 않는 낱말 배열을 열쇠로.
+  const cacheKey = Array.isArray(entry?.words) ? entry.words : entry;
+  const cached = cacheKey && typeof cacheKey === "object" ? wordRunsCache.get(cacheKey) : undefined;
+  if (cached) return cached;
   const words = (entry.words ?? []).flatMap((word) => {
-    const text = normalizedText(word.text).replace(/\s+/gu, "");
-    return text ? [{ text, characters: [...text], rect: word.rect }] : [];
+    const full = normalizedText(word.text);
+    const text = full.replace(/\s+/gu, "");
+    return text ? [{ text, characters: [...text], rect: word.rect, edges: characterEdges(full) }] : [];
   });
   const runs = [];
   for (const word of words) {
@@ -43,13 +80,20 @@ export function mapQueryHighlights(entry, queryOrTerms) {
       && Math.abs((previous.rect[1] + previous.rect[3] / 2) - (word.rect[1] + word.rect[3] / 2)) <= Math.max(previous.rect[3], word.rect[3]) * 0.65
       && horizontalGap >= -Math.max(previous.rect[2], word.rect[2]) * 0.1
       && horizontalGap <= maximumAdjacentGap;
-    if (!sameLine) runs.push({ words: [], stream: "", offsets: [] });
+    if (!sameLine) runs.push({ words: [], stream: "", offsets: [], length: 0 });
     const run = runs.at(-1);
-    const start = [...run.stream].length;
+    // 11-08: 줄 글자 수를 매번 처음부터 세던 것(단어마다 [...stream])을 누적 수로 — 긴 줄에서 제곱으로 느려졌다.
+    const start = run.length;
     run.words.push(word);
     run.stream += word.text;
+    run.length += word.characters.length;
     run.offsets.push({ word, start, end: start + word.characters.length });
   }
+  if (cacheKey && typeof cacheKey === "object") wordRunsCache.set(cacheKey, runs);
+  return runs;
+}
+
+function highlightsFromRuns(entry, terms, runs) {
   const highlights = [];
   const misses = [];
   for (const term of terms) {
@@ -64,12 +108,9 @@ export function mapQueryHighlights(entry, queryOrTerms) {
           const localStart = Math.max(0, start - part.start);
           const localEnd = Math.min(part.word.characters.length, end - part.start);
           const [x, y, width, height] = part.word.rect;
-          const rect = [
-            x + width * localStart / part.word.characters.length,
-            y,
-            width * (localEnd - localStart) / part.word.characters.length,
-            height,
-          ];
+          const edges = part.word.edges, count = part.word.characters.length;
+          const from = edges?.left?.[localStart] ?? localStart / count, to = edges?.right?.[localEnd - 1] ?? localEnd / count;
+          const rect = [x + width * from, y, width * Math.max(0, to - from), height];
           highlights.push(Object.freeze({
             ...term, coordinateSpace: "page-normalized",
             documentId: entry.documentId, pageNumber: entry.pageNumber,
@@ -115,6 +156,11 @@ export function buildSearchIndex(documents) {
   return Object.freeze({ schemaVersion: "pdf-search-index-v1", entries: Object.freeze(entries) });
 }
 
+// 11-08: 색인을 새로 만든 직후(일꾼 안·한가할 때) 쪽마다 정규화한 글을 미리 만들어, 첫 검색도 바로 끝나게 한다.
+export function warmSearchIndex(index) {
+  for (const entry of index?.entries ?? []) searchableText(entry);
+}
+
 export function searchIndex(index, options) {
   const terms = queryHighlightTerms(options?.query ?? "");
   if (terms.length === 0) return Object.freeze([]);
@@ -128,12 +174,14 @@ export function searchIndex(index, options) {
     if (filters.academicYear && String(entry.metadata?.academicYear) !== String(filters.academicYear)) continue;
     if (filters.administration && entry.metadata?.administration !== filters.administration) continue;
     if (filters.subject && entry.metadata?.subject !== filters.subject) continue;
-    const searchable = normalizedText(entry.normalized ?? entry.text).replace(/\s+/gu, "");
+    const searchable = searchableText(entry);
     if (!terms.every(({ term }) => searchable.includes(term))) continue;
     const firstOffset = Math.min(...terms.map(({ term }) => searchable.indexOf(term)).filter((offset) => offset >= 0));
     const start = Math.max(0, firstOffset - 48);
     const occurrences = terms.reduce((sum, { term }) => sum + searchable.split(term).length - 1, 0);
-    candidates.push({ entry, score: occurrences / terms.length, snippet: entry.text.slice(start, start + 160).trim() });
+    // 11-09: 낱말이 친 순서대로 붙어 있는 쪽·문항을 맨 위로(provider.js examSearchScore와 같은 규칙).
+    const adjacent = terms.length > 1 && searchable.includes(terms.map(({ term }) => term).join("")) ? 1000 : 0;
+    candidates.push({ entry, score: adjacent + occurrences / terms.length, snippet: entry.text.slice(start, start + 160).trim() });
   }
   candidates.sort((left, right) => right.score - left.score || left.entry.pageNumber - right.entry.pageNumber);
   const results = candidates.slice(0, limit).map(({ entry, score, snippet }) => {

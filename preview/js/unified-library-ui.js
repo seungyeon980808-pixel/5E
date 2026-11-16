@@ -1000,6 +1000,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cropDocumentFile = null;
   let cropSelectionChanged = false;
   let cropPreviewEpoch = 0;
+  let pendingCropConfirmation = null;
   let cropPreviewExact = false;
   let cropExact = null;
   let cropActionBusy = false;
@@ -1884,9 +1885,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     await renderSources(isCurrent);
   }
 
+  const hasOpenDrawer = () =>
+    window.matchMedia("(max-width: 1099px)").matches && root.classList.contains("preview-open")
+    || window.matchMedia("(max-width: 767px)").matches && root.classList.contains("folders-open");
   function closeDrawers() {
     root.classList.remove("folders-open", "preview-open");
-    if (window.matchMedia("(max-width: 720px)").matches) setMobileFoldersOpen(false);
+    if (window.matchMedia("(max-width: 767px)").matches) setMobileFoldersOpen(false);
   }
   function closeExpandedReader() {
     root.classList.remove("is-reader-expanded");
@@ -2490,6 +2494,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   };
   addCropHandles(cropBox);
   const cropRectKey = () => draftCrop?.join(",") ?? "";
+  const cropConfirmationIsCurrent = request => Boolean(request
+    && request.session === cropSession && request.epoch === cropPreviewEpoch
+    && request.rectKey === cropRectKey() && request.editingId === editingAcceptedId
+    && !cropDialog.hidden && !overlay.hidden && !cropGesture?.drawing && !cropActionBusy);
   const cropActionTargets = () => {
     if (activeAcceptedCropId) return acceptedCrops.filter(({ result }) => result.id === activeAcceptedCropId);
     return [...acceptedCrops];
@@ -2555,6 +2563,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const draftReady = Boolean(cropReady && draftCrop && cropPreviewExact && cropExact?.rectKey === cropRectKey() && !cropActionBusy);
     cropConfirm.hidden = !draftCrop || Boolean(editingAcceptedId);
     cropSave.disabled = !draftReady;
+    if (pendingCropConfirmation && !cropConfirmationIsCurrent(pendingCropConfirmation)) pendingCropConfirmation = null;
+    if (draftReady && pendingCropConfirmation) {
+      const request = pendingCropConfirmation;
+      pendingCropConfirmation = null;
+      queueMicrotask(() => {
+        if (cropConfirmationIsCurrent(request) && !cropSave.disabled) cropSave.click();
+      });
+    }
     overlay.querySelector("[data-unilib-crop-workbench]").disabled = !available;
   };
   const sizeCropCanvas = () => {
@@ -2691,11 +2707,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       setCropActionAvailability();
     } catch (error) {
       if (epoch === cropPreviewEpoch && cropSessionIsCurrent(cropSession, selectedActiveResult())) {
+        pendingCropConfirmation = null;
         setStatus(`선택 미리보기 실패: ${error instanceof Error ? error.message : error}`, true);
       }
     }
   };
   const closeCrop = (restoreFocus = true) => {
+    pendingCropConfirmation = null;
     const refreshSelection = cropSelectionChanged && !overlay.hidden;
     cropMagnifier.hide();
     continuousCrop.reset();
@@ -3143,7 +3161,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       else if (cancelPlacementChoice) cancelPlacementChoice();
       else if (!cropDialog.hidden) closeCrop();
       else if (cropTrayExpanded) collapseCropTray();
-      else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
+      else if (hasOpenDrawer()) closeDrawers();
       else close({ keyboard: true });
       return;
     }
@@ -3155,9 +3173,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         event.stopImmediatePropagation();
         if (event.repeat) return;
         if (draftCrop) {
-          if (cropSave.disabled || event.repeat) return;
-          cropSave.classList.add("is-pressed");
-          window.setTimeout(() => { cropSave.classList.remove("is-pressed"); cropSave.click(); }, 100);
+          // Preserve this confirmation while its exact preview is pending;
+          // session/epoch/rectangle checks discard it after edits or dismissal.
+          pendingCropConfirmation = { session: cropSession, epoch: cropPreviewEpoch, rectKey: cropRectKey(), editingId: editingAcceptedId };
+          if (cropSave.disabled) setStatus("선택 영역을 준비한 뒤 추가합니다.");
+          setCropActionAvailability();
         }
         else finishCropSelection();
       }
@@ -3217,7 +3237,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     lastInteractionWasKeyboard = true;
     cancelSpacePress();
     if (cropTrayExpanded) collapseCropTray();
-    else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
+    else if (hasOpenDrawer()) closeDrawers();
     else close({ keyboard: true });
   };
   registerEscapeLayer(overlay.querySelector("[data-unilib-crop-tray]"), collapseCropTray);

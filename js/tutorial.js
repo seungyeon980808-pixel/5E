@@ -1,4 +1,5 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== TUTORIAL ENGINE (따라하기) — 실제 화면 위에서 한 곳씩 짚어 주는 안내 =====
  *
  * 레퍼런스: 31_hwp_palette/tutorial.py (같은 사용자가 만든 데스크톱 판의 웹 이식).
@@ -20,10 +21,10 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-rem
  *   새로 시작해 흐림 패널이 겹쳐 남는 문제가 실제로 있었다(tutorial.py 주석).
  */
 
-import { state } from "./state.js?v=1.6.1-remediation-0929";
-import { addPage, switchPage } from "./pages.js?v=1.6.1-remediation-0929";
-import { showConfirm } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { COURSES, getCourse } from "./tutorial-courses.js?v=1.6.1-remediation-0929";
+import { state } from "./state.js?v=1.7.0-four-session-integration";
+import { addPage, switchPage } from "./pages.js?v=1.7.0-four-session-integration";
+import { showConfirm } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { COURSES, getCourse } from "./tutorial-courses.js?v=1.7.0-four-session-integration";
 
 /* ===== 저장 (localStorage) ===== */
 
@@ -1486,8 +1487,8 @@ export function openPicker({ justFinished = null } = {}) {
     row.innerHTML = `
       <span class="tut-course-mark" aria-hidden="true">${isDone ? "✓" : ""}</span>
       <span class="tut-course-body">
-        <span class="tut-course-title">${c.title}</span>
-        <span class="tut-course-desc">${c.desc}</span>
+        <span class="tut-course-title">${escapeHtml(c.title)}</span>
+        <span class="tut-course-desc">${escapeHtml(c.desc)}</span>
       </span>
       <span class="tut-course-meta">약 ${c.minutes}분</span>`;
     row.addEventListener("click", () => startCourse(c.id));   // 언제나 처음부터
@@ -1510,8 +1511,8 @@ export function openPicker({ justFinished = null } = {}) {
     });
     const t = tracks[i];
     pane.innerHTML = `<div class="tut-pane-head">
-        <span class="tut-pane-name">${t.name}${t.beta ? '<span class="beta-tag">베타</span>' : ""} — ${t.lead}</span>
-        <span class="tut-pane-note">${t.beta ? "아직 다듬는 중입니다 — " : ""}${t.note}</span>
+        <span class="tut-pane-name">${escapeHtml(t.name)}${t.beta ? '<span class="beta-tag">베타</span>' : ""} — ${escapeHtml(t.lead)}</span>
+        <span class="tut-pane-note">${t.beta ? "아직 다듬는 중입니다 — " : ""}${escapeHtml(t.note)}</span>
       </div>
       <div class="tut-picker-list"></div>`;
     const list = pane.querySelector(".tut-picker-list");
@@ -1524,8 +1525,8 @@ export function openPicker({ justFinished = null } = {}) {
     b.type = "button";
     b.className = "tut-track-btn" + (doneN === t.items.length ? " is-cleared" : "");
     b.setAttribute("role", "tab");
-    b.innerHTML = `<span class="tut-track-name">${t.name}${t.beta ? '<span class="beta-tag">베타</span>' : ""}</span>
-      <span class="tut-track-lead">${t.lead}</span>
+    b.innerHTML = `<span class="tut-track-name">${escapeHtml(t.name)}${t.beta ? '<span class="beta-tag">베타</span>' : ""}</span>
+      <span class="tut-track-lead">${escapeHtml(t.lead)}</span>
       <span class="tut-track-count">${doneN}/${t.items.length}</span>`;
     b.addEventListener("click", () => showTrack(i));
     nav.appendChild(b);
@@ -1708,5 +1709,5 @@ export function initTutorial() {
   // 탭을 닫아도 흐림이 남지 않게(뒤로가기·새로고침 포함) 정리한다.
   window.addEventListener("pagehide", () => { if (_run) teardown(); });
 
-  maybeShowBanner();
+  // 첫 방문 환영 창은 띄우지 않는다(11-04 사용자: 이제 필요 없음). 튜토리얼은 도움말 메뉴에서 연다.
 }

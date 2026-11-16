@@ -1,0 +1,18 @@
+/* 초점 표시는 하나(10-28 주말 출제 지적 3 「박멸」): 세 앱(5E_image·5E_exam·5E_hwp) 어디서든
+ * 마우스로 누를 때와 창이 처음 뜰 때는 테두리 없음, 키보드(Tab)로 옮길 때만 은은한 1px 선 하나.
+ * 화면마다 따로 쓴 2~3px 선·바깥 번짐 링을 여기서 한 번에 덮는다 — 맨 마지막에 읽는다. */
+:focus:not(:focus-visible),
+[data-pointer-focus]:focus {
+  outline: none !important;
+}
+/* 단추·칸·탭처럼 누르거나 쓰는 것만. 창 자체(tabindex=-1)나 마우스로 편집 중인 캔버스(.pointer-focused)는 각자 규칙대로 테두리 없음. */
+:is(button, a[href], input, select, textarea, summary, [contenteditable="true"], [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="checkbox"], [role="radio"], [role="switch"], [tabindex]:not([tabindex="-1"])):focus-visible:not([data-pointer-focus]):not(.pointer-focused) {
+  outline: 1px solid var(--ds-soft-line, #6ba4f8) !important;
+  outline-offset: -1px !important;
+}
+/* 초점 링으로 쓰던 바깥 번짐(box-shadow)도 없앤다. 눌린 단추의 안쪽 그림자는 마우스로 누른 뒤 그대로 남게
+ * 키보드 초점일 때만 덮는다. 입력칸의 바깥 번짐은 각 규칙에서 1px 안쪽 선으로 바꿨다. */
+.modal-overlay .modal-btn:focus-visible,
+:is(button, a, summary, [role="button"], [role="tab"], [role="menuitem"]):focus-visible {
+  box-shadow: none !important;
+}

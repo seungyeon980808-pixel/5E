@@ -5,8 +5,9 @@
  * 파괴적 escape hatch("곡선으로 변환")만 남긴다. 선 색·굵기는 공용 "선" 섹션(sec1)이 담당.
  * Mount + show/hide live in js/inspector.js. */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { openGraphModal } from "../graph/graph-modal.js?v=1.6.1-remediation-0929";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { openGraphModal } from "../graph/graph-modal.js?v=1.7.0-four-session-integration";
 
 const BTN_CSS = "font-size: 11px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 
@@ -33,7 +34,7 @@ function makeHaloRow(body, state, typeOf) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== typeOf || o.locked) return;
@@ -94,7 +95,7 @@ export function buildFuncgraphSection(ctx) {
     const o = currentFuncgraph();
     if (!o || o.locked) return;
     const s = state.get();
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o2 = s2.objects.find((it) => it.id === o.id);
       if (!o2 || o2.locked || o2.type !== "funcgraph") return;

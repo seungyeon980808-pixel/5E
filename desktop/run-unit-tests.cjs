@@ -9,10 +9,10 @@ const desktop = fs.readdirSync(__dirname)
   .sort()
   .map((name) => path.join("desktop", name));
 const unit = manifest.unit.map((entry) => entry.path);
-const files = [...desktop, ...unit];
+const files = [...new Set([...desktop, ...unit])];
 
 if (process.argv.includes("--list")) {
-  console.log(JSON.stringify({ desktop, unit, deferred: manifest.deferred }, null, 2));
+  console.log(JSON.stringify({ desktop, unit, files, deferred: manifest.deferred }, null, 2));
   process.exit(0);
 }
 if (files.length === 0) throw new Error("No unit tests were discovered");

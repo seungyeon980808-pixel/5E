@@ -631,7 +631,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 /* Beta label: red "[시범공개]" badge before the program name (brand + footer) */
 .beta-label {
-  color: #d1242f;
+  color: var(--ds-danger);
   font-weight: 700;
   margin-right: 4px;
 }
@@ -1735,7 +1735,7 @@ body { zoom: var(--ui-zoom, 1); }
   line-height: 1.5;
   color: var(--text-secondary);
 }
-.objectify-status.is-error { color: #e35d6a; }
+.objectify-status.is-error { color: var(--ds-danger); }
 .objectify-dropzone {
   display: flex;
   align-items: center;
@@ -2094,7 +2094,7 @@ textarea.unified-text-input {
   overflow: visible;
 }
 .formula-preview-error {
-  color: #b42318;
+  color: var(--ds-danger);
   font: 12px/1.35 "IBM Plex Sans KR", sans-serif;
 }
 .unified-style-controls {
@@ -2800,7 +2800,7 @@ textarea.unified-text-input {
   color: var(--text-secondary); background: transparent; border: none; cursor: pointer;
   align-self: center;
 }
-.personal-item-del:hover { color: #e5534b; }
+.personal-item-del:hover { color: var(--ds-danger); }
 .personal-store-btn {
   display: block; width: 100%; margin: 0 0 6px; padding: 6px 8px;
   font-family: inherit; font-size: 12px; font-weight: 600;
@@ -2840,7 +2840,7 @@ textarea.unified-text-input {
 .defaults-pbg-thumb { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--c-border); border-radius: 4px; background: #fff; flex: none; }
 .defaults-pbg-meta { flex: 1 1 auto; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .defaults-pbg-del { flex: none; width: 20px; font-size: 11px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
-.defaults-pbg-del:hover { color: #e5534b; }
+.defaults-pbg-del:hover { color: var(--ds-danger); }
 .defaults-pbg-row { display: flex; gap: 6px; margin-top: 6px; }
 .defaults-pbg-row .modal-input { min-width: 0; }
 .defaults-pbg-row #defaults-pbg-name { flex: 2 1 0; }
@@ -2894,7 +2894,7 @@ textarea.unified-text-input {
 .page-ctx-sep { height: 1px; margin: 4px 6px; background: var(--border); }
 .text-ctx-item:disabled { opacity: 0.4; cursor: default; }
 .text-ctx-item:disabled:hover { background: transparent; color: inherit; }
-.text-ctx-item.is-danger:hover:not(:disabled) { background: #b03a4a; color: #fff; }
+.text-ctx-item.is-danger:hover:not(:disabled) { background: var(--ds-danger); color: #fff; }
 
 /* delayed cut action stays inside the right inspector so the final commit is
  * visible where object properties are edited. */

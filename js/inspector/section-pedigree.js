@@ -12,7 +12,8 @@
  * selected() / commit() / sync() 3함수 패턴은 section-groundarc.js를 그대로 따른다.
  */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 const FILL_OPTIONS = [
   ["hatch", "빗금"],
@@ -112,7 +113,7 @@ export function initPedigreeSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

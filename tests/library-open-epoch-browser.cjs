@@ -88,7 +88,8 @@ async function assertActualFooterFirstPaint(browser) {
     window.libraryOpenEpochNetwork = requests;
     window.fetch = (input, init) => {
       const url = typeof input === "string" ? input : input?.url;
-      if (!/assets\/(parts-library\/manifest|exam-library\/sample-catalog)\.json/u.test(String(url))) return originalFetch(input, init);
+      // 11-05: 기출 목록은 빠른 주소(5e-exam-pdf … /v1/catalog.json·pack.json)와 catalog-bootstrap.json에서 받는다 — 첫 화면은 그 요청을 붙잡은 채 본다.
+      if (!/assets\/(parts-library\/manifest|exam-library\/sample-catalog|pdf-library\/catalog-bootstrap)\.json|\/v1\/(catalog|pack)\.json/u.test(String(url))) return originalFetch(input, init);
       return new Promise((resolve, reject) => requests.push({
         url: String(url),
         resolve: () => originalFetch(input, init).then(resolve, reject),

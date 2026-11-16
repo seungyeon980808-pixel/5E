@@ -1,5 +1,5 @@
-import { createCropSource, normalizedRect } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
-import { isAnswerChoiceBoxCandidate, trimImageCandidateAtExternalCaption } from "./page-geometry.js?v=1.6.1-preview-labeler-0917-1111";
+import { createCropSource, normalizedRect } from "./contract.js?v=1.7.0-four-session-integration";
+import { isAnswerChoiceBoxCandidate, trimImageCandidateAtExternalCaption } from "./page-geometry.js?v=1.7.0-four-session-integration";
 
 const FIGURE_SCHEMA = "pdf-figure-candidates-v1";
 const IMAGE_OPERATORS = [

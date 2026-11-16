@@ -1,0 +1,16 @@
+{
+  "manual": true,
+  "aiCalls": 0,
+  "reason": "Source comparison review; only manual engine-test inputs changed",
+  "previousSnapshot": ".omo/evidence/graph-engine-20261005/reference-fixtures/pre-fidelity",
+  "changes": [
+    "g04: data stroke .52 mm, source-like short guides, title/tick 40px, larger axis heads",
+    "g06: 0.96mm dots, 41px main labels, 36px unit, longer separate guides, no mirrored frame ticks",
+    "g08: .68mm phase curves and larger axis heads, phase labels 36px, main 38px",
+    "g10: unit title glyphs explicit editable vertical stack; numerical log axis retained; parentheses and equality rotated to match original vertical unit convention",
+    "g12: first trough shoulder .1551/.4094 to .1551/.389, minimum .1778/.3701 retained; no extra frame ticks",
+    "g14: cross stroke .2mm, half-size .7mm; font33px and legend4.1mm; axis data/observations unchanged",
+    "g17: manually retraced A shoulder through y-axis, smooth plateau approach, original observation retained in fixture provenance; endpoints and flat saturation retained",
+    "g18: main labels40px and text annotations+8%, all curve/guide contacts retained"
+  ]
+}

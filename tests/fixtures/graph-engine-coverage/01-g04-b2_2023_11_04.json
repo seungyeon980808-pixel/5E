@@ -1,0 +1,403 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "g04-b2_2023_11_04",
+    "hash": "sha256:860be6763e014a71c11b26d6cf88eba1b00da23af9edb5458b748ca1e3773c57",
+    "width": 500,
+    "height": 403,
+    "plotBox": {
+      "x": 55,
+      "y": 15,
+      "w": 431,
+      "h": 290
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "세포의 부피",
+      "unit": "상댓값",
+      "displayTitle": "세포의 부피(상댓값)",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 0.9,
+          "label": "0.9",
+          "position": 0
+        },
+        {
+          "value": 1,
+          "label": "1.0",
+          "position": 0.23202
+        },
+        {
+          "value": null,
+          "label": "V₁",
+          "displayMath": "V_1",
+          "position": 0.40835
+        },
+        {
+          "value": null,
+          "label": "V₂",
+          "displayMath": "V_2",
+          "position": 0.68213
+        },
+        {
+          "value": null,
+          "label": "V₃",
+          "displayMath": "V_3",
+          "position": 0.91183
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.66821,
+        "y": -0.23793
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "압력",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "vertical",
+      "titlePosition": {
+        "x": -0.06961,
+        "y": 0.89655
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0,
+          "y": 0.87931
+        },
+        {
+          "x": 0.0464,
+          "y": 0.82069
+        },
+        {
+          "x": 0.09281,
+          "y": 0.76897
+        },
+        {
+          "x": 0.13921,
+          "y": 0.72069
+        },
+        {
+          "x": 0.18561,
+          "y": 0.67586
+        },
+        {
+          "x": 0.23202,
+          "y": 0.63448
+        },
+        {
+          "x": 0.27842,
+          "y": 0.59655
+        },
+        {
+          "x": 0.32483,
+          "y": 0.55862
+        },
+        {
+          "x": 0.37123,
+          "y": 0.52414
+        },
+        {
+          "x": 0.40835,
+          "y": 0.5
+        },
+        {
+          "x": 0.45244,
+          "y": 0.47241
+        },
+        {
+          "x": 0.49884,
+          "y": 0.44483
+        },
+        {
+          "x": 0.54524,
+          "y": 0.42069
+        },
+        {
+          "x": 0.59165,
+          "y": 0.4
+        },
+        {
+          "x": 0.63805,
+          "y": 0.38276
+        },
+        {
+          "x": 0.68213,
+          "y": 0.36897
+        },
+        {
+          "x": 0.73086,
+          "y": 0.35172
+        },
+        {
+          "x": 0.76566,
+          "y": 0.34138
+        },
+        {
+          "x": 0.81206,
+          "y": 0.32759
+        },
+        {
+          "x": 0.85847,
+          "y": 0.31724
+        },
+        {
+          "x": 0.91183,
+          "y": 0.3069
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.82
+    },
+    {
+      "id": "s2",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.23202,
+          "y": 0
+        },
+        {
+          "x": 0.27842,
+          "y": 0.01034
+        },
+        {
+          "x": 0.32483,
+          "y": 0.02069
+        },
+        {
+          "x": 0.37123,
+          "y": 0.03793
+        },
+        {
+          "x": 0.40835,
+          "y": 0.05172
+        },
+        {
+          "x": 0.45244,
+          "y": 0.06897
+        },
+        {
+          "x": 0.49884,
+          "y": 0.08621
+        },
+        {
+          "x": 0.54524,
+          "y": 0.11034
+        },
+        {
+          "x": 0.59165,
+          "y": 0.13103
+        },
+        {
+          "x": 0.63805,
+          "y": 0.15172
+        },
+        {
+          "x": 0.68213,
+          "y": 0.17241
+        },
+        {
+          "x": 0.73086,
+          "y": 0.2
+        },
+        {
+          "x": 0.78886,
+          "y": 0.23448
+        },
+        {
+          "x": 0.83527,
+          "y": 0.26552
+        },
+        {
+          "x": 0.87703,
+          "y": 0.28621
+        },
+        {
+          "x": 0.91183,
+          "y": 0.3069
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "dashed",
+      "dashLength": 2.2,
+      "dashGap": 0.95,
+      "markerSize": 0.82
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin-label",
+      "kind": "text",
+      "text": "0",
+      "x": -0.03944,
+      "y": 0.0069,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 32
+    },
+    {
+      "id": "label-a",
+      "kind": "text",
+      "text": "A",
+      "x": 0.7355,
+      "y": 0.47586,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "leader-a",
+      "kind": "leader",
+      "text": "",
+      "x": 0.73318,
+      "y": 0.42414,
+      "to": {
+        "x": 0.76566,
+        "y": 0.34138
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 17,
+      "endStyle": "none"
+    },
+    {
+      "id": "label-b",
+      "kind": "text",
+      "text": "B",
+      "x": 0.83063,
+      "y": 0.08276,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s2",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "leader-b",
+      "kind": "leader",
+      "text": "",
+      "x": 0.81903,
+      "y": 0.14828,
+      "to": {
+        "x": 0.78886,
+        "y": 0.23448
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s2",
+      "pointIndex": 12,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-v1",
+      "kind": "guide",
+      "text": "",
+      "x": 0.40835,
+      "y": 0.5,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 9,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-v2",
+      "kind": "guide",
+      "text": "",
+      "x": 0.68213,
+      "y": 0.36897,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 15,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-v3",
+      "kind": "guide",
+      "text": "",
+      "x": 0.91183,
+      "y": 0.3069,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 20,
+      "endStyle": "none"
+    }
+  ],
+  "style": {
+    "fontSizePx": 40,
+    "labelWeight": 400,
+    "strokeWidth": 0.52,
+    "guideStyle": {
+      "strokeWidth": 0.17,
+      "dashLength": 0.85,
+      "dashGap": 0.55
+    }
+  },
+  "review": [],
+  "frame": {
+    "variant": "quadrant",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowLength": 3.3,
+    "arrowWidth": 2.25,
+    "strokeWidth": 0.26
+  }
+}

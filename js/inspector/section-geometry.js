@@ -3,11 +3,13 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.6.1-remediation-0929";
-import { boxLabelSlots } from "../render.js?v=1.6.1-remediation-0929";
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.1-remediation-0929";
-import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.1-preview-lite-hybrid-0922";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.7.0-four-session-integration";
+import { boxLabelSlots } from "../render.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.7.0-four-session-integration";
+import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.7.0-four-session-integration";
+import { commitGroupGeometry } from "../transform.js?v=1.7.0-four-session-integration";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -49,7 +51,8 @@ export function buildGeometrySection(ctx) {
       }
       if (!isFinite(val)) return;
       inp.setCustomValidity?.("");
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      if (commitGroupGeometry(state, prop, negate ? -val : val, document.getElementById('canvas'))) return;
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const id = (s2.selectedIds || [])[0];
         const o = s2.objects.find((o) => o.id === id);
@@ -57,8 +60,20 @@ export function buildGeometrySection(ctx) {
         if (o.locked || (o.positionLocked && (prop === "x" || prop === "y"))) return;
         const next = negate ? -val : val;
         if (o[prop] === next) return;
+        const imageAspect = o.type === "image" && o.aspectLocked !== false;
+        const assetAspect = o.type === "svgAsset" && o.lockAspect !== false;
+        const otherProp = prop === "w" ? "h" : prop === "h" ? "w" : null;
+        let otherNext = null;
+        if (otherProp && (imageAspect || assetAspect) && o.w > 0 && o.h > 0) {
+          otherNext = o[otherProp] * next / o[prop];
+          if (!Number.isFinite(otherNext) || !(otherNext > 0)) return;
+        }
         if (o.positionLocked && prop === "w") o.x -= (next - o.w) / 2;
         if (o.positionLocked && prop === "h") o.y -= (next - o.h) / 2;
+        if (otherNext != null) {
+          if (o.positionLocked) o[otherProp === "w" ? "x" : "y"] -= (otherNext - o[otherProp]) / 2;
+          o[otherProp] = otherNext;
+        }
         s2.undoStack.push(snap);
         s2.redoStack = [];
         o[prop] = next;
@@ -100,6 +115,7 @@ export function buildGeometrySection(ctx) {
   whPair.appendChild(wF.el);
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
+  for (const el of [rotF.el, xyPair, whPair]) el.classList.add('insp-group-geometry');
 
   const lockAspectRow = document.createElement("div");
   lockAspectRow.className = "insp-row";
@@ -116,7 +132,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
     if (!id) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = lockAspectCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === id);
@@ -141,7 +157,7 @@ export function buildGeometrySection(ctx) {
   trimRow.appendChild(trimBtn);
   sec3Body.appendChild(trimRow);
   trimBtn.addEventListener("click", async () => {
-    const mod = await import("../erase-tool.js?v=1.6.1-remediation-0929");
+    const mod = await import("../erase-tool.js?v=1.7.0-four-session-integration");
     const n = mod.trimSelectedBoxMargins();
     const orig = trimBtn.textContent;
     trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";
@@ -175,7 +191,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (!ids.length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const id = (s2.selectedIds || [])[0];
       const o = s2.objects.find((o) => o.id === id);
@@ -232,7 +248,7 @@ export function buildGeometrySection(ctx) {
   showLabelCb.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = showLabelCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
@@ -306,7 +322,7 @@ export function buildGeometrySection(ctx) {
     });
   };
   nodeSizeInp.addEventListener("focus", () => {
-    nodeSizeSnap = JSON.parse(JSON.stringify(state.get().objects));
+    nodeSizeSnap = jsonClone(state.get().objects);
   });
   nodeSizeInp.addEventListener("input", applyNodeSize);
   nodeSizeInp.addEventListener("change", () => { applyNodeSize(); nodeSizeSnap = null; });
@@ -316,7 +332,7 @@ export function buildGeometrySection(ctx) {
   labelPosSel.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = labelPosSel.value === "below" ? "below" : "above";
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
@@ -358,7 +374,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.locked) return;
@@ -469,7 +485,7 @@ export function buildGeometrySection(ctx) {
       const o = s.objects.find((item) => item.id === gapEditedId);
       if (!o || o.id !== (s.selectedIds || [])[0] || o.type !== "labeler" || o.locked || o.labelGap === value) return;
       if (!gapUndoRecorded) {
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.undoStack.push(jsonClone(s.objects));
         s.redoStack = [];
         gapUndoRecorded = true;
       }
@@ -505,7 +521,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "labeler" || o.locked) return;
@@ -544,7 +560,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "labeler" || o.locked) return;
@@ -772,7 +788,7 @@ export function buildGeometrySection(ctx) {
     if (!isFinite(val) || val <= 0) return;
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked) return;
@@ -834,7 +850,7 @@ export function buildGeometrySection(ctx) {
   function commitAxes(apply) {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked || o.type !== "axes") return;
@@ -935,7 +951,7 @@ export function buildGeometrySection(ctx) {
   function commitLens(apply) {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked || o.type !== "optics") return;
@@ -981,7 +997,7 @@ export function buildGeometrySection(ctx) {
     function commit() {
       const s = state.get();
       if (!(s.selectedIds || []).length) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
         if (!o || o.locked) return;

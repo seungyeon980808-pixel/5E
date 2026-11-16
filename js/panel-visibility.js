@@ -1,4 +1,4 @@
-import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.6.1-preview-panel-lock-0921';
+import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.7.0-four-session-integration';
 
 const narrow = window.matchMedia('(max-width: 767px)');
 const fixedLite = () => document.documentElement.dataset.mode === 'lite';
@@ -11,13 +11,23 @@ const layouts = new Set();
 const initialized = new WeakSet();
 let serial = 0;
 
+// 그라파이트 아이콘 세트(24칸·선 1.5): 패널 쪽 칸을 채우고, 접히면 채운 칸만 사라진다
+// (css/graphite-shell.css의 .ds-fillcol). 작업실(이미지 패널)도 같은 아이콘을 쓴다.
 function panelIcon(side) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 20 20');
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'ds-ico');
+  svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS(svg.namespaceURI, 'path');
-  path.setAttribute('d', `M3 3.5h14v13H3z M${side === 'left' ? 7 : 13} 3.5v13`);
-  svg.append(path);
+  for (const [name, value] of [['fill', 'none'], ['stroke', 'currentColor'], ['stroke-width', '1.5'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']]) svg.setAttribute(name, value);
+  const frame = document.createElementNS(ns, 'rect');
+  for (const [name, value] of [['x', '3'], ['y', '4'], ['width', '18'], ['height', '16'], ['rx', '2']]) frame.setAttribute(name, value);
+  const fill = document.createElementNS(ns, 'path');
+  fill.setAttribute('class', 'ds-fillcol');
+  fill.setAttribute('d', side === 'left' ? 'M3.8 4.8h5.2v14.4H3.8z' : 'M15 4.8h5.2v14.4H15z');
+  const divider = document.createElementNS(ns, 'path');
+  divider.setAttribute('d', side === 'left' ? 'M9 4v16' : 'M15 4v16');
+  svg.append(frame, fill, divider);
   return svg;
 }
 
@@ -152,7 +162,7 @@ function setup(root, kind) {
     const name = kind === 'editor' ? ['도구', '속성'][index] : ['작업 목록', '수정 설정'][index];
     panel.id = kind === 'editor' ? panel.id : `image-${side}-panel-${++serial}`;
     panel.dataset.layoutPanel = side;
-    const button = group.querySelector(`[data-panel-toggle="${side}"]`)
+    const button = toolbar.querySelector(`[data-panel-toggle="${side}"]`)
       || (kind === 'editor' ? document.getElementById(`drawer-${side}-toggle`) : null)
       || document.createElement('button');
     button.type = 'button';
@@ -163,7 +173,12 @@ function setup(root, kind) {
     label.className = 'panel-toggle-label';
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
-    group.append(button);
+    // 11-11: AI 이미지 창의 왼쪽 칸은 항상 펼쳐 둔다. 접기 단추는 숨기고(상태 처리는 그대로 둔다).
+    if (kind === 'image' && side === 'left') button.hidden = true;
+    const headerStatus = kind === 'image' && side === 'right'
+      ? toolbar.querySelector('.ai-head-status') : null;
+    if (headerStatus) headerStatus.insertBefore(button, headerStatus.querySelector('.ai-close'));
+    else group.append(button);
     const close = panel.querySelector('.panel-collapse-close') || document.createElement('button');
     close.type = 'button';
     close.className = 'panel-collapse-close';
@@ -228,6 +243,8 @@ function discover() {
 }
 
 discover();
+// 11-04: 데스크톱 Pro에서는 접기 단추를 패널 머리줄로(떠 있는 카드 방식) — js/panel-heads.js
+import('./panel-heads.js?v=1.7.0-four-session-integration').then(m => m.initPanelHeads());
 new MutationObserver(discover).observe(document.body, { childList: true });
 narrow.addEventListener('change', () => {
   preferences.editor.drawer = null;
@@ -238,6 +255,8 @@ window.addEventListener('5e:view-mode-change', refresh);
 window.addEventListener('keydown', event => {
   if (fixedLite()) return;
   if (!narrow.matches || (event.key !== 'Escape' && event.key !== 'Tab')) return;
+  // The detailed text dialog owns cancellation and font-navigation keys.
+  if (event.target instanceof Element && event.target.closest('.unified-text-editor')) return;
   const layout = [...layouts].find(item => !item.root.hidden && preferences[item.kind].drawer
     && (item.kind === 'image' || !document.querySelector('#ai-image-panel:not([hidden])')));
   if (!layout || document.querySelector('dialog[open]')) return;

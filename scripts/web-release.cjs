@@ -77,14 +77,19 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
   const preservedSha = channels.webPublication?.preservePreviewSourceSha;
   if (!/^[a-f0-9]{40}$/.test(preservedSha || '')) throw new Error('Preserved routes require a full SHA');
   const objectRepo = fs.existsSync(path.join(preservedRoot, '.git')) ? preservedRoot : sourceRoot;
-  const tree = execFileSync('git', ['ls-tree', '-r', '-z', preservedSha, '--', 'preview', 'mobile', '1.6.0'], { cwd: objectRepo, maxBuffer: 64 * 1024 * 1024 });
+  // 지킬 예전 판 경로는 release-channels.json webPublication.preservePaths(없으면 예전처럼 preview·mobile·1.6.0).
+  // 1.7.0(2026-11-15 사용자 결정): GitHub Pages 1 GB 한도 때문에 세 판을 내리고 1.7.0만 올린다 → 빈 목록.
+  const allowedPreserve = ['preview', 'mobile', '1.6.0'];
+  const preservePaths = Array.isArray(channels.webPublication?.preservePaths) ? channels.webPublication.preservePaths : allowedPreserve;
+  if (!preservePaths.every(p => allowedPreserve.includes(p))) throw new Error('Unknown preserved route');
+  const tree = preservePaths.length ? execFileSync('git', ['ls-tree', '-r', '-z', preservedSha, '--', ...preservePaths], { cwd: objectRepo, maxBuffer: 64 * 1024 * 1024 }) : Buffer.alloc(0);
   const retained = tree.toString().split('\0').filter(Boolean).map(line => {
     const [metadata, relative] = line.split('\t');
     const [mode, type, blob] = metadata.split(' ');
     if (type !== 'blob' || !['100644', '100755'].includes(mode)) throw new Error(`Unsupported preserved input: ${relative}`);
     return { relative, blob };
   });
-  if (!retained.some(file => file.relative === 'preview/index.html')) throw new Error('Pinned preview entry is missing');
+  if (preservePaths.includes('preview') && !retained.some(file => file.relative === 'preview/index.html')) throw new Error('Pinned preview entry is missing');
   fs.mkdirSync(output, { recursive: true });
   function copy(relative, from = sourceRoot, expectedBlob = null) {
     const source = path.join(from, relative);
@@ -156,7 +161,7 @@ if (require.main === module) {
         allowDirty: args.includes('--allow-dirty') });
       fs.mkdirSync(path.dirname(receiptFile), { recursive: true });
       fs.writeFileSync(receiptFile, JSON.stringify(receipt, null, 2) + '\n');
-      console.log(`Web artifact staged: ${Object.keys(receipt.files).length} files; root ${receipt.version} and preserved preview/mobile/1.6.0`);
+      console.log(`Web artifact staged: ${Object.keys(receipt.files).length} files; root ${receipt.version}; preserved routes: ${[...new Set(Object.keys(receipt.files).map(f => f.split('/')[0]).filter(d => ['preview', 'mobile', '1.6.0'].includes(d)))].join(', ') || 'none'}`);
     }
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

@@ -18,13 +18,16 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=1.6.1-remediation-0929";
-import { getLineDecorationBounds } from "./render/shapes.js?v=1.6.1-remediation-0929";
+import { renderObject, makeFillPattern } from "./render.js?v=1.7.0-four-session-integration";
+import { getLineDecorationBounds } from "./render/shapes.js?v=1.7.0-four-session-integration";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
-} from "./export-dir.js?v=1.6.1-remediation-0929";
-import { getObjectBBox } from "./pick.js?v=1.6.1-remediation-0929";
-import { zOrderObjects } from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
+} from "./export-dir.js?v=1.7.0-four-session-integration";
+import { getObjectBBox } from "./pick.js?v=1.7.0-four-session-integration";
+import { isLabApparatus } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { vesselLayout } from "./render/vessel.js?v=1.7.0-four-session-integration";
+import { bubbleLayout } from "./render/bubble.js?v=1.7.0-four-session-integration";
+import { zOrderObjects } from "./object-types.js?v=1.7.0-four-session-integration";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
@@ -96,8 +99,10 @@ export function getDefaultExportFilename(ext) {
  * 폰트 파일을 base64로 인라인한 @font-face를 export SVG의 <defs>에 넣어 편집 화면과 같은
  * 글꼴로 내보낸다. 파일이 없으면(선택적 폰트) 조용히 건너뛰어 기존 폴백 동작을 유지한다. */
 const EMBED_FONTS = [
-  { family: "Latin Modern Roman", style: "normal", url: "fonts/lmroman10-regular.woff2" },
-  { family: "Latin Modern Roman", style: "italic", url: "fonts/lmroman10-italic.woff2" },
+  { family: "Latin Modern Roman", style: "normal", url: new URL("../fonts/lmroman10-regular.woff2", import.meta.url).href },
+  { family: "Latin Modern Roman", style: "italic", url: new URL("../fonts/lmroman10-italic.woff2", import.meta.url).href },
+  // 11-10: 아래첨자 숫자(₀-₉)용 수식 글꼴. 파일이 없으면 조용히 건너뛴다.
+  { family: "Latin Modern Math", style: "normal", url: new URL("../vendor/rhwp-studio/fonts/LatinModernMath-Regular.woff2", import.meta.url).href },
 ];
 let _fontCss = "";          // 캐시된 @font-face CSS(base64). 사용 가능한 폰트가 없으면 "".
 let _fontCssPromise = null;
@@ -112,6 +117,13 @@ async function _fileToBase64(url) {
   return btoa(bin);
 }
 
+// 11-10: URL별 base64 캐시. 실패(파일 없음·중단)는 null로 굳혀 건너뛴다.
+const _b64Cache = new Map();
+function _embedBase64(url) {
+  if (!_b64Cache.has(url)) _b64Cache.set(url, _fileToBase64(url).catch(() => null));
+  return _b64Cache.get(url);
+}
+
 // 폰트를 한 번만 받아 base64 @font-face로 캐시한다. export 전에 await하면 임베딩이 보장되고,
 // 캐시가 비어 있으면(첫 동기 호출 등) 임베딩 없이 기존처럼 폴백 렌더된다.
 export function ensureEmbeddedFonts() {
@@ -119,22 +131,24 @@ export function ensureEmbeddedFonts() {
   _fontCssPromise = (async () => {
     const parts = [];
     for (const f of EMBED_FONTS) {
-      try {
-        const b64 = await _fileToBase64(f.url);
-        parts.push(`@font-face{font-family:"${f.family}";font-style:${f.style};font-weight:normal;src:url(data:font/woff2;base64,${b64}) format("woff2");}`);
-      } catch (_) { /* 폰트 파일 없음 → 건너뜀(기존 폴백 유지) */ }
+      const b64 = await _embedBase64(f.url);
+      if (b64) parts.push(`@font-face{font-family:"${f.family}";font-style:${f.style};font-weight:normal;src:url(data:font/woff2;base64,${b64}) format("woff2");}`);
     }
     _fontCss = parts.join("\n");
     return _fontCss;
   })();
   return _fontCssPromise;
 }
-// 모듈 로드 시 미리 받아 두어(비동기) 이후 동기 export 경로도 캐시를 쓸 수 있게 한다.
-ensureEmbeddedFonts();
+// 모듈 로드 시에는 본문 글꼴(Latin Modern Roman)만 미리 받는다.
+// 11-10: 수식 아래첨자 글꼴(Latin Modern Math, 약 390KB)을 시작 때 받으면, 새로고침이나 시험지 시트
+// 로딩 중 그 요청이 중간에 끊겨 WebKit이 「access control checks」 페이지 오류를 띄운다(Safari에서도 같다).
+// 그래서 이 글꼴은 처음 내보낼 때(ensureEmbeddedFonts await) 받는다.
+for (const f of EMBED_FONTS) if (f.family === "Latin Modern Roman") _embedBase64(f.url);
 
 /* ----- a layer's visibility (mirrors render.js: hidden = visible === false) ----- */
 function isReferenceImage(obj) {
-  return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
+  return !!obj && obj.type === "image" && obj.aiLabelEditingBackground !== true
+    && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
 }
 
 function isHidden(s, obj, options = {}) {
@@ -248,8 +262,42 @@ function rotatedBBox(bb, deg, cx, cy) {
   }
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
+function renderedGraphBounds(s, options) {
+  const bounds = new Map();
+  const graphs = s.objects.filter(obj => (obj.type === 'coordplane' || obj.type === 'funcgraph') && !isHidden(s, obj, options));
+  if (!graphs.length || typeof document === 'undefined' || !document.body) return bounds;
+  let svg;
+  try {
+    svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('data-export-measure', '');
+    svg.style.cssText = 'position:absolute;left:-10000px;top:0;width:1px;height:1px;overflow:visible;visibility:hidden;pointer-events:none;';
+    const wrappers = [];
+    for (const obj of graphs) {
+      const node = renderObject(obj, s.objects);
+      if (!node) continue;
+      // The parent's bbox includes the child's rotation, axis labels, markers
+      // and filled regions. Selection geometry deliberately excludes these.
+      const wrapper = document.createElementNS(SVG_NS, 'g');
+      wrapper.appendChild(node); svg.appendChild(wrapper);
+      wrappers.push([obj, wrapper]);
+    }
+    document.body.appendChild(svg);
+    for (const [obj, wrapper] of wrappers) {
+      try {
+        const b = wrapper.getBBox();
+        if ([b.x, b.y, b.width, b.height].every(Number.isFinite) && b.width >= 0 && b.height >= 0 && b.width + b.height > 0) {
+          bounds.set(obj, { x: b.x, y: b.y, w: b.width, h: b.height });
+        }
+      } catch (_) { /* Use geometry when rendered measurement is unavailable. */ }
+    }
+  } catch (_) { /* Non-browser callers keep the existing geometry fallback. */ }
+  finally { svg?.remove?.(); }
+  return bounds;
+}
 export function getContentBounds(s, options = {}, padding = 0) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const graphBounds = renderedGraphBounds(s, options);
   for (const obj of s.objects) {
     if (isHidden(s, obj, options)) continue;
     let bb = null;
@@ -257,7 +305,17 @@ export function getContentBounds(s, options = {}, padding = 0) {
     catch (_) { bb = null; }
     if (!bb || !isFinite(bb.x) || !isFinite(bb.y) || !(bb.w >= 0) || !(bb.h >= 0)) continue;
     const rot = Number(obj.rotation) || 0;
-    if (rot) bb = rotatedBBox(bb, rot, bb.x + bb.w / 2, bb.y + bb.h / 2);
+    if (rot) {
+      // 말풍선 렌더러는 꼬리를 제외한 몸통 중심으로 회전한다.
+      const pivot = obj.type === "bubble" ? bubbleLayout(obj) : obj.type === "vessel" ? vesselLayout(obj) : isLabApparatus(obj) ? obj : bb;
+      bb = rotatedBBox(bb, rot, pivot.x + pivot.w / 2, pivot.y + pivot.h / 2);
+    }
+    const rendered = graphBounds.get(obj);
+    if (rendered) {
+      const left = Math.min(bb.x, rendered.x), top = Math.min(bb.y, rendered.y);
+      bb = { x: left, y: top, w: Math.max(bb.x + bb.w, rendered.x + rendered.w) - left,
+        h: Math.max(bb.y + bb.h, rendered.y + rendered.h) - top };
+    }
     const half = (Number(obj.strokeWidth) || 0) / 2;
     if (bb.x - half < x0) x0 = bb.x - half;
     if (bb.y - half < y0) y0 = bb.y - half;
@@ -314,7 +372,7 @@ export function buildExportSvg(s, bounds = null, options = {}) {
   g.setAttribute("clip-path", "url(#artboard-clip)");
   for (const obj of zOrderObjects(s.objects)) {
     if (isHidden(s, obj, options)) continue;
-    const el = renderObject(obj);
+    const el = renderObject(obj, s.objects);
     if (el) g.appendChild(el);
   }
   svg.appendChild(g);
@@ -398,13 +456,21 @@ export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {
  * 한글(HWP)·PPT 등에서 바로 Ctrl+V 가능. localhost/HTTPS + 사용자 제스처 필요.
  * 성공 시 true. (SVG는 클립보드 규격상 지원되지 않아 PNG만) */
 export async function copyPngToClipboard(state, dpi = 300, bounds = null, options = {}) {
-  if (!navigator.clipboard || typeof ClipboardItem === "undefined") return false;
-  await ensureEmbeddedFonts();
-  const result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
-  const rawBlob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
-  if (!rawBlob) return false;
-  const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록
-  await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+  if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") return false;
+  // 그림 그리기에 쓰지 않는 되돌리기 기록은 복사하지 않는다. 함께 깊은 복사하면 3MB 그림·60단계에서 한 번에 약 186MB를 잡았다(M45).
+  const { undoStack, redoStack, ...drawable } = state.get();
+  const snapshot = structuredClone(drawable);
+  // Safari requires write() inside the original gesture. Give ClipboardItem
+  // the pending PNG, then embed fonts/rasterize without losing that gesture.
+  const png = (async () => {
+    await ensureEmbeddedFonts();
+    const result = await rasterizeExportCanvas(snapshot, { dpi, bounds, options });
+    const rawBlob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
+    if (!rawBlob) throw new Error("PNG encoding failed");
+    return pngBlobWithDpi(rawBlob, dpi);
+  })();
+  png.catch(() => {}); // write() may reject before consuming the PNG promise.
+  await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
   return true;
 }
 

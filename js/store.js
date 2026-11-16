@@ -18,7 +18,7 @@ export function createStore(initialState) {
   }
 
   /* ----- update: mutate via updaterFn, then notify everyone ----- */
-  function update(updaterFn) {
+  function update(updaterFn, change) {
     const activePageId = state?.activePageId ?? null;
     const pages = state?.pages;
     const activePage = Array.isArray(pages)
@@ -31,7 +31,7 @@ export function createStore(initialState) {
     if (nextPageId !== activePageId || nextPages !== pages || nextActivePage !== activePage) {
       pageContextRevision += 1;
     }
-    subscribers.forEach((fn) => fn(state));
+    subscribers.forEach((fn) => fn(state, change));
   }
 
   /* ----- get: read-only access to current state ----- */

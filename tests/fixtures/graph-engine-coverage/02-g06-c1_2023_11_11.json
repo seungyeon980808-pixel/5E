@@ -1,0 +1,367 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "g06-c1_2023_11_11",
+    "hash": "sha256:0ca5c984714b9ff2330580178bb069d22e78aece5abcd0683bc73a2c2a7e10ee",
+    "width": 581,
+    "height": 425,
+    "plotBox": {
+      "x": 205.5,
+      "y": 14.5,
+      "w": 359.5,
+      "h": 323
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "n+l",
+      "displayMath": "n+l",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 2,
+          "label": "2",
+          "position": 0.25174
+        },
+        {
+          "value": 3,
+          "label": "3",
+          "position": 0.5007
+        },
+        {
+          "value": 4,
+          "label": "4",
+          "position": 0.75104
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.5007,
+        "y": -0.19195
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "linear",
+      "title": "(n+l+m_l)/n",
+      "displayMath": "\\frac{n+l+m_l}{n}",
+      "displayTitle": "\\frac{n+l+m_l}{n}",
+      "unit": "상댓값",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 6,
+          "label": "6",
+          "position": 0.12384
+        },
+        {
+          "value": 8,
+          "label": "8",
+          "position": 0.37461
+        },
+        {
+          "value": 9,
+          "label": "9",
+          "position": 0.5
+        },
+        {
+          "value": 12,
+          "label": "12",
+          "position": 0.87307
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.34771,
+        "y": 0.56347
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.25174,
+          "y": 0.12384
+        }
+      ],
+      "curveStyle": "straight",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.96,
+      "lineVisible": false,
+      "markerShape": "circle"
+    },
+    {
+      "id": "s2",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.5007,
+          "y": 0.87307
+        }
+      ],
+      "curveStyle": "straight",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.96,
+      "lineVisible": false,
+      "markerShape": "circle"
+    },
+    {
+      "id": "s3",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.5007,
+          "y": 0.5
+        }
+      ],
+      "curveStyle": "straight",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.96,
+      "lineVisible": false,
+      "markerShape": "circle"
+    },
+    {
+      "id": "s4",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.75104,
+          "y": 0.37461
+        }
+      ],
+      "curveStyle": "straight",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.96,
+      "lineVisible": false,
+      "markerShape": "circle"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "y-unit",
+      "kind": "text",
+      "text": "(상댓값)",
+      "x": -0.34771,
+      "y": 0.36378,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "label-ga",
+      "kind": "text",
+      "text": "(가)",
+      "x": 0.38248,
+      "y": 0.12848,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 0,
+      "endStyle": "none",
+      "fontSizePx": 41
+    },
+    {
+      "id": "label-na",
+      "kind": "text",
+      "text": "(나)",
+      "x": 0.63282,
+      "y": 0.87926,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s2",
+      "pointIndex": 0,
+      "endStyle": "none",
+      "fontSizePx": 41
+    },
+    {
+      "id": "label-da",
+      "kind": "text",
+      "text": "(다)",
+      "x": 0.63282,
+      "y": 0.5031,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s3",
+      "pointIndex": 0,
+      "endStyle": "none",
+      "fontSizePx": 41
+    },
+    {
+      "id": "label-ra",
+      "kind": "text",
+      "text": "(라)",
+      "x": 0.88039,
+      "y": 0.37926,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s4",
+      "pointIndex": 0,
+      "endStyle": "none",
+      "fontSizePx": 41
+    },
+    {
+      "id": "guide-ga-h",
+      "kind": "guide",
+      "text": "",
+      "x": 0.25174,
+      "y": 0.12384,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-ga-v",
+      "kind": "guide",
+      "text": "",
+      "x": 0.25174,
+      "y": 0.12384,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-na-h",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5007,
+      "y": 0.87307,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s2",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-na-v",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5007,
+      "y": 0.87307,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s2",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-da-h",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5007,
+      "y": 0.5,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s3",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-ra-h",
+      "kind": "guide",
+      "text": "",
+      "x": 0.75104,
+      "y": 0.37461,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s4",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-ra-v",
+      "kind": "guide",
+      "text": "",
+      "x": 0.75104,
+      "y": 0.37461,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s4",
+      "pointIndex": 0,
+      "endStyle": "none"
+    }
+  ],
+  "style": {
+    "fontSizePx": 41,
+    "labelWeight": 400,
+    "strokeWidth": 0.45,
+    "guideStyle": {
+      "strokeWidth": 0.17,
+      "dashLength": 1.1,
+      "dashGap": 0.6
+    }
+  },
+  "review": [],
+  "frame": {
+    "variant": "box",
+    "arrowX": false,
+    "arrowY": false,
+    "arrowLength": 2.4,
+    "arrowWidth": 1.65,
+    "strokeWidth": 0.22,
+    "tickTop": false,
+    "tickRight": false
+  }
+}

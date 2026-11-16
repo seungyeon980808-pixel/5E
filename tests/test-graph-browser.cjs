@@ -29,7 +29,7 @@ async function main() {
   const welcome = page.locator('.tut-banner-no');
   await welcome.waitFor({ state: 'visible' });
   await welcome.click();
-  await page.locator('#graph-tool-open').click();
+  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
   console.log('clicked graph tool');
   await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
   if (await welcome.count()) await welcome.click({ force: true });

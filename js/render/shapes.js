@@ -16,12 +16,12 @@ import {
   applyGlyphHalo,
   DIM_HALO_RATIO,
   LABEL_INK,
-} from "./core.js?v=1.6.1-remediation-0929";
-import { estimateLabelBlock, withBoxLabel, withLineLabel } from "./labels.js?v=1.6.1-remediation-0929";
-import { resolveFill } from "./fill.js?v=1.6.1-remediation-0929";
-import { getSvgAsset } from "../svg-assets.js?v=1.6.1-preview-labeler-0917-1111";
-import { normalizeSrcRect } from "../cut-geometry.js?v=1.6.1-preview-labeler-0917-1111";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.1-remediation-0929";
+} from "./core.js?v=1.7.0-four-session-integration";
+import { estimateLabelBlock, withBoxLabel, withLineLabel } from "./labels.js?v=1.7.0-four-session-integration";
+import { resolveFill } from "./fill.js?v=1.7.0-four-session-integration";
+import { getSvgAsset } from "../svg-assets.js?v=1.7.0-four-session-integration";
+import { normalizeSrcRect } from "../cut-geometry.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.7.0-four-session-integration";
 
 // 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
 // (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.
@@ -788,19 +788,24 @@ function makeSrcRectViewport(obj, sr, href, preserveAspectRatio) {
   return nested;
 }
 
+// 편집 화면을 그리는 동안에만 scene.js가 넣어 주는 그림 주소 바꾸기(data URL → 재사용 blob URL). 내보내기는 null이라 obj.src 그대로.
+let imageHrefResolver = null;
+export function setImageHrefResolver(resolve) { imageHrefResolver = resolve; }
+const imageHref = (src) => imageHrefResolver ? imageHrefResolver(src) : src;
+
 /* ----- image: embedded raster via SVG <image> (href = base64 data URL) ----- */
 function renderImage(obj) {
   const sr = srcRectOf(obj);
   let el;
   if (sr) {
-    el = makeSrcRectViewport(obj, sr, obj.src, "none");
+    el = makeSrcRectViewport(obj, sr, imageHref(obj.src), "none");
   } else {
     el = document.createElementNS(SVG_NS, "image");
     el.setAttribute("x", obj.x);
     el.setAttribute("y", obj.y);
     el.setAttribute("width", obj.w);
     el.setAttribute("height", obj.h);
-    el.setAttribute("href", obj.src);
+    el.setAttribute("href", imageHref(obj.src));
     el.setAttribute("preserveAspectRatio", "none");
   }
   if (obj.opacity != null) el.setAttribute("opacity", obj.opacity);
@@ -825,13 +830,8 @@ function renderImage(obj) {
   if (obj.id) g.dataset.id = obj.id;
   if (rot !== 0) g.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
 
-  const cm = buildCutoutMask(obj);
-  if (!cm) { g.appendChild(el); return g; }
-  g.appendChild(cm.defs);
-  const masked = document.createElementNS(SVG_NS, "g");
-  masked.setAttribute("mask", `url(#${cm.maskId})`);
-  masked.appendChild(el);
-  g.appendChild(masked);
+  if (cutouts.some(c => c.background === 'white') && obj.opacity != null) { el.removeAttribute('opacity');g.setAttribute('opacity',obj.opacity); }
+  g.appendChild(cutoutContent(el, obj));
   return g;
 }
 
@@ -867,6 +867,13 @@ function appendCutoutShapes(mask, cutouts) {
       r.setAttribute("width", cut.w); r.setAttribute("height", cut.h);
       r.setAttribute("fill", "#000000");
       mask.appendChild(r);
+    } else if (cut?.type === 'brush') {
+      const points=cut.points || [],dx=Number(cut.diameterX),dy=Number(cut.diameterY);
+      if (!points.length || !(dx>0) || !(dy>0)) continue;
+      const g=document.createElementNS(SVG_NS,'g');g.setAttribute('transform',`scale(${dx},${dy})`);
+      const path=document.createElementNS(SVG_NS,'path'),first=points[0];
+      path.setAttribute('d',`M ${first.x/dx} ${first.y/dy} `+(points.length===1?'l .000001 0':points.slice(1).map(p=>`L ${p.x/dx} ${p.y/dy}`).join(' ')));
+      path.setAttribute('fill','none');path.setAttribute('stroke','#000000');path.setAttribute('stroke-width','1');path.setAttribute('stroke-linecap','round');path.setAttribute('stroke-linejoin','round');g.append(path);mask.append(g);
     } else if (cut && (cut.type === "path" || cut.type === "lasso")) {
       const pts = Array.isArray(cut.points) ? cut.points : [];
       if (pts.length < 3) continue;
@@ -897,11 +904,11 @@ function appendCutoutShapes(mask, cutouts) {
  * 썼지만, srcRect가 있는 객체는 <image>가 중첩 <svg> 안으로 들어가 "객체 상자"가
  * 모호해진다(엔진마다 다르다). 상자 좌표를 직접 써서 그 모호함을 없앤다 — 결과 좌표계
  * (상자의 0~1 분수, 회전 풀기 전)는 예전과 완전히 같다. */
-function buildCutoutMask(obj) {
+function buildCutoutMask(obj, suffix = '') {
   const cutouts = Array.isArray(obj.cutouts) ? obj.cutouts : [];
   if (cutouts.length === 0) return null;
   if (!(obj.w > 0) || !(obj.h > 0)) return null;
-  const maskId = `imgmask_${obj.id}`;
+  const maskId = `imgmask_${obj.id}${suffix}`;
   const defs = document.createElementNS(SVG_NS, "defs");
   const mask = document.createElementNS(SVG_NS, "mask");
   mask.setAttribute("id", maskId);
@@ -924,6 +931,31 @@ function buildCutoutMask(obj) {
   mask.appendChild(frac);
   defs.appendChild(mask);
   return { defs, maskId };
+}
+
+function cutoutContent(image, obj) {
+  const cuts=obj.cutouts || [];
+  if (!cuts.length) return image;
+  const root=document.createElementNS(SVG_NS,'g');
+  if (!cuts.some(c=>c.background==='white')) {
+    const cm=buildCutoutMask(obj);if(!cm)return image;
+    root.append(cm.defs);const g=document.createElementNS(SVG_NS,'g');g.setAttribute('mask',`url(#${cm.maskId})`);g.append(image);root.append(g);return root;
+  }
+  // White fills participate in order: a later transparent stroke also erases
+  // previous white paint, while later white paint can cover an earlier hole.
+  let content=image;
+  cuts.forEach((cut,i)=>{
+    if(cut.background==='white') {
+      const fill=document.createElementNS(SVG_NS,'svg');
+      for(const[k,v]of Object.entries({x:obj.x,y:obj.y,width:obj.w,height:obj.h,viewBox:'0 0 1 1',preserveAspectRatio:'none',overflow:'hidden'}))fill.setAttribute(k,v);
+      appendCutoutShapes(fill,[cut]);for(const n of fill.querySelectorAll('[fill],[stroke]'))for(const k of ['fill','stroke'])if(n.getAttribute(k)==='#000000')n.setAttribute(k,'#ffffff');
+      const g=document.createElementNS(SVG_NS,'g');g.append(content,fill);content=g;
+    } else {
+      const cm=buildCutoutMask({...obj,cutouts:[cut]},`_step${i}`);if(!cm)return;
+      root.append(cm.defs);const g=document.createElementNS(SVG_NS,'g');g.setAttribute('mask',`url(#${cm.maskId})`);g.append(content);content=g;
+    }
+  });
+  root.append(content);return root;
 }
 
 /* ----- svgAsset: one selectable, image-like built-in SVG asset ----- */
@@ -956,14 +988,7 @@ function renderSvgAsset(obj) {
     image.setAttribute("preserveAspectRatio", "xMidYMid meet");
   }
   // 가위로 잘린 svgAsset도 이미지와 동일하게 마스크로 반쪽을 지운다.
-  const cm = buildCutoutMask(obj);
-  if (cm) {
-    g.appendChild(cm.defs);
-    const masked = document.createElementNS(SVG_NS, "g");
-    masked.setAttribute("mask", `url(#${cm.maskId})`);
-    masked.appendChild(image);
-    image = masked;
-  }
+  image = cutoutContent(image, obj);
   g.appendChild(image);
 
   const rot = obj.rotation ?? 0;

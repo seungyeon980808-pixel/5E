@@ -9,12 +9,13 @@
  */
 
 import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors,
-         standingWaveGeometry } from "./render.js?v=1.6.1-remediation-0929";
+         standingWaveGeometry } from "./render.js?v=1.7.0-four-session-integration";
+import { labRingCenter } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
   SNAP_LINE_LIKE_TYPES as LINE_LIKE_TYPES,
-} from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
+} from "./object-types.js?v=1.7.0-four-session-integration";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
@@ -88,6 +89,8 @@ export function collectPrioritySnapPoints(state, excludeIds) {
     } else if (obj.type === "optics" && obj.kind === "object_arrow") {
       const { head, attach } = opticalObjectHead(obj);
       points.push(makeSnapPoint(head, "optical-object-head", obj.id, "head", 1, attach));
+    } else if (obj.type === "apparatus" && obj.kind === "metal_ring") {
+      points.push(makeSnapPoint(labRingCenter(obj), "line-endpoint", obj.id, "center", 0));
     } else if (obj.type === "apparatus" && obj.kind === "pulley") {
       // 실은 바퀴 가장자리(접선)에 걸린다. 좌우 접선점과 축을 앵커로 노출한다.
       for (const a of pulleyAnchors(obj)) {

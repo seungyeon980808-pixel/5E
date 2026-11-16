@@ -11,10 +11,10 @@
  * physical coastline datasets and never political boundaries.
  */
 
-import { FAST_SCENE_SCHEMA_ID, compileFastScene } from "./ai-scene-fastpath.js?v=1.6.1-remediation-0929";
-import { compileIllustrationAsset, createIllustrationAssetScene } from "./ai-illustration-assets.js?v=1.6.1-remediation-0929";
-import { compileVerifiedMap, createVerifiedMapScene } from "./ai-map-assets.js?v=1.6.1-remediation-0929";
-import { pulleyAnchors, pulleyGeom } from "./render/optics-apparatus.js?v=1.6.1-remediation-0929";
+import { FAST_SCENE_SCHEMA_ID, compileFastScene } from "./ai-scene-fastpath.js?v=1.7.0-four-session-integration";
+import { compileIllustrationAsset, createIllustrationAssetScene } from "./ai-illustration-assets.js?v=1.7.0-four-session-integration";
+import { compileVerifiedMap, createVerifiedMapScene } from "./ai-map-assets.js?v=1.7.0-four-session-integration";
+import { pulleyAnchors, pulleyGeom } from "./render/optics-apparatus.js?v=1.7.0-four-session-integration";
 
 export const MOTIF_CATALOG_VERSION = "5e-motif-catalog@5";
 

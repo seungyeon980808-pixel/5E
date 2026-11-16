@@ -1,5 +1,5 @@
-import { createDocumentRecord, createPageRecord } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
-import { detectPageItems } from "./pdf-runtime.js?v=1.6.1-preview-crop-quality-0920-1806";
+import { createDocumentRecord, createPageRecord } from "./contract.js?v=1.7.0-four-session-integration";
+import { detectPageItems } from "./pdf-runtime.js?v=1.7.0-four-session-integration";
 
 const TESSERACT_MODULE_URL = new URL("../../vendor/ocr/tesseract.esm.min.js?v=1.6.1-preview-labeler-0917-1111", import.meta.url);
 const TESSERACT_WORKER_URL = new URL("../../vendor/ocr/worker.min.js?v=1.6.1-preview-labeler-0917-1111", import.meta.url);

@@ -15,8 +15,12 @@ function identity(root) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   const dirty = git('status', '--porcelain', '--untracked-files=no', '--', 'preview', ...methodologyFiles);
   assert.equal(dirty, '', 'Performance inputs must be committed and clean');
+  const canonicalAlias = /^\s*export \* from ['"]\.\.\/\.\.\/js\/main\.js/m
+    .test(fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8'));
+  if (canonicalAlias) assert.equal(git('status', '--porcelain', '--untracked-files=no', '--', 'js', 'css', 'index.html'), '', 'Canonical performance inputs must be committed and clean');
   return {
     previewTree: git('rev-parse', 'HEAD:preview'),
+    ...(canonicalAlias ? { canonicalRuntime: Object.fromEntries(['js', 'css', 'index.html'].map(file => [file, git('rev-parse', `HEAD:${file}`)])) } : {}),
     methodologyBlobs: Object.fromEntries(methodologyFiles.map(file => [file, git('rev-parse', `HEAD:${file}`)])),
   };
 }
@@ -73,4 +77,12 @@ function loadForHostedCi(root) {
   assert.equal(process.env.GITHUB_ACTIONS, 'true', 'Only hosted CI may use physical reference acceptance');
   return validate(JSON.parse(fs.readFileSync(path.resolve(root, file), 'utf8')), identity(root));
 }
-module.exports = { identity, validate, loadForHostedCi };
+// GitHub 가상 컴퓨터의 시간 측정은 들쭉날쭉해서 참고용으로만 남긴다(기능 확인은 그대로 막는다).
+// 시간 기준(100ms 반응, 50ms 긴 작업, 프레임 멈춤)은 실제 Mac 로컬 실행과 수동 Browser Performance Diagnostics가 막는다.
+function hostedTimingIsDiagnostic() { return process.env.GITHUB_ACTIONS === 'true'; }
+function timingCheck(ok, message) {
+  if (ok) return;
+  if (hostedTimingIsDiagnostic()) { console.log(`::warning::시간 기준 참고(GitHub 가상 컴퓨터): ${message}`); return; }
+  throw new (require('node:assert').AssertionError)({ message });
+}
+module.exports = { identity, validate, loadForHostedCi, hostedTimingIsDiagnostic, timingCheck };

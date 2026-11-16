@@ -1,0 +1,129 @@
+// Question typesetting keeps the editable text, but makes table edge gestures
+// opt-in. Studio paints its blue marker before a drag starts; hiding that marker
+// with CSS would leave the destructive hit target active.
+const installed=new WeakSet();
+const rendererLocks=new WeakMap();
+const structureGuards=new WeakSet();
+// 구조 잠금: 잠겨 있으면 글(입력·글자/문단 모양·들여쓰기)만 고칠 수 있고, 표·그림의 틀(크기·줄/칸·합치기·
+// 나누기·테두리·넣기·옮기기·돌리기)은 잠금을 풀어야 바뀐다. 메뉴·단축키 명령은 모두 Studio 명령 전달기를 지나므로 거기서 막는다.
+export const STRUCTURE_LOCK_MESSAGE='구조 잠금 중 · 표·그림의 크기나 틀은 구조 잠금을 풀고 바꾸세요. 글은 그대로 고칠 수 있습니다.';
+const TEXT_TABLE_COMMANDS=new Set(['table:block-sum','table:block-avg','table:block-product','table:block-formula','table:decimal-add','table:decimal-remove','table:thousand-sep','table:transpose-copy']);
+// 조판 기준을 쓰는 ExamPool 조판(input.examLayoutRules)에서는 잠금 중 모양 틀(줄 간격·글꼴·크기·장평·문단 간격·여백·용지·단)도 막는다.
+// 글자 입력·자간·한 줄 맞춤·굵게·기울임·첨자·정렬·내어쓰기는 그대로 된다.
+export const LAYOUT_LOCK_MESSAGE='구조 잠금 중 · 줄 간격·글꼴·크기·장평·문단 간격·여백·용지·단은 구조 잠금을 풀고 바꾸세요. 글과 자간은 그대로 고칠 수 있습니다.';
+const LAYOUT_COMMANDS=new Set(['format:char-shape','format:para-shape','format:line-spacing','format:line-spacing-increase','format:line-spacing-decrease','format:char-ratio-increase','format:char-ratio-decrease','format:font-size-increase','format:font-size-decrease','format:style-dialog','format:apply-style',
+  'page:setup','page:section-settings','page:col-1','page:col-2','page:col-3','page:col-left','page:col-right','page:col-settings']);
+export const isLayoutCommand=id=>LAYOUT_COMMANDS.has(String(id||''));
+const TABLE_DATA_COMMANDS=new Set(['table:cell-merge','table:cell-split','table:insert-row-above','table:insert-row-below','table:insert-col-left','table:insert-col-right','table:delete-row','table:delete-col']);
+export const LAYOUT_OPERATIONS=new Set(['pageSetup','pageMargin','columnSettings','applyStyle']);
+export function isStructureCommand(id){
+  id=String(id||'');
+  if(id==='format:object-properties')return true;// 그림·표 크기·회전 대화상자(P)
+  if(id.startsWith('table:'))return !TEXT_TABLE_COMMANDS.has(id);
+  return /^insert:(image|shape|textbox|picture-|rotate-|flip-|caption-)/.test(id);
+}
+// 엔진의 모든 편집은 input.executeOperation을 지난다. 명령 전달기만 막으면 표 마지막 칸 Tab(줄 추가를 직접 실행),
+// 그림을 고른 뒤 P(개체 속성)·Delete·⌘X, 그림 붙여넣기·끌어 놓기, 셀 테두리 복사(Alt+C)가 잠금을 뚫었다(M1).
+// 표·그림의 틀을 바꾸는 작업 종류만 막고, 글 붙여넣기(HTML 포함)·수식·쪽 설정은 글 편집으로 보고 그대로 둔다.
+export const STRUCTURE_OPERATIONS=new Set(['objectProps','insertTableRow','insertTableColumn','deleteTableRow','deleteTableColumn','deleteTable','cutTable','createTable',
+  'splitTable','splitTableCell','mergeTableCells','mergeTableWithNext','resizeTableProportional','resizeTableCells','pasteTableCellsTransposed','formatCopyCellProps',
+  'insertPicture','assignPictureImage','pasteImage','pasteControl','cutObject','deleteObject','setColumnDef']);
+// 명령 전달기는 엔진이 다 뜬 뒤에 생길 수 있어, 잠금을 켤 때마다 아직 안 감싼 전달기를 감싼다(11-14: 단축키 M·S가 그대로 지나갔다).
+const wrappedDispatchers=new WeakSet();
+function wrapDispatcher(input){  const notice=()=>input.examStructureNotice?.(STRUCTURE_LOCK_MESSAGE);
+  const dispatcher=input.dispatcher;if(!dispatcher||wrappedDispatchers.has(dispatcher))return;wrappedDispatchers.add(dispatcher);
+  if(dispatcher&&typeof dispatcher.dispatchWithResult==='function'){
+    const run=dispatcher.dispatchWithResult.bind(dispatcher);
+    dispatcher.dispatchWithResult=(id,...args)=>{
+      // 11-14(시안 review-1114d 35번 A): 문항 자료 표에서는 한글 표 명령(M 합치기·S 나누기·줄/칸 넣기·지우기)을 문항 데이터로 바꿔 실행한다 — 표 안의 표도 된다.
+      // 11-15: 그 밖의 표 모양 명령(칸 테두리·배경·나누기 등)도 문항 자료 표면 같은 길(표 편집 창)로.
+      if(input.examTableLayoutLocked&&(TABLE_DATA_COMMANDS.has(String(id))||isStructureCommand(id)&&String(id).startsWith('table:'))&&typeof input.examTableEdit==='function'){const r=input.examTableEdit(String(id));if(r)return{ok:true};}
+      if(input.examTableLayoutLocked&&isStructureCommand(id)){notice();return{ok:false,reason:'structure-locked',message:STRUCTURE_LOCK_MESSAGE};}
+      if(input.examTableLayoutLocked&&input.examLayoutRules&&isLayoutCommand(id)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return{ok:false,reason:'layout-locked',message:LAYOUT_LOCK_MESSAGE};}
+      return run(id,...args);
+    };
+  }
+  // 단축키(셀 블록 중 M·S)는 dispatch로 바로 간다 — 같은 규칙으로 문항 자료 표면 데이터로 바꿔 실행한다.
+  if(dispatcher&&typeof dispatcher.dispatch==='function'){
+    const plain=dispatcher.dispatch.bind(dispatcher);
+    dispatcher.dispatch=(id,...args)=>{
+      if(input.examTableLayoutLocked&&(TABLE_DATA_COMMANDS.has(String(id))||isStructureCommand(id)&&String(id).startsWith('table:'))&&typeof input.examTableEdit==='function'&&input.examTableEdit(String(id)))return true;
+      return plain(id,...args);
+    };
+  }
+}
+function installStructureGuard(input){
+  if(structureGuards.has(input))return;structureGuards.add(input);
+  const notice=()=>input.examStructureNotice?.(STRUCTURE_LOCK_MESSAGE);
+  if(typeof input.executeOperation==='function'){
+    const execute=input.executeOperation.bind(input);
+    input.executeOperation=(operation,...args)=>{
+      if(input.examTableLayoutLocked&&STRUCTURE_OPERATIONS.has(operation?.operationType)){notice();return undefined;}
+      if(input.examTableLayoutLocked&&input.examLayoutRules&&LAYOUT_OPERATIONS.has(operation?.operationType)){input.examStructureNotice?.(LAYOUT_LOCK_MESSAGE);return undefined;}
+      return execute(operation,...args);
+    };
+  }
+  wrapDispatcher(input);
+  // 마우스로 그림·표를 옮기고 돌리고 크기를 바꾸는 중간 단계, 화살표로 선택 개체를 옮기는 것도 막는다.
+  for(const name of ['updatePictureMoveDrag','updatePictureRotateDrag','updatePictureResizeDrag','updateMoveDrag','moveSelectedPicture','resizeSelectedPicture','moveSelectedTable','resizeCellByKeyboard','resizeTableProportional']){
+    if(typeof input[name]!=='function')continue;
+    const original=input[name].bind(input);let warned=0;
+    const picture=name==='updatePictureResizeDrag'||name==='resizeSelectedPicture';
+    const table=name==='resizeCellByKeyboard'||name==='resizeTableProportional';
+    input[name]=(...args)=>{
+      if(!input.examTableLayoutLocked||picture&&input.examPictureResizeAllowed)return original(...args);
+      // 11-15: 문항 자료 표의 칸 크기(⌘·⌃화살표)도 표 모양을 바꾸는 일 → 표 편집 창으로(잠금 안내 대신).
+      if(table&&typeof input.examTableEdit==='function'&&input.examTableEdit('table:resize'))return;
+      const now=Date.now();if(now-warned>1500){warned=now;notice();}
+    };
+  }
+  // 그림 크기는 끄는 중이 아니라 놓을 때 정해지므로, 잠겨 있으면 놓을 때 바꾸지 않고 끄기만 정리한다.
+  if(typeof input.finishPictureResizeDrag==='function'){
+    const finish=input.finishPictureResizeDrag;
+    input.finishPictureResizeDrag=function(...args){
+      if(!input.examTableLayoutLocked||input.examPictureResizeAllowed)return finish.apply(this,args);
+      this.cleanupPictureResizeDrag?.();this.renderPictureObjectSelection?.();
+    };
+  }
+}
+export function setTableLayoutLocked(input,locked){
+  if(!input)return;
+  input.examTableLayoutLocked=!!locked;
+  installStructureGuard(input);wrapDispatcher(input);
+  // Geometry-only hosts (and tests) expose no table resize runtime to guard.
+  if(typeof input.setTableResizeRenderer!=='function')return;
+  if(!installed.has(input)){
+    installed.add(input);
+    const decorate=renderer=>{
+      if(!renderer)return renderer;
+      const previous=rendererLocks.get(renderer);
+      if(previous){previous.input=input;return renderer;}
+      const state={input};rendererLocks.set(renderer,state);
+      const hit=renderer.hitTestBorder.bind(renderer),show=renderer.showMarker.bind(renderer);
+      renderer.hitTestBorder=(...args)=>state.input.examTableLayoutLocked?null:hit(...args);
+      renderer.showMarker=(...args)=>state.input.examTableLayoutLocked?renderer.clear():show(...args);
+      return renderer;
+    };
+    const setter=input.setTableResizeRenderer.bind(input);
+    input.setTableResizeRenderer=renderer=>setter(decorate(renderer));
+    decorate(input.tableResizeRenderer);
+    const start=input.startResizeDrag.bind(input);
+    input.startResizeDrag=(...args)=>input.examTableLayoutLocked?undefined:start(...args);
+    // An outer-edge click can also select the entire table, exposing a second
+    // set of handles and a move gesture. Disable that route while locked too.
+    const render=input.renderTableObjectSelection.bind(input);
+    input.renderTableObjectSelection=(...args)=>{
+      if(!input.examTableLayoutLocked)return render(...args);
+      input.cursor.exitTableObjectSelection();input.tableObjectRenderer?.clear();
+    };
+  }
+  if(input.isResizeDragging)input.cleanupResizeDrag();
+  input.clearTableResizeRuntimeCache();
+  if(input.resizeHoverRafId){input.container.ownerDocument.defaultView.cancelAnimationFrame(input.resizeHoverRafId);input.resizeHoverRafId=0;}
+  input.tableResizeRenderer?.clear();
+  if(locked&&input.cursor.isInTableObjectSelection()){
+    input.cursor.exitTableObjectSelection();input.tableObjectRenderer?.clear();
+    input.eventBus.emit('table-object-selection-changed',false);input.updateCaret();
+  }
+  input.container.style.cursor='';
+}

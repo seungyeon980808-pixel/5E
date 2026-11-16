@@ -1,0 +1,384 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "source": {
+    "id": "wave",
+    "hash": "sha256:2202126019b631d40e55ae6d38d456f2d231a789014c089c3becb2641aabb369",
+    "width": 468,
+    "height": 345,
+    "plotBox": {
+      "x": 89,
+      "y": 16,
+      "w": 364,
+      "h": 326
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "t",
+      "unit": "s",
+      "min": 0,
+      "max": null,
+      "step": 1,
+      "ticks": [
+        {
+          "value": 0,
+          "label": "0",
+          "position": 0
+        },
+        {
+          "value": 1,
+          "label": "1",
+          "position": 0.1209
+        },
+        {
+          "value": 2,
+          "label": "2",
+          "position": 0.239
+        },
+        {
+          "value": 3,
+          "label": "3",
+          "position": 0.3571
+        },
+        {
+          "value": 4,
+          "label": "4",
+          "position": 0.478
+        },
+        {
+          "value": 5,
+          "label": "5",
+          "position": 0.5962
+        },
+        {
+          "value": 6,
+          "label": "6",
+          "position": 0.717
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 1,
+        "y": 0.3721
+      },
+      "titleAnchor": "end",
+      "displayTitle": "t(s)"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "변위",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.14,
+        "y": 0.955
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "wave-curve",
+      "label": "",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "points": [
+        {
+          "x": 0,
+          "y": 0.4571
+        },
+        {
+          "x": 0.0302,
+          "y": 0.5583
+        },
+        {
+          "x": 0.0604,
+          "y": 0.6472
+        },
+        {
+          "x": 0.0907,
+          "y": 0.7025
+        },
+        {
+          "x": 0.1209,
+          "y": 0.7209
+        },
+        {
+          "x": 0.1511,
+          "y": 0.6994
+        },
+        {
+          "x": 0.1813,
+          "y": 0.6411
+        },
+        {
+          "x": 0.2088,
+          "y": 0.5552
+        },
+        {
+          "x": 0.239,
+          "y": 0.4571
+        },
+        {
+          "x": 0.2692,
+          "y": 0.3528
+        },
+        {
+          "x": 0.2995,
+          "y": 0.2669
+        },
+        {
+          "x": 0.3297,
+          "y": 0.2117
+        },
+        {
+          "x": 0.3571,
+          "y": 0.1902
+        },
+        {
+          "x": 0.3874,
+          "y": 0.2117
+        },
+        {
+          "x": 0.4176,
+          "y": 0.27
+        },
+        {
+          "x": 0.4478,
+          "y": 0.3558
+        },
+        {
+          "x": 0.478,
+          "y": 0.4571
+        },
+        {
+          "x": 0.5082,
+          "y": 0.5583
+        },
+        {
+          "x": 0.5385,
+          "y": 0.6442
+        },
+        {
+          "x": 0.5687,
+          "y": 0.7025
+        },
+        {
+          "x": 0.5962,
+          "y": 0.7209
+        },
+        {
+          "x": 0.6264,
+          "y": 0.6994
+        },
+        {
+          "x": 0.6566,
+          "y": 0.6411
+        },
+        {
+          "x": 0.6868,
+          "y": 0.5552
+        },
+        {
+          "x": 0.717,
+          "y": 0.4571
+        },
+        {
+          "x": 0.7445,
+          "y": 0.3589
+        },
+        {
+          "x": 0.772,
+          "y": 0.2791
+        }
+      ],
+      "breaks": [],
+      "endpoints": [],
+      "curveStyle": "smooth",
+      "segmentModes": [
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "upper-horizontal-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5962,
+      "y": 0.7209,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none"
+    },
+    {
+      "id": "first-peak-vertical-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.1209,
+      "y": 0.7209,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "wave-curve",
+      "pointIndex": 4,
+      "endStyle": "none"
+    },
+    {
+      "id": "trough-horizontal-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.3571,
+      "y": 0.1902,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "wave-curve",
+      "pointIndex": 12,
+      "endStyle": "none"
+    },
+    {
+      "id": "trough-vertical-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.3571,
+      "y": 0.1902,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "wave-curve",
+      "pointIndex": 12,
+      "endStyle": "none"
+    },
+    {
+      "id": "second-peak-vertical-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5962,
+      "y": 0.7209,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "wave-curve",
+      "pointIndex": 20,
+      "endStyle": "none"
+    }
+  ],
+  "review": [
+    {
+      "path": "axes.y",
+      "reason": "변위 축에 크기를 확정할 수 있는 숫자 눈금이 없어 범위와 간격은 알 수 없다. 곡선과 보조선은 관찰한 정규화 좌표로 기록했다.",
+      "sourceBox": {
+        "x": 65,
+        "y": 96,
+        "w": 32,
+        "h": 191
+      }
+    },
+    {
+      "path": "axes.x.max",
+      "reason": "마지막 숫자 눈금 6 이후에도 축이 이어지지만 축 끝의 수치는 표시되지 않았다.",
+      "sourceBox": {
+        "x": 344,
+        "y": 180,
+        "w": 111,
+        "h": 29
+      }
+    },
+    {
+      "path": "axes.y",
+      "reason": "축 수치를 읽을 수 없습니다. 눈금과 범위를 확인하십시오."
+    },
+    {
+      "path": "series.0",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "annotations.0",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.1",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.2",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.3",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.4",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    }
+  ],
+  "coordinateMode": "observed",
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0.4571
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "style": {
+    "fontSizePx": 38,
+    "labelWeight": 300,
+    "strokeWidth": 0.32,
+    "guideStyle": {
+      "strokeWidth": 0.15,
+      "dashLength": 1.2,
+      "dashGap": 0.9
+    }
+  },
+  "provenance": {
+    "kind": "source-reviewed-graph-capability-fixture",
+    "rawObservationSchema": "5e.graph-reconstruction/v1",
+    "modelCurvePointsUnchanged": true,
+    "modelCallsThisRevision": 0,
+    "sourceReviewAdditions": [
+      "표시 좌표 모드",
+      "원본 눈금·축 제목 위치",
+      "글자·선 스타일",
+      "관찰된 영점의 축선 위치"
+    ]
+  }
+}

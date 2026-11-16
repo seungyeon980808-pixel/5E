@@ -1,0 +1,10 @@
+{
+  "name": "5e-visitor-stats",
+  "main": "index.mjs",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "vars": { "ALLOWED_ORIGINS": "https://www.5e.ai.kr,https://5e.ai.kr" },
+  "d1_databases": [{ "binding": "DB", "database_name": "5e-visitor-stats", "database_id": "4a1580fd-b8bd-43ec-ad24-5a563a48ccf3", "migrations_dir": "migrations" }],
+  "ratelimits": [{ "name": "VISITOR_POST_LIMITER", "namespace_id": "5201", "simple": { "limit": 10, "period": 60 } }],
+  "account_id": "a6dd35b7aa385514042f9003bc937b92"
+}

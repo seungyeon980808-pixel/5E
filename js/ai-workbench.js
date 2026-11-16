@@ -1,5 +1,8 @@
-import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.1-remediation-0929';
-import { comparisonGeometry } from './ai-comparison.js?v=1.6.1-ai-latest-fixes-0928';
+import { buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7.0-four-session-integration';
+import { LABEL_REVIEW_POLICY } from './ai-image-review.js?v=1.7.0-four-session-integration';
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-four-session-integration';
+import { comparisonGeometry } from './ai-comparison.js?v=1.7.0-four-session-integration';
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",
@@ -79,11 +82,14 @@ export function normalizePixelInspection(value) {
 export function normalizeReviewDetail(detail = {}) {
   const state = normalizeReviewState(detail.state);
   const report = detail.report && typeof detail.report === "object" ? detail.report : {};
+  const labelReview = report.labelReview?.policy === LABEL_REVIEW_POLICY
+    && ['pass', 'fail', 'uncertain'].includes(report.labelReview.verdict) ? report.labelReview : null;
   return {
     state,
     candidateId: cleanText(detail.candidateId),
     report: {
       verdict: cleanText(report.verdict),
+      ...(labelReview ? { labelReview: { policy: labelReview.policy, verdict: labelReview.verdict, editability: 'not-verified' } } : {}),
       checks: Array.isArray(report.checks) ? report.checks.map((check, index) => ({
         id: cleanText(check?.id, `check-${index + 1}`),
         label: cleanText(check?.label, `검수 항목 ${index + 1}`),
@@ -92,6 +98,7 @@ export function normalizeReviewDetail(detail = {}) {
       })) : [],
       issues: Array.isArray(report.issues) ? report.issues.map((issue) => ({
         message: cleanText(issue?.message, "확인이 필요한 문제가 있습니다."),
+        ...(issue?.checkId ? { checkId: cleanText(issue.checkId) } : {}),
         bbox: issue?.bbox ?? null,
         severity: cleanText(issue?.severity),
       })) : [],
@@ -127,6 +134,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const lifecycle = new AbortController();
 
   const results = panel.querySelector(".ai-results");
+  const workspace = panel.querySelector('.ai-workspace');
+  if (workspace) workspace.append(results, panel.querySelector('.ai-task-rail'), panel.querySelector('.ai-conversation'));
   const previews = panel.querySelector("[data-ai-previews]");
   const references = panel.querySelector("[data-ai-attachment-list]");
   const versionButton = panel.querySelector("[data-ai-version-button]");
@@ -134,20 +143,40 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const sourceSelect = panel.querySelector("[data-ai-source-select]");
   const resultState = panel.querySelector("[data-ai-result-state]");
   const reviewSummary = panel.querySelector("[data-ai-review-summary]");
+  const reviewContent = panel.querySelector('[data-ai-review-content]');
+  const reviewOpen = panel.querySelector('[data-ai-review-open]');
+  const reviewCount = panel.querySelector('[data-ai-review-count]');
+  reviewContent?.append(panel.querySelector('.ai-review-overview'));
+  const connection = panel.querySelector('.ai-advanced-settings');
+  if (connection) { connection.open = true; panel.querySelector('[data-ai-connection-content]')?.append(connection); }
+  panel.querySelector('[data-ai-connection-dialog]')?.setAttribute('hidden', '');
+  for (const kind of ['review']) {
+    const button = panel.querySelector(`[data-ai-${kind}-open]`);
+    const dialog = panel.querySelector(`[data-ai-${kind}-dialog]`);
+    if (dialog) panel.append(dialog); // Native modal siblings avoid nested aria-modal dialogs.
+    button?.addEventListener('click', () => { if (dialog && !dialog.open) dialog.showModal(); });
+    dialog?.querySelector('[data-ai-info-close]')?.addEventListener('click', () => dialog.close());
+    dialog?.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); dialog.close(); }
+    });
+    dialog?.addEventListener('close', () => button?.focus());
+  }
+
   const compositePreview = panel.querySelector("[data-ai-composite-preview]");
   const orientationButtons = Array.from(panel.querySelectorAll("[data-ai-composition-orientation]"));
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
-  const linkedZoom = panel.querySelector("[data-ai-zoom-linked]");
   const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
-  const zoomTarget = panel.querySelector('[data-ai-zoom-target]');
-  const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result'
-    : panel.dataset.aiLayout === 'source' || linkedZoom?.checked ? 'source' : zoomTarget?.value || 'source';
+  const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result' : 'source';
   const paneHeadControls = Array.from(panel.querySelectorAll('.ai-pane-head-controls'));
   let paneHeadSyncFrame = 0;
   let paneHeadHeight = '';
   const syncPaneHeadHeight = () => {
-    const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
-    const nextHeight = `${height + 16}px`;
+    const height = Math.max(0, ...paneHeadControls.map(control => {
+      const style = getComputedStyle(control.parentElement);
+      return control.offsetHeight + ['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth']
+        .reduce((total, key) => total + (parseFloat(style[key]) || 0), 0);
+    }));
+    const nextHeight = `${Math.ceil(height)}px`;
     if (nextHeight === paneHeadHeight) return;
     paneHeadHeight = nextHeight;
     panel.style.setProperty('--ai-pane-head-height', nextHeight);
@@ -190,8 +219,32 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let combinedCard = null;
   let combinedSignature = '';
   let composition = { orientation: 'horizontal' };
+  // 생성 탭(이미지 생성·그래프 생성)에서는 왼쪽 「레퍼런스」 칸에 앞 판 결과를 띄워 오른쪽 최신 판과 나란히 비교한다(10-22 A-3).
+  let compareCard = null;
+  const isCreation = () => panel.dataset.aiCreation === 'true';
+  const resultKey = card => `__result__:${candidateKey(card)}`;
   const activeSource = () => activeSourceKey === '__combined__' ? combinedCard
+    : activeSourceKey.startsWith('__result__:') ? compareCard
     : sourceCards().find(item => sourceKey(item) === activeSourceKey);
+  function prepareCompare() {
+    const result = isCreation() && activeSourceKey.startsWith('__result__:') ? generatedCards().find(card => resultKey(card) === activeSourceKey) : null;
+    const src = result?.querySelector('.ai-preview-stage > img')?.src;
+    if (!src) { compareCard?.remove(); compareCard = null; return false; }
+    if (!compareCard || !compareCard.isConnected) {
+      compareCard = document.createElement('article');
+      compareCard.className = 'ai-image-card ai-compare-result-card';
+      const head = document.createElement('header'); head.className = 'ai-image-card-head';
+      const title = document.createElement('strong'); head.append(title);
+      const stage = document.createElement('div'); stage.className = 'ai-preview-stage';
+      const image = document.createElement('img'); image.onload = () => { fitCardStage(compareCard); applyPaneZoom('source'); }; stage.append(image);
+      compareCard.append(head, stage); references.append(compareCard);
+    }
+    const name = cardTitle(result, '결과');
+    if (compareCard.querySelector('strong').textContent !== name) compareCard.querySelector('strong').textContent = name;
+    const image = compareCard.querySelector('img');
+    if (image.getAttribute('src') !== src) { image.alt = name; image.src = src; }
+    return true;
+  }
   const activeCandidate = () => generatedCards().find((card) => candidateKey(card) === activeCandidateKey) || null;
 
   function cardFit(card) {
@@ -219,13 +272,19 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       const scale = Math.min(baseWidth / image.naturalWidth, baseHeight / image.naturalHeight) * zoom;
       image.style.width = `${image.naturalWidth * scale}px`;
       image.style.setProperty('height', `${image.naturalHeight * scale}px`, 'important');
+      image.style.maxHeight = 'none';
+      image.style.maxWidth = 'none';
+      // Compared images share a frame but can have different aspect ratios.
+      // Keep the edit action attached to the image, including its letterbox.
+      stage.style.setProperty('--ai-graph-edge-right', `${Math.max(0, (baseWidth * zoom - image.naturalWidth * scale) / 2)}px`);
+      stage.style.setProperty('--ai-graph-edge-top', `${Math.max(0, (baseHeight * zoom - image.naturalHeight * scale) / 2)}px`);
     }
   }
 
   function fitCardStage(card) {
     const fit = cardFit(card);
     if (!fit) return;
-    const fits = results?.classList.contains('mode-side-by-side')
+    const fits = (results?.classList.contains('mode-side-by-side') || results?.classList.contains('mode-stacked'))
       ? [cardFit(activeCandidate()), cardFit(activeSource())].filter(Boolean)
       : [fit];
     const geometry = comparisonGeometry(fits[0], fits[1] || fits[0], {
@@ -260,11 +319,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   function setLayout(mode, fromUser = false) {
-    if (!results || !["side-by-side", "source", "result"].includes(mode)) return;
+    if (!results || !["side-by-side", "stacked", "source", "result"].includes(mode)) return;
     const previous = results.classList.contains("mode-source") ? "source" : results.classList.contains("mode-result") ? "result" : null;
     const position = previous ? readPosition(previous) : null;
-    if (previous && mode !== "side-by-side") paneZoom[mode] = paneZoom[previous];
-    results.classList.remove("mode-side-by-side", "mode-source", "mode-result");
+    if (previous && ['source','result'].includes(mode)) paneZoom[mode] = paneZoom[previous];
+    results.classList.remove("mode-side-by-side", "mode-stacked", "mode-source", "mode-result");
     results.classList.add(`mode-${mode}`);
     for (const button of layoutButtons) {
       const selected = button.dataset.aiLayoutMode === mode;
@@ -272,32 +331,21 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       button.setAttribute("aria-pressed", String(selected));
     }
     if (fromUser) userChoseLayout = true;
-    const trackingControl = panel.querySelector('[data-ai-tracking-control]');
-    if (trackingControl) trackingControl.hidden = mode !== 'side-by-side';
-    const viewOptions = panel.querySelector('.ai-view-options');
-    if (viewOptions) viewOptions.hidden = mode !== 'side-by-side';
     panel.dataset.aiLayout = mode;
-    const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
-    if (targetControl) targetControl.hidden = mode !== 'side-by-side' || linkedZoom?.checked;
-    if (mode === 'side-by-side' && linkedZoom?.checked) paneZoom.result = paneZoom.source;
+    if (mode === 'side-by-side' || mode === 'stacked') paneZoom.result = paneZoom.source;
     schedulePaneHeadSync();
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
       applyPaneZoom("source");
       applyPaneZoom("result");
-      if (position && mode !== "side-by-side") writePosition(mode, position);
+      if (position && ['source','result'].includes(mode)) writePosition(mode, position);
     });
   }
 
   function updateResponsiveLayout() {
-    const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
     if (userChoseLayout) return;
-    if (processing && !generatedCards().length) {
-      setLayout(sourceCards().length ? "side-by-side" : "result");
-      return;
-    }
-    setLayout(sourceCards().length ? "side-by-side" : "result");
+    setLayout('side-by-side');
   }
 
   const paneCard = (pane) => pane === "source"
@@ -324,7 +372,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
   function copyPosition(from, to) { writePosition(to, readPosition(from)); }
   panel.addEventListener('scroll', event => {
-    if (!linkedZoom?.checked || !results.classList.contains('mode-side-by-side')) return;
+    if (!results.classList.contains('mode-side-by-side') && !results.classList.contains('mode-stacked')) return;
     const card = event.target;
     const expected = syncedScroll.get(card);
     if (expected && Math.abs(card.scrollLeft - expected.left) < 1 && Math.abs(card.scrollTop - expected.top) < 1) return;
@@ -367,7 +415,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   function changePaneZoom(pane, action) {
     const position = readPosition(pane);
     const next = action === "in" ? paneZoom[pane] + .2 : action === "out" ? paneZoom[pane] - .2 : 1;
-    const targets = linkedZoom?.checked && results.classList.contains("mode-side-by-side") ? ["source", "result"] : [pane];
+    const targets = ['side-by-side','stacked'].includes(panel.dataset.aiLayout) ? ["source", "result"] : [pane];
     for (const target of targets) {
       paneZoom[target] = next;
       applyPaneZoom(target);
@@ -394,7 +442,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const scale = after.width / stage.offsetWidth;
     card.scrollLeft += (after.left + anchor.x * after.width - event.clientX) / scale;
     card.scrollTop += (after.top + anchor.y * after.height - event.clientY) / scale;
-    if (linkedZoom?.checked && results.classList.contains("mode-side-by-side")) {
+    if (['side-by-side','stacked'].includes(panel.dataset.aiLayout)) {
       const other = pane === "source" ? "result" : "source";
       paneZoom[other] = paneZoom[pane];
       applyPaneZoom(other);
@@ -447,6 +495,63 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     };
     reviewSummary.dataset.state = state;
     reviewSummary.textContent = labels[state] || labels.idle;
+    let issuesView = panel.querySelector('[data-ai-label-quality-issues]');
+    if (!issuesView) {
+      issuesView = document.createElement('section');
+      issuesView.dataset.aiLabelQualityIssues = '';
+      issuesView.className = 'ai-label-quality-issues';
+      issuesView.setAttribute('aria-label', '라벨 생성 결과 확인 사항');
+      reviewContent?.append(issuesView);
+    }
+    const issues = record?.report?.issues || [];
+    const labelReview = record?.report?.labelReview;
+    if (reviewCount) { reviewCount.hidden = !issues.length; reviewCount.textContent = String(issues.length); }
+    if (reviewOpen) {
+      reviewOpen.dataset.state = state;
+      reviewOpen.setAttribute('aria-label', issues.length ? `결과 확인 사항 ${issues.length}개` : `결과 확인 사항 · ${labels[state] || labels.idle}`);
+      reviewOpen.title = issues.length ? `결과 확인 사항 ${issues.length}개` : labels[state] || labels.idle;
+    }
+    issuesView.replaceChildren();
+    issuesView.hidden = !issues.length && !labelReview;
+    if (!issuesView.hidden) {
+      if (labelReview) {
+        const summary = document.createElement('p'); summary.dataset.aiLabelReviewSummary = '';
+        const verdicts = { pass: '통과', fail: '미통과', uncertain: '확인 필요' };
+        summary.textContent = `라벨 내용·연결·가독성: ${verdicts[labelReview.verdict] || '확인 필요'} · 전체 결과: ${verdicts[record.report.verdict] || '확인 필요'}`;
+        issuesView.append(summary);
+      }
+      if (!issues.length) return;
+      const heading = document.createElement('strong'); heading.textContent = `결과 확인 사항 ${issues.length}개`;
+      const list = document.createElement('ul');
+      const issueDescriptions = {
+        'source-plan-uncertainty': '원본에서 읽은 라벨의 내용이나 연결 대상을 확실하게 확인하지 못했습니다.',
+        'raw-ink-occlusion': '라벨이 그림의 선과 겹칩니다. 라벨 위치를 확인해 주세요.',
+        'unconfirmed-source-fallback': '연결 대상을 확정하지 못해 라벨을 원본 위치에 임시 배치했습니다.',
+        'final-glyph-overlap': '최종 배치에서 라벨끼리 겹칩니다.',
+        'clipped-final-glyph': '라벨의 일부가 그림 가장자리 밖으로 나갑니다.',
+        'clipped-label': '라벨의 일부가 그림 가장자리 밖으로 나갑니다.',
+        'unmeasured-final-glyph': '최종 라벨의 글자 영역을 측정하지 못했습니다.',
+        'raw-ink-not-checked': '라벨과 그림의 선이 겹치는지 확인하지 못했습니다.',
+        'label-overlap': '라벨끼리 겹칩니다.',
+      };
+      for (const issue of issues) {
+        const row = document.createElement('li');
+        const body = document.createElement(normalizeReviewBBox(issue.bbox) ? 'button' : 'span');
+        body.textContent = issueDescriptions[issue.code]
+          || issueDescriptions[issue.message] || issue.message || '결과를 확인해 주세요.';
+        if (body.tagName === 'BUTTON') { body.type = 'button'; body.title = '그림에서 위치 확인'; body.onclick = () => highlightIssue(activeCandidate(), issue.bbox); }
+        row.appendChild(body); list.appendChild(row);
+      }
+      issuesView.append(heading, list);
+      const correction = buildSourceLabelCorrectionDraft({ report: record?.report });
+      if (correction) {
+        const button = document.createElement('button'); button.type = 'button'; button.dataset.aiLabelCorrectionDraft = '';
+        button.textContent = `${correction.label} 교정 요청 준비`;
+        button.onclick = () => panel.dispatchEvent(new CustomEvent('5e:ai-label-correction-draft'));
+        issuesView.append(button);
+      }
+
+    }
   }
 
   function stateForCard(card) {
@@ -480,18 +585,14 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
     const empty = panel.querySelector('[data-ai-empty]');
     if (empty) {
-      const prepared = sourceCards().length > 0;
-      const lite = document.documentElement.dataset.mode === 'lite';
       const title = empty.querySelector('strong');
       const detail = empty.querySelector('span');
       const add = empty.querySelector('[data-ai-add-file]');
-      const titleText = prepared || lite ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
-      const detailText = lite
-        ? '변환하면 결과가 여기에 표시됩니다.'
-        : prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
+      const titleText = '생성 결과 없음';
+      const detailText = '변환하면 결과가 여기에 표시됩니다.';
       if (title && title.textContent !== titleText) title.textContent = titleText;
       if (detail && detail.textContent !== detailText) detail.textContent = detailText;
-      if (add && add.hidden !== (prepared || lite)) add.hidden = prepared || lite;
+      if (add && !add.hidden) add.hidden = true;
     }
     panel.dataset.aiStage = processing
       ? "processing"
@@ -514,6 +615,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       versionButton.textContent = cards.length
         ? cardTitle(activeCandidate(), `생성 결과 ${cards.length}`)
         : "생성 결과 없음";
+      versionButton.title = versionButton.textContent;
       cards.forEach((card, index) => {
         const option = document.createElement("button");
         const selected = candidateKey(card) === activeCandidateKey;
@@ -594,36 +696,45 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const cards = sourceCards();
     const wasCombined = Boolean(combinedCard);
     prepareCombined(cards);
-    const keys = [...(combinedCard ? ['__combined__'] : []), ...cards.map(sourceKey)];
+    const results = isCreation() ? generatedCards().filter(card => card.querySelector('.ai-preview-stage > img')?.src) : [];
+    const keys = [...(combinedCard ? ['__combined__'] : []), ...cards.map(sourceKey), ...results.map(resultKey)];
     if (!keys.includes(activeSourceKey) || (!wasCombined && combinedCard)) activeSourceKey = keys[0] || '';
+    const comparing = prepareCompare();
     combinedCard?.classList.toggle('is-ai-active-source', activeSourceKey === '__combined__');
+    compareCard?.classList.toggle('is-ai-active-source', comparing);
     if (sourceSelect) {
       const picker = sourceSelect.closest("[data-ai-source-picker]");
-      if (picker) picker.hidden = !cards.length;
+      if (picker) picker.hidden = !cards.length && !results.length;
       sourceSelect.replaceChildren();
       if (combinedCard) {
         const option = document.createElement('option');
         option.value = '__combined__'; option.textContent = '연결된 전체 원본'; sourceSelect.append(option);
       }
-      if (!cards.length) {
+      if (!cards.length && !results.length) {
         const option = document.createElement("option");
         option.value = "";
-        option.textContent = "원본 없음";
+        option.textContent = isCreation() ? "레퍼런스 없음" : "원본 없음";
         sourceSelect.appendChild(option);
         sourceSelect.disabled = true;
       } else {
         cards.forEach((card, index) => {
           const option = document.createElement("option");
           option.value = sourceKey(card);
-          option.textContent = `${card.dataset.aiReferenceRole === 'STYLE_REFERENCE' ? '표현 참고' : '원본'} · ${cardTitle(card, `참고 이미지 ${index + 1}`)}`;
+          option.textContent = isCreation() ? `레퍼런스 · ${cardTitle(card, `참고 이미지 ${index + 1}`)}` : `${card.dataset.aiReferenceRole === 'STYLE_REFERENCE' ? '표현 참고' : '원본'} · ${cardTitle(card, `참고 이미지 ${index + 1}`)}`;
+          sourceSelect.appendChild(option);
+        });
+        results.forEach((card, index) => {
+          const option = document.createElement("option");
+          option.value = resultKey(card); option.textContent = `결과 · ${cardTitle(card, `${index + 1}판`)}`;
           sourceSelect.appendChild(option);
         });
         sourceSelect.disabled = false;
-        if (activeSourceKey !== '__combined__') {
+        if (activeSourceKey !== '__combined__' && !activeSourceKey.startsWith('__result__:') && cards.length) {
           const replace = document.createElement('option');
           replace.value = '__replace__'; replace.textContent = '원본 교체…'; sourceSelect.append(replace);
         }
         sourceSelect.value = activeSourceKey;
+        sourceSelect.title = sourceSelect.selectedOptions[0]?.textContent || "원본 선택";
       }
     }
     for (const card of cards) {
@@ -656,21 +767,36 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   layoutButtons.forEach((button) => button.addEventListener("click", () => setLayout(button.dataset.aiLayoutMode, true)));
+  const compareMenu = panel.querySelector('.ai-compare-menu');
+  const compareMenuLabel = panel.querySelector('[data-ai-compare-menu-label]');
+  const syncCompareMenu = () => {
+    const slider = panel.querySelector('.ai-results')?.classList.contains('is-wipe-comparing');
+    if (compareMenuLabel) compareMenuLabel.textContent = slider ? '슬라이더 비교 ▾' : panel.dataset.aiLayout === 'side-by-side' ? '좌우 비교 ▾' : panel.dataset.aiLayout === 'stacked' ? '상하 비교 ▾' : '비교 ▾';
+    for (const button of layoutButtons) {
+      const active = !slider && button.dataset.aiLayoutMode === panel.dataset.aiLayout;
+      button.classList.toggle('is-on', active); button.setAttribute('aria-pressed', String(active));
+    }
+  };
+  panel.addEventListener('click', event => {
+    if (event.target.closest('[data-ai-layout-mode], [data-ai-compare]')) {
+      if (compareMenu) compareMenu.open = false;
+      queueMicrotask(syncCompareMenu);
+    } else if (compareMenu?.open && !compareMenu.contains(event.target)) compareMenu.open = false;
+  });
+  const compareObserver = new MutationObserver(syncCompareMenu);
+  compareObserver.observe(results, {attributes:true, attributeFilter:['class']});
+  const compareItems = compareMenu?.querySelector('.ai-compare-menu-items');
+  compareItems?.setAttribute('role', 'menu');
+  compareItems?.querySelectorAll('button').forEach(button => button.setAttribute('role', 'menuitem'));
+  const unregisterCompareEscape = compareItems ? registerEscapeLayer(compareItems, () => {
+    compareMenu.open = false; compareMenu.querySelector('summary')?.focus();
+  }) : () => {};
+
   paneZoomControls.forEach((controls) => controls.addEventListener("click", (event) => {
     const button = event.target.closest("[data-ai-zoom-action]");
     if (!button) return;
     changePaneZoom(controls.dataset.aiPaneZoom === "shared" ? zoomPane() : controls.dataset.aiPaneZoom, button.dataset.aiZoomAction);
   }));
-  linkedZoom?.addEventListener("change", () => {
-    const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
-    if (targetControl) targetControl.hidden = linkedZoom.checked || panel.dataset.aiLayout !== 'side-by-side';
-    applyPaneZoom(zoomPane());
-    if (!linkedZoom.checked) return;
-    paneZoom.result = paneZoom.source;
-    applyPaneZoom("result");
-    copyPosition("source", "result");
-  });
-  zoomTarget?.addEventListener('change', () => applyPaneZoom(zoomPane()));
   function selectCandidate(candidateKeyValue) {
     activeCandidateKey = candidateKeyValue;
     panel.dataset.aiSelectedCandidateId = activeCandidateKey;
@@ -783,7 +909,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   });
 
   let knownGeneratedCount = 0;
-  const cardObserver = new MutationObserver(() => {
+  const cardObserver = new MutationObserver(records => {
+    // Box overlays are view annotations, not candidate changes. Rebuilding the
+    // version menu for each marker repaint makes its options impossible to click.
+    const overlay = node => node.nodeType === 1 && node.matches('[data-ai-comment-marker], [data-ai-comment-drag-preview]');
+    if (records.every(record => record.target.closest?.('.ai-label-edit-overlay') || record.type === 'childList'
+      && [...record.addedNodes, ...record.removedNodes].length > 0
+      && [...record.addedNodes, ...record.removedNodes].every(overlay))) return;
     const nextCount = generatedCards().length;
     syncCandidates({ preferNewest: nextCount > knownGeneratedCount });
     knownGeneratedCount = nextCount;
@@ -823,6 +955,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   applyPaneZoom("result");
   panel.aiWorkbench = {
     dispose() {
+      compareObserver.disconnect();
+      unregisterCompareEscape();
       lifecycle.abort();
       if (paneHeadSyncFrame) window.cancelAnimationFrame(paneHeadSyncFrame);
       headResizeObserver?.disconnect();
@@ -839,7 +973,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         selectedSourceId: activeSourceKey,
         zoom: { ...paneZoom },
         layout: panel.dataset.aiLayout,
-        tracking: linkedZoom?.checked === true,
+        tracking: true,
         scroll: {
           source: { left: sourceCard?.scrollLeft || 0, top: sourceCard?.scrollTop || 0 },
           result: { left: resultCard?.scrollLeft || 0, top: resultCard?.scrollTop || 0 },
@@ -848,12 +982,12 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     },
     restoreViewState(state = {}) {
       state = state && typeof state === "object" ? state : {};
-      if (linkedZoom && typeof state.tracking === "boolean") linkedZoom.checked = state.tracking;
+      // Tracking is always enabled, including old workspaces saved with it off.
       if (state.layout) setLayout(state.layout, true);
       if (state.selectedCandidateId) panel.dataset.aiSelectedCandidateId = state.selectedCandidateId;
       if (state.selectedSourceId) {activeSourceKey = state.selectedSourceId;syncSources();}
       if (Number.isFinite(state.zoom?.source)) paneZoom.source = state.zoom.source;
-      if (Number.isFinite(state.zoom?.result)) paneZoom.result = state.zoom.result;
+      paneZoom.result = paneZoom.source;
       syncCandidates();
       applyPaneZoom("source");
       applyPaneZoom("result");
@@ -868,6 +1002,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
           resultCard.scrollLeft = Number(state.scroll?.result?.left) || 0;
           resultCard.scrollTop = Number(state.scroll?.result?.top ?? state.scroll?.result) || 0;
         }
+        if (['side-by-side','stacked'].includes(panel.dataset.aiLayout)) copyPosition("source", "result");
       });
     },
   };

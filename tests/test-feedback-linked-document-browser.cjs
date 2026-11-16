@@ -1,0 +1,45 @@
+const assert=require('node:assert/strict');
+const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const h=require('./helpers/rhwp-exam.cjs');
+h.withServer(async origin=>{
+ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
+  const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:950}}),errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  try {
+   await page.addInitScript(()=>{localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');});
+   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=1');await h.ready(page);await h.action(page,'close');
+   await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');state.update(s=>{s.objects=[{id:'link-line',type:'line',p1:{x:-15,y:-10},p2:{x:15,y:10},layerId:1,order:0,rotation:0,strokeWidth:.3,strokeLevel:0,lineMode:'solid',arrowHead:'none'}];s.selectedIds=[];});});
+   await h.sendCanvas(page);await page.locator('.capture-overlay').waitFor();await page.keyboard.press('Escape');await page.locator('.capture-overlay').waitFor({state:'hidden'});
+   const metadata=()=>page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return structuredClone(state.get().pages.find(p=>p.id===state.get().activePageId).meta);});
+   assert.equal((await metadata()).examLink,undefined);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),0);
+   await h.crop(page);await h.idle(page);assert.equal((await metadata()).examLink,undefined);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),0);
+   await page.locator('#exam-name').focus();await page.keyboard.press('Escape');assert.equal((await h.pictures(page)).length,0);await h.action(page,'close');
+   await h.crop(page);await h.place(page);await h.originalEdit(page);
+   // 11-06 사용자 결정: 한글 위에 뜨는 편집 창 안에서는 AI 입구를 뺀다(AI는 그림 단추에서 따로 연다).
+   await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+   assert.equal(await page.locator('#ai-image-install-open').isVisible(),false,'floating picture edit hides the AI entry');
+   // 그림 편집을 열면 그림 전체가 캔버스 안에 · 너무 크지도 작지도 않게(약 80%) · 가운데(10-24 지적 19).
+   {await page.waitForTimeout(300);const fit=await page.evaluate(()=>{const c=document.querySelector('#canvas').getBoundingClientRect(),o=document.querySelector('#canvas [data-id="link-line"]').getBoundingClientRect(),bar=document.querySelector('#exam-edit-bar').getBoundingClientRect();return {inside:o.left>=c.left&&o.right<=c.right&&bar.top>=c.top&&o.bottom<=c.bottom,share:Math.max(o.width/c.width,o.height/c.height),dx:Math.abs((o.left+o.right)/2-(c.left+c.right)/2)/c.width};});
+    assert.ok(fit.inside,`picture and edit bar fit in the canvas: ${JSON.stringify(fit)}`);assert.ok(fit.share>.45&&fit.share<.85,`picture fills about 80%: ${JSON.stringify(fit)}`);assert.ok(fit.dx<.08,`picture is centred: ${JSON.stringify(fit)}`);}
+   for(let revision=0;revision<2;revision++) {
+    const linked=await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return state.get().pages.find(p=>p.id===state.get().activePageId).meta.examLink;});assert.ok(linked);
+    assert.ok(await page.locator('.page-tab.is-exam-linked.is-active').isVisible());
+    assert.equal(await page.locator('[data-source-apply]').evaluate(n=>getComputedStyle(n).borderTopColor),'rgb(107, 164, 248)','linked editing uses the ds blue outline (노란 시그니처 폐지, 10-24)');
+    await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');state.update(s=>s.objects[0].strokeWidth+=.1);});
+    await page.locator('[data-source-apply]').click();await h.idle(page);
+    assert.equal((await h.pictures(page)).length,1,'revisions replace the linked picture');
+    assert.equal(await page.locator('#exam-source-crop').evaluate(n=>n.children.length),0,'finished edit clears dashed crop overlay');
+    await h.action(page,'close');
+    await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+   }
+   const committed=await metadata();await h.sendCanvas(page);await page.locator('.capture-overlay').waitFor();await page.keyboard.press('Escape');await page.locator('.capture-overlay').waitFor({state:'hidden'});
+   assert.deepEqual((await metadata()).examLink,committed.examLink);assert.equal((await metadata()).examRevisionId,committed.examRevisionId);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),1);
+   await page.locator('.page-tab.is-exam-linked.is-active').click({button:'right'});
+   await page.getByText('문서 그림 연결 해제',{exact:true}).click();
+   assert.equal(await page.locator('.page-tab.is-exam-linked.is-active').count(),0);
+   assert.equal(await page.locator('#exam-edit-bar').isVisible(),false);
+   assert.equal(await page.locator('#exam-source-crop').evaluate(n=>n.children.length),0);
+   assert.deepEqual(errors,[]);console.log(name+': crop/placement cancellation, committed link preservation, two replacements and explicit unlink passed');
+  } finally {await browser.close();}
+ }
+}).catch(error=>{console.error(error);process.exitCode=1;});

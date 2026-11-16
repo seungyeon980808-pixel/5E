@@ -1,6 +1,6 @@
 {
   "name": "5e-desktop",
-  "version": "1.6.3",
+  "version": "1.7.0",
   "private": true,
   "description": "5E science diagram editor for Windows and macOS with a local Codex image assistant",
   "author": "박승연",
@@ -10,6 +10,7 @@
     "node": ">=24.21.0 <25"
   },
   "scripts": {
+    "exam": "node scripts/start-rhwp-exam.cjs",
     "desktop": "electron .",
     "test": "npm run test:unit",
     "test:unit": "node desktop/run-unit-tests.cjs",
@@ -28,7 +29,8 @@
     "electron": "44.4.5",
     "electron-builder": "26.15.3",
     "js-yaml": "4.3.2",
-    "playwright": "1.62.1"
+    "playwright": "1.62.1",
+    "pngjs": "7.0.0"
   },
   "build": {
     "appId": "com.5e.editor",

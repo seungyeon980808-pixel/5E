@@ -5,6 +5,8 @@ const path = require('node:path');
 const test = require('node:test');
 
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+// 10-22(e704e45e)부터 「좌우·상하·슬라이더 비교」는 「비교 ▾」 메뉴 안에 있다 — 메뉴를 열고 누른다.
+const clickCompare = async (scope, selector = '[data-ai-compare]') => { const menu = scope.locator('.ai-compare-menu').first(); if (await menu.count() && !await menu.evaluate(d => d.open)) await menu.locator('summary').click(); await scope.locator(selector).first().click(); };
 const root = path.resolve(__dirname, '..');
 const evidenceDir = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/smoke-contract-browser');
 const fixture = path.join(root, 'tests/fixtures/rights-clear-smoke.png');
@@ -14,7 +16,7 @@ function traceLibrary(step, detail = {}) {
   fs.appendFileSync(path.join(evidenceDir, 'library-trace.ndjson'), `${JSON.stringify({ step, at: new Date().toISOString(), ...detail })}\n`);
 }
 
-async function transferCurrentLibraryReference(page, panel, mode) {
+async function transferCurrentLibraryReference(page, panel, mode, errors) {
   traceLibrary('open-current-library');
   if (mode === 'lite') await page.locator('.lite-ai-source-actions').getByRole('button', { name: '라이브러리', exact: true }).click();
   else {
@@ -58,6 +60,43 @@ async function transferCurrentLibraryReference(page, panel, mode) {
   await page.locator('[data-unilib-crop-workbench]:not([disabled])').click();
   traceLibrary('current-crop-added-to-workbench');
   await page.locator('[data-unilib-ai]:not([disabled])').click();
+  let destination;
+  try {
+    destination = await page.waitForFunction(() => {
+      const assignment = document.querySelector('.workbench-assignment [data-action="continue"]');
+      if (assignment?.getClientRects().length) return 'assignment';
+      const reference = document.querySelector('#ai-image-panel:not([hidden]) [data-ai-reference-id]');
+      if (reference) return 'consumer';
+      const status = document.querySelector('[data-unilib-status]');
+      if (status?.classList.contains('is-error')) throw new Error('Library transfer failed: ' + status.textContent);
+      return false;
+    });
+  } finally {
+    fs.writeFileSync(path.join(evidenceDir, `${page.context().browser().browserType().name()}-${mode}-pre-transfer-diagnostic.json`), JSON.stringify({ errors,
+      ...(await page.evaluate(() => ({
+        library: window.__smokeLibrarySnapshot?.() || null,
+        status: document.querySelector('[data-unilib-status]')?.textContent,
+        statusClass: document.querySelector('[data-unilib-status]')?.className,
+        assignments: [...document.querySelectorAll('.workbench-assignment')].map(node => ({text:node.innerText,visible:!!node.getClientRects().length})),
+        panels: [...document.querySelectorAll('#ai-image-panel,[id^="ai-workspace-"]')].map(node => ({id:node.id,hidden:node.hidden,referenceCount:node.querySelectorAll('[data-ai-reference-id]').length})),
+      }))),
+    }, null, 2));
+  }
+  const transferPath = await destination.jsonValue(); await destination.dispose();
+  assert.ok(['assignment', 'consumer'].includes(transferPath), 'The current library uses either explicit assignment or its existing one-reference consumer');
+  // 배정 창의 「계속」은 두 단계다: 처음은 분류 안 된 그림을 이미지 작업대에 배치만 하고(단추가 「작업대 열기」로 바뀜), 다음에 작업대를 연다
+  // (workbench-assignment.js — 작업대 열기는 따로 하는 동작). 창이 닫힐 때까지 누른다.
+  if (transferPath === 'assignment') {
+    const proceed = page.locator('.workbench-assignment [data-action="continue"]');
+    for (let i = 0; i < 3 && await proceed.isVisible().catch(() => false); i++) { await proceed.click(); await page.waitForTimeout(250); }
+  }
+  const referenceDiagnostic = await page.evaluate(() => ({
+    transferPath: document.querySelector('.workbench-assignment') ? 'assignment' : 'consumer',
+    panels: [...document.querySelectorAll('#ai-image-panel,[id^="ai-workspace-"]')].map(node => ({id:node.id,hidden:node.hidden,workflow:node.dataset.aiWorkflow})),
+    references: [...document.querySelectorAll('[data-ai-reference-id]')].map(node => ({id:node.dataset.aiReferenceId,html:node.outerHTML.slice(0,2400),visible:Boolean(node.getClientRects().length),style:getComputedStyle(node).display})),
+    status: document.querySelector('[data-unilib-status]')?.textContent,
+  }));
+  fs.writeFileSync(path.join(evidenceDir, `${page.context().browser().browserType().name()}-${mode}-transfer-diagnostic.json`), JSON.stringify({ transferPath, ...referenceDiagnostic }, null, 2));
   await panel.locator('[data-ai-reference-id]').first().waitFor({ state: 'visible' });
   await page.locator('[data-unilib-close]').waitFor({ state: 'hidden' });
   traceLibrary('current-reference-visible');
@@ -82,7 +121,12 @@ function startServer() {
 }
 
 async function installDesktopStub(context) {
-  const transport = { sends: [], delivered: new Set(), endpoints: [] };
+  const transport = { sends: [], stages: [], delivered: new Set(), endpoints: [] };
+  const sourceObservation = { version: 4, observationVersion: 1, leaderObservationVersion: 1, observationContractRevision: '1.4.0', removalOnlyItems: [], reviewRequired: false,
+    geometryLock: { version: 1, objects: [{ id: 'fixture-structure', sourceRef: 1, role: 'scientific-object', description: 'Controlled smoke source observation; not provider quality evidence', bounds: { x: .2, y: .2, w: .6, h: .6 }, relations: [] }] },
+    labels: [], removalRegions: [], protectedRegions: [], preservedMarks: [], uncertainties: [] };
+  const reviewIds = ['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','kice-flat-style','flat-gray-regions','raster-label-removal','editable-label-coverage','leader-relations','label-overlay-alignment','label-typography','leader-overlay'];
+  const reviewReport = { verdict: 'pass', checks: reviewIds.map(id => ({ id, label: id, status: 'pass', detail: 'Controlled smoke transport; not provider quality evidence' })), issues: [] };
   await context.addInitScript(() => {
     localStorage.setItem('5e.tutorial.bannerSeen', 'true');
     localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true');
@@ -96,12 +140,18 @@ async function installDesktopStub(context) {
     let response = {};
     if (endpoint === 'bridge-status') response = { login: { loggedIn: true }, server: true };
     else if (endpoint === 'bridge-models') response = { data: [{
-      model: 'gpt-5.6-sol', displayName: 'Controlled smoke fixture', supportedReasoningEfforts: ['medium', 'high'],
+      model: 'gpt-6.1-sol', displayName: 'Controlled smoke fixture', supportedReasoningEfforts: ['medium', 'high'],
       defaultReasoningEffort: 'medium', serviceTiers: ['priority'], defaultServiceTier: 'priority',
-    }] };
+    }, {model:'gpt-6-luna',displayName:'Controlled observer',supportedReasoningEfforts:['medium'],defaultReasoningEffort:'medium',serviceTiers:['priority']}] };
     else if (endpoint === 'bridge-account') response = { account: { name: 'Local fixture' }, limits: {} };
     else if (endpoint === 'bridge-send') {
       transport.sends.push(request);
+      const text = String(request.text || '');
+      const stage = request.purpose === 'image' ? 'image-generation'
+        : text.includes('입력 원본 라벨 관찰') ? 'source-observation'
+        : text.includes('검수') || text.includes('FINAL_NATIVE_OVERLAY') ? 'full-review' : null;
+      assert.ok(stage, 'Every controlled bridge request must have a recognized current workflow stage');
+      transport.stages.push(stage);
       response = { turnId: `smoke-turn-${transport.sends.length}`, renderThreadId: `smoke-render-${transport.sends.length}` };
     } else if (endpoint === 'bridge-events') {
       const index = transport.sends.length;
@@ -109,8 +159,11 @@ async function installDesktopStub(context) {
       if (index && !transport.delivered.has(index)) {
         transport.delivered.add(index);
         const clientScope = transport.sends.at(-1).clientScope || '';
+        const stage = transport.stages[index - 1];
+        const item = stage === 'image-generation' ? { type: 'imageGeneration', imageDataUrl: generatedFixtureDataUrl }
+          : { type: 'agentMessage', phase: 'final_answer', text: JSON.stringify(stage === 'source-observation' ? sourceObservation : reviewReport) };
         events.push(
-          { clientScope, method: 'item/completed', params: { turnId: `smoke-turn-${index}`, item: { type: 'imageGeneration', imageDataUrl: generatedFixtureDataUrl } } },
+          { clientScope, method: 'item/completed', params: { turnId: `smoke-turn-${index}`, item } },
           { clientScope, method: 'turn/completed', params: { turn: { id: `smoke-turn-${index}`, status: 'completed' } } },
         );
       }
@@ -168,7 +221,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
   const origin = `http://127.0.0.1:${server.address().port}`;
   const report = { invocation: 'node --test tests/test-smoke-contract-browser.cjs', engines: [], errors: [] };
 
-  const engines = process.env.SMOKE_ENGINES === 'chromium' ? [chromium] : process.env.SMOKE_ENGINES === 'webkit' ? [webkit] : [chromium, webkit];
+  const engines = process.env.SMOKE_ENGINES === 'chromium' ? [chromium] : process.env.SMOKE_ENGINES === 'webkit' ? [webkit] : [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE);
   const modes = process.env.SMOKE_MODES === 'lite' ? ['lite'] : process.env.SMOKE_MODES === 'pro' ? ['pro'] : ['pro', 'lite'];
   for (const engine of engines) {
     const browser = await engine.launch({ headless: true });
@@ -183,6 +236,16 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       const suffix = `?mode=${mode}`;
+      await page.route('**/js/unified-library-ui.js*', route => {
+        const original = fs.readFileSync(path.join(root, 'js/unified-library-ui.js'), 'utf8');
+        const anchor = 'const acceptedAssets = new Map();';
+        assert.equal(original.split(anchor).length - 1, 1, 'Exactly one actual accepted-assets observation boundary');
+        const observed = anchor + ` window.__smokeLibrarySnapshot = () => ({
+          accepted: [...acceptedAssets].map(([id, entry]) => ({id,kind:entry.result?.kind,materialized:!!entry.materialized,dataPrefix:String(entry.materialized?.dataUrl || entry.materialized?.src || '').slice(0,64)})),
+          actionBusy, actionRevision, selectedId, overlayHidden:overlay.hidden,
+        });`;
+        return route.fulfill({contentType:'text/javascript',body:original.replace(anchor, observed)});
+      });
       await page.goto(`${origin}/preview/${suffix}`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction((expectedMode) => document.documentElement.dataset.mode === expectedMode, mode);
       const dismiss = page.locator('.tut-welcome-overlay .tut-banner-no');
@@ -194,7 +257,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       let libraryAction = null;
       await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add) .ai-task-tab-select').waitFor({ state: 'visible' });
       await panel.locator('[data-ai-task-add]').waitFor({ state: 'visible' });
-      await transferCurrentLibraryReference(page, panel, mode);
+      await transferCurrentLibraryReference(page, panel, mode, errors);
       libraryAction = await page.evaluate(() => ({
         results: document.querySelectorAll('[data-result-id]').length,
         selected: document.querySelector('[data-result-id][aria-selected="true"]')?.dataset.resultId || null,
@@ -223,14 +286,35 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       const expectedReferences = await panel.locator('[data-ai-reference-id]').count();
       assert.equal(expectedReferences, 1, 'the current source transfer creates one reference in its task');
       assert.equal(await panel.locator('.ai-reference-section[open]').count(), 1, 'references are expanded after current transfer');
+      const sourceChoices = panel.locator('.ai-source-treatment');
+      if (!await sourceChoices.evaluate(node => node.open)) await sourceChoices.locator('summary').click();
+      await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').click();
+      await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').click();
       traceLibrary('fixture-send-click', { mode });
-      await panel.locator('[data-ai-send]').click();
+      // 이미지 작업에서는 준비 칸의 보내기 단추를 숨기고(10-16 83201a54) 「변환하기」([data-ai-comments-apply])가 같은 보내기를 부른다.
+      const send = panel.locator('[data-ai-send]');
+      await (await send.isVisible() ? send : panel.locator('[data-ai-comments-apply]')).click();
       await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 1, undefined, { timeout: 15_000 });
+      // First candidate registration precedes the actual review and busy-state settlement.
+      // Observe the real completion before hit-testing or editing its visible surface.
+      await page.evaluate(() => new Promise((resolve, reject) => {
+        const panel = document.querySelector('#ai-image-panel'); let timer;
+        const finish = () => {
+          if (panel.dataset.aiBusy !== 'false') return;
+          observer.disconnect(); clearTimeout(timer); resolve();
+        };
+        const observer = new MutationObserver(finish);
+        observer.observe(panel, { attributes: true, attributeFilter: ['data-ai-busy'] });
+        timer = setTimeout(() => { observer.disconnect(); reject(new Error('Actual smoke workflow completion deadline')); }, 15000);
+        finish();
+      }));
+      assert.deepEqual(transport.stages, ['source-observation', 'image-generation', 'full-review'],
+        'Area editing begins only after the actual complete modern workflow');
       const expectedResults = 1;
       traceLibrary('fixture-send-observed', { mode, sends: transport.sends.length, events: transport.delivered.size });
       const generatedImage = panel.locator('.ai-generated-card .ai-preview-stage img').first();
       await generatedImage.waitFor({ state: 'visible', timeout: 15_000 });
-      if (mode === 'pro') await panel.locator('[data-ai-layout-mode="side-by-side"]').click();
+      if (mode === 'pro') await clickCompare(panel, '[data-ai-layout-mode="side-by-side"]');
       await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiLayout === 'side-by-side');
       await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       const geometry = await (await page.waitForFunction(() => {
@@ -296,7 +380,9 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         const panel = document.querySelector('#ai-image-panel:not([hidden])');
         const visible = (selector) => { const rect = panel?.querySelector(selector)?.getBoundingClientRect(); return Boolean(rect && rect.width > 0 && rect.height > 0); };
         return { layout: panel?.dataset.aiLayout, sourceVisible: visible('.ai-original-pane .ai-reference-card'),
-          resultVisible: visible('.ai-result-pane .ai-generated-card'), compareVisible: visible('[data-ai-compare]') };
+          resultVisible: visible('.ai-result-pane .ai-generated-card'),
+          // 슬라이더 비교는 「비교 ▾」 메뉴 안(e704e45e): 메뉴가 보이고 단추가 숨김 상태가 아니면 쓸 수 있다.
+          compareVisible: visible('.ai-compare-menu > summary') && panel.querySelector('[data-ai-compare]')?.hidden === false };
       });
       traceLibrary('comparison-controls', { engine: engine.name(), mode, ...comparison });
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison-controls.png`), fullPage: true });
@@ -351,7 +437,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       }
       traceLibrary('raw-persistence', { mode, engine: engine.name(), results: rawPersistence });
       assert.ok(rawPersistence.some(result => result.matches), 'original generated PNG bytes survive persistence independently from Lite display processing');
-      await panel.locator('[data-ai-compare]').click();
+      await clickCompare(panel);
       const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });
       await page.waitForFunction(() => ['left', 'right'].every((side) => {
@@ -367,7 +453,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(await comparisonDialog.locator('.ai-comparison-right image').getAttribute('href'), selectedDisplaySource,
         'the comparison right side displays the selected generated content');
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison.png`), fullPage: true });
-      await panel.locator('[data-ai-compare]').click();
+      await clickCompare(panel);
       await comparisonDialog.waitFor({ state: 'detached' });
       const tasksBeforeFileAdd = await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').count();
       await panel.locator('[data-ai-source-file]').setInputFiles(fixture);
@@ -404,9 +490,11 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         return { exitCode: missing.length ? 1 : 0, missing };
       });
       assert.deepEqual(mutation, { exitCode: 1, missing: ['workspace-file-source'] });
-      const counts = { bridgeSends: transport.sends.length, bridgeEventBatches: transport.delivered.size, endpoints: transport.endpoints };
-      assert.equal(counts.bridgeSends, 1, 'the deterministic local UI bridge receives exactly one send');
-      assert.equal(counts.bridgeEventBatches, 1, 'the deterministic local UI bridge supplies exactly one result batch');
+      const counts = { bridgeSends: transport.sends.length, bridgeEventBatches: transport.delivered.size, generationSends: transport.stages.filter(stage => stage === 'image-generation').length, stages: transport.stages, endpoints: transport.endpoints };
+      assert.equal(counts.generationSends, 1, 'The deterministic local UI bridge receives exactly one image generation');
+      assert.equal(counts.bridgeSends, 3, 'The current conversion also observes its source and reviews its output');
+      assert.equal(counts.bridgeEventBatches, 3, 'Every actual correlated observer, image and review response is accounted for');
+      assert.deepEqual(counts.stages, ['source-observation', 'image-generation', 'full-review']);
       assert.deepEqual(errors, []);
       report.engines.push({ engine: engine.name(), mode, approvedAssertions: true, oldChecks, libraryAction, comparison,
         comparisonDialog: { referenceId, selectedRevisionId, originalContentMatches: true, generatedContentMatches: true }, mutation, counts, errors });

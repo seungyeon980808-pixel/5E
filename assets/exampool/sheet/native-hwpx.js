@@ -1,0 +1,130 @@
+// The pinned native HWPX writer omits equation and explicit-break line segments.
+// Preserve the native engine's actual segments from its HWP serialization;
+// do not estimate text widths, baselines or inline-control offsets in JS.
+export function exportLayoutHwpx(document,CFB){
+  const bytes=document.exportHwpx();
+  if(!CFB)throw Error('한글 저장 도구를 준비한 뒤 다시 시도하세요.');
+  const archive=CFB.read(bytes,{type:'array'}),decode=new TextDecoder(),encode=new TextEncoder();
+  let binary=null,changed=false;
+  for(let section=0;section<document.getSectionCount();section++){
+    const file=archive.FileIndex[archive.FullPaths.findIndex(p=>p.endsWith(`Contents/section${section}.xml`))];
+    if(!file)throw Error('한글 구역을 읽지 못했습니다.');
+    let xml=decode.decode(file.content);
+    // Cached line positions on an empty inline-table anchor can place the
+    // table above the preceding wrapped prompt when HWPX is reopened. Let
+    // the engine calculate that anchor from its real table height. Preserve
+    // every text/equation paragraph and all nested cell line geometry.
+    const flow=restackPictureLines(clearEmptyTableAnchorLines(xml));if(flow!==xml){xml=flow;file.content=encode.encode(xml);file.size=file.content.length;changed=true;}
+    // 어울림 그림(글자처럼 취급 안 함)이 든 문단도 줄 배치를 빠뜨리면 다시 열 때 글이 그림 쪽으로 흐른다.
+    const floating=/<hp:pos\b[^>]*treatAsChar="0"/;
+    if(!xml.includes('<hp:equation')&&!xml.includes('<hp:lineBreak')&&!floating.test(xml))continue;
+    binary ||= CFB.read(document.exportHwp(),{type:'array'});
+    const header=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith('/FileHeader'))].content;
+    const stream=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith(`/BodyText/Section${section}`))].content;
+    let body=new Uint8Array(stream);if(header[36]&1){body.l=0;body=CFB.utils._inflateRaw(body);}
+    const data=new DataView(body.buffer,body.byteOffset,body.byteLength),segments=[],levels=[];
+    for(let pos=0;pos<body.length;){
+      if(pos+4>body.length)throw Error('한글 문단 정보가 불완전합니다.');
+      const record=data.getUint32(pos,true);pos+=4;let size=record>>>20;
+      if(size===4095){size=data.getUint32(pos,true);pos+=4;}
+      if(pos+size>body.length)throw Error('한글 문단 범위를 확인하세요.');
+      const tag=record&1023;
+      if(tag===66){segments.push([]);levels.push((record>>>10)&1023);}
+      if(tag===69){if(size%36||!segments.length)throw Error('한글 줄 배치를 읽지 못했습니다.');
+        // LINE_SEG: textpos·flags만 부호 없는 수, vertpos~horzsize 일곱 칸은 부호 있는 수(음수 줄 간격이 42억대 수로 저장됐음, 코드 점검 10-21 하).
+        for(let i=0;i<size;i+=36)segments.at(-1).push(Array.from({length:9},(_,j)=>j===0||j===8?data.getUint32(pos+i+j*4,true):data.getInt32(pos+i+j*4,true)));
+      }
+      pos+=size;
+    }
+    const paragraphs=[],stack=[];
+    for(const match of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
+      if(match[0].startsWith('</')){const p=stack.pop();if(!p)throw Error('한글 문단 구조를 확인하세요.');p.end=match.index;}
+      else{const p={start:match.index,body:match.index+match[0].length,depth:stack.length};paragraphs.push(p);stack.push(p);}
+    }
+    if(stack.length)throw Error('수식 문단의 저장 배치를 확인하지 못했습니다. 문항 조판을 다시 여세요.');
+    // 학교 양식에 한글 문단 수가 XML과 바이너리에서 다른 개체(11-01 대왕중 원안지 양식 — 글상자·머리말 등)가 있으면 짝을 맞출 수 없다 —
+    // 이 구역은 줄 배치 손질을 건너뛰고 엔진 배치 그대로 둔다(내보내기를 통째로 멈추지 않는다). 마지막 겹침 검사는 그대로 거친다.
+    // 그때는 맨 바깥 본문 문단끼리만 차례로 짝지어 손질한다(수가 같을 때) — 다 건너뛰면 어울림 그림 문단의 줄 배치가 빠져 그림 옆 글이 찌그러졌다(11-02 밤샘).
+    let pick=null;
+    if(paragraphs.length!==segments.length){const top=paragraphs.map((p,i)=>p.depth===0?i:-1).filter(i=>i>=0),btop=levels.map((l,i)=>l===0?i:-1).filter(i=>i>=0);
+      if(top.length!==btop.length)continue;pick=new Map(top.map((xi,k)=>[xi,btop[k]]));}
+    const keys=['textpos','vertpos','vertsize','textheight','baseline','spacing','horzpos','horzsize','flags'];let output=xml;
+    // Work backwards so nested paragraph edits retain their original offsets.
+    for(let i=paragraphs.length-1;i>=0;i--){const p=paragraphs[i],body=xml.slice(p.body,p.end);
+      // Only leaf equation/break paragraphs require the writer repair. Parent table
+      // paragraphs retain their native cell placement and borders.
+      const si=pick?pick.get(i):i;if(si===undefined)continue;
+      if((!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak')&&!floating.test(body))||body.includes('<hp:p ')||!segments[si].length)continue;
+      const clean=body.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
+      const lines='<hp:linesegarray>'+segments[si].map(values=>'<hp:lineseg '+keys.map((key,j)=>`${key}="${values[j]}"`).join(' ')+'/>').join('')+'</hp:linesegarray>';
+      output=output.slice(0,p.body)+clean+lines+output.slice(p.end);changed=true;
+    }
+    output=restackPictureLines(output);
+    file.content=encode.encode(output);file.size=file.content.length;
+  }
+  return changed?new Uint8Array(CFB.write(archive,{type:'array',fileType:'zip'})):bytes;
+}
+
+export function clearEmptyTableAnchorLines(xml){
+  const stack=[],ranges=[];
+  for(const token of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>|<hp:tbl\b|<hp:t(?:\s[^>]*)?>[\s\S]*?<\/hp:t>/g)){
+    if(token[0].startsWith('<hp:p '))stack.push({table:false,text:false});
+    else if(token[0]==='</hp:p>'){
+      const p=stack.pop();if(stack.length||!p?.table||p.text)continue;
+      const start=xml.lastIndexOf('</hp:run>',token.index)+9,tail=xml.slice(start,token.index),line=tail.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);
+      if(line)ranges.push([start+line.index,start+line.index+line[0].length]);
+    }else if(token[0].startsWith('<hp:tbl')&&stack.length===1){
+      // 떠 있는 표(글 옆 표)의 문단은 엔진이 계산한 높이(거의 0)를 그대로 둔다. 지우면 다시 열 때 한 줄 높이가 생긴다.
+      const pos=xml.slice(token.index,xml.indexOf('<hp:tr',token.index)).match(/<hp:pos\b[^>]*>/)?.[0]||'';
+      if(/treatAsChar="0"/.test(pos))stack[0].text=true;else stack[0].table=true;
+    }
+    else if(stack.length===1&&token[0].replace(/<[^>]+>/g,'').trim())stack[0].text=true;
+  }
+  for(const [start,end] of ranges.reverse())xml=xml.slice(0,start)+xml.slice(end);
+  return xml;
+}
+
+// 글 없이 그림만 든 문단(글 아래 그림)의 줄 위치도 들여올 때의 값(수식 자리표시 글자로 길어진 앞 문단 기준)이 남아
+// 그림 위에 큰 빈칸이 생긴다. 줄 배치를 지우면 한글 엔진이 그림을 빠뜨리므로, 바로 앞 문단이 끝나는 자리로 고쳐 둔다.
+// 앞 문단 끝을 모르면(줄 배치를 비운 표 문단) 0으로 두어 엔진이 흐름대로 놓게 한다.
+// 가운데 맞춘 그림 문단은 한글 엔진의 HWPX 쓰기가 줄 배치를 빠뜨린다(표 칸 안도). 그림 크기로 한 줄을 써 둔다.
+export function restackPictureLines(xml){
+  // 문단 목록(본문, 표 칸마다)별로 이웃 문단을 따라간다.
+  const stack=[],root={paras:[]},open=[root],lists=[root];
+  for(const token of xml.matchAll(/<hp:subList\b[^>]*>|<\/hp:subList>|<hp:p\b[^>]*>|<\/hp:p>|<hp:pic\b|<hp:tbl\b|<hp:t(?:\s[^>]*)?>[\s\S]*?<\/hp:t>/g)){
+    const t=token[0];
+    if(t.startsWith('<hp:subList')){const list={paras:[]};lists.push(list);open.push(list);}
+    else if(t==='</hp:subList>')open.pop();
+    else if(t.startsWith('<hp:p ')){const p={start:token.index,pic:false,other:false,root:!stack.length};open.at(-1).paras.push(p);stack.push(p);}
+    else if(t==='</hp:p>'){const p=stack.pop();if(p)p.end=token.index;}
+    else if(!stack.length)continue;
+    else if(t.startsWith('<hp:pic'))stack.at(-1).pic=true;
+    else if(t.startsWith('<hp:tbl')||t.replace(/<[^>]+>/g,'').trim())stack.at(-1).other=true;
+  }
+  const value=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
+  const edits=[];
+  for(const list of lists){
+    let prevEnd=null;
+    for(const p of list.paras){
+      if(p.end===undefined){prevEnd=null;continue;}
+      const tail=xml.slice(p.start,p.end),body=tail.slice(tail.lastIndexOf('</hp:run>')+1),array=body.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);
+      const segs=array?[...array[0].matchAll(/<hp:lineseg\b[^>]*>/g)].map(m=>m[0]):[];
+      if(p.pic&&!p.other&&segs.length===1&&p.root){
+        const want=prevEnd??0,at=p.start+(tail.length-body.length)+array.index+array[0].indexOf(segs[0]);
+        if(value(segs[0],'vertpos')!==want)edits.push([at,segs[0],segs[0].replace(/\bvertpos="-?\d+"/,`vertpos="${want}"`)]);
+      }else if(p.pic&&!p.other&&!array){
+        const pics=[...tail.matchAll(/<hp:pic\b[\s\S]*?<\/hp:pic>/g)].map(m=>m[0]),size=pic=>{const sz=pic.match(/<hp:sz\b[^>]*>/)?.[0]||'',margin=pic.match(/<hp:outMargin\b[^>]*>/)?.[0]||'';return {w:value(sz,'width')+(value(margin,'left')||0)+(value(margin,'right')||0),h:value(sz,'height')+(value(margin,'top')||0)+(value(margin,'bottom')||0)};};
+        const sizes=pics.map(size).filter(v=>Number.isFinite(v.w)&&Number.isFinite(v.h));
+        if(sizes.length===pics.length&&sizes.length){
+          const h=Math.max(...sizes.map(v=>v.h)),w=sizes.reduce((a,v)=>a+v.w,0);
+          const seg=`<hp:lineseg textpos="0" vertpos="${prevEnd??0}" vertsize="${h}" textheight="${h}" baseline="${Math.round(h*.85)}" spacing="600" horzpos="0" horzsize="${w}" flags="393216"/>`;
+          edits.push([p.end,'',`<hp:linesegarray>${seg}</hp:linesegarray>`]);segs.push(seg);
+        }
+      }
+      const last=segs.at(-1);prevEnd=last?value(last,'vertpos')+value(last,'vertsize')+value(last,'spacing'):null;
+      if(!Number.isFinite(prevEnd))prevEnd=null;
+    }
+  }
+  for(const [at,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,at)+next+xml.slice(at+old.length);
+  return xml;
+}

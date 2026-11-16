@@ -1,4 +1,5 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== 전체 통일/수정: 여러 오브젝트의 속성을 한 번에 =====
  *
  * 고급 기능 [전체 통일/수정] 버튼 → 모달.
@@ -12,11 +13,11 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-rem
  *   · 적용 = Undo 1스텝.
  */
 
-import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.6.1-remediation-0929";
-import { SHAPE_TYPES } from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
-import { showAlert } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { getObjectBBox } from "./pick.js?v=1.6.1-remediation-0929";
-import { translateObject } from "./transform.js?v=1.6.1-remediation-0929";
+import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.7.0-four-session-integration";
+import { SHAPE_TYPES } from "./object-types.js?v=1.7.0-four-session-integration";
+import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { getObjectBBox } from "./pick.js?v=1.7.0-four-session-integration";
+import { translateObject } from "./transform.js?v=1.7.0-four-session-integration";
 
 let _state = null;
 let _overlay = null;
@@ -222,7 +223,7 @@ function renderFields() {
   Object.values(hosts).forEach((host) => { host.innerHTML = ""; });
   _rows.clear();
   const fontOptions = TEXT_FONTS.map((f) =>
-    `<option value="${f.css.replace(/"/g, "&quot;")}"${f.css === DEFAULT_TEXT_FONT ? " selected" : ""}>${f.label}</option>`
+    `<option value="${escapeHtml(f.css)}"${f.css === DEFAULT_TEXT_FONT ? " selected" : ""}>${escapeHtml(f.label)}</option>`
   ).join("");
 
   for (const f of FIELDS) {
@@ -394,7 +395,7 @@ function renderGapRows() {
     if (g.kind === "align") {
       const sel = document.createElement("select");
       sel.className = "modal-input";
-      sel.innerHTML = g.opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+      sel.innerHTML = g.opts.map(([v, t]) => `<option value="${escapeHtml(v)}">${escapeHtml(t)}</option>`).join("");
       sel.addEventListener("change", () => { cb.checked = true; });
       const pad = document.createElement("span");
       pad.className = "bulk-unit";

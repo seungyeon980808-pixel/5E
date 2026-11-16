@@ -83,6 +83,8 @@ function show(el) {
    * 튜토리얼은 이미 그 자리를 짚고 설명 창으로 안내하고 있어서, 그 위에 툴팁이
    * 하나 더 뜨면 안내가 둘로 갈라지고 짚어 놓은 자리를 가린다(사용자 지적). */
   if (document.querySelector(".tut-layer")) return;
+  // 펼친 메뉴 단추(11-07 「그래프」 세 갈래)는 메뉴가 곧 설명이다 — 메뉴 위에 설명을 또 겹치지 않는다.
+  if (el.getAttribute("aria-haspopup") === "menu" && el.getAttribute("aria-expanded") === "true") return;
   const txt = textFor(el);
   if (!txt) return;
   const t = ensureTip();

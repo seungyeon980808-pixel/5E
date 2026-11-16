@@ -1,7 +1,7 @@
-import { createIndexedDbPackAdapter, createMemoryPackAdapter } from "./pack-adapters.js?v=1.6.1-preview-labeler-0917-1111";
-import { createDocumentRecord } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
-import { PackNotInstalledError, PackValidationError } from "./pack-errors.js?v=1.6.1-preview-labeler-0917-1111";
-import { materializePackDocument, materializePackSearchEntry } from "./pack-identities.js?v=1.6.1-preview-labeler-0917-1111";
+import { createIndexedDbPackAdapter, createMemoryPackAdapter } from "./pack-adapters.js?v=1.7.0-four-session-integration";
+import { createDocumentRecord } from "./contract.js?v=1.7.0-four-session-integration";
+import { PackNotInstalledError, PackValidationError } from "./pack-errors.js?v=1.7.0-four-session-integration";
+import { materializePackDocument, materializePackSearchEntry } from "./pack-identities.js?v=1.7.0-four-session-integration";
 
 export { createIndexedDbPackAdapter, createMemoryPackAdapter, PackNotInstalledError, PackValidationError };
 

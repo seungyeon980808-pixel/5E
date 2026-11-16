@@ -4,7 +4,7 @@
 .ai-composition-editor h2 { margin: 0; font-size: 18px; }
 .ai-composition-editor p { color: var(--text-secondary, #8b949e); font-size: 12px; line-height: 1.6; }
 .ai-composition-editor button, .ai-composition-editor select { color: inherit; background: var(--bg-input, #21262d); border: 1px solid var(--border, #30363d); border-radius: 7px; padding: 8px 12px; cursor: pointer; font: inherit; }
-.ai-composition-editor button.primary { background: var(--accent, #2f81f7); color: white; }
+.ai-composition-editor button.primary { background: var(--control-selected-bg); color: var(--control-selected-text); border:1px solid var(--control-selected-border); }
 .ai-composition-editor button:focus-visible, .ai-composition-editor select:focus-visible { outline: 2px solid var(--accent, #2f81f7); outline-offset: 3px; }
 .ai-composition-tools { font-size: 12px; }
 .ai-composition-stage { height: min(52vh, 470px); display: flex; justify-content: center; align-items: center; margin: 16px 0; padding: 12px; background: var(--bg-app, #0d1117); border-radius: 8px; overflow: hidden; }

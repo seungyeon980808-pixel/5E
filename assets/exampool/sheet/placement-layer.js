@@ -1,0 +1,295 @@
+// 5E_hwp 창 위의 배치 층: 그림을 끌어 다른 그림·표의 옆/위/아래에 놓고, 손잡이로 크기와 폭 비율을 바꾼다.
+// 문서는 직접 고치지 않는다. 결과를 순서·묶음·폭 비율·크기 데이터로 넘기면 한글 창은 그 데이터로 다시 그려진다.
+import {placeBeside,placeAround,resizeTo,setPairRatio,ratioPair} from './placement-edit.js';
+import {snapSize} from './placement.js';
+
+const ICON_GRIP='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg>';
+const SIDE={left:'왼쪽',right:'오른쪽',before:'위',after:'아래'};
+const KIND={figure:'그림',table:'표'};
+const keyOf=c=>JSON.stringify(c.stableIndex||[c.secIdx,c.paraIdx,c.controlIdx]);
+// 문서 순서: 쪽 → 위 → (같은 높이면) 바깥 표 먼저 → 왼쪽. 엔진의 순서 번호는 겹친 표에서 문서 순서와 다르다.
+// 같은 줄에 나란히 놓인 것(세로로 겹치고 가로로는 안 겹침)은 왼쪽부터 — 칸 가운데 맞춤으로 작은 그림이 조금 내려가도 (가)(나) 순서가 뒤바뀌지 않게(11-14).
+const sideBySide=(a,b)=>a.y<b.y+b.h&&b.y<a.y+a.h&&(a.x+a.w<=b.x+1||b.x+b.w<=a.x+1);
+const order=(a,b)=>a.page-b.page||(sideBySide(a,b)?a.x-b.x:Math.round((a.y-b.y)*2)/2||(b.w*b.h-a.w*a.h)||a.x-b.x);
+const inside=(r,p,pad=0)=>p.x>=r.x-pad&&p.x<=r.x+r.w+pad&&p.y>=r.y-pad&&p.y<=r.y+r.h+pad;
+
+export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivate}){
+  const doc=host.ownerDocument,layer=doc.createElement('div');layer.className='placement-layer';layer.setAttribute('aria-hidden','true');
+  const outline=doc.createElement('div');outline.className='place-outline';outline.hidden=true;
+  const tag=doc.createElement('span');tag.className='place-tag';outline.append(tag);
+  const grip=doc.createElement('button');grip.type='button';grip.className='place-grip';grip.innerHTML=ICON_GRIP;grip.title='끌어서 표 옮기기';grip.hidden=true;
+  const sizer=doc.createElement('button');sizer.type='button';sizer.className='place-size';sizer.title='끌어서 크기 바꾸기 · 5% 단위';sizer.hidden=true;
+  const ghost=doc.createElement('div');ghost.className='place-ghost';ghost.hidden=true;
+  const marker=doc.createElement('div');marker.className='place-marker';marker.hidden=true;
+  const markerLabel=doc.createElement('span');marker.append(markerLabel);
+  const readout=doc.createElement('div');readout.className='place-readout';readout.hidden=true;
+  // 그림 위 수정·설정(5E 시험지 편집기와 같은 자리). 더블클릭은 그림 가져오기(빈 자리면 바로 5E에서 잘라 넣기).
+  const tools=doc.createElement('div');tools.className='place-tools';tools.hidden=true;
+  // 11-14(시안 review-1114 1-6·1-7): 조판 미리보기는 모양만 본다 — 「수정」(다시 잘라 넣기·파일·AI)은 없애고 「설정」(크기·위치)만.
+  // 그림을 고치는 일은 문항 카드에서(두 번 누르면 카드의 그 칸으로 간다).
+  tools.innerHTML='<button type="button" data-place-tool="settings" aria-haspopup="dialog" aria-expanded="false" title="크기·위치">설정</button>';
+  const menu=doc.createElement('div');menu.className='place-menu';menu.setAttribute('role','menu');menu.hidden=true;
+  layer.append(outline,ghost,marker,readout,grip,sizer,tools,menu);
+  let model=null,items=[],dividers=[],dividerNodes=[],hover=null,drag=null,enabled=false,base=hint?.textContent||'';
+  const say=(text)=>{if(hint)hint.textContent=text||base;};
+
+  // 한글 창 좌표(페이지 px) → 시트 문서 좌표 → 배치 층 기준 좌표.
+  function toLayer(page,c){
+    const placement=bridge.pagePlacement(page);if(!placement)return null;
+    const a=bridge.parentPoint(placement.x+c.x*placement.scale,placement.y+c.y*placement.scale);
+    const r=host.getBoundingClientRect();
+    return {x:a.x-r.left,y:a.y-r.top,w:c.w*placement.scale*a.scaleX,h:c.h*placement.scale*a.scaleY};
+  }
+  function nativeControls(){
+    const images=new Map(),tables=new Map();
+    for(let page=0;page<bridge.wasm.pageCount;page++)for(const c of bridge.wasm.getPageControlLayout(page).controls||[]){
+      const bucket=c.type==='image'?images:c.type==='table'?tables:null;if(!bucket)continue;
+      const k=keyOf(c);if(!bucket.has(k))bucket.set(k,{...c,page});
+    }
+    return {images:[...images.values()].sort(order),tables:[...tables.values()].sort(order)};
+  }
+  function rebuild(){
+    items=[];dividers=[];
+    if(!enabled||!model)return;
+    const {question:q,owners}=model,{images,tables}=nativeControls();
+    if(images.length!==owners.images.length||tables.length!==owners.tables.length){say('배치 · 저장된 조판이 문항 데이터와 달라 끌어서 배치할 수 없습니다. 문항 새로고침 후 다시 시도하세요.');return;}
+    for(const [i,t] of tables.entries())if(t.rowCount!==owners.shapes[i].rows||t.colCount!==owners.shapes[i].cols){say('배치 · 표 구조가 문항 데이터와 달라 끌어서 배치할 수 없습니다.');return;}
+    const add=(c,owner,kind)=>{if(owner?.kind!=='block')return;const b=q.blocks.find(x=>x.id===owner.id);if(!b)return;const rect=toLayer(c.page,c);if(rect)items.push({id:b.id,kind,block:b,rect,page:{index:c.page,x:c.x,y:c.y,w:c.w,h:c.h},ref:{sec:c.secIdx,ppi:c.paraIdx,ci:c.controlIdx,type:c.type,pageIndex:c.page,...(c.cellPath?.length?{cellPath:c.cellPath}:{})}});};
+    images.forEach((c,i)=>add(c,owners.images[i],'figure'));
+    tables.forEach((c,i)=>add(c,owners.tables[i],'table'));
+    // 가로 묶음 안 이웃한 두 그림·표 사이의 폭 나누기 손잡이.
+    for(const g of q.blocks.filter(b=>b.kind==='group'&&b.layout==='나란히')){
+      const kids=q.blocks.filter(b=>b.parent===g.id);
+      for(let i=0;i+1<kids.length;i++){const l=items.find(x=>x.id===kids[i].id),r=items.find(x=>x.id===kids[i+1].id);if(l&&r&&l.rect.x+l.rect.w<=r.rect.x+2)dividers.push({l,r});}
+    }
+    say();
+  }
+  function paintDividers(){
+    dividerNodes.forEach(n=>n.remove());dividerNodes=[];
+    for(const d of dividers){
+      const n=doc.createElement('button');n.type='button';n.className='place-divider';n.title='끌어서 폭 비율 바꾸기';
+      const x=(d.l.rect.x+d.l.rect.w+d.r.rect.x)/2,top=Math.min(d.l.rect.y,d.r.rect.y),bottom=Math.max(d.l.rect.y+d.l.rect.h,d.r.rect.y+d.r.rect.h);
+      Object.assign(n.style,{left:`${x-6}px`,top:`${top}px`,height:`${bottom-top}px`});
+      n.addEventListener('pointerdown',e=>startDivider(e,d,n));layer.append(n);dividerNodes.push(n);
+    }
+  }
+  const place=(n,r)=>Object.assign(n.style,{left:`${r.x}px`,top:`${r.y}px`,width:`${r.w}px`,height:`${r.h}px`});
+  function showHover(item){
+    if(item!==hover)closeMenu();
+    hover=item;outline.hidden=!item;grip.hidden=!item||item.kind!=='table';sizer.hidden=!item;tools.hidden=!item||item.kind!=='figure'||!onActivate;
+    if(!item)return;
+    if(!tools.hidden)Object.assign(tools.style,{left:`${item.rect.x+item.rect.w}px`,top:`${item.rect.y}px`});
+    place(outline,item.rect);tag.textContent=`${KIND[item.kind]} · ${item.block.label}${item.block.size?` · ${item.block.size}%`:''}`;
+    Object.assign(grip.style,{left:`${item.rect.x-22}px`,top:`${item.rect.y}px`});
+    Object.assign(sizer.style,{left:`${item.rect.x+item.rect.w-5}px`,top:`${item.rect.y+item.rect.h-5}px`});
+  }
+  function refresh(){queueMicrotask(()=>paintAiMarks?.());const open=!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null;rebuild();paintDividers();if(hover)showHover(items.find(x=>x.id===hover.id)||null);if(open){keepSettings=open;reopenSettings();}}
+
+  // 놓을 자리: 대상의 왼쪽·오른쪽 1/3이면 옆(가로 묶음), 가운데면 위/아래(세로 순서).
+  function dropAt(p){
+    const others=items.filter(x=>x.id!==drag.item.id);
+    let target=others.find(x=>inside(x.rect,p,10));
+    if(!target){let best=Infinity;for(const x of others){const d=Math.abs(p.y-(x.rect.y+x.rect.h/2));if(p.x>=x.rect.x-40&&p.x<=x.rect.x+x.rect.w+40&&d<best){best=d;target=x;}}if(best>80)target=null;}
+    if(!target)return null;
+    const fx=(p.x-target.rect.x)/target.rect.w,fy=(p.y-target.rect.y)/target.rect.h;
+    const side=fx<.3?'left':fx>.7?'right':fy<.5?'before':'after';
+    return {target,side};
+  }
+  function showDrop(drop){
+    marker.hidden=!drop;if(!drop){say('배치 · 놓을 그림이나 표 위로 옮기세요.');return;}
+    const r=drop.target.rect,vertical=drop.side==='left'||drop.side==='right';
+    marker.dataset.axis=vertical?'v':'h';
+    if(vertical)Object.assign(marker.style,{left:`${drop.side==='left'?r.x-4:r.x+r.w+1}px`,top:`${r.y}px`,width:'3px',height:`${r.h}px`});
+    else Object.assign(marker.style,{left:`${r.x}px`,top:`${drop.side==='before'?r.y-4:r.y+r.h+1}px`,width:`${r.w}px`,height:'3px'});
+    const name=`${KIND[drop.target.kind]} ${drop.target.block.label}`;
+    let text=vertical?`${name} ${SIDE[drop.side]}에 놓기 · 가로 묶음`:`${name} ${SIDE[drop.side]}에 놓기`;
+    if(vertical&&drop.target.block.parent===drag.item.block.parent&&model.question.blocks.find(b=>b.id===drop.target.block.parent)?.layout==='나란히')text=`${name} ${SIDE[drop.side]}에 놓기 · 같은 가로 묶음`;
+    else if(vertical){const [a,b]=drop.side==='right'?ratioPair(drop.target.rect.w,drag.item.rect.w):ratioPair(drag.item.rect.w,drop.target.rect.w);text+=` · ${drop.side==='right'?`${KIND[drop.target.kind]} ${a} : ${KIND[drag.item.kind]} ${b}`:`${KIND[drag.item.kind]} ${a} : ${KIND[drop.target.kind]} ${b}`}`;}
+    markerLabel.textContent=text;say(`배치 · ${text}`);
+  }
+  // 시트 문서 좌표(이 층 기준)로 바꾼 포인터 위치.
+  const fromParent=(x,y)=>{const r=host.getBoundingClientRect();return {x:x-r.left,y:y-r.top};};
+  const fromFrame=e=>{const p=bridge.parentPoint(e.clientX,e.clientY);return fromParent(p.x,p.y);};
+
+  function beginMove(item,start,pointerId,captureTarget){
+    drag={mode:'move',item,start,offset:{x:start.x-item.rect.x,y:start.y-item.rect.y},moved:false,pointerId,captureTarget};
+  }
+  function moveTo(p){
+    if(!drag.moved&&Math.hypot(p.x-drag.start.x,p.y-drag.start.y)<5)return;
+    if(!drag.moved){drag.moved=true;layer.dataset.dragging='true';ghost.hidden=false;outline.hidden=true;grip.hidden=true;sizer.hidden=true;}
+    place(ghost,{x:p.x-drag.offset.x,y:p.y-drag.offset.y,w:drag.item.rect.w,h:drag.item.rect.h});
+    drag.drop=dropAt(p);showDrop(drag.drop);
+  }
+  function endDrag(apply){
+    const d=drag;drag=null;layer.dataset.dragging='false';ghost.hidden=true;marker.hidden=true;readout.hidden=true;
+    if(!d)return;
+    if(apply&&d.mode==='move'&&d.moved&&d.drop){
+      const {target,side}=d.drop;
+      onApply(q=>side==='left'||side==='right'?placeBeside(q,d.item.id,target.id,side,{dragWidth:d.item.rect.w,targetWidth:target.rect.w}):placeAround(q,d.item.id,target.id,side),`${d.item.block.label}을(를) ${target.block.label} ${SIDE[side]}에 놓았습니다.`);
+    }else if(apply&&d.mode==='size'&&d.width!==undefined)onApply(q=>resizeTo(q,d.item.id,d.width,d.available),`${d.item.block.label} 크기 ${d.label}`);
+    else if(apply&&d.mode==='divider'&&d.split)onApply(q=>setPairRatio(q,d.pair.l.id,d.pair.r.id,d.split.left,d.split.right),`폭 비율 ${d.label}`);
+    say();
+  }
+
+  // 칸 폭(px, 이 층 기준): 가로 묶음 안이면 그 칸, 아니면 본문 폭. 상자 안이면 상자 여백을 뺀다.
+  function availableWidth(item){
+    const placement=bridge.pagePlacement(0);if(!placement)return item.rect.w;
+    const page=JSON.parse(bridge.wasm.borrowDocumentHandle().getPageDef(0)),body=(page.width-page.marginLeft-page.marginRight)/75;
+    const a=bridge.parentPoint(placement.x,placement.y),px=v=>v*placement.scale*a.scaleX;
+    const q=model.question;let width=px(body),node=item.block,chain=[];
+    while(node.parent){const p=q.blocks.find(b=>b.id===node.parent);chain.unshift({p,child:node});node=p;}
+    for(const {p,child} of chain){
+      const boxed=p.boxed===true||p.boxed===undefined&&p.label==='실험';if(boxed)width-=px(22);
+      if(p.layout==='나란히'){const kids=q.blocks.filter(b=>b.parent===p.id),total=kids.reduce((s,k)=>s+(k.ratio||1),0);width=width*(child.ratio||1)/total-px(16);}
+    }
+    return Math.max(20,width);
+  }
+
+  sizer.addEventListener('pointerdown',e=>{
+    if(!hover||!canEdit())return;e.preventDefault();sizer.setPointerCapture(e.pointerId);
+    drag={mode:'size',item:hover,start:fromParent(e.clientX,e.clientY),available:availableWidth(hover)};readout.hidden=false;layer.dataset.dragging='true';
+  });
+  sizer.addEventListener('pointermove',e=>{
+    if(drag?.mode!=='size')return;const p=fromParent(e.clientX,e.clientY),w=Math.max(10,drag.item.rect.w+(p.x-drag.start.x));
+    const size=snapSize(w/drag.available*100);drag.width=drag.available*size/100;drag.label=size===100?'자동(칸 폭)':`${size}%`;
+    place(ghost,{...drag.item.rect,w:drag.width,h:drag.item.rect.h*drag.width/drag.item.rect.w});ghost.hidden=false;
+    Object.assign(readout.style,{left:`${drag.item.rect.x+drag.width+8}px`,top:`${drag.item.rect.y+drag.item.rect.h-22}px`});readout.textContent=drag.label;say(`배치 · 크기 ${drag.label} · 칸 폭 대비 5% 단위`);
+  });
+  sizer.addEventListener('pointerup',()=>{if(drag?.mode==='size')endDrag(true);});
+  sizer.addEventListener('pointercancel',()=>endDrag(false));
+
+  grip.addEventListener('pointerdown',e=>{
+    if(!hover||!canEdit())return;e.preventDefault();grip.setPointerCapture(e.pointerId);beginMove(hover,fromParent(e.clientX,e.clientY));
+  });
+  grip.addEventListener('pointermove',e=>{if(drag?.mode==='move')moveTo(fromParent(e.clientX,e.clientY));});
+  grip.addEventListener('pointerup',()=>{if(drag?.mode==='move')endDrag(true);});
+  grip.addEventListener('pointercancel',()=>endDrag(false));
+
+  function startDivider(e,pair,node){
+    if(!canEdit())return;e.preventDefault();node.setPointerCapture(e.pointerId);
+    drag={mode:'divider',pair};layer.dataset.dragging='true';readout.hidden=false;
+    const move=ev=>{const p=fromParent(ev.clientX,ev.clientY),left=Math.max(10,p.x-pair.l.rect.x),right=Math.max(10,pair.r.rect.x+pair.r.rect.w-p.x),[a,b]=ratioPair(left,right);
+      drag.split={left,right};drag.label=`${KIND[pair.l.kind]} ${a} : ${KIND[pair.r.kind]} ${b}`;readout.textContent=drag.label;Object.assign(readout.style,{left:`${p.x+8}px`,top:`${p.y}px`});
+      Object.assign(node.style,{left:`${p.x-6}px`});say(`배치 · 폭 비율 ${drag.label}`);};
+    const up=ok=>()=>{node.removeEventListener('pointermove',move);node.removeEventListener('pointerup',onUp);node.removeEventListener('pointercancel',onCancel);endDrag(ok);};
+    const onUp=up(true),onCancel=up(false);
+    node.addEventListener('pointermove',move);node.addEventListener('pointerup',onUp);node.addEventListener('pointercancel',onCancel);
+  }
+
+  // 한글 창 안의 포인터: 그림 위에서는 바로 끌 수 있다. 표는 글을 고쳐야 하므로 손잡이로만 끈다.
+  function closeMenu(){menu.hidden=true;menu._item=null;tools.querySelector('[data-place-tool]')?.setAttribute('aria-expanded','false');}
+  function openMenu(){
+    const item=hover;if(!item)return;const linked=!!item.block.figure?.editable?.source,empty=!item.block.figure;
+    menu.innerHTML=`<button type="button" role="menuitem" data-place-action="pick">${empty?'5E 그림에서 잘라 넣기':'5E 그림에서 다시 잘라 넣기'}<small>5E 화면에서 영역을 정해 이 자리에 넣기</small></button>`+
+      (linked?'<button type="button" role="menuitem" data-place-action="edit">편집기에서 수정<small>5E 그림 편집기에서 원본을 고친 뒤 반영</small></button>':'')+
+      (empty?'':'<button type="button" role="menuitem" data-place-action="file">파일에서 넣기<small>PNG·JPEG 그림 파일로 바꾸기</small></button>')+
+      // 11-11 사용자: 한글처럼 문항 카드 그림에서도 바로 AI 이미지 변환으로(결과는 「문항 카드에 넣기」로 이 자리에).
+      (empty?'':'<button type="button" role="menuitem" data-place-action="ai-image">AI 이미지 변환<small>AI 이미지 창에서 다시 그린 뒤 이 자리로</small></button>');
+    const r=tools.getBoundingClientRect(),h=host.getBoundingClientRect();Object.assign(menu.style,{left:`${r.right-h.left}px`,top:`${r.bottom-h.top+4}px`});
+    menu.hidden=false;tools.querySelector('[data-place-tool="modify"]').setAttribute('aria-expanded','true');
+  }
+  tools.addEventListener('pointerdown',e=>e.stopPropagation());menu.addEventListener('pointerdown',e=>e.stopPropagation());
+  tools.addEventListener('click',e=>{const b=e.target.closest('[data-place-tool]');if(!b||!hover)return;if(menu.hidden)openSettings(hover);else closeMenu();});
+  menu.addEventListener('click',e=>{const b=e.target.closest('[data-place-action]');if(!b||!hover)return;const item=hover;closeMenu();onActivate?.(b.dataset.placeAction,item.block,item.ref);});
+  let frameDoc=null,leaveTimer=0;
+  const onFrameMove=e=>{
+    if(!enabled)return;const p=fromFrame(e);
+    if(drag?.mode==='move'){e.stopPropagation();e.preventDefault();moveTo(p);return;}
+    if(drag)return;
+    const found=items.find(x=>inside(x.rect,p,x.kind==='table'?0:0))||null;
+    // 그림 위 버튼으로 옮겨 가는 동안 잠깐 그림 밖을 지나도 버튼이 사라지지 않게 한다.
+    clearTimeout(leaveTimer);if(!found&&hover&&!tools.hidden){leaveTimer=setTimeout(()=>{if(!drag&&!tools.matches(':hover')&&menu.hidden)showHover(null);},400);return;}
+    showHover(found);
+  };
+  const onFrameDown=e=>{
+    if(!enabled||e.button!==0||drag||!canEdit())return;const p=fromFrame(e),item=items.find(x=>x.kind==='figure'&&inside(x.rect,p));
+    // 그림 위에서 누른 마우스는 배치 층이 맡는다. 한글 엔진이 같은 동작으로 그림을 옮기면 데이터와 문서가 어긋난다.
+    if(item){e.preventDefault();e.stopPropagation();beginMove(item,p);}
+  };
+  const onFrameUp=e=>{if(drag?.mode==='move'){if(drag.moved){e.stopPropagation();e.preventDefault();}endDrag(true);}};
+  const onFrameKey=e=>{if(e.key==='Escape'&&drag){e.stopPropagation();endDrag(false);return;}
+    // 11-14(시안 review-1114d 35번): 셀 블록(F5) 중 M 합치기·S 나누기 — 문항 자료 표면 문항 데이터로 바꿔 실행(표 안의 표도).
+    if(e.ctrlKey||e.metaKey||e.altKey||e.isComposing||e.keyCode===229||!bridge.input?.cursor?.isInCellSelectionMode?.())return;
+    const k=String(e.key).toLowerCase(),id=k==='m'||e.key==='ㅡ'||e.code==='KeyM'?'table:cell-merge':k==='s'||e.key==='ㄴ'||e.code==='KeyS'?'table:cell-split':null;
+    if(id&&bridge.input.examTableEdit?.(id)){e.preventDefault();e.stopImmediatePropagation();}};
+  // 더블클릭: 그림 자리는 5E에서 잘라 넣기, 표 자리는 표 만들기·크기 창.
+  const onFrameDouble=e=>{if(!enabled||!onActivate)return;const p=fromFrame(e),item=items.find(x=>inside(x.rect,p));if(!item)return;e.preventDefault();e.stopPropagation();onActivate('jump',item.block,item.ref);};
+  // 설정(크기·위치): 그림 위 작은 창. 크기는 칸 폭 대비 %(자동 = 칸 폭), 위치는 왼쪽·가운데·오른쪽(기본 가운데). 글 옆 그림은 왼쪽·오른쪽만.
+  function openSettings(item){
+    const b=item.block,size=b.size??100,wrapped=b.layout==='어울림',align=b.align||(wrapped?'오른쪽':'가운데');
+    const seg=v=>`<button type="button" data-set-align="${v}" aria-pressed="${align===v}"${wrapped&&v==='가운데'?' disabled title="글 옆 그림은 왼쪽·오른쪽만"':''}>${v}</button>`;
+    menu.className='place-menu place-settings';menu.setAttribute('role','dialog');menu.setAttribute('aria-label','그림 크기·위치');
+    menu.innerHTML=`<div class="ps-row"><span class="ps-k">크기</span><span class="ps-size"><button type="button" data-set-size="-5" aria-label="5% 작게">−</button><output>${size===100?'자동':size+'%'}</output><button type="button" data-set-size="5" aria-label="5% 크게">＋</button><button type="button" data-set-size="auto" class="ps-auto"${size===100?' disabled':''}>자동</button></span></div>
+      <div class="ps-row"><span class="ps-k">위치</span><span class="ps-seg">${['왼쪽','가운데','오른쪽'].map(seg).join('')}</span></div>
+      <p class="ps-note">그림을 고치려면 두 번 누르세요 — 문항 카드의 그 칸으로 갑니다.</p>`;
+    menu.hidden=false;menu._item=item;placeSettings(item);tools.querySelector('[data-place-tool]')?.setAttribute('aria-expanded','true');
+  }
+  // 11-14 지적 13: 설정 창은 그림 밖에 붙인다 — 아래 → 오른쪽 → 왼쪽 → 위 순서로 그림과 겹치지 않는 자리. 미리보기 칸 밖으로는 안 나간다.
+  function placeSettings(item){
+    const h=host.getBoundingClientRect(),mw=menu.offsetWidth||248,mh=menu.offsetHeight||120,r=item.rect,g=6,W=h.width,H=h.height;
+    const clampX=x=>Math.max(8,Math.min(W-mw-8,x)),clampY=y=>Math.max(8,Math.min(H-mh-8,y));
+    let left,top;
+    if(r.y+r.h+g+mh<=H-8){top=r.y+r.h+g;left=clampX(r.x+r.w/2-mw/2);}
+    else if(r.x+r.w+g+mw<=W-8){left=r.x+r.w+g;top=clampY(r.y+r.h-mh);}
+    else if(r.x-g-mw>=8){left=r.x-g-mw;top=clampY(r.y+r.h-mh);}
+    else{top=Math.max(8,r.y-g-mh);left=clampX(r.x+r.w/2-mw/2);}
+    Object.assign(menu.style,{transform:'none',left:`${Math.round(left)}px`,top:`${Math.round(top)}px`});
+  }
+  // 크기·위치를 바꾸면 창을 닫지 않고, 다시 조판된 그림 아래로 따라간다(크기를 보며 여러 번 누를 수 있게).
+  let keepSettings=null;
+  function reopenSettings(){const id=keepSettings;keepSettings=null;if(!id)return;const it=items.find(x=>x.id===id);if(!it)return;showHover(it);openSettings(it);}
+  menu.addEventListener('click',e=>{const item=menu._item;if(!item||!menu.classList.contains('place-settings'))return;const b=item.block;
+    const sz=e.target.closest('[data-set-size]')?.dataset.setSize,al=e.target.closest('[data-set-align]')?.dataset.setAlign;if(!sz&&!al)return;e.stopPropagation();
+    const available=availableWidth(item);
+    keepSettings=item.id;
+    // 11-14 2차 25: 다시 조판하는 동안 덮어 두는 화면(typeset.js freeze)에서 이 그림만 새 크기로 부드럽게 줄어들게 알려 둔다.
+    if(sz){const cur=b.size??100,next=sz==='auto'?100:Math.max(20,Math.min(100,cur+Number(sz)));
+      // 11-14 3차 36: 문서를 다시 열지 않는다 — 열린 한글 문서에서 그 그림만 같은 비율로 바꾸고(모서리 손잡이와 같은 길), 데이터만 맞춘다. 다시 열기가 없으니 깜빡임도 없다.
+      let native=false;try{let pr=bridge.properties?.(item.ref);if(typeof pr==='string')pr=JSON.parse(pr);if(pr&&pr.width>0&&pr.height>0&&cur>0&&next!==cur){const k=next/cur;bridge.transaction('resize-picture',()=>{bridge.setProperties(item.ref,{width:Math.round(pr.width*k),height:Math.round(pr.height*k)});return true;});native=true;}}catch{native=false;}
+      if(!native)host.__fiveEResizeHint={rect:{...item.rect},scale:next/cur,align:b.align||(b.layout==='어울림'?'오른쪽':'가운데'),at:performance.now()};
+      onApply(q=>resizeTo(q,item.id,available*next/100,available),`${b.label||'그림'} 크기 ${next===100?'자동(칸 폭)':next+'%'}`,native?{native:true}:undefined);return;}
+    onApply(q=>{const x=q.blocks.find(v=>v.id===item.id);if(!x)return false;const def=x.layout==='어울림'?'오른쪽':'가운데';if((x.align||def)===al)return false;if(al===def)delete x.align;else x.align=al;return true;},`${b.label||'그림'} 위치 ${al}`);});
+  function bindFrame(){
+    const next=bridge.editor.element.contentDocument;if(next===frameDoc)return;
+    if(frameDoc){frameDoc.removeEventListener('dblclick',onFrameDouble,true);frameDoc.removeEventListener('pointermove',onFrameMove,true);frameDoc.removeEventListener('pointerdown',onFrameDown,true);frameDoc.removeEventListener('pointerup',onFrameUp,true);frameDoc.removeEventListener('keydown',onFrameKey,true);}
+    frameDoc=next;frameDoc.addEventListener('dblclick',onFrameDouble,true);frameDoc.addEventListener('pointermove',onFrameMove,true);frameDoc.addEventListener('pointerdown',onFrameDown,true);frameDoc.addEventListener('pointerup',onFrameUp,true);frameDoc.addEventListener('keydown',onFrameKey,true);
+  }
+  doc.addEventListener('keydown',onFrameKey,true);
+  // 11-14 시안 review-1114b 2번 ③: 카드 칸에서 연 AI 작업을 조판 미리보기의 그 그림에도 같은 말로 표시한다(누르기는 카드 칸에서).
+  let aiMarks=[];const aiNodes=new Map();
+  function paintAiMarks(){const want=new Set();
+    for(const j of aiMarks){const it=enabled&&model?.question?.id===j.qid?items.find(x=>x.id===j.id):null;if(!it)continue;want.add(j.id);
+      let n=aiNodes.get(j.id);if(!n){n=doc.createElement('div');n.className='place-ai';n.innerHTML='<span></span>';layer.append(n);aiNodes.set(j.id,n);}
+      n.dataset.state=j.state;n.firstChild.textContent=j.text;place(n,it.rect);}
+    for(const [id,n] of aiNodes)if(!want.has(id)){n.remove();aiNodes.delete(id);}}
+  doc.addEventListener('cv-ai-jobs',e=>{aiMarks=(e.detail?.jobs||[]).map(j=>({...j,qid:e.detail.qid}));paintAiMarks();});
+  host.addEventListener('pointerleave',e=>{if(!drag&&!menu.contains(e.relatedTarget)&&!tools.contains(e.relatedTarget))showHover(null);});
+
+  return {
+    // 문서를 새로 불러온 뒤: 이 문항과, 문서 순서대로의 그림·표 주인 목록을 알려 준다.
+    setModel(next){model=next;enabled=!!next;host.append(layer);bindFrame();const keep=keepSettings||(!menu.hidden&&menu.classList.contains('place-settings')?menu._item?.id:null);showHover(null);refresh();if(keep&&enabled){keepSettings=keep;reopenSettings();}},
+    clear(){model=null;enabled=false;endDrag(false);showHover(null);items=[];dividers=[];paintDividers();say();},
+    refresh(){if(enabled&&!drag)refresh();},
+    // 커서가 든 문항 자료 표(카드 표 칸이 주인인 표)와 그 안 칸(줄·칸). 표 안의 표도 찾는다.
+    // 커서가 든 문항 자료 표(카드 표 칸이 주인인 표). 표 안의 표는 엔진 위치 정보가 커서와 달라, 커서가 그려진 자리를 감싸는 가장 작은 표로 찾는다.
+    tableAt(pos){if(!enabled||!pos?.cellPath?.length||!pos.cursorRect)return null;if(!items.length)refresh();const c=pos.cursorRect,p=toLayer(c.pageIndex??0,{x:c.x,y:c.y+(c.height||0)/2,w:1,h:1});if(!p)return null;
+      return items.filter(x=>x.kind==='table'&&inside(x.rect,p)).sort((a,b)=>a.rect.w*a.rect.h-b.rect.w*b.rect.h)[0]||null;},
+    itemOf(id){if(!enabled)return null;if(!items.length)refresh();return items.find(x=>x.id===id)||null;},
+    // 한글 엔진이 받은 그림 두 번 누르기(onEdit) → 그 그림의 칸으로(11-14).
+    jumpRef(ref){if(!enabled||!onActivate)return false;if(!items.length)refresh();
+      const same=i=>i.ref.sec===(ref.sec??ref.secIdx)&&i.ref.ppi===(ref.ppi??ref.paraIdx)&&i.ref.ci===(ref.ci??ref.controlIdx)&&JSON.stringify(i.ref.cellPath||[])===JSON.stringify(ref.cellPath||[]);
+      const item=items.find(same);if(!item)return false;onActivate('jump',item.block,item.ref);return true;},
+    // 11-05: 한글 엔진 손잡이로 그림 크기를 바꾼 경우에도 문항 데이터(칸 폭 대비 %)로 옮겨 적는다 — 다시 조판해도 크기가 남는다.
+    nativeResized(ref,widthHu){
+      if(!enabled||!model||!(widthHu>0)||!canEdit())return false;
+      if(!items.length)refresh();
+      const same=i=>i.kind==='figure'&&i.ref.sec===(ref.sec??ref.secIdx)&&i.ref.ppi===(ref.ppi??ref.paraIdx)&&i.ref.ci===(ref.ci??ref.controlIdx)&&JSON.stringify(i.ref.cellPath||[])===JSON.stringify(ref.cellPath||[]);
+      const item=items.find(same);if(!item)return false;
+      const placement=bridge.pagePlacement(item.ref.pageIndex??0);if(!placement)return false;
+      const a=bridge.parentPoint(placement.x,placement.y),width=widthHu/75*placement.scale*a.scaleX,available=availableWidth(item);
+      const size=snapSize(width/available*100);
+      onApply(q=>resizeTo(q,item.id,available*size/100,available),`${item.block.label} 크기 ${size===100?'자동(칸 폭)':size+'%'}`,{native:true});// 손잡이로 이미 문서에서 바뀜 — 다시 열지 않음
+      return true;
+    },
+  };
+}

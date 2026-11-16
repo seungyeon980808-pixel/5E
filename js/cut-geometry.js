@@ -10,7 +10,7 @@
 // 영역(객체화 덩어리 등)은 잘린 현(弦)을 따라 닫아 두 개의 "채워진" 조각으로 방출.
 // 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
 
-import { curveBezierSeg, curveBezierSegClosed, evalBezier, pointInPolygon, segDist } from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
+import { curveBezierSeg, curveBezierSegClosed, evalBezier, pointInPolygon, segDist } from "./geometry.js?v=1.7.0-four-session-integration";
 
 // curve 객체의 렌더된 스플라인을 폴리라인으로 샘플링(제어점 직선이 아니라 실제 곡선
 // 기준으로 잘리게). render/core.js의 curveSamplePoints와 동일한 Catmull-Rom 제어점 사용.
@@ -529,6 +529,7 @@ function remapCutout(cut, x0, y0, fw, fh) {
     out.w = round3((+cut.w) / fw); out.h = round3((+cut.h) / fh);
   } else if (Array.isArray(out.points)) {
     out.points = out.points.map((p) => ({ x: mx(p.x), y: my(p.y) }));
+    if (out.type === 'brush') { out.diameterX /= fw;out.diameterY /= fh; }
     if (out.brushWidth) out.brushWidth = round3(out.brushWidth * (1 / fw + 1 / fh) / 2);
   }
   return out;
@@ -547,6 +548,9 @@ export function normalizeSrcRect(sr) {
  * 좁힐 게 없거나 대상이 아니면 null(호출자는 원본을 그대로 쓴다). id·layerId 등 다른
  * 필드는 전부 보존한다 — 자르기 조각뿐 아니라 [여백 정리] 명령도 이 함수를 쓴다. */
 export function tightenBoxObject(o) {
+  // The legacy polygon grid cannot model open brush strokes or ordered white
+  // paint. Preserve placement; explicit image-margin trimming inspects pixels.
+  if ((o?.cutouts || []).some(c => c?.type === 'brush' || c?.background === 'white')) return null;
   if (!isBoxCuttable(o)) return null;
   if (!(o.w > 0) || !(o.h > 0)) return null;
   const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];

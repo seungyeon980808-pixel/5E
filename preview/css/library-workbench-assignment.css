@@ -11,7 +11,7 @@
   --workbench-paper: var(--unilib-paper, #fff);
   --workbench-selected-foreground: var(--unilib-selected-foreground, #fff);
   --workbench-selected-chip-text: #dbeafe;
-  --workbench-danger: var(--unilib-status-error, var(--danger, #f85149));
+  --workbench-danger: var(--unilib-status-error, var(--danger, var(--ds-danger)));
   --workbench-space-1: var(--unilib-space-1, 4px);
   --workbench-space-2: var(--unilib-space-2, 6px);
   --workbench-space-3: var(--unilib-space-3, 8px);

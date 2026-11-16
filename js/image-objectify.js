@@ -11,14 +11,14 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.1-remediation-0929";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=1.6.1-remediation-0929";
-import { MAX_PROCESS_DIMENSION } from "./image-analysis.js?v=1.6.1-remediation-0929";
-import { createImageAnalysisController } from "./image-analysis-controller.js?v=1.6.1-remediation-0929";
-import { measureFormula } from "./formula.js?v=1.6.1-remediation-0929";
-import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.6.1-remediation-0929";
-import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.1-preview-lite-hybrid-0922";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=1.7.0-four-session-integration";
+import { MAX_PROCESS_DIMENSION } from "./image-analysis.js?v=1.7.0-four-session-integration";
+import { createImageAnalysisController } from "./image-analysis-controller.js?v=1.7.0-four-session-integration";
+import { measureFormula } from "./formula.js?v=1.7.0-four-session-integration";
+import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.7.0-four-session-integration";
+import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js?v=1.7.0-four-session-integration";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.7.0-four-session-integration";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_SOURCE_FILE_BYTES = 64 * 1024 * 1024;
@@ -132,7 +132,7 @@ function injectObjectifyStyles() {
     .objectify-stage.is-panning { cursor:grabbing; }
     .objectify-stage canvas { position:absolute; top:0; left:0; transform-origin:0 0; }
     .objectify-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .objectify-tools .modal-btn.is-active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .objectify-tools .modal-btn.is-active { background:var(--control-selected-bg); color:var(--control-selected-text); border-color:var(--control-selected-border); }
     .modal-objectify .objectify-dropzone { position:absolute; inset:0; margin:0; z-index:3; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px; background:#22272e; color:#adbac7; border:2px dashed #444c56; border-radius:8px; cursor:pointer; }
     .objectify-stage.has-image .objectify-dropzone { display:none; }
     .objectify-stage.is-dragover .objectify-dropzone { display:flex; background:#2d333b; border-color:var(--accent); }
@@ -680,9 +680,9 @@ export function initImageObjectify(state) {
    * 남기고 나머지는 제외한다(원하는 부분만 출력). 일회성 — 적용 후 자동으로 꺼진다. */
   function setRegionMode(on) {
     regionMode = on;
-    regionButton.style.background = on ? "var(--accent, #0969da)" : "";
-    regionButton.style.color = on ? "#fff" : "";
-    regionButton.style.borderColor = on ? "var(--accent, #0969da)" : "";
+    regionButton.style.background = on ? "var(--control-selected-bg)" : "";
+    regionButton.style.color = on ? "var(--control-selected-text)" : "";
+    regionButton.style.borderColor = on ? "var(--control-selected-border)" : "";
     if (toolHint) {
       toolHint.textContent = on
         ? "드래그로 남길 영역을 그리세요 — 그 안쪽만 남습니다 (Esc 취소)"
@@ -1060,8 +1060,22 @@ export function initImageObjectify(state) {
   }
 
   /* ===== 이벤트 배선 ===== */
+  // 11-14 5E 클립보드: 원본을 「클립보드에서」 고를 수 있다(크게 보기 고르기 모드). 클립보드 항목을 끌어 놓아도 된다.
   const updatePasteHint = () => {
-    dropzone.textContent = keyLabel("PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기");
+    dropzone.innerHTML = `<span>${keyLabel("PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기")}</span>`
+      + `<button type="button" class="modal-btn objectify-clip" data-objectify-clip title="5E 클립보드에서 원본 고르기 (${/Mac|iPhone|iPad/.test(navigator.platform || "") ? "⇧⌘V" : "Ctrl+Shift+V"})">클립보드에서</button>`;
+  };
+  const loadClipItem = async item => {
+    if (!item?.src) return;
+    const blob = await (await fetch(item.src)).blob();
+    loadFile(new File([blob], `${item.name || "클립보드 그림"}.png`, { type: blob.type || "image/png" }));
+  };
+  // 11-14 5E 클립보드: 이 창이 열려 있으면 클립보드 「넣기」가 원본으로(main.js 받는 자리).
+  window.fiveEObjectifyClip = { open: () => !overlay.hidden, load: item => loadClipItem(item) };
+  const pickFromClipboard = async () => {
+    const clip = window.fiveEClipboard; if (!clip?.pick) return;
+    const [item] = await clip.pick({ kinds: ["img", "graph", "obj"], multiple: false, label: "원본으로 쓰기" });
+    await loadClipItem(item).catch(() => {});
   };
   updatePasteHint();
   window.addEventListener("5e:shortcut-platform-change", updatePasteHint);
@@ -1111,9 +1125,9 @@ export function initImageObjectify(state) {
       event.stopPropagation();
       return;
     }
-    const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
-    if (!imageItem) return;
-    const imageFile = imageItem.getAsFile();
+    const imageFile = Array.from(event.clipboardData?.items || [])
+      .filter(item => item.type.startsWith("image/"))
+      .map(item => item.getAsFile()).find(Boolean);
     if (!imageFile) return;
     event.preventDefault();
     event.stopPropagation();
@@ -1121,7 +1135,7 @@ export function initImageObjectify(state) {
   }, true);
 
   removeImageButton.addEventListener("click", clearSourceImage);
-  dropzone.addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("click", (event) => { if (event.target.closest?.("[data-objectify-clip]")) { void pickFromClipboard(); return; } fileInput.click(); });
   dropzone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
   });
@@ -1133,7 +1147,11 @@ export function initImageObjectify(state) {
   for (const type of ["dragleave", "drop"]) {
     stage.addEventListener(type, (event) => { event.preventDefault(); stage.classList.remove("is-dragover"); });
   }
-  stage.addEventListener("drop", (event) => loadFile(event.dataTransfer.files?.[0]));
+  stage.addEventListener("drop", (event) => {
+    const clipId = event.dataTransfer.getData("application/x-5e-drawer");
+    if (clipId && !event.dataTransfer.files?.length) { void import("./drawer.js?v=1114").then(m => m.clipGet(clipId)).then(loadClipItem).catch(() => {}); return; }
+    loadFile(event.dataTransfer.files?.[0]);
+  });
 
   // 슬라이더 값 표시 + 자동 재분석 (250ms 디바운스)
   const sliderUnits = { dilate: "px", minarea: "px²", textsize: "px", eps: "" };

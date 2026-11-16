@@ -1,21 +1,56 @@
-import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.6.1-preview-labeler-0917-1111";
+import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.7.0-four-session-integration";
 import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js?v=1.6.1-preview-labeler-0917-1111";
-import { deriveExamMetadata, examMetadataMatches, isRecognizedExamSourceName, parseCompactExamCode } from "./exam-code.js?v=1.6.1-remediation-0929";
-import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.6.1-preview-labeler-0917-1111";
-import { createCropSource } from "../pdf-library/contract.js?v=1.6.1-preview-labeler-0917-1111";
-import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.6.1-preview-labeler-0917-1111";
-import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.6.1-remediation-0929";
+import { deriveExamMetadata, examMetadataMatches, isRecognizedExamSourceName, parseCompactExamCode } from "./exam-code.js?v=1.7.0-four-session-integration";
+import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.7.0-four-session-integration";
+import { createCropSource } from "../pdf-library/contract.js?v=1.7.0-four-session-integration";
+import { extendQuestionRectToWords, isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-four-session-integration";
+import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-four-session-integration";
+import { connectionName } from "./connection-names.js";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
+// Results are immutable. Reuse their searchable text across keystrokes without
+// retaining results from a replaced catalog.
+let searchableResultText = new WeakMap();
+
+// 문항 카드 썸네일: 문항 상자는 단 전체 폭·고정 아래 끝으로 잡혀 있어 여백과 옆 단 세로선이
+// 같이 들어가고 마지막 줄(보기)이 잘리기도 한다. 썸네일만 실제 글자·그림이 있는 곳에 맞춰
+// 자른다. 작업대에 넣는 영역(source)은 그대로다.
+const THUMB_CONTENT_PAD = 0.008;
+const THUMB_MAX_EXTEND = 0.02;
+
+function questionThumbnailRect(source, result) {
+  if (result?.kind !== "crop" || result.cropType !== "question") return source.rect;
+  const [x, y, width, height] = source.rect;
+  const right = x + width, bottom = y + height;
+  const boxes = [
+    ...(result.searchWords ?? []).map((word) => word.rect),
+    ...(result.variants?.figures ?? []).map((figure) => figure.source?.rect),
+  ].filter((rect) => Array.isArray(rect) && rect.length === 4 && rect.every(Number.isFinite)
+    && rect[0] < right && rect[0] + rect[2] > x && rect[1] < bottom + THUMB_MAX_EXTEND && rect[1] + rect[3] > y);
+  if (!boxes.length) return source.rect;
+  const left = Math.max(x, Math.min(...boxes.map((rect) => rect[0])) - THUMB_CONTENT_PAD);
+  const top = Math.max(y, Math.min(...boxes.map((rect) => rect[1])) - THUMB_CONTENT_PAD);
+  const contentRight = Math.min(right, Math.max(...boxes.map((rect) => rect[0] + rect[2])) + THUMB_CONTENT_PAD);
+  // 마지막 줄이 상자 아래로 조금 삐져나간 경우만 그 줄까지 늘린다(다음 문항을 넘보지 않게 상한)
+  const contentBottom = Math.min(1, bottom + THUMB_MAX_EXTEND, Math.max(...boxes.map((rect) => rect[1] + rect[3])) + THUMB_CONTENT_PAD);
+  if (contentRight - left < 0.05 || contentBottom - top < 0.02) return source.rect;
+  return [left, top, contentRight - left, contentBottom - top];
+}
 
 async function providedPagePreview(document, source, result, options = {}) {
+  // OmO 작성 · 학평 목록 그림도 외부 탐색기 카드를 재사용한다. 원문 작업은 PDF로 연다.
+  if (document?.packId === "5e.hakpyeong" && options.thumbnail === true && !options.original && result.cropType === "question") {
+    const id = result.provenance.itemId.split("::").at(-1);
+    return Object.freeze({ url: `https://raw.githubusercontent.com/seungyeon980808-pixel/exam-search/main/cards/${encodeURIComponent(id)}.webp`, source, provenance: result.provenance, result, previewOnly: true });
+  }
   // prebuiltPage: a full-page card may use the prebuilt page image even when it asks for the original page.
   if ((options.original && !options.continuous && !options.prebuiltPage) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
   const hash = document.source.sha256;
   if (!providedPagePreviews[hash] || source.pageNumber > providedPagePreviews[hash]) return null;
   const fullPage = source.rect.every((value, index) => value === [0, 0, 1, 1][index]);
   const url = new URL(`../../assets/pdf-library/previews/${hash}/${source.pageNumber}${fullPage && options.thumbnail === true && !options.prebuiltPage ? "-thumb" : ""}.webp?v=${PREBUILT_PREVIEW_REVISION}`, import.meta.url).href;
-  const image = fullPage ? { url } : await cropPrebuiltPreview(url, source.rect, options.thumbnail === true);
+  const cropRect = options.thumbnail === true ? questionThumbnailRect(source, result) : source.rect;
+  const image = fullPage ? { url } : await cropPrebuiltPreview(url, cropRect, options.thumbnail === true);
   return Object.freeze({
     ...image,
     source, provenance: result.provenance, result, previewOnly: true,
@@ -24,7 +59,7 @@ async function providedPagePreview(document, source, result, options = {}) {
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
 const SUBJECT_LABELS = Object.freeze({ p1: "물리학Ⅰ", p2: "물리학Ⅱ", c1: "화학Ⅰ", c2: "화학Ⅱ", b1: "생명과학Ⅰ", b2: "생명과학Ⅱ", e1: "지구과학Ⅰ", e2: "지구과학Ⅱ" });
-const ADMINISTRATION_LABELS = Object.freeze({ "06": "6월 모의평가", "09": "9월 모의평가", "11": "대학수학능력시험" });
+const ADMINISTRATION_LABELS = Object.freeze({ "03": "3월 학평", "04": "4월 학평", "05": "5월 학평", "07": "7월 학평", "10": "10월 학평", "06": "6월 모의평가", "09": "9월 모의평가", "11": "대학수학능력시험" });
 
 export function humanExamName(metadata = {}, itemNumber = null) {
   if (!metadata) return "";
@@ -34,7 +69,7 @@ export function humanExamName(metadata = {}, itemNumber = null) {
   if (!subject || !validYear || !administration) return "";
   const year = `${String(metadata.academicYear).slice(-2)}년`;
   const question = Number.isInteger(itemNumber) ? `${itemNumber}번` : "";
-  return [subject.replace("물리학", "물리").replace("지구과학", "지구").replace("생명과학", "생명").replace("Ⅰ", "1").replace("Ⅱ", "2"), year, ({ "06": "6평", "09": "9평", "11": "수능" })[metadata.administration], question].filter(Boolean).join(" ");
+  return [subject.replace("물리학", "물리").replace("지구과학", "지구").replace("생명과학", "생명").replace("Ⅰ", "1").replace("Ⅱ", "2"), year, ({ "06": "6평", "09": "9평", "11": "수능" })[metadata.administration] || administration, question].filter(Boolean).join(" ");
 }
 
 export function compareExamResults(left, right) {
@@ -47,7 +82,89 @@ export function compareExamResults(left, right) {
     || left.title.localeCompare(right.title, "ko");
 }
 
+// 11-05: 라이브러리 「문항」 검색을 exam 기출 검색과 같은 수준으로 — 문항마다 단원·태그·비슷한 말·모양(그림/표/〈보기〉).
+// 색인은 assets/exampool/convert/data/library-tags.json(scripts/build-library-tags.mjs)이고, 라이브러리를 열 때 한 번 읽는다.
+let examTags = null;
+let examTagCache = new WeakMap();
+export function setLibraryExamTags(data) {
+  examTags = data?.schema === "library-tags-v1" && data.items ? data : null;
+  examTagCache = new WeakMap();
+  searchableResultText = new WeakMap();
+}
+export function examIdOf(result) {
+  const m = result?.metadata;
+  if (!m?.subject || !Number.isInteger(m.academicYear) || !m.administration || !Number.isInteger(m.itemNumber)) return "";
+  return `${m.subject}_${m.academicYear}_${String(m.administration).padStart(2, "0")}_${String(m.itemNumber).padStart(2, "0")}`;
+}
+export function examTagsOf(result) {
+  if (!examTags || result?.kind !== "crop") return null;
+  if (examTagCache.has(result)) return examTagCache.get(result);
+  const item = examTags.items[examIdOf(result)];
+  let value = null;
+  if (item) {
+    const parts = item[0].map((i) => examTags.parts[i]), tags = item[1].map((i) => examTags.tags[i]);
+    const words = [...parts, ...tags, ...[...parts, ...tags].flatMap((key) => examTags.synonyms?.[key] ?? [])];
+    const text = normalizedText(words.join(" "));
+    value = Object.freeze({ parts, tags, figure: Boolean(item[2] & 1), table: Boolean(item[2] & 2), bogi: Boolean(item[2] & 4), text, textNoSpace: text.replace(/\s+/gu, "") });
+  }
+  examTagCache.set(result, value);
+  return value;
+}
+// 시험 묶음: 수능·모평(6·9·11월) / 학평(3·4·5·7·10월).
+const KICE_ADMINISTRATIONS = new Set(["06", "09", "11"]);
+function matchesExamFacets(result, filters) {
+  const metadata = result.metadata ?? {};
+  if (Array.isArray(filters.subjects) && filters.subjects.length && !filters.subjects.includes(metadata.subject)) return false;
+  if (filters.exam === "kice" && !KICE_ADMINISTRATIONS.has(metadata.administration)) return false;
+  if (filters.exam === "hak" && (!metadata.administration || KICE_ADMINISTRATIONS.has(metadata.administration))) return false;
+  // 단원은 「과목|단원」. 단원을 하나라도 고른 과목만 단원으로 거르고, 단원을 안 고른 과목은 그대로 둔다.
+  const partKeys = Array.isArray(filters.parts) ? filters.parts.filter((key) => key.startsWith(`${metadata.subject}|`)) : [];
+  const needsTags = partKeys.length || (Array.isArray(filters.shapes) && filters.shapes.length);
+  if (!needsTags) return true;
+  const tags = examTagsOf(result);
+  if (!tags) return false;
+  if (partKeys.length && !partKeys.some((key) => tags.parts.includes(key.slice(key.indexOf("|") + 1)))) return false;
+  if (Array.isArray(filters.shapes) && filters.shapes.length && !filters.shapes.every((shape) => tags[shape])) return false;
+  return true;
+}
+// 점수(exam 기출 검색과 같은 규칙): 낱말마다 제목 8 · 단원·태그(비슷한 말 포함) 5 · 본문 1.
+// 11-09 사용자: 띄어 쓴 낱말은 따로 찾되(「유도 기전력」 → 「유도되는 기전력」도), 낱말이 친 순서대로 붙어 있는 문항
+// (「전자기 유도」·「전자기유도」)을 맨 위로 — 「판 구조」에 「진동판 … 내부 구조」 같은 문항이 앞에 오지 않게.
+export const ADJACENT_TERMS_BONUS = 1000;
+// 11-12 밤샘: 점수 매길 때 결과마다 제목·본문을 검색할 때마다 다시 정리했다 — 결과마다 한 번만(결과 객체는 얼려 있어 바뀌지 않음).
+const scoreTextCache = new WeakMap();
+function scoreTexts(result) {
+  let forms = scoreTextCache.get(result);
+  if (!forms) {
+    const title = normalizedText(result.title);
+    forms = { title, titleNoSpace: title.replace(/\s+/gu, ""), joined: null };
+    scoreTextCache.set(result, forms);
+  }
+  return forms;
+}
+function adjacentTermsBonus(result, queryTokens) {
+  if (queryTokens.length < 2) return 0;
+  const phrase = queryTokens.join("");
+  const forms = scoreTexts(result);
+  const text = forms.joined ??= normalizedText([result.title, result.searchText, result.matchText].join(" ")).replace(/\s+/gu, "");
+  return text.includes(phrase) ? ADJACENT_TERMS_BONUS : 0;
+}
+
+export function examSearchScore(result, queryTokens) {
+  if (!queryTokens.length) return 0;
+  const { title, titleNoSpace } = scoreTexts(result);
+  const tags = examTagsOf(result);
+  let score = adjacentTermsBonus(result, queryTokens);
+  for (const token of queryTokens) {
+    if (title.includes(token) || titleNoSpace.includes(token)) score += 8;
+    if (tags && (tags.text.includes(token) || tags.textNoSpace.includes(token))) score += 5;
+    score += 1;
+  }
+  return score;
+}
+
 function matchesFilters(result, filters = {}) {
+  if (!matchesExamFacets(result, filters)) return false;
   const metadata = result.metadata ?? {};
   const startYear = Number(filters.startYear);
   const endYear = Number(filters.endYear);
@@ -82,6 +199,22 @@ function stableId(namespace, ...segments) {
 function matchesText(haystack, queryTokens) {
   const normalized = normalizedText(haystack);
   const withoutSpaces = normalized.replace(/\s+/gu, "");
+  return queryTokens.every((token) => normalized.includes(token) || withoutSpaces.includes(token));
+}
+
+// 11-05: PDF 쪽 본문은 검색할 때마다 수천 쪽을 다시 정리했다 — 쪽마다 한 번만 정리해 둔다.
+const normalizedPageText = new WeakMap();
+function pageTextForms(page) {
+  let forms = normalizedPageText.get(page);
+  if (!forms) {
+    const normalized = normalizedText(page.text);
+    forms = [normalized, normalized.replace(/\s+/gu, "")];
+    normalizedPageText.set(page, forms);
+  }
+  return forms;
+}
+function pageMatches(page, queryTokens) {
+  const [normalized, withoutSpaces] = pageTextForms(page);
   return queryTokens.every((token) => normalized.includes(token) || withoutSpaces.includes(token));
 }
 
@@ -172,6 +305,9 @@ function collectImageResults(input) {
     const folders = pathSegments(item.relativePath ?? item.path).slice(0, -1);
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (folders[0] === categoryLabel) folders.shift();
+    // 설치형 연결 폴더의 그림은 그 폴더 이름 아래(같은 폴더의 PDF와 한 나무)에 둔다.
+    const root = connectionName(item.connectionId);
+    if (root) folders.unshift(root);
     const sourceId = stableId("source", "import", externalId, ...folders);
     if (!importsBySource.has(sourceId)) importsBySource.set(sourceId, []);
     importsBySource.get(sourceId).push(item);
@@ -190,6 +326,8 @@ function collectImageResults(input) {
     const folders = pathSegments(first.relativePath ?? first.path).slice(0, -1);
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (folders[0] === categoryLabel) folders.shift();
+    const root = connectionName(first.connectionId);
+    if (root) folders.unshift(root);
     sources.push(sourceNode(id, first.sourceLabel || "가져온 이미지", ["image"], values.length, {
       origin: "local", category, pathSegments: folders, counts: { pdf: 0, image: values.length, page: 0, question: 0 },
     }));
@@ -221,8 +359,8 @@ function pdfProvenance(document, source) {
   };
 }
 
-function entriesForDocument(index, document) {
-  const indexed = (index?.entries ?? []).filter((entry) => entry.documentId === document.id).map((entry) => ({
+function entriesForDocument(index, document, entriesByDocument = null) {
+  const indexed = (entriesByDocument ? entriesByDocument.get(document.id) || [] : (index?.entries ?? []).filter((entry) => entry.documentId === document.id)).map((entry) => ({
     ...entry,
     words: entry.words?.length ? entry.words : (entry.compactWords ?? []).map((word) => ({ text: word[0], rect: word.slice(1) })),
   }));
@@ -265,10 +403,26 @@ function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers, pa
   });
 }
 
+// 11-06 사용자(생명1 27년 6평 6번): 문항 영역 아래 끝이 선지 줄 가운데를 잘랐다 — 기출 문항 8,751개 중 1,437개에서 선지 글자 아래가 영역 밖으로
+// 1~2px 나갔다. 그 문항 낱말이 영역 위·아래로 조금(쪽 높이의 2% 안) 넘치면 그만큼 덮고 여유를 둔다. 멀리 떨어진 낱말은 건드리지 않는다.
+export function coverItemWords(source, words) {
+  const rect = source?.rect;
+  if (!Array.isArray(rect) || rect.length < 4 || !Array.isArray(words) || !words.length) return source;
+  const [x, y, w, h] = rect, inX = (r) => r[0] + r[2] / 2 >= x && r[0] + r[2] / 2 <= x + w;
+  const rects = words.map((word) => word.rect).filter((r) => Array.isArray(r) && r.length >= 4 && r[3] > 0 && inX(r));
+  if (!rects.length) return source;
+  const pad = 0.002, bottom = Math.max(...rects.map((r) => r[1] + r[3])), top = Math.min(...rects.map((r) => r[1]));
+  let y1 = y, y2 = y + h;
+  if (bottom > y2 && bottom - y2 < 0.02) y2 = Math.min(1, bottom + pad);
+  if (top < y1 && y1 - top < 0.02) y1 = Math.max(0, top - pad);
+  if (y1 === y && y2 === y + h) return source;
+  return { ...source, rect: Object.freeze([x, y1, w, y2 - y1]) };
+}
+
 function pdfQuestionResult(document, entry, metadata) {
   const pageNumber = entry.pageNumber;
   const itemNumber = entry.itemNumber ?? null;
-  const source = entry.source;
+  const source = coverItemWords(entry.source, entry.words);
   const code = metadata?.documentCode ?? null;
   const itemCode = code && itemNumber ? `${code}${String(itemNumber).padStart(2, "0")}` : null;
   const figures = (entry.figureCandidates ?? []).map((candidate, index) => ({
@@ -276,7 +430,7 @@ function pdfQuestionResult(document, entry, metadata) {
     label: `이미지 ${index + 1}`,
     source: candidate.source,
   }));
-  const contentSource = entry.contentSource ?? source;
+  const contentSource = entry.contentSource ? coverItemWords(entry.contentSource, entry.words) : source;
   const matchText = String(entry.text ?? entry.snippet ?? "");
   const matchRects = Object.freeze((entry.matchRects ?? []).map((rect) => Object.freeze([...rect])));
   return freezeResult({
@@ -323,11 +477,11 @@ function ownedCropSource(document, pageNumber, source) {
 function securedPdfEntry(document, entry) {
   const originalSource = ownedCropSource(document, entry.pageNumber, entry.source);
   if (!originalSource) return null;
-  const repairedRect = trimQuestionRectAtFooter(originalSource.rect, entry.words ?? []);
+  const repairedRect = extendQuestionRectToWords(trimQuestionRectAtFooter(originalSource.rect, entry.words ?? []), entry.words ?? []);
   const source = createCropSource({ ...originalSource, rect: repairedRect });
   const originalContent = ownedCropSource(document, entry.pageNumber, entry.contentSource);
   const contentRect = originalContent
-    ? trimQuestionRectAtFooter(originalContent.rect, entry.words ?? [])
+    ? extendQuestionRectToWords(trimQuestionRectAtFooter(originalContent.rect, entry.words ?? []), entry.words ?? [])
     : repairedRect;
   const contentSource = originalContent ? createCropSource({ ...originalContent, rect: contentRect }) : source;
   const figureCandidates = (entry.figureCandidates ?? []).flatMap((candidate) => {
@@ -360,13 +514,23 @@ function securedPdfEntry(document, entry) {
   return { ...entry, documentId: document.id, text, normalized: normalizedText(text), words, source, contentSource, figureCandidates };
 }
 
-function pdfResults(documents, index) {
+function groupIndexEntries(index) {
+  const grouped = new Map();
+  for (const entry of index?.entries || []) {
+    let list = grouped.get(entry.documentId);
+    if (!list) grouped.set(entry.documentId, list = []);
+    list.push(entry);
+  }
+  return grouped;
+}
+
+function pdfResults(documents, index, entriesByDocument = groupIndexEntries(index)) {
   const results = [];
   const sources = [];
   const files = [];
   for (const document of documents) {
     const resultStart = results.length;
-    const entries = entriesForDocument(index, document).flatMap((entry) => {
+    const entries = entriesForDocument(index, document, entriesByDocument).flatMap((entry) => {
       const secured = securedPdfEntry(document, entry);
       return secured ? [secured] : [];
     });
@@ -446,7 +610,7 @@ function pdfResults(documents, index) {
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (relativeFolders[0] === categoryLabel) relativeFolders.shift();
     const examPath = metadata ? [`${metadata.academicYear}학년도`, administration].filter(Boolean)
-      : [document.source?.kind === "file" ? "연결 폴더" : null, ...relativeFolders].filter(Boolean);
+      : [document.source?.kind === "file" ? connectionName(document.source.connectionId) || "연결 폴더" : null, ...relativeFolders].filter(Boolean);
     sources.push(sourceNode(sourceId, document.source?.displayName ?? document.title, ["crop", "page"], 1, {
       origin, category, pathSegments: document.driveFolder ? pathSegments(document.source.relativePath).slice(0, -1) : examPath,
       ...(document.driveFolder ? { driveFolder: document.driveFolder } : {}),
@@ -456,8 +620,17 @@ function pdfResults(documents, index) {
   return { results, sources, files };
 }
 
-function resultMatches(result, query, compact) {
-  if (!compact) return matchesText(result.searchText, tokens(query));
+function resultMatches(result, queryTokens, compact) {
+  if (!compact) {
+    if (!queryTokens.length) return true;
+    let searchable = searchableResultText.get(result);
+    if (!searchable) {
+      const text = normalizedText([result.title, result.searchText, examTagsOf(result)?.text ?? ""].join(" "));
+      searchable = [text, text.replace(/\s+/gu, "")];
+      searchableResultText.set(result, searchable);
+    }
+    return queryTokens.every((token) => searchable.some((text) => text.includes(token)));
+  }
   const actual = result.metadata;
   if (!examMetadataMatches(actual, compact)) return false;
   if (compact.itemNumber === null) return true;
@@ -505,10 +678,41 @@ function contextualized(result, query) {
 }
 
 export function createUnifiedLibraryProvider(input = {}) {
+  return createProvider(input);
+}
+
+// Keep the same crop/source validators, yielding between small document batches
+// so an arriving search index cannot freeze opening, closing or pointer input.
+// 11-12 밤샘: 라이브러리 화면은 검색으로 찾은 PDF 문항이 바뀔 때마다 제공자를 다시 만든다 — 그때마다 수천 쪽의
+// PDF 문항 목록을 처음부터 다시 정리해(글자 정리·쪽 아래 경계) 검색 한 번에 주 스레드가 0.3~0.4초 멈췄다.
+// 같은 PDF 목록(색인 객체가 그대로이고 판 표시 revision이 같음 — 문서 배열은 매번 복사되어 옴)이면 앞서 만든 목록을 다시 쓴다.
+const preparedPdfCache = new WeakMap();
+export async function createUnifiedLibraryProviderAsync(input = {}) {
+  const cacheIndex = input.pdfSearchIndex && typeof input.pdfSearchIndex === 'object' ? input.pdfSearchIndex : null;
+  const cached = cacheIndex ? preparedPdfCache.get(cacheIndex) : null;
+  const cacheRevision = typeof input.revision === 'string' && input.revision ? input.revision : null;
+  if (cached && cacheRevision && cached.revision === cacheRevision) return createProvider(input, cached.pdf);
+  const documents = uniquePdfDocuments(input.pdfDocuments), index = input.pdfSearchIndex;
+  const grouped = groupIndexEntries(index), pdf = { results: [], sources: [], files: [] };
+  let sliceStart = performance.now();
+  for (let i = 0; i < documents.length; i++) {
+    const part = pdfResults([documents[i]],index,grouped);
+    for (const key of ['results','sources','files']) pdf[key].push(...part[key]);
+    if (performance.now()-sliceStart >= 6 && i < documents.length-1) {
+      if (globalThis.scheduler?.yield) await scheduler.yield();
+      else await new Promise(resolve=>setTimeout(resolve,0));
+      sliceStart = performance.now();
+    }
+  }
+  if (cacheIndex && cacheRevision) preparedPdfCache.set(cacheIndex, { revision: cacheRevision, pdf });
+  return createProvider(input,pdf);
+}
+
+function createProvider(input, preparedPdf) {
   const images = collectImageResults(input);
   let documents = uniquePdfDocuments(input.pdfDocuments);
   let searchIndex = input.pdfSearchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
-  let pdf = pdfResults(documents, searchIndex);
+  let pdf = preparedPdf || pdfResults(documents, searchIndex);
   let revision = String(input.revision ?? input.catalogRevision ?? "catalog:0");
   const resolvedPdfResults = (Array.isArray(input.resolvedPdfResults) ? input.resolvedPdfResults : []).flatMap((resolved) => {
     const canonical = pdf.results.find((result) => result.id === resolved?.id && result.kind === "crop" && result.cropType === "question");
@@ -546,6 +750,16 @@ export function createUnifiedLibraryProvider(input = {}) {
   });
   const materializers = input.materializers ?? {};
 
+  function groupPdfResultsBySource() {
+    const grouped = new Map();
+    for (const result of pdf.results) {
+      if (!grouped.has(result.sourceId)) grouped.set(result.sourceId, []);
+      grouped.get(result.sourceId).push(result);
+    }
+    return grouped;
+  }
+  let pdfResultsBySource = groupPdfResultsBySource();
+
   async function loadPdfPage(file, pageNumber = 1, options = {}) {
     const document = documents.find((candidate) => candidate.id === file.documentId);
     const page = Number(pageNumber);
@@ -579,6 +793,7 @@ export function createUnifiedLibraryProvider(input = {}) {
 
   function search(options = {}) {
     const compact = parseCompactExamCode(options.query);
+    const queryTokens = compact ? [] : tokens(options.query ?? "");
     const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
     const allowedKinds = normalizedKinds(options.kinds);
     let found = allResults().filter((result) =>
@@ -586,14 +801,16 @@ export function createUnifiedLibraryProvider(input = {}) {
       && (!allowedKinds || allowedKinds.has(result.kind))
       && matchesFilters(result, options.filters)
       && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true)
-      && resultMatches(result, options.query ?? "", compact));
+      && resultMatches(result, queryTokens, compact));
     if (!allowedKinds && compact?.itemNumber !== null && found.some((result) => result.kind === "crop")) {
       found = found.filter((result) => result.kind === "crop");
     }
+    const scores = new Map(queryTokens.length ? found.map((result) => [result, examSearchScore(result, queryTokens)]) : []);
     found.sort((left, right) => {
       const exactLeft = compact && left.metadata.itemCode === compact.itemCode ? 1 : 0;
       const exactRight = compact && right.metadata.itemCode === compact.itemCode ? 1 : 0;
       return exactRight - exactLeft
+        || (scores.get(right) ?? 0) - (scores.get(left) ?? 0)
         || compareExamResults(left, right)
         || ((left.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER) - (right.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER))
         || left.title.localeCompare(right.title, "ko");
@@ -640,12 +857,13 @@ export function createUnifiedLibraryProvider(input = {}) {
       const compact = parseCompactExamCode(options.query);
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const queryText = options.query ?? "";
+      const queryTokens = compact ? [] : tokens(queryText);
       const found = pdf.files.filter((file) => {
         if (allowedSources && !allowedSources.has(file.sourceId)) return false;
         if (!matchesPdfInventoryFilters(file, options.filters)) return false;
         if (!String(queryText).trim()) return true;
-        return pdf.results.some((result) => result.sourceId === file.sourceId
-          && resultMatches(result, queryText, compact));
+        return resultMatches(file, queryTokens, compact) || (pdfResultsBySource.get(file.sourceId) ?? [])
+          .some((result) => resultMatches(result, queryTokens, compact));
       });
       return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
         ...file,
@@ -674,11 +892,11 @@ export function createUnifiedLibraryProvider(input = {}) {
       for (const document of allowedDocuments) {
         for (const page of document.pages ?? []) {
           const key = `${document.id}\0${page.pageNumber}`;
-          if (matchedPages.has(key) || !matchesText(page.text, queryTokens)) continue;
+          if (matchedPages.has(key) || !pageMatches(page, queryTokens)) continue;
           const mapped = mapQueryHighlights({ ...page, documentId: document.id }, query);
           const pageText = String(page.text ?? "");
           const firstMatch = queryTokens.reduce((offset, token) => {
-            const found = normalizedText(pageText).indexOf(token);
+            const found = pageTextForms(page)[0].indexOf(token);
             return found < 0 ? offset : Math.min(offset, found);
           }, Number.POSITIVE_INFINITY);
           const snippetStart = Number.isFinite(firstMatch) ? Math.max(0, firstMatch - 48) : 0;
@@ -740,22 +958,47 @@ export function createUnifiedLibraryProvider(input = {}) {
           loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
         });
       });
-      // File-name matches remain usable after the full-text index becomes ready.
-      const filenameMatches = [...filesByDocument.values()].filter(file =>
-        !matchesByDocument.has(file.documentId) && matchesText(file.searchText, queryTokens));
+      // The worker searches body text; preserve visible titles and canonical
+      // local matches without inventing highlights on the PDF page.
+      const filenameMatches = this.listPdfFiles(options).filter(file =>
+        !matchesByDocument.has(file.documentId));
       return Object.freeze([...found, ...filenameMatches].slice(0, boundedLimit(options.limit)));
     },
     listPdfPages(options = {}) {
       const compact = parseCompactExamCode(options.query);
+      const queryTokens = compact ? [] : tokens(options.query ?? "");
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const found = pdf.results.filter((result) => result.kind === "page"
         && (!allowedSources || allowedSources.has(result.sourceId))
         && (!options.sourceId || result.sourceId === options.sourceId)
         && matchesFilters(result, options.filters)
-        && resultMatches(result, options.query ?? "", compact))
+        && resultMatches(result, queryTokens, compact))
         .map((result) => contextualized(result, options.query ?? ""));
       const limit = Number.isInteger(options.limit) && options.limit > 0 ? boundedLimit(options.limit) : found.length;
       return Object.freeze(found.sort(compareExamResults).slice(0, limit));
+    },
+    // 11-05: 왼쪽 「조건」 칸의 개수 — 지금 검색어·검색 위치에서 걸리는 문항 수. 각 조건 묶음은 자기 조건만 빼고 센다
+    // (과목을 바꾸면 다른 과목 수가 0이 되지 않게). 결과 목록을 만들지 않고 세기만 한다.
+    facetCounts(options = {}) {
+      const compact = parseCompactExamCode(options.query);
+      const queryTokens = compact ? [] : tokens(options.query ?? "");
+      const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
+      const filters = options.filters ?? {};
+      const base = allResults().filter((result) => result.kind === "crop"
+        && (!allowedSources || allowedSources.has(result.sourceId)) && resultMatches(result, queryTokens, compact));
+      const pass = (result, omit) => matchesFilters(result, { ...filters, ...omit });
+      const subjects = {}, parts = {}, years = {}, exams = { kice: 0, hak: 0 }, shapes = { figure: 0, table: 0, bogi: 0 };
+      let total = 0;
+      for (const result of base) {
+        const metadata = result.metadata ?? {}, tags = examTagsOf(result);
+        if (pass(result, { subjects: [], parts: [] })) subjects[metadata.subject] = (subjects[metadata.subject] ?? 0) + 1;
+        if (tags && pass(result, { parts: [] })) for (const part of tags.parts) { const key = `${metadata.subject}|${part}`; parts[key] = (parts[key] ?? 0) + 1; }
+        if (Number.isInteger(metadata.academicYear) && pass(result, { startYear: null, endYear: null })) years[metadata.academicYear] = (years[metadata.academicYear] ?? 0) + 1;
+        if (metadata.administration && pass(result, { exam: "" })) exams[KICE_ADMINISTRATIONS.has(metadata.administration) ? "kice" : "hak"] += 1;
+        if (tags && pass(result, { shapes: [] })) { if (tags.figure) shapes.figure += 1; if (tags.table) shapes.table += 1; if (tags.bogi) shapes.bogi += 1; }
+        if (pass(result, {})) total += 1;
+      }
+      return Object.freeze({ total, subjects, parts, years, exams, shapes });
     },
     getExamFilterOptions() {
       const metadata = allResults().filter((result) => result.kind === "crop").map((result) => result.metadata ?? {});
@@ -777,12 +1020,17 @@ export function createUnifiedLibraryProvider(input = {}) {
           && matchesFilters({ metadata: deriveExamMetadata({ metadata: document.metadata, source: document.source }) }, options.filters)).map((document) => document.id),
         filters: {}, limit: boundedLimit(options.limit),
       });
-      const nonPdf = local.filter((result) => result.provenance?.provider !== "pdf");
-      const merged = dedupeResults([...nonPdf, ...normalizeWorkerEntries(workerEntries ?? [])]).filter((result) =>
+      const merged = dedupeResults([...normalizeWorkerEntries(workerEntries ?? []), ...local]).filter((result) =>
         (!allowedSources || allowedSources.has(result.sourceId))
         && (!allowedKinds || allowedKinds.has(result.kind))
         && matchesFilters(result, options.filters)
         && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true));
+      const queryTokens = tokens(options.query ?? "");
+      if (queryTokens.length) {
+        const order = new Map(merged.map((result, index) => [result, index]));
+        const scores = new Map(merged.map((result) => [result, examSearchScore(result, queryTokens)]));
+        merged.sort((left, right) => (scores.get(right) - scores.get(left)) || (order.get(left) - order.get(right)));
+      }
       return Object.freeze(merged.slice(0, boundedLimit(options.limit)).map((result) => contextualized(withManualCrop(result), options.query ?? "")));
     },
     replacePdfCatalog(next = {}) {
@@ -790,6 +1038,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       searchIndex = next.searchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
       revision = String(next.revision ?? next.catalogRevision ?? revision);
       pdf = pdfResults(documents, searchIndex);
+      pdfResultsBySource = groupPdfResultsBySource();
     },
     getSources() {
       return createHierarchicalSourceNodes([...images.sources, ...pdf.sources]);

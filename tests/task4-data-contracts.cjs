@@ -2,9 +2,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { pathToFileURL } = require('node:url');
 
-const root = path.resolve(__dirname, '../preview/js');
+const root = path.resolve(__dirname, '../js');
 const read = name => fs.readFileSync(path.join(root, `${name}.js`), 'utf8');
+const productModule = name => import(`${pathToFileURL(path.join(root, `${name}.js`)).href}?v=1.7.0-four-session-integration`);
 const strip = source => source
   .replace(/^import\s[\s\S]*?;\n/gm, '')
   .replace(/\bexport\s+(?=(?:async\s+)?function|const|let|class)/g, '');
@@ -31,31 +33,26 @@ function makeStore(ctx, pages, activePageId = pages[0].id) {
   });
 }
 
-function dataContext() {
+async function dataContext() {
+  // Use the same real store/history/geometry/import implementations that both
+  // web entries share. Only the page dialog/DOM boundary needs a VM fixture.
+  const [store, types, history, project, transform] = await Promise.all(
+    ['store', 'object-types', 'page-history', 'project-io', 'transform'].map(productModule));
   const ctx = vm.createContext({
     console, Blob, URL, TextEncoder, TextDecoder, Uint8Array, DataView, atob, btoa,
     window: {}, document: { getElementById: () => null }, showConfirm: async () => true,
-    LABEL_CAPABLE_TYPES: new Set(['rect', 'ellipse', 'labeler']),
-    migrateObjectStyleMode: () => {}, DEFAULT_TEXT_FONT: 'sans-serif', DEFAULT_TEXT_SIZE_MM: 3,
-    normalizeTextRuns: value => value.textRuns,
-    textRunsToText: runs => runs.map(run => run.text).join(''),
+    ...store, ...types, ...history, ...project,
+    rebuildGroups: transform.rebuildGroups, undo: transform.undo, redo: transform.redo,
   });
-  vm.runInContext(strip(read('object-types')), ctx, { filename: 'object-types.js' });
   ctx.geometryCoverage = vm.runInContext(`OBJECT_TYPE_IDS.filter(type => !SIZE_TYPES.has(type)
     && !ENDPOINT_HANDLE_TYPES.has(type) && !POINT_ARRAY_TYPES.has(type)
     && !TEXT_MEASURED_TYPES.has(type) && type !== 'anglearc' && type !== 'rightangle')`, ctx);
-  for (const name of ['store', 'page-history', 'document-history']) {
-    vm.runInContext(strip(read(name)), ctx, { filename: `${name}.js` });
-  }
-  vm.runInContext(strip(read('project-io')), ctx, { filename: 'project-io.js' });
   vm.runInContext(strip(read('pages')), ctx, { filename: 'pages.js' });
-  vm.runInContext(strip(read('transform').split('/* ===== MOVE GESTURE ===== */')[0]), ctx,
-    { filename: 'transform-history.js' });
   return ctx;
 }
 
 async function testPageHistory() {
-  const ctx = dataContext();
+  const ctx = await dataContext();
   const state = makeStore(ctx, [page('a', [line('a1', 5)]), page('b', [line('b1', 8)])]);
   state.get().undoStack.push([line('a1', 0)]);
   ctx.switchPage(state, 'b');
@@ -86,8 +83,8 @@ async function testPageHistory() {
   assert.equal(inactive.get().objects[0].p1.x, 0, 'inactive restored page keeps its history');
 }
 
-function testAtomicImport() {
-  const ctx = dataContext();
+async function testAtomicImport() {
+  const ctx = await dataContext();
   assert.deepEqual(clone(ctx.geometryCoverage), [], 'every registered object type has a geometry parser');
   const state = makeStore(ctx, [page('original', [line('safe', 3)])]);
   state.get().selectedIds = ['safe'];
@@ -107,8 +104,8 @@ function testAtomicImport() {
   }
 }
 
-function testPageContextGuard() {
-  const ctx = dataContext();
+async function testPageContextGuard() {
+  const ctx = await dataContext();
   const state = makeStore(ctx, [page('a'), page('b')]);
   const a = state.capturePageContext();
   assert.equal(state.isPageContextCurrent(a), true);

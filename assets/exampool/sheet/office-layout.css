@@ -1,0 +1,1094 @@
+/* ExamPool 카드 화면 정리(10-20 승인 시안 exampool-layout.html)
+ * 1. 세 칸 머리 줄 맨 앞에 칸 이름(참고 자료 · 문항 카드 · AI · 조판) — 같은 높이·글씨
+ * 2. 좌우 칸 닫기는 그 칸 머리 줄의 바깥쪽 끝, 닫힌 칸은 가장자리 세로 띠
+ * 3. 칸 경계 손잡이가 늘 보이게
+ * 4. 둥글기 3단계(칸 12 · 카드/상자 10 · 단추/입력칸 6)
+ * 5. 자료: 1개면 가운데, 여러 개면 한 줄로 카드 폭에 맞춰 비율대로
+ * 6. 단계 칩은 좁아도 한 줄
+ */
+
+/* 1. 칸 이름 */
+#card-view .pane-role{display:inline-flex;align-items:center;gap:6px;flex:none;height:30px;padding:0 10px 0 4px;color:var(--ds-ink);font-size:var(--cv-text-body,13px);font-weight:var(--ds-weight-strong,600);white-space:nowrap}
+#card-view .pane-role .ico{width:16px;height:16px;flex:none;color:var(--ds-ink-3)}
+#card-view .cv-ph .pane-role{padding-left:0}
+#card-view .cv-ph .pane-role,#card-view .cv-bar .pane-role,#card-view .lp-one .pane-role{font-size:var(--cv-text-body,13px)!important;color:var(--ds-ink)!important;font-weight:var(--ds-weight-strong,600)!important;opacity:1!important}
+.cv-right{container:rpane/inline-size}
+@container lib (max-width:600px){#card-view .lp-adv span{display:none}}
+@container lib (max-width:560px){#card-view .lp-one .lp-search .lp-n{display:none}#card-view .lp-one .lp-search{min-width:96px}}
+/* 11-06: 칸을 가장 좁게(240~280px) 줄이면 떼어 내기 단추까지 머리줄에 다 못 들어가 칸 밖으로 넘쳤다 — 그때만 떼어 내기를 접는다(넓히면 다시 보임). */
+@container lib (max-width:280px){#card-view .lp-one .pane-detach{display:none}}
+@container lib (max-width:440px){#card-view .cv-left .pane-role span{display:none}#card-view .cv-left .pane-role{padding-right:4px}}
+@container (max-width:380px){#card-view .cv-bar .pane-role span{display:none}#card-view .cv-bar .pane-role{padding-right:4px}}
+@container rpane (max-width:470px){#card-view .cv-ph .pane-role span{display:none}#card-view .cv-ph .pane-role{padding-right:2px}}
+
+/* 2. 닫기 단추(바깥쪽 끝)와 닫힌 칸 띠 */
+#card-view .pane-close{flex:none;width:30px;height:30px;padding:0;display:grid;place-items:center;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-3);cursor:pointer}
+#card-view .pane-close:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-close .ico{width:17px;height:17px}
+#card-view .lp-one .pane-close{margin-left:-2px}
+#card-view .pane-rail{flex:0 0 32px;align-self:stretch;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0;border:0;border-radius:var(--cv-pane-radius,12px);background:var(--ds-panel);box-shadow:0 0 0 1px var(--ds-line);color:var(--ds-ink-2);font:inherit;font-size:var(--cv-text-small,12.5px);cursor:pointer}
+#card-view .pane-rail.left{margin-right:var(--cv-gutter,8px)}
+#card-view .pane-rail.right{margin-left:var(--cv-gutter,8px)}
+#card-view .pane-rail .ico{width:17px;height:17px;color:var(--ds-ink-3)}
+#card-view .pane-rail span{writing-mode:vertical-rl;letter-spacing:2px;white-space:nowrap}
+#card-view .pane-rail:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-rail:focus-visible{outline:2px solid var(--go-line,#6ba4f8);outline-offset:-2px}
+
+/* 3. 칸 경계 손잡이: 4×36 막대가 늘 보이고, 올리거나 끌면 파란색 */
+/* 10-20 보강: 칸 사이 14px·바깥 10px, 막대 5×56 진하게, 올리면 위아래 안내선 */
+#card-view{--cv-gutter:14px;padding:10px!important}
+#card-view .cv-split::before{left:calc(50% - 2.5px);width:5px;height:56px;margin-top:-28px;border-radius:3px;background:var(--ds-ink-3);opacity:.9;transition:opacity .15s,background-color .15s,height .18s ease-out,margin-top .18s ease-out}
+#card-view .cv-split::after{left:calc(50% - .5px);width:1px;top:12px;bottom:12px;background:var(--go-line,#6ba4f8);opacity:0;transition:opacity .15s}
+#card-view .cv-split:hover::before,#card-view .cv-split.drag::before{opacity:1;height:72px;margin-top:-36px;background:var(--go-line,#6ba4f8)}
+#card-view .cv-split:hover::after,#card-view .cv-split.drag::after{opacity:.45;background:var(--go-line,#6ba4f8)}
+
+/* 4. 둥글기 3단계 */
+#card-view .cv-writer section,#card-view .cv-add-row,#card-view .cv-tile,#card-view .lp-linked,#card-view .past,#card-view .msg{border-radius:var(--cv-sec-radius,10px)}
+#card-view .cv-writer :is(input,textarea,select),#card-view .lp-search,#card-view .lp-scope,#card-view .cv-shape{border-radius:var(--cv-ctl-radius,6px)}
+
+/* 5. 자료: 1개면 가운데, 여러 개면 한 줄로 카드 폭에 맞춰 비율대로(칸당 최대 420px), 2단으로 꺾지 않는다 */
+#card-view .cv-tiles{flex-wrap:nowrap;justify-content:center}
+#card-view .cv-tile{flex:1 1 0;width:auto;min-width:0;max-width:420px}
+#card-view .cv-tile .pic{height:auto;aspect-ratio:16/10}
+#card-view .cv-tile .pic img{max-height:100%}
+#card-view .cv-tile.empty .pic{gap:8px;padding:10px;align-content:center}
+#card-view .cv-tile.empty .pic .btn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-tile .cap{min-width:0}
+#card-view .cv-tile .cap>*{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container (max-width:520px){#card-view .cv-tile .cap .mini{padding:0 4px}#card-view .cv-tile.empty .pic .btn .ico{display:none}}
+
+/* 6. 단계 칩: 좁아도 한 줄(글은 점과 짧게) */
+#card-view .w-head{flex-wrap:nowrap}
+#card-view .w-head .stage{flex:none}
+/* 좁으면 지금 단계만 글로, 나머지는 점만(눌러 바꾸기·이름은 title) */
+@container (max-width:620px){#card-view .w-head .stage button{padding:0 8px}}
+@container (max-width:560px){#card-view .w-head .stage button:not([aria-pressed=true]){font-size:0;gap:0;padding:0 9px}#card-view .w-head .stage button:not([aria-pressed=true]) .dot{margin:0}}
+#card-view .pane-role>span{font-size:inherit!important;color:inherit!important;font-weight:inherit!important}
+#card-view .pane-rail{height:auto!important;background:var(--ds-panel)!important;padding:10px 0!important;justify-content:flex-start!important}#card-view .pane-rail:hover{background:var(--ds-hover)!important}
+
+/* 조판 안내 줄 → ⓘ 단추(올리거나 누르면 보임). 오류·출력 기준 넘음일 때만 줄을 보인다. */
+.cv-hwp-layer #preview-dialog.docked .typeset-info{display:none}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]),
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-metrics[data-exceeded=true]){display:flex}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]) #typeset-metrics{display:none}
+.cv-hwp-layer .typeset-view-controls{position:relative}
+.typeset-info-wrap{position:static;display:inline-flex;margin-left:2px}
+#typeset-info-btn{width:22px;height:22px;min-width:0;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--ds-doc-ink-2,#5c6670);box-shadow:inset 0 0 0 1.5px currentColor;font:600 12px/1 Georgia,serif;font-style:italic;cursor:help}
+#typeset-info-btn:hover,#typeset-info-btn[aria-expanded=true]{color:var(--ds-hwp,#1a5fb4)}
+#typeset-info-btn[data-warn=true]{color:var(--ds-danger)}
+#typeset-info-pop{position:absolute;z-index:30;top:calc(100% + 4px);left:8px;right:8px;width:auto;display:grid;gap:4px;padding:8px 10px;border-radius:8px;background:var(--ds-doc,#fff);color:var(--ds-doc-ink,#1b1e23);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-doc-line,#e3e6ea);font-size:var(--ds-text-meta,12px);line-height:1.5}
+#typeset-info-pop[hidden]{display:none}
+#typeset-info-pop .warn{color:var(--ds-danger)}
+
+/* 13. 조판 칸: 칸 안의 또 하나의 창(둥근 테두리·그림자·어두운 「5e_hwp」 머리 줄)을 없애고 칸 바탕 위에 바로.
+   「HWPX · 조판 저장」은 칸 머리 줄로(card-editor pane-acts, 진짜 단추를 대신 누름). */
+.cv-hwp-layer{padding:0!important;background:var(--ds-doc,#fff)!important}
+.cv-hwp-layer #preview-dialog.docked{border-radius:0!important;box-shadow:none!important;margin:0!important;border:0!important}
+.cv-hwp-layer #preview-dialog.docked .typeset-head{display:none!important}
+.cv-hwp-layer #preview-dialog.docked .typeset-view-controls{border-bottom:1px solid var(--ds-doc-line,#e3e6ea)}
+#card-view .pane-acts{display:inline-flex;align-items:center;gap:6px;margin-right:2px}
+#card-view .pane-act{height:28px;padding:0 10px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);font:inherit;font-size:var(--cv-text-small,12.5px);cursor:pointer;white-space:nowrap}
+#card-view .pane-act:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-act.go{background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .pane-act:disabled{opacity:.45;cursor:default}
+
+/* 15. 기출·교과서 카드 아래 줄: 「제목 ··· [🔗 근거] [변형]」 한 줄, 근거도 변형과 같은 은은한 단추 */
+#card-view .cv-left .past figcaption{flex-wrap:nowrap!important;align-items:center}
+#card-view .cv-left .past figcaption b{flex:1 1 auto!important;min-width:0}
+#card-view .cv-left .past figcaption .acts{flex:none;display:inline-flex;gap:6px!important;margin-left:auto}
+#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border-radius:var(--cv-ctl-radius,6px);background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) .ico{width:14px;height:14px}
+@container lib (max-width:440px){#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) span{display:none}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){padding:0 7px}}
+/* 카드가 좁으면(제목이 잘릴 폭) 단추를 둘째 줄로 내려 제목을 온전히 보인다 */
+#card-view .cv-left .past{container:pastcard/inline-size}
+@container pastcard (max-width:310px){#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) span{display:none}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){padding:0 7px}}
+/* 10-20: 어떤 폭에서도 한 줄 — 좁아지면 글자·단추를 줄이고, 끝까지 좁으면 제목만 「…」(전체 제목은 마우스 올림) */
+#card-view .cv-left .past figcaption b{flex:1 1 0!important;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container pastcard (max-width:250px){#card-view .cv-left .past figcaption{gap:4px!important}#card-view .cv-left .past figcaption b{font-size:12.5px}#card-view .cv-left .past figcaption .acts{gap:4px!important}#card-view .cv-left .past figcaption .acts button{height:24px!important;min-height:24px;padding:0 6px!important;font-size:12px}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) .ico{width:13px;height:13px}}
+@container pastcard (max-width:190px){#card-view .cv-left .past figcaption b{font-size:12px;letter-spacing:-.2px}#card-view .cv-left .past figcaption .acts{gap:3px!important}#card-view .cv-left .past figcaption .acts button{padding:0 5px!important}}
+
+/* 조판 칸이 위아래로 밀리지 않게: 도구 줄은 늘 자리를 두고(고르기 전에는 흐리게), 오류·기준 넘음 안내는
+   흐름에서 빼 칸 아래쪽에 떠 있는 알림으로 보인다(종이 위치는 그대로). */
+.cv-hwp-layer #preview-dialog.docked{position:relative}
+.cv-hwp-layer #preview-dialog.docked #typeset-context[hidden]{display:flex!important}
+.cv-hwp-layer #preview-dialog.docked #typeset-context[data-idle] :is(button,select,label){opacity:.4;pointer-events:none}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]),
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-metrics[data-exceeded=true]){position:absolute;z-index:20;left:10px;right:10px;bottom:10px;border:0;border-radius:8px;background:var(--ds-doc,#fff);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-danger);animation:ep-backdrop-fade 180ms ease-out}
+
+/* 16. 성취기준 과목 고르기 두 단계: ① 과목 성격(네모) → ② 과목(둥근 단추). 고른 것은 은은한 파랑. */
+#sources #source-content .std-kinds,#sources #source-content .std-subs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+#sources #source-content .std-subs{padding-bottom:10px;border-bottom:1px solid var(--ds-line,#30363d)}
+#sources #source-content .std-kinds button,#sources #source-content .std-subs button{height:28px;padding:0 11px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);font-size:12.5px;box-shadow:inset 0 0 0 1px var(--ds-line,#30363d)}
+#sources #source-content .std-subs button{height:26px;border-radius:13px;padding:0 10px;font-size:12px}
+#sources #source-content :is(.std-kinds,.std-subs) button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#sources #source-content :is(.std-kinds,.std-subs) button[aria-pressed=true]{background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#sources #source-content .std-crumb{margin:8px 0 4px}
+
+/* 17·18. 기출 「문항 | 쪽」 띠·쪽 보기·형광펜 */
+#card-view .lp-viewbar{grid-column:1/-1;position:sticky;top:-12px;z-index:3;display:flex;align-items:center;gap:8px;min-width:0;margin:-12px 0 0;padding:12px 0 6px;background:var(--ds-panel)}
+#card-view .lp-seg{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:7px;background:var(--ds-bench);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .lp-seg button{height:24px;padding:0 10px;border:0;border-radius:5px;background:transparent;color:var(--ds-ink-2);font-size:12.5px}
+#card-view .lp-seg button:hover{color:var(--ds-ink)}
+#card-view .lp-seg button[aria-pressed=true]{background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .lp-vb-note{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ds-ink-3);font-size:12px}
+#card-view .lp-viewbar select{flex:1 1 0;min-width:0;height:28px;font-size:12.5px}
+#card-view .lp-pnav{flex:none;display:inline-flex;align-items:center;gap:2px;color:var(--ds-ink-2);font-size:12.5px;white-space:nowrap}
+#card-view .lp-pnav button{width:26px;height:26px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font-size:16px}
+#card-view .lp-pnav button:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-pnav button:disabled{opacity:.35}
+#card-view .lp-pdf{flex:none;display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:6px;color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8);font-size:12px;font-weight:600;text-decoration:none}
+#card-view .lp-pageview{display:flex!important;flex-direction:column;gap:8px}
+#card-view .lp-pageview>*{flex:none}
+#card-view .lp-paper{position:relative;display:grid;place-items:center;min-height:240px;border-radius:var(--cv-sec-radius,10px);background:#fff;overflow:hidden;box-shadow:0 0 0 1px var(--ds-line)}
+#card-view .lp-paper canvas{display:block;width:100%;height:auto}
+#card-view .lp-paper-wait{display:inline-flex;align-items:center;gap:8px;color:#57606a;font-size:13px}
+#card-view .lp-paper-wait.err{padding:0 16px;text-align:center;color:var(--ds-danger)}
+#card-view .lp-paper-wait i,#card-view .past-pic[data-marking]::after{width:14px;height:14px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;animation:ep-spin .7s linear infinite}
+#card-view .lp-qchips{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+#card-view .lp-qnote{color:var(--ds-ink-3);font-size:12px;margin-right:2px}
+#card-view .lp-q{display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 9px;border-radius:8px;background:var(--ds-bench);box-shadow:inset 0 0 0 1px var(--ds-line);color:var(--ds-ink-2);font-size:12.5px}
+#card-view .lp-q.on{box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .lp-q b{color:var(--ds-ink);margin-right:2px}
+#card-view .lp-q .mini{height:24px;padding:0 7px;font-size:12px}
+#card-view .lp-q [data-cvlink]{display:inline-flex;align-items:center;gap:3px}
+#card-view .lp-q [data-cvlink] .ico{width:13px;height:13px}
+/* 카드 형광펜 준비 중: 그림 오른쪽 위 작은 도는 표시 */
+#card-view .past-pic{position:relative}
+#card-view .past-pic[data-marking]::after{content:"";position:absolute;top:8px;right:8px;background:#fffc}
+/* 검색어 조각 색 = 형광펜 색(노랑·초록·하늘). 두꺼운 밑줄 대신 단어 앞 작은 색 점(10-22 시안 exampool-1022 안 A) */
+#card-view .lp-search .lp-token::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--lp-dot,transparent)}
+#card-view .lp-search .lp-token:nth-child(1){--lp-dot:rgba(255,214,0,.9)}
+#card-view .lp-search .lp-token:nth-child(2){--lp-dot:rgba(120,220,90,.9)}
+#card-view .lp-search .lp-token:nth-child(3){--lp-dot:rgba(90,190,255,.9)}
+@keyframes ep-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){#card-view .lp-paper-wait i,#card-view .past-pic[data-marking]::after{animation:none}}
+
+/* 24. 움직임(시안 exampool-motion.html, 5E 라이브러리 단추와 같은 0.14초) */
+:root{--ep-ease:cubic-bezier(.2,.8,.2,1)}
+button,select,.lp-pdf,.lp-token{transition:background-color 140ms var(--ep-ease),color 140ms var(--ep-ease),box-shadow 140ms var(--ep-ease),border-color 140ms var(--ep-ease),opacity 140ms var(--ep-ease),transform 90ms ease-out}
+button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:active{transform:scale(.96)}
+#card-view .pane-rail:active{transform:scale(.98)}
+/* 메뉴·상세검색·유형 바꾸기: 단추 쪽에서 살짝 커지며 나타남 */
+.top-menu:not([hidden]){transform-origin:top right;animation:ep-menu-in 160ms cubic-bezier(.2,.9,.25,1.06)}
+#card-view .lp-adv-pop:not([hidden]),#card-view .cv-shape-menu{transform-origin:top left;animation:ep-menu-in 160ms cubic-bezier(.2,.9,.25,1.06)}
+@keyframes ep-menu-in{from{opacity:0;transform:scale(.96) translateY(-4px)}}
+/* 칸 열기·닫기 */
+#card-view .cv-left.ep-pane-in{animation:ep-pane-l 220ms var(--ep-ease)}
+#card-view .cv-right.ep-pane-in,.cv-hwp-layer.ep-pane-in{animation:ep-pane-r 220ms var(--ep-ease)}
+#card-view .cv-center.ep-reflow{animation:ep-reflow 200ms var(--ep-ease)}
+@keyframes ep-pane-l{from{opacity:0;transform:translateX(-14px)}}
+@keyframes ep-pane-r{from{opacity:0;transform:translateX(14px)}}
+@keyframes ep-reflow{from{opacity:.55}}
+/* 보기 바꾸기: 새 내용만 떠오름 */
+.ep-swap{animation:ep-swap 200ms var(--ep-ease)}
+@keyframes ep-swap{from{opacity:0;transform:translateY(4px)}}
+@media (prefers-reduced-motion:reduce){
+  button,select,.lp-pdf,.lp-token{transition:none}
+  button:active,.lp-pdf:active{transform:none!important}
+  .top-menu,#card-view .lp-adv-pop,#card-view .cv-shape-menu,#card-view .ep-pane-in,.cv-hwp-layer.ep-pane-in,#card-view .ep-reflow,.ep-swap{animation:none!important}
+}
+
+/* 25. 참고 자료 머리 줄(묶음 D 시안): [닫기][범위▾][검색 … 조건 N][문항|쪽]. 칸 이름표·라이브러리·근거 수 단추 없음. */
+#card-view .lp-one .lp-slot{flex:1 1 0;min-width:0}
+#card-view .lp-one .lp-slot .lp-search{padding-right:40px}
+#card-view .lp-one .lp-adv{flex:none;position:relative;z-index:2;margin-left:-44px;height:24px;padding:0 6px;border:0;border-radius:5px;background:transparent;color:var(--ds-ink-3);gap:3px;font-size:11.5px}
+#card-view .lp-one .lp-adv>span{display:none}
+#card-view .lp-one .lp-adv:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-66px;color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137)}
+#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:64px}
+#card-view .lp-one .lp-adv i{min-width:0;height:auto;padding:0;background:transparent;font-size:11.5px;line-height:1;color:inherit}
+#card-view .lp-one .lp-adv i::before{content:"조건 "}
+#card-view .lp-headseg{flex:none;height:30px;align-items:center}
+#card-view .lp-headseg button{display:inline-grid;place-items:center;width:28px;height:26px;padding:0}
+#card-view .lp-headseg .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+/* 근거 줄: 칸 맨 아래 한 줄, 누르면 펼쳐 전부 보임 */
+#card-view .cv-left .lp-linked{display:flex;flex-direction:row;align-items:center;gap:6px;width:100%;min-height:36px;margin:0;padding:6px 12px;border:0;border-top:1px solid var(--ds-line);border-radius:0;background:transparent;color:var(--ds-ink-3);font-size:12px;text-align:left;cursor:pointer}
+#card-view .cv-left .lp-linked:hover{background:var(--ds-hover)}
+#card-view .cv-left .lp-linked .ico{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6}
+#card-view .cv-left .lp-linked b{flex:none;color:var(--ds-ink);font-size:12.5px}
+#card-view .cv-left .lp-linked span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-left.show-linked .lp-linked{position:static;box-shadow:none;background:var(--ds-raise)}
+/* 26. 기출 카드: 아래 줄은 제목만(근거·변형은 크게 보기에서). 마우스를 올리면 안내. */
+#card-view .past-list .past:not(.pick) figcaption .acts{display:none!important}
+#card-view .past-list .past:not(.book):not(.pick) .past-pic::before{content:"더블클릭: 크게 보기 · 근거 · 변형";position:absolute;z-index:2;left:8px;right:8px;bottom:8px;padding:5px 8px;border-radius:7px;background:#0d1117e6;color:#e6edf3;font-size:11.5px;line-height:1.4;opacity:0;transform:translateY(4px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease);pointer-events:none}
+#card-view .past-list .past.book .past-pic::before{content:"더블클릭: 크게 보기 · 근거";position:absolute;z-index:2;left:8px;right:8px;bottom:8px;padding:5px 8px;border-radius:7px;background:#0d1117e6;color:#e6edf3;font-size:11.5px;opacity:0;transition:opacity 140ms;pointer-events:none}
+#card-view .past-list .past:hover .past-pic::before{opacity:1;transform:none}
+/* 27. 크게 보기: 그림 높이만큼만(아래 빈 흰 공간 없음), 아래 줄 단추에 글자 */
+#card-view .lp-zoom-pic{flex:0 1 auto}
+#card-view .lp-zoom-foot{flex-wrap:wrap}
+#card-view .lp-zoom-foot .sp{flex:1}
+#card-view .lp-zoom-foot .mini{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:6px;font-size:12.5px;text-decoration:none;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .lp-zoom-foot .mini:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-zoom-foot .mini .ico{width:14px;height:14px}
+#card-view .lp-zoom-foot .go-mini{color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .lp-zoom-pic{position:relative}
+#card-view .lp-zoom-pic[data-marking]::after{content:"";position:absolute;top:8px;right:8px;width:14px;height:14px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;background:#fffc;animation:ep-spin .7s linear infinite}
+
+/* 30·31. 쪽 종이: 캔버스 위에 pdf.js 글자 층(투명 글자, 끌면 파란 바탕으로 골라짐) */
+#card-view .lp-paper{display:block}
+#card-view .lp-sheet{position:relative;width:100%}
+#card-view .lp-sheet canvas{display:block;width:100%;height:auto}
+#card-view .textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:#1f2328;z-index:0;
+  --min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
+#card-view .textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
+#card-view .textLayer > :not(.markedContent),#card-view .textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv))}
+#card-view .textLayer .markedContent{display:contents}
+#card-view .textLayer ::selection{background:rgba(47,111,214,.32);color:transparent}
+#card-view .textLayer br::selection{background:transparent}
+#card-view .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none}
+#card-view .lp-paper .lp-fallback{display:block;width:100%;height:auto}
+#card-view .lp-paper-wait.over{position:absolute;left:10px;right:10px;bottom:10px;justify-content:center;padding:6px 10px;border-radius:8px;background:#ffffffe6;box-shadow:0 2px 10px #0002}
+#card-view .lp-paper-note{display:block;padding:6px 10px;background:#fff8e1;color:#7a5a00;font-size:12px}
+#card-view .lp-pageref{flex:none;height:26px;padding:0 9px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12px;white-space:nowrap}
+#card-view .lp-pageref:hover{background:var(--ds-hover);color:var(--ds-ink)}
+@container lib (max-width:420px){#card-view .lp-pageref{padding:0 6px;font-size:11.5px}}
+/* 근거로 추가 창 */
+#card-view .ev-pop{position:absolute;z-index:9;left:12px;right:12px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line),0 14px 34px #0009;color:var(--ds-ink-2);font-size:12.5px;animation:ep-menu-in 160ms cubic-bezier(.2,.9,.25,1.06)}
+#card-view .ev-pop .ev-h{display:flex;align-items:baseline;gap:8px}#card-view .ev-pop .ev-h b{color:var(--ds-ink);font-size:13px}#card-view .ev-pop .ev-h span{color:var(--ds-ink-3);font-size:12px}
+#card-view .ev-pop q{display:block;max-height:96px;overflow:auto;padding:8px 10px;border-left:3px solid var(--go-line,#6ba4f8);border-radius:4px;background:var(--ds-bench);color:var(--ds-ink);quotes:none;line-height:1.55}
+#card-view .ev-pop label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+#card-view .ev-pop select{flex:1;min-width:0;height:28px}
+#card-view .ev-pop input{height:28px;padding:0 8px;border:0;border-radius:6px;background:var(--ds-bench);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .ev-pop .acts{display:flex;justify-content:flex-end;gap:6px}
+#card-view .ev-pop .mini{height:28px;padding:0 12px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .ev-pop .go-mini{color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+/* 근거 목록(근거 줄을 누르면 펼침) */
+#card-view .cv-left .lp-reflist{display:none}
+#card-view .cv-left.show-linked .lp-reflist{display:flex;flex-direction:column;gap:4px;position:absolute;z-index:8;left:8px;right:8px;bottom:44px;max-height:55%;overflow:auto;padding:8px;border-radius:12px;background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line),0 -10px 28px #0006;animation:ep-menu-in 160ms cubic-bezier(.2,.9,.25,1.06)}
+#card-view .cv-left.show-linked .lp-reflist:empty::before{content:"아직 근거가 없습니다 · 크게 보기의 「근거로 연결」이나 쪽 보기에서 글을 끌어 고르세요";padding:6px;color:var(--ds-ink-3);font-size:12px}
+#card-view .lp-ref{display:flex;align-items:flex-start;gap:4px;border-radius:8px;background:var(--ds-bench);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .lp-ref>[data-cvref]{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;height:auto;padding:7px 9px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2);font-size:12px;text-align:left}
+#card-view .lp-ref>[data-cvref]:hover:not(:disabled){background:var(--ds-hover)}
+#card-view .lp-ref>[data-cvref]:disabled{opacity:1;cursor:default}
+#card-view .lp-ref b{color:var(--ds-ink)}
+#card-view .lp-ref .who{padding:0 7px;border-radius:9px;background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);font-size:11px}
+#card-view .lp-ref q{flex-basis:100%;color:var(--ds-ink-2);quotes:none;border-left:2px solid var(--ds-line);padding-left:6px}
+#card-view .lp-ref small{flex-basis:100%;color:var(--ds-ink-3)}
+#card-view .lp-ref-x{flex:none;width:26px;height:26px;margin:4px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-3)}
+#card-view .lp-ref-x:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .cv-left .lp-linked,#card-view .lp-ref>[data-cvref]{justify-content:flex-start}
+
+/* 32. 문항 카드(묶음 D 시안): 엑셀처럼 왼쪽 이름표 칸 + 오른쪽 내용, 빈 줄 없이, 안내 글은 ? 안 */
+#card-view .cv-grid{gap:10px}
+#card-view .cv-grid .f-sec{padding:0;gap:0;overflow:hidden}
+#card-view .cv-grid .f-sec-head{padding:6px 12px;background:var(--ds-doc-head,#f6f8fa);border-bottom:1px solid var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-grid .f-sec-head h3{margin:0;font-size:12px;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-grid .cv-row{display:grid;grid-template-columns:84px minmax(0,1fr);gap:0;min-height:38px;border-bottom:1px solid var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-grid .f-sec>.cv-row:last-of-type{border-bottom:0}
+#card-view .cv-grid .cv-row>label{display:flex;align-items:flex-start;gap:4px;margin:0;padding:10px 6px 0 12px;background:var(--ds-doc-head,#fafbfc);border-right:1px solid var(--ds-doc-line,#e6e9ed);color:var(--ds-doc-ink-2,#57606a);font-size:12.5px;font-weight:600;white-space:nowrap}
+#card-view .cv-grid .cv-v{min-width:0;padding:4px 6px}
+#card-view .cv-grid .cv-v>:is(input,textarea){display:block;width:100%;min-height:30px;padding:4px 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;line-height:1.6;resize:none}
+#card-view .cv-grid .cv-v>:is(input,textarea):hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-grid .cv-v>:is(input,textarea):focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px var(--go-line,#2f6fd6);outline:0}
+#card-view .cv-grid .cv-v .pick{display:flex;align-items:center;gap:8px;min-height:30px;padding:0 6px;border:0;background:transparent}
+#card-view .cv-grid .cv-v .pick .ph{color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-grid .f-more{margin:0;padding:8px 12px;border-top:1px solid var(--ds-doc-line,#e6e9ed)}
+/* ? 도움말: 마우스를 올리거나 누르면 안내 */
+#card-view .help{position:relative;display:inline-grid;place-items:center;width:15px;height:15px;min-height:0;margin-top:1px;padding:0;border:0;border-radius:50%;background:var(--ds-doc-line,#e6e9ed);color:var(--ds-doc-ink-2,#57606a);font:700 10px/1 inherit;cursor:help}
+#card-view .help:hover,#card-view .help:focus-visible{background:#eaf2fd;color:#1a5fb4}
+#card-view .help::after{content:attr(data-tip);position:absolute;left:20px;top:-6px;z-index:30;width:240px;padding:8px 10px;border-radius:8px;background:#1f2328;color:#fff;font-size:12px;font-weight:400;line-height:1.5;white-space:normal;text-align:left;box-shadow:0 8px 24px #0004;opacity:0;pointer-events:none;transform:translateY(-2px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease)}
+#card-view .help:hover::after,#card-view .help:focus::after{opacity:1;transform:none}
+/* 배점: 맨 위 2점|3점 */
+#card-view .cv-pts{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:7px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#d0d7de);background:var(--ds-doc,#fff)}
+#card-view .cv-pts button{height:24px;padding:0 9px;border:0;border-radius:5px;background:transparent;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px}
+#card-view .cv-pts button[aria-pressed=true]{background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-weight:600}
+/* 자료 칸 「나」안(10-22 exampool-1022 10·11): 칸은 같은 폭·같은 높이로 나란히(넷부터 다음 줄), 이름표는 칸 아래 가운데,
+   바꾸기·지우기는 마우스를 올리면 칸 오른쪽 위. 빈 칸의 두 동작은 같은 옅은 테·같은 글자색, 아이콘은 같은 세로줄. 표는 칸 안쪽 폭의 90%. */
+#card-view .cv-grid .cv-tiles{display:grid;grid-template-columns:repeat(var(--cv-tiles,1),minmax(0,1fr));gap:10px;align-items:stretch}
+#card-view .cv-grid .cv-tile{position:relative;display:flex;flex-direction:column;width:auto;max-width:none;min-width:0;overflow:visible;border:0;border-radius:0;box-shadow:none;background:transparent}
+#card-view .cv-grid .cv-tile .pic{position:relative;flex:1;display:grid;place-items:center;aspect-ratio:auto;height:auto;min-height:132px;max-height:280px;padding:8px;border:0;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e3e6);background:var(--ds-doc,#fff);overflow:hidden}
+#card-view .cv-grid .cv-tile .pic img{width:auto;max-width:100%;max-height:264px}
+#card-view .cv-grid .cv-tile.empty .pic{min-height:132px;padding:8px;border-bottom:0;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.018) 6px 12px),var(--ds-doc,#fff)}
+#card-view .cv-grid .cv-tile .table-pic table{width:90%;font-size:12.5px}
+#card-view .cv-grid .cv-tile .table-pic th,#card-view .cv-grid .cv-tile .table-pic td{padding:4px 6px;min-width:0}
+#card-view .cv-grid .cv-tile .cap{display:block;padding:5px 0 0;background:none;text-align:center;color:var(--ds-doc-ink-2,#3a3f46)}
+#card-view .cv-grid .cv-tile .cap b{color:var(--ds-doc-ink-2,#3a3f46);font-weight:400}
+#card-view .cv-grid .cv-tile-tools{position:absolute;top:6px;right:6px;display:flex;gap:2px;padding:2px;border-radius:7px;background:var(--ds-doc,#fff);box-shadow:0 0 0 1px var(--ds-doc-line,#e1e3e6);opacity:0;pointer-events:none;transition:opacity 140ms var(--ep-ease)}
+#card-view .cv-grid .cv-tile-tools .mini{padding:2px 6px;border-radius:5px;color:var(--ds-doc-ink-3,#6a7079);background:transparent}
+#card-view .cv-grid .cv-tile-tools .mini:hover{background:var(--ds-doc-hover,rgba(0,0,0,.045));color:var(--ds-doc-ink,#1b1e23)}
+#card-view .cv-grid .cv-tile:hover .cv-tile-tools,#card-view .cv-grid .cv-tile:focus-within .cv-tile-tools{opacity:1;pointer-events:auto}
+@media (hover:none){#card-view .cv-grid .cv-tile-tools{opacity:1;pointer-events:auto}}
+#card-view .cv-grid .cv-picks{display:flex;flex-direction:column;gap:6px;width:min(190px,92%)}
+#card-view .cv-grid .cv-pick{display:flex;align-items:center;justify-content:flex-start;gap:8px;height:32px;min-width:0;padding:0 10px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e3e6);color:var(--ds-doc-ink-2,#3a3f46);font:inherit;font-size:var(--cv-text-small,12.5px);text-align:left;cursor:pointer}
+#card-view .cv-grid .cv-pick>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-grid .cv-pick .ico{flex:0 0 16px;width:16px;height:16px;color:var(--ds-doc-ink-3,#6a7079)}
+#card-view .cv-grid .cv-pick:hover{background:var(--ds-doc-hover,rgba(0,0,0,.045));box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink,#1b1e23)}
+#card-view .cv-grid .cv-pick:hover .ico{color:var(--ds-doc-ink-2,#3a3f46)}
+#card-view .cv-grid .cv-pick:focus-visible{outline:2px solid var(--ds-focus,#6ba4f8);outline-offset:1px}
+#card-view .cv-grid .cv-add-row{margin-top:4px;min-height:30px;padding:4px 8px}
+#card-view .cv-grid .cv-add-row span{display:none}
+/* 보기: 한 줄씩 + ○ 옳음 / × 틀림 */
+#card-view .cv-grid .rows{gap:0}
+#card-view .cv-grid .ig{min-height:32px;border-bottom:1px dashed var(--ds-doc-line,#e6e9ed);border-radius:0;box-shadow:none;background:transparent}
+#card-view .cv-grid .ig:last-of-type{border-bottom:0}
+#card-view .cv-grid .ig>span:first-child{background:transparent;border:0;min-width:22px}
+#card-view .cv-grid .ig>input{border:0;background:transparent;box-shadow:none}
+#card-view .ox{flex:none;display:inline-flex;gap:2px;margin:0 2px}
+#card-view .ox button{width:26px;height:24px;min-height:0;padding:0;border:0;border-radius:5px;background:transparent;color:#b1b8c0;font:700 13px/1 inherit}
+#card-view .ox button:hover{background:var(--ds-doc-hover,#f0f2f4)}
+#card-view .ox .o[aria-pressed=true]{background:#e6f4ea;color:var(--ds-success)}
+#card-view .ox .x[aria-pressed=true]{background:#fdeceb;color:var(--ds-danger)}
+#card-view .cv-grid .link.add{margin:2px 0 2px 4px}
+/* 선지: 추천 조합 + 한 줄 5칸 */
+#card-view .cv-suggs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 2px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+#card-view .cv-sugg{display:inline-flex;align-items:center;gap:6px;height:24px;min-height:0;padding:0 8px;border:0;border-radius:12px;background:var(--ds-doc-hover,#f6f8fa);box-shadow:inset 0 0 0 1px var(--ds-doc-line,#d0d7de);color:var(--ds-doc-ink,#1f2328);font-size:12px}
+#card-view .cv-sugg:hover{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6}
+#card-view .cv-sugg em{font-style:normal;color:#1a5fb4;font-weight:600}
+#card-view .cv-combos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+#card-view .cv-combos .combo-row{display:flex;align-items:center;gap:3px;height:32px;min-height:0;padding:0 6px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e6e9ed);background:transparent;cursor:pointer}
+#card-view .cv-combos .combo-row input[type=radio]{margin:0;flex:none}
+#card-view .cv-combos .combo-row .no{flex:none;color:var(--ds-doc-ink-2,#57606a);font-weight:600}
+#card-view .cv-combos .combo-row input:not([type]){flex:1;min-width:0;height:28px;padding:0 2px;border:0;background:transparent;box-shadow:none}
+#card-view .cv-combos .combo-row.on{background:#e6f4ea;box-shadow:inset 0 0 0 1.5px var(--ds-success)}
+#card-view .cv-combos .combo-row.right:not(.on){box-shadow:inset 0 0 0 1.5px var(--ds-success)}
+#card-view .cv-autoans{margin:4px 2px 2px;font-size:12px}
+#card-view .cv-autoans.ok{color:var(--ds-success)}#card-view .cv-autoans.bad{color:var(--ds-danger)}
+#card-view .cv-grid .ig{display:flex;align-items:center;gap:2px}
+#card-view .cv-grid .ig>input{flex:1;min-width:0}
+/* 11-15: 정답 동그라미는 늘이지 않는다 — 선지 글 칸이 수식 칸(eq-ce)으로 바뀐 뒤 동그라미만 남은 폭을 차지해 줄 가운데로 밀렸다. */
+#card-view .cv-grid .ig>input[type=radio]{flex:none}
+#card-view .cv-grid .ig .ig-x{position:static;flex:none;width:24px;height:24px;min-height:0;padding:0;opacity:0;transform:none}
+#card-view .cv-grid .ig:hover .ig-x,#card-view .cv-grid .ig:focus-within .ig-x{opacity:1}
+#card-view .ox button{flex:none;min-width:26px}
+#card-view .cv-grid .cv-row{grid-template-columns:92px minmax(0,1fr)}
+#card-view .cv-grid .cv-row>label{padding-left:10px}
+#card-view .cv-sugg{gap:4px;padding:0 7px;letter-spacing:-.2px}
+@container lib (max-width:320px){
+  #card-view .lp-one .lp-scope{max-width:64px}
+  #card-view .lp-headseg button{width:22px}
+  #card-view .lp-one .lp-search>svg{display:none}
+  #card-view .lp-one .lp-slot .lp-search{padding-left:6px;padding-right:28px}
+  #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-30px;padding:0 4px}
+  #card-view .lp-one .lp-adv i::before{content:""}
+  #card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:40px}
+}
+
+/* 33. 이름표 세로 칸(묶음 E 시안): 두 글자는 세로(지/문), 네 글자는 두 줄(성취/기준). ? 단추 없이 이름표에 올리면 안내. */
+#card-view .cv-grid .f-sec-head{display:none}
+#card-view .cv-grid .cv-row{grid-template-columns:36px minmax(0,1fr);min-height:34px}
+#card-view .cv-grid .cv-row>label{position:relative;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 0;font-size:12px;line-height:1.2;text-align:center;cursor:help}
+#card-view .cv-grid .cv-row>label .vt{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:1px}
+#card-view .cv-grid .cv-row>label .hz{white-space:nowrap;font-size:11.5px;letter-spacing:-.3px}
+#card-view .cv-grid .cv-row>label[data-tip]::after{content:attr(data-tip);position:absolute;left:40px;top:4px;z-index:30;width:250px;padding:8px 10px;border-radius:8px;background:#1f2328;color:#fff;font-size:12px;font-weight:400;line-height:1.5;text-align:left;white-space:normal;box-shadow:0 8px 24px #0004;opacity:0;pointer-events:none;transform:translateY(-2px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease)}
+#card-view .cv-grid .cv-row>label[data-tip]:hover::after,#card-view .cv-grid .cv-row>label[data-tip]:focus-visible::after{opacity:1;transform:none}
+#card-view .cv-grid .f-sec:first-child .cv-row:first-child>label{border-top-left-radius:var(--cv-sec-radius,10px)}
+#card-view .cv-grid .f-sec{overflow:visible}
+#card-view .cv-grid .cv-v{padding:3px 6px}
+/* 34. 근거 표시: 칸 옆 🔗N(올리면 출처·인용문), 근거 없음, 카드 맨 아래 근거 표 */
+#card-view .ev-chip{position:relative;flex:none;display:inline-flex;align-items:center;gap:2px;height:20px;min-height:0;padding:0 6px;border:0;border-radius:10px;background:#eaf2fd;color:#1a5fb4;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap}
+#card-view .ev-chip .ico{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2}
+#card-view .ev-chip:hover{background:#d5e6fb}
+#card-view .ev-tip{position:absolute;z-index:40;right:0;top:24px;width:300px;padding:10px 12px;border-radius:10px;background:#1f2328;color:#e6edf3;font-size:12px;font-weight:400;line-height:1.55;text-align:left;white-space:normal;box-shadow:0 12px 30px #0006;opacity:0;pointer-events:none;transform:translateY(-3px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease)}
+#card-view .ev-chip:hover .ev-tip,#card-view .ev-chip:focus-visible .ev-tip{opacity:1;transform:none}
+#card-view .ev-tip b{display:block;color:#fff;margin-top:4px}#card-view .ev-tip b:first-child{margin-top:0}
+#card-view .ev-tip q{display:block;margin:4px 0;padding:5px 8px;border-left:3px solid #6ba4f8;border-radius:3px;background:#ffffff12;quotes:none}
+#card-view .ev-tip small{display:block;color:#9aa4ae}#card-view .ev-tip em{display:block;margin-top:4px;font-style:normal;color:#9cc3ff}
+#card-view .cv-row>label .ev-chip{padding:0 4px;height:18px}
+#card-view .cv-row>label .ev-chip .ev-tip{left:30px;right:auto;top:0}
+#card-view .ev-miss{flex:none;display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:10px;background:#fff8c5;color:#9a6700;font:600 11px/1 inherit;white-space:nowrap}
+#card-view .cv-grid .ig.ev-need{background:linear-gradient(90deg,#fff8c5,transparent 60%)}
+#card-view .cv-combos .combo-row,#card-view .cv-grid .choice-row{position:relative}
+#card-view .cv-combos .combo-row :is(.ev-chip,.ev-miss){position:absolute;right:3px;top:-9px;height:16px;padding:0 5px;font-size:10.5px;box-shadow:0 0 0 2px #fff}
+#card-view .cv-combos .combo-row:has(.ev-miss){box-shadow:inset 0 0 0 1.5px #d4a72c}
+#card-view .cv-grid .cv-combos{padding-top:8px}
+#card-view .cv-evtab{width:100%;border-collapse:collapse;font-size:12px}
+#card-view .cv-evtab td{padding:4px 6px;border-bottom:1px dashed var(--ds-doc-line,#e6e9ed);vertical-align:top}
+#card-view .cv-evtab tr:last-child td{border-bottom:0}
+#card-view .cv-evtab .who{white-space:nowrap}
+#card-view .cv-evtab .who span{display:inline-block;padding:0 7px;border-radius:9px;background:#eaf2fd;color:#1a5fb4;font-weight:600}
+#card-view .cv-evtab .src{white-space:nowrap;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-evtab .src .link{padding:0;height:auto;min-height:0;font-size:12px}
+#card-view .cv-evtab .q q{quotes:none;color:var(--ds-doc-ink,#1f2328)}#card-view .cv-evtab .q small{display:block;color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-evtab .x{width:28px}#card-view .cv-evtab .lp-ref-x{margin:0;color:#8c959f}
+#card-view .cv-evtab tr.miss td{color:#9a6700;background:#fffbe6;font-weight:600}
+#card-view .cv-evrow .ph,#card-view .cv-evtab .ph{color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+@container (max-width:460px){#card-view .cv-evtab .src{white-space:normal}}
+/* 근거 표: 한 근거 = [대상][출처 ···][×] / 아래 줄에 인용문 전체 폭 */
+#card-view .cv-evtab,#card-view .cv-evtab tbody{display:block}
+#card-view .cv-evtab tr{display:grid;grid-template-columns:auto minmax(0,1fr) 26px;align-items:center;column-gap:6px;padding:5px 2px;border-bottom:1px dashed var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-evtab tr:last-child{border-bottom:0}
+#card-view .cv-evtab td{display:block;padding:0;border:0!important;background:transparent}
+#card-view .cv-evtab td.src{white-space:normal;overflow:hidden;text-overflow:ellipsis}
+#card-view .cv-evtab td.q{grid-column:1/-1;grid-row:2;padding:3px 0 0 2px;line-height:1.5}
+#card-view .cv-evtab td.q:has(.ph){display:none}
+#card-view .cv-evtab td.x{grid-column:3;grid-row:1}
+#card-view .cv-evtab tr.miss{grid-template-columns:auto minmax(0,1fr);padding:6px;border-radius:6px;background:#fffbe6}
+#card-view .cv-evtab tr.miss td{background:transparent}
+
+/* 35. 단원·해설·출처(묶음 F 시안): 접는 상자 대신 카드의 줄. 배점은 맨 위 하나. */
+#card-view .cv-unit,#card-view .cv-src{display:flex;align-items:center;gap:8px;min-height:28px;padding:0 6px;flex-wrap:wrap}
+#card-view .cv-unit>input,#card-view .cv-src>input{flex:1 1 140px;min-width:0;height:26px;padding:0 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;font-size:13px}
+#card-view .cv-unit>input:hover,#card-view .cv-src>input:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-unit>input:focus,#card-view .cv-src>input:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px var(--go-line,#2f6fd6);outline:0}
+#card-view .cv-unit>.cv-mid{flex:0 1 150px;background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-unit b{font-weight:600}
+#card-view .cv-unit .link{padding:0;height:auto;min-height:0;font-size:12.5px}
+#card-view .cv-auto{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:9px;background:#e6f4ea;color:var(--ds-success);font-size:11px;font-weight:600;white-space:nowrap}
+#card-view .cv-srcseg button{white-space:nowrap}
+#card-view .cv-srcnote{display:inline-flex;align-items:center;gap:6px;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px}
+#card-view .cv-exp-tools{display:flex;align-items:center;gap:6px;padding:2px 6px 2px}
+#card-view .cv-exp-tools .mini{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border:0;border-radius:6px;background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-size:12px}
+#card-view .cv-exp-tools .mini .ico{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7}
+#card-view .cv-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:2px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+#card-view .cv-meta input{width:150px;height:24px;padding:0 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;font:12px ui-monospace,Menlo,monospace;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-meta input:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-meta input:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px #2f6fd6;outline:0}
+
+/* 좁아져도 잘리지 않게: 보기 줄은 늘어나는 글 칸, 선지 칸은 폭에 맞춰 줄 수가 바뀜 */
+#card-view .cv-grid .ig{align-items:flex-start}
+#card-view .cv-grid .ig>span:first-child{padding-top:5px}
+#card-view .cv-grid .ig>textarea{flex:1;min-width:0;min-height:28px;padding:4px 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;line-height:1.55;resize:none;overflow:hidden}
+#card-view .cv-grid .ig>textarea:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-grid .ig>textarea:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px var(--go-line,#2f6fd6);outline:0}
+#card-view .cv-grid .ig>:is(.ox,.ev-chip,.ev-miss,.ig-x){margin-top:3px}
+#card-view .cv-combos{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+#card-view .cv-combos .combo-row input:not([type]){text-overflow:clip}
+#card-view .cv-suggs{gap:4px}
+
+/* 문항 보관함 카드: 빈 문항도 같은 크기(흰 자리), 아래는 성취기준 한 줄 · 출제의도 한 줄 · [상태·유형 ··· 넣기 삭제] 한 줄 */
+.pv-thumb.is-blank{display:grid;place-items:center;height:170px;margin:0;padding:0;border:0;background:#fff}
+.pv-thumb.is-blank::after{display:none}
+.pv-thumb.is-blank span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border:1px dashed #c9ced6;border-radius:10px;color:#8c959f;font-size:12px}
+.pv-thumb.is-blank b{color:#57606a;font-size:13px}
+.pv-thumb.is-blank:hover span{border-color:#6ba4f8;color:#1a5fb4}
+.pv-meta{gap:4px;padding:9px 12px 10px}
+.pv-plan{display:flex;align-items:baseline;gap:6px;margin:0;min-width:0;font-size:12.5px;line-height:1.45}
+.pv-plan .pv-k{flex:none;padding:0 5px;border-radius:4px;background:var(--ds-hover);color:var(--ds-ink-3);font-size:11px}
+.pv-plan .pv-v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ds-ink)}
+.pv-plan code{margin-right:5px;color:var(--go-line,#6ba4f8);font:600 11.5px ui-monospace,Menlo,monospace}
+.pv-plan i{font-style:normal;color:var(--ds-ink-3)}
+.pv-row.pv-actions{flex-wrap:nowrap;margin-top:2px}
+.pv-st{display:inline-flex;align-items:center;gap:4px;min-width:0;margin-right:auto;overflow:hidden;white-space:nowrap;color:var(--ds-ink-3)}
+/* 빈 문항 자리 가운데, 좁은 카드에서 머리 줄은 다음 줄로 넘김(겹치지 않게) */
+.pv-thumb.is-blank{display:flex;align-items:center;justify-content:center}
+#card-view .cv-center .w-head{flex-wrap:wrap;row-gap:6px}
+#card-view .cv-center .w-head .cv-shape-wrap{min-width:0}
+/* 보기 ○×: 보기 이름표 모양(.ig>span 회색 상자 44px)이 ○× 묶음에도 붙어 찌그러지던 것 */
+#card-view .cv-grid .ig>.ox{width:auto;display:inline-flex;place-items:normal;padding:0;border:0;border-radius:6px;background:transparent;font-size:inherit;gap:2px}
+#card-view .cv-grid .ig>:is(.ev-chip,.ev-miss){width:auto;border:0;padding:0 6px;display:inline-flex}
+
+/* 쪽 보기 시험지 고르기: [연도][시험][과목] 세 칸, 어두운 칸 디자인(흰 기본 고르기 상자 대신) */
+#card-view .lp-exam-pick{flex:1 1 0;min-width:0;display:flex;gap:4px}
+#card-view .lp-viewbar select,#card-view .lp-exam-pick select{-webkit-appearance:none;appearance:none;min-width:0;height:28px;padding:0 20px 0 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:var(--ds-bench) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b1bac4' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 4px center/14px;color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12.5px;cursor:pointer}
+#card-view .lp-exam-pick select{flex:0 1 auto}
+#card-view .lp-exam-pick select:last-child{flex:1 1 0}
+#card-view .lp-viewbar select:hover,#card-view .lp-exam-pick select:hover{box-shadow:inset 0 0 0 1px var(--ds-ink-3)}
+#card-view .lp-viewbar select:focus-visible{outline:2px solid var(--go-line,#6ba4f8);outline-offset:-2px}
+
+/* 맨 위 줄: 로고 「5E_exam」 + 다른 두 이름(image · hwp) + ↶ ↷ — 5E 세 프로그램 공통(그림·조판은 css/app-switch.css, 바꾸면 같이).
+   5E_image와 같은 수치(10-20): 높이 40, 왼쪽 160 칸(접기 x12 · 「5E」 x60 고정 · 오른쪽 선), 이름 단추 x172(폭 고정), ↶ x311. */
+.top{gap:0!important;padding-left:0!important;font-family:var(--ds-font)}
+.top .top-cell{position:relative;flex:none;box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;width:160px;height:100%;padding-left:41px;border-right:1px solid var(--ds-line,#21262d)}
+.top .top-cell #toggle-nav{position:absolute;left:12px;top:50%;margin:-14px 0 0;width:28px;height:28px}
+.top .top-cell .brand{height:28px;margin:0 0 0 15px;padding:0 4px;align-items:baseline;line-height:28px}
+.top .top-cell .brand-mark{font:italic 700 21px/1 var(--ds-font-brand);letter-spacing:-.6px;position:relative;top:2px}
+.top .brand strong{color:var(--ds-ink-2)}
+.top .top-cell .brand strong{font:italic 700 16px/1 var(--ds-font-brand);letter-spacing:-.2px;margin-left:1px;position:relative;top:2px}
+.top .app-switch{display:inline-flex;align-items:center;gap:2px;flex:none;height:auto;margin-left:12px;padding-left:0;border-left:0}
+.top .app-switch-btn{width:58px;height:30px;min-width:0;padding:0;border:0;border-radius:6px;background:transparent!important;box-shadow:none;color:#5b6470!important;font:italic 700 15px/1 var(--ds-font-brand,Georgia,serif);letter-spacing:-.1px;cursor:pointer;transition:color 160ms var(--ep-ease),background-color 160ms var(--ep-ease)}
+.top .app-switch-btn:hover{color:var(--ds-ink)!important;background:var(--ds-hover)!important}
+.top .top-sep{width:1px;height:20px;margin:0 10px;background:var(--ds-line);flex:none}
+.top #top-undo:disabled,.top #top-redo:disabled{opacity:.35}
+/* 좁은 창: 그림·조판 화면과 같이 이름 단추 46px·14px(전에는 뒤의 58px 규칙에 덮여 출제 칸만 넓었다) */
+@media (max-width:760px){.top .app-switch-btn{width:46px;font-size:14px}}
+/* 아주 좁은 창(640px 이하): 조판 화면처럼 로고 칸을 줄이고 「_exam」·위치 표시를 접어 오른쪽 단추(도움말·더 보기·닫기)가 화면 안에 남게 */
+@media (max-width:640px){.top .top-cell{width:auto;padding-right:6px}.top .top-cell .brand{margin-left:0}.top .top-cell .brand strong{display:none}.top .top-sep{margin:0 4px}.top .crumbs{display:none}}
+
+/* 「이 문항 | 시험지 전체」(10-22 안 B): 조판 칸 「상세 조판」 줄 맨 앞 두 칸 단추. 시험지 전체면 조판 칸이 가운데 자리까지 넓어지고
+   문항 카드는 왼쪽·오른쪽 칸을 접을 때와 같은 세로 띠. 칸에 붙지 않은 조판 창(따로 연 창)에는 두지 않는다. */
+.ts-scope{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:7px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e3e6)}
+.typeset-view-controls .ts-scope button{height:calc(var(--ds-h-control,28px) - 4px);padding:0 10px;border-radius:5px}
+.ts-scope+button{margin-left:6px}
+#preview-dialog:not(.docked) .ts-scope{display:none}
+#card-view.is-sheet-view .cv-right{flex:1 1 auto!important;min-width:0}
+#card-view .pane-rail.mid{margin-right:var(--cv-gutter,8px)}
+#card-view .cv-pgbar{flex:none}
+#card-view .cv-right .cv-page{background:var(--ds-bench,#0d1320)}
+#card-view .pg-q-hit{position:absolute;z-index:1;margin:-3px;padding:3px;border-radius:3px;cursor:pointer}
+#card-view .pg-q-hit:hover{outline:1px solid var(--ds-line-strong,#30363d);outline-offset:3px}
+#card-view .pg-q-hit.is-picked{outline:2px solid var(--ds-line-strong,#30363d);outline-offset:3px}
+/* 조판 부호 단추(10-22 17번): 「상세 조판」 줄 오른쪽, 구조 잠금 바로 앞. 켜짐은 다른 켜진 단추와 같은 옅은 면. */
+.typeset-view-controls .typeset-marks{display:inline-flex;align-items:center;gap:var(--ds-space-1,4px);margin-left:auto}
+.typeset-view-controls .typeset-marks+#typeset-lock{margin-left:4px}
+.typeset-view-controls .typeset-marks svg{flex:none}
+/* 조판 기준 메뉴·간격 보기(10-22 C-4, 시안 typeset-standard.html ②). 띠 색은 확정 시안 그대로: 초록 = 요소 사이, 보라 = 단 여백. */
+/* 「수능 틀 ▾」·「간격 보기」: 글자·문단·내어쓰기 줄 오른쪽 끝(머리 줄이 차서). 이 줄이 흐려질 때(고르기 전)도 이 둘은 또렷하게. */
+.ts-std-tail{display:inline-flex;align-items:center;gap:4px;margin-left:auto;flex:none}
+.cv-hwp-layer #preview-dialog.docked #typeset-context[data-idle] .ts-std-tail :is(button){opacity:1;pointer-events:auto}
+.ts-std-tail .ts-std{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-std-tail .ts-gaps[aria-pressed=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+/* 조판 부호는 아이콘만(이름은 도움말) — 머리 줄 폭 */
+.typeset-view-controls .typeset-marks span{display:none}
+.typeset-view-controls .typeset-marks{padding:0 8px}
+.typeset-view-controls .ts-std b{font-weight:600}
+#native-editor .ts-gap-layer{position:absolute;z-index:6;pointer-events:none;overflow:hidden}
+#native-editor .ts-gap-layer[hidden]{display:none}
+.ts-gap-margin{position:absolute;background:rgba(155,120,255,.14);pointer-events:none}
+.ts-gap-band{position:absolute;display:flex;align-items:center;justify-content:flex-end;padding:0 4px;border:0;border-radius:2px;background:rgba(47,179,154,.18);box-shadow:inset 0 0 0 1px rgba(47,179,154,.35);color:#1f7a68;font:500 10px/1 -apple-system,"Apple SD Gothic Neo",sans-serif;cursor:pointer;pointer-events:auto}
+.ts-gap-band span{padding:1px 4px;border-radius:3px;background:rgba(255,255,255,.85);white-space:nowrap}
+.ts-gap-band:hover,.ts-gap-band[aria-pressed=true]{box-shadow:inset 0 0 0 1.5px #2fb39a}
+.ts-gap-pop,.ts-std-menu{position:absolute;z-index:30;width:250px;padding:10px 12px;border-radius:10px;background:var(--ds-doc,#fff);color:var(--ds-doc-ink,#1b1e23);box-shadow:0 0 0 1px var(--ds-doc-line-strong,#d3d6db),0 10px 28px rgba(0,0,0,.18);font-size:12.5px}
+.ts-gap-pop[hidden],.ts-std-menu[hidden]{display:none}
+.ts-gap-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.ts-gap-head button{border:0;background:transparent;color:var(--ds-doc-ink-3,#6a7079);font-size:16px;cursor:pointer}
+.ts-gap-now,.ts-gap-note,.ts-gap-lock{margin:0 0 8px;color:var(--ds-doc-ink-3,#6a7079);font-size:11.5px;line-height:1.5}
+.ts-gap-lock{color:var(--ds-doc-ink-2,#3a3f46)}
+.ts-gap-step{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.ts-gap-step button{width:28px;height:28px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink,#1b1e23);cursor:pointer}
+.ts-gap-step button:hover:not(:disabled){background:var(--ds-doc-hover,rgba(0,0,0,.045))}
+.ts-gap-step output{min-width:52px;text-align:center;font-variant-numeric:tabular-nums}
+.ts-gap-step small{color:var(--ds-doc-ink-3,#6a7079)}
+.ts-gap-pop label{display:block;margin:2px 0;color:var(--ds-doc-ink-2,#3a3f46)}
+.ts-gap-reset{margin-top:6px;height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink-2,#3a3f46);cursor:pointer}
+.ts-std-menu{width:240px;padding:4px}
+.ts-std-menu button{display:block;width:100%;height:30px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--ds-doc-ink-2,#3a3f46);text-align:left;font:inherit;cursor:pointer}
+.ts-std-menu button:hover{background:var(--ds-doc-hover,rgba(0,0,0,.045));color:var(--ds-doc-ink,#1b1e23)}
+.ts-std-menu button[aria-checked=true]{font-weight:600;color:var(--ds-doc-ink,#1b1e23)}
+.ts-std-menu button[aria-checked=true]::after{content:" ✓"}
+.ts-std-menu hr{margin:4px 6px;border:0;border-top:1px solid var(--ds-doc-line,#e1e3e6)}
+.ts-std-name{display:flex;gap:4px;padding:4px 6px}
+.ts-std-name[hidden]{display:none}
+.ts-std-name input{flex:1;min-width:0;height:28px;padding:0 8px;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db)}
+.ts-std-name button{width:auto;height:28px}
+#preview-dialog:not(.docked) .ts-std-tail{display:none}
+/* 학교 양식에서 조판 기준 만들기 창 */
+#school-dialog{width:min(460px,92vw)}
+#school-dialog .school-file,#school-dialog .school-note{margin:6px 0;color:var(--ds-doc-ink-3,#6a7079);font-size:12px;line-height:1.5}
+#school-dialog .school-rows{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0 10px}
+#school-dialog .school-rows th,#school-dialog .school-rows td{padding:5px 6px;border-bottom:1px solid var(--ds-doc-line,#e1e3e6);text-align:left;vertical-align:top}
+#school-dialog .school-rows th{color:var(--ds-doc-ink-3,#6a7079);font-weight:500}
+#school-dialog .school-rows small{display:block;color:var(--ds-doc-ink-3,#6a7079);font-size:11px}
+#school-dialog .school-rows tr[data-found=false] td:last-child{color:var(--ds-doc-ink-3,#6a7079)}
+#school-dialog .school-name{display:flex;align-items:center;gap:8px;margin:4px 0}
+#school-dialog .school-name input{flex:1;height:30px;padding:0 8px;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db)}
+.pv-form{display:inline-flex;align-items:center;gap:6px;margin-right:8px;color:var(--ds-ink-3,#7d8590);font-size:12.5px}
+.pv-form select{height:30px;max-width:180px}
+#school-dialog .school-keep{display:block;margin:8px 0 2px;font-size:12.5px;color:var(--ds-doc-ink-2,#3a3f46)}
+/* 〈보기〉 안쪽 여백 띠(10-22 O3): 요소 사이 띠보다 옅게 */
+.ts-gap-band.inner{background:rgba(47,179,154,.12);box-shadow:inset 0 0 0 1px rgba(47,179,154,.25)}
+/* 숫자·단위 띄어쓰기 점검 표시(보여 주기만) */
+.ts-unit-chip{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:11px;background:var(--ds-doc-sub,#f6f7f9);box-shadow:inset 0 0 0 1px var(--ds-doc-line-strong,#d3d6db);color:var(--ds-doc-ink-2,#3a3f46);font-size:11.5px;white-space:nowrap;cursor:help}
+.ts-unit-chip[hidden]{display:none}
+/* 시험지 한눈에: 정답 분포·출제 점검(10-22) */
+.pv-answers{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;align-items:end;height:72px;margin:4px 0 10px}
+.pv-answers span{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;color:var(--ds-ink-2,#b1bac4);font-size:12px}
+.pv-answers i{display:block;width:60%;min-height:2px;border-radius:3px 3px 0 0;background:var(--ds-soft-line,#6ba4f8);opacity:.6}
+.pv-answers small{color:var(--ds-ink-3,#7d8590);font-size:11px}
+.pv-checks{margin:4px 0 12px;padding:0;list-style:none;display:grid;gap:4px;font-size:12px}
+.pv-checks li{padding:4px 8px;border-radius:6px;background:var(--ds-raise,#161b22);color:var(--ds-ink-2,#b1bac4);line-height:1.45}
+.pv-checks li[data-level=warn]{box-shadow:inset 3px 0 0 var(--ds-danger)}
+.pv-checks li[data-level=info]{box-shadow:inset 3px 0 0 var(--ds-soft-line,#6ba4f8)}
+.pv-checks li[data-level=ok]{color:var(--ds-ink-3,#7d8590)}
+
+/* ===== 「⚙ 조판 설정」(10-23, 시안 typeset-settings-1023-v3.html) =====
+   평소 조판 칸은 글만: 구조 잠금·조판 부호·상세 조판 단추와 글자/문단/내어쓰기·「수능 틀 ▾」·「간격 보기」 줄은 숨기고 설정 판으로 옮긴다. */
+.typeset-view-controls #typeset-lock,.typeset-view-controls #typeset-detail,.typeset-view-controls [data-exam-marks]{display:none!important}
+#preview-dialog #typeset-context,.cv-hwp-layer #preview-dialog.docked #typeset-context[hidden]{display:none!important}
+.typeset-view-controls .ts-settings-open{display:inline-flex;align-items:center;gap:6px;margin-left:4px;border-radius:6px}
+.typeset-view-controls .ts-settings-open[aria-expanded=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+/* 팝업: 화면 가운데, 작업대 위 두 판(왼쪽 설정 336px · 오른쪽 자체 미리보기) — 시안 값 그대로 */
+.tsx-back{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(1,4,9,.45);padding:24px;box-sizing:border-box}
+.tsx-back[hidden]{display:none}
+.tsx-pop{display:grid;grid-template-columns:336px minmax(0,1fr);gap:8px;padding:8px;width:min(1208px,100%);height:min(680px,100%);background:var(--ds-bench);border-radius:14px;box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));color:var(--ds-ink);font:13px/1.5 -apple-system,"Apple SD Gothic Neo",sans-serif}
+.tsx-pop svg{flex:none}
+.tsx-pane{position:relative;background:var(--ds-panel);border-radius:12px;box-shadow:0 0 0 1px var(--ds-line);overflow:hidden;display:flex;flex-direction:column;min-height:0}
+.tsx-ph{height:44px;flex:none;display:flex;align-items:center;gap:8px;padding:0 8px 0 16px;border-bottom:1px solid var(--ds-line)}
+.tsx-ph b{font-size:15px;font-weight:600}
+.tsx-right .tsx-ph b{font-size:12.5px;font-weight:500;color:var(--ds-ink-2)}
+.tsx-pop .sp{flex:1}
+.tsx-b{height:28px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.tsx-b:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
+.tsx-b.go{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);color:var(--ds-ink)}
+.tsx-b:disabled{opacity:.45;cursor:default}
+.tsx-ic{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);cursor:pointer}
+.tsx-ic:hover,.tsx-ic[aria-expanded=true]{background:var(--ds-hover);color:var(--ds-ink)}
+.tsx-ic[aria-pressed=true]{background:var(--ds-selected);color:var(--ds-ink)}
+.tsx-pick{position:relative;height:28px;display:inline-flex;align-items:center;gap:4px;padding:0 8px;border-radius:6px;color:var(--ds-ink);font-size:12.5px;cursor:pointer}
+.tsx-pick:hover{background:var(--ds-hover)}
+.tsx-pick svg{color:var(--ds-ink-3)}
+.tsx-pick select{position:absolute;inset:0;opacity:0;cursor:pointer;font:inherit}
+.tsx-menu{position:absolute;top:44px;right:8px;z-index:2;min-width:240px;padding:4px;border-radius:8px;background:var(--ds-raise);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55));display:flex;flex-direction:column}
+.tsx-menu button{height:30px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:12.5px;text-align:left;padding:0 10px;cursor:pointer}
+.tsx-menu button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.tsx-menu hr{border:0;border-top:1px solid var(--ds-line);margin:4px 0}
+.tsx-body{flex:1;overflow:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:14px}
+.tsx-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px;border-radius:8px;background:var(--ds-field-raise)}
+.tsx-parts button{position:relative;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:12.5px;cursor:pointer}
+.tsx-parts button:hover{background:var(--ds-hover)}
+.tsx-parts button[aria-selected=true]{background:var(--ds-selected-strong);color:var(--ds-ink);font-weight:600}
+.tsx-parts .d{position:absolute;right:6px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--ds-soft-line)}
+.tsx-seg{display:flex;gap:2px;padding:2px;border-radius:8px;background:var(--ds-field-raise)}
+.tsx-seg button{flex:1;height:26px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);font:inherit;font-size:12.5px;cursor:pointer}
+.tsx-seg button[aria-selected=true]{background:var(--ds-raise);color:var(--ds-ink);box-shadow:0 0 0 1px var(--ds-line-strong)}
+.tsx-grp{display:flex;flex-direction:column;gap:6px}
+.tsx-gh{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ds-ink-3);letter-spacing:.02em}
+.tsx-tip{display:inline-flex;cursor:help;color:var(--ds-ink-3)}
+.tsx-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tsx-row.one{grid-template-columns:1fr}
+.tsx-row>*{min-width:0}
+.tsx-f{position:relative;height:30px;display:flex;align-items:center;gap:6px;padding:0 8px;border-radius:6px;background:var(--ds-field);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12.5px;color:var(--ds-ink)}
+.tsx-f:hover{box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.tsx-f.diff{box-shadow:inset 0 0 0 1px var(--ds-line),inset 3px 0 0 var(--ds-soft-line)}
+.tsx-f.hot,.tsx-f:focus-within{box-shadow:inset 0 0 0 1px var(--ds-soft-line);background:var(--ds-soft-bg)}
+.tsx-f .n{color:var(--ds-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tsx-f.num .n{cursor:ew-resize;user-select:none}
+.tsx-f input:not([type=checkbox]){flex:1;width:0;min-width:0;border:0;background:transparent;color:var(--ds-ink);font:inherit;text-align:right;font-variant-numeric:tabular-nums;outline:none}
+.tsx-f .u{color:var(--ds-ink-3);font-size:11px}
+.tsx-f select{flex:1;min-width:0;appearance:none;-webkit-appearance:none;border:0;background:transparent;color:var(--ds-ink);font:inherit;text-align:right;text-align-last:right;padding-right:2px;cursor:pointer;outline:none}
+.tsx-f.sel svg{color:var(--ds-ink-3);pointer-events:none}
+.tsx-f.info{background:transparent;box-shadow:none;padding:0 2px;height:auto;min-height:24px}
+.tsx-f.info .v{color:var(--ds-ink-2)}
+.tsx-f.tog{justify-content:space-between;cursor:pointer}
+.tsx-f.tog .n{color:var(--ds-ink-2)}
+.tsx-pop input[type=checkbox]{position:absolute;opacity:0;width:0;height:0}
+.tsx-pop .sw{flex:none;width:28px;height:16px;border-radius:8px;background:var(--ds-line-strong);position:relative;transition:background .15s}
+.tsx-pop .sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--ds-ink-2);transition:left .15s}
+.tsx-pop input:checked+.sw{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.tsx-pop input:checked+.sw::after{left:14px;background:var(--ds-ink)}
+.tsx-pop input:focus-visible+.sw{outline:2px solid var(--ds-focus);outline-offset:2px}
+.tsx-pf{flex:none;display:flex;align-items:center;gap:6px;padding:8px 8px 8px 16px;border-top:1px solid var(--ds-line)}
+.tsx-exc{position:relative;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ds-ink-2);cursor:pointer}
+/* 오른쪽 판: 미리보기 — 옅은 회색 바탕 위 흰 종이(깨끗한 조판 그림) + 겹쳐 그리기 */
+.tsx-pv{flex:1;overflow:auto;background:var(--ds-doc-paper-bench,#e9ebee);padding:16px}
+.tsx-paper{background:var(--ds-doc,#fff);box-shadow:0 1px 2px rgba(0,0,0,.12);margin:0 auto;max-width:640px;padding:12px 0 8px}
+.tsx-wait{margin:0;padding:40px;color:#59636e;font-size:12.5px;text-align:center}
+.tsx-wait.error{color:var(--ds-danger)}
+.tsx-ruler{position:relative;height:16px;background:repeating-linear-gradient(to right,#c9cdd3 0 1px,transparent 1px 6px) bottom/100% 4px no-repeat,repeating-linear-gradient(to right,#9aa0a6 0 1px,transparent 1px 60px) bottom/100% 8px no-repeat;box-shadow:inset 0 -1px 0 #c9cdd3}
+.tsx-mk{position:absolute;bottom:0;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;transform:translateX(-5px)}
+.tsx-mk.t{top:0;bottom:auto;border-top:6px solid rgba(46,160,67,.8)}
+.tsx-mk.b{border-bottom:6px solid rgba(46,160,67,.8)}
+.tsx-sheet{position:relative;width:100%}
+.tsx-over{position:absolute;inset:0;pointer-events:none}
+.tsx-over i{position:absolute;display:block}
+.tsx-dim{background:rgba(255,255,255,.62)}
+.tsx-bar{border-radius:2px;background:var(--ds-soft-line,#6ba4f8)}
+.tsx-vl,.tsx-hang{border-left:1px solid rgba(46,160,67,.8)}
+.tsx-hl{border-top:1px solid rgba(46,160,67,.8)}
+.tsx-vl.on{border-left-width:2px}.tsx-hl.on{border-top-width:2px}
+.tsx-hang::before{content:'';position:absolute;left:-4px;top:-5px;border-left:3.5px solid transparent;border-right:3.5px solid transparent;border-top:5px solid rgba(46,160,67,.8)}
+.tsx-padfill{background:rgba(46,160,67,.10)}
+.tsx-gap{background:rgba(46,160,67,.14);box-shadow:inset 0 1px 0 rgba(46,160,67,.5),inset 0 -1px 0 rgba(46,160,67,.5)}
+.tsx-gap::after{content:attr(data-mm);position:absolute;right:2px;top:50%;transform:translateY(-50%);font:600 9.5px/1 -apple-system,sans-serif;color:var(--ds-success);background:#fff;padding:1px 3px;border-radius:3px}
+.tsx-v{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 62 60'%3E%3Cpath d='M3 3L31 57L59 3' fill='none' stroke='%23da3633' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/contain;transform:translateX(-50%)}
+/* 조판 자동 저장(10-23 A2): 「조판 저장」 단추는 없앤다(창 머리 줄·카드 칸 머리 줄 둘 다). */
+#typeset-save,#card-view [data-cv="hwp-save"]{display:none!important}
+
+/* 맨 위 막대 48px + 글씨 한 단계(10-24 시안 8 확정, 세 앱 같이 — 그림 graphite-shell.css · 조판 app-switch.css).
+   단추 32 · 아이콘 20 · 로고 「5E」 23 · 「_exam」 18 · 앱 바꾸기 16.5 · 막대 안 글자 13.5. 로고 칸 폭 160과 구분선은 그대로. */
+.top{--ds-h-bar:56px;--ds-h-control:32px;--ds-text-body:13.5px;font-size:13.5px}
+.top button{font-size:13.5px}
+.top .top-cell #toggle-nav{margin:-16px 0 0;width:32px;height:32px}
+.top .top-cell .brand{height:32px;line-height:32px}
+.top .top-cell .brand-mark{font-size:23px}
+.top .top-cell .brand strong{font-size:18px}
+.top .app-switch-btn{font-size:16.5px;height:32px}
+.top-actions .top-help .ico,.top .ico{width:20px;height:20px}
+@media (max-width:760px){.top .app-switch-btn{font-size:14px}}
+
+/* 합답형 「추천」 한 줄(10-26 U4, 시안 decisions-1026/u3-u4.html): 줄을 넘기지 않고, 좁으면 단추 글이 「…」로 줄어든다. 「/」 대신 좁은 빈칸. */
+#card-view .cv-suggs{flex-wrap:nowrap;gap:3px;overflow:hidden}
+#card-view .cv-suggs>span:first-child{flex:none;white-space:nowrap;margin-right:1px}
+#card-view .cv-sugg{height:22px;padding:0 5px;gap:3px;font-size:11px;letter-spacing:-.4px;flex:0 1 auto;min-width:0;white-space:nowrap}
+#card-view .cv-sugg b{font-weight:400;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-sugg b i{display:inline-block;width:2.5px}
+#card-view .cv-sugg em{flex:none;font-size:10.5px}
+/* 합답형 선지 다섯 칸은 늘 한 줄(10-26 지적: 좁으면 ⑤가 다음 줄로 넘어갔다). 칸을 얇게 — 동그라미 13px, 높이 28px. */
+#card-view .cv-combos{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+#card-view .cv-combos .combo-row{height:28px;padding:0 4px;gap:2px}
+#card-view .cv-combos .combo-row input[type=radio]{width:13px;height:13px}
+#card-view .cv-combos .combo-row .no{font-size:12px}
+#card-view .cv-combos .combo-row input:not([type]){height:24px;font-size:12px;padding:0 1px}
+
+/* ---------- 10-27 문항 카드 정리(W8): 위는 시험지에 찍히는 것만, 색은 회색 + 파랑(정답·고른 것) 하나 ---------- */
+/* 머리줄 한 줄: 번호 · 유형 · 배점(2점|3점|자유) · 단계 */
+#card-view .w-head,#card-view .cv-center .w-head{flex-wrap:nowrap;row-gap:0;gap:6px}
+#card-view .w-head .cv-shape-wrap{min-width:0;flex:0 1 auto}
+#card-view .w-head .stage{flex:none}
+#card-view .w-head .stage button:not([aria-pressed=true]){font-size:0;gap:0;padding:0 8px}
+#card-view .w-head .stage button:not([aria-pressed=true]) .dot{margin:0}
+#card-view .cv-ptsfree{display:inline-flex;align-items:center;height:24px;padding:0 4px 0 2px;border-radius:5px;color:var(--ds-doc-ink-3,#8c959f);font-size:12.5px;cursor:text}
+#card-view .cv-ptsfree input{width:34px;height:22px;padding:0 3px;border:0;background:transparent;box-shadow:none;text-align:center;font:inherit;color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-ptsfree input::placeholder{color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-ptsfree>span{display:none}
+#card-view .cv-ptsfree.on{background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-weight:600}
+#card-view .cv-ptsfree.on input{width:3.2ch;padding:0 1px 0 0;text-align:right;color:#1a5fb4;font-weight:600}
+#card-view .cv-ptsfree.on>span{display:inline}
+#card-view .cv-ptsfree:focus-within{box-shadow:inset 0 0 0 1px #2f6fd6}
+/* 자료: 그림은 미리보기에서 크게 보므로 카드에서는 작게, 칸 추가는 회색 글자 단추 */
+#card-view .cv-grid .cv-tile:not(.empty) .pic{min-height:96px;max-height:132px}
+#card-view .cv-grid .cv-tile:not(.empty) .pic img{max-height:112px}
+#card-view .cv-grid .cv-add-row{border:0;background:transparent;color:var(--ds-doc-ink-2,#57606a);justify-content:flex-start;min-height:26px;padding:0 4px;font-size:12.5px;box-shadow:none}
+#card-view .cv-grid .cv-add-row:hover{background:var(--ds-doc-hover,#f6f8fa);color:var(--ds-doc-ink,#1f2328)}
+/* 보기: 줄 왼쪽 ⋮ 메뉴, 판정 ○×는 눌린 쪽만 진한 글자·회색 바탕 */
+#card-view .cv-grid .ig{position:relative}
+#card-view .cv-grid .rows>.ig{padding-left:14px}
+#card-view .ig-h{position:absolute;left:-2px;top:4px;width:16px;height:26px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:#c2c8cf;font:700 14px/26px -apple-system,sans-serif;cursor:pointer;z-index:2}
+#card-view .ig-h:hover,#card-view .ig-h[aria-expanded=true]{background:var(--ds-doc-hover,#eef0f3);color:var(--ds-doc-ink-2,#57606a)}
+#card-view .ig-menu{position:absolute;left:0;top:32px;z-index:20;display:flex;flex-direction:column;min-width:132px;padding:4px;border-radius:8px;background:#fff;box-shadow:0 0 0 1px #d6dbe1,0 8px 22px rgba(15,23,42,.16)}
+#card-view .ig-menu button{display:flex;align-items:center;justify-content:flex-start;height:30px;min-height:0;padding:0 10px;border:0;border-radius:5px;background:transparent;color:#24292f;font-size:13px;text-align:left}
+#card-view .ig-menu button:hover:not(:disabled),#card-view .ig-menu button:focus-visible{background:#f0f2f4;outline:0}
+#card-view .ig-menu button:disabled{color:#c2c8cf}
+#card-view .ig-menu button.del{color:#cf222e}
+#card-view .ig-menu hr{border:0;border-top:1px solid #e6e9ed;margin:3px 2px}
+#card-view .ox .o[aria-pressed=true],#card-view .ox .x[aria-pressed=true]{background:#eef1f4;color:#24292f}
+#card-view .cv-grid .link.add,#card-view .cv-grid [data-cvline-add].link{color:var(--ds-doc-ink-2,#57606a);font-weight:500}
+/* 선지: 번호가 곧 정답 단추(라디오는 숨기되 그대로 동작), 추천 조합은 접어 둠 */
+#card-view .cv-sugg-toggle{display:inline-flex;align-items:center;gap:4px;height:22px;min-height:0;margin:0 0 4px;padding:0 4px;border:0;border-radius:4px;background:transparent;color:var(--ds-doc-ink-2,#57606a);font-size:12px}
+#card-view .cv-sugg-toggle:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-sugg-toggle i{font-style:normal;font-size:10px}
+#card-view .cv-suggs[hidden]{display:none}
+#card-view .cv-sugg em{color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-combos .combo-row{position:relative;padding:0 3px;gap:2px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e6e9ed);background:#fff;cursor:pointer}
+#card-view .cv-combos .combo-row input[type=radio]{position:absolute;opacity:0;width:0;height:0;margin:0;pointer-events:none}
+#card-view .cv-combos .combo-row .no{flex:none;width:21px;height:21px;border-radius:11px;display:grid;place-items:center;font-size:14px;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-combos .combo-row:hover .no{background:#eef0f3}
+#card-view .cv-combos .combo-row.on{box-shadow:inset 0 0 0 1.5px #2f6fd6;background:#fff}
+#card-view .cv-combos .combo-row.on .no{background:#2f6fd6;color:#fff}
+#card-view .cv-combos .combo-row:has(input[type=radio]:focus-visible){outline:2px solid #2f6fd6;outline-offset:1px}
+#card-view .cv-autoans.ok{display:none}
+#card-view .cv-autoans.bad{color:#cf222e}
+/* 문항 정보: 항목별 단추, 누른 것만 아래에 열림 */
+#card-view .cv-more{margin:14px 2px 0;padding-top:10px;border-top:1px solid var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-more-h{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-more-h span{font-weight:400;margin-left:4px}
+#card-view .cv-more-chips{display:flex;flex-wrap:wrap;gap:6px}
+#card-view .cv-more-chip{display:inline-flex;align-items:center;gap:6px;height:28px;min-height:0;padding:0 10px;border:1px solid var(--ds-doc-line,#e6e9ed);border-radius:7px;background:#fff;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px;font-weight:500}
+#card-view .cv-more-chip small{font-size:11.5px;font-weight:400;color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-more-chip.has{color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-more-chip.has small{color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-more-chip:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-more-chip[aria-expanded=true]{background:var(--ds-doc-hover,#f6f8fa);border-color:#cfd5dc;color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-more-rows{margin-top:10px}
+#card-view .cv-more-rows:not(:has(.cv-more-g:not([hidden]))){display:none}
+#card-view .cv-more-g[hidden]{display:none}
+#card-view .cv-more-rows .cv-meta{padding:6px 0 0}
+#card-view .cv-evtab tr.miss,#card-view .cv-evtab tr.miss td{background:transparent;color:var(--ds-doc-ink-2,#57606a);font-weight:400}
+#card-view .cv-evtab .who span{background:#f0f2f4;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-more-rows .cv-pts button[aria-pressed=true]{background:#f0f2f4;color:var(--ds-doc-ink,#1f2328);box-shadow:inset 0 0 0 1px #cfd5dc}
+#card-view .cv-exp-tools .mini{background:#fff;color:var(--ds-doc-ink-2,#57606a);border:1px solid var(--ds-doc-line,#e6e9ed);box-shadow:none}
+/* 바닥 줄: 완성 체크는 회색 작은 글자, AI 검토는 회색 테두리 */
+#card-view .f-foot .checks{font-size:12px}
+#card-view .f-foot .checks span{color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .f-foot .checks span.ok{color:var(--ds-doc-ink-2,#57606a)}
+#card-view .f-foot .btn.go{background:#fff;color:var(--ds-doc-ink,#1f2328);border:1px solid #cfd5dc;box-shadow:none}
+#card-view .f-foot .btn.go:hover{background:var(--ds-doc-hover,#f6f8fa)}
+/* 머리줄은 카드 위에 붙어 있으므로, 칸으로 스크롤할 때 그 높이만큼 비워 둔다(머리줄 밑에 단추·입력 칸이 숨지 않게) */
+#card-view .cv-writer{scroll-padding-top:60px}
+/* 10-27 W6: 기출 검색 줄 끝 상세검색을 테두리 있는 「≡ 조건」 단추로 늘 보이게, 조건을 걸면 파랗게 「조건 N」 */
+#card-view .lp-one .lp-scope{max-width:none;padding:0 18px 0 6px;background-position:right 3px center;font-weight:600}
+#card-view .lp-one .lp-adv{margin-left:-74px;height:24px;padding:0 8px;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line-strong,#3a4556);font-size:12px}
+#card-view .lp-one .lp-adv>span{display:inline}
+#card-view .lp-one .lp-slot .lp-search{padding-right:80px}
+#card-view .lp-one .lp-adv:has(i:not([hidden]))>span{display:none}
+#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-74px;box-shadow:inset 0 0 0 1px #3b82f6;color:var(--go-ink,#e6edf3);background:rgba(59,130,246,.18)}
+#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:80px}
+@container lib (max-width:320px){
+  #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-30px;padding:0 4px;box-shadow:none}
+  #card-view .lp-one .lp-adv>span{display:none}
+  #card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:40px}
+}
+
+/* ---------- 10-27 문항 카드 다듬기 2 ---------- */
+/* 글꼴: 시험지에 찍히는 글(지문·발문·보기·선지)은 함초롬바탕, 이름표·단추·문항 정보는 Pretendard(무료 OFL, vendor/에 들어 있음) */
+@font-face{font-family:'Pretendard Variable';src:local('Pretendard Variable'),url('../../../vendor/PretendardVariable.woff2') format('woff2-variations'),url('../../../vendor/PretendardVariable.woff2') format('woff2');font-weight:45 920;font-display:swap}
+#card-view .cv-writer{font-family:'Pretendard Variable',Pretendard,-apple-system,'Apple SD Gothic Neo',sans-serif}
+#card-view .cv-writer :is(button,input,select,textarea,label,small){font-family:inherit}
+#card-view .cv-grid>.f-sec:not(.cv-more-rows) :is(textarea,input[data-cvchoice],input[data-cvct]){font-family:'HCR Batang','함초롬바탕','AppleMyungjo',serif;font-size:15px;letter-spacing:-.1px}
+#card-view .cv-grid>.f-sec:not(.cv-more-rows) .ig>span:first-child{font-family:'HCR Batang','함초롬바탕','AppleMyungjo',serif}
+#card-view .cv-combos .combo-row input[data-cvchoice]{font-size:13px}
+/* 머리줄 유형 단추에는 유형만(「자료 2개」 같은 구조는 말줄임이 생겨서 뺀다) */
+#card-view .w-head .cv-shape .st{display:none}
+#card-view .w-head .cv-shape b{white-space:nowrap}
+/* 자유 배점: 숫자와 「점」을 붙여 한 덩어리 */
+#card-view .cv-ptsfree.on{gap:0;padding:0 7px 0 5px}
+#card-view .cv-ptsfree.on input{min-width:1.6ch;padding:0;text-align:right}
+#card-view .cv-ptsfree.on>span{margin-left:1px}
+/* 빈 자료 칸 단추 글자가 잘리지 않게 */
+#card-view .cv-tile.empty .cv-pick{min-width:0;white-space:nowrap}
+#card-view .cv-tile.empty .cv-pick span{overflow:visible;text-overflow:clip}
+/* 문항 정보: 문항 카드(흰 판)와 다른 영역 — 회색 판, 위 굵은 선, 「시험지에 찍히지 않음」 띠 */
+#card-view .cv-more{margin:18px 0 0;padding:12px 12px 10px;border-top:2px solid #d0d7de;border-radius:0 0 10px 10px;background:#eceff3}
+#card-view .cv-more-h{display:flex;align-items:center;gap:8px;color:#57606a}
+#card-view .cv-more-h span{margin-left:0;padding:1px 8px;border-radius:9px;background:#dde2e8;color:#57606a;font-size:11px;font-weight:500}
+#card-view .cv-more-rows{margin:0;padding:2px 12px 12px;border:0;border-radius:0 0 10px 10px;background:#eceff3;box-shadow:none}
+#card-view .cv-more-rows .cv-row{background:#fff;border-radius:8px;margin-top:8px;box-shadow:inset 0 0 0 1px #dde2e8}
+/* ○·× 판정 기호는 Pretendard의 영문 O처럼 보이지 않게 시스템 기호 글꼴로 */
+#card-view .ox button,#card-view .ig-h,#card-view .cv-combos .combo-row .no{font-family:-apple-system,'Apple SD Gothic Neo',sans-serif}
+/* 빈 자료 칸 단추: 글자가 테두리에 닿지 않게 */
+#card-view .cv-tile.empty .cv-picks{padding:0 6px}
+#card-view .cv-tile.empty .cv-pick{gap:6px;padding:0 8px;font-size:12.5px}
+/* 열린 문항 정보 칸도 같은 회색 판 안에 */
+#card-view .cv-more>.f-sec.cv-more-rows{margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+#card-view .cv-more>.f-sec.cv-more-rows .cv-row{margin-top:8px;border:0;border-radius:8px;background:#fff;box-shadow:inset 0 0 0 1px #dde2e8;overflow:hidden}
+/* 자료 배치(10-27): 「자/료」 이름표 칸 아래 위치·개수·배열 — 좁은 칸에 세로로 쌓는다 */
+#card-view .cv-grid .cv-matrow{position:relative}
+#card-view .cv-grid :is(.cv-matrow,.cv-linerow)>label{justify-content:flex-start;padding-top:14px}
+/* 11-14 사용자: 자료 줄(최소 142)에서 ＋ 단추가 줄 아래 경계를 넘어 발문 줄로 튀어나왔다 — 묶음을 6px 올리고 사이를 5px로(빈 공간은 늘리지 않음). */
+#card-view .cv-matset{position:absolute;left:0;top:52px;width:36px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:1}
+#card-view .cv-matseg{display:flex;flex-direction:column;gap:1px;width:30px;padding:2px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e4e8);background:#fff}
+#card-view .cv-matseg button{height:18px;min-height:0;padding:0;border:0;border-radius:4px;background:transparent;color:var(--ds-doc-ink-3,#8c959f);font:500 10.5px/18px 'Pretendard Variable',-apple-system,sans-serif;letter-spacing:-.3px;cursor:pointer}
+#card-view .cv-matseg button:hover:not(:disabled){background:#eef1f4;color:var(--ds-doc-ink,#1f2328)}
+#card-view .cv-matseg button[aria-pressed=true]{background:#eef1f4;color:var(--ds-doc-ink,#1f2328);font-weight:700}
+#card-view .cv-matseg button:disabled{opacity:.35;cursor:default}
+#card-view .cv-grid .cv-matrow{min-height:182px}
+/* 11-13: 칸·줄 더하기 ＋ — 이름표 아래(자료는 위치·배열 단추 밑, 보기·과정·대화는 이름 밑) */
+#card-view .cv-grid .cv-linerow{position:relative;min-height:96px}
+#card-view .cv-lineset{position:absolute;left:0;top:58px;width:36px;display:flex;justify-content:center;z-index:1}
+#card-view .cv-plus{width:30px;height:26px;min-height:0;display:grid;place-items:center;padding:0;border:0;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e1e4e8);background:#fff;color:var(--ds-doc-ink-3,#8c959f);cursor:pointer}
+#card-view .cv-plus .ico{width:15px;height:15px}
+#card-view .cv-plus:hover:not(:disabled){box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8);color:var(--go-line,#2f6fd6);background:#f6f9ff}
+#card-view .cv-plus:disabled{opacity:.35;cursor:default}
+#card-view .cv-empty-hint{padding:8px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+/* 라이브러리 칸이 좁으면(380px 이하) 「조건」 글자는 빼고 아이콘만 — 검색 칸 자리를 남긴다 */
+@container lib (max-width:380px){
+  #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-36px;padding:0 6px}
+  #card-view .lp-one .lp-adv>span{display:none}
+  #card-view .lp-one .lp-adv i::before{content:""}
+  #card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:44px}
+}
+/* 10-28: 「ㄱ, ㄴ, ㄷ」처럼 긴 조합은 다섯 칸 폭에서 잘렸다 — 긴 조합이 있으면 다섯 칸 글자를 같이 줄이고 자간을 좁힌다(조판은 그대로). */
+#card-view .cv-combos.tight .combo-row input[data-cvchoice]{font-size:12px;letter-spacing:-.06em;padding:0}
+/* 「틀 · ○○ ▾」(10-29 학교 양식 시안 ②-나): 학교 양식이 있을 때만. 머리는 문서(밝은) 바탕이라 글자색은 이웃 단추를 따른다. */
+.ts-frame{position:relative;display:inline-flex;align-items:center}
+.ts-frame[hidden]{display:none}
+.typeset-view-controls .ts-frame-btn{height:26px;display:inline-flex;align-items:center;gap:4px;border:1px solid var(--ds-doc-line,#d8dce1);border-radius:13px;background:transparent;color:inherit;font-size:12px;padding:0 8px 0 10px;cursor:pointer;max-width:240px;white-space:nowrap;min-width:0}
+.typeset-view-controls .ts-frame-btn .k{opacity:.65}
+.typeset-view-controls .ts-frame-btn b{font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.typeset-view-controls .ts-frame-btn svg{flex:none;opacity:.6}
+.typeset-view-controls .ts-frame-btn[aria-expanded=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+.ts-frame-menu{position:absolute;top:calc(100% + 4px);right:0;z-index:40;min-width:270px;background:var(--ds-raise,#161b22);color:var(--ds-ink);border:1px solid var(--ds-line);border-radius:10px;box-shadow:var(--ds-shadow-float,0 12px 32px rgba(0,0,0,.5));padding:6px}
+.ts-frame-menu[hidden]{display:none}
+.typeset-view-controls .ts-frame-menu button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;height:32px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink);font-size:13px;padding:0 8px;text-align:left;cursor:pointer}
+.typeset-view-controls .ts-frame-menu button:hover{background:var(--ds-hover,rgba(255,255,255,.06))}
+.ts-frame-menu .dot{flex:none;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--ds-ink-3);box-sizing:border-box}
+.ts-frame-menu button[aria-checked=true] .dot{border-color:#6ba4f8;background:radial-gradient(circle,#6ba4f8 0 2.5px,transparent 3px)}
+.ts-frame-menu .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ts-frame-menu small{color:var(--ds-ink-3);font-size:11.5px}
+.ts-frame-menu hr{border:0;border-top:1px solid var(--ds-line);margin:5px 2px}
+.ts-frame-menu .nt{margin:4px 8px 4px;color:var(--ds-ink-3);font-size:11.5px;line-height:1.5;white-space:normal}
+.pv-frame{margin-left:4px;padding:0 6px;height:18px;line-height:18px;border-radius:9px;background:rgba(107,164,248,.12);color:#9cc0f9;font-size:11px}
+
+/* ===== 11-04 확정(5E_image와 같게): 패널 단추는 왼쪽 칸 「문항」 머리줄 오른쪽 ▢, 접으면 44px 아이콘 줄 + 맨 위 ▢. 로고는 왼쪽 칸 가운데 ===== */
+@media (min-width:641px){
+  .top .top-cell{width:var(--ds-panel-left,160px);padding:0 8px;justify-content:center}
+  .top .top-cell .brand{margin:0}
+  .top .top-cell #toggle-nav{position:fixed;z-index:30;left:calc(var(--ds-panel-left,160px) - 36px);top:calc(var(--ds-h-bar,56px) + 4px);margin:0;width:28px;height:28px;
+    background:transparent!important;box-shadow:none!important;color:var(--ds-ink-3)}
+  .top .top-cell #toggle-nav:hover{background:var(--ds-hover)!important;color:var(--ds-ink)}
+  .top .top-cell #toggle-nav .ico{width:17px;height:17px}
+  .top .top-cell #toggle-nav[aria-pressed="false"]{background:var(--ds-selected)!important;color:var(--ds-selected-ink,var(--ds-ink))}
+  .shell-body.nav-off>.side{display:flex!important;width:44px;padding:44px 4px 8px;align-items:center}
+  .shell-body.nav-off>.side .side-item>span,.shell-body.nav-off>.side .side-item>b,.shell-body.nav-off>.side kbd,.shell-body.nav-off>.side .side-label{font-size:0}
+  .shell-body.nav-off>.side .side-label{height:1px;margin:6px 6px;background:var(--ds-line);padding:0;overflow:hidden}
+  .shell-body.nav-off>.side .side-label:first-child{display:none}
+  .shell-body.nav-off>.side .side-add{display:none}
+  .shell-body.nav-off>.side button{justify-content:center;padding:0;width:34px;font-size:0;gap:0}
+  .shell-body.nav-off>.side button>:not(svg):not(.ico){display:none}
+}
+.top .brand:focus:not(:focus-visible),.top-icon:focus:not(:focus-visible){outline:none}
+
+/* 11-05: 「조건」은 글자 없이 아이콘 하나 — 검색 칸 밖, 보기 단추와 같은 30px 정사각. 거른 조건이 있으면 아이콘이 파랗고 개수 배지. */
+#card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:0;width:30px;height:30px;padding:0;justify-content:center;box-shadow:none;background:transparent;color:var(--ds-ink-3);border-radius:6px}
+#card-view .lp-one .lp-adv>span{display:none!important}
+#card-view .lp-one .lp-adv .ico{width:17px;height:17px}
+#card-view .lp-one .lp-adv:hover,#card-view .lp-one .lp-adv[aria-expanded=true]{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-one .lp-adv:has(i:not([hidden])){color:var(--ds-soft-line,#6ba4f8)}
+#card-view .lp-one .lp-adv i{position:absolute;top:0;right:0;min-width:13px;height:13px;padding:0 3px;border-radius:7px;background:var(--ds-soft-line,#6ba4f8);color:#0d1117;font-size:9.5px;line-height:13px;font-weight:700}
+#card-view .lp-one .lp-adv i::before{content:""!important}
+#card-view .lp-one .lp-slot .lp-search,#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:12px}
+
+/* 11-05 칸 분리(pane-detach.js): 머리줄 [분리 ↗] 단추 — 보기 단추와 같은 28px 아이콘 */
+#card-view .pane-detach{flex:none;width:30px;height:30px;padding:0;display:inline-grid;place-items:center;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-3);cursor:pointer}
+#card-view .pane-detach:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-detach svg{width:16px;height:16px}
+#card-view .cv-bar .pane-detach{margin-left:auto}
+#card-view .lp-adv-foot .pane-detach{margin-left:6px}
+/* 떼어 낸 동안 남은 칸이 자리를 채운다 */
+#card-view[data-det-left]>[data-cvsplit="left"]{display:none}
+#card-view[data-det-center]>[data-cvsplit="right"]{display:none}
+#card-view[data-det-center]>.cv-right{flex:1 1 auto!important}
+#card-view[data-det-center][data-det-left]>.cv-right{flex:1 1 auto!important}
+/* 11-05: 맨 위 줄 버그 신고(링크) — ? · … 단추와 같은 모양·색. */
+.top-actions a.top-help{height:var(--ds-h-control);border-radius:var(--ds-radius);color:var(--ds-ink-2);text-decoration:none}
+.top-actions a.top-help:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.top-actions a.top-help .ico{fill:none;stroke:currentColor}
+/* 11-05: 가운데 칸이 좁으면(칸 분리·좁은 창) 머리줄이 한 줄을 고집하다 유형 칸이 번호 위로 겹쳤다 — 좁을 때만 두 줄로 넘긴다. */
+#card-view .w-head .cv-shape-wrap{overflow:hidden}
+@container (max-width:440px){#card-view .w-head,#card-view .cv-center .w-head{flex-wrap:wrap;row-gap:6px}#card-view .w-head .sp{display:none}}
+
+/* 11-14(시안 review-1114 1번): 자료 칸 — 아이콘만, 넣을 칸 고르기, 끌 때 칸 켜기·가까운 칸 밝히기 */
+#card-view .cv-grid .cv-tile.empty .cv-picks{flex-direction:row;justify-content:center;gap:8px;width:auto;padding:0}
+#card-view .cv-grid .cv-tile.empty .cv-pick{width:40px;height:40px;padding:0;justify-content:center;border-radius:8px;background:var(--ds-doc,#fff)}
+#card-view .cv-grid .cv-tile.empty .cv-pick .ico{width:18px;height:18px;flex-basis:18px}
+#card-view .cv-grid .cv-tile[data-cvtile]{position:relative;transition:box-shadow .16s ease,background-color .16s ease}
+#card-view .cv-grid .cv-tile.empty[data-cvtile]{cursor:pointer}
+#card-view .cv-grid .cv-tile.is-target{box-shadow:0 0 0 2px #2f6fd6}
+#card-view .cv-grid .cv-tile.is-target .pic{background-color:#f3f7ff}
+#card-view .cv-target-tag{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);padding:2px 8px;border-radius:999px;background:#2f6fd6;color:#fff;font-size:11.5px;font-weight:600;white-space:nowrap;pointer-events:none}
+#card-view .cv-grid .cv-tile-tools .cv-ti{display:grid;place-items:center;width:26px;height:26px;padding:0}
+#card-view .cv-grid .cv-tile-tools .cv-ti .ico{width:15px;height:15px}
+#card-view .cv-grid .cv-tile .pic img{cursor:zoom-in}
+#card-view.cv-drag-live .cv-grid .cv-tile[data-cvtile]{box-shadow:0 0 0 1.5px rgba(47,111,214,.45)}
+#card-view.cv-drag-live .cv-grid .cv-tile[data-cvtile] .pic{background-color:#f6f9ff}
+#card-view.cv-drag-live .cv-grid .cv-tile.cv-drop-near{box-shadow:0 0 0 3px #2f6fd6,0 6px 18px rgba(47,111,214,.25);transform:translateY(-1px)}
+#card-view.cv-drag-live .cv-grid .cv-tile.cv-drop-near .pic{background-color:#e8f0ff}
+#card-view .cv-drag-live .cv-grid .cv-matrow.cv-drop-on,#card-view .cv-grid .cv-matrow.cv-drop-on{box-shadow:none;background:none}
+.cv-tile-menu{position:fixed;z-index:4000;min-width:220px;padding:4px;border-radius:10px;background:#fff;box-shadow:0 0 0 1px #d9dce1,0 10px 28px rgba(0,0,0,.16)}
+.cv-tile-menu button{display:flex;align-items:flex-start;justify-content:flex-start;gap:10px;width:100%;height:auto;min-height:0;line-height:1.35;padding:8px 10px;border:0;border-radius:7px;background:transparent;color:#1b1e23;font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.cv-tile-menu button:hover,.cv-tile-menu button:focus-visible{background:#f1f3f6;outline:none}
+.cv-tile-menu .ico{width:16px;height:16px;flex:0 0 16px;margin-top:2px;fill:none;stroke:currentColor;stroke-width:1.6;color:#5a606a}
+.cv-tile-menu button>span{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.cv-table-grid{min-width:0;padding:10px 12px 9px}.cv-table-grid:focus{outline:none}
+.cv-table-grid .ctg-title{margin:0 0 8px;font-size:12.5px;font-weight:600;color:#1b1e23;font-variant-numeric:tabular-nums}
+.cv-table-grid .ctg-cells{display:grid;gap:3px}
+.cv-table-grid .ctg-cells button{width:16px;height:16px;min-height:0;padding:0;border:1px solid #d3d7dd;border-radius:3px;background:#fff;cursor:pointer}
+.cv-table-grid .ctg-cells button.on{border-color:#5b7fb8;background:#e3ecf8}
+.cv-table-grid .ctg-head{display:flex;align-items:center;gap:6px;margin:9px 0 0;font-size:12px;color:#3c4148}
+.cv-table-grid .ctg-hint{margin:4px 0 0;font-size:11px;color:#8a9099}
+.cv-tile-menu small{display:block;margin-top:1px;font-size:11.5px;color:#6a7079}
+@media (prefers-reduced-motion:reduce){#card-view .cv-grid .cv-tile[data-cvtile]{transition:none}#card-view.cv-drag-live .cv-grid .cv-tile.cv-drop-near{transform:none}}
+@keyframes cv-tile-flash{0%,100%{box-shadow:0 0 0 0 rgba(47,111,214,0)}20%,60%{box-shadow:0 0 0 3px #2f6fd6,0 0 0 8px rgba(47,111,214,.18)}40%,80%{box-shadow:0 0 0 1px rgba(47,111,214,.3)}}
+#card-view .cv-grid .cv-tile.cv-tile-flash{animation:cv-tile-flash 1.5s ease}
+@media (prefers-reduced-motion:reduce){#card-view .cv-grid .cv-tile.cv-tile-flash{animation:none;box-shadow:0 0 0 3px #2f6fd6}}
+
+/* 11-14(지적 8): 그림이 든 칸을 고르면 「바꿀 칸」을 왼쪽 아래 작게 — 그림·도구 위를 덮지 않게 */
+#card-view .cv-grid .cv-tile:not(.empty) .cv-target-tag{left:8px;bottom:8px;transform:none;padding:1px 7px;font-size:10.5px;opacity:.92}
+
+/* 11-14 시안 review-1114b 2번: 문항 카드 칸 위 AI 작업 표시 */
+.cv-tile .pic:has(>.cv-ai-job){position:relative}
+.cv-ai-job{position:absolute;inset:0;z-index:3;border-radius:inherit;display:flex;align-items:flex-end;cursor:pointer}
+.cv-ai-job[data-state="busy"]{backdrop-filter:blur(2px) saturate(.7);-webkit-backdrop-filter:blur(2px) saturate(.7);background:rgba(255,255,255,.45);box-shadow:inset 0 0 0 2px #5b8fd8;animation:cv-ai-breathe 1.8s ease-in-out infinite}
+@keyframes cv-ai-breathe{50%{box-shadow:inset 0 0 0 2px rgba(91,143,216,.35)}}
+.cv-ai-job[data-state="completed"]{box-shadow:inset 0 0 0 2px #5b8a6d}
+.cv-ai-job[data-state="failed"]{box-shadow:inset 0 0 0 2px #c4574f}
+.cv-ai-job[data-flash]{animation:cv-ai-flash .85s ease-in-out 3}
+@keyframes cv-ai-flash{50%{box-shadow:inset 0 0 0 3px #5b8a6d,0 0 0 4px rgba(91,138,109,.25)}}
+.cv-ai-band{width:100%;padding:6px 8px 7px;background:rgba(20,24,31,.82);color:#fff;font-size:11.5px;border-radius:0 0 7px 7px}
+.cv-ai-band .cv-ai-t{display:block;font-variant-numeric:tabular-nums;margin-bottom:5px}
+.cv-ai-steps{display:grid;grid-template-columns:1fr 1.5fr 1fr 1fr;gap:3px}
+.cv-ai-steps i{display:block;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
+.cv-ai-steps b{display:block;height:100%;width:0;background:#8fb4ea;transition:width .3s linear}
+.cv-ai-done{display:flex;align-items:center;gap:5px;width:100%;padding:5px 6px;background:rgba(255,255,255,.94);border-top:1px solid #e3e6ea;border-radius:0 0 7px 7px;font-size:11.5px;color:#1b1e23;cursor:default}
+.cv-ai-done .cv-ai-t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.cv-ai-job[data-state="completed"] .cv-ai-t{color:#3f6d52}.cv-ai-job[data-state="failed"] .cv-ai-t{color:#a8443d}
+.cv-ai-done button{height:24px;min-height:0;padding:0 8px;border:1px solid #d3d7dd;border-radius:6px;background:#fff;color:#1b1e23;font:inherit;font-size:11.5px;cursor:pointer}
+.cv-ai-done button.pri{border-color:#2f3a4a;background:#2f3a4a;color:#fff}
+.cv-ai-done button.x{width:24px;padding:0;border-color:transparent;color:#7a808a}
+@media (prefers-reduced-motion:reduce){.cv-ai-job{animation:none!important}}
+.place-ai{position:absolute;pointer-events:none;border-radius:3px;box-shadow:0 0 0 2px #5b8fd8;background:rgba(255,255,255,.35);display:flex;align-items:flex-end;justify-content:center}
+.place-ai[data-state="completed"]{box-shadow:0 0 0 2px #5b8a6d;background:none}.place-ai[data-state="failed"]{box-shadow:0 0 0 2px #c4574f;background:none}
+.place-ai span{margin-bottom:-22px;padding:2px 7px;border-radius:5px;background:rgba(20,24,31,.85);color:#fff;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cv-ai-job:not([data-state="busy"]){pointer-events:none}.cv-ai-job .cv-ai-done{pointer-events:auto}
+/* 11-14 시안 review-1114b 3번: 선지 아래 흐린 점선 뒤 해설 칸 */
+#card-view .cv-exp{margin:14px 2px 0;padding-top:12px;border-top:1px dashed #cfd5dc}
+#card-view .cv-exp.is-empty{padding-top:8px}
+#card-view .cv-exp-add{height:28px;min-height:0;padding:0 8px;border:0;background:none;color:#5a6270;font:inherit;font-size:12.5px;cursor:pointer;border-radius:6px}
+#card-view .cv-exp-add:hover{background:#f1f3f6;color:#1b1e23}
+#card-view .cv-exp-h{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12.5px}
+#card-view .cv-exp-h b{font-weight:700;color:#1b1e23}
+#card-view .cv-exp-ans{padding:1px 7px;border:1px solid #1b1e23;border-radius:4px;font-weight:600;font-size:12px;color:#1b1e23}
+#card-view .cv-exp-ans.none{border-color:#d3d7dd;color:#8a9099;font-weight:400}
+#card-view .cv-exp-h .mini{margin-left:auto}
+#card-view .cv-exp-sum{width:100%;height:28px;margin-bottom:6px;padding:0 8px;border:1px solid #e1e4e8;border-radius:6px;background:#fff;font:inherit;font-size:12.5px}
+#card-view .cv-exp textarea{width:100%;min-height:52px}
+/* 11-14 2차 30: 합답형 선지 칸의 「ㄱ, ㄴ, ㄷ」은 한 줄 — 칸이 좁으면 글자를 줄이고 넘치면 가로로만 밀린다(아래로 떨어지지 않음). */
+#card-view .cv-combos .combo-row .eq-ce{flex:1;min-width:0;white-space:nowrap;overflow:hidden;line-height:28px;height:28px}
+#card-view .cv-combos.tight .combo-row .eq-ce,#card-view .cv-combos .combo-row .eq-ce.cv-long{font-size:12px;letter-spacing:-.06em}
+/* 11-14 2차 29: 카드가 넓어져도 자료 칸 그림은 칸 안에 늘 다 보인다(칸 높이에 맞춰 줄임). */
+#card-view .cv-grid .cv-tile .pic{overflow:hidden}
+#card-view .cv-grid .cv-tile .pic img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;min-height:0}
+#card-view .cv-grid .cv-tile .pic:has(>img){max-height:280px}
+/* 끝·실패 표시가 그림 아래를 덮지 않게 그 높이만큼 칸 아래를 비운다. */
+#card-view .cv-grid .cv-tile .pic:has(>.cv-ai-job:not([data-state="busy"])){padding-bottom:44px}
+/* 11-14 시안 review-1114c 1번: 표 칸 안 편집 */
+#card-view .cv-grid .cv-tile.is-tedit{flex:2 1 0}
+#card-view .cv-grid .cv-tile .pic.cv-tedit{display:flex;flex-direction:column;align-items:stretch;gap:8px;max-height:none;min-height:0;padding:10px 10px 8px;box-shadow:inset 0 0 0 2px #2f6fd6;cursor:default}
+#card-view .cv-tedit-wrap{position:relative;align-self:center;padding:0 22px 22px 0;max-width:100%;overflow:auto}
+#card-view .cv-tedit table{border-collapse:collapse;font-family:"HCR Batang","함초롬바탕",serif;font-size:13px;background:#fff}
+#card-view .cv-tedit td,#card-view .cv-tedit th{border:1px solid #8f959e;min-width:56px;height:28px;padding:0;font-weight:400;vertical-align:middle}
+#card-view .cv-tedit th{background:#f1f3f5}
+#card-view .cv-tedit [data-tc]{min-height:26px;padding:4px 7px;text-align:center;outline:none;white-space:pre-wrap;cursor:text}
+#card-view .cv-tedit [data-tc]:focus{box-shadow:inset 0 0 0 2px #2f6fd6;background:#f4f8ff}
+#card-view .cv-tedit .sel{background:#e3ecf8}
+#card-view .cv-tedit-add{position:absolute;display:grid;place-items:center;width:20px;height:20px;min-height:0;padding:0;border-radius:50%;border:1px solid #c7ccd3;background:#fff;color:#4a5260;font-size:13px;line-height:1;cursor:pointer}
+#card-view .cv-tedit-add.col{right:0;top:calc(50% - 21px)}#card-view .cv-tedit-add.row{bottom:0;left:calc(50% - 21px)}
+#card-view .cv-tedit-add:hover{border-color:#2f6fd6;color:#2f6fd6}
+#card-view .cv-tedit-bar{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:4px;border-radius:8px;background:#161b22}
+#card-view .cv-tedit-bar button{height:26px;min-height:0;padding:0 9px;border:0;border-radius:6px;background:transparent;color:#c9d1d9;font:inherit;font-size:12px;cursor:pointer}
+#card-view .cv-tedit-bar button:hover{background:#1d2633}
+#card-view .cv-tedit-bar button[aria-pressed="true"]{background:#13243d;color:#dce9ff}
+#card-view .cv-tedit-bar button.pri{background:#2f3a4a;color:#fff}
+#card-view .cv-tile.is-tedit .cap small{color:#7a808a;font-weight:400;margin-left:6px}
+#card-view .cv-tedit [data-tc]{white-space:pre;min-width:44px}
+/* 11-14 시안 review-1114c 2번: 해설 칸 ㄱ·ㄴ·ㄷ·번호 */
+#card-view .cv-exp-rows{display:flex;flex-direction:column}
+#card-view .cv-exp-row{display:grid;grid-template-columns:28px 1fr 78px;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #e3e6ea}
+#card-view .cv-exp-rows[data-mode="num"] .cv-exp-row{grid-template-columns:28px 1fr 24px}
+#card-view .cv-exp-row:first-child{border-top:0}
+#card-view .cv-exp-row>.k{padding-top:6px;text-align:center;font-family:"HCR Batang","함초롬바탕",serif;font-size:14px;color:#1b1e23}
+#card-view .cv-exp textarea[data-cvexp]{width:100%;min-height:32px;field-sizing:content;resize:none;overflow:hidden;padding:6px 9px;border:1px solid #d9dce1;border-radius:7px;background:#fff;font:inherit;font-size:13px;line-height:1.5}
+#card-view .cv-exp-row .ox{padding-top:8px;font-size:12px;color:#3f6d52;white-space:nowrap}#card-view .cv-exp-row .ox.x{color:#a8443d}
+#card-view .cv-exp-sub{display:grid;grid-template-columns:24px 1fr 22px;gap:4px;align-items:start;margin-top:5px}
+#card-view .cv-exp-sub>.k{padding-top:7px;text-align:right;font-size:12px;color:#6a7079}
+#card-view .cv-exp .x{width:22px;height:22px;min-height:0;margin-top:5px;padding:0;border:0;border-radius:5px;background:none;color:#8a9099;cursor:pointer}
+#card-view .cv-exp .x:hover{background:#f1f3f6;color:#1b1e23}
+#card-view .cv-exp-addsub{height:24px;min-height:0;margin-top:4px;padding:0 6px;border:0;border-radius:5px;background:none;color:#4a6fa5;font:inherit;font-size:12px;cursor:pointer}
+#card-view .cv-exp-addsub:hover{background:#eef3fa}
+/* 11-14 3차 38: 해설 접기 */
+#card-view .cv-exp-fold{display:inline-flex;align-items:center;gap:6px;height:26px;min-height:0;padding:0 6px 0 2px;border:0;border-radius:6px;background:none;color:#1b1e23;font:inherit;font-size:12.5px;cursor:pointer}
+#card-view .cv-exp-fold:hover{background:#f1f3f6}
+#card-view .cv-exp-fold i{font-style:normal;width:12px;color:#6a7079;font-size:11px}
+#card-view .cv-exp.is-folded{padding-top:8px}
+#card-view .cv-exp.is-folded .cv-exp-fold{width:100%;justify-content:flex-start}
+#card-view .cv-exp-peek{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#6a7079;font-size:12px}
+/* 11-14 3차 32·33: 표 칸은 수식 입력 칸(eq), 편집 모양은 꼭 필요한 만큼 */
+#card-view .cv-tedit textarea[data-tc],#card-view .cv-tedit .eq-ce{display:block;width:100%;min-width:44px;min-height:26px;margin:0;padding:4px 7px;border:0;border-radius:0;background:transparent;box-shadow:none;resize:none;outline:none;text-align:center;font:inherit;font-size:13px;line-height:18px;white-space:pre;overflow:hidden;field-sizing:content}
+#card-view .cv-tedit .eq-ce:focus{box-shadow:inset 0 0 0 2px #2f6fd6;background:#f4f8ff}
+#card-view .cv-tedit-add{opacity:0;transition:opacity .12s}
+#card-view .cv-tedit-wrap:hover .cv-tedit-add,#card-view .cv-tedit-add:focus-visible{opacity:1}
+#card-view .cv-tedit-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;justify-content:flex-start;align-self:center;max-width:100%;opacity:0;pointer-events:none;transition:opacity .12s}
+#card-view .cv-tedit:focus-within .cv-tedit-bar,#card-view .cv-tedit-bar:hover{opacity:1;pointer-events:auto}
+#card-view .cv-tedit-bar button{flex:none;white-space:nowrap}
+/* 11-15: 둘째 이후 글·상자 안 글 */
+#card-view .cv-xtext{position:relative}
+#card-view .cv-xtext.boxed{padding:8px 10px;border:1px solid #9aa0a8;border-radius:2px;background:#fff}
+#card-view .cv-xtag{position:absolute;top:-9px;left:8px;padding:0 6px;background:#fff;color:#6a7079;font-size:11px;line-height:16px}
+#card-view .cv-xtext textarea{width:100%}
+/* 11-15: 카드 표 — 미리보기·편집 모두 칸 폭 안에(넘쳐 잘리지 않게), 합친 칸 그대로 */
+#card-view .cv-grid .cv-tile .table-pic table{width:100%;table-layout:fixed;border-collapse:collapse}
+#card-view .cv-grid .cv-tile .table-pic th,#card-view .cv-grid .cv-tile .table-pic td{text-align:center;vertical-align:middle;overflow:hidden;overflow-wrap:anywhere;word-break:keep-all;line-height:1.35}
+#card-view .cv-grid .cv-tile .table-pic:not(.cv-tedit){overflow:hidden}
+#card-view .cv-tedit-wrap{align-self:stretch;width:100%;overflow:visible}
+#card-view .cv-tedit table{width:100%;table-layout:fixed}
+#card-view .cv-tedit td,#card-view .cv-tedit th{min-width:0}
+#card-view .cv-tedit textarea[data-tc],#card-view .cv-tedit .eq-ce{min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
+/* 11-15(시안 review-1115 1번): 보기 줄 ⋮와 ㄱ 사이 30px → 19px(실측) — ㄱ 칸을 판정 동그라미 폭(26px)으로 */
+#card-view .cv-grid .rows>.ig:has(.cv-tk){padding-left:8px}
+#card-view .cv-grid .rows>.ig:has(.cv-tk)>span:first-child{width:26px;min-width:26px;flex:none}
+/* 11-15(지적 30): 합답형 선지 칸 「ㄱ, ㄴ, ㄷ」가 한 줄에 — 수식 칸(eq-ce)이 줄을 바꿔 칸 위로 삐져나왔다 */
+#card-view .cv-combos .combo-row .eq-ce{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:clip}
+/* 11-15(시안 review-1115 안 A): 카드 표 머리 행은 조판처럼 — 회색 바탕 없이 돋움 */
+#card-view .cv-grid .cv-tile .table-pic th{background:transparent;font-weight:400;font-family:-apple-system,"Apple SD Gothic Neo",sans-serif}
+#card-view .cv-grid .cv-tile[data-cvtile] .table-pic{cursor:pointer}
+/* 11-15(시안 material-1115): 자료 칸 네 가지 · (가)(나) 이름표 스위치 · 자료 상자 칸 */
+#card-view .cv-picks.four{display:grid;grid-template-columns:repeat(2,auto);gap:6px}
+#card-view .cv-picks.four .cv-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:62px;height:52px}
+#card-view .cv-picks.four .cv-pick small{font-size:11px;line-height:1.1;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-picks.four .cv-pick svg{width:18px;height:18px}
+#card-view .cv-mathead{display:flex;align-items:center;gap:8px;margin:0 0 6px}
+#card-view .cv-capsw{display:inline-flex;align-items:center;gap:6px;height:24px;min-height:0;padding:0 10px 0 4px;border:1px solid #d0d7de;border-radius:12px;background:#fff;color:#24292f;font:12px -apple-system,sans-serif;cursor:pointer}
+#card-view .cv-capsw i{width:24px;height:14px;border-radius:8px;background:#c9ced6;position:relative;display:inline-block;transition:background .15s}
+#card-view .cv-capsw i::after{content:"";position:absolute;left:2px;top:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:left .15s}
+#card-view .cv-capsw.on i{background:var(--go-line,#2f6fd6)}#card-view .cv-capsw.on i::after{left:12px}
+#card-view .cv-tiles.caps-off .cv-tile .cap b{color:#c2c8cf;text-decoration:line-through}
+#card-view .cv-boxtile .box-pic{display:flex;align-items:stretch;padding:6px;background:#fff}
+#card-view .cv-boxtile .box-pic textarea{flex:1;width:100%;min-height:90px;border:1px solid #444;border-radius:2px;padding:8px 10px;font:14px/1.6 'HCR Batang','함초롬바탕','AppleMyungjo',serif;color:#24292f;background:#fff;resize:none}
+#card-view .cv-boxtile .box-pic textarea:focus{outline:0;box-shadow:0 0 0 2px rgba(47,111,214,.25)}
+#card-view .cv-boxtile .box-pic .eq-ce{flex:1;min-height:90px;border:1px solid #444;border-radius:2px;padding:8px 10px}
+/* 11-15 선지 칸(일반 정답형): 다른 칸처럼 왼쪽 이름 칸, 줄은 ○ ① 글 한 줄로 가운데 맞춤, 번호는 회색 상자 없이(보기 ㄱ·ㄴ·ㄷ와 같은 모양). */
+#card-view .cv-choice .cv-lay{display:flex;justify-content:flex-end;height:22px;margin:2px 0 -2px}
+#card-view .cv-choice .cv-lay .lay{font-size:12px}
+#card-view .cv-grid .cv-choice .choice-row{align-items:center;gap:6px}
+#card-view .cv-grid .cv-choice .choice-row>input[type=radio]{width:15px;height:15px;margin:0 2px 0 0}
+#card-view .cv-grid .cv-choice .choice-row>span{width:auto;min-width:22px;padding:0;background:transparent;border:0;border-radius:0;font-family:'HCR Batang','함초롬바탕','AppleMyungjo',serif;font-size:15px;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-grid .cv-choice .choice-row.on>span{background:transparent;color:#2f6fd6;font-weight:700}

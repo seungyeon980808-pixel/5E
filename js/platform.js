@@ -1,4 +1,5 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
+import { coveringApp } from './app-lock.js?v=1.7.0-four-session-integration';
 /* ===== PLATFORM =====
  * Mac과 Windows는 수식키 규칙이 다르다. 이 파일이 그 차이를 한곳에 모은다.
  *
@@ -62,14 +63,24 @@ function isEditingTarget(target) {
   return !!target && (/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(target.tagName) || target.isContentEditable === true);
 }
 
+// 한글 입력기 상태의 키(isComposing · keyCode 229)를 「글자 조합 중」으로 볼지(10-24 사용자 요구: 단축키는 한글 상태와 상관없이 무조건 작동).
+// - ⌘·Ctrl·⌥를 함께 누른 키는 글자 조합이 아니다 → 단축키로 처리.
+// - 글 입력 칸(입력란·글상자 편집)이 아닌 곳의 키는 한글 입력기 상태라도 조합할 글이 없다 → 단축키로 처리(Safari는 이때도 229를 보낸다).
+// - 글 입력 칸 안에서 조합 중인 키만 글자 입력에 맡긴다.
 function isComposingKey(e) {
-  return !!e.isComposing || e.keyCode === 229;
+  if (!e || !(e.isComposing || e.keyCode === 229)) return false;
+  if (e.ctrlKey || e.metaKey || e.altKey) return false;
+  return isEditingTarget(e.target);
 }
 
+// 출제 칸·조판 창이 그림 화면을 덮고 있을 때도 「막힌 상태」다. 그림 화면 잠금(inert)은 키 입력을 막지 못해서,
+// 칸이 열려 있어도 ⌘Z·Delete·방향키·⌘V가 뒤에 숨은 그림을 바꾸던 것(H3).
 function hasBlockingModal() {
+  if (coveringApp()) return true;
+  if (document.getElementById('start-screen')) return true; // 시작 창이 떠 있는 동안 그림 단축키 막기
   const persistentLiteEditor = document.documentElement?.dataset.mode === 'lite'
     && document.documentElement?.dataset.liteResultMode === 'edit';
-  return [...document.querySelectorAll('.modal-overlay:not([hidden])')]
+  return [...document.querySelectorAll('.modal-overlay:not([hidden]):not([inert])')]
     .some((overlay) => !(persistentLiteEditor && overlay.id === 'ai-image-panel'));
 }
 

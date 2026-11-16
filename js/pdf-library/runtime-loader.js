@@ -5,7 +5,7 @@ function isModuleFetchFailure(error) {
 }
 
 export function createPdfRuntimeLoader({
-  moduleUrl = new URL("./pdf-runtime.js?v=1.6.3-pdf-runtime-retry", import.meta.url).href,
+  moduleUrl = new URL("./pdf-runtime.js?v=1.7.0-four-session-integration", import.meta.url).href,
   importModule = url => import(url),
 } = {}) {
   const retryId = `${Date.now()}-${++loaderSequence}`;

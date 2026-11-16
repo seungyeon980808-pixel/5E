@@ -26,6 +26,13 @@ async function body(request){
   const bytes=new Uint8Array(size);let at=0;for(const c of chunks){bytes.set(c,at);at+=c.byteLength;}
   try{const data=JSON.parse(new TextDecoder().decode(bytes));if(!data||typeof data!=='object'||Array.isArray(data))invalid();return data;}catch{invalid('Invalid JSON');}
 }
+// 보안 점검 M1: 접속 주소별 분당 쓰기 제한(Workers Rate Limiting 바인딩이 있을 때만)과 하루 전체 생성 상한. 주인장은 제외.
+async function throttle(request,env,auth,binding){
+  const limiter=env[binding];if(auth.owner||!limiter?.limit)return;
+  const {success}=await limiter.limit({key:request.headers.get('cf-connecting-ip')||'unknown'});
+  if(!success)throw new ApiError(429,'RATE_LIMITED','Too many memo changes');
+}
+function dailyCreateLimit(env){const n=Number(env.MEMO_DAILY_CREATE_LIMIT);return Number.isInteger(n)&&n>0?n:1000;}
 function serialize(row){return {...row,created_at:new Date(row.created_at).toISOString(),updated_at:new Date(row.updated_at).toISOString()};}
 function configured(env){return !!env.GOOGLE_CLIENT_ID?.match(/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/)&&!!env.OWNER_EMAIL?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);}
 async function identity(request,env){
@@ -65,6 +72,11 @@ async function route(request,env,url){
   if(url.pathname==='/entries'&&request.method==='POST'){
     const data=await body(request);if(!uuid.test(data.id)||Object.keys(data).some(k=>!['id','entry'].includes(k)))invalid();
     const entry=record(data.entry);
+    await throttle(request,env,auth,'MEMO_CREATE_LIMITER');
+    if(!auth.owner){
+      const usage=await env.DB.prepare(`SELECT (SELECT COUNT(*) FROM memo_entries WHERE created_at>${CLOCK}-${DAY}) AS recent,EXISTS(SELECT 1 FROM memo_entries WHERE id=?) AS existing`).bind(data.id).first();
+      if(!usage.existing&&usage.recent>=dailyCreateLimit(env))throw new ApiError(429,'DAILY_LIMIT','Too many memos today');
+    }
     const results=await env.DB.batch([
       env.DB.prepare(`INSERT INTO memo_entries(id,${fields.join(',')}) VALUES(?,${fields.map(()=>'?').join(',')}) ON CONFLICT(id) DO NOTHING`).bind(data.id,...fields.map(k=>entry[k])),
       env.DB.prepare(`SELECT * FROM memo_entries WHERE id=? AND (created_at>${CLOCK}-${DAY} OR ?=1)`).bind(data.id,Number(auth.owner))
@@ -77,6 +89,7 @@ async function route(request,env,url){
     if(!uuid.test(id))invalid();const data=await body(request);
     if(!Number.isInteger(data.version)||data.version<1)throw new ApiError(409,'40001','Valid memo version required');
     if(Object.keys(data).some(k=>!['version',...(request.method==='PATCH'?['patch']:[])].includes(k)))invalid();
+    await throttle(request,env,auth,'MEMO_WRITE_LIMITER');
     if(request.method==='PATCH'){
       const patch=record(data.patch,true),keys=Object.keys(patch);
       const row=await env.DB.prepare(`UPDATE memo_entries SET ${keys.map(k=>k+'=?').join(',')},updated_at=${CLOCK},version=version+1 WHERE id=? AND version=? AND (created_at>${CLOCK}-${DAY} OR ?=1) RETURNING *`).bind(...keys.map(k=>patch[k]),id,data.version,Number(auth.owner)).first();

@@ -26,8 +26,8 @@ export function snapshotComparisonRevisions(revisions) {
       && Number(comment.x) + Number(comment.w ?? 0) <= 100
       && Number(comment.y) + Number(comment.h ?? 0) <= 100
       && (comment.type !== 'area' || (Number(comment.w) > 0 && Number(comment.h) > 0))
-    ).map(comment => Object.freeze({
-      number: Number(comment.number) || 0, type: comment.type === 'area' ? 'area' : 'point',
+    ).map((comment, index) => Object.freeze({
+      number: item.comments.indexOf(comment) + 1, type: comment.type === 'area' ? 'area' : 'point',
       x: Number(comment.x), y: Number(comment.y), w: Number(comment.w) || 0, h: Number(comment.h) || 0,
     })));
     return Object.freeze({ id: item.id, label: item.label, src: item.src, ...size, kind: item.kind === 'original' ? 'original' : 'revision', comments });
@@ -35,12 +35,9 @@ export function snapshotComparisonRevisions(revisions) {
 }
 
 export function comparisonDefaults(revisions, selectedRevisionId) {
-  const right = revisions.find(item => item.id === selectedRevisionId) || revisions.at(-1);
+  const right = revisions.findLast(item => item.kind !== 'original') || revisions.at(-1);
   if (!right) throw new TypeError('Comparison requires at least one revision.');
-  const index = revisions.indexOf(right);
-  const left = revisions.slice(0, index).findLast(item => item.kind !== 'original')
-    || revisions.find(item => item.kind === 'original' && item !== right)
-    || revisions.find(item => item !== right) || right;
+  const left = revisions.find(item => item.kind === 'original') || revisions[0];
   return { leftRevisionId: left.id, rightRevisionId: right.id };
 }
 
@@ -130,7 +127,7 @@ export function mountRevisionComparison(container, options) {
   const defaults = comparisonDefaults(revisions, options.selectedRevisionId);
   const sides = ['left', 'right'].map((name, index) => {
     const group = node(doc, 'div', 'ai-comparison-choice');
-    const label = node(doc, 'label', '', index ? '오른쪽 · 수정본' : '왼쪽 · 기준');
+    const label = node(doc, 'label', '', index ? '오른쪽' : '왼쪽');
     const select = node(doc, 'select'); select.setAttribute('aria-label', index ? '오른쪽 비교 버전' : '왼쪽 비교 버전');
     label.append(select);
     const status = node(doc, 'span', 'ai-comparison-status'); status.setAttribute('role', 'status');
@@ -166,7 +163,8 @@ export function mountRevisionComparison(container, options) {
     listen(retry, 'click', () => load(side));
     return side;
   });
-  stage.append(divider); root.append(selectors, toolbar, stage, hint); container.append(root);
+  const controls = node(doc, 'div', 'ai-comparison-controls'); controls.append(selectors, toolbar);
+  stage.append(divider); root.append(controls, stage, hint); container.append(root);
 
   function render() {
     if (disposed) return;
@@ -239,12 +237,12 @@ export function mountRevisionComparison(container, options) {
     const generation = ++side.generation;
     const item = revisions.find(value => value.id === side.id);
     fillMarkers(side, item);
-    side.size = null; side.state = 'loading'; side.status.textContent = '불러오는 중…'; side.retry.hidden = true;
+    side.select.removeAttribute('title'); side.status.removeAttribute('title'); side.size = null; side.state = 'loading'; side.status.textContent = '불러오는 중…'; side.retry.hidden = true;
     side.image.removeAttribute('href'); side.svg.setAttribute('aria-label', item.label);
     render();
     side.pending = decodeImage(doc, item.src, request.signal).then(size => {
       if (disposed || request.signal.aborted || generation !== side.generation) return;
-      side.size = size; side.state = 'ready'; side.status.textContent = `${size.width} × ${size.height} px`;
+      side.size = size; side.state = 'ready'; side.status.textContent = ''; side.select.title = `${item.label} · ${size.width} × ${size.height} px`;
       side.image.setAttribute('href', item.src); render();
     }).catch(error => {
       if (disposed || request.signal.aborted || generation !== side.generation) return;

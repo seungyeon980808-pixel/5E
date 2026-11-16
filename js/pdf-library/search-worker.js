@@ -1,5 +1,5 @@
-import { buildSearchIndex, searchIndex } from "./search.js?v=1.6.1-remediation-0929";
-import { createCropSource } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { buildSearchIndex, searchIndex, warmSearchIndex } from "./search.js?v=1.7.0-four-session-integration";
+import { createCropSource } from "./contract.js?v=1.7.0-four-session-integration";
 
 const MAX_PREBUILT_ENTRIES = 100_000;
 const MAX_ENTRY_TEXT = 500_000;
@@ -110,6 +110,8 @@ function prebuiltEntries(input, pageCounts) {
 }
 
 export function createSearchWorkerController() {
+  // 11-08: 미리 만든 색인(수천 쪽)은 열쇠(key)마다 한 번만 검사·변환해 두고, 다음 교체 때는 열쇠만 받아 다시 쓴다.
+  const prebuiltCache = new Map();
   const documents = new Map();
   const pageCounts = new Map();
   let index = buildSearchIndex([]);
@@ -126,18 +128,36 @@ export function createSearchWorkerController() {
           }
           const entries = [...buildSearchIndex(documents.values()).entries]
             .map((entry, index) => securedEntry(entry, `documents.entries[${index}]`, pageCounts));
+          const usedKeys = new Set();
           for (let sourceIndex = 0; sourceIndex < (message.prebuilt ?? []).length; sourceIndex += 1) {
             const source = message.prebuilt[sourceIndex];
-            const sourcePageCounts = descriptorPageCounts(source.documents, `prebuilt[${sourceIndex}]`);
-            for (const [documentId, pageCount] of sourcePageCounts) {
+            const key = typeof source?.key === "string" ? source.key : null;
+            let cached = key ? prebuiltCache.get(key) : null;
+            if (!cached) {
+              if (!source?.index) {
+                const error = new TypeError("PREBUILT_MISSING");
+                error.code = "PREBUILT_MISSING";
+                throw error;
+              }
+              const sourcePageCounts = descriptorPageCounts(source.documents, `prebuilt[${sourceIndex}]`);
+              cached = { pageCounts: sourcePageCounts, entries: prebuiltEntries(source.index, sourcePageCounts) };
+              if (key) prebuiltCache.set(key, cached);
+            }
+            if (key) usedKeys.add(key);
+            for (const [documentId, pageCount] of cached.pageCounts) {
               if (pageCounts.has(documentId) && pageCounts.get(documentId) !== pageCount) {
                 throw new TypeError(`prebuilt[${sourceIndex}].documents conflicts with its catalog`);
               }
               pageCounts.set(documentId, pageCount);
             }
-            entries.push(...prebuiltEntries(source.index, sourcePageCounts));
+            entries.push(...cached.entries);
           }
+          // 11-12 밤샘: 화면이 두 문서 묶음으로 번갈아 검색하면, 안 쓰는 색인을 바로 지워 매번 33MB를 다시 받았다.
+          // 방금 쓴 것을 맨 뒤로 옮기고 최근 3개까지만 둔다(없으면 화면이 PREBUILT_MISSING을 받고 통째로 다시 보냄).
+          for (const key of usedKeys) { const value = prebuiltCache.get(key); if (value) { prebuiltCache.delete(key); prebuiltCache.set(key, value); } }
+          while (prebuiltCache.size > Math.max(3, usedKeys.size)) prebuiltCache.delete(prebuiltCache.keys().next().value);
           index = Object.freeze({ schemaVersion: "pdf-search-index-v1", entries: Object.freeze(entries) });
+          warmSearchIndex(index);
           return { count: documents.size, entries: entries.length };
         }
         case "upsert": documents.set(message.document.id, message.document); break;
@@ -161,14 +181,15 @@ export function createSearchWorkerController() {
   });
 }
 
-if (typeof self !== "undefined" && typeof self.addEventListener === "function") {
+// 일꾼(worker) 안에서만 메시지를 받는다 — 설치형(file://)은 같은 모듈을 화면 쪽에서 직접 불러 쓰므로 창 메시지를 가로채면 안 된다(11-04).
+if (typeof WorkerGlobalScope !== "undefined" && typeof self !== "undefined" && self instanceof WorkerGlobalScope) {
   const controller = createSearchWorkerController();
   self.addEventListener("message", (event) => {
     const id = event.data?.id;
     try {
       self.postMessage({ id, ok: true, result: controller.handle(event.data) });
     } catch (error) {
-      self.postMessage({ id, ok: false, error: { code: "PDF_SEARCH_ERROR", message: error instanceof Error ? error.message : String(error) } });
+      self.postMessage({ id, ok: false, error: { code: error?.code || "PDF_SEARCH_ERROR", message: error instanceof Error ? error.message : String(error) } });
     }
   });
 }

@@ -10,7 +10,7 @@ const endpointTools = [
   { type: "chargefield", query: "균일장" },
   { type: "fieldlines", query: "자기력선" },
   { type: "standingwave", query: "정상파(줄)" },
-  { type: "parabola", query: "포물선" },
+  { type: "parabola", query: "포물선 궤적" },
   { type: "groundarc", query: "평면 위 원호" },
   { type: "brace", query: "중괄호" },
   { type: "chromosome", query: "염색체" },
@@ -19,7 +19,7 @@ const endpointTools = [
 ];
 
 async function snapshot(page) {
-  return page.evaluate(() => import("./js/state.js?v=1.6.0-remediation-0929")
+  return page.evaluate(() => import("/js/state.js?v=1.7.0-four-session-integration")
     .then(({ state }) => structuredClone(state.get())));
 }
 
@@ -68,7 +68,7 @@ async function dragEndpointTool(page, tool, canvas, consoleErrors) {
   if (evidence) await page.screenshot({ path: path.join(evidence, `held-${tool.type}.png`), fullPage: true });
 
   await page.mouse.up();
-  await page.waitForFunction(({ ids, type }) => import("./js/state.js?v=1.6.0-remediation-0929")
+  await page.waitForFunction(({ ids, type }) => import("/js/state.js?v=1.7.0-four-session-integration")
     .then(({ state }) => state.get().objects.some((object) => object.type === type && !ids.includes(object.id))),
   { ids: before.objects.map((object) => object.id), type: tool.type });
   const created = (await snapshot(page)).objects.find((object) => object.type === tool.type && !before.objects.some((old) => old.id === object.id));

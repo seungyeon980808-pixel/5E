@@ -18,3 +18,18 @@ export function createPreviewPaper(result) {
   }
   return paper;
 }
+
+export function createLoadingDots() {
+  const dots = document.createElement('span');
+  dots.className = 'unilib-loading-dots'; dots.setAttribute('aria-hidden', 'true');
+  for (let i = 0; i < 5; i++) dots.append(document.createElement('i'));
+  return dots;
+}
+
+export function createPreviewLoading(message = '미리보기를 불러오는 중…') {
+  const status = document.createElement('div');
+  status.className = 'unilib-preview-loading'; status.setAttribute('role', 'status');
+  const caption = document.createElement('span'); caption.textContent = message;
+  status.append(createLoadingDots(), caption);
+  return status;
+}

@@ -8,7 +8,8 @@ let installed = false;
 export function initPopupFocus(root = document) {
   if (installed) return;
   installed = true;
-  let pointer = false;
+  // 처음에는 마우스 사용자로 본다 — 앱이 뜨자마자 열리는 창(작업 복구 등)의 단추에 초점 테두리가 보였다(10-28 출제 지적 3). Tab 등 키를 누르면 키보드로 바뀐다.
+  let pointer = true;
   let marked = null;
   const clear = () => {
     marked?.removeAttribute(POINTER_FOCUS);

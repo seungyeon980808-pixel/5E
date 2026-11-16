@@ -24,19 +24,20 @@ export function parseAiEvent(message) {
     return { kind: "limits", limits: params.rateLimits || params };
   }
   if (method === "item/started" && item?.type === "imageGeneration") {
-    return { kind: "progress", turnId, title: "이미지를 생성하고 있습니다", detail: "선화 구조와 배치를 렌더링하는 중입니다." };
+    return { kind: "progress", turnId, ...(item.id ? { itemId: item.id } : {}), title: "이미지를 생성하고 있습니다", detail: "선화 구조와 배치를 렌더링하는 중입니다." };
   }
   if (method === "item/completed" && item?.type === "imageGeneration") {
     const src = item.imageDataUrl || item.result;
     return {
       kind: "image",
       turnId,
+      ...(item.id ? { itemId: item.id } : {}),
       src: typeof src === "string" && (/^data:image\//.test(src) || /^https:\/\//.test(src)) ? src : null,
       rendererPrompt: typeof item.revisedPrompt === "string" ? item.revisedPrompt : "",
     };
   }
   if (method === "item/completed" && item?.type === "agentMessage") {
-    if (item.phase === "commentary") return { kind: "ignore" };
+    if (item.phase === "commentary" && !String(item.text || "").includes("<5e-editable-labels>")) return { kind: "ignore" };
     return { kind: "assistant", turnId, text: typeof item.text === "string" ? item.text.trim() : "" };
   }
   if (method === "turn/completed") {

@@ -6,29 +6,33 @@
  * original DOM order, and keeps setStyleControlsDisabled() + populate() as
  * verbatim original code. */
 
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.6.1-remediation-0929";
-import { resolveObjectStyle } from "./style-mode.js?v=1.6.1-remediation-0929";
+import { groupGeometry } from "./transform.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.7.0-four-session-integration";
+import { resolveObjectStyle } from "./style-mode.js?v=1.7.0-four-session-integration";
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
-} from "./inspector/widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.1-remediation-0929";
-import { createInspectorContext } from "./inspector/context.js?v=1.6.1-remediation-0929";
-import { buildLineSection } from "./inspector/section-line.js?v=1.6.1-remediation-0929";
-import { buildGroupSection } from "./inspector/section-group.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildTextSection } from "./inspector/section-text.js?v=1.6.1-remediation-0929";
-import { buildFillSection } from "./inspector/section-fill.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.1-remediation-0929";
-import { buildProtectSection } from "./inspector/section-protect.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildImageSection } from "./inspector/section-image.js?v=1.6.1-remediation-0929";
-import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildSpringSection } from "./inspector/section-spring.js?v=1.6.1-remediation-0929";
-import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.6.1-remediation-0929";
-import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.6.1-remediation-0929";
-import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildLayersSection } from "./inspector/section-layers.js?v=1.6.1-preview-labeler-0917-1111";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.6.1-remediation-0929";
+} from "./inspector/widgets.js?v=1.7.0-four-session-integration";
+import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.7.0-four-session-integration";
+import { createInspectorContext } from "./inspector/context.js?v=1.7.0-four-session-integration";
+import { buildLineSection } from "./inspector/section-line.js?v=1.7.0-four-session-integration";
+import { buildGroupSection } from "./inspector/section-group.js?v=1.7.0-four-session-integration";
+import { buildTextSection } from "./inspector/section-text.js?v=1.7.0-four-session-integration";
+import { buildFillSection } from "./inspector/section-fill.js?v=1.7.0-four-session-integration";
+import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.7.0-four-session-integration";
+import { buildProtectSection } from "./inspector/section-protect.js?v=1.7.0-four-session-integration";
+import { buildImageSection } from "./inspector/section-image.js?v=1.7.0-four-session-integration";
+import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.7.0-four-session-integration";
+import { buildSpringSection } from "./inspector/section-spring.js?v=1.7.0-four-session-integration";
+import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.7.0-four-session-integration";
+import { buildLabApparatusSection } from "./inspector/section-lab-apparatus.js?v=1.7.0-four-session-integration";
+import { isLabApparatus } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { buildOpticalBenchSection } from "./inspector/section-optical-bench.js?v=1.7.0-four-session-integration";
+import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.7.0-four-session-integration";
+import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.7.0-four-session-integration";
+import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.7.0-four-session-integration";
+import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.7.0-four-session-integration";
+import { buildLayersSection } from "./inspector/section-layers.js?v=1.7.0-four-session-integration";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.7.0-four-session-integration";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {
@@ -75,6 +79,7 @@ export function initInspector(state) {
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     waveLengthRow, waveAmpRow, waveTailRow,
     lineLabelRow, lineLabelInp, leaderLabelRow, leaderLabelBtn, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
+    syncLabelerTargetControls,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,
@@ -112,6 +117,8 @@ export function initInspector(state) {
           pendBobRow, pendBobInp } = buildPendulumSection(ctx);
   const { secSpring, syncSpring } = buildSpringSection(ctx);
   const { secApparatus, syncApparatus } = buildApparatusSection(ctx);
+  const { secLabApparatus, syncLabApparatus } = buildLabApparatusSection(ctx);
+  const { secOpticalBench, syncOpticalBench } = buildOpticalBenchSection(ctx);
   const { secChargeField, syncChargeField } = buildChargeFieldSection(ctx);
   const { secFieldLines, syncFieldLines } = buildFieldLinesSection(ctx);
   const { secStandingWave, syncStandingWave } = buildStandingWaveSection(ctx);
@@ -136,11 +143,19 @@ export function initInspector(state) {
   contentEl.appendChild(secPend);
   contentEl.appendChild(secSpring);
   contentEl.appendChild(secApparatus);
+  contentEl.appendChild(secOpticalBench);
+  contentEl.appendChild(secLabApparatus);
   contentEl.appendChild(secChargeField);
   contentEl.appendChild(secFieldLines);
   contentEl.appendChild(secStandingWave);
   contentEl.appendChild(secCoord);
   contentEl.appendChild(secFunc);
+  const labelReviewNotice = document.createElement('p');
+  labelReviewNotice.dataset.aiLabelReviewDraftNotice = '';
+  labelReviewNotice.textContent = '검토용 결과 · 자동 검수 미통과. 라벨을 클릭해 수정하고 위치와 연결 대상을 확인하세요.';
+  labelReviewNotice.style.cssText = 'font-size:12px;line-height:1.5;color:var(--text-secondary);padding:8px;border:1px solid var(--border);border-radius:6px;';
+  labelReviewNotice.hidden = true;
+  contentEl.prepend(labelReviewNotice);
   if (root) root.appendChild(abSection);
   if (root) root.appendChild(layerDetails);
   if (root) root.insertBefore(bgSection, root.firstChild);
@@ -179,15 +194,22 @@ export function initInspector(state) {
   }
 
   /* ---- Subscribe: populate controls on every state change ---- */
-  function populate(s) {
+  function populate(s, change) {
+    if (change === "native-text-input" && s.draftText?.nativeEditor) return;
     renderBgSection(s);
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
+    syncLabelerTargetControls(ids.length === 1 ? s.objects.find(o => o.id === ids[0]) : null);
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+    sec3.classList.toggle("insp-is-group", selectedObjects.length > 1 && !!selectedObjects[0].groupId
+      && selectedObjects.every(o => o.groupId === selectedObjects[0].groupId));
+    labelReviewNotice.hidden = !selectedObjects.some(object => object.aiReviewDraft === true
+      || s.objects.some(parent => parent.id === object.aiParentImageId && parent.aiReviewDraft === true));
     const liteObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
     document.documentElement.dataset.liteInspector = liteObject
       ? (["line", "polyline", "labeler"].includes(liteObject.type) ? "line"
-        : liteObject.type === "text" ? "text" : "none")
+        : liteObject.type === "text" ? "text"
+        : liteObject.type === "apparatus" && liteObject.kind === "optical_bench" ? "optical-bench" : isLabApparatus(liteObject) ? "lab-apparatus" : "none")
       : "empty";
 
     if (s.imageEditSession) {
@@ -233,6 +255,8 @@ export function initInspector(state) {
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
     secApparatus.style.display = "none"; // 기구 하나를 골랐을 때만(갈래에 옵션이 있는 것만)
+    secOpticalBench.style.display = "none";
+    secLabApparatus.style.display = "none";
     secChargeField.style.display = "none";   // 전기력선 하나를 골랐을 때만
     secFieldLines.style.display = "none";    // 자기력선 하나를 골랐을 때만
     secStandingWave.style.display = "none";  // 정상파 하나를 골랐을 때만
@@ -352,43 +376,14 @@ export function initInspector(state) {
       setStyleControlsDisabled(groupStyleDisabled, _fn, groupHasLocked);
 
       // Section 3 — combined bbox center (X/Y), combined size (W/H), shared rotation.
-      let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
-      const gRots = [];
-      ids.forEach((id) => {
-        const o = s.objects.find((o) => o.id === id);
-        if (!o) return;
-        let bx, by, bw, bh;
-        if (o.type === "line") {
-          bx = Math.min(o.p1.x, o.p2.x); by = Math.min(o.p1.y, o.p2.y);
-          bw = Math.abs(o.p2.x - o.p1.x); bh = Math.abs(o.p2.y - o.p1.y);
-        } else if ((o.type === "polyline" || o.type === "curve") && o.points && o.points.length) {
-          let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
-          o.points.forEach((p) => { if (p.x < a) a = p.x; if (p.y < b) b = p.y; if (p.x > c) c = p.x; if (p.y > d) d = p.y; });
-          bx = a; by = b; bw = c - a; bh = d - b;
-        } else {
-          bx = o.x ?? 0; by = o.y ?? 0; bw = o.w ?? 0; bh = o.h ?? 0;
-        }
-        if (bx < gMinX) gMinX = bx;
-        if (by < gMinY) gMinY = by;
-        if (bx + bw > gMaxX) gMaxX = bx + bw;
-        if (by + bh > gMaxY) gMaxY = by + bh;
-        if (typeof o.rotation === "number") gRots.push(o.rotation);
-      });
-      if (isFinite(gMinX)) {
-        const cx = (gMinX + gMaxX) / 2, cy = (gMinY + gMaxY) / 2;
-        xF.inp.value = cx.toFixed(2);
-        yF.inp.value = (-cy).toFixed(2); // SVG Y down → math Y up
-        wF.inp.value = (gMaxX - gMinX).toFixed(2);
-        hF.inp.value = (gMaxY - gMinY).toFixed(2);
+      const geometry = groupGeometry(selectedObjects, document.getElementById('canvas'));
+      if (geometry) {
+        xF.inp.value = (geometry.x + geometry.w / 2).toFixed(2);
+        yF.inp.value = (-(geometry.y + geometry.h / 2)).toFixed(2);
+        wF.inp.value = geometry.w.toFixed(2);
+        hF.inp.value = geometry.h.toFixed(2);
+        rotF.inp.value = geometry.rotation.toFixed(1);
       }
-      // shared rotation: common value if all equal, else average (0 when none)
-      let gSharedRot = 0;
-      if (gRots.length) {
-        gSharedRot = gRots.every((r) => r === gRots[0])
-          ? gRots[0]
-          : gRots.reduce((a, b) => a + b, 0) / gRots.length;
-      }
-      rotF.inp.value = gSharedRot.toFixed(1);
       return;
     }
 
@@ -454,7 +449,7 @@ export function initInspector(state) {
     // 이 섹션을 쓰므로 그대로 둔다(여긴 일반 선택 분기라 영향 없음).
     imageSection.style.display = "none";
     if (isText) {
-      textEditRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "text" ? "" : "none";
+      textEditRow.style.display = "";
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       boldCb.checked = (styleObj.fontWeight || "normal") === "bold";
       italicCb.checked = styleObj.italic === true;
@@ -600,7 +595,7 @@ export function initInspector(state) {
       arrowBtn.setAttribute("aria-label", `화살표 방향: ${ARROW_LABELS[displayArrow]}`);
       arrowBtn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[displayArrow]}</svg>`;
     }
-    leaderLabelRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "labeler" ? "" : "none";
+    leaderLabelRow.style.display = obj.type === "labeler" ? "" : "none";
 
     // Dash presets + sliders: lines and size-based shape outlines.
     const canDash = supportsDash(obj) || obj.type === "labeler";
@@ -714,6 +709,8 @@ export function initInspector(state) {
     // 기구 갈래별 옵션(슬릿 틈 개수·장치 상자 단자 …). 옵션이 없는 갈래는 sync가 숨긴다.
     if (obj.type === "apparatus") syncApparatus(obj);
     else secApparatus.style.display = "none";
+    syncOpticalBench(obj);
+    syncLabApparatus(obj);
     if (isSpring) syncSpring(obj);
 
     // 장(場)·정상파 section: 각 타입 하나를 골랐을 때만.

@@ -1,0 +1,47 @@
+{
+ "schemaVersion": 1,
+ "description": "AI 이미지 변환 한 번(라벨 복원 끄기·일반 원본)의 녹화 응답. 검사는 요청 종류를 보고 맞는 응답을 웹 연결 이벤트로 재생한다. 실제 AI 호출 0회. 그림은 검사용으로 직접 그린 회로 선화.",
+ "responses": [
+  {
+   "name": "원본 관찰",
+   "match": {
+    "outputSchemaHas": "observationContractRevision"
+   },
+   "reply": {
+    "type": "agentMessage",
+    "text": "{\"version\":4,\"observationVersion\":1,\"leaderObservationVersion\":1,\"observationContractRevision\":\"1.4.0\",\"labels\":[],\"removalOnlyItems\":[],\"preservedMarks\":[],\"uncertainties\":[],\"geometryLock\":{\"version\":1,\"objects\":[{\"id\":\"circuit\",\"sourceRef\":1,\"description\":\"전지·저항·전구가 직렬로 연결된 사각 회로\",\"bounds\":{\"x\":0.05,\"y\":0.05,\"w\":0.9,\"h\":0.8},\"relations\":[]}]},\"removalRegions\":[],\"protectedRegions\":[],\"inkSearchRegions\":[]}"
+   }
+  },
+  {
+   "name": "그림 생성",
+   "match": {
+    "purpose": "image"
+   },
+   "reply": {
+    "type": "imageGeneration",
+    "revisedPrompt": "시험지용 흑백 회로 선화",
+    "imageDataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAFACAYAAABkyK97AAAJpUlEQVR4Ae3BUW4jRqIkwJyCTpD3P2NeYXb0sYBhPJrttlSkuyPiP//9nwAAV50AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANd9BH4jbfNn2/Iu2ubPtuVdtM2fbQvw950AANedwG+ibd5Z27yztgG+zgkAcN0J/Aba5p21zTtrG+BrnQAA153AL65tHtmWV2ubR7bl1drmkW0Bfs4JAHDdCfzC2uaRbXm1tnlkW16tbR7ZFuDnnQAA153AL6ptHtmWV2ubR7bl1drmkW0B/pkTAOC6E/gFtc0j2/JqbfPItrxa2zyyLcA/dwIAXHcCv5i2eWRbXq1tHtmWV2ubR7YF+BonAMB1J/ALaZtHtuXV2uaRbXm1tnlkW4CvcwIAXHcCv4i2eWRbXq1tHtmWV2ubR7YF+Fr/+e//5BfXNgD8u2zLr+wEALjuBAC47gQAuO4EALjuBAC47gQAuO4jv7ltgf9L2zyyLa/WNo9sy6u1zSPbAp/a5nd1AvyftuWRtnm1bXmkbV5tWx5pG/jdnQAA150AD23LI23zatvySNu82rY80jbwOzsBAK47Af7StjzSNq+2LY+0zattyyNtA7+rEwDguhPgqW15pG1ebVseaZtX25ZH2gZ+RycAwHUnwA/Zlkfa5tW25ZG2ebVteaRt4HdzAgBcdwL8sG15pG1ebVseaZtX25ZH2gZ+JycAwHUnwN+yLY+0zattyyNt82rb8kjbwO/iBAC47gT427blnW3LO9sW+N2dAADXnQA/ZVve2ba8s22B39kJAHDdR4Cfti3vbFve2bbA7+oEALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4EALjuBAC47gQAuO4jb6ptbmibr7ItAPAjTgCA604AgOtOAIDrTgCA6z7yprblq7TNI9sCALedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANedAADXnQAA150AANd95F+ubf6JtnlmWwDgK50AANedAADXnQAA150AANd95F9uW55pm0e2BQBuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK47AQCuOwEArjsBAK77CMAbapsftS3wb/MRgDfQNn+0LT+qbf5oW+DdfQTghdrm07b8rG35o7b5tC3wrj4C8AJt82lbvtq2fGqbT9sC7+YjABe1zadt+W7b8qltPm0LvIuPAFzQNp+25bZt+dQ2n7YFXu0jAN+sbbbl1bblU9tsC7zSCcA3aptteSfb0jbwSh8B+GJt80dtsy3vom0+tc3/ty1w0wnABW3zDtoG3sEJwCVt80ptA+/iBOALtc1faZtXaJu/0jZw0wnAF2mbbXmmbW5qm2e2pW3glhOAL9A22/JpW55pmxva5plt+bQtbQM3nAB8g215pm2+U9s8sy3wCicA/1DbbMufbcszbfMd2uaZbfmzbWkb+G4nAN9oW55pm6/UNs9sC7zSCcA/0Dbb8le25Zm2+Qpt88y2/JVtaRv4TicAF2zLM23zT7TNM9sC7+AE4Ce1zbb8qG15pm1+Rts8sy0/alvaBr7LCcBF2/JM2/wdbfPMtsA7OQH4CW2zLT9jW55pmx/RNs9sy8/YlraB73AC8ALb8kzb/JW2eWZb4B2dALzItjzTNv+XtnlmW+BdnQC80LY80zZ/1DbPbAu8sxOAv6lttuWrbMszbfOpbZ7Zlq+yLW0DX+0E4A1syzNt88y2wL/Bf/77P/nFtQ0A/y7b8is7AQCuOwEArjsBAK47AQCuOwEArjsBAK77yG9gW4Cv0zbb8tXa5p/alq/WNtsCX+kE4A20zTPb8kzbwL/BCcDftC1t81Xa5plt+bQtz7TNV2mbbYGvdgLwQm3zzLb80bY80zbwzk4AXqRtntmW/8u2PNM28K5OAF6gbZ7Zlr+yLc+0DbyjE4CfsC1t8zPa5plt+RHb8kzb/Iy22Rb4DicAF7XNM9vyd2zLM20D7+QE4CdtS9v8qLZ5Zlt+xrY80zY/qm22Bb7LCcAFbfPMtvwT2/JM28A7OAH4B7albf5K2zyzLV9hW55pm7/SNtsC3+kE4Bu1zTPb8pW25Zm2gVc6AfiHtqVt/qxtntmW77Atz7TNn7XNtsB3OwH4Bm3zzLZ8p215pm3gFU4AvsC2tM2ntnlmW27Ylmfa5lPbbAvc8J///k8AvkjbPLMtt7XNM9sCt5wAfKFt+Svb8grb8le2BW46AbhkW15pW+BdnABcsC3vYFvgHfznv/8TgG/SNtvybtpmW+BVTgC+0ba0zTtpm22BV/oIwDfblrb5tC2v0jaftgVe7SMAF2zLp7b5tC23tM2nbYF38RGAi7blU9t82pbv0jaftgXezUcAXmBbPrXNp235Km3zaVvgXX0E4IW25VPb/NG2/Ki2+aNtgXf3EYA3sC1/1DY/alvg3+YjAG9oW+BXdgIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXHcCAFx3AgBcdwIAXPf/AFteeyztObpeAAAAAElFTkSuQmCC"
+   }
+  },
+  {
+   "name": "라벨 배치",
+   "match": {
+    "textIncludes": "최종 RAW 후보다"
+   },
+   "reply": {
+    "type": "agentMessage",
+    "text": "{\"version\":1,\"labels\":[]}"
+   }
+  },
+  {
+   "name": "결과 검수",
+   "match": {
+    "textIncludes": "검수"
+   },
+   "reply": {
+    "type": "agentMessage",
+    "text": "{\"verdict\":\"pass\",\"checks\":[{\"id\":\"object-counts\",\"label\":\"object-counts\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"inside-outside\",\"label\":\"inside-outside\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"liquid-occupancy\",\"label\":\"liquid-occupancy\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"connections\",\"label\":\"connections\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"composition-state\",\"label\":\"composition-state\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"black-fill-meaning\",\"label\":\"black-fill-meaning\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"presentation\",\"label\":\"presentation\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"request-scope\",\"label\":\"request-scope\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"kice-flat-style\",\"label\":\"kice-flat-style\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"flat-gray-regions\",\"label\":\"flat-gray-regions\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"raster-label-removal\",\"label\":\"raster-label-removal\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"editable-label-coverage\",\"label\":\"editable-label-coverage\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"leader-relations\",\"label\":\"leader-relations\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"label-overlay-alignment\",\"label\":\"label-overlay-alignment\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"label-typography\",\"label\":\"label-typography\",\"status\":\"pass\",\"detail\":\"녹화 응답\"},{\"id\":\"leader-overlay\",\"label\":\"leader-overlay\",\"status\":\"pass\",\"detail\":\"녹화 응답\"}],\"issues\":[]}"
+   }
+  }
+ ]
+}

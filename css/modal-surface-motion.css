@@ -1,0 +1,18 @@
+/* These three surfaces share interruptible motion instead of entrance keyframes. */
+.modal-overlay[data-modal-motion-state],
+.modal-overlay[data-modal-motion-state] > .modal,
+.web-login-dialog[data-modal-motion-state][open] {
+  animation: none;
+}
+
+[data-modal-motion-state="start"],
+[data-modal-motion-state="closing"] {
+  will-change: opacity;
+  transition: none;
+}
+[data-modal-motion-state="start"] > .modal,
+[data-modal-motion-state="closing"] > .modal {
+  will-change: translate, scale;
+}
+/* Clip only while two live modal surfaces cross the viewport edge. */
+.modal-overlay[data-library-ai-handoff] { overflow: clip; }

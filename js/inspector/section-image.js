@@ -3,10 +3,11 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.6.1-preview-lite-hybrid-0922";
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { trimImageMargins } from "../image-margin-trim.js?v=1.6.1-preview-labeler-0917-1111";
-import { startImageCompare } from "../image-compare.js?v=1.6.1-remediation-0929";
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
+import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { trimImageMargins } from "../image-margin-trim.js?v=1.7.0-four-session-integration";
+import { startImageCompare } from "../image-compare.js?v=1.7.0-four-session-integration";
 
 export function buildImageSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
@@ -100,7 +101,7 @@ export function buildImageSection(ctx) {
       if (trimmed) state.update(s => {
         const index = s.objects.findIndex(o => o.id === current.id);
         if (index < 0 || JSON.stringify(s.objects[index]) !== snapshot) return;
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects))); s.redoStack = [];
+        s.undoStack.push(jsonClone(s.objects)); s.redoStack = [];
         s.objects[index] = trimmed;
       });
       trimMargins.textContent = trimmed ? "여백 제거 완료" : "제거할 여백 없음";
@@ -202,11 +203,11 @@ export function buildImageSection(ctx) {
     </svg>
   </span><span>자유 영역 지우기</span>`;
   imgRectEraseBtn.onclick = async () => {
-    const mod = await import("../image-cutout.js?v=1.6.1-preview-lite-hybrid-0922");
+    const mod = await import("../image-cutout.js?v=1.7.0-four-session-integration");
     mod.startRectErase();
   };
   imgPathEraseBtn.onclick = async () => {
-    const mod = await import("../image-cutout.js?v=1.6.1-preview-lite-hybrid-0922");
+    const mod = await import("../image-cutout.js?v=1.7.0-four-session-integration");
     mod.startPathErase();
   };
 
@@ -221,7 +222,7 @@ export function buildImageSection(ctx) {
     const s = state.get();
     const cur = selectedImage(s);
     if (!cur) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = selectedImage(s2);
       if (!o || !apply(s2, o)) return;

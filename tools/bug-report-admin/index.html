@@ -1,0 +1,4 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>5E 문제 신고 관리</title><link rel="stylesheet" href="/admin.css"></head><body>
+<header><h1>5E 문제 신고</h1><form id="login"><label>관리자 키 <input id="token" type="password" autocomplete="off" required></label><button>접수 목록 열기</button></form><p id="status" role="status" aria-live="polite">관리자 키로 접수 목록을 열어 주세요.</p></header>
+<main><nav aria-label="접수 목록"><label>상태 <select id="filter"><option value="all">전체</option><option value="new">새 접수</option><option value="investigating">조사 중</option><option value="fixed">수정 완료</option><option value="needs-info">추가 정보 필요</option></select></label><button id="refresh">새로고침</button><div id="reports"></div></nav>
+<article id="detail"><p>접수된 리포트를 선택하면 이미지와 발생 상황을 확인할 수 있습니다.</p></article></main><script src="/admin.js"></script></body></html>

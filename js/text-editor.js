@@ -8,7 +8,9 @@
 // replicates the exact obj-id scheme, and three small accessors (isTextEditorOpen /
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
+import { jsonClone } from "./json-clone.js?v=1.7.0-four-session-integration";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
+import { getToolTextDefaults } from './tool-defaults.js?v=1.7.0-four-session-integration';
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -16,15 +18,17 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=1.6.1-remediation-0929";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.1-remediation-0929";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.6.1-remediation-0929";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.6.1-remediation-0929";
-import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.1-remediation-0929";
+} from "./state.js?v=1.7.0-four-session-integration";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.7.0-four-session-integration";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.7.0-four-session-integration";
+import { hasLabelTypography, measureLabelTypography, renderLabelTypography, labelTypographyText, reconcileLabelTypography, nativeLabelCenter, positionNativeLabelAtCenter } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.7.0-four-session-integration";
+import { pickSelectableObjectAtPoint, isLabelerTextPoint } from "./pick.js?v=1.7.0-four-session-integration";
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
-import { isSpaceHeld } from "./tools.js?v=1.6.1-remediation-0929";
+import { isSpaceHeld } from "./tools.js?v=1.7.0-four-session-integration";
+import { hasBlockingModal } from "./platform.js?v=1.7.0-four-session-integration";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives
@@ -53,6 +57,10 @@ export function initTextEditing(svg, state) {
 // True while the unified text/formula overlay is open. The drawing/pick code in
 // tools.js (setupDrawing double-click guard) reads this instead of _textEditor.
 export function isTextEditorOpen() { return _textEditor != null; }
+
+// A selected-label press is completed on release, so a rapid second press must
+// not be intercepted by the legacy double-click detailed-editor shortcut.
+export function isInlineLabelClickPending() { return _editClickId !== null; }
 
 // Commit the open text editor, if any. Route external commit requests through here
 // so callers never touch _commitText / _textEditor directly.
@@ -84,7 +92,21 @@ function _closeSmallEditor() {
 // 사용한다(수식 패널·LaTeX 도움말 포함 — 확정 항목 ① 재확인, 2026-07-06). 커밋
 // 대상만 다르다: 수식이면 라벨러 객체의 contentMode/source/rawSource, 일반 텍스트면
 // text/textRuns — 어느 쪽이든 fontFamily/labelSize는 함께 갱신된다.
-export function openLabelerTextEditor(objId, pendingLabeler = null) {
+function canInlineLabel(obj) {
+  return !!obj && !obj.locked && obj.textOrient !== 'vertical'
+    && (obj.type === 'labeler' || (obj.aiAutoLabel && obj.aiParentImageId && ['text', 'formula'].includes(obj.type)));
+}
+
+function openDetailedLabelEditor(id) {
+  const obj = _state.get().objects.find(o => o.id === id);
+  if (!obj) return;
+  if (obj.type === 'labeler') openLabelerTextEditor(id, null, { detailed: true });
+  else startEditingTextObject(id, null, { detailed: true });
+}
+let _lastInlineClick = null;
+let _pendingInlineOpenTimer = null;
+
+export function openLabelerTextEditor(objId, pendingLabeler = null, options = {}) {
   if (_textEditor) _commitText();
   const s = _state.get();
   const o = pendingLabeler || s.objects.find((x) => x.id === objId);
@@ -93,8 +115,17 @@ export function openLabelerTextEditor(objId, pendingLabeler = null) {
   const anchor = o.p2 || o.p1 || { x: o.x || 0, y: o.y || 0 };
   const isFormula = o.contentMode === "formula" && !!(o.rawSource || o.source);
   const prefill = isFormula ? (o.rawSource || o.source) : (o.text || "");
-  _openUnifiedTextEditor({
-    x: anchor.x, y: anchor.y,
+  const metrics = measureLabelTypography(o);
+  const inline = !pendingLabeler && !options.detailed && canInlineLabel(o);
+  const angle = (o.textRotation || 0) * Math.PI / 180;
+  const originX = anchor.x - (metrics.w * Math.cos(angle) - metrics.h * Math.sin(angle)) / 2;
+  const originY = anchor.y - (metrics.w * Math.sin(angle) + metrics.h * Math.cos(angle)) / 2;
+  const origin = inline ? worldToScreen(_svg, s.viewBox, originX, originY) : { x: 0, y: 0 };
+  _openTextEditor({
+    inlineLabel: inline,
+    aiInlinePlain: inline && !isFormula,
+    x: inline ? originX : anchor.x,
+    y: inline ? originY : anchor.y,
     text: prefill,
     source: o.rawSource || o.source || o.text || "",
     contentMode: isFormula ? "formula" : "plain",
@@ -103,13 +134,24 @@ export function openLabelerTextEditor(objId, pendingLabeler = null) {
     fontWeight: o.fontWeight || "normal",
     fontStyle: o.italic === true ? "italic" : "normal",
     italic: o.italic === true,
+    labelTypographyVersion: o.labelTypographyVersion, aiAutoLabel: o.aiAutoLabel,
+    letterSpacing: o.letterSpacing, labelLineHeight: o.labelLineHeight, labelFontOverride: o.labelFontOverride, labelItalicOverride: o.labelItalicOverride,
+    labelRuns: o.labelRuns ? structuredClone(o.labelRuns) : undefined,
+    labelScriptStyles: o.labelScriptStyles ? structuredClone(o.labelScriptStyles) : undefined,
+    labelStyleText: prefill,
+    labelSourceAtOpen: prefill,
+    labelContentModeAtOpen: isFormula ? 'formula' : 'plain',
+    formulaUpright: o.formulaUpright === true,
+    textOrient: o.textOrient,
+    textRotation: o.textRotation,
+    labelFontFamilyAtOpen: o.fontFamily || DEFAULT_TEXT_FONT,
     textRuns: isFormula ? undefined : normalizeTextRuns(o),
     underline: false, strikeout: false,
-    rotation: o.rotation ?? 0,
+    rotation: o.textRotation ?? 0,
     editingId: o.id,
     editingType: "labeler",
     pendingLabeler,
-  }, 0, 0, prefill, { title: "라벨 텍스트 입력" });
+  }, origin.x, origin.y, prefill, options.clickPt);
 }
 export function openAngleArcLabelEditor(objId) {
   _openSmallTextEditor(objId, { type: "anglearc", field: "label", title: "각도 라벨/기호 입력", selectAll: true });
@@ -137,7 +179,7 @@ export function insertLabelerChar(ch) {
   if (!id) return;
   const o = st.objects.find((x) => x.id === id);
   if (!o || o.type !== "labeler" || o.locked) return;
-  const snap = JSON.parse(JSON.stringify(st.objects));
+  const snap = jsonClone(st.objects);
   _state.update((s2) => {
     const obj = s2.objects.find((x) => x.id === id);
     if (!obj || obj.type !== "labeler" || obj.locked) return;
@@ -292,7 +334,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
       const fontChanged = fontVal != null && (obj.fontFamily ?? DEFAULT_TEXT_FONT) !== fontVal;
       const sizeChanged = sizeMm != null && (obj.labelSize ?? DEFAULT_TEXT_SIZE_MM) !== sizeMm;
       if (!textChanged && !fontChanged && !sizeChanged) return;
-      const snap = JSON.parse(JSON.stringify(st.objects));
+      const snap = jsonClone(st.objects);
       obj[fld] = val;
       if (fontVal != null) obj.fontFamily = fontVal;
       if (sizeMm != null) obj.labelSize = sizeMm;
@@ -359,6 +401,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
 let _dragMoveHandler = null;
 let _dragUpHandler = null;
 let _textEditor = null;     // the live capture <textarea>/<input>, or null
+let _textWidthMirror = null; // native-layout measurement for the inline textarea
 let _textBox = null;        // unified floating text/formula editor container
 let _textPreview = null;
 let _textFormulaPanel = null;
@@ -367,6 +410,15 @@ let _textSizeInput = null;
 let _textItalicInput = null;
 let _textBoldInput = null;
 let _textFormulaMode = false;
+// 11-14: 한글 조합 중인지(기호 단추를 조합 중에 누르면 마지막 음절이 사라지거나 두 번 들어가던 것 — 조합을 먼저 끝낸 뒤 넣는다).
+let _textComposing = false;
+function _afterComposition(run) {
+  if (!_textComposing || !_textEditor) return false;
+  const editor = _textEditor;
+  editor.addEventListener('compositionend', () => setTimeout(() => { if (_textEditor === editor) { _cacheTextSelection(); run(); } }, 0), { once: true });
+  editor.blur(); editor.focus();
+  return true;
+}
 let _textPlainOnly = false; // true for labeler edits: never treat content as formula
 let _textAnchor = null;     // world-space {x,y} of the text origin
 let _textCancelled = false; // set by ESC so blur doesn't double-commit
@@ -389,13 +441,12 @@ function setupTextTool() {
     const anchor = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
     const _sc = worldToScreen(_svg, _state.get().viewBox, anchor.x, anchor.y);
     // WYSIWYG: desired on-screen px → WORLD units via the TRUE render scale.
-    const worldFontSize = DEFAULT_TEXT_SIZE_MM;
+    const defaults = getToolTextDefaults();
     _openTextEditor({
       x: anchor.x, y: anchor.y, text: "",
       source: "", contentMode: "plain",
-      fontSize: worldFontSize, fontFamily: DEFAULT_TEXT_FONT,
-      fontWeight: "normal", fontStyle: "normal",
-      italic: false, underline: false, strikeout: false, rotation: 0,
+      ...defaults,
+      underline: false, strikeout: false, rotation: 0,
       editingId: null,
       editingType: null,
     }, _sc.x, _sc.y, "");
@@ -407,13 +458,15 @@ function setupTextTool() {
 // the commit preserves style + id. `clickPt` = client {x,y} of the mouse click
 // that opened the editor (or null for F2 / context-menu); when given, the caret
 // is placed at the clicked character instead of at the end.
-export function startEditingTextObject(objId, clickPt = null) {
+export function startEditingTextObject(objId, clickPt = null, options = {}) {
   if (_textEditor) _commitText();
   const s = _state.get();
   const o = s.objects.find((x) => x.id === objId);
   if (!o || (o.type !== "text" && o.type !== "formula")) return;
   const sc = worldToScreen(_svg, s.viewBox, o.x, o.y);
   _openTextEditor({
+    inlineLabel: !options.detailed && canInlineLabel(o),
+    aiInlinePlain: !options.detailed && canInlineLabel(o) && o.type !== "formula",
     x: o.x, y: o.y,
     text: o.type === "formula" ? (o.rawSource || o.source || "") : (o.text || ""),
     source: o.rawSource || o.source || "",
@@ -423,12 +476,24 @@ export function startEditingTextObject(objId, clickPt = null) {
     fontWeight: o.fontWeight || "normal",
     fontStyle: o.italic === true ? "italic" : "normal",
     italic: o.italic === true,
+    ...(hasLabelTypography(o) ? {
+      labelTypographyVersion: o.labelTypographyVersion, aiAutoLabel: o.aiAutoLabel,
+    letterSpacing: o.letterSpacing, labelLineHeight: o.labelLineHeight, labelFontOverride: o.labelFontOverride, labelItalicOverride: o.labelItalicOverride,
+      labelRuns: o.labelRuns ? structuredClone(o.labelRuns) : undefined,
+      labelScriptStyles: o.labelScriptStyles ? structuredClone(o.labelScriptStyles) : undefined,
+      labelStyleText: labelTypographyText(o),
+      labelSourceAtOpen: labelTypographyText(o),
+      labelContentModeAtOpen: o.type === 'formula' || o.contentMode === 'formula' ? 'formula' : 'plain',
+      formulaUpright: o.formulaUpright === true,
+      textOrient: o.textOrient,
+      labelFontFamilyAtOpen: o.fontFamily || DEFAULT_TEXT_FONT,
+    } : {}),
     textRuns: normalizeTextRuns(o),
     underline: !!o.underline, strikeout: !!o.strikeout,
     rotation: o.rotation ?? 0,
     editingId: o.id,
     editingType: o.type,
-  }, sc.x, sc.y, o.text || "", clickPt);
+  }, sc.x, sc.y, o.type === "formula" ? (o.rawSource || o.source || "") : (o.text || ""), clickPt);
 }
 
 /* ----- click → caret index: map a mouse click to the closest character index
@@ -523,6 +588,17 @@ const EDITOR_FONT_OPTIONS = [
 
 function normalizeFormulaSource(src) {
   return String(src || "")
+    // 11-14: 한글(HWP) 수식 말도 받는다 — sin·cos·tan은 정체 함수, times·+-·->·over·cdot·deg.
+    .replace(/\{([^{}]*)\}\s*over\s*\{([^{}]*)\}/g, "frac{$1}{$2}")
+    .replace(/(^|[\s(=])([A-Za-z0-9.]+)\s+over\s+([A-Za-z0-9.]+)(?=$|[\s)=])/g, "$1frac{$2}{$3}")
+    .replace(/(^|[^\\A-Za-z])(sin|cos|tan|log|ln|exp)(?![A-Za-z])/g, "$1\\$2")
+    .replace(/\btimes\b/g, "×")
+    .replace(/\bcdot\b/g, "·")
+    .replace(/\bdeg\b/g, "°")
+    .replace(/\+-/g, "±")
+    .replace(/->/g, "→")
+    .replace(/<-/g, "←")
+    .replace(/(?<![-<])-(?![->])/g, "−")
     .replace(/\btheta\b/g, "θ")
     .replace(/\blambda\b/g, "λ")
     .replace(/\bDelta\b/g, "Δ")
@@ -544,6 +620,8 @@ function looksLikeFormula(src) {
   // 문자·줄이 소실되므로, 일반 문장("실험_1\n온도" 등)이 수식으로 오판되지 않게 한다.
   if (/\n/.test(value)) return false;
   const hasSyntax = /\\[a-zA-Z]/.test(value) || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
+  // 11-14: 글꼴을 「수식」으로 고르면 수식으로 쓴다는 뜻 — 문법 기호가 없어도(sin theta) 수식으로 그린다.
+  if (_state?.get?.().draftText?.fontFamily === EQUATION_FONT_FAMILY && value.trim()) return true;
   // 수식 문법이 전혀 없으면 팔레트 클릭으로 켜졌던 수식 모드 플래그를 자동 해제한다
   // (한 번 켜지면 세션 내내 순수 한글 문장까지 수식으로 저장되던 버그 방지).
   if (!hasSyntax) _textFormulaMode = false;
@@ -601,11 +679,13 @@ function _currentUnifiedStyle() {
   // 필드나 바꾸면 기존 이탤릭이 정자로 리셋되던 버그. draft에 이미 있는 italic 값을
   // 그대로 유지한다.
   const dt = _state.get()?.draftText;
+  const fontFamily = _textFontSelect?.value || DEFAULT_TEXT_FONT;
+  const automaticFontChanged = hasLabelTypography(dt) && fontFamily !== dt.labelFontFamilyAtOpen;
   return {
-    fontFamily: _textFontSelect?.value || DEFAULT_TEXT_FONT,
+    fontFamily,
     fontSize: ptToMm(Math.max(MIN_TEXT_PT, parseFloat(_textSizeInput?.value) || mmToPt(DEFAULT_TEXT_SIZE_MM))),
     fontWeight: _textBoldInput?.getAttribute("aria-pressed") === "true" ? "bold" : "normal",
-    italic: dt?.italic ?? false,
+    italic: automaticFontChanged ? resolveTextFontStyle({ fontFamily, italic: false }) === 'italic' : dt?.italic ?? false,
     underline: false,
     strikeout: false,
   };
@@ -700,12 +780,18 @@ function _applyUnifiedStyleToDraft() {
     const dt = s.draftText;
     if (!dt) return;
     const raw = _textValue();
+    _syncSemanticLabelDraft(dt, raw);
     dt.text = raw;
     dt.source = raw;
     dt.rawSource = raw;
-    dt.contentMode = looksLikeFormula(raw) ? "formula" : "plain";
+    dt.contentMode = _labelAwareContentMode(raw, dt);
     _syncDraftRunsToText(dt, raw);
     _setDraftWholeTextStyle(dt, style);
+    if (hasLabelTypography(dt) && style.fontFamily !== dt.labelFontFamilyAtOpen) {
+      delete dt.labelRuns;
+      delete dt.labelScriptStyles;
+      dt.formulaUpright = false;
+    }
   });
   _syncEditorFont();
   _refreshUnifiedPreview();
@@ -717,17 +803,36 @@ function _syncDraftFromUnifiedEditor() {
   const raw = _textValue();
   _state.update((s) => {
     if (!s.draftText) return;
+    _syncSemanticLabelDraft(s.draftText, raw);
     s.draftText.text = raw;
     s.draftText.source = raw;
     s.draftText.rawSource = raw;
-    s.draftText.contentMode = looksLikeFormula(raw) ? "formula" : "plain";
+    s.draftText.contentMode = s.draftText.aiInlinePlain ? "plain" : _labelAwareContentMode(raw, s.draftText);
     _syncDraftRunsToText(s.draftText, raw);
-  });
+  }, "native-text-input");
   _refreshUnifiedPreview();
+}
+
+function _syncSemanticLabelDraft(draft, raw) {
+  if (!hasLabelTypography(draft)) return;
+  Object.assign(draft, reconcileLabelTypography(draft, raw, draft.labelPendingEdit));
+  draft.labelStyleText = raw;
+  delete draft.labelPendingEdit;
+}
+
+function _labelAwareContentMode(raw, draft) {
+  // Imported semantic labels can use formula mode without TeX syntax. Opening
+  // or resizing their editor must preserve that mode until the source changes.
+  if (hasLabelTypography(draft) && raw === draft.labelSourceAtOpen) return draft.labelContentModeAtOpen;
+  const formula = hasLabelTypography(draft)
+    ? raw.split('\n').some(line => looksLikeFormula(line)) || /[_^](?:\{[^}]*\}|[A-Za-z0-9+−-])|(?:frac|sqrt|vec)\{/.test(raw)
+    : looksLikeFormula(raw);
+  return formula ? 'formula' : 'plain';
 }
 
 function _insertIntoUnifiedText(value, cursorOffset = null) {
   if (!_textEditor) return;
+  if (_afterComposition(() => _insertIntoUnifiedText(value, cursorOffset))) return;
   const start = _textEditor.selectionStart ?? _textEditor.value.length;
   const end = _textEditor.selectionEnd ?? _textEditor.value.length;
   _textEditor.value = _textEditor.value.slice(0, start) + value + _textEditor.value.slice(end);
@@ -766,8 +871,15 @@ function _insertFormulaTemplate(template) {
  * replacing it. Never routes through the plain-text flattener. */
 function _insertStyledRun(text, symbolStyle) {
   if (!_textEditor) return;
+  if (_afterComposition(() => _insertStyledRun(text, symbolStyle))) return;
   const draft = _state.get().draftText;
   if (!draft) return;
+  // 11-14: 수식으로 쓰는 중이면 Ⅰ·Ⅱ·Ⅲ도 수식 안에 넣는다 — 서식 조각으로 넣으면 수식 전체가 일반 글로 떨어졌다.
+  if (draft.contentMode === "formula" || looksLikeFormula(_textEditor.value)) {
+    const roman = { I: "Ⅰ", II: "Ⅱ", III: "Ⅲ", IV: "Ⅳ" }[String(text)];
+    _insertIntoUnifiedText(roman || String(text));
+    return;
+  }
   const value = _textEditor.value;
   const sel = _textSelection || { start: value.length, end: value.length };
   const start = Math.max(0, Math.min(sel.start, value.length));
@@ -1058,6 +1170,21 @@ function _refreshUnifiedPreview() {
   _textPreview.replaceChildren();
   if (!raw) return;
   const dt = _state.get().draftText || {};
+  if (hasLabelTypography(dt)) {
+    const sameFont = dt.fontFamily === dt.labelFontFamilyAtOpen;
+    const obj = { ...dt, type: dt.editingType, text: raw, source: raw, rawSource: raw, labelSize: dt.fontSize,
+      contentMode: dt.contentMode || (looksLikeFormula(raw) ? 'formula' : 'plain'),
+      labelRuns: sameFont ? dt.labelRuns : undefined, formulaUpright: sameFont && dt.formulaUpright,
+      labelScriptStyles: sameFont ? dt.labelScriptStyles : undefined,
+      italic: sameFont && dt.formulaUpright ? false : resolveTextFontStyle(dt) === 'italic' };
+    const m = measureLabelTypography(obj);
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'formula-preview-svg');
+    svg.setAttribute('viewBox', `0 0 ${Math.max(m.rotatedW, 1)} ${Math.max(m.rotatedH, 1)}`);
+    svg.appendChild(renderLabelTypography(obj, { x: m.rotatedW / 2, y: m.rotatedH / 2 }));
+    _textPreview.appendChild(svg);
+    return;
+  }
   if (!looksLikeFormula(raw)) {
     const plain = document.createElement("div");
     plain.className = "plain-preview";
@@ -1186,6 +1313,14 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   _textEditor.setAttribute("autocomplete", "off");
   _textEditor.value = draft.contentMode === "formula" ? (draft.source || draft.text || "") : (draft.text || prefill || "");
   _textEditor.rows = Math.max(1, _textEditor.value.split("\n").length);
+  _textEditor.addEventListener('beforeinput', event => {
+    const draft = _state.get().draftText;
+    if (!hasLabelTypography(draft) || event.isComposing) return;
+    let start = _textEditor.selectionStart, end = _textEditor.selectionEnd;
+    if (start === end && event.inputType === 'deleteContentBackward') start = Math.max(0, start - 1);
+    if (start === end && event.inputType === 'deleteContentForward') end = Math.min(_textEditor.value.length, end + 1);
+    draft.labelPendingEdit = { start, end };
+  });
   row.append(_textEditor);
 
   // Discoverability: state the commit/newline keys (same wording as the labeler).
@@ -1250,9 +1385,10 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   const editor = _textEditor;
   let composing = false;
   let commitAfterComposition = false;
-  editor.addEventListener("compositionstart", () => { composing = true; });
+  editor.addEventListener("compositionstart", () => { composing = true; _textComposing = true; });
   editor.addEventListener("compositionend", () => {
-    composing = false;
+    composing = false; _textComposing = false;
+    _cacheTextSelection();
     if (!commitAfterComposition) return;
     commitAfterComposition = false;
     setTimeout(() => { if (_textEditor === editor) _commitText(); }, 0);
@@ -1261,6 +1397,8 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
     ke.stopPropagation();
     if (composing || ke.isComposing || ke.keyCode === 229) {
       if ((ke.key === "Enter" || ke.code === "Enter" || ke.code === "NumpadEnter") && !ke.ctrlKey && !ke.metaKey) commitAfterComposition = true;
+      // 조합 중 Tab은 다음 단추로 넘어가지 않게 — 조합만 끝낸다(11-14).
+      if (ke.key === "Tab") ke.preventDefault();
       return;
     }
     if (ke.key === "Escape") { ke.preventDefault(); _textCancelled = true; _cancelText(); }
@@ -1278,11 +1416,12 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
 // clientX/clientY = screen px of the text's top-left anchor.
 // caretClick = client {x,y} of the opening mouse click, or null (F2 / menu).
 function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
-  // 정밀감사 MINOR(스코프 축소): 아래 caretClick 처리(1254행~)는 이 함수 상단의
-  // return 때문에 죽은 코드였다 — _openUnifiedTextEditor로 그대로 배선해 클릭
-  // 지점 캐럿 배치가 실제로 동작하도록 opts.caretClick으로 전달한다.
-  _openUnifiedTextEditor(draft, clientX, clientY, prefill, caretClick ? { caretClick } : {});
-  return;
+  if (!draft.inlineLabel && !draft.aiInlinePlain) {
+    _openUnifiedTextEditor(draft, clientX, clientY, prefill, caretClick ? { caretClick } : {});
+    return;
+  }
+  _textPlainOnly = !!draft.aiInlinePlain;
+  _textFormulaMode = draft.contentMode === "formula";
   _textAnchor = { x: draft.x, y: draft.y };
   // While editing, the textarea renders both glyphs and caret. Keeping those in
   // one native layout is what makes selectionStart match the visible position.
@@ -1294,7 +1433,12 @@ function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
 
   _textCancelled = false;
   _textEditor = document.createElement("textarea");
-  _textEditor.className = "text-editor-overlay";
+  _textEditor.className = "text-editor-overlay ai-inline-label-editor";
+  // The shared capture-overlay CSS reserves 60px and 0.75em of trailing padding.
+  // Inline labels fit their native text layout; _syncEditorWidth adds caret room.
+  _textEditor.style.minWidth = "0";
+  _textEditor.style.padding = "0";
+  _textEditor.setAttribute('aria-label', '라벨 직접 편집');
   // This is a capture overlay, not for proofing — kill native spellcheck so the
   // (misaligned, dpr-dependent) red underline never appears.
   _textEditor.spellcheck = false;
@@ -1316,10 +1460,11 @@ function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
   _textEditor.style.transformOrigin = `0 ${_halfLeading}px`;
   _textEditor.style.transform = draft.rotation ? `rotate(${draft.rotation}deg)` : "none";
   wrap.appendChild(_textEditor);
-  _textEditor.focus();
+  _textEditor.focus({ preventScroll: true });
   // Caret at end (not select-all) so editing existing text doesn't wipe it on
   // the first keystroke. F2 / context-menu keep this end caret.
-  const _len = _textEditor.value.length;
+  const _initialValue = _textEditor.value;
+  const _len = _initialValue.length;
   _textEditor.setSelectionRange(_len, _len);
   // Mouse-click editing: let the browser map its own glyph layout to an index.
   if (caretClick) {
@@ -1327,20 +1472,47 @@ function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
     // overlay AFTER layout (size/position settled) — otherwise the caret mapping
     // is measured against a stale box and snaps to 0/end.
     requestAnimationFrame(() => {
-      if (!_textEditor) return;
+      // Native selection/typing can happen before this frame (notably WebKit
+      // select-all + replacement). Initial placement must yield to that input.
+      if (_textEditor !== editor || editor.value !== _initialValue
+        || editor.selectionStart !== _len || editor.selectionEnd !== _len) return;
       const idx = _caretIndexFromPoint(caretClick.x, caretClick.y);
       if (idx != null) _textEditor.setSelectionRange(idx, idx);
     });
   }
 
+  const inlineId = draft.editingId;
+  _textEditor.addEventListener('mousedown', (event) => {
+    event.stopPropagation();
+    if (event.button !== 0 || event.shiftKey || event.ctrlKey || event.metaKey) return;
+    const previous = _lastInlineClick;
+    if (event.detail >= 2 || (previous?.id === inlineId && Date.now() - previous.time < 500
+      && Math.hypot(event.clientX - previous.x, event.clientY - previous.y) < EDIT_CLICK_TOL_PX)) {
+      event.preventDefault();
+      _lastInlineClick = null;
+      openDetailedLabelEditor(inlineId);
+    }
+  });
+  _textEditor.addEventListener('dblclick', (event) => {
+    event.preventDefault(); event.stopPropagation();
+    openDetailedLabelEditor(inlineId);
+  });
+  // Refocus after the original canvas release/click has finished in Safari.
+  const editor = _textEditor;
+  setTimeout(() => {
+    if (_textEditor === editor && _state.get().draftText?.editingId === inlineId) editor.focus({ preventScroll: true });
+  }, 0);
+
   _textEditor.addEventListener("input", () => {
     _textEditor.rows = Math.max(1, _textEditor.value.split("\n").length);
-    _syncEditorWidth(); // keep trailing click-room past the (new) last character
+    _syncEditorWidth(); // fit the new text while retaining room for its end caret
     const val = _textEditor.value;
-    _state.update((s) => { if (s.draftText) s.draftText.text = val; });
+    _state.update((s) => { if (s.draftText) s.draftText.text = val; }, "native-text-input");
   });
 
   _textEditor.addEventListener("keydown", (ke) => {
+    ke.stopPropagation();
+    if (ke.isComposing || ke.keyCode === 229) return;
     if (ke.key === "Escape") {
       ke.preventDefault();
       _textCancelled = true;
@@ -1396,16 +1568,32 @@ function _syncEditorFont() {
   _syncEditorWidth();
 }
 
-// Grow the capture textarea to fit its widest line PLUS one trailing em, measured
-// with the editor's OWN font. The textarea uses white-space:pre + overflow:hidden,
-// so a fixed cols-based width clips long text and makes the region AFTER the last
-// character unclickable — the user then can't drop the caret at text.length. The
-// extra em guarantees a clickable insertion zone past the final glyph at any length.
+// Fit the capture textarea to its widest line in the editor's own font. Inline
+// labels need only two screen pixels for the end caret, rather than the shared
+// overlay's extra em plus CSS padding (which scales into a large empty region).
 function _syncEditorWidth() {
   if (!_textEditor) return;
   const st = _textEditor.style;
+  const inlineLabel = _textEditor.classList.contains("ai-inline-label-editor");
+  const em = parseFloat(st.fontSize) || TEXT_EDITOR_PX;
   const fontCss = `${st.fontStyle || "normal"} ${st.fontWeight || "normal"} ` +
     `${st.fontSize || (TEXT_EDITOR_PX + "px")} ${st.fontFamily || DEFAULT_TEXT_FONT}`;
+  if (inlineLabel) {
+    // DOM text uses the textarea's native fallback fonts and letter spacing;
+    // canvas measurements can differ for Korean fallback fonts. Reuse one
+    // hidden node so input updates never rebuild the SVG scene or inspector.
+    if (!_textWidthMirror) {
+      _textWidthMirror = document.createElement("span");
+      _textWidthMirror.setAttribute("aria-hidden", "true");
+      _textWidthMirror.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;display:inline-block;white-space:pre;width:max-content;min-width:0;max-width:none;padding:0;border:0;margin:0;";
+      _svg.closest(".canvas-wrap").appendChild(_textWidthMirror);
+    }
+    _textWidthMirror.style.font = fontCss;
+    _textWidthMirror.style.letterSpacing = st.letterSpacing || "normal";
+    _textWidthMirror.textContent = _textEditor.value;
+    _textEditor.style.width = Math.ceil(_textWidthMirror.getBoundingClientRect().width + 2) + "px";
+    return;
+  }
   const ctx = _measureCtx();
   ctx.font = fontCss;
   let maxW = 0;
@@ -1413,12 +1601,15 @@ function _syncEditorWidth() {
     const w = ctx.measureText(line).width;
     if (w > maxW) maxW = w;
   }
-  const em = parseFloat(st.fontSize) || TEXT_EDITOR_PX;
   _textEditor.style.width = Math.ceil(maxW + em) + "px";
 }
 
 function _removeTextEditor() {
   _closeCtxMenu();
+  clearTimeout(_pendingInlineOpenTimer);
+  _pendingInlineOpenTimer = null;
+  _textWidthMirror?.remove();
+  _textWidthMirror = null;
   // 정밀감사 MINOR: 드래그 리스너 정리(등록 쪽 주석 참고) — 편집기가 열릴 때마다
   // 쌓이던 window mousemove/mouseup 리스너 누수 수정.
   if (_dragMoveHandler) { window.removeEventListener("mousemove", _dragMoveHandler); _dragMoveHandler = null; }
@@ -1453,17 +1644,61 @@ function _cancelText() {
   if (_state.get().draftText) _state.update((s) => { s.draftText = null; });
 }
 
+function _commitSemanticLabel(s, draft, raw, formulaMode) {
+  const obj = draft.pendingLabeler || s.objects.find(o => o.id === draft.editingId);
+  if (!hasLabelTypography(obj)) return false;
+  if (!raw.trim()) return true;
+  const fontChanged = (obj.fontFamily || DEFAULT_TEXT_FONT) !== (draft.fontFamily || DEFAULT_TEXT_FONT);
+  const sameAutoFont = draft.fontFamily === draft.labelFontFamilyAtOpen;
+  const italic = sameAutoFont && draft.formulaUpright ? false : resolveTextFontStyle(draft) === 'italic';
+  const runs = sameAutoFont ? draft.labelRuns : undefined;
+  const scripts = sameAutoFont ? draft.labelScriptStyles : undefined;
+  const changed = raw !== labelTypographyText(obj) || (obj.contentMode === 'formula' || obj.type === 'formula') !== formulaMode
+    || fontChanged || (obj.fontSize || obj.labelSize) !== draft.fontSize
+    || (obj.fontWeight || 'normal') !== (draft.fontWeight || 'normal') || !!obj.italic !== italic
+    || JSON.stringify(obj.labelRuns) !== JSON.stringify(runs) || JSON.stringify(obj.labelScriptStyles) !== JSON.stringify(scripts);
+  if (!changed && !draft.pendingLabeler) return true;
+  const previousType = obj.type;
+  const previousCenter = previousType !== 'labeler' ? nativeLabelCenter(obj) : null;
+  s.undoStack.push(structuredClone(s.objects));
+  if (s.undoStack.length > 60) s.undoStack.splice(0, s.undoStack.length - 60);
+  s.redoStack = [];
+  if (draft.pendingLabeler) s.objects.push(obj);
+  obj.text = raw;
+  obj.contentMode = formulaMode ? 'formula' : 'plain';
+  if (formulaMode) { obj.source = raw; obj.rawSource = raw; }
+  else { delete obj.source; delete obj.rawSource; }
+  if (runs) obj.labelRuns = structuredClone(runs); else delete obj.labelRuns;
+  if (scripts) obj.labelScriptStyles = structuredClone(scripts); else delete obj.labelScriptStyles;
+  obj.formulaUpright = sameAutoFont && draft.formulaUpright === true;
+  obj.fontFamily = draft.fontFamily || DEFAULT_TEXT_FONT;
+  obj.fontWeight = draft.fontWeight || 'normal';
+  obj.italic = italic;
+  delete obj.textRuns;
+  if (obj.type === 'labeler') obj.labelSize = draft.fontSize;
+  else {
+    obj.type = formulaMode ? 'formula' : 'text';
+    obj.fontSize = draft.fontSize;
+    if (formulaMode) {
+      const m = measureLabelTypography(obj);
+      obj.w = m.w; obj.h = m.h;
+    } else { delete obj.w; delete obj.h; }
+    if (obj.type !== previousType) positionNativeLabelAtCenter(obj, previousCenter);
+  }
+  return true;
+}
+
 function _commitText() {
   if (!_textEditor) return;
   _syncDraftFromUnifiedEditor();
   const dt = _state.get().draftText;
   const val = _textEditor.value;
-  const rawSource = String(val || "").trim();
+  const rawSource = hasLabelTypography(dt) ? String(val || "") : String(val || "").trim();
   const isLabeler = dt && dt.editingType === "labeler";
   // 라벨러도 텍스트 도구와 동일하게 수식으로 승격될 수 있다(확정 항목 ①):
   // 수식이면 라벨러 객체에 contentMode/source/rawSource로 저장되고
   // renderLabeler가 renderFormula로 그린다.
-  const formulaMode = dt && (dt.contentMode === "formula" || looksLikeFormula(rawSource));
+  const formulaMode = dt && !dt.aiInlinePlain && (dt.contentMode === "formula" || (!hasLabelTypography(dt) && looksLikeFormula(rawSource)));
   const normalizedSource = normalizeFormulaSource(rawSource);
   const fromTool = _state.get().activeTool === "T"; // new-text path
   _removeTextEditor();
@@ -1472,6 +1707,10 @@ function _commitText() {
   _state.update((s) => {
     s.draftText = null;
     if (fromTool) s.activeTool = "V";
+    if (dt?.editingId && hasLabelTypography(s.objects.find(o => o.id === dt.editingId))) {
+      _commitSemanticLabel(s, dt, rawSource, formulaMode);
+      return;
+    }
     if (isLabeler) {
       // 수식 → contentMode/source/rawSource (+ text에 원문 보관: 구버전 로더 호환),
       // 일반 → text + textRuns(styled 심볼 보존). fontFamily/labelSize(mm) 공통 갱신.
@@ -1481,8 +1720,11 @@ function _commitText() {
         // 정밀감사 MINOR: 라벨러 소형 편집기 commit(약 273~300행)의 변경-여부 비교
         // 패턴을 재편집에도 적용 — 아무 것도 안 바꾸고 확인만 눌러도 undo 스냅샷이
         // 쌓이던 버그(무조건 push).
-        const italicNext = resolveTextFontStyle(dt) === "italic";
-        const textChanged = formulaMode
+        const sameFont = (o.fontFamily || DEFAULT_TEXT_FONT) === (dt.fontFamily || DEFAULT_TEXT_FONT);
+        const italicNext = sameFont && dt.formulaUpright ? false : resolveTextFontStyle(dt) === "italic";
+        const textChanged = hasLabelTypography(o)
+          ? rawSource !== (o.rawSource || o.text || '')
+          : formulaMode
           ? (o.contentMode !== "formula" || o.source !== normalizedSource || o.rawSource !== rawSource)
           : (o.contentMode === "formula" || (o.text ?? "") !== val ||
              JSON.stringify(o.textRuns || []) !== JSON.stringify(normalizeTextRuns(dt)));
@@ -1493,7 +1735,7 @@ function _commitText() {
         if (!textChanged && !fontChanged && !sizeChanged && !weightChanged && !italicChanged) {
           return;
         }
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         s.undoStack.push(snap);
         s.redoStack = [];
         if (dt.pendingLabeler) {
@@ -1501,9 +1743,13 @@ function _commitText() {
           s.selectedIds = [o.id];
           s.targetedId = null;
         }
+        // A manual content/font change replaces the AI's per-run typography.
+        // Size-only edits keep the semantic runs and their relative formatting.
+        if (textChanged || fontChanged) delete o.labelRuns;
+        if (fontChanged) o.formulaUpright = false;
         if (formulaMode) {
           o.contentMode = "formula";
-          o.source = normalizedSource;
+          o.source = hasLabelTypography(o) ? rawSource : normalizedSource;
           o.rawSource = rawSource;
           o.text = rawSource;      // 구버전 로더는 이 원문을 일반 텍스트로 그림
           delete o.textRuns;
@@ -1517,7 +1763,7 @@ function _commitText() {
         o.fontFamily = dt.fontFamily || DEFAULT_TEXT_FONT;
         o.labelSize = dt.fontSize;
         o.fontWeight = dt.fontWeight || "normal";
-        o.italic = resolveTextFontStyle(dt) === "italic";
+        o.italic = italicNext;
       }
     } else if (dt.editingId) {
       // Re-edit: update the SAME object (id preserved). Empty text → keep the
@@ -1541,7 +1787,7 @@ function _commitText() {
         if (!textChanged && !styleChanged) {
           return;
         }
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         s.undoStack.push(snap);
         s.redoStack = [];
         // formulaMode는 '지금 편집 중인 내용'을 실시간 반영하는 신호(dt.contentMode가
@@ -1581,7 +1827,7 @@ function _commitText() {
       }
     } else if (rawSource) {
       // New text built from the SAME draft data shown while typing.
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       s.undoStack.push(snap);
       s.redoStack = [];
       const id = `obj_${Date.now().toString(36)}_${++_idCounter}`;
@@ -1800,7 +2046,7 @@ function commitFormulaEditor() {
       // restore over delete), mirroring the text editor's re-edit semantics.
       const o = s.objects.find((x) => x.id === objId);
       if (o && src) {
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         s.undoStack.push(snap);
         s.redoStack = [];
         o.source = src;
@@ -1808,7 +2054,7 @@ function commitFormulaEditor() {
         o.w = m.w; o.h = m.h;
       }
     } else if (src) {
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       s.undoStack.push(snap);
       s.redoStack = [];
       const fontSize = DEFAULT_TEXT_SIZE_MM;
@@ -1838,10 +2084,14 @@ export function cancelActiveFormulaEditor() {
   teardownFormulaEditor();
 }
 
-/* ----- CLICK-AGAIN-TO-EDIT: a no-drag click on an ALREADY-selected sole text
+/* ----- Text and labelers select first, then edit on a selected no-drag click.
+ * Shift/multi-select and transform handles remain separate, except the label
+ * position handle: clicking it edits text and dragging it repositions the label.
+ *
+ * CLICK-AGAIN-TO-EDIT: a no-drag click on an ALREADY-selected sole text
  * object enters edit mode (DESIGN: text is directly editable, no context menu
  * required). The first click that SELECTS a text only selects it; a subsequent
- * click on the same (already sole-selected) text opens the in-place editor.
+ * click on the same (already sole-selected) text opens the editor.
  *
  * Implemented across mousedown→move→up so it never fires mid-drag:
  *   ??mousedown (capture, so we read the PRE-click selection before setupDrawing's
@@ -1856,48 +2106,118 @@ let _editClickStart = null;  // {x,y} client px of the arming mousedown (drag de
 const EDIT_CLICK_TOL_PX = 4; // pointer movement beyond this = a drag, not a click
 
 function setupTextClickToEdit() {
-  // Capture phase: read selectedIds BEFORE setupDrawing's bubble mousedown.
-  _svg.addEventListener("mousedown", (e) => {
+  let pressedTarget = null;
+  const textPressObject = (s, e, point) => {
+    const handle = e.target?.closest?.('[data-handle]');
+    if (handle) {
+      if (!['p1', 'p2'].includes(handle.dataset.handle)) return null;
+      const obj = s.objects.find(o => o.id === handle.dataset.id);
+      return obj?.type === 'labeler' ? obj : null;
+    }
+    const id = pickSelectableObjectAtPoint(s, point);
+    return s.objects.find(o => o.id === id);
+  };
+  const clearEditClick = (cancelPending = true) => {
+    if (cancelPending) {
+      clearTimeout(_pendingInlineOpenTimer);
+      _pendingInlineOpenTimer = null;
+    }
+    pressedTarget?.removeEventListener('pointerup', finishEditClick);
+    pressedTarget?.removeEventListener('mouseup', finishEditClick);
+    pressedTarget = null;
     _editClickId = null;
     _editClickStart = null;
+  };
+  // Keep the release on the stable SVG root: selection redraws replace glyph
+  // nodes on mousedown, and Safari can otherwise send release to a detached node.
+  _svg.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.pointerType === 'touch' || isSpaceHeld()
+      || e.shiftKey || e.metaKey || e.ctrlKey || e.target?.closest?.('[data-handle]')) return;
+    const s = _state.get();
+    if (s.activeTool !== 'V') return;
+    const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
+    const o = textPressObject(s, e, p);
+    if (!canInlineLabel(o) || (o.type === 'labeler' && !isLabelerTextPoint(o, p))) return;
+    _svg.setPointerCapture?.(e.pointerId);
+  }, true);
+  // Capture phase: read selectedIds BEFORE setupDrawing's bubble mousedown.
+  _svg.addEventListener("mousedown", (e) => {
+    clearEditClick();
     if (e.button !== 0) return;            // left button only
     if (isSpaceHeld()) return;              // Space+drag = pan
-    if (e.detail >= 2) return;              // double-click handled in setupDrawing
-    if (_textEditor) return;                // already editing
+    if (_textEditor) {
+      if (_textEditor.classList.contains('ai-inline-label-editor')) _commitText();
+      else return;
+    }
     const s = _state.get();
     if (s.activeTool !== "V") return;       // only the select tool edits-on-click
-    const ids = s.selectedIds || [];
-    if (ids.length !== 1) return;           // must be the SOLE selection
-    const o = s.objects.find((x) => x.id === ids[0]);
-    if (!o || (o.type !== "text" && o.type !== "formula")) return;    // ...and it must be a text/formula object
-    // The click must actually land on THAT text (not empty space / another shape).
+    if (e.shiftKey || e.metaKey || e.ctrlKey) return;
     const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
-    if (pickSelectableObjectAtPoint(s, p) !== o.id) return;
+    const o = textPressObject(s, e, p);
+    if (!o || o.locked) return;
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1 || ids[0] !== o.id) return;
+    if (e.detail >= 2 && !canInlineLabel(o)) return;
+    if (canInlineLabel(o)) {
+      if (o.type === 'labeler' && !isLabelerTextPoint(o, p)) return;
+      e.preventDefault(); // A canvas drag must not select SVG text in the browser.
+    } else {
+      if (o.type !== 'text' && o.type !== 'formula') return;
+    }
     _editClickId = o.id;
     _editClickStart = { x: e.clientX, y: e.clientY };
+    if (canInlineLabel(o)) {
+      // The pressed glyph can receive release even after selection removes it
+      // from the scene, so also listen on that target until release/cancellation.
+      pressedTarget = e.target;
+      pressedTarget.addEventListener('pointerup', finishEditClick);
+      pressedTarget.addEventListener('mouseup', finishEditClick);
+    }
   }, true); // capture = true
 
   // A drag (moving the text) cancels the pending edit-click.
   window.addEventListener("mousemove", (e) => {
     if (!_editClickId || !_editClickStart) return;
     if (Math.hypot(e.clientX - _editClickStart.x, e.clientY - _editClickStart.y) > EDIT_CLICK_TOL_PX) {
-      _editClickId = null;
-      _editClickStart = null;
+      clearEditClick();
     }
   });
 
   // Clean click (no drag) on the already-selected text → enter edit mode.
-  window.addEventListener("mouseup", (e) => {
+  // A move release redraws the SVG on pointerup, detaching its pressed glyph.
+  // Safari may then omit compatibility mouseup; consume pointerup as well.
+  const finishEditClick = (e) => {
     if (e.button !== 0) return;
     const id = _editClickId;
-    _editClickId = null;
-    _editClickStart = null;
+    clearEditClick(false); // Compatibility mouseup must not cancel pointerup's task.
     if (id === null) return;
     if (isSpaceHeld()) return;
     const o = _state.get().objects.find((x) => x.id === id);
-    if (!o || (o.type !== "text" && o.type !== "formula")) return;
-    startEditingTextObject(id, { x: e.clientX, y: e.clientY });
-  });
+    if (!o) return;
+    if (canInlineLabel(o)) {
+      // Let release handlers and the browser's focus action finish first. Use a
+      // task rather than an animation frame so background windows also respond.
+      const page = _state.capturePageContext?.();
+      _pendingInlineOpenTimer = setTimeout(() => {
+        _pendingInlineOpenTimer = null;
+        const current = _state.get();
+        if (_textEditor || isSpaceHeld() || current.activeTool !== 'V'
+          || !current.selectedIds?.includes(id)
+          || (page && _state.isPageContextCurrent?.(page) !== true)) return;
+        const live = current.objects.find(x => x.id === id);
+        if (!canInlineLabel(live)) return;
+        _state.update(s => { s.selectedIds = [id]; s.targetedId = live.groupId ? id : null; });
+        _lastInlineClick = { id, time: Date.now(), x: e.clientX, y: e.clientY };
+        if (live.type === 'labeler') openLabelerTextEditor(id, null, { clickPt: { x: e.clientX, y: e.clientY } });
+        else startEditingTextObject(id, { x: e.clientX, y: e.clientY });
+      }, 0);
+      return;
+    }
+    if (o.type === 'text' || o.type === 'formula') startEditingTextObject(id, { x: e.clientX, y: e.clientY });
+  };
+  window.addEventListener("pointerup", finishEditClick);
+  window.addEventListener("mouseup", finishEditClick);
+  window.addEventListener("pointercancel", clearEditClick);
 }
 
 /* ----- F2 / Enter on a selected single text object → edit it in place ----- */
@@ -1905,6 +2225,7 @@ function setupTextEditShortcuts() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (_textEditor) return;                                   // already editing
+    if (hasBlockingModal()) return;                            // 출제 칸·조판 창·팝업이 덮고 있으면 뒤 그림 글자를 열지 않음(H3)
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if (e.key !== "F2" && e.key !== "Enter") return;
@@ -1912,13 +2233,14 @@ function setupTextEditShortcuts() {
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
     const o = s.objects.find((x) => x.id === ids[0]);
-    if (!o || (o.type !== "text" && o.type !== "formula")) return;
+    if (!o || !["text", "formula", "labeler"].includes(o.type)) return;
     e.preventDefault();
-    startEditingTextObject(o.id);
+    if (o.type === "labeler") openLabelerTextEditor(o.id);
+    else startEditingTextObject(o.id);
   });
 }
 
-/* ===== TEXT CONTEXT MENU (right-click): 텍스트 수정 / 글꼴 설정... ===== */
+/* ===== TEXT CONTEXT MENU (secondary click): detailed text editing ===== */
 let _ctxMenu = null;          // the floating action menu element (built lazily)
 let _ctxEditItem = null;
 let _ctxTarget = null;        // { kind: "object"|"draft", id }
@@ -1933,11 +2255,11 @@ function _buildCtxMenu() {
   _ctxEditItem = document.createElement("button");
   _ctxEditItem.type = "button";
   _ctxEditItem.className = "text-ctx-item";
-  _ctxEditItem.textContent = "텍스트 수정";
+  _ctxEditItem.textContent = "텍스트 상세 편집";
   _ctxEditItem.addEventListener("click", () => {
     const id = (_ctxTarget && _ctxTarget.kind === "object") ? _ctxTarget.id : null;
     _closeCtxMenu();
-    if (id) startEditingTextObject(id);
+    if (id) openDetailedLabelEditor(id);
   });
 
   // 예전의 별도 "글꼴 설정..." 항목은 제거됐다. 글꼴/크기/굵게/기울임/심볼 컨트롤이
@@ -1965,10 +2287,10 @@ function setupTextContextMenu() {
       const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
       const hitId = pickSelectableObjectAtPoint(s, p);
       const hitObj = hitId ? s.objects.find((o) => o.id === hitId) : null;
-      let obj = (hitObj && (hitObj.type === "text" || hitObj.type === "formula")) ? hitObj : null;
+      let obj = (hitObj && ["text", "formula", "labeler"].includes(hitObj.type)) ? hitObj : null;
       if (!obj && (s.selectedIds || []).length === 1) {
         const sel = s.objects.find((o) => o.id === s.selectedIds[0]);
-        if (sel && (sel.type === "text" || sel.type === "formula")) obj = sel;
+        if (sel && ["text", "formula", "labeler"].includes(sel.type)) obj = sel;
       }
       if (!obj) {
         // 텍스트 대상이 아니면 텍스트 메뉴는 안 띄운다. 다만 Mac에서 Ctrl+클릭은 OS가
