@@ -125,11 +125,14 @@ const ACC_L2H = Object.fromEntries(Object.entries(ACCENT).map(([k, v]) => [v.sli
 const FONT_L2H = { mathrm: 'rm', mathit: 'it', mathbf: 'bold', textbf: 'bold', operatorname: 'rm', mathsf: 'rm' };
 const ENV_L2H = { matrix: 'matrix', pmatrix: 'pmatrix', bmatrix: 'bmatrix', vmatrix: 'dmatrix', Vmatrix: 'dmatrix', cases: 'cases', aligned: 'eqalign', align: 'eqalign', 'align*': 'eqalign' };
 const DELIM_L2H = { '\\{': '{', '\\}': '}', '\\langle': '<', '\\rangle': '>', '\\|': '||', '\\lfloor': 'lfloor', '\\rfloor': 'rfloor', '\\lceil': 'lceil', '\\rceil': 'rceil' };
-export function latexToHwp(src) {
+// o.hancom: 한글 파일로 내보낼 때(11-16, 1.7.1 B2). 글꼴 명령은 {rm X}처럼 묶어 뒤 글자로 번지지 않게 하고,
+// 모양 없는 LaTeX 명령(\displaystyle 등)은 빼며, 모르는 명령은 o.unknown(Set)에 모은다. o 없이 부르면 예전과 같다.
+const DROP_L2H = new Set(['displaystyle', 'textstyle', 'scriptstyle', 'limits', 'nolimits', 'mathstrut', 'strut', 'big', 'Big', 'bigg', 'Bigg', 'bigl', 'bigr', 'Bigl', 'Bigr']);
+export function latexToHwp(src, o = null) {
   const s = String(src || ''); let i = 0;
   const ws = () => { while (i < s.length && /\s/.test(s[i])) i++; };
   function group() { ws(); if (s[i] === '{') { i++; const e = seq('}'); if (s[i] === '}') i++; return e; } return one(); }
-  function opt() { ws(); if (s[i] !== '[') return null; let d = 0, j = i; for (; j < s.length; j++) { if (s[j] === '[') d++; else if (s[j] === ']' && !--d) break; } const inner = s.slice(i + 1, j); i = j + 1; return latexToHwp(inner); }
+  function opt() { ws(); if (s[i] !== '[') return null; let d = 0, j = i; for (; j < s.length; j++) { if (s[j] === '[') d++; else if (s[j] === ']' && !--d) break; } const inner = s.slice(i + 1, j); i = j + 1; return latexToHwp(inner, o); }
   function cmd() { let j = i + 1; if (/[A-Za-z]/.test(s[j] || '')) { while (j < s.length && /[A-Za-z*]/.test(s[j])) j++; } else j++; const name = s.slice(i + 1, j); i = j; return name; }
   const wrap = x => /^[A-Za-z0-9]+$/.test(x) || /^\{.*\}$/.test(x) ? x : '{' + x + '}';
   function delim() { ws(); if (s[i] === '\\') { const n = cmd(); return DELIM_L2H['\\' + n] ?? n; } return s[i++] || '.'; }
@@ -138,16 +141,17 @@ export function latexToHwp(src) {
     if (c === '{') return '{' + group() + '}';
     if (c === '\\') {
       const n = cmd();
-      if (n === 'frac' || n === 'dfrac' || n === 'tfrac') { const a = group(), b = group(); return '{' + a + '} over {' + b + '}'; }
+      if (n === 'frac' || n === 'dfrac' || n === 'tfrac' || n === 'cfrac') { const a = group(), b = group(); return '{' + a + '} over {' + b + '}'; }
       if (n === 'sqrt') { const k = opt(); const a = group(); return k ? ' root {' + k + '} of {' + a + '} ' : ' sqrt {' + a + '} '; }
       if (n === 'binom') { const a = group(), b = group(); return 'LEFT ( {' + a + '} atop {' + b + '} RIGHT )'; }
       if (n === 'text' || n === 'textrm' || n === 'mbox') { ws(); let d = 0, j = i; for (; j < s.length; j++) { if (s[j] === '{') d++; else if (s[j] === '}' && !--d) break; } const t = s.slice(i + 1, j); i = j + 1; return '"' + t + '"'; }
       if (ACC_L2H[n]) return ' ' + ACC_L2H[n] + ' ' + wrap(group()) + ' ';
       if (n === 'overset') { const a = group(), b = group(); return a === '\\frown' || a === 'frown' ? 'arch ' + wrap(b) : '{' + b + '} ^{' + a + '}'; }
-      if (FONT_L2H[n]) return ' ' + FONT_L2H[n] + ' ' + wrap(group()) + ' ';
+      if (FONT_L2H[n]) return o?.hancom ? ' {' + FONT_L2H[n] + ' ' + group() + '} ' : ' ' + FONT_L2H[n] + ' ' + wrap(group()) + ' ';
+      if (o?.hancom && DROP_L2H.has(n)) return ' ';
       if (n === 'left') { const d = delim(); const e = seq('\\right'); if (s.startsWith('\\right', i)) { i += 6; } const d2 = delim(); return 'LEFT ' + d + ' ' + e + ' RIGHT ' + d2; }
       if (n === 'begin') { ws(); const env = s.slice(i + 1, s.indexOf('}', i)); i = s.indexOf('}', i) + 1; const end = s.indexOf('\\end{' + env + '}', i); const body = s.slice(i, end < 0 ? s.length : end); i = end < 0 ? s.length : end + 6 + env.length;
-        const rows = body.split(/\\\\/).map(r => r.split('&').map(c => latexToHwp(c).trim()).join(' & ')).join(' # ');
+        const rows = body.split(/\\\\/).map(r => r.split('&').map(c => latexToHwp(c, o).trim()).join(' & ')).join(' # ');
         return (ENV_L2H[env] || 'matrix') + '{' + rows + '}'; }
       if (n === ',' || n === ':' || n === ';' || n === '!') return '`';
       if (n === ' ' ) return '~';
@@ -155,6 +159,7 @@ export function latexToHwp(src) {
       if (n === '{' || n === '}') return n;
       if (n === '%' || n === '$' || n === '#' || n === '&' || n === '_') return n;
       if (L2H[n] !== undefined) return ' ' + L2H[n] + ' ';
+      if (o?.unknown && /^[A-Za-z]+$/.test(n)) o.unknown.add(n);
       return ' ' + n + ' ';
     }
     if (c === '^' || c === '_') { i++; const a = group(); return c + wrap(a) + ' '; }// 첨자 뒤 글자가 붙어 첨자로 읽히지 않게 한 칸
@@ -175,5 +180,11 @@ export function detectSyntax(src) {
   if (/\\[A-Za-z]/.test(s)) return 'latex';
   if (/(^|[^A-Za-z])(over|atop|sqrt|root|rm|it|bold|bar|vec|hat|dot|LEFT|RIGHT|times|cdot|div|LEQ|GEQ|leq|geq|inf|deg|matrix|pmatrix|bmatrix|dmatrix|cases|sum|int|lim|prod|alpha|beta|gamma|delta|theta|lambda|mu|pi|sigma|omega|Delta|Omega|Sigma|therefore|approx|propto)(?![A-Za-z])|\+-|-\+|->|<->|=>|~|`|"/.test(s)) return 'hwp';
   return 'same';
+}
+// 한글 파일(HWPX·HWP)의 수식 스크립트를 한글 수식 문법으로(11-16, 1.7.1 B2).
+// 5E 안(조판 엔진 rhwp)은 LaTeX을 그대로 읽지만 윈도우 한글은 한글 수식만 읽는다. 한글 수식이거나 둘이 같은 글이면 그대로 둔다.
+export function hancomScript(src, unknown = null) {
+  const s = String(src || '');
+  return detectSyntax(s) === 'latex' ? latexToHwp(s, { hancom: true, unknown }) : s;
 }
 export function toLatex(src) { return detectSyntax(src) === 'hwp' ? hwpToLatex(src) : String(src || '').trim(); }
