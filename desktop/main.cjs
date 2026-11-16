@@ -1919,7 +1919,12 @@ handleTrustedIpc('exam:publish-names', (_event,names) => {
   if (examWindow && !examWindow.isDestroyed()) examWindow.webContents.send('exam:names',examTabNames);
   return {ok:true};
 });
-handleTrustedIpc('exam:open', (_event,payload) => openExamWindow(payload));
+// 1.7.1 B1: Lite 창은 시험지 창(mode=pro)을 열지 않는다 — 화면 쪽 막음이 빠져도 여기서 한 번 더 막는다.
+handleTrustedIpc('exam:open', async (event,payload) => {
+  const mode = await Promise.resolve().then(() => event.sender.executeJavaScript('document.documentElement.dataset.mode || ""')).catch(() => '');
+  if (mode === 'lite') throw new Error('Lite에서는 한글 시험지 창을 열 수 없습니다. 정식판(Pro)으로 바꾼 뒤 다시 보내세요.');
+  return openExamWindow(payload);
+});
 handleTrustedIpc('exam:finish', (_event,payload) => {
   boundedExamPayload(payload);
   if (!examEdit || payload.requestId !== examEdit.requestId || !examWindow || examWindow.isDestroyed()) throw new Error('시험지 편집 연결이 만료되었습니다.');

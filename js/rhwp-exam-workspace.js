@@ -1613,10 +1613,14 @@ export function initRhwpExamWorkspace(state, services) {
   panel.dataset.examReady = 'true';
   // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
   // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
-  window.addEventListener('5e:hwp-open',event=>{if(busy||document.documentElement.dataset.mode==='lite')return;if(event.detail)event.detail.accepted=true;void run(open);});
+  // 1.7.1 B1: Lite는 조판을 열지 않는다 — 말없이 끝내지 않고 「정식판에서 됩니다」 안내(view-mode.js requirePro), Pro로 바꾸면 이어서 연다.
+  const liteBlocked = (what, resume) => { if (document.documentElement.dataset.mode !== 'lite') return false;
+    void Promise.resolve(window.fiveERequirePro?.(what) ?? false).then(ok => { if (ok && document.documentElement.dataset.mode !== 'lite') resume(); }); return true; };
+  window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;if(liteBlocked('한글 시험지(5E_hwp)',()=>void run(open)))return;void run(open);});
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   // 다른 창에서 보내 온 요청은 조판 창이 바쁘면 예전에는 알림 없이 버려졌다(점검 하). 버리는 대신 이유를 알린다.
   const sendFromElsewhere = task => {
+    if (liteBlocked('한글 시험지로 보내기', () => sendFromElsewhere(task))) return;
     if (busy) {const text='한글 시험지 창이 다른 작업 중이라 보내지 못했습니다. 작업이 끝난 뒤 다시 보내세요.';message(text,true);if(panel.hidden)void services.reportError?.(text);return;}
     void run(task);
   };
