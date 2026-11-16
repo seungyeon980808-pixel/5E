@@ -6,6 +6,7 @@ import {F,MONTH,shortTitle,norm,splitWords} from './past-search.js';
 import {croppedQuestion,pdfHref} from './past-pdf.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {croppedPastImage} from './past-crop.js';
+import {examCardUrl,examFigureUrl} from '../../../js/library/image-hosts.js';
 import {store,ICON,E} from './card-shared.js';
 import {libraryQuestions,POOLS,poolQuestions} from './exams.js';
 import {questionTitle,previewHtml,workflowOf} from './views.js';
@@ -161,7 +162,7 @@ export function renderLibraryView(root, data, view, api) {
   // 내 문항 상태 아이콘(11-04): 원이 완성도만큼 채워짐 · 출제 완료는 초록 가득 · 시험지에 넣으면 파랑 + 체크.
   const mineMark = q => { const st = questionState(q, data); return qIcon(st, st === 'work' ? progressOf(q) : 1); };
   const kt = x => x.kind === 'mine' ? '' : `<span class="lv-kt ${x.kind}">기출</span>`;
-  const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
+  const thumb = x => x.kind === 'mine' ? (isBlank(x.q) ? '<div class="pv-thumb is-blank"><span><b>빈 문항</b>눌러서 쓰기</span></div>' : `<div class="pv-thumb"><div class="pv-doc" data-preview="${x.id}"></div></div>`) : `<img alt="${E(x.title)}" data-lv-card="${E(examCardUrl(x.id, past.index.cards))}" data-lv-past="${E(x.id)}" data-fallback="${E(x.i.hasFigure ? examFigureUrl(x.id) : '')}">`;
   // 묶음 제목: 앞 문항과 묶음이 바뀌는 자리에만
   // 11-14(시안 review-1114 4번 L1): 묶음 제목(오늘·이번 주·이전 / 초안·검토 중)을 없애고 한 격자로 잇는다 — 날짜는 카드 아래.
   const grp = () => '';
@@ -272,7 +273,7 @@ function fillViewer(host, list, data, api) {
   const x = list[Number(v.dataset.n)];
   fillOwn(v, data, api);
   const img = v.querySelector('img[data-lv-full]');
-  if (img && x?.i) { img.onerror = () => { if (!img.dataset.sharp) { img.closest('.lv-qbox')?.setAttribute('data-missing', '그림을 불러오지 못했습니다 — 인터넷 연결을 확인하세요'); img.remove(); } }; croppedPastImage(past.index.cards.replace('{id}', encodeURIComponent(x.id))).then(src => { if (img.isConnected && !img.dataset.sharp) img.src = src; }).catch(() => {});
+  if (img && x?.i) { img.onerror = () => { if (!img.dataset.sharp) { img.closest('.lv-qbox')?.setAttribute('data-missing', '그림을 불러오지 못했습니다 — 인터넷 연결을 확인하세요'); img.remove(); } }; croppedPastImage(examCardUrl(x.id, past.index.cards)).then(src => { if (img.isConnected && !img.dataset.sharp) img.src = src; }).catch(() => {});
     if (x.i.publicPath && Array.isArray(x.i.box)) sharpPast(img, x.i);
     // 11-07 정답 형광펜(평가원·학력평가): 정답 자료가 있는 문항에서만 「정답」 단추를 보인다.
     const ans = v.querySelector('[data-lv-answers]');

@@ -9,6 +9,7 @@ import {workflowOf,previewHtml,questionSubtitle,questionTitle} from './views.js'
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
+import {examCardUrl,examFigureUrl,pagePreviewUrl} from '../../../js/library/image-hosts.js';
 import {explanationParts,explanationText,bogiKeys,OX_WORD} from './explanation.js';
 import {applyTableCommand} from './table-ops.js';
 import {markedQuestion,croppedQuestion,renderPage as renderPdfPage,pdfHref} from './past-pdf.js';
@@ -610,7 +611,7 @@ export function createCardEditor(root,api){
       return p.catalog.documents.filter(x=>/\/교과서\//.test(x.source?.locator||'')).map(x=>{const path=x.source.locator.split('/').slice(1).join('/');return {id:x.id,title:x.title.replace(/\.pdf$/i,''),pages:x.pageCount,sha:p.checksums?.files?.[path]||'',path};}).filter(b=>b.sha);}).catch(()=>[]);
     return books;
   }
-  const bookPage=(b,n,thumb)=>new URL(`../../pdf-library/previews/${b.sha}/${n}${thumb?'-thumb':''}.webp`,import.meta.url).href;
+  const bookPage=(b,n,thumb)=>pagePreviewUrl(b.sha,`${n}${thumb?'-thumb':''}.webp`);
   // 별표·메모(10-23 지적 1·2): 이 기기에만 저장. 키는 기출 'past:<id>', 내 문항 'q:<id>'.
   const marks={stars:()=>store.get('stars',{}),memos:()=>store.get('memos',{}),
     star(key){const s=marks.stars();if(s[key])delete s[key];else s[key]=Date.now();store.set('stars',s);return !!s[key];},
@@ -660,7 +661,7 @@ export function createCardEditor(root,api){
     {const S=marks.stars(),M=marks.memos();if(f.mark==='star')list=list.filter(i=>S['past:'+i.id]);else if(f.mark==='memo')list=list.filter(i=>M['past:'+i.id]);}
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
     const sel=(k,vals,label)=>`<label>${label}<select data-cvpast="${k}" aria-label="${label}"><option value="">전체</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select></label>`;
-    const thumb=i=>{const card=i.card||pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
+    const thumb=i=>{const card=i.card||examCardUrl(i.id,pastIndex.cards),local=i.hasFigure?examFigureUrl(i.id):'';
       return `<div class="past-pic"><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
     fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어+Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<label>시험<select data-cvpast="source" aria-label="시험">${EXAM_SOURCES.map(([value,label])=>`<option value="${value}"${(f.source||'')===value?' selected':''}>${label}</option>`).join('')}</select></label>`+`<label>모아 보기<select data-cvpast="mark" aria-label="모아 보기"><option value="">모두</option><option value="star"${f.mark==='star'?' selected':''}>★ 별표만</option><option value="memo"${f.mark==='memo'?' selected':''}>메모 있음</option></select></label>`+`<div class="lp-adv-foot"><span>학평은 수능 대비 학년도 기준</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
