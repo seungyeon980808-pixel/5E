@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage, protocol, net } = require("electron");
+const { installAppMenu: installDesktopAppMenu } = require("./app-menu.cjs");
 const { desktopSmokePasses } = require("./smoke-contract.cjs");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
@@ -380,6 +381,10 @@ const APP_ICON_PATH = path.join(
 );
 if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
+// 사용자 데이터 폴더 이름은 「5e-desktop」으로 고정한다(1.7.1 결정): 맥 ~/Library/Application Support/5e-desktop,
+// 윈도우 %APPDATA%\5e-desktop. 이름은 package.json 「name」에서 온다(맨 위 productName이 없어서). 맨 위에 productName을
+// 넣거나 name을 바꾸면 폴더가 바뀌어 그림 작업·출제 보관함·설정(IndexedDB·localStorage)이 사라진 것처럼 보인다.
+// 바꿔야 하면 옛 폴더에서 옮기는 처리를 함께 넣는다. 지키는 검사: desktop/user-data-name.test.cjs.
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
 // 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
@@ -1994,16 +1999,8 @@ handleTrustedIpc("local-images:read", async (event, filePath) => {
 // URL. Install on the default session before any loadFile; the auxiliary exam
 // partition retains its separate loopback server and protocol policy.
 app.on('ready', () => protocol.handle('file', createDesktopEntryProtocolHandler()));
-// 11-14: 맥은 앱 메뉴가 없으면 ⌘Q(끝내기)·⌘H(가리기)가 먹지 않는다 — 앱 메뉴 하나만 둔다.
-// 편집 메뉴는 두지 않는다: 메뉴 단축키가 화면의 ⌘C·⌘V·⌘Z(5E 클립보드·되돌리기)를 가로채기 때문.
-function installAppMenu() {
-  if (process.platform !== 'darwin' || typeof Menu.buildFromTemplate !== 'function') { Menu.setApplicationMenu(null); return; }
-  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: app.name, submenu: [
-    { role: 'about', label: '5E 정보' }, { type: 'separator' },
-    { role: 'hide', label: '5E 가리기' }, { role: 'hideOthers', label: '기타 가리기' }, { role: 'unhide', label: '모두 보기' },
-    { type: 'separator' }, { role: 'quit', label: '5E 끝내기' },
-  ] }]));
-}
+// 맥 메뉴 막대(앱 메뉴 + 편집 메뉴)는 desktop/app-menu.cjs.
+function installAppMenu() { installDesktopAppMenu({ Menu, app }); }
 // 저장 확인 창은 창에 붙어 뜬다 — 창이 가려졌거나 내려가 있으면 확인 창도 안 보여 앱이 멈춘 것처럼 보였다(11-14). 먼저 창을 앞으로.
 function confirmLeave(target, options) {
   try { if (target.isMinimized()) target.restore(); target.show(); target.focus(); if (process.platform === 'darwin') app.focus({ steal: true }); } catch {}

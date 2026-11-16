@@ -71,6 +71,8 @@
     "mac": {
       "icon": "assets/icon.icns",
       "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
       "artifactName": "5E-${version}-macos-${arch}.${ext}",
       "target": [
         {
