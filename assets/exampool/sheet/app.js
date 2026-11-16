@@ -318,7 +318,7 @@ function renderView(){queueMicrotask(paintLockBar);queueMicrotask(paintExamStep)
   // 11-13 밤: 화면을 바꿀 때 메뉴 접기·펴기도 메뉴 단추와 같은 곡선으로(뚝 접히던 것), 카드·판은 고른 자리에서 커지며 열린다.
   {let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}const off=view.name==='card'?(pref===null||pref==='0'):pref==='0',entering=view.name==='card'&&lastViewName!=='card';
     if(view.name==='card'){if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();if(entering)cardEditor.enterFrom(takeZoomSource());}
-    if(document.querySelector('.shell-body').classList.contains('nav-off')!==off)navTo(off,{animate:lastViewName!==view.name});}
+    if(navIsOff()!==off)navTo(off,{animate:lastViewName!==view.name});}
   lastViewName=view.name;
   $('#toggle-lib').hidden=true;
   // 위쪽 막대: 카드 화면에서는 단계 칩이 카드에 있으므로 상태 선택을 숨기고, 시험지 문항이면 5E_hwp로 보내기를 보인다.
@@ -1680,26 +1680,50 @@ document.addEventListener('click',e=>{const b=e.target.closest?.('button[data-ap
 for(const [top,src] of [['#top-undo','#undo'],['#top-redo','#redo']]){const t=$(top),o=$(src);if(!t||!o)continue;t.onclick=()=>o.click();const sync=()=>{t.disabled=o.disabled;};sync();new MutationObserver(sync).observe(o,{attributes:true,attributeFilter:['disabled']});}
 $('#crumb-view').onclick=()=>{if(view.name==='library'){libView.close();renderView();return;}if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;if(current)libState(view).pool=poolOf(data,current);show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
-// 11-13: 접고 펼 때 — 메뉴 폭은 감속 곡선으로, 오른쪽 화면은 마지막 폭으로 먼저 그린 채 같은 곡선으로 밀고, 아이콘·접기 단추는 제자리에서 미끄러지게(FLIP).
-function navTo(off,{save=false,animate=true}={}){const NAV_EASE='cubic-bezier(.32,.72,0,1)',NAV_MS=320;const body=document.querySelector('.shell-body'),side=body.querySelector(':scope>.side'),tog=$('#toggle-nav');
+// 11-17(승인 시안 BL3/B15-메뉴접기.html): 폭은 0.28초 감속 곡선, 글자는 크기를 바꾸지 않고 투명도로.
+//  접을 때: 펼친 모양 그대로 폭만 줄이며(넘치는 것은 잘림) 글자가 앞 0.12초에 사라지고, 폭이 다 줄어든 뒤 접힌 모양(nav-off)으로 바꿔 줄 위치만 짧게 맞춘다.
+//  펼 때: 펼친 모양으로 바꾸고 폭을 늘리며, 글자는 0.12초 뒤부터 나타난다. 가운데 칸은 메뉴 폭을 따라 같이 움직이고, 접기 단추도 같은 곡선으로.
+//  줄(단추)은 아이콘만이 아니라 고른 표시까지 한 덩어리로 옮긴다. 「동작 줄이기」면 움직임 없이 바로.
+var navPending=null;// 접는 중이라 아직 nav-off를 붙이지 않은 목표 상태
+function navIsOff(){return navPending?navPending.off:document.querySelector('.shell-body').classList.contains('nav-off');}
+function navTo(off,{save=false,animate=true}={}){const NAV_EASE='cubic-bezier(.2,.8,.2,1)',NAV_MS=280,FADE_MS=120,SETTLE_MS=200;const body=document.querySelector('.shell-body'),side=body.querySelector(':scope>.side'),tog=$('#toggle-nav');
+  if(navPending){const p=navPending;navPending=null;p.finish();}
   const still=!animate||matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const w0=side.getBoundingClientRect().width,t0=tog.getBoundingClientRect(),icons=[...side.querySelectorAll('button.nav')].map(b=>b.querySelector('svg')).filter(Boolean),i0=icons.map(i=>i.getBoundingClientRect());
-  const mains=[...body.children].filter(c=>c!==side&&c.getClientRects().length),m0=mains.map(c=>c.getBoundingClientRect().left);
-  body.classList.toggle('nav-off',off);placeNavToggle();tog.setAttribute('aria-pressed',String(!off));if(save)try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}
-  if(still||!(w0>0))return;const o={duration:NAV_MS,easing:NAV_EASE};
-  side.animate([{width:w0+'px',minWidth:w0+'px',maxWidth:w0+'px'},{width:side.getBoundingClientRect().width+'px',minWidth:side.getBoundingClientRect().width+'px',maxWidth:side.getBoundingClientRect().width+'px'}],{...o});
-  mains.forEach((c,k)=>{const dx=m0[k]-c.getBoundingClientRect().left;if(Math.abs(dx)>.5&&m0[k]>0)c.animate([{transform:`translateX(${dx}px)`},{transform:'none'}],o);});
-  icons.forEach((i,k)=>{const r=i.getBoundingClientRect(),dx=i0[k].left-r.left,dy=i0[k].top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)i.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);});
+  const rows=()=>[...side.querySelectorAll('button.nav,.side-label')],texts=()=>[...side.querySelectorAll('.nav>span,.nav>b,.side-label,.side-add,.side-top,.side-div,kbd')];
+  const w0=side.getBoundingClientRect().width,t0=tog.getBoundingClientRect();
+  side.getAnimations().forEach(a=>a.cancel());tog.getAnimations().forEach(a=>a.cancel());
+  tog.setAttribute('aria-pressed',String(!off));if(save)try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}
+  const apply=()=>{body.classList.toggle('nav-off',off);placeNavToggle();};
+  // 바뀐 뒤 폭: 잠깐 바꿔 재고 되돌린다(그리기 전이라 화면에는 안 보임).
+  const had=body.classList.contains('nav-off');body.classList.toggle('nav-off',off);const w1=side.getBoundingClientRect().width;body.classList.toggle('nav-off',had);
+  if(still||!(w0>0)||!(w1>0)||Math.abs(w1-w0)<1){apply();return;}
+  const o={duration:NAV_MS,easing:NAV_EASE},W=w=>({width:w+'px',minWidth:w+'px',maxWidth:w+'px'});
+  // 폭을 바꾸는 동안 안쪽 줄은 펼친 폭에 묶어 둬 글자가 줄바꿈되며 출렁이지 않게 하고, 넘치는 것은 자른다.
+  const pin=()=>{const ws=[...side.children].map(c=>c.getBoundingClientRect().width);side.style.overflow='hidden';[...side.children].forEach((c,k)=>{if(ws[k]>0){c.style.minWidth=ws[k]+'px';c.style.flexShrink='0';}});},unpin=()=>{side.style.overflow='';for(const c of side.children){c.style.minWidth='';c.style.flexShrink='';}};
+  // 줄을 옛 자리에서 새 자리로 미끄러지게(FLIP).
+  const slide=(before,ms)=>rows().forEach((r,k)=>{const b=before[k];if(!b)return;const a=r.getBoundingClientRect(),dx=b.left-a.left,dy=b.top-a.top;if(Math.abs(dx)+Math.abs(dy)>.5)r.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],{duration:ms,easing:NAV_EASE});});
+  if(off){
+    navPending={off,finish:()=>{clearTimeout(timer);fades.forEach(a=>a.cancel());unpin();apply();}};placeNavToggle();
+    {const r=tog.getBoundingClientRect(),dx=t0.left-r.left,dy=t0.top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)tog.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);}
+    pin();const width=side.animate([W(w0),W(w1)],{...o,fill:'forwards'});
+    const fades=texts().map(n=>n.animate([{opacity:1},{opacity:0}],{duration:FADE_MS,easing:'ease',fill:'forwards'}));
+    const timer=setTimeout(()=>{if(!navPending||navPending.off!==off)return;navPending=null;
+      const before=rows().map(r=>r.getBoundingClientRect());fades.forEach(a=>a.cancel());unpin();apply();width.cancel();
+      slide(before,SETTLE_MS);side.querySelectorAll('.side-label').forEach(n=>n.animate([{opacity:0},{opacity:1}],{duration:SETTLE_MS,easing:'ease'}));},NAV_MS);
+    return;}
+  const before=rows().map(r=>r.getBoundingClientRect());apply();
   {const r=tog.getBoundingClientRect(),dx=t0.left-r.left,dy=t0.top-r.top;if(Math.abs(dx)+Math.abs(dy)>.5)tog.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'none'}],o);}
-  if(!off)side.querySelectorAll('.nav>span,.nav>b,.side-label,.side-add').forEach(n=>n.animate([{opacity:0},{opacity:0,offset:.25},{opacity:1}],o));}
-$('#toggle-nav').onclick=()=>navTo(!document.querySelector('.shell-body').classList.contains('nav-off'),{save:true});
+  pin();const width=side.animate([W(w0),W(w1)],o);width.finished.then(unpin,unpin);
+  slide(before,NAV_MS);
+  texts().forEach(n=>n.animate([{opacity:0},{opacity:0,offset:FADE_MS/NAV_MS},{opacity:1}],o));}
+$('#toggle-nav').onclick=()=>navTo(!navIsOff(),{save:true});
 // 11-13 밤: 카드·판을 연 자리(라이브러리 문항·문항 보기·판 목록 그림) — 작업 칸이 그 자리에서 커지며 열린다.
 var lastViewName='',zoomSource=null;
 function takeZoomSource(){const z=zoomSource;zoomSource=null;return z&&performance.now()-z.t<4000?z.rect:null;}
 for(const ev of ['pointerdown','keydown'])document.addEventListener(ev,e=>{const n=e.target?.closest?.('[data-iv-open],.lv-card,.lv-list li,.lv-viewer [data-lv-act="card"]');if(!n)return;
   const src=n.matches('[data-lv-act]')?(n.closest('.lv-viewer')?.querySelector('.lv-vbody,.lv-pic,img,canvas')||n.closest('.lv-viewer')):n;const r=src?.getBoundingClientRect();if(r&&r.width>4)zoomSource={rect:r,t:performance.now()};},true);
 // 11-04: 접힌 상태면 ▢를 44px 줄 맨 위로(펼친 상태는 「문항」 머리줄 오른쪽)
-function placeNavToggle(){const off=document.querySelector('.shell-body').classList.contains('nav-off');const t=$('#toggle-nav');if(t)t.style.left=off?'8px':'';}
+function placeNavToggle(){const off=navIsOff();const t=$('#toggle-nav');if(t)t.style.left=off?'8px':'';}
 new MutationObserver(placeNavToggle).observe(document.querySelector('.shell-body'),{attributes:true,attributeFilter:['class']});
 try{if(localStorage.getItem(CHANNEL+'exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}
 $('#toggle-lib').onclick=()=>$('#card-view [data-cv="toggle-lib"]')?.click();
