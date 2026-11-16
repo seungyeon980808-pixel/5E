@@ -34,6 +34,7 @@ export async function forHancom(bytes,JSZip=globalThis.JSZip){
 // ── .hwp(바이너리, HWP 5.0) ──
 // BodyText/Section* 레코드를 돌며 PARA_TEXT(67)의 U+2060을 빈칸으로(글자 수 같음), EQEDIT(88)의 스크립트를 한글 수식으로 바꾼다.
 // 다른 레코드·스트림은 바이트 그대로 둔다. 바꿀 것이 없으면 받은 바이트를 그대로 돌려준다.
+// ⚠ 아직 아무 데서도 부르지 않는다(11-17): SheetJS CFB.write로 상자를 다시 쓰면 내용이 같아도 rhwp가 다시 열 때 수식 뒤 줄이 약 15px 밀린다.
 const PARA_TEXT=67,EQEDIT=88;
 // 8칸(16바이트)을 차지하는 조판 부호(인라인·확장 컨트롤). 나머지 0~31은 한 칸.
 const WIDE=new Set([1,2,3,4,5,6,7,8,9,11,12,14,15,16,17,18,19,20,21,22,23]);

@@ -6,7 +6,7 @@ import { appSwitchHtml } from './app-switch.js?v=1.7.0-four-session-integration'
 import { attachAppMenu, appSwitchKey } from './app-switch-menu.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
-import {forHancom,forHancomHwp} from '../assets/exampool/sheet/hancom-file.js';
+import {forHancom} from '../assets/exampool/sheet/hancom-file.js';
 
 import { PictureSettings, ExamRegionSurface } from './rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import { validRegion, DEFAULT_PICTURE_LAYOUT } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
@@ -1493,8 +1493,8 @@ export function initRhwpExamWorkspace(state, services) {
   }
   async function exportDocument(format) {
     await stableSave();
-    // 한글용 파일: .hwp·.hwpx 모두 WJ → 빈칸, 수식 LaTeX → 한글 수식(1.7.1 B2·B4)
-    const bytes = format === 'hwp' ? await forHancomHwp(await bridge.exportHwp()) : await forHancom(await bridge.exportHwpx());
+    // .hwp는 아직 그대로(1.7.1 B4 보류): 상자(CFB)를 다시 쓰면 내용이 같아도 rhwp가 다시 열 때 줄이 밀린다(BL2 보고서).
+    const bytes = format === 'hwp' ? await bridge.exportHwp() : await forHancom(await bridge.exportHwpx());
     download(new Blob([bytes]), `${safeName(nameInput.value)}.${format}`);
     message('한글 파일 다운로드를 시작했습니다. 연결된 PNG에 그림 원본이 들어 있습니다.');
   }
