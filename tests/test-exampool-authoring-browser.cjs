@@ -61,9 +61,11 @@ h.withServer(async origin=>{
       await send('발문 고쳐 줘');
       await page.evaluate(()=>window.__answer.resolve({response:{reply:'변경안입니다',proposal:{summary:'발문 변경',changes:[{path:'ask',value:'AI가 고친 발문'}]}},evidence:[],meta:{live:false}}));
       await sheet.waitForSelector('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(900);
-      const dialogs=[];page.on('dialog',d=>{dialogs.push(d.message());void d.dismiss();});
-      await sheet.fill('#cv-ask + .eq-ce','교사가 방금 고친 발문');await sheet.click('#card-view .proposal [data-act="apply"]');await sheet.waitForTimeout(400);
-      assert.equal(dialogs.length,1,'applying right after a teacher edit asks first');assert.match(dialogs[0],/지난 버전/);
+      // 11-12(ask-dialog.js): 맥 기본 확인창 대신 5E 확인창(.ask-dialog)으로 묻는다 — 「취소」로 닫아 거절한다.
+      await sheet.fill('#cv-ask + .eq-ce','교사가 방금 고친 발문');await sheet.click('#card-view .proposal [data-act="apply"]');
+      await sheet.waitForSelector('.ask-dialog[open]');
+      assert.equal(await sheet.locator('.ask-dialog[open]').count(),1,'applying right after a teacher edit asks first');assert.match(await sheet.locator('.ask-dialog .ask-message').textContent(),/지난 버전/);
+      await sheet.click('.ask-dialog [data-ask="no"] >> nth=1');await sheet.waitForFunction(()=>!document.querySelector('.ask-dialog'));await sheet.waitForTimeout(400);
       assert.equal(await sheet.locator('#cv-ask').inputValue(),'교사가 방금 고친 발문','declining keeps the teacher text');
       // 4-2) M18: 탭을 바꿔 카드를 다시 그려도 AI 입력창에 쓰던 초안은 남는다.
       await sheet.fill('#cv-ai-input','쓰다 만 요청');await sheet.click('#card-view [data-cvright="paper"]');await sheet.click('#card-view [data-cvright="ai"]');await sheet.waitForSelector('#cv-ai-input');

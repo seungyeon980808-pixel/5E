@@ -15,7 +15,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const qs=[question(1),question(2),question(3)];
   await sheet.setInputFiles('#excel-file',{name:'pick.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:examples.format,questions:qs,documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.evaluate(()=>{const u=document.querySelector('input[name="import-mode"][value="update"]');if(u)u.checked=true;});await sheet.click('#apply-import');
-  if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
+  if(await sheet.locator('.shell-body.nav-off').count()||await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   // 「새 시험지」 창(10-24 시안 17): 틀을 바꾸면 핵심 목표가 그 틀 기본값으로 다시 채워지고, 「만들기」 → 바로 문항 고르기(탭 둘, 번호·✓ 없음).
   await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('.ef-new [data-new-make]');
   await sheet.click('[data-new-frame="kice"]');assert.equal(await sheet.inputValue('[data-new-goal="total"]'),'50','수능 틀 기본 총점');
@@ -60,6 +60,8 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.click('.ef-foot [data-ef-step="3"]');await sheet.waitForSelector('#examd-view .pv-orow');
   assert.equal(await sheet.locator('.pv-orow').count(),3);
   // 「목표 고치기」(시안 17): 점검 칸 제목 옆 단추 → 떠 있는 창. 「닫기」는 고친 것을 되돌리고 「적용」은 남긴다.
+  // 11-15(exam-place.js checkOpen:false): 점검 칸은 접힌 띠로 시작한다 — 띠를 눌러 펼친다.
+  if(await sheet.locator('.ex-checkpane[data-open="false"]').count())await sheet.click('.ex-checkpane[data-open="false"]');await sheet.waitForSelector('.ex-checkpane[data-open="true"]');
   const nObj=()=>sheet.evaluate(()=>document.querySelector('#exam-check .ex-goalpop [data-ef-goal="nObj"]')?.value);
   await sheet.click('[data-ex-goal-open]');await sheet.waitForSelector('#exam-check .ex-goalpop');assert.equal(await nObj(),'20');
   await sheet.fill('.ex-goalpop [data-ef-goal="nObj"]','12');await sheet.press('.ex-goalpop [data-ef-goal="nObj"]','Tab');await sheet.waitForFunction(()=>document.querySelector('#exam-check .ex-goalpop [data-ef-goal="nObj"]')?.value==='12');

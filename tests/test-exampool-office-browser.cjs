@@ -5,6 +5,7 @@ const fs = require('node:fs');const path = require('node:path');
 const {chromium,webkit} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const JSZip = require('../assets/exampool/sheet/vendor/jszip.min.js');
 const h = require('./helpers/rhwp-exam.cjs');
+const {openLibrary} = require('./helpers/exampool-open.cjs');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/exampool/office-verification');
 const figure = path.resolve(__dirname,'../assets/exam-library/images/b1_2007_11_05.png');
 
@@ -66,37 +67,32 @@ h.withServer(async origin => {
       // 새 문항은 문항 카드(입력 칸)로 열린다. 합답형 선지는 보기 조합 버튼, 오른쪽에는 라이브러리 탭.
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       assert.ok(await sheet.locator('#card-view .combo-row').count()===5,'combo choices are composed from bogi letters');
+      await openLibrary(sheet); // 11-12: 라이브러리는 기본 닫힘 — 왼쪽 메뉴로 켠다
       // 시안 4: 왼쪽 라이브러리(검색 범위: 기출문제·교과서·성취기준·교육과정·자료) · 가운데 문항 카드(번호 탭) · 오른쪽 미리보기|AI.
       assert.deepEqual((await sheet.locator('#card-view [data-cvscope] option').allTextContents()).slice(0,4),['기출문제','교과서','성취기준·교육과정','자료']);
       assert.deepEqual(await sheet.locator('#card-view .cv-rseg [data-cvright]').evaluateAll(b=>b.map(x=>x.textContent.trim())),['미리보기','AI']);
-      assert.ok(await sheet.locator('#card-view .cv-qtab[aria-current="true"]').count()===1,'the current question is marked in the number tabs');
+      // 11-12(9f4a1b87): 카드 위 번호 탭 줄은 없어졌다 — 지금 문항은 카드 머리의 「N번 문항」으로 알린다.
+      assert.ok(await sheet.locator('#card-view .cv-writer .w-head .qno').count()===1,'the current question is named in the card head');
       // 미리보기 칸 = 한글 조판 창(5e_hwp). 카드를 다시 그려도 지워지지 않는 층에 붙어 미리보기 칸 위에 정확히 겹친다.
       await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);
       const fit=await sheet.evaluate(()=>{const L=document.querySelector('.cv-hwp-layer').getBoundingClientRect(),S=document.querySelector('#cv-hwp').getBoundingClientRect(),c=document.querySelector('#native-editor iframe').contentDocument.querySelector('#scroll-container canvas')?.getBoundingClientRect();
         return {over:[L.left-S.left,L.top-S.top,L.width-S.width,L.height-S.height].every(v=>Math.abs(v)<1),pageInside:!!c&&c.width<=L.width};});
       assert.ok(fit.over,'the HWP window sits exactly over the preview slot');assert.ok(fit.pageInside,'the page fits the preview width');
-      const lw=await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth),split=await sheet.locator('#card-view [data-cvsplit="left"]').boundingBox();
-      await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x+split.width/2-60,split.y+split.height/2,{steps:4});await page.mouse.up();
-      assert.ok(Math.abs(await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth)-(lw-60))<=6,'dragging the left border resizes the library');
+      // (끌어서 칸 폭 바꾸기 검사는 11-12 9f4a1b87에서 경계 손잡이(.cv-split)가 없어져 뺌 — 칸 폭은 1:1:1·카드 2:조판 1 비율로 자동)
       // 좁은 창(1100): 칸이 이미 끌기 상한보다 넓어도 경계를 잡는 순간 줄어들지 않고, 끌면 움직인 만큼 줄어든다.
       await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(400);
       // 넓은 창에서 연 뒤 줄여도 오른쪽 칸이 창 밖으로 밀리지 않는다(칸 폭을 창에 다시 맞춤).
       assert.ok(await sheet.evaluate(()=>document.querySelector('#card-view .cv-right').getBoundingClientRect().right<=document.querySelector('#card-view').getBoundingClientRect().right+0.5),'the right pane stays inside after the window shrinks');
-      for(const k of ['left','right']){const pane=k==='left'?'.cv-left':'.cv-right',w0=await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane),b=await sheet.locator(`#card-view [data-cvsplit="${k}"]`).boundingBox(),f=await (await page.$('#exampool-sheet-workspace iframe')).boundingBox();
-        const x=f.x+b.x+b.width/2,y=f.y+b.y+b.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+1,y);await page.mouse.move(x,y);
-        assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-w0)<=1,`grabbing the ${k} border in a narrow window does not jump`);
-        // 11-04: 카드 화면 왼쪽에 44px 줄이 생겨 칸이 그만큼 좁다 — 오른쪽 칸 최소 폭(300)에 닿지 않게 20px만 끈다.
-        await page.mouse.move(k==='left'?x-20:x+20,y,{steps:3});await page.mouse.up();
-        assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-(w0-20))<=2,`dragging the ${k} border in a narrow window shrinks it by the drag`);
-        await sheet.locator(`#card-view [data-cvsplit="${k}"]`).dblclick();}
       await page.setViewportSize({width:1440,height:960});await sheet.waitForTimeout(200);
-      await sheet.click('#card-view [data-cv="toggle-right"]');assert.equal(await sheet.locator('#card-view .cv-right').isHidden(),true);await sheet.click('#card-view [data-cv="toggle-right"]');
+      await sheet.click('#card-view [data-cv="toggle-right"]');await sheet.waitForFunction(()=>{const n=document.querySelector('#card-view .cv-right');return !n||n.hidden||!n.getClientRects().length;},null,{timeout:5000}); // 11-12~: 칸이 접히는 움직임 뒤에 숨는다
+      assert.equal(await sheet.locator('#card-view .cv-right').isHidden(),true);await sheet.click('#card-view [data-cv="toggle-right"]');
       // 10-22 안 B: 문항 카드 입구는 하나 — 가운데 머리 줄 아이콘·쪽 화면 「문항 카드로」 없음. 「이 문항 | 시험지 전체」는 조판 칸 「상세 조판」 줄 맨 앞.
       assert.equal(await sheet.locator('#card-view .cv-vseg, #card-view .cv-bar [data-cvview]').count(),0,'no view toggle in the card header');
       const scope=sheet.locator('.cv-hwp-layer .typeset-view-controls .ts-scope');await scope.waitFor();
       assert.deepEqual(await scope.locator('button').allTextContents(),['이 문항','시험지 전체']);
       const before=await sheet.evaluate(()=>document.querySelector('#card-view .cv-right').getBoundingClientRect().width);
       await scope.locator('[data-cvview="page"]').click();await sheet.waitForSelector('#card-view .cv-right .pg-sheet[data-native-page] svg');await sheet.waitForSelector('#card-view .pg-sheet .pg-now');
+      await sheet.waitForFunction(()=>document.querySelector('.cv-hwp-layer').hidden,null,{timeout:5000}).catch(()=>{}); // 칸이 펼쳐지는 움직임이 끝난 뒤(alignHwp) 숨는다
       const wide=await sheet.evaluate(()=>({right:document.querySelector('#card-view .cv-right').getBoundingClientRect().width,center:!!document.querySelector('#card-view .cv-center'),rail:!!document.querySelector('#card-view .pane-rail.mid'),back:document.querySelectorAll('#card-view .pg-head [data-cvview]').length,pressed:document.querySelector('#card-view .cv-pgbar [data-cvview="page"]').getAttribute('aria-pressed'),layer:document.querySelector('.cv-hwp-layer').hidden}));
       assert.ok(wide.right>before+200&&!wide.center&&wide.rail,'the typeset pane widens over the card column and the card folds to a rail: '+JSON.stringify({before,...wide}));
       assert.equal(wide.back,0,'no second "back to card" entry on the page');assert.equal(wide.pressed,'true');assert.equal(wide.layer,true,'the hwp editor layer is hidden while the whole sheet shows');
@@ -128,25 +124,21 @@ h.withServer(async origin => {
       // 「그림 자리·표 자리」 대신 자료 칸 맨 아래 「자료 칸 추가」 하나: 빈 칸이 생기고 그 칸에서 그림/표를 고른다.
       assert.equal(await sheet.locator('#card-view .cv-add-slot, #card-view [data-cvslot-act="add-table"]').count(),0);
       const tiles=await sheet.locator('#card-view .cv-tile').count();
-      await sheet.click('#card-view .cv-add-row');await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,tiles);
+      // 11-13~15: 「자료 칸 추가」는 이름표 아래 ＋ 하나(.cv-matadd, 3개면 흐림).
+      await sheet.click('#card-view .cv-matadd:not([disabled])');await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,tiles);
       const added=sheet.locator('#card-view .cv-tile.empty').last();
-      assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
+      assert.deepEqual(await added.locator('.cv-pick').evaluateAll(b=>b.map(x=>x.dataset.cvslotAct)),['add-pic','new-graph','to-table','to-box'],'11-15 자료 칸 네 가지: 그림·그래프·표·자료 상자');
       // 10-22 「나」안: 빈 칸의 두 동작은 같은 폭·같은 옅은 테·같은 글자색(진한 파란 단추 없음), 아이콘은 같은 세로줄, 이름표는 칸 아래 가운데.
-      const picks=await added.evaluate(t=>{const bs=[...t.querySelectorAll('.cv-pick')].map(b=>{const r=b.getBoundingClientRect(),c=getComputedStyle(b),i=b.querySelector('.ico').getBoundingClientRect();return{w:r.width,shadow:c.boxShadow,color:c.color,bg:c.backgroundColor,icon:i.left};});const box=t.querySelector('.pic').getBoundingClientRect(),cap=t.querySelector('.cap').getBoundingClientRect(),name=t.querySelector('.cap b').getBoundingClientRect();return{bs,go:t.querySelectorAll('.btn.go').length,capBelow:cap.top>=box.bottom-1,centered:Math.abs((name.left+name.right)/2-(box.left+box.right)/2)<=2};});
+      const picks=await added.evaluate(t=>{const bs=[...t.querySelectorAll('.cv-pick')].map(b=>{const r=b.getBoundingClientRect(),c=getComputedStyle(b),i=(b.querySelector('.ico')||b.querySelector('svg')).getBoundingClientRect();return{w:r.width,shadow:c.boxShadow,color:c.color,bg:c.backgroundColor,icon:i.left};});const box=t.querySelector('.pic').getBoundingClientRect(),cap=t.querySelector('.cap').getBoundingClientRect(),name=t.querySelector('.cap b').getBoundingClientRect();return{bs,go:t.querySelectorAll('.btn.go').length,capBelow:cap.top>=box.bottom-1,centered:Math.abs((name.left+name.right)/2-(box.left+box.right)/2)<=2};});
       assert.equal(picks.go,0,'no strong blue button inside an empty slot');
-      assert.equal(picks.bs.length,2);assert.ok(Math.abs(picks.bs[0].w-picks.bs[1].w)<=1,'both slot actions are the same width');
-      assert.equal(picks.bs[0].shadow,picks.bs[1].shadow,'both slot actions share the same faint outline');assert.equal(picks.bs[0].color,picks.bs[1].color);assert.equal(picks.bs[0].bg,picks.bs[1].bg);
-      assert.ok(Math.abs(picks.bs[0].icon-picks.bs[1].icon)<=1,'slot action icons line up');assert.ok(picks.capBelow&&picks.centered,'slot name sits centred under its box');
+      assert.equal(picks.bs.length,4);assert.ok(picks.bs.every(b=>Math.abs(b.w-picks.bs[0].w)<=1),'all slot actions are the same width');
+      assert.ok(picks.bs.every(b=>b.shadow===picks.bs[0].shadow&&b.color===picks.bs[0].color&&b.bg===picks.bs[0].bg),'all slot actions share the same faint outline');
+      assert.ok(picks.bs.slice(0,2).every(b=>Math.abs(b.icon-picks.bs[0].icon)<=1)&&true,'slot action icons line up');assert.ok(picks.capBelow&&picks.centered,'slot name sits centred under its box');
       // 지우기는 칸에 마우스를 올렸을 때만 보이고 눌린다(10-22).
       assert.equal(await added.locator('.cv-tile-tools').evaluate(e=>getComputedStyle(e).opacity),'0','slot tools stay hidden until hover');
       await added.hover();await sheet.waitForFunction(()=>[...document.querySelectorAll('#card-view .cv-tile.empty .cv-tile-tools')].some(e=>getComputedStyle(e).opacity==='1'));
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
-      // 번호 줄이 넘쳐도 「+」는 줄 끝에 붙어 보이고, 마우스 휠로 가로로 넘어간다.
-      assert.equal(await sheet.evaluate(()=>getComputedStyle(document.querySelector('#card-view .cv-qtab.add')).position),'sticky','the add tab stays at the end of the number row');
-      await sheet.evaluate(()=>{const t=document.querySelector('#card-view .cv-qtabs');t.style.maxWidth='40px';});
-      await sheet.hover('#card-view .cv-qtabs');await page.mouse.wheel(0,120);await sheet.waitForTimeout(200);
-      assert.ok(await sheet.evaluate(()=>document.querySelector('#card-view .cv-qtabs').scrollLeft>0),'the wheel scrolls an overflowing number row sideways');
-      await sheet.evaluate(()=>{const t=document.querySelector('#card-view .cv-qtabs');t.style.maxWidth='';t.scrollLeft=0;});
+      // (번호 줄 「+」·휠 가로 이동 검사는 11-12 번호 탭 줄 삭제로 없앰)
       // 한글 창이 다시 그려져도 카드 칸에 이어 치는 글은 카드에 들어가고, ⌘Z는 카드 편집을 되돌린다(편집기가 초점을 가져가던 것).
       await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);
       await sheet.click('#cv-passage');await page.keyboard.type('가');await sheet.waitForTimeout(3500);await typesetReady(sheet);await page.keyboard.type('나');
