@@ -1,13 +1,13 @@
-// 학습지·시험지 만들기 도구(10-21 밤). 빈칸 학습지(표시 → 학생용 사본·정답 모음), 시험지 머리 양식, 정답표 칸, 문항 간격 일괄.
-// 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 학생용 사본은 지금 문서를 건드리지 않고 복사본에서 만든다.
+// 학습지·시험지 조판 도구(10-21 밤). 시험지 머리 양식, 문항 간격 일괄, 상자·답란·평가 기준표·표 틀, 단·용지·쪽 번호·머리말, 점검.
+// 1.7.1: 정답·배점·분류표·학생용 사본·가나형·QR·학습지 틀(교사용 기능)은 지웠다 — 5E_hwp는 인쇄 전 조판(모양만).
+// 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 「고른 문항만 새 파일로」는 지금 문서를 건드리지 않고 복사본에서 만든다.
 import { insertTable } from './hwp-palette/native.js?v=1.7.0-four-session-integration';
-import { qrPng } from './qr-encode.js?v=1.7.0-four-session-integration';
 import { unitGapIssues } from './rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps, hasInlineObjects, objectCounts, assertObjectsKept } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
+import { columnWidth, questionBlocks, renumberDocument, allQuestionBlocks, topTables, blockLines, formatLine, lineCharProps } from './rhwp-exam-layout-tools.js?v=1.7.0-four-session-integration';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 문단 끝 위치(10-27 D4): 글 길이(getParagraphLength)에는 표·그림·수식 개체가 빠져 있다. 개체만 든 문단(5E_exam 선지 표)은 길이 0이라
-// 「빈 줄」로 여겨 그 앞에 [정답]·정답표·대응표를 써 넣었고(표 앞에 들어감), 글 끝에서 나누면 끝의 개체가 다음 문단으로 떨어졌다.
+// 「빈 줄」로 여겨 그 앞에 글을 써 넣었고(표 앞에 들어감), 글 끝에서 나누면 끝의 개체가 다음 문단으로 떨어졌다.
 // 개체 수까지 더한 끝에서 나누고, 엔진이 받지 않으면 예전 위치로.
 const controlCount = (doc, sec, p) => { try { const x = doc.getControlTextPositions(sec, p); return (typeof x === 'string' ? JSON.parse(x || '[]') : x || []).length; } catch { return 0; } };
 const paraEnd = (doc, sec, p) => doc.getParagraphLength(sec, p) + controlCount(doc, sec, p);
@@ -15,108 +15,11 @@ const splitAtEnd = (doc, sec, p) => { try { return doc.splitParagraph(sec, p, pa
 // 쪽 배치가 「표」라고 알려 준 개체가 엔진에서는 표가 아닐 때가 있다(10-27 D2: 기출 변형 문항의 그림·수식) —
 // 엔진이 「지정된 컨트롤이 표가 아닙니다」를 던져 점검 전체가 멈췄다. 표로 읽지 못하면 칸 0개로 보고 건너뛴다.
 const tableCellCount = (doc, sec, para, ci) => { try { return parse(doc.getTableDimensions(sec, para, ci)).cellCount || 0; } catch { return 0; } };
-// 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
-export const BLANK_SHADE = '#dce8ff';
-const BLANK_MARK = { shadeColor: BLANK_SHADE, underline: true };
-const BLANK_CLEAR = { shadeColor: '#ffffff', underline: false };
 
 function requireInput(bridge) {
   const input = bridge?.input;
   if (!input?.cursor) throw new Error('먼저 시험지를 여세요.');
   return input;
-}
-
-// 고른 글자를 빈칸으로 표시하거나 표시를 지운다(스튜디오의 글자 서식 경로라 본문·표 칸 모두 된다).
-export function markBlank(bridge, on = true) {
-  const input = requireInput(bridge);
-  if (!input.cursor.hasSelection?.()) throw new Error(on ? '빈칸으로 만들 낱말을 먼저 끌어 고르세요.' : '표시를 지울 부분을 먼저 고르세요.');
-  bridge.deps.eventBus.emit('format-char', on ? BLANK_MARK : BLANK_CLEAR);
-  return true;
-}
-
-const isBlank = props => String(parse(props)?.shadeColor || '').toLowerCase() === BLANK_SHADE;
-
-// 본문 문단과 본문 표(한 겹) 칸에서 글자 속성이 test를 만족하는 구간을 문서 순서로 모은다. [{where, start, end, text, whole}]
-// whole = 그 문단 글 전체가 구간인지(제목·머리 칸처럼 통째로 굵은 줄을 가릴 때 쓴다).
-function collectRuns(doc, test) {
-  const out = [];
-  const scan = (length, propsAt, textOf, where) => {
-    let start = -1;
-    for (let i = 0; i <= length; i++) {
-      const marked = i < length && test(propsAt(i));
-      if (marked && start < 0) start = i;
-      if (!marked && start >= 0) { out.push({ where, start, end: i, text: textOf(start, i), whole: textOf(0, length).trim() === textOf(start, i).trim() }); start = -1; }
-    }
-  };
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) {
-    const tables = new Map();
-    for (let page = 0; page < doc.pageCount(); page++)
-      for (const c of parse(doc.getPageControlLayout(page)).controls || [])
-        if (c.type === 'table' && c.secIdx === sec && !(c.cellPath || []).length) tables.set(`${c.paraIdx}:${c.controlIdx ?? c.ci}`, { para: c.paraIdx, ci: c.controlIdx ?? c.ci });
-    const byPara = new Map();
-    for (const t of tables.values()) { if (!byPara.has(t.para)) byPara.set(t.para, []); byPara.get(t.para).push(t); }
-    for (let para = 0; para < doc.getParagraphCount(sec); para++) {
-      const len = doc.getParagraphLength(sec, para);
-      scan(len, i => doc.getCharPropertiesAt(sec, para, i), (a, b) => String(doc.getTextRange(sec, para, a, b - a)), { kind: 'body', sec, para });
-      for (const t of byPara.get(para) || []) {
-        const cells = tableCellCount(doc, sec, para, t.ci);
-        for (let cell = 0; cell < cells; cell++) {
-          const paras = doc.getCellParagraphCount(sec, para, t.ci, cell);
-          for (let cp = 0; cp < paras; cp++) {
-            const clen = doc.getCellParagraphLength(sec, para, t.ci, cell, cp);
-            scan(clen, i => doc.getCellCharPropertiesAt(sec, para, t.ci, cell, cp, i), (a, b) => String(doc.getTextInCell(sec, para, t.ci, cell, cp, a, b - a)), { kind: 'cell', sec, para, ci: t.ci, cell, cp });
-          }
-        }
-      }
-    }
-  }
-  return out;
-}
-export const collectBlanks = doc => collectRuns(doc, isBlank).map(({ whole, ...run }) => run);
-
-// 굵은 글씨 → 빈칸: 개념 정리에서 굵게 한 핵심어를 한 번에 빈칸 표시로. 줄 전체가 굵은 제목·머리 칸과
-// 문항 번호(「1.」), 기호·숫자뿐인 구간은 건너뛴다. 앞뒤 띄어쓰기는 빼고 표시한다. 표시한 낱말 수.
-export function boldToBlanks(bridge) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle();
-  const runs = collectRuns(doc, props => parse(props)?.bold === true && !isBlank(props))
-    .filter(r => !r.whole && /[가-힣A-Za-z]/.test(r.text) && !/^\s*\d{1,3}\.\s*$/.test(r.text))
-    .map(r => { const lead = r.text.length - r.text.trimStart().length, tail = r.text.length - r.text.trimEnd().length; return { ...r, start: r.start + lead, end: r.end - tail }; });
-  if (!runs.length) throw new Error('빈칸으로 바꿀 굵은 낱말이 없습니다(줄 전체가 굵은 제목은 건너뜁니다).');
-  bridge.transaction('bold-to-blanks', () => {
-    for (const { where: w, start, end } of runs) {
-      if (w.kind === 'body') doc.applyCharFormat(w.sec, w.para, start, end, JSON.stringify(BLANK_MARK));
-      else doc.applyCharFormatInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, end, JSON.stringify(BLANK_MARK));
-    }
-    return true;
-  });
-  return runs.length;
-}
-
-// 빈칸 너비: 낱말 길이에 맞춰 전각 빈칸(최소 4칸). 학생이 손으로 쓸 자리.
-export const blankText = word => `(${'　'.repeat(Math.max(4, Math.min(16, Math.round([...word.trim()].length * 1.6))))})`;
-
-function replaceRange(doc, w, start, end, text, format = BLANK_CLEAR) {
-  if (w.kind === 'body') {
-    doc.deleteText(w.sec, w.para, start, end - start);
-    doc.insertText(w.sec, w.para, start, text);
-    doc.applyCharFormat(w.sec, w.para, start, start + [...text].length, JSON.stringify(format));
-  } else {
-    doc.deleteTextInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, end - start);
-    doc.insertTextInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, text);
-    doc.applyCharFormatInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, start + [...text].length, JSON.stringify(format));
-  }
-}
-// 정답지 사본: 빈칸 자리에 「( 정답 )」을 빨간 굵은 글씨로. 지금 문서는 그대로.
-export function answerKeyCopy(bridge) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc);
-  if (!blanks.length) throw new Error('빈칸으로 표시한 낱말이 없습니다. 낱말을 고르고 「빈칸 표시」를 누르세요.');
-  const Document = doc.constructor, copy = new Document(doc.exportHwpx());
-  try {
-    for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, `( ${blank.text.trim()} )`, { ...BLANK_CLEAR, textColor: '#d0021b', bold: true });
-    return { bytes: copy.exportHwpx(), count: blanks.length };
-  } finally { copy.free(); }
 }
 
 // 자주 쓰는 발문(평가원 과학탐구에서 많이 쓰는 꼴).
@@ -153,71 +56,6 @@ export function shadeHeaderRow(bridge, color = '#eef2f7') {
   return heads.length;
 }
 
-// 학생용 사본: 지금 문서를 복사해 빈칸 표시 낱말을 「(　　　)」로 바꾼 HWPX 바이트. 지금 문서는 그대로다.
-// 교사만 보는 줄: 「[정답] …」「정답: …」「[해설]」「[풀이]」「[채점 기준]」「[교사용]」「[출처]」「[메모]」, 이 도구가 붙인 「[빈칸 정답]」「[나형 대응]」.
-export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|출처|메모|성취기준|난이도|내용\s*영역|빈칸 정답|나형 대응|나형 정답)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
-function hasTopTable(doc, sec, para) {
-  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && !c.cellPath?.length && (c.secIdx ?? 0) === sec && c.paraIdx === para) return true;
-  return false;
-}
-// labeled: 빈칸을 「( ㉠ )」처럼 이름 붙은 빈칸으로(시험지 「빈칸 ㉠에 들어갈 말은?」 꼴).
-export const BLANK_LABELS = '㉠㉡㉢㉣㉤㉥㉦㉧㉨㉩㉪㉫㉬㉭';
-export function studentCopy(bridge, { labeled = false } = {}) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc), teacher = [];
-  for (let sec = 0; sec < doc.getSectionCount(); sec++)
-    for (let p = 0; p < doc.getParagraphCount(sec); p++) {
-      const text = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-      if (!TEACHER_ONLY.test(text)) continue;
-      // 「정답표 칸」이 넣은 「[정답]」 머리 바로 다음 문단의 표(정답표)도 함께 뺀다.
-      const gridAfter = /^\s*\[정답\]\s*$/.test(text) && p + 1 < doc.getParagraphCount(sec) && hasTopTable(doc, sec, p + 1);
-      teacher.push({ sec, p, gridAfter });
-    }
-  if (!blanks.length && !teacher.length) throw new Error('빈칸으로 표시한 낱말이나 「[정답]·[해설]」 줄이 없습니다. 낱말을 고르고 「빈칸 표시」를 누르세요.');
-  const Document = doc.constructor, copy = new Document(doc.exportHwpx());
-  try {
-    // 같은 문단 안에서는 뒤에서부터 바꿔야 앞 구간 위치가 그대로다.
-    if (labeled && blanks.length > BLANK_LABELS.length) throw new Error(`이름 붙은 빈칸은 ${BLANK_LABELS.length}개까지입니다(지금 ${blanks.length}개).`);
-    blanks.forEach((blank, i) => { blank.label = BLANK_LABELS[i]; });
-    for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, labeled ? blankText(blank.text).replace(/^\(　/, `(　${blank.label}`) : blankText(blank.text));
-    // 교사용 줄은 뒤에서부터 문단째 뺀다(0번 문단은 구역 설정을 품어 글만 지운다).
-    for (const { sec, p, gridAfter } of [...teacher].reverse()) {
-      if (gridAfter) {
-        // 정답표를 문서 끝에 넣을 때 생긴 표 뒤 빈 문단도 함께 뺀다.
-        const n = copy.getParagraphCount(sec);
-        if (p + 2 === n - 1 && !copy.getParagraphLength(sec, p + 2)) parse(copy.deleteParagraph(sec, p + 2));
-        parse(copy.deleteParagraph(sec, p + 1));
-      }
-      if (p > 0) parse(copy.deleteParagraph(sec, p));
-      else { const n = copy.getParagraphLength(sec, 0); if (n) copy.deleteText(sec, 0, 0, n); }
-    }
-    // 교사용 줄이 빠지면 쪽 배치가 달라진다 — 교사용에서 맞춰 둔 판(나뉜 문항 없음, 단 채우기)을 학생용에서도 다시 맞춘다.
-    let relaid = 0, refilled = false;
-    if (teacher.length) {
-      if (!splitQuestions(doc).length && splitQuestions(copy).length) relaid = keepQuestionsWholeDoc(copy).moved;
-      if (looksColumnFilled(doc)) { fillColumnsDoc(copy); refilled = true; }
-    }
-    return { bytes: copy.exportHwpx(), count: blanks.length, removed: teacher.length, relaid, refilled, answers: blanks.map(b => b.text), labels: labeled ? blanks.map(b => `${b.label} ${b.text.trim()}`) : null };
-  } finally { copy.free(); }
-}
-
-// 정답 모아 넣기: 문서 끝에 「[빈칸 정답] 1. … 2. …」 문단을 붙인다(교사용).
-export function appendBlankAnswers(bridge) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc);
-  if (!blanks.length) throw new Error('빈칸으로 표시한 낱말이 없습니다.');
-  const sec = doc.getSectionCount() - 1, last = doc.getParagraphCount(sec) - 1;
-  const line = `[빈칸 정답] ${blanks.map((b, i) => `${i + 1}. ${b.text.trim()}`).join('   ')}`;
-  bridge.transaction('blank-answers', () => {
-    const end = doc.getParagraphLength(sec, last);
-    parse(doc.splitParagraph(sec, last, end));
-    doc.insertText(sec, last + 1, 0, line);
-    doc.applyCharFormat(sec, last + 1, 0, [...line].length, JSON.stringify(BLANK_CLEAR));
-    return true;
-  });
-  return blanks.length;
-}
-
 // 시험지 머리: 문서 맨 앞에 제목 줄과 「학년·반·번호·이름」 칸 표를 넣는다.
 export function insertExamHeader(bridge, { title = '', subject = '', grade = '' } = {}) {
   requireInput(bridge);
@@ -235,50 +73,15 @@ export function insertExamHeader(bridge, { title = '', subject = '', grade = '' 
   return heading;
 }
 
-// 정답표 칸: 문서에서 찾은 문항 번호(1., 2., …)로 「번호/정답」 두 줄 표를 문서 끝에 넣는다. 정답은 비워 둔다.
+// 교사만 보는 줄(문서에 이미 있는 「[정답] ③」「[해설]」 등): 점검(선지 번호·부정 표현)에서 건너뛴다.
+const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|출처|메모|성취기준|난이도|내용\s*영역|빈칸 정답|나형 대응|나형 정답)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
+const MARKS = '①②③④⑤';
 // 문항과 그 안의 줄(본문·표 칸) — 표 하나로 된 학교 시험 문항도 칸 글을 읽는다.
 function blocksWithLines(doc) {
   const tables = topTables(doc), out = [];
   for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec, tables)) out.push({ ...q, sec, lines: blockLines(doc, sec, q, tables) });
   return out;
 }
-// 문항마다 적어 둔 정답: 문항 안의 「[정답] ③」「정답: ③」 줄. Map(번호 → 정답 글).
-const ANSWER_LINE = /^\s*(?:[\[【]\s*정답\s*[\]】]|정답\s*[:：])\s*(\S.*)$/;
-export function questionAnswers(doc) {
-  const out = new Map();
-  for (const q of blocksWithLines(doc)) {
-    if (q.essay) continue;
-    for (const { text } of q.lines) { const m = ANSWER_LINE.exec(text); if (m) { out.set(q.number, m[1].trim()); break; } }
-  }
-  return out;
-}
-export function insertAnswerGrid(bridge) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), numbers = [];
-  for (let sec = 0; sec < doc.getSectionCount(); sec++)
-    for (let p = 0; p < doc.getParagraphCount(sec); p++) {
-      const len = doc.getParagraphLength(sec, p), m = len ? /^\s*(\d{1,3})\./.exec(String(doc.getTextRange(sec, p, 0, len))) : null;
-      if (m) numbers.push(Number(m[1]));
-    }
-  if (!numbers.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
-  const sec = doc.getSectionCount() - 1, last = doc.getParagraphCount(sec) - 1, width = columnWidth(doc, sec);
-  // 문항 안에 「[정답] ③」을 적어 두었으면 정답 줄을 채운다.
-  const answers = questionAnswers(doc), perRow = 10, rows = [];
-  for (let i = 0; i < numbers.length; i += perRow) {
-    const chunk = numbers.slice(i, i + perRow);
-    rows.push([...chunk.map(String), ...Array(perRow - chunk.length).fill('')], [...chunk.map(n => answers.get(n) || ''), ...Array(perRow - chunk.length).fill('')]);
-  }
-  bridge.transaction('answer-grid', () => {
-    const end = doc.getParagraphLength(sec, last);
-    parse(doc.splitParagraph(sec, last, end));
-    doc.insertText(sec, last + 1, 0, '[정답]');
-    parse(doc.splitParagraph(sec, last + 1, 4));
-    insertTable(doc, { sectionIndex: sec, paragraphIndex: last + 2, charOffset: 0 }, rows.length, perRow, rows, new Map(), { width, border: 'Solid' });
-    return true;
-  });
-  return numbers.length;
-}
-
 // 문항 간격 일괄: 「1.」로 시작하는 문단(첫 문항 빼고)의 위 간격을 pt로 맞춘다.
 export function setQuestionSpacing(bridge, pt) {
   requireInput(bridge);
@@ -295,69 +98,6 @@ export function setQuestionSpacing(bridge, pt) {
     return true;
   });
   return targets.length - 1;
-}
-
-// 배점: 커서가 있는 문항의 [n점]을 넣거나 바꾼다(score=null이면 지움). 자리는 발문 끝(「?」로 끝나는 마지막 문단), 없으면 문항 첫 문단 끝.
-// {number, total, count} — total은 문서 전체 배점 합계.
-export const SCORE_CHOICES = [2, 2.5, 3, 3.5, 4, 5];
-// 배점 표시: 평가원 「[3점]」과 학교 시험 「(3점)」 둘 다.
-const SCORE_MARK = /\s?[\[(]\d+(?:\.\d+)?\s*점[\])]/g;
-export const SCORE_VALUE = /[\[(](\d+(?:\.\d+)?)\s*점[\])]/;
-const SCORE_VALUES = new RegExp(SCORE_VALUE.source, 'g');
-// 문서에서 더 많이 쓴 배점 괄호 모양(평가원 [3점] / 학교 (3점)) — 둥근 괄호면 true.
-function prefersRoundScore(doc) {
-  let round = 0, square = 0;
-  for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) m[0][0] === '(' ? round++ : square++;
-  return round > square;
-}
-// 문항 하나의 배점 표시를 지우고(score=null) 또는 바꿔 넣는다(편집 묶음 안에서). paren=true면 「(3점)」.
-function writeScore(doc, sec, q, score, tables, paren = null) {
-  const lines = blockLines(doc, sec, q, tables).filter(l => !TEACHER_ONLY.test(l.text));
-  // 넣을 자리: 「?」로 끝나는 마지막 줄(배점 표시를 뺀 글 기준), 없으면 표 문항은 발문 칸(둘째 칸), 글 문항은 번호 줄.
-  const bare = t => t.replace(SCORE_MARK, '');
-  let target = lines.filter(l => /\?\s*$/.test(bare(l.text))).at(-1)?.where;
-  if (!target) target = q.cell ? { kind: 'cell', sec, p: q.head, ci: q.cell.ci, cell: 1, cp: 0 } : { kind: 'body', sec, p: q.head };
-  const lineText = w => (w.kind === 'body' ? String(doc.getTextRange(sec, w.p, 0, doc.getParagraphLength(sec, w.p))) : String(doc.getTextInCell(sec, w.p, w.ci, w.cell, w.cp, 0, doc.getCellParagraphLength(sec, w.p, w.ci, w.cell, w.cp))));
-  for (const l of lines) for (const m of [...lineText(l.where).matchAll(SCORE_MARK)].reverse()) editLine(doc, l.where, m.index, m[0].length);
-  if (score == null) return;
-  const text = lineText(target), trimmed = text.replace(/\s+$/, '');
-  if (trimmed.length < text.length) editLine(doc, target, trimmed.length, text.length - trimmed.length);
-  editLine(doc, target, trimmed.length, 0, paren ? ` (${score}점)` : ` [${score}점]`);
-}
-function scoreTotal(doc) {
-  let total = 0, count = 0;
-  for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) { total += Number(m[1]); count++; }
-  return { total: Math.round(total * 10) / 10, count };
-}
-export function setQuestionScore(bridge, score) {
-  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
-  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
-  const tables = topTables(doc), q = questionBlocks(doc, sec, tables).find(b => b.start <= para && para < b.end);
-  if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
-  const own = blockLines(doc, sec, q, tables).map(l => SCORE_VALUE.exec(l.text)).find(Boolean);
-  const paren = own ? own[0][0] === '(' : prefersRoundScore(doc);
-  bridge.transaction('question-score', () => { writeScore(doc, sec, q, score, tables, paren); return true; });
-  return { number: q.number, label: q.label, ...scoreTotal(doc) };
-}
-// 배점 한 번에: 「2 3 3 2.5」처럼 쓴 배점을 문항 차례대로(서술형 포함). 적으면 앞 문항부터 그만큼만. {count, total(합계)}
-export function setAllScores(bridge, text) {
-  requireInput(bridge);
-  const values = String(text || '').split(/[\s,/]+/).filter(Boolean).map(v => { const n = Number(v); if (!(n > 0 && n <= 100)) throw new Error(`「${v}」를 배점으로 읽지 못했습니다. 예: 2 3 3 2.5`); return n; });
-  if (!values.length) throw new Error('배점을 쓰세요. 예: 2 3 3 2.5');
-  const doc = bridge.wasm.borrowDocumentHandle(), count = allQuestionBlocks(doc).length;
-  if (values.length > count) throw new Error(`배점이 ${values.length}개인데 문항은 ${count}개입니다.`);
-  const paren = prefersRoundScore(doc);
-  bridge.transaction('all-scores', () => {
-    const targets = allQuestionBlocks(doc).slice(0, values.length).map((q, i) => ({ q, score: values[i] }));
-    for (const { q, score } of targets.reverse()) {
-      // 그 문항에 있던 괄호 모양을 따르고, 없으면 문서에서 더 많이 쓴 모양.
-      const tables = topTables(doc), cur = questionBlocks(doc, q.sec, tables).find(b => b.head === q.head) || q;
-      const own = blockLines(doc, q.sec, cur, tables).map(l => SCORE_VALUE.exec(l.text)).find(Boolean);
-      writeScore(doc, q.sec, cur, score, tables, own ? own[0][0] === '(' : paren);
-    }
-    return true;
-  });
-  return { count: values.length, questions: count, ...scoreTotal(doc), paren };
 }
 
 // 글꼴 맞추기: 문항 첫 줄 글꼴·크기가 대부분과 다른 문항(다른 곳에서 복사해 온 문항)을 대부분 쪽으로 맞춘다.
@@ -391,78 +131,6 @@ export function unifyQuestionFonts(bridge) {
   });
   input.updateCaret?.();
   return odd.length;
-}
-
-// 정답 넣기: 커서가 있는 선택형 문항 끝에 「[정답] ③」 줄을 넣거나 바꾼다(mark=null이면 그 줄을 지움). 빨간 글씨, 학생용에서는 빠진다.
-// 문항 하나의 [정답] 줄을 넣기·바꾸기·지우기(문서 손잡이, 편집 묶음 안에서 부른다).
-function writeAnswer(doc, sec, q, mark) {
-  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-  let line = -1; for (let p = q.head; p < q.end; p++) if (ANSWER_LINE.test(textOf(p))) { line = p; break; }
-  const text = mark ? `[정답] ${mark}` : '';
-  if (line >= 0 && !mark) {
-    if (line > 0) parse(doc.deleteParagraph(sec, line)); else doc.deleteText(sec, 0, 0, doc.getParagraphLength(sec, 0));
-  } else if (line >= 0) {
-    doc.deleteText(sec, line, 0, doc.getParagraphLength(sec, line)); doc.insertText(sec, line, 0, text);
-    doc.applyCharFormat(sec, line, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
-  } else if (mark) {
-    // 문항 마지막 문단 뒤에 새 줄(빈 줄이 끝에 있으면 그 줄을 쓴다).
-    let p = q.end - 1;
-    if (paraEnd(doc, sec, p) || p === q.head) { parse(splitAtEnd(doc, sec, p)); p++; }
-    doc.insertText(sec, p, 0, text);
-    doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
-  }
-}
-export function setQuestionAnswer(bridge, mark) {
-  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
-  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
-  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
-  if (!q) throw new Error('정답을 넣을 문항 안에 커서를 두세요.');
-  if (q.essay) throw new Error('서술형은 「[정답]」 대신 「[채점 기준]」 상자나 평가 기준표를 쓰세요.');
-  bridge.transaction('question-answer', () => { writeAnswer(doc, sec, q, mark); return true; });
-  return { label: q.label, mark };
-}
-// 정답 한 번에: 「31425 24153」·「3,1,4」·「③①④」처럼 쓴 정답을 선택형 문항 차례대로 넣는다(띄어쓰기·쉼표는 무시).
-// 정답이 문항보다 적으면 앞 문항부터 그만큼만, 많으면 오류. {count, total}
-export function parseAnswerList(text) {
-  const marks = [];
-  for (const c of String(text || '').replace(/[\s,./·]+/g, '')) {
-    const i = '12345'.indexOf(c) >= 0 ? '12345'.indexOf(c) : MARKS.indexOf(c);
-    if (i < 0) throw new Error(`「${c}」를 정답으로 읽지 못했습니다. 1~5나 ①~⑤로 쓰세요.`);
-    marks.push(MARKS[i]);
-  }
-  return marks;
-}
-export function setAllAnswers(bridge, text) {
-  requireInput(bridge);
-  const marks = parseAnswerList(text); if (!marks.length) throw new Error('정답을 쓰세요. 예: 31425 24153');
-  const doc = bridge.wasm.borrowDocumentHandle(), total = allQuestionBlocks(doc).filter(q => !q.essay).length;
-  if (marks.length > total) throw new Error(`정답이 ${marks.length}개인데 선택형 문항은 ${total}개입니다.`);
-  bridge.transaction('all-answers', () => {
-    // 줄을 넣으면 뒤 문항 자리가 밀리므로 뒤에서부터 넣는다.
-    const targets = allQuestionBlocks(doc).filter(q => !q.essay).slice(0, marks.length).map((q, i) => ({ q, mark: marks[i] }));
-    for (const { q, mark } of targets.reverse()) writeAnswer(doc, q.sec, questionBlocks(doc, q.sec).find(b => b.head === q.head) || q, mark);
-    return true;
-  });
-  return { count: marks.length, total };
-}
-
-// 해설 줄: 커서 문항 끝에 「[해설] 」 줄을 만들고(이미 있으면 그 줄로) 커서를 그 끝에 둔다. 학생용에서 빠지고 정답·해설지에 모인다.
-export function addExplanationLine(bridge) {
-  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
-  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
-  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
-  if (!q) throw new Error('해설을 달 문항 안에 커서를 두세요.');
-  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-  let line = -1; for (let p = q.head; p < q.end; p++) if (/^\s*(?:[\[【]\s*(?:해설|풀이)\s*[\]】]|(?:해설|풀이)\s*[:：])/.test(textOf(p))) { line = p; break; }
-  if (line < 0) bridge.transaction('explanation-line', () => {
-    let p = q.end - 1;
-    if (paraEnd(doc, sec, p) || p === q.head) { parse(splitAtEnd(doc, sec, p)); p++; }
-    doc.insertText(sec, p, 0, '[해설] ');
-    doc.applyCharFormat(sec, p, 0, 5, JSON.stringify({ textColor: '#3a5a8c', bold: false }));
-    line = p; return true;
-  });
-  input.cursor.moveTo({ sectionIndex: sec, paragraphIndex: line, charOffset: doc.getParagraphLength(sec, line) }); input.updateCaret?.();
-  return q.label;
 }
 
 // 수식 크기: 본문 수식은 그 문단 글자 크기(가장 흔한 크기), 표 칸 수식은 문서 본문 글자 크기(문항 첫 줄에서 가장 흔한 크기)에 맞춘다.
@@ -515,57 +183,13 @@ export function underlineNegativeWords(bridge) {
   return list.length;
 }
 
-// 문서 요약(점검 창 맨 위 한 줄): 문항 수(선택형·서술형), 쪽 수, 배점 합계, 정답 분포.
+// 문서 요약(점검 창 맨 위 한 줄): 문항 수(선택형·서술형), 쪽 수.
 export function examSummary(doc) {
   const blocks = blocksWithLines(doc), essay = blocks.filter(b => b.essay).length;
-  let total = 0, scored = 0;
-  for (const q of blocks) { const m = q.lines.map(l => SCORE_VALUE.exec(l.text)).find(Boolean); if (m) { total += Number(m[1]); scored++; } }
-  const counts = [0, 0, 0, 0, 0]; let answered = 0;
-  for (const [, a] of questionAnswers(doc)) { const i = MARKS.indexOf(a.trim()[0]); if (i >= 0) { counts[i]++; answered++; } }
-  const parts = [`문항 ${blocks.length}${essay ? `(선택형 ${blocks.length - essay}·서술형 ${essay})` : ''}`, `${doc.pageCount()}쪽`];
-  if (scored) parts.push(`배점 ${Math.round(total * 10) / 10}점`);
-  if (answered) parts.push(`정답 ${counts.map((c, i) => `${MARKS[i]}${c}`).join(' ')}`);
-  return blocks.length ? parts.join(' · ') : '';
+  return blocks.length ? `문항 ${blocks.length}${essay ? `(선택형 ${blocks.length - essay}·서술형 ${essay})` : ''} · ${doc.pageCount()}쪽` : '';
 }
 
-// 분류 정보: 커서 문항 끝에 「[내용 영역] …」「[성취기준] …」「[난이도] 상·중·하」 줄을 넣거나 바꾼다(빈 값이면 그 줄을 뺌). 학생용에서 빠진다.
-const META_KEYS = [['area', '내용 영역'], ['standard', '성취기준'], ['level', '난이도']];
-export function questionMeta(doc, sec, q) {
-  const out = {};
-  for (let p = q.head; p < q.end; p++) {
-    const m = /^\s*[\[【]\s*(내용\s*영역|성취기준|난이도)\s*[\]】]\s*(.*)$/.exec(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
-    if (m) out[META_KEYS.find(([, name]) => name.replace(/\s/g, '') === m[1].replace(/\s/g, ''))[0]] = { p, value: m[2].trim() };
-  }
-  return out;
-}
-export function cursorQuestion(bridge) {
-  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle(), at = input.cursor.getPosition();
-  const sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
-  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
-  return q ? { doc, sec, q } : null;
-}
-export function setQuestionMeta(bridge, values) {
-  const found = cursorQuestion(bridge); if (!found) throw new Error('분류 정보를 넣을 문항 안에 커서를 두세요.');
-  const { doc, sec, q } = found;
-  bridge.transaction('question-meta', () => {
-    for (const [key, name] of META_KEYS) {
-      if (!(key in values)) continue;
-      const value = String(values[key] || '').trim(), block = questionBlocks(doc, sec).find(b => b.head === q.head) || q, now = questionMeta(doc, sec, block)[key];
-      const text = `[${name}] ${value}`;
-      if (now && !value) { parse(doc.deleteParagraph(sec, now.p)); continue; }
-      if (!value) continue;
-      let p = now?.p;
-      if (p === undefined) { p = block.end - 1; if (paraEnd(doc, sec, p) || p === block.head) { parse(splitAtEnd(doc, sec, p)); p++; } }
-      else doc.deleteText(sec, p, 0, doc.getParagraphLength(sec, p));
-      doc.insertText(sec, p, 0, text);
-      doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#3a5a8c', bold: false }));
-    }
-    return true;
-  });
-  return q.label;
-}
-
-// 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
+// 점검 더하기: 선지 번호·〈보기〉 차례·부정 표현·단위 띄어쓰기·수식 크기·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], fonts = new Map(), blocks = blocksWithLines(doc);
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
@@ -579,30 +203,6 @@ export function extraChecks(doc) {
         fonts.get(key).push(at);
       }
     }
-  // 배점: 문항 안(본문·표 칸) 「[3점]」「(3점)」.
-  const scores = blocks.flatMap(q => q.lines.flatMap(l => [...l.text.matchAll(SCORE_VALUES)].map(m => Number(m[1]))));
-  // 평가원식(10-27 D7): 3점 문항만 「[3점]」을 달고 표시 없는 문항은 2점이다. 표시가 모두 3점이면 표시 없는 선택형은 2점으로 센다.
-  const unmarked = blocks.filter(q => !q.essay && !q.lines.some(l => SCORE_VALUE.test(l.text))), kice = scores.length > 0 && scores.every(v => v === 3);
-  if (scores.length) {
-    const total = Math.round((scores.reduce((a, b) => a + b, 0) + (kice ? unmarked.length * 2 : 0)) * 10) / 10;
-    if (total !== 100) issues.push({ text: kice ? `배점 합계가 ${total}점입니다(3점 표시 ${scores.length}문항 · 표시 없는 ${unmarked.length}문항은 2점으로 셈 · 100점이 아님).` : `배점 합계가 ${total}점입니다(배점 표시 ${scores.length}곳 · 100점이 아님).`, at: null });
-  }
-  // 배점 빠진 문항: 배점을 단 문항이 있는데 안 단 선택형·서술형 문항이 있으면 알린다(평가원식이면 선택형은 2점이라 넘어간다).
-  if (scores.length) for (const q of blocks) if (!q.lines.some(l => SCORE_VALUE.test(l.text)) && !(kice && !q.essay)) issues.push({ text: `${q.label} 문항에 배점(n점)이 없습니다.`, at: { sectionIndex: q.sec, paragraphIndex: q.head, charOffset: 0 } });
-  // 정답 분포: 문항 안 「[정답] ③」이 다섯 개 이상이면 번호별 개수와 같은 정답 연속을 본다.
-  const answers = [...questionAnswers(doc)].sort((a, b) => a[0] - b[0]).map(([n, a]) => [n, MARKS.indexOf(a.trim()[0])]).filter(([, i]) => i >= 0);
-  if (answers.length >= 5) {
-    const counts = [0, 0, 0, 0, 0]; for (const [, i] of answers) counts[i]++;
-    const mean = answers.length / 5, line = counts.map((c, i) => `${MARKS[i]}${c}`).join(' ');
-    if (counts.some(c => Math.abs(c - mean) > Math.max(2, mean * 0.5))) issues.push({ text: `정답 분포가 고르지 않습니다(${line}).`, at: null });
-    // 같은 정답이 세 문항 이상 잇달아 나오면 그 범위 전체를 알린다.
-    for (let i = 0, from = 0; i <= answers.length; i++) {
-      const same = i < answers.length && i > from && answers[i][1] === answers[i - 1][1] && answers[i][0] === answers[i - 1][0] + 1;
-      if (same) continue;
-      if (i - from >= 3) issues.push({ text: `같은 정답 ${MARKS[answers[from][1]]}이 ${answers[from][0]}~${answers[i - 1][0]}번에 잇달아 나옵니다.`, at: null });
-      from = i;
-    }
-  }
   for (const q of blocks) {
     if (q.essay) continue;
     const sec = q.sec, lines = q.lines.map(l => l.text).filter(t => !TEACHER_ONLY.test(t));
@@ -663,26 +263,6 @@ export function insertBox(bridge, title = '개념 정리') {
   });
   return title;
 }
-// QR 코드: 커서 문단 뒤에 테두리 없는 1×2 칸 — 왼쪽 QR 그림(sizeMm), 오른쪽 안내 글과 주소. 주소는 그대로 QR에 담는다.
-export async function insertQrCode(bridge, { url, label = '', sizeMm = 25 } = {}) {
-  requireInput(bridge);
-  const text = String(url || '').trim();
-  if (!text) throw new Error('QR 코드에 넣을 주소(또는 글)를 쓰세요.');
-  if (!(sizeMm >= 15 && sizeMm <= 60)) throw new Error('QR 코드 크기는 15~60mm로 고르세요.');
-  const png = await qrPng(text, { ecc: 'M', cell: 8 });
-  const doc = bridge.wasm.borrowDocumentHandle(), wasm = bridge.wasm;
-  const assets = new Map([['qr', { bytes: png.bytes, widthMm: sizeMm, heightMm: sizeMm, width: png.width, height: png.height, extension: 'png', name: 'qr.png' }]]);
-  const shown = text.length > 70 ? `${text.slice(0, 67)}…` : text, title = String(label || '').trim() || '스캔해서 보기';
-  bridge.transaction('insert-qr', () => {
-    const width = columnWidth(doc), left = Math.min(width - mmUnits(30), mmUnits(sizeMm + 5));
-    const t = tableAfterCursor(bridge, doc, 1, 2, [[[{ image: 'qr' }], { kind: 'multiline', lines: [title, shown] }]], { width, border: 'None', assets });
-    const cells = [0, 1].map(c => parse(wasm.getCellProperties(t.sec, t.para, t.ci, c)).width);
-    parse(wasm.resizeTableCells(t.sec, t.para, t.ci, [{ cellIdx: 0, widthDelta: left - cells[0] }, { cellIdx: 1, widthDelta: (width - left) - cells[1] }]));
-    doc.applyCharFormatInCell(t.sec, t.para, t.ci, 1, 0, 0, [...title].length, JSON.stringify({ bold: true }));
-    return true;
-  });
-  return { version: png.version, title };
-}
 // 서술형 답란: 아래 줄만 있는 칸 n줄(줄 간격 10mm).
 export function insertAnswerLines(bridge, lines = 5) {
   requireInput(bridge);
@@ -735,7 +315,7 @@ export function insertTablePreset(bridge, name) {
   return name;
 }
 
-// ── 판짜기: 단·용지·가나형 ──
+// ── 판짜기: 단·용지 ──
 function refuseWhenLocked(bridge) {
   if (bridge.tableLayoutLocked) throw new Error('구조 잠금 중입니다. 단·용지는 구조 잠금을 풀고 바꾸세요.');
 }
@@ -804,317 +384,6 @@ export function insertRunningHeader(bridge, text) {
   });
   return line;
 }
-// 나형 만들기: 문항 순서를 섞은 사본(번호 다시 매김)과 「나형 번호 → 가형 번호」 대응. 지금 문서는 그대로.
-export function makeVariant(bridge, random = Math.random, { choices = false } = {}) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle();
-  // 문항이 가장 많은 구역(보통 2단 본문)만 섞는다 — 머리 구역의 안내문은 그대로.
-  let mainSec = 0; for (let s = 1; s < doc.getSectionCount(); s++) if (questionBlocks(doc, s).length > questionBlocks(doc, mainSec).length) mainSec = s;
-  const first = questionBlocks(doc, mainSec);
-  // 묶음 문항([1~2])·서술형은 제자리에 두고, 그 사이사이 이어진 낱개 선택형 문항끼리만 섞는다.
-  const segments = []; let run = [];
-  first.forEach((b, i) => { if (b.group || b.essay) { if (run.length) segments.push(run); run = []; } else run.push(i); });
-  if (run.length) segments.push(run);
-  if (!segments.some(seg => seg.length > 1)) throw new Error('섞을 수 있는 낱개 문항이 둘 이상 이어져 있어야 합니다(묶음 문항은 제자리).');
-  // 원래 자리와 다른 순서가 나올 때까지 섞는다(문항이 둘이면 서로 바꾼다).
-  const order = first.map((_, i) => i);
-  for (let tries = 0; tries < 20 && order.every((v, i) => v === i); tries++)
-    for (const seg of segments) for (let k = seg.length - 1; k > 0; k--) { const j = Math.floor(random() * (k + 1)); [order[seg[k]], order[seg[j]]] = [order[seg[j]], order[seg[k]]]; }
-  const Document = doc.constructor, copy = new Document(doc.exportHwpx());
-  try {
-    // 인접 바꾸기로 목표 순서를 만든다(선택 정렬). current[k] = 지금 k번째 자리에 있는 원래 문항.
-    const current = first.map((_, i) => i);
-    for (let target = 0; target < order.length; target++) {
-      let at = current.indexOf(order[target]);
-      while (at > target) { swapAdjacentQuestions(copy, mainSec, questionBlocks(copy, mainSec), at - 1); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
-    }
-    renumberDocument(copy);
-    const shuffled = choices ? shuffleChoices(copy, mainSec, random) : 0;
-    const final = questionBlocks(copy, mainSec), answers = questionAnswers(copy);
-    assertObjectsKept(objectCounts(doc, mainSec), objectCounts(copy, mainSec), '섞으면');
-    return { bytes: copy.exportHwpx(), shuffled, mapping: order.map((orig, i) => ({ variant: final[i]?.number ?? i + 1, original: first[orig].number, answer: answers.get(final[i]?.number) || '' })) };
-  } finally { copy.free(); }
-}
-// 선지 섞기(나형 사본에만): 한 문단에 하나씩인 선지는 문단째(서식 그대로), 3열·5열 선지 표는 칸 글을 섞고 ①부터 다시 붙인다.
-// 문항 안 「[정답] ③」도 바뀐 자리로 고친다. ㄱㄴㄷ·A B C 조합 선지(차례가 관례)와 첨자 등 서식이 섞인 표 칸은 그대로 둔다. 섞은 문항 수.
-const MARKS = '①②③④⑤';
-const checkedCopy = value => { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '선지를 옮기지 못했습니다.'); return r; };
-function shuffleChoices(doc, sec, random, choose = null) {
-  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-  const markAt = p => { const t = textOf(p), i = t.search(/\S/); return i < 0 ? null : { i, mark: t[i], rest: t.slice(i + 1) }; };
-  const randomPerm = n => {
-    const perm = [...Array(n).keys()];
-    for (let tries = 0; tries < 20 && perm.every((v, i) => v === i); tries++) for (let i = n - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
-    return perm.every((v, i) => v === i) ? null : perm;
-  };
-  // k번째 문항의 정답 자리(0~4, 없으면 -1)
-  const answerIndex = k => {
-    const q = questionBlocks(doc, sec)[k];
-    for (let p = q.head; p < q.end; p++) { const m = ANSWER_LINE.exec(textOf(p)); if (m) return MARKS.indexOf(m[1].trim()[0]); }
-    return -1;
-  };
-  const pick = (k, n) => (choose ? choose(k, n, answerIndex(k)) : randomPerm(n));
-  // 문항 안 「[정답] ③」을 섞인 자리로 고친다.
-  const fixAnswer = (k, perm, n) => {
-    const after = questionBlocks(doc, sec)[k];
-    for (let p = after.head; p < after.end; p++) {
-      const t = textOf(p), m = ANSWER_LINE.exec(t); if (!m) continue;
-      const at = t.length - m[1].length + m[1].search(/[①-⑤]/), old = MARKS.indexOf(t[at]);
-      if (m[1].search(/[①-⑤]/) >= 0 && old >= 0 && old < n) { doc.deleteText(sec, p, at, 1); doc.insertText(sec, p, at, MARKS[perm.indexOf(old)]); }
-      break;
-    }
-  };
-  // 문단마다 본문 표(한 겹) — 표 칸 글만 바꾸므로 문단 번호는 그대로다.
-  const tablesAt = new Map();
-  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || [])
-    if (c.type === 'table' && (c.secIdx ?? 0) === sec && !c.cellPath?.length) { const list = tablesAt.get(c.paraIdx) || []; const ci = c.controlIdx ?? c.ci; if (!list.includes(ci)) list.push(ci); tablesAt.set(c.paraIdx, list); }
-  const COMBO = /^[ㄱ-ㅎA-E](?:\s*,\s*[ㄱ-ㅎA-E])*$/;
-  // 3열·5열 선지 표: 칸마다 「①…」 하나, 순서대로, 나머지 칸은 빈 칸.
-  const tableChoices = (p, ci) => {
-    const cells = tableCellCount(doc, sec, p, ci), choice = [];
-    if (!cells) return null;
-    for (let cell = 0; cell < cells; cell++) {
-      if (doc.getCellParagraphCount(sec, p, ci, cell) !== 1) return null;
-      const len = doc.getCellParagraphLength(sec, p, ci, cell, 0), t = String(doc.getTextInCell(sec, p, ci, cell, 0, 0, len)).trim();
-      if (!t) continue;
-      if (t[0] !== MARKS[choice.length] || /[①-⑤]/.test(t.slice(1))) return null;
-      choice.push({ cell, len, content: t.slice(1).trim() });
-    }
-    return choice.length >= 3 && !choice.every(c => COMBO.test(c.content)) ? choice : null;
-  };
-  let count = 0;
-  for (let k = 0; k < questionBlocks(doc, sec).length; k++) {
-    const b = questionBlocks(doc, sec)[k];
-    let from = -1;
-    for (let p = b.head + 1; p < b.end; p++) if (markAt(p)?.mark === MARKS[0]) { from = p; break; }
-    if (from >= 0 && /[①-⑤]/.test(markAt(from).rest)) {
-      // 한 줄에 여러 선지(① …⇥② …⇥③ …, 3+2 두 줄 포함): 선지 내용을 서식째 맞바꾼다.
-      const paras = [from]; if (from + 1 < b.end && /^\s*[①-⑤]/.test(textOf(from + 1))) paras.push(from + 1);
-      const segments = () => {
-        const out = [];
-        for (const p of paras) {
-          const t = textOf(p), marks = [...t.matchAll(/[①-⑤]/g)];
-          marks.forEach((m, i) => {
-            let start = m.index + 1; while (/[ \u3000]/.test(t[start] || '')) start++;
-            let end = i + 1 < marks.length ? marks[i + 1].index : t.length; while (end > start && /\s/.test(t[end - 1])) end--;
-            out.push({ p, mark: m[0], start, end });
-          });
-        }
-        return out;
-      };
-      const first = segments(), n = first.length;
-      if (n < 3 || first.some((sg, i) => sg.mark !== MARKS[i])) continue;
-      if (hasInlineObjects(doc, sec, paras)) continue; // 수식·그림이 든 한 줄 선지는 글 위치로 옮길 수 없어 그대로 둔다
-      if (first.every(sg => COMBO.test(textOf(sg.p).slice(sg.start, sg.end).trim()))) continue;
-      const perm = pick(k, n); if (!perm) continue;
-      const swap = (a, b) => {
-        let sg = segments(); const A = sg[a], B = sg[b], aLen = A.end - A.start, bLen = B.end - B.start;
-        if (aLen > 0) { checkedCopy(doc.copySelection(sec, A.p, A.start, A.p, A.end)); checkedCopy(doc.pasteInternal(sec, B.p, B.end)); }
-        sg = segments();
-        if (bLen > 0) { const B2 = sg[b]; checkedCopy(doc.copySelection(sec, B2.p, B2.start, B2.p, B2.start + bLen)); checkedCopy(doc.pasteInternal(sec, sg[a].p, sg[a].end)); }
-        sg = segments(); if (aLen > 0) doc.deleteText(sec, sg[a].p, sg[a].start, aLen);
-        sg = segments(); if (bLen > 0) doc.deleteText(sec, sg[b].p, sg[b].start, bLen);
-      };
-      const current = [...Array(n).keys()];
-      for (let target = 0; target < n; target++) {
-        const at = current.indexOf(perm[target]); if (at === target) continue;
-        swap(target, at); [current[target], current[at]] = [current[at], current[target]];
-      }
-      fixAnswer(k, perm, n); count++;
-      continue;
-    }
-    if (from >= 0) {
-      // 한 문단에 선지 하나씩: 문단째 옮긴다(서식 그대로).
-      let n = 0;
-      while (n < MARKS.length && from + n < b.end) { const m = markAt(from + n); if (m?.mark !== MARKS[n] || /[①-⑤]/.test(m.rest)) break; n++; }
-      if (n < 3 || (from + n < b.end && /^[①-⑤]/.test(markAt(from + n)?.mark || ''))) continue;
-      if ([...Array(n).keys()].every(i => COMBO.test(markAt(from + i).rest.trim()))) continue;
-      const perm = pick(k, n); if (!perm) continue;
-      const current = [...Array(n).keys()];
-      for (let target = 0; target < n; target++) {
-        let at = current.indexOf(perm[target]);
-        while (at > target) { swapAdjacentQuestions(doc, sec, [{ start: from + at - 1, end: from + at }, { start: from + at, end: from + at + 1 }], 0); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
-      }
-      for (let i = 0; i < n; i++) { const m = markAt(from + i); if (m.mark !== MARKS[i]) { doc.deleteText(sec, from + i, m.i, 1); doc.insertText(sec, from + i, m.i, MARKS[i]); } }
-      fixAnswer(k, perm, n); count++;
-      continue;
-    }
-    // 선지 표: 칸 글을 섞어 다시 쓴다.
-    let found = null;
-    for (let p = b.head; p < b.end && !found; p++) for (const ci of tablesAt.get(p) || []) { const c = tableChoices(p, ci); if (c) { found = { p, ci, choice: c }; break; } }
-    if (!found || hasInlineObjects(doc, sec, [found.p], found.ci)) continue;
-    const n = found.choice.length, perm = pick(k, n); if (!perm) continue;
-    // 칸 내용(번호 기호 뒤)을 서식째 맞바꾼다 — 첨자·수식 같은 글자 모양을 지키려고 글을 다시 쓰지 않고 내부 복사로 옮긴다.
-    const { p: tp, ci: tci } = found, len = cell => doc.getCellParagraphLength(sec, tp, tci, cell, 0);
-    const bodyStart = cell => { const t = String(doc.getTextInCell(sec, tp, tci, cell, 0, 0, len(cell))); const m = /^\s*[①-⑤]\s*/.exec(t); return m ? m[0].length : 0; };
-    const swapCells = (a, b) => {
-      const sa = bodyStart(a), sb = bodyStart(b), aLen = len(a) - sa, bLen = len(b) - sb;
-      if (aLen > 0) { checkedCopy(doc.copySelectionInCell(sec, tp, tci, a, 0, sa, 0, sa + aLen)); checkedCopy(doc.pasteInternalInCell(sec, tp, tci, b, 0, len(b))); } // b = B|A
-      if (bLen > 0) { checkedCopy(doc.copySelectionInCell(sec, tp, tci, b, 0, sb, 0, sb + bLen)); checkedCopy(doc.pasteInternalInCell(sec, tp, tci, a, 0, len(a))); } // a = A|B
-      if (aLen > 0) doc.deleteTextInCell(sec, tp, tci, a, 0, sa, aLen); // a = B
-      if (bLen > 0) doc.deleteTextInCell(sec, tp, tci, b, 0, sb, bLen); // b = A
-    };
-    const cells = found.choice.map(c => c.cell), current = [...Array(n).keys()];
-    for (let target = 0; target < n; target++) {
-      const at = current.indexOf(perm[target]); if (at === target) continue;
-      swapCells(cells[target], cells[at]); [current[target], current[at]] = [current[at], current[target]];
-    }
-    fixAnswer(k, perm, n); count++;
-  }
-  return count;
-}
-// 정답 분포 고르게: 정답이 몰린 번호의 문항에서 선지 두 개(정답 ↔ 가장 덜 쓰인 번호)만 맞바꾸고 [정답]을 따라 고친다.
-// 선지를 옮길 수 있는 문항(한 줄에 하나씩·3/5열 표, ㄱㄴㄷ 조합 제외)만. 같은 정답이 세 번 잇달지 않게 고른다. {changed, counts}
-export function balanceAnswers(bridge) {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), counts = [0, 0, 0, 0, 0];
-  for (const [, a] of questionAnswers(doc)) { const i = MARKS.indexOf(a.trim()[0]); if (i >= 0) counts[i]++; }
-  if (counts.reduce((a, b) => a + b, 0) < 5) throw new Error('문항 안 「[정답] ③」이 다섯 개 이상 있어야 분포를 맞출 수 있습니다.');
-  const recent = []; let changed = 0;
-  const choose = (k, n, a) => {
-    if (a < 0 || a >= n) return null;
-    const blocked = recent.length >= 2 && recent.at(-1) === recent.at(-2) ? recent.at(-1) : -1;
-    let target = a;
-    for (let t = 0; t < n; t++) if (t !== blocked && (counts[t] < counts[target] - 1 || (target === blocked && t !== blocked))) target = t;
-    if (target === a) { recent.push(a); return null; }
-    const perm = [...Array(n).keys()]; perm[target] = a; perm[a] = target;
-    counts[a]--; counts[target]++; recent.push(target); changed++;
-    return perm;
-  };
-  bridge.transaction('balance-answers', () => { for (let sec = 0; sec < doc.getSectionCount(); sec++) shuffleChoices(doc, sec, Math.random, choose); return true; });
-  return { changed, counts };
-}
-// 교사용 문서 끝에 「[나형 대응] 나1=가3 …」을 붙인다.
-export function appendVariantMapping(bridge, mapping) {
-  const doc = bridge.wasm.borrowDocumentHandle(), sec = doc.getSectionCount() - 1, last = doc.getParagraphCount(sec) - 1;
-  const line = `[나형 대응] ${mapping.map(m => `나${m.variant}=가${m.original}`).join('  ')}`;
-  // 문항 안에 정답을 적어 두었으면 나형 정답도 한 줄 더(선지를 섞었으면 바뀐 번호).
-  const key = mapping.some(m => m.answer) ? `[나형 정답] ${mapping.map(m => `${m.variant}-${m.answer || '?'}`).join('  ')}` : '';
-  bridge.transaction('variant-mapping', () => {
-    parse(splitAtEnd(doc, sec, last));
-    doc.insertText(sec, last + 1, 0, line);
-    if (key) { parse(doc.splitParagraph(sec, last + 1, [...line].length)); doc.insertText(sec, last + 2, 0, key); }
-    return true;
-  });
-  return key ? `${line} / ${key}` : line;
-}
-
-// 학습지 틀: 제목·「학년 반 번 이름」 칸·학습 목표·활동 1·활동 2·정리를 문서 끝에 한 번에.
-// 틀 종류: [제목 기본값, [칸 이름, 머리 음영, 칸 높이(mm)]…]
-export const WORKSHEET_FRAMES = {
-  lesson: ['학습지', '수업 학습지', [['학습 목표', '#eef2f7', 14], ['활동 1', '#eef6ee', 45], ['활동 2', '#eef6ee', 45], ['정리', '#fbf3e4', 30]]],
-  lab: ['실험 보고서', '실험 보고서', [['탐구 주제', '#eef2f7', 10], ['가설', '#eef2f7', 14], ['준비물', '#eef6ee', 14], ['실험 과정', '#eef6ee', 40], ['결과', '#fbf3e4', 35], ['결론 및 토의', '#fbf3e4', 30]]],
-  check: ['형성 평가', '형성 평가', [['확인 문제', '#eef2f7', 90], ['스스로 평가 (잘함 · 보통 · 노력)', '#fbf3e4', 14]]],
-};
-export function insertWorksheetFrame(bridge, title = '', kind = 'lesson') {
-  requireInput(bridge);
-  const frame = WORKSHEET_FRAMES[kind]; if (!frame) throw new Error('학습지 틀 종류를 다시 고르세요.');
-  title = title || frame[0];
-  const doc = bridge.wasm.borrowDocumentHandle(), sec = doc.getSectionCount() - 1, width = columnWidth(doc, sec);
-  const sections = frame[2];
-  bridge.transaction('worksheet-frame', () => {
-    const last = doc.getParagraphCount(sec) - 1, startEmpty = doc.getParagraphCount(sec) === 1 && !doc.getParagraphLength(sec, 0);
-    let p = startEmpty ? 0 : (parse(splitAtEnd(doc, sec, last)), last + 1);
-    doc.insertText(sec, p, 0, title);
-    doc.applyCharFormat(sec, p, 0, [...title].length, JSON.stringify({ bold: true, fontSize: 1600 }));
-    doc.applyParaFormat(sec, p, JSON.stringify({ alignment: 'center' }));
-    parse(splitAtEnd(doc, sec, p)); p++;
-    insertTable(doc, { sectionIndex: sec, paragraphIndex: p, charOffset: 0 }, 1, 4, [['   학년', '   반', '   번', '이름:']], new Map(), { width, border: 'Solid' });
-    for (const [label, shade, height] of sections) {
-      p = doc.getParagraphCount(sec) - 1;
-      if (paraEnd(doc, sec, p)) { parse(splitAtEnd(doc, sec, p)); p++; }
-      insertTable(doc, { sectionIndex: sec, paragraphIndex: p, charOffset: 0 }, 2, 1, [[label], ['']], new Map(), { width, border: 'Solid', heights: [mmUnits(7), mmUnits(height)] });
-      const controls = []; for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && c.secIdx === sec && c.paraIdx === p && !(c.cellPath || []).length) controls.push(c.controlIdx ?? c.ci);
-      const ci = controls.at(-1);
-      if (ci !== undefined) {
-        doc.setCellProperties(sec, p, ci, 0, JSON.stringify({ fillType: 'solid', fillColor: shade }));
-        doc.applyCharFormatInCell(sec, p, ci, 0, 0, 0, [...label].length, JSON.stringify({ bold: true }));
-      }
-    }
-    return true;
-  });
-  return sections.length;
-}
-
-// 이원목적분류표: 문항마다 번호·배점([n점])·정답([정답] ③)과, 문항 안에 적어 둔 [내용 영역]·[성취기준]·[난이도]를 채운 표를 새 한글 문서로.
-// 지금 문서는 그대로. {bytes, count, total}
-export const BLUEPRINT_HEAD = ['문항', '내용 영역', '성취기준', '난이도', '배점', '정답', '비고'];
-const BLUEPRINT_RATIO = [8, 18, 40, 9, 8, 8, 9];
-export function blueprintCopy(bridge, title = '시험') {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blocks = blocksWithLines(doc);
-  if (!blocks.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
-  const answers = questionAnswers(doc), rows = [BLUEPRINT_HEAD];
-  let total = 0;
-  for (const q of blocks) {
-    const sm = q.lines.map(l => SCORE_VALUE.exec(l.text)).find(Boolean), score = sm ? sm[1] : '';
-    total += Number(score) || 0;
-    // 문항 안 「[내용 영역] …」「[성취기준] …」「[난이도] 상·중·하」 줄이 있으면 채운다(학생용에서는 빠지는 교사용 줄).
-    const meta = {};
-    for (const { text } of q.lines) { const m = /^\s*[\[【]\s*(내용\s*영역|성취기준|난이도)\s*[\]】]\s*(.*)$/.exec(text); if (m) meta[m[1].replace(/\s+/g, '')] = m[2].trim(); }
-    rows.push([q.essay ? q.label : String(q.number), meta['내용영역'] || '', meta['성취기준'] || '', meta['난이도'] || '', score, q.essay ? '' : (answers.get(q.number) || ''), '']);
-  }
-  rows.push(['합계', '', '', '', String(Math.round(total * 10) / 10), '', '']);
-  const Document = doc.constructor, out = Document.createEmpty();
-  try {
-    out.createBlankDocument();
-    const name = `${String(title || '시험').trim()} 이원목적분류표`;
-    out.insertText(0, 0, 0, name);
-    out.applyCharFormat(0, 0, 0, [...name].length, JSON.stringify({ bold: true, fontSize: 1500 }));
-    out.applyParaFormat(0, 0, JSON.stringify({ alignment: 'center' }));
-    parse(splitAtEnd(out, 0, 0));
-    const width = columnWidth(out, 0), cols = BLUEPRINT_HEAD.length;
-    insertTable(out, { sectionIndex: 0, paragraphIndex: 1, charOffset: 0 }, rows.length, cols, rows, new Map(), { width, border: 'Solid' });
-    let t = null;
-    for (let pg = 0; pg < out.pageCount() && !t; pg++) t = (parse(out.getPageControlLayout(pg)).controls || []).find(c => c.type === 'table' && !c.cellPath?.length) || null;
-    if (t) {
-      const ci = t.controlIdx ?? t.ci, sum = BLUEPRINT_RATIO.reduce((a, b) => a + b, 0), changes = [];
-      for (let r = 0; r < rows.length; r++) for (let c = 0; c < cols; c++) {
-        const cell = r * cols + c, now = parse(out.getCellProperties(0, t.paraIdx, ci, cell)).width;
-        changes.push({ cellIdx: cell, widthDelta: Math.round(width * BLUEPRINT_RATIO[c] / sum) - now });
-      }
-      if (out.resizeTableCells) parse(out.resizeTableCells(0, t.paraIdx, ci, JSON.stringify(changes)));
-      for (const r of [0, rows.length - 1]) for (let c = 0; c < cols; c++) {
-        out.setCellProperties(0, t.paraIdx, ci, r * cols + c, JSON.stringify({ fillType: 'solid', fillColor: '#eef2f7' }));
-        const len = out.getCellParagraphLength(0, t.paraIdx, ci, r * cols + c, 0);
-        if (len) out.applyCharFormatInCell(0, t.paraIdx, ci, r * cols + c, 0, 0, len, JSON.stringify({ bold: true }));
-      }
-    }
-    return { bytes: out.exportHwpx(), count: blocks.length, total: Math.round(total * 10) / 10 };
-  } finally { out.free(); }
-}
-
-// 정답·해설지: 문항마다 「번호. 정답」과 문항 안 [해설]·[풀이]·해설: 줄을 모은 새 한글 문서(글만). 지금 문서는 그대로.
-const EXPLAIN_LINE = /^\s*(?:[\[【]\s*(?:해설|풀이)\s*[\]】]|(?:해설|풀이)\s*[:：])\s*/;
-export function explanationCopy(bridge, title = '시험') {
-  requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blocks = blocksWithLines(doc), answers = questionAnswers(doc), items = [];
-  for (const q of blocks) {
-    const notes = [];
-    for (const { text: t } of q.lines) { const m = EXPLAIN_LINE.exec(t); if (m) notes.push(t.slice(m[0].length).trim()); }
-    items.push({ head: q.essay ? q.label : `${q.number}. ${answers.get(q.number) || '(정답 없음)'}`, notes });
-  }
-  if (!items.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
-  if (!items.some(i => i.notes.length) && !answers.size) throw new Error('문항 안에 「[정답] ③」이나 「[해설] …」 줄이 없습니다. 문항 → 정답으로 먼저 적으세요.');
-  const Document = doc.constructor, out = Document.createEmpty();
-  try {
-    out.createBlankDocument();
-    const lines = [{ text: `${String(title || '시험').trim()} 정답과 해설`, style: { bold: true, fontSize: 1500 }, center: true }];
-    for (const it of items) {
-      lines.push({ text: it.head, style: { bold: true } });
-      for (const n of it.notes) lines.push({ text: n, style: null });
-    }
-    lines.forEach((line, i) => {
-      if (i) parse(splitAtEnd(out, 0, i - 1));
-      out.insertText(0, i, 0, line.text);
-      const len = [...line.text].length;
-      out.applyCharFormat(0, i, 0, len, JSON.stringify(line.style || { bold: false, fontSize: 1000 }));
-      if (line.center) out.applyParaFormat(0, i, JSON.stringify({ alignment: 'center' }));
-    });
-    return { bytes: out.exportHwpx(), count: items.length, explained: items.filter(i => i.notes.length).length };
-  } finally { out.free(); }
-}
-
 // 고른 문항만 새 파일로: 「3, 5, 7-9」처럼 고른 번호의 문항만 남긴 사본(번호 다시 매김). 지금 문서는 그대로. {bytes, count, numbers}
 export function parseNumberList(text) {
   const out = new Set();
