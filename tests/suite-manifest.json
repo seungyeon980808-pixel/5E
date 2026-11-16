@@ -918,6 +918,24 @@
       "findingIds": [
         "PREVIEW-RECEIPT-PATH"
       ]
+    },
+    {
+      "path": "tests/test-exampool-library-answer.mjs",
+      "findingIds": [
+        "BL3-B3-ANSWER-LABEL"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-card-fail-reason.mjs",
+      "findingIds": [
+        "BL3-B12-FAIL-REASON"
+      ]
+    },
+    {
+      "path": "tests/test-typeset-paper-mm.mjs",
+      "findingIds": [
+        "BL3-B7-PAPER-MM"
+      ]
     }
   ],
   "browser": [
@@ -2420,6 +2438,19 @@
       "path": "tests/test-clipboard-hub-browser.cjs",
       "findingIds": [
         "CLIPBOARD-HUB-1114"
+      ]
+    },
+    {
+      "path": "tests/test-elapsed-clock-browser.cjs",
+      "findingIds": [
+        "BL3-B13-ELAPSED-CLOCK"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-card-171-browser.cjs",
+      "findingIds": [
+        "BL3-B21-COMBO-FIT",
+        "BL3-TILE-DELETE-CLEARS-FIGURE"
       ]
     }
   ],
