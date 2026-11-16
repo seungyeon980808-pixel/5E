@@ -9,6 +9,8 @@ import { IS_MAC } from './platform.js?v=1.7.0-four-session-integration';
 const WORDS = [['sci', 'nce'], ['', 'ducational'], ['', 'valuation'], ['', 'xam'], ['', 'ditor']];
 // 11-14 사용자: 로딩을 6초 → 7초로(「조금 더 늘려도 된다」) — 미리 준비할 시간을 주고, 할 일이 적어도 들어간 뒤 버벅임의 완충지대가 되게. 단계마다 무엇을 하는지 보인다.
 const MIN_INTRO = 7000;
+// 설치판 새 버전 확인: GitHub 최신 릴리즈(공개 API, 출처 제한 없음 — Access-Control-Allow-Origin: *).
+const DESKTOP_LATEST_API = 'https://api.github.com/repos/seungyeon980808-pixel/5E/releases/latest';
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function startScreenEnabled() {
@@ -84,18 +86,29 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
   const creep = setInterval(() => { if (Math.random() < 0.3) return; progress = Math.min(0.12, progress + (0.12 - progress) * (0.05 + Math.random() * 0.15)); bar.style.width = `${(progress * 100).toFixed(2)}%`; }, 120);
   const setStatus = text => { status.textContent = text; };
   setStatus('작업 공간 준비 중…');
-  // 업데이트 알림: 배포 채널에 더 새 버전이 있으면 「1.7.0 → 1.7.1 [설치]」
+  // 업데이트 알림: 더 새 버전이 있으면 왼쪽 아래 버전 글자 자리에 「1.7.0 → 1.7.1 [받기]」(11-17 승인 시안 K/업데이트알림-설치판.html).
+  //  웹: 배포 채널(release-channels.json)에서 가장 새 버전.
+  //  설치판: GitHub 최신 릴리즈(=[받기]를 눌러 열리는 페이지에 실제로 있는 판)의 태그. 받기·설치는 사용자가 직접(자동 업데이트 아님).
+  //   앱 안 release-channels.json은 설치판 자기 판이라 쓸모가 없고, www.5e.ai.kr에는 그 파일이 올라가지 않는다(404).
+  //  인터넷이 없거나 응답이 이상하면 조용히 지금 모습 그대로. 시작을 기다리게 하지 않는다(뒤에서 읽음).
   const current = appVersion();
-  // 설치판은 앱 안 파일만 읽을 수 있어(허용 목록 밖이라 404) 새 버전을 알 수 없다 — 웹에서만 확인.
-  if (current && !globalThis.fiveEDesktop) fetch(new URL('release-channels.json', document.baseURI), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(json => {
-    const versions = Object.values(json?.channels || {}).map(c => c?.version).filter(v => /^\d+\.\d+\.\d+$/.test(v || ''));
-    const latest = versions.sort((a, b) => newer(a, b) ? -1 : 1)[0];
+  const latestVersion = globalThis.fiveEDesktop
+    ? () => fetch(DESKTOP_LATEST_API, { cache: 'no-store', headers: { Accept: 'application/vnd.github+json' } }).then(r => r.ok ? r.json() : null).then(json => {
+      const tag = String(json?.tag_name || '').replace(/^v/, '');
+      return !json?.draft && !json?.prerelease && /^\d+\.\d+\.\d+$/.test(tag) ? tag : '';
+    })
+    : () => fetch(new URL('release-channels.json', document.baseURI), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(json => {
+      const versions = Object.values(json?.channels || {}).map(c => c?.version).filter(v => /^\d+\.\d+\.\d+$/.test(v || ''));
+      return versions.sort((a, b) => newer(a, b) ? -1 : 1)[0] || '';
+    });
+  if (current) latestVersion().then(latest => {
     if (!latest || !newer(latest, current)) return;
     const ver = root.querySelector('.ss-ver');
+    if (!ver) return;
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'ss-upd';
-    button.innerHTML = `${esc(current)} → <b>${esc(latest)}</b><span>설치</span>`;
-    button.title = `새 버전 ${latest} 설치`;
+    button.innerHTML = `${esc(current)} → <b>${esc(latest)}</b><span>받기</span>`;
+    button.title = `새 버전 ${latest} 받기`;
     button.addEventListener('click', () => window.open(desktopReleaseUrl || 'https://www.5e.ai.kr/', '_blank', 'noopener'));
     ver.replaceWith(button);
   }).catch(() => {});
