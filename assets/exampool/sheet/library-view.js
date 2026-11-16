@@ -244,13 +244,16 @@ export function loadThumbs(root) {
   imgs.forEach(img => io.observe(img));
 }
 
+// 정답은 0~4로 저장된다(model.js) — ①~⑤로 보이고, ①(0)을 「정답 없음」으로 보지 않는다(1.7.1 B3).
+export const answerLabel = q => q?.type === '서술형' ? '서술형' : Number.isInteger(q?.answer) && q.answer >= 0 && q.answer < 5 ? '①②③④⑤'[q.answer] : '정답 없음';
+
 // ── 문항 보기(창·한 문항 공통) ──
 function viewerHtml(list, n, inline, api) {
   const x = list[n], stars = store.get('stars', {}), memos = store.get('memos', {}), memoAt = store.get('memoAt', {}), on = !!stars[x.key];
   const busy = api.pastBusy?.(), job = x.kind === 'past' && busy && busy.id === x.id ? busy : null;
   const info = x.kind === 'past'
     ? [['출처', `${x.i.title}`], ['과목', x.subject], ['단원', x.part || '—'], ['유형', x.i.tags.slice(0, 4).map(t => `<span class="lv-tagp">${E(t)}</span>`).join('') || '—', true], ['연결', '원본 PDF 있음']]
-    : [['출처', x.q.source || '내가 만든 문항'], ['단원', x.part || '—'], ['배점 · 정답', `${x.q.points ? x.q.points + '점' : '배점 없음'} · ${x.q.answer || '정답 없음'}`], ['유형', `<span class="lv-tagp">${E(x.q.type || '')}</span><span class="lv-tagp">${E(WORKFLOWS[workflowOf(x.q)] || '')}</span>`, true], ['연결', `근거 ${(x.q.references || []).length}개`]];
+    : [['출처', x.q.source || '내가 만든 문항'], ['단원', x.part || '—'], ['배점 · 정답', `${x.q.points ? x.q.points + '점' : '배점 없음'} · ${answerLabel(x.q)}`], ['유형', `<span class="lv-tagp">${E(x.q.type || '')}</span><span class="lv-tagp">${E(WORKFLOWS[workflowOf(x.q)] || '')}</span>`, true], ['연결', `근거 ${(x.q.references || []).length}개`]];
   const btns = x.kind === 'past'
     ? `${x.i.publicPath ? `<a class="lv-btn" href="${E(pdfHref(x.i.publicPath, x.i.page))}" target="_blank" rel="noopener" title="이 문항이 있는 시험지 쪽을 원본 PDF로 봅니다">시험지 쪽에서 보기</a><a class="lv-btn" href="${E(pdfHref(x.i.publicPath, 1))}" target="_blank" rel="noopener" title="시험지 PDF 원본">PDF</a>` : ''}<span class="sp"></span>
        <button type="button" class="lv-btn" data-lv-act="link" title="문항 카드를 연 상태에서 그 카드의 근거로 연결합니다">${SVG.link}근거로 연결</button>
