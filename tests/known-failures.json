@@ -135,10 +135,6 @@
     {
       "path": "tests/test-ai-workbench-polish-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: CI에서만(D): CI일 때만 기준 완화 넣음. 로컬은 성능 입력이 커밋 전이라 확인 못 함"
-    },
-    {
-      "path": "tests/test-unified-library-page-scroll-browser.cjs",
-      "reason": "2026-11-17 1.7.1: preview/ 삭제 뒤 옛 /preview/js 사본 대신 실제 js/unified-library-ui.js를 읽자 272줄에서 실패(옛 사본으로만 통과해 왔음). 의심: js/unified-library-ui.js 1988-2013 waitForFirstResultPaint·2409-2424 prepareVisibleThumbnails(11-05 화면 개편). 버그 갈래 판정 필요."
     }
   ]
 }
