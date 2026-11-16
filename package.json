@@ -48,6 +48,7 @@
       "js/**/*",
       "assets/**/*",
       "!assets/exam-library/**",
+      "!assets/pdf-library/previews/**/*.webp",
       "fonts/**/*",
       "desktop/**/*",
       "tests/fixtures/rights-clear-smoke.png",
