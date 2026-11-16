@@ -109,14 +109,6 @@
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 「이미지로 보내기」 경로 사라짐, 163줄 task-0 탭 없음"
     },
     {
-      "path": "tests/test-feedback-linked-document-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: hwp-escape와 같은 뿌리 — 배치 패널이 Esc로 안 닫힘(BL7 뒤 재확인 필요)"
-    },
-    {
-      "path": "tests/test-canvas-brush-erase-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 지우개 끌기 중 Esc 뒤 설정 칸이 남음(erase-tool.js:204·207은 Esc로 닫히게 만듦)"
-    },
-    {
       "path": "tests/test-blur-reveal-product-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
