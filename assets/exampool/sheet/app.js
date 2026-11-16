@@ -606,7 +606,7 @@ function renameExamInline(id,row){const exam=examById(data,id),b=row?.querySelec
 $('#delete-question').onclick=()=>{if(current)askDelete(current.id);};
 $('#delete-confirm').onclick=()=>{const run=pendingDelete;pendingDelete=null;$('#delete-dialog').close();run?.();};
 $('#filter').oninput=()=>{renderRows();grid?.refresh();};
-document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(grid?.finish()!==false)$('#export').click();return;}if((e.metaKey||e.ctrlKey)&&['z','y'].includes(e.key.toLowerCase())&&!e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea,select,[contenteditable]')){e.preventDefault();replay(e.shiftKey||e.key.toLowerCase()==='y'?'redo':'undo');return;}if(e.key==='Escape'&&!document.querySelector('dialog[open]'))closeSources();});
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(grid?.finish()!==false)$('#save-project').click();return;}if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&e.key.toLowerCase()==='o'){e.preventDefault();$('#import').click();return;}if((e.metaKey||e.ctrlKey)&&['z','y'].includes(e.key.toLowerCase())&&!e.target.matches('input:not([type=checkbox]):not([type=radio]):not([type=button]),textarea,select,[contenteditable]')){e.preventDefault();replay(e.shiftKey||e.key.toLowerCase()==='y'?'redo':'undo');return;}if(e.key==='Escape'&&!document.querySelector('dialog[open]'))closeSources();});
 // 11-11: 설치판은 ~/Documents/5E/출제 에 날짜_시간 이름으로 저장(save-out.js), 웹은 내려받기.
 function download(bytes,name,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',options={}){return saveOut(bytes,name,mime,options);}
 // 11-13: 「엑셀 양식 받기」 — 예시 문항 1개가 든 빈 5E 문항 시트. 내 문항은 넣지 않는다(내 문항 전부 내보내기는 메뉴의 엑셀 내보내기).
@@ -663,6 +663,17 @@ async function saveProjectFile(name,build){
   const blob=build();
   if(handle){const h=await handle,w=await h.createWritable();await w.write(blob);await w.close();return {desktop:false,picked:true,name:h.name};}
   return download(new Uint8Array(await blob.arrayBuffer()),name,'application/zip');}
+// 1.7.1(시안 파일형식-메뉴-1116 ①): ⌘S·「저장 (.5e)」 — 시험지 안이면 그 시험지, 아니면 보관함 전체(문항·자료·시험지·쓰는 학교 양식)를 .5e 한 파일로.
+async function saveLibraryFile(){try{
+  const ex=view.name==='exam'&&view.examId?examById(data,view.examId):null;
+  if(ex){await saveExamFile(ex);return;}
+  const formIds=new Set(data.exams.map(e=>e.formId).filter(Boolean)),forms=typesetForms.filter(f=>formIds.has(f.id)),stdIds=new Set(forms.map(f=>f.standardId).filter(Boolean));
+  const bundle={format:FORMAT,scope:'library',questions:data.questions,documents:data.documents,exams:data.exams,...(forms.length?{forms}:{}),...(stdIds.size?{standards:typesetStandards.filter(s=>stdIds.has(s.id))}:{})};
+  const name=projectFileName('5E_exam 보관함');
+  const saved=await saveProjectFile(name,()=>buildSheetProject(bundle,{name:'5E_exam 보관함'}));
+  status((saved.picked?`저장 · ${saved.name}`:savedText(saved,'보관함 파일'))+` · 문항 ${bundle.questions.length}개 · 시험지 ${bundle.exams.length}개`);
+}catch(e){if(e?.name==='AbortError'){status('');return;}status('저장하지 못했습니다: '+e.message,true);}}
+$('#save-project').onclick=()=>void saveLibraryFile();
 async function saveExamFile(exam){try{
   const bundle=examBundle(data,exam,{forms:typesetForms,standards:typesetStandards}),name=projectFileName(exam.title);
   const saved=await saveProjectFile(name,()=>buildSheetProject(bundle,{name:exam.title}));
