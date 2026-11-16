@@ -695,12 +695,6 @@
       "path": "tests/test-library-import-policy.mjs"
     },
     {
-      "path": "tools/mcp-5e/test/bridge-security.test.mjs"
-    },
-    {
-      "path": "tools/mcp-5e/test/server-pairing.test.mjs"
-    },
-    {
       "path": "desktop/label-leader-attachment.test.cjs",
       "findingIds": [
         "LABELER-NATIVE-ATTACHMENT"
