@@ -1509,12 +1509,19 @@ export function initRhwpExamWorkspace(state, services) {
     event.preventDefault();event.stopImmediatePropagation();closeMenus();open.focus({preventScroll:true});
   }
   document.addEventListener('keydown',closeOpenMenu,true);
+  // 1.7.1(검사 81): 클립보드 창(.clp·크게 보기 .clpb)은 role="dialog"이지만 닫혀 있어도 화면 상자를 가져 「안쪽 대화상자」로 세어졌다
+  // → 그림 배치 중 Esc(취소)·Enter(확정)가 먹지 않았다. 클립보드는 실제로 열려 있을 때만 센다(열려 있으면 Esc는 클립보드가 먼저 닫음).
+  function innerDialogOpen(owner) {
+    const clip = owner.defaultView?.fiveEClipboard || window.fiveEClipboard, clipOpen = !!clip?.isOpen?.();
+    return [...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')]
+      .some(node => node !== panel && !node.hidden && node.getClientRects().length && (clipOpen || !node.matches('.clp,.clpb')));
+  }
   function confirmPlacementWithKey(event) {
     if (!placement || panel.hidden || event.isComposing || event.keyCode === 229 || compositionActive() || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !['Enter',' '].includes(event.key)) return;
     const nativeInput = event.target === bridge?.input?.textarea;
     if (!nativeInput && event.target.closest?.('input,textarea,select,button,[contenteditable="true"]')) return;
     const owner = event.target?.ownerDocument || document;
-    if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')].some(node=>node!==panel && !node.hidden && node.getClientRects().length)) return;
+    if (innerDialogOpen(owner)) return;
     consumeConfirmationPress(event);
     const button = panel.querySelector('[data-exam-action="confirm-placement"]');
     if (!event.repeat && !button.disabled) void run(confirmPlacement);
@@ -1525,8 +1532,7 @@ export function initRhwpExamWorkspace(state, services) {
     // Inner dialogs, label editing and RHWP's own cancellation get first use.
     if (inlineEditor.active || !pictureSettings.root.hidden) return;
     const owner = event.target?.ownerDocument || document;
-    if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')]
-      .some(node => node !== panel && !node.hidden && node.getClientRects().length)) return;
+    if (innerDialogOpen(owner)) return;
     if (placement) { event.preventDefault(); event.stopImmediatePropagation(); cancelPlacement(); message('그림 보내기를 취소했습니다.'); return; }
     // 11-12 사용자: 5E_image·5E_exam·5E_hwp는 서로 호환되는 각각 다른 프로그램 — Esc로 한글 화면을 닫고 5E_image로 넘어가지 않는다.
     // (예전엔 그림 선택이 풀린 상태에서 Esc 한 번에 한글 화면이 닫히고 5E_image 편집으로 넘어갔다.) 프로그램 전환은 ⌥⌘1~3·로고 메뉴로만.
