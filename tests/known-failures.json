@@ -25,10 +25,6 @@
       "reason": "2026-11-17 1.7.1 T: 검사 낡음: 「한글로 보내기」가 「클립보드에 넣기」로 바뀜(86f9b7df) — 클립보드→붙여넣기로 재작성 필요"
     },
     {
-      "path": "tests/test-graph-library-compact-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 옛 기능: 라이브러리 「좌표/함수 생성」을 뺌(1f9cfb5a, review-1114b 17번) — 삭제·재작성 결정 필요"
-    },
-    {
       "path": "tests/test-graph-render-refinement.mjs",
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
