@@ -18,7 +18,8 @@ const contentTypes = {
 function staticServer() {
   return http.createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-    const target = path.resolve(root, `.${pathname === '/' ? '/preview/' : pathname}`);
+    // 1.7.1: 옛 /preview/ 사본을 지웠으므로 정식 루트(index.html)를 띄운다.
+    const target = path.resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);
     if (!target.startsWith(`${root}${path.sep}`)) {
       response.writeHead(403).end();
       return;
@@ -158,7 +159,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
       body: JSON.stringify({ id: 'a'.repeat(48), revokeKey: 'local-revoke', expiresAt: new Date(Date.now() + 3_600_000).toISOString() }),
     });
   });
-  await page.goto(`http://127.0.0.1:${port}/preview/`, { waitUntil: 'networkidle' });
+  await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();

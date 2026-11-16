@@ -51,7 +51,7 @@ async function menu(page,action,{keyboard=false}={}) {
 h.withServer(async origin=>{
   for(const[name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
     const browser=await engine.launch({headless:true});
-    try{for(const surface of['','preview/']){
+    try{for(const surface of['']){ // 1.7.1: 옛 preview/ 사본을 지움 — 정식 루트 하나만
       const context=await browser.newContext({viewport:{width:1440,height:950}}),page=await context.newPage(),errors=[];
       page.on('pageerror',e=>errors.push(e.message));
       page.on('dialog',dialog=>dialog.accept());

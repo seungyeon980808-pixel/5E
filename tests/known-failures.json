@@ -45,10 +45,6 @@
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 두 번째 검사가 퇴역한 연결 창 [data-ai-connection-open]을 요구"
     },
     {
-      "path": "tests/test-ai-release-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
-    },
-    {
       "path": "tests/test-ai-workspace-lifecycle-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
@@ -83,10 +79,6 @@
     {
       "path": "tests/test-four-session-resource-closure-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 검사 낡음: vendor rhwp 번들 해시가 작업 사본 파일과 다름 — 확인 필요"
-    },
-    {
-      "path": "tests/test-ai-created-task-selection-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
     {
       "path": "tests/test-ai-task-menu-viewport-browser.cjs",
