@@ -7,7 +7,7 @@ const path = require('node:path');
 const playwright = require(process.env.PLAYWRIGHT_MODULE
   || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 
-const root = path.resolve(__dirname, '..');
+const root = path.resolve(__dirname, '..', '..');
 const version = '?v=1.7.0-four-session-integration';
 
 function startServer() {
