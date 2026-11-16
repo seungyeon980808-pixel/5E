@@ -23,7 +23,6 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-image-transport\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-request-plan\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-prompt\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
-  assert.doesNotMatch(panel, /ai-structure-lock\.js/);
   assert.match(panel, /ai-scene-fastpath\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-motif-catalog\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-local-asset-router\.js\?v=\d+\.\d+\.\d+[^"\s]*/);

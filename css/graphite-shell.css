@@ -439,8 +439,7 @@
 /* ---------- 8. 강조 면 대비 — 그라파이트(밝은 회색 강조) 위 글자는 짙게 ---------- */
 :root[data-theme="dark"]:not([data-palette="classic"]) { --accent-contrast: var(--ds-accent-ink); }
 :root[data-theme="dark"]:not([data-palette="classic"]) :is(
-  .ai-e-core span, .ai-annotation-marker, .ai-selection-box > span, .ai-comment-row > span,
-  .tut-modkey, .tut-ghost-mod, .tut-pointout
+  .ai-e-core span, .ai-annotation-marker, .ai-selection-box > span, .ai-comment-row > span
 ) { color: var(--ds-accent-ink); }
 :root[data-theme="dark"]:not([data-palette="classic"]) #ai-image-panel :is(.ai-comment-pin, .ai-comment-marker, [data-ai-comment-pin]) {
   color: var(--ds-accent-ink) !important; border-color: #1e1e1e !important;
@@ -514,28 +513,6 @@
   }
 }
 :root:not([data-mode="lite"]) #ai-image-panel .ai-setting-help { color: var(--ds-ink-3); }
-
-/* ---------- 11. 튜토리얼 — 떠 있는 면 규격, 버튼·칸 테두리 없음 ---------- */
-:root:not([data-mode="lite"]) :is(.tut-picker, .tut-coach, .tut-compare, .tut-welcome) {
-  background: var(--ds-raise); border: 0; border-radius: var(--ds-radius-lg); box-shadow: var(--ds-shadow-float);
-  font-family: var(--ds-font);
-}
-/* 안내 상자 위쪽 강조 줄은 '튜토리얼 진행 중' 표시라 남기되 중립색으로 */
-:root:not([data-mode="lite"]) .tut-coach { border-top: 3px solid var(--ds-accent); }
-:root:not([data-mode="lite"]) .tut-btn {
-  border: 0; background: var(--ds-kbd); color: var(--ds-ink); border-radius: var(--ds-radius);
-  font: 500 var(--ds-text-body)/1.2 var(--ds-font); min-height: var(--ds-h-control);
-}
-:root:not([data-mode="lite"]) .tut-btn:active:not(:disabled) { transform: none; }
-:root:not([data-mode="lite"]) .tut-btn:hover:not(:disabled) { background: var(--ds-selected); }
-:root:not([data-mode="lite"]) .tut-btn-primary { background: var(--ds-selected-strong); color: var(--ds-selected-ink); font-weight: 600; }
-:root:not([data-mode="lite"]) .tut-btn-primary:hover:not(:disabled) { background: var(--ds-selected-strong); border-color: transparent; }
-:root:not([data-mode="lite"]) .tut-btn.is-soft { border: 0; background: transparent; color: var(--ds-ink-3); }
-:root:not([data-mode="lite"]) .tut-btn-quit { background: transparent; color: var(--ds-ink-3); }
-:root:not([data-mode="lite"]) :is(.tut-track-btn, .tut-course) { border: 0 !important; background: var(--ds-kbd); }
-:root:not([data-mode="lite"]) :is(.tut-track-btn, .tut-course):hover { background: var(--ds-selected); }
-:root:not([data-mode="lite"]) .tut-track-btn.is-active { background: var(--ds-selected-strong); color: var(--ds-selected-ink); }
-:root:not([data-mode="lite"]) .tut-picker .beta-tag { border: 0; background: var(--ds-kbd); color: var(--ds-ink-2); }
 
 /* ---------- 12. 로그인 창 — 떠 있는 면, 도는 테두리 대신 고정된 강조 면 ---------- */
 :root:not([data-mode="lite"]) .web-login-dialog {

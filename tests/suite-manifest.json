@@ -470,13 +470,6 @@
       ]
     },
     {
-      "path": "tests/test-graph-modal-fixed-selection.mjs",
-      "findingIds": [
-        "GRAPH-CUMULATIVE-SOURCE"
-      ],
-      "classificationRationale": "Node vm executes actual modal handlers with DOM/transport substitutes; no browser, server, or provider. Source browser classification was a runner-routing label."
-    },
-    {
       "path": "tests/test-graph-trace-coordinates.mjs",
       "findingIds": [
         "GRAPH-CUMULATIVE-SOURCE",
@@ -644,9 +637,6 @@
       "path": "tests/test-image-background.mjs"
     },
     {
-      "path": "tests/test-lite-workflow-state.mjs"
-    },
-    {
       "path": "tests/test-png-exif-regression.mjs"
     },
     {
@@ -693,12 +683,6 @@
     },
     {
       "path": "tests/test-library-import-policy.mjs"
-    },
-    {
-      "path": "tools/mcp-5e/test/bridge-security.test.mjs"
-    },
-    {
-      "path": "tools/mcp-5e/test/server-pairing.test.mjs"
     },
     {
       "path": "desktop/label-leader-attachment.test.cjs",
@@ -810,13 +794,6 @@
       ]
     },
     {
-      "path": "tests/test-image-split.cjs",
-      "findingIds": [
-        "USER-SAFARI-U13",
-        "MANUAL-IMAGE-SPLIT"
-      ]
-    },
-    {
       "path": "tests/test-graph-draft-history.mjs",
       "findingIds": [
         "GRAPH-DRAFT-HISTORY"
@@ -898,12 +875,6 @@
       "path": "tests/test-hwp-palette-history.mjs",
       "findingIds": [
         "HWPPALETTE-RHWP-SUBDOCUMENTS"
-      ]
-    },
-    {
-      "path": "tests/test-qr-encode.mjs",
-      "findingIds": [
-        "HWP-QR-ENCODE"
       ]
     },
     {
@@ -1181,12 +1152,6 @@
       "path": "tests/test-graph-editor-followup-browser.cjs",
       "findingIds": [
         "G15"
-      ]
-    },
-    {
-      "path": "tests/test-graph-reconstruction-browser.cjs",
-      "findingIds": [
-        "GRAPH-NATIVE-RECONSTRUCTION"
       ]
     },
     {

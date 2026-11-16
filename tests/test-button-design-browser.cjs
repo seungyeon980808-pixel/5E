@@ -92,11 +92,11 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
   assert.ok(idle.every(s=>JSON.stringify(s)===JSON.stringify(idle[0])),JSON.stringify(idle));
   assert.equal(await page.locator('.image-workflow-divider').count(),0);
   assert.equal(idle[0].background,'rgba(0, 0, 0, 0)');
-  const toolbar=await page.locator('#settings-menu-btn,#file-menu-btn,#sharing-btn,#auto-snap-btn,#grid-btn,#center-view-btn,#tutorial-btn,#quick-capture-btn').evaluateAll(els=>els.map(el=>{
+  const toolbar=await page.locator('#settings-menu-btn,#file-menu-btn,#sharing-btn,#auto-snap-btn,#grid-btn,#center-view-btn,#quick-capture-btn').evaluateAll(els=>els.map(el=>{
     const s=getComputedStyle(el),icon=getComputedStyle(el.querySelector('svg'));
     return {id:el.id,width:s.width,height:s.height,radius:s.borderRadius,padding:s.padding,iconWidth:icon.width,iconHeight:icon.height};
   }));
-  assert.equal(toolbar.length,8);
+  assert.equal(toolbar.length,7);
   // 그라파이트 규격: 위쪽 막대 버튼 32px·모서리 6px·아이콘 20px, 버튼 사이 2px(10-24 시안 8 확정: 막대 48 · 단추 28→32 · 아이콘 18→20).
   assert.ok(toolbar.every(s=>s.width==='32px' && s.height==='32px' && s.radius==='6px' && s.padding==='0px' && s.iconWidth==='20px' && s.iconHeight==='20px'),JSON.stringify(toolbar));
   assert.equal(await page.locator('.canvas-view-controls').evaluate(el=>getComputedStyle(el).gap),'2px');
