@@ -113,20 +113,8 @@
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
     {
-      "path": "tests/test-teacher-flow-ai-image-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결과 크기 386×257(기대 480×320) — 미판정"
-    },
-    {
       "path": "tests/test-teacher-flow-label-export-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: CI에서만(D): teacher-flow 헬퍼에 CI일 때만 대기 3배 넣음 — CI에서 확인 필요"
-    },
-    {
-      "path": "tests/test-teacher-flow-graph-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 크롬 통과, WebKit에서 그래프 모달이 안 열림 — 미판정"
-    },
-    {
-      "path": "tests/test-teacher-flow-hwp-exam-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 크롬 통과, WebKit에서 .unified-text-editor가 안 보임 — 미판정"
     },
     {
       "path": "tests/test-clipboard-hub-browser.cjs",
