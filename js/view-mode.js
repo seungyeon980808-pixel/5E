@@ -1,7 +1,7 @@
 import { animateModeChange } from './mode-transition.js?v=1.7.0-four-session-integration';
 import { checkpointBeforeModeSwitch } from './autosave.js?v=1.7.0-four-session-integration';
 import { serialize, applyLoaded } from './project-io.js?v=1.7.0-four-session-integration';
-import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { showModeSwitch, showAlert, showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { setActiveTool } from './tools.js?v=1.7.0-four-session-integration';
 import { shortcutKey } from './platform.js?v=1.7.0-four-session-integration';
@@ -28,6 +28,43 @@ const LITE_SHORTCUT_KEYS = new Set(["v", "r", "l", "p", "e", "t"]);
 let _state = null;
 let _btn = null;
 let _savedLayerId = null; // Lite 진입 직전 activeLayerId(Pro 복귀 시 복원용)
+let _switchMode = null;   // initViewMode가 채운다 — 모드 단추와 같은 전환(확인 창 포함)
+let _proNotice = null;    // 「정식판에서 됩니다」 안내가 이미 떠 있으면 같은 약속을 돌려준다(겹쳐 뜨지 않게)
+
+export const isLiteMode = () => document.documentElement.dataset.mode === "lite";
+
+const shownSurface = id => { const el = document.getElementById(id); return !!el && !el.hidden; };
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// 1.7.1 B1ⓓ: Pro → Lite 전에 정식판 화면을 닫는다. 조판 창은 저장을 마친 뒤 닫히므로 잠시 기다린다.
+// 닫히지 않으면(저장 확인 창에서 「계속 편집」 등) false — 전환하지 않는다.
+async function closeProSurfaces() {
+  window.dispatchEvent(new CustomEvent("5e:exampool-close"));
+  // 조판 창은 문서를 읽거나 저장하는 중이면 닫기를 받지 않으므로 잠시 간격을 두고 다시 누른다(최대 10초).
+  const until = Date.now() + 10000;
+  while (shownSurface("rhwp-exam-workspace") && Date.now() < until) {
+    document.querySelector('#rhwp-exam-workspace [data-exam-action="close"]')?.click();
+    for (let i = 0; i < 10 && shownSurface("rhwp-exam-workspace"); i++) await sleep(100);
+  }
+  return !shownSurface("rhwp-exam-workspace");
+}
+
+// 1.7.1 B1(결정 1 ⓑ): Lite에서 정식판 기능으로 가는 길을 눌렀을 때 — 말없이 끝내거나 단추를 숨기지 않고
+// 「정식판에서 됩니다」 안내와 Pro로 바꾸는 길을 준다(막다른 경고 금지). Pro로 바뀌면 true를 돌려주어, 부른 쪽이 하던 일을 이어 한다.
+export function requirePro(what = "이 기능") {
+  if (!isLiteMode()) return Promise.resolve(true);
+  if (_proNotice) return _proNotice;
+  _proNotice = (async () => {
+    try {
+      const go = await showConfirm(`${what}은(는) 정식판(Pro)에서 됩니다.\nLite는 그림 그리기와 라이브러리만 씁니다. Pro로 바꾸면 하던 일을 이어서 합니다.`,
+        { title: "정식판에서 됩니다", okText: "Pro로 바꾸기", cancelText: "닫기" });
+      if (!go || !_switchMode) return false;
+      return (await _switchMode()) === "pro";
+    } finally { _proNotice = null; }
+  })();
+  return _proNotice;
+}
+if (typeof window !== "undefined") window.fiveERequirePro = requirePro;
 
 export function loadMode() {
   const params = new URLSearchParams(window.location.search);
@@ -108,14 +145,21 @@ export function initViewMode(state, { prepareNewAiWork } = {}) {
   if (brand && brand.parentElement) brand.insertAdjacentElement("afterend", _btn);
   else document.body.appendChild(_btn);
 
-  _btn.addEventListener("click", async () => {
+  // 모드 바꾸기(단추·「정식판에서 됩니다」 안내의 「Pro로 바꾸기」가 같이 쓴다). 끝난 뒤의 모드를 돌려준다.
+  _switchMode = async () => {
     const cur = document.documentElement.getAttribute("data-mode") || DEFAULT_MODE;
-    if (_btn.disabled) return;
+    if (_btn.disabled) return cur;
     _btn.disabled = true;
     const target = cur === 'lite' ? 'pro' : 'lite';
     try {
+
       const choice = await showModeSwitch(target === 'pro' ? 'Pro' : 'Lite');
       if (choice === 'cancel') return;
+      // 1.7.1 B1ⓓ: Lite로 갈 때 열려 있던 정식판 화면(5E_hwp 조판·5E_exam 출제 칸)을 먼저 닫는다.
+      if (target === 'lite' && !await closeProSurfaces()) {
+        await showAlert('한글 시험지(5E_hwp) 창이 아직 닫히지 않았습니다. 시험지 창을 닫은 뒤 다시 Lite로 바꾸세요.', { title: 'Lite로 바꾸지 못함' });
+        return;
+      }
       let resetWork = () => {};
       if (choice === 'new') {
         await checkpointBeforeModeSwitch(state);
@@ -149,7 +193,9 @@ export function initViewMode(state, { prepareNewAiWork } = {}) {
     } catch (error) {
       await showAlert(error.message || '작업을 보관하지 못해 전환하지 않았습니다.', { title: '모드 전환 실패' });
     } finally { _btn.disabled = false; _btn.focus(); }
-  });
+    return document.documentElement.getAttribute("data-mode") || DEFAULT_MODE;
+  };
+  _btn.addEventListener("click", () => { void _switchMode(); });
 
   document.getElementById("tool-cut-merged")?.addEventListener("click", (event) => {
     if (document.documentElement.dataset.mode !== "lite") return;

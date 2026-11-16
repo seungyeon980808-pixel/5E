@@ -19,7 +19,9 @@ export function initQuestionSheet(state,services,examWorkspace){
   // 「한글로 보내기」·그림 가져오기가 모두 막혔다(M6).
   // 11-04: 시작 창이 떠 있는 동안 출제 칸을 숨긴 채 미리 불러 둔다 — 처음 exam으로 넘어갈 때 기다림·버벅임 줄이기.
   function prewarm(){if(host)return;open({silent:true});}
-  function open(opts={}){if(!opts.silent&&document.documentElement.dataset.mode==='lite')return;/* Lite는 출제 칸을 열지 않는다(11-14) */if(picking){picking.cancel();return;}if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('.side [data-pool]')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
+  // Lite는 출제 칸을 열지 않는다(11-14). 1.7.1 B1: 말없이 끝내지 않고 「정식판에서 됩니다」 안내 → Pro로 바꾸면 이어서 연다(view-mode.js requirePro).
+  const liteBlocked=(what,resume)=>{if(document.documentElement.dataset.mode!=='lite')return false;void Promise.resolve(window.fiveERequirePro?.(what)??false).then(ok=>{if(ok&&document.documentElement.dataset.mode!=='lite')resume();});return true;};
+  function open(opts={}){if(!opts.silent&&liteBlocked('5E_exam 문항 만들기',()=>open(opts)))return;if(picking){picking.cancel();return;}if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('.side [data-pool]')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
     if(opts.silent){host.hidden=true;return;}
     focusReturn=document.activeElement;host.hidden=false;host.style.bottom='0';/* ExamPool 상태 줄 하나에 5E 버전·문제 신고를 함께 두므로 5E 아래 막대는 덮는다(아래 막대 두 줄 → 한 줄). */syncAppLock();}
   // 사용자가 출제 칸을 닫거나(✕) 한글로 보낼 때: 휙 사라지지 않게 0.16초 흐려지며 닫는다(app-switch.css의 .app-leaving). 움직임 줄이기 설정이면 바로.
@@ -92,15 +94,18 @@ export function initQuestionSheet(state,services,examWorkspace){
   // 맨 위 줄 프로그램 전환(app-switch.js): 다른 프로그램으로 갈 때 출제 칸을 닫는다.
   window.addEventListener('5e:exampool-close',close);
   // 5E 라이브러리 창 「보내기 → 5E_exam 문항 카드로」: 문항 창을 열고(처음이면 다 읽힐 때까지 기다림) 「가져온 자료」로 넘긴다.
+  // 1.7.1 B1ⓒ: Lite에서 받으면 예전엔 받았다고 표시한 뒤 열기가 막혀 자료가 말없이 사라졌다 — 받아 두고 안내, Pro로 바꾸면 이어서 넣는다.
   window.addEventListener('5e:exampool-receive',e=>{const items=e.detail?.items;if(!Array.isArray(items)||!items.length||entry.disabled)return;e.detail.accepted=true;
-    setTimeout(async()=>{open();const until=Date.now()+30000;
+    const deliver=()=>setTimeout(async()=>{open();if(!frame)return;const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
-      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},OWN);},0);});
+      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},OWN);},0);
+    if(!liteBlocked('5E_exam 문항 카드로 보내기',deliver))deliver();});
   // 11-05 시안 v13: 5E 라이브러리 「문항 카드로 / 시험지에 넣기」(기출 id) — 문항 창을 열고(처음이면 다 읽힐 때까지) 「변형」 줄로 넘긴다.
   window.addEventListener('5e:exampool-past',e=>{const ids=e.detail?.ids;if(!Array.isArray(ids)||!ids.length||entry.disabled)return;e.detail.accepted=true;
-    setTimeout(async()=>{open();const until=Date.now()+30000;
+    const deliver=()=>setTimeout(async()=>{open();if(!frame)return;const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
-      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);});
+      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);
+    if(!liteBlocked(e.detail.toExam?'시험지에 넣기':'5E_exam 문항 카드로 보내기',deliver))deliver();});
   // 11-14 시안 review-1114b 2번: 문항 카드 칸에서 연 AI 작업의 상태(도는 중·끝·실패)를 출제 칸에 알려 칸 위에 표시한다.
   // 카드 그림에서 AI 창을 연 원본 그림(라벨 크기를 원본 글자 높이로 맞출 때 씀). 열쇠 = 문항|칸.
   const cardRefs=new Map();window.addEventListener('5e:ai-open-reference',e=>{const c=e.detail?.hwpTarget?.examCard,src=e.detail?.reference?.dataUrl;if(c&&src){cardRefs.set(c.qid+'|'+c.key,src);if(cardRefs.size>40)cardRefs.delete(cardRefs.keys().next().value);}});
