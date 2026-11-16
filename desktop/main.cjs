@@ -382,6 +382,10 @@ const APP_ICON_PATH = path.join(
 );
 if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
+// 사용자 데이터 폴더 이름은 「5e-desktop」으로 고정한다(1.7.1 결정): 맥 ~/Library/Application Support/5e-desktop,
+// 윈도우 %APPDATA%\5e-desktop. 이름은 package.json 「name」에서 온다(맨 위 productName이 없어서). 맨 위에 productName을
+// 넣거나 name을 바꾸면 폴더가 바뀌어 그림 작업·출제 보관함·설정(IndexedDB·localStorage)이 사라진 것처럼 보인다.
+// 바꿔야 하면 옛 폴더에서 옮기는 처리를 함께 넣는다. 지키는 검사: desktop/user-data-name.test.cjs.
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
 // 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
