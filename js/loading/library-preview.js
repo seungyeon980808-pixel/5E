@@ -1,6 +1,7 @@
 import { BlurReveal } from './blur-reveal.js?v=1.7.0-four-session-integration';
 import { trackLoadingMotion } from './activity-visibility.js?v=1.7.0-four-session-integration';
 import { createPreviewLoading } from '../library/page-loading.js?v=1.7.0-four-session-integration';
+import { mountElapsedClock } from './elapsed-clock.js?v=171';
 
 // One operation owns its indicator, source layers and clock. Disposing a stale
 // selection also prevents a late decode from painting over the current page.
@@ -22,11 +23,6 @@ export function createLibraryPreviewLoading(host, paper, source = '') {
     if (disposed || positionFrame) return;
     positionFrame = requestAnimationFrame(() => { positionFrame = 0; position(); });
   };
-  const tick = () => {
-    const seconds = Math.floor((performance.now() - started) / 1000);
-    time.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-    time.dateTime = `PT${seconds}S`;
-  };
   const clearReveal = () => { release?.(); release = null; reveal?.destroy(); reveal = null; };
   const setPaper = (next, src = source) => {
     if (disposed) return;
@@ -40,11 +36,12 @@ export function createLibraryPreviewLoading(host, paper, source = '') {
   };
   const resize = new ResizeObserver(schedulePosition); resize.observe(host);
   host.addEventListener('scroll', schedulePosition, { passive: true });
-  position(); tick(); const clock = setInterval(tick, 1000);
+  // 1.7.1 B13: 시계는 그래픽 처리 장치 움직임으로 — 그림 해독이 주 스레드를 붙잡아도 멈추지 않는다.
+  position(); const clock = mountElapsedClock(time, started);
   setPaper(paper);
   const dispose = () => {
     if (disposed) return;
-    disposed = true; clearInterval(clock); resize.disconnect();
+    disposed = true; clock.stop(); resize.disconnect();
     cancelAnimationFrame(positionFrame);
     host.removeEventListener('scroll', schedulePosition); status.remove(); clearReveal();
     host.removeAttribute('aria-busy');

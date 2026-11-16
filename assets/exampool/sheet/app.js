@@ -36,6 +36,7 @@ let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
 import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
 import {mountClipboard} from '../../../js/clipboard-view.js?v=1114';
+import {mountElapsedClock} from '../../../js/loading/elapsed-clock.js?v=171';
 import {sheetLoader,rememberSheet} from './sheet-loading.js';
 import {initAiJobsTop} from './ai-jobs-top.js';
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — 그때는 '*'로 보내고, 받을 때는 부모 창에서 왔는지로 가린다.
@@ -1290,11 +1291,11 @@ let examRequest=null,examRequestTimer=0;
 // 단계(문항 조판 확인 → 시험지 만들기 → 5E_hwp에서 열기)·진행 막대·경과 시간. 실패하면 안내를 닫고 그 문항 카드로 데려간다(막다른 경고 금지).
 // 11-11 사용자: 진행 막대가 단계마다 뚝뚝 끊기지 말고, 느리더라도 천천히 쭉 나가게. 막대는 지금 단계 끝(조금 못 미친 자리)을 향해
 // 계속 조금씩 다가가고(기다리는 동안에도 움직임), 다음 단계가 오면 그 자리부터 이어서 간다. 절대 뒤로 가지 않는다.
-const sendProgress=(()=>{let el=null,clock=0,started=0,barAnim=null;
+const sendProgress=(()=>{let el=null,clock=null,started=0,barAnim=null;
   const ensure=()=>{if(el)return el;el=document.createElement('div');el.className='send-progress';el.hidden=true;el.setAttribute('role','status');el.setAttribute('aria-live','polite');
     el.innerHTML='<div class="sp-card"><div class="sp-head"><span class="sp-spin" aria-hidden="true"></span><b>5E_hwp로 옮기는 중</b><time class="sp-time">00:00</time></div><p class="sp-title"></p><ol class="sp-steps"><li data-step="typeset">문항 조판 확인</li><li data-step="build">시험지 만들기</li><li data-step="open">5E_hwp에서 열기</li></ol><div class="sp-bar"><i></i></div><p class="sp-detail"></p></div>';
     document.body.append(el);return el;};
-  const tick=()=>{if(!el)return;const t=Math.floor((performance.now()-started)/1000);el.querySelector('.sp-time').textContent=`${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;};
+  // 1.7.1 B13: 경과 시간도 막대처럼 그래픽 처리 장치 움직임으로 — 조판이 주 스레드를 붙잡아도 멈추지 않는다(elapsed-clock.js).
   const order=['typeset','build','open'],span={typeset:[0,.55],build:[.55,.85],open:[.85,1]};
   // 11-13 밤(시안 exam-fixes-1113 D): 막대는 그래픽 처리 장치가 그리는 움직임(transform)으로 — 조판이 화면 일꾼을 붙잡아도 멈추지 않는다.
   // 받은 진행값까지는 0.3초에 빨리, 그 뒤로는 단계 끝(조금 못 미친 자리)을 향해 25초 동안 점점 느리게. 절대 뒤로 가지 않는다.
@@ -1303,12 +1304,12 @@ const sendProgress=(()=>{let el=null,clock=0,started=0,barAnim=null;
     barAnim?.cancel();i.style.transform=`scaleX(${c})`;
     barAnim=i.animate([{transform:`scaleX(${from})`,easing:'cubic-bezier(.3,.7,.3,1)'},{transform:`scaleX(${f})`,offset:FAST/(FAST+SLOW),easing:'cubic-bezier(.15,.55,.25,1)'},{transform:`scaleX(${c})`}],{duration:FAST+SLOW,fill:'both'});}
   return {
-    start(title){ensure();started=performance.now();el.querySelector('.sp-title').textContent=title||'';el.hidden=false;document.body.classList.add('sending-exam');this.step('typeset','확인하는 중…',0);tick();clearInterval(clock);clock=setInterval(tick,250);},
+    start(title){ensure();started=performance.now();el.querySelector('.sp-title').textContent=title||'';el.hidden=false;document.body.classList.add('sending-exam');this.step('typeset','확인하는 중…',0);clock?.stop();clock=mountElapsedClock(el.querySelector('.sp-time'),started);},
     step(name,detail='',fraction=0){if(!el||el.hidden)return;const at=order.indexOf(name);
       el.querySelectorAll('[data-step]').forEach((li,i)=>{li.dataset.state=i<at?'done':i===at?'active':'';});
-      const [a,b]=span[name];glide(a+(b-a)*Math.max(0,Math.min(1,fraction)),a+(b-a)*.96);tick();
+      const [a,b]=span[name];glide(a+(b-a)*Math.max(0,Math.min(1,fraction)),a+(b-a)*.96);
       el.querySelector('.sp-bar').dataset.waiting=String(name==='open');el.querySelector('.sp-detail').textContent=detail;},
-    hide(){clearInterval(clock);clock=0;barAnim?.cancel();barAnim=null;const i=el?.querySelector('.sp-bar i');if(i)i.style.transform='scaleX(0)';if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
+    hide(){clock?.stop();clock=null;barAnim?.cancel();barAnim=null;const i=el?.querySelector('.sp-bar i');if(i)i.style.transform='scaleX(0)';if(el)el.hidden=true;document.body.classList.remove('sending-exam');},
   };})();
 async function sendExam(exam,options={}){
   const toHwp=!options.download&&!options.variant&&!options.print&&embedded&&exam.items.length>0;
