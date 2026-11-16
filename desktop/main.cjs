@@ -33,7 +33,6 @@ const DESKTOP_RESOURCE_FILES = new Set([
   'docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md',
   'docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md',
   'docs/IMAGE_COMPLEXITY_MODE_SPEC.md',
-  'experiments/web-codex-auth/editor-bridge.js',
 ]);
 function resolveSmokeStateModuleUrl(root = path.join(__dirname, '..')) {
   const entry = fs.readFileSync(path.join(root, 'index.html'), 'utf8');

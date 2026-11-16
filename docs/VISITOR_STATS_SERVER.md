@@ -3,12 +3,12 @@
 ## 운영 서버 (2026-10-18 배포)
 
 - **Cloudflare Worker `5e-visitor-stats`** — `https://5e-visitor-stats.5e-desktop.workers.dev/api/visitor-stats`
-- 저장소: D1 `5e-visitor-stats` (`4a1580fd-b8bd-43ec-ad24-5a563a48ccf3`, 표는 `visitor/worker/migrations/0001_visitor_stats.sql`)
-- 코드: `visitor/api.mjs`(API·저장소, 아래 계약과 같음), `visitor/worker/index.mjs`, `visitor/worker/wrangler.jsonc`. 검사 `tests/test-visitor-stats-worker.mjs`
+- 저장소: D1 `5e-visitor-stats` (`4a1580fd-b8bd-43ec-ad24-5a563a48ccf3`, 표는 `cloudflare/visitor/worker/migrations/0001_visitor_stats.sql`)
+- 코드: `cloudflare/visitor/api.mjs`(API·저장소, 아래 계약과 같음), `cloudflare/visitor/worker/index.mjs`, `cloudflare/visitor/worker/wrangler.jsonc`. 검사 `tests/test-visitor-stats-worker.mjs`
 - `index.html`의 `5e-visitor-stats-endpoint` 메타가 이 주소를 가리킨다(1.7.0 프리뷰만. 1.6.3 정식 화면에는 이 표시가 없다)
 - HMAC 비밀값은 D1 `metadata` 표에 처음 요청 때 만들어 보존한다. **D1을 지우거나 비밀값만 바꾸면 같은 방문자가 다시 집계되므로 함부로 초기화하지 않는다**
 - 요청 제한(주소당 분당 120회)은 Worker 인스턴스마다 따로 센다. 정확한 차단이 필요하면 Cloudflare 규칙을 쓴다
-- 다시 배포: `npx wrangler@4 deploy --config visitor/worker/wrangler.jsonc` (표 변경은 `d1 migrations apply 5e-visitor-stats --remote --config …`)
+- 다시 배포: `npx wrangler@4 deploy --config cloudflare/visitor/worker/wrangler.jsonc` (표 변경은 `d1 migrations apply 5e-visitor-stats --remote --config …`)
 
 ## 로컬 Node 서버
 

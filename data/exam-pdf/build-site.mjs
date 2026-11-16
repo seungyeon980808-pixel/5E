@@ -3,14 +3,17 @@
 // 원본은 이 맥에 동기화된 드라이브 공유 폴더 그대로 — 복사하지 않고 링크만 만든다(site/v1/<공유 폴더 안 경로>).
 // 올릴 목록 = 5E 색인(평가원 index.json + 학평 hakpyeong/index.json)의 publicPath.
 // 미리 변환한 문항(preconvert.cjs → q-kice/·q-hakpyeong/)도 site/q/·site-hak/q/에 링크한다. 학평 문항은 파일 수 한도(2만) 때문에 따로(5e-exam-hak).
-// 실행: node exam-pdf/build-site.mjs && (cd exam-pdf && npx wrangler@4 deploy --config wrangler.jsonc && npx wrangler@4 deploy --config wrangler-hak.jsonc)
+// 실행: EXAM_PDF_ROOT=<드라이브 공유 폴더> node data/exam-pdf/build-site.mjs
+//       && npx wrangler@4 deploy --config cloudflare/exam-pdf/wrangler.jsonc && npx wrangler@4 deploy --config cloudflare/exam-pdf/wrangler-hak.jsonc
+// 1.7.1: 스크립트·결과물은 data/exam-pdf/, Worker 설정은 cloudflare/exam-pdf/(설정이 ../../data/exam-pdf/site를 가리킴).
 import {readFileSync,existsSync,statSync,mkdirSync,symlinkSync,lstatSync,readlinkSync,unlinkSync,writeFileSync,readdirSync,openSync,readSync,closeSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import os from 'node:os';
 
-const here=dirname(fileURLToPath(import.meta.url)),repo=join(here,'..'),site=join(here,'site');
-const ROOT=process.env.EXAM_PDF_ROOT||join(os.homedir(),'Library/CloudStorage/GoogleDrive-park49174332@gmail.com/내 드라이브/1. 개인작업/5E_공유폴더테스트_0916');
+const here=dirname(fileURLToPath(import.meta.url)),repo=join(here,'..','..'),site=join(here,'site');
+// 원본 폴더는 환경 변수로만 받는다(1.7.1: 개인 드라이브 경로 기본값을 뺌).
+const ROOT=process.env.EXAM_PDF_ROOT;
+if(!ROOT){console.error('EXAM_PDF_ROOT에 기출 PDF 원본 폴더(드라이브 「5E 공유 자료」를 이 맥에 동기화한 폴더)를 적어 주세요.\n예: EXAM_PDF_ROOT="$HOME/Library/CloudStorage/<내 드라이브>/…/5E_공유폴더" node data/exam-pdf/build-site.mjs');process.exit(1);}
 const paths=[...new Set(['assets/exampool/convert/data/index.json','assets/exampool/convert/data/hakpyeong/index.json']
   .flatMap(f=>Object.values(JSON.parse(readFileSync(join(repo,f),'utf8')).files)))].sort();
 const missing=paths.filter(p=>!existsSync(join(ROOT,p)));

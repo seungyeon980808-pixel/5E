@@ -1,6 +1,6 @@
 // 미리 변환한 기출(11-03 밤): 「변형」과 같은 엔진으로 밤새 바꿔 둔 문항 JSON을 정적 주소에서 받아 쓴다 — PDF 받기·변환이 없어 0.5초 안쪽.
-// 엔진이 바뀌면 열쇠(KEY)가 달라 옛 파일은 쓰지 않고 그 자리에서 바꾼다. 열쇠는 exam-pdf/engine-key.cjs가 만든 값과 같아야 한다(검사 test-preconverted-key).
-// 다시 만들기: node exam-pdf/preconvert.cjs (+ --source=hakpyeong) → exam-pdf/build-site.mjs → deploy.
+// 엔진이 바뀌면 열쇠(KEY)가 달라 옛 파일은 쓰지 않고 그 자리에서 바꾼다. 열쇠는 data/exam-pdf/engine-key.cjs가 만든 값과 같아야 한다(검사 test-preconverted-key).
+// 다시 만들기: node data/exam-pdf/preconvert.cjs (+ --source=hakpyeong) → data/exam-pdf/build-site.mjs → cloudflare/exam-pdf/ 설정으로 deploy.
 export const PRECONVERTED_KEY = '30d4d036828d';
 const HOSTS = { kice: 'https://5e-exam-pdf.5e-desktop.workers.dev/q/', hakpyeong: 'https://5e-exam-hak.5e-desktop.workers.dev/q/' };
 const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
