@@ -15,7 +15,8 @@ const { chromium, webkit } = require('playwright');
       const [{ createUnifiedLibraryProvider }, { createUnifiedLibraryUi }] = await Promise.all([
         import('/js/library/provider.js'), import('/js/unified-library-ui.js'),
       ]);
-      const document = { id: 'real-provider-exam', title: '생명1 27년 6평', pageCount: 4, source: { displayName: 'b12706.pdf', kind: 'pack' } };
+      // 라이브러리 기본 조건이 물리Ⅰ·Ⅱ 최근 5년(770718f8, 11-09)이라 물리Ⅰ 자료를 쓴다.
+      const document = { id: 'real-provider-exam', title: '물리1 27년 6평', pageCount: 4, source: { displayName: 'p12706.pdf', kind: 'pack' } };
       const source = { documentId: document.id, pageNumber: 1, rect: [.1, .1, .6, .5], fullPageFallback: false };
       const provider = createUnifiedLibraryProvider({
         pdfDocuments: [document],
