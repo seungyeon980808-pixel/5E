@@ -430,7 +430,7 @@
   ],
   "review": [],
   "style": {
-    "fontSizePx": 27,
+    "fontSizePx": 27, "fontSizeMeasured": true,
     "labelWeight": 400,
     "strokeWidth": 0.68,
     "guideStyle": {

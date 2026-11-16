@@ -13,10 +13,6 @@
       "reason": "2026-11-17 1.7.1 T: 카드 여는 길은 고침, 성능 기준 확인 못 끝냄"
     },
     {
-      "path": "tests/test-physics-graph-result-audit-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 그래프 결과 글자 높이가 원본 잰 값의 ×1.0726(27px→28.96px), js/graph/workbench-result.js"
-    },
-    {
       "path": "tests/test-graph-workbench-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 139줄 [data-ai-input]이 숨은 section.ai-preparation 안 — 11-11 AI 창 개편, 재작성 필요"
     },
