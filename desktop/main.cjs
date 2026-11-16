@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage, protocol, net } = require("electron");
+const { installAppMenu: installDesktopAppMenu } = require("./app-menu.cjs");
 const { desktopSmokePasses } = require("./smoke-contract.cjs");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
@@ -1997,16 +1998,8 @@ handleTrustedIpc("local-images:read", async (event, filePath) => {
 // URL. Install on the default session before any loadFile; the auxiliary exam
 // partition retains its separate loopback server and protocol policy.
 app.on('ready', () => protocol.handle('file', createDesktopEntryProtocolHandler()));
-// 11-14: 맥은 앱 메뉴가 없으면 ⌘Q(끝내기)·⌘H(가리기)가 먹지 않는다 — 앱 메뉴 하나만 둔다.
-// 편집 메뉴는 두지 않는다: 메뉴 단축키가 화면의 ⌘C·⌘V·⌘Z(5E 클립보드·되돌리기)를 가로채기 때문.
-function installAppMenu() {
-  if (process.platform !== 'darwin' || typeof Menu.buildFromTemplate !== 'function') { Menu.setApplicationMenu(null); return; }
-  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: app.name, submenu: [
-    { role: 'about', label: '5E 정보' }, { type: 'separator' },
-    { role: 'hide', label: '5E 가리기' }, { role: 'hideOthers', label: '기타 가리기' }, { role: 'unhide', label: '모두 보기' },
-    { type: 'separator' }, { role: 'quit', label: '5E 끝내기' },
-  ] }]));
-}
+// 맥 메뉴 막대(앱 메뉴 + 편집 메뉴)는 desktop/app-menu.cjs.
+function installAppMenu() { installDesktopAppMenu({ Menu, app }); }
 // 저장 확인 창은 창에 붙어 뜬다 — 창이 가려졌거나 내려가 있으면 확인 창도 안 보여 앱이 멈춘 것처럼 보였다(11-14). 먼저 창을 앞으로.
 function confirmLeave(target, options) {
   try { if (target.isMinimized()) target.restore(); target.show(); target.focus(); if (process.platform === 'darwin') app.focus({ steal: true }); } catch {}
