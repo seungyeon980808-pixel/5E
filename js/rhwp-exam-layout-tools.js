@@ -498,13 +498,29 @@ export function deleteQuestion(bridge, index) {
   bridge.transaction('delete-question', () => {
     // 묶음 첫 문항을 지울 때도 묶음 머리·지문은 남긴다(다른 문항이 쓴다).
     const from = q.group ? q.head : q.start;
-    if (q.end < doc.getParagraphCount(sec)) checkedResult(doc.deleteRange(sec, from, 0, q.end, 0));
-    else if (from > 0) checkedResult(doc.deleteRange(sec, from - 1, doc.getParagraphLength(sec, from - 1), q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
-    else checkedResult(doc.deleteRange(sec, 0, 0, q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
+    // 1.7.1 R1: 예전에는 deleteRange로 지웠는데, 엔진은 문단 사이의 글만 지우고 표·그림 같은 개체는 남긴다 —
+    // 판 구조(문항 하나 = 표 하나) 문항을 지우면 그 표가 다음 문항 문단에 붙어(한 문단에 표 둘) 글·그림이 겹쳤다.
+    // 그래서 문단째 지운다. 0번 문단은 구역·단 설정을 품고 있어 지우지 않고 비운 뒤 다음 문단을 끌어 붙인다.
+    for (let p = q.end - 1; p >= Math.max(from, 1); p--) checkedResult(doc.deleteParagraph(sec, p));
+    if (from === 0) {
+      clearParagraph(doc, sec, 0);
+      if (doc.getParagraphCount(sec) > 1) checkedResult(doc.mergeParagraph(sec, 1));
+    }
     renumberDocument(doc); // 번호 다시 매기기까지 한 묶음(되돌리기 한 번)
     return true;
   });
   return q.number;
+}
+// 문단 하나를 비운다: 구역·단 정의는 두고, 그 문단에 놓인 표·그림·수식·도형(쪽 배치에 보이는 것)과 글을 지운다(뒤 개체부터).
+function clearParagraph(doc, sec, para) {
+  const remove = { table: doc.deleteTableControl, equation: doc.deleteEquationControl, image: doc.deletePictureControl }, found = new Map();
+  for (let page = 0; page < doc.pageCount(); page++) for (const c of parse(doc.getPageControlLayout(page)).controls || []) {
+    if ((c.secIdx ?? 0) !== sec || c.paraIdx !== para || c.cellPath?.length || Number.isInteger(c.cellIdx)) continue;
+    const ci = c.controlIdx ?? c.ci; if (Number.isInteger(ci) && !found.has(ci)) found.set(ci, c.type);
+  }
+  for (const [ci, type] of [...found].sort((a, b) => b[0] - a[0])) checkedResult((remove[type] || doc.deleteShapeControl).call(doc, sec, para, ci));
+  const length = doc.getParagraphLength(sec, para);
+  if (length) checkedResult(doc.deleteText(sec, para, 0, length));
 }
 // 넓은 그림·표 모두 단 폭에 맞추기(본문 그림은 비율 유지, 표는 칸 비율 유지). 고친 수를 돌려준다.
 export function fitWideObjects(bridge) {

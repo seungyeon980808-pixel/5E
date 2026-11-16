@@ -2446,6 +2446,12 @@
         "BL3-B21-COMBO-FIT",
         "BL3-TILE-DELETE-CLEARS-FIGURE"
       ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-question-delete-browser.cjs",
+      "findingIds": [
+        "BL6-R1-TABLE-QUESTION-DELETE"
+      ]
     }
   ],
   "deferred": [
