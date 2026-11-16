@@ -584,7 +584,8 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
   const deletionReceipts=[];
   const inspectPhysicalActions=async()=>{
     const actions=[];
-    for(const selector of ['[data-ai-send]','[data-ai-comments-apply]']) {
+    // 11-11: 실행 단추(data-ai-send)도 data-ai-comments-apply를 함께 가진다(js/ai-panel.js 「실행 단추」 주석) — 옛 반영 단추만 따로 센다.
+    for(const selector of ['[data-ai-send]','[data-ai-comments-apply]:not([data-ai-send])']) {
       const buttons=page.locator('#ai-image-panel '+selector);
       const count=await buttons.count(); assert.ok(count<=1,'One canonical action per selector in the actual active panel');
       const observations=[];
@@ -628,6 +629,8 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
     }
     const remove=page.locator('#ai-image-panel .ai-reference-card button[title="이미지 제거"]');
     assert.equal(await remove.count(),1); assert.equal(await remove.isVisible(),true); assert.equal(await remove.isEnabled(),true); await remove.click();
+    // 11-11 사용자: 맥 기본 확인창 대신 5E 확인창(showConfirm, js/ai-panel.js 「이미지 빼기」) — 「빼기」를 누른다.
+    await page.getByRole('alertdialog',{name:'이미지 빼기',exact:true}).getByRole('button',{name:'빼기',exact:true}).click();
     await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiStage==='empty'&&document.querySelectorAll('#ai-image-panel .ai-reference-card').length===0);
     assert.equal(await input.inputValue(),request); assert.equal(await remove.count(),0);
     const sourceDeletion=await page.evaluate(async composition=>{

@@ -41,10 +41,6 @@
       "reason": "1.7.1: 첫 목록이 pdf-runtime을 기다리지 않는지만 보도록 기준을 고침(사용자 11-17 동의, 체감 변화 없음). 남은 실패: 118줄 교과서_중2.pdf 316쪽 결과가 30초 안에 안 보임 — 원인 미확인"
     },
     {
-      "path": "tests/test-ai-batch-source-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 선택 배치 재실행에서 scene 요청이 3번(캐시 재사용 안 됨)"
-    },
-    {
       "path": "tests/test-ai-output-previews-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(큼): 제품이 결과 처리 UI를 줄여 CURRENT_UI_CONTRACT_GAP — 재작성 필요"
     },

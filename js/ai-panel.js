@@ -7510,7 +7510,14 @@ ${chatText}` : ''}`;
       generated:!graph && candidate?[snapshotImageItem(candidate)]:[],
       priorGraph:graph && candidate?.graphResult ? snapshotImageItem(candidate) : null,
     };
-    return {...batchOwner(id),snapshot:{title:tab.title,dataUrl:source?.data,revisionId:source?.id,operation,model:selection.model,options,comments,candidate:candidate?snapshotImageItem(candidate):null,scopeEdit:operation==='scoped-edit'?{comments,promptMode:scopedPromptMode?.value || 'legacy'}:undefined,request:tab.input||'',discussion:compactConversation(tab.conversationMessages||[])}};
+    return {...batchOwner(id),snapshot:{title:tab.title,dataUrl:source?.data,revisionId:source?.id,operation,model:selection.model,options,comments,candidate:candidate?snapshotImageItem(candidate):null,scopeEdit:operation==='scoped-edit'?{comments,promptMode:scopedPromptMode?.value || 'legacy'}:undefined,request:batchRequest(id,tab),discussion:compactConversation(tab.conversationMessages||[])}};
+  }
+  // 1.7.1: 11-11부터 실행 단추는 숨은 요청 칸을 「이 작업의 사용자 대화 + 대화 입력 칸」으로 덮어쓴 뒤 보낸다(syncRequestFromChat).
+  // 일괄 실행도 같은 글을 써야 같은 작업이 같은 캐시 열쇠를 갖는다 — 숨은 칸에 남은 옛 요청(11-11 전 저장분)을 그대로 보내면
+  // 앞에서 한 번 만든 결과를 다시 쓰지 못하고 요청이 한 번 더 나갔다. 대화 입력 칸은 하나라 지금 작업에만 붙인다.
+  function batchRequest(id,tab){
+    if(id===activeTaskTabId)return composeRequestFromChat();
+    return (tab.conversationMessages||[]).filter(message=>message.role==='user').map(message=>message.text).filter(Boolean).join('\n');
   }
   function preflightBatch(entry) {
     const tab=taskTabs.get(entry.taskId),snapshot=entry.snapshot;
