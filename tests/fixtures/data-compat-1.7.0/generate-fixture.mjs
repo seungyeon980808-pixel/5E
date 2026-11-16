@@ -11,6 +11,7 @@ const {zipStore}=await load('js/backup-zip.js');
 const model=await load('assets/exampool/sheet/model.js');
 const {newExam}=await load('assets/exampool/sheet/exams.js');
 const {encodePool}=await load('js/exampool-model.js');
+const {copyStandard,KICE_STANDARD,validateStandard}=await load('assets/exampool/sheet/typeset-standard.js');
 const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 const fixed=(o,id)=>{o.id=id;return o;};
 const drawing={version:'0.17',activePageId:'p1',pages:[{id:'p1',name:'그림 1',objects:[{id:'img1',type:'image',x:0,y:0,w:20,h:20,src:png},{id:'t1',type:'text',x:5,y:30,text:'1.7.0 그림'}]}]};
@@ -23,7 +24,7 @@ const q1=model.newQuestion('1','객관식');model.applyPreset(q1,'그림');fixed
 const q2=fixed(model.newQuestion('2','합답형'),'q-170-2');q2.ask='1.7.0 문항 둘';q2.createdAt='2026-11-16T00:00:00.000Z';
 const exam={...newExam('1.7.0 시험지'),id:'exam-170',items:[q1.id,q2.id],formId:'form-170',createdAt:'2026-11-16T00:00:00.000Z',updatedAt:'2026-11-16T00:00:00.000Z'};
 const formBytes=hwpx,b64=u=>Buffer.from(u).toString('base64');
-const std={id:'std-170',name:'1.7.0 기준'};
+const std={...copyStandard(KICE_STANDARD),id:'std-170',name:'1.7.0 기준'};validateStandard(std);
 const sheet={format:model.FORMAT,questions:[q1,q2],documents:[],exams:[exam],forms:[{id:'form-170',name:'1.7.0 양식',fileName:'양식.hwpx',encrypted:false,structure:{},standardId:'std-170',createdAt:'2026-11-16T00:00:00.000Z',base64:b64(formBytes)}],standards:[std]};
 model.validate(sheet);
 fs.writeFileSync(path.join(out,'sheet-1.7.0.exampool'),JSON.stringify(sheet));
