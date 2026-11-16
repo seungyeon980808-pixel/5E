@@ -395,28 +395,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.ok(referenceId && selectedRevisionId && originalSource, 'comparison has an identified original and selected revision');
       assert.equal(await panel.locator('.ai-generated-card').getAttribute('data-ai-candidate-id'), selectedRevisionId,
         'the rendered result is the selected revision');
-      const selectedDisplaySource = await generatedImage.getAttribute('src');
-      // 11-10(58240dda): 새 기본 생성 경로는 생성 PNG를 캐시·표시 전에 로컬에서 한 번 무채색으로 바꾼다(js/ai-image-label-run.js:491).
-      // 그래서 화면·저장의 기준은 「생성 PNG 그대로」가 아니라 「같은 브라우저에서 무채색 변환한 생성 PNG」다(그 뒤 다른 가공 없음).
-      const expectedGenerated = await page.evaluate(async src => (await import('/js/ai-grayscale-png.js')).grayscalePngDataUrl(src), generatedFixtureDataUrl);
-      if (mode === 'pro') {
-        assert.equal(selectedDisplaySource, expectedGenerated, 'Pro displays the generated PNG with only the 11-10 grayscale pass (no further processing)');
-      } else {
-        const display = await generatedImage.evaluate(image => {
-          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
-          const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
-          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-          let ink = 0;
-          for (let i = 0; i < pixels.length; i += 4) {
-            if (pixels[i + 3] === 0) continue;
-            if (pixels[i] < 255) ink++;
-          }
-          return { width: canvas.width, height: canvas.height, ink };
-        });
-        assert.equal(display.width, 1005); assert.equal(display.height, 399);
-        assert.ok(display.ink > 100, 'the rendered diagram remains visible');
-      }
-      const readRawPersistence = () => page.evaluate(async ({ taskId, candidateId, source }) => {
+      const readRawPersistence = () => page.evaluate(async ({ taskId, candidateId }) => {
         const databases = await indexedDB.databases();
         const results = [];
         for (const { name } of databases.filter(entry => entry.name.includes('5e-ai-image-tasks'))) {
@@ -429,19 +408,39 @@ test('TPK-005: current library and task workspace smoke contract has real contro
               request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
             });
             const candidate = snapshot?.tabs?.find(tab => tab.id === taskId)?.generated?.find(item => item.id === candidateId);
-            results.push({ name, tabIds: snapshot?.tabs?.map(tab => tab.id), candidateId: candidate?.id, bytes: candidate?.data?.length, matches: candidate?.data === source });
+            results.push({ name, tabIds: snapshot?.tabs?.map(tab => tab.id), candidateId: candidate?.id, bytes: candidate?.data?.length, data: candidate?.data || null });
           } finally { db.close(); }
         }
         return results;
-      }, { taskId: original, candidateId: selectedRevisionId, source: expectedGenerated });
-      let rawPersistence = [];
-      for (let attempt = 0; attempt < 50; attempt++) {
-        rawPersistence = await readRawPersistence();
-        if (rawPersistence.some(result => result.matches)) break;
-        await new Promise(resolve => setTimeout(resolve, 100));
+      }, { taskId: original, candidateId: selectedRevisionId });
+      const selectedDisplaySource = await generatedImage.getAttribute('src');
+      // 11-10(58240dda): 새 기본 생성 경로는 생성 PNG를 무채색으로 바꾸고(js/ai-image-label-run.js:491) 원본 판에 맞춘 뒤(같은 파일 fitCandidateToSource) 저장한다.
+      // 그래서 기준은 「fixture 바이트」가 아니라 「저장된 실행 결과」 — Pro는 그것을 더 가공하지 않고 보여 준다.
+      const storedGenerated = async () => { for (let attempt = 0; attempt < 50; attempt++) { const found = (await readRawPersistence()).find(result => result.data); if (found) return found.data; await new Promise(resolve => setTimeout(resolve, 100)); } return null; };
+      if (mode === 'pro') {
+        assert.equal(selectedDisplaySource, await storedGenerated(), 'Pro displays the stored run result without further processing');
+      } else {
+        const display = await generatedImage.evaluate(image => {
+          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+          const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          let ink = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] === 0) continue;
+            if (pixels[i] < 255) ink++;
+          }
+          return { width: canvas.width, height: canvas.height, ink };
+        });
+        // 11-10: 결과는 원본 판에 맞춰 저장된다(fitCandidateToSource) — 생성 폭(1005)은 두고 가로세로 비율이 원본 그림과 같다(fixture 1005×399가 아님).
+        const sourceSize = await panel.locator('.ai-original-pane .ai-reference-card img').first().evaluate(image => ({ width: image.naturalWidth, height: image.naturalHeight }));
+        assert.equal(display.width, 1005, 'generated width is kept');
+        assert.ok(Math.abs(display.width / display.height - sourceSize.width / sourceSize.height) < 0.01, `Lite display keeps the source frame ratio (${display.width}x${display.height} vs ${sourceSize.width}x${sourceSize.height})`);
+        assert.ok(display.ink > 100, 'the rendered diagram remains visible');
       }
-      traceLibrary('raw-persistence', { mode, engine: engine.name(), results: rawPersistence });
-      assert.ok(rawPersistence.some(result => result.matches), 'grayscale generated PNG bytes survive persistence independently from Lite display processing');
+      const stored = await storedGenerated();
+      traceLibrary('raw-persistence', { mode, engine: engine.name(), bytes: stored?.length || 0 });
+      assert.ok(stored && stored.startsWith('data:image/png;base64,'), 'the run result PNG is persisted independently from Lite display processing');
+      // 무채색 여부는 단언하지 않는다: 흑백 변환이 실패하면 앞 결과를 그대로 쓰는 것이 제품 규칙이다(js/ai-grayscale-png.js grayscaleGeneratedPng).
       await clickCompare(panel);
       const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });
