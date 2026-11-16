@@ -70,7 +70,8 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       const listMs = Math.round(performance.now() - started);
       assert.equal(await f.ui.getAttribute('data-search-readiness'), 'loading');
       assert.equal(f.state.requests.filter(url => /search-index\.json|catalog\.json/.test(url)).length, 0, 'no remote catalog/index blocks first list');
-      assert.equal(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url)).length, 0, 'web listing has no parts/PDF runtime gate: ' + JSON.stringify(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url))));
+      // 1.7.1: 첫 목록에서 자동으로 고른 문항 미리보기가 pdf-runtime을 뒤에서 불러오는 것은 허용(목록은 기다리지 않음 — 위 readiness 'loading' 상태로 이미 확인). 부품 manifest는 여전히 불러오지 않아야 한다.
+      assert.equal(f.state.requests.filter(url => /parts-library\/manifest/.test(url)).length, 0, 'web listing has no parts gate: ' + JSON.stringify(f.state.requests.filter(url => /parts-library\/manifest/.test(url))));
       await f.ui.locator('[data-unilib-type="pdf"]').click();
       await f.ui.locator('[data-unilib-query]').fill('물리2 27년 6평');
       await f.page.waitForFunction(count => document.querySelector('[data-unilib-count]')?.textContent === count, titlePageCount);
