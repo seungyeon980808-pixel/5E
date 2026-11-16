@@ -930,6 +930,12 @@
       "findingIds": [
         "BL3-B12-FAIL-REASON"
       ]
+    },
+    {
+      "path": "tests/test-typeset-paper-mm.mjs",
+      "findingIds": [
+        "BL3-B7-PAPER-MM"
+      ]
     }
   ],
   "browser": [
