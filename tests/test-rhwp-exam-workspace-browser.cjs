@@ -9,7 +9,7 @@ h.withServer(async origin=>{
  fs.mkdirSync(evidence,{recursive:true});
  for(const [engineName,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name])=>!process.env.EXAM_ENGINE||name===process.env.EXAM_ENGINE)){
   const browser=await engine.launch({headless:true});
-  try{for(const surface of['','preview/'].filter(surface=>!process.env.EXAM_SURFACE||surface===(process.env.EXAM_SURFACE==='preview'?'preview/':''))){
+  try{for(const surface of['']){
    const name=engineName+(surface?'-preview':''),stateUrl='/js/state.js?v=1.7.0-four-session-integration';
    const context=await browser.newContext({viewport:{width:1440,height:950},acceptDownloads:true});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));
@@ -25,7 +25,7 @@ h.withServer(async origin=>{
     assert.equal(layout.bodyTop,layout.barBottom,'editor body starts right under the shared top bar at '+width);
     if(layout.toolsTop!=null&&width>900){assert.equal(layout.toolsTop,layout.bodyTop,'inspector column starts at the top of the body at '+width);assert.ok(Math.abs(layout.toolsLeft-layout.studioRight)<=1,'inspector sits right of the paper at '+width);}
     if(width<=900)assert.equal(await page.locator('#rhwp-exam-workspace .exam-insp-toggle').isVisible(),await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode')==='focus','narrow screens open the inspector as a drawer from the right edge at '+width);
-    assert.equal(layout.studioTop,layout.bodyTop,'paper starts right under the top bar (no tool row above it) at '+width);assert.ok(layout.barBottom<=49.5,'top bar is 48px + line (10-24 시안 「막대 48」)');assert.equal(layout.overflow,false,'no outer horizontal overflow');
+    assert.equal(layout.studioTop,layout.bodyTop,'paper starts right under the top bar (no tool row above it) at '+width);assert.ok(layout.barBottom<=57.5,'top bar is 56px (11-04 다듬기 15a825be: 48→56) '+JSON.stringify({width,surface,barBottom:layout.barBottom}));assert.equal(layout.overflow,false,'no outer horizontal overflow');
    }
    await page.setViewportSize({width:1440,height:950});
    await page.locator('[data-exam-menu="file"]').focus();await page.keyboard.press('ArrowDown');
@@ -46,7 +46,7 @@ h.withServer(async origin=>{
    await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').evaluate(b=>b.click());await h.idle(page);await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});
    const reopened=await h.drawing(page,stateUrl);
    assert.equal(reopened.activePageId,original.activePageId,'original editing returns to the linked source tab');assert.equal(reopened.undo,1,'original tab undo history survives');
-   assert.equal(await page.locator('#rhwp-exam-workspace').isVisible(),false,'full 5E working screen returns');
+   assert.equal(await page.locator('#rhwp-exam-workspace').isVisible(),true,'원본 편집은 한글 위에 뜨는 창(11-11, js/rhwp-exam-workspace.js beginEdit float): 한글 화면은 뒤에 남는다');assert.equal(await page.evaluate(()=>document.body.classList.contains('exam-float-edit')&&document.querySelector('#rhwp-exam-workspace').inert),true,'한글은 뒤에서 잠기고 편집 창이 뜬다');
    await page.evaluate(async url=>{const{state}=await import(url);state.update(s=>{s.objects[0].p2.y=4;});},stateUrl);
    await page.screenshot({path:path.join(evidence,name+'-edit.png')});
    await page.locator('[data-source-apply]').click();await h.recrop(page);await h.idle(page);

@@ -237,7 +237,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: restored side panel
  await page.screenshot({path:path.join(evidence,engine,'restored-enlarged.png')});
  await page.evaluate(()=>document.documentElement.style.removeProperty('--ui-zoom'));
  assert.equal((await snapshot(page)).length,count,'no source-reuse side effect');
- assert.deepEqual(await panel.locator('select[data-ai-empty-import] option').allTextContents(),['이미지 불러오기','라이브러리에서 불러오기','파일 탐색기에서 불러오기']);
+ // 11-11 시안 v7(7992a89c): 불러오기 select → 「라이브러리에서 불러오기」 단추 + ＋ 메뉴(js/ai-panel.js aiEmptyImportHtml)
+ assert.deepEqual(await panel.locator('.ai-stage-import-main span').allTextContents(),['라이브러리에서 불러오기']);assert.deepEqual(await panel.locator('.ai-stage-import-menu [role="menuitem"] span').allTextContents(),['파일에서 불러오기','클립보드에서']);
  const tabs=await snapshot(page);assert.ok(tabs.some(t=>t.generated?.some(c=>c.id==='candidate-0')),'existing result remains available');
  await page.setViewportSize({width:740,height:900});await page.screenshot({path:path.join(evidence,engine,'restored-mobile.png')});
  assert.deepEqual(errors,[]);
@@ -319,9 +320,11 @@ for (const engine of ['chromium','webkit']) test(`${engine}: empty workbench sta
  assert.equal(await panel.locator('.ai-task-add').textContent(),'＋ 이미지 추가');
  assert.equal(await panel.getAttribute('data-ai-layout'),'side-by-side');
  assert.equal(await panel.locator('[data-ai-fixed-speed], [data-ai-help-title="속도"]').count(),0);
- assert.equal(await panel.locator('[data-ai-send]').isVisible(),false,'one primary action in the footer');
- assert.equal(await panel.locator('[data-ai-comments-apply]').isVisible(),true);
- const boxes=()=>panel.evaluate(p=>Object.fromEntries(['.ai-original-pane','.ai-result-pane','.ai-conversation','.ai-compact-settings','.ai-side-tabs','.ai-workbench-actions'].map(s=>{
+ // 11-11(js/ai-panel.js:2789, css/ai-panel.css:3359): 실행 단추([data-ai-send])가 data-ai-comments-apply를 겸하고 옛 「코멘트 반영」 단추는 숨김 — 아래 칸의 주 단추는 하나.
+ assert.equal(await panel.locator('[data-ai-comments-apply]:not([data-ai-send])').isVisible(),false,'one primary action in the footer');
+ assert.equal(await panel.locator('[data-ai-send]').isVisible(),true);
+ // 11-11 시안 v6(506f30bf): .ai-side-tabs 칸은 없어져 비교 목록에서 뺌
+ const boxes=()=>panel.evaluate(p=>Object.fromEntries(['.ai-original-pane','.ai-result-pane','.ai-conversation','.ai-compact-settings','.ai-workbench-actions'].map(s=>{
   const r=p.querySelector(s).getBoundingClientRect();return[s,{x:r.x,y:r.y,w:r.width,h:r.height}];
  })));
  const before=await boxes();assert.ok(before['.ai-original-pane'].w>200);

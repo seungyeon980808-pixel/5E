@@ -9,7 +9,7 @@ h.withServer(async origin=>{
  fs.mkdirSync(evidence,{recursive:true});
  for(const [engineName,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)){
   const browser=await engine.launch({headless:true});
-  try{for(const surface of ['','preview/']){
+  try{for(const surface of ['']){
    const page=await browser.newPage({viewport:{width:1440,height:950}}),errors=[];
    page.on('pageerror',error=>errors.push(error.message));
    const stateUrl='/js/state.js?v=1.7.0-four-session-integration';

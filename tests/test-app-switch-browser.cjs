@@ -80,13 +80,14 @@ h.withServer(async origin => {
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && document.getElementById('rhwp-exam-workspace').hidden && !document.querySelector('.app-leaving'), null, { timeout: 10000 });
       await page.waitForTimeout(400);
       assert.equal(await page.evaluate(() => document.querySelector('body>.app').inert), false, `${name}: closing the sheet mid-switch never leaves the image screen locked`);
-      await page.locator('.app-switch-image [data-app-switch="hwp"]').click({ timeout: 5000 });
+      await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b=>b.click());/* nav.app-switch는 로고 목록(11-04)으로 숨겨짐 */
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' });
       // 5) M8: 이름을 빠르게 두 번 누르면 둘째 클릭이 새 화면의 같은 자리(방금 떠나온 프로그램)를 눌러 튕겨 돌아가던 것.
       await page.waitForTimeout(500);
       await page.locator('.exam-topbar [data-app-switch="image"]').evaluate(b=>b.click());
       await page.waitForFunction(() => document.getElementById('rhwp-exam-workspace').hidden && !document.querySelector('.app-leaving'));
-      const examName = page.locator('.app-switch-image [data-app-switch="exam"]'), box = await examName.boundingBox();
+      await page.locator('.app-shell-header .app-brand').click(); await page.locator('.app-menu.is-open').waitFor(); await page.waitForTimeout(250);/* 11-04: 이름 줄은 로고 목록으로 바뀜 — 목록의 exam 칸을 빠르게 두 번 누른다 */
+      const examName = page.locator('.app-menu.is-open [data-app-switch="exam"]'), box = await examName.boundingBox();
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
       await page.waitForTimeout(200);
       await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
