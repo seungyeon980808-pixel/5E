@@ -116,8 +116,9 @@ async function executeDesktopSmokeContractProbe(probe) {
 }
 
 async function loadPlatformTestSeam() {
-  const source = fs.readFileSync(path.join(__dirname, "..", "preview", "js", "platform.js"), "utf8")
-    .replace(/^import .*preview-storage\.js[^;]+;$/m, "const previewStorage = { getItem() { return null; }, setItem() {} };");
+  const source = fs.readFileSync(path.join(__dirname, "..", "js", "platform.js"), "utf8")
+    .replace(/^import .*preview-storage\.js[^;]+;$/m, "const previewStorage = { getItem() { return null; }, setItem() {} };")
+    .replace(/^import .*app-lock\.js[^;]+;$/m, "const coveringApp = () => false;");
   const original = {
     navigator: Object.getOwnPropertyDescriptor(globalThis, "navigator"),
     document: Object.getOwnPropertyDescriptor(globalThis, "document"),
@@ -173,7 +174,7 @@ test("packaged smoke accepts the legacy empty primary scope without weakening se
 
 test("packaged smoke dismisses the first-run tutorial through its public skip control", () => {
   const mainSource = fs.readFileSync(path.join(__dirname, "main.cjs"), "utf8");
-  const tutorialSource = fs.readFileSync(path.join(__dirname, "..", "preview", "js", "tutorial.js"), "utf8");
+  const tutorialSource = fs.readFileSync(path.join(__dirname, "..", "js", "tutorial.js"), "utf8");
   assert.match(tutorialSource, /class="tut-btn tut-banner-no">건너뛰기<\/button>/,
     "the first-run tutorial exposes a public dismissal control");
   assert.match(mainSource, /document\.querySelector\("\.tut-welcome-overlay \.tut-banner-no"\)\?\.click\(\)/,

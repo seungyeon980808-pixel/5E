@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { encodeScopedPng } from '../preview/js/ai-scoped-edit-png.js';
-import { prepareSeparatedAssets } from '../preview/js/ai-separated-assets.js';
+import { encodeScopedPng } from '../js/ai-scoped-edit-png.js';
+import { prepareSeparatedAssets } from '../js/ai-separated-assets.js';
 const w=100,h=80;
 async function separate(transparent) {
  const data=new Uint8Array(w*h*4).fill(255);
@@ -22,7 +22,7 @@ for(const checker of [false,true]) {
  await assert.rejects(prepareSeparatedAssets(`data:image/png;base64,${Buffer.from(png).toString('base64')}`), /체크무늬나 어두운 배경/);
 }
 console.log('Edge-touching objects: white/transparent separation and unsupported background rejection passed');
-const { insertEditableAssets } = await import('../preview/js/ai-editable-assets.js');
+const { insertEditableAssets } = await import('../js/ai-editable-assets.js');
 const prepared = await separate(false);
 prepared.labelsDisabled = true;
 const original = {id:'original',type:'image',src:'original-data'};

@@ -7,7 +7,7 @@ import {
   startBridge,
   stopBridge,
 } from "../lib/bridge.js";
-import { parseMcpPairingRecord } from "../../../preview/js/mcp-pairing.js";
+import { parseMcpPairingRecord } from "../../../js/mcp-pairing.js";
 
 const ORIGIN = "https://seungyeon980808-pixel.github.io";
 const SAMPLE_CAPABILITY = "A".repeat(43);

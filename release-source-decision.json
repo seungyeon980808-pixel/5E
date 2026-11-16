@@ -127,9 +127,8 @@
     }
   ],
   "entryDecision": {
-    "desktop": "preview/index.html",
+    "desktop": "index.html",
     "stableWeb": "index.html",
-    "packagePattern": "preview/**/*",
     "previewStorageNamespace": "5e.preview:",
     "storageMigrationFilesModified": false
   },
@@ -1658,8 +1657,7 @@
       "sourceCommit": "c1bca259aff32cb29caf0df6cb68503edb869863",
       "originalTaskCommit": "de7b5ecddd93504ba77bf37e0f79148215723d13",
       "paths": [
-        "docs/credits.html",
-        "preview/docs/credits.html"
+        "docs/credits.html"
       ],
       "evidence": ".omo/evidence/5e-160-release-remediation/task-11-credits/receipt.md",
       "rationale": "Task 11 regenerated both credit pages from the authoritative 991-item parts manifest."
@@ -1674,42 +1672,6 @@
       "rationale": "The independently reviewed named smoke-contract command is the final source for the package manifest."
     },
     {
-      "sourceCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
-      "originalTaskCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
-      "paths": [
-        "preview/css/style.css"
-      ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/integration-prep/integration-receipt.json",
-      "rationale": "The integrated accessibility fix is the final source for the preview stylesheet."
-    },
-    {
-      "sourceCommit": "3e62c46d626d45cc580a0ff4960da6cfa5be9696",
-      "originalTaskCommit": "3e62c46d626d45cc580a0ff4960da6cfa5be9696",
-      "paths": [
-        "preview/js/main.js"
-      ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/integration-prep/integration-receipt.json",
-      "rationale": "The integrated recovery fix is the final source for the preview entry module."
-    },
-    {
-      "sourceCommit": "4db68c6ad160eb99197f73d882106d7127d42323",
-      "originalTaskCommit": "4db68c6ad160eb99197f73d882106d7127d42323",
-      "paths": [
-        "preview/js/mcp-bridge.js"
-      ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/integration-prep/integration-apply.log",
-      "rationale": "The integrated local-input security fix is the final source for the preview bridge."
-    },
-    {
-      "sourceCommit": "a93e7708087246a6f6c39d3ab8a57d00b2d7f46b",
-      "originalTaskCommit": "a93e7708087246a6f6c39d3ab8a57d00b2d7f46b",
-      "paths": [
-        "preview/js/ai-workbench.js"
-      ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/task-13-final/f8772937/freeze-receipt.json",
-      "rationale": "The deferred header-resize fix is the final source for the preview workbench."
-    },
-    {
       "sourceCommit": "4d00f55d349bbfb64320a7cd29fe6c838a5d944b",
       "originalTaskCommit": "491a91554f7bfe1a5e392518854f2b0fba32b1f9",
       "paths": [
@@ -1717,15 +1679,6 @@
       ],
       "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-f812-harness-independent/REVIEW.md",
       "rationale": "The independently reviewed primary-pointer smoke repair is the final source for the desktop entry."
-    },
-    {
-      "sourceCommit": "5a70fb2d34788ebf04e2e8cde0d241d4071598b4",
-      "originalTaskCommit": "6e3436ebff5bf640bce295c59973a060a9077627",
-      "paths": [
-        "preview/js/ai-scoped-edit-png.js"
-      ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-png-phys-independent/REVIEW.md",
-      "rationale": "The independently reviewed bounded pHYs metadata repair is the final source for the scoped PNG decoder."
     }
   ],
   "taskChanges": [
@@ -1748,15 +1701,6 @@
       "rationale": "drive packaged area-comment smoke gestures with the required primary-pointer contract"
     },
     {
-      "path": "preview/js/ai-scoped-edit-png.js",
-      "sourceCommit": "5a70fb2d34788ebf04e2e8cde0d241d4071598b4",
-      "sourceBlob": "4f2e1721a86a2a6e58b62881d6892e802287aa3d",
-      "sourceSha256": "c70506b95c921bddf6b6925f165e3cf8e40942f3c672f9544e5a8c618c32bbf3",
-      "currentSha256": "c70506b95c921bddf6b6925f165e3cf8e40942f3c672f9544e5a8c618c32bbf3",
-      "bytes": 12813,
-      "rationale": "accept bounded pHYs metadata while preserving the scoped PNG decoder's fail-closed policy"
-    },
-    {
       "path": "js/svg-export.js",
       "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
       "sourceBlob": "07983262d6aa8da5cec5d9ebea29ab26f7ed7866",
@@ -1772,201 +1716,9 @@
       "currentSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
       "bytes": 243322,
       "rationale": "Task 11 generated the complete stable credits page from the authoritative parts manifest."
-    },
-    {
-      "path": "preview/docs/credits.html",
-      "sourceCommit": "c1bca259aff32cb29caf0df6cb68503edb869863",
-      "sourceBlob": "0aaae675624ca2ed06acfec86eb450efdb7f81ec",
-      "sourceSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
-      "currentSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
-      "bytes": 243322,
-      "rationale": "Task 11 generated the complete preview credits page from the authoritative parts manifest."
-    },
-    {
-      "path": "preview/css/style.css",
-      "sourceCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
-      "sourceBlob": "5af42bcb7a773da265a26508b56899b005a7f6cf",
-      "sourceSha256": "d6ddba5b6b3351c45afdea1edf2b9521d37d4c3a46046d267d3d1d3d5b79304d",
-      "currentSha256": "d6ddba5b6b3351c45afdea1edf2b9521d37d4c3a46046d267d3d1d3d5b79304d",
-      "bytes": 104729,
-      "rationale": "The integrated accessibility fix supplies the final preview stylesheet."
-    },
-    {
-      "path": "preview/js/ai-workbench.js",
-      "sourceCommit": "a93e7708087246a6f6c39d3ab8a57d00b2d7f46b",
-      "sourceBlob": "ae5d9869c56fbf04d70d3b597dc685fa73528478",
-      "sourceSha256": "5e70f3b96212b5246d68f1ae402c873ed7c9098cf0de3e324f8620179199a0e0",
-      "currentSha256": "5e70f3b96212b5246d68f1ae402c873ed7c9098cf0de3e324f8620179199a0e0",
-      "bytes": 41533,
-      "rationale": "The deferred header-resize fix supplies the final preview workbench."
-    },
-    {
-      "path": "preview/js/main.js",
-      "sourceCommit": "3e62c46d626d45cc580a0ff4960da6cfa5be9696",
-      "sourceBlob": "038ffb7660f76441122c97b335b9d488350d522f",
-      "sourceSha256": "3851d702b5e91f23b2b7a094600bb633eae10ed07f6a4898da1bf0365d1baa86",
-      "currentSha256": "3851d702b5e91f23b2b7a094600bb633eae10ed07f6a4898da1bf0365d1baa86",
-      "bytes": 31413,
-      "rationale": "The integrated recovery fix supplies the final preview entry module."
-    },
-    {
-      "path": "preview/js/mcp-bridge.js",
-      "sourceCommit": "4db68c6ad160eb99197f73d882106d7127d42323",
-      "sourceBlob": "b87f6b447ee22a1d7024d81a457ecb314730e5e7",
-      "sourceSha256": "ecd50eb2a25ca8564dd9e665656b77d0c03d1761673a8a982fde65efe1bcb15f",
-      "currentSha256": "ecd50eb2a25ca8564dd9e665656b77d0c03d1761673a8a982fde65efe1bcb15f",
-      "bytes": 32221,
-      "rationale": "The integrated local-input security fix supplies the final preview bridge."
     }
   ],
   "directEntryHashes": {
-    "preview": [
-      {
-        "path": "preview/assets/apple-touch-icon.png",
-        "sha256": "fb04497eefc90992d99e5d1e70b79d08873c4e9d8bbe194b151afd72c052b436",
-        "bytes": 26060
-      },
-      {
-        "path": "preview/assets/favicon.png",
-        "sha256": "1cf454e7bb8ce1c26f8c9127698afed9bfdc0e1a4c84a57977154b4593a5bb05",
-        "bytes": 5514
-      },
-      {
-        "path": "preview/assets/logo.svg",
-        "sha256": "32d034db852905d4eca2962274d144684f1c6186b70229b0cd8e602db0c2002a",
-        "bytes": 540
-      },
-      {
-        "path": "preview/css/ai-composition-editor.css",
-        "sha256": "5f0d9ca288a81e8d13a28024568eace5717d4680f4aa44ce9024f689505f3eb4",
-        "bytes": 2133
-      },
-      {
-        "path": "preview/css/ai-editable-assets.css",
-        "sha256": "55712ce1cb4367475bd94591878c14d4c6cefa23e408afab7393ed6ad3db9e68",
-        "bytes": 6296
-      },
-      {
-        "path": "preview/css/ai-panel.css",
-        "sha256": "fa4e86498706d543adc1f8a9be66cc87b350e9bace80e423407eabce1817b4c0",
-        "bytes": 111502
-      },
-      {
-        "path": "preview/css/ai-sharing.css",
-        "sha256": "12a5d4c2c40536d5379cb5a248b6f076ef2964ab082d866f8033f0c57a4b7dd1",
-        "bytes": 4424
-      },
-      {
-        "path": "preview/css/exam-library.css",
-        "sha256": "b1450634c530410ef20dea08c32d8d4876843978fb816ced370740db65679ff1",
-        "bytes": 13964
-      },
-      {
-        "path": "preview/css/inspector.css",
-        "sha256": "fcc8520664e5a19e997207ff36999dd3b7df843d0bf059a6075177d77d1cf34b",
-        "bytes": 17521
-      },
-      {
-        "path": "preview/css/lite-shell.css",
-        "sha256": "c5ad10525d399f4ab3b8fad321077592b8a68d31c3433b1116d96ef94b68d255",
-        "bytes": 22499
-      },
-      {
-        "path": "preview/css/mobile-image.css",
-        "sha256": "42ebae7ad0009c2d982990a94ebd9790188dc6a2f21e597dfdefc235ee909c59",
-        "bytes": 10482
-      },
-      {
-        "path": "preview/css/mode-transition.css",
-        "sha256": "1b8c78bccaacf885b88b432c82daefac634f81e704eb17703635a0113804c909",
-        "bytes": 1383
-      },
-      {
-        "path": "preview/css/panel-visibility.css",
-        "sha256": "8cedcdf8eacda168c67ab799b13837320447fc665d35c8a8e20c37ec81534a19",
-        "bytes": 13011
-      },
-      {
-        "path": "preview/css/parts-library.css",
-        "sha256": "682d81130f6758719f121f88d8bd3fbccbcac84e9d52c3f8bdb6470e16e5cc2d",
-        "bytes": 9430
-      },
-      {
-        "path": "preview/css/productization.css",
-        "sha256": "b2488a5dd98a7d736951ea221474e8f39b62a027d919e7734ba734e4a0c405ec",
-        "bytes": 10384
-      },
-      {
-        "path": "preview/css/style.css",
-        "sha256": "d6ddba5b6b3351c45afdea1edf2b9521d37d4c3a46046d267d3d1d3d5b79304d",
-        "bytes": 104729
-      },
-      {
-        "path": "preview/css/tutorial.css",
-        "sha256": "672bcc25e6c22f6ec0d6291ae0b9a95608d18952f1f93ab5cb93efcd05a47910",
-        "bytes": 29129
-      },
-      {
-        "path": "preview/css/unified-library.css",
-        "sha256": "5e0f61357953102bd646d838db5a1df258b2b7afac9de69d61456070d12612eb",
-        "bytes": 107174
-      },
-      {
-        "path": "preview/css/web-login.css",
-        "sha256": "af1d305c8da0c9a8b3828a0ecc50f35e44340ba53ec58fd113746a931c3dc6b6",
-        "bytes": 11325
-      },
-      {
-        "path": "preview/docs/credits.html",
-        "sha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
-        "bytes": 243322
-      },
-      {
-        "path": "preview/experiments/web-codex-auth/editor-bridge.js",
-        "sha256": "a280a6d7781c0d6d9bc1293daab529c8f0edbabd3751d4e9f14b7a225b2ba914",
-        "bytes": 4062
-      },
-      {
-        "path": "preview/js/ai-workbench.js",
-        "sha256": "5e70f3b96212b5246d68f1ae402c873ed7c9098cf0de3e324f8620179199a0e0",
-        "bytes": 41533
-      },
-      {
-        "path": "preview/js/main.js",
-        "sha256": "3851d702b5e91f23b2b7a094600bb633eae10ed07f6a4898da1bf0365d1baa86",
-        "bytes": 31413
-      },
-      {
-        "path": "preview/js/mcp-bridge.js",
-        "sha256": "ecd50eb2a25ca8564dd9e665656b77d0c03d1761673a8a982fde65efe1bcb15f",
-        "bytes": 32221
-      },
-      {
-        "path": "preview/js/mobile-entry.js",
-        "sha256": "9f256a8af433d3ff4cb00236943ce39881039b9ca5dd12a809f00869d23e4e07",
-        "bytes": 534
-      },
-      {
-        "path": "preview/js/panel-visibility.js",
-        "sha256": "049765bd46213f1283baf8b4c3188392bd6200d3ba616d2333be076dc556fecb",
-        "bytes": 11053
-      },
-      {
-        "path": "preview/js/touch-drag.js",
-        "sha256": "78dd11ba751f4a1745bedd5ca587e16f72e7656fdaa5dc44fbba79cc85cac31b",
-        "bytes": 4685
-      },
-      {
-        "path": "preview/js/web-ai-connection.js",
-        "sha256": "fa75f3546842ba73b852ca1934ce71eaaa2f865217111a96f8ee4d59cb41b71c",
-        "bytes": 8209
-      },
-      {
-        "path": "preview/manifest.json",
-        "sha256": "1d4fe69a4224f42438901741fffd9d8324c7891acc0b9906ca4d5d1b7f714917",
-        "bytes": 572
-      }
-    ],
     "stable": [
       {
         "path": "assets/apple-touch-icon.png",

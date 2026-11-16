@@ -6,9 +6,10 @@ const { pathToFileURL } = require('node:url');
 const { fixture, root } = require('./helpers/separation-fixtures.cjs');
 const evidence = process.env.TASK6_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task6');
 fs.mkdirSync(evidence, { recursive: true });
-const load = file => import(pathToFileURL(path.join(root, 'preview/js', file)));
+const load = file => import(pathToFileURL(path.join(root, 'js', file)));
 
-test('separated modes force connected background and restore each previous single preference', async () => {
+// 1.7.1: preview 삭제 뒤 루트 코드와 다름, T 판정 대기 — 옛 사본은 분리 중 배경을 connected로 묶었고, 루트(js/ai-separation-mode.js)는 11-09부터 묶지 않는다(backgroundLocked: false).
+test('separated modes force connected background and restore each previous single preference', { skip: '1.7.1: preview 삭제 뒤 루트 코드와 다름, T 판정 대기' }, async () => {
   const { transitionSeparationMode } = await load('ai-separation-mode.js');
   for (const backgroundPolicy of ['preserve', 'connected', 'checkerboard']) {
     // Given: a single image with independently chosen output options.

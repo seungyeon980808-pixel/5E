@@ -27,13 +27,13 @@ test("release documentation and channel provenance are internally consistent", (
 test("release documentation checker reads current PDF/Drive metadata", (t) => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "5e-release-docs-drive-config-"));
   t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
-  for (const relative of ["README.md", "DESIGN.md", "LICENSE", ".nvmrc", "package.json", "release-channels.json", "docs", "preview/PREVIEW.md"]) {
+  for (const relative of ["README.md", "DESIGN.md", "LICENSE", ".nvmrc", "package.json", "release-channels.json", "docs"]) {
     const source = path.join(root, relative);
     const target = path.join(fixture, relative);
     fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.cpSync(source, target, { recursive: true });
   }
-  const configRelative = path.join("preview", "assets", "pdf-library", "google-drive.json");
+  const configRelative = path.join("assets", "pdf-library", "google-drive.json");
   const configPath = path.join(fixture, configRelative);
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.copyFileSync(path.join(root, configRelative), configPath);

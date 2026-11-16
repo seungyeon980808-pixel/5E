@@ -1,5 +1,5 @@
 const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');const vm=require('node:vm');
-function harness(){const requests=[],starts=[];const window={fiveEWebRequest:async(action,payload)=>{requests.push({action,payload});if(action==='bridge-send')return new Promise(resolve=>starts.push(resolve));return {ok:true};}};vm.runInNewContext(fs.readFileSync(require.resolve('../preview/experiments/web-codex-auth/editor-bridge.js'),'utf8'),{window,setTimeout:()=>0,clearTimeout(){},AbortController});return{bridge:window.fiveEWebAI,requests,starts};}
+function harness(){const requests=[],starts=[];const window={fiveEWebRequest:async(action,payload)=>{requests.push({action,payload});if(action==='bridge-send')return new Promise(resolve=>starts.push(resolve));return {ok:true};}};vm.runInNewContext(fs.readFileSync(require.resolve('../experiments/web-codex-auth/editor-bridge.js'),'utf8'),{window,setTimeout:()=>0,clearTimeout(){},AbortController});return{bridge:window.fiveEWebAI,requests,starts};}
 test('actual browser adapter forwards current binding, rejects stale binding and preserves unbound cancellation',async()=>{
  const h=harness();const p=h.bridge.send({clientScope:'A'});h.starts[0]({turnId:'old',renderThreadId:'old-thread'});await p;
  const next=h.bridge.send({clientScope:'A'});assert.equal((await h.bridge.interrupt({clientScope:'A',turnId:'old',threadId:'old-thread'})).stale,true);h.starts[1]({turnId:'new',renderThreadId:'new-thread'});await next;
@@ -16,7 +16,7 @@ test('late old start result cannot replace newer browser scope owner or cancel a
 function pollingHarness(){
  const requests=[],timers=[],polls=[],events=[],states=[];let id=0;
  const window={fiveEWebRequest:async(action,payload)=>{requests.push({action,payload});if(action==='bridge-send')return {turnId:'t'+(++id),renderThreadId:'thread'+id};if(action==='bridge-events')return new Promise((resolve,reject)=>polls.push({resolve,reject}));return {ok:true};}};
- vm.runInNewContext(fs.readFileSync(require.resolve('../preview/experiments/web-codex-auth/editor-bridge.js'),'utf8'),{window,setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length;},clearTimeout(){},AbortController});
+ vm.runInNewContext(fs.readFileSync(require.resolve('../experiments/web-codex-auth/editor-bridge.js'),'utf8'),{window,setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length;},clearTimeout(){},AbortController});
  window.fiveEWebAI.onEvent(e=>events.push(e));window.fiveEWebAI.onState(e=>states.push(e));
  return {bridge:window.fiveEWebAI,requests,timers,polls,events,states};
 }

@@ -36,8 +36,8 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   // runtime. Pin its full identity, including the query, for both entrypoints.
   const origin = "https://unit.invalid";
   const expectedQuery = "?v=1.7.0-four-session-integration";
-  for (const entry of ["/", "/preview/"]) {
-    const html = entry === "/" ? index : fs.readFileSync(path.join(__dirname, "..", "preview", "index.html"), "utf8");
+  for (const entry of ["/"]) {
+    const html = index;
     const entryUrl = new URL(entry, origin).href;
     const mainUrl = mainModuleUrl(html, entryUrl);
     assert.equal(mainUrl, `${origin}/js/main.js${expectedQuery}`, `${entry} loads the canonical integrated entrypoint`);

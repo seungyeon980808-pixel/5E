@@ -88,10 +88,11 @@ function fixture(t) {
   return { appRoot, outside, file:name => pathToFileURL(path.join(appRoot, name)).href };
 }
 
-test('current root and preview load one canonical /js runtime backed by the actual candidate files', t => {
+test('current root loads one canonical /js runtime backed by the actual candidate files', t => {
   const { api } = harness(t);
   const main = alias('js/main.js' + query), state = alias('js/state.js' + query);
-  for (const entry of [primaryUrl, pathToFileURL(path.join(root, 'preview/index.html')).href]) {
+  // 1.7.1: 옛 preview/index.html은 지웠다. 아래 두 검사에서는 그 주소를 「믿지 않을 다른 주소」 예로만 쓴다.
+  for (const entry of [primaryUrl]) {
     const html = fs.readFileSync(fileURLToPath(entry), 'utf8');
     assert.equal(mainModuleUrl(html, entry), main);
     const runtime = runtimeConfiguration({moduleBase:'/js/', moduleQuery:query}, entry, main, fs.readFileSync(path.join(root, 'js/main.js'), 'utf8'));

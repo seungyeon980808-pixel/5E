@@ -3,7 +3,7 @@ import path from "node:path";
 import vm from "node:vm";
 
 const root = path.resolve(import.meta.dirname, "..");
-const sourceRoot = path.join(root, "preview/js");
+const sourceRoot = path.join(root, "js");
 const evidenceDir = process.env.GRAPH_EVIDENCE_DIR || null;
 
 class ElementStub {
@@ -51,12 +51,17 @@ const sampler = loadModule("function-graph/sampler.js", ["sampleFunctionPoints"]
 const core = loadModule("render/core.js", ["SVG_NS", "grayHex", "applyDash", "catmullRomPath", "catmullRomClosedPath", "roundedPolylinePath"], {
   fillSvgTextWithRomanRuns: () => {},
 });
+// 1.7.1: 루트 coordplane.js는 graph/exam-style.js(examSeriesStyle 등)를 가져다 쓴다. 옛 사본에는 없던 의존이라 같이 싣는다.
+const examStyle = loadModule("graph/exam-style.js", ["EXAM_STYLE", "DESCRIPTION_EXAM_STYLE", "isExamStyle", "examMetrics", "examPlaneStyle", "examSeriesStyle"]);
+const descriptionLayout = loadModule("graph/description-layout.js", ["descriptionTitleLayout", "descriptionTickLabelLanes"]);
 const render = loadModule("render/coordplane.js", ["renderFuncgraph"], {
   ...core,
   ...coords,
   resolveFill: () => "none",
   makeFillPattern: () => null,
   renderGraphLabel: () => null,
+  EXAM_STYLE: examStyle.EXAM_STYLE, isExamStyle: examStyle.isExamStyle, examPlaneStyle: examStyle.examPlaneStyle, examSeriesStyle: examStyle.examSeriesStyle,
+  descriptionTitleLayout: descriptionLayout.descriptionTitleLayout, descriptionTickLabelLanes: descriptionLayout.descriptionTickLabelLanes,
 });
 
 const plane = { x: 0, y: 0, w: 100, h: 100, xMin: -5, xMax: 5, yMin: -5, yMax: 5 };

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createUnifiedLibraryProvider } from "../preview/js/library/provider.js";
+import { createUnifiedLibraryProvider } from "../js/library/provider.js";
 
 const filters = { subject: "p1", academicYear: 2025, startYear: 2025, endYear: 2025, administration: "06" };
 const documents = [
