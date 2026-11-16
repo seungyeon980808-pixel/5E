@@ -144,7 +144,8 @@ test('store change metadata never suppresses any notification', async () => {
 
 test('RAW pending requests share one live service through the compatibility alias', async () => {
   const canonical = await import('../js/ai-label-background.js' + query);
-  const compatibility = await import('../preview/js/ai-label-background.js');
+  // 1.7.1: 옛 preview/ 별칭은 정식 모듈을 같은 쿼리로 다시 내보내던 것이라, 같은 쿼리로 가져와 같은 인스턴스를 본다.
+  const compatibility = await import('../js/ai-label-background.js' + query);
   assert.equal(compatibility.resolveImageLabelBackground, canonical.resolveImageLabelBackground);
   const contract = await canonical.imageLabelBackgroundContract({
     payload: { text: 'preserve RAW', attachments: [], model: 'fixture', effort: 'medium' },
