@@ -216,6 +216,12 @@
       ]
     },
     {
+      "path": "tests/test-hancom-file-equation.mjs",
+      "findingIds": [
+        "HANCOM-EQUATION-SCRIPT"
+      ]
+    },
+    {
       "path": "tests/test-exampool-sheet.mjs",
       "findingIds": [
         "EXAMPOOL-STRUCTURED-QUESTION",
