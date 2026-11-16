@@ -128,6 +128,8 @@ const DELIM_L2H = { '\\{': '{', '\\}': '}', '\\langle': '<', '\\rangle': '>', '\
 // o.hancom: 한글 파일로 내보낼 때(11-16, 1.7.1 B2). 글꼴 명령은 {rm X}처럼 묶어 뒤 글자로 번지지 않게 하고,
 // 모양 없는 LaTeX 명령(\displaystyle 등)은 빼며, 모르는 명령은 o.unknown(Set)에 모은다. o 없이 부르면 예전과 같다.
 const DROP_L2H = new Set(['displaystyle', 'textstyle', 'scriptstyle', 'limits', 'nolimits', 'mathstrut', 'strut', 'big', 'Big', 'bigg', 'Bigg', 'bigl', 'bigr', 'Bigl', 'Bigr']);
+// 한컴 수식 명령 목록(한글문서파일형식_수식 revision1.3)에 없는 기호는 글자 그대로 넣는다(한글은 수식 안 유니코드 글자를 그린다).
+const UNI_L2H = { rightleftharpoons: '⇌', leftrightharpoons: '⇋', mid: '|', degree: '°', AA: 'Å', cdotp: '·', checkmark: '✓', nexists: '∄', varnothing: '∅', parallel: '∥', perp: '⊥', ni: '∋', nleq: '≰', ngeq: '≱', leqslant: '≤', geqslant: '≥', lesssim: '≲', gtrsim: '≳', models: '⊨', dagger: '†', ddagger: '‡', hbar: 'ħ', nabla: '∇', aleph: 'ℵ', Re: 'ℜ', Im: 'ℑ', wp: '℘', implies: '⟹', iff: '⟺', gets: '←', mapsto: '↦', longleftarrow: '⟵', longleftrightarrow: '⟷', Longrightarrow: '⟹', updownarrow: '↕' };
 export function latexToHwp(src, o = null) {
   const s = String(src || ''); let i = 0;
   const ws = () => { while (i < s.length && /\s/.test(s[i])) i++; };
@@ -158,6 +160,7 @@ export function latexToHwp(src, o = null) {
       if (n === '\\') return ' # ';
       if (n === '{' || n === '}') return n;
       if (n === '%' || n === '$' || n === '#' || n === '&' || n === '_') return n;
+      if (o?.hancom && UNI_L2H[n]) return ' ' + UNI_L2H[n] + ' ';
       if (L2H[n] !== undefined) return ' ' + L2H[n] + ' ';
       if (o?.unknown && /^[A-Za-z]+$/.test(n)) o.unknown.add(n);
       return ' ' + n + ' ';
