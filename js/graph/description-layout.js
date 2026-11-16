@@ -1,7 +1,17 @@
 // Keep quantities and units separate in the plan; store real line breaks in
 // editable labels so preview, canvas and SVG export share the same typography.
+// 1.7.1 B18: AI 복원 축 이름이 「주기주기(일)」처럼 같은 낱말을 연달아 두 번 쓴 경우 한 번만 남긴다.
+// 낱말(두 글자 이상, 한글·영문)이 띄어쓰기를 사이에 두든 안 두든 바로 반복되고, 그 뒤가 끝이거나 (단위)일 때만 줄인다.
+// 「가가호호」처럼 반복 뒤에 다른 글자가 이어지는 정상 낱말은 그대로 둔다. 같은 (단위)가 두 번 붙은 것도 하나로.
+export function collapseRepeatedAxisCaption(text) {
+  let caption = String(text ?? '');
+  caption = caption.replace(/^(\s*)([가-힣A-Za-z]{2,}(?:\s+[가-힣A-Za-z]+)*)\s*\2(?=\s*(?:[（(]|$))/u, '$1$2');
+  caption = caption.replace(/([（(][^()（）]+[)）])(?:\s*\1)+\s*$/u, '$1');
+  return caption;
+}
+
 export function descriptionAxisTitle(axis, which = 'y') {
-  let caption = String(axis.displayTitle ?? axis.displayMath ?? axis.title ?? '').trim();
+  let caption = collapseRepeatedAxisCaption(String(axis.displayTitle ?? axis.displayMath ?? axis.title ?? '').trim());
   const unit = String(axis.unit ?? '').trim();
   // 11-12 밤샘(그래프 생성 20개): 「낙하 거리」「유도 기전력」처럼 띄어 쓴 한글 세로축 이름은 왼쪽 여백 폭에 맞추느라
   // 아주 작게 줄었다. 기출처럼 띄어쓰기에서 줄을 나눠 폭을 줄인다(글자·뜻은 그대로, 편집기에서 고칠 수 있음).
