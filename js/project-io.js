@@ -957,7 +957,8 @@ export function initProjectIO(state, svg) {
   window.addEventListener("5e:project-open", (e) => {
     const { name, bytes } = e.detail || {};
     window.dispatchEvent(new CustomEvent('5e:exampool-close'));
-    if (bytes instanceof Uint8Array || bytes instanceof ArrayBuffer) openProject(state, new File([new Uint8Array(bytes)], String(name || '프로젝트.5e')));
+    // 5E_exam(iframe)에서 온 바이트는 다른 창 영역의 객체라 instanceof로 가리면 놓친다.
+    if (ArrayBuffer.isView(bytes) || Object.prototype.toString.call(bytes) === '[object ArrayBuffer]') openProject(state, new File([new Uint8Array(bytes.buffer ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes)], String(name || '프로젝트.5e')));
   });
 
   initProjectShortcuts(state, fileInput);
