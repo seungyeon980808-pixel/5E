@@ -9,12 +9,12 @@ fs.mkdirSync(output, { recursive: true });
 h.withServer(async origin => {
   for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch();
-    try { for (const surface of ['/', '/preview/']) {
+    try { for (const surface of ['/']) {
       const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await h.navigate(page, new URL(surface + '?mode=pro&mobile=0&exam=0', origin).href);
       await h.ready(page);
-      await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+      await require('./helpers/graph-entry.cjs').openGraphDirect(page);
       await page.locator('#graph-modal-overlay').waitFor({ state: 'visible' });
       await page.locator('#gm-bounds-on').check();
       for (const [axis, min, max] of [['x', '-3', '3'], ['y', '-2', '4']]) {

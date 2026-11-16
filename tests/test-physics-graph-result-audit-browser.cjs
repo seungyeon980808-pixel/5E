@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict'), fs = require('node:fs'), path = require('node:path');
 const { chromium, webkit } = require('./helpers/graph-source-signals.cjs').loadPlaywright();
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/graph-physics/matter-wave-observed.json')));
-const evidence = process.env.EVIDENCE_DIR; assert(evidence); fs.mkdirSync(evidence, { recursive: true });
+const evidence = process.env.EVIDENCE_DIR || fs.mkdtempSync(path.join(require('node:os').tmpdir(), '5e-phys-audit-')); fs.mkdirSync(evidence, { recursive: true });
 (async () => {
   const reports = [];
   for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
@@ -34,10 +34,10 @@ const evidence = process.env.EVIDENCE_DIR; assert(evidence); fs.mkdirSync(eviden
         return { sourceMeasured: measured.applied, before: await audit(plan), after: await audit(measured.plan), originalUnchanged: JSON.stringify(plan) === original };
       }, fixture);
       assert(result.sourceMeasured); assert(result.originalUnchanged);
-      assert.equal(result.before.style.axisArrowSizePass, false);
-      assert.equal(result.after.style.axisArrowSizePass, true);
+      assert.equal(result.before.style.axisArrowSizePass, false, 'before '+JSON.stringify(result.before.style.axisArrows));
+      assert.equal(result.after.style.axisArrowSizePass, true, 'after '+JSON.stringify(result.after.style.axisArrows));
       assert.equal(result.after.formulaCount, 2); assert.equal(result.after.relationCount, 2);
-      assert.equal(result.after.style.fontEmbedded, true); assert.equal(result.after.style.labelHeightMappingPass, true);
+      assert.equal(result.after.style.fontEmbedded, true, 'font'); assert.equal(result.after.style.labelHeightMappingPass, true, 'heights '+JSON.stringify(result.after.style.labelHeights));
       assert.deepEqual(result.before.curves, result.after.curves);
       reports.push({ browser: name, pass: true, modelCalls: 0, inputKind: 'manual-matter-wave-reference', ...result });
     } finally { await browser.close(); }

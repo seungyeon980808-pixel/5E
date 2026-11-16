@@ -257,7 +257,7 @@ async function observe(page, predicate, action) {
       const opener = page.locator('#ai-image-install-open'); await opener.focus();
       await open();
       await page.locator('.gm-modal').evaluate(modal => {
-        const nodes = [...modal.querySelectorAll('button,input,select,textarea,summary,[tabindex="0"]')].filter(el => !el.disabled && el.getClientRects().length);
+        const nodes = [...modal.querySelectorAll('button,input,select,textarea,summary,a[href],[tabindex]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
         window.__workspaceFocus = { first: nodes[0], last: nodes.at(-1) }; nodes[0].focus();
       });
       await page.keyboard.press('Shift+Tab');

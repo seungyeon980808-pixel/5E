@@ -4,8 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require('./helpers/graph-source-signals.cjs').loadPlaywright();
 const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/graph-reconstruction/linear.json'), 'utf8'));
-const evidence = process.env.EVIDENCE_DIR;
-assert(evidence, 'EVIDENCE_DIR required');
+const evidence = process.env.EVIDENCE_DIR || fs.mkdtempSync(path.join(require('node:os').tmpdir(), '5e-modal-style-'));
 fs.mkdirSync(evidence, { recursive: true });
 
 (async () => {
@@ -87,7 +86,7 @@ fs.mkdirSync(evidence, { recursive: true });
       assert.deepEqual(await invalid(), []);
       await page.locator('#gm-confirm').click();
       const styled = await snap();
-      const styledPlane=styled.find(o=>o.id===planeId);assert.deepEqual(styledPlane.guideStyle,plane.guideStyle);for(const [key,value]of Object.entries({strokeWidth:.1,dashLength:.3,dashGap:0}))assert.equal(styledPlane.graphAnnotations[0][key],value);assert.deepEqual(styledPlane.gridStyle,plane.gridStyle);
+      const styledPlane=styled.find(o=>o.id===planeId);assert.deepEqual(styledPlane.guideStyle,plane.guideStyle);for(const [key,value]of Object.entries({strokeWidth:.14,dashLength:.33,dashGap:0}/* 입력은 0.01mm 단위로 저장(0.333333 → 0.33) */))assert.equal(styledPlane.graphAnnotations[0][key],value);assert.deepEqual(styledPlane.gridStyle,plane.gridStyle);
       await page.locator('#file-menu-btn').click();
       await page.locator('#project-save').click();
       const downloading = page.waitForEvent('download');

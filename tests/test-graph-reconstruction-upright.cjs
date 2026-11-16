@@ -3,7 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const {chromium}=require('./helpers/graph-source-signals.cjs').loadPlaywright();
-const out=process.env.EVIDENCE_DIR;assert(out,'EVIDENCE_DIR required');fs.mkdirSync(out,{recursive:true});
+const out=process.env.EVIDENCE_DIR||fs.mkdtempSync(path.join(require('node:os').tmpdir(),'5e-upright-'));fs.mkdirSync(out,{recursive:true});
+// 11-11(b823d003): 복원 그래프도 물리량 기호(눈금 t_1)는 기울인 수식 글꼴, 그 밖의 글자·숫자·단위·분수는 정체. 기울임 허용은 t_1 한 쌍뿐.
 const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/graph-reconstruction/linear.json'),'utf8'));
 (async()=>{
  const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1500,height:1000}});await page.addInitScript(()=>{localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');localStorage.setItem('5e.tutorial.bannerSeen','true');});const report={pass:false,syntheticFixture:true,realModelCalls:0,scenarios:[],errors:[]};page.on('pageerror',e=>report.errors.push(String(e)));
@@ -22,7 +23,7 @@ const fixture=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures/graph-rec
    const objects=structuredClone(state.get().objects.filter(o=>o.id===__uprightPlane||o.planeId===__uprightPlane));
    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='upright-evidence';svg.setAttribute('viewBox','-20 -20 115 95');svg.setAttribute('width','1000');svg.setAttribute('height','800');svg.style.cssText='position:fixed;top:0;left:0;z-index:2147483647;background:white;pointer-events:none';
    for(const o of objects){if(mode==='legacy')delete o.reconstruction.labelStyle;if(mode==='ordinary')delete o.reconstruction;if(mode==='plain')o.richLabels=false;svg.append(o.type==='coordplane'?renderCoordplane(o):renderFuncgraph(o));}document.querySelector('#upright-evidence')?.remove();document.body.append(svg);
-   await document.fonts.ready;const b=svg.getBBox();svg.setAttribute('viewBox',`${b.x-8} ${b.y-8} ${b.width+16} ${b.height+16}`);const texts=[...svg.querySelectorAll('text,tspan')].map(n=>({text:n.textContent,style:getComputedStyle(n).fontStyle,attribute:n.getAttribute('font-style')}));return{mode,texts,allNormal:texts.length>10&&texts.every(n=>n.style==='normal'),hasItalic:texts.some(n=>n.style==='italic'),fractionBars:svg.querySelectorAll('line').length};
+   await document.fonts.ready;const b=svg.getBBox();svg.setAttribute('viewBox',`${b.x-8} ${b.y-8} ${b.width+16} ${b.height+16}`);const texts=[...svg.querySelectorAll('text,tspan')].map(n=>({text:n.textContent,style:getComputedStyle(n).fontStyle,attribute:n.getAttribute('font-style')}));return{mode,texts,allNormal:texts.length>10&&texts.filter(n=>n.style!=='normal').length<=2&&texts.filter(n=>n.style!=='normal').every(n=>['t','1'].includes(n.text)),hasItalic:texts.some(n=>n.style==='italic'),fractionBars:svg.querySelectorAll('line').length};
   },mode);
   for(const mode of ['new','legacy','plain']){const result=await probe(mode);assert(result.allNormal,JSON.stringify(result));report.scenarios.push(result);await page.locator('#upright-evidence').screenshot({path:path.join(out,mode+'.png')});}
   const ordinary=await probe('ordinary');assert(ordinary.hasItalic);report.scenarios.push(ordinary);await page.evaluate(()=>document.querySelector('#upright-evidence').remove());

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const out=process.env.EVIDENCE_DIR; assert(out,'EVIDENCE_DIR required'); fs.mkdirSync(out,{recursive:true});
+const out=process.env.EVIDENCE_DIR||fs.mkdtempSync(path.join((await import('node:os')).tmpdir(),'5e-refine-')); fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true});
 try {
  const page=await browser.newPage({viewport:{width:1200,height:650}});
