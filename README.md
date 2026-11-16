@@ -169,11 +169,11 @@ npm run desktop     # 설치판(Electron)으로 열기
 npm test            # 단위 검사
 ```
 
-Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 설계 문서는 [DESIGN.md](DESIGN.md)와 [docs/](docs/)에 있습니다.
+Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 [DESIGN.md](DESIGN.md), 개발 기록은 [docs/dev/](docs/dev/README.md)에 있습니다.
 
 ## 문서
 
-[1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [사용 가이드](docs/USER_GUIDE.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
+[1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [사용 가이드(1.1.0 기준 옛 판)](docs/USER_GUIDE.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 
 ## 문제 신고 · 라이선스
 
