@@ -94,7 +94,7 @@ for (const workflowName of ['memo-route.yml', 'hub-route.yml', 'bug-route.yml'])
 });
 
 test('server code, schema and Worker never become public assets', () => {
-  for (const file of ['bug/api.mjs', 'bug/store.mjs', 'bug/schema.sql', 'bug/worker/index.mjs', 'bug/worker/wrangler.jsonc']) {
+  for (const file of ['bug/api.mjs', 'bug/store.mjs', 'bug/schema.sql', 'cloudflare/bug/index.mjs', 'cloudflare/bug/wrangler.jsonc']) {
     assert.equal(assets.includes(file), false, file);
   }
 });

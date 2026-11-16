@@ -1,13 +1,15 @@
 // 기출 미리 변환(11-03 밤): 5E 「변형」과 같은 엔진(kice-engine convertKice)으로 기출 문항을 미리 바꿔 문항 하나당 JSON 하나로 남긴다.
 // 「변형」은 이 파일이 있으면 받아서 바로 카드로 넣고(PDF 받기·변환 없음), 없으면 지금처럼 그 자리에서 바꾼다.
 // PDF는 동기화된 드라이브 공유 폴더에서 바로 읽는다(브라우저 요청을 가로채 로컬 파일로 답함).
-// 실행: node exam-pdf/preconvert.cjs [--source=''|hakpyeong] [--limit=N] [--pages=4]  → exam-pdf/q-<source>/<id>.json (+ 실패 목록 failed.json)
-const fs=require('fs'),path=require('path'),os=require('os'),crypto=require('crypto');
+// 실행: EXAM_PDF_ROOT=<드라이브 공유 폴더> node data/exam-pdf/preconvert.cjs [--source=''|hakpyeong] [--limit=N] [--pages=4]  → data/exam-pdf/q-<source>/<id>.json (+ 실패 목록 failed.json)
+const fs=require('fs'),path=require('path'),crypto=require('crypto');
 const {chromium}=require('playwright');
-const h=require('../tests/helpers/rhwp-exam.cjs');
+const h=require('../../tests/helpers/rhwp-exam.cjs');
 const arg=(k,d)=>{const a=process.argv.find(x=>x.startsWith(`--${k}=`));return a?a.slice(k.length+3):d;};
 const VERIFY=Number(arg('verify',0)),SOURCE=arg('source',''),LIMIT=Number(arg('limit',0)),PAGES=Number(arg('pages',4)),ONLY=arg('only','');
-const ROOT=process.env.EXAM_PDF_ROOT||path.join(os.homedir(),'Library/CloudStorage/GoogleDrive-park49174332@gmail.com/내 드라이브/1. 개인작업/5E_공유폴더테스트_0916');
+// 원본 폴더는 환경 변수로만 받는다(1.7.1: 개인 드라이브 경로 기본값을 뺌).
+const ROOT=process.env.EXAM_PDF_ROOT;
+if(!ROOT){console.error('EXAM_PDF_ROOT에 기출 PDF 원본 폴더(드라이브 「5E 공유 자료」를 이 맥에 동기화한 폴더)를 적어 주세요.');process.exit(1);}
 const OUT=path.join(__dirname,`q-${SOURCE||'kice'}`);fs.mkdirSync(OUT,{recursive:true});
 const L=(...a)=>console.log(new Date().toTimeString().slice(0,8),...a);
 const engineKey=require('./engine-key.cjs')();

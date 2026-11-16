@@ -1,5 +1,5 @@
-import { createBoardApi } from '../api.mjs';
-import { createBoardStore } from '../store.mjs';
+import { createBoardApi } from '../../bug/api.mjs';
+import { createBoardStore } from '../../bug/store.mjs';
 
 export default {
   async fetch(request, env) {

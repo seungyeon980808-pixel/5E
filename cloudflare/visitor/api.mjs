@@ -1,4 +1,4 @@
-// 방문자 집계 API. Cloudflare Worker(visitor/worker)와 단위 검사가 같은 코드를 쓴다.
+// 방문자 집계 API. Cloudflare Worker(cloudflare/visitor/worker)와 단위 검사가 같은 코드를 쓴다.
 // 계약은 docs/VISITOR_STATS_SERVER.md, 로컬 Node 서버 scripts/visitor-stats-server.cjs와 같다.
 export const ENDPOINT = '/api/visitor-stats';
 export const TIMEZONE = 'Asia/Seoul';
