@@ -51,19 +51,65 @@ export function mapQueryHighlights(entry, queryOrTerms) {
 const characterWidth = (ch) => /\s/u.test(ch) ? 0.33
   : /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3\u3000-\u9fff\uff00-\uffef]/u.test(ch) ? 1
   : /[A-Z]/.test(ch) ? 0.75 : /[a-z]/.test(ch) ? 0.5 : /[0-9]/.test(ch) ? 0.55
-  : /[.,:;'"!?·()\[\]{}<>~\-]/.test(ch) ? 0.35 : 0.6;
+  : /[()\[\]{}]/.test(ch) ? 0.45 : /[.,:;'"!?·<>~\-]/.test(ch) ? 0.35
+  // 수식 글자(평가원 PDF의 사용자 정의 영역 글자 = 기울인 변수 등)는 앞뒤 여백까지 넓다.
+  : /[\ue000-\uf8ff]/u.test(ch) ? 0.75 : 0.6;
+// 글자 조각(glyph): 검색용 글(NFKC·소문자)의 글자 하나와 그 폭. Ⅲ·①처럼 NFKC로 글자 수가 바뀌는 글자는 원래 글자 폭을
+// 조각에 나눠 준다 — 전에는 「Ⅲ」이 「iii」 세 글자 폭으로 잡혀 그 뒤 「물체」 형광이 한 칸 오른쪽(「체에」)으로 갔다.
+const isWideCharacter = (ch) => /[\u1100-\u11ff\u3130-\u318f\uac00-\ud7a3\u3000-\u9fff\uff00-\uffef\u2160-\u217f\u2460-\u24ff\u2776-\u2793]/u.test(ch);
+function sourceWidth(ch, parts) {
+  if (/\s/u.test(ch)) return characterWidth(" ");
+  if (isWideCharacter(ch)) return 1;
+  return parts.reduce((sum, part) => sum + characterWidth(part), 0) || characterWidth(ch);
+}
+function glyphsOf(text, normalized) {
+  const pieces = [];
+  for (const ch of String(text ?? "")) {
+    const parts = [...ch.normalize("NFKC")];
+    const lowered = parts.flatMap((part) => [...part.toLocaleLowerCase()]);
+    const width = sourceWidth(ch, parts);
+    for (const piece of lowered) pieces.push({ ch: piece, width: width / lowered.length, space: /\s/u.test(piece) });
+  }
+  const glyphs = [];
+  for (const piece of pieces) {
+    if (piece.space) { if (glyphs.length && !glyphs.at(-1).space) glyphs.push({ ch: " ", width: characterWidth(" "), space: true }); continue; }
+    glyphs.push(piece);
+  }
+  if (glyphs.at(-1)?.space) glyphs.pop();
+  if (glyphs.map((glyph) => glyph.ch).join("") === normalized) return glyphs;
+  // 낱자 조합 등으로 글자별 NFKC가 통째 NFKC와 다르면, 검색용 글 글자마다 폭을 잰다(대소문자는 살린 글이 같은 길이일 때만).
+  const cased = String(text ?? "").normalize("NFKC").replace(/\s+/gu, " ").trim();
+  const source = [...cased].length === [...normalized].length ? [...cased] : [...normalized];
+  return [...normalized].map((ch, index) => ({ ch, width: characterWidth(source[index]), space: /\s/u.test(ch) }));
+}
+
+// 색인 글은 글자 덩어리 사이마다 띄어쓰기를 넣어 화면에 없는 띄어쓰기가 있다(「지난다 .」「( 단 ,」) — 문장부호 앞·여는 괄호 뒤
+// 띄어쓰기는 폭 0으로 본다.
+const PHANTOM_BEFORE = /^[.,:;!?)\]}>]$/u, PHANTOM_AFTER = /^[(\[{<]$/u;
+// 조사가 붙는 앞 글자: 영문·숫자·그리스 문자·수식 기호(사용자 정의 영역)·로마 숫자·자모(㉠)·닫는 괄호.
+const PARTICLE_HOST = /^[a-z0-9\u0370-\u03ff\u1100-\u11ff\u3131-\u318e\ue000-\uf8ff)\]}>]$/u;
+// 「( 가 ) 는」「C 와」「5 초」「< 보기 > 에서」처럼 영문·숫자·기호·닫는 괄호 뒤 조사(한글 두 글자 이하 낱말) 앞 띄어쓰기도 화면에는 없다.
+function attachedParticle(glyphs, start) {
+  let count = 0;
+  for (let index = start; index < glyphs.length && !glyphs[index].space; index++) {
+    if (!/[\uac00-\ud7a3]/u.test(glyphs[index].ch) || ++count > 2) return false;
+  }
+  return count > 0;
+}
 // hangulUnits(선택) = 이 덩어리 폭을 한글 한 칸 폭으로 잰 값. 주면 띄어쓰기 폭을 고정값(0.33) 대신 「남는 폭 ÷ 띄어쓰기 수」로 푼다
 // — 평가원 시험지는 양쪽 맞춤이라 줄마다 띄어쓰기 폭이 0.1~1칸으로 달라, 고정값으로는 줄 뒤쪽 낱말 형광이 반 칸씩 밀렸다.
-function characterEdges(full, hangulUnits) {
-  const chars = [...full];
-  const spaces = chars.filter((ch) => /\s/u.test(ch)).length;
-  const glyphUnits = chars.reduce((sum, ch) => sum + (/\s/u.test(ch) ? 0 : characterWidth(ch)), 0);
+function characterEdges(glyphs, hangulUnits) {
+  const phantom = glyphs.map((glyph, index) => glyph.space
+    && (PHANTOM_BEFORE.test(glyphs[index + 1]?.ch ?? "") || PHANTOM_AFTER.test(glyphs[index - 1]?.ch ?? "")
+      || (PARTICLE_HOST.test(glyphs[index - 1]?.ch ?? "") && attachedParticle(glyphs, index + 1))));
+  const spaces = glyphs.filter((glyph, index) => glyph.space && !phantom[index]).length;
+  const glyphUnits = glyphs.reduce((sum, glyph) => sum + (glyph.space ? 0 : glyph.width), 0);
   const solved = Number.isFinite(hangulUnits) && hangulUnits > 0 && spaces
     ? Math.min(1.5, Math.max(0.12, (hangulUnits - glyphUnits) / spaces)) : null;
-  const widthOf = (ch) => /\s/u.test(ch) ? solved ?? characterWidth(ch) : characterWidth(ch);
-  const total = chars.reduce((sum, ch) => sum + widthOf(ch), 0) || 1;
+  const widthOf = (glyph, index) => !glyph.space ? glyph.width : phantom[index] ? 0 : solved ?? glyph.width;
+  const total = glyphs.reduce((sum, glyph, index) => sum + widthOf(glyph, index), 0) || 1;
   const left = [], right = []; let at = 0;
-  for (const ch of chars) { const w = widthOf(ch); if (!/\s/u.test(ch)) { left.push(at / total); right.push((at + w) / total); } at += w; }
+  glyphs.forEach((glyph, index) => { const w = widthOf(glyph, index); if (!glyph.space) { left.push(at / total); right.push((at + w) / total); } at += w; });
   return { left, right };
 }
 
@@ -98,12 +144,11 @@ function sameItemSpaces(previous, word) {
 // 띄어쓰기가 없는 3글자 이상·한글 위주 덩어리에서 재어 이 쪽(문항)의 가운데값을 쓴다. 잴 덩어리가 없으면 null(고정 폭으로).
 function hangulWidthPerHeight(groups) {
   const samples = [];
-  for (const { full, width, height } of groups) {
-    const chars = [...full];
-    if (chars.length < 3 || /\s/u.test(full) || !(height > 0)) continue;
-    const hangul = chars.filter((ch) => /[\uac00-\ud7a3]/u.test(ch)).length;
-    if (hangul / chars.length < 0.6) continue;
-    samples.push(width / height / chars.reduce((sum, ch) => sum + characterWidth(ch), 0));
+  for (const { glyphs, width, height } of groups) {
+    if (glyphs.length < 3 || glyphs.some((glyph) => glyph.space) || !(height > 0)) continue;
+    const hangul = glyphs.filter((glyph) => /[\uac00-\ud7a3]/u.test(glyph.ch)).length;
+    if (hangul / glyphs.length < 0.6) continue;
+    samples.push(width / height / glyphs.reduce((sum, glyph) => sum + glyph.width, 0));
   }
   if (!samples.length) return null;
   samples.sort((left, right) => left - right);
@@ -111,7 +156,7 @@ function hangulWidthPerHeight(groups) {
 }
 
 function assignCharacterEdges(words, ocr) {
-  if (ocr) { for (const word of words) word.edges = characterEdges(word.full); return; }
+  if (ocr) { for (const word of words) word.edges = characterEdges(word.glyphs); return; }
   const groups = [];
   for (const word of words) {
     const group = groups.at(-1), spaces = group ? sameItemSpaces(group.words.at(-1), word) : 0;
@@ -120,11 +165,12 @@ function assignCharacterEdges(words, ocr) {
   for (const group of groups) {
     const first = group.words[0], last = group.words.at(-1);
     group.left = first.rect[0]; group.width = last.rect[0] + last.rect[2] - group.left; group.height = first.rect[3];
-    group.full = group.words.map((word, index) => (index ? " ".repeat(group.gaps[index - 1]) : "") + word.full).join("");
+    group.glyphs = group.words.flatMap((word, index) => [
+      ...Array.from({ length: index ? group.gaps[index - 1] : 0 }, () => ({ ch: " ", width: characterWidth(" "), space: true })), ...word.glyphs]);
   }
   const ratio = hangulWidthPerHeight(groups);
   for (const group of groups) {
-    const edges = characterEdges(group.full, ratio ? group.width / (ratio * group.height) : undefined);
+    const edges = characterEdges(group.glyphs, ratio ? group.width / (ratio * group.height) : undefined);
     let at = 0;
     for (const word of group.words) {
       const count = word.characters.length, [x, , width] = word.rect;
@@ -144,9 +190,8 @@ function entryWordRuns(entry) {
   const words = (entry.words ?? []).flatMap((word) => {
     const full = normalizedText(word.text);
     const text = full.replace(/\s+/gu, "");
-    // 폭은 대소문자를 살린 글로 잰다(검색용 글은 소문자라 대문자 폭이 사라졌다). 글자 수가 달라지면 소문자 글로.
-    const cased = String(word.text ?? "").normalize("NFKC").replace(/\s+/gu, " ").trim();
-    return text ? [{ text, full: [...cased].length === [...full].length ? cased : full, characters: [...text], rect: word.rect }] : [];
+    // 폭은 대소문자를 살린 원래 글자로 잰다(검색용 글은 소문자라 대문자 폭이 사라졌다).
+    return text ? [{ text, glyphs: glyphsOf(word.text, full), characters: [...text], rect: word.rect }] : [];
   });
   assignCharacterEdges(words, ocr);
   const runs = [];
