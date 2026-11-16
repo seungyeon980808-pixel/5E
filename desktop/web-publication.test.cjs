@@ -58,7 +58,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('js/app.js', 'const stable = true;');
   write('js/release-receipt.js', 'const release = { sourceCommit: null };');
   write('assets/public.txt', 'public');
-  write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
+  write('apps/examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
   write('ourdocs/index.html', '<iframe title="OurDocs"></iframe>');
   write('404.html', '<title>Named route recovery</title>');
   write('memo/index.html', '<title>memo</title>');
@@ -124,8 +124,8 @@ test('production staging uses committed blobs and excludes ignored files while p
   commit();
   const routeSite = path.join(temporary, 'route-site');
   fs.cpSync(site, routeSite, { recursive: true });
-  write('examlibrary/index.html', '<iframe title="기출 탐색기" src="https://example.invalid/"></iframe>');
-  git(['add', 'examlibrary/index.html']);
+  write('apps/examlibrary/index.html', '<iframe title="기출 탐색기" src="https://example.invalid/"></iframe>');
+  git(['add', 'apps/examlibrary/index.html']);
   commit();
   const routeReceipt = appendRoute(routeSite, receipt, sourceRoot, receipt.sourceCommit);
   assert.equal(fs.readFileSync(path.join(routeSite, 'index.html'), 'utf8'), fs.readFileSync(path.join(site, 'index.html'), 'utf8'));

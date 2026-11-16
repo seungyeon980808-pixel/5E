@@ -7,7 +7,9 @@ const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 const root = path.resolve(__dirname, '..');
 const surfaceDirectories = ['js', 'css', 'assets', 'fonts', 'vendor'];
-const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'experiments/web-codex-auth/editor-bridge.js', 'examlibrary/index.html', 'ourdocs/index.html', ...require('../memo/assets.json'), ...require('../hub/assets.json'), ...require('../bug/assets.json'), ...require('../print/assets.json')];
+const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'apps/examlibrary/index.html', 'ourdocs/index.html', ...require('../memo/assets.json'), ...require('../hub/assets.json'), ...require('../bug/assets.json'), ...require('../apps/print/assets.json')];
+// 하위 프로그램 입구(print·기출 탐색기)는 저장소에서 apps/<이름>/에 두고, 사이트에는 지금처럼 /<이름>/ 주소로 올린다(1.7.1).
+const sitePath = relative => relative.replace(/^apps\//, '');
 
 function filesBelow(directory) {
   const files = [];
@@ -97,7 +99,7 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
     const bytes = fs.readFileSync(source);
     if (expectedBlob && gitBlob(bytes) !== expectedBlob) throw new Error(`Publication input differs from its validated Git blob: ${relative}`);
     assertSource(relative, bytes);
-    const destination = path.join(output, relative);
+    const destination = path.join(output, sitePath(relative));
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.writeFileSync(destination, bytes);
   }
@@ -166,4 +168,4 @@ if (require.main === module) {
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
 
-module.exports = { verifyArtifact, inventory, stage };
+module.exports = { verifyArtifact, inventory, stage, sitePath };

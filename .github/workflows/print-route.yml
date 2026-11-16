@@ -1,6 +1,6 @@
 name: Print Route
 
-# 5e.ai.kr/print: 지금 게시된 사이트를 그대로 두고 print 설문 한 장(print/index.html)만 덧붙인다.
+# 5e.ai.kr/print: 지금 게시된 사이트를 그대로 두고 print 설문 한 장(원본 apps/print/index.html → 사이트 print/index.html)만 덧붙인다.
 on:
   workflow_dispatch:
     inputs:

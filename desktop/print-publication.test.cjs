@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os');
 const { execFileSync } = require('node:child_process');
-const { assets, appendRoute, verifyRoute } = require('../scripts/print-publication.cjs');
+const { assets, sources, appendRoute, verifyRoute } = require('../scripts/print-publication.cjs');
 const { inventory } = require('../scripts/web-release.cjs');
 
 function fixture(t) {
@@ -11,7 +11,7 @@ function fixture(t) {
   const source = path.join(directory, 'source'), site = path.join(directory, 'site');
   fs.mkdirSync(source); fs.mkdirSync(site);
   execFileSync('git', ['init', '-q'], { cwd: source });
-  for (const asset of assets) {
+  for (const asset of sources) {
     fs.mkdirSync(path.dirname(path.join(source, asset)), { recursive: true });
     fs.writeFileSync(path.join(source, asset), 'committed print survey fixture: ' + asset);
   }
@@ -41,6 +41,6 @@ test('refuses a changed base before adding the route', t => {
 
 test('refuses uncommitted survey edits', t => {
   const { source, site, base } = fixture(t);
-  fs.writeFileSync(path.join(source, 'print/index.html'), 'edited after commit');
+  fs.writeFileSync(path.join(source, 'apps/print/index.html'), 'edited after commit');
   assert.throws(() => appendRoute(site, base, source), /Uncommitted route input/);
 });
