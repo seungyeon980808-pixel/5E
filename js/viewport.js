@@ -70,14 +70,23 @@ function placeLockAnchor(state, scale = getRenderScale()) {
   });
 }
 
-export function setCanvasLockMode(mode, state, point = { x: 0, y: 0 }) {
+let lockRetry = 0;
+export function setCanvasLockMode(mode, state, point = { x: 0, y: 0 }, tries = 0) {
   if (liteMode() || !_svgRef || !["free", "current", "coordinate"].includes(mode)) return;
+  cancelAnimationFrame(lockRetry);
   if (mode === "free") {
     canvasLock = { ...canvasLock, mode };
     return;
   }
   const vb = state.get().viewBox;
   const rect = _svgRef.getBoundingClientRect();
+  // 11-17(1.7.1 BL7): WebKit(Safari)은 창이 자리 잡는 중(시작 화면이 끝날 때 등)에 캔버스 높이를 0으로 잠깐 보고하고
+  // getScreenCTM 배율도 1로 준다. 그 크기로 기준을 잡으면 viewBox 높이가 0(「-502 0 1004 0」)이 되어
+  // 그림 자르기 확인 → 배치 칸, 두 번 눌러 편집 등이 모두 막힌다. 크기가 잡힐 때까지 다음 그림 틀에서 다시 잡는다(최대 약 1초).
+  if (!(rect.width > 0 && rect.height > 0)) {
+    if (tries < 60) lockRetry = requestAnimationFrame(() => setCanvasLockMode(mode, state, point, tries + 1));
+    return;
+  }
   if (mode === "current") {
     const worldX = vb.x + vb.w / 2;
     const worldY = vb.y + vb.h / 2;
