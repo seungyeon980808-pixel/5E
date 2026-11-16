@@ -2946,6 +2946,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!link) { link = document.createElement('span'); link.dataset.aiTitleLink = ''; label.after(link); }
       if (link.textContent !== linkText) link.textContent = linkText;
       link.hidden = !linkText;
+      // 11-17(시안 b17): 연결 줄이 두 줄로 넘어가면 머리 줄을 한 줄만큼 늘린다(제목이 위아래 줄에 걸치지 않게).
+      const head = title.closest('.ai-head');
+      if (head) {
+        const lines = linkText && link.getBoundingClientRect().height > parseFloat(getComputedStyle(link).lineHeight) * 1.5 ? '2' : '';
+        if ((head.dataset.aiLinkLines || '') !== lines) { if (lines) head.dataset.aiLinkLines = lines; else delete head.dataset.aiLinkLines; }
+      }
       const full = linkText ? `${text} — ${target.examCard ? '문항 카드' : '한글'} ${target.label || '그림'}에서 열었습니다. 결과를 확인한 뒤 「${target.examCard ? '문항 카드에 넣기' : '한글 파일에 넣기'}」를 누르세요.` : text;
       if (title.title !== full) title.title = full;
     }
