@@ -99,7 +99,6 @@ import { initSteppers } from "./stepper.js?v=1.7.0-four-session-integration";
 import { initRangeFill } from "./range-fill.js?v=1.7.0-four-session-integration";
 import { initReferenceWindows } from "./reference-window.js?v=1.7.0-four-session-integration";
 import { initShortcutTips } from "./shortcut-table.js?v=1.7.0-four-session-integration";
-import { initTutorial } from "./tutorial.js?v=1.7.0-four-session-integration";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
 import { initAiPanel } from "./ai-panel.js?v=1.7.0-four-session-integration";
 import { initRhwpExamWorkspace } from "./rhwp-exam-workspace.js?v=1.7.0-four-session-integration";
@@ -582,9 +581,6 @@ initRangeFill();
 /* ----- 참고 문항 창(별도 브라우저 창) — 최소화 칩 막대 준비 ----- */
 initReferenceWindows(state);
 
-/* ----- 따라하기: 상단바 단추 + 첫 방문 제안 배너 -----
-   페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
-if (new URLSearchParams(location.search).get('exam') !== '1' && new URLSearchParams(location.search).get('sheet') !== '1') initTutorial();
 initShortcutTips();// 단추 설명에 「이름 (단축키)」 — 표는 shortcut-table.js 하나
 
 /* Canvas and crop views own their zoom; surrounding UI keeps browser zoom. */

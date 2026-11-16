@@ -1371,7 +1371,6 @@ function createWindow() {
             }
             const startupDialogTitles = new Set(["작업 복구", "찾아 주셔서 고맙습니다"]);
             const dismissStartupDialogs = () => {
-              document.querySelector(".tut-welcome-overlay .tut-banner-no")?.click();
               for (const title of document.querySelectorAll(".modal-overlay .modal-title")) {
                 if (!startupDialogTitles.has(title.textContent?.trim())) continue;
                 title.closest(".modal-overlay")?.querySelector(".modal-btn")?.click();
@@ -1436,8 +1435,7 @@ function createWindow() {
               !document.querySelector(".unified-library-overlay:not([hidden])");
             panel.hidden = true;
             dismissStartupDialogs();
-            await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
-              !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
+            await waitFor(() => !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
                 .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
             const stateModule = await import(${JSON.stringify(smokeStateModuleUrl)});
             const textChooser = document.getElementById("chooser-text");

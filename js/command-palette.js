@@ -106,7 +106,6 @@ const COMMANDS = [
     showHint(n > 0 ? `${n}개 객체의 상자를 그림에 맞췄어요.` : "좁힐 여백이 없어요(가위·지우개로 자른 이미지에만 적용됩니다).");
   } },
   { id: "shortcuts",   label: "단축키 도움말",     keywords: ["shortcut", "단축키", "도움말", "help"], shortcutLabel: "",          run: () => clickById("open-shortcuts") },
-  { id: "tutorial",    label: "튜토리얼", keywords: ["tutorial", "튜토리얼", "따라하기", "도움말", "help", "처음"], shortcutLabel: "", run: () => clickById("tutorial-btn") },
 ];
 
 export function initCommandPalette() {
