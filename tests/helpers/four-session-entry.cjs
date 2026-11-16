@@ -3,8 +3,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function entryConfiguration(env = process.env) {
-  const entry = env.APP_ENTRY ?? "/preview/";
-  assert.ok(entry === "/" || entry === "/preview/", "APP_ENTRY must be / or /preview/");
+  // 1.7.1: 옛 /preview/ 사본을 지웠으므로 진입점은 정식 루트 하나뿐이다(CI와 같음).
+  const entry = env.APP_ENTRY ?? "/";
+  assert.ok(entry === "/", "APP_ENTRY must be /");
   const moduleBase = env.APP_MODULE_BASE;
   const moduleQuery = env.APP_MODULE_QUERY;
   if (moduleBase !== undefined) {

@@ -17,13 +17,6 @@
       "tag": "v1.7.0",
       "sourceReceipt": "https://www.5e.ai.kr/js/release-receipt.js"
     },
-    "previewWeb": {
-      "version": "1.7.0",
-      "label": "Preview",
-      "url": "https://www.5e.ai.kr/preview/",
-      "entry": "preview/index.html",
-      "preservedSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb"
-    },
     "desktop": {
       "version": "1.7.0",
       "entry": "index.html",
@@ -60,7 +53,6 @@
     "status": "VALIDATED_PUBLICATION_REQUIRED",
     "canonicalSourceBranch": "main",
     "preservePreviewSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
-    "preservePreviewPath": "preview",
     "workflow": ".github/workflows/web-release.yml",
     "requiresSeparateDeploymentApproval": true,
     "candidateVersion": "1.7.0",
