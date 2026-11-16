@@ -113,10 +113,6 @@
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
     {
-      "path": "tests/test-teacher-flow-library-send-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 보내기 메뉴가 단추가 아니라 컨테이너 기준으로 뜸(gap 50, css/unified-library.css:599)"
-    },
-    {
       "path": "tests/test-teacher-flow-ai-image-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 결과 크기 386×257(기대 480×320) — 미판정"
     },
