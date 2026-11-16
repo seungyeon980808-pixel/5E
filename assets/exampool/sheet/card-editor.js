@@ -11,6 +11,8 @@ import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
 import {examCardUrl,examFigureUrl,pagePreviewUrl} from '../../../js/library/image-hosts.js';
 import {explanationParts,explanationText,bogiKeys,OX_WORD} from './explanation.js';
+// 실패 이유: 한글 엔진은 오류를 글 한 줄로 던지기도 해 e.message가 빌 수 있다 — 어떤 오류든 이유를 보인다(1.7.1 B12, app.js와 같은 규칙).
+export function failReason(e){const m=e?.message||(typeof e==='string'?e:'')||e?.name||String(e??'');return m&&m!=='[object Object]'?m:'알 수 없는 오류';}
 import {applyTableCommand} from './table-ops.js';
 import {markedQuestion,croppedQuestion,renderPage as renderPdfPage,pdfHref} from './past-pdf.js';
 
@@ -549,7 +551,7 @@ export function createCardEditor(root,api){
   // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
   let pageSeq=0;
   async function renderPage(){const x=q(),n=root.querySelector('#cv-page');if(!x||!n)return;const seq=++pageSeq;
-    let view;try{view=await api.pageSheets(x,{alive:()=>seq===pageSeq&&n.isConnected&&q()===x});}catch(e){if(e.cancelled)return;if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
+    let view;try{view=await api.pageSheets(x,{alive:()=>seq===pageSeq&&n.isConnected&&q()===x});}catch(e){if(e?.cancelled)return;console.error('[5E_exam] 카드 쪽 그리기 실패',x.id,e);if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(failReason(e))}</p>`;return;}
     if(seq!==pageSeq||q()!==x||!n.isConnected)return;
     const pct=v=>(v*100).toFixed(3)+'%',total=view.pages.length;
     n.innerHTML=`<div class="pg-head"><b>${E(view.title)}</b><span>${total}쪽 · 한글 조판 그대로(${E(view.paper)} ${view.columns}단)</span></div>`+(view.warning?`<p class="pg-warn" role="alert" style="align-self:stretch;margin:0;font-size:var(--ds-text-meta);color:var(--ds-danger)">${E(view.warning)}</p>`:'')+
