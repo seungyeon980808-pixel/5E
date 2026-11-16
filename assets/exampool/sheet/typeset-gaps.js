@@ -4,7 +4,7 @@
 // 구조 잠금이 켜져 있으면 보기만 되고, 풀면 0.5mm씩(0~20mm) 바꾼다. 적용 범위: 「이 문항만」(블록 간격·발문/선지 앞 간격) 또는 「조판 기준에」.
 // 값을 바꾸면 엔진 문단 간격을 직접 고치지 않고 문항(또는 기준) 값을 바꾼 뒤 문항 조판을 다시 만든다(1/75 함정 회피, 저장 조판과 일치).
 import {nativeRuns} from './live-patch.js';
-import {KICE_STANDARD,KICE_ID,gapRole,exportStandard,importStandard} from './typeset-standard.js';
+import {KICE_STANDARD,KICE_ID,gapRole,exportStandard,importStandard,shownMm,storedMm} from './typeset-standard.js';
 import {KINDS} from './model.js';
 import {unitGapPositions} from '../../../js/rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
 
@@ -143,7 +143,12 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
     const page = parse(d.getPageDef(0)), mL = page.marginLeft / 75, mR = page.marginRight / 75, W = page.width / 75;
     const pt = (x, y) => { const p = bridge.parentPoint(placement.x + x * placement.scale, placement.y + y * placement.scale); return { x: p.x - viewport.x, y: p.y - viewport.y, s: placement.scale * p.scaleX }; };
     const elements = questionElements(d, ctx.q, ctx.owners?.texts);
-    bands = [...gapBands(ctx.q, elements, ctx.standard || KICE_STANDARD), ...bogiPadBands(d, ctx.q, elements, ctx.standard || KICE_STANDARD)];
+    // 11-16 B7: 기준 값(A4 2단 기준 mm)은 이 문항 용지의 실제 mm로 보이고, 「조판 기준에」로 저장할 때는 다시 기준 값으로 바꾼다. 「이 문항만」 값은 이미 실제 mm.
+    const stdNow = ctx.standard || KICE_STANDARD;
+    bands = [...gapBands(ctx.q, elements, stdNow), ...bogiPadBands(d, ctx.q, elements, stdNow)].map(b => {
+      const path = `gaps.${b.stdKey}`;
+      return { ...b, value: b.own !== undefined ? b.value : shownMm(stdNow, ctx.paper, path, b.value), toStored: v => storedMm(stdNow, ctx.paper, path, v) };
+    });
     const last = elements.at(-1);
     if (last) for (const [x0, x1, side] of [[0, mL, 'left'], [W - mR, W, 'right']]) {
       const a = pt(x0, page.marginTop / 75), b = pt(x1, last.bottom);
@@ -183,7 +188,12 @@ export function attachGapView({ bridge, host, panel, context, onGap, onStandard,
     if (e.target.closest('[data-gap-close]')) { selected = ''; draw(); return; }
     const band = bands.find(b => b.key === selected); if (!band || locked()) return;
     const step = e.target.closest('[data-gap-step]');
-    if (step) { const next = Math.min(20, Math.max(0, Math.round((band.value + Number(step.dataset.gapStep)) * 2) / 2)); onGap?.(band.target, next, band.target.kind === 'bogiPad' ? 'std' : scope, band.stdKey); return; }
+    if (step) {
+      const next = Math.min(20, Math.max(0, Math.round((band.value + Number(step.dataset.gapStep)) * 2) / 2));
+      const toStd = band.target.kind === 'bogiPad' || scope === 'std';
+      // next는 화면 mm, 기준에 저장할 때는 기준 값(÷ 용지 배율)으로 보낸다. 마지막 인자는 상태 글(화면 mm).
+      onGap?.(band.target, toStd ? band.toStored(next) : next, toStd ? 'std' : scope, band.stdKey, next); return;
+    }
     if (e.target.closest('[data-gap-reset]')) onGap?.(band.target, undefined, 'q', band.stdKey);
   });
   gapButton.addEventListener('click', () => { on = !on; selected = ''; try { localStorage.setItem('5e.typeset.gaps', on ? 'on' : 'off'); } catch {} draw(); });

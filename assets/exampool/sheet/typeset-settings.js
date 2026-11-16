@@ -4,7 +4,7 @@
 // 「이 문항만 예외」를 켜고 적용하면 이 문항만 쓰는 복사본에 저장한다.
 // 미리보기: 초안 틀로 이 문항을 새로 조판한 깨끗한 쪽 그림(편집용 칸 테두리 없음) 위에 고른 부분 파란 띠·나머지 흐리게,
 // 조판 부호(고정 띄어쓰기 큰 빨간 V · 내어쓰기 기준선·안 여백 초록 선), 간격 보기(초록 띠)를 겹쳐 그린다.
-import {KICE_STANDARD,KICE_ID} from './typeset-standard.js';
+import {KICE_STANDARD,KICE_ID,paperScale,paperScaledPath,shownMm,storedMm} from './typeset-standard.js';
 import {ask} from './ask-dialog.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -65,12 +65,17 @@ const decimals=(step,u)=>u==='mm'?2:String(step).includes('.')?String(step).spli
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 
 // 칸 하나(값 v는 value(p)로 읽는다). 조판 설정 팝업과 학교 양식 등록 창(11-01 「조판 확정」)이 함께 쓴다.
-export function fieldHtml(f,value,hot=''){
+// conv(없으면 저장 값 그대로): show(p,저장값)=화면에 보일 값, scaled(p)=용지 환산 칸이면 참, note=칸 설명 한 마디.
+export function fieldHtml(f,value,hot='',conv=null){
   if(f.t==='info')return `<div class="tsx-f info"><span class="n">${E(f.n)}</span><span class="v">${E(f.text)}</span></div>`;
-  const v=value(f.p),kv=get(KICE_STANDARD,f.p),diff=!same(v,kv),tip=diff?` title="수능 틀 ${E(f.t==='tog'?(kv===f.on?'켬':'끔'):kv)}${f.u&&f.t==='num'?E(f.u):''}과 다름"`:'',cls=`${diff?' diff':''}${hot&&hot===f.p?' hot':''}`;
+  const show=(p,x)=>conv?conv.show(p,x):x, shown=f.t==='num'&&conv?.scaled?.(f.p);
+  const v=value(f.p),kv=get(KICE_STANDARD,f.p),diff=!same(v,kv);
+  const kvText=f.t==='tog'?(kv===f.on?'켬':'끔'):f.t==='num'?String(Math.round(show(f.p,kv)*10000)/10000):kv;
+  const tipText=[diff?`수능 틀 ${kvText}${f.u&&f.t==='num'?f.u:''}과 다름`:'',shown?conv.note:''].filter(Boolean).join(' · ');
+  const tip=tipText?` title="${E(tipText)}"`:'',cls=`${diff?' diff':''}${hot&&hot===f.p?' hot':''}`;
   if(f.t==='tog')return `<label class="tsx-f tog${cls}"${tip}><span class="n">${E(f.n)}</span><input type="checkbox" data-p="${f.p}" ${v===f.on?'checked':''}><span class="sw" aria-hidden="true"></span></label>`;
   if(f.t==='sel')return `<label class="tsx-f sel${cls}"${tip}><span class="n">${E(f.n)}</span><select data-p="${f.p}">${f.opts.map(o=>{const [ov,ol]=Array.isArray(o)?o:[o,o];return `<option value="${E(ov)}" ${String(ov)===String(v)?'selected':''}>${E(ol)}</option>`;}).join('')}</select>${svg('chev',12)}</label>`;
-  return `<label class="tsx-f num${cls}"${tip} data-hl="${f.hl}" data-fp="${f.p}"><span class="n" data-scrub>${E(f.n)}</span><input inputmode="decimal" data-p="${f.p}" data-step="${f.step}" data-min="${f.min}" data-max="${f.max}" data-u="${f.u||''}" value="${Number(v).toFixed(decimals(f.step,f.u))}"><span class="u">${E(f.u||'')}</span></label>`;
+  return `<label class="tsx-f num${cls}"${tip} data-hl="${f.hl}" data-fp="${f.p}"><span class="n" data-scrub>${E(f.n)}</span><input inputmode="decimal" data-p="${f.p}" data-step="${f.step}" data-min="${f.min}" data-max="${f.max}" data-u="${f.u||''}" value="${Number(show(f.p,v)).toFixed(decimals(f.step,f.u))}"><span class="u">${E(f.u||'')}</span></label>`;
 }
 export const groupsHtml=(groups,field)=>groups.map(g=>`<div class="tsx-grp"><div class="tsx-gh">${E(g.h)}${g.tip?`<span class="tsx-tip" tabindex="0" title="${E(g.tip)}" aria-label="${E(g.tip)}">${svg('info',14)}</span>`:''}</div>${g.rows.map(r=>`<div class="tsx-row${r.length===1?' one':''}">${r.map(field).join('')}</div>`).join('')}</div>`).join('');
 export const partChanged=(k,value)=>Object.values(PARTS.find(x=>x.k===k).tabs).flat().flatMap(g=>g.rows.flat()).some(f=>f.p&&!same(value(f.p),get(KICE_STANDARD,f.p)));
@@ -96,7 +101,11 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   const value=p=>{const v=get(draft,p);return v===undefined?get(KICE_STANDARD,p):v;};
   const dirty=()=>!!draft&&(!same(draft,saved)||exception!==ownException());
 
-  const field=f=>fieldHtml(f,value,hot);
+  // 용지 환산(11-16 B7): 이 문항 용지가 A4가 아니면 기준 값(A4 2단 기준 mm)을 그 용지의 실제 mm로 보이고, 입력은 다시 기준 값으로 바꿔 담는다.
+  const paperNow=()=>context().paper;
+  const convNow=()=>{const s=base(),paper=paperNow(),k=paperScale(s,paper);return {show:(p,v)=>shownMm(s,paper,p,v),scaled:p=>k!==1&&paperScaledPath(p,s),note:`${paper} 문항 기준 실제 mm`};};
+  const field=f=>fieldHtml(f,value,hot,convNow());
+  const toStored=(p,v)=>storedMm(base(),paperNow(),p,v);
   const changed=k=>partChanged(k,value);
   function leftHtml(){
     const {standards=[]}=context(),P=PARTS.find(x=>x.k===part),names=Object.keys(P.tabs);if(tab>=names.length)tab=0;
@@ -207,7 +216,8 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
   }
   function commit(p,v){
     const f=fieldOf(p);
-    if(f?.t==='num'){v=Number(v);if(!Number.isFinite(v))return render();v=Number(Math.min(f.max,Math.max(f.min,v)).toFixed(decimals(f.step,f.u)));}
+    // v는 화면에 보이는 값이다. 환산 칸이면 기준 값으로 바꿔 담는다(글 칸·화살표·끌기가 모두 여기로 온다).
+    if(f?.t==='num'){v=Number(v);if(!Number.isFinite(v))return render();v=Number(Math.min(f.max,Math.max(f.min,v)).toFixed(decimals(f.step,f.u)));v=toStored(p,v);}
     setPath(draft,p,v);render();refresh();
   }
   opener.addEventListener('click',()=>back.hidden?open():close());
@@ -255,7 +265,7 @@ export function attachTypesetSettings({panel,context,preview,onApply,onStandard}
     const label=e.target.closest('[data-scrub]');if(!label)return;
     const input=label.parentElement.querySelector('input');const step=Number(input.dataset.step),x0=e.clientX,v0=Number(input.value),p=input.dataset.p;
     label.setPointerCapture(e.pointerId);e.preventDefault();
-    const move=ev=>{const f=fieldOf(p),v=Math.min(f.max,Math.max(f.min,Math.round((v0+Math.round((ev.clientX-x0)/4)*step)*100)/100));input.value=v.toFixed(decimals(step,f.u));setPath(draft,p,v);refresh(250);};
+    const move=ev=>{const f=fieldOf(p),v=Math.min(f.max,Math.max(f.min,Math.round((v0+Math.round((ev.clientX-x0)/4)*step)*100)/100));input.value=v.toFixed(decimals(step,f.u));setPath(draft,p,toStored(p,v));refresh(250);};
     const up=()=>{label.removeEventListener('pointermove',move);label.removeEventListener('pointerup',up);render();};
     label.addEventListener('pointermove',move);label.addEventListener('pointerup',up);
   });

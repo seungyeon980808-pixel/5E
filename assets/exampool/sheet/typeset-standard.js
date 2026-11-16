@@ -100,16 +100,41 @@ export function standardFor(question, { exam = null, standards = [] } = {}) {
 // 단 폭을 평가원 원본(111.98mm, kice-form-analysis/rules-200906.md)으로 맞추고 — 좌우 여백을 그만큼 줄이거나 늘린다 —
 // 간격·선지 칸·〈보기〉 머리를 단 폭 비율만큼 되돌린다. 원본과 같은 단 폭이라 줄바꿈이 원본과 같아진다. 글자 크기·선 굵기는 그대로.
 const PAGE_W = { A4: 210, B4: 257, A3: 297 }, KICE_COLUMN_MM = 111.98;
+// 저장 값은 A4 2단 기준 mm다. 그 기준을 다른 용지에 쓸 때 곱하는 배율(단 폭 111.98mm ÷ A4 단 폭). 환산하지 않으면 1.
+// standardForPaper와 조판 설정·간격 띠 화면 칸이 이 배율을 같이 쓴다(11-16 B7: 화면은 실제 mm, 저장은 기준 mm).
+export function paperScale(standard, paper) {
+  const s = resolveStandard(standard);
+  if (!scalesPaper(s, paper)) return 1;
+  const m = s.paper.margin, col = (PAGE_W.A4 - m.left - m.right - s.paper.columnGap) / 2;
+  return KICE_COLUMN_MM / col;
+}
+function scalesPaper(s, paper) { return !!PAGE_W[paper] && paper !== s.paper.size && s.paper.size === 'A4' && s.paper.columns === 2; }
+// 용지 맞춤에서 배율을 곱하는 경로. 수능 틀의 고정 덮어쓰기(상자 안 좌우 2.54mm)는 곱하지 않는다.
+export function paperScaledPath(path, standard) {
+  const s = resolveStandard(standard);
+  if (path === 'gaps.boxPadSide') return s.id !== KICE_STANDARD.id;
+  if (/^gaps\.\w+$/.test(path) || path === 'parts.cellPad' || path === 'parts.numberIndent') return true;
+  return /^parts\.choiceTabs\.\d+$/.test(path);
+}
+// 화면에 보이는 값(이 용지의 실제 mm) ↔ 저장 값. 왕복해도 보이는 값이 흔들리지 않게 저장 값은 소수 넷째 자리까지.
+export function shownMm(standard, paper, path, stored) {
+  if (!paperScaledPath(path, standard)) return stored;
+  const k = paperScale(standard, paper); return k === 1 ? stored : stored * k;
+}
+export function storedMm(standard, paper, path, shown) {
+  if (!paperScaledPath(path, standard)) return shown;
+  const k = paperScale(standard, paper); return k === 1 ? shown : Math.round(shown / k * 10000) / 10000;
+}
 export function standardForPaper(standard, paper) {
   const s = resolveStandard(standard);
-  if (!PAGE_W[paper] || paper === s.paper.size || s.paper.size !== 'A4' || s.paper.columns !== 2) return s;
-  const m = s.paper.margin, col = (PAGE_W.A4 - m.left - m.right - s.paper.columnGap) / 2;
+  if (!scalesPaper(s, paper)) return s;
+  const m = s.paper.margin;
   const side = Math.round((PAGE_W[paper] - s.paper.columnGap - 2 * KICE_COLUMN_MM) / 2 * 100) / 100;
-  const k = KICE_COLUMN_MM / col, r = v => Math.round(v * k * 100) / 100, out = structuredClone(s);
-  for (const key of Object.keys(out.gaps)) if (Number.isFinite(out.gaps[key])) out.gaps[key] = r(out.gaps[key]);
+  const k = paperScale(s, paper), r = v => Math.round(v * k * 100) / 100, out = structuredClone(s);
+  for (const key of Object.keys(out.gaps)) if (Number.isFinite(out.gaps[key]) && paperScaledPath(`gaps.${key}`, s)) out.gaps[key] = r(out.gaps[key]);
   // 〈보기〉 제목 칸(폭·줄 높이·여백)은 11pt 제목 글자에 맞춘 값이라 키우지 않는다 — 키우면 위 선이 글자 밑으로 내려가고 양옆이 뜬다(10-25).
-  for (const key of ['cellPad', 'numberIndent']) if (Number.isFinite(out.parts[key])) out.parts[key] = r(out.parts[key]);
-  if (Array.isArray(out.parts.choiceTabs)) out.parts.choiceTabs = out.parts.choiceTabs.map(r);
+  for (const key of ['cellPad', 'numberIndent']) if (Number.isFinite(out.parts[key]) && paperScaledPath(`parts.${key}`, s)) out.parts[key] = r(out.parts[key]);
+  if (Array.isArray(out.parts.choiceTabs)) out.parts.choiceTabs = out.parts.choiceTabs.map((v, i) => paperScaledPath(`parts.choiceTabs.${i}`, s) ? r(v) : v);
   out.paper = { ...out.paper, size: paper, margin: { ...m, left: side, right: side } };
   // 수능 틀의 글자: 원본 PDF(10-25 실측) 본문 11.5pt·장평 95%·자간 −3%·줄 간격 16.65pt(145%), 〈보기〉·상자 안도 같은 줄 간격.
   // A4 틀의 11pt·자간 −5%·160%를 그대로 쓰면 글자가 원본보다 6% 좁고 줄 간격은 6% 넓어 줄 나눔이 계속 달랐다.

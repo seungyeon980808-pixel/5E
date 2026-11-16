@@ -713,14 +713,14 @@ let typesetter=null,typesetRequest,typesetTransition=null;
 // 조판 기준(10-22): 문항 → 시험지 → 수능 틀. 간격 보기의 값 바꾸기와 기준 메뉴가 여기로 온다.
 const typesetStandardOf=q=>q?standardFor(q,{exam:examOf(data,q.id),standards:typesetStandards}):KICE_STANDARD;
 function refreshTypeset(){if(current&&typesetter){$('#typeset-refresh').hidden=false;void requestTypeset(current);}}
-async function onTypesetGap(target,value,scope,stdKey){const q=current;if(!q)return;
+async function onTypesetGap(target,value,scope,stdKey,shown){const q=current;if(!q)return;
   try{
     if(scope==='std'&&value!==undefined){
       const now=typesetStandardOf(q);let s=now.id===KICE_ID?(typesetStandards.find(x=>x.name==='수능 틀 (내 설정)')||copyStandard(KICE_STANDARD,{name:'수능 틀 (내 설정)'})):structuredClone(now);
       s.gaps={...s.gaps,[stdKey]:value};s.version=(s.version||1)+1;
       await saveTypesetStandards([...typesetStandards.filter(x=>x.id!==s.id),s]);
       if(q.standardId!==s.id)mutate(()=>{q.standardId=s.id;},{render:false});else refreshTypeset();
-      status(`조판 기준 「${s.name}」의 간격을 ${value}mm로 바꿨습니다.`);return;
+      status(`조판 기준 「${s.name}」의 간격을 ${shown??value}mm로 바꿨습니다.`);return;
     }
     mutate(()=>{
       if(target.kind==='ask'||target.kind==='choices'){const k=target.kind+'Gap';if(value===undefined)delete q[k];else q[k]=value;}
