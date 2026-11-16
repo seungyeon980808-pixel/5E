@@ -1401,6 +1401,9 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(act==='new-graph'){if(!embedded){status('그래프 만들기는 5E 안에서 연 문항 창에서 쓸 수 있습니다.',true);return false;}const b=q.blocks.find(x=>x.id===id);
       window.parent.postMessage({channel:'5e-question-sheet',action:'new-graph',qid:q.id,key:'block:'+id,label:b?.label||'그래프'},OWN);status('빈 좌표 평면으로 그래프 창을 엽니다 · 「적용」하면 이 칸에 들어갑니다');return true;}
     if(act==='to-table'){if(mutate(()=>applyPartChange(q,id,'kind',KINDS.table)))openSlots(q,id);return;}
+    // 1.7.1(사용자 결정): 고른 자료 칸에서 Delete·⌫ = 그 칸의 그림만 비움. 칸·이름·크기는 남고 ⌘Z 한 번으로 되돌린다. 칸째 지우기는 휴지통 단추(remove).
+    if(act==='clear-figure'){const b=q.blocks.find(x=>x.id===id),name=b?.label||'자료';if(!b?.figure?.data){status(`${name} 칸은 이미 비어 있습니다 · 칸째 지우려면 휴지통 단추를 누르세요`);return false;}
+      const ok=mutate(()=>{const cur=q.blocks.find(x=>x.id===id);if(!cur)throw Error('자료 칸을 찾지 못했습니다.');cur.figure=null;});if(ok)status(`${name} 칸의 그림을 비웠습니다 · ⌘Z로 되돌리기 · 칸째 지우려면 휴지통 단추`);return ok;}
     // 11-14(지적 1): 칸을 지우면 남은 칸 이름을 (가)(나)(다) 차례로 다시 매긴다(⌘Z 한 번으로 되돌림). 글 속 이름은 그대로.
     if(act==='remove'){let r={changes:[],texts:0};if(mutate(()=>{q.blocks=q.blocks.filter(b=>b.id!==id);q.references=q.references.filter(r=>r.target!==id);r=relabelMaterials(q);})&&r.changes.length)setTimeout(()=>status(`자료 이름을 ${r.changes.map(c=>`${c.from}→${c.to}`).join(' · ')}로 다시 매겼습니다 · ⌘Z로 되돌리기`),900);return;}
     if(act==='add-figure'||act==='add-table'){const kind=act==='add-figure'?'figure':'table',side=q.blocks.find(b=>b.kind==='group'&&b.layout==='나란히'&&q.blocks.some(c=>c.parent===b.id&&(c.kind==='figure'||c.kind==='table'))),parent=side?.id||null;let made=null;

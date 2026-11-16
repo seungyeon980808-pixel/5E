@@ -513,7 +513,14 @@ export function createCardEditor(root,api){
   function fit(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,30)+'px';}
   // 글 칸 높이는 칠 때만 맞추면, 처음 그릴 때와 칸 폭이 줄어 줄이 늘 때 글이 아래로 잘렸다. 그때도 맞춘다(폭이 바뀔 때만, 한 프레임에 한 번).
   let mathFields=null;
-  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();}
+  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();fitCombos();}
+  // 1.7.1 B21: 합답형 선지 칸(「ㄱ, ㄴ, ㄷ」)은 한 줄 칩 칸(eq-one, 줄바꿈 허용)이라 칸이 좁으면 「ㄷ」이 다음 줄로 떨어져 칸 위로 삐져나왔다.
+  // 줄은 나누지 않고, 넘칠 때만 글자를 0.5px씩(최소 9.5px)·자간을 좁혀 칸 안에 넣는다. 들어가는 칸은 그대로(카드 화면만, 조판과 무관).
+  function fitCombos(){for(const ce of root.querySelectorAll('.cv-combos .combo-row .eq-ce')){ce.style.flexWrap='nowrap';ce.style.whiteSpace='nowrap';
+    if(ce.dataset.fitBase===undefined)ce.dataset.fitBase=ce.style.fontSize||'';ce.style.fontSize=ce.dataset.fitBase;ce.style.letterSpacing='';ce.classList.remove('cv-long');
+    if(ce.scrollWidth<=ce.clientWidth+1)continue;ce.classList.add('cv-long');ce.style.letterSpacing='-.08em';let fs=parseFloat(getComputedStyle(ce).fontSize)||12;
+    for(let i=0;i<8&&ce.scrollWidth>ce.clientWidth+1&&fs>9.5;i++){fs-=.5;ce.style.fontSize=fs+'px';}}}
+  root.addEventListener('input',e=>{if(e.target.closest?.('.cv-combos .eq-ce'))fitCombos();});
   // 11-13: 카드 글 칸에 글 속 수식 띠($·⌘E), 안 고칠 때는 그려진 수식
   mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice],.cv-writer textarea[data-tc],.cv-writer textarea[data-cvexp],.cv-writer textarea[data-cvblock]'});
   // 11-13: 머리 줄은 단추(유형·배점·단계)를 절대 줄이지 않는다. 한 줄에 다 안 들어가면 「문항 이름」 칸만 아랫줄로 내려 가로를 다 쓴다.
@@ -546,7 +553,7 @@ export function createCardEditor(root,api){
     col.style.transform='none';const W=col.offsetWidth,H=col.offsetHeight,aw=n.clientWidth-24,ah=n.clientHeight-24;if(!W||!H||aw<=0)return;
     const s=Math.max(.2,Math.min(aw/W,ah>40?ah/H:aw/W));col.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';}
   // 크기를 바꾸는 일은 다음 그림 때 한 번에(관찰 콜백 안에서 크기를 바꾸면 Safari가 'ResizeObserver loop' 오류를 낸다).
-  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{if(!document.body.classList.contains('cv-dragging'))applyWidths();fitPaper();fitPage();alignHwp?.();});}).observe(root);
+  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{if(!document.body.classList.contains('cv-dragging'))applyWidths();fitPaper();fitPage();fitCombos();alignHwp?.();});}).observe(root);
   // 쪽 전체: 시험지에 든 문항이면 그 시험지의 쪽 배치(2단)로, 보관함 문항이면 이 문항만 놓은 쪽으로 가운데에 크게 보여 준다.
   // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
   let pageSeq=0;
@@ -1133,7 +1140,7 @@ export function createCardEditor(root,api){
     if(window.fiveEClipboard?.isOpen?.()&&!t.closest?.('.cv-tile[data-cvtile]')){window.fiveEClipboard.close();return;}// 고르기 중이던 클립보드도 닫으며 풀림(닫힘 → 고른 표시 풀기)
     setTileSel(null);},true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tileMenuEl){e.preventDefault();closeTileMenu();}});
-  // 11-14(지적 8): 고른 칸 — Delete·⌫는 휴지통 단추와 같이 그 칸을 지움(⌘Z로 되돌림), Esc는 고르기만 풂. 글을 쓰는 중이면 건드리지 않는다.
+  // 11-14(지적 8) → 1.7.1 사용자 결정: 고른 칸 — Delete·⌫는 그 칸의 그림만 비움(칸은 남음, ⌘Z로 되돌림). 칸째 지우기는 휴지통 단추. Esc는 고르기만 풂. 글을 쓰는 중이면 건드리지 않는다.
   // 11-14(지적 10): ⌘Enter(윈도우 Ctrl+Enter) — 고른 칸(없으면 마우스가 올라간 칸)이 그림이면 편집 창, 표면 표 편집, 빈 칸이면 그림 넣기 메뉴.
   let hoverTile=null;root.addEventListener('pointerover',e=>{hoverTile=e.target.closest?.('.cv-tile[data-cvtile]')?.dataset.cvtile||null;});
   document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!(e.metaKey||e.ctrlKey)||e.isComposing||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
@@ -1142,7 +1149,7 @@ export function createCardEditor(root,api){
     const btn=root.querySelector(`.cv-tile[data-cvtile="${CSS.escape(id)}"] [data-cvslot-act="add-pic"]`);if(btn)tileMenu(btn,x,id);},true);
   document.addEventListener('keydown',e=>{if(!tileSel||e.isComposing||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
     if(e.key==='Escape'&&!window.fiveEClipboard?.isOpen?.()){e.preventDefault();setTileSel(null);return;}
-    if((e.key==='Delete'||e.key==='Backspace')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const x=q(),id=tileSel;if(!x)return;e.preventDefault();e.stopPropagation();setTileSel(null);api.slot('remove',x,id);}});
+    if((e.key==='Delete'||e.key==='Backspace')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const x=q(),id=tileSel;if(!x)return;e.preventDefault();e.stopPropagation();api.slot('clear-figure',x,id);}});
   // 끌기: 잡는 순간 칸들을 켜고, 가까운 칸을 밝힌다.
   const liveTiles=()=>[...root.querySelectorAll('.cv-tile[data-cvtile]')].filter(t=>q()?.blocks.find(v=>v.id===t.dataset.cvtile)?.kind==='figure');
   function nearTile(e){const tiles=liveTiles();if(!tiles.length)return null;const box=tiles.map(t=>t.getBoundingClientRect()),M=90;
