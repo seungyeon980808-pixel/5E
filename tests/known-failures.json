@@ -38,7 +38,7 @@
     },
     {
       "path": "tests/test-stable-library-startup-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 웹 / 첫 목록에서 /js/pdf-library/pdf-runtime.js를 1회 요청(목록만 볼 땐 안 불러야 함)"
+      "reason": "2026-11-17 1.7.1 BL9: 결정 필요 — pdf-runtime.js는 목록을 막지 않는다. 첫 목록이 고른 기출 문항 미리보기에서 그림 후보를 찾느라(unified-library-ui.js renderPreview → pdf-library-ui.js resolveResult → ensureDocumentOpen) 불러옴. 안 부르려면 그림 후보 찾기를 미루는 화면 변경이 필요(BL9 보고서)"
     },
     {
       "path": "tests/test-ai-batch-source-browser.cjs",
