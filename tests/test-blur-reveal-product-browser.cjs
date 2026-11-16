@@ -109,11 +109,11 @@ test('library real thumbnail arrival, partial failure, retry and search replacem
   const provider={getSources:()=>[],getExamFilterOptions:()=>({academicYears:[]}),search:()=>window.items,listPdfFiles:()=>[],materialize:async r=>({dataUrl:r.preview.src})};
   window.library=createUnifiedLibraryUi({getProvider:async()=>provider,insertMaterialized:async()=>{},desktopLibrary:null});window.opening=library.open();
  });
- await page.locator('.ll.is-on').waitFor();assert.equal(await page.locator('.ll').count(),1);
+ await page.locator('.ll.is-on').waitFor({state:'attached'});assert.equal(await page.locator('.ll').count(),1);
  const count=await page.locator('.ll-count').textContent();const total=Number(count.split('/')[1]);assert.ok(total>0&&total<60,'only requested visible/prefetched thumbnails count');
  await page.screenshot({path:path.join(out,'library-loading.png')});
  assert.ok(pending.length>0);released=true;for(const release of pending.splice(0))await release();
- await page.locator('.ll[data-state="partial-failure"]').waitFor();assert.ok((await page.locator('.ll-text').textContent()).includes('1개 불러오지 못함'));
+ await page.locator('.ll[data-state="partial-failure"]').waitFor({state:'attached'});assert.ok((await page.locator('.ll-text').textContent()).includes('1개 불러오지 못함'));
  assert.equal(await page.locator('.unilib-thumb[data-thumbnail-state="error"]').count(),1);
  failed=false;await page.evaluate(()=>{window.retry=library.refresh();});await page.waitForFunction(()=>document.querySelector('.ll')?.dataset.state==='loading');
  for(const release of pending.splice(0))await release();
@@ -141,14 +141,14 @@ test('product entries and actual request signal mount the approved effect', {tim
  await page.evaluate(async()=>{
   const assignment=await window.__assignmentPromise;
   window.__imageReceipt=await window.__task2Manager.openIndependentReferences({references:[{dataUrl:window.__task2.original,name:'교과서 이미지'}],...assignment,startGeneration:false});
-  document.querySelector('#ai-image-panel [data-ai-comments-apply]').focus();
+  document.querySelector('#ai-image-panel [data-ai-send]').focus();
  });
  await page.keyboard.down('Space');await page.keyboard.up('Space');
  assert.equal(await page.locator('.workbench-assignment').count(),0);
  assert.equal(await page.evaluate(()=>window.__task2.sends.length),0,'the confirming Space press cannot also run image generation');
- await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+ await page.locator('#ai-image-panel [data-ai-send]').click();
  await page.locator('#ai-image-panel [data-ai-loading-frame] .br-layer').first().waitFor();
- assert.match(await page.locator('#ai-image-panel .rs-text').textContent(),/원본(과 라벨)?을 읽고 있어요/);
+ assert.match(await page.locator('#ai-image-panel .rs-text').textContent(),/원본(과 라벨)?을 읽고 있어요|그림을 새로 그리고 있어요/); // 11-10(c9d1da3f): 기본 경로는 원본 관찰 없이 바로 그림을 그린다
  assert.equal(await page.locator('#ai-image-panel .ai-loading-stage').count(),4,'four real stages are shown');
  assert.equal(await page.locator('#ai-image-panel .ai-loading-stage[data-state="current"]').count(),1);
  assert.equal(await page.locator('#ai-image-panel .rs-step').textContent(),'');

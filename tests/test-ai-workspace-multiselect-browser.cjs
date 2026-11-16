@@ -196,7 +196,7 @@ async function currentPrimaryAction(page) {
   assert.ok(['preparation', 'result'].includes(stage), 'Submission begins only in a real idle workbench stage: ' + stage);
   // 2026-10-16(83201a54)부터 이미지 작업은 준비 단계에서도 아래 '변환하기' 하나만 보인다. 그래프 작업만 준비 칸의 버튼을 쓴다.
   const graph = await panel.getAttribute('data-ai-workflow') === 'graph';
-  const selector = stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]';
+  const selector = '[data-ai-send]';
   const button = page.locator('#ai-image-panel[data-ai-stage="' + stage + '"] ' + selector);
   assert.equal(await button.count(), 1, 'Exactly one canonical primary action bound to ' + stage);
   assert.equal(await button.isVisible(), true, 'The actual current primary action must be physically visible');
@@ -206,7 +206,7 @@ async function currentPrimaryAction(page) {
 }
 
 const active = '#ai-image-panel';
-async function chooseModel(page, choice) { await page.locator(`${active} [data-ai-setting-key="model"] [data-ai-model-choice="${choice}"]`).click(); }
+async function chooseModel(page, choice) { await page.locator(`${active} [data-ai-setting-key="model"] [data-ai-model-choice="${choice}"]`).dispatchEvent("click"); }
 async function task(page, index) { await page.locator(`${active} [data-tab-id="task-${index}"] .ai-task-tab-select`).click(); await page.waitForFunction(index => document.querySelector('#ai-image-panel [data-tab-id="task-'+index+'"] .ai-task-tab-select')?.getAttribute('aria-pressed') === 'true', index); }
 async function chooseRevision(page, id) { await page.click(`${active} [data-ai-version-button]`); await page.click(`${active} [data-ai-candidate-option="${id}"]`); }
 async function openPanel(page) { await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
@@ -343,7 +343,8 @@ async function waitForScopedCancellationHistory(page, taskIds) {
 async function cancellationHistory(page) {
   return page.evaluate(async () => (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace => workspace.tabs).map(tab => ({
     id: tab.id, generated: tab.generated.map(({id, data, comments}) => ({id, data, comments})), attachments: tab.attachments.map(({id, data, comments}) => ({id, data, comments})), selectedCandidateId: tab.selectedCandidateId,
-    conversationMessages: tab.conversationMessages, input: tab.input,
+    conversationMessages: tab.conversationMessages, // 11-11(js/ai-panel.js:6264): 숨은 요청 칸(tab.input)은 대화 입력에서 매번 다시 만들어지므로 비교에서 뺀다(대화 메시지는 그대로 비교).
+
   })).sort((a, b) => a.id.localeCompare(b.id)));
 }
 
@@ -474,9 +475,10 @@ test('mixed eligibility blocks every send until user corrects selection', {timeo
   const pngEvidence=path.join(evidence,'png-no-area');fs.mkdirSync(pngEvidence,{recursive:true});
   const pngFixture=await requestBrowserFixture(context,3,pngEvidence,{sourceOnly:false});
   const pngPage=pngFixture.page, pngBefore=await cancellationHistory(pngPage);
+  
   await selectTasks(pngPage,3);
   const pngFullBefore=await pngPage.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs));
-  assert.equal(await pngPage.locator('#ai-image-panel [data-ai-comments-apply]').isEnabled(),true);
+  assert.equal(await pngPage.locator('#ai-image-panel [data-ai-send]').isEnabled(),true);
   await (await currentPrimaryAction(pngPage)).click();
   await pngPage.locator('#ai-image-panel [data-ai-workspace-batch] [role="alert"]').waitFor();
   assert.match(await pngPage.locator('#ai-image-panel [data-ai-workspace-batch] [role="alert"]').textContent(),/영역|박스/);

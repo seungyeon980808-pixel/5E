@@ -34,7 +34,8 @@ fs.mkdirSync(evidence, {recursive:true});
       await open(page.locator('.canvas-global-controls .bug-report-open'));
       await page.locator('#ai-image-install-open').click();
       await open(page.locator('#ai-image-panel .bug-report-open'));
-      await page.locator('[data-ai-empty-import]:visible').selectOption('library');
+      // 11-11(7992a89c): 빈 칸 불러오기는 「라이브러리에서 불러오기」 단추로 바뀌었다(select 아님).
+      await page.locator('#ai-image-panel [data-ai-empty-library]:visible').click();
       const library = page.locator('.unified-library-overlay'); await library.waitFor();
       await open(library.locator('.unilib-header-actions .bug-report-open'));
       assert.equal(await library.isVisible(), true, 'support navigation preserves the open library');

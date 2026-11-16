@@ -5,8 +5,9 @@ const closeTo = (actual, expected, label) => assert.ok(Math.abs(actual - expecte
 module.exports = async function verifyToolLenses(page, evidence, engine) {
   await page.evaluate(async () => {
     document.body.innerHTML = '<aside id="panel-right" style="position:fixed;right:0;width:250px;z-index:20"></aside><button id="arm-cut">Cut</button><button id="arm-delayed">Delayed</button><button id="arm-labeler">Labeler</button><svg id="canvas" style="position:absolute;left:20px;top:100px;width:900px;height:700px" width="900" height="700" viewBox="-100 -50 450 350"><g id="scene"><rect x="0" y="0" width="100" height="100" fill="steelblue"/></g></svg>';
+    const query = new URL(window.cropFixtureReceipt.moduleUrl, location.href).search;
     const [{ createStore }, { initCutTool }, { initLabelerMagnifier }] = await Promise.all([
-      import('/preview/js/store.js'), import('/preview/js/cut-tool.js'), import('/preview/js/tools/labeler-magnifier.js'),
+      import('/js/store.js' + query), import('/js/cut-tool.js' + query), import('/js/tools/labeler-magnifier.js' + query),
     ]);
     const store = createStore({ activeTool: 'CUT', objects: [], selectedIds: [], viewBox: { x: -100, y: -50, w: 450, h: 350 } });
     const svg = document.querySelector('#canvas');
@@ -37,7 +38,7 @@ module.exports = async function verifyToolLenses(page, evidence, engine) {
   const p = await point(); await page.mouse.move(p.x, p.y);
   await page.locator('#cut-magnifier').waitFor({ state: 'hidden' });
   await page.evaluate(async () => {
-    const { attachCropMagnifier } = await import('/preview/js/tools/pointer-magnifier.js');
+    const { attachCropMagnifier } = await import('/js/tools/pointer-magnifier.js' + new URL(window.cropFixtureReceipt.moduleUrl, location.href).search);
     document.body.style.zoom = '1';
     const dialog = document.createElement('section'); dialog.id = 'capture-adapter';
     dialog.style.cssText = 'position:fixed;inset:20px;background:white;display:flex;z-index:100';

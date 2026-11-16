@@ -31,15 +31,18 @@ h.withServer(async origin => {
         // 너비를 바꾼 바로 그 프레임에는 위 줄이 다시 배치되는 중이라 단추가 잠깐 겹칠 수 있다 — 두 프레임 기다린 뒤 잰다.
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         // 10-21: 아래 막대 「한글에 넣기」(#exam-send)는 없앴다. 한글 문서는 맨 위 줄 「hwp」로 열고, 그림 넣기는 5E_hwp 집중 도구 줄 「그림 화면에서 넣기」로.
+        // 11-04 시안 topbar-switch-1104: 줄 위 「exam hwp」 글자(nav.app-switch)는 숨기고 로고 목록(.app-menu)에서 고른다 — 목록을 연 채 실제로 눌리는지 잰다.
+        await page.locator('.app-shell-header .app-brand').click(); await page.locator('.app-menu.is-open').waitFor(); await page.waitForTimeout(250);
         const result = await page.evaluate(() => {
           const pick = sel => { const n=document.querySelector(sel),b=n.getBoundingClientRect(),hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);
             return {rect:{left:b.left,right:b.right,top:b.top,bottom:b.bottom},topmost:n.contains(hit),disabled:n.disabled,hit:hit?.id||hit?.className}; };
-          return { send:!!document.querySelector('#exam-send'), hwp:pick('.app-switch-image [data-app-switch="hwp"]'), viewport:{width:innerWidth,height:innerHeight}, legacy:!!document.querySelector('#exam-document-menu,[data-exam-document-open]'), pool:getComputedStyle(document.getElementById('exam-pool-open')).display };
+          return { send:!!document.querySelector('#exam-send'), hwp:pick('.app-menu.is-open [data-app-switch="hwp"]'), viewport:{width:innerWidth,height:innerHeight}, legacy:!!document.querySelector('#exam-document-menu,[data-exam-document-open]'), pool:getComputedStyle(document.getElementById('exam-pool-open')).display };
         });
         observations.push({ theme, width, ...result });
         fs.writeFileSync(path.join(evidence, name+'-controls.json'), JSON.stringify(observations,null,2));
         assert.ok(!result.send && result.hwp.topmost, `아래 「한글에 넣기」는 없고 맨 위 「hwp」가 실제로 눌린다 at ${width}/${theme}: ${JSON.stringify(result)}`);
         assert.ok(result.hwp.rect.right <= result.viewport.width, 'hwp stays in the viewport');
+        await page.keyboard.press('Escape'); await page.locator('.app-menu.is-open').waitFor({state:'detached'}).catch(()=>{});
         assert.equal(result.legacy,false,'no footer 5E_hwp menu (one entry: the top bar)');assert.equal(result.pool,'none','no footer 5E_ExamPool entry');
         await page.screenshot({ path:path.join(evidence, `${name}-${width}-${theme}.png`) });
         await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b=>b.click());

@@ -181,7 +181,7 @@ h.withServer(async configuredOrigin=>{
  fs.mkdirSync(evidence,{recursive:true});
  for(const[name,engine]of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([n])=>!process.env.EXAM_ENGINE||n===process.env.EXAM_ENGINE)){
   const browser=await engine.launch({headless:true});try{report.engines.push({name,version:browser.version()});if(!process.env.SCALE_WORKFLOW_ONLY && !process.env.SCALE_CORPUS_ONLY)await standalone(origin,browser,name);
-   if(!process.env.SCALE_ADAPTER_ONLY && !process.env.SCALE_CORPUS_ONLY)for(const surface of ['', 'preview/'])await workflow(origin,browser,name,surface);
+   if(!process.env.SCALE_ADAPTER_ONLY && !process.env.SCALE_CORPUS_ONLY)for(const surface of [''])await workflow(origin,browser,name,surface);
    if(!process.env.SCALE_ADAPTER_ONLY)await externalCorpus(origin,browser,name);
   }finally{await browser.close();}
  }

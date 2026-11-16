@@ -1,8 +1,8 @@
-import { buildExportSvg, getContentBounds, rasterizeExportCanvas } from '../preview/js/svg-export.js';
-import { renderObject } from '../preview/js/render.js';
-import { zOrderObjects } from '../preview/js/object-types.js';
-import { chromosomeBBox, chromosomeGeometry } from '../preview/js/render/chromosome.js';
-import { buildGeometrySection } from '../preview/js/inspector/section-geometry.js';
+import { buildExportSvg, getContentBounds, rasterizeExportCanvas } from '../js/svg-export.js';
+import { renderObject } from '../js/render.js';
+import { zOrderObjects } from '../js/object-types.js';
+import { chromosomeBBox, chromosomeGeometry } from '../js/render/chromosome.js';
+import { buildGeometrySection } from '../js/inspector/section-geometry.js';
 
 const result = document.querySelector('#result');
 const surfaces = document.querySelector('#surfaces');

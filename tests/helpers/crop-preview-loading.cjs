@@ -3,7 +3,7 @@ const path = require('node:path');
 
 module.exports = async function verifyPreviewLoading(page, evidence, engine) {
   await page.evaluate(async () => {
-    const { createUnifiedLibraryUi } = await import('/preview/js/unified-library-ui.js');
+    const { createUnifiedLibraryUi } = await import(new URL(window.cropFixtureReceipt.moduleUrl, location.href).href);
     const items = [
       { id: 'preview-a', kind: 'image', title: 'Portrait', provenance: { provider: 'image' }, preview: { pageGeometry: { width: 600, height: 800 } } },
       { id: 'preview-b', kind: 'image', title: 'Landscape', provenance: { provider: 'image' }, preview: { pageGeometry: { width: 800, height: 400 } } },

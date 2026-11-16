@@ -66,8 +66,8 @@ h.withServer(async origin=>{
       const duplicate=await selected(page,2,initial);assert.equal(await original(page),source,'duplicate shows the same actual source');
       const box=await page.locator(current).boundingBox(),list=await page.locator(`${panel} [data-ai-tab-list]`).boundingBox();
       assert.ok(box.y>=list.y && box.y+box.height<=list.y+list.height,'new current task is visible in the sidebar');
+      // 11-11: 이미지 작업대의 「그래프 복원으로 보내기」는 하위 메뉴 없이 바로 보낸다(ai-task-context-menu.js).
       await menu(page,'send');
-      await page.locator('.ai-task-context-menu:not([hidden]) [data-task-action="graph"]').click();
       const graph=await selected(page,1,duplicate);assert.equal(await original(page),source,'cross-workflow send shows the transferred source');
       assert.equal(await page.locator(`${panel} [data-ai-workflow="graph"]`).getAttribute('aria-pressed'),'true');
       await menu(page,'duplicate');const graphCopy=await selected(page,2,graph);

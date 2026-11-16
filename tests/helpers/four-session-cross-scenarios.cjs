@@ -9,7 +9,7 @@ const crypto = require('node:crypto');
 const primarySend = async (page, panel) => {
   const root = page.locator(panel).first();
   const graph = await root.getAttribute('data-ai-workflow') === 'graph', stage = await root.getAttribute('data-ai-stage');
-  return root.locator(stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]').first();
+  return root.locator('[data-ai-send]').first();
 };
 const root = path.resolve(__dirname, '../..');
 const version = '?v=1.7.0-four-session-integration';
@@ -505,10 +505,10 @@ async function stored(page, owner = null) {
 
 async function makeLabel(ctx, page, { task = 'task-0', labels = 'restore-editable', kind = 'general', verification = 'draft-first', request = '장치 연결을 보존해 변환해 주세요' } = {}) {
   const workflow = require('./label-source-browser.cjs');
-  await selectTask(ctx, page, task); await workflow.choose(page, kind, labels);
+  await selectTask(ctx, page, task); await workflow.choose(page, kind, labels); await page.evaluate(() => { globalThis.__5eLegacyLabelPipeline = true; }); // 11-10(c9d1da3f): 이 시나리오는 예전 라벨 파이프라인 계약(관찰·검수) — 내부 시험용 플래그
   assert.ok(['draft-first', 'full'].includes(verification));
-  if (labels === 'restore-editable') await page.locator(panel + ` [data-ai-setting-key="verification"] [data-ai-setting-value="${verification}"]`).click();
-  await page.locator(panel + ' [data-ai-input]').fill(request);
+  if (labels === 'restore-editable') await page.locator(panel + ` [data-ai-setting-key="verification"] [data-ai-setting-value="${verification}"]`).dispatchEvent("click");
+  await page.locator(panel + ' [data-ai-chat-input]').fill(request);
   const startIndex = await page.evaluate(() => __task2.sends.length);
   await ctx.act(`${kind}/${labels}: actual Send`, async () => (await primarySend(page, panel)).click(), page);
   await workflow.finish(page, { sourcePlan: workflow.verifiedPlan, startIndex });
@@ -896,7 +896,7 @@ scenarios.QA2 = async ctx => {
     // Actual supported model UI, with unchanged content and input.
     await selectTask(ctx, page, 'task-4');
     const oldModel = await page.locator(panel + ' [data-ai-model]').inputValue();
-    await page.locator(panel + ` [data-ai-setting-key=model] [data-ai-model-choice=${oldModel === 'gpt-6-luna' ? 'sol' : 'luna'}]`).click();
+    await page.locator(panel + ` [data-ai-setting-key=model] [data-ai-model-choice=${oldModel === 'gpt-6-luna' ? 'sol' : 'luna'}]`).dispatchEvent("click");
     const selectedModel = await page.locator(panel + ' [data-ai-model]').inputValue();
     assert.notEqual(selectedModel, oldModel);
     const modelOutput = await page.evaluate(async () => {
@@ -918,7 +918,7 @@ scenarios.QA2 = async ctx => {
     });
     ctx.result.inputs.push({ provenance: 'explicit synthetic source-change bitmap', sha256: sha(pngBytes(sourceChanged)), bytes: pngBytes(sourceChanged).length });
     await selectTask(ctx, page, 'task-5');
-    await page.locator(panel + ` [data-ai-setting-key=model] [data-ai-model-choice=${selectedModel === 'gpt-6-luna' ? 'luna' : 'sol'}]`).click();
+    await page.locator(panel + ` [data-ai-setting-key=model] [data-ai-model-choice=${selectedModel === 'gpt-6-luna' ? 'luna' : 'sol'}]`).dispatchEvent("click");
     assert.equal(await page.locator(panel + ' [data-ai-model]').inputValue(), selectedModel, 'source-only negative keeps the previous model');
     await transition(page, 'replace-source', async data => (await document.querySelector('#ai-image-panel').__crossController.sharingSnapshot()).tabs.find(t => t.id === 'task-5').attachments[0].data === data,
       sourceChanged, () => page.locator(panel + ' [data-ai-replace-source-input]').setInputFiles({ name: 'changed-source.png', mimeType: 'image/png', buffer: pngBytes(sourceChanged) }));
@@ -1964,7 +1964,7 @@ async function captureClipboard(ctx, page) {
   await selectLabel(ctx, page, label.id); let position = await labelPoint(page, label.id); await page.mouse.click(position.x, position.y);
   const input = page.locator('.ai-inline-label-editor'); await input.waitFor({ state: 'visible' }); await input.press('Alt+c');
   await ctx.check('Mac Option+C is blocked inside actual native inline text input', async () => assert.equal(await page.locator('.quick-capture-overlay').count(), 0)); await input.press('Escape');
-  await page.locator('#ai-image-install-open').click(); await page.locator(panel + ' [data-ai-input]').focus(); await page.keyboard.press('Alt+c');
+  await page.locator('#ai-image-install-open').click(); await page.locator(panel + ' [data-ai-chat-input]').focus(); await page.keyboard.press('Alt+c');
   await ctx.check('Option+C is blocked in actual textarea/modal and makes zero clipboard calls', async () => { assert.equal(await page.locator('.quick-capture-overlay').count(), 0); assert.equal(await page.evaluate(() => __cross.clipboard.calls), 0); }); await closeAI(page);
   await page.locator('#canvas').focus(); await page.keyboard.press('Alt+c'); await page.locator('.quick-capture-overlay').waitFor({ state: 'visible' });
   const b = await page.locator('#canvas').boundingBox();
@@ -2050,9 +2050,9 @@ async function respondTransport(page, index) {
   else assert.fail('Unrecognized actual transport: ' + request.text.slice(0, 200));
 }
 async function prepareSend(ctx, page, task, request, labels = 'remove') {
-  await selectTask(ctx, page, task); await require('./label-source-browser.cjs').choose(page, 'general', labels);
-  if (labels === 'restore-editable') await page.locator(panel + ' [data-ai-setting-key=verification] [data-ai-setting-value=draft-first]').click();
-  await page.locator(panel + ' [data-ai-input]').fill(request);
+  await selectTask(ctx, page, task); await require('./label-source-browser.cjs').choose(page, 'general', labels); await page.evaluate(() => { globalThis.__5eLegacyLabelPipeline = true; });
+  if (labels === 'restore-editable') await page.locator(panel + ' [data-ai-setting-key=verification] [data-ai-setting-value=draft-first]').dispatchEvent("click");
+  await page.locator(panel + ' [data-ai-chat-input]').fill(request);
   const next = await page.evaluate(() => __task2.sends.length);
   await arm(page, 'send-first-turn', n => __task2.sends.length > n, next);
   await ctx.act(`real Send ${task}`, async () => (await primarySend(page, panel)).click(), page); await arrived(page, 'send-first-turn'); return next;
@@ -2455,8 +2455,8 @@ async function graphGuards(ctx) {
   for (const fault of ['wrong-source', 'malformed', 'unsupported-model', 'canceled-source-replacement']) await app(ctx, 'graph-guard-' + fault, async page => {
     const label = await makeLabel(ctx, page), rich = await richUnion(ctx, page, label); await selectTask(ctx, page, 'cross-graph-task');
     await page.locator(panel + ' [data-ai-side-tab="comments"]').click();
-    await page.locator(panel + ' [data-ai-input]').waitFor({ state: 'visible' });
-    await page.locator(panel + ' [data-ai-input]').fill('Guard current native source ' + fault);
+    await page.locator(panel + ' [data-ai-chat-input]').waitFor({ state: 'visible' });
+    await page.locator(panel + ' [data-ai-chat-input]').fill('Guard current native source ' + fault);
     const before = (await tabs(page)).find(t => t.id === 'cross-graph-task'), scene = await objects(page), start = await page.evaluate(() => __task2.sends.length);
     if (fault === 'unsupported-model') await page.evaluate(() => { fiveEDesktop.models = async () => ({ data: [{ model: 'gpt-6-luna', supportedReasoningEfforts: ['medium'] }] }); });
     await arm(page, 'guard-idle', () => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false' && document.querySelector('#ai-image-panel [data-ai-status]').dataset.kind === 'error');
@@ -2534,7 +2534,7 @@ async function armedReplacement(ctx, name) {
       }});__cross.disposers.push(()=>{gate.release.resolve();Object.defineProperty(prototype,'oncomplete',descriptor);});
       __cross.heldCheckpoint=c.checkpointForClose();await __cross.deadline(gate.entered.promise,'actual old IndexedDB commit, completion callback held');
     },version);
-    await page.locator(panel+' [data-ai-input]').fill('복원 전 예약된 입력');
+    await page.locator(panel+' [data-ai-chat-input]').fill('복원 전 예약된 입력');
     await arm(page,'old-debounce-armed',()=>__cross.savedTimers.length>0);await arrived(page,'old-debounce-armed');
     const expected = await page.evaluate(async () => {
       const c=document.querySelector('#ai-image-panel').__crossController,replacement=await c.sharingSnapshot();
@@ -2548,7 +2548,7 @@ async function armedReplacement(ctx, name) {
     await ctx.act('fire original ARMED debounce callback while replacement is held',()=>page.evaluate(()=>{
       __cross.oldTimer.fired++;__cross.oldTimer.callback();__cross.notify();
     }),page);
-    await page.locator(panel+' [data-ai-input]').fill('복원 대기 중 새로 예약한 입력');
+    await page.locator(panel+' [data-ai-chat-input]').fill('복원 대기 중 새로 예약한 입력');
     await arm(page,'new-debounce-armed',()=>__cross.savedTimers.at(-1)!==__cross.oldTimer&&!__cross.savedTimers.at(-1).cleared);await arrived(page,'new-debounce-armed');
     await ctx.act('fire newly captured actual debounce callback DURING replacement',()=>page.evaluate(()=>{
       const item=__cross.savedTimers.at(-1);item.fired++;item.callback();__cross.notify();
@@ -2905,7 +2905,7 @@ async function recoveryAndTransfer(ctx){
       const databaseName='5e.preview:5e-ai-image-tasks'+(owner.scope?'-'+owner.scope:'');
       const put=IDBObjectStore.prototype.put;__cross.abortWrite={enabled:true,hits:0,databaseName};IDBObjectStore.prototype.put=function(value,...args){const req=put.call(this,value,...args);if(__cross.abortWrite.enabled&&this.transaction.db.name===__cross.abortWrite.databaseName&&this.name==='tasks'){__cross.abortWrite.hits++;this.transaction.abort();}return req;};__cross.disposers.push(()=>{IDBObjectStore.prototype.put=put;});
     },{label,version});
-    await page.locator(panel+' [data-ai-input]').fill('저장 실패 후 남아야 할 실제 입력');const memory=await workspace(page),count=await page.evaluate(()=>__task2.sends.length);
+    await page.locator(panel+' [data-ai-chat-input]').fill('저장 실패 후 남아야 할 실제 입력');const memory=await workspace(page),count=await page.evaluate(()=>__task2.sends.length);
     const failure=await page.evaluate(async()=>{try{await __task2Manager.checkpointForClose();return null;}catch(error){return{name:error.name,message:error.message};}});
     await ctx.check('actual IndexedDB abort preserves every draft field, appends its exact storage warning, retains previous durable state and makes zero requests',async()=>{
       assert.ok(failure);assert.ok(await page.evaluate(()=>__cross.abortWrite.hits>0));

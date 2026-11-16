@@ -41,7 +41,9 @@ h.withServer(async origin => {
       assert.equal(v.left, '레퍼런스'); assert.equal(v.right, '결과');
       assert.equal(v.viewSource, '레퍼런스'); assert.equal(v.viewResult, '결과');
       assert.match(v.add, /레퍼런스 추가/); assert.match(v.empty, /최대 4개/);
-      assert.equal(await page.locator(`${panel} [data-ai-reference-empty] select[data-ai-empty-import] option`).count(), 3, `${name}: the empty slot keeps its import menu`);
+      // 11-11(7992a89c, 시안 v7): 빈 칸 불러오기 select는 「라이브러리에서 불러오기」 단추 + 옆 ＋ 메뉴(파일·클립보드)로 바뀌었다.
+      assert.equal(await page.locator(`${panel} [data-ai-reference-empty] [data-ai-empty-library]`).count(), 1, `${name}: the empty slot keeps its library import button`);
+      assert.equal(await page.locator(`${panel} [data-ai-reference-empty] .ai-stage-import-menu [role="menuitem"]`).count(), 2, `${name}: the empty slot keeps its file/clipboard import menu`);
       assert.ok(v.original.visible && v.result.visible && v.controls.visible, `${name}: both panes and the view group show on a creation tab`);
       assert.ok(v.original.x < v.result.x && Math.abs(v.original.w - v.result.w) <= 2, `${name}: reference left, result right, same width`);
 

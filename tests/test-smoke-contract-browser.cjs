@@ -38,6 +38,8 @@ async function transferCurrentLibraryReference(page, panel, mode, errors) {
     const bounds = document.querySelector('[data-unilib-crop-canvas]')?.getBoundingClientRect();
     return Boolean(bounds && bounds.width > 20 && bounds.height > 20);
   }, undefined, { timeout: 20_000 });
+  // 크롭 화면은 PDF 쪽 그림이 준비된 뒤에야(cropReady) 끌기를 받는다. 준비 전 끌기는 무시되어 「추가」가 안 켜졌다.
+  await page.waitForFunction(() => { const i = document.querySelector('[data-unilib-crop-image]'); const p = document.querySelector('[data-unilib-crop-load-paper]'); return i && i.complete && i.naturalWidth > 0 && !i.hidden && (!p || p.hidden); }, undefined, { timeout: 20_000 });
   const cropBox = await page.locator('[data-unilib-crop-canvas]').boundingBox();
   const stageBox = await page.locator('[data-unilib-crop-stage]').boundingBox();
   assert.ok(cropBox, 'current unified-library crop canvas is visible');
@@ -53,7 +55,7 @@ async function transferCurrentLibraryReference(page, panel, mode, errors) {
   await page.mouse.down();
   await page.mouse.move(visibleCrop.x + visibleCrop.width * 0.45, visibleCrop.y + visibleCrop.height * 0.45, { steps: 5 });
   await page.mouse.up();
-  await page.locator('[data-unilib-crop-save]:not([disabled])').click();
+  await page.locator('[data-unilib-crop-save]:not([disabled])').click({ timeout: 15_000 });
   await page.locator('[data-unilib-crop-draft-review]').waitFor({ state: 'hidden' });
   traceLibrary('current-crop-saved');
   await page.screenshot({ path: path.join(evidenceDir, `${page.context().browser().browserType().name()}-${mode}-library-crop.png`), fullPage: true });
@@ -106,7 +108,7 @@ function startServer() {
   const contentTypes = { '.css': 'text/css', '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.mjs': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
   const server = http.createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-    const target = path.resolve(root, `.${pathname === '/' ? '/preview/' : pathname}`);
+    const target = path.resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);
     if (!target.startsWith(`${root}${path.sep}`)) return response.writeHead(403).end();
     fs.stat(target, (statError, stat) => {
       const file = !statError && stat.isDirectory() ? path.join(target, 'index.html') : target;
@@ -233,6 +235,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       const browserContext = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
       const transport = await installDesktopStub(browserContext);
       const page = await browserContext.newPage();
+      await page.addInitScript(() => { globalThis.__5eLegacyLabelPipeline = true; }); // 11-10(c9d1da3f): 원본 관찰·전체 검수 단계는 예전 라벨 파이프라인 계약 — 내부 시험용 플래그
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       const suffix = `?mode=${mode}`;
@@ -246,7 +249,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         });`;
         return route.fulfill({contentType:'text/javascript',body:original.replace(anchor, observed)});
       });
-      await page.goto(`${origin}/preview/${suffix}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${origin}/${suffix}`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction((expectedMode) => document.documentElement.dataset.mode === expectedMode, mode);
       const dismiss = page.locator('.tut-welcome-overlay .tut-banner-no');
       if (await dismiss.isVisible()) await dismiss.click();
@@ -286,14 +289,13 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       const expectedReferences = await panel.locator('[data-ai-reference-id]').count();
       assert.equal(expectedReferences, 1, 'the current source transfer creates one reference in its task');
       assert.equal(await panel.locator('.ai-reference-section[open]').count(), 1, 'references are expanded after current transfer');
-      const sourceChoices = panel.locator('.ai-source-treatment');
-      if (!await sourceChoices.evaluate(node => node.open)) await sourceChoices.locator('summary').click();
-      await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').click();
-      await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').click();
+      // 506f30bf(v6): 출처·라벨 단추는 늘 보이는 줄에 있고 출처 줄은 자동 판단 때 숨는다 → 숨은 단추도 같은 상태를 바꾸도록 click 이벤트를 보낸다.
+      await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').first().dispatchEvent('click');
+      await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').dispatchEvent('click');
       traceLibrary('fixture-send-click', { mode });
-      // 이미지 작업에서는 준비 칸의 보내기 단추를 숨기고(10-16 83201a54) 「변환하기」([data-ai-comments-apply])가 같은 보내기를 부른다.
+      // 이미지 작업에서는 준비 칸의 보내기 단추를 숨기고(10-16 83201a54) 「변환하기」([data-ai-send][data-ai-comments-apply])가 같은 보내기를 부른다.
       const send = panel.locator('[data-ai-send]');
-      await (await send.isVisible() ? send : panel.locator('[data-ai-comments-apply]')).click();
+      await (await send.isVisible() ? send : panel.locator('[data-ai-send][data-ai-comments-apply]')).click();
       await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 1, undefined, { timeout: 15_000 });
       // First candidate registration precedes the actual review and busy-state settlement.
       // Observe the real completion before hit-testing or editing its visible surface.

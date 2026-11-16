@@ -160,5 +160,5 @@ async function scenario(origin,engine,surface) {
 fs.mkdirSync(evidence,{recursive:true});
 h.withServer(async origin=>{
   for(const engine of ['webkit','chromium'].filter(n=>!process.env.EXAM_ENGINE||n===process.env.EXAM_ENGINE))
-    for(const surface of ['','preview/'].filter(n=>!process.env.EXAM_SURFACE||n===(process.env.EXAM_SURFACE==='preview'?'preview/':''))) await scenario(origin,engine,surface);
+    for(const surface of ['']) await scenario(origin,engine,surface);
 }).catch(error=>{console.error(error);process.exitCode=1;});

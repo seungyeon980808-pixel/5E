@@ -115,8 +115,9 @@ async function storedTabs(page) {
       await upload(page);
       await page.locator('#ai-image-panel .ai-compare-menu summary').click();
       await page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]').click();
-      page.once('dialog', dialog => dialog.accept());
       await page.locator('#ai-image-panel .ai-original-pane [title="이미지 제거"]').click();
+      // 11-11: 맥 기본 확인창 대신 5E 확인창(showConfirm, ui-dialogs.js) — 「빼기」를 누른다.
+      await page.getByRole('alertdialog', { name: '이미지 빼기', exact: true }).getByRole('button', { name: '빼기', exact: true }).click();
       await page.waitForGraphSignal(() => document.querySelector('#ai-image-panel')?.dataset.aiStage === 'empty');
       const emptyPanes = await page.locator('#ai-image-panel').evaluate(panel => {
         const bounds = selector => { const b=panel.querySelector(selector).getBoundingClientRect(); return {top:b.top,bottom:b.bottom,height:b.height}; };

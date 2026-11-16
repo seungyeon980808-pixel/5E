@@ -2,6 +2,7 @@
 // → 그래프를 더블클릭해 다시 열어 함수식을 고친다. 저장 파일과 고친 결과를 함께 확인한다.
 const assert = require('node:assert/strict');
 const flow = require('./helpers/teacher-flow.cjs');
+const { openGraphDirect } = require('./helpers/graph-entry.cjs');
 
 const appModule = (page, name, run, arg) => page.evaluate(async ({ name, source, arg }) => {
   const stateUrl = performance.getEntriesByType('resource').map(entry => entry.name).find(entry => /\/state\.js(\?|$)/.test(entry));
@@ -18,7 +19,7 @@ flow.runEngines('graph', {
   options: { savePicker: true },
   async run({ page, evidence, engine, shot }) {
     // ① 좌표: x 0~4, y 0~4, 1칸 간격
-    await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+    await openGraphDirect(page);
     const modal = page.locator('#graph-modal-overlay');
     await modal.waitFor({ state: 'visible' });
     for (const [id, value] of [['#gm-xpos', 4], ['#gm-ypos', 4], ['#gm-xstep', 1], ['#gm-ystep', 1]]) await setNumber(modal.locator(id), value);

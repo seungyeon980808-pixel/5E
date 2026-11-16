@@ -52,7 +52,7 @@ async function mockMovedPng(page,index,dx){
     const {decodeScopedPng,encodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');
     const {scopedPngBytes,scopedPngData}=await import('/js/ai-panel.js?v=1.7.0-four-session-integration');
     const request=window.__task2.sends[index].payload;
-    const image=await decodeScopedPng(scopedPngBytes(request.attachments[0].data));
+    const image=await decodeScopedPng(scopedPngBytes(request.attachments[1].data));
     const spec=JSON.parse(request.text.split('<5e-verified-edit-spec>\n')[1].split('\n</5e-verified-edit-spec>')[0]);
     const source=spec.edits[0].required_edit.source_bounds_pixels;
     const data=new Uint8Array(image.data);
@@ -71,8 +71,10 @@ async function mockMovedPng(page,index,dx){
 // 2026-10-12(4a523ad8)부터 박스 수정 방식은 접힌 '고급 · 실험' 칸 안에 있다. 고르기 전에 펼친다.
 async function showScopedMode(page) {
   const advanced = page.locator('#ai-image-panel [data-ai-scoped-advanced]');
-  await advanced.waitFor({ state: 'visible' });
-  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click();
+  // js/ai-panel.js:683: 고급 · 실험 칸은 제품에서 늘 hidden이다(사용자에게 안 보이는 실험 후보). 후보 방식 자체를 검사하므로 검사에서만 칸을 연다.
+  await advanced.evaluate(node => { node.hidden = false; for (let n = node; n && n.id !== 'ai-image-panel'; n = n.parentElement) { if (getComputedStyle(n).display === 'none') n.style.setProperty('display', 'block', 'important'); } });
+  await page.locator('#ai-image-panel [data-ai-scoped-prompt-row]').evaluate(node => { node.hidden = false; for (let n = node; n && n.id !== 'ai-image-panel'; n = n.parentElement) { if (getComputedStyle(n).display === 'none') n.style.setProperty('display', 'block', 'important'); } });
+  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click({ force: true });
   await page.locator('[data-ai-scoped-prompt-mode]').waitFor({ state: 'visible' });
   // 박스별 수치 칸은 코멘트 표식에 올린 창의 접힌 '고급 · 수치 검증' 칸(data-ai-precision-settings) 안에 있다.
   // 코멘트 표시는 처음에 꺼져 있다(2026-10-16, 83201a54).
@@ -93,7 +95,8 @@ test('real product blocks a bad candidate, authorizes one original-based correct
   const {page}=await fixture(context,1,evidence,{selectedPartial:true,precisionMove:true,
     browserContextOptions:mobile?{viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true}:{}});
   await page.evaluate(theme=>document.documentElement.dataset.theme=theme,process.env.UI_CAPTURE_THEME||'dark');
-  if(!await page.locator('#ai-image-panel [data-ai-scoped-advanced]').isVisible()) {
+  // 고급 칸은 제품에서 늘 hidden 속성이므로, 속성이 아닌 접힌 오른쪽 칸 때문에 안 보일 때만 연다.
+  if(await page.locator('#ai-image-panel [data-ai-scoped-advanced]').evaluate(n=>!n.hidden&&!n.offsetParent)) {
     await page.locator('#ai-image-panel [data-panel-toggle="right"]').click();
   }
   await showScopedMode(page);
@@ -119,11 +122,11 @@ test('real product blocks a bad candidate, authorizes one original-based correct
     }
   }
   await subscribe(page,'first-send','send');
-  await page.locator('[data-ai-comments-apply]').click();await arrived(page,'first-send');
+  await page.locator('[data-ai-send][data-ai-comments-apply]').click();await arrived(page,'first-send');
   assert.equal(await page.locator('[data-ai-precision-kind]').isDisabled(),true);
   assert.equal(await page.getByLabel('박스 1 가로 이동 px',{exact:true}).isDisabled(),true);
   const first=await page.evaluate(()=>window.__task2.sends[0].payload);
-  assert.equal(first.attachments.length,1);assert.equal(first.model,'gpt-6.1-sol');
+  assert.equal(first.attachments.length,3);assert.equal(first.model,'gpt-6.1-sol');
   const firstSpec=JSON.parse(first.text.split('<5e-verified-edit-spec>\n')[1].split('\n</5e-verified-edit-spec>')[0]);
   assert.equal(firstSpec.edits[0].required_edit.offset_pixels[0],20);
   await subscribe(page,'failed-dialog','dialog');
@@ -148,7 +151,7 @@ test('real product blocks a bad candidate, authorizes one original-based correct
   await subscribe(page,'correction-send','send');
   await page.getByRole('button',{name:'오차로 한 번 교정',exact:true}).click();await arrived(page,'correction-send');
   const second=await page.evaluate(()=>window.__task2.sends[1].payload);
-  assert.equal(second.attachments[0].data,first.attachments[0].data);
+  assert.equal(second.attachments[1].data, first.attachments[1].data);
   const secondSpec=JSON.parse(second.text.split('<5e-verified-edit-spec>\n')[1].split('\n</5e-verified-edit-spec>')[0]);
   const feedback=JSON.parse(secondSpec.edits[0].original_user_instruction.split('\n').at(-1));
   assert.equal(feedback.measured.dx,34);assert.equal(feedback.expected.dx,20);
@@ -189,7 +192,7 @@ test('a second real PNG verification failure has no apply or third-request path'
   await showScopedMode(page);
   await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   await subscribe(page,'send-one','send');
-  await page.locator('[data-ai-comments-apply]').click();await arrived(page,'send-one');
+  await page.locator('[data-ai-send][data-ai-comments-apply]').click();await arrived(page,'send-one');
   await subscribe(page,'failure-one','dialog');
   await emit(page,0,'image',await mockMovedPng(page,0,34));await arrived(page,'failure-one');
   await subscribe(page,'send-two','send');
@@ -215,7 +218,7 @@ test('source preflight rejects an impossible destination before sending, and cor
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).fill('150');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).press('Tab');
   await subscribe(page,'invalid-source','idle');
-  await page.locator('[data-ai-comments-apply]').click();await arrived(page,'invalid-source');
+  await page.locator('[data-ai-send][data-ai-comments-apply]').click();await arrived(page,'invalid-source');
   assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
   let tabs=await snapshot(page);
   assert.equal(tabs[0].generated[0].scopedEditHistory[0].error.code,'SCOPED_EDIT_SOURCE_UNCERTAIN');
@@ -223,7 +226,7 @@ test('source preflight rejects an impossible destination before sending, and cor
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).fill('20');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).press('Tab');
   await subscribe(page,'allowed-send','send');
-  await page.locator('[data-ai-comments-apply]').click();await arrived(page,'allowed-send');
+  await page.locator('[data-ai-send][data-ai-comments-apply]').click();await arrived(page,'allowed-send');
   await subscribe(page,'cancel-dialog','dialog');
   await emit(page,0,'image',await mockMovedPng(page,0,34));await arrived(page,'cancel-dialog');
   await subscribe(page,'cancelled','idle');

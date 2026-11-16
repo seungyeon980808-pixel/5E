@@ -93,8 +93,8 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
         await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
         const sourceTaskId=await page.locator(ui+'.ai-task-tab').first().getAttribute('data-tab-id');
-        await menu.getByRole('menuitem',{name:'이미지/그래프 변환으로 보내기',exact:true}).click();
-        await menu.getByRole('menuitem',{name:kind==='image'?'이미지 변환으로 보내기':'그래프 복원으로 보내기',exact:true}).click();
+        // 552279a9: 하위 메뉴가 없어지고, 그래프 작업대에서는 「이미지 변환으로 보내기」(반대쪽) 단추 하나와 「현 작업대에 추가」(같은 쪽 복사)가 된다.
+        await menu.getByRole('menuitem',{name:kind==='image'?'이미지 변환으로 보내기':'현 작업대에 추가',exact:true}).click();
         await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();
         await page.waitForGraphSignal(({kind,sourceTaskId})=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===(kind==='image'?1:2)
           && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId!==sourceTaskId,{kind,sourceTaskId});
@@ -142,9 +142,9 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.waitForGraphSignal(() => document.querySelector('.modal-overlay[data-ai-workflow="graph"]')?.dataset.aiBusy==='false');
       await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();await complete(page, 1);
-      assert.equal(await page.locator(ui+'[data-ai-comments-apply]').isVisible(),false,'graph restore uses one action');
+      assert.equal(await page.locator(ui+'[data-ai-comments-apply]:not([data-ai-send])').isVisible(),false,'graph restore uses one action');
       assert.deepEqual(await page.locator(ui+'.ai-output-actions > button').allTextContents(),
-        ['PNG 저장','이미지 복사','편집기로 가져오기','한글로 보내기'],'The approved four output actions are retained for graph results (11-07 G9: 캔버스에 삽입 → 편집기로 가져오기)');
+        ['PNG 저장','이미지 복사','편집기로 가져오기','캔버스에 넣기','한글로 보내기'],'The approved output actions are retained for graph results (11-07 G9: 캔버스에 삽입 → 편집기로 가져오기; 11-11 552279a9: 「캔버스에 넣기」 추가)');
       assert.equal(await page.locator(ui+'[data-ai-save-selected]').isVisible(),true,'The common graph output action saves a PNG');
       const beforePng = await tabs(page), requestsBeforePng = await page.evaluate(() => __stability.requests.length);
       fs.writeFileSync(path.join(output,name+'-png-action.json'), JSON.stringify({

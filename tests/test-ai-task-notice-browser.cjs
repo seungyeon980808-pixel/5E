@@ -38,7 +38,7 @@ test('task rows update when a completed image review notice changes', {timeout: 
             const skip = page.locator('.tut-welcome-overlay .tut-banner-no');
             if (await skip.isVisible()) await skip.click();
             await page.locator('#ai-image-install-open').click();
-            await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+            await page.locator('#ai-image-panel [data-ai-send]').click();
             await page.waitForFunction(() => window.__task2.generationSends.length === 1);
             await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').click();
             await page.evaluate(() => { window.__task2.emitGeneration(0, 'image'); window.__task2.emitGeneration(0, 'done'); });

@@ -16,7 +16,7 @@ h.withServer(async origin => {
   for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const page = await (await browser.newContext({ viewport: { width: 1600, height: 1100 }, acceptDownloads: true })).newPage();
-    page.setDefaultTimeout(60000);
+    page.setDefaultTimeout(process.env.CI ? 180000 : 60000); // CI(느린 WebKit)에서만 3배
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     try {

@@ -12,7 +12,7 @@ function server() {
     const pathname = new URL(request.url, 'http://127.0.0.1').pathname;
     if (pathname === '/review') {
       response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      response.end('<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Separation review QA</title><link rel="stylesheet" href="/preview/css/style.css"><link rel="stylesheet" href="/preview/css/ai-editable-assets.css"></head><body><button id="review">분리 결과 확인</button></body></html>');
+      response.end('<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Separation review QA</title><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/ai-editable-assets.css"></head><body><button id="review">분리 결과 확인</button></body></html>');
       return;
     }
     const target = path.resolve(root, `.${decodeURIComponent(pathname)}`);
@@ -49,8 +49,8 @@ test('numbered original regions, isolated PNGs and stale/cancel/retry dialog beh
           await page.goto(`http://127.0.0.1:${local.address().port}/review`);
           await page.evaluate(async ({ dataUrl, theme }) => {
             document.documentElement.dataset.theme = theme;
-            const { prepareSeparatedAssets } = await import('/preview/js/ai-separated-assets.js');
-            const { openEditableAssetsDialog } = await import('/preview/js/ai-editable-assets-dialog.js');
+            const { prepareSeparatedAssets } = await import('/js/ai-separated-assets.js');
+            const { openEditableAssetsDialog } = await import('/js/ai-editable-assets-dialog.js');
             const prepared = await prepareSeparatedAssets(dataUrl);
             window.reviewState = { prepared, source: dataUrl, original: JSON.stringify(prepared), current: true, inserts: [], resolutions: [], failInsert: false, fallback: false };
             document.querySelector('#review').onclick = () => {
@@ -132,7 +132,7 @@ test('numbered original regions, isolated PNGs and stale/cancel/retry dialog beh
           await page.click('[data-action="cancel"]');
           await page.evaluate(() => { window.reviewState.current = true; window.reviewState.fallback = true; });
           await page.click('#review');
-          await page.waitForFunction(() => document.querySelector('.aea-source')?.naturalWidth === 160);
+          await page.waitForFunction(() => document.querySelector('.aea-source')?.naturalWidth === 160 && /원본 PNG를 유지했습니다/.test(document.querySelector('.aea-status')?.textContent || ''));
           assert.equal(await page.locator('[data-action="insert"]').isDisabled(), true);
           await page.click('[data-action="cancel"]');
           assert.deepEqual(errors, []);

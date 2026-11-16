@@ -57,7 +57,8 @@ for (const engine of ['chromium', 'webkit']) {
     assert.ok(Math.abs(toolbar.annRight - (toolbar.gridRight - 8)) <= 1.5 && toolbar.annLeft > toolbar.center, 'annotation groups sit in the right half, right-aligned');
     assert.equal(toolbar.pressedBg, toolbar.softColor, 'active compare mode uses the soft selected surface');
     assert.ok(toolbar.onBg.length >= 1 && toolbar.onBg.every(bg => bg === toolbar.softColor), 'every pressed tool uses the soft selected surface: ' + JSON.stringify(toolbar.onBg));
-    assert.ok(toolbar.headingH <= 42, 'heading keeps its 41px height');
+    // 11-11(506f30bf, 시안 v6): 머리 줄·도구 줄 높이는 --ai-row-h 43px 한 값으로 맞춘다(css/ai-panel.css).
+    assert.ok(Math.abs(toolbar.headingH - 43) <= 1, 'heading keeps its 43px row height: ' + toolbar.headingH);
     await geometry('same-ratio');
     assert.equal(await page.locator(`${panel} [data-ai-capture]`).count(), 0);
     // 코멘트 표시 단추는 코멘트 도구 줄(.ai-annotation-toolbar)에 한 개 있다.

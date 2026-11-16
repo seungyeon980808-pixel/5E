@@ -63,7 +63,7 @@ async function cycle(page, key) {
         onState: () => () => {}, onLog: () => () => {}, setAiTaskShortcutActive: () => {}, onAiCloseTaskShortcut: () => () => {},
       };
     });
-    await page.goto(`${origin}/preview/?mode=pro`, { waitUntil: 'load' });
+    await page.goto(`${origin}/?mode=pro`, { waitUntil: 'load' });
     await page.locator('#ai-image-install-open').click();
     const panel = page.locator('#ai-image-panel');
     await panel.waitFor({ state: 'visible' });

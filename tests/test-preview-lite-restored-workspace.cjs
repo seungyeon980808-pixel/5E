@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
-const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?mode=lite";
+const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/?mode=lite";
 
 function liteUrl() {
   const url = new URL(previewUrl);

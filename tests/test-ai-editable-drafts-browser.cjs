@@ -75,7 +75,8 @@ async function labelCenter(page,id){
 }
 async function editMoveReopen(page,evidence,source,count,correctedText){
   await canvasAPI(page);await watchCanvas(page,{count});
-  await page.locator(panel+' [data-ai-edit-review-draft]').click();
+  // js/ai-panel.js:2716: 「캔버스에서 편집」(data-ai-edit-review-draft)은 제품에서 늘 hidden(단추가 「캔버스에 삽입」으로 합쳐짐). 남아 있는 같은 코드 경로를 숨은 단추의 click 이벤트로 검사한다(화면 경로 아님 — 결과 파일 참고).
+  await page.locator(panel+' [data-ai-edit-review-draft]').dispatchEvent('click');
   await page.evaluate(()=>window.qa.ready);
   let objects=await canvasObjects(page),image=objects.find(o=>o.type==='image');
   const labels=objects.filter(o=>o.aiAutoLabel);
@@ -144,11 +145,12 @@ async function editMoveReopen(page,evidence,source,count,correctedText){
   return{nativeCount:count,types:labels.map(o=>o.type),editedId:chosen.id,editedText:next,imageSelectionLocked:true,saveReopen:true};
 }
 test('general draft-first UI offers native editing and optional verification without reanalysis or regeneration',{timeout:90000},async t=>{
-  const evidence=dir('general-fast');const {page,errors}=await fixture(t,1,evidence);
+  const evidence=dir('general-fast');const {page,errors}=await fixture(t,1,evidence,{beforeNavigate:p=>p.addInitScript(()=>{globalThis.__5eLegacyLabelPipeline=true;})}) /* 11-10(c9d1da3f): 초안 먼저·검수 선택은 예전 라벨 파이프라인 계약 — 내부 시험용 플래그 */;
   await choose(page,'general','restore-editable');
-  await page.locator(panel+' [data-ai-setting-key=model] [data-ai-model-choice=sol]').click();
-  await page.locator(panel+' [data-ai-setting-key=verification] [data-ai-setting-value=draft-first]').click();
-  assert.equal(await page.locator(panel+' [data-ai-setting-key=verification]').isVisible(),true);
+  await page.locator(panel+' [data-ai-setting-key=model] [data-ai-model-choice=sol]').dispatchEvent("click");
+  await page.locator(panel+' [data-ai-setting-key=verification] [data-ai-setting-value=draft-first]').dispatchEvent("click");
+  // 506f30bf(시안 v6): 라벨 검수 줄은 index.html에서 hidden — 숨은 단추의 상태(눌림)만 확인한다.
+  assert.equal(await page.locator(panel+' [data-ai-setting-key=verification] [data-ai-setting-value=draft-first]').getAttribute('aria-pressed'),'true');
   for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
     await page.setViewportSize(viewport);
     for(const theme of ['light','dark']){
@@ -157,7 +159,7 @@ test('general draft-first UI offers native editing and optional verification wit
     }
   }
   await page.setViewportSize({width:1440,height:1000});
-  await page.locator(panel+' [data-ai-comments-apply]').click();await finish(page);
+  await page.locator(panel+' [data-ai-send]').click();await finish(page);
   let candidate=(await snapshot(page))[0].generated.at(-1);
   assert.equal(candidate.imageLabelWorkflow.verificationMode,'draft-first');
   assert.equal(candidate.reviewState,'needs-attention');
@@ -196,7 +198,7 @@ test('general draft-first UI offers native editing and optional verification wit
 });
 const retained="/Users/parkseungyeon/.codex/worktrees/5e-170-auto-labeler/5E/.omo/evidence/labeler-removal-fix-20261008/final-candidates/cases";
 for(const [id,count] of [['holdout-exam-2004-physics-q11',5],['holdout-exam-2004-biology-q07',4],['holdout-exam-2004-physics-q07',5]]){
-  test(`annotated retained Luna fixture preserves only removed labels as overlays: ${id}`,{timeout:90000},async t=>{
+  test(`annotated retained Luna fixture preserves only removed labels as overlays: ${id}`,{timeout:90000,skip:fs.existsSync(path.join(retained,id,'original.png'))?false:'보존된 Luna 응답 fixture(맥 밖 codex 작업 폴더)가 이 저장소·CI에 없어 건너뜀 — 1.7.1 T 갈래 기록 참고'},async t=>{
     const evidence=dir(id);const {page,errors}=await fixture(t,1,evidence);
     const source='data:image/png;base64,'+fs.readFileSync(path.join(retained,id,'original.png')).toString('base64');
     const retainedResponse=JSON.parse(fs.readFileSync(path.join(retained,id,'1-sourceAnalysis-response.txt'),'utf8'));
@@ -205,7 +207,7 @@ for(const [id,count] of [['holdout-exam-2004-physics-q11',5],['holdout-exam-2004
       labels:retainedResponse.labels.map(label=>({...label,disposition:'restore',semanticRole:'scientific-label',reason:'Synthetic classification annotation for UI regression'}))};
     await page.evaluate(async({source,id})=>{await window.__task2Manager.attachReference({src:source,name:id});},{source,id});
     await choose(page,'exam','restore-editable');
-    await page.locator(panel+' [data-ai-comments-apply]').click();await finish(page,{sourcePlan});
+    await page.locator(panel+' [data-ai-send]').click();await finish(page,{sourcePlan});
     let row=(await snapshot(page)).find(row=>row.attachments.some(a=>a.name===id));
     const candidate=row.generated.at(-1);
     const removed=candidate.removalReport.removedLabelIds;

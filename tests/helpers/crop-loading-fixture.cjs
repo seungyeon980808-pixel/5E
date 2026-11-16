@@ -32,11 +32,8 @@ async function installCropFixture(page, { held = [], root = path.resolve(__dirna
     libraryTransferHooks.push({ name: 'acceptedAssets', matchCount: 1, observation: 'window.__acceptedAssets = acceptedAssets', originalDeclarationRetained: true });
   }
   await page.route(`**${runtime.moduleBase}unified-library-ui.js*`, route => route.fulfill({ contentType: 'text/javascript', body }));
-  // Older component helpers must consume the same canonical implementation and query.
-  const legacyModules = ['unified-library-ui.js', 'store.js', 'cut-tool.js', 'tools/labeler-magnifier.js', 'tools/pointer-magnifier.js'];
-  for (const file of runtime.moduleBase === '/preview/js/' ? [] : legacyModules) {
-    await page.route(`**/preview/js/${file}*`, route => route.fulfill({ contentType: 'text/javascript', body: `export * from ${JSON.stringify(runtime.moduleBase + file + runtime.moduleQuery)};` }));
-  }
+  // preview/ 사본이 없어졌으므로 옛 /preview/js/ 별칭 경로는 없다(보조 검사 헬퍼는 루트 /js/를 직접 읽음).
+  const legacyModules = [];
   const receipt = { sourcePath, moduleUrl, originalSHA256: crypto.createHash('sha256').update(source).digest('hex'), instrumentedSHA256: crypto.createHash('sha256').update(body).digest('hex'), originalFunctionBodyRetained: true, observationOnly: true, cropObservationSeamCount: 5, libraryTransfer, libraryTransferHooks, fixtureCallbacks: { openIndependentReferences: libraryTransfer ? "window.__transfer(...args)" : null }, productCallbackParameterUnmodified: true, held, legacyAliases: legacyModules };
   if (evidence) { fs.mkdirSync(evidence, { recursive: true }); fs.writeFileSync(path.join(evidence, 'crop-fixture-source.json'), JSON.stringify(receipt, null, 2) + '\n'); }
   const styleBase = runtime.moduleBase.replace(/js\/$/, 'css/');

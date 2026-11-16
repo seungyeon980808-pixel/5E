@@ -1,11 +1,11 @@
-import { createStore } from '../preview/js/store.js';
+import { createStore } from '../js/store.js';
 import {
   checkpointBeforeModeSwitch, createRecoveryCheckpoint, initAutosave,
   inspectLegacyRecovery, listRecoveryCheckpoints, restoreRecoveryCheckpoint,
-} from '../preview/js/autosave.js';
-import { applyLoaded, migrate, serialize } from '../preview/js/project-io.js';
-import { deletePage, switchPage } from '../preview/js/pages.js';
-import { redo, undo } from '../preview/js/transform.js';
+} from '../js/autosave.js';
+import { applyLoaded, migrate, serialize } from '../js/project-io.js';
+import { deletePage, switchPage } from '../js/pages.js';
+import { redo, undo } from '../js/transform.js';
 
 const result = document.getElementById('result');
 const clone = value => JSON.parse(JSON.stringify(value));

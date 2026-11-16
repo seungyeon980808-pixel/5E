@@ -12,11 +12,11 @@ const { chromium, webkit } = require("playwright");
   try {
     await page.route('**/fixture', (route) => route.fulfill({
       contentType: 'text/html',
-      body: '<html><head><link rel="stylesheet" href="/preview/css/style.css"><link rel="stylesheet" href="/preview/css/unified-library.css"></head><body></body></html>',
+      body: '<html><head><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/unified-library.css"></head><body></body></html>',
     }));
     await page.goto(new URL('/fixture', process.env.PREVIEW_URL).href);
     await page.evaluate(async () => {
-      const { createUnifiedLibraryUi } = await import("/preview/js/unified-library-ui.js");
+      const { createUnifiedLibraryUi } = await import("/js/unified-library-ui.js");
       const image = (number) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="600" height="800" fill="white"/><text x="80" y="400" font-size="150">${number}</text></svg>`)}`;
       const file = {
         id: "book", kind: "pdf", title: "Test book", pageCount: 3, sourceId: "source",
@@ -258,7 +258,7 @@ const { chromium, webkit } = require("playwright");
       let releaseProvider;
       const waitProvider = new Promise((resolve) => { releaseProvider = resolve; });
       window.releaseLoadingProvider = releaseProvider;
-      window.loadingUiPromise = import('/preview/js/unified-library-ui.js').then(({ createUnifiedLibraryUi }) => {
+      window.loadingUiPromise = import('/js/unified-library-ui.js').then(({ createUnifiedLibraryUi }) => {
         window.loadingUi = createUnifiedLibraryUi({ getProvider: async () => { await waitProvider; return loadingProvider; }, insertMaterialized: async () => {} });
         return window.loadingUi.open();
       });

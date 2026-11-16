@@ -41,23 +41,23 @@ async function drag(page, from, to, shift=false) {
   return page.evaluate(() => structuredClone(window.__snapState.get().objects));
 }
 for (const engine of ['chromium','webkit']) {
-  test(`${engine}: free canvas movement is the default and coordinate locking remains optional`, async t => {
+  test(`${engine}: coordinate locking is the default and free movement remains optional`, async t => {
     const page=await fixture(t,engine);
     await seed(page,[]);
     const snapshot=()=>page.evaluate(()=>structuredClone(window.__snapState.get().viewBox));
     const pan=async()=>{await page.locator('#canvas').hover();await page.mouse.wheel(0,120);};
-    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
-    const free=await snapshot();await pan();
-    await page.waitForFunction(y=>window.__snapState.get().viewBox.y!==y,free.y);
-    await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
+    // 11-04(사용자 요청, js/main.js 「기준 좌표 고정」): 기본은 좌표 고정, 「자유 이동」은 메뉴에서 고른다.
+    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'coordinate');
     const locked=await snapshot();await pan();
     // Wait for the next frame after the native wheel, then inspect the projection.
     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     assert.deepEqual(await snapshot(),locked);
     await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="free"]').click();
     await pan();await page.waitForFunction(y=>window.__snapState.get().viewBox.y!==y,locked.y);
+    await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
+    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'coordinate');
     await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#rhwp-exam-workspace[data-exam-ready="true"]',{state:'attached'});
-    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
+    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'coordinate');
   });
   test(`${engine}: automatic alignment can be disabled without changing artwork, survives reload and supports undo`, async t => {
     const page=await fixture(t,engine);
