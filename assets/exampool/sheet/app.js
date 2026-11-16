@@ -9,6 +9,7 @@ import {renderLibraryView,installLibraryView,closeViewer,libState,past as pastDa
 import {createCardEditor,clearPastBusy} from './card-editor.js';
 import {busyHtml,pastBusyHtml,store as cardStore} from './card-shared.js';
 import {saveOut,savedText,desktopFiles} from './save-out.js';
+import {readSheetFile,buildSheetProject,examBundle,projectFileName,SHEET_FILE_ACCEPT} from './sheet-file.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam,POOLS,poolOf,poolQuestions,EXAM_STATUS,TRASH_DAYS} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
@@ -622,13 +623,18 @@ document.addEventListener('click',e=>{if(!e.target.closest('.top-more')){$('#top
 $('#top-menu').addEventListener('click',()=>{$('#top-menu').hidden=true;});
 $('#top-new-exam').addEventListener('click',()=>newExamDialog({seed:view.name==='card'?current?.id:null}));
 $('#send-hwp').onclick=()=>{const exam=examById(data,$('#send-hwp').dataset.exam);if(exam)void sendExam(exam);};
-$('#import').onclick=()=>$('#excel-file').click();$('#excel-file').onchange=async()=>{const file=$('#excel-file').files[0];if(!file)return;try{
-  status('파일 확인 중…');if(/\.xlsx$/i.test(file.name))pending=await importExcel(window.XLSX,window.JSZip,await file.arrayBuffer());else{if(file.size>STORE_LIMIT_MB*1024*1024)throw Error(`${STORE_LIMIT_MB} MB 이하의 문항 파일을 선택하세요.`);const v=JSON.parse(await file.text());if(v.format===FORMAT)pending={...validate(v),exams:Array.isArray(v.exams)?v.exams.map(e=>({...e,items:(e.items||[]).filter(id=>v.questions.some(q=>q.id===id))})):[],backedIds:v.questions.map(q=>q.id),warnings:[]};else{const {decodePoolBundle}=await import('../../../js/exampool-model.js?v=1.7.0-four-session-integration');const pack=decodePoolBundle(JSON.stringify(v));pending=validate({format:FORMAT,questions:pack.items.map(fromLegacy),documents:pack.resources.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))});pending.backedIds=pack.items.map(q=>q.id);pending.warnings=[];}}
-  // 11-15(시안 문항목록-시험지 E): 어느 파일에서 왔는지(출처 「외부 등록」), 시험지 파일에 든 학교 양식·조판 기준.
-  pending.fileName=file.name;if(!/\.xlsx$/i.test(file.name)){try{const v=JSON.parse(await file.text());pending.forms=Array.isArray(v.forms)?v.forms.filter(f=>f&&typeof f.id==='string'&&typeof f.base64==='string'):[];pending.standards=Array.isArray(v.standards)?v.standards.filter(x=>x&&typeof x.id==='string'):[];}catch{}}
+$('#import').onclick=()=>$('#excel-file').click();$('#excel-file').accept=SHEET_FILE_ACCEPT;$('#excel-file').onchange=async()=>{const file=$('#excel-file').files[0];$('#excel-file').value='';if(file)await openSheetFile(file.name,new Uint8Array(await file.arrayBuffer()));};
+// 1.7.1: 파일은 확장자가 아니라 안쪽 바이트로 가른다(sheet-file.js) — .5e(문항·시험지), 1.7.0 .exampool, 엑셀.
+// 그림·한글 시험지 .5e를 여기서 열면 5E가 맞는 프로그램으로 넘겨 연다(막다른 경고 대신).
+async function openSheetFile(name,bytes){try{
+  status('파일 확인 중…');const read=await readSheetFile(name,bytes,{importExcel:buffer=>importExcel(window.XLSX,window.JSZip,buffer)});
+  if(read.kind==='project'){if(!embedded)throw Error('이 파일은 5E에서 여는 프로젝트입니다.');pending=null;window.parent.dispatchEvent(new window.parent.CustomEvent('5e:project-open',{detail:{name,bytes}}));status('');return;}
+  pending=read.pending;
   $('#import-exam-opt').hidden=!pending.exams?.length;$('#import-no-exam').checked=false;
   const matches=pending.questions.filter(q=>data.questions.some(x=>x.id===q.id)).length;$('#import-count').textContent=`${pending.questions.length}문항 · ${pending.documents.length}자료${pending.exams?.length?` · 시험지 ${pending.exams.length}개(시험지로 등록 — 문항은 그 시험지 안에)`:''}${pending.forms?.length?` · 학교 양식 ${pending.forms.length}개`:''} · 기존 문항과 일치 ${matches}개${pending.warnings?.length?' · '+pending.warnings.join(' '):''}`;$('#import-preview').innerHTML='<table><thead><tr><th>번호</th><th>답안형</th><th>구성</th><th>발문</th></tr></thead><tbody>'+pending.questions.slice(0,20).map(q=>`<tr><td>${E(q.number)}</td><td>${E(q.type)}</td><td>${q.blocks.length}개</td><td>${E(q.ask)}</td></tr>`).join('')+'</tbody></table>';$('#import-dialog').showModal();status('불러올 내용을 확인하세요. 적용 전에는 기존 입력이 바뀌지 않습니다.');
-}catch(e){pending=null;status(e.message,true);}finally{$('#excel-file').value='';}};
+}catch(e){pending=null;status(e.message,true);}}
+// 1.7.1: 5E가 넘겨 준 .5e(문항·시험지) — 그림 화면에서 열었거나 설치판에서 파일을 두 번 눌렀을 때. 같은 「불러올 내용 확인」 창으로.
+window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet'||e.data.action!=='open-project-file')return;const m=e.data;if(m.bytes instanceof Uint8Array||m.bytes instanceof ArrayBuffer)void openSheetFile(String(m.name||'프로젝트.5e'),new Uint8Array(m.bytes));});
 $('#apply-import').onclick=()=>{if(!pending)return;const applied=mutate(()=>{const update=$('input[name="import-mode"]:checked').value==='update',docMap=new Map();for(const incoming of pending.documents){const existing=data.documents.find(d=>d.id===incoming.id);if(existing&&JSON.stringify(existing)!==JSON.stringify(incoming)){const d=clone(incoming);d.id=uid();data.documents.push(d);docMap.set(incoming.id,d.id);}else if(!existing)data.documents.push(clone(incoming));}
   const qidMap=new Map(),batch=uid(),at0=new Date().toISOString(),noExam=$('#import-no-exam').checked;for(const incoming of pending.questions){const q=update?clone(incoming):duplicateQuestion(incoming);qidMap.set(incoming.id,q.id);if(!data.questions.some(v=>v.id===q.id)){q.origin={kind:'import',file:String(pending.fileName||'불러온 파일').slice(0,120),at:at0,batch};/* 11-15(승인 5): 파일에 만든 시각이 없으면 불러온 시각 */if(!q.createdAt)q.createdAt=at0;}q.references.forEach(r=>{if(docMap.has(r.documentId))r.documentId=docMap.get(r.documentId);});const at=data.questions.findIndex(v=>v.id===q.id);if(update&&at>=0)data.questions[at]=keepAppOnly(q,data.questions[at]);else data.questions.push(q);current=data.questions[update&&at>=0?at:data.questions.length-1];}
   // 시험지도 함께 들여온다(H5): 문항 ID가 새로 매겨졌으면(복사본) 새 ID로 옮기고, 한 문항은 한 시험지에만 있게 다른 시험지에서는 뺀다.
@@ -642,16 +648,25 @@ $('#apply-import').onclick=()=>{if(!pending)return;const applied=mutate(()=>{con
 // 11-15(시안 문항목록-시험지 E): 시험지 파일에 든 학교 양식·조판 기준을 이 기기에 등록한다(같은 ID가 있으면 그대로 둠) — 불러온 시험지가 양식째 바로 쓰인다.
 async function importFormsAndStandards(forms,stds){try{
   const newStd=stds.filter(x=>x.id!=='kice'&&!typesetStandards.some(t=>t.id===x.id));if(newStd.length)await saveTypesetStandards([...typesetStandards,...newStd]);
-  const newForms=forms.filter(f=>!typesetForms.some(t=>t.id===f.id)).map(({base64,...f})=>({...f,bytes:Uint8Array.from(atob(base64),c=>c.charCodeAt(0))}));
+  const newForms=forms.filter(f=>!typesetForms.some(t=>t.id===f.id)&&f.bytes instanceof Uint8Array).map(f=>({...f}));
   if(newForms.length){await saveTypesetForms([...typesetForms,...newForms]);status(`학교 양식 ${newForms.length}개를 함께 등록했습니다 · 시험지에 바로 쓰입니다`);}
 }catch(e){status('학교 양식을 등록하지 못했습니다: '+e.message,true);}}
-// 11-15: 시험지 파일로 저장 — 문항·순서·그림·자료·학교 양식·조판 기준을 한 파일(.exampool)에. 다른 기기에서 「시험지로 등록」으로 통째로 들어온다.
-async function saveExamFile(exam){try{const qs=exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean),docIds=new Set(qs.flatMap(q=>(q.references||[]).map(r=>r.documentId)));
-  const form=exam.formId?typesetForms.find(f=>f.id===exam.formId):null,b64=bytes=>{const u=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);let s='';for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode(...u.subarray(i,i+32768));return btoa(s);};
-  const std=form?.standardId?typesetStandards.find(s=>s.id===form.standardId):null;
-  const out={format:FORMAT,questions:qs,documents:data.documents.filter(d=>docIds.has(d.id)),exams:[exam],...(form?{forms:[{...Object.fromEntries(Object.entries(form).filter(([k])=>k!=='bytes')),base64:b64(form.bytes)}]}:{}),...(std?{standards:[std]}:{})};
-  const saved=await download(new TextEncoder().encode(JSON.stringify(out)),`${exam.title.replace(/[\\/:*?"<>|]/g,'_')}.exampool`,'application/json');status(savedText(saved,'시험지 파일')+` · 문항 ${qs.length}개${form?' · 학교 양식 포함':''}`);
-}catch(e){status('시험지 파일을 저장하지 못했습니다: '+e.message,true);}}
+// 11-15: 시험지 파일로 저장 — 문항·순서·그림·자료·학교 양식·조판 기준을 한 파일에. 다른 기기에서 「시험지로 등록」으로 통째로 들어온다.
+// 1.7.1: 형식을 .exampool(JSON) → .5e(kind 'sheet')로. 그림·양식이 base64 글자 대신 상자 안 파일로 들어가 작아진다.
+// 저장 창(이름·자리를 고름)을 띄울 수 있으면 띄우고(설치판·크롬), 아니면 지금처럼 출제 폴더 자동 저장(설치판)·내려받기(웹).
+function savePicker(){try{const host=window.parent?.showSaveFilePicker?window.parent:window.showSaveFilePicker?window:null;return host?host.showSaveFilePicker.bind(host):null;}catch{return null;}}
+async function saveProjectFile(name,build){
+  const picker=savePicker();
+  // 저장 창은 누른 순간에 열어야 한다(사용자 동작이 살아 있을 때) — 파일은 그 뒤에 만든다.
+  const handle=picker?picker({suggestedName:name,startIn:'documents',types:[{description:'5E 프로젝트 파일',accept:{'application/zip':['.5e']}}]}):null;if(handle)void handle.catch(()=>{});
+  const blob=build();
+  if(handle){const h=await handle,w=await h.createWritable();await w.write(blob);await w.close();return {desktop:false,picked:true,name:h.name};}
+  return download(new Uint8Array(await blob.arrayBuffer()),name,'application/zip');}
+async function saveExamFile(exam){try{
+  const bundle=examBundle(data,exam,{forms:typesetForms,standards:typesetStandards}),name=projectFileName(exam.title);
+  const saved=await saveProjectFile(name,()=>buildSheetProject(bundle,{name:exam.title}));
+  status((saved.picked?`시험지 파일 저장 · ${saved.name}`:savedText(saved,'시험지 파일'))+` · 문항 ${bundle.questions.length}개${bundle.forms?' · 학교 양식 포함':''}`);
+}catch(e){if(e?.name==='AbortError'){status('');return;}status('시험지 파일을 저장하지 못했습니다: '+e.message,true);}}
 function fileData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('파일을 읽지 못했습니다.'));r.readAsDataURL(file);});}
 $('#figure-file').onchange=async()=>{const file=$('#figure-file').files[0],owner=imageTarget;if(!file||!owner)return;try{if(file.size>5*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('5 MB 이하의 PNG·JPEG·WebP 그림을 선택하세요.');const value=await fileData(file),image=await loadImage(value);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('그림 크기를 줄여주세요.');const figure={name:file.name,data:value,width:image.naturalWidth,height:image.naturalHeight};if(file.type==='image/png'&&embedded){window.parent.postMessage({channel:'5e-question-sheet',action:'read-figure',qid:owner.qid,key:owner.key,figure},OWN);return;}mutate(()=>{const q=data.questions.find(q=>q.id===owner.qid),holder=imageHolder(q,owner.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=figure;});}catch(e){status(e.message,true);}finally{$('#figure-file').value='';imageTarget=null;}};
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;if(m.error){if(m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;}status(m.error,true);return;}if(m.action==='handoff-ready'&&m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;status('한글로 보내기 완료'+(m.warnings?.length?' · '+m.warnings.join(' '):''));return;}if(m.action==='pick-cancelled'){status('그림 가져오기를 취소했습니다.');return;}if(m.action==='figure-ready'){/* 11-14 3차 37: 열린 조판 문서에 같은 그림 자리가 있으면 그 그림만 바꿔 끼워 문서 전체 다시 조판(버벅임)을 피한다 */const swap=String(m.key||'').startsWith('block:')&&typesetter?.questionId===m.qid?typesetter.swapFigure?.(m.key.slice(6),m.figure):null;Promise.resolve(swap).catch(()=>false).then(()=>mutate(()=>{const q=data.questions.find(q=>q.id===m.qid),holder=q&&imageHolder(q,m.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=m.figure;}));}});

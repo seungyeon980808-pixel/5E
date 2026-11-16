@@ -10,7 +10,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const KINDS = { hwpx: "한글", hwp: "한글", xlsx: "엑셀", json: "기타", pdf: "PDF", png: "그림" };
+// 1.7.1: 5e(문항·시험지 프로젝트) 더함 — 1.7.0은 여기 없는 .exampool을 저장하려다 「저장할 수 없는 파일 종류」로 실패했다.
+const KINDS = Object.freeze({ "5e": "프로젝트", hwpx: "한글", hwp: "한글", xlsx: "엑셀", json: "기타", pdf: "PDF", png: "그림" });
 const MAX_JSON = 512 * 1024 * 1024, MAX_FILE = 256 * 1024 * 1024, BACKUP_EVERY_MS = 10 * 60 * 1000;
 const BACKUP_KEEP_RECENT = 24, BACKUP_KEEP_DAYS = 30;
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/, BACKUP_RE = /^\d{4}\.json$/;
@@ -141,4 +142,4 @@ function registerExamFilesIpc({ handle, shell, documentsPath }) {
   return files;
 }
 
-module.exports = { createExamFiles, registerExamFilesIpc, stamp, safeName, backupsToTrash };
+module.exports = { createExamFiles, registerExamFilesIpc, stamp, safeName, backupsToTrash, KINDS };

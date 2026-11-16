@@ -35,6 +35,16 @@
   "build": {
     "appId": "com.5e.editor",
     "productName": "5E",
+    "fileAssociations": [
+      {
+        "ext": "5e",
+        "name": "5E 프로젝트",
+        "description": "5E 프로젝트 파일",
+        "mimeType": "application/x-5e-project",
+        "role": "Editor",
+        "rank": "Owner"
+      }
+    ],
     "artifactName": "5E-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release",

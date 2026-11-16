@@ -390,8 +390,14 @@ if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
 // 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
 if (userDataOverride && process.env.FIVE_E_DEV_DOCUMENTS) app.setPath("documents", path.resolve(process.env.FIVE_E_DEV_DOCUMENTS));
 if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
+// 1.7.1: 한 번만 실행 — 두 번째 실행(윈도우에서 .5e 두 번 누르기 등)은 떠 있는 창으로 넘기고 끝난다.
+// 잠금은 사용자 데이터 폴더마다 따로라, 검사용 폴더(FIVE_E_DEV_USER_DATA)로 띄운 것은 설치된 앱과 부딪치지 않는다.
+const singleInstance = typeof app.requestSingleInstanceLock !== "function" || app.requestSingleInstanceLock();
+if (!singleInstance) app.quit();
 
 let win;
+// 1.7.1: .5e 두 번 눌러 열기(맥 open-file, 윈도우 argv·second-instance) — desktop/project-open-file.cjs
+const projectOpenFile = require("./project-open-file.cjs").installProjectOpenFile({ app, getWindow: () => win, createWindow: () => createWindow(), handle: handleTrustedIpc });
 let splash;
 // 자료 목록 서비스는 처음 쓸 때 만든다(파일을 읽는 순간 app.getPath를 부르면 검사용 가짜 app에서 깨진다).
 let pdfLibraryServiceInstance = null;
@@ -1259,6 +1265,7 @@ function createWindow() {
     ...platformWindowOptions,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
+  projectOpenFile.attachWindow(win);
   win.setMenu(null);
   win.setMenuBarVisibility(false);
   // 맥: 빨강·노랑·초록 단추는 평소 숨기고, 마우스가 맨 위 가장자리에 가면 얇은 줄과 함께 내려온다(11-04 사용자).
@@ -2012,6 +2019,7 @@ function confirmLeave(target, options) {
   return dialog.showMessageBoxSync(target, options);
 }
 app.whenReady().then(() => {
+  if (!singleInstance) return;
   installAppMenu();
   if (process.platform === "darwin" && app.dock) app.dock.setIcon(APP_ICON_PATH);
   createWindow();

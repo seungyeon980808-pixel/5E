@@ -91,7 +91,7 @@ export function initRhwpExamWorkspace(state, services) {
       <div id="exam-figures"></div>
     <footer class="exam-footer"><span id="exam-status" role="status" aria-live="polite">준비 중</span></footer></aside><div id="exam-studio"><div class="exam-loading">시험지 편집기를 준비합니다…</div></div></div>
     <input id="exam-hwp-file" type="file" accept=".hwp,.hwpx" hidden>
-    <input id="exam-project-file" type="file" accept=".5e,.5exam,.json" hidden>
+    <input id="exam-project-file" type="file" accept=".5e" hidden>
     <input id="exam-png-file" type="file" accept=".png" hidden>`;
   document.body.append(panel);
   attachAppMenu(panel.querySelector('.exam-topbar .app-brand'), 'hwp');// 로고에 올리면 프로그램 목록(11-04)
@@ -1216,6 +1216,8 @@ export function initRhwpExamWorkspace(state, services) {
     await flushInline(true);await closeInline();
     const modern=parseFiveEProject(bytes,prepareLoadedProject);
     if (modern?.kind==='drawing') {await restoreWorkspace(modern.workspace || {drawing:modern.drawing});await actions.close();return;}
+    // 1.7.1: 문항·시험지(.5e kind 'sheet')는 5E_exam에서 연다(project-io.js가 받아 넘김).
+    if (modern?.kind==='sheet') {window.dispatchEvent(new CustomEvent('5e:project-open',{detail:{name:`${modern.name||'프로젝트'}.5e`,bytes:new Uint8Array(bytes)}}));return;}
     const project = parseExamProject(bytes, prepareLoadedProject);
     validateWorkspace(project.workspace);
     const previous = {bytes:new Uint8Array(await bridge.exportDraftHwpx()),generation:bridge.generation,figures,projectId,name:nameInput.value,workspace:await captureWorkspace()};

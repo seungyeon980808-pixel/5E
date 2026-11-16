@@ -694,6 +694,24 @@ export function applyLoaded(state, data) {
   }
 }
 
+/* ----- 5E_exam으로 넘겨 열기: 출제 칸을 열고(처음이면 다 읽힐 때까지) 바이트를 보낸다 ----- */
+async function openSheetInExam(name, bytes) {
+  const entry = document.getElementById('exam-pool-open');
+  for (let waited = 0; entry?.disabled && waited < 5000; waited += 100) await new Promise(r => setTimeout(r, 100));
+  if (!entry || entry.disabled) throw new Error('5E_exam을 준비하지 못했습니다. 잠시 뒤 다시 열어 주세요.');
+  if (document.getElementById('exampool-sheet-workspace')?.hidden !== false) entry.click();
+  const frame = () => document.querySelector('#exampool-sheet-workspace iframe');
+  const until = Date.now() + 30000;
+  while (Date.now() < until) {
+    const doc = frame()?.contentDocument, bar = doc?.querySelector('#status');
+    if (doc?.readyState === 'complete' && bar && bar.textContent !== '준비 중' && doc.querySelector('#excel-file')) break;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  const target = frame()?.contentWindow;
+  if (!target) throw new Error('5E_exam을 열지 못했습니다.');
+  target.postMessage({ channel: '5e-question-sheet', action: 'open-project-file', name, bytes }, location.protocol === 'file:' ? '*' : location.origin);
+}
+
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
 function openProject(state, file) {
   const png = /\.png$/i.test(file.name);
@@ -717,6 +735,16 @@ function openProject(state, file) {
       const figure = png ? readEditablePng(reader.result, prepareLoadedProject) : null;
       if (png && !figure) throw new Error("이 PNG에는 5E 원본이 없습니다. 이미지 불러오기로 넣어주세요.");
       const portable = !png && !executable ? parseFiveEProject(reader.result,prepareLoadedProject) : null;
+      // 1.7.1: 문항·시험지(.5e kind 'sheet')는 5E_exam으로 넘긴다 — 5E_exam의 「불러올 내용 확인」 창이 확인을 맡는다.
+      if (portable?.kind === 'sheet') {
+        if (document.documentElement.dataset.mode === 'lite') {
+          const toPro = await showConfirm("Lite에서는 그림 파일만 열 수 있습니다.\n이 시험지는 Pro에서 열립니다. Pro로 바꾼 뒤 다시 열어 주세요.", { title: "시험지 프로젝트", okText: "Pro로 바꾸기", cancelText: "닫기" });
+          if (toPro) document.getElementById('mode-toggle-btn')?.click();
+          return;
+        }
+        await openSheetInExam(file.name, new Uint8Array(reader.result));
+        return;
+      }
       if (!png && !executable && (!portable || portable.kind === 'exam')) {
         // Lite는 그림(image)만 연다 — 시험지는 막다른 경고 대신 Pro로 바꾸는 길로 이어 준다(11-14).
         if (document.documentElement.dataset.mode === 'lite') {
@@ -925,6 +953,13 @@ export function initProjectIO(state, svg) {
   if (saveBtn) saveBtn.addEventListener("click", () => saveProject(state));
 
   if (openBtn) openBtn.addEventListener("click", () => fileInput.click());
+  // 5E_exam·5E_hwp에서 다른 종류의 .5e를 골랐을 때 여기로 넘어온다 — 종류를 보고 맞는 프로그램에서 연다.
+  window.addEventListener("5e:project-open", (e) => {
+    const { name, bytes } = e.detail || {};
+    window.dispatchEvent(new CustomEvent('5e:exampool-close'));
+    // 5E_exam(iframe)에서 온 바이트는 다른 창 영역의 객체라 instanceof로 가리면 놓친다.
+    if (ArrayBuffer.isView(bytes) || Object.prototype.toString.call(bytes) === '[object ArrayBuffer]') openProject(state, new File([new Uint8Array(bytes.buffer ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes)], String(name || '프로젝트.5e')));
+  });
 
   initProjectShortcuts(state, fileInput);
 
