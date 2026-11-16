@@ -7,7 +7,7 @@ const path = require('node:path');
 const { fixture: sourceFixture, snapshot, sends, finish } = require('./helpers/label-source-browser.cjs');
 const root = process.env.EVIDENCE_DIR || path.resolve(__dirname,'../.omo/evidence/codex-continuation-20261010/label-current-contracts/ai-settings-panel');
 const panel = '#ai-image-panel';
-const pair = (page,key) => page.locator(`${panel} [data-ai-setting-key="${key}"]`);
+const pair = (page,key) => page.locator(`${panel} [data-ai-setting-key="${key}"]`).first();
 // 11-11: 출처 줄은 자동 판단이 정하면 숨는다. 숨은 단추도 같은 설정 상태를 바꾸도록 클릭 이벤트를 보낸다.
 // 11-11: 실행 단추는 대화 아래 독의 [data-ai-send](「변환하기」)이다. 옛 「코멘트 반영하기」(data-ai-comments-apply)는 숨겼고, 두 단추는 같은 실행 경로를 탄다.
 const pickKind = (page,name) => pair(page,'kind').getByRole('button',{name,exact:true,includeHidden:true}).dispatchEvent('click');
@@ -49,11 +49,12 @@ async function refreshModelCatalog(page) {
 async function assertModelChoices(page) {
   const model=page.locator(`${panel} [data-ai-model]`),value=await model.inputValue();
   const catalog=await model.locator('option').evaluateAll(options=>options.map(option=>({value:option.value,disabled:option.disabled})));
-  assert.equal(await pair(page,'model').getByRole('button').count(),2,'exactly the two user-facing model choices');
+  // 11-11(506f30bf, 시안 v6): 「변환 모델」 줄은 화면에서 숨겼다. 숨은 단추 둘이 같은 설정 상태를 그대로 따르는지만 본다.
+  assert.equal(await pair(page,'model').getByRole('button',{includeHidden:true}).count(),2,'exactly the two model choices');
   for(const [name,id] of [['Sol 6.1','gpt-6.1-sol'],['Luna 6','gpt-6-luna']]) {
-    const button=pair(page,'model').getByRole('button',{name,exact:true});
+    const button=pair(page,'model').getByRole('button',{name,exact:true,includeHidden:true});
     const available=catalog.some(option=>option.value===id&&!option.disabled);
-    assert.equal(await button.isVisible(),true,`${name} compact choice is visible`);
+    assert.equal(await button.isVisible(),false,`${name} model choice stays hidden in the v6 frame`);
     assert.equal(await button.isEnabled(),available,`${name} availability follows its exact provider ID`);
     assert.equal(await button.getAttribute('aria-pressed'),String(available&&value===id),`${name} pressed state follows the hidden backing value`);
   }
@@ -158,10 +159,10 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
   assert.equal(await page.locator(`${panel} [data-ai-fixed-speed], ${panel} [data-ai-help-title="속도"]`).count(),0,'fixed speed has no redundant visible UI');
   const expected={model:'Sol 6.1',labels:'끄기',background:'끄기',objects:'끄기',arrows:'끄기',guides:'끄기'};
   assert.equal(await page.locator(`${panel} [data-ai-label-verification]`).inputValue(),'draft-first');
-  assert.equal(await pair(page,'verification').getByRole('button',{name:'초안 먼저',exact:true}).isDisabled(),true);
+  assert.equal(await pair(page,'verification').getByRole('button',{name:'초안 먼저',exact:true,includeHidden:true}).isDisabled(),true);
   for(const [key,name] of Object.entries(expected)) {
-    assert.equal(await pair(page,key).getByRole('button').count(),2);
-    assert.equal(await pair(page,key).getByRole('button',{name,exact:true}).getAttribute('aria-pressed'),'true');
+    assert.equal(await pair(page,key).first().getByRole('button',{includeHidden:true}).count(),2,'buttons in '+key); // background·objects는 저장된 그림 설정(index.html:766)에도 같은 이름의 줄이 있어 첫 줄만 센다
+    assert.equal(await pair(page,key).getByRole('button',{name,exact:true,includeHidden:true}).getAttribute('aria-pressed'),'true');
   }
   const sizes=await page.locator(`${panel} .ai-setting-pair`).evaluateAll(groups => groups.filter(g=>g.getBoundingClientRect().height>0).flatMap(g=>[...g.querySelectorAll('button')].map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height,x:g.getBoundingClientRect().left}))));
   assert.equal(new Set(sizes.map(s=>s.h)).size,1);assert.equal(new Set(sizes.map(s=>s.w)).size,1);assert.equal(new Set(sizes.map(s=>s.x)).size,1);
@@ -171,9 +172,9 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
   await page.screenshot({path:path.join(evidence,'help.png')});
   await page.keyboard.press('Escape');assert.equal(await page.locator('.ai-setting-help-pop').count(),0);assert.equal(await page.locator(panel).isVisible(),true);
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
-  await pair(page,'arrows').getByRole('button',{name:'켜기',exact:true}).click();
-  await pair(page,'guides').getByRole('button',{name:'끄기',exact:true}).click();
-  await pair(page,'model').getByRole('button',{name:'Luna 6',exact:true}).click();
+  await pair(page,'arrows').getByRole('button',{name:'켜기',exact:true,includeHidden:true}).dispatchEvent('click');
+  await pair(page,'guides').getByRole('button',{name:'끄기',exact:true,includeHidden:true}).dispatchEvent('click');
+  await pair(page,'model').getByRole('button',{name:'Luna 6',exact:true,includeHidden:true}).dispatchEvent('click');
   assert.equal(await page.locator(`${panel} [data-ai-model]`).inputValue(),'gpt-6-luna');await assertModelChoices(page);
   const row=await active(page);assert.equal(row.imageLabelWorkflow.labelResult,'restore-editable');assert.equal(row.imageLabelWorkflow.scientificArrows,'remove');assert.equal(row.imageLabelWorkflow.auxiliaryMarks,'keep');assert.equal(row.model,'gpt-6-luna');
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
@@ -196,8 +197,8 @@ test('actual modern controller: policy payloads and exact RAW review/export/nati
   const evidence=dir('request-and-background');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
   // 11-09: 출처를 모르는 그림은 변환 전에 출처(교과서/기출)를 고른다.
   await pickKind(page,'교과서');
-  await pair(page,'arrows').getByRole('button',{name:'켜기',exact:true}).click();
-  await pair(page,'guides').getByRole('button',{name:'끄기',exact:true}).click();
+  await pair(page,'arrows').getByRole('button',{name:'켜기',exact:true,includeHidden:true}).dispatchEvent('click');
+  await pair(page,'guides').getByRole('button',{name:'끄기',exact:true,includeHidden:true}).dispatchEvent('click');
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
   assert.equal((await active(page)).outputOptions.backgroundPolicy,'connected','live pre-generation background control reaches the actual task');
   await page.locator(`${panel} [data-ai-send]`).click();
@@ -317,7 +318,8 @@ test('task rail selects every workspace idempotently and confirms full deletion 
   assert.equal(await page.locator(`${panel} [data-ai-batch-selected=true]`).count(),4);assert.equal(await selectAll.getAttribute('aria-pressed'),'true');
   await selectAll.click();assert.equal(await page.locator(`${panel} [data-ai-selection-count]`).innerText(),'4개 선택');assert.equal(await page.locator(`${panel} .ai-task-tab.is-on`).getAttribute('data-tab-id'),active);
   await page.screenshot({path:path.join(evidence,'selected-all.png')});
-  const clear=page.getByRole('button',{name:'선택 삭제',exact:true});await clear.click();
+  const clear=page.locator('#ai-image-panel [data-ai-tab-clear]'); // index.html:532 — 글자가 「삭제」로 줄었다(title이 「선택한 작업만 삭제합니다」)
+  await clear.click();
   const confirm=page.getByRole('dialog',{name:'선택 작업 삭제',exact:true});assert.match(await confirm.innerText(),/4개 작업/);
   await confirm.getByRole('button',{name:'취소',exact:true}).click();assert.deepEqual((await snapshot(page)).map(row=>row.id),ids);
   await clear.click();await confirm.getByRole('button',{name:'4개 삭제',exact:true}).click();
@@ -330,9 +332,9 @@ test('Sol 6.1 is disabled only when its exact provider ID is absent, with Luna s
   const evidence=dir('model-catalog');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
   await page.evaluate(()=>{window.fiveEDesktop.models=async()=>({data:[{model:'gpt-6-sol',displayName:'Sol 6',isDefault:true,defaultReasoningEffort:'medium',supportedReasoningEfforts:['medium'],serviceTiers:['priority']},{model:'gpt-6-luna',displayName:'Luna 6',defaultReasoningEffort:'medium',supportedReasoningEfforts:['medium'],serviceTiers:['priority']}]});});
   await refreshModelCatalog(page);
-  const sol=pair(page,'model').getByRole('button',{name:'Sol 6.1',exact:true}),luna=pair(page,'model').getByRole('button',{name:'Luna 6',exact:true});
+  const sol=pair(page,'model').getByRole('button',{name:'Sol 6.1',exact:true,includeHidden:true}),luna=pair(page,'model').getByRole('button',{name:'Luna 6',exact:true,includeHidden:true});
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-model-choice=sol]').disabled);
-  assert.equal(await sol.isEnabled(),false);assert.equal(await luna.isEnabled(),true);await assertAdvancedHidden(page);await assertModelChoices(page);await luna.click();assert.equal(await luna.getAttribute('aria-pressed'),'true');await assertModelChoices(page);
+  assert.equal(await sol.isEnabled(),false);assert.equal(await luna.isEnabled(),true);await assertAdvancedHidden(page);await assertModelChoices(page);await luna.dispatchEvent('click');assert.equal(await luna.getAttribute('aria-pressed'),'true');await assertModelChoices(page);
   assert.equal(await page.locator(`${panel} [data-ai-model]`).inputValue(),'gpt-6-luna');assert.equal((await sends(page)).length,0);assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({paidAiCalls:0,sol61Enabled:false,lunaEnabled:true,errors},null,2));
 });

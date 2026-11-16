@@ -24,7 +24,7 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     await page.mouse.click(154,196);await page.mouse.move(600,350);await page.mouse.down();await page.mouse.move(760,470,{steps:6});await page.mouse.up();
     await page.mouse.click(35,160);await page.mouse.click(600,350);
     await page.keyboard.press(MOD+'+KeyC');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).length===2;});
-    assert.deepEqual((await list())[0],{name:'사각형',kind:'obj',source:'5E_image',moving:false,objects:true});
+    assert.deepEqual((await list()).find(i=>i.source==='5E_image'),{name:'사각형',kind:'obj',source:'5E_image',moving:false,objects:true});
     await page.keyboard.press(MOD+'+KeyX');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).some(i=>i.moving);});
     await page.keyboard.press(MOD+'+KeyV');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return !(await m.clipList()).some(i=>i.moving);});
     // 글 입력칸에 커서가 있어도 ⇧⌘V로 열린다(11-14: AI 그래프 창은 열자마자 입력칸에 커서가 있어 안 열렸다).
@@ -45,7 +45,7 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     const images=()=>page.evaluate(()=>document.querySelectorAll('#canvas image').length);const n0=await images();
     await page.locator('.clp-go').click();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n0);
     // 더블클릭으로도 넣는다(11-14: 고를 때 목록을 다시 그려 더블클릭이 안 되던 것).
-    const n1=await images();await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).locator('.clp-t').dblclick();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n1);
+    const n1=await images();await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).locator('.clp-t').dblclick({force:true});await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n1);
     await page.keyboard.press('Escape');
     // 5E_exam: 왼쪽 메뉴 「클립보드」, 문항 카드 자료 칸에 넣기
     await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();

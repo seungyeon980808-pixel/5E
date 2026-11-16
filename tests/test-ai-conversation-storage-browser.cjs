@@ -40,7 +40,8 @@ test('conversation storage failures preserve the draft and allow an explicit ret
               const skip = page.locator('.tut-welcome-overlay .tut-banner-no');
               if (await skip.isVisible()) await skip.click();
               await page.locator('#ai-image-install-open').click();
-              await page.locator('#ai-image-panel [data-ai-side-tab="chat"]').click();
+              // 11-12(506f30bf, 시안 v6): 오른쪽 탭 줄이 숨겨져 대화 칸이 항상 열려 있다 — 탭을 누르지 않는다.
+              await page.locator('#ai-image-panel [data-ai-chat-input]').waitFor({ state: 'visible' });
               const input = page.locator('#ai-image-panel [data-ai-chat-input]');
               const draft = `Preserve this conversation draft: ${fault}`;
               await input.fill(draft);

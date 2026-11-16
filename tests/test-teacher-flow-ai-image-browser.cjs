@@ -46,7 +46,9 @@ flow.runEngines('ai-image', {
     await panel.waitFor({ state: 'visible' });
     await page.waitForFunction(() => document.querySelector('#ai-image-panel .ai-preview-stage > img')?.naturalWidth > 0);
     assert.equal(await panel.getAttribute('data-ai-result-count'), '0');
-    await panel.locator('[data-ai-comments-apply]').click();
+    // 11-10(c9d1da3f): 녹화된 세 요청(원본 관찰·그림 생성·결과 검수)은 예전 라벨 파이프라인 계약 — 내부 시험용 플래그
+    await page.evaluate(() => { globalThis.__5eLegacyLabelPipeline = true; });
+    await panel.locator('[data-ai-send][data-ai-comments-apply]').click();
     await page.waitForFunction(() => {
       const element = document.querySelector('#ai-image-panel');
       return element.dataset.aiResultCount === '1' && element.dataset.aiBusy === 'false';

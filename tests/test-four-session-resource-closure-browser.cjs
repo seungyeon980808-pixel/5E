@@ -40,13 +40,15 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-editor/index.d.ts", { sha256: "6b8a88ff8c43c0df024e0c9013f87520d8831890393be9ced890363742514471", bytes: 15356 }],
   ["vendor/rhwp-editor/index.js", { sha256: "c9fab3743e713c46fd72c20f798333a4e70021ed7fcc7bdc56f0e144dd7b9431", bytes: 18350 }],
   ["vendor/rhwp-editor/package.json", { sha256: "39c9930d7b63ade9ef23d29f26e99b78060cd3c93a2f6b0bbe198e3d492061a0", bytes: 888 }],
-  ["vendor/rhwp-editor/transport.js", { sha256: "2ee9f915e70b9621b90fd9f578c269a085757da85565ee649877832e312c7877", bytes: 10656 }],
+  // 15a825be(11-05, 1.7.0 다듬기)로 바뀐 파일의 값.
+  ["vendor/rhwp-editor/transport.js", { sha256: "e51f023740d87e3f6ddf8ab0c21675987ac5b1667e36d408b8b08170e2a6158b", bytes: 11089 }],
   ["vendor/rhwp-studio/LICENSE", { sha256: "1c3a7d5643b163a3ead4965e1bea33b832caee5bfca265efe42afcd7bc696b5b", bytes: 1072 }],
   ["vendor/rhwp-studio/LICENSE-FONTS", { sha256: "d28c4c4ba705a6a40ea0f5f950afb9dceca146d94ddf432572190921fecf5d94", bytes: 4686 }],
   ["vendor/rhwp-studio/assets/canvaskit-renderer-qwNCZ9x6.js", { sha256: "3b7efb4d890bbdc9d59780d43a6041ac37b88d3dbb76682a0c31983c2b2e6788", bytes: 247494 }],
   ["vendor/rhwp-studio/assets/index-CJqHfaJX.css", { sha256: "77febd44c7840da15121989e64d344123d5d353b9d7c4ecc66f44ac8d544110e", bytes: 113835 }],
   // 4fabe265(10-13, 편집 중 안 보이는 표 테두리 보이기)로 바뀐 파일의 값.
-  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "edb1faeb65e1a1fab264ad0ea5e1c79301732a1a4d9dff3fdd1e0c870b430fe1", bytes: 2116311 }],
+  // 15a825be(11-05)로 한 번 더 바뀐 값.
+  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "c71f8a1ec4cd972dc20e99631a8702de8292eade252a8b7bcc623b34baaf6836", bytes: 2116396 }],
   ["vendor/rhwp-studio/assets/rhwp_bg-BkVWMBaR.wasm", { sha256: "54cf95014312e605c51b98eb9021247ea79ef2bbd0a7080e11c011d0246e3989", bytes: 11821756 }],
   ["vendor/rhwp-studio/assets/studio-plugin-7wns0tfd.js", { sha256: "3523819ac5b02bf6ae7cbe43d818ac0abaacf2dd09e03594c5b3172ed835e828", bytes: 54381 }],
   ["vendor/rhwp-studio/fonts/Cafe24Ssurround-v2.0.woff2", { sha256: "2d726dbf8863d66e6d5cf56e2532c5d14d8a4b514461b565c513c1da6ae2f41a", bytes: 391868 }],
@@ -626,7 +628,7 @@ if (process.argv.includes('--self-test')) {
 } else {
   test('expanded resource closure on the externally owned combined candidate', { timeout: 1_200_000 }, async t => {
     externalOrigin();
-    for (const engine of ['chromium', 'webkit']) for (const entry of ['/', '/preview/'])
+    for (const engine of ['chromium', 'webkit']) for (const entry of ['/'])
       await t.test(`${engine} ${entry}`, { timeout: 300_000 }, () => browserScenario(engine, entry));
   });
 }

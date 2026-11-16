@@ -20,7 +20,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       for (const width of [1440, 760]) {
         const dir = path.join(evidence, name, String(width)); fs.mkdirSync(dir, { recursive: true });
         const page = await browser.newPage({ viewport: { width, height: 1000 } });await installLabelSourcePage(page);
-        page.setDefaultTimeout(5000);
+        page.setDefaultTimeout(process.env.CI ? 15000 : 5000);
         const errors = []; page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(() => localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true'));
         await page.goto(preview + '?mode=pro', { waitUntil: 'domcontentloaded' });

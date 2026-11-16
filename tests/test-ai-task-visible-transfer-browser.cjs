@@ -35,10 +35,15 @@ async function snapshot(page) {
 async function visibleSource(page) {
   return page.locator(active + ' .is-ai-active-candidate .ai-preview-stage > img').getAttribute('src');
 }
+// 11-11(ai-task-context-menu.js): 보내기 단추는 하위 메뉴 없이 반대 작업으로 바로 보낸다(이미지 작업대 → 그래프 복원, 그래프 작업대 → 이미지 변환).
+async function sendDirect(page, kind) {
+  const send = page.locator('.ai-task-context-menu [data-task-action="send"]');
+  assert.equal(await send.getAttribute('data-direct'), kind, 'the send button targets the other workflow');
+  await send.click();
+}
 async function transfer(page, taskId, kind) {
   await page.locator(active + ` [data-tab-id="${taskId}"] .ai-task-tab-select`).click({button:'right'});
-  await page.locator('.ai-task-context-menu [data-task-action="send"]').click();
-  await page.locator(`.ai-task-context-menu [data-task-action="${kind}"]`).click();
+  await sendDirect(page, kind);
   await page.waitForFunction(({kind,taskId}) => {
     const panel = document.querySelector('#ai-image-panel');
     return panel?.dataset.aiWorkflow === kind
@@ -132,7 +137,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
     return image?.complete && image.naturalWidth && image.src !== __task5Expected[0].generated[0].data;
   });
   const receipts = [];
-  for (const included of [true,false]) for (const kind of ['graph','image']) {
+  for (const included of [true,false]) for (const kind of ['graph']) { // 11-11(js/ai-task-context-menu.js:61): 보내기는 반대 작업으로만 바로 간다 — 이미지 작업대에서 「이미지로」 보내기는 없어졌다(그 쪽 덮개는 못 봄)
     await selectSource(page);
     const toggle = page.locator(active + ' [data-ai-label-toggle]');
     if ((await toggle.getAttribute('aria-checked') === 'true') !== included) await toggle.click();
@@ -171,8 +176,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
   const beforeRace = await snapshot(page);
   await page.evaluate(() => { window.__transferCompositeGate = new Promise(resolve => window.__releaseTransferComposite = resolve); });
   await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
-  await page.locator('.ai-task-context-menu [data-task-action="send"]').click();
-  await page.locator('.ai-task-context-menu [data-task-action="graph"]').click();
+  await sendDirect(page, 'graph');
   await page.waitForFunction(() => window.__transferCompositeEntered);
   await page.locator(active + ' [data-ai-label-toggle]').click();
   await page.evaluate(() => { window.__releaseTransferComposite(); window.__transferCompositeGate = null; });
@@ -265,7 +269,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
     assert.deepEqual(copy.copied,copy.visible);assert.equal(copy.gesture,true);
     assert.deepEqual((await snapshot(page)).find(tab => tab.id === 'task-2'),sourceBefore);
     receipts.push({action:'historical-clipboard',policy,pixelsMatch:true,writeDuringGesture:true,sourcePreserved:true,pixels:copy.visible});
-    for (const kind of ['image','graph']) {
+    for (const kind of ['graph']) { // 같은 이유(이미지 작업대 원본에서는 그래프 쪽으로만 보낸다)
       const displayed = await historical(policy), before = await snapshot(page), sourceBefore = before.find(tab => tab.id === 'task-2');
       await transfer(page,'task-2',kind);
       const after = await snapshot(page), targets = after.filter(tab => !before.some(old => old.id === tab.id));
@@ -294,8 +298,8 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
       const gate = {policy:'connected',entered:false};gate.promise = new Promise(resolve => gate.release = resolve);window.__historicalProcessingGate = gate;
     });
     await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click({button:'right'});
-    if (action === 'image') await page.locator('.ai-task-context-menu [data-task-action="send"]').click();
-    await page.locator(`.ai-task-context-menu [data-task-action="${action}"]`).click();
+    if (action === 'image') await sendDirect(page, 'image');
+    else await page.locator(`.ai-task-context-menu [data-task-action="${action}"]`).click();
     await page.waitForFunction(() => window.__historicalProcessingGate?.entered);
     if (action === 'copy') assert.equal(await page.evaluate(() => __clipboardWriteStarted),true);
     await page.locator(active + ' [data-ai-legacy-result-settings] [data-ai-setting-key="background"] [data-ai-setting-value="preserve"]').click();

@@ -18,10 +18,10 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
       await page.locator(selector).click();
       await page.waitForFunction(selector => document.querySelector(selector)?.getAttribute('aria-pressed') === 'true', selector);
       await choose(page, 'general', labels);
-      await page.locator(`${panel} [data-ai-input]`).fill(request);
+      await page.locator(`${panel} [data-ai-chat-input]`).fill(request);
       const startIndex = await page.evaluate(() => __task2.sends.length);
       const before = (await snapshot(page)).find(tab => tab.id === `task-${task}`).generated.length;
-      await page.locator(`${panel} [data-ai-comments-apply]`).click();
+      await page.locator(`${panel} [data-ai-send][data-ai-comments-apply]`).click();
       await finish(page, { sourcePlan: verifiedPlan, startIndex, allowIdle }); // 11-10: 캐시 재사용 변환은 그림 요청 없이 끝날 수 있다
       // 11-10: 그림 요청이 없으면 결과 항목이 늘어날 때까지 기다린다(바쁨 해제 직후 목록 반영 순서 차이를 흡수).
       for (let i = 0; allowIdle && i < 100 && (await snapshot(page)).find(tab => tab.id === `task-${task}`).generated.length <= before; i++) await page.waitForTimeout(100);

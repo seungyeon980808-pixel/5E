@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { fixture, choose, finish, verifiedPlan } = require('./helpers/label-source-browser.cjs');
 const baseline = require('./fixtures/rhwp-approved-first-contract.json');
+const LEGACY = { beforeNavigate: p => p.addInitScript(() => { globalThis.__5eLegacyLabelPipeline = true; }) }; // 11-10(c9d1da3f): 예전 라벨 파이프라인(원본 관찰·계약 프롬프트) 계약을 보는 검사 — 내부 시험용 플래그
 const evidence = process.env.EVIDENCE_DIR || path.resolve(__dirname, '../.omo/evidence/rhwp-image-harness-alignment-20261009/browser');
 
 for (const engine of ['chromium', 'webkit']) {
@@ -14,13 +15,13 @@ for (const engine of ['chromium', 'webkit']) {
       process.env.TASK2_ENGINE = engine;
       const dir = path.join(evidence, engine, labelResult);
       fs.mkdirSync(dir, { recursive: true });
-      const { page, errors } = await fixture(t, 1, dir);
+      const { page, errors } = await fixture(t, 1, dir, LEGACY);
       await choose(page, 'general', labelResult);
-      await page.locator('#ai-image-panel [data-ai-input]').fill('선택한 원본을 변환해 주세요');
+      await page.locator('#ai-image-panel [data-ai-chat-input]').fill('선택한 원본을 변환해 주세요');
       const plan = structuredClone(verifiedPlan);
       plan.labels[0].typography.role = 'name';
       plan.labels[0].typography.runs = [{ text: '전자', role: 'name', contentMode: 'plain' }];
-      await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+      await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();
       await finish(page, { sourcePlan: plan });
       const result = await page.evaluate(async baseline => {
         const v = '?v=1.7.0-four-session-integration';
@@ -56,7 +57,9 @@ for (const engine of ['chromium', 'webkit']) {
           legacyStyleRequestInjected: q.sends.filter(s => s.payload.purpose === 'scene').some(s => s.payload.text.includes('그라데이션, 그림자, 음영 효과, 조명')) };
       }, baseline);
       assert.equal(result.count, 1);
-      assert.equal(result.actual.text, result.expectedText);
+      // 11-10(c9d1da3f): 라벨 끄기(삭제) 경로는 짧은 기출·교과서 프롬프트(+ 「사용자 요청:」)를 보낸다. 계약 프롬프트는 라벨 복원(예전 파이프라인)에서만 쓴다.
+      if (labelResult === 'restore-editable') assert.equal(result.actual.text, result.expectedText);
+      else { assert.match(result.actual.text, /^첨부한 교과서 그림을 한국 수능/); assert.match(result.actual.text, /선택한 원본을 변환해 주세요/); }
       assert.equal(result.promptSha256, baseline.promptSha256);
       assert.deepEqual(result.actual.attachments, [result.expectedInput]);
       assert.equal(result.actual.conversationId, null);
@@ -70,7 +73,7 @@ for (const engine of ['chromium', 'webkit']) {
       assert.equal(result.generationHarness.id, 'rhwp-approved-first-v1');
       assert.deepEqual(result.preparation, { width: 1536, height: 512, originalUnchanged: true, name: 'INPUT_SOURCE.png' });
       // 4dbdd0b8(10-13): 첫 요청은 원본 추적 머리말을 싣되(기하 보존), 스타일은 원본 그대로(평가원 단순화 본문 없음).
-      assert.match(result.actual.text, /^\[SOURCE-GRID-TRACING[\s\S]*\[5e-source-tracing v/);
+      if (labelResult === 'restore-editable') assert.match(result.actual.text, /^\[SOURCE-GRID-TRACING[\s\S]*\[5e-source-tracing v/);
       assert.doesNotMatch(result.actual.text, /5e-kice-flat-style/);
       await page.screenshot({ path: path.join(dir, 'workbench.png') });
 
@@ -93,7 +96,8 @@ for (const engine of ['chromium', 'webkit']) {
         const initial = await rendered();
         assert.equal(initial.object.fontFamily, initial.expected);
         assert.deepEqual(initial.fonts, [initial.expected]);
-        assert.equal(initial.object.labelFontOverride, true);
+        // js/ai-editable-image-labels.js:295: 글자 묶음(scriptRuns)을 쓰는 라벨은 글꼴 고정 표시를 달지 않는다.
+        assert.equal(initial.object.labelFontOverride === true, !initial.object.aiScriptRuns);
         // WebKit's SVG text bounding box includes extra font-space offsets.
         // Project the shared native text center used by picking and rendering.
         const centerPoint = async () => page.evaluate(async id => {

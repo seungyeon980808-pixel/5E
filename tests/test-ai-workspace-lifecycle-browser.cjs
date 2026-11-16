@@ -503,8 +503,8 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
-  if (!initialGeneration) await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-candidate-option][aria-selected="true"]'));
-  await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
+  if (!initialGeneration && !union) await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-candidate-option][aria-selected="true"]')); // union(그래프 후보 합집합) 고정 자료는 버전 목록 없이 시작한다
+  if (!union)   await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
   assert.deepEqual(errors, [], 'real app boot must have no runtime errors');
   return { page, errors,
     async pauseTracing() {
@@ -551,7 +551,7 @@ for (const count of [1, 10, 30]) {
     await resumeTracing();
     await page.locator(task(0)).click();
     await page.screenshot({ path: path.join(evidence, `populated-${count}.png`) });
-    await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+    await page.locator('#ai-image-panel [data-ai-send]').click();
     assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
     assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0, 'The explicit primary scope action already authorizes the captured bounds');
     await page.waitForFunction(() => window.__task2.sends.length === 1);
@@ -610,7 +610,7 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
     await page.waitForFunction(id => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === id, `candidate-${index}`);
   };
   const start = async count => {
-    await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+    await page.locator('#ai-image-panel [data-ai-send]').click();
     await page.waitForFunction(count => window.__task2.sends.length === count, count);
   };
   await start(1);
@@ -686,7 +686,7 @@ test('a hung scoped response expires without success or automatic resend', { tim
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 2, evidence);
   await page.clock.install();
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await page.locator('#ai-image-panel [data-ai-send]').click();
   await page.waitForFunction(() => window.__task2.sends.length === 1);
   await page.clock.fastForward(181_000);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
@@ -702,7 +702,7 @@ test('initial generation shows preparation before delayed status and completes i
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 4, evidence, { initialGeneration: true });
   await page.evaluate(() => window.__task2.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await page.locator('#ai-image-panel [data-ai-send]').click();
   assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-request-phase'), 'preparing');
   await page.screenshot({ path: path.join(evidence, 'normal-preparation.png') });
@@ -720,8 +720,8 @@ test('initial generation shows preparation before delayed status and completes i
   assert.deepEqual(result.counts, { 'task-0': 1, 'task-2': 1, 'task-3': 1, 'task-1': 1 });
   assert.equal(result.state, 'completed');
   assert.equal(result.sends, 1);
-  // 11-10: 라벨 삭제는 관찰을 생략하고 소유 작업에 생성·검수 두 단계만 기록.
-  assert.deepEqual(result.transportStages, ['image-generation', 'full-review'], 'Both real correlated transport stages are accounted for; exactly one generation occurs');
+  // 11-10: 라벨 삭제는 관찰·검수를 생략해 생성 한 단계만 기록(test-ai-release-browser와 같은 기준).
+  assert.deepEqual(result.transportStages, ['image-generation'], 'Label-off flow records only the real generation stage (no source-observation / full-review, 11-10); exactly one generation occurs');
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(evidence, 'normal-generation.json'), JSON.stringify(result, null, 2));
 });

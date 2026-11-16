@@ -166,11 +166,16 @@ const sends = page => page.evaluate(() => window.__task2.sends.map(s=>({purpose:
 const snapshot = page => page.evaluate(async()=> (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs));
 async function emit(page,index,kind,text) { await page.evaluate(({index,kind,text})=>{window.__task2.emit(index,kind,text);window.__task2.emit(index,'done');},{index,kind,text}); }
 async function choose(page,imageKind,labelResult) {
-  const source=page.locator('#ai-image-panel .ai-source-treatment');
-  if(!await source.evaluate(element=>element.open)) await source.locator('summary').click();
-  // 11-09: 출처 단추가 「교과서 / 기출」로 바뀌고 접힌 칸 밖(늘 보이는 자리)으로 옮겨졌다.
-  await page.locator('#ai-image-panel [data-ai-setting-key=kind]').getByRole('button',{name:imageKind==='exam'?'기출':'교과서',exact:true}).click();
-  await page.locator('#ai-image-panel [data-ai-setting-key=labels]').getByRole('button',{name:labelResult==='remove'?'끄기':'켜기',exact:true}).click();
+  // 11-09 이후: 출처·라벨 단추는 compact 설정 줄에 늘 보이고, 접힌 .ai-source-treatment(summary)는 숨겨진다.
+  // 출처 줄은 알려진 그림이면 자동 판단되어 숨겨지고(index.html data-ai-source-kind-row hidden), 모호할 때만 보인다.
+  // 검사는 출처를 확정해야 하므로 보이면 눌러 보고, 숨어 있으면 같은 단추(data-ai-setting-value)를 직접 누른다.
+  const press=async(key,value,name)=>{
+    const visible=page.locator(`#ai-image-panel [data-ai-setting-key=${key}]`).getByRole('button',{name,exact:true});
+    if(await visible.count()) await visible.click();
+    else await page.locator(`#ai-image-panel [data-ai-setting-key=${key}] [data-ai-setting-value=${value}]`).first().evaluate(el=>el.click());
+  };
+  await press('kind',imageKind,imageKind==='exam'?'기출':'교과서');
+  await press('labels',labelResult,labelResult==='remove'?'끄기':'켜기');
 }
 function jointResponse(text) {
   const groups=JSON.parse(text.split('고정 후보: ')[1].split('\n')[0]);

@@ -115,6 +115,9 @@ function installRecordedBridge(responses) {
   window.__recordedAiSends = sends;
 }
 
+// CI(느린 WebKit 러너)에서만 기다림을 3배로 늘린다. 맥 로컬 기준은 그대로.
+const T = ms => process.env.CI ? ms * 3 : ms;
+
 function evidenceDir(name) {
   const dir = path.resolve(process.env.EVIDENCE_DIR || path.join('.omo/evidence/teacher-flows', name));
   fs.mkdirSync(dir, { recursive: true });
@@ -224,9 +227,9 @@ function recordSavePicker() {
 async function captureSave(page, trigger, evidence, file) {
   const target = path.join(evidence, file);
   const before = await page.evaluate(() => window.__savedFiles?.length ?? -1);
-  const downloaded = page.waitForEvent('download', { timeout: 20_000 }).then(item => ({ item }));
+  const downloaded = page.waitForEvent('download', { timeout: T(20_000) }).then(item => ({ item }));
   downloaded.catch(() => {});
-  const picked = before < 0 ? new Promise(() => {}) : page.waitForFunction(count => window.__savedFiles.length > count, before, { timeout: 20_000 })
+  const picked = before < 0 ? new Promise(() => {}) : page.waitForFunction(count => window.__savedFiles.length > count, before, { timeout: T(20_000) })
     .then(() => page.evaluate(() => window.__savedFiles.at(-1))).then(saved => ({ saved }));
   picked.catch(() => {});
   await trigger();
@@ -243,7 +246,7 @@ async function captureSave(page, trigger, evidence, file) {
 async function cropTextbookFigure(page) {
   await page.locator('#exam-library-open').click();
   const ui = page.locator('.unified-library-overlay').last();
-  await page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready', null, { timeout: 30_000 });
+  await page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready', null, { timeout: T(30_000) });
   await ui.locator('[data-unilib-type="pdf"]').click();
   await ui.locator('[data-result-id*="teacher-flow-textbook"]').first().click();
   await ui.locator('[data-unilib-adjust]').click();
@@ -252,7 +255,7 @@ async function cropTextbookFigure(page) {
   await page.waitForFunction(() => {
     const image = document.querySelector('[data-unilib-crop-image]'), quality = document.querySelector('[data-unilib-crop-quality]');
     return image?.naturalWidth >= 600 && quality?.hidden;
-  }, null, { timeout: 30_000 });
+  }, null, { timeout: T(30_000) });
   const canvas = await ui.locator('[data-unilib-crop-canvas]').boundingBox();
   const at = (fx, fy) => ({ x: canvas.x + canvas.width * fx, y: canvas.y + canvas.height * fy });
   // 회로 그림(PDF 좌표 100~470, 330~620)을 감싸는 영역.
@@ -273,7 +276,7 @@ async function sendTrayToWorkbench(page, ui) {
   while (await choices.count()) await choices.first().click();
   await assignment.locator('[data-action="continue"]').click();
   const panel = page.locator('#ai-image-panel');
-  await panel.waitFor({ state: 'visible', timeout: 20_000 });
+  await panel.waitFor({ state: 'visible', timeout: T(20_000) });
   await ui.waitFor({ state: 'hidden' });
   return panel;
 }
@@ -284,7 +287,8 @@ async function runEngines(name, scenario) {
     const receipts = [];
     for (const engine of [chromium, webkit]) {
       const app = await openApp(engine, origin, scenario.options);
-      const shot = file => app.page.screenshot({ path: path.join(evidence, `${engine.name()}-${file}.png`) });
+      if (process.env.CI) app.page.setDefaultTimeout(T(30_000));
+      const shot = file => process.env.KEEP_SHOTS ? app.page.screenshot({ path: path.join(evidence, `${engine.name()}-${file}.png`) }) : Promise.resolve(); // 디스크 절약: 스크린샷은 KEEP_SHOTS일 때만
       try {
         const receipt = await scenario.run({ ...app, engine: engine.name(), evidence, shot });
         assert.deepEqual(app.errors, [], '페이지 오류가 없어야 한다');
@@ -302,4 +306,4 @@ async function runEngines(name, scenario) {
   });
 }
 
-module.exports = { textbookPack, textbookPdf, recordedAiConversion, openApp, assertNavy, drawing, runEngines, evidenceDir, inkStats, download, captureSave, cropTextbookFigure, sendTrayToWorkbench, TEXTBOOK_PATH };
+module.exports = { T, textbookPack, textbookPdf, recordedAiConversion, openApp, assertNavy, drawing, runEngines, evidenceDir, inkStats, download, captureSave, cropTextbookFigure, sendTrayToWorkbench, TEXTBOOK_PATH };

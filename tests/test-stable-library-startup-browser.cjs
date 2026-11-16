@@ -70,7 +70,7 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       const listMs = Math.round(performance.now() - started);
       assert.equal(await f.ui.getAttribute('data-search-readiness'), 'loading');
       assert.equal(f.state.requests.filter(url => /search-index\.json|catalog\.json/.test(url)).length, 0, 'no remote catalog/index blocks first list');
-      assert.equal(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url)).length, 0, 'web listing has no parts/PDF runtime gate');
+      assert.equal(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url)).length, 0, 'web listing has no parts/PDF runtime gate: ' + JSON.stringify(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url))));
       await f.ui.locator('[data-unilib-type="pdf"]').click();
       await f.ui.locator('[data-unilib-query]').fill('물리2 27년 6평');
       await f.page.waitForFunction(count => document.querySelector('[data-unilib-count]')?.textContent === count, titlePageCount);

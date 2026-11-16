@@ -166,10 +166,9 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   await page.locator('#ai-image-panel [data-ai-status]').filter({ hasText: '준비됨' }).waitFor();
   const chooseCurrentInput = async () => {
     const panel = page.locator('#ai-image-panel');
-    const sourceChoices = panel.locator('.ai-source-treatment');
-    if (!await sourceChoices.evaluate(node => node.open)) await sourceChoices.locator('summary').click();
-    await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').click();
-    await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').click();
+    // 11-09(506f30bf): 출처·라벨 단추는 늘 보이는 줄로 옮겨졌고 출처 줄은 자동 판단 때 숨는다 → 숨은 단추도 같은 상태를 바꾸도록 click 이벤트를 보낸다.
+    await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').dispatchEvent('click');
+    await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').dispatchEvent('click');
   };
   await page.locator('#ai-image-panel [data-ai-source-file]').first().setInputFiles({
     name: 'source.png',
@@ -177,7 +176,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'),
   });
   await page.evaluate(() => {
-    const input = document.querySelector('#ai-image-panel [data-ai-input]');
+    const input = document.querySelector('#ai-image-panel [data-ai-chat-input]');
     input.value = 'PRIVATE-TASK-A';
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
@@ -185,7 +184,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   await chooseCurrentInput();
   const countsBefore = await page.evaluate(() => window.__task6Mock.counts());
   await page.evaluate(() => window.__task6Mock.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').dblclick();
+  await page.locator('#ai-image-panel [data-ai-send]').dblclick();
   await page.waitForFunction((before) => window.__task6Mock.counts().statusCount === before + 1,
     countsBefore.statusCount);
   assert.equal((await page.evaluate(() => window.__task6Mock.counts())).statusCount - countsBefore.statusCount, 1);
@@ -199,7 +198,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64'),
   });
   await page.evaluate(() => {
-    const input = document.querySelector('#ai-image-panel [data-ai-input]');
+    const input = document.querySelector('#ai-image-panel [data-ai-chat-input]');
     input.value = 'ACTIVE-TASK-B';
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
@@ -222,7 +221,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   }, png);
   await page.waitForFunction(() => window.__task6OldPanel.querySelectorAll('.ai-generated-card').length===1 && window.__task6OldPanel.dataset.aiBusy==='false');
   assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(),0,'A result never enters active B');
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await page.locator('#ai-image-panel [data-ai-send]').click();
   await page.waitForFunction(() => window.__task6Mock.counts().sendCount===2);
   await page.evaluate((imageDataUrl) => {
     window.__task6Mock.emitEvent({ method: 'item/completed', params: { turnId:'turn-2', item:{type:'imageGeneration',imageDataUrl} } },1);

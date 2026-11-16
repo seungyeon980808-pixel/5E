@@ -50,14 +50,17 @@ async function completeVerification(page, indices, verdicts) {
 }
 const ids = ['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','raster-label-removal','editable-label-coverage','leader-relations','label-overlay-alignment','label-typography','leader-overlay','kice-flat-style','flat-gray-regions'];
 const report = verdict => JSON.stringify({ verdict, checks: ids.map(id => ({ id, label: id, status: verdict === 'fail' && id === 'raster-label-removal' ? 'fail' : 'pass', detail: id === 'raster-label-removal' && verdict === 'fail' ? '+ 기호가 원래 위치에 남아 있음' : 'Synthetic reviewer fixture; not an actual AI quality verdict' })), issues: verdict === 'fail' ? [{ message: '+ 기호 잔존', severity: 'major', bbox: { x: .2, y: .3, width: .1, height: .1 } }] : [] });
+// 83201a54: 라벨 복원 기본값은 「끄기」다. 관찰(scene) 단계를 타려면 검사가 먼저 「켜기」를 누른다(숨은 단추도 같은 상태를 바꾸도록 click 이벤트).
+const LEGACY = { beforeNavigate: p => p.addInitScript(() => { globalThis.__5eLegacyLabelPipeline = true; }) }; // 11-10(c9d1da3f): 예전 라벨 파이프라인(원본 관찰·계약 프롬프트) 계약을 보는 검사 — 내부 시험용 플래그
+const labelsOn = async page => { await page.evaluate(() => { globalThis.__5eLegacyLabelPipeline = true; }); await page.locator('#ai-image-panel [data-ai-setting-key=kind] [data-ai-setting-value=general]').first().dispatchEvent('click'); await page.locator('#ai-image-panel [data-ai-setting-key=labels] [data-ai-setting-value=restore-editable]').dispatchEvent('click'); };
 const sends = page => page.evaluate(() => window.__task2.sends.map(s => ({ purpose: s.payload.purpose, model: s.payload.model, effort: s.payload.effort, text: s.payload.text, attachmentCount: s.payload.attachments.length })));
 const imageSends = requests => requests.filter(request => request.purpose === 'image');
 
 for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, generate once, review ${verdict}, insert and edit native leader`, { timeout: 60000 }, async t => {
   const evidence = path.join(evidenceRoot, verdict);
   fs.mkdirSync(evidence, { recursive: true });
-  const { page, errors } = await fixture(t, 1, evidence, { initialGeneration: true });
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  const { page, errors } = await fixture(t, 1, evidence, { ...LEGACY, initialGeneration: true });
+  await labelsOn(page); await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();
   await page.waitForFunction(() => window.__task2.sends.length === 1);
   assert.equal((await sends(page))[0].purpose, 'scene');
   assert.equal((await sends(page))[0].model, 'gpt-6-luna'); assert.equal((await sends(page))[0].effort, 'medium');
@@ -159,8 +162,8 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
 
 test('source label UI: cancellation during analysis sends no image request and ignores late observer result', { timeout: 30000 }, async t => {
   const evidence = path.join(evidenceRoot, 'cancel'); fs.mkdirSync(evidence, { recursive: true });
-  const { page, errors } = await fixture(t, 1, evidence, { initialGeneration: true });
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click(); await page.waitForFunction(() => window.__task2.sends.length === 1);
+  const { page, errors } = await fixture(t, 1, evidence, { ...LEGACY, initialGeneration: true });
+  await labelsOn(page); await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click(); await page.waitForFunction(() => window.__task2.sends.length === 1);
   await page.locator('#ai-image-panel [data-ai-interrupt]').click();
   await page.evaluate(plan => { window.__task2.emit(0, 'assistant', plan); window.__task2.emit(0, 'done'); }, plan);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
@@ -175,7 +178,7 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
   const a = original.indexOf('function seedRequestWorkspaces('), b = original.indexOf('\n\nconst active =', a);
   const code = original.slice(a, b)
     .replace("{ waitUntil: 'domcontentloaded' }", "{ waitUntil: 'domcontentloaded' }")
-    .replace('  let statusGate = null, interruptGate = null;', "  for (const tab of tabs) { tab.imageKind = 'general'; tab.labelResult = 'restore-editable'; tab.imageLabelWorkflow = { version:'1.0.0', imageKind:'general', labelResult:'restore-editable' }; tab.preserveSourceLabels = true; tab.generated = []; tab.selectedCandidateId = null; }\n  let statusGate = null, interruptGate = null;")
+    .replace('  let statusGate = null, interruptGate = null;', "  globalThis.__5eLegacyLabelPipeline = true; /* 11-10(c9d1da3f): 예전 라벨 파이프라인 계약 */\n  for (const tab of tabs) { tab.imageKind = 'general'; tab.labelResult = 'restore-editable'; tab.imageLabelWorkflow = { version:'1.0.0', imageKind:'general', labelResult:'restore-editable' }; tab.preserveSourceLabels = true; tab.generated = []; tab.selectedCandidateId = null; }\n  let statusGate = null, interruptGate = null;")
     .replace('emit(index, kind) {', 'emit(index, kind, text) {')
     .replace("if (kind === 'image') {", "if (kind === 'assistant') { method = 'item/completed'; params.item = { type: 'agentMessage', phase: 'final_answer', text }; }\n      else if (kind === 'image') {");
   const batchFixture = new Function('require','root','fs','path','assert','chromium','webkit', adaptHarness(code) + '; return requestBrowserFixture;')(require,root,fs,path,assert,chromium,webkit);
@@ -183,7 +186,8 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
   const { page, errors } = await batchFixture(t, 2, evidence, { initialGeneration: true });
   await page.click('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select', { modifiers: ['Meta'] });
   assert.equal(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(), '2개 선택');
-  await page.click('#ai-image-panel [data-ai-comments-apply]');
+  await labelsOn(page);
+  await page.click('#ai-image-panel [data-ai-send][data-ai-comments-apply]');
   await page.waitForFunction(() => window.__task2.sends.length === 2);
   assert.ok((await sends(page)).every(s => s.purpose === 'scene'));
   const batchPlan = JSON.stringify(clearance === 'clear' ? syntheticBatchPipelineObservation() : syntheticPipelineObservation());
@@ -225,8 +229,8 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
 
 test('missing final overlay checks cannot promote a candidate to passed', {timeout:60000}, async t => {
   const evidence=path.join(evidenceRoot,'missing-composite-checks');fs.mkdirSync(evidence,{recursive:true});
-  const {page,errors}=await fixture(t,1,evidence,{initialGeneration:true});
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
+  const {page,errors}=await fixture(t,1,evidence,{...LEGACY,initialGeneration:true});
+  await labelsOn(page); await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
   await page.evaluate(plan=>{window.__task2.emit(0,'assistant',plan);window.__task2.emit(0,'done');},plan);
   await page.waitForFunction(()=>window.__task2.sends.length===2);await page.evaluate(()=>{window.__task2.emit(1,'image');window.__task2.emit(1,'done');});
   await page.waitForFunction(()=>window.__task2.sends.length===3);
