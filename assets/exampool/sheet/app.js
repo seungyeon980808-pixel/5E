@@ -1009,8 +1009,9 @@ async function previewFormSample({draft,standard,keep}){typesetter||=makeTypeset
   const bytes=await typesetter.buildExam(sample,exam,{form:{bytes:draft.bytes,structure:draft.read.structure,keep,standard},password:draft.password||''});
   return typesetter.examPagesSvg(bytes);}
 // 11-15(사용자): 기본 학교 원안지 양식 3개 — 처음 쓸 때 한 번 앱 안 파일(assets/exampool/forms)을 읽어 이 기기 양식 목록에 등록한다(같은 ID면 그대로).
-const BUILTIN_VER=2;// 11-15: 양식 읽는 규칙이 바뀌면 올린다 — 이미 등록한 기본 양식을 다시 읽는다(육민관고: 개요 번호 문항).
-const BUILTIN_FORMS=[{id:'form_builtin_daewang',std:'std_builtin_daewang',name:'대왕중학교 원안지',file:'daewang-middle.hwpx'},{id:'form_builtin_haesong',std:'std_builtin_haesong',name:'해송고등학교 원안지(B4)',file:'haesong-high-b4.hwpx'},{id:'form_builtin_yukmingwan',std:'std_builtin_yukmingwan',name:'육민관고등학교 원안지',file:'yukmingwan-high.hwp'}];
+const BUILTIN_VER=2;// 11-15: 양식 읽는 규칙이 바뀌면 올린다 — 이미 등록한 기본 양식을 다시 읽는다(고등학교 원안지 2: 개요 번호 문항).
+// 1.7.1: 공개 저장소라 양식 속 학교 이름은 ○로 바꿨다(글자 수·모양 그대로). id는 이미 등록한 기기와 맞추려고 그대로 둔다.
+const BUILTIN_FORMS=[{id:'form_builtin_daewang',std:'std_builtin_daewang',name:'중학교 원안지(A4)',file:'middle-a4.hwpx'},{id:'form_builtin_haesong',std:'std_builtin_haesong',name:'고등학교 원안지(B4)',file:'high-b4.hwpx'},{id:'form_builtin_yukmingwan',std:'std_builtin_yukmingwan',name:'고등학교 원안지 2(B4)',file:'high-b4-2.hwp'}];
 let builtinForms=null;
 function ensureBuiltinForms(){return builtinForms||=(async()=>{let added=0;
   for(const b of BUILTIN_FORMS){if(typesetForms.some(f=>f.id===b.id&&f.builtinVer===BUILTIN_VER))continue;
