@@ -145,10 +145,6 @@
       "reason": "2026-11-17 1.7.1 T: 크롬 통과, WebKit에서 .unified-text-editor가 안 보임 — 미판정"
     },
     {
-      "path": "tests/test-typeset-gaps-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함(★): 선지 앞 간격 입력값이 1.3배로 반영(1→1.3, 2→2.6, 3→3.9, 0.5→0.6mm) — 1/0.768 배율과 일치, BL3 B7 몫"
-    },
-    {
       "path": "tests/test-clipboard-hub-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
