@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
-const moduleAt = name => import(pathToFileURL(path.join(__dirname, '../preview/js', name)));
+const moduleAt = name => import(pathToFileURL(path.join(__dirname, '../js', name)));
 const catalog = [
   { model: 'gpt-6-sol', displayName: 'GPT-6 Sol', isDefault: true, supportedReasoningEfforts: [{ reasoningEffort: 'medium' }, { reasoningEffort: 'ultra' }], defaultReasoningEffort: 'medium', serviceTiers: [{ id: 'priority' }], defaultServiceTier: null },
   { id: 'gpt-6-luna', supportedReasoningEfforts: ['low', { effort: 'high' }], defaultReasoningEffort: 'low', serviceTiers: ['flex'], defaultServiceTier: null },

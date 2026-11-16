@@ -27,7 +27,8 @@ const seedStart = lifecycleFixture.indexOf('function seedRequestWorkspaces(');
 const seedEnd = lifecycleFixture.indexOf('\nasync function requestBrowserFixture(', seedStart);
 assert.ok(seedStart >= 0 && seedEnd > seedStart, 'populated lifecycle fixture must be available');
 const seed = lifecycleFixture.slice(seedStart, seedEnd);
-const legacySourceFiles = ['preview/js/ai-panel.js', 'preview/js/ai-task-workspaces.js', 'preview/js/ai-workspace-batch.js', 'preview/js/ai-comparison.js', 'preview/js/unified-library-ui.js', 'preview/js/tools/pointer-magnifier.js', 'preview/css/ai-panel.css', 'preview/css/ai-comparison.css', 'preview/css/unified-library.css', 'preview/index.html', 'preview/js/main.js', 'tests/test-ai-workspace-lifecycle-browser.cjs', 'tests/helpers/crop-loading-fixture.cjs', 'tests/test-ai-workbench-polish-browser.cjs', 'tests/helpers/performance-reference.cjs', 'package-lock.json'];
+// 1.7.1: 옛 preview/ 사본은 지웠으므로 실제 js·css(canonicalSources)만 지킨다.
+const legacySourceFiles = ['tests/test-ai-workspace-lifecycle-browser.cjs', 'tests/helpers/crop-loading-fixture.cjs', 'tests/test-ai-workbench-polish-browser.cjs', 'tests/helpers/performance-reference.cjs', 'package-lock.json'];
 const canonicalSources = ['js', 'css'].flatMap(dir => fs.readdirSync(path.join(root, dir), { recursive: true }).filter(file => /\.(?:js|mjs|css)$/.test(file)).map(file => `${dir}/${file}`));
 const sourceFiles = [...new Set([...legacySourceFiles, ...canonicalSources, 'index.html', 'tests/helpers/canonical-fixture-adapter.cjs', 'tests/helpers/four-session-entry.cjs', 'tests/fixtures/candidate-union.cjs', 'tests/run-browser-tests.cjs'])].sort();
 const hashes = () => Object.fromEntries(sourceFiles.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')]));

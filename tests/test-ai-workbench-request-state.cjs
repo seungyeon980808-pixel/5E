@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
-const moduleUrl = pathToFileURL(path.join(__dirname, '../preview/js/ai-workbench-request-state.js')).href;
+const moduleUrl = pathToFileURL(path.join(__dirname, '../js/ai-workbench-request-state.js')).href;
 
 test('request progress starts before transport and remains with its originating task', async () => {
   const { createWorkbenchRequestState } = await import(moduleUrl);

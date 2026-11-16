@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const load = name => import(pathToFileURL(path.resolve(__dirname, '../preview/js', name)).href);
+const load = name => import(pathToFileURL(path.resolve(__dirname, '../js', name)).href);
 const source = length => {
   const bytes = Buffer.alloc(length, 19);
   Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(bytes);

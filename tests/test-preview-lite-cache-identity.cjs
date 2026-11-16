@@ -5,7 +5,7 @@ const test = require("node:test");
 
 const ROOT = path.resolve(__dirname, "..");
 const SURFACES = [
-  { label: 'historical preview', jsRoot: path.join(ROOT, 'preview', 'js'), cacheId: '1.6.0-remediation-0929' },
+  // 1.7.1: 옛 preview/ 사본(historical preview)은 지웠다.
   { label: 'canonical integrated', jsRoot: path.join(ROOT, 'js'), cacheId: '1.7.0-four-session-integration' },
 ];
 const GUARDED_MODULES = new Set([

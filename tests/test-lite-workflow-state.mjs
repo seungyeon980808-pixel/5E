@@ -6,7 +6,7 @@ import {
   createLiteWorkItem, createLiteWorkflowState, failOperation,
   recordCompletedSave, restoreLiteWorkflowState, serializeLiteWorkflowState,
   setExportSelected, startOperation, updateEditorSnapshot,
-} from "../preview/js/lite-workflow-state.js";
+} from "../js/lite-workflow-state.js";
 
 const original = (id) => ({ id: `source-${id}`, name: `${id}.png`, blob: { fixture: id } });
 const candidate = (id) => ({ id, pixels: id });

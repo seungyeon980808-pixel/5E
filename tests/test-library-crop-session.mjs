@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { cropSessionIsCurrent, pdfResultsForDisplay, cropContentBoundsForResult, shouldHandleLibrarySpace } from "../preview/js/unified-library-ui.js";
+import { cropSessionIsCurrent, pdfResultsForDisplay, cropContentBoundsForResult, shouldHandleLibrarySpace } from "../js/unified-library-ui.js";
 
 const page = (pageNumber) => ({
   id: "audit-document",
