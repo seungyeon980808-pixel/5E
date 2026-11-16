@@ -396,8 +396,11 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(await panel.locator('.ai-generated-card').getAttribute('data-ai-candidate-id'), selectedRevisionId,
         'the rendered result is the selected revision');
       const selectedDisplaySource = await generatedImage.getAttribute('src');
+      // 11-10(58240dda): 새 기본 생성 경로는 생성 PNG를 캐시·표시 전에 로컬에서 한 번 무채색으로 바꾼다(js/ai-image-label-run.js:491).
+      // 그래서 화면·저장의 기준은 「생성 PNG 그대로」가 아니라 「같은 브라우저에서 무채색 변환한 생성 PNG」다(그 뒤 다른 가공 없음).
+      const expectedGenerated = await page.evaluate(async src => (await import('/js/ai-grayscale-png.js')).grayscalePngDataUrl(src), generatedFixtureDataUrl);
       if (mode === 'pro') {
-        assert.equal(selectedDisplaySource, generatedFixtureDataUrl, 'Pro displays the unprocessed generated PNG bytes');
+        assert.equal(selectedDisplaySource, expectedGenerated, 'Pro displays the generated PNG with only the 11-10 grayscale pass (no further processing)');
       } else {
         const display = await generatedImage.evaluate(image => {
           const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
@@ -430,7 +433,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
           } finally { db.close(); }
         }
         return results;
-      }, { taskId: original, candidateId: selectedRevisionId, source: generatedFixtureDataUrl });
+      }, { taskId: original, candidateId: selectedRevisionId, source: expectedGenerated });
       let rawPersistence = [];
       for (let attempt = 0; attempt < 50; attempt++) {
         rawPersistence = await readRawPersistence();
@@ -438,7 +441,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       traceLibrary('raw-persistence', { mode, engine: engine.name(), results: rawPersistence });
-      assert.ok(rawPersistence.some(result => result.matches), 'original generated PNG bytes survive persistence independently from Lite display processing');
+      assert.ok(rawPersistence.some(result => result.matches), 'grayscale generated PNG bytes survive persistence independently from Lite display processing');
       await clickCompare(panel);
       const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });
