@@ -25,10 +25,6 @@
       "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 242줄 「＋ 그래프 추가」가 안 보임 — 원인 미확인"
     },
     {
-      "path": "tests/test-rhwp-exam-workspace-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 결함 후보: 59줄 한글 undo 뒤 이전 수정본(y=10)이 아닌 y=4를 엶, js/rhwp-exam-source-tabs.js:216-224"
-    },
-    {
       "path": "tests/test-rhwp-exam-graph-zoom-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 검사 낡음: 「한글로 보내기」가 「클립보드에 넣기」로 바뀜(86f9b7df) — 클립보드→붙여넣기로 재작성 필요"
     },
