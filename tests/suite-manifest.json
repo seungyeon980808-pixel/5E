@@ -1161,18 +1161,6 @@
       ]
     },
     {
-      "path": "tests/test-graph-editor-followup-browser.cjs",
-      "findingIds": [
-        "G15"
-      ]
-    },
-    {
-      "path": "tests/test-graph-extension-ui-browser.cjs",
-      "findingIds": [
-        "GRAPH-EXTENSION-UI"
-      ]
-    },
-    {
       "path": "tests/test-graph-editor-unified-browser.cjs",
       "findingIds": [
         "GRAPH-ANALYTIC-EDITOR"
@@ -1242,18 +1230,6 @@
       "path": "tests/test-graph-workbench-stability-browser.cjs",
       "findingIds": [
         "GRAPH-WORKBENCH"
-      ]
-    },
-    {
-      "path": "tests/test-graph-analytic-recovery-browser.cjs",
-      "findingIds": [
-        "GRAPH-RELATION-ANALYTIC"
-      ]
-    },
-    {
-      "path": "tests/test-graph-editor-tracing-browser.cjs",
-      "findingIds": [
-        "GRAPH-EDITOR-TRACING"
       ]
     },
     {
