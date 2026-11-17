@@ -3,6 +3,9 @@
 // 같은 판·인터넷 없음·초안 릴리즈면 지금처럼 「버전 1.7.0」 그대로. 누르면 릴리즈 페이지가 새 창(설치판은 바깥 브라우저)으로.
 // 웹은 예전처럼 release-channels.json을 읽는다(글자만 「받기」).
 // 실행: BROWSER_ENGINE=webkit node tests/manual/ui-start-update-browser.cjs (기본 chromium). SHOT_DIR을 주면 화면을 찍는다.
+// 판 번호는 package.json에서 읽는다(지금 판 CUR, 더 새 판 NEXT) — 출시마다 검사를 고치지 않게.
+const CUR = require('../../package.json').version; const NEXT = CUR.replace(/(\d+)$/, n => String(+n + 1));
+const esc = v => v.replace(/\./g, '\\.');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
@@ -40,7 +43,7 @@ function startServer() {
         apiCalls += 1;
         if (desktop?.fail) return route.abort();
         return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
-          body: JSON.stringify({ tag_name: desktop?.tag || 'v1.7.0', draft: !!desktop?.draft, prerelease: false }) });
+          body: JSON.stringify({ tag_name: desktop?.tag || `v${CUR}`, draft: !!desktop?.draft, prerelease: false }) });
       });
       await page.route('**/release-channels.json', route => channels
         ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ channels }) })
@@ -69,33 +72,33 @@ function startServer() {
   }
   const footText = page => page.evaluate(() => document.querySelector('#start-screen .ss-foot')?.innerText.replace(/\s+/g, ' ').trim());
   try {
-    await run('desktop-newer', { desktop: { tag: 'v1.7.1' } }, async (page, { apiCalls }) => {
+    await run('desktop-newer', { desktop: { tag: `v${NEXT}` } }, async (page, { apiCalls }) => {
       const button = page.locator('#start-screen .ss-upd');
       await button.waitFor({ timeout: 5000 });
       assert.equal(apiCalls(), 1, 'GitHub 최신 릴리즈를 한 번 읽음');
-      assert.match((await button.innerText()).replace(/\s+/g, ' '), /1\.7\.0 → 1\.7\.1 받기/);
-      assert.equal(await button.getAttribute('title'), '새 버전 1.7.1 받기');
+      assert.match((await button.innerText()).replace(/\s+/g, ' '), new RegExp(`${esc(CUR)} → ${esc(NEXT)} 받기`));
+      assert.equal(await button.getAttribute('title'), `새 버전 ${NEXT} 받기`);
       assert.equal(await page.locator('#start-screen .ss-ver').count(), 0, '버전 글자 자리를 단추가 차지');
       await button.click();
       const opened = await page.evaluate(() => window.__opened);
       assert.deepEqual(opened.map(o => o.url), [RELEASE_PAGE]);
     });
-    await run('desktop-same', { desktop: { tag: 'v1.7.0' } }, async page => {
+    await run('desktop-same', { desktop: { tag: `v${CUR}` } }, async page => {
       assert.equal(await page.locator('#start-screen .ss-upd').count(), 0);
-      assert.match(await footText(page), /버전 1\.7\.0/);
+      assert.match(await footText(page), new RegExp(`버전 ${esc(CUR)}`));
     });
     await run('desktop-offline', { desktop: { fail: true } }, async page => {
       assert.equal(await page.locator('#start-screen .ss-upd').count(), 0);
-      assert.match(await footText(page), /버전 1\.7\.0/);
+      assert.match(await footText(page), new RegExp(`버전 ${esc(CUR)}`));
     });
     await run('desktop-draft', { desktop: { tag: 'v1.8.0', draft: true } }, async page => {
       assert.equal(await page.locator('#start-screen .ss-upd').count(), 0);
     });
-    await run('web-newer', { channels: { stableWeb: { version: '1.7.1' } } }, async (page, { apiCalls }) => {
+    await run('web-newer', { channels: { stableWeb: { version: NEXT } } }, async (page, { apiCalls }) => {
       const button = page.locator('#start-screen .ss-upd');
       await button.waitFor({ timeout: 5000 });
       assert.equal(apiCalls(), 0, '웹은 GitHub을 읽지 않음');
-      assert.match((await button.innerText()).replace(/\s+/g, ' '), /1\.7\.0 → 1\.7\.1 받기/);
+      assert.match((await button.innerText()).replace(/\s+/g, ' '), new RegExp(`${esc(CUR)} → ${esc(NEXT)} 받기`));
     });
     await run('web-same', {}, async page => {
       assert.equal(await page.locator('#start-screen .ss-upd').count(), 0);
