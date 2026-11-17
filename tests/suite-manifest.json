@@ -2438,6 +2438,12 @@
       "findingIds": [
         "BL6-B6-HWP-DEAD-END"
       ]
+    },
+    {
+      "path": "tests/test-171-desktop-b3-browser.cjs",
+      "findingIds": [
+        "B3"
+      ]
     }
   ],
   "deferred": [

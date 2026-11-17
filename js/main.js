@@ -418,7 +418,8 @@ if (startScreen) {
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog, chooseStart: startScreen?.choose });
-initProjectFileOpening(state, autosaveReady);
+// 11-17 B3: 꺼진 앱을 .5e 두 번 눌러 켜면 파일이 시작 창 뒤에서 기다리기만 했다 — 파일이 오면 시작 창을 걷고 바로 연다.
+initProjectFileOpening(state, autosaveReady, { onReceive: () => startScreen?.skip({ kind: "file" }) });
 const recoveryChoice = await autosaveReady;
 // 시작 창 없이 열린 경우에도 처음 크기는 82%(기본)
 if (!startScreen) requestAnimationFrame(() => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); });

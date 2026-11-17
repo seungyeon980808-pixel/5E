@@ -15,6 +15,33 @@ import {isBlank} from './pool-views.js';
 import {qIcon,questionState,progressOf} from './status-icons.js';
 
 const PAGE = 40;
+// 11-17 B3: 다시 그릴 때 검색 칸(#lib-query) 요소는 그대로 둔다 — innerHTML로 통째 바꾸면 칸이 새것이 되어
+// ⌘Z 되돌리기 기록과 글자 사이 커서가 사라졌다. 검색 칸에 이르는 조상 줄만 남기고, 그 옆 형제들만 새로 그린 것으로 바꾼다.
+// (조상 모양이 달라졌으면 예전처럼 통째로 그린다.)
+function replaceKeepingSearch(root, html) {
+  const keep = root.querySelector('#lib-query');
+  if (!keep) { root.innerHTML = html; return; }
+  const tmp = document.createElement(root.tagName);
+  tmp.innerHTML = html;
+  const fresh = tmp.querySelector('#lib-query');
+  const pairs = [];
+  for (let live = keep, next = fresh; ; live = live.parentNode, next = next.parentNode) {
+    if (!next || !live || live.tagName !== next.tagName) { root.innerHTML = html; return; }
+    if (next.parentNode === tmp) { if (live.parentNode !== root) { root.innerHTML = html; return; } pairs.push([live, next]); break; }
+    if (live.parentNode === root) { root.innerHTML = html; return; }
+    pairs.push([live, next]);
+  }
+  for (const [live, next] of pairs) {
+    const liveParent = live.parentNode, nextParent = next.parentNode;
+    const kids = [...nextParent.childNodes], at = kids.indexOf(next);
+    for (const c of [...liveParent.childNodes]) if (c !== live) c.remove();
+    live.before(...kids.slice(0, at)); live.after(...kids.slice(at + 1));
+    if (liveParent === root) break;
+    for (const a of [...liveParent.attributes]) if (!nextParent.hasAttribute(a.name)) liveParent.removeAttribute(a.name);
+    for (const a of [...nextParent.attributes]) liveParent.setAttribute(a.name, a.value);
+  }
+  if (keep.value !== fresh.value && document.activeElement !== keep) keep.value = fresh.value;
+}
 const SVG = {
   trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12.2a1.3 1.3 0 0 0 1.3 1.2h6.6a1.3 1.3 0 0 0 1.3-1.2L17.5 7"/></svg>',
   toexam: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M12 11v6M9 14h6"/></svg>',
@@ -179,7 +206,7 @@ export function renderLibraryView(root, data, view, api) {
       <button type="button" class="lv-cstar${stars[x.key] ? ' on' : ''}" data-lv-star="${E(x.key)}" aria-pressed="${!!stars[x.key]}" aria-label="${stars[x.key] ? '별표 빼기' : '별표'}" title="별표 (S)">${SVG.star}</button>${x.kind === 'mine' && !picking ? `<button type="button" class="lv-cdel" data-lv-del="${E(x.id)}" aria-label="문항 삭제" title="문항 삭제 (⌫) — 되돌리기로 살릴 수 있습니다"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>` : ''}
       <div class="lv-meta">${kt(x)}${x.kind === 'mine' ? mineMark(x.q) : ''}<span class="lv-title">${E(x.title)}</span>${memos[x.key] ? `<i class="lv-memo-dot" title="메모 있음">${SVG.memo}</i>` : ''}<small>${x.pt ? x.pt + '점' : E(x.exam)}</small>${x.kind === 'mine' && when(x.q) ? `<small class="lv-date" title="마지막으로 고친 때">${when(x.q)}</small>` : ''}${x.kind === 'mine' ? `<button type="button" class="lv-open" data-open-card="${x.id}" title="카드 열기 — 바로 고쳐 쓰기">열기</button>` : ''}</div></article>`).join('')}</div>`;
   const more = s.mode !== 'one' && list.length > shown.length ? `<div class="lv-more"><button type="button" data-lv-more>${Math.min(PAGE, list.length - shown.length)}개 더 보기 <small>(${shown.length.toLocaleString()} / ${list.length.toLocaleString()})</small></button></div>` : '';
-  root.innerHTML = head.replace('<!--addbar-->', selbar || addbar) + body + more;
+  replaceKeepingSearch(root, head.replace('<!--addbar-->', selbar || addbar) + body + more);
   fillOwn(root, data, api);
   loadThumbs(root);
   view.lib.list = list;
@@ -394,7 +421,7 @@ export function installLibraryView(root, api) {
   root.addEventListener('keydown', e => { const o = e.target.closest?.('[data-lv-open]'); if (o && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); o.click(); } });
   root.addEventListener('change', e => { const sel = e.target.closest('[data-lv-sel]'); if (!sel) return; s()[sel.dataset.lvSel] = sel.value; if (sel.dataset.lvSel === 'subject') { s().part = ''; s().exam = ''; } s().limit = PAGE; api.rerender(); });
   // 한글 조합 중에는 다시 그리지 않는다 — 검색칸이 새로 만들어져 「ㄱ」만 남고 조합이 끊겼다(코드 점검 10-21 하). 조합이 끝나면(compositionend) 그린다.
-  const searchAgain = t => { clearTimeout(t._t); t._t = setTimeout(() => { if (t._composing) return; s().limit = PAGE; api.rerender(); const n = root.querySelector('#lib-query'); n?.focus(); n?.setSelectionRange(n.value.length, n.value.length); }, 250); };
+  const searchAgain = t => { clearTimeout(t._t); t._t = setTimeout(() => { if (t._composing) return; s().limit = PAGE; api.rerender(); const n = root.querySelector('#lib-query'); if (n && n !== t) { n.focus(); n.setSelectionRange(n.value.length, n.value.length); } }, 250); };
   root.addEventListener('compositionstart', e => { if (e.target.id === 'lib-query') e.target._composing = true; });
   root.addEventListener('compositionend', e => { if (e.target.id !== 'lib-query') return; e.target._composing = false; s().query = e.target.value; searchAgain(e.target); });
   root.addEventListener('input', e => { if (e.target.id !== 'lib-query') return; s().query = e.target.value; if (e.isComposing || e.target._composing) return; searchAgain(e.target); });

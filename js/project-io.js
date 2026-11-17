@@ -713,7 +713,7 @@ async function openSheetInExam(name, bytes) {
 }
 
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
-function openProject(state, file) {
+function openProject(state, file, { askReplace = true } = {}) {
   const png = /\.png$/i.test(file.name);
   if (png && file.size > EDITABLE_PNG_MAX_BYTES) {
     void showAlert('원본 포함 PNG는 최대 64 MiB까지 열 수 있습니다.', { title: "프로젝트 파일 용량 초과" });
@@ -768,7 +768,8 @@ function openProject(state, file) {
       // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
       // .json이 캔버스에 실수로 떨어지거나 '열기'를 잘못 눌러도 아무 확인 없이
       // 현재 작업 전체가 사라지던 것을 막는다.
-      const ok = await showConfirm(
+      // 11-17 B3: .5e를 두 번 눌러 열 때(설치판 open-file·argv)는 잃을 작업이 없으면 묻지 않는다 — 웹 열기 줄(project-launch.js)과 같게.
+      const ok = !askReplace || await showConfirm(
         "현재 작업을 이 프로젝트 파일로 대체할까요?\n저장하지 않은 현재 작업은 사라집니다.",
         { title: "프로젝트 열기", okText: "열기", cancelText: "취소" },
       );
@@ -904,11 +905,11 @@ function initProjectShortcuts(state, fileInput) {
 }
 
 /* ----- initProjectIO: wire the top-bar buttons + hidden file input ----- */
-export function initProjectFileOpening(state, ready) {
-  initProjectLaunch({ state, ready, prepare: prepareLoadedProject, apply: applyLoaded,
+export function initProjectFileOpening(state, ready, { onReceive } = {}) {
+  initProjectLaunch({ state, ready, onReceive, prepare: prepareLoadedProject, apply: applyLoaded,
     needsConfirm: () => initProjectStatus(state, serialize).hasUnsavedWork(),
     mark: () => markProjectStatus(state, captureProjectStatus(state), 'file'),
-    openFile: async payload => {if(payload.bytes) openProject(state,new File([new Uint8Array(payload.bytes)],payload.name || '프로젝트.5e'));} });
+    openFile: async payload => {if(payload.bytes) openProject(state,new File([new Uint8Array(payload.bytes)],payload.name || '프로젝트.5e'),{ askReplace: initProjectStatus(state, serialize).hasUnsavedWork() });} });
 }
 
 export function initProjectIO(state, svg) {

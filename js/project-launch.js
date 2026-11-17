@@ -42,9 +42,11 @@ export async function saveNativeProjectPackage(json, target) {
   return { kind: 'download-requested' };
 }
 
-export function initProjectLaunch({ state, ready, prepare, apply, mark, needsConfirm, openFile }) {
+export function initProjectLaunch({ state, ready, prepare, apply, mark, needsConfirm, openFile, onReceive }) {
   let queue = Promise.resolve(ready);
   const receive = payload => {
+    // 11-17 B3: 받는 즉시 알린다 — 시작 창이 떠 있으면 걷어 ready가 풀리게(main.js → start-screen skip).
+    try { onReceive?.(payload); } catch {}
     queue = queue.then(async () => {
       try {
         if (payload.error) throw new Error(payload.error);

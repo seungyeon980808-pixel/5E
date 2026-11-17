@@ -124,6 +124,22 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
     document.removeEventListener('keydown', onKey, true);
     resolve(choice);
   };
+  // 11-17 B3: 시작 창이 떠 있는 동안 .5e가 들어오면(꺼진 앱을 파일 두 번 눌러 켬) 고르기를 기다리지 않고
+  // 카드를 고른 것처럼 시작 창을 걷는다 — 파일은 걷힌 뒤 project-launch.js 줄에서 맞는 프로그램으로 열린다.
+  // 첫 장면(준비 중)이면 남은 머무는 시간을 건너뛴다(준비 작업은 뒤에서 계속).
+  let skipChoice = null, onSkip = null;
+  const leaveWith = choice => {
+    picked = choice; resolveChoice = null;
+    clearInterval(creep);
+    void leave();
+    document.removeEventListener('keydown', onKey, true);
+    return choice;
+  };
+  function skip(choice = { kind: 'file' }) {
+    if (picked || skipChoice) return;
+    if (resolveChoice) { finish(choice); return; }
+    skipChoice = choice; onSkip?.();
+  }
   let onReveal = null;
   const settle = () => new Promise(resolve => {
     let timer = 0; const started = performance.now();
@@ -168,6 +184,9 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
 
   // 준비가 끝나면 autosave.js가 부른다: 자동 저장 기록을 받아 목록을 채우고 다음 장면으로.
   async function choose({ checkpoints = [], latest = null, remove = null } = {}) {
+    if (skipChoice) return leaveWith(skipChoice);
+    const skipped = new Promise(resolve => { onSkip = resolve; });
+    const orSkip = work => Promise.race([work, skipped]);
     const list = root.querySelector('[data-ss-recent]');
     const rows = [];
     if (latest) rows.push({ label: latest.label, meta: `${latest.pageCount || 1}쪽 · ${when(latest.ts)}`, choice: { kind: 'latest' } });
@@ -219,18 +238,21 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
       const budget = Math.max(0, MIN_INTRO - 700 - (performance.now() - started)), restWeight = Math.max(w, totalWeight() - done);
       const slot = budget * (w / restWeight) * (0.75 + Math.random() * 0.5);
       target = 0.12 + 0.8 * (done + w) / totalWeight();
-      await Promise.all([
+      await orSkip(Promise.all([
         Promise.race([task.work, new Promise(r => setTimeout(r, Math.max(0, 25000 - (performance.now() - started))))]),// 25초에서 끊고 들어감(준비는 뒤에서 계속)
         new Promise(r => setTimeout(r, slot)),
-      ]);
+      ]));
+      if (skipChoice) { clearInterval(drift); return leaveWith(skipChoice); }
       done += w;
     }
     clearInterval(drift);
     bar.style.width = '100%'; setStatus('준비 완료');
     const wait = Math.max(0, MIN_INTRO - (performance.now() - started));
-    await new Promise(r => setTimeout(r, wait));
+    await orSkip(new Promise(r => setTimeout(r, wait)));
+    if (skipChoice) return leaveWith(skipChoice);
     sweep.classList.add('go'); root.querySelector('.ss-big').classList.add('shine');
-    await new Promise(r => setTimeout(r, 450));
+    await orSkip(new Promise(r => setTimeout(r, 450)));
+    if (skipChoice) return leaveWith(skipChoice);
     // 큰 「5E」가 왼쪽 칸의 「5E」 자리로 옮겨 가며 줄어든다
     const big = root.querySelector('.ss-big').getBoundingClientRect();
     win.classList.add('is-ready');
@@ -245,5 +267,5 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
   // 시작 화면이 떠 있는 동안 할 준비를 맡긴다(바로 시작하고, 고르기 화면은 끝날 때까지 기다린다).
   const tasks = [];
   function waitFor(label, run, weight = 1) { let work; try { work = Promise.resolve(run()).catch(() => {}); } catch { work = Promise.resolve(); } tasks.push({ label, work, weight }); return work; }
-  return { choose, setStatus, waitFor, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
+  return { choose, setStatus, waitFor, skip, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
 }
