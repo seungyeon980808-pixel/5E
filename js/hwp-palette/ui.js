@@ -1386,6 +1386,52 @@ export function initPaletteWorkspace(panel, services) {
       },
     );
   }
+  // 조각 편집 막대 자리(11-17 결정, 시안 팔레트막대-파일단추.html). 막대가 「파일」·모드 탭을 덮지 않게
+  // 넓은 창: 맨 위 줄 안, 모드 탭과 「파일」 사이 빈 자리(「파일」 바로 왼쪽).
+  // 그 빈 자리가 막대 폭보다 좁으면: 맨 위 줄 바로 아래 한 줄(종이를 그만큼 아래로 밂).
+  // 숫자를 박지 않고 실제 폭을 재서 고르고, 창·맨 위 줄 폭이 바뀌면 다시 고른다.
+  function placeContentEditBar(bar) {
+    const topbar = panel.querySelector(".exam-topbar");
+    if (!topbar) return () => {};
+    const GAP_FILE = 22, // 「파일」 왼쪽 여백(시안 right:262px = 파일 왼쪽 끝에서 22px)
+      GAP_LEAD = 12; // 모드 탭과 띄울 최소 여백
+    topbar.after(bar);
+    const place = () => {
+      if (!bar.isConnected) return;
+      const actions = topbar.querySelector(".exam-actions");
+      const file = actions?.querySelector(".exam-menu") || actions;
+      if (!file) return;
+      // 막대 왼쪽에 와 있는 마지막 요소(보통 모드 탭). 보이지 않는 것은 건너뛴다.
+      const heading = actions.parentElement;
+      let lead = null;
+      for (const el of heading.children) {
+        if (el === actions) break;
+        if (el.getClientRects().length) lead = el;
+      }
+      bar.classList.remove("is-below");
+      bar.style.top = bar.style.right = "";
+      const panelBox = panel.getBoundingClientRect(),
+        topBox = topbar.getBoundingClientRect(),
+        fileBox = file.getBoundingClientRect(),
+        leadRight = (lead || topbar.firstElementChild || topbar).getBoundingClientRect().right,
+        barBox = bar.getBoundingClientRect();
+      const room = fileBox.left - GAP_FILE - (leadRight + GAP_LEAD);
+      if (barBox.width <= room && barBox.height <= topBox.height) {
+        bar.style.top = `${Math.round(topBox.top - panelBox.top + (topBox.height - barBox.height) / 2)}px`;
+        bar.style.right = `${Math.round(panelBox.right - fileBox.left + GAP_FILE)}px`;
+      } else bar.classList.add("is-below");
+    };
+    place();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(() => place()) : null;
+    observer?.observe(topbar);
+    const actions = topbar.querySelector(".exam-actions");
+    if (actions) observer?.observe(actions);
+    window.addEventListener("resize", place);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", place);
+    };
+  }
   async function editContent(item) {
     const context = native.capture(),
       bytes = await itemBytes(store.state, item);
@@ -1396,6 +1442,7 @@ export function initPaletteWorkspace(panel, services) {
     bar.className = "palette-content-edit";
     bar.innerHTML = `<strong>${safe(item.name)} · 조각 편집</strong>${htmlButton("수정 저장하고 돌아가기", "content-save")}${htmlButton("돌아가기", "content-cancel")}`;
     panel.append(bar);
+    const stopPlacing = placeContentEditBar(bar);
     bar.querySelector('[data-palette-action="content-save"]').onclick = () =>
       void perform(async () => {
         const bytes = new Uint8Array(await services.getBridge().exportHwpx()),
@@ -1412,6 +1459,7 @@ export function initPaletteWorkspace(panel, services) {
           next.file = "edited.hwpx";
         });
         await restore();
+        stopPlacing();
         bar.remove();
         restoreContent = null;
         openManager(
@@ -1423,6 +1471,7 @@ export function initPaletteWorkspace(panel, services) {
     bar.querySelector('[data-palette-action="content-cancel"]').onclick = () =>
       void perform(async () => {
         await restore();
+        stopPlacing();
         bar.remove();
         restoreContent = null;
         openManager("템플릿");
