@@ -89,16 +89,8 @@
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
     },
     {
-      "path": "tests/test-teacher-flow-label-export-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: CI에서만(D): teacher-flow 헬퍼에 CI일 때만 대기 3배 넣음 — CI에서 확인 필요"
-    },
-    {
       "path": "tests/test-clipboard-hub-browser.cjs",
       "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
-    },
-    {
-      "path": "tests/test-ai-workbench-polish-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: CI에서만(D): CI일 때만 기준 완화 넣음. 로컬은 성능 입력이 커밋 전이라 확인 못 함"
     }
   ]
 }
