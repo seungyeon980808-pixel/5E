@@ -13,7 +13,7 @@ const startContentEdit = async page => {
   await page.locator('[data-palette-action="content-save"]').waitFor();
   await h.idle(page);
 };
-// 조각 편집 막대가 맨 위 줄을 덮어(팔레트 화면 몫) 마우스로는 파일 단추에 닿지 않는다 — 단추를 직접 누른다(키보드로 고른 것과 같음).
+// 파일 단추를 직접 누른다(키보드로 고른 것과 같음). 1.7.1부터 조각 편집 막대가 맨 위 줄을 덮지 않아 마우스로도 누를 수 있다(ui-palette-content-bar 검사).
 const fileAction = (page, action) => page.evaluate(action => {
   document.querySelector('[data-exam-menu="file"]').click();
   document.querySelector(`#exam-file-menu [data-exam-action="${action}"]`).click();
