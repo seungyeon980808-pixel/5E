@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const h = require('./helpers/rhwp-exam.cjs');
+const { installStallProbe, rethrowWithStall } = require('./helpers/stall-probe.cjs');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/school-form');
 const examples = JSON.parse(fs.readFileSync(path.join(__dirname, '../assets/exampool/sheet/examples.json'), 'utf8'));
 process.env.APP_ENTRY = '/';
@@ -15,7 +16,9 @@ h.withServer(async origin => {
   fs.mkdirSync(evidence, { recursive: true });
   for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
-    const page = await (await browser.newContext({ viewport: { width: 1600, height: 1100 }, acceptDownloads: true })).newPage();
+    const context = await browser.newContext({ viewport: { width: 1600, height: 1100 }, acceptDownloads: true });
+    await installStallProbe(context); // CI 전용 멈춤 진단(helpers/stall-probe.cjs) — 실패할 때만 보고
+    const page = await context.newPage();
     page.setDefaultTimeout(process.env.CI ? 180000 : 60000); // CI(느린 WebKit)에서만 3배
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -131,6 +134,6 @@ h.withServer(async origin => {
       assert.ok(tableChain[1].y >= tableChain[0].y + tableChain[0].h - 1, `${name}: 선지 표는 보기 표 아래에 놓인다`);
       assert.deepEqual(errors, [], `${name}: no page errors`);
       console.log(`${name}: school form ok`);
-    } finally { await browser.close(); }
+    } catch (error) { await rethrowWithStall(error, page, name, evidence); } finally { await browser.close(); }
   }
 });

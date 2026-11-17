@@ -10,6 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const h = require('./helpers/rhwp-exam.cjs');
+const { installStallProbe, rethrowWithStall } = require('./helpers/stall-probe.cjs');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/typeset-gaps');
 const examples = JSON.parse(fs.readFileSync(path.join(__dirname, '../assets/exampool/sheet/examples.json'), 'utf8'));
 process.env.APP_ENTRY = '/';
@@ -19,6 +20,7 @@ h.withServer(async origin => {
   for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } });
+    await installStallProbe(page.context()); // CI 전용 멈춤 진단(helpers/stall-probe.cjs) — 실패할 때만 보고
     // CI(GitHub macOS)의 WebKit은 조판(rhwp wasm) 한 번에 주 스레드가 길게 막혀 60초 안에 클릭·준비 확인이 끝나지 않았다(11-17 44030425938).
     // 맥 로컬 기준은 그대로 두고 CI에서만 기다림을 3배로 늘린다(teacher-flow.cjs T()와 같은 방식).
     page.setDefaultTimeout(process.env.CI ? 180000 : 60000);
@@ -90,6 +92,6 @@ h.withServer(async origin => {
       await ready();
       assert.deepEqual(errors, [], `${name}: no page errors`);
       console.log(`${name}: typeset gaps ok`);
-    } finally { await browser.close(); }
+    } catch (error) { await rethrowWithStall(error, page, name, evidence); } finally { await browser.close(); }
   }
 });
