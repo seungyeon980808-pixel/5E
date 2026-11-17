@@ -271,9 +271,12 @@ function assertModuleIdentities(runtime, records) {
       declaredUrls.add(imported.href);
     }
   }
+  // index.html이 type=module 없이 <script src>로 싣는 고전 스크립트(예: js/web-ai-bridge.js)는 모듈이 아니라 둘로 갈릴 일이 없다 — 판 번호 쿼리는 출시 서류가 정한다.
+  const classicScripts = new Set([...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script\b(?![^>]*type=["']module["'])[^>]*\bsrc=["'](js\/[^"'?#]+\.js)/g)].map(m => '/' + m[1]));
   for (const href of urls) {
     const url = new URL(href), decoded = decodeURIComponent(url.pathname);
     if (!/\/(?:js)\/.*\.js$/.test(decoded)) continue;
+    if (classicScripts.has(decoded)) continue;
     assert.ok(url.pathname.startsWith('/js/'), `Preview duplicate or module path alias: ${href}`);
     assert.equal(url.pathname, decoded, `Encoded module alias: ${href}`);
     assert.equal(url.pathname, path.posix.normalize(url.pathname), `Module path alias: ${href}`);

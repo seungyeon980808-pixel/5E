@@ -4,7 +4,7 @@
 // 5E 안(화면·인쇄·5E_hwp 편집)에는 쓰지 않는다 — rhwp는 빈칸이면 수식 뒤 줄 높이를 다시 놓친다(실측 최대 8px 어긋남).
 // 11-16(1.7.1 B2·B4): 수식 스크립트도 바꾼다. 5E 조판 엔진(rhwp)은 LaTeX(\frac…)를 그대로 읽어 파일에도 LaTeX로 적지만
 // 윈도우 한글은 한글 수식 문법(a over b)만 읽는다. .hwp(바이너리)도 같은 두 가지를 바꾼다.
-import {hancomScript} from '../../../js/eq/hwp-latex.js';
+import {hancomScript} from '../../../js/eq/hwp-latex.js?v=1.7.0-four-session-integration';
 const loading={};
 function loadScript(file,ready,fail){
   if(ready())return Promise.resolve(ready());

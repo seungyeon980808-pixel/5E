@@ -1,7 +1,7 @@
 import { BlurReveal } from './blur-reveal.js?v=1.7.0-four-session-integration';
 import { trackLoadingMotion } from './activity-visibility.js?v=1.7.0-four-session-integration';
 import { createPreviewLoading } from '../library/page-loading.js?v=1.7.0-four-session-integration';
-import { mountElapsedClock } from './elapsed-clock.js?v=171';
+import { mountElapsedClock } from './elapsed-clock.js?v=1.7.0-four-session-integration';
 
 // One operation owns its indicator, source layers and clock. Disposing a stale
 // selection also prevents a late decode from painting over the current page.

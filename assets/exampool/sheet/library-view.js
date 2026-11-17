@@ -6,7 +6,7 @@ import {F,MONTH,shortTitle,norm,splitWords} from './past-search.js';
 import {croppedQuestion,pdfHref} from './past-pdf.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {croppedPastImage} from './past-crop.js';
-import {examCardUrl,examFigureUrl} from '../../../js/library/image-hosts.js';
+import {examCardUrl,examFigureUrl} from '../../../js/library/image-hosts.js?v=1.7.0-four-session-integration';
 import {store,ICON,E} from './card-shared.js';
 import {libraryQuestions,POOLS,poolQuestions} from './exams.js';
 import {questionTitle,previewHtml,workflowOf} from './views.js';

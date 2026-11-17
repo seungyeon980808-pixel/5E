@@ -1,8 +1,8 @@
 // 5E 수식 입력(11-13, 시안 eq-editor-1113): 글 속 수식 띠 · 미니 도우미 · 큰 편집기 · 빠른 단추 10칸.
 // 저장은 글 그대로 `$LaTeX$`. 한글 수식으로 쳐도 띠를 닫을 때 LaTeX로 바꿔 둔다.
 // 쓰는 곳: 아이디어 판 메모 · 문항 카드 글 칸 · 조판 바로 입력(라벨러는 쓰지 않음).
-import { toLatex, latexToHwp, hwpToLatex, detectSyntax } from './hwp-latex.js?v=1113';
-import { TABS } from './palette.js?v=1113';
+import { toLatex, latexToHwp, hwpToLatex, detectSyntax } from './hwp-latex.js?v=1.7.0-four-session-integration';
+import { TABS } from './palette.js?v=1.7.0-four-session-integration';
 
 const BASE = new URL('../../vendor/mathlive/', import.meta.url).href;
 let mlPromise = null, ML = null;

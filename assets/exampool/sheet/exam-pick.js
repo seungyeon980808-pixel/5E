@@ -6,7 +6,7 @@ import { past, loadPast, examLabel, loadThumbs } from './library-view.js';
 import { libraryQuestions } from './exams.js';
 import { questionTitle } from './views.js';
 import { goalOf } from './exam-flow.js';
-import { examCardUrl, examFigureUrl } from '../../../js/library/image-hosts.js';
+import { examCardUrl, examFigureUrl } from '../../../js/library/image-hosts.js?v=1.7.0-four-session-integration';
 
 const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAGE = 40, LEVELS = ['상', '중', '하'], TYPES = ['객관식', '합답형', '서술형'];

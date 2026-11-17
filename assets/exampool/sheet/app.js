@@ -36,7 +36,7 @@ let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
 import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
 import {mountClipboard} from '../../../js/clipboard-view.js?v=1.7.0-four-session-integration';
-import {mountElapsedClock} from '../../../js/loading/elapsed-clock.js?v=171';
+import {mountElapsedClock} from '../../../js/loading/elapsed-clock.js?v=1.7.0-four-session-integration';
 import {sheetLoader,rememberSheet} from './sheet-loading.js';
 import {initAiJobsTop} from './ai-jobs-top.js';
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — 그때는 '*'로 보내고, 받을 때는 부모 창에서 왔는지로 가린다.

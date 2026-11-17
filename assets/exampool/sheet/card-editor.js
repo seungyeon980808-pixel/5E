@@ -9,7 +9,7 @@ import {workflowOf,previewHtml,questionSubtitle,questionTitle} from './views.js'
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
-import {examCardUrl,examFigureUrl,pagePreviewUrl} from '../../../js/library/image-hosts.js';
+import {examCardUrl,examFigureUrl,pagePreviewUrl} from '../../../js/library/image-hosts.js?v=1.7.0-four-session-integration';
 import {explanationParts,explanationText,bogiKeys,OX_WORD} from './explanation.js';
 // 실패 이유: 한글 엔진은 오류를 글 한 줄로 던지기도 해 e.message가 빌 수 있다 — 어떤 오류든 이유를 보인다(1.7.1 B12, app.js와 같은 규칙).
 export function failReason(e){const m=e?.message||(typeof e==='string'?e:'')||e?.name||String(e??'');return m&&m!=='[object Object]'?m:'알 수 없는 오류';}
@@ -22,8 +22,8 @@ import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersSho
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
 import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1.7.0-four-session-integration';
-import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1113';
-import {mathToHtml} from '../../../js/eq/eq-input.js?v=1113';
+import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1.7.0-four-session-integration';
+import {mathToHtml} from '../../../js/eq/eq-input.js?v=1.7.0-four-session-integration';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
