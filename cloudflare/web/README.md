@@ -28,7 +28,7 @@ GitHub Pages(`www.5e.ai.kr`)에 올라갈 것과 같은 웹 사이트를 Cloudfl
 2. 올리기: `cd cloudflare/web && npx --yes wrangler@4 deploy --config wrangler.jsonc`
 3. 확인:
    - `curl -sI https://5e-web-preview.5e-desktop.workers.dev/` → 200, `text/html`
-   - `/bug/`, `/print/`, `/examlibrary/`, `/hub/`, `/js/app.js`, `/css/…` → 200
+   - `/bug/`, `/print/`, `/examlibrary/`, `/hub/`, `/js/main.js`, `/css/…` → 200
    - `/없는-주소` → 404이고 본문이 `404.html`
    - Safari로 열어 라이브러리 목록과 쪽 미리보기 그림(`5e-images`에서 옴)이 뜨는지
 
