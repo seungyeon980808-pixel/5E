@@ -55,6 +55,14 @@
     {
       "path": "tests/test-clipboard-hub-browser.cjs",
       "reason": "2026-11-17 B1: 흔들림(c): 넣으면 닫히는 것(40c785b4)에 맞춰 고친 뒤 5번 중 2번 통과. 실패는 늘 27줄 — ⌘C 뒤 항목 수 2를 기다린 직후 목록에 「사각형」이 없음. 같은 단계만 4번 따로 돌리면 4번 다 들어옴(diag/clip-copy.cjs). 원인 미확인"
+    },
+    {
+      "path": "tests/test-school-form-browser.cjs",
+      "reason": "2026-11-18 1.7.1: CI(macOS 실행기) WebKit에서만 멈춤 — 1.7.0 때부터 같은 증상, 로컬 크롬·WebKit은 통과. 실패 때 stall-probe가 <엔진>-stall.json을 남김(원인 진단 중)"
+    },
+    {
+      "path": "tests/test-typeset-gaps-browser.cjs",
+      "reason": "2026-11-18 1.7.1: CI(macOS 실행기) WebKit에서만 멈춤 — evaluate 뒤 rAF 기다림이 180초 끝나지 않음(느림이 아니라 멈춤), 로컬은 통과. stall-probe로 진단 중"
     }
   ]
 }
