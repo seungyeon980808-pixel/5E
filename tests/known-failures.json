@@ -13,20 +13,12 @@
       "reason": "2026-11-17 B1: 결정 필요(d): 검사가 보는 「한글로 보내기 → 잘라 고르기 → 같은 그림 다시 보내기(연결 유지)」 흐름이 86f9b7df(11-14)에서 「클립보드에 넣기」로 바뀌어 없어짐. 제품의 5e:exam-send-graph를 보내는 곳이 없음(js/rhwp-exam-workspace.js:1703 받는 쪽만 남음). 지울지, 클립보드→⌘V 붙여넣기로 다시 쓸지(다시 보내기 연결 유지가 아직 기능인지) 사용자 결정"
     },
     {
-      "path": "tests/test-graph-render-refinement.mjs",
-      "reason": "2026-11-17 B1: 남은 1건(★ 결함 후보): measureGraphLabel이 크롬(설치판 Electron 포함)에서 굵기 300·700 너비가 같다(「한글 ABC」 16.454 셋 다, WebKit은 700이 넓음) — 굵은 라벨 폭 계산이 실제보다 좁을 수 있음. 고치면 조판 폭이 바뀌어 비교판·승인 필요. 낡은 단언 2개(빼기표 U+2212·띄어쓰기 간격)는 고침"
-    },
-    {
       "path": "tests/test-ai-output-previews-browser.cjs",
       "reason": "2026-11-17 B1: 결정 필요(d): 검사가 스스로 CURRENT_UI_CONTRACT_GAP을 던진다 — 결과 처리(배경·분리·격자) 설정이 화면에서 빠진 것(506f30bf v6)을 옛 UI로 확인하는 2,145줄 검사, 앞부분 SHA 고정도 T 수정으로 어긋남. 지울지/API 수준으로 다시 쓸지 결정"
     },
     {
       "path": "tests/test-ai-workbench-integration-browser.cjs",
       "reason": "2026-11-17 B1: 결정 필요(d): 6개 중 2개가 없어진 화면을 씀 — 「연결 창」[data-ai-connection-open](24219c8a 10-12에 index.html에서 빠짐)으로 모델 새로고침, Lite 「변환 설정」 칸(시안 v6 506f30bf로 숨김). 나머지는 통과. 이 둘을 지울지 결정. 검사 하나가 8분 넘게 걸림"
-    },
-    {
-      "path": "tests/test-labeler-selection-edit-browser.cjs",
-      "reason": "2026-11-17 B1: WebKit 760px만 실패(크롬·WebKit 1440 통과): 검사가 viewBox를 0~100으로 넣은 뒤 WebKit은 대지를 원점 가운데(-50~50, 11-04 기준 좌표)로 다시 맞춰 라벨(62,40)이 화면 밖(x≈779)으로 나감 — 크롬은 검사 viewBox 유지. 제품 결함인지(WebKit만 다시 맞춤) 고정 자료가 낡은 것인지 미판정"
     },
     {
       "path": "tests/test-preview-box-edit-verification-browser.cjs",
@@ -63,6 +55,14 @@
     {
       "path": "tests/test-typeset-gaps-browser.cjs",
       "reason": "2026-11-18 1.7.1: CI(macOS 실행기) WebKit에서만 멈춤 — evaluate 뒤 rAF 기다림이 180초 끝나지 않음(느림이 아니라 멈춤), 로컬은 통과. stall-probe로 진단 중"
+    },
+    {
+      "path": "tests/test-library-preview-settle-browser.cjs",
+      "reason": "2026-11-18 1.7.1: CI(macOS 실행기)에서만 가끔 실패 — 1.7.0 때도 같은 이유로 목록에 있었음(c5101205), 로컬 두 엔진 통과"
+    },
+    {
+      "path": "tests/test-rhwp-exam-modes-browser.cjs",
+      "reason": "2026-11-18 1.7.1: CI WebKit에서만 가끔 실패(「modes and focus tools」 42초) — 1.7.0 때도 CI 흔들림으로 목록에 있었음(c5101205), 로컬 두 엔진 통과"
     }
   ]
 }
