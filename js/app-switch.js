@@ -66,7 +66,8 @@ export function initAppSwitch(doc = document) {
   const closeApp = async (from, fade) => {
     const el = surface(from);
     if (fade && !reduced()) { el.classList.add('app-leaving'); await sleep(170); }
-    if (from === 'hwp') el.querySelector('[data-exam-action="close"]')?.click();
+    // 조판이 바쁜 동안(첫 열기의 엔진 읽기·저장 등)은 닫기 단추가 꺼져 있어 누름이 버려진다 — 켜질 때까지(최대 30초) 기다렸다가 누른다(11-18 CI2).
+    if (from === 'hwp') { const closer = () => el.querySelector('[data-exam-action="close"]'); await until(() => !closer()?.disabled, 30000); closer()?.click(); }
     if (from === 'exam') win.dispatchEvent(new CustomEvent('5e:exampool-close'));
     // 2초 안에 안 닫히면(저장 확인 창 등) 그대로 둔다.
     const closed = await until(() => !shown(from), 2000);

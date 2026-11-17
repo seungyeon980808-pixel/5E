@@ -25,26 +25,36 @@ h.withServer(async origin => {
       await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
       const sheet = async () => (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       // 매 프레임 「출제·조판 중 하나라도 보이는지」를 기록한다(둘 다 안 보이면 그 프레임에 그림 화면이 비친 것).
-      const record = () => page.evaluate(() => { window.__switchFrames = []; const t0 = performance.now();
+      // 11-18 CI2: 1.5초로 끊지 않고 전환이 끝날 때까지(목표 칸만 보이고 흐려지는 중이 아님, 최대 30초) 기록한다 — 느린 CI WebKit에서는
+      // 첫 hwp 열기의 엔진 읽기가 1.6초를 넘겨, 고정 1.5초 기록이 아직 끝나지 않은 전환을 「끝난 모습」으로 잘못 봤다.
+      const record = to => page.evaluate(to => { window.__switchFrames = []; window.__switchDone = false; const t0 = performance.now();
         const step = () => { const exam = document.getElementById('exampool-sheet-workspace'), hwp = document.getElementById('rhwp-exam-workspace');
-          window.__switchFrames.push({ exam: !!exam && !exam.hidden, hwp: !!hwp && !hwp.hidden }); if (performance.now() - t0 < 1500) requestAnimationFrame(step); };
-        requestAnimationFrame(step); });
-      const frames = async () => { await page.waitForTimeout(1600); return page.evaluate(() => window.__switchFrames); };
+          const now = { exam: !!exam && !exam.hidden, hwp: !!hwp && !hwp.hidden }; window.__switchFrames.push(now);
+          const settled = now.exam === (to === 'exam') && now.hwp === (to === 'hwp') && !document.querySelector('.app-leaving');
+          if ((settled && performance.now() - t0 >= 1500) || performance.now() - t0 > 30000) { window.__switchDone = true; return; }
+          requestAnimationFrame(step); };
+        requestAnimationFrame(step); }, to);
+      const frames = async () => { await page.waitForFunction(() => window.__switchDone, null, { timeout: 40000 }); return page.evaluate(() => window.__switchFrames); };
 
       await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());
       await (await sheet()).waitForSelector('.side [data-pool="drafting"]', { state: 'attached' });
       await page.waitForFunction(() => !document.querySelector('.app-leaving'));
 
       // 1) exam → hwp → exam: 둘 다 안 보이는 프레임이 없어야 한다.
+      // 11-18 CI2: 느린 CI처럼 첫 hwp 열기의 한글 엔진(wasm) 읽기를 2.5초 늦춘다. 그 사이(1.6초 뒤) 누른 exam이
+      // 바쁨 때문에 꺼진 단추에 막혀 버려지면 안 된다(CI 44082650904 「webkit: ends on exam」).
+      let slowEngine = true, busyAtClick = null;
+      await page.route(/rhwp_bg[^/]*\.wasm/, async route => { if (slowEngine) { slowEngine = false; await new Promise(r => setTimeout(r, 2500)); } await route.continue(); });
       for (const [from, to] of [['exam', 'hwp'], ['hwp', 'exam']]) {
-        await record();
+        await record(to);
         if (from === 'exam') await (await sheet()).locator('.top [data-app-switch="hwp"]').evaluate(b=>b.click());
-        else await page.locator('.exam-topbar [data-app-switch="exam"]').evaluate(b=>b.click());
+        else { busyAtClick = await page.evaluate(() => document.getElementById('rhwp-exam-workspace').getAttribute('aria-busy')); await page.locator('.exam-topbar [data-app-switch="exam"]').evaluate(b=>b.click()); }
         const seen = await frames();
         assert.ok(seen.length > 10, `${name}: frames recorded`);
         assert.equal(seen.filter(s => !s.exam && !s.hwp).length, 0, `${name} ${from}→${to}: the image screen never flashes between programs`);
         assert.deepEqual(seen.at(-1), { exam: to === 'exam', hwp: to === 'hwp' }, `${name}: ends on ${to}`);
       }
+      console.log(`${name}: hwp busy when exam was pressed: ${busyAtClick}`);
       await (await sheet()).locator('.top [data-app-switch="image"]').evaluate(b=>b.click());
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
 

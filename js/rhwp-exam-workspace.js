@@ -162,7 +162,9 @@ export function initRhwpExamWorkspace(state, services) {
   function setBusy(value) {
     busy = value;
     panel.setAttribute('aria-busy', String(value));
-    panel.querySelectorAll('button').forEach(button => { button.disabled = value || !!editing; });
+    // 11-18 CI2: 프로그램 이름(exam·image)은 바쁠 때도 눌리게 둔다 — 첫 열기에서 한글 엔진을 읽는 동안(느린 컴퓨터는 몇 초)
+    // 누른 exam이 꺼진 단추에 막혀 아무 일도 없었다. 전환(app-switch.js)이 바쁜 일이 끝날 때까지 기다렸다가 이 칸을 닫는다.
+    panel.querySelectorAll('button').forEach(button => { button.disabled = (button.matches('[data-app-switch]') ? false : value) || !!editing; });
     nameInput.disabled = value || !!editing;
     panel.querySelectorAll('select').forEach(select => { select.disabled = value || !!editing; });
     [nativeRegion.root,sourceRegion.root,regionInspector,pictureSettings.root].forEach(root=>root.querySelectorAll('button,input,select').forEach(button=>{button.disabled=value;}));
