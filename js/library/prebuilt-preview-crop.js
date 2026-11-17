@@ -1,4 +1,4 @@
-import { needsCors } from "./image-hosts.js";
+import { needsCors } from "./image-hosts.js?v=1.7.0-four-session-integration";
 
 const pageImages = new Map();
 

@@ -1,5 +1,5 @@
 import { loadAnswerBook, acceptedAnswers, answersShown, setAnswersShown, onAnswersShown, CIRCLED, ANSWER_COLOR } from "../assets/exampool/answers/answers.js?v=1107";
-import { drawerAdd } from "./drawer.js?v=1114";
+import { drawerAdd } from "./drawer.js?v=1.7.0-four-session-integration";
 import { createLibraryLoading } from './loading/library-controller.js?v=1.7.0-four-session-integration';
 import { createLibraryPreviewLoading } from './loading/library-preview.js?v=1.7.0-four-session-integration';
 import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';

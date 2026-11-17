@@ -5,8 +5,8 @@ import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source
 import { createCropSource } from "../pdf-library/contract.js?v=1.7.0-four-session-integration";
 import { extendQuestionRectToWords, isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-four-session-integration";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-four-session-integration";
-import { connectionName } from "./connection-names.js";
-import { EXAM_CARD_TEMPLATES, examCardUrl, needsCors, pagePreviewUrl, partsSvgUrl } from "./image-hosts.js";
+import { connectionName } from "./connection-names.js?v=1.7.0-four-session-integration";
+import { EXAM_CARD_TEMPLATES, examCardUrl, needsCors, pagePreviewUrl, partsSvgUrl } from "./image-hosts.js?v=1.7.0-four-session-integration";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 // Results are immutable. Reuse their searchable text across keystrokes without

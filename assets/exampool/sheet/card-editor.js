@@ -21,7 +21,7 @@ import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
-import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1114';
+import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1.7.0-four-session-integration';
 import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1113';
 import {mathToHtml} from '../../../js/eq/eq-input.js?v=1113';
 

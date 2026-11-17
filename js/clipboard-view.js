@@ -3,7 +3,7 @@
 // 원칙: AI로 처리할 것은 작업대, 그 밖에 옮기는 모든 것은 클립보드. 넣는 자리는 지금 화면이 정한다(hosts).
 // ⇧⌘V(윈도우 Ctrl+Shift+V) 열기·한 번 더 = 크게 보기, Enter·두 번 누르기 = 넣기, Space = 한 장 크게, Delete = 빼기, Esc = 닫기.
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
-import { clipList, clipAdd, clipRemove, clipRemoveMany, clipPin, clipConsume, onClipChange, CLIP_MIME } from './drawer.js?v=1114';
+import { clipList, clipAdd, clipRemove, clipRemoveMany, clipPin, clipConsume, onClipChange, CLIP_MIME } from './drawer.js?v=1.7.0-four-session-integration';
 
 export const CLIP_ICON = '<svg class="clip-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.6 4.6H6.6a2.1 2.1 0 0 0-2.1 2.1v12.2a2.1 2.1 0 0 0 2.1 2.1h10.8a2.1 2.1 0 0 0 2.1-2.1V6.7a2.1 2.1 0 0 0-2.1-2.1h-2"/><rect x="8.6" y="2.8" width="6.8" height="3.6" rx="1.2"/><path d="M10.4 10.4v-.3c0-.5.4-.9.9-.9h4.4c.5 0 .9.4.9.9v3.6c0 .5-.4.9-.9.9h-.4"/><rect x="7.8" y="11.4" width="6.8" height="5.6" rx=".9"/><circle cx="9.9" cy="13.4" r=".75" fill="currentColor" stroke="none"/></svg>';
 const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');

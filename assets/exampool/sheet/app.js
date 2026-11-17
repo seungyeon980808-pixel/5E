@@ -35,7 +35,7 @@ let grid=null,future=[];
 let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
 import {recordPaneListeners,initPaneDetach} from './pane-detach.js?v=1105';
-import {mountClipboard} from '../../../js/clipboard-view.js?v=1114';
+import {mountClipboard} from '../../../js/clipboard-view.js?v=1.7.0-four-session-integration';
 import {mountElapsedClock} from '../../../js/loading/elapsed-clock.js?v=171';
 import {sheetLoader,rememberSheet} from './sheet-loading.js';
 import {initAiJobsTop} from './ai-jobs-top.js';

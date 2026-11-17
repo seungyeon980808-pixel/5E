@@ -1,6 +1,6 @@
 import { initFigureStudio } from './figure-studio.js?v=1.7.0-four-session-integration';
-import { clipAdd, clipConsumeRef } from "./drawer.js?v=1114";
-import { mountClipboard, makeOSFollower, isOpenClipKey, clipKey, CLIP_ICON } from "./clipboard-view.js?v=1114";
+import { clipAdd, clipConsumeRef } from "./drawer.js?v=1.7.0-four-session-integration";
+import { mountClipboard, makeOSFollower, isOpenClipKey, clipKey, CLIP_ICON } from "./clipboard-view.js?v=1.7.0-four-session-integration";
 import { setClipboardHook, insertClipObjects } from "./editor-clipboard.js?v=1.7.0-four-session-integration";
 import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
@@ -112,7 +112,7 @@ const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ?
 // 시작 창이 걷히기 직전(창이 다 커진 뒤) 도화지 크기를 한 번만 맞춘다 — 걷힌 뒤 도화지가 튀지 않게.
 // 11-09 사용자: 「처음 로딩에서 미리 불러 두고 들어가서는 부드럽게」 — 시작 화면이 떠 있는 동안 라이브러리 기본 범위(물리Ⅰ·Ⅱ)
 // 학평 자료·낱말 위치를 읽어 둔다. 고르기 화면은 이 읽기가 끝난 뒤에 나온다(js/start-screen.js waitFor).
-if (startScreen) startScreen.waitFor("라이브러리 자료(학평·평가원) 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)), 1.3);
+if (startScreen) startScreen.waitFor("라이브러리 자료(학평·평가원) 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js?v=1.7.0-four-session-integration").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)), 1.3);
 if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
 initAppSwitch();
 installAppLock();
@@ -406,7 +406,7 @@ if (startScreen) {
   step("한글 조판 엔진 띄우는 중…", () => examWorkspace?.prewarm?.(), 1.2);
   step("수식·본문 글꼴 불러오는 중…", () => Promise.all([ensureEmbeddedFonts(), ...['16px "Latin Modern Math"', 'italic 16px "Latin Modern Roman"', '16px "Latin Modern Roman"', '16px "Pretendard Variable"', '16px Pretendard']
     .map(font => document.fonts?.load?.(font).catch(() => {}))]), 0.6);
-  step("클립보드 그림 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1114"); const items = await clipList();
+  step("클립보드 그림 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1.7.0-four-session-integration"); const items = await clipList();
     await Promise.all(items.slice(0, 24).map(item => { const img = new Image(); img.src = item.src; return img.decode().catch(() => {}); })); }, 0.5);
   // 마무리: 위 준비가 끝난 뒤 화면 그리기가 0.6초 동안 끊기지 않을 때까지(최대 4초) 기다린다 — 들어가자마자 남은 일이 몰려 버벅이지 않게.
   step("화면 안정화하는 중…", async () => { await Promise.all([...prep]);

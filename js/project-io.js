@@ -1,5 +1,5 @@
 import { buildFiveEProject, parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
-import { isDrawerDrag, drawerFromDrop } from "./drawer.js?v=1114";
+import { isDrawerDrag, drawerFromDrop } from "./drawer.js?v=1.7.0-four-session-integration";
 import { validateAnnotationPatch } from "./rhwp-exam-annotations.js?v=1.7.0-four-session-integration";
 import { readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from "./editable-png.js?v=1.7.0-four-session-integration";
 /* ===== PROJECT I/O (save / open editable 5E project source) ===== */
@@ -1081,7 +1081,7 @@ export function initProjectIO(state, svg) {
         drawerFromDrop(e.dataTransfer).then(async (it) => {
           if (!it) return;
           // 클립보드(11-14): 5E 객체 원본이 있으면 객체로, ⌘X로 넣은 것은 놓은 뒤 클립보드에서 뺀다.
-          if (it.moving) void import("./drawer.js?v=1114").then(m => m.clipConsume(it.id)).catch(() => {});
+          if (it.moving) void import("./drawer.js?v=1.7.0-four-session-integration").then(m => m.clipConsume(it.id)).catch(() => {});
           if (it.objects?.length) { const { insertClipObjects } = await import("./editor-clipboard.js?v=1.7.0-four-session-integration"); insertClipObjects(it.objects); return; }
           const blob = await (await fetch(it.src)).blob();
           readImageFile(new File([blob], `${it.name || "서랍 그림"}.png`, { type: blob.type || "image/png" }), pos, state);

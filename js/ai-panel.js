@@ -7016,7 +7016,7 @@ ${chatText}` : ''}`;
     if (isClipDrag(event) && !event.dataTransfer.files?.length) {
       event.preventDefault();
       const id = event.dataTransfer.getData('application/x-5e-drawer');
-      void import('./drawer.js?v=1114').then(async m => { const item = await m.clipGet(id); window.fiveEAiAddSource(item); if (item?.moving) await m.clipConsume(item.id); })
+      void import('./drawer.js?v=1.7.0-four-session-integration').then(async m => { const item = await m.clipGet(id); window.fiveEAiAddSource(item); if (item?.moving) await m.clipConsume(item.id); })
         .catch(error => setStatus(error?.message || '클립보드 그림을 가져오지 못했습니다.', 'warn'));
       return;
     }
@@ -7250,7 +7250,7 @@ ${chatText}` : ''}`;
         await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
         if (output.isCurrent()) setStatus('현재 보이는 이미지와 라벨을 복사했습니다 · 5E 클립보드에도 넣었습니다.','ok');
         // 11-14 5E 클립보드: AI 결과 복사 = 클립보드에 넣기. 맥 클립보드에 쓴 같은 그림을 「밖에서」로 다시 넣지 않게 서명을 기억한다.
-        void (async () => { const data = await output.png; const [{ clipAdd }, view] = await Promise.all([import('./drawer.js?v=1114'), import('./clipboard-view.js?v=1114')]);
+        void (async () => { const data = await output.png; const [{ clipAdd }, view] = await Promise.all([import('./drawer.js?v=1.7.0-four-session-integration'), import('./clipboard-view.js?v=1.7.0-four-session-integration')]);
           // 11-14 지적 22: 그래프 결과는 그래프 객체도 같이 넣는다 — 캔버스에 꺼내면 그림이 아니라 고칠 수 있는 그래프로 나온다(그림은 미리보기용).
           const objects = item.graphResult?.objects?.length ? structuredClone(item.graphResult.objects) : null;
           await clipAdd({ src: data, name: item.name || 'AI 결과', source: '5E_image', kind: objects || String(conversionKind).startsWith('graph') ? 'graph' : 'img', ...(objects ? { objects } : {}) });

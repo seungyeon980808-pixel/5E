@@ -10,7 +10,7 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     const browser=await chromium.launch();t.after(()=>browser.close());
     const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
     await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
-    const list=f=>(f||page).evaluate(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).map(i=>({name:i.name,kind:i.kind,source:i.source,moving:i.moving,objects:!!i.objects}));});
+    const list=f=>(f||page).evaluate(async()=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return (await m.clipList()).map(i=>({name:i.name,kind:i.kind,source:i.source,moving:i.moving,objects:!!i.objects}));});
     const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=300;c.height=180;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,300,180);x.strokeStyle='#123';x.lineWidth=5;x.strokeRect(20,20,260,140);return c.toDataURL('image/png');});
     // 옛 서랍 단추는 없고 「작업 도구 › 클립보드」가 있다.
     assert.equal(await page.locator('#drawer-btn').count(),0,'top bar drawer button removed');
@@ -23,10 +23,10 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     // ⌘C: 사각형을 그리고 복사하면 객체 원본과 함께 들어간다. ⌘X는 옮기는 중, ⌘V로 붙이면 빠진다.
     await page.mouse.click(154,196);await page.mouse.move(600,350);await page.mouse.down();await page.mouse.move(760,470,{steps:6});await page.mouse.up();
     await page.mouse.click(35,160);await page.mouse.click(600,350);
-    await page.keyboard.press(MOD+'+KeyC');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).length===2;});
-    assert.deepEqual((await list()).find(i=>i.source==='5E_image'),{name:'사각형',kind:'obj',source:'5E_image',moving:false,objects:true});
-    await page.keyboard.press(MOD+'+KeyX');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipList()).some(i=>i.moving);});
-    await page.keyboard.press(MOD+'+KeyV');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1114');return !(await m.clipList()).some(i=>i.moving);});
+    await page.keyboard.press(MOD+'+KeyC');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return (await m.clipList()).length===2;});
+    { const all=await list(); assert.deepEqual(all.find(i=>i.source==='5E_image'),{name:'사각형',kind:'obj',source:'5E_image',moving:false,objects:true},JSON.stringify(all)); }
+    await page.keyboard.press(MOD+'+KeyX');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return (await m.clipList()).some(i=>i.moving);});
+    await page.keyboard.press(MOD+'+KeyV');await page.waitForFunction(async()=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return !(await m.clipList()).some(i=>i.moving);});
     // 글 입력칸에 커서가 있어도 ⇧⌘V로 열린다(11-14: AI 그래프 창은 열자마자 입력칸에 커서가 있어 안 열렸다).
     await page.evaluate(()=>{const i=document.createElement('input');i.id='clip-probe';i.style.cssText='position:fixed;left:300px;top:300px;z-index:5';document.body.append(i);i.focus();});
     await page.keyboard.press(MOD+'+Shift+KeyV');await page.waitForSelector('.clp.show');await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('.clp').classList.contains('show'));
@@ -45,7 +45,8 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     const images=()=>page.evaluate(()=>document.querySelectorAll('#canvas image').length);const n0=await images();
     await page.locator('.clp-go').click();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n0);
     // 더블클릭으로도 넣는다(11-14: 고를 때 목록을 다시 그려 더블클릭이 안 되던 것).
-    const n1=await images();await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).locator('.clp-t').dblclick({force:true});await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n1);
+    // 11-14(지적 7, 40c785b4): 넣으면 클립보드는 닫힌다 — 다시 열고 두 번 누른다.
+    const n1=await images();await page.click('#clipboard-open');await page.locator('.clp-i',{hasText:'옛 서랍 그림'}).locator('.clp-t').dblclick();await page.waitForFunction(n=>document.querySelectorAll('#canvas image').length>n,n1);
     await page.keyboard.press('Escape');
     // 5E_exam: 왼쪽 메뉴 「클립보드」, 문항 카드 자료 칸에 넣기
     await page.locator('.app-switch-image [data-app-switch="exam"]').evaluate(b=>b.click());const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
@@ -59,7 +60,8 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     assert.equal((await sheet.locator('.clp-go').textContent()).trim(),'자료 칸에 넣기');
     await sheet.locator('.clp-go').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile img').length>n,f0);
     assert.doesNotMatch(await sheet.evaluate(()=>document.querySelector('#status').textContent),/확인하세요/);
-    await sheet.locator('.clp [data-clp="close"]').click();
+    // 11-14(지적 7, 40c785b4): 넣으면 클립보드는 저절로 닫힌다 — 닫힌 것을 확인한다(닫기 단추는 미끄러져 사라지는 중).
+    await sheet.waitForFunction(()=>!document.querySelector('.clp')?.classList.contains('show'));
     // 위 문서에서 ⇧⌘V를 눌러도 5E_exam의 클립보드가 열린다.
     await page.keyboard.press(MOD+'+Shift+KeyV');await sheet.waitForSelector('.clp.show');await sheet.locator('.clp [data-clp="close"]').click();
     // 5E_hwp: 「내용 넣기 › 클립보드」, 커서 자리에 넣기
@@ -80,7 +82,7 @@ test('5E clipboard: every image-accepting window takes insert and drag (AI image
     const page=await browser.newPage({viewport:{width:1600,height:1000}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
     await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
     const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=300;c.height=200;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,300,200);x.strokeRect(20,20,260,160);return c.toDataURL('image/png');});
-    const id=await page.evaluate(async src=>{const m=await import('/js/drawer.js?v=1114');return (await m.clipAdd({src,name:'시험 그림',w:300,h:200,source:'라이브러리'})).id;},png);
+    const id=await page.evaluate(async src=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return (await m.clipAdd({src,name:'시험 그림',w:300,h:200,source:'라이브러리'})).id;},png);
     const dropOn=(frame,selector,pt)=>frame.evaluate(({selector,id,pt})=>{const el=selector?document.querySelector(selector):document.elementFromPoint(pt.x,pt.y);const r=el.getBoundingClientRect();
       const dt=new DataTransfer();dt.setData('application/x-5e-drawer',id);const o={bubbles:true,cancelable:true,composed:true,clientX:pt?pt.x:r.left+r.width/2,clientY:pt?pt.y:r.top+r.height/2,dataTransfer:dt};
       const over=new DragEvent('dragover',o);el.dispatchEvent(over);el.dispatchEvent(new DragEvent('drop',o));return over.defaultPrevented;},{selector,id,pt});

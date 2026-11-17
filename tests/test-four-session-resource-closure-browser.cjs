@@ -84,7 +84,7 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-studio/images/icon_small_ko_dark.svg", { sha256: "9d02ea0b8c1d399a89290d97613759826f19f3e3f392b6d79dcf6109e7e15fa6", bytes: 451775 }],
   ["vendor/rhwp-studio/index.html", { sha256: "5bd733cb7edfa921da36dc7b0a6d68b7c13590d2d57d43ee7aa7821139a24be4", bytes: 86815 }],
   ["vendor/rhwp-studio/locale-init.js", { sha256: "633d47a6a53b2211cf816769f8c084b097c1b60b6ab263803d8610c0531539fa", bytes: 1342 }],
-  ["vendor/rhwp-studio/provenance.json", { sha256: "263d5bc19bccc191fa065236c3a01fc9747250bf26e2893017d7d3f645adea88", bytes: 7416 }],
+  ["vendor/rhwp-studio/provenance.json", { sha256: "ccc3694273c2d6c3b11f98fa32e1cd9ef97ad78d831699dca1adfa3831d5e433", bytes: 7510 }],
   ["vendor/rhwp-studio/theme-init.js", { sha256: "5a3afcc0139187bfe509414cd60fde2a0dfea72fd72751c4e6e696cdc0f6c587", bytes: 2783 }],
 ]);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -331,7 +331,10 @@ function externalOrigin(env = process.env) {
 }
 
 function privateEvidenceDirectory(env = process.env) {
-  const directory = path.resolve(env.EVIDENCE_DIR || path.join(root, '.omo/evidence/four-session-resource-closure'));
+  // 실행기(run-browser-tests.cjs)와 CI는 늘 저장소 밖·_work 아래 EVIDENCE_DIR를 준다 — 그때는 이 검사의 비공개 자리(.omo)를 그대로 쓴다.
+  const given = env.EVIDENCE_DIR && path.resolve(env.EVIDENCE_DIR), givenRelative = given && path.relative(root, given);
+  const insideOmo = givenRelative && (givenRelative === '.omo' || givenRelative.startsWith('.omo' + path.sep));
+  const directory = insideOmo ? given : path.join(root, '.omo/evidence/four-session-resource-closure');
   const relative = path.relative(root, directory);
   assert.ok(relative === '.omo' || relative.startsWith('.omo' + path.sep), 'Resource evidence must remain in private .omo');
   fs.mkdirSync(directory, { recursive: true });
@@ -362,7 +365,8 @@ async function probeFeatures(page, runtime) {
   await page.locator('[data-exam-action="close"]').click();
   await page.locator('#rhwp-exam-workspace').waitFor({ state: 'hidden' });
 
-  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+  // 11-14(a45c7c9c ONE_ENTRY): 「그래프」 세 갈래 메뉴가 없어졌다 — AI 그래프 창의 「직접」으로 빈 편집기를 연다.
+  await require('./helpers/graph-entry.cjs').openGraphDirect(page);
   await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
   await page.locator('#gm-labelx').fill('시간');
   await page.locator('#gm-tab-func-btn').click();

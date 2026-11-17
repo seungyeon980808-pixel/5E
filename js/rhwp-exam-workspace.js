@@ -1355,7 +1355,7 @@ export function initRhwpExamWorkspace(state, services) {
     { const doc=bridge.editor.element.contentDocument,isClip=event=>[...(event.dataTransfer?.types||[])].includes('application/x-5e-drawer');
       doc.addEventListener('dragover',event=>{if(isClip(event)){event.preventDefault();event.dataTransfer.dropEffect='copy';}},true);
       doc.addEventListener('drop',event=>{if(!isClip(event)||event.dataTransfer.files?.length)return;event.preventDefault();event.stopImmediatePropagation();const id=event.dataTransfer.getData('application/x-5e-drawer');
-        void import('./drawer.js?v=1114').then(async m=>{const item=await m.clipGet(id);await window.fiveEClipHostHwp.insert(item);if(item?.moving)await m.clipConsume(item.id);}).catch(error=>message(error?.message||'클립보드 그림을 넣지 못했습니다.',true));},true); }
+        void import('./drawer.js?v=1.7.0-four-session-integration').then(async m=>{const item=await m.clipGet(id);await window.fiveEClipHostHwp.insert(item);if(item?.moving)await m.clipConsume(item.id);}).catch(error=>message(error?.message||'클립보드 그림을 넣지 못했습니다.',true));},true); }
     bridge.editor.element.contentDocument.addEventListener('drop',event=>{
       const file=event.dataTransfer?.files?.[0];if(!file || !/\.(5e|5exam|json|hwp|hwpx)$/i.test(file.name)) return;
       event.preventDefault();event.stopImmediatePropagation();

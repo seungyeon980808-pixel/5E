@@ -1149,7 +1149,7 @@ export function initImageObjectify(state) {
   }
   stage.addEventListener("drop", (event) => {
     const clipId = event.dataTransfer.getData("application/x-5e-drawer");
-    if (clipId && !event.dataTransfer.files?.length) { void import("./drawer.js?v=1114").then(m => m.clipGet(clipId)).then(loadClipItem).catch(() => {}); return; }
+    if (clipId && !event.dataTransfer.files?.length) { void import("./drawer.js?v=1.7.0-four-session-integration").then(m => m.clipGet(clipId)).then(loadClipItem).catch(() => {}); return; }
     loadFile(event.dataTransfer.files?.[0]);
   });
 
