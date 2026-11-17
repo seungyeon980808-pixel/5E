@@ -1,3 +1,11 @@
+# 1.7.1 출시 후보 — 사용자 출시 승인 대기
+
+The 1.7.1 candidate remains **HOLD**.
+
+1.7.1(덜어내기·결함 수정, 새 기능 없음)의 판 번호·릴리스 노트·설치 파일을 이 맥에서 준비했습니다. 사용자(소유자)가 「출시해」라고 승인하면 이 줄을 `The 1.7.1 candidate is **CLEARED**.`로 바꾸고 날짜와 함께 승인 내용을 적은 뒤 태그·게시를 진행합니다. Mac 설치 파일은 번들 전체 임시(ad-hoc) 서명이며 공증은 없습니다. Windows 서명·실기기 검증·서버 인증·실계정 AI 항목(`release-channels.json`의 releaseHolds)은 외부 확인 대기(PENDING_EXTERNAL) 그대로입니다.
+
+## Previous release decision
+
 # 1.7.0 정식 출시 승인 — 웹·설치판
 
 The 1.7.0 candidate is **CLEARED**.
