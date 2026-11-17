@@ -6,91 +6,55 @@
   "suites": [
     {
       "path": "tests/test-exampool-office-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 슬롯 단추 줄맞춤 단언(slot action icons line up) 실패 — 검사 흐름은 고침, 줄맞춤이 제품 탓인지 미판정"
-    },
-    {
-      "path": "tests/test-exampool-card-typing-perf-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 카드 여는 길은 고침, 성능 기준 확인 못 끝냄"
-    },
-    {
-      "path": "tests/test-graph-workbench-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 139줄 [data-ai-input]이 숨은 section.ai-preparation 안 — 11-11 AI 창 개편, 재작성 필요"
-    },
-    {
-      "path": "tests/test-graph-workbench-stability-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 242줄 「＋ 그래프 추가」가 안 보임 — 원인 미확인"
+      "reason": "2026-11-17 B1: 낡은 단언 3개는 고침(자료 칸 2×2 아이콘 461c2245·카드 이름표 숨김 104c6990·지문 입력은 .eq-ce 9ca4a5a6). 남은 실패: 243줄 그림을 표 옆으로 끌 때 안내 글이 「…에 놓기 · 가로 묶음」으로 바뀌지 않음(기능은 placement-layer.js:105에 남아 있음) — 끌기가 시작 안 되는 검사 문제인지 제품 결함인지 미판정"
     },
     {
       "path": "tests/test-rhwp-exam-graph-zoom-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음: 「한글로 보내기」가 「클립보드에 넣기」로 바뀜(86f9b7df) — 클립보드→붙여넣기로 재작성 필요"
+      "reason": "2026-11-17 B1: 결정 필요(d): 검사가 보는 「한글로 보내기 → 잘라 고르기 → 같은 그림 다시 보내기(연결 유지)」 흐름이 86f9b7df(11-14)에서 「클립보드에 넣기」로 바뀌어 없어짐. 제품의 5e:exam-send-graph를 보내는 곳이 없음(js/rhwp-exam-workspace.js:1703 받는 쪽만 남음). 지울지, 클립보드→⌘V 붙여넣기로 다시 쓸지(다시 보내기 연결 유지가 아직 기능인지) 사용자 결정"
     },
     {
       "path": "tests/test-graph-render-refinement.mjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
-    },
-    {
-      "path": "tests/test-stable-library-startup-browser.cjs",
-      "reason": "1.7.1: 첫 목록이 pdf-runtime을 기다리지 않는지만 보도록 기준을 고침(사용자 11-17 동의, 체감 변화 없음). 남은 실패: 118줄 교과서_중2.pdf 316쪽 결과가 30초 안에 안 보임 — 원인 미확인"
+      "reason": "2026-11-17 B1: 남은 1건(★ 결함 후보): measureGraphLabel이 크롬(설치판 Electron 포함)에서 굵기 300·700 너비가 같다(「한글 ABC」 16.454 셋 다, WebKit은 700이 넓음) — 굵은 라벨 폭 계산이 실제보다 좁을 수 있음. 고치면 조판 폭이 바뀌어 비교판·승인 필요. 낡은 단언 2개(빼기표 U+2212·띄어쓰기 간격)는 고침"
     },
     {
       "path": "tests/test-ai-output-previews-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(큼): 제품이 결과 처리 UI를 줄여 CURRENT_UI_CONTRACT_GAP — 재작성 필요"
+      "reason": "2026-11-17 B1: 결정 필요(d): 검사가 스스로 CURRENT_UI_CONTRACT_GAP을 던진다 — 결과 처리(배경·분리·격자) 설정이 화면에서 빠진 것(506f30bf v6)을 옛 UI로 확인하는 2,145줄 검사, 앞부분 SHA 고정도 T 수정으로 어긋남. 지울지/API 수준으로 다시 쓸지 결정"
     },
     {
       "path": "tests/test-ai-workbench-integration-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 두 번째 검사가 퇴역한 연결 창 [data-ai-connection-open]을 요구"
-    },
-    {
-      "path": "tests/test-ai-workspace-lifecycle-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
+      "reason": "2026-11-17 B1: 결정 필요(d): 6개 중 2개가 없어진 화면을 씀 — 「연결 창」[data-ai-connection-open](24219c8a 10-12에 index.html에서 빠짐)으로 모델 새로고침, Lite 「변환 설정」 칸(시안 v6 506f30bf로 숨김). 나머지는 통과. 이 둘을 지울지 결정. 검사 하나가 8분 넘게 걸림"
     },
     {
       "path": "tests/test-labeler-selection-edit-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: CI에서만(D): CI일 때만 기본 대기 15초 — CI에서 확인 필요"
-    },
-    {
-      "path": "tests/test-labeler-attached-leaders-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
+      "reason": "2026-11-17 B1: WebKit 760px만 실패(크롬·WebKit 1440 통과): 검사가 viewBox를 0~100으로 넣은 뒤 WebKit은 대지를 원점 가운데(-50~50, 11-04 기준 좌표)로 다시 맞춰 라벨(62,40)이 화면 밖(x≈779)으로 나감 — 크롬은 검사 viewBox 유지. 제품 결함인지(WebKit만 다시 맞춤) 고정 자료가 낡은 것인지 미판정"
     },
     {
       "path": "tests/test-preview-box-edit-verification-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
+      "reason": "2026-11-17 B1: 결정 필요(d): 「박스 수정 방식」(고급·실험) 칸은 제품에서 늘 숨김(js/ai-panel.js:683). 검사가 억지로 펼쳐도 제품이 다시 숨겨 selectOption 실패. 3개 중 2개는 통과. 실험 후보 검사를 지울지 결정"
     },
     {
       "path": "tests/test-ai-settings-panel-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
+      "reason": "2026-11-17 B1: 결정 필요(d): 6개 중 3개가 숨긴 설정을 누름 — 「자동 검수」(verification) 줄·「보조선 제거 도움말」·RAW 검토 때 정책 칸 숨김 기대(시안 v6 506f30bf로 설정 줄 숨김, 11-10 c9d1da3f 검수 없음 기본). 나머지 3개 통과"
     },
     {
       "path": "tests/test-ai-editable-drafts-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 「캔버스에서 편집」·검수 단추가 늘 hidden"
+      "reason": "2026-11-17 B1: 결정 필요(d): 「캔버스에서 편집」·「라벨 검수」[data-ai-verify-label-draft] 단추가 제품에서 늘 hidden(11-10 c9d1da3f 짧은 지시문·검수 없음). 숨긴 단추를 누르는 검사라 지울지/다시 쓸지 결정"
     },
     {
       "path": "tests/test-ai-source-label-pipeline-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 미리보기가 최종 라벨 합성과 다름 — 흑백 후처리(58240dda) 재인코딩 추정"
+      "reason": "2026-11-17 B1: 결정 필요(d): 7개 중 4개 실패 — 「미리보기 이미지 = 생성 PNG 바이트」 계약이 흑백 후처리(58240dda 11-10) 뒤 성립 안 함, 옛 관찰→생성→검수 파이프라인 전제(c9d1da3f). 계약을 다시 정해야 함"
     },
     {
       "path": "tests/test-four-session-integration-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): QA1 통과, QA2~6 실패"
-    },
-    {
-      "path": "tests/test-four-session-resource-closure-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음: vendor rhwp 번들 해시가 작업 사본 파일과 다름 — 확인 필요"
-    },
-    {
-      "path": "tests/test-ai-task-menu-viewport-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
-    },
-    {
-      "path": "tests/test-ai-task-visible-transfer-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 검사 낡음(일부 고침): 「이미지로 보내기」 경로 사라짐, 163줄 task-0 탭 없음"
+      "reason": "2026-11-17 B1: 결정 필요(d): 10-10 네 세션 통합 QA 하네스(QA1~8, 요구 60여 개). QA1 WebKit만 통과, QA2~ 대부분 숨긴 설정(raw·정책 행렬)·옛 흐름을 요구, 8분 안에 안 끝남. 통째로 지울지/QA별로 나눌지 결정"
     },
     {
       "path": "tests/test-blur-reveal-product-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
+      "reason": "2026-11-17 B1: 결정 필요(d)+다시 쓰기(b): 4개 중 2개 실패 — ① 변환 오류 한 번에 불러오기 틀이 「failed」(「변환하지 못했어요」)가 되길 기대하나, 11-09(2d671587)부터 오류는 자동 재시도 3번(js/ai-image-label-run.js:164 AI_RETRY_POLICY)·Luna 대체로 이어져 바로 실패 화면이 안 옴 — 「AI 변환은 실패로 끝나면 안 됨」 결정과 실패 화면 단계를 어떻게 맞출지 결정 ② 그래프 카드 검사가 모든 작업을 graph로 심고 이미지 단추로 열어 11-11 작업대 나눔 뒤 원본이 안 뜸 — 고정 자료(fixtures/ai-image-label-workflow.cjs)에 그래프 작업대로 여는 길이 필요"
     },
     {
       "path": "tests/test-clipboard-hub-browser.cjs",
-      "reason": "2026-11-17 1.7.1 T: 아직 실패 — 검사 일부 고침, 원인은 2단계/T.md"
+      "reason": "2026-11-17 B1: 흔들림(c): 넣으면 닫히는 것(40c785b4)에 맞춰 고친 뒤 5번 중 2번 통과. 실패는 늘 27줄 — ⌘C 뒤 항목 수 2를 기다린 직후 목록에 「사각형」이 없음. 같은 단계만 4번 따로 돌리면 4번 다 들어옴(diag/clip-copy.cjs). 원인 미확인"
     }
   ]
 }
