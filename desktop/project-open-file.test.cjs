@@ -26,6 +26,9 @@ test('화면이 준비될 때까지 기다렸다가 하나씩 차례로 보내�
   queue.reset(); await queue.enqueue(one); assert.equal(sent.length, 3, '창이 다시 읽히면 다시 기다림');
 });
 
+// CI 컴퓨터는 느려서 고정 20ms 대기로는 차례가 밀린다 — 기대한 상태가 될 때까지(최대 2초) 기다린다.
+const until = async (check, ms = 2000) => { const end = Date.now() + ms; while (!check() && Date.now() < end) await new Promise(r => setTimeout(r, 10)); };
+
 test('main.cjs 연결: 맥 open-file(뜨기 전)·처음 argv·second-instance를 받아 창으로 보낸다', async t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), '5e-open-file-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -40,10 +43,10 @@ test('main.cjs 연결: 맥 open-file(뜨기 전)·처음 argv·second-instance�
   let prevented = false; app.emit('open-file', { preventDefault: () => { prevented = true; } }, mac);
   assert.ok(prevented); assert.equal(created, 0, '뜨기 전에는 창을 만들지 않음');
   isReady = true; makeWindow();
-  handlers['project:renderer-ready'](); await new Promise(r => setTimeout(r, 20));
+  handlers['project:renderer-ready'](); await until(() => sent.length >= 2);
   assert.deepEqual(sent, [['project:open', 'argv.5e'], ['project:open', 'finder.5e']]);
   app.emit('second-instance', {}, ['5E.exe', second]);
-  await new Promise(r => setTimeout(r, 20));
+  await until(() => sent.length >= 3);
   assert.deepEqual(sent.at(-1), ['project:open', 'second.5e']); assert.ok(focused >= 1);
   webContents.emit('did-navigate'); app.emit('open-file', { preventDefault() {} }, first);
   await new Promise(r => setTimeout(r, 20));
