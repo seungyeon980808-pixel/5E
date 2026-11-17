@@ -28,7 +28,7 @@ function linkFor(id) {
   const desktopBase=window.fiveEDesktop?.sharingBaseUrl;
   if(desktopBase&&/^http:\/\/(?:127\.0\.0\.1|localhost):\d+/.test(desktopBase))return `${desktopBase.replace(/\/$/,'')}/#share=${id}`;
   const local = ['127.0.0.1','localhost'].includes(location.hostname);
-  const url = new URL(local || location.hostname === 'www.5e.ai.kr' ? location.href : 'https://www.5e.ai.kr/preview/');
+  const url = new URL(local || location.hostname === 'www.5e.ai.kr' ? location.href : 'https://www.5e.ai.kr/');
   url.hash=`share=${id}`;
   return url.href;
 }
