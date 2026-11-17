@@ -248,6 +248,9 @@ async function cropTextbookFigure(page) {
   const ui = page.locator('.unified-library-overlay').last();
   await page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready', null, { timeout: T(30_000) });
   await ui.locator('[data-unilib-type="pdf"]').click();
+  // 라이브러리는 연 뒤 한가할 때 학평 PDF(기본 물리Ⅰ·Ⅱ, 약 140개)를 미리 붙인다(js/exam-library.js openLibrary preload, 11-08).
+  // 그게 먼저 끝나면(느린 CI) 교과서가 첫 60줄 밖으로 밀려 목록에 안 그려진다 — 교사처럼 이름으로 찾는다.
+  await ui.locator('[data-unilib-query]').fill('circuit');
   await ui.locator('[data-result-id*="teacher-flow-textbook"]').first().click();
   await ui.locator('[data-unilib-adjust]').click();
   await ui.locator('[data-unilib-crop-image]').waitFor();

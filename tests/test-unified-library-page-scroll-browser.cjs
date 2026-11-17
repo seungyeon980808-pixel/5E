@@ -182,7 +182,15 @@ const { chromium, webkit } = require("playwright");
     });
     await ui.locator('[data-unilib-crop-page-next]').click();
     await ui.locator('[data-unilib-crop-load-state][data-state="loading"]').waitFor({ state: 'visible' });
-    assert.equal(await ui.locator('.unilib-crop-load-paper').isVisible(), true, 'unavailable target thumbnail should leave a neutral paper placeholder');
+    // CI(11-17 44030425938)에서만 실패 — 로컬은 크롬 CPU 4·8배 느리게 해도 통과. 다음 CI에서 원인을 읽을 수 있게 상태를 함께 남긴다.
+    const paperVisible = await ui.locator('.unilib-crop-load-paper').isVisible();
+    const paperState = paperVisible ? null : await ui.evaluate((root) => {
+      const paper = root.querySelector('.unilib-crop-load-paper'), canvas = root.querySelector('[data-unilib-crop-canvas]'), r = paper?.getBoundingClientRect(), c = canvas?.getBoundingClientRect();
+      return { hidden: paper?.hidden, display: paper && getComputedStyle(paper).display, rect: r && [r.width, r.height], canvas: c && [c.width, c.height], canvasDisplay: canvas && getComputedStyle(canvas).display,
+        preview: { hidden: root.querySelector('.unilib-crop-load-preview')?.hidden, src: root.querySelector('.unilib-crop-load-preview')?.getAttribute('src')?.slice(-40) },
+        load: root.querySelector('[data-unilib-crop-load-state]')?.dataset.state, page: root.querySelector('[data-unilib-crop]')?.dataset.pdfPage, continuousPages: root.querySelectorAll('.unilib-crop-page').length };
+    });
+    assert.equal(paperVisible, true, `unavailable target thumbnail should leave a neutral paper placeholder ${JSON.stringify(paperState)}`);
     await page.evaluate(() => window.pageDelay.release());
     await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: 'hidden' });
     // 썸네일은 아직 붙잡혀 있다(thumbnailDelay 미해제) — 그동안 원문 2쪽이 뜨면 「썸네일을 기다리지 않음」이 맞다.
