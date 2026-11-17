@@ -9,7 +9,7 @@
 //     parts/<파일>.svg                   ← assets/parts-library/svg
 //     exam/<문항 id>.png                 ← assets/exam-library/images
 //   비어 있으면 지금 주소 그대로 동작한다.
-export const IMAGE_WORKER_BASE = "";
+export const IMAGE_WORKER_BASE = "https://5e-images.5e-desktop.workers.dev/";
 
 // 설치판이 원격으로 받을 때 쓰는 사이트 주소(Worker가 없을 때). 그림 파일 이름은 바뀌지 않으므로(쪽 미리보기는 PDF sha 기준)
 // 웹 사이트에 올라간 같은 파일을 받는다.
