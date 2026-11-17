@@ -1,0 +1,15 @@
+{
+  // 5E 웹 미리보기 Worker(1.7.1). GitHub Pages(www.5e.ai.kr)와 같은 사이트 묶음을 정적 파일로 내보낸다.
+  // site는 data/web/build-site.mjs가 만든다(저장소에 넣지 않음). 순서는 README.md.
+  // 없는 주소는 GitHub Pages처럼 가장 가까운 404.html을 404로 보여 준다(404.html이 ourdocs 주소를 되돌려 보냄).
+  "name": "5e-web-preview",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "account_id": "a6dd35b7aa385514042f9003bc937b92",
+  "assets": {
+    "directory": "../../data/web/out/site",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  }
+}
