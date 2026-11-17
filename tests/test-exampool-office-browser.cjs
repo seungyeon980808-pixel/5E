@@ -129,11 +129,13 @@ h.withServer(async origin => {
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.deepEqual(await added.locator('.cv-pick').evaluateAll(b=>b.map(x=>x.dataset.cvslotAct)),['add-pic','new-graph','to-table','to-box'],'11-15 자료 칸 네 가지: 그림·그래프·표·자료 상자');
       // 10-22 「나」안: 빈 칸의 두 동작은 같은 폭·같은 옅은 테·같은 글자색(진한 파란 단추 없음), 아이콘은 같은 세로줄, 이름표는 칸 아래 가운데.
-      const picks=await added.evaluate(t=>{const bs=[...t.querySelectorAll('.cv-pick')].map(b=>{const r=b.getBoundingClientRect(),c=getComputedStyle(b),i=(b.querySelector('.ico')||b.querySelector('svg')).getBoundingClientRect();return{w:r.width,shadow:c.boxShadow,color:c.color,bg:c.backgroundColor,icon:i.left};});const box=t.querySelector('.pic').getBoundingClientRect(),cap=t.querySelector('.cap').getBoundingClientRect(),name=t.querySelector('.cap b').getBoundingClientRect();return{bs,go:t.querySelectorAll('.btn.go').length,capBelow:cap.top>=box.bottom-1,centered:Math.abs((name.left+name.right)/2-(box.left+box.right)/2)<=2};});
+      const picks=await added.evaluate(t=>{const bs=[...t.querySelectorAll('.cv-pick')].map(b=>{const r=b.getBoundingClientRect(),c=getComputedStyle(b),i=(b.querySelector('.ico')||b.querySelector('svg')).getBoundingClientRect();return{w:r.width,shadow:c.boxShadow,color:c.color,bg:c.backgroundColor,icon:i.left};});const box=t.querySelector('.pic').getBoundingClientRect(),cap=t.querySelector('.cap').getBoundingClientRect(),name=t.querySelector('.cap b').getBoundingClientRect();return{bs,go:t.querySelectorAll('.btn.go').length,capBelow:cap.top>=box.bottom-1,centered:Math.abs((name.left+name.right)/2-(box.left+box.right)/2)<=2,capHidden:getComputedStyle(t.querySelector('.cap')).display==='none'};});
       assert.equal(picks.go,0,'no strong blue button inside an empty slot');
       assert.equal(picks.bs.length,4);assert.ok(picks.bs.every(b=>Math.abs(b.w-picks.bs[0].w)<=1),'all slot actions are the same width');
       assert.ok(picks.bs.every(b=>b.shadow===picks.bs[0].shadow&&b.color===picks.bs[0].color&&b.bg===picks.bs[0].bg),'all slot actions share the same faint outline');
-      assert.ok(picks.bs.slice(0,2).every(b=>Math.abs(b.icon-picks.bs[0].icon)<=1)&&true,'slot action icons line up');assert.ok(picks.capBelow&&picks.centered,'slot name sits centred under its box');
+      // 11-15(461c2245): 네 단추는 2×2 격자 — 같은 세로줄(0·2, 1·3)의 아이콘이 줄을 맞춘다.
+      assert.ok(Math.abs(picks.bs[0].icon-picks.bs[2].icon)<=1&&Math.abs(picks.bs[1].icon-picks.bs[3].icon)<=1,`slot action icons line up per column ${JSON.stringify(picks.bs.map(b=>b.icon))}`);// 11-13(104c6990, 시안 decide-1113): 칸 아래 (가)(나)(다)는 조판이 붙이므로 카드에선 이름표를 숨긴다.
+      assert.ok(picks.capHidden,'slot name under the box is hidden on the card (typesetting adds it)');
       // 지우기는 칸에 마우스를 올렸을 때만 보이고 눌린다(10-22).
       assert.equal(await added.locator('.cv-tile-tools').evaluate(e=>getComputedStyle(e).opacity),'0','slot tools stay hidden until hover');
       await added.hover();await sheet.waitForFunction(()=>[...document.querySelectorAll('#card-view .cv-tile.empty .cv-tile-tools')].some(e=>getComputedStyle(e).opacity==='1'));
@@ -141,10 +143,12 @@ h.withServer(async origin => {
       // (번호 줄 「+」·휠 가로 이동 검사는 11-12 번호 탭 줄 삭제로 없앰)
       // 한글 창이 다시 그려져도 카드 칸에 이어 치는 글은 카드에 들어가고, ⌘Z는 카드 편집을 되돌린다(편집기가 초점을 가져가던 것).
       await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);
-      await sheet.click('#cv-passage');await page.keyboard.type('가');await sheet.waitForTimeout(3500);await typesetReady(sheet);await page.keyboard.type('나');
+      // 9ca4a5a6(카드 수식 칩) 뒤 지문 글자 칸은 숨고(eq-hide) 옆 .eq-ce에 입력한다 — 값은 숨은 칸으로 옮겨진다.
+      const passageField=sheet.locator('#cv-passage + .eq-ce');
+      await passageField.click();await page.keyboard.type('가');await sheet.waitForTimeout(3500);await typesetReady(sheet);await page.keyboard.type('나');
       assert.equal(await sheet.inputValue('#cv-passage'),'가나','typing continues in the card after the HWP window redraws');
       assert.equal(await sheet.evaluate(()=>!!document.activeElement.closest('.cv-hwp-layer')),false,'the redraw does not move focus into the HWP window');
-      await sheet.fill('#cv-passage','');await sheet.locator('#cv-passage').press('Tab');await sheet.waitForTimeout(1500);await typesetReady(sheet);
+      await passageField.click();await page.keyboard.press('ControlOrMeta+a');await page.keyboard.press('Backspace');await page.keyboard.press('Tab');await sheet.waitForTimeout(1500);await typesetReady(sheet);
       // AI 연결 안 됨: 안내 말풍선의 「ChatGPT 로그인」이 5E 연결 창을 연다(카드 화면에는 로그인 단추가 따로 없음).
       await sheet.click('#card-view [data-cvright="ai"]');await sheet.fill('#cv-ai-input','검토해 줘');await sheet.click('#card-view [data-cv="ai-send"]');
       await sheet.waitForSelector('#card-view .msg.ai.err [data-cv="ai-login"]',{timeout:20000});await sheet.click('#card-view [data-cv="ai-login"]');

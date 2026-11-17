@@ -57,10 +57,11 @@ try {
   });
  },chemistrySource);
  fs.writeFileSync(path.join(out,'latex-label-results.json'),JSON.stringify(labelResult,null,2));await page.screenshot({path:path.join(out,'latex-labels.png')});
- assert.equal(labelResult[0].lines,2);assert.equal(labelResult[0].text,'[HA][A-]또는[HB][B-]');
- assert.equal(labelResult[1].lines,1);assert.equal(labelResult[1].text,'1물질파 파장');
- assert.equal(labelResult[3].lines,1);assert.equal(labelResult[3].text,'1물질파 파장');
- assert.equal(labelResult[2].lines,2);assert.equal(labelResult[2].text,'x+A0물의 질량+BC');
+ assert.equal(labelResult[0].lines,2);assert.equal(labelResult[0].text,'[HA][A−]또는[HB][B−]'); // 11-14(13d8a5e9): 수식의 빼기·음 부호는 하이픈 대신 진짜 빼기표(U+2212)
+ // 1.7.1(2e9b611d, ★ 승인): 낱말 사이 띄어쓰기는 글자 노드가 아니라 가로 간격으로 그린다 — 「물질파」「파장」이 따로 놓인다.
+ assert.equal(labelResult[1].lines,1);assert.equal(labelResult[1].text,'1물질파파장');assert(labelResult[1].glyphs.some(g=>g.text==='물질파')&&labelResult[1].glyphs.some(g=>g.text==='파장'));
+ assert.equal(labelResult[3].lines,1);assert.equal(labelResult[3].text,'1물질파파장');assert(labelResult[3].glyphs.some(g=>g.text==='물질파')&&labelResult[3].glyphs.some(g=>g.text==='파장'));
+ assert.equal(labelResult[2].lines,2);assert.equal(labelResult[2].text.replace(/\s+/g,''),'x+A0물의질량+BC');
  for(const item of labelResult){assert(!/mathrm|text|frac|[{};]/.test(item.text));assert(item.width>0&&Number.isFinite(item.width));assert(item.bbox.w<item.width+2);assert(item.endTransform.startsWith(`translate(${-item.width},`));}
  assert(labelResult[0].glyphs.filter(g=>/[HAB]/.test(g.text)).every(g=>g.style==='normal'));
  assert(labelResult[2].glyphs.some(g=>g.text.includes('x')&&g.style==='italic'));

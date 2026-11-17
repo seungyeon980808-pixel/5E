@@ -41,12 +41,13 @@ h.withServer(async origin => {
       await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:60000});
       await page.reload();sheet=await openPool(page,origin);
       if(await sheet.locator('.shell-body.nav-off').count()||await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().evaluate(b=>b.click());/* WebKit에서만 Playwright 클릭 자리가 옆 .lv-meta로 잡힌다(같은 자리 elementFromPoint는 단추, 11-17 진단; body CSS zoom 추정) — 다른 5E_exam 검사처럼 요소를 직접 누른다 */await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden])');await sheet.waitForTimeout(3000);
       await sheet.evaluate(()=>{const M=window.__typing={lat:[]};let at=0;
         document.addEventListener('beforeinput',()=>{at=performance.now();},true);
         document.addEventListener('input',()=>{if(!at)return;const k=at;at=0;requestAnimationFrame(()=>requestAnimationFrame(()=>M.lat.push(performance.now()-k)));},true);});
-      await sheet.click('#cv-passage');for(const ch of TEXT)await page.keyboard.type(ch,{delay:60});await sheet.waitForTimeout(400);
+      // 9ca4a5a6(카드 수식 칩) 뒤 지문 글자 칸은 숨고(eq-hide) 옆 .eq-ce에 입력한다 — 값은 숨은 칸으로 그대로 옮겨진다.
+      if(await sheet.locator('#cv-passage').isVisible())await sheet.click('#cv-passage');else await sheet.click('#cv-passage + .eq-ce');for(const ch of TEXT)await page.keyboard.type(ch,{delay:60});await sheet.waitForTimeout(400);
       assert.equal(await sheet.inputValue('#cv-passage'),TEXT,'no typed letter is lost');
       const lat=(await sheet.evaluate(()=>window.__typing.lat)).sort((a,b)=>a-b),p95=lat[Math.floor(lat.length*.95)],max=lat[lat.length-1];
       rows.push({engine:engineName,n:lat.length,p50:+lat[Math.floor(lat.length/2)].toFixed(1),p95:+p95.toFixed(1),max:+max.toFixed(1)});
@@ -55,7 +56,7 @@ h.withServer(async origin => {
       await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:20000});
       await page.reload();sheet=await openPool(page,origin);
       if(await sheet.locator('.shell-body.nav-off').count()||await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().evaluate(b=>b.click());/* WebKit에서만 Playwright 클릭 자리가 옆 .lv-meta로 잡힌다(같은 자리 elementFromPoint는 단추, 11-17 진단; body CSS zoom 추정) — 다른 5E_exam 검사처럼 요소를 직접 누른다 */await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       assert.equal(await sheet.inputValue('#cv-passage'),TEXT,'the typed passage is saved');
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: card typing with ${N} figure questions verified`,JSON.stringify(rows.at(-1)));

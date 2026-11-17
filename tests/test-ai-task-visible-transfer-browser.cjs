@@ -159,6 +159,8 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
     assert.equal(target.generated.length, 0);
   }
   // Right-clicking an inactive task must use its own retained label state.
+  // 11-11(552279a9): 보내기는 반대 작업(그래프)으로 바로 옮겨 가므로, 이미지 작업대로 돌아와서 task-0을 누른다.
+  await openAiWorkflow(page,'image');
   const beforeDuplicate = await snapshot(page), sourceBefore = beforeDuplicate.find(tab => tab.id === 'task-0');
   await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
   await page.locator('.ai-task-context-menu [data-task-action="duplicate"]').click();
@@ -291,14 +293,14 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipb
   const inactiveCopy = await page.evaluate(async data => ({visible:await __rasterDigest(data),copied:await __rasterDigest(__copiedImage.data),gesture:__copiedImage.gesture}),inactiveVisible);
   assert.deepEqual(inactiveCopy.copied,inactiveCopy.visible);assert.equal(inactiveCopy.gesture,true);assert.deepEqual(await snapshot(page),inactiveBefore);
   receipts.push({action:'inactive-historical-clipboard',policy:'connected',pixelsMatch:true,sourcePreserved:true,activeTaskPreserved:true,writeDuringGesture:true});
-  for (const action of ['copy','image']) {
+  for (const action of ['copy','graph']) { // 11-11(552279a9): 이미지 작업대에서 보내기는 그래프 복원으로만 바로 간다
     await historical('connected'); const before = await snapshot(page), sourceBefore = before.find(tab => tab.id === 'task-2');
     await page.evaluate(() => {
       window.__copiedImage = null;window.__clipboardWriteStarted = false;window.__lastTaskMenuError = null;
       const gate = {policy:'connected',entered:false};gate.promise = new Promise(resolve => gate.release = resolve);window.__historicalProcessingGate = gate;
     });
     await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click({button:'right'});
-    if (action === 'image') await sendDirect(page, 'image');
+    if (action === 'graph') await sendDirect(page, 'graph');
     else await page.locator(`.ai-task-context-menu [data-task-action="${action}"]`).click();
     await page.waitForFunction(() => window.__historicalProcessingGate?.entered);
     if (action === 'copy') assert.equal(await page.evaluate(() => __clipboardWriteStarted),true);

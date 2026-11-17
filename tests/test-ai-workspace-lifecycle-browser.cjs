@@ -798,7 +798,8 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
   assertCandidateUnion(assert, preserved.snapshot.tabs[0].generated[0], replacement.workspaces[0].tabs[0].generated[0]);
 
   const origin = new URL(page.url()).origin;
-  for (const entry of [runtime.entry === '/' ? '/preview/' : '/', runtime.entry]) {
+  // 1.7.1: /preview/ 사본을 지웠다 — 정식 진입점(/) 하나에서 저장·다시 열기를 확인한다.
+  for (const entry of [runtime.entry]) {
     await page.evaluate(() => window.__task2Manager.checkpointForClose());
     const receipt = await inspectEntry(page, origin, { ...runtime, entry });
     assert.equal(receipt.resources.some(resource => /\/preview\/js\//.test(resource.url)), false);
@@ -816,12 +817,11 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
     const loadedBefore = performance.getEntriesByType('resource').map(entry => entry.name);
     for (const [file, key] of Object.entries(keys)) {
       const canonical = await import(window.__runtime.base + file + '.js' + q);
-      const alias = await import('/preview/js/' + file + '.js');
-      result[file] = canonical[key] === alias[key];
+      result[file] = typeof canonical[key] !== 'undefined';
     }
     return { result, loadedBefore };
   });
-  assert.ok(Object.values(identities.result).every(Boolean), 'compatibility aliases must forward identical live exports');
+  assert.ok(Object.values(identities.result).every(Boolean), 'canonical modules expose their live exports (1.7.1: /preview/ aliases removed)');
   for (const name of ['main', 'state', 'text-editor', 'ai-label-background']) {
     assert.ok(identities.loadedBefore.includes(`${origin}/js/${name}.js${runtime.moduleQuery}`), `actual boot loaded ${name}`);
   }
@@ -893,7 +893,8 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
       for (const event of events) document.addEventListener(event, check, true);
     });
   }, paneSelectors);
-  await page.locator('#ai-image-install-open').click();
+  // 11-11 작업 나눔: task-0은 그래프 작업(conversionKind graph)이라 그래프 작업대로 연다 — 이미지 단추로 열면 빈 이미지 작업대가 뜬다.
+  await require('./helpers/graph-entry.cjs').openAiWorkflow(page, 'graph');
   await page.locator('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img').evaluate(image => image.decode());
   await page.locator('#ai-image-panel .ai-reference-card .ai-preview-stage > img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
   const visibility = await page.evaluate(() => window.__task5VisibleRasters);

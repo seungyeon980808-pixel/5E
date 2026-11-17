@@ -136,7 +136,8 @@ async function storedTabs(page) {
       }, fixture);
       assert.deepEqual(guards, [true,true,true]);
       assert(await page.locator('#ai-image-panel [data-ai-model]').isHidden());
-      await page.locator('#ai-image-panel [data-ai-input]').fill('B의 점선을 더 굵게');
+      // 11-11 AI 창 개편: 요청 칸([data-ai-input])은 숨고, 보이는 대화 칸 글이 실행 직전에 요청으로 옮겨진다(js/ai-panel.js composeRequestFromChat).
+      await page.locator('#ai-image-panel [data-ai-chat-input]').fill('B의 점선을 더 굵게');
       await page.locator('#ai-image-panel [data-ai-send]').click();
       await result(page);
       assert.equal((await objects(page)).length, 0, 'Reconstruction must not insert into the page yet.');
@@ -300,9 +301,9 @@ async function storedTabs(page) {
       await cancelled.page.waitForGraphSignal(() => document.querySelector('#ai-image-panel')?.dataset.aiWorkflow === 'image');
       assert.equal(await cancelled.page.locator('#ai-image-panel .ai-previews .ai-image-card').count(), 0, 'Switching workflows keeps the old result in its own task.');
       assert.equal(await cancelled.page.locator('#ai-image-panel [data-ai-connection-dialog]').isVisible(),false, 'Connection metadata stays outside the restored workbench layout.');
-      await cancelled.page.locator('#ai-image-panel [data-ai-side-tab="comments"]').click();
+      // 시안 v6(506f30bf): 오른쪽 탭 줄은 숨고 대화 칸이 늘 열려 있다. 모델 고르기 줄도 숨김(Sol 기본) — 값과 눌림 상태만 본다.
       const imageModel=cancelled.page.locator('#ai-image-panel [data-ai-model-choice="sol"]');
-      assert.equal(await imageModel.isVisible(),true);assert.equal(await imageModel.isEnabled(),true);
+      assert.equal(await imageModel.isEnabled(),true);
       assert.equal(await imageModel.getAttribute('aria-pressed'),'true');assert.equal(await cancelled.page.locator('#ai-image-panel [data-ai-model]').inputValue(),'gpt-6.1-sol');
       assert.equal(await cancelled.page.locator('#ai-image-panel [data-ai-workflow="image"]').getAttribute('aria-pressed'), 'true');
       assert.equal(await cancelled.page.locator('#ai-image-panel .ai-task-tab-select').count(), 0, 'Empty workflow has no synthetic tasks.');

@@ -24,6 +24,9 @@ async function closeAiPanel(page) {
 
 // kind: 'graph' | 'graph-create' | 'image' | 'image-create'
 async function openAiWorkflow(page, kind) {
+  // 창이 열리거나 닫히는 중(inert)이면 끝날 때까지 기다린다 — 그래프 편집기를 닫은 직후 AI 창이 움직이는 동안
+  // 「열려 있음」으로 보고 바로 단추를 누르다 사라지는 단추를 붙잡던 흔들림(11-17 graph-workbench 194줄).
+  await page.waitForFunction(selector => { const p = document.querySelector(selector); return !p || p.hidden || !p.inert; }, PANEL);
   const current = await panelState(page);
   if (current.shown && current.workflow === kind) return;
   if (current.shown && isGraph(current.workflow) === isGraph(kind)) {
