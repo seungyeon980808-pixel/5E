@@ -1,0 +1,11 @@
+{
+  // 드라이브 공개 폴더 → PDF·JSON 내려 주는 게이트웨이(5e-google-drive-gateway).
+  // 11-19: 배포본(버전 19c7cef6, 11-03 OmO 「경로 조각별 조회」)을 `wrangler init --from-dash`로 받아 소스로 보존. 설정 값은 배포본 그대로.
+  // 비밀값(소스에 없음): GOOGLE_DRIVE_API_KEY — `npx wrangler@4 secret put GOOGLE_DRIVE_API_KEY --config cloudflare/google-drive-gateway/wrangler.jsonc`
+  "name": "5e-google-drive-gateway",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-09-15",
+  "workers_dev": true,
+  "preview_urls": true,
+  "account_id": "a6dd35b7aa385514042f9003bc937b92"
+}
