@@ -293,7 +293,7 @@ test('기본 그래프 생성 경로는 이 엔진을 부르지 않는다(화면
   const users = r.stdout.split('\n').filter(Boolean).filter((f) => !f.startsWith('js/ai-graph/') && f !== 'js/ai-engines.js');
   assert.deepEqual(users, []);
   const connect = fs.readFileSync(path.join(ROOT, 'js/ai-engines.js'), 'utf8');
-  assert.match(connect, /import\('\.\/ai-graph\/index\.js'/, '그래프 엔진은 처음 쓸 때만 불러옴');
+  assert.match(connect, /import\('\.\/ai-graph\/index\.js[?']/, '그래프 엔진은 처음 쓸 때만 불러옴');
   assert.doesNotMatch(connect, /^import .*ai-graph/m);
 });
 

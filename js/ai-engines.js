@@ -10,7 +10,6 @@
 //       호출 쪽(ai-panel)이 옛 생성 길로 넘긴다. 앞 결과는 지우지 않는다.
 import { figureEngineFlag, graphPictureFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 
-const V = '?v=1.7.0-four-session-integration';
 export const FIGURE_ENGINE_ID = 'ai-figure';
 export const FIGURE_ENGINE_VERSION = '1.0.0';
 export const ENGINE_TEXT_MODEL = 'gpt-6.1-sol';
@@ -259,10 +258,11 @@ export function figureSceneMeta(result, index, { request = '', models = null } =
 
 // E9b: 브라우저는 실패한 import()를 주소별로 기억해 같은 주소로는 다시 받지 않는다(크롬) — 한 번 잠깐 못 받으면 그 창에서는
 // 새 엔진이 끝까지 안 됐다. 실패한 뒤에는 꼬리표(&retry=N)를 붙인 새 주소로 다시 받는다.
+// 주소의 판 번호(?v=)는 다른 import처럼 글자 그대로 쓴다 — 자원 닫힘 검사(test-four-session-resource-closure)가 글자 import에 판 번호가 붙었는지 본다.
 let figureModule = null, graphModule = null, figureRetry = 0, graphRetry = 0;
 const retryTag = (n) => (n ? `&retry=${n}` : '');
-export const loadFigureEngine = () => (figureModule ||= import('./ai-figure/index.js' + V + retryTag(figureRetry)).catch((e) => { figureModule = null; figureRetry++; throw e; }));
-export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.js' + V + retryTag(graphRetry)).catch((e) => { graphModule = null; graphRetry++; throw e; }));
+export const loadFigureEngine = () => (figureModule ||= import('./ai-figure/index.js?v=1.7.0-four-session-integration' + retryTag(figureRetry)).catch((e) => { figureModule = null; figureRetry++; throw e; }));
+export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.js?v=1.7.0-four-session-integration' + retryTag(graphRetry)).catch((e) => { graphModule = null; graphRetry++; throw e; }));
 
 /**
  * 새 그림 엔진으로 한 벌 만들기. 던지지 않는다(취소만 aborted로 알림).
