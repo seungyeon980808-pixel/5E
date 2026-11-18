@@ -35,7 +35,7 @@ async function fakeDesktop(context) {
     window.addEventListener('error', (e) => window.__unhandled.push(String(e.message || e.error)));
     const listeners = new Set();
     const fake = window.__engineFake = { sends: [], reads: [], interrupts: 0, n: 0, logins: 0 };
-    const fault = window.__fault = { text: 'ok', textFails: Infinity, image: 'ok', imageFails: Infinity, failModels: [], strip: [], loggedIn: true, sendReject: '', okImages: 0 };
+    const fault = window.__fault = { text: 'ok', textFails: Infinity, image: 'ok', imageFails: Infinity, failModels: [], strip: [], loggedIn: true, sendReject: '', okImages: 0, hangModels: [], hangCount: Infinity };
     const emit = (message) => listeners.forEach((fn) => fn(message));
     const ipcError = (channel, text) => new Error(`Error invoking remote method '${channel}': Error: ${text}`);
     const TEXT_ERRORS = {
@@ -83,7 +83,10 @@ async function fakeDesktop(context) {
             if (fault.okImages > 0) fault.okImages--;
             else if (fault.imageFails > 0) { failing = true; fault.imageFails--; }
           }
-          if (fault.image === 'hang') return { turnId, threadId: 'thread-' + turnId, renderThreadId: turnId };
+          // 응답 없는 그림 차례: hangModels의 모델은 늘, image='hang'이면 hangCount번(끝나지 않는 차례 — main이 알리지 못한 경우)
+          let hang = fault.hangModels.includes(payload.model);
+          if (!hang && fault.image === 'hang' && fault.hangCount > 0) { fault.hangCount--; hang = true; }
+          if (hang) return { turnId, threadId: 'thread-' + turnId, renderThreadId: turnId };
           setTimeout(() => {
             if (!failing) emit({ clientScope: payload.clientScope, method: 'item/completed', params: { turnId, item: { type: 'imageGeneration', status: 'completed', imageDataUrl: PNG } } });
             emit({ clientScope: payload.clientScope, method: 'turn/completed', params: { turn: failing ? { id: turnId, status: 'failed', error: { message: '그림 생성에 실패했습니다. 다른 모델로 다시 시도합니다.' } } : { id: turnId, status: 'completed' } } });
@@ -106,7 +109,7 @@ async function ask(page, text) {
   await page.locator(`${PANEL} [data-ai-send]`).click();
 }
 async function setFault(page, f) {
-  await page.evaluate((f) => { Object.assign(window.__fault, { text: 'ok', textFails: Infinity, image: 'ok', imageFails: Infinity, failModels: [], strip: [], loggedIn: true, sendReject: '', okImages: 0 }, f); }, f);
+  await page.evaluate((f) => { Object.assign(window.__fault, { text: 'ok', textFails: Infinity, image: 'ok', imageFails: Infinity, failModels: [], strip: [], loggedIn: true, sendReject: '', okImages: 0, hangModels: [], hangCount: Infinity }, f); }, f);
 }
 async function shot(page, name) { if (out) await page.screenshot({ path: path.join(out, name) }).catch(() => {}); }
 const waitBusy = (page) => page.waitForFunction((p) => document.querySelector(p)?.dataset.aiBusy === 'true', PANEL, { timeout: 15000 });
@@ -136,7 +139,7 @@ h.withServer(async (origin) => {
       worker = { mode: 'ok', hits: 0 };
       await setFault(page, {});
       await page.evaluate(async () => { try { (await import('/js/ai-figure/reference-images.js')).clearFigureCache(); } catch {} });
-      await page.evaluate(() => { window.__busySeen = false; window.__unhandled.length = 0; const f = window.__engineFake; f.sends.length = 0; f.reads.length = 0; f.interrupts = 0; });
+      await page.evaluate(() => { window.__busySeen = false; window.__unhandled.length = 0; const f = window.__engineFake; f.sends.length = 0; f.reads.length = 0; f.interrupts = 0; delete globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS; });
       pageErrors.length = 0;
       const before = await cardSrcs(page);
       const started = Date.now();
@@ -278,6 +281,31 @@ h.withServer(async (origin) => {
         } };
       });
       await scenario('after-abort', '취소 직후 다시 생성', async () => { await ask(page, '빗면 위 물체 H'); return { expect: 'result' }; });
+
+      // ── E9b 그림 차례 시계: main이 끝을 알리지 못한 그림 차례(직접 호출 대신 에이전트 길·IPC 끊김)를 화면이 끊고 다음 모델로
+      await scenario('image-deadline-switch', '그림 차례 응답 없음 → 차례 시계로 끊고 반대 모델', async () => {
+        await page.evaluate(() => { globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS = 1500; });
+        await setFault(page, { hangModels: ['gpt-6.1-sol'] });
+        await ask(page, '빗면 위 물체 N');
+        return { expect: 'result', check: async ({ fake, log }) => {
+          await page.evaluate(() => { delete globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS; });
+          const img = fake.sends.filter((s) => s.purpose === 'image');
+          assert.equal(img[0].model, 'gpt-6.1-sol'); assert.ok(img.some((s) => s.model === 'gpt-6-luna'), `${name}/image-deadline: other model drew`);
+          assert.ok(fake.interrupts >= 1, `${name}/image-deadline: the silent turn was interrupted`);
+          assert.match(log, /그림 모델을 바꿔\(gpt-6-luna\)/);
+        } };
+      });
+      await scenario('image-deadline-both', '두 모델 모두 응답 없음 → 더 기다리지 않고 옛 생성 길로', async () => {
+        await page.evaluate(() => { globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS = 1500; });
+        await setFault(page, { image: 'hang', hangCount: 2 });
+        await ask(page, '빗면 위 물체 O');
+        return { expect: 'result', check: async ({ fake, log }) => {
+          await page.evaluate(() => { delete globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS; });
+          const img = fake.sends.filter((s) => s.purpose === 'image');
+          assert.ok(img.length <= 3, `${name}/image-deadline-both: no scene retries after two silent turns (image sends=${img.length})`);
+          assert.match(log, /이전 생성 방식으로 이어서/);
+        } };
+      });
 
       // ── Codex 로그인 안 됨(설치판) → 연결 정보로 데려가고, 로그인하면 이어서 만든다
       await scenario('not-logged-in', 'Codex 로그인 안 됨 → 연결 화면 → 로그인 뒤 이어서', async () => {

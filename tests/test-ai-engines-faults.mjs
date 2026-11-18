@@ -115,3 +115,85 @@ test('Worker 404는 그 그림만 건너뛰고 다른 후보로 채운다', asyn
   const got = await collectReferenceImages(['a_1-1', 'b_1-1', 'c_1-1', 'd_1-1'], { fetch: fetchImpl });
   assert.deepEqual(got.ids, ['b_1-1', 'c_1-1', 'd_1-1']);
 });
+
+// ── E9b 차례 시계(화면 쪽): main이 끝을 알리지 못한 그림 차례·글 읽기를 끊고 다음 모델로
+// 래스터 컨트롤러처럼 signal이 끊기면 AbortError로 끝나는 가짜(끊긴 차례 수를 셈)
+const silentRaster = (okModels = []) => ({ models: [], interrupted: 0, generate(p, { signal } = {}) {
+  this.models.push(p.model);
+  if (okModels.includes(p.model)) return Promise.resolve({ src: PNG });
+  return new Promise((_, reject) => signal?.addEventListener('abort', () => { this.interrupted++; reject(Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' })); }, { once: true }));
+} });
+
+test('그림 차례 시계: 답 없는 차례는 끊고(interrupt) 반대 모델로 그린다', async () => {
+  const raster = silentRaster(['gpt-6-luna']);
+  const ai = createDesktopEngineAi({ readImageText: async () => ({ text: '' }) }, raster, { imageModels: ['gpt-6.1-sol', 'gpt-6-luna'], imageDeadlineMs: 40 });
+  const t0 = Date.now();
+  assert.equal((await ai.generateImage({ model: 'gpt-6.1-sol', text: 'x' })).imageDataUrl, PNG);
+  assert.deepEqual(raster.models, ['gpt-6.1-sol', 'gpt-6-luna']);
+  assert.equal(raster.interrupted, 1, '답 없는 차례를 끊음');
+  assert.equal(classifyAiError(new Error('AI 그림 응답 시간이 초과되었습니다(1초 동안 답이 없어 끊었습니다).')), 'transport');
+  assert.equal(ai.health.deadlines, 1);
+  assert.equal(ai.health.imageDown, false, '한 번 성공하면 다시 셈');
+  assert.ok(Date.now() - t0 < 1000);
+});
+
+test('그림 차례 시계: 두 모델 모두 답이 없으면 imageDown — 장면 재시도마다 또 기다리지 않는다', async () => {
+  const raster = silentRaster();
+  const ai = createDesktopEngineAi({ readImageText: async () => ({ text: '' }) }, raster, { imageModels: ['gpt-6.1-sol', 'gpt-6-luna'], imageDeadlineMs: 30 });
+  await assert.rejects(ai.generateImage({ model: 'gpt-6.1-sol', text: 'x' }), (e) => e.code === 'ENGINE_DEADLINE');
+  assert.equal(ai.health.imageDown, true);
+  await assert.rejects(ai.generateImage({ model: 'gpt-6.1-sol', text: 'y' }), (e) => e.code === 'ENGINE_IMAGE_DOWN');
+  assert.equal(raster.models.length, 2, '세 번째 차례는 보내지 않음');
+});
+
+test('그림 차례 시계: 사용자 취소는 시간 초과가 아니라 AbortError(다음 모델로 넘기지 않음)', async () => {
+  const raster = silentRaster();
+  const ctl = new AbortController();
+  const ai = createDesktopEngineAi({ readImageText: async () => ({ text: '' }) }, raster, { imageModels: ['gpt-6.1-sol', 'gpt-6-luna'], imageDeadlineMs: 5000 });
+  const p = ai.generateImage({ model: 'gpt-6.1-sol', text: 'x', signal: ctl.signal });
+  setTimeout(() => ctl.abort(), 20);
+  await assert.rejects(p, (e) => e.name === 'AbortError');
+  assert.deepEqual(raster.models, ['gpt-6.1-sol']);
+  assert.equal(ai.health.deadlines, 0);
+});
+
+test('글 읽기 시계: 답 없는 글 읽기는 시간 초과(transport)로 끊고, 두 번이면 그 차례 글 단계를 건너뛴다', async () => {
+  let calls = 0;
+  const ai = createDesktopEngineAi({ readImageText: () => { calls++; return new Promise(() => {}); } }, okRaster, { textDeadlineMs: 30 });
+  await assert.rejects(ai.readText({ model: 'm', text: 'a' }), (e) => e.code === 'ENGINE_DEADLINE' && /시간이 초과/.test(e.message));
+  await assert.rejects(ai.readText({ model: 'm', text: 'b' }), (e) => e.code === 'ENGINE_DEADLINE');
+  assert.equal(ai.health.textDown, true);
+  await assert.rejects(ai.readText({ model: 'm', text: 'c' }), (e) => e.code === 'ENGINE_TEXT_DOWN');
+  assert.equal(calls, 2);
+});
+
+test('차례 시계 기본값은 main 한도(100초 × 2)보다 길다 — 정상 차례를 끊지 않음', async () => {
+  const { ENGINE_IMAGE_DEADLINE_MS, ENGINE_TEXT_DEADLINE_MS } = await import('../js/ai-engines.js');
+  assert.ok(ENGINE_IMAGE_DEADLINE_MS > 200_000 && ENGINE_IMAGE_DEADLINE_MS < 600_000);
+  assert.ok(ENGINE_TEXT_DEADLINE_MS > 200_000);
+});
+
+// ── E9b 그래프 「그림으로 생성」: 설계를 못 받는 고장마다 엔진이 내는 결과(패널이 이것으로 길을 고른다)
+test('그래프: 설계 AI가 로그인·연결·전송 고장이면 health로 가를 수 있고, 설계는 축만(minimal)', async () => {
+  const { runGraphPicture } = await import('../js/ai-engines.js');
+  const drawGraph = async () => ({ png: PNG, svg: '<svg/>', collisions: { n: 0, list: [] }, warnings: [] });
+  for (const [msg, key] of [['Codex 로그인 정보가 없습니다.', 'authRequired'], ['Codex 서버에 연결하지 못했습니다.', 'offline'], ['Codex 응답 오류(503)', 'textDown']]) {
+    let calls = 0;
+    const ai = createDesktopEngineAi({ readImageText: async () => { calls++; throw ipc(msg); } }, okRaster);
+    const r = await runGraphPicture({ ai, request: '가로축은 시간, 세로축은 속도', drawGraph, models: { text: 'm' } });
+    assert.equal(r.fallback, 'minimal', msg);
+    assert.equal(ai.health[key], true, msg);
+    assert.ok(calls <= 2, `${msg}: 설계 호출 ${calls}번`);
+  }
+});
+
+test('그래프: 다시 그리기(redrawGraphPicture)는 연결이 없어도 AI를 부르지 않는다', async () => {
+  const { redrawGraphPicture } = await import('../js/ai-engines.js');
+  let drew = 0;
+  const drawGraph = async () => { drew++; return { png: PNG, svg: '<svg/>', collisions: { n: 0, list: [] }, warnings: [] }; };
+  const plan = { xMin: 0, xMax: 4, yMin: 0, yMax: 6, labelX: '시간', labelY: '속도', xTicks: [], yTicks: [], series: [{ expr: '6-2*x', domain: [0, 3] }], keyText: '' };
+  const r = await redrawGraphPicture({ graphPlan: plan, request: 'r' }, { drawGraph });
+  assert.equal(r.png, PNG); assert.equal(r.fallback, null); assert.equal(drew, 1);
+  const broken = await redrawGraphPicture({ graphPlan: { labelX: '시간', series: 'x' }, request: 'r' }, { drawGraph });
+  assert.equal(broken.fallback, 'minimal');
+});

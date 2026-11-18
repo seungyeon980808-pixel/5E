@@ -61,8 +61,11 @@ export function minimalPlan(request = '') {
 // 다시 그리기용 설계가 그릴 수 있는지(곡선이 없어도 축 범위만 맞으면 됨 — 축만 있는 설계도 다시 열 수 있게).
 const hasAxes = (p) => !!p && typeof p === 'object' && ['xMin', 'xMax', 'yMin', 'yMax'].every((k) => Number.isFinite(+p[k])) && +p.xMax > +p.xMin && +p.yMax > +p.yMin;
 
+// 실패한 import()는 같은 주소로 다시 받지 않으므로(브라우저가 실패를 기억함) 실패한 뒤에는 꼬리표를 붙인 새 주소로(E9b).
+let drawModule = null, drawRetry = 0;
 async function defaultDrawGraph(prepared, options) {
-  const { drawGraph } = await import('./draw.js?v=1.7.0-four-session-integration');
+  drawModule ||= import('./draw.js?v=1.7.0-four-session-integration' + (drawRetry ? `&retry=${drawRetry}` : '')).catch((e) => { drawModule = null; drawRetry++; throw e; });
+  const { drawGraph } = await drawModule;
   return drawGraph(prepared, options);
 }
 

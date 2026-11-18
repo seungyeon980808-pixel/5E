@@ -97,17 +97,31 @@ export function classifyAiError(error) {
 }
 const engineError = (message, code) => Object.assign(new Error(message), { code });
 
+// E9b(11-19) 차례마다 기다리는 한도. main(ai-direct-image.cjs)은 한 번 100초·다시 1번으로 끝내지만, 직접 호출이 안 되어
+// 에이전트 길로 넘어가거나 끝 알림(IPC)이 사라지면 화면은 그림 600초(래스터 컨트롤러)·글은 끝없이 기다렸다. main은 그림 실패를
+// 한 가지 글로만 넘겨 시간 초과인지 가릴 수 없으므로, 화면 쪽에서 차례마다 시계를 둔다: 넘으면 그 차례를 끊고(그림은 interrupt)
+// 「시간이 초과」 오류(transport)로 보고 다음 모델로. 검사는 globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS·__FIVE_E_ENGINE_TEXT_DEADLINE_MS로 줄인다.
+export const ENGINE_IMAGE_DEADLINE_MS = 240_000;
+export const ENGINE_TEXT_DEADLINE_MS = 240_000;
+const deadlineFrom = (value, key, fallback) => {
+  const n = Number(value ?? globalThis[key]);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+};
+const deadlineError = (kind, ms) => engineError(`AI ${kind === 'image' ? '그림' : '글 읽기'} 응답 시간이 초과되었습니다(${Math.round(ms / 1000)}초 동안 답이 없어 끊었습니다).`, 'ENGINE_DEADLINE');
+
 /**
  * 5E 연결을 엔진의 ai 모양으로 감싼다.
  * @param {{ readImageText: Function }} desktop
  * @param {{ generate: Function }} raster  createImageLabelRasterController(...) — 그림 차례 하나를 프라미스로
- * @param {{ onCall?: (e: { kind: 'text'|'image', model: string, attempt: number }) => void, imageModels?: string[], textModels?: string[] }} options
- * 돌려준 ai.health: { authRequired, offline, textDown, failures: { auth, network, transport, model, other } } — 호출 쪽이 실패 뒤 길을 고른다.
+ * @param {{ onCall?: (e: { kind: 'text'|'image', model: string, attempt: number }) => void, imageModels?: string[], textModels?: string[], imageDeadlineMs?: number, textDeadlineMs?: number }} options
+ * 돌려준 ai.health: { authRequired, offline, textDown, imageDown, deadlines, failures: { auth, network, transport, model, other } } — 호출 쪽이 실패 뒤 길을 고른다.
  */
-export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imageModels = imageModelOrder(null), textModels = [] } = {}) {
+export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imageModels = imageModelOrder(null), textModels = [], imageDeadlineMs, textDeadlineMs } = {}) {
   let chain = Promise.resolve(); // 그림 차례는 한 번에 하나(래스터 컨트롤러 규칙) — bestOf 2도 차례로
   const note = (e) => { try { onCall(e); } catch { /* 진행 알림 오류는 무시 */ } };
-  const health = { authRequired: false, offline: false, textDown: false, textStreak: 0, failures: { auth: 0, network: 0, transport: 0, model: 0, other: 0 } };
+  const health = { authRequired: false, offline: false, textDown: false, imageDown: false, textStreak: 0, imageStreak: 0, deadlines: 0, failures: { auth: 0, network: 0, transport: 0, model: 0, other: 0 } };
+  const imageLimit = () => deadlineFrom(imageDeadlineMs, '__FIVE_E_ENGINE_IMAGE_DEADLINE_MS', ENGINE_IMAGE_DEADLINE_MS);
+  const textLimit = () => deadlineFrom(textDeadlineMs, '__FIVE_E_ENGINE_TEXT_DEADLINE_MS', ENGINE_TEXT_DEADLINE_MS);
   const record = (error) => {
     const kind = classifyAiError(error);
     health.failures[kind]++;
@@ -115,13 +129,19 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
     if (kind === 'network' && (health.failures.network >= 2 || (typeof navigator !== 'undefined' && navigator.onLine === false))) health.offline = true;
     return kind;
   };
+  // 글 읽기 한 번. main 쪽 호출은 IPC로 끊을 수 없으므로 시간이 넘으면 기다림만 끊는다(main은 자기 시간 제한으로 곧 끝남).
   async function readOnce(model, text, atts, signal) {
-    const r = await raceAbort(Promise.resolve().then(() => desktop.readImageText({ model, text, attachments: atts })), signal);
-    return typeof r === 'string' ? r : String(r?.text ?? '');
+    const ms = textLimit();
+    let timer = null;
+    const deadline = new Promise((_, reject) => { timer = setTimeout(() => { health.deadlines++; reject(deadlineError('text', ms)); }, ms); });
+    try {
+      const r = await raceAbort(Promise.race([Promise.resolve().then(() => desktop.readImageText({ model, text, attachments: atts })), deadline]), signal);
+      return typeof r === 'string' ? r : String(r?.text ?? '');
+    } finally { clearTimeout(timer); }
   }
   async function readText({ model, text, attachments = [], signal }) {
     if (health.authRequired) throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
-    // 글 단계(구체화·검색·설명 찾기)는 모두 대체가 있다 — 끊긴 연결에 계속 묻지 않고 바로 대체로 넘긴다.
+    // 글 단계(구체화·검색·설명 찾기·그래프 설계·값 검사)는 모두 대체가 있다 — 끊긴 연결에 계속 묻지 않고 바로 대체로 넘긴다.
     if (health.textDown) throw engineError('AI 글 읽기가 응답하지 않아 이번 차례에서는 건너뜁니다.', 'ENGINE_TEXT_DOWN');
     note({ kind: 'text', model, attempt: 1 });
     const atts = await Promise.all(attachments.map(toTransportImage));
@@ -146,24 +166,41 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
     }
     throw last;
   }
+  // 그림 차례 하나. 차례 시계를 넘으면 그 차례를 끊고(래스터 → desktop.interrupt) 시간 초과로 본다.
+  async function drawOnce(payload, signal) {
+    const ms = imageLimit();
+    const inner = new AbortController();
+    const onOuter = () => inner.abort();
+    if (signal?.aborted) inner.abort(); else signal?.addEventListener('abort', onOuter, { once: true });
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; health.deadlines++; inner.abort(); }, ms);
+    try { return await raster.generate(payload, { signal: inner.signal }); }
+    catch (error) { if (timedOut && !signal?.aborted) throw deadlineError('image', ms); throw error; }
+    finally { clearTimeout(timer); signal?.removeEventListener('abort', onOuter); }
+  }
   function generateImage({ model, text, attachments = [], signal }) {
     const run = async () => {
       if (signal?.aborted) throw abortError();
       if (health.authRequired) throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
+      // 그림 차례가 연달아 응답하지 않았다(차례 시계·연결 끊김) — 같은 차례에서 장면 재시도마다 또 몇 분씩 기다리지 않는다.
+      if (health.imageDown) throw engineError('AI 그림 차례가 응답하지 않아 이번 차례에서는 더 그리지 않습니다.', 'ENGINE_IMAGE_DOWN');
       const atts = (await Promise.all(attachments.map(toTransportImage))).map((data, i) => ({ name: `figure-ref-${i + 1}.png`, data }));
       const order = [model, ...imageModels.filter((m) => m !== model)].filter(Boolean).slice(0, 2);
       let last;
       for (let i = 0; i < order.length; i++) {
         if (signal?.aborted) throw abortError();
+        if (health.imageDown) break;
         note({ kind: 'image', model: order[i], attempt: i + 1 });
         try {
-          const out = await raster.generate({ text, attachments: atts, model: order[i] }, { signal });
-          if (typeof out?.src === 'string' && out.src.startsWith('data:image')) return { imageDataUrl: out.src };
+          const out = await drawOnce({ text, attachments: atts, model: order[i] }, signal);
+          if (typeof out?.src === 'string' && out.src.startsWith('data:image')) { health.imageStreak = 0; return { imageDataUrl: out.src }; }
           last = new Error('AI가 그림을 돌려주지 않았습니다.');
         } catch (error) {
           if (isAbort(error) || signal?.aborted) throw abortError();
           last = error;
-          if (record(error) === 'auth') throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
+          const kind = record(error);
+          if (kind === 'auth') throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
+          if ((kind === 'transport' || kind === 'network') && ++health.imageStreak >= 2) health.imageDown = true;
         }
       }
       throw last || new Error('그림을 받지 못했습니다.');
@@ -210,9 +247,12 @@ export function figureSceneMeta(result, index, { request = '', models = null } =
   };
 }
 
-let figureModule = null, graphModule = null;
-export const loadFigureEngine = () => (figureModule ||= import('./ai-figure/index.js' + V).catch((e) => { figureModule = null; throw e; }));
-export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.js' + V).catch((e) => { graphModule = null; throw e; }));
+// E9b: 브라우저는 실패한 import()를 주소별로 기억해 같은 주소로는 다시 받지 않는다(크롬) — 한 번 잠깐 못 받으면 그 창에서는
+// 새 엔진이 끝까지 안 됐다. 실패한 뒤에는 꼬리표(&retry=N)를 붙인 새 주소로 다시 받는다.
+let figureModule = null, graphModule = null, figureRetry = 0, graphRetry = 0;
+const retryTag = (n) => (n ? `&retry=${n}` : '');
+export const loadFigureEngine = () => (figureModule ||= import('./ai-figure/index.js' + V + retryTag(figureRetry)).catch((e) => { figureModule = null; figureRetry++; throw e; }));
+export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.js' + V + retryTag(graphRetry)).catch((e) => { graphModule = null; graphRetry++; throw e; }));
 
 /**
  * 새 그림 엔진으로 한 벌 만들기. 던지지 않는다(취소만 aborted로 알림).

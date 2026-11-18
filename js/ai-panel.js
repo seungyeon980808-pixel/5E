@@ -2974,9 +2974,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   // 1.8.0 그래프 「그림으로 생성」 한 차례(js/ai-engines.js → js/ai-graph). 결과는 그림(PNG) 카드이고 설계는 item.meta.graphPlan에 둔다
   // (캔버스에 넣으면 이미지 객체 meta로 따라감 → 다시 열면 그 설계로 AI 없이 다시 그림). 선택한 결과가 그림 그래프면 그것을 앞 결과로 넘겨
   // 설계·그리기가 실패해도 앞 결과를 지킨다.
+  // E9b(11-19): 끝나는 길을 넷으로 나눈다 — 그림(item) | 앞 결과 그대로(prior) | 오류(graphOutcome):
+  //   'login'   Codex 로그인이 없음(시작 전 확인 또는 실행 중 만료) → 연결 화면, 로그인하면 이어서
+  //   'offline' 인터넷 끊김 → 안내, online이 되면 이어서
+  //   'objects' 설계를 못 받아 축만 그림·엔진 실패 → 기본 그래프 객체 생성으로(축만 그린 그림은 error.minimalItem으로 넘겨 최후의 결과로 남김)
+  const graphPictureStop = (outcome, message, extra = {}) => Object.assign(new Error(message), { graphOutcome: outcome, ...extra });
   async function runGraphPictureTurn({ instructions, isCurrent, epoch, batch = false }) {
     const prior = selectedOutputItem();
     const previous = prior?.meta?.graphPlan ? { png: prior.data, plan: prior.meta.graphPlan } : null;
+    if (!desktop.web && typeof desktop.status === 'function') {
+      let login = null;
+      try { login = (await desktop.status())?.login || null; } catch { login = null; }
+      if (!isCurrent()) return null;
+      if (login && login.loggedIn === false) throw graphPictureStop('login', 'Codex 로그인이 필요합니다.');
+    }
     const abort = new AbortController(); imageLabelRunAbort = abort;
     const startedAt = Date.now();
     newEngineRunActive = true;
@@ -2986,31 +2997,54 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       requestPhase('generating');
       const show = phase => { const c = graphPhaseCopy(phase); if (c.title && isCurrent()) setGenerating(true, c.title, c.detail); };
       show('graph-plan');
-      const ai = createDesktopEngineAi(desktop, engineRaster);
-      const r = await runGraphPicture({ ai, request: instructions, previous, signal: abort.signal, onPhase: e => show(e.phase), models: { text: GRAPH_WORKBENCH_SELECTION.model } });
+      const textModel = GRAPH_WORKBENCH_SELECTION.model;
+      // E9b: 글 모델이 거절(400)되면 다른 글 모델로 한 번 더(그림 엔진과 같음). 차례 시계는 createDesktopEngineAi가 둔다.
+      const ai = createDesktopEngineAi(desktop, engineRaster, { textModels: [textModel, ...imageModelOrder(textModel)] });
+      let r;
+      try {
+        r = await runGraphPicture({ ai, request: instructions, previous, signal: abort.signal, onPhase: e => show(e.phase), models: { text: textModel } });
+      } catch (error) {
+        if (error?.name === 'AbortError' || abort.signal.aborted) throw error;
+        if (ai.health.authRequired) throw graphPictureStop('login', 'Codex 로그인이 필요합니다.');
+        if (ai.health.offline) throw graphPictureStop('offline', 'AI 서버에 연결하지 못했습니다.');
+        throw Object.assign(error, { graphOutcome: 'objects' });
+      }
       if (!isCurrent() || abort.signal.aborted) return null;
       if (r.cancelled) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
-      if (r.fallback === 'previous' && previous) { setStatus('그래프를 다시 만들지 못해 앞 결과를 그대로 두었습니다.', 'warn'); setTaskState('completed'); advanceGenerationClock('turn-terminal', 'completed'); return prior; }
+      // 로그인·연결이 없어 설계를 못 받은 것은 축만 그린 그림이나 앞 결과로 덮지 않고 이어 갈 길로 데려간다.
+      if (r.fallback && ai.health.authRequired) throw graphPictureStop('login', 'Codex 로그인이 필요합니다.');
+      if (r.fallback && ai.health.offline) throw graphPictureStop('offline', 'AI 서버에 연결하지 못했습니다.');
+      // 앞 결과(고른 그림 그래프)는 카드에 그대로 있다. 새로 만들 길은 아직 남았으니 기본 그래프 객체 생성으로 넘기고, 그것도 안 되면 앞 결과로 끝낸다(E9b).
+      if (r.fallback === 'previous' && previous) throw graphPictureStop('objects', (r.warnings || []).find(w => /실패/.test(w)) || '설계를 받지 못했습니다.', { keepPrior: prior });
       requestPhase('validating');
       const issues = (r.warnings || []).map(message => ({ message: String(message), severity: 'minor' }));
+      // E9b: 글자 겹침이 남은 채 그려졌으면 결과 확인에 올리고 상태 글로도 알린다(그래프 글자 겹침 금지 — 조용히 넘기지 않음).
+      const collisionCount = Number(r.collisions?.n) || 0;
+      if (collisionCount > 0) issues.unshift({ code: 'GRAPH_PICTURE_LABEL_OVERLAP', message: `글자 겹침 ${collisionCount}곳: ${(r.collisions.list || []).slice(0, 3).join(', ')}`, severity: 'major' });
       const item = { id: `generated-${++imageSerial}`, name: `그림 그래프 ${generatedImages.length + 1}`, data: r.png, kind: 'generated', engine: 'ai-graph-picture', meta: r.meta, postprocessOk: true,
         comments: [], nextCommentNumber: 1, reviewState: 'needs-attention', reviewReport: { verdict: 'uncertain', checks: [], issues },
         reviewMeta: { ...GRAPH_WORKBENCH_SELECTION, elapsedMs: Date.now() - startedAt, generationCount: 0, reviewCount: 0 } };
+      // 설계를 못 받아 축만 그렸다: 기본 그래프 객체 생성이 더 나은 결과를 낼 수 있으므로 그쪽으로 넘기고, 이 그림은 최후의 결과로 들고 간다.
+      if (r.fallback === 'minimal') throw graphPictureStop('objects', (r.warnings || []).find(w => /실패/.test(w)) || '설계를 받지 못했습니다.', { minimalItem: item });
       advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
       if (batch) return item;
-      generatedImages.push(item); latestGeneratedSrc = item.data; selectedCandidateId = item.id;
-      panel.dataset.aiSelectedCandidateId = item.id; previews.querySelector('[data-ai-empty]')?.remove(); previews.prepend(makeImageCard(item));
-      panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: item.id } }));
-      dispatchReviewEvent({ state: item.reviewState, candidateId: item.id, report: item.reviewReport, ...item.reviewMeta }, item);
-      currentTurnCandidate = item;
+      addGraphPictureItem(item);
       setTaskState('completed');
-      setStatus(r.fallback === 'minimal' ? '설계를 받지 못해 축만 그렸습니다 · 설명을 더해 다시 만들 수 있습니다.' : '그래프 그림 생성 완료 · 설계를 함께 저장해 다시 열어 고칠 수 있습니다.', r.fallback ? 'warn' : 'ok');
+      const notes = [collisionCount ? `글자 겹침 ${collisionCount}곳이 남았습니다` : '', r.katex === false || (r.warnings || []).some(w => /KaTeX|글꼴/.test(w)) ? '수식 글자를 대체 글꼴로 그렸습니다' : ''].filter(Boolean);
+      setStatus(notes.length ? `그래프 그림 생성 완료 · ${notes.join(' · ')} — 결과 확인에서 확인해 주세요.` : '그래프 그림 생성 완료 · 설계를 함께 저장해 다시 열어 고칠 수 있습니다.', notes.length ? 'warn' : 'ok');
       captureActiveTaskTab(); await taskPersistence.checkpoint();
       return item;
     } finally {
       newEngineRunActive = false;
       if (imageLabelRunAbort === abort) imageLabelRunAbort = null;
     }
+  }
+  function addGraphPictureItem(item) {
+    generatedImages.push(item); latestGeneratedSrc = item.data; selectedCandidateId = item.id;
+    panel.dataset.aiSelectedCandidateId = item.id; previews.querySelector('[data-ai-empty]')?.remove(); previews.prepend(makeImageCard(item));
+    panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: item.id } }));
+    dispatchReviewEvent({ state: item.reviewState, candidateId: item.id, report: item.reviewReport, ...item.reviewMeta }, item);
+    currentTurnCandidate = item;
   }
 
   async function runGraphRestore(options = {}) {
@@ -3021,7 +3055,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const owner = taskTabs.get(taskId), ownerEpoch = graphOwnerEpoch;
     const captured = sourceItems.map(snapshotImageItem), styles = references.filter(item => !isInputReference(item)).map(snapshotImageItem);
     const priorGraph = options.runInputSnapshot?.priorGraph || (selectedOutputItem()?.graphResult ? snapshotImageItem(selectedOutputItem()) : null);
-    const instructions = [options.requestOverride ?? input.value, options.discussionContextOverride ?? compactConversation(conversationMessages), options.batchContext ? buildCommentRequest([...captured, ...(priorGraph ? [priorGraph] : [])]) : commentPrompt()].filter(Boolean).join('\n');
+    const enteredRequest = options.requestOverride ?? input.value, enteredDiscussion = options.discussionContextOverride ?? compactConversation(conversationMessages);
+    const instructions = [enteredRequest, enteredDiscussion, options.batchContext ? buildCommentRequest([...captured, ...(priorGraph ? [priorGraph] : [])]) : commentPrompt()].filter(Boolean).join('\n');
+    let minimalPicture = null, keptPrior = null; // E9b: 그림으로 생성이 남긴 것(축만 그린 그림·지킨 앞 결과) — 기본 생성까지 실패하면 이것으로 끝낸다
     if (creating && !instructions.trim()) { setStatus('축 이름과 그릴 모양 또는 수식을 적어 주세요.', 'warn'); input.focus(); return; }
     graphSubmitting = true; currentCancelRequested = false; currentTurnType = 'image';
     const epoch = ++currentRequestEpoch;
@@ -3048,6 +3084,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
             if (item) return item;
           } catch (error) {
             if (error?.name === 'AbortError' || !isCurrent()) return;
+            // E9b: 로그인·연결이 없으면 기본 생성도 같은 연결이라 실패한다 — 넘기지 않고 이어 갈 길로(그림 엔진 E9와 같음).
+            if (error?.graphOutcome === 'login' || error?.graphOutcome === 'offline') {
+              const again = () => runGraphRestore({ ...options, requestOverride: enteredRequest, discussionContextOverride: enteredDiscussion });
+              advanceGenerationClock('turn-terminal', 'failed'); requestPhase('failed');
+              if (error.graphOutcome === 'login') { guideDesktopLogin(again); return; }
+              setTaskState('idle');
+              setStatus('인터넷 연결을 확인해 주세요 · AI 서버에 닿지 못해 이번에는 그래프를 만들지 못했습니다. 앞 결과와 입력은 그대로 두었고, 연결되면 이어서 만듭니다.', 'warn');
+              addLog('AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 만듭니다. 바로 다시 하려면 실행을 누르세요.', 'error');
+              const epochAtStop = currentRequestEpoch;
+              window.addEventListener('online', () => { if (!disposed && !busy && !graphSubmitting && currentRequestEpoch === epochAtStop) void again(); }, { once: true, signal: lifecycle.signal });
+              return;
+            }
+            minimalPicture = error?.minimalItem || null; keptPrior = error?.keepPrior || null;
             addLog(`그림으로 생성하지 못해 기본 그래프 생성으로 이어서 만듭니다: ${error?.message || error}`, 'error');
             setGenerating(true, '설명으로 그래프를 만들고 있습니다', '축과 관계를 정리하고 편집 가능한 그래프로 구성합니다.');
           }
@@ -3103,6 +3152,27 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       captureActiveTaskTab(); await taskPersistence.checkpoint();
       return item;
     } catch (error) {
+      // E9b: 기본 생성까지 실패했지만 그림으로 생성이 축만 그린 그림을 남겼다 — 실패로 끝내지 않고 그것을 결과로(앞 결과는 그대로).
+      if (minimalPicture && isCurrent() && error?.name !== 'AbortError') {
+        const failure = describeGraphFailure(error);
+        addLog(`기본 그래프 생성도 실패했습니다: ${failure.detail || failure.message}`, 'error');
+        advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
+        if (options.batchContext) return minimalPicture;
+        addGraphPictureItem(minimalPicture);
+        setTaskState('completed');
+        setStatus('설계를 받지 못해 축만 그린 그래프를 두었습니다 · 설명을 더해 다시 만들거나 결과를 고칠 수 있습니다.', 'warn');
+        captureActiveTaskTab(); await taskPersistence.checkpoint();
+        return minimalPicture;
+      }
+      if (keptPrior && isCurrent() && error?.name !== 'AbortError') {
+        const failure = describeGraphFailure(error);
+        addLog(`기본 그래프 생성도 실패했습니다: ${failure.detail || failure.message}`, 'error');
+        advanceGenerationClock('turn-terminal', 'completed'); setTaskState('completed');
+        setStatus('그래프를 다시 만들지 못해 앞 결과를 그대로 두었습니다 · 설명을 고쳐 다시 실행할 수 있습니다.', 'warn');
+        if (options.batchContext) return keptPrior;
+        captureActiveTaskTab(); await taskPersistence.checkpoint();
+        return keptPrior;
+      }
       if (isCurrent()) { const failure = describeGraphFailure(error); advanceGenerationClock('turn-terminal', 'failed'); setTaskState('failed'); setStatus(failure.message, 'error'); addLog(failure.detail, 'error'); }
       if (options.batchContext) throw error;
     } finally {
@@ -6553,7 +6623,7 @@ ${chatText}` : ''}`;
       requestPhase('cancelled');advanceGenerationClock('turn-terminal','cancelled');
       await graphWorkflow.cancel();
       graphSubmitting=false;setTaskState('idle');setGenerating(false);setBusy(false);
-      setStatus('그래프 복원 취소됨 · 원본과 이전 결과 유지','warn');
+      setStatus(conversionKind === 'graph-create' ? '그래프 생성 취소됨 · 이전 결과 유지' : '그래프 복원 취소됨 · 원본과 이전 결과 유지','warn');
       captureActiveTaskTab();await taskPersistence.checkpoint();
       return {ok:true};
     }
