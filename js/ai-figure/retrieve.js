@@ -98,10 +98,19 @@ export function fillPicks(aiPicks, scored, count = PICK_COUNT) {
   return picks;
 }
 
-/** 요청 → 검색 조건. AI가 답을 못 주면 빈 조건(과목만 아는 대로)으로 이어 간다. */
+/** AI 없이 요청 글에서 검색어를 대강 뽑는다(분류 AI가 실패했을 때의 대체값, 원본 image_generator retrieve.cjs roughClassify). */
+export function roughClassify(request, subject = '') {
+  const words = String(request || '').split(/[\s,.·()「」'"]+/u).map((w) => w.replace(/(을|를|이|가|은|는|의|에|와|과|로|으로|에서)$/u, '')).filter((w) => w.length >= 2);
+  return { subject: subject || '', types: [], keywords: [...new Set(words)].slice(0, 8), fallback: true };
+}
+
+/** 요청 → 검색 조건. AI가 답을 못 주거나 JSON이 깨지면 요청 낱말로 대강 분류해 이어 간다(원본과 같게 — 참고 그림을 버리지 않음). */
 export async function classify({ request, index, readText, subject = '' }) {
-  const parsed = tryParseJson(await readText(classifyPrompt({ request, types: index.taxonomy.types || [] })));
-  const c = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  let parsed = null;
+  try { parsed = tryParseJson(await readText(classifyPrompt({ request, types: index.taxonomy.types || [] }))); }
+  catch (error) { if (error?.name === 'AbortError') throw error; }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return roughClassify(request, subject);
+  const c = parsed;
   return { subject: c.subject || subject || '', types: Array.isArray(c.types) ? c.types : [], keywords: Array.isArray(c.keywords) ? c.keywords : [] };
 }
 

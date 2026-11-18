@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import {
   createEngine, makeFigureSet, parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, makeIndex, loadFigureIndex,
-  fetchFigure, parseFigureId, figureFromQuestion, buildFigurePrompt, normalizeExpanded, aiFigureEngineEnabled,
+  fetchFigure, parseFigureId, figureFromQuestion, buildFigurePrompt, normalizeExpanded, aiFigureEngineEnabled, classify, roughClassify,
 } from '../js/ai-figure/index.js';
 import { parseTagLines, HAK_PENALTY } from '../js/ai-figure/retrieve.js';
 import { clearFigureCache, collectReferenceImages, isUsableReferenceImage, MAX_REFERENCE_DATA_URL_CHARS } from '../js/ai-figure/reference-images.js';
@@ -258,6 +258,24 @@ test('설명 지우기 실패는 지우기 전 그림으로, 구체화·검색 J
   assert.equal(nameOf(out.scenes[0].image), 'gray:gen1');
   assert.deepEqual(out.scenes[0].strippedTexts, []);
   assert.equal(out.scenes[0].refs.length, 3); // 점수 순으로 채움
+});
+
+test('분류 AI가 끝내 실패하거나 JSON이 깨져도 요청 낱말로 대강 분류해 참고 그림 3장을 고른다(원본 roughClassify와 같게)', async () => {
+  assert.deepEqual(roughClassify('빗면 위의 도르래와 물체', '물리학Ⅰ'), { subject: '물리학Ⅰ', types: [], keywords: ['빗면', '도르래', '물체'], fallback: true });
+  const index = makeIndex({ taxonomy: TAX, tags: TAGS });
+  const thrown = await classify({ request: '빗면 위의 도르래', index, readText: async () => { throw new Error('서버 오류'); } });
+  assert.equal(thrown.fallback, true);
+  assert.ok(thrown.keywords.includes('도르래'));
+  const broken = await classify({ request: '빗면 위의 도르래', index, readText: async () => '???' });
+  assert.equal(broken.fallback, true);
+  await assert.rejects(classify({ request: 'x', index, readText: async () => { throw Object.assign(new Error('취소'), { name: 'AbortError' }); } }), { name: 'AbortError' });
+  // 분류 호출이 늘 실패해도 검색이 통째로 버려지지 않는다(전에는 참고 그림 0장으로 그렸음)
+  const { ai } = fakeAi({ textOverride: { classify: new Error('x') } });
+  const orig = ai.readText;
+  ai.readText = async (a) => { if (a.text.includes('검색 조건')) throw new Error('분류 서버 오류'); return orig(a); };
+  const out = await engineOf(ai, { retries: { text: 1 } }).makeFigureSet({ request: '빗면 위의 도르래' });
+  assert.equal(out.ok, true);
+  assert.equal(out.scenes[0].refs.length, 3);
 });
 
 test('색인을 못 받아도 참고 그림 없이 그림, 오류는 결과에만', async () => {
