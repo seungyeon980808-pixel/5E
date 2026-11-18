@@ -960,6 +960,12 @@
       "findingIds": [
         "E180-AI-ENGINES-CONNECT"
       ]
+    },
+    {
+      "path": "tests/test-ai-engines-lazy-load.mjs",
+      "findingIds": [
+        "X2-180-LAZY-ENGINE-ASSETS"
+      ]
     }
   ],
   "browser": [
