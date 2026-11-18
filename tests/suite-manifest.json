@@ -2451,6 +2451,16 @@
       ]
     },
     {
+      "path": "tests/test-memory-feedback-recheck-browser.cjs",
+      "findingIds": [
+        "X3-1114-1-RELABEL-DOWN-TO-ONE",
+        "X3-1114-2-TILE-MENU-NO-OVERLAP",
+        "X3-1114-3-TABLE-GRID-NOT-SLOT-DIALOG",
+        "X3-1114-29-TILE-PICTURE-CONTAIN",
+        "X3-1113-9-BOGI-LETTER-JUDGE"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-171-browser.cjs",
       "findingIds": [
         "BL3-B21-COMBO-FIT",
