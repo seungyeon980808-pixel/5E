@@ -942,6 +942,12 @@
       "findingIds": [
         "BL3-B7-PAPER-MM"
       ]
+    },
+    {
+      "path": "tests/test-ai-figure-engine.mjs",
+      "findingIds": [
+        "E180-AI-FIGURE-ENGINE"
+      ]
     }
   ],
   "browser": [

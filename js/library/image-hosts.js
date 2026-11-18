@@ -72,3 +72,17 @@ export function needsCors(url, scope = globalThis) {
   const here = scope?.location?.origin;
   return !here || new URL(url).origin !== here;
 }
+
+// 미리 변환한 기출 문항 JSON(Cloudflare 정적 파일 Worker 5e-exam-pdf·5e-exam-hak의 /q/<문항>.json).
+// 그림 엔진(js/ai-figure/reference-images.js)이 참고 기출 그림을 여기서 꺼낸다. 문항 JSON 안 figure 블록에 data URL이 들어 있다.
+// assets/exampool/sheet/preconverted.js의 HOSTS와 같은 값이다(그쪽은 1.7.1 그대로 둠).
+export const EXAM_QUESTION_HOSTS = Object.freeze({
+  kice: "https://5e-exam-pdf.5e-desktop.workers.dev/q/",
+  hak: "https://5e-exam-hak.5e-desktop.workers.dev/q/",
+});
+
+/** 기출 문항 JSON 주소. src는 그림 색인 줄의 src('kice'|'hak'). */
+export function examQuestionJsonUrl(item, src = "kice") {
+  const base = src === "hak" ? EXAM_QUESTION_HOSTS.hak : EXAM_QUESTION_HOSTS.kice;
+  return `${base}${encodeURIComponent(item)}.json`;
+}
