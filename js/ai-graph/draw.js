@@ -19,14 +19,15 @@ function loadScript(src) {
   return new Promise((resolve, reject) => {
     const el = document.createElement('script');
     el.src = src; el.async = true; el.dataset.aiGraph = 'katex';
-    el.onload = () => resolve(); el.onerror = () => reject(new Error('KaTeX를 불러오지 못했습니다.'));
+    el.onload = () => resolve(); el.onerror = () => { el.remove(); reject(new Error('KaTeX를 불러오지 못했습니다.')); };
     document.head.appendChild(el);
   });
 }
 function loadCss(href) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector('link[data-ai-graph="stage-css"]');
-    if (existing) { resolve(existing); return; }
+    if (existing?.sheet) { resolve(existing); return; }
+    existing?.remove(); // 못 불러온 옛 link는 걷고 다시 붙인다(E9b)
     const el = document.createElement('link');
     el.rel = 'stylesheet'; el.href = href; el.dataset.aiGraph = 'stage-css';
     el.onload = () => resolve(el); el.onerror = () => reject(new Error('그래프 판 스타일을 불러오지 못했습니다.'));
@@ -35,18 +36,28 @@ function loadCss(href) {
 }
 
 // KaTeX·판 스타일·글꼴을 한 번만 불러온다. KaTeX를 못 불러오면 글자를 수식 없이 그대로 쓴다(실패로 끝내지 않음).
+let assetsRetry = false;
 export function ensureGraphAssets() {
   if (!assetsPromise) {
+    // 앞에서 글꼴을 못 받았으면 판 스타일을 다시 붙여 글꼴(@font-face)도 새로 받게 한다(오류 난 글꼴은 다시 받지 않으므로).
+    if (assetsRetry) { assetsRetry = false; document.querySelector('link[data-ai-graph="stage-css"]')?.remove(); }
     assetsPromise = (async () => {
       const warnings = [];
       try { await loadCss(STAGE_CSS); } catch (e) { warnings.push(e.message); }
       if (!globalThis.katex) { try { await loadScript(KATEX_JS); } catch (e) { warnings.push(e.message); } }
       katexLib = globalThis.katex || null;
+      const faces = ['normal 400 20px FEGKaTeX_Main', 'italic 400 20px FEGKaTeX_Math', 'normal 400 20px FEGKaTeX_Size1', 'normal 400 20px FEGKaTeX_AMS'];
       try {
-        await Promise.all(['normal 400 20px FEGKaTeX_Main', 'italic 400 20px FEGKaTeX_Math', 'normal 400 20px FEGKaTeX_Size1', 'normal 400 20px FEGKaTeX_AMS'].map((f) => document.fonts.load(f)));
+        await Promise.all(faces.map((f) => document.fonts.load(f)));
+        // 글꼴 파일을 못 받으면 load는 오류 없이 빈 목록으로 끝난다 — 받았는지 따로 확인해 알린다(대체 글꼴로 그림, 다음에 다시 시도).
+        if (katexLib && faces.some((f) => !document.fonts.check(f))) warnings.push('수식 글꼴을 불러오지 못해 대체 글꼴로 그렸습니다.');
       } catch (e) { warnings.push('글꼴: ' + e.message); }
       return { katex: !!katexLib, warnings };
     })();
+    // E9b: 한 번 못 불러온 것(KaTeX·판 스타일·글꼴)을 다음 그리기에서도 다시 묻지 않으면, 잠깐 끊긴 탓에 그 뒤 모든 그래프가
+    // 수식 없이 그려졌다. 문제가 있었던 판은 이번 한 번만 쓰고, 다음 그리기에서 다시 불러 본다.
+    const mine = assetsPromise;
+    mine.then((a) => { if (a.warnings.length && assetsPromise === mine) { assetsPromise = null; assetsRetry = true; } }, () => { if (assetsPromise === mine) assetsPromise = null; });
   }
   return assetsPromise;
 }
@@ -230,7 +241,9 @@ async function fontFaceCss(families) {
       const url = new URL(m[1], sheet.href || location.href).href;
       try {
         if (!fontDataCache.has(url)) {
-          const buf = new Uint8Array(await (await fetch(url)).arrayBuffer());
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`font ${res.status}`);
+          const buf = new Uint8Array(await res.arrayBuffer());
           let bin = ''; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
           fontDataCache.set(url, 'data:font/woff2;base64,' + btoa(bin));
         }

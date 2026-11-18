@@ -51,7 +51,26 @@
 | Codex 로그인 없음(시작 전 `desktop.status()`) 또는 실행 중 만료 | AI를 더 부르지 않고 「연결 정보」 창을 띄워 「Codex 로그인」으로 데려감 → 로그인되면 같은 요청으로 이어서 |
 | 취소 | 그 차례만 멈춤·옛 길로 넘기지 않음, 다음 차례는 새로 시작(앞 취소 표시를 지움) |
 
-IPC를 건너온 오류는 code가 사라지므로 `classifyAiError`가 글로 가릅니다(auth·network·transport·model·other). 검사: `tests/test-ai-engines-faults.mjs`(단위), `tests/test-ai-engines-faults-browser.cjs`(크롬·웹킷, 고장 23가지 + 동시성).
+| 그림 차례·글 읽기가 끝을 알리지 않음(E9b) | 화면 쪽 차례 시계(`ENGINE_IMAGE_DEADLINE_MS`·`ENGINE_TEXT_DEADLINE_MS` = 240초, main 한도 100초×2보다 김)로 끊음 — 그림은 interrupt 뒤 반대 모델, 두 차례 연달아 답이 없으면 `health.imageDown`으로 장면 재시도 없이 옛 길; 글은 transport로 세어 `textDown` |
+| 엔진 모듈(`ai-figure/index.js`·`ai-graph/index.js`·`draw.js`)을 못 받음(E9b) | 이번에는 옛 길·기본 생성으로. 브라우저가 실패한 import를 주소별로 기억하므로 다음 차례에는 `&retry=N` 주소로 다시 받음 |
+
+### 그래프 「그림으로 생성」 고장별 길(E9b, 11-19)
+
+| 고장 | 길 |
+|---|---|
+| 시작 전 Codex 로그인 없음·실행 중 만료 | AI를 부르지 않고(또는 더 부르지 않고) 「연결 정보」 창 → 로그인하면 같은 요청으로 이어서(`guideDesktopLogin`) |
+| 인터넷 끊김 | 기본 생성으로 넘기지 않음 → 「인터넷 연결을 확인해 주세요」, `online`이 되면 한 번 이어서 |
+| 설계 AI 시간 초과·429·5xx·답 없음 / 설계 JSON이 깨짐·축 범위 없음·곡선 없음 | 엔진은 축만 그린 설계(`minimal`)를 내지만 패널은 그것으로 끝내지 않고 **기본 그래프 객체 생성**으로. 기본 생성도 실패하면 축만 그린 그림을 결과로(실패로 끝나지 않음) |
+| 고른 결과가 그림 그래프인데 설계 실패(엔진 `previous`) | 기본 생성으로 새로 만들고, 그것도 실패하면 앞 결과 그대로(경고) |
+| 값 검사 AI 실패·엉뚱한 답 | 받은 설계 그대로 그림(결과 확인에 경고) |
+| 글 모델 거절(400) | 다른 글 모델로 한 번 더 |
+| 글자 겹침이 남음 | 그림은 넣고 결과 확인에 `GRAPH_PICTURE_LABEL_OVERLAP`(major), 상태 글 「글자 겹침 n곳」 |
+| KaTeX·수식 글꼴을 못 받음 | 수식 없이(대체 글꼴로) 그리고 상태 글로 알림. 다음 그리기에서 KaTeX·판 스타일을 다시 받음(실패를 붙들지 않음) |
+| 엔진·그리기 모듈을 못 받음 | 기본 생성으로, 다음 차례에는 다시 받아 그림으로 |
+| 취소 | 「그래프 생성 취소됨 · 이전 결과 유지」, 다음 차례는 새로 |
+| 저장된 `meta.graphPlan`으로 다시 그리기 | AI·연결 없이 그림. 망가진 설계면 축만 그린 그림(`minimal`) |
+
+IPC를 건너온 오류는 code가 사라지므로 `classifyAiError`가 글로 가릅니다(auth·network·transport·model·other). 검사: `tests/test-ai-engines-faults.mjs`(단위), `tests/test-ai-engines-faults-browser.cjs`(크롬·웹킷, 그림 고장 25가지 + 동시성), `tests/test-ai-engines-faults-graph-browser.cjs`(크롬·웹킷, 그래프 그림 고장 25가지 + 다시 그리기 3가지).
 
 ## 결과 정보(`item.meta` → 캔버스 이미지 객체 `meta`)
 

@@ -2502,6 +2502,12 @@
       "findingIds": [
         "E180-AI-ENGINES-NEVER-FAIL-BROWSER"
       ]
+    },
+    {
+      "path": "tests/test-ai-engines-faults-graph-browser.cjs",
+      "findingIds": [
+        "E180-AI-GRAPH-PICTURE-NEVER-FAIL-BROWSER"
+      ]
     }
   ],
   "deferred": [
