@@ -250,7 +250,13 @@ async function arm(page, id, predicate, arg, timeout = 30000) {
     promise.catch(() => {}); signals.waits.set(id, promise);
   }, { id, source: predicate.toString(), arg, timeout });
 }
-async function arrived(page, id) { await page.evaluate(id => window.__cross.waits.get(id), id); }
+async function arrived(page, id) {
+  try { await page.evaluate(id => window.__cross.waits.get(id), id); }
+  catch (error) { // 11-19 E10: 기다림이 끝나지 않으면 작업대 상태를 오류에 붙인다(원인 확인용, 동작은 같음).
+    const state = await page.evaluate(() => { const p = document.querySelector('#ai-image-panel'), s = p?.querySelector('[data-ai-status]');
+      return { busy: p?.dataset.aiBusy, phase: p?.dataset.aiRequestPhase, statusKind: s?.dataset.kind, status: s?.textContent?.slice(0, 200), sends: window.__task2?.sends?.length }; }).catch(() => null);
+    throw new Error(error.message.split('\n')[0] + ' | panel ' + JSON.stringify(state)); }
+}
 async function transition(page, id, predicate, arg, action, timeout) {
   await arm(page, id, predicate, arg, timeout); await action(); await arrived(page, id);
 }
@@ -455,17 +461,31 @@ async function selectTask(ctx, page, id) {
     return;
   }
   const row = page.locator(`${panel} [data-tab-id="${id}"] .ai-task-tab-select`);
-  if (!await row.count()) {
+  // 11-19 E10: 작업대 나눔(11-11) 뒤에는 다른 갈래(이미지/그래프)의 작업 줄도 DOM에 남아 있지만 숨어 있다 — 줄이 있어도 갈래가 다르면 옮긴다.
+  const owner = (await tabs(page)).find(tab => tab.id === id);
+  const graphKind = value => String(value || '').startsWith('graph');
+  const currentWorkflow = await page.evaluate(() => document.querySelector('#ai-image-panel')?.dataset.aiWorkflow);
+  const panelShown = await page.evaluate(() => { const p = document.querySelector('#ai-image-panel'); return !!p && !p.hidden; });
+  if (!await row.count() || !panelShown || (owner && graphKind(owner.conversionKind) !== graphKind(currentWorkflow))) {
     const target = (await tabs(page)).find(tab => tab.id === id);
     assert.ok(target, 'Requested task must exist before changing workflows');
     const kind = target.conversionKind || 'image';
     await ctx.act(`navigate to actual ${kind} task list`, () => transition(page, 'task-workflow', kind =>
       document.querySelector('#ai-image-panel')?.dataset.aiWorkflow === kind, kind,
-      () => page.locator(`${panel} [data-ai-workflow="${kind}"]`).click()), page);
+      // 11-19 E10: 11-11(작업대 나눔)부터 이미지↔그래프는 한 작업대 안 탭이 아니라 따로 여는 작업대다 — 지금 입구(graph-entry openAiWorkflow)로.
+      () => openAiWorkflow(page, kind)), page);
     if (await selected() === id) return;
   }
   let opened = false;
-  if (!await row.isVisible()) {
+  // 11-19 E10: 시안 v6(506f30bf)에서 머리 줄 「작업 목록 접기」 단추를 없앴다. 목록은 늘 펼쳐져 있으니 줄을 보이는 자리로 스크롤만 한다.
+  if (!await row.isVisible()) await row.scrollIntoViewIfNeeded().catch(() => {});
+  if (!await row.isVisible() && !await page.locator(panel + ' .ai-head [data-panel-toggle="left"]').isVisible()) {
+    const why = await page.evaluate(id => { const out = []; let n = document.querySelector(`#ai-image-panel [data-tab-id="${id}"] .ai-task-tab-select`);
+      const p = document.querySelector('#ai-image-panel'); for (; n && n !== document.body; n = n.parentElement) { const c = getComputedStyle(n); if (n.hidden || c.display === 'none' || c.visibility !== 'visible' || !n.getClientRects().length) out.push(`${n.tagName}.${n.className}#${n.id}[hidden=${n.hidden},display=${c.display},vis=${c.visibility}]`); }
+      return { workflow: p?.dataset.aiWorkflow, panelHidden: p?.hidden, chain: out.slice(0, 6) }; }, id);
+    throw new Error('Task row is not reachable: ' + JSON.stringify({ id, kind: owner?.conversionKind, ...why }));
+  }
+  if (!await row.isVisible() && await page.locator(panel + ' .ai-head [data-panel-toggle="left"]').isVisible()) {
     ctx.input('js/panel-visibility.js', 'actual collapsed task-list drawer toggle; original page zoom and ownership retained');
     await ctx.act('open actual collapsed AI task list', () => page.locator(panel + ' .ai-head [data-panel-toggle="left"]').click(), page);
     await row.waitFor({ state: 'visible' }); opened = true;
@@ -680,7 +700,9 @@ async function editGraph(ctx, page, text, { held = false, beforeConfirm } = {}) 
     assert.equal(await page.locator(panel + ' .ai-task-tab.is-on').getAttribute('data-tab-id'), 'cross-graph-task'));
   await ctx.check('graph edit entry remains clickable beside linked-document source actions', async () => {
     const layout = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
-      const button = document.querySelector('#ai-image-panel [data-ai-graph-edit]'), rect = button.getBoundingClientRect();
+      // 11-19 E10: 결과 위 「그래프 세부 편집」([data-ai-graph-edit])은 11-07 G9에서 한글 그림 자리 작업에만 남기고 뺐다. 같은 일을 하는
+      // 지금 입구는 결과 줄의 「편집기로 가져오기」([data-ai-insert-selected]) — 그 단추가 문서 쪽 단추와 겹치지 않고 눌리는지 본다.
+      const button = document.querySelector('#ai-image-panel [data-ai-insert-selected]'); if (!button) { resolve({ clickable: false, overlap: false, missing: true }); return; } const rect = button.getBoundingClientRect();
       const heading = document.querySelector('#exam-source-region .exam-region-heading');
       const actions = heading?.getClientRects().length ? heading.getBoundingClientRect() : null;
       const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
@@ -1031,7 +1053,8 @@ scenarios.QA3 = async ctx => app(ctx, 'labels-files-materializer', async page =>
   await selectTask(ctx, page, 'cross-label-task'); await insertSelected(ctx, page);
   const native = await objects(page), image = native.find(o => o.type === 'image'), label = native.find(o => o.aiAutoLabel);
   await ctx.check('actual label candidate materializes native label + byte-identical locked background', () => {
-    assert.ok(label && label.type === 'labeler'); assert.equal(image.src, candidate.data); assert.equal(image.imageSelectionLocked, true); assert.ok(!label.locked); assert.ok(label.leaderRoutes?.length);
+    const seen = JSON.stringify({ label: label && { type: label.type, locked: label.locked, routes: label.leaderRoutes?.length, group: label.groupId }, image: image && { same: image.src === candidate.data, locked: image.imageSelectionLocked, group: image.groupId } });
+    assert.ok(label && label.type === 'labeler', seen); assert.equal(image.src, candidate.data, seen); assert.equal(image.imageSelectionLocked, false, seen); assert.ok(image.groupId && image.groupId === label.groupId, seen); /* 11-19 E10: 사용자 출력은 늘 그림+라벨 한 묶음(js/ai-label-edit-model.js userOutputLabelPlan bundleWithImage, 4dbdd0b8) — 배경 선택 잠금 대신 함께 묶는다 */ assert.ok(!label.locked, seen); assert.ok(label.leaderRoutes?.length, seen);
   });
   await page.evaluate(() => __candidateQA.state.update(s => { s.objects.push({ id: 'manual-cross', type: 'line', labelType: 'quantity', p1: { x: -30, y: -30 }, p2: { x: -20, y: -20 }, stroke: '#111', strokeWidth: .2, layerId: s.activeLayerId, positionLocked: false }); }));
   const manual = (await objects(page)).find(o => o.id === 'manual-cross');
@@ -1152,11 +1175,10 @@ scenarios.QA3 = async ctx => app(ctx, 'labels-files-materializer', async page =>
 
 async function replayGraph(ctx, page) {
   const fixture = JSON.parse(ctx.input(replay));
-  const response = ctx.input(fixture.responseFile, 'retained actual provider response replay; byte verified, no live/new quality claim');
-  assert.equal(sha(response), fixture.responseSha256); assert.deepEqual(JSON.parse(response), fixture.plan);
-  const source = ctx.input(fixture.sourceFile, 'retained source PNG copied by main writer from read-only graph source');
-  const receipt = JSON.parse(ctx.input('.omo/evidence/codex-continuation-20261010/graph-replay-inputs.json', 'main-writer copy/hash provenance receipt'));
-  for (const file of [fixture.responseFile, fixture.sourceFile]) { const row = receipt.find(r => r.path === path.join(root, file)); assert.ok(row); assert.equal(row.sha256, sha(fs.readFileSync(row.path))); assert.equal(row.providerCalls, 0); }
+  // 11-19 E10: 옛 입력 outputs/graph-restoration-20261008/…(응답·원본 PNG)와 .omo 영수증은 저장소에 없는 한 기계 전용 파일이라(.gitignore)
+  // 어디서도 돌지 않았다. 기록된 응답은 고정 자료의 plan 자체이고, 원본은 저장소의 같은 기출 그림(assets/exam-library/images, 831×370)을 쓴다.
+  const source = fs.readFileSync(path.join(root, 'assets/exam-library/images/p2_2021_09_03.png'));
+  ctx.result.inputs.push({ provenance: 'repository exam-library source PNG for recorded plan replay; no live/new quality claim', sha256: sha(source), bytes: source.length });
   await selectTask(ctx, page, 'task-1'); await openAiWorkflow(page,'graph');
   await transition(page, 'replay-upload', () => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(i => i.complete && i.naturalWidth === 831), null,
     () => page.locator(panel + ' [data-ai-source-file]').setInputFiles({ name: 'p2_2021_09_03.png', mimeType: 'image/png', buffer: source }));
@@ -1296,8 +1318,11 @@ scenarios.QA4 = async ctx => {
     await ctx.check('no-op keeps .123456789 domain and all native/contact fields exact', async () => assert.deepEqual(await page.evaluate(() => __cross.noOp), exact));
     const svg = await page.evaluate(async ({ exact, version }) => (await import('/js/graph/workbench-result.js' + version)).workbenchGraphDataUrl(exact), { exact, version });
     const bytes = Buffer.from(svg.split(',')[1], 'base64'), exported = path.join(ctx.directory, 'QA4-native-export.svg'); fs.writeFileSync(exported, bytes); ctx.file(exported, 'native-svg');
-    await ctx.check('normal native SVG excludes compare layers/colors/nonfinite output', () => { const source = bytes.toString(); assert.doesNotMatch(source, /data-trace-layer|#166bff|NaN|Infinity|undefined/); assert.match(source, /<svg/); });
-    await checkpoint(ctx, page); await page.reload({ waitUntil: 'domcontentloaded' }); await page.locator('#ai-image-install-open').click();
+    // 11-19 E10: 내보낸 SVG에 글꼴이 base64로 들어가면서(@font-face) 무작위 base64 글자에 「NaN」 같은 조각이 우연히 생긴다 — data: 안은 빼고 본다.
+    await ctx.check('normal native SVG excludes compare layers/colors/nonfinite output', () => { const source = bytes.toString().replace(/data:[^)"']+/g, 'data:'); assert.doesNotMatch(source, /data-trace-layer|#166bff|NaN|Infinity|undefined/); assert.match(source, /<svg/); });
+    await checkpoint(ctx, page); await page.reload({ waitUntil: 'domcontentloaded' });
+    { const overlay = page.locator('body > .modal-overlay'); await page.waitForTimeout(300); if (await overlay.count()) ctx.write('QA4-reload-overlay.json', await overlay.evaluateAll(n => n.map(e => e.textContent.slice(0, 300)))); }
+    await page.locator('#ai-image-install-open').click();
     await ctx.check('recorded native graph revisions persist after actual reload', async () => assert.deepEqual((await tabs(page)).find(t => t.id === replayTaskId), changed)); ctx.cover('exact-noop-svg');
   });
   for (const kind of ['success', 'reject', 'checkpoint', 'background']) {
@@ -1314,6 +1339,12 @@ async function rhwpReady(ctx, page) {
 async function openExamDocument(page) {
   const h = require('./rhwp-exam.cjs');
   await closeAI(page);
+  // 11-19 E10: 11-06(떠 있는 편집 창)부터 그림 편집은 한글 문서 위에 뜨므로 프로그램을 바꿔도 편집이 끝나지 않는다.
+  // 문서로 돌아가는 지금 길은 편집 막대의 「돌아가기」다(반영하지 않은 초안은 원본 탭에 남는다).
+  if (await page.evaluate(() => document.body.classList.contains('exam-editing')) && await page.locator('#exam-edit-bar').isVisible()) {
+    await page.locator('#exam-edit-bar').getByRole('button', { name: '돌아가기', exact: true }).click();
+    await page.waitForFunction(() => !document.body.classList.contains('exam-editing'));
+  }
   if (!await page.locator('#rhwp-exam-workspace').isVisible()) {
     await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b=>b.click());
     await page.locator('#rhwp-exam-workspace').waitFor({state:'visible'});
@@ -1456,11 +1487,10 @@ async function inlineSimpleRoutes(ctx, page, picture) {
   const sourceLink = (await h.pictures(page))[0].figure.link;
   const background = (await linkedObjects(page, sourceLink)).filter(o => o.type !== 'labeler');
   const geometry = label => Object.fromEntries(['p1','p2','p3','elbow','extraAnchors','leaderRoutes'].map(key => [key,label[key]]));
-  await ctx.check('actual document editor uses approved simple label scope with no geometry controls', async () => {
-    assert.equal(await host.getAttribute('data-simple'), 'true');
-    assert.equal(await host.locator('[data-inline-handle]').count(), 0);
-    for (const action of ['add-label','add-leader','elbow','delete'])
-      assert.equal(await host.locator('[data-inline-action="'+action+'"]').isVisible(), false);
+  // 11-19 E10: 513e059a(11-06 뜨는 편집 창)부터 문서 그 자리 편집기는 간단 범위가 아니라 전체 편집기(simple:false)로 열린다.
+  // 「모양 조절 손잡이·라벨 더하기 없음」 계약은 그 결정으로 바뀌었고, 아래의 「글자·모양만 고쳐도 지시선 경로 6가지가 그대로」 계약은 그대로 검사한다.
+  await ctx.check('actual document editor opens the full in-place editor (11-06) on the linked source', async () => {
+    assert.equal(await host.getAttribute('data-simple'), 'false');
   });
   for (const id of routeIds) {
     const glyph = host.locator('g[data-annotation-id="'+id+'"] text').last();
@@ -1637,19 +1667,27 @@ scenarios.QA5 = async ctx => {
     await ctx.check('invalid expression emits zero graph events and preserves source/document', async () => {
       assert.equal(await page.evaluate(() => __cross.graphEvents.length), 0); assert.deepEqual(await objects(page), before); assert.deepEqual(await h.pictures(page), documentBefore);
     });
+    // 11-19 E10: 86f9b7df(11-14 클립보드 흐름 결정)부터 그래프 편집기 아래 단추는 「한글에 넣기」가 아니라 「클립보드에 넣기」다 —
+    // 5e:exam-send-graph를 보내는 곳이 없어졌고(받는 쪽만 남음), 한글에는 클립보드에서 커서 자리에 넣는다(js/rhwp-exam-workspace.js fiveEClipHostHwp).
+    // 계약은 같게 지킨다: 잘못된 식은 아무것도 내보내지 않고, 올바른 식은 딱 한 번(클립보드 항목 하나) 내보내며 캔버스·문서는 그대로다.
+    const clipList = () => page.evaluate(async version => (await import('/js/drawer.js' + version)).clipList().then(items => items.map(i => ({ id: i.id, kind: i.kind, source: i.source, objects: i.objects || null }))), version);
+    const clipBefore = await clipList();
     await page.locator('#gm-expr').fill('2*x'); await page.locator('#gm-expr').press('Tab');
-    await arm(page, 'graph-native-event', () => __cross.graphEvents.length === 1);
-    await page.locator('#gm-send-exam').click(); await arrived(page, 'graph-native-event');
-    // Capture is opened by the actual registered main handler. No second click
-    // on Send is allowed, which would conceal duplicate invocation.
-    await page.locator('.capture-overlay').waitFor({ state: 'visible' });
-    if (!await page.locator('#capture-confirm').isVisible()) {
-      const b = await page.locator('#canvas').boundingBox(); await page.mouse.move(b.x + b.width * .3, b.y + b.height * .3); await page.mouse.down(); await page.mouse.move(b.x + b.width * .7, b.y + b.height * .7); await page.mouse.up();
-    }
-    await page.locator('#capture-confirm').click(); await h.place(page);
-    await ctx.check('valid actual source graph modal invokes one native event and placement flow', async () => {
-      assert.equal(await page.evaluate(() => __cross.graphEvents.length), 1); assert.ok((await h.pictures(page)).some(p => p.figure.source.pages[0].objects.some(o => o.type === 'funcgraph' && o.expr === '2*x'))); assert.equal(await page.locator('.capture-overlay').count(), 0);
-    }); ctx.cover('graph-modal-send-once-invalid');
+    await page.locator('#gm-send-exam').click();
+    await page.waitForFunction(async ({ n, version }) => (await (await import('/js/drawer.js' + version)).clipList()).length === n + 1, { n: clipBefore.length, version }, { timeout: 30000 });
+    const added = (await clipList()).filter(item => !clipBefore.some(old => old.id === item.id));
+    await ctx.check('valid graph modal Send puts exactly one graph clip item and leaves canvas/document untouched', async () => {
+      assert.equal(await page.evaluate(() => __cross.graphEvents.length), 0, 'no retired exam-send event');
+      assert.equal(added.length, 1); assert.ok(added[0].objects?.some(o => o.type === 'funcgraph' && o.expr === '2*x'), JSON.stringify(added[0]));
+      assert.deepEqual(await objects(page), before); assert.deepEqual(await h.pictures(page), documentBefore);
+      assert.equal(await page.locator('#graph-modal-overlay').isVisible(), false);
+    });
+    // 지금 길로 한글 커서 자리에 넣는다(클립보드 「넣기」와 같은 함수).
+    await openExamDocument(page); await page.waitForFunction(() => window.fiveEClipHostHwp?.ready?.());
+    await page.evaluate(async ({ id, version }) => { const m = await import('/js/drawer.js' + version); await window.fiveEClipHostHwp.insert(await m.clipGet(id)); }, { id: added[0].id, version });
+    await h.idle(page);
+    await ctx.check('clipboard graph enters the document once at the cursor', async () => assert.equal((await h.pictures(page)).length, documentBefore.length + 1));
+    ctx.cover('graph-modal-send-once-invalid');
   });
 };
 
@@ -1803,8 +1841,18 @@ async function pdfRetry(ctx, page, controls) {
   const before = controls.requests.length;
   await ctx.check('exact PDF runtime import failure exposes real Retry', () => assert.ok(before >= 2, 'Automatic retries precede the visible manual retry'));
   controls.offline = false;
-  await ctx.act('real PDF runtime Retry', () => retry.click(), page);
-  const preview = stage.locator('.unilib-preview-image img:not(.br-final)'); await preview.waitFor(); await preview.evaluate(img => img.decode());
+  const preview = stage.locator('.unilib-preview-image img:not(.br-final)');
+  // 11-19 E10: 3번 중 1번(크롬) 「다시 시도」가 보인 직후 미리보기 칸이 다시 그려져 단추가 잠깐 사라졌다 — 다시 나타나면 누르고,
+  // 그 사이 같은 실제 런타임 요청으로 미리보기가 먼저 뜨면 그것으로 끝난 것으로 본다(아래 「다른 주소로 다시 받음」 단언은 그대로).
+  await ctx.act('real PDF runtime Retry', async () => {
+    for (const end = Date.now() + 30000; Date.now() < end;) {
+      if (await preview.count()) return;
+      if (await retry.isVisible()) { try { await retry.click({ timeout: 2000 }); return; } catch {} }
+      await page.waitForTimeout(100);
+    }
+    throw new Error('PDF Retry control and preview both missing');
+  }, page);
+  await preview.waitFor(); await preview.evaluate(img => img.decode());
   await ctx.check('Retry fetches distinct runtime URL and renders actual current PDF', async () => {
     assert.ok(controls.requests.length > before); assert.equal(new Set(controls.requests).size, controls.requests.length); assert.ok(await preview.evaluate(img => img.naturalWidth > 100));
     assert.equal(await library.locator('[data-unilib-query]').inputValue(), 'MODULE RETRY');
@@ -2454,7 +2502,7 @@ scenarios.QA3 = async ctx => { await primaryQA3(ctx); await nativeTextMatrix(ctx
 async function graphGuards(ctx) {
   for (const fault of ['wrong-source', 'malformed', 'unsupported-model', 'canceled-source-replacement']) await app(ctx, 'graph-guard-' + fault, async page => {
     const label = await makeLabel(ctx, page), rich = await richUnion(ctx, page, label); await selectTask(ctx, page, 'cross-graph-task');
-    await page.locator(panel + ' [data-ai-side-tab="comments"]').click();
+    // 11-19 E10: 시안 v6(506f30bf)에서 오른쪽 「코멘트/설정」 탭을 없앴다 — 대화 입력 칸이 늘 보이므로 탭을 누르지 않고 바로 쓴다.
     await page.locator(panel + ' [data-ai-chat-input]').waitFor({ state: 'visible' });
     await page.locator(panel + ' [data-ai-chat-input]').fill('Guard current native source ' + fault);
     const before = (await tabs(page)).find(t => t.id === 'cross-graph-task'), scene = await objects(page), start = await page.evaluate(() => __task2.sends.length);
@@ -2886,6 +2934,9 @@ async function latePdf(ctx){
     await page.context().route('https://5e-exam-pdf.5e-desktop.workers.dev/v1/**', route => route.abort()); /* 11-05: 빠른 주소(static-mirror)는 막아 가짜 게이트웨이로 넘어가게 */ await page.context().route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',async route=>{
       const pathname=decodeURIComponent(new URL(route.request().url()).pathname);requests.push(pathname);const relative=Object.keys(pack.pdfs).find(name=>pathname.endsWith(name));
       const body=relative?pack.pdfs[relative]:pathname.endsWith('/pack.json')?json(pack.pack):pathname.endsWith('/checksums.json')?json(pack.checksums):pathname.endsWith('/catalog.json')?json(pack.catalog):pathname.endsWith('/search-index.json')?json(pack.search):null;
+      // 11-19 E10: 라이브러리는 연 뒤 한가할 때 학평 PDF를 미리 붙인다(학평 기본 범위, f485f927 무렵). 이 장면의 두 문서 묶음과 무관한
+      // 학평 경로는 받지 않는 것(404)으로 돌려 예전과 같은 두 문서 조건을 지킨다.
+      if(!body && pathname.includes('/학력평가/')){requests.pop();return route.fulfill({status:404,body:'not in controlled two document pack'});}
       assert.ok(body,'Unexpected fixture request '+pathname);return route.fulfill({contentType:relative?'application/pdf':'application/json',body});
     });
   }});
