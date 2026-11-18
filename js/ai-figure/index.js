@@ -54,7 +54,7 @@ async function withRetry(times, signal, fn) {
  *   models?: { text?: string, image?: string }, retries?: { text?: number, image?: number, scene?: number },
  *   grayscale?: (dataUrl: string, { signal }) => Promise<{ data: string, applied: boolean, reason: string|null }>, includeHak?: boolean }} deps
  */
-export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true } = {}) {
+export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0 } = {}) {
   if (!ai || typeof ai.readText !== 'function' || typeof ai.generateImage !== 'function') throw new TypeError('그림 엔진에는 ai.readText·ai.generateImage가 필요합니다.');
   const model = { ...DEFAULT_MODELS, ...models };
   const tries = { text: 3, image: 2, scene: 2, ...retries };
@@ -63,7 +63,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
 
   function context(signal, log) {
     return {
-      fetch: fetchImpl, signal, log,
+      fetch: fetchImpl, signal, log, referenceTimeoutMs,
       readText: (text, attachments = []) => withRetry(tries.text, signal, () => ai.readText({ model: model.text, text, attachments, signal }).then(textOf)),
       generateImage: (text, attachments = []) => withRetry(tries.image, signal, () => ai.generateImage({ model: model.image, text, attachments, signal }).then(imageOf)),
     };

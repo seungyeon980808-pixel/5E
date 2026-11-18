@@ -82,24 +82,74 @@ export async function toTransportImage(dataUrl) {
   return c.toDataURL('image/png');
 }
 
+// E9(11-19) 고장 나눔. 설치판 main(ai-direct-image.cjs)은 시간 초과·429·5xx·연결 끊김을 이미 두 번 더 시도한 뒤 오류를 넘기고,
+// IPC를 건너오면 code가 사라져 글만 남는다(「Error invoking remote method …: Error: <글>」). 그래서 글로 나눈다.
+//   auth      로그인 없음·만료(401/403) — 더 불러도 소용없다. 호출 쪽이 연결 화면으로 데려간다.
+//   transport 시간 초과·429·5xx·연결 끊김 — main이 이미 다시 시도했다. 같은 차례에서 글 단계마다 또 부르면 몇 분씩 쌓인다.
+//   model     요청 거절(400 등) — 대개 그 모델을 쓸 수 없는 것. 다른 글 모델로 한 번 더.
+export function classifyAiError(error) {
+  const m = String(error?.message || error || '');
+  if (/로그인|login|\b40[13]\b|권한이 없/i.test(m)) return 'auth';
+  if (/연결하지 못|ENOTFOUND|ECONN|network|offline|internet/i.test(m)) return 'network';
+  if (/시간이 초과|time.?out|응답 오류\(\d+\)|\b429\b|\b5\d\d\b|rate.?limit|사용량/i.test(m)) return 'transport';
+  if (/거절되었습니다\(4\d\d\)|model|모델/i.test(m)) return 'model';
+  return 'other';
+}
+const engineError = (message, code) => Object.assign(new Error(message), { code });
+
 /**
  * 5E 연결을 엔진의 ai 모양으로 감싼다.
  * @param {{ readImageText: Function }} desktop
  * @param {{ generate: Function }} raster  createImageLabelRasterController(...) — 그림 차례 하나를 프라미스로
- * @param {{ onCall?: (e: { kind: 'text'|'image', model: string, attempt: number }) => void, imageModels?: string[] }} options
+ * @param {{ onCall?: (e: { kind: 'text'|'image', model: string, attempt: number }) => void, imageModels?: string[], textModels?: string[] }} options
+ * 돌려준 ai.health: { authRequired, offline, textDown, failures: { auth, network, transport, model, other } } — 호출 쪽이 실패 뒤 길을 고른다.
  */
-export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imageModels = imageModelOrder(null) } = {}) {
+export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imageModels = imageModelOrder(null), textModels = [] } = {}) {
   let chain = Promise.resolve(); // 그림 차례는 한 번에 하나(래스터 컨트롤러 규칙) — bestOf 2도 차례로
   const note = (e) => { try { onCall(e); } catch { /* 진행 알림 오류는 무시 */ } };
-  async function readText({ model, text, attachments = [], signal }) {
-    note({ kind: 'text', model, attempt: 1 });
-    const atts = await Promise.all(attachments.map(toTransportImage));
+  const health = { authRequired: false, offline: false, textDown: false, textStreak: 0, failures: { auth: 0, network: 0, transport: 0, model: 0, other: 0 } };
+  const record = (error) => {
+    const kind = classifyAiError(error);
+    health.failures[kind]++;
+    if (kind === 'auth') health.authRequired = true;
+    if (kind === 'network' && (health.failures.network >= 2 || (typeof navigator !== 'undefined' && navigator.onLine === false))) health.offline = true;
+    return kind;
+  };
+  async function readOnce(model, text, atts, signal) {
     const r = await raceAbort(Promise.resolve().then(() => desktop.readImageText({ model, text, attachments: atts })), signal);
     return typeof r === 'string' ? r : String(r?.text ?? '');
+  }
+  async function readText({ model, text, attachments = [], signal }) {
+    if (health.authRequired) throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
+    // 글 단계(구체화·검색·설명 찾기)는 모두 대체가 있다 — 끊긴 연결에 계속 묻지 않고 바로 대체로 넘긴다.
+    if (health.textDown) throw engineError('AI 글 읽기가 응답하지 않아 이번 차례에서는 건너뜁니다.', 'ENGINE_TEXT_DOWN');
+    note({ kind: 'text', model, attempt: 1 });
+    const atts = await Promise.all(attachments.map(toTransportImage));
+    const order = [model, ...textModels.filter((m) => m && m !== model)];
+    let last;
+    for (let i = 0; i < order.length; i++) {
+      try {
+        const out = await readOnce(order[i], text, atts, signal);
+        health.textStreak = 0;
+        return out;
+      } catch (error) {
+        if (isAbort(error) || signal?.aborted) throw abortError();
+        last = error;
+        const kind = record(error);
+        if (kind === 'auth') throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
+        if (kind === 'network' || kind === 'transport') {
+          if (++health.textStreak >= 2) health.textDown = true;
+          throw error;
+        }
+        if (kind !== 'model') throw error; // 그 밖(빈 결과 등)은 엔진이 다시 시도한다
+      }
+    }
+    throw last;
   }
   function generateImage({ model, text, attachments = [], signal }) {
     const run = async () => {
       if (signal?.aborted) throw abortError();
+      if (health.authRequired) throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
       const atts = (await Promise.all(attachments.map(toTransportImage))).map((data, i) => ({ name: `figure-ref-${i + 1}.png`, data }));
       const order = [model, ...imageModels.filter((m) => m !== model)].filter(Boolean).slice(0, 2);
       let last;
@@ -113,6 +163,7 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
         } catch (error) {
           if (isAbort(error) || signal?.aborted) throw abortError();
           last = error;
+          if (record(error) === 'auth') throw engineError('Codex 로그인이 필요합니다.', 'ENGINE_AUTH');
         }
       }
       throw last || new Error('그림을 받지 못했습니다.');
@@ -121,7 +172,7 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
     chain = next.catch(() => {});
     return next;
   }
-  return { readText, generateImage };
+  return { readText, generateImage, health };
 }
 
 /** 엔진 진행 신호 → 지금 진행 표시(제목·설명)에 넣을 글. 새 화면 없이 setGenerating 글만 바꾼다. */
@@ -171,7 +222,8 @@ export async function runFigureEngine({ ai, request, models, previous = null, si
   let result = null;
   try {
     const mod = engine ? null : await loadEngine();
-    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 } });
+    const referenceTimeoutMs = Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) > 0 ? Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) : 15000; // 검사가 줄여 쓴다
+    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, referenceTimeoutMs });
     result = await eng.makeFigureSet({ request, previous, signal, onPhase });
   } catch (error) {
     if (isAbort(error) || signal?.aborted) return { ok: false, aborted: true, fresh: [], result, errors: [] };

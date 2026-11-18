@@ -5035,7 +5035,7 @@ ${chatText}` : ''}`;
       const current = await desktop.status();
       loginButton.hidden = current.login.loggedIn;
       if (!current.login.loggedIn) {
-        setStatus("ChatGPT 로그인 필요", "warn");
+        if (!busy) setStatus("ChatGPT 로그인 필요", "warn");
         if (desktop.web) {
           loginButton.textContent = "ChatGPT 로그인";
           accountText.textContent = "ChatGPT 계정을 연결해 주세요";
@@ -5044,7 +5044,8 @@ ${chatText}` : ''}`;
           accountTokensText.textContent = "로그인 후 확인할 수 있습니다";
         }
       } else if (current.server) {
-        setStatus("준비됨", "ok");
+        // E9: 생성 중에 AI 창을 다시 열면(연결 확인) 「준비됨」이 진행 글을 덮어 아직 도는 작업이 끝난 것처럼 보였다.
+        if (!busy) setStatus("준비됨", "ok");
         await Promise.all([loadModels({ refresh: true }), loadAccountOverview()]);
       } else if (autoConnect) {
         setStatus("AI 자동 연결 중…", "busy");
@@ -5376,13 +5377,59 @@ ${chatText}` : ''}`;
     }
   };
 
+  // E9: 설치판 로그인 안내 — 연결 정보(「Codex 로그인」 단추가 있는 칸)를 열고 단추로 데려간다. 로그인하면 resume으로 멈춘 생성을 이어 간다.
+  let pendingLoginResume = null;
+  function guideDesktopLogin(resume) {
+    pendingLoginResume = typeof resume === 'function' ? resume : null;
+    const details = panel.querySelector('details.ai-advanced-settings');
+    if (details) details.open = true;
+    loginButton.hidden = false;
+    // 작업대(ai-workbench.js)는 연결 정보 칸을 숨긴 「연결 정보」 창 안으로 옮겨 둔다 — 그 창을 띄워 로그인 단추를 바로 보이게 한다.
+    const dialog = details?.closest('[data-ai-connection-dialog]');
+    if (dialog) {
+      dialog.removeAttribute('hidden');
+      if (!dialog.dataset.e9CloseWired) {
+        dialog.dataset.e9CloseWired = '1';
+        dialog.querySelector('[data-ai-info-close]')?.addEventListener('click', () => dialog.close());
+        dialog.addEventListener('close', () => dialog.setAttribute('hidden', ''));
+      }
+      try { if (!dialog.open) dialog.showModal(); } catch { dialog.setAttribute('open', ''); }
+    }
+    setTaskState('idle');
+    setStatus('Codex 로그인이 필요합니다 · 연결 정보의 「Codex 로그인」을 누르면 로그인한 뒤 이어서 만듭니다. 앞 결과와 입력은 그대로입니다.', 'warn');
+    addLog('AI 연결(Codex 로그인)이 없어 생성을 멈췄습니다. 「Codex 로그인」을 누르면 로그인 뒤 같은 요청으로 이어서 만듭니다.');
+    try { loginButton.scrollIntoView({ block: 'nearest' }); loginButton.focus({ preventScroll: true }); } catch { /* 보이지 않는 창 */ }
+  }
+
   // 1.8.0 새 그림 엔진 한 차례(js/ai-engines.js → js/ai-figure). 지금 생성과 같은 자리(결과 카드)에 넣고, 진행은 지금 진행 표시 글만 바꾼다.
   // 실패로 끝나지 않게: 엔진 안 재시도·반대 모델 → 한 장도 못 그리면 옛 생성 길로 이어서. 앞 결과 카드는 지우지 않는다.
   async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {} }) {
     const taskId = activeTaskTabId;
     const request = [discussionContext, entered].filter(Boolean).join('\n\n');
+    const again = () => submit('image', { ...options, silentUserLog: true, requestOverride: entered, discussionContextOverride: discussionContext, bypassCache: true });
+    const stopWith = (outcome) => {
+      newEngineRunActive = false;
+      if (requestEpoch !== currentRequestEpoch || disposed) return;
+      advanceGenerationClock('turn-terminal', 'failed');
+      requestPhase('failed'); setGenerating(false); setBusy(false);
+      if (outcome === 'login') return guideDesktopLogin(again);
+      // 연결이 끊김: 옛 길도 같은 연결을 쓰므로 넘기지 않는다. 연결이 돌아오면(online) 한 번 이어서 만든다.
+      setTaskState('idle');
+      setStatus('인터넷 연결을 확인해 주세요 · AI 서버에 닿지 못해 이번에는 그리지 못했습니다. 앞 결과와 입력은 그대로 두었고, 연결되면 이어서 만듭니다.', 'warn');
+      addLog('AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 그립니다. 바로 다시 하려면 실행을 누르세요.', 'error');
+      const epochAtStop = currentRequestEpoch;
+      window.addEventListener('online', () => { if (!disposed && !busy && currentRequestEpoch === epochAtStop) void again(); }, { once: true, signal: lifecycle.signal });
+    };
+    // E9: 설치판에서 Codex 로그인이 없으면 엔진·옛 길 모두 몇 번씩 실패한 뒤 「변환에 실패했습니다」로 끝났다 — 먼저 확인하고 연결 화면으로.
+    if (!desktop.web && typeof desktop.status === 'function') {
+      let login = null;
+      try { login = (await desktop.status())?.login || null; } catch { login = null; }
+      if (requestEpoch !== currentRequestEpoch || disposed) return;
+      if (login && login.loggedIn === false) return stopWith('login');
+    }
     if (!busy) setBusy(true);
-    imageReceived = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER;
+    // E9: 앞 차례를 취소한 표시(currentCancelRequested)가 남아 있으면 새 차례가 시작하자마자 「취소됨」으로 끝났다 — 옛 길처럼 새 차례에서 지운다.
+    imageReceived = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER; currentCancelRequested = false;
     currentRunInput = runInput; currentTerminalOutcome = null; currentImageOutputError = null;
     currentTurnCandidate = null; pendingCacheOutput = null; currentTurnDone = false; serverTurnFinished = false;
     currentRequestSnapshot = { entered, request, discussionContext, annotatedRequest: request, renderRequest: request, runInput };
@@ -5399,7 +5446,7 @@ ${chatText}` : ''}`;
     setStatus('이미지 생성 중…', 'busy');
     show(figurePhaseCopy({ phase: 'index' }));
     const models = engineModels({ selected: runInput.model, catalog: runInput.modelCatalog || availableModels });
-    const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image), onCall: e => {
+    const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image), textModels: [runInput.model, ...imageModelOrder(runInput.model)], onCall: e => {
       if (e.kind !== 'image') return;
       show(figurePhaseCopy({ phase: 'draw', scene, total }));
       if (e.attempt > 1 && isCurrent()) addLog(`그림 모델을 바꿔(${e.model}) 다시 그립니다.`);
@@ -5432,7 +5479,11 @@ ${chatText}` : ''}`;
       }
       return;
     }
-    if (!outcome.fresh.length) return fallBack(outcome.errors.map(e => e.message).filter(Boolean).join(' / '));
+    if (!outcome.fresh.length) {
+      if (ai.health?.authRequired) return stopWith('login');
+      if (ai.health?.offline) return stopWith('offline');
+      return fallBack(outcome.errors.map(e => e.message).filter(Boolean).join(' / '));
+    }
     requestPhase('validating');
     advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-started');
     const added = [];
@@ -6065,18 +6116,29 @@ ${chatText}` : ''}`;
 
   loginButton.onclick = async () => {
     if (!desktop) return refresh();
+    if (loginWaiting) return;
+    loginWaiting = true;
+    try { await waitForDesktopLogin(); } finally { loginWaiting = false; }
+  };
+  let loginWaiting = false;
+  async function waitForDesktopLogin() {
     try { await desktop.login(); } catch (error) { setStatus(error.message, "error"); return; }
     setStatus("브라우저에서 로그인을 완료해 주세요…", "busy");
     for (let attempt = 0; attempt < 120; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      const current = await desktop.status();
-      if (!current.login.loggedIn) continue;
+      const current = await desktop.status().catch(() => null);
+      if (!current?.login?.loggedIn) continue;
       loginButton.hidden = true;
       await refresh({ autoConnect: true });
+      // E9: 로그인이 없어 멈췄던 생성은 로그인하면 그대로 이어서 만든다(막다른 경고 대신 연결 화면 → 이어 하기).
+      const connectionDialog = panel.querySelector('[data-ai-connection-dialog]');
+      if (connectionDialog?.open) connectionDialog.close();
+      const resume = pendingLoginResume; pendingLoginResume = null;
+      if (resume && !busy) { addLog('로그인되었습니다. 멈췄던 생성을 이어서 합니다.'); void resume(); }
       return;
     }
     setStatus("로그인 확인 시간이 초과되었습니다. 다시 시도해 주세요.", "warn");
-  };
+  }
   const persistModelChoice = () => {
     const choice = modelSelection();
     localStorage.setItem('5e.aiModel', choice.model);

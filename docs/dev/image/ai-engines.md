@@ -37,6 +37,22 @@
 
 엔진 안 재시도(글 3·장면 2) → 그림은 반대 모델 → 한 장도 못 그리면 `submit('image', { legacyFigure:true })`로 옛 생성 길에 넘김. 앞 결과 카드는 지우지 않습니다. 그래프 그림이 실패하면 기본 그래프 객체 생성으로 이어 가고, 선택한 결과가 그림 그래프면 그것을 앞 결과로 넘겨 설계 실패 때 그대로 둡니다. 엔진이 단계마다 다시 시도하므로 전체 3분 제한과 「90초… 자동 재시도하지 않습니다」 안내는 이 길에서 끕니다.
 
+### 고장별 길(E9, 11-19)
+
+| 고장 | 길 |
+|---|---|
+| AI 글 읽기 시간 초과·429·5xx | main(`ai-direct-image.cjs`)이 이미 두 번 더 시도함 → 같은 차례에서 두 번 이어지면 글 단계(구체화·검색·설명 찾기)는 건너뛰고(`health.textDown`) 요청 그대로·참고 그림 없이 그림 |
+| 깨진 JSON·빈 응답 | 단계마다 대체(요청 한 장면·점수 고르기·지우기 전 그림) |
+| 글 모델 거절(400) | 다음 글 모델(고른 모델 → Luna/Sol)로 한 번 더 |
+| 그림 모델 실패 | 반대 모델 → 장면 재시도 → 옛 생성 길 |
+| 기출 Worker 404·너무 큼 | 그 그림만 건너뛰고 다른 후보, 없으면 참고 그림 없이 |
+| 기출 Worker 응답 없음 | 한 문항 15초 제한(`REFERENCE_FETCH_TIMEOUT_MS`), 넘으면 남은 후보는 묻지 않고 참고 그림 없이 |
+| 연결 끊김(글·그림 모두 연결 실패) | 옛 길도 같은 연결이라 넘기지 않음 → 「인터넷 연결을 확인해 주세요」, 앞 결과·입력 유지, `online` 되면 한 번 이어서 |
+| Codex 로그인 없음(시작 전 `desktop.status()`) 또는 실행 중 만료 | AI를 더 부르지 않고 「연결 정보」 창을 띄워 「Codex 로그인」으로 데려감 → 로그인되면 같은 요청으로 이어서 |
+| 취소 | 그 차례만 멈춤·옛 길로 넘기지 않음, 다음 차례는 새로 시작(앞 취소 표시를 지움) |
+
+IPC를 건너온 오류는 code가 사라지므로 `classifyAiError`가 글로 가릅니다(auth·network·transport·model·other). 검사: `tests/test-ai-engines-faults.mjs`(단위), `tests/test-ai-engines-faults-browser.cjs`(크롬·웹킷, 고장 23가지 + 동시성).
+
 ## 결과 정보(`item.meta` → 캔버스 이미지 객체 `meta`)
 
 - 그림: `{ figureEngine:'ai-figure', refs:[기출 id 3개], sceneIndex, sceneCount, strippedTexts, expanded, models, request }`. 장면이 둘이면 결과 카드도 둘.
