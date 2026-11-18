@@ -11,7 +11,7 @@ import { makeFigure } from './make-figure.js';
 import { fetchFigure } from './reference-images.js';
 import { grayscaleGeneratedPng } from '../ai-grayscale-png.js?v=1.7.0-four-session-integration';
 
-export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify } from './retrieve.js';
+export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify, roughClassify } from './retrieve.js';
 export { fetchFigure, collectReferenceImages, parseFigureId, figureFromQuestion } from './reference-images.js';
 export { buildFigurePrompt, FIGURE_PROMPT_VERSION } from './prompt.js';
 export { expand, normalizeExpanded } from './expand.js';
