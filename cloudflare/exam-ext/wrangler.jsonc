@@ -1,0 +1,10 @@
+{
+  // 기출확장_국영수사탐 문제지 PDF 정적 내보내기(11-19 준비, 아직 올리지 않음) — 드라이브 게이트웨이 대신 쓸 새 Worker.
+  // site/는 data/exam-ext/build-site.mjs가 만드는 링크 묶음(저장소에 넣지 않음). 경로는 v1/기출문제/기출확장_국영수사탐/<과목>/<파일>.
+  // 5e-exam-pdf(9,375개)와 따로 두어 다시 올리기·되돌리기를 나눈다. 401개 · 약 898MB, 가장 큰 파일 11.3MB(한도 25MiB).
+  "name": "5e-exam-ext",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "account_id": "a6dd35b7aa385514042f9003bc937b92",
+  "assets": { "directory": "../../data/exam-ext/site", "not_found_handling": "none" }
+}
