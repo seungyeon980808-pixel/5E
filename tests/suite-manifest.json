@@ -954,6 +954,12 @@
       "findingIds": [
         "AI-GRAPH-PICTURE-ENGINE"
       ]
+    },
+    {
+      "path": "tests/test-ai-engines-connect.mjs",
+      "findingIds": [
+        "E180-AI-ENGINES-CONNECT"
+      ]
     }
   ],
   "browser": [
@@ -2461,6 +2467,12 @@
       "path": "tests/test-ai-graph-draw-browser.cjs",
       "findingIds": [
         "AI-GRAPH-PICTURE-DRAW"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-connect-browser.cjs",
+      "findingIds": [
+        "E180-AI-ENGINES-CONNECT-BROWSER"
       ]
     }
   ],

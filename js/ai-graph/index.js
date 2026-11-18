@@ -14,24 +14,22 @@
 // 없으면 요청에서 축 이름만 읽은 축만 있는 설계로 그린다. 취소는 앞 결과가 있으면 그것(cancelled:true), 없으면 AbortError.
 import { plan as planGraph, makeReadText, isAbort, isPlan, abortError } from './plan.js?v=1.7.0-four-session-integration';
 import { verifyPlan, prepare } from './verify.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, graphPictureFlag } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
 
 export { plan, planPrompt, parseJson, conventionsFor, fixTick, curveYs, fixLabels, isPlan } from './plan.js?v=1.7.0-four-session-integration';
 export { verifyPlan, prepare, planFacts } from './verify.js?v=1.7.0-four-session-integration';
 
 export const AI_GRAPH_ENGINE = 'ai-graph-picture';
 export const AI_GRAPH_ENGINE_VERSION = '1.0.0';
-export const AI_GRAPH_PICTURE_FLAG = '5e.aiGraph.pictureEngine';
+export const AI_GRAPH_PICTURE_FLAG = AI_ENGINE_FLAG_KEYS.graphPicture;
 export const DEFAULT_MODELS = Object.freeze({ text: 'gpt-6.1-sol' });
 const CONVENTIONS_URL = new URL('../../assets/ai-graph/conventions.json', import.meta.url).href;
 
 // 옵션 플래그: 켜져 있을 때만 「그림으로 생성」을 쓸 수 있다. 기본은 꺼짐(지금의 그래프 객체 생성).
-//   localStorage['5e.aiGraph.pictureEngine'] === '1' 또는 globalThis.__FIVE_E_AI_GRAPH_PICTURE__ === true
+//   localStorage['5e.aiEngine.graphPicture']==='1'(옛 이름 '5e.aiGraph.pictureEngine') 또는 globalThis.__FIVE_E_AI_GRAPH_PICTURE__===true. 이름 정리는 js/ai-engine-flags.js.
 export function isAiGraphPictureEnabled(storage = null) {
-  if (globalThis.__FIVE_E_AI_GRAPH_PICTURE__ === true) return true;
-  try {
-    const s = storage || globalThis.localStorage;
-    return !!s && s.getItem(AI_GRAPH_PICTURE_FLAG) === '1';
-  } catch { return false; }
+  if (storage) return graphPictureFlag(storage) || globalThis.__FIVE_E_AI_GRAPH_PICTURE__ === true;
+  return graphPictureFlag(globalThis);
 }
 // 어떤 그래프 생성을 쓸지: 옵션을 고르고 플래그가 켜졌을 때만 'picture', 그 밖에는 언제나 'objects'(기본).
 export function graphEngineChoice({ picture = false, storage = null } = {}) {

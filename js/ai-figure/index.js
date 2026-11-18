@@ -10,6 +10,7 @@ import { loadFigureIndex, makeIndex, DEFAULT_INDEX_BASE } from './retrieve.js';
 import { makeFigure } from './make-figure.js';
 import { fetchFigure } from './reference-images.js';
 import { grayscaleGeneratedPng } from '../ai-grayscale-png.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, figureEngineFlag } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
 
 export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify } from './retrieve.js';
 export { fetchFigure, collectReferenceImages, parseFigureId, figureFromQuestion } from './reference-images.js';
@@ -19,13 +20,11 @@ export { makeFigure, pickBetter, stripText } from './make-figure.js';
 
 // 회차 실험에서 쓰던 모델. 5E 모델 선택이 생기면 createEngine({ models })로 바꿔 넣는다.
 export const DEFAULT_MODELS = Object.freeze({ text: 'gpt-6.1-sol', image: 'gpt-6-luna' });
-export const AI_FIGURE_ENGINE_FLAG = '5e.aiFigureEngine';
+export const AI_FIGURE_ENGINE_FLAG = AI_ENGINE_FLAG_KEYS.figure;
 
-/** 새 그림 엔진을 켤지(화면 변화 없이 옵션으로만). localStorage['5e.aiFigureEngine'] === '1' 또는 globalThis.FIVE_E_AI_FIGURE_ENGINE === true. */
-export function aiFigureEngineEnabled(scope = globalThis) {
-  if (scope?.FIVE_E_AI_FIGURE_ENGINE === true) return true;
-  try { return scope?.localStorage?.getItem(AI_FIGURE_ENGINE_FLAG) === '1'; } catch { return false; }
-}
+/** 새 그림 엔진을 쓸지. 1.8.0(11-19 사용자 결정)부터 기본 켜짐 — 이미지 생성은 이 엔진으로 대체한다.
+ *  끄기: localStorage['5e.aiEngine.figure']='0'(옛 이름 '5e.aiFigureEngine'='0') 또는 globalThis.FIVE_E_AI_FIGURE_ENGINE=false. 이름 정리는 js/ai-engine-flags.js. */
+export function aiFigureEngineEnabled(scope = globalThis) { return figureEngineFlag(scope); }
 
 const abortError = () => (typeof DOMException === 'function' ? new DOMException('작업이 취소되었습니다.', 'AbortError') : Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' }));
 const isAbort = (error) => error?.name === 'AbortError';

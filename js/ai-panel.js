@@ -61,6 +61,7 @@ import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-fo
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
+import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runGraphPicture, figurePhaseCopy, graphPhaseCopy } from './ai-engines.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { validateLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { prepareEditableLabelFonts } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
@@ -810,6 +811,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   let currentImageEventKeys = new Set();
   let currentRequestEpoch = 0;
   let serverTurnFinished = false;
+  let newEngineRunActive = false; // 1.8.0 새 엔진(그림·그래프 그림)이 도는 중 — 엔진이 단계마다 다시 시도한다
   let previewPending = false;
   let tokenFooterNode = null;
   let currentTurnStartedAt = 0;
@@ -899,6 +901,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const sourceLabelReview = makeSourceLabelController();
   const imageLabelRaster = createImageLabelRasterController({ transport: { send: payload => desktop.send(payload), interrupt: binding => desktop.interrupt(binding) } });
   sourceLabelControllers.add(imageLabelRaster);
+  // 1.8.0: 새 그림 엔진의 그림 차례 전용(지금 생성과 같은 직접 호출 길). 이벤트·취소는 다른 래스터 컨트롤러와 같이 받는다.
+  const engineRaster = createImageLabelRasterController({ transport: { send: payload => desktop.send(payload), interrupt: binding => desktop.interrupt(binding) } });
+  sourceLabelControllers.add(engineRaster);
   const sourceLabelRequest = (prompt, run, evidence) => run?.frozenLabelPlan
     ? withFrozenSourceLabelPlan(prompt, run.frozenLabelPlan) : withEditableImageLabelPlan(prompt, evidence);
   let selectedCandidateId = null;
@@ -1414,7 +1419,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const label = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
       if (elapsedTime) { elapsedTime.textContent = label; elapsedTime.dateTime = `PT${seconds}S`; }
       if (tab) updateTaskTimingLabels(tab, taskTimingLabel(tab));
-      if (request.elapsedMs >= 90_000 && request.phase === 'generating') progressDetail.textContent = '90초 넘게 응답을 기다리고 있습니다. 취소할 수 있으며 자동 재시도하지 않습니다.';
+      if (request.elapsedMs >= 90_000 && request.phase === 'generating' && !newEngineRunActive) progressDetail.textContent = '90초 넘게 응답을 기다리고 있습니다. 취소할 수 있으며 자동 재시도하지 않습니다.';
       if (!running) stopGenerationTimingTimer();
       return { running, available: true, phase: request.phase, elapsedMs: request.elapsedMs, formatted: label };
     }
@@ -1439,7 +1444,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (generating) generating.dataset.aiPhase = view.phase || "unknown";
     if (eCount) eCount.textContent = String(({ accepted:1, "image-generating":2, "image-received":3, postprocessing:4, "awaiting-terminal":5, terminal:5 })[view.phase] || 1);
     if (tab) updateTaskTimingLabels(tab, label);
-    if (view.running && view.elapsedMs >= 90_000 && !generationLongWaitShown) {
+    if (view.running && view.elapsedMs >= 90_000 && !generationLongWaitShown && !newEngineRunActive) {
       generationLongWaitShown = true;
       progressDetail.textContent = "90초 넘게 응답을 기다리고 있습니다. 작업 취소로 중단할 수 있으며 자동 재시도하지 않습니다.";
     }
@@ -2966,6 +2971,48 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     return c.toDataURL('image/png');
   }
 
+  // 1.8.0 그래프 「그림으로 생성」 한 차례(js/ai-engines.js → js/ai-graph). 결과는 그림(PNG) 카드이고 설계는 item.meta.graphPlan에 둔다
+  // (캔버스에 넣으면 이미지 객체 meta로 따라감 → 다시 열면 그 설계로 AI 없이 다시 그림). 선택한 결과가 그림 그래프면 그것을 앞 결과로 넘겨
+  // 설계·그리기가 실패해도 앞 결과를 지킨다.
+  async function runGraphPictureTurn({ instructions, isCurrent, epoch, batch = false }) {
+    const prior = selectedOutputItem();
+    const previous = prior?.meta?.graphPlan ? { png: prior.data, plan: prior.meta.graphPlan } : null;
+    const abort = new AbortController(); imageLabelRunAbort = abort;
+    const startedAt = Date.now();
+    newEngineRunActive = true;
+    try {
+      const clockId = `graph-picture-${epoch}`; currentTurnId = clockId; startGenerationClock(clockId);
+      if (pendingLoading && !pendingLoading.source) pendingLoading.source = blankGraphSheet();
+      requestPhase('generating');
+      const show = phase => { const c = graphPhaseCopy(phase); if (c.title && isCurrent()) setGenerating(true, c.title, c.detail); };
+      show('graph-plan');
+      const ai = createDesktopEngineAi(desktop, engineRaster);
+      const r = await runGraphPicture({ ai, request: instructions, previous, signal: abort.signal, onPhase: e => show(e.phase), models: { text: GRAPH_WORKBENCH_SELECTION.model } });
+      if (!isCurrent() || abort.signal.aborted) return null;
+      if (r.cancelled) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      if (r.fallback === 'previous' && previous) { setStatus('그래프를 다시 만들지 못해 앞 결과를 그대로 두었습니다.', 'warn'); setTaskState('completed'); advanceGenerationClock('turn-terminal', 'completed'); return prior; }
+      requestPhase('validating');
+      const issues = (r.warnings || []).map(message => ({ message: String(message), severity: 'minor' }));
+      const item = { id: `generated-${++imageSerial}`, name: `그림 그래프 ${generatedImages.length + 1}`, data: r.png, kind: 'generated', engine: 'ai-graph-picture', meta: r.meta, postprocessOk: true,
+        comments: [], nextCommentNumber: 1, reviewState: 'needs-attention', reviewReport: { verdict: 'uncertain', checks: [], issues },
+        reviewMeta: { ...GRAPH_WORKBENCH_SELECTION, elapsedMs: Date.now() - startedAt, generationCount: 0, reviewCount: 0 } };
+      advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
+      if (batch) return item;
+      generatedImages.push(item); latestGeneratedSrc = item.data; selectedCandidateId = item.id;
+      panel.dataset.aiSelectedCandidateId = item.id; previews.querySelector('[data-ai-empty]')?.remove(); previews.prepend(makeImageCard(item));
+      panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: item.id } }));
+      dispatchReviewEvent({ state: item.reviewState, candidateId: item.id, report: item.reviewReport, ...item.reviewMeta }, item);
+      currentTurnCandidate = item;
+      setTaskState('completed');
+      setStatus(r.fallback === 'minimal' ? '설계를 받지 못해 축만 그렸습니다 · 설명을 더해 다시 만들 수 있습니다.' : '그래프 그림 생성 완료 · 설계를 함께 저장해 다시 열어 고칠 수 있습니다.', r.fallback ? 'warn' : 'ok');
+      captureActiveTaskTab(); await taskPersistence.checkpoint();
+      return item;
+    } finally {
+      newEngineRunActive = false;
+      if (imageLabelRunAbort === abort) imageLabelRunAbort = null;
+    }
+  }
+
   async function runGraphRestore(options = {}) {
     if (busy || graphSubmitting || panel.dataset.aiSharingMode === 'view') return;
     const creating = (options.runInputSnapshot?.conversionKind || conversionKind) === 'graph-create';
@@ -2988,6 +3035,24 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       await taskPersistence.checkpoint();
       if (!isCurrent()) return;
       if (!desktop?.send) throw new Error('AI 연결을 확인해 주세요.');
+      // 1.8.0 옵션 「그림으로 생성」: 기본은 지금의 그래프 객체 생성. 옵션(플래그 5e.aiEngine.graphPicture)이 켜졌을 때만 새 그래프 엔진으로
+      // 그림(PNG)+설계(meta.graphPlan)를 만든다. 고르는 화면은 아직 없다(시안: 시안/그래프-생성방식-옵션.html). 실패하면 기본 생성으로 이어 간다.
+      if (creating) {
+        const choice = options.graphEngine || owner?.graphCreateEngine || null;
+        const route = graphRoute({ desktop, storage: channelStorage, picture: choice ? choice === 'picture' : null });
+        if (route.note && route.reason === 'web') addLog(route.note);
+        if (route.use) {
+          try {
+            const item = await runGraphPictureTurn({ instructions, isCurrent, epoch, batch: Boolean(options.batchContext) });
+            if (!isCurrent()) return;
+            if (item) return item;
+          } catch (error) {
+            if (error?.name === 'AbortError' || !isCurrent()) return;
+            addLog(`그림으로 생성하지 못해 기본 그래프 생성으로 이어서 만듭니다: ${error?.message || error}`, 'error');
+            setGenerating(true, '설명으로 그래프를 만들고 있습니다', '축과 관계를 정리하고 편집 가능한 그래프로 구성합니다.');
+          }
+        }
+      }
       const catalog = await desktop.models();
       resolveAIModelSelection(GRAPH_WORKBENCH_SELECTION, catalog);
       if (!isCurrent()) return;
@@ -5311,6 +5376,95 @@ ${chatText}` : ''}`;
     }
   };
 
+  // 1.8.0 새 그림 엔진 한 차례(js/ai-engines.js → js/ai-figure). 지금 생성과 같은 자리(결과 카드)에 넣고, 진행은 지금 진행 표시 글만 바꾼다.
+  // 실패로 끝나지 않게: 엔진 안 재시도·반대 모델 → 한 장도 못 그리면 옛 생성 길로 이어서. 앞 결과 카드는 지우지 않는다.
+  async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {} }) {
+    const taskId = activeTaskTabId;
+    const request = [discussionContext, entered].filter(Boolean).join('\n\n');
+    if (!busy) setBusy(true);
+    imageReceived = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER;
+    currentRunInput = runInput; currentTerminalOutcome = null; currentImageOutputError = null;
+    currentTurnCandidate = null; pendingCacheOutput = null; currentTurnDone = false; serverTurnFinished = false;
+    currentRequestSnapshot = { entered, request, discussionContext, annotatedRequest: request, renderRequest: request, runInput };
+    providerRequestPersistable = true; persistTasks();
+    // 엔진은 호출마다 시간 제한·재시도가 있어 전체 3분 제한 대신 엔진 결과를 기다린다(그래프 생성과 같음).
+    clearTimeout(requestTimeout); requestTimeout = null;
+    const abort = new AbortController(); imageLabelRunAbort = abort;
+    const isCurrent = () => !disposed && requestEpoch === currentRequestEpoch && activeTaskTabId === taskId && !currentCancelRequested && !abort.signal.aborted;
+    const clockId = `figure-${requestEpoch}`; currentTurnId = clockId; startGenerationClock(clockId);
+    newEngineRunActive = true;
+    requestPhase('generating');
+    let scene = 0, total = 1;
+    const show = copy => { if (!isCurrent()) return; if (copy.title) setGenerating(true, copy.title, copy.detail || ''); else if (copy.detail) progressDetail.textContent = copy.detail; };
+    setStatus('이미지 생성 중…', 'busy');
+    show(figurePhaseCopy({ phase: 'index' }));
+    const models = engineModels({ selected: runInput.model, catalog: runInput.modelCatalog || availableModels });
+    const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image), onCall: e => {
+      if (e.kind !== 'image') return;
+      show(figurePhaseCopy({ phase: 'draw', scene, total }));
+      if (e.attempt > 1 && isCurrent()) addLog(`그림 모델을 바꿔(${e.model}) 다시 그립니다.`);
+    } });
+    const fallBack = async (why) => {
+      newEngineRunActive = false;
+      if (requestEpoch !== currentRequestEpoch || disposed) return;
+      addLog(`새 그림 엔진이 그림을 만들지 못해 이전 생성 방식으로 이어서 그립니다.${why ? ` (${String(why).slice(0, 200)})` : ''}`, 'error');
+      advanceGenerationClock('turn-terminal', 'failed');
+      requestPhase('failed'); setGenerating(false); setBusy(false);
+      return submit('image', { ...options, legacyFigure: true, silentUserLog: true, requestOverride: entered, discussionContextOverride: discussionContext, bypassCache: true });
+    };
+    let outcome;
+    try {
+      await taskPersistence.checkpoint();
+      if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      outcome = await runFigureEngine({ ai, request, models, signal: abort.signal, onPhase: e => {
+        if (Number.isInteger(e.total)) total = e.total;
+        if (Number.isInteger(e.scene)) scene = e.scene;
+        show(figurePhaseCopy(e));
+      } });
+    } catch (error) {
+      outcome = error?.name === 'AbortError' ? { aborted: true, fresh: [], errors: [] } : { aborted: false, fresh: [], errors: [{ message: error?.message || String(error) }] };
+    } finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
+    if (outcome.aborted || !isCurrent()) {
+      newEngineRunActive = false;
+      if (requestEpoch === currentRequestEpoch && !disposed && activeTaskTabId === taskId) {
+        advanceGenerationClock('turn-terminal', 'cancelled'); requestPhase('cancelled');
+        setTaskState('idle'); setGenerating(false); setBusy(false); setStatus('작업 취소됨 · 이전 결과 유지', 'warn');
+      }
+      return;
+    }
+    if (!outcome.fresh.length) return fallBack(outcome.errors.map(e => e.message).filter(Boolean).join(' / '));
+    requestPhase('validating');
+    advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-started');
+    const added = [];
+    try {
+      for (const sceneResult of outcome.fresh) {
+        const m = sceneResult.meta;
+        const item = await addPreview(sceneResult.image, { isCurrent, name: m.sceneCount > 1 ? `생성 결과 ${generatedImages.length + 1} · 장면 ${m.sceneIndex + 1}/${m.sceneCount}` : undefined });
+        if (!item) break;
+        item.meta = m; item.engine = 'ai-figure';
+        added.push(item);
+      }
+    } catch (error) {
+      if (!added.length) return fallBack(error?.message || String(error));
+      addLog(`생성 결과 처리 중 오류: ${error?.message || error}`, 'error');
+    }
+    newEngineRunActive = false;
+    if (!isCurrent()) return;
+    if (!added.length) return fallBack('결과를 등록하지 못했습니다.');
+    imageReceived = true; currentTurnCandidate = added.at(-1);
+    serverTurnFinished = true; currentTurnDone = true; currentTerminalOutcome = 'completed';
+    advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
+    window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: currentTurnCandidate.id } }));
+    const sceneErrors = outcome.errors.filter(e => e.scene !== null && e.scene !== undefined);
+    const refs = [...new Set(added.flatMap(item => item.meta.refs || []))];
+    addLog(`이미지가 완성되었습니다. 참고한 기출 그림: ${refs.length ? refs.join(', ') : '없음'}. 생성 결과에서 확인하거나 캔버스로 출력할 수 있습니다.`);
+    setTaskState('completed'); requestPhase('completed'); setGenerating(false); setBusy(false);
+    setStatus(sceneErrors.length ? `생성 완료 · 장면 ${sceneErrors.length}개는 그리지 못했습니다. 다시 실행하면 그 장면을 다시 그립니다.` : '생성 완료', sceneErrors.length ? 'warn' : 'ok');
+    captureActiveTaskTab(); persistTasks();
+    try { await taskPersistence.checkpoint(); } catch {}
+    return added;
+  }
+
   const submit = async (type, options = {}) => {
     if (panel.dataset.aiSharingMode === 'view') return;
     if (type === 'image' && (isGraphWorkflow(conversionKind) || isGraphWorkflow(options.runInputSnapshot?.conversionKind))) return runGraphRestore(options);
@@ -5453,6 +5607,12 @@ ${chatText}` : ''}`;
     const requestEpoch = ++currentRequestEpoch;
     const immediateBatchRun = batchRun;
     preparationAccepted = true;
+    // 1.8.0(11-19 사용자 결정): 이미지 생성(설명으로 새 그림)은 새 그림 엔진으로 대체 — 구체화→기출 3장 검색→그리기→설명 지우기→흑백.
+    // 설치판에서만 돈다(웹은 지금 길). 사용자가 직접 넣은 레퍼런스가 있는 생성과, 엔진이 한 장도 못 그려 넘어온 경우는 옛 길.
+    if (type === 'image' && isExamBrief(runInput) && !batchRun) {
+      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true });
+      if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options });
+    }
     if (!busy) setBusy(true);
     imageReceived = false;
     currentTurnType = type;
@@ -6327,7 +6487,7 @@ ${chatText}` : ''}`;
   const interruptCurrentTask = async () => {
     if (!busy && !preflightRun) return;
     if (graphSubmitting || graphWorkflow.isActive()) {
-      currentCancelRequested=true;currentRequestEpoch+=1;
+      currentCancelRequested=true;currentRequestEpoch+=1;imageLabelRunAbort?.abort();
       requestPhase('cancelled');advanceGenerationClock('turn-terminal','cancelled');
       await graphWorkflow.cancel();
       graphSubmitting=false;setTaskState('idle');setGenerating(false);setBusy(false);
