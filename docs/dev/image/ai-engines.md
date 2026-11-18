@@ -11,6 +11,15 @@
 | `js/ai-engine-flags.js` | 두 엔진의 켜고 끄기(아래 표) — 한곳 |
 | `js/ai-engines.js` | 5E 연결: 길 고르기, AI 연결 감싸기, 진행 글, 결과 meta. 엔진 모듈은 처음 쓸 때 `import()` |
 | `js/ai-panel.js` | `runFigureEngineTurn`(이미지 생성), `runGraphPictureTurn`(그래프 생성 옵션) |
+| `assets/ai-figure/` | 기출 그림 색인 `tags.jsonl`(평가원)·`tags-hak.jsonl`(학평)·`taxonomy.json`, 약 7MB. 그림 자체는 없고 id·과목·종류·태그·한 줄 설명만. 다시 만들기·검사는 `data/ai-figure/build-index.mjs`(`--check`) |
+| `assets/ai-graph/` | 과목별 그래프 관례 `conventions.json`, 그리기 판 스타일 `graph-stage.css` |
+| `vendor/katex/` | KaTeX 0.16.11(앱에 넣음 — 인터넷 없이 수식). 그래프 그리기(`js/ai-graph/draw.js`)만 씀 |
+
+참고 기출 그림은 앱에 싣지 않고 기출 Worker(`js/library/image-hosts.js`의 `EXAM_QUESTION_HOSTS`)에서 문항 JSON으로 받습니다. 평가원·학평은 색인 줄의 `src`로 가리고, 모르면 평가원 → 학평 순. 최근 24개 캐시.
+
+## 처음 쓸 때만 불러오기
+
+엔진 모듈·색인·KaTeX는 첫 화면에서 받지 않습니다. `js/ai-engines.js`만 앱에 정적으로 들어가고, `loadFigureEngine`·`loadGraphEngine`이 처음 쓸 때 `import()`합니다. 색인은 엔진이 `loadFigureIndex`로(캐시), KaTeX는 그래프 그리기 때 받습니다. `tests/test-ai-engines-lazy-load.mjs`가 앱 코드의 정적 import·`<script>`·`<link>`·시작 로딩(`js/main.js`)의 미리 준비 단계에 이것들이 들어가면 실패시킵니다.
 
 ## 켜고 끄기
 
@@ -31,11 +40,13 @@
 
 - 글: `desktop.readImageText`(main `codex:read-image-text`, 직접 호출). 취소 신호로 기다림을 끊음.
 - 그림: `desktop.send({ purpose:'image', ephemeralRender:true })` → main `startDirectImageTurn`(`desktop/ai-direct-image.cjs`). 결과 이벤트는 전용 래스터 컨트롤러(`engineRaster`)가 받아 프라미스로. 그림 차례는 한 번에 하나.
-- 모델: 그림은 AI 작업대에서 고른 모델 먼저, 실패하면 반대 모델(Luna↔Sol) 한 번. 글은 `gpt-6.1-sol`(목록에 없으면 고른 모델). 그래프는 `GRAPH_WORKBENCH_SELECTION.model`.
+- 모델: 그림은 AI 작업대에서 고른 모델 먼저(목록 밖이면 `ENGINE_IMAGE_MODEL` = `gpt-6-luna`), 실패하면 반대 모델(Luna↔Sol) 한 번(`imageModelOrder`). 글은 `ENGINE_TEXT_MODEL` = `gpt-6.1-sol`(목록에 없으면 고른 모델), 거절(400)이면 다음 글 모델. 그래프는 `GRAPH_WORKBENCH_SELECTION.model`.
+- 재시도 수: 5E가 엔진에 넘기는 값은 글 3·그림 1·장면 2(`runFigureEngine`). 그림 한 차례 안의 재시도는 반대 모델이 맡습니다.
+- 차례 시계: 그림·글 차례마다 240초(`ENGINE_IMAGE_DEADLINE_MS`·`ENGINE_TEXT_DEADLINE_MS`, `js/ai-engines.js`). main 쪽 한도(한 번 100초 + 다시 1번)보다 길게 두어, main이 끝을 알리지 못했을 때만 화면 쪽이 끊습니다. 검사는 `globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS`·`__FIVE_E_ENGINE_TEXT_DEADLINE_MS`로 줄입니다.
 
 ## 실패로 끝나지 않게
 
-엔진 안 재시도(글 3·장면 2) → 그림은 반대 모델 → 한 장도 못 그리면 `submit('image', { legacyFigure:true })`로 옛 생성 길에 넘김. 앞 결과 카드는 지우지 않습니다. 그래프 그림이 실패하면 기본 그래프 객체 생성으로 이어 가고, 선택한 결과가 그림 그래프면 그것을 앞 결과로 넘겨 설계 실패 때 그대로 둡니다. 엔진이 단계마다 다시 시도하므로 전체 3분 제한과 「90초… 자동 재시도하지 않습니다」 안내는 이 길에서 끕니다.
+순서: 엔진 안 재시도(글 3·장면 2) → 그림은 반대 모델 → 글이 계속 안 되면 글 단계를 건너뛰고 요청 그대로·참고 그림 없이 → 한 장도 못 그리면 `submit('image', { legacyFigure:true })`로 옛 생성 길에 넘김. 앞 결과 카드는 지우지 않습니다. 그래프 그림이 실패하면 기본 그래프 객체 생성으로 이어 가고, 선택한 결과가 그림 그래프면 그것을 앞 결과로 넘겨 설계 실패 때 그대로 둡니다. 엔진이 단계마다 다시 시도하므로 전체 3분 제한과 「90초… 자동 재시도하지 않습니다」 안내는 이 길에서 끕니다.
 
 ### 고장별 길(E9, 11-19)
 
@@ -43,6 +54,8 @@
 |---|---|
 | AI 글 읽기 시간 초과·429·5xx | main(`ai-direct-image.cjs`)이 이미 두 번 더 시도함 → 같은 차례에서 두 번 이어지면 글 단계(구체화·검색·설명 찾기)는 건너뛰고(`health.textDown`) 요청 그대로·참고 그림 없이 그림 |
 | 깨진 JSON·빈 응답 | 단계마다 대체(요청 한 장면·점수 고르기·지우기 전 그림) |
+| 분류 AI 실패·JSON 깨짐 | `roughClassify`로 요청 낱말에서 검색어를 대강 뽑아 점수로 참고 그림을 고름(원본 image_generator와 같게) |
+| 기출 문항 JSON의 그림이 PNG·JPEG·WebP·GIF base64가 아니거나 8MB(글자 수, `MAX_REFERENCE_DATA_URL_CHARS`) 넘음 | 「그림 없음」으로 보고 다음 후보 |
 | 글 모델 거절(400) | 다음 글 모델(고른 모델 → Luna/Sol)로 한 번 더 |
 | 그림 모델 실패 | 반대 모델 → 장면 재시도 → 옛 생성 길 |
 | 기출 Worker 404·너무 큼 | 그 그림만 건너뛰고 다른 후보, 없으면 참고 그림 없이 |
@@ -50,7 +63,6 @@
 | 연결 끊김(글·그림 모두 연결 실패) | 옛 길도 같은 연결이라 넘기지 않음 → 「인터넷 연결을 확인해 주세요」, 앞 결과·입력 유지, `online` 되면 한 번 이어서 |
 | Codex 로그인 없음(시작 전 `desktop.status()`) 또는 실행 중 만료 | AI를 더 부르지 않고 「연결 정보」 창을 띄워 「Codex 로그인」으로 데려감 → 로그인되면 같은 요청으로 이어서 |
 | 취소 | 그 차례만 멈춤·옛 길로 넘기지 않음, 다음 차례는 새로 시작(앞 취소 표시를 지움) |
-
 | 그림 차례·글 읽기가 끝을 알리지 않음(E9b) | 화면 쪽 차례 시계(`ENGINE_IMAGE_DEADLINE_MS`·`ENGINE_TEXT_DEADLINE_MS` = 240초, main 한도 100초×2보다 김)로 끊음 — 그림은 interrupt 뒤 반대 모델, 두 차례 연달아 답이 없으면 `health.imageDown`으로 장면 재시도 없이 옛 길; 글은 transport로 세어 `textDown` |
 | 엔진 모듈(`ai-figure/index.js`·`ai-graph/index.js`·`draw.js`)을 못 받음(E9b) | 이번에는 옛 길·기본 생성으로. 브라우저가 실패한 import를 주소별로 기억하므로 다음 차례에는 `&retry=N` 주소로 다시 받음 |
 
@@ -80,5 +92,6 @@ IPC를 건너온 오류는 code가 사라지므로 `classifyAiError`가 글로 �
 
 ## 검사
 
-- 단위: `tests/test-ai-engines-connect.mjs`
+- 단위: `tests/test-ai-engines-connect.mjs`(연결), `tests/test-ai-figure-engine.mjs`(그림 엔진·지시문 해시·점수), `tests/test-ai-graph-engine.mjs`(그래프 설계·검사), `tests/test-ai-engines-faults.mjs`(고장), `tests/test-ai-engines-lazy-load.mjs`(첫 화면에 안 실림)
+- 브라우저: `tests/test-ai-graph-draw-browser.cjs`(고정 설계 그리기·겹침), `tests/test-ai-graph-task-transfer-browser.cjs`, 고장 검사 두 개(위)
 - 브라우저(크롬·웹킷, 가짜 설치판 연결): `tests/test-ai-engines-connect-browser.cjs` — 그래프 기본 길 그대로, 그림 생성 → 캔버스 meta, 실패 → 앞 결과 유지, 그래프 그림 → 다시 열기 → 다시 그리기
