@@ -1,0 +1,104 @@
+{
+ "source": "image_generator/out/별과우주-Q04/그래프.json",
+ "subject": "지구과학Ⅰ",
+ "request": "",
+ "keyValues": "",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 1,
+  "xMax": 3.35,
+  "yMin": 0,
+  "yMax": 19.5,
+  "labelX": "거리(pc)",
+  "labelY": "겉보기 등급",
+  "xTicks": [
+   {
+    "value": 1,
+    "label": "10",
+    "key": false
+   },
+   {
+    "value": 2,
+    "label": "100",
+    "key": false
+   },
+   {
+    "value": 3,
+    "label": "1000",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 2,
+    "label": "2",
+    "key": false
+   },
+   {
+    "value": 7,
+    "label": "7",
+    "key": false
+   },
+   {
+    "value": 12,
+    "label": "12",
+    "key": false
+   },
+   {
+    "value": 17,
+    "label": "17",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": "2+5*(x-1)",
+    "domain": [
+     1,
+     3
+    ],
+    "label": "P",
+    "labelAt": [
+     2.62,
+     7.2
+    ]
+   },
+   {
+    "expr": "7+5*(x-1)",
+    "domain": [
+     1,
+     3
+    ],
+    "label": "Q",
+    "labelAt": [
+     2.2,
+     15.2
+    ]
+   }
+  ],
+  "marks": [],
+  "guides": [
+   {
+    "x": 2,
+    "y": 7
+   },
+   {
+    "x": 3,
+    "y": 12
+   },
+   {
+    "x": 2,
+    "y": 12
+   },
+   {
+    "x": 3,
+    "y": 17
+   }
+  ]
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

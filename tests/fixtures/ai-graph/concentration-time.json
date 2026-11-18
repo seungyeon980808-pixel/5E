@@ -1,0 +1,108 @@
+{
+ "source": "image_generator/cycles/c9/hc2-01/meta.json#A1",
+ "subject": "화학Ⅱ",
+ "request": "평형 상태에서 온도 올렸을 때 농도 변하는 그래프 하나 그려 줘. 발열 반응으로",
+ "keyValues": "가로축: 시간(s), 세로축: 농도(mol/L). 곡선 이름: A, B. 초기 평형 농도: c_A,₀, c_B,₀. 새 평형 농도: c_A,₁, c_B,₁. c_A,₁ > c_A,₀, c_B,₁ < c_B,₀. t₀에서 두 농도는 연속이며, t₁ 이후 새 평형 농도로 일정하다. A ⇌ B의 1:1 반응이므로 c_A,₁ − c_A,₀ = c_B,₀ − c_B,₁. 농도의 수치 및 A와 B 사이의 농도 대소 관계는 지정하지 않으며, 곡선의 상대적 높이는 구분을 위한 개략적 배치이다.",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 4.3,
+  "yMin": 0,
+  "yMax": 0.8,
+  "labelX": "시간",
+  "labelY": "농도",
+  "xTicks": [
+   {
+    "value": 1,
+    "label": "t_0",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 0.4,
+    "label": "0.4",
+    "key": false
+   },
+   {
+    "value": 0.6,
+    "label": "0.6",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": "0.4",
+    "points": null,
+    "domain": [
+     0,
+     1
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": "0.6",
+    "points": null,
+    "domain": [
+     0,
+     1
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": "0.4+0.25*(1-exp(-2*(x-1)))",
+    "points": null,
+    "domain": [
+     1,
+     4
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "A",
+    "labelAt": [
+     3.8,
+     0.69
+    ]
+   },
+   {
+    "expr": "0.6-0.25*(1-exp(-2*(x-1)))",
+    "points": null,
+    "domain": [
+     1,
+     4
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "B",
+    "labelAt": [
+     3.8,
+     0.31
+    ]
+   }
+  ],
+  "marks": [],
+  "lineLabels": [],
+  "guides": [
+   {
+    "x": 1,
+    "y": 0.6
+   }
+  ],
+  "notes": "일정 부피의 발열 가역 반응 A ⇌ B에서 t_0=1에 온도를 올려 유지한다고 가정하며, 농도는 기준 농도로 나눈 값이고 온도 상승 순간에는 연속적으로 유지된 뒤 반응물 A는 증가하고 생성물 B는 감소하여 새 평형에 접근한다."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

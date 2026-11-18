@@ -1,0 +1,225 @@
+{
+ "source": "image_generator/cycles/c10/ke1-01/meta.json#A1",
+ "subject": "지구과학Ⅰ",
+ "request": "별의 H-R도 하나 그려 줘. 가로축은 표면 온도로 왼쪽 20000 K, 오른쪽 3000 K 정도, 세로축은 태양 기준 광도로 해 주고.\n주계열 띠에 A, 오른쪽 위 거성 쪽에 B 표시해 줘.\n태양은 P로 찍고 온도 5800 K, 광도 1만 적어 줘. 별 그림 같은 장식은 빼고.",
+ "keyValues": "가로축: 표면 온도(K), 왼쪽 끝 20000, 오른쪽 끝 3000으로 오른쪽으로 갈수록 감소. 세로축: 광도(L☉), 위쪽으로 증가하는 로그 눈금. P의 좌표: (5800 K, 1 L☉). 주계열 띠는 P를 지나며 A는 주계열 띠 내부, B는 오른쪽 위 거성 영역에 위치한다. A와 B의 정확한 온도·광도 수치는 지정하지 않는다.",
+ "originalCollisions": {
+  "n": 3,
+  "list": [
+   "눈금 뺌",
+   "겹침 남음 45.0",
+   "겹침 남음 60.0",
+   "겹침 남음 24.0"
+  ]
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 1.126,
+  "yMin": -4,
+  "yMax": 4.96,
+  "labelX": "표면 온도(K)",
+  "labelY": "태양 기준 광도",
+  "xTicks": [
+   {
+    "value": 0.6525,
+    "label": "5800",
+    "key": false
+   },
+   {
+    "value": 1,
+    "label": "3000",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": -4,
+    "label": "10^{-4}",
+    "key": false
+   },
+   {
+    "value": -2,
+    "label": "10^{-2}",
+    "key": false
+   },
+   {
+    "value": 2,
+    "label": "10^2",
+    "key": false
+   },
+   {
+    "value": 4,
+    "label": "10^4",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      3.65
+     ],
+     [
+      0.25,
+      2.25
+     ],
+     [
+      0.5,
+      0.95
+     ],
+     [
+      0.6525,
+      0.25
+     ],
+     [
+      0.8,
+      -1.05
+     ],
+     [
+      1,
+      -3.05
+     ]
+    ],
+    "domain": [
+     0,
+     1
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      3.15
+     ],
+     [
+      0.25,
+      1.75
+     ],
+     [
+      0.5,
+      0.45
+     ],
+     [
+      0.6525,
+      -0.25
+     ],
+     [
+      0.8,
+      -1.55
+     ],
+     [
+      1,
+      -3.55
+     ]
+    ],
+    "domain": [
+     0,
+     1
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.62,
+      1.65
+     ],
+     [
+      0.74,
+      2.1
+     ],
+     [
+      0.86,
+      2.45
+     ],
+     [
+      1,
+      2.65
+     ]
+    ],
+    "domain": [
+     0.62,
+     1
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.62,
+      1.15
+     ],
+     [
+      0.74,
+      1.6
+     ],
+     [
+      0.86,
+      1.95
+     ],
+     [
+      1,
+      2.15
+     ]
+    ],
+    "domain": [
+     0.62,
+     1
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "marks": [
+   {
+    "x": 0.5,
+    "y": 0.7,
+    "name": "A",
+    "style": "filled"
+   },
+   {
+    "x": 0.86,
+    "y": 2.2,
+    "name": "B",
+    "style": "filled"
+   },
+   {
+    "x": 0.6525,
+    "y": 0,
+    "name": "P",
+    "style": "filled"
+   }
+  ],
+  "lineLabels": [],
+  "guides": [
+   {
+    "x": 0.6525,
+    "y": 0
+   }
+  ],
+  "notes": "좌표는 x=ln(20000 K/T)/ln(20000/3000), y=log10(L/L_태양)인 무차원 로그 좌표이며, 온도는 오른쪽으로 갈수록 낮아진다. 두 경계선 사이로 주계열 띠와 거성 영역을 개략적으로 나타냈고, P는 온도 5800 K·태양 기준 광도 1이다."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

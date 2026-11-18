@@ -1,0 +1,98 @@
+{
+ "source": "image_generator/out/시험/그래프.json",
+ "subject": "물리학Ⅰ",
+ "request": "",
+ "keyValues": "",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 2.25,
+  "yMin": 0,
+  "yMax": 1.25,
+  "labelX": "시간",
+  "labelY": "속도",
+  "xTicks": [
+   {
+    "value": 1,
+    "label": "t_0",
+    "key": false
+   },
+   {
+    "value": 2,
+    "label": "2t_0",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 0.5,
+    "label": "\\frac{v_0}{2}",
+    "key": false
+   },
+   {
+    "value": 1,
+    "label": "v_0",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      0
+     ],
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      1
+     ]
+    ],
+    "domain": [
+     0,
+     2
+    ],
+    "dashed": false,
+    "label": "A",
+    "labelAt": [
+     1.7,
+     1.09
+    ]
+   },
+   {
+    "expr": "0.5",
+    "points": null,
+    "domain": [
+     0,
+     2
+    ],
+    "dashed": true,
+    "label": "B",
+    "labelAt": [
+     1.7,
+     0.59
+    ]
+   }
+  ],
+  "guides": [
+   {
+    "x": 1,
+    "y": 1
+   },
+   {
+    "x": 2,
+    "y": 1
+   }
+  ],
+  "notes": "t_0=1, v_0=1로 두었다."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

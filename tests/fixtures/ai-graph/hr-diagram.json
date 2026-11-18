@@ -1,0 +1,123 @@
+{
+ "source": "image_generator/out/시험/HR.json",
+ "subject": "지구과학Ⅰ",
+ "request": "",
+ "keyValues": "",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 3000,
+  "xMax": 22160,
+  "yMin": 0.001,
+  "yMax": 10000,
+  "labelX": "표면 온도(K)",
+  "labelY": "광도(태양 기준)",
+  "xTicks": [
+   {
+    "value": 3000,
+    "label": "3000",
+    "key": false
+   },
+   {
+    "value": 5800,
+    "label": "5800",
+    "key": false
+   },
+   {
+    "value": 20000,
+    "label": "20000",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 1,
+    "label": "1",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      3000,
+      0.003
+     ],
+     [
+      3800,
+      0.03
+     ],
+     [
+      4500,
+      0.15
+     ],
+     [
+      5800,
+      1
+     ],
+     [
+      7500,
+      8
+     ],
+     [
+      10000,
+      50
+     ],
+     [
+      15000,
+      500
+     ],
+     [
+      20000,
+      2500
+     ]
+    ],
+    "domain": [
+     3000,
+     20000
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "xReverse": true,
+  "xLog": false,
+  "yLog": true,
+  "marks": [
+   {
+    "x": 10000,
+    "y": 50,
+    "name": "A",
+    "style": "filled"
+   },
+   {
+    "x": 4000,
+    "y": 500,
+    "name": "B",
+    "style": "filled"
+   },
+   {
+    "x": 5800,
+    "y": 1,
+    "name": "P",
+    "style": "filled"
+   }
+  ],
+  "lineLabels": [],
+  "guides": [
+   {
+    "x": 5800,
+    "y": 1
+   }
+  ],
+  "notes": "주계열은 대표적인 온도·광도 관계를 나타내며, A는 주계열성, B는 거성, P는 태양이다."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}
