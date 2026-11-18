@@ -181,9 +181,18 @@ test('general draft-first UI offers native editing and optional verification wit
   const draftEdit=await editMoveReopen(page,evidence,await page.evaluate(()=>window.__task2.modified),1);
   const editedObjects=await canvasObjects(page);
   await page.locator('#ai-image-install-open').click();
+  // 11-19 E10 다시 씀: 지금은 작업대를 다시 열면 캔버스 그림으로 새 작업이 하나 더 생겨 그 작업이 앞에 온다(관찰: task-0 결과 옆에 task-3).
+  // 사용자가 하듯 왼쪽 작업 목록에서 결과가 있는 처음 작업을 다시 고른다.
+  const firstTask=(await snapshot(page)).find(row=>row.generated?.length);
+  await page.locator(`${panel} .ai-task-tab[data-tab-id="${firstTask.id}"]`).click();
+  await page.locator(`${panel} .ai-task-tab.is-on[data-tab-id="${firstTask.id}"]`).waitFor();
+  // 11-19 E10 다시 씀: 「추가 라벨 검수」는 결과 줄에서 빠져 머리 줄 「결과 확인 사항」 창([data-ai-review-open] → [data-ai-review-dialog], ai-workbench.js:153) 안에 있다.
+  // 사용자가 가는 길대로 그 창을 열고 누른다.
+  await page.locator(panel+' [data-ai-review-open]').click();
+  await page.locator('[data-ai-review-dialog][open]').waitFor();
   await page.locator(panel+' [data-ai-verify-label-draft]').click();
   await finish(page,{startIndex:2});
-  candidate=(await snapshot(page))[0].generated.at(-1);
+  candidate=(await snapshot(page)).find(row=>row.id===firstTask.id).generated.at(-1);
   assert.equal(candidate.workflowMetrics.calls.sourceAnalysis,0);
   assert.equal(candidate.workflowMetrics.calls.fullGeneration,0);
   assert.equal(candidate.workflowMetrics.calls.review,1);
@@ -191,7 +200,8 @@ test('general draft-first UI offers native editing and optional verification wit
   assert.deepEqual(await canvasObjects(page),editedObjects,'optional verification cannot overwrite the edited canvas copy');
   const models=await page.evaluate(()=>window.__task2.sends.map(s=>({purpose:s.payload.purpose,model:s.payload.model,effort:s.payload.effort})));
   assert.equal(models[0].model,'gpt-6-luna');assert.equal(models[0].effort,'medium');
-  assert.equal(models[1].model,'gpt-6.1-sol');
+  // 11-19 E10 다시 씀: c9d1da3f(11-10)부터 그림 그리기는 고른 모델(여기선 Sol)과 관계없이 첫 시도부터 Luna(medium) — 다시 그리기·정밀만 Sol.
+  assert.equal(models[1].model,'gpt-6-luna');assert.equal(models[1].effort,'medium');
   assert.equal(models[2].model,'gpt-6-luna');assert.equal(models[2].effort,'medium');
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'synthetic transport; real product UI',newPaidAiCalls:0,mandatoryRequests:2,optionalRequests:1,draftEdit,models,candidate},null,2));

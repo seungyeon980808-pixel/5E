@@ -95,14 +95,22 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
   // 「그림만 / 라벨 포함」 두 단추는 숨은 상태 표시이고, 실제로 누르는 것은 「라벨 ON/OFF」 토글 하나다.
   const labelToggle = page.locator('#ai-image-panel [data-ai-label-toggle]');
   const shown = () => page.locator('#ai-image-panel .ai-generated-card .ai-preview-stage > img').first().getAttribute('src');
-  await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, state.finalLabelComposite);
+  // 11-19 E10 다시 씀: 4dbdd0b8(10-13)부터 미리보기 「라벨 ON」은 검수 때 묶인 합성 바이트(finalLabelComposite)를 그대로 쓰지 않고,
+  // 지금 라벨 계획과 지금 출력 그림(resolveOutputVariant)으로 그 자리에서 다시 합성한다(js/ai-panel.js renderLabelPreview → createEditableLabelComposite).
+  // 그래서 「미리보기 = 검수 합성 바이트」 대신: ON은 라벨이 그려진 다른 그림(같은 크기), OFF는 생성 원본 그대로, 다시 ON은 앞의 ON과 같은 그림.
+  // 검수에 묶인 바이트가 바뀌지 않는다는 계약은 위 finalLabelComposite === 검수 첨부 단언이 그대로 본다.
+  const previewSrc = () => page.evaluate(() => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src || '');
+  const pngSize = src => page.evaluate(async src => { const image = new Image(); image.src = src; await image.decode(); return [image.naturalWidth, image.naturalHeight]; }, src);
+  await page.waitForFunction(data => { const src = document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src; return src?.startsWith('data:image/png') && src !== data; }, state.data);
   assert.equal(await included.getAttribute('aria-pressed'), 'true');
-  assert.equal(await shown(), state.finalLabelComposite, 'Preview displays the exact final native overlay bound to its review');
+  const labelledPreview = await previewSrc();
+  assert.notEqual(labelledPreview, state.data, 'Label ON preview draws the editable labels over the generated image');
+  assert.deepEqual(await pngSize(labelledPreview), await pngSize(state.finalLabelComposite), 'Live label preview keeps the reviewed composite size');
   await labelToggle.click();
   await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, state.data);
   assert.equal(await diagram.getAttribute('aria-pressed'), 'true'); assert.equal(await shown(), state.data);
   await labelToggle.click();
-  await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, state.finalLabelComposite);
+  await page.waitForFunction(data => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src === data, labelledPreview);
   if (verdict === 'fail') {
     await page.locator('[data-ai-review-open]').click();
     const issues = page.locator('[data-ai-label-quality-issues]');
@@ -180,7 +188,12 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
     .replace("{ waitUntil: 'domcontentloaded' }", "{ waitUntil: 'domcontentloaded' }")
     .replace('  let statusGate = null, interruptGate = null;', "  globalThis.__5eLegacyLabelPipeline = true; /* 11-10(c9d1da3f): 예전 라벨 파이프라인 계약 */\n  for (const tab of tabs) { tab.imageKind = 'general'; tab.labelResult = 'restore-editable'; tab.imageLabelWorkflow = { version:'1.0.0', imageKind:'general', labelResult:'restore-editable' }; tab.preserveSourceLabels = true; tab.generated = []; tab.selectedCandidateId = null; }\n  let statusGate = null, interruptGate = null;")
     .replace('emit(index, kind) {', 'emit(index, kind, text) {')
-    .replace("if (kind === 'image') {", "if (kind === 'assistant') { method = 'item/completed'; params.item = { type: 'agentMessage', phase: 'final_answer', text }; }\n      else if (kind === 'image') {");
+    .replace("if (kind === 'image') {", "if (kind === 'assistant') { method = 'item/completed'; params.item = { type: 'agentMessage', phase: 'final_answer', text }; }\n      else if (kind === 'image') {")
+    // 11-19 E10: 563e5063(11-08 ai-label-reframe)부터 새 그림은 「그림 영역이 원본 그림 영역 자리에 오도록」 다시 놓인다. 고정 자료의 생성 그림(modified)은
+    // 원본에 없던 사각형이 더해져 그림 영역이 커서 약 0.65배로 줄어 놓였고, 그래서 라벨 겹침(y .65 = 오른쪽 사각형 아랫변) 상황이 사라졌다.
+    // 겹침·비겹침 좌표가 뜻을 갖도록 생성 그림으로 원본과 같은 잉크 영역의 그림(original)을 돌려준다(다시 놓기가 그대로 둠).
+    .replace("params.item = { type: 'imageGeneration', imageDataUrl: modified };", "params.item = { type: 'imageGeneration', imageDataUrl: original };");
+  assert.ok(code.includes("imageDataUrl: original"), 'batch harness emits the source-extent image');
   const batchFixture = new Function('require','root','fs','path','assert','chromium','webkit', adaptHarness(code) + '; return requestBrowserFixture;')(require,root,fs,path,assert,chromium,webkit);
   const evidence = path.join(evidenceRoot, clearance === 'clear' ? 'workspace-batch' : 'workspace-batch-overlap'); fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await batchFixture(t, 2, evidence, { initialGeneration: true });
@@ -188,14 +201,27 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
   assert.equal(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(), '2개 선택');
   await labelsOn(page);
   await page.click('#ai-image-panel [data-ai-send][data-ai-comments-apply]');
-  await page.waitForFunction(() => window.__task2.sends.length === 2);
-  assert.ok((await sends(page)).every(s => s.purpose === 'scene'));
+  // 11-19 E10 다시 씀: 여러 작업을 함께 보내면 그림 생성은 한 번에 한 작업씩 차례로 돈다(js/ai-panel.js BATCH_CONCURRENCY = 1).
+  // 예전 검사는 두 작업의 관찰 요청 2개가 동시에 나간 뒤 그림 2개가 함께 나가길 기다렸다(고정 번호 0·1 / 2·3 / 4·5).
+  // 지금은 요청 순서가 차례 실행에 따라 바뀌므로, 들어오는 요청을 목적(관찰·그림·검수)으로 가려 답한다. 검수 판정은 먼저 온 것 pass, 다음 fail.
+  // 또 두 작업은 원본·설정이 같아 두 번째 작업은 앞 작업이 저장한 그림을 다시 쓰고(workflowMetrics.backgroundReused='storage', fullGeneration 0)
+  // 그림 요청을 다시 보내지 않는다 — 관찰 2 · 그림 1 · 검수 2 = 요청 5개.
   const batchPlan = JSON.stringify(clearance === 'clear' ? syntheticBatchPipelineObservation() : syntheticPipelineObservation());
-  await page.evaluate(plan => { for (const i of [0,1]) { window.__task2.emit(i, 'assistant', plan); window.__task2.emit(i, 'done'); } }, batchPlan);
-  await page.waitForFunction(() => window.__task2.sends.length === 4);
-  await assertApprovedGeneration(page, [2,3]);
-  await page.evaluate(() => { for (const i of [2,3]) { window.__task2.emit(i, 'image'); window.__task2.emit(i, 'done'); } });
-  await completeVerification(page, [4,5], ['pass','fail']);
+  const reviewIndices = [], imageIndices = [], observeIndices = [];
+  for (let handled = 0; reviewIndices.length < 2; handled++) {
+    await page.waitForFunction(n => window.__task2.sends.length > n, handled);
+    const request = (await sends(page))[handled];
+    if (request.purpose === 'image') {
+      imageIndices.push(handled); await assertApprovedGeneration(page, [handled]);
+      await page.evaluate(i => { window.__task2.emit(i, 'image'); window.__task2.emit(i, 'done'); }, handled);
+    } else if (request.text.includes('고정 후보: ')) {
+      reviewIndices.push(handled); await completeVerification(page, [handled], [reviewIndices.length === 1 ? 'pass' : 'fail']);
+    } else {
+      assert.equal(request.purpose, 'scene'); observeIndices.push(handled);
+      await page.evaluate(({ plan, i }) => { window.__task2.emit(i, 'assistant', plan); window.__task2.emit(i, 'done'); }, { plan: batchPlan, i: handled });
+    }
+  }
+  assert.deepEqual([observeIndices.length, imageIndices.length, reviewIndices.length], [2, 1, 2], 'two observations, one generation reused by the second task, two joint reviews');
   await page.waitForFunction(() => window.__task2Manager.workspaceBatchState().filter(job => ['completed','failed'].includes(job.state)).length === 2);
   const tasks = await page.evaluate(async () => (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w => w.tabs).map(tab => ({ id: tab.id, candidate: tab.generated.at(-1) })));
   assert.equal(tasks.length, 2); assert.ok(tasks.every(tab => tab.candidate.labelPlan.frozen && tab.candidate.labelPlan.labels[0].text === '• 전자'));
@@ -203,15 +229,16 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
   for (const task of tasks) {
     assert.equal(task.candidate.sourceLabelPlan.observationContractRevision, '1.4.0');
     assert.equal(task.candidate.sourceLabelPlan.labels[0].position.y, clearance === 'clear' ? .75 : .65, 'Source coordinates remain frozen');
-    assert.equal(task.candidate.data, await page.evaluate(() => window.__task2.modified), 'Original batch RAW bytes remain unchanged');
   }
-  const mechanical = await page.evaluate(() => window.__task2.sends.slice(4).map(send => {
+  // 11-19 E10: 다시 놓기가 그대로 두는 그림이라 RAW 바이트는 고정 자료가 돌려준 생성 PNG와 같다(두 번째 작업은 앞 작업이 저장한 같은 그림을 다시 씀).
+  for (const task of tasks) assert.equal(task.candidate.data, await page.evaluate(() => window.__task2.original), 'Original batch RAW bytes remain unchanged');
+  const mechanical = await page.evaluate(indices => indices.map(i => window.__task2.sends[i]).map(send => {
     const lines = send.payload.text.split('\n');
     const proposals = JSON.parse(lines.find(line => line.startsWith('고정 후보: ')).slice('고정 후보: '.length));
     const auditLine = lines.find(line => line.startsWith('실제 네이티브 렌더러의 측정'));
     const audit = JSON.parse(auditLine.slice(auditLine.indexOf(': ') + 2));
     return { candidateCounts: proposals.map(group => group.candidates.length), finalPlacement: audit.finalPlacement };
-  }));
+  }), reviewIndices);
   for (const result of mechanical) {
     if (clearance === 'clear') {
       assert.deepEqual(result.candidateCounts, [1]); assert.deepEqual(result.finalPlacement.issues, []);
@@ -221,8 +248,9 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
       assert.ok(result.finalPlacement.issues.some(issue => issue.code === 'unconfirmed-source-fallback'));
     }
   }
-  assert.ok((await sends(page)).slice(4).every(s=>s.attachmentCount===3 && s.text.includes('고정 후보: ')));
-  assert.equal((await sends(page)).length, 6); assert.equal(imageSends(await sends(page)).length, 2); assert.deepEqual(errors, []);
+  { const all = await sends(page); assert.ok(reviewIndices.every(i => all[i].attachmentCount === 3 && all[i].text.includes('고정 후보: '))); }
+  assert.equal((await sends(page)).length, 5); assert.equal(imageSends(await sends(page)).length, 1); assert.deepEqual(errors, []);
+  assert.deepEqual(tasks.map(tab => tab.candidate.workflowMetrics?.calls?.fullGeneration).sort(), [0, 1], 'second identical task reuses the stored generation');
   fs.writeFileSync(path.join(evidence, 'result.json'), JSON.stringify({ clearance, tasks, mechanical, sends: await sends(page), errors }, null, 2));
 });
 

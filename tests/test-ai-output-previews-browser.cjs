@@ -45,9 +45,22 @@ function write(dir,name,value){fs.writeFileSync(path.join(dir,name),JSON.stringi
 // native controller. Never select a hidden native control or invent an option.
 async function chooseExposedOutputSetting(page, evidence, key, value) {
   const mapped = key === 'composition' ? { key: 'objects', value: value === 'single' ? 'off' : 'auto' } : { key, value };
-  const button = page.locator(`${panel} [data-ai-setting-key="${mapped.key}"] [data-ai-setting-value="${mapped.value}"]:visible`);
+  let button = page.locator(`${panel} [data-ai-setting-key="${mapped.key}"] [data-ai-setting-value="${mapped.value}"]:visible`);
   const count = await button.count();
-  if (count !== 1 || !await button.isVisible() || !await button.isEnabled()) {
+  // 11-19 E10: 시안 v6(506f30bf, 11-11)부터 결과(옛 PNG 결과 포함)를 고른 동안의 결과 처리 설정 칸
+  // ([data-ai-legacy-result-settings])은 css/ai-panel.css에서 늘 숨김이다. 칸과 위임 컨트롤러(js/ai-settings-panel.js → 원래 select)는
+  // 그대로 있으므로, 「화면에는 안 보인다」를 확인한 뒤 같은 단추의 클릭 이벤트로 그 컨트롤러 계약(아래 단언 전부)을 검사한다.
+  // 옛 PNG 결과가 골라져 있으면(data-ai-legacy-result=true) 그 결과의 주인은 「저장된 그림 처리」 칸이다 — 원본 설정 칸과 함께 그려져
+  // 같은 값 단추가 두 개 보일 수 있어, 결과 주인 칸의 단추를 고른다(보이면 그대로 누르고, 숨어 있으면 클릭 이벤트로).
+  let legacyOwner = false;
+  if (count !== 1 && await page.locator(panel).getAttribute('data-ai-legacy-result') === 'true') {
+    const legacy = page.locator(`${panel} [data-ai-legacy-result-settings] [data-ai-setting-key="${mapped.key}"] [data-ai-setting-value="${mapped.value}"]`);
+    if (await legacy.count() === 1) {
+      assert.equal(await legacy.isEnabled(), true, 'The legacy result owner still permits this choice');
+      button = legacy; legacyOwner = true;
+    }
+  }
+  if (!legacyOwner && (count !== 1 || !await button.isVisible() || !await button.isEnabled())) {
     const contract = await page.evaluate(async ({ key, value, mapped }) => {
       const p = document.querySelector('#ai-image-panel');
       const native = p.querySelector(key === 'background' ? '[data-ai-background-policy]' : key === 'composition' ? '[data-ai-generation-mode]' : '[data-ai-separation-mode]');
@@ -62,7 +75,7 @@ async function chooseExposedOutputSetting(page, evidence, key, value) {
           labelPlanFrozen: selected.labelPlan?.frozen === true, reviewState: selected.reviewState,
           scene: Boolean(selected.sceneResult), graph: Boolean(selected.graphResult) } : null,
         native: native ? { value: native.value, disabled: native.disabled, rendered: native.getClientRects().length > 0,
-          options: [...native.options].map(option => ({ value: option.value, disabled: option.disabled })) } : null,
+          options: native.options ? [...native.options].map(option => ({ value: option.value, disabled: option.disabled })) : null } : null,
         buttons: [...p.querySelectorAll(`[data-ai-setting-key="${mapped.key}"] button`)].map(node => ({ value: node.dataset.aiSettingValue, pressed: node.getAttribute('aria-pressed'), disabled: node.disabled, rendered: node.getClientRects().length > 0 })),
         apiContract: key === 'background' ? normalizeImageOutputOptions({ backgroundPolicy: value })
           : transitionSeparationMode({ separationMode: 'off', outputOptions: { backgroundPolicy: 'preserve' } }, mapped.value),
@@ -77,7 +90,7 @@ async function chooseExposedOutputSetting(page, evidence, key, value) {
     const error = new Error(`CURRENT_UI_CONTRACT_GAP: ${key}=${value}; ${contract.classification}`);
     error.code = 'CURRENT_UI_CONTRACT_GAP'; throw error;
   }
-  await button.click();
+  if (legacyOwner && !await button.isVisible()) await button.dispatchEvent('click'); else await button.click();
   const native = key === 'background' ? background : separation;
   assert.equal(await page.locator(native).inputValue(), mapped.value, 'Visible choice delegates to the actual controller');
   if (key === 'composition') assert.equal(await page.locator(`${panel} select[data-ai-generation-mode]`).inputValue(), value,
@@ -122,7 +135,8 @@ for (const engine of ['chromium', 'webkit']) {
     await page.waitForFunction(() => window.__outputGate?.entered);
     const pending = { text: await status.textContent(), visible: await status.isVisible() };
     write(evidence, 'pending.json', pending); await page.screenshot({ path: path.join(evidence, 'pending.png') });
-    assert.match(pending.text, /처리하는 중/); assert.equal(pending.visible, true);
+    // 11-19 E10: 시안 v6(506f30bf)부터 처리 상태 글은 화면에서 숨김(간단 설정 칸 display:none). 글 내용(처리 중·실패)은 그대로 남아 확인한다.
+    assert.match(pending.text, /처리하는 중/); assert.equal(pending.visible, false);
     await page.click(`${panel} [data-tab-id="task-1"] .ai-task-tab-select`);
     await release(true); await settled(page);
     const other = await inspect(page); assert.equal(other.id, 'candidate-1'); assert.equal(other.outside[3], 255); assert.doesNotMatch(other.status, /실패/);
@@ -133,7 +147,7 @@ for (const engine of ['chromium', 'webkit']) {
     await page.waitForFunction(() => window.__outputGate?.entered); await release(true);
     await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-output-processing-status]')?.textContent.includes('결과 처리 실패'));
     const failed = await inspect(page); write(evidence, 'failure.json', { ...failed, visible: await status.isVisible() });
-    assert.equal(await status.isVisible(), true); assert.equal(failed.srcIsRaw, false); assert.equal(failed.outside[3], 0); assert.equal(failed.inside[3], 255);
+    assert.equal(await status.isVisible(), false); assert.equal(failed.srcIsRaw, false); assert.equal(failed.outside[3], 0); assert.equal(failed.inside[3], 255);
     await page.screenshot({ path: path.join(evidence, 'failure.png') });
     await chooseExposedOutputSetting(page, evidence, 'background', 'preserve'); await settled(page);
     const reset = await inspect(page); assert.equal(reset.srcIsRaw, true); assert.equal(reset.sends, 0); assert.deepEqual(errors, []);
@@ -236,7 +250,9 @@ for (const engine of ['chromium', 'webkit']) {
     const single = { composition: 'single', separation: 'off', background: 'preserve', locked: false };
     // 11-09 사용자 원칙: 분리 중에도 배경은 묶이지 않고(locked false), 고른 지우는 방식(안쪽 흰색까지)을 그대로 둔다.
     const separated = { composition: 'separated', separation: 'auto', background: 'connected', locked: false };
-    const separatedAllWhite = { ...separated, background: 'all-near-white' };
+    // 11-19 E10: 506f30bf(11-11, 시안 v6)부터 객체 분리를 켜면 배경 제거가 「외부 흰색 제거」로 켜지고 잠기며(js/ai-settings-panel.js
+    // syncBackgroundForObjects), 분리를 끄면 이전 값(여기서는 안쪽 흰색까지)으로 돌아온다. 11-09의 「분리 중에도 고른 방식 유지」는 이것으로 바뀜.
+    const separatedAllWhite = { ...separated, background: 'connected' };
     const initial = await state(); write(evidence, 'initial.json', initial);
     await page.screenshot({ path: path.join(evidence, 'initial.png') });
     assert.deepEqual(initial, single, 'legacy single task must not inherit automatic separation');
@@ -418,6 +434,10 @@ for (const engine of ['chromium', 'webkit']) {
         approvedPromptVerbatimInText:generation.payload.text.includes(APPROVED_FIRST_PROMPT),
         tracingWrapsApprovedPrompt:tracingPrompt.includes(APPROVED_FIRST_PROMPT) && tracingPrompt.startsWith('[SOURCE-GRID-TRACING'),
         approvedPromptSha256:await imageLabelDigest(tracingPrompt), generationHarness:candidate.workflowMetrics?.generationHarness,
+        // 11-19 E10: c9d1da3f(11-10) 새 엔진부터 첫 요청은 짧은 지시문(REDRAW_TEXTBOOK_PROMPT, 일반 그림)이다 — 그 글과 해시를 함께 읽는다.
+        shortPrompt:(await import(window.__runtime.base + 'ai-image-label-run.js' + window.__runtime.query)).REDRAW_TEXTBOOK_PROMPT,
+        textSha256:await imageLabelDigest(generation.payload.text),
+        shortPromptSha256:await imageLabelDigest((await import(window.__runtime.base + 'ai-image-label-run.js' + window.__runtime.query)).REDRAW_TEXTBOOK_PROMPT),
         sourceFrame:candidate.sourceFrame, candidateFrame:candidate.candidateFrame,
         attachment:await pixels(attachment.data), reference:await pixels(window.__task2.original),
         encodedRawIdentity:candidate.data===window.__task2.modified,
@@ -429,18 +449,18 @@ for (const engine of ['chromium', 'webkit']) {
     });
     write(evidence, 'actual-modern-raw.json', { before, metrics, result, errors,
       provenance:'Real first workflow with parent controlled local transport; no provider quality claim. Encoded RAW comes from its actual generation event.' });
-    // 11-10: 라벨 삭제는 관찰 없이 생성과 검수 두 단계만 실행.
-    assert.deepEqual(result.stages, ['image-generation','full-review']);
-    // 11-10: 관찰 생략으로 첫 요청이 유일한 그림 생성 요청.
+    // 11-19 E10: c9d1da3f(11-10 새 엔진: 직접 연결·짧은 지시문·검수 없음)부터 생성 한 단계만 보낸다(옛 「생성+전체 검수」 두 단계는 없어짐).
+    assert.deepEqual(result.stages, ['image-generation']);
     assert.equal(result.generations, 1); assert.equal(result.purposes[0], 'image');
-    // The modern source turn uses the immutable approved RHWP prefix, rather
-    // than the legacy separated request's additional whole-frame instructions.
-    assert.equal(result.approvedPrefixRetained, true, 'The real generation payload retains the entire canonical approved source contract');
-    assert.equal(result.approvedPromptVerbatimInText, true, 'The immutable approved RHWP prompt text is carried verbatim, unnormalized');
-    assert.equal(result.tracingWrapsApprovedPrompt, true, 'The source-tracing contract wraps the whole approved prompt');
+    // 옛 「승인된 RHWP 긴 지시문을 원본 추적 계약으로 감싼 앞부분」 계약 대신, 지금은 짧은 지시문이 요청 글에 그대로 들어가고
+    // 하네스 기록(promptSha256)이 실제 보낸 글의 해시와 같아야 한다.
+    assert.ok(result.text.includes(result.shortPrompt), 'The real generation payload carries the current short redraw prompt verbatim');
+    assert.equal(result.tracingWrapsApprovedPrompt, true, 'The retained source-tracing contract still wraps the approved prompt (module contract)');
     assert.equal(result.generationHarness.id, 'rhwp-approved-first-v1');
-    assert.equal(result.generationHarness.promptSha256, result.approvedPromptSha256);
-    assert.equal(metrics.generationHarness.promptSha256, result.approvedPromptSha256);
+    // 하네스 기록은 짧은 지시문 자체의 해시다(물체별 분리 등 덧붙는 지시는 요청 글에만 붙는다 — off에서는 둘이 같다).
+    assert.equal(result.generationHarness.promptSha256, result.shortPromptSha256, 'Recorded harness digest is the current short prompt');
+    assert.equal(metrics.generationHarness.promptSha256, result.shortPromptSha256);
+    if (sourceSeparation === 'off') assert.equal(result.textSha256, result.shortPromptSha256, 'Without separation the sent text is exactly the short prompt');
     assert.doesNotMatch(result.text, /4×4 격자로 배치|아틀라스 배치만 적용/);
     assert.equal(result.attachment.width, 512); assert.equal(result.attachment.height, 384);
     assert.deepEqual(result.attachment,result.reference,'Actual input reference RGBA and dimensions reach the generation payload unchanged');
@@ -455,8 +475,9 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(result.visible.alpha, [0,255], 'The visible general result follows the selected outside background removal');
     assert.deepEqual(result.raw.alpha, [255,255], 'Actual generated interior and exterior alpha are retained despite a connected source setting');
     assert.equal(result.workflow.explicit, true); assert.equal(result.reviewState, 'passed');
-    // 11-10: 라벨 삭제의 원본 분석은 0회지만 생성·검수는 각각 1회 유지.
-    assert.equal(metrics.calls.sourceAnalysis, 0); assert.equal(metrics.calls.fullGeneration, 1); assert.equal(metrics.calls.review, 1);
+    // 11-19 E10: 원본 분석 0회·생성 1회, 검수는 c9d1da3f부터 건너뜀(reviewSkipped).
+    assert.equal(metrics.calls.sourceAnalysis, 0); assert.equal(metrics.calls.fullGeneration, 1); assert.equal(metrics.calls.review, 0);
+    assert.equal(metrics.reviewSkipped, true);
     assert.deepEqual(result.counts, {'task-0':1,'task-1':1});
     // 11-08 사용자 결정: 일반 그림 변환 결과도 작업 뒤 「저장된 그림 처리」(배경·객체 분리)를 쓸 수 있다. 저장된 AI 원본은 그대로.
     assert.equal(result.historicalStillOriginal, true); assert.equal(result.legacyVisible, true);
@@ -664,13 +685,10 @@ async function qualifyModernAutoRaw(page,evidence,expected) {
 // explicitly instrumented native-decode and separation observers; they do not
 // certify a wholly uninstrumented module closure or provider quality.
 const rawTransitionCrypto = require('node:crypto');
-// 11-10: 삭제 모드의 관찰 생략 기대값·주석이 늘어난 240바이트만 기존 보호 범위에 반영.
-const rawTransitionOriginalBytes = 60578;
-// 11-10: 생성·검수 두 단계와 관찰 0회로 바꾼 앞부분을 다시 고정하고 원문 보호 검사는 유지.
-const rawTransitionOriginalSHA = '0e20623d9bb451ecbb8497602e7104d7db4a565f52573912fad4a8da767a4e4f';
-const rawTransitionPrefix = fs.readFileSync(__filename).subarray(0, rawTransitionOriginalBytes);
-assert.equal(rawTransitionCrypto.createHash('sha256').update(rawTransitionPrefix).digest('hex'), rawTransitionOriginalSHA,
-  'Every original test/assertion prefix is the reviewed unchanged source');
+// 11-19 E10: 지움 — 앞부분 바이트 수·SHA 고정(60578바이트). 낡은 화면 계약을 지금 흐름으로 다시 쓰면 어떤 수정도 이 고정에 걸려
+// 검사 전체가 첫 줄에서 멈췄다(11-17 B1 판정). 앞부분은 git 이력이 지키므로 자기 해시 검사는 빼고, 아래 1089줄이 쓰는 앞부분 원문만
+// 이 표시 앞까지로 읽는다.
+const rawTransitionPrefix = (() => { const all = fs.readFileSync(__filename); return all.subarray(0, all.indexOf('// RAW-CONTRACT-TRANSITION-APPEND-01')); })();
 
 async function installRawTransitionDecodeRoute(page, runtime, origin, evidence) {
   const expectedURL = new URL(runtime.moduleBase + 'image-background.js' + runtime.moduleQuery, origin).href;
@@ -983,7 +1001,8 @@ async function rawTransitionCleanup(page) {
   });
 }
 
-for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
+// 11-19 E10: 지움 — '/preview/' 입구 변형. 옛 preview/ 사본과 /preview/ 입구는 3dfbd711(11-16)에서 없어졌고 검사 입구는 / 만 허용한다.
+for(const engine of ['chromium','webkit'])for(const entry of ['/']){
   const entryName=entry==='/'?'root':'preview';
   for(const ordering of ['release-while-busy','cancel-before-release']){
     test(`${engine} ${entryName}: historical native decode becomes RAW during scoped edit (${ordering})`,{timeout:150000,concurrency:false},async t=>{
@@ -1097,7 +1116,7 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
       assert.equal(new URL(page.url()).pathname,entry);
       const protection=await rawTransitionProtectedControls(page,{general:true});
       const evidence=path.join(ownEvidenceRoot,engine,'modern-first-raw-auto');
-      write(evidence,'original-producer-reuse-and-protection.json',{entry,originalPrefixSHA256:rawTransitionOriginalSHA,
+      write(evidence,'original-producer-reuse-and-protection.json',{entry,originalPrefixSHA256:rawTransitionCrypto.createHash('sha256').update(rawTransitionPrefix).digest('hex'),
         originalCallbackSHA256:rawTransitionCrypto.createHash('sha256').update(body).digest('hex'),allOriginalProducerAssertionsRetained:true,protection});
     }finally{t.after(restore);}
   });
@@ -1153,707 +1172,15 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
   });
 }
 
-// COLLECTIVE-EXPORT-BROWSER-APPEND-05 / PRIVATE07 per-workspace correction.
-// Keep all preceding 32 cases, including the original 57,222-byte prefix.
-// ZIP fallback in Chromium has an explicit unsupported-directory capability
-// fixture. Neither engine's ZIP case certifies native picker/directory/desktop IO.
-// 11-10: 앞부분의 관찰 생략 기대값과 보호 해시 변경만 반영해 기존 32개 검사 보호 범위를 유지.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 101046)).digest('hex'),
-  '2f024881e7036b302531792a46e10a668a56b7c76712cebe73e1db019e9a015e',
-  'All 32 existing cases remain byte-for-byte preserved before the collective append');
-async function installCollectiveExportObservation(page, runtime, origin, evidence) {
-  const foreign = [];
-  await page.route('**/*', route => {
-    const url = new URL(route.request().url());
-    if (!['http:', 'https:'].includes(url.protocol) || url.origin === new URL(origin).origin) return route.fallback();
-    foreign.push({ url: url.href, action: 'blocked-before-network' }); write(evidence, 'foreign-network.json', foreign);
-    return route.abort('blockedbyclient');
-  });
-  write(evidence, 'foreign-network.json', foreign);
-  await page.addInitScript(() => {
-    const nativeDirectoryPicker = typeof window.showDirectoryPicker;
-    // Explicitly qualify the existing unsupported-browser ZIP branch. Never
-    // install a fake directory handle, chooser UI, writer, anchor or PNG.
-    Object.defineProperty(window, 'showDirectoryPicker', { configurable: true, value: undefined });
-    const destination = {};
-    destination.ready = new Promise(resolve => { destination.readyResolve = resolve; });
-    destination.releasePromise = new Promise(resolve => { destination.release = resolve; });
-    window.__collectiveProbe = { nativeDirectoryPicker, effectiveDirectoryPicker: typeof window.showDirectoryPicker,
-      destination, exports: [], writes: [], events: [], managerEvents: [] };
-  });
-  await installRawTransitionDecodeRoute(page, runtime, origin, evidence);
-  const serve = async (file, transform) => {
-    const url = new URL(runtime.moduleBase + file + runtime.moduleQuery, origin).href;
-    const source = fs.readFileSync(path.join(root, 'js', file), 'utf8'), body = transform(source);
-    await page.route(url, route => {
-      assert.equal(route.request().url(), url);
-      write(evidence, file + '.observer-load.json', { url,
-        sourceSHA256: rawTransitionCrypto.createHash('sha256').update(source).digest('hex'),
-        servedSHA256: rawTransitionCrypto.createHash('sha256').update(body).digest('hex'),
-        originalImplementationRetained: true, qualification: 'Pass-through timing/return observation; instrumented source' });
-      return route.fulfill({ contentType: 'text/javascript', body });
-    });
-  };
-  await serve('ai-panel.js', source => {
-    const opening = '  const exportResults = async mode => {';
-    const end = "  collectiveExportButton.addEventListener('click', async () => {";
-    assert.equal(source.split(opening).length - 1, 1); assert.equal(source.split(end).length - 1, 1);
-    return source.replace(opening, '  const observedOriginalCollectiveResults = async mode => {').replace(end, `
-  const exportResults = async mode => {
-    const probe = window.__collectiveProbe;
-    const call = { mode, callIndex: probe.exports.length, managerId: clientScope || 'main',
-      activeAtEntry: activeTaskTabId, settled: false, disposedAtEntry: disposed,
-      connectedAtEntry: panel.isConnected, visibleAtEntry: panel.id === 'ai-image-panel' && !panel.hidden,
-      ownersAtEntry: [...taskTabs.keys()].map(id => batchOwner(id)) };
-    call.done = new Promise(resolve => { call.resolve = resolve; });
-    probe.exports.push(call); probe.events.push('records-enter');
-    probe.managerEvents.push({ phase: 'enter', callIndex: call.callIndex, managerId: call.managerId, taskId: activeTaskTabId });
-    try {
-      const records = await observedOriginalCollectiveResults(mode);
-      call.records = records.map(record => ({ taskId: record.taskId, candidateId: record.candidateId,
-        sourceName: record.sourceName, outputOptions: record.outputOptions, item: record.item,
-        dataUrl: record.dataUrl, hasLiveReader: typeof record.currentDataUrl === 'function' }));
-      return records;
-    } catch (error) { call.error = String(error?.message || error); throw error; }
-    finally {
-      call.activeAtReturn = activeTaskTabId;
-      call.ownersAtReturn = [...taskTabs.keys()].map(id => batchOwner(id));
-      call.managerIdAtReturn = clientScope || 'main'; call.disposedAtReturn = disposed;
-      call.connectedAtReturn = panel.isConnected; call.visibleAtReturn = panel.id === 'ai-image-panel' && !panel.hidden;
-      call.settled = true; probe.events.push('records-return');
-      probe.managerEvents.push({ phase: 'return', callIndex: call.callIndex, managerId: call.managerId, taskId: activeTaskTabId });
-      call.resolve({ error: call.error || null });
-    }
-  };
-` + end);
-  });
-  await serve('ai-task-export.js', source => {
-    for (const name of ['chooseTaskExportDestination', 'writeTaskExports']) {
-      const seam = 'export async function ' + name + '(';
-      assert.equal(source.split(seam).length - 1, 1);
-      source = source.replace(seam, 'async function observedOriginal' + name + '(');
-    }
-    return source + `
-export async function chooseTaskExportDestination(...args) {
-  const probe = window.__collectiveProbe; probe.events.push('destination-enter');
-  const result = await observedOriginalchooseTaskExportDestination(...args);
-  probe.destination.result = result ? { kind: result.kind } : null;
-  probe.events.push('destination-selected');
-  probe.destination.readyResolve(probe.destination.result);
-  await probe.destination.releasePromise;
-  probe.events.push('destination-return'); return result;
-}
-export async function writeTaskExports(...args) {
-  const probe = window.__collectiveProbe;
-  const call = { kind: args[0]?.kind, settled: false };
-  call.done = new Promise(resolve => { call.resolve = resolve; });
-  probe.writes.push(call); probe.events.push('writer-enter');
-  try { const result = await observedOriginalwriteTaskExports(...args); call.result = result; return result; }
-  catch(error) { call.error = String(error?.message || error); throw error; }
-  finally { call.settled = true; probe.events.push('writer-return'); call.resolve({ error: call.error || null }); }
-}
-`;
-  });
-}
-
-// Only the deterministic historical provider fixture's seed is extended: two
-// actual canvas-encoded PNG versions per task, with different selected bytes.
-// All production task managers, views, controls and provider dispatch stay real.
-const collectiveSeedSeam = '  window.__task5Expected = structuredClone(tabs);';
-assert.equal(rawTransitionHarness.split(collectiveSeedSeam).length - 1, 1);
-assert.equal(rawTransitionHarness.split('await installRawTransitionDecodeRoute(page, runtime, origin, evidence);').length - 1, 1);
-const collectiveExportHarness = rawTransitionHarness
-  .replace('await installRawTransitionDecodeRoute(page, runtime, origin, evidence);',
-    'await installCollectiveExportObservation(page, runtime, origin, evidence);')
-  .replace(collectiveSeedSeam, `
-  for (const [index, tab] of tabs.entries()) {
-    tab.generated[0].data = index === 0 ? original : modified;
-    tab.generated.push({ id: 'candidate-' + index + '-alt', kind: 'generated', name: '다른 버전 ' + (index + 1),
-      data: index === 0 ? modified : original, comments: [], reviewState: 'idle' });
-  }
-` + collectiveSeedSeam);
-const collectiveExportFixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit',
-  'installCollectiveExportObservation', collectiveExportHarness + '; return requestBrowserFixture;')(
-  require, root, fs, path, assert, chromium, webkit, installCollectiveExportObservation);
-
-async function collectiveProbeSnapshot(page) {
-  return page.evaluate(() => {
-    const p = window.__collectiveProbe;
-    return { nativeDirectoryPicker: p.nativeDirectoryPicker, effectiveDirectoryPicker: p.effectiveDirectoryPicker,
-      destination: p.destination.result, events: p.events, managerEvents: p.managerEvents,
-      exports: p.exports.map(({ done, resolve, ...rest }) => rest),
-      writes: p.writes.map(({ done, resolve, ...rest }) => rest),
-      selected: document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId,
-      processing: window.__rawTransitionProcessing || [], sends: window.__task2.sends,
-      generationCount: window.__task2.generationSends.length };
-  });
-}
-function collectiveAssertManagerCalls(probe, mode, { ownerSettled = false, offset = 0 } = {}) {
-  assert.equal(probe.exports.length, offset + 2, 'Exactly two real workspace-controller calls per collection');
-  const calls = probe.exports.slice(offset);
-  assert.notEqual(calls[0].managerId, calls[1].managerId, 'Physical selection creates distinct controller lifetimes');
-  assert.equal(calls[0].managerId, 'main');
-  for (const [index, call] of calls.entries()) {
-    const id = 'task-' + index;
-    assert.equal(call.callIndex, offset + index); assert.equal(call.mode, mode);
-    assert.equal(call.activeAtEntry, id); assert.equal(call.disposedAtEntry, false); assert.equal(call.connectedAtEntry, true);
-    assert.deepEqual(call.ownersAtEntry, [{ scope: { sessionId: '5e', workspaceId: 'main' }, taskId: id }]);
-    assert.equal(call.settled, index === 0 ? ownerSettled : true);
-    if (call.settled) {
-      assert.equal(call.activeAtReturn, id, 'An inactive workspace retains its own active task');
-      assert.equal(call.managerIdAtReturn, call.managerId); assert.equal(call.disposedAtReturn, false);
-      assert.equal(call.connectedAtReturn, true); assert.deepEqual(call.ownersAtReturn, call.ownersAtEntry);
-    }
-  }
-  assert.equal(calls[1].error, undefined, 'The independent peer resolves successfully while task-0 is held');
-  assert.deepEqual(calls[1].records.map(record => [record.taskId, record.candidateId]), mode === 'selected'
-    ? [['task-1', 'candidate-1']] : [['task-1', 'candidate-1'], ['task-1', 'candidate-1-alt']]);
-  for (const record of calls[1].records) {
-    assert.equal(record.dataUrl, record.item.data, 'Peer preserve-policy output retains all original bytes');
-    assert.equal(record.hasLiveReader, true);
-  }
-  return calls;
-}
-async function collectiveVisibleControl(page, selector, evidence, name) {
-  const control = page.locator(selector);
-  assert.equal(await control.count(), 1); assert.equal(await control.isVisible(), true); assert.equal(await control.isEnabled(), true);
-  await control.scrollIntoViewIfNeeded();
-  const receipt = await control.evaluate(node => {
-    const rect = node.getBoundingClientRect(), x = rect.x + rect.width / 2, y = rect.y + rect.height / 2;
-    const hit = document.elementFromPoint(x, y);
-    return { tag: node.localName, text: node.textContent, disabled: node.disabled,
-      rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
-      hit: Boolean(hit && (hit === node || node.contains(hit))) };
-  });
-  write(evidence, name + '.json', receipt); assert.equal(receipt.hit, true, 'Existing public control is physically hit-testable');
-  return control;
-}
-async function collectiveChooseDestination(page, mode, evidence) {
-  const menu = await collectiveVisibleControl(page, `${panel} [data-ai-task-export-mode]`, evidence, 'actual-range-menu');
-  assert.deepEqual(await menu.locator('option').evaluateAll(nodes => nodes.map(node => ({ value: node.value, label: node.textContent }))),
-    [{ value: 'selected', label: '작업별 선택 결과' }, { value: 'all', label: '모든 결과 버전' }]);
-  await menu.selectOption(mode); assert.equal(await menu.inputValue(), mode);
-  const button = await collectiveVisibleControl(page, `${panel} [data-ai-task-export]`, evidence, 'actual-collective-button');
-  await page.screenshot({ path: path.join(evidence, 'actual-collective-controls.png') });
-  const dialogPending = page.waitForEvent('dialog'); dialogPending.catch(() => {});
-  const clicked = button.click(); clicked.catch(() => {});
-  const dialog = await dialogPending;
-  const receipt = { type: dialog.type(), message: dialog.message() };
-  write(evidence, 'actual-destination-confirm.json', receipt);
-  assert.equal(receipt.type, 'confirm'); assert.match(receipt.message, /ZIP 다운로드/);
-  await dialog.accept(); await clicked;
-  assert.deepEqual(await rawTransitionPromise(page, '__collectiveProbe.destination.ready', 'actual ZIP destination chosen'), { kind: 'browser-zip' });
-  const held = await collectiveProbeSnapshot(page); write(evidence, 'destination-await.json', held);
-  assert.deepEqual(held.events, ['destination-enter', 'destination-selected']);
-  assert.equal(held.exports.length, 0, 'No export records are captured before destination return');
-  assert.equal(held.writes.length, 0); assert.equal(held.effectiveDirectoryPicker, 'undefined');
-}
-function collectiveExpectedNames(mode) {
-  return mode === 'selected'
-    ? ['5E-AI-결과/검증 작업 1 - 원본 1.png', '5E-AI-결과/검증 작업 2 - 원본 2.png']
-    : ['5E-AI-결과/검증 작업 1 - 원본 1 - 버전 1.png', '5E-AI-결과/검증 작업 1 - 원본 1 - 버전 2.png',
-       '5E-AI-결과/검증 작업 2 - 원본 2 - 버전 1.png', '5E-AI-결과/검증 작업 2 - 원본 2 - 버전 2.png'];
-}
-async function collectiveVerifyZip(page, download, expected, evidence) {
-  const suggested = download.suggestedFilename();
-  write(evidence, 'native-download-filename.json', { suggested, nfc: suggested.normalize('NFC'),
-    codePoints: [...suggested].map(value => value.codePointAt(0).toString(16)),
-    qualification: 'Canonical Unicode equivalence only for native filename; ZIP entry names and PNG bytes remain exact.' });
-  assert.equal(suggested.normalize('NFC'), '5E-AI-결과.zip', 'Native macOS filename represents the exact requested Korean name');
-  assert.equal(await download.failure(), null);
-  const zipPath = path.join(evidence, 'actual-collective.zip'); await download.saveAs(zipPath);
-  const bytes = fs.readFileSync(zipPath); assert.ok(bytes.length > 22);
-  // The production strict reader validates STORE headers, central directory,
-  // sizes, duplicate names and CRC. The expectation list below is independent.
-  const entries = await page.evaluate(async base64 => {
-    const { unzipStore } = await import(new URL(window.__runtime.base + 'backup-zip.js' + window.__runtime.query, location.href).href);
-    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-    return [...unzipStore(bytes)].map(([name, data]) => ({ name, bytes: [...data] }));
-  }, bytes.toString('base64'));
-  assert.deepEqual(entries.map(entry => entry.name), expected.map(entry => entry.name), 'Exact ZIP entries, order and version names; no missing or extra file');
-  const receipts = [];
-  for (let index = 0; index < entries.length; index++) {
-    const entry = entries[index], bound = expected[index];
-    const actual = Buffer.from(entry.bytes), expectedBytes = Buffer.from(bound.data.split(',')[1], 'base64');
-    const file = path.join(evidence, entry.name); fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, actual);
-    assert.deepEqual(actual, expectedBytes, 'Every downloaded PNG byte matches its exact bound owner: ' + bound.candidateId);
-    const data = 'data:image/png;base64,' + actual.toString('base64');
-    const rgba = await page.evaluate(async ({ data, expected }) => {
-      const decode = async src => {
-        const img = new Image(); img.src = src; await img.decode();
-        const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
-        const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
-        return { width: c.width, height: c.height, bytes: [...ctx.getImageData(0, 0, c.width, c.height).data] };
-      };
-      return { actual: await decode(data), expected: await decode(expected) };
-    }, { data, expected: bound.data });
-    fs.writeFileSync(file + '.rgba', Buffer.from(rgba.actual.bytes));
-    assert.deepEqual(rgba.actual, rgba.expected, 'All decoded RGBA channels, alpha and dimensions match the bound expectation');
-    const pixels = await rawTransitionPixels(page, { data, raw: bound.raw });
-    if (bound.rawRequired) {
-      assert.equal(data, bound.raw); assert.equal(pixels.channelMismatches, 0); assert.equal(pixels.alphaMismatches, 0);
-    } else {
-      assert.notEqual(data, bound.raw); assert.equal(pixels.outside[3], 0); assert.equal(pixels.inside[3], 255);
-      assert.equal(pixels.ink[3], 255); assert.equal(pixels.interiorMismatches, 0); assert.ok(pixels.alphaMismatches > 0);
-    }
-    receipts.push({ name: entry.name, file, rgbaPath: file + '.rgba', taskId: bound.taskId, candidateId: bound.candidateId,
-      rawRequired: bound.rawRequired, bytes: actual.length, sha256: rawTransitionCrypto.createHash('sha256').update(actual).digest('hex'), pixels });
-  }
-  write(evidence, 'zip-receipt.json', { zipPath, bytes: bytes.length,
-    sha256: rawTransitionCrypto.createHash('sha256').update(bytes).digest('hex'), entries: receipts });
-  return receipts;
-}
-
-for (const engine of ['chromium', 'webkit']) for (const mode of ['selected', 'all']) {
-  for (const scenario of ['same-owner-capture', 'cancel-before-late-export']) {
-    test(`${engine} root: public collective ZIP ${mode} (${scenario})`, { timeout: 150000, concurrency: false }, async t => {
-      const evidence = path.join(evidenceRoot, 'collective-export', engine, 'root', mode, scenario);
-      fs.mkdirSync(evidence, { recursive: true });
-      const restore = rawTransitionConfigure(engine, '/'); let page;
-      t.after(async () => {
-        if (page && !page.isClosed()) {
-          await page.evaluate(() => window.__collectiveProbe?.destination.release());
-          await rawTransitionCleanup(page);
-        }
-      });
-      try {
-        const configured = await collectiveExportFixture(t, 2, evidence); page = configured.page;
-        assert.equal(new URL(page.url()).pathname, '/');
-        const downloads = []; page.on('download', value => downloads.push(value));
-        await chooseExposedOutputSetting(page, evidence, 'background', 'connected'); await settled(page);
-        const baseline = await rawTransitionSnapshot(page), owner = rawTransitionTab(baseline, 'task-0');
-        const candidate = owner.generated[0], raw = candidate.data;
-        assert.equal(candidate.id, 'candidate-0'); assert.equal(owner.selectedCandidateId, candidate.id);
-        assert.equal(owner.generated.length, 2); assert.notEqual(owner.generated[0].data, owner.generated[1].data);
-        const peer = rawTransitionTab(baseline, 'task-1'); assert.notEqual(peer.generated[0].data, raw);
-        const historical = await rawTransitionPreview(page, raw, candidate.id);
-        assert.equal(historical.pixels.outside[3], 0); assert.equal(historical.pixels.inside[3], 255);
-        write(evidence, 'baseline.json', { baseline, historical });
-        const reference = await rawTransitionPixels(page, { raw, data: raw });
-        await collectiveChooseDestination(page, mode, evidence);
-        // The real chooser has returned its kind to an observation gate, but
-        // exportCollection has not received that return yet. Exercise ordinary
-        // capture/persistence and visible owner re-selection at this boundary.
-        const destinationSnapshot = await rawTransitionSnapshot(page);
-        const destinationCheckpoint = await page.evaluate(() => window.__task2Manager.checkpointForClose());
-        assert.equal(destinationCheckpoint.recovered, true);
-        await rawTransitionSelect(page, 'task-1', 'candidate-1');
-        await rawTransitionSelect(page, 'task-0', candidate.id);
-        assert.equal((await collectiveProbeSnapshot(page)).exports.length, 0);
-        const afterDestinationSelection = await rawTransitionSnapshot(page);
-        assert.deepEqual(afterDestinationSelection.workspaces.map(workspace => workspace.tabs.map(tab => tab.id)), [['task-0'], ['task-1']],
-          'Real task selection transfers task-1 to its own controller before records are requested');
-        for (const id of ['task-0', 'task-1']) for (const field of ['attachments', 'generated']) {
-          const before = rawTransitionTab(baseline, id)[field], after = rawTransitionTab(afterDestinationSelection, id)[field];
-          assert.deepEqual(after.map(item => item.id), before.map(item => item.id));
-          // Import materializes explicit nullable/default fields on the peer.
-          // Every field that already existed, including full RAW, must survive.
-          for (const [index, item] of before.entries()) for (const key of Object.keys(item)) {
-            assert.equal(Object.hasOwn(after[index], key), true);
-            assert.deepEqual(after[index][key], item[key], 'Real workspace transfer preserves ' + id + ':' + field + ':' + key);
-          }
-        }
-        write(evidence, 'destination-same-owner-capture.json', { destinationSnapshot, destinationCheckpoint, after: afterDestinationSelection });
-        // Arm only now: earlier settings/preview work has really completed.
-        const processingStart = await page.evaluate(() => (window.__rawTransitionProcessing || []).length);
-        await rawTransitionArmDecode(page, raw, candidate.id);
-        const pendingDownload = page.waitForEvent('download', { timeout: 60000 }); pendingDownload.catch(() => {});
-        await page.evaluate(() => window.__collectiveProbe.destination.release());
-        const native = await rawTransitionPromise(page, '__rawTransitionDecodeGate.enteredPromise', 'collective record native image decode');
-        assert.equal(native.nativeImage, true); assert.equal(native.nativeDecodeCompleted, true);
-        assert.equal(native.src, raw); assert.equal(native.currentSrc, raw); assert.equal(native.candidateId, candidate.id);
-        assert.deepEqual([native.width, native.height], [512, 384]);
-        const pending = await collectiveProbeSnapshot(page);
-        write(evidence, 'record-await.json', { native, pending });
-        assert.deepEqual(pending.events, ['destination-enter', 'destination-selected', 'destination-return', 'records-enter', 'records-enter', 'records-return']);
-        collectiveAssertManagerCalls(pending, mode);
-        assert.deepEqual(pending.managerEvents.map(event => [event.phase, event.callIndex, event.taskId]),
-          [['enter', 0, 'task-0'], ['enter', 1, 'task-1'], ['return', 1, 'task-1']]);
-        assert.equal(pending.writes.length, 0); assert.equal(downloads.length, 0);
-        let dispatch = null, cancelled = null;
-        if (scenario === 'cancel-before-late-export') {
-          await rawTransitionObserveScopedDispatch(page);
-          const apply = await collectiveVisibleControl(page, `${panel} [data-ai-send][data-ai-comments-apply]`, evidence, 'actual-scope-apply');
-          await apply.click(); assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0);
-          dispatch = await rawTransitionPromise(page, '__rawTransitionScopedDispatch.done', 'actual scoped request before late collective export');
-          assert.equal(await page.locator(panel).getAttribute('data-ai-busy'), 'true');
-          const history = rawTransitionTab(dispatch.snapshot, 'task-0').generated[0].scopedEditHistory;
-          assert.equal(history.length, 1); assert.equal(history[0].sourceCandidateId, candidate.id);
-          assert.equal(history[0].sourceSha256, reference.encodedSHA256);
-          assert.equal(history[0].maximumAttempts, 1); assert.equal(history[0].attempts.length, 1);
-          assert.deepEqual([candidate.comments[0].x, candidate.comments[0].y, candidate.comments[0].w, candidate.comments[0].h], [25, 25, 25, 25]);
-          assert.equal(dispatch.payload.purpose, 'image'); assert.equal(dispatch.payload.model, 'gpt-6.1-sol');
-          assert.equal(dispatch.payload.effort, 'medium'); assert.ok(dispatch.result.turnId);
-          cancelled = await rawTransitionCancel(page); await rawTransitionProtectedControls(page);
-          rawTransitionPreserved(owner, rawTransitionTab(cancelled, 'task-0'), { history: true });
-          write(evidence, 'actual-scope-cancel.json', { dispatch, cancelled });
-        }
-        // Normal captures replace serialized arrays. This is still the exact
-        // same logical owner; exported task becomes inactive before completion.
-        const captured = await rawTransitionSnapshot(page);
-        const checkpoint = await page.evaluate(() => window.__task2Manager.checkpointForClose());
-        assert.equal(checkpoint.recovered, true);
-        await rawTransitionSelect(page, 'task-1', 'candidate-1');
-        await rawTransitionSelect(page, 'task-0', candidate.id);
-        await rawTransitionSelect(page, 'task-1', 'candidate-1');
-        const beforeRelease = await rawTransitionSnapshot(page);
-        const stillPending = await collectiveProbeSnapshot(page);
-        collectiveAssertManagerCalls(stillPending, mode);
-        assert.deepEqual(stillPending.exports[1], pending.exports[1], 'The already resolved peer is untouched by task-0 lifecycle changes');
-        assert.equal(stillPending.writes.length, 0); assert.equal(downloads.length, 0);
-        assert.equal(stillPending.selected, 'candidate-1');
-        write(evidence, 'same-owner-persistence-inactive.json', { captured, checkpoint, beforeRelease, stillPending });
-        await page.evaluate(() => window.__rawTransitionDecodeGate.release());
-        const transformed = await rawTransitionPromise(page, '__rawTransitionDecodeGate.completedPromise', 'real late collective transform');
-        assert.notEqual(transformed, raw, 'The actual transform still produced obsolete transparent PNG bytes');
-        const transformedPixels = await rawTransitionPixels(page, { raw, data: transformed });
-        assert.equal(transformedPixels.outside[3], 0); assert.ok(transformedPixels.alphaMismatches > 0);
-        const recordsDone = await rawTransitionPromise(page, '__collectiveProbe.exports.0.done', 'actual public exportResults completion');
-        assert.equal(recordsDone.error, null);
-        assert.equal((await rawTransitionPromise(page, '__collectiveProbe.exports.1.done', 'independent peer records completion')).error, null);
-        const downloaded = await pendingDownload;
-        assert.equal((await rawTransitionPromise(page, '__collectiveProbe.writes.0.done', 'actual ZIP writer completion')).error, null);
-        const probe = await collectiveProbeSnapshot(page);
-        const calls = collectiveAssertManagerCalls(probe, mode, { ownerSettled: true });
-        assert.equal(calls[0].visibleAtEntry, true); assert.equal(calls[0].visibleAtReturn, false);
-        assert.equal(probe.selected, 'candidate-1', 'Visible workspace changed while task-0 controller retained its own task');
-        assert.deepEqual(calls[1], pending.exports[1]);
-        const records = calls.flatMap(call => call.records); // Same order as real Promise.all(entries.map(...)).flat().
-        const expectedIds = mode === 'selected' ? ['candidate-0', 'candidate-1'] : ['candidate-0', 'candidate-0-alt', 'candidate-1', 'candidate-1-alt'];
-        assert.deepEqual(records.map(record => record.candidateId), expectedIds);
-        for (const [index, call] of calls.entries()) {
-          assert.equal(call.records.length, mode === 'selected' ? 1 : 2);
-          assert.ok(call.records.every(record => record.taskId === 'task-' + index));
-        }
-        const names = collectiveExpectedNames(mode);
-        const exportProcessing = probe.processing.slice(processingStart);
-        assert.equal(exportProcessing.length, mode === 'selected' ? 1 : 2, 'Only historical task-0 records enter the real transform');
-        assert.ok(exportProcessing.every(value => value.completed && !value.error && value.policy === 'connected'));
-        const expected = records.map((record, index) => {
-          const tab = rawTransitionTab(afterDestinationSelection, record.taskId), item = tab.generated.find(value => value.id === record.candidateId);
-          assert.ok(item); assert.deepEqual(record.item, item, 'Ephemeral export keeps the complete pre-await captured candidate');
-          assert.deepEqual(record.outputOptions, tab.outputOptions); assert.equal(record.hasLiveReader, true);
-          assert.equal('5E-AI-결과/' + record.sourceName + '.png', names[index]);
-          const rawRequired = record.taskId === 'task-1' || (scenario === 'cancel-before-late-export' && record.candidateId === candidate.id);
-          const matching = exportProcessing.filter(value => value.src === item.data);
-          if (!rawRequired) assert.equal(matching.length, 1);
-          const data = rawRequired ? item.data : matching[0].result;
-          assert.equal(record.dataUrl, data, 'Late resolution uses this exact owner and its current RAW contract');
-          return { name: names[index], taskId: record.taskId, candidateId: record.candidateId, raw: item.data, rawRequired, data };
-        });
-        const zip = await collectiveVerifyZip(page, downloaded, expected, evidence);
-        assert.equal(downloads.length, 1); assert.equal(probe.writes.length, 1); assert.equal(probe.writes[0].kind, 'browser-zip');
-        assert.deepEqual(probe.writes[0].result, { status: 'download-requested', count: names.length, files: names.map(name => name.slice('5E-AI-결과/'.length)) });
-        assert.equal(probe.sends.length, scenario === 'same-owner-capture' ? 0 : 1);
-        assert.equal(probe.generationCount, scenario === 'same-owner-capture' ? 0 : 1);
-        assert.deepEqual(probe.events, ['destination-enter', 'destination-selected', 'destination-return', 'records-enter',
-          'records-enter', 'records-return', 'records-return', 'writer-enter', 'writer-return']);
-        assert.deepEqual(probe.managerEvents.map(event => [event.phase, event.callIndex, event.taskId]),
-          [['enter', 0, 'task-0'], ['enter', 1, 'task-1'], ['return', 1, 'task-1'], ['return', 0, 'task-0']]);
-        const after = await rawTransitionSnapshot(page);
-        for (const id of ['task-0', 'task-1']) {
-          const before = rawTransitionTab(beforeRelease, id), current = rawTransitionTab(after, id);
-          assert.deepEqual(current.generated, before.generated, 'Export never mutates any original/provenance/history payload');
-          assert.deepEqual(current.attachments, before.attachments); assert.deepEqual(current.outputOptions, before.outputOptions);
-          assert.equal(current.selectedCandidateId, before.selectedCandidateId);
-        }
-        if (scenario === 'cancel-before-late-export') {
-          const beforeLate = await rawTransitionSnapshot(page);
-          await page.evaluate(() => { window.__task2.emit(0, 'image'); window.__task2.emit(0, 'done'); });
-          await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
-          assert.deepEqual(await rawTransitionSnapshot(page), beforeLate, 'Late cancelled local-provider events cannot replace exported RAW or its owner');
-        }
-        assert.deepEqual(configured.errors, []);
-        const foreignAttempts = JSON.parse(fs.readFileSync(path.join(evidence, 'foreign-network.json'), 'utf8'));
-        assert.ok(foreignAttempts.every(value => value.action === 'blocked-before-network'), 'Every foreign request, including external fonts, is blocked');
-        write(evidence, 'actual-collective-complete.json', { scenario, mode, engine, native, transformedPixels, probe, after, zip,
-          qualification: 'Actual public controls/manager and browser ZIP under deterministic local provider and explicit ZIP capability fixture; no paid-provider or real-directory claim' });
-        await page.screenshot({ path: path.join(evidence, 'actual-inactive-owner-complete.png') });
-      } finally { t.after(restore); }
-    });
-  }
-}
-
-// COLLECTIVE-EXPORT-BUSY-STATUS-APPEND-06 — private, unexecuted proposal.
-// 11-10: 관찰 생략 기대값과 앞선 보호 해시 갱신만 반영해 기존 40개 검사 보호 범위를 유지.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 132968)).digest('hex'),
-  '2a71dc7961f0b6fa97f68bbe9aa193b0ad99a1df3fbe3bf27730cff7584443e0', 'All 40 existing cases remain byte-for-byte unchanged');
-
-function observeCollectiveBusyUiCompletion(source) {
-  const opening = "  collectiveExportButton.addEventListener('click', async () => {";
-  const after = "  panel.querySelector('[data-ai-insert-selected]')?.addEventListener('click', () => {";
-  assert.equal(source.split(opening).length - 1, 1); assert.equal(source.split(after).length - 1, 1);
-  const begin = source.indexOf(opening), end = source.indexOf(after, begin), handler = source.slice(begin, end);
-  assert.ok(handler.endsWith('  });\n'), 'Exact current physical collective click handler boundary');
-  // Retain the entire CURRENT parent handler, including canReportExport and
-  // disposal-only finally. Only observe its true completion after catch/finally.
-  const original = handler.replace(opening, '  const originalCollectiveBusyClick = async () => {').slice(0, -'  });\n'.length) + '  };\n';
-  const observation = `
-  const readCollectiveBusyState = () => {
-    const request = requestStates.snapshot(activeTaskTabId);
-    const { elapsedMs, ...stableRequest } = request || {};
-    return { managerId: clientScope || 'main', taskId: activeTaskTabId, candidateId: selectedCandidateId, owner: batchOwner(activeTaskTabId),
-      requestEpoch: currentRequestEpoch, visibilityEpoch: localVisibilityEpoch,
-      token: requestToken ? structuredClone(requestToken) : null, request: request ? stableRequest : null,
-      requestLive: requestStates.live(requestToken), busy, preflight: Boolean(preflightRun), disposed,
-      exportInProgress, workState: taskTabs.get(activeTaskTabId)?.workState,
-      phase: panel.dataset.aiRequestPhase, generatingHidden: generating.hidden,
-      statusText: status.textContent, statusKind: status.dataset.kind,
-      scopeTransportPending: Boolean(scopedTransport) };
-  };
-  (window.__collectiveBusyStates ||= new Map()).set(panel, readCollectiveBusyState);
-  window.__collectiveBusyState = () => window.__collectiveBusyStates.get(document.querySelector('#ai-image-panel'))();
-  collectiveExportButton.addEventListener('click', async function(...args) {
-    const call = { entry: readCollectiveBusyState(), settled: false };
-    call.done = new Promise(resolve => { call.resolve = resolve; });
-    (window.__collectiveBusyClicks ||= []).push(call);
-    try { return await originalCollectiveBusyClick.apply(this, args); }
-    finally { call.exit = readCollectiveBusyState(); call.settled = true; call.resolve(call.exit); }
-  });
-`;
-  return source.slice(0, begin) + original + observation + source.slice(end);
-}
-
-// Reuse PRIVATE07's corrected source/served-hash, provider, network, destination,
-// record and writer observers. Add a transform solely at its served-body seam;
-// no 40-case prefix edit and no duplicate application export implementation.
-const collectiveBusyServeSeam = 'body = transform(source);';
-const collectiveBusyInstallerSource = installCollectiveExportObservation.toString();
-assert.equal(collectiveBusyInstallerSource.split(collectiveBusyServeSeam).length - 1, 1);
-const installCollectiveBusyObservation = new Function('root', 'fs', 'path', 'assert', 'rawTransitionCrypto', 'write',
-  'installRawTransitionDecodeRoute', 'observeCollectiveBusyUiCompletion', 'return (' + collectiveBusyInstallerSource.replace(
-    collectiveBusyServeSeam, "body = file === 'ai-panel.js' ? observeCollectiveBusyUiCompletion(transform(source)) : transform(source);") + ');')(
-    root, fs, path, assert, rawTransitionCrypto, write, installRawTransitionDecodeRoute, observeCollectiveBusyUiCompletion);
-const collectiveBusyFixtureSeam = 'await installCollectiveExportObservation(page, runtime, origin, evidence);';
-assert.equal(collectiveExportHarness.split(collectiveBusyFixtureSeam).length - 1, 1);
-const collectiveBusyFixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit',
-  'installCollectiveBusyObservation', collectiveExportHarness.replace(collectiveBusyFixtureSeam,
-    'await installCollectiveBusyObservation(page, runtime, origin, evidence);') + '; return requestBrowserFixture;')(
-    require, root, fs, path, assert, chromium, webkit, installCollectiveBusyObservation);
-
-async function collectiveBusyState(page) {
-  const state = await page.evaluate(async () => ({ live: window.__collectiveBusyState(),
-    snapshot: await window.__task2Manager.sharingSnapshot(),
-    clicks: (window.__collectiveBusyClicks || []).map(({ done, resolve, ...rest }) => rest) }));
-  return { ...state, probe: await collectiveProbeSnapshot(page),
-    generatingVisible: await page.locator(`${panel} [data-ai-generating]`).isVisible(),
-    interruptVisible: await page.locator(`${panel} [data-ai-interrupt]`).isVisible(),
-    interruptEnabled: await page.locator(`${panel} [data-ai-interrupt]`).isEnabled() };
-}
-function assertCollectiveScopeStillBusy(state, dispatch) {
-  const live = state.live;
-  assert.equal(live.taskId, 'task-0'); assert.equal(live.candidateId, 'candidate-0');
-  assert.deepEqual(live.owner, { scope: { sessionId: '5e', workspaceId: 'main' }, taskId: 'task-0' });
-  assert.equal(live.busy, true); assert.equal(live.workState, 'busy'); assert.equal(live.phase, 'generating');
-  assert.equal(rawTransitionTab(state.snapshot, 'task-0').workState, 'busy');
-  assert.equal(live.requestLive, true); assert.equal(live.scopeTransportPending, true);
-  assert.equal(live.request.phase, 'generating'); assert.equal(live.request.endedAt, null);
-  assert.equal(live.token.taskId, 'task-0'); assert.equal(live.token.revisionId, 'candidate-0');
-  assert.deepEqual(live.request.token, live.token);
-  assert.equal(live.request.turnId, dispatch.result.turnId);
-  assert.equal(live.request.threadId, dispatch.result.threadId);
-  assert.equal(live.generatingHidden, false); assert.equal(state.generatingVisible, true);
-  assert.equal(state.interruptVisible, true); assert.equal(state.interruptEnabled, true);
-  assert.notEqual(live.statusKind, 'error'); assert.doesNotMatch(live.statusText, /여러 작업 저장 실패/);
-  assert.equal(state.probe.sends.length, 1); assert.equal(state.probe.generationCount, 1);
-  assert.equal(state.probe.sends[0].turnId, dispatch.result.turnId);
-  assert.equal(state.probe.sends[0].threadId, dispatch.result.threadId);
-  const history = rawTransitionTab(state.snapshot, 'task-0').generated[0].scopedEditHistory;
-  assert.equal(history.length, 1); assert.equal(history[0].status, 'generating');
-  assert.equal(history[0].attempts.length, 1);
-}
-
-async function collectiveBusyIdleDestination(page, evidence) {
-  // The first real export has ended. Renew only the observation delivery gate,
-  // then use the same physical range select/button and actual confirm again.
-  await page.evaluate(() => {
-    const gate = {};
-    gate.ready = new Promise(resolve => { gate.readyResolve = resolve; });
-    gate.releasePromise = new Promise(resolve => { gate.release = resolve; });
-    window.__collectiveProbe.destination = gate;
-  });
-  const menu = await collectiveVisibleControl(page, `${panel} [data-ai-task-export-mode]`, evidence, 'idle-range-menu');
-  await menu.selectOption('selected'); assert.equal(await menu.inputValue(), 'selected');
-  const button = await collectiveVisibleControl(page, `${panel} [data-ai-task-export]`, evidence, 'idle-collective-button');
-  const pendingDialog = page.waitForEvent('dialog'); pendingDialog.catch(() => {});
-  const clicked = button.click(); clicked.catch(() => {});
-  const dialog = await pendingDialog;
-  write(evidence, 'idle-destination-confirm.json', { type: dialog.type(), message: dialog.message() });
-  assert.equal(dialog.type(), 'confirm'); assert.match(dialog.message(), /ZIP 다운로드/);
-  await dialog.accept(); await clicked;
-  assert.deepEqual(await rawTransitionPromise(page, '__collectiveProbe.destination.ready', 'idle real ZIP destination'), { kind: 'browser-zip' });
-  const held = await collectiveProbeSnapshot(page); write(evidence, 'idle-destination-await.json', held);
-  assert.equal(held.exports.length, 2); assert.equal(held.writes.length, 0);
-  await page.evaluate(() => window.__collectiveProbe.destination.release());
-}
-
-for (const engine of ['chromium', 'webkit']) {
-  test(`${engine} root: public collective ZIP selected rejects while scope stays busy, then cancel permits idle RAW`,
-    { timeout: 150000, concurrency: false }, async t => {
-      const evidence = path.join(evidenceRoot, 'collective-export-status', engine, 'root', 'selected', 'release-while-scope-busy');
-      fs.mkdirSync(evidence, { recursive: true });
-      const restore = rawTransitionConfigure(engine, '/'); let page;
-      t.after(async () => {
-        if (page && !page.isClosed()) {
-          await page.evaluate(() => window.__collectiveProbe?.destination.release());
-          await rawTransitionCleanup(page);
-        }
-      });
-      try {
-        const configured = await collectiveBusyFixture(t, 2, evidence); page = configured.page;
-        assert.equal(new URL(page.url()).pathname, '/');
-        const downloads = []; page.on('download', download => downloads.push(download));
-        // Exercise real workspace transfer before the export: each controller
-        // owns exactly one task, as in the corrected PRIVATE07 positive cases.
-        await rawTransitionSelect(page, 'task-1', 'candidate-1');
-        await rawTransitionSelect(page, 'task-0', 'candidate-0');
-        await chooseExposedOutputSetting(page, evidence, 'background', 'connected'); await settled(page);
-        const baseline = await rawTransitionSnapshot(page), owner = rawTransitionTab(baseline, 'task-0');
-        assert.deepEqual(baseline.workspaces.map(workspace => workspace.tabs.map(tab => tab.id)), [['task-0'], ['task-1']]);
-        const peer = rawTransitionTab(baseline, 'task-1'), candidate = owner.generated[0], raw = candidate.data;
-        assert.equal(candidate.id, 'candidate-0'); assert.equal(owner.selectedCandidateId, candidate.id);
-        assert.notEqual(peer.generated[0].data, raw, 'Owners have genuinely different fixture PNG bytes');
-        const reference = await rawTransitionPixels(page, { raw, data: raw });
-        const historical = await rawTransitionPreview(page, raw, candidate.id);
-        assert.equal(historical.pixels.outside[3], 0); assert.notEqual(historical.src, raw);
-        write(evidence, 'baseline.json', { baseline, reference, historical });
-        await collectiveChooseDestination(page, 'selected', evidence);
-        const processingStart = await page.evaluate(() => (window.__rawTransitionProcessing || []).length);
-        await rawTransitionArmDecode(page, raw, candidate.id);
-        await page.evaluate(() => window.__collectiveProbe.destination.release());
-        const native = await rawTransitionPromise(page, '__rawTransitionDecodeGate.enteredPromise', 'collective actual native decode held');
-        assert.equal(native.nativeImage, true); assert.equal(native.nativeDecodeCompleted, true);
-        assert.equal(native.src, raw); assert.equal(native.currentSrc, raw); assert.equal(native.candidateId, candidate.id);
-        assert.deepEqual([native.width, native.height], [512, 384]);
-        const pending = await collectiveProbeSnapshot(page); write(evidence, 'record-await.json', { native, pending });
-        collectiveAssertManagerCalls(pending, 'selected');
-        assert.deepEqual(pending.managerEvents.map(event => [event.phase, event.callIndex, event.taskId]),
-          [['enter', 0, 'task-0'], ['enter', 1, 'task-1'], ['return', 1, 'task-1']]);
-        assert.equal(pending.writes.length, 0); assert.equal(downloads.length, 0);
-
-        await rawTransitionObserveScopedDispatch(page);
-        const apply = await collectiveVisibleControl(page, `${panel} [data-ai-send][data-ai-comments-apply]`, evidence, 'actual-scope-apply');
-        await apply.click(); assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0);
-        const dispatch = await rawTransitionPromise(page, '__rawTransitionScopedDispatch.done', 'actual correlated scope request');
-        assert.equal(dispatch.payload.purpose, 'image'); assert.equal(dispatch.payload.model, 'gpt-6.1-sol');
-        assert.equal(dispatch.payload.effort, 'medium'); assert.ok(dispatch.result.turnId);
-        const busyBefore = await collectiveBusyState(page);
-        write(evidence, 'busy-before-release.json', { dispatch, busyBefore });
-        assertCollectiveScopeStillBusy(busyBefore, dispatch);
-        assert.equal(busyBefore.clicks.length, 1); assert.equal(busyBefore.clicks[0].settled, false);
-        assert.ok(busyBefore.live.requestEpoch > busyBefore.clicks[0].entry.requestEpoch, 'Scope starts a new epoch after export');
-        assert.equal(rawTransitionTab(busyBefore.snapshot, 'task-0').generated[0].scopedEditHistory[0].sourceSha256, reference.encodedSHA256);
-        await page.screenshot({ path: path.join(evidence, 'busy-before-release.png') });
-
-        await page.evaluate(() => window.__rawTransitionDecodeGate.release());
-        const transformed = await rawTransitionPromise(page, '__rawTransitionDecodeGate.completedPromise', 'actual late transparent transform');
-        assert.notEqual(transformed, raw);
-        const obsoletePixels = await rawTransitionPixels(page, { raw, data: transformed });
-        assert.equal(obsoletePixels.outside[3], 0); assert.ok(obsoletePixels.alphaMismatches > 0);
-        const rejected = await rawTransitionPromise(page, '__collectiveProbe.exports.0.done', 'busy-owner record rejection');
-        assert.match(rejected.error, /실행 중/);
-        const uiExit = await rawTransitionPromise(page, '__collectiveBusyClicks.0.done', 'original collective catch/finally completion');
-        const busyAfter = await collectiveBusyState(page);
-        write(evidence, 'busy-after-export-handler.json', { rejected, uiExit, busyBefore, busyAfter, obsoletePixels, downloadCount: downloads.length });
-        await page.screenshot({ path: path.join(evidence, 'busy-after-export-handler.png') });
-        assertCollectiveScopeStillBusy(busyAfter, dispatch);
-        collectiveAssertManagerCalls(busyAfter.probe, 'selected', { ownerSettled: true });
-        assert.deepEqual(busyAfter.probe.exports[1], pending.exports[1], 'Independent peer succeeded and stayed exact despite owner rejection');
-        assert.deepEqual(busyAfter.probe.managerEvents.map(event => [event.phase, event.callIndex, event.taskId]),
-          [['enter', 0, 'task-0'], ['enter', 1, 'task-1'], ['return', 1, 'task-1'], ['return', 0, 'task-0']]);
-        assert.equal(busyAfter.probe.writes.length, 0); assert.equal(downloads.length, 0);
-        assert.equal(busyAfter.live.exportInProgress, false); assert.equal(busyAfter.clicks[0].settled, true);
-        for (const key of ['managerId', 'taskId', 'candidateId', 'owner', 'requestEpoch', 'visibilityEpoch', 'token', 'request', 'requestLive',
-          'busy', 'workState', 'phase', 'generatingHidden', 'scopeTransportPending', 'statusText', 'statusKind']) {
-          assert.deepEqual(busyAfter.live[key], busyBefore.live[key], 'Stale export handler cannot mutate current scope ' + key);
-        }
-        assert.deepEqual(busyAfter.probe.sends, busyBefore.probe.sends, 'No resend or synthetic request completion');
-        assert.equal(busyAfter.snapshot.activeWorkspace, busyBefore.snapshot.activeWorkspace);
-        for (const id of ['task-0', 'task-1']) {
-          const before = rawTransitionTab(busyBefore.snapshot, id), after = rawTransitionTab(busyAfter.snapshot, id);
-          assert.deepEqual(Object.keys(after).sort(), Object.keys(before).sort());
-          // Only the production elapsed-time serialization may advance while
-          // the correlated provider remains pending; no payload field is waived.
-          for (const key of Object.keys(before).filter(key => key !== 'generationTiming')) {
-            assert.deepEqual(after[key], before[key], 'Stale export preserves current task field ' + id + ':' + key);
-          }
-          if (before.generationTiming && after.generationTiming) {
-            const { lastElapsedMs: beforeElapsed, ...beforeTiming } = before.generationTiming;
-            const { lastElapsedMs: afterElapsed, ...afterTiming } = after.generationTiming;
-            assert.deepEqual(afterTiming, beforeTiming); assert.ok(afterElapsed >= beforeElapsed);
-          } else assert.deepEqual(after.generationTiming, before.generationTiming);
-        }
-        assert.equal(await page.locator(`${panel} [data-ai-task-export]`).isDisabled(), true);
-
-        // No mock image/done/error events are emitted in this scenario. The
-        // existing correlated local provider remains deferred until real cancel.
-        const cancelled = await rawTransitionCancel(page); await rawTransitionProtectedControls(page);
-        const idle = await collectiveBusyState(page);
-        write(evidence, 'actual-cancel-idle.json', { cancelled, idle });
-        assert.equal(idle.live.taskId, 'task-0'); assert.equal(idle.live.candidateId, candidate.id);
-        assert.equal(idle.live.busy, false); assert.equal(idle.live.workState, 'idle');
-        assert.equal(idle.live.phase, 'cancelled'); assert.equal(idle.live.requestLive, false);
-        assert.equal(idle.live.scopeTransportPending, false); assert.equal(idle.live.generatingHidden, true);
-        assert.equal(idle.probe.sends.length, 1); assert.equal(idle.probe.generationCount, 1);
-        rawTransitionPreserved(owner, rawTransitionTab(cancelled, 'task-0'), { history: true });
-        assert.deepEqual(rawTransitionTab(cancelled, 'task-1'), peer);
-        await rawTransitionAssertRaw(page, raw, candidate.id, reference, evidence, 'idle-owner-raw');
-        const idleDir = path.join(evidence, 'idle-export'); fs.mkdirSync(idleDir, { recursive: true });
-        const pendingDownload = page.waitForEvent('download'); pendingDownload.catch(() => {});
-        const beforeIdle = await rawTransitionSnapshot(page);
-        await collectiveBusyIdleDestination(page, idleDir);
-        assert.equal((await rawTransitionPromise(page, '__collectiveProbe.exports.2.done', 'idle owner RAW records')).error, null);
-        assert.equal((await rawTransitionPromise(page, '__collectiveProbe.exports.3.done', 'idle independent peer RAW records')).error, null);
-        const download = await pendingDownload;
-        assert.equal((await rawTransitionPromise(page, '__collectiveProbe.writes.0.done', 'idle actual ZIP writer')).error, null);
-        await rawTransitionPromise(page, '__collectiveBusyClicks.1.done', 'idle collective handler completion');
-        const completed = await collectiveBusyState(page);
-        const callsByManager = collectiveAssertManagerCalls(completed.probe, 'selected', { ownerSettled: true, offset: 2 });
-        assert.deepEqual(completed.probe.exports.slice(0, 2), busyAfter.probe.exports, 'Both original call receipts remain exact');
-        assert.equal(callsByManager[0].managerId, pending.exports[0].managerId);
-        assert.equal(callsByManager[1].managerId, pending.exports[1].managerId);
-        assert.equal(callsByManager[0].visibleAtReturn, true); assert.equal(callsByManager[1].visibleAtReturn, false);
-        const records = callsByManager.flatMap(call => call.records);
-        assert.deepEqual(records.map(record => [record.taskId, record.candidateId]), [['task-0', 'candidate-0'], ['task-1', 'candidate-1']]);
-        const names = collectiveExpectedNames('selected');
-        const expected = records.map((record, index) => {
-          const tab = rawTransitionTab(beforeIdle, record.taskId), item = tab.generated.find(value => value.id === record.candidateId);
-          assert.ok(item); assert.deepEqual(record.item, item); assert.deepEqual(record.outputOptions, tab.outputOptions);
-          assert.equal(record.hasLiveReader, true); assert.equal(record.dataUrl, item.data);
-          assert.equal('5E-AI-결과/' + record.sourceName + '.png', names[index]);
-          return { name: names[index], taskId: record.taskId, candidateId: record.candidateId, data: item.data, raw: item.data, rawRequired: true };
-        });
-        const zip = await collectiveVerifyZip(page, download, expected, idleDir);
-        assert.equal(downloads.length, 1); assert.equal(completed.probe.writes.length, 1);
-        assert.deepEqual(completed.probe.writes[0].result, { status: 'download-requested', count: 2, files: names.map(name => name.slice('5E-AI-결과/'.length)) });
-        assert.equal(completed.live.workState, 'idle'); assert.equal(completed.live.busy, false);
-        assert.equal(completed.live.phase, 'cancelled'); assert.equal(completed.live.requestLive, false);
-        assert.equal(completed.live.statusKind, 'warn'); assert.match(completed.live.statusText, /결과 2개의 ZIP 다운로드/);
-        assert.equal(completed.probe.sends.length, 1); assert.equal(completed.probe.generationCount, 1);
-        assert.deepEqual(completed.probe.sends, busyAfter.probe.sends);
-        const calls = completed.probe.processing.slice(processingStart);
-        assert.equal(calls.length, 1, 'Only the obsolete first export transformed; idle bound RAW bypasses processing');
-        assert.equal(calls[0].completed, true); assert.equal(calls[0].error, undefined); assert.equal(calls[0].result, transformed);
-        for (const id of ['task-0', 'task-1']) {
-          const before = rawTransitionTab(beforeIdle, id), after = rawTransitionTab(completed.snapshot, id);
-          assert.deepEqual(after.generated, before.generated); assert.deepEqual(after.attachments, before.attachments);
-          assert.deepEqual(after.outputOptions, before.outputOptions); assert.equal(after.selectedCandidateId, before.selectedCandidateId);
-        }
-        assert.deepEqual(configured.errors, []);
-        const foreign = JSON.parse(fs.readFileSync(path.join(evidence, 'foreign-network.json'), 'utf8'));
-        assert.ok(foreign.every(value => value.action === 'blocked-before-network'));
-        write(evidence, 'actual-busy-status-complete.json', { engine, native, rejected, uiExit, dispatch, cancelled, completed, zip,
-          qualification: 'Real public UI, deferred existing correlated provider fixture, actual cancellation and browser ZIP. No synthetic completion event, paid-provider or native-directory claim.' });
-        await page.screenshot({ path: path.join(evidence, 'idle-export-complete.png') });
-      } finally { t.after(restore); }
-    });
-}
+// 11-19 E10: 지움 — 「여러 작업 결과를 한 폴더에(ZIP) 저장」 검사 10개(COLLECTIVE-EXPORT APPEND-05·06, PRIVATE07).
+// 작업대의 범위 메뉴 [data-ai-task-export-mode]와 「한 폴더에 저장」 단추 [data-ai-task-export]는 83201a54(10-16 작업대 정리)에서 빠졌고,
+// 그 뒤로 exportCollection(js/ai-task-workspaces.js)을 부르는 화면·공개 API가 없다(관리자 반환값에도 없음). 확인 창도 브라우저 confirm에서
+// 앱 확인 창(ui-dialogs showConfirm)으로 바뀌었다. 한 장 저장은 「PNG 저장」·「이미지 복사」(결과 줄)로 남아 있다.
+// 기능을 다시 열면 이 검사를 git 이력(fix/172-tests 직전)에서 되살려 새 입구에 맞춘다.
 
 // PRIVATE08: actual native load/decode success/error across preview UI lifetimes.
 // Root only. Manager dispose is explicitly component-lifecycle coverage, not a UI delete claim.
-// 11-10: 관찰 생략 기대값과 앞선 보호 해시 갱신만 반영해 기존 42개 검사 보호 범위를 유지.
-assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0, 155709)).digest('hex'),
-  '42e30d0dbda5e202d099e0fb4c46ddc3e8c6a8744d1a2d748e88d0044b9c99f1', 'PRIVATE08 retains all reviewed42 bytes');
+// 11-19 E10: 지움 — 파일 앞부분 SHA 자기 고정(위 RAW-CONTRACT 줄과 같은 이유).
 
 function lifetimeReplaceOnce(source, from, to, label) {
   assert.equal(source.split(from).length-1,1,label);return source.replace(from,to);
@@ -1869,12 +1196,16 @@ function lifetimeObservePanel(source) {
       const __cached = outputVariantCache.get(item)?.get(key);
       __call.cacheId = __life.promiseId(__cached);
       const source = await __pending;`, 'One original preview resolver await retained');
-  assert.equal(body.split('if (!isCurrent()) return;').length-1,2,'Both actual success and error guards observed');
-  body=body.replaceAll('if (!isCurrent()) return;',`const __accepted = isCurrent();
-      __call.checks.push({accepted:__accepted,epoch:localVisibilityEpoch,revision:outputProcessingRevision,disposed});
-      if (!__accepted) return;`);
+  // 11-19 E10: 라벨 미리보기(renderLabelPreview) 뒤에도 같은 guard가 하나 더 생겨 지금은 3개(성공 전·라벨 그린 뒤·오류). 그림 넣는 줄도
+  // 손 지우개 초안(localEraseController)을 먼저 보는 한 줄로 바뀌었다 — 아래 'src' 이음새를 지금 줄로 맞춘다.
+  assert.equal(body.split('if (!isCurrent()) return;').length-1,3,'All actual success and error guards observed');
+  // guard마다 이름을 따로(같은 try 안에 둘이 있어 const 이름이 겹치지 않게).
+  let __guard=0;
+  body=body.replaceAll('if (!isCurrent()) return;',()=>{const n=++__guard;return `const __accepted${n} = isCurrent();
+      __call.checks.push({accepted:__accepted${n},epoch:localVisibilityEpoch,revision:outputProcessingRevision,disposed});
+      if (!__accepted${n}) return;`;});
   for(const [kind,statement] of [
-    ['src','image.src = requiresRawImageOutput(item) ? item.data : source;'],
+    ['src','if (image.src !== preview) image.src = preview;'],
     ['class',"image.classList.toggle('ai-output-transparent', !requiresRawImageOutput(item) && selectedImageOutputOptions.backgroundPolicy !== 'preserve');"],
     ['status','setOutputProcessingStatus(`${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : \'\'}`, item, revision);'],
     ['error-status','setOutputProcessingStatus(`결과 처리 실패: ${error.message}`, item, revision);'],
@@ -1955,8 +1286,8 @@ function lifetimeObserveNative(source) {
 async function installLifetimeRoutes(page,runtime,origin,evidence) {
   for(const [file,observe] of [['ai-panel.js',lifetimeObservePanel],['image-background.js',lifetimeObserveNative]]){
     const source=fs.readFileSync(path.join(root,'js',file),'utf8');
-    const pins={"ai-panel.js": "f948ba2ef304ac4c6f4e2ea4d05c58164eb86d7118541ae356f55dc1d197c13d", "image-background.js": "9024c9f10256d9e45a7d03cf8354ffbb0b45006f5b312b04c50556159232aa49"};
-    assert.equal(rawTransitionCrypto.createHash('sha256').update(source).digest('hex'),pins[file],'PRIVATE08 observed module is the reviewed parent candidate source');
+    // 11-19 E10: 지움 — 제품 파일(ai-panel.js·image-background.js) 전체 SHA 고정. 제품을 고칠 때마다 이 검사가 실패했다(11-17 B1).
+    // 관찰 이음새는 lifetimeReplaceOnce가 「딱 한 번 있음」으로 지킨다.
     const body=observe(source);
     const url=new URL(runtime.moduleBase+file+runtime.moduleQuery,origin).href;
     await page.route(url,route=>{
@@ -2088,7 +1419,8 @@ for(const engine of ['chromium','webkit'])for(const scenario of ['close','close-
       assert.deepEqual(after.probe.writes.filter(w=>w.callId===old.id),[],'Old visibility writes neither image.src, class nor processing status');
       const all=after.probe.calls.filter(c=>c.policy==='connected');
       assert.deepEqual(all.map(c=>c.id),renders.map(c=>c.id),'Settlement starts no unobserved extra render');
-      for(const call of all){assert.equal(call.cacheId,old.cacheId);assert.equal(call.settled,true);assert.equal(call.checks.length,1);}
+      // 11-19 E10: 61bcd508부터 성공한 지금 렌더는 라벨 미리보기 뒤 guard를 한 번 더 지난다(받아들인 성공 = 2번, 그 밖 = 1번).
+      for(const call of all){assert.equal(call.cacheId,old.cacheId);assert.equal(call.settled,true);assert.equal(call.checks.length,call.checks[0].accepted&&outcome==='success'?2:1);if(call.checks.length===2)assert.equal(call.checks[1].accepted,true);}
       const accepted=all.filter(c=>c.checks[0].accepted);
       if(scenario==='close-reopen'){
         assert.equal(accepted.length,1,'Exactly the current visibility/current revision consumes settlement');
@@ -2132,7 +1464,7 @@ for(const engine of ['chromium','webkit'])for(const scenario of ['close','close-
         const cached=await lifetimeSnapshot(page),newCalls=cached.probe.calls.filter(c=>c.policy==='connected'&&!all.some(old=>old.id===c.id));
         assert.equal(newCalls.length,1);const call=newCalls[0];assert.equal(call.cacheId,old.cacheId);
         assert.equal(call.epoch,cached.state.epoch);assert.ok(call.epoch>accepted[0].epoch);assert.ok(call.revision>accepted[0].revision);
-        assert.equal(call.settled,true);assert.deepEqual(call.checks.map(v=>v.accepted),[true]);
+        assert.equal(call.settled,true);assert.deepEqual(call.checks.map(v=>v.accepted),[true,true]); // 11-19 E10: 61bcd508 뒤 guard 2번
         assert.equal(cached.probe.transforms.length,1);assert.equal(cached.state.src,processed.result);assert.equal(cached.state.retainedImage,true);
         const visible=await rawTransitionPreview(page,raw,'candidate-0');assert.equal(visible.src,processed.result);
         assert.equal(cached.sends,0);assert.equal(cached.generations,0);

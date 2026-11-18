@@ -332,10 +332,16 @@ async function setting(page, key, value) {
   const native = key === 'background' ? '[data-ai-background-policy]' : '[data-ai-separation-mode]';
   assert.equal(await page.locator(`${active} ${native}`).inputValue(), value, 'The visible setting delegates to the original native controller');
 }
+// 11-19 E10: 머리 줄 「연결 정보」 단추([data-ai-connection-open])와 그 창 안 「모델 목록 새로고침」은 24219c8a(10-12)에서 화면에서 빠졌다
+// (창은 늘 hidden, js/ai-workbench.js setupAiWorkbench). 지금 흐름은 작업대를 닫았다 다시 열면 showWorkbench → refresh() →
+// loadModels({refresh:true})로 모델 목록을 다시 읽는다. 같은 계약(목록을 다시 읽은 뒤 사라진 모델을 경고하고 보내지 않음)을 그 길로 검사한다.
 async function refreshModels(page) {
-  await page.click(`${active} [data-ai-connection-open]`);
-  await page.locator(`${active} [data-ai-connection-dialog][open] [data-ai-model-refresh]`).click();
-  await page.locator(`${active} [data-ai-connection-dialog][open] [data-ai-info-close]`).click();
+  assert.equal(await page.locator(`${active} [data-ai-connection-open]`).count(), 0, 'retired connection entry must not reappear (24219c8a)');
+  const reads = await page.evaluate(() => window.__task2.catalogReads || 0);
+  await page.click(`${active} [data-ai-close]`);
+  await page.locator(active).waitFor({ state: 'hidden' });
+  await openPanel(page);
+  await page.waitForFunction(reads => (window.__task2.catalogReads || 0) > reads, reads);
 }
 async function task(page, index) { await page.locator(`${active} [data-tab-id="task-${index}"] .ai-task-tab-select`).click(); await page.waitForFunction(index => document.querySelector('#ai-image-panel [data-tab-id="task-'+index+'"] .ai-task-tab-select')?.getAttribute('aria-pressed') === 'true', index); }
 async function chooseRevision(page, id) { await page.click(`${active} [data-ai-version-button]`); await page.click(`${active} [data-ai-candidate-option="${id}"]`); }
@@ -593,9 +599,13 @@ for(const engine of ['chromium','webkit']) test(`Lite background lock, per-task 
   await separation().locator('[data-ai-setting-value=auto]').click();
   assert.equal(await page.locator(`${active} [data-ai-background-policy]`).inputValue(),'connected');
   assert.equal(await background().locator('[data-ai-setting-value=preserve]').isDisabled(),true);
-  assert.equal(await page.locator(`${active} [data-ai-output-processing-status]`).isVisible(),true);
-  assert.match(await page.locator(`${active} [data-ai-output-processing-status]`).textContent(),/한 장으로 전환/);
-  assert.match(await page.locator(`${active} [data-ai-background-lock-hint]`).textContent(),/한 장으로 전환/);
+  // 11-19 E10: 시안 v6(506f30bf, 11-11)부터 간단 설정 칸의 처리 상태 글([data-ai-output-processing-status])은 늘 숨김
+  // (css/ai-panel.css .ai-compact-settings > [data-ai-output-processing-status] display:none). 대신 객체 분리가 켠 배경 줄이
+  // 흐려지고(.is-forced) 「배경 제거 끄기」가 잠긴다. 안내 문장은 화면 읽기용(aria-describedby)으로 남아 있어 글만 확인한다.
+  assert.equal(await page.locator(`${active} [data-ai-output-processing-status]`).isVisible(),false,'v6 hides the processing status line in compact settings');
+  assert.equal(await background().evaluate(node=>node.closest('.ai-setting-row')?.classList.contains('is-forced')),true,'objects=auto visibly forces the background row');
+  // 안내 문장은 2d671587(11-09)에서 「…원본 유지」로 바꾸면 한 장으로 돌아갑니다」로 바뀌었다(js/ai-separation-mode.js SEPARATION_BACKGROUND_HINT).
+  assert.match(await page.locator(`${active} [data-ai-background-lock-hint]`).textContent(),/한 장으로 돌아갑니다/);
   const disabled=await background().locator('[data-ai-setting-value=preserve]').boundingBox();
   await page.mouse.click(disabled.x+disabled.width/2,disabled.y+disabled.height/2);
   assert.equal(await page.locator(`${active} [data-ai-background-policy]`).inputValue(),'connected');

@@ -68,14 +68,19 @@ async function mockMovedPng(page,index,dx){
 }
 
 
-// 2026-10-12(4a523ad8)부터 박스 수정 방식은 접힌 '고급 · 실험' 칸 안에 있다. 고르기 전에 펼친다.
-async function showScopedMode(page) {
+// 11-19 E10 다시 씀: 박스 수정 방식(「고급 · 실험」 칸, 4a523ad8 10-12)은 제품에서 늘 hidden이다(js/ai-panel.js:683 — 사용자에게 안 보이는 실험 후보).
+// 예전처럼 숨은 칸을 억지로 펼치지 않고(제품이 다시 숨겨 selectOption이 실패했다), 지금 계약을 본다:
+//   · 칸은 숨어 있고 기본 방식은 「기존 방식」(legacy) — 사용자는 이 칸을 볼 수 없다.
+//   · 수치 명세(verified) 방식은 숨은 select 값으로만 켜지는 내부 실험 길이며, 켜면 아래 수치 검증·교정 흐름을 탄다.
+async function showScopedMode(page, mode = 'verified') {
   const advanced = page.locator('#ai-image-panel [data-ai-scoped-advanced]');
-  // js/ai-panel.js:683: 고급 · 실험 칸은 제품에서 늘 hidden이다(사용자에게 안 보이는 실험 후보). 후보 방식 자체를 검사하므로 검사에서만 칸을 연다.
-  await advanced.evaluate(node => { node.hidden = false; for (let n = node; n && n.id !== 'ai-image-panel'; n = n.parentElement) { if (getComputedStyle(n).display === 'none') n.style.setProperty('display', 'block', 'important'); } });
-  await page.locator('#ai-image-panel [data-ai-scoped-prompt-row]').evaluate(node => { node.hidden = false; for (let n = node; n && n.id !== 'ai-image-panel'; n = n.parentElement) { if (getComputedStyle(n).display === 'none') n.style.setProperty('display', 'block', 'important'); } });
-  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click({ force: true });
-  await page.locator('[data-ai-scoped-prompt-mode]').waitFor({ state: 'visible' });
+  // 칸 자체는 박스 수정 중 hidden이 풀리지만(js/ai-panel.js:1582), 시안 v6(506f30bf)부터 그 칸이 든 옛 아래 줄(.ai-workbench-actions)이 화면에 나오지 않아 사용자에게 보이지 않는다.
+  assert.equal(await advanced.isVisible(), false, 'scoped prompt modes stay an internal experiment (not visible)');
+  await page.locator('[data-ai-scoped-prompt-mode]').evaluate((select, mode) => {
+    if (!select.dataset.e10DefaultChecked) { select.dataset.e10DefaultChecked = select.value; }
+    select.value = mode; select.dispatchEvent(new Event('input', { bubbles: true })); select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, mode);
+  assert.equal(await page.locator('[data-ai-scoped-prompt-mode]').evaluate(select => select.dataset.e10DefaultChecked), 'legacy', 'default box edit mode is the existing (legacy) prompt');
   // 박스별 수치 칸은 코멘트 표식에 올린 창의 접힌 '고급 · 수치 검증' 칸(data-ai-precision-settings) 안에 있다.
   // 코멘트 표시는 처음에 꺼져 있다(2026-10-16, 83201a54).
   if (await page.locator('#ai-image-panel').getAttribute('data-ai-comments-visible') !== 'true') await page.locator('#ai-image-panel [data-ai-comment-visibility]').click();
@@ -95,12 +100,9 @@ test('real product blocks a bad candidate, authorizes one original-based correct
   const {page}=await fixture(context,1,evidence,{selectedPartial:true,precisionMove:true,
     browserContextOptions:mobile?{viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true}:{}});
   await page.evaluate(theme=>document.documentElement.dataset.theme=theme,process.env.UI_CAPTURE_THEME||'dark');
-  // 고급 칸은 제품에서 늘 hidden 속성이므로, 속성이 아닌 접힌 오른쪽 칸 때문에 안 보일 때만 연다.
-  if(await page.locator('#ai-image-panel [data-ai-scoped-advanced]').evaluate(n=>!n.hidden&&!n.offsetParent)) {
-    await page.locator('#ai-image-panel [data-panel-toggle="right"]').click();
-  }
+  // 11-19 E10: 지움 — 「고급 칸이 접힌 오른쪽 칸 때문에 안 보이면 오른쪽 칸을 연다」는 옛 배치 전제. 시안 v6(506f30bf)부터 고급 칸은 오른쪽 칸과 관계없이
+  // 보이지 않아(옛 아래 줄 숨김), 이 조건이 늘 참이 되어 오히려 열린 오른쪽 칸을 접고 「수정하기」 단추를 가렸다.
   await showScopedMode(page);
-  await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   assert.equal(await page.getByLabel('박스 1 가로 이동 px',{exact:true}).getAttribute('inputmode'),'text');
   await capture(page,'criteria');
   if(process.env.UI_CAPTURE_MATRIX==='1') {
@@ -190,7 +192,6 @@ test('a second real PNG verification failure has no apply or third-request path'
   const dir=path.join(evidence,'second-failure');fs.mkdirSync(dir,{recursive:true});
   const {page}=await fixture(context,1,dir,{selectedPartial:true,precisionMove:true});
   await showScopedMode(page);
-  await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   await subscribe(page,'send-one','send');
   await page.locator('[data-ai-send][data-ai-comments-apply]').click();await arrived(page,'send-one');
   await subscribe(page,'failure-one','dialog');
@@ -214,7 +215,6 @@ test('source preflight rejects an impossible destination before sending, and cor
   const dir=path.join(evidence,'preflight-cancel');fs.mkdirSync(dir,{recursive:true});
   const {page}=await fixture(context,1,dir,{selectedPartial:true,precisionMove:true});
   await showScopedMode(page);
-  await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).fill('150');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).press('Tab');
   await subscribe(page,'invalid-source','idle');
