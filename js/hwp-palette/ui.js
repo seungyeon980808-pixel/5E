@@ -1079,7 +1079,8 @@ export function initPaletteWorkspace(panel, services) {
         for (const [path, bytes] of Object.entries(
           unzipPalette(new Uint8Array(await file.arrayBuffer())),
         )) {
-          const name = path.split("/").at(-1);
+          // 윈도우 도구로 만든 ZIP은 폴더 구분을 역슬래시로 적기도 한다(1.8.0 X1).
+          const name = path.split(/[\\/]/).at(-1);
           if (/\.json$/i.test(name))
             jsons.push([name, JSON.parse(new TextDecoder().decode(bytes))]);
           else if (/\.(hwp|hwpx)$/i.test(name)) assets[name] = bytes;

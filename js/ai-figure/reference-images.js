@@ -6,6 +6,14 @@ import { examQuestionJsonUrl } from '../library/image-hosts.js?v=1.7.0-four-sess
 const CACHE_LIMIT = 24;
 const cache = new Map();   // id → Promise<dataURL> (최근 것만)
 
+// 원격(Worker) 문항 JSON에서 꺼낸 그림만 AI에 붙인다 — 비트맵 base64만, 한 장 8MB(글자 수) 이하(X1 보안 점검 11-19).
+// SVG·HTML 같은 다른 data URL이나 지나치게 큰 값은 「그림 없음」으로 보고 다음 후보로 넘어간다(실패로 끝내지 않음).
+export const MAX_REFERENCE_DATA_URL_CHARS = 8 * 1024 * 1024;
+const REFERENCE_DATA_URL = /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=\s]+$/u;
+export function isUsableReferenceImage(data) {
+  return typeof data === 'string' && data.length <= MAX_REFERENCE_DATA_URL_CHARS && REFERENCE_DATA_URL.test(data);
+}
+
 /** 그림 id → { item, n }. 꼬리 「-3」은 n=3, 학평 선지 그림 「-선지2」는 n=null(이름으로만 찾음). 형식이 아니면 오류. */
 export function parseFigureId(id) {
   const m = /^(.+)-([^-]+)$/u.exec(String(id || ''));
@@ -16,7 +24,7 @@ export function parseFigureId(id) {
 // 문항 JSON 어디든(본문 블록·선지) 이름이 `<id>.png`인 그림 — 색인을 만들 때(catalog/build-figs*.cjs) 쓴 기준과 같다.
 function findByName(o, name, depth = 0) {
   if (!o || typeof o !== 'object' || depth > 12) return null;
-  if (o.name === name && typeof o.data === 'string' && o.data.startsWith('data:image')) return o.data;
+  if (o.name === name && isUsableReferenceImage(o.data)) return o.data;
   for (const v of Object.values(o)) { const r = findByName(v, name, depth + 1); if (r) return r; }
   return null;
 }
@@ -26,7 +34,7 @@ export function figureFromQuestion(json, n, id = '') {
   if (id) { const named = findByName(json, id + '.png'); if (named) return named; }
   if (!n) return null;
   const q = json?.question || {};
-  const figs = (q.blocks || []).filter((b) => b?.kind === 'figure' && typeof b.figure?.data === 'string' && b.figure.data.startsWith('data:image'));
+  const figs = (q.blocks || []).filter((b) => b?.kind === 'figure' && isUsableReferenceImage(b.figure?.data));
   return figs[n - 1]?.figure.data || null;
 }
 
