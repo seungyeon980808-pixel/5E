@@ -288,10 +288,13 @@ test('옵션 플래그: 기본은 지금의 그래프 객체 생성', () => {
   assert.equal(isAiGraphPictureEnabled({ getItem() { throw new Error('막힘'); } }), false);
 });
 
-test('기본 그래프 생성 경로는 이 엔진을 부르지 않는다(화면 변화 없음)', () => {
+test('기본 그래프 생성 경로는 이 엔진을 부르지 않는다(화면 변화 없음) — 연결은 js/ai-engines.js 한곳, 옵션일 때만', () => {
   const r = spawnSync('git', ['grep', '-l', 'ai-graph/', '--', 'js', 'index.html', 'css'], { cwd: ROOT, encoding: 'utf8' });
-  const users = r.stdout.split('\n').filter(Boolean).filter((f) => !f.startsWith('js/ai-graph/'));
+  const users = r.stdout.split('\n').filter(Boolean).filter((f) => !f.startsWith('js/ai-graph/') && f !== 'js/ai-engines.js');
   assert.deepEqual(users, []);
+  const connect = fs.readFileSync(path.join(ROOT, 'js/ai-engines.js'), 'utf8');
+  assert.match(connect, /import\('\.\/ai-graph\/index\.js'/, '그래프 엔진은 처음 쓸 때만 불러옴');
+  assert.doesNotMatch(connect, /^import .*ai-graph/m);
 });
 
 test('KaTeX는 vendor에 고정 판으로, 그래프 판 스타일은 최신이고 이름이 섞이지 않음', () => {

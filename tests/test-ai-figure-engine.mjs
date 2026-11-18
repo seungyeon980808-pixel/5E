@@ -328,11 +328,15 @@ test('입력 검사: ai 없음·빈 요청은 TypeError, 한 번 쓰기 makeFigu
   assert.equal(out.ok, true);
 });
 
-test('aiFigureEngineEnabled: 기본은 꺼짐, 옵션 플래그로만 켬', () => {
-  assert.equal(aiFigureEngineEnabled({}), false);
-  assert.equal(aiFigureEngineEnabled({ localStorage: { getItem: (k) => (k === '5e.aiFigureEngine' ? '1' : null) } }), true);
+test('aiFigureEngineEnabled: 1.8.0부터 기본 켜짐(이미지 생성 대체), 플래그로만 끔', () => {
+  const store = (map) => ({ localStorage: { getItem: (k) => map[k] ?? null } });
+  assert.equal(aiFigureEngineEnabled({}), true);
+  assert.equal(aiFigureEngineEnabled(store({ '5e.aiEngine.figure': '0' })), false);
+  assert.equal(aiFigureEngineEnabled(store({ '5e.aiFigureEngine': '0' })), false, '옛 이름도 읽음');
+  assert.equal(aiFigureEngineEnabled(store({ '5e.aiFigureEngine': '0', '5e.aiEngine.figure': '1' })), true, '새 이름이 이김');
+  assert.equal(aiFigureEngineEnabled({ FIVE_E_AI_FIGURE_ENGINE: false }), false);
   assert.equal(aiFigureEngineEnabled({ FIVE_E_AI_FIGURE_ENGINE: true }), true);
-  assert.equal(aiFigureEngineEnabled({ localStorage: { getItem: () => { throw new Error('막힘'); } } }), false);
+  assert.equal(aiFigureEngineEnabled({ localStorage: { getItem: () => { throw new Error('막힘'); } } }), true, '저장소를 못 읽으면 기본값');
 });
 
 test('참고 그림 보안(X1): 비트맵 base64만, 8MB 넘는 값·SVG·HTML data URL은 AI에 붙이지 않음', () => {

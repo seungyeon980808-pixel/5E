@@ -15,7 +15,7 @@ export function validateCandidateSnapshot(item) {
   }
   if (item.source != null && (typeof item.source !== 'object' || Array.isArray(item.source))) throw new TypeError('Invalid candidate source');
   if (item.comments !== undefined && !Array.isArray(item.comments)) throw new TypeError('Invalid candidate comments');
-  for (const key of ['labelPlan','imageLabelWorkflow','sourceLabelPlan','editableDraft','targetPlacement','workflowMetrics','graphResult','graphEdit']) {
+  for (const key of ['labelPlan','imageLabelWorkflow','sourceLabelPlan','editableDraft','targetPlacement','workflowMetrics','graphResult','graphEdit','meta']) {
     if (item[key] != null && (typeof item[key] !== 'object' || Array.isArray(item[key]))) throw new TypeError('Invalid candidate ' + key);
   }
   // Reuse native structure/source checks without recomputing quality or repairing data.
@@ -62,6 +62,8 @@ export function snapshotImageItem(item) {
     sceneResult: item?.sceneResult ? structuredClone(item.sceneResult) : null,
     graphResult: item?.graphResult ? structuredClone(item.graphResult) : null,
     ...(item?.graphEdit ? { graphEdit: structuredClone(item.graphEdit) } : {}),
+    // 1.8.0 새 엔진 결과 정보: 그림 엔진(참고한 기출 3장 refs 등)·그래프 그림(graphPlan 설계 — 다시 열어 다시 그림).
+    ...(item?.meta ? { meta: structuredClone(item.meta) } : {}),
     sourceReferenceId: item?.sourceReferenceId || null,
     sourceReferenceName: item?.sourceReferenceName || "",
     engine: item?.engine || null,
