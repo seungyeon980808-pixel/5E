@@ -29,11 +29,25 @@ function toBuffer(bytes) {
   if (ArrayBuffer.isView(bytes)) return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   throw new TypeError("파일 내용이 올바르지 않습니다.");
 }
+// 윈도우에서는 OneDrive·백신·탐색기 미리보기가 「최근.json」을 잠깐 잡고 있으면 덮어쓰기(rename)가 EPERM·EBUSY·EACCES로 실패한다.
+// 잠깐 기다렸다 다시 하고, 끝내 안 되면 임시 파일을 치우고 오류를 그대로 던진다(1.8.0 X1 윈도우 점검).
+const RENAME_RETRY_CODES = new Set(["EPERM", "EBUSY", "EACCES"]);
+const RENAME_RETRY_DELAYS_MS = Object.freeze([40, 80, 160, 320, 640]);
+async function renameWithRetry(from, to, { rename = (a, b) => fs.promises.rename(a, b), delays = RENAME_RETRY_DELAYS_MS, wait = ms => new Promise(r => setTimeout(r, ms)) } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await rename(from, to); }
+    catch (error) {
+      if (!RENAME_RETRY_CODES.has(error?.code) || attempt >= delays.length) throw error;
+      await wait(delays[attempt]);
+    }
+  }
+}
 async function writeAtomic(file, data) {
   await fs.promises.mkdir(path.dirname(file), { recursive: true });
   const temp = `${file}.${process.pid}.${Date.now()}.tmp`;
   await fs.promises.writeFile(temp, data);
-  await fs.promises.rename(temp, file);
+  try { await renameWithRetry(temp, file); }
+  catch (error) { await fs.promises.unlink(temp).catch(() => {}); throw error; }
 }
 async function uniquePath(file) {
   const ext = path.extname(file), base = file.slice(0, file.length - ext.length);
@@ -142,4 +156,4 @@ function registerExamFilesIpc({ handle, shell, documentsPath }) {
   return files;
 }
 
-module.exports = { createExamFiles, registerExamFilesIpc, stamp, safeName, backupsToTrash, KINDS };
+module.exports = { createExamFiles, registerExamFilesIpc, stamp, safeName, backupsToTrash, renameWithRetry, KINDS };

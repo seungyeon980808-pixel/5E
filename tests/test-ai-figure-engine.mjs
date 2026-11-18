@@ -9,7 +9,7 @@ import {
   fetchFigure, parseFigureId, figureFromQuestion, buildFigurePrompt, normalizeExpanded, aiFigureEngineEnabled,
 } from '../js/ai-figure/index.js';
 import { parseTagLines, HAK_PENALTY } from '../js/ai-figure/retrieve.js';
-import { clearFigureCache, collectReferenceImages } from '../js/ai-figure/reference-images.js';
+import { clearFigureCache, collectReferenceImages, isUsableReferenceImage, MAX_REFERENCE_DATA_URL_CHARS } from '../js/ai-figure/reference-images.js';
 import { PREV_SCENE_NOTE, SINGLE_SCENE_NOTE } from '../js/ai-figure/prompt.js';
 import { EXAM_QUESTION_HOSTS } from '../js/library/image-hosts.js';
 
@@ -333,4 +333,19 @@ test('aiFigureEngineEnabled: 기본은 꺼짐, 옵션 플래그로만 켬', () =
   assert.equal(aiFigureEngineEnabled({ localStorage: { getItem: (k) => (k === '5e.aiFigureEngine' ? '1' : null) } }), true);
   assert.equal(aiFigureEngineEnabled({ FIVE_E_AI_FIGURE_ENGINE: true }), true);
   assert.equal(aiFigureEngineEnabled({ localStorage: { getItem: () => { throw new Error('막힘'); } } }), false);
+});
+
+test('참고 그림 보안(X1): 비트맵 base64만, 8MB 넘는 값·SVG·HTML data URL은 AI에 붙이지 않음', () => {
+  assert.equal(isUsableReferenceImage(png('a')), true);
+  assert.equal(isUsableReferenceImage('data:image/jpeg;base64,/9j/AA=='), true);
+  assert.equal(isUsableReferenceImage('data:image/svg+xml;base64,PHN2Zz4='), false);
+  assert.equal(isUsableReferenceImage('data:image/svg+xml,<svg onload=alert(1)>'), false);
+  assert.equal(isUsableReferenceImage('data:text/html;base64,PGI+'), false);
+  assert.equal(isUsableReferenceImage('data:image/png;base64,' + 'A'.repeat(MAX_REFERENCE_DATA_URL_CHARS)), false);
+  assert.equal(isUsableReferenceImage(null), false);
+  const json = question('data:image/svg+xml;base64,PHN2Zz4=', png('ok'));
+  assert.equal(nameOf(figureFromQuestion(json, 1)), 'ok', 'SVG 그림은 건너뛰어 첫째 비트맵이 1번');
+  assert.equal(figureFromQuestion(json, 2), null);
+  const named = { question: { blocks: [{ kind: 'figure', figure: { name: 'x-1.png', data: 'data:image/svg+xml;base64,PHN2Zz4=' } }] } };
+  assert.equal(figureFromQuestion(named, null, 'x-1'), null, '이름이 맞아도 SVG면 쓰지 않음');
 });

@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
-const { createExamFiles, safeName } = require('./exam-files.cjs');
+const { createExamFiles, safeName, renameWithRetry } = require('./exam-files.cjs');
 
 test('exam files: autosave, backups, named exports stay inside 5E/출제', async t => {
   const docs = fs.mkdtempSync(path.join(os.tmpdir(), '5e-exam-files-'));
@@ -76,4 +76,28 @@ test('exam files: 넘친 백업은 휴지통으로(폴더째 또는 파일만), 
   // 휴지통 함수가 없으면 아무것도 옮기지 않음
   clock = new Date(2026, 10, 16, 11, 0);
   assert.deepEqual(await createExamFiles({ documentsPath: docs, now: () => clock }).pruneBackups(), { trashed: [] });
+});
+
+// 1.8.0 X1 윈도우 점검: 파일 이름·경로 길이·잠긴 파일 덮어쓰기.
+test('윈도우 파일 이름: 금지 글자·제어 문자는 _로, 앞 점 제거, 120자, 날짜 접두로 CON·NUL 같은 예약 이름이 되지 않음', () => {
+  assert.equal(safeName('물리 <1>: "기말" a/b\\c|d?e*'), '물리 _1__ _기말_ a_b_c_d_e_');
+  assert.equal(safeName('...숨김'), '숨김');
+  assert.equal(safeName('CON'), 'CON', '이름 자체는 두되 저장 이름은 YYYY-MM-DD_HHMM_CON.hwpx라 예약 이름이 아님');
+  const long = safeName('가'.repeat(400));
+  assert.equal(long.length, 120);
+  // 흔한 윈도우 문서 폴더(OneDrive 포함)에서 전체 경로가 260자(MAX_PATH) 안에 드는지
+  const docs = 'C:\\Users\\사용자이름이긴선생님\\OneDrive - 교육청\\문서';
+  const full = path.win32.join(docs, '5E', '출제', '한글', `2026-11-19_0930_${long}.hwpx`);
+  assert.ok(full.length < 260, `경로 길이 ${full.length}`);
+});
+
+test('잠긴 파일 덮어쓰기(윈도우 EPERM·EBUSY·EACCES)는 잠깐 기다렸다 다시, 다른 오류·끝내 실패는 그대로', async () => {
+  const waits = [];
+  let calls = 0;
+  await renameWithRetry('a.tmp', 'a', { rename: async () => { calls++; if (calls < 3) throw Object.assign(new Error('busy'), { code: calls === 1 ? 'EPERM' : 'EBUSY' }); }, wait: async ms => waits.push(ms) });
+  assert.equal(calls, 3); assert.deepEqual(waits, [40, 80]);
+  await assert.rejects(renameWithRetry('a.tmp', 'a', { rename: async () => { throw Object.assign(new Error('no'), { code: 'ENOENT' }); }, wait: async () => {} }), /no/);
+  let n = 0;
+  await assert.rejects(renameWithRetry('a.tmp', 'a', { rename: async () => { n++; throw Object.assign(new Error('locked'), { code: 'EACCES' }); }, wait: async () => {}, delays: [1, 1] }), /locked/);
+  assert.equal(n, 3);
 });

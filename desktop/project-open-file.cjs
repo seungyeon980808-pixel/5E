@@ -9,22 +9,26 @@ const path = require("node:path");
 const PROJECT_EXT = /\.5e$/i;
 const MAX_PROJECT_FILE_BYTES = 128 * 1024 * 1024;
 
-function projectPathsFromArgv(argv, { cwd = process.cwd(), exists = file => { try { return fs.statSync(file).isFile(); } catch { return false; } } } = {}) {
+// pathImpl은 검사에서 path.win32로 바꿔 윈도우 경로(드라이브 글자·역슬래시·긴 한글 이름)를 맥에서도 확인하려고 받는다(1.8.0 X1).
+function projectPathsFromArgv(argv, { cwd = process.cwd(), exists = file => { try { return fs.statSync(file).isFile(); } catch { return false; } }, pathImpl = path } = {}) {
   const out = [];
   for (const arg of Array.isArray(argv) ? argv : []) {
     if (typeof arg !== "string" || !arg || arg.startsWith("-") || !PROJECT_EXT.test(arg)) continue;
-    const file = path.resolve(cwd, arg);
-    if (exists(file) && !out.includes(file)) out.push(file);
+    const file = pathImpl.resolve(cwd || process.cwd(), arg);
+    // 윈도우는 대소문자를 가리지 않으므로 같은 파일이 C:\A.5e·c:\a.5E로 두 번 와도 한 번만 연다.
+    const foldCase = pathImpl.sep === "\\";
+    const same = seen => (foldCase ? seen.toLowerCase() === file.toLowerCase() : seen === file);
+    if (exists(file) && !out.some(same)) out.push(file);
   }
   return out;
 }
 
-function createProjectOpenQueue({ send, readFile = file => fs.promises.readFile(file), statFile = file => fs.promises.stat(file), maxBytes = MAX_PROJECT_FILE_BYTES } = {}) {
+function createProjectOpenQueue({ send, readFile = file => fs.promises.readFile(file), statFile = file => fs.promises.stat(file), maxBytes = MAX_PROJECT_FILE_BYTES, pathImpl = path } = {}) {
   if (typeof send !== "function") throw new TypeError("send가 필요합니다.");
   const pending = [];
   let ready = false;
   async function deliver(file) {
-    const name = path.basename(file);
+    const name = pathImpl.basename(file);
     try {
       if (!PROJECT_EXT.test(file)) throw new Error("5E 프로젝트 파일(.5e)만 열 수 있습니다.");
       const stat = await statFile(file);
@@ -69,8 +73,9 @@ function installProjectOpenFile({ app, getWindow, createWindow, handle, argv = p
   const open = file => { queue.enqueue(file); bringForward(); };
   // 맥: 앱이 뜨기 전에 오기도 하므로 ready 전에 건다.
   app.on("open-file", (event, file) => { event.preventDefault(); open(file); });
-  app.on("second-instance", (_event, secondArgv) => {
-    const files = projectPathsFromArgv(secondArgv);
+  // 두 번째 실행의 상대 경로(명령 줄에서 `5E.exe 시험.5e`)는 그 실행의 작업 폴더 기준이다 — Electron이 셋째 인자로 준다.
+  app.on("second-instance", (_event, secondArgv, workingDirectory) => {
+    const files = projectPathsFromArgv(secondArgv, { cwd: typeof workingDirectory === "string" && workingDirectory ? workingDirectory : process.cwd() });
     if (files.length) files.forEach(open); else bringForward();
   });
   for (const file of projectPathsFromArgv(argv.slice(1))) queue.enqueue(file);
