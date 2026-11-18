@@ -71,7 +71,7 @@ function seedWorkspaces({count,unlabeled,selectedPartial,precisionMove}) {
     };
   });
 }
-async function fixture(context,count,evidence,{unlabeled=false,selectedPartial=false,precisionMove=false,browserContextOptions={},beforeNavigate}={}) {
+async function fixture(context,count,evidence,{unlabeled=false,selectedPartial=false,precisionMove=false,browserContextOptions={},beforeNavigate,entry='#ai-image-install-open'}={}) {
   const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
   const configured=process.env.RELEASE_URL || process.env.EXAM_URL;
   const server=configured?null:http.createServer((request,response)=>{
@@ -117,7 +117,8 @@ async function fixture(context,count,evidence,{unlabeled=false,selectedPartial=f
   if(beforeNavigate)await beforeNavigate(page);
   await page.goto(entryUrl,{waitUntil:'domcontentloaded',timeout:30000});
   const welcome=page.locator('.tut-welcome-overlay .tut-banner-no');if(await welcome.isVisible())await welcome.click();
-  await page.locator('#ai-image-install-open').click();
+  // 11-19 E10: 11-11 작업대 나눔 뒤 그래프 작업(conversionKind 'graph')은 그래프 입구(#graph-tool-open)로 연다 — entry로 고른다(기본은 이미지 입구).
+  await page.locator(entry).click();
   await page.evaluate(()=>new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>{cleanup();reject(new Error('Seeded source image did not load'));},10000);
     const observer=new MutationObserver(check);
