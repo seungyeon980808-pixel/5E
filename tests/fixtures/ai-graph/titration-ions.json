@@ -1,0 +1,112 @@
+{
+ "source": "image_generator/cycles/c10/kc1-01/meta.json#A1",
+ "subject": "화학Ⅰ",
+ "request": "염산에 수산화 나트륨 수용액 넣을 때 이온 수 변하는 그래프 그려 줘. 염산은 0.1 M, 20 mL이고 넣는 용액도 0.1 M이야.\n가로축은 넣은 부피, 세로축은 이온 수로 해 주고 H⁺는 A, Na⁺는 B로 표시해 줘.\n20 mL 지점은 점선만 넣고 다른 이온은 빼 줘.",
+ "keyValues": "넣은 부피를 V(mL), 초기 H⁺ 수를 N₀라 하면 N₀ = 0.002 mol × 아보가드로 상수이다. A: 0 ≤ V ≤ 20에서 N₀(1 − V/20), V ≥ 20에서 0. B: N₀V/20. A의 시작점은 (0, N₀), 가로축과 만나는 점은 (20, 0), B가 V = 20에서 갖는 값은 N₀이다. 두 직선의 교점은 (10, N₀/2)이며, 교점 좌표는 그림에 표시하지 않는다.",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 2.15,
+  "yMin": 0,
+  "yMax": 2.2640000000000002,
+  "labelX": "넣은 부피(mL)",
+  "labelY": "이온 수",
+  "xTicks": [
+   {
+    "value": 1,
+    "label": "20",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 1,
+    "label": "{N}_0",
+    "key": false
+   },
+   {
+    "value": 2,
+    "label": "2N_0",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      1
+     ],
+     [
+      1,
+      0
+     ],
+     [
+      2,
+      0
+     ]
+    ],
+    "domain": [
+     0,
+     2
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "A",
+    "labelAt": [
+     0.35,
+     0.75
+    ]
+   },
+   {
+    "expr": "x",
+    "points": null,
+    "domain": [
+     0,
+     2
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "B",
+    "labelAt": [
+     1.6,
+     1.75
+    ]
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      1,
+      0
+     ],
+     [
+      1,
+      2.05
+     ]
+    ],
+    "domain": [
+     1,
+     1
+    ],
+    "dashed": true,
+    "thin": true,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "marks": [],
+  "lineLabels": [],
+  "guides": [],
+  "notes": "완전 해리와 중화 반응을 가정하고 물의 자동 이온화는 무시한다. 부피 1은 20 mL, 이온 수 1은 초기 H⁺ 수 N_0=0.002N_A개이다."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

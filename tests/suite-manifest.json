@@ -942,6 +942,12 @@
       "findingIds": [
         "BL3-B7-PAPER-MM"
       ]
+    },
+    {
+      "path": "tests/test-ai-graph-engine.mjs",
+      "findingIds": [
+        "AI-GRAPH-PICTURE-ENGINE"
+      ]
     }
   ],
   "browser": [
@@ -2443,6 +2449,12 @@
       "path": "tests/test-171-desktop-b3-browser.cjs",
       "findingIds": [
         "B3"
+      ]
+    },
+    {
+      "path": "tests/test-ai-graph-draw-browser.cjs",
+      "findingIds": [
+        "AI-GRAPH-PICTURE-DRAW"
       ]
     }
   ],

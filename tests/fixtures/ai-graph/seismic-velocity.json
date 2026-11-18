@@ -1,0 +1,664 @@
+{
+ "source": "image_generator/cycles/c9/he2-01/meta.json#A1",
+ "subject": "지구과학Ⅱ",
+ "request": "지구 내부 깊이에 따른 P파랑 S파 속도 그래프 그려 줘. 외핵 경계가 드러나게",
+ "keyValues": "경계 깊이의 순서: 0 < d_M < d_C < d_I < R. 지각·맨틀에서 v_P > v_S > 0. 모호면에서 P파와 S파 속도는 불연속적으로 증가. 맨틀–외핵 경계에서 v_P(d_C⁻) > v_P(d_C⁺) > 0, v_S(d_C⁻) > 0, v_S(d_C⁺) = 0. 외핵 구간 d_C < d < d_I에서 v_S = 0. 외핵–내핵 경계에서 v_P(d_I⁺) > v_P(d_I⁻), 내핵에서 v_P > v_S > 0. 구체적인 깊이와 속도의 수치는 표시하지 않는다.",
+ "originalCollisions": {
+  "n": 2,
+  "list": [
+   "겹침 남음 15.0",
+   "겹침 남음 1.1"
+  ]
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 7.168,
+  "yMin": 0,
+  "yMax": 14.8,
+  "labelX": "깊이 (1000 km)",
+  "labelY": "지진파 속도 (km/s)",
+  "xTicks": [
+   {
+    "value": 2.9,
+    "label": "2.9",
+    "key": false
+   },
+   {
+    "value": 5.15,
+    "label": "5.15",
+    "key": false
+   },
+   {
+    "value": 6.37,
+    "label": "6.37",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 4,
+    "label": "4",
+    "key": false
+   },
+   {
+    "value": 8,
+    "label": "8",
+    "key": false
+   },
+   {
+    "value": 12,
+    "label": "12",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      5.8
+     ],
+     [
+      0.02,
+      6.5
+     ],
+     [
+      0.035,
+      6.8
+     ]
+    ],
+    "domain": [
+     0,
+     0.035
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.035,
+      6.8
+     ],
+     [
+      0.035,
+      8
+     ]
+    ],
+    "domain": [
+     0.035,
+     0.035
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.035,
+      8
+     ],
+     [
+      0.1,
+      8.1
+     ],
+     [
+      0.2,
+      8
+     ],
+     [
+      0.3,
+      8.5
+     ],
+     [
+      0.41,
+      9
+     ]
+    ],
+    "domain": [
+     0.035,
+     0.41
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.41,
+      9
+     ],
+     [
+      0.41,
+      9.4
+     ]
+    ],
+    "domain": [
+     0.41,
+     0.41
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.41,
+      9.4
+     ],
+     [
+      0.6,
+      10.2
+     ],
+     [
+      0.66,
+      10.3
+     ]
+    ],
+    "domain": [
+     0.41,
+     0.66
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.66,
+      10.3
+     ],
+     [
+      0.66,
+      10.8
+     ]
+    ],
+    "domain": [
+     0.66,
+     0.66
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.66,
+      10.8
+     ],
+     [
+      0.9,
+      11.4
+     ],
+     [
+      1.3,
+      12
+     ],
+     [
+      1.8,
+      12.6
+     ],
+     [
+      2.3,
+      13.1
+     ],
+     [
+      2.7,
+      13.5
+     ],
+     [
+      2.9,
+      13.7
+     ]
+    ],
+    "domain": [
+     0.66,
+     2.9
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "P파",
+    "labelAt": [
+     1.85,
+     13.15
+    ]
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      2.9,
+      13.7
+     ],
+     [
+      2.9,
+      8.1
+     ]
+    ],
+    "domain": [
+     2.9,
+     2.9
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      2.9,
+      8.1
+     ],
+     [
+      3.3,
+      8.7
+     ],
+     [
+      3.8,
+      9.3
+     ],
+     [
+      4.3,
+      9.7
+     ],
+     [
+      4.8,
+      10.1
+     ],
+     [
+      5.15,
+      10.3
+     ]
+    ],
+    "domain": [
+     2.9,
+     5.15
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      5.15,
+      10.3
+     ],
+     [
+      5.15,
+      11
+     ]
+    ],
+    "domain": [
+     5.15,
+     5.15
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      5.15,
+      11
+     ],
+     [
+      5.6,
+      11.15
+     ],
+     [
+      6,
+      11.23
+     ],
+     [
+      6.37,
+      11.26
+     ]
+    ],
+    "domain": [
+     5.15,
+     6.37
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      3.2
+     ],
+     [
+      0.02,
+      3.7
+     ],
+     [
+      0.035,
+      3.9
+     ]
+    ],
+    "domain": [
+     0,
+     0.035
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.035,
+      3.9
+     ],
+     [
+      0.035,
+      4.5
+     ]
+    ],
+    "domain": [
+     0.035,
+     0.035
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.035,
+      4.5
+     ],
+     [
+      0.1,
+      4.5
+     ],
+     [
+      0.2,
+      4.4
+     ],
+     [
+      0.3,
+      4.6
+     ],
+     [
+      0.41,
+      4.9
+     ]
+    ],
+    "domain": [
+     0.035,
+     0.41
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.41,
+      4.9
+     ],
+     [
+      0.41,
+      5.1
+     ]
+    ],
+    "domain": [
+     0.41,
+     0.41
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.41,
+      5.1
+     ],
+     [
+      0.6,
+      5.6
+     ],
+     [
+      0.66,
+      5.6
+     ]
+    ],
+    "domain": [
+     0.41,
+     0.66
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.66,
+      5.6
+     ],
+     [
+      0.66,
+      6
+     ]
+    ],
+    "domain": [
+     0.66,
+     0.66
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      0.66,
+      6
+     ],
+     [
+      0.9,
+      6.3
+     ],
+     [
+      1.3,
+      6.6
+     ],
+     [
+      1.8,
+      6.9
+     ],
+     [
+      2.3,
+      7.2
+     ],
+     [
+      2.7,
+      7.3
+     ],
+     [
+      2.9,
+      7.3
+     ]
+    ],
+    "domain": [
+     0.66,
+     2.9
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "S파",
+    "labelAt": [
+     1.85,
+     7.4
+    ]
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      5.15,
+      3.5
+     ],
+     [
+      5.6,
+      3.6
+     ],
+     [
+      6,
+      3.65
+     ],
+     [
+      6.37,
+      3.67
+     ]
+    ],
+    "domain": [
+     5.15,
+     6.37
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      2.9,
+      0
+     ],
+     [
+      2.9,
+      14.1
+     ]
+    ],
+    "domain": [
+     2.9,
+     2.9
+    ],
+    "dashed": true,
+    "thin": true,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      5.15,
+      0
+     ],
+     [
+      5.15,
+      14.1
+     ]
+    ],
+    "domain": [
+     5.15,
+     5.15
+    ],
+    "dashed": true,
+    "thin": true,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "marks": [],
+  "lineLabels": [
+   {
+    "text": "외핵 경계",
+    "x": 2.9,
+    "y": 14.45
+   },
+   {
+    "text": "내핵 경계",
+    "x": 5.15,
+    "y": 14.45
+   },
+   {
+    "text": "액체 외핵: S파 전파 불가",
+    "x": 4,
+    "y": 2
+   },
+   {
+    "text": "내핵의 전단파 속도",
+    "x": 5.8,
+    "y": 4.3
+   }
+  ],
+  "guides": [],
+  "notes": "대표 지구 모형의 개략적인 속도 분포이다. 깊이의 단위는 1000 km, 속도의 단위는 km/s이다. 액체 외핵에서는 S파가 전파되지 않으므로 S파 곡선을 그리지 않는다. 고체 내핵에는 전단파 속도가 존재하지만, 맨틀의 S파가 액체 외핵을 직접 통과하여 이어지는 것은 아니다."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

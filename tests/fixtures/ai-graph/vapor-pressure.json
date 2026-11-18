@@ -1,0 +1,138 @@
+{
+ "source": "image_generator/out/시험/yc2-06.json",
+ "subject": "화학Ⅱ",
+ "request": "",
+ "keyValues": "",
+ "originalCollisions": {
+  "n": 1,
+  "list": [
+   "겹침 남음 6.0"
+  ]
+ },
+ "plan": {
+  "xMin": 300,
+  "xMax": 367.92,
+  "yMin": 0,
+  "yMax": 270,
+  "labelX": "온도(K)",
+  "labelY": "증기 압력(kPa)",
+  "xTicks": [
+   {
+    "value": 300,
+    "label": "300",
+    "key": true
+   },
+   {
+    "value": 330,
+    "label": "{T}_1",
+    "key": false
+   },
+   {
+    "value": 336.891,
+    "label": "{T}_2",
+    "key": false
+   },
+   {
+    "value": 340,
+    "label": "{T}_3",
+    "key": false
+   },
+   {
+    "value": 360,
+    "label": "360",
+    "key": true
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 100,
+    "label": "100",
+    "key": true
+   }
+  ],
+  "series": [
+   {
+    "expr": "100*exp(3600*(1/330-1/x))",
+    "points": null,
+    "domain": [
+     300,
+     360
+    ],
+    "dashed": false,
+    "thin": false,
+    "label": "X",
+    "labelAt": [
+     362,
+     248
+    ]
+   },
+   {
+    "expr": "100*exp(4500*(1/340-1/x))",
+    "points": null,
+    "domain": [
+     300,
+     360
+    ],
+    "dashed": true,
+    "thin": false,
+    "label": "Y",
+    "labelAt": [
+     362,
+     211
+    ]
+   },
+   {
+    "expr": "0.80*100*exp(3600*(1/330-1/x))",
+    "points": null,
+    "domain": [
+     300,
+     360
+    ],
+    "dashed": false,
+    "thin": true,
+    "label": "S",
+    "labelAt": [
+     362,
+     196
+    ]
+   },
+   {
+    "expr": "100",
+    "points": null,
+    "domain": [
+     300,
+     360
+    ],
+    "dashed": true,
+    "thin": true,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "marks": [],
+  "lineLabels": [
+   {
+    "text": "외부 압력 100 kPa",
+    "x": 312,
+    "y": 109
+   }
+  ],
+  "guides": [
+   {
+    "x": 330,
+    "y": 100
+   },
+   {
+    "x": 336.891,
+    "y": 100
+   },
+   {
+    "x": 340,
+    "y": 100
+   }
+  ],
+  "notes": "온도와 압력은 각각 K와 kPa 단위의 수치로 표시하며, S는 액체상 X의 몰분율이 항상 0.80인 비휘발성·비전해질 용질의 이상 용액이다. X는 굵은 실선, Y는 굵은 파선, S는 가는 실선으로 구분한다."
+ },
+ "drawKeyValues": "300, 360, 100",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

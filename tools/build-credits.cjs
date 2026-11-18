@@ -66,6 +66,14 @@ const PAGE = `<!doctype html>
 
 {body}
 
+<div class="law" id="software">
+  <h2>함께 들어간 소프트웨어</h2>
+  <p><b>KaTeX 0.16.11</b> — 그래프를 그림으로 만들 때 수식 글자를 조판합니다. MIT License,
+  Copyright (c) 2013-2020 Khan Academy and other contributors.
+  <a href="https://github.com/KaTeX/KaTeX" target="_blank" rel="noopener noreferrer">github.com/KaTeX/KaTeX</a>
+  · 전문은 앱 안 <code>vendor/katex/LICENSE</code>.</p>
+</div>
+
 <footer>생성 {date} · <a href="../index.html">5E로 돌아가기</a></footer>
 </div></body></html>`;
 
