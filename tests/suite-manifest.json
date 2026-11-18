@@ -954,6 +954,12 @@
       "findingIds": [
         "AI-GRAPH-PICTURE-ENGINE"
       ]
+    },
+    {
+      "path": "tests/test-ai-engines-lazy-load.mjs",
+      "findingIds": [
+        "X2-180-LAZY-ENGINE-ASSETS"
+      ]
     }
   ],
   "browser": [
