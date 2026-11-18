@@ -35,8 +35,12 @@ export const boxHit = (a, b, pad) => a.x < b.x + b.w + pad && b.x < a.x + a.w + 
 export function layoutGraph(p, { measure, labelHtml }) {
   const tx = (v) => (p.xLog ? Math.log10(Math.max(v, 1e-12)) : v), ty = (v) => (p.yLog ? Math.log10(Math.max(v, 1e-12)) : v);
   const fx = (x) => (tx(x) - tx(p.xMin)) / (tx(p.xMax) - tx(p.xMin)), fy = (y) => (ty(y) - ty(p.yMin)) / (ty(p.yMax) - ty(p.yMin));
-  const W = STY.W, H = STY.H, X = (x) => (p.xReverse ? 1 - fx(x) : fx(x)) * W, Y = (y) => H - fy(y) * H;
-  const ox = (p.xReverse || p.xLog) ? 0 : X(Math.min(Math.max(0, p.xMin), p.xMax)), oy = p.yLog ? H : Y(Math.min(Math.max(0, p.yMin), p.yMax));
+  // yReverse(E8): 수심·지하 깊이처럼 세로 값이 아래로 커지는 그래프 — 가로축이 위, 세로축 화살표가 아래를 향한다.
+  const yRev = !!p.yReverse;
+  const W = STY.W, H = STY.H, X = (x) => (p.xReverse ? 1 - fx(x) : fx(x)) * W, Y = (y) => (yRev ? fy(y) * H : H - fy(y) * H);
+  const ox = (p.xReverse || p.xLog) ? 0 : X(Math.min(Math.max(0, p.xMin), p.xMax)), oy = p.yLog ? (yRev ? 0 : H) : Y(Math.min(Math.max(0, p.yMin), p.yMax));
+  // 가로축에서 그림 바깥쪽(보통은 아래, yReverse면 위)으로 d만큼 떨어진 글자 상자의 위 y / 그림 안쪽으로 d만큼
+  const outY = (d, h) => (yRev ? oy - d - h : oy + d), inY = (d, h) => (yRev ? oy + d : oy - h - d);
   const segs = [];   // 장애물 선분(mm)
   const arrowBoxes = []; // 화살촉 상자(mm)
   const shapes = [];
@@ -51,9 +55,9 @@ export function layoutGraph(p, { measure, labelHtml }) {
     arrowBoxes.push({ x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys), role });
   };
   // 축
-  const xEnd = W + 3.2, yEnd = -3.2;
+  const xEnd = W + 3.2, yEnd = yRev ? H + 3.2 : -3.2, yDir = yRev ? 1 : -1;
   line(Math.min(X(p.xMin), X(p.xMax), ox), oy, xEnd - 0.4, oy, STY.axis, null, 'axis-x'); arrow(xEnd, oy, 1, 0, 'axis-x');
-  line(ox, Y(p.yMin), ox, yEnd + 0.4, STY.axis, null, 'axis-y'); arrow(ox, yEnd, 0, -1, 'axis-y');
+  line(ox, Y(p.yMin), ox, yEnd - yDir * 0.4, STY.axis, null, 'axis-y'); arrow(ox, yEnd, 0, yDir, 'axis-y');
   parts.axes.push('x', 'y');
   // 곡선
   const curves = [];
@@ -92,7 +96,7 @@ export function layoutGraph(p, { measure, labelHtml }) {
     parts.guides++;
   }
   // 눈금선(안쪽으로 짧게)
-  for (const t of p.xTicks || []) line(X(t.value), oy, X(t.value), oy - STY.tick * 0.6, STY.axis, null, 'tick-x');
+  for (const t of p.xTicks || []) line(X(t.value), oy, X(t.value), oy + (yRev ? 1 : -1) * STY.tick * 0.6, STY.axis, null, 'tick-x');
   for (const t of p.yTicks || []) line(ox, Y(t.value), ox + STY.tick * 0.6, Y(t.value), STY.axis, null, 'tick-y');
 
   // ---- 글자 자리 정하기 ----
@@ -120,14 +124,31 @@ export function layoutGraph(p, { measure, labelHtml }) {
   // 축 이름: y는 화살표 끝 왼쪽 위, x는 화살표 끝 아래
   // (원본 ox - m.w - 0.8은 화살촉 반폭 0.575와 너무 가까워 끝 글자가 닿았다 → 화살촉에서 ARROW_PAD 넘게 띄움)
   const yGap = STY.arrowW / 2 + ARROW_PAD + 0.25;
-  if (p.labelY) add(p.labelY, 'axis', STY.mathMm, (m) => [[ox - m.w - yGap, yEnd - m.h * 0.35], [ox + yGap, yEnd - m.h * 0.35], [ox - m.w / 2, yEnd - m.h - 0.6], [ox - m.w - yGap, yEnd - m.h - 0.4]], 'axis', { axis: 'y' });
-  if (p.labelX) add(p.labelX, 'axis', STY.mathMm, (m) => [[xEnd - m.w, oy + 1.6], [xEnd + 0.8, oy - m.h / 2], [xEnd - m.w * 0.5, oy + 1.6], [xEnd - m.w, oy + 4.6], [xEnd - m.w, oy - m.h - 1.2]], 'axis', { axis: 'x' });
-  // 원점
-  if ((p.xMin === 0 && p.yMin === 0) || p.originLabel) add(p.originLabel || '0', 'value', STY.tickMathMm, (m) => [[ox - m.w - 0.5, oy + 0.6], [ox - m.w / 2, oy + 0.6]], 'tick', { key: true, axis: 'o' });
-  for (const t of p.xTicks || []) if (t.label) add(t.label, 'value', STY.tickMathMm, (m) => { const cx = X(t.value) - m.w / 2, y0 = oy + 0.85; return [[cx, y0], [cx + m.w * 0.25, y0], [cx - m.w * 0.25, y0], [cx, y0 + 0.5], [cx, oy - m.h - 0.9], [cx + m.w * 0.25, oy - m.h - 0.9], [cx - m.w * 0.25, oy - m.h - 0.9]]; }, 'tick', { key: t.key, axis: 'x' });
-  for (const t of p.yTicks || []) if (t.label) add(t.label, 'value', STY.tickMathMm, (m) => { const x0 = ox - m.w - 1.15, cy = Y(t.value) - m.h / 2; return [[x0, cy], [x0 - 0.6, cy], [x0, cy - m.h * 0.2], [x0, cy + m.h * 0.2], [x0 - 1.2, cy]]; }, 'tick', { key: t.key, axis: 'y' });
-  markPts.forEach((q) => { if (!q.name) return; add(q.name, /^[A-Za-z]+(_\w+)?$/.test(q.name) ? 'name' : 'value', STY.mathMm, (m) => [[q.x + 0.9, q.y - m.h - 0.5], [q.x - m.w - 0.9, q.y - m.h - 0.5], [q.x + 0.9, q.y + 0.5], [q.x - m.w - 0.9, q.y + 0.5], [q.x - m.w / 2, q.y - m.h - 1.0], [q.x - m.w / 2, q.y + 1.0], [q.x + 1.1, q.y - m.h / 2], [q.x - m.w - 1.1, q.y - m.h / 2]], 'mark'); });
-  for (const t of p.lineLabels || []) if (t.text && Number.isFinite(+t.x)) add(t.text, 'value', STY.tickMathMm * 0.9, (m) => { const x = X(+t.x), y = Y(+t.y); return [[x + 0.6, y - m.h - 0.4], [x + 0.6, y + 0.4], [x - m.w - 0.6, y - m.h - 0.4], [x - m.w - 0.6, y + 0.4]]; }, 'mark');
+  const yTip = (m, k) => (yRev ? yEnd - m.h * (1 - k) : yEnd - m.h * k); // 세로축 화살표 끝 곁(위쪽 화살표면 그대로, 아래쪽이면 위아래를 뒤집음)
+  const pastTip = (m, d) => (yRev ? yEnd + d : yEnd - m.h - d);        // 화살표 끝 너머
+  if (p.labelY) add(p.labelY, 'axis', STY.mathMm, (m) => [[ox - m.w - yGap, yTip(m, 0.35)], [ox + yGap, yTip(m, 0.35)], [ox - m.w / 2, pastTip(m, 0.6)], [ox - m.w - yGap, pastTip(m, 0.4)]], 'axis', { axis: 'y' });
+  if (p.labelX) add(p.labelX, 'axis', STY.mathMm, (m) => [[xEnd - m.w, outY(1.6, m.h)], [xEnd + 0.8, oy - m.h / 2], [xEnd - m.w * 0.5, outY(1.6, m.h)], [xEnd - m.w, outY(4.6, m.h)], [xEnd - m.w, inY(1.2, m.h)]], 'axis', { axis: 'x' });
+  // 원점 0(E8): 두 축이 실제로 x=0·y=0에서 만날 때(한쪽이 음수까지 내려가 축이 가운데 지나도) 원점에 0.
+  // 한 축만 0에서 시작하면(예: 시각 0~24시, 기압 950~1010) 그 축 눈금 자리에 0을 둔다(prepare가 0 눈금을 빼므로 여기서 채움).
+  // 눈금 글자가 값과 다른 숫자인 축(예: 세로 값은 지수 4인데 글자는 10^4)은 값 0이 글자 0이 아니므로 0을 더하지 않는다
+  const plainScale = (ticks) => (ticks || []).every((t) => { const n = Number(String(t.label).replace(/[−–]/g, '-').trim()); return !/^[-+]?[\d.]+/.test(String(t.label).replace(/[−–]/g, '-').trim()) || (Number.isFinite(n) && Math.abs(n - t.value) < 1e-9 * Math.max(1, Math.abs(t.value))); });
+  const xAtZero = !p.xLog && !p.xReverse && p.xMin <= 0 && p.xMax >= 0 && plainScale(p.xTicks);
+  const yAtZero = !p.yLog && p.yMin <= 0 && p.yMax >= 0 && plainScale(p.yTicks);
+  if (p.originLabel || (p.xMin === 0 && p.yMin === 0) || (xAtZero && yAtZero)) add(p.originLabel || '0', 'value', STY.tickMathMm, (m) => [[ox - m.w - 0.5, outY(0.6, m.h)], [ox - m.w / 2, outY(0.6, m.h)]], 'tick', { key: true, axis: 'o' });
+  for (const t of p.xTicks || []) if (t.label) add(t.label, 'value', STY.tickMathMm, (m) => { const cx = X(t.value) - m.w / 2, y0 = outY(0.85, m.h), y1 = inY(0.9, m.h); return [[cx, y0], [cx + m.w * 0.25, y0], [cx - m.w * 0.25, y0], [cx, outY(1.35, m.h)], [cx, y1], [cx + m.w * 0.25, y1], [cx - m.w * 0.25, y1]]; }, 'tick', { key: t.key, axis: 'x' });
+  for (const t of p.yTicks || []) if (t.label) add(t.label, 'value', STY.tickMathMm, (m) => { const x0 = ox - m.w - 1.15, cy = Y(t.value) - m.h / 2; return [[x0, cy], [x0 - 0.6, cy], [x0, cy - m.h * 0.2], [x0, cy + m.h * 0.2], [x0 - 1.2, cy],
+    // 가까운 핵심 눈금 둘(예: −70·−80)이 맞붙을 때 위아래로 반 칸 비켜 둠(E8)
+    [x0, cy - m.h * 0.5], [x0, cy + m.h * 0.5]]; }, 'tick', { key: t.key, axis: 'y' });
+  // 한 축만 0에서 시작할 때의 0(핵심 눈금이 아님): 다른 눈금을 다 놓은 뒤 남는 자리에, 막히면 뺀다
+  if (!(p.originLabel || (xAtZero && yAtZero))) {
+    if (xAtZero) add('0', 'value', STY.tickMathMm, (m) => [[ox - m.w / 2, outY(0.85, m.h)], [ox - m.w - 0.5, outY(0.6, m.h)]], 'tick', { key: false, axis: 'x' });
+    else if (yAtZero) add('0', 'value', STY.tickMathMm, (m) => [[ox - m.w - 1.15, oy - m.h / 2], [ox - m.w - 1.15, oy - m.h * 0.9]], 'tick', { key: false, axis: 'y' });
+  }
+  markPts.forEach((q) => { if (!q.name) return; add(q.name, /^[A-Za-z]+(_\w+)?$/.test(q.name) ? 'name' : 'value', STY.mathMm, (m) => [[q.x + 0.9, q.y - m.h - 0.5], [q.x - m.w - 0.9, q.y - m.h - 0.5], [q.x + 0.9, q.y + 0.5], [q.x - m.w - 0.9, q.y + 0.5], [q.x - m.w / 2, q.y - m.h - 1.0], [q.x - m.w / 2, q.y + 1.0], [q.x + 1.1, q.y - m.h / 2], [q.x - m.w - 1.1, q.y - m.h / 2],
+    // 가까운 자리가 모두 곡선·눈금에 막힐 때(E8 항체 그래프: 가로축 위 점 이름이 눈금 30과 겹침) 한 겹 더 바깥
+    [q.x + 2.2, q.y - m.h - 2.2], [q.x - m.w - 2.2, q.y - m.h - 2.2], [q.x - m.w / 2, q.y - m.h - 3.0], [q.x + 2.2, q.y + 2.2], [q.x - m.w - 2.2, q.y + 2.2], [q.x - m.w / 2, q.y + 3.0]], 'mark'); });
+  for (const t of p.lineLabels || []) if (t.text && Number.isFinite(+t.x)) add(t.text, 'value', STY.tickMathMm * 0.9, (m) => { const x = X(+t.x), y = Y(+t.y); return [[x + 0.6, y - m.h - 0.4], [x + 0.6, y + 0.4], [x - m.w - 0.6, y - m.h - 0.4], [x - m.w - 0.6, y + 0.4],
+    [x - m.w / 2, y - m.h - 1.6], [x - m.w / 2, y + 1.6], [x + 2.0, y - m.h / 2], [x - m.w - 2.0, y - m.h / 2]]; }, 'mark');
   // 곡선 이름: 자기 곡선을 따라 끝 쪽부터, 다른 곡선보다 자기 곡선에 가까운 자리
   curves.forEach((c, ci) => {
     if (!c.label) return;
@@ -172,7 +193,8 @@ export function layoutGraph(p, { measure, labelHtml }) {
     if (l.kind === 'curve') parts.curveNames.push(l.src);
   }
   // 판 크기(글자까지 다 들어가게)
-  const all = [...placed, { x: -0.5, y: yEnd - 0.5, w: xEnd + 1, h: H - yEnd + 1 }, { x: X(p.xMin), y: Y(p.yMin), w: 0, h: 0 }];
+  const axesBox = yRev ? { x: -0.5, y: -0.5, w: xEnd + 1, h: yEnd + 1 } : { x: -0.5, y: yEnd - 0.5, w: xEnd + 1, h: H - yEnd + 1 };
+  const all = [...placed, axesBox, { x: X(p.xMin), y: Y(p.yMin), w: 0, h: 0 }];
   const bx = Math.min(...all.map((b) => b.x)) - 1.2, by = Math.min(...all.map((b) => b.y)) - 1.2;
   const bw = Math.max(...all.map((b) => b.x + b.w * 1.08)) - bx + 2.5, bh = Math.max(...all.map((b) => b.y + b.h), Y(p.yMin)) - by + 1.2;
   return {

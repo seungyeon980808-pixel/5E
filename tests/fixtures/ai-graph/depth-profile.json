@@ -1,0 +1,147 @@
+{
+ "subject": "지구과학Ⅰ",
+ "source": "E8 실제 AI 설계(Sol 6.1, 11-19) — 수심 연직 분포(yReverse)",
+ "request": "중위도 해역의 깊이에 따른 수온 연직 분포. 세로축은 깊이(m)로 아래로 갈수록 깊어지고, 가로축은 수온(℃). 혼합층(0~100 m)은 20℃로 일정, 수온 약층(100~1000 m)에서 5℃까지 급격히 낮아지고, 1000 m보다 깊은 심해층은 거의 일정하다.",
+ "keyValues": "100, 1000, 20, 5",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 22,
+  "yMin": 0,
+  "yMax": 1600,
+  "labelX": "수온(℃)",
+  "labelY": "깊이(m)",
+  "xTicks": [
+   {
+    "value": 5,
+    "label": "5"
+   },
+   {
+    "value": 20,
+    "label": "20"
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 100,
+    "label": "100"
+   },
+   {
+    "value": 1000,
+    "label": "1000"
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      20,
+      0
+     ],
+     [
+      20,
+      100
+     ]
+    ],
+    "domain": [
+     20,
+     20
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": "100+900*(exp((20-x)/6)-1)/(exp(2.5)-1)",
+    "points": null,
+    "domain": [
+     5,
+     20
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": true,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": null,
+    "points": [
+     [
+      5,
+      1000
+     ],
+     [
+      5,
+      1500
+     ]
+    ],
+    "domain": [
+     5,
+     5
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": "100",
+    "points": null,
+    "domain": [
+     0,
+     21
+    ],
+    "dashed": true,
+    "thin": true,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   },
+   {
+    "expr": "1000",
+    "points": null,
+    "domain": [
+     0,
+     21
+    ],
+    "dashed": true,
+    "thin": true,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "xReverse": false,
+  "yReverse": true,
+  "xLog": false,
+  "yLog": false,
+  "marks": [],
+  "lineLabels": [
+   {
+    "text": "혼합층",
+    "x": 10,
+    "y": 50
+   },
+   {
+    "text": "수온 약층",
+    "x": 16,
+    "y": 550
+   },
+   {
+    "text": "심해층",
+    "x": 13,
+    "y": 1250
+   }
+  ],
+  "guides": [],
+  "notes": "깊이는 아래로 증가하며, 심해층은 1500 m까지 수온 5℃로 일정하다고 가정하였다."
+ }
+}

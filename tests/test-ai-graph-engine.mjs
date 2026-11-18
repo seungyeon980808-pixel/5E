@@ -181,6 +181,42 @@ test('layoutGraph(가짜 글자 재기): 축·눈금·곡선 이름이 다 놓�
   }
 });
 
+test('E8 그래프 품질: 빼기 부호 핵심 눈금·원점 0·세로축 뒤집기·점 이름 바깥 후보·숫자 값 단위', () => {
+  const measure = (html, mm) => { const t = html.replace(/<[^>]+>/g, '').replace(/\\[a-z]+/g, '').replace(/[{}_^]/g, ''); return { w: Math.max(1, t.length) * mm * 0.55, h: mm * 0.8, dx: 0, dy: 0 }; };
+  const labelHtml = (src) => `<span>${src}</span>`;
+  const base = { xMin: 0, xMax: 5.5, yMin: -90, yMax: 40, labelX: '시간(ms)', labelY: '막전위(mV)', series: [{ points: [[0, -70], [2, 30], [3, -80], [5, -70]], smooth: true, label: '' }], marks: [], guides: [] };
+  // ① 핵심 값 −70(fixTick이 U+2212로 바꿈)이 「-70」으로 적힌 핵심 값과 맞아 빼지 않음(전에는 눈금 뺌)
+  const p1 = prepare({ ...base, xTicks: [{ value: 2, label: '2' }], yTicks: [{ value: -70, label: '-70' }, { value: 30, label: '+30' }, { value: -80, label: '-80' }] }, '-70, +30, -80');
+  assert.deepEqual(p1.yTicks.map((t) => t.key), [true, true, true]);
+  const p1b = prepare({ ...base, xTicks: [{ value: 2, label: '2' }], yTicks: [{ value: 20, label: '2' }] }, '20, 40');
+  assert.equal(p1b.yTicks[0].key, false, '한 글자 눈금은 핵심 값 글자의 일부라고 핵심으로 보지 않음');
+  // ② 원점 0: 가로축이 가운데(y=0)를 지나도 원점에 0, 한 축만 0에서 시작하면 그 축 눈금 자리에 0
+  const zeros = (p) => layoutGraph(prepare(p, ''), { measure, labelHtml }).labels.filter((l) => l.src === '0').map((l) => l.axis);
+  assert.deepEqual(zeros({ ...base, xTicks: [], yTicks: [] }), ['o']);
+  assert.deepEqual(zeros({ ...base, yMin: 950, yMax: 1010, series: [{ expr: '1000-40*sin(pi*x/5.5)', label: '' }], xTicks: [], yTicks: [] }), ['x']);
+  assert.deepEqual(zeros({ ...base, xMin: 8, xMax: 1300, xLog: true, yMin: -1, yMax: 11, series: [{ points: [[10, 0], [1000, 10]], label: '' }], xTicks: [], yTicks: [] }), ['y']);
+  assert.deepEqual(zeros({ ...base, xMin: 2000, xMax: 9000, yMin: -4, yMax: 4.5, series: [{ points: [[3000, 3], [8000, -3]], label: '' }], xTicks: [], yTicks: [{ value: 4, label: '10^4' }, { value: -2, label: '10^{-2}' }] }), [], '지수로 적은 축(10^4)에는 0을 더하지 않음');
+  assert.deepEqual(zeros({ ...base, xMin: 33, xMax: 35, yMin: 2, yMax: 20, series: [{ points: [[33, 3], [35, 19]], label: '' }], xTicks: [], yTicks: [] }), [], '두 축 모두 0이 아니면 0 없음');
+  // ③ yReverse(수심): 세로축 화살표가 아래, 가로축은 위, 가로 눈금 글자는 축 위쪽, 깊이 값이 클수록 아래
+  const depth = prepare({ xMin: 0, xMax: 22, yMin: 0, yMax: 1600, yReverse: true, labelX: '수온(℃)', labelY: '깊이(m)', xTicks: [{ value: 5, label: '5' }, { value: 20, label: '20' }], yTicks: [{ value: 100, label: '100' }, { value: 1000, label: '1000' }],
+    series: [{ points: [[20, 0], [20, 100], [5, 1000], [5, 1500]], label: '' }], marks: [], guides: [] }, '100, 1000, 20, 5');
+  const lay = layoutGraph(depth, { measure, labelHtml });
+  const ay = lay.shapes.find((s) => s.type === 'arrow' && s.role === 'axis-y'), ax = lay.shapes.find((s) => s.type === 'arrow' && s.role === 'axis-x');
+  assert.ok(ay.tip[1] > 38, '세로축 화살표가 아래를 향함'); assert.ok(Math.abs(ax.tip[1]) < 1e-9, '가로축이 위(깊이 0)');
+  const at = (src) => lay.labels.find((l) => l.src === src).at;
+  assert.ok(at('1000').y > at('100').y, '깊은 값이 아래');
+  for (const t of ['5', '20']) assert.ok(at(t).y + at(t).h <= 0, `가로 눈금 ${t}는 축 위쪽`);
+  assert.ok(at('깊이(m)').y > 38, '세로축 이름은 아래 화살표 곁');
+  for (const b of lay.labels.map((l) => l.at)) for (const a of lay.arrowBoxes) assert.ok(!boxHit(b, a, 0), '글자가 화살촉에 닿음');
+  assert.deepEqual(labelOverlaps(lay.labels.map((l) => l.at)), []);
+  assert.ok(lay.bounds.y < -2 && lay.bounds.y + lay.bounds.h > 41, '판이 위 눈금·아래 화살표를 다 담음');
+  // ④ 가로축 위 점 이름은 가까운 자리가 막히면 바깥 후보로(눈금 30과 겹치지 않게)
+  const ab = prepare({ xMin: 0, xMax: 66, yMin: 0, yMax: 1.2, labelX: '시간(일)', labelY: '항체 농도', xTicks: [{ value: 30, label: '30' }, { value: 60, label: '60' }], yTicks: [],
+    series: [{ points: [[0, 0], [10, 0.02], [18, 0.2], [26, 0.03], [30, 0], [33, 0.02], [38, 1.0], [60, 0.75]], smooth: true, label: '' }], marks: [{ x: 30, y: 0, name: '항원 X 주사', style: 'filled' }], guides: [] }, '0, 30, 60');
+  const la = layoutGraph(ab, { measure, labelHtml });
+  assert.deepEqual(labelOverlaps(la.labels.map((l) => l.at)), [], '점 이름과 눈금이 겹치지 않음');
+});
+
 test('makeGraph: 설계 → 검사 → 정리 → 그리기, 계약 모양(plan·prepared·verified·verifyError)', async () => {
   const f = fixtures['enzyme-rate'];
   const ai = fakeAi([f.plan, { ok: true }]);

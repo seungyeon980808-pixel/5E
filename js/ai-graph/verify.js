@@ -38,10 +38,13 @@ export function prepare(p0, keyValues) {
   delete p.collisions;
   const clean = (s) => String(s ?? '').replace(/\\;/g, ' ');
   p.labelX = clean(p.labelX); p.labelY = clean(p.labelY);
-  const key = String(keyValues || p.keyText || '').replace(/\s/g, '');
+  // 핵심 값 맞추기: 빼기 부호(− U+2212, fixTick이 바꿈)·더하기 부호·아래첨자 밑줄 차이로 핵심 눈금(예: −70)을 놓치지 않게 같은 꼴로 비교(E8)
+  const keyForm = (s) => String(s).replace(/\\frac|[{}\\\s_]/g, '').replace(/[−–]/g, '-').replace(/^\+/, '');
+  const keys = String(keyValues || p.keyText || '').split(/[,，、;\n]/).map(keyForm).filter(Boolean);
+  const keyJoined = keys.join(',');
   for (const k of ['xTicks', 'yTicks']) {
     p[k] = (p[k] || []).filter((t) => Number.isFinite(+t.value) && Math.abs(+t.value) > 1e-9).map((t) => ({ ...t, value: +t.value, label: fixTick(t.label) }));
-    p[k].forEach((t) => { const bare = String(t.label).replace(/\\frac|[{}\\\s]/g, ''); t.key = !!bare && key.includes(bare); });
+    p[k].forEach((t) => { const bare = keyForm(t.label); t.key = !!bare && (keys.includes(bare) || (bare.length > 1 && keyJoined.includes(bare))); });
   }
   const room = (ax, mn, mx) => {
     const vs = (p[ax] || []).map((t) => t.value);
