@@ -960,6 +960,12 @@
       "findingIds": [
         "E180-AI-ENGINES-CONNECT"
       ]
+    },
+    {
+      "path": "tests/test-ai-engines-faults.mjs",
+      "findingIds": [
+        "E180-AI-ENGINES-NEVER-FAIL"
+      ]
     }
   ],
   "browser": [
@@ -2473,6 +2479,12 @@
       "path": "tests/test-ai-engines-connect-browser.cjs",
       "findingIds": [
         "E180-AI-ENGINES-CONNECT-BROWSER"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-faults-browser.cjs",
+      "findingIds": [
+        "E180-AI-ENGINES-NEVER-FAIL-BROWSER"
       ]
     }
   ],

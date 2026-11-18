@@ -38,12 +38,31 @@ export function figureFromQuestion(json, n, id = '') {
   return figs[n - 1]?.figure.data || null;
 }
 
-async function fetchFrom(src, item, n, id, { fetch: fetchImpl, signal }) {
-  const res = await fetchImpl(examQuestionJsonUrl(item, src), { credentials: 'omit', signal });
-  if (!res.ok) { const e = new Error(`그림 문항을 받지 못했습니다(${res.status}): ${item}`); e.status = res.status; throw e; }
-  const data = figureFromQuestion(await res.json(), n, id);
-  if (!data) throw new Error('그림이 없습니다: ' + id);
-  return data;
+// E9(11-19): Worker가 응답하지 않으면 그리기 전체가 하염없이 멈췄다(취소 말고는 끝낼 길이 없음). 한 문항 받기에 시간 제한을 둔다 —
+// 넘으면 그 그림만 건너뛰고(다음 후보 또는 참고 그림 없이) 그리기는 이어 간다. 사용자가 취소하면 그 취소는 그대로 AbortError.
+export const REFERENCE_FETCH_TIMEOUT_MS = 15000;
+function timeoutError(item) { const e = new Error(`그림 문항 응답이 늦어 건너뜁니다: ${item}`); e.code = 'REFERENCE_TIMEOUT'; return e; }
+
+async function fetchFrom(src, item, n, id, { fetch: fetchImpl, signal, timeoutMs = REFERENCE_FETCH_TIMEOUT_MS }) {
+  if (signal?.aborted) throw signal.reason?.name === 'AbortError' ? signal.reason : Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' });
+  const local = new AbortController();
+  let timedOut = false;
+  const onAbort = () => local.abort(signal.reason);
+  signal?.addEventListener('abort', onAbort, { once: true });
+  const timer = timeoutMs > 0 ? setTimeout(() => { timedOut = true; local.abort(); }, timeoutMs) : null;
+  try {
+    const res = await fetchImpl(examQuestionJsonUrl(item, src), { credentials: 'omit', signal: local.signal });
+    if (!res.ok) { const e = new Error(`그림 문항을 받지 못했습니다(${res.status}): ${item}`); e.status = res.status; throw e; }
+    const data = figureFromQuestion(await res.json(), n, id);
+    if (!data) throw new Error('그림이 없습니다: ' + id);
+    return data;
+  } catch (error) {
+    if (timedOut && !signal?.aborted) throw timeoutError(item);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', onAbort);
+  }
 }
 
 /**
@@ -51,7 +70,7 @@ async function fetchFrom(src, item, n, id, { fetch: fetchImpl, signal }) {
  * @param {string} id
  * @param {{ src?: 'kice'|'hak', fetch?: typeof fetch, signal?: AbortSignal, cache?: boolean }} [options]
  */
-export function fetchFigure(id, { src, fetch: fetchImpl = globalThis.fetch, signal, cache: useCache = true } = {}) {
+export function fetchFigure(id, { src, fetch: fetchImpl = globalThis.fetch, signal, cache: useCache = true, timeoutMs = REFERENCE_FETCH_TIMEOUT_MS } = {}) {
   let parsed;
   try { parsed = parseFigureId(id); } catch (error) { return Promise.reject(error); }
   const { item, n } = parsed;
@@ -60,8 +79,8 @@ export function fetchFigure(id, { src, fetch: fetchImpl = globalThis.fetch, sign
   const work = (async () => {
     let last;
     for (const s of order) {
-      try { return await fetchFrom(s, item, n, id, { fetch: fetchImpl, signal }); }
-      catch (error) { if (error?.name === 'AbortError') throw error; last = error; }
+      try { return await fetchFrom(s, item, n, id, { fetch: fetchImpl, signal, timeoutMs }); }
+      catch (error) { if (error?.name === 'AbortError') throw error; last = error; if (error?.code === 'REFERENCE_TIMEOUT') break; }
     }
     throw last;
   })();
@@ -80,18 +99,20 @@ export function clearFigureCache() { cache.clear(); }
  * 후보 id들에서 받을 수 있는 그림을 count장까지 모은다(받지 못한 것은 건너뜀 — 참고 그림이 모자라도 그리기는 이어 감).
  * @returns {Promise<{ ids: string[], images: string[], failed: { id: string, reason: string }[] }>}
  */
-export async function collectReferenceImages(ids, { count = 3, maxTries = 6, srcOf = () => undefined, fetch: fetchImpl, signal } = {}) {
+export async function collectReferenceImages(ids, { count = 3, maxTries = 6, srcOf = () => undefined, fetch: fetchImpl, signal, timeoutMs = REFERENCE_FETCH_TIMEOUT_MS } = {}) {
   const out = { ids: [], images: [], failed: [] };
   const queue = [...new Set(ids.filter(Boolean))].slice(0, Math.max(count, maxTries));
   let i = 0;
   while (out.ids.length < count && i < queue.length) {
     const batch = queue.slice(i, i + (count - out.ids.length)); i += batch.length;
-    const got = await Promise.allSettled(batch.map((id) => fetchFigure(id, { src: srcOf(id), fetch: fetchImpl, signal })));
+    const got = await Promise.allSettled(batch.map((id) => fetchFigure(id, { src: srcOf(id), fetch: fetchImpl, signal, timeoutMs })));
     got.forEach((r, k) => {
       if (r.status === 'fulfilled') { out.ids.push(batch[k]); out.images.push(r.value); }
-      else out.failed.push({ id: batch[k], reason: String(r.reason?.message || r.reason).slice(0, 200) });
+      else out.failed.push({ id: batch[k], reason: String(r.reason?.message || r.reason).slice(0, 200), timeout: r.reason?.code === 'REFERENCE_TIMEOUT' });
     });
     if (signal?.aborted) break;
+    // 응답이 늦은 Worker에 다음 후보를 또 물으면 그만큼 더 기다린다 — 시간 초과가 하나라도 나면 남은 후보는 묻지 않는다.
+    if (out.failed.some((f) => f.timeout)) break;
   }
   return out;
 }

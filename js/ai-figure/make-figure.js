@@ -52,7 +52,8 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
 
   const srcOf = (id) => ctx.index?.byId?.get(id)?.src;
   const order = [...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)];
-  const got = await collectReferenceImages(order, { count: 3, srcOf, fetch: ctx.fetch, signal: ctx.signal });
+  const got = await collectReferenceImages(order, { count: 3, srcOf, fetch: ctx.fetch, signal: ctx.signal, ...(ctx.referenceTimeoutMs ? { timeoutMs: ctx.referenceTimeoutMs } : {}) });
+  if (ctx.signal?.aborted) throw Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' });
   const refs = got.ids, refImages = got.images;
   log('참고 기출: ' + (refs.join(', ') || '없음'));
 
