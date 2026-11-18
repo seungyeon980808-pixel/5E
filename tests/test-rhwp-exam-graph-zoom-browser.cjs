@@ -3,8 +3,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {chromium, webkit} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const h = require('./helpers/rhwp-exam.cjs');
-// 11-06 결정 11-05e: 그래프 그림을 두 번 누르면 바로 그래프 창이 열린다. 창을 닫으면 그 자리 편집기(확대·라벨)가 남는다.
-async function graphWindowClosed(page){const overlay=page.locator('#graph-modal-overlay');await overlay.waitFor({state:'visible'});await page.locator('#gm-cancel').click();await overlay.waitFor({state:'hidden'});}
+// 11-06 결정 11-05e: 그래프 그림을 두 번 누르면 그 자리 편집기(확대·라벨)가 뜬다.
+// 11-19 E10 다시 씀: 18f26565(11-14)부터 그래프 창은 저절로 열리지 않고, 편집기의 「그래프 편집」 단추를 강조해 누르게 한다.
+async function graphWindowClosed(page){
+  const restore=page.locator('#exam-inline-editor [data-inline-action="restore"]');await restore.waitFor({state:'visible'});
+  assert.equal(await page.locator('#graph-modal-overlay').isVisible(),false,'graph window does not open by itself');
+  assert.equal(await restore.evaluate(b=>b.classList.contains('is-suggested')),true,'graph edit button is highlighted');
+  assert.equal((await page.locator('#exam-inline-editor [data-inline-restore-label]').textContent()).trim(),'그래프 편집');
+}
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/rhwp/verification/graph-zoom');
 
 async function view(page) {
@@ -41,33 +47,52 @@ async function scenario(origin, engine, surface) {
       const frame=node.getBoundingClientRect(),caption=node.querySelector('[data-axisname="y"]').getBoundingClientRect();
       return caption.left>=frame.left && caption.right<=frame.right;
     }),true,'long axis caption fits the maker preview');
-    assert.equal(await page.locator('#gm-send-exam').isVisible(),true,'graph maker exposes direct HWP action');
-    await page.evaluate(()=>{
-      window.examGraphEvents=[];
-      window.addEventListener('5e:exam-send-graph',event=>examGraphEvents.push(structuredClone(event.detail)));
-    });
-    await page.locator('#gm-expr').fill('sin(');await page.locator('#gm-send-exam').click();
+    // 11-19 E10 다시 씀: 86f9b7df(11-14 클립보드 흐름 결정)에서 그래프 편집기 「한글에 넣기」가 「클립보드에 넣기」로 바뀌었다.
+    // 이제 이 단추는 캔버스를 건드리지 않고 그래프 객체만 5E 클립보드에 넣고(⌘C와 같은 길), 한글에서는 클립보드 「커서 자리에 넣기」로 꺼낸다.
+    // 연결된(다시 열어 고칠 수 있는) 그래프 그림은 「캔버스에 넣기」 → 5E_hwp 「그림 화면에서 넣기」(5e:exam-send-canvas) 길로 만든다.
+    // 지움: 「그래프 편집기에서 바로 보내면 그래프 영역을 먼저 제안」(graphSendBounds) — 5e:exam-send-graph를 보내는 화면이 없어 닿지 않는다(받는 쪽 js/rhwp-exam-workspace.js만 남음).
+    const clipItems=()=>page.evaluate(async()=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return (await m.clipList()).map(i=>({id:i.id,kind:i.kind,source:i.source,objects:(i.objects||[]).map(o=>({type:o.type,expr:o.expr}))}));});
+    const send=page.locator('#gm-send-exam');
+    assert.equal(await send.isVisible(),true,'graph maker exposes the clipboard action');
+    assert.equal((await send.textContent()).trim(),'클립보드에 넣기');
+    assert.equal((await page.locator('#gm-confirm').textContent()).trim(),'캔버스에 넣기');
+    const clipBefore=(await clipItems()).length;
+    await page.locator('#gm-expr').fill('sin(');await send.click();
     assert.equal(await page.locator('#graph-modal-overlay').isVisible(),true,'invalid function stays editable');
     assert.ok((await page.locator('#gm-error').textContent()).trim());
-    assert.equal((await h.drawing(page,stateUrl)).objects.length,0,'invalid direct send commits no objects');
-    assert.equal(await page.evaluate(()=>examGraphEvents.length),0,'invalid formula emits no send event');
+    assert.equal((await h.drawing(page,stateUrl)).objects.length,0,'invalid send commits no objects');
+    assert.equal((await clipItems()).length,clipBefore,'invalid formula puts nothing on the clipboard');
     await page.locator('#gm-expr').fill('x');
     if(engine==='chromium' && !surface) await page.screenshot({path:path.join(evidence,'graph-send-button.png')});
-    await page.locator('#gm-send-exam').click();await page.locator('.capture-overlay').waitFor();
-    assert.equal(await page.locator('#capture-confirm').isVisible(),true,'graph bounds are proposed for confirmation');
+    await send.click();await page.locator('#graph-modal-overlay').waitFor({state:'hidden'});
+    assert.equal((await h.drawing(page,stateUrl)).objects.length,0,'clipboard send leaves the canvas untouched');
+    await h.waitForState(page,async n=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');return (await m.clipList()).length>n;},clipBefore);
+    const clipped=(await clipItems())[0];
+    assert.equal(clipped.kind,'graph','graph objects are filed as a graph clip');
+    assert.equal(clipped.objects.filter(o=>o.type==='coordplane').length,1,'clipboard holds the graph plane');
+    assert.deepEqual(clipped.objects.filter(o=>o.type==='funcgraph').map(o=>o.expr),['x'],'clipboard holds exactly the valid series');
+    // 연결된 그래프 그림: 같은 편집기에서 「캔버스에 넣기」 → 그림 화면에서 넣기 → 영역 고르기 → 자리 고르기
+    await require('./helpers/graph-entry.cjs').openGraphDirect(page);
+    await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
+    await page.locator('#gm-labelx').fill('시간(s)');await page.locator('#gm-labely').fill('속력(m/s)');
+    await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-add-series').click();await page.locator('#gm-expr').fill('x');
+    await page.locator('#gm-confirm').click();await page.locator('#graph-modal-overlay').waitFor({state:'hidden'});
     const created=await h.drawing(page,stateUrl),plane=created.objects.find(object=>object.type==='coordplane');
     assert.ok(plane);assert.equal(created.objects.filter(object=>object.type==='funcgraph').length,1);
-    assert.deepEqual(await page.evaluate(()=>examGraphEvents),[{pageId:created.activePageId,planeId:plane.id}],'one valid commit emits exactly one owned send event');
-    await page.locator('#capture-confirm').click();await h.place(page);
-    const first=(await h.pictures(page))[0];
-    assert.equal(first.figure.source.pages[0].objects.filter(object=>object.type==='funcgraph')[0].expr,'x');
-    const captionBounds=await page.evaluate(async ({stateUrl,id})=>{
-      const {state}=await import(stateUrl),canvas=document.querySelector('#canvas');
+    const captionBounds=await page.evaluate(async ({id})=>{
+      const canvas=document.querySelector('#canvas');
       const node=[...canvas.querySelectorAll('#scene [data-id]')].find(node=>node.dataset.id===id);
       const rect=node.getBoundingClientRect(),matrix=canvas.getScreenCTM().inverse();
       const a=new DOMPoint(rect.left,rect.top).matrixTransform(matrix),b=new DOMPoint(rect.right,rect.bottom).matrixTransform(matrix);
-      return {x:a.x,y:a.y,right:b.x,bottom:b.y};
-    },{stateUrl,id:plane.id});
+      return {x:a.x,y:a.y,right:b.x,bottom:b.y,screen:{left:rect.left,top:rect.top,right:rect.right,bottom:rect.bottom}};
+    },{id:plane.id});
+    await h.sendCanvas(page);await page.locator('.capture-overlay').waitFor();
+    // 축 이름까지 담기게 그래프(축 이름 포함) 둘레보다 조금 넓게 고른다.
+    {const s=captionBounds.screen;await page.mouse.move(s.left-12,s.top-12);await page.mouse.down();await page.mouse.move(s.right+12,s.bottom+12,{steps:6});await page.mouse.up();}
+    assert.equal(await page.locator('#capture-confirm').textContent(),'확인');
+    await page.locator('#capture-confirm').click();await h.place(page);
+    const first=(await h.pictures(page))[0];
+    assert.equal(first.figure.source.pages[0].objects.filter(object=>object.type==='funcgraph')[0].expr,'x');
     const crop=first.figure.render.bounds;
     assert.ok(crop.x<=captionBounds.x && crop.y<=captionBounds.y && crop.x+crop.w>=captionBounds.right && crop.y+crop.h>=captionBounds.bottom,'graph crop includes axis captions outside the coordinate frame');
     await h.seedSourceLabel(page);
@@ -86,8 +111,9 @@ async function scenario(origin, engine, surface) {
     // 11-06: 문서를 확대하지 않고 그림이 떠올라 따로 창에서 크게 보인다(어두운 막 뒤 문서는 그대로).
     const editing=await view(page);
     assert.ok(Math.abs(editing.zoom-before.zoom)<.001,'the document keeps its zoom while the picture floats');
-    const lifted=await page.evaluate(()=>document.querySelector('.exam-inline-picture').getBoundingClientRect().width);
-    assert.ok(lifted>before.geometry.w*1.3,'the floating picture is larger than its place on the page');
+    // 떠오르는 창은 커지는 움직임이 있어 다 커질 때까지 기다린다(11-19 E10: 바로 재면 움직이는 중간 폭이 잡혀 흔들렸다).
+    const lifted=await page.waitForFunction(min=>{const w=document.querySelector('.exam-inline-picture')?.getBoundingClientRect().width||0;return w>min&&w;},before.geometry.w*1.3,{timeout:10000}).then(v=>v.jsonValue(),async()=>page.evaluate(()=>document.querySelector('.exam-inline-picture').getBoundingClientRect().width));
+    assert.ok(lifted>before.geometry.w*1.3,`the floating picture is larger than its place on the page (${lifted} vs ${before.geometry.w})`);
     assert.deepEqual((await h.pictures(page))[0].props,zoomPicture.props,'zoom does not change stored picture properties');
     await page.locator('[data-inline-field="text"]').fill('가속 구간');await page.locator('[data-inline-field="text"]').press('Tab');
     await page.locator('[data-inline-field="size"]').fill('10');await page.locator('[data-inline-field="size"]').press('Tab');
@@ -107,21 +133,28 @@ async function scenario(origin, engine, surface) {
     await page.locator('[data-inline-action="close"]').click();await h.idle(page);
     assert.equal((await view(page)).zoom,1.25,'manual zoom is not undone on close');
     await page.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.setZoom(1));
-    // Edit and send the same graph through the same button: no second image.
+    // 같은 그래프를 고쳐 다시 넣기: 캔버스에서 고친 뒤 「그림 화면에서 넣기」 — 같은 탭에 연결된 그림 한 개가 갱신된다(두 번째 그림 없음).
     await h.action(page,'close');
     await page.evaluate(async ({graphUrl,id})=>(await import(graphUrl)).openGraphModal(id),{graphUrl,id:plane.id});
     await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-expr').fill('2*x');
-    await page.locator('#gm-send-exam').click();await page.locator('.capture-overlay').waitFor();
+    await page.locator('#gm-confirm').click();await page.locator('#graph-modal-overlay').waitFor({state:'hidden'});
+    await h.sendCanvas(page);await page.locator('.capture-overlay').waitFor();
+    assert.equal(await page.locator('#capture-confirm').isVisible(),true,'resend proposes the previous crop for confirmation');
     await page.locator('#capture-confirm').click();await page.locator('.exam-placement:not([hidden])').waitFor();await h.idle(page);
     await page.locator('[data-exam-action="confirm-placement"]').click();await h.idle(page);
     const revised=await h.pictures(page);assert.equal(revised.length,1);assert.deepEqual(revised[0].figure.link,first.figure.link);
     assert.deepEqual(revised[0].figure.render.bounds,first.figure.render.bounds,'resend begins with the previous crop');
     assert.equal(revised[0].figure.source.pages[0].objects.find(object=>object.type==='funcgraph').expr,'2*x');
     assert.equal(revised[0].figure.source.pages[0].objects.find(object=>object.type==='labeler').text,'가속 구간');
+    // 클립보드에 넣어 둔 그래프는 한글 커서 자리에 그림으로 들어간다(연결된 그림은 그대로).
+    await page.evaluate(async id=>{const m=await import('/js/drawer.js?v=1.7.0-four-session-integration');await window.fiveEClipHostHwp.insert(await m.clipGet(id));},clipped.id);await h.idle(page);
+    const withClip=await h.pictures(page);
+    assert.equal(withClip.length,2,'clipboard graph is inserted as one more picture');
+    assert.equal(withClip.filter(p=>p.figure?.link&&JSON.stringify(p.figure.link)===JSON.stringify(first.figure.link)).length,1,'linked graph picture is unchanged by the clipboard insert');
     const download=page.waitForEvent('download');await h.action(page,'save');
     await (await download).saveAs(path.join(evidence,`${engine}-${surface ? 'preview' : 'root'}.5e`));
     assert.deepEqual(errors,[],'no browser renderer errors');
-    console.log(`${engine}-${surface || 'root'}: real graph create/validate/send/resend, linked labels, document/context zoom and manual-view preference passed`);
+    console.log(`${engine}-${surface || 'root'}: real graph create/validate/clipboard/send/resend, linked labels, document/context zoom and manual-view preference passed`);
   } finally {await context.close();await browser.close();}
 }
 fs.mkdirSync(evidence,{recursive:true});
