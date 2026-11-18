@@ -68,6 +68,8 @@ function labelHtml1(src, role) {
   let s = String(src ?? '').replace(/\\;/g, ' ').replace(/−/g, '-').trim();
   let unit = '';
   if (role === 'axis') { const m = /\(([^()]*)\)\s*$/.exec(s); if (m) { unit = m[1]; s = s.slice(0, m.index).trim(); } }
+  // 숫자 값 뒤 괄호 단위(예: 등밀도선 값 1.025(g/cm³))도 단위는 바로 선 글자로(E8: 기울어져 그려졌음)
+  if (role === 'value') { const m = /^([-−+]?[\d.,]+)\s*\(([^()]*[A-Za-z][^()]*)\)\s*$/.exec(s); if (m) { unit = m[2]; s = m[1]; } }
   const parts = []; let cur = '', isKo = null;
   for (const ch of s) { const k = HANGUL.test(ch) || (ch === ' ' && isKo); if (isKo !== null && k !== isKo) { parts.push([isKo, cur]); cur = ''; } isKo = k; cur += ch; }
   if (cur) parts.push([isKo, cur]);
@@ -80,7 +82,7 @@ function labelHtml1(src, role) {
   };
   const koEm = STY.koMm / STY.mathMm;
   let html = parts.map(([ko, t]) => (ko ? `<span class="ko" style="font-size:${koEm}em">${esc(t).replace(/ /g, '&nbsp;')}</span>` : tex(t))).join('');
-  if (unit) html += HANGUL.test(unit) ? `<span class="ko" style="font-size:${koEm}em">(${esc(unit).replace(/ /g, '&nbsp;')})</span>` : texHtml(`(\\mathrm{${unit.replace(/%/g, '\\%')}})`);
+  if (unit) html += HANGUL.test(unit) ? `<span class="ko" style="font-size:${koEm}em">(${esc(unit).replace(/ /g, '&nbsp;')})</span>` : texHtml(`(\\mathrm{${unit.replace(/%/g, '\\%').replace(/²/g, '^2').replace(/³/g, '^3')}})`);
   return html;
 }
 

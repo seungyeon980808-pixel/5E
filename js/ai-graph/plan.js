@@ -60,7 +60,7 @@ export function planPrompt(request, keyValues, conventions = null) {
  "labelX":"가로축 이름(예: 시간, 반응 시간(s)) — 단위가 있으면 괄호로 붙이고 변수 기호는 넣지 않음","labelY":"세로축 이름(예: 위치, 농도(M))",
  "xTicks":[{"value":1,"label":"t_0"}],"yTicks":[{"value":4,"label":"4d"}],   // 아래첨자는 _ , 원점 0은 넣지 않음
  "series":[{"expr":"x에 대한 식(예: 4-0.5*(x-1)^2, 꺾은선은 points 사용)","points":null 또는 [[x,y],...],"domain":[시작,끝],"dashed":false,"thin":false,"smooth":false,"label":"A","labelAt":[x,y]}],   // thin=true는 등밀도선·등온선·기준선 같은 가는 보조선
- "xReverse":false,"xLog":false,"yLog":false,   // H-R도처럼 왼쪽이 큰 값이면 xReverse, 광도처럼 10배씩이면 yLog(값은 실제 값으로)
+ "xReverse":false,"yReverse":false,"xLog":false,"yLog":false,   // H-R도처럼 왼쪽이 큰 값이면 xReverse, 수심·지하 깊이처럼 아래로 갈수록 커지면 yReverse(가로축이 위로 감), 광도처럼 10배씩이면 yLog(값은 실제 값으로)
  "marks":[{"x":34,"y":4,"name":"A","style":"filled"}],   // 그래프 위의 점: filled(검은 점) | open(빈 원) | none(점 없이 이름만), name은 점 이름(없으면 "")
  "lineLabels":[{"text":"σ_t=26","x":35,"y":12}],   // 보조선 옆 작은 값 표시가 필요할 때만
  "guides":[{"x":1,"y":4}],   // 꼭짓점·교점 등에서 두 축으로 내리는 점선
