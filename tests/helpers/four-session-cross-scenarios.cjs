@@ -1322,6 +1322,9 @@ scenarios.QA4 = async ctx => {
     await ctx.check('normal native SVG excludes compare layers/colors/nonfinite output', () => { const source = bytes.toString().replace(/data:[^)"']+/g, 'data:'); assert.doesNotMatch(source, /data-trace-layer|#166bff|NaN|Infinity|undefined/); assert.match(source, /<svg/); });
     await checkpoint(ctx, page); await page.reload({ waitUntil: 'domcontentloaded' });
     { const overlay = page.locator('body > .modal-overlay'); await page.waitForTimeout(300); if (await overlay.count()) ctx.write('QA4-reload-overlay.json', await overlay.evaluateAll(n => n.map(e => e.textContent.slice(0, 300)))); }
+    // 11-19 FIXWB: 다시 읽기 전에 도면 자동 저장이 먼저 끝나면 「작업 복구」 창이 뜬다(타이밍에 따라 가끔, 크롬에서 관찰). 사용자처럼 「복구」를 누른다.
+    { const restore = page.locator('body > .modal-overlay').getByRole('button', { name: '복구', exact: true });
+      if (await restore.waitFor({ state: 'visible', timeout: 1500 }).then(() => true, () => false)) { await restore.click(); await restore.waitFor({ state: 'hidden' }); } }
     await page.locator('#ai-image-install-open').click();
     await ctx.check('recorded native graph revisions persist after actual reload', async () => assert.deepEqual((await tabs(page)).find(t => t.id === replayTaskId), changed)); ctx.cover('exact-noop-svg');
   });
@@ -2500,22 +2503,28 @@ const primaryQA3 = scenarios.QA3;
 scenarios.QA3 = async ctx => { await primaryQA3(ctx); await nativeTextMatrix(ctx); };
 
 async function graphGuards(ctx) {
-  for (const fault of ['wrong-source', 'malformed', 'unsupported-model', 'canceled-source-replacement']) await app(ctx, 'graph-guard-' + fault, async page => {
+  // 11-19 FIXWB: 「malformed 뒤 작업대가 생성 중에 머묾」(E10 QA4)은 제품 멈춤이 아니었다. 168dfc7d(11-12)부터 검증에 걸린 그래프 응답은
+  // 오류를 붙여 최대 두 번 더 고쳐 받는다(ai-panel.js runGraphRestore → reconstruction-workflow.js repairInvalid 2). 이 검사는 첫 응답만 흉내 내고
+  // 고쳐 받는 요청(두 번째 scene)에 답하지 않아, 작업대가 그 답을 기다리는 동안(한도 240초) 「생성 중」으로 보였다.
+  // 이제 고쳐 받는 요청에도 답한다: malformed = 세 번 모두 틀림 → 앞 결과 유지·오류 안내, malformed-repaired = 고쳐 받은 답이 맞음 → 새 결과로 끝남.
+  for (const fault of ['wrong-source', 'malformed', 'malformed-repaired', 'unsupported-model', 'canceled-source-replacement']) await app(ctx, 'graph-guard-' + fault, async page => {
     const label = await makeLabel(ctx, page), rich = await richUnion(ctx, page, label); await selectTask(ctx, page, 'cross-graph-task');
     // 11-19 E10: 시안 v6(506f30bf)에서 오른쪽 「코멘트/설정」 탭을 없앴다 — 대화 입력 칸이 늘 보이므로 탭을 누르지 않고 바로 쓴다.
     await page.locator(panel + ' [data-ai-chat-input]').waitFor({ state: 'visible' });
     await page.locator(panel + ' [data-ai-chat-input]').fill('Guard current native source ' + fault);
     const before = (await tabs(page)).find(t => t.id === 'cross-graph-task'), scene = await objects(page), start = await page.evaluate(() => __task2.sends.length);
     if (fault === 'unsupported-model') await page.evaluate(() => { fiveEDesktop.models = async () => ({ data: [{ model: 'gpt-6-luna', supportedReasoningEfforts: ['medium'] }] }); });
-    await arm(page, 'guard-idle', () => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false' && document.querySelector('#ai-image-panel [data-ai-status]').dataset.kind === 'error');
+    if (fault !== 'malformed-repaired') await arm(page, 'guard-idle', () => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false' && document.querySelector('#ai-image-panel [data-ai-status]').dataset.kind === 'error');
     if (fault !== 'unsupported-model') await arm(page, 'guard-request', n => __task2.sends.length > n, start);
+    let valid = null;
     await (await primarySend(page, panel)).click();
     if (fault !== 'unsupported-model') {
       await arrived(page, 'guard-request'); const request = await page.evaluate(n => __task2.sends[n].payload, start); assert.equal(request.purpose,'scene');
       const match = request.text.match(/바인딩을 정확히 복사하고[^\n]*: (\{[^\n]+\})/); assert.ok(match);
       const reply = clone(before.generated[0].graphResult.plan); reply.source = { ...JSON.parse(match[1]), plotBox: clone(reply.source.plotBox) };
       if (fault === 'wrong-source') reply.source.hash = 'sha256:' + 'f'.repeat(64);
-      if (fault === 'malformed') reply.axes.x.max = 'not-a-number';
+      valid = clone(reply);
+      if (fault === 'malformed' || fault === 'malformed-repaired') reply.axes.x.max = 'not-a-number';
       if (fault === 'canceled-source-replacement') {
         await transition(page, 'cancel-graph-guard', () => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false', null, () => page.locator(panel + ' [data-ai-interrupt]').click());
         const png = await page.evaluate(()=>__task2.modified);
@@ -2523,12 +2532,40 @@ async function graphGuards(ctx) {
           ()=>page.locator(panel+' [data-ai-replace-source-input]').setInputFiles({name:'controlled-source-replacement.png',mimeType:'image/png',buffer:pngBytes(png)}));
         const canceled = await workspace(page); await require('./label-source-browser.cjs').emit(page,start,'assistant',JSON.stringify(reply)); await checkpoint(ctx,page);
         await ctx.check('canceled graph response after actual source replacement has zero adoption or silent fallback',async()=>{ assert.deepEqual(await workspace(page),canceled); assert.deepEqual(await objects(page),scene); assert.equal(await page.evaluate(n=>__task2.sends.length-n,start),1); });
+      } else if (fault === 'malformed' || fault === 'malformed-repaired') {
+        if (fault === 'malformed-repaired') await arm(page, 'guard-repaired', () => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false' && document.querySelector('#ai-image-panel [data-ai-status]').dataset.kind !== 'error');
+        const replies = fault === 'malformed' ? [reply, reply, reply] : [reply, valid];
+        for (let k = 0; k < replies.length; k++) {
+          const last = k === replies.length - 1;
+          if (!last) await arm(page, 'guard-repair-' + k, n => __task2.sends.length > n, start + k + 1);
+          await require('./label-source-browser.cjs').emit(page, start + k, 'assistant', JSON.stringify(replies[k]));
+          if (!last) {
+            await arrived(page, 'guard-repair-' + k);
+            const repair = await page.evaluate(n => __task2.sends[n].payload, start + k + 1);
+            await ctx.check(`${fault}: invalid graph reply ${k + 1} is auto-repaired with validation errors, panel stays busy only while waiting`, async () => {
+              assert.equal(repair.purpose, 'scene'); assert.match(repair.text, /GRAPH_VALIDATION_ERRORS_JSON: \[[^\n]*axes\.x\.max/);
+              assert.equal(await page.locator(panel).getAttribute('data-ai-busy'), 'true');
+            });
+          }
+        }
+        await arrived(page, fault === 'malformed' ? 'guard-idle' : 'guard-repaired');
       } else { await require('./label-source-browser.cjs').emit(page,start,'assistant',JSON.stringify(reply)); await arrived(page,'guard-idle'); }
     } else await arrived(page,'guard-idle');
     const after=(await tabs(page)).find(t=>t.id===before.id);
+    if (fault === 'malformed-repaired') {
+      await ctx.check('malformed-repaired: repaired reply ends as a new selected graph result, prior result kept, never stuck busy', async () => {
+        assert.equal(await page.locator(panel).getAttribute('data-ai-busy'), 'false'); assert.equal(after.workState, 'completed');
+        assert.equal(after.generated.length, before.generated.length + 1); assert.deepEqual(after.generated.slice(0, before.generated.length), before.generated);
+        const created = after.generated.at(-1); assert.ok(created.graphResult); assert.equal(after.selectedCandidateId, created.id); assert.equal(created.graphResult.plan.axes.x.max, valid.axes.x.max);
+        assert.deepEqual(await page.evaluate(n => __task2.sends.slice(n).map(s => s.payload.purpose), start), ['scene', 'scene']); assert.deepEqual(await objects(page), scene);
+      });
+      await unionEqual(ctx,await tabs(page),[rich.find(t=>t.id==='cross-label-task')],`${fault}: unrelated actual label union`);
+      ctx.write('graph-guard-'+fault+'.json',{before,after,sourceOrigin:new URL(ctx.report.url).origin});
+      return;
+    }
     await ctx.check(`${fault}: selected original graph/native data/RAW/comments/review remain intact with exact request count`,async()=>{
       assert.deepEqual(after.generated,before.generated); assert.equal(after.selectedCandidateId,before.selectedCandidateId); assert.equal(after.input,before.input); assert.deepEqual(await objects(page),scene);
-      const sends=await page.evaluate(n=>__task2.sends.slice(n).map(s=>s.payload.purpose),start); assert.deepEqual(sends,fault==='unsupported-model'?[]:['scene']);
+      const sends=await page.evaluate(n=>__task2.sends.slice(n).map(s=>s.payload.purpose),start); assert.deepEqual(sends,fault==='unsupported-model'?[]:fault==='malformed'?['scene','scene','scene']:['scene']);
       if(fault!=='canceled-source-replacement'){ assert.equal(after.workState,'failed'); assert.equal(await page.locator(panel+' [data-ai-status]').getAttribute('data-kind'),'error'); assert.ok((await page.locator(panel+' [data-ai-status]').textContent()).length); }
     });
     await unionEqual(ctx,await tabs(page),[rich.find(t=>t.id==='cross-label-task')],`${fault}: unrelated actual label union`);
