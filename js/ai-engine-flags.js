@@ -4,9 +4,10 @@
 // |---|---|---|---|---|
 // | 그림 생성(js/ai-figure) | `5e.aiEngine.figure` | **켜짐**(11-19 사용자 결정: 이미지 생성은 새 엔진으로 대체) | '0'이면 끔(옛 생성 길) | `5e.aiFigureEngine`('0' 끔·'1' 켬), `globalThis.FIVE_E_AI_FIGURE_ENGINE`(true/false) |
 // | 그래프 「그림으로 생성」(js/ai-graph) | `5e.aiEngine.graphPicture` | **꺼짐**(기본은 지금의 그래프 객체 생성) | '1'이면 켬 | `5e.aiGraph.pictureEngine`('1'), `globalThis.__FIVE_E_AI_GRAPH_PICTURE__`(true) |
+// | 그림 생성의 그림 모델 | `5e.aiEngine.figureImageModel` | **luna**(gpt-6-luna, 원본 image_generator와 같음 — 11-19 사용자 결정) | 'sol'이면 gpt-6.1-sol로 그림 | 없음 |
 //
 // 새 열쇠가 있으면 새 열쇠가 이긴다. 저장소를 읽지 못하면(사생활 보호 창 등) 기본값.
-export const AI_ENGINE_FLAG_KEYS = Object.freeze({ figure: '5e.aiEngine.figure', graphPicture: '5e.aiEngine.graphPicture' });
+export const AI_ENGINE_FLAG_KEYS = Object.freeze({ figure: '5e.aiEngine.figure', graphPicture: '5e.aiEngine.graphPicture', figureImageModel: '5e.aiEngine.figureImageModel' });
 export const AI_ENGINE_LEGACY_KEYS = Object.freeze({ figure: '5e.aiFigureEngine', graphPicture: '5e.aiGraph.pictureEngine' });
 
 function read(storage, key) {
@@ -40,6 +41,13 @@ export function graphPictureFlag(scope = globalThis) {
   return read(storage, AI_ENGINE_LEGACY_KEYS.graphPicture) === '1';
 }
 
+/** 그림 생성 엔진이 그림을 그릴 모델 선택. 기본 'luna'(원본과 같음, Sol보다 한 장에 약 13초 빠름 — FIGGAP 11-19). 'sol'이면 Sol. */
+export const FIGURE_IMAGE_MODEL_CHOICES = Object.freeze({ luna: 'gpt-6-luna', sol: 'gpt-6.1-sol' });
+export function figureImageModelFlag(scope = globalThis) {
+  const v = read(storageOf(scope), AI_ENGINE_FLAG_KEYS.figureImageModel);
+  return v === 'sol' || v === FIGURE_IMAGE_MODEL_CHOICES.sol ? 'sol' : 'luna';
+}
+
 export function aiEngineFlags(scope = globalThis) {
-  return { figure: figureEngineFlag(scope), graphPicture: graphPictureFlag(scope) };
+  return { figure: figureEngineFlag(scope), graphPicture: graphPictureFlag(scope), figureImageModel: figureImageModelFlag(scope) };
 }
