@@ -54,17 +54,24 @@ h.withServer(async origin => {
       // 칸 고르기 → Delete
       await sheet.locator(`${tile} .pic`).click();
       await sheet.waitForSelector(`${tile}.is-target`);
+      // 11-19: 안내 줄은 곧 자동 저장의 「저장 중…」으로 바뀐다. 느린 컴퓨터에서는 읽기 전에 바뀌어 있었으므로,
+      // Delete 전부터 안내 줄에 나온 글을 모두 적어 두고 그 가운데에서 찾는다(안내가 실제로 나왔는지는 그대로 본다).
+      await sheet.evaluate(() => { const st = document.querySelector('#status'); window.__statusSeen = [st.textContent];
+        new MutationObserver(() => window.__statusSeen.push(st.textContent)).observe(st, { subtree: true, childList: true, characterData: true }); });
       await sheet.evaluate(() => document.activeElement?.blur?.());
       await page.keyboard.press('Delete');
       await sheet.waitForFunction(s => !document.querySelector(`${s} .pic img`), tile);
       assert.ok(await sheet.$(tile), `${name}: Delete 뒤에도 칸은 남는다`);
       assert.equal(await tiles(), count, `${name}: 칸 수 그대로`);
-      assert.match(await sheet.locator('#status').textContent(), /그림을 비웠습니다/, `${name}: 비웠다는 안내`);
+      assert.ok((await sheet.evaluate(() => window.__statusSeen)).some(t => /그림을 비웠습니다/.test(t)), `${name}: 비웠다는 안내`);
       // ⌘Z(윈도우 Ctrl+Z)로 그림이 돌아온다
       await page.keyboard.press(process.platform === 'darwin' ? 'Meta+z' : 'Control+z');
       await sheet.waitForSelector(`${tile} .pic img`);
-      // 휴지통 단추는 칸째 지운다
-      await sheet.locator(`${tile} [data-cvslot-act="remove"]`).evaluate(b => b.click());
+      // 휴지통 단추는 칸째 지운다.
+      // 11-19(CI 68줄): locator.evaluate는 단추를 찾은 뒤 따로 한 번 더 오가며 누른다. ⌘Z 뒤 카드가 한 번 더 다시 그려지면
+      // 그 사이 단추가 문서에서 떨어져 나가, 떨어진 단추를 누르니 아무 일도 없이 60초를 기다렸다(느린 Chromium에서 재현·확인).
+      // 찾기와 누르기를 한 번의 실행 안에서 해 지금 화면에 붙어 있는 단추를 누른다.
+      assert.ok(await sheet.evaluate(s => { const b = document.querySelector(`${s} [data-cvslot-act="remove"]`); if (!b) return false; b.click(); return true; }, tile), `${name}: 휴지통 단추가 화면에 있다`);
       await sheet.waitForFunction(s => !document.querySelector(s), tile);
       assert.equal(await tiles(), count - 1, `${name}: 휴지통 단추는 칸째 지운다`);
       assert.deepEqual(errors, [], `${name}: 페이지 오류 없음`);

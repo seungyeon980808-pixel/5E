@@ -70,11 +70,17 @@ async function fixture(t, engine) {
   assert.deepEqual(errors, []);
   return {page, errors, origin};
 }
+// 판을 바꾸면 후보 그림(512px PNG)을 새로 해독한다. 느린 CI WebKit에서는 해독이 기본 15초(setDefaultTimeout)를 넘겼다(11-19 CI 74줄).
+// 그림 요소의 해독 약속(img.decode())을 실제 준비 신호로 기다리고, 이 기다림에만 넉넉한 한도를 준다. 조건(고른 판·512px)은 그대로다.
+const IMAGE_READY_TIMEOUT = 60000;
 async function selected(page, id) {
   await page.waitForFunction(id => {
     const panel=document.querySelector('#ai-image-panel'), img=panel?.querySelector('.is-ai-active-candidate .ai-preview-stage > img');
-    return panel?.dataset.aiSelectedCandidateId===id && img?.complete && img.naturalWidth===512;
-  }, id);
+    if (panel?.dataset.aiSelectedCandidateId!==id || !img?.getAttribute('src')) return false;
+    if (img.complete && img.naturalWidth===512) return true;
+    // 아직 해독 중이면 그 약속이 끝날 때까지 기다렸다가 다시 잰다(실패하면 다음 확인에서 다시 본다).
+    return img.decode().then(() => img.isConnected && img.complete && img.naturalWidth===512, () => false);
+  }, id, {timeout:IMAGE_READY_TIMEOUT});
   await page.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 }
 async function selectVersion(page, id) {
