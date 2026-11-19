@@ -11,7 +11,7 @@ async function insideViewport(page) {
 h.withServer(async origin => {
   for (const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({headless:true});
-    try { for (const surface of ['', 'preview/']) {
+    try { for (const surface of ['']) { // 1.7.1(3dfbd711): /preview/ 사본 삭제 — 정식 루트만
       const context = await browser.newContext(), page = await context.newPage(), errors = [];
       page.on('pageerror',error=>errors.push(error.message));
       await page.addInitScript(()=>{
@@ -45,15 +45,11 @@ h.withServer(async origin => {
           },corner);
           await page.locator('#menu-viewport-opener').click({button:'right'});
           await insideViewport(page);
-          await page.locator(`${menu} [data-task-action="send"]`).click();
-          await insideViewport(page);
-          await page.keyboard.press('ArrowLeft');
+          // 11-11(552279a9): 하위 메뉴 없이 반대쪽 작업으로 바로 보낸다 — 이미지 작업대에서는 「그래프 복원으로 보내기」 하나.
+          assert.equal((await page.locator(`${menu} [data-task-action="send"]`).textContent()).trim(),'그래프 복원으로 보내기');
           assert.equal(await page.locator(`${menu} [data-task-submenu]`).isVisible(),false);
-          await insideViewport(page);
-          await page.keyboard.press('ArrowRight');
-          await insideViewport(page);
-          await page.keyboard.press('ArrowDown');
-          assert.equal(await page.evaluate(()=>document.activeElement.dataset.taskAction),'graph');
+          await page.keyboard.press('End'); await page.keyboard.press('ArrowUp');
+          assert.equal(await page.evaluate(()=>document.activeElement.dataset.taskAction),'send','keyboard reaches the direct send item');
           await page.keyboard.press('Enter');
           assert.equal(await page.locator(menu).count(),0);
           const action=await page.evaluate(()=>window.__menuActions.at(-1));
@@ -64,7 +60,7 @@ h.withServer(async origin => {
       await page.locator('#menu-viewport-opener').evaluate(button=>Object.assign(button.style,{top:'auto',bottom:'8px'}));
       await page.locator('#menu-viewport-opener').click({button:'right'});
       await page.locator(`${menu} [data-task-action="send"]`).click();
-      await page.locator(`${menu} [data-task-action="graph"]`).click();
+      assert.deepEqual(await page.evaluate(()=>window.__menuActions.at(-1)),['graph',{workspaceId:'viewport-owner',taskId:'task-viewport'}],'pointer send goes straight to the other workflow');
       await page.locator('#menu-viewport-opener').click({button:'right'});
       await page.keyboard.press('Escape');
       assert.equal(await page.locator('#menu-viewport-opener').evaluate(button=>button===document.activeElement),true);
@@ -73,7 +69,7 @@ h.withServer(async origin => {
       await page.locator(menu).waitFor({state:'hidden'});
       assert.equal(await page.locator(menu).count(),0,'resizing dismisses the transient menu');
       assert.deepEqual(errors,[]);
-      console.log(`${name}${surface?'-preview':''}: all viewport edges, submenu expand/collapse, pointer/keyboard send, owner and focus PASS`);
+      console.log(`${name}${surface?'-preview':''}: all viewport edges, direct send (no submenu), pointer/keyboard send, owner and focus PASS`);
       await context.close();
     }} finally {await browser.close();}
   }

@@ -58,7 +58,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('js/app.js', 'const stable = true;');
   write('js/release-receipt.js', 'const release = { sourceCommit: null };');
   write('assets/public.txt', 'public');
-  write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
+  write('apps/examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
   write('ourdocs/index.html', '<iframe title="OurDocs"></iframe>');
   write('404.html', '<title>Named route recovery</title>');
   write('memo/index.html', '<title>memo</title>');
@@ -124,8 +124,8 @@ test('production staging uses committed blobs and excludes ignored files while p
   commit();
   const routeSite = path.join(temporary, 'route-site');
   fs.cpSync(site, routeSite, { recursive: true });
-  write('examlibrary/index.html', '<iframe title="기출 탐색기" src="https://example.invalid/"></iframe>');
-  git(['add', 'examlibrary/index.html']);
+  write('apps/examlibrary/index.html', '<iframe title="기출 탐색기" src="https://example.invalid/"></iframe>');
+  git(['add', 'apps/examlibrary/index.html']);
   commit();
   const routeReceipt = appendRoute(routeSite, receipt, sourceRoot, receipt.sourceCommit);
   assert.equal(fs.readFileSync(path.join(routeSite, 'index.html'), 'utf8'), fs.readFileSync(path.join(site, 'index.html'), 'utf8'));
@@ -184,4 +184,40 @@ test('web publication requires successful validation and a separate manual main-
     'the source gate must validate the shipped root entry rather than inherit the preserved preview default');
   assert.match(steps[browser].env.FIVE_E_SITE_ROOT, /web-release\/site$/);
   assert.deepEqual(workflow.jobs.publish.steps.map(step => step.uses), ['actions/deploy-pages@v4']);
+});
+
+// 1.7.1: preview/를 지운 뒤 release-channels.json에 지킬 판·고정 커밋이 없어도 본체만 올린다.
+test('staging needs no preserved snapshot when no old routes are kept, and apps/ entries keep their public paths', t => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), '5e-web-no-preserve-'));
+  t.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
+  const sourceRoot = path.join(temporary, 'source');
+  fs.mkdirSync(sourceRoot);
+  const git = args => execFileSync('git', args, { cwd: sourceRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  const write = (file, content) => {
+    fs.mkdirSync(path.dirname(path.join(sourceRoot, file)), { recursive: true });
+    fs.writeFileSync(path.join(sourceRoot, file), content);
+  };
+  git(['init']);
+  write('index.html', '<title>5E 1.7.1</title><strong data-release-version>v1.7.1</strong>');
+  write('CNAME', 'www.5e.ai.kr\n');
+  write('js/release-receipt.js', 'const release = { sourceCommit: null };');
+  write('js/web-ai-bridge.js', 'bridge');
+  write('apps/examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
+  for (const file of require('../apps/print/assets.json')) write(file, 'print survey');
+  write('release-channels.json', JSON.stringify({ candidate: { version: '1.7.1' }, webPublication: {} }));
+  git(['add', '.']);
+  git(['-c', 'user.name=Publication test', '-c', 'user.email=publication@example.invalid', 'commit', '-m', 'fixture']);
+  const site = path.join(temporary, 'site');
+  const receipt = stage({ output: site, preservedRoot: null, sourceRoot });
+  assert.equal(receipt.preservedRoutesCommit, null);
+  assert.equal(fs.readFileSync(path.join(site, 'examlibrary/index.html'), 'utf8'), '<iframe title="기출 탐색기"></iframe>');
+  assert.equal(fs.readFileSync(path.join(site, 'print/index.html'), 'utf8'), 'print survey');
+  assert.equal(fs.readFileSync(path.join(site, 'js/web-ai-bridge.js'), 'utf8'), 'bridge');
+  assert.equal(fs.existsSync(path.join(site, 'apps')), false);
+  verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
+  // 지킬 판을 적었는데 고정 커밋이 없으면 예전처럼 거절한다.
+  write('release-channels.json', JSON.stringify({ candidate: { version: '1.7.1' }, webPublication: { preservePaths: ['preview'] } }));
+  git(['add', '.']);
+  git(['-c', 'user.name=Publication test', '-c', 'user.email=publication@example.invalid', 'commit', '-m', 'preserve']);
+  assert.throws(() => stage({ output: path.join(temporary, 'site-2'), preservedRoot: null, sourceRoot }), /snapshot is required|full SHA/);
 });

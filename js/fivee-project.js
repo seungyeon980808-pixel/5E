@@ -22,9 +22,28 @@ function validateWorkspaces(payload) {
 function documentValid(bytes) {
   if (!(bytes instanceof Uint8Array) || !isZip(bytes)) throw new Error('프로젝트의 한글 문서가 올바르지 않습니다.');
 }
-export function buildFiveEProject({kind='drawing', projectId=crypto.randomUUID(), name='', documentBytes, ...payload}) {
-  if (!['drawing','exam'].includes(kind) || !idPattern.test(projectId) || typeof name !== 'string' || name.length>200) throw new Error('프로젝트 정보가 올바르지 않습니다.');
+// 종류: drawing(5E_image 그림) · exam(5E_hwp 한글 시험지) · sheet(5E_exam 문항·시험지, 1.7.1).
+// sheet는 1.7.0의 .exampool(5e-question-sheet-v2) 묶음을 그대로 담는다. 그림은 assets/로 빠지고,
+// 학교 양식(bytes)은 forms/<i> 파일로 빠진다. 1.7.0은 sheet를 모르므로 「지원하지 않는 파일」로 거절한다(망가뜨리지 않음).
+export const FIVE_E_PROJECT_KINDS = Object.freeze(['drawing','exam','sheet']);
+const MAX_FORMS = 50;
+function splitForms(payload) {
+  if (payload.forms === undefined) return {payload, formFiles:[]};
+  if (!Array.isArray(payload.forms) || payload.forms.length > MAX_FORMS) throw new Error('학교 양식 정보가 올바르지 않습니다.');
+  const formFiles = [];
+  const forms = payload.forms.map((form, i) => {
+    if (!form || typeof form !== 'object' || !(form.bytes instanceof Uint8Array) || !form.bytes.length) throw new Error('학교 양식 파일이 올바르지 않습니다.');
+    const {bytes, ...meta} = form; if (Object.hasOwn(meta,'file')) throw new Error('예약된 프로젝트 필드입니다.');
+    formFiles.push({name:`forms/${i}`, data:bytes});
+    return {...meta, file:`forms/${i}`};
+  });
+  return {payload:{...payload, forms}, formFiles};
+}
+export function buildFiveEProject({kind='drawing', projectId=crypto.randomUUID(), name='', documentBytes, ...input}) {
+  if (!FIVE_E_PROJECT_KINDS.includes(kind) || !idPattern.test(projectId) || typeof name !== 'string' || name.length>200) throw new Error('프로젝트 정보가 올바르지 않습니다.');
   if (kind === 'exam') documentValid(documentBytes);
+  if (kind === 'sheet' && (!Array.isArray(input.questions) || typeof input.format !== 'string')) throw new Error('문항 프로젝트 원본이 올바르지 않습니다.');
+  const {payload, formFiles} = kind === 'sheet' ? splitForms(input) : {payload:input, formFiles:[]};
   validateWorkspaces(payload);
   const assets=[], seen=new Map();
   const visit = (value, depth=0) => {
@@ -47,6 +66,7 @@ export function buildFiveEProject({kind='drawing', projectId=crypto.randomUUID()
   const manifest={format:'5e-project',version:1,kind,projectId,name,assets:assets.map(({name,mediaType})=>({name,mediaType}))};
   const entries=[{name:'manifest.json',data:enc.encode(JSON.stringify(manifest))},{name:'project.json',data},...assets.map(({name,data})=>({name,data}))];
   if (kind==='exam') entries.push({name:'document.hwpx',data:documentBytes});
+  entries.push(...formFiles);
   const blob=zipStore(entries);
   if(blob.size>MAX_PROJECT_FILE_BYTES) throw new Error('프로젝트 파일은 최대 128 MiB까지 저장할 수 있습니다.');
   return blob;
@@ -60,7 +80,7 @@ export function parseFiveEProject(bytes, validateDrawing=value=>value) {
   if(!raw || raw.length>1024*1024) throw new Error('프로젝트 정보가 없습니다.');
   const m=JSON.parse(dec.decode(raw));
   if(m.format==='5e-exam') return null;
-  if(m.format!=='5e-project' || m.version!==1 || !['drawing','exam'].includes(m.kind) || !idPattern.test(m.projectId) || typeof m.name!=='string' || m.name.length>200 || !Array.isArray(m.assets) || m.assets.length>9997) throw new Error('지원하는 5E 프로젝트 파일이 아닙니다.');
+  if(m.format!=='5e-project' || m.version!==1 || !FIVE_E_PROJECT_KINDS.includes(m.kind) || !idPattern.test(m.projectId) || typeof m.name!=='string' || m.name.length>200 || !Array.isArray(m.assets) || m.assets.length>9997) throw new Error('지원하는 5E 프로젝트 파일이 아닙니다.');
   const urls=[], names=new Set(); let hydrationBytes=0;
   for(const [i,asset] of m.assets.entries()) {
     if(asset?.name!==`assets/${i}` || !/^image\/[a-z0-9.+-]+$/i.test(asset.mediaType) || names.has(asset.name) || !files.has(asset.name)) throw new Error('프로젝트 이미지가 없거나 올바르지 않습니다.');
@@ -88,5 +108,16 @@ export function parseFiveEProject(bytes, validateDrawing=value=>value) {
   if(m.kind==='drawing' && !payload.drawing) throw new Error('그림 프로젝트 원본이 없습니다.');
   const documentBytes=m.kind==='exam'?new Uint8Array(files.get('document.hwpx')||[]):undefined;
   if(m.kind==='exam') documentValid(documentBytes);
+  if(m.kind==='sheet') {
+    if(!Array.isArray(payload.questions) || typeof payload.format!=='string') throw new Error('문항 프로젝트 원본이 없습니다.');
+    if(payload.forms!==undefined) {
+      if(!Array.isArray(payload.forms) || payload.forms.length>MAX_FORMS) throw new Error('학교 양식 정보가 올바르지 않습니다.');
+      payload.forms=payload.forms.map((form,i)=>{
+        const bytes=form?.file===`forms/${i}`?files.get(form.file):null;
+        if(!bytes?.length) throw new Error('학교 양식 파일이 없거나 올바르지 않습니다.');
+        const {file,...meta}=form; return {...meta,bytes:new Uint8Array(bytes)};
+      });
+    }
+  }
   return {...payload,kind:m.kind,name:m.name,projectId:m.projectId,...(documentBytes?{documentBytes}:{})};
 }

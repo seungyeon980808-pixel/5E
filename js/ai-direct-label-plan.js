@@ -79,7 +79,7 @@ export function labelReadToEditablePlan(items) {
       position,
       anchor: leader ? { x: leader.x2, y: leader.y2 } : position,
       typography: { role, bounds: { x: item.x, y: item.y, w: item.w, h: item.h }, ...(scriptStyles?.length ? { scriptStyles } : {}) },
-      // 11-10: 라벨마다 자기 원본 글자 상자 높이로 글자 크기를 정한다(상자 높이 × 0.85 ≈ 글자 높이, 그림 높이 비율).
+      // 11-10: 라벨마다 자기 원본 글자 상자 높이로 글자 크기를 정한다(상자 높이 × LABEL_BOX_FONT_RATIO 1.05 ≈ 글자 크기, 그림 높이 비율. 11-11에 0.85에서 바꿈).
       // sizeFromBox: 넣을 때 1.8~8mm로 자른다(createEditableImageLabelObjects).
       measuredSize: labelBoxFontRatio(item),
       sizeFromBox: true,
@@ -91,7 +91,7 @@ export function labelReadToEditablePlan(items) {
 // 11-11 사용자 「라벨 글씨가 작다」: 읽은 글자 상자 높이는 글꼴 크기(em)보다 작다(한글 ≈ 0.95em, 영문 대문자 ≈ 0.7em) —
 // 0.85를 곱하면 원본보다 작게 나왔다. 1.05로 원본 글자 크기에 맞춘다(규칙: 원본 ±15%).
 export const LABEL_BOX_FONT_RATIO = 1.05;
-// 글자 상자 높이(그림 높이 비율, 여러 줄이면 한 줄 높이) × 0.85. 상자 높이가 없으면 null.
+// 글자 상자 높이(그림 높이 비율, 여러 줄이면 한 줄 높이) × LABEL_BOX_FONT_RATIO(1.05). 상자 높이가 없으면 null.
 export function labelBoxFontRatio(item) {
   const h = Number(item?.h ?? item?.typography?.bounds?.h);
   if (!(h > 0)) return null;

@@ -18,9 +18,13 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.waitForSelector('.side [data-pool="drafting"]');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
   await sheet.setInputFiles('#excel-file',{name:'many.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'5e-question-sheet-v2',questions,documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.check('input[name="import-mode"][value="update"]');await sheet.click('#apply-import');// 같은 ID로 들여온다
-  const target=questions[3];// 완성 문항 하나를 고른다(고치면 검토 중으로 돌아가는 계산도 함께 지난다)
-  await sheet.locator('[data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask + .eq-ce');
-  await sheet.evaluate(id=>document.querySelector(`#card-view .cv-qtab[data-cv-open="${id}"]`).click(),target.id);await sheet.waitForFunction(v=>document.querySelector('#cv-ask')?.value===v,target.ask);await sheet.waitForFunction(()=>document.querySelector('#native-editor')?.dataset.ready==='true',null,{timeout:90000});await sheet.waitForTimeout(1000);
+  // 완성 문항 하나를 고른다(고치면 검토 중으로 돌아가는 계산도 함께 지난다). 11-15: 카드 위 번호 탭은 없어져, 목록에 보이는 완성 문항(i%3===0)의 카드를 바로 연다.
+  const completeIds=questions.filter(q=>q.workflow==='complete').map(q=>q.id);
+  await sheet.evaluate(()=>{if(document.querySelector('.shell-body.nav-off'))document.querySelector('#toggle-nav')?.click();});await sheet.evaluate(()=>document.querySelector('.side [data-pool="done"]')?.click()); // 완성 문항은 「완료」 목록에 있다
+  await sheet.waitForFunction(ids=>[...document.querySelectorAll('[data-open-card]')].some(el=>ids.includes(el.dataset.openCard)&&el.getClientRects().length),completeIds);
+  const openedId=await sheet.evaluate(ids=>{const n=[...document.querySelectorAll('[data-open-card]')].find(el=>ids.includes(el.dataset.openCard)&&el.getClientRects().length);if(!n)return null;const id=n.dataset.openCard;n.click();return id;},completeIds);
+  assert.ok(openedId,'a complete question card is listed');const target=questions.find(q=>q.id===openedId);
+  await sheet.waitForSelector('#card-view:not([hidden]) #cv-ask + .eq-ce');await sheet.waitForFunction(v=>document.querySelector('#cv-ask')?.value===v,target.ask);await sheet.waitForFunction(()=>document.querySelector('#native-editor')?.dataset.ready==='true',null,{timeout:90000});await sheet.waitForTimeout(1000);
   await sheet.evaluate(()=>{window.__lat=[];document.addEventListener('beforeinput',e=>{const t0=e.timeStamp;requestAnimationFrame(()=>requestAnimationFrame(()=>window.__lat.push(performance.now()-t0)));},true);});
   const typed=' 이어서 입력하는 문장입니다 가나다라마바사';
   await sheet.click('#cv-ask + .eq-ce');await page.keyboard.press('End');await page.keyboard.type(typed,{delay:30});await sheet.waitForTimeout(1500);
@@ -39,7 +43,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   if(name==='chromium'){const cdp=await page.context().newCDPSession(page);const heap=async()=>{await cdp.send('HeapProfiler.collectGarbage');await cdp.send('HeapProfiler.collectGarbage');return (await cdp.send('Runtime.getHeapUsage')).usedSize/1048576;};
     // 출제의도는 아래 「문항 정보」 단추를 눌러야 보인다(10-27 카드 정리).
     if(!await sheet.locator('#cv-intent').isVisible())await sheet.click('#card-view [data-cvmore="intent"]');
-    const before=await heap();for(let i=0;i<12;i++){await sheet.click(['#cv-ask','#cv-intent','#cv-passage'][i%3]);await page.keyboard.type('가',{delay:10});}await sheet.waitForTimeout(800);
+    const before=await heap();for(let i=0;i<12;i++){{const sel=['#cv-ask','#cv-intent','#cv-passage'][i%3];if(await sheet.locator(sel).isVisible())await sheet.click(sel);else await sheet.click(sel+' + .eq-ce');/* 수식 칸은 글자 칸을 숨기고 옆 .eq-ce로 입력 */}await page.keyboard.type('가',{delay:10});}await sheet.waitForTimeout(800);
     const grown=(await heap())-before;console.log(`${name}: heap after 12 field edits +${grown.toFixed(1)}MB`);assert.ok(grown<60,`undo history keeps heap growth small (${grown.toFixed(1)}MB)`);}
   assert.deepEqual(errors,[]);
  });

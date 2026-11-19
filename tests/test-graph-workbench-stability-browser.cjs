@@ -93,8 +93,8 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
         await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
         const sourceTaskId=await page.locator(ui+'.ai-task-tab').first().getAttribute('data-tab-id');
-        await menu.getByRole('menuitem',{name:'이미지/그래프 변환으로 보내기',exact:true}).click();
-        await menu.getByRole('menuitem',{name:kind==='image'?'이미지 변환으로 보내기':'그래프 복원으로 보내기',exact:true}).click();
+        // 552279a9: 하위 메뉴가 없어지고, 그래프 작업대에서는 「이미지 변환으로 보내기」(반대쪽) 단추 하나와 「현 작업대에 추가」(같은 쪽 복사)가 된다.
+        await menu.getByRole('menuitem',{name:kind==='image'?'이미지 변환으로 보내기':'현 작업대에 추가',exact:true}).click();
         await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();
         await page.waitForGraphSignal(({kind,sourceTaskId})=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===(kind==='image'?1:2)
           && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId!==sourceTaskId,{kind,sourceTaskId});
@@ -142,9 +142,9 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.waitForGraphSignal(() => document.querySelector('.modal-overlay[data-ai-workflow="graph"]')?.dataset.aiBusy==='false');
       await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();await complete(page, 1);
-      assert.equal(await page.locator(ui+'[data-ai-comments-apply]').isVisible(),false,'graph restore uses one action');
+      assert.equal(await page.locator(ui+'[data-ai-comments-apply]:not([data-ai-send])').isVisible(),false,'graph restore uses one action');
       assert.deepEqual(await page.locator(ui+'.ai-output-actions > button').allTextContents(),
-        ['PNG 저장','이미지 복사','편집기로 가져오기','한글로 보내기'],'The approved four output actions are retained for graph results (11-07 G9: 캔버스에 삽입 → 편집기로 가져오기)');
+        ['PNG 저장','이미지 복사','편집기로 가져오기','캔버스에 넣기','한글로 보내기'],'The approved output actions are retained for graph results (11-07 G9: 캔버스에 삽입 → 편집기로 가져오기; 11-11 552279a9: 「캔버스에 넣기」 추가)');
       assert.equal(await page.locator(ui+'[data-ai-save-selected]').isVisible(),true,'The common graph output action saves a PNG');
       const beforePng = await tabs(page), requestsBeforePng = await page.evaluate(() => __stability.requests.length);
       fs.writeFileSync(path.join(output,name+'-png-action.json'), JSON.stringify({
@@ -256,8 +256,8 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         const data = (await new IndexedDBOutputCacheBackend({ databaseName: '5e-ai-image-tasks', storeName: 'tasks' }).get('workspace'))?.tabs.find(t => t.id === ownerId)?.generated?.find(c => c.id === candidateId)?.data;
         if(!data?.startsWith('data:image/svg+xml;base64,'))return false;
         const svg=new DOMParser().parseFromString(new TextDecoder().decode(Uint8Array.from(atob(data.split(',')[1]), c => c.charCodeAt(0))),'image/svg+xml');
-        // Typography splits Korean words and spaces across native text nodes.
-        return !svg.querySelector('parsererror')&&[...svg.querySelectorAll('text')].map(node=>node.textContent).join('').includes('보존된 편집');
+        // Typography splits Korean words across native text nodes; 1.7.1(2e9b611d) 띄어쓰기는 글자 노드가 아니라 가로 간격으로 그린다.
+        return !svg.querySelector('parsererror')&&[...svg.querySelectorAll('text')].map(node=>node.textContent).join('').replace(/\s+/g,'').includes('보존된편집');
       }, {ownerId: oldTask, candidateId: editedId}, undefined, async () => { await page.evaluate(() => window.__fontGate.release()); });
       } catch (error) {
         const saved = await tabs(page), candidate = saved.find(t => t.id === oldTask)?.generated?.find(c => c.id === editedId);
@@ -289,14 +289,17 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.locator(ui + `[data-tab-id="${oldTask}"] .ai-task-tab-select`).click(); await complete(page, 2);
       const graphTaskCount=await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count();
       await page.locator(ui+'.ai-task-tab.is-on .ai-task-tab-select').click({button:'right'});
-      await menu.getByRole('menuitem',{name:'이미지/그래프 변환으로 보내기',exact:true}).click();
+      // 11-11(552279a9): 하위 메뉴 없이 반대쪽 작업으로 바로 보낸다 — 그래프 작업에서는 「이미지 변환으로 보내기」 하나.
       await menu.getByRole('menuitem',{name:'이미지 변환으로 보내기',exact:true}).click();
       await page.locator('#ai-image-panel[data-ai-workflow="image"]').waitFor();
-      await page.waitForGraphSignal(()=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===1);
+      // 11-11 작업대 나눔 뒤 이미지 작업대에는 앞 단계에서 생긴 이미지 작업이 남아 있을 수 있다 — 보낸 것이 새로 켜진 작업인지와 개수로 본다.
+      await page.waitForGraphSignal(()=>document.querySelector('#ai-image-panel .ai-task-tab.is-on:not(.ai-task-add)'));
+      const imageTaskCount=await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count();
+      assert.ok(imageTaskCount>=1,'the sent task opens in the image workbench');
       await page.locator(ui+'[data-ai-tab-select-all]').click();
-      assert.equal(await page.locator(ui+'.ai-task-tab.is-batch-selected').count(),1,'select all is scoped to image tasks');
+      assert.equal(await page.locator(ui+'.ai-task-tab.is-batch-selected').count(),imageTaskCount,'select all is scoped to image tasks');
       await page.locator(ui+'[data-ai-tab-clear]').click();
-      await page.getByRole('dialog',{name:'선택 작업 삭제',exact:true}).getByRole('button',{name:'1개 삭제',exact:true}).click();
+      await page.getByRole('dialog',{name:'선택 작업 삭제',exact:true}).getByRole('button',{name:`${imageTaskCount}개 삭제`,exact:true}).click();
       await page.waitForGraphSignal(()=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===0);
       await openAiWorkflow(page,'graph');
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();

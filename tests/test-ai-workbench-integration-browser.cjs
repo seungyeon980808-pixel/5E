@@ -287,7 +287,7 @@ async function currentPrimaryAction(page) {
   assert.ok(['preparation', 'result'].includes(stage), 'Submission begins only in a real idle workbench stage: ' + stage);
   // 2026-10-16(83201a54)부터 이미지 작업은 준비 단계에서도 아래 '변환하기' 하나만 보인다. 그래프 작업만 준비 칸의 버튼을 쓴다.
   const graph = await panel.getAttribute('data-ai-workflow') === 'graph';
-  const selector = stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]';
+  const selector = '[data-ai-send]';
   const button = page.locator('#ai-image-panel[data-ai-stage="' + stage + '"] ' + selector);
   assert.equal(await button.count(), 1, 'Exactly one canonical primary action bound to ' + stage);
   assert.equal(await button.isVisible(), true, 'The actual current primary action must be physically visible');
@@ -297,7 +297,7 @@ async function currentPrimaryAction(page) {
 }
 
 const active = '#ai-image-panel';
-async function chooseModel(page, choice) { await page.locator(`${active} [data-ai-setting-key="model"] [data-ai-model-choice="${choice}"]`).click(); }
+async function chooseModel(page, choice) { await page.locator(`${active} [data-ai-setting-key="model"] [data-ai-model-choice="${choice}"]`).dispatchEvent("click"); }
 async function setting(page, key, value) {
   const contract = await page.evaluate(async ({ key, value }) => {
     const panel = document.querySelector('#ai-image-panel');
@@ -359,8 +359,8 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(await settingsPage.locator(`${active} [data-ai-comment-marker]`).count(),1,'Actual physical point creation stays available on the input source');
     await setting(settingsPage,'background','preserve');await setting(settingsPage,'objects','auto');
     assert.equal(await settingsPage.locator(`${active} [data-ai-background-policy]`).inputValue(),'connected');
-    assert.equal(await settingsPage.locator(`${active} [data-ai-background-policy]`).isDisabled(),true);
-    assert.match(await settingsPage.locator(`${active} [data-ai-background-policy]`).getAttribute('title'),/한 장으로 전환/);
+    // 11-11(test-ai-settings-panel-browser 같은 줄): 객체 분리를 켜면 숨은 정책 select가 아니라 「배경 제거 끄기」 단추가 잠긴다.
+    assert.equal(await settingsPage.locator(`${active} [data-ai-setting-key="background"] [data-ai-setting-value="preserve"]`).first().isDisabled(),true);
     await task(settingsPage,1);
     assert.equal(await settingsPage.locator(`${active} [data-ai-model]`).inputValue(),'gpt-6.1-sol');
     assert.equal(await settingsPage.locator(`${active} [data-ai-speed]`).inputValue(),'priority');
@@ -392,7 +392,7 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(await page.locator(`${active} .ai-generated-card .ai-image-card-head > strong`).first().evaluate(node => getComputedStyle(node).display), 'none');
     // 24219c8a(10-12): 생성 PNG에서도 점 도구 단추는 더 이상 숨기지 않는다(button.hidden=false). 영역 전용 보장은 아래 변환 단추 비활성(점만으로는 전체 재생성 불가)이 맡는다.
     assert.equal(await page.locator(`${active} [data-ai-comment-tool="point"]`).isVisible(),true,'Generated PNG shows the point tool; area-only is enforced by the apply button');
-    assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).isDisabled(),true,'A historical point cannot authorize whole-PNG regeneration');
+    assert.equal(await page.locator(`${active} [data-ai-comments-apply]:not([data-ai-send])`).isDisabled(),true,'A historical point cannot authorize whole-PNG regeneration');
     // 83201a54(10-16): 코멘트 표시는 기본 '숨김'(markersVisible=false)이다. 처음엔 마커가 있으나 숨겨져 있고, 단추로 켜면 보인다.
     await page.locator(`${active} [data-ai-comment-marker]`).first().waitFor({state:'attached'});
     const commentRows = await page.locator(`${active} [data-ai-comment-row]`).count();
@@ -436,8 +436,7 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(await page.locator(`${active} select[data-ai-generation-mode]`).inputValue(),'separated');
     await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-editable-groups]')?.dataset.aiSeparationState==='ready');
     assert.equal(await page.locator(`${active} [data-ai-background-policy]`).inputValue(),'connected');
-    assert.equal(await page.locator(`${active} [data-ai-background-policy]`).isDisabled(),true);
-    assert.match(await page.locator(`${active} [data-ai-background-policy]`).getAttribute('title'),/한 장으로 전환/);
+    assert.equal(await page.locator(`${active} [data-ai-setting-key="background"] [data-ai-setting-value="preserve"]`).first().isDisabled(),true); // 11-11: 숨은 정책 select가 아니라 끄기 단추가 잠긴다
     assert.equal(await page.evaluate(()=>window.__task2.generationSends.length),0);assert.equal(await page.evaluate(()=>window.__task2.sends.length),0, 'Blocked input must send neither generation nor observation');
     await openOutputMore(page);
     await page.click(`${active} [data-ai-editable-groups]`);
@@ -492,7 +491,7 @@ for (const engine of ['chromium','webkit']) {
     const {page,errors,baseline}=await requestBrowserFixture(context,3,evidence,{sourceOnly:true});
     await chooseModel(page,'luna');
     await page.evaluate(()=>window.__task2.delayStatus());
-    await page.click(`${active} [data-ai-comments-apply]`);
+    await page.click(`${active} [data-ai-send]`);
     await task(page,1);
     await page.evaluate(()=>window.__task2.releaseStatus());
     await page.waitForFunction(()=>window.__task2.generationSends.length===1);
@@ -507,11 +506,11 @@ for (const engine of ['chromium','webkit']) {
     await task(page,0);
     const completed=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs).find(t=>t.id==='task-0'));
     assert.equal(completed.generated.length,baseline.find(t=>t.id==='task-0').generated.length+1);
-    assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).isDisabled(),true,'No-area generated PNG cannot become a whole revision request');
+    assert.equal(await page.locator(`${active} [data-ai-comments-apply]:not([data-ai-send])`).isDisabled(),true,'No-area generated PNG cannot become a whole revision request');
     const callsBeforeInvalid=await page.evaluate(()=>window.__task2.sends.length);
     await task(page,1);await chooseModel(page,'sol');await chooseModel(page,'luna');
     const freshRequest='원본 아래쪽 빈 공간에 작은 사각형 하나를 추가해 주세요.';
-    const freshInput=page.locator(`${active} [data-ai-input]`);
+    const freshInput=page.locator(`${active} [data-ai-chat-input]`);
     assert.equal(await freshInput.isVisible(),true,'Distinct first-conversion request uses its real visible input');
     await freshInput.fill(freshRequest);
     assert.equal(await freshInput.inputValue(),freshRequest);
@@ -707,7 +706,7 @@ for (const engine of ['chromium', 'webkit']) {
       fs.mkdirSync(evidence, { recursive: true });
       // Given a genuinely completed fixture request with retained original/history.
       const { page, errors } = await requestBrowserFixture(context, 2, evidence, { initialGeneration: true });
-      await page.click(`${active} [data-ai-comments-apply]`);
+      await page.click(`${active} [data-ai-send]`);
       await page.waitForFunction(() => window.__task2.generationSends.length === 1);
       await page.evaluate(() => { window.__task2.emitGeneration(0, 'image'); window.__task2.emitGeneration(0, 'done'); });
       await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');

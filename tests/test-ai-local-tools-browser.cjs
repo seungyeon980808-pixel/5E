@@ -164,6 +164,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   await page.waitForFunction(()=>window.__compositeCalls===1);
   const labeled=await geometry(page);
   const advanced=page.locator(`${active} [data-ai-scoped-advanced]`), precision=page.locator(`${active} [data-ai-precision-settings]`);
+  // js/ai-panel.js:683: 고급 · 실험 칸은 제품에서 늘 hidden — 후보 방식을 검사하므로 검사에서만 연다.
+  await advanced.evaluate(node => { node.hidden = false; for (let n = node; n && n.id !== 'ai-image-panel'; n = n.parentElement) { if (getComputedStyle(n).display === 'none') n.style.setProperty('display', 'block', 'important'); } });
   await showComments(page);
   await page.locator(`${active} .is-ai-active-candidate button[data-ai-comment-marker]`).first().hover();
   await precision.waitFor({state:'visible'});
@@ -202,8 +204,9 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   assert.equal(after[0].generated[0].comments.length,comments,'erasure cannot create a comment box');
   assert.equal(result.scopedEditHistory.at(-1).operation,'local-rect-erase');assert.equal(result.reviewState,'scoped-applied');
   assert.notEqual(result.data,before[0].generated[0].data);
-  assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).textContent(),'수정하기');
-  assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).isDisabled(),true);
+  // 11-11(js/ai-image-comments.js:453): 실행 단추는 [data-ai-send]이고, 박스·대화가 없으면 「다시 그리기 · 정밀」로 눌러 쓸 수 있다(옛 「코멘트 반영」 단추는 숨김).
+  assert.equal((await page.locator(`${active} [data-ai-send][data-ai-comments-apply]`).textContent()).trim(),'다시 그리기 · 정밀');
+  assert.equal(await page.locator(`${active} [data-ai-send][data-ai-comments-apply]`).isDisabled(),false);
   assert.match(await page.locator(`${active} [data-ai-scoped-apply-hint]`).textContent(),/영역/);
   // Cancel a gesture by changing the selected version. The old captured pointer
   // must not create either an erased version or a request box on release.
@@ -283,7 +286,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: R01–R07 follow-up
   const parent=(await snapshot(page))[1].generated[0];
   const toggle=panel.locator('[data-ai-label-toggle]'); await toggle.click();
   assert.equal(await toggle.getAttribute('aria-checked'),'false');
-  await panel.locator('[data-ai-comments-apply]').click();
+  await panel.locator('[data-ai-send][data-ai-comments-apply]').click();
   await page.waitForFunction(()=>window.__task2.sends.length===1);
   await page.evaluate(()=>{window.__task2.emit(0,'image');window.__task2.emit(0,'done');});
   await page.getByRole('dialog',{name:'수정 전후 비교'}).waitFor();

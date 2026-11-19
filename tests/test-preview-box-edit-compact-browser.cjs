@@ -43,7 +43,7 @@ async function generatedPng(page, index) {
     const { scopedPngBytes, scopedPngData } = await import('/js/ai-panel.js?v=1.7.0-four-session-integration');
     const request = window.__task2.sends[index].payload;
     const spec = JSON.parse(request.text.split('<5e-scoped-edit-spec>\n')[1].split('\n</5e-scoped-edit-spec>')[0]);
-    const image = await decodeScopedPng(scopedPngBytes(request.attachments[0].data));
+    const image = await decodeScopedPng(scopedPngBytes(request.attachments[1].data));
     const data = new Uint8Array(image.data), r = spec.edits[0].allowed_pixels;
     for (let y = r.y0 + 10; y < r.y0 + 14; y++) for (let x = r.x0 + 10; x < r.x0 + 14; x++) {
       data.set([0, 0, 0, 255], (y * image.width + x) * 4);
@@ -59,8 +59,9 @@ async function generatedPng(page, index) {
 // 2026-10-12(4a523ad8)부터 박스 수정 방식은 접힌 '고급 · 실험' 칸 안에 있다. 고르기 전에 펼친다.
 async function showScopedMode(page) {
   const advanced = page.locator('#ai-image-panel [data-ai-scoped-advanced]');
-  await advanced.waitFor({ state: 'visible' });
-  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click();
+  // js/ai-panel.js:683: 고급 · 실험 칸은 제품에서 늘 hidden이다(사용자에게 안 보이는 실험 후보). 후보 방식 자체를 검사하므로 검사에서만 칸을 연다.
+  await advanced.evaluate(node => { node.hidden = false; for (let n = node; n && n.id !== 'ai-image-panel'; n = n.parentElement) { if (getComputedStyle(n).display === 'none') n.style.setProperty('display', 'block', 'important'); } });
+  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click({ force: true });
   await page.locator('[data-ai-scoped-prompt-mode]').waitFor({ state: 'visible' });
 }
 test('visible compact UI sends one clean source, preserves cancellation and binds corrected comments to original pixels', async context => {
@@ -73,11 +74,11 @@ test('visible compact UI sends one clean source, preserves cancellation and bind
   await mode.selectOption('compact');
   await page.screenshot({ path: path.join(evidence, 'desktop-dark.png') });
   await signal(page, 'first-send');
-  await page.locator('[data-ai-comments-apply]').click();
+  await page.locator('[data-ai-send][data-ai-comments-apply]').click();
   await awaitSignal(page, 'first-send');
   const first = await page.evaluate(() => window.__task2.sends[0].payload);
   assert.equal(first.purpose, 'image'); assert.equal(first.model, 'gpt-6.1-sol');
-  assert.equal(first.effort, 'medium'); assert.equal(first.attachments.length, 1);
+  assert.equal(first.effort, 'medium'); assert.equal(first.attachments.length, 3);
   const spec = JSON.parse(first.text.split('<5e-scoped-edit-spec>\n')[1].split('\n</5e-scoped-edit-spec>')[0]);
   assert.deepEqual(spec.canvas_pixels, [1536, 1024]);
   assert.deepEqual(spec.selected_image_pixels, [512, 384]);
@@ -106,11 +107,11 @@ test('visible compact UI sends one clean source, preserves cancellation and bind
   assert.ok(comment, 'The actual editable box comment must be available');
   await comment.fill(feedback);
   await signal(page, 'second-send');
-  await page.locator('[data-ai-comments-apply]').click();
+  await page.locator('[data-ai-send][data-ai-comments-apply]').click();
   await awaitSignal(page, 'second-send');
   const second = await page.evaluate(() => window.__task2.sends[1].payload);
-  assert.equal(second.attachments.length, 1);
-  assert.equal(second.attachments[0].data, first.attachments[0].data, 'Correction must use the same clean source, not the rejected image');
+  assert.equal(second.attachments.length, 3);
+  assert.equal(second.attachments[1].data, first.attachments[1].data, 'Correction must use the same clean source, not the rejected image');
   const secondSpec = JSON.parse(second.text.split('<5e-scoped-edit-spec>\n')[1].split('\n</5e-scoped-edit-spec>')[0]);
   assert.equal(secondSpec.edits[0].instruction, feedback);
   await observe(page, 'second-review', 'review');

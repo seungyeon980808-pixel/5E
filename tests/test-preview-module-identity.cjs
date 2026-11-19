@@ -2,21 +2,10 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
-const root = path.resolve(__dirname, '../preview/js');
 const canonicalRoot = path.resolve(__dirname, '../js');
 const { mainModuleUrl, runtimeConfiguration } = require('./helpers/four-session-entry.cjs');
 function files(dir) {return fs.readdirSync(dir,{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?files(path.join(dir,entry.name)):entry.name.endsWith('.js')?[path.join(dir,entry.name)]:[]);}
-test('each imported preview module has exactly one resolved URL identity',()=>{
- const urls=new Map();
- for(const file of files(root)) for(const match of fs.readFileSync(file,'utf8').matchAll(/(?:\bfrom\s*|\bimport\s*\(?\s*)["'](\.{1,2}\/[^"']+\.js(?:\?[^"']*)?)["']/g)) {
-  const [module,query='']=match[1].split('?');const target=path.resolve(path.dirname(file),module);if(!urls.has(target))urls.set(target,new Set());urls.get(target).add(query);
- }
- const conflicts=[...urls].filter(([,versions])=>versions.size>1).map(([file,versions])=>({file:path.relative(root,file),versions:[...versions]}));
- assert.deepEqual(conflicts,[]);
-});
-
-// Preserve the historical preview-tree check above and independently check the
-// shipped tree, including absolute imports and URL fragments (also identities).
+// 1.7.1: 옛 preview/ 사본을 지워 그 트리 검사는 뺐다. 아래는 실제로 싣는 정식 트리를 검사한다.
 function moduleIdentities(sources, origin = 'http://owned-candidate.invalid') {
  const urls = new Map();
  for (const [filename, source] of sources) {
@@ -43,24 +32,19 @@ test('each imported canonical root module has exactly one resolved URL identity'
   'canonical modules must not import the compatibility state tree');
 });
 
-test('root and compatibility HTML enter the same canonical main and state instances', () => {
+test('the root HTML enters the canonical main and state instances', () => {
  const origin = 'http://owned-candidate.invalid';
  const mainSource = fs.readFileSync(path.join(canonicalRoot, 'main.js'), 'utf8');
- const runtimes = ['/', '/preview/'].map(entry => {
-  const html = fs.readFileSync(path.resolve(__dirname, '..', entry === '/' ? 'index.html' : 'preview/index.html'), 'utf8');
-  const entryUrl = new URL(entry, origin).href;
-  const main = mainModuleUrl(html, entryUrl);
-  const runtime = runtimeConfiguration({ entry }, entryUrl, main, mainSource);
-  assert.equal(runtime.moduleBase, '/js/');
-  assert.equal(new URL(runtime.mainUrl).search, runtime.moduleQuery,
-   'entry and state must preserve the same root query');
-  const scripts = [...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/g)]
-   .map(match => new URL(match[1], entryUrl));
-  assert.deepEqual(scripts.filter(url => url.pathname.startsWith('/preview/js/')).map(url => url.href), []);
-  return runtime;
- });
- assert.equal(runtimes[0].mainUrl, runtimes[1].mainUrl);
- assert.equal(runtimes[0].stateUrl, runtimes[1].stateUrl);
+ const html = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+ const entryUrl = new URL('/', origin).href;
+ const main = mainModuleUrl(html, entryUrl);
+ const runtime = runtimeConfiguration({ entry: '/' }, entryUrl, main, mainSource);
+ assert.equal(runtime.moduleBase, '/js/');
+ assert.equal(new URL(runtime.mainUrl).search, runtime.moduleQuery,
+  'entry and state must preserve the same root query');
+ const scripts = [...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/g)]
+  .map(match => new URL(match[1], entryUrl));
+ assert.deepEqual(scripts.filter(url => url.pathname.startsWith('/preview/')).map(url => url.href), []);
 });
 
 test('canonical scan detects dynamic, absolute and fragment identity conflicts', () => {

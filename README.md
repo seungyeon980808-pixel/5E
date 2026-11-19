@@ -17,12 +17,12 @@
 <p align="center">
   <a href="https://www.5e.ai.kr/"><b>웹에서 시작하기</b></a> ·
   <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest"><b>설치판 내려받기</b></a> ·
-  <a href="docs/RELEASE_NOTES_v1.7.0.md">1.7.0 변경 내용</a> ·
+  <a href="docs/RELEASE_NOTES_v1.7.1.md">1.7.1 변경 내용</a> ·
   <a href="https://www.5e.ai.kr/bug/">문제 신고</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.7.0-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.7.0">
+  <img src="https://img.shields.io/badge/version-1.7.1-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.7.1">
   <img src="https://img.shields.io/badge/web%20·%20Windows%20·%20Mac-3f3f46?style=flat-square&labelColor=18181b" alt="web, Windows, Mac">
   <img src="https://img.shields.io/github/license/seungyeon980808-pixel/5E?style=flat-square&labelColor=18181b&color=3f3f46" alt="AGPL-3.0">
 </p>
@@ -38,7 +38,7 @@
 |---|---|
 | **5E_image** | 교과서·기출 그림을 평가원식 흑백 선화로 바꾸고, 라벨을 붙이고, 그래프를 복원합니다. |
 | **5E_exam** | 문항 카드로 문항을 쓰고, 기출을 찾아 변형하고, 학교 양식으로 시험지를 묶습니다. |
-| **5E_hwp** | 한글 파일을 열어 다듬고, 점검하고, 정답표·분류표·학생용 사본과 함께 인쇄합니다. |
+| **5E_hwp** | 한글 파일을 열어 모양을 다듬고, 인쇄 전에 점검하고, 인쇄합니다. |
 
 맨 위 이름 줄로 세 프로그램을 오가고, 세 프로그램이 함께 쓰는 **5E 클립보드**(⌘C · ⌘V · ⇧⌘V)로 그림·그래프·표를 옮깁니다.
 
@@ -75,7 +75,7 @@
 - **기출 변형** — AI 없이 원본 PDF를 편집 가능한 한글 문항으로. 1,440문항 시험에서 95.7%가 제자리에 복원됩니다.
 - **시험지** — 담기 → 학교 양식으로 배치 → 여백·순서 → 점검 → 이원목적분류표 · B형 · 인쇄 · HWPX.
 - **학교 양식** — 학교 원안지 한글 파일을 등록하면 머리 표와 꼬리말을 그대로 두고 그 위에 조판합니다.
-- **시험지 파일** — 문항 · 그림 · 양식 · 조판 기준을 `.exampool` 하나에. 시험이 끝난 시험지는 잠가 둡니다.
+- **시험지 파일** — 문항 · 그림 · 양식 · 조판 기준을 `.5e` 하나에(⌘S 저장 · ⌘O 불러오기). 1.7.0 `.exampool`도 그대로 열립니다. 시험이 끝난 시험지는 잠가 둡니다.
 - **AI 출제 대화** — 대화로 문항을 다듬고 범위·정답·그림을 검토합니다. 변경은 「적용」을 눌러야 들어갑니다.
 
 </details>
@@ -84,10 +84,10 @@
 <summary><b>5E_hwp — 한글 조판과 인쇄</b></summary>
 
 - 한글 프로그램 없이 HWP·HWPX를 열고, 고치고, 저장합니다.
-- **교사용 줄** — `[정답]` 한 번이면 정답표 · 나형 정답 · 정답 분포 · 해설지 · 분류표 · 정답 QR이 따라오고, 학생용 사본에서는 빠집니다.
-- **시험지 도구** — 문항 틀 14종 · 조합 선지 · 배점 한 번에 · 정답 한 번에 · 가·나형 · 쪽 번호 · 머리말.
-- **인쇄 전 점검** — 넓은 그림, 번호 빠짐, 배점 합계, 글꼴 섞임, 숫자·단위 띄어쓰기, 정답 분포 치우침을 찾아 한 번에 고칩니다.
-- **학습지** — 빈칸 학습지 · 실험 보고서 · 형성 평가 틀 · QR 코드 · 화학식 첨자.
+- **시험지 도구** — 시험지 머리 · 문항 간격 · 단 채우기 · 1단·2단 · 용지 · 쪽 번호 · 머리말 · 〈보기〉 · ㄱㄴㄷ 선지 · 번호 다시 · 고른 문항만 새 파일로.
+- **인쇄 전 점검** — 넓은 그림, 번호 빠짐, 글꼴 섞임, 숫자·단위 띄어쓰기를 찾아 한 번에 고칩니다.
+- **학습지** — 상자 · 답란 · 평가 기준표 · 화학식 첨자.
+- 정답·배점·분류표 같은 문항 내용은 5E_exam에서 다룹니다(5E_hwp는 모양만).
 - 한컴 한글과 같은 단축키. [전체 목록](docs/HWP_EXAM_SHORTCUTS.md)
 
 </details>
@@ -100,11 +100,11 @@
 
 | | 파일 |
 |---|---|
-| Windows | `5E-1.7.0-windows-x64.exe` |
-| Mac · 애플 실리콘 | `5E-1.7.0-macos-arm64.dmg` |
-| Mac · 인텔 | `5E-1.7.0-macos-x64.dmg` |
+| Windows | `5E-1.7.1-windows-x64.exe` |
+| Mac · 애플 실리콘 | `5E-1.7.1-macos-arm64.dmg` |
+| Mac · 인텔 | `5E-1.7.1-macos-x64.dmg` |
 
-> 설치 파일에는 아직 코드 서명이 없습니다. Windows에서 「PC 보호」 창이 뜨면 **추가 정보 → 실행**, Mac에서 처음 열 때 막히면 응용 프로그램 폴더에서 5E를 **Control-클릭 → 열기**를 누르세요.
+> 설치 파일에는 아직 코드 서명이 없습니다. Windows에서 「PC 보호」 창이 뜨면 **추가 정보 → 실행**, Mac에서 처음 열 때 「Apple이 확인할 수 없습니다」가 뜨면 **시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기**를 누르세요.
 >
 > 1.7.0 이전 설치판의 최신 릴리즈 <strong>v1.5.8</strong>은 [v1.5.8 릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 남아 있습니다.
 
@@ -128,11 +128,11 @@
 | | 저장되는 곳 | 밖으로 |
 |---|---|---|
 | 그림 · 문항 · 시험지 | 브라우저 저장소 (설치판은 `~/Documents/5E/출제`에도 자동 저장·백업) | 나가지 않음 |
-| 프로젝트 · 시험지 파일 | 내가 저장한 `.5e` · `.exampool` | 직접 옮길 때만 |
+| 프로젝트 · 시험지 파일 | 내가 저장한 `.5e` | 직접 옮길 때만 |
 | AI 작업 | 브라우저 저장소 | 실행할 때 원본과 요청만 AI 연결 서버로 |
 | 웹 AI 로그인 | 탭의 sessionStorage에 5E 세션 토큰 하나 | 30분 쓰지 않으면 끝 |
 
-웹과 설치판, 브라우저마다 저장 공간이 다릅니다. 옮길 때는 그림은 `.5e`, 시험지는 `.exampool` 파일을 쓰세요.
+웹과 설치판, 브라우저마다 저장 공간이 다릅니다. 옮길 때는 `.5e` 파일을 쓰세요(그림 · 문항 · 시험지 모두).
 
 ## 자주 묻는 질문
 
@@ -169,11 +169,11 @@ npm run desktop     # 설치판(Electron)으로 열기
 npm test            # 단위 검사
 ```
 
-Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 설계 문서는 [DESIGN.md](DESIGN.md)와 [docs/](docs/)에 있습니다.
+Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 [DESIGN.md](DESIGN.md), 개발 기록은 [docs/dev/](docs/dev/README.md)에 있습니다.
 
 ## 문서
 
-[1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [사용 가이드](docs/USER_GUIDE.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
+[1.7.1 변경 내용](docs/RELEASE_NOTES_v1.7.1.md) · [1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [사용 가이드(1.1.0 기준 옛 판)](docs/USER_GUIDE.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 
 ## 문제 신고 · 라이선스
 

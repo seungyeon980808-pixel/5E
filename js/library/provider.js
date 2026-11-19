@@ -5,7 +5,8 @@ import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source
 import { createCropSource } from "../pdf-library/contract.js?v=1.7.0-four-session-integration";
 import { extendQuestionRectToWords, isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-four-session-integration";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-four-session-integration";
-import { connectionName } from "./connection-names.js";
+import { connectionName } from "./connection-names.js?v=1.7.0-four-session-integration";
+import { EXAM_CARD_TEMPLATES, examCardUrl, needsCors, pagePreviewUrl, partsSvgUrl } from "./image-hosts.js?v=1.7.0-four-session-integration";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 // Results are immutable. Reuse their searchable text across keystrokes without
@@ -41,20 +42,42 @@ async function providedPagePreview(document, source, result, options = {}) {
   // OmO 작성 · 학평 목록 그림도 외부 탐색기 카드를 재사용한다. 원문 작업은 PDF로 연다.
   if (document?.packId === "5e.hakpyeong" && options.thumbnail === true && !options.original && result.cropType === "question") {
     const id = result.provenance.itemId.split("::").at(-1);
-    return Object.freeze({ url: `https://raw.githubusercontent.com/seungyeon980808-pixel/exam-search/main/cards/${encodeURIComponent(id)}.webp`, source, provenance: result.provenance, result, previewOnly: true });
+    return Object.freeze({ url: examCardUrl(id, EXAM_CARD_TEMPLATES.hakpyeong), source, provenance: result.provenance, result, previewOnly: true });
   }
   // prebuiltPage: a full-page card may use the prebuilt page image even when it asks for the original page.
   if ((options.original && !options.continuous && !options.prebuiltPage) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
   const hash = document.source.sha256;
   if (!providedPagePreviews[hash] || source.pageNumber > providedPagePreviews[hash]) return null;
   const fullPage = source.rect.every((value, index) => value === [0, 0, 1, 1][index]);
-  const url = new URL(`../../assets/pdf-library/previews/${hash}/${source.pageNumber}${fullPage && options.thumbnail === true && !options.prebuiltPage ? "-thumb" : ""}.webp?v=${PREBUILT_PREVIEW_REVISION}`, import.meta.url).href;
+  const url = `${pagePreviewUrl(hash, `${source.pageNumber}${fullPage && options.thumbnail === true && !options.prebuiltPage ? "-thumb" : ""}.webp`)}?v=${PREBUILT_PREVIEW_REVISION}`;
   const cropRect = options.thumbnail === true ? questionThumbnailRect(source, result) : source.rect;
-  const image = fullPage ? { url } : await cropPrebuiltPreview(url, cropRect, options.thumbnail === true);
+  // 설치판은 쪽 미리보기를 원격으로 받는다. 목록 썸네일은 <img>로만 보이므로 주소 그대로, 크게 보기·자르기 화면처럼
+  // canvas에 그릴 수 있는 쪽 그림은 같은 출처 data: 주소로 바꿔 준다(다른 출처 그림을 그리면 canvas가 막힌다).
+  // 받지 못하면(인터넷 끊김 등) null — 미리 만든 그림이 없을 때처럼 PDF에서 직접 그린다.
+  let image;
+  if (fullPage && options.thumbnail !== true && needsCors(url)) {
+    const dataUrl = await sameOriginPageImage(url).catch(() => null);
+    if (!dataUrl) return null;
+    image = { url, dataUrl };
+  } else image = fullPage ? { url } : await cropPrebuiltPreview(url, cropRect, options.thumbnail === true);
   return Object.freeze({
     ...image,
     source, provenance: result.provenance, result, previewOnly: true,
   });
+}
+
+const remotePageImages = new Map();
+function sameOriginPageImage(url) {
+  let pending = remotePageImages.get(url);
+  if (!pending) {
+    pending = fetch(url, { mode: "cors", credentials: "omit" })
+      .then((response) => { if (!response.ok) throw new Error(`쪽 그림을 받지 못했습니다(${response.status}).`); return response.blob(); })
+      .then((blob) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error); reader.readAsDataURL(blob); }));
+    remotePageImages.set(url, pending);
+    pending.catch(() => { if (remotePageImages.get(url) === pending) remotePageImages.delete(url); });
+    if (remotePageImages.size > 12) remotePageImages.delete(remotePageImages.keys().next().value);
+  }
+  return pending;
 }
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
@@ -290,7 +313,7 @@ function collectImageResults(input) {
       subtitle: [item.subjectLabel, item.part].filter(Boolean).join(" · "),
       searchText: [item.id, item.name, ...(item.keywords ?? []), ...(item.sourceTags ?? []), item.part, item.subjectLabel].join(" "),
       metadata: { subject: item.subject ?? null, subjectLabel: item.subjectLabel ?? null, part: item.part ?? null, curated: true },
-      previewUrl: `assets/parts-library/svg/${encodeURIComponent(item.file)}`,
+      previewUrl: partsSvgUrl(item.file),
     });
     results.push(result); items.set(result.id, item);
   }

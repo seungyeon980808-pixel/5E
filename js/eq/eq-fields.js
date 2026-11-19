@@ -4,7 +4,7 @@
 //   · 원래 글 칸(textarea·input)은 숨겨 두고 저장 통로로만 쓴다 — 고칠 때마다 `$LaTeX$` 글을 그 칸에 넣고 input 이벤트를 보내
 //     카드의 기존 저장·되돌리기·완성도 계산이 그대로 돈다. 칸을 다시 그려도 띠는 칩 칸 안에 살아 있어 「치다가 꺼짐」이 없다.
 // 키: $ 열기·닫기(설정으로 끔), ⌘E 열기·닫기·고른 글을 수식으로, ⌘⇧E 큰 편집기, ⌘1~⌘0 빠른 단추, Esc·Enter·→(끝) 빠져나오기.
-import { loadMath, mathToHtml, htmlToMath, attachMathInput } from './eq-input.js?v=1113';
+import { loadMath, mathToHtml, htmlToMath, attachMathInput } from './eq-input.js?v=1.7.0-four-session-integration';
 
 // 커서 둘레의 $…$ 구간: {a: 여는 $ 위치, b: 닫는 $ 위치(없으면 -1)} 또는 null
 export function regionAt(text, pos) {

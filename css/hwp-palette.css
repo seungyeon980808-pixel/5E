@@ -473,6 +473,8 @@
   flex-direction: column;
   gap: 8px;
 }
+/* 조각 편집 막대(11-17, 시안 팔레트막대-파일단추.html): 자리는 ui.js placeContentEditBar가 잼.
+   넓은 창 = 맨 위 줄 안(모드 탭과 「파일」 사이, top·right를 JS가 넣음), 좁은 창 = .is-below 맨 위 줄 바로 아래 한 줄 */
 .palette-content-edit {
   position: absolute;
   top: 8px;
@@ -480,12 +482,28 @@
   z-index: 6;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 3px 4px 3px 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--bg-panel);
-  box-shadow: 0 6px 20px #0002;
+  box-shadow: none;
+  white-space: nowrap;
+}
+#rhwp-exam-workspace .palette-content-edit button {
+  padding-block: 5px;
+}
+.palette-content-edit.is-below {
+  position: static;
+  z-index: auto; /* 판 칸의 flex 항목이라 z-index가 살아 있으면 파일 메뉴(z 2)를 덮는다 */
+  flex: none;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 6px 10px 6px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--ds-line, var(--border));
+  border-radius: 0;
+  white-space: normal;
 }
 .palette-dialog :focus-visible {
   outline: 2px solid var(--accent);

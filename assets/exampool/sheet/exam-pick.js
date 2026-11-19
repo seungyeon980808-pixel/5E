@@ -6,6 +6,7 @@ import { past, loadPast, examLabel, loadThumbs } from './library-view.js';
 import { libraryQuestions } from './exams.js';
 import { questionTitle } from './views.js';
 import { goalOf } from './exam-flow.js';
+import { examCardUrl, examFigureUrl } from '../../../js/library/image-hosts.js?v=1.7.0-four-session-integration';
 
 const E = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAGE = 40, LEVELS = ['상', '중', '하'], TYPES = ['객관식', '합답형', '서술형'];
@@ -72,7 +73,7 @@ export function renderStep2(exam, data, forms, s, { busy = null } = {}) {
   const fb = (k, label) => { const v = s[FIELD[k]]; const show = k === 'sort' ? SORTS.find(x => x[0] === s.sort)[1] : label; return `<button type="button" class="ep-fbtn${v && k !== 'sort' ? ' on' : ''}" data-ep-menu="${k}" aria-haspopup="menu">${E(show)}${v && k !== 'sort' ? ` <span class="v">${E(v)}</span>` : ''}${CV}</button>`; };
   const tags = allTags(data);
   const card = x => { const m = metaOf(x), inC = x.kind === 'mine' && inExam.has(x.id), pk = s.picked.includes(x.key), conv = busy && x.kind === 'past' && busy.id === x.id;
-    const doc = x.kind === 'mine' ? `<div class="ep-doc" data-preview="${E(x.id)}"></div>` : `<img alt="${E(x.title)}" data-lv-card="${E(past.index.cards.replace('{id}', encodeURIComponent(x.id)))}" data-fallback="${E(x.i.hasFigure ? new URL(`../../exam-library/images/${encodeURIComponent(x.id)}.png`, import.meta.url).href : '')}">`;
+    const doc = x.kind === 'mine' ? `<div class="ep-doc" data-preview="${E(x.id)}"></div>` : `<img alt="${E(x.title)}" data-lv-card="${E(examCardUrl(x.id, past.index.cards))}" data-fallback="${E(x.i.hasFigure ? examFigureUrl(x.id) : '')}">`;
     // 카드 아래는 해시태그 한 줄 + 「#＋」(10-24 시안 16 3차): 내 문항/기출 표 · 제목 · 유형·배점은 위 「전체 · 내 문항 · 기출」로 이미 구별돼 뺀다.
     // 담은 카드는 그림 왼쪽 위 「✓ n번」(시험지에 담긴 순서) + 은은한 파랑 테두리 + 눌린 듯한 회색 음영. 「빼기」·「＋ 담기」는 마우스를 올릴 때만.
     const at = inC ? exam.items.indexOf(x.id) + 1 : 0, tagsHtml = [...(m.lv ? [`난이도 ${m.lv}`] : []), ...m.tags];

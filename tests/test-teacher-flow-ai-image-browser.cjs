@@ -46,7 +46,9 @@ flow.runEngines('ai-image', {
     await panel.waitFor({ state: 'visible' });
     await page.waitForFunction(() => document.querySelector('#ai-image-panel .ai-preview-stage > img')?.naturalWidth > 0);
     assert.equal(await panel.getAttribute('data-ai-result-count'), '0');
-    await panel.locator('[data-ai-comments-apply]').click();
+    // 11-10(c9d1da3f): 녹화된 세 요청(원본 관찰·그림 생성·결과 검수)은 예전 라벨 파이프라인 계약 — 내부 시험용 플래그
+    await page.evaluate(() => { globalThis.__5eLegacyLabelPipeline = true; });
+    await panel.locator('[data-ai-send][data-ai-comments-apply]').click();
     await page.waitForFunction(() => {
       const element = document.querySelector('#ai-image-panel');
       return element.dataset.aiResultCount === '1' && element.dataset.aiBusy === 'false';
@@ -63,7 +65,10 @@ flow.runEngines('ai-image', {
     const saved = await flow.download(page, () => panel.locator('[data-ai-save-selected]').click(), evidence, `${engine}-ai-result.png`);
     assert.match(saved.suggested, /\.png$/);
     const result = flow.inkStats(saved.bytes), source = flow.inkStats(fs.readFileSync(sourceFile));
-    assert.deepEqual([result.width, result.height], [source.width, source.height], '결과는 원본과 같은 크기');
+    // 11-08·11-10 원본 판 맞춤(js/ai-label-reframe.js fitCandidateToSource): 판은 원본과 같은 「비율」이고, 크기는 새 그림의
+    // 해상도(그림 영역 폭 ÷ 원본 그림 영역 비율)로 정한다 — 원본 픽셀 크기와 같을 필요는 없다(예: 480×320 → 386×257).
+    assert.ok(Math.abs(result.width / result.height - source.width / source.height) / (source.width / source.height) < .01,
+      `결과는 원본과 같은 비율: ${result.width}×${result.height} / ${source.width}×${source.height}`);
     assert.ok(paperRatio(fs.readFileSync(sourceFile)) > .8 && paperRatio(saved.bytes) < .01, '종이 배경이 흰 배경으로 바뀌었다');
     assert.ok(result.inkRatio > .02 && result.inkRatio < .3, `선이 남아 있다(먹 비율 ${result.inkRatio.toFixed(3)})`);
 

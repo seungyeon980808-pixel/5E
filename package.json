@@ -1,6 +1,6 @@
 {
   "name": "5e-desktop",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "private": true,
   "description": "5E science diagram editor for Windows and macOS with a local Codex image assistant",
   "author": "박승연",
@@ -35,6 +35,16 @@
   "build": {
     "appId": "com.5e.editor",
     "productName": "5E",
+    "fileAssociations": [
+      {
+        "ext": "5e",
+        "name": "5E 프로젝트",
+        "description": "5E 프로젝트 파일",
+        "mimeType": "application/x-5e-project",
+        "role": "Editor",
+        "rank": "Owner"
+      }
+    ],
     "artifactName": "5E-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "release",
@@ -48,6 +58,7 @@
       "js/**/*",
       "assets/**/*",
       "!assets/exam-library/**",
+      "!assets/pdf-library/previews/**/*.webp",
       "fonts/**/*",
       "desktop/**/*",
       "tests/fixtures/rights-clear-smoke.png",
@@ -71,6 +82,8 @@
     "mac": {
       "icon": "assets/icon.icns",
       "category": "public.app-category.education",
+      "identity": "-",
+      "hardenedRuntime": false,
       "artifactName": "5E-${version}-macos-${arch}.${ext}",
       "target": [
         {

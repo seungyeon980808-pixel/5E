@@ -38,6 +38,8 @@ async function transferCurrentLibraryReference(page, panel, mode, errors) {
     const bounds = document.querySelector('[data-unilib-crop-canvas]')?.getBoundingClientRect();
     return Boolean(bounds && bounds.width > 20 && bounds.height > 20);
   }, undefined, { timeout: 20_000 });
+  // 크롭 화면은 PDF 쪽 그림이 준비된 뒤에야(cropReady) 끌기를 받는다. 준비 전 끌기는 무시되어 「추가」가 안 켜졌다.
+  await page.waitForFunction(() => { const i = document.querySelector('[data-unilib-crop-image]'); const p = document.querySelector('[data-unilib-crop-load-paper]'); return i && i.complete && i.naturalWidth > 0 && !i.hidden && (!p || p.hidden); }, undefined, { timeout: 20_000 });
   const cropBox = await page.locator('[data-unilib-crop-canvas]').boundingBox();
   const stageBox = await page.locator('[data-unilib-crop-stage]').boundingBox();
   assert.ok(cropBox, 'current unified-library crop canvas is visible');
@@ -53,7 +55,7 @@ async function transferCurrentLibraryReference(page, panel, mode, errors) {
   await page.mouse.down();
   await page.mouse.move(visibleCrop.x + visibleCrop.width * 0.45, visibleCrop.y + visibleCrop.height * 0.45, { steps: 5 });
   await page.mouse.up();
-  await page.locator('[data-unilib-crop-save]:not([disabled])').click();
+  await page.locator('[data-unilib-crop-save]:not([disabled])').click({ timeout: 15_000 });
   await page.locator('[data-unilib-crop-draft-review]').waitFor({ state: 'hidden' });
   traceLibrary('current-crop-saved');
   await page.screenshot({ path: path.join(evidenceDir, `${page.context().browser().browserType().name()}-${mode}-library-crop.png`), fullPage: true });
@@ -106,7 +108,7 @@ function startServer() {
   const contentTypes = { '.css': 'text/css', '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.mjs': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
   const server = http.createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-    const target = path.resolve(root, `.${pathname === '/' ? '/preview/' : pathname}`);
+    const target = path.resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);
     if (!target.startsWith(`${root}${path.sep}`)) return response.writeHead(403).end();
     fs.stat(target, (statError, stat) => {
       const file = !statError && stat.isDirectory() ? path.join(target, 'index.html') : target;
@@ -233,6 +235,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       const browserContext = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
       const transport = await installDesktopStub(browserContext);
       const page = await browserContext.newPage();
+      await page.addInitScript(() => { globalThis.__5eLegacyLabelPipeline = true; }); // 11-10(c9d1da3f): 원본 관찰·전체 검수 단계는 예전 라벨 파이프라인 계약 — 내부 시험용 플래그
       const errors = [];
       page.on('pageerror', (error) => errors.push(error.message));
       const suffix = `?mode=${mode}`;
@@ -246,7 +249,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         });`;
         return route.fulfill({contentType:'text/javascript',body:original.replace(anchor, observed)});
       });
-      await page.goto(`${origin}/preview/${suffix}`, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${origin}/${suffix}`, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction((expectedMode) => document.documentElement.dataset.mode === expectedMode, mode);
       const dismiss = page.locator('.tut-welcome-overlay .tut-banner-no');
       if (await dismiss.isVisible()) await dismiss.click();
@@ -286,14 +289,13 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       const expectedReferences = await panel.locator('[data-ai-reference-id]').count();
       assert.equal(expectedReferences, 1, 'the current source transfer creates one reference in its task');
       assert.equal(await panel.locator('.ai-reference-section[open]').count(), 1, 'references are expanded after current transfer');
-      const sourceChoices = panel.locator('.ai-source-treatment');
-      if (!await sourceChoices.evaluate(node => node.open)) await sourceChoices.locator('summary').click();
-      await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').click();
-      await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').click();
+      // 506f30bf(v6): 출처·라벨 단추는 늘 보이는 줄에 있고 출처 줄은 자동 판단 때 숨는다 → 숨은 단추도 같은 상태를 바꾸도록 click 이벤트를 보낸다.
+      await panel.locator('[data-ai-setting-key="kind"] [data-ai-setting-value="general"]').first().dispatchEvent('click');
+      await panel.locator('[data-ai-setting-key="labels"] [data-ai-setting-value="remove"]').dispatchEvent('click');
       traceLibrary('fixture-send-click', { mode });
-      // 이미지 작업에서는 준비 칸의 보내기 단추를 숨기고(10-16 83201a54) 「변환하기」([data-ai-comments-apply])가 같은 보내기를 부른다.
+      // 이미지 작업에서는 준비 칸의 보내기 단추를 숨기고(10-16 83201a54) 「변환하기」([data-ai-send][data-ai-comments-apply])가 같은 보내기를 부른다.
       const send = panel.locator('[data-ai-send]');
-      await (await send.isVisible() ? send : panel.locator('[data-ai-comments-apply]')).click();
+      await (await send.isVisible() ? send : panel.locator('[data-ai-send][data-ai-comments-apply]')).click();
       await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 1, undefined, { timeout: 15_000 });
       // First candidate registration precedes the actual review and busy-state settlement.
       // Observe the real completion before hit-testing or editing its visible surface.
@@ -393,25 +395,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.ok(referenceId && selectedRevisionId && originalSource, 'comparison has an identified original and selected revision');
       assert.equal(await panel.locator('.ai-generated-card').getAttribute('data-ai-candidate-id'), selectedRevisionId,
         'the rendered result is the selected revision');
-      const selectedDisplaySource = await generatedImage.getAttribute('src');
-      if (mode === 'pro') {
-        assert.equal(selectedDisplaySource, generatedFixtureDataUrl, 'Pro displays the unprocessed generated PNG bytes');
-      } else {
-        const display = await generatedImage.evaluate(image => {
-          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
-          const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
-          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-          let ink = 0;
-          for (let i = 0; i < pixels.length; i += 4) {
-            if (pixels[i + 3] === 0) continue;
-            if (pixels[i] < 255) ink++;
-          }
-          return { width: canvas.width, height: canvas.height, ink };
-        });
-        assert.equal(display.width, 1005); assert.equal(display.height, 399);
-        assert.ok(display.ink > 100, 'the rendered diagram remains visible');
-      }
-      const readRawPersistence = () => page.evaluate(async ({ taskId, candidateId, source }) => {
+      const readRawPersistence = () => page.evaluate(async ({ taskId, candidateId }) => {
         const databases = await indexedDB.databases();
         const results = [];
         for (const { name } of databases.filter(entry => entry.name.includes('5e-ai-image-tasks'))) {
@@ -424,19 +408,39 @@ test('TPK-005: current library and task workspace smoke contract has real contro
               request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
             });
             const candidate = snapshot?.tabs?.find(tab => tab.id === taskId)?.generated?.find(item => item.id === candidateId);
-            results.push({ name, tabIds: snapshot?.tabs?.map(tab => tab.id), candidateId: candidate?.id, bytes: candidate?.data?.length, matches: candidate?.data === source });
+            results.push({ name, tabIds: snapshot?.tabs?.map(tab => tab.id), candidateId: candidate?.id, bytes: candidate?.data?.length, data: candidate?.data || null });
           } finally { db.close(); }
         }
         return results;
-      }, { taskId: original, candidateId: selectedRevisionId, source: generatedFixtureDataUrl });
-      let rawPersistence = [];
-      for (let attempt = 0; attempt < 50; attempt++) {
-        rawPersistence = await readRawPersistence();
-        if (rawPersistence.some(result => result.matches)) break;
-        await new Promise(resolve => setTimeout(resolve, 100));
+      }, { taskId: original, candidateId: selectedRevisionId });
+      const selectedDisplaySource = await generatedImage.getAttribute('src');
+      // 11-10(58240dda): 새 기본 생성 경로는 생성 PNG를 무채색으로 바꾸고(js/ai-image-label-run.js:491) 원본 판에 맞춘 뒤(같은 파일 fitCandidateToSource) 저장한다.
+      // 그래서 기준은 「fixture 바이트」가 아니라 「저장된 실행 결과」 — Pro는 그것을 더 가공하지 않고 보여 준다.
+      const storedGenerated = async () => { for (let attempt = 0; attempt < 50; attempt++) { const found = (await readRawPersistence()).find(result => result.data); if (found) return found.data; await new Promise(resolve => setTimeout(resolve, 100)); } return null; };
+      if (mode === 'pro') {
+        assert.equal(selectedDisplaySource, await storedGenerated(), 'Pro displays the stored run result without further processing');
+      } else {
+        const display = await generatedImage.evaluate(image => {
+          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+          const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          let ink = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] === 0) continue;
+            if (pixels[i] < 255) ink++;
+          }
+          return { width: canvas.width, height: canvas.height, ink };
+        });
+        // 11-10: 결과는 원본 판에 맞춰 저장된다(fitCandidateToSource) — 생성 폭(1005)은 두고 가로세로 비율이 원본 그림과 같다(fixture 1005×399가 아님).
+        const sourceSize = await panel.locator('.ai-original-pane .ai-reference-card img').first().evaluate(image => ({ width: image.naturalWidth, height: image.naturalHeight }));
+        assert.equal(display.width, 1005, 'generated width is kept');
+        assert.ok(Math.abs(display.width / display.height - sourceSize.width / sourceSize.height) < 0.01, `Lite display keeps the source frame ratio (${display.width}x${display.height} vs ${sourceSize.width}x${sourceSize.height})`);
+        assert.ok(display.ink > 100, 'the rendered diagram remains visible');
       }
-      traceLibrary('raw-persistence', { mode, engine: engine.name(), results: rawPersistence });
-      assert.ok(rawPersistence.some(result => result.matches), 'original generated PNG bytes survive persistence independently from Lite display processing');
+      const stored = await storedGenerated();
+      traceLibrary('raw-persistence', { mode, engine: engine.name(), bytes: stored?.length || 0 });
+      assert.ok(stored && stored.startsWith('data:image/png;base64,'), 'the run result PNG is persisted independently from Lite display processing');
+      // 무채색 여부는 단언하지 않는다: 흑백 변환이 실패하면 앞 결과를 그대로 쓰는 것이 제품 규칙이다(js/ai-grayscale-png.js grayscaleGeneratedPng).
       await clickCompare(panel);
       const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });

@@ -4,6 +4,8 @@ const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { inventory, verifyArtifact } = require('./web-release.cjs');
 const route = 'examlibrary/index.html';
+// 원본은 저장소 apps/examlibrary/, 사이트 주소는 지금처럼 /examlibrary/(1.7.1).
+const source = 'apps/examlibrary/index.html';
 const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 
 function verifyRoute(site, receipt) {
@@ -27,8 +29,8 @@ function verifyRoute(site, receipt) {
 function appendRoute(site, baseReceipt, sourceRoot, expectedBaseSha) {
   verifyArtifact(site, baseReceipt, { expectedSha: expectedBaseSha, requireClean: true });
   const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim();
-  const bytes = fs.readFileSync(path.join(sourceRoot, route));
-  const committed = execFileSync('git', ['show', `${sourceCommit}:${route}`], { cwd: sourceRoot });
+  const bytes = fs.readFileSync(path.join(sourceRoot, source));
+  const committed = execFileSync('git', ['show', `${sourceCommit}:${source}`], { cwd: sourceRoot });
   if (!bytes.equals(committed)) throw new Error('Route source must match its committed Git blob');
   fs.mkdirSync(path.join(site, 'examlibrary'), { recursive: true });
   fs.writeFileSync(path.join(site, route), bytes);

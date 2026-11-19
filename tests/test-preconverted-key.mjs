@@ -3,7 +3,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
 import {PRECONVERTED_KEY,freshIds} from '../assets/exampool/sheet/preconverted.js';
 const require=createRequire(import.meta.url);
-test('preconverted key matches the conversion engine source',()=>{assert.equal(PRECONVERTED_KEY,require('../exam-pdf/engine-key.cjs')(),'엔진이 바뀌었습니다 — exam-pdf/preconvert.cjs로 다시 미리 변환하고 올린 뒤 열쇠를 바꾸세요');});
+test('preconverted key matches the conversion engine source',()=>{assert.equal(PRECONVERTED_KEY,require('../data/exam-pdf/engine-key.cjs')(),'엔진이 바뀌었습니다 — data/exam-pdf/preconvert.cjs로 다시 미리 변환하고 올린 뒤 열쇠를 바꾸세요');});
 test('fresh ids keep links but never reuse ids',()=>{const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
   const q={id:a,blocks:[{id:b,parent:null},{id:'33333333-3333-4333-8333-333333333333',parent:b}],figure:{data:'data:image/png;base64,AAAA'}};
   const x=freshIds(q);assert.notEqual(x.id,a);assert.notEqual(x.blocks[0].id,b);assert.equal(x.blocks[1].parent,x.blocks[0].id);assert.equal(x.figure.data,q.figure.data);});

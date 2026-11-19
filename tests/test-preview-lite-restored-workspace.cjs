@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
-const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?mode=lite";
+const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/?mode=lite";
 
 function liteUrl() {
   const url = new URL(previewUrl);
@@ -29,11 +29,10 @@ async function run(engine) {
     assert.equal(await page.locator("#panel-left").isVisible(), true, "Lite keeps tools on the left");
     assert.ok(await page.locator('#tool-list .tool-btn[data-lite-label]:visible').count() > 0, "Lite exposes approved tools");
     assert.equal(await page.locator("#ai-image-panel").isVisible(), false, "restored AI state does not auto-open a dock");
-    assert.equal(await page.locator("#tutorial-btn").evaluate((button) => button.closest(".app-shell-header") !== null), true,
-      "help remains in the current top toolbar position");
+    assert.equal(await page.locator("#tutorial-btn").count(), 0, "1.7.1: the removed tutorial button stays absent");
     assert.equal(await page.locator("#lite-dock").count(), 0, "retired Lite dock stays absent");
     assert.deepEqual(errors, []);
-    console.log(`${engine.name()}: Lite shared canvas, left tools, help position, and no auto-open PASS`);
+    console.log(`${engine.name()}: Lite shared canvas, left tools, no tutorial button, and no auto-open PASS`);
   } finally {
     await browser.close();
   }

@@ -71,10 +71,23 @@ function mathSize(size, weight, sourceHeight) {
 function buildPlainLine(line, size, color, upright = false, weight = 400, sourceHeight = false, parenthesesAreUnits = true) {
   const g = el("g");
   let cx = 0, asc = 0, desc = 0;
-  for (const run of graphLabelRuns(line, parenthesesAreUnits)) {
-    if (run.text === "") continue;
+  const koSizeOf = () => sourceHeight ? sourceEmSize(size, TEXT_FONT_FAMILY, "가", weight) : size * KO_SCALE;
+  // 1.7.1: 수식 런 앞뒤의 띄어쓰기는 formula.js(수식 모드)가 버린다 → 「경과 시간」이 「경과시간」처럼
+  // 붙어 보였다. 런 경계의 공백은 한글 글꼴 띄어쓰기 폭만큼 가로로 띄운다(글자는 그리지 않음).
+  const space = (text) => { if (text) cx += measureKo(text, koSizeOf(), weight); };
+  const runs = graphLabelRuns(line, parenthesesAreUnits);
+  runs.forEach((whole, index) => {
+    let run = whole, trail = "";
+    if (run.text === "") return;
+    if (run.kind !== "ko") {
+      const [, lead, core, after] = /^(\s*)([\s\S]*?)(\s*)$/.exec(run.text);
+      // 줄 맨 앞·맨 끝 공백은 예전처럼 폭을 두지 않는다(가운데 맞춤이 밀리지 않게).
+      if (index > 0) space(lead);
+      if (!core) return;
+      run = { ...run, text: core }; trail = index < runs.length - 1 ? after : "";
+    }
     if (run.kind === "ko") {
-      const koSize = sourceHeight ? sourceEmSize(size, TEXT_FONT_FAMILY, "가", weight) : size * KO_SCALE;                // legacy graphs retain their visual balance
+      const koSize = koSizeOf();                // legacy graphs retain their visual balance
       const t = el("text");
       t.setAttribute("x", cx);
       t.setAttribute("y", 0);
@@ -119,7 +132,8 @@ function buildPlainLine(line, size, color, upright = false, weight = 400, source
         desc = Math.max(desc, m.descent);
       }
     }
-  }
+    space(trail);
+  });
   if (asc === 0 && desc === 0) { asc = size * 0.78; desc = size * 0.22; } // 빈 줄 fallback
   return { g, width: cx, ascent: asc, descent: desc };
 }

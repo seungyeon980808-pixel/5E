@@ -110,7 +110,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
     const shown = () => page.evaluate(() => { const p = document.querySelector('#ai-image-panel'); return !!p && !p.hidden && !p.inert && p.dataset.aiWorkflow === 'graph'; });
     if (await shown()) return;
     if (await page.locator(panel).isVisible()) { await page.keyboard.press('Escape'); await page.locator(panel).waitFor({state:'hidden'}); }
-    await page.locator('#graph-tool-open').click(); await page.locator('[data-graph-entry="graph"]').click();
+    await page.locator('#graph-tool-open').click();
     await page.waitForFunction(() => { const p = document.querySelector('#ai-image-panel'); return !!p && !p.hidden && p.dataset.aiWorkflow === 'graph'; });
   };
   await openGraphAi();
@@ -183,8 +183,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
       receipts.push({action:'clipboard',candidateId,dimensions,pixels:copy.visible,pixelsMatch:true,sourcePreserved:true,writeDuringGesture:true});
     }
     await page.locator(panel + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
-    await page.locator('.ai-task-context-menu [data-task-action="send"]').click();
-    await page.locator(`.ai-task-context-menu [data-task-action="${targetKind}"]`).click();
+    // 552279a9: 하위 메뉴가 없어졌다. 그래프 작업대에서 이미지로는 「보내기」, 같은 그래프로는 「현 작업대에 추가」(duplicate).
+    await page.locator(`.ai-task-context-menu [data-task-action="${targetKind==='image'?'send':'duplicate'}"]`).click();
     await page.waitForFunction(({targetKind,count}) => document.querySelector('#ai-image-panel')?.dataset.aiWorkflow === targetKind
       && document.querySelector('#ai-image-panel [data-ai-tab-list] .is-on')?.dataset.tabId !== 'task-0'
       && __graphTransferManager.sharingSnapshot().then(s => s.workspaces.flatMap(w => w.tabs).length === count+1),{targetKind,count:before.length});

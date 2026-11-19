@@ -32,7 +32,7 @@ const SVG = {
   tool: '<path d="M14 6l4 4M4 20l6-6M13 7l4 4-7 7-4-4z"/>',
 };
 const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${SVG[name] || SVG.tool}</svg>`;
-const MODES = [['item', '문항', '문항 모드 — 시험 문항을 쓰고 다듬기'], ['sheet', '학습지', '학습지 모드 — 빈칸·활동지 만들기'], ['layout', '판짜기', '판짜기 모드 — 쪽·단에 문항 배치']];
+const MODES = [['item', '문항', '문항 모드 — 시험 문항을 쓰고 다듬기'], ['sheet', '학습지', '학습지 모드 — 상자·답란·평가 기준표 넣기'], ['layout', '판짜기', '판짜기 모드 — 쪽·단에 문항 배치']];
 const MODE_TOOLS = { item: '문항 쓰기', sheet: '학습지 도구', layout: '판짜기 도구' };
 
 // ── 오른쪽: 묶음·줄 그리기 ──
@@ -115,7 +115,7 @@ export function leftToolsMarkup() {
       ${sec('내용 넣기', '밖에서 가져오기', tiles([['md', '마크다운', '고른 마크다운을 한글 문서로 (팔레트)', 'md'], ['excel', '문항 엑셀', '엑셀 표에 채워 문항 만들기 (팔레트)', 'grid'], ['form', '양식 채우기', '양식 빈칸을 채워 새 문서로 (팔레트)', 'form'], ['photo', '사진', '그림 파일을 커서 자리에 (팔레트 사진)', 'photo'], ['clip', '클립보드', '5E 클립보드에서 골라 커서 자리에 넣기 (⇧⌘V)', 'clip']]) + '<button type="button" class="el-more" data-el-act="palette">조판 팔레트로 가기 ↓</button>')}
       ${sec('자동 다듬기', '고른 곳에 적용', tiles([['fit', '자간 맞춤', '줄 끝에서 단어가 잘리지 않게 — 넘친 한두 글자를 자간으로 줄 안에 (팔레트 자간 맞춤)', 'fit'], ['oneline', '한 줄에 맞추기', '고른 문단을 한 줄에 들어가게 자간으로 (팔레트 한 줄 맞춤)', 'oneline'], ['chem', '화학식 첨자', 'H2O → H₂O 숫자를 아래 첨자로(문서 전체)', 'sub'], ['renum', '문항 번호', '문항 번호를 1부터 순서대로 다시 매기기', 'num']]))}
       <div class="ei-sec el-figs-slot"></div>
-      <div class="ei-sec el-mode"><h4 data-el-modetitle>문항 쓰기<em>지금 모드</em></h4><div class="ei-tiles" data-el-modetools></div><button type="button" class="el-more" data-el-more title="이 모드의 나머지 기능(문항을 그림으로·고른 문항만 새 파일로·㉠㉡ 빈칸 학생용 등)">⋯ 더 보기</button></div>
+      <div class="ei-sec el-mode"><h4 data-el-modetitle>문항 쓰기<em>지금 모드</em></h4><div class="ei-tiles" data-el-modetools></div><button type="button" class="el-more" data-el-more title="이 모드의 나머지 기능(문항을 그림으로·고른 문항만 새 파일로·글상자·각주 등)">⋯ 더 보기</button></div>
       <div class="ei-sec el-outline-slot"></div>
       <div class="ei-sec el-palette-slot"></div>
     </div>

@@ -10,7 +10,7 @@ test('duplicate local status and chat log records coalesce while keeping occurre
  appendAiErrorRecord(records,context,'다른 오류');assert.equal(records.length,2);
 });
 test('diagnostics preserve complete safe messages and redact secrets and image data', async () => {
- const {safeAiErrorText}=await import(pathToFileURL(path.join(__dirname,'../preview/js/ai-error-log.js')));
+ const {safeAiErrorText}=await import(pathToFileURL(path.join(__dirname,'../js/ai-error-log.js')));
  const safe='Provider rejected gpt-6-luna: unsupported reasoning effort ultra. '+ 'safe detail '.repeat(500)+' END';
  assert.equal(safeAiErrorText(safe),safe);
  for(const secret of ['Authorization: Bearer private-secret','api_key="private-secret"','{"access_token":"private-secret"}','data:image/png;base64,c2VjcmV0','sk-private-secret', 'A'.repeat(150)]) {
@@ -18,7 +18,7 @@ test('diagnostics preserve complete safe messages and redact secrets and image d
  }
 });
 test('provider catalog alone determines model availability without silently changing saved selection', async () => {
- const {readAIModelCatalog,resolveAIModelSelection,defaultAIModelSelection}=await import(pathToFileURL(path.join(__dirname,'../preview/js/ai-model-capabilities.js')));
+ const {readAIModelCatalog,resolveAIModelSelection,defaultAIModelSelection}=await import(pathToFileURL(path.join(__dirname,'../js/ai-model-capabilities.js')));
  const old=[{model:'gpt-6-astra',supportedReasoningEfforts:['medium'],defaultReasoningEffort:'medium',serviceTiers:[]}];
  const selected={model:'gpt-6-luna',effort:'high',serviceTier:null};
  assert.deepEqual(readAIModelCatalog(old).map(entry=>entry.model),['gpt-6-astra']);
@@ -29,7 +29,7 @@ test('provider catalog alone determines model availability without silently chan
  assert.throws(()=>resolveAIModelSelection(selected,[...old,{...refreshed[1],hidden:true}]));
 });
 test('diagnostics redact complete Cookie and Set-Cookie headers including semicolon fields', async () => {
- const {safeAiErrorText}=await import(pathToFileURL(path.join(__dirname,'../preview/js/ai-error-log.js')));
+ const {safeAiErrorText}=await import(pathToFileURL(path.join(__dirname,'../js/ai-error-log.js')));
  for(const header of [
   'Cookie: theme=dark; session=synthetic-session-secret; other=synthetic-other-secret',
   'Set-Cookie: theme=dark; session=synthetic-session-secret; Path=/',
@@ -42,7 +42,7 @@ test('diagnostics redact complete Cookie and Set-Cookie headers including semico
  }
 });
 test('precise request errors replace generic summaries without hiding distinct errors, tasks or retries', async () => {
- const {appendAiErrorRecord}=await import(pathToFileURL(path.join(__dirname,'../preview/js/ai-error-log.js')));
+ const {appendAiErrorRecord}=await import(pathToFileURL(path.join(__dirname,'../js/ai-error-log.js')));
  const records=[];
  const context={taskId:'task-1',requestId:1,turnId:'turn-1',model:'gpt-6-sol'};
  const exact='HTTP 422: pinned model rejects gpt-6-sol';

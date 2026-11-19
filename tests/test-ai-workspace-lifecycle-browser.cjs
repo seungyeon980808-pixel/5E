@@ -503,8 +503,8 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
-  if (!initialGeneration) await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-candidate-option][aria-selected="true"]'));
-  await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
+  if (!initialGeneration && !union) await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-candidate-option][aria-selected="true"]')); // union(그래프 후보 합집합) 고정 자료는 버전 목록 없이 시작한다
+  if (!union)   await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
   assert.deepEqual(errors, [], 'real app boot must have no runtime errors');
   return { page, errors,
     async pauseTracing() {
@@ -551,7 +551,7 @@ for (const count of [1, 10, 30]) {
     await resumeTracing();
     await page.locator(task(0)).click();
     await page.screenshot({ path: path.join(evidence, `populated-${count}.png`) });
-    await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+    await page.locator('#ai-image-panel [data-ai-send]').click();
     assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
     assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0, 'The explicit primary scope action already authorizes the captured bounds');
     await page.waitForFunction(() => window.__task2.sends.length === 1);
@@ -610,7 +610,7 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
     await page.waitForFunction(id => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === id, `candidate-${index}`);
   };
   const start = async count => {
-    await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+    await page.locator('#ai-image-panel [data-ai-send]').click();
     await page.waitForFunction(count => window.__task2.sends.length === count, count);
   };
   await start(1);
@@ -686,7 +686,7 @@ test('a hung scoped response expires without success or automatic resend', { tim
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 2, evidence);
   await page.clock.install();
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await page.locator('#ai-image-panel [data-ai-send]').click();
   await page.waitForFunction(() => window.__task2.sends.length === 1);
   await page.clock.fastForward(181_000);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
@@ -702,7 +702,7 @@ test('initial generation shows preparation before delayed status and completes i
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 4, evidence, { initialGeneration: true });
   await page.evaluate(() => window.__task2.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await page.locator('#ai-image-panel [data-ai-send]').click();
   assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-request-phase'), 'preparing');
   await page.screenshot({ path: path.join(evidence, 'normal-preparation.png') });
@@ -720,8 +720,8 @@ test('initial generation shows preparation before delayed status and completes i
   assert.deepEqual(result.counts, { 'task-0': 1, 'task-2': 1, 'task-3': 1, 'task-1': 1 });
   assert.equal(result.state, 'completed');
   assert.equal(result.sends, 1);
-  // 11-10: 라벨 삭제는 관찰을 생략하고 소유 작업에 생성·검수 두 단계만 기록.
-  assert.deepEqual(result.transportStages, ['image-generation', 'full-review'], 'Both real correlated transport stages are accounted for; exactly one generation occurs');
+  // 11-10: 라벨 삭제는 관찰·검수를 생략해 생성 한 단계만 기록(test-ai-release-browser와 같은 기준).
+  assert.deepEqual(result.transportStages, ['image-generation'], 'Label-off flow records only the real generation stage (no source-observation / full-review, 11-10); exactly one generation occurs');
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(evidence, 'normal-generation.json'), JSON.stringify(result, null, 2));
 });
@@ -798,7 +798,8 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
   assertCandidateUnion(assert, preserved.snapshot.tabs[0].generated[0], replacement.workspaces[0].tabs[0].generated[0]);
 
   const origin = new URL(page.url()).origin;
-  for (const entry of [runtime.entry === '/' ? '/preview/' : '/', runtime.entry]) {
+  // 1.7.1: /preview/ 사본을 지웠다 — 정식 진입점(/) 하나에서 저장·다시 열기를 확인한다.
+  for (const entry of [runtime.entry]) {
     await page.evaluate(() => window.__task2Manager.checkpointForClose());
     const receipt = await inspectEntry(page, origin, { ...runtime, entry });
     assert.equal(receipt.resources.some(resource => /\/preview\/js\//.test(resource.url)), false);
@@ -816,12 +817,11 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
     const loadedBefore = performance.getEntriesByType('resource').map(entry => entry.name);
     for (const [file, key] of Object.entries(keys)) {
       const canonical = await import(window.__runtime.base + file + '.js' + q);
-      const alias = await import('/preview/js/' + file + '.js');
-      result[file] = canonical[key] === alias[key];
+      result[file] = typeof canonical[key] !== 'undefined';
     }
     return { result, loadedBefore };
   });
-  assert.ok(Object.values(identities.result).every(Boolean), 'compatibility aliases must forward identical live exports');
+  assert.ok(Object.values(identities.result).every(Boolean), 'canonical modules expose their live exports (1.7.1: /preview/ aliases removed)');
   for (const name of ['main', 'state', 'text-editor', 'ai-label-background']) {
     assert.ok(identities.loadedBefore.includes(`${origin}/js/${name}.js${runtime.moduleQuery}`), `actual boot loaded ${name}`);
   }
@@ -893,7 +893,8 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
       for (const event of events) document.addEventListener(event, check, true);
     });
   }, paneSelectors);
-  await page.locator('#ai-image-install-open').click();
+  // 11-11 작업 나눔: task-0은 그래프 작업(conversionKind graph)이라 그래프 작업대로 연다 — 이미지 단추로 열면 빈 이미지 작업대가 뜬다.
+  await require('./helpers/graph-entry.cjs').openAiWorkflow(page, 'graph');
   await page.locator('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img').evaluate(image => image.decode());
   await page.locator('#ai-image-panel .ai-reference-card .ai-preview-stage > img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
   const visibility = await page.evaluate(() => window.__task5VisibleRasters);

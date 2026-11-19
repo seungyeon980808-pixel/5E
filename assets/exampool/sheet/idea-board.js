@@ -5,8 +5,8 @@
 //  · 판 카드 위에는 단추를 두지 않는다. 오른쪽 단추 = 차림표(보내기·모양·색·잇기·복제·삭제), 왼쪽 단추 = 고르기·옮기기.
 //  · 칸이 좁아지면 판을 자르지 않고 통째로 비율로 줄인다(75%까지). ⌘+휠로 바꾸면 그 배율을 지키고 「맞춤」이면 다시 자동.
 import {qIcon} from './status-icons.js';
-import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1114';
-import {mathToHtml,htmlToMath,attachMathInput,loadMath,renderTex,hasMath} from '../../../js/eq/eq-input.js?v=1113';
+import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1.7.0-four-session-integration';
+import {mathToHtml,htmlToMath,attachMathInput,loadMath,renderTex,hasMath} from '../../../js/eq/eq-input.js?v=1.7.0-four-session-integration';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const now=()=>new Date().toISOString();

@@ -327,7 +327,7 @@ export class RhwpExamBridge {
 
   transaction(label, mutate) {
     const input = this.input;
-    if (!input) throw new Error('먼저 시험지를 열어주세요.');
+    if (!input) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' }); // 1.7.1 B6: 화면 쪽이 파일 메뉴를 펼친다
     // A structured question is one native undo step, including its picture.
     if (this.batchMutation) return mutate(input);
     let result;

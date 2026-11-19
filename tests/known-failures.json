@@ -5,448 +5,64 @@
   "sourceCommit": "737f80c5",
   "suites": [
     {
-      "path": "tests/test-exampool-library-layout-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 30000ms exceeded."
-    },
-    {
       "path": "tests/test-exampool-office-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:"
-    },
-    {
-      "path": "tests/test-exampool-card-typing-perf-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-exampool-authoring-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: FAILURE-PATHS] entry=/preview/"
-    },
-    {
-      "path": "tests/test-button-design-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-graph-editor-selection-workspace-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:"
-    },
-    {
-      "path": "tests/test-graph-modal-textbook-style-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: EVIDENCE_DIR required"
-    },
-    {
-      "path": "tests/test-graph-source-arrow-browser.cjs",
-      "reason": "기대값이 지금 동작과 다름 — The expression evaluated to a falsy value:  assert(out)"
-    },
-    {
-      "path": "tests/test-graph-engine-editor-browser.cjs",
-      "reason": "기대값이 지금 동작과 다름 — Expected values to be strictly equal:  10 !== 12"
-    },
-    {
-      "path": "tests/test-graph-engine-render.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:"
-    },
-    {
-      "path": "tests/test-graph-workbench-result-stability-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: EVIDENCE_DIR required"
-    },
-    {
-      "path": "tests/test-physics-graph-result-audit-browser.cjs",
-      "reason": "기대값이 지금 동작과 다름 — The expression evaluated to a falsy value:  assert(evidence)"
-    },
-    {
-      "path": "tests/test-graph-editor-followup-browser.cjs",
-      "reason": "저장소 밖 자료 필요: outputs/graph-restoration-20261008 기록이 있어야 돌아감"
-    },
-    {
-      "path": "tests/test-graph-reconstruction-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /경과 시간/. Input:"
-    },
-    {
-      "path": "tests/test-graph-extension-ui-browser.cjs",
-      "reason": "이 Mac 전용: 검사 안에 다른 작업 폴더 경로(/Users/parkseungyeon/.codex/worktrees/analyable-function/5E)와 그 폴더의 git 기록이 박혀 있어 GitHub에서는 git을 실행하지 못함(로컬은 통과)"
-    },
-    {
-      "path": "tests/test-graph-plane-engine-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:"
-    },
-    {
-      "path": "tests/test-graph-workbench-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-graph-source-typography-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: EVIDENCE_DIR required"
-    },
-    {
-      "path": "tests/test-graph-reconstruction-upright.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: EVIDENCE_DIR required"
-    },
-    {
-      "path": "tests/test-graph-boxed-axis-render.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: EVIDENCE_DIR required"
-    },
-    {
-      "path": "tests/test-graph-workbench-stability-browser.cjs",
-      "reason": "기본값 차이: 새 이미지 작업의 보조선 기본값이 1.6.3(remove)과 다름(keep). 보조선 정의는 restoration-strength-harness 세션 작업"
-    },
-    {
-      "path": "tests/test-graph-analytic-recovery-browser.cjs",
-      "reason": "저장소 밖 자료 필요: outputs/graph-restoration-20261008 기록이 있어야 돌아감"
-    },
-    {
-      "path": "tests/test-graph-editor-tracing-browser.cjs",
-      "reason": "저장소 밖 자료 필요: outputs/graph-restoration-20261008 기록이 있어야 돌아감"
-    },
-    {
-      "path": "tests/test-rhwp-exam-workspace-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: top bar is 48px + line (10-24 시안 「막대 48」)"
-    },
-    {
-      "path": "tests/test-rhwp-exam-menu-focus-browser.cjs",
-      "reason": "고정 파일 확인 실패: 한글 작업실 SDK 자원의 실제 바이트 확인이 맞지 않음"
-    },
-    {
-      "path": "tests/test-rhwp-exam-ai-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-rhwp-exam-drafts-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
+      "reason": "2026-11-17 B1: 낡은 단언 3개는 고침(자료 칸 2×2 아이콘 461c2245·카드 이름표 숨김 104c6990·지문 입력은 .eq-ce 9ca4a5a6). 남은 실패: 243줄 그림을 표 옆으로 끌 때 안내 글이 「…에 놓기 · 가로 묶음」으로 바뀌지 않음(기능은 placement-layer.js:105에 남아 있음) — 끌기가 시작 안 되는 검사 문제인지 제품 결함인지 미판정"
     },
     {
       "path": "tests/test-rhwp-exam-graph-zoom-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-rhwp-exam-edit-navigation-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-graph-library-compact-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\\n\\n assert(await ui.locator('[data-unilib-crop-graph]').isVisible"
-    },
-    {
-      "path": "tests/test-graph-render-refinement.mjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: EVIDENCE_DIR required"
-    },
-    {
-      "path": "tests/test-four-session-candidate-smoke.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 10000ms exceeded."
-    },
-    {
-      "path": "tests/test-stable-library-startup-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: web listing has no parts/PDF runtime gate"
-    },
-    {
-      "path": "tests/test-frontend-remediation-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:"
-    },
-    {
-      "path": "tests/test-ai-conversation-storage-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 10000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-task-notice-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Error: strict mode violation: locator('#ai-image-panel [data-ai-comments-apply]') resolved to 2 elements:"
-    },
-    {
-      "path": "tests/test-ai-failure-log-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: FAILURE-LOG] entry=/preview/"
-    },
-    {
-      "path": "tests/test-ai-batch-source-browser.cjs",
-      "reason": "버그 후보: 원본 없는 작업 2개를 함께 고르면 '선택한 작업 2개 변환하기'가 눌리는 상태(1개일 때는 막힘). 실행 버튼·빈 작업대 배치는 검사를 지금 화면에 맞춤"
-    },
-    {
-      "path": "tests/test-ai-compare-layout-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: heading keeps its 41px height"
+      "reason": "2026-11-17 B1: 결정 필요(d): 검사가 보는 「한글로 보내기 → 잘라 고르기 → 같은 그림 다시 보내기(연결 유지)」 흐름이 86f9b7df(11-14)에서 「클립보드에 넣기」로 바뀌어 없어짐. 제품의 5e:exam-send-graph를 보내는 곳이 없음(js/rhwp-exam-workspace.js:1703 받는 쪽만 남음). 지울지, 클립보드→⌘V 붙여넣기로 다시 쓸지(다시 보내기 연결 유지가 아직 기능인지) 사용자 결정"
     },
     {
       "path": "tests/test-ai-output-previews-browser.cjs",
-      "reason": "54개 중 38개 실패. 상당수가 2026-10-16(83201a54)에 없어진 묶음 ZIP 내보내기를 봄 — 파일을 나눠 정리 필요"
-    },
-    {
-      "path": "tests/test-ai-workspace-deletion-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Error: Cannot read properties of null (reading 'taskId')"
-    },
-    {
-      "path": "tests/test-ai-library-transfer-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:"
-    },
-    {
-      "path": "tests/test-ai-workspace-multiselect-browser.cjs",
-      "reason": "실행 버튼은 지금 화면에 맞춤. 다음 단계: 작업 목록의 넷째 작업 선택 단추를 누르지 못함(목록 배치 확인 필요)"
+      "reason": "2026-11-17 B1: 결정 필요(d): 검사가 스스로 CURRENT_UI_CONTRACT_GAP을 던진다 — 결과 처리(배경·분리·격자) 설정이 화면에서 빠진 것(506f30bf v6)을 옛 UI로 확인하는 2,145줄 검사, 앞부분 SHA 고정도 T 수정으로 어긋남. 지울지/API 수준으로 다시 쓸지 결정"
     },
     {
       "path": "tests/test-ai-workbench-integration-browser.cjs",
-      "reason": "실행 버튼 기준은 지금 화면에 맞춤. 다음 단계: 슬라이더 비교([data-ai-compare])가 '비교 ▾' 메뉴 안으로, 이미지 작업의 [data-ai-send]는 숨김으로 바뀐 것을 따라가야 함"
-    },
-    {
-      "path": "tests/test-mode-projection-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: lite matrix 4: 212 -> 714"
-    },
-    {
-      "path": "tests/test-funcgraph-selection-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-release-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-workspace-lifecycle-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Error: strict mode violation: locator('#ai-image-panel [data-ai-comments-apply]') resolved to 2 elements:"
-    },
-    {
-      "path": "tests/test-smoke-contract-browser.cjs",
-      "reason": "시간 초과: 화면 요소를 찾지 못함(화면 구조가 바뀐 뒤 검사가 따라가지 못한 것으로 추정)"
-    },
-    {
-      "path": "tests/test-ai-task-elapsed-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Exactly one canonical primary action bound to preparation"
-    },
-    {
-      "path": "tests/test-label-background-invariance-browser.cjs",
-      "reason": "실행 버튼은 지금 화면에 맞춤. 다음 단계: 기대값이 지금 동작과 다름(line 60) — 라벨 기본값 '유지'(83201a54) 확인 필요"
-    },
-    {
-      "path": "tests/test-rhwp-labeler-harness-browser.cjs",
-      "reason": "실행 버튼은 지금 화면에 맞춤. 다음 단계: 기대값이 지금 동작과 다름(line 53) — 라벨 기본값 '유지'(83201a54) 확인 필요"
-    },
-    {
-      "path": "tests/test-labeler-selection-edit-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: er:261:19) at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5) at node:internal/main/run_main_module:33:47 {"
-    },
-    {
-      "path": "tests/test-ai-label-read-hwp-send-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-labeler-attached-leaders-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: er:261:19) at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5) at node:internal/main/run_main_module:33:47 {"
+      "reason": "2026-11-17 B1: 결정 필요(d): 6개 중 2개가 없어진 화면을 씀 — 「연결 창」[data-ai-connection-open](24219c8a 10-12에 index.html에서 빠짐)으로 모델 새로고침, Lite 「변환 설정」 칸(시안 v6 506f30bf로 숨김). 나머지는 통과. 이 둘을 지울지 결정. 검사 하나가 8분 넘게 걸림"
     },
     {
       "path": "tests/test-preview-box-edit-verification-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 10000ms exceeded."
-    },
-    {
-      "path": "tests/test-preview-box-edit-compact-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 10000ms exceeded."
+      "reason": "2026-11-17 B1: 결정 필요(d): 「박스 수정 방식」(고급·실험) 칸은 제품에서 늘 숨김(js/ai-panel.js:683). 검사가 억지로 펼쳐도 제품이 다시 숨겨 selectOption 실패. 3개 중 2개는 통과. 실험 후보 검사를 지울지 결정"
     },
     {
       "path": "tests/test-ai-settings-panel-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: exactly the two user-facing model choices"
-    },
-    {
-      "path": "tests/test-ai-image-label-workflow-browser.cjs",
-      "reason": "실행 버튼은 지금 화면에 맞춤. 다음 단계: 기대값이 지금 동작과 다름 — 원본 보존 결과의 삽입 허용(line 155), 라벨 기본값 '유지'(83201a54) 확인 필요"
-    },
-    {
-      "path": "tests/test-ai-label-timeout-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: FAILURE-LOG] entry=/preview/"
+      "reason": "2026-11-17 B1: 결정 필요(d): 6개 중 3개가 숨긴 설정을 누름 — 「자동 검수」(verification) 줄·「보조선 제거 도움말」·RAW 검토 때 정책 칸 숨김 기대(시안 v6 506f30bf로 설정 줄 숨김, 11-10 c9d1da3f 검수 없음 기본). 나머지 3개 통과"
     },
     {
       "path": "tests/test-ai-editable-drafts-browser.cjs",
-      "reason": "실행 버튼은 지금 화면에 맞춤. 다음 단계: [data-ai-edit-review-draft] 단추를 찾지 못함"
+      "reason": "2026-11-17 B1: 결정 필요(d): 「캔버스에서 편집」·「라벨 검수」[data-ai-verify-label-draft] 단추가 제품에서 늘 hidden(11-10 c9d1da3f 짧은 지시문·검수 없음). 숨긴 단추를 누르는 검사라 지울지/다시 쓸지 결정"
     },
     {
       "path": "tests/test-ai-source-label-pipeline-browser.cjs",
-      "reason": "실행 버튼은 지금 화면에 맞춤. 다음 단계: 기대값이 지금 동작과 다름(assertApprovedGeneration) — 라벨 기본값 '유지'(83201a54) 확인 필요"
+      "reason": "2026-11-17 B1: 결정 필요(d): 7개 중 4개 실패 — 「미리보기 이미지 = 생성 PNG 바이트」 계약이 흑백 후처리(58240dda 11-10) 뒤 성립 안 함, 옛 관찰→생성→검수 파이프라인 전제(c9d1da3f). 계약을 다시 정해야 함"
     },
     {
       "path": "tests/test-four-session-integration-browser.cjs",
-      "reason": "시간 초과: 화면 요소를 찾지 못함(화면 구조가 바뀐 뒤 검사가 따라가지 못한 것으로 추정)"
-    },
-    {
-      "path": "tests/test-four-session-resource-closure-browser.cjs",
-      "reason": "고정 파일 크기 불일치: vendor/rhwp-studio 번들 크기가 검사에 적힌 값과 다름"
-    },
-    {
-      "path": "tests/test-page-context-anchor-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-created-task-selection-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-task-menu-viewport-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.boundingBox: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-formula-spacing-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.dblclick: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-graph-partial-domain-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-personal-graph-save-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-local-tools-browser.cjs",
-      "reason": "기대값이 지금 동작과 다름: 지우개 방식 표시가 버튼·그림 칸 둘 다에 붙고, 지우기가 새 결과를 만들지 않는 흐름으로 바뀐 것으로 보임(재작성 필요)"
-    },
-    {
-      "path": "tests/test-ai-visible-label-output-browser.cjs",
-      "reason": "AI로 만든 그림의 '원본 편집' 뒤 #exam-edit-bar가 뜨지 않음(test-rhwp-exam-ai와 같은 곳). 캔버스 삽입 단추는 검사를 지금 화면에 맞춤"
-    },
-    {
-      "path": "tests/test-ai-task-visible-transfer-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 15000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-graph-task-transfer-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 15000ms exceeded."
-    },
-    {
-      "path": "tests/test-ai-hwp-direct-output-browser.cjs",
-      "reason": "버그 후보: 720px 폭에서 아래 출력 줄의 '한글로 보내기'가 화면 밖으로 나감. 삽입 단추·테두리·닫기 단추 위치는 검사를 지금 화면에 맞춤"
-    },
-    {
-      "path": "tests/test-feedback-document-flow-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-feedback-workspace-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:"
-    },
-    {
-      "path": "tests/test-feedback-linked-document-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-feedback-graph-controls-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-canvas-auto-snap-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:"
-    },
-    {
-      "path": "tests/test-hwp-escape-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:"
-    },
-    {
-      "path": "tests/test-hwp-confirm-shortcuts-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-canvas-brush-erase-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:"
-    },
-    {
-      "path": "tests/test-hwp-footer-menu-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: 아래 「한글에 넣기」는 없고 맨 위 「hwp」가 실제로 눌린다 at 1440/light: {\"send\":false,\"hwp\":{\"rect\":{\"left\":0,\"right\":0,\"top\":0,\"b"
-    },
-    {
-      "path": "tests/test-bug-report-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.selectOption: Timeout 30000ms exceeded."
+      "reason": "2026-11-17 B1: 결정 필요(d): 10-10 네 세션 통합 QA 하네스(QA1~8, 요구 60여 개). QA1 WebKit만 통과, QA2~ 대부분 숨긴 설정(raw·정책 행렬)·옛 흐름을 요구, 8분 안에 안 끝남. 통째로 지울지/QA별로 나눌지 결정"
     },
     {
       "path": "tests/test-blur-reveal-product-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-teacher-flow-library-send-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: 2×2: 「보내기」가 이미지 객체화 자리에"
-    },
-    {
-      "path": "tests/test-teacher-flow-ai-image-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Error: strict mode violation: locator('#ai-image-panel').locator('[data-ai-comments-apply]') resolved to 2 elements:"
-    },
-    {
-      "path": "tests/test-teacher-flow-label-export-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-teacher-flow-graph-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-teacher-flow-hwp-exam-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.waitFor: Timeout 30000ms exceeded."
-    },
-    {
-      "path": "tests/test-exampool-side-materials-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 60000ms exceeded."
-    },
-    {
-      "path": "tests/test-exampool-paper-mix-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 60000ms exceeded."
-    },
-    {
-      "path": "tests/test-exam-choices-with-question-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: tests/test-exam-choices-with-question-browser.cjs [EXAMPOOL-EXAM-CHOICES-WITH-QUESTION] entry=/preview/ ✖ chromium: choices stay with their "
-    },
-    {
-      "path": "tests/test-exam-pick-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 60000ms exceeded."
-    },
-    {
-      "path": "tests/test-exampool-page-view-perf-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 90000ms exceeded."
-    },
-    {
-      "path": "tests/test-exampool-card-typing-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Error: Cannot read properties of null (reading 'click')"
-    },
-    {
-      "path": "tests/test-main-canvas-perf-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: 선을 눌러 고른다"
-    },
-    {
-      "path": "tests/test-exam-review-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 60000ms exceeded."
-    },
-    {
-      "path": "tests/test-exam-form-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: Timeout 60000ms exceeded."
-    },
-    {
-      "path": "tests/test-typeset-gaps-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: chromium: +1.0mm before the choices is exact (4.1 → 5.4)"
-    },
-    {
-      "path": "tests/test-ai-create-references-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: AssertionError [ERR_ASSERTION]: chromium: the empty slot keeps its import menu"
-    },
-    {
-      "path": "tests/test-app-switch-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.click: Timeout 5000ms exceeded."
+      "reason": "2026-11-17 B1: 결정 필요(d)+다시 쓰기(b): 4개 중 2개 실패 — ① 변환 오류 한 번에 불러오기 틀이 「failed」(「변환하지 못했어요」)가 되길 기대하나, 11-09(2d671587)부터 오류는 자동 재시도 3번(js/ai-image-label-run.js:164 AI_RETRY_POLICY)·Luna 대체로 이어져 바로 실패 화면이 안 옴 — 「AI 변환은 실패로 끝나면 안 됨」 결정과 실패 화면 단계를 어떻게 맞출지 결정 ② 그래프 카드 검사가 모든 작업을 graph로 심고 이미지 단추로 열어 11-11 작업대 나눔 뒤 원본이 안 뜸 — 고정 자료(fixtures/ai-image-label-workflow.cjs)에 그래프 작업대로 여는 길이 필요"
     },
     {
       "path": "tests/test-clipboard-hub-browser.cjs",
-      "reason": "2026-11-15 전체 검진: 11-14 끝(2ce3878a)에서도 같은 실패 — 옛 화면 기준·증거 폴더·옛 파일 필요 등, 1.7.1에서 정리. 첫 오류: locator.dblclick: Timeout 60000ms exceeded."
-    },
-    {
-      "path": "tests/test-shortcut-simplification-browser.cjs",
-      "reason": "2026-11-16 출시 갈래 전체 검사: 흔들림 — 혼자 돌리면 4번 중 3번 통과, 전체 실행 부하에서 찾기 창 Esc 뒤 보임 판정(34줄)이 늦게 맞음. 코드 변화 없음"
-    },
-    {
-      "path": "tests/test-user-screen-feedback-browser.cjs",
-      "reason": "2026-11-16 출시 갈래 전체 검사: 흔들림 — WebKit에서 그래프 축 이름 끌기 위치가 가끔 튐(크롬 통과). 11-15 검진 갈래(737f80c5)에서도 3번 중 2번 같은 실패, 코드 변화 없음. 1.7.1에서 원인 조사"
-    },
-    {
-      "path": "tests/test-ai-workbench-polish-browser.cjs",
-      "reason": "CI 전용 실패: 작업 30개 성능 측정이 느린 실행기에서 기준 초과(다시 돌려도 같음) — 맥에서는 시작 주소 / 와 /preview/ 모두 통과(2026-11-16), GitHub 맥 실행기에서만 실패. 1.7.1에서 CI 환경 차이 조사"
-    },
-    {
-      "path": "tests/test-teacher-flow-pdf-library-browser.cjs",
-      "reason": "CI 전용 실패: 라이브러리에 교과서 시험 자료(teacher-flow-textbook) 결과가 30초 안에 안 나타남 — 맥에서는 시작 주소 / 와 /preview/ 모두 통과(2026-11-16), GitHub 맥 실행기에서만 실패. 1.7.1에서 CI 환경 차이 조사"
+      "reason": "2026-11-17 B1: 흔들림(c): 넣으면 닫히는 것(40c785b4)에 맞춰 고친 뒤 5번 중 2번 통과. 실패는 늘 27줄 — ⌘C 뒤 항목 수 2를 기다린 직후 목록에 「사각형」이 없음. 같은 단계만 4번 따로 돌리면 4번 다 들어옴(diag/clip-copy.cjs). 원인 미확인"
     },
     {
       "path": "tests/test-school-form-browser.cjs",
-      "reason": "CI 전용 실패: 학교 양식 틀 고르기·내려받기 기다림이 60초를 넘김 — 맥에서는 시작 주소 / 와 /preview/ 모두 통과(2026-11-16), GitHub 맥 실행기에서만 실패. 1.7.1에서 CI 환경 차이 조사"
+      "reason": "2026-11-18 1.7.1: CI(macOS 실행기) WebKit에서만 멈춤 — 1.7.0 때부터 같은 증상, 로컬 크롬·WebKit은 통과. 실패 때 stall-probe가 <엔진>-stall.json을 남김(원인 진단 중)"
+    },
+    {
+      "path": "tests/test-typeset-gaps-browser.cjs",
+      "reason": "2026-11-18 1.7.1: CI(macOS 실행기) WebKit에서만 멈춤 — evaluate 뒤 rAF 기다림이 180초 끝나지 않음(느림이 아니라 멈춤), 로컬은 통과. stall-probe로 진단 중"
     },
     {
       "path": "tests/test-library-preview-settle-browser.cjs",
-      "reason": "CI 흔들림(2026-11-16): 같은 커밋 111692ec의 push 실행과 맥 전체 검사에서는 통과, PR 실행에서만 WebKit 미리보기 정착 기다림 30초 초과. 1.7.1에서 조사"
+      "reason": "2026-11-18 1.7.1: CI(macOS 실행기)에서만 가끔 실패 — 1.7.0 때도 같은 이유로 목록에 있었음(c5101205), 로컬 두 엔진 통과"
     },
     {
       "path": "tests/test-rhwp-exam-modes-browser.cjs",
-      "reason": "CI 흔들림(2026-11-16): 같은 커밋 111692ec의 push 실행과 맥 전체 검사에서는 통과, PR 실행에서만 한글 모드 검사 시간 초과(다시 돌려도 실패). 1.7.1에서 조사"
+      "reason": "2026-11-18 1.7.1: CI WebKit에서만 가끔 실패(「modes and focus tools」 42초) — 1.7.0 때도 CI 흔들림으로 목록에 있었음(c5101205), 로컬 두 엔진 통과"
     }
   ]
 }

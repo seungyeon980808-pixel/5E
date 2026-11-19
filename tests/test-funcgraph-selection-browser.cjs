@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
-const base = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/';
+const base = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/';
 const evidence = process.env.EVIDENCE_DIR || path.join(__dirname, '..', '.omo', 'evidence', 'task-12-funcgraph-selection');
 
 async function snapshot(page) {
@@ -47,7 +47,7 @@ async function assertFiniteFuncgraphFrame(page, graph, label) {
 }
 
 async function createFuncgraph(page) {
-  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+  await require('./helpers/graph-entry.cjs').openGraphDirect(page);
   await page.locator('#gm-tab-func-btn').click();
   await page.locator('#gm-add-series').click();
   await page.locator('#gm-expr').last().fill('x^2');

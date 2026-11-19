@@ -2946,6 +2946,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!link) { link = document.createElement('span'); link.dataset.aiTitleLink = ''; label.after(link); }
       if (link.textContent !== linkText) link.textContent = linkText;
       link.hidden = !linkText;
+      // 11-17(시안 b17): 연결 줄이 두 줄로 넘어가면 머리 줄을 한 줄만큼 늘린다(제목이 위아래 줄에 걸치지 않게).
+      const head = title.closest('.ai-head');
+      if (head) {
+        const lines = linkText && link.getBoundingClientRect().height > parseFloat(getComputedStyle(link).lineHeight) * 1.5 ? '2' : '';
+        if ((head.dataset.aiLinkLines || '') !== lines) { if (lines) head.dataset.aiLinkLines = lines; else delete head.dataset.aiLinkLines; }
+      }
       const full = linkText ? `${text} — ${target.examCard ? '문항 카드' : '한글'} ${target.label || '그림'}에서 열었습니다. 결과를 확인한 뒤 「${target.examCard ? '문항 카드에 넣기' : '한글 파일에 넣기'}」를 누르세요.` : text;
       if (title.title !== full) title.title = full;
     }
@@ -7010,7 +7016,7 @@ ${chatText}` : ''}`;
     if (isClipDrag(event) && !event.dataTransfer.files?.length) {
       event.preventDefault();
       const id = event.dataTransfer.getData('application/x-5e-drawer');
-      void import('./drawer.js?v=1114').then(async m => { const item = await m.clipGet(id); window.fiveEAiAddSource(item); if (item?.moving) await m.clipConsume(item.id); })
+      void import('./drawer.js?v=1.7.0-four-session-integration').then(async m => { const item = await m.clipGet(id); window.fiveEAiAddSource(item); if (item?.moving) await m.clipConsume(item.id); })
         .catch(error => setStatus(error?.message || '클립보드 그림을 가져오지 못했습니다.', 'warn'));
       return;
     }
@@ -7244,7 +7250,7 @@ ${chatText}` : ''}`;
         await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
         if (output.isCurrent()) setStatus('현재 보이는 이미지와 라벨을 복사했습니다 · 5E 클립보드에도 넣었습니다.','ok');
         // 11-14 5E 클립보드: AI 결과 복사 = 클립보드에 넣기. 맥 클립보드에 쓴 같은 그림을 「밖에서」로 다시 넣지 않게 서명을 기억한다.
-        void (async () => { const data = await output.png; const [{ clipAdd }, view] = await Promise.all([import('./drawer.js?v=1114'), import('./clipboard-view.js?v=1114')]);
+        void (async () => { const data = await output.png; const [{ clipAdd }, view] = await Promise.all([import('./drawer.js?v=1.7.0-four-session-integration'), import('./clipboard-view.js?v=1.7.0-four-session-integration')]);
           // 11-14 지적 22: 그래프 결과는 그래프 객체도 같이 넣는다 — 캔버스에 꺼내면 그림이 아니라 고칠 수 있는 그래프로 나온다(그림은 미리보기용).
           const objects = item.graphResult?.objects?.length ? structuredClone(item.graphResult.objects) : null;
           await clipAdd({ src: data, name: item.name || 'AI 결과', source: '5E_image', kind: objects || String(conversionKind).startsWith('graph') ? 'graph' : 'img', ...(objects ? { objects } : {}) });
@@ -7510,7 +7516,14 @@ ${chatText}` : ''}`;
       generated:!graph && candidate?[snapshotImageItem(candidate)]:[],
       priorGraph:graph && candidate?.graphResult ? snapshotImageItem(candidate) : null,
     };
-    return {...batchOwner(id),snapshot:{title:tab.title,dataUrl:source?.data,revisionId:source?.id,operation,model:selection.model,options,comments,candidate:candidate?snapshotImageItem(candidate):null,scopeEdit:operation==='scoped-edit'?{comments,promptMode:scopedPromptMode?.value || 'legacy'}:undefined,request:tab.input||'',discussion:compactConversation(tab.conversationMessages||[])}};
+    return {...batchOwner(id),snapshot:{title:tab.title,dataUrl:source?.data,revisionId:source?.id,operation,model:selection.model,options,comments,candidate:candidate?snapshotImageItem(candidate):null,scopeEdit:operation==='scoped-edit'?{comments,promptMode:scopedPromptMode?.value || 'legacy'}:undefined,request:batchRequest(id,tab),discussion:compactConversation(tab.conversationMessages||[])}};
+  }
+  // 1.7.1: 11-11부터 실행 단추는 숨은 요청 칸을 「이 작업의 사용자 대화 + 대화 입력 칸」으로 덮어쓴 뒤 보낸다(syncRequestFromChat).
+  // 일괄 실행도 같은 글을 써야 같은 작업이 같은 캐시 열쇠를 갖는다 — 숨은 칸에 남은 옛 요청(11-11 전 저장분)을 그대로 보내면
+  // 앞에서 한 번 만든 결과를 다시 쓰지 못하고 요청이 한 번 더 나갔다. 대화 입력 칸은 하나라 지금 작업에만 붙인다.
+  function batchRequest(id,tab){
+    if(id===activeTaskTabId)return composeRequestFromChat();
+    return (tab.conversationMessages||[]).filter(message=>message.role==='user').map(message=>message.text).filter(Boolean).join('\n');
   }
   function preflightBatch(entry) {
     const tab=taskTabs.get(entry.taskId),snapshot=entry.snapshot;

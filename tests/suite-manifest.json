@@ -216,6 +216,12 @@
       ]
     },
     {
+      "path": "tests/test-hancom-file-equation.mjs",
+      "findingIds": [
+        "HANCOM-EQUATION-SCRIPT"
+      ]
+    },
+    {
       "path": "tests/test-exampool-sheet.mjs",
       "findingIds": [
         "EXAMPOOL-STRUCTURED-QUESTION",
@@ -470,13 +476,6 @@
       ]
     },
     {
-      "path": "tests/test-graph-modal-fixed-selection.mjs",
-      "findingIds": [
-        "GRAPH-CUMULATIVE-SOURCE"
-      ],
-      "classificationRationale": "Node vm executes actual modal handlers with DOM/transport substitutes; no browser, server, or provider. Source browser classification was a runner-routing label."
-    },
-    {
       "path": "tests/test-graph-trace-coordinates.mjs",
       "findingIds": [
         "GRAPH-CUMULATIVE-SOURCE",
@@ -644,9 +643,6 @@
       "path": "tests/test-image-background.mjs"
     },
     {
-      "path": "tests/test-lite-workflow-state.mjs"
-    },
-    {
       "path": "tests/test-png-exif-regression.mjs"
     },
     {
@@ -693,12 +689,6 @@
     },
     {
       "path": "tests/test-library-import-policy.mjs"
-    },
-    {
-      "path": "tools/mcp-5e/test/bridge-security.test.mjs"
-    },
-    {
-      "path": "tools/mcp-5e/test/server-pairing.test.mjs"
     },
     {
       "path": "desktop/label-leader-attachment.test.cjs",
@@ -810,13 +800,6 @@
       ]
     },
     {
-      "path": "tests/test-image-split.cjs",
-      "findingIds": [
-        "USER-SAFARI-U13",
-        "MANUAL-IMAGE-SPLIT"
-      ]
-    },
-    {
       "path": "tests/test-graph-draft-history.mjs",
       "findingIds": [
         "GRAPH-DRAFT-HISTORY"
@@ -901,12 +884,6 @@
       ]
     },
     {
-      "path": "tests/test-qr-encode.mjs",
-      "findingIds": [
-        "HWP-QR-ENCODE"
-      ]
-    },
-    {
       "path": "tests/test-science-scripts.mjs",
       "findingIds": [
         "HWP-SCIENCE-SCRIPTS"
@@ -946,6 +923,24 @@
       "path": "tests/test-publication-receipt.cjs",
       "findingIds": [
         "PREVIEW-RECEIPT-PATH"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-library-answer.mjs",
+      "findingIds": [
+        "BL3-B3-ANSWER-LABEL"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-card-fail-reason.mjs",
+      "findingIds": [
+        "BL3-B12-FAIL-REASON"
+      ]
+    },
+    {
+      "path": "tests/test-typeset-paper-mm.mjs",
+      "findingIds": [
+        "BL3-B7-PAPER-MM"
       ]
     }
   ],
@@ -1178,24 +1173,6 @@
       ]
     },
     {
-      "path": "tests/test-graph-editor-followup-browser.cjs",
-      "findingIds": [
-        "G15"
-      ]
-    },
-    {
-      "path": "tests/test-graph-reconstruction-browser.cjs",
-      "findingIds": [
-        "GRAPH-NATIVE-RECONSTRUCTION"
-      ]
-    },
-    {
-      "path": "tests/test-graph-extension-ui-browser.cjs",
-      "findingIds": [
-        "GRAPH-EXTENSION-UI"
-      ]
-    },
-    {
       "path": "tests/test-graph-editor-unified-browser.cjs",
       "findingIds": [
         "GRAPH-ANALYTIC-EDITOR"
@@ -1265,18 +1242,6 @@
       "path": "tests/test-graph-workbench-stability-browser.cjs",
       "findingIds": [
         "GRAPH-WORKBENCH"
-      ]
-    },
-    {
-      "path": "tests/test-graph-analytic-recovery-browser.cjs",
-      "findingIds": [
-        "GRAPH-RELATION-ANALYTIC"
-      ]
-    },
-    {
-      "path": "tests/test-graph-editor-tracing-browser.cjs",
-      "findingIds": [
-        "GRAPH-EDITOR-TRACING"
       ]
     },
     {
@@ -1381,14 +1346,6 @@
         "LOCAL-OCR-RESOURCE-CLOSURE",
         "AI-LABEL-SOURCE-CANDIDATES",
         "AI-LABEL-OWNERSHIP"
-      ]
-    },
-    {
-      "path": "tests/test-graph-library-compact-browser.cjs",
-      "findingIds": [
-        "UX-U29-ACTUAL-LIBRARY-IMPORT",
-        "GRAPH-LIBRARY-UNION",
-        "GRAPH-EDITOR-LIBRARY-COMPACT"
       ]
     },
     {
@@ -2455,6 +2412,37 @@
       "path": "tests/test-clipboard-hub-browser.cjs",
       "findingIds": [
         "CLIPBOARD-HUB-1114"
+      ]
+    },
+    {
+      "path": "tests/test-elapsed-clock-browser.cjs",
+      "findingIds": [
+        "BL3-B13-ELAPSED-CLOCK"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-card-171-browser.cjs",
+      "findingIds": [
+        "BL3-B21-COMBO-FIT",
+        "BL3-TILE-DELETE-CLEARS-FIGURE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-question-delete-browser.cjs",
+      "findingIds": [
+        "BL6-R1-TABLE-QUESTION-DELETE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-dead-end-browser.cjs",
+      "findingIds": [
+        "BL6-B6-HWP-DEAD-END"
+      ]
+    },
+    {
+      "path": "tests/test-171-desktop-b3-browser.cjs",
+      "findingIds": [
+        "B3"
       ]
     }
   ],

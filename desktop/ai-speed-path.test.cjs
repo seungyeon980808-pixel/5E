@@ -23,7 +23,6 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-image-transport\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-request-plan\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-prompt\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
-  assert.doesNotMatch(panel, /ai-structure-lock\.js/);
   assert.match(panel, /ai-scene-fastpath\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-motif-catalog\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(panel, /ai-local-asset-router\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
@@ -36,8 +35,8 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   // runtime. Pin its full identity, including the query, for both entrypoints.
   const origin = "https://unit.invalid";
   const expectedQuery = "?v=1.7.0-four-session-integration";
-  for (const entry of ["/", "/preview/"]) {
-    const html = entry === "/" ? index : fs.readFileSync(path.join(__dirname, "..", "preview", "index.html"), "utf8");
+  for (const entry of ["/"]) {
+    const html = index;
     const entryUrl = new URL(entry, origin).href;
     const mainUrl = mainModuleUrl(html, entryUrl);
     assert.equal(mainUrl, `${origin}/js/main.js${expectedQuery}`, `${entry} loads the canonical integrated entrypoint`);

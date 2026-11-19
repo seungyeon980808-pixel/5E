@@ -30,3 +30,50 @@ test('exam files: autosave, backups, named exports stay inside 5E/출제', async
   assert.equal(files.inside(one.path), one.path);
   assert.equal(safeName('a/b:c'), 'a_b_c');
 });
+
+test('exam files: 백업 보관 규칙 — 최근 24개 + 30일 동안 하루 마지막 하나', () => {
+  const { backupsToTrash } = require('./exam-files.cjs');
+  // 10-01 ~ 11-09, 하루 세 개
+  const days = []; for (let i = 0; i < 40; i++) { const t = new Date(2026, 9, 1 + i); days.push(`${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`); }
+  const backups = days.flatMap(day => ['0900', '1200', '1500'].map(time => ({ day, time })));
+  const out = backupsToTrash(backups, '2026-11-09');
+  const kept = backups.filter(b => !out.includes(b));
+  // 최근 24개 = 마지막 8일 × 3, 그 앞 22일(10-11 ~ 11-01)은 하루 하나, 10-10 이전은 모두 휴지통
+  assert.equal(kept.length, 24 + 22);
+  assert.ok(kept.some(b => b.day === '2026-10-11' && b.time === '1500'));
+  assert.ok(!kept.some(b => b.day === '2026-10-10'));
+  assert.ok(!kept.some(b => b.day === '2026-10-11' && b.time === '0900'));
+  assert.equal(backupsToTrash(backups.slice(-10), '2026-11-09').length, 0, '24개 이하면 아무것도 옮기지 않음');
+});
+
+test('exam files: 넘친 백업은 휴지통으로(폴더째 또는 파일만), 규칙 밖 파일은 그대로', async t => {
+  const docs = fs.mkdtempSync(path.join(os.tmpdir(), '5e-exam-prune-'));
+  t.after(() => fs.rmSync(docs, { recursive: true, force: true }));
+  const trashed = [];
+  const trashDir = path.join(docs, '휴지통');
+  const trash = async file => { trashed.push(path.relative(docs, file)); fs.mkdirSync(trashDir, { recursive: true }); fs.renameSync(file, path.join(trashDir, `${trashed.length}-${path.basename(file)}`)); };
+  let clock = new Date(2026, 10, 16, 9, 0);
+  const files = createExamFiles({ documentsPath: docs, now: () => clock, trash });
+  const backup = path.join(docs, '5E', '출제', '자동 저장', '백업');
+  const put = (day, time) => { fs.mkdirSync(path.join(backup, day), { recursive: true }); fs.writeFileSync(path.join(backup, day, `${time}.json`), '{}'); };
+  for (let h = 0; h < 30; h++) put('2026-11-15', `${String(Math.floor(h / 6) + 8).padStart(2, '0')}${String((h % 6) * 10).padStart(2, '0')}`);
+  put('2026-09-01', '1000'); put('2026-09-01', '1100');          // 30일 밖 → 폴더째
+  fs.writeFileSync(path.join(backup, '2026-11-15', '메모.txt'), 'x'); // 규칙 밖 → 그대로
+  fs.mkdirSync(path.join(backup, '내 폴더'));                        // 규칙 밖 → 그대로
+  await files.autosave('{"now":1}');                                  // 새 백업 2026-11-16/0900 + 정리
+  const left = fs.readdirSync(path.join(backup, '2026-11-15')).filter(n => n.endsWith('.json'));
+  assert.equal(left.length, 23, '오늘 1개 + 어제 23개 = 최근 24개');
+  assert.ok(left.includes('1250.json'), '어제 마지막 것은 남음');
+  assert.ok(!fs.existsSync(path.join(backup, '2026-09-01')), '30일 밖 하루 폴더는 폴더째 휴지통');
+  assert.ok(trashed.includes(path.join('5E', '출제', '자동 저장', '백업', '2026-09-01')));
+  assert.ok(fs.existsSync(path.join(backup, '2026-11-15', '메모.txt')) && fs.existsSync(path.join(backup, '내 폴더')));
+  assert.ok(fs.existsSync(path.join(backup, '2026-11-16', '0900.json')));
+  assert.equal(trashed.length, 1 + 7, '폴더 1개 + 어제 앞쪽 파일 7개');
+  // 휴지통이 실패해도 자동 저장은 성공
+  const failing = createExamFiles({ documentsPath: docs, now: () => new Date(2026, 10, 16, 10, 0), trash: async () => { throw new Error('no trash'); } });
+  for (let h = 0; h < 30; h++) put('2026-11-14', `${String(Math.floor(h / 6) + 8).padStart(2, '0')}${String((h % 6) * 10).padStart(2, '0')}`);
+  assert.equal((await failing.autosave('{"now":2}')).path.endsWith('최근.json'), true);
+  // 휴지통 함수가 없으면 아무것도 옮기지 않음
+  clock = new Date(2026, 10, 16, 11, 0);
+  assert.deepEqual(await createExamFiles({ documentsPath: docs, now: () => clock }).pruneBackups(), { trashed: [] });
+});

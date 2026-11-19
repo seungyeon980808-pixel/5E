@@ -467,7 +467,7 @@ export function initImagePaste(state, svg) {
         await insertImageFromSrc(state, String(reader.result || ""), { at });
         // 5E 클립보드(11-14): 밖에서 가져온 그림을 ⌘V로 붙이면 클립보드에도 넣는다. 설치판은 맥 클립보드 따라 넣기가 같은 그림을 한 번만 넣는다.
         if (typeof window.fiveEDesktop?.readClipboardImageInfo === "function") window.dispatchEvent(new Event("5e:clip-os-sync"));
-        else void import("./drawer.js?v=1114").then(m => m.clipAdd({ src: String(reader.result || ""), name: "붙여 넣은 그림", source: "밖에서" })).catch(() => {});
+        else void import("./drawer.js?v=1.7.0-four-session-integration").then(m => m.clipAdd({ src: String(reader.result || ""), name: "붙여 넣은 그림", source: "밖에서" })).catch(() => {});
       } catch (error) {
         void showAlert(error?.message?.includes("페이지") ? error.message :
           "이미지를 붙여넣지 못했습니다. 다시 복사하거나 이미지 파일을 불러와 주세요.", { title: "이미지 붙여넣기" });

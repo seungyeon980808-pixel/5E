@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
-const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8794/preview/";
+const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8794/";
 
 (async () => {
   for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
@@ -50,7 +50,7 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8794/preview/";
         `${engine.name()} actual SVG workspace must be centered in the canvas surface`);
 
       const toolbarMetrics = await page.evaluate(() => {
-        const ids = ["settings-menu-btn", "file-menu-btn", "sharing-btn", "tutorial-btn", "theme-toggle", "fullscreen-toggle"];
+        const ids = ["settings-menu-btn", "file-menu-btn", "sharing-btn", "theme-toggle", "fullscreen-toggle"];
         return ids.map((id) => {
           const el = document.getElementById(id);
           const rect = el.getBoundingClientRect();
@@ -63,7 +63,7 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8794/preview/";
         assert.equal(metric.radius, "8px", `${engine.name()} ${metric.id} radius must be 8px`);
       }
       const iconMetrics = await page.evaluate(() => {
-        const ids = ["settings-menu-btn", "file-menu-btn", "sharing-btn", "tutorial-btn", "theme-toggle", "fullscreen-toggle"];
+        const ids = ["settings-menu-btn", "file-menu-btn", "sharing-btn", "theme-toggle", "fullscreen-toggle"];
         return ids.map((id) => {
           const svg = document.querySelector(`#${id} svg`);
           const rect = svg.getBoundingClientRect();
@@ -84,11 +84,10 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8794/preview/";
         return [
           gap("settings-menu-btn", "file-menu-btn"),
           gap("file-menu-btn", "sharing-btn"),
-          gap("sharing-btn", "tutorial-btn"),
           gap("theme-toggle", "fullscreen-toggle"),
         ];
       });
-      assert.deepEqual(toolbarGaps.map(Math.round), [8, 8, 8, 8],
+      assert.deepEqual(toolbarGaps.map(Math.round), [8, 8, 8],
         `${engine.name()} top shell button gaps must be 8px`);
 
       const textControls = await page.evaluate(() => {

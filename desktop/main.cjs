@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage, protocol, net } = require("electron");
+const { installAppMenu: installDesktopAppMenu } = require("./app-menu.cjs");
 const { desktopSmokePasses } = require("./smoke-contract.cjs");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
@@ -33,7 +34,6 @@ const DESKTOP_RESOURCE_FILES = new Set([
   'docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md',
   'docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md',
   'docs/IMAGE_COMPLEXITY_MODE_SPEC.md',
-  'experiments/web-codex-auth/editor-bridge.js',
 ]);
 function resolveSmokeStateModuleUrl(root = path.join(__dirname, '..')) {
   const entry = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -381,13 +381,23 @@ const APP_ICON_PATH = path.join(
 );
 if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
+// 사용자 데이터 폴더 이름은 「5e-desktop」으로 고정한다(1.7.1 결정): 맥 ~/Library/Application Support/5e-desktop,
+// 윈도우 %APPDATA%\5e-desktop. 이름은 package.json 「name」에서 온다(맨 위 productName이 없어서). 맨 위에 productName을
+// 넣거나 name을 바꾸면 폴더가 바뀌어 그림 작업·출제 보관함·설정(IndexedDB·localStorage)이 사라진 것처럼 보인다.
+// 바꿔야 하면 옛 폴더에서 옮기는 처리를 함께 넣는다. 지키는 검사: desktop/user-data-name.test.cjs.
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
 // 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
 if (userDataOverride && process.env.FIVE_E_DEV_DOCUMENTS) app.setPath("documents", path.resolve(process.env.FIVE_E_DEV_DOCUMENTS));
 if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
+// 1.7.1: 한 번만 실행 — 두 번째 실행(윈도우에서 .5e 두 번 누르기 등)은 떠 있는 창으로 넘기고 끝난다.
+// 잠금은 사용자 데이터 폴더마다 따로라, 검사용 폴더(FIVE_E_DEV_USER_DATA)로 띄운 것은 설치된 앱과 부딪치지 않는다.
+const singleInstance = typeof app.requestSingleInstanceLock !== "function" || app.requestSingleInstanceLock();
+if (!singleInstance) app.quit();
 
 let win;
+// 1.7.1: .5e 두 번 눌러 열기(맥 open-file, 윈도우 argv·second-instance) — desktop/project-open-file.cjs
+const projectOpenFile = require("./project-open-file.cjs").installProjectOpenFile({ app, getWindow: () => win, createWindow: () => createWindow(), handle: handleTrustedIpc });
 let splash;
 // 자료 목록 서비스는 처음 쓸 때 만든다(파일을 읽는 순간 app.getPath를 부르면 검사용 가짜 app에서 깨진다).
 let pdfLibraryServiceInstance = null;
@@ -1255,6 +1265,7 @@ function createWindow() {
     ...platformWindowOptions,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
+  projectOpenFile.attachWindow(win);
   win.setMenu(null);
   win.setMenuBarVisibility(false);
   // 맥: 빨강·노랑·초록 단추는 평소 숨기고, 마우스가 맨 위 가장자리에 가면 얇은 줄과 함께 내려온다(11-04 사용자).
@@ -1371,7 +1382,6 @@ function createWindow() {
             }
             const startupDialogTitles = new Set(["작업 복구", "찾아 주셔서 고맙습니다"]);
             const dismissStartupDialogs = () => {
-              document.querySelector(".tut-welcome-overlay .tut-banner-no")?.click();
               for (const title of document.querySelectorAll(".modal-overlay .modal-title")) {
                 if (!startupDialogTitles.has(title.textContent?.trim())) continue;
                 title.closest(".modal-overlay")?.querySelector(".modal-btn")?.click();
@@ -1436,8 +1446,7 @@ function createWindow() {
               !document.querySelector(".unified-library-overlay:not([hidden])");
             panel.hidden = true;
             dismissStartupDialogs();
-            await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
-              !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
+            await waitFor(() => !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
                 .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
             const stateModule = await import(${JSON.stringify(smokeStateModuleUrl)});
             const textChooser = document.getElementById("chooser-text");
@@ -1919,7 +1928,12 @@ handleTrustedIpc('exam:publish-names', (_event,names) => {
   if (examWindow && !examWindow.isDestroyed()) examWindow.webContents.send('exam:names',examTabNames);
   return {ok:true};
 });
-handleTrustedIpc('exam:open', (_event,payload) => openExamWindow(payload));
+// 1.7.1 B1: Lite 창은 시험지 창(mode=pro)을 열지 않는다 — 화면 쪽 막음이 빠져도 여기서 한 번 더 막는다.
+handleTrustedIpc('exam:open', async (event,payload) => {
+  const mode = await Promise.resolve().then(() => event.sender.executeJavaScript('document.documentElement.dataset.mode || ""')).catch(() => '');
+  if (mode === 'lite') throw new Error('Lite에서는 한글 시험지 창을 열 수 없습니다. 정식판(Pro)으로 바꾼 뒤 다시 보내세요.');
+  return openExamWindow(payload);
+});
 handleTrustedIpc('exam:finish', (_event,payload) => {
   boundedExamPayload(payload);
   if (!examEdit || payload.requestId !== examEdit.requestId || !examWindow || examWindow.isDestroyed()) throw new Error('시험지 편집 연결이 만료되었습니다.');
@@ -1997,22 +2011,15 @@ handleTrustedIpc("local-images:read", async (event, filePath) => {
 // URL. Install on the default session before any loadFile; the auxiliary exam
 // partition retains its separate loopback server and protocol policy.
 app.on('ready', () => protocol.handle('file', createDesktopEntryProtocolHandler()));
-// 11-14: 맥은 앱 메뉴가 없으면 ⌘Q(끝내기)·⌘H(가리기)가 먹지 않는다 — 앱 메뉴 하나만 둔다.
-// 편집 메뉴는 두지 않는다: 메뉴 단축키가 화면의 ⌘C·⌘V·⌘Z(5E 클립보드·되돌리기)를 가로채기 때문.
-function installAppMenu() {
-  if (process.platform !== 'darwin' || typeof Menu.buildFromTemplate !== 'function') { Menu.setApplicationMenu(null); return; }
-  Menu.setApplicationMenu(Menu.buildFromTemplate([{ label: app.name, submenu: [
-    { role: 'about', label: '5E 정보' }, { type: 'separator' },
-    { role: 'hide', label: '5E 가리기' }, { role: 'hideOthers', label: '기타 가리기' }, { role: 'unhide', label: '모두 보기' },
-    { type: 'separator' }, { role: 'quit', label: '5E 끝내기' },
-  ] }]));
-}
+// 맥 메뉴 막대(앱 메뉴 + 편집 메뉴)는 desktop/app-menu.cjs.
+function installAppMenu() { installDesktopAppMenu({ Menu, app }); }
 // 저장 확인 창은 창에 붙어 뜬다 — 창이 가려졌거나 내려가 있으면 확인 창도 안 보여 앱이 멈춘 것처럼 보였다(11-14). 먼저 창을 앞으로.
 function confirmLeave(target, options) {
   try { if (target.isMinimized()) target.restore(); target.show(); target.focus(); if (process.platform === 'darwin') app.focus({ steal: true }); } catch {}
   return dialog.showMessageBoxSync(target, options);
 }
 app.whenReady().then(() => {
+  if (!singleInstance) return;
   installAppMenu();
   if (process.platform === "darwin" && app.dock) app.dock.setIcon(APP_ICON_PATH);
   createWindow();

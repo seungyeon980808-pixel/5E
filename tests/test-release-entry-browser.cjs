@@ -31,7 +31,6 @@ async function drawLine(page, stateModule) {
     const report = [];
     for (const surface of [
       { name: 'root', url: 'index.html?mode=pro&mobile=0', stateModule: '/js/state.js?v=1.7.0-four-session-integration' },
-      { name: 'preview', url: 'preview/?mode=pro&mobile=0', stateModule: '/js/state.js?v=1.7.0-four-session-integration' },
     ]) {
       const page = await context.newPage();
       const errors = [];
@@ -50,7 +49,7 @@ async function drawLine(page, stateModule) {
         return state.get().objects.length;
       }, surface.stateModule), 0, `${surface.name} undoes the line`);
 
-      if (surface.name === 'preview') {
+      if (surface.name === 'root') { // preview/ 사본이 없어져 모드 전환 확인을 루트 진입점에서 한다
         await page.locator('#redo-btn').click();
         await page.locator('#mode-toggle-btn').click();
         await page.getByRole('button', { name: '취소', exact: true }).click();
@@ -62,7 +61,7 @@ async function drawLine(page, stateModule) {
         assert.equal(await page.evaluate(async modulePath => {
           const { state } = await import(modulePath);
           return state.get().objects.length;
-        }, surface.stateModule), 1, 'preview retains the line across mode switch');
+        }, surface.stateModule), 1, 'root retains the line across mode switch');
       }
 
       assert.deepEqual(errors, [], `${surface.name} browser errors`);

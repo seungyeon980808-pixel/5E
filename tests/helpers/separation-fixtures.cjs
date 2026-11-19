@@ -2,7 +2,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const root = path.resolve(__dirname, '../..');
 async function fixture({ width = 160, height = 100, noisy = false, empty = false } = {}) {
-  const { encodeScopedPng } = await import(pathToFileURL(path.join(root, 'preview/js/ai-scoped-edit-png.js')));
+  const { encodeScopedPng } = await import(pathToFileURL(path.join(root, 'js/ai-scoped-edit-png.js')));
   const data = new Uint8Array(width * height * 4).fill(255);
   const paint = (x, y, color) => data.set(color, (y * width + x) * 4);
   if (noisy) {

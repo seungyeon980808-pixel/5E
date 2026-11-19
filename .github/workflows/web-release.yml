@@ -61,15 +61,19 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run verify:release-identity -- --sha "${{ github.sha }}"
       - id: preserved
-        name: Resolve the approved immutable preview snapshot
+        name: Resolve the approved immutable preview snapshot (1.7.1 이후 지킬 판이 없으면 건너뜀)
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
-          const sha = require('./release-channels.json').webPublication.preservePreviewSourceSha;
-          if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error('Full preservation SHA required');
+          const publication = require('./release-channels.json').webPublication || {};
+          const sha = publication.preservePreviewSourceSha;
+          const paths = Array.isArray(publication.preservePaths) ? publication.preservePaths : (sha ? ['preview', 'mobile', '1.6.0'] : []);
+          if (!paths.length) { console.log('No preserved routes: publishing the release root only'); process.exit(0); }
+          if (!/^[a-f0-9]{40}$/.test(sha || '')) throw new Error('Full preservation SHA required');
           fs.appendFileSync(process.env.GITHUB_OUTPUT, `sha=${sha}\n`);
           NODE
       - uses: actions/checkout@v4
+        if: ${{ steps.preserved.outputs.sha != '' }}
         with:
           ref: ${{ steps.preserved.outputs.sha }}
           path: _work/preserved-web

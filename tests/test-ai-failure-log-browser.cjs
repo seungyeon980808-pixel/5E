@@ -14,19 +14,20 @@ const harness = source.slice(start, end)
   .replace("  if (scoped)", "  tabs[0].attachments[0].comments = [{type:'point',number:1,x:20,y:20,w:0,h:0,text:'원본 코멘트 보존',imageId:'source-0'}];\n  if (scoped)")
   .replace("message: 'late synthetic error'", "message: 'Provider rejected request: ' + 'Full diagnostic detail. '.repeat(80) + 'END-OF-ERROR Authorization: Bearer sk-test-secret image=data:image/png;base64,c2VjcmV0 api_key=private-key'");
 assert.notEqual(harness, source.slice(start,end), 'Long diagnostic and original-comment fixtures remain injected');
+// 11-11(506f30bf, 시안 v6): 「변환 모델」 줄은 화면에서 숨겼다(index.html의 hidden). 숨은 단추도 같은 설정 상태를 바꾸므로 클릭 이벤트를 보내 확인한다.
 const { fixture, currentPrimaryAction } = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', harness + '; return { fixture: requestBrowserFixture, currentPrimaryAction };')(require, root, fs, path, assert, chromium, webkit);
 test('model switch normalizes unsupported settings; a failed request keeps inputs and source comments', { timeout: 90000 }, async t => {
  const { page, errors } = await fixture(t, 1, evidence);
  const panel = '#ai-image-panel';
  // Fixed medium/priority replaces the retired ultra/high chooser. The actual
  // permitted Sol→Luna transition still proves captured model/settings normalization.
- await page.locator(`${panel} [data-ai-setting-key=model] [data-ai-model-choice=sol]`).click();
- await page.locator(`${panel} [data-ai-setting-key=model] [data-ai-model-choice=luna]`).click();
+ await page.locator(`${panel} [data-ai-setting-key=model] [data-ai-model-choice=sol]`).dispatchEvent('click');
+ await page.locator(`${panel} [data-ai-setting-key=model] [data-ai-model-choice=luna]`).dispatchEvent('click');
  const selected = await page.locator(`${panel} [data-ai-model], ${panel} [data-ai-effort], ${panel} [data-ai-speed]`).evaluateAll(nodes => nodes.map(node => ({name:node.getAttribute('aria-label'),value:node.value})));
  fs.writeFileSync(path.join(evidence, 'model-selection.json'), JSON.stringify(selected, null, 2));
  assert.equal(await page.locator(`${panel} [data-ai-effort]`).inputValue(), 'medium');
  assert.equal(await page.locator(`${panel} [data-ai-speed]`).inputValue(), 'priority');
- const input = page.locator(`${panel} [data-ai-input]`);
+ const input = page.locator(`${panel} [data-ai-chat-input]`);
  const beforeInput = await input.inputValue();
  await (await currentPrimaryAction(page)).click();
  await page.waitForFunction(() => window.__task2.generationSends.length === 1);
@@ -64,8 +65,8 @@ test('only advertised models are selectable and refreshed catalog preserves expl
  const refreshed=await readOptions();
  assert.deepEqual(refreshed.filter(option=>!option.disabled).map(option=>option.value),['gpt-6.1-sol','gpt-6-luna']);
  assert.equal(await page.locator('#ai-image-panel [data-ai-model]').inputValue(),'gpt-6-luna');
- await page.locator('#ai-image-panel [data-ai-setting-key=model] [data-ai-model-choice=sol]').click();
- await page.locator('#ai-image-panel [data-ai-setting-key=model] [data-ai-model-choice=luna]').click();
+ await page.locator('#ai-image-panel [data-ai-setting-key=model] [data-ai-model-choice=sol]').dispatchEvent('click');
+ await page.locator('#ai-image-panel [data-ai-setting-key=model] [data-ai-model-choice=luna]').dispatchEvent('click');
  // 연결 정보 창(모델 목록 새로고침 단추)은 2026-10-12(24219c8a)부터 늘 숨겨져 있다.
  // 목록 새로 읽기는 위의 '5e:web-ai-status' 신호 경로로 이미 확인했다.
  assert.equal(await page.locator('#ai-image-panel [data-ai-effort]').inputValue(),'medium');

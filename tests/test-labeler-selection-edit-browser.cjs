@@ -20,7 +20,9 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       for (const width of [1440, 760]) {
         const dir = path.join(evidence, name, String(width)); fs.mkdirSync(dir, { recursive: true });
         const page = await browser.newPage({ viewport: { width, height: 1000 } });await installLabelSourcePage(page);
-        page.setDefaultTimeout(5000);
+        page.setDefaultTimeout(process.env.CI ? 15000 : 5000);
+        // 앱 첫 로드(모듈 수백 개)는 동작 대기와 다르다 — 다른 검사와 함께 돌 때 WebKit이 5초를 넘겨 실패했다(11-17). 이동만 넉넉히.
+        page.setDefaultNavigationTimeout(process.env.CI ? 60000 : 30000);
         const errors = []; page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(() => localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true'));
         await page.goto(preview + '?mode=pro', { waitUntil: 'domcontentloaded' });

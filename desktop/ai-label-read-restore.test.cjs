@@ -145,7 +145,7 @@ test('the label read channel is wired through preload, the preview bridge, the w
   assert.match(read('scripts/preview-local-server.cjs'), /bridge-\(status\|models\|account\|send\|events\|interrupt\|read-text\)/);
   assert.match(read('scripts/local-codex-bridge.cjs'), /action==='bridge-read-text'/);
   assert.match(read('js/web-ai-connection.js'), /'bridge-read-text'\]\.includes\(action\)/);
-  assert.match(read('experiments/web-codex-auth/editor-bridge.js'), /readImageText:\s*payload\s*=>\s*request\('bridge-read-text', payload\)/);
+  assert.match(read('js/web-ai-bridge.js'), /readImageText:\s*payload\s*=>\s*request\('bridge-read-text', payload\)/);
   assert.match(read('js/ai-task-workspaces.js'), /'interrupt', 'readImageText'\]/);
   assert.match(read('desktop/main.cjs'), /createDirectImageClient\(\{ log: entry => appendAiTurnLog\(entry\), timeoutMs: 100_000, retries: 1 \}\)/);
   assert.match(read('scripts/local-codex-bridge.cjs'), /createDirectImageClient\(\{log,timeoutMs:100000,retries:1\}\)/);

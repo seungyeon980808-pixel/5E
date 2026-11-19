@@ -7,7 +7,9 @@ const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 const root = path.resolve(__dirname, '..');
 const surfaceDirectories = ['js', 'css', 'assets', 'fonts', 'vendor'];
-const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'experiments/web-codex-auth/editor-bridge.js', 'examlibrary/index.html', 'ourdocs/index.html', ...require('../memo/assets.json'), ...require('../hub/assets.json'), ...require('../bug/assets.json'), ...require('../print/assets.json')];
+const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'apps/examlibrary/index.html', 'ourdocs/index.html', ...require('../memo/assets.json'), ...require('../hub/assets.json'), ...require('../bug/assets.json'), ...require('../apps/print/assets.json')];
+// 하위 프로그램 입구(print·기출 탐색기)는 저장소에서 apps/<이름>/에 두고, 사이트에는 지금처럼 /<이름>/ 주소로 올린다(1.7.1).
+const sitePath = relative => relative.replace(/^apps\//, '');
 
 function filesBelow(directory) {
   const files = [];
@@ -73,15 +75,19 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
   const dirty = Boolean(execFileSync('git', ['status', '--porcelain'], { cwd: sourceRoot, encoding: 'utf8' }).trim());
   if (dirty && !allowDirty) throw new Error('Commit and validate an exact source revision before publication');
   if (fs.existsSync(output)) throw new Error('Choose a fresh output directory; existing artifacts are never replaced');
-  if (!preservedRoot) throw new Error('A pinned preview/mobile snapshot is required; existing routes must not be dropped');
-  const preservedSha = channels.webPublication?.preservePreviewSourceSha;
-  if (!/^[a-f0-9]{40}$/.test(preservedSha || '')) throw new Error('Preserved routes require a full SHA');
-  const objectRepo = fs.existsSync(path.join(preservedRoot, '.git')) ? preservedRoot : sourceRoot;
+  const preservedSha = channels.webPublication?.preservePreviewSourceSha || null;
   // 지킬 예전 판 경로는 release-channels.json webPublication.preservePaths(없으면 예전처럼 preview·mobile·1.6.0).
   // 1.7.0(2026-11-15 사용자 결정): GitHub Pages 1 GB 한도 때문에 세 판을 내리고 1.7.0만 올린다 → 빈 목록.
+  // 1.7.1: preview/를 지운 뒤에는 지킬 판도, 고정 커밋(preservePreviewSourceSha)도 없을 수 있다 → 둘 다 없으면 빈 목록.
   const allowedPreserve = ['preview', 'mobile', '1.6.0'];
-  const preservePaths = Array.isArray(channels.webPublication?.preservePaths) ? channels.webPublication.preservePaths : allowedPreserve;
+  const preservePaths = Array.isArray(channels.webPublication?.preservePaths) ? channels.webPublication.preservePaths
+    : preservedSha ? allowedPreserve : [];
   if (!preservePaths.every(p => allowedPreserve.includes(p))) throw new Error('Unknown preserved route');
+  if (preservePaths.length) {
+    if (!preservedRoot) throw new Error('A pinned preview/mobile snapshot is required; existing routes must not be dropped');
+    if (!/^[a-f0-9]{40}$/.test(preservedSha || '')) throw new Error('Preserved routes require a full SHA');
+  }
+  const objectRepo = preservedRoot && fs.existsSync(path.join(preservedRoot, '.git')) ? preservedRoot : sourceRoot;
   const tree = preservePaths.length ? execFileSync('git', ['ls-tree', '-r', '-z', preservedSha, '--', ...preservePaths], { cwd: objectRepo, maxBuffer: 64 * 1024 * 1024 }) : Buffer.alloc(0);
   const retained = tree.toString().split('\0').filter(Boolean).map(line => {
     const [metadata, relative] = line.split('\t');
@@ -97,7 +103,7 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
     const bytes = fs.readFileSync(source);
     if (expectedBlob && gitBlob(bytes) !== expectedBlob) throw new Error(`Publication input differs from its validated Git blob: ${relative}`);
     assertSource(relative, bytes);
-    const destination = path.join(output, relative);
+    const destination = path.join(output, sitePath(relative));
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.writeFileSync(destination, bytes);
   }
@@ -157,7 +163,8 @@ if (require.main === module) {
         requireClean: !args.includes('--allow-dirty') });
       console.log(`Web artifact verified: ${count} files at ${receipt.sourceCommit}`);
     } else {
-      const receipt = stage({ output, preservedRoot: path.resolve(option('--preserved-root')),
+      // 지킬 예전 판이 없으면(1.7.1 이후) --preserved-root를 빼도 된다.
+      const receipt = stage({ output, preservedRoot: args.includes('--preserved-root') ? path.resolve(option('--preserved-root')) : null,
         allowDirty: args.includes('--allow-dirty') });
       fs.mkdirSync(path.dirname(receiptFile), { recursive: true });
       fs.writeFileSync(receiptFile, JSON.stringify(receipt, null, 2) + '\n');
@@ -166,4 +173,4 @@ if (require.main === module) {
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
 
-module.exports = { verifyArtifact, inventory, stage };
+module.exports = { verifyArtifact, inventory, stage, sitePath };

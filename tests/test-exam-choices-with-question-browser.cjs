@@ -25,7 +25,9 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.setInputFiles('#excel-file',{name:'split.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:examples.format,questions:qs,documents:[],exams:[exam]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.evaluate(()=>{const u=document.querySelector('input[name="import-mode"][value="update"]');if(u)u.checked=true;});await sheet.click('#apply-import');
   await sheet.waitForTimeout(1200);await sheet.evaluate(()=>document.querySelector('[data-nav="exams"]').click());
-  await sheet.locator('#exams-view button:has-text("열기")').first().click();
+  await sheet.locator('#exams-view [data-nav="exam"]').first().click(); // 11-12: 시험지 카드는 글자 「열기」 없이 쪽 그림 단추(aria-label)
+  // 11-15: 시험지를 열면 ② 문항 고르기로 열린다 — 쪽 배치는 ③ 탭.
+  await sheet.waitForSelector('#examd-view:not([hidden]) [data-ef-step="3"]');await sheet.click('#examd-view [data-ef-step="3"]');
   await sheet.waitForSelector('#exam-sheet .pv-pg',{timeout:180000});
   await sheet.waitForFunction(()=>document.querySelectorAll('#exam-sheet .pv-pg').length>=3&&!/어림/.test(document.querySelector('#exam-layout-checks')?.textContent||''),null,{timeout:120000});
   const view=await sheet.evaluate(()=>({checks:document.querySelector('#exam-layout-checks').textContent,tall:[...document.querySelectorAll('#exam-layout-checks .ex-rl')].filter(r=>/단 높이를 넘는/.test(r.textContent)).map(r=>r.querySelector('.si').className),pages:[...document.querySelectorAll('#exam-sheet .pv-pg')].map(p=>[...p.querySelectorAll('.pv-pg-q')].map(b=>{const r=b.getBoundingClientRect();return {id:b.dataset.examPick,x:r.x,y:r.y,r:r.right,b:r.bottom};}))}));

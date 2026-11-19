@@ -1,5 +1,5 @@
 import { buildFiveEProject, parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
-import { isDrawerDrag, drawerFromDrop } from "./drawer.js?v=1114";
+import { isDrawerDrag, drawerFromDrop } from "./drawer.js?v=1.7.0-four-session-integration";
 import { validateAnnotationPatch } from "./rhwp-exam-annotations.js?v=1.7.0-four-session-integration";
 import { readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from "./editable-png.js?v=1.7.0-four-session-integration";
 /* ===== PROJECT I/O (save / open editable 5E project source) ===== */
@@ -694,8 +694,26 @@ export function applyLoaded(state, data) {
   }
 }
 
+/* ----- 5E_exam으로 넘겨 열기: 출제 칸을 열고(처음이면 다 읽힐 때까지) 바이트를 보낸다 ----- */
+async function openSheetInExam(name, bytes) {
+  const entry = document.getElementById('exam-pool-open');
+  for (let waited = 0; entry?.disabled && waited < 5000; waited += 100) await new Promise(r => setTimeout(r, 100));
+  if (!entry || entry.disabled) throw new Error('5E_exam을 준비하지 못했습니다. 잠시 뒤 다시 열어 주세요.');
+  if (document.getElementById('exampool-sheet-workspace')?.hidden !== false) entry.click();
+  const frame = () => document.querySelector('#exampool-sheet-workspace iframe');
+  const until = Date.now() + 30000;
+  while (Date.now() < until) {
+    const doc = frame()?.contentDocument, bar = doc?.querySelector('#status');
+    if (doc?.readyState === 'complete' && bar && bar.textContent !== '준비 중' && doc.querySelector('#excel-file')) break;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  const target = frame()?.contentWindow;
+  if (!target) throw new Error('5E_exam을 열지 못했습니다.');
+  target.postMessage({ channel: '5e-question-sheet', action: 'open-project-file', name, bytes }, location.protocol === 'file:' ? '*' : location.origin);
+}
+
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
-function openProject(state, file) {
+function openProject(state, file, { askReplace = true } = {}) {
   const png = /\.png$/i.test(file.name);
   if (png && file.size > EDITABLE_PNG_MAX_BYTES) {
     void showAlert('원본 포함 PNG는 최대 64 MiB까지 열 수 있습니다.', { title: "프로젝트 파일 용량 초과" });
@@ -717,6 +735,16 @@ function openProject(state, file) {
       const figure = png ? readEditablePng(reader.result, prepareLoadedProject) : null;
       if (png && !figure) throw new Error("이 PNG에는 5E 원본이 없습니다. 이미지 불러오기로 넣어주세요.");
       const portable = !png && !executable ? parseFiveEProject(reader.result,prepareLoadedProject) : null;
+      // 1.7.1: 문항·시험지(.5e kind 'sheet')는 5E_exam으로 넘긴다 — 5E_exam의 「불러올 내용 확인」 창이 확인을 맡는다.
+      if (portable?.kind === 'sheet') {
+        if (document.documentElement.dataset.mode === 'lite') {
+          const toPro = await showConfirm("Lite에서는 그림 파일만 열 수 있습니다.\n이 시험지는 Pro에서 열립니다. Pro로 바꾼 뒤 다시 열어 주세요.", { title: "시험지 프로젝트", okText: "Pro로 바꾸기", cancelText: "닫기" });
+          if (toPro) document.getElementById('mode-toggle-btn')?.click();
+          return;
+        }
+        await openSheetInExam(file.name, new Uint8Array(reader.result));
+        return;
+      }
       if (!png && !executable && (!portable || portable.kind === 'exam')) {
         // Lite는 그림(image)만 연다 — 시험지는 막다른 경고 대신 Pro로 바꾸는 길로 이어 준다(11-14).
         if (document.documentElement.dataset.mode === 'lite') {
@@ -740,7 +768,8 @@ function openProject(state, file) {
       // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
       // .json이 캔버스에 실수로 떨어지거나 '열기'를 잘못 눌러도 아무 확인 없이
       // 현재 작업 전체가 사라지던 것을 막는다.
-      const ok = await showConfirm(
+      // 11-17 B3: .5e를 두 번 눌러 열 때(설치판 open-file·argv)는 잃을 작업이 없으면 묻지 않는다 — 웹 열기 줄(project-launch.js)과 같게.
+      const ok = !askReplace || await showConfirm(
         "현재 작업을 이 프로젝트 파일로 대체할까요?\n저장하지 않은 현재 작업은 사라집니다.",
         { title: "프로젝트 열기", okText: "열기", cancelText: "취소" },
       );
@@ -876,11 +905,11 @@ function initProjectShortcuts(state, fileInput) {
 }
 
 /* ----- initProjectIO: wire the top-bar buttons + hidden file input ----- */
-export function initProjectFileOpening(state, ready) {
-  initProjectLaunch({ state, ready, prepare: prepareLoadedProject, apply: applyLoaded,
+export function initProjectFileOpening(state, ready, { onReceive } = {}) {
+  initProjectLaunch({ state, ready, onReceive, prepare: prepareLoadedProject, apply: applyLoaded,
     needsConfirm: () => initProjectStatus(state, serialize).hasUnsavedWork(),
     mark: () => markProjectStatus(state, captureProjectStatus(state), 'file'),
-    openFile: async payload => {if(payload.bytes) openProject(state,new File([new Uint8Array(payload.bytes)],payload.name || '프로젝트.5e'));} });
+    openFile: async payload => {if(payload.bytes) openProject(state,new File([new Uint8Array(payload.bytes)],payload.name || '프로젝트.5e'),{ askReplace: initProjectStatus(state, serialize).hasUnsavedWork() });} });
 }
 
 export function initProjectIO(state, svg) {
@@ -925,6 +954,13 @@ export function initProjectIO(state, svg) {
   if (saveBtn) saveBtn.addEventListener("click", () => saveProject(state));
 
   if (openBtn) openBtn.addEventListener("click", () => fileInput.click());
+  // 5E_exam·5E_hwp에서 다른 종류의 .5e를 골랐을 때 여기로 넘어온다 — 종류를 보고 맞는 프로그램에서 연다.
+  window.addEventListener("5e:project-open", (e) => {
+    const { name, bytes } = e.detail || {};
+    window.dispatchEvent(new CustomEvent('5e:exampool-close'));
+    // 5E_exam(iframe)에서 온 바이트는 다른 창 영역의 객체라 instanceof로 가리면 놓친다.
+    if (ArrayBuffer.isView(bytes) || Object.prototype.toString.call(bytes) === '[object ArrayBuffer]') openProject(state, new File([new Uint8Array(bytes.buffer ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes)], String(name || '프로젝트.5e')));
+  });
 
   initProjectShortcuts(state, fileInput);
 
@@ -1045,7 +1081,7 @@ export function initProjectIO(state, svg) {
         drawerFromDrop(e.dataTransfer).then(async (it) => {
           if (!it) return;
           // 클립보드(11-14): 5E 객체 원본이 있으면 객체로, ⌘X로 넣은 것은 놓은 뒤 클립보드에서 뺀다.
-          if (it.moving) void import("./drawer.js?v=1114").then(m => m.clipConsume(it.id)).catch(() => {});
+          if (it.moving) void import("./drawer.js?v=1.7.0-four-session-integration").then(m => m.clipConsume(it.id)).catch(() => {});
           if (it.objects?.length) { const { insertClipObjects } = await import("./editor-clipboard.js?v=1.7.0-four-session-integration"); insertClipObjects(it.objects); return; }
           const blob = await (await fetch(it.src)).blob();
           readImageFile(new File([blob], `${it.name || "서랍 그림"}.png`, { type: blob.type || "image/png" }), pos, state);

@@ -1,9 +1,9 @@
-// 방문자 집계 Worker API(visitor/api.mjs)를 D1과 같은 모양의 SQLite 어댑터로 확인한다.
+// 방문자 집계 Worker API(cloudflare/visitor/api.mjs)를 D1과 같은 모양의 SQLite 어댑터로 확인한다.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { createVisitorApi, createVisitorStore, kstDate } from '../visitor/api.mjs';
+import { createVisitorApi, createVisitorStore, kstDate } from '../cloudflare/visitor/api.mjs';
 
 const ORIGIN = 'https://www.5e.ai.kr';
 const BROWSER = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/18.0 Safari/605.1.15';
@@ -12,7 +12,7 @@ const A = '91c9b7e4-42f2-4c20-bd89-e34c016dcc1a', B = '0f8fad5b-d9cb-469f-a165-7
 // D1의 prepare/bind/first/all/run/batch만 흉내 낸다. batch는 D1처럼 한 트랜잭션.
 function d1() {
   const db = new DatabaseSync(':memory:');
-  db.exec(fs.readFileSync(new URL('../visitor/worker/migrations/0001_visitor_stats.sql', import.meta.url), 'utf8'));
+  db.exec(fs.readFileSync(new URL('../cloudflare/visitor/worker/migrations/0001_visitor_stats.sql', import.meta.url), 'utf8'));
   const prepare = sql => {
     const bound = values => ({ sql, values,
       async first() { return db.prepare(sql).get(...values) ?? null; },

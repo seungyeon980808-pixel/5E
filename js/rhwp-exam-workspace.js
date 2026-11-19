@@ -91,7 +91,7 @@ export function initRhwpExamWorkspace(state, services) {
       <div id="exam-figures"></div>
     <footer class="exam-footer"><span id="exam-status" role="status" aria-live="polite">준비 중</span></footer></aside><div id="exam-studio"><div class="exam-loading">시험지 편집기를 준비합니다…</div></div></div>
     <input id="exam-hwp-file" type="file" accept=".hwp,.hwpx" hidden>
-    <input id="exam-project-file" type="file" accept=".5e,.5exam,.json" hidden>
+    <input id="exam-project-file" type="file" accept=".5e" hidden>
     <input id="exam-png-file" type="file" accept=".png" hidden>`;
   document.body.append(panel);
   attachAppMenu(panel.querySelector('.exam-topbar .app-brand'), 'hwp');// 로고에 올리면 프로그램 목록(11-04)
@@ -101,15 +101,15 @@ export function initRhwpExamWorkspace(state, services) {
   const palette = initPaletteWorkspace(panel, {
     getBridge:() => bridge,run,notify:(...args)=>message(...args),download,
     withBusy:async task => { if (busy) throw new Error('진행 중인 작업이 끝난 뒤 다시 실행해주세요.');setBusy(true);try{return await task();}finally{setBusy(false);} },
-    replaceDocument:async(bytes,name,anchor)=>{if(palette.contentEditing)throw new Error('조각 편집을 저장하거나 돌아간 뒤 새 양식을 열어주세요.');await stableSave();await loadDocument(bytes,`${safeName(name)}.hwpx`);if(anchor&&!anchor.hf)bridge.input.cursor.moveTo(anchor);},
-    beginContentEdit:async(bytes,name)=>{if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');const previous=new Uint8Array(await (await stableSave()).arrayBuffer());await loadDocument(bytes,`${safeName(name)}.hwpx`);return async()=>{await stableSave();await loadProject(previous);};},
+    replaceDocument:async function replaceDocument(bytes,name,anchor){if(palette.contentEditing)throw contentEditingError(()=>replaceDocument(bytes,name,anchor));/* 1.7.1 B6: 막지 않고 묻고 이어서 */await stableSave();await loadDocument(bytes,`${safeName(name)}.hwpx`);if(anchor&&!anchor.hf)bridge.input.cursor.moveTo(anchor);},
+    beginContentEdit:async(bytes,name)=>{if(palette.contentEditing)throw contentEditingError(null);/* 1.7.1 B6: 앞 조각을 저장/버리기 고른 뒤 다시 누르게 */const previous=new Uint8Array(await (await stableSave()).arrayBuffer());await loadDocument(bytes,`${safeName(name)}.hwpx`);return async()=>{await stableSave();await loadProject(previous);};},
   });
   // A small public capability surface also makes standalone port regressions
   // exercise the same instances the user operates.
   window.fiveEHwpPalette = palette; // 화면 색(graphite-shell)의 window.fiveEPalette와 이름이 겹쳐 덮어쓰이던 것을 피함
   // 도구 모드 3개(기본·집중·없음)와 집중 도구 줄. 동작(actions)·그림 설정은 아래에서 정의되므로 누를 때 찾는다.
   const toolModes = installExamModes(panel, { getBridge:() => bridge, palette, message:(...args) => message(...args), run:task => run(task),
-    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), loadExam:async(bytes,title) => { if (bridge?.input) await stableSave(); await loadDocument(new Uint8Array(bytes),`${String(title||'시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`); }, openPictureSettings:anchor => openPictureSettings(anchor) });
+    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, offerDocument:() => offerDocument(), download:(blob,name) => download(blob,name), documentName:() => nameInput.value.trim(), loadExam:async(bytes,title) => { if (bridge?.input) await stableSave(); await loadDocument(new Uint8Array(bytes),`${String(title||'시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`); }, openPictureSettings:anchor => openPictureSettings(anchor) });
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onFit:() => void run(cyclePictureFit),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
@@ -162,7 +162,9 @@ export function initRhwpExamWorkspace(state, services) {
   function setBusy(value) {
     busy = value;
     panel.setAttribute('aria-busy', String(value));
-    panel.querySelectorAll('button').forEach(button => { button.disabled = value || !!editing; });
+    // 11-18 CI2: 프로그램 이름(exam·image)은 바쁠 때도 눌리게 둔다 — 첫 열기에서 한글 엔진을 읽는 동안(느린 컴퓨터는 몇 초)
+    // 누른 exam이 꺼진 단추에 막혀 아무 일도 없었다. 전환(app-switch.js)이 바쁜 일이 끝날 때까지 기다렸다가 이 칸을 닫는다.
+    panel.querySelectorAll('button').forEach(button => { button.disabled = (button.matches('[data-app-switch]') ? false : value) || !!editing; });
     nameInput.disabled = value || !!editing;
     panel.querySelectorAll('select').forEach(select => { select.disabled = value || !!editing; });
     [nativeRegion.root,sourceRegion.root,regionInspector,pictureSettings.root].forEach(root=>root.querySelectorAll('button,input,select').forEach(button=>{button.disabled=value;}));
@@ -179,9 +181,62 @@ export function initRhwpExamWorkspace(state, services) {
   async function run(task) {
     if (busy) return;
     setBusy(true);
+    let next=null;
     try { await task(); }
-    catch (error) { const text=error.message || '작업을 완료하지 못했습니다.';message(text,true);if(panel.hidden)void services.reportError?.(text); }
+    catch (error) {
+      // 1.7.1 B6 막다른 경고 없애기: 문서가 없으면 파일 메뉴로, 조각 편집 중이면 저장/버리기를 물은 뒤 이어서.
+      if(error?.code==='no-document')next=offerDocument;
+      else if(error?.code==='content-editing')next=()=>continueAfterContentEdit(error.retry);
+      else {const text=error.message || '작업을 완료하지 못했습니다.';message(text,true);if(panel.hidden)void services.reportError?.(text);}
+    }
     finally { setBusy(false); }
+    next?.();
+  }
+  // 열린 시험지가 없을 때: 경고만 띄우지 않고 파일 메뉴(새 시험지·한글 파일 열기·프로젝트 열기·ExamPool 시험지)를 펼친다.
+  function offerDocument() {
+    if(busy){setTimeout(offerDocument,50);return;}
+    message('열린 시험지가 없습니다. 파일 메뉴에서 새 시험지를 만들거나 시험지를 여세요.');
+    const file=panel.querySelector('[data-exam-menu="file"]');
+    if(file && !file.disabled && !panel.hidden)openMenu(file,true);
+  }
+  // 조각 편집 중에 다른 문서로 바꾸려 할 때: 막지 않고 묻는다(기존 「자동 저장한 프로젝트」 창 모양).
+  const contentEditingError=retry=>Object.assign(new Error('조각 편집을 마친 뒤 이어서 합니다.'),{code:'content-editing',retry});
+  function askContentEdit() {
+    return new Promise(resolve=>{
+      const box=document.createElement('dialog');box.className='exam-draft-dialog exam-content-edit-dialog';
+      const heading=document.createElement('h3');heading.textContent='조각을 편집하는 중입니다';
+      const note=document.createElement('p');note.textContent='이어서 하려면 지금 편집한 조각을 어떻게 할지 고르세요.';
+      box.append(heading,note);
+      const finish=value=>{if(box.open)box.close();box.remove();resolve(value);};
+      for(const [value,label] of [['save','수정 저장하고 계속'],['discard','저장하지 않고 계속'],[null,'취소']]){const button=document.createElement('button');button.type='button';button.textContent=label;button.onclick=()=>finish(value);box.append(button);}
+      box.addEventListener('cancel',event=>{event.preventDefault();finish(null);});
+      document.body.append(box);box.showModal();box.querySelector('button')?.focus();
+    });
+  }
+  const until=async(test,ms=60000)=>{const end=Date.now()+ms;while(!test()&&Date.now()<end)await new Promise(r=>setTimeout(r,30));return test();};
+  // 조각 편집을 팔레트의 「수정 저장하고 돌아가기 / 돌아가기」로 마치고, 그 뒤 열리는 팔레트 창은 닫는다. 이어서 해도 되면 true.
+  async function finishContentEdit() {
+    if(!palette.contentEditing)return true;
+    closeMenus();
+    const choice=await askContentEdit();
+    if(!choice){message('조각 편집을 이어서 합니다.');return false;}
+    await until(()=>!busy);
+    const button=panel.querySelector(`.palette-content-edit [data-palette-action="${choice==='save'?'content-save':'content-cancel'}"]`);
+    if(!button){message('조각 편집 막대를 찾지 못했습니다. 막대의 「돌아가기」를 누른 뒤 다시 해 주세요.',true);return false;}
+    message(choice==='save'?'조각을 저장하고 돌아가는 중…':'조각 편집을 닫는 중…');
+    button.click();
+    // 팔레트는 조각을 마치는 순간(restoreContent=null) 팔레트 창을 다시 연다 — 그때까지 기다린다. 실패하면(오류 표시) 거기서 멈춘다.
+    // 바쁨(busy)만 보면 안 된다: 문서를 되돌려 여는 중에 바쁨이 잠깐 풀려 창이 열리기 전에 지나갔다.
+    await until(()=>!palette.contentEditing || (!busy && status.dataset.error==='true'));
+    await until(()=>!busy);
+    if(palette.contentEditing){message('조각을 저장하지 못했습니다. 조각 편집 막대에서 다시 해 주세요.',true);return false;}
+    panel.querySelector('#palette-manager [data-palette-action="manager-close"]')?.click();
+    return true;
+  }
+  async function continueAfterContentEdit(retry) {
+    if(!await finishContentEdit())return;
+    if(retry){await until(()=>!busy);await run(retry);}
+    else message('앞 조각 편집을 마쳤습니다. 하려던 일을 다시 눌러 주세요.');
   }
   const thumbnails = new Map(), remoteNames = new Map();
   const linkKey = link => `${link.tabId}:${link.assetId}`;
@@ -1216,6 +1271,8 @@ export function initRhwpExamWorkspace(state, services) {
     await flushInline(true);await closeInline();
     const modern=parseFiveEProject(bytes,prepareLoadedProject);
     if (modern?.kind==='drawing') {await restoreWorkspace(modern.workspace || {drawing:modern.drawing});await actions.close();return;}
+    // 1.7.1: 문항·시험지(.5e kind 'sheet')는 5E_exam에서 연다(project-io.js가 받아 넘김).
+    if (modern?.kind==='sheet') {window.dispatchEvent(new CustomEvent('5e:project-open',{detail:{name:`${modern.name||'프로젝트'}.5e`,bytes:new Uint8Array(bytes)}}));return;}
     const project = parseExamProject(bytes, prepareLoadedProject);
     validateWorkspace(project.workspace);
     const previous = {bytes:new Uint8Array(await bridge.exportDraftHwpx()),generation:bridge.generation,figures,projectId,name:nameInput.value,workspace:await captureWorkspace()};
@@ -1257,7 +1314,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
 
   async function importFile(file) {
-    if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');
+    if(palette.contentEditing)throw contentEditingError(()=>importFile(file));
     if (file.size>EXAM_PROJECT_MAX_BYTES) throw new Error('최대 128 MiB 파일을 열 수 있습니다.');
     const bytes=new Uint8Array(await file.arrayBuffer());
     await stableSave();
@@ -1270,7 +1327,7 @@ export function initRhwpExamWorkspace(state, services) {
     panel.querySelector('#exam-studio').replaceChildren();
     bridge = await RhwpExamBridge.create(panel.querySelector('#exam-studio'), {
       validateSource:prepareLoadedProject,
-      onChange:error=>{if(error)message(error.message,true);else documentChanged();},
+      onChange:error=>{if(error?.code==='no-document')offerDocument();else if(error)message(error.message,true);else documentChanged();},
       onBeforeReplace:stableSave,
       onReplace:()=>{
         if(initializing) return;
@@ -1300,7 +1357,7 @@ export function initRhwpExamWorkspace(state, services) {
     { const doc=bridge.editor.element.contentDocument,isClip=event=>[...(event.dataTransfer?.types||[])].includes('application/x-5e-drawer');
       doc.addEventListener('dragover',event=>{if(isClip(event)){event.preventDefault();event.dataTransfer.dropEffect='copy';}},true);
       doc.addEventListener('drop',event=>{if(!isClip(event)||event.dataTransfer.files?.length)return;event.preventDefault();event.stopImmediatePropagation();const id=event.dataTransfer.getData('application/x-5e-drawer');
-        void import('./drawer.js?v=1114').then(async m=>{const item=await m.clipGet(id);await window.fiveEClipHostHwp.insert(item);if(item?.moving)await m.clipConsume(item.id);}).catch(error=>message(error?.message||'클립보드 그림을 넣지 못했습니다.',true));},true); }
+        void import('./drawer.js?v=1.7.0-four-session-integration').then(async m=>{const item=await m.clipGet(id);await window.fiveEClipHostHwp.insert(item);if(item?.moving)await m.clipConsume(item.id);}).catch(error=>message(error?.message||'클립보드 그림을 넣지 못했습니다.',true));},true); }
     bridge.editor.element.contentDocument.addEventListener('drop',event=>{
       const file=event.dataTransfer?.files?.[0];if(!file || !/\.(5e|5exam|json|hwp|hwpx)$/i.test(file.name)) return;
       event.preventDefault();event.stopImmediatePropagation();
@@ -1438,6 +1495,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
   async function exportDocument(format) {
     await stableSave();
+    // .hwp는 아직 그대로(1.7.1 B4 보류): 상자(CFB)를 다시 쓰면 내용이 같아도 rhwp가 다시 열 때 줄이 밀린다(BL2 보고서).
     const bytes = format === 'hwp' ? await bridge.exportHwp() : await forHancom(await bridge.exportHwpx());
     download(new Blob([bytes]), `${safeName(nameInput.value)}.${format}`);
     message('한글 파일 다운로드를 시작했습니다. 연결된 PNG에 그림 원본이 들어 있습니다.');
@@ -1488,8 +1546,21 @@ export function initRhwpExamWorkspace(state, services) {
     const button = event.target.closest('[data-exam-action]');
     if (button && !button.disabled) {
       const action=button.dataset.examAction;
-      if(palette.contentEditing&&['close','new','open-hwp','open-project','demo','restore'].includes(action)){
-        message('조각 편집을 저장하거나 돌아간 뒤 실행해주세요.',true);
+      // 1.7.1 B6: 조각 편집 중이면 막지 않고 「수정 저장하고 계속 / 저장하지 않고 계속 / 취소」를 물은 뒤 이어서 한다.
+      if(palette.contentEditing&&['close','new','open-hwp','open-project','open-exampool','demo','restore'].includes(action)){
+        closeMenus();
+        void finishContentEdit().then(async ok=>{
+          if(!ok)return;
+          await until(()=>!busy);
+          // 파일 고르는 창은 누른 순간에만 열린다(Safari) — 기다린 뒤에는 파일 메뉴를 다시 펼쳐 그 항목에 커서를 둔다.
+          if(['open-hwp','open-project'].includes(action)){
+            const file=panel.querySelector('[data-exam-menu="file"]');openMenu(file);
+            panel.querySelector(`#exam-file-menu [data-exam-action="${action}"]`)?.focus();
+            message(`조각 편집을 마쳤습니다. 「${button.textContent.trim()}」를 다시 누르면 파일을 고릅니다.`);
+            return;
+          }
+          void run(() => actions[action]?.());
+        });
         return;
       }
       closeMenus();
@@ -1507,12 +1578,19 @@ export function initRhwpExamWorkspace(state, services) {
     event.preventDefault();event.stopImmediatePropagation();closeMenus();open.focus({preventScroll:true});
   }
   document.addEventListener('keydown',closeOpenMenu,true);
+  // 1.7.1(검사 81): 클립보드 창(.clp·크게 보기 .clpb)은 role="dialog"이지만 닫혀 있어도 화면 상자를 가져 「안쪽 대화상자」로 세어졌다
+  // → 그림 배치 중 Esc(취소)·Enter(확정)가 먹지 않았다. 클립보드는 실제로 열려 있을 때만 센다(열려 있으면 Esc는 클립보드가 먼저 닫음).
+  function innerDialogOpen(owner) {
+    const clip = owner.defaultView?.fiveEClipboard || window.fiveEClipboard, clipOpen = !!clip?.isOpen?.();
+    return [...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')]
+      .some(node => node !== panel && !node.hidden && node.getClientRects().length && (clipOpen || !node.matches('.clp,.clpb')));
+  }
   function confirmPlacementWithKey(event) {
     if (!placement || panel.hidden || event.isComposing || event.keyCode === 229 || compositionActive() || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !['Enter',' '].includes(event.key)) return;
     const nativeInput = event.target === bridge?.input?.textarea;
     if (!nativeInput && event.target.closest?.('input,textarea,select,button,[contenteditable="true"]')) return;
     const owner = event.target?.ownerDocument || document;
-    if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')].some(node=>node!==panel && !node.hidden && node.getClientRects().length)) return;
+    if (innerDialogOpen(owner)) return;
     consumeConfirmationPress(event);
     const button = panel.querySelector('[data-exam-action="confirm-placement"]');
     if (!event.repeat && !button.disabled) void run(confirmPlacement);
@@ -1523,8 +1601,7 @@ export function initRhwpExamWorkspace(state, services) {
     // Inner dialogs, label editing and RHWP's own cancellation get first use.
     if (inlineEditor.active || !pictureSettings.root.hidden) return;
     const owner = event.target?.ownerDocument || document;
-    if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')]
-      .some(node => node !== panel && !node.hidden && node.getClientRects().length)) return;
+    if (innerDialogOpen(owner)) return;
     if (placement) { event.preventDefault(); event.stopImmediatePropagation(); cancelPlacement(); message('그림 보내기를 취소했습니다.'); return; }
     // 11-12 사용자: 5E_image·5E_exam·5E_hwp는 서로 호환되는 각각 다른 프로그램 — Esc로 한글 화면을 닫고 5E_image로 넘어가지 않는다.
     // (예전엔 그림 선택이 풀린 상태에서 Esc 한 번에 한글 화면이 닫히고 5E_image 편집으로 넘어갔다.) 프로그램 전환은 ⌥⌘1~3·로고 메뉴로만.
@@ -1613,10 +1690,14 @@ export function initRhwpExamWorkspace(state, services) {
   panel.dataset.examReady = 'true';
   // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
   // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
-  window.addEventListener('5e:hwp-open',event=>{if(busy||document.documentElement.dataset.mode==='lite')return;if(event.detail)event.detail.accepted=true;void run(open);});
+  // 1.7.1 B1: Lite는 조판을 열지 않는다 — 말없이 끝내지 않고 「정식판에서 됩니다」 안내(view-mode.js requirePro), Pro로 바꾸면 이어서 연다.
+  const liteBlocked = (what, resume) => { if (document.documentElement.dataset.mode !== 'lite') return false;
+    void Promise.resolve(window.fiveERequirePro?.(what) ?? false).then(ok => { if (ok && document.documentElement.dataset.mode !== 'lite') resume(); }); return true; };
+  window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;if(liteBlocked('한글 시험지(5E_hwp)',()=>void run(open)))return;void run(open);});
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   // 다른 창에서 보내 온 요청은 조판 창이 바쁘면 예전에는 알림 없이 버려졌다(점검 하). 버리는 대신 이유를 알린다.
   const sendFromElsewhere = task => {
+    if (liteBlocked('한글 시험지로 보내기', () => sendFromElsewhere(task))) return;
     if (busy) {const text='한글 시험지 창이 다른 작업 중이라 보내지 못했습니다. 작업이 끝난 뒤 다시 보내세요.';message(text,true);if(panel.hidden)void services.reportError?.(text);return;}
     void run(task);
   };

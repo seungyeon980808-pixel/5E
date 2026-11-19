@@ -15,7 +15,8 @@ const CAPTIONS = ['(가)', '(나)', '(다)', '(라)', '(마)', '(바)', '(사)',
 
 function requireDocument(bridge) {
   const input = bridge?.input;
-  if (!input?.cursor) throw new Error('먼저 시험지를 여세요.');
+  // 1.7.1 B6: code로 「문서 없음」을 알려, 화면 쪽이 경고만 띄우지 않고 파일 메뉴(새 시험지·열기)를 펼치게 한다.
+  if (!input?.cursor) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' });
   return { input, wasm: bridge.wasm, doc: bridge.wasm.borrowDocumentHandle() };
 }
 
@@ -171,11 +172,6 @@ export function hasInlineObjects(doc, sec, paras, ci = null) {
     if (ci === null ? !inCell : inCell && (c.cellPath?.[0]?.controlIndex ?? ci) === ci) return true;
   }
   return false;
-}
-// 줄 하나 고치기(본문·표 칸 공통)
-export function editLine(doc, where, start, removeLength, insert = '') {
-  if (where.kind === 'body') { if (removeLength) doc.deleteText(where.sec, where.p, start, removeLength); if (insert) doc.insertText(where.sec, where.p, start, insert); }
-  else { if (removeLength) doc.deleteTextInCell(where.sec, where.p, where.ci, where.cell, where.cp, start, removeLength); if (insert) doc.insertTextInCell(where.sec, where.p, where.ci, where.cell, where.cp, start, insert); }
 }
 export function formatLine(doc, where, start, end, props) {
   if (where.kind === 'body') doc.applyCharFormat(where.sec, where.p, start, end, JSON.stringify(props));
@@ -426,26 +422,6 @@ export function moveQuestionTo(bridge, from, to) {
   });
   return to;
 }
-// 문항마다 개체(표·그림·수식) 수 — 가·나형으로 섞은 뒤에도 같아야 한다(10-27 D3).
-// 한글 엔진(rhwp 0.8.7)의 문단 범위 복사·붙여넣기는 개체만 든 문단(5E_exam이 만든 선지 표·그림)이 섞이면 개체를 겹쳐 붙이거나 다른 문단으로 옮긴다.
-// 그러면 표·그림이 글과 겹친 문서가 나온다 — 바뀐 것이 보이면 되돌리고(편집 묶음 오류 = 원래대로) 알린다.
-export function objectCounts(doc, sec) {
-  // 쪽 배치에 그려지는 개체(표·그림·수식·도형)만 센다 — 구역·단 설정 같은 보이지 않는 개체는 0번 문단에 남아 문항과 함께 움직이지 않는다.
-  // 편집 묶음 안에서는 쪽 배치가 미뤄져 있어 마저 한 뒤 잰다.
-  try { doc.flushDeferredPagination?.(); } catch {}
-  const perPara = new Map(), seenObj = new Set();
-  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
-    if ((c.secIdx ?? 0) !== sec || c.cellPath?.length) continue;
-    // 단·쪽을 넘는 표는 조각마다 한 번씩 나온다 — 개체 하나로 센다.
-    const id = `${c.paraIdx}:${c.controlIdx ?? c.ci}`; if (seenObj.has(id)) continue; seenObj.add(id);
-    perPara.set(c.paraIdx, (perPara.get(c.paraIdx) || 0) + 1);
-  }
-  return questionBlocks(doc, sec).map(q => { let n = 0; for (let p = q.head; p < q.end; p++) n += perPara.get(p) || 0; return { key: paragraphText(doc, sec, q.head).replace(/^\s*\d{1,3}\.\s*/, '').slice(0, 30), n }; });
-}
-export function assertObjectsKept(before, after, what) {
-  const bag = list => list.map(x => `${x.key}|${x.n}`).sort().join('\n');
-  if (bag(before) !== bag(after)) throw new Error(`${what} 문항의 그림·표 자리가 어긋나서 하지 않았습니다. 5E_exam에서 만든 시험지는 5E_exam 시험지 화면에서 순서를 바꾸거나 B형을 만드세요.`);
-}
 // a번째와 a+1번째 문항 묶음을 바꾼다(문서 손잡이만 씀 — 복사본에도 쓴다).
 export function swapAdjacentQuestions(doc, sec, blocks, a) {
   {
@@ -523,13 +499,29 @@ export function deleteQuestion(bridge, index) {
   bridge.transaction('delete-question', () => {
     // 묶음 첫 문항을 지울 때도 묶음 머리·지문은 남긴다(다른 문항이 쓴다).
     const from = q.group ? q.head : q.start;
-    if (q.end < doc.getParagraphCount(sec)) checkedResult(doc.deleteRange(sec, from, 0, q.end, 0));
-    else if (from > 0) checkedResult(doc.deleteRange(sec, from - 1, doc.getParagraphLength(sec, from - 1), q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
-    else checkedResult(doc.deleteRange(sec, 0, 0, q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
+    // 1.7.1 R1: 예전에는 deleteRange로 지웠는데, 엔진은 문단 사이의 글만 지우고 표·그림 같은 개체는 남긴다 —
+    // 판 구조(문항 하나 = 표 하나) 문항을 지우면 그 표가 다음 문항 문단에 붙어(한 문단에 표 둘) 글·그림이 겹쳤다.
+    // 그래서 문단째 지운다. 0번 문단은 구역·단 설정을 품고 있어 지우지 않고 비운 뒤 다음 문단을 끌어 붙인다.
+    for (let p = q.end - 1; p >= Math.max(from, 1); p--) checkedResult(doc.deleteParagraph(sec, p));
+    if (from === 0) {
+      clearParagraph(doc, sec, 0);
+      if (doc.getParagraphCount(sec) > 1) checkedResult(doc.mergeParagraph(sec, 1));
+    }
     renumberDocument(doc); // 번호 다시 매기기까지 한 묶음(되돌리기 한 번)
     return true;
   });
   return q.number;
+}
+// 문단 하나를 비운다: 구역·단 정의는 두고, 그 문단에 놓인 표·그림·수식·도형(쪽 배치에 보이는 것)과 글을 지운다(뒤 개체부터).
+function clearParagraph(doc, sec, para) {
+  const remove = { table: doc.deleteTableControl, equation: doc.deleteEquationControl, image: doc.deletePictureControl }, found = new Map();
+  for (let page = 0; page < doc.pageCount(); page++) for (const c of parse(doc.getPageControlLayout(page)).controls || []) {
+    if ((c.secIdx ?? 0) !== sec || c.paraIdx !== para || c.cellPath?.length || Number.isInteger(c.cellIdx)) continue;
+    const ci = c.controlIdx ?? c.ci; if (Number.isInteger(ci) && !found.has(ci)) found.set(ci, c.type);
+  }
+  for (const [ci, type] of [...found].sort((a, b) => b[0] - a[0])) checkedResult((remove[type] || doc.deleteShapeControl).call(doc, sec, para, ci));
+  const length = doc.getParagraphLength(sec, para);
+  if (length) checkedResult(doc.deleteText(sec, para, 0, length));
 }
 // 넓은 그림·표 모두 단 폭에 맞추기(본문 그림은 비율 유지, 표는 칸 비율 유지). 고친 수를 돌려준다.
 export function fitWideObjects(bridge) {
@@ -569,12 +561,6 @@ export function keepQuestionsWhole(bridge) {
   });
   return { moved, left };
 }
-// 문서 손잡이만 쓰는 「나뉜 문항 넘기기」(학생용 사본에도 쓴다). {moved, left}
-export function keepQuestionsWholeDoc(doc) {
-  let moved = 0, left = 0;
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) { const r = keepSectionWhole(doc, sec); moved += r.moved; left += r.left; }
-  return { moved, left };
-}
 function keepSectionWhole(doc, sec) {
   const columns = Math.max(1, parse(doc.getColumnDef(sec))?.columnCount || 1);
   let moved = 0;
@@ -607,7 +593,7 @@ export function fillColumns(bridge) {
   bridge.transaction('fill-columns', () => { result = fillColumnsDoc(doc); return true; });
   return result;
 }
-// 문서 손잡이만 쓰는 단 채우기(학생용 사본에도 쓴다).
+// 문서 손잡이만 쓰는 단 채우기.
 export function fillColumnsDoc(doc) {
   const all = allQuestionBlocks(doc);
   let changed = 0, columnsFilled = 0;
@@ -653,15 +639,6 @@ export function fillColumnsDoc(doc) {
   }
   return { changed, columns: columnsFilled };
 }
-// 단 채우기를 쓴 문서인지 어림: 같은 구역 문항 위 간격이 두 가지 넘게 다르면(단마다 다른 간격) 채운 것으로 본다.
-export function looksColumnFilled(doc) {
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) {
-    const values = new Set(questionBlocks(doc, sec).slice(1).map(b => { try { return Math.round(parse(doc.getParaPropertiesAt?.(sec, b.start) ?? '{}')?.spacingBefore || 0); } catch { return 0; } }));
-    if (values.size > 1) return true;
-  }
-  return false;
-}
-
 // 조합 선지: 〈보기〉 ㄱㄴㄷ·학생 A B C를 「있는 대로 고른」 문항에서 흔히 쓰는 다섯 조합. 커서 문단 뒤에 넣고 5열로 놓는다.
 export const CHOICE_COMBOS = [
   ['ㄱ', 'ㄷ', 'ㄱ, ㄴ', 'ㄴ, ㄷ', 'ㄱ, ㄴ, ㄷ'],

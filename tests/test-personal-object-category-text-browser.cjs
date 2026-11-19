@@ -18,7 +18,7 @@ const MIME = {
 function startStaticServer() {
   const server = http.createServer((request, response) => {
     const pathname = decodeURIComponent(new URL(request.url, 'http://127.0.0.1').pathname);
-    const relative = pathname === '/' ? '/preview/index.html' : pathname;
+    const relative = pathname === '/' ? '/index.html' : pathname;
     const filePath = path.resolve(ROOT, `.${relative}`);
     if (!filePath.startsWith(`${ROOT}${path.sep}`)) {
       response.writeHead(403).end();
@@ -100,7 +100,7 @@ async function observe(page) {
   try {
     const initialCategory = '역학 "인용" <각도>';
     const category = '역학 "인용" <img src="/__missing-category-probe" onerror="window.__categoryProbe += 1"> <각도>';
-    await page.goto(`${origin}/preview/index.html?mode=pro&mobile=0`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${origin}/index.html?mode=pro&mobile=0`, { waitUntil: 'domcontentloaded' });
     await waitForPersonalLibrary(page);
     await initPersonalLibrary(page);
     await importCategory(page, initialCategory);

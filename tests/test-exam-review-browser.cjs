@@ -20,12 +20,12 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   const qs=[question(1),question(2)];
   await sheet.setInputFiles('#excel-file',{name:'form.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:examples.format,questions:qs,documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.evaluate(()=>{const u=document.querySelector('input[name="import-mode"][value="update"]');if(u)u.checked=true;});await sheet.click('#apply-import');
-  const open=async q=>{await sheet.waitForFunction(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].some(n=>n.getClientRects().length),q.id);
+  const open=async q=>{await sheet.evaluate(()=>{if(document.querySelector('.shell-body.nav-off'))document.querySelector('#toggle-nav')?.click();});await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]')?.click()); /* 11-15: 카드는 「작업 중」 문항 목록에서 연다 — 열린 카드 위 번호 탭은 없어짐 */ await sheet.waitForFunction(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].some(n=>n.getClientRects().length),q.id);
     await sheet.evaluate(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].find(n=>n.getClientRects().length).click(),q.id);
     await sheet.waitForFunction(n=>document.querySelector('#typeset-title')?.textContent.startsWith(n+'번')&&document.querySelector('#native-editor')?.dataset.ready==='true'&&document.querySelector('#preview-dialog')?.getAttribute('aria-busy')!=='true',q.number);};
   const save=async()=>{for(let i=0;i<3;i++){await sheet.evaluate(()=>(document.querySelector('#card-view:not([hidden]) [data-cv="hwp-save"]')||document.querySelector('#typeset-save')).click()) /* 10-23 A2: 조판은 자동 저장 — 단추는 숨겼지만 같은 저장 명령을 부른다 */;await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';});const s=await sheet.locator('#typeset-status').textContent();if(/조판 저장됨/.test(s))return;assert.notEqual(await sheet.locator('#typeset-status').getAttribute('data-error'),'true',s);await sheet.waitForTimeout(400);}throw Error('조판을 저장하지 못했습니다');};
   await open(qs[0]);await save();await open(qs[1]);await save();
-  if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
+  if(await sheet.locator('.shell-body.nav-off').count()||await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   await sheet.click('.side [data-nav="new-exam"]');/* 새 시험지는 ① 틀 · 속성에서 열림 → ② 「담기」(10-24) */await h.pickIntoExam(sheet,qs.map(q=>q.id));
   // 점검 칸(10-24 ③): 정답 분포 5칸 · 목표 대비 배점 합(100점이 아님)
   assert.equal(await sheet.locator('.pv-answers span').count(),5);

@@ -1,8 +1,10 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { inventory } = require('./web-release.cjs');
-const assets = require('../print/assets.json');
+const { inventory, sitePath } = require('./web-release.cjs');
+// 원본은 저장소 apps/print/, 사이트에는 print/로 올린다.
+const sources = require('../apps/print/assets.json');
+const assets = sources.map(sitePath);
 const requiredBase = ['index.html', '404.html', 'js/release-receipt.js', 'examlibrary/index.html', 'ourdocs/index.html'];
 
 function exactInventory(site, files) {
@@ -40,13 +42,13 @@ function appendRoute(site, base, sourceRoot) {
     if (!base.files[file]) throw new Error(`Incomplete published base: ${file}`);
   }
   const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim();
-  const committedAssets = assets.map(asset => {
-    if (!/^print\/index\.html$/.test(asset)) throw new Error(`Unexpected print source path: ${asset}`);
+  const committedAssets = sources.map(asset => {
+    if (!/^apps\/print\/index\.html$/.test(asset)) throw new Error(`Unexpected print source path: ${asset}`);
     const source = path.join(sourceRoot, asset);
     if (!fs.lstatSync(source).isFile()) throw new Error(`Only ordinary print files may be published: ${asset}`);
     const committed = execFileSync('git', ['show', `${sourceCommit}:${asset}`], { cwd: sourceRoot, maxBuffer: 64 * 1024 * 1024 });
     if (!fs.readFileSync(source).equals(committed)) throw new Error(`Uncommitted route input: ${asset}`);
-    return [asset, committed];
+    return [sitePath(asset), committed];
   });
   for (const [asset, bytes] of committedAssets) {
     const destination = path.join(site, asset);
@@ -82,4 +84,4 @@ if (require.main === module) (() => {
     }
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 })();
-module.exports = { assets, appendRoute, verifyRoute };
+module.exports = { assets, sources, appendRoute, verifyRoute };

@@ -71,7 +71,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     await choose(page,imageKind,labelResult);
     assert.equal(await page.locator('[data-ai-precise-restore]').isChecked(),false);
     if(imageKind==='exam')assert.equal(await page.locator('[data-ai-precise-restore]').isDisabled(),true);
-    await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+    await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();
     await finish(page);
     const requests=await sends(page),c=await candidate(page);
     record(dir,{requests,c,errors}); // Preserve the actual result even if a contract assertion fails.
@@ -125,7 +125,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
 
 test('relation failures retain the exact changed connection in review without automatic regeneration',{timeout:90000},async t=>{
   const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
-  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();
   // 11-10: 예전 계약(legacy) 삭제 흐름은 원본 관찰 → 그림 생성 → 검수 세 요청이다(기본 경로의 삭제는 관찰·검수 없이 생성 한 번).
   await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'assistant',JSON.stringify(verifiedPlan));
   await page.waitForFunction(()=>window.__task2.sends.length===2);await emit(page,1,'image');
@@ -148,11 +148,11 @@ test('relation failures retain the exact changed connection in review without au
 test('workflow cancel/retry: late analysis cannot mutate candidate; explicit retry only',{timeout:90000},async t=>{
   const dir=evidenceFor('cancel-retry');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   // 11-10: 늦은 관찰 응답 취소 검사는 관찰이 남아 있는 기출 편집 라벨 복원으로 유지.
-  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();
   await page.waitForFunction(()=>window.__task2.sends.length===1);await page.locator('#ai-image-panel [data-ai-interrupt]').click();
   await emit(page,0,'assistant',JSON.stringify(plan));await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
   assert.equal((await snapshot(page))[0].generated.length,0);assert.equal((await sends(page)).length,1);
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{startIndex:1});
+  await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();await finish(page,{startIndex:1});
   const c=await candidate(page),requests=await sends(page);assert.ok(c);assert.equal(generations(requests).length,0);assert.deepEqual(errors,[]);
   const requestTiers=await page.evaluate(()=>window.__task2.sends.map(request=>request.payload.serviceTier));
   assert.ok(requestTiers.every(tier=>tier==='priority'),'Initial and retry requests keep the fixed fast tier');
@@ -162,7 +162,7 @@ test('workflow cancel/retry: late analysis cannot mutate candidate; explicit ret
 test('workflow unlabeled exam: zero invented native objects and identical source pixels',{timeout:90000},async t=>{
   const dir=evidenceFor('unlabeled');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true,unlabeled:true});
   const empty={...plan,labels:[],removalRegions:[],uncertainties:[]};
-  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:empty});
+  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();await finish(page,{sourcePlan:empty});
   const c=await candidate(page),requests=await sends(page);assert.ok(c);assert.equal(c.sourceLabelPlan.labels.length,0);assert.equal(generations(requests).length,0);
   const pixels=await pixelEvidence(page,c);assert.equal(pixels.outsideChanged,0);assert.equal(pixels.insideChanged,0);
   assert.equal(c.data,await page.evaluate(()=>window.__task2.original),'Unlabeled exam retains exact source PNG bytes, not just matching pixels');
@@ -189,7 +189,7 @@ test('workflow unlabeled exam: zero invented native objects and identical source
 
 test('workflow recovery: choices, source plan and candidate bindings survive reload without calls',{timeout:90000},async t=>{
   const dir=evidenceFor('recovery');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
-  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
+  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();await finish(page);
   const before=await candidate(page);
   assert.equal(before.sourceFrame.width,512);assert.equal(before.sourceFrame.height,384);
   const beforeObservation=(await snapshot(page))[0].sourceLabelObservation;
@@ -207,7 +207,7 @@ test('workflow explicit choices: legacy workspace cannot silently dispatch an im
   const dir=evidenceFor('explicit-choices');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
   assert.equal(await page.locator('#ai-image-panel [data-ai-image-kind]').inputValue(),'');
   assert.equal(await page.locator('#ai-image-panel [data-ai-label-result]').inputValue(),'');
-  const send=page.locator('#ai-image-panel [data-ai-comments-apply]');
+  const send=page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]');
   const disabled=await send.isDisabled();if(!disabled)await send.click();
   assert.equal((await sends(page)).length,0,'A legacy workspace cannot infer exam/general or label result');
   await page.screenshot({path:path.join(dir,'explicit-choices-required.png')});record(dir,{disabled,requests:await sends(page),errors});assert.deepEqual(errors,[]);
@@ -217,7 +217,7 @@ test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncer
   const dir=evidenceFor('uncertainty');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   const uncertain={...plan,removalRegions:[...plan.removalRegions,{id:'unsafe-mark',labelId:'source-label',sourceRef:1,ownership:'confirmed',kind:'polygon',component:'endpoint',method:'flat-background',points:[{x:408/512,y:278/384},{x:430/512,y:278/384},{x:430/512,y:298/384},{x:408/512,y:298/384}]}]};
   // 11-10: 불확실 영역의 로컬 픽셀 보호 검사는 기출 편집 라벨 복원에서 그대로 유지.
-  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:uncertain});
+  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();await finish(page,{sourcePlan:uncertain});
   const c=await candidate(page),pixels=await pixelEvidence(page,c);
   assert.equal(pixels.outsideChanged,0);assert.deepEqual(pixels.uncertainMark,[17,17,17,255]);assert.notEqual(c.reviewState,'passed');
   assert.ok(c.removalReport.issues.some(issue=>issue.code==='uncertain-overlap'));
@@ -228,13 +228,13 @@ test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncer
 test('workflow selected scoped edit: explicit apply preserves source observation and RAW without full reanalysis',{timeout:120000},async t=>{
   const dir=evidenceFor('selected-scoped-edit');const {page,errors}=await fixture(t,1,dir,{...LEGACY,initialGeneration:true});
   // 11-10: 부분 수정이 기존 관찰을 보존하는지 검사하므로 관찰이 있는 편집 라벨 복원으로 실행.
-  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
+  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();await finish(page);
   const first=await candidate(page),firstRequests=await sends(page),observation=(await snapshot(page))[0].sourceLabelObservation;
   assert.equal(generations(firstRequests).length,1);assert.equal(observations(firstRequests).length,1);
-  assert.equal(await page.locator('#ai-image-panel [data-ai-send]').isVisible(),false,'Selected PNG uses the approved box-edit UI');
-  const apply=page.locator('#ai-image-panel [data-ai-comments-apply]');
-  assert.equal(await apply.isVisible(),true);assert.equal(await apply.isDisabled(),true,'No boxes means no authorized edit');
-  await apply.evaluate(button=>button.click());assert.equal((await sends(page)).length,firstRequests.length);
+  assert.equal(await page.locator('#ai-image-panel [data-ai-comments-apply]:not([data-ai-send])').isVisible(),false,'Selected PNG uses the approved box-edit UI (옛 코멘트 반영 단추는 숨김, 11-11 js/ai-panel.js:2789)');
+  const apply=page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]');
+  // 11-11(js/ai-image-comments.js:453): 박스가 없으면 단추는 「다시 그리기 · 정밀」(결과 전체를 Sol로 다시 그림)로 눌러 쓸 수 있다. 박스가 생기기 전에는 누르지 않아 요청이 늘지 않는다.
+  assert.equal(await apply.isVisible(),true);assert.equal(await apply.isDisabled(),false);assert.equal((await apply.textContent()).trim(),'다시 그리기 · 정밀');
   await page.locator('#ai-image-panel [data-ai-comment-tool="area"]').click();
   const image=page.locator('#ai-image-panel .ai-generated-card .ai-preview-stage > img').first();
   const rect=await image.boundingBox();assert.ok(rect);
@@ -250,8 +250,10 @@ test('workflow selected scoped edit: explicit apply preserves source observation
     const startIndex=(await sends(page)).length;
     await apply.click();await page.waitForFunction(n=>window.__task2.sends.length===n,startIndex+1);
     const payload=await page.evaluate(index=>window.__task2.sends[index].payload,startIndex);
-    assert.equal(payload.purpose,'image');assert.equal(payload.attachments.length,1);
-    assert.equal(payload.attachments[0].data,first.data,'Each explicit attempt edits the original selected RAW, never a cancelled candidate');
+    assert.equal(payload.purpose,'image');
+    // 11-11(f5ea556b): 부분 수정은 원본·지금 그림·박스 표시 그림 3장을 함께 보낸다(js/ai-panel.js scopedAttachments 순서). 지금 그림(둘째)이 선택한 RAW다.
+    assert.equal(payload.attachments.length,3);
+    assert.equal(payload.attachments[1].data,first.data,'Each explicit attempt edits the original selected RAW, never a cancelled candidate');
     // A narrowly defined synthetic dot edits only the explicitly drawn box.
     const controlled=await page.evaluate(async({data,comment})=>{
       const {decodeScopedPng,encodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');
@@ -301,7 +303,7 @@ test('workflow mixed batch: exam remove and general editable retain independent 
   await choose(page,'general','restore-editable');
   await page.locator('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-select').click({modifiers:['Meta']});
   assert.match(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(),/2개 선택/);
-  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
+  await page.locator('#ai-image-panel [data-ai-send][data-ai-comments-apply]').click();
   let next=0;
   for(let step=0;step<20;step++) {
     await page.waitForFunction(next=>window.__task2.sends.length>next || window.__task2Manager.workspaceBatchState().filter(j=>j.state==='completed').length===2,next);

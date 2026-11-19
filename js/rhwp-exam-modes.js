@@ -9,7 +9,7 @@ import { installExamMarks, marksButtonHtml, marksEnabled, setMarksEnabled } from
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
 const examPoolOpen = () => import('./rhwp-exam-exampool-open.js?v=1.7.0-four-session-integration');
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js?v=1.7.0-four-session-integration';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset, setAllAnswers, setAllScores } from './rhwp-exam-worksheet.js?v=1.7.0-four-session-integration';
+import { insertExamHeader, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, STEMS, shadeHeaderRow, PAGE_NUMBER_STYLES, insertPageNumbers, unifyQuestionFonts, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, pickQuestionsCopy, TABLE_PRESETS, insertTablePreset } from './rhwp-exam-worksheet.js?v=1.7.0-four-session-integration';
 import { inspectorMarkup, leftToolsMarkup, installInspector, installLeftTools } from './rhwp-exam-inspector.js?v=1.7.0-four-session-integration';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js?v=1.7.0-four-session-integration';
 
@@ -91,37 +91,21 @@ function focusTabs(ctx) {
       ['내어쓰기', '〈보기〉·선지 줄에서 누르면 「ㄱ. 」「① 」 이름표 폭만큼 둘째 줄을 내어 씀(커서는 그 줄 어디든)', doc(b => { if (!applyHangingIndent(b)) throw new Error('이 줄에는 「ㄱ.」「①」 같은 이름표가 없습니다. 맞출 글자 뒤에 커서를 두고 다시 누르세요.'); })], '|',
       ['ㄱㄴㄷ 선지', '〈보기〉 ㄱㄴㄷ·학생 A B C 조합 선지 다섯 개를 커서 줄 뒤에 5열로 넣기', (_, button) => ctx.openPicker(button, 'combo')], ['선지 자동', '선지 길이를 보고 5열·3열·1열 중 한 줄에 들어가는 배열로', doc(b => ctx.message(`선지를 ${relayoutChoices(b, 'auto')}열로 놓았습니다.`))], ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
-      ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
-      ['해설', '커서 문항 끝에 「[해설] 」 줄을 만들고 커서를 그 끝에(학생용에서 빠지고 정답·해설지에 모임)', doc(b => { ctx.message(`${addExplanationLine(b)} 해설 줄에 쓰세요.`); ctx.refocus(); })],
-      ['분류', '커서 문항의 내용 영역·성취기준·난이도(상·중·하) 줄 넣기·바꾸기 — 분류표가 채워 씀(학생용에서는 빠짐)', (_, button) => ctx.openPicker(button, 'meta')],
-      ['배점', '커서가 있는 문항의 배점 넣기·바꾸기(발문 끝, [3점]·(3점) 중 문서가 쓰는 모양) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
     ],
     sheet: [
-      ['빈칸 표시', '고른 낱말을 빈칸으로 표시(연한 파랑·밑줄) — 학생용에서 「(　　　)」로 바뀜', doc(b => markBlank(b, true))],
-      ['표시 지우기', '고른 부분의 빈칸 표시 지우기', doc(b => markBlank(b, false))],
-      ['굵은 글씨→빈칸', '문서의 굵은 낱말을 한 번에 빈칸 표시로(줄 전체가 굵은 제목·머리 칸은 그대로)', doc(b => ctx.message(`굵은 낱말 ${boldToBlanks(b)}개를 빈칸으로 표시했습니다. 「학생용 내려받기」로 빈칸 학습지를 만드세요.`))],
-      ['학생용 내려받기', '빈칸을 「(　　　)」로 바꾸고 「[정답]·[해설]·정답:」 줄을 뺀 학생용 HWPX 사본 내려받기(지금 문서는 그대로)', doc(b => ctx.studentCopy(b))],
-      ['정답지 내려받기', '빈칸 자리에 정답을 빨간 굵은 글씨로 채운 정답지 HWPX 사본 내려받기', doc(b => ctx.answerKey(b))],
-      ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
-      ['학습지 틀', '제목·이름 칸과 상자를 문서 끝에 한 번에 — 수업 학습지·실험 보고서·형성 평가', (_, button) => ctx.openPicker(button, 'frame')],
       ['상자', '개념 정리·탐구 활동·생각해 보기·주의·유의 사항 상자(제목 줄 음영)와 표 틀(KWL·비교·실험 결과·용어)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
       ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
-      ['QR 코드', '영상·자료 주소를 QR 코드로 커서 문단 뒤에 넣기(왼쪽 QR, 오른쪽 안내 글)', (_, button) => ctx.openPicker(button, 'qr')],
       ['평가 기준표', '평가 요소 | 상 | 중 | 하 표를 커서 문단 뒤에 넣기', doc(b => ctx.message(`평가 기준표(${insertRubric(b)}줄)를 넣었습니다.`))],
     ],
     layout: [
       ['시험지 머리', '문서 맨 앞에 제목 줄과 학년·반·번호·이름 칸 넣기', (_, button) => ctx.openHeaderForm(button)],
-      ['정답·해설지', '문항마다 「번호. 정답」과 [해설] 줄을 모은 정답·해설지를 새 한글 파일로 내려받기', doc(b => ctx.explanations(b))],
-      ['분류표', '이원목적분류표: 문항 번호·배점·정답을 채운 표를 새 한글 파일로 내려받기(성취기준·난이도 칸은 비워 둠)', doc(b => ctx.blueprint(b))],
-      ['정답표 칸', '찾은 문항 번호로 「번호/정답」 표를 문서 끝에 넣기(정답은 비워 둠)', doc(b => ctx.message(`문항 ${insertAnswerGrid(b)}개의 정답표 칸을 넣었습니다.`))],
       ['문항 간격', '두 번째 문항부터 문항 위 간격을 한꺼번에 맞추기', (_, button) => ctx.openSpacingForm(button)],
       ['단 채우기', '단마다 남는 빈 공간을 그 단 문항 사이에 고르게 나누기(풀이 공간 맞추기, 다시 눌러도 같음)', doc(b => { const r = fillColumns(b); ctx.message(r.columns ? `단 ${r.columns}곳의 문항 사이 빈 공간을 고르게 나눴습니다.` : '나눌 빈 공간이 있는 단이 없습니다(단마다 문항이 둘 이상이어야 합니다).'); })], '|',
       ['1단', '모든 쪽을 1단으로', doc(b => ctx.message(`${setColumns(b, 1)}단으로 바꿨습니다.`))], ['2단', '모든 쪽을 2단으로(단 사이 8mm) — 시험지 기본', doc(b => ctx.message(`${setColumns(b, 2)}단으로 바꿨습니다.`))],
       ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
-      ['쪽 번호·머리말', '모든 쪽 아래 가운데에 쪽 번호(- 1 -, 1 / 4 …) — 다시 누르면 모양만 바뀜 · 쪽 위 머리말(시험 이름)도 여기서', (_, button) => ctx.openPicker(button, 'pagenum')],
-      ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김, 선지까지 섞기 고를 수 있음) + 교사용 문서 끝에 대응표·나형 정답', (_, button) => ctx.openPicker(button, 'variant')], '|',
+      ['쪽 번호·머리말', '모든 쪽 아래 가운데에 쪽 번호(- 1 -, 1 / 4 …) — 다시 누르면 모양만 바뀜 · 쪽 위 머리말(시험 이름)도 여기서', (_, button) => ctx.openPicker(button, 'pagenum')], '|',
       // 5E_hwp 안 편집기에는 파일 명령(인쇄 등)이 등록되지 않아 이 두 단추가 늘 「이 위치에서는 해당 단축키를 사용할 수 없습니다」였다(10-26).
       // 5E_exam 인쇄와 같은 방식: 엔진이 그린 쪽(SVG)을 실제 용지 크기로 인쇄 창에 — PDF는 인쇄 창의 「PDF로 저장」.
       ['인쇄', '인쇄 창 열기', doc(b => printNativePages(b, ctx, false))], ['PDF로 저장', 'PDF로 저장(인쇄 창에서 「PDF로 저장」)', doc(b => printNativePages(b, ctx, true))],
@@ -131,7 +115,7 @@ function focusTabs(ctx) {
 
 // 「⋯ 더 보기」: 자주 쓰지 않지만 한글 리본을 켜지 않고도 닿아야 하는 것(기능 목록의 ○ 항목).
 const MORE = {
-  sheet: [['학생용(㉠㉡ 빈칸)', '빈칸을 「( ㉠ )」처럼 이름 붙은 빈칸으로 바꾼 학생용 사본(정답 대응은 알림에)', 'x:student-labeled'], ['찾아 바꾸기', '찾아 바꾸기 (Ctrl+H)', 'edit:find-replace'], ['문자표 전체', '한글 문자표 창', 'insert:symbols'], ['글상자', '글상자 넣기', 'insert:textbox'], ['각주', '각주 넣기', 'insert:footnote']],
+  sheet: [['찾아 바꾸기', '찾아 바꾸기 (Ctrl+H)', 'edit:find-replace'], ['문자표 전체', '한글 문자표 창', 'insert:symbols'], ['글상자', '글상자 넣기', 'insert:textbox'], ['각주', '각주 넣기', 'insert:footnote']],
   text: [['장평 −', '장평 줄이기 (Alt+Shift+J)', 'format:char-ratio-decrease'], ['장평 +', '장평 늘리기 (Alt+Shift+K)', 'format:char-ratio-increase'], ['글자 모양 창', '글자 모양 전체 설정(글자색·테두리 등) (Alt+L)', 'format:char-shape'], ['문단 모양 창', '문단 모양 전체 설정 (Alt+T)', 'format:para-shape'],
     ['문단 번호', '문단 번호 켜기·끄기', 'format:toggle-numbering'], ['글머리표', '글머리표 켜기·끄기', 'format:toggle-bullet'],
     ['왼쪽 여백 +1pt', '왼쪽 여백 늘이기 (Ctrl+Alt+F6)', 'para:left-increase'], ['왼쪽 여백 −1pt', '왼쪽 여백 줄이기 (Ctrl+Alt+F5)', 'para:left-decrease'],
@@ -197,7 +181,8 @@ export function installExamModes(panel, services) {
   panel.append(pop);
   const closePop = () => { pop.hidden = true; pop.innerHTML = ''; };
 
-  const bridgeOrThrow = () => { const b = getBridge(); if (!b?.input) throw new Error('시험지 편집기를 준비하는 중입니다. 잠시 뒤 다시 누르세요.'); return b; };
+  // 1.7.1 B6: 편집기는 떴는데 문서가 없으면 code를 붙여 던진다 — 5E_hwp가 파일 메뉴(새 시험지·열기)를 펼친다.
+  const bridgeOrThrow = () => { const b = getBridge(); if (!b) throw new Error('시험지 편집기를 준비하는 중입니다. 잠시 뒤 다시 누르세요.'); if (!b.input) throw Object.assign(new Error('먼저 시험지를 여세요.'), { code: 'no-document' }); return b; };
   // 조판 부호(빨간 V·초록 선) — 화면에만. 편집기가 새로 뜨면 그 편집기에 다시 붙인다.
   const marksToggle = bar.querySelector('[data-exam-marks]');
   const syncMarksButton = on => marksToggle?.setAttribute('aria-pressed', String(on));
@@ -245,8 +230,8 @@ export function installExamModes(panel, services) {
     command(action) {
       const b = bridgeOrThrow();
       let failure = null;
-      runDocumentAction(b, action, { notify: text => { failure = text; } });
-      if (failure) throw new Error(failure);
+      runDocumentAction(b, action, { notify: (text, code) => { failure = Object.assign(new Error(text), code ? { code } : {}); } });
+      if (failure) throw failure;
       refocus();
     },
     highlight(color) { const b = bridgeOrThrow(); b.deps.eventBus.emit('format-char', { shadeColor: color }); refocus(); },
@@ -258,16 +243,6 @@ export function installExamModes(panel, services) {
       input.applyParaFormat({ [name]: units });
       message(`${name === 'spacingBefore' ? '문단 위' : '문단 아래'} 간격 ${pt}pt`);
       refocus();
-    },
-    studentCopy(b, labeled = false) {
-      const { bytes, count, removed, relaid, refilled, labels } = studentCopy(b, { labeled }), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
-      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`${[count ? `빈칸 ${count}개를 비우고` : '', removed ? `[정답]·[해설] 줄 ${removed}개를 뺀` : ''].filter(Boolean).join(' ').replace(/비우고$/, '비운')} 학생용 사본을 내려받습니다(${name})${refilled || relaid ? ` — 줄이 빠진 만큼 ${[refilled ? '단을 다시 채우고' : '', relaid ? `나뉜 문항 ${relaid}개를 넘겼습니다` : ''].filter(Boolean).join(' ').replace(/채우고$/, '채웠습니다')}` : ''}. 지금 문서는 그대로입니다.${labels ? ` 빈칸 정답: ${labels.join(', ')}` : ''}`);
-    },
-    answerKey(b) {
-      const { bytes, count } = answerKeyCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-정답지.hwpx`;
-      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`빈칸 ${count}개에 정답을 채운 정답지를 내려받습니다(${name}).`);
     },
     // 문항을 그림으로: 스튜디오 문서(글꼴이 올라 있는 곳)의 캔버스에 쪽을 3배로 그려 문항 영역만 잘라 PNG로.
     async questionImage(b) {
@@ -288,22 +263,6 @@ export function installExamModes(panel, services) {
       services.download(new Blob([zipSync(files, { level: 0 })], { type: 'application/zip' }), `${documentBase()}-문항그림.zip`);
       message(`문항 ${Object.keys(files).length}개를 그림으로 묶어 내려받습니다.`);
     },
-    explanations(b) {
-      const base = (services.documentName?.() || '시험').replace(/[\\/:*?"<>|]/g, '_'), { bytes, count, explained } = explanationCopy(b, base === '새 시험지' ? '시험' : base);
-      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), `${base}-정답과해설.hwpx`);
-      message(`문항 ${count}개(해설 ${explained}개)의 정답·해설지를 내려받습니다.`);
-    },
-    blueprint(b) {
-      const base = (services.documentName?.() || '시험').replace(/[\\/:*?"<>|]/g, '_'), { bytes, count, total } = blueprintCopy(b, base === '새 시험지' ? '시험' : base);
-      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), `${base}-이원목적분류표.hwpx`);
-      message(`문항 ${count}개(배점 합계 ${total}점)의 이원목적분류표를 내려받습니다. 성취기준·난이도 칸을 채우세요.`);
-    },
-    variant(b, choices = false) {
-      const { bytes, mapping, shuffled } = makeVariant(b, Math.random, { choices }), name = `${(services.documentName?.() || '시험지').replace(/[\\/:*?"<>|]/g, '_')}-나형.hwpx`;
-      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`나형을 내려받습니다(${name})${choices ? ` — 선지도 섞은 문항 ${shuffled}개` : ''}. 교사용 문서 끝에 대응표를 넣었습니다: ${appendVariantMapping(b, mapping)}`);
-    },
-    documentTitle: kind => { const n = services.documentName?.() || ''; return n && n !== '새 시험지' ? n : (WORKSHEET_FRAMES[kind]?.[0] || '학습지'); },
     openHeaderForm: anchor => openForm(anchor, 'header'),
     openSpacingForm: anchor => openForm(anchor, 'spacing'),
     openPicker: (anchor, kind) => openForm(anchor, kind),
@@ -413,7 +372,6 @@ export function installExamModes(panel, services) {
   function runMore(action) {
     if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'x:question-image') return ctx.questionImage(bridgeOrThrow());
-    if (action === 'x:student-labeled') return ctx.studentCopy(bridgeOrThrow(), true);
     if (action === 'x:all-question-images') return ctx.allQuestionImages(bridgeOrThrow());
     if (action === 'x:pick-questions') return openForm(bar, 'pick');
     if (action === 'table-align-left' || action === 'table-align-right') return ctx.withBridge(b => applyTableAlignment(b, action.slice(12)));
@@ -444,47 +402,13 @@ export function installExamModes(panel, services) {
     } else if (kind === 'paper') {
       pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
         <div class="exam-morelist exam-three">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
-    } else if (kind === 'qr') {
-      pop.innerHTML = `<div class="exam-pop-head">QR 코드 <small>커서 문단 뒤에 넣음</small></div>
-        <label class="exam-field"><span>주소</span><input data-exam-qr="url" placeholder="https://" inputmode="url" autocomplete="off" spellcheck="false"></label>
-        <label class="exam-field"><span>안내 글</span><input data-exam-qr="label" placeholder="예: 실험 영상 보기"></label>
-        <div class="exam-morelist exam-three">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>
-        <div class="exam-pop-head exam-pop-sub">정답 QR <small>문항 안 [정답]을 「1-③ 2-①」로 담아 학생이 스스로 채점</small></div>
-        <div class="exam-morelist"><button type="button" data-exam-qr-answers>정답을 QR로 넣기</button></div>`;
-    } else if (kind === 'frame') {
-      pop.innerHTML = `<div class="exam-pop-head">학습지 틀 <small>문서 끝에 넣음 · 제목은 문서 이름</small></div>
-        <div class="exam-stemlist">${Object.entries(WORKSHEET_FRAMES).map(([k, [, name, parts]]) => `<button type="button" data-exam-frame="${k}"><b>${esc(name)}</b> — ${esc(parts.map(x => x[0].replace(/ \(.*\)$/, '')).join(' · '))}</button>`).join('')}</div>`;
     } else if (kind === 'combo') {
       pop.innerHTML = `<div class="exam-pop-head">조합 선지 <small>커서 줄 뒤에 5열로</small></div>
         <div class="exam-stemlist">${CHOICE_COMBOS.map((c, i) => `<button type="button" data-exam-combo="${i}">${c.map((t, k) => `${'①②③④⑤'[k]} ${esc(t)}`).join('&nbsp;&nbsp;')}</button>`).join('')}</div>`;
-    } else if (kind === 'variant') {
-      pop.innerHTML = `<div class="exam-pop-head">가·나형 <small>나형 사본 내려받기 · 지금 문서는 대응표만 붙음</small></div>
-        <div class="exam-morelist"><button type="button" data-exam-variant="order">문항 순서만 섞기</button><button type="button" data-exam-variant="choices" title="선지가 한 줄에 하나씩인 문항만 선지 순서도 섞고, 문항 안 「[정답] ③」을 따라 고침">문항+선지 순서 섞기</button></div>`;
     } else if (kind === 'pick') {
       pop.innerHTML = `<div class="exam-pop-head">고른 문항만 새 파일로 <small>오답·보충 학습지 · 지금 문서는 그대로</small></div>
         <label class="exam-field"><span>문항 번호</span><input data-exam-pick placeholder="예: 3, 5, 7-9" inputmode="numeric" autocomplete="off"></label>
         <div class="exam-form-actions"><button type="button" data-exam-pick-submit>내려받기</button></div>`;
-    } else if (kind === 'meta') {
-      let now = {}, last = {}; try { last = JSON.parse(localStorage.getItem('5e.hwp.questionMeta') || '{}'); } catch {}
-      try { const f = cursorQuestion(bridgeOrThrow()); if (f) now = Object.fromEntries(Object.entries(questionMeta(f.doc, f.sec, f.q)).map(([k, v]) => [k, v.value])); } catch {}
-      const val = k => esc(now[k] ?? last[k] ?? '');
-      pop.innerHTML = `<div class="exam-pop-head">분류 정보 <small>커서 문항 · 분류표에 채워짐 · 학생용에서는 빠짐</small></div>
-        <label class="exam-field"><span>내용 영역</span><input data-exam-meta="area" value="${val('area')}" placeholder="예: 물질과 규칙성"></label>
-        <label class="exam-field"><span>성취기준</span><input data-exam-meta="standard" value="${val('standard')}" placeholder="예: [10통과1-01]"></label>
-        <div class="exam-field"><span>난이도</span><div class="exam-morelist exam-levels" role="group" aria-label="난이도">${['상', '중', '하'].map(l => `<button type="button" data-exam-meta-level="${l}" aria-pressed="${(now.level ?? '') === l}">${l}</button>`).join('')}</div></div>
-        <div class="exam-form-actions"><button type="button" data-exam-meta-submit>넣기</button></div>`;
-    } else if (kind === 'answer') {
-      pop.innerHTML = `<div class="exam-pop-head">정답 <small>커서가 있는 문항 끝 · 학생용에서는 빠짐</small></div>
-        <div class="exam-morelist exam-three">${[...'①②③④⑤'].map(m => `<button type="button" data-exam-answer="${m}">${m}</button>`).join('')}<button type="button" data-exam-answer="">지우기</button></div>
-        <div class="exam-pop-head exam-pop-sub">정답 한 번에 <small>선택형 문항 차례대로 · 예: 31425 24153</small></div>
-        <label class="exam-field"><span>정답</span><input data-exam-allanswers placeholder="31425 24153" inputmode="numeric" autocomplete="off"></label>
-        <div class="exam-form-actions"><button type="button" data-exam-allanswers-submit>모두 넣기</button></div>`;
-    } else if (kind === 'score') {
-      pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
-        <div class="exam-morelist exam-four">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>
-        <div class="exam-pop-head exam-pop-sub">배점 한 번에 <small>문항 차례대로(서술형 포함) · 예: 2 3 3 2.5</small></div>
-        <label class="exam-field"><span>배점</span><input data-exam-allscores placeholder="2 3 3 2.5" inputmode="decimal" autocomplete="off"></label>
-        <div class="exam-form-actions"><button type="button" data-exam-allscores-submit>모두 넣기</button></div>`;
     } else if (kind === 'pagenum') {
       let savedHeader = {}; try { savedHeader = JSON.parse(localStorage.getItem(HEADER_KEY) || '{}'); } catch {}
       pop.innerHTML = `<div class="exam-pop-head">쪽 번호 <small>모든 쪽 아래 가운데</small></div>
@@ -504,7 +428,6 @@ export function installExamModes(panel, services) {
   }
   pop.addEventListener('click', event => {
     if (event.target.closest('[data-exam-keepwhole]')) { closePop(); void run(async () => { const { moved, left } = keepQuestionsWhole(bridgeOrThrow()); message(`문항 ${moved}개를 다음 단(쪽)으로 넘겼습니다.${left ? ` 단보다 긴 문항 ${left}개는 그대로 두었습니다.` : ''}`); }); return; }
-    if (event.target.closest('[data-exam-fixanswers]')) { closePop(); void run(async () => { const r = balanceAnswers(bridgeOrThrow()); renderOutline(); message(r.changed ? `${r.changed}문항의 선지를 맞바꿔 정답 분포를 ${r.counts.map((c, i) => `${'①②③④⑤'[i]}${c}`).join(' ')}로 맞췄습니다(되돌리기 ⌘Z).` : '선지를 옮길 수 있는 문항으로는 더 고르게 할 수 없습니다.'); }); return; }
     if (event.target.closest('[data-exam-fixneg]')) { closePop(); void run(async () => message(`발문의 부정 표현 ${underlineNegativeWords(bridgeOrThrow())}곳에 밑줄을 그었습니다.`)); return; }
     if (event.target.closest('[data-exam-fixunit]')) { closePop(); void run(async () => message(`숫자와 단위 사이 ${fixUnitGaps(bridgeOrThrow())}곳을 띄어 썼습니다(되돌리기 ⌘Z).`)); return; }
     if (event.target.closest('[data-exam-fixeq]')) { closePop(); void run(async () => message(`수식 ${fitEquationSizes(bridgeOrThrow())}개의 크기를 둘레 글자에 맞췄습니다.`)); return; }
@@ -512,43 +435,12 @@ export function installExamModes(panel, services) {
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
-    const frameKind = event.target.closest('[data-exam-frame]');
-    if (frameKind) { const kind = frameKind.dataset.examFrame; closePop(); void run(async () => message(`${WORKSHEET_FRAMES[kind][1]} 틀(상자 ${insertWorksheetFrame(bridgeOrThrow(), ctx.documentTitle(kind), kind)}개)을 넣었습니다. 칸 안에 내용을 쓰세요.`)); return; }
     const combo = event.target.closest('[data-exam-combo]');
     if (combo) { const i = Number(combo.dataset.examCombo); closePop(); void run(async () => { insertChoiceCombo(bridgeOrThrow(), i); refocus(); }); return; }
-    const variant = event.target.closest('[data-exam-variant]');
-    if (variant) { const choices = variant.dataset.examVariant === 'choices'; closePop(); void run(async () => ctx.variant(bridgeOrThrow(), choices)); return; }
-    if (event.target.closest('[data-exam-qr-answers]')) {
-      closePop(); void run(async () => {
-        const b = bridgeOrThrow(), answers = [...questionAnswers(b.wasm.borrowDocumentHandle())].sort((x, y) => x[0] - y[0]);
-        if (!answers.length) throw new Error('문항 안에 「[정답] ③」이 없습니다. 문항 → 정답으로 먼저 적으세요.');
-        const r = await insertQrCode(b, { url: answers.map(([n, a]) => `${n}-${a}`).join(' '), label: `정답 확인 (${answers.length}문항)`, sizeMm: 25 });
-        message(`정답 ${answers.length}개를 담은 QR(「${r.title}」)를 넣었습니다.`);
-      }); return;
-    }
-    const qrSize = event.target.closest('[data-exam-qr-size]');
-    if (qrSize) {
-      const value = name => pop.querySelector(`[data-exam-qr="${name}"]`)?.value || '', form = { url: value('url'), label: value('label'), sizeMm: Number(qrSize.dataset.examQrSize) };
-      if (!form.url.trim()) { pop.querySelector('[data-exam-qr="url"]')?.focus(); message('QR 코드에 넣을 주소를 쓰세요.', true); return; }
-      closePop(); void run(async () => { const r = await insertQrCode(bridgeOrThrow(), form); message(`QR 코드(「${r.title}」)를 넣었습니다. 휴대폰 카메라로 비춰 확인해 보세요.`); }); return;
-    }
     if (event.target.closest('[data-exam-pick-submit]')) {
       const text = pop.querySelector('[data-exam-pick]')?.value || '';
       closePop(); void run(async () => { const r = pickQuestionsCopy(bridgeOrThrow(), text); services.download(new Blob([r.bytes], { type: 'application/vnd.hancom.hwpx' }), `${documentBase()}-${r.numbers.length}문항.hwpx`); message(`${r.numbers.join(', ')}번 문항 ${r.count}개만 남긴 사본을 내려받습니다(번호는 1부터 다시).`); }); return;
     }
-    const level = event.target.closest('[data-exam-meta-level]');
-    if (level) { for (const b of pop.querySelectorAll('[data-exam-meta-level]')) b.setAttribute('aria-pressed', String(b === level && b.getAttribute('aria-pressed') !== 'true')); return; }
-    if (event.target.closest('[data-exam-meta-submit]')) {
-      const get = k => pop.querySelector(`[data-exam-meta="${k}"]`)?.value || '', values = { area: get('area'), standard: get('standard'), level: pop.querySelector('[data-exam-meta-level][aria-pressed="true"]')?.dataset.examMetaLevel || '' };
-      try { localStorage.setItem('5e.hwp.questionMeta', JSON.stringify({ area: values.area, standard: values.standard })); } catch {}
-      closePop(); void run(async () => { message(`${setQuestionMeta(bridgeOrThrow(), values)} 분류 정보를 적었습니다.`); refocus(); }); return;
-    }
-    if (event.target.closest('[data-exam-allscores-submit]')) { const text = pop.querySelector('[data-exam-allscores]')?.value || ''; closePop(); void run(async () => { const r = setAllScores(bridgeOrThrow(), text); message(`${r.questions}문항 중 ${r.count}문항에 배점을 넣었습니다 — 배점 합계 ${r.total}점${r.total !== 100 ? ' (100점 아님)' : ''}`); }); return; }
-    if (event.target.closest('[data-exam-allanswers-submit]')) { const text = pop.querySelector('[data-exam-allanswers]')?.value || ''; closePop(); void run(async () => { const r = setAllAnswers(bridgeOrThrow(), text); renderOutline(); message(`선택형 ${r.total}문항 중 ${r.count}문항에 정답을 넣었습니다.`); }); return; }
-    const answer = event.target.closest('[data-exam-answer]');
-    if (answer) { const mark = answer.dataset.examAnswer || null; closePop(); void run(async () => { const r = setQuestionAnswer(bridgeOrThrow(), mark); renderOutline(); message(`${r.label} 정답${mark ? `을 ${mark}로 적었습니다` : ' 줄을 지웠습니다'}.`); refocus(); }); return; }
-    const score = event.target.closest('[data-exam-score]');
-    if (score) { const value = score.dataset.examScore === '' ? null : Number(score.dataset.examScore); closePop(); void run(async () => { const r = setQuestionScore(bridgeOrThrow(), value); message(`${r.label} ${value == null ? '배점을 지웠습니다' : `${value}점`} — 배점 ${r.count}곳 합계 ${r.total}점${r.count && r.total !== 100 ? ' (100점 아님)' : ''}`); refocus(); }); return; }
     if (event.target.closest('[data-exam-runhead-submit]')) { const text = pop.querySelector('[data-exam-runhead]')?.value || ''; closePop(); void run(async () => { const line = insertRunningHeader(bridgeOrThrow(), text); message(line ? `모든 쪽 머리말을 「${line}」로 넣었습니다.` : '머리말 글을 지웠습니다.'); }); return; }
     const pagenum = event.target.closest('[data-exam-pagenum]');
     if (pagenum) { const style = pagenum.dataset.examPagenum; closePop(); void run(async () => message(`모든 쪽 아래에 쪽 번호(${insertPageNumbers(bridgeOrThrow(), style)})를 넣었습니다.`)); return; }
@@ -571,7 +463,7 @@ export function installExamModes(panel, services) {
   // 입력 칸에서 Enter = 그 창의 넣기 단추(한글 조합 중에는 무시).
   pop.addEventListener('keydown', event => {
     if (event.key !== 'Enter' || event.isComposing || event.target.tagName !== 'INPUT') return;
-    const submit = pop.querySelector('[data-exam-form-submit],[data-exam-pick-submit],[data-exam-meta-submit],[data-exam-runhead-submit],[data-exam-allanswers-submit],[data-exam-allscores-submit],[data-exam-qr-size="25"]');
+    const submit = pop.querySelector('[data-exam-form-submit],[data-exam-pick-submit],[data-exam-runhead-submit]');
     if (submit) { event.preventDefault(); submit.click(); }
   });
 
@@ -585,7 +477,6 @@ export function installExamModes(panel, services) {
     [/수식 \d+개의 크기가/, '<button type="button" data-exam-fixeq>수식 크기 맞추기</button>'],
     [/단위 사이 띄어쓰기가 빠진/, '<button type="button" data-exam-fixunit>숫자·단위 띄어 쓰기</button>'],
     [/부정 표현 .*밑줄이 없습니다/, '<button type="button" data-exam-fixneg>부정 표현에 밑줄</button>'],
-    [/정답 분포가 고르지|같은 정답 .*잇달아/, '<button type="button" data-exam-fixanswers title="정답이 몰린 문항의 선지 두 개(정답 ↔ 덜 쓰인 번호)를 맞바꾸고 [정답]을 따라 고침">정답 분포 고르게</button>'],
   ];
   const fixButtons = issues => { const html = FIXES.filter(([re]) => issues.some(issue => re.test(issue.text))).map(([, button]) => button).join(''); return html ? `<div class="exam-form-actions">${html}</div>` : ''; };
   function openCheck(anchor) {
@@ -604,7 +495,7 @@ export function installExamModes(panel, services) {
     const kind = b.dataset.examFx;
     if (!pop.hidden && pop.dataset.kind === kind) { closePop(); return; }
     pop.dataset.kind = kind;
-    if (kind === 'symbols') { try { bridgeOrThrow(); openSymbols(b); } catch (error) { message(error.message, true); } }
+    if (kind === 'symbols') { try { bridgeOrThrow(); openSymbols(b); } catch (error) { if (error.code === 'no-document' && services.offerDocument) services.offerDocument(); else message(error.message, true); } }
     else if (kind === 'check') void run(async () => openCheck(b));
     else if (kind === 'capture') { closePop(); services.palette?.tool('capture'); }
   };
@@ -623,10 +514,9 @@ export function installExamModes(panel, services) {
   function renderOutline() {
     const b = getBridge(); if (!b?.input || panel.hidden) return;
     let blocks = [];
-    let answers = new Map();
-    try { const d = b.wasm.borrowDocumentHandle(); blocks = allQuestionBlocks(d); answers = questionAnswers(d); } catch { return; }
+    try { blocks = allQuestionBlocks(b.wasm.borrowDocumentHandle()); } catch { return; }
     outline.hidden = !blocks.length;
-    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" draggable="${q.group ? 'false' : 'true'}" title="${esc(`${q.label} ${q.preview} — 끌어서 옮기기 · ⌥↑↓로 순서 바꾸기`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button>${!q.essay && answers.get(q.number) ? `<span class="exam-qans" title="정답">${esc(answers.get(q.number).slice(0, 2))}</span>` : ''}<button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" draggable="${q.group ? 'false' : 'true'}" title="${esc(`${q.label} ${q.preview} — 끌어서 옮기기 · ⌥↑↓로 순서 바꾸기`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
   }
   const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
   outline.addEventListener('click', event => {

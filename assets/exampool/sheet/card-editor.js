@@ -9,7 +9,10 @@ import {workflowOf,previewHtml,questionSubtitle,questionTitle} from './views.js'
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
+import {examCardUrl,examFigureUrl,pagePreviewUrl} from '../../../js/library/image-hosts.js?v=1.7.0-four-session-integration';
 import {explanationParts,explanationText,bogiKeys,OX_WORD} from './explanation.js';
+// 실패 이유: 한글 엔진은 오류를 글 한 줄로 던지기도 해 e.message가 빌 수 있다 — 어떤 오류든 이유를 보인다(1.7.1 B12, app.js와 같은 규칙).
+export function failReason(e){const m=e?.message||(typeof e==='string'?e:'')||e?.name||String(e??'');return m&&m!=='[object Object]'?m:'알 수 없는 오류';}
 import {applyTableCommand} from './table-ops.js';
 import {markedQuestion,croppedQuestion,renderPage as renderPdfPage,pdfHref} from './past-pdf.js';
 
@@ -18,9 +21,9 @@ import {EXAM_SOURCES,loadPastQuestions} from './past-data.js';
 import {loadAnswerBook,acceptedAnswers,answersShown,setAnswersShown,onAnswersShown} from '../answers/answers.js?v=1107';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 import {ask} from './ask-dialog.js';
-import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1114';
-import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1113';
-import {mathToHtml} from '../../../js/eq/eq-input.js?v=1113';
+import {isDrawerDrag,drawerFromDrop,clipConsume} from '../../../js/drawer.js?v=1.7.0-four-session-integration';
+import {attachMathFields} from '../../../js/eq/eq-fields.js?v=1.7.0-four-session-integration';
+import {mathToHtml} from '../../../js/eq/eq-input.js?v=1.7.0-four-session-integration';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 // 「변형」 진행 표시 지우기: 고리·단계 글, 흐림, 단추 바쁨 표시.
@@ -510,7 +513,14 @@ export function createCardEditor(root,api){
   function fit(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,30)+'px';}
   // 글 칸 높이는 칠 때만 맞추면, 처음 그릴 때와 칸 폭이 줄어 줄이 늘 때 글이 아래로 잘렸다. 그때도 맞춘다(폭이 바뀔 때만, 한 프레임에 한 번).
   let mathFields=null;
-  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();}
+  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);fitHead();mathFields?.decorate();fitCombos();}
+  // 1.7.1 B21: 합답형 선지 칸(「ㄱ, ㄴ, ㄷ」)은 한 줄 칩 칸(eq-one, 줄바꿈 허용)이라 칸이 좁으면 「ㄷ」이 다음 줄로 떨어져 칸 위로 삐져나왔다.
+  // 줄은 나누지 않고, 넘칠 때만 글자를 0.5px씩(최소 9.5px)·자간을 좁혀 칸 안에 넣는다. 들어가는 칸은 그대로(카드 화면만, 조판과 무관).
+  function fitCombos(){for(const ce of root.querySelectorAll('.cv-combos .combo-row .eq-ce')){ce.style.flexWrap='nowrap';ce.style.whiteSpace='nowrap';
+    if(ce.dataset.fitBase===undefined)ce.dataset.fitBase=ce.style.fontSize||'';ce.style.fontSize=ce.dataset.fitBase;ce.style.letterSpacing='';ce.classList.remove('cv-long');
+    if(ce.scrollWidth<=ce.clientWidth+1)continue;ce.classList.add('cv-long');ce.style.letterSpacing='-.08em';let fs=parseFloat(getComputedStyle(ce).fontSize)||12;
+    for(let i=0;i<8&&ce.scrollWidth>ce.clientWidth+1&&fs>9.5;i++){fs-=.5;ce.style.fontSize=fs+'px';}}}
+  root.addEventListener('input',e=>{if(e.target.closest?.('.cv-combos .eq-ce'))fitCombos();});
   // 11-13: 카드 글 칸에 글 속 수식 띠($·⌘E), 안 고칠 때는 그려진 수식
   mathFields=attachMathFields(root,{selector:'.cv-writer textarea[data-cvf]:not(#cv-ai-input),.cv-writer textarea[data-cvline],.cv-writer input[data-cvchoice],.cv-writer textarea[data-tc],.cv-writer textarea[data-cvexp],.cv-writer textarea[data-cvblock]'});
   // 11-13: 머리 줄은 단추(유형·배점·단계)를 절대 줄이지 않는다. 한 줄에 다 안 들어가면 「문항 이름」 칸만 아랫줄로 내려 가로를 다 쓴다.
@@ -543,12 +553,12 @@ export function createCardEditor(root,api){
     col.style.transform='none';const W=col.offsetWidth,H=col.offsetHeight,aw=n.clientWidth-24,ah=n.clientHeight-24;if(!W||!H||aw<=0)return;
     const s=Math.max(.2,Math.min(aw/W,ah>40?ah/H:aw/W));col.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';}
   // 크기를 바꾸는 일은 다음 그림 때 한 번에(관찰 콜백 안에서 크기를 바꾸면 Safari가 'ResizeObserver loop' 오류를 낸다).
-  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{if(!document.body.classList.contains('cv-dragging'))applyWidths();fitPaper();fitPage();alignHwp?.();});}).observe(root);
+  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{if(!document.body.classList.contains('cv-dragging'))applyWidths();fitPaper();fitPage();fitCombos();alignHwp?.();});}).observe(root);
   // 쪽 전체: 시험지에 든 문항이면 그 시험지의 쪽 배치(2단)로, 보관함 문항이면 이 문항만 놓은 쪽으로 가운데에 크게 보여 준다.
   // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
   let pageSeq=0;
   async function renderPage(){const x=q(),n=root.querySelector('#cv-page');if(!x||!n)return;const seq=++pageSeq;
-    let view;try{view=await api.pageSheets(x,{alive:()=>seq===pageSeq&&n.isConnected&&q()===x});}catch(e){if(e.cancelled)return;if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
+    let view;try{view=await api.pageSheets(x,{alive:()=>seq===pageSeq&&n.isConnected&&q()===x});}catch(e){if(e?.cancelled)return;console.error('[5E_exam] 카드 쪽 그리기 실패',x.id,e);if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(failReason(e))}</p>`;return;}
     if(seq!==pageSeq||q()!==x||!n.isConnected)return;
     const pct=v=>(v*100).toFixed(3)+'%',total=view.pages.length;
     n.innerHTML=`<div class="pg-head"><b>${E(view.title)}</b><span>${total}쪽 · 한글 조판 그대로(${E(view.paper)} ${view.columns}단)</span></div>`+(view.warning?`<p class="pg-warn" role="alert" style="align-self:stretch;margin:0;font-size:var(--ds-text-meta);color:var(--ds-danger)">${E(view.warning)}</p>`:'')+
@@ -610,7 +620,7 @@ export function createCardEditor(root,api){
       return p.catalog.documents.filter(x=>/\/교과서\//.test(x.source?.locator||'')).map(x=>{const path=x.source.locator.split('/').slice(1).join('/');return {id:x.id,title:x.title.replace(/\.pdf$/i,''),pages:x.pageCount,sha:p.checksums?.files?.[path]||'',path};}).filter(b=>b.sha);}).catch(()=>[]);
     return books;
   }
-  const bookPage=(b,n,thumb)=>new URL(`../../pdf-library/previews/${b.sha}/${n}${thumb?'-thumb':''}.webp`,import.meta.url).href;
+  const bookPage=(b,n,thumb)=>pagePreviewUrl(b.sha,`${n}${thumb?'-thumb':''}.webp`);
   // 별표·메모(10-23 지적 1·2): 이 기기에만 저장. 키는 기출 'past:<id>', 내 문항 'q:<id>'.
   const marks={stars:()=>store.get('stars',{}),memos:()=>store.get('memos',{}),
     star(key){const s=marks.stars();if(s[key])delete s[key];else s[key]=Date.now();store.set('stars',s);return !!s[key];},
@@ -660,7 +670,7 @@ export function createCardEditor(root,api){
     {const S=marks.stars(),M=marks.memos();if(f.mark==='star')list=list.filter(i=>S['past:'+i.id]);else if(f.mark==='memo')list=list.filter(i=>M['past:'+i.id]);}
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
     const sel=(k,vals,label)=>`<label>${label}<select data-cvpast="${k}" aria-label="${label}"><option value="">전체</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select></label>`;
-    const thumb=i=>{const card=i.card||pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
+    const thumb=i=>{const card=i.card||examCardUrl(i.id,pastIndex.cards),local=i.hasFigure?examFigureUrl(i.id):'';
       return `<div class="past-pic"><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
     fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어+Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<label>시험<select data-cvpast="source" aria-label="시험">${EXAM_SOURCES.map(([value,label])=>`<option value="${value}"${(f.source||'')===value?' selected':''}>${label}</option>`).join('')}</select></label>`+`<label>모아 보기<select data-cvpast="mark" aria-label="모아 보기"><option value="">모두</option><option value="star"${f.mark==='star'?' selected':''}>★ 별표만</option><option value="memo"${f.mark==='memo'?' selected':''}>메모 있음</option></select></label>`+`<div class="lp-adv-foot"><span>학평은 수능 대비 학년도 기준</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
@@ -1130,7 +1140,7 @@ export function createCardEditor(root,api){
     if(window.fiveEClipboard?.isOpen?.()&&!t.closest?.('.cv-tile[data-cvtile]')){window.fiveEClipboard.close();return;}// 고르기 중이던 클립보드도 닫으며 풀림(닫힘 → 고른 표시 풀기)
     setTileSel(null);},true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&tileMenuEl){e.preventDefault();closeTileMenu();}});
-  // 11-14(지적 8): 고른 칸 — Delete·⌫는 휴지통 단추와 같이 그 칸을 지움(⌘Z로 되돌림), Esc는 고르기만 풂. 글을 쓰는 중이면 건드리지 않는다.
+  // 11-14(지적 8) → 1.7.1 사용자 결정: 고른 칸 — Delete·⌫는 그 칸의 그림만 비움(칸은 남음, ⌘Z로 되돌림). 칸째 지우기는 휴지통 단추. Esc는 고르기만 풂. 글을 쓰는 중이면 건드리지 않는다.
   // 11-14(지적 10): ⌘Enter(윈도우 Ctrl+Enter) — 고른 칸(없으면 마우스가 올라간 칸)이 그림이면 편집 창, 표면 표 편집, 빈 칸이면 그림 넣기 메뉴.
   let hoverTile=null;root.addEventListener('pointerover',e=>{hoverTile=e.target.closest?.('.cv-tile[data-cvtile]')?.dataset.cvtile||null;});
   document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!(e.metaKey||e.ctrlKey)||e.isComposing||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
@@ -1139,7 +1149,7 @@ export function createCardEditor(root,api){
     const btn=root.querySelector(`.cv-tile[data-cvtile="${CSS.escape(id)}"] [data-cvslot-act="add-pic"]`);if(btn)tileMenu(btn,x,id);},true);
   document.addEventListener('keydown',e=>{if(!tileSel||e.isComposing||e.target.closest?.('input,textarea,select,[contenteditable="true"],dialog[open]'))return;
     if(e.key==='Escape'&&!window.fiveEClipboard?.isOpen?.()){e.preventDefault();setTileSel(null);return;}
-    if((e.key==='Delete'||e.key==='Backspace')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const x=q(),id=tileSel;if(!x)return;e.preventDefault();e.stopPropagation();setTileSel(null);api.slot('remove',x,id);}});
+    if((e.key==='Delete'||e.key==='Backspace')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){const x=q(),id=tileSel;if(!x)return;e.preventDefault();e.stopPropagation();api.slot('clear-figure',x,id);}});
   // 끌기: 잡는 순간 칸들을 켜고, 가까운 칸을 밝힌다.
   const liveTiles=()=>[...root.querySelectorAll('.cv-tile[data-cvtile]')].filter(t=>q()?.blocks.find(v=>v.id===t.dataset.cvtile)?.kind==='figure');
   function nearTile(e){const tiles=liveTiles();if(!tiles.length)return null;const box=tiles.map(t=>t.getBoundingClientRect()),M=90;

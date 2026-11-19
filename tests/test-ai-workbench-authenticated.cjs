@@ -288,7 +288,7 @@ function preserved(before, after) {
   }
 }
 async function canvasObjects(page) {
-  const source = fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8');
+  const source = fs.readFileSync(path.join(root, 'js/main.js'), 'utf8');
   const specifier = source.match(/import\s*\{\s*state\s*\}\s*from\s*["']([^"']+)["']/)?.[1];
   assert.ok(specifier, 'Production state import must be identified exactly');
   return page.evaluate(async spec => {
@@ -595,7 +595,7 @@ async function batchScenario(page, owners, spectator, localPreflight = false) {
 test('genuine authenticated workbench acceptance (unavailable is blocking)', { timeout: 8 * turnTimeout + 180000 }, async context => {
   fs.mkdirSync(evidence, { recursive: true });
   fs.writeFileSync(path.join(evidence, 'receipts.jsonl'), JSON.stringify({ kind: 'harness-start', at: new Date().toISOString(), generationGateReleased: process.env.AI_WORKBENCH_TASK9_RELEASE === 'accepted' }) + '\n');
-  save('invocation.json', { argv: process.argv, environment: Object.fromEntries(['AI_WORKBENCH_REAL', 'AI_WORKBENCH_TASK9_RELEASE', 'AI_WORKBENCH_EVIDENCE', 'AI_WORKBENCH_DISCONNECTED', 'AI_WORKBENCH_SOL_MODEL', 'AI_WORKBENCH_LUNA_MODEL', 'AI_WORKBENCH_TURN_TIMEOUT', 'AI_WORKBENCH_TASK12_RELEASE', 'AI_WORKBENCH_RESUME_FROM', 'AI_WORKBENCH_RESUME_PREFLIGHT', 'AI_WORKBENCH_CHECKPOINT_FROM', 'AI_WORKBENCH_BATCH_RELEASE'].filter(key => process.env[key] !== undefined).map(key => [key, process.env[key]])), version: JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version, node: process.version, cwd: root, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), real: process.env.AI_WORKBENCH_REAL, gateReleased: process.env.AI_WORKBENCH_TASK9_RELEASE === 'accepted', disconnected: process.env.AI_WORKBENCH_DISCONNECTED === '1', sourceHashes: Object.fromEntries(['desktop/main.cjs', 'desktop/preload.cjs', 'preview/js/ai-panel.js', 'preview/js/ai-task-workspaces.js', 'preview/js/ai-workspace-batch.js', 'preview/js/state.js', 'preview/index.html', 'tests/test-ai-workbench-authenticated.cjs', 'tests/authenticated-desktop-observer.cjs'].map(file => [file, digest(fs.readFileSync(path.join(root, file)))])) });
+  save('invocation.json', { argv: process.argv, environment: Object.fromEntries(['AI_WORKBENCH_REAL', 'AI_WORKBENCH_TASK9_RELEASE', 'AI_WORKBENCH_EVIDENCE', 'AI_WORKBENCH_DISCONNECTED', 'AI_WORKBENCH_SOL_MODEL', 'AI_WORKBENCH_LUNA_MODEL', 'AI_WORKBENCH_TURN_TIMEOUT', 'AI_WORKBENCH_TASK12_RELEASE', 'AI_WORKBENCH_RESUME_FROM', 'AI_WORKBENCH_RESUME_PREFLIGHT', 'AI_WORKBENCH_CHECKPOINT_FROM', 'AI_WORKBENCH_BATCH_RELEASE'].filter(key => process.env[key] !== undefined).map(key => [key, process.env[key]])), version: JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).version, node: process.version, cwd: root, sha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), real: process.env.AI_WORKBENCH_REAL, gateReleased: process.env.AI_WORKBENCH_TASK9_RELEASE === 'accepted', disconnected: process.env.AI_WORKBENCH_DISCONNECTED === '1', sourceHashes: Object.fromEntries(['desktop/main.cjs', 'desktop/preload.cjs', 'js/ai-panel.js', 'js/ai-task-workspaces.js', 'js/ai-workspace-batch.js', 'js/state.js', 'index.html', 'tests/test-ai-workbench-authenticated.cjs', 'tests/authenticated-desktop-observer.cjs'].map(file => [file, digest(fs.readFileSync(path.join(root, file)))])) });
   let app;
   let page;
   let profile;
@@ -613,7 +613,7 @@ test('genuine authenticated workbench acceptance (unavailable is blocking)', { t
   app = await _electron.launch({ executablePath: require('electron'), args: [path.join(__dirname, 'authenticated-desktop-observer.cjs')], cwd: root, env: { ...process.env, FIVE_E_DEV_USER_DATA: profile, FIVE_E_SMOKE_USER_DATA: '', AI_WORKBENCH_RECEIPTS: path.join(evidence, 'receipts.jsonl'), PATH: process.env.AI_WORKBENCH_DISCONNECTED === '1' ? profile : `/opt/homebrew/bin:${process.env.PATH}` }, timeout: 30000 });
   const windowDeadline = Date.now() + 30000;
   while (!page && Date.now() < windowDeadline) {
-    page = app.windows().find(candidate => candidate.url().endsWith('/preview/index.html'));
+    page = app.windows().find(candidate => candidate.url().endsWith('/index.html'));
     if (!page) await new Promise(resolve => setTimeout(resolve, 100));
   }
   assert.ok(page, 'BLOCKED: production renderer did not open');

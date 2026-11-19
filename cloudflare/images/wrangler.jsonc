@@ -1,0 +1,10 @@
+{
+  // 그림 세 묶음 정적 Worker(1.7.1 초안 — 아직 올리지 않음). 올리는 순서는 README.md.
+  // site는 data/images/build-bundle.mjs가 만드는 링크 묶음(저장소에 넣지 않음):
+  //   previews/ 쪽 미리보기 · parts/ 부품 SVG · exam/ 기출 문항 그림 — 합계 약 12,400개(무료 한도 Worker당 2만 개).
+  "name": "5e-images",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "account_id": "a6dd35b7aa385514042f9003bc937b92",
+  "assets": { "directory": "../../data/images/out/site", "not_found_handling": "none" }
+}

@@ -8,6 +8,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');const path = require('node:path');
 const {chromium,webkit} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const h = require('./helpers/rhwp-exam.cjs');
+const {openLibrary} = require('./helpers/exampool-open.cjs');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/exampool/library-layout');
 
 // 글 한 줄과 상자 몇 개가 있는 A4 한 쪽 PDF(외부 파일 없이 만든다).
@@ -40,6 +41,7 @@ h.withServer(async origin => {
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
 
       // 1. 머리 한 줄(시안 library-one-row.html): [검색 범위 ▾][검색창][상세검색][5E 라이브러리][근거 N] — 높이 44, 칸 맨 위, 가운데 머리 줄과 같은 줄.
+      await openLibrary(sheet); // 11-12: 라이브러리는 왼쪽 메뉴에서 켠다
       await sheet.selectOption('#card-view [data-cvscope]','past');
       await sheet.waitForSelector('#card-view .past-list figure.past',{timeout:30000});
       const head=await sheet.evaluate(()=>{const lib=document.querySelector('#card-view .cv-left'),row=lib.querySelector('.lp-one'),r=row.getBoundingClientRect(),bar=document.querySelector('#card-view .cv-center .cv-bar').getBoundingClientRect();
@@ -50,7 +52,7 @@ h.withServer(async origin => {
       assert.equal(head.h,44,'one 44px head row');assert.equal(head.top,0,'at the top of the pane');assert.equal(head.barTop,0,'on the same line as the card head row');
       // 10-20 화면 정리: 머리 줄 맨 앞에 칸 닫기(바깥쪽 끝)와 칸 이름 「참고 자료」.
       // 10-20 묶음 D: [닫기][범위▾][검색(안에 상세검색)][문항|쪽]. 칸 이름표·라이브러리 아이콘·근거 수 단추는 없다(라이브러리는 범위 목록 맨 아래, 근거는 칸 맨 아래 줄).
-      assert.deepEqual(head.kids.map(k=>k.k),['scope','search','adv','lp-seg lp-headseg','pane-detach','btn icon pt pane-close'],'scope · search · detail search · item|page · detach · close (11-05 칸 떼어 내기: 닫기는 오른쪽 끝)');
+      assert.deepEqual(head.kids.map(k=>k.k),['scope','search','adv','lp-seg lp-headseg','pane-detach'],'scope · search · detail search · item|page · detach (11-12 9f4a1b87: 칸 닫기 단추는 없앰 — 왼쪽 메뉴 「라이브러리」로 끈다)');
       assert.ok(head.kids.filter(k=>k.k!=='adv').every(k=>k.h===30)&&new Set(head.kids.filter(k=>k.k!=='adv').map(k=>k.top)).size===1,'all 30px on one line: '+JSON.stringify(head.kids));
       assert.deepEqual(head.scopes.slice(0,4),['기출문제','교과서','성취기준·교육과정','자료']);
       assert.equal(head.scopes.at(-1),'5E 라이브러리에서 가져오기…','the 5E library lives at the bottom of the scope list');
@@ -71,12 +73,13 @@ h.withServer(async origin => {
 
       // 3. 기출 문항 카드는 5E 라이브러리 「문항」 탭 카드 모양으로 한 줄에 2개(시안 library-two-col.html 안 C):
       //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 정사각(그림은 칸 폭에 맞춰 위에 붙고, 긴 문항은 아래만 잘림), 같은 줄 제목 줄이 맞고, 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
-      const grid=await sheet.evaluate(()=>{const list=document.querySelector('#card-view .past-list'),cs=getComputedStyle(list),lr=list.getBoundingClientRect();
-        const cards=[...list.querySelectorAll('figure.past')],rects=cards.map(c=>c.getBoundingClientRect()),img=cards[0].querySelector('img').getBoundingClientRect(),pic=cards[0].querySelector('.past-pic')?.getBoundingClientRect();
+      // 목록을 다시 그리는 중에 재지 않게 목록이 있는 순간에 한 번에 잰다. 그림을 못 받은 카드(.past-text 글 카드)는 그림 칸 재기에서 건너뛴다.
+      const grid=await (await sheet.waitForFunction(()=>{const list=document.querySelector('#card-view .past-list');if(!list||list.querySelectorAll('figure.past').length<3)return false;const cs=getComputedStyle(list),lr=list.getBoundingClientRect();
+        const cards=[...list.querySelectorAll('figure.past')],rects=cards.map(c=>c.getBoundingClientRect()),shot=cards.find(c=>c.querySelector('.past-pic img'))||cards[0],img=shot.querySelector('.past-pic img,.past-pic .past-text').getBoundingClientRect(),pic=shot.querySelector('.past-pic')?.getBoundingClientRect();
         const inner=list.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
         const full=rects.filter(r=>r.top>=lr.top-0.5&&r.bottom<=lr.bottom-parseFloat(cs.paddingBottom)+0.5).length;
         return {w:[rects[0].width,rects[1].width],want:(inner-12)/2,tops:[rects[0].top,rects[1].top,rects[2]?.top],ratio:pic?pic.width/pic.height:0,inside:cards.slice(0,8).every(c=>{const p=c.querySelector('.past-pic')?.getBoundingClientRect(),i=c.querySelector('.past-pic img,.past-pic .past-text')?.getBoundingClientRect();return !p||!i||i.bottom<=p.bottom+0.5;}),capRows:[0,2,4].filter(k=>cards[k+1]).map(k=>[cards[k],cards[k+1]].map(c=>Math.round(c.querySelector('figcaption').getBoundingClientRect().top))),imgTop:pic?Math.round(img.top-pic.top):-1,imgW:pic?Math.round(img.width-pic.width):-1,full,count:cards.length,
-          title:cards[0].querySelector('figcaption b').textContent,full_title:cards[0].querySelector('figcaption b').title,snap:cs.scrollSnapType,align:getComputedStyle(cards[0]).scrollSnapAlign};});
+          title:cards[0].querySelector('figcaption b').textContent,full_title:cards[0].querySelector('figcaption b').title,snap:cs.scrollSnapType,align:getComputedStyle(cards[0]).scrollSnapAlign};},null,{timeout:30000})).jsonValue();
       assert.ok(grid.w.every(v=>Math.abs(v-grid.want)<=1),`two equal columns: ${grid.w} vs ${grid.want}`);
       assert.equal(Math.round(grid.tops[0]),Math.round(grid.tops[1]),'two cards share one row');assert.ok(grid.tops[2]>grid.tops[0],'the third card starts the next row');
       assert.ok(Math.abs(grid.ratio-1)<0.02,'the picture box is square like the 5E library: '+grid.ratio);

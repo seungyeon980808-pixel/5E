@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
-const previewUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:8794/preview/';
+const previewUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:8794/';
 const presets = ['small', 'medium', 'large', 'wide'];
 const tolerance = 0.5;
 

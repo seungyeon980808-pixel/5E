@@ -9,13 +9,14 @@ const { chromium, webkit } = require('playwright');
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   try {
-    await page.route('**/fixture', (route) => route.fulfill({ contentType: 'text/html', body: '<html><head><link rel="stylesheet" href="/preview/css/style.css"><link rel="stylesheet" href="/preview/css/unified-library.css"></head><body></body></html>' }));
+    await page.route('**/fixture', (route) => route.fulfill({ contentType: 'text/html', body: '<html><head><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/unified-library.css"></head><body></body></html>' }));
     await page.goto(new URL('/fixture', process.env.PREVIEW_URL).href);
     await page.evaluate(async () => {
       const [{ createUnifiedLibraryProvider }, { createUnifiedLibraryUi }] = await Promise.all([
-        import('/preview/js/library/provider.js'), import('/preview/js/unified-library-ui.js'),
+        import('/js/library/provider.js'), import('/js/unified-library-ui.js'),
       ]);
-      const document = { id: 'real-provider-exam', title: '생명1 27년 6평', pageCount: 4, source: { displayName: 'b12706.pdf', kind: 'pack' } };
+      // 라이브러리 기본 조건이 물리Ⅰ·Ⅱ 최근 5년(770718f8, 11-09)이라 물리Ⅰ 자료를 쓴다.
+      const document = { id: 'real-provider-exam', title: '물리1 27년 6평', pageCount: 4, source: { displayName: 'p12706.pdf', kind: 'pack' } };
       const source = { documentId: document.id, pageNumber: 1, rect: [.1, .1, .6, .5], fullPageFallback: false };
       const provider = createUnifiedLibraryProvider({
         pdfDocuments: [document],

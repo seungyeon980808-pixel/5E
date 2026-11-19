@@ -1,6 +1,6 @@
 name: Print Route
 
-# 5e.ai.kr/print: 지금 게시된 사이트를 그대로 두고 print 설문 한 장(print/index.html)만 덧붙인다.
+# 5e.ai.kr/print: 지금 게시된 사이트를 그대로 두고 print 설문 한 장(원본 apps/print/index.html → 사이트 print/index.html)만 덧붙인다.
 on:
   workflow_dispatch:
     inputs:
@@ -67,7 +67,7 @@ jobs:
             git fetch origin 751b1ed4622058497a6f3ba43f92333eb15268eb
             node - <<'NODE'
           const fs = require('node:fs'), path = require('node:path');
-          const { recoverBase } = require('./scripts/preview-publication.cjs');
+          const { recoverBase } = require('./scripts/publication-recover.cjs');
           const receipt = JSON.parse(fs.readFileSync('_work/print-base-receipt/receipt.json', 'utf8'));
           // 1.7.0 Preview 게시본은 preview/ 파일이 미리보기 원본 커밋에 있으므로 그 커밋도 찾을 곳에 넣는다(내용은 해시로 확인)
           const lookup = receipt.previewSourceCommit ? { ...receipt, baseRouteCommit: receipt.previewSourceCommit } : receipt;

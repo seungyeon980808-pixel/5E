@@ -3,9 +3,10 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 const vm = require("node:vm");
+const { pathToFileURL } = require("node:url");
 
 const ROOT = path.resolve(__dirname, "..");
-const PREVIEW = path.join(ROOT, "preview", "js");
+const PREVIEW = path.join(ROOT, "js");
 
 class ElementStub {
   constructor(tagName) {
@@ -49,9 +50,12 @@ function loadPreviewModule(relativePath, exportNames, dependencies = {}) {
   const source = readPreviewSource(relativePath)
     .replace(/^import\s[\s\S]*?from\s*["'][^"']+["'];\s*/gm, "")
     .replace(/^export\s*\{[\s\S]*?\};?\s*/gm, "")
-    .replace(/\bexport\s+(?=(?:async\s+)?function|const|let)/g, "");
+    .replace(/\bexport\s+(?=(?:async\s+)?function|const|let)/g, "")
+    // 1.7.1: 스크립트 조각으로 읽으므로 import.meta.url은 실제 파일 주소 문자열로 바꾼다(글꼴 주소 계산용).
+    .replace(/import\.meta\.url/g, JSON.stringify(pathToFileURL(path.join(PREVIEW, relativePath)).href));
   const context = vm.createContext({
     Blob,
+    URL,
     DataView,
     Uint8Array,
     Uint32Array,
@@ -223,8 +227,11 @@ function commitInspectorValue(prop, initialValue, inputValue) {
     redoStack: [],
   };
   const context = vm.createContext({
-    document: documentStub,
+    document: { ...documentStub, getElementById: () => null },
     state: { get: () => state, update: (update) => update(state) },
+    // 1.7.1: 루트 section-geometry.js는 transform.js의 그룹 치수 확정을 가져다 쓴다. 이 검사는 단일 선택만 보므로 「처리 안 함」으로 둔다.
+    commitGroupGeometry: () => false,
+    jsonClone: value => JSON.parse(JSON.stringify(value)),
   });
   vm.runInContext(`${propsSource}\n${rowSource}\nglobalThis.row = makePosRow("field", "${prop}", "0.1");`, context);
   context.row.inp.value = inputValue;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { decodeScopedPng, encodeScopedPng } from '../preview/js/ai-scoped-edit-png.js';
+import { decodeScopedPng, encodeScopedPng } from '../js/ai-scoped-edit-png.js';
 function chunk(type, data) {
  const out = Buffer.alloc(data.length + 12);
  out.writeUInt32BE(data.length); out.write(type, 4); out.set(data, 8);

@@ -66,7 +66,9 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
         const m = attachmentQA.measureLabelTypography(o);
         const group = document.querySelector(`#scene [data-id="${id}"]:not([data-ui])`);
         const paths = [...group.querySelectorAll('[data-label-leader-route]')];
-        return { center: o.p2, rotation: o.textRotation || 0, half: { x: m.w / 2 + (o.labelGap || 0), y: m.h / 2 + (o.labelGap || 0) },
+        // 11-11(f5a67cce, 사용자 승인): labelGap이 없으면 지시선과 글자 사이를 글자 크기의 15% 띄운다(js/label-leader-geometry.js).
+        const gap = Number.isFinite(o.labelGap) && o.labelGap >= 0 ? o.labelGap : (o.fontSize || o.labelSize) * 0.15;
+        return { center: o.p2, rotation: o.textRotation || 0, half: { x: m.w / 2 + gap, y: m.h / 2 + gap },
           routes: paths.map(p => { const start = p.getPointAtLength(0), length = p.getTotalLength(), midpoint = p.getPointAtLength(length / 2), target = p.getPointAtLength(length); return { d: p.getAttribute('d'), start: { x: start.x, y: start.y }, target: { x: target.x, y: target.y }, midpoint: { x: midpoint.x, y: midpoint.y }, length, stroke: p.getAttribute('stroke') }; }) };
       }, id);
       const attached = (g, index = 0) => {

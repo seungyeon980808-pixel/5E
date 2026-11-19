@@ -1,3 +1,5 @@
+import { needsCors } from "./image-hosts.js?v=1.7.0-four-session-integration";
+
 const pageImages = new Map();
 
 function loadPageImage(url) {
@@ -5,6 +7,8 @@ function loadPageImage(url) {
   if (!pending) {
     pending = (async () => {
       const image = new Image();
+      // 설치판은 쪽 미리보기를 원격으로 받는다 — 다른 출처 그림을 canvas에 그리려면 CORS로 받아야 한다.
+      if (needsCors(url)) image.crossOrigin = "anonymous";
       image.src = url;
       await image.decode();
       return image;

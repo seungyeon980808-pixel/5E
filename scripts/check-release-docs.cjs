@@ -46,14 +46,13 @@ const requiredDocs = [
   "docs/RELEASE_HOLD.md",
   `docs/RELEASE_NOTES_v${channels.candidate.version}.md`,
   "docs/RELEASE_ROLLBACK.md",
-  "preview/PREVIEW.md",
 ];
 const combined = requiredDocs.map(read).join("\n");
 for (const token of ["v1.5.8", "https://www.5e.ai.kr/", "HOLD", "UNVERIFIED", "OPEN_PENDING_PUBLICATION"]) {
   if (!combined.includes(token)) fail(`release docs missing ${token}`);
 }
 
-const driveConfig = JSON.parse(read("preview/assets/pdf-library/google-drive.json"));
+const driveConfig = JSON.parse(read("assets/pdf-library/google-drive.json"));
 if (driveConfig.schemaVersion !== 1) fail("PDF/Drive metadata schemaVersion must be 1");
 let driveGateway;
 try {

@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { mkdirSync } = require('node:fs');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const base = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/';
+const base = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/';
 const evidence = process.env.EVIDENCE_DIR;
 (async () => {
   if (evidence) mkdirSync(evidence, { recursive: true });

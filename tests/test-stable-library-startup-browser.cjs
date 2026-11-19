@@ -70,7 +70,8 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       const listMs = Math.round(performance.now() - started);
       assert.equal(await f.ui.getAttribute('data-search-readiness'), 'loading');
       assert.equal(f.state.requests.filter(url => /search-index\.json|catalog\.json/.test(url)).length, 0, 'no remote catalog/index blocks first list');
-      assert.equal(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url)).length, 0, 'web listing has no parts/PDF runtime gate');
+      // 1.7.1: 첫 목록에서 자동으로 고른 문항 미리보기가 pdf-runtime을 뒤에서 불러오는 것은 허용(목록은 기다리지 않음 — 위 readiness 'loading' 상태로 이미 확인). 부품 manifest는 여전히 불러오지 않아야 한다.
+      assert.equal(f.state.requests.filter(url => /parts-library\/manifest/.test(url)).length, 0, 'web listing has no parts gate: ' + JSON.stringify(f.state.requests.filter(url => /parts-library\/manifest/.test(url))));
       await f.ui.locator('[data-unilib-type="pdf"]').click();
       await f.ui.locator('[data-unilib-query]').fill('물리2 27년 6평');
       await f.page.waitForFunction(count => document.querySelector('[data-unilib-count]')?.textContent === count, titlePageCount);
@@ -114,8 +115,14 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       await f.page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'error');
       f.state.indexFailure = false; await f.ui.locator('[data-unilib-provided-retry]').click();
       await f.page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready');
-      await f.ui.locator(`[data-result-id$="${book.source.displayName}:page:316"]`).waitFor();
       assert.equal(await f.ui.locator('[data-unilib-query]').inputValue(), '힘 운동');
+      // PDF 탭에는 연 뒤 한가할 때 학평 PDF(약 140개, js/exam-library.js openLibrary preload 11-08)가 붙어 「힘 운동」 앞자리를 채운다
+      // (11-17 확인: 결과 66개 중 앞 12개 모두 학평) — 재시도로 교과서 본문 색인이 살아났는지는 교과서 낱말을 더해 본다.
+      await f.ui.locator('[data-unilib-query]').fill('교과서 힘 운동');
+      await f.ui.locator(`[data-result-id$="${book.source.displayName}:page:316"]`).waitFor().catch(async error => {
+        const seen = await f.ui.evaluate(ui => ({ ids: [...ui.querySelectorAll('[data-result-id]')].map(n => n.dataset.resultId).slice(0, 12), count: ui.querySelector('[data-unilib-count]')?.textContent }));
+        throw new Error(`retry did not show page 316: ${JSON.stringify(seen)}\n${error.message}`);
+      });
       assert.deepEqual(f.state.errors, []); results.push({ engine: name, case: 'search-failure-retry-retains-query', errors: f.state.errors }); await f.context.close();
 
       f = await setup(browser, { fallback: true }); contexts.push(f.context);
@@ -136,19 +143,25 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
 
       // OmO 작성 · 학평은 첫 열기에 받지 않고, 고른 과목만 자동으로 연결한다.
       f = await setup(browser); contexts.push(f.context); await f.open();
-      assert.equal(f.state.requests.some(url => url.includes('/data/hakpyeong/')), false);
+      // 770718f8(11-09 「처음 로딩에서 미리 다 불러 두고」): 시작 화면에서 기본 범위(물리Ⅰ·Ⅱ) 학평만 미리 읽는다 — 다른 과목은 고를 때만.
+      const hakShards = () => f.state.requests.filter(url => /\/data\/hakpyeong\/.*\.json\.gz/.test(url));
+      assert.ok(hakShards().every(url => /\/(p1|p2)\.json\.gz$/.test(url)), `only the default subjects are preloaded: ${JSON.stringify(hakShards())}`);
       await f.ui.locator('[data-unilib-type="question"]').click();
       // 11-05: 과목·시험은 왼쪽 「문항 검색 조건」 상자(과목 바둑판·시험 단추)에서 고른다. 상자는 접힌 채로 시작한다(시안 v8).
       await f.ui.locator('[data-unilib-cond-toggle]').click();
-      await f.ui.locator('[data-cond-subject="p1"]').click();
+      // 770718f8(11-09): 기본 범위가 물리Ⅰ·Ⅱ라 p1은 이미 눌려 있다(누르면 풀림) — 물리Ⅰ만 남게 맞춘다.
+      for (const [code, on] of [['p1', true], ['p2', false]]) {
+        const button = f.ui.locator(`[data-cond-subject="${code}"]`);
+        if ((await button.getAttribute('aria-pressed') === 'true') !== on) await button.click();
+      }
       await f.ui.locator('[data-cond-exam="hak"]').click();
       await f.ui.locator('[data-unilib-query]').fill('물리1 27년 3월 학평');
       await f.ui.getByText('물리1 27년 3월 학평 1번', { exact: true }).first().waitFor({ timeout: 60000 });
       await f.ui.locator('[data-unilib-count]').filter({ hasText: /^20개$/ }).waitFor({ state: 'attached' }); // 11-05 시안 v8: 개수 글은 숨기고 종류 칸 숫자로 보인다
       assert.equal(await f.ui.locator('[data-result-kind="crop"]').count(), 20);
-      const shards = f.state.requests.filter(url => /\/data\/hakpyeong\/.*\.json\.gz/.test(url));
-      assert.equal(shards.length, 1);
-      assert.ok(shards[0].endsWith('/p1.json.gz'));
+      const shards = hakShards();
+      assert.ok(shards.some(url => url.endsWith('/p1.json.gz')), 'the chosen subject is read');
+      assert.ok(shards.every(url => /\/(p1|p2)\.json\.gz$/.test(url)), `no other subject is read: ${JSON.stringify(shards)}`);
       // 기존 색인이 늦게 도착해도 방금 찾은 학평 문항을 덮어쓰지 않는다.
       f.state.metadata.release(); f.state.indexGate.release();
       await f.page.locator('.unified-library-overlay[data-search-readiness="ready"]').waitFor();

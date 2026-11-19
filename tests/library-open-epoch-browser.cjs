@@ -17,11 +17,11 @@ async function fixture(browser) {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.route("**/fixture", (route) => route.fulfill({
     contentType: "text/html",
-    body: '<html><head><link rel="stylesheet" href="/preview/css/style.css"><link rel="stylesheet" href="/preview/css/unified-library.css"></head><body></body></html>',
+    body: '<html><head><link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/unified-library.css"></head><body></body></html>',
   }));
   await page.goto(`${origin}/fixture`);
   await page.evaluate(async () => {
-    const { createUnifiedLibraryUi } = await import("/preview/js/unified-library-ui.js");
+    const { createUnifiedLibraryUi } = await import("/js/unified-library-ui.js");
     const gates = [];
     const provider = {
       revision: "open-epoch-regression",
@@ -96,7 +96,7 @@ async function assertActualFooterFirstPaint(browser) {
       }));
     };
   });
-  await page.goto(`${origin}/preview/`, { waitUntil: "networkidle" });
+  await page.goto(`${origin}/`, { waitUntil: "networkidle" });
   const tutorialSkip = page.locator(".tut-welcome-overlay .tut-banner-no");
   if (await tutorialSkip.isVisible().catch(() => false)) {
     await tutorialSkip.click();

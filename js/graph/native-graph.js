@@ -14,13 +14,16 @@ import { inferAxisStep } from './axis-layout.js?v=1.7.0-four-session-integration
 import { observedAxisBreakMarks } from './axis-break-observation.js?v=1.7.0-four-session-integration';
 import { auditGraphReconstructionQuality } from './reconstruction-quality.js?v=1.7.0-four-session-integration';
 import { EXAM_STYLE } from './exam-style.js?v=1.7.0-four-session-integration';
+import { collapseRepeatedAxisCaption } from './description-layout.js?v=1.7.0-four-session-integration';
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const title = (a) => {
   const compact = (v) => String(v || '').replace(/\s/g, '');
-  const caption = compact(a.title), unit = compact(a.unit);
-  if (unit && (caption.endsWith(`(${unit})`) || caption.endsWith(`（${unit}）`))) return a.title;
-  return [a.title, a.unit ? `(${a.unit})` : ''].filter(Boolean).join(' ');
+  // 1.7.1 B18: 「주기주기」처럼 같은 낱말이 두 번 들어간 축 이름은 한 번만.
+  const name = collapseRepeatedAxisCaption(a.title);
+  const caption = compact(name), unit = compact(a.unit);
+  if (unit && (caption.endsWith(`(${unit})`) || caption.endsWith(`（${unit}）`))) return name;
+  return [name, a.unit ? `(${a.unit})` : ''].filter(Boolean).join(' ');
 };
 const fail = (error, review = []) => ({ ok: false, objects: [], groups: [], error, review });
 
@@ -38,7 +41,7 @@ export function buildNativeGraph(input, options = {}) {
     ? { ...axis, min: 0, max: 1, step: 0.25, ticks: (axis.ticks || []).map(t => ({ ...t, observedValue: t.value, value: t.position, label: t.displayMath ?? t.label })) }
     : { ...axis, ticks: (axis.ticks || []).map(t => ({ ...t, label: t.displayMath ?? t.label })) };
   const x = displayAxis(plan.axes.x), y = displayAxis(plan.axes.y), y2 = displayAxis(plan.axes.y2);
-  const displayTitle = a => a.displayTitle ?? a.displayMath ?? title(a);
+  const displayTitle = a => a.displayTitle != null ? collapseRepeatedAxisCaption(a.displayTitle) : a.displayMath ?? title(a);
   // Exam-style labels and guides scale with the inserted graph, not browser zoom.
   const styleScale = box.w / 70;
   const style = plan.style || {};

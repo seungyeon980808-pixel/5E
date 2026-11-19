@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { matchLocalAssetRequest } from "../preview/js/ai-local-asset-router.js";
+import { matchLocalAssetRequest } from "../js/ai-local-asset-router.js";
 import { compilePanelScene } from "../js/ai-panel.js";
 
 test("an exact internal asset compiles through the same panel path without an image call", () => {

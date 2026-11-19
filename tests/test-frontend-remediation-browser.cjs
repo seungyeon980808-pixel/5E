@@ -126,9 +126,9 @@ test('conversation quota failure preserves chat input and ends request without t
   record('quota-source-only-owner', owner);
   assert.equal(owner.tasks,1); assert.equal(owner.generated,0); assert.equal(owner.selected,null);
   assert.equal(owner.references,1); assert.equal(owner.explicit,true); assert.equal(owner.boxEdit,'false'); assert.equal(owner.sends,0);
-  assert.equal(await page.locator('#ai-image-panel [data-ai-side-tab="chat"]').isVisible(),true);
-  await page.screenshot({path:path.join(evidence,'quota-before.png')});
-  await page.locator('#ai-image-panel [data-ai-side-tab="chat"]').click();
+  // 11-12(506f30bf, 시안 v6): 오른쪽 탭 줄은 숨겨졌고 대화 칸이 항상 열려 있다 → 탭 단추는 안 보이고 입력 칸이 바로 보인다.
+  assert.equal(await page.locator('#ai-image-panel [data-ai-side-tab="chat"]').isVisible(),false);
+  assert.equal(await page.locator('#ai-image-panel [data-ai-chat-input]').isVisible(),true);
   const input = page.locator('#ai-image-panel [data-ai-chat-input]');
   await input.fill('보존할 대화 입력');
   await page.clock.install();
@@ -309,7 +309,8 @@ test('sixty crop pages evict decoded images without changing page geometry and r
 test('browser zoom remains available outside canvas and is prevented inside canvas',async t=>{
  const page=await fixture(t,true);await page.locator('#canvas').waitFor();
  const result=await page.evaluate(()=>{const probe=(target,type,properties)=>{const e=type==='wheel'?new WheelEvent(type,{bubbles:true,cancelable:true,...properties}):new KeyboardEvent(type,{bubbles:true,cancelable:true,...properties});target.dispatchEvent(e);return e.defaultPrevented;};return ['ctrlKey','metaKey'].flatMap(mod=>[['wheel',''],...['+','-','=','0'].map(key=>['keydown',key])].map(([type,key])=>({mod,type,key,outside:probe(document.body,type,{[mod]:true,key}),inside:probe(document.querySelector('#canvas'),type,{[mod]:true,key})})));});record('zoom',result);
- for(const entry of result){assert.equal(entry.outside,false);assert.equal(entry.inside,true);}
+ // 11-05(15a825be, js/main.js): ⌘/Ctrl +·−·=·0 키는 화면 어디서든 캔버스 배율을 바꾼다(입력 중·창이 덮였을 때만 제외). 마우스 휠 확대만 캔버스·크롭 칸 안에서만 막고 바깥은 브라우저 배율 그대로.
+ for(const entry of result){assert.equal(entry.outside,entry.type==='keydown');assert.equal(entry.inside,true);}
 });
 test('GPT account badge remains visible without overlapping header buttons at 390px',async t=>{
  const page=await fixture(t,true);await page.evaluate(async()=>{if(!document.querySelector('.web-account-status')) { window.fiveEWebAI={status:async()=>({login:{loggedIn:false}})}; const {initWebLoginUi}=await import(window.__runtime.base + "web-login-ui.js" + window.__runtime.query);initWebLoginUi({openAi:()=>{}}); }});await page.setViewportSize({width:390,height:844});await page.locator('.web-account-status').waitFor({state:'attached'});

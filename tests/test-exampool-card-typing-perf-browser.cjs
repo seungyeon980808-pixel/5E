@@ -16,8 +16,12 @@ async function openPool(page,origin){
   return sheet;
 }
 async function newCard(sheet,first){
-  if(first){await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.click('[data-lv-new]');}else await sheet.click('#card-view .cv-qtab.add');
-  await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.locator('#new-dialog .nq-opt[data-step="struct"]').first().click();await sheet.click('#new-dialog [data-nq="go"]');
+  // 11-15: 카드 위 번호 탭(＋)은 없어졌다 — 왼쪽 메뉴 「작업 중」 목록의 「새 문항」으로 만든다.
+  if(!first&&await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
+  await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]').click());await sheet.waitForSelector('#library-view:not([hidden]) [data-lv-new]');await sheet.evaluate(()=>document.querySelector('[data-lv-new]').click()); // 화면 전환 움직임 중에도 누르도록 직접 클릭
+  // 새 문항 창은 지난 선택을 기억한다 — 이미 눌린 선택지를 다시 누르면 풀리므로, 눌려 있지 않을 때만 누른다. 자료 구조는 그림이 있는 「큰 자료 1개」로 고정.
+  for(const [step,k] of [['form','combo'],['struct','big']]){const o=sheet.locator(`#new-dialog .nq-opt[data-step="${step}"][data-k="${k}"]`);if(await o.getAttribute('aria-pressed')!=='true')await o.click();}
+  await sheet.click('#new-dialog [data-nq="go"]');
 }
 
 h.withServer(async origin => {
@@ -27,23 +31,23 @@ h.withServer(async origin => {
     try {
       const page = await (await browser.newContext({viewport:{width:1440,height:900}})).newPage(), errors=[];page.on('pageerror',e=>errors.push(e.message));
       let sheet=await openPool(page,origin);
-      await newCard(sheet,true);await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
-      for(let i=1;i<N;i++){await newCard(sheet,false);await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-qtab:not(.add)').length===n,i+1);}
-      await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:20000});
-      // 문항마다 큰 그림 하나(실제 기출 그림 948KB)를 저장소에 넣고 다시 연다.
-      const stored=await sheet.evaluate(async png=>{const db=await new Promise((r,j)=>{const o=indexedDB.open('5e-exampool-structure');o.onsuccess=()=>r(o.result);o.onerror=()=>j(o.error);});
-        const d=await new Promise(r=>{const g=db.transaction('state').objectStore('state').get('draft');g.onsuccess=()=>r(g.result);});let n=0;
-        for(const q of d.questions){const f=q.blocks.find(b=>b.kind==='figure');if(f){f.figure={name:'기출 그림.png',data:png};n++;}}
-        await new Promise((r,j)=>{const t=db.transaction('state','readwrite');t.objectStore('state').put(d,'draft');t.oncomplete=r;t.onerror=()=>j(t.error);});db.close();return n;},png);
-      assert.equal(stored,N,'every question got a figure');
+      // 11-15 이후 카드 위 번호 탭(＋)이 없고 문항을 하나씩 만들어 저장하면 저장소에 한 문항만 남던 경로라, 그림이 든 12문항을 엑셀·JSON 가져오기로 한 번에 넣고 저장된 뒤 다시 연다.
+      const {questionFromShape}=await import('../assets/exampool/sheet/templates.js');
+      const qs=[];for(let i=0;i<N;i++){const q=questionFromShape({form:'combo',struct:'big'},String(i+1));q.name='문항 '+(i+1);q.blocks.filter(b=>b.kind==='figure').forEach(b=>b.figure={name:'기출 그림.png',data:png});qs.push(q);}
+      assert.equal(qs.filter(q=>q.blocks.some(b=>b.figure)).length,N,'every question got a figure');
+      await sheet.setInputFiles('#excel-file',{name:'perf.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'5e-question-sheet-v2',questions:qs,documents:[]}))});
+      await sheet.waitForSelector('#import-dialog[open]');await sheet.check('input[name="import-mode"][value="update"]');await sheet.click('#apply-import');
+      await sheet.waitForFunction(n=>document.querySelector('.side [data-pool="drafting"] b')?.textContent===String(n),N);
+      await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:60000});
       await page.reload();sheet=await openPool(page,origin);
-      if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      if(await sheet.locator('.shell-body.nav-off').count()||await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().evaluate(b=>b.click());/* WebKit에서만 Playwright 클릭 자리가 옆 .lv-meta로 잡힌다(같은 자리 elementFromPoint는 단추, 11-17 진단; body CSS zoom 추정) — 다른 5E_exam 검사처럼 요소를 직접 누른다 */await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden])');await sheet.waitForTimeout(3000);
       await sheet.evaluate(()=>{const M=window.__typing={lat:[]};let at=0;
         document.addEventListener('beforeinput',()=>{at=performance.now();},true);
         document.addEventListener('input',()=>{if(!at)return;const k=at;at=0;requestAnimationFrame(()=>requestAnimationFrame(()=>M.lat.push(performance.now()-k)));},true);});
-      await sheet.click('#cv-passage');for(const ch of TEXT)await page.keyboard.type(ch,{delay:60});await sheet.waitForTimeout(400);
+      // 9ca4a5a6(카드 수식 칩) 뒤 지문 글자 칸은 숨고(eq-hide) 옆 .eq-ce에 입력한다 — 값은 숨은 칸으로 그대로 옮겨진다.
+      if(await sheet.locator('#cv-passage').isVisible())await sheet.click('#cv-passage');else await sheet.click('#cv-passage + .eq-ce');for(const ch of TEXT)await page.keyboard.type(ch,{delay:60});await sheet.waitForTimeout(400);
       assert.equal(await sheet.inputValue('#cv-passage'),TEXT,'no typed letter is lost');
       const lat=(await sheet.evaluate(()=>window.__typing.lat)).sort((a,b)=>a-b),p95=lat[Math.floor(lat.length*.95)],max=lat[lat.length-1];
       rows.push({engine:engineName,n:lat.length,p50:+lat[Math.floor(lat.length/2)].toFixed(1),p95:+p95.toFixed(1),max:+max.toFixed(1)});
@@ -51,8 +55,8 @@ h.withServer(async origin => {
       // 입력이 저장되고 다시 열어도 남는다.
       await sheet.waitForFunction(()=>/저장됨/.test(document.querySelector('#status').textContent),null,{timeout:20000});
       await page.reload();sheet=await openPool(page,origin);
-      if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      if(await sheet.locator('.shell-body.nav-off').count()||await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
+      await sheet.click('.side [data-nav="library"][data-pool="drafting"]');await sheet.locator('#library-view [data-open-card]').first().evaluate(b=>b.click());/* WebKit에서만 Playwright 클릭 자리가 옆 .lv-meta로 잡힌다(같은 자리 elementFromPoint는 단추, 11-17 진단; body CSS zoom 추정) — 다른 5E_exam 검사처럼 요소를 직접 누른다 */await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       assert.equal(await sheet.inputValue('#cv-passage'),TEXT,'the typed passage is saved');
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: card typing with ${N} figure questions verified`,JSON.stringify(rows.at(-1)));

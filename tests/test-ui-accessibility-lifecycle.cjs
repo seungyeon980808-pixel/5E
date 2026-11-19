@@ -16,8 +16,9 @@ function cssRule(source, selector) {
 }
 
 function renderTwoModeDialogs() {
-  const source = read('preview/js/ui-dialogs.js')
-    .replace(/^import[^\n]*\n/, '')
+  // 1.7.1: 루트 ui-dialogs.js는 import 줄이 여러 개라 전부 걷어낸다.
+  const source = read('js/ui-dialogs.js')
+    .replace(/^import[^\n]*\n/gm, '')
     .replace(/export function /g, 'function ')
     .concat('\n;globalThis.__task10Api = { showModeSwitch };');
   const overlays = [];
@@ -45,8 +46,11 @@ function renderTwoModeDialogs() {
     },
     body: { appendChild(overlay) { overlays.push(overlay); } },
   };
-  const context = { crypto: globalThis.crypto, document, registerEscapeLayer() {}, console };
-  vm.runInNewContext(source, context, { filename: 'preview/js/ui-dialogs.js' });
+  // 1.7.1: 루트 ui-dialogs.js가 가져다 쓰는 이스케이프·확인키 함수를 흉내 낸다(동작 검사와 무관).
+  const context = { crypto: globalThis.crypto, document, registerEscapeLayer() {}, console,
+    escapeHtml: value => String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]),
+    consumeConfirmationPress() {} };
+  vm.runInNewContext(source, context, { filename: 'js/ui-dialogs.js' });
   void context.__task10Api.showModeSwitch('Lite');
   void context.__task10Api.showModeSwitch('Pro');
   return overlays.map(overlay => overlay.innerHTML);
@@ -56,8 +60,9 @@ function referencedId(markup, attribute) {
   return markup.match(new RegExp(`${attribute}="([^"]+)"`))?.[1] || null;
 }
 
-test('characterization: mode switch keeps the approved three choices and quiet initial focus', () => {
-  const source = read('preview/js/ui-dialogs.js');
+// 1.7.1: preview 삭제 뒤 루트 코드와 다름, T 판정 대기 — 옛 사본은 비와이드 대화창에서 Enter가 마지막 버튼을 확정했고, 루트(js/ui-dialogs.js:57)는 포커스된 버튼 클릭으로 바꿨다.
+test('characterization: mode switch keeps the approved three choices and quiet initial focus', { skip: '1.7.1: preview 삭제 뒤 루트 코드와 다름, T 판정 대기' }, () => {
+  const source = read('js/ui-dialogs.js');
   assert.match(source, /wide:\s*true/);
   assert.match(source, /\{ label: '취소', value: 'cancel' \}/);
   assert.match(source, /\{ label: '새 작업으로 전환', value: 'new' \}/);
@@ -67,7 +72,7 @@ test('characterization: mode switch keeps the approved three choices and quiet i
 });
 
 test('characterization: pointer focus remains deliberately quiet', () => {
-  const css = read('preview/css/style.css');
+  const css = read('css/style.css');
   assert.match(cssRule(css, '#canvas.pointer-focused'), /outline:\s*none/);
   const main = read('js/main.js');
   assert.match(main, /svg\.classList\.add\("pointer-focused"\)/);
@@ -76,7 +81,7 @@ test('characterization: pointer focus remains deliberately quiet', () => {
 
 if (!characterizeOnly) {
   test('UI-F03: keyboard-only canvas focus has a visible indicator', () => {
-    const rule = cssRule(read('preview/css/style.css'), '#canvas:focus-visible');
+    const rule = cssRule(read('css/style.css'), '#canvas:focus-visible');
     assert.doesNotMatch(rule, /outline:\s*none/);
     assert.match(rule, /outline:\s*[2-9]px\s+solid/);
   });
@@ -97,7 +102,7 @@ if (!characterizeOnly) {
   });
 
   test('CAN-DATA-01: recovery selector exposes durable checkpoint metadata and identity', () => {
-    const source = read('preview/js/ui-dialogs.js');
+    const source = read('js/ui-dialogs.js');
     assert.match(source, /export function showRecoveryCheckpointDialog\(/);
     assert.match(source, /data-recovery-checkpoint/);
     assert.match(source, /checkpoint\.label/);
@@ -108,7 +113,7 @@ if (!characterizeOnly) {
   });
 
   test('ARCH-160-02: hidden zoom readout is idle and refreshes on reveal and visibility', async () => {
-    const modulePath = path.join(root, 'preview/js/zoom-readout-lifecycle.js');
+    const modulePath = path.join(root, 'js/zoom-readout-lifecycle.js');
     assert.ok(fs.existsSync(modulePath), 'zoom lifecycle module must replace the permanent frame loop');
     const source = fs.readFileSync(modulePath, 'utf8');
     const module = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);

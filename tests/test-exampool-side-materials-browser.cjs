@@ -28,7 +28,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}).filter(([k])=>!proc
   await sheet.setInputFiles('#excel-file',{name:'side.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:examples.format,questions:qs,documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.evaluate(()=>{const u=document.querySelector('input[name="import-mode"][value="update"]');if(u)u.checked=true;});await sheet.click('#apply-import');
   for(const [i,q] of qs.entries()){
-    await sheet.waitForFunction(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].some(n=>n.getClientRects().length),q.id);
+    await sheet.evaluate(()=>{if(document.querySelector('.shell-body.nav-off'))document.querySelector('#toggle-nav')?.click();});await sheet.evaluate(()=>document.querySelector('.side [data-pool="drafting"]')?.click()); /* 11-15: 카드는 「작업 중」 문항 목록에서 연다 — 열린 카드 위 번호 탭은 없어짐 */ await sheet.waitForFunction(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].some(n=>n.getClientRects().length),q.id);
     await sheet.evaluate(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].find(n=>n.getClientRects().length).click(),q.id);
     await sheet.waitForFunction(n=>document.querySelector('#typeset-title')?.textContent.startsWith(n+'번')&&document.querySelector('#native-editor')?.dataset.ready==='true'&&document.querySelector('#preview-dialog')?.getAttribute('aria-busy')!=='true',q.number);
     const m=await sheet.evaluate(()=>{const doc=document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle(),controls=[];

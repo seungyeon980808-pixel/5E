@@ -1,52 +1,39 @@
 # docs 안내
 
-문서를 성격별로 나눠 둔다. **작성 시점이 곧 신뢰 범위**다 — 날짜가 박힌 문서는
-그 시점 스냅샷이니 현재 상태로 믿지 말고 코드와 대조한다.
+`docs/` 바로 아래에는 **5E를 쓰는 사람을 위한 문서**를, `docs/dev/`에는 **5E를 만드는 사람을 위한 개발 기록**을 둡니다.
 
-> 저장소 루트의 `CLAUDE.md`에 "무엇을 할 때 무엇을 읽나" 지도가 있다. 거기부터 보는 게 빠르다.
-> 구조·스키마 결정은 루트 `DESIGN.md`.
-
-## 항상 최신을 유지하는 문서
+## 쓰는 사람용
 
 | 문서 | 내용 |
 |---|---|
-| `BRANCH_MAP.md` | 폴더 ↔ 브랜치 ↔ 포트 ↔ 역할. **작업 시작 전 필수** — 실측 명령도 함께 있음 (최종 실측 2026-07-19) |
-| `USER_GUIDE.md` | 전 기능 사용 가이드 8개 장 + 단축키 부록. 기능 동작을 확인하는 1차 자료 |
-| `MERGE_PLAYBOOK.md` | 브랜치 병합 절차 |
-| `OBJECT_SCHEMA.md` | 객체 데이터 구조 |
+| [RELEASE_NOTES_v1.7.0.md](RELEASE_NOTES_v1.7.0.md) 외 `RELEASE_NOTES_v*.md` | 판마다 바뀐 것 (`media/release-1.6.0/`은 1.6.0 노트 그림) |
+| [HWP_EXAM_SHORTCUTS.md](HWP_EXAM_SHORTCUTS.md) | 5E_hwp 단축키 |
+| [DATA_COMPAT_1_6_3_TO_1_7_0.md](DATA_COMPAT_1_6_3_TO_1_7_0.md) | 1.6.3에서 1.7.0으로 올릴 때 저장 데이터 호환 |
+| [CODE_SIGNING_POLICY.md](CODE_SIGNING_POLICY.md) | 설치 파일 서명 정책 |
+| [USER_GUIDE.md](USER_GUIDE.md) | 사용 안내 — **v1.1.0 기준 옛 판** (다시 쓰기는 1.8.0 이후) |
+| [credits.html](credits.html) | 사용한 공개 소프트웨어와 저작권 표시 (웹에 그대로 공개됨) |
 
-## 살아 있는 명세 (해당 기능을 건드릴 때 본다)
+## 릴리즈 운영 (자리 고정)
 
-| 문서 | 대상 |
-|---|---|
-| `GRAPH_TOOL_SPEC.md` | 좌표평면·함수그래프 **아키텍처 계약**(새 타입 없이 coordplane+funcgraph로) |
-| `GRAPH_TOOL_REDESIGN.md` | 그래프 모달이 지금 모양인 근거. v1.1.0에 릴리즈 완료 |
-| `EXAM_LIBRARY_SPEC_20260706.md` | 기출 라이브러리 데이터 계약(`tags.csv` → `build_manifest.py`) |
-| `IMAGE_OBJECT_SEAM_CONTRACT.md` | 이미지 → 객체 변환 경계 계약 |
-| `HELP_PLAN.md` | 도움말 4층 계획 — ①② 완료, ③ 절반, ④ 미착수 |
-
-## 조사 리포트 (2026-07-10 · 기준 v0.54.14)
-
-프로그램 전체를 훑어 만든 산출물. 기준 버전이 **v0.54.14**로 현재 **v1.1.0**과 상당히 벌어졌다 —
-개별 항목은 **반드시 코드와 대조**하고, 특히 "미구현"이라 적힌 것은 이미 나온 기능일 수 있다.
-그래도 범위와 밀도가 높아 새 작업의 출발점으로는 여전히 쓸 만하다.
+아래 파일은 `scripts/check-release-docs.cjs`·`scripts/check-release-gate.cjs`가 이 경로로 읽습니다. 옮기지 않습니다.
 
 | 문서 | 내용 |
 |---|---|
-| `FEATURE_PROPOSALS_20260710.md` | 기능 로드맵 20선. **6건 완료 · 14건이 살아 있는 로드맵** (문서 앞 진행 현황표 참조) |
-| `BUG_AUDIT_20260710.md` | 12개 영역 감사 47건. **약 90% 수정 완료** — 남은 것과 ⚠️오진 1건(#23)이 문서 앞에 정리돼 있다 |
+| [BRANCH_MAP.md](BRANCH_MAP.md) | 브랜치 지도 |
+| [RELEASE_CHANNELS.md](RELEASE_CHANNELS.md) · [RELEASE_HOLD.md](RELEASE_HOLD.md) · [RELEASE_ROLLBACK.md](RELEASE_ROLLBACK.md) | 배포 통로·보류·되돌리기 |
+| `checksums/` | 지난 설치 파일 확인값 |
+| [PREVIEW_NOTES_v1.7.0.md](PREVIEW_NOTES_v1.7.0.md) | 1.7.0 프리뷰 요약. `preview/PREVIEW.md`가 링크하므로 `preview/`를 지울 때 같이 지움 |
 
-> `DESIGN_PROPOSALS_20260710.md`는 **`archive/`로 옮겼다.** 그 문서의 종합 추천(제안 5 = 토큰
-> 시스템화)이 실제로 채택·구현되어 결정이 끝났기 때문이다. UI를 손볼 때의 살아 있는 지침은
-> 루트 `DESIGN.md` **13장 (UI 조립 원칙)**이다.
+## 설치판이 싣는 AI 지시문 재료 (자리 고정)
 
-## `archive/`
+`package.json` `build.files`와 `desktop/main.cjs`가 이 경로로 읽습니다. 1.8.0 그림 생성 작업 때 프로그램 자료 자리로 옮길 예정입니다.
 
-끝난 작업의 기록 — 세션 인계, 지난 백로그·QA 체크리스트, 완료된 계획서, 옛 릴리즈 체크리스트.
-**지우지 않고 남기는 이유**는 "왜 그때 그렇게 했는지"를 잃지 않기 위해서다. 현재 상태의 근거로는 쓰지 않는다.
+- [EXAM_SCIENTIFIC_DIAGRAM_STYLE.md](EXAM_SCIENTIFIC_DIAGRAM_STYLE.md)
+- [GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md](GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md)
+- [IMAGE_COMPLEXITY_MODE_SPEC.md](IMAGE_COMPLEXITY_MODE_SPEC.md)
+- `engine-v2/ILLUSTRATION_ASSET_CANDIDATES.json` (출처 목록에 경로가 적혀 있어 그대로 둠)
+- `security/` — CSP 제안서·초안. `scripts/csp-report-only-probe.cjs`의 기본 경로라 그대로 둠
 
-## 새 문서를 더할 때
+## 만드는 사람용
 
-- 계속 갱신할 문서면 날짜를 파일명에 넣지 않는다(`BRANCH_MAP.md`처럼).
-- 한 시점의 기록이면 날짜를 넣고(`BUG_AUDIT_20260710.md`), 문서 첫머리에 **기준 버전**을 적는다.
-- 일이 끝나면 `archive/`로 옮긴다. 여기 목록도 같이 손본다.
+[dev/README.md](dev/README.md)부터 읽으세요. 디자인 규칙은 저장소 루트 `DESIGN.md`, AI 작업자 규칙은 루트 `AGENTS.md`.

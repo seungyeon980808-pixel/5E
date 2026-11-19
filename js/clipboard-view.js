@@ -3,7 +3,7 @@
 // 원칙: AI로 처리할 것은 작업대, 그 밖에 옮기는 모든 것은 클립보드. 넣는 자리는 지금 화면이 정한다(hosts).
 // ⇧⌘V(윈도우 Ctrl+Shift+V) 열기·한 번 더 = 크게 보기, Enter·두 번 누르기 = 넣기, Space = 한 장 크게, Delete = 빼기, Esc = 닫기.
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
-import { clipList, clipAdd, clipRemove, clipRemoveMany, clipPin, clipConsume, onClipChange, CLIP_MIME } from './drawer.js?v=1114';
+import { clipList, clipAdd, clipRemove, clipRemoveMany, clipPin, clipConsume, onClipChange, CLIP_MIME } from './drawer.js?v=1.7.0-four-session-integration';
 
 export const CLIP_ICON = '<svg class="clip-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.6 4.6H6.6a2.1 2.1 0 0 0-2.1 2.1v12.2a2.1 2.1 0 0 0 2.1 2.1h10.8a2.1 2.1 0 0 0 2.1-2.1V6.7a2.1 2.1 0 0 0-2.1-2.1h-2"/><rect x="8.6" y="2.8" width="6.8" height="3.6" rx="1.2"/><path d="M10.4 10.4v-.3c0-.5.4-.9.9-.9h4.4c.5 0 .9.4.9.9v3.6c0 .5-.4.9-.9.9h-.4"/><rect x="7.8" y="11.4" width="6.8" height="5.6" rx=".9"/><circle cx="9.9" cy="13.4" r=".75" fill="currentColor" stroke="none"/></svg>';
 const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
@@ -136,6 +136,9 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
       <span class="clpb-hint">${clipKey('⌘')}·⇧ 누르며 고르면 여러 개 · Space 한 장 크게 · 두 번 누르면 바로 넣기</span><button type="button" class="clpb-go" data-clpb="go" disabled>넣기</button></div>
     <div class="clpb-one" aria-hidden="true"><img alt=""><p></p></div></section>`;
   doc.body.appendChild(big);
+  // WebKit(Safari): 시작할 때 다른 스타일 파일을 기다리는 동안 두 판이 한때 보이는 상태로 계산됐다가 숨김으로 0.3초 사라지는 효과가
+  // 돌았다 — 그동안 이 보이지 않는 판이 맨 위 Esc 층으로 잡혀 페이지 메뉴 등의 Esc를 가로챘다. 처음 열 때까지는 효과 없이 숨겨 둔다.
+  el.style.transition = big.style.transition = 'none';
   const toast = doc.createElement('div'); toast.className = 'clp-toast'; toast.setAttribute('role', 'status'); doc.body.appendChild(toast);
   const body = el.querySelector('.clp-b'), grid = big.querySelector('.clpb-g'), one = big.querySelector('.clpb-one');
   let pickOnce = null, open = false, bigOn = false, items = [], sel = null, multi = new Set(), filters = { kind: '', src: '', q: '' }, picking = null, oneIdx = -1;
@@ -207,8 +210,8 @@ export function mountClipboard(doc = document, { hosts = [], top, onToggle, foll
     // 11-14(지적 7): 넣으면 클립보드는 닫힌다(넣기 단추·두 번 누르기·크게 보기 넣기). 떼어 둔 창은 계속 쓰려고 띄운 것이라 그대로.
     if (done && !detached) { if (bigOn) closeBig(); if (open) set(false); }
   }
-  function set(v) { if (!v && pickOnce) { const p = pickOnce; pickOnce = null; p.cancel?.(); } if (v) { const d = store.get('5e.clp.detached', '0') === '1'; if (d !== detached) setDetached(d); else if (detached) place(); } open = v; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
-  function openBig({ pick = null } = {}) { picking = pick; multi.clear(); if (pick) filters = { kind: '', src: '', q: '' }; bigOn = true; big.classList.add('show'); void refresh(); requestAnimationFrame(() => grid.focus({ preventScroll: true })); if (!pick) void followOS?.(); }
+  function set(v) { if (!v && pickOnce) { const p = pickOnce; pickOnce = null; p.cancel?.(); } if (v) { const d = store.get('5e.clp.detached', '0') === '1'; if (d !== detached) setDetached(d); else if (detached) place(); } open = v; if (v) el.style.transition = ''; el.classList.toggle('show', v); if (v) { void refresh(); requestAnimationFrame(() => body.focus({ preventScroll: true })); void followOS?.(); } onToggle?.(v); }
+  function openBig({ pick = null } = {}) { picking = pick; multi.clear(); if (pick) filters = { kind: '', src: '', q: '' }; bigOn = true; big.style.transition = ''; big.classList.add('show'); void refresh(); requestAnimationFrame(() => grid.focus({ preventScroll: true })); if (!pick) void followOS?.(); }
   function closeBig() { bigOn = false; big.classList.remove('show'); one.classList.remove('show'); oneIdx = -1; if (picking) { const p = picking; picking = null; p.resolve([]); } }
   function showOne(i) { const list = visible(); if (!list.length) return; oneIdx = (i + list.length) % list.length; const it = list[oneIdx]; one.querySelector('img').src = it.src; one.querySelector('p').textContent = `${it.name} · ${KIND[it.kind] || '그림'} · ${it.source} — ← → 넘기기 · Esc 돌아가기`; one.classList.add('show'); }
   // 서랍: 고르기·넣기·고정·빼기·끌기

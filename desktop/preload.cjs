@@ -95,6 +95,15 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     onCancel: callback => {const listener = () => callback();ipcRenderer.on('exam:cancel',listener);return () => ipcRenderer.removeListener('exam:cancel',listener);},
   },
   // 11-11: 출제 자료 파일 저장(~/Documents/5E/출제). 경로는 넘기지 않고 이름·종류만.
+  // 1.7.1: .5e 두 번 눌러 열기 — 받을 곳을 걸면 바로 「준비됨」을 알려 main이 줄에 둔 파일을 보내게 한다(desktop/project-open-file.cjs).
+  project: {
+    onOpen: (callback) => {
+      const listener = (_event, payload) => callback(payload);
+      ipcRenderer.on("project:open", listener);
+      void ipcRenderer.invoke("project:renderer-ready").catch(() => {});
+      return () => ipcRenderer.removeListener("project:open", listener);
+    },
+  },
   examFiles: {
     autosave: text => ipcRenderer.invoke("exam-files:autosave", text),
     readLatest: () => ipcRenderer.invoke("exam-files:read-latest"),

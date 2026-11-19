@@ -3456,7 +3456,10 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 
 /* 11-11: 제목 아래 연결 줄(문항 카드·한글 어디에서 열었는지) — 제목은 짧게, 연결은 작은 줄로 */
 #ai-image-panel #ai-image-title {flex-wrap:wrap;row-gap:0;}
-#ai-image-panel #ai-image-title [data-ai-title-link] {flex-basis:100%;display:block;margin-top:1px;font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ds-ink-3,#8b949e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+/* 11-17(승인 시안 BL4/b17-ai-link-line.html): 한 줄 말줄임 → 두 줄까지 낱말 단위 줄바꿈, 그래도 넘치면 둘째 줄 끝만 말줄임(전체는 제목에 마우스를 올리면 설명으로).
+   두 줄일 때만 머리 줄이 한 줄 높이(약 15px)만큼 늘어난다(ai-panel.js syncSurfaceTitle가 data-ai-link-lines="2"를 붙임). 글자 크기·색·위치는 그대로. */
+#ai-image-panel #ai-image-title [data-ai-title-link] {flex-basis:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;margin-top:1px;font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ds-ink-3,#8b949e);white-space:normal;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden;max-width:100%;}
+#ai-image-panel .ai-head[data-ai-link-lines="2"] {min-height:calc(var(--ai-row-h) + 15px);}
 #ai-image-panel #ai-image-title [data-ai-title-link][hidden] {display:none;}
 
 /* 11-14(시안 review-1114 5번 G4): 그래프 쪽 전환 줄은 「복원 · 대화로 만들기 · 직접」. 「직접」은 빈 그래프 편집기(전환 탭이 아니라 바로 여는 단추). */

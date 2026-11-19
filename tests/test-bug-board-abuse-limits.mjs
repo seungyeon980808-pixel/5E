@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { createBoardApi } from '../bug/api.mjs';
 import { createBoardStore } from '../bug/store.mjs';
-import worker from '../bug/worker/index.mjs';
+import worker from '../cloudflare/bug/index.mjs';
 
 const ADMIN = 'a'.repeat(48), ORIGIN = 'https://www.5e.ai.kr';
 const png = size => 'data:image/png;base64,' + Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), Buffer.alloc(size - 8)]).toString('base64');

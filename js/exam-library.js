@@ -10,7 +10,7 @@ import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.7.0-f
 import { createUnifiedLibraryProviderAsync, setLibraryExamTags } from "./library/provider.js?v=1.7.0-four-session-integration";
 import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.7.0-four-session-integration";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.7.0-four-session-integration";
-import { setConnectionNames } from "./library/connection-names.js";
+import { setConnectionNames } from "./library/connection-names.js?v=1.7.0-four-session-integration";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
 export function unifiedImageInsertionOptions(result, asset) {
@@ -394,7 +394,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       const wanted = filters.subject ? [filters.subject] : Array.isArray(filters.subjects) ? filters.subjects.filter(Boolean) : [];
       if (hakpyeongAll || (wanted.length && wanted.every(subject => hakpyeongSubjects.has(subject)))) return;
       const subjects = wanted.length ? [...new Set([...hakpyeongSubjects, ...wanted])].sort() : [];
-      const {loadHakpyeongPack} = await import("./pdf-library/hakpyeong-pack.js");
+      const {loadHakpyeongPack} = await import("./pdf-library/hakpyeong-pack.js?v=1.7.0-four-session-integration");
       hakpyeongPack = await loadHakpyeongPack(subjects);
       if (!subjects.length) hakpyeongAll = true;
       subjects.forEach(subject => hakpyeongSubjects.add(subject));
@@ -514,7 +514,8 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     await opening;
     // 11-08: 학평 자료는 첫 검색 때 불러오느라 검색이 4~7초 걸렸다 — 라이브러리를 연 뒤 한가할 때 미리 불러 둔다.
     // 다 불러오면 목록을 한 번 새로 고쳐(지금 보던 자리 유지) 검색 준비(문항 색인·PDF 본문 색인)를 미리 끝낸다.
-    const preload = () => { void prepareHakpyeong({ query: "", filters: { exam: "hak" }, questionSearch: true }).then((changed) => { if (changed) return unifiedUi.refresh(); }).catch(() => {}); };
+    // 1.7.1: 과목 없이 부르면 학평 8과목을 모두 읽었다(11-09 「기본 범위 과목만」과 어긋남) — 시작 화면 미리 읽기(warmLibrary)와 같은 기본 범위로.
+    const preload = () => { void prepareHakpyeong({ query: "", filters: { ...(unifiedUi.defaultConditionFilters?.() ?? {}), exam: "hak" }, questionSearch: true }).then((changed) => { if (changed) return unifiedUi.refresh(); }).catch(() => {}); };
     // 설치판(file://)은 일꾼이 없어 미리 불러오기·색인 교체가 모두 화면 쪽에서 돌아 오히려 검색을 붙잡았다(연 뒤 3초 검색 3.8→9.1초) — 웹에서만.
     if (location.protocol !== "file:") typeof requestIdleCallback === "function" ? requestIdleCallback(preload, { timeout: 2500 }) : setTimeout(preload, 800);
   };

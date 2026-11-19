@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
-const base = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/";
+const base = process.env.PREVIEW_URL || "http://127.0.0.1:8798/";
 const evidence = process.env.EVIDENCE_DIR;
 const endpointTools = [
   { type: "spring", query: "용수철" },

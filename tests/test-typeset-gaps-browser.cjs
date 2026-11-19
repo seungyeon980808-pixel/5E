@@ -10,6 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const h = require('./helpers/rhwp-exam.cjs');
+const { installStallProbe, rethrowWithStall } = require('./helpers/stall-probe.cjs');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/typeset-gaps');
 const examples = JSON.parse(fs.readFileSync(path.join(__dirname, '../assets/exampool/sheet/examples.json'), 'utf8'));
 process.env.APP_ENTRY = '/';
@@ -19,7 +20,10 @@ h.withServer(async origin => {
   for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1600, height: 1100 } });
-    page.setDefaultTimeout(60000);
+    await installStallProbe(page.context()); // CI 전용 멈춤 진단(helpers/stall-probe.cjs) — 실패할 때만 보고
+    // CI(GitHub macOS)의 WebKit은 조판(rhwp wasm) 한 번에 주 스레드가 길게 막혀 60초 안에 클릭·준비 확인이 끝나지 않았다(11-17 44030425938).
+    // 맥 로컬 기준은 그대로 두고 CI에서만 기다림을 3배로 늘린다(teacher-flow.cjs T()와 같은 방식).
+    page.setDefaultTimeout(process.env.CI ? 180000 : 60000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     try {
@@ -42,9 +46,9 @@ h.withServer(async origin => {
       assert.match(await sheet.locator('.ts-unit-chip').getAttribute('title'), /2kg/);
       // 10-23 B 다시 하기: 조판 간격은 「⚙ 조판 설정」 팝업에서만 바꾼다(입력할 때는 조판 변경 없음). 팝업 미리보기의 「간격 보기」로 요소 사이를 잰다.
       const popup = {
-        open: async () => { if (!(await sheet.locator('.tsx-back:not([hidden])').count())) await sheet.click('#typeset-settings'); await sheet.waitForSelector('.tsx-sheet svg', { timeout: 30000 }); },
+        open: async () => { if (!(await sheet.locator('.tsx-back:not([hidden])').count())) await sheet.click('#typeset-settings'); await sheet.waitForSelector('.tsx-sheet svg', { timeout: process.env.CI ? 90000 : 30000 }); },
         gaps: () => sheet.evaluate(() => [...document.querySelectorAll('.tsx-gap')].map(g => parseFloat(g.dataset.mm))),
-        waitGaps: prev => sheet.waitForFunction(p => JSON.stringify([...document.querySelectorAll('.tsx-gap')].map(g => g.dataset.mm)) !== p, prev, { timeout: 20000 }),
+        waitGaps: prev => sheet.waitForFunction(p => JSON.stringify([...document.querySelectorAll('.tsx-gap')].map(g => g.dataset.mm)) !== p, prev, { timeout: process.env.CI ? 60000 : 20000 }),
       };
       await popup.open();
       await sheet.click('.tsx-pop [data-view="gaps"]');
@@ -69,7 +73,7 @@ h.withServer(async origin => {
       assert.ok(Math.abs(after[2] - before[2]) <= 0.15, `${name}: other gaps stay (${before[2]} → ${after[2]})`);
       // 적용 → 수능 틀을 복제한 「수능 틀 (내 설정)」이 모든 문항에
       await sheet.click('.tsx-pop [data-apply]');
-      await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 (내 설정) ▾', null, { timeout: 20000 });
+      await sheet.waitForFunction(() => document.querySelector('.ts-std')?.textContent === '수능 틀 (내 설정) ▾', null, { timeout: process.env.CI ? 60000 : 20000 });
       await ready();
       // 틀 고르기로 수능 틀 되돌리기
       await popup.open();
@@ -84,10 +88,10 @@ h.withServer(async origin => {
       const f2 = sheet.locator('.tsx-pop input[data-p="gaps.choices"]'); await f2.fill('0.5'); await f2.press('Enter');
       assert.equal(await sheet.locator('.tsx-pop [data-apply]').textContent(), '이 문항에 적용');
       await sheet.click('.tsx-pop [data-apply]');
-      await sheet.waitForFunction(() => /1번만 ▾$/.test(document.querySelector('.ts-std')?.textContent || ''), null, { timeout: 20000 });
+      await sheet.waitForFunction(() => /1번만 ▾$/.test(document.querySelector('.ts-std')?.textContent || ''), null, { timeout: process.env.CI ? 60000 : 20000 });
       await ready();
       assert.deepEqual(errors, [], `${name}: no page errors`);
       console.log(`${name}: typeset gaps ok`);
-    } finally { await browser.close(); }
+    } catch (error) { await rethrowWithStall(error, page, name, evidence); } finally { await browser.close(); }
   }
 });

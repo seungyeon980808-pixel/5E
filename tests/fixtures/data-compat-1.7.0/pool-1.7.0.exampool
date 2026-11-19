@@ -1,0 +1,48 @@
+{
+  "format": "5e-exampool",
+  "version": 1,
+  "items": [
+    {
+      "id": "legacy-170",
+      "revision": 0,
+      "number": "",
+      "passage": "",
+      "ask": "",
+      "bogi_items": [],
+      "choices": [
+        {
+          "id": "0d78f856-9401-41f2-9fd6-37c4ec773577",
+          "ord": 1,
+          "text": ""
+        },
+        {
+          "id": "1bde70d4-3897-45ac-ac60-2398e9f7d842",
+          "ord": 2,
+          "text": ""
+        },
+        {
+          "id": "3a878600-4934-4621-880b-056c65094bc0",
+          "ord": 3,
+          "text": ""
+        },
+        {
+          "id": "38b955f6-b898-48a8-9aa8-8fac292b967d",
+          "ord": 4,
+          "text": ""
+        },
+        {
+          "id": "2b123f6a-5b2c-4097-aa24-22c091e71bec",
+          "ord": 5,
+          "text": ""
+        }
+      ],
+      "standard_code": "",
+      "standard": null,
+      "intent": "",
+      "references": [],
+      "asset": null,
+      "createdAt": "2026-11-16T14:21:18.469Z",
+      "updatedAt": "2026-11-16T14:21:18.469Z"
+    }
+  ]
+}

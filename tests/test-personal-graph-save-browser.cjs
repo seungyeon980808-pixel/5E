@@ -9,7 +9,7 @@ fs.mkdirSync(output, { recursive: true });
 h.withServer(async origin => {
   for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.name()===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch();
-    try { for (const surface of ['/', '/preview/']) {
+    try { for (const surface of ['/']) {
       const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await h.navigate(page, new URL(surface + '?mode=pro&mobile=0&exam=0', origin).href);
@@ -17,7 +17,7 @@ h.withServer(async origin => {
       const { stateUrl } = h.runtime(page);
       const read = () => page.evaluate(async url => JSON.parse(JSON.stringify((await import(url)).state.get().objects)), stateUrl);
       const library = () => page.evaluate(async url => JSON.parse((await import(new URL('personal-objects.js?v=1.7.0-four-session-integration', url).href)).exportLibraryString() || '[]'), stateUrl);
-      await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+      await require('./helpers/graph-entry.cjs').openGraphDirect(page);
       await page.locator('#gm-tab-func-btn').click();
       await page.locator('#gm-add-series').click();
       await page.locator('#gm-expr').fill('x^2');

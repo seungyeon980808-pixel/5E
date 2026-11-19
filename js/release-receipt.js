@@ -1,5 +1,5 @@
 const release = Object.freeze({
-  version: '1.7.0',
+  version: '1.7.1',
   releasedAt: '2026.11 출시 준비',
   // Publication stamps the validated commit after copying its tracked source.
   sourceCommit: null,

@@ -470,7 +470,7 @@ h.withServer(async origin => {
   for (const [engineName, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).filter(([name]) => !process.env.EXAM_ENGINE || name === process.env.EXAM_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     try {
-      for (const surface of ['', 'preview/'].filter(s => !process.env.EXAM_SURFACE || s === (process.env.EXAM_SURFACE === 'preview' ? 'preview/' : ''))) {
+      for (const surface of [''].filter(s => !process.env.EXAM_SURFACE || s === (process.env.EXAM_SURFACE === 'preview' ? 'preview/' : ''))) {
         await scenario(browser, origin, surface, engineName + (surface ? '-preview' : '-root'));
       }
     } finally { await browser.close(); }

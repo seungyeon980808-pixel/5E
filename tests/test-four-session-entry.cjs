@@ -10,12 +10,13 @@ const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "suite-manifest
 const origin = "http://127.0.0.1:60000";
 
 test("entry and independent module settings accept only local unambiguous values", () => {
-  assert.deepEqual(helper.entryConfiguration({}), { entry: "/preview/", moduleBase: undefined, moduleQuery: undefined });
-  for (const entry of ["/", "/preview/"]) {
+  assert.deepEqual(helper.entryConfiguration({}), { entry: "/", moduleBase: undefined, moduleQuery: undefined });
+  for (const entry of ["/"]) {
     assert.deepEqual(helper.entryConfiguration({ APP_ENTRY: entry, APP_MODULE_BASE: "/js/", APP_MODULE_QUERY: "?v=integrated" }),
       { entry, moduleBase: "/js/", moduleQuery: "?v=integrated" });
   }
-  for (const APP_ENTRY of ["", "/bad", "/preview", "//example.org/", "/?x=1", "/;exit 0"]) {
+  // 1.7.1: 옛 /preview/ 진입점은 지웠으므로 거절한다.
+  for (const APP_ENTRY of ["", "/bad", "/preview", "/preview/", "//example.org/", "/?x=1", "/;exit 0"]) {
     assert.throws(() => helper.entryConfiguration({ APP_ENTRY }));
   }
   for (const APP_MODULE_BASE of ["js/", "//example.org/", "/js/../", "/js/?x=1", "/js\\"]) {
@@ -26,8 +27,8 @@ test("entry and independent module settings accept only local unambiguous values
   }
 });
 
-test("both page entries can target canonical modules without deriving base from navigation", () => {
-  for (const entry of ["/", "/preview/"]) {
+test("the root entry can target canonical modules without deriving base from navigation", () => {
+  for (const entry of ["/"]) {
     const config = helper.entryConfiguration({ APP_ENTRY: entry, APP_MODULE_BASE: "/js/", APP_MODULE_QUERY: "?v=state" });
     const mainUrl = helper.mainModuleUrl('<script type="module" src="/js/main.js?v=main"></script>', origin + entry);
     const runtime = helper.runtimeConfiguration(config, origin + entry, mainUrl, 'import { state } from "./state.js?v=state";');
@@ -37,24 +38,24 @@ test("both page entries can target canonical modules without deriving base from 
   }
 });
 
-test("default preview uses its observed old runtime and refuses missing or mismatched identities", () => {
+test("default root entry uses its observed runtime and refuses missing or mismatched identities", () => {
   const config = helper.entryConfiguration({});
-  const main = origin + "/preview/js/main.js?v=old";
+  const main = origin + "/js/main.js?v=old";
   const source = 'import { state } from "./state.js?v=old";';
-  const runtime = helper.runtimeConfiguration(config, origin + "/preview/", main, source);
-  assert.equal(runtime.moduleBase, "/preview/js/");
+  const runtime = helper.runtimeConfiguration(config, origin + "/", main, source);
+  assert.equal(runtime.moduleBase, "/js/");
   assert.equal(runtime.moduleQuery, "?v=old");
-  for (const override of [{ moduleBase: "/js/" }, { moduleBase: "/nonexistent/" }, { moduleQuery: "?v=other" }]) {
-    assert.throws(() => helper.runtimeConfiguration({ ...config, ...override }, origin + "/preview/", main, source));
+  for (const override of [{ moduleBase: "/other/" }, { moduleBase: "/nonexistent/" }, { moduleQuery: "?v=other" }]) {
+    assert.throws(() => helper.runtimeConfiguration({ ...config, ...override }, origin + "/", main, source));
   }
-  assert.throws(() => helper.runtimeConfiguration(config, origin + "/preview/", main, ""));
+  assert.throws(() => helper.runtimeConfiguration(config, origin + "/", main, ""));
   assert.throws(() => helper.mainModuleUrl("<html></html>", origin));
   assert.throws(() => helper.mainModuleUrl('<script src="https://example.org/main.js"></script>', origin));
   for (const resources of [
     [runtime.mainUrl], // A missing state is not proof.
-    [runtime.mainUrl, origin + "/js/state.js?v=old"],
+    [runtime.mainUrl, origin + "/js/state.js?v=other"],
     [runtime.mainUrl, runtime.stateUrl, runtime.stateUrl + "-stale"],
-    [runtime.mainUrl, runtime.stateUrl, origin + "/js/state.js?v=old"],
+    [runtime.mainUrl, runtime.stateUrl, origin + "/js/state.js?v=other"],
   ]) assert.throws(() => helper.assertLoadedRuntime(runtime, resources));
   helper.assertLoadedRuntime(runtime, [runtime.mainUrl, runtime.stateUrl, runtime.stateUrl]);
 });
@@ -120,9 +121,9 @@ function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cj
     if (name === "owned-test-playwright") return { chromium: engine("chromium"), webkit: engine("webkit") };
     if (name === "./helpers/four-session-entry.cjs") return { ...helper, inspectEntry: async (page, origin, config) => {
       if (validationError) throw validationError;
-      return { ...config, entryUrl: origin + config.entry, moduleBase: config.moduleBase || "/preview/js/",
-        moduleQuery: config.moduleQuery || "?v=old", mainUrl: origin + "/preview/js/main.js?v=old",
-        stateUrl: origin + "/preview/js/state.js?v=old" };
+      return { ...config, entryUrl: origin + config.entry, moduleBase: config.moduleBase || "/js/",
+        moduleQuery: config.moduleQuery || "?v=old", mainUrl: origin + "/js/main.js?v=old",
+        stateUrl: origin + "/js/state.js?v=old" };
     } };
     return require(name);
   };
@@ -157,9 +158,9 @@ test("runner forwards independent routing and completes owned cleanup before ret
     await instance.run();
     const suites = instance.calls.filter(call => call.kind === "suite");
     assert.equal(suites.length, 1);
-    assert.equal(suites[0].env.PREVIEW_URL, origin + (env.APP_ENTRY || "/preview/"));
+    assert.equal(suites[0].env.PREVIEW_URL, origin + (env.APP_ENTRY || "/"));
     assert.equal(suites[0].env.RELEASE_URL, origin + "/");
-    assert.equal(suites[0].env.APP_MODULE_BASE, env.APP_MODULE_BASE || "/preview/js/");
+    assert.equal(suites[0].env.APP_MODULE_BASE, env.APP_MODULE_BASE || "/js/");
     assert.equal(suites[0].env.APP_MODULE_QUERY, env.APP_MODULE_QUERY || "?v=old");
     assert.equal(instance.calls.filter(call => call.kind === "closedBrowser").length, 2);
     assert.equal(instance.calls.at(-1).kind, "kill");

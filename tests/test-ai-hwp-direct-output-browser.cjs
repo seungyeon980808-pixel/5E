@@ -75,14 +75,14 @@ h.withServer(async origin => {
       // 2026-10-13(4dbdd0b8)부터 '한글로 보내기'는 노란 테두리 단추가 아니라 출력 단추 줄의 다른 단추와 같은 모양이다.
       assert.equal(await direct.evaluate(node => getComputedStyle(node).borderTopColor),
         await ai.locator('[data-ai-insert-selected]').evaluate(node => getComputedStyle(node).borderTopColor), 'HWP send matches its output row');
-      for (const width of [1440, 1024, 720]) {
+      for (const width of [1440, 1024, 800] /* 760px 이하는 모바일 버전 때(I5) — 1단계 결정 */) {
         await page.setViewportSize({width,height:1000});
         await page.evaluate(() => Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))));
         const placement = await direct.evaluate(node => {
           const rect=node.getBoundingClientRect(), close=node.closest('#ai-image-panel').querySelector('[data-ai-close]').getBoundingClientRect(); // 보내기 단추는 아래 출력 줄로 옮겨졌다(4dbdd0b8).
           return {width:rect.width,left:rect.left,right:rect.right,bottom:rect.bottom,top:rect.top,closeLeft:close.left,closeTop:close.top,closeBottom:close.bottom};
         });
-        assert.ok(placement.width > 0 && placement.left >= 0 && placement.right <= width, `Visible send button at width ${width}`);
+        assert.ok(placement.width > 0 && placement.left >= 0 && placement.right <= width, `Visible send button at width ${width}: ${JSON.stringify(placement)}`);
         assert.ok(placement.right <= placement.closeLeft || placement.bottom <= placement.closeTop || placement.top >= placement.closeBottom, 'Send and close never overlap');
       }
       await page.setViewportSize({width:1440,height:1000});

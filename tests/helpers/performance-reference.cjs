@@ -13,14 +13,12 @@ const methodologyFiles = [
 ];
 function identity(root) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
-  const dirty = git('status', '--porcelain', '--untracked-files=no', '--', 'preview', ...methodologyFiles);
+  const dirty = git('status', '--porcelain', '--untracked-files=no', '--', ...methodologyFiles);
   assert.equal(dirty, '', 'Performance inputs must be committed and clean');
-  const canonicalAlias = /^\s*export \* from ['"]\.\.\/\.\.\/js\/main\.js/m
-    .test(fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8'));
-  if (canonicalAlias) assert.equal(git('status', '--porcelain', '--untracked-files=no', '--', 'js', 'css', 'index.html'), '', 'Canonical performance inputs must be committed and clean');
+  // 1.7.1: 옛 preview/ 사본이 없어졌으므로 정식 실행 파일(js·css·index.html)만 기준으로 묶는다.
+  assert.equal(git('status', '--porcelain', '--untracked-files=no', '--', 'js', 'css', 'index.html'), '', 'Canonical performance inputs must be committed and clean');
   return {
-    previewTree: git('rev-parse', 'HEAD:preview'),
-    ...(canonicalAlias ? { canonicalRuntime: Object.fromEntries(['js', 'css', 'index.html'].map(file => [file, git('rev-parse', `HEAD:${file}`)])) } : {}),
+    canonicalRuntime: Object.fromEntries(['js', 'css', 'index.html'].map(file => [file, git('rev-parse', `HEAD:${file}`)])),
     methodologyBlobs: Object.fromEntries(methodologyFiles.map(file => [file, git('rev-parse', `HEAD:${file}`)])),
   };
 }
@@ -29,7 +27,7 @@ function validate(reference, expected) {
   assert.equal(reference.measuredOutsideGitHubActions, true, 'Hosted VM timings cannot certify the physical reference');
   assert.equal(reference.sourceDirty, false);
   assert.match(reference.sourceCommit, /^[a-f0-9]{40}$/);
-  assert.deepEqual(reference.identity, expected, 'Performance reference does not match the current preview tree and methodology');
+  assert.deepEqual(reference.identity, expected, 'Performance reference does not match the current runtime and methodology');
   assert.equal(reference.scenarios.length, 8, 'All eight physical scenarios are required');
   const required = new Set(['chromium', 'webkit'].flatMap(engine => ['tasks-1', 'tasks-10', 'tasks-30', 'loading'].map(name => `${engine}/${name}`)));
   for (const row of reference.scenarios) {

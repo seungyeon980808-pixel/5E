@@ -1335,8 +1335,10 @@
 .unified-library-overlay .unilib-header .ll { display: none !important; }
 .unified-library-overlay .unilib-search input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
 /* 맥 설치본: 신호등 단추 자리를 비우고 머리줄로 창을 끈다(제목 줄이 내려와 머리줄을 덮지 않음, desktop/preload.cjs). */
-.desktop-shell.platform-darwin .unified-library-overlay .unilib-header { padding-inline-start: 84px; -webkit-app-region: drag; }
-.desktop-shell.platform-darwin .unified-library-overlay .unilib-header .unilib-brand { width: calc(var(--unilib-folders-width) - 84px); }
+/* 1.7.1 B19: :root를 붙여 우선순위를 올린다 — Pro에서는 graphite-shell.css의 「padding: 0 12px」(같은 우선순위, 더 늦게 읽힘)가
+   이 규칙을 덮어 「라이브러리」 제목이 맥 신호등 자리(왼쪽 위)에 그대로 걸렸다. Lite에서만 맞게 보였다. */
+:root.desktop-shell.platform-darwin .unified-library-overlay .unilib-header { padding-inline-start: 84px; -webkit-app-region: drag; }
+:root.desktop-shell.platform-darwin .unified-library-overlay .unilib-header .unilib-brand { width: calc(var(--unilib-folders-width) - 84px); }
 .desktop-shell.platform-darwin .unified-library-overlay .unilib-header :is(button, a, input, label, details, summary) { -webkit-app-region: no-drag; }
 
 .unified-library-overlay .unilib-folder-scroll { overflow: auto; overscroll-behavior: contain; }

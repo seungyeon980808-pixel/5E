@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const load = name => import(pathToFileURL(path.resolve(__dirname, '../preview/js', name)).href);
+const load = name => import(pathToFileURL(path.resolve(__dirname, '../js', name)).href);
 const batchScope = { sessionId: 'session', workspaceId: 'batch-host' };
 const image = 'data:image/png;base64,iVBORw0KGgo=';
 const entry = i => ({ scope: { sessionId: 'session', workspaceId: `workspace-${i % 2}` }, taskId: `task-${i}`, snapshot: { dataUrl: image, revisionId: `original-${i}`, operation: 'generate', options: { quality: 'high' }, comments: [{ text: 'before' }], model: 'sol', candidate: { id: 'candidate-before' } } });

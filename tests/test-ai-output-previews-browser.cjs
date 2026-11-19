@@ -376,8 +376,8 @@ for (const engine of ['chromium', 'webkit']) {
       });
       window.__firstImageRequest.catch(() => {});
     });
-    // 10-22(83201a54): 이미지 작업은 숨은 [data-ai-send] 대신 보이는 「변환하기」([data-ai-comments-apply])로 같은 전송 흐름을 시작한다.
-    await page.locator(`${panel} [data-ai-comments-apply]`).click();
+    // 10-22(83201a54): 이미지 작업은 숨은 [data-ai-send] 대신 보이는 「변환하기」([data-ai-send][data-ai-comments-apply])로 같은 전송 흐름을 시작한다.
+    await page.locator(`${panel} [data-ai-send][data-ai-comments-apply]`).click();
     await page.evaluate(() => window.__firstImageRequest);
     await page.evaluate(() => {
       const index = window.__task2.sends.indexOf(window.__task2.generationSends[0]);
@@ -1020,7 +1020,7 @@ for(const engine of ['chromium','webkit'])for(const entry of ['/','/preview/']){
         assert.equal(await page.evaluate(()=>window.__rawTransitionSaveObservation.settled),false,'Actual save is held by the native decode');
         assert.equal(downloads.length-startedDownloads,0,'Held decoding has not produced a download');
         await rawTransitionObserveScopedDispatch(page);
-        const apply=page.locator(`${panel} [data-ai-comments-apply]`);assert.equal(await apply.isVisible(),true);assert.equal(await apply.isEnabled(),true);await apply.click();
+        const apply=page.locator(`${panel} [data-ai-send][data-ai-comments-apply]`);assert.equal(await apply.isVisible(),true);assert.equal(await apply.isEnabled(),true);await apply.click();
         assert.equal(await page.getByRole('dialog',{name:'수정 허용 범위 확인'}).count(),0,'Primary click authorizes the actual captured scope');
         const dispatch=await rawTransitionPromise(page,'__rawTransitionScopedDispatch.done','original correlated scoped provider-fixture request');
         assert.equal(await page.locator(panel).getAttribute('data-ai-busy'),'true');
@@ -1473,7 +1473,7 @@ for (const engine of ['chromium', 'webkit']) for (const mode of ['selected', 'al
         let dispatch = null, cancelled = null;
         if (scenario === 'cancel-before-late-export') {
           await rawTransitionObserveScopedDispatch(page);
-          const apply = await collectiveVisibleControl(page, `${panel} [data-ai-comments-apply]`, evidence, 'actual-scope-apply');
+          const apply = await collectiveVisibleControl(page, `${panel} [data-ai-send][data-ai-comments-apply]`, evidence, 'actual-scope-apply');
           await apply.click(); assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0);
           dispatch = await rawTransitionPromise(page, '__rawTransitionScopedDispatch.done', 'actual scoped request before late collective export');
           assert.equal(await page.locator(panel).getAttribute('data-ai-busy'), 'true');
@@ -1732,7 +1732,7 @@ for (const engine of ['chromium', 'webkit']) {
         assert.equal(pending.writes.length, 0); assert.equal(downloads.length, 0);
 
         await rawTransitionObserveScopedDispatch(page);
-        const apply = await collectiveVisibleControl(page, `${panel} [data-ai-comments-apply]`, evidence, 'actual-scope-apply');
+        const apply = await collectiveVisibleControl(page, `${panel} [data-ai-send][data-ai-comments-apply]`, evidence, 'actual-scope-apply');
         await apply.click(); assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0);
         const dispatch = await rawTransitionPromise(page, '__rawTransitionScopedDispatch.done', 'actual correlated scope request');
         assert.equal(dispatch.payload.purpose, 'image'); assert.equal(dispatch.payload.model, 'gpt-6.1-sol');

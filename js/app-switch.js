@@ -66,7 +66,8 @@ export function initAppSwitch(doc = document) {
   const closeApp = async (from, fade) => {
     const el = surface(from);
     if (fade && !reduced()) { el.classList.add('app-leaving'); await sleep(170); }
-    if (from === 'hwp') el.querySelector('[data-exam-action="close"]')?.click();
+    // 조판이 바쁜 동안(첫 열기의 엔진 읽기·저장 등)은 닫기 단추가 꺼져 있어 누름이 버려진다 — 켜질 때까지(최대 30초) 기다렸다가 누른다(11-18 CI2).
+    if (from === 'hwp') { const closer = () => el.querySelector('[data-exam-action="close"]'); await until(() => !closer()?.disabled, 30000); closer()?.click(); }
     if (from === 'exam') win.dispatchEvent(new CustomEvent('5e:exampool-close'));
     // 2초 안에 안 닫히면(저장 확인 창 등) 그대로 둔다.
     const closed = await until(() => !shown(from), 2000);
@@ -128,5 +129,13 @@ export function initAppSwitch(doc = document) {
   });
   // 로고에 마우스를 올리면 프로그램 목록(11-04) · 단축키 ⌥⌘1~3(윈도우 Ctrl+Alt+1~3)
   { const brand = doc.querySelector('.app-shell-header .app-brand'); attachAppMenu(brand, 'image', { guide: brand?.getAttribute('href') || '' }); }
-  doc.addEventListener('keydown', event => { const target = appSwitchKey(event); if (!target) return; event.preventDefault(); void go(target); });
+  // 11-17 B3: Lite에서 ⌥⌘2·⌥⌘3은 조용히 끝나던 것 — 다른 막힌 길처럼 「정식판에서 됩니다」 안내(view-mode.js requirePro), Pro로 바꾸면 이어서 간다.
+  const LITE_WHAT = { exam: '5E_exam 문항 만들기', hwp: '한글 시험지(5E_hwp)' };
+  doc.addEventListener('keydown', event => { const target = appSwitchKey(event); if (!target) return; event.preventDefault();
+    if (target !== 'image' && doc.documentElement.dataset.mode === 'lite') {
+      if (event.repeat) return;
+      void Promise.resolve(win.fiveERequirePro?.(LITE_WHAT[target]) ?? false).then(ok => { if (ok && doc.documentElement.dataset.mode !== 'lite') void go(target); });
+      return;
+    }
+    void go(target); });
 }

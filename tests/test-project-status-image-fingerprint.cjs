@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 
 function fixture() {
-  const source = fs.readFileSync(path.join(__dirname, '../preview/js/project-status.js'), 'utf8').replace(/export /g, '');
+  const source = fs.readFileSync(path.join(__dirname, '../js/project-status.js'), 'utf8').replace(/export /g, '');
   const ctx = vm.createContext({ document: { querySelector: () => null } });
   vm.runInContext(source, ctx);
   const image = { id: 'image', type: 'image', src: 'data:image/png;base64,' + 'a'.repeat(2_000_000), x: 1 };

@@ -7,8 +7,7 @@ const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/graph-
 fixture.axes.x.ticks = [{ value: 1, label: 't_0', displayMath: 't_0' }];
 fixture.axes.y.ticks = [{ value: 2, label: '값 2' }];
 fixture.axes.y2 = { scale: 'linear', title: '오른쪽 축', unit: '', min: 0, max: 8, step: 2, ticks: [{ value: 4, label: '4' }] };
-const evidence = process.env.EVIDENCE_DIR;
-assert(evidence, 'EVIDENCE_DIR required'); fs.mkdirSync(evidence, { recursive: true });
+const evidence = process.env.EVIDENCE_DIR || require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(), '5e-wb-stab-')); fs.mkdirSync(evidence, { recursive: true });
 
 (async () => {
   const reports = [];
@@ -139,7 +138,7 @@ assert(evidence, 'EVIDENCE_DIR required'); fs.mkdirSync(evidence, { recursive: t
         assert.deepEqual(new Set(group.memberIds), new Set(item.ids));
       }
       const svg = Buffer.from(insertion.data.split(',')[1], 'base64').toString('utf8');
-      assert(!/NaN|Infinity|undefined/.test(svg)); assert(insertion.attachment.data.startsWith('data:image/png;base64,'));
+      {const plain=svg.replace(/url\((['"]?)data:[^)]*\)/g,'url()');const m=/NaN|Infinity|undefined/.exec(plain);assert(!m,m?plain.slice(Math.max(0,m.index-160),m.index+60):'');}/* 내장 글꼴 base64 안의 우연한 「NaN」은 제외 */ assert(insertion.attachment.data.startsWith('data:image/png;base64,'));
       assert.equal(insertion.attachment.id, 'context');
       const before = await snap();
       await page.locator('#file-menu-btn').click(); await page.locator('#project-save').click();

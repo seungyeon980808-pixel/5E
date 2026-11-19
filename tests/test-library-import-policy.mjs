@@ -6,7 +6,7 @@ import {
   PDF_IMPORT_BATCH_MAX_FILES,
   PDF_IMPORT_MAX_BYTES,
   partitionLibraryImports,
-} from "../preview/js/library-import-policy.js";
+} from "../js/library-import-policy.js";
 
 const pdf = (name, size) => ({ name, size, type: "application/pdf" });
 

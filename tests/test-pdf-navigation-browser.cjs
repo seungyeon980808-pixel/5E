@@ -10,7 +10,7 @@ fs.mkdirSync(dir,{recursive:true});
 async function observeRetainedEditor(page) {
  const helper=fs.readFileSync(path.join(__dirname,'helpers/crop-loading-fixture.cjs'),'utf8');
  if(helper.includes('window.__cropRecord')) return;
- let source=fs.readFileSync(path.resolve(__dirname,'../preview/js/unified-library-ui.js'),'utf8');
+ let source=fs.readFileSync(path.resolve(__dirname,'../js/unified-library-ui.js'),'utf8');
  const originalSHA256=require('node:crypto').createHash('sha256').update(source).digest('hex');
  const observe=(before,after)=>{assert.equal(source.split(before).length-1,1,'PDF editor observation seam must occur once');source=source.replace(before,after);};
  observe('    cropOpenOptions = { emptyDraft, wholePage, title };',
@@ -19,7 +19,7 @@ async function observeRetainedEditor(page) {
   '      const original = await materializeOriginalLibraryPage(result, activeProvider)\n        .finally(() => window.__cropRecord({ phase: "editor-original-settled", number: session.pageNumber }));');
  observe('      return false;\n    }\n  };\n  overlay.querySelector("[data-unilib-adjust]").addEventListener("click", () => void openCropEditor());',
   '      return false;\n    } finally {\n      window.__cropRecord({ phase: "editor-settled", number: session.pageNumber });\n    }\n  };\n  overlay.querySelector("[data-unilib-adjust]").addEventListener("click", () => void openCropEditor());');
- await page.route('**/preview/js/unified-library-ui.js*',route=>route.fulfill({contentType:'text/javascript',body:source}));
+ await page.route('**/js/unified-library-ui.js*',route=>route.fulfill({contentType:'text/javascript',body:source}));
  await page.addInitScript(()=>{window.cropFixtureLog=[];window.__cropRecord=value=>window.cropFixtureLog.push({sequence:window.cropFixtureLog.length+1,...value});});
  fs.writeFileSync(path.join(dir,'retained-source-observation.json'),JSON.stringify({originalSHA256,observationOnly:true,seams:3},null,2));
 }

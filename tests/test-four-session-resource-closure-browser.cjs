@@ -40,13 +40,15 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-editor/index.d.ts", { sha256: "6b8a88ff8c43c0df024e0c9013f87520d8831890393be9ced890363742514471", bytes: 15356 }],
   ["vendor/rhwp-editor/index.js", { sha256: "c9fab3743e713c46fd72c20f798333a4e70021ed7fcc7bdc56f0e144dd7b9431", bytes: 18350 }],
   ["vendor/rhwp-editor/package.json", { sha256: "39c9930d7b63ade9ef23d29f26e99b78060cd3c93a2f6b0bbe198e3d492061a0", bytes: 888 }],
-  ["vendor/rhwp-editor/transport.js", { sha256: "2ee9f915e70b9621b90fd9f578c269a085757da85565ee649877832e312c7877", bytes: 10656 }],
+  // 15a825be(11-05, 1.7.0 다듬기)로 바뀐 파일의 값.
+  ["vendor/rhwp-editor/transport.js", { sha256: "e51f023740d87e3f6ddf8ab0c21675987ac5b1667e36d408b8b08170e2a6158b", bytes: 11089 }],
   ["vendor/rhwp-studio/LICENSE", { sha256: "1c3a7d5643b163a3ead4965e1bea33b832caee5bfca265efe42afcd7bc696b5b", bytes: 1072 }],
   ["vendor/rhwp-studio/LICENSE-FONTS", { sha256: "d28c4c4ba705a6a40ea0f5f950afb9dceca146d94ddf432572190921fecf5d94", bytes: 4686 }],
   ["vendor/rhwp-studio/assets/canvaskit-renderer-qwNCZ9x6.js", { sha256: "3b7efb4d890bbdc9d59780d43a6041ac37b88d3dbb76682a0c31983c2b2e6788", bytes: 247494 }],
   ["vendor/rhwp-studio/assets/index-CJqHfaJX.css", { sha256: "77febd44c7840da15121989e64d344123d5d353b9d7c4ecc66f44ac8d544110e", bytes: 113835 }],
   // 4fabe265(10-13, 편집 중 안 보이는 표 테두리 보이기)로 바뀐 파일의 값.
-  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "edb1faeb65e1a1fab264ad0ea5e1c79301732a1a4d9dff3fdd1e0c870b430fe1", bytes: 2116311 }],
+  // 15a825be(11-05)로 한 번 더 바뀐 값.
+  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "c71f8a1ec4cd972dc20e99631a8702de8292eade252a8b7bcc623b34baaf6836", bytes: 2116396 }],
   ["vendor/rhwp-studio/assets/rhwp_bg-BkVWMBaR.wasm", { sha256: "54cf95014312e605c51b98eb9021247ea79ef2bbd0a7080e11c011d0246e3989", bytes: 11821756 }],
   ["vendor/rhwp-studio/assets/studio-plugin-7wns0tfd.js", { sha256: "3523819ac5b02bf6ae7cbe43d818ac0abaacf2dd09e03594c5b3172ed835e828", bytes: 54381 }],
   ["vendor/rhwp-studio/fonts/Cafe24Ssurround-v2.0.woff2", { sha256: "2d726dbf8863d66e6d5cf56e2532c5d14d8a4b514461b565c513c1da6ae2f41a", bytes: 391868 }],
@@ -82,7 +84,7 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-studio/images/icon_small_ko_dark.svg", { sha256: "9d02ea0b8c1d399a89290d97613759826f19f3e3f392b6d79dcf6109e7e15fa6", bytes: 451775 }],
   ["vendor/rhwp-studio/index.html", { sha256: "5bd733cb7edfa921da36dc7b0a6d68b7c13590d2d57d43ee7aa7821139a24be4", bytes: 86815 }],
   ["vendor/rhwp-studio/locale-init.js", { sha256: "633d47a6a53b2211cf816769f8c084b097c1b60b6ab263803d8610c0531539fa", bytes: 1342 }],
-  ["vendor/rhwp-studio/provenance.json", { sha256: "263d5bc19bccc191fa065236c3a01fc9747250bf26e2893017d7d3f645adea88", bytes: 7416 }],
+  ["vendor/rhwp-studio/provenance.json", { sha256: "ccc3694273c2d6c3b11f98fa32e1cd9ef97ad78d831699dca1adfa3831d5e433", bytes: 7510 }],
   ["vendor/rhwp-studio/theme-init.js", { sha256: "5a3afcc0139187bfe509414cd60fde2a0dfea72fd72751c4e6e696cdc0f6c587", bytes: 2783 }],
 ]);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -269,9 +271,12 @@ function assertModuleIdentities(runtime, records) {
       declaredUrls.add(imported.href);
     }
   }
+  // index.html이 type=module 없이 <script src>로 싣는 고전 스크립트(예: js/web-ai-bridge.js)는 모듈이 아니라 둘로 갈릴 일이 없다 — 판 번호 쿼리는 출시 서류가 정한다.
+  const classicScripts = new Set([...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/<script\b(?![^>]*type=["']module["'])[^>]*\bsrc=["'](js\/[^"'?#]+\.js)/g)].map(m => '/' + m[1]));
   for (const href of urls) {
     const url = new URL(href), decoded = decodeURIComponent(url.pathname);
     if (!/\/(?:js)\/.*\.js$/.test(decoded)) continue;
+    if (classicScripts.has(decoded)) continue;
     assert.ok(url.pathname.startsWith('/js/'), `Preview duplicate or module path alias: ${href}`);
     assert.equal(url.pathname, decoded, `Encoded module alias: ${href}`);
     assert.equal(url.pathname, path.posix.normalize(url.pathname), `Module path alias: ${href}`);
@@ -329,7 +334,10 @@ function externalOrigin(env = process.env) {
 }
 
 function privateEvidenceDirectory(env = process.env) {
-  const directory = path.resolve(env.EVIDENCE_DIR || path.join(root, '.omo/evidence/four-session-resource-closure'));
+  // 실행기(run-browser-tests.cjs)와 CI는 늘 저장소 밖·_work 아래 EVIDENCE_DIR를 준다 — 그때는 이 검사의 비공개 자리(.omo)를 그대로 쓴다.
+  const given = env.EVIDENCE_DIR && path.resolve(env.EVIDENCE_DIR), givenRelative = given && path.relative(root, given);
+  const insideOmo = givenRelative && (givenRelative === '.omo' || givenRelative.startsWith('.omo' + path.sep));
+  const directory = insideOmo ? given : path.join(root, '.omo/evidence/four-session-resource-closure');
   const relative = path.relative(root, directory);
   assert.ok(relative === '.omo' || relative.startsWith('.omo' + path.sep), 'Resource evidence must remain in private .omo');
   fs.mkdirSync(directory, { recursive: true });
@@ -360,7 +368,8 @@ async function probeFeatures(page, runtime) {
   await page.locator('[data-exam-action="close"]').click();
   await page.locator('#rhwp-exam-workspace').waitFor({ state: 'hidden' });
 
-  await page.locator('#graph-tool-open').click();await page.locator('[data-graph-entry="direct"]').click();
+  // 11-14(a45c7c9c ONE_ENTRY): 「그래프」 세 갈래 메뉴가 없어졌다 — AI 그래프 창의 「직접」으로 빈 편집기를 연다.
+  await require('./helpers/graph-entry.cjs').openGraphDirect(page);
   await page.locator('#graph-modal-overlay:not([hidden])').waitFor();
   await page.locator('#gm-labelx').fill('시간');
   await page.locator('#gm-tab-func-btn').click();
@@ -626,7 +635,7 @@ if (process.argv.includes('--self-test')) {
 } else {
   test('expanded resource closure on the externally owned combined candidate', { timeout: 1_200_000 }, async t => {
     externalOrigin();
-    for (const engine of ['chromium', 'webkit']) for (const entry of ['/', '/preview/'])
+    for (const engine of ['chromium', 'webkit']) for (const entry of ['/'])
       await t.test(`${engine} ${entry}`, { timeout: 300_000 }, () => browserScenario(engine, entry));
   });
 }

@@ -202,7 +202,7 @@ async function currentPrimaryAction(page) {
   assert.ok(['preparation', 'result'].includes(stage), 'Submission begins only in a real idle workbench stage: ' + stage);
   // 2026-10-16(83201a54)부터 이미지 작업은 준비 단계에서도 아래 '변환하기' 하나만 보인다. 그래프 작업만 준비 칸의 버튼을 쓴다.
   const graph = await panel.getAttribute('data-ai-workflow') === 'graph';
-  const selector = stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]';
+  const selector = '[data-ai-send]';
   const button = page.locator('#ai-image-panel[data-ai-stage="' + stage + '"] ' + selector);
   assert.equal(await button.count(), 1, 'Exactly one canonical primary action bound to ' + stage);
   assert.equal(await button.isVisible(), true, 'The actual current primary action must be physically visible');
@@ -417,7 +417,7 @@ function assertEveryOriginalAttachmentField(canonical, original) {
 
 async function immediateSceneFixture(context,count,evidence,engine) {
   const previousEngine=process.env.TASK2_ENGINE; process.env.TASK2_ENGINE=engine;
-  try { return await requestBrowserFixture(context,count,evidence); }
+  try { const fixture=await requestBrowserFixture(context,count,evidence); await fixture.page.evaluate(()=>{globalThis.__5eLegacyLabelPipeline=true;}); /* 11-10(c9d1da3f): 배경 캐시(scene) 흐름은 예전 라벨 파이프라인 계약 — 내부 시험용 플래그 */ return fixture; }
   finally {
     // Register restoration after the real fixture's cleanup hooks, including
     // failed boot: cleanup receipts must retain their actual engine identity.
@@ -584,7 +584,8 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
   const deletionReceipts=[];
   const inspectPhysicalActions=async()=>{
     const actions=[];
-    for(const selector of ['[data-ai-send]','[data-ai-comments-apply]']) {
+    // 11-11: 실행 단추(data-ai-send)도 data-ai-comments-apply를 함께 가진다(js/ai-panel.js 「실행 단추」 주석) — 옛 반영 단추만 따로 센다.
+    for(const selector of ['[data-ai-send]','[data-ai-comments-apply]:not([data-ai-send])']) {
       const buttons=page.locator('#ai-image-panel '+selector);
       const count=await buttons.count(); assert.ok(count<=1,'One canonical action per selector in the actual active panel');
       const observations=[];
@@ -611,15 +612,16 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
     const compare=page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]');
     assert.equal(await compare.count(),1); assert.equal(await compare.isVisible(),true); assert.equal(await compare.isEnabled(),true); await compare.click();
     const settings=page.locator('#ai-image-panel [data-ai-side-tab="comments"]');
-    assert.equal(await settings.isVisible(),true); await settings.click();
+    // 11-12(v6): 오른쪽 탭 줄이 숨겨졌다. 보이면 누르고, 숨겨졌으면 기본 탭(comments) 그대로 둔다.
+    if(await settings.isVisible()) await settings.click();
     const owner=await page.evaluate(()=>window.__task2Manager.activeExamTask()); assert.equal(owner.taskId,id);
     const before=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
     const prior=before.find(tab=>tab.id===id);
     assert.equal(prior.attachments.length,1); assert.equal(prior.generated.length,0);
     assert.equal(prior.workbenchViewState.layout,'side-by-side');
     assert.equal(prior.workbenchViewState.selectedSourceId,prior.attachments[0].id);
-    assert.equal(prior.commentViewState.selected,null); assert.equal(prior.commentViewState.tab,'comments');
-    const input=page.locator('#ai-image-panel [data-ai-input]'); assert.equal(await input.isVisible(),true); assert.equal(await input.isEnabled(),true); await input.fill(request);
+    assert.equal(prior.commentViewState.selected,null); assert.equal(prior.commentViewState.tab,'chat'); // 506f30bf(v6): 대화 칸이 늘 열려 있어 getViewState().tab(js/ai-image-comments.js:694)은 'chat'
+    const input=page.locator('#ai-image-panel [data-ai-chat-input]'); assert.equal(await input.isVisible(),true); assert.equal(await input.isEnabled(),true); await input.fill(request);
     const typed=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
     for(const tab of before) {
       const expected=structuredClone(tab); if(tab.id===id) expected.input=request;
@@ -627,6 +629,8 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
     }
     const remove=page.locator('#ai-image-panel .ai-reference-card button[title="이미지 제거"]');
     assert.equal(await remove.count(),1); assert.equal(await remove.isVisible(),true); assert.equal(await remove.isEnabled(),true); await remove.click();
+    // 11-11 사용자: 맥 기본 확인창 대신 5E 확인창(showConfirm, js/ai-panel.js 「이미지 빼기」) — 「빼기」를 누른다.
+    await page.getByRole('alertdialog',{name:'이미지 빼기',exact:true}).getByRole('button',{name:'빼기',exact:true}).click();
     await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiStage==='empty'&&document.querySelectorAll('#ai-image-panel .ai-reference-card').length===0);
     assert.equal(await input.inputValue(),request); assert.equal(await remove.count(),0);
     const sourceDeletion=await page.evaluate(async composition=>{
