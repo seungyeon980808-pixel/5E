@@ -29,6 +29,7 @@
 |---|---|---|---|
 | 그림 생성 | `5e.aiEngine.figure` | 켜짐 · `'0'`이면 옛 생성 길 | `5e.aiFigureEngine`, `globalThis.FIVE_E_AI_FIGURE_ENGINE` |
 | 그래프 「그림으로 생성」 | `5e.aiEngine.graphPicture` | 꺼짐 · `'1'`이면 켬 | `5e.aiGraph.pictureEngine`, `globalThis.__FIVE_E_AI_GRAPH_PICTURE__` |
+| 그림 생성의 그림 모델 | `5e.aiEngine.figureImageModel` | `luna`(gpt-6-luna) · `'sol'`이면 gpt-6.1-sol | 없음 |
 
 새 열쇠가 옛 열쇠보다 앞섭니다. 미리보기(`/preview`) 길에서는 `channelStorage`라 앞에 `5e.preview:`가 붙습니다. 그래프 옵션을 고르는 화면은 아직 없어서 플래그가 곧 옵션입니다(작업마다 `tab.graphCreateEngine`: `'picture'|'objects'` 자리만 있음).
 
@@ -42,7 +43,7 @@
 
 - 글: `desktop.readImageText`(main `codex:read-image-text`, 직접 호출). 취소 신호로 기다림을 끊음.
 - 그림: `desktop.send({ purpose:'image', ephemeralRender:true })` → main `startDirectImageTurn`(`desktop/ai-direct-image.cjs`). 결과 이벤트는 전용 래스터 컨트롤러(`engineRaster`)가 받아 프라미스로. 그림 차례는 한 번에 하나.
-- 모델: 그림은 AI 작업대에서 고른 모델 먼저(목록 밖이면 `ENGINE_IMAGE_MODEL` = `gpt-6-luna`), 실패하면 반대 모델(Luna↔Sol) 한 번(`imageModelOrder`). 글은 `ENGINE_TEXT_MODEL` = `gpt-6.1-sol`(목록에 없으면 고른 모델), 거절(400)이면 다음 글 모델. 그래프는 `GRAPH_WORKBENCH_SELECTION.model`.
+- 모델: 그림은 기본 `ENGINE_IMAGE_MODEL` = `gpt-6-luna`(원본 image_generator와 같음), 옵션 `5e.aiEngine.figureImageModel`='sol'이면 `gpt-6.1-sol`(`engineModels`·`figureImageModelFlag`). 작업대에서 고른 대화 모델은 따르지 않습니다(11-19 사용자 결정 — 앞서는 따라가서 설치판이 기본 선택 Sol로 그렸고, 한 장에 약 13초 더 걸렸음, FIGGAP). 실패하면 반대 모델(Luna↔Sol) 한 번(`imageModelOrder`). 글은 `ENGINE_TEXT_MODEL` = `gpt-6.1-sol`(목록에 없으면 고른 모델), 거절(400)이면 다음 글 모델. 그래프는 `GRAPH_WORKBENCH_SELECTION.model`.
 - 재시도 수: 5E가 엔진에 넘기는 값은 글 3·그림 1·장면 2(`runFigureEngine`). 그림 한 차례 안의 재시도는 반대 모델이 맡습니다.
 - 차례 시계: 그림·글 차례마다 240초(`ENGINE_IMAGE_DEADLINE_MS`·`ENGINE_TEXT_DEADLINE_MS`, `js/ai-engines.js`). main 쪽 한도(한 번 100초 + 다시 1번)보다 길게 두어, main이 끝을 알리지 못했을 때만 화면 쪽이 끊습니다. 검사는 `globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS`·`__FIVE_E_ENGINE_TEXT_DEADLINE_MS`로 줄입니다.
 

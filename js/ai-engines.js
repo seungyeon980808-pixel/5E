@@ -8,7 +8,7 @@
 //   웹: 연결은 만들어 두되 쓰지 않는다(availability().reason). 웹은 지금 생성 길을 그대로 쓴다 — 막다른 길 없음.
 // 원칙: 실패로 끝나지 않는다. 엔진 안 재시도 → 그림은 고른 모델 다음 반대 모델(Luna↔Sol) → 엔진이 한 장도 못 그리면
 //       호출 쪽(ai-panel)이 옛 생성 길로 넘긴다. 앞 결과는 지우지 않는다.
-import { figureEngineFlag, graphPictureFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, FIGURE_IMAGE_MODEL_CHOICES } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_ENGINE_ID = 'ai-figure';
 export const FIGURE_ENGINE_VERSION = '1.0.0';
@@ -54,11 +54,14 @@ export function imageModelOrder(selected) {
   const first = IMAGE_MODELS.includes(selected) ? selected : ENGINE_IMAGE_MODEL;
   return [first, IMAGE_MODELS.find((m) => m !== first)];
 }
-export function engineModels({ selected, catalog = null } = {}) {
+// 그림 모델은 작업대에서 고른 대화 모델을 따르지 않는다(11-19 사용자 결정): 기본 Luna(원본 image_generator와 같음),
+// 옵션 `5e.aiEngine.figureImageModel`='sol'일 때만 Sol. 앞서는 고른 모델(기본 gpt-6.1-sol)을 따라가 설치판이 늘 Sol로 그렸다(FIGGAP).
+// 실패하면 반대 모델로 한 번 더 그리는 대체(imageModelOrder)는 그대로다.
+export function engineModels({ selected, catalog = null, imageChoice = figureImageModelFlag() } = {}) {
   const list = Array.isArray(catalog) ? catalog : Array.isArray(catalog?.data) ? catalog.data : null;
   const ids = list ? list.map((e) => (typeof e === 'string' ? e : e?.model || e?.id)).filter((m) => typeof m === 'string' && m) : null;
   const text = !ids || ids.includes(ENGINE_TEXT_MODEL) ? ENGINE_TEXT_MODEL : (ids.includes(selected) ? selected : ids[0] || ENGINE_TEXT_MODEL);
-  return { text, image: imageModelOrder(selected)[0] };
+  return { text, image: FIGURE_IMAGE_MODEL_CHOICES[imageChoice] || ENGINE_IMAGE_MODEL };
 }
 
 function raceAbort(promise, signal) {

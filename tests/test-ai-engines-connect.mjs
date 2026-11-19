@@ -8,7 +8,7 @@ import {
   engineAvailability, figureRoute, graphRoute, imageModelOrder, engineModels, createDesktopEngineAi, figurePhaseCopy,
   figureSceneMeta, runFigureEngine, runGraphPicture, redrawGraphPicture, graphPhaseCopy, DESKTOP_ONLY_NOTE,
 } from '../js/ai-engines.js';
-import { aiEngineFlags, figureEngineFlag, graphPictureFlag, AI_ENGINE_FLAG_KEYS } from '../js/ai-engine-flags.js';
+import { aiEngineFlags, figureEngineFlag, graphPictureFlag, figureImageModelFlag, AI_ENGINE_FLAG_KEYS } from '../js/ai-engine-flags.js';
 import { snapshotImageItem } from '../js/ai-candidate-snapshot.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,7 +17,7 @@ const desktopApp = { readImageText: async () => ({ text: '' }), send: async () =
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 
 test('플래그: 그림 엔진 기본 켜짐·그래프 그림 기본 꺼짐, 새 이름이 옛 이름보다 앞섬', () => {
-  assert.deepEqual(aiEngineFlags(store()), { figure: true, graphPicture: false });
+  assert.deepEqual(aiEngineFlags(store()), { figure: true, graphPicture: false, figureImageModel: 'luna' });
   assert.equal(figureEngineFlag(store({ [AI_ENGINE_FLAG_KEYS.figure]: '0' })), false);
   assert.equal(figureEngineFlag(store({ '5e.aiFigureEngine': '0' })), false);
   assert.equal(graphPictureFlag(store({ [AI_ENGINE_FLAG_KEYS.graphPicture]: '1' })), true);
@@ -59,6 +59,25 @@ test('모델: 작업대에서 고른 그림 모델 먼저, 실패하면 반대 �
   assert.deepEqual(engineModels({ selected: 'gpt-6-luna' }), { text: 'gpt-6.1-sol', image: 'gpt-6-luna' });
   assert.deepEqual(engineModels({ selected: 'gpt-6-luna', catalog: { data: [{ model: 'gpt-6-luna' }] } }), { text: 'gpt-6-luna', image: 'gpt-6-luna' });
   assert.deepEqual(engineModels({ selected: 'gpt-6-luna', catalog: [{ model: 'gpt-6.1-sol' }, { model: 'gpt-6-luna' }] }), { text: 'gpt-6.1-sol', image: 'gpt-6-luna' }, '정리된 목록(객체 배열)');
+});
+
+test('그림 모델: 고른 대화 모델과 상관없이 기본 Luna, 옵션 sol일 때만 Sol(11-19 사용자 결정)', () => {
+  // 작업대 기본 선택(gpt-6.1-sol)이어도 그림은 Luna — 앞서는 Sol로 그렸다(FIGGAP)
+  assert.deepEqual(engineModels({ selected: 'gpt-6.1-sol', imageChoice: 'luna' }), { text: 'gpt-6.1-sol', image: 'gpt-6-luna' });
+  assert.deepEqual(engineModels({ selected: 'gpt-6.1-sol', imageChoice: 'sol' }), { text: 'gpt-6.1-sol', image: 'gpt-6.1-sol' });
+  assert.deepEqual(engineModels({ selected: 'gpt-6-luna', imageChoice: 'sol' }).image, 'gpt-6.1-sol');
+  assert.equal(engineModels({ selected: 'gpt-6.1-sol', imageChoice: '이상한 값' }).image, 'gpt-6-luna');
+  // 실패 대체는 반대 모델
+  assert.deepEqual(imageModelOrder(engineModels({ selected: 'gpt-6.1-sol', imageChoice: 'luna' }).image), ['gpt-6-luna', 'gpt-6.1-sol']);
+  assert.deepEqual(imageModelOrder(engineModels({ selected: 'gpt-6.1-sol', imageChoice: 'sol' }).image), ['gpt-6.1-sol', 'gpt-6-luna']);
+  // 플래그 읽기
+  const store = (v) => ({ getItem: (k) => (k === AI_ENGINE_FLAG_KEYS.figureImageModel ? v : null) });
+  assert.equal(figureImageModelFlag(store(null)), 'luna');
+  assert.equal(figureImageModelFlag(store('sol')), 'sol');
+  assert.equal(figureImageModelFlag(store('gpt-6.1-sol')), 'sol');
+  assert.equal(figureImageModelFlag(store('luna')), 'luna');
+  assert.equal(figureImageModelFlag({ getItem() { throw new Error('막힘'); } }), 'luna');
+  assert.equal(figureImageModelFlag(store('sol')), aiEngineFlags(store('sol')).figureImageModel);
 });
 
 test('연결 감싸기: 글은 readImageText, 그림은 래스터 차례(한 번에 하나), 실패하면 반대 모델로 한 번 더', async () => {
