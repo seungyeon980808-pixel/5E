@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { compileExpr } from '../js/ai-graph/expr.js';
-import { parseJson, fixTick, curveYs, fixLabels, conventionsFor, plan, planPrompt, isPlan, makeReadText } from '../js/ai-graph/plan.js';
+import { parseJson, fixTick, curveYs, fixLabels, conventionsFor, plan, planPrompt, isPlan, makeReadText, restoreAxisSymbols, axisSymbolsFromRequest } from '../js/ai-graph/plan.js';
 import { prepare, verifyPlan, planFacts } from '../js/ai-graph/verify.js';
 import { layoutGraph, labelOverlaps, boxHit } from '../js/ai-graph/layout.js';
 import { makeGraph, createGraphEngine, graphPlanMeta, minimalPlan, isAiGraphPictureEnabled, graphEngineChoice, AI_GRAPH_PICTURE_FLAG } from '../js/ai-graph/index.js';
@@ -309,4 +309,32 @@ test('KaTeX는 vendor에 고정 판으로, 그래프 판 스타일은 최신이�
   const check = spawnSync(process.execPath, ['data/ai-graph/build-stage-css.cjs', '--check'], { cwd: ROOT, encoding: 'utf8' });
   assert.equal(check.status, 0, check.stderr);
   assert.match(fs.readFileSync(path.join(ROOT, 'docs/credits.html'), 'utf8'), /KaTeX[\s\S]{0,200}MIT/);
+});
+
+// E2E(11-19 실제 설치판): 요청 「가로축은 시간 t(s), 세로축은 속도 v(m/s)」인데 그림 축 이름이 「시간(s)」「속도(m/s)」로 기호가 빠졌다.
+// 원인은 설계 지시문의 「변수 기호는 넣지 않음」. 요청에 「낱말 기호(단위)」로 적힌 축만 기호를 되살린다.
+test('restoreAxisSymbols: 요청에 적은 축 기호(v·t)를 설계 축 이름에 되살린다', () => {
+  const req = '가로축은 시간 t(s), 세로축은 속도 v(m/s)이다. 물체의 속도가 0초일 때 6 m/s이고 3초까지 일정하게 감소해 0이 된다.';
+  assert.deepEqual(axisSymbolsFromRequest(req), [{ word: '시간', sym: 't', unit: 's' }, { word: '속도', sym: 'v', unit: 'm/s' }]);
+  const p = restoreAxisSymbols({ labelX: '시간(s)', labelY: '속도(m/s)', xMin: 0 }, req);
+  assert.equal(p.labelX, '시간 t(s)'); assert.equal(p.labelY, '속도 v(m/s)'); assert.equal(p.xMin, 0);
+  // fixLabels 뒤 \; 꼴·단위 없는 축 이름도
+  const q = restoreAxisSymbols({ labelX: '시간\\;(s)', labelY: '속도' }, req);
+  assert.equal(q.labelX, '시간\\;t(s)'); assert.equal(q.labelY, '속도 v(m/s)');
+  // 이미 기호가 있으면 그대로, 요청에 기호가 없으면 그대로, 단위가 다르면 그대로
+  assert.equal(restoreAxisSymbols({ labelY: '속도 v(m/s)' }, req).labelY, '속도 v(m/s)');
+  assert.equal(restoreAxisSymbols({ labelY: '속도(m/s)' }, '세로축은 속도(m/s)').labelY, '속도(m/s)');
+  assert.equal(restoreAxisSymbols({ labelY: '속도(km/h)' }, req).labelY, '속도(km/h)');
+  // 아래첨자 기호
+  assert.equal(restoreAxisSymbols({ labelY: '운동 에너지(J)' }, '세로축은 운동 에너지 E_k(J)').labelY, '운동 에너지 E_k(J)');
+});
+
+test('makeGraph: AI 설계가 축 기호를 빼도 요청에 적힌 기호가 그림 설계에 남는다(저장 설계 다시 그리기는 그대로)', async () => {
+  const req = '가로축은 시간 t(s), 세로축은 속도 v(m/s)이다. 속도가 0초에 6, 3초에 0으로 일정하게 감소한다.';
+  const aiPlan = { xMin: 0, xMax: 3.6, yMin: 0, yMax: 7.2, labelX: '시간(s)', labelY: '속도(m/s)', xTicks: [{ value: 3, label: '3' }], yTicks: [{ value: 6, label: '6' }], series: [{ points: [[0, 6], [3, 0]] }] };
+  const r = await makeGraph({ request: req }, { ai: fakeAi([aiPlan, { ok: true }]), conventions: null, drawGraph: fakeDraw });
+  assert.equal(r.plan.labelX, '시간 t(s)'); assert.equal(r.plan.labelY, '속도 v(m/s)');
+  assert.equal(r.prepared.labelX, '시간 t(s)'); assert.equal(r.prepared.labelY, '속도 v(m/s)');
+  const again = await makeGraph({ plan: clone(r.plan) }, { ai: fakeAi([]), drawGraph: fakeDraw });
+  assert.equal(again.prepared.labelY, '속도 v(m/s)');
 });

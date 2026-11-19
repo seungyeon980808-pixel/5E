@@ -70,6 +70,36 @@ ${conv ? conv + '\n' : ''}요청: ${request}
 정확해야 할 값: ${keyValues || '(없음)'}`;
 }
 
+// 축 이름의 변수 기호 되살리기(E2E 11-19, AI 없음). 설계 지시문(image_generator 그대로)이 「변수 기호는 넣지 않음」이라
+// 요청에 「속도 v(m/s)」「시간 t(s)」처럼 기호를 적어도 축 이름이 「속도(m/s)」「시간(s)」로 나왔다. 요청에 「낱말 기호(단위)」
+// 꼴로 적힌 축만, 그 낱말이 든 축 이름에 기호를 다시 넣는다(이미 기호가 있으면 그대로). 지시문은 E8 품질 기준이라 바꾸지 않음.
+const AXIS_SYMBOL_RE = /([가-힣]+)\s*([A-Za-z](?:_\{?[A-Za-z0-9]+\}?)?)\s*\(([^()]+)\)/g;
+export function axisSymbolsFromRequest(request) {
+  const out = [];
+  for (const m of String(request ?? '').matchAll(AXIS_SYMBOL_RE)) out.push({ word: m[1], sym: m[2], unit: m[3].trim() });
+  return out;
+}
+export function restoreAxisSymbols(p, request) {
+  const pairs = axisSymbolsFromRequest(request);
+  if (!pairs.length || !p || typeof p !== 'object') return p;
+  const out = { ...p };
+  const used = new Set();
+  for (const k of ['labelX', 'labelY']) {
+    if (!out[k]) continue;
+    const text = String(out[k]).replace(/\\;/g, ' ').trim();
+    const um = /\(([^()]*)\)\s*$/.exec(text);
+    const base = um ? text.slice(0, um.index).trim() : text;
+    const pair = pairs.find((q, i) => !used.has(i) && base.includes(q.word) && (!um || um[1].replace(/\s/g, '') === q.unit.replace(/\s/g, '')));
+    if (!pair) continue;
+    used.add(pairs.indexOf(pair));
+    const esc = pair.sym.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
+    if (new RegExp(`(^|[^A-Za-z])${esc}([^A-Za-z]|$)`).test(base)) continue;
+    const fixed = `${base} ${pair.sym}(${um ? um[1] : pair.unit})`;
+    out[k] = /\\;/.test(String(out[k])) ? fixed.replace(/\s+/g, '\\;') : fixed;
+  }
+  return out;
+}
+
 // 설계가 그릴 수 있는 모양인지(계약: 축 범위 숫자, 곡선 하나 이상)
 export function isPlan(p) {
   return !!p && typeof p === 'object' && !Array.isArray(p) && ['xMin', 'xMax', 'yMin', 'yMax'].every((k) => Number.isFinite(+p[k])) && Array.isArray(p.series) && p.series.length > 0;

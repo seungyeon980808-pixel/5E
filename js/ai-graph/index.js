@@ -12,7 +12,7 @@
 //     parts, size, warnings, fallback: null | 'minimal' | 'previous', cancelled?, engine, version }
 // 계약보다 더 하는 것(5E 원칙 「실패로 끝나면 안 됨」): 설계를 못 받으면(GRAPH_PLAN·연결 오류) 앞 결과(previous)를,
 // 없으면 요청에서 축 이름만 읽은 축만 있는 설계로 그린다. 취소는 앞 결과가 있으면 그것(cancelled:true), 없으면 AbortError.
-import { plan as planGraph, makeReadText, isAbort, isPlan, abortError } from './plan.js?v=1.7.0-four-session-integration';
+import { plan as planGraph, makeReadText, isAbort, isPlan, abortError, restoreAxisSymbols } from './plan.js?v=1.7.0-four-session-integration';
 import { verifyPlan, prepare } from './verify.js?v=1.7.0-four-session-integration';
 import { AI_ENGINE_FLAG_KEYS, graphPictureFlag } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
 
@@ -98,6 +98,8 @@ export function createGraphEngine({ ai, conventions, drawGraph = defaultDrawGrap
           p = v.plan; verified = v.changed; verifyError = v.error || null;
           if (verifyError) warnings.push('값 검사 AI 실패(앞 설계로 그림): ' + verifyError);
         }
+        // E2E(11-19): 요청에 적힌 축 기호(속도 v(m/s) 등)가 설계에서 빠지면 되살린다(설계 지시문이 기호를 빼라고 함).
+        if (!fallback) p = restoreAxisSymbols(p, request);
         p = { ...p, ...(request ? { request } : {}), ...(subject ? { subject } : {}) };
       }
       p = { ...p, keyText: keyValues || p.keyText || '' };
