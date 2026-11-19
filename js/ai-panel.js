@@ -5635,6 +5635,18 @@ ${chatText}` : ''}`;
           return;
         }
       }
+      // E2E(11-19 실제 설치판): Codex 로그인이 없어도 Codex는 기본 모델 목록(gpt-6.1-sol 없음)을 돌려준다. 그래서 그림 엔진의
+      // 로그인 확인(runFigureEngineTurn)까지 가기 전에 「선택 모델 …을 사용할 수 없습니다」에서 멈췄다(막다른 경고).
+      // 모델을 고르기 전에 로그인부터 보고, 없으면 연결 정보 창으로 데려간 뒤 로그인하면 같은 요청으로 이어 간다.
+      if (!desktop.web && typeof desktop.status === 'function') {
+        let login = null;
+        try { login = (await desktop.status())?.login || null; } catch { login = null; }
+        if (login && login.loggedIn === false) {
+          if (requestToken !== preparingToken || !requestStates.live(preparingToken)) return;
+          guideDesktopLogin(() => submit(type, options));
+          return;
+        }
+      }
       if (!modelsLoaded) await loadModels();
       Object.assign(originatingRunInput, defaultAIModelSelection(availableModels, originatingRunInput));
       originatingRunInput.modelCatalog = structuredClone(availableModels);
