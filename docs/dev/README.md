@@ -8,7 +8,7 @@
 |---|---|
 | [overview.md](overview.md) | 세 프로그램(5E_image·5E_exam·5E_hwp)의 역할과 큰 구조, 저장소 폴더 지도 |
 | [decisions.md](decisions.md) | 확정된 결정 (날짜·결정·이유 한 줄) |
-| [roadmap.md](roadmap.md) | 1.7.1 / 1.8.0 / 1.9.0 / 2.0.0 범위와 뒤로 미룬 것, 구조 부채 |
+| [roadmap.md](roadmap.md) | 1.7.1 / 1.7.2 / 1.8.0 / 1.9.0 / 2.0.0 범위와 뒤로 미룬 것, 구조 부채 |
 | 루트 `DESIGN.md` | 화면·디자인 규칙 |
 | 루트 `AGENTS.md` | AI 작업자(Codex·Claude) 규칙 |
 

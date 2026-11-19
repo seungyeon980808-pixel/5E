@@ -17,12 +17,12 @@
 <p align="center">
   <a href="https://www.5e.ai.kr/"><b>웹에서 시작하기</b></a> ·
   <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest"><b>설치판 내려받기</b></a> ·
-  <a href="docs/RELEASE_NOTES_v1.7.1.md">1.7.1 변경 내용</a> ·
+  <a href="docs/RELEASE_NOTES_v1.7.2.md">1.7.2 변경 내용</a> ·
   <a href="https://www.5e.ai.kr/bug/">문제 신고</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.7.1-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.7.1">
+  <img src="https://img.shields.io/badge/version-1.7.2-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.7.2">
   <img src="https://img.shields.io/badge/web%20·%20Windows%20·%20Mac-3f3f46?style=flat-square&labelColor=18181b" alt="web, Windows, Mac">
   <img src="https://img.shields.io/github/license/seungyeon980808-pixel/5E?style=flat-square&labelColor=18181b&color=3f3f46" alt="AGPL-3.0">
 </p>
@@ -100,9 +100,9 @@
 
 | | 파일 |
 |---|---|
-| Windows | `5E-1.7.1-windows-x64.exe` |
-| Mac · 애플 실리콘 | `5E-1.7.1-macos-arm64.dmg` |
-| Mac · 인텔 | `5E-1.7.1-macos-x64.dmg` |
+| Windows | `5E-1.7.2-windows-x64.exe` |
+| Mac · 애플 실리콘 | `5E-1.7.2-macos-arm64.dmg` |
+| Mac · 인텔 | `5E-1.7.2-macos-x64.dmg` |
 
 > 설치 파일에는 아직 코드 서명이 없습니다. Windows에서 「PC 보호」 창이 뜨면 **추가 정보 → 실행**, Mac에서 처음 열 때 「Apple이 확인할 수 없습니다」가 뜨면 **시스템 설정 → 개인정보 보호 및 보안 → 그래도 열기**를 누르세요.
 >
@@ -173,7 +173,7 @@ Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 
 
 ## 문서
 
-[1.7.1 변경 내용](docs/RELEASE_NOTES_v1.7.1.md) · [1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [사용 가이드(1.1.0 기준 옛 판)](docs/USER_GUIDE.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
+[1.7.2 변경 내용](docs/RELEASE_NOTES_v1.7.2.md) · [1.7.1 변경 내용](docs/RELEASE_NOTES_v1.7.1.md) · [1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [사용 가이드(1.1.0 기준 옛 판)](docs/USER_GUIDE.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 
 ## 문제 신고 · 라이선스
 
