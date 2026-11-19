@@ -61,7 +61,7 @@ import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-fo
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
-import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runGraphPicture, figurePhaseCopy, graphPhaseCopy } from './ai-engines.js?v=1.7.0-four-session-integration';
+import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { validateLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { prepareEditableLabelFonts } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
@@ -3091,7 +3091,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
               if (error.graphOutcome === 'login') { guideDesktopLogin(again); return; }
               setTaskState('idle');
               setStatus('인터넷 연결을 확인해 주세요 · AI 서버에 닿지 못해 이번에는 그래프를 만들지 못했습니다. 앞 결과와 입력은 그대로 두었고, 연결되면 이어서 만듭니다.', 'warn');
-              addLog('AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 만듭니다. 바로 다시 하려면 실행을 누르세요.', 'error');
+              addLog(`AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 만듭니다. ${runAgainHint(sendButton?.textContent)}`, 'error');
               const epochAtStop = currentRequestEpoch;
               window.addEventListener('online', () => { if (!disposed && !busy && !graphSubmitting && currentRequestEpoch === epochAtStop) void again(); }, { once: true, signal: lifecycle.signal });
               return;
@@ -5486,7 +5486,7 @@ ${chatText}` : ''}`;
       // 연결이 끊김: 옛 길도 같은 연결을 쓰므로 넘기지 않는다. 연결이 돌아오면(online) 한 번 이어서 만든다.
       setTaskState('idle');
       setStatus('인터넷 연결을 확인해 주세요 · AI 서버에 닿지 못해 이번에는 그리지 못했습니다. 앞 결과와 입력은 그대로 두었고, 연결되면 이어서 만듭니다.', 'warn');
-      addLog('AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 그립니다. 바로 다시 하려면 실행을 누르세요.', 'error');
+      addLog(`AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 그립니다. ${runAgainHint(sendButton?.textContent)}`, 'error');
       const epochAtStop = currentRequestEpoch;
       window.addEventListener('online', () => { if (!disposed && !busy && currentRequestEpoch === epochAtStop) void again(); }, { once: true, signal: lifecycle.signal });
     };
@@ -5516,10 +5516,12 @@ ${chatText}` : ''}`;
     setStatus('이미지 생성 중…', 'busy');
     show(figurePhaseCopy({ phase: 'index' }));
     const models = engineModels({ selected: runInput.model, catalog: runInput.modelCatalog || availableModels });
+    const switchLogged = new Set();
     const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image), textModels: [runInput.model, ...imageModelOrder(runInput.model)], onCall: e => {
       if (e.kind !== 'image') return;
       show(figurePhaseCopy({ phase: 'draw', scene, total }));
-      if (e.attempt > 1 && isCurrent()) addLog(`그림 모델을 바꿔(${e.model}) 다시 그립니다.`);
+      // E2E(11-19): 장면을 다시 그릴 때마다 같은 줄이 또 찍혔다 — 차례마다 모델별로 한 번만.
+      if (e.attempt > 1 && isCurrent() && !switchLogged.has(e.model)) { switchLogged.add(e.model); addLog(`그림 모델을 바꿔(${e.model}) 다시 그립니다.`); }
     } });
     const fallBack = async (why) => {
       newEngineRunActive = false;

@@ -2,7 +2,7 @@
 // 가짜 연결만 쓴다(실제 AI·네트워크 없음). 화면 흐름 전체는 tests/test-ai-engines-faults-browser.cjs.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyAiError, createDesktopEngineAi } from '../js/ai-engines.js';
+import { classifyAiError, createDesktopEngineAi, runAgainHint } from '../js/ai-engines.js';
 import { fetchFigure, collectReferenceImages, clearFigureCache } from '../js/ai-figure/reference-images.js';
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
@@ -196,4 +196,14 @@ test('그래프: 다시 그리기(redrawGraphPicture)는 연결이 없어도 AI�
   assert.equal(r.png, PNG); assert.equal(r.fallback, null); assert.equal(drew, 1);
   const broken = await redrawGraphPicture({ graphPlan: { labelX: '시간', series: 'x' }, request: 'r' }, { drawGraph });
   assert.equal(broken.fallback, 'minimal');
+});
+
+// E2E(11-19 실제 설치판): 끊김 안내가 「실행을 누르세요」였는데 그런 단추가 없었다 — 실제 단추 글자를 쓴다.
+test('runAgainHint: 실제 실행 단추 글자와 받침에 맞는 을/를', () => {
+  assert.equal(runAgainHint('이미지 생성'), '바로 다시 하려면 「이미지 생성」을 누르세요.');
+  assert.equal(runAgainHint(' 그래프 생성 '), '바로 다시 하려면 「그래프 생성」을 누르세요.');
+  assert.equal(runAgainHint('수정하기'), '바로 다시 하려면 「수정하기」를 누르세요.');
+  assert.equal(runAgainHint('다시 그리기 · 정밀'), '바로 다시 하려면 「다시 그리기 · 정밀」을 누르세요.');
+  assert.equal(runAgainHint(''), '바로 다시 하려면 실행 단추를 누르세요.');
+  assert.doesNotMatch(runAgainHint('이미지 생성'), /실행을 누르세요/);
 });

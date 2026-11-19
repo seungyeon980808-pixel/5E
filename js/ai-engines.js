@@ -213,6 +213,16 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
 }
 
 /** 엔진 진행 신호 → 지금 진행 표시(제목·설명)에 넣을 글. 새 화면 없이 setGenerating 글만 바꾼다. */
+// 끊김 안내의 「바로 다시 하려면 …을 누르세요」— 실제 실행 단추 글자(이미지 생성·그래프 생성·수정하기 등)를 그대로 쓴다(E2E 11-19:
+// 「실행을 누르세요」인데 그런 단추가 없었음). 받침에 따라 을/를. 글자가 비면 「실행 단추를」.
+export function runAgainHint(label) {
+  const text = String(label ?? '').replace(/\s+/g, ' ').trim();
+  if (!text) return '바로 다시 하려면 실행 단추를 누르세요.';
+  const code = text.charCodeAt(text.length - 1);
+  const batchim = code >= 0xac00 && code <= 0xd7a3 ? (code - 0xac00) % 28 !== 0 : false;
+  return `바로 다시 하려면 「${text}」${batchim ? '을' : '를'} 누르세요.`;
+}
+
 export function figurePhaseCopy(e = {}) {
   const scene = Number.isInteger(e.scene) && (e.total || 0) > 1 ? ` · 장면 ${e.scene + 1}/${e.total}` : '';
   switch (e.phase) {
