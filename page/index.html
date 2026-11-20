@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>5E 소개 페이지 시안 v8</title>
+<title>5E — 그림, 문항, 조판 한 곳에서</title>
+<meta name="description" content="과학 평가문항 에디터 5E. 그림, 문항, 조판 — 한 곳에서.">
 <meta property="og:url" content="https://www.5e.ai.kr/page/"><meta property="og:title" content="5E"><meta property="og:description" content="그림, 문항, 조판 — 한 곳에서."><meta property="og:image" content="https://www.5e.ai.kr/page/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500;700&display=swap">
@@ -1416,6 +1417,12 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
   .feat .steps button{padding:10px 4px}
   .mf{font-size:clamp(26px,7.4vw,40px)!important}
 }
+/* 휴대폰(마우스 없음·좁은 화면): 구조도 작은 설명은 칸 안에 그대로(올릴 마우스가 없으니), 검색 칸은 화면 안에 */
+@media (hover:none),(max-width:900px){
+  .ar1 .ar-p span,.ar1 .ar-chip small{position:static;opacity:1;transform:none;background:none;border:0;box-shadow:none;padding:0;margin-top:2px;width:auto;max-width:none;color:var(--ink-faint);white-space:normal}
+}
+.faq-s input{min-width:0;width:100%}
+.faq-s{max-width:min(720px,100%);box-sizing:border-box}
 
 </style>
 <style>:root{--m-open:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTM2IDEwMjQiPgogIDxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMjIyIDg3SDEzMTVRMTM1MiA4NyAxMzUyIDEyNkwxMzUzIDc5M1ExMzU0IDgwNyAxMzUwIDgxNEwxNDczIDg2NVExNDc3IDg2NiAxNDc3IDg3MFY4OTNRMTQ3NyA5MDUgMTQzOCA5MTBMMTQxMCA5MTJRMTM5OCA5MTcgMTM1MCA5MTZMMTMwMSA5MTJIMjM0TDIwNSA5MTZIMTU1UTEzNyA5MTYgMTI2IDkxMkw5NyA5MTBRNTkgOTA1IDU5IDg5M1Y4NzBRNTkgODY2IDY0IDg2NEwxODcgODE0UTE4MyA4MDcgMTg0IDc5M0wxODYgMTI2UTE4NiA4OCAyMjIgODdaIi8+Cjwvc3ZnPgo=");--m-hole:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTM2IDEwMjQiPjxwYXRoIGZpbGw9IiNmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTAgMEgxNTM2VjEwMjRIMFogTTIxMy4zIDEwNC4zSDcwOC45VjExNy41UTcwOC45IDEyMi41IDcxMy45IDEyMi41SDgyMi40UTgyNy40IDEyMi41IDgyNy40IDExNy41VjEwNC4zSDEzMjYuMlExMzM1LjIgMTA0LjMgMTMzNS4yIDExMy4zVjc3Mi4yUTEzMzUuMiA3ODEuMiAxMzI2LjIgNzgxLjJIMjEzLjNRMjA0LjMgNzgxLjIgMjA0LjMgNzcyLjJWMTEzLjNRMjA0LjMgMTA0LjMgMjEzLjMgMTA0LjNaIi8+PC9zdmc+")}</style>
@@ -1459,24 +1466,24 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
   </div>
   <div class="device-frame" id="nb">
     <div class="rest-shadow"></div>
-    <img class="nb-base" src="img/studio/nb-base-alpha.webp" width="1536" height="1024" alt="">
-    <div class="device-lid" id="lid"><img src="img/studio/notebook-refined-open.webp" width="1536" height="1024" alt="">
+    <img loading="lazy" decoding="async" class="nb-base" src="img/studio/nb-base-alpha.webp" width="1536" height="1024" alt="">
+    <div class="device-lid" id="lid"><img loading="lazy" decoding="async" src="img/studio/notebook-refined-open.webp" width="1536" height="1024" alt="">
       <div class="screen-viewport">
         <div class="mbar"><b class="h3-app" data-desk="Finder" data-app="5E">Finder</b><span>파일</span><span>편집</span><span>보기</span><span class="h3-only-desk">이동</span><span>윈도우</span><span>도움말</span><span class="r h3-clock">11월 17일 (화) 오전 9:41</span></div>
         <div class="h3-spot" aria-hidden="true">
           <div class="h3-bar"><svg class="h3-mag" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span class="h3-q"><span class="h3-typed"></span><i class="h3-caret"></i><span class="h3-ph">Spotlight 검색</span></span></div>
-          <div class="h3-res"><div class="h3-row"><img src="img/herov3/icon-5e.png" alt=""><b>5E</b><span>응용 프로그램</span></div></div>
+          <div class="h3-res"><div class="h3-row"><img loading="lazy" decoding="async" src="img/herov3/icon-5e.png" alt=""><b>5E</b><span>응용 프로그램</span></div></div>
         </div>
         <div class="h3-keys" aria-hidden="true"><kbd class="k-cmd">⌘</kbd><kbd class="k-space">space</kbd><kbd class="k-ret">return</kbd></div>
         <div class="appwin" id="appwin">
-          <img class="g" data-g="load-1" src="img/herov3/load-1.jpg" alt=""><img class="g" data-g="load-2" src="img/herov3/load-2.jpg" alt=""><img class="g" data-g="load-done" src="img/herov3/load-done.jpg" alt="">
-          <img class="g" data-g="ready" src="img/herov3/ready.jpg" alt="5E 시작 창"><img class="g" data-g="image" src="img/herov3/hover-image.jpg" alt=""><img class="g" data-g="exam" src="img/herov3/hover-exam.jpg" alt=""><img class="g" data-g="hwp" src="img/herov3/hover-hwp.jpg" alt="">
+          <img loading="lazy" decoding="async" class="g" data-g="load-1" src="img/herov3/load-1.jpg" alt=""><img loading="lazy" decoding="async" class="g" data-g="load-2" src="img/herov3/load-2.jpg" alt=""><img loading="lazy" decoding="async" class="g" data-g="load-done" src="img/herov3/load-done.jpg" alt="">
+          <img loading="lazy" decoding="async" class="g" data-g="ready" src="img/herov3/ready.jpg" alt="5E 시작 창"><img loading="lazy" decoding="async" class="g" data-g="image" src="img/herov3/hover-image.jpg" alt=""><img loading="lazy" decoding="async" class="g" data-g="exam" src="img/herov3/hover-exam.jpg" alt=""><img loading="lazy" decoding="async" class="g" data-g="hwp" src="img/herov3/hover-hwp.jpg" alt="">
           <button class="h3hot" data-k="image" data-go="g-image" style="left:35.05%" aria-label="image로"></button><button class="h3hot" data-k="exam" data-go="g-exam" style="left:55.8%" aria-label="exam으로"></button><button class="h3hot" data-k="hwp" data-go="g-hwp" style="left:76.6%" aria-label="hwp로"></button>
         </div>
       </div>
       <span class="screen-notch"></span>
     </div>
-    <div class="device-cover"><img src="img/studio/notebook-material-closed.webp" width="1536" height="1024" alt=""></div>
+    <div class="device-cover"><img loading="lazy" decoding="async" src="img/studio/notebook-material-closed.webp" width="1536" height="1024" alt=""></div>
   </div>
   <div class="studio__fade"></div>
 </section>
@@ -1884,7 +1891,7 @@ scene($('#f6'),(()=>{
     if(phase===1){const b=bub('ai','<span class="dots3"><i></i><i></i><i></i></span>');await c.wait(1500);b.innerHTML=A[i]}
     if(phase===2){const S=k=>slots.find(s=>s.dataset.k===k);
       const st=S('stem');st.classList.add('hot');await c.type($('.tx',st),STEM,c.fast?0:16,'textContent');st.classList.remove('hot');
-      const f=S('fig');f.classList.add('hot');$('.tx',f).innerHTML=i===1?'<img src="img/kice-graph.png" alt="">':'<img src="img/c-q5-fig.jpg" alt="">';await c.wait(500);f.classList.remove('hot');
+      const f=S('fig');f.classList.add('hot');$('.tx',f).innerHTML=i===1?'<img loading="lazy" decoding="async" src="img/kice-graph.png" alt="">':'<img loading="lazy" decoding="async" src="img/c-q5-fig.jpg" alt="">';await c.wait(500);f.classList.remove('hot');
       const bo=S('bogi');bo.classList.add('hot');await c.type($('.tx',bo),BOGI,c.fast?0:14,'textContent');bo.classList.remove('hot');
       const ch=S('ch');ch.classList.add('hot');await c.type($('.tx',ch),CH,c.fast?0:14,'textContent');ch.classList.remove('hot')}
   }
@@ -1964,8 +1971,8 @@ scene($('#f9'),(()=>{
   function copy(i,c,anim=true){if(clip.includes(i))return;clip.unshift(i);const it=items[i];it.classList.add('picked');setTimeout(()=>it.classList.remove('picked'),700);
     if(anim&&c){const a=c.rect($('img',it)),z=c.rect(drawer);const f=document.createElement('img');f.src=$('img',it).src;Object.assign(f.style,{position:'absolute',left:a.x+'px',top:a.y+'px',width:a.w+'px',height:a.h+'px',objectFit:'contain',background:'#fff',borderRadius:'3px',zIndex:20,transition:'all .7s cubic-bezier(.65,0,.35,1)',boxShadow:'0 8px 24px rgba(0,0,0,.4)'});c.stage.append(f);void f.offsetWidth;Object.assign(f.style,{left:(z.x+z.w-40)+'px',top:(z.y+4)+'px',width:'34px',height:'24px',opacity:.4});setTimeout(()=>f.remove(),720)}
     renderList()}
-  function renderList(){list.innerHTML=clip.length?clip.map(i=>`<div class="di" data-i="${i}"><img src="${$('img',items[i]).src}" alt=""><span>${NAMES[i]}</span></div>`).join(''):'<div class="empty">복사한 것이 여기 쌓입니다</div>';dc.textContent=clip.length?clip.length+'개 · ⇧⌘V':'⇧⌘V'}
-  function paste(i){const d=document.createElement('div');d.className='pasted';d.innerHTML=`<img src="${$('img',items[i]).src}" alt="">`;pastes.append(d);while(pastes.children.length>2)pastes.firstChild.remove();drawer.classList.add('closed')}
+  function renderList(){list.innerHTML=clip.length?clip.map(i=>`<div class="di" data-i="${i}"><img loading="lazy" decoding="async" src="${$('img',items[i]).src}" alt=""><span>${NAMES[i]}</span></div>`).join(''):'<div class="empty">복사한 것이 여기 쌓입니다</div>';dc.textContent=clip.length?clip.length+'개 · ⇧⌘V':'⇧⌘V'}
+  function paste(i){const d=document.createElement('div');d.className='pasted';d.innerHTML=`<img loading="lazy" decoding="async" src="${$('img',items[i]).src}" alt="">`;pastes.append(d);while(pastes.children.length>2)pastes.firstChild.remove();drawer.classList.add('closed')}
   return{durs:[3600,1600,3000],hold:2800,
     reset(c){w=c.win;items=$$('.itm',w);drawer=$('.drawer',w);list=$('.list',drawer);dc=$('.dc',drawer);pastes=$('.pastes',w);key=$('.keycap',w);clip=[];renderList();pastes.innerHTML='';drawer.classList.add('closed');items.forEach(i=>i.classList.remove('hov','picked'))},
     steps:[
@@ -2104,7 +2111,7 @@ function player(sec,data){
   // 비교 손잡이
   let cmp=null;
   if(C.compare){const r=C.compare.rect;cmp=el('div','rcmp');pos(cmp,r.x,r.y,r.w,r.h);
-    cmp.innerHTML=`<div class="rcmp-a"><img src="${C.compare.src}" alt=""></div><div class="rcmp-h"><i></i></div><span class="rcmp-t a">원본</span><span class="rcmp-t b">변환본</span>`;cam.append(cmp)}
+    cmp.innerHTML=`<div class="rcmp-a"><img loading="lazy" decoding="async" src="${C.compare.src}" alt=""></div><div class="rcmp-h"><i></i></div><span class="rcmp-t a">원본</span><span class="rcmp-t b">변환본</span>`;cam.append(cmp)}
   // 라벨 달기 판
   let lab=null;
   if(C.labeler){const r=C.labeler.rect;lab=el('div','rlab');pos(lab,r.x,r.y,r.w,r.h);lab.innerHTML='<svg preserveAspectRatio="none"></svg><div class="rlab-tip">그림 위를 눌러 지시선을 그어 보세요</div>';cam.append(lab)}
@@ -2114,7 +2121,7 @@ function player(sec,data){
   // 사진 바꾸기: 앞 사진(원본)을 덮어 두고 빛줄이 지나가며 걷어 내 변환본이 드러나게
   let conv=null,hit=null;
   if(C.convert){const r=C.convert.rect;conv=el('div','rconv');pos(conv,r.x,r.y,r.w,r.h);
-    conv.innerHTML=`<div class="rconv-a"><img src="${F[C.convert.before].src}" alt="" style="width:${W/r.w*100}%;left:${-r.x/r.w*100}%;top:${-r.y/r.h*100}%"></div><i class="rconv-s"></i>`;cam.append(conv);
+    conv.innerHTML=`<div class="rconv-a"><img loading="lazy" decoding="async" src="${F[C.convert.before].src}" alt="" style="width:${W/r.w*100}%;left:${-r.x/r.w*100}%;top:${-r.y/r.h*100}%"></div><i class="rconv-s"></i>`;cam.append(conv);
     hit=el('button','rconv-hit');hit.type='button';hit.setAttribute('aria-label','사진 바꾸기');pos(hit,r.x,r.y,r.w,r.h);cam.append(hit)}
   function convert(){if(!conv)return;conv.classList.add('on');const t0=performance.now();
     const tick=n=>{const p=Math.min(1,(n-t0)/1500);const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;conv.style.setProperty('--cut',e*100+'%');if(p<1)requestAnimationFrame(tick);else setTimeout(()=>conv.classList.remove('on'),150)};
@@ -2235,12 +2242,12 @@ function scene(sec,D){
   const C=D.chrome,W=C.w,H=C.h,pc=(v,t)=>v/t*100+'%';
   const st=document.createElement('div');st.className='wstage';
   const wipeHtml=w=>`<div class="s34-paper" style="left:${pc(w.rect.x,W)};top:${pc(w.rect.y,H)};width:${pc(w.rect.w,W)};height:${pc(w.rect.h,H)}">
-      <img src="${w.base}" alt="${w.baseAlt||''}"><div class="s34-top"><img src="${w.top}" alt=""></div>
+      <img loading="lazy" decoding="async" src="${w.base}" alt="${w.baseAlt||''}"><div class="s34-top"><img loading="lazy" decoding="async" src="${w.top}" alt=""></div>
       <div class="whandle"><i></i></div><span class="wtag a">${w.tagA||'원본'}</span><span class="wtag b">${w.tagB||'결과'}</span></div>`;
   st.innerHTML=`<div class="s34-win" style="aspect-ratio:${W}/${H}">
      <div class="s34-zoom">
-       <img class="s34-img" src="${C.off}" alt="${C.alt||'5E 실제 화면'}">
-       ${D.layers.map((l,i)=>`<div class="s34-lay" data-i="${i}"><img class="s34-img" src="${l.src}" alt="">${l.wipe?wipeHtml(l.wipe):''}</div>`).join('')}
+       <img loading="lazy" decoding="async" class="s34-img" src="${C.off}" alt="${C.alt||'5E 실제 화면'}">
+       ${D.layers.map((l,i)=>`<div class="s34-lay" data-i="${i}"><img loading="lazy" decoding="async" class="s34-img" src="${l.src}" alt="">${l.wipe?wipeHtml(l.wipe):''}</div>`).join('')}
        <div class="s34-ring"></div>
        <div class="s34-cur"><svg viewBox="0 0 24 28"><path d="M2 1.5v21.2l5.6-5.2 3.6 8.3 3.6-1.6-3.5-8.2h7.8z" fill="#fff" stroke="#111" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
      </div>
@@ -2324,14 +2331,14 @@ function scene(sec,D){
   const st=document.createElement('div');st.className='wstage s7stage';
   st.innerHTML=`<div class="wwin s7win" style="aspect-ratio:${W}/${H}">
     <div class="s7cam">
-      <img class="wchrome s7base" src="${C.off}" alt="${C.alt||'5E 실제 화면'}">
+      <img loading="lazy" decoding="async" class="wchrome s7base" src="${C.off}" alt="${C.alt||'5E 실제 화면'}">
       ${D.layers.map((l,i)=>`<img class="wchrome s7f" data-i="${i}" src="${l.src}" alt="" loading="lazy" decoding="async">`).join('')}
       <div class="s7edit" style="left:${pc(E.rect.x,W)};top:${pc(E.rect.y,H)};width:${pc(E.rect.w,W)};height:${pc(E.rect.h,H)}">
-        <img class="s7bare" src="${E.base}" alt="${E.alt||''}" draggable="false">
+        <img loading="lazy" decoding="async" class="s7bare" src="${E.base}" alt="${E.alt||''}" draggable="false">
         <svg class="s7lead" viewBox="0 0 ${E.rect.w} ${E.rect.h}" preserveAspectRatio="none"></svg>
-        ${E.before?`<div class="s7before"><div class="s7bimg"><img src="${E.before.src}" alt="${E.before.alt||'변환 전 기출 그림'}" style="width:${E.before.wPct}%" draggable="false"></div><div class="s7bh"><i></i></div><span class="s7bt a">변환 전 · 기출 원본</span><span class="s7bt b">변환 후 · 5E</span></div>`:''}
+        ${E.before?`<div class="s7before"><div class="s7bimg"><img loading="lazy" decoding="async" src="${E.before.src}" alt="${E.before.alt||'변환 전 기출 그림'}" style="width:${E.before.wPct}%" draggable="false"></div><div class="s7bh"><i></i></div><span class="s7bt a">변환 전 · 기출 원본</span><span class="s7bt b">변환 후 · 5E</span></div>`:''}
       </div>
-      <div class="s7cmp"><div class="s7cmpimg"><img alt="" draggable="false"></div><div class="s7bh"><i></i></div><span class="s7bt a"></span><span class="s7bt b"></span></div>
+      <div class="s7cmp"><div class="s7cmpimg"><img loading="lazy" decoding="async" alt="" draggable="false"></div><div class="s7bh"><i></i></div><span class="s7bt a"></span><span class="s7bt b"></span></div>
       ${(S.zoom||[]).map((z,i)=>`<div class="s7zoom" data-z="${i}">
          <div class="s7zfrom" style="left:${pc(z.from.x,W)};top:${pc(z.from.y,H)};width:${pc(z.from.w,W)};height:${pc(z.from.h,H)}"></div>
          <div class="s7zbox" style="left:${pc(z.at.x,W)};top:${pc(z.at.y,H)};width:${pc(z.at.w,W)};height:${pc(z.at.h,H)}"><img src="${z.src}" alt="${z.alt||''}" loading="lazy"><span>${z.tag||''}</span></div>
@@ -2494,17 +2501,17 @@ function scene(sec,D){
   const C=D.chrome,R=C.rect,pc=(v,t)=>v/t*100+'%',PRE=D.pre||[];
   const st=document.createElement('div');st.className='wstage';
   st.innerHTML=`<div class="wwin" style="aspect-ratio:${C.w}/${C.h}">
-     <img class="wchrome off" src="${C.off}" alt="${C.alt||'5E 실제 화면'}">
-     ${C.on?`<img class="wchrome on" src="${C.on}" alt="">`:''}
+     <img loading="lazy" decoding="async" class="wchrome off" src="${C.off}" alt="${C.alt||'5E 실제 화면'}">
+     ${C.on?`<img loading="lazy" decoding="async" class="wchrome on" src="${C.on}" alt="">`:''}
      ${R?`<div class="wpaper" style="left:${pc(R.x,C.w)};top:${pc(R.y,C.h)};width:${pc(R.w,C.w)};height:${pc(R.h,C.h)}">
-       <img class="wl w-base" src="${D.base}" alt="${D.baseAlt||''}">
-       <div class="wl w-top"><img src="${D.wipe}" alt=""></div>
-       ${D.layers.map((l,i)=>l.full?'':`<img class="wl w-lay" data-i="${i}" src="${l.src}" alt="">`).join('')}
+       <img loading="lazy" decoding="async" class="wl w-base" src="${D.base}" alt="${D.baseAlt||''}">
+       <div class="wl w-top"><img loading="lazy" decoding="async" src="${D.wipe}" alt=""></div>
+       ${D.layers.map((l,i)=>l.full?'':`<img loading="lazy" decoding="async" class="wl w-lay" data-i="${i}" src="${l.src}" alt="">`).join('')}
        <div class="whandle"><i></i></div>
        <span class="wtag a">${D.tagA||'원본'}</span><span class="wtag b">${D.tagB||'결과'}</span>
      </div>`:''}
-     ${D.layers.map((l,i)=>l.full?`<img class="wchrome w-lay" data-i="${i}" src="${l.src}" alt="">`:'').join('')}
-     ${PRE.map((f,i)=>`<img class="wchrome w-pre" data-i="${i}" src="${f.src}" alt="${f.alt||''}">`).join('')}
+     ${D.layers.map((l,i)=>l.full?`<img loading="lazy" decoding="async" class="wchrome w-lay" data-i="${i}" src="${l.src}" alt="">`:'').join('')}
+     ${PRE.map((f,i)=>`<img loading="lazy" decoding="async" class="wchrome w-pre" data-i="${i}" src="${f.src}" alt="${f.alt||''}">`).join('')}
      ${PRE.length||D.cursor?`<div class="wcur">${CUR}<b></b></div>`:''}
    </div>
    <div class="wcap"><span class="wcap-t"></span><span class="wsrc">${D.source||''}</span></div>`;
@@ -2664,7 +2671,7 @@ $$('[data-wipe]').forEach(sec=>{const d=W[sec.dataset.wipe];if(d)scene(sec,d)});
       ['img/mont/s3v3-b20.jpg','image','그래프는 살아있게'],['img/mont/s5v3-03-hits.jpg','exam','낱말로 기출 검색'],['img/mont/s4v3-09.jpg','exam','쓰면 바로 조판'],
       ['img/mont/s6v3-08-school.jpg','exam','내 학교 양식으로'],['img/mont/s7v4-a02.jpg','hwp','시험지 위에서 바로'],['img/mont/s9v3-s2.jpg','clipboard','세 프로그램을 하나로']];
     const mo=document.createElement('div');mo.className='h3mont';
-    mo.innerHTML=M.map(m=>`<img alt="" decoding="async" data-src="${m[0]}">`).join('')+'<div class="h3mcap"><b></b><span></span></div>';
+    mo.innerHTML=M.map(m=>`<img loading="lazy" decoding="async" alt="" decoding="async" data-src="${m[0]}">`).join('')+'<div class="h3mcap"><b></b><span></span></div>';
     sv.appendChild(mo);
     const ims=[...mo.querySelectorAll('img')],cb=mo.querySelector('.h3mcap b'),cs=mo.querySelector('.h3mcap span');
     const w=ms=>new Promise(r=>setTimeout(r,ms));
@@ -3057,5 +3064,6 @@ $$('[data-wipe]').forEach(sec=>{const d=W[sec.dataset.wipe];if(d)scene(sec,d)});
 
 </script>
 <!-- mockup-kit -->
+<script>/* prefetchScene */(function(){if(!("IntersectionObserver" in window))return;var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;e.target.querySelectorAll("img[loading=lazy]").forEach(function(i){i.loading="eager"});io.unobserve(e.target)})},{rootMargin:"150% 0px"});function go(){document.querySelectorAll("section[id^=f-S],#studio,#arch,#hx,#download").forEach(function(s){io.observe(s)})}if(document.readyState==="loading")addEventListener("DOMContentLoaded",function(){setTimeout(go,50)});else setTimeout(go,50)})();</script>
 </body>
 </html>

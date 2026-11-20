@@ -14,6 +14,11 @@ h=h.replace('content="img/og.png"',f'content="{B}img/og.png"').replace('<meta pr
 # 실제 판: 시안 안내(V 키)와 그 단축키 끄기
 h=h.replace("tip.textContent='방문자 화면 · V 키를 누르면 시안 모드로 돌아갑니다';document.body.appendChild(tip);","tip.textContent='';")
 h=h.replace("addEventListener('keydown',e=>{if((e.key==='v'||e.key==='V')","addEventListener('keydown',e=>{if(false&&(e.key==='v'||e.key==='V')")
+# 휴대폰 데이터: 장면 그림은 그 장면에 가까워질 때 받기(브라우저 기본 늦게 받기)
+h=re.sub(r'<img(?![^>]*\bloading=)\s',lambda m:'<img loading="lazy" decoding="async" ',h)
+# 장면이 화면 1.5배 거리 안에 들어오면 그 장면 그림을 모두 바로 받기(잘려 있던 결과 그림도 늦지 않게)
+pf='<script>/* prefetchScene */(function(){if(!("IntersectionObserver" in window))return;var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;e.target.querySelectorAll("img[loading=lazy]").forEach(function(i){i.loading="eager"});io.unobserve(e.target)})},{rootMargin:"150% 0px"});function go(){document.querySelectorAll("section[id^=f-S],#studio,#arch,#hx,#download").forEach(function(s){io.observe(s)})}if(document.readyState==="loading")addEventListener("DOMContentLoaded",function(){setTimeout(go,50)});else setTimeout(go,50)})();</script>'
+h=h.replace('</body>',pf+'\n</body>',1)
 (out/'index.html').write_text(h)
 refs=sorted(set(re.findall(r'img/[A-Za-z0-9_./-]+\.(?:png|jpe?g|webp|svg|gif)',h)))
 n=0;miss=[]

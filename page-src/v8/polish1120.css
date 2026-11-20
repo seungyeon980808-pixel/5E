@@ -86,3 +86,9 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
   .feat .steps button{padding:10px 4px}
   .mf{font-size:clamp(26px,7.4vw,40px)!important}
 }
+/* 휴대폰(마우스 없음·좁은 화면): 구조도 작은 설명은 칸 안에 그대로(올릴 마우스가 없으니), 검색 칸은 화면 안에 */
+@media (hover:none),(max-width:900px){
+  .ar1 .ar-p span,.ar1 .ar-chip small{position:static;opacity:1;transform:none;background:none;border:0;box-shadow:none;padding:0;margin-top:2px;width:auto;max-width:none;color:var(--ink-faint);white-space:normal}
+}
+.faq-s input{min-width:0;width:100%}
+.faq-s{max-width:min(720px,100%);box-sizing:border-box}
