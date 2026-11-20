@@ -1,0 +1,22 @@
+/* 11-20: 내려받기 — Mac · Windows · 웹 세 칸 */
+.dlsec{padding-top:14vh;padding-bottom:10vh;text-align:center}
+.dlsec .dl-v{font-style:normal}
+.dl3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:40px auto 0}
+.dl3-c{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 20px 26px;border:1px solid var(--line-strong);border-radius:16px;background:var(--surface);color:var(--ink);text-decoration:none;transition:transform .2s,border-color .2s,box-shadow .2s}
+.dl3-c:hover{transform:translateY(-3px);border-color:var(--ink-soft);box-shadow:0 18px 40px -22px #000a}
+.dl3-c svg{width:34px;height:34px;margin-bottom:6px}
+.dl3-c b{font-size:22px;font-weight:700}
+.dl3-s{font-size:12.5px;color:var(--ink-faint)}
+.dl3-c em{margin-top:14px;font-style:normal;font-size:14px;font-weight:600;padding:9px 22px;border-radius:999px;border:1px solid var(--line-strong)}
+.dl3-c.mine em{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.dl3-c.mine{border-color:var(--ink-soft)}
+.dl3-foot{margin:22px 0 0;font-size:12.5px;color:var(--ink-faint)}
+.dl3-foot a{color:var(--ink-soft);text-underline-offset:3px}
+@media (max-width:720px){.dl3{grid-template-columns:1fr}}
+/* 11-20 저녁: 칸 안 단추(웹은 열기 + 링크 복사) */
+.dl3-c:hover{transform:none;box-shadow:none}
+.dl3-b{display:flex;gap:8px;margin-top:14px}
+.dl3-go,.dl3-cp{all:unset;cursor:pointer;font-size:14px;font-weight:600;padding:9px 22px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink);transition:background .2s,border-color .2s}
+.dl3-go:hover,.dl3-cp:hover{border-color:var(--ink-soft)}
+.dl3-cp{font-weight:500;color:var(--ink-soft)}
+.dl3-c.mine .dl3-go{background:var(--ink);color:var(--bg);border-color:var(--ink)}

@@ -1,0 +1,11 @@
+/* 약력·로드맵 */
+.history{padding-bottom:40px}
+.hist{list-style:none;margin:28px 0 0;padding:0;border-top:1px solid var(--line,#eeeeef17)}
+.hist li{display:grid;grid-template-columns:150px 110px 1fr;gap:16px;align-items:baseline;padding:16px 0;border-bottom:1px solid var(--line,#eeeeef17);font-size:15px;color:var(--ink-dim,#a8a49b)}
+.hist li .v{font-family:var(--mono,ui-monospace,monospace);color:var(--ink,#eee);font-size:15px}
+.hist li .d{font-family:var(--mono,ui-monospace,monospace);font-size:12.5px;color:var(--ink-faint,#77736b)}
+.hist li.sm{padding:10px 0;font-size:13px}.hist li.sm .v{font-size:13px;color:var(--ink-dim,#a8a49b)}
+.hist li.now .v,.hist li.now .t{color:var(--accent,#7fcdd6)}
+.hist.next li .t{color:var(--ink,#eee)}
+.hist li.goal .v,.hist li.goal .d{color:var(--accent,#7fcdd6)}
+@media(max-width:820px){.hist li{grid-template-columns:90px 1fr}.hist li .d{display:none}}

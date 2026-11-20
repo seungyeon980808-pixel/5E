@@ -1,0 +1,215 @@
+{
+ "text": [
+  "교과서 그림",
+  "어떤 그림도,<br><span class=\"soft\">평가원 스타일로.</span>",
+  "교과서에서 잘라 넣고 「변환하기」. 글자까지 고칠 수 있게 그려 드립니다."
+ ],
+ "chrome": {
+  "w": 1440,
+  "h": 900,
+  "off": "img/s1v3/chrome-off.jpg",
+  "on": "img/s1v3/chrome-on.jpg",
+  "alt": "5E AI 이미지 작업대",
+  "rect": {
+   "x": 341.92,
+   "y": 185.5,
+   "w": 580.14,
+   "h": 678
+  }
+ },
+ "pre": [
+  {
+   "src": "img/s1v3/pre-lib.jpg",
+   "alt": "라이브러리에서 「심장과 혈관의 구조」 검색 → 교과서_중2 216쪽"
+  },
+  {
+   "src": "img/s1v3/pre-crop.jpg",
+   "alt": "PDF에서 자르기"
+  },
+  {
+   "src": "img/s1v3/pre-conv.jpg",
+   "alt": "AI 이미지 작업대 · 변환하기"
+  },
+  {
+   "src": "img/s1v3/pre-gen1.jpg",
+   "alt": "이미지 생성 중"
+  },
+  {
+   "src": "img/s1v3/pre-gen2.jpg",
+   "alt": "이미지 생성 중"
+  }
+ ],
+ "base": "img/s1v3/orig.jpg",
+ "baseAlt": "중학교 과학 2 교과서 215쪽 심장 그림",
+ "wipe": "img/s1v3/result.jpg",
+ "layers": [
+  {
+   "src": "img/s1v3/label-clean.jpg"
+  },
+  {
+   "src": "img/s1v3/label-edited.jpg"
+  }
+ ],
+ "tagA": "교과서 원본",
+ "tagB": "5E 변환",
+ "source": "출시본 5E 1.7.0 실제 화면·결과 · 교과서_중2 215쪽(PDF 216/327)",
+ "steps": [
+  "찾기",
+  "변환",
+  "비교",
+  "라벨 고치기"
+ ],
+ "states": [
+  {
+   "pre": 0,
+   "cur": {
+    "x": 386,
+    "y": 233
+   },
+   "cap": "「심장과 혈관의 구조」 → 교과서_중2 216쪽",
+   "next": 1
+  },
+  {
+   "pre": 3,
+   "cur": {
+    "x": 1278,
+    "y": 757
+   },
+   "cap": "흑백 선화로 다시 그리는 중…",
+   "next": 4
+  },
+  {
+   "p": 50,
+   "handle": true,
+   "layers": [],
+   "cap": "손잡이를 끌어 원본과 비교해 보세요",
+   "next": 9
+  },
+  {
+   "p": 100,
+   "layers": [
+    1
+   ],
+   "cap": "우심방 → ㉠ · 우심실 → ㉡",
+   "next": 12
+  }
+ ],
+ "dragNext": 9,
+ "resume": [
+  1,
+  5,
+  6
+ ],
+ "timeline": [
+  {
+   "step": 0,
+   "do": "pre",
+   "i": 0,
+   "under": true,
+   "ms": 450,
+   "cur": {
+    "x": 386,
+    "y": 233
+   },
+   "click": true,
+   "cap": "라이브러리에서 「심장과 혈관의 구조」 → 교과서_중2 216쪽",
+   "hold": 1300
+  },
+  {
+   "do": "pre",
+   "i": 1,
+   "ms": 400,
+   "cur": {
+    "x": 389,
+    "y": 691
+   },
+   "cap": "그림만 끌어서 잘라 작업대로",
+   "hold": 1100,
+   "curAfter": true
+  },
+  {
+   "step": 1,
+   "do": "pre",
+   "i": 2,
+   "ms": 400,
+   "cur": {
+    "x": 1278,
+    "y": 757
+   },
+   "cap": "AI 이미지 작업대에서 「변환하기」",
+   "hold": 300
+  },
+  {
+   "do": "pre",
+   "i": 3,
+   "ms": 250,
+   "cur": {
+    "x": 1278,
+    "y": 757
+   },
+   "click": true,
+   "cap": "흑백 선화로 다시 그리는 중…",
+   "hold": 650
+  },
+  {
+   "do": "pre",
+   "i": 4,
+   "ms": 450,
+   "cur": null,
+   "hold": 450
+  },
+  {
+   "step": 2,
+   "do": "pre",
+   "i": -1,
+   "ms": 500,
+   "cap": "교과서 그림 한 장",
+   "hold": 250
+  },
+  {
+   "do": "sweep",
+   "to": 100,
+   "ms": 1700,
+   "cap": "흑백 선화로 다시 그렸습니다"
+  },
+  {
+   "do": "sweep",
+   "to": 35,
+   "ms": 800
+  },
+  {
+   "do": "sweep",
+   "to": 100,
+   "ms": 700,
+   "hold": 150
+  },
+  {
+   "do": "hide",
+   "hold": 300
+  },
+  {
+   "step": 3,
+   "do": "layer",
+   "i": 0,
+   "to": 1,
+   "ms": 500,
+   "cap": "그림 속 글자가 원래 자리에 라벨로",
+   "hold": 1300
+  },
+  {
+   "do": "layer",
+   "i": 1,
+   "to": 1,
+   "only": true,
+   "ms": 450,
+   "cap": "우심방 → ㉠ · 우심실 → ㉡ — 바로 문항 그림",
+   "hold": 1900
+  },
+  {
+   "do": "reset",
+   "ms": 600,
+   "cap": "",
+   "hold": 200
+  }
+ ]
+}

@@ -1,0 +1,290 @@
+{
+ "text": [
+  "기출 그림",
+  "그림판은 넣어 두세요.<br><span class=\"soft\">이젠 바로 고칠 수 있습니다.</span>",
+  "그림 속 글자, 지우고 다시 쓸 필요 없습니다. 그 자리에서 바로 고치세요."
+ ],
+ "chrome": {
+  "w": 1440,
+  "h": 900,
+  "off": "img/s2v3/chrome-off.jpg",
+  "on": "img/s2v3/chrome-on.jpg",
+  "alt": "5E AI 이미지 작업대",
+  "rect": {
+   "x": 219.1875,
+   "y": 185.5,
+   "w": 825.609375,
+   "h": 678
+  }
+ },
+ "pre": [
+  {
+   "src": "img/s2v3/pre-lib.jpg",
+   "alt": "라이브러리 · 지구1 26년 7월 학평 18번"
+  },
+  {
+   "src": "img/s2v3/pre-crop.jpg",
+   "alt": "PDF에서 자르기"
+  },
+  {
+   "src": "img/s2v3/pre-conv.jpg",
+   "alt": "라벨 복원 켜고 변환하기"
+  },
+  {
+   "src": "img/s2v3/pre-gen1.jpg",
+   "alt": "라벨 복원 중"
+  },
+  {
+   "src": "img/s2v3/pre-gen2.jpg",
+   "alt": "라벨 복원 중"
+  }
+ ],
+ "base": "img/s2v3/orig.jpg",
+ "baseAlt": "2026학년도 7월 학평 지구과학Ⅰ 18번 그림",
+ "wipe": "img/s2v3/result.jpg",
+ "layers": [
+  {
+   "src": "img/s2v3/label-clean.jpg"
+  },
+  {
+   "src": "img/s2v3/label-edited.jpg"
+  },
+  {
+   "src": "img/s2v3/edit-d1.jpg",
+   "full": true
+  },
+  {
+   "src": "img/s2v3/edit-d2.jpg",
+   "full": true
+  },
+  {
+   "src": "img/s2v3/edit-d4.jpg",
+   "full": true
+  },
+  {
+   "src": "img/s2v3/edit-d6.jpg",
+   "full": true
+  }
+ ],
+ "tagA": "기출 원본",
+ "tagB": "글자만 떼어 냄",
+ "source": "출시본 5E 1.7.0 실제 화면·결과 · 지구1 26년 7월 학평 18번",
+ "steps": [
+  "찾기",
+  "변환",
+  "그대로",
+  "옮기고 바꾸기"
+ ],
+ "states": [
+  {
+   "pre": 0,
+   "cur": {
+    "x": 434,
+    "y": 306
+   },
+   "cap": "기출 「지구1 26년 7월 학평 18번」",
+   "next": 1
+  },
+  {
+   "pre": 3,
+   "cur": {
+    "x": 1278,
+    "y": 757
+   },
+   "cap": "글자를 읽어 라벨로 되살리는 중…",
+   "next": 4
+  },
+  {
+   "p": 50,
+   "handle": true,
+   "layers": [],
+   "cap": "손잡이를 끌어 원본과 비교해 보세요",
+   "next": 9
+  },
+  {
+   "p": 100,
+   "layers": [
+    5
+   ],
+   "cur": {
+    "x": 720,
+    "y": 698
+   },
+   "cap": "A → ㉠ · C → ㉡, ㉡은 끌어 옮김",
+   "next": 16
+  }
+ ],
+ "dragNext": 9,
+ "resume": [
+  1,
+  5,
+  6
+ ],
+ "timeline": [
+  {
+   "step": 0,
+   "do": "pre",
+   "i": 0,
+   "under": true,
+   "ms": 450,
+   "cur": {
+    "x": 434,
+    "y": 306
+   },
+   "click": true,
+   "cap": "라이브러리에서 기출 「지구1 26년 7월 학평 18번」",
+   "hold": 1300
+  },
+  {
+   "do": "pre",
+   "i": 1,
+   "ms": 400,
+   "cur": {
+    "x": 395,
+    "y": 466
+   },
+   "cap": "그림만 끌어서 잘라 작업대로",
+   "hold": 1100,
+   "curAfter": true
+  },
+  {
+   "step": 1,
+   "do": "pre",
+   "i": 2,
+   "ms": 400,
+   "cur": {
+    "x": 1278,
+    "y": 757
+   },
+   "cap": "라벨 복원 켜고 「변환하기」",
+   "hold": 300
+  },
+  {
+   "do": "pre",
+   "i": 3,
+   "ms": 250,
+   "cur": {
+    "x": 1278,
+    "y": 757
+   },
+   "click": true,
+   "cap": "글자를 읽어 라벨로 되살리는 중…",
+   "hold": 650
+  },
+  {
+   "do": "pre",
+   "i": 4,
+   "ms": 450,
+   "cur": null,
+   "hold": 450
+  },
+  {
+   "step": 2,
+   "do": "pre",
+   "i": -1,
+   "ms": 500,
+   "cap": "기출 그림 한 장",
+   "hold": 250
+  },
+  {
+   "do": "sweep",
+   "to": 100,
+   "ms": 1700,
+   "cap": "그림은 그대로 두고 글자만 떼어 냅니다"
+  },
+  {
+   "do": "sweep",
+   "to": 35,
+   "ms": 800
+  },
+  {
+   "do": "sweep",
+   "to": 100,
+   "ms": 700,
+   "hold": 150
+  },
+  {
+   "do": "hide",
+   "hold": 300
+  },
+  {
+   "step": 3,
+   "do": "layer",
+   "i": 0,
+   "to": 1,
+   "ms": 500,
+   "cap": "원래 크기·자리 그대로, 고칠 수 있는 라벨로",
+   "hold": 1300
+  },
+  {
+   "do": "layer",
+   "i": 1,
+   "to": 1,
+   "only": true,
+   "ms": 450,
+   "cap": "A → ㉠ · C → ㉡",
+   "hold": 1300
+  },
+  {
+   "do": "layer",
+   "i": 2,
+   "to": 1,
+   "only": true,
+   "ms": 300,
+   "cur": {
+    "x": 1079,
+    "y": 106
+   },
+   "click": true,
+   "cap": "라벨 편집에서 ㉡을 끌어 옮기면",
+   "hold": 350
+  },
+  {
+   "do": "layer",
+   "i": 3,
+   "to": 1,
+   "only": true,
+   "ms": 220,
+   "cur": {
+    "x": 815,
+    "y": 688
+   },
+   "curMs": 380,
+   "click": true,
+   "hold": 150
+  },
+  {
+   "do": "layer",
+   "i": 4,
+   "to": 1,
+   "only": true,
+   "ms": 200,
+   "cur": {
+    "x": 749,
+    "y": 695
+   },
+   "curMs": 240,
+   "hold": 60
+  },
+  {
+   "do": "layer",
+   "i": 5,
+   "to": 1,
+   "only": true,
+   "ms": 200,
+   "cur": {
+    "x": 720,
+    "y": 698
+   },
+   "curMs": 200,
+   "cap": "끌어 옮기고 글자를 바꾸면 — 내 문항의 그림",
+   "hold": 1800
+  },
+  {
+   "do": "reset",
+   "ms": 600,
+   "cap": "",
+   "hold": 200
+  }
+ ]
+}

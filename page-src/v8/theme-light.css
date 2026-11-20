@@ -1,0 +1,45 @@
+/* 밝은 화면 — html[data-theme="light"]. 앱 촬영본(창 안)은 실제 화면 그대로 두고, 페이지 바탕·글·선만 밝게. */
+html[data-theme="light"]{
+  --bg:#f5f4f0;--bg-raised:#ffffff;--surface:#ffffff;--surface-2:#efede8;
+  --ink:#16150f;--ink-soft:#57544c;--ink-faint:#8f8b82;--ink-dim:#57544c;
+  --line-strong:#16150f29;--line:#16150f14;--dot:#16150f1c;
+  --accent:#2c8f9a;--accent-rgb:44 143 154;
+  --mk-bg:#f5f4f0;--mk-surface:#ffffff;--mk-ink:#16150f;--mk-ink2:#57544c;--mk-line:#16150f29;--mk-badge:#16150f;--mk-badge-ink:#f5f4f0;
+  color-scheme:light;
+}
+html[data-theme="light"] body{background:var(--bg);color:var(--ink)}
+html[data-theme="light"] .btn--primary{background:var(--ink);color:#fff}
+html[data-theme="light"] .btn--primary:hover{background:#000}
+html[data-theme="light"] .btn--ghost:hover{border-color:#16150f55}
+html[data-theme="light"] .nav__inner{background:color-mix(in srgb,#fff 82%,transparent)}
+/* 앱 창·장면 그림자는 밝은 바탕에 맞게 옅게 */
+html[data-theme="light"] .wwin,html[data-theme="light"] .rstage,html[data-theme="light"] .win{box-shadow:0 1px 0 #ffffff inset,0 30px 80px -30px #16150f40;border-color:#16150f1f}
+html[data-theme="light"] .wcap-t{color:var(--ink)}
+html[data-theme="light"] .wsrc{color:var(--ink-faint)}
+html[data-theme="light"] .closing .aura{opacity:.35}
+html[data-theme="light"] .manifesto .m-small,html[data-theme="light"] .hist li{color:var(--ink-soft)}
+/* 화면 색 바꾸기 단추 */
+.theme-toggle{all:unset;cursor:pointer;margin-left:10px;padding:2px 10px;border:1px solid var(--line-strong);border-radius:999px;font-size:12px;color:var(--ink-soft)}
+.theme-toggle:hover{color:var(--ink)}
+/* 첫 화면(맥북 사진판) — 밝은 바탕 */
+html[data-theme="light"] .studio{background:radial-gradient(55% 45% at 50% 62%,#ffffff 0%,#f7f6f2 50%,var(--bg) 85%);color:#1d1d1f}
+html[data-theme="light"] .studio__copy h1,html[data-theme="light"] .studio__copy h1 *{color:#1d1d1f}
+html[data-theme="light"] .studio__copy p{color:#6e6e73}
+html[data-theme="light"] .studio__copy p em{color:#1d1d1f}
+html[data-theme="light"] .rest-shadow{background:radial-gradient(ellipse at center,rgb(0 0 0/.22),transparent 70%)}
+html[data-theme="light"] .device-frame::before{-webkit-mask-image:url('../img/studio/notebook-original-base-mask.svg');mask-image:url('../img/studio/notebook-original-base-mask.svg')}
+html[data-theme="light"] .nav.light .nav__inner{background:color-mix(in srgb,#fff 82%,transparent)}
+/* ===== 밝은 화면 시안 3가지 (html[data-pal]) ===== */
+/* A 모노 — 흰 바탕·검은 글·강조도 검정(애플식) */
+html[data-theme="light"][data-pal="a"]{--bg:#ffffff;--bg-raised:#ffffff;--surface:#f5f5f7;--surface-2:#ececee;--ink:#0a0a0b;--ink-soft:#4a4a50;--ink-faint:#8a8a92;--ink-dim:#4a4a50;--line-strong:#0a0a0b24;--line:#0a0a0b12;--accent:#0a0a0b;--accent-rgb:10 10 11}
+html[data-theme="light"][data-pal="a"] .studio{background:#ffffff}
+/* B 코발트 — 아주 옅은 회색 바탕·짙은 남색 글·코발트 강조 */
+html[data-theme="light"][data-pal="b"]{--bg:#f8f9fb;--bg-raised:#ffffff;--surface:#ffffff;--surface-2:#eef1f6;--ink:#0b1324;--ink-soft:#445066;--ink-faint:#8791a3;--ink-dim:#445066;--line-strong:#0b132424;--line:#0b132412;--accent:#1d4ed8;--accent-rgb:29 78 216}
+html[data-theme="light"][data-pal="b"] .studio{background:radial-gradient(60% 50% at 50% 60%,#ffffff 0%,#f8f9fb 80%)}
+/* C 슬레이트·앰버 — 차가운 회색 바탕·슬레이트 글·짙은 호박색 강조 */
+html[data-theme="light"][data-pal="c"]{--bg:#f1f2f4;--bg-raised:#ffffff;--surface:#ffffff;--surface-2:#e6e8ec;--ink:#111418;--ink-soft:#4b525c;--ink-faint:#8b929c;--ink-dim:#4b525c;--line-strong:#11141826;--line:#11141814;--accent:#b45309;--accent-rgb:180 83 9}
+html[data-theme="light"][data-pal="c"] .studio{background:radial-gradient(60% 50% at 50% 60%,#ffffff 0%,#f1f2f4 80%)}
+.pal-switch{display:none;margin-left:6px;gap:4px}
+html[data-theme="light"] .pal-switch{display:inline-flex}
+.pal-switch button{all:unset;cursor:pointer;padding:2px 9px;border:1px solid var(--line-strong);border-radius:999px;font-size:12px;color:var(--ink-soft)}
+.pal-switch button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}

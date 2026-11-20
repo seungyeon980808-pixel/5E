@@ -1,0 +1,74 @@
+/* 11-19 갤러리 시안 — html[data-look="gallery"]. 미술관 벽·액자 매트·작품 설명표·전시실 번호. 장면 내용은 그대로. */
+html[data-look="gallery"]{--bg:#f4f4f4;--surface:#ffffff;--surface-2:#ebebeb;--ink:#111111;--ink-soft:#555555;--ink-faint:#999999;--line:#1111111a;--line-strong:#1111112b;--gser:'Noto Serif KR','AppleMyungjo','Nanum Myeongjo',serif}
+html[data-look="gallery"] body{background:var(--bg);color:var(--ink);counter-reset:room}
+html[data-look="gallery"] .studio{background:radial-gradient(70% 55% at 50% 30%,#ffffff 0%,#f4f4f4 70%)!important}
+html[data-look="gallery"] .studio__fade{display:none}
+html[data-look="gallery"] html[data-look="gallery"] .h2,html[data-look="gallery"] .mf h2,html[data-look="gallery"] .history h2,html[data-look="gallery"] .closing h2{font-family:var(--gser)!important;font-weight:500!important;letter-spacing:-.02em!important}
+html[data-look="gallery"] .h2 .soft{font-weight:300;color:var(--ink-faint)}
+/* 문구 세 화면: 벽에 쓴 글처럼 */
+html[data-look="gallery"] .mf{text-align:center}
+html[data-look="gallery"] .mfin{display:flex;flex-direction:column;align-items:center}
+html[data-look="gallery"] .mf h2{font-size:clamp(36px,6vw,88px);line-height:1.25}
+html[data-look="gallery"] .mf h2 em{font-weight:300;font-style:normal}
+html[data-look="gallery"] .mfk{font-family:var(--gser);font-style:normal;color:var(--ink-soft);order:3;margin:34px 0 0;padding-top:22px;border-top:1px solid var(--ink);min-width:60px}
+html[data-look="gallery"] .mfn{order:0}
+/* 전시실 머리 */
+html[data-look="gallery"] .group{counter-increment:room;border-bottom:0;padding-top:22vh;flex-direction:column;align-items:center;gap:10px;text-align:center}
+html[data-look="gallery"] .group::before{content:none;font:500 11px/1 'JetBrains Mono',monospace;letter-spacing:.3em;color:var(--ink-faint)}
+html[data-look="gallery"] .group b{font-size:clamp(3rem,2rem + 4vw,6rem);font-weight:400}
+html[data-look="gallery"] .group span{font-family:var(--gser)}
+html[data-look="gallery"] .group .k{margin:0}
+/* 한 작품씩: 넓은 여백 + 위에서 비추는 조명 */
+html[data-look="gallery"] .feat{padding-top:16vh;padding-bottom:16vh;background:radial-gradient(48% 60% at 72% 8%,#ffffff 0%,transparent 70%)}
+html[data-look="gallery"] .feat .kicker .num::before{content:"No. "}
+html[data-look="gallery"] .feat .kicker{font-family:var(--gser);font-style:italic}
+html[data-look="gallery"] .feat .kicker .rule{background:var(--ink)}
+html[data-look="gallery"] .steps li,html[data-look="gallery"] .steps button{border-color:var(--line)!important}
+/* 액자: 흰 매트 + 얇은 테 + 벽에 걸린 그림자 */
+html[data-look="gallery"] .wfit{background:#ffffff;padding:clamp(16px,2.2vw,34px) clamp(16px,2.2vw,34px) clamp(12px,1.4vw,20px);border:1px solid #11111124;box-shadow:0 1px 0 #fff inset,0 2px 0 #1111110d,0 50px 70px -46px #0000003d,0 22px 30px -24px #00000026}
+html[data-look="gallery"] .wwin,html[data-look="gallery"] .s34-win{border-radius:2px!important;box-shadow:0 0 0 1px #00000014!important}
+/* 작품 설명표 */
+html[data-look="gallery"] .wcap{display:block!important;margin-top:clamp(12px,1.4vw,18px);padding-top:10px;border-top:1px solid var(--line)}
+html[data-look="gallery"] .wcap-t{display:block;font-family:var(--gser);font-style:italic;font-size:14px;color:var(--ink)!important}
+html[data-look="gallery"] .wsrc{display:block;margin-top:4px;font:400 10.5px/1.5 'JetBrains Mono',monospace;letter-spacing:.04em;color:var(--ink-faint)!important;text-align:left!important}
+html[data-look="gallery"] .where{justify-content:flex-start;font-family:var(--gser)}
+html[data-look="gallery"] .where i{display:none}
+html[data-look="gallery"] .where b::before{content:"— "}
+/* 메뉴 */
+html[data-look="gallery"] .nav__inner{background:color-mix(in srgb,#ffffff 85%,transparent)!important;border-color:var(--line-strong)}
+html[data-look="gallery"] .btn--primary{background:var(--ink);color:#fff}
+html[data-look="gallery"] .intro5e{background:#f4f4f4}
+html[data-look="gallery"] .mf{font-family:var(--gser);font-weight:500;letter-spacing:-.02em;line-height:1.28}
+html[data-look="gallery"] .mf em{font-weight:300}
+
+/* 갤러리 — 어두운 화면: 불 꺼진 전시실, 작품에만 조명 */
+html[data-look="gallery"]:not([data-theme="light"]){--bg:#0e0e0f;--surface:#18181a;--surface-2:#202023;--ink:#f2f2f2;--ink-soft:#b4b4b8;--ink-faint:#7c7c82;--line:#ffffff14;--line-strong:#ffffff26}
+html[data-look="gallery"]:not([data-theme="light"]) .studio{background:radial-gradient(70% 55% at 50% 30%,#1c1c1f 0%,#0e0e0f 70%)!important}
+html[data-look="gallery"]:not([data-theme="light"]) .feat{background:radial-gradient(48% 60% at 72% 8%,#ffffff0d 0%,transparent 70%)}
+html[data-look="gallery"]:not([data-theme="light"]) .wfit{background:#1a1a1c;border-color:#ffffff1f;box-shadow:0 0 0 1px #00000080,0 50px 80px -40px #000000cc,0 0 120px -40px #ffffff14}
+html[data-look="gallery"]:not([data-theme="light"]) .nav__inner{background:color-mix(in srgb,#0e0e0f 82%,transparent)!important}
+html[data-look="gallery"]:not([data-theme="light"]) .btn--primary{background:#f2f2f2;color:#0e0e0f}
+html[data-look="gallery"]:not([data-theme="light"]) .intro5e{background:#0e0e0f}
+html[data-look="gallery"] .feat .h2,html[data-look="gallery"] .feat h2.h2 *{font-family:var(--gser)!important;font-weight:500!important}
+
+/* 11-20: Safari에서 가림이 풀려 흰 네모가 보이던 노트북 몸체 → 투명 바탕 그림 한 장으로(가림 없음) */
+.nb-base{clip-path:none!important;-webkit-mask:none!important;mask:none!important}
+/* 11-20: 작업 장면이 나올 때 메뉴 줄 뒤로 바탕화면이 비치지 않게 */
+.studio.hero3.h3-mont .mac__menubar{background:#0b0c0f!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;color:#f2f2f2!important}
+.studio.hero3.h3-mont .mac__menubar *{color:#f2f2f2!important}
+/* 11-20: 누런 기운 빼기 — 기본 색을 모두 무채색으로 */
+:root{--bg:#0e0e0f;--bg-raised:#131314;--surface:#18181a;--surface-2:#202023;--ink:#f2f2f2;--ink-soft:#b4b4b8;--ink-faint:#7c7c82}
+html[data-theme="light"]{--bg:#f6f6f6;--surface-2:#ececee;--ink:#0a0a0b;--ink-soft:#4a4a50;--ink-faint:#8a8a92;--mk-bg:#f6f6f6}
+html[data-theme="light"] .studio{background:#ffffff}
+html[data-accent="gold"]{--accent:#c6ccd6;--accent-rgb:198 204 214}
+html[data-theme="light"][data-accent="gold"]{--accent:#0a0a0b;--accent-rgb:10 10 11}
+html[data-view="visitor"][data-accent]{--accent:#d6d9de;--accent-rgb:214 217 222}
+html[data-theme="light"][data-view="visitor"][data-accent]{--accent:#0a0a0b;--accent-rgb:10 10 11}
+/* 11-20: 주소 상자 — 바탕과 같은 결로 */
+.addr{background:var(--surface)!important;border-color:var(--line-strong)!important;color:var(--ink)}
+.addr .dim{color:var(--ink-faint)}
+html[data-theme="light"] .addr{background:#ffffff!important;box-shadow:0 1px 2px #0000000d}
+html[data-theme="light"] .addr #copyAddr{color:var(--ink-soft)}
+/* 11-20: 메뉴 줄 뒤로 본문 글자가 비치지 않게 */
+.nav__inner{background:rgba(14,14,15,.86)!important}
+html[data-theme="light"] .nav__inner{background:rgba(255,255,255,.9)!important}

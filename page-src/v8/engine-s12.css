@@ -1,0 +1,8 @@
+/* engine-s12 추가분 — 앞쪽 실제 화면과 커서 */
+.wchrome.w-pre{opacity:0;will-change:opacity;z-index:1}
+.wcur{position:absolute;z-index:5;left:50%;top:50%;width:0;height:0;opacity:0;pointer-events:none;transition:left .42s cubic-bezier(.4,0,.2,1),top .42s cubic-bezier(.4,0,.2,1),opacity .2s}
+.wcur.on{opacity:1}
+.wcur svg{position:absolute;left:-3px;top:-2px;filter:drop-shadow(0 2px 3px #0009)}
+.wcur b{position:absolute;left:-16px;top:-16px;width:32px;height:32px;border-radius:50%;border:2px solid rgb(var(--accent-rgb,127 205 214));opacity:0;transform:scale(.3)}
+.wcur.click b{animation:wcur-click .5s ease-out}
+@keyframes wcur-click{0%{opacity:.95;transform:scale(.3)}100%{opacity:0;transform:scale(1.25)}}

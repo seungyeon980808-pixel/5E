@@ -1399,6 +1399,23 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
 .nav__links a{padding:6px 0!important}
 /* 웹에서 쓰기도 아이콘 단추만(글자 없이, 마우스를 올리면 이름) */
 .navlk a.lk.ico.web{width:32px!important;height:32px;padding:0!important}
+/* 메뉴 한 줄: 조용히 떠오르는 작은 글 — 상자 없이 */
+.navcap{position:fixed;z-index:210;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .35s cubic-bezier(.2,.7,.2,1),left .45s cubic-bezier(.2,.8,.2,1)}
+.navcap.on{opacity:1}
+.navcap span{display:block;white-space:nowrap;font:500 12.5px/1 var(--f);letter-spacing:.01em;color:var(--ink-soft);padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.navcap span.in{animation:navcapin .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes navcapin{from{opacity:0;transform:translateY(-4px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion:reduce){.navcap,.navcap span.in{transition:none;animation:none}}
+/* 휴대폰·좁은 화면: 장면은 한 칸 — 글 아래에 시연 화면을 꽉 차게 */
+@media (max-width:900px){
+  section.feat.wrap,.wrap.feat{padding-inline:var(--gutter)!important}
+  .feat{grid-template-columns:minmax(0,1fr)!important;gap:22px!important;padding-block:72px!important}
+  .feat .h2{font-size:clamp(26px,7.2vw,36px)!important}
+  .feat .feat__text{padding-left:12px}
+  .feat .steps{margin-top:18px}
+  .feat .steps button{padding:10px 4px}
+  .mf{font-size:clamp(26px,7.4vw,40px)!important}
+}
 
 </style>
 <style>:root{--m-open:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTM2IDEwMjQiPgogIDxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMjIyIDg3SDEzMTVRMTM1MiA4NyAxMzUyIDEyNkwxMzUzIDc5M1ExMzU0IDgwNyAxMzUwIDgxNEwxNDczIDg2NVExNDc3IDg2NiAxNDc3IDg3MFY4OTNRMTQ3NyA5MDUgMTQzOCA5MTBMMTQxMCA5MTJRMTM5OCA5MTcgMTM1MCA5MTZMMTMwMSA5MTJIMjM0TDIwNSA5MTZIMTU1UTEzNyA5MTYgMTI2IDkxMkw5NyA5MTBRNTkgOTA1IDU5IDg5M1Y4NzBRNTkgODY2IDY0IDg2NEwxODcgODE0UTE4MyA4MDcgMTg0IDc5M0wxODYgMTI2UTE4NiA4OCAyMjIgODdaIi8+Cjwvc3ZnPgo=");--m-hole:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTM2IDEwMjQiPjxwYXRoIGZpbGw9IiNmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTAgMEgxNTM2VjEwMjRIMFogTTIxMy4zIDEwNC4zSDcwOC45VjExNy41UTcwOC45IDEyMi41IDcxMy45IDEyMi41SDgyMi40UTgyNy40IDEyMi41IDgyNy40IDExNy41VjEwNC4zSDEzMjYuMlExMzM1LjIgMTA0LjMgMTMzNS4yIDExMy4zVjc3Mi4yUTEzMzUuMiA3ODEuMiAxMzI2LjIgNzgxLjJIMjEzLjNRMjA0LjMgNzgxLjIgMjA0LjMgNzcyLjJWMTEzLjNRMjA0LjMgMTA0LjMgMjEzLjMgMTA0LjNaIi8+PC9zdmc+")}</style>
@@ -3023,6 +3040,19 @@ $$('[data-wipe]').forEach(sec=>{const d=W[sec.dataset.wipe];if(d)scene(sec,d)});
   let rq=0;const qu=()=>{if(!rq)rq=requestAnimationFrame(()=>{rq=0;upd()})};
   addEventListener('scroll',qu,{passive:true});addEventListener('resize',()=>{items=[];qu()});
   addEventListener('load',()=>{items=[];setTimeout(qu,300)});setTimeout(()=>{items=[];qu()},1200);
+})();
+/* 11-20 밤: 메뉴에 마우스를 올리면 아래에 한 줄 — 천천히 떠오르고, 칸 사이를 옮겨 가면 글만 바뀜 */
+(function(){
+  'use strict';
+  const links=document.querySelector('.nav__links');if(!links||!matchMedia('(hover:hover)').matches)return;
+  const CAP={'#g-image':'어떤 그림도, 평가원 스타일로','#g-exam':'문항부터 시험지까지','#g-hwp':'한글 없이, 인쇄 직전까지','#g-clipboard':'담고, 꺼내고. 어디서든','#arch':'한눈에 보는 5E','#history':'따로 시작해, 하나가 되기까지','#download':'Mac · Windows · 웹','#faq':'궁금한 건 여기서'};
+  const tip=document.createElement('div');tip.className='navcap';tip.setAttribute('aria-hidden','true');tip.innerHTML='<span></span>';document.body.appendChild(tip);
+  const sp=tip.firstChild;let hideT=0,shown=false;
+  const place=a=>{const r=a.getBoundingClientRect(),nav=document.querySelector('.nav__inner').getBoundingClientRect();tip.style.left=(r.left+r.width/2)+'px';tip.style.top=(nav.bottom+10)+'px'};
+  links.querySelectorAll('a').forEach(a=>{const t=CAP[a.getAttribute('href')];if(!t)return;
+    a.addEventListener('mouseenter',()=>{clearTimeout(hideT);place(a);if(shown){sp.classList.remove('in');void sp.offsetWidth}sp.textContent=t;sp.classList.add('in');tip.classList.add('on');shown=true});
+    a.addEventListener('mouseleave',()=>{hideT=setTimeout(()=>{tip.classList.remove('on');sp.classList.remove('in');shown=false},120)})});
+  addEventListener('scroll',()=>{if(shown){tip.classList.remove('on');shown=false}},{passive:true});
 })();
 
 </script>
