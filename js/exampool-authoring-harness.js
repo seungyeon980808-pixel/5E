@@ -49,7 +49,8 @@ function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent,onRetry,stal
     const giveUp=()=>{void bridge.interrupt?.().catch(()=>{});finish(Object.assign(Error('AI 연결이 끊겨 다시 잇지 못했습니다: '+(lastRetry?.text||'')),{code:'AI_RECONNECT_FAILED',retry:lastRetry}));};
     const retrying=info=>{lastRetry=info;onRetry?.(info);clearTimeout(stallTimer);
       if(online()===false){giveUp();return;}
-      stallTimer=setTimeout(giveUp,stall);};
+      // 마지막 다시 잇기(5/5)면 오래 기다리지 않는다.
+      stallTimer=setTimeout(giveUp,info?.total&&info?.attempt>=info.total?Math.min(stall,20000):stall);};
     const handle=event=>{if(turnId&&event.turnId&&event.turnId!==turnId)return;
       if(event.retry){retrying(event.retry);return;}
       if(event.kind==='assistant'&&event.text)text=event.text;
@@ -57,7 +58,8 @@ function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent,onRetry,stal
       else if(event.kind==='done')event.status==='completed'?finish(null,text):finish(Object.assign(Error(event.error||`AI 요청이 끝나지 못했습니다(${event.status}).`),lastRetry?{retry:lastRetry}:{}));};
     const off=bridge.onEvent?.(message=>{const retry=retryInfo(message);const event=retry?{kind:'retry',retry,turnId:message.params?.turnId||null}:parseAiEvent(message);
       // 다시 이은 뒤 오는 신호(생각 중 등 화면에 안 쓰는 것 포함)는 연결이 살아 있다는 뜻 — 포기 시계를 멈춘다.
-      if(!retry&&lastRetry&&(!turnId||!message?.params?.turnId||message.params.turnId===turnId))clearTimeout(stallTimer);
+      // 11-22(결함 14): 차례 번호가 없는 전체 신호(한도·상태 알림 등)는 이 차례가 살아 있다는 뜻이 아니다 — 같은 차례의 신호만 시계를 멈춘다.
+      if(!retry&&lastRetry&&turnId&&message?.params?.turnId===turnId)clearTimeout(stallTimer);
       if(event.kind==='ignore')return;if(!turnId){buffered.push(event);return;}handle(event);});
     const abort=()=>{void bridge.interrupt?.().catch(()=>{});finish(Object.assign(Error('출제 요청을 취소했습니다.'),{cancelled:true}));};
     const timer=setTimeout(()=>{void bridge.interrupt?.().catch(()=>{});finish(Error('AI 응답이 너무 오래 걸려 중단했습니다.'));},timeout);
