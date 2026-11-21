@@ -1,4 +1,4 @@
-import { createDesktopAccountCard } from './desktop-account-card.js?v=1.7.2-account-card';
+import { createDesktopAccountCard } from './desktop-account-card.js?v=1.7.0-four-session-integration';
 import { DESKTOP_RELEASE_URL } from './ai-install-guide.js?v=1.7.0-four-session-integration';
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 
