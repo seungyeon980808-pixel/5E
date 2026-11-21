@@ -45,7 +45,7 @@ async function play(i,r){const d=D[i];cur=i;chip(i);bar(i,reduce?400:17000);
   const f=d.first.map(x=>x.src);const main=d.first[f.length>1?d.editScene:0];sheet.className='sheet';sheet.innerHTML='';
   await Promise.all([rows(DRAW,d.s1,r),loading('draw',blankPaper(),main.src,r)]);await wait(500,r);
   await show(f,f.length>1?'g2':'');LD.reset();
-  msg('done',`<b>그림 ${f.length>1?f.length+'장을':'을'} 그렸어요</b> <span>· ${d.s1}초</span>`);
+  msg('done',`<b>그림${f.length>1?' '+f.length+'장을':'을'} 그렸어요</b> <span>· ${d.s1}초</span>`);
   await wait(2300,r);
   await type(d.edit,r);await wait(300,r);go.classList.add('on');await wait(450,r);go.classList.remove('on');
   ta.innerHTML='';msg('user',esc(d.edit));await wait(300,r);
