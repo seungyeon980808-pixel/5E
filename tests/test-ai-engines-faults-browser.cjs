@@ -214,6 +214,8 @@ h.withServer(async (origin) => {
       }
 
       // ── 그림 안 설명 문장이 남은 그림 → 지우고 다시 그림(meta.strippedTexts)
+      // 1.7.2(ai-engine-flags.js figureSkipStripCheckFlag): 「설명 문장 지우기」 확인은 기본 건너뜀 — 이 두 장면만 '0'으로 켜서 본다.
+      await page.evaluate(() => localStorage.setItem('5e.aiEngine.figureSkipStripCheck', '0'));
       await scenario('strip-text', '그림에 설명 문장이 남음', async () => {
         await setFault(page, { strip: ['물체 A는 정지해 있다.'] });
         await ask(page, '수평면 위에 정지한 물체 A');
@@ -227,6 +229,7 @@ h.withServer(async (origin) => {
         await ask(page, '수평면 위에 정지한 물체 B');
         return { expect: 'result' };
       });
+      await page.evaluate(() => localStorage.removeItem('5e.aiEngine.figureSkipStripCheck'));
 
       // ── 기출 Worker 고장: 참고 그림 없이(또는 다른 후보로) 그린다
       await scenario('worker-404', '기출 Worker 404', async () => { worker.mode = '404'; await ask(page, '용수철 진자'); return { expect: 'result', check: ({ fake }) => {

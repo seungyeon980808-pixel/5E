@@ -126,18 +126,14 @@ h.withServer(async (origin) => {
       assert.equal(await page.locator(`${PANEL} [data-ai-version-button]`).textContent(), '생성 결과 3');
       await page.locator(`${PANEL} .ai-chat-result-open`).nth(1).click(); // 결과 2(T를 지운 것)로 돌아가 거기서 바꾸기
       await page.waitForFunction((p) => document.querySelector(`${p} [data-ai-version-button]`).textContent === '생성 결과 2', PANEL);
-      // 안 C(태그 6): 「그림 설정 · 바꾸기 ▾」 안 「글자 바꾸기 빠르게」 — 기본 끔, 켜기를 누르면 저장값 '1'
+      // 11-21 사용자 결정(css/ai-create.css): 「글자 빠르게」 줄은 화면에서 숨김 — 글자 바꾸기는 그림 AI 길로만. 기본 끔.
       await page.locator(`${PANEL} [data-ai-settings-change]`).click();
       const fastRow = page.locator(`${PANEL} [data-ai-fast-replace-row]`);
-      assert.ok(await fastRow.isVisible(), `${name}: fast replace row is in the 바꾸기 ▾ settings`);
-      assert.match(await fastRow.locator('[data-ai-fast-replace-group]').getAttribute('title'), /그림을 다시 그리지 않고 몇 초 만에 합니다\. 새 글자는 5E 글꼴로 들어갑니다\./);
-      assert.equal(await fastRow.locator('[data-ai-fast-replace="0"]').getAttribute('aria-pressed'), 'true', `${name}: default off`);
+      assert.equal(await fastRow.isVisible(), false, `${name}: fast replace row is hidden (11-21 decision)`);
       assert.equal(await page.evaluate(() => localStorage.getItem('5e.aiEngine.figureLocalReplace')), null);
-      await fastRow.locator('[data-ai-fast-replace="1"]').click();
-      assert.equal(await page.evaluate(() => localStorage.getItem('5e.aiEngine.figureLocalReplace')), '1', `${name}: toggle on sets the flag`);
-      assert.equal(await fastRow.locator('[data-ai-fast-replace="1"]').getAttribute('aria-pressed'), 'true');
-      if (out) await page.screenshot({ path: path.join(out, `${name}-fast-replace-setting.png`) });
       await page.locator(`${PANEL} [data-ai-settings-change]`).click();
+      // 숨긴 뒤에도 남은 저장값 길(5e.aiEngine.figureLocalReplace='1')은 그대로 돈다 — 저장값으로 켜서 본다.
+      await page.evaluate(() => localStorage.setItem('5e.aiEngine.figureLocalReplace', '1'));
       await send(page, 'C를 D로 바꿔 줘');
       await idle(page); await page.waitForTimeout(400);
       assert.equal(await imageSends(page), sends1 + 1, `${name}: with the option, no image AI call`);
@@ -145,11 +141,8 @@ h.withServer(async (origin) => {
       const cAfter = await darkIn(page, box('C'));
       assert.ok(cAfter > 30, `${name}: a new glyph is drawn where C was (${cAfter})`);
       assert.equal(await darkIn(page, box('T')), 0, `${name}: built on result 2 (T still gone)`);
-      await page.locator(`${PANEL} [data-ai-settings-change]`).click();
-      await fastRow.locator('[data-ai-fast-replace="0"]').click();
-      assert.equal(await page.evaluate(() => localStorage.getItem('5e.aiEngine.figureLocalReplace')), '0', `${name}: toggle off clears the flag`);
+      await page.evaluate(() => localStorage.setItem('5e.aiEngine.figureLocalReplace', '0'));
       assert.equal(await page.evaluate(() => import('/js/ai-engine-flags.js?v=1.7.0-four-session-integration').then((m) => m.figureLocalReplaceFlag())), false);
-      await page.locator(`${PANEL} [data-ai-settings-change]`).click();
       if (out) await page.screenshot({ path: path.join(out, `${name}-local-replace.png`) });
 
       // 3) 끄는 플래그면 예전처럼 그림 AI로
