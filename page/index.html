@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>5E — 그림, 문항, 조판 한 곳에서</title>
-<meta name="description" content="과학 평가문항 에디터 5E. 그림, 문항, 조판 — 한 곳에서.">
-<meta property="og:url" content="https://www.5e.ai.kr/page/"><meta property="og:title" content="5E"><meta property="og:description" content="그림, 문항, 조판 — 한 곳에서."><meta property="og:image" content="https://www.5e.ai.kr/page/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
+<meta name="description" content="과학 평가문항 제작 플랫폼 5E. 그림, 문항, 조판 — 한 곳에서.">
+<meta property="og:url" content="https://www.5e.ai.kr/page/"><meta property="og:title" content="5E"><meta property="og:description" content="과학 평가문항 제작 플랫폼 · 그림, 문항, 조판 — 한 곳에서."><meta property="og:image" content="https://www.5e.ai.kr/page/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gelasio:ital,wght@0,400;0,700;1,400;1,700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500;700&display=swap">
@@ -3067,7 +3067,7 @@ $$('[data-wipe]').forEach(sec=>{const d=W[sec.dataset.wipe];if(d)scene(sec,d)});
     const sec=document.createElement('section');sec.className='manif1';sec.id='manif';
     sec.innerHTML=`<div class="mf-stage">${COPY.map((c,i)=>`<h2 class="mf" data-i="${i}"><em>${c[0]}</em><br>${c[1]}</h2>`).join('')}</div>
       <div class="mf-dots">${COPY.map((_,i)=>`<button type="button" aria-label="문구 ${i+1}"><i></i></button>`).join('')}</div>
-      <p class="mf-sub"><b>5E</b> 과학 평가문항 에디터. 그림, 출제, 조판까지 한 곳에서.</p>
+      <p class="mf-sub"><b>5E</b> 과학 평가문항 제작 플랫폼. 그림, 출제, 조판까지 한 곳에서.</p>
 `;
     st.after(sec);
     const hs=[...sec.querySelectorAll('.mf')],ds=[...sec.querySelectorAll('.mf-dots button')];let k=-1,tm=null,vis=false;

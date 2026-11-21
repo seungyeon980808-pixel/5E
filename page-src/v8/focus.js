@@ -39,7 +39,7 @@
     const sec=document.createElement('section');sec.className='manif1';sec.id='manif';
     sec.innerHTML=`<div class="mf-stage">${COPY.map((c,i)=>`<h2 class="mf" data-i="${i}"><em>${c[0]}</em><br>${c[1]}</h2>`).join('')}</div>
       <div class="mf-dots">${COPY.map((_,i)=>`<button type="button" aria-label="문구 ${i+1}"><i></i></button>`).join('')}</div>
-      <p class="mf-sub"><b>5E</b> 과학 평가문항 에디터. 그림, 출제, 조판까지 한 곳에서.</p>
+      <p class="mf-sub"><b>5E</b> 과학 평가문항 제작 플랫폼. 그림, 출제, 조판까지 한 곳에서.</p>
 `;
     st.after(sec);
     const hs=[...sec.querySelectorAll('.mf')],ds=[...sec.querySelectorAll('.mf-dots button')];let k=-1,tm=null,vis=false;
