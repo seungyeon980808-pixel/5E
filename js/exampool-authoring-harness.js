@@ -47,10 +47,15 @@ function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent,onRetry,stal
     const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);clearTimeout(stallTimer);off?.();signal?.removeEventListener('abort',abort);error?reject(error):resolve(value);};
     // 다시 잇기가 오래 멈추거나 인터넷이 끊겼으면 기다리지 않고 「연결 안 됨」으로 끝낸다(진행 표시가 몇 분씩 남지 않게).
     const giveUp=()=>{void bridge.interrupt?.().catch(()=>{});finish(Object.assign(Error('AI 연결이 끊겨 다시 잇지 못했습니다: '+(lastRetry?.text||'')),{code:'AI_RECONNECT_FAILED',retry:lastRetry}));};
-    const retrying=info=>{lastRetry=info;onRetry?.(info);clearTimeout(stallTimer);
-      if(online()===false){giveUp();return;}
-      // 마지막 다시 잇기(5/5)면 오래 기다리지 않는다.
-      stallTimer=setTimeout(giveUp,info?.total&&info?.attempt>=info.total?Math.min(stall,20000):stall);};
+    // 11-22(결함 14): 다시 잇기 신호가 올 때마다 시계를 새로 맞추면(5/5 뒤 번호 없는 신호가 계속 옴) 끝나지 않았다 —
+    // 첫 다시 잇기에서 정한 마감을 늦추지 않고, 마지막(n/n)을 한 번 보면 그 뒤 20초 안으로 당긴다.
+    let giveUpAt=0,finalSeen=false;
+    const retrying=info=>{onRetry?.(info);
+      if(online()===false){lastRetry=info;giveUp();return;}
+      if(info?.total&&info?.attempt>=info.total)finalSeen=true;
+      lastRetry=info?.attempt==null&&lastRetry?{...lastRetry,text:info?.text||lastRetry.text}:info;
+      const now=Date.now(),due=Math.min(giveUpAt||now+stall,finalSeen?now+Math.min(stall,20000):Infinity);
+      if(due!==giveUpAt||!stallTimer){giveUpAt=due;clearTimeout(stallTimer);stallTimer=setTimeout(giveUp,Math.max(0,due-now));}};
     const handle=event=>{if(turnId&&event.turnId&&event.turnId!==turnId)return;
       if(event.retry){retrying(event.retry);return;}
       if(event.kind==='assistant'&&event.text)text=event.text;
@@ -59,7 +64,7 @@ function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent,onRetry,stal
     const off=bridge.onEvent?.(message=>{const retry=retryInfo(message);const event=retry?{kind:'retry',retry,turnId:message.params?.turnId||null}:parseAiEvent(message);
       // 다시 이은 뒤 오는 신호(생각 중 등 화면에 안 쓰는 것 포함)는 연결이 살아 있다는 뜻 — 포기 시계를 멈춘다.
       // 11-22(결함 14): 차례 번호가 없는 전체 신호(한도·상태 알림 등)는 이 차례가 살아 있다는 뜻이 아니다 — 같은 차례의 신호만 시계를 멈춘다.
-      if(!retry&&lastRetry&&turnId&&message?.params?.turnId===turnId)clearTimeout(stallTimer);
+      if(!retry&&lastRetry&&turnId&&message?.params?.turnId===turnId){clearTimeout(stallTimer);stallTimer=0;giveUpAt=0;finalSeen=false;}
       if(event.kind==='ignore')return;if(!turnId){buffered.push(event);return;}handle(event);});
     const abort=()=>{void bridge.interrupt?.().catch(()=>{});finish(Object.assign(Error('출제 요청을 취소했습니다.'),{cancelled:true}));};
     const timer=setTimeout(()=>{void bridge.interrupt?.().catch(()=>{});finish(Error('AI 응답이 너무 오래 걸려 중단했습니다.'));},timeout);
