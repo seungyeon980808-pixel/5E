@@ -839,7 +839,8 @@
   :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-send] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12h11M11 7l5 5-5 5'/%3E%3Cpath d='M19 4v16'/%3E%3C/svg%3E"); }
   :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z'/%3E%3C/svg%3E"); }
   :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-graph] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 3.5v16.5h16.5M6.5 17c3-1 4-9 7-9.5S18 9 20 6'/%3E%3C/svg%3E"); }
-  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button:not([data-unilib-adjust], [data-unilib-send], [data-unilib-ai], [data-unilib-graph])::before { content: none; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-whole] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='3.5' width='14' height='17' rx='1.5'/%3E%3Cpath d='M8.5 8h7M8.5 11.5h7M8.5 15h4'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button:not([data-unilib-adjust], [data-unilib-send], [data-unilib-ai], [data-unilib-graph], [data-unilib-whole])::before { content: none; }
 
   :root:not([data-mode="lite"]) .workbench-assignment-card-actions {
     gap: 2px; padding: 2px; border-radius: 7px; background: rgba(13, 17, 23, .92); box-shadow: 0 0 0 1px #30363d, 0 4px 12px rgba(0, 0, 0, .35);
@@ -928,3 +929,51 @@
 /* 5E 클립보드 줄(11-14): 개수는 오른쪽 끝에 흐리게, 열려 있으면 눌린 회색 */
 #tool-list #clipboard-open .clip-count { margin-left: auto; font-weight: 400; font-size: 12px; color: var(--ds-ink-3); }
 #tool-list #clipboard-open[aria-pressed="true"] { background: var(--ds-selected); color: var(--ds-ink); }
+
+/* 11-21 시안(로그인관리-시안): 오른쪽 위 「AI」 아래 연결 관리 카드 */
+:root:not([data-mode="lite"]) .app-shell-header .web-account-status[data-state="missing"] .web-account-dot { background: #d29922 !important; border-color: #d29922 !important; }
+.desktop-account-card { position: fixed; z-index: 9000; box-sizing: border-box; padding: 14px; border: 1px solid var(--border, #262c34); border-radius: 12px; background: var(--bg-panel, #161b22); color: var(--text-primary, #e6edf3); box-shadow: 0 18px 48px rgba(0,0,0,.55); font-size: 13px; line-height: 1.4; animation: dac-in .14s ease-out; }
+.desktop-account-card[hidden] { display: none; }
+@keyframes dac-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.desktop-account-card::before { content: ""; position: absolute; top: -6px; left: var(--tail-x, 260px); width: 10px; height: 10px; background: var(--bg-panel, #161b22); border-left: 1px solid var(--border, #262c34); border-top: 1px solid var(--border, #262c34); transform: rotate(45deg); }
+.desktop-account-card .dac-row { display: flex; align-items: center; gap: 10px; }
+.desktop-account-card .dac-avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #24303d; color: #cfe3ff; font-weight: 600; font-size: 14px; }
+.desktop-account-card .dac-avatar.is-muted { background: #1f2630; color: var(--text-secondary, #7d8590); }
+.desktop-account-card .dac-avatar.is-warn { background: #2b2412; color: #d29922; }
+.desktop-account-card .dac-who { min-width: 0; }
+.desktop-account-card .dac-who b { display: block; font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desktop-account-card .dac-who span { color: var(--text-secondary, #7d8590); font-size: 12px; }
+.desktop-account-card .dac-state { margin-left: auto; flex: none; display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #4ade80; }
+.desktop-account-card .dac-state.is-off { color: var(--text-secondary, #7d8590); }
+.desktop-account-card .dac-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.18); }
+.desktop-account-card .dac-sep { height: 1px; margin: 12px -14px; background: var(--border, #262c34); }
+.desktop-account-card .dac-limit { margin: 8px 0; }
+.desktop-account-card .dac-limit-lbl { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 5px; color: var(--text-secondary, #7d8590); font-size: 12px; }
+.desktop-account-card .dac-limit-lbl b { color: var(--text-primary, #e6edf3); font-weight: 500; }
+.desktop-account-card .dac-bar { height: 5px; border-radius: 3px; background: #0d1117; overflow: hidden; }
+.desktop-account-card .dac-bar i { display: block; height: 100%; border-radius: 3px; background: #8b949e; }
+.desktop-account-card .dac-note { margin: 2px 0 0; color: var(--text-secondary, #7d8590); font-size: 12px; line-height: 1.55; }
+.desktop-account-card .dac-message { margin-top: 10px; }
+.desktop-account-card .dac-acts { display: grid; gap: 6px; }
+.desktop-account-card .dac-acts.is-spaced { margin-top: 12px; }
+.desktop-account-card .dac-btn { height: 32px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid var(--border, #262c34); border-radius: 7px; background: var(--bg-input, #0d1117); color: var(--text-primary, #e6edf3); font: inherit; font-size: 12.5px; cursor: pointer; }
+.desktop-account-card .dac-btn:hover { border-color: #3a424d; }
+.desktop-account-card .dac-btn.is-main { border-color: transparent; background: #e6edf3; color: #0d1117; font-weight: 600; }
+.desktop-account-card .dac-btn.is-main:hover { background: #fff; }
+.desktop-account-card .dac-btn.is-waiting { opacity: .85; cursor: default; }
+.desktop-account-card .dac-btn.is-quiet, .desktop-account-card .dac-btn.is-danger { height: 28px; justify-content: flex-start; padding: 0 4px; border-color: transparent; background: transparent; color: var(--text-secondary, #7d8590); }
+.desktop-account-card .dac-btn.is-quiet:hover { color: var(--text-primary, #e6edf3); }
+.desktop-account-card .dac-btn.is-danger { color: #f0827a; }
+.desktop-account-card .dac-btn.is-danger:hover { color: #ffa198; }
+.desktop-account-card .dac-spin { width: 12px; height: 12px; box-sizing: border-box; border-radius: 50%; border: 2px solid #0d1117; border-top-color: transparent; animation: dac-spin .9s linear infinite; }
+@keyframes dac-spin { to { transform: rotate(360deg); } }
+.desktop-account-card .dac-more { margin-top: 10px; }
+.desktop-account-card .dac-more summary { cursor: pointer; }
+.desktop-account-card .dac-code { margin-top: 6px; padding: 6px 8px; border: 1px solid var(--border, #262c34); border-radius: 6px; background: #0d1117; color: #c9d1d9; font: 11.5px ui-monospace, Menlo, Consolas, monospace; user-select: text; }
+.dac-confirm { position: fixed; inset: 0; z-index: 9100; display: grid; place-items: center; background: rgba(0,0,0,.45); }
+.dac-confirm-box { width: min(340px, calc(100vw - 32px)); box-sizing: border-box; padding: 18px; border: 1px solid var(--border, #262c34); border-radius: 12px; background: var(--bg-panel, #161b22); color: var(--text-primary, #e6edf3); font-size: 13px; }
+.dac-confirm-box h3 { margin: 0 0 8px; font-size: 15px; }
+.dac-confirm-box p { margin: 0 0 16px; color: var(--text-secondary, #7d8590); line-height: 1.6; }
+.dac-confirm-acts { display: flex; justify-content: flex-end; gap: 8px; }
+.dac-confirm-acts .dac-btn { height: 32px; padding: 0 14px; border: 1px solid var(--border, #262c34); border-radius: 7px; background: var(--bg-input, #0d1117); color: var(--text-primary, #e6edf3); font: inherit; font-size: 12.5px; cursor: pointer; }
+.dac-confirm-acts .dac-btn.is-red { border-color: transparent; background: #da3633; color: #fff; font-weight: 600; }

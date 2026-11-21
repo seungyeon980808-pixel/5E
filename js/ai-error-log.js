@@ -1,3 +1,4 @@
+import { reportAiError } from './ai-error-copy.js?v=1.7.0-four-session-integration';
 /** Keep diagnostics useful without retaining credentials, request bodies or image bytes. */
 export function safeAiErrorText(value) {
   return String(value ?? '')
@@ -13,6 +14,9 @@ const genericFailures = new Set([
   '작업 실패',
   '요청 실패',
   '변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.',
+  '생성하지 못했습니다 · 앞 결과는 그대로',
+  '인터넷이 끊겨 생성하지 못했습니다 · 앞 결과는 그대로',
+  'AI 로그인이 없어 생성하지 못했습니다 · 앞 결과는 그대로',
 ]);
 
 export function appendAiErrorRecord(records, current, message, cause) {
@@ -52,6 +56,9 @@ export function mountAiErrorLog(panel, context) {
       ({ taskId, candidateId, sourceId, requestId, turnId, time, model, effort, occurrences, message: error, log: text })),
     record(message, cause) {
       if (!appendAiErrorRecord(records, context(), message, cause)) return;
+      // PATHFIX(11-20): 화면 오류 기록은 메모리에만 있어 창을 닫으면 사라졌다 — 설치판 ai-turns.log에도 남긴다.
+      const record = records.at(-1);
+      reportAiError('ai-panel', cause || message, { message: safeAiErrorText(String(message ?? '')).slice(0, 300), taskId: record?.taskId || null, requestId: record?.requestId || null, model: record?.model || null });
       panel.dispatchEvent(new CustomEvent('5e:ai-error-record', { bubbles: true, detail: { count: records.length } }));
     },
   };

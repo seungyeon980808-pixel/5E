@@ -120,6 +120,14 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   models: () => ipcRenderer.invoke("codex:models"),
   account: () => ipcRenderer.invoke("codex:account"),
   login: () => ipcRenderer.invoke("codex:login"),
+  cancelLogin: () => ipcRenderer.invoke("codex:login-cancel"),
+  logout: () => ipcRenderer.invoke("codex:logout"),
+  // PATHFIX(11-20): codex를 다시 찾기(설치한 뒤 「다시 찾기」) · AI 오류 기록 남기기/열기
+  locateCodex: () => ipcRenderer.invoke("codex:locate"),
+  diagnostics: {
+    logError: (entry) => ipcRenderer.invoke("diagnostics:log-error", entry),
+    openLog: () => ipcRenderer.invoke("diagnostics:open-log"),
+  },
   send: (payload) => ipcRenderer.invoke("codex:send", payload),
   // 11-10: 원본 그림을 읽는 글자 호출(라벨 복원). 에이전트를 거치지 않는다.
   readImageText: (payload) => ipcRenderer.invoke("codex:read-image-text", payload),
