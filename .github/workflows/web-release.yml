@@ -9,6 +9,11 @@ on:
         description: Publish the tested artifact (only after Pages/environment approval is configured)
         type: boolean
         default: false
+      skip_browser_regression:
+        # 11-21: 프로그램 코드는 바뀌지 않고 소개 페이지(page/) 같은 정적 파일만 바뀔 때만 켠다. 사이트 조립·단위 검사·게시 파일 검사는 그대로 거친다.
+        description: 브라우저 전체 회귀(약 2시간 40분) 건너뛰기 — 프로그램 코드가 바뀌지 않은 배포에서만
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +25,7 @@ concurrency:
 jobs:
   source-test:
     name: Source Browser Regression
+    if: ${{ !inputs.skip_browser_regression }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +58,8 @@ jobs:
 
   validate:
     needs: source-test
+    # 브라우저 회귀를 건너뛰었을 때(skipped)만 통과로 본다. 실패·취소면 그대로 막힌다.
+    if: ${{ !cancelled() && (needs.source-test.result == 'success' || (inputs.skip_browser_regression && needs.source-test.result == 'skipped')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +113,7 @@ jobs:
             _work/web-release/evidence
 
   publish:
-    if: ${{ inputs.publish && github.ref == 'refs/heads/main' }}
+    if: ${{ !cancelled() && needs.validate.result == 'success' && inputs.publish && github.ref == 'refs/heads/main' }}
     needs: validate
     runs-on: ubuntu-latest
     permissions:
