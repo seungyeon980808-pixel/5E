@@ -169,7 +169,7 @@ npm run desktop     # 설치판(Electron)으로 열기
 npm test            # 단위 검사
 ```
 
-Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 [DESIGN.md](DESIGN.md), 개발 기록은 [docs/dev/](docs/dev/README.md)에 있습니다.
+Node 24.21 · Electron 44.11.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 [DESIGN.md](DESIGN.md), 개발 기록은 [docs/dev/](docs/dev/README.md)에 있습니다.
 
 ## 문서
 

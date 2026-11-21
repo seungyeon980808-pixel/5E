@@ -26,7 +26,7 @@
     "test:web-artifact": "node tests/test-web-publication-browser.cjs"
   },
   "devDependencies": {
-    "electron": "44.4.5",
+    "electron": "44.11.5",
     "electron-builder": "26.15.3",
     "js-yaml": "4.3.2",
     "playwright": "1.62.1",
@@ -62,6 +62,7 @@
       "fonts/**/*",
       "desktop/**/*",
       "tests/fixtures/rights-clear-smoke.png",
+      "docs/credits.html",
       "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md",
       "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md",
       "docs/IMAGE_COMPLEXITY_MODE_SPEC.md",
