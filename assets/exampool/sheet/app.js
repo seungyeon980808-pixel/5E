@@ -494,11 +494,12 @@ function showBatch(){const B=pastBatch;if(!B)return;const n=jobBox(),one=!B.whol
   const rows=B.whole?[...B.rows.filter(r=>r.state==='image'||r.state==='fail'),...B.rows.filter(r=>r.state!=='image'&&r.state!=='fail')]:B.rows;
   const done=rows.filter(r=>r.state==='done'||r.state==='image').length,fail=rows.filter(r=>r.state==='fail').length,now=rows.find(r=>r.state==='now'),at=now?jobStep(now.stage):3;
   n.hidden=false;n.dataset.state=B.ended?(fail?'error':'done'):'busy';
-  const head=one?(one.state==='fail'?'변형 실패':one.state==='done'?'변형 완료':'변형 중'):B.whole&&B.ended?`변환 ${rows.length}문항`:`변형 ${rows.length}개`,sub=one?one.title:B.ended?(fail?`${done}개 끝 · ${fail}개 실패`:'모두 끝'):`${done}개 끝${now?' · 1개 하는 중':''}`;
+  const head=one?(one.state==='fail'?'변형 실패':one.state==='done'?'변형 완료':one.state==='image'?'그림으로 넣음':'변형 중'):B.whole&&B.ended?`변환 ${rows.length}문항`:`변형 ${rows.length}개`,sub=one?one.title:B.ended?(fail?`${done}개 끝 · ${fail}개 실패`:'모두 끝'):`${done}개 끝${now?' · 1개 하는 중':''}`;
   let body,sum='';
   if(B.whole&&B.ended){const wr=rows.filter(r=>r.whole),han=wr.filter(r=>r.state==='done').length,img=wr.filter(r=>r.state==='image'),again=img.some(r=>r.item);
     sum=`<div class="job-sum"><span>${[han?`${han}문항 한글로`:'',img.length?`${img.length}문항 그림으로 넣음`:''].filter(Boolean).join(' · ')||'넣은 문항 없음'}</span>${again?'<button type="button" class="mini" data-job-retry-all title="그림으로 넣은 문항을 한글 문항으로 다시 바꿔 봅니다">다시 시도</button>':''}</div>`;}
-  if(one)body=one.state==='fail'?`<p class="job-err">${E(one.error)}</p><button type="button" class="job-open" data-job-retry="${E(one.id)}">다시</button>`:`<ol class="lp-steps">${JOB_STEPS.map((x,i)=>`<li data-at="${i<at?'done':i===at?'now':''}">${i+1}. ${x}</li>`).join('')}</ol>${one.state==='done'&&!B.moved?`<button type="button" class="job-open" data-job-open="${E(one.qid)}">${E(one.number)}번 카드 보기</button>`:''}`;
+  if(one&&one.state==='image')body=`<p class="job-err">${E(one.error||'')}</p><button type="button" class="job-open" data-job-open="${E(one.qid)}">${E(one.number)}번 카드 보기</button>${one.item?`<button type="button" class="job-open" data-job-retry="${E(one.id)}" title="한글 문항으로 다시 바꿔 봅니다">다시 시도</button>`:''}`; // 11-22 한 문항 그림 대체
+  else if(one)body=one.state==='fail'?`<p class="job-err">${E(one.error)}</p><button type="button" class="job-open" data-job-retry="${E(one.id)}">다시</button>`:`<ol class="lp-steps">${JOB_STEPS.map((x,i)=>`<li data-at="${i<at?'done':i===at?'now':''}">${i+1}. ${x}</li>`).join('')}</ol>${one.state==='done'&&!B.moved?`<button type="button" class="job-open" data-job-open="${E(one.qid)}">${E(one.number)}번 카드 보기</button>`:''}`;
   else body=`<ol class="job-list">${rows.map(r=>`<li data-state="${r.state}">${r.state==='now'?'<i class="busy-ring" aria-hidden="true"></i>':`<b aria-hidden="true">${r.state==='done'?'✓':r.state==='fail'?'!':r.state==='image'?'▣':''}</b>`}<em title="${E(r.state==='fail'||r.state==='image'?r.error||r.title:r.title)}">${E(r.title)}${r.state==='done'?` → ${E(r.number)}번`:r.state==='image'?` → ${E(r.number)}번 · 그림으로 넣음`:''}</em>${
     r.state==='done'?`<button type="button" class="mini" data-job-open="${E(r.qid)}">열기</button>`:r.state==='image'?(r.item?`<button type="button" class="mini" data-job-retry="${E(r.id)}" title="한글 문항으로 다시 바꿔 봅니다">다시 시도</button>`:`<button type="button" class="mini" data-job-open="${E(r.qid)}">열기</button>`):r.state==='fail'?`<button type="button" class="mini" data-job-retry="${E(r.id)}">다시</button>`:r.state==='wait'?(r.whole?'<small>기다림</small>':`<small>기다림</small><button type="button" class="mini" data-job-drop="${E(r.id)}">빼기</button>`):`<small>${E(JOB_STEPS[jobStep(r.stage)])}</small>`}</li>`).join('')}</ol>`;
   n.innerHTML=`<div class="job-head"><b>${E(head)}</b><span>${E(sub)}</span><button type="button" data-job-close aria-label="닫기">×</button></div>${sum}${body}`;
@@ -567,7 +568,8 @@ async function convertPast(item,{go=false,row:given=null,whole=null}={}){
   }catch(e){
     // 11-20 시험지 통째로 변환: 한글로 못 바꾼 문항은 비우지 않고 원본 그림 문항으로 넣는다(그 줄은 맨 위로, 줄마다 다시 시도).
     if(whole&&row){pastIdle();await wholeImage(row,`한글로 바꾸지 못했습니다 · ${e.message}`);}
-    else{pastIdle(`가져오지 못했습니다 · ${e.message}`);if(row){row.state='fail';row.error=e.message;}showBatch();status(`${item.title} 변환 실패: ${e.message}`,true);}}
+    // 11-22: 한 문항 「변형」도 실패로 끝내지 않는다(선지가 그림인 문항 등 원본 분리 실패) — 원본 문항 그림 한 장짜리 문항으로 넣고 그 카드로 간다.
+    else if(!(await singleImage(item,row,go,e))){pastIdle(`가져오지 못했습니다 · ${e.message}`);if(row){row.state='fail';row.error=e.message;}showBatch();status(`${item.title} 변환 실패: ${e.message}`,true);}}
   finally{convertingPast=null;pastIdle();}
 }
 // ── 11-20 시안 「시험지 통째로 변환」(시험지통째변환/index.html 태그 3·4·5·6) ──
@@ -594,6 +596,15 @@ function wholeImageQuestion(run,row,figure){const q=newQuestion('0','객관식',
   q.source=`기출 그림 · ${title}`.slice(0,300);q.figureOnly=true;/* 빈 발문·①~⑤를 그리지 않음(handoff.js) · 배점은 기본 3점 그대로 */q.references=[{target:'question',label:`원본 기출 · ${title}`.slice(0,300),quote:''}];q.workflow='draft';
   if(!figure)q.ask=`${title} — 원본 그림을 넣지 못했습니다. 5E 라이브러리에서 이 문항을 잘라 그림 칸에 넣으세요.`;
   return q;}
+// 11-22: 한 문항 변형이 한글로 못 바꾼 경우 — 원본 문항 그림 한 장으로 넣는다. 그림도 못 받으면 false(예전처럼 실패 표시).
+async function singleImage(item,row,go,error){
+  const figure=await wholeFigureData(await pastQuestionData(item));if(!figure)return false;
+  const q=wholeImageQuestion({title:item.title},{title:item.title,whole:{no:item.no}},figure);
+  const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
+  if(!ok)return false;
+  pastIdle();if(row){row.state='image';row.error=`한글로 바꾸지 못했습니다 · ${error.message}`;row.qid=q.id;row.imageQid=q.id;row.number=q.number;}
+  const move=go&&go===view.name&&pastBatch&&!pastBatch.moved;if(move){pastBatch.moved=true;openCard(q.id);}
+  showBatch();const msg=`${item.title}은 한글로 바꾸지 못해 원본 그림 한 장으로 ${q.number}번 문항에 넣었습니다 · 「다시」로 한글 변형을 다시 시도할 수 있습니다`;status(msg);notice(msg);return true;}
 // 그림 문항으로 넣는다(이미 그 번호의 그림 문항이 있으면 그대로 두고 상태만).
 async function wholeImage(row,reason){const run=row.whole.run;
   if(row.imageQid&&data.questions.some(x=>x.id===row.imageQid)){row.state='image';row.error=reason;row.number=String(row.whole.no);showBatch();return;}
