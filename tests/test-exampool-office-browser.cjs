@@ -265,8 +265,12 @@ h.withServer(async origin => {
       assert.match(await nativeText(),/OK[\s\S]*실시간/,'the card edit reaches the HWP paragraph after the HWP edit');
       assert.equal(await passageCard(),'다음은 실험이다. OK','the HWP edit survives the card edit');
       // 한글에 나오지 않는 칸(해설)을 고쳐도 한글 창은 그대로다.
-      if(!await sheet.locator('#card-view [data-cvf="explanation"] + .eq-ce').isVisible())await sheet.click('#card-view [data-cvmore="exp"]');// 해설은 「문항 정보」 단추로 연다(10-27 카드 정리)
-      await sheet.click('#card-view [data-cvf="explanation"] + .eq-ce');await page.keyboard.type('해설만 바꿈');
+      // 11-14 해설 칸(1f9cfb5a): 선지 아래 「＋ 해설 쓰기」(비었을 때) 또는 접힌 머리 ▸로 연다. 글은 문단 칸 textarea[data-cvexp].
+      const expBox='#card-view .cv-exp textarea[data-cvexp="0"] + .eq-ce';// 수식 칸이라 textarea는 숨고 옆 .eq-ce에 쓴다
+      if(!await sheet.locator(expBox).isVisible())await sheet.click('#card-view [data-cv="exp-open"], #card-view .cv-exp.is-folded [data-cv="exp-toggle"]');
+      // 해설 칸을 펴면 카드를 다시 그리며 미리보기 창이 한 번 맞춰 본다(refreshView, 창은 다시 싣지 않음). 펴는 동작은 빼고, 해설 글만 고칠 때를 본다.
+      await sheet.waitForTimeout(900);await sheet.evaluate(()=>{window.__busySeen=false;});
+      await sheet.click(expBox);await page.keyboard.type('해설만 바꿈');
       await sheet.waitForTimeout(900);
       assert.equal(await sheet.evaluate(()=>window.__busySeen),false,'text edits and non-printed fields never redraw the HWP window');
       assert.equal(await sheet.locator('#typeset-refresh').isHidden(),true,'the HWP window matches the card');
@@ -391,16 +395,19 @@ h.withServer(async origin => {
         assert.equal(await smallSheet.locator('#card-view [data-cvline="bogi"]').count(),3,'a printed bogi stays visible on a non-combo card');
         for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-menu="bogi"]').first().click();await smallSheet.locator('#card-view .ig-menu [data-cvline-remove="bogi"]').click();await smallSheet.waitForTimeout(150);}// 줄 지우기는 줄 왼쪽 ⋮ 메뉴 안(10-27)
         await smallSheet.waitForFunction(()=>!document.querySelector('#card-view [data-cvline="bogi"]'));}
+      // 카드 위 문항 탭 줄의 ＋(data-cv="new")는 9f4a1b87(1.7.1 전)에서 빠졌다. 화면 어디서 열든 같은 #new(새 문항 창)를 부른다.
       // 자료 칸을 여럿 더해도 이름은 (가)·(나)… 순서로 겹치지 않는다((아) 다음은 (자)·(차)).
-      await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');await smallSheet.click('#new-dialog [data-nq="go"]');
-      for(let i=0;i<8;i++){const n=await smallSheet.locator('#card-view .cv-tile').count();await smallSheet.click('#card-view .cv-add-row');await smallSheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,n);}
-      assert.deepEqual(await smallSheet.locator('#card-view .cv-tile .cap b').allTextContents(),['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)']);
+      await smallSheet.evaluate(()=>document.querySelector('#new').click());await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');await smallSheet.click('#new-dialog [data-nq="go"]');
+      // 11-13(f99cfd0b): 「자료 칸 추가」 줄은 이름표 아래 ＋ 하나로 바뀌었고 자료 칸은 3개까지다. 꽉 차면 ＋가 꺼진다.
+      while(await smallSheet.locator('#card-view .cv-matadd:not([disabled])').count()){const n=await smallSheet.locator('#card-view .cv-tile').count();await smallSheet.click('#card-view .cv-matadd:not([disabled])');await smallSheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,n);}
+      assert.deepEqual(await smallSheet.locator('#card-view .cv-tile .cap b').allTextContents(),['(가)','(나)','(다)']);
+      assert.equal(await smallSheet.locator('#card-view .cv-matadd[disabled]').count(),1,'the add button turns off at three material slots');
       // 좁은 카드 칸에서도 유형 메뉴가 칸 밖으로 나가 잘리지 않는다.
       await smallSheet.click('#card-view .cv-shape');
       const menuFit=await smallSheet.evaluate(()=>{const m=document.querySelector('.cv-shape-menu').getBoundingClientRect(),c=document.querySelector('#card-view .cv-writer').getBoundingClientRect();return m.left>=c.left&&m.right<=c.right;});
       assert.equal(menuFit,true,'the type menu stays inside a narrow card column');
       // 새 문항 창은 키보드만으로 끝까지 고를 수 있다: 고른 뒤에도 초점이 창 안에 남아 숫자·Backspace·Enter가 먹는다.
-      await small.keyboard.press('Escape');await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.waitForSelector('#new-dialog[open] .nq-opt');
+      await small.keyboard.press('Escape');await smallSheet.evaluate(()=>document.querySelector('#new').click());await smallSheet.waitForSelector('#new-dialog[open] .nq-opt');
       for(const k of ['5','Backspace','2','1'])await small.keyboard.press(k);
       assert.equal(await smallSheet.evaluate(()=>!!document.activeElement?.closest('#new-dialog')),true,'focus stays in the new-question dialog');
       await small.keyboard.press('Enter');await smallSheet.waitForFunction(()=>/^일반 정답형/.test(document.querySelector('#card-view .cv-shape')?.textContent||''));
