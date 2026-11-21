@@ -65,7 +65,7 @@ async function fakeDesktop(context) {
       },
       send: async (payload) => {
         const turnId = `fake-${fake.sends.length + 1}`;
-        fake.sends.push({ purpose: payload.purpose || null, model: payload.model || null, text: String(payload.text || '').slice(0, 4000) });
+        fake.sends.push({ purpose: payload.purpose || null, model: payload.model || null, text: String(payload.text || '').slice(0, 4000), attachments: (payload.attachments || []).map((a) => String(a?.name || '')) });
         setTimeout(() => {
           if (payload.purpose === 'image') {
             const white = fake.white > 0; if (white) fake.white--;
@@ -374,7 +374,15 @@ h.withServer(async (origin) => {
       await vButton.click(); await rows.first().click(); await page.waitForTimeout(200);
 
       // V5 태그 16: 결과가 나온 뒤 다음 그리기는 그 결과 뒤 대화만 읽는다
+      const refChatFrom = (await fakeState(page)).sends.length;
       await chat(page, '오른쪽 비커에도 빛 화살표를 넣고, 사람 손은 왼쪽 비커만 잡게 해 줘');
+      // 11-22: 대화 AI가 결과가 참고한 기출을 안다(맥락 글) — 그림을 볼 질문이 아니면 기출 그림은 붙이지 않는다.
+      const refChat = (await fakeState(page)).sends.slice(refChatFrom).find((x) => x.purpose === 'chat');
+      assert.match(refChat.text, /\[그림 결과가 참고한 기출[\s\S]*\(지금 보는 결과\):\n- 참고한 기출: /u, `${name}: the chat AI is told which past-exam figures were referenced`);
+      assert.match(refChat.text, /첨부되지 않았다/u);
+      assert.ok(!refChat.attachments.some((a) => a.startsWith('참고한 기출')), `${name}: no past-exam figure attached for a plain message`);
+      const firstImage = (await fakeState(page)).sends.findIndex((x) => x.purpose === 'image');
+      assert.ok((await fakeState(page)).sends.slice(0, firstImage).every((x) => !/참고한 기출:/u.test(x.text)), `${name}: no reference context before any result`);
       await page.locator(`${PANEL} [data-ai-create-more]`).click();
       const lastName = (await vButton.textContent()).trim();
       assert.equal((await page.locator(`${PANEL} [data-ai-create-new] small`).textContent()).trim(), `${lastName.replace(/^생성 /, '')} 뒤 대화로`);
@@ -435,6 +443,15 @@ h.withServer(async (origin) => {
       await idle(page);
       expand = (await fakeState(page)).reads.slice(readsBefore).find((t) => /교사의 요청:/.test(t));
       assert.match(expand, /시험관/); assert.doesNotMatch(expand, /빛 화살표|광합성에서/);
+
+      // 11-22: 그림을 봐야 하는 질문(비교)일 때만 지금 보는 결과의 참고 기출 그림을 붙인다.
+      const compareFrom = (await fakeState(page)).sends.length;
+      await chat(page, '참고한 기출 그림이랑 비교해 줘');
+      const compareChat = (await fakeState(page)).sends.slice(compareFrom).find((x) => x.purpose === 'chat');
+      const refNames = compareChat.attachments.filter((a) => a.startsWith('참고한 기출 · '));
+      assert.ok(refNames.length >= 1 && refNames.length <= 3, `${name}: past-exam figures attached for a comparison (${compareChat.attachments})`);
+      assert.match(compareChat.text, new RegExp(`기출 그림 ${refNames.length}장을 「참고한 기출 · …」 이름으로 첨부했다`, 'u'));
+      assert.doesNotMatch(await logText(page), /참고한 기출(:| · )/u, `${name}: the screen does not show the referenced figures`);
 
       await closeAiPanel(page);
       assert.deepEqual(errors, [], `${name}: no page errors`);

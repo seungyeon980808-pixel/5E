@@ -962,6 +962,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-chat-refs.mjs",
+      "findingIds": [
+        "NIGHT172B-FIGURE-CHAT-REFS"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-speed.mjs",
       "findingIds": [
         "GENSPEED-FIGURE-SPEED"

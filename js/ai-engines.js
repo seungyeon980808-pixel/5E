@@ -355,6 +355,68 @@ export async function loadFigureRefImages(ids = [], { loadEngine = loadFigureEng
   return Promise.all(ids.map(id => Promise.resolve().then(() => mod.fetchFigure(id, { src: index?.byId?.get(id)?.src, signal })).catch(() => null)));
 }
 
+// --- 11-22: 대화 AI가 「이 그림이 참고한 기출」을 알게(화면 표시는 바꾸지 않음) ---
+// 사용자가 「기출 참고한 거 맞아?」 물었더니 대화 AI가 「참고 안 했다」고 답했다 — 대화 쪽은 엔진이 고른 참고 기출(meta.refs)을 몰랐다.
+const FIGURE_REF_SUBJECTS = { p1: '물리학Ⅰ', p2: '물리학Ⅱ', c1: '화학Ⅰ', c2: '화학Ⅱ', b1: '생명과학Ⅰ', b2: '생명과학Ⅱ', e1: '지구과학Ⅰ', e2: '지구과학Ⅱ' };
+const KICE_ADMIN = { '06': '6월 모의평가', '09': '9월 모의평가', '11': '대학수학능력시험' };
+
+/** 참고 기출 그림 id(예: b1_2021_09_03-1) + 색인 줄 → 「생명과학Ⅰ 2021학년도 9월 모의평가 3번 — 설명」. 형식이 다르면 id 그대로. */
+export function figureRefLabel(id, tag = null) {
+  const text = String(id || '');
+  const m = /^([a-z]\d)_(\d{4})_(\d{2})_(\d{1,2})(?:-(.+))?$/u.exec(text);
+  if (!m) return tag?.desc ? `${text} — ${tag.desc}` : text;
+  const [, code, year, month, number, part] = m;
+  const subject = tag?.subject || FIGURE_REF_SUBJECTS[code] || code;
+  const hak = tag?.src === 'hak' || !KICE_ADMIN[month];
+  const exam = hak ? `${Number(month)}월 학력평가` : KICE_ADMIN[month];
+  const piece = part && part !== '1' ? ` (${/^\d+$/u.test(part) ? `그림 ${part}` : part})` : '';
+  const head = `${subject} ${year}학년도 ${exam} ${Number(number)}번${piece}`;
+  return tag?.desc ? `${head} — ${tag.desc}` : head;
+}
+
+/** 결과 하나가 참고한 기출 id(최대 3개). 라벨 결과는 meta가 원래 결과에서 복사돼 같은 refs를 가진다. */
+export function figureRefIds(item) {
+  const refs = item?.meta?.refs;
+  return Array.isArray(refs) ? refs.filter((id) => typeof id === 'string' && id).slice(0, 3) : [];
+}
+
+/** 색인(tags.jsonl·tags-hak.jsonl)에서 id별 줄. 못 읽으면 빈 Map(이름은 id로 만든다). */
+export async function figureRefTags(ids = [], { loadEngine = loadFigureEngine } = {}) {
+  const out = new Map();
+  if (!ids.length) return out;
+  try {
+    const mod = await loadEngine();
+    const index = await mod.loadFigureIndex();
+    for (const id of ids) { const tag = index?.byId?.get(id); if (tag) out.set(id, tag); }
+  } catch { /* 색인을 못 읽어도 id로 만든 이름은 넘긴다 */ }
+  return out;
+}
+
+/**
+ * 대화 맥락에 넣을 「참고한 기출」 글. results = [{ name, refs, selected }].
+ * 참고 기출이 있는 결과가 없으면 ''(맥락에 아무것도 넣지 않음).
+ */
+export function figureRefContextText(results = [], tags = new Map(), { attachedCount = 0 } = {}) {
+  const withRefs = results.filter((r) => r?.refs?.length);
+  if (!withRefs.length) return '';
+  const lines = ['[그림 결과가 참고한 기출 — 화면에는 보이지 않지만 사실이다]',
+    '아래 생성 결과는 그림 엔진이 실제 평가원·학력평가 기출 그림을 참고 그림으로 함께 보고 그렸다.'];
+  for (const r of withRefs) {
+    lines.push(`${r.name || '생성 결과'}${r.selected ? '(지금 보는 결과)' : ''}:`);
+    for (const id of r.refs) lines.push(`- 참고한 기출: ${figureRefLabel(id, tags.get(id) || null)}`);
+  }
+  lines.push('교사가 기출을 참고했는지 물으면 「참고하지 않았다」고 하지 말고 위 목록대로 어떤 기출을 참고했는지 답한다. 참고는 구도·화풍을 본 것이지 그대로 베낀 것이 아니다.');
+  lines.push(attachedCount
+    ? `이번 메시지에 참고한 기출 그림 ${attachedCount}장을 「참고한 기출 · …」 이름으로 첨부했다. 비교할 때는 그 그림을 직접 보고 말한다.`
+    : '참고한 기출 그림 자체는 이번에 첨부되지 않았다. 모습을 비교해야 하면 위 설명만으로 말하고, 그림을 직접 보지 않았다는 것을 밝힌다.');
+  return lines.join('\n');
+}
+
+/** 그림을 직접 봐야 답할 수 있는 질문인가(비교·차이·닮음·보여 줘 …). 「참고한 거 맞아?」처럼 사실만 묻는 말은 아니다. */
+export function wantsFigureRefImages(text) {
+  return /비교|견주|견줘|대조|닮|비슷|똑같|같은지|차이|다른\s*점|달라|어디가|보여|봐\s*줘|살펴|기출\s*그림|원래\s*그림|원본/u.test(String(text || ''));
+}
+
 /** 「다른 기출로 다시 그리기」: 앞서 참고한 기출을 빼고 다시 고른 3장(엔진 retrieve). 못 고르면 []. */
 export async function pickOtherFigureRefs({ ai, request, exclude = [], models, signal, loadEngine = loadFigureEngine } = {}) {
   try {

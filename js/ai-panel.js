@@ -65,7 +65,7 @@ import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-fo
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL, AI_LABEL_READ_MODEL, labelPlanFromRead, measuredLabelSizes } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
-import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureEdit, figureLabelHints, pickOtherFigureRefs, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
+import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureEdit, figureLabelHints, pickOtherFigureRefs, loadFigureRefImages, figureRefIds, figureRefTags, figureRefLabel, figureRefContextText, wantsFigureRefImages, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
 import { advanceStatusRows, settleStatusRows, statusRowText, clockText, resultNumber, resultSubline, resultChips, labelHintsFallback, labelHintPrompt, eraseGlyphsInBoxes } from './ai-create-chat.js?v=1.7.0-four-session-integration';
 import { enterAction, isImeEnter, isBlankInspection, gatherDrawRequest, drawPlanNote, drawPreviewLine, composerHint, looksLikeDrawSummary, drawScope, resetIsLast, resultActionText, RESULT_MARK, RESET_MARK } from './ai-create-flow.js?v=1.7.0-four-session-integration';
 import { installChatWidth } from './ai-chat-width.js?v=1.7.0-four-session-integration';
@@ -7037,6 +7037,7 @@ ${chatText}` : ''}`;
       const clientPrepareStartedAt = performance.now();
       let outgoingItems = [];
       let outgoingAttachments = [];
+      let figureRefContext = '';
       let requestWithVisualPlan = renderRequest;
       let referenceRoleContract = '';
       let observationAttachments = null;
@@ -7262,6 +7263,28 @@ ${chatText}` : ''}`;
           conversationId,
         });
         outgoingAttachments = await Promise.all(outgoingItems.map(prepareTransportItem));
+        // 11-22: 그림 생성 대화 — 결과가 참고한 기출(meta.refs)을 대화 맥락에 넣는다(화면 표시는 그대로).
+        // 그림을 직접 봐야 하는 질문(비교·차이 …)일 때만 지금 보는 결과의 참고 기출 그림을 첨부한다(엔진 캐시 재사용).
+        if (type === 'chat' && isFigureCreate()) {
+          try {
+            const shown = selectedOutputItem() || generatedImages.at(-1) || null;
+            const results = generatedImages.map(item => ({ name: item.name, refs: figureRefIds(item), selected: item === shown })).filter(r => r.refs.length).slice(-6);
+            if (results.length) {
+              const ids = [...new Set(results.flatMap(r => r.refs))];
+              const tags = await figureRefTags(ids);
+              let attachedCount = 0;
+              const shownRefs = figureRefIds(shown);
+              if (shownRefs.length && wantsFigureRefImages(entered)) {
+                const images = await loadFigureRefImages(shownRefs);
+                const refItems = shownRefs.map((id, i) => (images[i] ? { id: `figure-ref-${id}`, name: `참고한 기출 · ${figureRefLabel(id, tags.get(id) || null).split(' — ')[0]}`, data: images[i], kind: 'reference', sourceKind: 'auto', comments: [] } : null)).filter(Boolean);
+                const refAttachments = (await Promise.all(refItems.map(item => prepareTransportItem(item).catch(() => null)))).filter(Boolean);
+                outgoingAttachments = [...outgoingAttachments, ...refAttachments];
+                attachedCount = refAttachments.length;
+              }
+              figureRefContext = figureRefContextText(results, tags, { attachedCount });
+            }
+          } catch { figureRefContext = ''; /* 맥락을 못 만들어도 대화는 보낸다 */ }
+        }
       }
 
       currentTurnPerformance = {
@@ -7344,7 +7367,7 @@ ${chatText}` : ''}`;
             referenceRoleContract,
             markPolicyContract: buildMarkPolicyContract(runInput.markPolicy),
           }))
-        : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode, creating: isFigureCreate() }));
+        : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode, creating: isFigureCreate(), context: figureRefContext }));
       const requestText = type === "image" && currentEngine === IMAGE_ENGINE_IDS.RASTER && !isExamBrief(runInput)
         ? sourceLabelRequest(baseRequestText, runInput, labelEvidenceForRun(runInput, renderRequest))
         : baseRequestText;

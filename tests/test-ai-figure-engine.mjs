@@ -147,7 +147,10 @@ test('buildFigurePrompt: v2t 사슬을 펼친 결과가 고정값과 같다', ()
   // image_generator pipeline/prompts/v2t.cjs build()와 글자 하나까지 같던 값(0869623efdc7dae0)에서
   // 11-21 「(가)(나)(다)는 그림에 쓰지 않는다」 한 줄만 바뀌었다(그렸다 지우느라 +40초 — 8과목 64장 시험).
   // 11-21(사용자 확정): 정자/기울임 규칙(수치+단위 정자·붙여 씀, 기호만 기울임, 첨자 정자)과 그림 한글 고딕 계열.
-  assert.equal(createHash('sha256').update(p).digest('hex').slice(0, 16), '358c002f1ec28c42');
+  // 11-22: 이온·원소·물질 기호(e⁻, Pᵢ, H⁺, O₂, ATP, P700 …)는 첨자까지 정자 — 생명 20장 시험에서 e⁻ 기울임 3장, Pᵢ 기울임 5장.
+  // 11-22(64장 대량 비교): P700 숫자는 같은 줄 정자, 반응식 전체를 기울이지 않음, 분자 수 계수는 붙여 씀(3CO₂).
+  assert.equal(createHash('sha256').update(p).digest('hex').slice(0, 16), 'a51d2376bd0c1e96');
+  assert.match(p, /전자 e⁻, 무기 인산 Pᵢ\(P와 첨자 i 모두 바로 선 글자\)/u);
   assert.match(p, /빈칸을 두지 않고 바로 붙여 쓴다/u);
   assert.match(p, /초점 F, 고기압 H/u);
   assert.match(p, /\(l\)의 l만 기울이고/u);

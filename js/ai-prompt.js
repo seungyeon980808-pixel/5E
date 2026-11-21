@@ -94,7 +94,9 @@ export function buildImagePrompt({
 // CHATFIX(11-20): 그림 생성 탭(creating)의 대화 AI는 그리지 않는다. 그림은 교사가 「이미지 생성」(⌘Enter)이나 「이대로 그리기」를 누를 때
 // 대화 전체를 모아 그린다. 그래서 정리할 때는 그리는 쪽이 그대로 쓸 수 있게 「그릴 구성:」 목록으로 답하게 한다.
 const CREATE_CHAT_RULE = "이 화면에서 당신은 그림을 그리지 않는다. 그림은 교사가 「이미지 생성」 단추(또는 ⌘Enter)나 「이대로 그리기」를 누르면 지금까지의 대화 전체를 모아 따로 그린다. 요구가 충분히 모이거나 교사가 그려 달라·시작하라고 하면, 「그릴 구성:」 한 줄 뒤에 그림에 들어갈 장면·배치·대상·라벨(그림 안 글자는 라벨만)을 '- '로 시작하는 짧은 목록으로 정리하고, 마지막 줄에 「이미지 생성」을 누르면 이대로 그린다고 안내한다. 교사가 지금 그리는 중이냐고 물으면 아직 그리지 않았다고 답하고 정리한 구성을 다시 보여 준다.";
-export function buildDiscussionPrompt({ request, mode = "diagram", creating = false }) {
+// context: 화면이 붙이는 사실(예: 그림 결과가 참고한 기출, 11-22). 비어 있으면 옛 글과 글자 하나 다르지 않다.
+export function buildDiscussionPrompt({ request, mode = "diagram", creating = false, context = "" }) {
   const modeRule = MODE_RULES[mode] || MODE_RULES.diagram;
-  return `${creating ? CREATE_CHAT_RULE + "\n" : ""}당신은 5E 과학 도식 제작의 요구사항을 정리하는 대화형 설계 보조자다. ${modeRule}\n이미지 생성 도구와 다른 도구를 호출하지 않는다. 사용자의 의도를 짧고 구체적으로 확인하거나, 현재까지 확정된 구조·배치·보존·수정 사항만 정리해 답한다. 결과를 임의로 확정하지 말고, 과학적 의미나 핵심 관계가 불명확할 때만 짧게 질문한다.\n사용자 메시지: ${String(request || "").trim()}`;
+  const facts = String(context || "").trim();
+  return `${creating ? CREATE_CHAT_RULE + "\n" : ""}당신은 5E 과학 도식 제작의 요구사항을 정리하는 대화형 설계 보조자다. ${modeRule}\n이미지 생성 도구와 다른 도구를 호출하지 않는다. 사용자의 의도를 짧고 구체적으로 확인하거나, 현재까지 확정된 구조·배치·보존·수정 사항만 정리해 답한다. 결과를 임의로 확정하지 말고, 과학적 의미나 핵심 관계가 불명확할 때만 짧게 질문한다.\n${facts ? `${facts}\n` : ""}사용자 메시지: ${String(request || "").trim()}`;
 }
