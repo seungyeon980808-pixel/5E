@@ -43,6 +43,9 @@ export function attachMathFields(root, { selector }) {
       if (v === f.value) return; f.value = v; ce._last = v; f.dispatchEvent(new Event('input', { bubbles: true }));
     }
     ce.addEventListener('input', push);
+    // 11-22: 덮어씌운 글 칸이 <label> 안(선지 줄: 정답 라디오 + 글)에 있으면, 글 칸을 누를 때 label 기본 동작이 첫 컨트롤(정답 라디오)로
+    // 넘어가 정답이 조용히 바뀌고 커서도 안 들어갔다. label 동작만 막고(커서 놓기는 mousedown에서 이미 됨) 글 칸에 초점을 준다.
+    ce.addEventListener('click', e => { if (!ce.closest('label')) return; e.preventDefault(); if (doc.activeElement !== ce) ce.focus(); });
     // 줄 칸·한 줄 칸에서 Enter는 원래 칸의 동작(다음 줄로)으로 — 띠를 닫는 Enter는 이미 막혀 있다(defaultPrevented)
     ce.addEventListener('keydown', e => {
       if (e.isComposing || e.defaultPrevented || e.key !== 'Enter' || e.shiftKey || ctl.isOpen()) return;
