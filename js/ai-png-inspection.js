@@ -8,7 +8,7 @@ export function inspectRgbaPixels(pixels, width, height) {
     throw new Error("픽셀 검사 크기가 올바르지 않습니다.");
   }
   let nonOpaquePixels = 0, chromaticPixels = 0, visibleColorPixels = 0;
-  let whitePixels = 0, darkPixels = 0, borderPixels = 0, whiteBorderPixels = 0;
+  let whitePixels = 0, darkPixels = 0, inkPixels = 0, borderPixels = 0, whiteBorderPixels = 0;
   let maxChannelDifference = 0;
   const band = Math.min(4, width, height);
   for (let y = 0; y < height; y += 1) {
@@ -26,6 +26,8 @@ export function inspectRgbaPixels(pixels, width, height) {
       const white = r === 255 && g === 255 && b === 255 && a === 255;
       if (white) whitePixels += 1;
       if (Math.max(r, g, b) <= 32 && a === 255) darkPixels += 1;
+      // CHATFIX(11-20): 회색 선도 「그린 것」으로 세는 몫 — 빈 그림 판정(ai-create-flow.js)이 같이 본다.
+      if (a >= 128 && r * 0.299 + g * 0.587 + b * 0.114 < 160) inkPixels += 1;
       if (x < band || x >= width - band || y < band || y >= height - band) {
         borderPixels += 1;
         if (white) whiteBorderPixels += 1;
@@ -40,6 +42,7 @@ export function inspectRgbaPixels(pixels, width, height) {
     channelDifferenceOver3Share: visibleColorPixels / pixelCount,
     maxChannelDifference, exactWhiteShare: whitePixels / pixelCount,
     darkPixelShare: darkPixels / pixelCount,
+    inkPixelShare: inkPixels / pixelCount,
     exactWhiteBorderShare: whiteBorderPixels / borderPixels,
     limitations: "측정만 수행. 검정 선과 면, 과학적 구조, 배경 영역은 구별하지 못함.",
   };
