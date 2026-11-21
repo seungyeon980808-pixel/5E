@@ -1630,6 +1630,13 @@
   font-weight: 650;
 }
 #ai-image-panel .ai-task-tab-copy .ai-task-tab-time {
+  /* 11-20: 「완료 · 앞 결과를 그대로 두었습니다」처럼 긴 끝 상태도 한 줄로(전체 글은 줄 title에) */
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text-secondary);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-variant-numeric: tabular-nums;
@@ -3165,6 +3172,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-loading-frame[data-loading-state="completed"],
 #ai-image-panel .ai-loading-frame[data-loading-state="failed"] { pointer-events: none; }
 #ai-image-panel[data-blur-loading="true"] .ai-generating { opacity: 0; pointer-events: none; }
+#ai-image-panel[data-loading-pending="true"] .ai-generating { opacity: 0; pointer-events: none; } /* 11-21: 새 로딩 시작 전 옛 상자 비침 막기 */
 #ai-image-panel .ai-loading-frame .br-bar { display: none; }
 #ai-image-panel .ai-loading-picture { position: relative; width: 100%; margin-inline: auto; border-radius: 0; }
 #ai-image-panel .ai-loading-caption { position: absolute; inset: 0; pointer-events: none; }
@@ -3465,3 +3473,13 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 /* 11-14(시안 review-1114 5번 G4): 그래프 쪽 전환 줄은 「복원 · 대화로 만들기 · 직접」. 「직접」은 빈 그래프 편집기(전환 탭이 아니라 바로 여는 단추). */
 [data-ai-mode="image"] .ai-workflow-switch [data-ai-graph-direct] { display:none; }
 .ai-workflow-switch [data-ai-graph-direct] { margin-left:4px; box-shadow: inset 1px 0 0 var(--border); border-radius:0 5px 5px 0; }
+
+/* PATHFIX(11-20): Codex 설치 안내(연결 정보 안) — 다른 안내 줄과 같은 글자·색, 명령은 고정폭 */
+.ai-codex-install { display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--border-strong, var(--border)); border-radius:6px; background:var(--bg-panel); font-size:11px; color:var(--text-primary, inherit); }
+.ai-codex-install[hidden] { display:none; }
+.ai-codex-install strong { font-size:11px; font-weight:600; }
+.ai-codex-install p { margin:0; color:var(--text-secondary); line-height:1.45; }
+.ai-codex-install-cmd { display:flex; gap:6px; align-items:baseline; flex-wrap:wrap; }
+.ai-codex-install-cmd code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:10.5px; padding:1px 5px; border-radius:4px; background:var(--bg-subtle, rgba(127,127,127,.12)); user-select:all; }
+.ai-codex-install-note:empty { display:none; }
+.ai-codex-install-actions { display:flex; gap:6px; margin-top:2px; }

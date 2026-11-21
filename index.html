@@ -79,6 +79,7 @@
   <link rel="stylesheet" href="/css/object-window.css?v=1.7.0-object-window" />
   <link rel="stylesheet" href="/css/popup-surface.css?v=1020-popup" />
   <link rel="stylesheet" href="/css/focus-calm.css?v=1028-focus" />
+  <link rel="stylesheet" href="/css/ai-create.css?v=1.7.0-four-session-integration" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true"></div>
@@ -87,7 +88,7 @@
 <header class="app-shell-header">
 <div class="canvas-toolbar">
 <div class="toolbar-history" role="group" aria-label="작업 기록"><a class="app-brand" href="https://seungyeon980808-pixel.github.io/personal_site/projects/physics-draw.html"
-           target="_blank" rel="noopener" title="5E · sciEnce Educational Evaluation Exam Editor · 과학 교육을 위한 평가 문항 편집기"><b class="app-brand-mark">5E</b><span class="app-brand-name">_image</span></a></div>
+           target="_blank" rel="noopener" title="5E · sciEnce Educational Evaluation Exam Editor · 과학 평가문항 제작 플랫폼"><b class="app-brand-mark">5E</b><span class="app-brand-name">_image</span></a></div>
 <div class="toolbar-canvas"><div class="toolbar-document">
         <nav class="app-switch app-switch-image" aria-label="5E 프로그램"><button type="button" class="app-switch-btn" data-app-switch="exam" title="출제 — 문항 만들기">exam</button><button type="button" class="app-switch-btn" data-app-switch="hwp" title="조판 — 시험지 인쇄 전 마무리">hwp</button></nav><button id="undo-btn" class="topbar-btn icon-btn" type="button"
                 title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button id="redo-btn" class="topbar-btn icon-btn" type="button"
@@ -686,6 +687,14 @@
               </div>
               <button type="button" class="ai-setting-help" aria-label="객체 분리 도움말" aria-expanded="false" data-ai-help-title="객체 분리" data-ai-setting-help="켜면 떨어져 있는 객체를 자동 감지해 각각 사용할 수 있게 분리합니다. 맞닿거나 겹친 구조는 함께 처리될 수 있습니다. 켜는 동안 배경 제거도 함께 적용됩니다.">?</button>
             </div>
+            <div class="ai-setting-row ai-fast-replace-row" data-ai-fast-replace-row>
+              <span title="글자 바꾸기 빠르게">글자 빠르게</span>
+              <div class="ai-setting-pair" data-ai-fast-replace-group role="group" aria-label="글자 바꾸기 빠르게" title="다시 그리지 않고 5E 글꼴로 바꿈">
+                <button type="button" data-ai-fast-replace="0" aria-pressed="true" class="is-on">끄기</button>
+                <button type="button" data-ai-fast-replace="1" aria-pressed="false">켜기</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="글자 바꾸기 빠르게 도움말" aria-expanded="false" data-ai-help-title="글자 바꾸기 빠르게" data-ai-setting-help="글자만 바꾸는 고침을 그림을 다시 그리지 않고 몇 초 만에 합니다. 새 글자는 5E 글꼴로 들어갑니다.">?</button>
+            </div>
             <div class="ai-separation-note" data-ai-separation-note hidden><span data-ai-separation-text></span><button type="button" class="ai-text-link" data-ai-separation-manual>직접 나누기</button></div>
             <div class="ai-setting-row" hidden>
               <span>화살표 제거</span>
@@ -860,7 +869,16 @@
                 <span data-ai-limit>잔여 한도 확인 중…</span>
                 <span data-ai-account-tokens>누적 토큰 확인 중…</span>
               </div>
-              <button type="button" data-ai-login>Codex 로그인</button>
+              <button type="button" data-ai-login>GPT 로그인</button>
+              <!-- PATHFIX(11-20): Codex 프로그램을 못 찾았을 때만 보이는 설치 안내 — 「다시 찾기」로 찾으면 멈춘 요청을 이어서 한다 -->
+              <div class="ai-codex-install" data-ai-codex-install hidden role="status" aria-live="polite">
+                <strong>이 컴퓨터에서 Codex 프로그램을 찾지 못했습니다</strong>
+                <p>AI 기능은 Codex 프로그램으로 연결됩니다. 아래 중 하나로 설치한 뒤 「다시 찾기」를 누르면 멈춘 요청을 이어서 합니다.</p>
+                <p class="ai-codex-install-cmd"><span>맥(Homebrew)</span><code>brew install --cask codex</code></p>
+                <p class="ai-codex-install-cmd"><span>맥·윈도우(Node.js)</span><code>npm i -g @openai/codex</code></p>
+                <p class="ai-codex-install-note" data-ai-codex-install-note></p>
+                <div class="ai-codex-install-actions"><button type="button" data-ai-codex-locate>다시 찾기</button><button type="button" data-ai-open-error-log>오류 기록 열기</button></div>
+              </div>
               <p data-ai-fixed-model hidden>그래프 복원 · Sol 6.1 / medium 고정</p>
               <label class="ai-setting-label" hidden>생성 모델
                 <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>

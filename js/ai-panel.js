@@ -1,3 +1,4 @@
+import { grayscaleGeneratedPng } from './ai-grayscale-png.js?v=1.7.0-four-session-integration';
 import { AI_WORKFLOW_KINDS, normalizeAIWorkflowKind, isGraphWorkflow, isCreationWorkflow } from './ai-workflow-kinds.js?v=1.7.0-four-session-integration';
 import { graphDescriptionSource, prepareGraphDescriptionPlan } from './graph/description-contract.js?v=1.7.0-four-session-integration';
 import { createWorkbenchLoading, estimateLoadingMs, showDoneNotice } from './loading/workbench-loading.js?v=1.7.0-four-session-integration';
@@ -11,7 +12,7 @@ import { createInlineLabelEditor } from './ai-inline-label-editor.js?v=1.7.0-fou
 import { visibleImagePng } from './ai-visible-image-output.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry, isQuietLabelReadResult, isQuietSkippedReviewResult } from './ai-result-attention.js?v=1.7.0-four-session-integration';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
-import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
+import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph, workbenchGraphSourceFrame } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
 import { describeGraphFailure } from './graph/reconstruction-error.js?v=1.7.0-four-session-integration';
 import { summarizeAnalyticGraph } from './graph/analytic-summary.js?v=1.7.0-four-session-integration';
 import { collectScopedAreaComments, buildScopedEditPrompt } from './ai-scoped-edit-prompt.js?v=1.7.0-four-session-integration';
@@ -28,10 +29,13 @@ import { mountRevisionComparison } from './ai-comparison.js?v=1.7.0-four-session
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.7.0-four-session-integration';
 import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
 import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.7.0-four-session-integration';
-import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.7.0-four-session-integration';
+import { createWorkbenchRequestState, isTerminalRequestPhase, requestPhaseLabel, requestPhaseOutcome } from './ai-workbench-request-state.js?v=1.7.0-four-session-integration';
+import { GENERATION_STOPPED, generationFailedText, failureReason } from './ai-generation-copy.js?v=1.7.0-four-session-integration';
+import { aiErrorText, aiErrorCode, codexMissing, reportAiError } from './ai-error-copy.js?v=1.7.0-four-session-integration';
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-four-session-integration';
 import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { clearTaskWorkspaces, taskHasReviewNotice, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {
   advanceGenerationTiming,
@@ -60,8 +64,13 @@ import { createSourceLabelController, withFrozenSourceLabelPlan, buildSourceLabe
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
-import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
-import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
+import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL, AI_LABEL_READ_MODEL, labelPlanFromRead, measuredLabelSizes } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
+import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureEdit, figureLabelHints, pickOtherFigureRefs, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
+import { advanceStatusRows, settleStatusRows, statusRowText, clockText, resultNumber, resultSubline, resultChips, labelHintsFallback, labelHintPrompt, eraseGlyphsInBoxes } from './ai-create-chat.js?v=1.7.0-four-session-integration';
+import { enterAction, isImeEnter, isBlankInspection, gatherDrawRequest, drawPlanNote, drawPreviewLine, composerHint, looksLikeDrawSummary, drawScope, resetIsLast, resultActionText, RESULT_MARK, RESET_MARK } from './ai-create-flow.js?v=1.7.0-four-session-integration';
+import { installChatWidth } from './ai-chat-width.js?v=1.7.0-four-session-integration';
+import { LABEL_READ_PROMPT, parseLabelRead } from './ai-direct-label-plan.js?v=1.7.0-four-session-integration';
+import { eraseLabelsAndLeaders } from './ai-label-leader-erase.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { validateLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { prepareEditableLabelFonts } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
@@ -430,9 +439,10 @@ export function resolveAiTerminalOutcome({
   return normalized === "completed" ? "completed" : "failed";
 }
 
-export function aiTerminalStatusView(outcome, { imageReceived = false } = {}) {
-  if (outcome === "failed") return { text: "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.", kind: "error" };
-  if (outcome === "cancelled") return { text: "작업 취소됨", kind: "warn" };
+export function aiTerminalStatusView(outcome, { imageReceived = false, creating = false, reason = 'ai' } = {}) {
+  // creating: 그림 생성 — 원본이 없으므로 「앞 결과는 그대로」(변환 문구는 그대로 둔다).
+  if (outcome === "failed") return { text: creating ? generationFailedText(reason) : "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.", kind: "error" };
+  if (outcome === "cancelled") return { text: creating ? GENERATION_STOPPED : "작업 취소됨", kind: "warn" };
   if (outcome === "completed" && imageReceived) return { text: "생성 완료", kind: "ok" };
   return null;
 }
@@ -544,8 +554,10 @@ export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTa
   if (tab?.id !== activeTaskTabId || !['busy', 'running'].includes(tab?.workState)) {
     return { acknowledged: false };
   }
-  const outcome = await interrupt();
-  return { acknowledged: outcome?.ok === true };
+  // 먹통 고침(11-21): 이미 끝난 턴·대화 턴은 interrupt가 ok:true를 못 돌려줘 작업을 지울 수 없었다.
+  // 멈추기를 보냈으면(결과·오류와 상관없이) 지우기를 허락한다 — 늦게 오는 이벤트는 epoch로 버려진다.
+  try { await interrupt(); } catch { /* 멈추기가 실패해도 지우기는 진행 */ }
+  return { acknowledged: true };
 }
 
 function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, switchWorkflow, navigationChanged, workspaceEmpty, clearCollection, selectCollection, launchSelected, selectedTaskCount, selectedTaskBlocked = () => 0, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
@@ -710,6 +722,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }
   const referenceSearchButton = panel.querySelector("[data-ai-reference-search]");
   const loginButton = panel.querySelector("[data-ai-login]");
+  // PATHFIX(11-20): Codex 프로그램을 못 찾았을 때의 설치 안내(연결 정보 안) — 「다시 찾기」·「오류 기록 열기」
+  const codexInstallBox = panel.querySelector("[data-ai-codex-install]");
+  const codexInstallNote = panel.querySelector("[data-ai-codex-install-note]");
+  const codexLocateButton = panel.querySelector("[data-ai-codex-locate]");
+  const openErrorLogButton = panel.querySelector("[data-ai-open-error-log]");
+  const CODEX_MISSING_STATUS = 'Codex 프로그램을 찾지 못했습니다 · 연결 정보의 설치 안내대로 설치한 뒤 「다시 찾기」를 누르면 이어서 합니다.';
+  const showCodexInstall = (visible, note = '') => {
+    if (!codexInstallBox) return;
+    codexInstallBox.hidden = !visible || !desktop || Boolean(desktop.web);
+    if (codexInstallNote) codexInstallNote.textContent = note;
+    if (visible && loginButton) loginButton.hidden = true;
+  };
+  queueMicrotask(() => { try { wireCodexInstallControls(); } catch (error) { console.warn('[5E] 설치 안내 단추 연결 실패', error); } });
   const modelSelect = panel.querySelector("[data-ai-model]");
   const modelWarning = panel.querySelector("[data-ai-model-warning]");
   const modelRefreshButton = document.createElement('button');
@@ -931,6 +956,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   comparisonHost.className = 'ai-inline-comparison';
   comparisonHost.hidden = true;
   panel.querySelector('.ai-comparison-grid')?.after(comparisonHost);
+  comparisonHost.addEventListener('change', () => scheduleCreateSync());
   const closeComparison = () => {
     comparison?.dispose();
     comparison = null;
@@ -939,6 +965,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const button = panel.querySelector('[data-ai-compare]');
     button?.setAttribute('aria-pressed', 'false');
     button?.classList.remove('is-on');
+    scheduleCreateSync();
   };
   let closeCapture = null;
   window.addEventListener('5e:ai-workspace-activate', event => {
@@ -987,6 +1014,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     conversationMessages = [...previous, { role, text: value.slice(0, 4000) }].slice(-20);
     try { saveConversationMessages(); }
     catch (error) { conversationMessages = previous; throw error; }
+  };
+  // V5(시안 대화창v5 ④·⑤): 대화 기록 안 표시 — 결과가 나온 자리({role:'result'})·「새 대화」({role:'reset'}).
+  // 그림 요청·대화 요약은 user/assistant만 읽으므로 표시는 말로 새지 않는다. 저장을 못 해도 화면 일은 막지 않는다.
+  const recordConversationMark = (mark) => {
+    const previous = conversationMessages;
+    conversationMessages = [...previous, { ...mark, text: '' }].slice(-20);
+    try { saveConversationMessages(); } catch { /* 표시는 이번 화면에서만이라도 쓴다 */ }
   };
 
   const persistPerformance = (metrics) => {
@@ -1065,8 +1099,42 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       images: [original && { ...original, role: 'original' }, result && { ...result, data: localEraseController?.getDraft(result)?.data || result.data, role: 'result' }].filter(Boolean),
       errors: errorLog.snapshot() };
   }));
+  // 11-21 사용자: 대화를 보내면 답이 올 때까지 대화창에 아무 변화가 없어 답하는 중인지 알 수 없었다.
+  // 그림 생성 탭에서 대화 답을 기다리는 동안 답 자리에 빛이 흐르는 글자 + 시간에 따라 바뀌는 단계 글을 둔다.
+  let chatThinkingNode = null, chatThinkingTimer = 0;
+  const CHAT_THINKING_STEPS = [[0, '생각하는 중'], [4000, '말씀을 정리하는 중'], [10000, '그림 구성을 짜는 중'], [20000, '조금만 더 기다려 주세요']];
+  function hideChatThinking() {
+    if (chatThinkingTimer) { clearInterval(chatThinkingTimer); chatThinkingTimer = 0; }
+    chatThinkingNode?.remove(); chatThinkingNode = null;
+  }
+  function showChatThinking() {
+    if (chatThinkingNode?.isConnected) return;
+    hideChatThinking();
+    const node = document.createElement('div');
+    node.className = 'ai-msg assistant ai-chat-thinking'; node.dataset.aiChatThinking = ''; node.setAttribute('role', 'status'); node.setAttribute('aria-live', 'polite');
+    // 11-21 사용자 요청: 움직이는 점 아이콘 + 지금 하는 일 + 흐른 시간(「생각하는 중 · 12초」).
+    const dots = document.createElement('span'); dots.className = 'ai-chat-thinking-dots'; dots.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 4; i++) dots.append(document.createElement('i'));
+    const label = document.createElement('span'); label.className = 'ai-chat-thinking-text'; label.textContent = CHAT_THINKING_STEPS[0][1];
+    const clock = document.createElement('span'); clock.className = 'ai-chat-thinking-time';
+    node.append(dots, label, clock); log.appendChild(node); log.scrollTop = log.scrollHeight;
+    const started = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - started;
+      const text = [...CHAT_THINKING_STEPS].reverse().find(([at]) => elapsed >= at)[1];
+      if (label.textContent !== text) label.textContent = text;
+      const sec = Math.floor(elapsed / 1000);
+      const t = sec >= 60 ? `${Math.floor(sec / 60)}분 ${sec % 60}초` : `${sec}초`;
+      if (clock.textContent !== t) clock.textContent = t;
+    };
+    tick(); chatThinkingTimer = setInterval(tick, 500);
+    chatThinkingNode = node;
+  }
   const addLog = (text, kind = "assistant") => {
     if (!text) return null;
+    const keepThinking = kind === 'user' && Boolean(chatThinkingNode);
+    hideChatThinking();
+    if (keepThinking) queueMicrotask(() => { if (busy && currentTurnType === 'chat' && panel.dataset.aiCreateUi === 'true') showChatThinking(); });
     if (kind === "error") { errorLog.record(text); text = safeAiErrorText(text); }
     if (text === APPROVED_FIRST_REQUEST || text === APPROVED_FIRST_PROMPT || text === SEPARATED_ASSETS_PROMPT) {
       text = "이미지 변환을 요청했습니다.";
@@ -1386,7 +1454,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (request) {
       const seconds = Math.floor(request.elapsedMs / 1000);
       const phase = taskNeedsLabelReview(tab) && request.phase === 'failed' ? '검수 확인 필요'
-        : { preparing: '요청 준비', 'confirmation-wait': '확인 대기', generating: '변환 중', validating: '결과 확인', completed: '완료', failed: '실패', cancelled: '취소' }[request.phase];
+        : requestPhaseLabel(request.phase, { creating: isCreationWorkflow(tab?.conversionKind) });
       return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · ${phase}`;
     }
     if (view?.available) return `${view.formatted}${taskNeedsLabelReview(tab) ? ' · 확인 사항' : ''}`;
@@ -1412,8 +1480,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const request = requestStates.snapshot(activeTaskTabId);
     if (request) {
       const running = requestStates.live(request.token);
-      const phaseCopy = { preparing: '요청 준비', 'confirmation-wait': '사용자 확인 대기', generating: '이미지 생성 중', validating: '결과 확인 중', completed: '작업 완료', failed: '작업 실패', cancelled: '작업 취소' };
-      if (progressStage) progressStage.textContent = phaseCopy[request.phase];
+      if (progressStage) progressStage.textContent = requestPhaseLabel(request.phase, { detail: true });
       if (generating) generating.dataset.aiPhase = request.phase;
       const seconds = Math.floor(request.elapsedMs / 1000);
       const label = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
@@ -1471,6 +1538,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     return view;
   };
   const setGenerating = (on, title = "이미지를 생성하고 있습니다", detail = "런타임 이벤트를 기다리고 있습니다.") => {
+    if (!on) delete panel.dataset.loadingPending;
     generating.hidden = !on;
     progressTitle.textContent = title;
     progressDetail.textContent = detail;
@@ -1485,12 +1553,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     pendingLoading = null;
     loading.reset();
     requestToken = requestStates.begin(activeTaskTabId, selectedCandidateId);
-    if (type !== 'chat' && (!isCreationWorkflow(conversionKind) || conversionKind === 'graph-create')) {
-      const source = loadingSource || attachments.find(isInputReference)?.data || attachments[0]?.data;
+    // 11-19(시안 태그 7): 그림 생성도 새 로딩 창. 첫 생성 바탕은 흐린 빈 종이(원본이 없어도 시작한다).
+    if (type !== 'chat' && (!isCreationWorkflow(conversionKind) || conversionKind === 'graph-create' || conversionKind === 'image-create')) {
+      const source = loadingSource || (conversionKind === 'image-create' ? blankPaper() : attachments.find(isInputReference)?.data || attachments[0]?.data);
       const selectedModel = isGraphWorkflow(conversionKind) ? GRAPH_WORKBENCH_SELECTION.model : modelSelect.value;
       const history = [...taskTabs.values()].filter(tab => (tab.conversionKind || 'image') === conversionKind && tab.model === selectedModel)
         .flatMap(tab => (tab.generated || []).map(item => item.workflowMetrics?.timings?.total || item.generationTiming?.elapsedMs));
-      pendingLoading = { token: requestToken, source, kind: conversionKind, model: selectedModel, startedAt: Date.now(), expectedMs: estimateLoadingMs(conversionKind, selectedModel, history), ...(isGraphWorkflow(conversionKind) ? { plan: conversionKind, phased: true } : {}) };
+      pendingLoading = { token: requestToken, source, kind: conversionKind === 'image-create' ? 'figure' : conversionKind, model: selectedModel, startedAt: Date.now(), expectedMs: estimateLoadingMs(conversionKind, selectedModel, history), ...(isGraphWorkflow(conversionKind) ? { plan: conversionKind, phased: true } : {}) };
+      // 11-21: 새 로딩 창은 준비(연결·모델 확인)가 끝난 뒤 시작한다 — 그 사이 옛 진행 상자가 잠깐 비치던 것을 처음부터 숨긴다.
+      panel.dataset.loadingPending = 'true';
     }
     setBusy(true);
     stopGenerationTimingTimer();
@@ -1513,10 +1584,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }, 180_000);
     return requestToken;
   };
-  const requestPhase = phase => {
+  // 그림 생성이 새 결과를 못 냈어도 앞 결과 카드가 있으면 그것을 그대로 두고 끝난 것이다(작업 목록 「완료 · 앞 결과를 그대로 두었습니다」).
+  const failedRequestPhase = () => currentTurnType === 'image' && conversionKind === 'image-create' && generatedImages.length ? 'kept-previous' : 'failed';
+  // reason: 못 끝난 까닭('offline'·'login'·'ai') — 로딩 창이 까닭대로 말한다(생성만). 기다리는 단계는 까닭이 정해져 있다.
+  const requestPhase = (phase, { reason = null } = {}) => {
     if (batchRun) void batchRun.emit({type:'progress',progress:{phase}}).catch(batchRun.reject);
     if (requestStates.advance(requestToken, phase)) {
       panel.dataset.aiRequestPhase = phase;
+      if (phase !== 'preparing') delete panel.dataset.loadingPending; // 새 로딩이 넘겨받거나(generating) 다른 안내(로그인 기다림 등)로 바뀐다
       // 라벨 변환 작업은 단계 신호를 보낸다. 라벨 복원과 이미지만은 단계 구성이 다르다.
       if (phase === 'generating' && pendingLoading?.token === requestToken) loading.begin(currentRunInput?.loadingPlan ? { ...pendingLoading, plan: currentRunInput.loadingPlan, phased: true } : pendingLoading);
       if (phase === 'validating') { loading.setPhase('결과 확인 중'); loading.stage('validating'); }
@@ -1525,11 +1600,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         const graphJob = isGraphWorkflow(conversionKind);
         showDoneNotice({ title: graphJob ? '그래프가 다 만들어졌어요' : '그림 변환이 끝났어요', detail: `${Math.floor(tookMs / 60000)}:${String(Math.floor(tookMs / 1000) % 60).padStart(2, '0')} 걸림`, onOpen: () => showWorkbench(), ...(graphJob ? { anchor: document.getElementById('graph-tool-open') } : {}) });
       }
-      if (['completed', 'failed', 'cancelled'].includes(phase)) {
+      if (isTerminalRequestPhase(phase)) {
         const candidate = currentTurnCandidate || generatedImages.at(-1);
-        void loading.finish({ token: requestToken, outcome: phase, result: phase === 'completed' ? candidate?.data : null });
+        const ended = requestPhaseOutcome(phase);
+        void loading.finish({ token: requestToken, outcome: ended.outcome, result: phase === 'completed' ? candidate?.data : null, reason: ended.reason || reason, resumes: ended.resumes });
+        clearTimeout(requestTimeout); requestTimeout = null;
       }
-      if (['completed', 'failed', 'cancelled'].includes(phase)) { clearTimeout(requestTimeout); requestTimeout = null; }
       renderGenerationTiming();
     }
   };
@@ -1538,9 +1614,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const workState = taskTabs.get(activeTaskTabId)?.workState;
       if (currentCancelRequested) requestPhase('cancelled');
       else if (workState === 'completed' || (currentTerminalOutcome === 'completed' && !previewPending && (imageReceived || currentTurnType === 'chat'))) requestPhase('completed');
-      else if (workState === 'failed' || currentTerminalOutcome === 'failed') requestPhase('failed');
+      else if (workState === 'failed' || currentTerminalOutcome === 'failed') requestPhase(failedRequestPhase());
     }
     busy = on;
+    // 11-21: 그림 생성 탭에서 대화 답을 기다리는 동안 답 자리 표시(showChatThinking) — 끝나면 거둔다.
+    if (on && panel.dataset.aiCreateUi === 'true' && currentTurnType === 'chat') showChatThinking(); else if (!on) hideChatThinking();
     if (on) closeSourceMenu();
     if (!insertingOutput) {
       if (on) setTaskState("busy");
@@ -1621,6 +1699,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     panel.dataset.aiNeedsSource = String(needsSource);
     commentController?.render();
     syncGraphWorkbenchUi();
+    // V5: 그림 생성 탭에서는 위 옛 글(「이미지 생성」)이 그리기 단추를 덮지 않게 생성 화면 맞추기를 다시 건다(결과 목록을 열 때 「이 그림 고치기」가 바뀌던 문제).
+    if (panel.dataset.aiCreateUi === 'true') { try { scheduleCreateSync(); } catch { /* 시작 중(생성 화면 준비 전) */ } }
   };
   const syncConversionSummary = () => {
     if (sourceLabelNote) sourceLabelNote.hidden = !readPreserveSourceLabels();
@@ -1722,6 +1802,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     syncSelectedOutputActions();
   };
   const syncReferenceSummary = () => {
+    scheduleCreateSync(); // 레퍼런스가 생기거나 없어지면 결과만 보기·좌우 두 칸이 바뀐다(시안 태그 1·2)
     referenceCount.textContent = String(attachments.length);
     const empty = attachmentList.querySelector("[data-ai-reference-empty]");
     if (empty) empty.hidden = attachments.length > 0;
@@ -1800,7 +1881,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (!['gpt-6.1-sol', 'gpt-6-luna'].includes(preference.model) && availableModels.some(item => (item.model || item.id) === 'gpt-6.1-sol')) preference.model = 'gpt-6.1-sol';
     let catalog = [], selection = preference;
     try { catalog = readAIModelCatalog(availableModels); selection = defaultAIModelSelection(availableModels, preference); }
-    catch (error) { setStatus(error.message, 'error'); }
+    catch (error) { setStatus(aiErrorText(error), 'error', error); }
     fillChoice(modelSelect, catalog.map(item => [item.model, item.displayName]), selection.model);
     populateEfforts(selection.effort);
     populateSpeeds(selection.serviceTier);
@@ -1817,7 +1898,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       restoreModelChoices();
     } catch (error) {
       restoreModelChoices();
-      setStatus(error.message, 'error');
+      // PATHFIX: 「Error invoking remote method 'codex:models': Error: spawn codex ENOENT」 대신 한국어 안내(원문은 오류 기록에).
+      if (aiErrorCode(error) === 'CODEX_NOT_FOUND') { showCodexInstall(true); setStatus(CODEX_MISSING_STATUS, 'warn'); reportAiError('codex:models', error); }
+      else setStatus(aiErrorText(error), 'error', error);
     }
   };
   const renderLimits = (limits) => {
@@ -2599,6 +2682,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   }
   function syncSelectedOutputActions() {
+    scheduleCreateSync();
     const item = selectedOutputItem();
     const outputBusy = busy || isLocalSavePending(item);
     syncLabelViewControls();
@@ -2837,6 +2921,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     modelRefreshButton.hidden = false; if (graph && modelWarning) { let message=''; try { resolveAIModelSelection(GRAPH_WORKBENCH_SELECTION,availableModels); } catch(error) { message=modelsLoaded ? `그래프는 Sol 6.1 / medium으로 실행합니다. ${error.message}` : ''; } modelWarning.textContent=message; modelWarning.hidden=!message; }
     const connectionSummary=panel.querySelector('[data-ai-account-tokens]'); if(graph && connectionSummary) connectionSummary.title='편집 그래프: Sol 6.1 / medium 고정';
     if (conversionSummary && graph) conversionSummary.textContent = '편집 가능한 그래프';
+    scheduleCreateSync();
   }
 
   function switchConversionKind(kind) {
@@ -2979,6 +3064,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   //   'offline' 인터넷 끊김 → 안내, online이 되면 이어서
   //   'objects' 설계를 못 받아 축만 그림·엔진 실패 → 기본 그래프 객체 생성으로(축만 그린 그림은 error.minimalItem으로 넘겨 최후의 결과로 남김)
   const graphPictureStop = (outcome, message, extra = {}) => Object.assign(new Error(message), { graphOutcome: outcome, ...extra });
+  // 로그인·연결이 없어 멈춘 그래프 생성은 실패가 아니라 「로그인 대기」·「연결 대기」다. 로그인하거나 online이 되면 같은 요청으로 이어서 만든다.
+  const parkGraphCreate = (outcome, again, { missing = null } = {}) => {
+    advanceGenerationClock('turn-terminal', 'failed'); requestPhase(outcome === 'login' || outcome === 'install' ? 'login-wait' : 'offline-wait');
+    if (outcome === 'login' || outcome === 'install') { guideDesktopLogin(again, { missing: outcome === 'install' ? true : missing }); return; }
+    setTaskState('idle');
+    setStatus('인터넷 연결을 확인해 주세요 · AI 서버에 닿지 못해 이번에는 그래프를 만들지 못했습니다. 앞 결과와 입력은 그대로 두었고, 연결되면 이어서 만듭니다.', 'warn');
+    addLog(`AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 만듭니다. ${runAgainHint(sendButton?.textContent)}`, 'error');
+    const epochAtStop = currentRequestEpoch;
+    window.addEventListener('online', () => { if (!disposed && !busy && !graphSubmitting && currentRequestEpoch === epochAtStop) void again(); }, { once: true, signal: lifecycle.signal });
+  };
   async function runGraphPictureTurn({ instructions, isCurrent, epoch, batch = false }) {
     const prior = selectedOutputItem();
     const previous = prior?.meta?.graphPlan ? { png: prior.data, plan: prior.meta.graphPlan } : null;
@@ -2986,6 +3081,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       let login = null;
       try { login = (await desktop.status())?.login || null; } catch { login = null; }
       if (!isCurrent()) return null;
+      if (login && login.installed === false) throw graphPictureStop('login', 'Codex 프로그램을 찾지 못했습니다.');
       if (login && login.loggedIn === false) throw graphPictureStop('login', 'Codex 로그인이 필요합니다.');
     }
     const abort = new AbortController(); imageLabelRunAbort = abort;
@@ -3057,6 +3153,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const priorGraph = options.runInputSnapshot?.priorGraph || (selectedOutputItem()?.graphResult ? snapshotImageItem(selectedOutputItem()) : null);
     const enteredRequest = options.requestOverride ?? input.value, enteredDiscussion = options.discussionContextOverride ?? compactConversation(conversationMessages);
     const instructions = [enteredRequest, enteredDiscussion, options.batchContext ? buildCommentRequest([...captured, ...(priorGraph ? [priorGraph] : [])]) : commentPrompt()].filter(Boolean).join('\n');
+    const again = () => runGraphRestore({ ...options, requestOverride: enteredRequest, discussionContextOverride: enteredDiscussion });
     let minimalPicture = null, keptPrior = null; // E9b: 그림으로 생성이 남긴 것(축만 그린 그림·지킨 앞 결과) — 기본 생성까지 실패하면 이것으로 끝낸다
     if (creating && !instructions.trim()) { setStatus('축 이름과 그릴 모양 또는 수식을 적어 주세요.', 'warn'); input.focus(); return; }
     graphSubmitting = true; currentCancelRequested = false; currentTurnType = 'image';
@@ -3071,6 +3168,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       await taskPersistence.checkpoint();
       if (!isCurrent()) return;
       if (!desktop?.send) throw new Error('AI 연결을 확인해 주세요.');
+      // PATHFIX(11-20): 복원·생성 모두 시작 전에 Codex 설치·로그인부터 본다 — 없으면 모델 목록에서 영어 원문으로 끝나지 않고
+      // 연결 화면(설치 안내 또는 로그인)으로 데려간 뒤 「다시 찾기」·로그인하면 같은 요청으로 이어 간다.
+      if (!desktop.web && typeof desktop.status === 'function' && !options.batchContext) {
+        let connection = null;
+        try { connection = await desktop.status(); } catch (error) { reportAiError('graph:status', error); connection = null; }
+        if (!isCurrent()) return;
+        const login = connection?.login || null;
+        if (connection && (codexMissing(connection) || login?.loggedIn === false)) {
+          addLog(codexMissing(connection) ? 'Codex 프로그램을 찾지 못해 그래프 작업을 시작하지 않았습니다. 설치한 뒤 「다시 찾기」를 누르면 이어서 합니다.' : 'Codex 로그인이 없어 그래프 작업을 시작하지 않았습니다. 로그인하면 이어서 합니다.');
+          parkGraphCreate('login', again, { missing: codexMissing(connection) });
+          return;
+        }
+      }
       // 1.8.0 옵션 「그림으로 생성」: 기본은 지금의 그래프 객체 생성. 옵션(플래그 5e.aiEngine.graphPicture)이 켜졌을 때만 새 그래프 엔진으로
       // 그림(PNG)+설계(meta.graphPlan)를 만든다. 고르는 화면은 아직 없다(시안: 시안/그래프-생성방식-옵션.html). 실패하면 기본 생성으로 이어 간다.
       if (creating) {
@@ -3085,19 +3195,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           } catch (error) {
             if (error?.name === 'AbortError' || !isCurrent()) return;
             // E9b: 로그인·연결이 없으면 기본 생성도 같은 연결이라 실패한다 — 넘기지 않고 이어 갈 길로(그림 엔진 E9와 같음).
-            if (error?.graphOutcome === 'login' || error?.graphOutcome === 'offline') {
-              const again = () => runGraphRestore({ ...options, requestOverride: enteredRequest, discussionContextOverride: enteredDiscussion });
-              advanceGenerationClock('turn-terminal', 'failed'); requestPhase('failed');
-              if (error.graphOutcome === 'login') { guideDesktopLogin(again); return; }
-              setTaskState('idle');
-              setStatus('인터넷 연결을 확인해 주세요 · AI 서버에 닿지 못해 이번에는 그래프를 만들지 못했습니다. 앞 결과와 입력은 그대로 두었고, 연결되면 이어서 만듭니다.', 'warn');
-              addLog(`AI 서버에 연결하지 못했습니다. 인터넷이 다시 연결되면 자동으로 이어서 만듭니다. ${runAgainHint(sendButton?.textContent)}`, 'error');
-              const epochAtStop = currentRequestEpoch;
-              window.addEventListener('online', () => { if (!disposed && !busy && !graphSubmitting && currentRequestEpoch === epochAtStop) void again(); }, { once: true, signal: lifecycle.signal });
-              return;
-            }
+            if (error?.graphOutcome === 'login' || error?.graphOutcome === 'offline') { parkGraphCreate(error.graphOutcome, again); return; }
             minimalPicture = error?.minimalItem || null; keptPrior = error?.keepPrior || null;
-            addLog(`그림으로 생성하지 못해 기본 그래프 생성으로 이어서 만듭니다: ${error?.message || error}`, 'error');
+            addLog(`그림으로 생성하지 못해 기본 그래프 생성으로 이어서 만듭니다: ${aiErrorText(error)}`, 'error');
             setGenerating(true, '설명으로 그래프를 만들고 있습니다', '축과 관계를 정리하고 편집 가능한 그래프로 구성합니다.');
           }
         }
@@ -3167,13 +3267,28 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (keptPrior && isCurrent() && error?.name !== 'AbortError') {
         const failure = describeGraphFailure(error);
         addLog(`기본 그래프 생성도 실패했습니다: ${failure.detail || failure.message}`, 'error');
-        advanceGenerationClock('turn-terminal', 'completed'); setTaskState('completed');
+        advanceGenerationClock('turn-terminal', 'completed');
+        if (!options.batchContext) requestPhase('kept-previous', { reason: failureReason(error) });
+        setTaskState('completed');
         setStatus('그래프를 다시 만들지 못해 앞 결과를 그대로 두었습니다 · 설명을 고쳐 다시 실행할 수 있습니다.', 'warn');
         if (options.batchContext) return keptPrior;
         captureActiveTaskTab(); await taskPersistence.checkpoint();
         return keptPrior;
       }
-      if (isCurrent()) { const failure = describeGraphFailure(error); advanceGenerationClock('turn-terminal', 'failed'); setTaskState('failed'); setStatus(failure.message, 'error'); addLog(failure.detail, 'error'); }
+      if (isCurrent()) {
+        const failure = describeGraphFailure(error), reason = failureReason(error);
+        // 생성이 인터넷·로그인 때문에 멈췄으면 막다른 실패 대신 이어 갈 길로(그림으로 생성과 같음).
+        // PATHFIX: Codex가 없음(install)·로그인 없음은 복원도 막다른 실패 대신 연결 화면 → 이어 하기.
+        if (!options.batchContext && ((creating && reason === 'offline') || ((reason === 'login' || reason === 'install') && !desktop?.web))) { addLog(failure.detail, 'error'); parkGraphCreate(reason, again); return; }
+        // 앞 결과 카드가 있으면 그것을 그대로 두고 끝난 것이다(작업 목록 「완료 · 앞 결과를 그대로 두었습니다」).
+        const kept = generatedImages.length > 0;
+        advanceGenerationClock('turn-terminal', 'failed');
+        if (!options.batchContext) requestPhase(kept ? 'kept-previous' : 'failed', { reason });
+        setTaskState('failed');
+        if (creating) setStatus(generationFailedText(reason) + (reason === 'ai' ? ' · 설명을 고쳐 다시 실행할 수 있습니다.' : ''), kept ? 'warn' : 'error');
+        else setStatus(failure.message, 'error');
+        addLog(failure.detail, 'error');
+      }
       if (options.batchContext) throw error;
     } finally {
       if (graphOwnerEpoch === ownerEpoch && activeTaskTabId === taskId && currentRequestEpoch === epoch) { setGenerating(false); setBusy(false); syncGraphWorkbenchUi(); syncSelectedOutputActions(); captureActiveTaskTab(); persistTasks(); }
@@ -3835,10 +3950,15 @@ ${chatText}` : ''}`;
     tab.generated = generatedImages.map(taskItemCopy);
     taskViews.set(tab.id, { attachments, generatedImages, sourceSnapshot: tab.attachments, outputSnapshot: tab.generated });
     tab.conversationMessages = conversationMessages.map((message) => ({ ...message }));
-    tab.uiMessages = Array.from(log.querySelectorAll(".ai-msg")).map((node) => ({
-      text: node.textContent || "",
-      kind: node.classList.contains("user") ? "user" : node.classList.contains("error") ? "error" : "assistant",
-    }));
+    tab.uiMessages = Array.from(log.querySelectorAll(".ai-msg:not([data-ai-transient])")).map((node) => {
+      // 11-19: 생성 탭의 진행 줄·결과 카드는 모양 정보(data-ai-chat)를 함께 남긴다.
+      let chat = null; try { chat = node.dataset.aiChat ? JSON.parse(node.dataset.aiChat) : null; } catch { chat = null; }
+      return {
+        text: chat ? "" : node.textContent || "",
+        kind: node.classList.contains("user") ? "user" : node.classList.contains("error") ? "error" : "assistant",
+        ...(chat ? { chat } : {}),
+      };
+    });
     tab.selectedCandidateId = selectedCandidateId;
     tab.labelPreviewIncluded = Object.fromEntries(generatedImages.filter(hasPreviewLabels)
       .map(item => [item.id, labelPreviewState(item).included !== false]));
@@ -3916,7 +4036,8 @@ ${chatText}` : ''}`;
       markResultReady(tab, currentTurnCandidate || generatedImages.at(-1));
     }
     const removalRetry = workState === 'completed' && tab.sourceLabelObservation?.removalIncomplete === true;
-    if (workState === 'completed' || workState === 'failed') requestPhase(workState);
+    if (workState === 'completed') requestPhase('completed');
+    else if (workState === 'failed') requestPhase(failedRequestPhase());
     if (workState === 'failed' || removalRetry) {
       tab.retryRequest = currentRequestSnapshot ? { type: currentTurnType, snapshot: structuredClone(currentRequestSnapshot) } : null;
     }
@@ -3926,7 +4047,7 @@ ${chatText}` : ''}`;
     }
     if (!['busy', 'interrupted', 'failed'].includes(workState) && !removalRetry) tab.retryRequest = null;
     retryInterruptedButton.hidden = !['interrupted', 'failed'].includes(workState) && !removalRetry;
-    retryInterruptedButton.textContent = removalRetry ? '제거 다시 시도' : workState === 'failed' ? '변환 다시 시도' : '중단 작업 다시 시도';
+    retryInterruptedButton.textContent = removalRetry ? '제거 다시 시도' : workState === 'failed' ? (isCreationWorkflow(conversionKind) ? '다시 생성' : '변환 다시 시도') : '중단 작업 다시 시도';
     retryInterruptedButton.disabled = busy || !tab.retryRequest?.snapshot;
     renderTaskTabs();
     persistTasks();
@@ -3970,8 +4091,11 @@ ${chatText}` : ''}`;
       button.className = "ai-task-tab";
       button.classList.toggle("is-exam-linked", linked);
       button.dataset.tabId = tab.id;
-      button.dataset.workState = taskNeedsLabelReview(tab) ? "review" : tab.workState || "idle";
-      const stateLabel = pending ? '변환 완료 · 확인 필요' : taskNeedsLabelReview(tab) ? '생성 완료 · 확인 사항'
+      // 앞 결과를 그대로 두고 끝난 작업은 실패 표시(빨간 ×) 대신 완료로 보인다(시간 줄 글과 같게). 다시 시도 단추는 workState로 그대로.
+      const endedPhase = requestStates.snapshot(tab.id)?.phase;
+      button.dataset.workState = taskNeedsLabelReview(tab) ? "review" : endedPhase === 'kept-previous' && tab.workState === 'failed' ? 'completed' : tab.workState || "idle";
+      const stateLabel = pending ? (tab.conversionKind === 'image-create' ? '생성 완료 · 새 결과' : '변환 완료 · 새 결과') : taskNeedsLabelReview(tab) ? '생성 완료 · 확인 사항'
+        : ['kept-previous', 'offline-wait', 'login-wait'].includes(endedPhase) ? requestPhaseLabel(endedPhase)
         : { busy: "작업 중", interrupted: "작업 중단", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
       button.title = `${tab.title} · ${stateLabel} · ${taskDeleteShortcutHint()}`;
       if (["completed", "busy", "interrupted", "failed", "review"].includes(button.dataset.workState)) {
@@ -4029,7 +4153,7 @@ ${chatText}` : ''}`;
       timingLabel.textContent = timingText;
       copy.append(timingLabel);
       if (pending) {
-        const notice = document.createElement('small'); notice.className = 'ai-result-notice'; notice.textContent = '확인 필요'; copy.append(notice);
+        const notice = document.createElement('small'); notice.className = 'ai-result-notice'; notice.textContent = '새 결과'; copy.append(notice);
       }
       if ((tab.attachments || []).length > 1 && !tab.referenceComposition) {
         const warning = document.createElement("small");
@@ -4181,7 +4305,7 @@ ${chatText}` : ''}`;
     if (preciseRestoreCheckbox) { preciseRestoreCheckbox.checked = tab.preciseRestore === true && imageKindSelect?.value === 'general'; preciseRestoreCheckbox.disabled = imageKindSelect?.value !== 'general'; }
     input.value = tab.input || "";
     log.replaceChildren();
-    for (const message of tab.uiMessages || []) addLog(message.text, message.kind);
+    for (const message of tab.uiMessages || []) message.chat ? addChatEntry(message.chat) : addLog(message.text, message.kind);
     if (!log.children.length) {
       const emptyLog = document.createElement("p");
       emptyLog.className = "ai-log-empty";
@@ -4211,7 +4335,7 @@ ${chatText}` : ''}`;
     renderTaskTabs();
     const removalRetry = tab.workState === 'completed' && tab.sourceLabelObservation?.removalIncomplete === true;
     retryInterruptedButton.hidden = !['interrupted', 'failed'].includes(tab.workState) && !removalRetry;
-    retryInterruptedButton.textContent = removalRetry ? '제거 다시 시도' : tab.workState === 'failed' ? '변환 다시 시도' : '중단 작업 다시 시도';
+    retryInterruptedButton.textContent = removalRetry ? '제거 다시 시도' : tab.workState === 'failed' ? (isCreationWorkflow(tab.conversionKind || conversionKind) ? '다시 생성' : '변환 다시 시도') : '중단 작업 다시 시도';
     retryInterruptedButton.disabled = busy || !tab.retryRequest?.snapshot;
     const selectedCandidate = generatedImages.find((item) => item.id === selectedCandidateId) || generatedImages.at(-1) || null;
     if (selectedCandidate) {
@@ -4697,14 +4821,17 @@ ${chatText}` : ''}`;
 
   const allImages = () => [...attachments, ...generatedImages];
   function comparisonRevisions() {
-    return allImages().map((item, index) => ({
-      id: item.id, label: item.name || `이미지 ${index + 1}`,
-      src: item.kind === 'generated' ? (item.outputImage?.src || item.data) : item.data,
-      comments: item.comments, kind: attachments.includes(item) ? 'original' : undefined,
-    }));
+    return allImages().map((item, index) => {
+      const src = item.kind === 'generated' ? (item.outputImage?.src || item.data) : item.data;
+      // 11-20 GRAPHFIX: 그래프 결과는 원본보다 넓은 출력 틀로 그려진다 — 원본 틀 자리를 함께 넘겨 1:1로 겹친다.
+      const sourceFrame = item.graphResult ? workbenchGraphSourceFrame(src) : null;
+      return { id: item.id, label: item.name || `이미지 ${index + 1}`, src, ...(sourceFrame ? { sourceFrame } : {}),
+        comments: item.comments, kind: attachments.includes(item) ? 'original' : undefined };
+    });
   }
-  const openComparison = () => {
+  const openComparison = (pair = null) => {
     if (comparison) { closeComparison(); return; }
+    if (pair instanceof Event) pair = null;
     const images = allImages();
     if (images.length < 2) { setStatus('비교할 이미지를 두 개 이상 추가해 주세요.', 'warn'); return; }
     comparisonHost.hidden = false;
@@ -4715,7 +4842,10 @@ ${chatText}` : ''}`;
       revisions: comparisonRevisions(),
       selectedRevisionId: selectedOutputItem()?.id || selectedCandidateId,
       wipeOnly: true,
+      // 11-19(시안 태그 23): 대화 결과 카드의 「비교」 — 그 결과가 왼쪽, 보는 결과가 오른쪽.
+      ...(pair?.leftId && pair?.rightId ? { leftRevisionId: pair.leftId, rightRevisionId: pair.rightId } : {}),
     });
+    scheduleCreateSync();
   };
   panel.addEventListener('click', event => {
     if (event.target.closest?.('[data-ai-layout-mode]')) closeComparison();
@@ -5103,6 +5233,14 @@ ${chatText}` : ''}`;
     }
     try {
       const current = await desktop.status();
+      // PATHFIX(11-20): 설치 안 됨과 로그인 안 됨을 나눈다 — 예전에는 codex를 못 찾아도 「ChatGPT 로그인 필요」였다.
+      if (codexMissing(current)) {
+        showCodexInstall(true);
+        if (!busy) setStatus(CODEX_MISSING_STATUS, "warn");
+        accountText.textContent = "Codex 프로그램이 필요합니다";
+        return;
+      }
+      showCodexInstall(false);
       loginButton.hidden = current.login.loggedIn;
       if (!current.login.loggedIn) {
         if (!busy) setStatus("ChatGPT 로그인 필요", "warn");
@@ -5120,11 +5258,13 @@ ${chatText}` : ''}`;
       } else if (autoConnect) {
         setStatus("AI 자동 연결 중…", "busy");
         const result = await desktop.start();
-        setStatus(result.ok ? "준비됨" : `연결 실패: ${result.message}`, result.ok ? "ok" : "error");
+        if (!result.ok && aiErrorCode(result) === 'CODEX_NOT_FOUND') { showCodexInstall(true); setStatus(CODEX_MISSING_STATUS, "warn"); return; }
+        setStatus(result.ok ? "준비됨" : `연결 실패: ${aiErrorText(result)}`, result.ok ? "ok" : "error", result.ok ? undefined : result);
         if (result.ok) await Promise.all([loadModels({ refresh: true }), loadAccountOverview()]);
       }
     } catch (error) {
-      setStatus(`상태 확인 실패: ${error.message}`, "error");
+      if (aiErrorCode(error) === 'CODEX_NOT_FOUND') { showCodexInstall(true); setStatus(CODEX_MISSING_STATUS, "warn"); reportAiError('codex:status', error); return; }
+      setStatus(`상태 확인 실패: ${aiErrorText(error)}`, "error", error);
     }
   };
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); }, { signal: lifecycle.signal });
@@ -5273,6 +5413,908 @@ ${chatText}` : ''}`;
 
   disposalCallbacks.push(registerEscapeLayer(modal || panel, close));
 
+  // ===== 11-19 그림 생성 화면(승인 시안 그림생성화면 v4, 태그 1~32) =====
+  // 「생성」 탭(image-create)만 바꾼다. 변환·그래프는 그대로. 대화는 차례대로 쌓이는 말풍선·진행 줄·결과 카드,
+  // 결과가 있으면 실행 단추는 「이 그림 고치기」, 레퍼런스가 없으면 결과만 크게.
+  const isFigureCreate = () => conversionKind === 'image-create';
+  const isMacKeys = () => keyLabel('Ctrl+K').startsWith('⌘');
+  const shiftEnterLabel = () => (isMacKeys() ? '⇧Enter' : 'Shift+Enter');
+  let blankPaperSource = null;
+  const blankPaper = () => {
+    if (blankPaperSource) return blankPaperSource;
+    try { const canvas = document.createElement('canvas'); canvas.width = 1536; canvas.height = 1024; const g = canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, 1536, 1024); blankPaperSource = canvas.toDataURL('image/png'); }
+    catch { blankPaperSource = null; }
+    return blankPaperSource;
+  };
+  let createComposeMode = 'auto'; // 'auto' = 결과가 있으면 고치기, 'new' = 「새로 그리기」 칩을 눌러 새 그림
+  let createDrawScope = 'after-result'; // V5: 'after-result' = 결과 뒤 대화만(기본), 'all' = 「처음부터 다시 그리기」(새 대화 뒤 전체)
+  const NEW_CHAT_DIVIDER = '여기부터 새 대화 · 위 대화는 그림에 쓰지 않아요';
+  let resetPicked = false; // V5: 「새 대화」 뒤 결과를 다시 골랐다 → 그리기 단추가 다시 「이 그림 고치기」
+  let createStatusBlock = null; // { node, rows, startedAt, timer, kind }
+  let createCompareNote = null;
+  let createSyncQueued = false;
+
+  // --- 대화 기록(태그 4·9·11·13·19) ---
+  const chatEntryNode = (entry) => {
+    const node = document.createElement('div');
+    node.className = `ai-msg ${entry.type === 'result' ? 'result' : entry.type === 'status' ? 'status' : entry.type === 'chips' ? 'assistant chips' : entry.type === 'divider' ? 'divider' : 'assistant'}`;
+    node.dataset.aiChat = JSON.stringify(entry);
+    return node;
+  };
+  function addChatEntry(entry) {
+    if (!entry || !['result', 'status', 'chips', 'divider'].includes(entry.type)) return null;
+    hideChatThinking();
+    log.querySelector('[data-ai-log-empty]')?.remove();
+    const node = chatEntryNode(entry);
+    log.appendChild(node);
+    if (entry.type === 'result') renderChatResult(node);
+    else if (entry.type === 'chips') renderChatChips(node, entry);
+    else if (entry.type === 'divider') { const label = document.createElement('span'); label.textContent = NEW_CHAT_DIVIDER; node.replaceChildren(label); node.setAttribute('role', 'separator'); }
+    else renderStatusBlock(node, entry.rows || [], entry.elapsedMs, false);
+    log.scrollTop = log.scrollHeight;
+    return node;
+  }
+  // V5: 결과 카드 + 기록 안 「여기서 결과가 나왔다」 표시(다음 그리기는 이 뒤 대화만 읽는다).
+  function addResultEntry(item) {
+    const node = addChatEntry({ type: 'result', id: item.id });
+    recordConversationMark({ role: RESULT_MARK, id: item.id, name: item.name || '' });
+    return node;
+  }
+  // CHATFIX(11-20): 대화 안 다음 할 일 칩(「이대로 그리기」·「다시 그리기」·「한 번 더 고치기」·「말 바꿔 다시 적기」).
+  // 칩마다 다시 실행할 내용(payload)을 함께 저장해, 작업을 바꿨다 돌아와도 같은 일을 한다.
+  function renderChatChips(node, entry) {
+    const row = document.createElement('div'); row.className = 'ai-chat-chips';
+    for (const chip of entry.chips || []) {
+      const button = document.createElement('button'); button.type = 'button'; button.className = `ai-chat-chip${chip.strong ? ' is-strong' : ''}`;
+      button.dataset.aiChip = chip.id; button.dataset.aiFlowChip = '';
+      if (chip.payload) button.dataset.aiChipPayload = JSON.stringify(chip.payload);
+      button.textContent = chip.label; button.title = chip.title || chip.label; button.disabled = busy;
+      row.append(button);
+    }
+    node.replaceChildren(row);
+  }
+  function addFlowChips(chips) {
+    // 같은 종류의 앞 칩 줄은 지운다 — 다음 할 일은 마지막 한 줄만.
+    log.querySelectorAll('.ai-msg.chips').forEach(node => node.remove());
+    return addChatEntry({ type: 'chips', chips });
+  }
+  function renderStatusBlock(node, rows, elapsedMs, live) {
+    const list = document.createElement('ul'); list.className = 'ai-status-rows';
+    rows.forEach((row, index) => {
+      const li = document.createElement('li'); li.className = `ai-status-row is-${row.state === 'current' && live ? 'current' : 'done'}`;
+      const mark = document.createElement('i'); mark.setAttribute('aria-hidden', 'true');
+      const text = document.createElement('span'); text.textContent = statusRowText(live ? row : { ...row, state: 'done' });
+      li.append(mark, text);
+      if (index === rows.length - 1 && Number.isFinite(elapsedMs)) { const time = document.createElement('time'); time.textContent = clockText(elapsedMs); li.append(time); }
+      list.append(li);
+    });
+    node.replaceChildren(list);
+  }
+  function startStatusBlock(kind, firstPhase = null) {
+    finishStatusBlock();
+    // 앞 차례의 끝난 진행 줄은 지운다 — 대화에는 말과 결과 카드만 차례로 남는다(시안 ④).
+    log.querySelectorAll('.ai-msg.status').forEach(node => node.remove());
+    const rows = firstPhase ? advanceStatusRows([], firstPhase) : [];
+    const node = chatEntryNode({ type: 'status', rows });
+    log.querySelector('[data-ai-log-empty]')?.remove();
+    log.appendChild(node);
+    const block = createStatusBlock = { node, rows, startedAt: Date.now(), kind, timer: null };
+    const paint = () => { if (createStatusBlock === block) { renderStatusBlock(node, block.rows, Date.now() - block.startedAt, true); node.dataset.aiChat = JSON.stringify({ type: 'status', rows: block.rows, elapsedMs: Date.now() - block.startedAt }); } };
+    block.paint = paint; paint();
+    block.timer = setInterval(paint, 1000);
+    log.scrollTop = log.scrollHeight;
+    return block;
+  }
+  function statusPhase(phase, text) {
+    const block = createStatusBlock; if (!block) return;
+    const next = advanceStatusRows(block.rows, phase, { text });
+    if (next === block.rows) return;
+    block.rows = next; block.paint();
+    log.scrollTop = log.scrollHeight;
+  }
+  function finishStatusBlock({ remove = false } = {}) {
+    const block = createStatusBlock; if (!block) return;
+    clearInterval(block.timer); createStatusBlock = null;
+    if (remove || !block.rows.length) { block.node.remove(); return; }
+    block.rows = settleStatusRows(block.rows);
+    const elapsedMs = Date.now() - block.startedAt;
+    renderStatusBlock(block.node, block.rows, elapsedMs, false);
+    block.node.dataset.aiChat = JSON.stringify({ type: 'status', rows: block.rows, elapsedMs });
+  }
+  disposalCallbacks.push(() => { if (createStatusBlock) clearInterval(createStatusBlock.timer); });
+
+  const createCompareState = () => {
+    if (comparison) {
+      const [left, right] = [...comparisonHost.querySelectorAll('.ai-comparison-choice select')].map(select => select.value);
+      return { mode: 'slider', leftId: left || null, rightId: right || null };
+    }
+    if (['side-by-side', 'stacked'].includes(panel.dataset.aiLayout) && panel.dataset.aiResultOnly === 'true') {
+      const leftId = panel.aiWorkbench?.compareSourceId?.() || null;
+      if (leftId && leftId !== selectedCandidateId) return { mode: 'side', leftId, rightId: selectedCandidateId };
+    }
+    return null;
+  };
+  function renderChatResult(node) {
+    let entry; try { entry = JSON.parse(node.dataset.aiChat || '{}'); } catch { entry = {}; }
+    const item = generatedImages.find(candidate => candidate.id === entry.id);
+    const card = document.createElement('div'); card.className = 'ai-chat-result';
+    if (!item) { card.classList.add('is-gone'); card.textContent = '지운 결과'; node.replaceChildren(card); return; }
+    const viewing = item.id === (selectedOutputItem()?.id);
+    const compare = createCompareState();
+    const side = compare ? (compare.leftId === item.id ? 'left' : compare.rightId === item.id ? 'right' : null) : null;
+    card.classList.toggle('is-viewing', viewing);
+    card.classList.toggle('is-compared', Boolean(side));
+    const open = document.createElement('button'); open.type = 'button'; open.className = 'ai-chat-result-open'; open.dataset.aiChatOpen = item.id;
+    open.title = viewing ? '지금 보는 결과' : `${item.name || '결과'}로 보기`;
+    const thumb = document.createElement('img'); thumb.alt = ''; thumb.src = item.outputImage?.src || item.data; thumb.draggable = false;
+    const meta = document.createElement('span'); meta.className = 'ai-chat-result-meta';
+    const name = document.createElement('b'); name.textContent = item.name || '생성 결과';
+    const sub = document.createElement('small'); sub.textContent = resultSubline(item, generatedImages);
+    meta.append(name, sub); open.append(thumb, meta);
+    card.append(open);
+    if (side) { const badge = document.createElement('span'); badge.className = 'ai-chat-badge is-side'; badge.textContent = side === 'left' ? '왼쪽' : '오른쪽'; card.append(badge); }
+    else if (viewing) { const badge = document.createElement('span'); badge.className = 'ai-chat-badge'; badge.textContent = '보는 중'; card.append(badge); }
+    else if (generatedImages.length > 1) {
+      const compareButton = document.createElement('button'); compareButton.type = 'button'; compareButton.className = 'ai-chat-badge ai-chat-compare';
+      compareButton.dataset.aiChatCompare = item.id; compareButton.textContent = '비교';
+      compareButton.title = `${item.name || '이 결과'}를 왼쪽에, 보는 결과를 오른쪽에 두고 비교합니다`;
+      card.append(compareButton);
+    }
+    const chips = resultChips(item, { viewing, items: generatedImages, comparing: Boolean(compare), side, labelsOn: labelPreviewState(item).included !== false, canLabel: !item.labelPlan?.labels?.length });
+    if (chips.length) {
+      const row = document.createElement('div'); row.className = 'ai-chat-chips';
+      for (const chip of chips) {
+        const button = document.createElement('button'); button.type = 'button'; button.className = `ai-chat-chip${chip.strong ? ' is-strong' : ''}`;
+        button.dataset.aiChip = chip.id; button.dataset.aiChipFor = item.id;
+        if (chip.target) button.dataset.aiChipTarget = chip.target;
+        if (chip.text) button.dataset.aiChipText = chip.text;
+        button.textContent = chip.label;
+        button.disabled = busy && chip.kind !== 'fill';
+        button.title = chip.kind === 'fill' ? '입력칸에 말을 넣습니다 · 고친 뒤 실행하세요' : chip.label;
+        row.append(button);
+      }
+      card.append(row);
+    }
+    node.replaceChildren(card);
+  }
+  const refreshChatResults = () => log.querySelectorAll('.ai-msg.result').forEach(renderChatResult);
+  function addChatNote(text, { transient = false } = {}) {
+    const node = addLog(text);
+    if (node && transient) node.dataset.aiTransient = '';
+    return node;
+  }
+  function setCompareNote(text) {
+    createCompareNote?.remove(); createCompareNote = null;
+    if (text) { createCompareNote = addChatNote(text, { transient: true }); }
+  }
+
+  // --- 화면 바꾸기(태그 1·2·3·17·18·20·21·22) ---
+  let createDom = null;
+  function ensureCreateDom() {
+    if (createDom) return createDom;
+    const dock = panel.querySelector('.ai-dock');
+    const composer = panel.querySelector('.ai-chat-composer');
+    const frame = document.createElement('div'); frame.className = 'ai-composer-frame'; frame.setAttribute('aria-hidden', 'true');
+    const clip = document.createElement('button'); clip.type = 'button'; clip.className = 'ai-create-clip'; clip.dataset.aiCreateClip = '';
+    clip.setAttribute('aria-haspopup', 'menu'); clip.setAttribute('aria-label', '레퍼런스 추가');
+    clip.title = `레퍼런스 추가 (라이브러리 ${keyLabel('Ctrl+Shift+L').replace('Ctrl+Shift+', '⇧⌘').replace(/^⇧⌘/, isMacKeys() ? '⇧⌘' : 'Ctrl+Shift+')} · 파일 ${keyLabel('Ctrl+O')})`;
+    clip.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20.5 11.5-8.2 8.2a5.2 5.2 0 0 1-7.4-7.4l8.6-8.6a3.5 3.5 0 0 1 5 5l-8.6 8.5a1.8 1.8 0 0 1-2.5-2.5l7.9-7.9"/></svg>';
+    const hint = document.createElement('span'); hint.className = 'ai-create-hint'; hint.dataset.aiCreateHint = '';
+    const more = document.createElement('button'); more.type = 'button'; more.className = 'ai-create-more'; more.dataset.aiCreateMore = '';
+    more.setAttribute('aria-haspopup', 'menu'); more.setAttribute('aria-expanded', 'false'); more.setAttribute('aria-label', '다른 그리기'); more.title = '다른 그리기 · 이 그림 고치기 / 새로 그리기 / 처음부터 다시 그리기 / 새 대화';
+    more.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const moreMenu = document.createElement('div'); moreMenu.className = 'ai-create-menu ai-create-more-menu'; moreMenu.setAttribute('role', 'menu'); moreMenu.hidden = true;
+    // CHATFIX(시안 대화생성분리 안 1 · 태그 10): 「묻기만」은 Enter(대화 보내기)로 옮겨 메뉴에서 뺐다.
+    // V5(시안 대화창v5 태그 9): 이 그림 고치기 / 새로 그리기(결과 N 뒤 대화로) / 처음부터 다시 그리기(대화 전체로) / ─ / 새 대화.
+    moreMenu.innerHTML = `<button type="button" role="menuitem" data-ai-create-edit>이 그림 고치기 <kbd>${isMacKeys() ? '⌘Enter' : 'Ctrl+Enter'}</kbd></button>`
+      + '<button type="button" role="menuitem" data-ai-create-new>새로 그리기 <small data-ai-create-new-note>결과 뒤 대화로</small></button>'
+      + '<button type="button" role="menuitem" data-ai-create-all>처음부터 다시 그리기 <small>대화 전체로</small></button>'
+      + '<hr aria-hidden="true">'
+      + '<button type="button" role="menuitem" data-ai-create-reset>새 대화 <small>대화를 비우고 결과는 남김</small></button>';
+    // V5(태그 1·3): 입력칸 밖 「미리 말하는 줄」은 없앴다 — 같은 말은 그리기 단추 설명(title)과 「그릴 내용」 글로.
+    dock?.prepend(frame);
+    composer?.append(clip, hint, more, moreMenu);
+    // 「＋ 레퍼런스」(결과 칸 머리줄) — 레퍼런스 0개인 생성 작업에서만(태그 2).
+    const addRef = document.createElement('button'); addRef.type = 'button'; addRef.className = 'ai-create-add-ref'; addRef.dataset.aiCreateAddRef = '';
+    addRef.setAttribute('aria-haspopup', 'menu'); addRef.textContent = '＋ 레퍼런스'; addRef.title = '레퍼런스 추가 · 파일·클립보드·자료 라이브러리';
+    panel.querySelector('.ai-result-pane .ai-result-tools')?.before(addRef);
+    const refMenu = document.createElement('div'); refMenu.className = 'ai-create-menu ai-create-ref-menu'; refMenu.setAttribute('role', 'menu'); refMenu.hidden = true;
+    refMenu.innerHTML = `<button type="button" role="menuitem" data-ai-create-ref="library">자료 라이브러리에서 <kbd>${isMacKeys() ? '⇧⌘L' : 'Ctrl+Shift+L'}</kbd></button><button type="button" role="menuitem" data-ai-create-ref="file">파일에서 <kbd>${keyLabel('Ctrl+O')}</kbd></button><button type="button" role="menuitem" data-ai-create-ref="clipboard">클립보드에서 <kbd>${keyLabel('Ctrl+V')}</kbd></button>`;
+    panel.querySelector('.ai-workbench')?.append(refMenu);
+    // 11-20 사용자 결정: 「참고한 기출 3장」 띠(태그 3)는 뺐다. 엔진은 안에서 계속 참고 그림을 쓴다.
+    // 그림 설정 한 줄 요약(태그 18)
+    const caption = panel.querySelector('.ai-conversation-caption');
+    const summary = document.createElement('span'); summary.className = 'ai-settings-oneline'; summary.dataset.aiSettingsOneline = '';
+    const change = document.createElement('button'); change.type = 'button'; change.className = 'ai-settings-change'; change.dataset.aiSettingsChange = '';
+    change.setAttribute('aria-expanded', 'false'); change.textContent = '바꾸기 ▾'; change.title = '배경 제거·객체 분리 설정 열기';
+    caption?.querySelector('strong')?.after(summary, change);
+    // V5(시안 대화창v5 태그 7 · 안 1): 머리줄 「바꾸기 ▾」 옆 「새 대화」 — 대화만 끊고 결과는 남긴다.
+    const newChat = document.createElement('button'); newChat.type = 'button'; newChat.className = 'ai-create-newchat'; newChat.dataset.aiCreateNewchat = '';
+    newChat.title = '새 대화 · 대화를 끊고 새로 시작합니다(위 대화는 그림에 쓰지 않음, 결과는 그대로)';
+    newChat.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8.5v3.5a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 12V4A1.5 1.5 0 0 1 4 2.5h3.5"/><path d="m11.2 2.3 2.5 2.5-5.4 5.4-2.9.4.4-2.9z"/></svg>새 대화';
+    change.after(newChat);
+    newChat.addEventListener('click', () => startNewChat());
+    const menus = [[clip, refMenu], [addRef, refMenu], [more, moreMenu]];
+    let menuAnchor = null;
+    const closeMenus = () => { for (const [button, menu] of menus) { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); } menuAnchor = null; };
+    const openMenu = (button, menu) => {
+      const was = !menu.hidden && menuAnchor === button;
+      closeMenus(); if (was) return;
+      menu.hidden = false; button.setAttribute('aria-expanded', 'true'); menuAnchor = button;
+      const box = button.getBoundingClientRect(), host = panel.querySelector('.ai-workbench').getBoundingClientRect();
+      if (menu === refMenu) {
+        menu.style.left = `${Math.max(8, Math.min(box.left - host.left, host.width - 240))}px`;
+        const below = button === addRef;
+        menu.style.top = below ? `${box.bottom - host.top + 4}px` : '';
+        menu.style.bottom = below ? '' : `${host.bottom - box.top + 6}px`;
+      }
+      menu.querySelector('button')?.focus();
+    };
+    clip.addEventListener('click', () => openMenu(clip, refMenu));
+    addRef.addEventListener('click', () => openMenu(addRef, refMenu));
+    more.addEventListener('click', () => openMenu(more, moreMenu));
+    refMenu.addEventListener('click', event => {
+      const action = event.target.closest('[data-ai-create-ref]')?.dataset.aiCreateRef; if (!action) return;
+      closeMenus();
+      if (busy) return;
+      if (action === 'file') { if (!file.disabled) file.click(); }
+      else if (action === 'clipboard') void pickFromClipboard();
+      else referenceSearchButton?.click();
+    });
+    moreMenu.addEventListener('click', event => {
+      const editNow = event.target.closest('[data-ai-create-edit]'), fresh = event.target.closest('[data-ai-create-new]');
+      const all = event.target.closest('[data-ai-create-all]'), reset = event.target.closest('[data-ai-create-reset]');
+      closeMenus();
+      if (editNow) { createComposeMode = 'auto'; createDrawScope = 'after-result'; createGenerate(); }
+      if (fresh) startNewDrawingCompose();
+      if (all) startNewDrawingCompose({ scope: 'all' });
+      if (reset) startNewChat();
+    });
+    document.addEventListener('pointerdown', event => { if (menuAnchor && !event.target.closest('.ai-create-menu, [data-ai-create-clip], [data-ai-create-add-ref], [data-ai-create-more]')) closeMenus(); }, { capture: true, signal: lifecycle.signal });
+    for (const [, menu] of menus) menu.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); const anchor = menuAnchor; closeMenus(); anchor?.focus(); }
+      if (['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); const items = [...menu.querySelectorAll('button')]; const at = items.indexOf(document.activeElement); items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus(); }
+    });
+    change.addEventListener('click', () => {
+      const open = panel.dataset.aiSettingsOpen !== 'true';
+      panel.dataset.aiSettingsOpen = String(open); change.setAttribute('aria-expanded', String(open));
+      change.textContent = open ? '접기 ▴' : '바꾸기 ▾';
+    });
+    // GENSPEED 안 C(태그 6, 11-20 사용자 결정): 「글자 바꾸기 빠르게」 켬/끔 — 바꾸기 ▾ 메뉴 한 줄, 기본 끔, 저장값 5e.aiEngine.figureLocalReplace.
+    const fastReplace = panel.querySelector('[data-ai-fast-replace-group]');
+    const syncFastReplace = () => {
+      const on = figureLocalReplaceFlag();
+      for (const button of fastReplace?.querySelectorAll('[data-ai-fast-replace]') || []) {
+        const selected = (button.dataset.aiFastReplace === '1') === on;
+        button.classList.toggle('is-on', selected); button.setAttribute('aria-pressed', String(selected));
+      }
+    };
+    // 11-21: 「글자 빠르게」 줄은 숨겼다(css). 예전에 켜 둔 값이 보이지 않는 채로 남지 않게 처음 열 때 끔으로 돌린다.
+    try { if (globalThis.localStorage?.getItem(AI_ENGINE_FLAG_KEYS.figureLocalReplace) === '1') globalThis.localStorage.setItem(AI_ENGINE_FLAG_KEYS.figureLocalReplace, '0'); } catch { /* 저장소를 못 쓰면 기본(끔) */ }
+    fastReplace?.addEventListener('click', event => {
+      const button = event.target.closest('[data-ai-fast-replace]'); if (!button || button.disabled) return;
+      try { globalThis.localStorage?.setItem(AI_ENGINE_FLAG_KEYS.figureLocalReplace, button.dataset.aiFastReplace === '1' ? '1' : '0'); } catch { /* 저장소를 못 쓰면 기본(끔) */ }
+      syncFastReplace();
+    });
+    syncFastReplace();
+    log.addEventListener('click', onChatClick);
+    // V5(태그 4·5): 대화 칸 폭 손잡이(420~820, 저장, 두 번 누르면 처음 폭)
+    installChatWidth(panel, { signal: lifecycle.signal });
+    createDom = { frame, clip, hint, more, moreMenu, addRef, refMenu, summary, change, newChat, closeMenus };
+    return createDom;
+  }
+
+  // CHATFIX: 「새로 그리기」 = 대화(+ 입력칸 글)로 새 그림. 예전처럼 첫 결과의 요청(「지금 이미지를 생성중이야?」였음)을 입력칸에 넣지 않는다.
+  // V5(태그 9·16): 「새로 그리기」는 마지막 결과 뒤 대화만, 「처음부터 다시 그리기」(scope 'all')는 「새 대화」 뒤 대화 전체.
+  function startNewDrawingCompose({ scope = 'after-result' } = {}) {
+    createComposeMode = 'new'; createDrawScope = scope;
+    chatInput.focus(); chatInput.setSelectionRange?.(chatInput.value.length, chatInput.value.length);
+    scheduleCreateSync();
+  }
+
+  // V5(시안 대화창v5 ⑤ · 태그 12·13·14): 「새 대화」 — 대화 맨 아래 구분 줄, 위 대화·결과 카드는 흐리게 남김(지우지 않음),
+  // 결과는 결과 목록·작업 목록에 그대로, 그리기 단추는 「이미지 생성」으로. 대화 AI도 새 대화로 시작한다. 누른 직후 5초 「되돌리기」.
+  let newChatUndo = null; // { node, conversationId, timer }
+  function startNewChat() {
+    if (busy) { setStatus('그리는 중이에요 · 끝난 뒤에 새 대화를 시작하세요.', 'warn'); return; }
+    if (!conversationMessages.some(message => message.role === 'user' || message.role === 'assistant') || resetIsLast(conversationMessages)) return;
+    clearNewChatUndo();
+    recordConversationMark({ role: RESET_MARK });
+    const node = addChatEntry({ type: 'divider' });
+    const previousConversationId = conversationId;
+    conversationId = null;
+    try { localStorage.removeItem(`5e.aiConversationId${clientScope ? ":" + clientScope : ""}`); } catch { /* 다음 대화에서 새 스레드 */ }
+    resetPicked = false; createComposeMode = 'auto'; createDrawScope = 'after-result';
+    log.querySelectorAll('.ai-msg.chips').forEach(chips => chips.remove()); // 앞 대화의 「이대로 그리기」 칩은 새 대화에 맞지 않는다
+    if (node) newChatUndo = { conversationId: previousConversationId, timer: setTimeout(clearNewChatUndo, 5000) };
+    chatInput.focus();
+    captureActiveTaskTab(); persistTasks();
+    scheduleCreateSync();
+  }
+  function clearNewChatUndo() {
+    if (!newChatUndo) return;
+    clearTimeout(newChatUndo.timer); newChatUndo = null;
+    log.querySelectorAll('[data-ai-newchat-undo]').forEach(button => button.remove());
+  }
+  function undoNewChat() {
+    if (!newChatUndo) return;
+    const { conversationId: kept } = newChatUndo; clearTimeout(newChatUndo.timer); newChatUndo = null;
+    const at = conversationMessages.map(message => message.role).lastIndexOf(RESET_MARK);
+    if (at >= 0) { conversationMessages = conversationMessages.filter((_, index) => index !== at); try { saveConversationMessages(); } catch { /* 화면에서만 */ } }
+    [...log.querySelectorAll(':scope > .ai-msg.divider')].at(-1)?.remove();
+    if (kept && !conversationId) { conversationId = kept; try { localStorage.setItem(`5e.aiConversationId${clientScope ? ":" + clientScope : ""}`, kept); } catch { /* 화면에서만 */ } }
+    captureActiveTaskTab(); persistTasks();
+    scheduleCreateSync();
+  }
+  // 마지막 구분 줄 위의 대화·결과 카드를 흐리게(시안 태그 12). 「되돌리기」는 누른 직후 5초 동안 마지막 구분 줄에만.
+  function dimBeforeReset() {
+    const nodes = [...log.querySelectorAll(':scope > .ai-msg')];
+    let last = -1;
+    nodes.forEach((node, index) => { if (node.classList.contains('divider')) last = index; });
+    nodes.forEach((node, index) => node.classList.toggle('is-before-reset', index < last));
+    const divider = last >= 0 ? nodes[last] : null;
+    log.querySelectorAll('[data-ai-newchat-undo]').forEach(button => { if (!newChatUndo || button.parentElement !== divider) button.remove(); });
+    if (newChatUndo && divider && !divider.querySelector('[data-ai-newchat-undo]')) {
+      const undo = document.createElement('button'); undo.type = 'button'; undo.dataset.aiNewchatUndo = ''; undo.textContent = '되돌리기';
+      undo.title = '새 대화를 취소하고 앞 대화를 이어 갑니다';
+      undo.addEventListener('click', () => undoNewChat());
+      divider.append(undo);
+    }
+  }
+
+  function onChatClick(event) {
+    const open = event.target.closest('[data-ai-chat-open]');
+    if (open) { selectCreateResult(open.dataset.aiChatOpen); return; }
+    const compareTarget = event.target.closest('[data-ai-chat-compare]');
+    if (compareTarget) { openResultCompare(compareTarget.dataset.aiChatCompare); return; }
+    const chip = event.target.closest('[data-ai-chip]');
+    if (!chip) return;
+    if (chip.matches('[data-ai-flow-chip]')) { onFlowChip(chip); return; }
+    const item = generatedImages.find(candidate => candidate.id === chip.dataset.aiChipFor);
+    switch (chip.dataset.aiChip) {
+      case 'revert': selectCreateResult(chip.dataset.aiChipTarget); return;
+      case 'compare-close': closeResultCompare(); return;
+      case 'redraw': startNewDrawingCompose(); return;
+      case 'label-restore': if (item) void runLabelRestoreTurn(item); return;
+      case 'label-toggle': if (item?.id === selectedOutputItem()?.id) labelToggle?.click(); scheduleCreateSync(); return;
+      case 'label-edit': panel.querySelector('[data-ai-label-edit]')?.click(); return;
+      default: {
+        // 칩은 입력칸에 말만 넣는다(시안 「정할 것」 권함). 바로 실행하지 않는다.
+        const text = chip.dataset.aiChipText || chip.textContent;
+        createComposeMode = 'auto';
+        chatInput.value = text; chatInput.focus(); chatInput.setSelectionRange?.(text.length, text.length);
+        chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+        scheduleCreateSync();
+      }
+    }
+  }
+  function selectCreateResult(id) {
+    if (!id || !generatedImages.some(item => item.id === id)) return;
+    if (comparison) closeComparison();
+    panel.aiWorkbench?.select?.(id);
+    scheduleCreateSync();
+  }
+  function openResultCompare(leftId) {
+    const right = selectedOutputItem();
+    if (!right || leftId === right.id) return;
+    if (comparison) closeComparison();
+    if (['side-by-side', 'stacked'].includes(panel.dataset.aiLayout)) {
+      // 좌우·상하 비교 중이면 그 보기를 그대로 두고 왼쪽(비교 대상)만 바꾼다.
+      panel.aiWorkbench?.setCompareSource?.(leftId);
+    } else openComparison({ leftId, rightId: right.id });
+    if (!busy) log.querySelectorAll('.ai-msg.status').forEach(node => node.remove());
+    scheduleCreateSync();
+  }
+  function closeResultCompare() {
+    if (comparison) closeComparison();
+    if (['side-by-side', 'stacked'].includes(panel.dataset.aiLayout)) panel.aiWorkbench?.setLayout?.('result');
+    setCompareNote(null);
+    scheduleCreateSync();
+  }
+
+  // V5(안 A · 태그 10): 결과 제목 ▾ 목록에 작은 그림 · 한 일 · 시각. 작업대가 늦게 생겨도 처음 맞출 때 단다.
+  let versionDescriberSet = false;
+  function ensureVersionDescriber() {
+    if (versionDescriberSet || !panel.aiWorkbench?.setVersionDescriber) return;
+    versionDescriberSet = true;
+    panel.aiWorkbench.setVersionDescriber((id) => {
+      if (!isFigureCreate()) return null;
+      const item = generatedImages.find(candidate => candidate.id === id);
+      if (!item) return null;
+      const ms = item.meta?.ui?.elapsedMs;
+      return { thumb: item.outputImage?.src || item.data, sub: [resultActionText(item, generatedImages), Number.isFinite(ms) ? clockText(ms) : null].filter(Boolean).join(' · ') };
+    });
+  }
+  // V5: 지금 그리기 단추가 할 일 — 'stop' | 'edit' | 'new'(이미지 생성) | 'fresh'(▾ 새로 그리기) | 'all'(▾ 처음부터 다시 그리기)
+  function createDrawMode(item = selectedOutputItem()) {
+    if (busy && !insertingOutput) return 'stop';
+    if (createComposeMode === 'new' && item) return createDrawScope === 'all' ? 'all' : 'fresh';
+    if (item && !(resetIsLast(conversationMessages) && !resetPicked)) return 'edit';
+    return 'new';
+  }
+  // V5(태그 16): 다음 그리기가 읽을 대화. 결과가 있으면 그 결과 뒤만, 「처음부터 다시 그리기」면 새 대화 뒤 전체.
+  function gatherForDraw(text, mode) {
+    const resultIds = generatedImages.map(item => item.id);
+    return gatherDrawRequest(conversationMessages, text, { scope: mode === 'all' ? 'all' : 'after-result', resultIds });
+  }
+
+  function scheduleCreateSync() {
+    if (createSyncQueued) return;
+    createSyncQueued = true;
+    queueMicrotask(() => { createSyncQueued = false; try { syncCreationUi(); } catch (error) { console.warn('[5E 생성 화면]', error); } });
+  }
+  function syncCreationUi() {
+    if (disposed) return;
+    const on = isFigureCreate();
+    panel.dataset.aiCreateUi = String(on);
+    const dom = ensureCreateDom();
+    const resultOnly = on && attachments.length === 0;
+    panel.dataset.aiResultOnly = String(resultOnly);
+    panel.aiWorkbench?.setResultOnly?.(resultOnly);
+    if (!on) { dom.closeMenus(); setCompareNote(null); return; }
+    ensureVersionDescriber();
+    const item = selectedOutputItem();
+    // 실행 단추(태그 6·22): 그리는 중 = 멈추기, 결과가 있으면 「이 그림 고치기」, 없으면(또는 「새 대화」 뒤) 「이미지 생성」.
+    const mode = createDrawMode(item);
+    const running = mode === 'stop', editing = mode === 'edit';
+    // 입력칸 안 A(11-21): 대화 답을 기다릴 때와 그릴 때 멈추기를 나눠 보인다(대화 중 멈추기를 그리기 멈추기로 알고 누르던 일).
+    const stopLabel = currentTurnType === 'chat' ? '대화 멈추기' : '그리기 멈추기';
+    const label = { stop: stopLabel, edit: '이 그림 고치기', fresh: '새로 그리기', all: '처음부터 다시 그리기', new: '이미지 생성' }[mode];
+    if (sendButton.textContent !== label) sendButton.textContent = label;
+    sendButton.dataset.aiCreateState = running ? 'stop' : editing ? 'edit' : 'new';
+    sendButton.disabled = running ? false : busy;
+    const modKey = isMacKeys() ? '⌘' : 'Ctrl+';
+    const fresh = mode === 'fresh' || mode === 'all';
+    // V5(태그 1·3): 미리 말하는 줄은 없앴다 — 같은 말을 그리기 단추 설명으로. 안내 줄은 「Enter 대화 · ⌘Enter …」만(⇧Enter는 ✈ 설명).
+    const typed = chatInput.value.trim();
+    const gathered = running || editing ? null : gatherForDraw(typed, mode);
+    const lastResult = drawScope(conversationMessages, { resultIds: generatedImages.map(other => other.id) }).after;
+    const previewText = running ? '' : drawPreviewLine({ editing, baseNo: editing ? resultNumber(item, generatedImages) : null, fresh, all: mode === 'all',
+      count: gathered?.count || 0, after: gathered?.after?.name || null, reset: Boolean(gathered?.reset && !gathered?.after) });
+    sendButton.title = running ? '작업을 멈춥니다 · 앞 결과는 그대로' : `${previewText} · ${modKey}Enter`;
+    sendButton.removeAttribute('data-tip');
+    const resetNote = !running && !editing && gathered?.reset && !gathered?.after && gathered.count > 0 ? `새 대화 ${gathered.count}개로` : '';
+    const hintText = composerHint({ mod: modKey, action: running ? (item ? '이 그림 고치기' : '이미지 생성') : label, note: resetNote });
+    if (dom.hint.textContent !== hintText) dom.hint.textContent = hintText;
+    chatButton.title = `대화 보내기 · Enter (그림은 그리지 않음) · ${shiftEnterLabel()} 줄바꿈`; chatButton.setAttribute('aria-label', '대화 보내기');
+    dom.more.hidden = !item;
+    dom.more.disabled = busy;
+    // ▾ 메뉴 「새로 그리기」 옆 작은 글: 「결과 3 뒤 대화로」 / 「새 대화로」
+    const newNote = dom.moreMenu.querySelector('[data-ai-create-new-note]');
+    const newNoteText = lastResult?.name ? `${lastResult.name.replace(/^생성 /, '')} 뒤 대화로` : resetIsLast(conversationMessages) ? '새 대화로' : '대화로';
+    if (newNote && newNote.textContent !== newNoteText) newNote.textContent = newNoteText;
+    // 「새 대화」: 끊을 대화가 있고, 이미 막 끊은 게 아닐 때만
+    const canReset = !busy && conversationMessages.some(message => message.role === 'user' || message.role === 'assistant') && !resetIsLast(conversationMessages);
+    dom.newChat.disabled = !canReset;
+    const resetItem = dom.moreMenu.querySelector('[data-ai-create-reset]'); if (resetItem) resetItem.disabled = !canReset;
+    dimBeforeReset();
+    log.querySelectorAll('.ai-msg.chips button').forEach(button => { button.disabled = busy; });
+    dom.clip.disabled = busy;
+    const placeholder = running ? '그리는 동안 덧붙일 말을 적어 두세요'
+      : item?.meta?.ui?.kind === 'label' && editing ? '라벨을 고치거나 더 말하세요'
+      : editing ? '이 그림에 대해 이야기하거나, 고칠 곳을 적고 「이 그림 고치기」'
+      : mode === 'fresh' ? `덧붙일 말을 적고 「새로 그리기」 · 비워 두면 ${lastResult?.name ? `${lastResult.name} 뒤 대화로` : '대화로'} 그립니다`
+      : mode === 'all' ? '덧붙일 말을 적고 「처음부터 다시 그리기」 · 비워 두면 대화 전체로 그립니다' : '그림에 대해 AI와 이야기하세요 · 그리기는 「이미지 생성」';
+    if (chatInput.placeholder !== placeholder) chatInput.placeholder = placeholder;
+    chatInput.disabled = false;
+    // 그림 설정 한 줄(태그 18)
+    const value = key => panel.querySelector(`.ai-compact-settings [data-ai-setting-key="${key}"] .is-on`)?.dataset.aiSettingValue;
+    const background = value('background') === 'connected' ? '배경 제거 켬' : '배경 제거 끔';
+    const objects = value('objects') && value('objects') !== 'off' ? '객체 분리 켬' : '객체 분리 끔';
+    const summary = `${background} · ${objects}`;
+    if (dom.summary.textContent !== summary) dom.summary.textContent = summary;
+    // 「＋ 레퍼런스」(태그 2)·결과 칸 왼쪽 이름(태그 24)
+    dom.addRef.hidden = !resultOnly || panel.dataset.aiLayout !== 'result' || Boolean(comparison);
+    // 비교 안내(태그 23·25): 지금 비교 상태를 한 줄로. 비교가 끝나면 지운다.
+    const compareNow = createCompareState();
+    if (compareNow) {
+      const left = generatedImages.find(candidate => candidate.id === compareNow.leftId), right = generatedImages.find(candidate => candidate.id === compareNow.rightId);
+      const pair = `${left?.name || '왼쪽 결과'}(왼쪽)와 ${right?.name || '오른쪽 결과'}(오른쪽)`;
+      const note = compareNow.mode === 'slider' ? `${pair}를 겹쳐 보고 있어요. 경계를 끌어 보세요. 다른 결과의 「비교」를 누르면 왼쪽이 그 결과로 바뀝니다.`
+        : `${pair}를 나란히 보고 있어요. 다른 결과의 「비교」를 누르면 왼쪽이 그 결과로 바뀝니다.`;
+      if (createCompareNote?.textContent !== note) setCompareNote(note);
+    } else if (createCompareNote) setCompareNote(null);
+    dom.addRef.disabled = busy;
+    const leftTitle = panel.querySelector('.ai-original-pane .ai-pane-metadata > strong');
+    const leftName = resultOnly ? '비교 대상' : '레퍼런스';
+    if (leftTitle && leftTitle.textContent !== leftName) leftTitle.textContent = leftName;
+    refreshChatResults();
+  }
+
+  // --- 대화 보내기 · 이미지 생성(CHATFIX, 시안 대화생성분리 안 B · 안 1) ---
+  // Enter·입력칸 안 ✈ = 대화 보내기(AI가 묻고 정리, 그리지 않음). 「이미지 생성」(입력칸 밖)·⌘Enter = 지금까지 대화 전체 + 입력칸 글로 그리기.
+  // 결과가 있으면 같은 단추가 「이 그림 고치기」(입력칸 글 = 고칠 말), ▾ 「새로 그리기」 = 대화 전체로 처음부터.
+  // 한글 조합 중 Enter는 아무것도 보내지 않는다(CHATGEN 2절: 옛 Enter 처리가 조합 중 Enter를 대화로 보내 「?」로 끝난 말만 그림이 됐다).
+  let lastDrawRun = null;
+  function createChat() {
+    const text = chatInput.value.trim();
+    if (!text) return true;
+    if (busy) { setStatus(currentTurnType === 'chat' ? 'AI가 답하는 중이에요 · 답이 오면 이어서 보낼 수 있어요.' : '그리는 중이에요 · 끝나면 대화를 보낼 수 있어요. 멈추려면 「그리기 멈추기」를 누르세요.', 'warn'); return true; }
+    chatButton.click();
+    return true;
+  }
+  function startDraw(gathered, { note = true } = {}) {
+    lastDrawRun = { kind: 'new', request: gathered.request, conversation: gathered.conversation, count: gathered.count, summary: gathered.summary || [], after: gathered.after || null, reset: Boolean(gathered.reset), scope: gathered.scope || 'after-result' };
+    // 그리기 시작 때 모은 「그릴 내용」을 대화에 한 번 남긴다(태그 7).
+    if (note) addLog(drawPlanNote(gathered));
+    void submit('image', { requestOverride: gathered.request, discussionContextOverride: '', figureConversation: gathered.conversation, figureGathered: lastDrawRun,
+      bypassCache: true, silentUserLog: true, createBubbleShown: true });
+    captureActiveTaskTab(); persistTasks();
+  }
+  function startEdit(item, instruction, { bubble = true } = {}) {
+    lastDrawRun = { kind: 'edit', baseId: item.id, instruction };
+    if (bubble) addLog(instruction, 'user');
+    void submit('image', { figureEdit: { baseId: item.id, instruction }, requestOverride: instruction, bypassCache: true, createBubbleShown: true, silentUserLog: !bubble });
+    captureActiveTaskTab(); persistTasks();
+  }
+  function createGenerate({ fresh = false } = {}) {
+    if (busy) { void interruptCurrentTask(); return true; }
+    const text = chatInput.value.trim();
+    const item = selectedOutputItem();
+    const drawMode = fresh && item && createDrawMode(item) === 'edit' ? 'fresh' : createDrawMode(item);
+    const editing = drawMode === 'edit';
+    if (localEraseController?.getDraft(item)) { setStatus('먼저 수정 저장을 눌러 편집을 완료하세요.', 'warn'); return true; }
+    if (editing) {
+      if (!text) { setStatus('고칠 곳을 입력칸에 적어 주세요. 예: T는 빼 줘', 'warn'); chatInput.focus(); return true; }
+      chatInput.value = ''; input.value = ''; createComposeMode = 'auto'; createDrawScope = 'after-result';
+      startEdit(item, text);
+      return true;
+    }
+    // V5(태그 16): 결과가 있으면 그 결과 뒤 대화만, 「처음부터 다시 그리기」면 새 대화 뒤 전체.
+    let gathered = gatherForDraw(text, drawMode);
+    if (!gathered.request && gathered.after) {
+      // 결과 뒤 대화가 없으면 막지 않고 그 결과를 만든 내용으로 다시 그린다(없으면 새 대화 뒤 대화 전체).
+      const marked = generatedImages.find(candidate => candidate.id === gathered.after.id);
+      const source = marked?.meta?.ui?.kind === 'label' ? (generatedImages.find(candidate => candidate.id === marked.meta.ui.from) || marked) : marked;
+      const made = source?.meta?.gathered;
+      gathered = made?.request ? { ...made, users: [], after: gathered.after, again: true, count: 0, reset: gathered.reset, scope: 'after-result' } : gatherForDraw(text, 'all');
+    }
+    if (!gathered.request) { setStatus('어떤 그림이 필요한지 입력칸에 적거나, AI와 먼저 이야기해 주세요.', 'warn'); chatInput.focus(); return true; }
+    if (text) {
+      addLog(text, 'user');
+      try { recordConversationMessage('user', text); } catch { /* 저장을 못 해도 이번 그리기에는 넣었다 */ }
+    }
+    chatInput.value = ''; input.value = ''; createComposeMode = 'auto'; createDrawScope = 'after-result';
+    clearNewChatUndo();
+    startDraw(gathered);
+    return true;
+  }
+  function onFlowChip(chip) {
+    let payload = null; try { payload = chip.dataset.aiChipPayload ? JSON.parse(chip.dataset.aiChipPayload) : null; } catch { payload = null; }
+    if (busy) { setStatus('그리는 중이에요 · 끝난 뒤에 눌러 주세요.', 'warn'); return; }
+    switch (chip.dataset.aiChip) {
+      case 'draw-now': createComposeMode = 'new'; createGenerate({ fresh: true }); return;
+      case 'retry-draw': {
+        if (payload?.request) startDraw({ ...payload, users: [] }, { note: false });
+        else createGenerate({ fresh: true });
+        return;
+      }
+      case 'retry-edit': {
+        const base = generatedImages.find(candidate => candidate.id === payload?.baseId) || selectedOutputItem();
+        if (base && payload?.instruction) { addLog(payload.instruction, 'user'); startEdit(base, payload.instruction, { bubble: false }); }
+        return;
+      }
+      case 'reword': {
+        const text = String(payload?.text || '');
+        createComposeMode = payload?.kind === 'new' ? 'new' : 'auto';
+        chatInput.value = text; chatInput.focus(); chatInput.select?.();
+        chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+        setStatus(payload?.kind === 'edit' ? '고칠 말을 바꿔 적고 「이 그림 고치기」를 누르세요.' : '그릴 말을 바꿔 적고 「이미지 생성」을 누르세요.', 'ok');
+        scheduleCreateSync();
+        return;
+      }
+      default:
+    }
+  }
+  sendButton.addEventListener('click', event => {
+    if (!isFigureCreate() || panel.dataset.aiSharingMode === 'view') return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    createGenerate();
+  }, true);
+  // 입력칸 안 ✈(대화 보내기): 생성 탭에서도 다시 보인다. 조합 중이던 글자는 click 전에 확정된다.
+  chatButton.addEventListener('click', event => {
+    if (!isFigureCreate() || panel.dataset.aiSharingMode === 'view') return;
+    if (busy) { event.preventDefault(); event.stopImmediatePropagation(); setStatus('그리는 중이에요 · 끝나면 대화를 보낼 수 있어요.', 'warn'); }
+  }, true);
+  let imeComposing = false;
+  chatInput?.addEventListener('compositionstart', () => { imeComposing = true; });
+  chatInput?.addEventListener('compositionend', () => { imeComposing = false; });
+  chatInput?.addEventListener('keydown', event => {
+    if (!isFigureCreate()) return;
+    const action = enterAction(event, { composing: imeComposing });
+    if (!action) return;
+    // 조합 확정 Enter: 입력기에 맡기고, 옛 Enter 처리(대화 보내기)도 돌지 않게 막는다.
+    if (action === 'ime') { event.stopImmediatePropagation(); return; }
+    if (action === 'newline') { event.stopImmediatePropagation(); return; }
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (action === 'generate') { if (busy) { setStatus('그리는 중입니다 · 멈추려면 「멈추기」를 누르세요.', 'warn'); return; } createGenerate(); return; }
+    createChat();
+  }, true);
+  chatInput?.addEventListener('input', () => {
+    if (!isFigureCreate()) return;
+    if (!chatInput.value.trim() && createComposeMode === 'new' && !selectedOutputItem()) createComposeMode = 'auto';
+    scheduleCreateSync();
+  });
+
+  // --- 확정하고 라벨 살리기(태그 27~32): 그림은 다시 그리지 않고 글자만 5E 라벨로 ---
+  async function runLabelRestoreTurn(base) {
+    if (busy || preflightRun || !base?.data) return;
+    if (!desktop || desktop.web || typeof desktop.readImageText !== 'function') {
+      // 막다른 경고 대신 라벨 편집으로 데려간다(웹은 글자 읽기 연결이 없다).
+      setStatus('라벨 자동 살리기는 설치판에서 됩니다 · 라벨 편집으로 직접 넣을 수 있게 열었습니다.', 'warn');
+      panel.querySelector('[data-ai-label-edit]')?.click();
+      return;
+    }
+    const source = base.meta?.ui?.kind === 'label' ? generatedImages.find(item => item.id === base.meta.ui.from) || base : base;
+    const taskId = activeTaskTabId;
+    addLog('확정하고 라벨 살리기', 'user');
+    addChatNote(`${source.name}를 확정했어요. 그림은 그대로 두고 글자만 5E 라벨로 바꿉니다.`);
+    const token = beginRequest('image', source.data);
+    if (pendingLoading?.token === token) pendingLoading = { ...pendingLoading, source: source.data, kind: 'label-restore', plan: 'label-restore', phased: true, title: `${source.name}의 글자를 라벨로 바꾸고 있어요` };
+    const requestEpoch = ++currentRequestEpoch;
+    const abort = new AbortController(); imageLabelRunAbort = abort;
+    const isCurrent = () => !disposed && requestEpoch === currentRequestEpoch && activeTaskTabId === taskId && !currentCancelRequested && !abort.signal.aborted;
+    clearTimeout(requestTimeout); requestTimeout = null;
+    imageReceived = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER; currentCancelRequested = false;
+    currentRunInput = { attachments: [], generated: [], mode: selectedMode, outputEngine: selectedOutputEngine, examBriefProfile: EXAM_BRIEF_PROFILE, markPolicy: readMarkPolicy() };
+    currentTerminalOutcome = null; currentTurnCandidate = null; currentTurnDone = false; serverTurnFinished = false;
+    const clockId = `label-${requestEpoch}`; currentTurnId = clockId; startGenerationClock(clockId);
+    newEngineRunActive = true;
+    requestPhase('generating');
+    startStatusBlock('label');
+    setStatus('라벨 살리는 중…', 'busy');
+    setGenerating(true, '그림 속 글자를 라벨로 바꾸고 있습니다', '그림은 다시 그리지 않습니다.');
+    const phase = (name, text) => { if (!isCurrent()) return; loading.stage(name); statusPhase(name, text); };
+    const startedAt = Date.now();
+    try {
+      const hints = Array.isArray(source.meta?.labelHints) && source.meta.labelHints.length ? source.meta.labelHints
+        : (await figureLabelHints(source.meta?.request || '')) || labelHintsFallback(source.meta?.request || '');
+      phase('label-read', hints.length ? `요청에 적은 라벨 ${hints.length}개를 기준으로 글자 읽는 중 · ${hints.slice(0, 10).join(' ')}${hints.length > 10 ? ' …' : ''}` : undefined);
+      let items = [], readError = null;
+      for (let attempt = 1; attempt <= 2 && !items.length; attempt++) {
+        try {
+          const read = await desktop.readImageText({ model: AI_LABEL_READ_MODEL, text: `${LABEL_READ_PROMPT}${labelHintPrompt(hints)}`, attachments: [source.data] });
+          if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+          items = parseLabelRead(typeof read === 'string' ? read : String(read?.text ?? ''));
+        } catch (error) { if (error?.name === 'AbortError' || !isCurrent()) throw error; readError = error; }
+      }
+      if (hints.length) statusPhase('label-read', `요청에 적은 라벨 ${hints.length}개를 기준으로 글자 읽음 · ${items.length}개 찾음`);
+      phase('label-erase');
+      const picture = new Image(); picture.src = source.data; await picture.decode();
+      const canvas = document.createElement('canvas'); canvas.width = picture.naturalWidth; canvas.height = picture.naturalHeight;
+      const g = canvas.getContext('2d', { willReadFrequently: true }); g.drawImage(picture, 0, 0);
+      const pixels = g.getImageData(0, 0, canvas.width, canvas.height);
+      // LEADERFIX(11-20): 글자만이 아니라 읽은 지시선도 그림에서 찾아 지운다(라벨 켬·끔 같은 그림, 두 줄 지시선 없음).
+      // 확실하지 않은 지시선은 그림에 그대로 두고 그 라벨은 지시선 없이 만든다(eraseLabelsAndLeaders가 leader: null로 돌려줌).
+      const untouched = pixels.data.slice();
+      const readItems = items.map(item => ({ ...item }));
+      try { items = eraseLabelsAndLeaders(pixels.data, canvas.width, canvas.height, items).items; }
+      catch { pixels.data.set(untouched); items = items.map(item => ({ ...item, leader: null })); eraseGlyphsInBoxes(pixels.data, canvas.width, canvas.height, items); }
+      g.putImageData(pixels, 0, 0);
+      let erased = items.length ? canvas.toDataURL('image/png') : source.data;
+      // 11-21 사용자: 지시선이 그림 선(근육 결·줄무늬)과 닿으면 맥 안 지우기가 「확실하지 않음」으로 남겨 라벨을 끄면 지시선만 남았다.
+      // 프로그램이 알아서 고른다 — 지시선을 모두 지웠으면 지금처럼 끝(빠름·그림 그대로), 하나라도 남겼으면 그때만
+      // 변환 탭처럼 그림 AI가 글자·지시선 없는 그림을 다시 그리고 읽은 지시선 그대로 5E 라벨을 올린다. 다시 그리기가 안 되면 맥 안 결과로(실패로 끝내지 않음).
+      const keptLeaders = readItems.filter(item => item.leader).length - items.filter(item => item.leader).length;
+      if (keptLeaders > 0 && typeof desktop.send === 'function') {
+        const note = `지시선이 그림과 겹쳐 ${keptLeaders}개는 깨끗이 지우지 못했어요. 글자·지시선 없는 그림을 다시 그리는 중이라 30~40초쯤 더 걸려요 · 다른 일을 하셔도 끝나면 작업 목록에 「새 결과」로 알려 드려요.`;
+        phase('label-erase', note);
+        setGenerating(true, '지시선이 많아 깨끗한 그림을 다시 그리고 있어요', '30~40초쯤 더 걸려요 · 다른 일을 하셔도 끝나면 알려 드려요.');
+        try {
+          const models = engineModels({ catalog: availableModels });
+          const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image) });
+          const texts = readItems.map(item => String(item.text || '').trim()).filter(Boolean).slice(0, 30);
+          const prompt = `첨부 그림에서 글자 라벨과, 라벨에서 물체로 이어진 지시선만 깨끗이 지운 그림을 다시 만든다. 그 밖의 선·도형·명암·해칭·배치·크기는 픽셀 단위로 그대로 둔다. 그림 크기·여백·위치는 바꾸지 않는다(잘라 내지 않는다). 지운 자리는 주변 바탕과 자연스럽게 잇는다. 흑백.\n지울 라벨: ${texts.join(', ') || '(그림 안 모든 글자)'}`;
+          const out = await ai.generateImage({ model: models.image, text: prompt, attachments: [source.data], signal: abort.signal });
+          if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+          const drawn = typeof out === 'string' ? out : out?.imageDataUrl || out?.dataUrl || '';
+          if (drawn.startsWith('data:image')) {
+            const gray = await grayscaleGeneratedPng(drawn, { signal: abort.signal });
+            // 크기가 같을 때만 쓴다(라벨 자리는 원래 그림 좌표) — 다르면 맥 안 결과로.
+            const check = new Image(); check.src = gray.data; await check.decode();
+            if (check.naturalWidth === canvas.width && check.naturalHeight === canvas.height) {
+              const g2 = canvas.getContext('2d', { willReadFrequently: true }); g2.drawImage(check, 0, 0);
+              const px2 = g2.getImageData(0, 0, canvas.width, canvas.height);
+              eraseGlyphsInBoxes(px2.data, canvas.width, canvas.height, readItems.map(item => ({ ...item, leader: null }))); // 남은 글자 흔적만 정리
+              g2.putImageData(px2, 0, 0);
+              erased = canvas.toDataURL('image/png');
+              // 다시 그린 그림에는 지시선이 없으니 모든 지시선을 5E 지시선으로 올린다 — 맥 안에서 찾은 실제 끝점이 있으면 그것, 없으면 읽은 끝점.
+              items = readItems.map((read, i) => (items.length === readItems.length && items[i]?.leader ? items[i] : read));
+              statusPhase('label-erase', `글자·지시선 없는 그림을 다시 그렸어요 · 지시선 ${readItems.filter(item => item.leader).length}개를 5E 라벨로 올려요`);
+            }
+          }
+        } catch (error) { if (error?.name === 'AbortError' || !isCurrent()) throw error; /* 다시 그리기 실패 → 맥 안 결과 그대로 */ }
+      }
+      if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      phase('label-place');
+      const readPlan = labelPlanFromRead(items);
+      let sized = null;
+      if (readPlan.labels.length) { try { sized = await measuredLabelSizes(source.data, readPlan.labels, abort.signal); } catch (error) { if (error?.name === 'AbortError') throw error; } }
+      const candidateSha256 = await imageLabelDigest(erased);
+      const report = { verdict: 'pass', checks: [], issues: [], reviewSkipped: true };
+      const labelPlan = { ...structuredClone(readPlan), labels: structuredClone(readPlan.labels), sourcePlan: structuredClone(readPlan), qualityReview: report, reviewRequired: false, targetPlacement: null, candidateSha256, ...(sized?.ratio ? { measuredLabelSize: sized.ratio } : {}) };
+      if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      phase('label-check');
+      requestPhase('validating');
+      const number = generatedImages.length + 1;
+      const item = await addPreview(erased, { alreadyEditable: true, isCurrent, name: `생성 결과 ${number} · 라벨`, labelPlan: readPlan.labels.length ? labelPlan : null, reviewState: 'passed', reviewReport: report });
+      if (!item || !isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      item.engine = 'ai-figure-labels';
+      item.candidateSha256 = candidateSha256; item.verifiedCandidateData = erased;
+      item.meta = { ...(structuredClone(source.meta || {})), ui: { kind: 'label', from: source.id, labelCount: readPlan.labels.length, elapsedMs: Date.now() - startedAt, hints: hints.length } };
+      if (item.labelPlan) { labelPreviewState(item).included = true; ensureCompositePreviewControl(item); syncEditableLabelPlanButton(item); void renderLabelPreview(item); }
+      newEngineRunActive = false;
+      imageReceived = true; currentTurnCandidate = item; serverTurnFinished = true; currentTurnDone = true; currentTerminalOutcome = 'completed';
+      advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
+      finishStatusBlock();
+      addResultEntry(item);
+      addChatNote(readPlan.labels.length
+        ? `라벨 ${readPlan.labels.length}개를 5E 라벨로 바꿨어요. 두 번 눌러 글자를 고칠 수 있고, 캔버스에 넣으면 라벨이 따로 움직입니다.`
+        : `그림 속 글자를 읽지 못했어요${readError ? '(AI 연결)' : ''}. 그림은 그대로 두었고, 「라벨 편집」에서 라벨을 직접 넣을 수 있어요.`);
+      setTaskState('completed'); requestPhase('completed'); setGenerating(false); setBusy(false);
+      setStatus(readPlan.labels.length ? `라벨 ${readPlan.labels.length}개를 살렸습니다` : '글자를 읽지 못해 그림만 두었습니다 · 라벨 편집에서 직접 넣을 수 있습니다', readPlan.labels.length ? 'ok' : 'warn');
+      window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: item.id } }));
+      captureActiveTaskTab(); persistTasks();
+      try { await taskPersistence.checkpoint(); } catch {}
+      return item;
+    } catch (error) {
+      newEngineRunActive = false;
+      const cancelled = error?.name === 'AbortError' || currentCancelRequested;
+      finishStatusBlock({ remove: cancelled });
+      if (requestEpoch === currentRequestEpoch && !disposed && activeTaskTabId === taskId) {
+        advanceGenerationClock('turn-terminal', cancelled ? 'cancelled' : 'failed');
+        requestPhase(cancelled ? 'cancelled' : 'kept-previous', { reason: failureReason(error) }); setTaskState('idle'); setGenerating(false); setBusy(false);
+        setStatus(cancelled ? '라벨 살리기를 멈췄습니다 · 앞 결과는 그대로' : `라벨을 살리지 못했습니다 · 앞 결과는 그대로입니다. 다시 누르면 다시 합니다. (${String(error?.message || error).slice(0, 120)})`, 'warn');
+        if (!cancelled) addChatNote('라벨을 살리지 못했어요. 앞 결과는 그대로이고, 「확정하고 라벨 살리기」를 다시 누르면 다시 합니다.');
+        captureActiveTaskTab(); persistTasks();
+      }
+    } finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
+  }
+  window.addEventListener('5e:ai-task-change', () => { finishStatusBlock(); setCompareNote(null); clearNewChatUndo(); createComposeMode = 'auto'; createDrawScope = 'after-result'; resetPicked = false; scheduleCreateSync(); }, { signal: lifecycle.signal });
+  // V5(태그 13): 「새 대화」 뒤 결과 목록·결과 카드에서 결과를 고르면 다시 「이 그림 고치기」
+  panel.addEventListener('5e:ai-candidate-select', () => { if (resetIsLast(conversationMessages)) resetPicked = true; scheduleCreateSync(); }, { signal: lifecycle.signal });
+  panel.addEventListener('click', event => { if (event.target.closest?.('[data-ai-layout-mode], [data-ai-compare], [data-ai-setting-value]')) setTimeout(scheduleCreateSync, 0); }, { signal: lifecycle.signal });
+  new MutationObserver(scheduleCreateSync).observe(panel.querySelector('.ai-results'), { attributes: true, attributeFilter: ['class'] });
+
+  // 11-19(시안 태그 6·10·12·14): 「이 그림 고치기」 — 보는 결과를 바탕으로 말한 곳만 고친다(엔진 editFigure).
+  // 고친 그림은 「생성 결과 N+1」로 바로 골라지고, 앞 결과는 지우지 않는다. 엔진에 고치기가 없거나 고치지 못하면
+  // 앞 그림과 지시를 함께 넘겨 새로 그린다(실패로 끝내지 않음). 라벨 결과를 고치면 라벨 없는 앞 그림을 고친 뒤 라벨을 다시 살린다.
+  // CHATFIX: 빈(흰) 그림인가 — 앱이 재는 픽셀 검사(darkPixelShare·inkPixelShare)로. 못 재면 빈 그림으로 보지 않는다.
+  async function isBlankFigure(dataUrl) {
+    try { return isBlankInspection(await inspectPngDataUrl(dataUrl)); } catch { return false; }
+  }
+  async function runFigureEditTurn({ runInput, entered, requestEpoch, options = {} }) {
+    const taskId = activeTaskTabId;
+    const picked = generatedImages.find(item => item.id === options.figureEdit?.baseId) || selectedOutputItem();
+    const relabel = picked?.meta?.ui?.kind === 'label';
+    const base = relabel ? (generatedImages.find(item => item.id === picked.meta.ui.from) || picked) : picked;
+    const instruction = String(options.figureEdit?.instruction || entered || '').trim();
+    if (!base?.data || !instruction) return runFigureEngineTurn({ runInput, entered, discussionContext: '', requestEpoch, options });
+    // 원래 요청: 대화를 모아 그린 결과면 모은 요청 + 정리된 구성(CHATFIX), 아니면 앞 그림의 요청.
+    const gathered = base.meta?.gathered || null;
+    const originalRequest = [base.meta?.request || conversationMessages.find(message => message.role === 'user')?.text || '',
+      gathered?.summary?.length ? `정리된 구성: ${gathered.summary.join(' / ')}` : ''].filter(Boolean).join('\n');
+    if (!busy) setBusy(true);
+    imageReceived = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER; currentCancelRequested = false;
+    currentRunInput = runInput; currentTerminalOutcome = null; currentImageOutputError = null;
+    currentTurnCandidate = null; pendingCacheOutput = null; currentTurnDone = false; serverTurnFinished = false;
+    currentRequestSnapshot = { entered, request: instruction, discussionContext: '', annotatedRequest: instruction, renderRequest: instruction, runInput };
+    providerRequestPersistable = true; persistTasks();
+    clearTimeout(requestTimeout); requestTimeout = null;
+    const abort = new AbortController(); imageLabelRunAbort = abort;
+    const isCurrent = () => !disposed && requestEpoch === currentRequestEpoch && activeTaskTabId === taskId && !currentCancelRequested && !abort.signal.aborted;
+    const clockId = `figure-edit-${requestEpoch}`; currentTurnId = clockId; startGenerationClock(clockId);
+    newEngineRunActive = true;
+    const baseNo = resultNumber(base, generatedImages);
+    if (pendingLoading?.token === requestToken) pendingLoading = { ...pendingLoading, kind: 'figure-edit', plan: 'figure-edit', phased: true, source: base.data, title: `생성 결과 ${baseNo}에서 말한 곳만 고치고 있어요` };
+    const turnStartedAt = Date.now();
+    addLog(`생성 결과 ${baseNo}에서 말한 곳만 고치고 있어요. 나머지는 그대로 둡니다.`);
+    startStatusBlock('edit');
+    requestPhase('generating');
+    setStatus('그림 고치는 중…', 'busy');
+    setGenerating(true, '그림을 고치고 있습니다', '앞 그림을 바탕으로 말한 곳만 고칩니다.');
+    const models = engineModels({ selected: runInput.model, catalog: runInput.modelCatalog || availableModels });
+    const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image), textModels: [runInput.model, ...imageModelOrder(runInput.model)] });
+    const previous = base.meta ? { expanded: base.meta.expanded || null, scenes: [{ request: base.meta.sceneRequest || originalRequest, refs: base.meta.refs || [], image: base.data }] } : null;
+    const editPhase = e => {
+      if (!isCurrent() || !e?.phase) return;
+      const copy = figurePhaseCopy(e);
+      if (copy.title) setGenerating(true, copy.title, copy.detail || '');
+      loading.stage(e.phase); statusPhase(e.phase);
+    };
+    let outcome;
+    try {
+      await taskPersistence.checkpoint();
+      if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      outcome = await runFigureEdit({ ai, previousPng: base.data, instruction, originalRequest, previous, models, signal: abort.signal, onPhase: editPhase });
+      // CHATFIX(시안 태그 12): 고친 그림이 비었으면 다른 그림 모델로 한 번 더 고친다.
+      if (outcome.fresh?.length && isCurrent() && await isBlankFigure(outcome.fresh[0].image)) {
+        const other = imageModelOrder(models.image)[1];
+        if (isCurrent()) addLog(`고친 그림이 비어 나와 다른 그림 모델(${other})로 한 번 더 고칩니다.`);
+        const ai2 = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(other), textModels: [runInput.model, ...imageModelOrder(runInput.model)] });
+        const second = await runFigureEdit({ ai: ai2, previousPng: base.data, instruction, originalRequest, previous, models: { ...models, image: other }, signal: abort.signal, onPhase: editPhase });
+        if (second.aborted) outcome = second;
+        else if (second.fresh?.length && !(await isBlankFigure(second.fresh[0].image))) outcome = { ...second, blankRedrawn: true };
+        else outcome = { ...second, fresh: [], blankKept: true };
+      }
+    } catch (error) {
+      outcome = error?.name === 'AbortError' ? { available: true, aborted: true, fresh: [], errors: [] } : { available: true, aborted: false, fresh: [], errors: [{ message: error?.message || String(error) }] };
+    } finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
+    const endTurn = () => { newEngineRunActive = false; };
+    if (outcome.aborted || !isCurrent()) {
+      endTurn(); finishStatusBlock({ remove: true });
+      if (requestEpoch === currentRequestEpoch && !disposed && activeTaskTabId === taskId) {
+        advanceGenerationClock('turn-terminal', 'cancelled'); requestPhase('cancelled');
+        setTaskState('idle'); setGenerating(false); setBusy(false); setStatus('고치기를 멈췄습니다 · 앞 결과는 그대로', 'warn');
+      }
+      return;
+    }
+    // CHATFIX: 고칠 곳을 못 찾았거나(되묻기)·말한 곳이 안 바뀌었거나·두 번 다 비었으면 앞 결과를 그대로 두고 대화로 묻는다.
+    if (!outcome.fresh.length && (outcome.result?.needsClarification || outcome.result?.editRejected || outcome.blankKept)) {
+      endTurn(); finishStatusBlock({ remove: true });
+      advanceGenerationClock('turn-terminal', 'failed'); requestPhase('kept-previous'); setTaskState('completed'); setGenerating(false); setBusy(false);
+      const baseName = `생성 결과 ${baseNo}`;
+      if (outcome.result?.needsClarification) {
+        const ask = String(outcome.result.edit?.clarify?.ask || '').trim();
+        addLog(`${baseName}에서 무엇을 고칠지 그림에서 찾지 못해 고치지 않았어요. ${ask || '어디를 어떻게 바꿀지 말해 주세요. 예: 「왼쪽 비커의 ATP 글자를 지워 줘」'}${/(빈|하얀|흰|안 ?보)/.test(instruction) ? ' 그림이 비어 보이면 ▾ 「새로 그리기」로 대화 전체를 모아 다시 그릴 수 있어요.' : ''}`);
+        addFlowChips([{ id: 'reword', label: '말 바꿔 다시 적기', strong: true, payload: { kind: 'edit', text: instruction } }]);
+        setStatus('고칠 곳을 물어봤어요 · 앞 결과는 그대로', 'warn');
+      } else {
+        addLog(outcome.blankKept ? `두 번 고쳐도 빈 그림이 나와 결과로 넣지 않았어요. ${baseName}는 그대로예요.` : `말한 곳이 바뀌지 않아 결과로 넣지 않았어요. ${baseName}는 그대로예요.`);
+        addFlowChips([
+          { id: 'retry-edit', label: '한 번 더 고치기', strong: true, payload: { baseId: picked?.id || base.id, instruction } },
+          { id: 'reword', label: '말 바꿔 다시 적기', payload: { kind: 'edit', text: instruction } },
+        ]);
+        setStatus(`고치지 못했습니다 · ${baseName}는 그대로`, 'warn');
+      }
+      captureActiveTaskTab(); persistTasks();
+      return;
+    }
+    if (!outcome.fresh.length) {
+      endTurn(); finishStatusBlock({ remove: true });
+      advanceGenerationClock('turn-terminal', 'failed'); requestPhase(ai.health?.authRequired ? 'login-wait' : 'failed'); setGenerating(false); setBusy(false);
+      if (ai.health?.authRequired) return guideDesktopLogin(() => submit('image', options));
+      // 엔진에 고치기가 없거나(옛 판) 끝내 고치지 못했다 — 앞 그림의 요청과 고칠 말을 함께 넘겨 새로 그린다.
+      addLog(outcome.available === false ? '이 판의 그림 엔진에는 「고치기」가 없어 요청과 고칠 말을 합쳐 새로 그립니다.' : `앞 그림을 고치지 못해 요청과 고칠 말을 합쳐 새로 그립니다.${outcome.errors?.[0]?.message ? ` (${String(outcome.errors[0].message).slice(0, 120)})` : ''}`);
+      return submit('image', { requestOverride: `${originalRequest}\n\n고칠 점: ${instruction}`.trim(), discussionContextOverride: '', figureConversation: gathered?.conversation || '', bypassCache: true, silentUserLog: true, createBubbleShown: true });
+    }
+    requestPhase('validating');
+    advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-started');
+    let item = null;
+    try {
+      const fresh = outcome.fresh[0];
+      item = await addPreview(fresh.image, { isCurrent, name: `생성 결과 ${generatedImages.length + 1}` });
+      if (item) {
+        const edit = outcome.result?.edit || fresh.meta.edit || {};
+        item.meta = { ...fresh.meta, request: base.meta?.request || originalRequest, ...(gathered ? { gathered } : {}), ...(outcome.blankRedrawn ? { blankRedrawn: true } : {}), refs: base.meta?.refs || fresh.meta.refs || [],
+          labelHints: Array.isArray(outcome.result?.labelHints) ? outcome.result.labelHints.slice(0, 60) : (base.meta?.labelHints || []),
+          ui: { kind: 'edit', from: base.id, instruction, summary: edit.summary || '', elapsedMs: Date.now() - turnStartedAt } };
+        item.engine = 'ai-figure';
+      }
+    } catch (error) { addLog(`고친 결과 처리 중 오류: ${error?.message || error}`, 'error'); }
+    endTurn();
+    if (!isCurrent()) return;
+    if (!item) {
+      finishStatusBlock({ remove: true });
+      advanceGenerationClock('turn-terminal', 'failed'); requestPhase('kept-previous'); setGenerating(false); setBusy(false);
+      setStatus('고친 결과를 등록하지 못했습니다 · 앞 결과는 그대로입니다. 다시 누르면 다시 고칩니다.', 'warn');
+      return;
+    }
+    imageReceived = true; currentTurnCandidate = item;
+    serverTurnFinished = true; currentTurnDone = true; currentTerminalOutcome = 'completed';
+    advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
+    window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: item.id } }));
+    finishStatusBlock();
+    addResultEntry(item);
+    setTaskState('completed'); requestPhase('completed'); setGenerating(false); setBusy(false);
+    setStatus(outcome.result?.edit?.verify && outcome.result.edit.verify.done === false ? '고친 결과 · 말한 곳이 다 바뀌지 않았을 수 있습니다. 비교로 확인하세요.' : '고치기 완료', outcome.result?.edit?.verify?.done === false ? 'warn' : 'ok');
+    captureActiveTaskTab(); persistTasks();
+    try { await taskPersistence.checkpoint(); } catch {}
+    // 라벨 결과를 고쳤으면 라벨을 다시 살린다(시안 「정할 것」 권함).
+    if (relabel) setTimeout(() => { if (!busy && activeTaskTabId === taskId) void runLabelRestoreTurn(item); }, 0);
+    return item;
+  }
+
   const runImageLabelConversion = async ({ runInput, request, generationInstructions = '', options, originatingTaskId }) => {
     const workflow = runInput.imageLabelWorkflow;
     const sources = runInput.attachments.filter(item => item.referenceRole !== 'STYLE_REFERENCE');
@@ -5299,8 +6341,18 @@ ${chatText}` : ''}`;
     currentRequestSnapshot = { entered: request, request, renderRequest: request, discussionContext: options.discussionContextOverride || '', runInput: currentRunInput };
     providerRequestPersistable = true;
     setBusy(true); requestPhase('generating');
-    const phaseNames = { sourceAnalysis: '원본 라벨·소속 확인 중', pixelProcessing: '기출 주석 국소 제거 중', generation: runInput.preciseRestore ? '선택한 그림 정밀 복원 중' : '일반 이미지 변환 중', targetMapping: '최종 연결 대상 확인 중', labelProposals: '편집 라벨 배치 준비 중', finalVerification: '그림·라벨 결과 확인 중', labelPlacement: '편집 라벨 배치 중', review: '그림·라벨 결과 확인 중', localRestore: '겹친 주석 영역 복원 중', localReview: '국소 복원 결과 확인 중' };
-    const onPhase = phase => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', '원본의 과학 구조와 라벨 소속을 확인합니다.', phase === 'generation' ? 'generate' : 'analyze'); loading.setPhase(phaseNames[phase] || '결과 준비 중'); loading.stage(phase); panel.dataset.aiWorkflowPhase = phase; } };
+    const phaseNames = { sourceAnalysis: '원본 라벨·소속 확인 중', pixelProcessing: '기출 주석 국소 제거 중', generation: runInput.preciseRestore ? '선택한 그림 정밀 복원 중' : '일반 이미지 변환 중', targetMapping: '최종 연결 대상 확인 중', labelProposals: '편집 라벨 배치 준비 중', finalVerification: '그림·라벨 결과 확인 중', labelPlacement: '편집 라벨 배치 중', review: '그림·라벨 결과 확인 중', localRestore: '겹친 주석 영역 복원 중', localReview: '국소 복원 결과 확인 중', convertCheck: '원본과 빠진 것 대조 중', convertFix: '빠진 곳만 다시 그리는 중', convertRecheck: '다시 그린 그림 확인 중' };
+    // 11-21: 대조 뒤 다시 그리기는 1분쯤 더 걸린다(측정 중앙 +58초) — 라벨 복원 때처럼 기다림 안내를 띄운다.
+    const phaseDetail = (phase, info) => {
+      if (phase === 'convertFix') {
+        const items = (Array.isArray(info?.items) ? info.items : []).map(item => String(item?.text || '').trim()).filter(Boolean);
+        const what = items.length ? `(${items.slice(0, 3).join(', ')}${items.length > 3 ? ` 외 ${items.length - 3}개` : ''})` : '';
+        return `원본과 대조해 빠지거나 남은 곳 ${info?.count || items.length || ''}개${what}를 원래대로 다시 그리고 있어요 · 1분쯤 더 걸려요 · 다른 일을 하셔도 끝나면 작업 목록에 「새 결과」로 알려 드려요.`.replace('곳 개', '곳');
+      }
+      return phase === 'convertCheck' ? '그린 그림에 원본의 과학 내용이 빠짐없이 들어갔는지 확인합니다.'
+        : phase === 'convertRecheck' ? '다시 그린 그림이 원본과 맞는지 한 번 더 확인합니다.' : '원본의 과학 구조와 라벨 소속을 확인합니다.';
+    };
+    const onPhase = (phase, info) => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', phaseDetail(phase, info), phase === 'generation' || phase === 'convertFix' ? 'generate' : 'analyze'); loading.setPhase(phaseNames[phase] || '결과 준비 중'); loading.stage(phase); panel.dataset.aiWorkflowPhase = phase; } };
     // 11-09: 다른 작업 칸의 변환이 돌고 있으면 줄을 서고(「차례 기다리는 중」), AI 응답이 없거나 고르지 않으면 자동으로 다시 보낸다.
     const onQueueWait = position => {
       if (!isCurrent()) return;
@@ -5393,6 +6445,12 @@ ${chatText}` : ''}`;
               ? `안전 제거·복원 ${result.labelPlan.labels.length}개 · 보류 ${result.removalReport.deferredLabels.length}개. 원본 구조를 보존했고 복원 라벨은 직접 편집할 수 있습니다.`
               : '편집 초안 준비 · 위치·문구·연결을 확인해 주세요. 추가 라벨 검수는 선택할 수 있습니다.'
           : result.removalReport?.unchanged ? '라벨 제거 보류 · 원본을 유지했습니다. 결과 확인에서 라벨별 사유를 확인하세요.' : '검수 미통과 · 원본과 RAW 결과를 보존했습니다. 표시된 문제를 확인해 주세요.', outOfScope || candidate.reviewState === 'passed' ? 'ok' : 'warn');
+        // 11-21: 원본과 대조해 끝내 못 맞춘 곳은 실패로 만들지 않고 「원본과 다를 수 있는 곳」으로만 알린다.
+        const convertDiffs = (result.convertCheck?.differences || []).map(item => String(item?.text || '').trim()).filter(Boolean);
+        if (convertDiffs.length) {
+          addLog(`원본과 다를 수 있는 곳 ${convertDiffs.length}개 — ${convertDiffs.join(' · ')}. 필요하면 「다시 그리기」를 누르거나 직접 고쳐 주세요.`);
+          setStatus(`처리 완료 · 원본과 다를 수 있는 곳 ${convertDiffs.length}개는 대화 기록에 적어 두었습니다.`, 'warn');
+        } else if (result.convertCheck?.status === 'fixed') addLog('원본과 대조해 빠진 곳을 다시 그려 맞췄습니다.');
         captureActiveTaskTab(); await taskPersistence.checkpoint();
         if (candidate.reviewState === 'passed') window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: candidate.id } }));
       }
@@ -5448,12 +6506,12 @@ ${chatText}` : ''}`;
   };
 
   // E9: 설치판 로그인 안내 — 연결 정보(「Codex 로그인」 단추가 있는 칸)를 열고 단추로 데려간다. 로그인하면 resume으로 멈춘 생성을 이어 간다.
+  // PATHFIX(11-20): Codex 프로그램이 없으면(missing) 로그인 대신 설치 안내를 보이고, 「다시 찾기」로 찾으면 → 로그인 확인 → 이어 간다.
+  // missing을 모르면(null) 상태를 한 번 물어 맞는 안내를 고른다.
   let pendingLoginResume = null;
-  function guideDesktopLogin(resume) {
-    pendingLoginResume = typeof resume === 'function' ? resume : null;
+  function openConnectionDialog() {
     const details = panel.querySelector('details.ai-advanced-settings');
     if (details) details.open = true;
-    loginButton.hidden = false;
     // 작업대(ai-workbench.js)는 연결 정보 칸을 숨긴 「연결 정보」 창 안으로 옮겨 둔다 — 그 창을 띄워 로그인 단추를 바로 보이게 한다.
     const dialog = details?.closest('[data-ai-connection-dialog]');
     if (dialog) {
@@ -5465,10 +6523,77 @@ ${chatText}` : ''}`;
       }
       try { if (!dialog.open) dialog.showModal(); } catch { dialog.setAttribute('open', ''); }
     }
+  }
+  function guideDesktopLogin(resume, { missing = null, manual = false } = {}) {
+    pendingLoginResume = typeof resume === 'function' ? resume : null;
+    openConnectionDialog();
     setTaskState('idle');
-    setStatus('Codex 로그인이 필요합니다 · 연결 정보의 「Codex 로그인」을 누르면 로그인한 뒤 이어서 만듭니다. 앞 결과와 입력은 그대로입니다.', 'warn');
-    addLog('AI 연결(Codex 로그인)이 없어 생성을 멈췄습니다. 「Codex 로그인」을 누르면 로그인 뒤 같은 요청으로 이어서 만듭니다.');
-    try { loginButton.scrollIntoView({ block: 'nearest' }); loginButton.focus({ preventScroll: true }); } catch { /* 보이지 않는 창 */ }
+    const guide = isMissing => {
+      if (isMissing) {
+        showCodexInstall(true);
+        setStatus(CODEX_MISSING_STATUS, 'warn');
+        if (!manual) addLog('이 컴퓨터에서 Codex 프로그램을 찾지 못해 멈췄습니다. 연결 정보의 안내대로 설치한 뒤 「다시 찾기」를 누르면 같은 요청으로 이어서 합니다. 앞 결과와 입력은 그대로입니다.');
+        try { codexLocateButton?.scrollIntoView({ block: 'nearest' }); codexLocateButton?.focus({ preventScroll: true }); } catch { /* 보이지 않는 창 */ }
+        return;
+      }
+      showCodexInstall(false);
+      loginButton.hidden = false;
+      if (manual) { setStatus('「GPT 로그인」을 누르면 브라우저에서 ChatGPT 계정으로 로그인합니다. 로그인하면 이 창이 자동으로 닫힙니다.', 'busy'); }
+      else {
+      setStatus('GPT 로그인이 필요합니다 · 연결 정보의 「GPT 로그인」을 누르면 로그인한 뒤 이어서 만듭니다. 앞 결과와 입력은 그대로입니다.', 'warn');
+        addLog('AI 연결(GPT 로그인)이 없어 생성을 멈췄습니다. 「GPT 로그인」을 누르면 로그인 뒤 같은 요청으로 이어서 만듭니다.');
+      }
+      try { loginButton.scrollIntoView({ block: 'nearest' }); loginButton.focus({ preventScroll: true }); } catch { /* 보이지 않는 창 */ }
+    };
+    if (missing != null || typeof desktop?.status !== 'function' || desktop.web) { guide(Boolean(missing)); return; }
+    void desktop.status().then(current => guide(codexMissing(current)), () => guide(false));
+  }
+  // 11-21 사용자: 설치판에서 먼저 로그인할 길이 없었다 — 오른쪽 위 「● AI」·exam 카드의 로그인 요청이 이 창(연결 정보)을 연다.
+  // detail.resumeAi가 있으면 로그인 뒤 그 일을 이어 한다(웹판 requireAi와 같은 약속).
+  if (globalThis.fiveEDesktop && !globalThis.fiveEDesktop.web && typeof window !== 'undefined') {
+    // 11-21: 오른쪽 위 연결 카드에서 로그인·로그아웃하면 작업대의 계정·모델 정보도 새로 읽는다.
+    window.addEventListener('5e:desktop-auth-changed', () => { if (!disposed) void refresh({ autoConnect: false }); });
+    window.addEventListener('5e:desktop-login-request', event => {
+      const resume = typeof event.detail?.resumeAi === 'function' ? event.detail.resumeAi : null;
+      guideDesktopLogin(resume, { manual: !resume });
+    });
+  }
+  // 연결이 갖춰지면(로그인 끝·Codex 찾음) 멈춘 요청을 이어 간다.
+  async function resumeAfterConnection(message) {
+    loginButton.hidden = true;
+    showCodexInstall(false);
+    await refresh({ autoConnect: true });
+    const connectionDialog = panel.querySelector('[data-ai-connection-dialog]');
+    if (connectionDialog?.open) connectionDialog.close();
+    const resume = pendingLoginResume; pendingLoginResume = null;
+    if (resume && !busy) { addLog(message); void resume(); }
+  }
+  // PATHFIX: 설치 안내 단추(「다시 찾기」·「오류 기록 열기」) 연결. 함수로 두고 위에서 한 번 부른다.
+  function wireCodexInstallControls() {
+  if (codexLocateButton) codexLocateButton.onclick = async () => {
+    if (!desktop?.locateCodex) return;
+    codexLocateButton.disabled = true;
+    if (codexInstallNote) codexInstallNote.textContent = '찾는 중…';
+    try {
+      const found = await desktop.locateCodex();
+      if (!found?.found) {
+        if (codexInstallNote) codexInstallNote.textContent = '아직 찾지 못했습니다. 설치가 끝났는지 확인한 뒤 다시 눌러 주세요. 멈춘 요청은 그대로 기다립니다.';
+        return;
+      }
+      if (codexInstallNote) codexInstallNote.textContent = '';
+      addLog(`Codex 프로그램을 찾았습니다 (${found.path}).`);
+      const current = await desktop.status().catch(() => null);
+      if (current?.login?.loggedIn) await resumeAfterConnection('Codex를 찾았습니다. 멈췄던 요청을 이어서 합니다.');
+      else guideDesktopLogin(pendingLoginResume, { missing: false });
+    } catch (error) {
+      if (codexInstallNote) codexInstallNote.textContent = aiErrorText(error);
+      reportAiError('codex:locate', error);
+    } finally { codexLocateButton.disabled = false; }
+  };
+  if (openErrorLogButton) {
+    openErrorLogButton.hidden = !desktop?.diagnostics?.openLog;
+    openErrorLogButton.onclick = () => { void desktop?.diagnostics?.openLog?.().catch(() => {}); };
+  }
   }
 
   // 1.8.0 새 그림 엔진 한 차례(js/ai-engines.js → js/ai-figure). 지금 생성과 같은 자리(결과 카드)에 넣고, 진행은 지금 진행 표시 글만 바꾼다.
@@ -5476,12 +6601,16 @@ ${chatText}` : ''}`;
   async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {} }) {
     const taskId = activeTaskTabId;
     const request = [discussionContext, entered].filter(Boolean).join('\n\n');
+    // CHATFIX: 「이미지 생성」은 지금까지 대화 전체를 구체화에 넘긴다(앞서는 마지막 한 마디만 썼다 — CHATGEN 3절).
+    const conversation = String(options.figureConversation || '');
+    const gatheredMeta = options.figureGathered ? { request: options.figureGathered.request || request, conversation, count: options.figureGathered.count || 0, summary: options.figureGathered.summary || [] } : null;
     const again = () => submit('image', { ...options, silentUserLog: true, requestOverride: entered, discussionContextOverride: discussionContext, bypassCache: true });
     const stopWith = (outcome) => {
       newEngineRunActive = false;
+      finishStatusBlock({ remove: true });
       if (requestEpoch !== currentRequestEpoch || disposed) return;
       advanceGenerationClock('turn-terminal', 'failed');
-      requestPhase('failed'); setGenerating(false); setBusy(false);
+      requestPhase(outcome === 'login' ? 'login-wait' : 'offline-wait'); setGenerating(false); setBusy(false);
       if (outcome === 'login') return guideDesktopLogin(again);
       // 연결이 끊김: 옛 길도 같은 연결을 쓰므로 넘기지 않는다. 연결이 돌아오면(online) 한 번 이어서 만든다.
       setTaskState('idle');
@@ -5495,7 +6624,7 @@ ${chatText}` : ''}`;
       let login = null;
       try { login = (await desktop.status())?.login || null; } catch { login = null; }
       if (requestEpoch !== currentRequestEpoch || disposed) return;
-      if (login && login.loggedIn === false) return stopWith('login');
+      if (login && (login.loggedIn === false || login.installed === false)) return stopWith('login');
     }
     if (!busy) setBusy(true);
     // E9: 앞 차례를 취소한 표시(currentCancelRequested)가 남아 있으면 새 차례가 시작하자마자 「취소됨」으로 끝났다 — 옛 길처럼 새 차례에서 지운다.
@@ -5510,6 +6639,10 @@ ${chatText}` : ''}`;
     const isCurrent = () => !disposed && requestEpoch === currentRequestEpoch && activeTaskTabId === taskId && !currentCancelRequested && !abort.signal.aborted;
     const clockId = `figure-${requestEpoch}`; currentTurnId = clockId; startGenerationClock(clockId);
     newEngineRunActive = true;
+    // 11-19(시안 태그 7·9): 새 로딩 창(흐린 빈 종이 + 4단계)과 대화 안 진행 줄.
+    if (pendingLoading?.token === requestToken) pendingLoading = { ...pendingLoading, kind: 'figure', plan: 'figure', phased: true, source: pendingLoading.source || blankPaper() };
+    const turnStartedAt = Date.now();
+    if (isFigureCreate()) startStatusBlock('figure');
     requestPhase('generating');
     let scene = 0, total = 1;
     const show = copy => { if (!isCurrent()) return; if (copy.title) setGenerating(true, copy.title, copy.detail || ''); else if (copy.detail) progressDetail.textContent = copy.detail; };
@@ -5520,34 +6653,65 @@ ${chatText}` : ''}`;
     const ai = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(models.image), textModels: [runInput.model, ...imageModelOrder(runInput.model)], onCall: e => {
       if (e.kind !== 'image') return;
       show(figurePhaseCopy({ phase: 'draw', scene, total }));
+      if (isCurrent()) { loading.stage('draw'); statusPhase('draw'); }
       // E2E(11-19): 장면을 다시 그릴 때마다 같은 줄이 또 찍혔다 — 차례마다 모델별로 한 번만.
       if (e.attempt > 1 && isCurrent() && !switchLogged.has(e.model)) { switchLogged.add(e.model); addLog(`그림 모델을 바꿔(${e.model}) 다시 그립니다.`); }
     } });
+    // 두 번 그려도 비었을 때: 결과로 넣지 않고(앞 결과 그대로), 모은 「그릴 내용」은 대화에 남겨 둔 채 다음 할 일 칩을 붙인다.
+    const keepAfterBlank = () => {
+      newEngineRunActive = false;
+      finishStatusBlock({ remove: true });
+      if (!isCurrent()) return;
+      const hadPrevious = generatedImages.length > 0;
+      advanceGenerationClock('turn-terminal', 'failed');
+      requestPhase(hadPrevious ? 'kept-previous' : 'completed'); setTaskState(hadPrevious ? 'completed' : 'idle');
+      setGenerating(false); setBusy(false);
+      addLog(hadPrevious ? '두 번 그려도 빈 그림이 나와 결과로 넣지 않았어요. 앞 결과는 그대로예요.' : '두 번 그려도 빈 그림이 나와 결과로 넣지 않았어요. 위에 모은 그릴 내용은 그대로 두었어요.');
+      const lastUser = [...conversationMessages].reverse().find(message => message.role === 'user')?.text || '';
+      addFlowChips([
+        { id: 'retry-draw', label: '다시 그리기', strong: true, payload: { request, conversation, count: gatheredMeta?.count || 0, summary: gatheredMeta?.summary || [] } },
+        { id: 'reword', label: '말 바꿔 다시 적기', payload: { kind: 'new', text: lastUser } },
+      ]);
+      setStatus(hadPrevious ? '빈 그림이라 넣지 않았습니다 · 앞 결과는 그대로' : '빈 그림이라 넣지 않았습니다 · 다시 그리거나 말을 바꿔 보세요', 'warn');
+      captureActiveTaskTab(); persistTasks();
+    };
     const fallBack = async (why) => {
       newEngineRunActive = false;
+      finishStatusBlock({ remove: true });
       if (requestEpoch !== currentRequestEpoch || disposed) return;
       addLog(`새 그림 엔진이 그림을 만들지 못해 이전 생성 방식으로 이어서 그립니다.${why ? ` (${String(why).slice(0, 200)})` : ''}`, 'error');
       advanceGenerationClock('turn-terminal', 'failed');
       requestPhase('failed'); setGenerating(false); setBusy(false);
-      return submit('image', { ...options, legacyFigure: true, silentUserLog: true, requestOverride: entered, discussionContextOverride: discussionContext, bypassCache: true });
+      return submit('image', { ...options, legacyFigure: true, silentUserLog: true, requestOverride: entered, discussionContextOverride: discussionContext || conversation, bypassCache: true });
     };
-    let outcome;
+    const enginePhase = e => {
+      if (Number.isInteger(e.total)) total = e.total;
+      if (Number.isInteger(e.scene)) scene = e.scene;
+      // 11-20 사용자 결정: 참고한 기출 그림은 화면에 말하지 않는다(엔진 기록 「참고 기출: …」「참고 그림 없이」는 진행 글에 안 띄움).
+      if (!(e.phase === 'log' && /기출|참고 그림/.test(String(e.message || '')))) show(figurePhaseCopy(e));
+      if (isCurrent() && e.phase) { loading.stage(e.phase); statusPhase(e.phase); }
+    };
+    let outcome, refIds = [];
     try {
       await taskPersistence.checkpoint();
       if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
-      outcome = await runFigureEngine({ ai, request, models, signal: abort.signal, onPhase: e => {
-        if (Number.isInteger(e.total)) total = e.total;
-        if (Number.isInteger(e.scene)) scene = e.scene;
-        show(figurePhaseCopy(e));
-      } });
+      // 「다른 기출로 다시 그리기」: 앞서 참고한 기출을 빼고 다시 고른 3장을 넘긴다.
+      const otherOf = options.otherRefsOf ? generatedImages.find(item => item.id === options.otherRefsOf) : null;
+      if (otherOf?.meta?.refs?.length) {
+        statusPhase('scene');
+        refIds = await pickOtherFigureRefs({ ai, request, exclude: otherOf.meta.refs, models, signal: abort.signal });
+        if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      }
+      outcome = await runFigureEngine({ ai, request, conversation, models, refIds, signal: abort.signal, onPhase: enginePhase });
     } catch (error) {
       outcome = error?.name === 'AbortError' ? { aborted: true, fresh: [], errors: [] } : { aborted: false, fresh: [], errors: [{ message: error?.message || String(error) }] };
     } finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
     if (outcome.aborted || !isCurrent()) {
       newEngineRunActive = false;
+      finishStatusBlock({ remove: true });
       if (requestEpoch === currentRequestEpoch && !disposed && activeTaskTabId === taskId) {
         advanceGenerationClock('turn-terminal', 'cancelled'); requestPhase('cancelled');
-        setTaskState('idle'); setGenerating(false); setBusy(false); setStatus('작업 취소됨 · 이전 결과 유지', 'warn');
+        setTaskState('idle'); setGenerating(false); setBusy(false); setStatus(GENERATION_STOPPED, 'warn');
       }
       return;
     }
@@ -5556,15 +6720,50 @@ ${chatText}` : ''}`;
       if (ai.health?.offline) return stopWith('offline');
       return fallBack(outcome.errors.map(e => e.message).filter(Boolean).join(' / '));
     }
+    // CHATFIX(시안 태그 12·13): 빈(흰) 그림은 결과로 넣지 않는다 → 다른 그림 모델로 한 번 더 → 그래도 비면 앞 결과 그대로 + 다음 할 일 칩.
+    let freshScenes = outcome.fresh, blankRedrawn = false;
+    const blankFlags = await Promise.all(freshScenes.map(sceneResult => isBlankFigure(sceneResult.image)));
+    if (blankFlags.some(Boolean) && isCurrent()) {
+      const other = imageModelOrder(models.image)[1];
+      addLog(`그림이 비어 나와 다른 그림 모델(${other})로 한 번 더 그립니다.`);
+      const ai2 = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(other), textModels: [runInput.model, ...imageModelOrder(runInput.model)], onCall: e => {
+        if (e.kind !== 'image') return;
+        show(figurePhaseCopy({ phase: 'draw', scene, total }));
+        if (isCurrent()) { loading.stage('draw'); statusPhase('draw'); }
+      } });
+      let second = null;
+      imageLabelRunAbort = abort;
+      try { second = await runFigureEngine({ ai: ai2, request, conversation, models: { ...models, image: other }, refIds, signal: abort.signal, onPhase: enginePhase }); }
+      catch (error) { second = { aborted: error?.name === 'AbortError', fresh: [], errors: [] }; }
+      finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
+      if (second?.aborted || !isCurrent()) {
+        newEngineRunActive = false; finishStatusBlock({ remove: true });
+        if (requestEpoch === currentRequestEpoch && !disposed && activeTaskTabId === taskId) {
+          advanceGenerationClock('turn-terminal', 'cancelled'); requestPhase('cancelled');
+          setTaskState('idle'); setGenerating(false); setBusy(false); setStatus(GENERATION_STOPPED, 'warn');
+        }
+        return;
+      }
+      const secondFlags = await Promise.all((second?.fresh || []).map(sceneResult => isBlankFigure(sceneResult.image)));
+      const merged = [];
+      const length = Math.max(freshScenes.length, second?.fresh?.length || 0);
+      for (let i = 0; i < length; i++) {
+        if (freshScenes[i] && !blankFlags[i]) merged.push(freshScenes[i]);
+        else if (second?.fresh?.[i] && !secondFlags[i]) { merged.push(second.fresh[i]); blankRedrawn = true; }
+      }
+      freshScenes = merged;
+    }
+    if (!freshScenes.length) return keepAfterBlank();
     requestPhase('validating');
     advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-started');
     const added = [];
     try {
-      for (const sceneResult of outcome.fresh) {
+      for (const sceneResult of freshScenes) {
         const m = sceneResult.meta;
         const item = await addPreview(sceneResult.image, { isCurrent, name: m.sceneCount > 1 ? `생성 결과 ${generatedImages.length + 1} · 장면 ${m.sceneIndex + 1}/${m.sceneCount}` : undefined });
         if (!item) break;
-        item.meta = m; item.engine = 'ai-figure';
+        item.meta = { ...m, ...(gatheredMeta ? { gathered: gatheredMeta } : {}), ...(blankRedrawn ? { blankRedrawn: true } : {}),
+          ui: { kind: 'figure', elapsedMs: Date.now() - turnStartedAt, ...(options.otherRefsOf ? { otherRefsOf: options.otherRefsOf } : {}) } }; item.engine = 'ai-figure';
         added.push(item);
       }
     } catch (error) {
@@ -5579,14 +6778,16 @@ ${chatText}` : ''}`;
     advanceGenerationClock('postprocess-completed'); advanceGenerationClock('turn-terminal', 'completed');
     window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: currentTurnCandidate.id } }));
     const sceneErrors = outcome.errors.filter(e => e.scene !== null && e.scene !== undefined);
-    const refs = [...new Set(added.flatMap(item => item.meta.refs || []))];
-    addLog(`이미지가 완성되었습니다. 참고한 기출 그림: ${refs.length ? refs.join(', ') : '없음'}. 생성 결과에서 확인하거나 캔버스로 출력할 수 있습니다.`);
+    // 11-19(시안 태그 13·19): 옛 「이미지가 완성되었습니다. 참고한 기출 그림: …」 글 대신 대화 안 결과 카드.
+    finishStatusBlock();
+    for (const item of added) addResultEntry(item);
     setTaskState('completed'); requestPhase('completed'); setGenerating(false); setBusy(false);
     setStatus(sceneErrors.length ? `생성 완료 · 장면 ${sceneErrors.length}개는 그리지 못했습니다. 다시 실행하면 그 장면을 다시 그립니다.` : '생성 완료', sceneErrors.length ? 'warn' : 'ok');
     captureActiveTaskTab(); persistTasks();
     try { await taskPersistence.checkpoint(); } catch {}
     return added;
   }
+
 
   const submit = async (type, options = {}) => {
     if (panel.dataset.aiSharingMode === 'view') return;
@@ -5599,7 +6800,7 @@ ${chatText}` : ''}`;
     const originatingTaskId = activeTaskTabId;
     const activeInput = type === "chat" ? chatInput : input;
     const entered = typeof options.requestOverride === "string" ? options.requestOverride.trim() : activeInput?.value.trim() || "";
-    const originatingConversation = compactConversation(conversationMessages);
+    const originatingConversation = compactConversation(conversationMessages.slice(conversationMessages.map((message) => message?.role).lastIndexOf('reset') + 1)); // V5: 「새 대화」 위 대화는 넘기지 않는다
     const originatingRunInput = options.runInputSnapshot ? {...structuredClone(options.runInputSnapshot), serviceTier:'priority'} : {
       attachments: attachments.map(snapshotImageItem),
       generated: generatedImages.map(snapshotImageItem),
@@ -5643,9 +6844,10 @@ ${chatText}` : ''}`;
       if (!desktop.web && typeof desktop.status === 'function') {
         let login = null;
         try { login = (await desktop.status())?.login || null; } catch { login = null; }
-        if (login && login.loggedIn === false) {
+        if (login && (login.loggedIn === false || login.installed === false)) {
           if (requestToken !== preparingToken || !requestStates.live(preparingToken)) return;
-          guideDesktopLogin(() => submit(type, options));
+          requestPhase('login-wait'); // 실패가 아니라 로그인(또는 설치) 대기 — 로그인·「다시 찾기」하면 같은 요청으로 이어 간다
+          guideDesktopLogin(() => submit(type, options), { missing: login.installed === false });
           return;
         }
       }
@@ -5654,7 +6856,9 @@ ${chatText}` : ''}`;
       originatingRunInput.modelCatalog = structuredClone(availableModels);
     } catch (error) {
       if (requestToken !== preparingToken || !requestStates.live(preparingToken)) return;
-      setStatus(`연결 상태를 확인하지 못했습니다: ${error.message}`, 'error');
+      // PATHFIX: Codex가 없으면 막다른 오류 대신 설치 안내 → 「다시 찾기」로 같은 요청을 이어 간다.
+      if (!desktop.web && aiErrorCode(error) === 'CODEX_NOT_FOUND') { reportAiError('submit:prepare', error); requestPhase('login-wait'); guideDesktopLogin(() => submit(type, options), { missing: true }); return; }
+      setStatus(`연결 상태를 확인하지 못했습니다: ${aiErrorText(error)}`, 'error', error);
       return;
     } finally {
       if (preflightRun === preflight) preflightRun = null;
@@ -5746,11 +6950,14 @@ ${chatText}` : ''}`;
     // 설치판에서만 돈다(웹은 지금 길). 사용자가 직접 넣은 레퍼런스가 있는 생성과, 엔진이 한 장도 못 그려 넘어온 경우는 옛 길.
     if (type === 'image' && isExamBrief(runInput) && !batchRun) {
       const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true });
+      if (route.use && options.figureEdit) return runFigureEditTurn({ runInput, entered, requestEpoch, options });
       if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options });
     }
     if (!busy) setBusy(true);
     imageReceived = false;
     currentTurnType = type;
+    // 11-21: setBusy(true)가 차례 종류를 정하기 전에 불려 대화 답 기다림 표시가 안 떴다 — 종류가 정해진 뒤 띄운다.
+    if (type === 'chat' && panel.dataset.aiCreateUi === 'true') showChatThinking();
     const requestedEngine = options.forceEngine
       || (normalizeOutputEngine(runInput.outputEngine) === AI_OUTPUT_ENGINES.ASSET
         ? IMAGE_ENGINE_IDS.FAST_SCENE
@@ -5799,7 +7006,7 @@ ${chatText}` : ''}`;
         elapsedMs: 0,
       });
     }
-    if (!options.silentUserLog) {
+    if (!options.silentUserLog && !options.createBubbleShown) {
       if (runInput.approvedFirstPng) {
         addLog("이미지 변환을 요청했습니다.");
       } else {
@@ -6137,7 +7344,7 @@ ${chatText}` : ''}`;
             referenceRoleContract,
             markPolicyContract: buildMarkPolicyContract(runInput.markPolicy),
           }))
-        : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode }));
+        : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode, creating: isFigureCreate() }));
       const requestText = type === "image" && currentEngine === IMAGE_ENGINE_IDS.RASTER && !isExamBrief(runInput)
         ? sourceLabelRequest(baseRequestText, runInput, labelEvidenceForRun(runInput, renderRequest))
         : baseRequestText;
@@ -6186,13 +7393,21 @@ ${chatText}` : ''}`;
       if (requestEpoch !== currentRequestEpoch) return;
       awaitingTurnId = false;
       queuedTurnEvents = [];
-      requestPhase(currentCancelRequested ? 'cancelled' : 'failed');
+      // 생성(그림 만들기)은 원본이 없다: 「변환에 실패」「작업 취소됨」 대신 생성 문구로, 까닭(인터넷·로그인·AI)을 나눠 말한다.
+      const creatingFigure = type === 'image' && isCreationWorkflow(conversionKind), reason = failureReason(error);
+      requestPhase(currentCancelRequested ? 'cancelled' : creatingFigure && generatedImages.length ? 'kept-previous' : 'failed', { reason });
       const cancelled = currentCancelRequested || error?.code === "AI_TURN_CANCELLED" || /작업 준비가 취소/.test(error?.message || "");
       pendingCacheOutput = null;
-      addLog(error.message, cancelled ? "" : "error");
-      setStatus(cancelled ? "작업 취소됨" : error?.code === "AI_TASK_CHECKPOINT_FAILED"
+      addLog(aiErrorText(error), cancelled ? "" : "error");
+      // PATHFIX: Codex가 없어서 실패했으면 설치 안내를 열고 「다시 찾기」로 같은 요청을 이어 간다(막다른 실패 대신).
+      if (!cancelled && !desktop?.web && reason === 'install') {
+        setGenerating(false); setBusy(false);
+        guideDesktopLogin(() => submit(type, { ...options, silentUserLog: true }), { missing: true });
+        return;
+      }
+      setStatus(cancelled ? (creatingFigure ? GENERATION_STOPPED : "작업 취소됨") : error?.code === "AI_TASK_CHECKPOINT_FAILED"
         ? "임시저장 실패 · AI 요청을 보내지 않았습니다"
-        : type === 'image' ? "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다." : "요청 실패", cancelled ? "warn" : "error");
+        : creatingFigure ? generationFailedText(reason) : type === 'image' ? "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다." : "요청 실패", cancelled ? "warn" : "error");
       setGenerating(false);
       setBusy(false);
     }
@@ -6205,23 +7420,33 @@ ${chatText}` : ''}`;
     try { await waitForDesktopLogin(); } finally { loginWaiting = false; }
   };
   let loginWaiting = false;
+  // PATHFIX(11-20): main이 `codex login`이 끝날 때까지 기다려 실제 결과를 돌려준다(예전: 늘 {ok:true} → 120초 헛기다림 → 「시간 초과」).
   async function waitForDesktopLogin() {
-    try { await desktop.login(); } catch (error) { setStatus(error.message, "error"); return; }
-    setStatus("브라우저에서 로그인을 완료해 주세요…", "busy");
-    for (let attempt = 0; attempt < 120; attempt += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const current = await desktop.status().catch(() => null);
-      if (!current?.login?.loggedIn) continue;
-      loginButton.hidden = true;
-      await refresh({ autoConnect: true });
-      // E9: 로그인이 없어 멈췄던 생성은 로그인하면 그대로 이어서 만든다(막다른 경고 대신 연결 화면 → 이어 하기).
-      const connectionDialog = panel.querySelector('[data-ai-connection-dialog]');
-      if (connectionDialog?.open) connectionDialog.close();
-      const resume = pendingLoginResume; pendingLoginResume = null;
-      if (resume && !busy) { addLog('로그인되었습니다. 멈췄던 생성을 이어서 합니다.'); void resume(); }
+    setStatus("브라우저에서 로그인을 완료해 주세요… 로그인 창이 열립니다.", "busy");
+    let result;
+    try { result = await desktop.login(); } catch (error) { result = { ok: false, code: aiErrorCode(error), message: error?.message || String(error) }; }
+    if (result && result.ok === false) {
+      reportAiError('codex:login', result);
+      if (aiErrorCode(result) === 'CODEX_NOT_FOUND') { guideDesktopLogin(pendingLoginResume, { missing: true }); return; }
+      setStatus(aiErrorText(result), "warn");
+      addLog(`${aiErrorText(result)}${result.detail ? ` (${result.detail})` : ''}`, "error");
+      loginButton.hidden = false;
       return;
     }
-    setStatus("로그인 확인 시간이 초과되었습니다. 다시 시도해 주세요.", "warn");
+    // 로그인이 끝났다고 했으면 상태로 한 번 더 확인한다(잠깐 늦게 반영되는 경우를 위해 몇 초만 다시 본다).
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const current = await desktop.status().catch(() => null);
+      if (current?.login?.loggedIn) {
+        // E9: 로그인이 없어 멈췄던 생성은 로그인하면 그대로 이어서 만든다(막다른 경고 대신 연결 화면 → 이어 하기).
+        await resumeAfterConnection('로그인되었습니다. 멈췄던 생성을 이어서 합니다.');
+        return;
+      }
+      if (codexMissing(current)) { guideDesktopLogin(pendingLoginResume, { missing: true }); return; }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    reportAiError('codex:login', { code: 'CODEX_NOT_LOGGED_IN', message: '로그인은 끝났다고 했지만 로그인 상태가 확인되지 않음' });
+    setStatus("로그인이 확인되지 않았습니다 · 「GPT 로그인」을 다시 눌러 주세요. 멈춘 요청은 그대로 기다립니다.", "warn");
+    loginButton.hidden = false;
   }
   const persistModelChoice = () => {
     const choice = modelSelection();
@@ -6593,6 +7818,8 @@ ${chatText}` : ''}`;
     void submit("image", { bypassCache: !readImageLabelWorkflow().explicit });
   };
   chatInput?.addEventListener("keydown", (event) => {
+    // CHATFIX(11-20): 생성 탭은 위의 생성 탭 처리만 쓴다. 한글 조합 중 Enter(isComposing·keyCode 229)는 어디서도 보내지 않는다.
+    if (isFigureCreate() || isImeEnter(event)) return;
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       chatButton.click();
@@ -6637,7 +7864,7 @@ ${chatText}` : ''}`;
       requestPhase('cancelled');advanceGenerationClock('turn-terminal','cancelled');
       await graphWorkflow.cancel();
       graphSubmitting=false;setTaskState('idle');setGenerating(false);setBusy(false);
-      setStatus(conversionKind === 'graph-create' ? '그래프 생성 취소됨 · 이전 결과 유지' : '그래프 복원 취소됨 · 원본과 이전 결과 유지','warn');
+      setStatus(conversionKind === 'graph-create' ? GENERATION_STOPPED : '그래프 복원 취소됨 · 원본과 이전 결과 유지','warn');
       captureActiveTaskTab();await taskPersistence.checkpoint();
       return {ok:true};
     }
@@ -6654,13 +7881,22 @@ ${chatText}` : ''}`;
     for (const controller of sourceLabelControllers) controller.cancel();
     if (reviewWasActive) imageReview.cancel();
     else setStatus("작업 취소 중…", "busy");
-    const outcome = await desktop?.interrupt();
-    if (requestToken === cancelledToken && outcome?.ok === true) {
+    // 먹통 고침(11-21): 대화(Codex app-server) 턴의 멈추기는 {ok:true}가 아니라 {}·{pending:true}·null로 돌아오고,
+    // 뒤따르는 interrupted 이벤트는 이미 cancelled라 dispatchAiEvent가 버린다 → 「작업 취소 중…」에서 영원히 멈췄다.
+    // 응답 모양과 상관없이(오류·5초 무응답 포함) 화면을 반드시 멈춤 상태로 정리한다. 늦게 오는 이벤트는 epoch로 버려진다.
+    let outcome = null;
+    try {
+      outcome = await Promise.race([
+        Promise.resolve(desktop?.interrupt?.()),
+        new Promise((resolve) => setTimeout(() => resolve({ timedOut: true }), 5000)),
+      ]);
+    } catch (error) { outcome = { error: error?.message || String(error) }; }
+    if (requestToken === cancelledToken) {
       currentRequestEpoch += 1; preflightRun = null;
       setTaskState('idle'); setGenerating(false); setBusy(false);
-      setStatus('작업 취소됨 · 원본 유지', 'warn');
+      setStatus(isCreationWorkflow(conversionKind) ? GENERATION_STOPPED : '작업 취소됨 · 원본 유지', 'warn');
     }
-    return outcome;
+    return { ...(outcome && typeof outcome === 'object' ? outcome : {}), ok: true };
   };
   panel.querySelector("[data-ai-interrupt]").onclick = () => batchRun ? cancelWorkspaceJob(batchRun.context) : interruptCurrentTask();
   async function clearTasks(confirm, ids = null) {
@@ -6826,7 +8062,8 @@ ${chatText}` : ''}`;
       return;
     }
     if (currentTerminalOutcome !== "completed") {
-      requestPhase(currentTerminalOutcome === "failed" ? "failed" : "cancelled");
+      const creatingFigure = currentTurnType === "image" && isCreationWorkflow(conversionKind);
+      requestPhase(currentTerminalOutcome !== "failed" ? "cancelled" : creatingFigure && generatedImages.length ? "kept-previous" : "failed", { reason: failureReason(currentImageOutputError) });
       setTaskState(currentTerminalOutcome === "failed" ? "failed" : "idle");
       pendingCacheOutput = null;
       const cancelledReview = candidateReviewOnTerminal(currentReviewCandidate, currentTerminalOutcome);
@@ -6834,7 +8071,7 @@ ${chatText}` : ''}`;
       setGenerating(false);
       setBusy(false);
       currentTurnDone = true;
-      const terminalView = aiTerminalStatusView(currentTerminalOutcome, { imageReceived });
+      const terminalView = aiTerminalStatusView(currentTerminalOutcome, { imageReceived, creating: creatingFigure, reason: failureReason(currentImageOutputError) });
       if (terminalView) setStatus(terminalView.text, terminalView.kind);
       addTokenFooter(currentTurnUsage);
       void loadAccountOverview();
@@ -7031,6 +8268,10 @@ ${chatText}` : ''}`;
       } else {
         addLog(event.text);
         if (currentTurnType === "chat") recordConversationMessage("assistant", event.text);
+        // CHATFIX(시안 태그 4): 생성 탭에서 AI가 그릴 구성을 정리하면 그 답 아래 「이대로 그리기」(누르면 바로 그림).
+        if (currentTurnType === "chat" && isFigureCreate() && looksLikeDrawSummary(event.text)) {
+          addFlowChips([{ id: 'draw-now', label: '이대로 그리기', strong: true, title: '지금까지 대화를 모아 바로 그립니다 · 「이미지 생성」과 같음' }]);
+        }
       }
     } else if (event.kind === "tokens") {
       currentTurnUsage = event.usage;
@@ -7072,7 +8313,7 @@ ${chatText}` : ''}`;
         }
         serverTurnFinished = true;
         currentTurnDone = true;
-        const terminalView = aiTerminalStatusView(currentTerminalOutcome, { imageReceived });
+        const terminalView = aiTerminalStatusView(currentTerminalOutcome, { imageReceived, creating: currentTurnType === "image" && isCreationWorkflow(conversionKind) });
         if (terminalView) setStatus(terminalView.text, terminalView.kind);
         if (!previewPending) setGenerating(false);
         finishCurrentTurnUi(eventEpoch);
@@ -7170,18 +8411,20 @@ ${chatText}` : ''}`;
         return;
       }
       if (!imageReceived) setGenerating(false);
+      const creatingFigure = currentTurnType === "image" && isCreationWorkflow(conversionKind);
       if (event.status === "failed") {
         pendingCacheOutput = null;
         if (event.error) addLog(String(event.error), "error");
-        setStatus("작업 실패", "error");
+        setStatus(creatingFigure ? generationFailedText(failureReason(event.error)) : "작업 실패", "error");
       } else if (event.status === "interrupted") {
         if (currentCancelRequested) pendingCacheOutput = null;
         if (!previewPending) setGenerating(false);
+        const stopped = creatingFigure ? GENERATION_STOPPED : "작업 취소됨";
         setStatus(currentCancelRequested
-          ? "작업 취소됨"
+          ? stopped
           : imageReceived && currentTurnType === "image"
             ? (previewPending ? "생성 결과 정리 중" : "생성 완료")
-            : "작업 취소됨", currentCancelRequested || !imageReceived ? "warn" : "ok");
+            : stopped, currentCancelRequested || !imageReceived ? "warn" : "ok");
       } else if (imageReceived && currentTurnType === "image") {
         if (!previewPending) setGenerating(false);
         setStatus(previewPending ? "생성 결과 정리 중" : "생성 완료", previewPending ? "busy" : "ok");
@@ -7935,9 +9178,14 @@ ${chatText}` : ''}`;
     const tab = taskTabs.get(id);
     if (!tab || panel.dataset.aiSharingMode === 'view') return;
     const running = () => tab.workState === 'busy' || (id === activeTaskTabId && (busy || preflightRun));
-    if (running()) { setStatus('변환이 끝나거나 취소된 뒤 삭제해 주세요.', 'warn'); return; }
-    if (!await scopedDialog('작업 삭제', `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, {accept: '작업 삭제', defaultAccept: true})) return;
-    if (taskTabs.get(id) !== tab || running()) return;
+    // 먹통 고침(11-21): 지금 보고 있는 작업은 돌고 있어도 멈추고 지울 수 있게 한다(막다른 「취소된 뒤 삭제」 안내 대신).
+    const stopFirst = running() && id === activeTaskTabId;
+    if (running() && !stopFirst) { setStatus('변환이 끝나거나 취소된 뒤 삭제해 주세요.', 'warn'); return; }
+    const message = stopFirst ? `‘${tab.title}’ 작업이 아직 진행 중입니다. 멈추고 삭제할까요? 원본 파일은 삭제하지 않습니다.` : `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`;
+    if (!await scopedDialog('작업 삭제', message, {accept: stopFirst ? '멈추고 삭제' : '작업 삭제', defaultAccept: true})) return;
+    if (taskTabs.get(id) !== tab) return;
+    if (stopFirst && running()) await interruptCurrentTask();
+    if (running()) { setStatus('작업을 멈추지 못해 삭제하지 않았습니다. 잠시 뒤 다시 눌러 주세요.', 'warn'); return; }
     captureActiveTaskTab();
     taskTabs.delete(id); taskViews.delete(id); taskRows.delete(id); requestStates.forget(id);
     if (!taskTabs.size) {
@@ -8021,7 +9269,8 @@ ${chatText}` : ''}`;
     taskHasSource: id => { const tab=taskTabs.get(id); return !!tab && (isExamBrief(tab) || (tab.attachments||[]).some(isInputReference) || (tab.generated||[]).length>0); },preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
     open, close, attachReference, clearTasks, ready: workspaceReady,
     acknowledgeViewedResult: () => acknowledgeVisibleResult(),
-    refreshTaskSelection: () => commentController?.refreshControls(),
+    // V5: 그림 생성 탭은 위 공용 단추 글(「이미지 생성」·꺼짐)이 그리기 단추를 덮지 않게 생성 화면 맞추기를 다시 건다.
+    refreshTaskSelection: () => { commentController?.refreshControls(); if (panel.dataset.aiCreateUi === 'true') scheduleCreateSync(); },
     setWorkbenchVisible: (visible, { animate = true } = {}) => {
       // A cached, closed workspace is already settled. Hiding it again forces
       // computed-style/layout reads across every retained task on each switch.

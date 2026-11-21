@@ -409,7 +409,9 @@ if (startScreen) {
   step("클립보드 그림 준비 중…", async () => { const { clipList } = await import("./drawer.js?v=1.7.0-four-session-integration"); const items = await clipList();
     await Promise.all(items.slice(0, 24).map(item => { const img = new Image(); img.src = item.src; return img.decode().catch(() => {}); })); }, 0.5);
   // 마무리: 위 준비가 끝난 뒤 화면 그리기가 0.6초 동안 끊기지 않을 때까지(최대 4초) 기다린다 — 들어가자마자 남은 일이 몰려 버벅이지 않게.
-  step("화면 안정화하는 중…", async () => { await Promise.all([...prep]);
+  // 11-20: 단계는 이제 한 프레임씩 늦게 시작한다(start-screen.js waitFor) — 앞 단계 목록은 지금 잡아 둔다(늦게 읽으면 자기 자신을 기다림).
+  const before = [...prep];
+  step("화면 안정화하는 중…", async () => { await Promise.all(before);
     await new Promise(resolve => { const t0 = performance.now(); let last = t0, calm = t0;
       const tick = now => { if (now - last > 50) calm = now; last = now; if (now - calm >= 600 || now - t0 > 4000) resolve(); else requestAnimationFrame(tick); };
       requestAnimationFrame(tick); }); }, 0.8);

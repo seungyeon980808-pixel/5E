@@ -339,5 +339,6 @@
 :root[data-mode="lite"] .app[data-panel-layout]>.panel{box-shadow:none}
 @media(max-width:700px){:root[data-mode="lite"] #ai-image-panel .ai-comparison-grid{grid-template-columns:minmax(0,1fr)!important}}
 
-:root[data-mode="lite"] :is(.unilib-header-panel-toggle,[data-unilib-send],.unilib-send-menu){display:none!important}
+/* 11-20: 「시험지 통째로 변환」도 5E_exam으로 보내는 길이라 보내기처럼 Lite에서는 단추·확인 줄 모두 숨긴다. */
+:root[data-mode="lite"] :is(.unilib-header-panel-toggle,[data-unilib-send],.unilib-send-menu,[data-unilib-whole],[data-unilib-whole-confirm]){display:none!important}
 :root[data-mode="lite"] #ai-image-panel :is(.panel-shell-toggles,.panel-collapse-close){display:none!important}
