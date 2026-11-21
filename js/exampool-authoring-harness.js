@@ -8,11 +8,13 @@ import {parseAiEvent} from './ai-events.js?v=1.7.0-four-session-integration';
 import {parseAuthoringResponse} from '../assets/exampool/authoring/contract.js';
 import {buildAuthoringPrompt} from '../assets/exampool/authoring/prompt.js';
 import {GUIDELINES_VERSION} from '../assets/exampool/authoring/guidelines.js';
+// PATHFIX(11-20): IPC 거절의 영어 머리말·Codex 실행 오류를 한국어로.
+import {aiErrorText,aiErrorCode} from './ai-error-copy.js?v=1.7.0-four-session-integration';
 export const HARNESS_VERSION='exampool-authoring-harness-1';
 const MAX_EVIDENCE_ROUNDS=2,TURN_TIMEOUT=300000;
 export async function fetchEvidence(request){
   // 데스크톱 앱은 IPC로, 로컬 서버는 같은 원점 API로 검색한다.
-  if(typeof window.fiveEDesktop?.examEvidence==='function'){try{return await window.fiveEDesktop.examEvidence(request);}catch(error){return {available:false,results:[],warning:'근거 검색 실패: '+error.message};}}
+  if(typeof window.fiveEDesktop?.examEvidence==='function'){try{return await window.fiveEDesktop.examEvidence(request);}catch(error){return {available:false,results:[],warning:'근거 검색 실패: '+aiErrorText(error)};}}
   // 공개 웹(정적 사이트·/preview/)에는 근거 검색 서버가 없다: 404·405·네트워크 오류는 '연결 안 됨'으로 조용히 넘긴다.
   const offline={available:false,results:[],warning:'이 실행 환경에는 근거 검색이 연결되어 있지 않습니다. 근거는 미확보로 남습니다.'};
   let r;try{r=await fetch('/api/exampool-evidence',{method:'POST',headers:{'content-type':'application/json','x-5e-request':'1'},body:JSON.stringify(request)});}catch{return offline;}
@@ -43,7 +45,7 @@ export function createAuthoringHarness({base=()=>window.fiveEDesktop||window.fiv
     const bridge=bridgeFor(packet.question?.id||'none'),controller=new AbortController();if(requestId)controllers.set(requestId,controller);
     const started=Date.now(),attempts=[];let found=[],errors=[],response=null,selection=null;
     try{
-      selection=defaultAIModelSelection(await bridge.models());
+      selection=defaultAIModelSelection(await bridge.models().catch(error=>{throw Object.assign(Error(aiErrorText(error)),{code:aiErrorCode(error)||error?.code,cause:error});}));
       // 문항의 실제 그림을 함께 보낸다. 모두 보냈을 때만 '그림을 읽었다'고 표시한다(그림 축 통과의 조건).
       const figures=(packet.figures||[]).filter(f=>/^data:image\/(png|jpeg|webp);base64,/.test(f.data||'')).slice(0,6);
       var attachments=figures.map((f,i)=>({id:'figure-'+i,name:`${f.label||'그림'}.png`,data:f.data}));

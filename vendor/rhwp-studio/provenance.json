@@ -7,13 +7,14 @@
     "Remove upstream PWA registration and app icons",
     "Use relative icon sprite paths in stylesheet",
     "Return the native blank document initialization promise to the embedded host",
-    "Accept the null message origin only for the installed file:// app (5E 1.7.0, 15a825be)"
+    "Accept the null message origin only for the installed file:// app (5E 1.7.0, 15a825be)",
+    "Replace the old-Hangul subset font with upstream rhwp RHWPOldHangul-Regular.woff2 (OFL renamed subset, same glyphs) and point the bundled font URLs at it (5E 1.7.2)"
   ],
   "files": [
     {
       "path": "assets/canvaskit-renderer-qwNCZ9x6.js",
-      "sha256": "3b7efb4d890bbdc9d59780d43a6041ac37b88d3dbb76682a0c31983c2b2e6788",
-      "bytes": 247494
+      "sha256": "ac3866d1becc18f5074c2e3c8a69063096065cf7bab4f74ce84001ab83a1978a",
+      "bytes": 247472
     },
     {
       "path": "assets/index-CJqHfaJX.css",
@@ -22,8 +23,8 @@
     },
     {
       "path": "assets/index-zNX2Cct6.js",
-      "sha256": "c71f8a1ec4cd972dc20e99631a8702de8292eade252a8b7bcc623b34baaf6836",
-      "bytes": 2116396
+      "sha256": "a7d73f4e5194db7bdbe3c61ff73082ae61a4c380bf45c5a49567a3be599f9a75",
+      "bytes": 2116341
     },
     {
       "path": "assets/rhwp_bg-BkVWMBaR.wasm",
@@ -195,9 +196,9 @@
       "bytes": 694804
     },
     {
-      "path": "fonts/SourceHanSerifK-OldHangul-subset.woff2",
-      "sha256": "9e419cd16df2ea3b220aa7751320d956ac2493440ba412484d98325078f09d43",
-      "bytes": 239628
+      "path": "fonts/RHWPOldHangul-Regular.woff2",
+      "sha256": "1a45a61e9a320c1bc62ca1401f7b23ceffffe8133dc2a9650ad4e12524f8dcab",
+      "bytes": 239732
     },
     {
       "path": "fonts/SpoqaHanSans-Regular.woff2",

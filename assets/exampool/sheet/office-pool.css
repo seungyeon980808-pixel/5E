@@ -792,3 +792,15 @@ body.card-locked #card-view .cv-grid textarea,body.card-locked #card-view .cv-gr
 .ajt-menu .ajt-row em{margin-left:auto;font-style:normal;color:#6ba4f8;font-size:12px}
 .ajt-menu .ajt-clear{border:0;background:none;color:var(--ds-ink-3);font:inherit;font-size:12px;padding:6px 10px;text-align:right;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.ajt-dot.busy,.ai-jobs-top .ajt-done.flash{animation:none}}
+/* 11-20 시안 「시험지 통째로 변환」: 결과 한 줄(태그 5) · 그림으로 넣은 줄 표시 · 가운데 진행(태그 3). */
+#job-box .job-sum{display:flex;align-items:center;gap:8px;min-height:36px;padding:4px 4px 4px 12px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);font-size:13px;color:var(--ds-ink)}
+#job-box .job-sum span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#job-box .job-sum button{height:28px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);font:inherit;font-size:12.5px;cursor:pointer;flex:none}
+#job-box .job-sum button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#job-box .job-list li[data-state=image]>b{color:var(--ds-ink-3);font-weight:400}
+#whole-progress{position:fixed;left:50%;top:50%;z-index:90;transform:translate(-50%,-50%);width:min(384px,calc(100vw - 32px));padding:16px 20px 18px;border-radius:12px;background:var(--ds-panel,#0d1117);color:var(--ds-ink,#e6edf3);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55))}
+#whole-progress .wp-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+#whole-progress .wp-head b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:600}
+#whole-progress .wp-head span{flex:none;font-size:14px;font-weight:600;color:var(--ds-ink-2,#b1bac4);font-variant-numeric:tabular-nums}
+#whole-progress .wp-bar{height:6px;border-radius:3px;background:var(--ds-line,#30363d);overflow:hidden}
+#whole-progress .wp-bar i{display:block;height:100%;border-radius:3px;background:var(--go-line,#6ba4f8);transition:width .25s cubic-bezier(.2,0,0,1)}

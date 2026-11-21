@@ -19,7 +19,7 @@ export function examChecks(qs, { ready = () => true } = {}) {
   const add = (level, list, text) => { if (list.length) out.push({ level, text: `${text}: ${list.map(no).join(', ')}`, ids: list.map(q => q.id) }); };
   add('warn', qs.filter(q => objective(q) && !Number.isInteger(q.answer)), '정답을 정하지 않은 문항');
   add('warn', qs.filter(q => !(Number(q.points) > 0)), '배점이 없는 문항');
-  add('warn', qs.filter(q => !String(q.ask || '').trim()), '발문이 비어 있는 문항');
+  add('warn', qs.filter(q => !q.figureOnly && !String(q.ask || '').trim()), '발문이 비어 있는 문항');
   // 조판은 자동 저장(10-23)이라 「조판 저장 전」 점검은 없앴다.
   const dupChoices = qs.filter(q => { const t = (q.choices || []).map(c => String(c.text || '').replace(/\s+/g, '')).filter(Boolean); return new Set(t).size !== t.length; });
   add('warn', dupChoices, '선지 글이 겹치는 문항');

@@ -546,22 +546,10 @@ export function initRhwpExamWorkspace(state, services) {
     await preparePlacement(latest);
   }
   function graphSendBounds(planeId) {
+    // 11-20 GRAPHFIX(안 1): 그래프는 어느 출력이든 한 틀 = 그래프 + 모든 라벨 + 2mm(getContentBounds가 그린 글자까지 잰다).
+    // 예전에는 화면 글자 상자(선택 표시·잡기 상자 포함)를 더 합쳐 다른 출력보다 0.2mm쯤 컸다.
     const objects=state.get().objects.filter(object=>object.id===planeId || object.planeId===planeId);
-    let bounds=getContentBounds({...state.get(),objects},{},2);
-    const canvas=document.querySelector('#canvas'),matrix=canvas.getScreenCTM()?.inverse();
-    if (!matrix) return bounds;
-    const nodes=[...canvas.querySelectorAll('#scene [data-id]')];
-    for (const object of objects) {
-      const node=nodes.find(node=>node.dataset.id===object.id);if(!node)continue;
-      // Coordinate-frame boxes omit long axis captions and end labels. Measure
-      // the existing renderer so those glyphs enter the proposed crop as well.
-      const rect=node.getBoundingClientRect();if(!rect.width || !rect.height)continue;
-      const a=new DOMPoint(rect.left,rect.top).matrixTransform(matrix),b=new DOMPoint(rect.right,rect.bottom).matrixTransform(matrix);
-      const x=Math.min(bounds?.x ?? Infinity,a.x-2),y=Math.min(bounds?.y ?? Infinity,a.y-2);
-      const right=Math.max(bounds ? bounds.x+bounds.w : -Infinity,b.x+2),bottom=Math.max(bounds ? bounds.y+bounds.h : -Infinity,b.y+2);
-      bounds={x,y,w:right-x,h:bottom-y};
-    }
-    return bounds;
+    return getContentBounds({...state.get(),objects},{},2);
   }
   async function confirmPlacement() {
     if (!placement) return;

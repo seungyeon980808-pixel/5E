@@ -76,7 +76,24 @@ function notice(message,error=false){
   clearTimeout(noticeTimer);n.dataset.error=String(error);n.querySelector('i').textContent=error?'!':'✓';n.querySelector('p').textContent=message;n.hidden=false;n.classList.remove('in');void n.offsetWidth;n.classList.add('in');
   noticeTimer=setTimeout(()=>{n.hidden=true;},error?7000:4000);}
 let lastProgress=false;
-function status(message,error=false,{keep=false}={}){clearTimeout(statusTimer);const progress=/…$/.test(message)&&message!=='저장 중…',finishing=lastProgress&&!progress&&!/^저장됨/.test(message);lastProgress=progress;$('#status').textContent=message;$('#status').dataset.error=String(error);markBusy(error?'':message);
+// 11-20(MISC172): 아래 상태 줄은 사용자 동작 안내(예: 「그림을 비웠습니다」)와 자동 저장 안내(「저장 중…」「저장됨 · 시각」)가 한 자리를 같이 쓴다.
+// 동작 안내는 mutate→remember가 「저장 중…」을 띄운 바로 뒤에 나오지만, 0.3초 뒤 저장이 끝나며 「저장됨」(그리고 다시 그리기가 부른 저장의 「저장 중…」)이
+// 같은 자리를 덮어 읽기 전에 사라졌다. 이제 동작 안내는 2.5초 동안 붙들고, 그 사이 온 자동 저장 안내는 맨 마지막 것만 붙들기가 끝난 뒤 보인다.
+// 다른 동작 안내·오류는 붙들기와 상관없이 바로 바꾼다. 저절로 나오는 안내(background)는 자동 저장 안내처럼 기다린다.
+const STATUS_HOLD_MS=2500,isSaveStatus=m=>m==='저장 중…'||/^저장됨 · /.test(m);
+// background: 사용자가 누른 일이 아닌 저절로 나오는 안내(예: 조판 창을 다시 그림). 붙들기 중이면 자동 저장 안내처럼 기다렸다가 보인다
+// (자동 저장 안내보다 먼저 — 붙들기가 끝나면 그 안내가 이어서 2.5초 붙들린다).
+let statusHeld='',statusHeldUntil=0,statusHoldTimer=0,statusDeferred=null;
+function status(message,error=false,opts={}){
+  const save=isSaveStatus(message);
+  if(!error&&(save||opts.background)&&statusHeld&&performance.now()<statusHeldUntil&&$('#status').textContent===statusHeld&&$('#status').dataset.error!=='true'){
+    if(!(save&&statusDeferred&&!isSaveStatus(statusDeferred.message)))statusDeferred={message,opts};
+    clearTimeout(statusHoldTimer);
+    statusHoldTimer=setTimeout(()=>{const d=statusDeferred,held=statusHeld;statusDeferred=null;statusHeld='';if(d&&$('#status').textContent===held&&$('#status').dataset.error!=='true')status(d.message,false,d.opts);},Math.max(0,statusHeldUntil-performance.now())+20);
+    return;}
+  if(!save){clearTimeout(statusHoldTimer);statusDeferred=null;statusHeld=message&&!error?message:'';statusHeldUntil=statusHeld?performance.now()+STATUS_HOLD_MS:0;}
+  showStatus(message,error,opts);}
+function showStatus(message,error=false,{keep=false}={}){clearTimeout(statusTimer);const progress=/…$/.test(message)&&message!=='저장 중…',finishing=lastProgress&&!progress&&!/^저장됨/.test(message);lastProgress=progress;$('#status').textContent=message;$('#status').dataset.error=String(error);markBusy(error?'':message);
   if(error||finishing)notice(message,error);
   if(error&&!keep)statusTimer=setTimeout(()=>{if($('#status').textContent!==message)return;$('#status').textContent='';$('#status').dataset.error='false';},6000);}
 // 자료 열람 상태 문장: 라이브러리 칸에 붙어 있을 때는 칸 안 줄 대신 아래 상태 막대로 보낸다(오류는 빨간 글).
@@ -469,17 +486,23 @@ const JOB_STEPS=['문항 스캔','문항 카드 작성','한글 조판 작성'],
 function jobBox(){let n=document.querySelector('#job-box');if(!n){n=document.createElement('section');n.id='job-box';n.setAttribute('role','status');n.setAttribute('aria-live','polite');document.body.append(n);
   n.addEventListener('click',e=>{const open=e.target.closest('[data-job-open]');if(open){const q=data.questions.find(x=>x.id===open.dataset.jobOpen);if(q){current=q;openCard(q.id);cardEditor.showHwp?.();}if(pastBatch?.ended){n.hidden=true;pastBatch=null;}return;}
     const drop=e.target.closest('[data-job-drop]');if(drop){unqueuePast(drop.dataset.jobDrop);return;}
-    const again=e.target.closest('[data-job-retry]');if(again){const row=pastBatch?.rows.find(r=>r.id===again.dataset.jobRetry);if(row){pastBatch.rows=pastBatch.rows.filter(r=>r!==row);queuePast(row.item,{go:false});}return;}
+    if(e.target.closest('[data-job-retry-all]')){retryWhole(pastBatch?.rows.filter(r=>r.whole&&r.state==='image'&&r.item)||[]);return;}
+    const again=e.target.closest('[data-job-retry]');if(again){const row=pastBatch?.rows.find(r=>r.id===again.dataset.jobRetry&&(r.state==='fail'||r.state==='image'));if(row?.whole){retryWhole([row]);return;}if(row){pastBatch.rows=pastBatch.rows.filter(r=>r!==row);queuePast(row.item,{go:false});}return;}
     if(e.target.closest('[data-job-close]')){n.hidden=true;if(pastBatch?.ended)pastBatch=null;}});}return n;}
-function showBatch(){const B=pastBatch;if(!B)return;const n=jobBox(),rows=B.rows,one=rows.length===1&&rows[0];
-  const done=rows.filter(r=>r.state==='done').length,fail=rows.filter(r=>r.state==='fail').length,now=rows.find(r=>r.state==='now'),at=now?jobStep(now.stage):3;
+function showBatch(){const B=pastBatch;if(!B)return;const n=jobBox(),one=!B.whole&&B.rows.length===1&&B.rows[0];
+  // 11-20 시험지 통째로 변환(시안 태그 5): 그림으로 넣은 줄·실패한 줄을 맨 위로.
+  const rows=B.whole?[...B.rows.filter(r=>r.state==='image'||r.state==='fail'),...B.rows.filter(r=>r.state!=='image'&&r.state!=='fail')]:B.rows;
+  const done=rows.filter(r=>r.state==='done'||r.state==='image').length,fail=rows.filter(r=>r.state==='fail').length,now=rows.find(r=>r.state==='now'),at=now?jobStep(now.stage):3;
   n.hidden=false;n.dataset.state=B.ended?(fail?'error':'done'):'busy';
-  const head=one?(one.state==='fail'?'변형 실패':one.state==='done'?'변형 완료':'변형 중'):`변형 ${rows.length}개`,sub=one?one.title:B.ended?(fail?`${done}개 끝 · ${fail}개 실패`:'모두 끝'):`${done}개 끝${now?' · 1개 하는 중':''}`;
-  let body;
+  const head=one?(one.state==='fail'?'변형 실패':one.state==='done'?'변형 완료':'변형 중'):B.whole&&B.ended?`변환 ${rows.length}문항`:`변형 ${rows.length}개`,sub=one?one.title:B.ended?(fail?`${done}개 끝 · ${fail}개 실패`:'모두 끝'):`${done}개 끝${now?' · 1개 하는 중':''}`;
+  let body,sum='';
+  if(B.whole&&B.ended){const wr=rows.filter(r=>r.whole),han=wr.filter(r=>r.state==='done').length,img=wr.filter(r=>r.state==='image'),again=img.some(r=>r.item);
+    sum=`<div class="job-sum"><span>${[han?`${han}문항 한글로`:'',img.length?`${img.length}문항 그림으로 넣음`:''].filter(Boolean).join(' · ')||'넣은 문항 없음'}</span>${again?'<button type="button" class="mini" data-job-retry-all title="그림으로 넣은 문항을 한글 문항으로 다시 바꿔 봅니다">다시 시도</button>':''}</div>`;}
   if(one)body=one.state==='fail'?`<p class="job-err">${E(one.error)}</p><button type="button" class="job-open" data-job-retry="${E(one.id)}">다시</button>`:`<ol class="lp-steps">${JOB_STEPS.map((x,i)=>`<li data-at="${i<at?'done':i===at?'now':''}">${i+1}. ${x}</li>`).join('')}</ol>${one.state==='done'&&!B.moved?`<button type="button" class="job-open" data-job-open="${E(one.qid)}">${E(one.number)}번 카드 보기</button>`:''}`;
-  else body=`<ol class="job-list">${rows.map(r=>`<li data-state="${r.state}">${r.state==='now'?'<i class="busy-ring" aria-hidden="true"></i>':`<b aria-hidden="true">${r.state==='done'?'✓':r.state==='fail'?'!':''}</b>`}<em title="${E(r.state==='fail'?r.error:r.title)}">${E(r.title)}${r.state==='done'?` → ${E(r.number)}번`:''}</em>${
-    r.state==='done'?`<button type="button" class="mini" data-job-open="${E(r.qid)}">열기</button>`:r.state==='fail'?`<button type="button" class="mini" data-job-retry="${E(r.id)}">다시</button>`:r.state==='wait'?`<small>기다림</small><button type="button" class="mini" data-job-drop="${E(r.id)}">빼기</button>`:`<small>${E(JOB_STEPS[jobStep(r.stage)])}</small>`}</li>`).join('')}</ol>`;
-  n.innerHTML=`<div class="job-head"><b>${E(head)}</b><span>${E(sub)}</span><button type="button" data-job-close aria-label="닫기">×</button></div>${body}`;
+  else body=`<ol class="job-list">${rows.map(r=>`<li data-state="${r.state}">${r.state==='now'?'<i class="busy-ring" aria-hidden="true"></i>':`<b aria-hidden="true">${r.state==='done'?'✓':r.state==='fail'?'!':r.state==='image'?'▣':''}</b>`}<em title="${E(r.state==='fail'||r.state==='image'?r.error||r.title:r.title)}">${E(r.title)}${r.state==='done'?` → ${E(r.number)}번`:r.state==='image'?` → ${E(r.number)}번 · 그림으로 넣음`:''}</em>${
+    r.state==='done'?`<button type="button" class="mini" data-job-open="${E(r.qid)}">열기</button>`:r.state==='image'?(r.item?`<button type="button" class="mini" data-job-retry="${E(r.id)}" title="한글 문항으로 다시 바꿔 봅니다">다시 시도</button>`:`<button type="button" class="mini" data-job-open="${E(r.qid)}">열기</button>`):r.state==='fail'?`<button type="button" class="mini" data-job-retry="${E(r.id)}">다시</button>`:r.state==='wait'?(r.whole?'<small>기다림</small>':`<small>기다림</small><button type="button" class="mini" data-job-drop="${E(r.id)}">빼기</button>`):`<small>${E(JOB_STEPS[jobStep(r.stage)])}</small>`}</li>`).join('')}</ol>`;
+  n.innerHTML=`<div class="job-head"><b>${E(head)}</b><span>${E(sub)}</span><button type="button" data-job-close aria-label="닫기">×</button></div>${sum}${body}`;
+  showWholeProgress();
   for(const ol of document.querySelectorAll(`.lp-steps[data-steps]`))ol.querySelectorAll('li').forEach((li,i)=>li.dataset.at=i<at?'done':i===at?'now':'');}
 function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;const row=pastBatch?.rows.find(r=>r.id===pastBusy.id&&r.state==='now');if(row)row.stage=stage;showBatch();libView?.refreshJob();pickCart();
   for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(pastBusy.id)}"]`)){
@@ -503,15 +526,15 @@ function queuePast(items,{go=true}={}){
 }
 function unqueuePast(id){const k=pastQueue.findIndex(x=>x.item.id===id);if(k<0)return false;pastQueue.splice(k,1);
   if(pastBatch){pastBatch.rows=pastBatch.rows.filter(r=>!(r.id===id&&r.state==='wait'));if(!pastBatch.rows.length){pastBatch=null;jobBox().hidden=true;}else showBatch();}markQueued();return true;}
-async function runPastQueue(){pastRunning=true;try{while(pastQueue.length){const {item,from}=pastQueue.shift();markQueued();await convertPast(item,{go:from});}}finally{pastRunning=false;}
+async function runPastQueue(){pastRunning=true;try{while(pastQueue.length){const {item,from,row,whole}=pastQueue.shift();markQueued();await convertPast(item,{go:from,row,whole});}}finally{pastRunning=false;}
   if(pastBatch){pastBatch.ended=true;const B=pastBatch;showBatch();if(B.rows.length===1&&B.rows[0].state==='done'&&B.moved){jobBox().hidden=true;pastBatch=null;}}}
 // 줄에서 기다리는 기출: 그림 위에 「차례 기다림 · n번째」, 단추는 「빼기」. 다시 그린 목록에도 맞춘다(card-editor가 부른다).
 function markQueued(root=document){
   for(const b of root.querySelectorAll('[data-cvconvert]')){const id=b.dataset.cvconvert,k=pastQueued(id),f=b.closest('figure.past');
     if(k){b.dataset.queued='true';b.textContent='빼기';b.title='줄에서 빼기';if(f){f.dataset.wait='true';const o=f.querySelector('.past-wait');const t=`차례 기다림 · ${k}번째`;if(o)o.querySelector('span').textContent=t;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',`<div class="past-busy past-wait" role="status"><span>${t}</span></div>`);}}
     else if(b.dataset.queued){delete b.dataset.queued;if(!b.hasAttribute('aria-busy'))b.textContent='변형';b.title='편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)';if(f){delete f.dataset.wait;f.querySelector('.past-wait')?.remove();}}}}
-async function convertPast(item,{go=false}={}){
-  const row=pastBatch?.rows.find(r=>r.id===item.id&&r.state==='wait');
+async function convertPast(item,{go=false,row:given=null,whole=null}={}){
+  const row=given||pastBatch?.rows.find(r=>r.id===item.id&&r.state==='wait');
   if(data.questions.length>=500){if(row){row.state='fail';row.error='문항은 500개까지 만들 수 있습니다.';}status('문항은 500개까지 만들 수 있습니다.',true);return;}
   if(row)row.state='now';convertingPast=item.title;pastBusy={id:item.id,title:item.title,stage:''};pastStage('준비 중');
   try{
@@ -532,18 +555,88 @@ async function convertPast(item,{go=false}={}){
     q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];if(!q.source||q.source===item.title)q.source=`기출 변형 · ${item.title}`.slice(0,300);
     q.workflow='draft';
     pastStage('카드 여는 중');
-    const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
-    if(!ok)return;
-    if(row){row.state='done';row.qid=q.id;row.number=q.number;}
+    const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);if(whole){placeWhole(whole,q,row);return;}const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
+    if(!ok){if(whole&&row)await wholeImage(row,'시험지에 넣지 못했습니다');return;}
+    if(row){row.state='done';row.qid=q.id;row.number=whole?String(whole.no):q.number;row.imageQid=null;}
     // 처음 끝난 것만 그 카드로 간다(누른 화면 그대로일 때). 왼쪽 기출 칸은 보던 자리 그대로.
     const move=go&&go===view.name&&pastBatch&&!pastBatch.moved;if(move){pastBatch.moved=true;openCard(q.id);}
     showBatch();
     const warn=(diag?.notes||[]).filter(n=>/못|확인|제외|원본 참고/.test(n));
     const done=`${item.title} → ${q.number}번 문항으로 가져왔습니다 · 원본은 근거로 연결${warn.length?' · 확인: '+warn[0]:''}`;
     status(done);notice(move?`${item.title}을 ${q.number}번 문항으로 만들었습니다 · 되돌리기 ⌘Z`:done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
-  }catch(e){pastIdle(`가져오지 못했습니다 · ${e.message}`);if(row){row.state='fail';row.error=e.message;}showBatch();status(`${item.title} 변환 실패: ${e.message}`,true);}
+  }catch(e){
+    // 11-20 시험지 통째로 변환: 한글로 못 바꾼 문항은 비우지 않고 원본 그림 문항으로 넣는다(그 줄은 맨 위로, 줄마다 다시 시도).
+    if(whole&&row){pastIdle();await wholeImage(row,`한글로 바꾸지 못했습니다 · ${e.message}`);}
+    else{pastIdle(`가져오지 못했습니다 · ${e.message}`);if(row){row.state='fail';row.error=e.message;}showBatch();status(`${item.title} 변환 실패: ${e.message}`,true);}}
   finally{convertingPast=null;pastIdle();}
 }
+// ── 11-20 시안 「시험지 통째로 변환」(시험지통째변환/index.html 태그 3·4·5·6) ──
+// 5E 라이브러리 PDF 보기에서 보낸 시험지 하나(번호순 문항 + 문항 그림)를 새 시험지(시험 이름)에 원래 번호 순서로 담는다.
+// 평가원 문항은 위 「변형」 줄로 한글 문항이 되고, 못 바꾼 문항·학평 문항은 원본 그림 한 장짜리 문항으로 들어간다(실패로 끝나지 않음).
+// 들어오는 차례와 상관없이 자리는 원래 번호로 정한다 — 예전 「시험지에 넣기」는 끝난 차례대로 맨 뒤에 붙였다.
+function wholeAt(run,exam,no){const k=exam.items.findIndex(id=>(run.nos.get(id)??Infinity)>no);return k<0?exam.items.length:k;}
+// mutate 안에서 부른다: q는 이미 data.questions에 있다. 그 번호의 그림 문항이 있으면 그 자리를 바꿔 낀다(다시 시도).
+function placeWhole(whole,q,row){const run=whole.run,exam=examById(data,run.examId),old=row?.imageQid&&data.questions.find(x=>x.id===row.imageQid);
+  if(exam){let at=old&&exam.items.includes(old.id)?exam.items.indexOf(old.id):wholeAt(run,exam,whole.no);
+    if(old){removeFromExam(data,old.id);data.questions=data.questions.filter(x=>x!==old);run.nos.delete(old.id);}
+    addToExam(data,exam.id,q.id,at);run.nos.set(q.id,whole.no);renumberExam(data,exam.id);}
+  else if(old)data.questions=data.questions.filter(x=>x!==old);}
+const WHOLE_IMAGE_RE=/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]*={0,2}$/;
+// 문항 그림을 시험지 보관 규칙(png·jpeg·webp, 8MB 미만)에 맞춘다. 못 맞추면 ''.
+async function wholeFigureData(url){if(!url)return '';if(WHOLE_IMAGE_RE.test(url)&&url.length<6*1024*1024)return url;
+  try{const img=await loadImage(url),k=Math.min(1,2400/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height,1)),c=document.createElement('canvas');c.width=Math.max(1,Math.round((img.naturalWidth||img.width)*k));c.height=Math.max(1,Math.round((img.naturalHeight||img.height)*k));
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);const out=c.toDataURL('image/jpeg',.9);return WHOLE_IMAGE_RE.test(out)&&out.length<8*1024*1024?out:'';}catch{return '';}}
+// 라이브러리가 그림을 보내지 못했으면 5E_exam 기출 원본에서 그 문항을 잘라 온다.
+async function pastQuestionData(item){if(!item)return '';try{const {croppedQuestion}=await import('./past-pdf.js');const r=await croppedQuestion(item);if(!r?.url)return '';
+  const blob=await (await fetch(r.url)).blob();return await new Promise(res=>{const f=new FileReader();f.onload=()=>res(String(f.result||''));f.onerror=()=>res('');f.readAsDataURL(blob);});}catch{return '';}}
+function wholeImageQuestion(run,row,figure){const q=newQuestion('0','객관식','그림');q.blocks=q.blocks.filter(x=>x.kind==='figure');/* 빈 「자료 설명」 칸은 뺀다 — 원본 그림 한 장짜리 */const b=q.blocks[0],title=row.title||`${run.title} ${row.whole.no}번`;
+  if(b&&figure)b.figure={name:`${title}.png`.slice(0,240),data:figure};
+  q.source=`기출 그림 · ${title}`.slice(0,300);q.figureOnly=true;/* 빈 발문·①~⑤를 그리지 않음(handoff.js) · 배점은 기본 3점 그대로 */q.references=[{target:'question',label:`원본 기출 · ${title}`.slice(0,300),quote:''}];q.workflow='draft';
+  if(!figure)q.ask=`${title} — 원본 그림을 넣지 못했습니다. 5E 라이브러리에서 이 문항을 잘라 그림 칸에 넣으세요.`;
+  return q;}
+// 그림 문항으로 넣는다(이미 그 번호의 그림 문항이 있으면 그대로 두고 상태만).
+async function wholeImage(row,reason){const run=row.whole.run;
+  if(row.imageQid&&data.questions.some(x=>x.id===row.imageQid)){row.state='image';row.error=reason;row.number=String(row.whole.no);showBatch();return;}
+  const figure=await wholeFigureData(row.whole.data)||await wholeFigureData(await pastQuestionData(row.item));const q=wholeImageQuestion(run,row,figure);
+  const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);placeWhole(row.whole,q,null);});
+  row.state=ok?'image':'fail';row.error=ok?reason:'시험지에 넣지 못했습니다';if(ok){row.qid=q.id;row.imageQid=q.id;row.number=String(row.whole.no);}showBatch();}
+function retryWhole(list){if(!list.length||!pastBatch)return;for(const row of list){row.state='wait';row.stage='';pastQueue.push({item:row.item,from:'',row,whole:row.whole});}
+  pastBatch.ended=false;const run=list[0].whole.run;run.panel=true;run.total=pastBatch.rows.filter(r=>r.whole?.run===run).length;
+  if(!pastRunning)void runPastQueue();markQueued();showBatch();}
+async function receiveWhole(whole){
+  const seen=new Set(),rows=(Array.isArray(whole.rows)?whole.rows:[]).map(r=>({no:Number(r?.no),id:typeof r?.id==='string'&&/^[a-z]\d_\d{4}_\d{2}_\d{2}$/i.test(r.id)?r.id:null,name:String(r?.name||'').slice(0,200),data:typeof r?.data==='string'?r.data:''}))
+    .filter(r=>Number.isInteger(r.no)&&r.no>0&&r.no<1000&&!seen.has(r.no)&&seen.add(r.no)).sort((a,b)=>a.no-b.no).slice(0,100);
+  if(!rows.length){status('변환할 문항이 없습니다.',true);return;}
+  if(data.questions.length+rows.length>500){status(`문항은 500개까지 만들 수 있어 ${rows.length}문항을 담지 못했습니다 · 휴지통·안 쓰는 문항을 정리해 주세요.`,true);return;}
+  let all=[];if(rows.some(r=>r.id))try{all=await loadPast();}catch(error){status(`기출 목록을 불러오지 못해 그림 문항으로 넣습니다 · ${error.message}`,true);}
+  const exam=createExam(String(whole.title||'').trim().slice(0,200)||undefined);if(!exam)return;
+  const run={examId:exam.id,title:exam.title,total:rows.length,nos:new Map(),panel:true};
+  if(!pastBatch||pastBatch.ended)pastBatch={rows:[],moved:false,ended:false};
+  pastBatch.whole=run;
+  const queued=[],images=[];
+  for(const r of rows){const item=r.id&&all.find(x=>x.id===r.id)||null,title=item?item.title:`${run.title} ${r.no}번`;
+    const row={id:item?item.id:`whole-${exam.id}-${r.no}`,item,title,state:'wait',stage:'',whole:{run,no:r.no,data:r.data}};pastBatch.rows.push(row);
+    if(item)queued.push({item,from:'',row,whole:row.whole});else images.push(row);}
+  show('exam',{examId:exam.id,examStep:2});
+  status(queued.length?`「${exam.title}」 ${rows.length}문항을 한글 문항으로 바꿔 담는 중…`:`「${exam.title}」 ${rows.length}문항을 그림 문항으로 담는 중…`);
+  showBatch();
+  // 기출 목록에 없는 문항(학평 등)은 그림 문항으로 한 번에 넣는다(되돌리기 한 번).
+  if(images.length){const figures=await Promise.all(images.map(row=>wholeFigureData(row.whole.data))),made=images.map((row,k)=>wholeImageQuestion(run,row,figures[k]));
+    const ok=mutate(()=>{made.forEach((q,k)=>{q.number=nextNumber();data.questions.push(q);placeWhole(images[k].whole,q,null);});});
+    images.forEach((row,k)=>{row.state=ok?'image':'fail';row.error=ok?'5E_exam 기출 목록에 없어 그림으로 넣었습니다':'시험지에 넣지 못했습니다';if(ok){row.qid=made[k].id;row.imageQid=made[k].id;row.number=String(row.whole.no);}});}
+  for(const e of queued)pastQueue.push(e);
+  if(queued.length){if(!pastRunning)void runPastQueue();markQueued();}
+  else if(!pastRunning){pastBatch.ended=true;}
+  showBatch();
+  if(!queued.length)status(`「${exam.title}」에 ${rows.length}문항을 그림 문항으로 넣었습니다 · 원래 번호 순서`);
+}
+// 가운데 진행(태그 3): 「<시험 이름> 변환 중 · n / N」과 막대. 바깥을 누르면 닫히고 오른쪽 아래 「변형」 상자로 계속 보인다.
+function showWholeProgress(){const B=pastBatch,run=B?.whole;let n=document.querySelector('#whole-progress');
+  if(!run||!run.panel||B.ended){n?.remove();return;}
+  const rows=B.rows.filter(r=>r.whole?.run===run),done=rows.filter(r=>r.state==='done'||r.state==='image').length,total=rows.length||run.total;
+  if(!n){n=document.createElement('div');n.id='whole-progress';n.setAttribute('role','status');n.setAttribute('aria-live','polite');document.body.append(n);}
+  n.innerHTML=`<div class="wp-head"><b>${E(run.title)} 변환 중</b><span>${done} / ${total}</span></div><div class="wp-bar"><i style="width:${Math.round(done/Math.max(1,total)*100)}%"></i></div>`;}
+document.addEventListener('pointerdown',e=>{const n=document.querySelector('#whole-progress');if(n&&!n.contains(e.target)){if(pastBatch?.whole)pastBatch.whole.panel=false;n.remove();}},true);
 // 학교 양식 틀(10-29): 등록한 학교 양식(학습지 제외)과 그 조판 기준.
 setFrameNames(id=>{const s=typesetStandards.find(x=>x.id===id);return s?.source?.kind==='hwp'?s.name:'';});
 const schoolFrames=()=>typesetForms.filter(f=>f.kind!=='sheet'&&f.standardId&&typesetStandards.some(s=>s.id===f.standardId)).map(f=>({id:f.standardId,name:f.name}));
@@ -897,7 +990,7 @@ async function requestTypeset(value){
         closeSources();panel.hidden=false;$('#preview').setAttribute('aria-expanded','true');
         typesetter ||= makeTypesetter();
         $('#typeset-title').textContent=`${next.number}번 문항 조판`;
-        if(!typesetter.matches(next)){await typesetter.open(next);if(lostFormat)status('구성이 바뀌어 한글 창을 다시 그렸습니다 · 저장하지 않은 서식 조정은 다시 해 주세요.');}else typesetter.refreshView();lostFormat=false;
+        if(!typesetter.matches(next)){await typesetter.open(next);if(lostFormat)status('구성이 바뀌어 한글 창을 다시 그렸습니다 · 저장하지 않은 서식 조정은 다시 해 주세요.',false,{background:true});}else typesetter.refreshView();lostFormat=false;
         $('#typeset-refresh').hidden=true;
       }catch(e){
         const failedQ=next&&data.questions.find(q=>q.id===next.id);if(failedQ)typesetFailed={id:failedQ.id,key:typesetFailKey(failedQ),message:`${failedQ.number}번 문항을 조판하지 못했습니다: ${e.message}`};
@@ -1657,6 +1750,7 @@ window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||
 // 11-05 시안 v13: 5E 라이브러리 「문항 카드로 / 시험지에 넣기」 — 기출 id를 받아 「변형」 줄에 넣는다(편집 가능한 한글 문항 카드가 됨).
 // 시험지에 넣기면 지금 보던 시험지에(없으면 새 시험지를 만들어) 담는다 — convertPast는 시험지 화면일 때 그 시험지에 담는다.
 window.addEventListener('message',async e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet'||e.data.action!=='library-past')return;
+  if(e.data.whole&&typeof e.data.whole==='object'){void receiveWhole(e.data.whole);return;}
   const ids=[...new Set((e.data.ids||[]).map(String))].slice(0,100);if(!ids.length)return;
   let all;try{all=await loadPast();}catch(error){status(`기출 목록을 불러오지 못했습니다 · ${error.message}`,true);return;}
   const items=ids.map(id=>all.find(x=>x.id===id)).filter(Boolean);if(!items.length){status('보낸 문항이 5E_exam 기출 목록에 없습니다.',true);return;}

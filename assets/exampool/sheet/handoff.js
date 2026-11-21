@@ -108,7 +108,7 @@ const SPACER_MM=0.58;
 export function handoffQuestion(value,{skeleton=false}={}){
   const q=clone(value);q.references=[];
   validate({format:FORMAT,questions:[q],documents:[]});
-  if(!skeleton&&!q.ask.trim())throw Error('발문을 입력한 뒤 한글로 보내세요.');
+  if(!skeleton&&!q.ask.trim()&&!q.figureOnly)throw Error('발문을 입력한 뒤 한글로 보내세요.');
   return q;
 }
 // 틀 보기(한글 창 전용): 아직 비어 있는 발문·글·그림 자리에 회색 이름(발문·지문·자료)만 넣어 문항 모양을 먼저 보여 준다.
@@ -116,14 +116,17 @@ export function handoffQuestion(value,{skeleton=false}={}){
 // 안내 글은 시트 값이 아니므로 주인이 없고(한글 창에서 고쳐도 시트로 가지 않음), 조판 저장도 하지 않는다.
 const GHOST_INK='#9aa0a6';
 const ghostName=b=>b.label&&!/^\(.+\)$/.test(b.label)?b.label:'지문';
+// 11-20 「시험지 통째로 변환」의 그림 문항(figureOnly): 원본 문항 그림 한 장이 곧 문항이라 빈 발문은 빈 칸이 아니다 —
+// 흐린 「발문 [3점]」·빈 ①~⑤를 그리지 않는다(배점 3점은 데이터에 그대로). 발문·선지를 직접 쓰면 그때부터 보인다.
+const figureOnlyChoicesEmpty=q=>!!q.figureOnly&&(q.choices||[]).every(c=>!String(c?.text||'').trim()&&!c?.figure);
 export function skeletonKey(value){
-  const keys=[];if(!String(value.ask||'').trim())keys.push('ask');
+  const keys=[];if(!String(value.ask||'').trim()&&!value.figureOnly)keys.push('ask');
   for(const b of value.blocks||[]){if(b.kind==='text'&&!String(b.text||'').trim())keys.push('block:'+b.id);if(b.kind==='figure'&&!b.figure)keys.push('figure:'+b.id);}
   return keys.join('|');
 }
 function fillSkeleton(q){
   const ghosts=new Set(),figures=new Set();
-  if(!q.ask.trim()){q.ask='발문';ghosts.add('ask');}
+  if(!q.ask.trim()&&!q.figureOnly){q.ask='발문';ghosts.add('ask');}
   for(const b of q.blocks){
     if(b.kind==='text'&&!b.text.trim()){b.text=ghostName(b);ghosts.add('block:'+b.id);}
     if(b.kind==='figure'&&!b.figure)figures.add(b.id);
@@ -365,7 +368,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const sideText=!firstText?openingSideText(q):null;
   // 배점이 3점이면 발문 끝에 [3점]. 한글 창에서 고칠 수 없는 꼬리(suffix)로 둔다.
   // 2점은 표시하지 않는다(평가원). 3점과 카드에서 「자유」로 적은 배점(4, 2.5 …)은 [N점].
-  const pts=Number(q.points),mark=pts>0&&pts!==2?(L.points==='round'?` (${pts}점)`:` [${pts}점]`):'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
+  const pts=Number(q.points),mark=pts>0&&pts!==2&&!(q.figureOnly&&!q.ask.trim())?(L.points==='round'?` (${pts}점)`:` [${pts}점]`):'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
   // 평가원 순서: 발문 다음에 <보기>. 맨 바깥 보기는 발문 뒤에 찍는다.
   const afterAsk=q.blocks.filter(b=>!b.parent&&b.kind==='bogi').map(b=>b.id);
   // 기출 그림의 원본 폭(widthPt, 원본 PDF pt)이 있으면 그 크기를 넘지 않는다. 평가원 PDF 한 단(387pt)이 조판 단 폭(columnPx)에 대응.
@@ -806,7 +809,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     :await (async()=>{floating=true;try{return await walk(null,Math.round(width*Math.min(.6,Math.max(.3,floatShare))),floatTable.id);}finally{floating=false;}})();
   let html=floatHtml+first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
   for(const id of afterAsk)html+=await walk(null,width,id);
-  if(q.type!=='서술형'){
+  if(q.type!=='서술형'&&!figureOnlyChoicesEmpty(q)){
     html+=gapHtml(q.choicesGap??L.choicesGap);
     if(q.style==='대응표')html+=kicePair(q.choiceTable)?pairChoices(q.choiceTable):await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){
