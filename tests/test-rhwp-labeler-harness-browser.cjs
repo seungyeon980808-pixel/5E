@@ -59,7 +59,7 @@ for (const engine of ['chromium', 'webkit']) {
       assert.equal(result.count, 1);
       // 11-10(c9d1da3f): 라벨 끄기(삭제) 경로는 짧은 기출·교과서 프롬프트(+ 「사용자 요청:」)를 보낸다. 계약 프롬프트는 라벨 복원(예전 파이프라인)에서만 쓴다.
       if (labelResult === 'restore-editable') assert.equal(result.actual.text, result.expectedText);
-      else { assert.match(result.actual.text, /^첨부한 교과서 그림을 한국 수능/); assert.match(result.actual.text, /선택한 원본을 변환해 주세요/); }
+      else { assert.match(result.actual.text, /^첨부한 교과서 그림을 편집해서 한국 수능/); assert.match(result.actual.text, /선택한 원본을 변환해 주세요/); }
       assert.equal(result.promptSha256, baseline.promptSha256);
       assert.deepEqual(result.actual.attachments, [result.expectedInput]);
       assert.equal(result.actual.conversationId, null);

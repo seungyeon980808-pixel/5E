@@ -118,6 +118,10 @@ async function ask(page, text) {
 }
 async function setFault(page, f) { await page.evaluate((f) => { Object.assign(window.__fault, window.__defaultFault, f); }, f); }
 async function shot(page, name) { if (out) await page.screenshot({ path: path.join(out, name) }).catch(() => {}); }
+
+// 11-20: 작업 목록(고른 작업의 시간 줄)과 로딩 창 글 — 「실패」 대신 뜻대로(연결 대기·완료 · 앞 결과를 그대로 두었습니다).
+const activeTaskLabel = (page) => page.evaluate((p) => (document.querySelector(`${p} .ai-task-tab.is-on .ai-task-tab-time`)?.textContent || '').trim(), PANEL);
+const loadingCaption = (page) => page.evaluate((p) => { const f = document.querySelector(`${p} [data-ai-loading-frame]`); return { state: f?.dataset.loadingState || '', text: (f?.querySelector('.ai-loading-caption')?.textContent || '').replace(/\s+/g, ' ').trim() }; }, PANEL);
 const waitBusy = (page) => page.waitForFunction((p) => document.querySelector(p)?.dataset.aiBusy === 'true', PANEL, { timeout: 15000 });
 const waitReads = (page, n) => page.waitForFunction((n) => window.__engineFake.reads.length >= n, n, { timeout: 30000 });
 const REQUEST = '가로축은 시간(s), 세로축은 속도(m/s)로 처음 3초 동안 6에서 0까지 일정하게 줄어드는 그래프';
@@ -218,7 +222,11 @@ h.withServer(async (origin) => {
       await scenario('engine-load-fail', '그래프 엔진 모듈을 못 불러옴 → 기본 생성', async () => { blocked.add('engine'); await ask(page, REQUEST); return { expect: 'objects' }; });
       await scenario('engine-and-objects-fail', '엔진 모듈 실패 + 기본 생성도 실패 → 앞 결과 유지·안내', async () => {
         blocked.add('engine'); await setFault(page, { objects: 'fail' }); await ask(page, REQUEST);
-        return { expect: 'kept', check: ({ st }) => assert.ok(st.text.length > 4 && st.kind === 'error', `${name}: failure explained: ${st.text}`) };
+        // 앞 카드(앞 경우의 결과)가 있으니 실패가 아니라 「앞 결과를 그대로 두고」 끝난 것이다(11-20).
+        return { expect: 'kept', check: async ({ st }) => {
+          assert.ok(/생성하지 못했습니다 · 앞 결과는 그대로/.test(st.text) && st.kind === 'warn', `${name}: failure explained with generation wording: ${st.text}`);
+          assert.match(await activeTaskLabel(page), /완료 · 앞 결과를 그대로 두었습니다/, `${name}: job list says the previous result was kept`);
+        } };
       });
       await scenario('draw-load-fail', '그리기 모듈을 못 불러옴 → 기본 생성', async () => { blocked.add('draw'); await ask(page, REQUEST); return { expect: 'objects' }; });
       // ── KaTeX(스크립트·글꼴)를 못 불러옴 → 수식 없이 그리고 알림. 다음 차례에는 다시 불러온다.
@@ -290,7 +298,7 @@ h.withServer(async (origin) => {
         await waitReads(page, 1);
         await page.locator(`${PANEL} [data-ai-interrupt]`).click();
         return { expect: 'cancelled', check: ({ st, fake }) => {
-          assert.match(st.text, /취소/);
+          assert.match(st.text, /멈췄습니다 · 앞 결과는 그대로/, `${name}/abort: generation stop wording: ${st.text}`);
           assert.ok(!fake.sends.length, `${name}/abort: no default generation after cancel`);
         } };
       });
@@ -303,6 +311,19 @@ h.withServer(async (origin) => {
         await page.waitForTimeout(200);
         const st = await statusOf(page);
         assert.match(st.text, /인터넷/, `${name}/offline: tells the user to check the connection: ${st.text}`);
+        assert.match(await activeTaskLabel(page), /연결 대기/, `${name}/offline: job list waits for the connection instead of 실패`);
+        assert.doesNotMatch(await activeTaskLabel(page), /실패/);
+        const lc = await loadingCaption(page);
+        if (lc.state === 'failed') assert.ok(/인터넷/.test(lc.text) && !/설명을 조금/.test(lc.text), `${name}/offline: loading card names the cause: ${lc.text}`);
+        // 로딩 창 문구는 까닭대로(생성만): 인터넷·로그인은 「설명을 바꿔 보세요」가 아니다. 변환 문구는 그대로.
+        const copies = await page.evaluate(async () => { const m = await import('/js/loading/workbench-loading.js'); return {
+          offline: m.loadingFailedCopy('graph-create', 'offline', true), login: m.loadingFailedCopy('graph-create', 'login', true), ai: m.loadingFailedCopy('graph-create', null),
+          figureOffline: m.loadingFailedCopy('figure', 'offline', false), conversion: m.loadingFailedCopy('graph', 'offline', true) }; });
+        assert.equal(copies.offline, '인터넷이 끊겼어요 · 연결되면 이어서 할게요');
+        assert.equal(copies.login, 'AI 로그인이 필요해요 · 로그인하면 이어서 할게요');
+        assert.equal(copies.ai, '그래프를 만들지 못했어요 · 앞 결과는 그대로예요');
+        assert.equal(copies.figureOffline, '인터넷이 끊겼어요 · 앞 결과는 그대로예요');
+        assert.equal(copies.conversion, '그래프를 읽지 못했어요 · 원본은 그대로예요');
         const f = await fakeState(page);
         assert.ok(!f.sends.length, `${name}/offline: no default generation over a dead connection`);
         assert.equal((await cardInfo(page)).length, (await cardInfo(page)).length);
@@ -317,6 +338,7 @@ h.withServer(async (origin) => {
         await ask(page, REQUEST);
         await page.locator(`${PANEL} [data-ai-login]`).waitFor({ state: 'visible', timeout: 30000 });
         assert.ok(await page.locator(`${PANEL} [data-ai-connection-dialog]`).evaluate((d) => d.open), `${name}/not-logged-in: connection dialog shown`);
+        assert.match(await activeTaskLabel(page), /로그인 대기/, `${name}/not-logged-in: job list waits for login instead of 실패`);
         await shot(page, `${name}-not-logged-in-connection.png`);
         assert.equal((await fakeState(page)).reads.length, 0, `${name}/not-logged-in: no AI call without login`);
         await page.locator(`${PANEL} [data-ai-login]`).click();
@@ -338,7 +360,10 @@ h.withServer(async (origin) => {
       await scenario('previous-objects-fail', '고른 그림 그래프가 있을 때 설계 실패 + 기본 생성도 실패 → 앞 결과 그대로', async () => {
         await scenario.selectPicture();
         await setFault(page, { plan: 'garbled', objects: 'fail' }); await ask(page, REQUEST + '. 곡선 이름을 B로');
-        return { expect: 'kept', check: ({ st }) => assert.ok(/앞 결과/.test(st.text) && st.kind === 'warn', `${name}/previous: ${st.text}`) };
+        return { expect: 'kept', check: async ({ st }) => {
+          assert.ok(/앞 결과/.test(st.text) && st.kind === 'warn', `${name}/previous: ${st.text}`);
+          assert.match(await activeTaskLabel(page), /완료 · 앞 결과를 그대로 두었습니다/, `${name}/previous: job list says kept, not 실패`);
+        } };
       });
 
       // ── 저장된 meta.graphPlan으로 다시 그리기(AI 없음): 연결이 끊겨도, KaTeX가 없어도, 설계가 망가져도 그림이 나온다

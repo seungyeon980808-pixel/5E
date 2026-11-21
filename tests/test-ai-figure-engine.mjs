@@ -144,8 +144,18 @@ test('앱에 실은 색인(assets/ai-figure): 평가원 9,924 + 학평 10,879, i
 // ── 지시문 ──
 test('buildFigurePrompt: v2t 사슬을 펼친 결과가 고정값과 같다', () => {
   const p = buildFigurePrompt({ request: '빗면 위 상자', refs: ['a', 'b', 'c'], retrieval: { classify: { types: ['역학 모식도(물체·빗면·도르래·용수철)', '그래프(선·곡선)'], subject: '물리학Ⅰ' } } });
-  // image_generator pipeline/prompts/v2t.cjs build()와 글자 하나까지 같은 값(옮길 때 4가지 경우로 대조함).
-  assert.equal(createHash('sha256').update(p).digest('hex').slice(0, 16), '0869623efdc7dae0');
+  // image_generator pipeline/prompts/v2t.cjs build()와 글자 하나까지 같던 값(0869623efdc7dae0)에서
+  // 11-21 「(가)(나)(다)는 그림에 쓰지 않는다」 한 줄만 바뀌었다(그렸다 지우느라 +40초 — 8과목 64장 시험).
+  // 11-21(사용자 확정): 정자/기울임 규칙(수치+단위 정자·붙여 씀, 기호만 기울임, 첨자 정자)과 그림 한글 고딕 계열.
+  assert.equal(createHash('sha256').update(p).digest('hex').slice(0, 16), '358c002f1ec28c42');
+  assert.match(p, /빈칸을 두지 않고 바로 붙여 쓴다/u);
+  assert.match(p, /초점 F, 고기압 H/u);
+  assert.match(p, /\(l\)의 l만 기울이고/u);
+  assert.match(p, /3m, 60kg, 2s, 10N, 5m\/s, 0.1M, 50mL, 1000hPa, 30°, 25°C/u);
+  assert.match(p, /단위는 절대 기울이지 않는다/u);
+  assert.match(p, /아래첨자는 기호만 기울임, 첨자 글자는 바로 선 글자/u);
+  assert.match(p, /고딕 계열/u);
+  assert.match(p, /\(가\)\(나\)\(다\) 같은 패널·구분 이름은 그림 안에 절대 쓰지 않는다/u);
   assert.ok(p.endsWith('[내용]\n빗면 위 상자'));
   assert.match(p, /물리 그림 화풍/u);
   assert.match(p, /참고 그림 3장은/u);

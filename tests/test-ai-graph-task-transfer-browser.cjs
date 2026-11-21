@@ -27,7 +27,8 @@ window.__seedReady = window.__seedReady.then(async () => {
   plan.source = {id:'source-0',hash,width:512,height:384,plotBox:{x:40,y:50,w:420,h:280}};
   const graphResult = api.buildWorkbenchGraph(plan, plan.source);
   window.__graphTransferSeedPhase = 'render';
-  const data = await api.workbenchGraphDataUrl(graphResult);
+  // 11-20 GRAPHFIX: 그래프 출력은 원본 그림 크기가 아니라 출력 틀(그래프+라벨+2mm) 크기다.
+  const raster = await api.workbenchGraphRaster(graphResult), data = raster.data;
   window.__graphTransferSeedPhase = 'persist';
   tab.conversionKind = 'graph';
   // A stored historical setting must not transform native graph output.
@@ -143,7 +144,11 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
     const displayed = await img.getAttribute('src');
     const before = await snap(page), sourceBefore = before.find(tab => tab.id === 'task-0');
     const dimensions = await img.evaluate(image => [image.naturalWidth,image.naturalHeight]);
-    assert.deepEqual(dimensions,[512,384]);
+    // 11-20 GRAPHFIX: 보이는 그래프 출력 = 그 수정본 그래프의 출력 틀(그래프+라벨+2mm) 크기.
+    const candidateGraph = sourceBefore.generated.find(candidate => candidate.id === candidateId).graphResult;
+    const frameSize = await page.evaluate(async graph => { const api = await import('/js/graph/workbench-result.js?v=1.7.0-four-session-integration');
+      const raster = await api.workbenchGraphRaster(graph); return [raster.width, raster.height]; }, candidateGraph);
+    assert.deepEqual(dimensions,frameSize,'visible graph output uses the one export frame');
     if (targetKind === 'image') {
       await page.locator(panel + ' [data-ai-insert-selected]').click();
       const graph = page.locator('#graph-modal-overlay'), selectedCurve = graph.locator('#gm-chips [data-series-index="0"]');

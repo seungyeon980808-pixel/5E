@@ -688,6 +688,12 @@
       "path": "tests/test-library-crop-session.mjs"
     },
     {
+      "path": "tests/test-library-answer-highlight.mjs"
+    },
+    {
+      "path": "tests/test-search-index-parts.mjs"
+    },
+    {
       "path": "tests/test-library-import-policy.mjs"
     },
     {
@@ -950,6 +956,36 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-edit.mjs",
+      "findingIds": [
+        "GENENG-FIGURE-EDIT-LABEL-HINTS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-speed.mjs",
+      "findingIds": [
+        "GENSPEED-FIGURE-SPEED"
+      ]
+    },
+    {
+      "path": "tests/test-ai-create-chat.mjs",
+      "findingIds": [
+        "GENUI-FIGURE-CREATE-SCREEN"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-leader-erase.mjs",
+      "findingIds": [
+        "LEADERFIX-LABEL-RESTORE-LEADER"
+      ]
+    },
+    {
+      "path": "tests/test-ai-create-flow.mjs",
+      "findingIds": [
+        "CHATFIX-CHAT-GENERATE-SPLIT"
+      ]
+    },
+    {
       "path": "tests/test-ai-graph-engine.mjs",
       "findingIds": [
         "AI-GRAPH-PICTURE-ENGINE"
@@ -971,6 +1007,30 @@
       "path": "tests/test-ai-engines-faults.mjs",
       "findingIds": [
         "E180-AI-ENGINES-NEVER-FAIL"
+      ]
+    },
+    {
+      "path": "tests/test-library-whole-exam.mjs",
+      "findingIds": [
+        "LIB-WHOLE-EXAM-NAME"
+      ]
+    },
+    {
+      "path": "tests/test-ai-error-copy.mjs",
+      "findingIds": [
+        "PATHFIX-AI-ERROR-COPY"
+      ]
+    },
+    {
+      "path": "tests/test-ai-interrupt-never-stuck.mjs",
+      "findingIds": [
+        "AI-INTERRUPT-NEVER-STUCK"
+      ]
+    },
+    {
+      "path": "tests/test-label-upright-italic-rules.mjs",
+      "findingIds": [
+        "LABEL-UPRIGHT-ITALIC-RULES"
       ]
     }
   ],
@@ -1938,6 +1998,13 @@
       "reason": "Compares automatic graph export bounds to independently scanned raster pixels for axis labels, rotation, offsets and filled areas; verifies hidden layers, explicit crop and immutable state in root/preview Chromium/WebKit."
     },
     {
+      "path": "tests/test-graph-label-drag-frame-browser.cjs",
+      "findingIds": [
+        "GRAPH-LABEL-DRAG-ONE-FRAME"
+      ],
+      "reason": "Graph editor labels follow the pointer (axis names past tick numbers, ticks under guide lines, labels outside the frame) with a frozen preview, and editor dashed frame, PNG/copy and canvas/HWP use one graph+labels+2 mm frame in Chromium/WebKit."
+    },
+    {
       "path": "tests/test-image-clipboard-order-browser.cjs",
       "findingIds": [
         "SAFARI-CLIPBOARD-STRING-BEFORE-IMAGE-FILE"
@@ -2388,6 +2455,24 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-create-ui-browser.cjs",
+      "findingIds": [
+        "GENUI-FIGURE-CREATE-SCREEN"
+      ]
+    },
+    {
+      "path": "tests/test-ai-create-chat-split-browser.cjs",
+      "findingIds": [
+        "CHATFIX-CHAT-GENERATE-SPLIT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-local-edit-browser.cjs",
+      "findingIds": [
+        "GENSPEED-FIGURE-LOCAL-EDIT"
+      ]
+    },
+    {
       "path": "tests/test-shell-left-width-browser.cjs",
       "findingIds": [
         "SHELL-LEFT-WIDTH-SHARED",
@@ -2508,6 +2593,13 @@
       "findingIds": [
         "E180-AI-GRAPH-PICTURE-NEVER-FAIL-BROWSER"
       ]
+    },
+    {
+      "path": "tests/test-library-whole-exam-browser.cjs",
+      "findingIds": [
+        "LIB-WHOLE-EXAM"
+      ],
+      "reason": "시험지 통째로 변환: 평가원 2026 수능 물리학Ⅰ 20문항(이름·1→20 순서·실패 2문항 그림·다시 시도)과 학평 20문항 그림 변환을 실제 공유 자료로 Chromium·WebKit에서 확인한다(인터넷 필요)."
     }
   ],
   "deferred": [
@@ -2719,6 +2811,13 @@
         "EXAM-SEND-1106-REPRO"
       ],
       "reason": "Repro harness needs a read-only export of a user exam (E1106_JSON/E1106_OUT); skipped without it."
+    },
+    {
+      "path": "tests/test-codex-path-desktop.cjs",
+      "findingIds": [
+        "PATHFIX-CODEX-MINIMAL-PATH"
+      ],
+      "reason": "실제 Electron을 최소 PATH(/usr/bin:/bin:/usr/sbin:/sbin)·임시 프로필로 띄워 codex 찾기를 본다. 첫 검사는 이 맥의 Codex 로그인이 필요(모델 목록만, 그림·글 요청 0). 없는 codex 경우는 로그인 없이 됨. 설치판으로는 FIVE_E_APP_EXECUTABLE."
     }
   ]
 }

@@ -47,6 +47,8 @@ async function fakeDesktop(context) {
         const texts = fault.strip.length ? [fault.strip.shift()] : [];
         return JSON.stringify({ has: texts.length > 0, texts });
       }
+      // CHATFIX(11-20): 고칠 곳 찾기는 대상이 있어야 고친다(0개면 되묻는다).
+      if (/교사가 이 그림에서 일부만/.test(text)) return JSON.stringify({ targets: ['물체'], keep: ['빗면'], summary: '고침', mode: 'draw', ops: [] });
       return JSON.stringify({ type: '역학', scenes: ['빗면 위 물체 A가 용수철에 매달려 정지'], keyValues: '', subject: '물리학Ⅰ', types: ['역학'], keywords: ['빗면'], has: false, texts: [] });
     };
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -102,9 +104,18 @@ const cardSrcs = (page) => page.locator(`${PANEL} .ai-previews .ai-image-card im
 const idle = (page, timeout = 60000) => page.waitForFunction((p) => document.querySelector(p)?.dataset.aiBusy !== 'true', PANEL, { timeout });
 const busyNow = (page) => page.evaluate((p) => document.querySelector(p)?.dataset.aiBusy === 'true', PANEL);
 const statusOf = (page) => page.evaluate((p) => { const s = document.querySelector(`${p} [data-ai-status]`); return { text: (s?.textContent || '').trim(), kind: s?.dataset.kind || '' }; }, PANEL);
+
+// 11-20: 작업 목록(고른 작업의 시간 줄)과 로딩 창 글 — 「실패」 대신 뜻대로(연결 대기·완료 · 앞 결과를 그대로 두었습니다).
+const activeTaskLabel = (page) => page.evaluate((p) => (document.querySelector(`${p} .ai-task-tab.is-on .ai-task-tab-time`)?.textContent || '').trim(), PANEL);
+const loadingCaption = (page) => page.evaluate((p) => { const f = document.querySelector(`${p} [data-ai-loading-frame]`); return { state: f?.dataset.loadingState || '', text: (f?.querySelector('.ai-loading-caption')?.textContent || '').replace(/\s+/g, ' ').trim() }; }, PANEL);
 const logText = (page) => page.locator(`${PANEL} [data-ai-log]`).textContent().catch(() => '');
 const fakeState = (page) => page.evaluate(() => structuredClone({ ...window.__engineFake, unhandled: window.__unhandled }));
 async function ask(page, text) {
+  // 11-19(시안 그림생성화면 태그 6): 결과가 있으면 실행 단추가 「이 그림 고치기」다 — 새 그림은 ▾ 메뉴의 「새로 그리기」로.
+  if (await page.locator(`${PANEL} [data-ai-send][data-ai-create-state="edit"]`).count()) {
+    await page.locator(`${PANEL} [data-ai-create-more]`).click();
+    await page.locator(`${PANEL} [data-ai-create-new]`).click();
+  }
   await page.locator(`${PANEL} [data-ai-chat-input]`).fill(text);
   await page.locator(`${PANEL} [data-ai-send]`).click();
 }
@@ -170,7 +181,7 @@ h.withServer(async (origin) => {
       } finally {
         worker = { mode: 'ok', hits: 0 };
         await setFault(page, {});
-        if (await busyNow(page)) { await page.locator(`${PANEL} [data-ai-interrupt]`).click().catch(() => {}); await idle(page).catch(() => {}); }
+        if (await busyNow(page)) { await page.locator(`${PANEL} [data-ai-send][data-ai-create-state="stop"], ${PANEL} [data-ai-interrupt]:visible`).first().click().catch(() => {}); await idle(page).catch(() => {}); }
       }
     }
 
@@ -237,17 +248,23 @@ h.withServer(async (origin) => {
         worker.mode = 'offline';
         await setFault(page, { text: 'network', sendReject: 'Codex 서버에 연결하지 못했습니다.' });
         await ask(page, '도르래에 매달린 물체');
-        return { expect: 'guided', check: ({ st }) => assert.match(st.text, /인터넷|연결/, `${name}/offline: tells the user to check the connection`) };
+        return { expect: 'guided', check: async ({ st }) => {
+          assert.match(st.text, /인터넷|연결/, `${name}/offline: tells the user to check the connection`);
+          assert.match(await activeTaskLabel(page), /연결 대기/, `${name}/offline: job list waits for the connection instead of 실패`);
+          const lc = await loadingCaption(page);
+          if (lc.state === 'failed') assert.match(lc.text, /인터넷이 끊겼어요 · 연결되면 이어서/, `${name}/offline: loading card names the cause: ${lc.text}`);
+        } };
       });
 
       // ── 모델을 쓸 수 없음 → 다른 모델
       await scenario('model-unavailable', '그림 모델 사용 불가 → 반대 모델', async () => {
-        await setFault(page, { failModels: ['gpt-6.1-sol'] });
+        // 그림 모델 기본은 Luna(18b191cf) — 기본 모델을 쓸 수 없으면 반대 모델(Sol)로 그린다.
+        await setFault(page, { failModels: ['gpt-6-luna'] });
         await ask(page, '수평면 위 물체 C');
         return { expect: 'result', check: ({ fake, log }) => {
           const img = fake.sends.filter((s) => s.purpose === 'image');
-          assert.equal(img[0].model, 'gpt-6.1-sol'); assert.ok(img.some((s) => s.model === 'gpt-6-luna'), `${name}/model-unavailable: other model drew`);
-          assert.match(log, /그림 모델을 바꿔\(gpt-6-luna\)/);
+          assert.equal(img[0].model, 'gpt-6-luna'); assert.ok(img.some((s) => s.model === 'gpt-6.1-sol'), `${name}/model-unavailable: other model drew`);
+          assert.match(log, /그림 모델을 바꿔\(gpt-6\.1-sol\)/);
         } };
       });
       await scenario('text-model-unavailable', '글 모델 사용 불가(400) → 다른 글 모델', async () => {
@@ -265,7 +282,11 @@ h.withServer(async (origin) => {
       await scenario('all-fail-legacy-fail', '엔진·옛 길 모두 실패 → 앞 결과 유지·다시 실행 안내', async () => {
         await setFault(page, { image: 'fail' });
         await ask(page, '도르래에 매달린 두 물체 F');
-        return { expect: 'guided', check: ({ st }) => assert.match(st.text, /유지|보존|다시/, `${name}/all-fail: status says what is kept / what to do`) };
+        return { expect: 'guided', check: async ({ st }) => {
+          assert.match(st.text, /그대로|유지|보존|다시/, `${name}/all-fail: status says what is kept / what to do`);
+          assert.doesNotMatch(st.text, /변환에 실패|입력과 코멘트/, `${name}/all-fail: generation wording, not conversion: ${st.text}`);
+          assert.match(await activeTaskLabel(page), /완료 · 앞 결과를 그대로 두었습니다/, `${name}/all-fail: previous cards kept → not 실패`);
+        } };
       });
 
       // ── 장면 그리는 중 취소
@@ -273,9 +294,9 @@ h.withServer(async (origin) => {
         await setFault(page, { image: 'hang' });
         await ask(page, '빗면 위 물체 G');
         await waitImageSend(page, 1);
-        await page.locator(`${PANEL} [data-ai-interrupt]`).click();
+        await page.locator(`${PANEL} [data-ai-send][data-ai-create-state="stop"], ${PANEL} [data-ai-interrupt]:visible`).first().click();
         return { expect: 'cancelled', check: async ({ st, fake }) => {
-          assert.match(st.text, /취소/);
+          assert.match(st.text, /멈췄습니다 · 앞 결과는 그대로/, `${name}/abort: generation stop wording: ${st.text}`);
           assert.ok(fake.interrupts >= 1, `${name}/abort: the running image turn was interrupted`);
           assert.ok(!fake.sends.some((s) => s.purpose === 'image' && !s.names.length && s.at > 0 && fake.sends.indexOf(s) > 0), `${name}/abort: no legacy fallback after cancel`);
         } };
@@ -285,14 +306,15 @@ h.withServer(async (origin) => {
       // ── E9b 그림 차례 시계: main이 끝을 알리지 못한 그림 차례(직접 호출 대신 에이전트 길·IPC 끊김)를 화면이 끊고 다음 모델로
       await scenario('image-deadline-switch', '그림 차례 응답 없음 → 차례 시계로 끊고 반대 모델', async () => {
         await page.evaluate(() => { globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS = 1500; });
-        await setFault(page, { hangModels: ['gpt-6.1-sol'] });
+        // 그림 모델 기본 Luna(18b191cf)가 응답하지 않으면 반대 모델(Sol)로.
+        await setFault(page, { hangModels: ['gpt-6-luna'] });
         await ask(page, '빗면 위 물체 N');
         return { expect: 'result', check: async ({ fake, log }) => {
           await page.evaluate(() => { delete globalThis.__FIVE_E_ENGINE_IMAGE_DEADLINE_MS; });
           const img = fake.sends.filter((s) => s.purpose === 'image');
-          assert.equal(img[0].model, 'gpt-6.1-sol'); assert.ok(img.some((s) => s.model === 'gpt-6-luna'), `${name}/image-deadline: other model drew`);
+          assert.equal(img[0].model, 'gpt-6-luna'); assert.ok(img.some((s) => s.model === 'gpt-6.1-sol'), `${name}/image-deadline: other model drew`);
           assert.ok(fake.interrupts >= 1, `${name}/image-deadline: the silent turn was interrupted`);
-          assert.match(log, /그림 모델을 바꿔\(gpt-6-luna\)/);
+          assert.match(log, /그림 모델을 바꿔\(gpt-6\.1-sol\)/);
         } };
       });
       await scenario('image-deadline-both', '두 모델 모두 응답 없음 → 더 기다리지 않고 옛 생성 길로', async () => {
@@ -314,6 +336,7 @@ h.withServer(async (origin) => {
         await page.waitForFunction((p) => document.querySelector(`${p} details.ai-advanced-settings`)?.open === true, PANEL, { timeout: 30000 });
         await page.locator(`${PANEL} [data-ai-login]`).waitFor({ state: 'visible', timeout: 10000 });
         assert.ok(await page.locator(`${PANEL} [data-ai-connection-dialog]`).evaluate((d) => d.open), `${name}/not-logged-in: the connection dialog is shown`);
+        assert.match(await activeTaskLabel(page), /로그인 대기/, `${name}/not-logged-in: job list waits for login instead of 실패`);
         await shot(page, `${name}-not-logged-in-connection.png`);
         const reads = (await fakeState(page)).reads.length;
         assert.ok(reads <= 1, `${name}/not-logged-in: no engine run without login (reads=${reads})`);

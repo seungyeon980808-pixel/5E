@@ -58,6 +58,11 @@ const cards = (page) => page.locator(`${PANEL} .ai-previews .ai-image-card`).cou
 const idle = (page) => page.waitForFunction((p) => document.querySelector(p)?.dataset.aiBusy !== 'true', PANEL, { timeout: 60000 });
 const status = (page) => page.locator(`${PANEL} [data-ai-status]`).textContent();
 async function ask(page, text) {
+  // 11-19(시안 그림생성화면 태그 6): 결과가 있으면 실행 단추가 「이 그림 고치기」다 — 새 그림은 ▾ 메뉴의 「새로 그리기」로.
+  if (await page.locator(`${PANEL} [data-ai-send][data-ai-create-state="edit"]`).count()) {
+    await page.locator(`${PANEL} [data-ai-create-more]`).click();
+    await page.locator(`${PANEL} [data-ai-create-new]`).click();
+  }
   await page.locator(`${PANEL} [data-ai-chat-input]`).fill(text);
   await page.locator(`${PANEL} [data-ai-send]`).click();
 }
@@ -96,7 +101,7 @@ h.withServer(async (origin) => {
       assert.ok(fake.sends.every((s) => s.purpose !== 'image'), `${name}: default graph creation sends the graph-object request`);
       assert.equal(fake.reads.length, 0, `${name}: default graph creation does not call the new engine`);
       assert.ok(!(await loaded()).some((p) => p.includes('/js/ai-graph/')), `${name}: graph picture engine module is not even loaded`);
-      await page.locator(`${PANEL} [data-ai-interrupt]`).click();
+      await page.locator(`${PANEL} [data-ai-send][data-ai-create-state="stop"], ${PANEL} [data-ai-interrupt]:visible`).first().click();
       await idle(page);
       await closeAiPanel(page);
 
@@ -111,10 +116,14 @@ h.withServer(async (origin) => {
       if (process.env.DEBUG_ENGINE) console.log(JSON.stringify({ sends: fake.sends.slice(startSends).map((s) => ({ ...s, text: s.text.slice(0, 80) })), reads: fake.reads.map((r) => r.text.slice(0, 60)), workerHits, logs: await page.locator(`${PANEL} [data-ai-log]`).textContent().catch(() => '') }, null, 1));
       assert.ok(engineSends.length >= 1, `${name}: the engine drew through the desktop image path`);
       assert.ok(engineSends[0].names.length >= 1 && engineSends[0].names.every((n) => /^figure-ref-\d\.png$/.test(n)), `${name}: up to three exam figures attached: ${JSON.stringify(engineSends[0].names)}`);
-      assert.equal(engineSends[0].model, 'gpt-6.1-sol', `${name}: the model chosen in the AI workbench draws first`);
+      // 11-19 사용자 결정(18b191cf): 그림 모델은 작업대의 대화 모델을 따르지 않고 기본 Luna(옵션이 sol일 때만 Sol).
+      assert.equal(engineSends[0].model, 'gpt-6-luna', `${name}: the engine's default image model (Luna) draws first`);
       assert.ok(fake.reads.some((r) => r.model === 'gpt-6.1-sol'), `${name}: text steps use the engine text model`);
       assert.ok(workerHits >= 1, `${name}: reference figures fetched from the Worker`);
-      assert.match(await page.locator(`${PANEL} [data-ai-log]`).textContent(), /이미지가 완성되었습니다\. 참고한 기출 그림: \S+-\d/, `${name}: the run log names the reference figures`);
+      // 11-19(시안 그림생성화면 태그 13·19): 옛 「이미지가 완성되었습니다. 참고한 기출 그림: …」 글 대신 대화의 결과 카드.
+      // 11-20 사용자 결정: 참고한 기출은 화면에 말하지 않는다(띠·「기출 N장 참고」 없음). 엔진 meta에는 남는다.
+      assert.doesNotMatch(await page.locator(`${PANEL} .ai-msg.result .ai-chat-result`).last().textContent(), /기출/, `${name}: the result card does not mention reference figures`);
+      assert.equal(await page.locator(`${PANEL} [data-ai-ref-strip]`).count(), 0, `${name}: no reference strip`);
       await shot(page, `${name}-figure-result.png`);
       const figureObject = await insertSelected(page);
       assert.equal(figureObject.meta?.figureEngine, 'ai-figure', `${name}: canvas image keeps the engine metadata`);

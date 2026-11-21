@@ -10,7 +10,7 @@ const { pathToFileURL } = require('node:url');
 
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const channels = ['clipboard:read-image', 'codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
-  'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
+  'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'codex:login-cancel', 'codex:logout', 'codex:locate', 'diagnostics:log-error', 'diagnostics:open-log', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
   'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence','exam-files:autosave','exam-files:read-latest','exam-files:save','exam-files:open','exam-files:reveal','exam-files:folder','exam-files:open-folder','project:renderer-ready'];
 const pdfLibraryChannels=['pdf-library:pick-folder','pdf-library:ensure-default-folder','pdf-library:connections','pdf-library:folder-tree','pdf-library:set-folder-selection','pdf-library:disconnect','pdf-library:sync','pdf-library:cancel','pdf-library:list','pdf-library:read','pdf-library:read-image','pdf-library:open-folder','pdf-library:reveal-item','pdf-library:save-index','pdf-library:load-index','pdf-library:index-state','pdf-library:save-index-state','pdf-library:retry-index','pdf-library:list-corrections','pdf-library:save-correction','pdf-library:delete-correction','pdf-library:capabilities','pdf-library:bundled-pack','pdf-library:read-bundled-pack'];
 const auxChannels=['exam:request-edit','exam:get-names','exam:return-source','exam:ack','exam:workspace-snapshot','exam:workspace-restore','exam:project-snapshot-reply','exam:annotations'];
@@ -21,6 +21,12 @@ function harness(t) {
   const folder = fs.mkdtempSync(path.join(os.tmpdir(), '5e-ipc-'));
   const image = path.join(folder, 'fixture.svg');
   fs.writeFileSync(image, '<svg xmlns="http://www.w3.org/2000/svg"/>');
+  // PATHFIX: codex 위치는 이 가짜 실행 파일로 고정한다(이 맥의 실제 codex·PATH와 상관없이).
+  const fakeCodex = path.join(folder, process.platform === 'win32' ? 'codex.exe' : 'codex');
+  fs.writeFileSync(fakeCodex, '#!/bin/sh\n'); fs.chmodSync(fakeCodex, 0o755);
+  const previousCodexPath = process.env.FIVE_E_CODEX_PATH;
+  process.env.FIVE_E_CODEX_PATH = fakeCodex;
+  t.after(() => { if (previousCodexPath == null) delete process.env.FIVE_E_CODEX_PATH; else process.env.FIVE_E_CODEX_PATH = previousCodexPath; });
   t.after(() => fs.rmSync(folder, { recursive: true, force: true }));
   let ready;
   class Window {
@@ -46,6 +52,8 @@ function harness(t) {
     const child = new EventEmitter(); children.push(child);
     child.stdout = new PassThrough(); child.stderr = new PassThrough();
     child.kill = () => { child.emit('exit', 0, null); return true; };
+    child.pid = 4242; child.exitCode = null;
+    process.nextTick(() => child.emit('spawn')); // 실제 자식처럼 떴다고 알린다(startServer가 기다림)
     child.stdin = new Writable({ write(bytes, encoding, done) {
       const request = JSON.parse(String(bytes));
       effects.push(request.method);
@@ -66,7 +74,7 @@ function harness(t) {
       app: { getVersion: () => '1.6.0', getPath: () => folder, on() {}, dock: { setIcon() {} }, whenReady: () => ({ then(callback) { ready = callback; } }) },
       BrowserWindow: Window, ipcMain: { handle: (name, handler) => handlers.set(name, handler) },
       Menu: { setApplicationMenu() {} },
-      shell: { openExternal(url) { effects.push(url); } },
+      shell: { openExternal(url) { effects.push(url); }, async openPath() { effects.push('open-log'); return ''; }, showItemInFolder() {} },
       desktopCapturer: { async getSources() { effects.push('capture'); return []; } },
       dialog: { async showOpenDialog() { effects.push('dialog'); return { canceled: false, filePaths: [folder] }; } },
     };
@@ -117,10 +125,15 @@ for (const channel of [...channels, ...pdfLibraryChannels]) {
     if(channel==='exam:save-workspace') await h.call('exam:open');
     const result = await h.call(channel);
     switch (channel) {
-      case 'codex:status': assert.deepEqual(result, { server: false, login: { loggedIn: true, output: 'logged in' } }); break;
+      case 'codex:status': assert.equal(result.server, false); assert.equal(result.installed, true); assert.equal(result.login.loggedIn, true); assert.equal(result.login.installed, true); assert.equal(result.login.output, 'logged in'); break;
       case 'codex:start': assert.deepEqual(result, { ok: true, state: 'running' }); break;
       case 'codex:stop': case 'codex:interrupt': assert.equal(result, null); break;
       case 'codex:login': assert.deepEqual(result, { ok: true }); break;
+      case 'codex:login-cancel': assert.deepEqual(result, { ok: true, running: false }); break;
+      case 'codex:logout': assert.equal(typeof result.ok, 'boolean'); break;
+      case 'codex:locate': assert.equal(result.found, true); assert.equal(result.via, 'env-override'); break;
+      case 'diagnostics:log-error': assert.deepEqual(result, { ok: true }); break;
+      case 'diagnostics:open-log': assert.equal(result.ok, true); assert.ok(h.effects.includes('open-log')); break;
       case 'codex:send': assert.equal(result.turnId, 'turn'); break;
       case 'codex:models': assert.deepEqual(result.data, []); break;
       case 'codex:account': assert.deepEqual(Object.keys(result).sort(), ['account', 'limits', 'usage']); break;

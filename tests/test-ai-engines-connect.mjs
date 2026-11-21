@@ -17,7 +17,7 @@ const desktopApp = { readImageText: async () => ({ text: '' }), send: async () =
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 
 test('플래그: 그림 엔진 기본 켜짐·그래프 그림 기본 꺼짐, 새 이름이 옛 이름보다 앞섬', () => {
-  assert.deepEqual(aiEngineFlags(store()), { figure: true, graphPicture: false, figureImageModel: 'luna' });
+  assert.deepEqual(aiEngineFlags(store()), { figure: true, graphPicture: false, figureImageModel: 'luna', figureSpeed: true, figureLocalReplace: false, figureSkipStripCheck: true });
   assert.equal(figureEngineFlag(store({ [AI_ENGINE_FLAG_KEYS.figure]: '0' })), false);
   assert.equal(figureEngineFlag(store({ '5e.aiFigureEngine': '0' })), false);
   assert.equal(graphPictureFlag(store({ [AI_ENGINE_FLAG_KEYS.graphPicture]: '1' })), true);

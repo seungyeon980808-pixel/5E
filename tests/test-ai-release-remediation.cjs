@@ -371,6 +371,8 @@ async function submitContext(statusPromise) {
     refresh: () => {},
     setStatus: () => {},
     setBusy: (value) => { context.busy = value; sends.push(value); },
+    // PATHFIX(11-20): 오류 글 공통 함수(js/ai-error-copy.js)
+    aiErrorText: error => String(error?.message || error), aiErrorCode: () => '', reportAiError: () => {}, codexMissing: () => false,
   };
   const prefix = sourcePart('  const submit = async (type, options = {}) => {', '    imageReceived = false;');
   vm.runInNewContext(`${prefix}\nreturn {request, taskId:activeTaskTabId, sourceIds:runInput.attachments.map(item=>item.id), reviewEnabled:runInput.reviewEnabled, requestEpoch};\n};\nglobalThis.submit = submit;`, context);

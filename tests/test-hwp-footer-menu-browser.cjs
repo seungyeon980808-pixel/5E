@@ -58,17 +58,13 @@ h.withServer(async origin => {
           if (!(await page.locator('#rhwp-exam-workspace.insp-open').count())) await page.locator('.exam-insp-toggle').click();
           await page.waitForFunction(() => { const i=document.querySelector('#rhwp-exam-workspace .exam-inspector'); return document.querySelector('#rhwp-exam-workspace')?.classList.contains('insp-open') && i && getComputedStyle(i).visibility==='visible'; });
         }
-        // 인스펙터는 0.5초마다 커서를 따라 칸을 고르고, 처음 한 번은 손으로 고른 칸을 「글자」로 덮어쓴다(js/rhwp-exam-inspector.js follow).
-        // 새 브라우저의 첫 열기에서 그보다 먼저 「그림」을 누르면 그림 칸이 닫혀 「⋯ 더 보기」가 안 보였다(11-19 Chromium에서 재현).
-        // 그림 칸이 따라가기 두세 번(1.5초) 동안 그대로 남을 때까지 다시 누른다.
-        let picKept = false;
-        for (let attempt = 0; attempt < 8 && !picKept; attempt++) {
-          await page.locator('.exam-inspector [data-ei-pane="pic"]').click();
-          picKept = await page.evaluate(() => new Promise(resolve => { const t0 = performance.now(); const tick = () => {
-            const pic = document.querySelector('#rhwp-exam-workspace .exam-inspector [data-ei-panel="pic"]');
-            if (!pic || pic.hidden) return resolve(false); if (performance.now() - t0 > 1500) return resolve(true); requestAnimationFrame(tick); }; tick(); }));
-        }
-        assert.ok(picKept, `인스펙터 「그림」 칸이 열린 채로 남는다 at ${width}/${theme}`);
+        // 11-20(MISC172): 인스펙터는 손으로 고른 칸을 커서가 다른 것으로 옮겨 갈 때까지 둔다(js/rhwp-exam-inspector.js follow).
+        // 예전(cf163ba4)엔 처음 한 번 「글자」로 덮어써 다시 누르기로 피했다. 이제 한 번만 누르고, 따라가기 세 번(1.5초) 뒤에도 그대로인지 본다.
+        await page.locator('.exam-inspector [data-ei-pane="pic"]').click();
+        const picKept = await page.evaluate(() => new Promise(resolve => { const t0 = performance.now(); const tick = () => {
+          const pic = document.querySelector('#rhwp-exam-workspace .exam-inspector [data-ei-panel="pic"]');
+          if (!pic || pic.hidden) return resolve(false); if (performance.now() - t0 > 1600) return resolve(true); requestAnimationFrame(tick); }; tick(); }));
+        assert.ok(picKept, `인스펙터 「그림」 칸이 한 번 눌러도 열린 채로 남는다 at ${width}/${theme}`);
         // 10-23 인스펙터: 「그림 화면에서 넣기」는 그림 칸의 「⋯ 더 보기」 안
         await page.locator('.exam-inspector .ei-pane:not([hidden]) [data-ei-more]').click();
         await page.getByRole('button',{name:'그림 화면에서 넣기',exact:true}).click();

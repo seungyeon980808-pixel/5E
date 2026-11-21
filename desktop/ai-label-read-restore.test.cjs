@@ -25,16 +25,18 @@ async function loadRun() {
   return context;
 }
 
+const isConvertCheck = payload => /^첨부 그림은 .{1,4} 그림이다|^첫째 그림은/.test(payload?.text || '');
 // 관찰·검수 호출은 이 경로에서 부르면 안 된다(호출되면 실패).
 function fakes({ readText, generate } = {}) {
-  const calls = { generate: [], read: [], observer: 0 };
+  const calls = { generate: [], read: [], check: [], observer: 0 };
   const forbidden = name => async () => { calls.observer++; throw new Error(`${name} must not run`); };
   const options = {
     source: { data: png, name: 'source' }, selection: { model: 'chosen-model', effort: 'high' }, artboard: { w: 100, h: 100 },
     workflow: { imageKind: 'general', labelResult: 'restore-editable' }, queue: false, fallback: false,
     observer: { analyze: forbidden('analyze'), review: forbidden('review'), reviewFinal: forbidden('reviewFinal'), verifyPlacement: forbidden('verifyPlacement'), mapTargets: forbidden('mapTargets'), blankPlan: forbidden('blankPlan') },
     raster: { generate: generate || (async payload => { calls.generate.push(payload); return { src: png, imageToolCalls: 1, rendererPrompt: 'r' }; }) },
-    readText: readText || (async payload => { calls.read.push(payload); return { text: readItems }; }),
+    // 11-21: 변환 목록 대조(ai-image-convert-check.js)도 같은 글 읽기 연결을 쓴다 → 라벨 읽기만 calls.read에 센다.
+    readText: readText || (async payload => { (isConvertCheck(payload) ? calls.check : calls.read).push(payload); return { text: readItems }; }),
   };
   return { calls, options };
 }
@@ -44,7 +46,9 @@ test('restore-editable reads the original in parallel and returns accepted label
   const { calls, options } = fakes();
   const result = await run.executeImageLabelRun(options);
   assert.equal(calls.observer, 0);
-  assert.equal(calls.generate.length, 1);
+  // 11-21: 교과서는 두 장을 동시에 그려 대조로 고른다(ai-image-convert-check.js dual) → 같은 요청 두 번.
+  assert.equal(calls.generate.length, 2);
+  assert.equal(calls.generate[0].text, calls.generate[1].text);
   assert.equal(calls.generate[0].model, 'gpt-6-luna');
   assert.equal(calls.generate[0].effort, 'medium');
   assert.match(calls.generate[0].text, /첨부한 교과서 그림을/);
@@ -121,7 +125,7 @@ test('label on and off reuse the same generated image through the background cac
   const { options: on, calls: onCalls } = fakes({ generate: async payload => { generated.push(payload); return { src: png, imageToolCalls: 1, rendererPrompt: 'on' }; } });
   on.backgroundCache = backgroundCache;
   const restored = await run.executeImageLabelRun(on);
-  assert.equal(generated.length, 1, 'the second request must come from the cached generation');
+  assert.equal(generated.length, 2, 'the second request must come from the cached generation (11-21: the first run draws two candidates)');
   assert.equal(removed.data, restored.data);
   assert.equal(offCalls.read.length, 0);
   assert.equal(onCalls.read.length, 1);
@@ -147,7 +151,7 @@ test('the label read channel is wired through preload, the preview bridge, the w
   assert.match(read('js/web-ai-connection.js'), /'bridge-read-text'\]\.includes\(action\)/);
   assert.match(read('js/web-ai-bridge.js'), /readImageText:\s*payload\s*=>\s*request\('bridge-read-text', payload\)/);
   assert.match(read('js/ai-task-workspaces.js'), /'interrupt', 'readImageText'\]/);
-  assert.match(read('desktop/main.cjs'), /createDirectImageClient\(\{ log: entry => appendAiTurnLog\(entry\), timeoutMs: 100_000, retries: 1 \}\)/);
+  assert.match(read('desktop/main.cjs'), /createDirectImageClient\(\{ log: entry => appendAiTurnLog\(entry\), timeoutMs: 100_000, retries: 1, refreshAuth: refreshCodexAuth \}\)/);
   assert.match(read('scripts/local-codex-bridge.cjs'), /createDirectImageClient\(\{log,timeoutMs:100000,retries:1\}\)/);
   assert.match(read('js/state.js'), /EQUATION_FONT_FAMILY = '"Latin Modern Roman", "Latin Modern Math", "HYhwpEQ"/);
   assert.match(read('css/style.css'), /font-family: "Latin Modern Math";\s*src: url\("\.\.\/vendor\/rhwp-studio\/fonts\/LatinModernMath-Regular\.woff2"\)/);
