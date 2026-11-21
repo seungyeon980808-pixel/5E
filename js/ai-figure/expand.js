@@ -19,7 +19,7 @@ export function normalizeExpanded(parsed, request) {
 /**
  * @param {{ request: string, subject?: string, context?: string, taxonomy: { types: string[] }, readText: (prompt: string) => Promise<string> }} args
  */
-export async function expand({ request, subject = '', context = '', taxonomy, readText }) {
-  const text = await readText(expandPrompt({ request, subject, context, types: taxonomy?.types || [] }));
+export async function expand({ request, subject = '', context = '', conversation = '', taxonomy, readText }) {
+  const text = await readText(expandPrompt({ request, subject, context, conversation, types: taxonomy?.types || [] }));
   return normalizeExpanded(tryParseJson(text), request);
 }

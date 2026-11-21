@@ -8,7 +8,8 @@
 //   웹: 연결은 만들어 두되 쓰지 않는다(availability().reason). 웹은 지금 생성 길을 그대로 쓴다 — 막다른 길 없음.
 // 원칙: 실패로 끝나지 않는다. 엔진 안 재시도 → 그림은 고른 모델 다음 반대 모델(Luna↔Sol) → 엔진이 한 장도 못 그리면
 //       호출 쪽(ai-panel)이 옛 생성 길로 넘긴다. 앞 결과는 지우지 않는다.
-import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, FIGURE_IMAGE_MODEL_CHOICES } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { aiErrorCode, stripIpcPrefix } from './ai-error-copy.js?v=1.7.0-four-session-integration';
+import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, figureSpeedFlag, figureLocalReplaceFlag, figureSkipStripCheckFlag, FIGURE_IMAGE_MODEL_CHOICES } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_ENGINE_ID = 'ai-figure';
 export const FIGURE_ENGINE_VERSION = '1.0.0';
@@ -17,6 +18,19 @@ export const ENGINE_IMAGE_MODEL = 'gpt-6-luna';
 export const DESKTOP_ONLY_NOTE = '새 그림 엔진은 설치판에서 됩니다.';
 const IMAGE_MODELS = ['gpt-6-luna', 'gpt-6.1-sol'];
 const IMAGE_URL = /^data:image\/(png|jpeg|webp);base64,/;
+
+// GENSPEED(11-20) 시간 재기: 검사가 window.__fiveEFigureTrace = []를 넣어 둔 때만 단계·호출 시각을 쌓는다(화면 변화 없음).
+export function figureTrace(entry) {
+  const list = globalThis.__fiveEFigureTrace;
+  if (!Array.isArray(list) || list.length > 2000) return;
+  try { list.push({ at: Math.round(globalThis.performance?.now?.() ?? Date.now()), ...entry }); } catch { /* 기록 실패는 무시 */ }
+}
+const traced = (kind, model, text, promise) => {
+  const step = String(text || '').slice(0, 60);
+  figureTrace({ ev: 'call-start', kind, model, step, len: String(text || '').length });
+  return promise.then((v) => { figureTrace({ ev: 'call-end', kind, model, step, ok: true }); return v; }, (e) => { figureTrace({ ev: 'call-end', kind, model, step, ok: false, error: String(e?.message || e).slice(0, 120) }); throw e; });
+};
+const tracePhase = (onPhase) => (e) => { figureTrace({ ev: 'phase', phase: e?.phase, scene: e?.scene, local: e?.local || undefined }); return onPhase(e); };
 
 const abortError = () => (typeof DOMException === 'function' ? new DOMException('작업이 취소되었습니다.', 'AbortError') : Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' }));
 const isAbort = (error) => error?.name === 'AbortError' || ['ABORTED', 'DIRECT_ABORTED'].includes(error?.code);
@@ -90,7 +104,9 @@ export async function toTransportImage(dataUrl) {
 //   transport 시간 초과·429·5xx·연결 끊김 — main이 이미 다시 시도했다. 같은 차례에서 글 단계마다 또 부르면 몇 분씩 쌓인다.
 //   model     요청 거절(400 등) — 대개 그 모델을 쓸 수 없는 것. 다른 글 모델로 한 번 더.
 export function classifyAiError(error) {
-  const m = String(error?.message || error || '');
+  // PATHFIX: Codex 프로그램이 없거나 로그인이 없으면 다시 불러도 소용없다 — 'auth'로 멈추면 호출 쪽이 연결 화면(설치·로그인 안내)으로 데려간다.
+  if (['CODEX_NOT_FOUND', 'CODEX_NOT_LOGGED_IN'].includes(aiErrorCode(error))) return 'auth';
+  const m = stripIpcPrefix(error);
   if (/로그인|login|\b40[13]\b|권한이 없/i.test(m)) return 'auth';
   if (/연결하지 못|ENOTFOUND|ECONN|network|offline|internet/i.test(m)) return 'network';
   if (/시간이 초과|time.?out|응답 오류\(\d+\)|\b429\b|\b5\d\d\b|rate.?limit|사용량/i.test(m)) return 'transport';
@@ -137,7 +153,7 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
     let timer = null;
     const deadline = new Promise((_, reject) => { timer = setTimeout(() => { health.deadlines++; reject(deadlineError('text', ms)); }, ms); });
     try {
-      const r = await raceAbort(Promise.race([Promise.resolve().then(() => desktop.readImageText({ model, text, attachments: atts })), deadline]), signal);
+      const r = await raceAbort(Promise.race([traced('text', model, text, Promise.resolve().then(() => desktop.readImageText({ model, text, attachments: atts }))), deadline]), signal);
       return typeof r === 'string' ? r : String(r?.text ?? '');
     } finally { clearTimeout(timer); }
   }
@@ -176,7 +192,7 @@ export function createDesktopEngineAi(desktop, raster, { onCall = () => {}, imag
     if (signal?.aborted) inner.abort(); else signal?.addEventListener('abort', onOuter, { once: true });
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; health.deadlines++; inner.abort(); }, ms);
-    try { return await raster.generate(payload, { signal: inner.signal }); }
+    try { return await traced('image', payload.model, payload.text, raster.generate(payload, { signal: inner.signal })); }
     catch (error) { if (timedOut && !signal?.aborted) throw deadlineError('image', ms); throw error; }
     finally { clearTimeout(timer); signal?.removeEventListener('abort', onOuter); }
   }
@@ -228,12 +244,17 @@ export function runAgainHint(label) {
 export function figurePhaseCopy(e = {}) {
   const scene = Number.isInteger(e.scene) && (e.total || 0) > 1 ? ` · 장면 ${e.scene + 1}/${e.total}` : '';
   switch (e.phase) {
-    case 'index': return { title: '비슷한 기출 그림을 찾을 준비를 하고 있습니다', detail: '기출 그림 색인을 불러옵니다.' };
+    case 'index': return { title: '그릴 준비를 하고 있습니다', detail: '요청을 읽고 있습니다.' };
     case 'expand': return { title: '요청을 그림 설계로 바꾸고 있습니다', detail: '그릴 장면과 꼭 맞아야 할 값을 정리합니다.' };
-    case 'scene': return { title: `비슷한 기출 그림 3장을 찾고 있습니다${scene}`, detail: String(e.request || '').slice(0, 120) || '기출 그림을 참고로 고릅니다.' };
-    case 'draw': return { title: `그림을 그리고 있습니다${scene}`, detail: '고른 기출 3장을 참고해 흑백 시험지 선화로 그립니다.' };
+    case 'scene': return { title: `그릴 준비를 하고 있습니다${scene}`, detail: String(e.request || '').slice(0, 120) || '그릴 장면을 정리합니다.' };
+    case 'draw': return { title: `그림을 그리고 있습니다${scene}`, detail: '흑백 시험지 선화로 그립니다.' };
     case 'strip': return { title: `그림 안 설명 문장을 지우고 있습니다${scene}`, detail: '그림 속 설명 문장·패널 이름을 찾아 지웁니다.' };
     case 'grayscale': return { title: `흑백으로 정리하고 있습니다${scene}`, detail: '시험지 인쇄용 흑백으로 맞춥니다.' };
+    // 「이 그림 고치기」(엔진 editFigure, EDIT_PHASES) — 시안 태그 10의 네 단계.
+    case 'edit-find': return { title: '고칠 곳을 찾고 있습니다', detail: '앞 그림에서 말한 곳을 찾습니다. 나머지는 그대로 둡니다.' };
+    case 'edit-apply': return { title: '그 부분을 고치고 있습니다', detail: '앞 그림을 바탕으로 말한 곳만 고칩니다.' };
+    case 'edit-verify': return { title: '나머지가 그대로인지 확인하고 있습니다', detail: '고친 그림을 앞 그림과 견줍니다.' };
+    case 'edit-finish': return { title: '마무리하고 있습니다', detail: '설명 글을 지우고 흑백으로 맞춥니다.' };
     case 'log': return { title: null, detail: String(e.message || '').slice(0, 160) };
     case 'done': return { title: '결과를 확인하고 있습니다', detail: '생성 결과에 등록합니다.' };
     default: return { title: null, detail: null };
@@ -252,6 +273,8 @@ export function figureSceneMeta(result, index, { request = '', models = null } =
     sceneCount: result?.scenes?.length || 1,
     refs: Array.isArray(s.refs) ? s.refs.slice(0, 3) : [],
     strippedTexts: Array.isArray(s.strippedTexts) ? s.strippedTexts.slice() : [],
+    // 요청 글에 적힌 라벨(엔진 labelHints) — 「확정하고 라벨 살리기」가 글자 읽기 기준으로 쓴다(시안 태그 29).
+    labelHints: Array.isArray(result?.labelHints) ? result.labelHints.slice(0, 60) : [],
     expanded: result?.expanded ? { type: result.expanded.type ?? null, scenes: Array.isArray(result.expanded.scenes) ? result.expanded.scenes.slice() : [], keyValues: result.expanded.keyValues ?? '' } : null,
     grayscale: s.grayscale ? { applied: !!s.grayscale.applied } : null,
     ...(models ? { models: { ...models } } : {}),
@@ -271,19 +294,76 @@ export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.j
  * 새 그림 엔진으로 한 벌 만들기. 던지지 않는다(취소만 aborted로 알림).
  * @returns {Promise<{ ok: boolean, aborted: boolean, fresh: { image: string, meta: object }[], result: object|null, errors: object[] }>}
  */
-export async function runFigureEngine({ ai, request, models, previous = null, signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine } = {}) {
+export async function runFigureEngine({ ai, request, conversation = '', models, previous = null, refIds = [], signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine } = {}) {
   let result = null;
   try {
     const mod = engine ? null : await loadEngine();
     const referenceTimeoutMs = Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) > 0 ? Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) : 15000; // 검사가 줄여 쓴다
     const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, referenceTimeoutMs });
-    result = await eng.makeFigureSet({ request, previous, signal, onPhase });
+    figureTrace({ ev: 'engine-start', kind: 'generate' });
+    result = await eng.makeFigureSet({ request, ...(conversation ? { conversation } : {}), previous, signal, onPhase: tracePhase(onPhase), earlyRetrieve: figureSpeedFlag(), ...(figureSkipStripCheckFlag() ? { strip: false } : {}), ...(refIds.length ? { refIds } : {}) });
+    figureTrace({ ev: 'engine-end', kind: 'generate', ok: !!result?.ok });
   } catch (error) {
     if (isAbort(error) || signal?.aborted) return { ok: false, aborted: true, fresh: [], result, errors: [] };
     return { ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'engine', message: String(error?.message || error).slice(0, 300) }] };
   }
   const fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: figureSceneMeta(result, i, { request, models }) } : null)).filter(Boolean);
   return { ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
+}
+
+/**
+ * 「이 그림 고치기」(시안 그림생성화면 태그 10~14): 앞 결과 그림을 바탕으로 instruction에 적힌 곳만 고친다. 던지지 않는다.
+ * 엔진 갈래(feat/172-gen-engine)가 넣은 createEngine(...).editFigure를 쓴다. 엔진에 고치기가 없으면(옛 판) available:false.
+ * @returns {Promise<{ available: boolean, ok: boolean, aborted: boolean, fresh: { image: string, meta: object }[], result: object|null, errors: object[] }>}
+ */
+export async function runFigureEdit({ ai, previousPng, instruction, originalRequest = '', previous = null, sceneIndex = 0, models, signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine } = {}) {
+  let result = null;
+  try {
+    const mod = engine ? null : await loadEngine();
+    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, localEdit: figureLocalEdit() });
+    if (typeof eng.editFigure !== 'function') return { available: false, ok: false, aborted: false, fresh: [], result: null, errors: [] };
+    figureTrace({ ev: 'engine-start', kind: 'edit' });
+    result = await eng.editFigure({ previousPng, instruction, originalRequest, previous, sceneIndex, signal, onPhase: tracePhase(onPhase), localText: figureSpeedFlag(), localReplace: figureSpeedFlag() && figureLocalReplaceFlag() });
+    figureTrace({ ev: 'engine-end', kind: 'edit', ok: !!result?.ok, local: !!result?.edit?.local });
+  } catch (error) {
+    if (isAbort(error) || signal?.aborted) return { available: true, ok: false, aborted: true, fresh: [], result, errors: [] };
+    return { available: true, ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'edit', message: String(error?.message || error).slice(0, 300) }] };
+  }
+  const scene = result?.scenes?.[0];
+  const fresh = scene?.image && !scene.kept ? [{ image: scene.image, meta: { ...figureSceneMeta(result, 0, { request: originalRequest, models }), edit: result.edit ? structuredClone(result.edit) : null } }] : [];
+  return { available: true, ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
+}
+
+/** GENSPEED(11-20): 글자만 고치는 「이 그림 고치기」를 화면 캔버스로(그림을 다시 그리지 않음). 캔버스가 없으면 null(엔진이 그리기 길로). */
+export function figureLocalEdit() {
+  if (typeof document === 'undefined' || typeof Image !== 'function') return null;
+  return (png, ops) => import('./ai-figure-local-edit.js?v=1.7.0-four-session-integration').then((m) => m.applyLocalTextEdits(png, ops));
+}
+
+/** 요청 글에 적힌 라벨(태그 29). 엔진의 labelHintsFromRequest를 쓰고, 없으면 null(화면이 대체 규칙을 씀). */
+export async function figureLabelHints(text, { loadEngine = loadFigureEngine } = {}) {
+  try { const mod = await loadEngine(); return typeof mod.labelHintsFromRequest === 'function' ? mod.labelHintsFromRequest(String(text || '')) : null; }
+  catch { return null; }
+}
+
+/** 참고한 기출 그림(태그 3 띠). 생성 때 받은 그림은 엔진 캐시에 있다. 못 받은 것은 null. */
+export async function loadFigureRefImages(ids = [], { loadEngine = loadFigureEngine, signal } = {}) {
+  let mod;
+  try { mod = await loadEngine(); } catch { return ids.map(() => null); }
+  let index = null;
+  try { index = await mod.loadFigureIndex(); } catch { index = null; }
+  return Promise.all(ids.map(id => Promise.resolve().then(() => mod.fetchFigure(id, { src: index?.byId?.get(id)?.src, signal })).catch(() => null)));
+}
+
+/** 「다른 기출로 다시 그리기」: 앞서 참고한 기출을 빼고 다시 고른 3장(엔진 retrieve). 못 고르면 []. */
+export async function pickOtherFigureRefs({ ai, request, exclude = [], models, signal, loadEngine = loadFigureEngine } = {}) {
+  try {
+    const mod = await loadEngine();
+    const index = await mod.loadFigureIndex();
+    const readText = (text, attachments = []) => ai.readText({ model: models?.text || ENGINE_TEXT_MODEL, text, attachments, signal }).then(r => (typeof r === 'string' ? r : String(r?.text ?? '')));
+    const got = await mod.retrieve({ request, index, readText, exclude });
+    return (got?.picks || []).filter(id => !exclude.includes(id)).slice(0, 3);
+  } catch (error) { if (isAbort(error)) throw error; return []; }
 }
 
 /** 그래프 「그림으로 생성」. 결과 { png, meta(graphPlan 포함), warnings, fallback, collisions } 또는 취소·실패 오류. */

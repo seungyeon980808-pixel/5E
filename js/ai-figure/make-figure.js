@@ -44,15 +44,16 @@ export async function stripText(ctx, img) {
  * @param {object} ctx  엔진이 만든 것: { readText(prompt, attachments) → 글, generateImage(prompt, attachments) → data URL, index, fetch, signal, log }
  * @param {{ request: string, subject?: string, keyValues?: string, bestOf?: number, prevScene?: string|null, single?: boolean, refIds?: string[], fixNote?: string, strip?: boolean }} opts
  */
-export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true }) {
+export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3 }) {
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
-  try { ret = await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject }); }
+  // retrieval: 엔진이 미리(구체화와 나란히) 시작해 둔 검색 프라미스. 없거나 실패하면 여기서 검색한다.
+  try { ret = (retrieval ? await retrieval.catch((error) => { if (isAbort(error)) throw error; return null; }) : null) || await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject }); }
   catch (error) { if (isAbort(error)) throw error; log('검색 실패 — 참고 그림 없이 그림: ' + (error?.message || error)); }
 
   const srcOf = (id) => ctx.index?.byId?.get(id)?.src;
   const order = [...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)];
-  const got = await collectReferenceImages(order, { count: 3, srcOf, fetch: ctx.fetch, signal: ctx.signal, ...(ctx.referenceTimeoutMs ? { timeoutMs: ctx.referenceTimeoutMs } : {}) });
+  const got = await collectReferenceImages(order, { count: Math.max(0, Math.min(3, Number(refCount) || 0)), srcOf, fetch: ctx.fetch, signal: ctx.signal, ...(ctx.referenceTimeoutMs ? { timeoutMs: ctx.referenceTimeoutMs } : {}) });
   if (ctx.signal?.aborted) throw Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' });
   const refs = got.ids, refImages = got.images;
   log('참고 기출: ' + (refs.join(', ') || '없음'));

@@ -1,6 +1,6 @@
 // 새 기본 생성 경로(라벨 삭제·라벨 복원)의 생성 PNG를 로컬에서 무채색으로 바꾼다(AI 호출 없음).
 // 모델이 옅은 색을 남기는 경우가 있어(실측: 224,577 픽셀 유채색) 캐시·맞춤·검사 전에 한 번만 적용한다.
-// R=G=B=round(0.299R+0.587G+0.114B), 알파는 그대로 둔다. 흰 바탕(255,255,255)은 255로 그대로 남는다.
+// R=G=B=round(0.299R+0.587G+0.114B). 브라우저 변환(grayscalePngDataUrl)은 흰 종이 위에 얹어 투명 바탕을 없앤다(11-21). 흰 바탕(255,255,255)은 255로 그대로 남는다.
 export const GRAYSCALE_PNG_VERSION = '1.0.0';
 
 export function grayscaleRgbaInPlace(rgba) {
@@ -25,6 +25,10 @@ export async function grayscalePngDataUrl(dataUrl, { signal } = {}) {
   canvas.width = width; canvas.height = height;
   try {
     const context = canvas.getContext('2d', { willReadFrequently: true });
+    // 11-21: 그림 AI가 가끔(약 5%) 바탕이 투명한 PNG를 준다 → 한글로 보내기·어두운 바탕·다음 장면 첨부에서 검게 보였다.
+    // 흰 종이 위에 얹어 투명을 없앤다(배경 제거 설정은 이 뒤 단계에서 따로 투명하게 만든다).
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, width, height);
     context.drawImage(image, 0, 0);
     const frame = context.getImageData(0, 0, width, height);
     grayscaleRgbaInPlace(frame.data);

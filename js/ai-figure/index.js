@@ -6,21 +6,28 @@
 // 원칙(사용자 규칙): 실패로 끝내지 않는다. 호출마다 자동 재시도, 단계별 대체(참고 그림 없이·첫 후보·지우기 전 그림),
 // 장면이 끝내 실패하거나 취소되면 앞 결과(previous)를 그대로 지키고 오류는 결과에 적는다 — makeFigureSet은 던지지 않는다.
 import { expand } from './expand.js';
-import { loadFigureIndex, makeIndex, DEFAULT_INDEX_BASE } from './retrieve.js';
+import { loadFigureIndex, makeIndex, retrieve, DEFAULT_INDEX_BASE } from './retrieve.js';
 import { makeFigure } from './make-figure.js';
 import { fetchFigure } from './reference-images.js';
 import { grayscaleGeneratedPng } from '../ai-grayscale-png.js?v=1.7.0-four-session-integration';
-import { AI_ENGINE_FLAG_KEYS, figureEngineFlag } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, figureEngineFlag, figureImageModelFlag, FIGURE_IMAGE_MODEL_CHOICES } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { runEdit } from './edit.js';
+import { labelHintsFromRequest } from './labels.js';
 
 export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify, roughClassify } from './retrieve.js';
 export { fetchFigure, collectReferenceImages, parseFigureId, figureFromQuestion } from './reference-images.js';
 export { buildFigurePrompt, FIGURE_PROMPT_VERSION } from './prompt.js';
 export { expand, normalizeExpanded } from './expand.js';
 export { makeFigure, pickBetter, stripText } from './make-figure.js';
+export { labelHintsFromRequest, labelHintsAfterEdit } from './labels.js';
+export { EDIT_PHASES, editSummaryFallback, normalizeTextOps } from './edit.js';
+export { editFindPrompt, editDrawPrompt, editVerifyPrompt, editLocalVerifyPrompt } from './prompt.js';
 
 // 회차 실험에서 쓰던 모델. 5E 모델 선택이 생기면 createEngine({ models })로 바꿔 넣는다.
 export const DEFAULT_MODELS = Object.freeze({ text: 'gpt-6.1-sol', image: 'gpt-6-luna' });
 export const AI_FIGURE_ENGINE_FLAG = AI_ENGINE_FLAG_KEYS.figure;
+/** 기출 검색을 구체화와 나란히 돌릴지(GENSPEED 11-20). 검사·실험은 makeFigureSet({ earlyRetrieve })로 바꾼다. */
+export const EARLY_RETRIEVE = true;
 
 /** 새 그림 엔진을 쓸지. 1.8.0(11-19 사용자 결정)부터 기본 켜짐 — 이미지 생성은 이 엔진으로 대체한다.
  *  끄기: localStorage['5e.aiEngine.figure']='0'(옛 이름 '5e.aiFigureEngine'='0') 또는 globalThis.FIVE_E_AI_FIGURE_ENGINE=false. 이름 정리는 js/ai-engine-flags.js. */
@@ -54,7 +61,7 @@ async function withRetry(times, signal, fn) {
  *   models?: { text?: string, image?: string }, retries?: { text?: number, image?: number, scene?: number },
  *   grayscale?: (dataUrl: string, { signal }) => Promise<{ data: string, applied: boolean, reason: string|null }>, includeHak?: boolean }} deps
  */
-export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0 } = {}) {
+export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null } = {}) {
   if (!ai || typeof ai.readText !== 'function' || typeof ai.generateImage !== 'function') throw new TypeError('그림 엔진에는 ai.readText·ai.generateImage가 필요합니다.');
   const model = { ...DEFAULT_MODELS, ...models };
   const tries = { text: 3, image: 2, scene: 2, ...retries };
@@ -75,7 +82,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
    *   signal?: AbortSignal, previous?: { expanded?: object, scenes?: { image?: string }[] } | null, onPhase?: (e: object) => void }} opts
    * @returns {Promise<{ expanded: object|null, scenes: object[], ok: boolean, aborted: boolean, errors: { scene: number|null, step: string, message: string }[] }>}
    */
-  async function makeFigureSet({ request, subject = '', context: itemContext = '', keyValues = '', raw = false, bestOf = 1, refIds = [], fixNote = '', signal = ai.signal, previous = null, onPhase = () => {} } = {}) {
+  async function makeFigureSet({ request, subject = '', context: itemContext = '', conversation = '', keyValues = '', raw = false, bestOf = 1, refIds = [], fixNote = '', signal = ai.signal, previous = null, onPhase = () => {}, earlyRetrieve = EARLY_RETRIEVE, refCount = 3, strip = true } = {}) {
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('그림 요청 글이 비어 있습니다.');
     const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
     const errors = [];
@@ -88,7 +95,8 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       // 앞 결과에 장면이 더 있었으면 그대로 남겨 둔다(취소·실패로 잃지 않게).
       const all = scenes.slice();
       if (aborted) for (let i = all.length; i < prevScenes.length; i++) all.push(keptScene(i, '취소됨'));
-      return { expanded, scenes: all, ok: !aborted && all.length > 0 && all.every((s) => s.image && !s.kept), aborted, errors };
+      // labelHints: 요청 글에 적힌 라벨 — 화면이 라벨 복원(글자 읽기)에 넘긴다(시안 태그 29).
+      return { expanded, scenes: all, ok: !aborted && all.length > 0 && all.every((s) => s.image && !s.kept), aborted, errors, labelHints: labelHintsFromRequest(request) };
     };
     const abortedNow = () => signal?.aborted;
 
@@ -100,10 +108,18 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     catch (error) { errors.push({ scene: null, step: 'index', message: message(error) }); index = makeIndex({}); }
 
     let expanded = null, sceneRequests = [request];
+    // GENSPEED(11-20): 기출 검색(분류·고르기 글 AI 두 번)을 구체화와 나란히 시작한다 — 앞에서 차례로 기다리던 7~9초를 줄인다.
+    // 첫 장면은 처음 요청으로 고른 기출을 쓰고, 둘째 장면부터는 첫 장면을 그리는 동안 장면 요청으로 미리 검색해 둔다.
+    const retrieveFor = (req) => {
+      const p = retrieve({ request: req, index, readText: (t) => context(signal).readText(t), subject });
+      p.catch(() => {}); // 처리하지 않은 거절 경고 막기(쓰는 쪽이 다시 받는다)
+      return p;
+    };
+    const early = !raw && earlyRetrieve ? retrieveFor(request) : null;
     if (!raw) {
       phase({ phase: 'expand' });
       try {
-        expanded = await expand({ request, subject, context: itemContext, taxonomy: index.taxonomy, readText: context(signal).readText });
+        expanded = await expand({ request, subject, context: itemContext, conversation, taxonomy: index.taxonomy, readText: context(signal).readText });
         sceneRequests = expanded.scenes;
       } catch (error) {
         if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
@@ -113,12 +129,15 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
 
     const scenes = [];
     let first = null;
+    const retrievals = sceneRequests.map((_, i) => (i === 0 ? early : null));
     for (let i = 0; i < sceneRequests.length; i++) {
+      // 다음 장면 검색을 이번 장면 그리는 동안 미리 시작(나란히 켰을 때만).
+      if (early && i + 1 < sceneRequests.length && !retrievals[i + 1]) retrievals[i + 1] = retrieveFor(sceneRequests[i + 1]);
       const log = (m) => phase({ phase: 'log', scene: i, total: sceneRequests.length, message: m });
       phase({ phase: 'scene', scene: i, total: sceneRequests.length, request: sceneRequests[i] });
       try {
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal, log), index }, {
-          request: sceneRequests[i], subject, keyValues, bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote,
+          request: sceneRequests[i], subject, keyValues, bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip,
         }));
         phase({ phase: 'grayscale', scene: i, total: sceneRequests.length });
         const g = await grayscale(r.image, { signal });
@@ -145,8 +164,30 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     return result(expanded, scenes, false);
   }
 
+  /**
+   * 「이 그림 고치기」: 앞 그림(previousPng)을 바탕으로 instruction에 적힌 곳만 고친다. 던지지 않는다(입력이 잘못된 경우만 TypeError).
+   * 결과는 makeFigureSet과 같은 모양(scenes 한 장) + { kind: 'edit', edit: { instruction, summary, targets, keep, verify, attempts }, labelHints }.
+   * 실패·취소면 scenes[0]은 앞 그림 그대로(kept: true), ok: false.
+   */
+  async function editFigure({ previousPng, instruction, originalRequest = '', subject = '', signal = ai.signal, onPhase = () => {}, previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, skipFind = false, localText = true, localReplace = false } = {}) {
+    if (typeof previousPng !== 'string' || !previousPng.startsWith('data:image')) throw new TypeError('고칠 앞 그림(previousPng, data URL)이 없습니다.');
+    if (typeof instruction !== 'string' || !instruction.trim()) throw new TypeError('고치기 지시 글이 비어 있습니다.');
+    const ctx = { ...context(signal), signal, grayscale, localEdit };
+    try {
+      return await runEdit(ctx, { previousPng, instruction: instruction.trim(), originalRequest, subject, previous, sceneIndex, verify, maxAttempts, onPhase, skipFind, localText, localReplace });
+    } catch (error) {
+      // runEdit은 던지지 않게 짰지만, 혹시 모를 오류도 앞 그림을 지킨 결과로 바꾼다.
+      const aborted = isAbort(error) || !!signal?.aborted;
+      const prevScene = previous?.scenes?.[sceneIndex] || {};
+      return { expanded: previous?.expanded ?? null, kind: 'edit', edit: { instruction, summary: '', targets: [], keep: [], verify: null, attempts: 0, sceneIndex },
+        labelHints: labelHintsFromRequest(originalRequest), scenes: [{ ...prevScene, image: previousPng, kept: true, error: aborted ? '취소됨' : message(error) }],
+        ok: false, aborted, errors: aborted ? [] : [{ scene: sceneIndex, step: 'edit', message: message(error) }] };
+    }
+  }
+
   return {
     makeFigureSet,
+    editFigure,
     loadIndex: getIndex,
     fetchFigure: (id, options = {}) => getIndex().catch(() => null).then((ix) => fetchFigure(id, { src: ix?.byId?.get(id)?.src, fetch: fetchImpl, ...options })),
     models: model,
@@ -155,3 +196,19 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
 
 /** 한 번만 쓸 때: makeFigureSet(opts, deps) = createEngine(deps).makeFigureSet(opts). */
 export function makeFigureSet(opts, deps) { return createEngine(deps).makeFigureSet(opts); }
+
+/** 그림 모델 기본값: 작업대의 그림 모델 옵션(`5e.aiEngine.figureImageModel`, 기본 Luna)을 따른다. 글 모델은 엔진 기본. */
+export function defaultFigureModels(scope = globalThis) {
+  return { text: DEFAULT_MODELS.text, image: FIGURE_IMAGE_MODEL_CHOICES[figureImageModelFlag(scope)] || DEFAULT_MODELS.image };
+}
+
+/**
+ * 한 번만 쓸 때의 「이 그림 고치기」. AI 연결은 ai 또는 adapter({ readText, generateImage })로 받는다.
+ * @param {{ previousPng: string, instruction: string, originalRequest?: string, subject?: string, signal?: AbortSignal, onPhase?: (e: object) => void,
+ *   ai?: object, adapter?: object, models?: { text?: string, image?: string }, retries?: object, grayscale?: Function, previous?: object|null,
+ *   sceneIndex?: number, verify?: boolean, maxAttempts?: number }} opts
+ */
+export function editFigure({ ai, adapter, models, retries, grayscale, fetch: fetchImpl, localEdit, ...opts } = {}) {
+  const engine = createEngine({ ai: ai || adapter, models: models || defaultFigureModels(), ...(retries ? { retries } : {}), ...(grayscale ? { grayscale } : {}), ...(fetchImpl ? { fetch: fetchImpl } : {}), ...(localEdit ? { localEdit } : {}) });
+  return engine.editFigure(opts);
+}
