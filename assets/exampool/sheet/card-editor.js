@@ -632,6 +632,7 @@ export function createCardEditor(root,api){
   const stepsHtml=(id,stage)=>`<ol class="lp-steps" data-steps="${E(id)}">${STEPS.map((n,i)=>`<li data-at="${i<stepOf(stage)?'done':i===stepOf(stage)?'now':''}">${i+1}. ${n}</li>`).join('')}</ol>`;
   const searchHtml=(placeholder,n)=>`<label class="lp-search">${ICON.search}<span class="lp-tokens">${pastFilter.tokens.map(w=>`<button type="button" class="lp-token" data-cvtoken="${E(w)}" aria-label="${E(w)} 단어 삭제" title="${E(w)} 단어 삭제">${E(w)}<span aria-hidden="true">×</span></button>`).join('')}</span><input data-cvpast="query" value="${E(pastFilter.query)}" placeholder="${placeholder}" aria-label="검색할 단어 입력(Enter로 색인 추가, 최대 3개)">${n}</label>`;
   function fillHead(search,adv,count){
+    requestAnimationFrame(()=>{const t=root.querySelector('[data-cvslot="search"] .lp-tokens');if(t)t.scrollLeft=t.scrollWidth;}); // 11-22: 좁은 칸에서도 마지막 조각과 입력칸이 보이게
     // 검색창은 조각·안내 글이 그대로면 바꾸지 않고 문항 수만 고친다 — 치는 중에 입력칸을 새로 만들지 않게(초점·글자 유지, 다시 그리기 줄임).
     const s=root.querySelector('[data-cvslot="search"]');
     if(s){const sig=search.replace(/ value="[^"]*"/,'').replace(/<span class="lp-n"[^>]*>[^<]*<\/span>/,'');const n=s.querySelector('.lp-n'),m=search.match(/<span class="lp-n"[^>]*>([^<]*)<\/span>/);
