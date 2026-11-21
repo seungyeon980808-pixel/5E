@@ -11,6 +11,11 @@ const WORDS = [['sci', 'nce'], ['', 'ducational'], ['', 'valuation'], ['', 'xam'
 const MIN_INTRO = 7000;
 // 설치판 새 버전 확인: GitHub 최신 릴리즈(공개 API, 출처 제한 없음 — Access-Control-Allow-Origin: *).
 const DESKTOP_LATEST_API = 'https://api.github.com/repos/seungyeon980808-pixel/5E/releases/latest';
+// 한 프레임 쉬기: 다음 그리기 뒤로 넘긴다. 창이 가려져 rAF가 멈춰도 50ms 뒤엔 넘어간다(준비가 멈추지 않게).
+const yieldFrame = () => new Promise(resolve => {
+  let done = false; const go = () => { if (!done) { done = true; resolve(); } };
+  requestAnimationFrame(() => setTimeout(go, 0)); setTimeout(go, 50);
+});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export function startScreenEnabled() {
@@ -23,6 +28,62 @@ export function startScreenEnabled() {
   if (document.documentElement.classList.contains('mobile-image-mode')) return false;
   return window.matchMedia('(min-width: 760px)').matches;
 }
+
+// 11-20 빛 띠(합성기 전용). 예전 CSS는 글자에 오려 붙인 그라디언트(background-clip:text)의 background-position을 움직였는데,
+// 그건 매 프레임 주 스레드에서 다시 그려야 해서 준비 작업(라이브러리·조판 엔진·글꼴)이 주 스레드를 잡으면 띠가 끊기며 좌우로 깜빡였다.
+// 같은 띠를 두 층으로 만든다: 띠 창(W, 띠 모양 mask)은 띠 위치로 옮기고, 그 안의 글자 사본(T)은 정확히 반대로 옮겨 글자는 제자리.
+// 둘 다 transform 애니메이션이라 주 스레드가 막혀도 합성기에서 부드럽게 돈다. 색은 예전 그라디언트를 흰 층·푸른 층으로 나눠 그대로 되살린다
+// (흰 층 위에 푸른 층을 겹치면 premultiplied 보간과 같은 색). 모양 값(각도·배경 크기·위치·멈춤점)은 예전 CSS 값 그대로다.
+export const SHINES = {
+  // .ss-big.shine::after: linear-gradient(105deg,transparent 40%,#fff 49%,#bcd6ff 51%,transparent 60%) 260% · 140%→-40%
+  big: { angle: 105, size: 2.6, from: 1.4, to: -0.4, layers: [
+    { color: '#fff', stops: [[0.40, 0], [0.49, 1], [0.51, 1], [0.51, 0]] },
+    { color: '#bcd6ff', stops: [[0.49, 0], [0.51, 1], [0.60, 0]] }] },
+  // .ss-five::after: (105deg, …rgba(255,255,255,0) 43%,#fff 49%,#bcd6ff 51%,rgba(255,255,255,0) 57%…) 260% · 120%→-20%(6초 중 37%), 되풀이
+  five: { angle: 105, size: 2.6, from: 1.2, to: -0.2, layers: [
+    { color: '#fff', stops: [[0.43, 0], [0.49, 1], [0.51, 1], [0.51, 0]] },
+    { color: '#bcd6ff', stops: [[0.49, 0], [0.51, 1], [0.57, 0]] }] },
+  // .ss-sl(다섯 단어): (100deg,transparent 40%,rgba(255,255,255,.9) 48%,#cfe0ff 52%,transparent 60%) 320% · 140%→-40%
+  col: { angle: 100, size: 3.2, from: 1.4, to: -0.4, layers: [
+    { color: '#fff', stops: [[0.40, 0], [0.48, 0.9], [0.52, 0.9], [0.52, 0]] },
+    { color: '#cfe0ff', stops: [[0.48, 0], [0.52, 1], [0.60, 0]] }] },
+};
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+// host 위에 띠 층을 만들고, 띠를 움직이는 함수(play(frames, options))를 돌려준다. glyph(color)는 글자 사본을 만든다.
+// 띠 창(W)은 예전 배경 상자 그대로(가로 size배·세로 100%, 같은 각도의 그라디언트를 알파 mask로)이고, 예전 background-position만큼
+// translateX로 옮긴다. 글자 사본(T)은 반대로 옮겨 글자는 제자리. 기울이기(skew) 없이 평행 이동만 써서 글자가 흐려지지 않는다.
+export function buildShine(host, spec, glyph) {
+  // offsetWidth는 정수로 반올림돼 사본 상자가 0.x px 달라지고, 그 차이가 격자 줄 사이로 퍼져 글자가 어긋난다 — 소수점 크기 그대로 쓴다.
+  const { width: w, height: h } = host.getBoundingClientRect();
+  if (!w || !h) return null;
+  const S = spec.size * w;
+  const at = pos => (w - S) * pos; // background-position: pos(비율) → 배경 상자의 왼쪽 끝 위치(px)
+  const layers = spec.layers.map(({ color, stops }) => {
+    const W = document.createElement('span'); W.className = 'ss-shine-w'; W.setAttribute('aria-hidden', 'true');
+    const mask = `linear-gradient(${spec.angle}deg,rgba(0,0,0,0) 0%,${stops.map(([g, a]) => `rgba(0,0,0,${a}) ${(g * 100).toFixed(3)}%`).join(',')},rgba(0,0,0,0) 100%)`;
+    Object.assign(W.style, { width: `${S}px`, height: `${h}px`, webkitMaskImage: mask, maskImage: mask });
+    const T = glyph(color); T.classList.add('ss-shine-t'); T.setAttribute('aria-hidden', 'true');
+    Object.assign(T.style, { width: `${w}px`, height: `${h}px` });
+    W.append(T); host.append(W);
+    return { W, T };
+  });
+  const wT = pos => `translateX(${at(pos)}px)`, tT = pos => `translateX(${-at(pos)}px)`;
+  layers.forEach(l => { l.W.style.transform = wT(spec.from); l.T.style.transform = tT(spec.from); });
+  return {
+    play(frames, options) {
+      const kf = make => frames.map(([offset, pos, easing]) => ({ offset, transform: make(pos), ...(easing ? { easing } : {}) }));
+      return layers.flatMap(l => [l.W.animate(kf(wT), options), l.T.animate(kf(tT), options)]);
+    },
+  };
+}
+// 글자 하나(「5E」) 사본: host와 같은 글꼴·자간·안쪽 여백으로 그 자리에 겹친다.
+export const textGlyph = host => color => {
+  const cs = getComputedStyle(host), t = document.createElement('span');
+  t.textContent = host.firstChild?.nodeType === 3 ? host.firstChild.textContent : '5E';
+  for (const k of ['fontStyle', 'fontWeight', 'fontSize', 'fontFamily', 'lineHeight', 'letterSpacing', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft']) t.style[k] = cs[k];
+  Object.assign(t.style, { boxSizing: 'border-box', color, display: 'block' });
+  return t;
+};
 
 function appVersion() {
   return document.querySelector('[data-release-version]')?.textContent.match(/\d+\.\d+\.\d+/)?.[0] || '';
@@ -37,6 +98,28 @@ function when(ts) {
   if (ts >= start) return `오늘 ${hm}`;
   if (ts >= start - day) return `어제 ${hm}`;
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
+function drawBigFiveE(big) {
+  if (!big || reducedMotion()) return;
+  try {
+    const NS = 'http://www.w3.org/2000/svg';
+    const W = big.offsetWidth, H = big.offsetHeight;
+    if (!W || !H) return;
+    big.style.animation = 'none';
+    big.style.color = 'transparent';
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'ss-draw'); svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const text = document.createElementNS(NS, 'text');
+    text.setAttribute('x', '0'); text.setAttribute('y', '0'); text.setAttribute('dominant-baseline', 'text-before-edge');
+    text.textContent = big.textContent; svg.append(text); big.append(svg);
+    const range = document.createRange(); range.selectNodeContents(big.firstChild);
+    const real = range.getBoundingClientRect(), box = svg.getBoundingClientRect(), bb = text.getBBox(), k = box.width / W || 1;
+    text.setAttribute('x', String((real.left - box.left) / k - bb.x));
+    text.setAttribute('y', String((real.top - box.top) / k - bb.y));
+    setTimeout(() => { big.style.transition = 'color .25s'; big.style.color = ''; setTimeout(() => { svg.remove(); big.style.transition = ''; }, 300); }, 1800);
+  } catch { big.style.color = ''; big.querySelector('.ss-draw')?.remove(); }
 }
 
 export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {}) {
@@ -55,9 +138,9 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
   root.innerHTML = `<div class="ss-win">
    <div class="ss-left"><div class="ss-grid"></div>
     <div class="ss-intro"><span class="ss-big">5E</span><div class="ss-col">${col}</div>
-     <div class="ss-bottom"><div class="ss-ko">과학 교육을 위한 평가 문항 편집기</div><div class="ss-bar"><i></i></div><div class="ss-st"></div></div></div>
+     <div class="ss-bottom"><div class="ss-ko">과학 평가문항 제작 플랫폼</div><div class="ss-bar"><i></i></div><div class="ss-st"></div></div></div>
     <div class="ss-ready"><span class="ss-five">5E</span></div>
-    <div class="ss-mean"><small>과학 교육을 위한 평가 문항 편집기</small><div class="ss-en"><span>sci<b>E</b>nce <b>E</b>ducational</span><span><b>E</b>valuation <b>E</b>xam <b>E</b>ditor</span></div></div>
+    <div class="ss-mean"><small>과학 평가문항 제작 플랫폼</small><div class="ss-en"><span>sci<b>E</b>nce <b>E</b>ducational</span><span><b>E</b>valuation <b>E</b>xam <b>E</b>ditor</span></div></div>
     <div class="ss-foot"><span class="ss-ver">버전 ${esc(appVersion())}</span><span class="ss-cpy">© 2026 서울특별시교육청 박승연</span></div>
    </div>
    <div class="ss-right">
@@ -78,12 +161,18 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
   const colEl = root.querySelector('.ss-col');
   // 단어는 위에서부터 0.12초 간격으로
   [...colEl.children].forEach((span, i) => { span.style.animationDelay = `${0.15 + Math.floor(i / 3) * 0.12}s`; });
-  const sweep = colEl.cloneNode(true); sweep.classList.add('ss-sl'); colEl.append(sweep);
+  // 다섯 단어 위를 지나는 빛: 단어 칸 사본(색만 띠 색)을 글자 사본으로 쓴다.
+  const colGlyph = color => { const t = colEl.cloneNode(true); t.querySelectorAll('.ss-shine-w').forEach(n => n.remove()); [...t.children].forEach(span => { span.style.color = color; span.style.animation = 'none'; }); return t; };
+  // 11-21 사용자 승인(시안 시작화면-인트로): 큰 「5E」 자리에서만 소개 페이지의 「획이 그려지는」 효과 — 같은 글꼴로 윤곽선을
+  // 실제 글자 자리에 픽셀 단위로 맞춰 1.5초 그리고 채운 뒤 실제 글자로 넘긴다. 원래의 올라오기·흐림은 이때 끈다(위치가 떠 보였다).
+  drawBigFiveE(root.querySelector('.ss-big'));
   const bar = root.querySelector('.ss-bar i'), status = root.querySelector('.ss-st');
   const started = performance.now();
+  // 11-20: 진행 막대는 너비(width, 매번 배치 다시 계산·주 스레드) 대신 scaleX로 채운다 — 전환이 합성기에서 돌아 준비 작업 중에도 매끄럽다. 모양은 같다.
+  const setBar = p => { bar.style.transform = `scaleX(${Math.max(0, Math.min(1, p)).toFixed(4)})`; };
   // 단계 목록이 오기 전에는 12%까지만 천천히(가끔 멈칫) — 단계 막대가 뒤로 가지 않게.
-  let progress = 0.03; bar.style.width = '3%';
-  const creep = setInterval(() => { if (Math.random() < 0.3) return; progress = Math.min(0.12, progress + (0.12 - progress) * (0.05 + Math.random() * 0.15)); bar.style.width = `${(progress * 100).toFixed(2)}%`; }, 120);
+  let progress = 0.03; setBar(progress);
+  const creep = setInterval(() => { if (Math.random() < 0.3) return; progress = Math.min(0.12, progress + (0.12 - progress) * (0.05 + Math.random() * 0.15)); setBar(progress); }, 120);
   const setStatus = text => { status.textContent = text; };
   setStatus('작업 공간 준비 중…');
   // 업데이트 알림: 더 새 버전이 있으면 왼쪽 아래 버전 글자 자리에 「1.7.0 → 1.7.1 [받기]」(11-17 승인 시안 K/업데이트알림-설치판.html).
@@ -229,7 +318,7 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
     // 11-14 사용자: 0.8초씩 똑같이 오르니 답답 — 단계마다 머무는 시간에 무게·흔들림을 주고, 막대도 들쭉날쭉(가끔 멈칫) 차오르게.
     clearInterval(creep);
     let target = Math.max(progress, 0.12);
-    const drift = setInterval(() => { if (Math.random() < 0.18) return; progress += (target - progress) * (0.04 + Math.random() * 0.2); bar.style.width = `${(progress * 100).toFixed(2)}%`; }, 90);
+    const drift = setInterval(() => { if (Math.random() < 0.18) return; progress += (target - progress) * (0.04 + Math.random() * 0.2); setBar(progress); }, 90);
     const totalWeight = () => tasks.reduce((sum, t) => sum + (t.weight || 1), 0);
     let done = 0;
     for (let i = 0; i < tasks.length; i++) {
@@ -246,17 +335,27 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
       done += w;
     }
     clearInterval(drift);
-    bar.style.width = '100%'; setStatus('준비 완료');
+    setBar(1); setStatus('준비 완료');
     const wait = Math.max(0, MIN_INTRO - (performance.now() - started));
     await orSkip(new Promise(r => setTimeout(r, wait)));
     if (skipChoice) return leaveWith(skipChoice);
-    sweep.classList.add('go'); root.querySelector('.ss-big').classList.add('shine');
+    if (!reducedMotion()) {
+      const sweepOnce = { duration: 1300, easing: 'ease-in-out', fill: 'both' };
+      buildShine(colEl, SHINES.col, colGlyph)?.play([[0, SHINES.col.from], [1, SHINES.col.to]], sweepOnce);
+      const bigEl = root.querySelector('.ss-big');
+      buildShine(bigEl, SHINES.big, textGlyph(bigEl))?.play([[0, SHINES.big.from], [1, SHINES.big.to]], sweepOnce);
+    }
     await orSkip(new Promise(r => setTimeout(r, 450)));
     if (skipChoice) return leaveWith(skipChoice);
     // 큰 「5E」가 왼쪽 칸의 「5E」 자리로 옮겨 가며 줄어든다
     const big = root.querySelector('.ss-big').getBoundingClientRect();
     win.classList.add('is-ready');
     const five = root.querySelector('.ss-five');
+    // 왼쪽 칸 「5E」의 되풀이 빛(6초 중 앞 37%에 지나감). 예전엔 숨은 채로도 처음부터 돌았으니, 같은 박자를 이어 받아 지금부터만 돌린다.
+    if (!reducedMotion()) {
+      const loop = buildShine(five, SHINES.five, textGlyph(five))?.play([[0, SHINES.five.from, 'ease-in-out'], [0.37, SHINES.five.to], [1, SHINES.five.to]], { duration: 6000, iterations: Infinity });
+      loop?.forEach(a => { a.currentTime = (performance.now() - started) % 6000; });
+    }
     requestAnimationFrame(() => {
       const b = five.getBoundingClientRect();
       five.animate?.([{ transform: `translate(${big.left - b.left + (big.width - b.width) / 2}px,${big.top - b.top + (big.height - b.height) / 2}px) scale(${big.width / b.width})` }, { transform: 'none' }], { duration: 650, easing: 'cubic-bezier(.2,.8,.2,1)' });
@@ -265,7 +364,18 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
   }
 
   // 시작 화면이 떠 있는 동안 할 준비를 맡긴다(바로 시작하고, 고르기 화면은 끝날 때까지 기다린다).
+  // 11-20: 예전엔 waitFor가 부르는 즉시 run()을 시작해 무거운 준비(라이브러리·출제 화면·조판 엔진 WASM·글꼴·클립보드)의 동기 부분이
+  // 한 작업 안에 몰렸다 — 그동안 화면(막대·글자)이 멈췄다. 이제 앞 단계의 동기 부분이 끝나면 한 프레임 쉬고 다음 단계를 시작한다.
+  // 일 자체는 예전처럼 겹쳐 진행된다(끝날 때까지 기다리지 않음) — 전체 준비 시간은 늘지 않고 시작만 프레임 단위로 나뉜다.
   const tasks = [];
-  function waitFor(label, run, weight = 1) { let work; try { work = Promise.resolve(run()).catch(() => {}); } catch { work = Promise.resolve(); } tasks.push({ label, work, weight }); return work; }
+  let startedChain = Promise.resolve();
+  function waitFor(label, run, weight = 1) {
+    let markStarted;
+    const startedHere = new Promise(resolve => { markStarted = resolve; });
+    const work = startedChain.then(yieldFrame).then(() => { try { return run(); } finally { markStarted(); } }).catch(() => {});
+    startedChain = startedHere;
+    tasks.push({ label, work, weight });
+    return work;
+  }
   return { choose, setStatus, waitFor, skip, get choice() { return picked; }, set onReveal(fn) { onReveal = fn; } };
 }
