@@ -70,13 +70,12 @@
   if(st){
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     let done;window.__5eIntro=new Promise(r=>done=r);
-    if(true){done()}else{ // 11-20: 인트로(로고 쓰기·뚜껑 열기) 뺌 — 열자마자 5E와 열린 노트북
-      st.classList.add('h3-shut');
-      const ov=document.createElement('div');ov.className='intro5e';ov.innerHTML='<svg viewBox="0 0 220 130"><text x="14" y="104">5E</text></svg>';
+    if(reduce){done()}else{ // 11-21: 인트로 다시 켬 — 5E를 그리고 위로 올라감(노트북 뚜껑 열기는 뺌). 글자는 윤곽선 path(안드로이드도 같게)
+      const ov=document.createElement('div');ov.className='intro5e';ov.innerHTML='<svg viewBox="0 0 220 130"><path d="M39.3 125.6Q27.7 125.6 19.7 120.5Q11.8 115.4 11.8 108.4Q11.8 104.2 14.4 101.4Q17.1 98.5 21.6 98.5Q26.2 98.5 29 101.1Q31.9 103.7 31.9 107.9Q31.9 110.8 30.9 114.1Q29.9 117.4 29.2 119.2Q30.2 119.5 32.6 119.8Q34.9 120.2 37.2 120.2Q40.2 120.2 43.7 118.3Q47.2 116.4 50.1 112.8Q53.2 109 55.1 104.2Q56.9 99.4 56.9 92.3Q56.9 85.7 53.6 81.8Q50.3 77.9 44.2 77.9Q41.2 77.9 38.9 78.6Q36.6 79.4 34.4 80.6Q32.2 81.9 30.6 83.1Q29 84.4 27.2 86.2L22.9 84.6L37.9 40.9H87.4L83.7 57H39L32.6 76.8Q38 73.5 42.5 72.2Q47 70.8 52.4 70.8Q57.1 70.8 61.5 71.7Q65.9 72.7 70 75.4Q74 78 76.4 82.1Q78.8 86.2 78.8 92Q78.8 106.2 67.2 115.9Q55.5 125.6 39.3 125.6Z M175 20.9 170.1 42.1H165.6Q164.8 36.5 161.7 31.8Q158.6 27.2 155.1 26.4Q153.5 26 150.3 25.9Q147.2 25.8 145.2 25.8H133.7L126.2 58.4H134.2Q138.6 58.4 141.1 57.4Q143.6 56.4 145.7 54.7Q147.4 53.3 149.6 49.8Q151.8 46.3 152.7 43.9H157.1L149.1 78.6H144.7V76.4Q144.7 73.8 144.1 71Q143.6 68.2 142.8 67.1Q141.3 64.9 138.7 64.1Q136.2 63.4 133 63.4H125L119.7 86.5Q119.3 88.3 118.9 90.3Q118.6 92.4 118.6 93.3Q118.6 97 121.1 98Q123.5 99 130.1 99Q138.6 99 142.4 98.2Q146.3 97.5 148.2 96Q151.8 93 156.7 87Q161.6 81 163.4 78.1H167.6L160.1 104H82.7L83.7 99.7Q85.1 99.7 88 99.3Q90.9 99 92.3 98.6Q94.6 97.8 95.8 96.2Q97 94.6 97.5 92.6L110.9 34.4Q111.2 33.2 111.3 32.4Q111.4 31.6 111.4 31.2Q111.4 28.7 109 27.3Q106.5 26 100.8 25.1L101.8 20.9Z"/></svg>';
       document.body.appendChild(ov);document.documentElement.classList.add('intro-on');
       requestAnimationFrame(()=>ov.classList.add('draw'));
       setTimeout(()=>{ov.classList.add('fly');document.documentElement.classList.remove('intro-on')},1900);
-      setTimeout(()=>{ov.remove();st.classList.remove('h3-shut')},2600);
+      setTimeout(()=>ov.remove(),2600);
       setTimeout(done,3700);
     }
   }

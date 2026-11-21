@@ -932,8 +932,8 @@ html[data-theme="light"] .fspot{background:radial-gradient(circle var(--fr,140px
 html.intro-on{overflow:hidden}
 .intro5e{position:fixed;inset:0;z-index:10000;background:var(--bg,#fff);display:grid;place-items:center;transition:opacity .6s ease .1s}
 .intro5e svg{width:min(40vw,360px);overflow:visible;transition:transform .7s cubic-bezier(.6,0,.2,1)}
-.intro5e text{fill:transparent;stroke:var(--ink,#0a0a0b);stroke-width:1.4;stroke-dasharray:900;stroke-dashoffset:900}
-.intro5e.draw text{animation:i5draw 1.5s cubic-bezier(.4,0,.2,1) forwards,i5fill .5s 1.25s forwards}
+.intro5e text,.intro5e path{fill:transparent;stroke:var(--ink,#0a0a0b);stroke-width:1.4;stroke-dasharray:1100;stroke-dashoffset:1100}
+.intro5e.draw text,.intro5e.draw path{animation:i5draw 1.5s cubic-bezier(.4,0,.2,1) forwards,i5fill .5s 1.25s forwards}
 @keyframes i5draw{to{stroke-dashoffset:0}}@keyframes i5fill{to{fill:var(--ink,#0a0a0b);stroke-width:0}}
 .intro5e.fly{opacity:0;pointer-events:none}.intro5e.fly svg{transform:translateY(-28vh) scale(.85)}
 .studio.hero3 .device-lid{transition:transform 1.4s cubic-bezier(.3,.8,.2,1)}
@@ -1488,7 +1488,385 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
 
 </style>
 <style>:root{--m-open:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTM2IDEwMjQiPgogIDxwYXRoIGZpbGw9IndoaXRlIiBkPSJNMjIyIDg3SDEzMTVRMTM1MiA4NyAxMzUyIDEyNkwxMzUzIDc5M1ExMzU0IDgwNyAxMzUwIDgxNEwxNDczIDg2NVExNDc3IDg2NiAxNDc3IDg3MFY4OTNRMTQ3NyA5MDUgMTQzOCA5MTBMMTQxMCA5MTJRMTM5OCA5MTcgMTM1MCA5MTZMMTMwMSA5MTJIMjM0TDIwNSA5MTZIMTU1UTEzNyA5MTYgMTI2IDkxMkw5NyA5MTBRNTkgOTA1IDU5IDg5M1Y4NzBRNTkgODY2IDY0IDg2NEwxODcgODE0UTE4MyA4MDcgMTg0IDc5M0wxODYgMTI2UTE4NiA4OCAyMjIgODdaIi8+Cjwvc3ZnPgo=");--m-hole:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxNTM2IDEwMjQiPjxwYXRoIGZpbGw9IiNmZmYiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTAgMEgxNTM2VjEwMjRIMFogTTIxMy4zIDEwNC4zSDcwOC45VjExNy41UTcwOC45IDEyMi41IDcxMy45IDEyMi41SDgyMi40UTgyNy40IDEyMi41IDgyNy40IDExNy41VjEwNC4zSDEzMjYuMlExMzM1LjIgMTA0LjMgMTMzNS4yIDExMy4zVjc3Mi4yUTEzMzUuMiA3ODEuMiAxMzI2LjIgNzgxLjJIMjEzLjNRMjA0LjMgNzgxLjIgMjA0LjMgNzcyLjJWMTEzLjNRMjA0LjMgMTA0LjMgMjEzLjMgMTA0LjNaIi8+PC9zdmc+")}</style>
-</head>
+<style>/* 11-21: 「말로 그리기」 장면 — 1.7.2 실제 생성 화면(바탕 촬영) 위에 실제 대화·결과를 얹어 재생 */
+.tk{position:relative;width:100%;aspect-ratio:1440/900;overflow:hidden;border-radius:6px;background:#0d1117}
+.tk-in{position:absolute;left:0;top:0;width:1440px;height:900px;transform-origin:0 0;transform:scale(var(--s,.5));font-family:"IBM Plex Sans KR","Pretendard Variable",system-ui,sans-serif;--u:1px;--accent:#2f81f7}
+.tk-cam{position:absolute;inset:0;transform-origin:0 0;transition:transform 1.1s cubic-bezier(.65,0,.35,1)}
+.tk>img.bg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.tk .cv{position:absolute;overflow:hidden;left:calc(var(--u)*160);top:calc(var(--u)*132);width:calc(var(--u)*672);height:calc(var(--u)*758);display:grid;place-items:center}
+.tk .sheet{background:#fff;width:92%;max-height:94%;box-sizing:border-box;display:grid;gap:calc(var(--u)*6);padding:calc(var(--u)*10);border-radius:calc(var(--u)*3);box-shadow:0 calc(var(--u)*8) calc(var(--u)*30) #0008;opacity:0;transform:scale(.985);transition:opacity .5s,transform .5s}
+.tk .sheet.on{opacity:1;transform:none}
+.tk .sheet img{display:block;width:100%;height:auto;max-height:calc(var(--u)*690);object-fit:contain;margin:auto}
+.tk .sheet.g2{grid-template-columns:1fr 1fr}.tk .sheet.g2 img{max-height:calc(var(--u)*330)}
+.tk .sheet .fresh{animation:tkfresh 1.1s ease}
+@keyframes tkfresh{0%{filter:blur(6px) brightness(1.3);opacity:.2}100%{filter:none;opacity:1}}
+.tk .log{position:absolute;left:calc(var(--u)*855);top:calc(var(--u)*96);width:calc(var(--u)*573);height:calc(var(--u)*620);display:flex;flex-direction:column;justify-content:flex-end;gap:calc(var(--u)*12);overflow:hidden;color:#e6edf3}
+.tk .m{font-size:calc(var(--u)*13);line-height:1.7;opacity:0;transform:translateY(calc(var(--u)*8));transition:opacity .35s,transform .35s}
+.tk .m.on{opacity:1;transform:none}
+.tk .m.user{align-self:flex-end;max-width:80%;padding:calc(var(--u)*8) calc(var(--u)*14);border-radius:calc(var(--u)*12);background:#0d1117;border:1px solid #262c35;white-space:pre-wrap}
+.tk .rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:calc(var(--u)*4)}
+.tk .row{display:flex;align-items:center;gap:calc(var(--u)*10);font-size:calc(var(--u)*12.5);line-height:1.6;color:#7d8590}
+.tk .row>i{flex:none;width:calc(var(--u)*5);height:calc(var(--u)*5);margin:0 calc(var(--u)*4);border-radius:50%;background:currentColor;opacity:.55}
+.tk .row.cur{color:#e6edf3}.tk .row.cur>i{width:calc(var(--u)*11);height:calc(var(--u)*11);margin:0 1px;background:none;opacity:1;border:1.5px solid #7d859073;border-top-color:#e6edf3;animation:tkspin .9s linear infinite}
+.tk .row>time{margin-left:auto;font:calc(var(--u)*11.5) ui-monospace,SFMono-Regular,Menlo,monospace;color:#7d8590}
+@keyframes tkspin{to{transform:rotate(360deg)}}
+.tk .done{font-size:calc(var(--u)*12.5);color:#e6edf3}.tk .done b{font-weight:600}.tk .done span{color:#7d8590}
+.tk .ta{position:absolute;left:calc(var(--u)*866);top:calc(var(--u)*786);width:calc(var(--u)*550);height:calc(var(--u)*48);font-size:calc(var(--u)*13.5);line-height:1.55;color:#e6edf3;overflow:hidden}
+.tk .ta .ph{color:#7d8590}.tk .ta .car{display:inline-block;width:1px;height:1.1em;vertical-align:-.15em;background:#e6edf3;animation:tkcar 1s steps(1) infinite}
+@keyframes tkcar{50%{opacity:0}}
+.tk .go{position:absolute;left:calc(var(--u)*1253);top:calc(var(--u)*846);width:calc(var(--u)*90);height:calc(var(--u)*29);border-radius:calc(var(--u)*7);box-shadow:0 0 0 calc(var(--u)*2) #2f81f7;opacity:0;transition:opacity .2s}
+.tk .go.on{opacity:1;animation:tkgo .6s ease}
+@keyframes tkgo{0%{box-shadow:0 0 0 calc(var(--u)*2) #2f81f7,0 0 0 0 #2f81f799}100%{box-shadow:0 0 0 calc(var(--u)*2) #2f81f7,0 0 0 calc(var(--u)*14) #2f81f700}}
+.tk .tag172{position:absolute;right:calc(var(--u)*16);bottom:calc(var(--u)*14);font:600 calc(var(--u)*11) ui-monospace,Menlo,monospace;letter-spacing:.04em;color:#0d1117;background:#e6edf3;border-radius:calc(var(--u)*5);padding:calc(var(--u)*3) calc(var(--u)*7);display:none}
+.tk-foot{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:12px;color:var(--ink-faint,#888)}
+.tk-foot b{color:var(--ink-soft,#aaa);font-weight:500}
+.feat .kicker .v172{margin-left:8px;font:600 10.5px var(--mono,ui-monospace);letter-spacing:.05em;padding:2px 6px;border:1px solid currentColor;border-radius:5px;opacity:.75}
+#f-TK .wfit{flex-direction:column;align-items:stretch}
+#f-TK .steps{display:grid;grid-template-columns:1fr 1fr;column-gap:18px}
+.tk .sheet:empty{display:none}
+
+.tk .cv{container-type:inline-size}
+.tk .zoomtag{position:absolute;left:24px;top:22px;font:600 12px var(--mono,ui-monospace,monospace);color:#e6edf3;background:#0d1117cc;border:1px solid #30363d;border-radius:6px;padding:4px 8px;opacity:0;transition:opacity .4s}
+.tk .zoomtag.on{opacity:1}
+
+/* BlurReveal — 효과 전용 스타일. 프레임 요소에 크기(또는 aspect-ratio)만 주면 된다. */
+.br-frame {
+  --br-base: #10141b;      /* 첫 레벨이 그려지기 전 바탕 */
+  --br-accent: #5b8cff;    /* 진행선 */
+  position: relative;
+  overflow: hidden;        /* 블러·확대가 프레임 밖으로 번지지 않게 */
+  isolation: isolate;
+  contain: paint;
+  background: var(--br-base);
+}
+.br-stage,
+.br-stack { position: absolute; inset: 0; }
+.br-layer,
+.br-final {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.br-sweep {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 125%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent);
+}
+.br-sweep-inner { position: absolute; left: 0; top: 0; width: 100%; height: 80%; }
+
+/* The window and its content travel in opposite directions. The paper stays
+   still while a broad, feathered patch of focus passes across it. */
+.br-focus-window {
+  position: absolute; inset: 0 auto 0 0; width: 50%; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 42%, #000 58%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 42%, #000 58%, transparent);
+  animation: br-focus-pass 8.2s ease-in-out infinite;
+}
+.br-focus-content { position: absolute; inset: 0 auto 0 0; width: 200%; animation: br-focus-counter 8.2s ease-in-out infinite; }
+.br-focus-glow { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(193, 217, 255, .15), transparent); }
+@keyframes br-focus-pass { 0% { transform: translateX(-110%); } 80%, 100% { transform: translateX(210%); } }
+@keyframes br-focus-counter { 0% { transform: translateX(55%); } 80%, 100% { transform: translateX(-105%); } }
+[data-loading-motion="paused"] .br-focus-window,
+[data-loading-motion="paused"] .br-focus-content,
+[data-loading-sheen="off"] .br-focus-window,
+[data-loading-sheen="off"] .br-focus-content { animation-play-state: paused; }
+[data-loading-sheen="off"] .br-focus-window { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .br-focus-window { display: none; } }
+
+/* 로딩 중 입력 막기 (시각 시안 단계) */
+.br-frame.is-loading { cursor: progress; }
+.br-frame.is-loading::after { content: ""; position: absolute; inset: 0; z-index: 3; }
+
+.br-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  z-index: 2;
+  opacity: 0;
+  background: color-mix(in srgb, var(--br-accent) 14%, transparent);
+  pointer-events: none;
+}
+.br-bar-fill {
+  height: 100%;
+  background: var(--br-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+/* RevealStatus — 5E 상태 표시. .br-frame 안에 붙는다. */
+.rs {
+  --rs-accent: #6f9bff;
+  --rs-sheen: 1;            /* 빛줄기 세기 배율 (0이면 끔) */
+  --rs-cycle: 2.8s;         /* 빛줄기 주기. 5E 글자 속 빛과 같은 주기로 움직인다 */
+  /* 5E는 프로그램 아이콘(assets/logo.svg)과 같은 글꼴: Georgia 굵은 이탤릭. 시스템 글꼴이라 따로 불러오지 않는다 */
+  --rs-mark-font: Georgia, "Times New Roman", serif;
+  --rs-text-font: "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --rs-scale: 1;            /* 글자 크기 배율. 기본 크기는 프레임 폭에 맞춰 자동으로 커진다 */
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  container-type: size;     /* 아래 cqw 단위 = 프레임 폭의 1% */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .32s ease;
+}
+.rs.is-on { opacity: 1; }
+
+/* ---- 빛줄기: 비스듬한 옅은 파란 빛이 천천히 지나가고 잠시 쉰다 ---- */
+.rs-sheen {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 38%;
+  opacity: var(--rs-sheen);
+  background: linear-gradient(100deg,
+    transparent 0%,
+    rgba(130, 170, 255, .10) 30%,
+    rgba(225, 236, 255, .30) 50%,
+    rgba(130, 170, 255, .10) 70%,
+    transparent 100%);
+  transform: translateX(-120%) skewX(-12deg);
+  will-change: transform;
+}
+.rs.is-on .rs-sheen { animation: rs-sweep var(--rs-cycle) cubic-bezier(.45, 0, .25, 1) infinite; }
+.rs.is-done .rs-sheen {
+  animation: rs-glint .75s cubic-bezier(.3, 0, .2, 1) 1 forwards;
+  background: linear-gradient(100deg, transparent, rgba(160, 195, 255, .22) 35%, rgba(255, 255, 255, .55) 50%, rgba(160, 195, 255, .22) 65%, transparent);
+}
+@keyframes rs-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  62%  { transform: translateX(300%) skewX(-12deg); }
+  100% { transform: translateX(300%) skewX(-12deg); }
+}
+@keyframes rs-glint {
+  from { transform: translateX(-120%) skewX(-12deg); }
+  to   { transform: translateX(300%) skewX(-12deg); }
+}
+
+/* ---- 라벨 공통 ---- */
+.rs-scrim { position: absolute; inset: 0; }
+.rs-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #e3e9f4;
+  font-family: var(--rs-text-font);
+  white-space: nowrap;
+}
+.rs-mark {
+  position: relative;
+  display: inline-block;
+  font-family: var(--rs-mark-font);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.rs-mark-base { color: #dfe7fb; text-shadow: 0 0 .35em rgba(90, 135, 255, .45); }
+.rs-mark-win {
+  position: absolute;
+  inset: -.2em -.3em;
+  overflow: hidden;
+  transform: translateX(-110%);
+  will-change: transform;
+}
+.rs-mark-glow {
+  /* 창과 같은 크기여야 창 이동과 반대 이동이 정확히 상쇄된다 */
+  position: absolute;
+  inset: 0;
+  padding: .2em .3em;
+  box-sizing: border-box;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 0 .5em rgba(130, 170, 255, .95), 0 0 1.2em rgba(110, 155, 255, .5);
+  transform: translateX(110%);
+  will-change: transform;
+}
+.rs.is-on .rs-mark-win  { animation: rs-win var(--rs-cycle) cubic-bezier(.45, 0, .25, 1) infinite; }
+.rs.is-on .rs-mark-glow { animation: rs-win-inner var(--rs-cycle) cubic-bezier(.45, 0, .25, 1) infinite; }
+.rs.is-done .rs-mark-win, .rs.is-done .rs-mark-glow { animation: none; transform: none; }
+.rs.is-done .rs-mark-base { color: transparent; }
+@keyframes rs-win {
+  0%   { transform: translateX(-110%); }
+  62%  { transform: translateX(110%); }
+  100% { transform: translateX(110%); }
+}
+@keyframes rs-win-inner {
+  0%   { transform: translateX(110%); }
+  62%  { transform: translateX(-110%); }
+  100% { transform: translateX(-110%); }
+}
+.rs-sep { width: 1px; height: .95em; background: rgba(255, 255, 255, .16); }
+.rs-text {
+  position: relative;
+  display: inline-block;
+  height: 1.4em;
+  transition: width .32s cubic-bezier(.22, .61, .36, 1);
+}
+.rs-msg { position: absolute; left: 0; top: 0; line-height: 1.4em; white-space: nowrap; }
+.rs-step {
+  font-family: var(--rs-text-font);
+  font-size: .86em;
+  color: #7f8da5;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+.rs-step:empty { display: none; }
+.rs.is-done .rs-msg { color: #fff; }
+
+/* 동작 줄이기: 빛과 글자 속 빛을 끄고 문구만 바꾼다 */
+.rs.is-reduced .rs-sheen,
+.rs.is-reduced .rs-mark-win { display: none; }
+
+/* 크기: 프레임 폭(cqw)에 비례하고 최소/최대를 둔다. --rs-scale로 한 번에 조절 */
+
+/* ============ A. 칩 (좌하단) ============ */
+.rs--chip .rs-label {
+  left: clamp(12px, 3cqw, 24px);
+  bottom: clamp(12px, 3cqw, 24px);
+  gap: .6em;
+  padding: .6em 1.05em .6em .85em;
+  border-radius: 999px;
+  background: rgba(11, 15, 22, .84);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 .5em 1.6em rgba(0, 0, 0, .32);
+  font-size: calc(clamp(15px, 3.4cqw, 24px) * var(--rs-scale));
+  font-weight: 500;
+}
+.rs--chip .rs-mark { font-size: 1.12em; }
+
+/* ============ B. 하단 띠 ============ */
+.rs--band .rs-scrim {
+  top: auto;
+  height: clamp(80px, 24cqw, 150px);
+  background: linear-gradient(to top, rgba(8, 11, 17, .9), rgba(8, 11, 17, .6) 55%, transparent);
+}
+.rs--band .rs-label {
+  left: clamp(16px, 4cqw, 32px);
+  right: clamp(16px, 4cqw, 32px);
+  bottom: clamp(14px, 3.6cqw, 28px);
+  gap: .75em;
+  font-size: calc(clamp(15px, 3.4cqw, 24px) * var(--rs-scale));
+  font-weight: 500;
+}
+.rs--band .rs-mark { font-size: 1.4em; }
+
+/* ============ C. 중앙 워드마크 ============ */
+.rs--center .rs-scrim {
+  background: radial-gradient(ellipse 55% 48% at 50% 50%, rgba(8, 11, 17, .62), rgba(8, 11, 17, .24) 55%, rgba(8, 11, 17, .06) 85%);
+  transition: opacity .6s ease;
+}
+.rs--center .rs-label {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  gap: .5em;
+  font-size: calc(clamp(15px, 3.5cqw, 24px) * var(--rs-scale));
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.rs--center .rs-mark { font-size: 4.2em; }
+.rs--center .rs-sep { display: none; }
+.rs--center .rs-text { text-align: center; }
+.rs--center .rs-step { font-size: .78em; }
+
+/* ============ D. 미니멀 (좌상단 텍스트) ============ */
+.rs--minimal .rs-scrim {
+  bottom: auto;
+  height: clamp(70px, 20cqw, 130px);
+  background: linear-gradient(to bottom, rgba(8, 11, 17, .82), rgba(8, 11, 17, .42) 55%, transparent);
+}
+.rs--minimal .rs-label {
+  left: clamp(14px, 3.6cqw, 28px);
+  top: clamp(12px, 3.2cqw, 24px);
+  gap: .6em;
+  font-size: calc(clamp(14px, 3.1cqw, 22px) * var(--rs-scale));
+  font-weight: 500;
+}
+.rs--minimal .rs-mark { font-size: 1.1em; }
+.rs--minimal .rs-sep { width: 1.1em; height: 1px; background: var(--rs-accent); opacity: .7; }
+.rs--minimal .rs-step { display: none; }
+
+@font-face {
+  font-family: 'Pretendard'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('../../fonts/pretendard/PretendardVariable.woff2') format('woff2');
+}
+.rs.is-failed .rs-sheen, .rs.is-failed .rs-mark-win { display: none; }
+.rs-label { min-width: 0; }
+.rs-mark, .rs-sep { flex-shrink: 0; }
+.rs-text { flex: 1; min-width: 0; height: auto; transition: none; }
+.rs-msg { position: relative; display: block; white-space: normal; overflow-wrap: anywhere; }
+.rs-msg.is-leaving { position: absolute; }
+[data-loading-motion="paused"] *, [data-loading-sheen="off"] .rs-sheen,
+[data-loading-sheen="off"] .rs-mark-win, [data-loading-sheen="off"] .rs-mark-glow { animation-play-state: paused !important; }
+[data-loading-sheen="off"] .rs-sheen { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .rs-sheen, .rs-mark-win { display: none; }
+  .br-stack { transform: none !important; }
+}
+
+.tk .ai-loading-frame { position: absolute; z-index: 9; width: calc(100% - 16px); min-width: 0; min-height: 0; pointer-events: none; }
+.tk .ai-loading-frame[hidden] { display: none; }
+.tk .ai-loading-frame[data-loading-state="completed"],
+.tk .ai-loading-frame[data-loading-state="failed"] { pointer-events: none; }
+.tk .ai-loading-frame .br-bar { display: none; }
+.tk .ai-loading-picture { position: relative; width: 100%; margin-inline: auto; border-radius: 0; }
+.tk .ai-loading-caption { position: absolute; inset: 0; pointer-events: none; }
+.tk .ai-loading-caption .rs-label {
+  gap: .65em; line-height: 1.4;
+}
+.tk .ai-loading-caption .rs-text { width: auto !important; overflow: hidden; }
+.tk .ai-loading-caption .rs-msg.is-leaving { right: 0; }
+.tk .ai-loading-caption .rs-elapsed { flex: none; color: #c9d3e4; font-size: .75em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tk .ai-loading-caption .rs-activity { display: inline-flex; flex: none; gap: 3px; align-items: center; }
+.tk .ai-loading-caption .rs-activity i { width: 3px; height: 3px; background: var(--accent); border-radius: 50%; animation: ai-loading-dot 1.6s ease-in-out infinite; }
+.tk .ai-loading-caption .rs-activity i:nth-child(2) { animation-delay: .16s; }
+.tk .ai-loading-caption .rs-activity i:nth-child(3) { animation-delay: .32s; }
+.tk .ai-loading-caption .is-done .rs-activity,
+.tk .ai-loading-caption .is-failed .rs-activity { display: none; }
+.tk .ai-loading-frame[data-loading-state="completed"] .br-focus-window,
+.tk .ai-loading-frame[data-loading-state="failed"] .br-focus-window { display: none; }
+.tk .ai-loading-caption { --load-fill: #58a6ff; }
+:root[data-theme="dark"]:not([data-palette="classic"]) .tk .ai-loading-caption,
+:root[data-theme="light"] .tk .ai-loading-caption { --load-fill: #f0f0f0; }
+.tk .ai-loading-caption .ai-loading-stages { display: none; }
+.tk .ai-loading-caption.has-stages .ai-loading-stages {
+  position: absolute; display: grid; gap: 4px;
+  left: clamp(16px, 4cqw, 32px); right: clamp(16px, 4cqw, 32px); bottom: clamp(12px, 3cqw, 22px);
+}
+.tk .ai-loading-caption.has-stages .rs--band .rs-scrim { height: clamp(112px, 30cqw, 190px); }
+.tk .ai-loading-caption.has-stages .rs--band .rs-label { bottom: calc(clamp(12px, 3cqw, 22px) + 30px); }
+.tk .ai-loading-caption.has-stages .rs-activity,
+.tk .ai-loading-caption.has-stages .rs-sep { display: none; }
+.tk .ai-loading-stage { min-width: 0; }
+.tk .ai-loading-stage i { position: relative; display: block; height: 4px; overflow: hidden; border-radius: 2px; background: rgba(230, 237, 243, .14); }
+.tk .ai-loading-stage b { position: absolute; inset: 0; border-radius: 2px; background: var(--load-fill); transform: scaleX(0); transform-origin: left center; transition: transform .25s linear; }
+.tk .ai-loading-stage[data-state="current"] b::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 18px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75)); animation: ai-loading-tip 1.6s ease-in-out infinite; }
+.tk .ai-loading-stage span { display: block; margin-top: 6px; overflow: hidden; color: #7d8590; font-size: 11px; line-height: 1.3; white-space: nowrap; text-overflow: ellipsis; }
+.tk .ai-loading-stage[data-state="done"] span { color: #b1bac4; }
+.tk .ai-loading-stage[data-state="current"] span { color: #e6edf3; }
+.tk .ai-loading-caption .ai-loading-meta { flex: none; color: #b1bac4; font-size: .62em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tk .ai-loading-caption .ai-loading-meta:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .tk .ai-loading-caption .rs-activity i { animation: none; opacity: .6; }
+  .tk .ai-loading-stage b::after { animation: none !important; }
+  .tk .ai-loading-stage b { transition: none; }
+}
+.unified-library-overlay .unilib-preview-paper .br-bar,
+.unified-library-overlay .unilib-preview-image .br-bar,
+.unified-library-overlay .unilib-pdf-page-frame .br-bar { display: none; }
+.unified-library-overlay .unilib-preview-image .br-stage { pointer-events: none; }
+.unified-library-overlay .unilib-pdf-page-frame > .br-stage { pointer-events: none; }</style></head>
 <body>
 <div class="mockbar">5E 소개 페이지 시안 v8 · 장면은 저절로 돌고, 직접 눌러 볼 수 있습니다 <button id="toggleTags" type="button">번호 숨기기</button><button class="theme-toggle" id="themeToggle" type="button">밝은 화면</button><button class="theme-toggle" id="lookToggle" type="button">갤러리 느낌</button></div>
 <script>(function(){var l;try{l=new URLSearchParams(location.search).get("look")||localStorage.getItem("5e-look")}catch(e){}if(l==="gallery")document.documentElement.dataset.look="gallery";addEventListener("DOMContentLoaded",function(){var b=document.getElementById("lookToggle");function t(){var g=document.documentElement.dataset.look==="gallery";b.textContent=g?"기본 모습":"갤러리 느낌"}t();b.onclick=function(){var g=document.documentElement.dataset.look==="gallery";if(g)delete document.documentElement.dataset.look;else document.documentElement.dataset.look="gallery";try{localStorage.setItem("5e-look",g?"":"gallery")}catch(e){}t()}})})()</script>
@@ -1582,11 +1960,22 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
   </div>
   <div class="wfit rise" style="--delay:.1s"></div>
 </section>
+<section class="wrap feat" id="f-TK">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">04</span><span class="rule"></span>말로 그리기<span class="v172">1.7.2</span></p>
+    <h2 class="h2">말로 그리세요.<br><span class="soft">시험용 그림이 됩니다.</span></h2>
+    <p class="lede">그리고 싶은 그림을 말로 설명하면 평가원식 흑백 그림으로 그립니다. 마음에 안 드는 곳은 「여기 고쳐 줘」 한마디면 그 부분만. 물리부터 윤리까지.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">물리</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">화학</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">생명</span><span class="bar"><i></i></span></button></li><li><button><span class="n">04</span><span class="t">지구</span><span class="bar"><i></i></span></button></li><li><button><span class="n">05</span><span class="t">역사</span><span class="bar"><i></i></span></button></li><li><button><span class="n">06</span><span class="t">지리</span><span class="bar"><i></i></span></button></li><li><button><span class="n">07</span><span class="t">사회</span><span class="bar"><i></i></span></button></li><li><button><span class="n">08</span><span class="t">윤리</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>저절로 과목을 돌며 보여 드리는 중 · 과목을 눌러 보세요</span></p>
+  </div>
+  <div class="wfit rise" style="--delay:.1s"></div>
+</section>
+
 
 <div class="wrap"><div class="group rise" id="g-exam"><b>exam</b><span>문항 · 기출 · 시험지</span><span class="k">⌥⌘2</span></div></div>
 <section class="wrap feat" id="f-S4" data-wipe="S4">
   <div class="feat__text rise">
-    <p class="kicker"><span class="num">04</span><span class="rule"></span>문항 카드</p>
+    <p class="kicker"><span class="num">05</span><span class="rule"></span>문항 카드</p>
     <h2 class="h2">선생님께서는<br><span class="soft">내용에만 신경 써 주세요.</span></h2>
     <p class="lede">쓰는 순간 옆에 한글 시험지가 그려집니다. 정답은 ○·×만 누르세요.</p>
     <ol class="steps"><li><button><span class="n">01</span><span class="t">보면서 쓰기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">그림 넣기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">바로 조판</span><span class="bar"><i></i></span></button></li><li><button><span class="n">04</span><span class="t">정답</span><span class="bar"><i></i></span></button></li></ol>
@@ -1596,7 +1985,7 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
 </section>
 <section class="wrap feat" id="f-S5" data-wipe="S5">
   <div class="feat__text rise">
-    <p class="kicker"><span class="num">05</span><span class="rule"></span>기출 변형</p>
+    <p class="kicker"><span class="num">06</span><span class="rule"></span>기출 변형</p>
     <h2 class="h2">낱말 하나로 검색.<br><span class="soft">버튼 하나로 수정.</span></h2>
     <p class="lede">찾고, 고르고, 「변형」. AI 없이 바로 내 문항이 됩니다.</p>
     <ol class="steps"><li><button><span class="n">01</span><span class="t">검색</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">변형</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">고치기</span><span class="bar"><i></i></span></button></li></ol>
@@ -1606,7 +1995,7 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
 </section>
 <section class="wrap feat" id="f-S6" data-wipe="S6">
   <div class="feat__text rise">
-    <p class="kicker"><span class="num">06</span><span class="rule"></span>시험지 · 학교 양식</p>
+    <p class="kicker"><span class="num">07</span><span class="rule"></span>시험지 · 학교 양식</p>
     <h2 class="h2">시험지를 넣기만 하면,<br><span class="soft">모든 문제가 내 양식으로.</span></h2>
     <p class="lede">학교 원안지 한글 파일만 올리세요. 머리 표부터 쪽 번호까지 그대로입니다.</p>
     <ol class="steps"><li><button><span class="n">01</span><span class="t">수능 틀</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">원안지 올리기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">내 양식으로</span><span class="bar"><i></i></span></button></li></ol>
@@ -1618,7 +2007,7 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
 <div class="wrap"><div class="group rise" id="g-hwp"><b>hwp</b><span>조판 · 인쇄</span><span class="k">⌥⌘3</span></div></div>
 <section class="wrap feat" id="f-S8" data-wipe="S8">
   <div class="feat__text rise">
-    <p class="kicker"><span class="num">07</span><span class="rule"></span>시험지 위에서</p>
+    <p class="kicker"><span class="num">08</span><span class="rule"></span>시험지 위에서</p>
     <h2 class="h2">PDF → HWP 변환을<br>돈 주고 하세요?<br><span class="soft">5E는 한술 더 뜹니다.</span></h2>
     <p class="lede">옮기는 데서 끝나지 않습니다. 시험지 위 그림도 두 번 누르면 바로 고칩니다.</p>
     <ol class="steps"><li><button><span class="n">01</span><span class="t">두 번 누르기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">고치기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">적용</span><span class="bar"><i></i></span></button></li><li><button><span class="n">04</span><span class="t">그래프도</span><span class="bar"><i></i></span></button></li></ol>
@@ -1630,7 +2019,7 @@ section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;
 <div class="wrap"><div class="group rise" id="g-clipboard"><b>clipboard</b><span>세 프로그램을 잇는 것</span><span class="k">⇧⌘V</span></div></div>
 <section class="wrap feat" id="f-S9" data-wipe="S9">
   <div class="feat__text rise">
-    <p class="kicker"><span class="num">08</span><span class="rule"></span>5E 클립보드</p>
+    <p class="kicker"><span class="num">09</span><span class="rule"></span>5E 클립보드</p>
     <h2 class="h2">담고, 꺼내고.<br><span class="soft">세 프로그램 어디서든.</span></h2>
     <p class="lede">그림도, 그래프도, 문항도. ⌘C로 담아 두면 어디서든 꺼내 씁니다.</p>
     <ol class="steps"><li><button><span class="n">01</span><span class="t">image</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">exam</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">hwp</span><span class="bar"><i></i></span></button></li><li><button><span class="n">04</span><span class="t">커서 자리에</span><span class="bar"><i></i></span></button></li></ol>
@@ -2709,13 +3098,12 @@ $$('[data-wipe]').forEach(sec=>{const d=W[sec.dataset.wipe];if(d)scene(sec,d)});
   if(st){
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
     let done;window.__5eIntro=new Promise(r=>done=r);
-    if(true){done()}else{ // 11-20: 인트로(로고 쓰기·뚜껑 열기) 뺌 — 열자마자 5E와 열린 노트북
-      st.classList.add('h3-shut');
-      const ov=document.createElement('div');ov.className='intro5e';ov.innerHTML='<svg viewBox="0 0 220 130"><text x="14" y="104">5E</text></svg>';
+    if(reduce){done()}else{ // 11-21: 인트로 다시 켬 — 5E를 그리고 위로 올라감(노트북 뚜껑 열기는 뺌). 글자는 윤곽선 path(안드로이드도 같게)
+      const ov=document.createElement('div');ov.className='intro5e';ov.innerHTML='<svg viewBox="0 0 220 130"><path d="M39.3 125.6Q27.7 125.6 19.7 120.5Q11.8 115.4 11.8 108.4Q11.8 104.2 14.4 101.4Q17.1 98.5 21.6 98.5Q26.2 98.5 29 101.1Q31.9 103.7 31.9 107.9Q31.9 110.8 30.9 114.1Q29.9 117.4 29.2 119.2Q30.2 119.5 32.6 119.8Q34.9 120.2 37.2 120.2Q40.2 120.2 43.7 118.3Q47.2 116.4 50.1 112.8Q53.2 109 55.1 104.2Q56.9 99.4 56.9 92.3Q56.9 85.7 53.6 81.8Q50.3 77.9 44.2 77.9Q41.2 77.9 38.9 78.6Q36.6 79.4 34.4 80.6Q32.2 81.9 30.6 83.1Q29 84.4 27.2 86.2L22.9 84.6L37.9 40.9H87.4L83.7 57H39L32.6 76.8Q38 73.5 42.5 72.2Q47 70.8 52.4 70.8Q57.1 70.8 61.5 71.7Q65.9 72.7 70 75.4Q74 78 76.4 82.1Q78.8 86.2 78.8 92Q78.8 106.2 67.2 115.9Q55.5 125.6 39.3 125.6Z M175 20.9 170.1 42.1H165.6Q164.8 36.5 161.7 31.8Q158.6 27.2 155.1 26.4Q153.5 26 150.3 25.9Q147.2 25.8 145.2 25.8H133.7L126.2 58.4H134.2Q138.6 58.4 141.1 57.4Q143.6 56.4 145.7 54.7Q147.4 53.3 149.6 49.8Q151.8 46.3 152.7 43.9H157.1L149.1 78.6H144.7V76.4Q144.7 73.8 144.1 71Q143.6 68.2 142.8 67.1Q141.3 64.9 138.7 64.1Q136.2 63.4 133 63.4H125L119.7 86.5Q119.3 88.3 118.9 90.3Q118.6 92.4 118.6 93.3Q118.6 97 121.1 98Q123.5 99 130.1 99Q138.6 99 142.4 98.2Q146.3 97.5 148.2 96Q151.8 93 156.7 87Q161.6 81 163.4 78.1H167.6L160.1 104H82.7L83.7 99.7Q85.1 99.7 88 99.3Q90.9 99 92.3 98.6Q94.6 97.8 95.8 96.2Q97 94.6 97.5 92.6L110.9 34.4Q111.2 33.2 111.3 32.4Q111.4 31.6 111.4 31.2Q111.4 28.7 109 27.3Q106.5 26 100.8 25.1L101.8 20.9Z"/></svg>';
       document.body.appendChild(ov);document.documentElement.classList.add('intro-on');
       requestAnimationFrame(()=>ov.classList.add('draw'));
       setTimeout(()=>{ov.classList.add('fly');document.documentElement.classList.remove('intro-on')},1900);
-      setTimeout(()=>{ov.remove();st.classList.remove('h3-shut')},2600);
+      setTimeout(()=>ov.remove(),2600);
       setTimeout(done,3700);
     }
   }
@@ -3126,6 +3514,70 @@ $$('[data-wipe]').forEach(sec=>{const d=W[sec.dataset.wipe];if(d)scene(sec,d)});
 
 </script>
 <!-- mockup-kit -->
-<script>/* prefetchScene */(function(){if(!("IntersectionObserver" in window))return;var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;e.target.querySelectorAll("img[loading=lazy]").forEach(function(i){i.loading="eager"});io.unobserve(e.target)})},{rootMargin:"150% 0px"});function go(){document.querySelectorAll("section[id^=f-S],#studio,#arch,#hx,#download").forEach(function(s){io.observe(s)})}if(document.readyState==="loading")addEventListener("DOMContentLoaded",function(){setTimeout(go,50)});else setTimeout(go,50)})();</script>
+<script>window.TALK=[{"sub": "물리", "id": "p11", "ask": "다리 위에서 번지 점프를 하는 사람을 일러스트로 그려 줘. 뛰어내린 순간, 줄이 팽팽해지는 순간, 가장 낮은 곳 세 위치를 같이 보여 주고, 오른쪽에는 높이에 따른 운동 에너지와 퍼텐셜 에너지 그래프를 넣어 줘.", "edit": "그래프에서 운동 에너지 K가 가장 큰 점에 별표를 넣고, 그 높이 h_m에서 가로축까지 점선을 내려 줘.", "s1": 171, "s2": 40, "first": [{"src": "img/talk/p11-1-1.jpg", "wh": [1400, 933]}, {"src": "img/talk/p11-1-2.jpg", "wh": [1400, 933]}, {"src": "img/talk/p11-1-3.jpg", "wh": [1400, 910]}, {"src": "img/talk/p11-1-4.jpg", "wh": [1400, 717]}], "editScene": 3, "second": {"src": "img/talk/p11-2.jpg", "wh": [1400, 717]}}, {"sub": "화학", "id": "c3", "ask": "뷰렛으로 수산화 나트륨 수용액을 떨어뜨려 삼각 플라스크 속 염산을 중화 적정하는 장치를 그려 줘. 스탠드, 뷰렛, 삼각 플라스크에 이름표를 달아 줘.", "edit": "뷰렛에 눈금을 더 촘촘하게 넣고, 플라스크 아래에 흰 종이를 깔아 줘.", "s1": 53, "s2": 48, "first": [{"src": "img/talk/c3-1-1.jpg", "wh": [933, 1400]}], "editScene": 0, "second": {"src": "img/talk/c3-2.jpg", "wh": [933, 1400]}}, {"sub": "생명", "id": "b1", "ask": "뉴런 하나를 그려 줘. 가지 돌기, 신경 세포체, 축삭 돌기, 말이집, 축삭 돌기 말단에 지시선 이름표를 달아 줘.", "edit": "흥분이 전도되는 방향을 축삭 돌기 위에 화살표로 넣어 줘.", "s1": 45, "s2": 77, "first": [{"src": "img/talk/b1-1-1.jpg", "wh": [1400, 467]}], "editScene": 0, "second": {"src": "img/talk/b1-2.jpg", "wh": [1400, 467]}}, {"sub": "지구", "id": "e3", "ask": "지층 단면을 그려 줘. 아래에서부터 사암, 셰일, 석회암이 쌓여 있고, 그 위를 부정합면이 자르고 역암이 덮고 있어. 오른쪽에는 화성암이 관입해 있게 해 줘.", "edit": "화성암 주변에 접촉 변성된 부분을 얇은 띠로 표시해 줘.", "s1": 63, "s2": 50, "first": [{"src": "img/talk/e3-1-1.jpg", "wh": [1400, 965]}], "editScene": 0, "second": {"src": "img/talk/e3-2.jpg", "wh": [1400, 965]}}, {"sub": "역사", "id": "h7", "ask": "1919년 3·1 운동 때 탑골 공원에서 사람들이 태극기를 들고 만세를 부르는 장면을 일러스트로 그려 줘. 팔각정이 뒤에 보이게 해 줘.", "edit": "앞쪽에 독립 선언서를 읽는 학생 한 명을 넣어 줘.", "s1": 62, "s2": 96, "first": [{"src": "img/talk/h7-1-1.jpg", "wh": [1400, 933]}], "editScene": 0, "second": {"src": "img/talk/h7-2.jpg", "wh": [1400, 933]}}, {"sub": "지리", "id": "g1", "ask": "하천 상류에서 하류까지의 모습을 그려 줘. 상류의 V자곡, 중류의 감입 곡류, 하류의 자유 곡류와 삼각주가 보이게 하고 이름표를 달아 줘.", "edit": "삼각주 끝에 바다를 넣고, 자유 곡류 옆에 우각호를 하나 그려 줘.", "s1": 65, "s2": 51, "first": [{"src": "img/talk/g1-1-1.jpg", "wh": [1400, 851]}], "editScene": 0, "second": {"src": "img/talk/g1-2.jpg", "wh": [1400, 851]}}, {"sub": "사회", "id": "s3", "ask": "국민 경제의 순환 모형을 그려 줘. 가계, 기업, 정부를 상자로 두고 생산물 시장과 생산 요소 시장을 거치는 실물과 화폐의 흐름을 화살표로 표시해 줘.", "edit": "실물 흐름은 실선, 화폐 흐름은 점선으로 구분해 줘.", "s1": 58, "s2": 98, "first": [{"src": "img/talk/s3-1-1.jpg", "wh": [1400, 717]}], "editScene": 0, "second": {"src": "img/talk/s3-2.jpg", "wh": [1400, 716]}}, {"sub": "윤리", "id": "y3", "ask": "전차 딜레마 상황을 그려 줘. 갈림길 선로 한쪽에 5명, 다른 쪽에 1명이 있고, 선로 변환기 옆에 사람이 서 있어.", "edit": "달려오는 전차를 왼쪽에 더 크게 그리고, 진행 방향 화살표를 넣어 줘.", "s1": 46, "s2": 43, "first": [{"src": "img/talk/y3-1-1.jpg", "wh": [1400, 788]}], "editScene": 0, "second": {"src": "img/talk/y3-2.jpg", "wh": [1400, 788]}}];</script><script>/* 11-21: 「말로 그리기」 장면 재생(1.7.2 생성 화면 바탕 + 실제 대화·결과 + 앱 로딩 모듈 page/talk/js) — 과목 칩 8개, 저절로 돌고 칩을 누르면 그 과목으로 */
+(function(){
+'use strict';
+const sec=document.getElementById('f-TK');if(!sec)return;
+const D=window.TALK||[];const fit=sec.querySelector('.wfit'),lis=[...sec.querySelectorAll('.steps li')];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+fit.innerHTML=`<div class="tk"><div class="tk-in"><div class="tk-cam"><img loading="lazy" decoding="async" class="bg" src="img/talk/chrome.jpg" alt="5E_image AI 이미지 · 생성 화면(1.7.2)"><div class="cv"><div class="sheet"></div></div><div class="log"></div><div class="ta"></div><div class="go"></div></div><span class="zoomtag">크게 보기</span></div></div><div class="tk-foot"><span class="src"></span><span><b>GPT 연결 필요</b> · 걸린 시간은 실제 시간</span></div>`;
+const tk=fit.querySelector('.tk'),tin=fit.querySelector('.tk-in'),cam=fit.querySelector('.tk-cam'),cv=fit.querySelector('.cv'),ztag=fit.querySelector('.zoomtag'),sheet=tk.querySelector('.sheet'),log=tk.querySelector('.log'),ta=tk.querySelector('.ta'),go=tk.querySelector('.go'),src=fit.querySelector('.src');
+const DRAW=[['요청을 그림 설계로 바꾸는 중','요청을 그림 설계로 바꿨어요'],['그릴 준비를 하는 중','그릴 준비를 마쳤어요'],['그림을 그리는 중','그림을 그렸어요'],['흑백으로 정리하는 중','흑백으로 정리했어요']];
+const EDIT=[['고칠 곳을 찾는 중','고칠 곳을 찾았어요'],['그 부분을 고치는 중','그 부분을 고쳤어요'],['나머지가 그대로인지 확인하는 중','나머지가 그대로인지 확인했어요']];
+let run=0,cur=0,auto=true;
+const fitScale=()=>tin.style.setProperty('--s',tk.clientWidth/1440);fitScale();new ResizeObserver(fitScale).observe(tk);
+D.forEach(d=>[...d.first,d.second].forEach(x=>{const im=new Image();im.src=x.src}));
+class Stop extends Error{}
+const wait=(ms,r)=>new Promise((ok,no)=>setTimeout(()=>r===run?ok():no(new Stop()),reduce?Math.min(ms,60):ms));
+const el=(c,h)=>{const e=document.createElement('div');e.className=c;if(h!=null)e.innerHTML=h;return e};
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function chip(i,p){lis.forEach((li,k)=>{li.classList.toggle('on',k===i);const b=li.querySelector('.bar i');if(b){b.style.transition='none';b.style.width=k<i?'100%':'0%'}});}
+function bar(i,ms){const b=lis[i]&&lis[i].querySelector('.bar i');if(!b)return;b.style.transition='none';b.style.width='0%';b.offsetWidth;b.style.transition=`width ${ms}ms linear`;b.style.width='100%'}
+async function type(text,r){ta.innerHTML='';const n=text.length,step=Math.max(14,Math.min(38,2600/n));for(let k=1;k<=n;k++){ta.innerHTML=esc(text.slice(0,k))+'<span class="car"></span>';await wait(step,r)}}
+function msg(c,h){const m=el('m '+c,h);log.append(m);requestAnimationFrame(()=>requestAnimationFrame(()=>m.classList.add('on')));while(log.children.length>6)log.firstChild.remove();return m}
+// 실제 1.7.2 로딩 모듈(js/loading/workbench-loading.js)을 그대로 쓴다. 새 그림은 흰 종이(1536×1024)에서, 고치기는 앞 그림에서 시작.
+const WAITS={draw:[600,1500,500,400],edit:[500,1300,450,350]};
+const PH={draw:['index','draw','strip','grayscale'],edit:['edit-find','edit-apply','edit-verify','edit-finish']};
+try{localStorage.setItem('5e.loading.stageTimes.v1',JSON.stringify({'figure:undefined:figure':[WAITS.draw],'figure-edit:undefined:figure-edit':[WAITS.edit]}))}catch(_){}
+let LD=null,tok=0,paper=null;
+const blankPaper=()=>{if(paper)return paper;const c=document.createElement('canvas');c.width=1536;c.height=1024;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,1536,1024);return paper=c.toDataURL('image/png')};
+const ldReady=import('./talk/js/loading/workbench-loading.js').then(m=>{LD=m.createWorkbenchLoading({host:cv,legacy:sheet,panel:tin});});
+async function loading(kind,source,result,r,title){await ldReady;const t=++tok;
+  LD.begin({token:t,source,kind:kind==='draw'?'figure':'figure-edit',plan:kind==='draw'?'figure':'figure-edit',phased:true,title:title||null});
+  for(let s=0;s<4;s++){LD.stage(PH[kind][s]);await wait(WAITS[kind][s],r)}
+  await LD.finish({token:t,outcome:'done',result});}
+async function rows(list,secs,r){const box=msg('status','<ul class="rows"></ul>'),ul=box.querySelector('ul');const t0=performance.now();
+  for(let k=0;k<list.length;k++){[...ul.children].forEach(li=>{li.className='row';li.querySelector('span').textContent=li.dataset.done});
+    const li=document.createElement('li');li.className='row cur';li.dataset.done=list[k][1];li.innerHTML=`<i></i><span>${list[k][0]}</span><time></time>`;ul.append(li);
+    const share=Math.round(secs/list.length);li.querySelector('time').textContent=String(Math.round(secs*(k+1)/list.length)).padStart(2,'0')+'초';
+    await wait((list.length===4?WAITS.draw:WAITS.edit)[k]||800,r)}
+  [...ul.children].forEach(li=>{li.className='row';li.querySelector('span').textContent=li.dataset.done});return box}
+async function show(imgs,cls){await Promise.all(imgs.map(s=>{const im=new Image();im.src=s;return im.decode().catch(()=>{})}));sheet.className='sheet'+(cls?' '+cls:'');sheet.innerHTML=imgs.map(s=>`<img loading="lazy" decoding="async" src="${s}" alt="">`).join('');sheet.querySelectorAll('img').forEach(i=>i.classList.add('fresh'));requestAnimationFrame(()=>sheet.classList.add('on'))}
+async function play(i,r){const d=D[i];cur=i;chip(i);bar(i,reduce?400:17000);
+  log.innerHTML='';sheet.className='sheet';sheet.innerHTML='';ta.innerHTML='<span class="ph">그림에 대해 AI와 이야기하세요 · 그리기는 「이미지 생성」</span>';
+  src.textContent=`${d.sub} · 1.7.2 실제 생성 결과`;
+  await wait(500,r);await type(d.ask,r);await wait(350,r);go.classList.add('on');await wait(450,r);go.classList.remove('on');
+  ta.innerHTML='';msg('user',esc(d.ask));await wait(300,r);
+  const f=d.first.map(x=>x.src);const main=d.first[f.length>1?d.editScene:0];sheet.className='sheet';sheet.innerHTML='';
+  await Promise.all([rows(DRAW,d.s1,r),loading('draw',blankPaper(),main.src,r)]);await wait(500,r);
+  await show(f,f.length>1?'g2':'');LD.reset();
+  msg('done',`<b>그림 ${f.length>1?f.length+'장을':'을'} 그렸어요</b> <span>· ${d.s1}초</span>`);
+  await wait(2300,r);
+  await type(d.edit,r);await wait(300,r);go.classList.add('on');await wait(450,r);go.classList.remove('on');
+  ta.innerHTML='';msg('user',esc(d.edit));await wait(300,r);
+  if(f.length>1){await show([d.first[d.editScene].src]);await wait(500,r)}
+  const prev=f.length>1?d.first[d.editScene]:d.first[0];sheet.innerHTML='';sheet.className='sheet';
+  await Promise.all([rows(EDIT,d.s2,r),loading('edit',prev.src,d.second.src,r,'생성 결과 1에서 말한 곳만 고치고 있어요')]);await wait(500,r);
+  await show([d.second.src]);LD.reset();msg('done',`<b>말한 곳만 고쳤어요</b> <span>· ${d.s2}초</span>`);
+  await wait(900,r);await zoom(r);await wait(400,r)}
+async function zoom(r){const im=sheet.querySelector('img');if(!im)return;const tb=tin.getBoundingClientRect(),s=tk.clientWidth/1440,ib=im.getBoundingClientRect();
+  const x=(ib.left-tb.left)/s,y=(ib.top-tb.top)/s,w=ib.width/s,h=ib.height/s;const k=Math.min(1440*.94/w,900*.94/h);
+  const tx=720-(x+w/2)*k,ty=450-(y+h/2)*k;cam.style.transform=`translate(${tx}px,${ty}px) scale(${k})`;ztag.classList.add('on');
+  try{await wait(3600,r)}finally{cam.style.transform='';ztag.classList.remove('on')}await wait(1100,r)}
+async function loop(start){const r=++run;let i=start;try{for(;;){await play(i,r);if(!auto)return;i=(i+1)%D.length}}catch(e){if(!(e instanceof Stop))throw e}}
+lis.forEach((li,k)=>li.querySelector('button').addEventListener('click',()=>{auto=true;cam.style.transform='';ztag.classList.remove('on');LD&&LD.reset();loop(k)}));
+let started=false;new IntersectionObserver(es=>{if(es[0].isIntersecting&&!started){started=true;loop(0)}},{threshold:.25}).observe(fit);
+})();
+</script><script>/* prefetchScene */(function(){if(!("IntersectionObserver" in window))return;var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;e.target.querySelectorAll("img[loading=lazy]").forEach(function(i){i.loading="eager"});io.unobserve(e.target)})},{rootMargin:"150% 0px"});function go(){document.querySelectorAll("section[id^=f-S],#studio,#arch,#hx,#download").forEach(function(s){io.observe(s)})}if(document.readyState==="loading")addEventListener("DOMContentLoaded",function(){setTimeout(go,50)});else setTimeout(go,50)})();</script>
 </body>
 </html>

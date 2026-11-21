@@ -37,8 +37,8 @@ html[data-theme="light"] .fspot{background:radial-gradient(circle var(--fr,140px
 html.intro-on{overflow:hidden}
 .intro5e{position:fixed;inset:0;z-index:10000;background:var(--bg,#fff);display:grid;place-items:center;transition:opacity .6s ease .1s}
 .intro5e svg{width:min(40vw,360px);overflow:visible;transition:transform .7s cubic-bezier(.6,0,.2,1)}
-.intro5e text{fill:transparent;stroke:var(--ink,#0a0a0b);stroke-width:1.4;stroke-dasharray:900;stroke-dashoffset:900}
-.intro5e.draw text{animation:i5draw 1.5s cubic-bezier(.4,0,.2,1) forwards,i5fill .5s 1.25s forwards}
+.intro5e text,.intro5e path{fill:transparent;stroke:var(--ink,#0a0a0b);stroke-width:1.4;stroke-dasharray:1100;stroke-dashoffset:1100}
+.intro5e.draw text,.intro5e.draw path{animation:i5draw 1.5s cubic-bezier(.4,0,.2,1) forwards,i5fill .5s 1.25s forwards}
 @keyframes i5draw{to{stroke-dashoffset:0}}@keyframes i5fill{to{fill:var(--ink,#0a0a0b);stroke-width:0}}
 .intro5e.fly{opacity:0;pointer-events:none}.intro5e.fly svg{transform:translateY(-28vh) scale(.85)}
 .studio.hero3 .device-lid{transition:transform 1.4s cubic-bezier(.3,.8,.2,1)}
