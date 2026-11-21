@@ -30,6 +30,7 @@ html[data-theme="light"] .fspot{background:radial-gradient(circle var(--fr,140px
 .studio.hero3 .studio__copy{display:flex;flex-direction:column;align-items:center}
 .studio.hero3 .studio__copy h1.h3-big{margin:0;line-height:0}
 .h3-logo{width:clamp(150px,min(17vw,30svh),290px);height:auto;overflow:visible}
+.h3-logo path{fill:var(--ink,#0a0a0b)}/* 11-21: 로고는 Georgia 굵은 기울임을 윤곽선으로 — Georgia 없는 갤럭시에서도 같은 모양 */
 .h3-logo text,.intro5e text{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:120px;fill:var(--ink,#0a0a0b)}
 .studio.hero3{padding-top:84px!important;--nb-w:min(92vw,1100px,calc((100svh - 300px) * 1.62))!important}
 /* 들어올 때 */
