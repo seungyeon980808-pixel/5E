@@ -596,7 +596,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       const detail = empty.querySelector('span');
       const add = empty.querySelector('[data-ai-add-file]');
       const titleText = '생성 결과 없음';
-      const detailText = '변환하면 결과가 여기에 표시됩니다.';
+      // 11-22: 생성 탭에서도 「변환하면」이라 나오던 것 — 지금 작업 종류(생성/변환)에 맞춘다.
+      const detailText = /create/.test(panel.dataset.aiConversionKind || panel.dataset.conversionKind || '') || panel.dataset.aiCreateUi === 'true' ? '그리면 결과가 여기에 표시됩니다.' : '변환하면 결과가 여기에 표시됩니다.';
       if (title && title.textContent !== titleText) title.textContent = titleText;
       if (detail && detail.textContent !== detailText) detail.textContent = detailText;
       if (add && !add.hidden) add.hidden = true;
@@ -952,7 +953,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     // Box overlays are view annotations, not candidate changes. Rebuilding the
     // version menu for each marker repaint makes its options impossible to click.
     const overlay = node => node.nodeType === 1 && node.matches('[data-ai-comment-marker], [data-ai-comment-drag-preview]');
-    if (records.every(record => record.target.closest?.('.ai-label-edit-overlay') || record.type === 'childList'
+    // 11-22: 로딩 띠의 글자 바뀜(reveal-status)도 결과 변화가 아니다 — 이것 때문에 판 목록을 다시 그려 키보드 초점이 날아갔다.
+    if (records.every(record => record.target.closest?.('.ai-label-edit-overlay, [data-ai-loading-frame]') || record.type === 'childList'
       && [...record.addedNodes, ...record.removedNodes].length > 0
       && [...record.addedNodes, ...record.removedNodes].every(overlay))) return;
     const nextCount = generatedCards().length;

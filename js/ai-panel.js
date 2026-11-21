@@ -1107,6 +1107,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (chatThinkingTimer) { clearInterval(chatThinkingTimer); chatThinkingTimer = 0; }
     chatThinkingNode?.remove(); chatThinkingNode = null;
   }
+  // 11-22: 「생성 결과 1를」 같은 조사 오류 — 끝 글자(한글 받침·숫자 읽기)로 을/를을 고른다.
+  function objectParticle(word) {
+    const last = String(word || '').trim().slice(-1);
+    if (/[0-9]/.test(last)) return '2459'.includes(last) ? '를' : '을';
+    if (/[가-힣]/.test(last)) return (last.charCodeAt(0) - 0xAC00) % 28 === 0 ? '를' : '을';
+    return '을(를)';
+  }
   function showChatThinking() {
     if (chatThinkingNode?.isConnected) return;
     hideChatThinking();
@@ -1143,7 +1150,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     log.querySelector("[data-ai-log-empty]")?.remove();
     const message = document.createElement("div");
     message.className = `ai-msg ${kind}`;
-    message.textContent = text;
+    // 11-22: AI 답의 **굵게** 표시가 별표째 보이던 것 — 별표 쌍만 굵은 글자로 바꾼다(나머지는 글 그대로, HTML로 읽지 않음).
+    if (kind === 'assistant' && /\*\*[^*\n]+\*\*/.test(text)) {
+      for (const [i, part] of String(text).split(/\*\*([^*\n]+)\*\*/).entries()) {
+        if (!part) continue;
+        if (i % 2) { const strong = document.createElement('strong'); strong.textContent = part; message.append(strong); }
+        else message.append(document.createTextNode(part));
+      }
+    } else message.textContent = text;
     log.appendChild(message);
     log.scrollTop = log.scrollHeight;
     return message;
@@ -1563,6 +1577,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // 11-21: 새 로딩 창은 준비(연결·모델 확인)가 끝난 뒤 시작한다 — 그 사이 옛 진행 상자가 잠깐 비치던 것을 처음부터 숨긴다.
       panel.dataset.loadingPending = 'true';
     }
+    // 11-22: 바로 그리기 때 앞 차례 종류(대화)가 남아 처음 2초 「대화 멈추기」·대화 기다림 표시가 잘못 떴다 — 바쁨 표시 전에 종류를 맞춘다.
+    currentTurnType = type === 'chat' ? 'chat' : 'image';
     setBusy(true);
     stopGenerationTimingTimer();
     generationTimingTimer = setInterval(() => renderGenerationTiming(), 1_000);
@@ -3702,6 +3718,9 @@ ${chatText}` : ''}`;
     applyDetectedSourceKind(item, kind);
   }
   function applyDetectedSourceKind(item, kind) {
+    // 11-22: 파일 여러 장을 넣으면 지금 보는 작업만 판단이 들어가고 나머지 작업은 출처가 비어 변환할 길이 없었다 —
+    // 판단은 그림마다 기억해 두고(detectedSourceKind), 그 작업을 열 때·한꺼번에 변환할 때 쓴다.
+    if (item && typeof item === 'object') item.detectedSourceKind = kind;
     if (!attachments.includes(item) || conversionKind !== 'image') return;
     const row = panel.querySelector('[data-ai-source-kind-row]');
     if (kind === 'ambiguous') { autoSourceDecision = null; if (row) row.hidden = false; syncSourceDecision(); return; }
@@ -4299,6 +4318,13 @@ ${chatText}` : ''}`;
     if (preserveSourceLabels) preserveSourceLabels.checked = tab.preserveSourceLabels === true;
     sourceChoicePending = false;
     if (imageKindSelect) imageKindSelect.value = tab.imageLabelWorkflow?.imageKind || '';
+    // 11-22: 출처가 비어 있는 작업을 열면, 그 원본 그림을 넣을 때 해 둔 자동 판단을 넣는다(애매하면 출처 줄을 보여 준다).
+    if (imageKindSelect && !imageKindSelect.value && (tab.conversionKind || 'image') === 'image') {
+      const detected = (tab.attachments || []).find(item => item?.detectedSourceKind)?.detectedSourceKind;
+      const row = panel.querySelector('[data-ai-source-kind-row]');
+      if (['exam', 'general'].includes(detected)) { imageKindSelect.value = detected; autoSourceDecision = detected; if (row) row.hidden = true; }
+      else if (detected === 'ambiguous' && row) row.hidden = false;
+    }
     if (labelResultSelect) labelResultSelect.value = tab.imageLabelWorkflow?.labelResult || '';
     if (labelVerificationSelect) labelVerificationSelect.value = normalizeImageLabelWorkflow(tab.imageLabelWorkflow).verificationMode;
     compactSettings?.sync();
@@ -6048,7 +6074,7 @@ ${chatText}` : ''}`;
     const source = base.meta?.ui?.kind === 'label' ? generatedImages.find(item => item.id === base.meta.ui.from) || base : base;
     const taskId = activeTaskTabId;
     addLog('확정하고 라벨 살리기', 'user');
-    addChatNote(`${source.name}를 확정했어요. 그림은 그대로 두고 글자만 5E 라벨로 바꿉니다.`);
+    addChatNote(`${source.name}${objectParticle(source.name)} 확정했어요. 글자를 5E 라벨로 바꿉니다(지시선이 그림과 겹쳐 깨끗이 안 지워지면 그림을 다시 그려 정리해요).`);
     const token = beginRequest('image', source.data);
     if (pendingLoading?.token === token) pendingLoading = { ...pendingLoading, source: source.data, kind: 'label-restore', plan: 'label-restore', phased: true, title: `${source.name}의 글자를 라벨로 바꾸고 있어요` };
     const requestEpoch = ++currentRequestEpoch;
@@ -7707,6 +7733,7 @@ ${chatText}` : ''}`;
   function requestSourceChoice() {
     sourceChoicePending = true;
     const row = panel.querySelector('[data-ai-source-kind-row]');
+    if (row) row.hidden = false; // 11-22: 숨겨진 출처 줄을 고르라고만 하던 막다른 안내 — 줄을 보여 준다
     row?.classList.add('ai-needs-choice');
     row?.scrollIntoView?.({ block: 'nearest' });
     row?.querySelector('[data-ai-setting-value]:not([disabled])')?.focus?.({ preventScroll: true });
@@ -9071,6 +9098,12 @@ ${chatText}` : ''}`;
   function captureBatchTask(id) {
     if(id===activeTaskTabId)captureActiveTaskTab();
     const tab=taskTabs.get(id);if(!tab)throw new Error('작업을 찾을 수 없습니다.');
+    // 11-22: 한꺼번에 변환 — 한 번도 열지 않은 작업은 원본을 넣을 때 해 둔 출처 자동 판단으로 채운다(지금 보는 작업과 같은 규칙).
+    if ((tab.conversionKind || 'image') === 'image' && !['exam', 'general'].includes(tab.imageLabelWorkflow?.imageKind)) {
+      const detected = (tab.attachments || []).find(item => item?.detectedSourceKind)?.detectedSourceKind;
+      if (['exam', 'general'].includes(detected)) tab.imageLabelWorkflow = normalizeImageLabelWorkflow({ ...(tab.imageLabelWorkflow || {}), imageKind: detected,
+        labelResult: tab.imageLabelWorkflow?.labelResult || labelResultSelect?.value || 'remove' });
+    }
     if (isCreationWorkflow(tab.conversionKind)) throw new Error('설명으로 만드는 작업은 각 작업의 만들기 버튼으로 실행해 주세요.');
     const candidate=(tab.generated||[]).find(item=>item.id===tab.selectedCandidateId);
     const graph=isGraphWorkflow(tab.conversionKind);
@@ -9117,7 +9150,7 @@ ${chatText}` : ''}`;
     }
     if(!desktop?.send)return 'AI 연결을 사용할 수 없습니다.';
     if(snapshot.operation==='generate' && !isGraphWorkflow(snapshot.options?.conversionKind) && !isExamBrief(snapshot.options) && snapshot.options?.outputEngine !== AI_OUTPUT_ENGINES.ASSET) {
-      if (!['exam', 'general'].includes(snapshot.options?.imageLabelWorkflow?.imageKind)) return '출처(교과서/기출)를 골라 주세요.';
+      if (!['exam', 'general'].includes(snapshot.options?.imageLabelWorkflow?.imageKind)) return `${tab.title || '작업'}: 출처(교과서/기출)를 골라 주세요 — 그 작업을 열면 출처 줄이 보입니다.`;
       try { normalizeImageLabelWorkflow(snapshot.options?.imageLabelWorkflow, { requireExplicit: true }); } catch(error) { return error.message; }
     }
     return null;
