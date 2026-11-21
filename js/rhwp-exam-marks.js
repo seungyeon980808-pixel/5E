@@ -116,15 +116,17 @@ export function installExamMarks(bridge, { onToggle, onIndent } = {}) {
     frame = 0;
     if (disposed) return;
     const box = ensureLayer(); if (!box) return;
-    svg.replaceChildren(); hits = [];
+    svg.replaceChildren(); hits = []; drawnSig = layoutSig();
     const inp = input(), manager = inp?.viewportManager, virtual = inp?.virtualScroll, container = inp?.container;
     if (!on || !manager || !virtual || !container?.getClientRects().length) { box.hidden = true; return; }
     let handle; try { handle = bridge.wasm.borrowDocumentHandle(); } catch { box.hidden = true; return; }
     const rect = container.getBoundingClientRect();
     Object.assign(box.style, { left: `${rect.left + container.clientLeft}px`, top: `${rect.top + container.clientTop}px`, width: `${container.clientWidth}px`, height: `${container.clientHeight}px` });
     box.hidden = false;
-    const zoom = manager.getZoom(), sx = manager.getScrollX(), sy = manager.getScrollY();
-    const total = Math.max(manager.getViewportSize().width, virtual.getTotalWidth()), count = handle.pageCount?.() ?? bridge.wasm.pageCount ?? 0;
+    // 11-22: 스크롤 위치·화면 폭은 rhwp가 들고 있는 값(scroll·resize 이벤트 때만 갱신) 대신 지금 DOM 값으로 읽는다.
+    // 자동 저장 복원 뒤 그 값이 묵어 부호가 약 640px 오른쪽(2단 자리)에 그려지고, 휠을 굴려야(=scroll 이벤트) 제자리로 갔다.
+    const zoom = manager.getZoom(), sx = container.scrollLeft, sy = container.scrollTop;
+    const total = Math.max(container.clientWidth, virtual.getTotalWidth()), count = handle.pageCount?.() ?? bridge.wasm.pageCount ?? 0;
     const h = container.clientHeight, parts = [];
     for (let page = 0; page < count; page++) {
       const top = virtual.getPageOffset(page) - sy, height = virtual.getPageHeight(page);
@@ -146,6 +148,15 @@ export function installExamMarks(bridge, { onToggle, onIndent } = {}) {
     svg.innerHTML = parts.join('');
   }
   const schedule = () => { if (!frame && !disposed) frame = requestAnimationFrame(draw); };
+  // 그린 때의 배치 지문. 이벤트 없이 배치가 바뀌면(복원·쪽 배치 끝·칸 폭 변화) 1초 점검에서 다시 그린다(11-22).
+  let drawnSig = '';
+  function layoutSig() {
+    const inp = input(), manager = inp?.viewportManager, virtual = inp?.virtualScroll, c = inp?.container;
+    if (!manager || !virtual || !c) return '';
+    const r = c.getBoundingClientRect();
+    let left0 = 0; try { left0 = virtual.getPageLeft(0); } catch {}
+    return [bridge.generation, bridge.revision, r.left, r.top, c.clientWidth, c.clientHeight, c.scrollLeft, c.scrollTop, manager.getZoom(), virtual.getTotalWidth(), virtual.getTotalHeight?.(), left0, on].join('|');
+  }
   const bus = bridge?.deps?.eventBus;
   for (const event of ['document-changed', 'document-layout-refreshed', 'document-mutated', 'document-swapped', 'zoom-changed', 'zoom-raster-ready', 'viewport-scroll', 'viewport-resize', 'page-view-settings-changed']) bus?.on?.(event, schedule);
   const scrollHost = () => input()?.container;
@@ -154,8 +165,11 @@ export function installExamMarks(bridge, { onToggle, onIndent } = {}) {
   const toggle = event => { on = event.detail?.on ?? marksEnabled(); onToggle?.(on); schedule(); };
   window.addEventListener('5e:typeset-marks', toggle);
   const resize = () => schedule(); window.addEventListener('resize', resize);
-  const tick = setInterval(() => { hookScroll(); }, 1000);
-  hookScroll(); schedule();
+  const tick = setInterval(() => { hookScroll(); if (on && !frame && layoutSig() !== drawnSig) schedule(); }, 1000);
+  // 문서를 불러오거나 바꾼 뒤에는 쪽 배치가 끝날 때까지 몇 번 더 그린다(이벤트가 배치 끝보다 먼저 올 때가 있다).
+  const settle = () => { for (const ms of [150, 600, 1500]) setTimeout(schedule, ms); };
+  for (const event of ['document-changed', 'document-swapped', 'document-layout-refreshed']) bus?.on?.(event, settle);
+  hookScroll(); schedule(); settle();
   // 단축키는 편집기 안(글 쓰는 중)과 이 문서 둘 다에서 받는다.
   installMarksShortcut(document); const keyTick = setInterval(() => installMarksShortcut(doc()), 1000); installMarksShortcut(doc());
   return {

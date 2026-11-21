@@ -340,7 +340,7 @@ export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, 
   if (figures) root.querySelector('.el-figs-slot').append(...figures);
   const ACT = {
     new: () => actions.newDocument(),
-    md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => palette?.tool('photo'), clip: () => window.fiveEClipboard?.toggle(), palette: () => {},
+    md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => ctx.command('insert:image') /* 11-22: 팔레트 「사진」 창고는 집중 모드에서 안 보여 눌러도 아무 일이 없었다 — 리본 「그림」과 같은 그림 파일 넣기로 */, clip: () => window.fiveEClipboard?.toggle(), palette: () => {},
     fit: () => palette?.tool('spacing_fit'), oneline: () => palette?.tool('spacing_fit'),
     chem: () => ctx.withBridge(b => { const n = applyScienceScripts(b); ctx.message(n ? `첨자 ${n}곳을 입혔습니다(되돌리기 ⌘Z).` : '첨자를 입힐 화학식·단위를 찾지 못했습니다.'); }),
     renum: () => ctx.withBridge(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`)),
