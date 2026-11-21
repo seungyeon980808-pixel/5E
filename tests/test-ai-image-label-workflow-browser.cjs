@@ -78,7 +78,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     assert.ok(c,'A completed request has a candidate');
     // 11-10: 삭제는 기출·일반 모두 관찰 0회와 전체 생성 1회, 기출 복원만 로컬 픽셀 경로.
     // 11-10: 기본 경로는 관찰 요청이 없고(라벨 복원도 원본 글자 읽기 통로로 따로 읽는다), 기출·일반 모두 그림 생성 한 번.
-    assert.equal(observations(requests).length,0);assert.equal(generations(requests).length,imageKind==='general'?2:1); // 11-21: 교과서는 두 장 동시에 그려 대조로 고름
+    assert.equal(observations(requests).length,0);assert.equal(generations(requests).length,1);
     assert.equal(mappings(requests).length,0,'Current joint verification confirms placement and review in one Luna turn');
     // 11-10: 기본 그림 경로는 짧은 기출·교과서 지시문만 보낸다. SOURCE-GRID 계약 문장은 예전 라벨 복원 경로 전용이다.
     {
@@ -100,7 +100,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     assert.equal(c.imageLabelWorkflow.scientificArrows,'keep');assert.equal(c.workflowMetrics.calls.review,0);
     // 11-10: 삭제는 생성·검수 2회, 복원은 관찰·검수와 일반 그림 생성만 요청.
     // 11-10: 기본 경로는 그림 생성 요청 한 번뿐이다(라벨 복원의 글자 읽기는 별도 통로라 이 목록에 없다).
-    assert.equal(requests.length,imageKind==='general'?2:1,'Default path sends one picture request (textbook: two at once, 11-21); label restoration reads text on its own channel');
+    assert.equal(requests.length,1,'Default path sends one picture request; label restoration reads text on its own channel');
     const hashes=await page.evaluate(async c=>{const {imageLabelDigest}=await import('/js/ai-image-label-run.js?v=1.7.0-four-session-integration');return{source:await imageLabelDigest(window.__task2.original),plan:await imageLabelDigest(JSON.stringify(c.sourceLabelPlan)),candidate:await imageLabelDigest(c.data)};},c);
     assert.equal(c.sourceSha256,hashes.source);assert.equal(c.planSha256,hashes.plan);assert.equal(c.candidateSha256,hashes.candidate);
     // 11-10: 원본 묶음 해시 검사는 예전 관찰 계약 전용이라 기본 경로에서는 건너뛴다(원본 해시는 위에서 이미 확인).

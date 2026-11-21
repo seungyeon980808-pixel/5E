@@ -145,21 +145,22 @@ function runOptions({ readText, generate }) {
     raster: { generate } };
 }
 
-test('the textbook remove path draws two pictures at once and keeps the cleaner one (dual mode, no redraw)', async () => {
+test('the textbook remove path redraws once with the named items and carries the remaining differences', async () => {
   const run = await loadRun();
-  const texts = [], phases = []; let n = 0, checks = 0;
-  const pngs = ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==', png];
+  const texts = [], phases = []; let checks = 0;
   const readText = async p => {
     if (isList(p)) return { text: '- 혈류 화살표 2개' };
-    checks++; return { text: JSON.stringify(p.attachments[1] === png && checks ? { missing: [], leftover: [] } : { missing: ['혈류 화살표 2개'], leftover: [] }) };
+    checks++; return { text: JSON.stringify(checks === 1 ? { missing: ['혈류 화살표 2개'], leftover: [] } : { missing: [], leftover: [] }) };
   };
-  const options = runOptions({ readText, generate: async payload => { texts.push(payload.text); n++; return { src: png, imageToolCalls: 1, rendererPrompt: 'r' + n }; } });
+  const options = runOptions({ readText, generate: async payload => { texts.push(payload.text); return { src: png, imageToolCalls: 1, rendererPrompt: 'r' }; } });
   options.onPhase = (name, info) => phases.push([name, info]);
   const result = await run.executeImageLabelRun(options);
-  assert.equal(texts.length, 2); assert.ok(texts.every(t => /^첨부한 교과서 그림을 편집해서/.test(t)) && texts.every(t => !/바로잡고/.test(t)));
-  assert.equal(result.accepted, true); assert.equal(result.convertCheck.mode, 'dual'); assert.equal(result.convertCheck.candidates, 2);
-  assert.equal(result.metrics.convertCheck.redrawn, false);
-  assert.ok(phases.some(([name, info]) => name === 'convertCheck' && info.candidates === 2));
+  assert.equal(texts.length, 2);
+  assert.match(texts[0], /^첨부한 교과서 그림을 편집해서/); assert.doesNotMatch(texts[0], /바로잡고/);
+  assert.match(texts[1], /사용자 요청: 앞서 다시 그린 결과가/); assert.match(texts[1], /혈류 화살표 2개/);
+  assert.equal(result.accepted, true); assert.equal(result.convertCheck.status, 'fixed');
+  assert.equal(result.metrics.convertCheck.redrawn, true);
+  assert.ok(phases.some(([n, i]) => n === 'convertFix' && i.count === 1));
 });
 
 test('an exam redraw keeps drawing once (check is textbook-only after the 11-21 measurement)', async () => {
@@ -176,31 +177,4 @@ test('without a text reader the conversion draws once exactly as before', async 
   const texts = [];
   const result = await run.executeImageLabelRun(runOptions({ readText: undefined, generate: async payload => { texts.push(payload.text); return { src: png, imageToolCalls: 1, rendererPrompt: 'r' }; } }));
   assert.equal(texts.length, 1); assert.equal(result.convertCheck, undefined); assert.equal(result.metrics.convertCheck, undefined);
-});
-
-test('dual: two pictures are drawn at once, both checked, and the cleaner one is chosen without a redraw', async () => {
-  const { runConvertCheckDual } = await api;
-  const a = pic('a'), b = pic('b'); const starts = [];
-  const r = reader({ answers: { [a.data]: { missing: ['x'], leftover: [] }, [b.data]: { missing: [], leftover: [] } } });
-  const out = await runConvertCheckDual({ readText: r.readText, sourceData: src, generate: async i => { starts.push(i); await new Promise(f => setTimeout(f, 5)); return i ? b : a; } });
-  assert.deepEqual(starts, [0, 1]); assert.equal(out.picture, b); assert.equal(out.check.status, 'pass'); assert.equal(out.check.candidates, 2);
-  assert.equal(r.calls.filter(isCheck).length, 2); assert.equal(out.check.redrawn, false);
-});
-
-test('dual: when both differ the one with fewer differences is kept and its differences are carried', async () => {
-  const { runConvertCheckDual } = await api;
-  const a = pic('a'), b = pic('b');
-  const r = reader({ answers: { [a.data]: { missing: ['x', 'y'], leftover: [] }, [b.data]: { missing: ['y'], leftover: [] } } });
-  const out = await runConvertCheckDual({ readText: r.readText, sourceData: src, generate: async i => i ? b : a });
-  assert.equal(out.picture, b); assert.equal(out.check.status, 'issues'); assert.deepEqual(out.check.differences, [{ kind: 'missing', text: 'y' }]);
-});
-
-test('dual: a failed or very late second picture never blocks the first', async () => {
-  const { runConvertCheckDual } = await api;
-  const a = pic('a');
-  let out = await runConvertCheckDual({ readText: reader().readText, sourceData: src, generate: async i => { if (i) throw new Error('down'); return a; } });
-  assert.equal(out.picture, a); assert.equal(out.check.candidates, 1);
-  out = await runConvertCheckDual({ readText: reader().readText, sourceData: src, lateMs: 20, generate: async i => i ? new Promise(() => {}) : a });
-  assert.equal(out.picture, a); assert.match(out.check.reason, /늦어/);
-  await assert.rejects(runConvertCheckDual({ readText: reader().readText, sourceData: src, generate: async () => { throw new Error('both down'); } }), /both down/);
 });

@@ -7,7 +7,9 @@ export const CONVERT_CHECK_VERSION = 1;
 export const CONVERT_CHECK_MODEL = 'gpt-6.1-sol';
 // 11-21 측정: 기출(5장)은 대조 뒤 다시 그리기 4/5·심사 점수 4.7→4.6으로 나아지지 않아 교과서만 켠다. 기출도 켜려면 'exam'을 넣는다.
 // 11-21: 'dual' = 두 장 동시에 그려 대조로 고르기(다시 그리기 없음, 시간 ≈ 한 장), 'redraw' = 한 장 그린 뒤 빠진 것만 다시 그리기.
-export const CONVERT_CHECK_MODE = 'dual';
+// 11-22 밤샘: 앱의 그림 통로(createImageLabelRasterController)는 한 번에 한 장만 받아 둘째 장을 「이미 진행 중」으로 거절한다 —
+// 앱에서 'dual'은 동시가 아니라 차례로 돌아 시간·한도만 늘었다. 통로를 여러 장 받게 고치기 전까지 'redraw'(한 장 → 대조 → 빠진 것만 다시)로 둔다.
+export const CONVERT_CHECK_MODE = 'redraw';
 export const CONVERT_CHECK_KINDS = Object.freeze(['general']);
 export const CONVERT_CHECK_LIMITS = Object.freeze({ listMs: 40000, checkMs: 30000, maxItems: 6 });
 

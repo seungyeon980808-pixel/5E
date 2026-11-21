@@ -32,8 +32,7 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
     const first = await convert(0, initial);
     const opposite = initial === 'remove' ? 'restore-editable' : 'remove';
     const second = await convert(1, opposite, undefined, { allowIdle: true }); // 11-10: 두 번째는 저장된 그림을 재사용해 그림 요청이 없다
-    // 11-21: 교과서(general) 첫 변환은 두 장을 동시에 그려 고른다 → 첫 변환 2장, 반대 설정은 그 결과를 재사용해 0장.
-    assert.equal(await imagesSent(), 2, 'opposite label setting must not create a second picture');
+    assert.equal(await imagesSent(), 1, 'opposite label setting must not create a second picture');
     assert.equal(first.data, second.data, 'full PNG data URL is byte-identical');
     assert.equal(first.candidateSha256, second.candidateSha256);
     assert.equal(second.workflowMetrics.calls.fullGeneration, 0);
@@ -96,7 +95,7 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
       __task2.emit = (index, kind, text) => emit(index, kind, kind === 'image' ? __task2.original : text);
     });
     const changed = await convert(3, 'remove', '장치 연결을 보존하고 왼쪽 부품만 수정해 주세요');
-    assert.equal(await imagesSent(), 2); // 11-21: 교과서 새 변환은 두 장 동시
+    assert.equal(await imagesSent(), 1);
     assert.notEqual(changed.data, first.data);
     assert.notEqual(changed.workflowMetrics.generationHarness.key, first.workflowMetrics.generationHarness.key);
     assert.deepEqual(errors, []);

@@ -46,9 +46,7 @@ test('restore-editable reads the original in parallel and returns accepted label
   const { calls, options } = fakes();
   const result = await run.executeImageLabelRun(options);
   assert.equal(calls.observer, 0);
-  // 11-21: 교과서는 두 장을 동시에 그려 대조로 고른다(ai-image-convert-check.js dual) → 같은 요청 두 번.
-  assert.equal(calls.generate.length, 2);
-  assert.equal(calls.generate[0].text, calls.generate[1].text);
+  assert.equal(calls.generate.length, 1);
   assert.equal(calls.generate[0].model, 'gpt-6-luna');
   assert.equal(calls.generate[0].effort, 'medium');
   assert.match(calls.generate[0].text, /첨부한 교과서 그림을/);
@@ -125,7 +123,7 @@ test('label on and off reuse the same generated image through the background cac
   const { options: on, calls: onCalls } = fakes({ generate: async payload => { generated.push(payload); return { src: png, imageToolCalls: 1, rendererPrompt: 'on' }; } });
   on.backgroundCache = backgroundCache;
   const restored = await run.executeImageLabelRun(on);
-  assert.equal(generated.length, 2, 'the second request must come from the cached generation (11-21: the first run draws two candidates)');
+  assert.equal(generated.length, 1, 'the second request must come from the cached generation');
   assert.equal(removed.data, restored.data);
   assert.equal(offCalls.read.length, 0);
   assert.equal(onCalls.read.length, 1);
