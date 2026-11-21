@@ -2,6 +2,7 @@ import { createIndexedDbPackAdapter, createMemoryPackAdapter } from "./pack-adap
 import { createDocumentRecord } from "./contract.js?v=1.7.0-four-session-integration";
 import { PackNotInstalledError, PackValidationError } from "./pack-errors.js?v=1.7.0-four-session-integration";
 import { materializePackDocument, materializePackSearchEntry } from "./pack-identities.js?v=1.7.0-four-session-integration";
+import { SEARCH_INDEX_PARTS_PATH, searchIndexPartPaths } from "./search-index-parts.js?v=1.7.0-four-session-integration";
 
 export { createIndexedDbPackAdapter, createMemoryPackAdapter, PackNotInstalledError, PackValidationError };
 
@@ -179,6 +180,20 @@ async function validateBundle(bundle, configuredLimits) {
   if (searchIndex.schemaVersion !== "pdf-search-index-v1" || !Array.isArray(searchIndex.entries)) {
     throw new PackValidationError(pack.paths.searchIndex, "unsupported search index");
   }
+  // 11-20: 조각 색인(search-index-parts.json → search-index-2.json …)도 같은 한도·모양으로 확인한다.
+  const partsAsset = assets.find((asset) => asset.path === SEARCH_INDEX_PARTS_PATH);
+  if (partsAsset) {
+    let partPaths;
+    try { partPaths = searchIndexPartPaths(parseJsonAsset(partsAsset.bytes, SEARCH_INDEX_PARTS_PATH)); }
+    catch (error) { throw error instanceof PackValidationError ? error : new PackValidationError(SEARCH_INDEX_PARTS_PATH, "unsupported search index parts"); }
+    for (const partPath of partPaths) {
+      const partAsset = assets.find((asset) => asset.path === partPath);
+      if (!partAsset) throw new PackValidationError("paths", "a declared file is missing");
+      if (partAsset.bytes.byteLength > limits.maxJsonBytes) throw new PackValidationError(partPath, `JSON exceeds ${limits.maxJsonBytes} bytes`);
+      const part = parseJsonAsset(partAsset.bytes, partPath);
+      if (part.schemaVersion !== "pdf-search-index-v1" || !Array.isArray(part.entries)) throw new PackValidationError(partPath, "unsupported search index");
+    }
+  }
   for (const documentPath of pack.paths.documents) {
     const documentAsset = assets.find((asset) => asset.path === documentPath);
     if (documentAsset.bytes.byteLength < 5 || new TextDecoder().decode(documentAsset.bytes.subarray(0, 5)) !== "%PDF-") {
@@ -240,11 +255,15 @@ export function createPackStore({ adapter, limits = {} }) {
         ]);
         const catalog = parseJsonAsset(catalogBytes, record.paths.catalog);
         const searchIndex = parseJsonAsset(searchBytes, record.paths.searchIndex);
+        const partPaths = record.fileChecksums?.[SEARCH_INDEX_PARTS_PATH]
+          ? searchIndexPartPaths(parseJsonAsset(await adapter.readAsset(record.id, SEARCH_INDEX_PARTS_PATH), SEARCH_INDEX_PARTS_PATH))
+          : [];
+        const parts = await Promise.all(partPaths.map(async (partPath) => parseJsonAsset(await adapter.readAsset(record.id, partPath), partPath)));
         for (const document of catalog.documents) {
           const prefix = `${record.id}/`; const relative = document.source?.locator?.startsWith(prefix) ? document.source.locator.slice(prefix.length) : "";
           documents.push(materializePackDocument(record.id, catalog, document, record.fileChecksums?.[relative] ?? record.checksumFingerprint));
         }
-        entries.push(...searchIndex.entries.map((entry) => materializePackSearchEntry(record.id, entry)));
+        for (const index of [searchIndex, ...parts]) entries.push(...index.entries.map((entry) => materializePackSearchEntry(record.id, entry)));
       }
       return Object.freeze({
         documents: Object.freeze(documents),

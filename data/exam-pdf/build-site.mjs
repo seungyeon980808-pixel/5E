@@ -26,11 +26,15 @@ for(const p of paths){const src=join(ROOT,p),dst=join(site,'v1',p);mkdirSync(dir
   if(!ok){try{unlinkSync(dst);}catch{}symlinkSync(src,dst);made++;}}
 // 11-05: 라이브러리 「5E 제공」 자료팩 색인(pack·checksums·catalog·search-index)도 올린다(js/pdf-library/static-mirror.js).
 // search-index.json(33MB)은 정적 파일 한도(25MB)를 넘어 16MB 조각으로 나눠 복사한다. 이어 붙인 뒤 앱이 SHA-256으로 확인한다.
-for(const f of ['pack.json','checksums.json','catalog.json']){const src=join(ROOT,f),dst=join(site,'v1',f);try{unlinkSync(dst);}catch{}symlinkSync(src,dst);}
-{const src=join(ROOT,'search-index.json'),size=statSync(src).size,PART=16*1024*1024,n=Math.ceil(size/PART),fd=openSync(src,'r');
-  for(const f of readdirSync(join(site,'v1')).filter(f=>f.startsWith('search-index.json.part')))unlinkSync(join(site,'v1',f));
-  for(let i=0;i<n;i++){const len=Math.min(PART,size-i*PART),buf=Buffer.alloc(len);readSync(fd,buf,0,len,i*PART);writeFileSync(join(site,'v1',`search-index.json.part${i}`),buf);}
-  closeSync(fd);writeFileSync(join(site,'v1','search-index.json.parts.json'),JSON.stringify({parts:n,bytes:size}));console.log(`자료팩 색인: search-index ${n}조각 · ${(size/1e6).toFixed(1)}MB`);}
+// 11-20: 조각 색인(search-index-parts.json → search-index-2.json …)도 같은 방식으로 올린다(js/pdf-library/search-index-parts.js).
+const partsList=existsSync(join(ROOT,'search-index-parts.json'))?JSON.parse(readFileSync(join(ROOT,'search-index-parts.json'),'utf8')).parts:[];
+for(const f of ['pack.json','checksums.json','catalog.json',...(partsList.length?['search-index-parts.json']:[])]){const src=join(ROOT,f),dst=join(site,'v1',f);try{unlinkSync(dst);}catch{}symlinkSync(src,dst);}
+for(const f of readdirSync(join(site,'v1')).filter(f=>/^search-index(-\d+)?\.json\.(part\d+|parts\.json)$/.test(f)))unlinkSync(join(site,'v1',f));
+for(const name of ['search-index.json',...partsList]){
+  if(!/^search-index(-\d+)?\.json$/.test(name)){console.error('조각 색인 이름이 이상합니다:',name);process.exit(1);}
+  const src=join(ROOT,name),size=statSync(src).size,PART=16*1024*1024,n=Math.ceil(size/PART),fd=openSync(src,'r');
+  for(let i=0;i<n;i++){const len=Math.min(PART,size-i*PART),buf=Buffer.alloc(len);readSync(fd,buf,0,len,i*PART);writeFileSync(join(site,'v1',`${name}.part${i}`),buf);}
+  closeSync(fd);writeFileSync(join(site,'v1',`${name}.parts.json`),JSON.stringify({parts:n,bytes:size}));console.log(`자료팩 색인: ${name} ${n}조각 · ${(size/1e6).toFixed(1)}MB`);}
 const HEAD='  Access-Control-Allow-Origin: *\n  Access-Control-Expose-Headers: Content-Length, ETag\n  Cache-Control: public, max-age=86400\n';
 writeFileSync(join(site,'_headers'),`/v1/*\n${HEAD}/q/*\n${HEAD}`);
 // 미리 변환한 문항 링크

@@ -2,12 +2,15 @@
 // 드라이브 게이트웨이는 파일마다 경로를 찾느라 1~3초(색인 33MB는 5~6초) 걸렸다. 정적 주소는 0.2~0.5초.
 // 같은 파일을 올려 두었으므로 remote-pack.js의 SHA-256 검사가 그대로 지켜 준다. 없거나 늦으면 게이트웨이로 넘어간다.
 // 올리기: data/exam-pdf/build-site.mjs(색인 4개·기출 PDF) → wrangler deploy. 색인은 정적 파일 한도(25MB) 때문에 조각으로 올린다.
+import { SEARCH_INDEX_PARTS_PATH, isSearchIndexFile } from "./search-index-parts.js?v=1.7.0-four-session-integration";
+
 export const STATIC_MIRROR_BASE = "https://5e-exam-pdf.5e-desktop.workers.dev/v1/";
-const PACK_FILES = new Set(["pack.json", "checksums.json", "catalog.json", "search-index.json"]);
+// 11-20: 조각 색인(search-index-parts.json · search-index-<n>.json)도 거울에 있다. 색인 파일은 모두 16MB 조각으로 올린다.
+const PACK_FILES = new Set(["pack.json", "checksums.json", "catalog.json", "search-index.json", SEARCH_INDEX_PARTS_PATH]);
 const STALL_MS = 8000;
 
 export function staticMirrorPath(relativePath) {
-  if (PACK_FILES.has(relativePath)) return relativePath;
+  if (PACK_FILES.has(relativePath) || isSearchIndexFile(relativePath)) return relativePath;
   return /^(기출문제|학력평가)\/.+\.pdf$/i.test(relativePath) && !relativePath.startsWith("기출문제/기출확장_국영수사탐/") ? relativePath : "";
 }
 
@@ -50,7 +53,7 @@ export function createStaticMirrorFetcher(gatewayRoot, { fetcher = globalThis.fe
       if (mirror) {
         try {
           const target = base + encodePath(mirror);
-          const response = mirror === "search-index.json" ? await readParts(fetcher, target, init) : await withDeadline(fetcher, target, init);
+          const response = isSearchIndexFile(mirror) ? await readParts(fetcher, target, init) : await withDeadline(fetcher, target, init);
           if (response) return response;
         } catch (error) { if (init?.signal?.aborted) throw error; }
       }

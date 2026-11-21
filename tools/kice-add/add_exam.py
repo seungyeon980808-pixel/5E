@@ -101,9 +101,13 @@ def main() -> None:
     args = parser.parse_args()
     tail = f"{args.year}_{args.month:02d}"
 
-    pack_index = json.loads((args.pack / "search-index.json").read_text(encoding="utf-8"))
+    # 11-20: 첫 색인 + 조각 색인(search-index-parts.json → search-index-2.json …)을 모두 읽는다.
+    index_names = ["search-index.json"]
+    if (args.pack / "search-index-parts.json").exists():
+        index_names += json.loads((args.pack / "search-index-parts.json").read_text(encoding="utf-8"))["parts"]
+    pack_entries = [entry for name in index_names for entry in json.loads((args.pack / name).read_text(encoding="utf-8"))["entries"]]
     figures = {}
-    for entry in pack_index["entries"]:
+    for entry in pack_entries:
         if entry.get("itemNumber"):
             figures[(entry["documentTitle"], entry["itemNumber"])] = bool(entry.get("figureCandidates"))
     synonyms = json.loads((DATA / "synonyms.json").read_text(encoding="utf-8"))["map"]

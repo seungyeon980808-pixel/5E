@@ -1704,3 +1704,16 @@
 .unified-library-overlay .unilib-folder-pick [data-fold][aria-selected="true"] { box-shadow: inset 2px 0 0 #b89a55; background: rgba(184,154,85,.08); }
 .unified-library-overlay .unilib-folder-pick .ufp-new { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--ds-line, #2b3442); }
 .unified-library-overlay .unilib-folder-pick .ufp-new input { width: 100%; box-sizing: border-box; height: 30px; padding: 0 8px; border: 1px solid var(--ds-line, #2b3442); border-radius: 7px; background: var(--ds-bg, #0d1117); color: var(--ds-ink, #e6edf3); font: inherit; font-size: 12.5px; }
+
+/* 11-20 시안 「시험지 통째로 변환」(태그 1·2·6): 아래 단추 줄 한 줄 전체 폭 단추 → 같은 자리 한 줄 확인. */
+.unified-library-overlay .unilib-actions > [data-unilib-whole],
+.unified-library-overlay .unilib-actions > .unilib-whole-confirm { grid-column: 1 / -1; }
+.unified-library-overlay .unilib-actions > [data-unilib-whole][hidden],
+.unified-library-overlay .unilib-actions > .unilib-whole-confirm[hidden] { display: none !important; }
+.unified-library-overlay .unilib-whole-confirm { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 3px 3px 3px 12px; border: 1px solid var(--ds-line-strong, var(--unilib-border)); border-radius: var(--ds-radius, var(--unilib-control-radius)); }
+.unified-library-overlay .unilib-whole-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.unified-library-overlay .unilib-whole-line { overflow: hidden; color: var(--ds-ink-2, var(--unilib-text)); font-size: 13px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.unified-library-overlay .unilib-whole-line b { color: var(--ds-ink, var(--unilib-text)); font-weight: 600; }
+.unified-library-overlay .unilib-whole-text small { overflow: hidden; color: var(--ds-ink-3, var(--unilib-muted)); font-size: 12px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.unified-library-overlay .unilib-whole-confirm button { flex: none; height: 30px; min-height: 30px; padding: 0 12px; border-radius: 6px; font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.unified-library-overlay .unilib-whole-cancel { border: 0; background: transparent; color: var(--ds-ink-2, var(--unilib-text)); }

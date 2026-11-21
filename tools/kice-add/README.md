@@ -22,7 +22,7 @@
 
 # 1. 공유 자료 묶음 늘리기(기존 드라이브 폴더는 읽기만, 결과는 새 폴더)
 node tools/pdf-library/extend-pack.mjs --pack "<드라이브 공유 폴더>" --spec spec.json --output <새 묶음 폴더>
-#    spec.json: {"version":"1.1.0","compactWordsDigits":3,"documents":[{"source":"…/p1_2027_11.pdf","destination":"기출문제/물리1/p1_2027_11.pdf","id":"kice-p1_2027_11"}, …]}
+#    spec.json: {"version":"1.2.0","documents":[{"source":"…/p1_2027_11.pdf","destination":"기출문제/물리1/p1_2027_11.pdf","id":"kice-p1_2027_11"}, …]}
 
 # 2. 시작용 목록
 LIBRARY_PACK_DIR=<새 묶음 폴더> node scripts/build-library-catalog-bootstrap.mjs
@@ -40,14 +40,19 @@ node scripts/build-library-tags.mjs
 EXAM_PDF_ROOT=<새 묶음 폴더> node data/exam-pdf/preconvert.cjs --only=_2027_11
 ```
 
-## 검색 색인 크기 한도 (중요)
+## 검색 색인 나눠 받기 (11-20부터)
 
-앱은 `search-index.json`을 32MiB(33,554,432바이트)까지만 받는다(`js/pdf-library/remote-pack.js` `MAX_JSON_BYTES`, 1.7.x 설치판도 같음).
-넘으면 라이브러리 본문 검색이 통째로 꺼진다(「본문 검색을 준비하지 못했습니다」).
-9월 묶음이 이미 33,460,729바이트였고, 2027 수능 8과목을 더하면 34.1MB가 된다.
-그래서 `compactWordsDigits: 3`으로 모든 줄 상자 좌표를 소수 셋째 자리로 줄여 33,180,641바이트(여유 약 37만 바이트)로 맞췄다.
-**다음 시험 하나(약 68만 바이트)는 이 방법으로도 들어가지 않는다.** 그 전에 앱 상한을 올리는 판을 먼저 내보내고
-(설치판이 그 판으로 바뀐 뒤) 묶음을 키우거나, 색인을 나누는 방법을 정해야 한다.
+앱은 JSON 파일 하나를 32MiB(33,554,432바이트)까지만 받는다(`js/pdf-library/remote-pack.js` `MAX_JSON_BYTES`).
+첫 색인 `search-index.json`은 2027 수능까지 넣고 33,180,641바이트라 더 넣을 수 없다(11-19에 줄 상자를 소수 셋째 자리로 줄여 맞춤).
+그래서 1.7.2부터 색인을 나눠 받는다(`js/pdf-library/search-index-parts.js`).
+
+- 첫 색인 `search-index.json`은 **바이트 그대로 둔다.** 1.7.1 이하 앱은 이것만 읽는다(조각에 든 시험만 본문 검색에 안 나오고, 목록·미리보기는 된다).
+- 새 시험의 항목은 조각 `search-index-2.json`, `search-index-3.json` …에 넣는다. 조각 목록은 `search-index-parts.json`
+  (`{"schemaVersion":"pdf-search-index-parts-v1","parts":["search-index-2.json"]}`)이고, 셋 다 `checksums.json`에 해시를 적는다.
+  `pack.json` 모양은 그대로다(옛 앱 pack-store가 정해진 칸만 남겨 해시를 맞추므로 칸을 더하면 안 된다).
+- 32MiB 한도는 조각마다다. `extend-pack.mjs`가 마지막 조각에 들어가면 거기에, 넘치면 새 조각을 만든다. 시험 하나는 약 67만 바이트.
+- 정적 거울(`data/exam-pdf/build-site.mjs`)은 색인 파일마다 `<이름>.parts.json` + `<이름>.part<n>`(16MB)으로 올린다.
+- 2027 9월 모평(11-20)이 첫 조각 `search-index-2.json`(671,204바이트)에 들어갔다.
 
 ## 자동으로 채운 것 · 확인한 것
 
@@ -58,9 +63,9 @@ EXAM_PDF_ROOT=<새 묶음 폴더> node data/exam-pdf/preconvert.cjs --only=_2027
 
 ## 올리기 (사용자 승인 뒤에만)
 
-1. 드라이브: 새 PDF 8개를 `기출문제/<과목>/`에 넣고, 묶음 파일 넷을 새것으로 바꾼다(옛 넷은 보관 폴더로).
+1. 드라이브: 새 PDF 8개를 `기출문제/<과목>/`에 넣고, 바뀐 묶음 파일(pack·checksums·catalog·조각 색인·조각 목록)을 새것으로 바꾼다(옛것은 보관 폴더로). 첫 색인은 바뀌지 않는다.
 2. 정적 거울 `5e-exam-pdf`: `data/exam-pdf/build-site.mjs` → `npx wrangler@4 deploy --config cloudflare/exam-pdf/wrangler.jsonc`.
-   **이 Worker는 올릴 때 파일 전체를 바꾼다.** `data/exam-pdf/q-kice/`에 기존 미리 변환 8,387개가 같이 있어야 지워지지 않는다.
+   **이 Worker는 올릴 때 파일 전체를 바꾼다.** `data/exam-pdf/q-kice/`에 기존 미리 변환(11-20 기준 8,707개)이 같이 있어야 지워지지 않는다.
 3. 그림 Worker `5e-images`: `node data/images/build-bundle.mjs` → `npx wrangler@4 deploy --config cloudflare/images/wrangler.jsonc`.
 4. 카드: exam-search 저장소에 `cards/*_2027_11_*.webp`를 커밋·푸시(github.io).
 5. 웹 배포(이 갈래를 합친 뒤).
