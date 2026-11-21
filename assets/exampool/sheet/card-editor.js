@@ -796,8 +796,9 @@ export function createCardEditor(root,api){
     const figs=m.figures?.length?`<div class="au-figs">${m.figures.map((f,j)=>`<div class="au-fig"><b>${f.kind==='graph'?'그래프':'그림'} · ${E(f.slot)}</b><p>${E(f.description)}</p><button type="button" class="mini go-mini" data-cvfig="${i}:${j}">${f.kind==='graph'?'그래프 만들기':'그림 만들기'}</button></div>`).join('')}</div>`:'';
     const meta=m.meta?.model?`<span class="au-meta">${E(m.meta.model)} · ${Math.round((m.meta.ms||0)/1000)}초${m.meta.live?'':' · 대역 응답'}</span>`:'';
     const legacy=m.suggestion?`<div class="suggest"><div class="sg-head">${E(m.suggestion.field)} · 제안</div><p>${E(m.suggestion.text)}</p><div class="sg-act"><button type="button" class="mini go-mini" data-ai-apply="${i}">적용</button></div></div>`:'';
-    // 연결 안 됨 안내에는 5E의 ChatGPT 연결 창을 여는 단추를 붙인다(카드 화면에는 로그인 단추가 따로 없음).
-    const login=m.error&&/ChatGPT 로그인/.test(m.text||'')?`<div class="sg-act ai-login"><button type="button" class="mini go-mini" data-cv="ai-login">ChatGPT 로그인</button></div>`:'';
+    // 연결 안 됨 안내에는 5E의 연결 화면(설치 안내·GPT 로그인)을 여는 단추를 붙인다(카드 화면에는 로그인 단추가 따로 없음).
+    // 11-22: 설치·로그인이 없어 멈춘 요청(need)은 이 단추로 연결 화면을 다시 열고, 연결되면 같은 요청을 이어서 보낸다.
+    const login=m.error&&(m.need||/ChatGPT 로그인/.test(m.text||''))?`<div class="sg-act ai-login"><button type="button" class="mini go-mini" data-cv="ai-login">${m.need?'연결 화면 열기':'ChatGPT 로그인'}</button></div>`:'';
     return `<div class="msg ai${m.error?' err':''}${m.stale?' old':''}">${E(m.text)}${login}${questions}${items}${notes}${proposal}${legacy}${figs}${ev}${meta}</div>`;
   }
   function renderAi(){
@@ -950,7 +951,7 @@ export function createCardEditor(root,api){
     if(d.aiQuick){const kind=d.aiQuick==='검토해 줘'?'review':d.aiQuick==='새 문항 초안'?'draft':'chat';api.ai(x,{kind,text:d.aiQuick==='새 문항 초안'?'지금까지 정한 요구사항으로 새 문항 초안을 만들어 줘. 정하지 않은 것은 가정으로 남겨 줘.':d.aiQuick});return;}
     if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;input.value='';aiDrafts.delete(x.id);api.ai(x,{kind:/^검토/.test(text)?'review':'chat',text});return;}
     if(d.cv==='ai-cancel'){api.cancelAi?.(x);return;}
-    if(d.cv==='ai-login'){api.login?.();return;}
+    if(d.cv==='ai-login'){api.login?.(x);return;}
     if(d.cvprop){api.proposal?.(x,d.cvprop,d.act);return;}
     if(d.cvrevert!==undefined){api.revert?.(x,Number(d.cvrevert));return;}
     if(d.cvfig){const [i,j]=d.cvfig.split(':').map(Number),f=x.reviews?.[i]?.figures?.[j];if(f)api.figure?.(x,f);return;}

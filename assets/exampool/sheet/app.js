@@ -534,6 +534,9 @@ function markQueued(root=document){
   for(const b of root.querySelectorAll('[data-cvconvert]')){const id=b.dataset.cvconvert,k=pastQueued(id),f=b.closest('figure.past');
     if(k){b.dataset.queued='true';b.textContent='빼기';b.title='줄에서 빼기';if(f){f.dataset.wait='true';const o=f.querySelector('.past-wait');const t=`차례 기다림 · ${k}번째`;if(o)o.querySelector('span').textContent=t;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',`<div class="past-busy past-wait" role="status"><span>${t}</span></div>`);}}
     else if(b.dataset.queued){delete b.dataset.queued;if(!b.hasAttribute('aria-busy'))b.textContent='변형';b.title='편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)';if(f){delete f.dataset.wait;f.querySelector('.past-wait')?.remove();}}}}
+// 11-22: 기출 정답(science-answers.json, 라이브러리 정답 형광과 같은 자료)을 카드 정답 칸 번호(0~4)로. 정답표 번호는 1~5, 여러 개면 첫째, []·null·범위 밖이면 null.
+export function answerIndexOf(acc){const n=Array.isArray(acc)?Number(acc[0]):NaN;return Number.isInteger(n)&&n>=1&&n<=5?n-1:null;}
+async function pastAnswerIndex(item){try{const {loadAnswerBook,acceptedAnswers}=await import('../answers/answers.js?v=1107');return answerIndexOf(acceptedAnswers(await loadAnswerBook(),item.pdfFile,item.no));}catch{return null;}}
 async function convertPast(item,{go=false,row:given=null,whole=null}={}){
   const row=given||pastBatch?.rows.find(r=>r.id===item.id&&r.state==='wait');
   if(data.questions.length>=500){if(row){row.state='fail';row.error='문항은 500개까지 만들 수 있습니다.';}status('문항은 500개까지 만들 수 있습니다.',true);return;}
@@ -555,6 +558,7 @@ async function convertPast(item,{go=false,row:given=null,whole=null}={}){
     const {question:q,diag}=converted;
     q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];if(!q.source||q.source===item.title)q.source=`기출 변형 · ${item.title}`.slice(0,300);
     q.workflow='draft';
+    if(!Number.isInteger(q.answer)&&q.type!=='서술형'){const a=await pastAnswerIndex(item);if(a!=null)q.answer=a;}// 11-22: 라이브러리가 형광으로 보여 주는 정답을 카드에도
     pastStage('카드 여는 중');
     const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);if(whole){placeWhole(whole,q,row);return;}const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
     if(!ok){if(whole&&row)await wholeImage(row,'시험지에 넣지 못했습니다');return;}
@@ -600,6 +604,7 @@ function wholeImageQuestion(run,row,figure){const q=newQuestion('0','객관식',
 async function singleImage(item,row,go,error){
   const figure=await wholeFigureData(await pastQuestionData(item));if(!figure)return false;
   const q=wholeImageQuestion({title:item.title},{title:item.title,whole:{no:item.no}},figure);
+  {const a=await pastAnswerIndex(item);if(a!=null)q.answer=a;}// 11-22: 그림으로 넣어도 라이브러리가 아는 정답은 카드에
   const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
   if(!ok)return false;
   pastIdle();if(row){row.state='image';row.error=`한글로 바꾸지 못했습니다 · ${error.message}`;row.qid=q.id;row.imageQid=q.id;row.number=q.number;}
@@ -785,7 +790,7 @@ async function saveExamFile(exam){try{
 }catch(e){if(e?.name==='AbortError'){status('');return;}status('시험지 파일을 저장하지 못했습니다: '+e.message,true);}}
 function fileData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('파일을 읽지 못했습니다.'));r.readAsDataURL(file);});}
 $('#figure-file').onchange=async()=>{const file=$('#figure-file').files[0],owner=imageTarget;if(!file||!owner)return;try{if(file.size>5*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('5 MB 이하의 PNG·JPEG·WebP 그림을 선택하세요.');const value=await fileData(file),image=await loadImage(value);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('그림 크기를 줄여주세요.');const figure={name:file.name,data:value,width:image.naturalWidth,height:image.naturalHeight};if(file.type==='image/png'&&embedded){window.parent.postMessage({channel:'5e-question-sheet',action:'read-figure',qid:owner.qid,key:owner.key,figure},OWN);return;}mutate(()=>{const q=data.questions.find(q=>q.id===owner.qid),holder=imageHolder(q,owner.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=figure;});}catch(e){status(e.message,true);}finally{$('#figure-file').value='';imageTarget=null;}};
-window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;if(m.error){if(m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;}status(m.error,true);return;}if(m.action==='handoff-ready'&&m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;status('한글로 보내기 완료'+(m.warnings?.length?' · '+m.warnings.join(' '):''));return;}if(m.action==='pick-cancelled'){status('그림 가져오기를 취소했습니다.');return;}if(m.action==='figure-ready'){/* 11-14 3차 37: 열린 조판 문서에 같은 그림 자리가 있으면 그 그림만 바꿔 끼워 문서 전체 다시 조판(버벅임)을 피한다 */const swap=String(m.key||'').startsWith('block:')&&typesetter?.questionId===m.qid?typesetter.swapFigure?.(m.key.slice(6),m.figure):null;Promise.resolve(swap).catch(()=>false).then(()=>mutate(()=>{const q=data.questions.find(q=>q.id===m.qid),holder=q&&imageHolder(q,m.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=m.figure;}));}});
+window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;if(m.error&&!/^author-/.test(m.action||'')){if(m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;}status(m.error,true);return;}if(m.action==='handoff-ready'&&m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;status('한글로 보내기 완료'+(m.warnings?.length?' · '+m.warnings.join(' '):''));return;}if(m.action==='pick-cancelled'){status('그림 가져오기를 취소했습니다.');return;}if(m.action==='figure-ready'){/* 11-14 3차 37: 열린 조판 문서에 같은 그림 자리가 있으면 그 그림만 바꿔 끼워 문서 전체 다시 조판(버벅임)을 피한다 */const swap=String(m.key||'').startsWith('block:')&&typesetter?.questionId===m.qid?typesetter.swapFigure?.(m.key.slice(6),m.figure):null;Promise.resolve(swap).catch(()=>false).then(()=>mutate(()=>{const q=data.questions.find(q=>q.id===m.qid),holder=q&&imageHolder(q,m.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=m.figure;}));}});
 if(embedded){$('#handoff').hidden=false;$('#handoff').onclick=async()=>{if(!current||handoffRequest)return;try{const question=handoffQuestion(current);const {typesetMatches,LAYOUT_VERSION}=await import('./typeset-model.js?v=1014-compact-panel');if(!current.typeset||current.typeset.layoutVersion!==LAYOUT_VERSION||!await typesetMatches(current.typeset,current))throw Error('문항 조판을 열어 확인하고 조판 저장을 누른 뒤 보내세요.');await saveQueue;const requestId=uid();handoffRequest=requestId;$('#handoff').disabled=true;status('선택 문항을 한글로 보내는 중…');window.parent.postMessage({channel:'5e-question-sheet',action:'handoff',requestId,packet:{format:FORMAT,version:2,question,typeset:current.typeset}},OWN);}catch(e){status(e.message,true);}};$('#return').onclick=async()=>{await saveQueue.catch(()=>{});window.parent.postMessage({channel:'5e-question-sheet',action:'close'},OWN);};}
 $('#example').onclick=async()=>{try{const v=validate(await(await fetch(new URL('./examples.json',import.meta.url))).json());mutate(()=>{const qs=v.questions.map(duplicateQuestion);data.questions.push(...qs);current=qs[0];activeTab='composition';});}catch(e){status(e.message,true);}};
 // Reference pane is deliberately closed until requested.
@@ -1543,7 +1548,7 @@ const cardEditor=createCardEditor($('#card-view'),{
   columnPreview:q=>columnPreview(q),find:id=>data.questions.find(x=>x.id===id)||null,
   pageSheets:async(q,options)=>{await new Promise(r=>{if(!whenSheetShown(r))r();});if(options?.alive&&!options.alive())throw Object.assign(new Error('cancelled'),{cancelled:true});typesetter||=makeTypesetter();const exam=examOf(data,q.id);return {title:exam?exam.title:'문항 보관함 · 이 문항만',...await typesetter.pageSheets(data,exam,q.id,options)};},
   pagePlan:async q=>{const exam=examOf(data,q.id);if(!exam)return {title:'문항 보관함 · 이 문항만',pages:[{columns:[[q.id],[]]}]};const {examPlan}=await import('./exam-layout.js');const {pages}=examPlan(data,exam);return {title:exam.title,pages:pages.length?pages:[{columns:[[q.id],[]]}]};},
-  cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),login:()=>window.parent.postMessage({channel:'5e-question-sheet',action:'login'},OWN),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
+  cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),login:q=>window.parent.postMessage({channel:'5e-question-sheet',action:'login',...(q?{qid:q.id,resume:true}:{})},OWN),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
 // ── 아이디어 판 ──
@@ -1639,9 +1644,10 @@ function teacherEditsSince(q){const h=q.authoring?.history||[],lastAi=[...h].rev
 function authoringSummary(q){const a=q.authoring;return {revision:a.revision,target:a.target,requirements:a.requirements,issues:a.issues.filter(i=>i.status==='open').map(i=>i.text).slice(-12),
   stale:a.stale.map(s=>`${labelOf(q,s.target)}: ${s.reason}`),axes:Object.fromEntries(Object.entries(a.review.axes).map(([k,v])=>[AXIS_LABEL[k],v.status])),
   recentHistory:a.history.slice(-5).map(h=>`버전 ${h.revision} (${({ai:'AI 변경안',teacher:'직접 수정',revert:'되돌리기',import:'시작'})[h.by]}): ${h.summary}`)};}
-async function askAi(q,{kind,text}){
+async function askAi(q,{kind,text,resume=false}){
   const qid=q.id;if(view.name==='card')cardEditor.showAi?.();
-  mutate(()=>{ensureAuthoring(q);(q.reviews ||= []).push({role:'me',text,at:nowIso(),kind});if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);},{render:false});
+  // resume: 연결 뒤 같은 요청을 다시 보낼 때는 내 말풍선을 또 쌓지 않는다.
+  mutate(()=>{ensureAuthoring(q);if(!resume)(q.reviews ||= []).push({role:'me',text,at:nowIso(),kind});if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);},{render:false});
   if(view.name==='card')cardEditor.refreshAi?.();
   if(!embedded){mutate(()=>{q.reviews.push({role:'ai',text:'5E 안에서 열어야 AI 출제 대화를 쓸 수 있습니다.',at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
   await syncAuthoring(qid,{by:'teacher'});
@@ -1654,7 +1660,7 @@ async function askAi(q,{kind,text}){
   window.parent.postMessage({channel:'5e-question-sheet',action:'author',requestId:req.requestId,qid,packet},OWN);
 }
 function cancelAi(q){for(const [id,req] of authorRequests)if(req.qid===q.id){cancelledAuthor.add(id);window.parent.postMessage({channel:'5e-question-sheet',action:'author-cancel',cancelId:id},OWN);}cardEditor.refreshAi?.();}
-const aiPending=q=>{const r=[...authorRequests.values()].find(r=>r.qid===q.id&&!cancelledAuthor.has(r.requestId));if(!r)return null;const p=r.progress||{};return {since:r.at,text:p.stage==='evidence'?`근거 DB에서 ${p.count}건 찾는 중…`:p.stage==='rewrite'?'찾은 근거로 답을 다시 쓰는 중…':p.round>1?'형식을 고쳐 다시 받는 중…':'AI가 답을 쓰는 중…'};};
+const aiPending=q=>{const r=[...authorRequests.values()].find(r=>r.qid===q.id&&!cancelledAuthor.has(r.requestId));if(!r)return null;const p=r.progress||{};return {since:r.at,text:p.stage==='reconnect'?`AI에 다시 연결하는 중${p.attempt&&p.total?` ${p.attempt}/${p.total}`:''}…`:p.stage==='evidence'?`근거 DB에서 ${p.count}건 찾는 중…`:p.stage==='rewrite'?'찾은 근거로 답을 다시 쓰는 중…':p.round>1?'형식을 고쳐 다시 받는 중…':'AI가 답을 쓰는 중…'};};
 async function receiveAuthor(m){
   const req=authorRequests.get(m.requestId);if(!req)return;authorRequests.delete(m.requestId);
   const found=data.questions.find(x=>x.id===req.qid),currentHash=found&&req.contentHash?(await reviewVersion(found)).version:null;
@@ -1662,7 +1668,11 @@ async function receiveAuthor(m){
   if(verdict==='duplicate')return;
   if(verdict==='gone'){status('AI 답이 왔지만 그 문항이 없어 반영하지 않았습니다.',true);return;}
   if(verdict==='cancelled'){mutate(()=>{q.reviews.push({role:'ai',text:'요청을 취소했습니다. 늦게 온 답은 반영하지 않았습니다.',at:nowIso(),requestId:req.requestId,error:true});},{render:false});cardEditor.refreshAi?.();return;}
-  if(m.error){mutate(()=>{q.reviews.push({role:'ai',text:m.error,at:nowIso(),requestId:req.requestId,error:true});},{render:false});cardEditor.refreshAi?.();return;}
+  // 11-22(결함 10·11): 설치·로그인이 없어 못 한 요청은 짧은 안내 + 「연결 화면 열기」(need). 연결 화면은 본창이 이미 띄웠고, 연결되면 같은 요청을 다시 보낸다.
+  // 오류는 이 말풍선에만 둔다(아래 상태 줄·오른쪽 아래 알림에 같은 글을 또 띄우면 AI 입력 칸을 덮었다).
+  if(m.error){const need=['install','login'].includes(m.need)?m.need:'',what=req.kind==='review'?'검토':'요청';
+    const text=need==='install'?`이 컴퓨터에 Codex 프로그램이 없어 ${what}를 시작하지 못했습니다. 연결 화면에서 설치한 뒤 「다시 찾기」를 누르면 이어서 ${what}합니다.`:need==='login'?`GPT 로그인이 필요합니다. 연결 화면에서 로그인하면 이어서 ${what}합니다.`:m.error;
+    mutate(()=>{q.reviews.push({role:'ai',text,at:nowIso(),requestId:req.requestId,error:true,...(need?{need}:{})});},{render:false});cardEditor.refreshAi?.();return;}
   const {response,evidence=[],searches=[],meta={}}=m.result||{};
   if(!response){mutate(()=>{q.reviews.push({role:'ai',text:'AI 답을 읽지 못했습니다.',at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
   const evidenceMap=new Map(evidence.map(e=>[e.ref,{kind:{curriculum:'curriculum',past:'past',claim:'paper',textbook:'textbook'}[e.kind]||'other',title:String(e.title||'').slice(0,600),ref:e.ref,quote:String(e.quote||'').slice(0,6000),page:Number.isInteger(e.page)&&e.page>0?e.page:null,sha256:/^[a-f0-9]{64}$/.test(e.sha256||'')?e.sha256:null,bbox:Array.isArray(e.bbox)&&e.bbox.length===4&&e.bbox.every(Number.isFinite)?e.bbox:null}]));
@@ -1754,6 +1764,9 @@ async function revertAuthoring(q,revision){
   if(mutate(()=>{restoreRevision(q,revision);}))void syncAuthoring(q.id,{by:'revert',summary:`버전 ${revision}으로 되돌림`});
 }
 // 출제 답은 같은 원점 + 이 창이 만든 요청 ID일 때만 받는다(WebKit은 비동기 응답의 e.source가 부모 창이 아닐 수 있다).
+// 11-22: 연결 화면에서 설치·로그인을 마치면 본창이 알린다 — 그 문항의 마지막 요청을 같은 내용으로 다시 보낸다(이미 기다리는 요청이 있으면 그대로 둔다).
+window.addEventListener('message',e=>{if(!fromOwn(e)||e.source!==window.parent||e.data?.channel!=='5e-question-sheet'||e.data.action!=='author-resume')return;
+  const q=data.questions.find(x=>x.id===e.data.qid);if(!q||aiPending(q))return;const last=[...(q.reviews||[])].reverse().find(m=>m.role==='me');if(last)void askAi(q,{kind:last.kind||'chat',text:last.text,resume:true});});
 window.addEventListener('message',e=>{if(!fromOwn(e)||e.data?.channel!=='5e-question-sheet'||!authorRequests.has(e.data.requestId))return;
   if(e.data.action==='author-progress'){authorRequests.get(e.data.requestId).progress=e.data.progress;cardEditor.refreshAi?.();return;}
   if(e.data.action==='author-ready')receiveAuthor(e.data);});
