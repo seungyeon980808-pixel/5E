@@ -292,11 +292,12 @@ export function initDesktopAccountBadge({ openAi }) {
   badge.setAttribute('aria-haspopup', 'dialog'); badge.setAttribute('aria-expanded', 'false');
   const render = state => {
     badge.dataset.state = state;
-    const title = state === 'connected' ? 'AI 연결됨 · 눌러서 연결 관리' : state === 'missing' ? 'Codex 프로그램이 없음 · 눌러서 설치 안내' : 'AI 연결 안 됨 · 눌러서 GPT 로그인';
+    const title = state === 'connected' ? 'AI 연결됨 · 눌러서 연결 관리' : state === 'offline' ? '인터넷 연결 없음 · AI를 쓸 수 없어요' : state === 'missing' ? 'AI 연결 안 됨 · 눌러서 GPT 로그인(처음 한 번 Codex 설치)' : 'AI 연결 안 됨 · 눌러서 GPT 로그인';
     if (badge.getAttribute('aria-expanded') !== 'true') badge.title = title; // 카드가 열려 있으면 말풍선은 닫힐 때 되살린다
     badge.setAttribute('aria-label', title);
   };
-  const stateOf = status => (status?.installed === false || status?.login?.installed === false) ? 'missing' : status?.login?.loggedIn ? 'connected' : 'idle';
+  // 11-22: 로그인만 보고 초록이던 것 — 인터넷이 끊겼으면 로그인되어 있어도 회색(오프라인)으로.
+  const stateOf = status => (status?.installed === false || status?.login?.installed === false) ? 'missing' : status?.login?.loggedIn ? (navigator.onLine === false ? 'offline' : 'connected') : 'idle';
   const refresh = async () => { try { render(stateOf(await desktop.status())); } catch { render('idle'); } };
   const card = createDesktopAccountCard({ desktop, badge, onAuthChanged: kind => {
     void refresh();
@@ -312,6 +313,8 @@ export function initDesktopAccountBadge({ openAi }) {
   window.addEventListener('5e:web-login-request', event => openLogin(typeof event.detail?.resumeAi === 'function' ? event.detail.resumeAi : null));
   desktop.onState?.(() => void refresh());
   window.addEventListener('focus', () => void refresh());
+  window.addEventListener('online', () => void refresh());
+  window.addEventListener('offline', () => void refresh());
   void refresh();
   return { refresh };
 }

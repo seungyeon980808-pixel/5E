@@ -5,6 +5,7 @@
 //     예전 「작업 복구 / 새로 시작」 확인창 대신 여기서 고른다(autosave.js의 chooseStart).
 //  검사 브라우저(navigator.webdriver)·출제/조판 안쪽 화면·모바일에서는 띄우지 않는다(?start=1이면 강제로, ?start=0이면 끔).
 import { IS_MAC } from './platform.js?v=1.7.0-four-session-integration';
+import { mountStartUpdateButton } from './app-update-ui.js?v=1.7.0-four-session-integration';
 
 const WORDS = [['sci', 'nce'], ['', 'ducational'], ['', 'valuation'], ['', 'xam'], ['', 'ditor']];
 // 11-14 사용자: 로딩을 6초 → 7초로(「조금 더 늘려도 된다」) — 미리 준비할 시간을 주고, 할 일이 적어도 들어간 뒤 버벅임의 완충지대가 되게. 단계마다 무엇을 하는지 보인다.
@@ -190,7 +191,9 @@ export function createStartScreen({ desktopReleaseUrl = '', lite = false } = {})
       const versions = Object.values(json?.channels || {}).map(c => c?.version).filter(v => /^\d+\.\d+\.\d+$/.test(v || ''));
       return versions.sort((a, b) => newer(a, b) ? -1 : 1)[0] || '';
     });
-  if (current) latestVersion().then(latest => {
+  // 11-22 시안(설치-업데이트): 설치판에 앱 안 업데이트가 있으면 그 단추(업데이트 → 받는 중 % → 다시 시작해 업데이트)를 쓴다.
+  const inAppUpdate = Boolean(globalThis.fiveEDesktop) && mountStartUpdateButton({ desktop: globalThis.fiveEDesktop, host: root.querySelector('.ss-foot'), fallbackUrl: desktopReleaseUrl });
+  if (current && !inAppUpdate) latestVersion().then(latest => {
     if (!latest || !newer(latest, current)) return;
     const ver = root.querySelector('.ss-ver');
     if (!ver) return;

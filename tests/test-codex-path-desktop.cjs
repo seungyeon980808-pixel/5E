@@ -79,8 +79,8 @@ test('codex가 없으면 「로그인 필요」가 아니라 한국어 설치 �
     install: document.querySelector('#ai-image-panel [data-ai-codex-install]')?.textContent || '',
     body: document.querySelector('#ai-image-panel')?.innerText || '',
   }));
-  assert.match(text.install, /brew install --cask codex/);
-  assert.match(text.install, /npm i -g @openai\/codex/);
+  assert.match(text.install, /chatgpt\.com\/codex\/install\.ps1/); // 11-22: 공식 설치 명령(윈도우·맥)
+  assert.match(text.install, /chatgpt\.com\/codex\/install\.sh/);
   assert.match(text.install, /다시 찾기/);
   assert.doesNotMatch(text.body, /Error invoking remote method|spawn codex ENOENT/);
   assert.doesNotMatch(text.status, /ChatGPT 로그인 필요/);

@@ -124,6 +124,26 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   logout: () => ipcRenderer.invoke("codex:logout"),
   // PATHFIX(11-20): codex를 다시 찾기(설치한 뒤 「다시 찾기」) · AI 오류 기록 남기기/열기
   locateCodex: () => ipcRenderer.invoke("codex:locate"),
+  // 11-22: Codex가 없으면 바로 설치(공식 설치 명령, 창 없이) · 취소 · 단계 알림(download → install → done)
+  installCodex: () => ipcRenderer.invoke("codex:install"),
+  // 11-22: 앱 안 업데이트(확인 · 받기 · 다시 시작해 바꾸기 · 취소 · 상태 알림)
+  appUpdate: {
+    check: () => ipcRenderer.invoke("app-update:check"),
+    start: () => ipcRenderer.invoke("app-update:start"),
+    installNow: () => ipcRenderer.invoke("app-update:install-now"),
+    cancel: () => ipcRenderer.invoke("app-update:cancel"),
+    onState: (callback) => {
+      const listener = (_, value) => callback(value);
+      ipcRenderer.on("app-update:state", listener);
+      return () => ipcRenderer.removeListener("app-update:state", listener);
+    },
+  },
+  cancelInstallCodex: () => ipcRenderer.invoke("codex:install-cancel"),
+  onInstallStep: (callback) => {
+    const listener = (_, value) => callback(value);
+    ipcRenderer.on("codex:install-step", listener);
+    return () => ipcRenderer.removeListener("codex:install-step", listener);
+  },
   diagnostics: {
     logError: (entry) => ipcRenderer.invoke("diagnostics:log-error", entry),
     openLog: () => ipcRenderer.invoke("diagnostics:open-log"),

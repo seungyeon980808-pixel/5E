@@ -3483,3 +3483,13 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 .ai-codex-install-cmd code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:10.5px; padding:1px 5px; border-radius:4px; background:var(--bg-subtle, rgba(127,127,127,.12)); user-select:all; }
 .ai-codex-install-note:empty { display:none; }
 .ai-codex-install-actions { display:flex; gap:6px; margin-top:2px; }
+/* 11-22 시안(설치-업데이트) 5번: 작업대 안 자동 설치 — 설치 안내 칸을 「AI 연결 준비 중」으로 */
+.ai-codex-install[data-mode="auto"] > :not(.ai-codex-auto) { display:none; }
+.ai-codex-auto { display:flex; flex-direction:column; gap:4px; }
+.ai-codex-auto p { margin:0; color:var(--text-secondary, #8b95a5); }
+.ai-codex-steps { display:flex; flex-direction:column; gap:4px; margin:4px 0; color:var(--text-secondary, #8b95a5); }
+.ai-codex-steps > div { display:flex; align-items:center; gap:7px; }
+.ai-codex-steps .done { color:#7ee2a8; }
+.ai-codex-steps .on { color:var(--text-primary, #e6edf3); }
+.ai-codex-steps .on i { display:inline-block; animation:dac-spin .9s linear infinite; }
+.ai-codex-steps i { width:12px; text-align:center; font-style:normal; }

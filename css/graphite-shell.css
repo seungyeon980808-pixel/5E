@@ -977,3 +977,18 @@
 .dac-confirm-acts { display: flex; justify-content: flex-end; gap: 8px; }
 .dac-confirm-acts .dac-btn { height: 32px; padding: 0 14px; border: 1px solid var(--border, #262c34); border-radius: 7px; background: var(--bg-input, #0d1117); color: var(--text-primary, #e6edf3); font: inherit; font-size: 12.5px; cursor: pointer; }
 .dac-confirm-acts .dac-btn.is-red { border-color: transparent; background: #da3633; color: #fff; font-weight: 600; }
+/* 11-22 시안(설치-업데이트): Codex 설치 단계 · 5E 버전 줄 */
+.desktop-account-card .dac-steps { display: flex; flex-direction: column; gap: 6px; margin: 2px 0 8px; font-size: 12px; color: var(--text-secondary, #7d8590); }
+.desktop-account-card .dac-steps > div { display: flex; align-items: center; gap: 8px; }
+.desktop-account-card .dac-steps .done { color: #7ee2a8; }
+.desktop-account-card .dac-steps .on { color: var(--text-primary, #e6edf3); }
+.desktop-account-card .dac-steps i { width: 14px; display: inline-flex; justify-content: center; font-style: normal; }
+.desktop-account-card .dac-steps .dac-spin { border-color: var(--text-primary, #e6edf3); border-top-color: transparent; }
+.desktop-account-card .dac-ver { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--text-secondary, #7d8590); }
+.desktop-account-card .dac-ver b { color: var(--text-primary, #e6edf3); font-weight: 600; }
+.desktop-account-card .dac-ver .dac-btn { height: 26px; padding: 0 10px; font-size: 12px; }
+.desktop-account-card .dac-ver-bar { flex: 1; max-width: 110px; height: 4px; border-radius: 2px; background: #222b37; overflow: hidden; }
+.desktop-account-card .dac-ver-bar i { display: block; height: 100%; background: #e6edf3; transition: width .3s; }
+.desktop-account-card .dac-ver-pct { min-width: 32px; text-align: right; }
+.desktop-account-card .dac-limit-lbl b.is-credit { color: #d29922; }
+.desktop-account-card .dac-credit { margin: 10px 0 0; }

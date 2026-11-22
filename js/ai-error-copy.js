@@ -3,7 +3,7 @@
 // 이 머리말을 걷어 내고, main(desktop/codex-binary.cjs)이 붙인 고정 표식 [CODEX_…]이나 알려진 원문을 코드로 읽어 안내 글로 바꾼다.
 // 원문은 detail로 남겨 오류 기록(ai-turns.log·화면 오류 기록)에 들어가게 한다.
 
-export const CODEX_INSTALL_COMMANDS = Object.freeze({ mac: 'brew install --cask codex', npm: 'npm i -g @openai/codex' });
+export const CODEX_INSTALL_COMMANDS = Object.freeze({ mac: 'curl -fsSL https://chatgpt.com/codex/install.sh | sh', windows: 'powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"', npm: 'npm i -g @openai/codex' });
 
 const IPC_PREFIX = /^\s*(?:Error invoking remote method '[^']*':\s*)+(?:[A-Za-z]*Error:\s*)?/;
 const MARKER = /^\s*\[(CODEX_[A-Z_]+)\]\s*/;

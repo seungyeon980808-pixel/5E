@@ -10,7 +10,7 @@ const { pathToFileURL } = require('node:url');
 
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const channels = ['clipboard:read-image', 'codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
-  'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'codex:login-cancel', 'codex:logout', 'codex:locate', 'diagnostics:log-error', 'diagnostics:open-log', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
+  'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'codex:login-cancel', 'codex:logout', 'codex:locate', 'codex:install', 'codex:install-cancel', 'app-update:check', 'app-update:start', 'app-update:install-now', 'app-update:cancel', 'diagnostics:log-error', 'diagnostics:open-log', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
   'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence','exam-files:autosave','exam-files:read-latest','exam-files:save','exam-files:open','exam-files:reveal','exam-files:folder','exam-files:open-folder','project:renderer-ready'];
 const pdfLibraryChannels=['pdf-library:pick-folder','pdf-library:ensure-default-folder','pdf-library:connections','pdf-library:folder-tree','pdf-library:set-folder-selection','pdf-library:disconnect','pdf-library:sync','pdf-library:cancel','pdf-library:list','pdf-library:read','pdf-library:read-image','pdf-library:open-folder','pdf-library:reveal-item','pdf-library:save-index','pdf-library:load-index','pdf-library:index-state','pdf-library:save-index-state','pdf-library:retry-index','pdf-library:list-corrections','pdf-library:save-correction','pdf-library:delete-correction','pdf-library:capabilities','pdf-library:bundled-pack','pdf-library:read-bundled-pack'];
 const auxChannels=['exam:request-edit','exam:get-names','exam:return-source','exam:ack','exam:workspace-snapshot','exam:workspace-restore','exam:project-snapshot-reply','exam:annotations'];
@@ -132,6 +132,10 @@ for (const channel of [...channels, ...pdfLibraryChannels]) {
       case 'codex:login-cancel': assert.deepEqual(result, { ok: true, running: false }); break;
       case 'codex:logout': assert.equal(typeof result.ok, 'boolean'); break;
       case 'codex:locate': assert.equal(result.found, true); assert.equal(result.via, 'env-override'); break;
+      case 'codex:install': assert.deepEqual({ ok: result.ok, already: result.already }, { ok: true, already: true }); break; // 이미 있으면 설치하지 않는다
+      case 'codex:install-cancel': assert.deepEqual(result, { ok: true, running: false }); break;
+      case 'app-update:check': assert.equal(result.available, false); break; // 설치판이 아니면 네트워크 없이 건너뛴다
+      case 'app-update:start': case 'app-update:install-now': case 'app-update:cancel': assert.equal(typeof result, 'object'); break;
       case 'diagnostics:log-error': assert.deepEqual(result, { ok: true }); break;
       case 'diagnostics:open-log': assert.equal(result.ok, true); assert.ok(h.effects.includes('open-log')); break;
       case 'codex:send': assert.equal(result.turnId, 'turn'); break;

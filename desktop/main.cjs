@@ -796,6 +796,8 @@ const codexBinary = createCodexResolver({
   log: entry => appendAiTurnLog(entry),
 });
 function codexInvocation(args) { return codexBinary.invocation(args); }
+// 11-22: Codex가 없으면 묻지 않고 공식 설치 명령으로 설치한다(로그인·AI 기능을 누를 때). 끝나면 다시 찾아 결과를 돌려준다.
+const codexInstaller = require("./codex-install.cjs").createCodexInstaller({ log: entry => appendAiTurnLog(entry) });
 // 실행 파일을 못 찾았거나(ENOENT) 실행이 안 되면 기억을 비우고 한 번 다시 찾는다(앱을 켠 채 설치한 경우).
 async function runCodexOnce(args, options = {}) {
   for (let attempt = 0; ; attempt += 1) {
@@ -2067,6 +2069,46 @@ handleTrustedIpc("codex:locate", async () => {
   const found = await codexBinary.resolve({ force: true });
   return found ? { found: true, path: found.path, via: found.via } : { found: false, code: CODEX_ERROR_CODES.NOT_FOUND };
 });
+// 11-22: Codex 자동 설치 — 이미 있으면 설치하지 않고 바로 알린다. 단계는 codex:install-step으로 보낸다.
+handleTrustedIpc("codex:install", async () => {
+  codexBinary.invalidate();
+  const before = await codexBinary.resolve({ force: true });
+  if (before) return { ok: true, already: true, path: before.path };
+  // 검사 스위치(FIVE_E_CODEX_PATH)로 「없는 codex」를 흉내 낼 때는 이 컴퓨터에 진짜로 설치하지 않는다.
+  if (process.env.FIVE_E_CODEX_PATH) return { ok: false, code: "CODEX_INSTALL_UNSUPPORTED", message: "검사 중에는 Codex를 설치하지 않아요." };
+  const result = await codexInstaller.install({ onStep: info => send("codex:install-step", info) });
+  if (!result.ok) return result;
+  codexBinary.invalidate();
+  const found = await codexBinary.resolve({ force: true });
+  if (!found) return { ok: false, code: "CODEX_INSTALL_NOT_FOUND", message: "설치는 끝났는데 Codex를 찾지 못했어요. 5E를 다시 켜 주세요.", elapsedMs: result.elapsedMs };
+  send("codex:state", { state: "stopped" });
+  return { ok: true, path: found.path, elapsedMs: result.elapsedMs };
+});
+handleTrustedIpc("codex:install-cancel", () => codexInstaller.cancel());
+// 11-22 시안(설치-업데이트): 앱 안 업데이트 — 윈도우는 electron-updater, 맥은 받은 새 5E.app으로 바꿔 넣기(옛 앱은 휴지통).
+// 확인은 창마다 한 번만(GitHub 공개 API 한도 시간당 60회). 상태는 app-update:state로 알린다.
+let appUpdaterInstance = null;
+let appUpdateChecked = null;
+function appUpdater() {
+  if (!appUpdaterInstance) {
+    const { createAppUpdater } = require("./app-updater.cjs");
+    appUpdaterInstance = createAppUpdater({
+      app, shell,
+      log: entry => appendAiTurnLog(typeof entry === "object" && entry ? { event: "app-update", ...entry } : { event: "app-update", message: String(entry).slice(0, 300) }),
+      send: (channel, payload) => { if (win && !win.isDestroyed()) win.webContents.send(channel, payload); },
+    });
+  }
+  return appUpdaterInstance;
+}
+handleTrustedIpc("app-update:check", async () => {
+  const updater = appUpdater();
+  if (!appUpdateChecked) appUpdateChecked = updater.check().finally(() => setTimeout(() => { appUpdateChecked = null; }, 30 * 60_000).unref?.());
+  const result = await appUpdateChecked;
+  return { ...result, ...(["downloading", "verifying", "ready", "opened"].includes(updater.state()?.state) ? { state: updater.state().state } : {}) };
+});
+handleTrustedIpc("app-update:start", () => appUpdater().start());
+handleTrustedIpc("app-update:install-now", () => appUpdater().installNow());
+handleTrustedIpc("app-update:cancel", () => appUpdater().cancel());
 handleTrustedIpc("codex:start", () => startServer());
 handleTrustedIpc('exam:open-project',(_event,bytes)=>{
   if(!(bytes instanceof ArrayBuffer) || bytes.byteLength>128*1024*1024)throw new Error('프로젝트 파일이 올바르지 않습니다.');

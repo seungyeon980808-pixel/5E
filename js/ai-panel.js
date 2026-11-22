@@ -136,6 +136,7 @@ import {
   resolveImageOutput,
 } from "./ai-output-processing.js?v=1.7.0-four-session-integration";
 import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.7.0-four-session-integration";
+import { installCodex, codexInstallState, onCodexInstall, canAutoInstallCodex, INSTALL_STEPS, elapsedText } from "./codex-auto-install.js?v=1.7.0-four-session-integration";
 import {
   enforceKiceImageRunInput,
   KICE_IMAGE_MODE,
@@ -6555,6 +6556,8 @@ ${chatText}` : ''}`;
     openConnectionDialog();
     setTaskState('idle');
     const guide = isMissing => {
+      // 11-22 시안(설치-업데이트) 5번: Codex가 없으면 그 자리에서 묻지 않고 설치 → 로그인 → 멈춘 요청 이어서.
+      if (isMissing && canAutoInstallCodex(desktop)) { void autoInstallCodexHere({ manual }); return; }
       if (isMissing) {
         showCodexInstall(true);
         setStatus(CODEX_MISSING_STATUS, 'warn');
@@ -6583,6 +6586,68 @@ ${chatText}` : ''}`;
       const resume = typeof event.detail?.resumeAi === 'function' ? event.detail.resumeAi : null;
       guideDesktopLogin(resume, { manual: !resume });
     });
+  }
+  // 11-22: 작업대 안 자동 설치. 설치 안내 칸을 「AI 연결 준비 중」으로 바꿔 단계·경과 시간을 보이고, 끝나면 바로 로그인.
+  let autoInstallTicker = null;
+  function renderAutoInstall(info) {
+    if (!codexInstallBox) return;
+    let auto = codexInstallBox.querySelector('.ai-codex-auto');
+    if (!info?.running) { codexInstallBox.removeAttribute('data-mode'); auto?.remove(); clearInterval(autoInstallTicker); autoInstallTicker = null; return; }
+    codexInstallBox.dataset.mode = 'auto';
+    codexInstallBox.hidden = false;
+    if (loginButton) loginButton.hidden = true;
+    if (!auto) {
+      auto = document.createElement('div'); auto.className = 'ai-codex-auto';
+      auto.innerHTML = '<strong>AI 연결 준비 중 · Codex 설치 (1~3분)</strong><p>처음 한 번만 설치합니다. 끝나면 로그인 창이 열리고, 로그인하면 멈춘 요청을 이어서 합니다. 입력은 그대로입니다.</p><div class="ai-codex-steps"></div><div class="ai-codex-install-actions"><button type="button" data-ai-codex-install-cancel>취소</button></div>';
+      auto.querySelector('[data-ai-codex-install-cancel]').onclick = () => { void desktop?.cancelInstallCodex?.(); };
+      codexInstallBox.prepend(auto);
+    }
+    const steps = auto.querySelector('.ai-codex-steps');
+    const order = INSTALL_STEPS.map(([key]) => key);
+    const at = Math.max(0, order.indexOf(info.step === 'done' ? 'install' : info.step));
+    steps.replaceChildren();
+    let live = null;
+    INSTALL_STEPS.forEach(([key, label], index) => {
+      const row = document.createElement('div');
+      row.className = index < at || info.step === 'done' ? 'done' : index === at ? 'on' : '';
+      const mark = document.createElement('i'); mark.textContent = row.className === 'done' ? '✓' : row.className === 'on' ? '◌' : '·';
+      const text = document.createElement('span'); text.textContent = label;
+      if (row.className === 'on') live = text;
+      row.append(mark, text); steps.append(row);
+    });
+    const last = document.createElement('div'); last.innerHTML = '<i>·</i><span>로그인 → 이어서 만들기</span>'; steps.append(last);
+    clearInterval(autoInstallTicker); autoInstallTicker = null;
+    if (live && info.startedAt) {
+      const base = live.textContent;
+      const tick = () => { live.textContent = `${base} · ${elapsedText(Date.now() - info.startedAt)}`; };
+      tick(); autoInstallTicker = setInterval(tick, 1000);
+    }
+  }
+  let autoInstallWatch = null;
+  async function autoInstallCodexHere({ manual = false } = {}) {
+    autoInstallWatch ||= onCodexInstall(info => { if (!disposed) renderAutoInstall(info); });
+    showCodexInstall(false);
+    renderAutoInstall({ running: true, step: 'download', startedAt: Date.now() });
+    setStatus('AI 연결 준비 중 · Codex를 설치하고 있습니다(1~3분). 끝나면 로그인 창이 열립니다.', 'busy');
+    if (!manual) addLog('이 컴퓨터에 Codex 프로그램이 없어 설치부터 합니다. 끝나면 로그인 창이 열리고, 로그인하면 같은 요청으로 이어서 합니다. 앞 결과와 입력은 그대로입니다.');
+    const result = await installCodex(desktop);
+    renderAutoInstall({ running: false });
+    if (disposed) return;
+    if (!result?.ok) {
+      const cancelled = result?.code === 'CODEX_INSTALL_CANCELLED';
+      showCodexInstall(true, cancelled ? '설치를 취소했습니다. 아래 명령으로 직접 설치한 뒤 「다시 찾기」를 눌러도 됩니다.' : `${result?.message || 'Codex를 설치하지 못했습니다.'} 아래 명령으로 직접 설치한 뒤 「다시 찾기」를 누르면 이어서 합니다.`);
+      setStatus(cancelled ? 'Codex 설치를 취소했습니다.' : (result?.message || 'Codex를 설치하지 못했습니다.'), 'warn');
+      addLog(cancelled ? 'Codex 설치를 취소했습니다. 멈춘 요청은 그대로 기다립니다.' : `Codex 설치 실패: ${result?.message || ''}${result?.detail ? ` (${result.detail})` : ''}`, cancelled ? undefined : 'error');
+      reportAiError('codex:install', result || {});
+      return;
+    }
+    addLog(result.already ? 'Codex 프로그램을 찾았습니다.' : 'Codex 설치를 마쳤습니다. 로그인 창을 엽니다.');
+    window.dispatchEvent(new CustomEvent('5e:desktop-auth-changed', { detail: { kind: 'installed' } }));
+    const current = await desktop.status().catch(() => null);
+    if (current?.login?.loggedIn) { await resumeAfterConnection('Codex를 찾았습니다. 멈췄던 요청을 이어서 합니다.'); return; }
+    showCodexInstall(false);
+    loginButton.hidden = false;
+    if (!loginWaiting) { loginWaiting = true; try { await waitForDesktopLogin(); } finally { loginWaiting = false; } }
   }
   // 연결이 갖춰지면(로그인 끝·Codex 찾음) 멈춘 요청을 이어 간다.
   async function resumeAfterConnection(message) {
