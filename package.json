@@ -46,6 +46,13 @@
       }
     ],
     "artifactName": "5E-${version}-${os}-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "seungyeon980808-pixel",
+        "repo": "5E"
+      }
+    ],
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -108,5 +115,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true
     }
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
   }
 }

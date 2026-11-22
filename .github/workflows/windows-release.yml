@@ -53,7 +53,11 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: 5e-windows
-          path: release/*.exe
+          # 앱 안 새 판 받기(electron-updater)는 latest.yml·.blockmap을 릴리스에서 읽는다.
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
           if-no-files-found: error
 
   build-macos:
@@ -76,6 +80,8 @@ jobs:
           path: |
             release/*.dmg
             release/*.zip
+            release/*.blockmap
+            release/latest-mac.yml
           if-no-files-found: error
 
   publish-release:
