@@ -131,8 +131,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     if (!raw) {
       phase({ phase: 'expand' });
       try {
-        expanded = await expand({ request, subject, context: [itemContext, userExpandNote].filter(Boolean).join('
-'), conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand', fix });
+        expanded = await expand({ request, subject, context: [itemContext, userExpandNote].filter(Boolean).join('\n'), conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand', fix });
         sceneRequests = expanded.scenes;
       } catch (error) {
         if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
