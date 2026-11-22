@@ -59,9 +59,12 @@ export const USER_ROLE_LINES = {
   sketch: '교사가 손으로 그린 밑그림이다. 구도·물체의 위치·개수·연결 관계·라벨 위치를 정확히 그대로 지킨다(빼거나 더하거나 옮기지 않는다). 비뚤어진 손 선과 손글씨만 평가원 화풍의 깨끗한 선화와 바로 쓴 글자로 다시 그린다: 울퉁불퉁한 윤곽은 매끈한 곡선·직선으로, 구불구불한 지시선은 곧은 직선으로 바꾼다(손 떨림을 옮기지 않는다).',
   style: '교사가 고른 화풍 참고 그림이다. 선 굵기·회색·글자 모양만 참고하고, 내용·구도는 [내용]을 따른다(이 그림의 물체를 베끼지 않는다).',
 };
-export function userImagesNote(roles) {
+// 실험(fix.sketchStrict): 손그림의 떨림·물결 바닥선·울퉁불퉁 테두리를 옮기는 일이 남아(11-23 최종 S4·S5) 한 줄 더 못 박는다. 기본 꺼짐.
+export const SKETCH_STRICT_NOTE = '\n[손그림 다시 그리기 점검] 결과에는 손 떨림이 하나도 없어야 한다: 바닥·실험대·수면은 자로 그은 곧은 수평선 한 줄(물결선·이중선 금지), 원·구는 컴퍼스로 그린 매끈한 원, 용기 벽은 곧은 직선. 손그림에 라벨이 지시선으로 붙어 있으면 결과에서도 모든 라벨을 곧은 지시선으로 대상에 잇는다(지시선 없이 글자만 두지 않는다).';
+export function userImagesNote(roles, fix = {}) {
   const list = roles.map((r) => (USER_ROLE_LINES[r] ? r : 'reference'));
   if (!list.length) return '';
+  if (fix.sketchStrict && list.includes('sketch')) return userImagesNote(roles) + SKETCH_STRICT_NOTE;
   if (list.every((r) => r === list[0])) return `\n\n[교사 그림] ${list.length === 1 ? '첫 첨부는' : `첨부의 처음 ${list.length}장은 모두`} ${USER_ROLE_LINES[list[0]]}`;
   return '\n\n[교사 그림]\n' + list.map((r, i) => `- ${i + 1}번째 첨부: ${USER_ROLE_LINES[r]}`).join('\n');
 }
@@ -94,7 +97,7 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   // 고침 U1(fix.userRoles): 교사 그림을 늘 첫 첨부로 두고(앞 장면은 그 다음), 역할 문장을 첨부 순서와 맞춘다.
   const userFix = !!fix.userRoles && users.length > 0;
   const roleList = Array.isArray(userImageRole) ? users.map((_, i) => userImageRole[i] || userImageRole[0] || 'reference') : users.map(() => userImageRole);
-  const userNote = !users.length ? '' : userFix ? userImagesNote(roleList)
+  const userNote = !users.length ? '' : userFix ? userImagesNote(roleList, fix)
     : (USER_IMAGE_NOTES[Array.isArray(userImageRole) ? userImageRole[0] : userImageRole] || USER_IMAGE_NOTES.reference)(users.length);
   const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '', fix, prevScene: !!prevScene, users: userFix ? users.length : 0 }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
   const prevNote = userFix ? PREV_SCENE_NOTE.replace('첫 첨부 그림은', `${users.length + 1}번째 첨부 그림(교사 그림 바로 뒤)은`) : PREV_SCENE_NOTE;
