@@ -44,11 +44,17 @@ export async function stripText(ctx, img) {
  * @param {object} ctx  엔진이 만든 것: { readText(prompt, attachments) → 글, generateImage(prompt, attachments) → data URL, index, fetch, signal, log }
  * @param {{ request: string, subject?: string, keyValues?: string, bestOf?: number, prevScene?: string|null, single?: boolean, refIds?: string[], fixNote?: string, strip?: boolean }} opts
  */
-export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3 }) {
+// 실험(exp/1122-figure-tuning): userImages = 교사가 붙인 레퍼런스·손그림(data URL). 있으면 참고 기출보다 앞에 붙이고 역할을 지시문에 적는다.
+// 지금 앱은 교사 첨부가 있으면 이 엔진 대신 옛 길로 보낸다(figureRoute user-references) — 엔진이 받을 때의 품질을 재 보려는 선택 옵션. 기본값(빈 배열)은 지금과 같다.
+export const USER_IMAGE_NOTES = {
+  reference: (n) => `\n\n[교사가 붙인 그림] 첨부의 처음 ${n}장은 교사가 직접 붙인 그림이다. 이 그림의 구성·물체·배치·라벨을 그대로 따르고, 뒤의 참고 기출은 선·회색·글자 화풍만 참고한다.`,
+  sketch: (n) => `\n\n[교사의 손그림] 첨부의 처음 ${n}장은 교사가 손으로 대강 그린 밑그림이다. 비뚤어진 선·대강 쓴 글자는 깨끗한 평가원 선화로 바꾸되, 물체의 수·연결·위치 관계·라벨은 밑그림 그대로 따른다. 뒤의 참고 기출은 화풍만 참고한다.`,
+};
+export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference' }) {
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
   // retrieval: 엔진이 미리(구체화와 나란히) 시작해 둔 검색 프라미스. 없거나 실패하면 여기서 검색한다.
-  try { ret = (retrieval ? await retrieval.catch((error) => { if (isAbort(error)) throw error; return null; }) : null) || await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject }); }
+  try { ret = (retrieval ? await retrieval.catch((error) => { if (isAbort(error)) throw error; return null; }) : null) || await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject, classifyMode, aiPick }); }
   catch (error) { if (isAbort(error)) throw error; log('검색 실패 — 참고 그림 없이 그림: ' + (error?.message || error)); }
 
   const srcOf = (id) => ctx.index?.byId?.get(id)?.src;
@@ -59,10 +65,12 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   log('참고 기출: ' + (refs.join(', ') || '없음'));
 
   const req = sceneRequestText({ request, keyValues, fixNote });
-  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '' }) + (single ? SINGLE_SCENE_NOTE : '');
+  const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
+  const userNote = users.length ? (USER_IMAGE_NOTES[userImageRole] || USER_IMAGE_NOTES.reference)(users.length) : '';
+  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '' }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
   const gen = () => prevScene
-    ? ctx.generateImage(text + PREV_SCENE_NOTE, [prevScene, ...refImages])
-    : ctx.generateImage(text, refImages);
+    ? ctx.generateImage(text + PREV_SCENE_NOTE, [prevScene, ...users, ...refImages])
+    : ctx.generateImage(text, [...users, ...refImages]);
 
   const settled = await Promise.allSettled(Array.from({ length: Math.max(1, Math.min(2, Number(bestOf) || 1)) }, gen));
   const aborted = settled.find((r) => r.status === 'rejected' && isAbort(r.reason));

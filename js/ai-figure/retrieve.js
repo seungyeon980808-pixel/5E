@@ -118,12 +118,15 @@ export async function classify({ request, index, readText, subject = '' }) {
  * 요청 → 참고 그림 3장. readText(prompt) => Promise<string>는 엔진이 넣어 준다(재시도·취소 포함).
  * 고르기 AI가 실패해도 점수 순으로 채워 돌려준다.
  */
-export async function retrieve({ request, index, readText, exclude = [], subject = '' }) {
-  const c = await classify({ request, index, readText, subject });
+// 실험(exp/1122-figure-tuning): classifyMode 'keyword'면 분류 AI 없이 요청 낱말로, aiPick false면 고르기 AI 없이 점수 순으로. 기본값은 지금과 같다.
+export async function retrieve({ request, index, readText, exclude = [], subject = '', classifyMode = 'ai', aiPick = true }) {
+  const c = classifyMode === 'keyword' ? roughClassify(request, subject) : await classify({ request, index, readText, subject });
   const scored = scoreCandidates(index.tags, c, { exclude });
   if (!scored.length) return { classify: c, picks: [], candidates: [] };
   let aiPicks = [];
-  try { aiPicks = tryParseJson(await readText(pickReferencesPrompt({ request, candidates: scored.map((x) => x.t) }))) || []; }
-  catch (error) { if (error?.name === 'AbortError') throw error; }
+  if (aiPick) {
+    try { aiPicks = tryParseJson(await readText(pickReferencesPrompt({ request, candidates: scored.map((x) => x.t) }))) || []; }
+    catch (error) { if (error?.name === 'AbortError') throw error; }
+  }
   return { classify: c, picks: fillPicks(aiPicks, scored), candidates: scored.map((x) => ({ id: x.t.id, s: +x.s.toFixed(2), src: x.t.src })) };
 }

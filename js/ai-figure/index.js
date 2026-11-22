@@ -82,7 +82,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
    *   signal?: AbortSignal, previous?: { expanded?: object, scenes?: { image?: string }[] } | null, onPhase?: (e: object) => void }} opts
    * @returns {Promise<{ expanded: object|null, scenes: object[], ok: boolean, aborted: boolean, errors: { scene: number|null, step: string, message: string }[] }>}
    */
-  async function makeFigureSet({ request, subject = '', context: itemContext = '', conversation = '', keyValues = '', raw = false, bestOf = 1, refIds = [], fixNote = '', signal = ai.signal, previous = null, onPhase = () => {}, earlyRetrieve = EARLY_RETRIEVE, refCount = 3, strip = true } = {}) {
+  async function makeFigureSet({ request, subject = '', context: itemContext = '', conversation = '', keyValues = '', raw = false, bestOf = 1, refIds = [], fixNote = '', signal = ai.signal, previous = null, onPhase = () => {}, earlyRetrieve = EARLY_RETRIEVE, refCount = 3, strip = true, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference' } = {}) {
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('그림 요청 글이 비어 있습니다.');
     const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
     const errors = [];
@@ -111,7 +111,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     // GENSPEED(11-20): 기출 검색(분류·고르기 글 AI 두 번)을 구체화와 나란히 시작한다 — 앞에서 차례로 기다리던 7~9초를 줄인다.
     // 첫 장면은 처음 요청으로 고른 기출을 쓰고, 둘째 장면부터는 첫 장면을 그리는 동안 장면 요청으로 미리 검색해 둔다.
     const retrieveFor = (req) => {
-      const p = retrieve({ request: req, index, readText: (t) => context(signal).readText(t), subject });
+      const p = retrieve({ request: req, index, readText: (t) => context(signal).readText(t), subject, classifyMode, aiPick });
       p.catch(() => {}); // 처리하지 않은 거절 경고 막기(쓰는 쪽이 다시 받는다)
       return p;
     };
@@ -137,7 +137,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       phase({ phase: 'scene', scene: i, total: sceneRequests.length, request: sceneRequests[i] });
       try {
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal, log), index }, {
-          request: sceneRequests[i], subject, keyValues, bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip,
+          request: sceneRequests[i], subject, keyValues, bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages, userImageRole,
         }));
         phase({ phase: 'grayscale', scene: i, total: sceneRequests.length });
         const g = await grayscale(r.image, { signal });
