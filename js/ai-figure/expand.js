@@ -46,8 +46,8 @@ export function mergeSideBySide(scenes, request = '') {
 /**
  * @param {{ request: string, subject?: string, context?: string, taxonomy: { types: string[] }, readText: (prompt: string) => Promise<string> }} args
  */
-export async function expand({ request, subject = '', context = '', conversation = '', taxonomy, readText, withSearch = false }) {
-  const text = await readText((withSearch ? expandPromptWithSearch : expandPrompt)({ request, subject, context, conversation, types: taxonomy?.types || [] }));
+export async function expand({ request, subject = '', context = '', conversation = '', taxonomy, readText, withSearch = false, fix = {} }) {
+  const text = await readText((withSearch ? expandPromptWithSearch : expandPrompt)({ request, subject, context, conversation, types: taxonomy?.types || [], fix }));
   const parsed = tryParseJson(text);
   const out = normalizeExpanded(parsed, request);
   // 실험(R6): 구체화가 낸 검색 조건(분류 AI 대신). 없으면 null → 엔진이 분류 AI로 돌아간다.
