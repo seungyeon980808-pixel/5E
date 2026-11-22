@@ -974,6 +974,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-task-bridge-listeners-1123.mjs",
+      "findingIds": [
+        "CAND1123-TASK-BRIDGE-LISTENERS"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-chat-refs.mjs",
       "findingIds": [
         "NIGHT172B-FIGURE-CHAT-REFS"
