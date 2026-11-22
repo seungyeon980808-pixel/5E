@@ -71,6 +71,7 @@ import { enterAction, isImeEnter, isBlankInspection, gatherDrawRequest, drawPlan
 import { installChatWidth } from './ai-chat-width.js?v=1.7.0-four-session-integration';
 import { LABEL_READ_PROMPT, parseLabelRead } from './ai-direct-label-plan.js?v=1.7.0-four-session-integration';
 import { eraseLabelsAndLeaders } from './ai-label-leader-erase.js?v=1.7.0-four-session-integration';
+import { snapReadItemsToGlyphInk, eraseBoxOf, finalLabelItems, redrawAlignment, withGlyphLabelSizes } from './ai-generated-label-snap.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
 import { validateLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { prepareEditableLabelFonts } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
@@ -1578,10 +1579,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // 11-21: 새 로딩 창은 준비(연결·모델 확인)가 끝난 뒤 시작한다 — 그 사이 옛 진행 상자가 잠깐 비치던 것을 처음부터 숨긴다.
       panel.dataset.loadingPending = 'true';
     }
-    // 11-22: 바로 그리기 때 앞 차례 종류(대화)가 남아 처음 2초 「대화 멈추기」·대화 기다림 표시가 잘못 떴다 — 바쁨 표시 전에 종류를 맞춘다.
     // 11-22 사용자: 대화를 보낼 때도 연결·모델 확인 동안 옛 진행 상자(「요청을 준비하고 있습니다」)가 잠깐 비쳤다.
     // 대화는 대화창 안 「생각하는 중」 점 표시만 쓴다 — 옛 상자는 처음부터 끝까지 가린다(setGenerating(false)에서 풀림).
     if (type === 'chat') panel.dataset.loadingPending = 'true';
+    // 11-22: 바로 그리기 때 앞 차례 종류(대화)가 남아 처음 2초 「대화 멈추기」·대화 기다림 표시가 잘못 떴다 — 바쁨 표시 전에 종류를 맞춘다.
     currentTurnType = type === 'chat' ? 'chat' : 'image';
     setBusy(true);
     stopGenerationTimingTimer();
@@ -6118,8 +6119,15 @@ ${chatText}` : ''}`;
       // 확실하지 않은 지시선은 그림에 그대로 두고 그 라벨은 지시선 없이 만든다(eraseLabelsAndLeaders가 leader: null로 돌려줌).
       const untouched = pixels.data.slice();
       const readItems = items.map(item => ({ ...item }));
+      // LEADERFIX(11-22 사용자 뇌 단면 그림): AI가 준 글자 자리는 반 글자쯤 비켜 있곤 했다 — 지우기 전에 원본 그림의 실제 글자 잉크로 맞춘다
+      // (기출 변환 labelsAtMeasuredGlyphs와 같은 방법). 지울 창은 AI 상자와 잉크 상자를 합친 것, 라벨 자리·크기는 잉크 상자. 못 찾으면 AI 자리.
+      let snapped = readItems.map(item => ({ ...item, glyph: null }));
+      try { snapped = snapReadItemsToGlyphInk(untouched, canvas.width, canvas.height, readItems); } catch {}
+      items = snapped.map(({ glyph, ...item }) => ({ ...item, ...eraseBoxOf({ ...item, glyph }) }));
       try { items = eraseLabelsAndLeaders(pixels.data, canvas.width, canvas.height, items).items; }
       catch { pixels.data.set(untouched); items = items.map(item => ({ ...item, leader: null })); eraseGlyphsInBoxes(pixels.data, canvas.width, canvas.height, items); }
+      const erasedItems = items;
+      let redrawn = false;
       g.putImageData(pixels, 0, 0);
       let erased = items.length ? canvas.toDataURL('image/png') : source.data;
       // 11-21 사용자: 지시선이 그림 선(근육 결·줄무늬)과 닿으면 맥 안 지우기가 「확실하지 않음」으로 남겨 라벨을 끄면 지시선만 남았다.
@@ -6142,24 +6150,37 @@ ${chatText}` : ''}`;
             const gray = await grayscaleGeneratedPng(drawn, { signal: abort.signal });
             // 크기가 같을 때만 쓴다(라벨 자리는 원래 그림 좌표) — 다르면 맥 안 결과로.
             const check = new Image(); check.src = gray.data; await check.decode();
+            // LEADERFIX(11-22): 다시 그린 그림이 원본에서 밀렸는지 글자·지시선 밖의 그림 선끼리 재어 본다 — 조금 밀렸으면 옮겨 맞추고,
+            // 많이 어긋났으면(모양이 바뀜) 다시 그린 그림을 버리고 맥 안에서 지운 그림을 쓴다(라벨 자리는 원본 좌표라 어긋나면 안 맞는다).
+            let fit = null;
             if (check.naturalWidth === canvas.width && check.naturalHeight === canvas.height) {
-              const g2 = canvas.getContext('2d', { willReadFrequently: true }); g2.drawImage(check, 0, 0);
+              const probe = document.createElement('canvas'); probe.width = canvas.width; probe.height = canvas.height;
+              const gp = probe.getContext('2d', { willReadFrequently: true }); gp.fillStyle = '#fff'; gp.fillRect(0, 0, probe.width, probe.height); gp.drawImage(check, 0, 0);
+              try { fit = redrawAlignment(untouched, gp.getImageData(0, 0, probe.width, probe.height).data, canvas.width, canvas.height, snapped.map((item, i) => ({ ...item, traced: erasedItems[i]?.traced }))); } catch { fit = null; }
+              probe.width = probe.height = 0;
+            }
+            if (fit?.ok) {
+              const g2 = canvas.getContext('2d', { willReadFrequently: true });
+              g2.fillStyle = '#fff'; g2.fillRect(0, 0, canvas.width, canvas.height); g2.drawImage(check, fit.dx, fit.dy);
               const px2 = g2.getImageData(0, 0, canvas.width, canvas.height);
-              eraseGlyphsInBoxes(px2.data, canvas.width, canvas.height, readItems.map(item => ({ ...item, leader: null }))); // 남은 글자 흔적만 정리
+              eraseGlyphsInBoxes(px2.data, canvas.width, canvas.height, erasedItems.map(item => ({ ...item, leader: null }))); // 남은 글자 흔적만 정리
               g2.putImageData(px2, 0, 0);
               erased = canvas.toDataURL('image/png');
-              // 다시 그린 그림에는 지시선이 없으니 모든 지시선을 5E 지시선으로 올린다 — 맥 안에서 찾은 실제 끝점이 있으면 그것, 없으면 읽은 끝점.
-              items = readItems.map((read, i) => (items.length === readItems.length && items[i]?.leader ? items[i] : read));
+              redrawn = true;
+              // 다시 그린 그림에는 지시선이 없으니 모든 지시선을 5E 지시선으로 올린다 — 지운 선·픽셀에서 찾은 선이 먼저, 없으면 읽은 끝점(finalLabelItems).
               statusPhase('label-erase', `글자·지시선 없는 그림을 다시 그렸어요 · 지시선 ${readItems.filter(item => item.leader).length}개를 5E 라벨로 올려요`);
-            }
+            } else if (fit) statusPhase('label-erase', '다시 그린 그림이 원래 그림과 어긋나 맥 안에서 지운 그림을 그대로 써요');
           }
         } catch (error) { if (error?.name === 'AbortError' || !isCurrent()) throw error; /* 다시 그리기 실패 → 맥 안 결과 그대로 */ }
       }
       if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
       phase('label-place');
-      const readPlan = labelPlanFromRead(items);
+      // 라벨 자리는 잉크에 맞춘 상자, 지시선은 지운 선 → (다시 그렸으면) 픽셀에서 찾은 선 → 읽은 끝점 순서.
+      items = erasedItems.length === snapped.length ? finalLabelItems(snapped, erasedItems, { redrawn }) : items;
+      let readPlan = labelPlanFromRead(items);
       let sized = null;
       if (readPlan.labels.length) { try { sized = await measuredLabelSizes(source.data, readPlan.labels, abort.signal); } catch (error) { if (error?.name === 'AbortError') throw error; } }
+      readPlan = withGlyphLabelSizes(readPlan, items, sized?.sizes); // 잉크에 맞춘 라벨은 잰 글자 크기로(기출 변환과 같은 셈)
       const candidateSha256 = await imageLabelDigest(erased);
       const report = { verdict: 'pass', checks: [], issues: [], reviewSkipped: true };
       const labelPlan = { ...structuredClone(readPlan), labels: structuredClone(readPlan.labels), sourcePlan: structuredClone(readPlan), qualityReview: report, reviewRequired: false, targetPlacement: null, candidateSha256, ...(sized?.ratio ? { measuredLabelSize: sized.ratio } : {}) };

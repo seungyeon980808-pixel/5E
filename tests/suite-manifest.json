@@ -986,6 +986,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-generated-label-snap.mjs",
+      "findingIds": [
+        "LEADERFIX-GENERATED-LABEL-SNAP"
+      ]
+    },
+    {
       "path": "tests/test-ai-create-flow.mjs",
       "findingIds": [
         "CHATFIX-CHAT-GENERATE-SPLIT"
@@ -2458,6 +2464,12 @@
       "findingIds": [
         "AI-CREATE-TWO-PANES",
         "AI-CREATE-REFERENCE-LIMIT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-generated-label-snap-browser.cjs",
+      "findingIds": [
+        "LEADERFIX-GENERATED-LABEL-SNAP"
       ]
     },
     {
