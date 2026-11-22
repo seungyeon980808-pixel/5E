@@ -968,6 +968,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-candidate-1123.mjs",
+      "findingIds": [
+        "CAND1123-FIGURE-WINNERS-DEFAULT"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-chat-refs.mjs",
       "findingIds": [
         "NIGHT172B-FIGURE-CHAT-REFS"
