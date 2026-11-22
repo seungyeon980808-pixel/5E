@@ -112,7 +112,12 @@ export function sceneRequestText({ request, keyValues = '', fixNote = '' }) {
 }
 
 /** 구체화: 교사의 짧은 요청 → 장면별 구체 요청(JSON). */
-export function expandPrompt({ request, subject = '', context = '', conversation = '', types = [] }) {
+export function expandPrompt({ request, subject = '', context = '', conversation = '', types = [], fix = {} }) {
+  const out = expandPromptBase({ request, subject, context, conversation, types });
+  // 실험(fix.noInventNames): 교사가 말하지 않은 이름(A·B·P…)·설명 글을 구체화가 새로 붙이지 않게. 기본 꺼짐.
+  return fix.noInventNames ? out.replace('문항에서 물어볼 만한 대상에는 이름(A, B, P, ㉠)을 붙인다.', '교사가 말하지 않은 이름(A, B, P, m, ㉠ 등)·라벨·설명 글은 새로 붙이지 않는다(장면 요청에도 쓰지 않는다). 교사가 「설명 문장은 넣지 말라」고 하면 용액 이름·농도 같은 글도 그림에 쓰지 않는다.') : out;
+}
+function expandPromptBase({ request, subject = '', context = '', conversation = '', types = [] }) {
   return `너는 평가원 ${subject || '과학탐구'} 출제 위원의 그림 담당이다. 교사가 짧게 부탁한 그림을, 그림 그리는 AI가 그대로 그릴 수 있는 구체적인 요청으로 바꾼다.
 규칙:
 1. 그림 종류를 먼저 정하고(아래 목록), 그 종류의 평가원 관례대로 배치·시점·라벨을 채운다. 예: 역학 장치는 옆에서 본 단면, 일기도는 등압선 값·전선 기호, 입자 모형은 범례.
