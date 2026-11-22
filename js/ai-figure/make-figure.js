@@ -52,6 +52,19 @@ export const USER_IMAGE_NOTES = {
   questionReplace: (n) => `\n\n[교사가 붙인 문항] 첨부의 처음 ${n}장은 그림이 들어 있는 시험 문항 화면이다. 그 안의 원래 그림은 보지 않은 것으로 하고 베끼지 않는다 — 구도·모양을 새로 정해, 문항의 글·조건·〈보기〉·선지와 모순 없이 문항을 풀 수 있는 새 그림 하나만 그린다(문항 글은 그리지 않는다). 뒤의 참고 기출은 화풍만 참고한다.`,
   sketch: (n) => `\n\n[교사의 손그림] 첨부의 처음 ${n}장은 교사가 손으로 대강 그린 밑그림이다. 비뚤어진 선·대강 쓴 글자는 깨끗한 평가원 선화로 바꾸되, 물체의 수·연결·위치 관계·라벨은 밑그림 그대로 따른다. 뒤의 참고 기출은 화풍만 참고한다.`,
 };
+// 고침 U1(exp/1122-figure-fixes): 앱이 교사 첨부를 엔진으로 보낼 때 쓰는 역할 문장(fix.userRoles일 때). 그림마다 역할이 다를 수 있다(userImageRole 배열).
+//  reference = 내용·화풍 참고(교사 말대로 물체·배치를 따름), sketch = 손그림(구도·위치·개수를 정확히 지키고 깨끗이 다시 그림), style = 화풍만(「표현 참고」).
+export const USER_ROLE_LINES = {
+  reference: '교사가 붙인 레퍼런스(내용·화풍 참고 그림)다. 교사 요청에 따라 이 그림의 물체·배치를 따르고, 요청에서 바꾸라고 한 값·라벨·개수만 바꾼다. 선·회색·글자는 평가원 그림처럼 깨끗하게 다시 그리고, 레퍼런스의 색·사진 질감·손글씨·설명 문장은 옮기지 않는다.',
+  sketch: '교사가 손으로 그린 밑그림이다. 구도·물체의 위치·개수·연결 관계·라벨 위치를 정확히 그대로 지킨다(빼거나 더하거나 옮기지 않는다). 비뚤어진 손 선과 손글씨만 평가원 화풍의 깨끗한 선화와 바로 쓴 글자로 다시 그린다.',
+  style: '교사가 고른 화풍 참고 그림이다. 선 굵기·회색·글자 모양만 참고하고, 내용·구도는 [내용]을 따른다(이 그림의 물체를 베끼지 않는다).',
+};
+export function userImagesNote(roles) {
+  const list = roles.map((r) => (USER_ROLE_LINES[r] ? r : 'reference'));
+  if (!list.length) return '';
+  if (list.every((r) => r === list[0])) return `\n\n[교사 그림] ${list.length === 1 ? '첫 첨부는' : `첨부의 처음 ${list.length}장은 모두`} ${USER_ROLE_LINES[list[0]]}`;
+  return '\n\n[교사 그림]\n' + list.map((r, i) => `- ${i + 1}번째 첨부: ${USER_ROLE_LINES[r]}`).join('\n');
+}
 export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference', fix = {}, styleScore = false, classification = null, excludeRefs = [], refReject = null }) {
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
@@ -70,10 +83,15 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
 
   const req = sceneRequestText({ request, keyValues, fixNote });
   const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
-  const userNote = users.length ? (USER_IMAGE_NOTES[userImageRole] || USER_IMAGE_NOTES.reference)(users.length) : '';
-  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '', fix, prevScene: !!prevScene }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
+  // 고침 U1(fix.userRoles): 교사 그림을 늘 첫 첨부로 두고(앞 장면은 그 다음), 역할 문장을 첨부 순서와 맞춘다.
+  const userFix = !!fix.userRoles && users.length > 0;
+  const roleList = Array.isArray(userImageRole) ? users.map((_, i) => userImageRole[i] || userImageRole[0] || 'reference') : users.map(() => userImageRole);
+  const userNote = !users.length ? '' : userFix ? userImagesNote(roleList)
+    : (USER_IMAGE_NOTES[Array.isArray(userImageRole) ? userImageRole[0] : userImageRole] || USER_IMAGE_NOTES.reference)(users.length);
+  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '', fix, prevScene: !!prevScene, users: userFix ? users.length : 0 }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
+  const prevNote = userFix ? PREV_SCENE_NOTE.replace('첫 첨부 그림은', `${users.length + 1}번째 첨부 그림(교사 그림 바로 뒤)은`) : PREV_SCENE_NOTE;
   const gen = () => prevScene
-    ? ctx.generateImage(text + PREV_SCENE_NOTE, [prevScene, ...users, ...refImages])
+    ? ctx.generateImage(text + prevNote, userFix ? [...users, prevScene, ...refImages] : [prevScene, ...users, ...refImages])
     : ctx.generateImage(text, [...users, ...refImages]);
 
   const settled = await Promise.allSettled(Array.from({ length: Math.max(1, Math.min(2, Number(bestOf) || 1)) }, gen));

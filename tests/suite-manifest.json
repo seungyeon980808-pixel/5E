@@ -962,6 +962,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-user-refs.mjs",
+      "findingIds": [
+        "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-chat-refs.mjs",
       "findingIds": [
         "NIGHT172B-FIGURE-CHAT-REFS"
@@ -2470,6 +2476,12 @@
       "path": "tests/test-ai-generated-label-snap-browser.cjs",
       "findingIds": [
         "LEADERFIX-GENERATED-LABEL-SNAP"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-user-refs-browser.cjs",
+      "findingIds": [
+        "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
       ]
     },
     {

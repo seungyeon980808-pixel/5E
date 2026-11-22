@@ -79,7 +79,10 @@ const KICE_LOOK_NOREF = `대한민국 수능·평가원 모의평가 시험지�
 - 순수 흰 배경, 컬러 금지(흑백·회색만), 테두리나 제목·설명 문장·워터마크를 넣지 않는다.
 - 시험지에 그대로 붙일 수 있게 그림 둘레 여백은 좁게.`;
 const ILLUST_STYLE = '일러스트 요청: 대상을 실제 모양에 가깝게 가는 펜 선과 회색 음영 두세 단계로 그린다(평가원 회색조 일러스트). 단순 도형으로 줄이지 않되 사진 같은 질감·그라데이션은 쓰지 않는다.';
-export function buildFigurePrompt({ request, refs = [], retrieval = null, subject = '', fix = {}, prevScene = false, style = '' } = {}) {
+//  fix.userRoles + users(교사 첨부 수, 고침 U1): 첨부 순서가 [교사 그림 users장, (앞 장면), 참고 기출]일 때 역할 문장을 그 순서대로 쓴다.
+//    「참고 그림 N장은 모두 실제 평가원 그림이다. 첫 장은 구도…」가 교사 그림을 평가원 그림으로 읽게 하던 모순을 없앤다.
+export function buildFigurePrompt({ request, refs = [], retrieval = null, subject = '', fix = {}, prevScene = false, style = '', users = 0 } = {}) {
+  if (fix.userRoles && users > 0) return buildFigurePromptWithUsers({ request, refs, retrieval, subject, fix, prevScene, style, users });
   const types = (retrieval?.classify?.types || []).join(' ');
   const wantStyle = style || retrieval?.classify?.style || '';
   const illust = /일러스트/u.test(wantStyle);
@@ -101,6 +104,19 @@ export function buildFigurePrompt({ request, refs = [], retrieval = null, subjec
     `\n\n[내용]\n${request}`,
   ];
   return parts.join('');
+}
+
+// 고침 U1: 교사 그림이 첫 첨부일 때의 그리기 지시문. 화풍·글자 규칙은 기본 판과 같고, 첨부 역할 줄과 「첨부한 참고 그림은…」 줄만 다르다.
+function buildFigurePromptWithUsers({ request, refs, retrieval, subject, fix, prevScene, style, users }) {
+  const base = buildFigurePrompt({ request, refs, retrieval, subject, fix: { ...fix, userRoles: false, sceneRoles: false }, prevScene: false, style });
+  const order = [`${users === 1 ? '1번째' : `1~${users}번째`} 첨부 = 교사가 붙인 그림(아래 [교사 그림] 줄의 역할대로 쓴다)`];
+  if (prevScene) order.push(`${users + 1}번째 첨부 = 같은 문항의 앞 장면(배율·화풍을 맞출 그림)`);
+  if (refs.length) order.push(`그 뒤 ${refs.length}장 = 실제 평가원 기출 그림(선 굵기·회색·글자 화풍만 참고하고, 내용·구도는 따르지 않는다)`);
+  const rolesNow = refs.length ? `참고 그림 ${refs.length}장은 모두 실제 평가원 그림이다. 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.` : '';
+  let text = rolesNow ? base.replace('\n' + rolesNow, '') : base;
+  if (refs.length) text = text.replace('- 첨부한 참고 그림은 실제 평가원 시험지 그림이다.', '- 교사 그림 뒤에 붙인 참고 그림은 실제 평가원 시험지 그림이다.');
+  else text = text.replace(KICE_LOOK, KICE_LOOK_NOREF);
+  return text.replace('\n' + TEXT_RULES, `\n[첨부 순서] ${order.join(' / ')}.\n${TEXT_RULES}`);
 }
 
 export const SINGLE_SCENE_NOTE = '\n\n[한 장면만] 이 그림에는 위 장면 하나만 그린다(장치·용기·좌표 한 벌). 비교용 두 번째 그림이나 다른 장면을 같이 그리지 않는다.';

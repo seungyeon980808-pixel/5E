@@ -93,6 +93,9 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('그림 요청 글이 비어 있습니다.');
     const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
     const errors = [];
+    // 고침 U1: 교사 그림이 있으면 구체화(글만 보는 AI)가 그림에 없을 물체·배치를 지어내지 않게 알려 준다(fix.userRoles일 때만).
+    const userCount = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')).length : 0;
+    const userExpandNote = fix.userRoles && userCount ? userExpandText(userCount, userImageRole) : '';
     const prevScenes = Array.isArray(previous?.scenes) ? previous.scenes : [];
     const keptScene = (i, reason) => {
       const p = prevScenes[i];
@@ -127,7 +130,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     if (!raw) {
       phase({ phase: 'expand' });
       try {
-        expanded = await expand({ request, subject, context: itemContext, conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand' });
+        expanded = await expand({ request, subject, context: [itemContext, userExpandNote].filter(Boolean).join('\n'), conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand' });
         sceneRequests = expanded.scenes;
       } catch (error) {
         if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
@@ -150,7 +153,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
         }));
         phase({ phase: 'grayscale', scene: i, total: sceneRequests.length });
         const g = await grayscale(r.image, { signal });
-        const scene = { request: sceneRequests[i], image: g.data, refs: r.refs, strippedTexts: r.strippedTexts, beforeStrip: r.beforeStrip, prompt: r.prompt, grayscale: { applied: g.applied, reason: g.reason } };
+        const scene = { request: sceneRequests[i], image: g.data, refs: r.refs, strippedTexts: r.strippedTexts, beforeStrip: r.beforeStrip, prompt: r.prompt, grayscale: { applied: g.applied, reason: g.reason }, classify: r.retrieval?.classify || null };
         if (!first) first = scene.image;
         scenes.push(scene);
       } catch (error) {
@@ -171,6 +174,56 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     }
     phase({ phase: 'done', total: scenes.length });
     return result(expanded, scenes, false);
+  }
+
+  /**
+   * 고침 E2: 빈 장면만 다시 그리기. 앞 결과(previous = makeFigureSet 결과)의 장면 글·참고 기출 그대로, 구체화·검색 없이 그 장면만 그린다.
+   * 다른 장면은 그대로 두고(kept 아님), 다시 그린 장면만 바꾼 결과를 돌려준다. 다시 그려도 실패한 장면은 앞 결과 그대로 + errors.
+   * 앞 장면 맞추기(prevScene)는 처음 실행과 같게: 0번이 아닌 장면은 0번 장면(없으면 처음 성한 장면) 그림을 붙인다.
+   * @param {{ previous: object, scenes: number[], signal?: AbortSignal, onPhase?: Function, bestOf?: number, strip?: boolean, userImages?: string[], userImageRole?: string|string[], fix?: object, baselineFix?: boolean }} opts
+   * @returns {Promise<{ expanded: object|null, scenes: object[], ok: boolean, aborted: boolean, errors: object[], labelHints: string[], redrawn: number[] }>}
+   */
+  async function redrawScenes({ previous, scenes: which = [], signal = ai.signal, onPhase = () => {}, bestOf = 1, strip = true, userImages = [], userImageRole = 'reference', baselineFix = false, fix: fixIn = {}, keyValues = '', subject = '', request = '' } = {}) {
+    const fix = baselineFix ? { sceneRoles: true, keyValues: true, noRefLook: true, pickGothic: true, ...fixIn } : { ...fixIn };
+    const prevScenes = Array.isArray(previous?.scenes) ? previous.scenes : [];
+    if (!prevScenes.length) throw new TypeError('다시 그릴 앞 결과(previous.scenes)가 없습니다.');
+    const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
+    const errors = [], redrawn = [];
+    const out = prevScenes.map((s) => ({ ...s }));
+    const targets = [...new Set(which.map(Number).filter((i) => Number.isInteger(i) && i >= 0 && i < out.length))].sort((a, b) => a - b);
+    const hints = labelHintsFromRequest(request || previous?.expanded?.scenes?.join('\n') || prevScenes.map((s) => s.request || '').join('\n'));
+    const done = (aborted) => ({ expanded: previous?.expanded ?? null, scenes: out, ok: !aborted && out.every((s) => s.image && !s.kept), aborted, errors, labelHints: Array.isArray(previous?.labelHints) ? previous.labelHints : hints, redrawn });
+    if (signal?.aborted) return done(true);
+    let index;
+    try { index = await getIndex(); } catch { index = makeIndex({}); }
+    const total = out.length;
+    for (const i of targets) {
+      const s = prevScenes[i] || {};
+      const sceneReq = String(s.request || '').trim() || String(request || '').trim();
+      if (!sceneReq) { errors.push({ scene: i, step: 'redraw', message: '장면 글이 없어 다시 그리지 못했습니다.' }); continue; }
+      const refs = Array.isArray(s.refs) ? s.refs.filter((id) => typeof id === 'string' && id) : [];
+      // 검색을 다시 하지 않는다: 앞서 고른 기출을 그대로(refIds) 받고, 화풍 줄은 앞서 분류한 종류(classify)로 같게 만든다.
+      const retrieval = Promise.resolve({ classify: s.classify || null, picks: [], candidates: [] });
+      const usable = (k) => k !== i && out[k]?.image && !out[k].kept && (!targets.includes(k) || redrawn.includes(k));
+      const anchorAt = out.findIndex((_, k) => usable(k));
+      const prevImage = i === 0 || anchorAt < 0 ? null : out[anchorAt].image;
+      const log = (m) => phase({ phase: 'log', scene: i, total, message: m });
+      phase({ phase: 'scene', scene: i, total, request: sceneReq, redraw: true });
+      try {
+        const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal, log), index }, {
+          request: sceneReq, subject: subject || s.classify?.subject || '', keyValues: keyValues || (fix.keyValues ? previous?.expanded?.keyValues || '' : ''), bestOf, prevScene: prevImage, single: total > 1, refIds: refs, retrieval, refCount: refs.length, strip, userImages, userImageRole, fix,
+        }));
+        phase({ phase: 'grayscale', scene: i, total });
+        const g = await grayscale(r.image, { signal });
+        out[i] = { request: sceneReq, image: g.data, refs: r.refs, strippedTexts: r.strippedTexts, beforeStrip: r.beforeStrip, prompt: r.prompt, grayscale: { applied: g.applied, reason: g.reason }, classify: r.retrieval?.classify || s.classify || null, redrawn: true };
+        redrawn.push(i);
+      } catch (error) {
+        if (isAbort(error) || signal?.aborted) return done(true);
+        errors.push({ scene: i, step: 'redraw', message: message(error) });
+      }
+    }
+    phase({ phase: 'done', total });
+    return done(false);
   }
 
   /**
@@ -196,11 +249,20 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
 
   return {
     makeFigureSet,
+    redrawScenes,
     editFigure,
     loadIndex: getIndex,
     fetchFigure: (id, options = {}) => getIndex().catch(() => null).then((ix) => fetchFigure(id, { src: ix?.byId?.get(id)?.src, fetch: fetchImpl, ...options })),
     models: model,
   };
+}
+
+// 고침 U1: 구체화에 알리는 교사 그림 안내(글만 보는 AI라 그림 내용은 모른다).
+function userExpandText(n, role) {
+  const roles = Array.isArray(role) ? role : [role];
+  const sketch = roles.includes('sketch'), styleOnly = roles.every((r) => r === 'style');
+  if (styleOnly) return `교사가 화풍 참고 그림 ${n}장을 붙였다(그리는 AI가 화풍만 참고한다). 내용은 교사 말대로 정리한다.`;
+  return `교사가 그림 ${n}장(${sketch ? '손그림' : '레퍼런스'})을 붙였고, 그리는 AI가 그 그림을 직접 보고 따른다. 구체화는 교사 말에 적힌 내용과 바꿀 점만 정리하고, 그림에 있을지 모르는 물체·개수·배치를 새로 지어내거나 옮기지 않는다${sketch ? '(장면 요청에 「손그림의 구도·위치·개수를 그대로 따른다」를 적는다)' : ''}. 교사가 여러 장을 부탁하지 않았으면 장면은 하나만 쓴다.`;
 }
 
 /** 한 번만 쓸 때: makeFigureSet(opts, deps) = createEngine(deps).makeFigureSet(opts). */

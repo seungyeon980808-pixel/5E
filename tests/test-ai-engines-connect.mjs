@@ -17,7 +17,7 @@ const desktopApp = { readImageText: async () => ({ text: '' }), send: async () =
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 
 test('플래그: 그림 엔진 기본 켜짐·그래프 그림 기본 꺼짐, 새 이름이 옛 이름보다 앞섬', () => {
-  assert.deepEqual(aiEngineFlags(store()), { figure: true, graphPicture: false, figureImageModel: 'luna', figureSpeed: true, figureLocalReplace: false, figureSkipStripCheck: true });
+  assert.deepEqual(aiEngineFlags(store()), { figure: true, graphPicture: false, figureImageModel: 'luna', figureSpeed: true, figureLocalReplace: false, figureSkipStripCheck: true, figureUserRefs: true, figureBlankSceneOnly: true });
   assert.equal(figureEngineFlag(store({ [AI_ENGINE_FLAG_KEYS.figure]: '0' })), false);
   assert.equal(figureEngineFlag(store({ '5e.aiFigureEngine': '0' })), false);
   assert.equal(graphPictureFlag(store({ [AI_ENGINE_FLAG_KEYS.graphPicture]: '1' })), true);
@@ -38,7 +38,9 @@ test('그림 길 고르기: 기본 새 엔진, 끄면·웹·직접 넣은 레퍼
   assert.equal(figureRoute({ desktop: desktopApp, storage: store() }).use, true);
   assert.equal(figureRoute({ desktop: desktopApp, storage: store({ [AI_ENGINE_FLAG_KEYS.figure]: '0' }) }).reason, 'flag-off');
   assert.equal(figureRoute({ desktop: { ...desktopApp, web: true }, storage: store() }).reason, 'web');
-  assert.equal(figureRoute({ desktop: desktopApp, storage: store(), hasUserReferences: true }).reason, 'user-references');
+  // 고침 U1(exp/1122-figure-fixes): 교사 그림도 새 엔진으로(플래그 기본 켬), '0'이면 옛 길.
+  assert.equal(figureRoute({ desktop: desktopApp, storage: store(), hasUserReferences: true }).userRefs, true);
+  assert.equal(figureRoute({ desktop: desktopApp, storage: store({ [AI_ENGINE_FLAG_KEYS.figureUserRefs]: '0' }), hasUserReferences: true }).reason, 'user-references');
   assert.equal(figureRoute({ desktop: desktopApp, storage: store(), legacy: true }).reason, 'legacy');
 });
 
