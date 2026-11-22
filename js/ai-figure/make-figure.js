@@ -2,7 +2,7 @@
 // 원본 image_generator pipeline/steps.cjs(makeFigure·pickBetter·stripText). 로컬 catalog/figs 대신 Worker에서 참고 그림을 받는다.
 // 원칙: 실패로 끝내지 않는다 — 검색 실패면 참고 그림 없이, 고르기 실패면 첫 후보, 지우기 실패면 지우기 전 그림을 쓴다.
 // 그리기 자체가 끝내 실패했을 때만 오류를 던지고, 앞 결과를 지키는 일은 index.js(makeFigureSet)가 맡는다.
-import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt, SKETCH_LAYOUT_ROLE, STYLE_DIRECTIVES, STYLE_REF_KEEP, MULTI_PREV_NOTE } from './prompt.js';
+import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt, SKETCH_LAYOUT_ROLE, STYLE_DIRECTIVES, STYLE_REF_KEEP, MULTI_PREV_NOTE, PANEL_LAYOUT_ROLE } from './prompt.js';
 import { retrieve, tryParseJson, roughClassify } from './retrieve.js';
 import { collectReferenceImages } from './reference-images.js';
 
@@ -58,6 +58,7 @@ export const USER_ROLE_LINES = {
   reference: '교사가 붙인 레퍼런스(내용·화풍 참고 그림)다. 교사 요청에 따라 이 그림의 물체·배치를 따르고, 요청에서 바꾸라고 한 값·라벨·개수만 바꾼다. 선·회색·글자는 평가원 그림처럼 깨끗하게 다시 그리고, 레퍼런스의 색·사진 질감·손글씨·설명 문장은 옮기지 않는다.',
   sketch: '교사가 손으로 그린 밑그림이다. 구도·물체의 위치·개수·연결 관계·라벨 위치를 정확히 그대로 지킨다(빼거나 더하거나 옮기지 않는다). 비뚤어진 손 선과 손글씨만 평가원 화풍의 깨끗한 선화와 바로 쓴 글자로 다시 그린다: 울퉁불퉁한 윤곽은 매끈한 곡선·직선으로, 구불구불한 지시선은 곧은 직선으로 바꾼다(손 떨림을 옮기지 않는다).',
   sketchLayout: SKETCH_LAYOUT_ROLE, // 실험(fix.sketchSpec 1): 손그림을 배치 안내로만
+  panelLayout: PANEL_LAYOUT_ROLE, // 실험(생성 3차, fix.multiCombined 'layout'): 한 장 판에서 자른 칸을 배치 안내로
   style: '교사가 고른 화풍 참고 그림이다. 선 굵기·회색·글자 모양만 참고하고, 내용·구도는 [내용]을 따른다(이 그림의 물체를 베끼지 않는다).',
 };
 // 실험(fix.sketchStrict): 손그림의 떨림·물결 바닥선·울퉁불퉁 테두리를 옮기는 일이 남아(11-23 최종 S4·S5) 한 줄 더 못 박는다. 기본 꺼짐.

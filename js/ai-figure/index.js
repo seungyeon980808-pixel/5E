@@ -10,11 +10,11 @@ import { collectReferenceImages as prefetchReferenceImages } from './reference-i
 import { loadFigureIndex, makeIndex, retrieve, DEFAULT_INDEX_BASE } from './retrieve.js';
 import { makeFigure } from './make-figure.js';
 import { fetchFigure } from './reference-images.js';
-import { grayscaleGeneratedPng } from '../ai-grayscale-png.js?v=1.7.0-four-session-integration';
+import { grayscaleGeneratedPng, flattenPngOnWhite } from '../ai-grayscale-png.js?v=1.7.0-four-session-integration';
 import { AI_ENGINE_FLAG_KEYS, figureEngineFlag, figureImageModelFlag, FIGURE_IMAGE_MODEL_CHOICES } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { runEdit } from './edit.js';
 import { labelHintsFromRequest } from './labels.js';
-import { SKETCH_SPEC_PROMPT, sketchSpecText, styleWanted, STYLE_DIRECTIVES, combinedPanelsRequest } from './prompt.js';
+import { SKETCH_SPEC_PROMPT, sketchSpecText, styleWanted, STYLE_DIRECTIVES, combinedPanelsRequest, SKETCH_MERGED_NOTE, SKETCH_SPEC_SHORT_PROMPT, sketchSpecShortText, EDIT_BOX_NOTE, EDIT_DRIFT_RETRY_NOTE } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
 
 export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify, roughClassify } from './retrieve.js';
@@ -64,7 +64,9 @@ async function withRetry(times, signal, fn) {
  *   models?: { text?: string, image?: string }, retries?: { text?: number, image?: number, scene?: number },
  *   grayscale?: (dataUrl: string, { signal }) => Promise<{ data: string, applied: boolean, reason: string|null }>, includeHak?: boolean }} deps
  */
-export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null, composite = null, splitPanels = null } = {}) {
+export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null, composite = null, splitPanels = null,
+  // 실험(생성 3차): upscale(dataUrl, 배율) → dataUrl(fix.multiUpscale), measureDrift(before, after, region) → { inkDrift }(editFigure boxCheck), flatten(dataUrl) → dataUrl(fix.flattenWhite)
+  upscale = null, measureDrift = null, flatten = flattenPngOnWhite } = {}) {
   if (!ai || typeof ai.readText !== 'function' || typeof ai.generateImage !== 'function') throw new TypeError('그림 엔진에는 ai.readText·ai.generateImage가 필요합니다.');
   const model = { ...DEFAULT_MODELS, ...models };
   const tries = { text: 3, image: 2, scene: 2, ...retries };
@@ -78,6 +80,11 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       generateImage: (text, attachments = []) => withRetry(tries.image, signal, () => ai.generateImage({ model: model.image, text, attachments, signal }).then(imageOf)),
     };
   }
+
+  // 실험(생성 3차, fix.flattenWhite): 흑백 뒤에 흰 종이에 한 번 더 얹는다(흑백이 실패해 원본이 돌아와도 투명이 남지 않게). 실패하면 그대로.
+  const grayFor = (on) => (on && typeof flatten === 'function'
+    ? async (u, o) => { const g = await grayscale(u, o); try { const d = await flatten(g?.data || u); return { ...g, data: d || g?.data || u, flattened: true }; } catch { return g; } }
+    : grayscale);
 
   /**
    * 그림 한 벌(장면 하나 이상) 만들기. 던지지 않는다(입력이 잘못된 경우만 TypeError).
@@ -93,6 +100,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     const fix = baselineFix ? { sceneRoles: true, keyValues: true, noRefLook: true, pickGothic: true, ...fixIn } : { ...fixIn };
     if (classifyMode === 'expand') earlyRetrieve = false; // 구체화 결과로 검색하므로 미리 검색하지 않는다
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('그림 요청 글이 비어 있습니다.');
+    const grayscale = grayFor(!!fix.flattenWhite);
     const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
     const errors = [];
     // 고침 U1: 교사 그림이 있으면 구체화(글만 보는 AI)가 그림에 없을 물체·배치를 지어내지 않게 알려 준다(fix.userRoles일 때만).
@@ -124,11 +132,18 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     const styleExpand = styleWant === 'illust' ? STYLE_DIRECTIVES.expandIllust : styleWant === 'schematic' ? STYLE_DIRECTIVES.expandSchematic : '';
     let drawUsers = userImages, drawRole = userImageRole, specText = '';
     const roleList0 = Array.isArray(userImageRole) ? userImageRole : [userImageRole];
-    if (fix.sketchSpec && userCount && roleList0.includes('sketch')) {
+    if (fix.sketchSpec === 3 && userCount && roleList0.includes('sketch')) {
+      // 생성 3차: 합침 — 글 AI 없이 그리기 지시문에 읽기 절차를 넣는다.
+      specText = SKETCH_MERGED_NOTE;
+    } else if (fix.sketchSpec && userCount && roleList0.includes('sketch')) {
       phase({ phase: 'sketch-spec' });
       try {
-        const spec = tryParseJson(await context(signal).readText(SKETCH_SPEC_PROMPT({ request }), userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image'))));
-        specText = sketchSpecText(spec, { attached: fix.sketchSpec !== 2 });
+        const sketches = userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image'));
+        if (fix.sketchSpec === 4) specText = sketchSpecShortText(await context(signal).readText(SKETCH_SPEC_SHORT_PROMPT({ request }), sketches));
+        else {
+          const spec = tryParseJson(await context(signal).readText(SKETCH_SPEC_PROMPT({ request }), sketches));
+          specText = sketchSpecText(spec, { attached: fix.sketchSpec !== 2 });
+        }
       } catch (error) {
         if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
         errors.push({ scene: null, step: 'sketch-spec', message: message(error) });
@@ -170,7 +185,34 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal), index }, {
           request: combinedPanelsRequest(sceneRequests), subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: null, single: false, refIds, fixNote, retrieval: retrievals[0], refCount, strip, classifyMode, aiPick, userImages: drawUsers, userImageRole: drawRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject, styleWant,
         }));
-        const parts = await splitPanels(r.image, n);
+        let parts = await splitPanels(r.image, n);
+        if (Array.isArray(parts) && parts.length === n && fix.multiCombined === 'layout') {
+          // 생성 3차(b): 자른 칸을 배치 안내로 붙여 장면마다 크게 다시 그린다(나란히). 실패한 장면은 자른 칸을 그대로 쓴다.
+          const redrawn = await Promise.all(parts.map(async (part, i) => {
+            phase({ phase: 'scene', scene: i, total: n, request: sceneRequests[i] });
+            try {
+              const q = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal), index }, {
+                request: sceneRequests[i], subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf: 1, prevScene: null, single: true, refIds: [], fixNote, retrieval: null, refCount: 0, strip, classifyMode, aiPick, userImages: [part], userImageRole: ['panelLayout'], fix: { ...fix, userRoles: true }, styleScore, classification: searchFromExpand, excludeRefs, refReject, styleWant,
+              }));
+              return { image: q.image, refs: q.refs, prompt: q.prompt, strippedTexts: q.strippedTexts, layout: true };
+            } catch (error) {
+              if (isAbort(error) || abortedNow()) throw error;
+              errors.push({ scene: i, step: 'combined-layout', message: message(error) });
+              return { image: part, refs: r.refs, prompt: r.prompt, strippedTexts: r.strippedTexts, layout: false };
+            }
+          }));
+          const out = [];
+          for (let i = 0; i < n; i++) {
+            const g = await grayscale(redrawn[i].image, { signal });
+            out.push({ request: sceneRequests[i], image: g.data, refs: redrawn[i].refs, strippedTexts: redrawn[i].strippedTexts, beforeStrip: null, prompt: redrawn[i].prompt, grayscale: { applied: g.applied, reason: g.reason }, classify: r.retrieval?.classify || null, combined: true, layoutRedrawn: redrawn[i].layout });
+          }
+          phase({ phase: 'done', total: n });
+          return { ...result(expanded, out, false), combined: { image: r.image, crops: parts } };
+        }
+        if (Array.isArray(parts) && parts.length === n && fix.multiUpscale && typeof upscale === 'function') {
+          // 생성 3차(c): 자른 칸을 AI 없이 키운다(실패하면 자른 그대로).
+          parts = await Promise.all(parts.map(async (p) => { try { return (await upscale(p, Number(fix.multiUpscale) || 2)) || p; } catch (error) { errors.push({ scene: null, step: 'combined-upscale', message: message(error) }); return p; } }));
+        }
         if (Array.isArray(parts) && parts.length === n) {
           const out = [];
           for (let i = 0; i < n; i++) {
@@ -229,6 +271,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
    */
   async function redrawScenes({ previous, scenes: which = [], signal = ai.signal, onPhase = () => {}, bestOf = 1, strip = true, userImages = [], userImageRole = 'reference', baselineFix = false, fix: fixIn = {}, keyValues = '', subject = '', request = '' } = {}) {
     const fix = baselineFix ? { sceneRoles: true, keyValues: true, noRefLook: true, pickGothic: true, ...fixIn } : { ...fixIn };
+    const grayscale = grayFor(!!fix.flattenWhite);
     const prevScenes = Array.isArray(previous?.scenes) ? previous.scenes : [];
     if (!prevScenes.length) throw new TypeError('다시 그릴 앞 결과(previous.scenes)가 없습니다.');
     const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
@@ -275,12 +318,44 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
    * 결과는 makeFigureSet과 같은 모양(scenes 한 장) + { kind: 'edit', edit: { instruction, summary, targets, keep, verify, attempts }, labelHints }.
    * 실패·취소면 scenes[0]은 앞 그림 그대로(kept: true), ok: false.
    */
-  async function editFigure({ previousPng, instruction, originalRequest = '', subject = '', signal = ai.signal, onPhase = () => {}, previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, skipFind = false, localText = true, localReplace = false, originalPng = null, region = null, regionPng = null, composite: useComposite = false } = {}) {
+  async function editFigure({ previousPng, instruction, originalRequest = '', subject = '', signal = ai.signal, onPhase = () => {}, previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, skipFind = false, localText = true, localReplace = false, originalPng = null, region = null, regionPng = null, composite: useComposite = false,
+    // 실험(생성 3차) — 기본값이면 지금과 같다:
+    //  boxCheck { thr }: 영역이 있으면 「상자 안만」을 지시에 붙이고, 고친 뒤 영역 밖 바뀐 정도(measureDrift)가 thr(영역 없으면 ×3)를 넘으면 한 번 더 고쳐 덜 바뀐 쪽을 쓴다.
+    //  retryOnError: 그리기 오류로 앞 그림 그대로(kept) 끝났으면 한 번 더 시도한다(되묻기·「지시 안 됨」은 다시 하지 않음).
+    //  flattenWhite: 결과를 흰 종이에 얹는다.
+    boxCheck = null, retryOnError = false, flattenWhite = false } = {}) {
     if (typeof previousPng !== 'string' || !previousPng.startsWith('data:image')) throw new TypeError('고칠 앞 그림(previousPng, data URL)이 없습니다.');
     if (typeof instruction !== 'string' || !instruction.trim()) throw new TypeError('고치기 지시 글이 비어 있습니다.');
-    const ctx = { ...context(signal), signal, grayscale, localEdit, composite };
+    const ctx = { ...context(signal), signal, grayscale: grayFor(!!flattenWhite), localEdit, composite };
     try {
-      return await runEdit(ctx, { previousPng, instruction: instruction.trim(), originalRequest, subject, previous, sceneIndex, verify, maxAttempts, onPhase, skipFind, localText, localReplace, originalPng, region, regionPng, composite: useComposite });
+      const reg = Array.isArray(region) ? region : null;
+      const instr = instruction.trim() + (boxCheck && reg ? EDIT_BOX_NOTE : '');
+      const once = (ins) => runEdit(ctx, { previousPng, instruction: ins, originalRequest, subject, previous, sceneIndex, verify, maxAttempts, onPhase, skipFind, localText, localReplace, originalPng, region, regionPng, composite: useComposite });
+      let out = await once(instr);
+      const failedByError = (o) => !o.ok && !o.aborted && !o.needsClarification && !o.editRejected && !!o.scenes?.[0]?.kept && (o.errors || []).length > 0;
+      if (retryOnError && failedByError(out) && !signal?.aborted) {
+        const again = await once(instr);
+        again.errors = [...(out.errors || []), ...(again.errors || [])];
+        again.retriedAfterError = true;
+        out = again;
+      }
+      if (boxCheck && out.ok && !out.aborted && typeof measureDrift === 'function' && out.scenes?.[0]?.image && !out.scenes[0].kept) {
+        const thr = (Number(boxCheck.thr) || 0.04) * (reg ? 1 : 3);
+        let d1 = null;
+        try { d1 = await measureDrift(previousPng, out.scenes[0].image, reg); } catch { d1 = null; }
+        const info = { thr, first: d1?.inkDrift ?? null, retried: false, picked: 1 };
+        if (d1 && d1.inkDrift > thr && !signal?.aborted) {
+          const out2 = await once(instr + EDIT_DRIFT_RETRY_NOTE);
+          info.retried = true;
+          if (out2.ok && out2.scenes?.[0]?.image && !out2.scenes[0].kept) {
+            let d2 = null; try { d2 = await measureDrift(previousPng, out2.scenes[0].image, reg); } catch { d2 = null; }
+            info.second = d2?.inkDrift ?? null;
+            if (d2 && d2.inkDrift < d1.inkDrift) { out = { ...out2, errors: [...(out.errors || []), ...(out2.errors || [])] }; info.picked = 2; }
+          }
+        }
+        if (out.edit) out.edit.boxCheck = info;
+      }
+      return out;
     } catch (error) {
       // runEdit은 던지지 않게 짰지만, 혹시 모를 오류도 앞 그림을 지킨 결과로 바꾼다.
       const aborted = isAbort(error) || !!signal?.aborted;
