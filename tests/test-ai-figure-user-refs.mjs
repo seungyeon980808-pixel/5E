@@ -110,7 +110,7 @@ test('U1 역할 문장: 레퍼런스·손그림·표현 참고, 섞이면 그림
 });
 
 // ── 엔진 흐름 ──
-test('U1 runFigureEngine: 교사 그림이 첫 첨부, 기출은 2장, 역할 문장·대화 요약·구체화 안내', async () => {
+test('U1 runFigureEngine: 교사 그림이 첫 첨부, 기출은 1장, 역할 문장·대화 요약, 구체화 없음', async () => {
   const { ai, calls } = fakeAi();
   const sketch = png('teacher-sketch');
   const out = await runFigureEngine({ ai, engine: engineOf(ai), request: '손그림처럼 빗면 위 물체 A를 그려 줘', conversation: '교사: 빗면 30°\nAI: 정리했어요', userImages: [sketch], userImageRoles: ['sketch'] });
@@ -122,9 +122,9 @@ test('U1 runFigureEngine: 교사 그림이 첫 첨부, 기출은 2장, 역할 �
   assert.ok(att.slice(1).every((a) => a.startsWith('ref:')));
   assert.match(calls.image[0].text, /\[교사 그림\] 첫 첨부는 교사가 손으로 그린 밑그림이다/u);
   assert.match(calls.image[0].text, /\[첨부 순서\] 1번째 첨부 = 교사가 붙인 그림/u);
-  const expandCall = calls.text.find((c) => c.text.includes('그림 담당'));
-  assert.match(expandCall.text, /교사와 AI가 그림을 정리한 대화[\s\S]*빗면 30°/u); // 대화 요약이 빠지지 않는다
-  assert.match(expandCall.text, /교사가 그림 1장\(손그림\)을 붙였고/u);
+  // 11-22 실제 비교 뒤: 교사 그림이 있으면 구체화를 건너뛰고(그림을 못 보는 구체화가 구도를 바꿨다) 대화 정리는 그리기 요청 글에 붙인다.
+  assert.equal(calls.text.filter((c) => c.text.includes('그림 담당')).length, 0, '구체화 없음');
+  assert.match(calls.image[0].text, /\[내용\]\n손그림처럼 빗면 위 물체 A를 그려 줘\n\n\[교사와 AI가 그림을 정리한 대화[^\]]*\]\n교사: 빗면 30°/u); // 대화 요약이 빠지지 않는다
   assert.deepEqual(out.fresh[0].meta.userRefs, { count: 1, roles: ['sketch'] });
 });
 
@@ -136,9 +136,10 @@ test('U1 runFigureEngine: 교사 그림이 없으면 지금과 같다(기출 3�
   assert.doesNotMatch(calls.text.find((c) => c.text.includes('그림 담당')).text, /교사가 그림/u);
 });
 
-test('U1 여러 장면: 교사 그림 → 앞 장면 → 기출 순서, 앞 장면 문장은 2번째 첨부를 가리킴', async () => {
+test('U1 여러 장면(엔진 옵션 raw 없이): 교사 그림 → 앞 장면 → 기출 순서, 앞 장면 문장은 2번째 첨부, 구체화에 교사 그림 안내', async () => {
   const { ai, calls } = fakeAi({ scenes: ['장면 1', '장면 2'] });
-  await runFigureEngine({ ai, engine: engineOf(ai), request: '레퍼런스대로 두 장면', userImages: [png('teacher-ref')], userImageRoles: ['reference'] });
+  await engineOf(ai).makeFigureSet({ request: '레퍼런스대로 두 장면', userImages: [png('teacher-ref')], userImageRole: ['reference'], fix: { userRoles: true }, refCount: 2 });
+  assert.match(calls.text.find((c) => c.text.includes('그림 담당')).text, /교사가 그림 1장\(레퍼런스\)을 붙였고/u);
   assert.equal(calls.image.length, 2);
   const second = calls.image[1];
   assert.equal(nameOf(second.attachments[0]), 'teacher-ref');

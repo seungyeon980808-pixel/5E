@@ -62,8 +62,15 @@ export function userReferenceRole(item, request = '') {
   if (SKETCH_WORDS.test(String(item?.name || '')) || SKETCH_WORDS.test(String(request || ''))) return 'sketch';
   return 'reference';
 }
-/** 교사 그림이 있을 때 붙일 기출 수: 교사 그림이 구도를 주므로 기출은 화풍 참고 2장(기본 3장). */
-export const USER_REF_KICE_COUNT = 2;
+/** 교사 그림이 있을 때 붙일 기출 수: 교사 그림이 구도를 주므로 기출은 화풍 참고 1장(기본 3장).
+ *  11-22 밤 실제 4문제(레퍼런스 2·손그림 2) 비교: 구체화 켬·기출 2장은 그림에 없던 물체를 지어내고(세포 소기관 추가·미토콘드리아 2개)
+ *  레퍼런스 구도를 버렸다(해령 단면 → 입체 블록). 구체화 끔·기출 1장은 4문제 모두 교사 그림 구도·개수를 지켰다. */
+export const USER_REF_KICE_COUNT = 1;
+/** 교사 그림이 있으면 구체화(글만 보는 AI)를 건너뛴다 — 그림을 못 보는 구체화가 구도를 바꿨다(위 비교). 대화 정리 글은 요청 글 뒤에 붙인다. */
+export function userRefRequest(request, conversation = '') {
+  const c = String(conversation || '').trim();
+  return c && !String(request || '').includes(c) ? `${request}\n\n[교사와 AI가 그림을 정리한 대화 — 마지막에 확정된 구성·라벨을 따른다. 질문·인사는 그림 내용이 아니다]\n${c}` : String(request || '');
+}
 
 /** 그래프 생성에 「그림으로 생성」을 쓸지. picture: 옵션을 골랐는지(화면이 생기기 전에는 플래그가 곧 옵션). */
 export function graphRoute({ desktop, storage, picture = null } = {}) {
@@ -309,7 +316,8 @@ export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.j
 export async function runFigureEngine({ ai, request, conversation = '', models, previous = null, refIds = [], signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
   // 고침 U1: 교사 그림을 첫 첨부로(역할 문장 fix.userRoles), 기출은 화풍 참고 2장.
   const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
-  const userOpts = users.length ? { userImages: users, userImageRole: users.map((_, i) => userImageRoles[i] || 'reference'), fix: { userRoles: true }, refCount: USER_REF_KICE_COUNT } : {};
+  const userOpts = users.length ? { userImages: users, userImageRole: users.map((_, i) => userImageRoles[i] || 'reference'), fix: { userRoles: true }, refCount: USER_REF_KICE_COUNT, raw: true } : {};
+  if (users.length) request = userRefRequest(request, conversation);
   let result = null;
   try {
     const mod = engine ? null : await loadEngine();

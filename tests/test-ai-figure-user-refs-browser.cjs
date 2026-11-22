@@ -1,7 +1,7 @@
 'use strict';
 // 고침 U1·E2(exp/1122-figure-fixes)를 가짜 설치판 연결로 끝까지 돈다(실제 AI 안 부름).
 //  U1) 그림 생성 작업에 레퍼런스(손그림)를 넣고 대화 → 「이미지 생성」: 옛 exam-brief 길이 아니라 새 엔진(구체화·기출·흑백)으로,
-//      교사 그림이 첫 첨부, 기출은 2장, 지시문에 손그림 역할 문장, 구체화에 대화 요약과 교사 그림 안내.
+//      교사 그림이 첫 첨부, 기출은 1장, 지시문에 손그림 역할 문장, 구체화는 건너뜀(11-22 실제 비교).
 //  E2) 두 장면 중 하나가 빈 그림이면 그 장면만 다시(구체화·검색 글 호출 없이 그림 1번), 결과 카드 2장.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -99,11 +99,10 @@ h.withServer(async origin => {
       assert.match(s1.text, /\[교사 그림\] 첫 첨부는 교사가 손으로 그린 밑그림이다/);
       assert.match(s1.text, /\[첨부 순서\] 1번째 첨부 = 교사가 붙인 그림/);
       assert.match(s1.text, /글자 규칙\(평가원 시험지와 같게\)/, `${name}: 정자·기울임 글자 규칙이 들어간다`);
-      assert.equal(s1.atts.length, 3, `${name}: teacher sketch + two 기출 (${s1.atts.length})`);
+      assert.equal(s1.atts.length, 2, `${name}: teacher sketch + one 기출 (${s1.atts.length})`);
       assert.equal(s1.atts[0].name, 'figure-ref-1.png');
-      const expandRead = f.reads.find(t => /그림 담당/.test(t));
-      assert.ok(expandRead, `${name}: expand ran`);
-      assert.match(expandRead, /교사가 그림 1장\(손그림\)을 붙였고/);
+      assert.equal(f.reads.filter(t => /그림 담당/.test(t)).length, 0, `${name}: no expand when a teacher image is attached`);
+      assert.match(s1.text, /\[내용\]\n[\s\S]*손그림처럼 수평 막대/);
       const card = page.locator(`${PANEL} .ai-msg.result .ai-chat-result`).last();
       assert.match(await card.textContent(), /생성 결과 1/);
       await shot(page, `${name}-u1-result.png`);
