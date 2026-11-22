@@ -593,7 +593,8 @@ async function wholeFigureData(url){if(!url)return '';if(WHOLE_IMAGE_RE.test(url
   try{const img=await loadImage(url),k=Math.min(1,2400/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height,1)),c=document.createElement('canvas');c.width=Math.max(1,Math.round((img.naturalWidth||img.width)*k));c.height=Math.max(1,Math.round((img.naturalHeight||img.height)*k));
     const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);const out=c.toDataURL('image/jpeg',.9);return WHOLE_IMAGE_RE.test(out)&&out.length<8*1024*1024?out:'';}catch{return '';}}
 // 라이브러리가 그림을 보내지 못했으면 5E_exam 기출 원본에서 그 문항을 잘라 온다.
-async function pastQuestionData(item){if(!item)return '';try{const {croppedQuestion}=await import('./past-pdf.js');const r=await croppedQuestion(item);if(!r?.url)return '';
+// 11-22: 그림 한 장이 곧 문항이므로 그림 속 원본 번호(「20.」)는 지우고, 아래 「확인 사항」 상자 조각은 뺀다(past-pdf.js bare).
+async function pastQuestionData(item){if(!item)return '';try{const {croppedQuestion}=await import('./past-pdf.js');const r=await croppedQuestion(item,[],{bare:true});if(!r?.url)return '';
   const blob=await (await fetch(r.url)).blob();return await new Promise(res=>{const f=new FileReader();f.onload=()=>res(String(f.result||''));f.onerror=()=>res('');f.readAsDataURL(blob);});}catch{return '';}}
 function wholeImageQuestion(run,row,figure){const q=newQuestion('0','객관식','그림');q.blocks=q.blocks.filter(x=>x.kind==='figure');/* 빈 「자료 설명」 칸은 뺀다 — 원본 그림 한 장짜리 */const b=q.blocks[0],title=row.title||`${run.title} ${row.whole.no}번`;
   if(b&&figure)b.figure={name:`${title}.png`.slice(0,240),data:figure};
@@ -604,6 +605,7 @@ function wholeImageQuestion(run,row,figure){const q=newQuestion('0','객관식',
 async function singleImage(item,row,go,error){
   const figure=await wholeFigureData(await pastQuestionData(item));if(!figure)return false;
   const q=wholeImageQuestion({title:item.title},{title:item.title,whole:{no:item.no}},figure);
+  q.name=String(item.title||'').slice(0,240);// 11-22: 카드 제목을 「발문을 입력하세요」 대신 원본 출처(예: 2008학년도 6월 물리Ⅱ 20번)로 — 시험지에는 찍히지 않음
   {const a=await pastAnswerIndex(item);if(a!=null)q.answer=a;}// 11-22: 그림으로 넣어도 라이브러리가 아는 정답은 카드에
   const ok=mutate(()=>{q.number=nextNumber();data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
   if(!ok)return false;

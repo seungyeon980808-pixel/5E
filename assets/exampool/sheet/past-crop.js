@@ -57,6 +57,34 @@ export function pastCropRect({ data, width: W, height: H }) {
   return { x, y, width: Math.min(W - x, Math.max(right + PAD + 1 - x, COLUMN)), height: Math.min(H, bottom + PAD + 1) - y };
 }
 
+// 11-22: PDF 글자 좌표로 자른 문항 그림(past-pdf.js)을 픽셀로 한 번 더 다듬는다. 줄이기만 하고 늘리지 않으며, 내용 잉크는 자르지 않는다.
+// · 아래: foot(쪽 아래 「※ 확인 사항」 상자·저작권 줄 글자의 위 끝 행)이 그림 안에 걸려 있으면 그 행부터 아래를 버리고,
+//   그 바로 위 reach 행 안의 잉크(상자 위 테두리)가 위쪽 내용과 gap 행 이상 떨어져 있으면 그것도 상자 조각으로 보고 버린다(붙어 있으면 내용으로 보고 둠).
+//   keep(본문 글자 줄의 아래 끝 행)보다 위로는 절대 올라가지 않는다. 그다음 아래쪽 빈 여백을 pad만 남기고 줄인다.
+// · 왼쪽(left: true): 남는 부분의 맨 왼쪽 잉크 앞 빈 여백을 pad만 남기고 줄인다(문항 번호를 지운 뒤 생긴 빈 칸).
+// 돌려주는 값: { x, y: 0, width, height } — 그림 좌표.
+export function tidyQuestionRect({ data, width: W, height: H }, { foot = null, keep = 0, reach = 0, gap = 0, pad = 0, left = false } = {}) {
+  // 옅은 회색 점선(그림 칸 테두리)도 내용이다 — 흰색에 가깝지 않으면 모두 잉크로 친다.
+  const ink = (x, y) => { const p = (y * W + x) * 4; return data[p] < 235 || data[p + 1] < 235 || data[p + 2] < 235; };
+  const row = new Uint8Array(H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ink(x, y)) { row[y] = 1; break; }
+  let cut = H;
+  const k = Math.max(0, Math.min(H, Math.round(keep)));
+  if (Number.isFinite(foot) && foot < H) {
+    cut = Math.max(k, Math.round(foot));
+    let top = -1; for (let y = cut - 1; y >= Math.max(k, cut - reach); y--) if (row[y]) top = y;
+    if (top >= 0) { let clear = top - k >= gap; for (let y = top - 1; y >= top - gap && clear; y--) if (row[y]) clear = false; if (clear) cut = top; }
+  }
+  let last = -1; for (let y = cut - 1; y >= 0 && last < 0; y--) if (row[y]) last = y;
+  const height = Math.max(1, last < 0 ? cut : Math.max(Math.min(cut, last + 1 + pad), k));
+  let x = 0;
+  if (left) {
+    let first = W; for (let y = 0; y < height; y++) for (let i = 0; i < first; i++) if (ink(i, y)) { first = i; break; }
+    if (first < W) x = Math.max(0, first - pad);
+  }
+  return { x, y: 0, width: W - x, height };
+}
+
 // 브라우저: 그림을 읽어 잘라 낸 그림 주소를 돌려준다(같은 그림은 한 번만). 되도록 작업자 스레드(past-crop-worker.js)에서 자르고,
 // 작업자·OffscreenCanvas가 없거나 실패하면 이 창에서 자른다. 그래도 안 되면 원본 주소.
 const cache = new Map();

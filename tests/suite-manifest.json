@@ -2606,6 +2606,13 @@
         "LIB-WHOLE-EXAM"
       ],
       "reason": "시험지 통째로 변환: 평가원 2026 수능 물리학Ⅰ 20문항(이름·1→20 순서·실패 2문항 그림·다시 시도)과 학평 20문항 그림 변환을 실제 공유 자료로 Chromium·WebKit에서 확인한다(인터넷 필요)."
+    },
+    {
+      "path": "tests/test-exampool-variant-image-fallback-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-VARIANT-IMAGE-FALLBACK"
+      ],
+      "reason": "한 문항 변형이 한글로 못 바뀌어 원본 그림 한 장으로 들어갈 때(2008 6월 물리Ⅱ 20번): 원본 번호 지움·아래 확인 사항 상자 조각 없음·카드 이름은 출처. 원본 PDF를 실제 공유 자료에서 받는다(인터넷 필요)."
     }
   ],
   "deferred": [
