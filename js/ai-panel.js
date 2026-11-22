@@ -1579,6 +1579,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       panel.dataset.loadingPending = 'true';
     }
     // 11-22: 바로 그리기 때 앞 차례 종류(대화)가 남아 처음 2초 「대화 멈추기」·대화 기다림 표시가 잘못 떴다 — 바쁨 표시 전에 종류를 맞춘다.
+    // 11-22 사용자: 대화를 보낼 때도 연결·모델 확인 동안 옛 진행 상자(「요청을 준비하고 있습니다」)가 잠깐 비쳤다.
+    // 대화는 대화창 안 「생각하는 중」 점 표시만 쓴다 — 옛 상자는 처음부터 끝까지 가린다(setGenerating(false)에서 풀림).
+    if (type === 'chat') panel.dataset.loadingPending = 'true';
     currentTurnType = type === 'chat' ? 'chat' : 'image';
     setBusy(true);
     stopGenerationTimingTimer();
@@ -1608,7 +1611,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (batchRun) void batchRun.emit({type:'progress',progress:{phase}}).catch(batchRun.reject);
     if (requestStates.advance(requestToken, phase)) {
       panel.dataset.aiRequestPhase = phase;
-      if (phase !== 'preparing') delete panel.dataset.loadingPending; // 새 로딩이 넘겨받거나(generating) 다른 안내(로그인 기다림 등)로 바뀐다
+      if (phase !== 'preparing' && currentTurnType !== 'chat') delete panel.dataset.loadingPending; // 새 로딩이 넘겨받거나(generating) 다른 안내(로그인 기다림 등)로 바뀐다
       // 라벨 변환 작업은 단계 신호를 보낸다. 라벨 복원과 이미지만은 단계 구성이 다르다.
       if (phase === 'generating' && pendingLoading?.token === requestToken) loading.begin(currentRunInput?.loadingPlan ? { ...pendingLoading, plan: currentRunInput.loadingPlan, phased: true } : pendingLoading);
       if (phase === 'validating') { loading.setPhase('결과 확인 중'); loading.stage('validating'); }
