@@ -115,6 +115,8 @@ export function sceneRequestText({ request, keyValues = '', fixNote = '' }) {
 export function expandPrompt({ request, subject = '', context = '', conversation = '', types = [], fix = {} }) {
   const out = expandPromptBase({ request, subject, context, conversation, types });
   // 실험(fix.noInventNames): 교사가 말하지 않은 이름(A·B·P…)·설명 글을 구체화가 새로 붙이지 않게. 기본 꺼짐.
+  // fix.noInventNames === 2: 대화에서 교사가 이미 말한 이름은 꼭 살린다(11-23 생성3에서 C2의 대화 속 A·B가 빠짐).
+  if (fix.noInventNames === 2) return out.replace('문항에서 물어볼 만한 대상에는 이름(A, B, P, ㉠)을 붙인다.', '교사가 지금 요청이나 앞선 대화에서 말한 이름(A, B, ㉠ 등)·라벨은 하나도 빠짐없이 그 대상에 붙인다(「아까 말한 걸로」 같은 말이면 대화 속 지시를 그대로 따른다). 교사가 말하지 않은 이름(A, B, P, m, ㉠ 등)·라벨·설명 글은 새로 붙이지 않는다(장면 요청에도 쓰지 않는다). 교사가 「설명 문장은 넣지 말라」고 하면 용액 이름·농도 같은 글도 그림에 쓰지 않는다.');
   return fix.noInventNames ? out.replace('문항에서 물어볼 만한 대상에는 이름(A, B, P, ㉠)을 붙인다.', '교사가 말하지 않은 이름(A, B, P, m, ㉠ 등)·라벨·설명 글은 새로 붙이지 않는다(장면 요청에도 쓰지 않는다). 교사가 「설명 문장은 넣지 말라」고 하면 용액 이름·농도 같은 글도 그림에 쓰지 않는다.') : out;
 }
 function expandPromptBase({ request, subject = '', context = '', conversation = '', types = [] }) {
