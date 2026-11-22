@@ -3049,6 +3049,11 @@
 body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; pointer-events: none; }
 #ai-image-panel { inset: 0 !important; padding: 0; background: var(--bg-app); }
 #ai-image-panel .modal-ai.ai-workbench { width: calc(100vw / var(--ui-zoom, 1)); height: calc(100dvh / var(--ui-zoom, 1)) !important; min-width: 0; border: 0; }
+/* 11-22 사용자(윈도우 설치판 「커서 위치를 가끔 못 알아들음」): 위 inset:0이 윈도우용 top:30px를 덮어 AI 작업대가 창 끌기 띠(30px)·
+   윈도우 창 단추 밑까지 올라가, 맨 윗줄 단추 윗부분 클릭이 창 끌기·최대화로 빠졌다. 윈도우·리눅스에서만 띠 아래로 내린다(맥은 그대로).
+   body 안이라 30px도 화면 크기(--ui-zoom)와 같이 줄고 늘어 띠 높이와 맞는다. */
+.desktop-shell:not(.platform-darwin):not(.is-native-fullscreen) body:not(.exam-editing) #ai-image-panel { top: 30px !important; }
+.desktop-shell:not(.platform-darwin):not(.is-native-fullscreen) body:not(.exam-editing) #ai-image-panel .modal-ai.ai-workbench { height: calc(100dvh / var(--ui-zoom, 1) - 30px) !important; }
 #ai-image-panel .ai-pane-head,
 #ai-image-panel .mode-side-by-side .ai-pane-head { min-height: var(--ai-pane-head-height, 36px); padding: 4px 6px; }
 #ai-image-panel .ai-pane-head-controls { flex-wrap: nowrap; gap: 4px; }
