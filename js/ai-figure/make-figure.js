@@ -3,7 +3,7 @@
 // 원칙: 실패로 끝내지 않는다 — 검색 실패면 참고 그림 없이, 고르기 실패면 첫 후보, 지우기 실패면 지우기 전 그림을 쓴다.
 // 그리기 자체가 끝내 실패했을 때만 오류를 던지고, 앞 결과를 지키는 일은 index.js(makeFigureSet)가 맡는다.
 import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt } from './prompt.js';
-import { retrieve, tryParseJson } from './retrieve.js';
+import { retrieve, tryParseJson, roughClassify } from './retrieve.js';
 import { collectReferenceImages } from './reference-images.js';
 
 const isAbort = (error) => error?.name === 'AbortError';
@@ -69,6 +69,14 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
   // retrieval: 엔진이 미리(구체화와 나란히) 시작해 둔 검색 프라미스. 없거나 실패하면 여기서 검색한다.
+  // 실험(고침 U1 빠른 길, fix.noRefFast): 참고 기출을 0장 쓰면(refCount 0·refIds 없음) 분류·고르기 AI를 부르지 않고 요청 낱말로만 분류한다. 기본값이면 그대로.
+  const noRefFast = !!fix.noRefFast && !(Number(refCount) > 0) && !refIds.length;
+  if (noRefFast) {
+    const c = roughClassify(request, subject);
+    const types = (ctx.index?.taxonomy?.types || []).map((t) => (typeof t === 'string' ? t : t?.name || t?.id || '')).filter((t) => t && String(request).includes(t));
+    ret = { classify: { ...c, types, ...(/일러스트/u.test(request) ? { style: '일러스트' } : {}) }, picks: [], candidates: [] };
+    log('참고 기출 0장 — 분류·고르기 AI 건너뜀(noRefFast)');
+  } else
   try { ret = (retrieval ? await retrieval.catch((error) => { if (isAbort(error)) throw error; return null; }) : null) || await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject, classifyMode, aiPick, styleScore, classification }); }
   catch (error) { if (isAbort(error)) throw error; log('검색 실패 — 참고 그림 없이 그림: ' + (error?.message || error)); }
 

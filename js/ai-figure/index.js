@@ -126,7 +126,8 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       if (prefetchRefs) p.then((ret) => prefetchReferenceImages([...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)], { count: Math.max(0, Math.min(3, Number(refCount) || 0)), srcOf: (id) => index?.byId?.get(id)?.src, fetch: fetchImpl, signal, ...(referenceTimeoutMs ? { timeoutMs: referenceTimeoutMs } : {}) })).catch(() => {});
       return p;
     };
-    const early = !raw && earlyRetrieve ? retrieveFor(request) : null;
+    const noRefFast = !!fix?.noRefFast && !(Number(refCount) > 0) && !refIds.length; // 실험: 참고 기출 0장이면 미리 검색도 안 함
+    const early = !raw && earlyRetrieve && !noRefFast ? retrieveFor(request) : null;
     if (!raw) {
       phase({ phase: 'expand' });
       try {
