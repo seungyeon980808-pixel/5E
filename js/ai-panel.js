@@ -35,7 +35,7 @@ import { aiErrorText, aiErrorCode, codexMissing, reportAiError } from './ai-erro
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-four-session-integration';
 import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
-import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag, figureBlankSceneOnlyFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag, figureBlankSceneOnlyFlag, convertExamSolCircledFlag, convertTextbookEdgeGuideFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { clearTaskWorkspaces, taskHasReviewNotice, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {
   advanceGenerationTiming,
@@ -4594,7 +4594,7 @@ ${chatText}` : ''}`;
         sourceLabelControllers.add(job.labelController); sourceLabelControllers.add(job.rasterController);
         const onPhase = phase => updateBatchCard(job, `${job.name} · ${phase}`);
         const tab = taskTabs.get(job.taskTabId), sourceHash = await imageLabelDigest(job.source.data);
-        const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
+        const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ examSolCircled: convertExamSolCircledFlag(), textbookEdgeGuide: convertTextbookEdgeGuideFlag(), /* 11-23 앱 반영 후보: 변환 우승안(플래그로 끔) */ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
           selection: { model: job.model, effort: job.effort, serviceTier: job.serviceTier, models: availableModels }, artboard: { ...state.get().artboard }, signal: abort.signal,
           observation: tab?.sourceLabelObservations?.[sourceHash], onObservation: async observation => {
             if (abort.signal.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
@@ -6425,7 +6425,7 @@ ${chatText}` : ''}`;
       const generationSource = workflow.imageKind === 'general' && !options.verifyOnly
         ? await prepareApprovedFirstAttachment({ ...sources[0] }) : undefined;
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
-      const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
+      const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ examSolCircled: convertExamSolCircledFlag(), textbookEdgeGuide: convertTextbookEdgeGuideFlag(), /* 11-23 앱 반영 후보: 변환 우승안(플래그로 끔) */ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
         generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
         artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphKeepOriginal ? 'keep' : 'route',
         onObservation: async observation => {
