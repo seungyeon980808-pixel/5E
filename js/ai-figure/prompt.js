@@ -129,7 +129,9 @@ export function sceneRequestText({ request, keyValues = '', fixNote = '' }) {
 
 /** 구체화: 교사의 짧은 요청 → 장면별 구체 요청(JSON). */
 export function expandPrompt({ request, subject = '', context = '', conversation = '', types = [], fix = {} }) {
-  const out = expandPromptBase({ request, subject, context, conversation, types });
+  let out = expandPromptBase({ request, subject, context, conversation, types });
+  // 실험(fix.multiConsistency): 여러 장면의 공통 틀·배수 수치를 장면 요청마다 적게 한다. 기본 꺼짐.
+  if (fix.multiConsistency) out = out.replace('\n5. 그래프면', MULTI_CONSISTENCY_RULE.replace('\n7.', '\n4-1.') + '\n5. 그래프면');
   // 실험(fix.noInventNames): 교사가 말하지 않은 이름(A·B·P…)·설명 글을 구체화가 새로 붙이지 않게. 기본 꺼짐.
   // fix.noInventNames === 2: 대화에서 교사가 이미 말한 이름은 꼭 살린다(11-23 생성3에서 C2의 대화 속 A·B가 빠짐).
   if (fix.noInventNames === 2) return out.replace('문항에서 물어볼 만한 대상에는 이름(A, B, P, ㉠)을 붙인다.', '교사가 지금 요청이나 앞선 대화에서 말한 이름(A, B, ㉠ 등)·라벨은 하나도 빠짐없이 그 대상에 붙인다(「아까 말한 걸로」 같은 말이면 대화 속 지시를 그대로 따른다). 교사가 말하지 않은 이름(A, B, P, m, ㉠ 등)·라벨·설명 글은 새로 붙이지 않는다(장면 요청에도 쓰지 않는다). 교사가 「설명 문장은 넣지 말라」고 하면 용액 이름·농도 같은 글도 그림에 쓰지 않는다.');
@@ -248,4 +250,60 @@ export function editExtraNote({ hasOriginal = false, region = null, hasRegionIma
   if (region) lines.push(`- 고칠 영역: 그림의 왼쪽에서 ${Math.round(region[0] * 100)}~${Math.round((region[0] + region[2]) * 100)}%, 위에서 ${Math.round(region[1] * 100)}~${Math.round((region[1] + region[3]) * 100)}% 사각형 안. 이 영역 밖은 한 점도 바꾸지 않는다.`);
   if (hasRegionImage) lines.push('- 마지막 첨부는 고칠 영역을 사각형으로 표시한 그림이다(표시 사각형 자체는 그리지 않는다).');
   return lines.length ? '\n[교사가 준 범위]\n' + lines.join('\n') : '';
+}
+
+// ── 실험(생성 2차, exp/1122-figure-fixes) — 모두 선택 옵션, 기본값이면 쓰이지 않는다 ──
+// fix.sketchSpec: 손그림 → 글 명세(물체·개수·상대 위치·라벨·지시선) → 명세대로 새로 그리기(손그림은 배치 안내).
+export const SKETCH_SPEC_PROMPT = ({ request }) => `첨부는 교사가 손으로 대강 그린 과학 그림 밑그림이다. 교사 요청: 「${request}」
+이 밑그림을 평가원 선화로 깨끗이 다시 그릴 수 있게 명세를 JSON으로만 답한다(설명 글 없이):
+{"objects":[{"name":"물체 이름","count":1,"box":[x,y,w,h],"shape":"깨끗한 모양(곧은 벽 원통형 등)"}],
+ "lines":[{"what":"실험대·바닥·실·지시선 아닌 선","kind":"곧은 수평선|곧은 직선|매끈한 곡선|원","from":[x,y],"to":[x,y]}],
+ "labels":[{"text":"글자 그대로","target":"가리키는 대상","at":[x,y],"leader":true}],
+ "relations":["A는 B 위에 놓임 같은 연결·접촉 관계"]}
+규칙: 좌표는 밑그림 틀 기준 0~1(왼쪽 위 0,0). 손 떨림·물결·이중선·울퉁불퉁함은 명세에 넣지 않는다 — 모든 선은 자로 그은 직선·매끈한 곡선·정원으로 적는다. 물체 개수·위치 관계·연결은 밑그림 그대로. 교사 요청에 적힌 라벨은 빠짐없이 넣고, 요청이 「지시선 라벨」이거나 글자가 대상에서 떨어져 있으면 leader true. 밑그림에 없고 요청에도 없는 물체·라벨은 넣지 않는다.`;
+const pct = (v) => Math.round(Math.max(0, Math.min(1, Number(v) || 0)) * 100);
+export function sketchSpecText(spec, { attached = true } = {}) {
+  if (!spec || typeof spec !== 'object') return '';
+  const lines = [];
+  for (const o of Array.isArray(spec.objects) ? spec.objects.slice(0, 16) : []) {
+    const b = Array.isArray(o.box) && o.box.length === 4 ? `, 가로 ${pct(o.box[0])}~${pct(o.box[0] + o.box[2])}% · 세로 ${pct(o.box[1])}~${pct(o.box[1] + o.box[3])}%` : '';
+    lines.push(`- 물체: ${o.name}${o.count > 1 ? ` ${o.count}개` : ''}${o.shape ? `(${o.shape})` : ''}${b}`);
+  }
+  for (const l of Array.isArray(spec.lines) ? spec.lines.slice(0, 12) : []) {
+    const at = Array.isArray(l.from) && Array.isArray(l.to) ? ` (${pct(l.from[0])}%,${pct(l.from[1])}%)→(${pct(l.to[0])}%,${pct(l.to[1])}%)` : '';
+    lines.push(`- 선: ${l.what} — ${l.kind || '곧은 직선'}${at}`);
+  }
+  for (const t of Array.isArray(spec.labels) ? spec.labels.slice(0, 16) : []) {
+    const at = Array.isArray(t.at) ? ` (${pct(t.at[0])}%,${pct(t.at[1])}%)` : '';
+    lines.push(`- 라벨: 「${t.text}」 → ${t.target}${at}${t.leader ? ', 곧은 지시선으로 대상에 잇는다' : ''}`);
+  }
+  for (const r of Array.isArray(spec.relations) ? spec.relations.slice(0, 8) : []) lines.push(`- 관계: ${r}`);
+  if (!lines.length) return '';
+  return `\n\n[밑그림 명세 — 교사 손그림을 읽어 정리한 것, 위치는 그림 틀 기준 %]\n${lines.join('\n')}\n이 명세의 물체 수·위치·관계·라벨을 지키고, 모든 선은 자로 그은 직선·매끈한 곡선·정원으로 새로 그린다.${attached ? ' 첨부 손그림은 배치를 확인하는 안내일 뿐 그 선을 따라 그리지 않는다(손 떨림·물결선·이중선·울퉁불퉁한 테두리 금지).' : ''}`;
+}
+export const SKETCH_LAYOUT_ROLE = '교사가 손으로 그린 배치 안내다. 물체의 위치·크기 비율·라벨 위치만 보고, 선은 따라 그리지 않는다 — [밑그림 명세]대로 자로 그은 직선·매끈한 곡선으로 새로 그린다(손 떨림·물결선·이중선·울퉁불퉁한 테두리를 옮기지 않는다).';
+
+// fix.styleDirective: 교사 말의 화풍(모식도/일러스트)을 그리기 지시문 맨 끝에 못 박는다.
+export function styleWanted(text) {
+  const t = String(text || '');
+  const il = /일러스트|삽화|실제\s*(모습|모양)|사실적|실물처럼|생생하게/u.test(t);
+  const sc = /모식도|도식|단순하게|간단한\s*도형/u.test(t);
+  return il && !sc ? 'illust' : sc && !il ? 'schematic' : null;
+}
+export const STYLE_DIRECTIVES = {
+  illust: '\n\n[화풍 — 교사 지정: 일러스트] 대상을 실제 모양·비율대로 그린다(해부 구조·인물의 몸과 옷·사물의 실제 윤곽과 두께). 가는 펜 선 + 회색 음영 두세 단계 + 짧은 해칭으로 입체를 살짝 보인다(평가원 회색조 일러스트). 원·사각형·단순 블록으로 줄인 모식도로 그리지 않는다. 사진 질감·그라데이션·컬러는 쓰지 않는다.',
+  illustBio: '\n- 생물 일러스트는 교과서 해부 그림처럼: 기관의 실제 윤곽·혈관·근육 결을 가는 펜 선과 짧은 해칭으로, 단면이면 벽 두께를 보인다.',
+  schematic: '\n\n[화풍 — 교사 지정: 모식도] 대상을 구조와 관계만 보이는 단순한 도형으로 줄인다: 고른 굵기의 가는 선, 평면 연회색 한두 단계, 입체·음영·해칭·질감 없음. 인물이 있으면 윤곽만 있는 단순한 인물(얼굴 표정·옷 주름 없음). 실제 모양을 자세히 묘사하는 일러스트로 그리지 않는다.',
+  expandIllust: '교사가 화풍을 「일러스트」(실제 모양을 살린 회색조 그림)로 정했다. 장면 요청 첫머리에 「일러스트:」를 적고 모식도·단순 도식으로 바꾸지 않는다.',
+  expandSchematic: '교사가 화풍을 「모식도」(단순한 선과 평면 도형)로 정했다. 장면 요청 첫머리에 「모식도:」를 적고 실제 모양을 자세히 묘사하지 않는다.',
+};
+export const STYLE_REF_KEEP = { illust: ['회색조 일러스트', '펜 선화·해칭'], schematic: ['단순 도식(선·도형)'] };
+
+// fix.multiConsistency: 여러 장면일 때 장면마다 같은 틀·배율과 바뀌는 양의 수치(장면 1 기준 배수)를 적게 한다.
+export const MULTI_CONSISTENCY_RULE = '\n7. 장면이 둘 이상이면 모든 장면 요청에 같은 「공통 틀」 문장을 똑같이 적는다: 그림 틀 비율, 같은 용기·장치의 크기(예: 실린더 안쪽 높이 6칸, 폭 4칸), 같은 시점·배율. 그리고 장면마다 바뀌는 양을 장면 1 기준 수치로 적는다(예: 「피스톤 아래 기체 높이 = 장면 1의 2배(2칸 → 4칸)」, 「분자 8개 그대로」). 비율·개수는 교사 말 그대로이며, 그림에서 자로 재어 맞는 크기로 쓴다.';
+export const MULTI_PREV_NOTE = '\n\n[장면끼리 수치 맞추기] 첫 첨부 그림(장면 1)과 틀 크기·용기 크기·배율이 같아야 한다. 이번 장면 요청에 적힌 배수(예: 높이 2배)를 장면 1 그림에서 자로 재어 그대로 맞춘다. 개수가 같다고 했으면 하나씩 세어 같게.';
+export function combinedPanelsRequest(scenes) {
+  const n = scenes.length;
+  return `한 장의 가로로 긴 그림에 다음 ${n}개 그림을 왼쪽에서 오른쪽으로 한 줄로 나란히 그린다(나중에 칸별로 잘라 따로 쓴다). 칸 사이는 넓은 흰 여백(그림 폭의 6% 이상)으로 떼고, 칸을 겹치거나 선·화살표·글자가 칸 사이 여백을 건너가지 않게 한다. 칸 테두리·칸 번호·(가)(나) 같은 이름표는 넣지 않는다. 모든 칸은 같은 배율·같은 용기·장치 크기·같은 바닥 높이·선 굵기·글꼴로 그려, 칸끼리 바뀌는 양(부피·높이·개수·모양)이 서로 정확한 비율로 보이게 한다.\n`
+    + scenes.map((s, i) => `${i + 1}번째 칸(왼쪽부터): ${s}`).join('\n');
 }

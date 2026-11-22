@@ -2,7 +2,7 @@
 // 원본 image_generator pipeline/steps.cjs(makeFigure·pickBetter·stripText). 로컬 catalog/figs 대신 Worker에서 참고 그림을 받는다.
 // 원칙: 실패로 끝내지 않는다 — 검색 실패면 참고 그림 없이, 고르기 실패면 첫 후보, 지우기 실패면 지우기 전 그림을 쓴다.
 // 그리기 자체가 끝내 실패했을 때만 오류를 던지고, 앞 결과를 지키는 일은 index.js(makeFigureSet)가 맡는다.
-import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt } from './prompt.js';
+import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt, SKETCH_LAYOUT_ROLE, STYLE_DIRECTIVES, STYLE_REF_KEEP, MULTI_PREV_NOTE } from './prompt.js';
 import { retrieve, tryParseJson, roughClassify } from './retrieve.js';
 import { collectReferenceImages } from './reference-images.js';
 
@@ -57,6 +57,7 @@ export const USER_IMAGE_NOTES = {
 export const USER_ROLE_LINES = {
   reference: '교사가 붙인 레퍼런스(내용·화풍 참고 그림)다. 교사 요청에 따라 이 그림의 물체·배치를 따르고, 요청에서 바꾸라고 한 값·라벨·개수만 바꾼다. 선·회색·글자는 평가원 그림처럼 깨끗하게 다시 그리고, 레퍼런스의 색·사진 질감·손글씨·설명 문장은 옮기지 않는다.',
   sketch: '교사가 손으로 그린 밑그림이다. 구도·물체의 위치·개수·연결 관계·라벨 위치를 정확히 그대로 지킨다(빼거나 더하거나 옮기지 않는다). 비뚤어진 손 선과 손글씨만 평가원 화풍의 깨끗한 선화와 바로 쓴 글자로 다시 그린다: 울퉁불퉁한 윤곽은 매끈한 곡선·직선으로, 구불구불한 지시선은 곧은 직선으로 바꾼다(손 떨림을 옮기지 않는다).',
+  sketchLayout: SKETCH_LAYOUT_ROLE, // 실험(fix.sketchSpec 1): 손그림을 배치 안내로만
   style: '교사가 고른 화풍 참고 그림이다. 선 굵기·회색·글자 모양만 참고하고, 내용·구도는 [내용]을 따른다(이 그림의 물체를 베끼지 않는다).',
 };
 // 실험(fix.sketchStrict): 손그림의 떨림·물결 바닥선·울퉁불퉁 테두리를 옮기는 일이 남아(11-23 최종 S4·S5) 한 줄 더 못 박는다. 기본 꺼짐.
@@ -68,7 +69,7 @@ export function userImagesNote(roles, fix = {}) {
   if (list.every((r) => r === list[0])) return `\n\n[교사 그림] ${list.length === 1 ? '첫 첨부는' : `첨부의 처음 ${list.length}장은 모두`} ${USER_ROLE_LINES[list[0]]}`;
   return '\n\n[교사 그림]\n' + list.map((r, i) => `- ${i + 1}번째 첨부: ${USER_ROLE_LINES[r]}`).join('\n');
 }
-export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference', fix = {}, styleScore = false, classification = null, excludeRefs = [], refReject = null }) {
+export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference', fix = {}, styleScore = false, classification = null, excludeRefs = [], refReject = null, styleWant = null }) {
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
   // retrieval: 엔진이 미리(구체화와 나란히) 시작해 둔 검색 프라미스. 없거나 실패하면 여기서 검색한다.
@@ -86,7 +87,12 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   const srcOf = (id) => ctx.index?.byId?.get(id)?.src;
   // 실험(문항 → 그림): excludeRefs = 쓰지 않을 기출 id 앞부분(같은 문항·같은 시험지), refReject(dataUrl) = 참이면 그 그림을 버리고 다음 후보(같은 그림 재사용 막기)
   const excluded = (id) => excludeRefs.some((p) => String(id).startsWith(p));
-  const order = [...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)].filter((id) => !excluded(id));
+  let order = [...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)].filter((id) => !excluded(id));
+  // 실험(fix.styleRefFilter): 교사가 정한 화풍과 같은 화풍 태그의 기출을 앞으로(모자라면 나머지로 채움).
+  if (fix.styleRefFilter && styleWant && STYLE_REF_KEEP[styleWant]) {
+    const keep = STYLE_REF_KEEP[styleWant]; const st = (id) => ctx.index?.byId?.get(id)?.style;
+    order = [...new Set([...order.filter((id) => keep.includes(st(id))), ...order.filter((id) => !keep.includes(st(id)))])];
+  }
   const got = await collectReferenceImages(order, { count: Math.max(0, Math.min(3, Number(refCount) || 0)), srcOf, fetch: ctx.fetch, signal: ctx.signal, ...(typeof refReject === 'function' ? { reject: refReject } : {}), ...(ctx.referenceTimeoutMs ? { timeoutMs: ctx.referenceTimeoutMs } : {}) });
   if (ctx.signal?.aborted) throw Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' });
   const refs = got.ids, refImages = got.images;
@@ -99,8 +105,11 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   const roleList = Array.isArray(userImageRole) ? users.map((_, i) => userImageRole[i] || userImageRole[0] || 'reference') : users.map(() => userImageRole);
   const userNote = !users.length ? '' : userFix ? userImagesNote(roleList, fix)
     : (USER_IMAGE_NOTES[Array.isArray(userImageRole) ? userImageRole[0] : userImageRole] || USER_IMAGE_NOTES.reference)(users.length);
-  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '', fix, prevScene: !!prevScene, users: userFix ? users.length : 0 }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
-  const prevNote = userFix ? PREV_SCENE_NOTE.replace('첫 첨부 그림은', `${users.length + 1}번째 첨부 그림(교사 그림 바로 뒤)은`) : PREV_SCENE_NOTE;
+  const styleName = styleWant === 'illust' ? '일러스트' : styleWant === 'schematic' ? '모식도' : '';
+  const subj = subject || ret.classify?.subject || '';
+  const styleNote = styleWant ? STYLE_DIRECTIVES[styleWant] + (styleWant === 'illust' && /생명/u.test(subj) ? STYLE_DIRECTIVES.illustBio : '') : '';
+  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subj, fix, prevScene: !!prevScene, users: userFix ? users.length : 0, ...(styleName ? { style: styleName } : {}) }) + (single ? SINGLE_SCENE_NOTE : '') + userNote + styleNote;
+  const prevNote = (userFix ? PREV_SCENE_NOTE.replace('첫 첨부 그림은', `${users.length + 1}번째 첨부 그림(교사 그림 바로 뒤)은`) : PREV_SCENE_NOTE) + (fix.multiConsistency ? MULTI_PREV_NOTE.replace('첫 첨부 그림', userFix ? `${users.length + 1}번째 첨부 그림` : '첫 첨부 그림') : '');
   const gen = () => prevScene
     ? ctx.generateImage(text + prevNote, userFix ? [...users, prevScene, ...refImages] : [prevScene, ...users, ...refImages])
     : ctx.generateImage(text, [...users, ...refImages]);

@@ -14,6 +14,8 @@ import { grayscaleGeneratedPng } from '../ai-grayscale-png.js?v=1.7.0-four-sessi
 import { AI_ENGINE_FLAG_KEYS, figureEngineFlag, figureImageModelFlag, FIGURE_IMAGE_MODEL_CHOICES } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { runEdit } from './edit.js';
 import { labelHintsFromRequest } from './labels.js';
+import { SKETCH_SPEC_PROMPT, sketchSpecText, styleWanted, STYLE_DIRECTIVES, combinedPanelsRequest } from './prompt.js';
+import { tryParseJson } from './retrieve.js';
 
 export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify, roughClassify } from './retrieve.js';
 export { fetchFigure, collectReferenceImages, parseFigureId, figureFromQuestion } from './reference-images.js';
@@ -62,7 +64,7 @@ async function withRetry(times, signal, fn) {
  *   models?: { text?: string, image?: string }, retries?: { text?: number, image?: number, scene?: number },
  *   grayscale?: (dataUrl: string, { signal }) => Promise<{ data: string, applied: boolean, reason: string|null }>, includeHak?: boolean }} deps
  */
-export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null, composite = null } = {}) {
+export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null, composite = null, splitPanels = null } = {}) {
   if (!ai || typeof ai.readText !== 'function' || typeof ai.generateImage !== 'function') throw new TypeError('그림 엔진에는 ai.readText·ai.generateImage가 필요합니다.');
   const model = { ...DEFAULT_MODELS, ...models };
   const tries = { text: 3, image: 2, scene: 2, ...retries };
@@ -117,6 +119,22 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     try { index = await getIndex(); }
     catch (error) { errors.push({ scene: null, step: 'index', message: message(error) }); index = makeIndex({}); }
 
+    // 실험(생성 2차) 선택 옵션 — fix.styleDirective / fix.sketchSpec / fix.multiCombined. 기본값이면 아래는 아무것도 바꾸지 않는다.
+    const styleWant = fix.styleDirective ? styleWanted([request, conversation].join('\n')) : null;
+    const styleExpand = styleWant === 'illust' ? STYLE_DIRECTIVES.expandIllust : styleWant === 'schematic' ? STYLE_DIRECTIVES.expandSchematic : '';
+    let drawUsers = userImages, drawRole = userImageRole, specText = '';
+    const roleList0 = Array.isArray(userImageRole) ? userImageRole : [userImageRole];
+    if (fix.sketchSpec && userCount && roleList0.includes('sketch')) {
+      phase({ phase: 'sketch-spec' });
+      try {
+        const spec = tryParseJson(await context(signal).readText(SKETCH_SPEC_PROMPT({ request }), userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image'))));
+        specText = sketchSpecText(spec, { attached: fix.sketchSpec !== 2 });
+      } catch (error) {
+        if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
+        errors.push({ scene: null, step: 'sketch-spec', message: message(error) });
+      }
+      if (specText) { if (fix.sketchSpec === 2) drawUsers = []; else drawRole = roleList0.map((r) => (r === 'sketch' ? 'sketchLayout' : r)); }
+    }
     let expanded = null, sceneRequests = [request];
     // GENSPEED(11-20): 기출 검색(분류·고르기 글 AI 두 번)을 구체화와 나란히 시작한다 — 앞에서 차례로 기다리던 7~9초를 줄인다.
     // 첫 장면은 처음 요청으로 고른 기출을 쓰고, 둘째 장면부터는 첫 장면을 그리는 동안 장면 요청으로 미리 검색해 둔다.
@@ -131,7 +149,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     if (!raw) {
       phase({ phase: 'expand' });
       try {
-        expanded = await expand({ request, subject, context: [itemContext, userExpandNote].filter(Boolean).join('\n'), conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand', fix });
+        expanded = await expand({ request, subject, context: [itemContext, userExpandNote, styleExpand].filter(Boolean).join('\n'), conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand', fix });
         sceneRequests = expanded.scenes;
       } catch (error) {
         if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
@@ -143,6 +161,31 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     let first = typeof firstScene === 'string' && firstScene.startsWith('data:image') ? firstScene : null;
     const searchFromExpand = classifyMode === 'expand' && expanded?.search ? expanded.search : null;
     const retrievals = sceneRequests.map((_, i) => (i === 0 ? early : null));
+    if (specText) sceneRequests = sceneRequests.map((s) => s + specText);
+    // 실험(fix.multiCombined): 여러 장면을 한 장에 나란히 그린 뒤 칸별로 잘라 쓴다(그림 한 번·같은 배율). 칸 수가 안 맞으면 보통 길로.
+    if (fix.multiCombined && sceneRequests.length >= 2 && sceneRequests.length <= 5 && typeof splitPanels === 'function') {
+      const n = sceneRequests.length;
+      phase({ phase: 'scene', scene: 0, total: n, request: 'combined' });
+      try {
+        const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal), index }, {
+          request: combinedPanelsRequest(sceneRequests), subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: null, single: false, refIds, fixNote, retrieval: retrievals[0], refCount, strip, classifyMode, aiPick, userImages: drawUsers, userImageRole: drawRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject, styleWant,
+        }));
+        const parts = await splitPanels(r.image, n);
+        if (Array.isArray(parts) && parts.length === n) {
+          const out = [];
+          for (let i = 0; i < n; i++) {
+            const g = await grayscale(parts[i], { signal });
+            out.push({ request: sceneRequests[i], image: g.data, refs: r.refs, strippedTexts: r.strippedTexts, beforeStrip: null, prompt: r.prompt, grayscale: { applied: g.applied, reason: g.reason }, classify: r.retrieval?.classify || null, combined: true });
+          }
+          phase({ phase: 'done', total: n });
+          return { ...result(expanded, out, false), combined: { image: r.image } };
+        }
+        errors.push({ scene: null, step: 'combined-split', message: `칸 ${Array.isArray(parts) ? parts.length : 0}개(바라는 수 ${n}) — 장면마다 따로 그림` });
+      } catch (error) {
+        if (isAbort(error) || abortedNow()) return result(expanded ?? previous?.expanded ?? null, [], true);
+        errors.push({ scene: null, step: 'combined', message: message(error) });
+      }
+    }
     for (let i = 0; i < sceneRequests.length; i++) {
       // 다음 장면 검색을 이번 장면 그리는 동안 미리 시작(나란히 켰을 때만).
       if (early && i + 1 < sceneRequests.length && !retrievals[i + 1]) retrievals[i + 1] = retrieveFor(sceneRequests[i + 1]);
@@ -150,7 +193,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       phase({ phase: 'scene', scene: i, total: sceneRequests.length, request: sceneRequests[i] });
       try {
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal, log), index }, {
-          request: sceneRequests[i], subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages, userImageRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject,
+          request: sceneRequests[i], subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages: drawUsers, userImageRole: drawRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject, styleWant,
         }));
         phase({ phase: 'grayscale', scene: i, total: sceneRequests.length });
         const g = await grayscale(r.image, { signal });
