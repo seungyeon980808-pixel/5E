@@ -203,6 +203,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
           }));
           const out = [];
           for (let i = 0; i < n; i++) {
+            phase({ phase: 'grayscale', scene: i, total: n });
             const g = await grayscale(redrawn[i].image, { signal });
             out.push({ request: sceneRequests[i], image: g.data, refs: redrawn[i].refs, strippedTexts: redrawn[i].strippedTexts, beforeStrip: null, prompt: redrawn[i].prompt, grayscale: { applied: g.applied, reason: g.reason }, classify: r.retrieval?.classify || null, combined: true, layoutRedrawn: redrawn[i].layout });
           }
@@ -216,6 +217,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
         if (Array.isArray(parts) && parts.length === n) {
           const out = [];
           for (let i = 0; i < n; i++) {
+            phase({ phase: 'grayscale', scene: i, total: n });
             const g = await grayscale(parts[i], { signal });
             out.push({ request: sceneRequests[i], image: g.data, refs: r.refs, strippedTexts: r.strippedTexts, beforeStrip: null, prompt: r.prompt, grayscale: { applied: g.applied, reason: g.reason }, classify: r.retrieval?.classify || null, combined: true });
           }

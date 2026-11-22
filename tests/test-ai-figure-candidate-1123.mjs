@@ -141,13 +141,18 @@ test('엔진 multiCombined + multiUpscale: 한 번 그려 칸별로 자르고 2�
       async generateImage({ text }) { images.push(text); return { imageDataUrl: toUrl(panelsPng(drawN, { W: 300 * drawN + 120 })) }; },
     };
     const eng = createEngine({ ai, fetch: async () => ({ ok: false, status: 404, json: async () => ({}) }), index: makeIndex({ taxonomy: { types: ['기타'], styles: [] }, tags: [] }), grayscale: async (d) => ({ data: d, applied: true, reason: null }), splitPanels: split, upscale: up, flatten: async (d) => d });
-    const r = await eng.makeFigureSet({ request: '실린더 세 장면', strip: false, refCount: 0, ...figureCreateOptions(store()) });
-    return { r, images };
+    const phases = [];
+    const r = await eng.makeFigureSet({ request: '실린더 세 장면', strip: false, refCount: 0, onPhase: (e) => phases.push(e), ...figureCreateOptions(store()) });
+    return { r, images, phases };
   };
   const ok = await run(3);
   assert.equal(ok.images.length, 1, '그림 한 번');
   assert.equal(ok.r.scenes.length, 3);
   assert.ok(ok.r.scenes.every((s) => s.combined), '한 장에서 자른 장면');
+  // 06시 고침: 한 장 그림 길도 흑백 단계를 알린다(진행 목록 「흑백으로 정리했어요」).
+  const gray = ok.phases.filter((e) => e.phase === 'grayscale');
+  assert.deepEqual(gray.map((e) => [e.scene, e.total]), [[0, 3], [1, 3], [2, 3]], '칸마다 흑백 단계 알림');
+  assert.ok(ok.phases.findIndex((e) => e.phase === 'grayscale') < ok.phases.findIndex((e) => e.phase === 'done'), '흑백 알림은 끝 알림보다 먼저');
   const w = fromUrl(ok.r.scenes[0].image).width;
   assert.ok(w >= 2 * 180, `2배로 키움(칸 180px+여백 → ${w}px)`);
   const bad = await run(2);
