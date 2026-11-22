@@ -2491,6 +2491,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-candidate-browser.cjs",
+      "findingIds": [
+        "CAND1123-FIGURE-WINNERS-DEFAULT"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-create-ui-browser.cjs",
       "findingIds": [
         "GENUI-FIGURE-CREATE-SCREEN"

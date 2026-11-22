@@ -19,6 +19,8 @@ const REF = fs.readFileSync(PNG).toString('base64');
 async function fakeDesktop(context) {
   await context.addInitScript(() => {
     for (const p of ['', '5e.preview:']) { localStorage.setItem(p + '5e.tutorial.bannerSeen', 'true'); localStorage.setItem(p + '5e.mode', 'pro'); }
+    // 11-23 앱 반영 후보: 이 검사는 손그림 짧은 명세·여러 장 한 장 그리기를 끈 상태(고침 U1·E2 길)를 본다 — 켠 기본은 test-ai-figure-candidate-browser.cjs.
+    localStorage.setItem('5e.aiEngine.figureSketchSpec', '0'); localStorage.setItem('5e.aiEngine.figureMultiCombined', '0');
     const listeners = new Set();
     const draw = (blank, n) => {
       const c = document.createElement('canvas'); c.width = 900; c.height = 600; const g = c.getContext('2d');
