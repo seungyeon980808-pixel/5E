@@ -7059,8 +7059,11 @@ ${chatText}` : ''}`;
     let roleGroups;
     try { roleGroups=partitionReferenceItems(runInput.attachments); } catch(error) { setStatus('이미지 역할을 확인해 주세요. 원본 또는 표현 참고를 선택하세요.','error'); return; }
     // 고침 U1: 그림 생성(exam-brief)에서 교사 그림이 새 엔진으로 가면 「표현 참고」도 화풍 참고로 엔진에 넣는다(막다른 경고 없음).
+    // 11-23 앱 반영 후보: 첨부마다 역할(손그림·레퍼런스·표현 참고)을 먼저 정한다 — 기본은 모두 손그림일 때만 새 엔진, 레퍼런스는 옛 길.
+    const userRoleText = [options.figureConversation, entered].filter(Boolean).join('\n');
+    const userRoles = (runInput.attachments || []).map(item => userReferenceRole(item, userRoleText));
     const userRefRoute = type === 'image' && isExamBrief(runInput) && !batchRun && (runInput.attachments || []).length > 0
-      ? figureRoute({ desktop, storage: channelStorage, hasUserReferences: true, legacy: options.legacyFigure === true }) : null;
+      ? figureRoute({ desktop, storage: channelStorage, hasUserReferences: true, legacy: options.legacyFigure === true, userRoles }) : null;
     if (roleGroups.styleReferences.length && !userRefRoute?.use && (!whiteRun || !roleGroups.inputs.length || runInput.generated.length)) {
       setStatus('표현 참고는 원본이 있는 새 작업의 첫 PNG 변환과 자동 교정에서만 지원합니다. 추가 수정·대화는 새 작업을 사용하세요.','warn'); return;
     }
@@ -7095,7 +7098,7 @@ ${chatText}` : ''}`;
     // 1.8.0(11-19 사용자 결정): 이미지 생성(설명으로 새 그림)은 새 그림 엔진으로 대체 — 구체화→기출 3장 검색→그리기→설명 지우기→흑백.
     // 설치판에서만 돈다(웹은 지금 길). 사용자가 직접 넣은 레퍼런스가 있는 생성과, 엔진이 한 장도 못 그려 넘어온 경우는 옛 길.
     if (type === 'image' && isExamBrief(runInput) && !batchRun) {
-      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true });
+      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true, userRoles });
       if (route.use && options.figureEdit) return runFigureEditTurn({ runInput, entered, requestEpoch, options });
       if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options, userRefItems: route.userRefs ? runInput.attachments.slice() : [] });
     }

@@ -57,8 +57,11 @@ const engineOf = (ai) => createEngine({ ai, fetch: fakeFetch(), index: makeIndex
 test.beforeEach(() => clearFigureCache());
 
 // ── 길 고르기 ──
-test('U1 figureRoute: 교사 그림이 있어도 플래그(기본 켬)면 새 엔진, \'0\'이면 옛 길', () => {
-  assert.deepEqual(figureRoute({ desktop: desktopApp, storage: store(), hasUserReferences: true }), { use: true, reason: null, userRefs: true });
+test('U1 figureRoute: 기본은 손그림만 새 엔진(레퍼런스·표현 참고·섞임·역할 모름은 옛 길), \'1\'이면 모두 새 엔진, \'0\'이면 옛 길', () => {
+  // 11-23 앱 반영 후보(생성 2차 눈가림: 레퍼런스는 옛 길 12장 모두 5점 vs 새 길 3.79)
+  assert.deepEqual(figureRoute({ desktop: desktopApp, storage: store(), hasUserReferences: true, userRoles: ['sketch', 'sketch'] }), { use: true, reason: null, userRefs: true, sketchOnly: true });
+  for (const roles of [['reference'], ['style'], ['sketch', 'reference'], null, []]) assert.equal(figureRoute({ desktop: desktopApp, storage: store(), hasUserReferences: true, userRoles: roles }).reason, 'user-references', String(roles));
+  assert.deepEqual(figureRoute({ desktop: desktopApp, storage: store({ [AI_ENGINE_FLAG_KEYS.figureUserRefs]: '1' }), hasUserReferences: true, userRoles: ['reference'] }), { use: true, reason: null, userRefs: true });
   assert.equal(figureRoute({ desktop: desktopApp, storage: store({ [AI_ENGINE_FLAG_KEYS.figureUserRefs]: '0' }), hasUserReferences: true }).reason, 'user-references');
   assert.equal(figureRoute({ desktop: desktopApp, storage: store(), hasUserReferences: false }).userRefs, undefined);
   assert.equal(figureRoute({ desktop: { ...desktopApp, web: true }, storage: store(), hasUserReferences: true }).reason, 'web');
@@ -106,26 +109,27 @@ test('U1 역할 문장: 레퍼런스·손그림·표현 참고, 섞이면 그림
   const mixed = userImagesNote(['sketch', 'style']);
   assert.match(mixed, /- 1번째 첨부: 교사가 손으로 그린 밑그림/u);
   assert.match(mixed, /- 2번째 첨부: 교사가 고른 화풍 참고 그림/u);
-  assert.equal(Object.keys(USER_ROLE_LINES).sort().join(), 'reference,sketch,style');
+  assert.equal(Object.keys(USER_ROLE_LINES).sort().join(), 'panelLayout,reference,sketch,sketchLayout,style'); // 생성 2·3차가 배치 안내 역할 둘을 더함
 });
 
 // ── 엔진 흐름 ──
 test('U1 runFigureEngine: 교사 그림이 첫 첨부, 기출은 1장, 역할 문장·대화 요약, 구체화 없음', async () => {
+  // 11-23 앱 반영 후보: 손그림만이면 짧은 명세 길(test-ai-figure-candidate-1123.mjs), 여기서는 레퍼런스가 고침 U1 길('1'일 때)을 타는지 본다.
   const { ai, calls } = fakeAi();
   const sketch = png('teacher-sketch');
-  const out = await runFigureEngine({ ai, engine: engineOf(ai), request: '손그림처럼 빗면 위 물체 A를 그려 줘', conversation: '교사: 빗면 30°\nAI: 정리했어요', userImages: [sketch], userImageRoles: ['sketch'] });
+  const out = await runFigureEngine({ ai, engine: engineOf(ai), request: '손그림처럼 빗면 위 물체 A를 그려 줘', conversation: '교사: 빗면 30°\nAI: 정리했어요', userImages: [sketch], userImageRoles: ['reference'] });
   assert.equal(out.ok, true);
   assert.equal(calls.image.length, 1);
   const att = calls.image[0].attachments.map(nameOf);
   assert.equal(att[0], 'teacher-sketch');
   assert.equal(att.length, 1 + USER_REF_KICE_COUNT);
   assert.ok(att.slice(1).every((a) => a.startsWith('ref:')));
-  assert.match(calls.image[0].text, /\[교사 그림\] 첫 첨부는 교사가 손으로 그린 밑그림이다/u);
+  assert.match(calls.image[0].text, /\[교사 그림\] 첫 첨부는 교사가 붙인 레퍼런스/u);
   assert.match(calls.image[0].text, /\[첨부 순서\] 1번째 첨부 = 교사가 붙인 그림/u);
   // 11-22 실제 비교 뒤: 교사 그림이 있으면 구체화를 건너뛰고(그림을 못 보는 구체화가 구도를 바꿨다) 대화 정리는 그리기 요청 글에 붙인다.
   assert.equal(calls.text.filter((c) => c.text.includes('그림 담당')).length, 0, '구체화 없음');
   assert.match(calls.image[0].text, /\[내용\]\n손그림처럼 빗면 위 물체 A를 그려 줘\n\n\[교사와 AI가 그림을 정리한 대화[^\]]*\]\n교사: 빗면 30°/u); // 대화 요약이 빠지지 않는다
-  assert.deepEqual(out.fresh[0].meta.userRefs, { count: 1, roles: ['sketch'] });
+  assert.deepEqual(out.fresh[0].meta.userRefs, { count: 1, roles: ['reference'] });
 });
 
 test('U1 runFigureEngine: 교사 그림이 없으면 지금과 같다(기출 3장·역할 문장 없음)', async () => {

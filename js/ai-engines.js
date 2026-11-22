@@ -47,12 +47,19 @@ export function engineAvailability(desktop) {
 
 /** 이미지 생성에 새 엔진을 쓸지. 사용자가 직접 넣은 레퍼런스가 있는 생성은 옛 길(첨부를 그대로 쓰는 길)을 쓴다.
  *  고침 U1(exp/1122-figure-fixes): `5e.aiEngine.figureUserRefs`가 켜져 있으면(이 갈래 기본) 레퍼런스·손그림도 새 엔진으로 — userRefs: true. */
-export function figureRoute({ desktop, storage, hasUserReferences = false, legacy = false } = {}) {
+export function figureRoute({ desktop, storage, hasUserReferences = false, legacy = false, userRoles = null } = {}) {
   if (legacy) return { use: false, reason: 'legacy' };
   if (!figureEngineFlag(storage ?? globalThis)) return { use: false, reason: 'flag-off' };
   const a = engineAvailability(desktop);
   if (!a.available) return { use: false, reason: a.web ? 'web' : 'unavailable', note: a.reason };
-  if (hasUserReferences) return figureUserRefsFlag(storage ?? globalThis) ? { use: true, reason: null, userRefs: true } : { use: false, reason: 'user-references' };
+  if (hasUserReferences) {
+    // 11-23 앱 반영 후보: 기본 'sketch' — 첨부가 모두 손그림일 때만 새 엔진(짧은 명세), 레퍼런스·표현 참고가 하나라도 있으면 옛 길.
+    //   역할을 모르면(userRoles 없음) 옛 길. 'all'(고침 U1)이면 모두 새 엔진, 'off'면 모두 옛 길.
+    const mode = figureUserRefsMode(storage ?? globalThis);
+    if (mode === 'all') return { use: true, reason: null, userRefs: true };
+    if (mode === 'sketch' && Array.isArray(userRoles) && userRoles.length && userRoles.every((r) => r === 'sketch')) return { use: true, reason: null, userRefs: true, sketchOnly: true };
+    return { use: false, reason: 'user-references' };
+  }
   return { use: true, reason: null };
 }
 
