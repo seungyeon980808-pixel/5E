@@ -62,7 +62,7 @@ async function withRetry(times, signal, fn) {
  *   models?: { text?: string, image?: string }, retries?: { text?: number, image?: number, scene?: number },
  *   grayscale?: (dataUrl: string, { signal }) => Promise<{ data: string, applied: boolean, reason: string|null }>, includeHak?: boolean }} deps
  */
-export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null } = {}) {
+export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBase = DEFAULT_INDEX_BASE, index = null, models = {}, retries = {}, grayscale = grayscaleGeneratedPng, includeHak = true, referenceTimeoutMs = 0, localEdit = null, composite = null } = {}) {
   if (!ai || typeof ai.readText !== 'function' || typeof ai.generateImage !== 'function') throw new TypeError('그림 엔진에는 ai.readText·ai.generateImage가 필요합니다.');
   const model = { ...DEFAULT_MODELS, ...models };
   const tries = { text: 3, image: 2, scene: 2, ...retries };
@@ -178,12 +178,12 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
    * 결과는 makeFigureSet과 같은 모양(scenes 한 장) + { kind: 'edit', edit: { instruction, summary, targets, keep, verify, attempts }, labelHints }.
    * 실패·취소면 scenes[0]은 앞 그림 그대로(kept: true), ok: false.
    */
-  async function editFigure({ previousPng, instruction, originalRequest = '', subject = '', signal = ai.signal, onPhase = () => {}, previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, skipFind = false, localText = true, localReplace = false } = {}) {
+  async function editFigure({ previousPng, instruction, originalRequest = '', subject = '', signal = ai.signal, onPhase = () => {}, previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, skipFind = false, localText = true, localReplace = false, originalPng = null, region = null, regionPng = null, composite: useComposite = false } = {}) {
     if (typeof previousPng !== 'string' || !previousPng.startsWith('data:image')) throw new TypeError('고칠 앞 그림(previousPng, data URL)이 없습니다.');
     if (typeof instruction !== 'string' || !instruction.trim()) throw new TypeError('고치기 지시 글이 비어 있습니다.');
-    const ctx = { ...context(signal), signal, grayscale, localEdit };
+    const ctx = { ...context(signal), signal, grayscale, localEdit, composite };
     try {
-      return await runEdit(ctx, { previousPng, instruction: instruction.trim(), originalRequest, subject, previous, sceneIndex, verify, maxAttempts, onPhase, skipFind, localText, localReplace });
+      return await runEdit(ctx, { previousPng, instruction: instruction.trim(), originalRequest, subject, previous, sceneIndex, verify, maxAttempts, onPhase, skipFind, localText, localReplace, originalPng, region, regionPng, composite: useComposite });
     } catch (error) {
       // runEdit은 던지지 않게 짰지만, 혹시 모를 오류도 앞 그림을 지킨 결과로 바꾼다.
       const aborted = isAbort(error) || !!signal?.aborted;
