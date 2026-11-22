@@ -198,6 +198,8 @@ function capturedFirstSourceTurn(runInput, options = {}, { held = false } = {}) 
     },
     createExamLocalRestore: () => undefined,
     executeImageLabelRun: async args => { calls.push(args); throw boundary; },
+    // 11-23 앱 반영 후보: 변환 우승안 플래그(ai-engine-flags.js)
+    convertExamSolCircledFlag: () => true, convertTextbookEdgeGuideFlag: () => true,
   };
   for (const control of ['selectedAssetGenerationMode', 'selectedMode', 'selectedCandidateId', 'attachments', 'generatedImages']) {
     Object.defineProperty(context, control, { get() { liveControlReads++; throw new Error(`Read live UI ${control}`); } });
