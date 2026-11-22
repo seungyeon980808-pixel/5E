@@ -131,8 +131,11 @@ export function traceLeaderLine(luma, W, H, item) {
   // 화살촉·끝 점: 양 끝 30점 안에서 넓은 띠가 5점 넘게 이어지면(획이 스치는 것은 3점 안팎) 지시선이 아니라 화살표·점 표시로 본다.
   const edge = Math.min(30, Math.floor(samples.length / 3));
   const runOfWide = list => { let longest = 0, cur = 0; for (const s of list) { cur = wide(s) ? cur + 1 : 0; longest = Math.max(longest, cur); } return longest; };
+  // LEADERFIX(11-22): 여기부터의 「확실하지 않음」은 지우기만 못 믿는 것이다 — 찾은 선(line: 글자 쪽 끝 → 진한 점이 끝나는 곳)은 돌려줘
+  // 다시 그린 그림의 5E 지시선에 쓴다(빗금 속에서 끝나는 선은 처음 닿는 물체 선이 아니라 실제 선 끝이 가리키는 끝).
+  const line = { start, end: rawEnd };
   if (runOfWide(samples.slice(0, edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-text' };
-  if (runOfWide(samples.slice(-edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-target' };
+  if (runOfWide(samples.slice(-edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-target', line };
   // 글자 쪽 끝은 비어 있어야 한다: 끝 너머(글자 상자 밖)에 진한 점이 이어지면 굽은 화살표·다른 획의 일부다
   // (실제 읽기에서 「산소」「NADP⁺」로 가는 굽은 과정 화살표의 곧은 부분을 지시선으로 잡았던 것).
   {
@@ -157,18 +160,18 @@ export function traceLeaderLine(luma, W, H, item) {
   // 지시선이 아닐 수 있으므로 지우지 않고(끝 묶음은 다른 획을 피해 조심해서만 칠함), 5E 지시선 끝은 처음 물체에 닿는 자리로 둔다.
   let last = -1;
   for (let i = samples.length - 1, run = 0; i >= 0; i--) { run = samples[i].erase ? run + 1 : 0; if (run >= 8) { last = i + run - 1; break; } }
-  if (last < 0) return { ok: false, reason: 'no-clean-run' };
+  if (last < 0) return { ok: false, reason: 'no-clean-run', line };
   for (let i = last + 1; i < samples.length; i++) samples[i].erase = false;
   const touch = samples.slice(last + 1).find(q => q.on && (q.other || wide(q))) || samples[last];
   const end = { x: touch.x, y: touch.y };
   samples.length = Math.min(samples.length, samples.indexOf(touch) + 1);
   // 다른 획과 겹친 곳이 너무 많으면(빗금 면을 지나는 선 등) 반쯤 지운 선이 남으므로 아예 건드리지 않는다.
   const erasable = samples.filter(s => s.erase).length;
-  if (erasable < samples.length * 0.7) return { ok: false, reason: 'crowded' };
+  if (erasable < samples.length * 0.7) return { ok: false, reason: 'crowded', line };
   // 한 번에 길게(10점 넘게) 다른 획과 겹치는 자리(점 무늬 띠·겹선 사이를 지나는 선)는 그 토막이 남으므로 건드리지 않는다.
   let longest = 0;
   for (let i = 0, run = 0; i <= last; i++) { run = samples[i].erase ? 0 : run + 1; longest = Math.max(longest, run); }
-  if (longest > 10) return { ok: false, reason: 'crowded-crossing' };
+  if (longest > 10) return { ok: false, reason: 'crowded-crossing', line };
   return { ok: true, start, end, ux, uy, nx, ny, t0, t1, samples, width };
 }
 
@@ -268,15 +271,22 @@ export function eraseLabelsAndLeaders(rgba, W, H, items = []) {
     if (!item?.leader) { out.push({ ...item, leader: null }); continue; }
     let trace;
     try { trace = traceLeaderLine(luma, W, H, item); } catch { trace = { ok: false, reason: 'error' }; }
+    const clamp = v => Math.min(1, Math.max(0, v));
     if (!trace.ok) {
       leaders.push({ text: item.text, status: 'kept', reason: trace.reason });
-      out.push({ ...item, leader: null });
+      // LEADERFIX(11-22): 지우지는 않지만 픽셀에서 찾은 선이 있으면 traced로 남긴다(다시 그린 그림의 5E 지시선은 AI 끝점보다 이것을 먼저 쓴다).
+      const l = trace.line;
+      out.push({ ...item, leader: null, ...(l ? { traced: { x1: clamp(l.start.x / W), y1: clamp(l.start.y / H), x2: clamp(l.end.x / W), y2: clamp(l.end.y / H) } } : {}) });
       continue;
     }
     traces.push(trace);
     leaders.push({ text: item.text, status: 'erased' });
-    const clamp = v => Math.min(1, Math.max(0, v));
-    out.push({ ...item, leader: { x1: clamp(trace.start.x / W), y1: clamp(trace.start.y / H), x2: clamp(trace.end.x / W), y2: clamp(trace.end.y / H) } });
+    // LEADERFIX(11-22): 지운 선의 5E 끝은 처음 물체 선에 닿는 자리(그 뒤는 그림에 남김)다. 진한 점이 실제로 끝나는 곳이 더 멀면 traced로 남긴다
+    // — 그림을 다시 그리면(남긴 토막도 사라짐) 그쪽이 맞을 수 있다(finalLabelItems가 읽은 끝점에 더 가까운 쪽을 고른다).
+    const rawEnd = { x: trace.start.x + trace.ux * (trace.t1 - trace.t0), y: trace.start.y + trace.uy * (trace.t1 - trace.t0) };
+    const further = Math.hypot(rawEnd.x - trace.end.x, rawEnd.y - trace.end.y) > 2;
+    out.push({ ...item, leader: { x1: clamp(trace.start.x / W), y1: clamp(trace.start.y / H), x2: clamp(trace.end.x / W), y2: clamp(trace.end.y / H) },
+      ...(further ? { traced: { x1: clamp(trace.start.x / W), y1: clamp(trace.start.y / H), x2: clamp(rawEnd.x / W), y2: clamp(rawEnd.y / H) } } : {}) });
   }
   // 모든 선을 먼저 찾은 뒤 지운다(앞 선을 지운 자리가 뒤 선 찾기에 영향을 주지 않게).
   let erasedLeaderPixels = 0;

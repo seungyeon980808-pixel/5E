@@ -18,13 +18,18 @@ export function normalizeExpanded(parsed, request) {
 
 // 11-22: 「A와 B를 나란히/비교해 그려」가 두 장면(두 장)으로 나뉘었다(생명 시험 b09 발효 비교·b19 힐·루벤 실험).
 // 교사 요청이 한 그림에 함께 그리라는 말이면, AI가 장면을 나눠 답해도 한 장면으로 합쳐 한 장 안에 나란히 그린다.
-const TOGETHER = /나란히|한\s*(장|그림|화면|판)\s*(에|안|으로)|양옆|좌우로|한꺼번에\s*그|두\s*줄로|위아래로/u;
+const TOGETHER = /나란히|한\s*(장|그림|화면|판)\s*(에|안|으로)|양옆|좌우로|두\s*줄로|위아래로/u;
+// 11-22 사용자: 「(도식) 다섯 개를 한번에 그려」가 한 장(다섯 칸)으로 합쳐졌다 — 「한번에·한꺼번에·모두·각각·따로」는 여러 장을 한 번에 그려 달라는 말.
+// 이런 말이 있으면 교사가 「한 장에·나란히」라고 따로 쓰지 않은 한 합치지 않는다.
+const MANY = /(\d+|두|세|네|다섯|여섯|일곱|여덟|아홉|열|여러)\s*(개|장|가지|컷)\s*(를|을|씩|다|모두)?\s*(한\s*번에|한꺼번에|모두|다|전부|각각|따로)|각각\s*(따로|한\s*장)|따로\s*따로|장씩/u;
+const EXPLICIT_ONE = /한\s*(장|그림|판)\s*(에|안|으로)|나란히/u;
 const ROWS = /두\s*줄|세\s*줄|위아래|윗줄|아랫줄/u;
 const COMPARE = /비교(해|하여|하는|되게|할\s*수\s*있게)?\s*(서\s*)?(그려|그리|그림|나타내|보이)|비교\s*그림/u;
 const PANEL_NAMES = /\([가나다라]\)/u;
 /** 교사 요청이 「한 장 안에 나란히」인가. (가)(나)로 따로 그린 그림을 말하면 「비교」만으로는 합치지 않는다. */
 export function wantsSideBySide(request) {
   const t = String(request || '');
+  if (MANY.test(t) && !EXPLICIT_ONE.test(t)) return false;
   return TOGETHER.test(t) || (COMPARE.test(t) && !PANEL_NAMES.test(t));
 }
 const SIDE_NAMES = { 2: ['왼쪽', '오른쪽'], 3: ['왼쪽', '가운데', '오른쪽'] };

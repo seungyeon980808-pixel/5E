@@ -103,3 +103,12 @@ test('(c) 구체화 결과가 두 장면으로 나뉘어도 「나란히」 요�
   const kept = await expand({ request: '피스톤을 누르기 전 (가)와 누른 뒤 (나)', taxonomy: { types: ['t'] }, readText: async () => two });
   assert.deepEqual(kept.scenes, ['플라스크 A', '플라스크 B']);
 });
+
+test('(c) 11-22 「다섯 개를 한번에 그려」는 여러 장 — 합치지 않고, 「한 장에·나란히」를 직접 쓰면 합친다', () => {
+  for (const t of ['응 다섯개를 한번에 그려', '두 장 따로 그려줘', '세 가지를 각각 그려', '도식 5개를 모두 그려', '네 컷을 한꺼번에 그려'])
+    assert.equal(wantsSideBySide(t), false, t);
+  for (const t of ['세 개를 한 장에 나란히 그려', '두 개를 한번에 나란히 그려']) assert.equal(wantsSideBySide(t), true, t);
+  const p = expandPrompt({ request: '다섯 개를 한번에 그려', types: [] });
+  assert.match(p, /한번에\(한꺼번에·모두·각각·따로\) 그려」는 그림 여러 장/);
+  assert.match(p, /교사가 직접 「한 장에」「나란히」라고 쓰지 않았으면 장면을 나눈다/);
+});
