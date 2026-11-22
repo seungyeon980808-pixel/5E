@@ -87,7 +87,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     // 실험(exp/1122-figure-tuning) 선택 옵션 — 기본값이면 지금과 같다:
     //  baselineFix/fix: { sceneRoles, keyValues, noRefLook, pickGothic } (점검 B-3·B-5·B-8·B-9), styleScore (B-7),
     //  prefetchRefs (B-10: 검색이 끝나는 즉시 참고 그림 받기 시작), firstScene (E2: 빈 장면만 다시 그릴 때 맞출 앞 장면 그림)
-    baselineFix = false, fix: fixIn = {}, styleScore = false, prefetchRefs = false, firstScene = null } = {}) {
+    baselineFix = false, fix: fixIn = {}, styleScore = false, prefetchRefs = false, firstScene = null, excludeRefs = [], refReject = null } = {}) {
     const fix = baselineFix ? { sceneRoles: true, keyValues: true, noRefLook: true, pickGothic: true, ...fixIn } : { ...fixIn };
     if (classifyMode === 'expand') earlyRetrieve = false; // 구체화 결과로 검색하므로 미리 검색하지 않는다
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('그림 요청 글이 비어 있습니다.');
@@ -146,7 +146,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       phase({ phase: 'scene', scene: i, total: sceneRequests.length, request: sceneRequests[i] });
       try {
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal, log), index }, {
-          request: sceneRequests[i], subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages, userImageRole, fix, styleScore, classification: searchFromExpand,
+          request: sceneRequests[i], subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages, userImageRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject,
         }));
         phase({ phase: 'grayscale', scene: i, total: sceneRequests.length });
         const g = await grayscale(r.image, { signal });

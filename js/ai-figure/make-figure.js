@@ -48,9 +48,11 @@ export async function stripText(ctx, img) {
 // 지금 앱은 교사 첨부가 있으면 이 엔진 대신 옛 길로 보낸다(figureRoute user-references) — 엔진이 받을 때의 품질을 재 보려는 선택 옵션. 기본값(빈 배열)은 지금과 같다.
 export const USER_IMAGE_NOTES = {
   reference: (n) => `\n\n[교사가 붙인 그림] 첨부의 처음 ${n}장은 교사가 직접 붙인 그림이다. 이 그림의 구성·물체·배치·라벨을 그대로 따르고, 뒤의 참고 기출은 선·회색·글자 화풍만 참고한다.`,
+  question: (n) => `\n\n[교사가 붙인 문항] 첨부의 처음 ${n}장은 시험 문항 화면이다. 흰 빈 칸이 그림이 들어갈 자리다. 문항의 글·조건·〈보기〉·선지와 모순 없이, 문항을 풀 수 있게 그 자리에 들어갈 그림 하나만 그린다(문항 글은 그리지 않는다). 뒤의 참고 기출은 화풍만 참고한다.`,
+  questionReplace: (n) => `\n\n[교사가 붙인 문항] 첨부의 처음 ${n}장은 그림이 들어 있는 시험 문항 화면이다. 그 안의 원래 그림은 보지 않은 것으로 하고 베끼지 않는다 — 구도·모양을 새로 정해, 문항의 글·조건·〈보기〉·선지와 모순 없이 문항을 풀 수 있는 새 그림 하나만 그린다(문항 글은 그리지 않는다). 뒤의 참고 기출은 화풍만 참고한다.`,
   sketch: (n) => `\n\n[교사의 손그림] 첨부의 처음 ${n}장은 교사가 손으로 대강 그린 밑그림이다. 비뚤어진 선·대강 쓴 글자는 깨끗한 평가원 선화로 바꾸되, 물체의 수·연결·위치 관계·라벨은 밑그림 그대로 따른다. 뒤의 참고 기출은 화풍만 참고한다.`,
 };
-export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference', fix = {}, styleScore = false, classification = null }) {
+export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference', fix = {}, styleScore = false, classification = null, excludeRefs = [], refReject = null }) {
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
   // retrieval: 엔진이 미리(구체화와 나란히) 시작해 둔 검색 프라미스. 없거나 실패하면 여기서 검색한다.
@@ -58,8 +60,10 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   catch (error) { if (isAbort(error)) throw error; log('검색 실패 — 참고 그림 없이 그림: ' + (error?.message || error)); }
 
   const srcOf = (id) => ctx.index?.byId?.get(id)?.src;
-  const order = [...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)];
-  const got = await collectReferenceImages(order, { count: Math.max(0, Math.min(3, Number(refCount) || 0)), srcOf, fetch: ctx.fetch, signal: ctx.signal, ...(ctx.referenceTimeoutMs ? { timeoutMs: ctx.referenceTimeoutMs } : {}) });
+  // 실험(문항 → 그림): excludeRefs = 쓰지 않을 기출 id 앞부분(같은 문항·같은 시험지), refReject(dataUrl) = 참이면 그 그림을 버리고 다음 후보(같은 그림 재사용 막기)
+  const excluded = (id) => excludeRefs.some((p) => String(id).startsWith(p));
+  const order = [...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)].filter((id) => !excluded(id));
+  const got = await collectReferenceImages(order, { count: Math.max(0, Math.min(3, Number(refCount) || 0)), srcOf, fetch: ctx.fetch, signal: ctx.signal, ...(typeof refReject === 'function' ? { reject: refReject } : {}), ...(ctx.referenceTimeoutMs ? { timeoutMs: ctx.referenceTimeoutMs } : {}) });
   if (ctx.signal?.aborted) throw Object.assign(new Error('작업이 취소되었습니다.'), { name: 'AbortError' });
   const refs = got.ids, refImages = got.images;
   log('참고 기출: ' + (refs.join(', ') || '없음'));

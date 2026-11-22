@@ -99,7 +99,7 @@ export function clearFigureCache() { cache.clear(); }
  * 후보 id들에서 받을 수 있는 그림을 count장까지 모은다(받지 못한 것은 건너뜀 — 참고 그림이 모자라도 그리기는 이어 감).
  * @returns {Promise<{ ids: string[], images: string[], failed: { id: string, reason: string }[] }>}
  */
-export async function collectReferenceImages(ids, { count = 3, maxTries = 6, srcOf = () => undefined, fetch: fetchImpl, signal, timeoutMs = REFERENCE_FETCH_TIMEOUT_MS } = {}) {
+export async function collectReferenceImages(ids, { count = 3, maxTries = 6, srcOf = () => undefined, fetch: fetchImpl, signal, timeoutMs = REFERENCE_FETCH_TIMEOUT_MS, reject = null } = {}) {
   const out = { ids: [], images: [], failed: [] };
   const queue = [...new Set(ids.filter(Boolean))].slice(0, Math.max(count, maxTries));
   let i = 0;
@@ -107,7 +107,8 @@ export async function collectReferenceImages(ids, { count = 3, maxTries = 6, src
     const batch = queue.slice(i, i + (count - out.ids.length)); i += batch.length;
     const got = await Promise.allSettled(batch.map((id) => fetchFigure(id, { src: srcOf(id), fetch: fetchImpl, signal, timeoutMs })));
     got.forEach((r, k) => {
-      if (r.status === 'fulfilled') { out.ids.push(batch[k]); out.images.push(r.value); }
+      if (r.status === 'fulfilled' && reject && (() => { try { return reject(r.value, batch[k]); } catch { return false; } })()) out.failed.push({ id: batch[k], reason: 'rejected' });
+      else if (r.status === 'fulfilled') { out.ids.push(batch[k]); out.images.push(r.value); }
       else out.failed.push({ id: batch[k], reason: String(r.reason?.message || r.reason).slice(0, 200), timeout: r.reason?.code === 'REFERENCE_TIMEOUT' });
     });
     if (signal?.aborted) break;
