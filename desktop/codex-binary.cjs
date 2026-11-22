@@ -7,7 +7,7 @@
 //   3. 알려진 폴더(Homebrew·/usr/local·~/.local/bin·mise·asdf·volta·npm-global·bun·nvm, 윈도우 npm·scoop 등)
 //   4. 지난번에 찾은 경로(설정 파일 lastFound)
 //   5. 로그인 셸 `$SHELL -ilc 'command -v codex'`(3초 제한, 마지막 줄이 절대 경로이고 실행 가능할 때만) — 맥·리눅스
-//      윈도우는 `where codex`(.exe는 바로, .cmd·.bat은 cmd를 거쳐)
+//      윈도우는 레지스트리의 지금 PATH(사용자·시스템) → `where codex`(.exe는 바로, .cmd·.bat은 cmd를 거쳐)
 // 찾은 경로는 메모리에 기억하고 설정 파일에 lastFound로 남긴다. ENOENT가 나면 invalidate() 뒤 한 번 다시 찾는다.
 // 자식에게는 codex 폴더·알려진 폴더를 앞에 붙인 넓힌 PATH를 넘긴다(mise 심이 mise를, npm 판 codex가 node를 찾도록).
 const fs = require("node:fs");
@@ -66,7 +66,11 @@ function knownDirs({ platform, env, homedir, fsImpl, systemDirs = SYSTEM_DIRS, c
     return [
       appData && path.win32.join(appData, "npm"),
       localAppData && path.win32.join(localAppData, "Programs", "codex"),
+      // 11-22: 공식 설치(install.ps1)는 …\OpenAI\Codex\bin에 codex.exe를 둔다. 본체는 ~/.codex\packages\standalone\current.
+      localAppData && path.win32.join(localAppData, "Programs", "OpenAI", "Codex", "bin"),
       localAppData && path.win32.join(localAppData, "Programs", "OpenAI", "Codex"),
+      homedir && path.win32.join(env.CODEX_HOME || path.win32.join(homedir, ".codex"), "packages", "standalone", "current", "bin"),
+      homedir && path.win32.join(env.CODEX_HOME || path.win32.join(homedir, ".codex"), "packages", "standalone", "current"),
       localAppData && path.win32.join(localAppData, "Microsoft", "WinGet", "Links"),
       homedir && path.win32.join(homedir, "scoop", "shims"),
       localAppData && path.win32.join(localAppData, "Volta", "bin"),
@@ -79,6 +83,7 @@ function knownDirs({ platform, env, homedir, fsImpl, systemDirs = SYSTEM_DIRS, c
   if (home) {
     dirs.push(
       path.join(home, ".local", "bin"),
+      path.join(env.CODEX_HOME || path.join(home, ".codex"), "packages", "standalone", "current", "bin"),
       path.join(home, ".local", "share", "mise", "shims"),
       path.join(home, ".asdf", "shims"),
       path.join(home, ".volta", "bin"),
@@ -172,6 +177,28 @@ function createCodexResolver({
     return null;
   }
 
+  // 11-22: 켜 둔 5E는 켤 때의 PATH만 안다 — 그 뒤에 설치가 사용자 PATH에 더한 폴더를 레지스트리에서 다시 읽어 찾는다
+  // (전에는 Codex를 설치해도 5E를 껐다 켜야 잡혔다).
+  async function fromRegistryPath() {
+    const reg = env.SystemRoot ? pathApi.join(env.SystemRoot, "System32", "reg.exe") : "reg";
+    const keys = ["HKCU\\Environment", "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"];
+    const dirs = [];
+    for (const key of keys) {
+      const { stdout } = await runQuiet(reg, ["query", key, "/v", "Path"], { timeout: shellTimeoutMs, windowsHide: true, env });
+      const line = stdout.split(/\r?\n/).find(row => /^\s*Path\s+REG_(EXPAND_)?SZ\s+/i.test(row));
+      if (!line) continue;
+      const value = line.replace(/^\s*Path\s+REG_(EXPAND_)?SZ\s+/i, "");
+      for (const part of value.split(";")) {
+        const expanded = part.trim().replace(/%([^%]+)%/g, (all, name) => {
+          const hit = Object.keys(env).find(k => k.toUpperCase() === String(name).toUpperCase());
+          return hit ? env[hit] : all;
+        });
+        if (expanded && !expanded.includes("%")) dirs.push(expanded);
+      }
+    }
+    return searchDirs(dirs, "registry-path");
+  }
+
   async function fromWhere() {
     const where = env.SystemRoot ? pathApi.join(env.SystemRoot, "System32", "where.exe") : "where";
     const { stdout } = await runQuiet(where, ["codex"], { timeout: shellTimeoutMs, windowsHide: true, env });
@@ -197,7 +224,8 @@ function createCodexResolver({
     // 4. 지난번에 찾은 경로
     if (usable(settings.lastFound)) return found(settings.lastFound, "last-found");
     // 5. 로그인 셸 / where
-    return platform === "win32" ? fromWhere() : fromLoginShell();
+    if (platform === "win32") return (await fromRegistryPath()) || fromWhere();
+    return fromLoginShell();
   }
 
   async function resolve({ force = false } = {}) {

@@ -96,3 +96,30 @@ test("실행 실패 분류: ENOENT·윈도우 「인식되지 않음」은 CODEX
   assert.equal(classifyCodexSpawnError(new Error("x"), "'codex' is not recognized as an internal or external command").code, CODEX_ERROR_CODES.NOT_FOUND);
   assert.equal(classifyCodexSpawnError(Object.assign(new Error("EACCES"), { code: "EACCES" })).code, CODEX_ERROR_CODES.SPAWN_FAILED);
 });
+
+// 11-22: 윈도우 공식 설치(install.ps1) 위치와, 켜 둔 5E가 설치 뒤 바뀐 사용자 PATH를 다시 읽는지.
+const winFs = files => ({
+  statSync: file => { if (files.some(f => f.toLowerCase() === String(file).toLowerCase())) return { isFile: () => true }; throw Object.assign(new Error("ENOENT"), { code: "ENOENT" }); },
+  accessSync: () => {}, readdirSync: () => [], existsSync: () => true, readFileSync: () => { throw new Error("none"); }, writeFileSync: () => {}, mkdirSync: () => {},
+});
+test("윈도우: 공식 설치 위치 …\\OpenAI\\Codex\\bin\\codex.exe를 알려진 폴더로 찾는다", async () => {
+  const exe = "C:\\Users\\t\\AppData\\Local\\Programs\\OpenAI\\Codex\\bin\\codex.exe";
+  const resolver = createCodexResolver({ platform: "win32", env: { PATH: "", LOCALAPPDATA: "C:\\Users\\t\\AppData\\Local", PATHEXT: ".EXE;.CMD" }, homedir: "C:\\Users\\t", fsImpl: winFs([exe]), execFileImpl: noShell() });
+  const found = await resolver.resolve();
+  assert.equal(found?.path, exe);
+  assert.equal(found?.via, "known-dir");
+});
+test("윈도우: 켤 때 PATH에 없던 폴더도 레지스트리의 지금 사용자 PATH(%변수% 풀기)에서 찾는다 — 다시 켜지 않아도 됨", async () => {
+  const exe = "D:\\Tools\\codex-new\\codex.exe";
+  const calls = [];
+  const execFileImpl = (file, args, options, callback) => {
+    calls.push({ file, args });
+    if (/reg/i.test(file) && args[1] === "HKCU\\Environment") return callback(null, "\r\nHKEY_CURRENT_USER\\Environment\r\n    Path    REG_EXPAND_SZ    %TOOLS%\\codex-new;C:\\Other\r\n\r\n", "");
+    callback(Object.assign(new Error("none"), { code: 1 }), "", "");
+  };
+  const resolver = createCodexResolver({ platform: "win32", env: { PATH: "C:\\Windows", TOOLS: "D:\\Tools", SystemRoot: "C:\\Windows", PATHEXT: ".EXE" }, homedir: "C:\\Users\\t", fsImpl: winFs([exe]), execFileImpl });
+  const found = await resolver.resolve();
+  assert.equal(found?.path, exe);
+  assert.equal(found?.via, "registry-path");
+  assert.ok(calls.some(c => /reg\.exe$/i.test(c.file)));
+});
