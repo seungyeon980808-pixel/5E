@@ -69,6 +69,9 @@ const itemOf = (id) => String(id).replace(/-\d+$/u, '');
 /** 꼬리표 한 줄의 점수(AI 없음): 종류 순위·과목·검색어 겹침·연도·학평 감점. */
 export function scoreTag(tag, classification) {
   const c = classification || {};
+  // 실험(B-7 styleScore): 분류에 style이 있으면 화풍 일치 +3, 요청이 사진·위성이 아닌데 사진·영상 참고면 −5. style이 없으면 지금과 같다.
+  let styleAdj = 0;
+  if (c.style) { if (tag.style === c.style) styleAdj += 3; if (tag.style === '사진·영상' && !c.wantsPhoto) styleAdj -= 5; }
   const keywords = (c.keywords || []).map(String);
   let s = 0;
   const ti = (c.types || []).indexOf(tag.type); if (ti >= 0) s += 6 - ti * 2;
@@ -77,7 +80,7 @@ export function scoreTag(tag, classification) {
   for (const k of keywords) if (k && hay.includes(k)) s += 1.5;
   s += ((Number(tag.year) || 2015) - 2015) * 0.02; // 최근 화풍을 조금 우대
   if (tag.src === 'hak') s -= HAK_PENALTY;
-  return s;
+  return s + styleAdj;
 }
 
 /** 점수 상위 후보(같은 문항은 exclude로 뺌). 안정 정렬이라 같은 점수는 색인 순서(평가원 먼저). */
@@ -105,13 +108,15 @@ export function roughClassify(request, subject = '') {
 }
 
 /** 요청 → 검색 조건. AI가 답을 못 주거나 JSON이 깨지면 요청 낱말로 대강 분류해 이어 간다(원본과 같게 — 참고 그림을 버리지 않음). */
-export async function classify({ request, index, readText, subject = '' }) {
+export async function classify({ request, index, readText, subject = '', styleScore = false }) {
   let parsed = null;
-  try { parsed = tryParseJson(await readText(classifyPrompt({ request, types: index.taxonomy.types || [] }))); }
+  try { parsed = tryParseJson(await readText(classifyPrompt({ request, types: index.taxonomy.types || [], styles: styleScore ? index.taxonomy.styles || [] : null }))); }
   catch (error) { if (error?.name === 'AbortError') throw error; }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return roughClassify(request, subject);
   const c = parsed;
-  return { subject: c.subject || subject || '', types: Array.isArray(c.types) ? c.types : [], keywords: Array.isArray(c.keywords) ? c.keywords : [] };
+  const out = { subject: c.subject || subject || '', types: Array.isArray(c.types) ? c.types : [], keywords: Array.isArray(c.keywords) ? c.keywords : [] };
+  if (styleScore && typeof c.style === 'string' && c.style) { out.style = c.style; out.wantsPhoto = /사진|위성|영상|관측/u.test(request); }
+  return out;
 }
 
 /**
@@ -119,8 +124,9 @@ export async function classify({ request, index, readText, subject = '' }) {
  * 고르기 AI가 실패해도 점수 순으로 채워 돌려준다.
  */
 // 실험(exp/1122-figure-tuning): classifyMode 'keyword'면 분류 AI 없이 요청 낱말로, aiPick false면 고르기 AI 없이 점수 순으로. 기본값은 지금과 같다.
-export async function retrieve({ request, index, readText, exclude = [], subject = '', classifyMode = 'ai', aiPick = true }) {
-  const c = classifyMode === 'keyword' ? roughClassify(request, subject) : await classify({ request, index, readText, subject });
+// classification: 구체화가 이미 낸 검색 조건(R6 classifyMode 'expand') — 있으면 분류 AI를 부르지 않는다.
+export async function retrieve({ request, index, readText, exclude = [], subject = '', classifyMode = 'ai', aiPick = true, styleScore = false, classification = null }) {
+  const c = classification || (classifyMode === 'keyword' ? roughClassify(request, subject) : await classify({ request, index, readText, subject, styleScore }));
   const scored = scoreCandidates(index.tags, c, { exclude });
   if (!scored.length) return { classify: c, picks: [], candidates: [] };
   let aiPicks = [];

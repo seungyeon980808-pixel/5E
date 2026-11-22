@@ -1,6 +1,6 @@
 // 그림 엔진(1.8.0) 구체화: 교사의 짧은 요청 → 평가원 관례로 빈칸을 채운 그림 요청(장면별). 지어내지 않고, 모르는 값은 기호로.
 // 원본 image_generator pipeline/expand.cjs. AI가 답을 못 주거나 JSON이 깨져도 실패로 끝내지 않고 원래 요청 한 장면으로 이어 간다.
-import { expandPrompt } from './prompt.js';
+import { expandPrompt, expandPromptWithSearch } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
 
 /** AI 응답 글 → 구체화 결과(장면이 없으면 원래 요청 하나). */
@@ -46,9 +46,16 @@ export function mergeSideBySide(scenes, request = '') {
 /**
  * @param {{ request: string, subject?: string, context?: string, taxonomy: { types: string[] }, readText: (prompt: string) => Promise<string> }} args
  */
-export async function expand({ request, subject = '', context = '', conversation = '', taxonomy, readText }) {
-  const text = await readText(expandPrompt({ request, subject, context, conversation, types: taxonomy?.types || [] }));
-  const out = normalizeExpanded(tryParseJson(text), request);
+export async function expand({ request, subject = '', context = '', conversation = '', taxonomy, readText, withSearch = false }) {
+  const text = await readText((withSearch ? expandPromptWithSearch : expandPrompt)({ request, subject, context, conversation, types: taxonomy?.types || [] }));
+  const parsed = tryParseJson(text);
+  const out = normalizeExpanded(parsed, request);
+  // 실험(R6): 구체화가 낸 검색 조건(분류 AI 대신). 없으면 null → 엔진이 분류 AI로 돌아간다.
+  if (withSearch && parsed && typeof parsed === 'object') {
+    const types = [...new Set([parsed.type, ...(Array.isArray(parsed.types) ? parsed.types : [])].filter((t) => typeof t === 'string' && t))].slice(0, 3);
+    const keywords = Array.isArray(parsed.keywords) ? parsed.keywords.map(String).filter(Boolean).slice(0, 8) : [];
+    if (types.length || keywords.length) out.search = { subject: typeof parsed.subject === 'string' ? parsed.subject : subject, types, keywords, fromExpand: true };
+  }
   if (out.scenes.length > 1 && wantsSideBySide(request)) return { ...out, scenes: mergeSideBySide(out.scenes, request), merged: true };
   return out;
 }

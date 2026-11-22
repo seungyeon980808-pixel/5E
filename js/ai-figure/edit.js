@@ -2,7 +2,7 @@
 // 단계: 고칠 곳 찾기(edit-find) → 그 부분 고치기(edit-apply) → 나머지 그대로 확인(edit-verify) → 마무리(edit-finish).
 // 원칙(사용자 규칙): 실패로 끝내지 않는다 — 찾기·확인이 안 되면 지시 글만으로 고치고, 고친 그림이 지시를 놓치거나 다른 곳을 바꾸면
 // 한 번 더 고치며, 그리기가 끝내 실패하거나 취소되면 앞 그림을 그대로 지킨 결과(kept)를 돌려준다. 던지지 않는다(입력이 잘못된 경우만 TypeError).
-import { editFindPrompt, editDrawPrompt, editVerifyPrompt, editLocalVerifyPrompt, stripRedrawPrompt } from './prompt.js';
+import { editFindPrompt, editDrawPrompt, editVerifyPrompt, editLocalVerifyPrompt, stripRedrawPrompt, editExtraNote } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
 import { labelHintsAfterEdit } from './labels.js';
 
@@ -59,7 +59,13 @@ export function normalizeTextOps(ops) {
  *   sceneIndex?: number, verify?: boolean, maxAttempts?: number, onPhase?: (e: object) => void }} opts
  * @returns {Promise<object>} makeFigureSet과 같은 모양 { expanded, scenes, ok, aborted, errors } + { kind: 'edit', edit, labelHints }
  */
-export async function runEdit(ctx, { previousPng, instruction, originalRequest = '', subject = '', previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, onPhase = () => {}, skipFind = false, localText = true, localReplace = false }) {
+export async function runEdit(ctx, { previousPng, instruction, originalRequest = '', subject = '', previous = null, sceneIndex = 0, verify = true, maxAttempts = 2, onPhase = () => {}, skipFind = false, localText = true, localReplace = false,
+  // 실험(E1, exp/1122-figure-tuning) — 기본값이면 지금과 같다: originalPng(처음 결과), region [x,y,w,h](0~1), regionPng(영역 표시 그림),
+  // composite(영역 밖을 앞 그림 픽셀로 되돌리기 — ctx.composite(before, after, region)가 있어야 함)
+  originalPng = null, region = null, regionPng = null, composite = false }) {
+  const extras = [originalPng, regionPng].filter((u) => typeof u === 'string' && u.startsWith('data:image'));
+  const note = editExtraNote({ hasOriginal: !!originalPng, region: Array.isArray(region) ? region : null, hasRegionImage: !!regionPng });
+  const withBase = (img) => [img, ...extras];
   const signal = ctx.signal;
   const errors = [];
   const phase = (name, extra = {}) => { try { onPhase({ ...PHASE_BY_NAME[name], total: EDIT_PHASES.length, ...extra }); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
@@ -81,7 +87,7 @@ export async function runEdit(ctx, { previousPng, instruction, originalRequest =
   if (!skipFind) {
     phase('edit-find');
     try {
-      const j = tryParseJson(await ctx.readText(editFindPrompt({ instruction, originalRequest }), [previousPng]));
+      const j = tryParseJson(await ctx.readText(editFindPrompt({ instruction, originalRequest }) + note, withBase(previousPng)));
       if (j && typeof j === 'object') {
         edit.targets = strings(j.targets);
         edit.keep = strings(j.keep, 12);
@@ -148,9 +154,12 @@ export async function runEdit(ctx, { previousPng, instruction, originalRequest =
   let best = null, fixNote = '';
   for (let attempt = 1; attempt <= Math.max(1, maxAttempts); attempt++) {
     phase('edit-apply', { attempt });
-    const prompt = editDrawPrompt({ instruction, targets: edit.targets, keep: edit.keep, fixNote });
+    const prompt = editDrawPrompt({ instruction, targets: edit.targets, keep: edit.keep, fixNote }) + note;
     let image;
-    try { image = await ctx.generateImage(prompt, [previousPng]); }
+    try {
+      image = await ctx.generateImage(prompt, withBase(previousPng));
+      if (composite && typeof ctx.composite === 'function') { try { image = await ctx.composite(previousPng, image, Array.isArray(region) ? region : null) || image; } catch (error) { errors.push({ scene: sceneIndex, step: 'edit-composite', message: message(error) }); } }
+    }
     catch (error) {
       if (isAbort(error) || abortedNow()) return keptResult('취소됨', true);
       errors.push({ scene: sceneIndex, step: 'edit-apply', message: message(error) });

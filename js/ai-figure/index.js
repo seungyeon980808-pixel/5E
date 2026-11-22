@@ -6,6 +6,7 @@
 // 원칙(사용자 규칙): 실패로 끝내지 않는다. 호출마다 자동 재시도, 단계별 대체(참고 그림 없이·첫 후보·지우기 전 그림),
 // 장면이 끝내 실패하거나 취소되면 앞 결과(previous)를 그대로 지키고 오류는 결과에 적는다 — makeFigureSet은 던지지 않는다.
 import { expand } from './expand.js';
+import { collectReferenceImages as prefetchReferenceImages } from './reference-images.js';
 import { loadFigureIndex, makeIndex, retrieve, DEFAULT_INDEX_BASE } from './retrieve.js';
 import { makeFigure } from './make-figure.js';
 import { fetchFigure } from './reference-images.js';
@@ -82,7 +83,13 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
    *   signal?: AbortSignal, previous?: { expanded?: object, scenes?: { image?: string }[] } | null, onPhase?: (e: object) => void }} opts
    * @returns {Promise<{ expanded: object|null, scenes: object[], ok: boolean, aborted: boolean, errors: { scene: number|null, step: string, message: string }[] }>}
    */
-  async function makeFigureSet({ request, subject = '', context: itemContext = '', conversation = '', keyValues = '', raw = false, bestOf = 1, refIds = [], fixNote = '', signal = ai.signal, previous = null, onPhase = () => {}, earlyRetrieve = EARLY_RETRIEVE, refCount = 3, strip = true, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference' } = {}) {
+  async function makeFigureSet({ request, subject = '', context: itemContext = '', conversation = '', keyValues = '', raw = false, bestOf = 1, refIds = [], fixNote = '', signal = ai.signal, previous = null, onPhase = () => {}, earlyRetrieve = EARLY_RETRIEVE, refCount = 3, strip = true, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference',
+    // 실험(exp/1122-figure-tuning) 선택 옵션 — 기본값이면 지금과 같다:
+    //  baselineFix/fix: { sceneRoles, keyValues, noRefLook, pickGothic } (점검 B-3·B-5·B-8·B-9), styleScore (B-7),
+    //  prefetchRefs (B-10: 검색이 끝나는 즉시 참고 그림 받기 시작), firstScene (E2: 빈 장면만 다시 그릴 때 맞출 앞 장면 그림)
+    baselineFix = false, fix: fixIn = {}, styleScore = false, prefetchRefs = false, firstScene = null } = {}) {
+    const fix = baselineFix ? { sceneRoles: true, keyValues: true, noRefLook: true, pickGothic: true, ...fixIn } : { ...fixIn };
+    if (classifyMode === 'expand') earlyRetrieve = false; // 구체화 결과로 검색하므로 미리 검색하지 않는다
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('그림 요청 글이 비어 있습니다.');
     const phase = (e) => { try { onPhase(e); } catch { /* 화면 쪽 오류는 엔진을 멈추지 않음 */ } };
     const errors = [];
@@ -111,15 +118,16 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     // GENSPEED(11-20): 기출 검색(분류·고르기 글 AI 두 번)을 구체화와 나란히 시작한다 — 앞에서 차례로 기다리던 7~9초를 줄인다.
     // 첫 장면은 처음 요청으로 고른 기출을 쓰고, 둘째 장면부터는 첫 장면을 그리는 동안 장면 요청으로 미리 검색해 둔다.
     const retrieveFor = (req) => {
-      const p = retrieve({ request: req, index, readText: (t) => context(signal).readText(t), subject, classifyMode, aiPick });
+      const p = retrieve({ request: req, index, readText: (t) => context(signal).readText(t), subject, classifyMode, aiPick, styleScore });
       p.catch(() => {}); // 처리하지 않은 거절 경고 막기(쓰는 쪽이 다시 받는다)
+      if (prefetchRefs) p.then((ret) => prefetchReferenceImages([...refIds, ...ret.picks, ...ret.candidates.map((c) => c.id)], { count: Math.max(0, Math.min(3, Number(refCount) || 0)), srcOf: (id) => index?.byId?.get(id)?.src, fetch: fetchImpl, signal, ...(referenceTimeoutMs ? { timeoutMs: referenceTimeoutMs } : {}) })).catch(() => {});
       return p;
     };
     const early = !raw && earlyRetrieve ? retrieveFor(request) : null;
     if (!raw) {
       phase({ phase: 'expand' });
       try {
-        expanded = await expand({ request, subject, context: itemContext, conversation, taxonomy: index.taxonomy, readText: context(signal).readText });
+        expanded = await expand({ request, subject, context: itemContext, conversation, taxonomy: index.taxonomy, readText: context(signal).readText, withSearch: classifyMode === 'expand' });
         sceneRequests = expanded.scenes;
       } catch (error) {
         if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
@@ -128,7 +136,8 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     }
 
     const scenes = [];
-    let first = null;
+    let first = typeof firstScene === 'string' && firstScene.startsWith('data:image') ? firstScene : null;
+    const searchFromExpand = classifyMode === 'expand' && expanded?.search ? expanded.search : null;
     const retrievals = sceneRequests.map((_, i) => (i === 0 ? early : null));
     for (let i = 0; i < sceneRequests.length; i++) {
       // 다음 장면 검색을 이번 장면 그리는 동안 미리 시작(나란히 켰을 때만).
@@ -137,7 +146,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       phase({ phase: 'scene', scene: i, total: sceneRequests.length, request: sceneRequests[i] });
       try {
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal, log), index }, {
-          request: sceneRequests[i], subject, keyValues, bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages, userImageRole,
+          request: sceneRequests[i], subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: first, single: sceneRequests.length > 1, refIds, fixNote, retrieval: retrievals[i], refCount, strip, classifyMode, aiPick, userImages, userImageRole, fix, styleScore, classification: searchFromExpand,
         }));
         phase({ phase: 'grayscale', scene: i, total: sceneRequests.length });
         const g = await grayscale(r.image, { signal });

@@ -2,16 +2,16 @@
 // 원본 image_generator pipeline/steps.cjs(makeFigure·pickBetter·stripText). 로컬 catalog/figs 대신 Worker에서 참고 그림을 받는다.
 // 원칙: 실패로 끝내지 않는다 — 검색 실패면 참고 그림 없이, 고르기 실패면 첫 후보, 지우기 실패면 지우기 전 그림을 쓴다.
 // 그리기 자체가 끝내 실패했을 때만 오류를 던지고, 앞 결과를 지키는 일은 index.js(makeFigureSet)가 맡는다.
-import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, STRIP_CHECK_PROMPT, stripRedrawPrompt } from './prompt.js';
+import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt } from './prompt.js';
 import { retrieve, tryParseJson } from './retrieve.js';
 import { collectReferenceImages } from './reference-images.js';
 
 const isAbort = (error) => error?.name === 'AbortError';
 
 /** 두 후보 중 나은 쪽(1 또는 2). AI가 답을 못 주면 1. */
-export async function pickBetter(ctx, request, a, b, refImages = []) {
+export async function pickBetter(ctx, request, a, b, refImages = [], { gothic = false } = {}) {
   try {
-    const j = tryParseJson(await ctx.readText(pickBetterPrompt({ request }), [a, b, ...refImages.slice(0, 2)]));
+    const j = tryParseJson(await ctx.readText((gothic ? pickBetterPromptGothic : pickBetterPrompt)({ request }), [a, b, ...refImages.slice(0, 2)]));
     return { better: j?.better === 2 ? 2 : 1, why: typeof j?.why === 'string' ? j.why : '' };
   } catch (error) {
     if (isAbort(error)) throw error;
@@ -50,11 +50,11 @@ export const USER_IMAGE_NOTES = {
   reference: (n) => `\n\n[교사가 붙인 그림] 첨부의 처음 ${n}장은 교사가 직접 붙인 그림이다. 이 그림의 구성·물체·배치·라벨을 그대로 따르고, 뒤의 참고 기출은 선·회색·글자 화풍만 참고한다.`,
   sketch: (n) => `\n\n[교사의 손그림] 첨부의 처음 ${n}장은 교사가 손으로 대강 그린 밑그림이다. 비뚤어진 선·대강 쓴 글자는 깨끗한 평가원 선화로 바꾸되, 물체의 수·연결·위치 관계·라벨은 밑그림 그대로 따른다. 뒤의 참고 기출은 화풍만 참고한다.`,
 };
-export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference' }) {
+export async function makeFigure(ctx, { request, subject = '', keyValues = '', bestOf = 1, prevScene = null, single = false, refIds = [], fixNote = '', strip = true, retrieval = null, refCount = 3, classifyMode = 'ai', aiPick = true, userImages = [], userImageRole = 'reference', fix = {}, styleScore = false, classification = null }) {
   const log = ctx.log || (() => {});
   let ret = { classify: null, picks: [], candidates: [] };
   // retrieval: 엔진이 미리(구체화와 나란히) 시작해 둔 검색 프라미스. 없거나 실패하면 여기서 검색한다.
-  try { ret = (retrieval ? await retrieval.catch((error) => { if (isAbort(error)) throw error; return null; }) : null) || await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject, classifyMode, aiPick }); }
+  try { ret = (retrieval ? await retrieval.catch((error) => { if (isAbort(error)) throw error; return null; }) : null) || await retrieve({ request, index: ctx.index, readText: (p) => ctx.readText(p), subject, classifyMode, aiPick, styleScore, classification }); }
   catch (error) { if (isAbort(error)) throw error; log('검색 실패 — 참고 그림 없이 그림: ' + (error?.message || error)); }
 
   const srcOf = (id) => ctx.index?.byId?.get(id)?.src;
@@ -67,7 +67,7 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   const req = sceneRequestText({ request, keyValues, fixNote });
   const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
   const userNote = users.length ? (USER_IMAGE_NOTES[userImageRole] || USER_IMAGE_NOTES.reference)(users.length) : '';
-  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '' }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
+  const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subject || ret.classify?.subject || '', fix, prevScene: !!prevScene }) + (single ? SINGLE_SCENE_NOTE : '') + userNote;
   const gen = () => prevScene
     ? ctx.generateImage(text + PREV_SCENE_NOTE, [prevScene, ...users, ...refImages])
     : ctx.generateImage(text, [...users, ...refImages]);
@@ -81,7 +81,7 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
 
   let best = cands[0];
   if (cands.length > 1) {
-    const p = await pickBetter(ctx, request, cands[0], cands[1], refImages);
+    const p = await pickBetter(ctx, request, cands[0], cands[1], refImages, { gothic: !!fix.pickGothic });
     log('고름: ' + p.better + (p.why ? ' — ' + p.why : ''));
     best = p.better === 2 ? cands[1] : cands[0];
   }

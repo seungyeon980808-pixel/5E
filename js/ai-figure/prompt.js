@@ -70,13 +70,31 @@ export const FIGURE_PROMPT_VERSION = 'v2t';
  * 그리기 지시문(v2t). 원래 사슬과 글자 하나까지 같은 결과를 낸다.
  * @param {{ request: string, refs?: string[], retrieval?: { classify?: { types?: string[], subject?: string } }, subject?: string }} args
  */
-export function buildFigurePrompt({ request, refs = [], retrieval = null, subject = '' } = {}) {
+// 실험(exp/1122-figure-tuning) 선택 옵션 — 모두 기본 꺼짐(기본 글은 글자 하나까지 같음):
+//  fix.sceneRoles: 앞 장면이 첫 첨부일 때 참고 그림 역할 문장을 「둘째부터」로(점검 B-3)
+//  fix.noRefLook: 참고 그림 0장이면 「첨부한 참고 그림은…」 줄을 빼고 평가원 관례 문장으로(B-8)
+//  style: 분류가 고른 화풍(taxonomy styles). '회색조 일러스트'면 「모식도는 연회색 평면만」 줄 대신 일러스트 줄(B-7)
+const KICE_LOOK_NOREF = `대한민국 수능·평가원 모의평가 시험지에 인쇄되는 그림과 구별되지 않게 그린다.
+- 평가원 시험지 그림의 관례(가는 선, 한두 단계 회색 평면, 굵기 고른 가는 고딕 한글, 로마체 영문·숫자·단위, 기울인 물리량 기호)를 따른다.
+- 순수 흰 배경, 컬러 금지(흑백·회색만), 테두리나 제목·설명 문장·워터마크를 넣지 않는다.
+- 시험지에 그대로 붙일 수 있게 그림 둘레 여백은 좁게.`;
+const ILLUST_STYLE = '일러스트 요청: 대상을 실제 모양에 가깝게 가는 펜 선과 회색 음영 두세 단계로 그린다(평가원 회색조 일러스트). 단순 도형으로 줄이지 않되 사진 같은 질감·그라데이션은 쓰지 않는다.';
+export function buildFigurePrompt({ request, refs = [], retrieval = null, subject = '', fix = {}, prevScene = false, style = '' } = {}) {
   const types = (retrieval?.classify?.types || []).join(' ');
-  const styles = TYPE_STYLE.filter(([re]) => re.test(types)).map(([, s]) => '- ' + s);
-  const roles = refs.length ? `참고 그림 ${refs.length}장은 모두 실제 평가원 그림이다. 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.` : '';
+  const wantStyle = style || retrieval?.classify?.style || '';
+  const illust = /일러스트/u.test(wantStyle);
+  let styles = TYPE_STYLE.filter(([re]) => re.test(types)).filter(([re]) => !(illust && String(re) === String(/모식도|회로|도선|광학|파동|궤적/u))).map(([, s]) => '- ' + s);
+  if (illust) styles = styles.concat('- ' + ILLUST_STYLE);
+  const roles = refs.length
+    ? (fix.sceneRoles && prevScene
+      ? `첫 첨부는 같은 문항의 앞 장면(배율·화풍을 맞출 그림)이다. 둘째부터의 참고 그림 ${refs.length}장은 실제 평가원 그림이다 — 그중 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.`
+      : `참고 그림 ${refs.length}장은 모두 실제 평가원 그림이다. 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.`)
+    : '';
+  const look = fix.noRefLook && !refs.length ? KICE_LOOK_NOREF
+    : fix.sceneRoles && prevScene ? KICE_LOOK.replace('- 첨부한 참고 그림은 실제 평가원 시험지 그림이다.', '- 둘째부터의 첨부(참고 그림)는 실제 평가원 시험지 그림이다.') : KICE_LOOK;
   const key = subjectKey(subject || retrieval?.classify?.subject || '');
   const parts = [
-    `${EXAM_STYLE_PROMPT}\n${COMPLETE_RULE}\n\n${KICE_LOOK}`,
+    `${EXAM_STYLE_PROMPT}\n${COMPLETE_RULE}\n\n${look}`,
     `\n\n${TYPO}${styles.length ? '\n그림 종류별 화풍:\n' + styles.join('\n') : ''}${roles ? '\n' + roles : ''}`,
     key ? `\n${SUBJECT_STYLE[key]}` : '',
     `\n${TEXT_RULES}`,
@@ -109,7 +127,8 @@ JSON 하나로만: {"type": "목록 중 하나", "graph": true/false, "scenes": 
 }
 
 /** 검색 1단계: 요청 → 과목·그림 종류 후보·검색어(JSON). */
-export function classifyPrompt({ request, types = [] }) {
+export function classifyPrompt({ request, types = [], styles = null }) {
+  if (Array.isArray(styles) && styles.length) return classifyPromptStyled({ request, types, styles });
   return `과학 시험 그림 요청을 읽고 검색 조건을 JSON 하나로만 답한다.
 {"subject": "물리학Ⅰ|물리학Ⅱ|화학Ⅰ|화학Ⅱ|생명과학Ⅰ|생명과학Ⅱ|지구과학Ⅰ|지구과학Ⅱ 중 가장 가까운 하나", "types": [아래 목록에서 가까운 순서로 1~3개], "keywords": [그림에 나올 대상·현상·장치 검색어 5~8개, 한국어 명사]}
 그림 종류 목록: ${types.join(' | ')}
@@ -185,4 +204,25 @@ export function editLocalVerifyPrompt({ instruction }) {
 - done: 지시한 글자가 깨끗이 지워졌는가(바꾸기면 새 글자로 바뀌었는가).
 - unwanted: 지시하지 않은 다른 글자·선·도형·화살표가 지워지거나 잘리거나 흐려진 것. 잘라 낸 그림 테두리 밖의 일은 말하지 않는다. 지운 자리의 아주 옅은 얼룩은 넣지 않는다.
 JSON 하나로만: {"done": true/false, "unwanted": ["..."]}`;
+}
+
+/** 실험(B-7 styleScore): 분류에 화풍(style)도 묻는 판. 기본 classifyPrompt는 그대로. */
+export function classifyPromptStyled({ request, types = [], styles = [] }) {
+  return classifyPrompt({ request, types }).replace('{"subject":', `{"style": "${styles.join('|')} 중 요청에 맞는 하나(「모식도」면 단순 도식, 「일러스트」면 회색조 일러스트, 생물 묘사는 펜 선화)", "subject":`);
+}
+/** 실험(B-9 fix.pickGothic): 두 후보 고르기 기준의 글자 규칙을 고딕으로 맞춘 판. */
+export function pickBetterPromptGothic({ request }) {
+  return pickBetterPrompt({ request }).replace('글자는 작고 가는 명조체', '한글은 작고 굵기 고른 가는 고딕 계열, 수식 기호는 Times 기울임');
+}
+/** 실험(R6 classifyMode 'expand'): 구체화 JSON에 검색용 subject·types·keywords도 함께 받는 판. */
+export function expandPromptWithSearch(args) {
+  return expandPrompt(args).replace('JSON 하나로만: {"type": "목록 중 하나",', 'JSON 하나로만: {"type": "목록 중 하나", "types": [목록에서 가까운 순서로 1~3개], "subject": "물리학Ⅰ|물리학Ⅱ|화학Ⅰ|화학Ⅱ|생명과학Ⅰ|생명과학Ⅱ|지구과학Ⅰ|지구과학Ⅱ 중 하나", "keywords": [그림에 나올 대상·현상·장치 낱말 3~8개],');
+}
+/** 실험(E1): 고치기 때 원본·영역 표시 그림을 함께 보낼 때 덧붙이는 글. */
+export function editExtraNote({ hasOriginal = false, region = null, hasRegionImage = false } = {}) {
+  const lines = [];
+  if (hasOriginal) lines.push('- 첨부 순서: 첫째 = 지금 그림(바탕, 이것을 고친다), 둘째 = 처음 만든 원본 그림(선 굵기·회색·글자 모양의 기준 — 지금 그림이 원본과 달라진 화풍으로 고치지 않는다).');
+  if (region) lines.push(`- 고칠 영역: 그림의 왼쪽에서 ${Math.round(region[0] * 100)}~${Math.round((region[0] + region[2]) * 100)}%, 위에서 ${Math.round(region[1] * 100)}~${Math.round((region[1] + region[3]) * 100)}% 사각형 안. 이 영역 밖은 한 점도 바꾸지 않는다.`);
+  if (hasRegionImage) lines.push('- 마지막 첨부는 고칠 영역을 사각형으로 표시한 그림이다(표시 사각형 자체는 그리지 않는다).');
+  return lines.length ? '\n[교사가 준 범위]\n' + lines.join('\n') : '';
 }
