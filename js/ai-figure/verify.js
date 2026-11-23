@@ -17,7 +17,7 @@ ${request}
 
 검사할 것:
 1. 개수 — 장면 글에 수가 적힌 작은 대상(분자·입자·이온 종류별 수, 자석·전하·물체 수, 층 수, 칸 수 등). 그림에서 하나씩 짚어 세고 각각의 가운데 좌표를 적는다. 범례·견본 칸 안의 견본 도형은 세지 않는다. 여러 용기·칸이 있으면 용기·칸마다 따로 적는다. 그릇·틀처럼 하나뿐인 큰 대상과 「모두 합친 수」 줄은 적지 않는다.
-2. 내용 — 장면 글이 정한 방향(화살표·빛·힘·흐름·회전), 달의 위상과 밝은 쪽, 왼쪽·오른쪽·위·아래 위치 관계, 층의 위아래 순서, 연결 관계만(모양·화풍·배치의 고름은 적지 않는다). 반대거나 다르면 틀림.
+2. 내용 — 장면 글이 정한 방향(화살표·빛·힘·흐름·회전), 달의 위상과 밝은 쪽, 왼쪽·오른쪽·위·아래 위치 관계, 층의 위아래 순서, 연결 관계만(모양·화풍·배치의 고름은 적지 않는다). 반대거나 다르면 틀림. 높이·길이·간격 같은 크기 비율은 장면 글과 눈에 띄게(1.5배 넘게) 다를 때만 틀림으로 적는다.
 3. 선과 글자 — 선(지시선·점선·치수선·물체 윤곽·화살표)이 라벨 글자 위를 지나가 글자를 가르거나 겹친 곳, 끝이 아무 대상에도 닿지 않고 허공에서 끝난 지시선, 가리키는 대상이 없는 라벨. 없으면 빈 배열.
 
 좌표는 그림 왼쪽 위가 (0,0), 오른쪽 아래가 (1000,1000)인 정수다.
@@ -174,7 +174,8 @@ export function countShapes(img, comps, box, aiItems = []) {
   const kept = top.filter((c) => size(c) >= 0.7 * med && size(c) <= 1.4 * med);
   // 믿을 만한가: 같은 크기 무리가 AI가 짚은 자리 대부분과 맞고, 크기가 다른 덩어리가 섞여 헷갈리지 않을 때.
   const matched = near.filter((c) => kept.includes(c)).length;
-  const reliable = kept.length > 0 && (aiItems.length === 0 || matched >= Math.ceil(0.7 * Math.min(aiItems.length, kept.length))) && top.length - kept.length <= Math.max(1, Math.floor(kept.length / 3));
+  // 11-23 시험: 무늬 칠(점·얼룩)이 같은 크기 덩어리로 쪼개져 달 1개를 6개로 센 일 — AI가 2개 이상 짚었고 AI 수와 2개 안쪽으로 맞을 때만 믿는다.
+  const reliable = kept.length > 0 && aiItems.length >= 2 && Math.abs(kept.length - aiItems.length) <= 2 && ( matched >= Math.ceil(0.7 * Math.min(aiItems.length, kept.length))) && top.length - kept.length <= Math.max(1, Math.floor(kept.length / 3));
   return { count: kept.length, reliable, sizes: kept.map(size) };
 }
 
