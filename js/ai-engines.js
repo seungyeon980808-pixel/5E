@@ -9,7 +9,9 @@
 // 원칙: 실패로 끝나지 않는다. 엔진 안 재시도 → 그림은 고른 모델 다음 반대 모델(Luna↔Sol) → 엔진이 한 장도 못 그리면
 //       호출 쪽(ai-panel)이 옛 생성 길로 넘긴다. 앞 결과는 지우지 않는다.
 import { aiErrorCode, stripIpcPrefix } from './ai-error-copy.js?v=1.7.0-four-session-integration';
-import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, figureSpeedFlag, figureLocalReplaceFlag, figureSkipStripCheckFlag, FIGURE_IMAGE_MODEL_CHOICES } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, figureSpeedFlag, figureLocalReplaceFlag, figureSkipStripCheckFlag, figureUserRefsFlag, FIGURE_IMAGE_MODEL_CHOICES,
+  figureUserRefsMode, figureG4Flag, figureStyleDirectiveFlag, figureMultiCombinedFlag, figureSketchSpecFlag, figureEditRetryOnErrorFlag, figureFlattenWhiteFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { figurePanelTools } from './ai-figure-panels.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_ENGINE_ID = 'ai-figure';
 export const FIGURE_ENGINE_VERSION = '1.0.0';
@@ -43,14 +45,61 @@ export function engineAvailability(desktop) {
   return { available: true, reason: null };
 }
 
-/** 이미지 생성에 새 엔진을 쓸지. 사용자가 직접 넣은 레퍼런스가 있는 생성은 옛 길(첨부를 그대로 쓰는 길)을 쓴다. */
-export function figureRoute({ desktop, storage, hasUserReferences = false, legacy = false } = {}) {
+/** 이미지 생성에 새 엔진을 쓸지. 사용자가 직접 넣은 레퍼런스가 있는 생성은 옛 길(첨부를 그대로 쓰는 길)을 쓴다.
+ *  고침 U1(exp/1122-figure-fixes): `5e.aiEngine.figureUserRefs`가 켜져 있으면(이 갈래 기본) 레퍼런스·손그림도 새 엔진으로 — userRefs: true. */
+export function figureRoute({ desktop, storage, hasUserReferences = false, legacy = false, userRoles = null } = {}) {
   if (legacy) return { use: false, reason: 'legacy' };
   if (!figureEngineFlag(storage ?? globalThis)) return { use: false, reason: 'flag-off' };
   const a = engineAvailability(desktop);
   if (!a.available) return { use: false, reason: a.web ? 'web' : 'unavailable', note: a.reason };
-  if (hasUserReferences) return { use: false, reason: 'user-references' };
+  if (hasUserReferences) {
+    // 11-23 앱 반영 후보: 기본 'sketch' — 첨부가 모두 손그림일 때만 새 엔진(짧은 명세), 레퍼런스·표현 참고가 하나라도 있으면 옛 길.
+    //   역할을 모르면(userRoles 없음) 옛 길. 'all'(고침 U1)이면 모두 새 엔진, 'off'면 모두 옛 길.
+    const mode = figureUserRefsMode(storage ?? globalThis);
+    if (mode === 'all') return { use: true, reason: null, userRefs: true };
+    if (mode === 'sketch' && Array.isArray(userRoles) && userRoles.length && userRoles.every((r) => r === 'sketch')) return { use: true, reason: null, userRefs: true, sketchOnly: true };
+    return { use: false, reason: 'user-references' };
+  }
   return { use: true, reason: null };
+}
+
+/** 11-23 앱 반영 후보: 글로 그리기 makeFigureSet 선택 옵션(우승안, 플래그마다 끌 수 있음). 교사 그림이 없을 때 쓴다. */
+export function figureCreateOptions(scope = globalThis) {
+  const opts = {}, fix = {};
+  if (figureG4Flag(scope)) { Object.assign(opts, { baselineFix: true, classifyMode: 'expand', aiPick: false }); fix.noInventNames = 2; }
+  if (figureStyleDirectiveFlag(scope)) fix.styleDirective = true;
+  if (figureMultiCombinedFlag(scope)) { fix.multiCombined = true; fix.multiUpscale = 2; }
+  if (figureFlattenWhiteFlag(scope)) fix.flattenWhite = true;
+  return Object.keys(fix).length ? { ...opts, fix } : opts;
+}
+/** 11-23 앱 반영 후보: 손그림만 붙은 생성(실험 CH-묶음의 손그림 길 = G4 검색 방식 + 기출 0장·빠른 길 + 짧은 명세 4). 짧은 명세를 끄면 null(고침 U1 길). */
+export function figureSketchOptions(scope = globalThis) {
+  if (!figureSketchSpecFlag(scope)) return null;
+  const opts = figureG4Flag(scope) ? { baselineFix: true, classifyMode: 'expand', aiPick: false } : {};
+  return { ...opts, refCount: 0, raw: true, fix: { userRoles: true, noRefFast: true, sketchSpec: 4, ...(figureFlattenWhiteFlag(scope) ? { flattenWhite: true } : {}) } };
+}
+/** 엔진에 넣을 AI 없는 도구(칸 자르기·키우기). canvas가 없거나 여러 장 한 장 그리기를 껐으면 빈 객체. */
+function panelDeps(scope = globalThis) {
+  if (!figureMultiCombinedFlag(scope)) return {};
+  return figurePanelTools() || {};
+}
+
+// 고침 U1: 교사 첨부의 역할. 「표현 참고」(STYLE_REFERENCE) = 화풍만, 손그림(요청 글·이름에 손그림·스케치·밑그림…) = 구도 그대로, 나머지 = 레퍼런스.
+const SKETCH_WORDS = /손\s*그림|손으로\s*(그린|그렸|그려)|스케치|밑그림|대충\s*(그린|그렸)|낙서|sketch|drawing/iu;
+export function userReferenceRole(item, request = '') {
+  if (item?.referenceRole === 'STYLE_REFERENCE') return 'style';
+  if (item?.userImageRole && ['reference', 'sketch', 'style'].includes(item.userImageRole)) return item.userImageRole;
+  if (SKETCH_WORDS.test(String(item?.name || '')) || SKETCH_WORDS.test(String(request || ''))) return 'sketch';
+  return 'reference';
+}
+/** 교사 그림이 있을 때 붙일 기출 수: 교사 그림이 구도를 주므로 기출은 화풍 참고 1장(기본 3장).
+ *  11-22 밤 실제 4문제(레퍼런스 2·손그림 2) 비교: 구체화 켬·기출 2장은 그림에 없던 물체를 지어내고(세포 소기관 추가·미토콘드리아 2개)
+ *  레퍼런스 구도를 버렸다(해령 단면 → 입체 블록). 구체화 끔·기출 1장은 4문제 모두 교사 그림 구도·개수를 지켰다. */
+export const USER_REF_KICE_COUNT = 1;
+/** 교사 그림이 있으면 구체화(글만 보는 AI)를 건너뛴다 — 그림을 못 보는 구체화가 구도를 바꿨다(위 비교). 대화 정리 글은 요청 글 뒤에 붙인다. */
+export function userRefRequest(request, conversation = '') {
+  const c = String(conversation || '').trim();
+  return c && !String(request || '').includes(c) ? `${request}\n\n[교사와 AI가 그림을 정리한 대화 — 마지막에 확정된 구성·라벨을 따른다. 질문·인사는 그림 내용이 아니다]\n${c}` : String(request || '');
 }
 
 /** 그래프 생성에 「그림으로 생성」을 쓸지. picture: 옵션을 골랐는지(화면이 생기기 전에는 플래그가 곧 옵션). */
@@ -294,21 +343,54 @@ export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.j
  * 새 그림 엔진으로 한 벌 만들기. 던지지 않는다(취소만 aborted로 알림).
  * @returns {Promise<{ ok: boolean, aborted: boolean, fresh: { image: string, meta: object }[], result: object|null, errors: object[] }>}
  */
-export async function runFigureEngine({ ai, request, conversation = '', models, previous = null, refIds = [], signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine } = {}) {
+export async function runFigureEngine({ ai, request, conversation = '', models, previous = null, refIds = [], signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
+  // 고침 U1: 교사 그림을 첫 첨부로(역할 문장 fix.userRoles), 기출은 화풍 참고 2장.
+  const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
+  const roles = users.map((_, i) => userImageRoles[i] || 'reference');
+  // 11-23 앱 반영 후보: 손그림만이면 짧은 명세 길(figureSketchOptions), 그 밖의 교사 그림은 고침 U1 길, 교사 그림이 없으면 우승안 옵션(figureCreateOptions).
+  const sketchOpts = users.length && roles.every((r) => r === 'sketch') ? figureSketchOptions() : null;
+  const flat = figureFlattenWhiteFlag() ? { flattenWhite: true } : {};
+  const userOpts = users.length ? { userImages: users, userImageRole: roles, ...(sketchOpts || { fix: { userRoles: true, ...flat }, refCount: USER_REF_KICE_COUNT, raw: true }) } : figureCreateOptions();
+  if (users.length) request = userRefRequest(request, conversation);
   let result = null;
   try {
     const mod = engine ? null : await loadEngine();
     const referenceTimeoutMs = Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) > 0 ? Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) : 15000; // 검사가 줄여 쓴다
-    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, referenceTimeoutMs });
+    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, referenceTimeoutMs, ...panelDeps() });
     figureTrace({ ev: 'engine-start', kind: 'generate' });
-    result = await eng.makeFigureSet({ request, ...(conversation ? { conversation } : {}), previous, signal, onPhase: tracePhase(onPhase), earlyRetrieve: figureSpeedFlag(), ...(figureSkipStripCheckFlag() ? { strip: false } : {}), ...(refIds.length ? { refIds } : {}) });
+    result = await eng.makeFigureSet({ request, ...(conversation ? { conversation } : {}), previous, signal, onPhase: tracePhase(onPhase), earlyRetrieve: figureSpeedFlag(), ...(figureSkipStripCheckFlag() ? { strip: false } : {}), ...(refIds.length ? { refIds } : {}), ...userOpts });
     figureTrace({ ev: 'engine-end', kind: 'generate', ok: !!result?.ok });
   } catch (error) {
     if (isAbort(error) || signal?.aborted) return { ok: false, aborted: true, fresh: [], result, errors: [] };
     return { ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'engine', message: String(error?.message || error).slice(0, 300) }] };
   }
-  const fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: figureSceneMeta(result, i, { request, models }) } : null)).filter(Boolean);
+  const fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: { ...figureSceneMeta(result, i, { request, models }), ...(users.length ? { userRefs: { count: users.length, roles: userOpts.userImageRole.slice(), ...(sketchOpts ? { sketchSpec: 4 } : {}) } } : {}), ...(s.combined ? { combined: true } : {}) } } : null)).filter(Boolean);
   return { ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
+}
+
+/**
+ * 고침 E2: 빈 장면만 다시 그리기(구체화·검색 없이 같은 장면 글·같은 참고 기출). 엔진에 redrawScenes가 없으면(옛 판) available:false.
+ * fresh에는 다시 그린 장면만 들어간다(meta.sceneIndex로 원래 자리를 찾는다). 던지지 않는다.
+ */
+export async function runFigureRedraw({ ai, previous, scenes = [], request = '', models, signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
+  let result = null;
+  const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
+  const flat = figureFlattenWhiteFlag() ? { flattenWhite: true } : {};
+  const userOpts = users.length ? { userImages: users, userImageRole: users.map((_, i) => userImageRoles[i] || 'reference'), fix: { userRoles: true, ...flat } } : (flat.flattenWhite ? { fix: flat } : {});
+  try {
+    const mod = engine ? null : await loadEngine();
+    const referenceTimeoutMs = Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) > 0 ? Number(globalThis.__FIVE_E_FIGURE_REF_TIMEOUT_MS) : 15000;
+    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, referenceTimeoutMs });
+    if (typeof eng.redrawScenes !== 'function') return { available: false, ok: false, aborted: false, fresh: [], result: null, errors: [] };
+    figureTrace({ ev: 'engine-start', kind: 'redraw', scenes: scenes.slice() });
+    result = await eng.redrawScenes({ previous, scenes, request, signal, onPhase: tracePhase(onPhase), ...(figureSkipStripCheckFlag() ? { strip: false } : {}), ...userOpts });
+    figureTrace({ ev: 'engine-end', kind: 'redraw', ok: !!result?.ok });
+  } catch (error) {
+    if (isAbort(error) || signal?.aborted) return { available: true, ok: false, aborted: true, fresh: [], result, errors: [] };
+    return { available: true, ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'redraw', message: String(error?.message || error).slice(0, 300) }] };
+  }
+  const fresh = (result?.redrawn || []).map((i) => (result.scenes[i]?.image ? { image: result.scenes[i].image, meta: { ...figureSceneMeta(result, i, { request, models }), blankRedrawn: true } } : null)).filter(Boolean);
+  return { available: true, ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
 }
 
 /**
@@ -323,7 +405,9 @@ export async function runFigureEdit({ ai, previousPng, instruction, originalRequ
     const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, localEdit: figureLocalEdit() });
     if (typeof eng.editFigure !== 'function') return { available: false, ok: false, aborted: false, fresh: [], result: null, errors: [] };
     figureTrace({ ev: 'engine-start', kind: 'edit' });
-    result = await eng.editFigure({ previousPng, instruction, originalRequest, previous, sceneIndex, signal, onPhase: tracePhase(onPhase), localText: figureSpeedFlag(), localReplace: figureSpeedFlag() && figureLocalReplaceFlag() });
+    result = await eng.editFigure({ previousPng, instruction, originalRequest, previous, sceneIndex, signal, onPhase: tracePhase(onPhase), localText: figureSpeedFlag(), localReplace: figureSpeedFlag() && figureLocalReplaceFlag(),
+      // 11-23 앱 반영 후보: 그리기 서버 오류로 앞 그림 그대로면 한 번 더(figureEditRetryOnError), 흰 종이에 얹기(figureFlattenWhite).
+      ...(figureEditRetryOnErrorFlag() ? { retryOnError: true } : {}), ...(figureFlattenWhiteFlag() ? { flattenWhite: true } : {}) });
     figureTrace({ ev: 'engine-end', kind: 'edit', ok: !!result?.ok, local: !!result?.edit?.local });
   } catch (error) {
     if (isAbort(error) || signal?.aborted) return { available: true, ok: false, aborted: true, fresh: [], result, errors: [] };

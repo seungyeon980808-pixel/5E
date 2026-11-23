@@ -35,7 +35,7 @@ import { aiErrorText, aiErrorCode, codexMissing, reportAiError } from './ai-erro
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-four-session-integration';
 import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
-import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag, figureBlankSceneOnlyFlag, convertExamSolCircledFlag, convertTextbookEdgeGuideFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { clearTaskWorkspaces, taskHasReviewNotice, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {
   advanceGenerationTiming,
@@ -65,7 +65,7 @@ import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-fo
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL, AI_LABEL_READ_MODEL, labelPlanFromRead, measuredLabelSizes } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
-import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureEdit, figureLabelHints, pickOtherFigureRefs, loadFigureRefImages, figureRefIds, figureRefTags, figureRefLabel, figureRefContextText, wantsFigureRefImages, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
+import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureRedraw, userReferenceRole, runFigureEdit, figureLabelHints, pickOtherFigureRefs, loadFigureRefImages, figureRefIds, figureRefTags, figureRefLabel, figureRefContextText, wantsFigureRefImages, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
 import { advanceStatusRows, settleStatusRows, statusRowText, clockText, resultNumber, resultSubline, resultChips, labelHintsFallback, labelHintPrompt, eraseGlyphsInBoxes } from './ai-create-chat.js?v=1.7.0-four-session-integration';
 import { enterAction, isImeEnter, isBlankInspection, gatherDrawRequest, drawPlanNote, drawPreviewLine, composerHint, looksLikeDrawSummary, drawScope, resetIsLast, resultActionText, RESULT_MARK, RESET_MARK } from './ai-create-flow.js?v=1.7.0-four-session-integration';
 import { installChatWidth } from './ai-chat-width.js?v=1.7.0-four-session-integration';
@@ -4594,7 +4594,7 @@ ${chatText}` : ''}`;
         sourceLabelControllers.add(job.labelController); sourceLabelControllers.add(job.rasterController);
         const onPhase = phase => updateBatchCard(job, `${job.name} · ${phase}`);
         const tab = taskTabs.get(job.taskTabId), sourceHash = await imageLabelDigest(job.source.data);
-        const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
+        const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ examSolCircled: convertExamSolCircledFlag(), textbookEdgeGuide: convertTextbookEdgeGuideFlag(), /* 11-23 앱 반영 후보: 변환 우승안(플래그로 끔) */ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
           selection: { model: job.model, effort: job.effort, serviceTier: job.serviceTier, models: availableModels }, artboard: { ...state.get().artboard }, signal: abort.signal,
           observation: tab?.sourceLabelObservations?.[sourceHash], onObservation: async observation => {
             if (abort.signal.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
@@ -6425,7 +6425,7 @@ ${chatText}` : ''}`;
       const generationSource = workflow.imageKind === 'general' && !options.verifyOnly
         ? await prepareApprovedFirstAttachment({ ...sources[0] }) : undefined;
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
-      const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
+      const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ examSolCircled: convertExamSolCircledFlag(), textbookEdgeGuide: convertTextbookEdgeGuideFlag(), /* 11-23 앱 반영 후보: 변환 우승안(플래그로 끔) */ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
         generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
         artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphKeepOriginal ? 'keep' : 'route',
         onObservation: async observation => {
@@ -6713,9 +6713,11 @@ ${chatText}` : ''}`;
 
   // 1.8.0 새 그림 엔진 한 차례(js/ai-engines.js → js/ai-figure). 지금 생성과 같은 자리(결과 카드)에 넣고, 진행은 지금 진행 표시 글만 바꾼다.
   // 실패로 끝나지 않게: 엔진 안 재시도·반대 모델 → 한 장도 못 그리면 옛 생성 길로 이어서. 앞 결과 카드는 지우지 않는다.
-  async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {} }) {
+  async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {}, userRefItems = [] }) {
     const taskId = activeTaskTabId;
-    const request = [discussionContext, entered].filter(Boolean).join('\n\n');
+    // 고침 U1: 교사 그림(레퍼런스·손그림·표현 참고)에 단 메모는 요청 글 뒤에 붙인다(좌표는 그 그림 기준).
+    const userRefNotes = userRefItems.length ? commentPrompt(userRefItems) : '';
+    const request = [discussionContext, entered, userRefNotes ? `교사 그림에 단 메모(좌표는 그 그림 기준 %):\n${userRefNotes}` : ''].filter(Boolean).join('\n\n');
     // CHATFIX: 「이미지 생성」은 지금까지 대화 전체를 구체화에 넘긴다(앞서는 마지막 한 마디만 썼다 — CHATGEN 3절).
     const conversation = String(options.figureConversation || '');
     const gatheredMeta = options.figureGathered ? { request: options.figureGathered.request || request, conversation, count: options.figureGathered.count || 0, summary: options.figureGathered.summary || [] } : null;
@@ -6806,10 +6808,19 @@ ${chatText}` : ''}`;
       if (!(e.phase === 'log' && /기출|참고 그림/.test(String(e.message || '')))) show(figurePhaseCopy(e));
       if (isCurrent() && e.phase) { loading.stage(e.phase); statusPhase(e.phase); }
     };
-    let outcome, refIds = [];
+    let outcome, refIds = [], userImages = [], userImageRoles = [];
     try {
       await taskPersistence.checkpoint();
       if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      // 고침 U1: 교사 그림을 AI 전송용 사본(긴 변 1536)으로 — 엔진이 첫 첨부로 붙인다. 못 바꾼 그림은 빼고 이어 간다(막다른 길 없음).
+      if (userRefItems.length) {
+        const roleText = [conversation, entered].filter(Boolean).join('\n');
+        for (const item of userRefItems) {
+          try { const t = await prepareTransportItem(item); if (t?.data) { userImages.push(t.data); userImageRoles.push(userReferenceRole(item, roleText)); } }
+          catch (error) { addLog(`${item.name || '첨부 그림'}을 AI에 보낼 수 없어 빼고 그립니다: ${error?.message || error}`, 'error'); }
+        }
+        if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      }
       // 「다른 기출로 다시 그리기」: 앞서 참고한 기출을 빼고 다시 고른 3장을 넘긴다.
       const otherOf = options.otherRefsOf ? generatedImages.find(item => item.id === options.otherRefsOf) : null;
       if (otherOf?.meta?.refs?.length) {
@@ -6817,7 +6828,7 @@ ${chatText}` : ''}`;
         refIds = await pickOtherFigureRefs({ ai, request, exclude: otherOf.meta.refs, models, signal: abort.signal });
         if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
       }
-      outcome = await runFigureEngine({ ai, request, conversation, models, refIds, signal: abort.signal, onPhase: enginePhase });
+      outcome = await runFigureEngine({ ai, request, conversation, models, refIds, signal: abort.signal, onPhase: enginePhase, userImages, userImageRoles });
     } catch (error) {
       outcome = error?.name === 'AbortError' ? { aborted: true, fresh: [], errors: [] } : { aborted: false, fresh: [], errors: [{ message: error?.message || String(error) }] };
     } finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
@@ -6846,9 +6857,17 @@ ${chatText}` : ''}`;
         show(figurePhaseCopy({ phase: 'draw', scene, total }));
         if (isCurrent()) { loading.stage('draw'); statusPhase('draw'); }
       } });
-      let second = null;
+      let second = null, sceneOnly = false;
       imageLabelRunAbort = abort;
-      try { second = await runFigureEngine({ ai: ai2, request, conversation, models: { ...models, image: other }, refIds, signal: abort.signal, onPhase: enginePhase }); }
+      try {
+        // 고침 E2: 빈 장면만 같은 장면 글·같은 참고 기출로 다시(구체화·검색·성한 장면은 다시 그리지 않음). 옛 판 엔진이면 전체 다시.
+        if (figureBlankSceneOnlyFlag(channelStorage) && outcome.result?.scenes?.length) {
+          const blankIdx = freshScenes.map((f, k) => (blankFlags[k] ? f.meta?.sceneIndex : null)).filter(Number.isInteger);
+          const redo = await runFigureRedraw({ ai: ai2, previous: outcome.result, scenes: blankIdx, request, models: { ...models, image: other }, signal: abort.signal, onPhase: enginePhase, userImages, userImageRoles });
+          if (redo.available) { second = redo; sceneOnly = true; }
+        }
+        if (!second) second = await runFigureEngine({ ai: ai2, request, conversation, models: { ...models, image: other }, refIds, signal: abort.signal, onPhase: enginePhase, userImages, userImageRoles });
+      }
       catch (error) { second = { aborted: error?.name === 'AbortError', fresh: [], errors: [] }; }
       finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
       if (second?.aborted || !isCurrent()) {
@@ -6861,10 +6880,19 @@ ${chatText}` : ''}`;
       }
       const secondFlags = await Promise.all((second?.fresh || []).map(sceneResult => isBlankFigure(sceneResult.image)));
       const merged = [];
-      const length = Math.max(freshScenes.length, second?.fresh?.length || 0);
-      for (let i = 0; i < length; i++) {
-        if (freshScenes[i] && !blankFlags[i]) merged.push(freshScenes[i]);
-        else if (second?.fresh?.[i] && !secondFlags[i]) { merged.push(second.fresh[i]); blankRedrawn = true; }
+      if (sceneOnly) {
+        // 장면 번호(meta.sceneIndex)로 제자리에 넣는다 — 다시 그린 장면은 첫 실행의 장면 글·기출·앞 장면 그림을 그대로 썼다.
+        for (let k = 0; k < freshScenes.length; k++) {
+          if (!blankFlags[k]) { merged.push(freshScenes[k]); continue; }
+          const at = (second.fresh || []).findIndex(f => f.meta?.sceneIndex === freshScenes[k].meta?.sceneIndex);
+          if (at >= 0 && !secondFlags[at]) { merged.push(second.fresh[at]); blankRedrawn = true; }
+        }
+      } else {
+        const length = Math.max(freshScenes.length, second?.fresh?.length || 0);
+        for (let i = 0; i < length; i++) {
+          if (freshScenes[i] && !blankFlags[i]) merged.push(freshScenes[i]);
+          else if (second?.fresh?.[i] && !secondFlags[i]) { merged.push(second.fresh[i]); blankRedrawn = true; }
+        }
       }
       freshScenes = merged;
     }
@@ -7030,7 +7058,13 @@ ${chatText}` : ''}`;
     }
     let roleGroups;
     try { roleGroups=partitionReferenceItems(runInput.attachments); } catch(error) { setStatus('이미지 역할을 확인해 주세요. 원본 또는 표현 참고를 선택하세요.','error'); return; }
-    if (roleGroups.styleReferences.length && (!whiteRun || !roleGroups.inputs.length || runInput.generated.length)) {
+    // 고침 U1: 그림 생성(exam-brief)에서 교사 그림이 새 엔진으로 가면 「표현 참고」도 화풍 참고로 엔진에 넣는다(막다른 경고 없음).
+    // 11-23 앱 반영 후보: 첨부마다 역할(손그림·레퍼런스·표현 참고)을 먼저 정한다 — 기본은 모두 손그림일 때만 새 엔진, 레퍼런스는 옛 길.
+    const userRoleText = [options.figureConversation, entered].filter(Boolean).join('\n');
+    const userRoles = (runInput.attachments || []).map(item => userReferenceRole(item, userRoleText));
+    const userRefRoute = type === 'image' && isExamBrief(runInput) && !batchRun && (runInput.attachments || []).length > 0
+      ? figureRoute({ desktop, storage: channelStorage, hasUserReferences: true, legacy: options.legacyFigure === true, userRoles }) : null;
+    if (roleGroups.styleReferences.length && !userRefRoute?.use && (!whiteRun || !roleGroups.inputs.length || runInput.generated.length)) {
       setStatus('표현 참고는 원본이 있는 새 작업의 첫 PNG 변환과 자동 교정에서만 지원합니다. 추가 수정·대화는 새 작업을 사용하세요.','warn'); return;
     }
     let whiteGenerationNotice = "";
@@ -7064,9 +7098,9 @@ ${chatText}` : ''}`;
     // 1.8.0(11-19 사용자 결정): 이미지 생성(설명으로 새 그림)은 새 그림 엔진으로 대체 — 구체화→기출 3장 검색→그리기→설명 지우기→흑백.
     // 설치판에서만 돈다(웹은 지금 길). 사용자가 직접 넣은 레퍼런스가 있는 생성과, 엔진이 한 장도 못 그려 넘어온 경우는 옛 길.
     if (type === 'image' && isExamBrief(runInput) && !batchRun) {
-      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true });
+      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true, userRoles });
       if (route.use && options.figureEdit) return runFigureEditTurn({ runInput, entered, requestEpoch, options });
-      if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options });
+      if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options, userRefItems: route.userRefs ? runInput.attachments.slice() : [] });
     }
     if (!busy) setBusy(true);
     imageReceived = false;

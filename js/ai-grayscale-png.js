@@ -50,3 +50,26 @@ export async function grayscaleGeneratedPng(dataUrl, { signal, convert = graysca
     return { data: dataUrl, applied: false, reason: String(error?.message || error).slice(0, 200), ms: Math.round(now() - started) };
   }
 }
+
+// ── 실험(생성 3차, exp/1122-figure-fixes) — 흰 종이에 얹기(fix.flattenWhite). 기본 경로는 쓰지 않는다. ──
+// 픽셀 배열만 다루는 판(설치판 밖·검사용): 알파를 흰 바탕과 섞고 알파를 255로.
+export function flattenRgbaOnWhiteInPlace(rgba) {
+  if (!rgba || typeof rgba.length !== 'number' || rgba.length % 4 !== 0) throw new Error('RGBA 픽셀 길이가 올바르지 않습니다.');
+  let changed = 0;
+  for (let i = 0; i < rgba.length; i += 4) {
+    const a = rgba[i + 3];
+    if (a === 255) continue;
+    const f = a / 255;
+    rgba[i] = Math.round(rgba[i] * f + 255 * (1 - f)); rgba[i + 1] = Math.round(rgba[i + 1] * f + 255 * (1 - f)); rgba[i + 2] = Math.round(rgba[i + 2] * f + 255 * (1 - f));
+    rgba[i + 3] = 255; changed++;
+  }
+  return changed;
+}
+// 브라우저 판: 흰 종이 위에 그려 다시 PNG로. 흑백 변환이 실패해 원본이 그대로 돌아온 경우에도 투명이 남지 않게 한다.
+export async function flattenPngOnWhite(dataUrl) {
+  if (typeof dataUrl !== 'string' || !/^data:image\/png;base64,/i.test(dataUrl)) return dataUrl;
+  const image = new Image(); image.src = dataUrl; await image.decode();
+  const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+  try { const c = canvas.getContext('2d'); c.fillStyle = '#ffffff'; c.fillRect(0, 0, canvas.width, canvas.height); c.drawImage(image, 0, 0); return canvas.toDataURL('image/png'); }
+  finally { canvas.width = 0; canvas.height = 0; }
+}
