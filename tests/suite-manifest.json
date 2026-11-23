@@ -962,6 +962,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-edit-merge.mjs",
+      "findingIds": [
+        "FIX1123-FIGURE-EDIT-MERGE-DRIFT"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-user-refs.mjs",
       "findingIds": [
         "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
