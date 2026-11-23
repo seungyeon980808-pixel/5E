@@ -38,7 +38,7 @@
     const chip=(k,t,s)=>btn(k,'ar-chip',`${t}<small>${s}</small>`);
     sec.innerHTML=head+`<div class="ar1">
       <div class="ar1-src"><h5>자료</h5>${chip('lib','라이브러리','평가원 · 학평 · 교과서')}${chip('mine','내 파일','그림 · 문항 · 시험지')}</div>
-      <div class="ar1-core"><div class="ar1-name">5E</div>
+      <div class="ar1-core"><div class="ar1-name">__LOGO5E__</div>
         <div class="ar1-row">${pbox('image')}<em>→</em>${pbox('exam')}<em>→</em>${pbox('hwp')}</div>
         ${btn('clip','ar1-clip','<b>clipboard</b> 세 프로그램이 함께 쓰는 서랍 · ⌘C · ⇧⌘V')}
         <div class="ar1-eng">${chip('ai','AI 연결','그림 변환 · 라벨 · 그래프')}${chip('engine','한글 엔진','rhwp · 브라우저에서 한글 파일')}${chip('restore','기출 복원','AI 없이 한글 문항으로')}${chip('typeset','조판','수능 틀 · 학교 양식')}</div>

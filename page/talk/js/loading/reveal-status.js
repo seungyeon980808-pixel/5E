@@ -13,6 +13,8 @@
  *  s.set('거의 다 됐어요', 3, 3);  // 마지막 단계 신호가 있을 때만
  *  s.done();                      // 실제 완료
  */
+import { paintLogo5e } from './logo5e.js';
+
 (function (global) {
   'use strict';
 
@@ -38,8 +40,9 @@
 
     // 5E: 기본 글자 + 빛이 지나가는 창(같은 글자를 한 겹 더, 창만 움직임)
     this.mark = el('span', 'rs-mark');
-    this.mark.appendChild(el('span', 'rs-mark-base', this.o.mark));
-    var win = el('span', 'rs-mark-win'), glow = el('span', 'rs-mark-glow', this.o.mark);
+    // 11-23: 「5E」는 글꼴이 아니라 윤곽선으로(js/loading/logo5e.js) — 안드로이드에서도 같은 모양
+    this.mark.appendChild(paintLogo5e(el('span', 'rs-mark-base', this.o.mark), ''));
+    var win = el('span', 'rs-mark-win'), glow = paintLogo5e(el('span', 'rs-mark-glow', this.o.mark), '');
     win.appendChild(glow);
     this.mark.appendChild(win);
     this.mark.setAttribute('aria-hidden', 'true');
