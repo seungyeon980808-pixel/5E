@@ -1,0 +1,94 @@
+/* 11-20 밤: 지적 모음 반영 — 장면은 크게·틀 없이·글 적게, 커지는 효과 없음, 애플식 곡률 통일 */
+:root{--r-box:18px;--r-btn:11px;--r-card:14px}
+/* 메뉴: 알약 → 둥근 사각형, 진행 막대는 줄 안쪽 아래에(테두리와 겹치지 않게) */
+.nav__inner{border-radius:var(--r-box)!important;overflow:hidden}
+.navprog{left:0!important;right:0!important;bottom:0!important;border-radius:0!important;opacity:.55}
+.navlk a.lk,.navlk a.lk.web,.navlk a.lk.ico,button.lk.thm{border-radius:var(--r-btn)!important}
+.navlk a.lk.web{background:transparent!important;color:var(--ink)!important;border:1px solid var(--line-strong)!important}
+.navlk a.lk.web:hover{border-color:var(--ink-soft)!important}
+/* 장면: 위 칩 · 아래 설명 줄 · 안내 · 알림 숨김 */
+.feat .where,.feat .wcap,.feat p.hint,.where .tryme{display:none!important}
+/* 틀(액자 · 매트) 없애기 */
+html[data-look="gallery"] .wfit,.wfit{background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
+/* 화면 크게: 글 칸 좁히고 화면 칸 넓게, 장면 영역도 넓게 */
+.feat{grid-template-columns:minmax(0,3.3fr) minmax(0,8.7fr)!important;gap:clamp(28px,3.4vw,56px)!important}
+section.feat.wrap,.wrap.feat{max-width:calc(1440px + 2*var(--gutter))}
+.feat .wwin,.feat .s34-win,.feat .s7win{border-radius:12px}
+/* 커지는 효과 없음: 단계 반짝 테두리, 화면 확대(카메라), 첫 화면 사진 확대 */
+button.trythis::after{display:none!important}
+.s34-zoom,.s7cam,.rcam{transform:none!important;transition:none!important}
+.h3mont img.kb{animation:none!important}
+/* 진행 표시: 지금 단계 이름 밑 가는 선이 시간만큼 차오름(크기 변화 없음) */
+.steps .bar{height:2px!important;margin-top:6px;border-radius:2px}
+.steps .bar i{background:var(--ink)!important}
+.steps li.on .n{color:var(--ink)!important}
+/* architecture: 곡률 통일, 겹침 풀기, 작은 글은 커서를 올렸을 때만 */
+.ar1-core{border-radius:calc(var(--r-box) + 8px)!important}
+.ar-p,.ar-chip,.ar1-clip,.ar-deep,.ar1-eng .ar-chip{border-radius:var(--r-card)!important}
+.ar1 button.ar1-clip{margin-top:14px!important}
+.ar1-eng{margin-top:14px!important}
+.ar1 [data-d]{position:relative;overflow:visible}
+.ar1 .ar-p span,.ar1 .ar-chip small{position:absolute;left:0;top:calc(100% + 8px);z-index:20;width:max-content;max-width:260px;padding:8px 11px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-strong);color:var(--ink-soft);font-size:12px;font-weight:400;line-height:1.5;box-shadow:0 12px 30px -14px #000a;opacity:0;transform:translateY(-2px);transition:opacity .18s,transform .18s;pointer-events:none;white-space:normal}
+.ar1 [data-d]:hover .ar-p span,.ar1 .ar-p:hover span,.ar1 .ar-chip:hover small,.ar1 [data-d]:focus-visible span,.ar1 [data-d]:focus-visible small{opacity:1;transform:none}
+.ar1 .ar-p{min-height:0;padding:16px 16px 14px}
+.ar1 .ar-chip small:empty{display:none}
+/* 갤러리 규칙보다 우선 */
+html[data-look] .feat .wcap,html .feat .wcap,html[data-look] .feat .where,html[data-look] .feat p.hint{display:none!important}
+/* 구조도: 올린 칸의 설명이 다른 칸 위로 */
+.ar1 [data-d]:hover,.ar1 [data-d]:focus-visible{z-index:30}
+/* 장면 제목: 좁아진 글 칸에 맞춰 크기 · 글 칸 조금 넓게 */
+.feat{grid-template-columns:minmax(0,4fr) minmax(0,8fr)!important}
+.feat .h2{font-size:clamp(28px,2.7vw,44px)!important;line-height:1.18!important}
+/* 문구 화면: 바뀐 문구가 두 줄에 들어가게 */
+.mf{font-size:clamp(30px,4.4vw,72px)!important;text-wrap:balance}
+/* 11-20 밤 2: 시연 화면 조금 줄여 좌우 여백 · 웹에서 쓰기 작게 · 지금 단계 잘 보이게 */
+section.feat.wrap,.wrap.feat{max-width:calc(1240px + 2*var(--gutter))!important;padding-inline:max(var(--gutter),5vw)!important}
+.feat{grid-template-columns:minmax(0,4.4fr) minmax(0,7.6fr)!important;gap:clamp(32px,4.4vw,72px)!important}
+.navlk a.lk.web{padding:0 10px!important;height:32px;font-size:12px!important;gap:6px!important}
+.navlk a.lk.web svg{width:14px;height:14px}
+.steps li{position:relative}
+.steps button{color:var(--ink-faint)}
+.steps li.on button{color:var(--ink)!important}
+.steps li.on .t{font-weight:700}
+.steps li::before{content:"";position:absolute;left:-14px;top:12px;bottom:12px;width:2px;border-radius:2px;background:transparent;transition:background .3s}
+.steps li.on::before{background:var(--ink)}
+.steps .bar{background:color-mix(in srgb,var(--ink) 16%,transparent)!important}
+.feat .feat__text{padding-left:14px}
+section.feat.wrap,.wrap.feat{max-width:calc(1320px + 2*var(--gutter))!important;padding-inline:max(var(--gutter),4vw)!important}
+.feat{grid-template-columns:minmax(0,4fr) minmax(0,8fr)!important}
+/* 11-20 밤: 메뉴 진행선 — 칸 하나 = 구역 하나(예전 막대·밑줄은 끔) */
+.navprog{display:none!important}
+.nav__links a.cur{font-weight:inherit!important;color:var(--ink-soft)!important}
+.nav__links a.cur::after{display:none!important}
+.nav__links{position:relative}
+.nav__links a.now{color:var(--ink)!important;font-weight:700}
+.navnow{position:absolute;left:0;bottom:-8px;height:2px;width:0;border-radius:2px;background:var(--ink);pointer-events:none;transition:width .12s linear}
+/* 칸은 글자 길이대로, 간격은 똑같이 — 진행선은 구역마다 속도를 바꿔 각 글자 위를 지나감 */
+.nav__inner{max-width:1200px!important}
+.nav__links{gap:22px!important}
+.nav__links a{padding:6px 0!important}
+/* 웹에서 쓰기도 아이콘 단추만(글자 없이, 마우스를 올리면 이름) */
+.navlk a.lk.ico.web{width:32px!important;height:32px;padding:0!important}
+/* 메뉴 한 줄: 조용히 떠오르는 작은 글 — 상자 없이 */
+.navcap{position:fixed;z-index:210;transform:translateX(-50%);pointer-events:none;opacity:0;transition:opacity .35s cubic-bezier(.2,.7,.2,1),left .45s cubic-bezier(.2,.8,.2,1)}
+.navcap.on{opacity:1}
+.navcap span{display:block;white-space:nowrap;font:500 12.5px/1 var(--f);letter-spacing:.01em;color:var(--ink-soft);padding:8px 12px;border-radius:10px;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.navcap span.in{animation:navcapin .45s cubic-bezier(.2,.7,.2,1) both}
+@keyframes navcapin{from{opacity:0;transform:translateY(-4px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@media (prefers-reduced-motion:reduce){.navcap,.navcap span.in{transition:none;animation:none}}
+/* 휴대폰·좁은 화면: 장면은 한 칸 — 글 아래에 시연 화면을 꽉 차게 */
+@media (max-width:900px){
+  section.feat.wrap,.wrap.feat{padding-inline:var(--gutter)!important}
+  .feat{grid-template-columns:minmax(0,1fr)!important;gap:22px!important;padding-block:72px!important}
+  .feat .h2{font-size:clamp(26px,7.2vw,36px)!important}
+  .feat .feat__text{padding-left:12px}
+  .feat .steps{margin-top:18px}
+  .feat .steps button{padding:10px 4px}
+  .mf{font-size:clamp(26px,7.4vw,40px)!important}
+}
+/* 휴대폰(마우스 없음·좁은 화면): 구조도 작은 설명은 칸 안에 그대로(올릴 마우스가 없으니), 검색 칸은 화면 안에 */
+@media (hover:none),(max-width:900px){
+  .ar1 .ar-p span,.ar1 .ar-chip small{position:static;opacity:1;transform:none;background:none;border:0;box-shadow:none;padding:0;margin-top:2px;width:auto;max-width:none;color:var(--ink-faint);white-space:normal}
+}
+.faq-s input{min-width:0;width:100%}
+.faq-s{max-width:min(720px,100%);box-sizing:border-box}

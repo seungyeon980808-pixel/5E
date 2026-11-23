@@ -1,0 +1,660 @@
+{
+ "S2": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s2v2/chrome-off.jpg",
+   "on": "img/s2v2/chrome-on.jpg",
+   "alt": "5E AI 이미지 작업대",
+   "rect": {
+    "x": 219.1875,
+    "y": 185.5,
+    "w": 825.609375,
+    "h": 678
+   }
+  },
+  "base": "img/s2v2/orig.jpg",
+  "baseAlt": "2026학년도 7월 학평 지구과학Ⅰ 18번 그림",
+  "wipe": "img/s2v2/result.jpg",
+  "layers": [
+   {
+    "src": "img/s2v2/label-clean.jpg"
+   },
+   {
+    "src": "img/s2v2/label-edited.jpg"
+   }
+  ],
+  "tagA": "기출 원본",
+  "tagB": "글자만 떼어 냄",
+  "source": "출시본 5E 1.7.0 실제 결과 · 지구1 26년 7월 학평 18번",
+  "steps": [
+   "그림은 그대로",
+   "글자는 라벨로",
+   "내 문항에 맞게"
+  ],
+  "states": [
+   {
+    "p": 50,
+    "layers": [],
+    "cap": "손잡이를 끌어 원본과 비교해 보세요"
+   },
+   {
+    "p": 100,
+    "layers": [
+     0
+    ],
+    "cap": "원래 크기·자리 그대로 라벨로"
+   },
+   {
+    "p": 100,
+    "layers": [
+     1
+    ],
+    "cap": "A → ㉠ · C → ㉡"
+   }
+  ],
+  "resume": [
+   1,
+   5,
+   6
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "기출 그림 한 장",
+    "hold": 700
+   },
+   {
+    "do": "sweep",
+    "to": 100,
+    "ms": 1700,
+    "cap": "그림은 그대로 두고 글자만 떼어 냅니다"
+   },
+   {
+    "do": "sweep",
+    "to": 35,
+    "ms": 800
+   },
+   {
+    "do": "sweep",
+    "to": 100,
+    "ms": 700,
+    "hold": 150
+   },
+   {
+    "do": "hide",
+    "hold": 350
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 500,
+    "cap": "원래 크기·자리 그대로, 고칠 수 있는 라벨로",
+    "hold": 1600
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 450,
+    "cap": "A → ㉠ · C → ㉡ — 그림은 한 점도 안 바뀝니다",
+    "hold": 2000
+   },
+   {
+    "do": "reset",
+    "ms": 600,
+    "cap": "",
+    "hold": 250
+   }
+  ]
+ },
+ "S3": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s3v2/orig-view.jpg",
+   "alt": "5E AI 그래프 작업대 · 원본"
+  },
+  "layers": [
+   {
+    "src": "img/s3v2/ed-03.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s3v2/ed-09.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s3v2/ed-13.jpg",
+    "full": true
+   }
+  ],
+  "source": "출시본 5E 1.7.0 실제 결과 · 물리1 27년 6평 13번",
+  "steps": [
+   "그래프 사진 한 장",
+   "고칠 수 있는 그래프로",
+   "선 모양·축 이름까지"
+  ],
+  "states": [
+   {
+    "layers": [],
+    "cap": "기출에서 잘라 온 그래프 사진"
+   },
+   {
+    "layers": [
+     0
+    ],
+    "cap": "축·눈금·곡선을 읽어 다시 그린 그래프"
+   },
+   {
+    "layers": [
+     2
+    ],
+    "cap": "곡선 B는 점선으로, 축 이름은 「운동 에너지 (J)」로"
+   }
+  ],
+  "resume": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "기출에서 잘라 온 그래프 사진",
+    "hold": 1300
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 600,
+    "cap": "축·눈금·곡선·수식 눈금까지 읽어 다시 그립니다",
+    "hold": 1800
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 450,
+    "cap": "곡선 B를 점선으로",
+    "hold": 1300
+   },
+   {
+    "do": "layer",
+    "i": 2,
+    "to": 1,
+    "only": true,
+    "ms": 450,
+    "cap": "축 이름을 「운동 에너지 (J)」로",
+    "hold": 1900
+   },
+   {
+    "do": "reset",
+    "ms": 600,
+    "cap": "",
+    "hold": 250
+   }
+  ]
+ },
+ "S4": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s4v2/15.jpg",
+   "alt": "5E_exam 문항 카드 · 5E 클립보드"
+  },
+  "layers": [
+   {
+    "src": "img/s4v2/16.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s4v2/20.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s4v2/21.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s4v2/22.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s4v2/24.jpg",
+    "full": true
+   }
+  ],
+  "source": "출시본 5E 1.7.0 실제 화면 · 그래프는 장면 3에서 클립보드로",
+  "steps": [
+   "그래프는 클립보드에서",
+   "쓰는 대로 한글 조판",
+   "○·× → 정답"
+  ],
+  "states": [
+   {
+    "layers": [],
+    "cap": "⇧⌘V — 장면 3에서 고친 그래프를 그대로 꺼냅니다"
+   },
+   {
+    "layers": [
+     1
+    ],
+    "cap": "카드에 쓰는 대로 오른쪽에 실제 한글 조판"
+   },
+   {
+    "layers": [
+     4
+    ],
+    "cap": "ㄱ ○ · ㄴ × · ㄷ ○ → 정답 ③ ㄱ, ㄷ"
+   }
+  ],
+  "resume": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "⇧⌘V — 장면 3에서 고친 그래프를 그대로 꺼냅니다",
+    "hold": 1300
+   },
+   {
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 450,
+    "cap": "자료 칸에 고칠 수 있는 그래프째",
+    "hold": 1300
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 450,
+    "cap": "카드에 쓰는 대로 오른쪽에 실제 한글 조판",
+    "hold": 1700
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 2,
+    "to": 1,
+    "only": true,
+    "ms": 300,
+    "cap": "ㄱ ○",
+    "hold": 600
+   },
+   {
+    "do": "layer",
+    "i": 3,
+    "to": 1,
+    "only": true,
+    "ms": 300,
+    "cap": "ㄱ ○ · ㄴ ×",
+    "hold": 600
+   },
+   {
+    "do": "layer",
+    "i": 4,
+    "to": 1,
+    "only": true,
+    "ms": 350,
+    "cap": "ㄱ ○ · ㄴ × · ㄷ ○ → 정답 ③ ㄱ, ㄷ 이 저절로",
+    "hold": 2200
+   },
+   {
+    "do": "reset",
+    "ms": 500,
+    "cap": "",
+    "hold": 200
+   }
+  ]
+ },
+ "S5": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s5v2/11.jpg",
+   "alt": "5E_exam 기출문제 검색"
+  },
+  "layers": [
+   {
+    "src": "img/s5v2/13.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s5v2/15.jpg",
+    "full": true
+   }
+  ],
+  "source": "출시본 5E 1.7.0 실제 화면 · AI 없이 변형",
+  "steps": [
+   "낱말 하나로 기출 찾기",
+   "고르고 변형",
+   "고칠 수 있는 한글 문항으로"
+  ],
+  "states": [
+   {
+    "layers": [],
+    "cap": "「흥분 전도」 — 원본 시험지 위에 형광"
+   },
+   {
+    "layers": [
+     0
+    ],
+    "cap": "문항을 고르고 「변형」"
+   },
+   {
+    "layers": [
+     1
+    ],
+    "cap": "발문·자료·표·〈보기〉가 카드 칸으로, 오른쪽은 한글 조판"
+   }
+  ],
+  "resume": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "「흥분 전도」 — 원본 시험지 위에 형광",
+    "hold": 1700
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 400,
+    "cap": "문항을 고르고 「변형」",
+    "hold": 1000
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 600,
+    "cap": "AI 없이 1초 — 표는 한글 표로, 그래프는 그림 칸으로",
+    "hold": 2600
+   },
+   {
+    "do": "reset",
+    "ms": 500,
+    "cap": "",
+    "hold": 200
+   }
+  ]
+ },
+ "S6": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s6v2/01.jpg",
+   "alt": "5E_exam 시험지 배치 · 수능 틀"
+  },
+  "layers": [
+   {
+    "src": "img/s6v2/06.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s6v2/09.jpg",
+    "full": true
+   }
+  ],
+  "source": "출시본 5E 1.7.0 실제 화면 · 학교 양식은 가상 「○○고 중간고사 양식.hwpx」",
+  "steps": [
+   "수능 틀 B4 2단",
+   "내 학교 원안지 올리기",
+   "같은 문항이 학교 양식으로"
+  ],
+  "states": [
+   {
+    "layers": [],
+    "cap": "처음엔 수능 틀(B4 2단) — 걱정하지 마세요"
+   },
+   {
+    "layers": [
+     0
+    ],
+    "cap": "학교 원안지 한글 파일을 넣으면 머리 표·단·쪽을 읽고"
+   },
+   {
+    "layers": [
+     1
+    ],
+    "cap": "같은 문항이 학교 양식 위로 — 머리 표 그대로"
+   }
+  ],
+  "resume": [
+   1,
+   2,
+   3
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "처음엔 수능 틀(B4 2단) — 걱정하지 마세요",
+    "hold": 1800
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 450,
+    "cap": "학교 원안지 한글 파일을 넣으면 머리 표·단·쪽을 읽고",
+    "hold": 1700
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 600,
+    "cap": "같은 문항이 학교 양식 위로 — 머리 표 그대로",
+    "hold": 2500
+   },
+   {
+    "do": "reset",
+    "ms": 600,
+    "cap": "",
+    "hold": 200
+   }
+  ]
+ },
+ "S8": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s7v2/01.jpg",
+   "alt": "5E_hwp 시험지"
+  },
+  "layers": [
+   {
+    "src": "img/s7v2/02.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s7v2/06.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s7v2/09.jpg",
+    "full": true
+   }
+  ],
+  "source": "출시본 5E 1.7.0 실제 화면 · 한글 프로그램 없이",
+  "steps": [
+   "5E_hwp로 보낸 시험지",
+   "그림을 두 번 누르면 그 자리에서",
+   "고치면 시험지에 그대로"
+  ],
+  "states": [
+   {
+    "layers": [],
+    "cap": "한글 프로그램 없이, 5E_hwp에서 열린 시험지"
+   },
+   {
+    "layers": [
+     0
+    ],
+    "cap": "그래프를 두 번 누르면 그 자리에서 편집 창"
+   },
+   {
+    "layers": [
+     2
+    ],
+    "cap": "지시선 라벨 「전자」가 시험지에 그대로"
+   }
+  ],
+  "resume": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "한글 프로그램 없이, 5E_hwp에서 열린 시험지",
+    "hold": 1500
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 450,
+    "cap": "그래프를 두 번 누르면 그 자리에서 편집 창",
+    "hold": 1300
+   },
+   {
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 350,
+    "cap": "라벨러로 곡선 B에 「전자」",
+    "hold": 1500
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 2,
+    "to": 1,
+    "only": true,
+    "ms": 500,
+    "cap": "「적용」 — 시험지 쪽에 그대로, 칸 크기도 그대로",
+    "hold": 2200
+   },
+   {
+    "do": "reset",
+    "ms": 500,
+    "cap": "",
+    "hold": 200
+   }
+  ]
+ },
+ "S9": {
+  "chrome": {
+   "w": 1440,
+   "h": 900,
+   "off": "img/s8v2/image.jpg",
+   "alt": "5E 클립보드 · 5E_image"
+  },
+  "layers": [
+   {
+    "src": "img/s8v2/exam.jpg",
+    "full": true
+   },
+   {
+    "src": "img/s8v2/hwp.jpg",
+    "full": true
+   }
+  ],
+  "source": "출시본 5E 1.7.0 실제 화면 · 같은 클립보드",
+  "steps": [
+   "5E_image",
+   "5E_exam",
+   "5E_hwp"
+  ],
+  "states": [
+   {
+    "layers": [],
+    "cap": "⇧⌘V — 5E_image에서"
+   },
+   {
+    "layers": [
+     0
+    ],
+    "cap": "⇧⌘V — 5E_exam에서도 같은 서랍"
+   },
+   {
+    "layers": [
+     1
+    ],
+    "cap": "⇧⌘V — 5E_hwp에서도 같은 서랍"
+   }
+  ],
+  "resume": [
+   1,
+   2,
+   3
+  ],
+  "timeline": [
+   {
+    "step": 0,
+    "cap": "⇧⌘V — 5E_image에서 넣어 둔 그래프·그림",
+    "hold": 1700
+   },
+   {
+    "step": 1,
+    "do": "layer",
+    "i": 0,
+    "to": 1,
+    "ms": 450,
+    "cap": "5E_exam에서도 같은 서랍 — 꺼내면 카드 칸으로",
+    "hold": 1700
+   },
+   {
+    "step": 2,
+    "do": "layer",
+    "i": 1,
+    "to": 1,
+    "only": true,
+    "ms": 450,
+    "cap": "5E_hwp에서도 같은 서랍 — 커서 자리에",
+    "hold": 2000
+   },
+   {
+    "do": "reset",
+    "ms": 500,
+    "cap": "",
+    "hold": 200
+   }
+  ]
+ }
+}
