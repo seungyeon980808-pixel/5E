@@ -17,6 +17,8 @@ export function initVisitorStats() {
   const note = text => { widget.title = text; widget.setAttribute('aria-label', text); };
   if (!eligible) {
     note('누적·오늘 이용자 수 · 로컬 미리보기와 자동 검수는 집계에서 제외합니다.');
+    // 11-23 출시: 집계하지 않는 곳(설치판·로컬)에서는 늘 「누적 — · 오늘 —」로 비어 보이니 숨긴다. 5e.ai.kr 웹에서만 보인다.
+    widget.hidden = true;
     return;
   }
   let endpoint;
