@@ -2589,6 +2589,12 @@
       ]
     },
     {
+      "path": "tests/test-172-start-draw-align-browser.cjs",
+      "findingIds": [
+        "172-START-DRAW-ALIGN"
+      ]
+    },
+    {
       "path": "tests/test-ai-graph-draw-browser.cjs",
       "findingIds": [
         "AI-GRAPH-PICTURE-DRAW"
