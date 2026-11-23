@@ -35,8 +35,8 @@ test('글로 그리기 옵션: 기본 = G4(구체화 검색·고르기 AI 끔·�
   assert.deepEqual(figureCreateOptions(store(allOff)), {}, '모두 끄면 1.7.2와 같은 호출');
 });
 
-test('손그림 옵션: 기출 0장·빠른 길·짧은 명세 4(실험 CH-묶음 손그림 길), 명세를 끄면 null(고침 U1 길)', () => {
-  assert.deepEqual(figureSketchOptions(store()), { baselineFix: true, classifyMode: 'expand', aiPick: false, refCount: 0, raw: true, fix: { userRoles: true, noRefFast: true, sketchSpec: 4, flattenWhite: true } });
+test('손그림 옵션: 손그림 상세(1.7.3 B — 배치는 손그림, 세부는 평가원 수준, 같은 종류 기출 2장), 명세를 끄면 null(고침 U1 길)', () => {
+  assert.deepEqual(figureSketchOptions(store()), { baselineFix: true, classifyMode: 'expand', aiPick: false, refCount: 2, raw: true, fix: { userRoles: true, sketchPlan: 1, flattenWhite: true } });
   assert.equal(figureSketchOptions(store({ [AI_ENGINE_FLAG_KEYS.figureSketchSpec]: '0' })), null);
 });
 
@@ -49,7 +49,7 @@ const fakeEngine = () => {
   } };
 };
 
-test('runFigureEngine: 교사 그림 없으면 우승안 옵션, 손그림만이면 짧은 명세, 레퍼런스면 고침 U1 옵션', async () => {
+test('runFigureEngine: 교사 그림 없으면 우승안 옵션, 손그림만이면 손그림 상세, 레퍼런스면 고침 U1 옵션', async () => {
   await withStorage({}, async () => {
     let f = fakeEngine();
     await runFigureEngine({ ai: {}, engine: f.engine, request: '실린더 세 장면' });
@@ -59,8 +59,8 @@ test('runFigureEngine: 교사 그림 없으면 우승안 옵션, 손그림만이
 
     f = fakeEngine();
     const out = await runFigureEngine({ ai: {}, engine: f.engine, request: '손그림대로', userImages: ['data:image/png;base64,SK'], userImageRoles: ['sketch'] });
-    assert.equal(f.calls[0].o.fix.sketchSpec, 4); assert.equal(f.calls[0].o.refCount, 0); assert.equal(f.calls[0].o.raw, true);
-    assert.deepEqual(out.fresh[0].meta.userRefs, { count: 1, roles: ['sketch'], sketchSpec: 4 });
+    assert.equal(f.calls[0].o.fix.sketchPlan, 1); assert.equal(f.calls[0].o.refCount, 2); assert.equal(f.calls[0].o.raw, true);
+    assert.deepEqual(out.fresh[0].meta.userRefs, { count: 1, roles: ['sketch'], sketchPlan: 1 });
 
     f = fakeEngine();
     await runFigureEngine({ ai: {}, engine: f.engine, request: '이 사진처럼', userImages: ['data:image/png;base64,RF'], userImageRoles: ['reference'] });

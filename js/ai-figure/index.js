@@ -16,6 +16,7 @@ import { runEdit } from './edit.js';
 import { labelHintsFromRequest } from './labels.js';
 import { SKETCH_SPEC_PROMPT, sketchSpecText, styleWanted, STYLE_DIRECTIVES, combinedPanelsRequest, SKETCH_MERGED_NOTE, SKETCH_SPEC_SHORT_PROMPT, sketchSpecShortText, EDIT_BOX_NOTE, EDIT_DRIFT_RETRY_NOTE } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
+import { readSketchPlan, sketchPlanText, sketchClassification } from './sketch.js';
 
 export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify, roughClassify } from './retrieve.js';
 export { fetchFigure, collectReferenceImages, parseFigureId, figureFromQuestion } from './reference-images.js';
@@ -132,7 +133,20 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     const styleExpand = styleWant === 'illust' ? STYLE_DIRECTIVES.expandIllust : styleWant === 'schematic' ? STYLE_DIRECTIVES.expandSchematic : '';
     let drawUsers = userImages, drawRole = userImageRole, specText = '';
     const roleList0 = Array.isArray(userImageRole) ? userImageRole : [userImageRole];
-    if (fix.sketchSpec === 3 && userCount && roleList0.includes('sketch')) {
+    // 1.7.3 B(fix.sketchPlan): 손그림은 배치만, 내용·세부는 평가원 수준으로 — 손그림을 보는 글 AI 한 번으로 배치·세부·기출 검색어를 뽑는다(sketch.js).
+    let sketchSearch = null;
+    if (fix.sketchPlan && userCount && roleList0.includes('sketch')) {
+      phase({ phase: 'sketch-plan' });
+      try {
+        const sketches = userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image'));
+        const plan = await readSketchPlan({ readText: context(signal).readText, request, subject, types: index.taxonomy?.types || [], sketches });
+        specText = sketchPlanText(plan, { attached: fix.sketchPlan !== 2, refs: Number(refCount) > 0 || refIds.length > 0 });
+        if (specText) { raw = true; if (!subject && plan.subject) subject = plan.subject; sketchSearch = sketchClassification(plan, subject); if (fix.sketchPlan === 2) drawUsers = []; else drawRole = roleList0.map((r) => (r === 'sketch' ? 'sketchLayout' : r)); }
+      } catch (error) {
+        if (isAbort(error) || abortedNow()) return result(previous?.expanded ?? null, [], true);
+        errors.push({ scene: null, step: 'sketch-plan', message: message(error) });
+      }
+    } else if (fix.sketchSpec === 3 && userCount && roleList0.includes('sketch')) {
       // 생성 3차: 합침 — 글 AI 없이 그리기 지시문에 읽기 절차를 넣는다.
       specText = SKETCH_MERGED_NOTE;
     } else if (fix.sketchSpec && userCount && roleList0.includes('sketch')) {
@@ -174,7 +188,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
 
     const scenes = [];
     let first = typeof firstScene === 'string' && firstScene.startsWith('data:image') ? firstScene : null;
-    const searchFromExpand = classifyMode === 'expand' && expanded?.search ? expanded.search : null;
+    const searchFromExpand = (classifyMode === 'expand' && expanded?.search ? expanded.search : null) || sketchSearch;
     const retrievals = sceneRequests.map((_, i) => (i === 0 ? early : null));
     if (specText) sceneRequests = sceneRequests.map((s) => s + specText);
     // 실험(fix.multiCombined): 여러 장면을 한 장에 나란히 그린 뒤 칸별로 잘라 쓴다(그림 한 번·같은 배율). 칸 수가 안 맞으면 보통 길로.
