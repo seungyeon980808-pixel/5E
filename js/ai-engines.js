@@ -72,11 +72,14 @@ export function figureCreateOptions(scope = globalThis) {
   if (figureFlattenWhiteFlag(scope)) fix.flattenWhite = true;
   return Object.keys(fix).length ? { ...opts, fix } : opts;
 }
-/** 11-23 앱 반영 후보: 손그림만 붙은 생성(실험 CH-묶음의 손그림 길 = G4 검색 방식 + 기출 0장·빠른 길 + 짧은 명세 4). 짧은 명세를 끄면 null(고침 U1 길). */
+/** 1.7.3 B: 손그림만 붙은 생성 — 손그림은 배치·위치·개수·라벨만 따르고 내용은 평가원 그림 수준으로(fix.sketchPlan, js/ai-figure/sketch.js).
+ *  손그림을 보는 글 AI 한 번(배치 + 평가원 관례 세부 + 기출 검색어) → 같은 종류 기출 SKETCH_REF_COUNT장 + 손그림(배치 안내)으로 그린다.
+ *  11-23 S1~S7 비교: 11-23 앱 후보(짧은 명세 4, 기출 0장)는 손그림을 깨끗이 베껴 앙상했다. 손그림 명세 플래그를 끄면 null(고침 U1 길). */
+export const SKETCH_REF_COUNT = 2;
 export function figureSketchOptions(scope = globalThis) {
   if (!figureSketchSpecFlag(scope)) return null;
   const opts = figureG4Flag(scope) ? { baselineFix: true, classifyMode: 'expand', aiPick: false } : {};
-  return { ...opts, refCount: 0, raw: true, fix: { userRoles: true, noRefFast: true, sketchSpec: 4, ...(figureFlattenWhiteFlag(scope) ? { flattenWhite: true } : {}) } };
+  return { ...opts, refCount: SKETCH_REF_COUNT, raw: true, fix: { userRoles: true, sketchPlan: 1, ...(figureFlattenWhiteFlag(scope) ? { flattenWhite: true } : {}) } };
 }
 /** 엔진에 넣을 AI 없는 도구(칸 자르기·키우기). canvas가 없거나 여러 장 한 장 그리기를 껐으면 빈 객체. */
 function panelDeps(scope = globalThis) {
@@ -347,7 +350,7 @@ export async function runFigureEngine({ ai, request, conversation = '', models, 
   // 고침 U1: 교사 그림을 첫 첨부로(역할 문장 fix.userRoles), 기출은 화풍 참고 2장.
   const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
   const roles = users.map((_, i) => userImageRoles[i] || 'reference');
-  // 11-23 앱 반영 후보: 손그림만이면 짧은 명세 길(figureSketchOptions), 그 밖의 교사 그림은 고침 U1 길, 교사 그림이 없으면 우승안 옵션(figureCreateOptions).
+  // 손그림만이면 손그림 상세 길(figureSketchOptions, 1.7.3 B), 그 밖의 교사 그림은 고침 U1 길, 교사 그림이 없으면 우승안 옵션(figureCreateOptions).
   const sketchOpts = users.length && roles.every((r) => r === 'sketch') ? figureSketchOptions() : null;
   const flat = figureFlattenWhiteFlag() ? { flattenWhite: true } : {};
   const userOpts = users.length ? { userImages: users, userImageRole: roles, ...(sketchOpts || { fix: { userRoles: true, ...flat }, refCount: USER_REF_KICE_COUNT, raw: true }) } : figureCreateOptions();
@@ -364,7 +367,7 @@ export async function runFigureEngine({ ai, request, conversation = '', models, 
     if (isAbort(error) || signal?.aborted) return { ok: false, aborted: true, fresh: [], result, errors: [] };
     return { ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'engine', message: String(error?.message || error).slice(0, 300) }] };
   }
-  const fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: { ...figureSceneMeta(result, i, { request, models }), ...(users.length ? { userRefs: { count: users.length, roles: userOpts.userImageRole.slice(), ...(sketchOpts ? { sketchSpec: 4 } : {}) } } : {}), ...(s.combined ? { combined: true } : {}) } } : null)).filter(Boolean);
+  const fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: { ...figureSceneMeta(result, i, { request, models }), ...(users.length ? { userRefs: { count: users.length, roles: userOpts.userImageRole.slice(), ...(sketchOpts ? { sketchPlan: sketchOpts.fix.sketchPlan } : {}) } } : {}), ...(s.combined ? { combined: true } : {}) } } : null)).filter(Boolean);
   return { ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
 }
 

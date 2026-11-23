@@ -48,6 +48,7 @@ async function fakeDesktop(context) {
         fake.reads.push(text);
         if (/그림 담당/.test(text)) return { text: JSON.stringify({ type: '역학', graph: false, scenes: fake.scenes, keyValues: '', notes: '' }) };
         if (/「참고 그림」으로 쓸/.test(text)) return { text: '[]' };
+        if (/이 밑그림은 배치만 알려 준다/.test(text)) return { text: JSON.stringify({ target: '수평 막대와 추', subject: '물리학Ⅰ', types: ['역학 모식도(물체·빗면·도르래·용수철)'], keywords: ['막대', '추'], layout: ['막대: 1개, 가운데 수평', '받침 O: 막대 왼쪽 아래', '추 A: 막대 오른쪽 끝에 매달림'], labels: ['「A」 → 추(지시선)'], details: ['막대는 일정한 두께의 가는 직사각형', '받침은 삼각형 쐐기'] }) };
         if (/짧은 명세만 쓴다/.test(text)) return { text: '- 막대: 1개, 가운데 수평\n- 받침 O: 막대 왼쪽 아래\n- 추 A: 막대 오른쪽 끝에 매달림\n- 라벨: 「A」 → 추(지시선)' };
         return { text: JSON.stringify({ subject: '물리학Ⅰ', types: ['역학 모식도(물체·빗면·도르래·용수철)'], keywords: ['막대', '추'], has: false, texts: [] }) };
       },
@@ -101,7 +102,7 @@ h.withServer(async origin => {
       await openAiWorkflow(page, 'image-create');
       await page.waitForFunction(p => document.querySelector(p).dataset.aiCreateUi === 'true', PANEL);
 
-      // S) 손그림 → 새 엔진 + 짧은 명세
+      // S) 손그림 → 새 엔진 + 손그림 상세(1.7.3 B: 손그림 읽기 한 번 → 배치 + 평가원 관례 세부, 같은 종류 기출 2장)
       await page.locator(`${PANEL} [data-ai-source-file]`).setInputFiles(PNG);
       await page.waitForFunction(p => document.querySelector(p).querySelector('[data-ai-reference-count]').textContent === '1', PANEL);
       await draw(page, '손그림처럼 수평 막대 위 O점 받침과 추 A를 그려 줘');
@@ -109,10 +110,13 @@ h.withServer(async origin => {
       const f = await page.evaluate(() => ({ sends: window.__engineFake.sends, reads: window.__engineFake.reads }));
       assert.equal(f.sends.length, 1, `${name}: one picture turn (${f.sends.length})`);
       assert.equal(f.sends[0].ephemeral, true, `${name}: sketch goes to the new engine`);
-      assert.equal(f.reads.filter(t => /짧은 명세만 쓴다/.test(t)).length, 1, `${name}: one short sketch-spec read`);
+      assert.equal(f.reads.filter(t => /이 밑그림은 배치만 알려 준다/.test(t)).length, 1, `${name}: one sketch-plan read`);
+      assert.equal(f.reads.filter(t => /짧은 명세만 쓴다/.test(t)).length, 0, `${name}: no short sketch-spec read`);
       assert.equal(f.reads.filter(t => /그림 담당/.test(t)).length, 0, `${name}: no expand with a sketch`);
-      assert.match(f.sends[0].text, /\[밑그림 명세 — 교사 손그림을 읽어 정리한 것\]\n- 막대: 1개, 가운데 수평/);
-      assert.equal(f.sends[0].atts.length, 1, `${name}: sketch only, no 기출 (${f.sends[0].atts.length})`);
+      assert.match(f.sends[0].text, /\[밑그림 명세 — 교사 손그림에서 읽은 배치[^\n]*\]\n- 막대: 1개, 가운데 수평/);
+      assert.match(f.sends[0].text, /\[평가원 수준 세부 — 꼭 넣는다\]\n- 막대는 일정한 두께/);
+      assert.equal(f.sends[0].atts[0].head.startsWith('data:image'), true, `${name}: sketch first`);
+      assert.ok(f.sends[0].atts.length >= 1 && f.sends[0].atts.length <= 3, `${name}: sketch + up to two same-type 기출 (${f.sends[0].atts.length})`);
       assert.match(await page.locator(`${PANEL} .ai-msg.result .ai-chat-result`).last().textContent(), /생성 결과 1/);
       await shot(page, `${name}-s-sketch.png`);
 

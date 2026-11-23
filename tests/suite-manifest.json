@@ -986,6 +986,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-sketch-1123.mjs",
+      "findingIds": [
+        "FIG173-B-SKETCH-DETAIL"
+      ]
+    },
+    {
       "path": "tests/test-ai-task-bridge-listeners-1123.mjs",
       "findingIds": [
         "CAND1123-TASK-BRIDGE-LISTENERS"
