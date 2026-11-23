@@ -17,13 +17,14 @@
 // | 손그림 짧은 명세(손그림 → 12줄 이하 글 명세 → 명세 + 손그림 배치 안내로 그리기) | `5e.aiEngine.figureSketchSpec` | **켜짐**('4') | '0'이면 명세 없이 고침 U1 길(기출 1장) | 없음 |
 // | 그림 고치기: 그리기 서버 오류로 앞 그림 그대로 끝나면 한 번 더 | `5e.aiEngine.figureEditRetryOnError` | **켜짐** | '0'이면 끔 | 없음 |
 // | 흑백 뒤 흰 종이에 한 번 더 얹기(흑백 실패 때 투명 보험) | `5e.aiEngine.figureFlattenWhite` | **켜짐** | '0'이면 끔 | 없음 |
+// | (1.7.3 ⑫) 그림 고치기: 고친 그림에서 바뀐 덩어리만 앞 그림에 붙임(나머지는 앞 그림 픽셀 — 연속 고치기 누적 변화 막기) | `5e.aiEngine.figureEditMerge` | **켜짐** | '0'이면 고친 그림 그대로(1.7.2) | 없음 |
 // | 기출 그림 변환: 첫 그림 모델 Sol + 「동그라미 문자는 동그라미까지 지움」「화살촉 화살표는 남김」 두 줄 | `5e.aiEngine.convertExamSolCircled` | **켜짐** | '0'이면 Luna·두 줄 없음(1.7.2) | 없음 |
 // | 교과서 그림 변환: 원본 윤곽 밑그림(AI 없이 뽑은 선화)을 두 번째 첨부로 | `5e.aiEngine.convertTextbookEdgeGuide` | **켜짐** | '0'이면 끔(1.7.2) | 없음 |
 //
 // 새 열쇠가 있으면 새 열쇠가 이긴다. 저장소를 읽지 못하면(사생활 보호 창 등) 기본값.
 export const AI_ENGINE_FLAG_KEYS = Object.freeze({ figure: '5e.aiEngine.figure', graphPicture: '5e.aiEngine.graphPicture', figureImageModel: '5e.aiEngine.figureImageModel', figureSpeed: '5e.aiEngine.figureSpeed', figureLocalReplace: '5e.aiEngine.figureLocalReplace', figureSkipStripCheck: '5e.aiEngine.figureSkipStripCheck', figureUserRefs: '5e.aiEngine.figureUserRefs', figureBlankSceneOnly: '5e.aiEngine.figureBlankSceneOnly',
   figureG4: '5e.aiEngine.figureG4', figureStyleDirective: '5e.aiEngine.figureStyleDirective', figureMultiCombined: '5e.aiEngine.figureMultiCombined', figureSketchSpec: '5e.aiEngine.figureSketchSpec',
-  figureEditRetryOnError: '5e.aiEngine.figureEditRetryOnError', figureFlattenWhite: '5e.aiEngine.figureFlattenWhite', convertExamSolCircled: '5e.aiEngine.convertExamSolCircled', convertTextbookEdgeGuide: '5e.aiEngine.convertTextbookEdgeGuide' });
+  figureEditRetryOnError: '5e.aiEngine.figureEditRetryOnError', figureFlattenWhite: '5e.aiEngine.figureFlattenWhite', figureEditMerge: '5e.aiEngine.figureEditMerge', convertExamSolCircled: '5e.aiEngine.convertExamSolCircled', convertTextbookEdgeGuide: '5e.aiEngine.convertTextbookEdgeGuide' });
 export const AI_ENGINE_LEGACY_KEYS = Object.freeze({ figure: '5e.aiFigureEngine', graphPicture: '5e.aiGraph.pictureEngine' });
 
 function read(storage, key) {
@@ -100,6 +101,7 @@ export const figureMultiCombinedFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.figureMu
 export const figureSketchSpecFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.figureSketchSpec);
 export const figureEditRetryOnErrorFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.figureEditRetryOnError);
 export const figureFlattenWhiteFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.figureFlattenWhite);
+export const figureEditMergeFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.figureEditMerge);
 export const convertExamSolCircledFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.convertExamSolCircled);
 export const convertTextbookEdgeGuideFlag = onUnlessZero(AI_ENGINE_FLAG_KEYS.convertTextbookEdgeGuide);
 
@@ -115,5 +117,5 @@ export function aiEngineFlags(scope = globalThis) {
 /** 11-23 우승안 플래그 한눈에(검사·보고용). aiEngineFlags와 나눠 둔다 — 옛 모양을 보는 검사가 그대로 돈다. */
 export function aiWinnerFlags(scope = globalThis) {
   return { figureUserRefsMode: figureUserRefsMode(scope), figureG4: figureG4Flag(scope), figureStyleDirective: figureStyleDirectiveFlag(scope), figureMultiCombined: figureMultiCombinedFlag(scope), figureSketchSpec: figureSketchSpecFlag(scope),
-    figureEditRetryOnError: figureEditRetryOnErrorFlag(scope), figureFlattenWhite: figureFlattenWhiteFlag(scope), convertExamSolCircled: convertExamSolCircledFlag(scope), convertTextbookEdgeGuide: convertTextbookEdgeGuideFlag(scope) };
+    figureEditRetryOnError: figureEditRetryOnErrorFlag(scope), figureFlattenWhite: figureFlattenWhiteFlag(scope), figureEditMerge: figureEditMergeFlag(scope), convertExamSolCircled: convertExamSolCircledFlag(scope), convertTextbookEdgeGuide: convertTextbookEdgeGuideFlag(scope) };
 }
