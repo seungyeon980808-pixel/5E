@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 // 예전엔 다른 작업 폴더(5e-170-auto-labeler)의 파일을 직접 읽었다. 그 폴더가 정리돼 같은 내용을 git 커밋(6e2c5501)에서 읽고, 없으면 이 저장소 파일을 쓴다.
-const labelerSource = file => { try { return require('node:child_process').execFileSync('git', ['show', `6e2c5501:tests/${file}`], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return fs.readFileSync(path.join(__dirname, file), 'utf8'); } };
+// 11-24: GitHub 검사는 최신 커밋만 받아(얕은 복제) git show 6e2c5501이 실패하고 지금 파일로 넘어가 맞지 않았다 — 그 판을 tests/fixtures/labeler-6e2c5501/에 두고 읽는다.
+const labelerSource = file => fs.readFileSync(path.join(__dirname, 'fixtures/labeler-6e2c5501', file + '.txt'), 'utf8');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
