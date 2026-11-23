@@ -10,7 +10,7 @@
 //       호출 쪽(ai-panel)이 옛 생성 길로 넘긴다. 앞 결과는 지우지 않는다.
 import { aiErrorCode, stripIpcPrefix } from './ai-error-copy.js?v=1.7.0-four-session-integration';
 import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, figureSpeedFlag, figureLocalReplaceFlag, figureSkipStripCheckFlag, figureUserRefsFlag, FIGURE_IMAGE_MODEL_CHOICES,
-  figureUserRefsMode, figureG4Flag, figureStyleDirectiveFlag, figureMultiCombinedFlag, figureSketchSpecFlag, figureEditRetryOnErrorFlag, figureFlattenWhiteFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+  figureUserRefsMode, figureG4Flag, figureStyleDirectiveFlag, figureMultiCombinedFlag, figureSketchSpecFlag, figureEditRetryOnErrorFlag, figureFlattenWhiteFlag, figureEditMergeFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { figurePanelTools } from './ai-figure-panels.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_ENGINE_ID = 'ai-figure';
@@ -402,12 +402,15 @@ export async function runFigureEdit({ ai, previousPng, instruction, originalRequ
   let result = null;
   try {
     const mod = engine ? null : await loadEngine();
-    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, localEdit: figureLocalEdit() });
+    // 11-23(1.7.3 ⑫): 고친 그림에서 바뀐 덩어리만 앞 그림에 붙인다(연속 고치기 누적 변화 막기). canvas가 없거나 깃발 '0'이면 지금처럼.
+    const merge = figureEditMergeFlag() ? await figureEditMergeTool() : null;
+    const eng = engine || mod.createEngine({ ai, models, retries: { text: 3, image: 1, scene: 2 }, localEdit: figureLocalEdit(), ...(merge ? { composite: merge } : {}) });
     if (typeof eng.editFigure !== 'function') return { available: false, ok: false, aborted: false, fresh: [], result: null, errors: [] };
     figureTrace({ ev: 'engine-start', kind: 'edit' });
     result = await eng.editFigure({ previousPng, instruction, originalRequest, previous, sceneIndex, signal, onPhase: tracePhase(onPhase), localText: figureSpeedFlag(), localReplace: figureSpeedFlag() && figureLocalReplaceFlag(),
       // 11-23 앱 반영 후보: 그리기 서버 오류로 앞 그림 그대로면 한 번 더(figureEditRetryOnError), 흰 종이에 얹기(figureFlattenWhite).
-      ...(figureEditRetryOnErrorFlag() ? { retryOnError: true } : {}), ...(figureFlattenWhiteFlag() ? { flattenWhite: true } : {}) });
+      ...(figureEditRetryOnErrorFlag() ? { retryOnError: true } : {}), ...(figureFlattenWhiteFlag() ? { flattenWhite: true } : {}),
+      ...(merge ? { composite: true } : {}) });
     figureTrace({ ev: 'engine-end', kind: 'edit', ok: !!result?.ok, local: !!result?.edit?.local });
   } catch (error) {
     if (isAbort(error) || signal?.aborted) return { available: true, ok: false, aborted: true, fresh: [], result, errors: [] };
@@ -416,6 +419,25 @@ export async function runFigureEdit({ ai, previousPng, instruction, originalRequ
   const scene = result?.scenes?.[0];
   const fresh = scene?.image && !scene.kept ? [{ image: scene.image, meta: { ...figureSceneMeta(result, 0, { request: originalRequest, models }), edit: result.edit ? structuredClone(result.edit) : null } }] : [];
   return { available: true, ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
+}
+
+/** 11-23(1.7.3 ⑫): 엔진 createEngine({ composite })에 넣을 「바뀐 곳만 붙이기」(canvas 해독·부호화 + 엔진 makeEditMerge). canvas가 없으면 null. */
+let editMergePromise = null;
+export function figureEditMergeTool() {
+  if (typeof document === 'undefined' || typeof Image !== 'function' || typeof ImageData !== 'function') return Promise.resolve(null);
+  const decode = async (dataUrl) => {
+    const image = new Image(); image.src = dataUrl; await image.decode();
+    const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    try { const c = canvas.getContext('2d'); c.drawImage(image, 0, 0); return { data: c.getImageData(0, 0, canvas.width, canvas.height).data, width: canvas.width, height: canvas.height }; }
+    finally { canvas.width = 0; canvas.height = 0; }
+  };
+  const encode = async ({ data, width, height }) => {
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    try { canvas.getContext('2d').putImageData(new ImageData(data, width, height), 0, 0); return canvas.toDataURL('image/png'); }
+    finally { canvas.width = 0; canvas.height = 0; }
+  };
+  editMergePromise ||= import('./ai-figure/edit.js') /* 엔진 index.js가 './edit.js'로 부르는 것과 같은 주소(모듈 하나) */.then((m) => (typeof m.makeEditMerge === 'function' ? m.makeEditMerge({ decode, encode }) : null)).catch(() => { editMergePromise = null; return null; });
+  return editMergePromise;
 }
 
 /** GENSPEED(11-20): 글자만 고치는 「이 그림 고치기」를 화면 캔버스로(그림을 다시 그리지 않음). 캔버스가 없으면 null(엔진이 그리기 길로). */
