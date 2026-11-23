@@ -10,7 +10,7 @@
 //       호출 쪽(ai-panel)이 옛 생성 길로 넘긴다. 앞 결과는 지우지 않는다.
 import { aiErrorCode, stripIpcPrefix } from './ai-error-copy.js?v=1.7.0-four-session-integration';
 import { figureEngineFlag, graphPictureFlag, figureImageModelFlag, figureSpeedFlag, figureLocalReplaceFlag, figureSkipStripCheckFlag, figureUserRefsFlag, FIGURE_IMAGE_MODEL_CHOICES,
-  figureUserRefsMode, figureG4Flag, figureStyleDirectiveFlag, figureMultiCombinedFlag, figureSketchSpecFlag, figureEditRetryOnErrorFlag, figureFlattenWhiteFlag, figureEditMergeFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+  figureUserRefsMode, figureG4Flag, figureStyleDirectiveFlag, figureMultiCombinedFlag, figureSketchSpecFlag, figureEditRetryOnErrorFlag, figureFlattenWhiteFlag, figureEditMergeFlag, figureVerifyFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { figurePanelTools } from './ai-figure-panels.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_ENGINE_ID = 'ai-figure';
@@ -70,6 +70,7 @@ export function figureCreateOptions(scope = globalThis) {
   if (figureStyleDirectiveFlag(scope)) fix.styleDirective = true;
   if (figureMultiCombinedFlag(scope)) { fix.multiCombined = true; fix.multiUpscale = 2; }
   if (figureFlattenWhiteFlag(scope)) fix.flattenWhite = true;
+  if (!figureVerifyFlag(scope)) fix.verify = false; // 1.7.3 C: 그린 뒤 검사 끄기
   return Object.keys(fix).length ? { ...opts, fix } : opts;
 }
 /** 1.7.3 B: 손그림만 붙은 생성 — 손그림은 배치·위치·개수·라벨만 따르고 내용은 평가원 그림 수준으로(fix.sketchPlan, js/ai-figure/sketch.js).

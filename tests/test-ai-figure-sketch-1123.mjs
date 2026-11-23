@@ -22,7 +22,7 @@ const engineOf = (ai) => createEngine({ ai, fetch: async () => ({ ok: false, sta
 
 test('손그림 상세 1: 손그림을 보는 글 AI 한 번(구체화 없이) → 배치·세부를 장면 글에, 손그림은 배치 안내로 붙여 그림', async () => {
   const f = fakeAi();
-  const r = await engineOf(f.ai).makeFigureSet({ request: '손그림대로 화산 단면. 마그마굄에 A, 화도에 B.', userImages: [SK], userImageRole: ['sketch'], raw: true, refCount: 2, strip: false, baselineFix: true, classifyMode: 'expand', aiPick: false, fix: { userRoles: true, sketchPlan: 1 } });
+  const r = await engineOf(f.ai).makeFigureSet({ request: '손그림대로 화산 단면. 마그마굄에 A, 화도에 B.', userImages: [SK], userImageRole: ['sketch'], raw: true, refCount: 2, strip: false, baselineFix: true, classifyMode: 'expand', aiPick: false, fix: { userRoles: true, sketchPlan: 1, verify: false } }); // 그린 뒤 검사(1.7.3 C)는 따로 검사 — 여기서는 손그림 읽기 호출 수만 본다
   assert.equal(r.ok, true);
   assert.equal(f.reads.length, 1, '글 AI는 손그림 읽기 한 번뿐(구체화·분류·고르기 없음)');
   assert.deepEqual(f.reads[0].attachments, [SK], '손그림 읽기에 손그림을 붙임');

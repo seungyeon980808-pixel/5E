@@ -156,12 +156,12 @@ test('U1 여러 장면(엔진 옵션 raw 없이): 교사 그림 → 앞 장면 �
 test('E2 redrawScenes: 빈 장면만 같은 장면 글·같은 기출로 — 구체화·검색 없음, 앞 장면 그림 첨부, 다른 장면 그대로', async () => {
   const { ai, calls } = fakeAi({ scenes: ['장면 1', '장면 2', '장면 3'], blankAt: new Set([2]) });
   const eng = engineOf(ai);
-  const first = await eng.makeFigureSet({ request: '세 장면', strip: false });
+  const first = await eng.makeFigureSet({ request: '세 장면', strip: false, fix: { verify: false } }); // 그린 뒤 검사(1.7.3 C)는 따로 검사
   assert.equal(first.scenes.length, 3);
   assert.equal(nameOf(first.scenes[1].image), 'gray:blank2');
   assert.ok(first.scenes[1].classify?.types?.length, '장면에 분류 결과가 남는다');
   const textBefore = calls.text.length, imageBefore = calls.image.length;
-  const redo = await eng.redrawScenes({ previous: first, scenes: [1], strip: false });
+  const redo = await eng.redrawScenes({ previous: first, scenes: [1], strip: false, fix: { verify: false } });
   assert.equal(calls.text.length, textBefore, '글 AI(구체화·분류·고르기) 호출 없음');
   assert.equal(calls.image.length, imageBefore + 1, '그림은 빈 장면 하나만');
   const call = calls.image.at(-1);
