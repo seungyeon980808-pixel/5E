@@ -974,6 +974,12 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-panels-1123e.mjs",
+      "findingIds": [
+        "FIX1123-FIGURE-MULTI-PANELS"
+      ]
+    },
+    {
       "path": "tests/test-ai-task-bridge-listeners-1123.mjs",
       "findingIds": [
         "CAND1123-TASK-BRIDGE-LISTENERS"
