@@ -16,6 +16,7 @@ import { runEdit } from './edit.js';
 import { labelHintsFromRequest } from './labels.js';
 import { SKETCH_SPEC_PROMPT, sketchSpecText, styleWanted, STYLE_DIRECTIVES, combinedPanelsRequest, SKETCH_MERGED_NOTE, SKETCH_SPEC_SHORT_PROMPT, sketchSpecShortText, EDIT_BOX_NOTE, EDIT_DRIFT_RETRY_NOTE } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
+import { panelSheetRequest, wantsBlackFill } from '../ai-figure-panels.js?v=1.7.0-four-session-integration'; // 1.7.3(E): 여러 장 칸 그림 지시·검은 칠 바람 판정
 
 export { parseJson, tryParseJson, scoreTag, scoreCandidates, fillPicks, loadFigureIndex, makeIndex, retrieve, classify, roughClassify } from './retrieve.js';
 export { fetchFigure, collectReferenceImages, parseFigureId, figureFromQuestion } from './reference-images.js';
@@ -183,9 +184,10 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       phase({ phase: 'scene', scene: 0, total: n, request: 'combined' });
       try {
         const r = await withRetry(tries.scene, signal, () => makeFigure({ ...context(signal), index }, {
-          request: combinedPanelsRequest(sceneRequests), subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: null, single: false, refIds, fixNote, retrieval: retrievals[0], refCount, strip, classifyMode, aiPick, userImages: drawUsers, userImageRole: drawRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject, styleWant,
+          request: (fix.multiCombined === 'layout' ? combinedPanelsRequest : panelSheetRequest)(sceneRequests), subject, keyValues: keyValues || (fix.keyValues ? expanded?.keyValues || '' : ''), bestOf, prevScene: null, single: false, refIds, fixNote, retrieval: retrievals[0], refCount, strip, classifyMode, aiPick, userImages: drawUsers, userImageRole: drawRole, fix, styleScore, classification: searchFromExpand, excludeRefs, refReject, styleWant,
         }));
-        let parts = await splitPanels(r.image, n);
+        // 1.7.3(E): 넓은 검은 칠은 연회색으로(요청이 검은 칠을 바라면 그대로).
+        let parts = await splitPanels(r.image, n, { softenFills: !wantsBlackFill([request, ...sceneRequests].join('\n')) });
         if (Array.isArray(parts) && parts.length === n && fix.multiCombined === 'layout') {
           // 생성 3차(b): 자른 칸을 배치 안내로 붙여 장면마다 크게 다시 그린다(나란히). 실패한 장면은 자른 칸을 그대로 쓴다.
           const redrawn = await Promise.all(parts.map(async (part, i) => {
