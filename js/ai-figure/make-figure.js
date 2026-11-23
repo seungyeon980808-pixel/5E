@@ -5,6 +5,7 @@
 import { buildFigurePrompt, sceneRequestText, SINGLE_SCENE_NOTE, PREV_SCENE_NOTE, pickBetterPrompt, pickBetterPromptGothic, STRIP_CHECK_PROMPT, stripRedrawPrompt, SKETCH_LAYOUT_ROLE, STYLE_DIRECTIVES, STYLE_REF_KEEP, MULTI_PREV_NOTE, PANEL_LAYOUT_ROLE } from './prompt.js';
 import { retrieve, tryParseJson, roughClassify } from './retrieve.js';
 import { collectReferenceImages } from './reference-images.js';
+import { verifyAndRedraw } from './verify.js';
 
 const isAbort = (error) => error?.name === 'AbortError';
 
@@ -111,9 +112,9 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
   const styleNote = styleWant ? STYLE_DIRECTIVES[styleWant] + (styleWant === 'illust' && /생명/u.test(subj) ? STYLE_DIRECTIVES.illustBio : '') : '';
   const text = buildFigurePrompt({ request: req, refs, retrieval: ret, subject: subj, fix, prevScene: !!prevScene, users: userFix ? users.length : 0, ...(styleName ? { style: styleName } : {}) }) + (single ? SINGLE_SCENE_NOTE : '') + userNote + styleNote;
   const prevNote = (userFix ? PREV_SCENE_NOTE.replace('첫 첨부 그림은', `${users.length + 1}번째 첨부 그림(교사 그림 바로 뒤)은`) : PREV_SCENE_NOTE) + (fix.multiConsistency ? MULTI_PREV_NOTE.replace('첫 첨부 그림', userFix ? `${users.length + 1}번째 첨부 그림` : '첫 첨부 그림') : '');
-  const gen = () => prevScene
-    ? ctx.generateImage(text + prevNote, userFix ? [...users, prevScene, ...refImages] : [prevScene, ...users, ...refImages])
-    : ctx.generateImage(text, [...users, ...refImages]);
+  const gen = (extra = '') => prevScene
+    ? ctx.generateImage(text + prevNote + extra, userFix ? [...users, prevScene, ...refImages] : [prevScene, ...users, ...refImages])
+    : ctx.generateImage(text + extra, [...users, ...refImages]);
 
   const settled = await Promise.allSettled(Array.from({ length: Math.max(1, Math.min(2, Number(bestOf) || 1)) }, gen));
   const aborted = settled.find((r) => r.status === 'rejected' && isAbort(r.reason));
@@ -128,6 +129,13 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
     log('고름: ' + p.better + (p.why ? ' — ' + p.why : ''));
     best = p.better === 2 ? cands[1] : cands[0];
   }
+  // 1.7.3 그림 고침 C: 그린 뒤 검사(장면 글의 개수·방향·위상, 라벨을 가르는 선) — 틀리면 그 장면만 한 번 다시 그린다. fix.verify === false면 끔.
+  let verify = null;
+  if (fix.verify !== false) {
+    const sketches = users.filter((_, i) => /sketch/u.test(String(roleList[i] || '')));
+    const v = await verifyAndRedraw(ctx, { image: best, request: req, sketches, redraw: (note) => gen(note) });
+    best = v.image; verify = v.verify;
+  }
   const s = strip ? await stripText(ctx, best) : { img: best, found: [] };
   if (s.found.length) log('지운 설명: ' + s.found.join(' / '));
   return {
@@ -139,5 +147,6 @@ export async function makeFigure(ctx, { request, subject = '', keyValues = '', b
     strippedTexts: s.found,
     beforeStrip: s.found.length ? best : null,
     prompt: text,
+    verify,
   };
 }
