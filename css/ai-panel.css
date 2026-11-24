@@ -3154,7 +3154,10 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-label-edit-wide { grid-column:1/-1; }
 #ai-image-panel .ai-label-edit-detail { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); }
 #ai-image-panel .ai-label-edit-detail > summary { cursor:pointer; color:var(--text-secondary); }
-#ai-image-panel .ai-label-edit-removal { margin-top:12px; justify-content:flex-end; }
+/* 11-24(1.7.2 결함 4, 시안 2026-11-24_라벨삭제-시안): 「복제 · 라벨 삭제」를 맨 아래에서 문구 줄 오른쪽으로 — 칸이 짧아도 스크롤 없이 보인다 */
+#ai-image-panel .ai-label-edit-textrow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px; }
+#ai-image-panel .ai-label-edit-removal { margin:0; justify-content:flex-end; flex-wrap:nowrap; }
+#ai-image-panel .ai-label-edit-removal [data-label-delete]:not(:disabled) { color:#f0a5a5; }
 #ai-image-panel .ai-label-edit-overlay { position:absolute; z-index:7; overflow:hidden; pointer-events:none; }
 #ai-image-panel .ai-label-edit-overlay [data-ai-label-id] { pointer-events:all; cursor:move; touch-action:none; }
 #ai-image-panel .ai-label-edit-overlay.is-preview-only [data-ai-label-id] { pointer-events:none; }

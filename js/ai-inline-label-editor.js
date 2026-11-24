@@ -36,9 +36,10 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
   section.setAttribute('aria-label','라벨 편집'); section.hidden = true;
   section.innerHTML = `<header><strong>라벨 편집</strong><button type="button" data-label-close aria-label="라벨 편집 닫기">닫기</button></header>
     <div class="ai-label-edit-tools"><button type="button" data-label-add>라벨 추가</button><button type="button" data-label-add-leader>지시선 라벨</button></div>
-    <p class="ai-label-edit-hint">라벨과 지시선 끝점을 드래그해 옮기세요. 끝점을 잡으면 확대경이 표시됩니다. 편집을 마치면 수정 저장을 누르세요.</p>
+    <p class="ai-label-edit-hint">라벨과 지시선 끝점을 드래그해 옮기세요. 끝점을 잡으면 확대경이 표시됩니다. 고른 라벨은 Delete로 지웁니다. 편집을 마치면 수정 저장을 누르세요.</p>
     <div data-label-fields hidden>
-      <label class="ai-label-edit-text">문구<textarea data-label-text aria-label="라벨 문구" maxlength="1000" rows="2"></textarea></label>
+      <div class="ai-label-edit-textrow"><span>문구</span><div class="ai-label-edit-tools ai-label-edit-removal"><button type="button" data-label-duplicate>복제</button><button type="button" data-label-delete>라벨 삭제</button></div></div>
+      <label class="ai-label-edit-text"><textarea data-label-text aria-label="라벨 문구" maxlength="1000" rows="2"></textarea></label>
       <div class="ai-label-edit-grid">
         <label>표현<select data-label-content aria-label="라벨 표현"><option value="plain">텍스트</option><option value="formula">수식</option></select></label>
         <label>종류<select data-label-role aria-label="라벨 종류"></select></label>
@@ -59,7 +60,6 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
         <label>연결 가로(%)<input type="number" min="0" max="100" step="0.1" data-label-anchor-x aria-label="지시선 연결 가로 위치"></label>
         <label>연결 세로(%)<input type="number" min="0" max="100" step="0.1" data-label-anchor-y aria-label="지시선 연결 세로 위치"></label>
       </div></details>
-      <div class="ai-label-edit-tools ai-label-edit-removal"><button type="button" data-label-duplicate>복제</button><button type="button" data-label-delete>라벨 삭제</button></div>
     </div>`;
   // 11-15: 오른쪽 칸이 「그림 설정」으로 바뀌며 옛 탭 줄(.ai-side-tabs)이 없어져 편집 칸이 붙지 않았다(「라벨 편집」을 누르면 오른쪽이 텅 빔) — 칸 제목 아래에 붙인다.
   { const tabs = panel.querySelector('.ai-side-tabs'); if (tabs) tabs.after(section); else (panel.querySelector('.ai-conversation-caption') || panel.querySelector('.ai-conversation')?.firstElementChild)?.after(section); }
@@ -243,6 +243,7 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
     }
     if (!gesture) paintSelection(plan);
     syncFields(plan);
+    if (focusLabelId && focusLabelId === selectedId) focusSelectedLabel();
     section.querySelectorAll('input,textarea,select,button').forEach(control => {
       if (control.matches('[data-label-close]')) return;
       control.disabled = isBusy() || applying || panel.dataset.aiSharingMode === 'view'
@@ -284,6 +285,11 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
   listen(entry,'click',() => setActive(!active)); listen(q('close'),'click',() => setActive(false));
   listen(q('add'),'click',() => void add(false)); listen(q('add-leader'),'click',() => void add(true));
   listen(q('text'),'change',() => void changeSelected(label => changeLabelText(label,q('text').value)));
+  // 11-24(1.7.2 결함 2): Enter가 줄바꿈만 넣고 반영되지 않았다 — Enter는 반영(blur → change), 여러 줄은 ⇧Enter.
+  listen(q('text'),'keydown',event => {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+    event.preventDefault(); focusLabelId = selectedId; q('text').blur(); focusSelectedLabel();
+  });
   for (const key of ['content','role','font','size','rotation','spacing','line-height','mode','arrow','dash','x','y','anchor-x','anchor-y']) {
     listen(q(key),'change',() => void changeSelected((label,plan) => {
       const value = q(key).value;
@@ -345,6 +351,17 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
     selectedId = null;
   });
   listen(q('delete'),'click',() => void deleteSelected());
+  // 11-24(1.7.2 결함 1·3): 라벨을 누르면 pointerdown이 preventDefault라 문구 칸이 포커스를 잃지 않았다 — 고친 문구의 change가 나지 않은 채
+  // 선택이 바뀌어(syncFields) 고친 글자가 사라졌고, 키보드 포커스도 편집기 밖에 남아 Delete가 닿지 않았다.
+  // 선택을 바꾸기 전에 편집 칸을 blur해 change(지금 고른 라벨에 반영)를 먼저 일으키고, 새로 고른 라벨에 포커스를 준다.
+  let focusLabelId = null;
+  function commitFields() { const field = doc.activeElement; if (field && section.contains(field) && field.matches?.('input,textarea,select')) field.blur(); }
+  function focusSelectedLabel() {
+    if (!selectedId || !svg) return; const current = doc.activeElement;
+    if (current && current !== doc.body && !svg.contains(current) && current !== stage) return;
+    const group = [...svg.querySelectorAll('[data-ai-label-id]')].find(node => node.dataset.aiLabelId === selectedId && node.getAttribute('tabindex') === '0');
+    if (group && current !== group) group.focus({ preventScroll:true });
+  }
   function normalized(event) { const r = image.getBoundingClientRect(); return {x:(event.clientX-r.left)/r.width,y:(event.clientY-r.top)/r.height}; }
   listen(panel,'pointerdown',event => {
     const target = event.target.closest?.('[data-ai-label-id]');
@@ -354,8 +371,8 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
       event.preventDefault(); event.stopImmediatePropagation(); selectedId = target.dataset.aiLabelId; setActive(true); return;
     }
     if (!editable()) return;
-    event.preventDefault(); event.stopImmediatePropagation(); selectedId = target.dataset.aiLabelId;
-    refresh(); const plan = structuredClone(getPlan(getTarget()));
+    event.preventDefault(); event.stopImmediatePropagation(); commitFields(); selectedId = focusLabelId = target.dataset.aiLabelId;
+    refresh(); focusSelectedLabel(); const plan = structuredClone(getPlan(getTarget()));
     gesture = { plan,item:getTarget(),part:event.target.dataset.aiLabelHandle || 'position',start:normalized(event),pointerId:event.pointerId,moved:false };
     try { stage.setPointerCapture(event.pointerId); } catch {}
   },{capture:true});
@@ -389,7 +406,7 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
       if (group && ['Enter',' '].includes(event.key) && !event.repeat && !entry.disabled) { event.preventDefault(); event.stopImmediatePropagation(); selectedId = group.dataset.aiLabelId; setActive(true); }
       return;
     }
-    if (group && ['Enter',' '].includes(event.key)) { event.preventDefault(); selectedId = group.dataset.aiLabelId; refresh(); q('text').focus(); }
+    if (group && ['Enter',' '].includes(event.key)) { event.preventDefault(); selectedId = focusLabelId = group.dataset.aiLabelId; refresh(); q('text').focus(); }
     else if (selectedId && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) {
       event.preventDefault(); event.stopImmediatePropagation(); const step = event.shiftKey ? 10 : 1;
       void changeSelected(label => moveLabel(label,event.key === 'ArrowLeft' ? -step/image.naturalWidth : event.key === 'ArrowRight' ? step/image.naturalWidth : 0,

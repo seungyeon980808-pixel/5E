@@ -2595,6 +2595,12 @@
       ]
     },
     {
+      "path": "tests/test-172-label-edit-commit-browser.cjs",
+      "findingIds": [
+        "172-LABEL-EDIT-COMMIT"
+      ]
+    },
+    {
       "path": "tests/test-ai-graph-draw-browser.cjs",
       "findingIds": [
         "AI-GRAPH-PICTURE-DRAW"
