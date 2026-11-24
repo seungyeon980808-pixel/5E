@@ -63,3 +63,18 @@ html[data-edge="c"][data-theme="light"] .feat{background:#ffffff!important}
 .hx-node.cur circle{fill:var(--ink);stroke:var(--ink)}
 .hx-node.cur .hx-tag{fill:var(--ink);font-weight:700}
 .hx-tip{min-height:1.6em;margin:14px auto 0;text-align:center;color:var(--ink);font-size:14px}
+
+/* 11-24: history 아래 「next」 — 지금 판(1.7.2)과 다음 계획 */
+.hx-road{max-width:860px;margin:56px auto 0;padding:0 4px}
+.hx-road h4{margin:0 0 18px;font:italic 700 26px Georgia,Gelasio,serif;color:var(--ink);text-align:center}
+.hx-road h4 span{display:block;margin-top:8px;font:400 14px/1.4 -apple-system,"Apple SD Gothic Neo","Pretendard Variable",sans-serif;letter-spacing:0;color:var(--ink-faint)}
+.hx-road>ol{list-style:none;margin:0;padding:0;border-top:1px solid var(--line,#e5e5e5)}
+.hx-road>ol>li{display:grid;grid-template-columns:112px 1fr;gap:18px;padding:18px 0;border-bottom:1px solid var(--line,#e5e5e5)}
+.hx-road .v b{display:block;font:italic 700 24px/1.1 Georgia,Gelasio,serif;color:var(--ink)}
+.hx-road .v span{display:inline-block;margin-top:6px;font-size:12px;color:var(--ink-faint)}
+.hx-road li.now .v span{color:#fff;background:var(--ink);border-radius:999px;padding:2px 8px}
+.hx-road li.next .v span{color:var(--ink);border:1px solid var(--ink);border-radius:999px;padding:1px 8px}
+.hx-road .c strong{display:block;font-size:16px;color:var(--ink);margin-bottom:6px}
+.hx-road .c ul{margin:0;padding-left:18px;color:var(--ink-soft);font-size:14px;line-height:1.7}
+.hx-now circle{fill:var(--ink)}
+@media (max-width:640px){.hx-road>ol>li{grid-template-columns:1fr;gap:6px}.hx-road .v b{display:inline;margin-right:8px}}
