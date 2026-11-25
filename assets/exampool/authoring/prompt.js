@@ -28,7 +28,7 @@ const list=(title,items)=>items?.length?`${title}\n${items.map(x=>'- '+x).join('
 export const RESPONSE_SPEC=`[응답 형식] 아래 JSON 객체 하나만 출력한다. 설명 글·코드 블록 표시 없이 JSON만.
 {
   "format": "${AUTHORING_FORMAT}",
-  "reply": "교사에게 하는 말. 핵심만 3~8문장. 무엇을 바꿨고 왜, 남은 확인 사항.",
+  "reply": "교사에게 하는 말. 핵심만 3~8문장. 무엇을 어떻게 바꾸자는 안인지와 왜, 남은 확인 사항. 너는 문항을 직접 바꾸지 못한다 — 교사가 적용해야 바뀐다. 그러니 「바꿨습니다·고쳤습니다·수정했습니다」라고 쓰지 말고 「~로 바꾸는 안입니다」처럼 쓴다.",
   "questions": ["답·범위 판정을 바꾸는 누락만, 최대 3개. 없으면 빈 배열"],
   "requirements": {"explicit": ["교사가 말한 요구"], "assumed": ["임시 가정"], "pending": ["확인 필요"]},
   "target": {"schoolLevel": "", "subject": "", "curriculum": "2015 또는 2022 개정", "scope": "", "difficulty": ""},

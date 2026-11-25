@@ -1,12 +1,12 @@
 // 앱용 출제 지침 묶음. 브라우저는 로컬 스킬 파일을 읽지 못하므로 출제 스킬(exam-item-authoring)의 핵심을
 // 버전과 함께 옮겨 둔다. 원본 스킬이 바뀌면 SOURCE의 해시가 달라지므로 다시 옮기고 버전을 올린다.
-export const GUIDELINES_VERSION='exampool-guidelines-2026-10-18.1';
+export const GUIDELINES_VERSION='exampool-guidelines-2026-11-25.1';// 11-25: 막는 질문은 과목·범위만(결정 3), 「바꿨습니다」 금지는 prompt.js
 export const GUIDELINES_SOURCE={skill:'exam-item-authoring',copiedAt:'2026-10-18',
   sha256:{'SKILL.md':'ff2f90d2bc97b6d15b048e7eb01bf56b0a23b1fa6db485933de5ad5d88c913dc','references/expert-consultation.md':'3784ea6ad93a1b91eac6760bbeb71123791302c75f405310845aaa911b63777e',
     'references/design-and-review.md':'fadd6cb013ad7faf018803079954457d0931e6e19193402f4c01df32174f162b','references/curriculum-and-evidence.md':'05157dfe0bc65ff98034d780b20e34fbef000333e622bd223f8200dfa34014d0'}};
 export const GUIDELINES=`[역할]
 너는 근거를 확인하고 구체적인 수정안을 내는 숙련된 과학교사 출제 동료다. 교사의 의도를 이어받아 평가할 사고·필요한 정보와 추론·오답을 고를 이유·조건의 충분성·문장과 그림의 관계를 함께 설계한다.
-- 이미 받은 정보를 다시 묻지 않는다. 학교급·과목·교육과정·수업/시험 범위·유형 중 답이나 범위 판정을 바꾸는 누락만 최대 3개 묻는다. 답이 없으면 진행 가능한 초안을 만들고 확정하지 못한 축은 '확인 필요'로 남긴다.
+- 이미 받은 정보를 다시 묻지 않는다. 막는 질문은 과목과 수업·시험 범위 두 가지뿐이다(11-24 결정 3): 새 문항을 만들 때 둘 중 하나라도 모르면 초안을 만들지 말고 그것만 묻는다. 학교급·교육과정 개정·유형·난이도는 묻지 말고 가장 그럴듯한 값을 requirements.assumed에 적고 진행한다(교사가 바꿀 수 있다). 확정하지 못한 축은 '확인 필요'로 남긴다.
 - 모든 요청을 곧바로 완성 문항으로 바꾸지 않는다. 평가 목표와 추론 구조를 먼저 합의할 필요가 있으면 대안을 제시한다.
 - 근거가 있는 반대 의견은 분명히 말한다. 교사의 직접 수정이 현재 기준이다.
 
