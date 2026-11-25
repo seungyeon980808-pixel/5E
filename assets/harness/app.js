@@ -153,7 +153,7 @@ async function draftAll(){
   tab='review';work.meta.stage='review';save();render();
   // 완주 3: AI가 정해 준 정답 번호를 다 따르지 않아 4연속이 생겼다 → 고르지 않으면 알리고, 맞추기는 교사가 말할 때 「안」으로만(결정: 정답 분포 맞추기도 제안)
   const c=v.stats.countByNumber,vals=[1,2,3,4,5].map(n=>c[n]||0);if(v.stats.longestRun>=3||Math.max(...vals)-Math.min(...vals)>=2)say('ai',`정답 분포가 고르지 않아요(${[1,2,3,4,5].map(n=>CIRCLED[n-1]+(c[n]||0)).join(' ')} · 같은 번호 최대 ${v.stats.longestRun}연속). 맞추려면 「정답 분포 맞춰 줘」라고 해 주세요. 어느 문항을 어떻게 바꿀지 안부터 보여 드려요.`);
-  void solveChanged(v);
+  void solveChanged(v).then(()=>drawAll());
 }
 // 정답 분포 맞추기: 바꿀 문항을 골라 「정답이 ⓧ이 되게」 안을 만든다(반영은 교사가 「반영해」).
 async function rebalanceAnswers(){const qs=X.orderedQuestions(work).filter(q=>q.type!=='서술형'&&Number.isInteger(q.answer));const ans=qs.map(q=>q.answer+1);
@@ -282,12 +282,18 @@ async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)th
 }
 
 // ── 그림(제작 명세 → 기존 그림 엔진). 빈 그림 칸에 넣는 것은 빈 칸 채우기 ──
-async function drawFigure(qid,i){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec)return;busy++;const a=act(`${q.number}번 그림 그리는 중…`);
+async function drawFigure(qid,i,{bg=false}={}){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec)return false;if(!bg)busy++;const a=bg?{set(){},done(){}}:act(`${q.number}번 그림 그리는 중…`);
   try{const r=await call('figure',{qid,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[]});
     let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);
     if(!slot){toast('빈 그림 칸이 없어 새 그림 칸을 만들었어요');slot={id:crypto.randomUUID(),parent:null,kind:'figure',label:spec.kind==='graph'?'그래프':'그림',text:'',layout:'세로',figure:null};q.blocks.push(slot);}
-    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms});toast(`${q.number}번 그림을 넣었어요`);}
-  catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();}finally{a.done();busy--;}}
+    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms,bg});if(!bg)toast(`${q.number}번 그림을 넣었어요`);return true;}
+  catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;if(!bg)say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();return false;}finally{a.done();if(!bg)busy--;}}
+// v8 초안 단계(「초안 v0.1 · 그림 8장」): 초안 뒤 빈 그림 칸을 뒤에서 차례로 그린다(빈 칸 처음 채우기 — 결정 7). 대화는 막지 않는다. 다 그리면 판을 올리고 그 문항만 다시 푼다.
+async function drawAll(){const jobs=[];for(const q of X.orderedQuestions(work))(q.figureSpecs||[]).forEach((f,i)=>{if(!f.done&&q.blocks.some(b=>b.kind==='figure'&&!b.figure?.data))jobs.push({qid:q.id,i,no:q.number});});if(!jobs.length)return;
+  const a=act(`그림 ${jobs.length}장 그리는 중 · 0/${jobs.length} (그동안 대화해도 돼요)`);let done=0;const ok=[],fail=[];const queue=[...jobs];
+  await Promise.all(Array.from({length:2},async()=>{while(queue.length){const j=queue.shift();(await drawFigure(j.qid,j.i,{bg:true})?ok:fail).push(j);a.set(`그림 ${jobs.length}장 그리는 중 · ${++done}/${jobs.length} (그동안 대화해도 돼요)`);}}));a.done();
+  if(ok.length){const v=commit(`그림 ${ok.length}장`,{changed:[...new Set(ok.map(j=>j.qid))]});say('ai',`그림 ${ok.length}장을 빈 그림 칸에 넣어 ${v.label}로 올렸어요${fail.length?` · 못 그린 것 ${fail.length}장(${[...new Set(fail.map(j=>j.no))].join('·')}번) — 「문항 검토」의 「그림」에서 다시 그리기`:''}. 그림이 들어간 문항을 두 모델이 다시 풀어요.`,{stats:v.stats});note('draw-all',{ok:ok.length,fail:fail.length});void solveChanged(v);}
+  else say('ai',`그림을 그리지 못했어요(${fail.length}장). 「문항 검토」의 「그림」에서 다시 그리거나 image에서 직접 넣어 주세요.`,{error:true});}
 
 // ── 한글에서 고친 판: 차이 보고까지만(결정 2) ──
 async function importHwpx(file){const a=act('받은 한글 파일과 지금 판을 문항별로 비교하는 중…');
