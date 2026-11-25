@@ -98,8 +98,10 @@ async function planEvidence(text=''){const m=work.meta;
 async function examTurn(text){
   const ev=await planEvidence(text);
   const prompt=buildExamPrompt(work,{text,ledger:ledgerForPrompt(),rules:rulesFor()})+(ev.length?`\n\n[근거 검색 결과 · 후보일 뿐, 설계표 basis·standards에 title로만 인용]\n${ev.map(e=>`- ${e.kind} · ${e.title}${e.page?` · ${e.page}쪽`:''}: ${e.quote}`).join('\n')}`:'');const a=act('생각하는 중…');
-  try{let r=await call('turn',{scope:'exam:'+work.projectId,text:prompt}),parsed=parseExamResponse(r.text);
-    if(!parsed.ok){a.set('형식을 고쳐 다시 받는 중…');r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+'\n\n[앞 응답 형식 오류 — 고쳐서 JSON만]\n'+parsed.errors.join('\n')});parsed=parseExamResponse(r.text);}
+  // 규칙 시험(rule4): 「초안 써 줘」에 시험지 대화가 1~3번 문항 글을 통째로 답한 뒤 하위 세션이 다시 씀(두 번 듦·글이 달라 헷갈림) → 초안 지시면 답을 짧게.
+  const draftNote=wantsDraft(text)?'\n\n[이번 말은 초안 쓰기 지시다. 문항 글은 문항마다 따로 쓰니 reply에 문항·선지·정답을 쓰지 말고, 초안 전에 정해 둘 것만 1~2문장으로 말한다.]':'';
+  try{let r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+draftNote}),parsed=parseExamResponse(r.text);
+    if(!parsed.ok){a.set('형식을 고쳐 다시 받는 중…');r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+draftNote+'\n\n[앞 응답 형식 오류 — 고쳐서 JSON만]\n'+parsed.errors.join('\n')});parsed=parseExamResponse(r.text);}
     if(!parsed.ok)throw Error('AI 응답 형식이 맞지 않아요: '+parsed.errors.join(' / '));note('exam-turn',{ms:r.ms,model:r.model});return {...parsed.value,_ms:r.ms,_model:r.model};}
   finally{a.done();}
 }
