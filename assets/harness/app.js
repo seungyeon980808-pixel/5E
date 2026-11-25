@@ -78,11 +78,12 @@ const setGlobalRules=list=>{try{localStorage.setItem('5e.harness.rules',JSON.str
 const rulesFor=()=>[...globalRules().filter(r=>r.layer==='global'||r.layer==='subject'&&r.subject===work.meta.subject?.value),...(work.rules.exam||[])];
 function ledgerForPrompt(){return work.comments.filter(c=>['new','talk','decided'].includes(c.status)).map(c=>({id:c.id,no:work.questions.find(q=>q.id===c.qid)?.number||null,status:c.status,text:c.text,proposal:(c.proposals||[]).map(pid=>work.proposals?.find?.(p=>p.id===pid)?.summary).filter(Boolean).join(' / ')}));}
 // 설계표를 잡기 전(막는 칸이 다 찼고 설계표가 비었을 때) 교육과정·기출 근거를 찾아 시험지 대화에 함께 넘긴다(근거 중심, 결정 3).
-async function planEvidence(){const m=work.meta;if(X.missingBlocking(work).length||work.plan.length)return [];const terms=[].concat(m.range?.value||[]).join(' ').split(/[,·:\s]+/).filter(t=>t.length>1&&!/교과서|쪽|\d/.test(t)).slice(0,6);if(!terms.length)return [];
+// 11-25 완주 2: 과목·범위가 들어온 바로 그 턴에는 아직 「막는 칸이 빔」이라 검색을 건너뛰어, 설계표가 근거 없이 잡혔다 → 설계표가 비었으면 교사 말에서도 검색어를 뽑는다.
+async function planEvidence(text=''){const m=work.meta;if(work.plan.length)return [];const terms=[[].concat(m.range?.value||[]).join(' '),m.subject?.value||'',text].join(' ').split(/[,·:\s]+/).filter(t=>t.length>1&&!/교과서|쪽|\d|하자|해\s?줘|이야|만들|출제|문항|기말|중간|시험|다시|수업|강조|앞쪽|힘|주고|최상|보통|쉬움|^상$|^과목|이름/.test(t)).filter((t,i,a)=>a.indexOf(t)===i).slice(0,6);if(!terms.length)return [];
   const found=[];for(const kind of ['curriculum','past']){try{const r=await call('evidence',{request:{kind,terms:terms.slice(0,4),sentence:`${m.subject?.value||''} ${terms.join(' ')}`,limit:kind==='past'?6:4}});for(const e of r.results||[])found.push(e);note('plan-evidence',{kind,available:r.available,n:(r.results||[]).length,warning:r.warning||''});}catch(e){note('plan-evidence-fail',{kind,error:e.message});}}
   work.sources.planEvidence=found.map(e=>({ref:e.ref,kind:e.kind,title:e.title,page:e.page||null,quote:String(e.quote||'').slice(0,600)}));return work.sources.planEvidence;}
 async function examTurn(text){
-  const ev=await planEvidence();
+  const ev=await planEvidence(text);
   const prompt=buildExamPrompt(work,{text,ledger:ledgerForPrompt(),rules:rulesFor()})+(ev.length?`\n\n[근거 검색 결과 · 후보일 뿐, 설계표 basis·standards에 title로만 인용]\n${ev.map(e=>`- ${e.kind} · ${e.title}${e.page?` · ${e.page}쪽`:''}: ${e.quote}`).join('\n')}`:'');const a=act('생각하는 중…');
   try{let r=await call('turn',{scope:'exam:'+work.projectId,text:prompt}),parsed=parseExamResponse(r.text);
     if(!parsed.ok){a.set('형식을 고쳐 다시 받는 중…');r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+'\n\n[앞 응답 형식 오류 — 고쳐서 JSON만]\n'+parsed.errors.join('\n')});parsed=parseExamResponse(r.text);}
