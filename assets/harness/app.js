@@ -125,8 +125,8 @@ function absorb(v,text,{allowDecided=true}={}){
   const PLACEHOLDER=/^(미지정|미정|없음|모름|알 수 없음|확인 필요|n\/a|unknown|-)$/i;
   for(const [k,val] of Object.entries(v.meta||{})){if(val===''||val==null||(Array.isArray(val)&&!val.length)||(typeof val==='string'&&PLACEHOLDER.test(val.trim())))continue;const by=v.metaBy?.[k]==='teacher'?'teacher':'ai',cur=work.meta[k];
     if(by==='teacher'||!cur||cur.value==null||X.canAiChange(cur))X.setMeta(work,k,val,by);}
-  if(v.meta?.subject&&!work.meta.title)work.meta.title=[work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');
-  if(!work.meta.title||work.meta.title==='새 시험지'){const t=[work.meta.term?.value,work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');if(t)work.meta.title=t;}
+  // 완주 5: 첫 턴에 AI가 추정한 과목(「과학」)으로 만든 제목이, 선생님이 과목을 바로잡아도 그대로였다 → 자동으로 만든 제목은 시험지 정보가 바뀌면 다시 만든다(가져온 파일 제목·직접 정한 제목은 그대로).
+  if(!work.meta.title||work.meta.title==='새 시험지'||work.meta.titleAuto){const t=[work.meta.term?.value,work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');if(t){work.meta.title=t;work.meta.titleAuto=true;}}
   // 설계표: 막는 칸이 비었으면 받지 않는다(결정 3). AI 행은 교사가 안 본 것만 바꾸고, 본 행은 제안으로.
   const missing=X.missingBlocking(work);
   if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const r=X.setPlanRows(work,v.plan,'ai');const real=(r.proposals||[]).filter(p=>summarizeRow(p.before)!==summarizeRow(p.after)||(p.before?.twist||'')!==(p.after?.twist||''));
