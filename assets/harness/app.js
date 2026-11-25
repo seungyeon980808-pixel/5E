@@ -131,7 +131,10 @@ function absorb(v,text,{allowDecided=true}={}){
   if(!work.meta.title||work.meta.title==='새 시험지'||work.meta.titleAuto){const t=[work.meta.term?.value,work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');if(t){work.meta.title=t;work.meta.titleAuto=true;}}
   // 설계표: 막는 칸이 비었으면 받지 않는다(결정 3). AI 행은 교사가 안 본 것만 바꾸고, 본 행은 제안으로.
   const missing=X.missingBlocking(work);
-  if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const r=X.setPlanRows(work,v.plan,'ai');const real=(r.proposals||[]).filter(p=>summarizeRow(p.before)!==summarizeRow(p.after)||(p.before?.twist||'')!==(p.after?.twist||''));
+  // 물리학 완주: 「난이도는 상2·중4·하2로」처럼 교사가 직접 시킨 설계표 변경까지 「이미 본 칸」이라 막혔다 → 교사 지시(planBy=teacher)는 바로 반영.
+  // 안전장치: 상의만 하자는 말이 아니고, 교사 말에 설계표 낱말이 있을 때만 교사 지시로 받는다.
+  const teacherPlan=v.planBy==='teacher'&&!wantsDiscussOnly(text)&&/난이도|배점|번은|번을|번 문항|설계|유형|그림|문항|순서|단원|소단원|점/.test(text);
+  if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const before=JSON.stringify(work.plan.map(r=>[r.no,r.unit,r.difficulty,r.points,r.form,r.figure]));const r=X.setPlanRows(work,teacherPlan?v.plan.filter(x=>!work.plan.find(p=>p.no===x.no)?.qid):v.plan,teacherPlan?'teacher':'ai');if(teacherPlan){note('plan-teacher',{applied:r.applied.length});if(JSON.stringify(work.plan.map(r=>[r.no,r.unit,r.difficulty,r.points,r.form,r.figure]))!==before)say('ai','말씀하신 대로 설계표를 바꿨어요(문항이 아직 없는 칸만).');}const real=(r.proposals||[]).filter(p=>summarizeRow(p.before)!==summarizeRow(p.after)||(p.before?.twist||'')!==(p.after?.twist||''));
       // 11-25 완주 2: 교사가 본 설계표 칸의 안이 16칸 전체 긴 글로만 나오고(같은 칸 포함) 받아들일 길이 없었다 → 바뀌는 칸만 짧게, 저장해 두었다가 「설계표 반영해·추천대로」면 바꿈
       work.planProposals=real.map(p=>({no:p.no,after:p.after,at:nowIso()}));
       if(real.length)say('ai',`설계표는 이미 보셨으니 바꾸지 않았어요. 바꿀 안 ${real.length}칸: ${real.slice(0,6).map(p=>`${p.no}번 ${summarizeRow(p.before)} → ${summarizeRow(p.after)}`).join(' / ')}${real.length>6?` 외 ${real.length-6}칸`:''}. 이대로 하려면 「설계표 반영해」라고 해 주세요.`);if(work.meta.stage==='design'&&work.plan.length)tab='plan';}}
