@@ -147,7 +147,7 @@ async function draftAll(){
 // 정답 분포 맞추기: 바꿀 문항을 골라 「정답이 ⓧ이 되게」 안을 만든다(반영은 교사가 「반영해」).
 async function rebalanceAnswers(){const qs=X.orderedQuestions(work).filter(q=>q.type!=='서술형'&&Number.isInteger(q.answer));const ans=qs.map(q=>q.answer+1);
   const count=[0,0,0,0,0,0];ans.forEach(a=>count[a]++);const want=Math.floor(ans.length/5),pick=[];
-  for(let i=0;i<qs.length;i++){const a=ans[i],run=i>=2&&ans[i-1]===a&&ans[i-2]===a;if(count[a]>want+1||run){const to=[1,2,3,4,5].filter(n=>n!==ans[i-1]&&n!==ans[i+1]).sort((x,y)=>count[x]-count[y])[0];if(to&&count[to]<count[a]){pick.push({q:qs[i],to});count[a]--;count[to]++;ans[i]=to;}}}
+  for(let i=0;i<qs.length;i++){const a=ans[i],run=i>=2&&ans[i-1]===a&&ans[i-2]===a;if(count[a]>Math.ceil(ans.length/5)||run){const to=[1,2,3,4,5].filter(n=>n!==ans[i-1]&&n!==ans[i+1]).sort((x,y)=>count[x]-count[y])[0];if(to&&count[to]<count[a]){pick.push({q:qs[i],to});count[a]--;count[to]++;ans[i]=to;}}}
   if(!pick.length){say('ai','지금 정답 분포에서 바꿀 문항이 없어요.');return;}
   const a=act(`정답 분포 맞추는 안 만드는 중 · 문항 ${pick.length}개`);
   for(const {q,to} of pick){const cid=X.addComment(work,{qid:q.id,text:`(정답 분포 맞추기) 정답을 ${CIRCLED[to-1]}로`,onVersion:work.head});
