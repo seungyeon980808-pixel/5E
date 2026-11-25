@@ -90,33 +90,43 @@ async function examSend(text){
   // 1) 「반영해」: 먼저 대장 상태를 교사 말대로 맞춘 뒤(AI는 decided만 표시), 코드가 결정된 것만 반영한다.
   const apply=wantsApply(text),discuss=wantsDiscussOnly(text);
   if(/다 달았|코멘트 (다|봐|읽|확인)/.test(text)&&work.comments.some(c=>c.status==='new')){await triageComments(text);return;}
+  const shownPlan=(work.planProposals||[]).slice();// 교사가 이미 본 설계표 안만 받을 수 있다(이번 턴에 새로 나온 안은 아직 못 봤음)
   const v=await examTurn(text);
   absorb(v,text,{allowDecided:!discuss});
   say('ai',v.reply,{asks:v.questions||[],model:v._model,ms:v._ms,ruleCards:(v.rules||[]).map(r=>({text:r.text,id:crypto.randomUUID()}))});
   if(discuss){note('discuss-only');return;}
-  if(apply){await applyNow('교사 지시: '+text.slice(0,80));return;}
+  const planAsk=shownPlan.length&&(/설계표.*(반영|적용)|추천대로|그 안대로|제안대로/.test(text));
+  if(planAsk){const n=applyPlanProposals(shownPlan);say('ai',`설계표 ${n}칸을 안대로 바꿨어요.`);}
+  if(apply&&!(planAsk&&!work.comments.some(c=>c.status==='decided'))){await applyNow('교사 지시: '+text.slice(0,80));return;}
   if(wantsFinal(text)){declareFinal();return;}
   if(wantsDraft(text)){await draftAll();return;}
   if(wantsSolve(text)&&work.questions.length){const v=work.versions.find(x=>x.label===work.head)||{label:work.head||'v0.0'};await solveChanged({label:v.label,changed:work.items.slice()});return;}
 }
 function absorb(v,text,{allowDecided=true}={}){
   // 시험지 정보: 교사가 말한 것(teacher)은 늘 넣고, AI 기본값(ai)은 아직 교사가 정하지도 보지도 않은 칸에만.
-  for(const [k,val] of Object.entries(v.meta||{})){if(val===''||val==null||(Array.isArray(val)&&!val.length))continue;const by=v.metaBy?.[k]==='teacher'?'teacher':'ai',cur=work.meta[k];
+  const PLACEHOLDER=/^(미지정|미정|없음|모름|알 수 없음|확인 필요|n\/a|unknown|-)$/i;
+  for(const [k,val] of Object.entries(v.meta||{})){if(val===''||val==null||(Array.isArray(val)&&!val.length)||(typeof val==='string'&&PLACEHOLDER.test(val.trim())))continue;const by=v.metaBy?.[k]==='teacher'?'teacher':'ai',cur=work.meta[k];
     if(by==='teacher'||!cur||cur.value==null||X.canAiChange(cur))X.setMeta(work,k,val,by);}
   if(v.meta?.subject&&!work.meta.title)work.meta.title=[work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');
   if(!work.meta.title||work.meta.title==='새 시험지'){const t=[work.meta.term?.value,work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');if(t)work.meta.title=t;}
   // 설계표: 막는 칸이 비었으면 받지 않는다(결정 3). AI 행은 교사가 안 본 것만 바꾸고, 본 행은 제안으로.
   const missing=X.missingBlocking(work);
-  if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const r=X.setPlanRows(work,v.plan,'ai');if(r.proposals?.length)say('ai',`이미 보신 설계표 칸은 바꾸지 않았어요. 바꿀 안: ${r.proposals.map(p=>`${p.no}번 ${summarizeRow(p.before)} → ${summarizeRow(p.after)}`).join(' / ')}`);if(work.meta.stage==='design'&&work.plan.length)tab='plan';}}
+  if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const r=X.setPlanRows(work,v.plan,'ai');const real=(r.proposals||[]).filter(p=>summarizeRow(p.before)!==summarizeRow(p.after)||(p.before?.twist||'')!==(p.after?.twist||''));
+      // 11-25 완주 2: 교사가 본 설계표 칸의 안이 16칸 전체 긴 글로만 나오고(같은 칸 포함) 받아들일 길이 없었다 → 바뀌는 칸만 짧게, 저장해 두었다가 「설계표 반영해·추천대로」면 바꿈
+      work.planProposals=real.map(p=>({no:p.no,after:p.after,at:nowIso()}));
+      if(real.length)say('ai',`설계표는 이미 보셨으니 바꾸지 않았어요. 바꿀 안 ${real.length}칸: ${real.slice(0,6).map(p=>`${p.no}번 ${summarizeRow(p.before)} → ${summarizeRow(p.after)}`).join(' / ')}${real.length>6?` 외 ${real.length-6}칸`:''}. 이대로 하려면 「설계표 반영해」라고 해 주세요.`);if(work.meta.stage==='design'&&work.plan.length)tab='plan';}}
   for(const x of v.ledger||[]){const c=work.comments.find(c=>c.id===x.id);if(!c||['applied','dropped'].includes(c.status))continue;
     if(x.status==='decided'&&!allowDecided)continue;X.updateComment(work,c.id,{status:x.status,...(x.gist?{gist:x.gist}:{}),...(x.answer?{answer:x.answer}:{}),...(x.status==='decided'?{decision:x.gist||text}:{})});}
   save();
 }
+function applyPlanProposals(list=work.planProposals||[]){let n=0;for(const p of list){const row=work.plan.find(r=>r.no===p.no);if(!row||row.qid)continue;Object.assign(row,{...p.after,no:row.no,qid:row.qid,by:'teacher',seen:true});n++;}work.planProposals=[];save();note('plan-apply',{n});return n;}
 const summarizeRow=r=>r?[r.unit,r.difficulty,r.points!=null?r.points+'점':'',r.form].filter(Boolean).join(' · '):'(빈 칸)';
 
 // 초안: 설계표의 빈 문항 칸마다 하위 세션(출제 대화 엔진, kind=draft)으로 쓴다 — 빈 칸 처음 채우기라 바로 넣는다.
 async function draftAll(){
   const rows=work.plan.filter(r=>!r.qid&&r.status!=='empty');if(!rows.length){say('ai','설계표에 아직 쓸 문항 칸이 없어요. 설계표부터 같이 정해요.');return;}
+  // 11-25 완주 2: 문항을 따로 쓰니 정답이 ①1·②2·③5·④7·⑤0으로 몰리고 3연속이 생겼다 → 쓰기 전에 객관식 칸마다 정답 번호를 고르게 정해 준다(워크플로 기본값: 고르게, 3연속 없음).
+  const taken=X.orderedQuestions(work).filter(q=>q.type!=='서술형'&&Number.isInteger(q.answer)).map(q=>q.answer+1);const need=rows.filter(r=>r.form!=='essay');const tgt=balancedAnswers(need.length,taken);need.forEach((r,i)=>{r.answerTarget=tgt[i];});
   work.meta.stage='draft';const a=act(`문항 ${rows.length}개 쓰는 중 · 0/${rows.length}`);let done=0,fails=[];
   const one=async row=>{try{await draftRow(row);}catch(e){fails.push({no:row.no,error:e.message});note('draft-fail',{no:row.no,error:e.message});}finally{done++;a.set(`문항 ${rows.length}개 쓰는 중 · ${done}/${rows.length}`);render();}};
   const queue=[...rows];const workers=Array.from({length:3},async()=>{while(queue.length)await one(queue.shift());});await Promise.all(workers);a.done();
@@ -130,6 +140,11 @@ function packetFor(q,{kind,text}){const a=ensureAuthoring(q),{typeset,reviews,au
     teacherEdits:(q.locks||[]).map(l=>`직접 고친 칸: ${l.key}`),conversation:(subThreadIf(q.id)||[]).slice(-12).map(({role,text})=>({role,text})),contentHash:null,
     figureCount:q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data).length,figures:q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({blockId:b.id,label:b.label||'그림',data:b.figure.data}))};}
 const subThreadIf=qid=>work.sessions.find(x=>x.scope==='q:'+qid)?.thread;
+function balancedAnswers(n,taken=[]){const count=[0,0,0,0,0,0];for(const a of taken)count[a]++;const out=[];
+  for(let i=0;i<n;i++){const order=[1,2,3,4,5].sort((x,y)=>count[x]-count[y]||Math.random()-.5);out.push(order[0]);count[order[0]]++;}
+  for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]];}
+  for(let i=2;i<out.length;i++)if(out[i]===out[i-1]&&out[i]===out[i-2]){const k=out.findIndex((x,j)=>j>i&&x!==out[i]);if(k>0)[out[i],out[k]]=[out[k],out[i]];}
+  return out;}
 async function draftRow(row){
   const q=newQuestion(String(row.no),FORM_TYPE[row.form]||'합답형');try{if(row.form)applyForm(q,row.form);}catch{}q.points=Number(row.points)||q.points;
   // 설계표에 그림이 있는 문항은 빈 그림 칸을 먼저 둔다 — AI가 그 칸의 제작 명세(figures)를 쓰게(11-25 밤샘 완주 1: 초안 16문항에 그림 명세 0).
@@ -137,7 +152,7 @@ async function draftRow(row){
   const m=work.meta,rules=rulesFor().map(r=>'- '+r.text).join('\n');
   const text=`새 문항 초안을 써 줘. 시험: ${[m.subject?.value,m.grade?.value,m.examName?.value].filter(Boolean).join(' ')} · 범위: ${[].concat(m.range?.value||[]).join(', ')}.
 설계표 ${row.no}번: 소단원 ${row.unit||''} · 난이도 ${row.difficulty||''} · 배점 ${row.points||''}점 · 유형 ${row.form||''} · 자료 구조 ${row.structure||''} · 평가할 사고 ${row.twist||''} · 그림 ${row.figure||''}.
-${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고${needFigure?`, 이 문항은 그림이 있는 문항이니 빈 「${row.figure==='code'?'그래프':'그림'}」 칸의 제작 명세를 figures에 꼭 1개 이상 써 줘(slot은 그 칸 이름, ${row.figure==='convert'?'기출 그림을 바탕으로 바꿔 그리는 명세':row.figure==='code'?'kind=graph, 축·단위·값을 정확히':'kind=image'})`:''}. 정답 번호는 ${row.no}번 자리라는 것만 알고 고르게 정해.`;
+${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고${needFigure?`, 이 문항은 그림이 있는 문항이니 빈 「${row.figure==='code'?'그래프':'그림'}」 칸의 제작 명세를 figures에 꼭 1개 이상 써 줘(slot은 그 칸 이름, ${row.figure==='convert'?'기출 그림을 바탕으로 바꿔 그리는 명세':row.figure==='code'?'kind=graph, 축·단위·값을 정확히':'kind=image'})`:''}. ${row.answerTarget?`정답은 ${'①②③④⑤'[row.answerTarget-1]}이 되게 써 줘(시험지 전체 정답 분포를 고르게 맞춘 것). 합답형이면 옳은 보기 조합이 ${'①②③④⑤'[row.answerTarget-1]} 자리 선지가 되게.`:''}`;
   const r=await call('author',{packet:packetFor(q,{kind:'draft',text})});const resp=r.response;
   const changes=proposalChanges(q,resp.proposal);const {question,errors}=applyChanges(q,changes);
   Object.assign(q,question);X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map((r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]))});
