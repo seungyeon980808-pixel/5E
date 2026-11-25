@@ -272,7 +272,10 @@ async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)th
   const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text+'\n(안을 말할 때는 그 안을 proposal.changes에도 넣어 줘. 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다.)'+(fh.length?'\n\n'+folderPrompt(fh):'')})},{onProgress:p=>{}});
   const resp=r.response,changes=discuss?[]:proposalChanges(q,resp.proposal);let pid=null;
   if(changes.length)pid=X.addProposal(work,{qid:q.id,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:[],effects:{answer:changes.some(c=>c.path==='answer')}});
-  else if(resp.review||resp.solve||resp.evidenceUsed?.length)recordReview(q,resp,{evidence:new Map([...(r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]),...hitEvidence(fh)])});
+  // 폴더 시나리오: 검토 답에 거의 늘 고칠 안이 같이 와서 근거·검토 축 기록을 건너뛰었다(칸 근거 0) → 안이 있어도 지금 판의 축·근거는 기록(풀이는 안 기준이라 뺌).
+  const evMap=new Map([...(r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]),...hitEvidence(fh)]);
+  if(changes.length){if(resp.review||resp.evidenceUsed?.length)recordReview(q,{review:resp.review,evidenceUsed:resp.evidenceUsed},{evidence:evMap});}
+  else if(resp.review||resp.solve||resp.evidenceUsed?.length)recordReview(q,resp,{evidence:evMap});
   say('ai',resp.reply+(pid?'\n\n아직 고치지 않았어요. 이대로 할지 말씀해 주시고, 고치려면 「반영해」라고 해 주세요.':''),{proposalId:pid,asks:resp.questions||[],model:r.meta?.model,ms:r.meta?.ms});
   note('sub',{qid:q.id,proposal:!!pid,discuss,ms:r.meta?.ms});
 }
