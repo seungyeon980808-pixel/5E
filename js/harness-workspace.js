@@ -5,7 +5,7 @@
 // - 도구: image·exam·hwp는 기존 전환(fiveEAppSwitch)으로 열고, 하네스 사이드바는 왼쪽에 남긴다(시안 v8).
 import {createTaskBridge} from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {defaultAIModelSelection} from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
-import {runTurn,authoringError} from './exampool-authoring-harness.js?v=1.7.0-four-session-integration';
+import {runTurn,authoringError,fetchEvidence} from './exampool-authoring-harness.js?v=1.7.0-four-session-integration';
 import {aiErrorText,aiErrorCode} from './ai-error-copy.js?v=1.7.0-four-session-integration';
 
 const FLAG='5e.harness';
@@ -59,6 +59,7 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     if(m.action==='turn'){try{send({action:'turn-ready',requestId:m.requestId,result:await turn(m)});}catch(error){send({action:'turn-ready',requestId:m.requestId,error:error.message,cancelled:!!error.cancelled,need:need(error)});}return;}
     if(m.action==='author'){try{const h=await authoring();const result=await h.request(m.packet,{requestId:m.requestId,onProgress:p=>send({action:'author-progress',requestId:m.requestId,progress:p})});send({action:'author-ready',requestId:m.requestId,result});}
       catch(error){send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:need(error)});}return;}
+    if(m.action==='evidence'){try{send({action:'evidence-ready',requestId:m.requestId,result:await fetchEvidence(m.request)});}catch(error){send({action:'evidence-ready',requestId:m.requestId,result:{available:false,results:[],warning:error.message}});}return;}
     if(m.action==='cancel'){controllers.get(m.requestId)?.abort();try{(await authoring()).cancel(m.requestId);}catch{}return;}
     if(m.action==='figure'){try{const en=await engines();const r=m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});
         send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null}});}

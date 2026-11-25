@@ -5,7 +5,7 @@
 import * as X from './model/examset.js';
 import {buildExamsetFile,parseExamsetFile} from './model/file.js';
 import {hwpxText,diffAgainst} from './model/hwpx.js';
-import {newQuestion,applyForm,clone} from '../exampool/sheet/model.js';
+import {newQuestion,applyForm,clone,block} from '../exampool/sheet/model.js';
 import {explanationParts} from '../exampool/sheet/explanation.js';
 import {proposalChanges,ensureAuthoring,recordReview} from '../exampool/authoring/session.js';
 import {applyChanges,checkAnswerStructure} from '../exampool/authoring/contract.js';
@@ -30,6 +30,7 @@ function call(action,payload,{onProgress}={}){const requestId=crypto.randomUUID(
 addEventListener('message',e=>{if(e.source!==window.parent||e.data?.channel!=='5e-harness')return;const m=e.data;
   if(m.action==='theme'){document.documentElement.dataset.theme=m.theme==='light'?'light':'dark';document.documentElement.dataset.palette=m.palette==='graphite'?'graphite':'classic';return;}
   if(m.action==='tool-opened'){document.body.classList.add('tool-on');return;}if(m.action==='tool-closed'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));return;}
+  if(m.action==='evidence-ready'){const p=pending.get(m.requestId);if(p){pending.delete(m.requestId);p.resolve(m.result);}return;}
   if(m.action==='author-progress'){pending.get(m.requestId)?.onProgress?.(m.progress);return;}
   if(m.action==='library-picked'){if(m.items?.length){work.sources.picked=[...(work.sources.picked||[]),...m.items.map(x=>({name:x.name,at:nowIso()}))];toast(`라이브러리에서 ${m.items.length}개를 가져왔어요`);save();}return;}
   const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);
@@ -60,8 +61,13 @@ const globalRules=()=>{try{return JSON.parse(localStorage.getItem('5e.harness.ru
 const setGlobalRules=list=>{try{localStorage.setItem('5e.harness.rules',JSON.stringify(list.slice(-200)));}catch{}};
 const rulesFor=()=>[...globalRules().filter(r=>r.layer==='global'||r.layer==='subject'&&r.subject===work.meta.subject?.value),...(work.rules.exam||[])];
 function ledgerForPrompt(){return work.comments.filter(c=>['new','talk','decided'].includes(c.status)).map(c=>({id:c.id,no:work.questions.find(q=>q.id===c.qid)?.number||null,status:c.status,text:c.text,proposal:(c.proposals||[]).map(pid=>work.proposals?.find?.(p=>p.id===pid)?.summary).filter(Boolean).join(' / ')}));}
+// 설계표를 잡기 전(막는 칸이 다 찼고 설계표가 비었을 때) 교육과정·기출 근거를 찾아 시험지 대화에 함께 넘긴다(근거 중심, 결정 3).
+async function planEvidence(){const m=work.meta;if(X.missingBlocking(work).length||work.plan.length)return [];const terms=[].concat(m.range?.value||[]).join(' ').split(/[,·:\s]+/).filter(t=>t.length>1&&!/교과서|쪽|\d/.test(t)).slice(0,6);if(!terms.length)return [];
+  const found=[];for(const kind of ['curriculum','past']){try{const r=await call('evidence',{request:{kind,terms:terms.slice(0,4),sentence:`${m.subject?.value||''} ${terms.join(' ')}`,limit:kind==='past'?6:4}});for(const e of r.results||[])found.push(e);note('plan-evidence',{kind,available:r.available,n:(r.results||[]).length,warning:r.warning||''});}catch(e){note('plan-evidence-fail',{kind,error:e.message});}}
+  work.sources.planEvidence=found.map(e=>({ref:e.ref,kind:e.kind,title:e.title,page:e.page||null,quote:String(e.quote||'').slice(0,600)}));return work.sources.planEvidence;}
 async function examTurn(text){
-  const prompt=buildExamPrompt(work,{text,ledger:ledgerForPrompt(),rules:rulesFor()});const a=act('생각하는 중…');
+  const ev=await planEvidence();
+  const prompt=buildExamPrompt(work,{text,ledger:ledgerForPrompt(),rules:rulesFor()})+(ev.length?`\n\n[근거 검색 결과 · 후보일 뿐, 설계표 basis·standards에 title로만 인용]\n${ev.map(e=>`- ${e.kind} · ${e.title}${e.page?` · ${e.page}쪽`:''}: ${e.quote}`).join('\n')}`:'');const a=act('생각하는 중…');
   try{let r=await call('turn',{scope:'exam:'+work.projectId,text:prompt}),parsed=parseExamResponse(r.text);
     if(!parsed.ok){a.set('형식을 고쳐 다시 받는 중…');r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+'\n\n[앞 응답 형식 오류 — 고쳐서 JSON만]\n'+parsed.errors.join('\n')});parsed=parseExamResponse(r.text);}
     if(!parsed.ok)throw Error('AI 응답 형식이 맞지 않아요: '+parsed.errors.join(' / '));note('exam-turn',{ms:r.ms,model:r.model});return {...parsed.value,_ms:r.ms,_model:r.model};}
@@ -112,10 +118,12 @@ function packetFor(q,{kind,text}){const a=ensureAuthoring(q),{typeset,reviews,au
 const subThreadIf=qid=>work.sessions.find(x=>x.scope==='q:'+qid)?.thread;
 async function draftRow(row){
   const q=newQuestion(String(row.no),FORM_TYPE[row.form]||'합답형');try{if(row.form)applyForm(q,row.form);}catch{}q.points=Number(row.points)||q.points;
+  // 설계표에 그림이 있는 문항은 빈 그림 칸을 먼저 둔다 — AI가 그 칸의 제작 명세(figures)를 쓰게(11-25 밤샘 완주 1: 초안 16문항에 그림 명세 0).
+  const needFigure=row.figure&&row.figure!=='none';if(needFigure&&!q.blocks.some(b=>b.kind==='figure'))q.blocks.splice(1,0,block('figure',null,row.figure==='code'?'그래프':'그림'));
   const m=work.meta,rules=rulesFor().map(r=>'- '+r.text).join('\n');
   const text=`새 문항 초안을 써 줘. 시험: ${[m.subject?.value,m.grade?.value,m.examName?.value].filter(Boolean).join(' ')} · 범위: ${[].concat(m.range?.value||[]).join(', ')}.
 설계표 ${row.no}번: 소단원 ${row.unit||''} · 난이도 ${row.difficulty||''} · 배점 ${row.points||''}점 · 유형 ${row.form||''} · 자료 구조 ${row.structure||''} · 평가할 사고 ${row.twist||''} · 그림 ${row.figure||''}.
-${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고, 그림이 필요하면 figures에 제작 명세를 써 줘. 정답 번호는 ${row.no}번 자리라는 것만 알고 고르게 정해.`;
+${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고${needFigure?`, 이 문항은 그림이 있는 문항이니 빈 「${row.figure==='code'?'그래프':'그림'}」 칸의 제작 명세를 figures에 꼭 1개 이상 써 줘(slot은 그 칸 이름, ${row.figure==='convert'?'기출 그림을 바탕으로 바꿔 그리는 명세':row.figure==='code'?'kind=graph, 축·단위·값을 정확히':'kind=image'})`:''}. 정답 번호는 ${row.no}번 자리라는 것만 알고 고르게 정해.`;
   const r=await call('author',{packet:packetFor(q,{kind:'draft',text})});const resp=r.response;
   const changes=proposalChanges(q,resp.proposal);const {question,errors}=applyChanges(q,changes);
   Object.assign(q,question);X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map((r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]))});
@@ -315,4 +323,4 @@ $('#fFolder').onchange=async()=>{const files=[...$('#fFolder').files];$('#fFolde
 (async()=>{post({action:'ready'});try{const last=await idbGet('last');if(last)work=await idbGet('work:'+last);renderSide((await idbGet('list'))||[]);}catch{}
   if(!work){work=X.newExamset({title:''});X.setMeta(work,'stage','design');work.chat.push({role:'ai',text:'어떤 시험지를 만들까요? 과목·범위·문항 수·총점을 알려 주시면 설계표부터 잡아요. 교과서·학습지가 있으면 「자료 폴더」로 등록해 주세요.',at:nowIso()});}
   work.proposals ||= [];render();note('boot',{head:work.head});})();
-window.__harness={get work(){return work;},render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};
+window.__harness={get work(){return work;},get sub(){return sub;},openSub:id=>{sub=id;render();},closeSub:()=>{sub=null;render();},get busy(){return busy;},log,render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};
