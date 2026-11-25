@@ -151,7 +151,7 @@ async function draftAll(){
   // 11-25 완주 2: 문항을 따로 쓰니 정답이 ①1·②2·③5·④7·⑤0으로 몰리고 3연속이 생겼다 → 쓰기 전에 객관식 칸마다 정답 번호를 고르게 정해 준다(워크플로 기본값: 고르게, 3연속 없음).
   const taken=X.orderedQuestions(work).filter(q=>q.type!=='서술형'&&Number.isInteger(q.answer)).map(q=>q.answer+1);const need=rows.filter(r=>r.form!=='essay');const tgt=balancedAnswers(need.length,taken);need.forEach((r,i)=>{r.answerTarget=tgt[i];});
   work.meta.stage='draft';const a=act(`문항 ${rows.length}개 쓰는 중 · 0/${rows.length}`);let done=0,fails=[];
-  const one=async row=>{try{await draftRow(row);}catch(e){fails.push({no:row.no,error:e.message});note('draft-fail',{no:row.no,error:e.message});}finally{done++;a.set(`문항 ${rows.length}개 쓰는 중 · ${done}/${rows.length}`);save();render();}};// 문항마다 저장: 도중에 앱을 꺼도 다 쓴 문항은 남고, 다시 「초안 써 줘」 하면 빈 칸만 쓴다
+  const one=async row=>{try{await draftRow(row).catch(e=>{note('draft-retry',{no:row.no,error:e.message});return draftRow(row);});}catch(e){fails.push({no:row.no,error:e.message});note('draft-fail',{no:row.no,error:e.message});}finally{done++;a.set(`문항 ${rows.length}개 쓰는 중 · ${done}/${rows.length}`);save();render();}};// 문항마다 저장: 도중에 앱을 꺼도 다 쓴 문항은 남고, 다시 「초안 써 줘」 하면 빈 칸만 쓴다
   const queue=[...rows];const workers=Array.from({length:3},async()=>{while(queue.length)await one(queue.shift());});await Promise.all(workers);a.done();
   const v=commit(`초안 ${rows.length-fails.length}문항`,{changed:rows.filter(r=>r.qid).map(r=>r.qid)});
   say('ai',`초안 ${v.label}이 나왔어요(${rows.length-fails.length}문항${fails.length?` · 못 쓴 문항 ${fails.map(f=>f.no+'번').join(', ')} — 다시 「초안 써 줘」라고 하면 그 칸만 써요`:''}). 「문항 검토」에서 문항마다 오른쪽 아래에 편하게 코멘트를 적어 주세요. 근거·해설·검토는 각 문항의 단추를 누르면 열려요.`,{stats:v.stats});
@@ -197,6 +197,9 @@ ${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)
   // 생명과학 시나리오: 합답형 칸으로 만들었는데 AI가 객관식으로 써서 빈 〈보기〉 상자가 남았다 → 합답형이 아니면 빈 보기 상자는 뺀다(빈 칸 정리).
   if(q.type!=='합답형')q.blocks=q.blocks.filter(b=>!(b.kind==='bogi'&&!b.lines?.some(l=>String(l.text||'').trim())));
   X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map([...(r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]),...hitEvidence(fh)])});
+  // 밤샘 규칙 시험(rule3): 발문·글이 모두 빈 문항 3개가 「초안」으로 들어갔다 → 빈 문항은 넣지 않고 다시 쓴다.
+  const blank=!String(q.ask||'').trim()&&!q.blocks.some(b=>String(b.text||'').trim()||(b.lines||[]).some(l=>String(l.text||'').trim()))&&!q.choices.some(c=>String(c.text||'').trim());
+  if(blank){note('draft-blank',{no:row.no,changes:changes.length,errors:errors.map(e=>String(e).slice(0,120))});throw Error('AI가 빈 문항을 돌려줬어요');}
   q.figureSpecs=(resp.figures||[]).slice(0,6);X.addQuestion(work,q,{planNo:row.no});X.linkItem(work,row.no,q.id);
   subThread(q.id).push({role:'ai',text:resp.reply,at:nowIso(),model:r.meta?.model,ms:r.meta?.ms});
   note('draft',{no:row.no,ms:r.meta?.ms,changes:changes.length,errors:errors.length,figures:q.figureSpecs.length});
