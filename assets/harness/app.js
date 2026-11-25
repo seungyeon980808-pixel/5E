@@ -16,7 +16,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin;
 const CIRCLED='①②③④⑤',FORM_TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식',essay:'서술형'};
-const SOLVERS=[{model:'gpt-6.1-sol',label:'GPT-6.1-Sol'},{model:'gpt-6-astra',label:'GPT-6-Astra'}];// 결정 4 가정: Codex 안 두 모델, 「한 회사 두 모델」
+const SOLVERS=[{model:'gpt-6.1-sol',label:'GPT-6.1-Sol'},{model:'gpt-6-astra',label:'GPT-6-Astra',fallback:['gpt-6-luna']}];// 결정 4 가정: Codex 안 두 모델, 「한 회사 두 모델」. 완주 1: astra가 429로 막혀 대신 luna
 const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200);};
 const nowIso=()=>new Date().toISOString();
 let work=null,tab='plan',sub=null,busy=0;
@@ -95,7 +95,7 @@ function absorb(v,text,{allowDecided=true}={}){
   const missing=X.missingBlocking(work);
   if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const r=X.setPlanRows(work,v.plan,'ai');if(r.proposals?.length)say('ai',`이미 보신 설계표 칸은 바꾸지 않았어요. 바꿀 안: ${r.proposals.map(p=>`${p.no}번 ${summarizeRow(p.before)} → ${summarizeRow(p.after)}`).join(' / ')}`);if(work.meta.stage==='design'&&work.plan.length)tab='plan';}}
   for(const x of v.ledger||[]){const c=work.comments.find(c=>c.id===x.id);if(!c||['applied','dropped'].includes(c.status))continue;
-    if(x.status==='decided'&&!allowDecided)continue;X.updateComment(work,c.id,{status:x.status,...(x.gist?{gist:x.gist}:{}),...(x.answer?{answer:x.answer}:{})});}
+    if(x.status==='decided'&&!allowDecided)continue;X.updateComment(work,c.id,{status:x.status,...(x.gist?{gist:x.gist}:{}),...(x.answer?{answer:x.answer}:{}),...(x.status==='decided'?{decision:x.gist||text}:{})});}
   save();
 }
 const summarizeRow=r=>r?[r.unit,r.difficulty,r.points!=null?r.points+'점':'',r.form].filter(Boolean).join(' · '):'(빈 칸)';
@@ -138,7 +138,7 @@ async function triageComments(text){
   const a=act(`코멘트 ${fresh.length}개 읽는 중…`);let n=0;
   for(const [qid,list] of byQ){const q=work.questions.find(x=>x.id===qid);if(!q){for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:'문항이 없어요.'});continue;}
     const body=list.map((c,i)=>`${i+1}) ${c.target?`[${c.target}] `:''}${c.text}`).join('\n');
-    try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text:`교사 코멘트(${list.length}개):\n${body}\n\n아직 고치지 마. 코멘트마다 요지를 말하고, 질문이면 근거로 먼저 답하고, 고칠 것은 proposal에 「지금 → 바꿀 안」으로만 내. 정답·분포가 바뀌면 그 영향도 reply에 써.`})});
+    try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text:`교사 코멘트(${list.length}개):\n${body}\n\n코멘트마다 요지를 말하고, 질문이면 근거로 먼저 답해. 고칠 것이 있으면 바꿀 안을 proposal.changes에 꼭 넣어(이것은 「제안」일 뿐이고 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다). 질문만 있어 고칠 것이 없으면 proposal은 null. 정답·분포가 바뀌면 그 영향도 reply에 써. reply에 「바꿨습니다」라고 쓰지 마.`})});
       const resp=r.response,changes=proposalChanges(q,resp.proposal);let pid=null;
       if(changes.length)pid=X.addProposal(work,{qid,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:list.map(c=>c.id),effects:{answer:changes.some(c=>c.path==='answer')}});
       for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:resp.reply.slice(0,1200),proposals:pid?[pid]:[]});
@@ -153,10 +153,17 @@ function beforeOf(q,changes){return changes.map(c=>{try{if(c.path==='bogi'){cons
   if(c.path==='block')return q.blocks.find(b=>b.id===c.id||b.label===c.id)?.text??'';return typeof q[c.path]==='string'?q[c.path]:'';}catch{return '';}});}
 
 // 반영: 결정된 코멘트에 딸린 제안만 적용 → 판 올림 → 바뀐 문항만 다시 풂.
+// 교사가 분명히 「반영해」라고 했는데 안(proposal)이 없을 때: 결정 내용으로 안을 만든다(state agreed). 반영은 applyDecided가 한다.
+async function proposalFrom(q,text,commentIds){try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text})});const changes=proposalChanges(q,r.response.proposal);if(!changes.length){note('proposal-empty',{no:q.number});return null;}
+  const pid=X.addProposal(work,{qid:q.id,changes,before:beforeOf(q,changes),summary:r.response.proposal?.summary||'교사 결정대로',comments:commentIds,effects:{answer:changes.some(c=>c.path==='answer')}});X.setProposalState(work,pid,'agreed');note('proposal-from-decision',{no:q.number,changes:changes.length});return pid;}
+  catch(e){note('proposal-from-decision-fail',{no:q.number,error:e.message});return null;}}
 async function applyNow(why){
+  const bare=work.comments.filter(c=>c.status==='decided'&&!(c.proposals||[]).some(pid=>work.proposals.find(p=>p.id===pid&&['current','agreed'].includes(p.state))));
+  if(bare.length){const a=act(`결정된 코멘트 ${bare.length}개를 고칠 칸으로 옮기는 중…`);for(const c of bare){const q=work.questions.find(x=>x.id===c.qid);if(!q)continue;
+      await proposalFrom(q,`교사가 이 코멘트를 이렇게 하기로 정하고 반영하라고 했다. 정한 대로 문항을 고칠 proposal.changes를 만들어라. 정한 것 밖은 건드리지 마.\n[코멘트] ${c.text}\n[정한 것] ${c.decision||c.gist||''}\n[교사 말] ${why}`,[c.id]);}a.done();}
   const before=work.questions.map(q=>[q.id,JSON.stringify(stripMeta(q))]);
   const r=X.applyDecided(work);const changed=r.changedQids||[];
-  if(!changed.length){say('ai',`반영할 「결정됨」이 없어요${r.skipped?.length?` (잠긴 칸이라 건너뛴 것 ${r.skipped.length}개)`:''}. 아직 의논 중인 것은 그대로 뒀어요.`);note('apply-empty');return;}
+  if(!changed.length){say('ai',`반영할 것이 없어요${r.noProposal?.length?` (결정됐지만 고칠 칸으로 옮기지 못한 코멘트 ${r.noProposal.length}개 — 「결정됨」으로 남겨 뒀어요)`:''}${r.skipped?.length?` (잠긴 칸이라 건너뛴 것 ${r.skipped.length}개)`:''}. 아직 의논 중인 것은 그대로 뒀어요.`);note('apply-empty',{noProposal:r.noProposal?.length||0});return;}
   const v=commit(why,{changed,applied:r});const talk=work.comments.filter(c=>c.status==='talk').length;
   say('ai',`반영했어요 → ${v.label}. 바뀐 문항 ${changed.map(id=>work.questions.find(q=>q.id===id)?.number+'번').join(', ')}${talk?` · 의논 중 ${talk}개는 그대로`:''}${r.skipped?.length?` · 직접 고친 칸이라 건너뛴 것 ${r.skipped.length}개`:''}.`,{stats:v.stats});
   note('apply',{label:v.label,changed:changed.length,skipped:r.skipped?.length||0,unchangedOthers:before.filter(([id,h])=>!changed.includes(id)).every(([id,h])=>JSON.stringify(stripMeta(work.questions.find(q=>q.id===id)))===h)});
@@ -170,21 +177,23 @@ function declareFinal(){const v=X.declareFinal(work);work.meta.stage='final';sav
 async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questions.some(q=>q.id===id&&q.type!=='서술형'));if(!ids.length)return;
   const a=act(`정답·해설 가린 문항지로 두 모델 풀이 — 바뀐 문항 ${ids.length}개`);let done=0;
   const one=async id=>{const q=work.questions.find(x=>x.id===id);if(!q)return;const runs=[];
-    for(const s of SOLVERS){try{const r=await call('turn',{scope:`solve:${s.model}:${id}`,text:buildSolvePrompt(q),model:s.model,effort:'medium'});const p=parseSolve(r.text);runs.push({provider:'codex',model:r.model||s.model,isolated:true,answer:p.ok?p.value.answer:null,multiple:p.value?.multiple||[],note:p.value?.note||(p.ok?'':'형식 오류'),ms:r.ms});}
-      catch(e){runs.push({provider:'codex',model:s.model,isolated:true,answer:null,note:'풀지 못함: '+e.message,ms:0});}}
+    for(const s of SOLVERS){let last=null;for(const model of [s.model,...(s.fallback||[])]){try{const r=await call('turn',{scope:`solve:${model}:${id}`,text:buildSolvePrompt(q),model,effort:'medium'});const p=parseSolve(r.text);last={provider:'codex',model:r.model||model,isolated:true,answer:p.ok?p.value.answer:null,multiple:p.value?.multiple||[],note:p.value?.note||(p.ok?'':'형식 오류'),ms:r.ms};break;}
+        catch(e){last={provider:'codex',model,isolated:true,answer:null,note:'풀지 못함: '+e.message,ms:0};note('solve-retry',{model,error:e.message.slice(0,120)});}}runs.push(last);}
     const ans=Number.isInteger(q.answer)?q.answer+1:null,vd=verdict(ans,runs);X.recordCheck(work,{qid:id,version:v.label,contentHash:null,runs,verdict:vd,skipped:runs.every(r=>r.answer==null)?'풀이 실패':null});
     note('solve',{no:q.number,verdict:vd,answers:runs.map(r=>r.answer)});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);render();};
-  const queue=[...ids];await Promise.all(Array.from({length:2},async()=>{while(queue.length)await one(queue.shift());}));a.done();
+  const queue=[...ids];await Promise.all(Array.from({length:1},async()=>{while(queue.length)await one(queue.shift());}));a.done();
   const ck=work.checks.filter(c=>c.version===v.label),bad=ck.filter(c=>c.verdict!=='pass');
   say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${SOLVERS.map(s=>s.label).join('·')}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
 
 // 문항 대화(하위 세션)
 async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
-  if(wantsApply(text)){const props=(work.proposals||[]).filter(p=>p.qid===q.id&&['current','agreed'].includes(p.state));if(!props.length){say('ai','이 문항에 반영할 안이 없어요.');return;}
+  if(wantsApply(text)){let props=(work.proposals||[]).filter(p=>p.qid===q.id&&['current','agreed'].includes(p.state));
+    if(!props.length){const lastAi=[...subThread(q.id)].reverse().find(m=>m.role==='ai'&&!m.error&&m.text);if(!lastAi){say('ai','이 문항에 반영할 안이 없어요. 어떻게 바꿀지 먼저 말씀해 주세요.');return;}
+      const pid=await proposalFrom(q,`교사가 바로 앞에서 합의한 안을 그대로 반영하라고 했다(「${text}」). 아래 합의 내용을 문항에 옮길 proposal.changes를 만들어라. 합의에 없는 칸은 건드리지 마.\n[합의한 안]\n${lastAi.text}`,[]);if(!pid){say('ai','합의한 안을 고칠 칸으로 옮기지 못했어요. 바꿀 곳을 한 번 더 짚어 주세요. 바뀐 것은 없어요.',{error:true});return;}props=[work.proposals.find(p=>p.id===pid)];}
     for(const p of props){p.state='agreed';for(const cid of p.comments||[])X.updateComment(work,cid,{status:'decided'});if(!p.comments?.length){const cid=X.addComment(work,{qid:q.id,text:'(문항 대화에서 정함) '+p.summary,onVersion:work.head});X.updateComment(work,cid,{status:'decided',proposals:[p.id]});}}
     await applyNow(`${q.number}번 문항 대화에서 반영`);return;}
   const discuss=wantsDiscussOnly(text);
-  const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text})},{onProgress:p=>{}});
+  const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text+'\n(안을 말할 때는 그 안을 proposal.changes에도 넣어 줘. 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다.)'})},{onProgress:p=>{}});
   const resp=r.response,changes=discuss?[]:proposalChanges(q,resp.proposal);let pid=null;
   if(changes.length)pid=X.addProposal(work,{qid:q.id,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:[],effects:{answer:changes.some(c=>c.path==='answer')}});
   else if(resp.review||resp.solve)recordReview(q,resp,{});

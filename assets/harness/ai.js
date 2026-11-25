@@ -46,7 +46,7 @@ export const EXAM_SPEC=`[응답 형식] JSON 객체 하나만 출력한다(설�
  "metaBy":{"subject":"teacher|ai", ...},  ← 교사가 말한 값은 teacher, 네가 정한 기본값은 ai
  "plan":null 또는 [{"no":1,"unit":"소단원","standards":[],"difficulty":"상","points":3,"form":"combo|single|pair|talk|essay","structure":"two|big|small|condition|many|experiment|none","twist":"평가할 사고·꼬는 방식 한 줄","figure":"reuse|convert|new|code|none","basis":[{"kind":"textbook|worksheet|past","title":"","page":0}],"status":"set|choosing|redesign|empty"}],
  "ledger":[{"id":"코멘트 id","status":"talk|decided|dropped","gist":"요지","answer":"교사 질문이면 근거로 먼저 답"}],
- "rules":[{"text":"이번 대화에서 교사가 말한 출제 규칙(다음 문항에도 쓸 만한 것)"}]
+ "rules":[{"text":"교사가 이번 말에서 새로 밝힌 출제 규칙(표현·표기·금지·자료 다루는 법 등 다음 문항에도 쓸 것)만. 문항 수·배점·난이도·강조 단원 같은 시험 조건은 meta에 넣고 여기 넣지 않는다. 없으면 []"}]
 }
 - 과목·범위·문항 수·총점 중 하나라도 비어 있으면 설계표(plan)를 만들지 말고 그것만 묻는다. 나머지(배점 종류·난이도 분포·양식·학교급·개정)는 묻지 말고 기본값을 meta에 넣고 metaBy=ai로 둔다.
 - 너는 아무것도 고치지 않는다. 「고쳤다·반영했다」라고 말하지 않는다. 반영은 교사가 「반영해」라고 말할 때 앱이 한다.

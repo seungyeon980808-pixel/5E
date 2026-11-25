@@ -327,3 +327,11 @@ test('별과우주 실제 16문항: 통계·묶음·파일 왕복', {skip:!exist
   assert.ok(bytes.length<readFileSync(STAR).length,'base64를 바이트로 담아 원본 JSON보다 작다');
   const back=await parseExamsetFile(bytes);assert.deepEqual(back,JSON.parse(JSON.stringify(w)));
 });
+
+// 11-25 밤샘 완주 1에서 나온 결함 두 가지
+test('완주 결함: 안 없는 「결정됨」은 「반영됨」이 되지 않고, 코멘트의 AI 답·요지는 남는다', ()=>{
+  const w=M.newExamset({title:'t'}),q=newQuestion('1','합답형');M.addQuestion(w,q);
+  const c=M.addComment(w,{qid:q.id,text:'섭씨로 바꿔'});M.updateComment(w,c,{status:'decided',answer:'교과서는 ℃',gist:'섭씨로'});
+  const cm=w.comments.find(x=>x.id===c);assert.equal(cm.answer,'교과서는 ℃');assert.equal(cm.gist,'섭씨로');
+  const r=M.applyDecided(w);assert.deepEqual(r.changedQids,[]);assert.deepEqual(r.noProposal,[c]);assert.equal(cm.status,'decided');
+});

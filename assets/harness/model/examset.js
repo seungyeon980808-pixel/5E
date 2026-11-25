@@ -165,7 +165,7 @@ export function addComment(work,{qid=null,target=null,text,onVersion=work.head}=
   const c={id:'c-'+uid(),qid,target,text:String(text),at:now(),onVersion:onVersion??null,status:'new',split:[],decision:null,proposals:[],appliedIn:null};
   work.comments.push(c);work.dirty=true;return c.id;
 }
-const COMMENT_PATCH=['status','split','decision','proposals','target','appliedIn'];
+const COMMENT_PATCH=['status','split','decision','proposals','target','appliedIn','answer','gist'];// 11-25 완주 1: answer·gist(AI 답·요지)가 버려져 대장에 AI 답이 안 보였다
 export function updateComment(work,id,patch={}){
   const c=work.comments.find(x=>x.id===id);if(!c)throw Error('코멘트를 찾지 못했습니다.');
   if(patch.status!==undefined&&!COMMENT_STATUS.includes(patch.status))throw Error('코멘트 상태는 new·talk·decided·applied·dropped 중 하나입니다.');
@@ -232,7 +232,7 @@ export function setProposalState(work,id,state){
 // 「반영」: decided인 코멘트에 딸린 제안(agreed·current)만 문항에 적용한다. 잠긴 칸을 건드리는 변경은 건너뛰고 적는다.
 // 건너뛰거나 실패한 변경이 있는 코멘트는 decided로 남긴다(선생님이 다시 정하도록). 나머지는 applied.
 export function applyDecided(work){
-  const changed=new Set(),skipped=[],errors=[],appliedProposals=[],appliedComments=[];
+  const changed=new Set(),skipped=[],errors=[],appliedProposals=[],appliedComments=[],noProposal=[];
   for(const c of work.comments.filter(c=>c.status==='decided')){
     const ids=new Set([...c.proposals,...work.proposals.filter(p=>p.comments.includes(c.id)).map(p=>p.id)]);
     let clean=true;
@@ -248,10 +248,12 @@ export function applyDecided(work){
       if(r.applied.length){work.questions[at]=r.question;changed.add(p.qid);}
       if(r.applied.length||!p.changes.length){p.state='applied';appliedProposals.push(p.id);}
     }
-    if(clean){c.status='applied';appliedComments.push(c.id);}
+    // 11-25 완주 1: 딸린 제안이 하나도 없는 「결정됨」이 「반영됨」으로 넘어가 문항은 그대로인데 반영된 것처럼 보였다 → decided로 남기고 알린다.
+    const appliedAny=[...ids].some(pid=>work.proposals.find(x=>x.id===pid)?.state==='applied'&&appliedProposals.includes(pid));
+    if(clean&&appliedAny){c.status='applied';appliedComments.push(c.id);}else if(clean&&!ids.size)noProposal.push(c.id);
   }
   if(changed.size||appliedComments.length)work.dirty=true;
-  return {changedQids:[...changed],skipped,errors,applied:{proposals:appliedProposals,comments:appliedComments}};
+  return {changedQids:[...changed],skipped,errors,noProposal,applied:{proposals:appliedProposals,comments:appliedComments}};
 }
 
 /* ---------- 판 ---------- */
