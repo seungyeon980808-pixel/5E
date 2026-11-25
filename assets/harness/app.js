@@ -217,15 +217,18 @@ const figuresOf=q=>[...q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.f
 // 풀이 검사: 판의 바뀐 문항만, 두 모델이 정답·해설 없이 새 맥락에서 따로 푼다(결정 8 + 4 가정).
 async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questions.some(q=>q.id===id&&q.type!=='서술형'));if(!ids.length)return;
   const a=act(`정답·해설 가린 문항지로 두 모델 풀이 — 바뀐 문항 ${ids.length}개`);let done=0;
-  const one=async id=>{const q=work.questions.find(x=>x.id===id);if(!q)return;const runs=[];
+  const doneIds=[];
+  const one=async id=>{const q=work.questions.find(x=>x.id===id);if(!q)return;const runs=[];doneIds.push(id);
+    // 생명과학 시나리오: 그림 칸이 비어 있는 문항도 두 모델에게 보내 「그림 없음」만 받고 크레딧을 썼다 → 그림이 다 들어온 뒤에 푼다.
+    const empty=q.blocks.filter(b=>b.kind==='figure'&&!b.figure?.data);if(empty.length){X.recordCheck(work,{qid:id,version:v.label,contentHash:null,runs:[],verdict:'skipped',skipped:`그림 칸 ${empty.length}개가 비어 있어 아직 풀지 않음`});note('solve-skip-figure',{no:q.number});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);return;}
     for(const s of SOLVERS){let last=null;for(const model of [s.model,...(s.fallback||[])]){try{const r=await call('turn',{scope:`solve:${model}:${id}`,text:buildSolvePrompt(q),model,effort:'medium',attachments:figuresOf(q)});const p=parseSolve(r.text);last={provider:'codex',model:r.model||model,isolated:true,answer:p.ok?p.value.answer:null,multiple:p.value?.multiple||[],note:p.value?.note||(p.ok?'':'형식 오류'),ms:r.ms};break;}
         catch(e){last={provider:'codex',model,isolated:true,answer:null,note:'풀지 못함: '+e.message,ms:0};note('solve-retry',{model,error:e.message.slice(0,120)});}}runs.push(last);}
     const ans=Number.isInteger(q.answer)?q.answer+1:null,vd=verdict(ans,runs);X.recordCheck(work,{qid:id,version:v.label,contentHash:null,runs,verdict:vd,skipped:runs.every(r=>r.answer==null)?'풀이 실패':null});
     note('solve',{no:q.number,verdict:vd,answers:runs.map(r=>r.answer)});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);render();};
   const queue=[...ids];await Promise.all(Array.from({length:1},async()=>{while(queue.length)await one(queue.shift());}));a.done();
-  const ck=work.checks.filter(c=>c.version===v.label),bad=ck.filter(c=>c.verdict!=='pass');
+  const ck=doneIds.map(id=>work.checks.filter(c=>c.qid===id&&c.version===v.label).at(-1)).filter(Boolean),bad=ck.filter(c=>c.verdict!=='pass');
   const used=[...new Set(ck.flatMap(c=>c.runs.filter(r=>r.answer!=null||!/^풀지 못함/.test(r.note||'')).map(r=>r.model)))];
-  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${used.join('·')||SOLVERS.map(s=>s.label).join('·')}${used.some(m=>!SOLVERS.some(s=>s.model===m))?' — 기본 둘째 모델이 막혀 대신 푼 모델이 있어요':''}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
+  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${used.join('·')||SOLVERS.map(s=>s.label).join('·')}${used.some(m=>!SOLVERS.some(s=>s.model===m))?' — 기본 둘째 모델이 막혀 대신 푼 모델이 있어요':''}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:c.skipped&&/그림 칸/.test(c.skipped)?'그림이 아직 없음':'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
 
 // 문항 대화(하위 세션)
 async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
