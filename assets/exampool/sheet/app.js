@@ -1691,6 +1691,10 @@ async function receiveAuthor(m){
     if(stale)msg.notes.unshift('기다리는 동안 문항 내용이 바뀌어(직접 수정 등), 이 답은 요청할 때의 내용 기준입니다. 검토 상태에는 반영하지 않았고 변경안은 확인 후 적용할 수 있습니다.');
     else if(!changes.length){const before=ensureAuthoring(q).evidence.length;recordReview(q,response,{evidence:evidenceMap,figuresSeen:meta.figuresSeen===true&&verdict==='current'});msg.evidence=q.authoring.evidence.slice(before).slice(-12).map(b=>({target:labelOf(q,b.target),judgement:b.judgement,title:b.source?.title||'',claim:b.claim}));}
     else msg.evidence=(response.evidenceUsed||[]).slice(0,12).map(e=>({target:String(e.target||''),judgement:evidenceMap.has(String(e.ref))?e.judgement:'missing',title:evidenceMap.get(String(e.ref))?.title||'',claim:String(e.claim||'')}));
+    // 11-25 밤샘(시나리오 E1): AI 검토(review.axes)는 「지금 판」 기준이다(prompt.js RESPONSE_SPEC). 예전엔 변경안이 있으면 이 검토를 변경안에 붙였다가
+    // 적용할 때 「다음 판」의 검토로 기록해, 고친 문항이 「정답·조건 · 문제 있음」으로 남았다. 지금 판의 축은 지금 판에 기록하고,
+    // 변경안에는 변경안 기준 풀이(solve)·근거만 붙인다(적용 뒤 축은 「다시 검토」로 남아 교사가 다시 검토를 부른다).
+    if(changes.length&&!stale&&response.review?.axes)recordReview(q,{review:{axes:response.review.axes}},{evidence:new Map(),figuresSeen:meta.figuresSeen===true&&verdict==='current'});
     if(changes.length){const p=storeProposal(q,req,{summary:response.proposal.summary||'AI 변경안',changes,review:reviewPack},stale?'stale':'current');msg.proposalId=p.id;}
     (q.reviews ||= []).push(msg);if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);
     if(req.kind==='review'&&(q.workflow||'draft')==='draft')q.workflow='review';
@@ -1759,7 +1763,7 @@ async function decideProposal(q,id,action,{force=false}={}){
     void syncAuthoring(q.id,{by:'ai',summary:'AI 변경안: '+p.summary.slice(0,200)}).then(()=>{
       // 변경안을 만든 검토는 '변경안 그대로' 적용했을 때만 새 버전의 검토로 남긴다(일부만 적용됐거나 지난 변경안이면 남기지 않음).
       const live=data.questions.find(x=>x.id===q.id);if(!live||!p.review||applied.errors.length||stale)return;
-      mutate(()=>{recordReview(live,{review:p.review.review,solve:p.review.solve,evidenceUsed:p.review.evidenceUsed},{evidence:new Map(p.review.evidence||[])});},{render:false});cardEditor.refreshAi?.();});}
+      mutate(()=>{recordReview(live,{solve:p.review.solve,evidenceUsed:p.review.evidenceUsed},{evidence:new Map(p.review.evidence||[])});},{render:false});cardEditor.refreshAi?.();});}
 }
 async function revertAuthoring(q,revision){
   if(!await ask(`버전 ${revision}의 내용으로 되돌릴까요? 지금 내용은 이력에 남습니다.`,{title:'버전 되돌리기',ok:'되돌리기'}))return;
