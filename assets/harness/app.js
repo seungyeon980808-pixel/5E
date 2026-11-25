@@ -239,7 +239,7 @@ async function drawFigure(qid,i){const q=work.questions.find(x=>x.id===qid),spec
     let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);
     if(!slot){toast('빈 그림 칸이 없어 새 그림 칸을 만들었어요');slot={id:crypto.randomUUID(),parent:null,kind:'figure',label:spec.kind==='graph'?'그래프':'그림',text:'',layout:'세로',figure:null};q.blocks.push(slot);}
     slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms});toast(`${q.number}번 그림을 넣었어요`);}
-  catch(e){toast('그림을 그리지 못했어요: '+e.message);note('figure-fail',{no:q?.number,error:e.message});}finally{a.done();}}
+  catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();}finally{a.done();}}
 
 // ── 한글에서 고친 판: 차이 보고까지만(결정 2) ──
 async function importHwpx(file){const a=act('받은 한글 파일과 지금 판을 문항별로 비교하는 중…');
