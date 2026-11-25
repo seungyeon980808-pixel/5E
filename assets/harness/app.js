@@ -94,6 +94,9 @@ async function examSend(text){
   // 1) 「반영해」: 먼저 대장 상태를 교사 말대로 맞춘 뒤(AI는 decided만 표시), 코드가 결정된 것만 반영한다.
   const apply=wantsApply(text),discuss=wantsDiscussOnly(text);
   if(/다 달았|코멘트 (다|봐|읽|확인)/.test(text)&&work.comments.some(c=>c.status==='new')){await triageComments(text);return;}
+  // 정답 분포 맞추기(AI 대화를 거치지 않음): 안 만들기 / 교사가 그 안을 반영하라고 할 때
+  if(/정답 ?분포.*(맞춰|맞추|고르게)/.test(text)&&!apply){await rebalanceAnswers();return;}
+  if(/정답 ?분포 ?안/.test(text)&&apply){for(const c of work.comments.filter(c=>c.status==='talk'&&/^\(정답 분포 맞추기\)/.test(c.text)))X.updateComment(work,c.id,{status:'decided',decision:c.text});await applyNow('정답 분포 맞추기');return;}
   const shownPlan=(work.planProposals||[]).slice();// 교사가 이미 본 설계표 안만 받을 수 있다(이번 턴에 새로 나온 안은 아직 못 봤음)
   const v=await examTurn(text);
   absorb(v,text,{allowDecided:!discuss});
@@ -136,8 +139,21 @@ async function draftAll(){
   const queue=[...rows];const workers=Array.from({length:3},async()=>{while(queue.length)await one(queue.shift());});await Promise.all(workers);a.done();
   const v=commit(`초안 ${rows.length-fails.length}문항`,{changed:rows.filter(r=>r.qid).map(r=>r.qid)});
   say('ai',`초안 ${v.label}이 나왔어요(${rows.length-fails.length}문항${fails.length?` · 못 쓴 문항 ${fails.map(f=>f.no+'번').join(', ')} — 다시 「초안 써 줘」라고 하면 그 칸만 써요`:''}). 「문항 검토」에서 문항마다 오른쪽 아래에 편하게 코멘트를 적어 주세요. 근거·해설·검토는 각 문항의 단추를 누르면 열려요.`,{stats:v.stats});
-  tab='review';work.meta.stage='review';save();render();void solveChanged(v);
+  tab='review';work.meta.stage='review';save();render();
+  // 완주 3: AI가 정해 준 정답 번호를 다 따르지 않아 4연속이 생겼다 → 고르지 않으면 알리고, 맞추기는 교사가 말할 때 「안」으로만(결정: 정답 분포 맞추기도 제안)
+  const c=v.stats.countByNumber,vals=[1,2,3,4,5].map(n=>c[n]||0);if(v.stats.longestRun>=3||Math.max(...vals)-Math.min(...vals)>=2)say('ai',`정답 분포가 고르지 않아요(${[1,2,3,4,5].map(n=>CIRCLED[n-1]+(c[n]||0)).join(' ')} · 같은 번호 최대 ${v.stats.longestRun}연속). 맞추려면 「정답 분포 맞춰 줘」라고 해 주세요. 어느 문항을 어떻게 바꿀지 안부터 보여 드려요.`);
+  void solveChanged(v);
 }
+// 정답 분포 맞추기: 바꿀 문항을 골라 「정답이 ⓧ이 되게」 안을 만든다(반영은 교사가 「반영해」).
+async function rebalanceAnswers(){const qs=X.orderedQuestions(work).filter(q=>q.type!=='서술형'&&Number.isInteger(q.answer));const ans=qs.map(q=>q.answer+1);
+  const count=[0,0,0,0,0,0];ans.forEach(a=>count[a]++);const want=Math.floor(ans.length/5),pick=[];
+  for(let i=0;i<qs.length;i++){const a=ans[i],run=i>=2&&ans[i-1]===a&&ans[i-2]===a;if(count[a]>want+1||run){const to=[1,2,3,4,5].filter(n=>n!==ans[i-1]&&n!==ans[i+1]).sort((x,y)=>count[x]-count[y])[0];if(to&&count[to]<count[a]){pick.push({q:qs[i],to});count[a]--;count[to]++;ans[i]=to;}}}
+  if(!pick.length){say('ai','지금 정답 분포에서 바꿀 문항이 없어요.');return;}
+  const a=act(`정답 분포 맞추는 안 만드는 중 · 문항 ${pick.length}개`);
+  for(const {q,to} of pick){const cid=X.addComment(work,{qid:q.id,text:`(정답 분포 맞추기) 정답을 ${CIRCLED[to-1]}로`,onVersion:work.head});
+    const pid=await proposalFrom(q,`시험지 정답 분포를 고르게 하려고 이 문항의 정답을 ${CIRCLED[to-1]}로 옮기려 한다. 문항 내용·정오는 그대로 두고 선지 순서(합답형이면 보기 내용이나 선지 조합)를 바꿔 정답이 ${CIRCLED[to-1]}이 되게 하는 proposal.changes를 만들어라. 해설의 정답 번호도 함께.`,[cid]);
+    if(pid){X.setProposalState(work,pid,'current');X.updateComment(work,cid,{status:'talk',answer:`정답을 ${CIRCLED[q.answer]} → ${CIRCLED[to-1]}로 옮기는 안`});}else X.updateComment(work,cid,{status:'talk',answer:'안을 만들지 못했어요'});}
+  a.done();say('ai',`정답 분포를 맞추는 안을 문항 ${pick.length}개에 붙였어요(${pick.map(p=>`${p.q.number}번 ${CIRCLED[p.q.answer]}→${CIRCLED[p.to-1]}`).join(', ')}). 아직 바꾸지 않았어요. 이대로 하려면 「정답 분포 안 그대로 반영해」라고 해 주세요.`,{ledger:true});tab='review';save();}
 function packetFor(q,{kind,text}){const a=ensureAuthoring(q),{typeset,reviews,authoring,origin,seen,locks,...question}=clone(q);
   const m=work.meta;return {format:'exampool-authoring-request-v1',kind,text,question,previewHtml:'',
     authoring:{revision:a.revision,target:{subject:m.subject?.value||'',scope:[].concat(m.range?.value||[]).join(', '),schoolLevel:m.grade?.value||''},requirements:a.requirements,issues:(a.issues||[]).filter(i=>i.status==='open').map(i=>i.text).slice(-8),stale:[],axes:null,recentHistory:[]},
