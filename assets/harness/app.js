@@ -78,7 +78,8 @@ function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.n
 // 자료 폴더 색인(이 기기에만): 시험지마다 IndexedDB 'folder:<id>'.
 let folderIndex=null,folderFor=null;
 async function getFolder(){if(folderFor===work.projectId)return folderIndex;folderFor=work.projectId;folderIndex=await idbGet('folder:'+work.projectId).catch(()=>null);return folderIndex;}
-async function folderHits(query,k=3){const idx=await getFolder();const hits=idx?searchFolder(idx,query,{k}):[];if(hits.length)note('folder-hits',{n:hits.length,top:hits[0].title});return hits;}
+// 교사 말로 먼저 찾고(묻힌 낱말이 없게) 문항 글로 보탠다 — 폴더 시나리오: 문항 글이 섞여 「7등급 625배」가 든 학습지를 놓쳤다.
+async function folderHits(query,k=3,extra=''){const idx=await getFolder();let hits=idx?searchFolder(idx,query,{k}):[];if(idx&&extra&&hits.length<k){const more=searchFolder(idx,extra,{k}).filter(h=>!hits.some(x=>x.rel===h.rel&&x.title===h.title));hits=[...hits,...more].slice(0,k).map((h,i)=>({...h,ref:`fd-${i+1}-${h.ref.split('-').pop()}`}));}if(hits.length)note('folder-hits',{n:hits.length,top:hits[0].title});return hits;}
 const SRC_KIND={textbook:'textbook',past:'past',worksheet:'document',document:'document'};
 const hitEvidence=hits=>hits.map(h=>[h.ref,{kind:SRC_KIND[h.kind]||'document',title:(h.kind==='worksheet'?'학습지 · ':'')+h.title,quote:h.quote,page:h.page,ref:h.ref}]);
 // 시험지 대화(큰 세션)
@@ -200,7 +201,7 @@ async function triageComments(text){
   const fresh=work.comments.filter(c=>c.status==='new'),byQ=new Map();for(const c of fresh)(byQ.get(c.qid)||byQ.set(c.qid,[]).get(c.qid)).push(c);
   const a=act(`코멘트 ${fresh.length}개 읽는 중…`);let n=0;
   for(const [qid,list] of byQ){const q=work.questions.find(x=>x.id===qid);if(!q){for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:'문항이 없어요.'});continue;}
-    const body=list.map((c,i)=>`${i+1}) ${c.target?`[${c.target}] `:''}${c.text}`).join('\n'),fh=await folderHits(body+' '+(q.ask||'')+' '+q.blocks.map(b=>b.text||'').join(' '));
+    const body=list.map((c,i)=>`${i+1}) ${c.target?`[${c.target}] `:''}${c.text}`).join('\n'),fh=await folderHits(body,3,(q.ask||'')+' '+q.blocks.map(b=>b.text||'').join(' '));
     try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text:`교사 코멘트(${list.length}개):\n${body}\n\n코멘트마다 요지를 말하고, 질문이면 근거로 먼저 답해. 고칠 것이 있으면 바꿀 안을 proposal.changes에 꼭 넣어(이것은 「제안」일 뿐이고 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다). 질문만 있어 고칠 것이 없으면 proposal은 null. 정답·분포가 바뀌면 그 영향도 reply에 써. reply에 「바꿨습니다」라고 쓰지 마.${fh.length?'\n\n'+folderPrompt(fh):''}`})});
       const resp=r.response,changes=proposalChanges(q,resp.proposal);let pid=null;
       if(changes.length)pid=X.addProposal(work,{qid,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:list.map(c=>c.id),effects:{answer:changes.some(c=>c.path==='answer')}});
@@ -267,7 +268,7 @@ async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)th
       const pid=await proposalFrom(q,`교사가 바로 앞에서 합의한 안을 그대로 반영하라고 했다(「${text}」). 아래 합의 내용을 문항에 옮길 proposal.changes를 만들어라. 합의에 없는 칸은 건드리지 마.\n[합의한 안]\n${lastAi.text}`,[]);if(!pid){say('ai','합의한 안을 고칠 칸으로 옮기지 못했어요. 바꿀 곳을 한 번 더 짚어 주세요. 바뀐 것은 없어요.',{error:true});return;}props=[work.proposals.find(p=>p.id===pid)];}
     for(const p of props){p.state='agreed';for(const cid of p.comments||[])X.updateComment(work,cid,{status:'decided'});if(!p.comments?.length){const cid=X.addComment(work,{qid:q.id,text:'(문항 대화에서 정함) '+p.summary,onVersion:work.head});X.updateComment(work,cid,{status:'decided',proposals:[p.id]});}}
     await applyNow(`${q.number}번 문항 대화에서 반영`);return;}
-  const discuss=wantsDiscussOnly(text),fh=await folderHits(text+' '+(q.ask||'')+' '+q.blocks.map(b=>b.text||'').join(' '));
+  const discuss=wantsDiscussOnly(text),fh=await folderHits(text,3,(q.ask||'')+' '+q.blocks.map(b=>b.text||'').join(' '));
   const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text+'\n(안을 말할 때는 그 안을 proposal.changes에도 넣어 줘. 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다.)'+(fh.length?'\n\n'+folderPrompt(fh):'')})},{onProgress:p=>{}});
   const resp=r.response,changes=discuss?[]:proposalChanges(q,resp.proposal);let pid=null;
   if(changes.length)pid=X.addProposal(work,{qid:q.id,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:[],effects:{answer:changes.some(c=>c.path==='answer')}});
