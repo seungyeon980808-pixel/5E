@@ -33,7 +33,9 @@ html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspa
 
   // ── AI ──
   let authoringPromise,enginesPromise;
-  const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):authoringPromise||=import('./exampool-authoring-harness.js?v=1.7.0-four-session-integration').then(x=>x.createAuthoringHarness());
+  // 11-25 밤샘: 출제 엔진을 처음 부를 때 인터넷이 끊겨 있으면 「Failed to fetch dynamically imported module …」 영어 원문이 문항 대화에 그대로 떴다.
+const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 요청하세요. 입력한 내용은 그대로입니다.';
+  const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):authoringPromise||=import('./exampool-authoring-harness.js?v=1.7.0-four-session-integration').then(x=>x.createAuthoringHarness()).catch(error=>{authoringPromise=null;throw Object.assign(Error(MODULE_FAIL),{cause:error});});
   const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1.7.0-four-session-integration').then(x=>x.createFigureEngines()));
   const base=()=>window.fiveEDesktop||window.fiveEWebAI;
   const bridges=new Map(),controllers=new Map();
