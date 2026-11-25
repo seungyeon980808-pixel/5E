@@ -11,6 +11,7 @@ import {proposalChanges,ensureAuthoring,recordReview} from '../exampool/authorin
 import {applyChanges,checkAnswerStructure} from '../exampool/authoring/contract.js';
 import {buildSheetProject,readSheetFile} from '../exampool/sheet/sheet-file.js';
 import {peekKind} from './model/file.js';
+import {readFolder,searchFolder,folderPrompt} from './folder.js';
 import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,wantsSolve,parseSolve,buildSolvePrompt,verdict} from './ai.js';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -74,6 +75,12 @@ async function send(){const ta=$('#input'),text=ta.value.trim();if(!text||busy)r
   try{sub?await subSend(text):await examSend(text);}catch(e){failMsg(e);}finally{busy--;$('#bSend').disabled=false;render();}}
 function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.need==='login'?(e.opened?'GPT 로그인이 필요해요. 연결 화면을 열었어요 — 로그인하면 같은 말을 이어서 보내요. 쓰던 내용은 그대로예요.':'GPT 로그인이 필요해요. 왼쪽 아래 「5E」를 눌러 5E 화면의 AI 연결에서 로그인한 뒤 같은 말을 다시 보내 주세요. 쓰던 내용은 그대로예요.'):e.need==='install'?(e.opened?'이 컴퓨터에 Codex가 없어요. 연결 화면을 열었어요 — 설치하면 같은 말을 이어서 보내요.':'이 컴퓨터에 Codex가 없어 AI를 부르지 못했어요. AI 연결 화면에서 설치한 뒤 다시 보내 주세요.'):e.cancelled?'요청을 취소했어요. 바뀐 것은 없어요.':`AI 답을 받지 못했어요: ${e.message} · 바뀐 것은 없어요. 같은 말을 다시 보내면 이어서 해요.`;say('ai',text,{error:true});}
 
+// 자료 폴더 색인(이 기기에만): 시험지마다 IndexedDB 'folder:<id>'.
+let folderIndex=null,folderFor=null;
+async function getFolder(){if(folderFor===work.projectId)return folderIndex;folderFor=work.projectId;folderIndex=await idbGet('folder:'+work.projectId).catch(()=>null);return folderIndex;}
+async function folderHits(query,k=3){const idx=await getFolder();const hits=idx?searchFolder(idx,query,{k}):[];if(hits.length)note('folder-hits',{n:hits.length,top:hits[0].title});return hits;}
+const SRC_KIND={textbook:'textbook',past:'past',worksheet:'document',document:'document'};
+const hitEvidence=hits=>hits.map(h=>[h.ref,{kind:SRC_KIND[h.kind]||'document',title:(h.kind==='worksheet'?'학습지 · ':'')+h.title,quote:h.quote,page:h.page,ref:h.ref}]);
 // 시험지 대화(큰 세션)
 const globalRules=()=>{try{return JSON.parse(localStorage.getItem('5e.harness.rules')||'[]');}catch{return [];}};
 const setGlobalRules=list=>{try{localStorage.setItem('5e.harness.rules',JSON.stringify(list.slice(-200)));}catch{}};
@@ -83,6 +90,7 @@ function ledgerForPrompt(){return work.comments.filter(c=>['new','talk','decided
 // 11-25 완주 2: 과목·범위가 들어온 바로 그 턴에는 아직 「막는 칸이 빔」이라 검색을 건너뛰어, 설계표가 근거 없이 잡혔다 → 설계표가 비었으면 교사 말에서도 검색어를 뽑는다.
 async function planEvidence(text=''){const m=work.meta;if(work.plan.length)return [];const terms=[[].concat(m.range?.value||[]).join(' '),m.subject?.value||'',text].join(' ').split(/[,·:\s]+/).filter(t=>t.length>1&&!/교과서|쪽|\d|하자|해\s?줘|이야|만들|출제|문항|기말|중간|시험|다시|수업|강조|앞쪽|힘|주고|최상|보통|쉬움|^상$|^과목|이름/.test(t)).filter((t,i,a)=>a.indexOf(t)===i).slice(0,6);if(!terms.length)return [];
   const found=[];for(const kind of ['curriculum','past']){try{const r=await call('evidence',{request:{kind,terms:terms.slice(0,4),sentence:`${m.subject?.value||''} ${terms.join(' ')}`,limit:kind==='past'?6:4}});for(const e of r.results||[])found.push(e);note('plan-evidence',{evKind:kind,available:r.available,n:(r.results||[]).length,warning:r.warning||''});}catch(e){note('plan-evidence-fail',{evKind:kind,error:e.message});}}
+  for(const h of await folderHits([terms.join(' '),text].join(' '),4))found.push(h);
   work.sources.planEvidence=found.map(e=>({ref:e.ref,kind:e.kind,title:e.title,page:e.page||null,quote:String(e.quote||'').slice(0,600)}));return work.sources.planEvidence;}
 async function examTurn(text){
   const ev=await planEvidence(text);
@@ -175,12 +183,13 @@ async function draftRow(row){
   const text=`새 문항 초안을 써 줘. 시험: ${[m.subject?.value,m.grade?.value,m.examName?.value].filter(Boolean).join(' ')} · 범위: ${[].concat(m.range?.value||[]).join(', ')}.
 설계표 ${row.no}번: 소단원 ${row.unit||''} · 난이도 ${row.difficulty||''} · 배점 ${row.points||''}점 · 유형 ${row.form||''} · 자료 구조 ${row.structure||''} · 평가할 사고 ${row.twist||''} · 그림 ${row.figure||''}.
 ${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고${needFigure?`, 이 문항은 그림이 있는 문항이니 빈 「${row.figure==='code'?'그래프':'그림'}」 칸의 제작 명세를 figures에 꼭 1개 이상 써 줘(slot은 그 칸 이름, ${row.figure==='convert'?'기출 그림을 바탕으로 바꿔 그리는 명세':row.figure==='code'?'kind=graph, 축·단위·값을 정확히':'kind=image'})`:''}. ${row.answerTarget?`정답은 ${'①②③④⑤'[row.answerTarget-1]}이 되게 써 줘(시험지 전체 정답 분포를 고르게 맞춘 것). 합답형이면 옳은 보기 조합이 ${'①②③④⑤'[row.answerTarget-1]} 자리 선지가 되게.`:''}`;
-  const r=await call('author',{packet:packetFor(q,{kind:'draft',text})});const resp=r.response;
+  const fh=await folderHits(`${row.unit||''} ${row.twist||''} ${[].concat(m.range?.value||[]).join(' ')}`);
+  const r=await call('author',{packet:packetFor(q,{kind:'draft',text:text+(fh.length?'\n\n'+folderPrompt(fh):'')})});const resp=r.response;
   const changes=proposalChanges(q,resp.proposal);const {question,errors}=applyChanges(q,changes);
   Object.assign(q,question);
   // 생명과학 시나리오: 합답형 칸으로 만들었는데 AI가 객관식으로 써서 빈 〈보기〉 상자가 남았다 → 합답형이 아니면 빈 보기 상자는 뺀다(빈 칸 정리).
   if(q.type!=='합답형')q.blocks=q.blocks.filter(b=>!(b.kind==='bogi'&&!b.lines?.some(l=>String(l.text||'').trim())));
-  X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map((r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]))});
+  X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map([...(r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]),...hitEvidence(fh)])});
   q.figureSpecs=(resp.figures||[]).slice(0,6);X.addQuestion(work,q,{planNo:row.no});X.linkItem(work,row.no,q.id);
   subThread(q.id).push({role:'ai',text:resp.reply,at:nowIso(),model:r.meta?.model,ms:r.meta?.ms});
   note('draft',{no:row.no,ms:r.meta?.ms,changes:changes.length,errors:errors.length,figures:q.figureSpecs.length});
@@ -191,8 +200,8 @@ async function triageComments(text){
   const fresh=work.comments.filter(c=>c.status==='new'),byQ=new Map();for(const c of fresh)(byQ.get(c.qid)||byQ.set(c.qid,[]).get(c.qid)).push(c);
   const a=act(`코멘트 ${fresh.length}개 읽는 중…`);let n=0;
   for(const [qid,list] of byQ){const q=work.questions.find(x=>x.id===qid);if(!q){for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:'문항이 없어요.'});continue;}
-    const body=list.map((c,i)=>`${i+1}) ${c.target?`[${c.target}] `:''}${c.text}`).join('\n');
-    try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text:`교사 코멘트(${list.length}개):\n${body}\n\n코멘트마다 요지를 말하고, 질문이면 근거로 먼저 답해. 고칠 것이 있으면 바꿀 안을 proposal.changes에 꼭 넣어(이것은 「제안」일 뿐이고 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다). 질문만 있어 고칠 것이 없으면 proposal은 null. 정답·분포가 바뀌면 그 영향도 reply에 써. reply에 「바꿨습니다」라고 쓰지 마.`})});
+    const body=list.map((c,i)=>`${i+1}) ${c.target?`[${c.target}] `:''}${c.text}`).join('\n'),fh=await folderHits(body+' '+(q.ask||'')+' '+q.blocks.map(b=>b.text||'').join(' '));
+    try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text:`교사 코멘트(${list.length}개):\n${body}\n\n코멘트마다 요지를 말하고, 질문이면 근거로 먼저 답해. 고칠 것이 있으면 바꿀 안을 proposal.changes에 꼭 넣어(이것은 「제안」일 뿐이고 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다). 질문만 있어 고칠 것이 없으면 proposal은 null. 정답·분포가 바뀌면 그 영향도 reply에 써. reply에 「바꿨습니다」라고 쓰지 마.${fh.length?'\n\n'+folderPrompt(fh):''}`})});
       const resp=r.response,changes=proposalChanges(q,resp.proposal);let pid=null;
       if(changes.length)pid=X.addProposal(work,{qid,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:list.map(c=>c.id),effects:{answer:changes.some(c=>c.path==='answer')}});
       for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:resp.reply.slice(0,1200),proposals:pid?[pid]:[]});
@@ -258,11 +267,11 @@ async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)th
       const pid=await proposalFrom(q,`교사가 바로 앞에서 합의한 안을 그대로 반영하라고 했다(「${text}」). 아래 합의 내용을 문항에 옮길 proposal.changes를 만들어라. 합의에 없는 칸은 건드리지 마.\n[합의한 안]\n${lastAi.text}`,[]);if(!pid){say('ai','합의한 안을 고칠 칸으로 옮기지 못했어요. 바꿀 곳을 한 번 더 짚어 주세요. 바뀐 것은 없어요.',{error:true});return;}props=[work.proposals.find(p=>p.id===pid)];}
     for(const p of props){p.state='agreed';for(const cid of p.comments||[])X.updateComment(work,cid,{status:'decided'});if(!p.comments?.length){const cid=X.addComment(work,{qid:q.id,text:'(문항 대화에서 정함) '+p.summary,onVersion:work.head});X.updateComment(work,cid,{status:'decided',proposals:[p.id]});}}
     await applyNow(`${q.number}번 문항 대화에서 반영`);return;}
-  const discuss=wantsDiscussOnly(text);
-  const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text+'\n(안을 말할 때는 그 안을 proposal.changes에도 넣어 줘. 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다.)'})},{onProgress:p=>{}});
+  const discuss=wantsDiscussOnly(text),fh=await folderHits(text+' '+(q.ask||'')+' '+q.blocks.map(b=>b.text||'').join(' '));
+  const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text+'\n(안을 말할 때는 그 안을 proposal.changes에도 넣어 줘. 앱은 교사가 「반영해」라고 하기 전까지 문항을 바꾸지 않는다.)'+(fh.length?'\n\n'+folderPrompt(fh):'')})},{onProgress:p=>{}});
   const resp=r.response,changes=discuss?[]:proposalChanges(q,resp.proposal);let pid=null;
   if(changes.length)pid=X.addProposal(work,{qid:q.id,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:[],effects:{answer:changes.some(c=>c.path==='answer')}});
-  else if(resp.review||resp.solve)recordReview(q,resp,{});
+  else if(resp.review||resp.solve||resp.evidenceUsed?.length)recordReview(q,resp,{evidence:new Map([...(r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]),...hitEvidence(fh)])});
   say('ai',resp.reply+(pid?'\n\n아직 고치지 않았어요. 이대로 할지 말씀해 주시고, 고치려면 「반영해」라고 해 주세요.':''),{proposalId:pid,asks:resp.questions||[],model:r.meta?.model,ms:r.meta?.ms});
   note('sub',{qid:q.id,proposal:!!pid,discuss,ms:r.meta?.ms});
 }
@@ -388,7 +397,10 @@ $('#fOpen').onchange=()=>{const f=$('#fOpen').files[0];$('#fOpen').value='';if(f
 $('#fHwpx').onchange=()=>{const f=$('#fHwpx').files[0];$('#fHwpx').value='';if(f)importHwpx(f);};
 $('#fFolder').onchange=async()=>{const files=[...$('#fFolder').files];$('#fFolder').value='';if(!files.length)return;const root=files[0].webkitRelativePath.split('/')[0];
   work.sources={...work.sources,folder:{path:root,label:root},files:files.filter(f=>/\.(pdf|hwpx?|pptx?|docx?|png|jpe?g|txt)$/i.test(f.name)).slice(0,300).map(f=>({id:crypto.randomUUID(),rel:f.webkitRelativePath,kind:/교과서/.test(f.webkitRelativePath)?'textbook':/학습지/.test(f.webkitRelativePath)?'worksheet':/기출/.test(f.webkitRelativePath)?'past':'document',bytes:f.size,readAt:null}))};
-  save();say('ai',`자료 폴더 「${root}」를 등록했어요(파일 ${work.sources.files.length}개). 지금은 파일 목록만 기억하고, 내용을 근거 검색에 쓰는 것은 아직이에요.`);note('folder',{files:work.sources.files.length});};
+  save();const a=act(`자료 폴더 「${root}」 읽는 중…`);busy++;try{const idx=await readFolder(files,{onProgress:p=>a.set(`자료 폴더 읽는 중 · ${p.i+1}/${p.n} ${p.rel.split('/').pop()}`)});await idbSet('folder:'+work.projectId,idx);folderIndex=idx;folderFor=work.projectId;
+    const pages=idx.reduce((n,f)=>n+f.pages.filter(Boolean).length,0),bad=idx.filter(f=>f.error).length,imgs=files.filter(f=>/\.(png|jpe?g|webp|gif|heic)$/i.test(f.name)).length;for(const f of work.sources.files){const hit=idx.find(x=>x.rel===f.rel);if(hit){f.readAt=nowIso();f.pages=hit.pages.length;}}save();
+    say('ai',`자료 폴더 「${root}」를 등록했어요(파일 ${work.sources.files.length}개, 글을 읽은 쪽 ${pages}쪽${bad?` · 못 읽은 파일 ${bad}개`:''}${imgs?` · 그림 파일 ${imgs}개는 글자를 읽지 못해 아직 근거로 못 써요(교과서 쪽 사진 등)`:''}). 이제 설계·초안·코멘트 때 이 폴더에서 근거 후보를 찾아 함께 봐요. 내용은 이 컴퓨터에만 두고 시험지 파일에는 경로만 남겨요.`);note('folder',{files:work.sources.files.length,pages,bad});}
+  catch(e){say('ai','자료 폴더를 읽지 못했어요: '+e.message+' · 파일 목록만 기억했어요.',{error:true});note('folder-fail',{error:e.message});}finally{a.done();busy--;render();}};
 // 패널 넓이 끌기(시안 v8 그대로)
 (()=>{const sp=$('#splitter'),wEl=$('#splitW'),w=$('#work');let on=false;const set=x=>{const r=w.getBoundingClientRect();const v=Math.max(460,Math.min(r.width-360,r.right-x));w.style.setProperty('--pw',v+'px');wEl.textContent='결과물 '+Math.round(v)+'px · 대화 '+Math.round(r.width-v)+'px';};
   sp.addEventListener('pointerdown',e=>{on=true;sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('resizing');set(e.clientX);});sp.addEventListener('pointermove',e=>{if(on)set(e.clientX);});

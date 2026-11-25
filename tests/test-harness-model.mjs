@@ -335,3 +335,10 @@ test('완주 결함: 안 없는 「결정됨」은 「반영됨」이 되지 않
   const cm=w.comments.find(x=>x.id===c);assert.equal(cm.answer,'교과서는 ℃');assert.equal(cm.gist,'섭씨로');
   const r=M.applyDecided(w);assert.deepEqual(r.changedQids,[]);assert.deepEqual(r.noProposal,[c]);assert.equal(cm.status,'decided');
 });
+
+test('자료 폴더 검색: 띄어쓰기 무시·나눠 읽은 글·근거 후보 글', async()=>{
+  const {searchFolder,folderPrompt}=await import('../assets/harness/folder.js');
+  const idx=[{rel:'자료/학습지/학습지6.txt',kind:'worksheet',chunked:true,pages:['은하까지의 거리와 후퇴속도는 비례한다. 이것을 허블 법칙이라 한다.']},{rel:'자료/교과서.pdf',kind:'textbook',pages:['별의 색과 표면 온도']}];
+  const h=searchFolder(idx,'허블 법칙 후퇴 속도');assert.equal(h.length,1);assert.match(h[0].title,/학습지6\.txt \(1번째 부분\)/);assert.equal(h[0].page,null);assert.ok(h[0].quote.length>0);
+  assert.match(folderPrompt(h),/학습지·수업 자료/);assert.deepEqual(searchFolder(idx,'광합성 엽록체'),[]);
+});
