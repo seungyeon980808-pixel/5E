@@ -195,9 +195,12 @@ async function applyNow(why){
       await proposalFrom(q,`교사가 이 코멘트를 이렇게 하기로 정하고 반영하라고 했다. 정한 대로 문항을 고칠 proposal.changes를 만들어라. 정한 것 밖은 건드리지 마.\n[코멘트] ${c.text}\n[정한 것] ${c.decision||c.gist||''}\n[교사 말] ${why}`,[c.id]);}a.done();}
   const before=work.questions.map(q=>[q.id,JSON.stringify(stripMeta(q))]);
   const r=X.applyDecided(work);const changed=r.changedQids||[];
+  if(!changed.length&&r.errors?.length){const nos=[...new Set(r.errors.map(e=>work.questions.find(q=>q.id===e.qid)?.number).filter(Boolean))];say('ai',`${nos.join('·')}번은 글로 고칠 수 없는 안(그림 등)이라 반영하지 못하고 「결정됨」으로 남겼어요. 바뀐 것은 없어요. 그림은 image에서 고쳐 주세요.`);note('apply-errors',{n:r.errors.length});return;}
   if(!changed.length){say('ai',`반영할 것이 없어요${r.noProposal?.length?` (결정됐지만 고칠 칸으로 옮기지 못한 코멘트 ${r.noProposal.length}개 — 「결정됨」으로 남겨 뒀어요)`:''}${r.skipped?.length?` (잠긴 칸이라 건너뛴 것 ${r.skipped.length}개)`:''}. 아직 의논 중인 것은 그대로 뒀어요.`);note('apply-empty',{noProposal:r.noProposal?.length||0});return;}
   const v=commit(why,{changed,applied:r});const talk=work.comments.filter(c=>c.status==='talk').length;
-  say('ai',`반영했어요 → ${v.label}. 바뀐 문항 ${changed.map(id=>work.questions.find(q=>q.id===id)?.number+'번').join(', ')}${talk?` · 의논 중 ${talk}개는 그대로`:''}${r.skipped?.length?` · 직접 고친 칸이라 건너뛴 것 ${r.skipped.length}개`:''}.`,{stats:v.stats});
+  const failedNos=[...new Set((r.errors||[]).map(e=>work.questions.find(q=>q.id===e.qid)?.number).filter(Boolean))];
+  // 11-25 완주 2: 그림 코멘트(그림 높이·글자 크기)는 글로 고칠 수 없어 적용에 실패했는데 결과 문구가 말하지 않았다 → 이유와 다음 길
+  say('ai',`반영했어요 → ${v.label}. 바뀐 문항 ${changed.map(id=>work.questions.find(q=>q.id===id)?.number+'번').join(', ')}${talk?` · 의논 중 ${talk}개는 그대로`:''}${r.skipped?.length?` · 직접 고친 칸이라 건너뛴 것 ${r.skipped.length}개`:''}${failedNos.length?` · ${failedNos.join('·')}번은 글로 고칠 수 없는 안(그림 등)이라 「결정됨」으로 남겼어요 — 그림은 「문항 검토」의 그림 칸을 두 번 눌러 image에서 고쳐 주세요`:''}.`,{stats:v.stats});
   note('apply',{label:v.label,changed:changed.length,skipped:r.skipped?.length||0,unchangedOthers:before.filter(([id,h])=>!changed.includes(id)).every(([id,h])=>JSON.stringify(stripMeta(work.questions.find(q=>q.id===id)))===h)});
   void solveChanged(v);
 }
