@@ -195,7 +195,8 @@ async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questio
     note('solve',{no:q.number,verdict:vd,answers:runs.map(r=>r.answer)});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);render();};
   const queue=[...ids];await Promise.all(Array.from({length:1},async()=>{while(queue.length)await one(queue.shift());}));a.done();
   const ck=work.checks.filter(c=>c.version===v.label),bad=ck.filter(c=>c.verdict!=='pass');
-  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${SOLVERS.map(s=>s.label).join('·')}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
+  const used=[...new Set(ck.flatMap(c=>c.runs.filter(r=>r.answer!=null||!/^풀지 못함/.test(r.note||'')).map(r=>r.model)))];
+  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${used.join('·')||SOLVERS.map(s=>s.label).join('·')}${used.some(m=>!SOLVERS.some(s=>s.model===m))?' — 기본 둘째 모델이 막혀 대신 푼 모델이 있어요':''}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
 
 // 문항 대화(하위 세션)
 async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
