@@ -277,7 +277,7 @@ async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)th
   if(changes.length){if(resp.review||resp.evidenceUsed?.length)recordReview(q,{review:resp.review,evidenceUsed:resp.evidenceUsed},{evidence:evMap});}
   else if(resp.review||resp.solve||resp.evidenceUsed?.length)recordReview(q,resp,{evidence:evMap});
   say('ai',resp.reply+(pid?'\n\n아직 고치지 않았어요. 이대로 할지 말씀해 주시고, 고치려면 「반영해」라고 해 주세요.':''),{proposalId:pid,asks:resp.questions||[],model:r.meta?.model,ms:r.meta?.ms});
-  note('sub',{qid:q.id,proposal:!!pid,discuss,ms:r.meta?.ms});
+  note('sub',{qid:q.id,proposal:!!pid,discuss,ms:r.meta?.ms,kind:/^검토/.test(text)?'review':'chat',evidenceUsed:(resp.evidenceUsed||[]).map(e=>e.ref+'→'+e.target).slice(0,8),folder:fh.map(h=>h.ref),review:!!resp.review,recorded:(q.authoring?.evidence||[]).length});
 }
 
 // ── 그림(제작 명세 → 기존 그림 엔진). 빈 그림 칸에 넣는 것은 빈 칸 채우기 ──
