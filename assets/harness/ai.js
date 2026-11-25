@@ -18,6 +18,7 @@ export function wantsApply(text){
 // 교사 말이 고치지 말라는 뜻인가(상의 모드).
 export const wantsDiscussOnly=text=>/고치지 말|상의하자|먼저 (의논|상의|얘기)|바꾸지 말고/.test(String(text||''));
 export const wantsDraft=text=>/초안|문항.*(써|만들어|뽑아)|이대로 (써|만들)/.test(String(text||''))&&!wantsDiscussOnly(text);
+export const wantsSolve=text=>/풀이 ?검사|두 모델(로|이)? ?(풀|검사)|(다시 )?풀어 ?(봐|줘)/.test(String(text||''));
 export const wantsFinal=text=>/v ?1\.0|최종(본)?으로|확정(해|하자)|이대로 (내자|낼게)/.test(String(text||''));
 
 export function validateExamResponse(v){

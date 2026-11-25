@@ -11,7 +11,7 @@ import {proposalChanges,ensureAuthoring,recordReview} from '../exampool/authorin
 import {applyChanges,checkAnswerStructure} from '../exampool/authoring/contract.js';
 import {buildSheetProject,readSheetFile} from '../exampool/sheet/sheet-file.js';
 import {peekKind} from './model/file.js';
-import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,parseSolve,buildSolvePrompt,verdict} from './ai.js';
+import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,wantsSolve,parseSolve,buildSolvePrompt,verdict} from './ai.js';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
@@ -93,6 +93,7 @@ async function examSend(text){
   if(apply){await applyNow('교사 지시: '+text.slice(0,80));return;}
   if(wantsFinal(text)){declareFinal();return;}
   if(wantsDraft(text)){await draftAll();return;}
+  if(wantsSolve(text)&&work.questions.length){const v=work.versions.find(x=>x.label===work.head)||{label:work.head||'v0.0'};await solveChanged({label:v.label,changed:work.items.slice()});return;}
 }
 function absorb(v,text,{allowDecided=true}={}){
   // 시험지 정보: 교사가 말한 것(teacher)은 늘 넣고, AI 기본값(ai)은 아직 교사가 정하지도 보지도 않은 칸에만.
