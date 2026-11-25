@@ -11,7 +11,7 @@ import {proposalChanges,ensureAuthoring,recordReview} from '../exampool/authorin
 import {applyChanges,checkAnswerStructure} from '../exampool/authoring/contract.js';
 import {buildSheetProject,readSheetFile} from '../exampool/sheet/sheet-file.js';
 import {peekKind} from './model/file.js';
-import {readFolder,searchFolder,folderPrompt} from './folder.js';
+import {readFolder,searchFolder,folderPrompt,ocrImages} from './folder.js';
 import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,wantsSolve,parseSolve,buildSolvePrompt,verdict} from './ai.js';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -403,8 +403,13 @@ $('#fFolder').onchange=async()=>{const files=[...$('#fFolder').files];$('#fFolde
   work.sources={...work.sources,folder:{path:root,label:root},files:files.filter(f=>/\.(pdf|hwpx?|pptx?|docx?|png|jpe?g|txt)$/i.test(f.name)).slice(0,300).map(f=>({id:crypto.randomUUID(),rel:f.webkitRelativePath,kind:/교과서/.test(f.webkitRelativePath)?'textbook':/학습지/.test(f.webkitRelativePath)?'worksheet':/기출/.test(f.webkitRelativePath)?'past':'document',bytes:f.size,readAt:null}))};
   save();const a=act(`자료 폴더 「${root}」 읽는 중…`);busy++;try{const idx=await readFolder(files,{onProgress:p=>a.set(`자료 폴더 읽는 중 · ${p.i+1}/${p.n} ${p.rel.split('/').pop()}`)});await idbSet('folder:'+work.projectId,idx);folderIndex=idx;folderFor=work.projectId;
     const pages=idx.reduce((n,f)=>n+f.pages.filter(Boolean).length,0),bad=idx.filter(f=>f.error).length,imgs=files.filter(f=>/\.(png|jpe?g|webp|gif|heic)$/i.test(f.name)).length;for(const f of work.sources.files){const hit=idx.find(x=>x.rel===f.rel);if(hit){f.readAt=nowIso();f.pages=hit.pages.length;}}save();
-    say('ai',`자료 폴더 「${root}」를 등록했어요(파일 ${work.sources.files.length}개, 글을 읽은 쪽 ${pages}쪽${bad?` · 못 읽은 파일 ${bad}개`:''}${imgs?` · 그림 파일 ${imgs}개는 글자를 읽지 못해 아직 근거로 못 써요(교과서 쪽 사진 등)`:''}). 이제 설계·초안·코멘트 때 이 폴더에서 근거 후보를 찾아 함께 봐요. 내용은 이 컴퓨터에만 두고 시험지 파일에는 경로만 남겨요.`);note('folder',{files:work.sources.files.length,pages,bad});}
-  catch(e){say('ai','자료 폴더를 읽지 못했어요: '+e.message+' · 파일 목록만 기억했어요.',{error:true});note('folder-fail',{error:e.message});}finally{a.done();busy--;render();}};
+    say('ai',`자료 폴더 「${root}」를 등록했어요(파일 ${work.sources.files.length}개, 글을 읽은 쪽 ${pages}쪽${bad?` · 못 읽은 파일 ${bad}개`:''}${imgs?` · 사진 ${imgs}장은 뒤에서 글자를 읽는 중이에요`:''}). 이제 설계·초안·코멘트 때 이 폴더에서 근거 후보를 찾아 함께 봐요. 내용은 이 컴퓨터에만 두고 시험지 파일에는 경로만 남겨요.`);note('folder',{files:work.sources.files.length,pages,bad});}
+  catch(e){say('ai','자료 폴더를 읽지 못했어요: '+e.message+' · 파일 목록만 기억했어요.',{error:true});note('folder-fail',{error:e.message});}finally{a.done();busy--;render();}
+  // 그림 파일은 뒤에서 글자를 읽는다(대화는 막지 않음). 다 읽으면 색인에 더하고 알린다.
+  const pics=files.filter(f=>/\.(png|jpe?g|webp)$/i.test(f.name));if(!pics.length)return;const pid=work.projectId,b=act(`사진 ${pics.length}장 글자 읽는 중…`);const t0=Date.now();
+  try{const got=await ocrImages(pics,{onProgress:p=>b.set(`사진 글자 읽는 중 · ${p.i+1}/${p.n} ${p.rel.split('/').pop()}`)});const idx=[...((await idbGet('folder:'+pid))||[]).filter(f=>!f.ocr),...got];await idbSet('folder:'+pid,idx);if(work.projectId===pid){folderIndex=idx;folderFor=pid;}
+    const ok=got.filter(g=>g.pages[0]?.length>40).length;say('ai',`사진 ${pics.length}장의 글자를 읽었어요(글이 나온 것 ${ok}장, ${Math.round((Date.now()-t0)/1000)}초). 이제 교과서 쪽 사진도 근거 후보로 써요. 사진에서 읽은 글은 틀린 글자가 있을 수 있어 근거에 「사진에서 읽은 글」이라고 적어요.`);note('ocr',{n:pics.length,ok,sec:Math.round((Date.now()-t0)/1000)});}
+  catch(e){say('ai','사진 글자를 읽지 못했어요: '+e.message+' · 글 파일만 근거로 써요.',{error:true});note('ocr-fail',{error:e.message});}finally{b.done();render();}};
 // 패널 넓이 끌기(시안 v8 그대로)
 (()=>{const sp=$('#splitter'),wEl=$('#splitW'),w=$('#work');let on=false;const set=x=>{const r=w.getBoundingClientRect();const v=Math.max(460,Math.min(r.width-360,r.right-x));w.style.setProperty('--pw',v+'px');wEl.textContent='결과물 '+Math.round(v)+'px · 대화 '+Math.round(r.width-v)+'px';};
   sp.addEventListener('pointerdown',e=>{on=true;sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('resizing');set(e.clientX);});sp.addEventListener('pointermove',e=>{if(on)set(e.clientX);});

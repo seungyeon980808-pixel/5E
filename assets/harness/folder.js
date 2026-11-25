@@ -24,6 +24,19 @@ export function searchFolder(index,query,{k=3}={}){const ts=tokens(query);if(!ts
   for(const f of index)f.pages.forEach((text,pi)=>{if(!text)return;const flat=text.replace(/\s/g,'');let score=0;for(const t of tn)if(flat.includes(t))score+=t.length>=3?2:1;if(score>=2)hits.push({f,pi,score});});
   hits.sort((a,b)=>b.score-a.score);
   return hits.slice(0,k).map(({f,pi,score},n)=>{const text=f.pages[pi],first=Math.min(...ts.map(t=>{const i=text.indexOf(t);return i<0?1e9:i;})),at=first>=1e9?0:Math.max(0,first-80);
-    return {ref:`fd-${n+1}-${pi+1}`,kind:f.kind,title:f.chunked?`${f.rel.split('/').pop()} (${pi+1}번째 부분)`:`${f.rel.split('/').pop()} ${pi+1}쪽`,page:f.chunked?null:pi+1,rel:f.rel,score,quote:text.slice(at,at+420)};});
+    return {ref:`fd-${n+1}-${pi+1}`,kind:f.kind,title:f.ocr?`${f.rel.split('/').pop()} (사진에서 읽은 글)`:f.chunked?`${f.rel.split('/').pop()} (${pi+1}번째 부분)`:`${f.rel.split('/').pop()} ${pi+1}쪽`,page:f.ocr?f.page:f.chunked?null:pi+1,rel:f.rel,score,quote:text.slice(at,at+420)};});
 }
-export function folderPrompt(hits){return hits.length?`[등록한 자료 폴더에서 찾은 글 · 근거 후보일 뿐, 인용할 때는 ref로만]\n${hits.map(h=>`ref=${h.ref} · ${({textbook:'교과서',worksheet:'학습지·수업 자료',past:'기출',document:'자료'})[h.kind]} · ${h.title}\n  ${h.quote}`).join('\n')}\n(학습지·수업 자료에 있으면 교과서에 없어도 수업에서 다룬 근거다.)`:'';}
+export function folderPrompt(hits){return hits.length?`[등록한 자료 폴더에서 찾은 글 · 근거 후보일 뿐, 인용할 때는 ref로만]\n${hits.map(h=>`ref=${h.ref} · ${({textbook:'교과서',worksheet:'학습지·수업 자료',past:'기출',document:'자료'})[h.kind]} · ${h.title}\n  ${h.quote}`).join('\n')}\n(학습지·수업 자료에 있으면 교과서에 없어도 수업에서 다룬 근거다. 답에서 이 ref를 인용했으면 evidenceUsed에도 {ref, target(보기 ㄱ·선지 ①·발문 등), claim, judgement}로 꼭 적는다 — 그래야 그 칸의 근거로 남는다.)`:'';}
+// 그림 파일(교과서 쪽 사진 등) 글자 읽기 — 5E에 들어 있는 Tesseract(한국어+영어, vendor/ocr)를 그대로 쓴다. 파일 이름의 「279쪽」을 쪽으로.
+const OCR=new URL('../../vendor/ocr/',import.meta.url).href;
+export async function ocrImages(files,{onProgress=()=>{},max=80}={}){
+  const imgs=[...files].filter(f=>/\.(png|jpe?g|webp)$/i.test(f.name)).slice(0,max);if(!imgs.length)return [];
+  const mod=await import(OCR+'tesseract.esm.min.js');const T=mod.default??mod;
+  const worker=await T.createWorker(['kor','eng'],1,{workerPath:OCR+'worker.min.js',corePath:OCR+'tesseract-core-simd-lstm.wasm.js',langPath:OCR+'lang/',gzip:true,cacheMethod:'none'});
+  const out=[];try{for(const [i,f] of imgs.entries()){const rel=f.webkitRelativePath||f.name;onProgress({i,n:imgs.length,rel});
+      try{const r=await worker.recognize(f);const text=clean(r.data?.text||'');const page=Number((f.name.match(/(\d{1,4})\s*쪽/)||[])[1])||null;
+        out.push({rel,kind:kindOf(rel),pages:[text],ocr:true,page,confidence:Math.round(r.data?.confidence||0)});}
+      catch(e){out.push({rel,kind:kindOf(rel),pages:[],ocr:true,error:String(e.message||e).slice(0,200)});}}}
+  finally{await worker.terminate().catch(()=>{});}
+  return out;
+}
