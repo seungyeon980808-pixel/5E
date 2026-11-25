@@ -1,0 +1,318 @@
+// 1.8.0 출제 하네스 화면(iframe). 시안 v8(11-24 승인)의 흐름: 시작(꼭 묻기) → 설계표 → 초안(문항 = 하위 세션) → 코멘트 대장 → 문항 대화
+// → 「반영해」 → 판 v0.x(정답 배열·개수·배점 합) → 두 모델 풀이 → 한글에서 고친 판 차이 보고 → 조판(exam으로) → v1.0 선언.
+// 원칙: 고치라는 뜻이 분명할 때만 고친다. AI가 낸 것은 모두 「제안」이고, 반영은 교사 말(wantsApply)이나 단추로만 한다.
+// 빈 칸을 처음 채우는 것(설계표 빈 행, 초안)은 알아서 하고 보여 준다(결정 7 가정).
+import * as X from './model/examset.js';
+import {buildExamsetFile,parseExamsetFile} from './model/file.js';
+import {hwpxText,diffAgainst} from './model/hwpx.js';
+import {newQuestion,applyForm,clone} from '../exampool/sheet/model.js';
+import {explanationParts} from '../exampool/sheet/explanation.js';
+import {proposalChanges,ensureAuthoring,recordReview} from '../exampool/authoring/session.js';
+import {applyChanges,checkAnswerStructure} from '../exampool/authoring/contract.js';
+import {buildSheetProject} from '../exampool/sheet/sheet-file.js';
+import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,parseSolve,buildSolvePrompt,verdict} from './ai.js';
+
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin;
+const CIRCLED='①②③④⑤',FORM_TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식',essay:'서술형'};
+const SOLVERS=[{model:'gpt-6.1-sol',label:'GPT-6.1-Sol'},{model:'gpt-6-astra',label:'GPT-6-Astra'}];// 결정 4 가정: Codex 안 두 모델, 「한 회사 두 모델」
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2200);};
+const nowIso=()=>new Date().toISOString();
+let work=null,tab='plan',sub=null,busy=0;
+const log=[];// 화면 사건 기록(검진용): window.__harnessLog
+window.__harnessLog=log;const note=(kind,data={})=>{log.push({at:nowIso(),kind,...data});if(log.length>500)log.shift();};
+
+// ── 본창과 주고받기 ──
+const pending=new Map();
+const post=msg=>window.parent.postMessage({channel:'5e-harness',...msg},OWN);
+function call(action,payload,{onProgress}={}){const requestId=crypto.randomUUID();return new Promise((resolve,reject)=>{pending.set(requestId,{resolve,reject,onProgress,action});post({action,requestId,...payload});});}
+addEventListener('message',e=>{if(e.source!==window.parent||e.data?.channel!=='5e-harness')return;const m=e.data;
+  if(m.action==='theme'){document.documentElement.dataset.theme=m.theme==='light'?'light':'dark';document.documentElement.dataset.palette=m.palette==='graphite'?'graphite':'classic';return;}
+  if(m.action==='tool-opened'){document.body.classList.add('tool-on');return;}if(m.action==='tool-closed'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));return;}
+  if(m.action==='author-progress'){pending.get(m.requestId)?.onProgress?.(m.progress);return;}
+  if(m.action==='library-picked'){if(m.items?.length){work.sources.picked=[...(work.sources.picked||[]),...m.items.map(x=>({name:x.name,at:nowIso()}))];toast(`라이브러리에서 ${m.items.length}개를 가져왔어요`);save();}return;}
+  const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);
+  if(m.error){p.reject(Object.assign(Error(m.error),{need:m.need,cancelled:m.cancelled}));return;}p.resolve(m.result);});
+
+// ── 저장(자동: IndexedDB 한 칸 / 파일: .5e examset) ──
+const DB='5e-harness';
+const idb=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+async function idbSet(key,val){const d=await idb();await new Promise((res,rej)=>{const t=d.transaction('files','readwrite');t.objectStore('files').put(val,key);t.oncomplete=res;t.onerror=()=>rej(t.error);});}
+async function idbGet(key){const d=await idb();return new Promise((res,rej)=>{const r=d.transaction('files').objectStore('files').get(key);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+let saveTimer=0;
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await idbSet('work:'+work.projectId,work);const list=(await idbGet('list'))||[];const i=list.findIndex(x=>x.id===work.projectId);const row={id:work.projectId,title:work.meta.title||'새 시험지',head:work.head,stage:work.meta.stage,at:nowIso()};if(i>=0)list[i]=row;else list.unshift(row);await idbSet('list',list.slice(0,30));await idbSet('last',work.projectId);$('#footSave').textContent='자동 저장됨 · '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});renderSide(list);}catch(e){$('#footSave').textContent='자동 저장 실패: '+e.message;note('save-fail',{error:e.message});}},400);}
+async function saveFile(){const bytes=await buildExamsetFile(work);const name=`${(work.meta.title||'시험지').replace(/[\\/:*?"<>|]/g,'_')}.5e`;
+  const desk=window.parent.fiveEDesktop?.examFiles;if(desk){const r=await desk.save({name,ext:'5e',bytes});toast('저장했어요: '+r.name);note('file-save',{bytes:bytes.length,desktop:true});return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes]));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('시험지 파일을 내려받았어요');note('file-save',{bytes:bytes.length});}
+async function openFile(file){try{const w=await parseExamsetFile(new Uint8Array(await file.arrayBuffer()));work=w;sub=null;save();render();toast('시험지를 열었어요 · '+(work.head||'v0.0'));note('file-open',{head:work.head});}catch(e){toast('열지 못했어요: '+e.message);note('file-open-fail',{error:e.message});}}
+
+// ── 대화 ──
+function say(role,text,extra={}){const m={role,text,at:nowIso(),...extra};(sub?subThread(sub):work.chat).push(m);save();renderThread();return m;}
+function subThread(qid){const s=work.sessions.find(x=>x.scope==='q:'+qid)||(work.sessions.push({id:crypto.randomUUID(),scope:'q:'+qid,parent:'exam',provider:'codex',startedAt:nowIso(),thread:[]}),work.sessions.at(-1));s.thread ||= [];return s.thread;}
+function act(text){const el=document.createElement('div');el.className='msg a';el.innerHTML=`<div class="act"><span class="dot"></span>${E(text)}</div>`;$('#thread').append(el);$('#scroll').scrollTop=1e7;return {set:t=>{el.querySelector('.act').lastChild.textContent=t;},done:()=>el.remove()};}
+async function send(){const ta=$('#input'),text=ta.value.trim();if(!text||busy)return;ta.value='';say('me',text);busy++;$('#bSend').disabled=true;
+  try{sub?await subSend(text):await examSend(text);}catch(e){failMsg(e);}finally{busy--;$('#bSend').disabled=false;render();}}
+function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.need==='login'?'GPT 로그인이 필요해요. 5E 상단의 AI 연결에서 로그인한 뒤 같은 말을 다시 보내 주세요. 쓰던 내용은 그대로예요.':e.need==='install'?'이 컴퓨터에 Codex가 없어 AI를 부르지 못했어요. AI 연결 화면에서 설치한 뒤 다시 보내 주세요.':e.cancelled?'요청을 취소했어요. 바뀐 것은 없어요.':`AI 답을 받지 못했어요: ${e.message} · 바뀐 것은 없어요. 같은 말을 다시 보내면 이어서 해요.`;say('ai',text,{error:true});}
+
+// 시험지 대화(큰 세션)
+const globalRules=()=>{try{return JSON.parse(localStorage.getItem('5e.harness.rules')||'[]');}catch{return [];}};
+const setGlobalRules=list=>{try{localStorage.setItem('5e.harness.rules',JSON.stringify(list.slice(-200)));}catch{}};
+const rulesFor=()=>[...globalRules().filter(r=>r.layer==='global'||r.layer==='subject'&&r.subject===work.meta.subject?.value),...(work.rules.exam||[])];
+function ledgerForPrompt(){return work.comments.filter(c=>['new','talk','decided'].includes(c.status)).map(c=>({id:c.id,no:work.questions.find(q=>q.id===c.qid)?.number||null,status:c.status,text:c.text,proposal:(c.proposals||[]).map(pid=>work.proposals?.find?.(p=>p.id===pid)?.summary).filter(Boolean).join(' / ')}));}
+async function examTurn(text){
+  const prompt=buildExamPrompt(work,{text,ledger:ledgerForPrompt(),rules:rulesFor()});const a=act('생각하는 중…');
+  try{let r=await call('turn',{scope:'exam:'+work.projectId,text:prompt}),parsed=parseExamResponse(r.text);
+    if(!parsed.ok){a.set('형식을 고쳐 다시 받는 중…');r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+'\n\n[앞 응답 형식 오류 — 고쳐서 JSON만]\n'+parsed.errors.join('\n')});parsed=parseExamResponse(r.text);}
+    if(!parsed.ok)throw Error('AI 응답 형식이 맞지 않아요: '+parsed.errors.join(' / '));note('exam-turn',{ms:r.ms,model:r.model});return {...parsed.value,_ms:r.ms,_model:r.model};}
+  finally{a.done();}
+}
+async function examSend(text){
+  // 1) 「반영해」: 먼저 대장 상태를 교사 말대로 맞춘 뒤(AI는 decided만 표시), 코드가 결정된 것만 반영한다.
+  const apply=wantsApply(text),discuss=wantsDiscussOnly(text);
+  if(/다 달았|코멘트 (다|봐|읽|확인)/.test(text)&&work.comments.some(c=>c.status==='new')){await triageComments(text);return;}
+  const v=await examTurn(text);
+  absorb(v,text,{allowDecided:!discuss});
+  say('ai',v.reply,{asks:v.questions||[],model:v._model,ms:v._ms,ruleCards:(v.rules||[]).map(r=>({text:r.text,id:crypto.randomUUID()}))});
+  if(discuss){note('discuss-only');return;}
+  if(apply){await applyNow('교사 지시: '+text.slice(0,80));return;}
+  if(wantsFinal(text)){declareFinal();return;}
+  if(wantsDraft(text)){await draftAll();return;}
+}
+function absorb(v,text,{allowDecided=true}={}){
+  // 시험지 정보: 교사가 말한 것(teacher)은 늘 넣고, AI 기본값(ai)은 아직 교사가 정하지도 보지도 않은 칸에만.
+  for(const [k,val] of Object.entries(v.meta||{})){if(val===''||val==null||(Array.isArray(val)&&!val.length))continue;const by=v.metaBy?.[k]==='teacher'?'teacher':'ai',cur=work.meta[k];
+    if(by==='teacher'||!cur||cur.value==null||X.canAiChange(cur))X.setMeta(work,k,val,by);}
+  if(v.meta?.subject&&!work.meta.title)work.meta.title=[work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');
+  if(!work.meta.title||work.meta.title==='새 시험지'){const t=[work.meta.term?.value,work.meta.examName?.value,work.meta.subject?.value].filter(Boolean).join(' · ');if(t)work.meta.title=t;}
+  // 설계표: 막는 칸이 비었으면 받지 않는다(결정 3). AI 행은 교사가 안 본 것만 바꾸고, 본 행은 제안으로.
+  const missing=X.missingBlocking(work);
+  if(Array.isArray(v.plan)&&v.plan.length){if(missing.length)note('plan-blocked',{missing});else{const r=X.setPlanRows(work,v.plan,'ai');if(r.proposals?.length)say('ai',`이미 보신 설계표 칸은 바꾸지 않았어요. 바꿀 안: ${r.proposals.map(p=>`${p.no}번 ${summarizeRow(p.before)} → ${summarizeRow(p.after)}`).join(' / ')}`);if(work.meta.stage==='design'&&work.plan.length)tab='plan';}}
+  for(const x of v.ledger||[]){const c=work.comments.find(c=>c.id===x.id);if(!c||['applied','dropped'].includes(c.status))continue;
+    if(x.status==='decided'&&!allowDecided)continue;X.updateComment(work,c.id,{status:x.status,...(x.gist?{gist:x.gist}:{}),...(x.answer?{answer:x.answer}:{})});}
+  save();
+}
+const summarizeRow=r=>r?[r.unit,r.difficulty,r.points!=null?r.points+'점':'',r.form].filter(Boolean).join(' · '):'(빈 칸)';
+
+// 초안: 설계표의 빈 문항 칸마다 하위 세션(출제 대화 엔진, kind=draft)으로 쓴다 — 빈 칸 처음 채우기라 바로 넣는다.
+async function draftAll(){
+  const rows=work.plan.filter(r=>!r.qid&&r.status!=='empty');if(!rows.length){say('ai','설계표에 아직 쓸 문항 칸이 없어요. 설계표부터 같이 정해요.');return;}
+  work.meta.stage='draft';const a=act(`문항 ${rows.length}개 쓰는 중 · 0/${rows.length}`);let done=0,fails=[];
+  const one=async row=>{try{await draftRow(row);}catch(e){fails.push({no:row.no,error:e.message});note('draft-fail',{no:row.no,error:e.message});}finally{done++;a.set(`문항 ${rows.length}개 쓰는 중 · ${done}/${rows.length}`);render();}};
+  const queue=[...rows];const workers=Array.from({length:3},async()=>{while(queue.length)await one(queue.shift());});await Promise.all(workers);a.done();
+  const v=commit(`초안 ${rows.length-fails.length}문항`,{changed:rows.filter(r=>r.qid).map(r=>r.qid)});
+  say('ai',`초안 ${v.label}이 나왔어요(${rows.length-fails.length}문항${fails.length?` · 못 쓴 문항 ${fails.map(f=>f.no+'번').join(', ')} — 다시 「초안 써 줘」라고 하면 그 칸만 써요`:''}). 「문항 검토」에서 문항마다 오른쪽 아래에 편하게 코멘트를 적어 주세요. 근거·해설·검토는 각 문항의 단추를 누르면 열려요.`,{stats:v.stats});
+  tab='review';work.meta.stage='review';save();render();void solveChanged(v);
+}
+function packetFor(q,{kind,text}){const a=ensureAuthoring(q),{typeset,reviews,authoring,origin,seen,locks,...question}=clone(q);
+  const m=work.meta;return {format:'exampool-authoring-request-v1',kind,text,question,previewHtml:'',
+    authoring:{revision:a.revision,target:{subject:m.subject?.value||'',scope:[].concat(m.range?.value||[]).join(', '),schoolLevel:m.grade?.value||''},requirements:a.requirements,issues:(a.issues||[]).filter(i=>i.status==='open').map(i=>i.text).slice(-8),stale:[],axes:null,recentHistory:[]},
+    teacherEdits:(q.locks||[]).map(l=>`직접 고친 칸: ${l.key}`),conversation:(subThreadIf(q.id)||[]).slice(-12).map(({role,text})=>({role,text})),contentHash:null,
+    figureCount:q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data).length,figures:q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({blockId:b.id,label:b.label||'그림',data:b.figure.data}))};}
+const subThreadIf=qid=>work.sessions.find(x=>x.scope==='q:'+qid)?.thread;
+async function draftRow(row){
+  const q=newQuestion(String(row.no),FORM_TYPE[row.form]||'합답형');try{if(row.form)applyForm(q,row.form);}catch{}q.points=Number(row.points)||q.points;
+  const m=work.meta,rules=rulesFor().map(r=>'- '+r.text).join('\n');
+  const text=`새 문항 초안을 써 줘. 시험: ${[m.subject?.value,m.grade?.value,m.examName?.value].filter(Boolean).join(' ')} · 범위: ${[].concat(m.range?.value||[]).join(', ')}.
+설계표 ${row.no}번: 소단원 ${row.unit||''} · 난이도 ${row.difficulty||''} · 배점 ${row.points||''}점 · 유형 ${row.form||''} · 자료 구조 ${row.structure||''} · 평가할 사고 ${row.twist||''} · 그림 ${row.figure||''}.
+${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고, 그림이 필요하면 figures에 제작 명세를 써 줘. 정답 번호는 ${row.no}번 자리라는 것만 알고 고르게 정해.`;
+  const r=await call('author',{packet:packetFor(q,{kind:'draft',text})});const resp=r.response;
+  const changes=proposalChanges(q,resp.proposal);const {question,errors}=applyChanges(q,changes);
+  Object.assign(q,question);X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map((r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]))});
+  q.figureSpecs=(resp.figures||[]).slice(0,6);X.addQuestion(work,q,{planNo:row.no});X.linkItem(work,row.no,q.id);
+  subThread(q.id).push({role:'ai',text:resp.reply,at:nowIso(),model:r.meta?.model,ms:r.meta?.ms});
+  note('draft',{no:row.no,ms:r.meta?.ms,changes:changes.length,errors:errors.length,figures:q.figureSpecs.length});
+}
+
+// 코멘트: 「다 달았어」 → 문항마다 하위 세션에 코멘트를 넘겨 「지금 → 바꿀 안」만 받는다. 아무것도 고치지 않는다.
+async function triageComments(text){
+  const fresh=work.comments.filter(c=>c.status==='new'),byQ=new Map();for(const c of fresh)(byQ.get(c.qid)||byQ.set(c.qid,[]).get(c.qid)).push(c);
+  const a=act(`코멘트 ${fresh.length}개 읽는 중…`);let n=0;
+  for(const [qid,list] of byQ){const q=work.questions.find(x=>x.id===qid);if(!q){for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:'문항이 없어요.'});continue;}
+    const body=list.map((c,i)=>`${i+1}) ${c.target?`[${c.target}] `:''}${c.text}`).join('\n');
+    try{const r=await call('author',{packet:packetFor(q,{kind:'chat',text:`교사 코멘트(${list.length}개):\n${body}\n\n아직 고치지 마. 코멘트마다 요지를 말하고, 질문이면 근거로 먼저 답하고, 고칠 것은 proposal에 「지금 → 바꿀 안」으로만 내. 정답·분포가 바뀌면 그 영향도 reply에 써.`})});
+      const resp=r.response,changes=proposalChanges(q,resp.proposal);let pid=null;
+      if(changes.length)pid=X.addProposal(work,{qid,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:list.map(c=>c.id),effects:{answer:changes.some(c=>c.path==='answer')}});
+      for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:resp.reply.slice(0,1200),proposals:pid?[pid]:[]});
+      subThread(qid).push({role:'ai',text:resp.reply,at:nowIso(),proposalId:pid});note('triage',{qid,comments:list.length,proposal:!!pid,ms:r.meta?.ms});
+    }catch(e){for(const c of list)X.updateComment(work,c.id,{status:'talk',answer:'AI 답을 받지 못했어요: '+e.message});note('triage-fail',{qid,error:e.message});}
+    a.set(`코멘트 읽는 중 · 문항 ${++n}/${byQ.size}`);render();}
+  a.done();const cnt=X.commentCounts(work);
+  say('ai',`코멘트 ${fresh.length}개를 읽었어요. 아직 아무것도 고치지 않았어요. 문항마다 「지금 → 바꿀 안」을 붙여 두었어요. 그대로 할 것을 말씀해 주시면 「결정됨」으로 두고, 「반영해」라고 하시면 결정된 것만 반영해요.`,{ledger:true,counts:cnt});tab='review';save();
+}
+function beforeOf(q,changes){return changes.map(c=>{try{if(c.path==='bogi'){const b=q.blocks.find(b=>b.kind==='bogi');const l=typeof c.line==='string'?b?.lines.find(l=>l.label===c.line):b?.lines[Number(c.line)];return l?.text??'';}
+  if(c.path==='choice'){return q.choices[Number(c.index??c.line)]?.text??'';}if(c.path==='answer')return q.answer==null?'':String(q.answer+1);if(c.path==='passage')return q.blocks.find(b=>b.kind==='text'&&!b.parent)?.text??'';
+  if(c.path==='block')return q.blocks.find(b=>b.id===c.id||b.label===c.id)?.text??'';return typeof q[c.path]==='string'?q[c.path]:'';}catch{return '';}});}
+
+// 반영: 결정된 코멘트에 딸린 제안만 적용 → 판 올림 → 바뀐 문항만 다시 풂.
+async function applyNow(why){
+  const before=work.questions.map(q=>[q.id,JSON.stringify(stripMeta(q))]);
+  const r=X.applyDecided(work);const changed=r.changedQids||[];
+  if(!changed.length){say('ai',`반영할 「결정됨」이 없어요${r.skipped?.length?` (잠긴 칸이라 건너뛴 것 ${r.skipped.length}개)`:''}. 아직 의논 중인 것은 그대로 뒀어요.`);note('apply-empty');return;}
+  const v=commit(why,{changed,applied:r});const talk=work.comments.filter(c=>c.status==='talk').length;
+  say('ai',`반영했어요 → ${v.label}. 바뀐 문항 ${changed.map(id=>work.questions.find(q=>q.id===id)?.number+'번').join(', ')}${talk?` · 의논 중 ${talk}개는 그대로`:''}${r.skipped?.length?` · 직접 고친 칸이라 건너뛴 것 ${r.skipped.length}개`:''}.`,{stats:v.stats});
+  note('apply',{label:v.label,changed:changed.length,skipped:r.skipped?.length||0,unchangedOthers:before.filter(([id,h])=>!changed.includes(id)).every(([id,h])=>JSON.stringify(stripMeta(work.questions.find(q=>q.id===id)))===h)});
+  void solveChanged(v);
+}
+const stripMeta=q=>{const {authoring,reviews,typeset,seen,figureSpecs,...rest}=q;return rest;};
+function commit(summary,{changed=[],applied}={}){const v=X.commitVersion(work,{summary,changed,applied:applied?.applied||{}});save();render();note('version',{label:v.label,stats:v.stats});return v;}
+function declareFinal(){const v=X.declareFinal(work);work.meta.stage='final';save();render();say('ai',`${v.label}으로 정했어요. 정답 배열 ${v.stats.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · 배점 합계 ${v.stats.pointsTotal}점. 시험지 탭에서 exam으로 보내 조판·한글로 내보낼 수 있어요.`,{stats:v.stats});note('final',{label:v.label});}
+
+// 풀이 검사: 판의 바뀐 문항만, 두 모델이 정답·해설 없이 새 맥락에서 따로 푼다(결정 8 + 4 가정).
+async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questions.some(q=>q.id===id&&q.type!=='서술형'));if(!ids.length)return;
+  const a=act(`정답·해설 가린 문항지로 두 모델 풀이 — 바뀐 문항 ${ids.length}개`);let done=0;
+  const one=async id=>{const q=work.questions.find(x=>x.id===id);if(!q)return;const runs=[];
+    for(const s of SOLVERS){try{const r=await call('turn',{scope:`solve:${s.model}:${id}`,text:buildSolvePrompt(q),model:s.model,effort:'medium'});const p=parseSolve(r.text);runs.push({provider:'codex',model:r.model||s.model,isolated:true,answer:p.ok?p.value.answer:null,multiple:p.value?.multiple||[],note:p.value?.note||(p.ok?'':'형식 오류'),ms:r.ms});}
+      catch(e){runs.push({provider:'codex',model:s.model,isolated:true,answer:null,note:'풀지 못함: '+e.message,ms:0});}}
+    const ans=Number.isInteger(q.answer)?q.answer+1:null,vd=verdict(ans,runs);X.recordCheck(work,{qid:id,version:v.label,contentHash:null,runs,verdict:vd,skipped:runs.every(r=>r.answer==null)?'풀이 실패':null});
+    note('solve',{no:q.number,verdict:vd,answers:runs.map(r=>r.answer)});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);render();};
+  const queue=[...ids];await Promise.all(Array.from({length:2},async()=>{while(queue.length)await one(queue.shift());}));a.done();
+  const ck=work.checks.filter(c=>c.version===v.label),bad=ck.filter(c=>c.verdict!=='pass');
+  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${SOLVERS.map(s=>s.label).join('·')}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
+
+// 문항 대화(하위 세션)
+async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
+  if(wantsApply(text)){const props=(work.proposals||[]).filter(p=>p.qid===q.id&&['current','agreed'].includes(p.state));if(!props.length){say('ai','이 문항에 반영할 안이 없어요.');return;}
+    for(const p of props){p.state='agreed';for(const cid of p.comments||[])X.updateComment(work,cid,{status:'decided'});if(!p.comments?.length){const cid=X.addComment(work,{qid:q.id,text:'(문항 대화에서 정함) '+p.summary,onVersion:work.head});X.updateComment(work,cid,{status:'decided',proposals:[p.id]});}}
+    await applyNow(`${q.number}번 문항 대화에서 반영`);return;}
+  const discuss=wantsDiscussOnly(text);
+  const r=await call('author',{packet:packetFor(q,{kind:/^검토/.test(text)?'review':'chat',text:discuss?text+'\n(교사가 고치지 말고 상의하자고 했다: proposal은 null로 두고 대화로만 답해.)':text})},{onProgress:p=>{}});
+  const resp=r.response,changes=discuss?[]:proposalChanges(q,resp.proposal);let pid=null;
+  if(changes.length)pid=X.addProposal(work,{qid:q.id,changes,before:beforeOf(q,changes),summary:resp.proposal?.summary||'AI 안',comments:[],effects:{answer:changes.some(c=>c.path==='answer')}});
+  else if(resp.review||resp.solve)recordReview(q,resp,{});
+  say('ai',resp.reply+(pid?'\n\n아직 고치지 않았어요. 이대로 할지 말씀해 주시고, 고치려면 「반영해」라고 해 주세요.':''),{proposalId:pid,asks:resp.questions||[],model:r.meta?.model,ms:r.meta?.ms});
+  note('sub',{qid:q.id,proposal:!!pid,discuss,ms:r.meta?.ms});
+}
+
+// ── 그림(제작 명세 → 기존 그림 엔진). 빈 그림 칸에 넣는 것은 빈 칸 채우기 ──
+async function drawFigure(qid,i){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec)return;const a=act(`${q.number}번 그림 그리는 중…`);
+  try{const r=await call('figure',{qid,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[]});
+    let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);
+    if(!slot){toast('빈 그림 칸이 없어 새 그림 칸을 만들었어요');slot={id:crypto.randomUUID(),parent:null,kind:'figure',label:spec.kind==='graph'?'그래프':'그림',text:'',layout:'세로',figure:null};q.blocks.push(slot);}
+    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms});toast(`${q.number}번 그림을 넣었어요`);}
+  catch(e){toast('그림을 그리지 못했어요: '+e.message);note('figure-fail',{no:q?.number,error:e.message});}finally{a.done();}}
+
+// ── 한글에서 고친 판: 차이 보고까지만(결정 2) ──
+async function importHwpx(file){const a=act('받은 한글 파일과 지금 판을 문항별로 비교하는 중…');
+  try{const paras=await hwpxText(new Uint8Array(await file.arrayBuffer()));const d=diffAgainst(paras,X.orderedQuestions(work));
+    work.imports.push({id:crypto.randomUUID(),at:nowIso(),name:file.name,against:work.head,diff:d,state:'reported'});save();
+    const lines=[...d.order.map(o=>`순서 · ${o.no}번 자리 바뀜(${o.from}→${o.to})`),...d.text.map(t=>`글 · ${t.no}번 「${String(t.before).slice(0,40)}」 → 「${String(t.after).slice(0,40)}」`),...d.missing.map(m=>`빠짐 · ${m.no}번 ${m.what}`),...d.points.map(p=>`배점 · ${p.no}번 ${p.before}→${p.after??'없음'}`)];
+    say('ai',`받은 파일(${file.name})과 ${work.head||'지금'} 판을 비교했어요. 아직 원본에 반영하지 않았어요.\n${lines.length?lines.map(l=>'- '+l).join('\n'):'- 눈에 띄는 차이가 없어요.'}\n반영할 것은 말씀해 주시면 「지금 → 바꿀 안」으로 만들어 둘게요.`,{diff:true});note('hwpx-diff',{n:lines.length});}
+  catch(e){say('ai','한글 파일을 읽지 못했어요: '+e.message,{error:true});note('hwpx-fail',{error:e.message});}finally{a.done();}}
+
+// ── 조판: exam으로 보내 학교 양식 조판·한글 내보내기 ──
+async function sendToExam(){try{const bundle=X.toSheetBundle(work);const blob=buildSheetProject(bundle,{name:work.meta.title||'시험지'});const bytes=new Uint8Array(await blob.arrayBuffer());
+  post({action:'open-project',name:`${work.meta.title||'시험지'}.5e`,bytes});work.outputs.push({version:work.head,kind:'exam-sheet',at:nowIso()});work.meta.stage=work.meta.stage==='final'?'final':'typeset';save();note('to-exam',{bytes:bytes.length});toast('exam으로 보냈어요 · 불러올 내용 확인 창에서 「적용」을 누르면 시험지로 들어가요');}
+  catch(e){toast('exam으로 보내지 못했어요: '+e.message);note('to-exam-fail',{error:e.message});}}
+
+// ── 그리기 ──
+const tex=s=>String(s??'').split(/(\$[^$]+\$)/g).map(part=>{if(/^\$[^$]+\$$/.test(part)){try{return window.katex?katex.renderToString(part.slice(1,-1),{throwOnError:false}):E(part.slice(1,-1));}catch{return E(part);}}return E(part).replace(/\n/g,'<br>');}).join('');
+function dot(q,key){const s=X.cellEvidence(q,key);if(s==='ok')return '';return `<span class="edot ${s}" data-ev="${E(q.id)}|${E(key)}" title="${s==='waived'?'근거 없음 — 예외로 진행':s==='problem'?'근거와 맞지 않는 곳이 있어요':'근거가 아직 없어요 · 누르면 보기'}"></span>`;}
+function paperHtml(q){let h=`<p class="q" data-cell="${E(q.id)}|ask"><b>${E(q.number)}.</b> `;const blocks=q.blocks.filter(b=>!b.parent);const first=blocks.find(b=>b.kind==='text'&&b.text);
+  if(first)h+=`<span data-cell="${E(q.id)}|block:${E(first.id)}">${tex(first.text)}${dot(q,'block:'+first.id)}</span></p>`;else h+='</p>';
+  for(const b of q.blocks){if(b===first||b.kind==='bogi')continue;
+    if(b.kind==='text'&&b.text)h+=`<p data-cell="${E(q.id)}|block:${E(b.id)}">${tex(b.text)}${dot(q,'block:'+b.id)}</p>`;
+    else if(b.kind==='figure')h+=b.figure?.data?`<img class="fig" src="${b.figure.data}" alt="${E(b.label)}" data-cell="${E(q.id)}|block:${E(b.id)}">`:`<span class="figslot">${E(b.label||'그림')} · 아직 그림 없음</span>`;
+    else if(b.kind==='table')h+=`<table class="dt" data-cell="${E(q.id)}|block:${E(b.id)}">${b.table.cells.map(r=>`<tr>${r.map(c=>`<td>${tex(c.value)}</td>`).join('')}</tr>`).join('')}</table>`;
+    else if(b.lines)h+=`<div class="box">${b.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)} ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;}
+  h+=`<p data-cell="${E(q.id)}|ask">${tex(q.ask)} <span class="pt">[${E(q.points)}점]</span>${dot(q,'ask')}</p>`;
+  const bogi=q.blocks.find(b=>b.kind==='bogi');if(bogi)h+=`<div class="bogi">${bogi.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)}. ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;
+  if(q.type!=='서술형')h+=`<div class="choices${q.choices.some(c=>String(c.text).length>14)?' v':''}">${q.choices.map((c,i)=>`<p data-cell="${E(q.id)}|choice:${E(c.id)}">${CIRCLED[i]} ${tex(c.text)}</p>`).join('')}</div>`;
+  return h;}
+function statsLine(s){if(!s)return '';const c=s.countByNumber||{};return `정답 ${s.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · ${[1,2,3,4,5].map(n=>`${CIRCLED[n-1]}${c[n]||0}`).join(' ')} · 최대 연속 ${s.longestRun} · 합계 ${s.pointsTotal}점`;}
+function renderThread(){const list=sub?subThread(sub):work.chat;
+  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}">${String(m.text).split(/\n+/).map(p=>`<p>${E(p)}</p>`).join('')}${(m.asks||[]).length?`<div class="ledger"><div class="lh">꼭 정해야 해요</div>${m.asks.map(a=>`<div class="lr"><span class="ln">?</span><span>${E(a)}</span></div>`).join('')}</div>`:''}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
+  $('#scroll').scrollTop=1e7;}
+const ST={new:'새 코멘트',talk:'의논 중',decided:'결정됨',applied:'반영됨',dropped:'안 함'},SC={new:'b-ok',talk:'b-talk',decided:'b-ok',applied:'b-done',dropped:'b-ok'};
+function ledgerHtml(){const list=work.comments.filter(c=>c.status!=='dropped').slice(-20);if(!list.length)return '';return `<div class="ledger"><div class="lh">코멘트 대장 · ${E(work.head||'v0.0')}</div>${list.map(c=>`<div class="lr"><span class="ln">${E(work.questions.find(q=>q.id===c.qid)?.number||'전체')}번</span><span>${E(c.gist||c.text).slice(0,80)}</span><span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>`).join('')}</div>`;}
+function renderPlan(){const m=work.meta,chip=(k,label,fmt=v=>v)=>{const x=m[k];if(!x||x.value==null||x.value==='')return `<span class="c miss"><b>${label}</b>아직</span>`;return `<span class="c${x.by==='ai'?' ai':''}"><b>${label}</b>${E(fmt(x.value))}</span>`;};
+  const list=v=>Array.isArray(v)?v.join(' · '):typeof v==='object'?Object.entries(v).map(([k,n])=>k+n).join(' · '):v;
+  $('#t-plan').innerHTML=`<div class="cond">${chip('subject','과목')}${chip('range','범위',list)}${chip('itemCount','문항',v=>v+'문항')}${chip('pointsTotal','총점',v=>v+'점')}${chip('pointKinds','배점',v=>list(v))}${chip('difficulty','난이도',list)}${chip('emphasis','강조',list)}${chip('form','양식')}</div>`+
+   (work.plan.length?`<table class="ptable"><tr><th class="num">번호</th><th>소단원</th><th>난이도</th><th>배점</th><th>유형</th><th>그림</th><th>상태</th></tr>${work.plan.map(r=>`<tr data-row="${r.no}" class="${r.seen?'':'seen-no'}"><td>${r.no}</td><td>${E(r.unit)}</td><td>${E(r.difficulty)}</td><td>${E(r.points)}점</td><td>${E(r.form||'')}</td><td>${E(({reuse:'재활용',convert:'기출 변형',new:'새로',code:'코드 그래프',none:'없음'})[r.figure]||'')}</td><td class="${({set:'s-ok',choosing:'s-pick',empty:'s-empty',redesign:'s-talk'})[r.status]||''}">${r.qid?'문항 있음':({set:'잡힘',choosing:'고르는 중',empty:'빈자리',redesign:'다시 설계 중'})[r.status]||''}</td></tr>`).join('')}</table>`:`<div class="empty-note">대화할수록 위에서부터 채워져요. 과목·범위·문항 수·총점이 정해지면 설계표를 잡아요.${X.missingBlocking(work).length?`<br>아직 정할 것: ${X.missingBlocking(work).map(k=>({subject:'과목',range:'범위',itemCount:'문항 수',pointsTotal:'총점'})[k]).join(' · ')}`:''}</div>`);
+  // 설계표를 화면에 보였으면 「교사가 봄」(경계 규칙의 seen)
+  if(tab==='plan'&&!$('#rp').closest('.panel-off')){let changed=false;for(const r of work.plan)if(!r.seen){r.seen=true;changed=true;}const ks=Object.keys(m).filter(k=>m[k]&&typeof m[k]==='object'&&'seen' in m[k]&&!m[k].seen&&m[k].value!=null);if(ks.length){X.markSeen(work,ks);changed=true;}if(changed)save();}
+}
+function renderReview(){const qs=X.orderedQuestions(work);if(!qs.length){$('#t-review').innerHTML='<div class="empty-note">아직 문항이 없어요. 설계표가 잡히면 「초안 써 줘」라고 말해 주세요.</div>';return;}
+  $('#t-review').innerHTML=qs.map(q=>{const cs=work.comments.filter(c=>c.qid===q.id&&c.status!=='dropped'),props=(work.proposals||[]).filter(p=>p.qid===q.id&&!['applied','rejected'].includes(p.state)),miss=X.cellKeys(q).some(k=>X.cellEvidence(q,k.key)==='missing');
+    const ck=work.checks.filter(c=>c.qid===q.id).at(-1),ex=explanationParts(q);
+    return `<section class="qrow" data-q="${E(q.id)}"><div class="qleft kq">${paperHtml(q)}</div><div class="qright">
+<div class="qmeta">${E(q.number)}번 · ${E(work.plan.find(r=>r.qid===q.id)?.unit||'')} · ${E(work.plan.find(r=>r.qid===q.id)?.difficulty||'')} · ${E(q.points)}점 · 정답 ${q.answer!=null?CIRCLED[q.answer]:'—'}${miss?'<span class="exdot" title="근거 없는 칸이 있어요"></span>':''}<span class="sp"></span><button class="btn sm" data-sub="${E(q.id)}"><svg class="i s"><use href="#i-msg"/></svg>이 문항 대화</button></div>
+<div class="qtabs"><button data-pane="ev">근거</button><button data-pane="sol">해설</button><button data-pane="chk">검토</button>${(q.figureSpecs||[]).filter(f=>!f.done).length?'<button data-pane="fig">그림</button>':''}</div>
+<div class="qpane" data-p="ev" hidden>${X.cellKeys(q).map(k=>{const st=X.cellEvidence(q,k.key),list=(q.authoring?.evidence||[]).filter(e=>e.target===k.key);return `<div class="ev${st!=='ok'?' ev-x':''}"><b>${E(k.label)}</b><span>${list.length?list.map(e=>E((e.source?.title||'')+(e.source?.page?` ${e.source.page}쪽`:'')+' · '+e.claim)).join('<br>'):st==='waived'?'근거 없음 — 예외로 진행':'근거 없음'}</span></div>`;}).join('')}</div>
+<div class="qpane" data-p="sol" hidden>${ex.parts.map(p=>`<p><b>${E(p.key)}</b> ${tex(p.text)}${p.ox?` → ${p.ox==='o'?'옳다':'옳지 않다'}`:''}</p>`).join('')||'(해설 없음)'}</div>
+<div class="qpane" data-p="chk" hidden>${ck?`${ck.runs.map(r=>`<div class="chk-row"><b>${E(r.model)}</b><span>${r.answer?CIRCLED[r.answer-1]:'—'} · ${E(r.note)}</span></div>`).join('')}<p><b>결론</b> ${E(({pass:'두 모델 일치 · 정답과 같음',doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[ck.verdict]||ck.verdict)} (${E(ck.version)} · 한 회사 두 모델)</p>`:'아직 풀이 검사 전이에요.'}</div>
+${(q.figureSpecs||[]).length?`<div class="qpane" data-p="fig" hidden>${q.figureSpecs.map((f,i)=>`<p>${f.done?'✓ ':''}${E(f.kind==='graph'?'그래프':'그림')} · ${E(f.description).slice(0,220)} ${f.done?'':`<button class="btn sm" data-draw="${E(q.id)}|${i}">그리기</button>`}</p>`).join('')}</div>`:''}
+<div class="cbox2"><div class="ch">문항 전체${cs.length?` · 코멘트 ${cs.length}`:''}<span class="sp"></span></div>
+<div class="clist">${cs.map(c=>`<div class="ci"><div class="ctext">${E(c.text)} <span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>${c.answer?`<div class="cans">${E(c.answer).slice(0,600)}</div>`:''}</div>`).join('')}</div>
+${props.map(p=>`<div class="prop"><b>지금 → 바꿀 안</b> · ${E(p.summary)}${p.changes.slice(0,6).map((c,i)=>`<div><span class="pb">${E(String(p.before?.[i]??'').slice(0,120))}</span> → <span class="pa">${E(String(c.value??'').slice(0,160))}</span></div>`).join('')}</div>`).join('')}
+<textarea data-comment="${E(q.id)}" placeholder="편하게 코멘트를 적어 주세요 · ⌘↵로 쌓기"></textarea></div></div></section>`;}).join('')+'<div style="height:70px"></div>';
+  $$('#t-review .qrow').forEach(row=>{const qid=row.dataset.q;const q=work.questions.find(x=>x.id===qid);if(q&&!q.seen){q.seen=true;}});
+}
+function renderSheet(){const qs=X.orderedQuestions(work),m=work.meta;const s=X.computeStats(qs);
+  $('#t-sheet').innerHTML=`<div class="sheetwrap"><div class="sheetnote"><svg class="i s"><use href="#i-hwp"/></svg>미리보기 기준 — 시험지 모양은 조판 단계(exam·hwp)에서 확정해요. 내용은 바꾸지 않아요.</div>
+<div class="sheetbar"><button class="btn sm pri" id="bToExam">exam으로 보내 조판</button><button class="btn sm" id="bHwpx">한글에서 고친 판 가져오기</button><button class="btn sm" id="bFinal">${work.head&&/^v[1-9]/.test(work.head)?'다음 확정판 선언':'v1.0 선언'}</button><button class="btn sm" id="bSaveFile">시험지 파일 저장(.5e)</button></div>
+<div class="paper2"><div class="ph1"><span class="l">${E([m.term?.value,m.examName?.value].filter(Boolean).join(' '))}</span><span class="m">${E(m.subject?.value||'')}</span><span class="r">${E(m.grade?.value||'')}</span></div><div class="ph2"></div>
+<div class="cols2">${qs.map(q=>`<div class="kq qblock">${paperHtml(q)}</div>`).join('')||'<p class="empty-note">문항이 없어요.</p>'}</div></div>
+<div class="anskey"><b>정답표 · ${E(work.head||'v0.0')}</b><table><tr>${qs.map(q=>`<th>${E(q.number)}</th>`).join('')}</tr><tr>${qs.map(q=>`<td>${q.answer!=null?CIRCLED[q.answer]:'서술'}</td>`).join('')}</tr><tr>${qs.map(q=>`<td>${E(q.points)}</td>`).join('')}</tr></table><p class="note2">${E(statsLine(s))}</p></div></div>`;}
+function renderSide(list){const box=$('#examList');if(!box)return;box.innerHTML=(list||[]).slice(0,12).map(x=>`<button class="exam${work&&x.id===work.projectId?' on':''}" data-open="${E(x.id)}">${E(x.title)}<small>${E(x.head||'v0.0')} · ${E(({design:'설계 중',draft:'쓰는 중',review:'검토 중',typeset:'조판 중',final:'확정'})[x.stage]||'')}</small></button>`).join('');}
+function render(){if(!work)return;const title=work.meta.title||'새 시험지';$('#exTitle').textContent=title;$('#pTitle').textContent=title;
+  $('#verChat').textContent=work.head||'v0.0';$('#verBtn').firstChild.textContent=(work.head||'v0.0')+(work.dirty?' · 고친 것 있음':'')+' ';
+  $('#crumb').classList.toggle('has-sub',!!sub);if(sub)$('#subName').textContent=(work.questions.find(q=>q.id===sub)?.number||'')+'번 문항';
+  $$('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));for(const t of ['plan','review','sheet'])$('#t-'+t).hidden=t!==tab;
+  const c=X.commentCounts(work);$('#counts').textContent=`코멘트 ${work.comments.length} · 의논 중 ${c.talk||0} · 결정 ${c.decided||0} · 반영 ${c.applied||0}`;
+  $('#dock2').hidden=tab!=='review'||!(c.decided||c.talk||c.new);$('#dock2').innerHTML=`<span>새 코멘트 <b>${c.new||0}</b> · 결정된 것 <b>${c.decided||0}</b> · 의논 중 <b>${c.talk||0}</b></span>${c.new?'<button class="btn sm" id="bTriage">코멘트 보내기</button>':''}<button class="btn sm pri" id="bApply"${c.decided?'':' disabled'}>결정된 것만 반영</button>`;
+  $('#footMid').textContent=`${work.questions.length}문항 · 판 ${work.versions.length}개`;
+  if(tab==='plan')renderPlan();else if(tab==='review')renderReview();else renderSheet();renderThread();}
+
+// ── 입력 ──
+$('#bSend').onclick=send;$('#input').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send();}});
+$('#seg').onclick=e=>{const b=e.target.closest('button[data-tab]');if(!b)return;tab=b.dataset.tab;render();};
+document.addEventListener('click',async e=>{const t=e.target;
+  const subB=t.closest('[data-sub]');if(subB){sub=subB.dataset.sub;render();$('#input').focus();return;}
+  if(t.closest('#subBack')){sub=null;render();return;}
+  const qt=t.closest('.qtabs button');if(qt){const row=qt.closest('.qright'),on=!qt.classList.contains('on');row.querySelectorAll('.qtabs button').forEach(x=>x.classList.remove('on'));row.querySelectorAll('.qpane').forEach(p=>p.hidden=true);if(on){qt.classList.add('on');row.querySelector(`.qpane[data-p="${qt.dataset.pane}"]`).hidden=false;}return;}
+  const cell=t.closest('[data-cell],.edot');if(cell){showEvidence(cell);return;}
+  const rule=t.closest('.rulec button');if(rule){const card=rule.closest('.rulec'),m=work.chat[+card.dataset.msg],r=m?.ruleCards?.find(x=>x.id===card.dataset.rule);if(!r)return;const layer=rule.dataset.layer;r.done=true;
+    if(layer==='exam')work.rules.exam.push({id:r.id,layer:'exam',text:r.text,at:nowIso()});else if(layer!=='no')setGlobalRules([...globalRules(),{id:r.id,layer,subject:work.meta.subject?.value||'',text:r.text,at:nowIso()}]);note('rule',{layer});save();render();toast(layer==='no'?'저장하지 않았어요':'규칙으로 저장했어요');return;}
+  if(t.closest('#bApply')){await applyNow('결정된 것만 반영');render();return;}
+  if(t.closest('#bTriage')){busy++;try{await triageComments('');}finally{busy--;render();}return;}
+  const draw=t.closest('[data-draw]');if(draw){const [qid,i]=draw.dataset.draw.split('|');await drawFigure(qid,+i);return;}
+  if(t.closest('#bToExam')){await sendToExam();return;}if(t.closest('#bHwpx')){$('#fHwpx').click();return;}if(t.closest('#bFinal')){declareFinal();return;}if(t.closest('#bSaveFile')){await saveFile();return;}
+  if(t.closest('#bExport')){tab='sheet';render();return;}
+  if(t.closest('#verBtn')||t.closest('#bHist')){const m=$('#histMenu');m.hidden=!m.hidden;m.innerHTML=work.versions.slice().reverse().map(v=>`<div class="hv"><b>${E(v.label)}</b><span>${E(v.summary)} · ${new Date(v.at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span><button class="btn sm" data-restore="${E(v.label)}">이 판으로</button></div>`).join('')||'<div class="hv"><span>아직 판이 없어요</span></div>';return;}
+  const rs=t.closest('[data-restore]');if(rs){X.restoreVersion(work,rs.dataset.restore);$('#histMenu').hidden=true;save();render();say('ai',`${rs.dataset.restore} 내용으로 되돌렸어요. 옛 판은 그대로 남아 있어요.`);note('restore',{label:rs.dataset.restore});return;}
+  const nav=t.closest('.side [data-tool]');if(nav){const tl=nav.dataset.tool;if(tl==='lib'){post({action:'library'});return;}$$('.side .nav').forEach(n=>n.classList.toggle('on',n===nav));post({action:'tool',tool:tl});note('tool',{tool:tl});return;}
+  if(t.closest('[data-go="home"]')){post({action:'home'});return;}
+  if(t.closest('[data-go="new"]')){work=X.newExamset({title:''});X.setMeta(work,'stage','design');sub=null;tab='plan';save();render();say('ai','어떤 시험지를 만들까요? 과목·범위·문항 수·총점을 알려 주시면 설계표부터 잡아요.');return;}
+  const op=t.closest('[data-open]');if(op){const w=await idbGet('work:'+op.dataset.open);if(w){work=w;sub=null;post({action:'home'});render();}return;}
+  if(t.closest('#bOpen')){$('#fOpen').click();return;}if(t.closest('#bFolder')){$('#fFolder').click();return;}
+  if(t.closest('#bClip')){post({action:'tool',tool:'exam'});toast('클립보드는 exam 화면의 서랍을 써요(하네스 공용 서랍은 아직이에요)');note('blocked',{what:'clipboard-shared'});return;}
+  if(t.closest('#bPane')||t.closest('#bClose')){$('#work').classList.toggle('panel-off');$('#work').classList.remove('panel-full');return;}
+  if(t.closest('#bFull')){$('#work').classList.toggle('panel-full');$('#work').classList.remove('panel-off');return;}
+  if(t.closest('#bSide')){$('#app').classList.toggle('side-off');return;}
+  if(!t.closest('#histMenu,#verBtn,#bHist'))$('#histMenu').hidden=true;
+  if(!t.closest('#evpop,[data-cell],.edot'))$('#evpop').hidden=true;
+});
+document.addEventListener('keydown',e=>{const ta=e.target.closest?.('textarea[data-comment]');if(ta&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();const text=ta.value.trim();if(!text)return;X.addComment(work,{qid:ta.dataset.comment,text,onVersion:work.head});ta.value='';save();render();note('comment',{qid:ta.dataset.comment});toast('코멘트를 쌓았어요 · 다 달면 「다 달았어」라고 말해 주세요');}
+  const m=e.metaKey||e.ctrlKey;if(m&&e.key==='s'){e.preventDefault();void saveFile();}if(m&&e.key==='o'){e.preventDefault();$('#fOpen').click();}if(m&&!e.shiftKey&&e.key==='.'){e.preventDefault();$('#work').classList.toggle('panel-off');}if(m&&e.shiftKey&&(e.key==='.'||e.key==='>')){e.preventDefault();$('#work').classList.toggle('panel-full');}if(m&&e.key==='\\'){e.preventDefault();$('#app').classList.toggle('side-off');}
+  if(m&&e.altKey){const k={Digit1:'image',Digit2:'exam',Digit3:'hwp'}[e.code];if(k){e.preventDefault();post({action:'tool',tool:k});}if(e.code==='Digit0'){e.preventDefault();post({action:'home'});}}});
+function showEvidence(el){const [qid,key]=(el.dataset.cell||el.dataset.ev||'').split('|');const q=work.questions.find(x=>x.id===qid);if(!q||!key)return;$$('.kq .pick').forEach(x=>x.classList.remove('pick'));el.classList.add?.('pick');
+  const list=(q.authoring?.evidence||[]).filter(e=>e.target===key),st=X.cellEvidence(q,key),label=X.cellKeys(q).find(k=>k.key===key)?.label||key;const pop=$('#evpop');
+  pop.innerHTML=`<div class="h">${E(q.number)}번 · ${E(label)} 근거<span class="x">닫기</span></div>${list.length?list.map(e=>`<div class="ev${['missing','unreadable','refuted','conflict'].includes(e.judgement)?' ev-x':''}"><b>${E(({direct:'직접 지지',conditional:'조건부',derived:'도출',refuted:'반박',missing:'미확보',conflict:'충돌',unreadable:'판독 미확인'})[e.judgement]||e.judgement)}</b><span>${E((e.source?.title||'출처 없음')+(e.source?.page?` ${e.source.page}쪽`:''))} · ${E(e.claim)}</span></div>`).join(''):''}${st==='waived'?'<div class="ev ev-x"><span>근거 없음 — 예외로 진행</span></div>':st!=='ok'?`<div class="ev ev-x"><span>이 칸에 붙은 근거가 없어요 · 「예외로 진행」하려면 이유를 남겨 주세요</span></div><input id="wvReason" placeholder="예: 수업 시간에 실험으로 다룸" style="width:100%;margin-top:6px"><button class="btn sm" id="wvOk" style="margin-top:6px">예외로 진행</button>`:''}`;
+  const r=el.getBoundingClientRect();pop.hidden=false;pop.style.left=Math.min(innerWidth-320,r.right+8)+'px';pop.style.top=Math.min(innerHeight-220,r.top)+'px';pop.querySelector('.x').onclick=()=>{pop.hidden=true;};
+  const ok=pop.querySelector('#wvOk');if(ok)ok.onclick=()=>{const reason=pop.querySelector('#wvReason').value.trim();if(!reason){toast('이유를 한 줄 적어 주세요');return;}X.addWaiver(q,key,{reason,by:'teacher'});pop.hidden=true;save();render();note('waiver',{key});};}
+$('#fOpen').onchange=()=>{const f=$('#fOpen').files[0];$('#fOpen').value='';if(f)openFile(f);};
+$('#fHwpx').onchange=()=>{const f=$('#fHwpx').files[0];$('#fHwpx').value='';if(f)importHwpx(f);};
+$('#fFolder').onchange=async()=>{const files=[...$('#fFolder').files];$('#fFolder').value='';if(!files.length)return;const root=files[0].webkitRelativePath.split('/')[0];
+  work.sources={...work.sources,folder:{path:root,label:root},files:files.filter(f=>/\.(pdf|hwpx?|pptx?|docx?|png|jpe?g|txt)$/i.test(f.name)).slice(0,300).map(f=>({id:crypto.randomUUID(),rel:f.webkitRelativePath,kind:/교과서/.test(f.webkitRelativePath)?'textbook':/학습지/.test(f.webkitRelativePath)?'worksheet':/기출/.test(f.webkitRelativePath)?'past':'document',bytes:f.size,readAt:null}))};
+  save();say('ai',`자료 폴더 「${root}」를 등록했어요(파일 ${work.sources.files.length}개). 지금은 파일 목록만 기억하고, 내용을 근거 검색에 쓰는 것은 아직이에요.`);note('folder',{files:work.sources.files.length});};
+// 패널 넓이 끌기(시안 v8 그대로)
+(()=>{const sp=$('#splitter'),wEl=$('#splitW'),w=$('#work');let on=false;const set=x=>{const r=w.getBoundingClientRect();const v=Math.max(460,Math.min(r.width-360,r.right-x));w.style.setProperty('--pw',v+'px');wEl.textContent='결과물 '+Math.round(v)+'px · 대화 '+Math.round(r.width-v)+'px';};
+  sp.addEventListener('pointerdown',e=>{on=true;sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('resizing');set(e.clientX);});sp.addEventListener('pointermove',e=>{if(on)set(e.clientX);});
+  const end=()=>{on=false;sp.classList.remove('drag');document.body.classList.remove('resizing');};sp.addEventListener('pointerup',end);sp.addEventListener('pointercancel',end);sp.addEventListener('dblclick',()=>w.style.removeProperty('--pw'));})();
+
+// ── 시작 ──
+(async()=>{post({action:'ready'});try{const last=await idbGet('last');if(last)work=await idbGet('work:'+last);renderSide((await idbGet('list'))||[]);}catch{}
+  if(!work){work=X.newExamset({title:''});X.setMeta(work,'stage','design');work.chat.push({role:'ai',text:'어떤 시험지를 만들까요? 과목·범위·문항 수·총점을 알려 주시면 설계표부터 잡아요. 교과서·학습지가 있으면 「자료 폴더」로 등록해 주세요.',at:nowIso()});}
+  work.proposals ||= [];render();note('boot',{head:work.head});})();
+window.__harness={get work(){return work;},render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};

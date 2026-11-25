@@ -1,0 +1,84 @@
+// 1.8.0 출제 하네스(실험 설정) — 5E 본창 쪽. 넷째 덧창에 하네스 화면(assets/harness/)을 띄우고, AI·도구 요청을 잇는다.
+// - 켜는 법: localStorage 「5e.harness」=「1」 또는 주소 ?harness=1. 꺼져 있으면 아무것도 하지 않는다(기존 화면 그대로).
+// - AI: 문항 단위 출제·대화는 기존 출제 대화 엔진(exampool-authoring-harness)을 그대로 쓰고(JSON 계약·근거 검색·재시도),
+//   시험지 대화·풀이 검사는 같은 연결로 한 차례(runTurn)씩 부른다. 결과를 문항에 쓰지 않는다 — 반영은 하네스 화면이 정한다.
+// - 도구: image·exam·hwp는 기존 전환(fiveEAppSwitch)으로 열고, 하네스 사이드바는 왼쪽에 남긴다(시안 v8).
+import {createTaskBridge} from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
+import {defaultAIModelSelection} from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
+import {runTurn,authoringError} from './exampool-authoring-harness.js?v=1.7.0-four-session-integration';
+import {aiErrorText,aiErrorCode} from './ai-error-copy.js?v=1.7.0-four-session-integration';
+
+const FLAG='5e.harness';
+export function harnessEnabled(){try{if(new URLSearchParams(location.search).get('harness')==='1')return true;return localStorage.getItem(FLAG)==='1';}catch{return false;}}
+const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin;
+const SIDE_W=224;
+
+export function initHarness({doc=document}={}){
+  if(!harnessEnabled()||doc.getElementById('harness-workspace'))return null;
+  const win=doc.defaultView,root=doc.documentElement;
+  const host=doc.createElement('section');host.id='harness-workspace';host.setAttribute('aria-label','5E 출제 하네스');
+  host.style.cssText='position:fixed;inset:0;z-index:30001;display:flex;background:var(--ds-app,#0f141c)';
+  const frame=doc.createElement('iframe');frame.title='5E 출제 하네스';frame.src='assets/harness/index.html?v=1.8.0-harness';frame.style.cssText='flex:1;border:0;width:100%;height:100%';
+  host.append(frame);doc.body.append(host);
+  // 도구를 열면 하네스는 사이드바 폭만 남기고, 도구 화면은 그 오른쪽으로 민다.
+  const style=doc.createElement('style');style.id='harness-tool-style';
+  style.textContent=`html.harness-tool #harness-workspace{right:auto!important;width:${SIDE_W}px}
+html.harness-tool body>.app,html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{margin-left:${SIDE_W}px!important;width:calc(100% - ${SIDE_W}px)!important}
+html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{left:${SIDE_W}px!important}`;
+  doc.head.append(style);
+  const send=msg=>frame.contentWindow?.postMessage({channel:'5e-harness',...msg},OWN);
+  const fromFrame=e=>e.source===frame.contentWindow&&(e.origin===win.location.origin||FILE_MODE)&&e.data?.channel==='5e-harness';
+  const theme=()=>({theme:root.getAttribute('data-theme')||'dark',palette:root.getAttribute('data-palette')||'classic'});
+  win.addEventListener('5e:color-mode-change',()=>send({action:'theme',...theme()}));
+
+  // ── AI ──
+  let authoringPromise,enginesPromise;
+  const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):authoringPromise||=import('./exampool-authoring-harness.js?v=1.7.0-four-session-integration').then(x=>x.createAuthoringHarness());
+  const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1.7.0-four-session-integration').then(x=>x.createFigureEngines()));
+  const base=()=>window.fiveEDesktop||window.fiveEWebAI;
+  const bridges=new Map(),controllers=new Map();
+  const bridgeFor=scope=>{const b=base();if(!b?.send)throw Object.assign(Error('AI 연결을 확인해 주세요. 상단 AI 연결에서 로그인한 뒤 다시 요청하세요.'),{code:'CODEX_NOT_LOGGED_IN'});
+    const key='harness:'+String(scope).slice(0,80);if(!bridges.has(key)||bridges.get(key).base!==b)bridges.set(key,{base:b,bridge:createTaskBridge(b,key)});return bridges.get(key).bridge;};
+  const need=error=>{const code=aiErrorCode(error)||error?.code;return code==='CODEX_NOT_FOUND'?'install':code==='CODEX_NOT_LOGGED_IN'?'login':'';};
+  // 한 차례: 프롬프트 글 → 답 글. model을 주면 그 모델로(풀이 검사의 두 모델).
+  async function turn({scope,text,model,effort,requestId}){
+    const bridge=bridgeFor(scope),controller=new AbortController();if(requestId)controllers.set(requestId,controller);const t0=Date.now();
+    try{
+      if(typeof bridge.status==='function'){const st=await bridge.status().catch(()=>null);if(st?.login?.loggedIn===false)throw Object.assign(Error(aiErrorText({code:'CODEX_NOT_LOGGED_IN'})),{code:'CODEX_NOT_LOGGED_IN'});}
+      const list=await bridge.models();let selection=defaultAIModelSelection(list);
+      if(model){const m=(list?.data||list||[]).find?.(x=>x.model===model||x.id===model);if(m)selection={...selection,model:m.model||m.id,effort:effort||m.defaultReasoningEffort||selection.effort};}
+      const raw=await runTurn(bridge,{purpose:'chat',text,attachments:[],...selection,conversationId:null},{signal:controller.signal});
+      return {text:raw,model:selection.model,ms:Date.now()-t0};
+    }catch(error){throw authoringError(error);}finally{if(requestId)controllers.delete(requestId);}
+  }
+  win.addEventListener('message',async e=>{
+    if(!fromFrame(e))return;const m=e.data;
+    if(m.action==='ready'){send({action:'theme',...theme(),desktop:!!window.fiveEDesktop});return;}
+    if(m.action==='turn'){try{send({action:'turn-ready',requestId:m.requestId,result:await turn(m)});}catch(error){send({action:'turn-ready',requestId:m.requestId,error:error.message,cancelled:!!error.cancelled,need:need(error)});}return;}
+    if(m.action==='author'){try{const h=await authoring();const result=await h.request(m.packet,{requestId:m.requestId,onProgress:p=>send({action:'author-progress',requestId:m.requestId,progress:p})});send({action:'author-ready',requestId:m.requestId,result});}
+      catch(error){send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:need(error)});}return;}
+    if(m.action==='cancel'){controllers.get(m.requestId)?.abort();try{(await authoring()).cancel(m.requestId);}catch{}return;}
+    if(m.action==='figure'){try{const en=await engines();const r=m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});
+        send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null}});}
+      catch(error){send({action:'figure-ready',requestId:m.requestId,error:aiErrorText(error)});}return;}
+    if(m.action==='tool'){openTool(m.tool);return;}
+    if(m.action==='home'){closeTool();return;}
+    if(m.action==='open-project'){win.dispatchEvent(new CustomEvent('5e:project-open',{detail:{name:String(m.name||'시험지.5e'),bytes:new Uint8Array(m.bytes)}}));openTool('exam',{already:true});return;}
+    if(m.action==='library'){try{const {openPdfReferencePicker}=await import('./pdf-library/reference-picker.js?v=1.7.0-four-session-integration');openTool('image',{silent:true});
+        await openPdfReferencePicker({onAdd:r=>{send({action:'library-picked',items:[{data:r.dataUrl||r.src,name:String(r.name||'라이브러리 자료').slice(0,200)}]});closeTool();return ['harness'];},onAddMany:list=>{send({action:'library-picked',items:list.map(r=>({data:r.dataUrl||r.src,name:String(r.name||'').slice(0,200)}))});closeTool();return list.map(()=>'harness');},onStatus:()=>{},onClose:()=>closeTool(),bindClose:()=>{}});}
+      catch(error){send({action:'library-picked',items:[],error:error.message});closeTool();}return;}
+  });
+  // ── 도구 오가기 ──
+  let tool=null;
+  function openTool(name,{silent=false,already=false}={}){
+    if(!['image','exam','hwp'].includes(name))return;tool=name;root.classList.add('harness-tool');
+    if(!already&&name!=='image')win.fiveEAppSwitch?.(name);
+    if(name==='image')win.fiveEAppSwitch?.('image');
+    if(!silent)send({action:'tool-opened',tool:name});
+  }
+  function closeTool(){tool=null;root.classList.remove('harness-tool');send({action:'tool-closed'});}
+  // ⌥⌘0: 하네스 첫 화면으로
+  doc.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.altKey&&e.code==='Digit0'){e.preventDefault();closeTool();frame.contentWindow?.focus();}});
+  win.fiveEHarness={open:()=>{closeTool();host.hidden=false;},frame};
+  return {host,frame};
+}

@@ -1,0 +1,37 @@
+/* 1.8.0 출제 하네스 — 시안 v8에 없던 「실제로 움직이게 하는 데 꼭 필요한」 최소 스타일만. 새 화면 요소는 만들지 않는다. */
+.app{height:calc(100vh - var(--ds-h-footer,28px))}
+.ptable td.num,.ptable th.num{width:44px}
+.ptable tr[data-row]{cursor:pointer}
+.ptable tr.seen-no td:first-child:after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ds-selected-icon);margin-left:5px;vertical-align:middle}
+.cond .c.ai{box-shadow:0 0 0 1px var(--ds-line);border-style:dashed}
+.cond .c.ai b:after{content:" · AI";font-weight:400}
+.empty-note{padding:28px 18px;color:var(--ds-ink-3);font-size:13px;line-height:1.7}
+/* 근거 없는 칸 점(결정 1: 점 하나만 늘), 예외는 다른 표시 */
+.kq .edot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#9aa3ad;margin-left:4px;vertical-align:.25em;cursor:pointer}
+.kq .edot.waived{background:transparent;box-shadow:inset 0 0 0 1.5px #9aa3ad}
+.kq .edot.problem{background:#ea580c}
+.kq [data-cell]{cursor:pointer;border-radius:3px}
+.kq [data-cell]:hover{background:rgba(0,0,0,.04)}
+.kq [data-cell].pick{background:rgba(47,129,247,.1);box-shadow:inset 2px 0 0 #2f81f7}
+.kq .fig{display:block;margin:6px auto;max-width:100%}
+.kq .figslot{display:block;border:1px dashed #999;color:#777;font:12px var(--ds-font,sans-serif);padding:18px;text-align:center;margin:6px 0}
+.kq table.dt{border-collapse:collapse;margin:6px auto}.kq table.dt td{border:1px solid #222;padding:3px 8px;text-align:center}
+.cbox2 textarea{width:100%;min-height:44px;resize:vertical;background:transparent;border:0;color:var(--ds-ink);font:inherit;font-size:12.5px;outline:none}
+.cbox2 .clist .ci{padding:6px 0;border-top:1px dashed var(--ds-line-strong)}
+.cbox2 .clist .ci:first-child{border-top:0}
+.prop{margin-top:6px;padding:6px 8px;border-radius:var(--ds-radius);background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);font-size:12px}
+.prop .pb{color:var(--ds-ink-3);text-decoration:line-through}.prop .pa{color:var(--ds-ink)}
+.msg .act .dot{animation:hpulse 1.2s infinite}@keyframes hpulse{50%{opacity:.35}}
+.msg.err p{color:#ea8a3a}
+.histmenu{position:absolute;top:44px;left:120px;z-index:20;min-width:300px;max-height:60vh;overflow:auto;background:var(--ds-raise);border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-float);padding:6px;font-size:12.5px}
+.histmenu .hv{display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:var(--ds-radius)}
+.histmenu .hv:hover{background:var(--ds-hover)}
+.histmenu .hv b{width:52px}.histmenu .hv span{flex:1;color:var(--ds-ink-2)}
+.chk-row{display:flex;gap:8px;padding:3px 0}.chk-row b{width:70px;color:var(--ds-ink-3);font-weight:500}
+.anskey{max-width:900px;margin:14px auto;background:#fff;color:#111;padding:14px 18px;border-radius:2px;box-shadow:var(--ds-shadow-board);font:13px var(--ds-font,sans-serif)}
+.anskey table{border-collapse:collapse;width:100%}.anskey td,.anskey th{border:1px solid #444;padding:3px 6px;text-align:center}
+.sheetbar{max-width:900px;margin:0 auto 12px;display:flex;gap:6px;flex-wrap:wrap}
+.paper2 .qblock{break-inside:avoid;margin-bottom:18px}
+.cols2.flow1{display:block}.cols2.flow1:before{display:none}
+.cols2{column-count:2;column-gap:26px;column-rule:1px solid #ccc;display:block}
+.cols2:before{display:none}

@@ -41,7 +41,7 @@ export async function fetchEvidence(request){
   const body=await r.json().catch(()=>({}));if(!r.ok)return {available:false,results:[],warning:body.error||'근거 검색 실패'};return body;
 }
 // 한 차례 AI 요청: 최종 답 글이 오고 차례가 끝날 때까지 기다린다. 취소·시간 초과는 중단 요청을 보낸다.
-function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent,onRetry,stall=RETRY_STALL,online=()=>globalThis.navigator?.onLine}={}){
+export function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent,onRetry,stall=RETRY_STALL,online=()=>globalThis.navigator?.onLine}={}){
   return new Promise((resolve,reject)=>{
     let text='',turnId=null,done=false,stallTimer=0,lastRetry=null;const buffered=[];
     const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);clearTimeout(stallTimer);off?.();signal?.removeEventListener('abort',abort);error?reject(error):resolve(value);};

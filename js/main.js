@@ -114,6 +114,9 @@ const startScreen = createStartScreen({ desktopReleaseUrl: window.fiveEDesktop ?
 // 학평 자료·낱말 위치를 읽어 둔다. 고르기 화면은 이 읽기가 끝난 뒤에 나온다(js/start-screen.js waitFor).
 if (startScreen) startScreen.waitFor("라이브러리 자료(학평·평가원) 읽는 중…", () => import("./pdf-library/hakpyeong-pack.js?v=1.7.0-four-session-integration").then(m => m.loadHakpyeongPack(m.DEFAULT_HAKPYEONG_SUBJECTS)), 1.3);
 if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
+// 1.8.0 출제 하네스(실험 설정 5e.harness=1 또는 ?harness=1일 때만): 첫 화면이 하네스다(넷째 덧창). 시작 창은 하네스 뒤에서 그림 새로 만들기로 걷는다.
+// 꺼져 있으면 모듈도 읽지 않는다(기존 화면 그대로).
+try { if (localStorage.getItem("5e.harness") === "1" || new URLSearchParams(location.search).get("harness") === "1") import("./harness-workspace.js?v=1.8.0-harness").then(m => { if (m.initHarness()) startScreen?.skip({ kind: "new", app: "image" }); }).catch(error => console.warn("출제 하네스를 열지 못했습니다:", error)); } catch {}
 initAppSwitch();
 installAppLock();
 initVisitorStats();
