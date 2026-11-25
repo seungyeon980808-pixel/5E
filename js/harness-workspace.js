@@ -42,6 +42,11 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
   const bridgeFor=scope=>{const b=base();if(!b?.send)throw Object.assign(Error('AI 연결을 확인해 주세요. 상단 AI 연결에서 로그인한 뒤 다시 요청하세요.'),{code:'CODEX_NOT_LOGGED_IN'});
     const key='harness:'+String(scope).slice(0,80);if(!bridges.has(key)||bridges.get(key).base!==b)bridges.set(key,{base:b,bridge:createTaskBridge(b,key)});return bridges.get(key).bridge;};
   const need=error=>{const code=aiErrorCode(error)||error?.code;return code==='CODEX_NOT_FOUND'?'install':code==='CODEX_NOT_LOGGED_IN'?'login':'';};
+  // 예외 시나리오: 「5E 상단의 AI 연결에서 로그인」이라 안내했지만 하네스가 그 막대를 가린다(막다른 안내) → exam처럼 연결 화면을 바로 열고,
+  // 하네스는 사이드바 폭으로 줄여 연결 창이 보이게 한다. 연결되면 하네스로 돌아와 같은 말을 이어서 보낸다.
+  let resumeSeq=0;
+  function openConnection(){if(!(window.fiveEDesktop&&!window.fiveEDesktop.web))return false;const seq=++resumeSeq;root.classList.add('harness-tool');
+    win.dispatchEvent(new CustomEvent('5e:web-login-request',{detail:{resumeAi:()=>{if(seq!==resumeSeq)return;closeTool();send({action:'resume'});}}}));return true;}
   // 한 차례: 프롬프트 글 → 답 글. model을 주면 그 모델로(풀이 검사의 두 모델).
   async function turn({scope,text,model,effort,requestId,attachments=[]}){
     const bridge=bridgeFor(scope),controller=new AbortController();if(requestId)controllers.set(requestId,controller);const t0=Date.now();
@@ -57,9 +62,9 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
   win.addEventListener('message',async e=>{
     if(!fromFrame(e))return;const m=e.data;
     if(m.action==='ready'){send({action:'theme',...theme(),desktop:!!window.fiveEDesktop});return;}
-    if(m.action==='turn'){try{send({action:'turn-ready',requestId:m.requestId,result:await turn(m)});}catch(error){send({action:'turn-ready',requestId:m.requestId,error:error.message,cancelled:!!error.cancelled,need:need(error)});}return;}
+    if(m.action==='turn'){try{send({action:'turn-ready',requestId:m.requestId,result:await turn(m)});}catch(error){const n=need(error);send({action:'turn-ready',requestId:m.requestId,error:error.message,cancelled:!!error.cancelled,need:n,opened:n?openConnection():false});}return;}
     if(m.action==='author'){try{const h=await authoring();const result=await h.request(m.packet,{requestId:m.requestId,onProgress:p=>send({action:'author-progress',requestId:m.requestId,progress:p})});send({action:'author-ready',requestId:m.requestId,result});}
-      catch(error){send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:need(error)});}return;}
+      catch(error){const n=need(error);send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:n,opened:n?openConnection():false});}return;}
     if(m.action==='evidence'){try{send({action:'evidence-ready',requestId:m.requestId,result:await fetchEvidence(m.request)});}catch(error){send({action:'evidence-ready',requestId:m.requestId,result:{available:false,results:[],warning:error.message}});}return;}
     if(m.action==='cancel'){controllers.get(m.requestId)?.abort();try{(await authoring()).cancel(m.requestId);}catch{}return;}
     if(m.action==='figure'){try{const en=await engines();const r=m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});

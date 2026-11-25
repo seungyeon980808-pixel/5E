@@ -35,7 +35,9 @@ addEventListener('message',e=>{if(e.source!==window.parent||e.data?.channel!=='5
   if(m.action==='author-progress'){pending.get(m.requestId)?.onProgress?.(m.progress);return;}
   if(m.action==='library-picked'){if(m.items?.length){work.sources.picked=[...(work.sources.picked||[]),...m.items.map(x=>({name:x.name,at:nowIso()}))];toast(`라이브러리에서 ${m.items.length}개를 가져왔어요`);save();}return;}
   const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);
-  if(m.error){p.reject(Object.assign(Error(m.error),{need:m.need,cancelled:m.cancelled}));return;}p.resolve(m.result);});
+  if(m.error){p.reject(Object.assign(Error(m.error),{need:m.need,cancelled:m.cancelled,opened:m.opened}));return;}p.resolve(m.result);});
+// 연결 화면에서 로그인을 마치면: 마지막 교사 말을 같은 대화에 이어서 다시 보낸다(말풍선은 다시 쌓지 않음).
+addEventListener('message',e=>{if(e.source!==window.parent||e.data?.channel!=='5e-harness'||e.data.action!=='resume'||busy)return;const last=[...(sub?subThread(sub):work.chat)].reverse().find(m=>m.role==='me');if(!last)return;note('resume');busy++;(sub?subSend(last.text):examSend(last.text)).catch(failMsg).finally(()=>{busy--;render();});});
 
 // ── 저장(자동: IndexedDB 한 칸 / 파일: .5e examset) ──
 const DB='5e-harness';
@@ -70,7 +72,7 @@ function act(text){const el=document.createElement('div');el.className='msg a';e
   return {set:t=>{el.querySelector('.act').lastChild.textContent=t;},done:()=>{acts.delete(el);el.remove();}};}
 async function send(){const ta=$('#input'),text=ta.value.trim();if(!text||busy)return;ta.value='';say('me',text);busy++;$('#bSend').disabled=true;
   try{sub?await subSend(text):await examSend(text);}catch(e){failMsg(e);}finally{busy--;$('#bSend').disabled=false;render();}}
-function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.need==='login'?'GPT 로그인이 필요해요. 5E 상단의 AI 연결에서 로그인한 뒤 같은 말을 다시 보내 주세요. 쓰던 내용은 그대로예요.':e.need==='install'?'이 컴퓨터에 Codex가 없어 AI를 부르지 못했어요. AI 연결 화면에서 설치한 뒤 다시 보내 주세요.':e.cancelled?'요청을 취소했어요. 바뀐 것은 없어요.':`AI 답을 받지 못했어요: ${e.message} · 바뀐 것은 없어요. 같은 말을 다시 보내면 이어서 해요.`;say('ai',text,{error:true});}
+function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.need==='login'?(e.opened?'GPT 로그인이 필요해요. 연결 화면을 열었어요 — 로그인하면 같은 말을 이어서 보내요. 쓰던 내용은 그대로예요.':'GPT 로그인이 필요해요. 왼쪽 아래 「5E」를 눌러 5E 화면의 AI 연결에서 로그인한 뒤 같은 말을 다시 보내 주세요. 쓰던 내용은 그대로예요.'):e.need==='install'?(e.opened?'이 컴퓨터에 Codex가 없어요. 연결 화면을 열었어요 — 설치하면 같은 말을 이어서 보내요.':'이 컴퓨터에 Codex가 없어 AI를 부르지 못했어요. AI 연결 화면에서 설치한 뒤 다시 보내 주세요.'):e.cancelled?'요청을 취소했어요. 바뀐 것은 없어요.':`AI 답을 받지 못했어요: ${e.message} · 바뀐 것은 없어요. 같은 말을 다시 보내면 이어서 해요.`;say('ai',text,{error:true});}
 
 // 시험지 대화(큰 세션)
 const globalRules=()=>{try{return JSON.parse(localStorage.getItem('5e.harness.rules')||'[]');}catch{return [];}};
