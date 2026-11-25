@@ -159,7 +159,10 @@ async function draftRow(row){
 ${rules?`출제 규칙:\n${rules}\n`:''}근거(교과서 쪽·학습지·기출)를 evidenceUsed에 대고${needFigure?`, 이 문항은 그림이 있는 문항이니 빈 「${row.figure==='code'?'그래프':'그림'}」 칸의 제작 명세를 figures에 꼭 1개 이상 써 줘(slot은 그 칸 이름, ${row.figure==='convert'?'기출 그림을 바탕으로 바꿔 그리는 명세':row.figure==='code'?'kind=graph, 축·단위·값을 정확히':'kind=image'})`:''}. ${row.answerTarget?`정답은 ${'①②③④⑤'[row.answerTarget-1]}이 되게 써 줘(시험지 전체 정답 분포를 고르게 맞춘 것). 합답형이면 옳은 보기 조합이 ${'①②③④⑤'[row.answerTarget-1]} 자리 선지가 되게.`:''}`;
   const r=await call('author',{packet:packetFor(q,{kind:'draft',text})});const resp=r.response;
   const changes=proposalChanges(q,resp.proposal);const {question,errors}=applyChanges(q,changes);
-  Object.assign(q,question);X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map((r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]))});
+  Object.assign(q,question);
+  // 생명과학 시나리오: 합답형 칸으로 만들었는데 AI가 객관식으로 써서 빈 〈보기〉 상자가 남았다 → 합답형이 아니면 빈 보기 상자는 뺀다(빈 칸 정리).
+  if(q.type!=='합답형')q.blocks=q.blocks.filter(b=>!(b.kind==='bogi'&&!b.lines?.some(l=>String(l.text||'').trim())));
+  X.ensureExplanationIds?.(q);ensureAuthoring(q);recordReview(q,{...resp,review:resp.review},{evidence:new Map((r.evidence||[]).map(e=>[e.ref,{kind:e.kind,title:e.title,quote:e.quote,page:e.page||null,ref:e.ref}]))});
   q.figureSpecs=(resp.figures||[]).slice(0,6);X.addQuestion(work,q,{planNo:row.no});X.linkItem(work,row.no,q.id);
   subThread(q.id).push({role:'ai',text:resp.reply,at:nowIso(),model:r.meta?.model,ms:r.meta?.ms});
   note('draft',{no:row.no,ms:r.meta?.ms,changes:changes.length,errors:errors.length,figures:q.figureSpecs.length});
@@ -272,7 +275,7 @@ function paperHtml(q){let h=`<p class="q" data-cell="${E(q.id)}|ask"><b>${E(q.nu
     else if(b.kind==='table')h+=`<table class="dt" data-cell="${E(q.id)}|block:${E(b.id)}">${b.table.cells.map(r=>`<tr>${r.map(c=>`<td>${tex(c.value)}</td>`).join('')}</tr>`).join('')}</table>`;
     else if(b.lines)h+=`<div class="box">${b.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)} ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;}
   h+=`<p data-cell="${E(q.id)}|ask">${tex(q.ask)} <span class="pt">[${E(q.points)}점]</span>${dot(q,'ask')}</p>`;
-  const bogi=q.blocks.find(b=>b.kind==='bogi');if(bogi)h+=`<div class="bogi">${bogi.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)}. ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;
+  const bogi=q.blocks.find(b=>b.kind==='bogi'&&b.lines?.some(l=>String(l.text||'').trim()));if(bogi)h+=`<div class="bogi">${bogi.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)}. ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;
   if(q.type!=='서술형')h+=`<div class="choices${q.choices.some(c=>String(c.text).length>14)?' v':''}">${q.choices.map((c,i)=>`<p data-cell="${E(q.id)}|choice:${E(c.id)}">${CIRCLED[i]} ${tex(c.text)}</p>`).join('')}</div>`;
   return h;}
 function statsLine(s){if(!s)return '';const c=s.countByNumber||{};return `정답 ${s.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · ${[1,2,3,4,5].map(n=>`${CIRCLED[n-1]}${c[n]||0}`).join(' ')} · 최대 연속 ${s.longestRun} · 합계 ${s.pointsTotal}점`;}
