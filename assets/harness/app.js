@@ -64,7 +64,10 @@ async function openFile(file){const bytes=new Uint8Array(await file.arrayBuffer(
 // ── 대화 ──
 function say(role,text,extra={}){const m={role,text,at:nowIso(),...extra};(sub?subThread(sub):work.chat).push(m);save();renderThread();return m;}
 function subThread(qid){const s=work.sessions.find(x=>x.scope==='q:'+qid)||(work.sessions.push({id:crypto.randomUUID(),scope:'q:'+qid,parent:'exam',provider:'codex',startedAt:nowIso(),thread:[]}),work.sessions.at(-1));s.thread ||= [];return s.thread;}
-function act(text){const el=document.createElement('div');el.className='msg a';el.innerHTML=`<div class="act"><span class="dot"></span>${E(text)}</div>`;$('#thread').append(el);$('#scroll').scrollTop=1e7;return {set:t=>{el.querySelector('.act').lastChild.textContent=t;},done:()=>el.remove()};}
+// 진행 줄: 화면을 다시 그려도 남는다(11-25 완주 2: render가 대화를 다시 그리며 진행 줄을 지워, 초안 16문항·그림 그리는 동안 진행이 안 보였다).
+const acts=new Set();
+function act(text){const el=document.createElement('div');el.className='msg a';el.innerHTML=`<div class="act"><span class="dot"></span>${E(text)}</div>`;acts.add(el);$('#thread').append(el);$('#scroll').scrollTop=1e7;
+  return {set:t=>{el.querySelector('.act').lastChild.textContent=t;},done:()=>{acts.delete(el);el.remove();}};}
 async function send(){const ta=$('#input'),text=ta.value.trim();if(!text||busy)return;ta.value='';say('me',text);busy++;$('#bSend').disabled=true;
   try{sub?await subSend(text):await examSend(text);}catch(e){failMsg(e);}finally{busy--;$('#bSend').disabled=false;render();}}
 function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.need==='login'?'GPT 로그인이 필요해요. 5E 상단의 AI 연결에서 로그인한 뒤 같은 말을 다시 보내 주세요. 쓰던 내용은 그대로예요.':e.need==='install'?'이 컴퓨터에 Codex가 없어 AI를 부르지 못했어요. AI 연결 화면에서 설치한 뒤 다시 보내 주세요.':e.cancelled?'요청을 취소했어요. 바뀐 것은 없어요.':`AI 답을 받지 못했어요: ${e.message} · 바뀐 것은 없어요. 같은 말을 다시 보내면 이어서 해요.`;say('ai',text,{error:true});}
@@ -234,12 +237,12 @@ async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)th
 }
 
 // ── 그림(제작 명세 → 기존 그림 엔진). 빈 그림 칸에 넣는 것은 빈 칸 채우기 ──
-async function drawFigure(qid,i){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec)return;const a=act(`${q.number}번 그림 그리는 중…`);
+async function drawFigure(qid,i){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec)return;busy++;const a=act(`${q.number}번 그림 그리는 중…`);
   try{const r=await call('figure',{qid,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[]});
     let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);
     if(!slot){toast('빈 그림 칸이 없어 새 그림 칸을 만들었어요');slot={id:crypto.randomUUID(),parent:null,kind:'figure',label:spec.kind==='graph'?'그래프':'그림',text:'',layout:'세로',figure:null};q.blocks.push(slot);}
     slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms});toast(`${q.number}번 그림을 넣었어요`);}
-  catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();}finally{a.done();}}
+  catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();}finally{a.done();busy--;}}
 
 // ── 한글에서 고친 판: 차이 보고까지만(결정 2) ──
 async function importHwpx(file){const a=act('받은 한글 파일과 지금 판을 문항별로 비교하는 중…');
@@ -271,7 +274,7 @@ function paperHtml(q){let h=`<p class="q" data-cell="${E(q.id)}|ask"><b>${E(q.nu
 function statsLine(s){if(!s)return '';const c=s.countByNumber||{};return `정답 ${s.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · ${[1,2,3,4,5].map(n=>`${CIRCLED[n-1]}${c[n]||0}`).join(' ')} · 최대 연속 ${s.longestRun} · 합계 ${s.pointsTotal}점`;}
 function renderThread(){const list=sub?subThread(sub):work.chat;
   $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}">${String(m.text).split(/\n+/).map(p=>`<p>${E(p)}</p>`).join('')}${(m.asks||[]).length?`<div class="ledger"><div class="lh">꼭 정해야 해요</div>${m.asks.map(a=>`<div class="lr"><span class="ln">?</span><span>${E(a)}</span></div>`).join('')}</div>`:''}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
-  $('#scroll').scrollTop=1e7;}
+  for(const el of acts)$('#thread').append(el);$('#scroll').scrollTop=1e7;}
 const ST={new:'새 코멘트',talk:'의논 중',decided:'결정됨',applied:'반영됨',dropped:'안 함'},SC={new:'b-ok',talk:'b-talk',decided:'b-ok',applied:'b-done',dropped:'b-ok'};
 function ledgerHtml(){const list=work.comments.filter(c=>c.status!=='dropped').slice(-20);if(!list.length)return '';return `<div class="ledger"><div class="lh">코멘트 대장 · ${E(work.head||'v0.0')}</div>${list.map(c=>`<div class="lr"><span class="ln">${E(work.questions.find(q=>q.id===c.qid)?.number||'전체')}번</span><span>${E(c.gist||c.text).slice(0,80)}</span><span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>`).join('')}</div>`;}
 function renderPlan(){const m=work.meta,chip=(k,label,fmt=v=>v)=>{const x=m[k];if(!x||x.value==null||x.value==='')return `<span class="c miss"><b>${label}</b>아직</span>`;return `<span class="c${x.by==='ai'?' ai':''}"><b>${label}</b>${E(fmt(x.value))}</span>`;};
