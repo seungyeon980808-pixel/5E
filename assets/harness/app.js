@@ -261,8 +261,11 @@ async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questio
     note('solve',{no:q.number,verdict:vd,answers:runs.map(r=>r.answer)});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);render();};
   const queue=[...ids];await Promise.all(Array.from({length:1},async()=>{while(queue.length)await one(queue.shift());}));a.done();
   const ck=doneIds.map(id=>work.checks.filter(c=>c.qid===id&&c.version===v.label).at(-1)).filter(Boolean),bad=ck.filter(c=>c.verdict!=='pass');
+  // 완주 6: 초안 직후엔 그림이 아직 없어 「그림이 아직 없음」이 16줄 나왔다(곧 뒤에서 그림을 그림) → 그런 문항은 한 줄로 묶는다.
+  const waitFig=bad.filter(c=>c.verdict==='skipped'&&/그림 칸/.test(c.skipped||''));
+  if(waitFig.length&&waitFig.length===bad.length&&ck.length-bad.length===0){say('ai',`${v.label}: 그림이 들어가야 풀 수 있는 문항 ${waitFig.length}개는 그림을 넣은 뒤 두 모델이 풀어요.`);save();return;}
   const used=[...new Set(ck.flatMap(c=>c.runs.filter(r=>r.answer!=null||!/^풀지 못함/.test(r.note||'')).map(r=>r.model)))];
-  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${used.join('·')||SOLVERS.map(s=>s.label).join('·')}${used.some(m=>!SOLVERS.some(s=>s.model===m))?' — 기본 둘째 모델이 막혀 대신 푼 모델이 있어요':''}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:c.skipped&&/그림 칸/.test(c.skipped)?'그림이 아직 없음':'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
+  say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${used.join('·')||SOLVERS.map(s=>s.label).join('·')}${used.some(m=>!SOLVERS.some(s=>s.model===m))?' — 기본 둘째 모델이 막혀 대신 푼 모델이 있어요':''}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.filter(c=>!waitFig.includes(c)).map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:c.skipped&&/그림 칸/.test(c.skipped)?'그림이 아직 없음':'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}${waitFig.length?` · 그림을 기다리는 문항 ${waitFig.length}개`:''}. 고칠지는 말씀해 주시면 정해요.`);save();}
 
 // 문항 대화(하위 세션)
 async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
