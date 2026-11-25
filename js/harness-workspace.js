@@ -78,10 +78,14 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     if(!already&&name!=='image')win.fiveEAppSwitch?.(name);
     if(name==='image')win.fiveEAppSwitch?.('image');
     if(!silent)send({action:'tool-opened',tool:name});
+    setTimeout(hookFrames,1500);setTimeout(hookFrames,6000);
   }
   function closeTool(){tool=null;root.classList.remove('harness-tool');send({action:'tool-closed'});}
   // ⌥⌘0: 하네스 첫 화면으로
-  doc.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.altKey&&e.code==='Digit0'){e.preventDefault();closeTool();frame.contentWindow?.focus();}});
+  const homeKey=e=>{if((e.metaKey||e.ctrlKey)&&e.altKey&&e.code==='Digit0'){e.preventDefault();closeTool();frame.contentWindow?.focus();}};
+  doc.addEventListener('keydown',homeKey);
+  // 11-25 완주 1: exam·hwp 칸(iframe) 안에 포커스가 있으면 ⌥⌘0이 본창까지 오지 않아 하네스로 못 돌아왔다 → 도구 칸 문서에도 단다(같은 출처만).
+  const hooked=new WeakSet();const hookFrames=()=>{for(const f of doc.querySelectorAll('#exampool-sheet-workspace iframe,#rhwp-exam-workspace iframe')){try{const d=f.contentDocument;if(d&&!hooked.has(d)){hooked.add(d);d.addEventListener('keydown',homeKey);}}catch{}}};
   win.fiveEHarness={open:()=>{closeTool();host.hidden=false;},frame};
   return {host,frame};
 }
