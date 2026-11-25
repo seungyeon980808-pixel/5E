@@ -43,13 +43,14 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     const key='harness:'+String(scope).slice(0,80);if(!bridges.has(key)||bridges.get(key).base!==b)bridges.set(key,{base:b,bridge:createTaskBridge(b,key)});return bridges.get(key).bridge;};
   const need=error=>{const code=aiErrorCode(error)||error?.code;return code==='CODEX_NOT_FOUND'?'install':code==='CODEX_NOT_LOGGED_IN'?'login':'';};
   // 한 차례: 프롬프트 글 → 답 글. model을 주면 그 모델로(풀이 검사의 두 모델).
-  async function turn({scope,text,model,effort,requestId}){
+  async function turn({scope,text,model,effort,requestId,attachments=[]}){
     const bridge=bridgeFor(scope),controller=new AbortController();if(requestId)controllers.set(requestId,controller);const t0=Date.now();
     try{
       if(typeof bridge.status==='function'){const st=await bridge.status().catch(()=>null);if(st?.login?.loggedIn===false)throw Object.assign(Error(aiErrorText({code:'CODEX_NOT_LOGGED_IN'})),{code:'CODEX_NOT_LOGGED_IN'});}
       const list=await bridge.models();let selection=defaultAIModelSelection(list);
       if(model){const m=(list?.data||list||[]).find?.(x=>x.model===model||x.id===model);if(m)selection={...selection,model:m.model||m.id,effort:effort||m.defaultReasoningEffort||selection.effort};}
-      const raw=await runTurn(bridge,{purpose:'chat',text,attachments:[],...selection,conversationId:null},{signal:controller.signal});
+      const files=(attachments||[]).filter(f=>/^data:image\/(png|jpeg|webp);base64,/.test(f?.data||'')).slice(0,6).map((f,i)=>({id:'att-'+i,name:String(f.name||`그림 ${i+1}.png`).slice(0,80),data:f.data}));
+      const raw=await runTurn(bridge,{purpose:'chat',text,attachments:files,...selection,conversationId:null},{signal:controller.signal});
       return {text:raw,model:selection.model,ms:Date.now()-t0};
     }catch(error){throw authoringError(error);}finally{if(requestId)controllers.delete(requestId);}
   }

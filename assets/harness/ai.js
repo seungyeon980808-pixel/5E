@@ -86,7 +86,7 @@ export function solveSheet(q){
 }
 export function buildSolvePrompt(q){return `[역할] 너는 이 시험을 처음 보는 학생이자 검토 교사다. 정답·해설은 받지 않았다. 문항만 보고 직접 푼다.
 [응답 형식] JSON 하나만: {"format":"${SOLVE_FORMAT}","answer":1~5 또는 null,"multiple":[정답이 여럿이면 번호들],"note":"풀이 핵심과 문항 결함(복수 정답·조건 부족·교과 범위 밖·시비 가능성) 한두 문장, 한국어"}
-- 그림이 없다고 적힌 칸은 글만으로 판단하고, 그림이 꼭 필요하면 note에 적는다.
+- 문항의 그림은 첨부한 이미지로 함께 준다(이름이 칸 이름). 그림이 없다고 적힌 칸만 글로 판단하고, 그림이 꼭 필요한데 없으면 note에 적는다.
 
 [문항]
 ${solveSheet(q)}`;}

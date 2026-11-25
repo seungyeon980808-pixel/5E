@@ -9,7 +9,8 @@ import {newQuestion,applyForm,clone,block} from '../exampool/sheet/model.js';
 import {explanationParts} from '../exampool/sheet/explanation.js';
 import {proposalChanges,ensureAuthoring,recordReview} from '../exampool/authoring/session.js';
 import {applyChanges,checkAnswerStructure} from '../exampool/authoring/contract.js';
-import {buildSheetProject} from '../exampool/sheet/sheet-file.js';
+import {buildSheetProject,readSheetFile} from '../exampool/sheet/sheet-file.js';
+import {peekKind} from './model/file.js';
 import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,parseSolve,buildSolvePrompt,verdict} from './ai.js';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -46,7 +47,15 @@ function save(){clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{try{await
 async function saveFile(){const bytes=await buildExamsetFile(work);const name=`${(work.meta.title||'시험지').replace(/[\\/:*?"<>|]/g,'_')}.5e`;
   const desk=window.parent.fiveEDesktop?.examFiles;if(desk){const r=await desk.save({name,ext:'5e',bytes});toast('저장했어요: '+r.name);note('file-save',{bytes:bytes.length,desktop:true});return;}
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bytes]));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast('시험지 파일을 내려받았어요');note('file-save',{bytes:bytes.length});}
-async function openFile(file){try{const w=await parseExamsetFile(new Uint8Array(await file.arrayBuffer()));work=w;sub=null;save();render();toast('시험지를 열었어요 · '+(work.head||'v0.0'));note('file-open',{head:work.head});}catch(e){toast('열지 못했어요: '+e.message);note('file-open-fail',{error:e.message});}}
+// 1.7.x 시험지·문항 파일(.5e sheet·.exampool·엑셀)은 새 시험지로 「복사해 가져온다」(결정 17·18 가정). 문항은 그대로, 설계표는 문항에서 거꾸로 채움, 판 v0.1.
+async function importSheet(name,bytes){const read=await readSheetFile(name,bytes,{});if(read.kind!=='sheet')throw Error('그림·한글 시험지 파일은 image·hwp에서 여세요.');
+  const p=read.pending,exam=p.exams?.[0],ids=exam?.items?.length?exam.items:p.questions.map(q=>q.id),w=X.newExamset({title:exam?.title||name.replace(/\.[^.]+$/,'')});
+  const FORM_OF={합답형:'combo',서술형:'essay'};for(const id of ids){const q=clone(p.questions.find(x=>x.id===id));if(!q)continue;X.addQuestion(w,q,{by:'import'});
+    w.plan.push({no:w.plan.length+1,qid:q.id,unit:q.unitSmall||q.unitMiddle||'',standards:q.standardCode?[q.standardCode]:[],difficulty:q.difficulty||'',points:q.points,form:q.form||FORM_OF[q.type]||'single',structure:q.structure||'',twist:q.intent||'',figure:q.blocks.some(b=>b.kind==='figure'&&b.figure?.data)?'reuse':'none',basis:[],status:'set',by:'teacher',seen:true});}
+  X.setMeta(w,'itemCount',w.items.length,'teacher');X.setMeta(w,'pointsTotal',X.computeStats(X.orderedQuestions(w)).pointsTotal,'teacher');w.meta.stage='review';
+  X.commitVersion(w,{summary:`가져옴: ${name}`});w.chat.push({role:'ai',text:`「${name}」에서 문항 ${w.items.length}개를 새 시험지로 복사해 왔어요(원래 파일은 그대로). 과목과 범위를 알려 주시면 근거 검토를 이어서 할게요.`,at:nowIso()});return w;}
+async function openFile(file){const bytes=new Uint8Array(await file.arrayBuffer());if(peekKind(bytes)!=='examset'){try{work=await importSheet(file.name,bytes);sub=null;tab='review';save();render();note('import-sheet',{n:work.items.length});toast('기존 시험지를 복사해 왔어요');}catch(e){toast('가져오지 못했어요: '+e.message);note('import-sheet-fail',{error:e.message});}return;}
+  try{const w=await parseExamsetFile(bytes);work=w;sub=null;save();render();toast('시험지를 열었어요 · '+(work.head||'v0.0'));note('file-open',{head:work.head});}catch(e){toast('열지 못했어요: '+e.message);note('file-open-fail',{error:e.message});}}
 
 // ── 대화 ──
 function say(role,text,extra={}){const m={role,text,at:nowIso(),...extra};(sub?subThread(sub):work.chat).push(m);save();renderThread();return m;}
@@ -173,11 +182,13 @@ const stripMeta=q=>{const {authoring,reviews,typeset,seen,figureSpecs,...rest}=q
 function commit(summary,{changed=[],applied}={}){const v=X.commitVersion(work,{summary,changed,applied:applied?.applied||{}});save();render();note('version',{label:v.label,stats:v.stats});return v;}
 function declareFinal(){const v=X.declareFinal(work);work.meta.stage='final';save();render();say('ai',`${v.label}으로 정했어요. 정답 배열 ${v.stats.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · 배점 합계 ${v.stats.pointsTotal}점. 시험지 탭에서 exam으로 보내 조판·한글로 내보낼 수 있어요.`,{stats:v.stats});note('final',{label:v.label});}
 
+// 문항의 실제 그림(풀이 검사에 첨부 — 11-25 완주 1: 글만 보내 그림 문항은 두 모델 모두 「그림 누락」으로 못 풂)
+const figuresOf=q=>[...q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({name:(b.label||'그림')+'.png',data:b.figure.data})),...q.choices.map((c,i)=>c.figure?.data?{name:'선지 '+CIRCLED[i]+'.png',data:c.figure.data}:null).filter(Boolean)].slice(0,6);
 // 풀이 검사: 판의 바뀐 문항만, 두 모델이 정답·해설 없이 새 맥락에서 따로 푼다(결정 8 + 4 가정).
 async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questions.some(q=>q.id===id&&q.type!=='서술형'));if(!ids.length)return;
   const a=act(`정답·해설 가린 문항지로 두 모델 풀이 — 바뀐 문항 ${ids.length}개`);let done=0;
   const one=async id=>{const q=work.questions.find(x=>x.id===id);if(!q)return;const runs=[];
-    for(const s of SOLVERS){let last=null;for(const model of [s.model,...(s.fallback||[])]){try{const r=await call('turn',{scope:`solve:${model}:${id}`,text:buildSolvePrompt(q),model,effort:'medium'});const p=parseSolve(r.text);last={provider:'codex',model:r.model||model,isolated:true,answer:p.ok?p.value.answer:null,multiple:p.value?.multiple||[],note:p.value?.note||(p.ok?'':'형식 오류'),ms:r.ms};break;}
+    for(const s of SOLVERS){let last=null;for(const model of [s.model,...(s.fallback||[])]){try{const r=await call('turn',{scope:`solve:${model}:${id}`,text:buildSolvePrompt(q),model,effort:'medium',attachments:figuresOf(q)});const p=parseSolve(r.text);last={provider:'codex',model:r.model||model,isolated:true,answer:p.ok?p.value.answer:null,multiple:p.value?.multiple||[],note:p.value?.note||(p.ok?'':'형식 오류'),ms:r.ms};break;}
         catch(e){last={provider:'codex',model,isolated:true,answer:null,note:'풀지 못함: '+e.message,ms:0};note('solve-retry',{model,error:e.message.slice(0,120)});}}runs.push(last);}
     const ans=Number.isInteger(q.answer)?q.answer+1:null,vd=verdict(ans,runs);X.recordCheck(work,{qid:id,version:v.label,contentHash:null,runs,verdict:vd,skipped:runs.every(r=>r.answer==null)?'풀이 실패':null});
     note('solve',{no:q.number,verdict:vd,answers:runs.map(r=>r.answer)});a.set(`두 모델 풀이 · ${++done}/${ids.length}`);render();};
