@@ -50,7 +50,11 @@ async function saveFile(){const bytes=await buildExamsetFile(work);const name=`$
 // 1.7.x 시험지·문항 파일(.5e sheet·.exampool·엑셀)은 새 시험지로 「복사해 가져온다」(결정 17·18 가정). 문항은 그대로, 설계표는 문항에서 거꾸로 채움, 판 v0.1.
 async function importSheet(name,bytes){const read=await readSheetFile(name,bytes,{});if(read.kind!=='sheet')throw Error('그림·한글 시험지 파일은 image·hwp에서 여세요.');
   const p=read.pending,exam=p.exams?.[0],ids=exam?.items?.length?exam.items:p.questions.map(q=>q.id),w=X.newExamset({title:exam?.title||name.replace(/\.[^.]+$/,'')});
-  const FORM_OF={합답형:'combo',서술형:'essay'};for(const id of ids){const q=clone(p.questions.find(x=>x.id===id));if(!q)continue;X.addQuestion(w,q,{by:'import'});
+  const FORM_OF={합답형:'combo',서술형:'essay'};for(const id of ids){const q=clone(p.questions.find(x=>x.id===id));if(!q)continue;
+    // 명세 4-5: 옛 근거 references[]를 출제 기록 근거로 옮긴다(직접 지지·교사).
+    if(q.references?.length){const a=ensureAuthoring(q);for(const r of q.references){const t=/^(block|line|choice):/.test(r.target)?r.target:r.target==='question'?'question':q.blocks.some(b=>b.id===r.target)?'block:'+r.target:q.blocks.some(b=>b.lines?.some(l=>l.id===r.target))?'line:'+r.target:q.choices.some(c=>c.id===r.target)?'choice:'+r.target:'question';
+      a.evidence.push({id:crypto.randomUUID(),target:t,claim:String(r.quote||r.label||'').slice(0,4000)||'(옛 근거)',judgement:'direct',by:'teacher',note:'옛 파일 근거에서 옮김',reviewVersion:null,at:nowIso(),source:{kind:'document',title:String(r.label||'').slice(0,600),quote:String(r.quote||'').slice(0,6000),page:Number.isInteger(r.page)?r.page:null}});}}
+    X.addQuestion(w,q,{by:'import'});
     w.plan.push({no:w.plan.length+1,qid:q.id,unit:q.unitSmall||q.unitMiddle||'',standards:q.standardCode?[q.standardCode]:[],difficulty:q.difficulty||'',points:q.points,form:q.form||FORM_OF[q.type]||'single',structure:q.structure||'',twist:q.intent||'',figure:q.blocks.some(b=>b.kind==='figure'&&b.figure?.data)?'reuse':'none',basis:[],status:'set',by:'teacher',seen:true});}
   X.setMeta(w,'itemCount',w.items.length,'teacher');X.setMeta(w,'pointsTotal',X.computeStats(X.orderedQuestions(w)).pointsTotal,'teacher');w.meta.stage='review';
   X.commitVersion(w,{summary:`가져옴: ${name}`});w.chat.push({role:'ai',text:`「${name}」에서 문항 ${w.items.length}개를 새 시험지로 복사해 왔어요(원래 파일은 그대로). 과목과 범위를 알려 주시면 근거 검토를 이어서 할게요.`,at:nowIso()});return w;}
