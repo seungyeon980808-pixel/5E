@@ -167,7 +167,8 @@ async function rebalanceAnswers(){const qs=X.orderedQuestions(work).filter(q=>q.
   a.done();say('ai',`정답 분포를 맞추는 안을 문항 ${pick.length}개에 붙였어요(${pick.map(p=>`${p.q.number}번 ${CIRCLED[p.q.answer]}→${CIRCLED[p.to-1]}`).join(', ')}). 아직 바꾸지 않았어요. 이대로 하려면 「정답 분포 안 그대로 반영해」라고 해 주세요.`,{ledger:true});tab='review';save();}
 function packetFor(q,{kind,text}){const a=ensureAuthoring(q),{typeset,reviews,authoring,origin,seen,locks,...question}=clone(q);
   const m=work.meta;return {format:'exampool-authoring-request-v1',kind,text,question,previewHtml:'',
-    authoring:{revision:a.revision,target:{subject:m.subject?.value||'',scope:[].concat(m.range?.value||[]).join(', '),schoolLevel:m.grade?.value||''},requirements:a.requirements,issues:(a.issues||[]).filter(i=>i.status==='open').map(i=>i.text).slice(-8),stale:[],axes:null,recentHistory:[]},
+    // 결정 7: 저장한 출제 규칙(전체·과목·이 시험지)은 문항 요청마다 「명시 요구」로 함께 넘긴다(예전엔 초안에만 들어가 코멘트·문항 대화에선 무시됐다).
+    authoring:{revision:a.revision,target:{subject:m.subject?.value||'',scope:[].concat(m.range?.value||[]).join(', '),schoolLevel:m.grade?.value||''},requirements:{...a.requirements,explicit:[...new Set([...(a.requirements?.explicit||[]),...rulesFor().map(r=>'출제 규칙: '+r.text)])].slice(0,50)},issues:(a.issues||[]).filter(i=>i.status==='open').map(i=>i.text).slice(-8),stale:[],axes:null,recentHistory:[]},
     teacherEdits:(q.locks||[]).map(l=>`직접 고친 칸: ${l.key}`),conversation:(subThreadIf(q.id)||[]).slice(-12).map(({role,text})=>({role,text})),contentHash:null,
     figureCount:q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data).length,figures:q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({blockId:b.id,label:b.label||'그림',data:b.figure.data}))};}
 const subThreadIf=qid=>work.sessions.find(x=>x.scope==='q:'+qid)?.thread;
