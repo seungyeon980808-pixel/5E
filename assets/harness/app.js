@@ -329,7 +329,7 @@ function paperHtml(q){let h=`<p class="q" data-cell="${E(q.id)}|ask"><b>${E(q.nu
   for(const b of q.blocks){if(b===first||b.kind==='bogi')continue;
     if(b.kind==='text'&&b.text)h+=`<p data-cell="${E(q.id)}|block:${E(b.id)}">${tex(b.text)}${dot(q,'block:'+b.id)}</p>`;
     else if(b.kind==='figure')h+=b.figure?.data?`<img class="fig" src="${b.figure.data}" alt="${E(b.label)}" data-cell="${E(q.id)}|block:${E(b.id)}">`:`<span class="figslot">${E(b.label||'그림')} · 아직 그림 없음</span>`;
-    else if(b.kind==='table')h+=`<table class="dt" data-cell="${E(q.id)}|block:${E(b.id)}">${b.table.cells.map(r=>`<tr>${r.map(c=>`<td>${tex(c.value)}</td>`).join('')}</tr>`).join('')}</table>`;
+    else if(b.kind==='table')h+=`<table class="dt" data-cell="${E(q.id)}|block:${E(b.id)}">${b.table.cells.map((r,ri)=>`<tr>${r.map((c,ci)=>`<td data-tcell="${E(q.id)}|block:${E(b.id)}|${ri}|${ci}">${tex(c.value)}</td>`).join('')}</tr>`).join('')}</table>`;
     else if(b.lines)h+=`<div class="box">${b.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)} ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;}
   h+=`<p data-cell="${E(q.id)}|ask">${tex(q.ask)} <span class="pt">[${E(q.points)}점]</span>${dot(q,'ask')}</p>`;
   const bogi=q.blocks.find(b=>b.kind==='bogi'&&b.lines?.some(l=>String(l.text||'').trim()));if(bogi)h+=`<div class="bogi">${bogi.lines.map(l=>`<p data-cell="${E(q.id)}|line:${E(l.id)}">${E(l.label)}. ${tex(l.text)}${dot(q,'line:'+l.id)}</p>`).join('')}</div>`;
@@ -349,10 +349,10 @@ function renderPlan(){const m=work.meta,chip=(k,label,fmt=v=>v)=>{const x=m[k];i
   if(tab==='plan'&&!$('#rp').closest('.panel-off')){let changed=false;for(const r of work.plan)if(!r.seen){r.seen=true;changed=true;}const ks=Object.keys(m).filter(k=>m[k]&&typeof m[k]==='object'&&'seen' in m[k]&&!m[k].seen&&m[k].value!=null);if(ks.length){X.markSeen(work,ks);changed=true;}if(changed)save();}
 }
 function renderReview(){const qs=X.orderedQuestions(work);if(!qs.length){$('#t-review').innerHTML='<div class="empty-note">아직 문항이 없어요. 설계표가 잡히면 「초안 써 줘」라고 말해 주세요.</div>';return;}
-  $('#t-review').innerHTML=qs.map(q=>{const cs=work.comments.filter(c=>c.qid===q.id&&c.status!=='dropped'),props=(work.proposals||[]).filter(p=>p.qid===q.id&&!['applied','rejected'].includes(p.state)),miss=X.cellKeys(q).some(k=>X.cellEvidence(q,k.key)==='missing');
+  const html=qs.map(q=>{const cs=work.comments.filter(c=>c.qid===q.id&&c.status!=='dropped'),props=(work.proposals||[]).filter(p=>p.qid===q.id&&!['applied','rejected'].includes(p.state)),miss=X.cellKeys(q).some(k=>X.cellEvidence(q,k.key)==='missing');
     const ck=work.checks.filter(c=>c.qid===q.id).at(-1),ex=explanationParts(q);
     return `<section class="qrow" data-q="${E(q.id)}"><div class="qleft kq">${paperHtml(q)}</div><div class="qright">
-<div class="qmeta">${E(q.number)}번 · ${E(work.plan.find(r=>r.qid===q.id)?.unit||'')} · ${E(work.plan.find(r=>r.qid===q.id)?.difficulty||'')} · ${E(q.points)}점 · 정답 ${q.answer!=null?CIRCLED[q.answer]:'—'}${miss?'<span class="exdot" title="근거 없는 칸이 있어요"></span>':''}<span class="sp"></span><button class="btn sm" data-sub="${E(q.id)}"><svg class="i s"><use href="#i-msg"/></svg>이 문항 대화</button></div>
+<div class="qmeta">${E(q.number)}번 · ${E(work.plan.find(r=>r.qid===q.id)?.unit||'')} · ${E(work.plan.find(r=>r.qid===q.id)?.difficulty||'')} · ${E(q.points)}점 · 정답 ${q.answer!=null?CIRCLED[q.answer]:'—'}${(q.locks||[]).length?`<span class="lockn" title="직접 고친 칸은 AI가 덮어쓰지 않아요">직접 고친 칸 ${q.locks.length}</span>`:''}${miss?'<span class="exdot" title="근거 없는 칸이 있어요"></span>':''}<span class="sp"></span><button class="btn sm" data-sub="${E(q.id)}"><svg class="i s"><use href="#i-msg"/></svg>이 문항 대화</button></div>
 <div class="qtabs"><button data-pane="ev">근거</button><button data-pane="sol">해설</button><button data-pane="chk">검토</button>${(q.figureSpecs||[]).filter(f=>!f.done).length?'<button data-pane="fig">그림</button>':''}</div>
 <div class="qpane" data-p="ev" hidden>${X.cellKeys(q).map(k=>{const st=X.cellEvidence(q,k.key),list=(q.authoring?.evidence||[]).filter(e=>e.target===k.key);return `<div class="ev${st!=='ok'?' ev-x':''}"><b>${E(k.label)}</b><span>${list.length?list.map(e=>E((e.source?.title||'')+(e.source?.page?` ${e.source.page}쪽`:'')+' · '+e.claim)).join('<br>'):st==='waived'?'근거 없음 — 예외로 진행':'근거 없음'}</span></div>`;}).join('')}</div>
 <div class="qpane" data-p="sol" hidden>${ex.parts.map(p=>`<p><b>${E(p.key)}</b> ${tex(p.text)}${p.ox?` → ${p.ox==='o'?'옳다':'옳지 않다'}`:''}</p>`).join('')||'(해설 없음)'}</div>
@@ -362,6 +362,11 @@ ${(q.figureSpecs||[]).length?`<div class="qpane" data-p="fig" hidden>${q.figureS
 <div class="clist">${cs.map(c=>`<div class="ci"><div class="ctext">${E(c.text)} <span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>${c.answer?`<div class="cans">${E(c.answer).slice(0,600)}</div>`:''}</div>`).join('')}</div>
 ${props.map(p=>`<div class="prop"><b>지금 → 바꿀 안</b> · ${E(p.summary)}${p.changes.slice(0,6).map((c,i)=>`<div><span class="pb">${E(String(p.before?.[i]??'').slice(0,120))}</span> → <span class="pa">${E(String(c.value??'').slice(0,160))}</span></div>`).join('')}</div>`).join('')}
 <textarea data-comment="${E(q.id)}" placeholder="편하게 코멘트를 적어 주세요 · ⌘↵로 쌓기"></textarea></div></div></section>`;}).join('')+'<div style="height:70px"></div>';
+  // 칸 그 자리 편집 중이면 그 문항 칸은 다시 그리지 않는다(문항이 새로 들어오거나 코멘트가 붙어도 편집이 끊기지 않게). 노드를 옮기면 초점이 빠지므로 둘레만 바꾼다.
+  const box=$('#t-review'),keep=editing&&box.querySelector(`.qrow[data-q="${editing.qid}"]`);
+  if(keep){const tmp=document.createElement('div');tmp.innerHTML=html;const nodes=[...tmp.children],i=nodes.findIndex(n=>n.dataset?.q===editing.qid);
+    if(i>=0){for(const c of [...box.children])if(c!==keep)box.removeChild(c);keep.before(...nodes.slice(0,i));keep.after(...nodes.slice(i+1));}else box.innerHTML=html;}
+  else box.innerHTML=html;
   $$('#t-review .qrow').forEach(row=>{const qid=row.dataset.q;const q=work.questions.find(x=>x.id===qid);if(q&&!q.seen){q.seen=true;}});
 }
 function renderSheet(){const qs=X.orderedQuestions(work),m=work.meta;const s=X.computeStats(qs);
@@ -383,7 +388,7 @@ function render(){if(!work)return;const title=work.meta.title||'새 시험지';$
 // ── 입력 ──
 $('#bSend').onclick=send;$('#input').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send();}});
 $('#seg').onclick=e=>{const b=e.target.closest('button[data-tab]');if(!b)return;tab=b.dataset.tab;render();};
-document.addEventListener('click',async e=>{const t=e.target;
+document.addEventListener('click',async e=>{const t=e.target;if(t.closest?.('.hx-edit,.eq-help,.eq-back'))return;
   const subB=t.closest('[data-sub]');if(subB){sub=subB.dataset.sub;render();$('#input').focus();return;}
   if(t.closest('#subBack')){sub=null;render();return;}
   const qt=t.closest('.qtabs button');if(qt){const row=qt.closest('.qright'),on=!qt.classList.contains('on');row.querySelectorAll('.qtabs button').forEach(x=>x.classList.remove('on'));row.querySelectorAll('.qpane').forEach(p=>p.hidden=true);if(on){qt.classList.add('on');row.querySelector(`.qpane[data-p="${qt.dataset.pane}"]`).hidden=false;}return;}
@@ -435,8 +440,44 @@ $('#fFolder').onchange=async()=>{const files=[...$('#fFolder').files];$('#fFolde
   sp.addEventListener('pointerdown',e=>{on=true;sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('resizing');set(e.clientX);});sp.addEventListener('pointermove',e=>{if(on)set(e.clientX);});
   const end=()=>{on=false;sp.classList.remove('drag');document.body.classList.remove('resizing');};sp.addEventListener('pointerup',end);sp.addEventListener('pointercancel',end);sp.addEventListener('dblclick',()=>w.style.removeProperty('--pw'));})();
 
+// ── 칸 그 자리 편집(결정 6 · 시안7 2번) ──
+// 「문항 검토」 종이의 칸을 두 번 누르면 그 칸이 편집 상자가 된다. 글은 그대로 치고, 수식은 exam 문항 카드와 같은 수식 입력기(누르면 그 수식만 원문 띠 + 작은 도우미).
+// 고친 칸은 「직접 고침」으로 잠겨 AI 안이 덮어쓰지 않고(결정 12), 판에는 다음 「판 올리기」 때 들어간다(결정 13).
+const EQV='?v=1.7.0-four-session-integration';// exam이 쓰는 것과 같은 모듈 주소(같은 인스턴스)
+let editing=null,eqF=null,eqI=null;
+const eqMods=async()=>{eqF||=import('../../js/eq/eq-fields.js'+EQV);eqI||=import('../../js/eq/eq-input.js'+EQV);return [await eqF,await eqI];};
+function cellField(q,key,r,c){
+  if(key==='ask')return {get:()=>q.ask||'',set:v=>{q.ask=v;},prefix:'',suffix:` <span class="pt">[${E(q.points)}점]</span>`,lock:'ask',label:'발문'};
+  if(key.startsWith('block:')){const b=q.blocks.find(x=>x.id===key.slice(6));if(!b)return null;
+    if(b.kind==='table'){if(r==null)return null;const cell=b.table?.cells?.[+r]?.[+c];if(!cell)return null;return {get:()=>String(cell.value??''),set:v=>{cell.value=v;},prefix:'',suffix:'',lock:key,label:'표 칸'};}
+    if(b.kind!=='text')return null;return {get:()=>b.text||'',set:v=>{b.text=v;},prefix:'',suffix:'',lock:key,label:b.label||'자료 글'};}
+  if(key.startsWith('line:')){const id=key.slice(5);for(const b of q.blocks){const l=(b.lines||[]).find(x=>x.id===id);if(l)return {get:()=>l.text||'',set:v=>{l.text=v;},prefix:E(l.label)+(b.kind==='bogi'?'. ':' '),suffix:'',lock:key,label:'보기 '+l.label};}return null;}
+  if(key.startsWith('choice:')){const i=q.choices.findIndex(x=>x.id===key.slice(7));if(i<0)return null;return {get:()=>q.choices[i].text||'',set:v=>{q.choices[i].text=v;},prefix:CIRCLED[i]+' ',suffix:'',lock:key,label:'선지 '+CIRCLED[i]};}
+  return null;}
+async function startEdit(el){if(editing)await finishEdit();const [qid,key,r,c]=(el.dataset.tcell||el.dataset.cell||'').split('|');const q=work.questions.find(x=>x.id===qid);if(!q||!key)return;const F=cellField(q,key,r,c);if(!F)return;
+  $('#evpop').hidden=true;$$('.kq .pick').forEach(x=>x.classList.remove('pick'));const cs=getComputedStyle(el);
+  const ta=document.createElement('textarea');ta.className='hx-ta';ta.value=F.get();Object.assign(ta.style,{fontFamily:cs.fontFamily,fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,color:cs.color,textAlign:el.tagName==='TD'?'center':'justify'});
+  const wrap=document.createElement('span');wrap.className='hx-edit';el.innerHTML=F.prefix?`<span class="hx-pre">${F.prefix}</span>`:'';el.append(wrap);wrap.append(ta);if(F.suffix)el.insertAdjacentHTML('beforeend',F.suffix);el.classList.add('hx-editing');
+  editing={qid,el,ta,F,orig:F.get(),wrap};const [m]=await eqMods();m.attachMathFields(wrap,{selector:'textarea.hx-ta'});
+  let ce=null;for(let i=0;i<40&&!(ce=wrap.querySelector('.eq-ce'));i++)await new Promise(r=>setTimeout(r,50));if(!ce){note('edit-fail',{key});editing=null;render();return;}
+  ce.focus();const rg=document.createRange();rg.selectNodeContents(ce);rg.collapse(false);const sl=getSelection();sl.removeAllRanges();sl.addRange(rg);
+  ce.addEventListener('keydown',e=>{if(e.isComposing)return;if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();finishEdit();}else if(e.key==='Escape'&&!wrap.querySelector('.eq-band')){e.preventDefault();finishEdit();}});
+  // 편집 상자 밖으로 초점이 나가면 끝(수식 도우미·큰 편집기를 쓰는 동안은 아님)
+  ce.addEventListener('focusout',()=>setTimeout(()=>{if(editing?.wrap!==wrap)return;if(wrap.contains(document.activeElement)||document.querySelector('.eq-back'))return;finishEdit();},150));
+  note('edit-start',{no:q.number,key:F.lock});}
+async function finishEdit(){const e=editing;if(!e)return;editing=null;const [,mi]=await eqMods();const ce=e.wrap.querySelector('.eq-ce');let v=e.ta.value;
+  if(ce){// exam 입력기는 수식 띠를 닫을 때 뒤에 빈칸 하나를 넣는다(새 수식을 이어 칠 때 쓰려고). 원래 글에서 그 수식 바로 뒤에 빈칸이 없었으면 뺀다.
+    // 수식은 차례로 맞춘다(고친 수식은 글이 달라져도 같은 자리): 원래 n번째 수식 뒤에 빈칸이 없었으면 n번째 칩 뒤 빈칸을 뺀다.
+    const tight=[...e.orig.matchAll(/\$[^$\n]+\$(\s?)/g)].map(x=>!x[1]),chips=[...ce.querySelectorAll('.eq-chip')];
+    if(chips.length===tight.length)chips.forEach((chip,i)=>{const n=chip.nextSibling;if(tight[i]&&n?.nodeType===3&&n.data.startsWith(' '))n.data=n.data.slice(1);});
+    v=mi.htmlToMath(ce);}
+  v=v.replace(/ /g,' ');const q=work.questions.find(x=>x.id===e.qid);
+  if(q&&v!==e.orig){e.F.set(v);X.lockCell(q,e.F.lock);work.pendingEdits=[...(work.pendingEdits||[]),{qid:q.id,key:e.F.lock,label:e.F.label,at:nowIso()}];work.dirty=true;save();note('cell-edit',{no:q.number,key:e.F.lock});toast(`${q.number}번 ${e.F.label}을 고쳤어요 · 직접 고친 칸은 AI가 덮어쓰지 않아요`);}
+  render();}
+document.addEventListener('dblclick',e=>{if(tab!=='review'||!work)return;const el=e.target.closest('#t-review .kq td[data-tcell],#t-review .kq [data-cell]');if(!el||el.tagName==='IMG'||el.classList.contains('q')||el.tagName==='TABLE'||el.closest('.hx-edit'))return;e.preventDefault();void startEdit(el);});
+
 // ── 시작 ──
 (async()=>{post({action:'ready'});try{const last=await idbGet('last');if(last)work=await idbGet('work:'+last);renderSide((await idbGet('list'))||[]);}catch{}
   if(!work){work=X.newExamset({title:''});X.setMeta(work,'stage','design');work.chat.push({role:'ai',text:'어떤 시험지를 만들까요? 과목·범위·문항 수·총점을 알려 주시면 설계표부터 잡아요. 교과서·학습지가 있으면 「자료 폴더」로 등록해 주세요.',at:nowIso()});}
   work.proposals ||= [];render();note('boot',{head:work.head});})();
-window.__harness={get work(){return work;},get sub(){return sub;},openSub:id=>{sub=id;render();},closeSub:()=>{sub=null;render();},get busy(){return busy;},log,render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};
+window.__harness={get editing(){return editing;},startEdit,finishEdit,get work(){return work;},get sub(){return sub;},openSub:id=>{sub=id;render();},closeSub:()=>{sub=null;render();},get busy(){return busy;},log,render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};

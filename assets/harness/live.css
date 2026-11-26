@@ -41,3 +41,29 @@
 :root[data-theme="light"] .btn.pri,:root[data-theme="light"] .send{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6;color:#1a5fb4}
 :root[data-palette="classic"][data-theme="dark"] .pin:not(.w),.pin:not(.w){background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);color:var(--ds-ink)}
 :root[data-palette="classic"][data-theme="dark"] .sugg{border-color:var(--ds-soft-line)}
+
+/* ── 칸 그 자리 편집(시안7 2번): 칸 전체가 둥근 네모 상자 하나, 수식은 exam 수식 입력기 ── */
+.kq .hx-editing{display:flex!important;gap:4px;align-items:flex-start;text-indent:0!important;padding-left:0!important}
+.kq p.q:has(.hx-editing){display:flex;gap:4px;text-indent:0;padding-left:0}
+.kq span.hx-editing{flex:1;min-width:0}
+.kq .hx-pre{flex:none;white-space:pre}
+.kq .hx-edit{flex:1;min-width:0;display:block}
+.kq .hx-edit .eq-ce{border:1px solid #6ba4f8!important;border-radius:6px;padding:2px 6px;margin:-3px -7px;background:transparent!important;box-shadow:0 0 0 1px #6ba4f8}
+.kq .eq-chip,.kq .eq-band,.kq .eq-ce{text-indent:0}
+.kq td.hx-editing{display:table-cell!important}.kq td .hx-edit .eq-ce{margin:-3px;text-align:center}
+.lockn{font-size:11px;font-weight:500;border-radius:6px;padding:0 7px;background:rgba(154,163,173,.16);color:var(--ds-ink-2);margin-left:6px;white-space:nowrap}
+
+/* 수식 도우미 밝은 판(11-26 지시): exam 입력기는 늘 어두운 창이라 하네스 밝은 모드에서만 밝게 덮어쓴다. 모양·크기는 그대로, 색만. */
+:root[data-theme="light"] .eq-help{background:#fff;color:#1f2328;box-shadow:0 0 0 1px #d0d7de,0 16px 40px rgba(31,35,40,.18)}
+:root[data-theme="light"] .eq-help::before{background:#fff;box-shadow:-1px -1px 0 0 #d0d7de}
+:root[data-theme="light"] .eq-prev{background:#f6f8fa;color:#1f2328;box-shadow:inset 0 0 0 1px #d0d7de}
+:root[data-theme="light"] .eq-k{background:#f6f8fa;box-shadow:inset 0 0 0 1px #d0d7de;color:#1f2328}
+:root[data-theme="light"] .eq-k:hover{background:#eef1f4;box-shadow:inset 0 0 0 1px #afb8c1}
+:root[data-theme="light"] .eq-k.flash{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6}
+:root[data-theme="light"] .eq-n{color:#6e7781}
+:root[data-theme="light"] .eq-hf{border-top-color:#d8dee4;color:#6e7781}
+:root[data-theme="light"] .eq-b{border-color:#d0d7de;background:#f6f8fa;color:#424a53}
+:root[data-theme="light"] .eq-b:hover{background:#eef1f4;color:#1f2328}
+:root[data-theme="light"] .eq-b.soft{border-color:#2f6fd6;background:#eaf2fd;color:#1a5fb4}
+:root[data-theme="light"] .eq-b kbd{color:#2f6fd6}
+:root[data-theme="light"] .kq .hx-edit .eq-ce{border-color:#2f6fd6!important;box-shadow:0 0 0 1px #2f6fd6}
