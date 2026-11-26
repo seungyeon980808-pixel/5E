@@ -35,3 +35,9 @@
 .cols2.flow1{display:block}.cols2.flow1:before{display:none}
 .cols2{column-count:2;column-gap:26px;column-rule:1px solid #ccc;display:block}
 .cols2:before{display:none}
+/* ── 11-26 단추 모양을 5E 규칙으로(DESIGN.md 0-25): 진한 파란·검은 면 + 흰 글자 금지. 주 단추 = 은은한 면 + 1px 선(exam .go와 같음) ── */
+.btn.pri,:root[data-theme] .btn.pri,:root[data-palette="classic"][data-theme="dark"] .sugg .btn.pri,.send,:root[data-theme] .send{background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);color:var(--ds-ink)}
+.btn.pri:hover,.send:hover:not(:disabled){filter:brightness(1.12)}
+:root[data-theme="light"] .btn.pri,:root[data-theme="light"] .send{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6;color:#1a5fb4}
+:root[data-palette="classic"][data-theme="dark"] .pin:not(.w),.pin:not(.w){background:var(--ds-soft-bg);box-shadow:inset 0 0 0 1px var(--ds-soft-line);color:var(--ds-ink)}
+:root[data-palette="classic"][data-theme="dark"] .sugg{border-color:var(--ds-soft-line)}
