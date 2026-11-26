@@ -201,3 +201,8 @@ body.tool-on .foot>*:not(.b5){display:none}
 /* 꼭 정해야 해요 표시·선생님 단추 초점: 은은하게 */
 .ask .req,:root[data-theme] .ask .req{background:var(--ds-soft-bg);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
 .me:focus:not(:focus-visible),.extitle:focus:not(:focus-visible),.nav:focus:not(:focus-visible){outline:none}
+
+/* 끝난 작업 기록 줄: 「일하는 중」(.act)과 이름을 나눠 점이 깜빡이지 않게 */
+.alog{display:inline-flex;align-items:center;gap:7px;color:var(--tx3);font:inherit;font-size:12.5px;padding:2px 0;margin-bottom:4px;background:none;border:0;cursor:pointer}
+.alog:hover{color:var(--tx2)}
+.alog .dot{width:6px;height:6px;border-radius:50%;background:var(--tx3)}
