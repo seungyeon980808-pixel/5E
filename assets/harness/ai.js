@@ -61,11 +61,18 @@ export function buildExamPrompt(work,{text,ledger=[],rules=[],stage}){
   const plan=(work.plan||[]).length?(work.plan||[]).map(r=>`- ${r.no}번 ${r.unit||''} · ${r.difficulty||''} · ${r.points??''}점 · ${r.form||''}/${r.structure||''} · ${r.figure||''} · ${r.status||''}${r.qid?' · 문항 있음':''}${r.seen?' · 교사 봄':''}${r.twist?` · ${r.twist}`:''}`).join('\n'):'(아직 없음)';
   const led=ledger.length?ledger.map(c=>`- [${c.id}] ${c.no?c.no+'번':'시험지 전체'} · ${c.status} · 「${String(c.text).slice(0,400)}」${c.proposal?` · AI 안: ${String(c.proposal).slice(0,300)}`:''}`).join('\n'):'(없음)';
   const chat=(work.chat||[]).slice(-10).map(x=>`${x.role==='me'?'교사':'AI'}: ${String(x.text).slice(0,800)}`).join('\n');
+  // 완주(11-26): 초안을 쓰는 동안 「지금 나온 문항 난이도 괜찮아?」에 「문항이 제공되지 않았다」고 답했다 → 다 쓴 문항의 글을 짧게 함께 준다(문항당 600자, 전체 12,000자).
+  // 교사가 「n번」을 짚으면 그 문항은 통째로(4,000자까지) — 600자로 자르니 「발언 중간에서 끊겨 확정할 수 없다」고 했다.
+  const named=new Set([...String(text||'').matchAll(/(\d{1,2})\s*번/g)].map(x=>x[1]));
+  const ord=new Map((work.items||[]).map((id,i)=>[id,i]));let budget=16000;
+  const qs=(work.questions||[]).slice().sort((x,y)=>(ord.get(x.id)??999)-(ord.get(y.id)??999)).map(q=>{const parts=[...(q.blocks||[]).map(b=>b.kind==='figure'?`[${b.label||'그림'}${b.figure?.data?'':' 없음'}]`:b.kind==='table'?'[표] '+(b.table?.cells||[]).map(r=>r.map(c=>c.value).join(' | ')).join(' / '):b.lines?b.lines.map(l=>`${l.label}. ${l.text}`).join(' '):b.text||''),q.ask||'',(q.choices||[]).map((c,i)=>'①②③④⑤'[i]+' '+c.text).join(' ')].filter(Boolean).join(' ');
+    const t=`- ${q.number}번 (${q.points??''}점, 정답 ${Number.isInteger(q.answer)?'①②③④⑤'[q.answer]:'—'}) ${parts}`.slice(0,named.has(String(q.number))?4000:600);if(budget<=0)return '';budget-=t.length;return t;}).filter(Boolean).join('\n');
   return [
     `[역할] 너는 과학 교사와 함께 시험지 한 벌을 설계하는 출제 동료다. 지금 단계: ${stage||m.stage||'design'}. 근거(교과서 쪽·학습지·기출)를 먼저 대고, 근거가 없으면 「근거 없음」이라고 밝힌다.`,
     EXAM_SPEC,
     `[시험지 정보]\n${meta}`,
     `[설계표]\n${plan}`,
+    qs?`[지금 문항 · 다 쓴 것만, 짧게]\n${qs}`:'',
     `[코멘트 대장]\n${led}`,
     rules.length?`[출제 규칙]\n${rules.map(r=>'- '+r.text).join('\n')}`:'',
     chat?`[최근 대화]\n${chat}`:'',
