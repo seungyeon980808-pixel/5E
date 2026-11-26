@@ -288,7 +288,7 @@ function bumpVersion(why='판 올리기',{solve=true,quiet=false}={}){if(!pendin
   const v=commit(`${why}: ${list.length?list.slice(0,6).map(x=>`${work.questions.find(q=>q.id===x.qid)?.number||''}번 ${x.label}`).join(' · ')+(list.length>6?` 외 ${list.length-6}`:''):'고친 것'}`);
   if(!quiet)say('ai',`${v.label}로 올렸어요${nos.length?` · 바뀐 문항 ${nos.map(n=>n+'번').join(', ')}`:''}.${solve?' 바뀐 문항을 두 모델이 다시 풀어요.':''}`,{stats:v.stats});note('bump',{label:v.label,n:list.length});if(solve)void solveChanged(v);return v;}
 const wantsBump=t=>/판\s*(을\s*)?올려|판\s*올리기|새\s*판으로|판 만들어/.test(String(t||''))&&!wantsDiscussOnly(t);
-function declareFinal(){const v=X.declareFinal(work);work.meta.stage='final';save();render();say('ai',`${v.label}으로 정했어요. 정답 배열 ${v.stats.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · 배점 합계 ${v.stats.pointsTotal}점. 시험지 탭에서 exam으로 보내 조판·한글로 내보낼 수 있어요.`,{stats:v.stats});note('final',{label:v.label});}
+function declareFinal(){const v=X.declareFinal(work);work.pendingEdits=[];work.pendingApplied=null;work.meta.stage='final';save();render();say('ai',`${v.label}으로 정했어요. 정답 배열 ${v.stats.answers.map(a=>a?CIRCLED[a-1]:'·').join(' ')} · 배점 합계 ${v.stats.pointsTotal}점. 시험지 탭에서 exam으로 보내 조판·한글로 내보낼 수 있어요.`,{stats:v.stats});note('final',{label:v.label});}
 
 // 문항의 실제 그림(풀이 검사에 첨부 — 11-25 완주 1: 글만 보내 그림 문항은 두 모델 모두 「그림 누락」으로 못 풂)
 const figuresOf=q=>[...q.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({name:(b.label||'그림')+'.png',data:b.figure.data})),...q.choices.map((c,i)=>c.figure?.data?{name:'선지 '+CIRCLED[i]+'.png',data:c.figure.data}:null).filter(Boolean)].slice(0,6);
