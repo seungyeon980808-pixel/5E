@@ -67,3 +67,61 @@
 :root[data-theme="light"] .eq-b.soft{border-color:#2f6fd6;background:#eaf2fd;color:#1a5fb4}
 :root[data-theme="light"] .eq-b kbd{color:#2f6fd6}
 :root[data-theme="light"] .kq .hx-edit .eq-ce{border-color:#2f6fd6!important;box-shadow:0 0 0 1px #2f6fd6}
+
+/* ── 먼저 나온 문항부터 보기 + 멈추기(시안7 1번) ── */
+.msg .act .at{flex:none}
+.msg .act .hx-stop{margin-left:auto;height:24px;padding:0 10px;display:inline-flex;align-items:center;background:transparent;box-shadow:inset 0 0 0 1px var(--ds-line-strong);color:var(--ds-ink-2);border-radius:var(--ds-radius)}
+.msg .act .hx-stop:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.msg .act:has(.hx-stop){display:flex;width:100%}
+.qrow.hx-writing{display:flex;align-items:center;gap:8px;padding:16px 20px;color:var(--ds-ink-3);font-size:12.5px}
+.qrow.hx-writing .dot{width:6px;height:6px;border-radius:50%;background:var(--ds-ink-3);animation:hpulse 1.2s infinite}
+
+/* ── 판에 안 들어간 고침·판 올리기·두 판 비교(시안7 3·7번) ── */
+.pendchip{font-size:11px;border-radius:6px;padding:1px 7px;background:rgba(47,129,247,.16);color:#8db4ea;margin-left:6px;cursor:pointer;white-space:nowrap}
+:root[data-theme="light"] .pendchip{background:#eaf2fd;color:#1a5fb4}
+.histmenu .hvtop{padding:8px;border-bottom:1px solid var(--ds-line);margin-bottom:4px}
+.histmenu .hvrow{display:flex;align-items:center;gap:8px}.histmenu .hvrow b{width:52px}.histmenu .hvrow span{flex:1;color:var(--ds-ink-2)}
+.histmenu .hvnote{font-size:11px;color:var(--ds-ink-3);margin-top:4px}
+.histmenu .hv input{margin:0}
+.histmenu .hvfoot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:6px 8px;border-top:1px solid var(--ds-line);margin-top:4px;color:var(--ds-ink-3);font-size:11.5px}
+.histmenu button:disabled{opacity:.4;cursor:default}
+.cmpbar{display:flex;align-items:center;gap:8px;padding:10px 12px;font-size:12.5px;color:var(--ds-ink-2);position:sticky;top:0;z-index:3;background:var(--ds-app,inherit)}
+.cmpbar b{color:var(--ds-ink)}.cmpbar .sp{flex:1}.cmpbar u{cursor:pointer;margin:0 2px}
+.cmpbar select{height:24px;border-radius:6px;border:0;background:var(--ds-hover);color:var(--ds-ink);padding:0 6px;font:inherit}
+.cmprow{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 12px 14px}
+.cmplab{font-size:11px;color:var(--ds-ink-3);margin:0 0 4px}
+.cmppaper{background:#fff;border-radius:2px;padding:16px 16px 18px;font-size:13.5px}
+.kq .hx-del{background:rgba(229,72,77,.12);text-decoration:line-through;text-decoration-color:rgba(229,72,77,.6)}
+.kq .hx-add{background:rgba(46,160,67,.14)}
+.kq img.hx-add{outline:2px solid rgba(46,160,67,.6)}.kq img.hx-del{outline:2px solid rgba(229,72,77,.6);opacity:.7}
+
+/* ── 점검 탭(시안7 4번) ── */
+.ckwrap{padding:12px}
+.ckhead{font-size:12px;color:var(--ds-ink-3);margin-bottom:8px;line-height:1.6}
+.ckt td{vertical-align:top}.ckt tr[data-ckgo]{cursor:pointer}.ckt tr[data-ckgo]:hover td{background:var(--ds-hover)}
+.ckt .ck-fix{color:#ea8a3a;font-weight:600}.ckt .ck-ok{color:var(--ds-ink-2)}
+.ckt .ck-miss{color:var(--ds-ink-3)}
+.cksum{font-size:12px;color:var(--ds-ink-2);margin-top:10px}
+
+/* ── 근거 없는 칸 숫자로 모으기(시안7 6번) ── */
+.kq.dots-off .edot{display:none}
+.evn{font-size:11px;font-weight:500;border-radius:6px;padding:0 7px;background:rgba(154,163,173,.16);color:var(--ds-ink-2);margin-left:6px;cursor:pointer;white-space:nowrap}
+.evn.on{box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+
+/* ── 라이브러리에서 고른 그림 넣기(시안7 5번) ── */
+.pickrow{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.pickrow figure{margin:0;width:120px}.pickrow img{width:120px;height:80px;object-fit:contain;background:#fff;border-radius:8px;display:block}
+.pickrow figcaption{font-size:11px;color:var(--ds-ink-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pickbtns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pickbtns .btn{display:inline-flex;background:var(--ds-hover)}
+.picksel{height:var(--ds-h-control-sm,26px);border:0;border-radius:var(--ds-radius);background:var(--ds-hover);color:var(--ds-ink-2);font:12.5px inherit;padding:0 8px}
+
+/* ── 보관함 문항 출처(결정 17) ── */
+.srcn{font-size:11px;font-weight:400;color:var(--ds-ink-3);margin-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+
+/* 문항 머리: 글은 한 줄로 두고, 표시는 넘치면 아랫줄로 */
+.qmeta{flex-wrap:wrap;row-gap:4px}
+.qmeta .qmt{flex:1 1 auto;min-width:0}
+.qmeta .qtags{display:flex;flex-wrap:wrap;gap:4px;order:3;flex-basis:100%}
+.qmeta .qtags:empty{display:none}
+.qmeta .qtags>*{margin-left:0}

@@ -76,7 +76,9 @@ export function buildExamPrompt(work,{text,ledger=[],rules=[],stage}){
 // ── 풀이 검사: 정답·해설을 가린 문항지를 모델마다 새 맥락에서 따로 푼다 ──
 export function validateSolve(v){if(!v||typeof v!=='object')return ['JSON 객체가 아닙니다.'];const e=[];
   if(!(v.answer===null||Number.isInteger(v.answer)&&v.answer>=1&&v.answer<=5))e.push('answer는 1~5 또는 null(정답 없음·여럿).');
-  if(v.multiple!==undefined&&!Array.isArray(v.multiple))e.push('multiple은 목록.');if(!str(v.note||'',2000))e.push('note.');return e;}
+  if(v.multiple!==undefined&&!Array.isArray(v.multiple))e.push('multiple은 목록.');if(!str(v.note||'',2000))e.push('note.');
+  if(v.level!==undefined&&!['안','넘음','모름'].includes(v.level))e.push('level은 안|넘음|모름.');if(v.curriculum!==undefined&&!['맞음','어긋남','모름'].includes(v.curriculum))e.push('curriculum은 맞음|어긋남|모름.');
+  if(v.judge!==undefined&&!['그대로','고치면'].includes(v.judge))e.push('judge는 그대로|고치면.');return e;}
 export function parseSolve(text){const v=extractJson(text);if(!v)return {ok:false,errors:['JSON 없음']};const errors=validateSolve(v);return errors.length?{ok:false,errors,value:v}:{ok:true,value:v};}
 const CIRCLED='①②③④⑤';
 export function solveSheet(q){
@@ -87,8 +89,11 @@ export function solveSheet(q){
   if(q.type!=='서술형')lines.push(q.choices.map((c,i)=>`${CIRCLED[i]} ${c.text}`).join('  '));
   return lines.filter(Boolean).join('\n');
 }
-export function buildSolvePrompt(q){return `[역할] 너는 이 시험을 처음 보는 학생이자 검토 교사다. 정답·해설은 받지 않았다. 문항만 보고 직접 푼다.
-[응답 형식] JSON 하나만: {"format":"${SOLVE_FORMAT}","answer":1~5 또는 null,"multiple":[정답이 여럿이면 번호들],"note":"풀이 핵심과 문항 결함(복수 정답·조건 부족·교과 범위 밖·시비 가능성) 한두 문장, 한국어"}
+export function buildSolvePrompt(q,ctx={}){const cur=(ctx.curriculum||[]).map(c=>`- ${c.title}: ${String(c.quote||'').slice(0,500)}`).join('\n');return `[역할] 너는 이 시험을 처음 보는 학생이자 검토 교사다. 정답·해설은 받지 않았다. 문항만 보고 직접 푼 뒤, 검토 교사로서 판정한다.
+[시험] ${[ctx.subject,ctx.grade].filter(Boolean).join(' · ')||'(과목·학년 모름)'}${ctx.unit?` · 소단원 ${ctx.unit}`:''}
+${cur?`[교육과정 원문 후보 · 성취기준 해설·적용 시 고려 사항 — 판정 근거로 「…」 인용]\n${cur}\n`:''}[응답 형식] JSON 하나만: {"format":"${SOLVE_FORMAT}","answer":1~5 또는 null,"multiple":[정답이 여럿이면 번호들],"note":"풀이 핵심과 문항 결함(복수 정답·조건 부족·교과 범위 밖·시비 가능성) 한두 문장, 한국어",
+ "level":"안|넘음|모름","levelNote":"학년·수학 수준 판단 한 문장","curriculum":"맞음|어긋남|모름","curriculumNote":"위 교육과정 원문과 대조한 결과 한 문장(원문이 있으면 「…」로 인용, 없으면 모름)","judge":"그대로|고치면"}
+- judge: 정답이 하나로 정해지고 수준·교육과정에 문제가 없으면 「그대로」, 고칠 곳이 있으면 「고치면」.
 - 문항의 그림은 첨부한 이미지로 함께 준다(이름이 칸 이름). 그림이 없다고 적힌 칸만 글로 판단하고, 그림이 꼭 필요한데 없으면 note에 적는다.
 
 [문항]
