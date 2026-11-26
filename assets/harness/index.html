@@ -106,7 +106,8 @@
   <div class="srow"><span class="mark" data-go="home" title="첫 화면  ⌥⌘0">5E</span><span class="sp"></span><button class="ib" id="bSide" title="사이드바 접기  ⌘\"><svg class="i"><use href="#i-side"/></svg></button></div>
   <div class="sbody">
    <button class="nav" data-go="new" data-key="home"><svg class="i"><use href="#i-plus"/></svg><span class="lab">새 시험지</span><kbd>⌘N</kbd></button>
-   <button class="nav" id="bOpen"><svg class="i"><use href="#i-folder"/></svg><span class="lab">시험지 열기</span><kbd>⌘O</kbd></button>
+   <button class="nav" id="bFind"><svg class="i"><use href="#i-search"/></svg><span class="lab">찾기</span><kbd>⌘K</kbd></button>
+   <button class="nav hx-ask" id="bToolAsk" title="대화로 돌아가 이 도구에 시킬 일을 말해요"><svg class="i"><use href="#i-spark"/></svg><span class="lab">5E에 말로 시키기</span></button>
    <div class="grp tools rel">도구</div>
    <button class="nav" data-tool="image"><svg class="i"><use href="#i-img"/></svg><span class="lab"><span class="brandname">image</span></span><kbd>⌥⌘1</kbd></button>
    <button class="nav" data-tool="exam"><svg class="i"><use href="#i-cards"/></svg><span class="lab"><span class="brandname">exam</span></span><kbd>⌥⌘2</kbd></button>
@@ -114,21 +115,57 @@
    <div class="grp tools">자료</div>
    <button class="nav" data-tool="lib"><svg class="i"><use href="#i-book"/></svg><span class="lab">라이브러리</span><kbd>⌥⌘4</kbd></button>
    <button class="nav" id="bClip"><svg class="i"><use href="#i-clip"/></svg><span class="lab">클립보드</span><kbd>⇧⌘V</kbd></button>
-   <div class="grp">이번 학기</div>
    <div id="examList"></div>
   </div>
   <button class="me rel" id="bMe"><span class="av">선</span><span class="who">선생님<small id="usage">AI 연결 확인 중</small></span></button>
  </aside>
  <div class="main">
+  <section id="vHome" class="main" style="flex:1" hidden>
+   <div class="head"><span class="sp"></span><button class="ib" id="bHelp" title="도움말 · 단축키"><svg class="i"><use href="#i-book"/></svg></button></div>
+   <div class="home">
+    <h1><span class="mk">5E</span>어떤 시험지를 만들까요?</h1>
+    <p class="sub">말로 시키면 설계표부터 시험지 한 벌까지 만들어 드려요. 고칠 곳은 시험지에 코멘트로.</p>
+    <div class="wrap">
+     <div class="box">
+      <textarea id="homeIn" placeholder="예: 생명과학Ⅰ 1학기 기말 20문항, 범위는 항상성까지" rows="2"></textarea>
+      <div class="tools">
+       <button class="ib" id="homePlus" title="교과서·학습지 폴더 붙이기"><svg class="i"><use href="#i-plus"/></svg></button>
+       <button class="pill" id="homeForm" title="학교 시험지 양식(.hwpx)을 고르면 그 양식으로 조판해요"><svg class="i s"><use href="#i-file"/></svg><span>학교 양식</span></button>
+       <button class="pill on" id="homePast" title="설계·초안 때 평가원·학평 기출을 근거로 찾아 봐요"><svg class="i s"><use href="#i-book"/></svg>기출 참고</button>
+       <span class="sp"></span>
+       <button class="send" id="homeSend" title="시작  ↵"><svg class="i"><use href="#i-up"/></svg></button>
+      </div>
+     </div>
+     <div class="starters">
+      <button class="chip" data-fill="생명과학Ⅰ 1학기 기말고사 20문항, 범위는 항상성까지">기말고사 한 벌</button>
+      <button class="chip" data-fill="물질과 에너지 단원평가 10문항">단원평가</button>
+      <button class="chip" data-fill="이 기출 문항들을 변형해서 비슷한 난이도로 5문항">기출 변형</button>
+      <button class="chip" data-fill="수업용 학습지 한 장, 개념 정리와 문항 6개">수업 학습지</button>
+      <button class="chip" data-openfile>시험지 불러오기</button>
+     </div>
+    </div>
+    <div class="rec">
+     <div id="recWrap"><h3>이어서 하기</h3><div class="cards" id="recCards"></div></div>
+     <div><h3 style="margin-top:28px">새로 만들기 · 하나만 따로 할 때</h3>
+     <div class="apps3">
+      <button class="appc" data-tool="image"><em>NEW</em><b>image</b><small>새 그림 만들기</small></button>
+      <button class="appc" data-tool="exam"><em>NEW</em><b>exam</b><small>새 시험지 만들기</small></button>
+      <button class="appc" data-tool="hwp"><em>OPEN</em><b>hwp</b><small>한글 파일 열기</small></button>
+     </div>
+     <button class="openrow" id="homeOpen"><b>open</b>다른 파일 열기…<kbd>⌘O</kbd></button>
+     </div>
+    </div>
+   </div>
+  </section>
   <div class="v8" id="work">
    <div class="chat">
-    <div class="head"><div class="crumb2" id="crumb"><b id="exTitle" style="font-size:14px;font-weight:600">새 시험지</b><span class="sub"><span style="color:var(--ds-ink-3)">›</span><b id="subName"></b><span class="subtag">하위 세션</span><button class="btn sm gh" id="subBack">← 시험지 대화로</button></span></div><span class="sp" style="flex:1"></span><span class="ver" id="verChat">v0.0</span><button class="ib on" id="bPane" title="결과물 칸 열고 닫기  ⌘."><svg class="i"><use href="#i-pane"/></svg></button></div>
+    <div class="head"><div class="crumb2" id="crumb"><b id="exTitle" class="extitle" title="시험지 이름 메뉴"><span id="exTitleT">새 시험지</span><svg class="i s"><use href="#i-chev"/></svg></b><span class="sub"><span style="color:var(--ds-ink-3)">›</span><b id="subName"></b><span class="subtag">하위 세션</span><button class="btn sm gh" id="subBack">← 시험지 대화로</button></span></div><span class="sp" style="flex:1"></span><span class="ver" id="verChat">v0.0</span><button class="ib" id="bShare" title="시험지 공유 — 받는 사람이 브라우저로 열어 보는 파일(.html)"><svg class="i"><use href="#i-share"/></svg></button><button class="ib on" id="bPane" title="결과물 칸 열고 닫기  ⌘."><svg class="i"><use href="#i-pane"/></svg></button></div>
     <div class="scroll" id="scroll"><div class="col" id="thread"></div></div>
-    <div class="composer"><div class="col"><div class="box"><textarea id="input" rows="2" placeholder="말로 시키기 · @3번처럼 문항 지목 · 고칠 때는 「반영해」라고 말해야 고쳐요"></textarea><div class="tools"><button class="ib" id="bPlus" title="파일 붙이기"><svg class="i"><use href="#i-plus"/></svg></button><button class="pill" id="bAt"><svg class="i s"><use href="#i-at"/></svg>문항</button><button class="pill" id="bFolder"><svg class="i s"><use href="#i-folder"/></svg>자료 폴더</button><span class="sp"></span><span class="meta" id="aiMeta">GPT · 두 모델 검토 켬</span><button class="send" id="bSend" title="보내기  ⌘↵"><svg class="i"><use href="#i-up"/></svg></button></div></div></div></div>
+    <div class="composer"><div class="col"><div class="box"><textarea id="input" rows="2" placeholder="말로 시키기 · @3번처럼 문항 지목 · 고칠 때는 「반영해」라고 말해야 고쳐요"></textarea><div class="tools"><button class="ib" id="bPlus" title="파일 붙이기"><svg class="i"><use href="#i-plus"/></svg></button><button class="pill" id="bAt"><svg class="i s"><use href="#i-at"/></svg>문항</button><button class="pill" id="bPic" title="라이브러리·클립보드에서 그림 붙이기"><svg class="i s"><use href="#i-img"/></svg>그림</button><button class="pill" id="bFolder"><svg class="i s"><use href="#i-folder"/></svg>자료 폴더</button><span class="sp"></span><span class="meta" id="aiMeta">GPT · 두 모델 검토 켬</span><button class="send" id="bSend" title="보내기  ⌘↵"><svg class="i"><use href="#i-up"/></svg></button></div></div><div class="hint">AI가 만든 문항은 풀이 검사를 거쳐도 틀릴 수 있어요. 내보내기 전에 꼭 확인하세요.</div></div></div>
    </div>
    <div class="rp" id="rp"><div class="splitter" id="splitter" title="끌어서 넓이 조절 · 두 번 누르면 처음대로"><span class="w" id="splitW"></span></div>
     <div class="phead"><span class="t" id="pTitle">새 시험지</span>&nbsp;<button class="ver" id="verBtn">v0.0 <svg class="i s"><use href="#i-chev"/></svg></button><span class="sp" style="flex:1"></span><button class="ib" id="bHist" title="판 기록"><svg class="i"><use href="#i-hist"/></svg></button><button class="btn sm pri" id="bExport"><svg class="i s"><use href="#i-dl"/></svg>한글로 내보내기</button><button class="ib" id="bFull" title="크게 보기  ⌘⇧."><svg class="i"><use href="#i-full"/></svg></button><button class="ib" id="bClose" title="닫기  ⌘."><svg class="i"><use href="#i-x"/></svg></button></div>
-    <div class="psub"><div class="seg" id="seg"><button data-tab="plan" class="on">설계표</button><button data-tab="review">문항 검토</button><button data-tab="sheet">시험지</button><button data-tab="check">점검</button></div><span class="sp" style="flex:1"></span><span style="font-size:11px;color:var(--ds-ink-3)" id="counts"></span></div>
+    <div class="psub"><div class="seg" id="seg"><button data-tab="plan" class="on">설계표</button><button data-tab="review">문항 검토</button><button data-tab="sheet">시험지</button><button data-tab="check">점검</button></div><div class="steps" id="steps"></div><span class="sp" style="flex:1"></span><span style="font-size:11px;color:var(--ds-ink-3)" id="counts"></span></div>
     <div class="rbody" id="t-plan"></div>
     <div class="rbody" id="t-review" hidden></div>
     <div class="rbody" id="t-sheet" hidden></div>
@@ -139,10 +176,51 @@
   </div>
  </div>
 </div>
-<footer class="foot"><span class="b5">5E</span><span>v1.8.0 · 출제 하네스(실험)</span><span class="mid" id="footMid"></span><span style="margin-left:auto" id="footSave">저장 전</span></footer>
+<footer class="foot"><span class="b5">5E</span><span>v1.8.0 · 출제 하네스(실험)</span><span>AGPL-3.0</span><a class="src" href="https://github.com/seungyeon980808-pixel/5E" target="_blank" rel="noopener">&lt;/&gt; Source</a><span class="mid" id="footMid">Copyright © 2026 박승연 | SMOE</span><span style="margin-left:auto" id="footSave">저장 전</span></footer>
+<!-- 선생님 메뉴(시안 v7) -->
+<div id="meMenu" class="menu" hidden>
+ <div class="lab">화면 색</div>
+ <button class="mi" data-theme-set="navy"><span class="ck"></span><svg class="i"><use href="#i-moon"/></svg>다크네이비<small>기본</small></button>
+ <button class="mi" data-theme-set="graphite"><span class="ck"></span><svg class="i"><use href="#i-moon"/></svg>그라파이트</button>
+ <button class="mi" data-theme-set="white"><span class="ck"></span><svg class="i"><use href="#i-sun"/></svg>화이트</button>
+ <button class="mi" data-theme-set="auto"><span class="ck"></span><svg class="i"><use href="#i-auto"/></svg>시스템 따라가기<small>⌘⇧L 바꾸기</small></button>
+ <div class="sepl"></div>
+ <button class="mi" id="miSettings"><span class="ck"></span><svg class="i"><use href="#i-gear"/></svg>설정<small>⌘,</small></button>
+ <button class="mi" id="miKeys"><span class="ck"></span><svg class="i"><use href="#i-list"/></svg>키보드 단축키</button>
+</div>
+<!-- 시험지 이름 메뉴(시안 v7) -->
+<div id="exMenu" class="menu" hidden>
+ <button class="mi" id="exRename">이름 바꾸기</button><button class="mi" id="exDup">복제해 새 시험지로</button><button class="mi" id="exShare">시험지 공유 파일 저장(.html)</button><button class="mi" id="exSave">시험지 파일 저장(.5e)<small>⌘S</small></button><div class="sepl"></div><button class="mi" id="exHwp"><svg class="i"><use href="#i-hwp"/></svg>hwp에서 열기</button><button class="mi" id="exPool"><svg class="i"><use href="#i-cards"/></svg>문항을 exam 보관함에 넣기</button>
+</div>
+<!-- 도움말 -->
+<div id="helpMenu" class="menu" hidden>
+ <div class="lab">단축키</div>
+ <div class="mi"><span>새 시험지</span><small>⌘N</small></div><div class="mi"><span>찾기</span><small>⌘K</small></div><div class="mi"><span>시험지 열기 · 저장</span><small>⌘O · ⌘S</small></div>
+ <div class="mi"><span>사이드바 접기</span><small>⌘\</small></div><div class="mi"><span>결과물 칸 · 크게</span><small>⌘. · ⌘⇧.</small></div><div class="mi"><span>첫 화면</span><small>⌥⌘0</small></div>
+ <div class="mi"><span>image · exam · hwp · 라이브러리</span><small>⌥⌘1~4</small></div><div class="mi"><span>클립보드</span><small>⇧⌘V</small></div><div class="mi"><span>화면 색 바꾸기</span><small>⌘⇧L</small></div>
+ <div class="sepl"></div>
+ <div class="lab">시험지에서</div>
+ <div class="mi"><span>문항 글 누르기</span><small>코멘트</small></div><div class="mi"><span>칸 두 번 누르기</span><small>그 자리 고치기</small></div><div class="mi"><span>그림 두 번 누르기</span><small>image로</small></div>
+</div>
+<!-- 코멘트 팝오버(시안 v7) -->
+<div id="cPop" class="pop" hidden>
+ <div class="h" id="cpH">3번 · 코멘트</div>
+ <div class="thread" id="cpThread" hidden></div>
+ <div class="seg2" id="cpSeg"></div>
+ <textarea id="cpIn" placeholder="무엇을 바꿀까요?  ⌘↵ 쌓아 두기"></textarea>
+ <div class="row"><button class="btn sm gh" id="cpEdit">직접 고치기</button><span class="sp"></span><button class="btn sm" id="cpCancel">취소</button><button class="btn sm pri" id="cpAdd">코멘트 쌓기</button></div>
+</div>
+<!-- 찾기(⌘K) -->
+<div id="findPop" class="findpop" hidden><div class="fbox"><svg class="i"><use href="#i-search"/></svg><input id="findIn" placeholder="시험지 · 문항 · 기능 찾기" autocomplete="off"><kbd>Esc</kbd></div><div class="flist" id="findList"></div></div>
+<!-- 클립보드 서랍(시안 v7) -->
+<aside class="drawer" id="clipD">
+ <div class="dh">클립보드<span style="font-size:11px;font-weight:400;color:var(--ds-ink-3);margin-left:6px">끌어서 대화·그림 칸에 넣기</span><span class="sp"></span><button class="ib" id="clipX" title="닫기 Esc"><svg class="i"><use href="#i-x"/></svg></button></div>
+ <div class="dl" id="clipList"></div>
+</aside>
+<div class="scrim" id="scrim" hidden></div>
 <div class="evpop" id="evpop" hidden></div>
 <div class="toast" id="toast"></div>
-<input type="file" id="fOpen" accept=".5e,.exampool,.xlsx,.json" hidden><input type="file" id="fHwpx" accept=".hwpx" hidden><input type="file" id="fFolder" webkitdirectory multiple hidden>
+<input type="file" id="fOpen" accept=".5e,.exampool,.xlsx,.json" hidden><input type="file" id="fForm" accept=".hwpx,.hwp" hidden><input type="file" id="fHwpx" accept=".hwpx" hidden><input type="file" id="fFolder" webkitdirectory multiple hidden>
 <script src="../../vendor/katex/katex.min.js"></script>
 <script type="module" src="app.js?v=1.8.0-harness"></script>
 </body></html>

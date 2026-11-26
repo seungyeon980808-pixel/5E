@@ -7,6 +7,7 @@ import {createTaskBridge} from './ai-task-workspaces.js?v=1.7.0-four-session-int
 import {defaultAIModelSelection} from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
 import {runTurn,authoringError,fetchEvidence} from './exampool-authoring-harness.js?v=1.7.0-four-session-integration';
 import {aiErrorText,aiErrorCode} from './ai-error-copy.js?v=1.7.0-four-session-integration';
+import {getColorMode,setColorMode,nextColorMode} from './color-mode.js?v=1.7.0-four-session-integration';
 
 const FLAG='5e.harness';
 export function harnessEnabled(){try{if(new URLSearchParams(location.search).get('harness')==='1')return true;return localStorage.getItem(FLAG)==='1';}catch{return false;}}
@@ -18,17 +19,35 @@ export function initHarness({doc=document}={}){
   const win=doc.defaultView,root=doc.documentElement;
   const host=doc.createElement('section');host.id='harness-workspace';host.setAttribute('aria-label','5E 출제 하네스');
   host.style.cssText='position:fixed;inset:0;z-index:30001;display:flex;background:var(--ds-app,#0f141c)';
-  const frame=doc.createElement('iframe');frame.title='5E 출제 하네스';frame.src='assets/harness/index.html?v=1.8.0-harness';frame.style.cssText='flex:1;border:0;width:100%;height:100%';
+  // 이름표(title)는 마우스를 올릴 때마다 화면 아래에 「5E 출제 하네스」 말풍선으로 떴다(사용자 캡처 11-26) → 읽기 프로그램용 이름만 둔다.
+  const frame=doc.createElement('iframe');frame.setAttribute('aria-label','5E 출제 하네스');frame.src='assets/harness/index.html?v=1.8.0-harness';frame.style.cssText='flex:1;border:0;width:100%;height:100%';
   host.append(frame);doc.body.append(host);
   // 도구를 열면 하네스는 사이드바 폭만 남기고, 도구 화면은 그 오른쪽으로 민다.
   const style=doc.createElement('style');style.id='harness-tool-style';
   style.textContent=`html.harness-tool #harness-workspace{right:auto!important;width:${SIDE_W}px}
-html.harness-tool body>.app,html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{margin-left:${SIDE_W}px!important;width:calc(100% - ${SIDE_W}px)!important}
-html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{left:${SIDE_W}px!important}`;
+html.harness-tool body>.app{margin-left:${SIDE_W}px!important;width:calc(100% - ${SIDE_W}px)!important}
+html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{left:${SIDE_W}px!important;margin-left:0!important;width:calc(100% - ${SIDE_W}px)!important}
+#hx-crumb{position:fixed;left:${SIDE_W}px;top:0;width:192px;height:56px;z-index:30005;display:none;align-items:center;gap:6px;padding:0 12px 0 14px;box-sizing:border-box;font:13px/1 var(--ds-font,system-ui);color:var(--ds-ink-2,#aab);border-right:1px solid var(--ds-line,rgba(255,255,255,.08))}
+html.harness-tool #hx-crumb{display:flex}
+#hx-crumb button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;min-width:0;border-radius:6px;padding:4px 6px;margin-left:-6px;color:var(--ds-ink-2,#aab)}
+#hx-crumb button:hover{background:var(--ds-hover,rgba(255,255,255,.06));color:var(--ds-ink,#fff)}
+#hx-crumb .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
+#hx-crumb .sl{color:var(--ds-ink-3,#778)}
+#hx-crumb b{font:italic 700 17px/1 Georgia,serif;color:var(--ds-ink,#fff)}
+.modal-overlay{z-index:30010!important}`;
   doc.head.append(style);
   const send=msg=>frame.contentWindow?.postMessage({channel:'5e-harness',...msg},OWN);
   const fromFrame=e=>e.source===frame.contentWindow&&(e.origin===win.location.origin||FILE_MODE)&&e.data?.channel==='5e-harness';
-  const theme=()=>({theme:root.getAttribute('data-theme')||'dark',palette:root.getAttribute('data-palette')||'classic'});
+  // 시안 v7 「선생님」 메뉴: 화면 색 네 가지. 「시스템 따라가기」는 맥 설정이 어두우면 마지막으로 고른 어두운 색, 밝으면 화이트.
+  const AUTO_KEY='5e.harness.colorAuto',DARK_KEY='5e.harness.colorDark';
+  const store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch{}}};
+  const mq=win.matchMedia?.('(prefers-color-scheme: dark)');
+  const colorPref=()=>store.get(AUTO_KEY)==='1'?'auto':getColorMode(root);
+  const theme=()=>({theme:root.getAttribute('data-theme')||'dark',palette:root.getAttribute('data-palette')||'classic',pref:colorPref()});
+  const applyAuto=()=>{if(store.get(AUTO_KEY)!=='1')return;const dark=store.get(DARK_KEY)||'navy';const want=mq?.matches===false?'white':dark;if(getColorMode(root)!==want)setColorMode(want);else send({action:'theme',...theme()});};
+  mq?.addEventListener?.('change',applyAuto);applyAuto();
+  const pickColor=mode=>{if(mode==='auto'){store.set(AUTO_KEY,'1');applyAuto();send({action:'theme',...theme()});return;}
+    store.set(AUTO_KEY,null);if(mode!=='white')store.set(DARK_KEY,mode);setColorMode(mode);send({action:'theme',...theme()});};
   win.addEventListener('5e:color-mode-change',()=>send({action:'theme',...theme()}));
 
   // ── AI ──
@@ -70,6 +89,10 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     if(m.action==='figure'){try{const en=await engines();const r=m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});
         send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null}});}
       catch(error){send({action:'figure-ready',requestId:m.requestId,error:aiErrorText(error)});}return;}
+    if(m.action==='color-mode'){pickColor(m.mode==='next'?(colorPref()==='auto'?'navy':nextColorMode(getColorMode(root))):m.mode);return;}
+    // 설정(⌘,)·키보드 단축키: 본창의 원래 창을 그대로 연다(하네스 위로 뜨게 .modal-overlay를 올려 둠).
+    if(m.action==='settings'){doc.getElementById(m.which==='shortcuts'?'open-shortcuts':'open-screen')?.click();return;}
+    if(m.action==='crumb'){crumbTitle=String(m.title||'5E').slice(0,80);if(tool)paintCrumb();return;}
     if(m.action==='tool'){openTool(m.tool);return;}
     if(m.action==='home'){closeTool();return;}
     if(m.action==='open-project'){win.dispatchEvent(new CustomEvent('5e:project-open',{detail:{name:String(m.name||'시험지.5e'),bytes:new Uint8Array(m.bytes)}}));openTool('exam',{already:true});return;}
@@ -78,9 +101,13 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
       catch(error){send({action:'library-picked',items:[],error:error.message});closeTool();}return;}
   });
   // ── 도구 오가기 ──
-  let tool=null;
+  let tool=null,crumbTitle='5E';
+  const crumb=doc.createElement('div');crumb.id='hx-crumb';crumb.innerHTML='<button type="button" title="시험지로 돌아가기  ⌥⌘0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg><span class="t"></span></button><span class="sl">/</span><b></b>';doc.body.append(crumb);
+  const paintCrumb=()=>{crumb.querySelector('.t').textContent=crumbTitle||'5E';crumb.querySelector('b').textContent=tool||'';const hd=doc.querySelector('.app-shell-header');crumb.style.background=(hd&&getComputedStyle(hd).backgroundColor)||'var(--ds-bar,#0d1117)';};
+  crumb.querySelector('button').onclick=()=>{closeTool();send({action:'tool-back'});frame.contentWindow?.focus();};
+  win.addEventListener('5e:color-mode-change',()=>setTimeout(paintCrumb,50));
   function openTool(name,{silent=false,already=false}={}){
-    if(!['image','exam','hwp'].includes(name))return;tool=name;root.classList.add('harness-tool');
+    if(!['image','exam','hwp'].includes(name))return;tool=name;root.classList.add('harness-tool');paintCrumb();
     if(!already&&name!=='image')win.fiveEAppSwitch?.(name);
     if(name==='image')win.fiveEAppSwitch?.('image');
     if(!silent)send({action:'tool-opened',tool:name});
