@@ -7,7 +7,7 @@ const OFFSET = 24;
 const MARGIN = 8;
 const preferenceEvent = "5e:crop-magnifier-preference";
 const preferences = new Map();
-const preferenceKey = (context) => context === "canvas" || context === "library"
+const preferenceKey = (context) => context === "canvas" || context === "library" || context === "erase"
   ? `crop-magnifier-${context}` : "crop-magnifier";
 
 export function magnifierPosition(x, y, width, height) {
@@ -26,7 +26,7 @@ export function cropMagnifierEnabled(context = "capture") {
   } catch { return preferences.get(context) ?? fallback; }
 }
 
-export function mountCropMagnifierToggle(host, context = "canvas") {
+export function mountCropMagnifierToggle(host, context = "canvas", text = "자르기 돋보기") {
   const label = document.createElement("label");
   label.className = "crop-magnifier-control";
   const input = document.createElement("input");
@@ -40,7 +40,7 @@ export function mountCropMagnifierToggle(host, context = "canvas") {
     catch { /* A blocked settings store keeps the preference for this session. */ }
     window.dispatchEvent(new Event(preferenceEvent));
   });
-  label.append(input, document.createTextNode("자르기 돋보기"));
+  label.append(input, document.createTextNode(text));
   host.append(label);
   window.addEventListener(preferenceEvent, sync);
   return () => { window.removeEventListener(preferenceEvent, sync); label.remove(); };
@@ -106,7 +106,7 @@ function createLens(id) {
 }
 
 export function createPointerMagnifier({ surface, sample, available, id = "crop-magnifier", dragging = true }) {
-  let lens = null, viewport = null, content = null, frame = null, pointer = null, panning = false;
+  let lens = null, viewport = null, content = null, incoming = null, extras = null, frame = null, pointer = null, panning = false;
   const events = new AbortController();
   const hide = () => {
     pointer = null;
@@ -122,13 +122,33 @@ export function createPointerMagnifier({ surface, sample, available, id = "crop-
     if (!lens) ({ lens, viewport } = createLens(id));
     const tag = source.width ? "image" : "use";
     if (content?.localName !== tag) {
-      content = document.createElementNS(SVG_NS, tag);
+      content = document.createElementNS(SVG_NS, tag); incoming = null;
       viewport.replaceChildren(content);
     }
-    content.setAttribute("href", source.href);
+    if (content.getAttribute("href") !== source.href && incoming?.getAttribute("href") !== source.href) {
+      if (tag === "image" && content.getAttribute("href")) {
+        // 11-26: 그림이 바뀌면(지우개로 지운 뒤 등) 새 그림을 다 읽은 뒤 바꿔 끼운다 — 읽는 동안 확대경이 하얗게 비어 깜박였다.
+        const next = document.createElementNS(SVG_NS, "image");
+        next.setAttribute("href", source.href);
+        next.setAttribute("width", source.width); next.setAttribute("height", source.height);
+        next.style.opacity = "0";
+        content.after(next);
+        incoming?.remove(); incoming = next;
+        const swap = () => { if (!next.isConnected) return; next.style.opacity = ""; content?.remove(); content = next; if (incoming === next) incoming = null; };
+        next.addEventListener("load", swap, { once: true });
+        next.addEventListener("error", swap, { once: true });
+      } else content.setAttribute("href", source.href);
+    }
     if (source.width) {
       content.setAttribute("width", source.width);
       content.setAttribute("height", source.height);
+    }
+    // 11-26: 확대경 안에도 지울 자리(지우개 끝)와 그리고 있는 영역을 같은 좌표로 겹쳐 보인다.
+    extras?.remove(); extras = null;
+    if (source.overlays?.length) {
+      extras = document.createElementNS(SVG_NS, "g");
+      extras.append(...source.overlays);
+      viewport.append(extras);
     }
     viewport.setAttribute("viewBox", `${source.x - source.spanX / 2} ${source.y - source.spanY / 2} ${source.spanX} ${source.spanY}`);
     const position = magnifierPosition(pointer.x, pointer.y, window.innerWidth, window.innerHeight);
@@ -147,7 +167,8 @@ export function createPointerMagnifier({ surface, sample, available, id = "crop-
     if (event.pointerType === "touch" || (event.buttons && (!dragging || event.buttons !== 1))) { hide(); return; }
     move({ x: event.clientX, y: event.clientY });
   });
-  listen(surface, "pointerleave", hide);
+  // 11-26: 포인터 잡기를 풀 때 오는 pointerleave로 확대경이 깜빡였다 — 포인터가 아직 위에 있으면 숨기지 않는다.
+  listen(surface, "pointerleave", event => { const hit = document.elementFromPoint?.(event.clientX, event.clientY); if (!(hit && surface.contains(hit))) hide(); });
   listen(surface, "pointercancel", hide);
   listen(surface, "pointerdown", hide);
   listen(window, "blur", () => { panning = false; hide(); });

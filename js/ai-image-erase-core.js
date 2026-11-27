@@ -1,5 +1,5 @@
 import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
-import { brushPixelMask, rectanglePixelMask } from './image-erase-mask.js?v=1.7.0-four-session-integration';
+import { brushPixelMask, rectanglePixelMask, squareBrushPixelMask } from './image-erase-mask.js?v=1.7.0-four-session-integration';
 import { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
 // 엄격한 PNG 해석기는 색 PNG(RGB·RGBA 8비트)만 받는다. 회색조·팔레트 PNG는 영어 오류(「Unsupported or invalid PNG」)로 실패했다
 // (코드 점검 10-21 하) — 그때만 브라우저 해석으로 RGBA로 풀고, 그것도 안 되면 한국어로 안내한다. 색 정보 덧붙임(metadata)은 없앤다.
@@ -54,10 +54,13 @@ export async function eraseImagePolygon(dataUrl, polygon, { signal } = {}) {
   return result && { ...result, polygon: polygon.map(p => ({ x: p.x, y: p.y })) };
 }
 
-export async function eraseImageRegion(dataUrl, { mode, points, diameter, background = 'transparent' }, { signal } = {}) {
-  if (!['brush', 'rect'].includes(mode)) throw new TypeError('지우개 방식을 선택하세요.');
+export async function eraseImageRegion(dataUrl, { mode, points, diameter, tip = 'round', background = 'transparent' }, { signal } = {}) {
+  if (!['round', 'square'].includes(tip)) throw new TypeError('지우개 끝 모양을 선택하세요.');
+  if (!['brush', 'rect', 'loop'].includes(mode)) throw new TypeError('지우개 방식을 선택하세요.');
+  // 11-25 밤샘 검수: 시안 v6의 「자유 영역」 — 그린 닫힌 경로 안을 지운다.
+  if (mode === 'loop' && points.length < 3) throw new RangeError('지울 영역을 조금 더 크게 둘러싸 주세요.');
   const result = await eraseMaskedImage(dataUrl, (w, h) => mode === 'brush'
-    ? brushPixelMask(w, h, points, diameter) : rectanglePixelMask(w, h, points), { signal, background });
-  return result && { ...result, mode, points: points.map(p => ({ x:p.x, y:p.y })), ...(mode === 'brush' ? { diameter } : {}) };
+    ? (tip === 'square' ? squareBrushPixelMask : brushPixelMask)(w, h, points, diameter) : mode === 'loop' ? polygonPixelMask(w, h, points) : rectanglePixelMask(w, h, points), { signal, background });
+  return result && { ...result, mode, points: points.map(p => ({ x:p.x, y:p.y })), ...(mode === 'brush' ? { diameter, tip } : {}) };
 }
 

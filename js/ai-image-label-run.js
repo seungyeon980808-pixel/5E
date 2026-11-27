@@ -63,10 +63,12 @@ export function redrawRequestText({ imageKind, userRequest = '' } = {}) {
 export const AI_LABEL_READ_MODEL = 'gpt-6.1-sol';
 export const AI_LABEL_READ_NOTICE = '라벨 글자를 읽지 못해 그림만 넣었습니다. 라벨은 직접 추가할 수 있습니다.';
 // 11-10: 읽은 글자 → 검수 없이 쓰는 확정 라벨 명세(frozen). 편집 라벨 삽입·미리보기 경로가 그대로 쓴다.
-export function labelPlanFromRead(items) {
+export function labelPlanFromRead(items, { figureRestore = false } = {}) {
   const { labels } = labelReadToEditablePlan(items);
   return freezeLabelPlan({ version: EDITABLE_IMAGE_LABEL_PLAN_VERSION, policyVersion: SOURCE_LABEL_POLICY_VERSION, frozen: true,
-    status: labels.length ? 'ready' : 'empty', labels: labels.map(label => ({ ...label, scope: 'general' })), excludedLabels: [], preservedMarks: [],
+    status: labels.length ? 'ready' : 'empty', labels: labels.map((label, i) => ({ ...label, scope: 'general',
+      // 11-27 사용자: 변환 라벨 복구도 할로는 기본 끔 — 치수선 위 글자만 선을 가리려고 켠다(그림 생성 라벨 살리기와 같게).
+      haloRatio: items[i].onDimensionLine && !items[i].leader ? 0.34 : 0 })), excludedLabels: [], preservedMarks: [],
     uncertainties: [], reviewRequired: false, rejectedCount: 0, relationGroups: [], sourceBindings: [] });
 }
 const clone = value => structuredClone(value);
