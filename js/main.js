@@ -116,7 +116,7 @@ if (startScreen) startScreen.waitFor("라이브러리 자료(학평·평가원) 
 if (startScreen) startScreen.onReveal = () => { fitDefault(state); window.dispatchEvent(new CustomEvent("5e:start-screen-done")); };
 // 1.8.0 출제 하네스(실험 설정 5e.harness=1 또는 ?harness=1일 때만): 첫 화면이 하네스다(넷째 덧창). 시작 창은 하네스 뒤에서 그림 새로 만들기로 걷는다.
 // 꺼져 있으면 모듈도 읽지 않는다(기존 화면 그대로).
-try { if (localStorage.getItem("5e.harness") === "1" || new URLSearchParams(location.search).get("harness") === "1") import("./harness-workspace.js?v=1.8.0-harness").then(m => { if (m.initHarness()) startScreen?.skip({ kind: "new", app: "image" }); }).catch(error => console.warn("출제 하네스를 열지 못했습니다:", error)); } catch {}
+try { if (globalThis.localStorage.getItem("5e.harness") === "1" /* 이 파일의 localStorage는 「5e.preview:」 앞붙이 저장소라 하네스 설정을 못 읽었다(설치판에서 안 켜짐) */ || new URLSearchParams(location.search).get("harness") === "1") import("./harness-workspace.js?v=1.8.0-harness").then(m => { if (m.initHarness()) startScreen?.skip({ kind: "new", app: "image" }); }).catch(error => console.warn("출제 하네스를 열지 못했습니다:", error)); } catch {}
 initAppSwitch();
 installAppLock();
 initVisitorStats();
