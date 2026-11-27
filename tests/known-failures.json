@@ -23,6 +23,14 @@
     {
       "path": "tests/test-rhwp-exam-modes-browser.cjs",
       "reason": "2026-11-18 1.7.1: CI WebKit에서만 가끔 실패(「modes and focus tools」 42초) — 1.7.0 때도 CI 흔들림으로 목록에 있었음(c5101205), 로컬 두 엔진 통과"
+    },
+    {
+      "path": "tests/test-ai-engines-connect-browser.cjs",
+      "reason": "2026-11-24 1.7.2 출시(사용자 승인 「일단 알려진 실패로 넘기는게 낫겠지?」): GitHub 러너에서만 실패(두 번 연속) — 새로 고침 뒤 #graph-tool-open을 누를 때 modal-overlay가 가로막음(169줄). 이 맥의 작업 사본·얕은 복제 모두 통과. 느린 러너에서 새로 고침 뒤 뜨는 확인 창으로 보임 — 1.7.3에서 어떤 창인지 확인하고 검사가 닫게 고칠 것"
+    },
+    {
+      "path": "tests/test-graph-render-refinement.mjs",
+      "reason": "2026-11-24 1.7.2 출시(사용자 승인 「일단 알려진 실패로 넘기는게 낫겠지?」): GitHub 러너에서만 실패(두 번 연속) — 75줄 글자 폭 값 15.759 대 기대 15.277(약 0.5px), 러너 글꼴 차이로 보임. 이 맥의 작업 사본·얕은 복제 모두 통과. 1.7.3에서 오차를 허용하도록 고칠 것"
     }
   ]
 }

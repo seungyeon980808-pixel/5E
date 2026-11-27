@@ -1,0 +1,55 @@
+/* 첫 화면 v3 (11-17) — v7.css 뒤에 읽는다. 스포트라이트(macOS 모양을 HTML로 그림) → 실제 5E 준비 창 → 실제 시작 창.
+   단위는 화면 안(.screen-viewport, container-type:inline-size) 기준 cqw. */
+
+/* 창은 engine-hero.js가 .h3-app을 붙일 때만 보인다(v7.js의 옛 연출이 .app을 붙여도 무시). */
+.studio.hero3:not(.h3-app) .appwin{opacity:0;transform:translate(-50%,-50%) scale(.94)}
+.studio.hero3.h3-app .appwin{opacity:1;transform:translate(-50%,-50%);transition:opacity .28s var(--ease),transform .45s var(--spring)}
+.hero3 .appwin .g{position:absolute;inset:0;width:100%;height:100%;opacity:0;z-index:0}
+.hero3 .appwin .g.prev{opacity:1;z-index:1}
+.hero3 .appwin .g.on{opacity:1;z-index:2;animation:h3fade .32s var(--ease)}
+.hero3 .appwin .g.on.fast{animation-duration:.18s}
+@keyframes h3fade{from{opacity:0}to{opacity:1}}
+.hero3 .h3hot{all:unset;position:absolute;top:11.3%;width:19.6%;height:26.6%;border-radius:.9cqw;cursor:pointer;pointer-events:none;z-index:5}
+.studio.hero3.h3-ready .h3hot{pointer-events:auto}
+.hero3 .h3hot:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+
+/* 메뉴 막대: 처음엔 Finder, 5E가 열리면 5E */
+.hero3 .mbar b.h3-app{font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;font-style:normal;font-weight:700;font-size:1.15cqw}
+.hero3.h3-app .mbar b.h3-app{font-family:Georgia,serif;font-style:italic;font-size:1.3cqw}
+.hero3.h3-app .mbar .h3-only-desk{display:none}
+
+/* 스포트라이트 */
+.h3-spot{position:absolute;left:50%;top:21%;width:46%;transform:translate(-50%,0) scale(.96);opacity:0;pointer-events:none;z-index:6;font-family:-apple-system,'SF Pro Text','Apple SD Gothic Neo',sans-serif;transition:opacity .22s var(--ease),transform .36s var(--spring)}
+.hero3.h3-spot-on .h3-spot{opacity:1;transform:translate(-50%,0) scale(1)}
+.hero3.h3-spot-out .h3-spot{opacity:0;transform:translate(-50%,0) scale(.985);transition-duration:.18s}
+.h3-bar,.h3-res{background:rgba(246,248,251,.74);-webkit-backdrop-filter:blur(2.2cqw) saturate(1.7);backdrop-filter:blur(2.2cqw) saturate(1.7);box-shadow:inset 0 0 0 .08cqw rgba(255,255,255,.75),0 0 0 .07cqw rgba(0,0,0,.12),0 1.6cqw 4cqw rgba(10,30,60,.28)}
+.h3-bar{display:flex;align-items:center;gap:1.1cqw;height:4.6cqw;padding:0 1.6cqw;border-radius:2.3cqw}
+.h3-mag{flex:none;width:1.9cqw;height:1.9cqw;fill:none;stroke:#5b6068;stroke-width:2.4;stroke-linecap:round}
+.h3-q{position:relative;display:flex;align-items:center;flex:1;min-width:0;font-size:2cqw;font-weight:400;letter-spacing:-.01em;color:#1d1d1f;white-space:nowrap}
+.h3-ph{color:#8b8f96}
+.h3-typed:not(:empty)~.h3-ph{display:none}
+.h3-caret{display:inline-block;width:.13cqw;height:2.3cqw;margin:0 .1cqw;background:#2a7bf6;border-radius:.1cqw;animation:h3blink 1s steps(1) infinite}
+.h3-typed:empty+.h3-caret{position:absolute;left:0}
+@keyframes h3blink{50%{opacity:0}}
+.h3-res{margin-top:.8cqw;padding:.7cqw;border-radius:1.8cqw;opacity:0;transform:translateY(-.5cqw);transition:opacity .2s var(--ease),transform .3s var(--spring)}
+.hero3.h3-res-on .h3-res{opacity:1;transform:none}
+.h3-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:1.1cqw;padding:.7cqw 1.1cqw .7cqw .8cqw;border-radius:1.1cqw;background:#2a7bf6;color:#fff;transition:filter .12s}
+.h3-row img{width:3.4cqw;height:3.4cqw;border-radius:.8cqw;box-shadow:0 .15cqw .4cqw rgba(0,0,0,.25)}
+.h3-row b{font-family:-apple-system,'SF Pro Text',sans-serif;font-size:1.7cqw;font-weight:600}
+.h3-row span{font-size:1.25cqw;opacity:.85}
+.hero3.h3-enter .h3-row{filter:brightness(.82)}
+
+/* 누른 단축키(⌘Space, Return)를 화면 아래에 잠깐 */
+.h3-keys{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);display:flex;gap:.6cqw;z-index:7;pointer-events:none}
+.h3-keys kbd{display:none;min-width:3.6cqw;padding:.55cqw 1cqw;border-radius:.8cqw;background:rgba(28,30,36,.78);color:#f2f4f7;font:500 1.35cqw/1 -apple-system,'SF Pro Text',sans-serif;text-align:center;box-shadow:inset 0 -.18cqw 0 rgba(0,0,0,.4),0 .6cqw 1.6cqw rgba(0,0,0,.25);opacity:0;transform:translateY(.4cqw);transition:opacity .16s,transform .25s var(--spring)}
+.hero3[data-keys="cmdspace"] .k-cmd,.hero3[data-keys="cmdspace"] .k-space,.hero3[data-keys="ret"] .k-ret{display:inline-block}
+.hero3.h3-keys-on .h3-keys kbd{opacity:1;transform:none}
+.hero3.h3-keys-down .h3-keys kbd{transform:translateY(.15cqw);box-shadow:inset 0 -.06cqw 0 rgba(0,0,0,.4),0 .3cqw .8cqw rgba(0,0,0,.25)}
+
+@media (prefers-reduced-motion:reduce){.h3-spot,.h3-keys{display:none}.hero3 .appwin .g.on{animation:none}}
+
+/* 11-19: 로딩 이어짐을 부드럽게 */
+.studio.hero3.h3-app .appwin{transition:opacity .55s var(--ease),transform .8s var(--spring)!important}
+.hero3 .appwin .g.on{animation:h3fade .6s var(--ease)!important}
+.hero3 .appwin .g.on.fast{animation:h3fade .45s var(--ease)!important}
+.hero3.h3-spot-out .h3-spot{transition-duration:.28s!important}

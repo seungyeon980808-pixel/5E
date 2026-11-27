@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="ko" data-accent="teal">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>5E — 그림, 문항, 조판 한 곳에서</title>
+<meta name="description" content="과학 평가문항 제작 플랫폼 5E. 그림, 문항, 조판 — 한 곳에서.">
+<meta property="og:title" content="5E"><meta property="og:description" content="과학 평가문항 제작 플랫폼 · 그림, 문항, 조판 — 한 곳에서."><meta property="og:image" content="img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="v8/v7.css">
+<style>:root{--m-open:url("__MASK__");--m-hole:url("__HOLE__")}</style>
+</head>
+<body>
+<div class="mockbar">5E 소개 페이지 시안 v8 · 장면은 저절로 돌고, 직접 눌러 볼 수 있습니다 <button id="toggleTags" type="button">번호 숨기기</button><button class="theme-toggle" id="themeToggle" type="button">밝은 화면</button><button class="theme-toggle" id="lookToggle" type="button">갤러리 느낌</button></div>
+<script>(function(){var l;try{l=new URLSearchParams(location.search).get("look")||localStorage.getItem("5e-look")}catch(e){}if(l==="gallery")document.documentElement.dataset.look="gallery";addEventListener("DOMContentLoaded",function(){var b=document.getElementById("lookToggle");function t(){var g=document.documentElement.dataset.look==="gallery";b.textContent=g?"기본 모습":"갤러리 느낌"}t();b.onclick=function(){var g=document.documentElement.dataset.look==="gallery";if(g)delete document.documentElement.dataset.look;else document.documentElement.dataset.look="gallery";try{localStorage.setItem("5e-look",g?"":"gallery")}catch(e){}t()}})})()</script>
+<script>document.documentElement.dataset.pal='a'</script>
+<script>(function(){var t;try{t=localStorage.getItem('5e-landing-theme')}catch(e){}if(!t&&matchMedia('(prefers-color-scheme: light)').matches)t='light';if(t==='light')document.documentElement.dataset.theme='light';addEventListener('DOMContentLoaded',function(){var b=document.getElementById('themeToggle');function lab(){b.textContent=document.documentElement.dataset.theme==='light'?'어두운 화면':'밝은 화면'}lab();b.onclick=function(){var l=document.documentElement.dataset.theme==='light';if(l)delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme='light';try{localStorage.setItem('5e-landing-theme',l?'dark':'light')}catch(e){}lab()}})})();</script>
+
+<header class="nav">
+  <div class="nav__inner">
+    <a class="brand" href="#top" aria-label="5E">__LOGO5E__</a>
+    <ul class="nav__links">
+      <li><a href="#g-image">image</a></li>
+      <li><a href="#g-exam">exam</a></li>
+      <li><a href="#g-hwp">hwp</a></li>
+    </ul>
+    <div class="nav__end">
+      <div class="swatch" role="group" aria-label="포인트 색" data-badge="D-00" data-note="포인트 색 고르기(시안 확인용). 정해지면 지웁니다.">
+        <button type="button" data-a="teal" title="청록" style="--c:#7fcdd6"><i></i></button>
+        <button type="button" data-a="lavender" title="라벤더" style="--c:#b9adff"><i></i></button>
+        <button type="button" data-a="gold" title="금" style="--c:#d9bf8c"><i></i></button>
+        <button type="button" data-a="rose" title="장미" style="--c:#efa7b6"><i></i></button>
+        <button type="button" data-a="silver" title="은" style="--c:#c6ccd6"><i></i></button>
+      </div>
+      <a class="btn btn--primary btn--sm" href="#start" data-badge="C-01">시작하기</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+<!-- 0 첫 화면: 개인 페이지(psy.ai.kr) 입구와 같은 노트북 — 흰 무대에서 열리고, 화면에 실제 5E 시작 창 -->
+<!-- 0 첫 화면 v3 (11-17): 맥 화면에서 스포트라이트(⌘Space)로 「5E」를 찾아 열기 → 짧은 준비(출시본 실제 준비 단계 2순간) → 실제 시작 창(v1.7.0 촬영).
+     index-v8.html의 첫 화면 section(class studio) 전체를 이 조각으로 바꾼다. 필요: v8/engine-hero.css(v7.css 뒤), v8/engine-hero.js(v7.js 뒤).
+     id="studio"·id="appwin"은 v7.js가 찾는 이름이라 그대로 둔다(없으면 v7.js가 멈춤). 시작 창 그림은 .f/.hot 대신 .g/.h3hot을 써서 v7.js의 옛 첫 화면 연출과 겹치지 않게 했다. -->
+<section class="studio hero3" data-phase="open" id="studio" data-badge="D-01" data-note="장면 0. 사진판 노트북 화면에서 스포트라이트(⌘Space)로 「5E」를 검색해 엶 → 실제 준비 단계 글 두 순간(기출 문항·검색 색인, 출제 화면) → 출시본 v1.7.0 시작 창. 카드에 마우스를 올리면 실제 앱처럼 바뀌고, 누르면 그 묶음으로 내려감. 스포트라이트는 macOS 모양을 HTML로 그린 것, 5E 창은 모두 실제 촬영.">
+  <div class="studio__copy">
+    <h1 data-badge="C-02"><span>그림, 출제, 조판.</span><span><strong>한 창에서.</strong></span></h1>
+    <p data-badge="C-03">과학 시험지 편집기, <em>5E</em></p>
+  </div>
+  <div class="device-frame" id="nb">
+    <div class="rest-shadow"></div>
+    <img class="nb-base" src="img/studio/nb-base-alpha.webp" width="1536" height="1024" alt="">
+    <div class="device-lid" id="lid"><img src="img/studio/notebook-refined-open.webp" width="1536" height="1024" alt="">
+      <div class="screen-viewport">
+        <div class="mbar"><b class="h3-app" data-desk="Finder" data-app="5E">Finder</b><span>파일</span><span>편집</span><span>보기</span><span class="h3-only-desk">이동</span><span>윈도우</span><span>도움말</span><span class="r h3-clock">11월 17일 (화) 오전 9:41</span></div>
+        <div class="h3-spot" aria-hidden="true">
+          <div class="h3-bar"><svg class="h3-mag" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><span class="h3-q"><span class="h3-typed"></span><i class="h3-caret"></i><span class="h3-ph">Spotlight 검색</span></span></div>
+          <div class="h3-res"><div class="h3-row"><img src="img/herov3/icon-5e.png" alt=""><b>5E</b><span>응용 프로그램</span></div></div>
+        </div>
+        <div class="h3-keys" aria-hidden="true"><kbd class="k-cmd">⌘</kbd><kbd class="k-space">space</kbd><kbd class="k-ret">return</kbd></div>
+        <div class="appwin" id="appwin">
+          <img class="g" data-g="load-1" src="img/herov3/load-1.jpg" alt=""><img class="g" data-g="load-2" src="img/herov3/load-2.jpg" alt=""><img class="g" data-g="load-done" src="img/herov3/load-done.jpg" alt="">
+          <img class="g" data-g="ready" src="img/herov3/ready.jpg" alt="5E 시작 창"><img class="g" data-g="image" src="img/herov3/hover-image.jpg" alt=""><img class="g" data-g="exam" src="img/herov3/hover-exam.jpg" alt=""><img class="g" data-g="hwp" src="img/herov3/hover-hwp.jpg" alt="">
+          <button class="h3hot" data-k="image" data-go="g-image" style="left:35.05%" aria-label="image로"></button><button class="h3hot" data-k="exam" data-go="g-exam" style="left:55.8%" aria-label="exam으로"></button><button class="h3hot" data-k="hwp" data-go="g-hwp" style="left:76.6%" aria-label="hwp로"></button>
+        </div>
+      </div>
+      <span class="screen-notch"></span>
+    </div>
+    <div class="device-cover"><img src="img/studio/notebook-material-closed.webp" width="1536" height="1024" alt=""></div>
+  </div>
+  <div class="studio__fade"></div>
+</section>
+
+
+<!-- ============ image ============ -->
+<div class="wrap"><div class="group rise" id="g-image"><b>image</b><span>그림 · 그래프</span><span class="k">⌥⌘1</span></div></div>
+
+<section class="wrap feat" id="f1" data-scene="s1" data-badge="D-11" data-note="장면 1. 변환: 교과서 사진 위로 비교 손잡이가 지나가며 흑백 선화가 드러남(손잡이를 직접 끌 수 있음) → 확정: 캔버스에 놓임 → 직접 수정: 라벨 글자를 눌러 고침(직접 쳐 볼 수 있음).">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">01</span><span class="rule"></span>교과서 그림</p>
+    <h2 class="h2" data-badge="C-11">교과서 사진을<br><span class="soft">평가원 그림으로.</span></h2>
+    <p class="lede" data-badge="C-12">붙여 넣으면 흑백 선화로 다시 그리고, 글자는 고칠 수 있는 라벨로 얹습니다.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">변환</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">확정</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">직접 수정</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 손잡이를 끌어 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s1">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_image</span><span class="crumb">AI 이미지 변환 · 에탄올 끓는점</span><span class="sp"></span><span class="seg"><span class="vo on">원본</span><span class="vc">비교</span><span class="vr">수정본</span></span><button class="abtn pri" data-act="confirm">확정</button></div>
+    <div class="stage bench">
+      <div class="bench-grid"></div>
+      <div class="board">
+        <div class="ly or"><img src="img/tb-orig.png" alt=""></div>
+        <div class="ly ai"><img src="img/tb-ai.jpg" alt=""></div>
+        <span class="tagL">원본</span><span class="tagR">수정본</span>
+        <div class="handle"></div>
+        <div class="lbl" contenteditable="true" spellcheck="false" style="left:17.2%;top:7.2%;min-width:19%;min-height:7.4%">온도 센서</div>
+        <div class="sel"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="toast"><i></i><span>캔버스에 놓았습니다 · 그림 1개 · 라벨 6개</span></div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f2" data-scene="s2" data-badge="D-12" data-note="장면 2. 기출 그림(그림 그대로) → 글자만 떠올라 라벨 객체 14개가 됨 → 라벨 끔/켬, 라벨을 끌어 옮길 수 있음. 라벨 없는 그림은 objectify-1109의 erase 결과.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">02</span><span class="rule"></span>기출 그림</p>
+    <h2 class="h2" data-badge="C-13">기출 그림은 그대로.<br><span class="soft">글자만 라벨로.</span></h2>
+    <p class="lede" data-badge="C-14">다시 그리지 않습니다. 그림 속 글자만 떼어 옮기니, 끄고 켜고 옮길 수 있습니다.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">원본</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">라벨 복원</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">끄고, 옮기기</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 라벨을 끌어 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s2">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_image</span><span class="crumb">기출 그림 · 2027 수능 물리학Ⅰ 19번</span><span class="sp"></span><span class="seg"><button class="lon on">라벨 포함</button><button class="loff">그림만</button></span></div>
+    <div class="stage bench">
+      <div class="fig paper">
+        <img class="or" src="img/kice-fig.png" alt=""><img class="er" src="img/kice-fig-erase.png" alt="">
+        <span class="L" style="left:6.4%;top:6.4%">A</span>
+        <span class="L" style="left:24.3%;top:35.5%"><i>p</i></span>
+        <span class="L" style="left:32%;top:49.6%"><i>q</i></span>
+        <span class="L ko" style="left:35.4%;top:43.2%">마찰 구간 Ⅰ</span>
+        <span class="L" style="left:4.9%;top:50%">15<i>h</i></span>
+        <span class="L" style="left:20.9%;top:64.1%">2<i>H</i></span>
+        <span class="L" style="left:58.3%;top:64.1%">9<i>h</i></span>
+        <span class="L" style="left:56.4%;top:37.2%">A</span>
+        <span class="L" style="left:62%;top:37.2%">B</span>
+        <span class="L" style="left:72.1%;top:47.6%"><i>r</i></span>
+        <span class="L" style="left:78%;top:63.8%"><i>s</i></span>
+        <span class="L ko" style="left:83.3%;top:54.1%">마찰 구간 Ⅱ</span>
+        <span class="L" style="left:74.1%;top:74.5%"><i>H</i></span>
+        <span class="L" style="left:90.7%;top:81.4%">B</span>
+        <span class="L ko" style="left:93.6%;top:93.8%">수평면</span>
+      </div>
+      <div class="dock">라벨 <b class="cnt">0</b>개 · 그림은 원본 그대로</div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f3" data-scene="s3" data-badge="D-13" data-note="장면 3. 그래프 사진에서 축·꺾인 점을 읽음(점이 찍힘) → 오른쪽에 편집 가능한 그래프로 다시 그림 → 손잡이를 끌어 곡선을 바꾸고 축 이름 K→℃, T1→78을 고침. 오른쪽 그래프는 SVG로 실제로 끌 수 있음.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">03</span><span class="rule"></span>그래프</p>
+    <h2 class="h2" data-badge="C-15">그래프 사진이<br><span class="soft">고칠 수 있는 그래프로.</span></h2>
+    <p class="lede" data-badge="C-16">축과 눈금, 꺾인 점을 읽어 다시 그립니다. 점을 끌고, 글자를 고치면 됩니다.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">읽기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">복원</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">직접 수정</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 파란 점을 끌어 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s3">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_image</span><span class="crumb">그래프 복원 · 가열 곡선</span><span class="sp"></span><button class="abtn" data-act="none">그래프 세부 편집</button></div>
+    <div class="stage bench">
+      <div class="two">
+        <div class="pane orig"><span class="cap">원본 사진</span><img src="img/graph-k.png" alt="">
+          <svg class="pts" viewBox="0 0 641 519" preserveAspectRatio="xMidYMid meet"><circle r="7" cx="152" cy="411"/><circle r="7" cx="190" cy="339"/><circle r="7" cx="345" cy="339"/><circle r="7" cx="493" cy="184"/><circle r="7" cx="586" cy="184"/><circle r="5" cx="152" cy="448"/><circle r="5" cx="566" cy="448"/><circle r="5" cx="152" cy="70"/></svg></div>
+        <div class="pane"><span class="cap">수정본 · 편집 가능</span>
+          <svg class="g rec" viewBox="0 0 320 260">
+            <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#111"/></marker></defs>
+            <line x1="62" y1="222" x2="300" y2="222" stroke="#111" stroke-width="1.6" marker-end="url(#ah)"/>
+            <line x1="62" y1="222" x2="62" y2="22" stroke="#111" stroke-width="1.6" marker-end="url(#ah)"/>
+            <text x="24" y="40" font-size="17" fill="#111">온도</text>
+            <text class="ed unit" x="26" y="62" font-size="17" fill="#111">(K)</text>
+            <text class="ed t1" x="30" y="95" font-size="17" fill="#111" font-style="italic">T₁</text>
+            <line class="dash" x1="62" y1="90" x2="250" y2="90" stroke="#111" stroke-dasharray="4 3"/>
+            <polyline class="curve" points=""/>
+            <g class="abc" font-size="16" fill="#111"><text class="la" x="92" y="168">A</text><text class="lb" x="124" y="168">B</text><text class="lc" x="190" y="128">C</text></g>
+            <text x="54" y="244" font-size="16" fill="#111">0</text><text x="268" y="250" font-size="16" fill="#111">시간</text>
+            <circle class="h h1" r="6"/><circle class="h h2" r="6"/>
+          </svg>
+        </div>
+      </div>
+      <div class="toast"><i></i><span>그래프 수정본으로 남겼습니다</span></div>
+    </div>
+  </figure></div>
+</section>
+
+<!-- ============ exam ============ -->
+<div class="wrap"><div class="group rise" id="g-exam"><b>exam</b><span>문항 · 기출 · 시험지</span><span class="k">⌥⌘2</span></div></div>
+
+<section class="wrap feat" id="f4" data-scene="s4" data-badge="D-21" data-note="장면 4. 기출 PDF 문항을 발문·그림·질문·〈보기〉·선지로 나눔(색 상자) → 조각이 카드 칸으로 날아감 → 카드에서 고침. 왼쪽 조각에 마우스를 올리면 카드 칸이 같이 빛남.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">04</span><span class="rule"></span>문항 복원</p>
+    <h2 class="h2" data-badge="C-21">PDF 속 기출이<br><span class="soft">고칠 수 있는 카드로.</span></h2>
+    <p class="lede" data-badge="C-22">발문, 그림, 〈보기〉, 선지를 나눠 카드 칸에 넣습니다. 그림은 그림대로, 수식은 수식대로.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">나누기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">카드에 넣기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">고치기</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 조각에 마우스를 올려 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s4">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_exam</span><span class="crumb">라이브러리 · 2022 6월 모평 지구과학Ⅰ 7번</span><span class="sp"></span><span class="chip">변형</span></div>
+    <div class="stage bench">
+      <div class="pdf"><span class="cap">PDF 원본</span><div class="imgbox" style="position:relative;width:100%;aspect-ratio:760/740">
+        <img src="img/c-q5.jpg" alt="" style="width:100%;height:100%">
+        <div class="seg-box" data-k="stem" style="--c:#7fcdd6;top:0;height:15.8%"><em>발문</em></div>
+        <div class="seg-box" data-k="fig" style="--c:#d9bf8c;top:18.8%;height:33%"><em>그림</em></div>
+        <div class="seg-box" data-k="ask" style="--c:#b9adff;top:54%;height:10%"><em>질문</em></div>
+        <div class="seg-box" data-k="bogi" style="--c:#efa7b6;top:65.5%;height:27%"><em>〈보기〉</em></div>
+        <div class="seg-box" data-k="ch" style="--c:#9fd49a;top:93.6%;height:6.2%"><em>선지</em></div>
+      </div></div>
+      <div class="card">
+        <div class="card__h"><b>5번 문항</b><span class="chip">기출 변형</span></div>
+        <div class="slot" data-k="stem" style="--c:#7fcdd6"><small>발문</small><div class="tx" data-full="그림 (가)는 질량이 태양과 같은 주계열성의 내부 구조를, (나)는 이 별의 진화 과정을 나타낸 것이다. A와 B는 각각 대류층과 복사층 중 하나이다."></div></div>
+        <div class="slot" data-k="fig" style="--c:#d9bf8c"><small>자료</small><div class="tx"><img src="img/c-q5-fig.jpg" alt="" style="opacity:0;transition:opacity .4s"></div></div>
+        <div class="slot" data-k="ask" style="--c:#b9adff"><small>질문</small><div class="tx" data-full="이에 대한 설명으로 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?"></div></div>
+        <div class="slot" data-k="bogi" style="--c:#efa7b6"><small>〈보기〉</small><div class="tx" data-full="ㄱ. 복사층은 B이다.  ㄴ. 적색 거성의 중심핵에서는 주로 p-p 반응이 일어난다.  ㄷ. ㉠ 단계의 별 내부에서는 철보다 무거운 원소가 생성된다."></div></div>
+        <div class="slot" data-k="ch" style="--c:#9fd49a"><small>선지</small><div class="tx" data-full="① ㄱ  ② ㄴ  ③ ㄱ, ㄷ  ④ ㄴ, ㄷ  ⑤ ㄱ, ㄴ, ㄷ"></div></div>
+      </div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f5" data-scene="s5" data-badge="D-22" data-note="장면 5. 검색칸에 「주계열성」을 치면 목록이 걸러지고 형광펜 → ＋를 누르거나 끌어다 놓으면 오른쪽 B4 시험지에 자리 잡음 → 조판 끝. 검색칸에 직접 칠 수 있음. 목록 이름은 예시.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">05</span><span class="rule"></span>라이브러리와 조판</p>
+    <h2 class="h2" data-badge="C-23">찾고, 담으면<br><span class="soft">시험지가 짜입니다.</span></h2>
+    <p class="lede" data-badge="C-24">평가원·학평 기출 8,400문항을 낱말 하나로 찾고, 끌어다 놓으면 B4 2단에 자리 잡습니다.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">검색</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">담기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">조판</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 낱말을 쳐 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s5">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_exam</span><span class="crumb">라이브러리 · 평가원 · 학평</span><span class="sp"></span><span class="chip qn">0문항</span></div>
+    <div class="stage">
+      <div class="lib">
+        <label class="search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg><input type="text" placeholder="낱말로 찾기" spellcheck="false"></label>
+        <div class="count">8,412문항</div>
+        <div class="rows"></div>
+      </div>
+      <div class="sheetwrap"><div class="minib4 dropzone"><div class="hd"><span>2026학년도 2학기 중간고사</span><b>지구과학Ⅰ</b><span>2학년</span></div><div class="cols"><div class="col c1"></div><div class="col c2"></div></div></div></div>
+      <div class="toast"><i></i><span>B4 · 2단 · <b class="tn">3</b>문항 · 조판 끝</span></div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f6" data-scene="s6" data-badge="D-23" data-note="장면 6. 요청 단추를 누르면(직접 눌러 볼 수 있음) 대화가 오가고 오른쪽 카드가 발문 → 자료 → 〈보기〉 → 선지 순서로 채워짐. 1.8.0 구상(베타) 기준 화면.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">06</span><span class="rule"></span>AI 출제<span class="beta">베타</span></p>
+    <h2 class="h2" data-badge="C-25">말로 부탁하면<br><span class="soft">문항이 채워집니다.</span></h2>
+    <p class="lede" data-badge="C-26">단원과 조건을 말하면 AI가 기출을 참고해 발문, 자료, 〈보기〉를 카드에 채웁니다.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">요청</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">생성</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">카드</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 요청을 골라 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s6">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_exam</span><span class="crumb">AI와 문항 만들기</span><span class="sp"></span><span class="chip">베타</span></div>
+    <div class="stage">
+      <div class="chat"><div class="msgs"></div>
+        <div class="sugg"><button data-q="0">주계열성 진화로 3점 문항</button><button data-q="1">그래프 있는 문항으로</button><button data-q="2">〈보기〉는 세 개</button></div>
+        <div class="compose"><span class="cin"></span><i class="send">↑</i></div></div>
+      <div class="card">
+        <div class="card__h"><b>새 문항</b><span class="chip">AI 초안</span></div>
+        <div class="slot" data-k="stem"><small>발문</small><div class="tx"></div></div>
+        <div class="slot" data-k="fig"><small>자료</small><div class="tx"><div class="ph">자료 자리</div></div></div>
+        <div class="slot" data-k="bogi"><small>〈보기〉</small><div class="tx"></div></div>
+        <div class="slot" data-k="ch"><small>선지</small><div class="tx"></div></div>
+      </div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f7" data-scene="s7" data-badge="D-24" data-note="장면 7. 카드의 자료 칸 그래프를 누르면 그 자리 편집기가 뜸 → 점을 끌고 축 이름을 고침(직접 해 볼 수 있음) → 확정하면 오른쪽 미리보기에 바로 반영.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">07</span><span class="rule"></span>카드 안에서</p>
+    <h2 class="h2" data-badge="C-27">카드 안에서<br><span class="soft">그래프를 바로.</span></h2>
+    <p class="lede" data-badge="C-28">카드 속 그림과 그래프를 누르면 그 자리에서 편집기가 열립니다. 다른 프로그램을 열지 않습니다.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">누르기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">고치기</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">확정</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 그래프를 눌러 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s7">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_exam</span><span class="crumb">문항 카드 · 3번 문항</span><span class="sp"></span><span class="chip">자동 저장</span></div>
+    <div class="stage bench">
+      <div class="card">
+        <div class="card__h"><b>3번 문항</b><span class="chip">출제 중</span></div>
+        <div class="slot"><small>발문</small><div class="tx">그림은 고체 에탄올을 가열할 때 시간에 따른 온도를 나타낸 것이다.</div></div>
+        <div class="slot hot2" data-k="fig"><small>자료 · 그래프</small><div class="gslot"></div></div>
+        <div class="slot"><small>〈보기〉</small><div class="tx">ㄱ. A 구간에서 에탄올은 녹는다.<br>ㄴ. 끓는점은 78 ℃이다.</div></div>
+      </div>
+      <div class="preview"><p><b>3.</b> 그림은 고체 에탄올을 가열할 때 시간에 따른 온도를 나타낸 것이다.</p><div class="gmirror"></div><p>ㄱ. A 구간에서 에탄올은 녹는다.<br>ㄴ. 끓는점은 78 ℃이다.</p></div>
+      <div class="inl"><span class="lab">축 이름</span><input class="field" value="(K)"><button class="abtn pri" data-act="ok">확정</button></div>
+      <div class="toast"><i></i><span>미리보기에 반영했습니다</span></div>
+    </div>
+  </figure></div>
+</section>
+
+<!-- ============ hwp ============ -->
+<div class="wrap"><div class="group rise" id="g-hwp"><b>hwp</b><span>조판 · 인쇄</span><span class="k">⌥⌘3</span></div></div>
+
+<section class="wrap feat" id="f8" data-scene="s8" data-badge="D-31" data-note="장면 8. 시험지 속 교과서 사진을 누르면 메뉴 → AI 변환(빛줄) → 확정하면 그림 크기가 바뀌며 쪽이 다시 짜임 → 라벨 편집 창에서 「온도 센서」를 「온도계」로 고침(직접 쳐 볼 수 있음).">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">08</span><span class="rule"></span>시험지 위에서</p>
+    <h2 class="h2" data-badge="C-31">시험지 위에서<br><span class="soft">변환하고, 고치고.</span></h2>
+    <p class="lede" data-badge="C-32">시험지 속 그림을 눌러 바로 변환하고, 확정하면 쪽이 다시 짜입니다. 라벨 글자도 그 자리에서.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">변환</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">확정</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">직접 수정</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 그림을 눌러 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s8">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_hwp</span><span class="crumb">2학기 중간고사 · 통합과학.hwpx</span><span class="sp"></span><span class="seg"><span>기본</span><span class="on">집중</span><span>없음</span></span></div>
+    <div class="stage bench">
+      <div class="sheet">
+        <div class="hd"><span>2026학년도 2학기 중간고사</span><b>통합과학</b><span>1학년</span></div>
+        <p><b>1.</b> 그림은 에탄올의 끓는점을 측정하는 실험 장치를 나타낸 것이다.</p>
+        <div class="figwrap"><div class="im" style="aspect-ratio:468/297"><img class="or" src="img/tb-orig.png" alt=""><img class="ai" src="img/tb-ai.jpg" alt=""><div class="scan"></div></div>
+          <div class="lbl" style="left:17.2%;top:7.2%;min-width:19%;min-height:7.4%">온도 센서</div><div class="selb"></div></div>
+        <p>이에 대한 설명으로 옳은 것만을 &lt;보기&gt;에서 있는 대로 고른 것은?</p>
+        <p style="border:1px solid #888;padding:4px 8px">ㄱ. 온도 센서의 값은 일정하게 유지된다.<br>ㄴ. 찬물 속 시험관에는 액체가 모인다.</p>
+      </div>
+      <div class="menu"><button class="ai" data-act="conv">AI 변환</button><button data-act="none">그래프 복원</button><button data-act="none">그림 편집</button></div>
+      <div class="reflow"><i></i>쪽 다시 짜는 중 · 1쪽</div>
+      <div class="ledit"><div class="t"><b>라벨 편집</b>라벨이나 지시선의 점을 끌어 옮기세요.</div><div class="r">내용 <input class="field" value="온도 센서" style="flex:1"> 글자 <span class="field" style="width:46px">17</span><button class="abtn pri" data-act="apply">수정 반영</button></div></div>
+      <div class="toast"><i></i><span>시험지에 반영했습니다</span></div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f9" data-scene="s9" data-badge="D-32" data-note="장면 9. 그래프·문항 위에서 ⌘C(또는 누르기) → 오른쪽 아래 서랍에 쌓임 → ⇧⌘V로 서랍을 열어 골라 시험지에 붙임. 마우스를 올리고 실제 ⌘C를 눌러도 됨. 클립보드 허브 시안 v3 모양을 따름.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">09</span><span class="rule"></span>클립보드</p>
+    <h2 class="h2" data-badge="C-33">⌘C 한 번으로<br><span class="soft">세 프로그램을 건너갑니다.</span></h2>
+    <p class="lede" data-badge="C-34">복사한 것은 서랍에 쌓입니다. ⇧⌘V로 골라 어디에든 붙이세요.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">복사</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">서랍</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">붙이기</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 조각을 눌러 복사해 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s9">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E</span><span class="crumb">image · exam → hwp</span><span class="sp"></span><span class="chip">⇧⌘V 서랍</span></div>
+    <div class="stage">
+      <div class="area">
+        <div class="src"><h5><b>image</b> · exam</h5>
+          <div class="itm" data-i="0"><span class="k">⌘C</span><img src="img/graph-k.png" alt=""><div class="nm">그래프 · 가열 곡선</div></div>
+          <div class="itm" data-i="1"><span class="k">⌘C</span><img src="img/c-q5-fig.jpg" alt=""><div class="nm">문항 5 · 자료</div></div>
+          <div class="itm" data-i="2"><span class="k">⌘C</span><img src="img/kice-fig.png" alt=""><div class="nm">기출 그림 · 라벨 포함</div></div>
+        </div>
+        <div class="dst"><h5><b>hwp</b> · 2학기 중간고사</h5><div class="minib4"><div class="hd"><span>2026학년도 2학기 중간고사</span><b>통합과학</b><span>1학년</span></div>
+          <div class="qb" style="animation:none"><span class="no">1.</span>다음은 실험 과정이다.<div class="ln"></div><div class="ln" style="width:70%"></div></div>
+          <div class="pastes"></div></div></div>
+      </div>
+      <div class="drawer closed"><div class="dh">클립보드 <span class="dc">⇧⌘V</span></div><div class="list"><div class="empty">복사한 것이 여기 쌓입니다</div></div></div>
+      <div class="keycap"></div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap feat" id="f10" data-scene="s10" data-badge="D-33" data-note="장면 10. 왼쪽 양식(수능형·학교 원안지·학습지)을 고르면 같은 문항 5개가 그 양식대로 다시 흐름(직접 골라 볼 수 있음). 양식 모양은 추상 도형.">
+  <div class="feat__text rise">
+    <p class="kicker"><span class="num">10</span><span class="rule"></span>어떤 양식이든</p>
+    <h2 class="h2" data-badge="C-35">어느 학교 양식이든<br><span class="soft">그대로 짭니다.</span></h2>
+    <p class="lede" data-badge="C-36">원안지를 한 번 넣어 두면 문항이 그 양식에 맞춰 흐릅니다. 사람은 마지막에 훑어보기만.</p>
+    <ol class="steps"><li><button><span class="n">01</span><span class="t">수능형</span><span class="bar"><i></i></span></button></li><li><button><span class="n">02</span><span class="t">우리 학교 원안지</span><span class="bar"><i></i></span></button></li><li><button><span class="n">03</span><span class="t">학습지</span><span class="bar"><i></i></span></button></li></ol>
+    <p class="hint"><i></i><span>자동 재생 중 · 양식을 골라 보세요</span></p>
+  </div>
+  <div class="fit rise" style="--delay:.1s"><figure class="win s10">
+    <div class="wbar"><span class="dots"><i></i><i></i><i></i></span><span class="brand5">5E_hwp</span><span class="crumb">양식 · 5문항</span><span class="sp"></span><span class="chip fmn">수능형 B4 2단</span></div>
+    <div class="stage">
+      <div class="forms">
+        <button class="fm" data-f="0"><span class="th"><i style="left:8%;right:8%;top:8%;height:3px;background:#333"></i><i style="left:49.5%;width:1px;top:16%;bottom:6%"></i><i style="left:8%;width:36%;top:22%;height:3px"></i><i style="left:56%;width:36%;top:22%;height:3px"></i><i style="left:8%;width:36%;top:40%;height:3px"></i><i style="left:56%;width:36%;top:40%;height:3px"></i></span><span class="nm">수능형</span><span class="ds">B4 · 2단</span></button>
+        <button class="fm" data-f="1"><span class="th"><i style="left:8%;right:8%;top:8%;height:14px;background:#ddd;border:1px solid #888"></i><i style="left:8%;width:80%;top:40%;height:3px"></i><i style="left:8%;width:70%;top:55%;height:3px"></i><i style="left:8%;width:76%;top:70%;height:3px"></i></span><span class="nm">○○고 원안지</span><span class="ds">A4 · 1단 · 결재란</span></button>
+        <button class="fm" data-f="2"><span class="th"><i style="left:8%;width:38%;top:12%;height:38%;background:none;border:1px solid #999;border-radius:3px"></i><i style="left:54%;width:38%;top:12%;height:38%;background:none;border:1px solid #999;border-radius:3px"></i><i style="left:8%;width:38%;top:56%;height:36%;background:none;border:1px solid #999;border-radius:3px"></i></span><span class="nm">학습지</span><span class="ds">A4 · 상자형</span></button>
+      </div>
+      <div class="stagew"><div class="pg"><div class="hdr"></div><div class="flowq"></div><span class="vline"></span></div></div>
+    </div>
+  </figure></div>
+</section>
+
+<section class="wrap history" id="history" data-badge="D-50" data-note="약력·로드맵. 판 이름·날짜는 GitHub 릴리스 기준. 미래 판은 날짜 없이, 2.0.0만 2027년 3월 전.">
+  <div class="group rise"><b>history</b><span>지금까지 · 릴리스 약력</span></div>
+  <ol class="hist rise">
+    <li><span class="v">1.0</span><span class="d">2026.07</span><span class="t">기출 그림 한 장에서 시작해 시험지 그림 하나를 끝까지 만드는 편집기</span></li>
+    <li class="sm"><span class="v">1.0.1 · 1.0.2</span><span class="d">07</span><span class="t">곡선이 점을 지나감, 앱으로 설치 · 출시 전 정밀 감사</span></li>
+    <li><span class="v">1.1 – 1.3</span><span class="d">07</span><span class="t">원본을 옆에 띄워 놓고 그리기 · 그래프에 점·화살표·이름표 · 용수철·도르래 같은 과학 부품</span></li>
+    <li><span class="v">1.4</span><span class="d">07</span><span class="t">물리·화학·생명·지구 네 과목 부품 완성, 밖에서 가져온 그림을 흑백 선화로</span></li>
+    <li><span class="v">1.5</span><span class="d">08</span><span class="t">라이브러리·AI 작업대·편집기를 한 흐름으로, Windows 설치판</span></li>
+    <li class="sm"><span class="v">1.5.6 · 1.5.8</span><span class="d">08</span><span class="t">교과서 PDF 검색·크롭, AI 그래프 통합</span></li>
+    <li><span class="v">1.6</span><span class="d">09</span><span class="t">어떤 그림이든 시험용 그림으로 — 크롭 → AI 변환 → 라벨</span></li>
+    <li class="sm"><span class="v">1.6.1 – 1.6.3</span><span class="d">10.07</span><span class="t">웹 정비 — 배포 경로 정리, 라이브러리 미리보기 반응·즉시 표시</span></li>
+    <li class="now"><span class="v">1.7</span><span class="d">11</span><span class="t">그림 도구에서 출제 도구로 — 문항 카드, 기출 변형, 학교 양식 조판, 한글 없이 인쇄까지</span></li>
+  </ol>
+  <div class="group rise" style="padding-top:72px"><b>next</b><span>다음 · 로드맵</span></div>
+  <ol class="hist next rise">
+    <li><span class="v">1.7.1</span><span class="d"></span><span class="t">덜어내기 — 새 기능 없이 구조를 정리하고 버그를 잡습니다</span></li>
+    <li><span class="v">1.8</span><span class="d"></span><span class="t">없는 그림도 — 설명만으로 그림·그래프를 만듭니다</span></li>
+    <li><span class="v">1.9</span><span class="d"></span><span class="t">대화로 출제 — 방향을 말하면 시안, 고치고, 실제 문항까지</span></li>
+    <li class="goal"><span class="v">2.0</span><span class="d">2027.03 전</span><span class="t">구상 · 그림 · 조판 · 검토 · 이의 제기 대응까지, 출제의 처음부터 끝까지 5E 안에서</span></li>
+  </ol>
+</section>
+
+<section class="closing" id="start">
+  <div class="aura" aria-hidden="true"></div>
+  <div class="wrap">
+    <div class="manifesto rise" data-badge="C-40">
+      <p class="m-big">문제를 많이 만드는 것보다<br><span class="soft">출제 의도를 정확히 담았는지, 오류가 없는지.</span></p>
+      <p class="m-mid">같은 한 문제라도, 무게가 다릅니다.</p>
+      <p class="m-small">교사와 강사의 도구는 달라야 합니다. 학교 원안지, 이원목적분류표, 교육과정 범위, 학생용 사본 — 교사에게 필요한 것은 문제 수가 아니라 이것입니다.<br>모든 기능은 무료입니다. 협찬 없이, 서울의 한 과학 교사가 만들었습니다.</p>
+    </div>
+    <h2 class="h2 rise" data-badge="C-41">주소 하나면<br><span class="soft">됩니다.</span></h2>
+    <div class="addr rise" style="--delay:.1s"><span class="dim">›</span><span data-badge="C-42">www.5e.ai.kr</span><button class="btn btn--ghost btn--sm" id="copyAddr" type="button">복사</button></div>
+    <div class="cta-row rise" style="--delay:.2s"><a class="btn btn--primary" href="#" data-badge="C-43">웹에서 열기</a><a class="btn btn--ghost" href="#">설치판 받기</a></div>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="wrap row2">
+    <span><span class="e">__LOGO5E__</span><span data-badge="C-44">게으른 교사가 만들었습니다</span></span>
+    <span><a href="#">psy.ai.kr</a> · <a href="#">Instagram</a> · <a href="#">문제 신고</a></span>
+  </div>
+</footer>
+
+<section class="mk-sec" id="tags" data-mk-legend></section>
+<script src="v8/v7.js"></script>
+<!-- mockup-kit -->
+</body>
+</html>

@@ -1,0 +1,63 @@
+/* 11-20: 사양표 · FAQ · 시안 알약 */
+.spec{max-width:900px;margin:70px auto 0;text-align:left}
+.spec-h{font-size:15px;margin:0 0 12px;color:var(--ink-soft);font-weight:600;letter-spacing:.02em}
+.spec table{width:100%;border-collapse:collapse;font-size:13.5px}
+.spec thead th{font:italic 700 18px Georgia,serif;text-align:left;padding:0 14px 10px;color:var(--ink);border-bottom:1.5px solid var(--ink-soft)}
+.spec tbody th{width:150px;text-align:left;font-weight:600;color:var(--ink-soft);padding:12px 14px 12px 0;vertical-align:top}
+.spec td{padding:12px 14px;color:var(--ink);vertical-align:top;line-height:1.55;border-left:1px solid var(--line)}
+.spec tbody tr{border-bottom:1px solid var(--line)}
+.spec-n{margin:14px 0 0;font-size:12.5px;color:var(--ink-faint)}
+@media (max-width:640px){.spec tbody th{width:96px}.spec td{padding:10px 8px}}
+.faq{padding-top:12vh;padding-bottom:10vh}
+.faq-s{display:flex;align-items:center;gap:10px;max-width:720px;margin:34px auto 18px;padding:12px 16px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface)}
+.faq-s svg{width:16px;height:16px;color:var(--ink-faint);flex:none}
+.faq-s input{flex:1;border:0;background:transparent;color:var(--ink);font:inherit;font-size:15px;outline:none}
+.faq-s input::placeholder{color:var(--ink-faint)}
+.faq-c{font-size:12px;color:var(--ink-faint)}
+.faq-l{max-width:720px;margin:0 auto}
+.faq-i{border-bottom:1px solid var(--line)}
+.faq-i summary{list-style:none;cursor:pointer;padding:16px 30px 16px 2px;font-size:15.5px;font-weight:600;position:relative}
+.faq-i summary::-webkit-details-marker{display:none}
+.faq-i summary::after{content:"+";position:absolute;right:4px;top:13px;font-size:20px;font-weight:300;color:var(--ink-faint);transition:transform .2s}
+.faq-i[open] summary::after{transform:rotate(45deg)}
+.faq-i p{margin:0 0 18px;padding-right:30px;color:var(--ink-soft);font-size:14px;line-height:1.75}
+.faq mark{background:color-mix(in srgb,var(--ink) 18%,transparent);color:var(--ink);border-radius:3px;padding:0 2px}
+.faq-none{text-align:center;color:var(--ink-faint);font-size:14px;margin-top:20px}.faq-none a{color:var(--ink)}
+/* 시안 알약 */
+.mkp{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:500;display:flex;align-items:center;font:13px/1.4 -apple-system,"Apple SD Gothic Neo",Pretendard,sans-serif}
+.mkp-pill{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 7px;border-radius:12px 0 0 12px;background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--line-strong);border-right:0;color:var(--ink-soft);box-shadow:-6px 6px 20px -10px #0007}
+.mkp-pill span{writing-mode:vertical-rl;font-size:11.5px;letter-spacing:.15em}
+.mkp-pill i{width:7px;height:7px;border-radius:50%;background:#e5484d}
+.mkp-pill:hover{color:var(--ink)}
+.mkp-panel{display:none;width:250px;padding:14px;border-radius:14px 0 0 14px;background:var(--surface);border:1px solid var(--line-strong);border-right:0;box-shadow:-10px 10px 30px -12px #0008;color:var(--ink)}
+.mkp.open .mkp-panel{display:flex;flex-direction:column;gap:9px}
+.mkp-h{font-size:13px;margin-bottom:2px}
+.mkp-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft)}
+.mkp-seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden}
+.mkp-seg button{all:unset;cursor:pointer;padding:3px 10px;font-size:12px}.mkp-seg button.on{background:var(--ink);color:var(--bg)}
+.mkp-btn{all:unset;cursor:pointer;display:block;padding:7px 10px;border:1px solid var(--line-strong);border-radius:8px;font-size:12.5px;color:var(--ink)}
+.mkp-btn:hover{background:var(--surface-2)}
+.mkp-btn kbd{float:right;font:11px ui-monospace,Menlo,monospace;color:var(--ink-faint)}
+.mkp-note{margin:2px 0 0;font-size:11px;color:var(--ink-faint)}
+/* 방문자 화면에서도 문구 탭은 열 수 있게 */
+html[data-view="visitor"] .ttab{display:flex!important}
+/* 11-20 저녁: FAQ 이름 · 빠른 낱말 · 분류 */
+/* FAQ 제목은 다른 제목과 같은 글꼴·기울임 */
+.faq-k{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;max-width:720px;margin:0 auto 22px}
+.faq-k button{all:unset;cursor:pointer;padding:5px 12px;border:1px solid var(--line-strong);border-radius:999px;font-size:12.5px;color:var(--ink-soft)}
+.faq-k button:hover{color:var(--ink);border-color:var(--ink-soft)}
+.faq-k button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.faq-i summary small{display:inline-block;min-width:58px;margin-right:10px;font-size:11px;font-weight:500;color:var(--ink-faint)}
+.faq-more{all:unset;cursor:pointer;display:block;margin:22px auto 0;padding:9px 18px;border:1px solid var(--line-strong);border-radius:999px;font-size:13px;color:var(--ink-soft)}
+.faq-more:hover{color:var(--ink)}
+/* 11-20 저녁: 장면 글 덜어내기 — 직접 해 보기 알림·단계 아래 안내·출처 줄 숨김(누를 곳은 번호만 빛남) */
+.where .tryme,.feat p.hint,.wsrc{display:none!important}
+/* 휴대폰 미리보기 */
+.mkphone{position:fixed;inset:0;z-index:900;background:#000c;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px}
+.mkphone-bar{display:flex;align-items:center;gap:10px;color:#eee;font:13px -apple-system,"Apple SD Gothic Neo",sans-serif}
+.mkphone-bar span{color:#999}
+.mkphone-bar button{all:unset;cursor:pointer;padding:5px 11px;border:1px solid #ffffff33;border-radius:9px;color:#eee}
+.mkphone-bar button:hover{border-color:#fff8}
+.mkphone-dev{width:390px;height:844px;max-height:calc(100vh - 80px);border-radius:46px;border:10px solid #1c1c1e;box-shadow:0 0 0 1px #ffffff26,0 30px 80px -20px #000;overflow:hidden;background:#000;transition:width .3s,height .3s}
+.mkphone-dev iframe{width:100%;height:100%;border:0;display:block;background:#0e0e0f}
+.mkphone-dev{box-sizing:content-box}

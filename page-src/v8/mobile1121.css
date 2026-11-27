@@ -1,0 +1,59 @@
+/* 11-21: 휴대폰(600px 이하) — 영역 사이 여백을 줄이고 단추를 모아 덜 어수선하게. 데스크톱은 그대로. */
+@media (max-width:600px){
+  /* 첫 화면: 로고·노트북만 한 화면에(아래 문구가 비치지 않게) */
+  html .studio{min-height:100svh!important;padding:40px 0 140px!important;justify-content:center!important}
+  /* 문구 화면: 다음 묶음 제목이 비치지 않을 만큼 */
+  html .manif1{min-height:calc(100svh - 56px)!important;padding:56px 20px 56px!important}
+  /* 묶음 제목(image · exam · hwp · download …) */
+  html[data-look] .group,html .group{padding-top:76px!important;padding-bottom:12px!important;gap:6px!important}
+  html .group b{font-size:2.1rem!important}
+  /* 장면 */
+  html .feat,html[data-look] .feat{padding-block:44px!important;gap:20px!important}
+  /* 장면: 시연 화면을 제목·설명 바로 아래로 올리고, 단계 단추는 작은 칩으로 */
+  html .feat,html[data-look] .feat{row-gap:0!important}
+  html .feat>.feat__text{display:contents!important}
+  html .feat>.feat__text>*,html .feat>.wfit{grid-column:1/-1!important;grid-row:auto!important;min-width:0}
+  html .feat .kicker{order:1}html .feat .h2{order:2}html .feat .lede{order:3}
+  html .feat>.wfit{order:4;margin:18px 0 0!important}
+  html .feat .steps{order:5}html .feat .feat__text>.hint{order:6}
+  html .steps{display:flex!important;flex-wrap:wrap;gap:6px!important;border-top:0!important;margin:14px 0 0!important}
+  html .steps li{border:0!important;flex:0 0 auto}
+  html .steps li::before{display:none!important}
+  html .steps button{display:flex!important;align-items:center;gap:5px!important;width:auto!important;padding:6px 10px 7px!important;border:1px solid var(--line-strong)!important;border-radius:9px;position:relative;overflow:hidden}
+  html .steps li.on button{border-color:var(--ink-soft)!important}
+  html .steps .n{font-size:10.5px!important;padding-top:0!important}
+  html .steps .t{font-size:13px!important}
+  html .steps .bar{position:absolute;left:0;right:0;bottom:0;height:2px!important;margin:0!important;border-radius:0!important}
+  /* 아래쪽 섹션 */
+  html .arch,html .hx,html .dlsec,html .faq{padding-top:16px!important;padding-bottom:44px!important}
+  /* 메뉴 단추: 간격 좁히고 조금 작게 */
+  html .navlk{gap:0!important}
+  html .navlk .lk.ico{width:30px!important;height:30px!important;padding:0!important;justify-content:center;border-color:transparent!important}
+  html .navlk .lk.ico svg{width:16px;height:16px}
+  /* 내려받기: 큰 카드 세 장 → 한 줄짜리 세 줄 */
+  html .dl3{gap:8px!important;margin-top:18px!important}
+  html .dl3-c{flex-direction:row!important;flex-wrap:wrap;align-items:center!important;text-align:left;gap:4px 10px!important;padding:12px 14px!important;border-radius:12px!important}
+  html .dl3-c>svg{width:20px!important;height:20px!important;flex:none;margin:0!important}
+  html .dl3-c>b{font-size:15px!important;margin:0!important}
+  html .dl3-c .dl3-s{font-size:12px!important;flex:1 1 auto;min-width:0}
+  html .dl3-c .dl3-b{margin:0 0 0 auto!important;gap:6px!important}
+  html .dl3-c .dl3-b>*{padding:6px 12px!important;font-size:12.5px!important}
+  html .dl3-foot{margin-top:10px!important}
+  /* 웹과 설치판 표: 왼쪽 제목 칸을 좁게 */
+  html .spec{margin-top:32px!important}
+  html .spec tbody th{width:74px!important;padding:9px 8px 9px 0!important;font-size:12.5px}
+  html .spec td{padding:9px 8px!important;font-size:12.5px;line-height:1.45}
+  html .spec thead th{padding:0 8px 8px!important;font-size:16px!important}
+  /* architecture: 자료·결과물 칸은 옆으로 나란히, 안쪽 여백 줄이기 */
+  html .ar1-src,html .ar1-out{display:grid!important;gap:8px!important}
+  html .ar1-src{grid-template-columns:1fr 1fr}
+  html .ar1-out{grid-template-columns:1fr 1fr 1fr}
+  html .ar1-src>h5,html .ar1-out>h5{grid-column:1/-1;margin:0!important}
+  html .ar1-src .ar-chip,html .ar1-out .ar-chip{padding:9px 10px!important}
+  html .ar1-core{padding:34px 14px 14px!important}
+  html .ar1-core .ar-p{padding:11px 13px 10px!important}
+  html .ar-deep{padding:16px 16px!important}
+  html .theme-toggle.lk,html .navlk .lk.thm{width:30px!important;height:30px!important;padding:0!important;justify-content:center;border-color:transparent!important}
+  /* 맨 아래 */
+  html .footer{padding-block:22px!important}
+}

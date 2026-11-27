@@ -115,10 +115,17 @@ function drawBigFiveE(big) {
     const text = document.createElementNS(NS, 'text');
     text.setAttribute('x', '0'); text.setAttribute('y', '0'); text.setAttribute('dominant-baseline', 'text-before-edge');
     text.textContent = big.textContent; svg.append(text); big.append(svg);
-    const range = document.createRange(); range.selectNodeContents(big.firstChild);
-    const real = range.getBoundingClientRect(), box = svg.getBoundingClientRect(), bb = text.getBBox(), k = box.width / W || 1;
-    text.setAttribute('x', String((real.left - box.left) / k - bb.x));
-    text.setAttribute('y', String((real.top - box.top) / k - bb.y));
+    // 11-23: 예전엔 글자 묶음 상자(getBBox)로 맞췄는데, 기울임꼴의 상자 왼끝은 글자 시작점과 달라 SVG 글자가 실제 글자보다
+    // 약 2.8px 오른쪽에 그려졌다 — 1.8초에 실제 글자로 바뀌는 순간 그만큼 왼쪽으로 튀었다(배율 125·150%면 3.6·4.5 화소).
+    // 이제 글자마다 실제 글자 자리(Range)에 SVG 글자 칸(getExtentOfChar)을 맞춘다 — 자간·커닝·윈도우 글자 폭 반올림 차이도 함께 없어진다.
+    const node = big.firstChild, box = svg.getBoundingClientRect(), k = box.width / W || 1;
+    const chars = [...node.textContent].map((_, i) => {
+      const r = document.createRange(); r.setStart(node, i); r.setEnd(node, i + 1);
+      const real = r.getBoundingClientRect(), ext = text.getExtentOfChar(i), start = text.getStartPositionOfChar(i);
+      return { x: start.x + (real.left - box.left) / k - ext.x, y: (real.top - box.top) / k - ext.y };
+    });
+    text.setAttribute('x', chars.map(c => c.x.toFixed(3)).join(' '));
+    text.setAttribute('y', chars[0].y.toFixed(3));
     setTimeout(() => { big.style.transition = 'color .25s'; big.style.color = ''; setTimeout(() => { svg.remove(); big.style.transition = ''; }, 300); }, 1800);
   } catch { big.style.color = ''; big.querySelector('.ss-draw')?.remove(); }
 }

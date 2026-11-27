@@ -2727,6 +2727,9 @@ textarea.unified-text-input {
   white-space: nowrap;
   overflow: hidden;
 }
+/* 11-23 출시판(설치판·웹)에서는 개발용 변경 배지를 감춘다 — 로컬 미리보기 서버(scripts/preview-local-server.cjs)가
+   기준 커밋을 끼워 넣은 화면(data-preview-commit)에서만 보인다. */
+.footer-change-badge:not([data-preview-commit]) { display: none; }
 .footer-visitor-stats {
   flex: 0 0 auto;
   color: var(--text-secondary);

@@ -30,8 +30,10 @@ function command(executable, argv) {
 // dirtyHash is the delta against the current index, plus new product/test files.
 // Index identity is recorded separately; this does not certify a clean HEAD.
 function fingerprint(directory) {
-  const gitFile = fs.readFileSync(path.join(directory, '.git'), 'utf8').trim();
-  const gitDir = path.resolve(directory, gitFile.replace(/^gitdir:\s*/, ''));
+  // 11-24: 작업 사본(worktree)에서는 .git이 「gitdir: …」 파일이지만, 보통 복제(GitHub 검사)에서는 폴더다 — 둘 다 읽는다(폴더를 파일로 읽어 EISDIR).
+  const dotGit = path.join(directory, '.git');
+  const gitDir = fs.statSync(dotGit).isDirectory() ? dotGit
+    : path.resolve(directory, fs.readFileSync(dotGit, 'utf8').trim().replace(/^gitdir:\s*/, ''));
   const commonFile = path.join(gitDir, 'commondir');
   const common = fs.existsSync(commonFile) ? path.resolve(gitDir, fs.readFileSync(commonFile, 'utf8').trim()) : gitDir;
   let head = fs.readFileSync(path.join(gitDir, 'HEAD'), 'utf8').trim();

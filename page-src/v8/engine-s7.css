@@ -1,0 +1,96 @@
+/* 장면 7(S8) — 시험지 위에서 바로 고치기. 페이지에서 가장 크게: 글은 위, 무대는 넓게 */
+.feat.s7{grid-template-columns:minmax(0,1fr);gap:28px;padding-block:130px}
+.feat.s7 .feat__text{max-width:none;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:6px 56px;align-items:end}
+.feat.s7 .feat__text>.kicker,.feat.s7 .feat__text>.h2,.feat.s7 .feat__text>.lede{grid-column:1}
+.feat.s7 .feat__text>.steps,.feat.s7 .feat__text>.hint{grid-column:2}
+.feat.s7 .feat__text>.steps{grid-row:1 / span 3;align-self:end;margin-top:0}
+.feat.s7 .feat__text>.hint{grid-row:4;margin-top:10px}
+.feat.s7 .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0 10px;border-top:0}
+.feat.s7 .steps li{border-bottom:0;border-top:1px solid var(--line)}
+.feat.s7 .steps li.on{border-top-color:var(--accent)}
+.feat.s7 .steps button{grid-template-columns:22px 1fr;padding:12px 2px}
+.feat.s7 .wfit{width:100%}
+@media(max-width:900px){
+  .feat.s7 .feat__text{grid-template-columns:1fr}
+  .feat.s7 .feat__text>*{grid-column:1!important;grid-row:auto!important}
+  .feat.s7 .steps{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:24px}
+}
+
+.s7win{--k:1;--pick:#4c8dff;touch-action:pan-y}
+.s7cam{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.s7f{opacity:0;will-change:opacity}
+
+/* 편집 창 그림 칸: 라벨 없는 실제 결과 + 실제 라벨(HTML) */
+.s7edit{position:absolute;opacity:0;pointer-events:none;transition:opacity .35s ease}
+.s7edit.on{opacity:1;pointer-events:auto}
+.s7bare{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;-webkit-user-drag:none}
+.s7lead{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.s7lead line{stroke:#0d1117;stroke-width:calc(1.15px / var(--k-cam,1));vector-effect:non-scaling-stroke}
+.s7lead line.gone{opacity:0}
+.s7lab{position:absolute;display:flex;align-items:center;justify-content:center;white-space:nowrap;cursor:grab;touch-action:none;user-select:none;
+  border-radius:3px;outline:1px dashed transparent;outline-offset:1px;transition:outline-color .2s,background-color .2s}
+.s7lab .s7t{font-family:"돋움",Dotum,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:calc(var(--fs) * var(--k) * 1px);line-height:1;color:#0d1117;
+  paint-order:stroke fill;-webkit-text-stroke:calc(var(--fs) * var(--k) * .13px) #fff;letter-spacing:-.01em;outline:none;caret-color:var(--pick)}
+.s7lab.serif .s7t{font-family:"Times New Roman","Nanum Myeongjo",AppleMyungjo,serif}
+.s7edit.on .s7lab:hover,.s7lab.hot{outline-color:rgb(76 141 255 / .9);background:rgb(76 141 255 / .06)}
+.s7lab.hot{cursor:grabbing}
+.s7lab.editing{outline:1.5px solid var(--pick);background:#fff;cursor:text}
+.s7lab.editing .s7t{user-select:text;-webkit-user-select:text}
+.s7lab.caret .s7t::after{content:"";display:inline-block;width:.06em;height:.95em;margin-left:.04em;background:var(--pick);vertical-align:-.1em;animation:s7blink .8s steps(1) infinite}
+.s7lab.gone{opacity:0;pointer-events:none}
+@keyframes s7blink{50%{opacity:0}}
+.touched .s7edit.on .s7lab{outline-color:rgb(76 141 255 / .35)}
+
+/* 확대 돋보기(실제 화면을 앱에서 키워 찍은 것) */
+.s7zoom{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s ease}
+.s7zoom.on{opacity:1}
+.s7zfrom{position:absolute;border:2px solid rgb(var(--accent-rgb,127 205 214));border-radius:3px;box-shadow:0 0 0 9999px #0000}
+.s7zbox{position:absolute;border:2px solid rgb(var(--accent-rgb,127 205 214));border-radius:8px;background:#fff;
+  box-shadow:0 18px 60px -12px #000c,0 0 0 1px #0006;transform:scale(.96);transition:transform .45s cubic-bezier(.16,1,.3,1)}
+.s7zoom.on .s7zbox{transform:none}
+.s7zbox img{width:100%;height:100%;display:block;object-fit:cover;border-radius:6px}
+.s7zbox span{position:absolute;right:-2px;bottom:calc(100% + 6px);padding:2px 9px;border-radius:999px;background:rgb(var(--accent-rgb,127 205 214));color:#0f0e0d;font-size:calc(11px + .2vw);font-weight:600;white-space:nowrap}
+
+/* 커서 — 핵심 누름에만 */
+.s7cur{position:absolute;width:1.7%;aspect-ratio:1;margin:-.15% 0 0 -.35%;opacity:0;transition:opacity .25s;pointer-events:none;z-index:5}
+.s7cur.on{opacity:1}
+.s7cur svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 3px #000a)}
+.s7cur path{fill:#fff;stroke:#111;stroke-width:1.3;stroke-linejoin:round}
+.s7cur i{position:absolute;left:12%;top:8%;width:200%;height:200%;margin:-100% 0 0 -100%;border-radius:50%;border:2px solid rgb(var(--accent-rgb,127 205 214));opacity:0;transform:scale(.2)}
+.s7cur.clk i{animation:s7clk .5s ease-out}
+.s7cur.dbl i{animation:s7clk .32s ease-out 2}
+@keyframes s7clk{0%{opacity:.95;transform:scale(.2)}100%{opacity:0;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.s7cam{transition:none}}
+/* 11-19 메인: 장면 7도 다른 장면처럼 왼쪽 글·오른쪽 화면으로(화면 비중 줄이기) */
+.feat.s7{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(32px,4vw,64px);padding-block:clamp(96px,12vh,140px);align-items:center}
+.feat.s7 .feat__text{display:block;max-width:none}
+.feat.s7 .steps{display:block;border-top:1px solid var(--line)}
+.feat.s7 .steps button{grid-template-columns:28px 1fr;padding:13px 4px}
+@media(max-width:900px){.feat.s7{grid-template-columns:1fr}}
+
+/* 변환 전 ↔ 후 손잡이 */
+.s7before{position:absolute;inset:0;z-index:30;opacity:0;pointer-events:none;transition:opacity .35s;cursor:ew-resize;touch-action:none}
+.s7before.on{opacity:1;pointer-events:auto}
+.s7bimg{position:absolute;inset:0;background:#fff;display:flex;justify-content:center;align-items:stretch;will-change:clip-path}
+.s7bimg img{height:100%;display:block;user-select:none}
+.s7bh{position:absolute;top:0;bottom:0;left:100%;width:0;pointer-events:none}
+.s7bh::before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:2px;background:rgb(var(--accent-rgb,10 10 11) / .9);box-shadow:0 0 0 1px #fff}
+.s7bh i{position:absolute;left:-12px;top:calc(50% - 12px);width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid rgb(var(--accent-rgb,10 10 11));box-shadow:0 3px 10px #0005}
+.s7bt{position:absolute;top:8px;padding:2px 8px;border-radius:999px;background:#111d;color:#fff;font-size:10.5px;pointer-events:none}
+.s7bt.a{left:8px}.s7bt.b{right:8px}
+
+/* 11-19: 커서를 실제 화면처럼 크게, 화면 바뀜 매끄럽게 */
+.wcur svg{width:34px!important;height:34px!important;left:-5px;top:-3px}
+.wcur b{left:-22px;top:-22px;width:44px;height:44px}
+.s7cur{width:34px!important;margin:-3px 0 0 -6px}
+.s34-cur{width:34px!important}
+.s7cmp{position:absolute;inset:0;z-index:40;opacity:0;pointer-events:none;transition:opacity .4s;cursor:ew-resize;touch-action:none}
+.s7cmp.on{opacity:1;pointer-events:auto}
+.s7cmpimg{position:absolute;inset:0;will-change:clip-path}
+.s7cmpimg img{width:100%;height:100%;display:block;user-select:none}
+.s7cmp .s7bh{left:100%}
+.s7cmp .s7bt{top:auto;bottom:12px;font-size:12px;padding:3px 10px}
+/* 바뀌는 화면은 아래, 편집 칸·비교·커서는 늘 위 */
+.s7edit{z-index:9000}.s7zoom{z-index:9200}.s7cmp{z-index:9500}.s7cur{z-index:9999}
+.wcur{z-index:9999!important}.whandle,.wtag{z-index:9800}
+.s34-cur,.s34-ring{z-index:9999!important}

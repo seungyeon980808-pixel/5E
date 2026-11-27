@@ -1,0 +1,29 @@
+/* 그림 한 장 장면 — 실제 앱 화면 안 */
+.wfit{display:flex;justify-content:center}
+.wstage{width:100%;display:flex;flex-direction:column;gap:12px}
+.wwin{position:relative;width:100%;border:1px solid var(--line-strong,#eeeeef29);border-radius:10px;overflow:hidden;background:#0b0e14;box-shadow:0 1px 0 #ffffff0a inset,0 30px 100px -30px #000000d0}
+.wchrome{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none;pointer-events:none}
+.wchrome.on{opacity:0}
+.wpaper{position:absolute;background:#fff;overflow:hidden;cursor:ew-resize;touch-action:none;user-select:none}
+.wl{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.w-top{clip-path:inset(0 100% 0 0);will-change:clip-path}
+.w-top img{width:100%;height:100%;display:block}
+.w-lay{opacity:0;will-change:opacity}
+.whandle{position:absolute;top:0;bottom:0;left:0;width:0;opacity:0;transition:opacity .25s ease;pointer-events:none}
+.whandle.on{opacity:1}
+.whandle::before{content:"";position:absolute;left:-1px;top:0;bottom:0;width:2px;background:rgb(var(--accent-rgb,127 205 214) / .95);box-shadow:0 0 14px rgb(var(--accent-rgb,127 205 214) / .6)}
+.whandle i{position:absolute;left:-13px;top:calc(50% - 13px);width:26px;height:26px;border-radius:50%;background:#111;border:2px solid rgb(var(--accent-rgb,127 205 214));box-shadow:0 4px 14px #0008}
+.whandle i::before,.whandle i::after{content:"";position:absolute;top:8px;border:4px solid transparent}
+.whandle i::before{left:2px;border-right-color:rgb(var(--accent-rgb,127 205 214))}
+.whandle i::after{right:2px;border-left-color:rgb(var(--accent-rgb,127 205 214))}
+.wtag{position:absolute;top:8px;padding:2px 8px;border-radius:999px;background:#111c;color:#eee;font-size:10.5px;opacity:0;transition:opacity .25s}
+.wtag.a{left:8px}.wtag.b{right:8px}
+.wtag.on{opacity:1}
+.wcap{display:flex;justify-content:space-between;gap:12px;width:100%;font-size:12.5px;color:var(--ink-dim,#a8a49b);min-height:20px}
+.wcap-t{color:var(--ink,#eee)}
+.wsrc{color:var(--ink-faint,#77736b);text-align:right}
+.wchrome.w-lay{opacity:0;will-change:opacity}
+.manifesto{max-width:760px;margin:0 auto 96px;text-align:left}
+.manifesto .m-big{font-size:clamp(1.5rem,3.2vw,2.3rem);line-height:1.35;font-weight:650;letter-spacing:-.01em;margin:0 0 22px}
+.manifesto .m-mid{font-size:clamp(1.1rem,2vw,1.4rem);margin:0 0 22px;color:var(--accent,#7fcdd6)}
+.manifesto .m-small{font-size:14.5px;line-height:1.75;color:var(--ink-dim,#a8a49b);margin:0}

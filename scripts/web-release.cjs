@@ -6,7 +6,7 @@ const { execFileSync } = require('node:child_process');
 const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 const root = path.resolve(__dirname, '..');
-const surfaceDirectories = ['js', 'css', 'assets', 'fonts', 'vendor'];
+const surfaceDirectories = ['js', 'css', 'assets', 'fonts', 'vendor', 'page']; // page: 둘러보기 소개 페이지(www.5e.ai.kr/page, 원본은 page-src)
 const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'apps/examlibrary/index.html', 'ourdocs/index.html', ...require('../memo/assets.json'), ...require('../hub/assets.json'), ...require('../bug/assets.json'), ...require('../apps/print/assets.json')];
 // 하위 프로그램 입구(print·기출 탐색기)는 저장소에서 apps/<이름>/에 두고, 사이트에는 지금처럼 /<이름>/ 주소로 올린다(1.7.1).
 const sitePath = relative => relative.replace(/^apps\//, '');
