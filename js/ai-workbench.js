@@ -200,7 +200,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let generatedSerial = 0;
   let sourceSerial = 0;
   let activeCandidateKey = "";
-  let versionDescriber = null; // V5: (candidateId, card) => { sub, thumb } | null — 그림 생성 탭 결과 목록의 둘째 줄
+  let versionDescriber = null, versionAction = null; // V5: (candidateId, card) => { sub, thumb } | null — 그림 생성 탭 결과 목록의 둘째 줄
   let activeSourceKey = "";
   const paneZoom = { source: 1, result: 1 };
   let userChoseLayout = false;
@@ -388,6 +388,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }, { capture: true, signal: lifecycle.signal });
   document.addEventListener('keydown', event => {
     if (panel.hidden || !['source', 'result'].includes(panel.dataset.aiLayout) || event.key !== ' ') return;
+    // 11-26 사용자: 생성은 결과 한 창이 기본 — 스페이스로 레퍼런스와 맞바꾸지 않는다(직접 편집 중 화면이 다른 곳으로 넘어갔다).
+    if (panel.dataset.aiCreateUi === 'true') return;
     if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
     if (event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"]),button:not([data-ai-layout-mode]),[role="button"],summary')) return;
     if (document.querySelector('dialog[open], .modal-overlay:not([hidden]):not(#ai-image-panel)')) return;
@@ -618,6 +620,17 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       : "생성 결과 없음";
     versionButton.title = versionButton.textContent;
     let rich = false;
+    // 11-26 시안(판 목록 8): 손으로 고친 판은 그 AI 결과 바로 아래에 묶어 들여 보인다.
+    const details = new Map(cards.map(card => [candidateKey(card), versionDescriber?.(candidateKey(card), card) || null]));
+    const keys = new Set(cards.map(candidateKey));
+    const isChild = card => { const d = details.get(candidateKey(card)); return Boolean(d?.local && d.parentId && keys.has(d.parentId)); };
+    const ordered = [];
+    for (const card of cards) {
+      if (isChild(card)) continue;
+      ordered.push(card);
+      for (const child of cards) if (isChild(child) && details.get(candidateKey(child)).parentId === candidateKey(card)) ordered.push(child);
+    }
+    cards = ordered;
     cards.forEach((card, index) => {
       const option = document.createElement("button");
       const selected = candidateKey(card) === activeCandidateKey;
@@ -628,9 +641,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       option.tabIndex = selected ? 0 : -1;
       const title = cardTitle(card, `생성 결과 ${cards.length - index}`);
       // V5(시안 대화창v5 안 A · 태그 10): 그림 생성 탭은 작은 그림 · 이름 · 한 일 · 시각 · ✓(설명은 ai-panel이 준다).
-      const detail = versionDescriber?.(candidateKey(card), card) || null;
+      const detail = details.get(candidateKey(card));
       if (detail) {
-        option.className = "ai-version-row";
+        option.className = "ai-version-row" + (isChild(card) ? " is-child" : "");
         const thumb = document.createElement("img"); thumb.alt = ""; thumb.draggable = false;
         thumb.src = detail.thumb || card.querySelector(".ai-preview-stage > img")?.src || "";
         const text = document.createElement("span");
@@ -639,6 +652,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         if (detail.sub) { const sub = document.createElement("small"); sub.textContent = detail.sub; text.append(sub); }
         option.append(thumb, text);
         if (selected) { const mark = document.createElement("i"); mark.setAttribute("aria-hidden", "true"); mark.textContent = "✓"; option.append(mark); }
+        if (versionAction) {
+          const more = document.createElement("span"); more.className = "ai-version-more"; more.dataset.aiVersionMore = candidateKey(card);
+          more.setAttribute("role", "button"); more.setAttribute("aria-label", `${title} 메뉴`); more.textContent = "⋯"; option.append(more);
+        }
         option.setAttribute("aria-label", [title, detail.sub].filter(Boolean).join(" · "));
         rich = true;
       } else option.textContent = title;
@@ -877,6 +894,25 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     event.preventDefault();
   });
   versionList?.addEventListener("click", (event) => {
+    // 11-26 시안(판 목록 8): ⋯ — 이름 바꾸기 · 복제해서 새 판으로 · 지우기
+    const pick = event.target.closest("[data-ai-version-menu-action]");
+    if (pick) {
+      event.stopPropagation();
+      const id = pick.closest("[data-ai-version-menu]").dataset.aiVersionMenu, action = pick.dataset.aiVersionMenuAction;
+      closeVersionList({ returnFocus: true }); versionAction?.(id, action); return;
+    }
+    const more = event.target.closest("[data-ai-version-more]");
+    if (more) {
+      event.stopPropagation();
+      versionList.querySelector("[data-ai-version-menu]")?.remove();
+      const menu = document.createElement("div"); menu.className = "ai-version-menu"; menu.dataset.aiVersionMenu = more.dataset.aiVersionMore; menu.setAttribute("role", "menu");
+      for (const [action, text] of [["rename", "이름 바꾸기"], ["duplicate", "복제해서 새 판으로"], ["delete", "지우기"]]) {
+        const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "menuitem"); b.dataset.aiVersionMenuAction = action; b.textContent = text; menu.append(b);
+      }
+      more.closest("[data-ai-candidate-option]").after(menu);
+      menu.querySelector("button")?.focus();
+      return;
+    }
     const option = event.target.closest("[data-ai-candidate-option]");
     if (!option) return;
     selectCandidate(option.dataset.aiCandidateOption);
@@ -970,6 +1006,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     attributes: true,
     attributeFilter: ["data-ai-candidate-id", "data-ai-review-state", "hidden"],
   };
+  // 11-25 밤샘 검수: 새 작업 공간은 생성 화면 표시(data-ai-create-ui)가 붙기 전에 빈 결과 안내를 그려 생성 탭에서도 「변환하면…」이 남았다.
+  const modeObserver = new MutationObserver(() => syncWorkbenchStage());
+  modeObserver.observe(panel, { attributes: true, attributeFilter: ['data-ai-create-ui', 'data-ai-conversion-kind'] });
+  lifecycle.signal.addEventListener('abort', () => modeObserver.disconnect(), { once: true });
   if (previews) cardObserver.observe(previews, cardObserverOptions);
   if (references) cardObserver.observe(references, cardObserverOptions);
 
@@ -1008,6 +1048,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     },
     /** V5: 그림 생성 탭 결과 목록의 둘째 줄(한 일 · 시각)과 작은 그림을 주는 함수. null이면 예전 글자 목록. */
     setVersionDescriber(fn) { versionDescriber = typeof fn === "function" ? fn : null; renderVersionList(); },
+    setVersionAction(fn) { versionAction = typeof fn === "function" ? fn : null; },
+    refreshVersions() { renderVersionList(); },
     /** 생성 결과 하나를 보는 결과로 고른다(대화의 결과 카드·되돌리기). */
     select(candidateId) { if (generatedCards().some(card => candidateKey(card) === candidateId)) { selectCandidate(candidateId); syncSources(); } },
     /** 좌우 비교 왼쪽(비교 대상)에 결과 하나를 놓는다. */

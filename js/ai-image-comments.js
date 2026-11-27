@@ -98,7 +98,7 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, selectedTaskBlocked = () => 0, isTextCreation = () => false, changed, viewChanged, areaOnlyForSelected = false }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, selectedTaskBlocked = () => 0, isTextCreation = () => false, changed, viewChanged, controlsChanged, areaOnlyForSelected = false }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
@@ -428,7 +428,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const visibility = q('[data-ai-comment-visibility]');
     if (visibility) {
       visibility.setAttribute('aria-pressed', String(markersVisible));
-      visibility.textContent = markersVisible ? '코멘트 표시' : '코멘트 숨김';
+      // 11-26 생성 화면: 라벨처럼 「● 코멘트」 층 켜기로 보인다(켬/끔은 점 색과 aria-pressed).
+      visibility.textContent = (panel.dataset.aiCreateUi === 'true' || panel.hasAttribute('data-ai-layer-row')) ? '코멘트' : markersVisible ? '코멘트 표시' : '코멘트 숨김';
     }
     panel.dataset.aiCommentsVisible = String(markersVisible);
     const count = q('[data-ai-comments-count]');
@@ -482,6 +483,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     });
     const toolbar = q('.ai-annotation-toolbar');
     toolbar?.toggleAttribute('data-escape-layer', tool !== 'select' || Boolean(selected && markersVisible));
+    // 11-25 밤샘 검수: 위에서 실행 단추 글을 옛 글로 덮었으면, 그 단추를 함께 쓰는 생성 화면이 제 글(「이 그림 고치기」)로 다시 맞춘다.
+    controlsChanged?.();
   }
 
 

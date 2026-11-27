@@ -50,7 +50,7 @@
 
 /* ---------- 생성 탭(data-ai-create-ui) 전용 ---------- */
 #ai-image-panel .ai-composer-frame, #ai-image-panel .ai-create-clip, #ai-image-panel .ai-create-hint, #ai-image-panel .ai-create-more,
-#ai-image-panel .ai-create-add-ref, #ai-image-panel .ai-settings-oneline, #ai-image-panel .ai-settings-change { display: none; }
+#ai-image-panel .ai-create-add-ref { display: none; }
 #ai-image-panel .ai-create-menu[hidden] { display: none !important; }
 
 /* V5 태그 4·5(시안 대화창v5): 대화 칸 기본 598px(결과만 보기 · 예전 460의 30%↑), 레퍼런스가 있으면 424px(326의 30%↑).
@@ -68,17 +68,8 @@ html.ai-chat-resizing, html.ai-chat-resizing * { cursor: col-resize !important; 
 html.ai-chat-resizing iframe { pointer-events: none; }
 @media (max-width: 1000px) { #ai-image-panel .ai-chat-grip { display: none; } }
 
-/* 태그 18: 그림 설정 한 줄 — 「그림 설정 · 배경 제거 끔 · 객체 분리 끔 · 바꾸기 ▾」 */
-#ai-image-panel[data-ai-create-ui="true"] .ai-conversation-caption { gap: 10px; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-settings-oneline { display: inline; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary); }
-#ai-image-panel[data-ai-create-ui="true"] .ai-settings-change {
-  display: inline-flex; align-items: center; margin: 0 0 0 auto; height: 26px; min-height: 0; padding: 0 8px; border: 0; border-radius: 6px;
-  background: transparent; box-shadow: none; color: var(--text-secondary); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer;
-}
-#ai-image-panel[data-ai-create-ui="true"] .ai-settings-change:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
-#ai-image-panel[data-ai-create-ui="true"] .ai-settings-change:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-#ai-image-panel[data-ai-create-ui="true"].ai-panel-heads .ai-conversation-caption > .panel-visibility-toggle { margin-left: 2px; }
-#ai-image-panel[data-ai-create-ui="true"]:not([data-ai-settings-open="true"]) .ai-compact-settings { display: none !important; }
+#ai-image-panel[data-ai-create-ui="true"] .ai-conversation-caption { flex-wrap: wrap; gap: 4px 8px; }
+#ai-image-panel[data-ai-create-ui="true"] .ai-compact-settings { display: none !important; }
 /* GENSPEED 안 C(태그 6): 「글자 바꾸기 빠르게」는 그림 생성(바꾸기 ▾)에서만 */
 #ai-image-panel:not([data-ai-create-ui="true"]) .ai-fast-replace-row { display: none !important; }
 
@@ -211,13 +202,13 @@ html.ai-chat-resizing iframe { pointer-events: none; }
 #ai-image-panel[data-ai-create-ui="true"] .ai-conversation > .ai-side-content,
 #ai-image-panel[data-ai-create-ui="true"] .ai-side-content > .ai-chat-panel { flex: 1 1 0 !important; min-height: 0 !important; }
 #ai-image-panel[data-ai-create-ui="true"] .ai-side-content > .ai-comments-panel { flex: 0 0 auto !important; }
-/* 태그 20: 그리는 동안 출력 줄은 흐리게 남긴다(시안 ②). */
-#ai-image-panel[data-ai-create-ui="true"][data-ai-stage="processing"] .ai-dock .ai-output-actions { display: flex !important; opacity: .45; pointer-events: none; }
+/* 이전 결과가 있는 상태에서 다시 그리는 동안만 출력 줄을 흐리게 표시한다. */
+#ai-image-panel[data-ai-create-ui="true"][data-ai-stage="processing"]:has(.ai-generated-card) .ai-dock .ai-output-actions { display: flex !important; opacity: .45; pointer-events: none; }
 
 /* ---------- V5 태그 7·9·12·14(시안 대화창v5): 「새 대화」 — 머리줄 조용한 단추(안 1) + ▾ 메뉴(안 3) ---------- */
 #ai-image-panel .ai-create-newchat { display: none; }
 #ai-image-panel[data-ai-create-ui="true"] .ai-create-newchat {
-  display: inline-flex; align-items: center; gap: 5px; flex: none; height: 26px; min-height: 0; margin: 0; padding: 0 8px; border: 0; border-radius: 6px;
+  display: inline-flex; align-items: center; gap: 5px; flex: none; height: 26px; min-height: 0; margin: 0 0 0 auto; padding: 0 8px; border: 0; border-radius: 6px;
   background: transparent; box-shadow: none; color: var(--text-secondary); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer;
 }
 #ai-image-panel[data-ai-create-ui="true"] .ai-create-newchat svg { width: 15px; height: 15px; }
@@ -233,26 +224,26 @@ html.ai-chat-resizing iframe { pointer-events: none; }
 
 /* ---------- V5 태그 8·10(시안 대화창v5 안 A): 결과 제목 = 테두리 + ▾ 단추 → 작은 그림 목록 ---------- */
 #ai-image-panel[data-ai-create-ui="true"] .ai-result-pane .ai-pane-metadata .ai-version-picker { flex: 0 0 auto; min-width: 0; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane [data-ai-version-button] {
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) [data-ai-version-button] {
   display: inline-flex; align-items: center; gap: 6px; width: auto; max-width: 100%; min-width: 0; height: 28px; min-height: 0; padding: 0 8px 0 10px;
   border: 1px solid var(--border) !important; border-radius: 6px; background: transparent !important; color: var(--text-primary);
   font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
 }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane [data-ai-version-button]::after {
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) [data-ai-version-button]::after {
   content: ""; flex: none; width: 8px; height: 8px; margin: -4px 0 0 4px; border-right: 1.4px solid var(--text-secondary); border-bottom: 1.4px solid var(--text-secondary); transform: rotate(45deg);
 }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane [data-ai-version-button]:hover:not(:disabled) { border-color: var(--text-secondary) !important; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane [data-ai-version-button]:disabled { border-color: transparent !important; cursor: default; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane [data-ai-version-button]:disabled::after { display: none; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane [data-ai-version-button]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane .ai-version-list {
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) [data-ai-version-button]:hover:not(:disabled) { border-color: var(--text-secondary) !important; }
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) [data-ai-version-button]:disabled { border-color: transparent !important; cursor: default; }
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) [data-ai-version-button]:disabled::after { display: none; }
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) [data-ai-version-button]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) .ai-version-list {
   left: 0; right: auto; top: calc(100% + 4px); width: 330px; min-width: 0; padding: 4px; border-radius: 8px; box-shadow: 0 10px 28px rgba(0, 0, 0, .45);
 }
 #ai-image-panel .ai-version-list .ai-version-row[role="option"], #ai-image-panel .ai-version-list .ai-version-row * { font-family: inherit !important; letter-spacing: normal !important; }
 #ai-image-panel .ai-version-list .ai-version-row[role="option"]:focus { outline: none !important; box-shadow: none !important; }
 #ai-image-panel .ai-version-list .ai-version-row[role="option"]:focus-visible { outline: 1px solid var(--text-secondary) !important; outline-offset: -1px; }
 #ai-image-panel .ai-version-list .ai-version-row[role="option"] { border: 0 !important; box-shadow: none !important; }
-#ai-image-panel[data-ai-create-ui="true"] .ai-result-pane .ai-version-list { font-family: var(--font-sans, "IBM Plex Sans KR", system-ui, sans-serif); }
+#ai-image-panel[data-ai-create-ui="true"] :is(.ai-result-pane,.ai-compare-heading) .ai-version-list { font-family: var(--font-sans, "IBM Plex Sans KR", system-ui, sans-serif); }
 #ai-image-panel .ai-version-list .ai-version-row[role="option"] { display: flex; align-items: center; gap: 12px; min-height: 0; padding: 6px 8px; border-radius: 5px; font-size: 13px; cursor: pointer; }
 #ai-image-panel .ai-version-list .ai-version-row[aria-selected="true"]::after { content: none; }
 #ai-image-panel .ai-version-list .ai-version-row:hover { background: var(--bg-panel-hover); }
@@ -341,3 +332,197 @@ html.ai-chat-resizing iframe { pointer-events: none; }
 @keyframes ai-thinking-dot { 0%, 100% { opacity: .25; } 40% { opacity: 1; background: var(--text-primary); } }
 #ai-image-panel .ai-chat-thinking-time { font-size: 12px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { #ai-image-panel .ai-chat-thinking-dots i { animation: none; opacity: .6; } }
+
+/* 새 그림의 라벨 방식은 대화 머리줄에서 선택한다. */
+#ai-image-panel .ai-create-label-options[hidden] { display: none !important; }
+#ai-image-panel .ai-create-label-options {
+  flex: 0 1 auto; min-width: 0; border: 0; margin: 0; padding: 0;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px 9px;
+}
+#ai-image-panel .ai-create-label-options legend { position: absolute; clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
+#ai-image-panel .ai-create-label-name { color: var(--text-secondary); font-size: 12px; }
+#ai-image-panel .ai-create-label-choice { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px; border: 1px solid var(--border); border-radius: 7px; }
+#ai-image-panel .ai-create-label-choice label { position: relative; display: inline-flex; }
+#ai-image-panel .ai-create-label-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+#ai-image-panel .ai-create-label-choice span { display: block; padding: 3px 8px; border-radius: 5px; color: var(--text-secondary); font-size: 12px; white-space: nowrap; cursor: pointer; }
+#ai-image-panel .ai-create-label-choice input:checked + span { background: var(--control-selected-bg); color: var(--text-primary); font-weight: 600; }
+#ai-image-panel .ai-create-label-choice input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 1px; }
+#ai-image-panel .ai-create-label-choice input:disabled + span { cursor: default; }
+
+#ai-image-panel[data-ai-workflow="image-create"]:not(:has(.ai-generated-card)) .ai-dock :is(.ai-output-actions, .ai-output-more) { display: none !important; }
+/* 11-25 밤샘 검수: 생성 전에는 결과 머리줄의 다듬기 도구(라벨 보기·지우개·라벨 편집)도 숨긴다(인계 명세 「생성 전」). */
+#ai-image-panel[data-ai-workflow="image-create"]:not(:has(.ai-generated-card)) .ai-result-pane .ai-result-tools { display: none !important; }
+
+#ai-image-panel :is(.ai-result-modes,.ai-manual-tools,.ai-create-result-footer)[hidden] { display:none !important; }
+#ai-image-panel .ai-result-modes { display:inline-flex; gap:2px; padding:2px; border:1px solid var(--border); border-radius:7px; background:var(--bg-input); }
+#ai-image-panel .ai-result-modes button, #ai-image-panel .ai-create-result-footer button {
+  padding:4px 9px; border:0; border-radius:5px; font:inherit; font-size:12px; color:var(--text-secondary); background:transparent; cursor:pointer;
+}
+#ai-image-panel .ai-result-modes button:disabled { opacity:.45; cursor:default; }
+#ai-image-panel .ai-result-modes button[aria-pressed="true"] { background:var(--control-selected-bg); color:var(--text-primary); font-weight:600; }
+#ai-image-panel .ai-conversation-caption:has(> .ai-result-modes:not([hidden])) > strong,
+#ai-image-panel[data-ai-result-mode="manual"] .ai-conversation > :is(.ai-side-content,.ai-advanced-settings),
+#ai-image-panel[data-ai-result-mode="manual"] .ai-conversation-caption :is(.ai-create-newchat,.ai-create-label-options),
+#ai-image-panel[data-ai-result-mode="chat"] .ai-label-click-overlay { display:none !important; }
+#ai-image-panel .ai-manual-tools { display:flex; flex-wrap:wrap; align-items:center; gap:6px; padding:9px 12px; border-bottom:1px solid var(--border); }
+#ai-image-panel .ai-manual-tools .ai-local-erase-options { position:static; width:100%; box-shadow:none; }
+#ai-image-panel .ai-manual-tools .ai-output-more { flex-basis:100%; }
+#ai-image-panel .ai-create-result-footer { flex:none; padding:4px 8px; border-top:1px solid var(--border); background:var(--bg-panel); }
+#ai-image-panel .ai-create-result-footer .ai-output-actions { display:flex; justify-content:space-evenly; flex-wrap:wrap; align-items:center; gap:0; margin:0; padding:0; }
+#ai-image-panel .ai-create-result-footer .ai-output-actions > button { flex:1 1 90px; width:auto; min-height:28px; white-space:nowrap; color:var(--text-primary); }
+#ai-image-panel .ai-create-result-footer button:hover:enabled { background:var(--bg-panel-hover); }
+#ai-image-panel .ai-create-result-footer button:disabled { opacity:.45; }
+@media(min-width:1100px) {
+  #ai-image-panel[data-panel-layout][data-ai-create-ui="true"][data-ai-result-mode="manual"]:not([data-right-collapsed="true"]) { --workbench-right-width:330px; } /* 11-27: 변환은 오른쪽 칸 너비를 바꾸지 않는다(위 도구줄이 두 줄로 넘어감) */
+}
+
+#ai-image-panel .ai-create-result-footer .ai-output-actions > button:not([hidden]) + button:not([hidden]) { border-inline-start:1px solid var(--border); border-radius:0; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.ai-chat-resizing) #ai-image-panel[data-ai-result-mode] .ai-workspace {
+    transition: grid-template-columns 200ms ease-out;
+  }
+  #ai-image-panel .ai-result-modes button {
+    transition: background-color 150ms ease-out, color 150ms ease-out;
+  }
+  #ai-image-panel[data-ai-result-mode="manual"] :is(.ai-manual-tools,.ai-label-edit-panel),
+  #ai-image-panel[data-ai-result-mode="chat"] .ai-conversation > .ai-side-content {
+    animation: ai-result-content-enter 150ms ease-out;
+  }
+}
+@keyframes ai-result-content-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+/* 11-25 밤샘 검수: 생성 탭의 직접 편집 도구줄로 옮긴 「결과 다듬기」는 안에 보일 항목이 없으면 숨긴다(펼치면 빈 칸이었다). */
+#ai-image-panel .ai-manual-tools .ai-output-more:not(:has(> :not(summary):not([hidden]))) { display: none !important; }
+
+/* 11-26 시안 S1(승인): 생성 전 머리줄 — 「대화」와 라벨 방식 사이 구분선, 「새 대화」는 접기 단추 바로 옆 */
+/* 11-27 사용자: 라벨 방식은 입력칸 아래 줄(클립 옆)로 — 보이는 동안은 단축키 안내 글 자리를 쓴다(안내는 그리기 단추 설명에 있음). */
+#ai-image-panel[data-ai-create-ui="true"] .ai-chat-composer > .ai-create-label-options { grid-area: 4 / 2 / 5 / 3; z-index: 1; align-self: center; margin: 0 0 10px 4px; flex-wrap: nowrap; gap: 6px; }
+#ai-image-panel[data-ai-create-ui="true"] .ai-chat-composer > .ai-create-label-options .ai-create-label-choice { flex-wrap: nowrap; }
+#ai-image-panel[data-ai-create-ui="true"] .ai-chat-composer:has(> .ai-create-label-options:not([hidden])) > .ai-create-hint { display: none; }
+#ai-image-panel[data-ai-create-ui="true"].ai-panel-heads .ai-conversation-caption > .panel-visibility-toggle { margin-left: 4px; }
+/* 11-26 시안 S2(승인): 결과가 있을 때 「AI와 대화 / 직접 편집」을 오른쪽 끝(접기 단추 옆)에 붙여, 모드를 바꿔도 단추가 제자리 */
+#ai-image-panel .ai-conversation-caption:has(> .ai-result-modes:not([hidden])) > .ai-create-newchat { order: 1; margin-left: 0; }
+#ai-image-panel .ai-conversation-caption > .ai-result-modes { order: 2; margin-left: auto; }
+#ai-image-panel.ai-panel-heads .ai-conversation-caption:has(> .ai-result-modes:not([hidden])) > .panel-visibility-toggle { order: 3; margin-left: 4px; }
+/* 11-26 시안 S3(승인): 결과 아래 내보내기 4개 사이 구분선(테두리 대신 그린 선, 숨은 단추가 끼어도 이어짐) */
+#ai-image-panel .ai-create-result-footer .ai-output-actions > button:not([hidden]) + button:not([hidden]) { border-inline-start: 0; }
+#ai-image-panel .ai-create-result-footer .ai-output-actions > button { position: relative; }
+#ai-image-panel .ai-create-result-footer .ai-output-actions > button:not([hidden]) ~ button:not([hidden])::before { content: ""; position: absolute; left: 0; top: 50%; width: 1px; height: 14px; transform: translateY(-50%); background: var(--border); }
+/* 11-26 시안 S4(승인): 그라파이트 테마에서 AI 창 경계 살리기 — AI 창 안에서만, 작업대 바탕은 그대로 */
+:root[data-theme="dark"]:not([data-palette="classic"]) #ai-image-panel { --border: var(--ds-line-strong); --bg-input: #1a1a1a; }
+:root[data-theme="dark"]:not([data-palette="classic"]) #ai-image-panel :is(.ai-result-modes, .ai-create-label-choice, .ai-composer-frame) { border-color: #4a4a4a !important; }
+/* 11-26 시안 v6 직접 편집 도구 격자(4칸 × 2줄): 선택·텍스트·지시선 라벨·길이 표시 / 지우개·자르기·가로 정렬·세로 정렬 */
+#ai-image-panel .ai-manual-tools .ai-edit-tools { flex-basis:100%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:2px; padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:4px; }
+#ai-image-panel .ai-edit-tools button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; min-height:38px; padding:4px 0; border:1px solid transparent; border-radius:6px; background:transparent; color:var(--text-primary); font:inherit; font-size:11px; cursor:pointer; }
+#ai-image-panel .ai-edit-tools button svg { width:16px; height:16px; }
+#ai-image-panel .ai-edit-tools button:hover { background:var(--bg-panel-hover, rgba(127,127,127,.12)); }
+#ai-image-panel .ai-edit-tools button[aria-pressed="true"] { background:#152137; color:#c9dfff; border-color:#537eae; }
+#ai-image-panel .ai-edit-tools button[aria-disabled="true"] { color:var(--text-secondary); opacity:.7; cursor:default; }
+#ai-image-panel .ai-edit-tools button[aria-disabled="true"]:hover { background:transparent; }
+/* 도구 격자가 맡은 예전 단추(라벨 편집·지우개 탭, 라벨 편집 칸의 라벨 추가·지시선 라벨·정렬)는 직접 편집에서 숨긴다 */
+#ai-image-panel .ai-manual-tools:has(.ai-edit-tools) :is([data-ai-label-edit],[data-ai-local-erase]) { display:none !important; }
+#ai-image-panel[data-ai-result-mode="manual"] .ai-label-edit-panel :is([data-label-add],[data-label-add-leader],.ai-label-edit-align) { display:none !important; }
+/* 11-26 시안 v6 자르기·조각 */
+#ai-image-panel .ai-crop-layer { position:absolute; z-index:6; pointer-events:none; }
+#ai-image-panel .ai-crop-layer img[data-ai-piece] { position:absolute; max-width:none; pointer-events:none; user-select:none; }
+#ai-image-panel .ai-crop-layer.is-movable img[data-ai-piece] { pointer-events:auto; cursor:move; }
+#ai-image-panel .ai-crop-layer .ai-crop-outline { position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; }
+#ai-image-panel .ai-crop-selected { fill:none; stroke:#3879d2; stroke-width:1.4px; stroke-dasharray:5 4; }
+#ai-image-panel .ai-crop-region { fill:rgba(67,132,214,.2); stroke:#3479d0; stroke-width:1.8px; stroke-dasharray:6 4; }
+#ai-image-panel[data-ai-crop-active="true"] .ai-preview-stage > img { cursor:crosshair; }
+#ai-image-panel .ai-manual-tools .ai-crop-options { flex-basis:100%; display:grid; gap:8px; font-size:11px; }
+#ai-image-panel .ai-manual-tools .ai-crop-options[hidden] { display:none; }
+#ai-image-panel .ai-crop-options .ai-erase-modes { margin:0; }
+#ai-image-panel .ai-crop-apply { min-height:28px; border:1px solid var(--border); border-radius:5px; background:var(--bg-input); color:var(--text-primary); font:inherit; cursor:pointer; }
+#ai-image-panel .ai-crop-apply:disabled { color:var(--text-secondary); cursor:default; opacity:.7; }
+#ai-image-panel .ai-crop-options small { color:var(--text-secondary); font-size:10px; }
+
+/* 11-26 시안 v6 「PNG 저장 ▾」 저장 위치 메뉴 */
+#ai-image-panel .ai-create-result-footer .ai-output-actions { position:relative; }
+#ai-image-panel .ai-save-where { flex:none; width:22px; height:28px; display:inline-flex; align-items:center; justify-content:center; color:var(--text-secondary); cursor:pointer; border-radius:5px; margin-left:-22px; position:relative; z-index:1; }
+#ai-image-panel .ai-save-where svg { width:12px; height:12px; }
+#ai-image-panel .ai-save-where:hover, #ai-image-panel .ai-save-where:focus-visible { color:var(--text-primary); background:var(--bg-panel-hover, rgba(127,127,127,.12)); outline:none; }
+#ai-image-panel .ai-save-where-menu { position:absolute; bottom:calc(100% + 6px); left:0; z-index:30; min-width:220px; padding:8px; display:grid; gap:4px; border:1px solid var(--border); border-radius:8px; background:var(--bg-panel); box-shadow:0 8px 24px #0003; font-size:12px; }
+#ai-image-panel .ai-save-where-menu[hidden] { display:none; }
+#ai-image-panel .ai-save-where-menu p { margin:0 0 4px; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#ai-image-panel .ai-save-where-menu p b { color:var(--text-primary); font-weight:600; }
+#ai-image-panel .ai-save-where-menu button { text-align:left; padding:5px 8px; border:0; border-radius:5px; background:transparent; color:var(--text-primary); font:inherit; cursor:pointer; }
+#ai-image-panel .ai-save-where-menu button:hover { background:var(--bg-panel-hover, rgba(127,127,127,.12)); }
+/* 11-26 시안 v6: 직접 편집의 「편집 취소 · 수정 저장」은 오른쪽 칸 맨 아래 오른쪽 */
+#ai-image-panel .ai-manual-actions { margin-top:auto; display:flex; justify-content:flex-end; gap:8px; padding:10px 12px; border-top:1px solid var(--border); }
+#ai-image-panel .ai-manual-actions[hidden] { display:none !important; }
+#ai-image-panel .ai-manual-actions:not(:has(> button:not([hidden]))) { display:none !important; }
+#ai-image-panel .ai-manual-actions > button { min-height:30px; padding:0 14px; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; font-size:12px; cursor:pointer; }
+@property --ai-save-orbit { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+@keyframes ai-save-orbit { to { --ai-save-orbit:360deg; } }
+/* 11-26 시안 7: 수정 저장 — 라이브러리 「다음」 단추와 같은 뱅글뱅글 도는 테두리(저장할 편집이 있을 때만). 편집 취소는 옅게. */
+#ai-image-panel .ai-manual-actions > [data-ai-edit-discard] { border-color:transparent; background:transparent; color:var(--text-secondary); }
+#ai-image-panel .ai-manual-actions > [data-ai-edit-save]:not(:disabled) { position:relative; border-color:var(--accent, #358cff); background:color-mix(in srgb, var(--accent, #358cff) 10%, var(--bg-input, #0c1117)); font-weight:600; }
+#ai-image-panel .ai-manual-actions > [data-ai-edit-save]:not(:disabled)::after { content:''; position:absolute; inset:-1px; padding:1px; border-radius:inherit; pointer-events:none;
+  background:conic-gradient(from var(--ai-save-orbit), transparent 0deg, var(--accent, #358cff) 80deg, #c4e4ff 100deg, transparent 135deg, transparent 360deg);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite:xor; mask-composite:exclude; animation:ai-save-orbit 3s linear infinite; }
+@media (prefers-reduced-motion:reduce) { #ai-image-panel .ai-manual-actions > [data-ai-edit-save]::after { animation:none; } }
+#ai-image-panel[data-ai-edit-draft="true"] .ai-result-modes [data-result-mode="manual"] { position:relative; }
+#ai-image-panel[data-ai-edit-draft="true"] .ai-result-modes [data-result-mode="manual"]::after { content:""; position:absolute; top:4px; right:4px; width:6px; height:6px; border-radius:50%; background:var(--accent, #358cff); }
+
+/* 11-26: 직접 편집에서는 「눌러서 크게 보기」 돋보기 커서를 쓰지 않는다 — 도구에 맞는 커서만 */
+#ai-image-panel[data-ai-result-mode="manual"] .ai-preview-stage > img { cursor:default; }
+#ai-image-panel[data-ai-result-mode="manual"][data-ai-label-editing="true"]:is([data-ai-label-tool="text"],[data-ai-label-tool="leader"],[data-ai-label-tool="dimension"]) .ai-preview-stage > img,
+#ai-image-panel[data-ai-result-mode="manual"][data-ai-crop-active="true"] .ai-preview-stage > img { cursor:crosshair; }
+/* 11-26 시안(생성 화면 정리 5): 결과 한 창 + 도구줄 한 줄 */
+#ai-image-panel[data-ai-create-one-row][data-ai-layout="result"] .ai-compare-controls:not(:has([data-ai-compare][aria-pressed="true"])) { display:none !important; } /* 결과 카드 「비교」로 들어간 비교 중에는 닫을 수 있게 보인다 */
+#ai-image-panel[data-ai-create-one-row] .ai-result-pane > .ai-pane-head { display:none !important; }
+#ai-image-panel[data-ai-create-one-row] .ai-compare-heading > .ai-version-picker { position:relative; flex:none; }
+#ai-image-panel[data-ai-create-one-row] .ai-compare-heading > .ai-version-picker > [data-ai-version-button] { max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) [data-ai-comment-tool="pan"],
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) [data-ai-comment-tool="free"],
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) [data-ai-comment-tool="pan"] + .ai-seg-div { display:none !important; }
+/* 층 켜기: ● 라벨 ● 코멘트 */
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar .ai-label-view { display:inline-flex; align-items:center; margin:0; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-label-toggle] { display:inline-flex; align-items:center; gap:6px; border:0; background:transparent; padding:0 8px; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-label-toggle] :is([data-ai-label-toggle-state],.ai-label-toggle-track) { display:none; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar :is([data-ai-label-toggle],[data-ai-comment-visibility])::before { content:""; width:8px; height:8px; border-radius:50%; background:#5b5f66; flex:none; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-label-toggle][aria-checked="true"]::before { background:var(--accent, #358cff); }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-comment-visibility] { display:inline-flex; align-items:center; gap:6px; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-comment-visibility][aria-pressed="true"]::before { background:#e8590c; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-comment-visibility] svg { display:none; }
+/* 11-26 시안(판 목록 8): 손으로 고친 판은 AI 결과 아래 들여쓰기, ⋯ 메뉴 */
+#ai-image-panel .ai-version-row.is-child { margin-left:22px; width:calc(100% - 22px); border-left:1px solid var(--border); }
+#ai-image-panel .ai-version-row .ai-version-more { margin-left:auto; padding:2px 8px; border-radius:5px; color:var(--text-secondary); font-size:14px; line-height:1; }
+#ai-image-panel .ai-version-row .ai-version-more:hover { background:var(--bg-panel-hover, rgba(127,127,127,.15)); color:var(--text-primary); }
+#ai-image-panel .ai-version-menu { display:grid; gap:2px; margin:2px 0 6px 64px; width:170px; padding:4px; border:1px solid var(--border); border-radius:7px; background:var(--bg-panel); box-shadow:0 8px 22px #0004; }
+#ai-image-panel .ai-version-menu button { text-align:left; padding:5px 8px; border:0; border-radius:5px; background:transparent; color:var(--text-primary); font:inherit; font-size:12px; cursor:pointer; }
+#ai-image-panel .ai-version-menu button:hover { background:var(--bg-panel-hover, rgba(127,127,127,.12)); }
+#ai-image-panel .ai-version-menu [data-ai-version-menu-action="delete"] { color:#e5484d; }
+
+/* 11-27 사용자: 생성 화면은 결과 전에도 한 줄 — 라벨·코멘트 켜기는 늘 자리에 두고, 쓸 수 없으면 흐리게. 코멘트 도구는 「코멘트 점 박스」 하나. */
+#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar .ai-label-view[hidden] { display:inline-flex !important; }
+#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-label-toggle]:disabled { opacity:.45; cursor:default; }
+#ai-image-panel[data-ai-create-one-row] .ai-compare-heading > .ai-create-add-ref:not([hidden]) { display:inline-flex !important; align-items:center; flex:none; }
+#ai-image-panel[data-ai-create-one-row]:not(:has(.ai-generated-card)) .ai-annotation-toolbar :is([data-ai-comment-tool],[data-ai-comment-visibility],.ai-comment-tools-label) { opacity:.45; pointer-events:none; }
+
+
+/* 11-27: 변환도 생성처럼 — 결과 칸 머리의 옛 지우개·라벨 편집 단추는 숨긴다(직접 편집 도구 격자에서 씀) */
+#ai-image-panel[data-ai-layer-row] .ai-result-pane .ai-pane-head :is([data-ai-label-edit],[data-ai-local-erase]) { display:none !important; }
+/* 11-27 사용자: 라벨·코멘트 켜기가 서로 다른 모양이었다 — 같은 규칙으로: 「● 이름」, 같은 글자 크기·굵기, 바탕·테두리·눈 모양 없음,
+   켜짐은 점 색(라벨 파랑·코멘트 주황)과 밝은 글자, 꺼짐은 회색 점과 흐린 글자. 앱의 「고른 단추」 바탕·테두리 규칙보다 앞서게 id를 겹쳐 쓴다. */
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar :is([data-ai-label-toggle],[data-ai-comment-visibility]) {
+  display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 8px; border:0 !important; border-radius:5px; background:transparent !important; box-shadow:none !important; outline:0 !important;
+  font-family:inherit; font-size:12px !important; font-weight:500 !important; letter-spacing:0 !important; color:var(--text-primary) !important;
+}
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar :is([data-ai-label-toggle],[data-ai-comment-visibility]):focus-visible { outline:2px solid var(--accent) !important; outline-offset:-2px; }
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar :is([data-ai-label-toggle][aria-checked="false"],[data-ai-comment-visibility][aria-pressed="false"]) { color:var(--text-secondary) !important; }
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar :is([data-ai-label-toggle],[data-ai-comment-visibility]):hover:not(:disabled) { background:var(--bg-panel-hover) !important; }
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar :is([data-ai-label-toggle],[data-ai-comment-visibility])::before {
+  content:""; width:8px; height:8px; border-radius:50%; flex:none; -webkit-mask:none; mask:none; background:#5b5f66;
+}
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-label-toggle][aria-checked="true"]::before { background:var(--accent, #358cff); }
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-comment-visibility][aria-pressed="true"]::before { background:#e8590c; }
+#ai-image-panel#ai-image-panel#ai-image-panel:is([data-ai-create-one-row],[data-ai-layer-row]) .ai-annotation-toolbar [data-ai-label-toggle] > span { font:inherit !important; color:inherit !important; letter-spacing:inherit !important; }
+
+/* 11-27: 변환 원본 칸 아래 빈 자리 — 수정본 칸 아래 내보내기 줄과 같은 높이라 좌우 비교의 두 그림 높이가 맞는다 */
+#ai-image-panel .ai-result-footer-spacer { flex:none; visibility:hidden; pointer-events:none; }
+#ai-image-panel .ai-result-footer-spacer[hidden] { display:none !important; }
