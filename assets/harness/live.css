@@ -206,3 +206,13 @@ body.tool-on .foot>*:not(.b5){display:none}
 .alog{display:inline-flex;align-items:center;gap:7px;color:var(--tx3);font:inherit;font-size:12.5px;padding:2px 0;margin-bottom:4px;background:none;border:0;cursor:pointer}
 .alog:hover{color:var(--tx2)}
 .alog .dot{width:6px;height:6px;border-radius:50%;background:var(--tx3)}
+
+/* 도구 화면: 하네스 칸에는 사이드바만(첫 화면·대화가 좁게 끼지 않게) */
+body.tool-on .app{grid-template-columns:100% 0!important}
+body.tool-on .app>.main{display:none!important}
+
+/* 접힌 사이드바: 빈 목록 안내는 숨김(세로로 한 글자씩 보이던 것) */
+.side-off .side-empty{display:none}
+
+/* 화면 색 단추: 사이드바 맨 위(접으면 숨김) */
+.side-off #bTheme{display:none}

@@ -24,10 +24,10 @@ export function initHarness({doc=document}={}){
   host.append(frame);doc.body.append(host);
   // 도구를 열면 하네스는 사이드바 폭만 남기고, 도구 화면은 그 오른쪽으로 민다.
   const style=doc.createElement('style');style.id='harness-tool-style';
-  style.textContent=`html.harness-tool #harness-workspace{right:auto!important;width:${SIDE_W}px}
-html.harness-tool body>.app{margin-left:${SIDE_W}px!important;width:calc(100% - ${SIDE_W}px)!important}
-html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{left:${SIDE_W}px!important;margin-left:0!important;width:calc(100% - ${SIDE_W}px)!important}
-#hx-crumb{position:fixed;left:${SIDE_W}px;top:0;width:192px;height:56px;z-index:30005;display:none;align-items:center;gap:6px;padding:0 12px 0 14px;box-sizing:border-box;font:13px/1 var(--ds-font,system-ui);color:var(--ds-ink-2,#aab);border-right:1px solid var(--ds-line,rgba(255,255,255,.08))}
+  style.textContent=`html.harness-tool #harness-workspace{right:auto!important;width:var(--hx-sw,${SIDE_W}px)}
+html.harness-tool body>.app{margin-left:var(--hx-sw,${SIDE_W}px)!important;width:calc(100% - var(--hx-sw,${SIDE_W}px))!important}
+html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{left:var(--hx-sw,${SIDE_W}px)!important;margin-left:0!important;width:calc(100% - var(--hx-sw,${SIDE_W}px))!important}
+#hx-crumb{position:fixed;left:var(--hx-sw,${SIDE_W}px);top:0;width:192px;height:56px;z-index:30005;display:none;align-items:center;gap:6px;padding:0 12px 0 14px;box-sizing:border-box;font:13px/1 var(--ds-font,system-ui);color:var(--ds-ink-2,#aab);border-right:1px solid var(--ds-line,rgba(255,255,255,.08))}
 html.harness-tool #hx-crumb{display:flex}
 #hx-crumb button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;min-width:0;border-radius:6px;padding:4px 6px;margin-left:-6px;color:var(--ds-ink-2,#aab)}
 #hx-crumb button:hover{background:var(--ds-hover,rgba(255,255,255,.06));color:var(--ds-ink,#fff)}
@@ -93,6 +93,7 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     // 설정(⌘,)·키보드 단축키: 본창의 원래 창을 그대로 연다(하네스 위로 뜨게 .modal-overlay를 올려 둠).
     if(m.action==='settings'){doc.getElementById(m.which==='shortcuts'?'open-shortcuts':'open-screen')?.click();return;}
     if(m.action==='crumb'){crumbTitle=String(m.title||'5E').slice(0,80);if(tool)paintCrumb();return;}
+    if(m.action==='side-width'){const w=Math.max(40,Math.min(400,Number(m.width)||SIDE_W));root.style.setProperty('--hx-sw',w+'px');return;}
     if(m.action==='tool'){openTool(m.tool);return;}
     if(m.action==='home'){closeTool();return;}
     if(m.action==='open-project'){win.dispatchEvent(new CustomEvent('5e:project-open',{detail:{name:String(m.name||'시험지.5e'),bytes:new Uint8Array(m.bytes)}}));openTool('exam',{already:true});return;}
