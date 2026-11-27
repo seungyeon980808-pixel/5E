@@ -122,3 +122,22 @@ export function mdLines(text){const out=[];
 const READ_DIGIT='영일이삼사오육칠팔구';
 export function eulReul(word){const m=String(word??'').match(/[가-힣0-9①-⑨](?=[^가-힣0-9①-⑨]*$)/);let c=m?m[0]:'';const circ='①②③④⑤⑥⑦⑧⑨'.indexOf(c);if(circ>=0)c=READ_DIGIT[circ+1];else if(/\d/.test(c))c=READ_DIGIT[+c];
   const code=c.charCodeAt(0)-0xAC00;if(code<0||code>11171)return '을';return code%28?'을':'를';}
+
+// 그림 칸 고르기(도구 draw_figure, 11-28): 문항에 「그래프」 칸과 「그림」 칸이 같이 있을 때 시킨 종류의 빈 칸을 먼저 고른다.
+//  - 칸 이름이 그 종류(graph=그래프·좌표, figure=그림·도식·삽화)인 빈 칸 → 그 칸
+//  - 그 종류의 칸이 있는데 모두 차 있고, 남은 빈 칸은 다른 종류라고 이름이 붙어 있으면 → 넣지 않음(그래프를 「그림」 칸에 넣지 않게)
+//  - 그 밖(이름 없는 칸 등) → 첫 빈 칸
+// 돌려주는 것: {slot} 또는 {slot:null, why}
+const KIND_OF_LABEL=l=>{const s=String(l||'');return /그래프|좌표/.test(s)?'graph':/그림|도식|삽화|사진/.test(s)?'figure':null;};
+export function pickFigureSlot(blocks,kind){const figs=(blocks||[]).filter(b=>b&&b.kind==='figure'),empty=figs.filter(b=>!b.figure?.data);
+  if(!figs.length)return {slot:null,why:'이 문항에는 그림 칸이 없어요'};
+  if(!empty.length)return {slot:null,why:'이미 그림이 있어요'};
+  const same=empty.find(b=>KIND_OF_LABEL(b.label)===kind);if(same)return {slot:same};
+  const sameFilled=figs.some(b=>b.figure?.data&&KIND_OF_LABEL(b.label)===kind),otherOnly=empty.every(b=>{const k=KIND_OF_LABEL(b.label);return k&&k!==kind;});
+  if(sameFilled&&otherOnly)return {slot:null,why:`${kind==='graph'?'그래프':'그림'} 칸은 이미 차 있고, 빈 칸은 「${empty[0].label}」 칸이에요`};
+  return {slot:empty.find(b=>!KIND_OF_LABEL(b.label))||empty[0]};}
+
+// 「풀이 검사는 나중에」「검사는 하지 마」처럼 그 일을 미루거나 하지 말라는 말(11-28). 지금 엔진의 wantsSolve는 「풀이 검사」 낱말만 보아
+// 이런 말에도 참이 되므로, 크레딧을 쓰는 일(풀이 검사)은 이 판정으로 한 번 더 막는다.
+export function deferred(text,word=/풀이\s*검사|검사|풀어|풀이/){const t=norm(text);const m=t.match(word);if(!m)return false;
+  const after=t.slice(m.index+m[0].length,m.index+m[0].length+16);return /^\s*(은|는|도|을|를)?\s*(나중|다음에|이따|아직|말고|하지\s*(마|말)|안\s*해|미뤄|미루|빼|됐어|괜찮아)/.test(after);}

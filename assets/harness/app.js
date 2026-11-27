@@ -14,7 +14,7 @@ import {peekKind} from './model/file.js';
 import {readFolder,searchFolder,folderPrompt,ocrImages} from './folder.js';
 import {createAgentClient,createAgentEngine} from './agent.js';
 import {createTools,newTurnState,undoTurn} from './tools.js';
-import {PERMISSIONS,PERMISSION_LABEL,relTime,mdLines,eulReul} from './guard.js';
+import {PERMISSIONS,PERMISSION_LABEL,relTime,mdLines,eulReul,pickFigureSlot} from './guard.js';
 import {loadCurriculum,findStandards,standardLabel} from './curriculum.js';
 import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,wantsSolve,parseSolve,buildSolvePrompt,verdict} from './ai.js';
 
@@ -115,9 +115,11 @@ function act(text,{onStop,stepMode}={}){if(stepMode)return stepAct({onStop});con
 // 11-27 엔진 화면 시안 v1 ①②⑥: 새 엔진의 진행 — 도구 한 번이 한 줄(지금 하는 줄은 숨 쉬는 점, 끝난 줄은 ✓와 초),
 // 끝에 「멈추기」와 안내 글. 답 글은 받는 대로 흐르고, 일하는 중에 받은 말은 단계 줄 사이에 끼운다.
 // 끝나면 지금 작업 기록(doneLogs → m.logs → logsHtml)으로 넘겨 「N단계 · S초 ›」 한 줄로 접는다.
-const STD_CODE=/\[?(\d{1,2}[가-힣]{1,6}\d{2}-\d{2})\]?/g;
+// 성취기준 코드: 12물리01-02 · 10통과1-03-04(2022 통합과학처럼 과목 이름에 숫자가 붙고 마디가 셋인 것도) — 11-28 고침
+const STD_CODE=/\[?(\d{1,2}[가-힣Ⅰ-Ⅻ]{1,6}\d{0,2}-\d{2}(?:-\d{2})?)\]?/g;
 const stlText=t=>E(t).replace(STD_CODE,'<code>[$1]</code>');
-const secOf=ms=>(Math.max(0,ms)/1000).toFixed(1)+'초';
+// 0.5초도 안 걸린 단계는 초를 쓰지 않는다(「0.0초」가 줄마다 붙으면 읽기만 번거롭다).
+const secOf=ms=>!(ms>=500)?'':(ms/1000).toFixed(1)+'초';
 function stlHtml(st,{now=false}={}){return `<div class="hx-stl${now?' now':''}${st.stop?' stopd':''}"><span class="mk">${now?'<span class="dot"></span>':`<svg class="i xs ok"><use href="#i-${st.stop?'stop':'check'}"/></svg>`}</span><span class="tx">${stlText(st.t)}</span><span class="sec">${st.sec||''}</span></div>`;}
 const lateHtml=t=>`<div class="msg u hx-late"><p>${E(t)}</p><span class="late">일하는 중에 받은 말 · 다음 단계 전에 읽어요</span></div>`;
 const mdHtml=text=>mdLines(text).map(l=>`<p class="tx${l.kind==='p'?'':' md-'+l.kind}">${l.html}</p>`).join('');
@@ -192,7 +194,7 @@ async function examTurn(text){
 }
 // ── 새 엔진(실험, 깃발 5e.harness.engine=agent): AI가 5E 도구를 직접 부른다(계획-엔진전환). 도구는 tools.js, 권한·안전망은 guard.js. ──
 const agentOn=()=>{try{return localStorage.getItem('5e.harness.engine')==='agent';}catch{return false;}};
-const AGENT_TOOLS_VERSION='a4-make';
+const AGENT_TOOLS_VERSION='a5-1128';
 // 권한(11-27): ask = 제안 후 받기(기본), direct = 바로 고침. 대화마다 고르고, 기본값은 앱 설정에.
 const PERM_KEY='5e.harness.permission';
 const permission=()=>{const v=work?.ui?.permission||(()=>{try{return localStorage.getItem(PERM_KEY);}catch{return null;}})();return PERMISSIONS.includes(v)?v:'ask';};
@@ -215,7 +217,7 @@ const AGENT_RULES=`너는 5E(과학 교사용 출제·수업 프로그램) 안�
 3. set_plan: 넷이 다 차면 설계표를 잡는다(행 수 = 문항 수, 배점 합 = 총점, 성취기준은 find_standard로 확인한 코드만). 잡았으면 「설계표를 보시고 초안 써 달라고 하시면 써요」로 마무리한다. 이 차례에 초안을 쓰지 않는다.
 4. 선생님이 「초안 써 줘」라고 하면 write_questions. 바로 돌아오니 「쓰기 시작했어요」만 짧게 말하고 끝낸다. 문항 글을 답에 쓰지 않는다.
 5. 코멘트: 선생님이 「코멘트 다 달았어」면 triage_comments, 문항 하나를 고치라면 change_question.
-6. 판은 선생님이 「판 올려」라고 할 때만 bump_version, 두 모델 풀이는 「풀이 검사」라고 할 때만 run_solve_check. 정답 분포는 시킬 때만 rebalance_answers.
+6. 판은 선생님이 「판 올려」라고 할 때만 bump_version, 두 모델 풀이는 「풀이 검사」라고 할 때만 run_solve_check(판에 안 들어간 고침이 있어도 묻지 말고 바로 부른다 — 도구가 판을 먼저 올린다). 정답 분포는 시킬 때만 rebalance_answers.
 7. 그림은 선생님이 그려 달라고 할 때만 draw_figure(빈 그림 칸에만).
 8. 선생님이 다음에도 지킬 출제 규칙(표기·금지 등)을 말하면 save_rule로 저장할지 묻는다. 저장했다고 말하지 않는다.
 - 도구가 refused·error를 돌려주면 하지 않은 것이다. 그 이유(why)를 그대로 말하고, 했다고 말하지 않는다.`;
@@ -249,14 +251,25 @@ const agentApi={work:()=>work,X,CIRCLED,permission,plainBlocks,cellLabel:(q,key)
   unversioned:()=>{if(pendingCount())return true;const head=work.versions.find(v=>v.label===work.head);if(!head?.snapshot)return work.questions.length>0;
     const old=new Map(head.snapshot.questions.map(q=>[q.id,JSON.stringify(stripMeta(q))]));return work.questions.some(q=>old.get(q.id)!==JSON.stringify(stripMeta(q)));},
   startSolve:v=>{void solveChanged(v).catch(e=>{note('agent-solve-fail',{error:e.message});say('ai',`풀이 검사를 끝내지 못했어요: ${e.message}`,{error:true});});},
-  rebalanceAnswers:()=>rebalanceAnswers(),triageComments:()=>triageComments('')};
-// 빈 그림 칸 하나에 그린다(도구 draw_figure): 제작 명세를 하나 더하고 지금 그림 엔진(drawFigure)으로 그린다. drawFigure는 첫 빈 칸에 넣는다.
+  // 정답 분포·코멘트 읽기는 지금 엔진 함수가 끝에 스스로 대화에 한 마디 띄운다. 새 엔진에서는 그 말을 대화에서 거둬 도구 결과로 넘기고(AI가 전함),
+  // 대장 카드(ledger)·시험지 카드는 AI 답 하나에 붙인다 — 같은 말이 두 번 나오지 않게(11-28).
+  rebalanceAnswers:()=>absorbSay(()=>rebalanceAnswers(),m=>m.ledger||/^지금 정답 분포에서 바꿀 문항이 없어요/.test(m.text)),
+  triageComments:()=>absorbSay(()=>triageComments(''),m=>m.ledger)};
+async function absorbSay(fn,mine){const list=sub?subThread(sub):work.chat,n0=list.length;await fn();
+  const got=list.slice(n0).filter(m=>m.role==='ai'&&!m.agent&&mine(m));for(const m of got)list.splice(list.indexOf(m),1);
+  if(got.length){save();renderThread();}return got.map(({text,ledger,art,counts})=>({text,ledger:!!ledger,art:art||null,counts:counts||null}));}
+// 빈 그림 칸 하나에 그린다(도구 draw_figure). 칸은 시킨 종류에 맞는 빈 칸(pickFigureSlot — 「그래프」 칸과 「그림」 칸이 같이 있어도 섞지 않음).
+// 지금 엔진의 drawFigure는 첫 빈 칸에 넣으므로 쓰지 않고, 같은 그림 엔진(call 'figure')으로 고른 칸에 직접 넣는다.
 async function agentDrawInto(qid,{kind,description}){const q=work.questions.find(x=>x.id===qid);if(!q)return {ok:false,error:'문항이 없어요'};
-  const slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);if(!slot)return {ok:false,error:'빈 그림 칸이 없어요'};
-  q.figureSpecs ||= [];const i=q.figureSpecs.push({kind,description,mustNot:[],slot:slot.label||'그림',by:'agent'})-1;const n0=log.length;
-  const ok=await drawFigure(qid,i,{bg:true});
-  if(!ok){const f=log.slice(n0).reverse().find(x=>x.kind==='figure-fail');return {ok:false,error:f?.error||''};}
-  work.pendingEdits=[...(work.pendingEdits||[]),{qid,key:'figure',label:(kind==='graph'?'그래프':'그림')+' 넣음',at:nowIso()}];save();return {ok:true,slot:slot.label||'그림'};}
+  const pick=pickFigureSlot(q.blocks,kind),slot=pick.slot;if(!slot)return {ok:false,refused:true,error:pick.why};
+  q.figureSpecs ||= [];const spec={kind,description,mustNot:[],slot:slot.label||'그림',by:'agent'};q.figureSpecs.push(spec);drawingQ.add(qid);render();
+  try{const r=await call('figure',{qid,kind,description,mustNot:[]},{group:'figure'});
+    if(slot.figure?.data||!q.blocks.includes(slot))return {ok:false,error:'그리는 동안 그 칸이 바뀌었어요(선생님이 넣었거나 지움)'};
+    slot.figure={name:`${kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;
+    work.pendingEdits=[...(work.pendingEdits||[]),{qid,key:'figure',label:(kind==='graph'?'그래프':'그림')+' 넣음',at:nowIso()}];note('figure',{no:q.number,ms:r.ms,agent:true,engine:r.engine||null});
+    return {ok:true,slot:slot.label||'그림',engine:r.engine||(kind==='graph'?'코드 그래프':null),ms:r.ms||null};}
+  catch(e){note('figure-fail',{no:q.number,error:e.message,agent:true});return {ok:false,error:e.message};}
+  finally{drawingQ.delete(qid);save();render();}}
 const TOOL_LABEL={read_exam:['시험지 읽는 중','시험지 읽음'],read_question:a=>[`${a.no}번 문항 읽는 중`,`${a.no}번 문항 읽음`],read_comments:['코멘트 대장 읽는 중','코멘트 대장 읽음'],find_standard:(a,r)=>[`교육과정 찾는 중 · ${String(a.code||a.query||'').slice(0,16)}`,`교육과정 ${r?.results?.length?'찾음 · '+r.results.slice(0,2).map(x=>x.code).join(' '):'못 찾음'}`],find_material:a=>[`자료 찾는 중 · ${String(a.query||'').slice(0,16)}`,`자료 찾음 · ${String(a.query||'').slice(0,16)}`],
   change_question:(a,r)=>[`${a.no}번 고치는 중`,r?.applied?`${a.no}번 고침`:r?.proposed?`${a.no}번 제안 띄움`:`${a.no}번 고치지 못함`],accept_proposals:['제안 받는 중','제안 받음'],update_comment:['코멘트 대장 고치는 중','코멘트 대장 고침'],ask_teacher:['물을 것 정리 중','선생님께 물음'],
   set_info:(a,r)=>['시험지 정보 정하는 중',r?.set?`시험지 정보 정함 · ${r.set.filter(x=>!x.same).length}칸${r.skipped?.length?` · 그대로 둔 칸 ${r.skipped.length}`:''}`:'시험지 정보 못 정함'],
@@ -280,6 +293,7 @@ function agentEngine(){const id=work.projectId,kind=agentToolKind(),key=id+'|'+k
 // 매 차례 앞에 붙이는 지금 상태(짧게). 자세한 것은 AI가 도구로 읽는다.
 const agentContext=()=>`시험지 「${work.meta.title||'새 시험지'}」 · 문항 ${work.questions.length}개(${X.orderedQuestions(work).map(q=>q.number).join('·')||'없음'}) · 판 ${work.head||'v0.0'} · 판에 안 들어간 고침 ${pendingCount()} · 열린 제안 ${openProposals().length} · 열린 코멘트 ${work.comments.filter(c=>['new','talk','decided'].includes(c.status)).length} · 권한 「${PERMISSION_LABEL[permission()]}」${sub?` · 지금 열린 문항 ${work.questions.find(q=>q.id===sub)?.number}번`:''} · 설계표 ${work.plan.length}행(문항 없는 행 ${work.plan.filter(r=>!r.qid).length})${X.missingBlocking(work).length?` · 비어 있는 막는 칸 ${X.missingBlocking(work).map(k=>META_LABEL_H[k]).join('·')}`:''}${drafting?` · 초안 쓰는 중 ${drafting.done.length}/${drafting.rows.length}`:''}`;
 async function agentSend(text){if(!sub&&workMode()==='img'&&!work.questions.length){await figureChat(text);return;}// 그림만: 지금 길 그대로
+  const headBefore=work.head||null;// 되돌리기 카드의 「판 기록에서 돌아갈 판」(이 차례 전에 있던 판)
   const eng=agentEngine(),turn=newTurnState(text),a=act('생각하는 중…',{onStop:()=>{void eng.interrupt();},stepMode:true});a.sub=sub;agentRun=a;renderComposer();let r=null,err=null;
   const metaBefore=Object.fromEntries(Object.entries(work.meta).map(([k,v])=>[k,JSON.stringify(v?.value??null)]));
   agentLive.onTool=({tool,args})=>a.begin(args,toolLabel(tool,args));agentLive.onToolDone=({tool,args,result,ok,ms,late})=>{if(!late)a.end(args,toolLabel(tool,args,true,result)+(ok||result?.proposed?'':' — 안 됨'),ms);};agentLive.onDelta=(d,all)=>a.delta(all);
@@ -287,18 +301,22 @@ async function agentSend(text){if(!sub&&workMode()==='img'&&!work.questions.leng
   catch(e){err=e;}
   // 진행 줄을 먼저 닫아야 작업 기록이 이 답에 붙는다.
   finally{agentLive.onTool=agentLive.onToolDone=agentLive.onDelta=null;a.done({stopped:r?.status==='interrupted',changed:turn.changes.length>0});if(agentRun===a)agentRun=null;renderComposer();}
-  if(err)throw err;
+  // 도구가 거둔 5E의 말(정답 분포·코멘트 읽기): 답이 제대로 끝나면 그 답에 카드를 붙이고, 아니면 원래 말을 그대로 되살린다.
+  const carry=turn.carry||[],restoreCarry=()=>{for(const c of carry)say('ai',c.text,{...(c.ledger?{ledger:true}:{}),...(c.art?{art:c.art}:{}),...(c.counts?{counts:c.counts}:{}),noStream:true});};
+  if(err){restoreCarry();throw err;}
   note('agent-turn',{status:r.status,tools:r.toolLog.map(t=>t.tool),ms:r.ms,leak:r.leak,applied:turn.applied,proposed:turn.proposed.length,permission:permission()});
   const extra={model:'5E 도구 엔진',ms:r.ms,agent:true,noStream:true};
   if(turn.asks.length)extra.asks=turn.asks;
-  if(turn.changes.length){const id=crypto.randomUUID();agentTurns.set(id,turn);extra.undo={id,cells:turn.changes.flatMap(c=>c.cells.map(x=>`${c.no}번 ${x}`)).slice(0,12)};}
+  if(turn.changes.length){const id=crypto.randomUUID();turn.after=agentPrint();agentTurns.set(id,turn);extra.undo={id,head:headBefore,cells:turn.changes.flatMap(c=>c.cells.map(x=>`${c.no}번 ${x}`)).slice(0,12)};}
   if(turn.proposed.length)extra.proposed={n:turn.proposed.length,locked:turn.proposed.filter(x=>work.proposals.find(p=>p.id===x.proposalId)?.touchesLock).length};// 시안 ④: 「고친 것 없음 · 제안 n개가 시험지에 있어요」
   // 만드는 도구: 알아서 정한 시험지 정보(지금 엔진과 같은 카드) · 판 · 처음 잡은 설계표 카드 · 규칙 저장 물음.
   const decided=Object.entries(work.meta).filter(([k,x])=>META_LABEL_H[k]&&x&&x.by==='ai'&&x.value!=null&&JSON.stringify(x.value)!==metaBefore[k]).map(([k,x])=>({k:META_LABEL_H[k],v:fmtMeta(x.value)}));if(decided.length)extra.decided=decided;
   if(turn.bumped){extra.stats=turn.bumped.stats;extra.art={tab:'sheet',icon:'file',title:`시험지 ${turn.bumped.label}`,sub:`바뀐 문항 ${turn.bumped.nos.length}개 · 판 기록에서 두 판 비교`};}
   if(turn.planFirst&&work.plan.length){const std=[...new Set(work.plan.flatMap(r=>r.standards||[]))].length;extra.art={tab:'plan',icon:'table',title:'설계표',sub:`${work.plan.length}문항 · ${std?`성취기준 ${std}개 · `:''}배점 합 ${work.plan.reduce((n,r)=>n+(Number(r.points)||0),0)}점`};autoTab('plan');}
   const ruleCards=turn.ruleCards.map(({text,id})=>({text,id}));if(ruleCards.length&&!sub)extra.ruleCards=ruleCards;
-  if(r.leak)say('ai',`5E 밖의 동작(${r.leak})이 시작되어 멈췄어요. 다시 말씀해 주세요.`,{error:true});
+  if(r.status!=='completed'||r.leak)restoreCarry();
+  else for(const c of carry){if(c.ledger)extra.ledger=true;if(c.art&&!extra.art)extra.art=c.art;if(c.counts)extra.counts=c.counts;}
+  if(r.leak)say('ai',`5E 밖의 동작(${r.leak})이 시작되어 멈췄어요. 다시 말씀해 주세요.`,{error:true,...(extra.undo?{undo:extra.undo}:{}),...(extra.proposed?{proposed:extra.proposed}:{})});// 멈추기 전에 고친 것이 있으면 되돌리기 카드는 남긴다
   else if(r.status==='interrupted')say('ai',(r.text?r.text+'\n\n':'')+'(멈췄어요)',extra);
   else if(r.status!=='completed')say('ai',`AI가 끝까지 답하지 못했어요${r.error?': '+r.error:''}. 다시 보내 주세요.`,{error:true,...(extra.undo?{undo:extra.undo}:{})});
   else say('ai',r.text||'(답이 비었어요)',extra);
@@ -306,7 +324,11 @@ async function agentSend(text){if(!sub&&workMode()==='img'&&!work.questions.leng
   if(ruleCards.length&&sub){const wasSub=sub;sub=null;say('ai',`${work.questions.find(q=>q.id===wasSub)?.number??''}번 문항 대화에서 나온 규칙이에요.`,{ruleCards,noStream:true});sub=wasSub;}
   save();render();}
 // 이번 차례에 바로 고친 것을 한 묶음으로 되돌린다.
-function undoAgentTurn(id){const turn=agentTurns.get(id);if(!turn||!undoTurn(agentApi,turn))return false;for(const m of work.chat)if(m.undo?.id===id)m.undo={...m.undo,undone:true};save();render();note('agent-undo',{cells:turn.changes.length});toast('이번에 고친 것을 되돌렸어요');return true;}
+// 되돌리기는 이 차례 직전의 문항 사본으로 통째로 돌린다 — 그 뒤에 시험지가 바뀌었으면(다른 차례·직접 고침·받기) 그것까지 지워지므로 하지 않는다.
+const agentPrint=()=>JSON.stringify(work.questions,(k,v)=>typeof v==='string'&&v.length>4000?'#'+v.length+':'+v.slice(-64):v);
+function undoAgentTurn(id){const turn=agentTurns.get(id);if(!turn?.undo)return false;
+  if(turn.after!=null&&agentPrint()!==turn.after){for(const m of [...work.chat,...work.sessions.flatMap(x=>x.thread||[])])if(m.undo?.id===id)m.undo={...m.undo,stale:true};save();render();note('agent-undo-stale',{});toast('그 뒤 시험지가 바뀌어 이 묶음만 따로 되돌릴 수 없어요');return false;}
+  if(!undoTurn(agentApi,turn))return false;for(const m of [...work.chat,...work.sessions.flatMap(x=>x.thread||[])])if(m.undo?.id===id)m.undo={...m.undo,undone:true};save();render();note('agent-undo',{cells:turn.changes.length});toast('이번에 고친 것을 되돌렸어요');return true;}
 async function examSend(text){
   if(agentOn()){await agentSend(text);return;}
   if(workMode()==='img'&&!work.questions.length){await figureChat(text);return;}
@@ -734,7 +756,7 @@ $('#bSend').onclick=send;$('#input').addEventListener('keydown',e=>{if(e.key==='
 $('#bPerm').onclick=e=>{e.stopPropagation();$('#permBox').classList.toggle('open');};
 for(const b of $$('#permBox .hx-pm'))b.onclick=e=>{e.stopPropagation();pickPermission(b.dataset.perm);};
 document.addEventListener('click',e=>{if(!e.target.closest?.('#permBox'))$('#permBox')?.classList.remove('open');});
-document.addEventListener('click',e=>{const u=e.target.closest?.('[data-undo]');if(!u)return;if(!undoAgentTurn(u.dataset.undo))toast('이 묶음은 이제 되돌릴 수 없어요 · 판 기록에서 이전 판으로 돌아갈 수 있어요');});
+document.addEventListener('click',e=>{const u=e.target.closest?.('[data-undo]');if(!u)return;if(!agentTurns.get(u.dataset.undo)?.undo){toast('이 묶음은 이제 되돌릴 수 없어요');render();return;}undoAgentTurn(u.dataset.undo);});
 $('#seg').onclick=e=>{const b=e.target.closest('button[data-tab]');if(!b)return;tab=b.dataset.tab;work.ui={...(work.ui||{}),tab,manual:true};save();render();};
 document.addEventListener('click',async e=>{const t=e.target;if(t.closest?.('.hx-edit,.eq-help,.eq-back'))return;
   const subB=t.closest('[data-sub]');if(subB){sub=subB.dataset.sub;render();$('#input').focus();return;}
@@ -919,9 +941,13 @@ function pickChoice(i,k,j){const list=sub?subThread(sub):work.chat,m=list[i],c=m
 // 시안 ④: 이번 답에서 바로 고친 묶음(되돌리기) · 고친 것 없이 제안만 했을 때의 안내 줄
 // 카드가 나타나는 움직임은 처음 한 번만(대화는 자주 다시 그려져서, 매번 움직이면 깜빡여 보인다)
 const shownCards=new WeakSet();
+// 되돌리기 단추는 이 묶음의 장부(메모리)가 있고 그 뒤 바뀐 것이 없을 때만. 앱을 다시 열면 장부가 없어 단추를 그리지 않는다.
+const undoable=u=>!u.stale&&!!agentTurns.get(u.id)?.undo;
+// 판 기록 안내는 참일 때만: 이 차례 전에 있던 판이 사본째 남아 있으면 그 판으로 돌아갈 수 있다(그 뒤 고친 것도 함께 돌아감).
+const undoHint=u=>{const v=u.head&&work.versions.find(x=>x.label===u.head);return v&&v.snapshot&&!v.missing?`<small class="hx-bh">판 기록에서 ${E(u.head)} 판으로 돌아갈 수 있어요(그 뒤 고친 것도 함께)</small>`:'';};
 function undoHtml(m,i){let h='';const u=m.undo;const nu=shownCards.has(m)?'':' hx-in';if(u||m.proposed)shownCards.add(m);
   if(u){const where=(u.cells||[]).join(' · ');h+=u.undone?`<div class="hx-batch undone${nu}"><span class="bi"><svg class="i s"><use href="#i-undo"/></svg></span><span class="bt"><b>되돌렸어요</b><span>· ${E(where)}${where?eulReul(where)+' 처음대로':''}</span></span></div>`
-    :`<div class="hx-batch${nu}"><span class="bi"><svg class="i s"><use href="#i-bolt"/></svg></span><span class="bt"><b>이번에 고친 것 ${(u.cells||[]).length}칸</b><span>· ${E(where)}</span></span><button class="btn hx-undob" data-undo="${E(u.id)}"><svg class="i s"><use href="#i-undo"/></svg>되돌리기</button></div>`;}
+    :`<div class="hx-batch${nu}${undoable(u)?'':' gone'}"><span class="bi"><svg class="i s"><use href="#i-bolt"/></svg></span><span class="bt"><b>이번에 고친 것 ${(u.cells||[]).length}칸</b><span>· ${E(where)}</span>${undoable(u)?'':undoHint(u)}</span>${undoable(u)?`<button class="btn hx-undob" data-undo="${E(u.id)}"><svg class="i s"><use href="#i-undo"/></svg>되돌리기</button>`:''}</div>`;}
   const pr=m.proposed;if(pr?.n)h+=`<button class="hx-pnote${nu}" data-arttab="sheet"><svg class="i s"><use href="#i-${pr.locked?'lock':'hand'}"/></svg><span>${u?'':'고친 것 없음 · '}${pr.locked?`잠긴 칸 제안 ${pr.n}개가`:`제안 ${pr.n}개가`} 시험지에 있어요</span></button>`;
   return h;}
 function logsHtml(m,i){return (m.logs||[]).map((l,j)=>l.kind==='steps'?`<div class="hx-steps hx-folded"><button class="alog hx-stsum" data-log="${i}-${j}"><svg class="i xs chev"><use href="#i-right"/></svg>${E(l.title)}</button><div class="actlog hx-stfold" data-logp="${i}-${j}" hidden>${(l.steps||[]).map(st=>stlHtml(st)).join('')}</div></div>${(l.late||[]).map(lateHtml).join('')}`:`<button class="alog" data-log="${i}-${j}"><span class="dot"></span>${E(l.title)}${l.steps?.length?'<svg class="i s"><use href="#i-right"/></svg>':''}</button>${l.steps?.length?`<div class="actlog" data-logp="${i}-${j}" hidden>${l.steps.map(x=>`<div>${E(x)}</div>`).join('')}</div>`:''}`).join('');}

@@ -1,7 +1,7 @@
 // 1.8.0 출제 하네스 새 엔진 — AI가 부르는 5E 도구(11-27 계획-엔진전환 3절).
 // 도구는 화면(app.js)이 넘겨 준 api로만 일한다. 규칙 판정은 guard.js(순수 함수)가 하고, 여기서는 그 판정대로 실행한다.
 // 고침의 길은 하나다: 변경 → (계약 미리 적용으로 검사) → 제안 만들기 → 권한·안전망을 지나면 그 제안을 바로 받음. 아니면 제안으로 남김.
-import {teacherIntent,checkDirect,checkAccept,normalizeChange,staleReason,PERMISSION_LABEL,isPlaceholder,teacherPlanText,wantsPlanApply,saidByTeacher} from './guard.js';
+import {teacherIntent,checkDirect,checkAccept,normalizeChange,staleReason,PERMISSION_LABEL,isPlaceholder,teacherPlanText,wantsPlanApply,saidByTeacher,pickFigureSlot,deferred} from './guard.js';
 
 const obj=(properties,required=[])=>({type:'object',properties,required});
 const S={str:d=>({type:'string',description:d}),int:d=>({type:'integer',description:d})};
@@ -10,7 +10,7 @@ const clip=(v,n)=>{const s=String(v??'');return s.length>n?s.slice(0,n)+'…':s;
 // 한 차례 동안의 장부(바로 고친 칸 수, 이번에 만든 제안, 되돌리기용 사본, 선생님께 물을 것).
 // 만드는 도구 장부(11-27 저녁): info 정한 시험지 정보 · planFirst 설계표가 이번에 처음 생김 · planNew 이번에 저장한 설계표 안 · bumped 올린 판 · started 뒤에서 시작한 일 · ruleCards 규칙 저장 물음 카드.
 export function newTurnState(text){return {text:String(text||''),intent:teacherIntent(text),applied:0,created:new Set(),undo:null,changes:[],asks:[],proposed:[],
-  info:[],planFirst:false,planNew:new Set(),bumped:null,started:[],ruleCards:[]};}
+  info:[],planFirst:false,planNew:new Set(),bumped:null,started:[],ruleCards:[],carry:[]};}
 
 export function createTools(api){
   const {X,CIRCLED}=api;const work=()=>api.work();
@@ -152,12 +152,12 @@ export function createTools(api){
         if(!['graph','figure'].includes(kind))return {error:'kind는 graph나 figure예요.'};if(!String(description||'').trim())return {error:'description(그릴 것)이 비었어요.'};
         if(turn.intent.empty||turn.intent.discuss||!/그림|그래프|도식|그려|그리|삽화/.test(turn.text))return {refused:true,why:'선생님이 그림을 그리라고 하지 않았어요'};
         if(api.drawingQ(q.id))return {refused:true,why:`${q.number}번 그림을 이미 그리는 중이에요`};
-        const slots=q.blocks.filter(b=>b.kind==='figure');
-        if(!slots.length)return {refused:true,why:'이 문항에는 그림 칸이 없어요',note:'그림 칸은 선생님이 문항에 빈 그림 칸을 만든 뒤 다시 시켜야 해요'};
-        if(slots.every(b=>b.figure?.data))return {refused:true,why:'이미 그림이 있어요',note:'그림 바꾸기는 선생님이 그림을 두 번 눌러 image에서 하거나, 빈 칸을 만든 뒤 다시 시켜야 해요'};
+        // 칸 고르기는 guard.pickFigureSlot(시킨 종류의 빈 칸 먼저, 다른 종류 칸에는 넣지 않음)
+        const pick=pickFigureSlot(q.blocks,kind);
+        if(!pick.slot){const none=!q.blocks.some(b=>b.kind==='figure');return {refused:true,why:pick.why,note:none?'그림 칸은 선생님이 문항에 빈 그림 칸을 만든 뒤 다시 시켜야 해요':'이미 있는 그림은 바꾸지 않아요. 그림 바꾸기는 선생님이 그림을 두 번 눌러 image에서 하거나, 빈 칸을 만든 뒤 다시 시켜야 해요. 그렇게 말하세요.'};}
         const r=await api.drawInto(q.id,{kind,description:clip(description,2000)});
-        if(!r.ok)return {drawn:false,no:q.number,error:'그리지 못했어요'+(r.error?': '+r.error:''),note:'문항의 그림 칸은 그대로예요. 설명을 바꿔 다시 시키거나 image에서 직접 넣을 수 있다고 알리세요.'};
-        return {drawn:true,no:q.number,slot:r.slot,note:`${q.number}번 빈 「${r.slot}」 칸에 넣었어요. 판에는 아직 안 넣었어요.`};}},
+        if(!r.ok)return r.refused?{refused:true,why:r.error}:{drawn:false,no:q.number,error:'그리지 못했어요'+(r.error?': '+r.error:''),note:'문항의 그림 칸은 그대로예요. 설명을 바꿔 다시 시키거나 image에서 직접 넣을 수 있다고 알리세요.'};
+        return {drawn:true,no:q.number,slot:r.slot,engine:r.engine||null,note:`${q.number}번 빈 「${r.slot}」 칸에 넣었어요${r.engine?`(그린 엔진: ${r.engine})`:''}. 판에는 아직 안 넣었어요. 어느 엔진으로 그렸는지 한마디 알리세요.`};}},
     bump_version:{description:'판을 올린다(지금까지 고친 것을 한 묶음으로 새 판 v0.x에 넣음). 선생님이 「판 올려」라고 했을 때만 된다. 두 모델 풀이는 따로(run_solve_check).',inputSchema:obj({why:S.str('이 판에 무엇이 들어가는지 한 줄')}),
       run:({why},{turn})=>{if(!api.wantsBump(turn.text))return {refused:true,why:'선생님이 판을 올리라고 하지 않았어요'};
         if(api.drafting())return {refused:true,why:'초안을 쓰는 중이에요',note:'다 쓰면 5E가 v0.1로 올린다고 말하세요.'};
@@ -165,8 +165,8 @@ export function createTools(api){
         const list=w.pendingEdits||[],nos=[...new Set(list.map(x=>w.questions.find(q=>q.id===x.qid)?.number).filter(Boolean))];
         const v=api.bumpVersion(clip(why||'판 올리기',80));if(!v)return {bumped:false,version:w.head||'v0.0',note:'판을 올리지 못했어요.'};turn.bumped={label:v.label,stats:v.stats,nos};
         return {bumped:true,version:v.label,changedQuestions:nos,stats:{answers:(v.stats?.answers||[]).map(a=>a?CIRCLED[a-1]:'·').join(' '),pointsTotal:v.stats?.pointsTotal??null},note:`${v.label}로 올렸어요. 두 모델 풀이는 하지 않았어요(선생님이 「풀이 검사」라고 하면 run_solve_check).`};}},
-    run_solve_check:{description:'두 모델 풀이 검사를 뒤에서 시작한다(정답·해설을 가린 문항을 서로 다른 두 모델이 따로 풂, 크레딧을 씀). 선생님이 「풀이 검사」「두 모델로 풀어 봐」라고 했을 때만 된다. 판에 안 들어간 고침이 있으면 먼저 판을 올린다. 바로 돌아오고, 끝나면 5E가 결과를 알린다.',inputSchema:obj({}),
-      run:(_,{turn})=>{if(!api.wantsSolve(turn.text)||turn.intent.discuss)return {refused:true,why:'선생님이 풀이 검사를 하라고 하지 않았어요'};
+    run_solve_check:{description:'두 모델 풀이 검사를 뒤에서 시작한다(정답·해설을 가린 문항을 서로 다른 두 모델이 따로 풂, 크레딧을 씀). 선생님이 「풀이 검사」「두 모델로 풀어 봐」라고 했을 때만 된다. 판에 안 들어간 고침이 있으면 이 도구가 알아서 먼저 판을 올리고 푼다 — 판을 올려도 되는지 선생님께 묻지 않는다(「풀이 검사 해 줘」가 곧 그 뜻). 바로 돌아오고, 끝나면 5E가 결과를 알린다.',inputSchema:obj({}),
+      run:(_,{turn})=>{if(!api.wantsSolve(turn.text)||turn.intent.discuss||deferred(turn.text))return {refused:true,why:deferred(turn.text)?'선생님이 풀이 검사를 미루라고 했어요':'선생님이 풀이 검사를 하라고 하지 않았어요'};
         const w=work();if(!w.questions.length)return {refused:true,why:'아직 문항이 없어요'};if(api.drafting())return {refused:true,why:'초안을 쓰는 중이에요',note:'다 쓰면 5E가 판을 올리고 풀이 검사를 해요.'};
         let v=null,bumped=false;if(api.unversioned()){v=api.bumpVersion('풀이 검사 전 판 올리기');bumped=!!v;if(v)turn.bumped={label:v.label,stats:v.stats,nos:[]};}
         if(!v){const cur=w.versions.find(x=>x.label===w.head);v={label:w.head||'v0.0',changed:cur?.changed?.length?cur.changed.slice():w.items.slice()};}
@@ -176,14 +176,19 @@ export function createTools(api){
     rebalance_answers:{description:'정답 번호 분포(①~⑤ 개수·같은 번호 연속)를 고르게 맞추는 「안」을 만든다. 문항은 바꾸지 않고 제안으로만 붙는다(선생님이 「정답 분포 안 그대로 반영해」라고 하면 반영). 선생님이 정답 분포를 맞추라고 했을 때만.',inputSchema:obj({}),
       run:async(_,{turn})=>{if(turn.intent.empty||turn.intent.discuss||!/정답|분포/.test(turn.text))return {refused:true,why:'선생님이 정답 분포를 맞추라고 하지 않았어요'};
         const w=work();if(!w.questions.length)return {refused:true,why:'아직 문항이 없어요'};if(api.drafting())return {refused:true,why:'초안을 쓰는 중이에요'};
-        const before=new Set((w.proposals||[]).map(p=>p.id));await api.rebalanceAnswers();
+        const before=new Set((w.proposals||[]).map(p=>p.id));const said=await api.rebalanceAnswers()||[];turn.carry.push(...said);
         const made=(w.proposals||[]).filter(p=>!before.has(p.id));for(const p of made)turn.created.add(p.id);
-        return {proposals:made.map(p=>({proposalId:p.id,no:w.questions.find(q=>q.id===p.qid)?.number,summary:clip(p.summary,100)})),applied:false,note:made.length?'5E가 이미 화면에 안을 알렸어요. 아무것도 바꾸지 않았다는 것만 한두 문장으로 말하세요.':'바꿀 문항이 없거나 안을 만들지 못했어요(5E가 화면에 알렸어요).'};}},
+        // 5E의 말은 화면에 따로 띄우지 않는다(같은 말 두 번 방지) — 그 내용을 AI가 한 번만 전한다.
+        return {proposals:made.map(p=>({proposalId:p.id,no:w.questions.find(q=>q.id===p.qid)?.number,summary:clip(p.summary,100)})),applied:false,result:said.map(x=>x.text).join('\n')||null,
+          note:made.length?`문항은 바꾸지 않았어요. 실제로 시험지에 붙은 안은 proposals의 ${made.length}개(${made.map(p=>w.questions.find(q=>q.id===p.qid)?.number+'번').join('·')})뿐이에요 — result(5E 안내 글)는 안을 못 만든 문항까지 셀 수 있으니 개수·번호는 proposals를 따르세요. 그 안(어느 문항 정답을 몇 번으로)과 「정답 분포 안 그대로 반영해」라고 하면 반영된다는 것을 짧게 한 번 전하세요. 화면에는 5E의 말이 따로 뜨지 않아요.`:'바꿀 문항이 없거나 안을 만들지 못했어요. result를 그대로 짧게 전하세요.'};}},
     triage_comments:{description:'선생님이 시험지에 단 새 코멘트(new)를 문항마다 읽고 「지금 → 바꿀 안」을 제안으로 붙인다. 문항은 바꾸지 않는다. 선생님이 「코멘트 다 달았어」「코멘트 봐 줘」라고 할 때 부른다.',inputSchema:obj({}),
       run:async(_,{turn})=>{if(turn.intent.empty||turn.intent.discuss)return {refused:true,why:turn.intent.discuss?'고치지 말고 의논하자는 말이라 안을 만들지 않았어요':'선생님 말이 없는 차례예요'};
         const w=work(),fresh=w.comments.filter(c=>c.status==='new');if(!fresh.length)return {note:'새 코멘트가 없어요'};
-        const before=new Set((w.proposals||[]).map(p=>p.id));await api.triageComments();const made=(w.proposals||[]).filter(p=>!before.has(p.id));for(const p of made)turn.created.add(p.id);
-        return {comments:fresh.length,questions:new Set(fresh.map(c=>c.qid)).size,proposals:made.length,applied:false,counts:X.commentCounts(w),note:'5E가 이미 화면에 결과를 알렸어요. 아무것도 고치지 않았다는 것과 받기·「반영해」로 반영된다는 것만 짧게 말하세요.'};}},
+        const before=new Set((w.proposals||[]).map(p=>p.id));const said=await api.triageComments()||[];turn.carry.push(...said);const made=(w.proposals||[]).filter(p=>!before.has(p.id));for(const p of made)turn.created.add(p.id);
+        // 코멘트마다의 답은 코멘트 대장(talk)에 들어가 있다 — AI가 문항별 요지를 전할 수 있게 같이 돌려준다.
+        const answers=fresh.map(c=>{const x=w.comments.find(y=>y.id===c.id)||c;return {no:w.questions.find(q=>q.id===c.qid)?.number,comment:clip(c.text,120),answer:clip(x.answer,300),proposal:!!(x.proposals||[]).length};});
+        return {comments:fresh.length,questions:new Set(fresh.map(c=>c.qid)).size,proposals:made.length,applied:false,counts:X.commentCounts(w),answers,
+          note:'아무것도 고치지 않았어요. 코멘트마다 요지와 답(answers)을 짧게 전하고, 안은 시험지 위 제안의 받기나 「반영해」로 반영된다고 한 번만 말하세요. 화면에는 5E의 따로 안내가 뜨지 않아요.'};}},
     save_rule:{description:'선생님이 이번 말에서 밝힌 출제 규칙(표현·표기·금지·자료 다루는 법처럼 다음 문항에도 쓸 것)을 「규칙으로 저장할까요?」 카드로 띄운다. 저장은 선생님이 카드를 눌러야 된다. 문항 수·배점 같은 시험 조건은 규칙이 아니라 set_info.',
       inputSchema:obj({text:S.str('규칙 한 문장'),layer:{type:'string',enum:['global','subject','exam'],description:'추천 층: global 모든 시험지 · subject 이 과목 · exam 이 시험지'}},['text']),
       run:({text,layer},{turn})=>{const t=clip(String(text||'').replace(/\s+/g,' ').trim(),300);if(!t)return {error:'규칙 글이 비었어요.'};if(turn.intent.empty)return {refused:true,why:'선생님 말이 없는 차례예요'};

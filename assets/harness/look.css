@@ -237,3 +237,11 @@ img.aichg+.aitag,table.aichg+.aitag{display:block;width:max-content;margin:2px 0
 :root[data-theme] .sugg.hx-sg .btn.pri{background:#15171c!important;color:#fff!important;box-shadow:none!important}
 :root[data-theme] .sugg.hx-sg .btn.pri:hover{opacity:.88;filter:none}
 .hx-batch.hx-in,.hx-pnote.hx-in,.aitag.hx-in{animation:hxinl .25s ease-out}
+/* 11-28 · 되돌리기 장부가 없을 때(앱을 다시 엶·그 뒤 바뀜): 단추 없이, 참일 때만 판 기록 안내 */
+.hx-batch.gone .bi{background:var(--ds-hover);color:var(--ds-ink-3)}
+.hx-batch .hx-bh{display:block;font-size:11.5px;color:var(--ds-ink-3);margin-top:1px}
+/* 11-28 · 권한 고르기가 보일 때 입력칸 아래 줄이 넘치지 않게: 좁으면 덜 중요한 것부터 숨김(안내 글 → 단추 글자). 권한 고르기·보내기는 늘 보임 */
+.composer .box:has(#permBox:not([hidden])){container:hxcomp/inline-size}
+@container hxcomp (max-width:484px){.composer .tools .meta{display:none}}
+@container hxcomp (max-width:414px){.composer .tools #bFolder{font-size:0;gap:0;padding:0 8px}}
+@container hxcomp (max-width:358px){.composer .tools .pill{font-size:0;gap:0;padding:0 8px}}

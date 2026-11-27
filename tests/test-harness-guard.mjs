@@ -120,3 +120,28 @@ test('되돌린 칸 말끝 조사(을/를)', () => {
   assert.equal(eulReul('3번 정답'),'을');assert.equal(eulReul('2번 선지 ②'),'를');assert.equal(eulReul('선지 ①'),'을');
   assert.equal(eulReul('3번 발문'),'을');assert.equal(eulReul('3번 자료 (가)'),'를');assert.equal(eulReul(''),'을');assert.equal(eulReul('4번 배점 4'),'를');
 });
+
+// 11-28: 그래프 칸과 그림 칸이 같이 있을 때 시킨 종류의 빈 칸을 고른다.
+import {pickFigureSlot} from '../assets/harness/guard.js';
+test('그림 칸 고르기: 같은 종류의 빈 칸 먼저', ()=>{
+  const g={kind:'figure',label:'그래프',figure:null},p={kind:'figure',label:'그림',figure:null};
+  assert.equal(pickFigureSlot([p,g],'graph').slot,g);
+  assert.equal(pickFigureSlot([p,g],'figure').slot,p);
+});
+test('그림 칸 고르기: 그 종류 칸이 차 있으면 다른 종류 칸에 넣지 않음', ()=>{
+  const g={kind:'figure',label:'그래프',figure:{data:'data:x'}},p={kind:'figure',label:'그림',figure:null};
+  const r=pickFigureSlot([g,p],'graph');assert.equal(r.slot,null);assert.match(r.why,/그래프 칸은 이미/);
+  assert.equal(pickFigureSlot([g,p],'figure').slot,p);
+});
+test('그림 칸 고르기: 이름 없는 칸·한 칸뿐·없음·다 참', ()=>{
+  const a={kind:'figure',label:'',figure:null},p={kind:'figure',label:'그림',figure:null};
+  assert.equal(pickFigureSlot([p,a],'graph').slot,a);
+  assert.equal(pickFigureSlot([p],'graph').slot,p);// 그림 칸 하나뿐이면 그래프도 거기에
+  assert.equal(pickFigureSlot([{kind:'text',text:'x'}],'graph').slot,null);
+  assert.match(pickFigureSlot([{kind:'figure',label:'그림',figure:{data:'d'}}],'graph').why,/이미 그림/);
+});
+import {deferred} from '../assets/harness/guard.js';
+test('미루는 말: 풀이 검사는 나중에 → 참, 풀이 검사 해 줘 → 거짓', ()=>{
+  for(const t of ['풀이 검사는 나중에 할게','검사는 하지 마','풀이 검사 아직 말고 1번만 봐 줘','풀이 검사는 됐어'])assert.equal(deferred(t),true,t);
+  for(const t of ['풀이 검사 해 줘','두 모델로 풀어 봐','판 올리고 풀이 검사까지','1번 그래프 알려 줘'])assert.equal(deferred(t),false,t);
+});
