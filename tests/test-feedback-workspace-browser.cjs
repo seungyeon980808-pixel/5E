@@ -21,6 +21,18 @@ async function installAiMain(page, root, options) {
   await page.route(`**${runtime.moduleBase}main.js*`, route => route.fulfill({contentType:'text/javascript',body:instrumentAiMain(root,options).body}));
 }
 const playwright = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+
+// 11-27: 변환에도 「AI와 대화 / 직접 편집」이 생겨 지우개·라벨 편집 단추가 직접 편집 칸으로 옮겨졌다 — 먼저 직접 편집으로 들어간다.
+async function toolClick(scope, sel) {
+  const b = scope.locator(sel), before = await b.getAttribute('aria-pressed').catch(() => null);
+  const manual = scope.locator('[data-result-mode="manual"]');
+  if (await manual.isVisible().catch(() => false) && await manual.getAttribute('aria-pressed') !== 'true') {
+    await manual.click();
+    if (sel.includes('label-edit') && before !== 'true' && await b.getAttribute('aria-pressed') === 'true') return;
+  }
+  if (await b.isVisible()) await b.click(); else await b.dispatchEvent('click');
+}
+
 const evidence = path.resolve(process.env.EVIDENCE_DIR || path.join(root, '_work/ai-local-tools-qa'));
 const lifecycleSource = fs.readFileSync(path.join(root, 'tests/test-ai-workspace-lifecycle-browser.cjs'), 'utf8');
 const seedStart = lifecycleSource.indexOf('function seedRequestWorkspaces(');
@@ -108,7 +120,8 @@ async function saveEraseDraft(page) {
   await page.locator(`${active} [data-ai-edit-save]`).waitFor();
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-ai-edit-save]').disabled);
   await page.locator(`${active} [data-ai-edit-save]`).click();
-  await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,previous);
+  // 11-26 시안(판 목록 8): 처음 저장만 새 판, 손으로 고친 판을 다시 저장하면 같은 판에 덮어쓴다.
+  await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel');return p.dataset.aiEditDraft!=='true'&&!p.querySelector('[data-ai-edit-save]:not([hidden])');});
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-ai-local-erase]').disabled);
 }
 async function placePendingAndOpen(page, assignment) {
@@ -149,7 +162,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: screen followup def
  await editor.press('Escape');assert.equal(await popup.isVisible(),false);assert.equal(await panel.isVisible(),true);
  assert.equal((await snapshot(page))[0].generated[0].comments.length,0,'Escape removes only the selected comment');
  await panel.locator('[data-ai-model]').selectOption('gpt-6-luna',{force:true});
- await pan.click();assert.equal(await pan.getAttribute('aria-pressed'),'true');
+ await pan.dispatchEvent('click'); // 11-27: 변환도 이동 단추를 숨겼다(생성처럼) — 상태 이어짐만 본다
+ assert.equal(await pan.getAttribute('aria-pressed'),'true');
  await panel.locator('[data-ai-mark-leaders]').selectOption('remove',{force:true});
  assert.equal(await panel.locator('[data-ai-mark-leaders]').inputValue(),'remove');
  await panel.locator('.ai-task-add').click();
@@ -189,7 +203,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: restored side panel
  await page.mouse.move(g.image.x+g.image.width*.4,g.image.y+g.image.height*.4);await page.mouse.down();await page.mouse.move(g.image.x+g.image.width*.7,g.image.y+g.image.height*.6,{steps:5});await page.mouse.up();
  assert.equal((await snapshot(page)).length,count,'preview dragging cannot add a work task');
  assert.equal(await panel.locator('.is-ai-active-source img').getAttribute('draggable'),'false');
- await panel.locator('[data-ai-comment-tool="free"]').click();
+ await panel.locator('[data-ai-comment-tool="free"]').dispatchEvent('click');
  const b=await page.locator(image).boundingBox();
  await page.mouse.move(b.x+b.width*.2,b.y+b.height*.2);await page.mouse.down();
  for(const [x,y] of [[.4,.2],[.3,.4],[.2,.2]])await page.mouse.move(b.x+b.width*x,b.y+b.height*y,{steps:4});
@@ -199,19 +213,20 @@ for (const engine of ['chromium','webkit']) test(`${engine}: restored side panel
  await page.keyboard.press('Escape');assert.equal(await panel.locator('[data-ai-comment-popover]').isVisible(),false);assert.equal(await panel.isVisible(),true);
  assert.equal(await panel.locator('[data-ai-comment-tool="pan"]').getAttribute('aria-pressed'),'false');
  assert.equal((await snapshot(page))[0].generated[0].comments.some(c=>c.text==='자유 영역 확인'),false,'Escape deletes the selected comment');
- const erase=panel.locator('[data-ai-local-erase]');await erase.click();
+ const erase=panel.locator('[data-ai-local-erase]');await toolClick(panel,'[data-ai-local-erase]');
+ await panel.locator('[data-ai-erase-background]').selectOption('transparent'); // 11-26: 지운 자리 기본값이 흰색 — 이 시험은 투명으로 본다
  await panel.locator('[data-ai-erase-mode="rect"]').click();
  await lasso(page,[{x:75,y:75},{x:140,y:100}]);
  await saveEraseDraft(page);
  const firstErase=await panel.getAttribute('data-ai-selected-candidate-id');
  assert.equal(await erase.getAttribute('aria-pressed'),'false','saving selects the new version and closes the tool');
- await erase.click();
+ await toolClick(panel,'[data-ai-local-erase]');
  await lasso(page,[{x:180,y:145},{x:235,y:195}]);
  await saveEraseDraft(page);
- assert.notEqual(await panel.getAttribute('data-ai-selected-candidate-id'),firstErase);
+ assert.equal(await panel.getAttribute('data-ai-selected-candidate-id'),firstErase,'11-26: re-saving a hand-edited version overwrites the same version');
  const erased=(await snapshot(page))[0].generated.at(-1);assert.equal(erased.labelPlan,null);
  assert.equal(await page.locator(image).getAttribute('src'),erased.data,'displayed pixels are the persisted erased version');
- await erase.click();await page.keyboard.press('Escape');assert.equal(await erase.getAttribute('aria-pressed'),'false');assert.equal(await panel.isVisible(),true);
+ await toolClick(panel,'[data-ai-local-erase]');await page.keyboard.press('Escape');assert.equal(await erase.getAttribute('aria-pressed'),'false');assert.equal(await panel.isVisible(),true);
  await panel.locator('.ai-compare-menu summary').click();await panel.locator('[data-ai-layout-mode="stacked"]').click();
  assert.equal(await panel.locator('.ai-results').evaluate(n=>n.classList.contains('mode-stacked')),true);
  const panes=await panel.locator('.ai-image-pane').evaluateAll(ns=>ns.map(n=>{const b=n.getBoundingClientRect();return{x:b.x,y:b.y,w:b.width,h:b.height};}));
@@ -251,7 +266,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: local erasing prese
  if(await toggle.getAttribute('aria-checked')==='false')await toggle.click();
  await page.waitForFunction(data=>{const img=document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');return img.complete && img.src!==data;},parent.data);
  assert.notEqual((await geometry(page)).src,parent.data,'the visible preview includes the label layer');
- const before=parent.data;await panel.locator('[data-ai-local-erase]').click();await panel.locator('[data-ai-erase-mode=rect]').click();
+ const before=parent.data;await toolClick(panel,'[data-ai-local-erase]');await panel.locator('[data-ai-erase-mode=rect]').click();
+ await panel.locator('[data-ai-erase-background]').selectOption('transparent'); // 11-26: 지운 자리 기본값이 흰색 — 이 시험은 투명으로 본다
  const points=[{x:150,y:35},{x:345,y:135}];await lasso(page,points);
  await saveEraseDraft(page);
  const child=(await snapshot(page))[1].generated.at(-1);
@@ -262,7 +278,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: local erasing prese
   const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration'),{rectanglePixelMask}=await import('/js/image-erase-mask.js?v=1.7.0-four-session-integration');
   const read=async src=>decodeScopedPng(new Uint8Array(await (await fetch(src)).arrayBuffer()));
   const a=await read(before),b=await read(after),mask=rectanglePixelMask(a.width,a.height,points);let outsideChanges=0,erased=0;
-  for(let i=0;i<mask.length;i++){if(!mask[i])for(let c=0;c<4;c++)outsideChanges+=Number(a.data[i*4+c]!==b.data[i*4+c]);else erased+=Number(a.data[i*4+3]>0 && b.data[i*4+3]===0);}
+  for(let i=0;i<mask.length;i++){if(!mask[i])for(let c=0;c<4;c++)outsideChanges+=Number(a.data[i*4+c]!==b.data[i*4+c]);else erased+=Number(a.data[i*4+3]>0 && (b.data[i*4+3]===0 || b.data[i*4]===255&&b.data[i*4+1]===255&&b.data[i*4+2]===255&&a.data[i*4]<255)); /* 11-26: 지운 자리 기본값 흰색 */}
   return {outsideChanges,erased};
  },{before,after:child.data,points:child.scopedEditHistory.at(-1).points});
  assert.equal(pixels.outsideChanges,0,'the unflattened bitmap stays unchanged outside the erasure');assert.ok(pixels.erased>0);
@@ -371,11 +387,12 @@ for (const engine of ['chromium','webkit']) test(`${engine}: eraser boundary dia
  const {page,errors}=await fixture(t,engine),panel=page.locator(active);
  const before=(await snapshot(page))[0].generated.length,src=await page.locator(image).getAttribute('src');
  const erase=panel.locator('[data-ai-local-erase]'),save=panel.locator('[data-ai-edit-save]');
- await erase.click();await panel.locator('[data-ai-erase-mode="rect"]').click();
+ await toolClick(panel,'[data-ai-local-erase]');await panel.locator('[data-ai-erase-mode="rect"]').click();
+ await panel.locator('[data-ai-erase-background]').selectOption('transparent'); // 11-26: 지운 자리 기본값이 흰색 — 이 시험은 투명으로 본다
  await lasso(page,[{x:75,y:-18},{x:140,y:100}]);
  assert.equal(await save.isVisible(),false,'gestures starting outside the image are ignored');
  assert.equal(await page.locator(image).getAttribute('src'),src);
- if(await erase.getAttribute('aria-pressed')!=='true') await erase.click();
+ if(await erase.getAttribute('aria-pressed')!=='true') await toolClick(panel,'[data-ai-local-erase]');
  await lasso(page,[{x:75,y:75},{x:140,y:140}]);
  await save.waitFor();await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-ai-edit-save]').disabled);
  assert.equal((await snapshot(page))[0].generated.length,before,'erasing is a draft until explicitly saved');

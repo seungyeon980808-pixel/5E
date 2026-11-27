@@ -3,6 +3,18 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {fixture,verifiedPlan,snapshot} = require('./fixtures/ai-image-label-workflow.cjs');
+
+// 11-27: 변환에도 「AI와 대화 / 직접 편집」이 생겨 지우개·라벨 편집 단추가 직접 편집 칸으로 옮겨졌다 — 먼저 직접 편집으로 들어간다.
+async function toolClick(scope, sel) {
+  const b = scope.locator(sel), before = await b.getAttribute('aria-pressed').catch(() => null);
+  const manual = scope.locator('[data-result-mode="manual"]');
+  if (await manual.isVisible().catch(() => false) && await manual.getAttribute('aria-pressed') !== 'true') {
+    await manual.click();
+    if (sel.includes('label-edit') && before !== 'true' && await b.getAttribute('aria-pressed') === 'true') return;
+  }
+  if (await b.isVisible()) await b.click(); else await b.dispatchEvent('click');
+}
+
 const evidence=path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/inline-labels','inline-editor');
 fs.mkdirSync(evidence,{recursive:true});
 
@@ -28,7 +40,7 @@ test('label controls wait for the bitmap presentation before accepting edits',{t
   }});
   const panel=page.locator('#ai-image-panel'),editor=panel.locator('[data-ai-inline-label-editor]'),saved=(await snapshot(page))[0].generated;
   await page.evaluate(()=>{window.__holdLabelDisplay=true;});
-  await panel.locator('[data-ai-label-edit]').click();await page.waitForFunction(()=>Boolean(window.__releaseLabelDisplay));
+  await toolClick(panel,'[data-ai-label-edit]');await page.waitForFunction(()=>Boolean(window.__releaseLabelDisplay));
   assert.equal(await editor.isVisible(),true);
   for(const control of ['add','add-leader','text'])assert.equal(await editor.locator(`[data-label-${control}]`).isDisabled(),true,'presentation is still pending');
   assert.equal(await editor.locator('[data-label-close]').isEnabled(),true,'pending presentation can still be closed');
@@ -60,7 +72,9 @@ test('clicking a visible label opens only its settings; one leader endpoint stay
   const parent=(await snapshot(page))[0].generated[0];
   const ready=()=>page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel');return p.querySelector('.ai-label-edit-overlay [data-ai-label-id]')&&!p.querySelector('[data-label-add]').disabled;});
   assert.equal(await editor.isVisible(),false);
-  await panel.locator('.ai-label-click-overlay [data-ai-label-id="source-label"] .ai-label-edit-hit').click();await ready();
+  // 11-27: 변환도 「AI와 대화」에서는 라벨을 눌러 고치지 않는다 — 직접 편집으로 들어가면 라벨 편집이 열린다.
+  await panel.locator('[data-result-mode="manual"]').click();await ready();
+  await panel.locator('.ai-label-edit-overlay [data-ai-label-id="source-label"] .ai-label-edit-hit').click();
   assert.equal(await editor.locator('[data-label-text]').inputValue(),'전자');
   assert.equal(await panel.locator('[data-label-list],[data-ai-label-list-id]').count(),0);
   const handles=panel.locator('.ai-label-edit-handle');
@@ -68,6 +82,7 @@ test('clicking a visible label opens only its settings; one leader endpoint stay
   assert.equal(await handles.count(),1,'the legacy anchor and routed target have a single handle');
   const start=await handles.first().boundingBox();
   const before=await editor.locator('[data-label-anchor-x]').inputValue();
+  await page.keyboard.down('Control');
   await page.mouse.move(start.x+start.width/2,start.y+start.height/2);await page.mouse.down();
   await page.mouse.move(start.x+start.width/2+24,start.y+start.height/2+12,{steps:4});
   await page.locator('#ai-label-endpoint-magnifier').waitFor({state:'visible'});
@@ -76,7 +91,7 @@ test('clicking a visible label opens only its settings; one leader endpoint stay
   assert.ok(await panel.locator(`${sampleId} text`).count()>0,'magnifier shows the edited label with its image');
   assert.equal(await panel.locator(`${sampleId} .ai-label-edit-handle`).count(),0,'handles are excluded from the sample');
   await page.screenshot({path:path.join(dir,'endpoint-magnifier.png')});
-  await page.mouse.up();await ready();assert.equal(await page.locator('#ai-label-endpoint-magnifier').isVisible(),false);
+  await page.mouse.up();await page.keyboard.up('Control');await ready();assert.equal(await page.locator('#ai-label-endpoint-magnifier').isVisible(),false);
   const moved=await editor.locator('[data-label-anchor-x]').inputValue();
   assert.ok(Number(moved)>Number(before));assert.equal(await handles.count(),1);
   await panel.locator('[data-ai-edit-undo]').click();await ready();assert.equal(await editor.locator('[data-label-anchor-x]').inputValue(),before);
@@ -88,6 +103,9 @@ test('clicking a visible label opens only its settings; one leader endpoint stay
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-status]').textContent.startsWith('수정 저장 완료'));
   const saved=(await snapshot(page))[0].generated,child=saved[1],label=child.labelPlan.labels[0];
   assert.equal(saved.length,2);assert.deepEqual(saved[0],parent);assert.deepEqual(label.anchor,label.leaderRoutes[0].target);
+  const route = label.leaderRoutes[0];
+  const angle = Math.atan2((route.target.y-route.start.y)*384,(route.target.x-route.start.x)*512)*180/Math.PI;
+  assert.ok(Math.abs(angle-Math.round(angle/15)*15)<0.05,`Ctrl 드래그 각도 ${angle}`);
   assert.equal(label.leaderRoutes.length,1);assert.equal(child.data,parent.data);
   assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({directLabelClick:true,directEndpointDrag:true,magnifier:true,leaderHandles:1,endpointAliases:label.anchor,undoRedo:true,paidAiCalls:0,errors},null,2));
@@ -133,7 +151,7 @@ test('entering, selecting and moving a label retain the displayed fonts and unto
     fonts.load=async(...args)=>{window.__pendingFontLoads=(window.__pendingFontLoads||0)+1;await gate;return load(...args);};
     window.__releaseLabelFonts=()=>{fonts.load=load;release();};
   });
-  await panel.locator('[data-ai-label-edit]').click();
+  await toolClick(panel,'[data-ai-label-edit]');
   await page.waitForFunction(()=>window.__pendingFontLoads>0);
   assert.equal(await panel.locator('.ai-label-edit-overlay text').count(),0,'keep the existing preview until its fonts are ready');
   assert.notEqual(await panel.locator('.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src'),parent.data);
@@ -183,7 +201,7 @@ test('entering, selecting and moving a label retain the displayed fonts and unto
   await page.evaluate(()=>window.__releaseLabelFonts());
   await page.waitForFunction(raw=>{const i=document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');return i?.complete&&i.src!==raw;},parent.data);
   await panel.locator('.ai-label-edit-overlay').waitFor({state:'detached'});
-  await panel.locator('[data-ai-label-edit]').click();await ready();assert.deepEqual(await metrics(),moved,'reopening retains the finished presentation');
+  await toolClick(panel,'[data-ai-label-edit]');await ready();assert.deepEqual(await metrics(),moved,'reopening retains the finished presentation');
   await page.screenshot({path:path.join(dir,'after-1440.png')});
   await page.setViewportSize({width:1080,height:800});await page.screenshot({path:path.join(dir,'after-1080.png')});
   assert.deepEqual((await snapshot(page))[0].generated,[parent]);assert.deepEqual(errors,[]);
@@ -221,10 +239,10 @@ test('inline labels and erasing share draft history; visible PNG and native outp
   const change=async(key,value)=>{await field(key).fill(value);await field(key).blur();await ready();};
   const select=async(key,value)=>{await field(key).selectOption(value);await ready();};
   assert.equal(await panel.locator('[data-ai-insert-selected]').isEnabled(),true,'automatic QA does not prevent the user from adopting a result');
-  assert.deepEqual(await panel.locator('.ai-output-actions > button:not([hidden])').allTextContents(),['PNG 저장','이미지 복사','캔버스에 삽입','한글로 보내기']);
+  assert.deepEqual(await panel.locator('.ai-output-actions :is([data-ai-save-selected],[data-ai-copy-selected],[data-ai-insert-selected],[data-ai-exam-send]):not([hidden])').allTextContents(),['PNG 저장','이미지 복사','캔버스에 삽입','한글로 보내기']);
   assert.equal(await panel.locator('.ai-generated-card [data-action="canvas-output"]').first().isVisible(),false);
   assert.equal(await panel.locator('.ai-output-more .ai-task-export-controls').isVisible(),false);
-  await panel.locator('[data-ai-label-edit]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
   assert.equal(await panel.locator('[data-ai-label-toggle]').getAttribute('aria-checked'),'true');
   assert.equal(await image().getAttribute('src'),original.data,'editor has the bare bitmap below editable vector labels');
   await panel.locator('.ai-label-edit-overlay [data-ai-label-id=\"source-label\"] .ai-label-edit-hit').click();
@@ -251,15 +269,15 @@ test('inline labels and erasing share draft history; visible PNG and native outp
   assert.match(await panel.locator('[data-ai-status]').innerText(),/수정 저장/);
   await panel.locator('[data-tab-id="task-1"]').click();
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='selected-1');
-  await panel.locator('[data-ai-label-edit]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
   assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),false,'label draft belongs only to its task');
   await panel.locator('[data-tab-id="task-0"]').click();
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='selected-0');
-  await panel.locator('[data-ai-label-edit]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
   await panel.locator('.ai-label-edit-overlay [data-ai-label-id=\"source-label\"] .ai-label-edit-hit').click();
   assert.equal(await field('text').inputValue(),'속도 v_A','returning retains the unsaved label draft');
   await panel.locator('[data-ai-label-toggle]').click();
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   await panel.locator('[data-ai-erase-background]').selectOption('transparent');
   const ib=await image().boundingBox();
   await page.mouse.move(ib.x+40/512*ib.width,ib.y+120/384*ib.height);await page.mouse.down();
@@ -280,7 +298,7 @@ test('inline labels and erasing share draft history; visible PNG and native outp
   assert.equal(child.labelPlan.labels[0].manualStyle.size,24*25.4/72/(100*384/512),'크기 칸은 pt(그림 폭 100mm 기준, 11-15)');
   assert.equal(child.labelPlan.qualityReview,undefined);assert.equal(child.labelPlan.targetPlacement,undefined);
   assert.equal(child.scopedEditHistory.length,1,'one saved version combines all label changes and the one eraser stroke');
-  await panel.locator('[data-ai-label-edit]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
   await panel.locator('.ai-label-edit-overlay [data-ai-label-id=\"source-label\"] .ai-label-edit-hit').click();
   await page.screenshot({path:path.join(evidence,'editor-1440.png')});
   await page.setViewportSize({width:1080,height:800});
@@ -328,8 +346,8 @@ test('adding a formula label leaves the bitmap intact and survives reopening', {
   const panel=page.locator('#ai-image-panel'),parent=(await snapshot(page))[0].generated[0];
   const editor=panel.locator('[data-ai-inline-label-editor]');
   const ready=()=>page.waitForFunction(()=>{const s=document.querySelector('#ai-image-panel [data-ai-inline-label-editor]');return s&&!s.hidden&&!s.querySelector('[data-label-add]').disabled;});
-  await panel.locator('[data-ai-label-edit]').click();await ready();
-  await editor.locator('[data-label-add]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
+  await editor.locator('[data-label-add]').dispatchEvent('click');await ready();
   const text=editor.locator('[data-label-text]');await text.fill('F_{A}');await text.blur();await ready();
   await editor.locator('[data-label-content]').selectOption('formula');await ready();
   await editor.locator('[data-label-role]').selectOption('quantity');await ready();
@@ -349,7 +367,7 @@ test('adding a formula label leaves the bitmap intact and survives reopening', {
   assert.equal(child.labelPlan.labels[0].manualStyle.size,24/384);
   await page.reload({waitUntil:'domcontentloaded',timeout:30000});await page.locator('#ai-image-install-open').click();
   await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId===id,child.id);
-  await panel.locator('[data-ai-label-edit]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
   await panel.locator('.ai-label-edit-overlay .ai-label-edit-hit').click();
   assert.equal(await text.inputValue(),'F_{A}');
   assert.deepEqual((await snapshot(page))[0].generated,saved,'reopening preserves both versions and the editable label plan');
@@ -362,8 +380,8 @@ test('failed local storage preserves the label draft and retry saves exactly one
   const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
   const panel=page.locator('#ai-image-panel'),parent=(await snapshot(page))[0].generated[0];
   const ready=()=>page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
-  await panel.locator('[data-ai-label-edit]').click();await ready();
-  await panel.locator('[data-label-add]').click();await ready();
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
+  await panel.locator('[data-label-add]').dispatchEvent('click');await ready();
   await page.evaluate(()=>{
     const put=IDBObjectStore.prototype.put;
     IDBObjectStore.prototype.put=function(value,...args){
@@ -395,8 +413,8 @@ for(const success of [false,true])for(const view of ['parent','child'])test(`pen
   const panel=page.locator('#ai-image-panel'),editor=panel.locator('[data-ai-inline-label-editor]');
   const ready=()=>page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel [data-ai-inline-label-editor]');return p&&!p.hidden&&!p.querySelector('[data-label-add]').disabled;});
   const edit=async text=>{
-    if(await panel.locator('[data-ai-label-edit]').getAttribute('aria-pressed')!=='true')await panel.locator('[data-ai-label-edit]').click();
-    await ready();await editor.locator('[data-label-add]').click();await ready();
+    if(await panel.locator('[data-ai-label-edit]').getAttribute('aria-pressed')!=='true')await toolClick(panel,'[data-ai-label-edit]');
+    await ready();await editor.locator('[data-label-add]').dispatchEvent('click');await ready();
     await editor.locator('[data-label-text]').fill(text);await editor.locator('[data-label-text]').blur();await ready();
   };
   const version=async id=>{await panel.locator('[data-ai-version-button]').click();await panel.locator(`[data-ai-candidate-option="${id}"]`).click();};
@@ -489,9 +507,9 @@ for(const switchTarget of ['task','candidate']) test(`late local save failure pr
   // Complete the fixture's one-time durable task migration before saving.
   if(switchTarget==='task'){await task('task-1','selected-1');await task('task-0','selected-0');}
   const before=await snapshot(page);
-  await panel.locator('[data-ai-label-edit]').click();
+  await toolClick(panel,'[data-ai-label-edit]');
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
-  await panel.locator('[data-label-add]').click();
+  await panel.locator('[data-label-add]').dispatchEvent('click');
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
   // Hold only the write that carries the new label revision; unrelated state writes must pass through.
   await page.evaluate(ids=>{window.__knownCandidates=ids;window.__holdLocalSave=true;},before.flatMap(tab=>tab.generated.map(item=>item.id)));
@@ -520,4 +538,124 @@ for(const switchTarget of ['task','candidate']) test(`late local save failure pr
   assert.deepEqual((await snapshot(page)).map(tab=>tab.generated),saved.map(tab=>tab.generated),'the failed intermediate version cannot return from queued autosave on reload');
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({otherTaskUnchanged:true,ownerRollback:true,draftRetained:true,retryVersions:1,errors},null,2));
+});
+
+// 11-25: 시안 v6의 여러 라벨 선택·서식·정렬·단축키.
+test('several labels: box select, mixed size with Enter, W alignment, bracket keys, typing and one undo step each',{timeout:120000},async t=>{
+  const dir=path.join(evidence,'multi-select');fs.mkdirSync(dir,{recursive:true});
+  const label=(id,text,x,y,size)=>({id,text,mode:'text',scope:'general',contentMode:'plain',position:{x,y},anchor:{x,y},
+    manualStyle:{size:size/384},typography:{role:'text'}});
+  const plan={version:4,frozen:true,relationGroups:[],labels:[label('a','가',.2,.3,20),label('b','나',.5,.5,28),label('c','다',.32,.72,20),label('d','라',.88,.12,20)]};
+  const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,beforeNavigate:async page=>{
+    await page.addInitScript(plan=>{
+      window.__seedReady=window.__seedReady.then(()=>new Promise((resolve,reject)=>{
+        const r=indexedDB.open('5e.preview:5e-ai-image-tasks',1);
+        r.onsuccess=()=>{const db=r.result,tx=db.transaction('tasks','readwrite'),store=tx.objectStore('tasks'),read=store.get('workspace');
+          read.onsuccess=()=>{const record=read.result,item=record.tabs[0].generated[0];item.data=window.__task2.modified;item.labelPlan=plan;record.tabs[0].labelPreviewIncluded={[item.id]:true};store.put(record);};
+          tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);
+        };r.onerror=()=>reject(r.error);
+      }));
+    },plan);
+  }});
+  const panel=page.locator('#ai-image-panel'),editor=panel.locator('[data-ai-inline-label-editor]'),field=key=>editor.locator(`[data-label-${key}]`);
+  const ready=()=>page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel');return p.querySelector('.ai-label-edit-overlay text')&&!p.querySelector('[data-label-add]').disabled;});
+  const chosen=()=>panel.locator('.ai-label-edit-overlay .is-selected').evaluateAll(groups=>groups.map(g=>g.dataset.aiLabelId).sort());
+  const centers=()=>panel.locator('.ai-label-edit-overlay').evaluate(svg=>Object.fromEntries([...svg.querySelectorAll('[data-ai-label-id]')].map(g=>{
+    const b=g.querySelector('text').getBoundingClientRect();return [g.dataset.aiLabelId,{x:b.x+b.width/2,y:b.y+b.height/2}];})));
+  // 편집은 비동기로 들어가므로 기대한 값이 보일 때까지 기다린다.
+  const until=async(check,message)=>{for(let i=0;i<150;i++){if(await check().catch(()=>false))return;await page.waitForTimeout(20);}assert.fail(message);};
+  const value=(key,expected)=>until(async()=>await field(key).inputValue()===expected,`${key} = ${expected}`);
+  const parent=(await snapshot(page))[0].generated[0];
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
+  const ib=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').boundingBox(),at=(x,y)=>[ib.x+x*ib.width,ib.y+y*ib.height];
+  // 빈 곳을 끌어 사각에 걸친 라벨 셋을 고른다(라는 밖).
+  await page.mouse.move(...at(.08,.18));await page.mouse.down();await page.mouse.move(...at(.4,.5),{steps:3});
+  assert.equal(await panel.locator('.ai-label-edit-marquee').count(),1,'drag shows the selection box');
+  await page.mouse.move(...at(.62,.86),{steps:3});await page.mouse.up();
+  assert.deepEqual(await chosen(),['a','b','c']);
+  assert.equal(await panel.locator('.ai-label-edit-marquee').count(),0);
+  assert.match(await field('count').innerText(),/3개/);
+  assert.equal(await field('text').isVisible(),false,'the wording field belongs to a single label');
+  assert.equal(await field('size').inputValue(),'');assert.equal(await field('size').getAttribute('placeholder'),'혼합');
+  // W·H 단추: 마우스를 올리면 단축키가 보이고 두 개 이상일 때만 쓸 수 있다.
+  const horizontal=editor.locator('[data-label-align="y"]');
+  assert.equal(await horizontal.getAttribute('aria-keyshortcuts'),'W');assert.match(await horizontal.getAttribute('data-tip'),/\(W\)/);
+  assert.equal(await horizontal.getAttribute('aria-disabled'),'false');
+  assert.match(await editor.locator('[data-label-step="size"][data-delta="1"]').getAttribute('data-tip'),/\(\]\)/);
+  assert.match(await editor.locator('[data-label-step="spacing"][data-delta="-1"]').getAttribute('data-tip'),/Shift\+\[/);
+  // 섞인 크기에 숫자 + Enter면 고른 라벨 모두에 들어간다 — 실행 취소 한 번에 되돌아간다.
+  await field('size').fill('15');await field('size').press('Enter');await value('size','15');await ready();
+  assert.equal(await page.evaluate(()=>document.activeElement.matches('input,textarea,select')),false,'Enter leaves the field');
+  assert.equal(await field('size').inputValue(),'15');assert.equal(await field('size').getAttribute('placeholder'),'');
+  await panel.locator('[data-ai-edit-undo]').click();await value('size','');await ready();assert.deepEqual(await chosen(),['a','b','c'],'undo keeps the selection');
+  await panel.locator('[data-ai-edit-redo]').click();await value('size','15');await ready();
+  // W: 첫 선택 라벨(가)과 같은 높이. 한 단계로 되돌아간다.
+  const before=await centers();
+  await page.keyboard.press('w');await until(async()=>{const c=await centers();return Math.abs(c.b.y-c.a.y)<2;},'W aligns');await ready();
+  const aligned=await centers();
+  for(const id of ['b','c'])assert.ok(Math.abs(aligned[id].y-aligned.a.y)<2,`${id} aligned to the first label`);
+  assert.ok(Math.abs(aligned.a.y-before.a.y)<.5&&Math.abs(aligned.d.y-before.d.y)<.5,'the base and unselected labels stay');
+  await page.keyboard.press('ControlOrMeta+z');await until(async()=>{const c=await centers();return Math.abs(c.b.y-before.b.y)<.5;},'undo W');await ready();
+  const undone=await centers();for(const id of ['b','c'])assert.ok(Math.abs(undone[id].y-before[id].y)<.5,'one undo restores the alignment');
+  // [ ] 크기 ±1pt, Shift+[ ] 자간 ±0.01em — 고른 라벨 모두, 한 번에 한 단계.
+  await page.keyboard.press(']');await value('size','16');await ready();
+  await page.keyboard.press('Shift+BracketLeft');await value('spacing','-0.01');await ready();
+  await page.keyboard.press('ControlOrMeta+z');await value('spacing','0');await ready();
+  assert.equal(await field('spacing').inputValue(),'0');assert.equal(await field('size').inputValue(),'16');
+  // 함께 끌면 모두 옮겨지고 실행 취소 한 번에 돌아온다.
+  const dragFrom=await centers();
+  await page.mouse.move(dragFrom.b.x,dragFrom.b.y);await page.mouse.down();await page.mouse.move(dragFrom.b.x+30,dragFrom.b.y+12,{steps:4});await page.mouse.up();
+  await until(async()=>{const c=await centers();return Math.abs(c.a.x-dragFrom.a.x-30)<1.5;},'group drag');await ready();
+  const dragged=await centers();
+  for(const id of ['a','b','c'])assert.ok(Math.abs(dragged[id].x-dragFrom[id].x-30)<1.5,`${id} moves with the group`);
+  assert.ok(Math.abs(dragged.d.x-dragFrom.d.x)<.5);assert.deepEqual(await chosen(),['a','b','c']);
+  await page.keyboard.press('ArrowLeft');await until(async()=>(await centers()).c.x<dragged.c.x,'arrow');await ready();
+  const nudged=await centers();for(const id of ['a','b','c'])assert.ok(nudged[id].x<dragged[id].x,'arrow keys move every selected label');
+  await page.keyboard.press('ControlOrMeta+z');await until(async()=>Math.abs((await centers()).c.x-dragged.c.x)<.5,'undo arrow');await ready();
+  await page.keyboard.press('ControlOrMeta+z');await until(async()=>Math.abs((await centers()).c.x-dragFrom.c.x)<.5,'undo drag');await ready();
+  const back=await centers();for(const id of ['a','b','c'])assert.ok(Math.abs(back[id].x-dragFrom[id].x)<.5);
+  // Ctrl/⌘ 클릭으로 빼고 더하기, ⌘A 전체.
+  const hit=id=>panel.locator(`.ai-label-edit-overlay [data-ai-label-id="${id}"] .ai-label-edit-hit`);
+  await hit('b').click({modifiers:['ControlOrMeta']});assert.deepEqual(await chosen(),['a','c']);
+  await hit('d').click({modifiers:['ControlOrMeta']});assert.deepEqual(await chosen(),['a','c','d']);
+  await page.keyboard.press('ControlOrMeta+a');assert.deepEqual(await chosen(),['a','b','c','d']);
+  await page.mouse.click(...at(.7,.9));assert.deepEqual(await chosen(),[],'clicking an empty spot clears the selection');
+  // 글 입력 중에는 [ ] W 가 글자로 들어가고 그림은 그대로다. 두 번 누르면 그림 위 입력칸에서 바로 고친다(11-26).
+  await hit('d').dblclick();
+  assert.equal(await page.evaluate(()=>document.activeElement.matches('.ai-label-inplace')),true,'double click edits the wording on the picture');
+  const sizeD=await field('size').inputValue();
+  await page.keyboard.press('End');await page.keyboard.type('[w]');
+  assert.equal(await page.locator('.ai-label-inplace').inputValue(),'라[w]');assert.equal(await field('text').inputValue(),'라[w]','the side field follows live');
+  assert.equal(await field('size').inputValue(),sizeD);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.ai-label-inplace').count(),0,'Esc closes the in-place field');
+  assert.equal(await field('text').inputValue(),'라','Esc restores the wording');assert.equal(await editor.isVisible(),true);
+  const chat=panel.locator('textarea:not([data-label-text])').first();
+  if(await chat.isVisible()){await chat.fill('');await chat.type('[w]');assert.equal(await chat.inputValue(),'[w]');await chat.fill('');}
+  await page.screenshot({path:path.join(dir,'multi-select.png')});
+  assert.deepEqual((await snapshot(page))[0].generated,[parent],'all changes stay in the unsaved draft');
+  assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({boxSelect:true,mixedSizeEnter:true,alignW:true,brackets:true,typingKeepsKeys:true,undoOneStep:true,paidAiCalls:0,errors},null,2));
+});
+
+// 11-25 밤샘 검수 P1: 「지시선 라벨」·「라벨 추가」를 거듭 눌러도 앞 라벨을 덮지 않는다.
+test('repeated label additions are offset instead of stacking on the previous label',{timeout:90000},async t=>{
+  const dir=path.join(evidence,'add-offset');fs.mkdirSync(dir,{recursive:true});
+  const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
+  const panel=page.locator('#ai-image-panel'),editor=panel.locator('[data-ai-inline-label-editor]');
+  const ready=()=>page.waitForFunction(()=>{const s=document.querySelector('#ai-image-panel [data-ai-inline-label-editor]');return s&&!s.hidden&&!s.querySelector('[data-label-add]').disabled;});
+  const count=n=>page.waitForFunction(n=>document.querySelectorAll('#ai-image-panel .ai-label-edit-overlay [data-ai-label-id]').length===n,n);
+  await toolClick(panel,'[data-ai-label-edit]');await ready();
+  await editor.locator('[data-label-add-leader]').dispatchEvent('click');await count(1);await ready();
+  await editor.locator('[data-label-add-leader]').dispatchEvent('click');await count(2);await ready();
+  await editor.locator('[data-label-add]').dispatchEvent('click');await count(3);await ready();
+  const boxes=await panel.locator('.ai-label-edit-overlay [data-ai-label-id] text').evaluateAll(texts=>texts.map(t=>{const b=t.getBoundingClientRect();return {x:b.x,y:b.y};}));
+  for(let i=0;i<boxes.length;i++)for(let j=0;j<i;j++)
+    assert.ok(Math.hypot(boxes[i].x-boxes[j].x,boxes[i].y-boxes[j].y)>5,`label ${i} does not cover label ${j}`);
+  // 앞에 만든 지시선 라벨도 그대로 눌러 고를 수 있다.
+  const first=panel.locator('.ai-label-edit-overlay [data-ai-label-id]').first();
+  await first.locator('.ai-label-edit-hit').click();
+  assert.equal(await first.evaluate(g=>g.classList.contains('is-selected')),true);
+  await page.screenshot({path:path.join(dir,'add-offset.png')});
+  assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
 });

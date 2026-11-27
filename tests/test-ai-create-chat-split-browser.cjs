@@ -44,7 +44,7 @@ async function fakeDesktop(context) {
       if (!white) { g.strokeStyle = '#000'; g.lineWidth = 4; g.strokeRect(200, 300, 260, 300); g.strokeRect(740, 300, 260, 300); g.fillStyle = '#000'; g.font = '40px serif'; g.fillText('명반응', 260, 660); g.fillText('암반응', 800, 660); }
       return c.toDataURL('image/png');
     };
-    const fake = window.__engineFake = { sends: [], reads: [], white: 0, noTargets: false, chatN: 0 };
+    const fake = window.__engineFake = { sends: [], reads: [], white: 0, noTargets: false, chatN: 0, failImage: 0 };
     const emit = (m) => listeners.forEach((fn) => fn(m));
     window.fiveEDesktop = {
       web: false,
@@ -65,6 +65,7 @@ async function fakeDesktop(context) {
       },
       send: async (payload) => {
         const turnId = `fake-${fake.sends.length + 1}`;
+        if (payload.purpose === 'image' && fake.failImage > 0) { fake.failImage--; fake.sends.push({ purpose: 'image-failed', model: payload.model || null, text: '', attachments: [] }); throw new Error('가짜 연결 끊김'); }
         fake.sends.push({ purpose: payload.purpose || null, model: payload.model || null, text: String(payload.text || '').slice(0, 4000), attachments: (payload.attachments || []).map((a) => String(a?.name || '')) });
         setTimeout(() => {
           if (payload.purpose === 'image') {
@@ -148,7 +149,7 @@ h.withServer(async (origin) => {
       assert.equal(await send.evaluate((el) => getComputedStyle(el, '::after').content), 'none', `${name}: no ✈ on 이미지 생성`);
       // V5 태그 1·2·6: 한 줄 — 📎 · 안내 · [이미지 생성] · │ ✈ 모두 입력칸 안, 입력칸 밖 줄·미리 말하는 줄 없음
       const frame = await page.locator(`${PANEL} .ai-composer-frame`).boundingBox(), sendBox = await send.boundingBox(), plane = await page.locator(`${PANEL} [data-ai-chat-send]`).boundingBox();
-      const clipBox = await page.locator(`${PANEL} [data-ai-create-clip]`).boundingBox(), hintBox = await page.locator(`${PANEL} [data-ai-create-hint]`).boundingBox();
+      const clipBox = await page.locator(`${PANEL} [data-ai-create-clip]`).boundingBox(), hintBox = await page.locator(`${PANEL} [data-ai-create-hint]`).boundingBox() || await page.locator(`${PANEL} .ai-chat-composer .ai-create-label-options`).boundingBox(); // 11-27: 라벨 방식이 보이면 안내 자리를 쓴다
       const inside = (b) => b.y > frame.y && b.y + b.height <= frame.y + frame.height + 1;
       for (const [label, b] of [['이미지 생성', sendBox], ['✈', plane], ['📎', clipBox], ['안내', hintBox]]) assert.ok(inside(b), `${name}: ${label} sits inside the composer (${JSON.stringify(b)} in ${JSON.stringify(frame)})`);
       const mid = (b) => b.y + b.height / 2;
@@ -168,8 +169,8 @@ h.withServer(async (origin) => {
       assert.ok(await newChat.isVisible(), `${name}: 새 대화 in the chat header`);
       assert.equal((await newChat.textContent()).trim(), '새 대화');
       assert.ok(await newChat.isDisabled(), `${name}: 새 대화 is off with no conversation`);
-      const changeBox = await page.locator(`${PANEL} [data-ai-settings-change]`).boundingBox(), newChatBox = await newChat.boundingBox();
-      assert.ok(newChatBox.x > changeBox.x && Math.abs(mid(newChatBox) - mid(changeBox)) <= 2, `${name}: 새 대화 sits right of 바꾸기 ▾`);
+      assert.ok(await newChat.evaluate(button => button.parentElement.matches('.ai-conversation-caption')));
+      assert.equal(await page.locator(`${PANEL} .ai-compact-settings`).isVisible(),false);
       // V5 태그 4·5: 대화 칸 598px · 경계 끌기 420~820 · 저장 · 두 번 누르면 598 · ←/→ 8px
       const conv = () => page.locator(`${PANEL} .ai-conversation`).boundingBox();
       const grip = page.locator(`${PANEL} [data-ai-chat-grip]`);
@@ -351,7 +352,7 @@ h.withServer(async (origin) => {
       assert.deepEqual((await userBubbles(page)).slice(-2), ['지금 그림이 제대로 안보이는데?', '당 라벨은 빼 줘']);
 
       // V5 안 A(태그 8·10): 결과 제목 = 테두리 + ▾ 단추 → 작은 그림 · 이름 · 한 일 · 시각 · ✓, 제목 바로 아래
-      const vButton = page.locator(`${PANEL} .ai-result-pane [data-ai-version-button]`);
+      const vButton = page.locator(`${PANEL} [data-ai-version-button]`); // 11-26: 생성은 판 고르기가 도구줄로 올라감
       assert.notEqual(await vButton.evaluate((el) => getComputedStyle(el).borderTopStyle), 'none', `${name}: version title has a border`);
       assert.notEqual(await vButton.evaluate((el) => getComputedStyle(el, '::after').content), 'none', `${name}: version title has ▾`);
       await vButton.click();
@@ -452,6 +453,69 @@ h.withServer(async (origin) => {
       assert.ok(refNames.length >= 1 && refNames.length <= 3, `${name}: past-exam figures attached for a comparison (${compareChat.attachments})`);
       assert.match(compareChat.text, new RegExp(`기출 그림 ${refNames.length}장을 「참고한 기출 · …」 이름으로 첨부했다`, 'u'));
       assert.doesNotMatch(await logText(page), /참고한 기출(:| · )/u, `${name}: the screen does not show the referenced figures`);
+
+      // A note on the selected result is discussion context on Enter and an edit instruction on ⌘/Ctrl+Enter.
+      await page.locator(`${PANEL} [data-ai-comment-tool="area"]`).click();
+      const picture = await page.locator(`${PANEL} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
+      await page.mouse.move(picture.x + picture.width * .32, picture.y + picture.height * .35);
+      await page.mouse.down();
+      await page.mouse.move(picture.x + picture.width * .46, picture.y + picture.height * .49);
+      await page.mouse.up();
+      const popup = page.locator(`${PANEL} [data-ai-comment-popover]`);
+      const comment = '이 박스에 창문 두 개 추가';
+      await popup.locator('textarea').fill(comment);
+      await popup.locator('.ai-comment-popover-close').click();
+      const beforeQuestion = await resultCount(page);
+      await chat(page, '두 번째 그림에 단 코멘트를 읽어 줘');
+      const answerRequest = (await fakeState(page)).sends.at(-1);
+      assert.equal(answerRequest.purpose, 'chat');
+      assert.match(answerRequest.text, /박스 1 \(x=.*%, y=.*%, w=.*%, h=.*%\): 이 박스에 창문 두 개 추가/);
+      assert.equal(await resultCount(page), beforeQuestion);
+      assert.equal(await page.locator(INPUT).inputValue(), '');
+      await page.locator(INPUT).press(`${MOD}+Enter`);
+      await page.waitForFunction(note => window.__engineFake.reads.some(text =>
+        text.includes('교사가 이 그림에서 일부만') && text.includes(note) && text.includes('박스 1 (x=')), comment);
+      await idle(page);
+
+      // 11-25 밤샘 검수(포물선 결과 5): 결과를 고른 채 대화 정리 답 아래 「이대로 그리기」를 누르면 새로 그리지 않고 고른 결과를 고친다
+      // — 원본 그림·코멘트 좌표·결과 뒤 대화가 고치기 요청에 함께 실린다.
+      // 고치기 로딩 화면이 걷힌 뒤에 그린다(끝난 뒤 잠깐 남아 그림을 덮는다).
+      await page.waitForTimeout(2500);
+      const areaTool = page.locator(`${PANEL} [data-ai-comment-tool="area"]`);
+      if (await areaTool.getAttribute('aria-pressed') !== 'true') await areaTool.click();
+      const picked = await page.locator(`${PANEL} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
+      await page.mouse.move(picked.x + picked.width * .2, picked.y + picked.height * .3);
+      await page.mouse.down();
+      await page.mouse.move(picked.x + picked.width * .3, picked.y + picked.height * .5);
+      await page.mouse.up();
+      await popup.locator('textarea').fill('왼쪽 건물에 창문');
+      await popup.locator('.ai-comment-popover-close').click();
+      await chat(page, '박스에 창문을 넣고, 입사각은 법선 기준으로 해 줘');
+      const chip = page.locator(`${PANEL} [data-ai-chip="draw-now"]`).last();
+      assert.ok(await chip.isVisible(), `${name}: 「이대로 그리기」 under the summary after a result`);
+      const drawNowFrom = (await fakeState(page)).reads.length;
+      const resultsBeforeChip = await resultCount(page);
+      await chip.click();
+      await page.waitForFunction((n) => document.querySelectorAll('#ai-image-panel .ai-msg.result').length === n + 1, resultsBeforeChip, { timeout: 30000 });
+      await idle(page);
+      const chipReads = (await fakeState(page)).reads.slice(drawNowFrom);
+      const editRead = chipReads.find((t) => t.includes('교사가 이 그림에서 일부만'));
+      assert.ok(editRead, `${name}: 「이대로 그리기」 with a result edits the picked result`);
+      assert.match(editRead, /박스 1 \(x=.*\): 왼쪽 건물에 창문/, `${name}: the comment box on the picked result rides along`);
+      assert.match(editRead, /법선 기준/, `${name}: the talk after the result becomes the edit instruction`);
+      assert.ok(!chipReads.some((t) => /교사의 요청:/.test(t)), `${name}: no fresh expand step`);
+      // 고치기가 오류로 끝나면 장면 전체를 새로 그리지 않고 앞 결과를 그대로 둔 채 고르게 한다
+      const failFrom = await fakeState(page);
+      const resultsBeforeFail = await resultCount(page);
+      await page.evaluate(() => { window.__engineFake.failImage = 50; });
+      await page.locator(INPUT).fill('창문을 세 개로');
+      await page.keyboard.press(`${MOD}+Enter`);
+      await page.waitForFunction(() => /고치지 못했어요/.test(document.querySelector('#ai-image-panel [data-ai-log]').textContent), null, { timeout: 60000 });
+      await idle(page);
+      await page.evaluate(() => { window.__engineFake.failImage = 0; });
+      assert.equal(await resultCount(page), resultsBeforeFail, `${name}: a failed edit adds nothing`);
+      assert.ok(!(await fakeState(page)).reads.slice(failFrom.reads.length).some((t) => /교사의 요청:/.test(t)), `${name}: a failed edit does not silently redraw the whole scene`);
+      assert.deepEqual(await page.locator(`${PANEL} .ai-msg.chips .ai-chat-chip`).allTextContents(), ['한 번 더 고치기', '새로 그리기']);
 
       await closeAiPanel(page);
       assert.deepEqual(errors, [], `${name}: no page errors`);

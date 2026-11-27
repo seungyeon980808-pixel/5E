@@ -127,11 +127,9 @@ h.withServer(async (origin) => {
       await page.locator(`${PANEL} .ai-chat-result-open`).nth(1).click(); // 결과 2(T를 지운 것)로 돌아가 거기서 바꾸기
       await page.waitForFunction((p) => document.querySelector(`${p} [data-ai-version-button]`).textContent === '생성 결과 2', PANEL);
       // 11-21 사용자 결정(css/ai-create.css): 「글자 빠르게」 줄은 화면에서 숨김 — 글자 바꾸기는 그림 AI 길로만. 기본 끔.
-      await page.locator(`${PANEL} [data-ai-settings-change]`).click();
       const fastRow = page.locator(`${PANEL} [data-ai-fast-replace-row]`);
       assert.equal(await fastRow.isVisible(), false, `${name}: fast replace row is hidden (11-21 decision)`);
       assert.equal(await page.evaluate(() => localStorage.getItem('5e.aiEngine.figureLocalReplace')), null);
-      await page.locator(`${PANEL} [data-ai-settings-change]`).click();
       // 숨긴 뒤에도 남은 저장값 길(5e.aiEngine.figureLocalReplace='1')은 그대로 돈다 — 저장값으로 켜서 본다.
       await page.evaluate(() => localStorage.setItem('5e.aiEngine.figureLocalReplace', '1'));
       await send(page, 'C를 D로 바꿔 줘');

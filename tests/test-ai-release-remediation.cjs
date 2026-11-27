@@ -998,6 +998,8 @@ function fixture() {
     generatedImages: [item], selected: item, insertingOutput: false, batchRun: null, status,
     selectedImageOutputOptions:{}, imageOutputOptionsKey:JSON.stringify,
     selectedOutputItem: () => sandbox.selected,
+    // 11-26 PNG 저장 위치: 폴더 연결이 없는 환경(내려받기 그대로)
+    FS_DIR_SUPPORTED: false, currentDirName: () => '', writeToDir: async () => false,
     panel: { querySelector(selector) { assert.equal(selector, '[data-ai-save-selected]'); return footer; } },
     document: { createElement(tag) {
       assert.equal(tag, 'a');

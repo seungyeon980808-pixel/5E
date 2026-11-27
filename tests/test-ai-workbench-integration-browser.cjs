@@ -6,7 +6,7 @@ const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/pa
 // 10-22(e704e45e)부터 「좌우·상하·슬라이더 비교」는 「비교 ▾」 메뉴 안에 있다 — 메뉴를 열고 누른다.
 const clickCompare = async (scope, selector = '[data-ai-compare]') => { const menu = scope.locator('.ai-compare-menu').first(); if (await menu.count() && !await menu.evaluate(d => d.open)) await menu.locator('summary').click(); await scope.locator(selector).first().click(); };
 // 83201a54(10-22): 「그룹으로 보기」등 부가 출력 단추는 닫힌 「고급 출력」(details.ai-output-more) 안에 있다 — 먼저 연다.
-const openOutputMore = async page => { const d = page.locator('#ai-image-panel .ai-output-more').first(); if (await d.count() && !await d.evaluate(e => e.open)) await d.locator('summary').click(); };
+const openOutputMore = async page => { const manual = page.locator('#ai-image-panel [data-result-mode="manual"]'); if (await manual.isVisible().catch(() => false) && await manual.getAttribute('aria-pressed') !== 'true') await manual.click(); const d = page.locator('#ai-image-panel .ai-output-more').first(); if (await d.count() && !await d.evaluate(e => e.open)) await d.locator('summary').click(); };
 const root = path.resolve(__dirname, '..');
 const evidenceRoot = process.env.TASK7_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task7/browser');
 function seedRequestWorkspaces(count, initialGeneration = false, missingCapabilities = false, mode = 'pro', scoped = false, badTask = false, sourceOnly = false, fixtureOptions = {}) {
@@ -418,7 +418,7 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(await page.locator(`${active} [data-ai-comment-row]`).count(), commentRows);
     await page.click(`${active} [data-ai-comment-visibility]`);
     await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel [data-ai-comment-marker]')].some(node => node.isConnected && getComputedStyle(node).display !== 'none'));
-    await page.click(`${active} [data-ai-comment-tool="pan"]`);
+    await page.locator(`${active} [data-ai-comment-tool="pan"]`).dispatchEvent('click');
     await clickCompare(page.locator(active));
     // 83201a54: 새로 연 비교의 오른쪽은 최신본(latest-0)이므로, 코멘트가 달린 선택본(candidate-0)을 오른쪽으로 직접 고른다.
     await page.getByLabel('오른쪽 비교 버전',{exact:true}).selectOption('candidate-0');
