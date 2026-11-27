@@ -56,7 +56,7 @@ export function planRow(row={},by='ai'){
   const r={no:Number(row.no),qid:row.qid??null,unit:String(row.unit??''),standards:[...(row.standards||[])],difficulty:row.difficulty??null,
     points:row.points??null,form:row.form??null,structure:row.structure??null,twist:String(row.twist??''),
     figure:PLAN_FIGURE.includes(row.figure)?row.figure:'none',basis:copyTree(row.basis||[]),
-    status:PLAN_STATUS.includes(row.status)?row.status:'empty',by:row.by??by,seen:row.seen??by==='teacher'};
+    status:PLAN_STATUS.includes(row.status)?row.status:(String(row.unit??'').trim()?'set':'empty')/* AI가 상태를 빼먹어도 내용이 있으면 빈자리가 아님 */,by:row.by??by,seen:row.seen??by==='teacher'};
   if(!Number.isInteger(r.no)||r.no<1)throw Error('설계표 번호는 1 이상의 정수입니다.');
   return r;
 }

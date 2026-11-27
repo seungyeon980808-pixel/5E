@@ -172,7 +172,7 @@ const summarizeRow=r=>r?[r.unit,r.difficulty,r.points!=null?r.points+'점':'',r.
 
 // 초안: 설계표의 빈 문항 칸마다 하위 세션(출제 대화 엔진, kind=draft)으로 쓴다 — 빈 칸 처음 채우기라 바로 넣는다.
 async function draftAll(){
-  const rows=work.plan.filter(r=>!r.qid&&r.status!=='empty');if(!rows.length){say('ai','설계표에 아직 쓸 문항 칸이 없어요. 설계표부터 같이 정해요.');return;}
+  const rows=work.plan.filter(r=>!r.qid&&(r.status!=='empty'||String(r.unit||'').trim()));if(!rows.length){say('ai','설계표에 아직 쓸 문항 칸이 없어요. 설계표부터 같이 정해요.');return;}
   // 11-25 완주 2: 문항을 따로 쓰니 정답이 ①1·②2·③5·④7·⑤0으로 몰리고 3연속이 생겼다 → 쓰기 전에 객관식 칸마다 정답 번호를 고르게 정해 준다(워크플로 기본값: 고르게, 3연속 없음).
   const taken=X.orderedQuestions(work).filter(q=>q.type!=='서술형'&&Number.isInteger(q.answer)).map(q=>q.answer+1);const need=rows.filter(r=>r.form!=='essay');const tgt=balancedAnswers(need.length,taken);need.forEach((r,i)=>{r.answerTarget=tgt[i];});
   // 시안7 1번(11-26): 16문항이 다 끝날 때까지(11~21분) 아무것도 못 봤다 → 첫 문항이 나오면 바로 「문항 검토」로, 나온 문항부터 보고 코멘트. 진행 줄에 「멈추기」.
@@ -666,7 +666,7 @@ function nextSugg(){const all=$$('#t-sheet .sugg');if(!all.length){toast('남은
 let curTool=null,lastCrumb='';
 function renderChrome(){if(!work)return;const ct=work.meta.title||'새 시험지';if(ct!==lastCrumb){lastCrumb=ct;post({action:'crumb',title:ct});}const qs=work.questions,st=work.meta.stage;
   const nonEssay=qs.filter(q=>q.type!=='서술형'),checked=nonEssay.length>0&&nonEssay.every(q=>work.checks.some(k=>k.qid===q.id&&k.runs?.length)),exported=(work.outputs||[]).length>0||st==='final';
-  const S=[['계획',work.plan.length>0&&!X.missingBlocking(work).length],['작성',qs.length>0&&!drafting&&work.plan.every(r=>r.qid||r.status==='empty')],['검토',checked||exported],['검사',checked&&!work.checks.some(k=>['doubt','fail'].includes(k.verdict)&&k.version===work.head)],['내보내기',exported]];
+  const S=[['계획',work.plan.length>0&&!X.missingBlocking(work).length],['작성',qs.length>0&&!drafting&&work.plan.every(r=>r.qid||(r.status==='empty'&&!String(r.unit||'').trim()))],['검토',checked||exported],['검사',checked&&!work.checks.some(k=>['doubt','fail'].includes(k.verdict)&&k.version===work.head)],['내보내기',exported]];
   const now=S.findIndex(x=>!x[1]);$('#steps').innerHTML=S.map(([n,ok],i)=>i===now?`<b><span class="d now"></span>${n}</b>`:`<span><span class="d${ok?' ok':''}"></span>${n}</span>`).join('<i></i>');
   let dk=$('#dock');if(!dk){dk=document.createElement('div');dk.id='dock';dk.className='dock';$('#rp').append(dk);}
   const open=openProposals(),c=X.commentCounts(work),cm=(c.new||0)+(c.talk||0)+(c.decided||0);dk.hidden=tab!=='sheet'||!(open.length||cm)||!!compare;
