@@ -150,7 +150,7 @@ async function examTurn(text){
 }
 // ── 새 엔진(실험, 깃발 5e.harness.engine=agent): AI가 5E 도구를 직접 부른다(계획-엔진전환). 도구는 tools.js, 권한·안전망은 guard.js. ──
 const agentOn=()=>{try{return localStorage.getItem('5e.harness.engine')==='agent';}catch{return false;}};
-const AGENT_TOOLS_VERSION='a3-standard';
+const AGENT_TOOLS_VERSION='a4-make';
 // 권한(11-27): ask = 제안 후 받기(기본), direct = 바로 고침. 대화마다 고르고, 기본값은 앱 설정에.
 const PERM_KEY='5e.harness.permission';
 const permission=()=>{const v=work?.ui?.permission||(()=>{try{return localStorage.getItem(PERM_KEY);}catch{return null;}})();return PERMISSIONS.includes(v)?v:'ask';};
@@ -166,7 +166,22 @@ const AGENT_RULES=`너는 5E(과학 교사용 출제·수업 프로그램) 안�
 - 선생님이 시킨 문항·칸만 손댄다. 시키지 않은 다른 문항이나 다른 칸은 건드리지 않는다. 정답이 바뀌면 그 사실을 알린다.
 - 꼭 정해야 일을 할 수 있는 것만 ask_teacher로 묻고(보기 포함), 나머지는 알아서 정한 뒤 알린다.
 - 성취기준·교육과정은 find_standard 결과만 인용하고, 인용한 문장 끝에 [근거:코드]를 붙인다. 원문은 글자 그대로 옮긴다.
-- 그 밖의 근거는 find_material로 등록된 자료를 찾고, 없으면 「근거 없음」이라고 말한다. 지어내지 않는다.`;
+- 그 밖의 근거는 find_material로 등록된 자료를 찾고, 없으면 「근거 없음」이라고 말한다. 지어내지 않는다.
+[시험지 만드는 흐름 — 선생님이 정한 순서]
+1. 먼저 묻기: 막는 칸은 과목·범위·문항 수·총점 넷뿐이다. 이 넷 중 비어 있는 것만 ask_teacher로 묻는다(보기 포함). 학년·학기·시험 이름·배점 종류·난이도 분포·양식은 묻지 말고 알아서 정한다.
+2. set_info: 선생님이 말한 값은 by:"teacher", 네가 정한 값은 by:"ai"로 따로 부른다. 정한 값은 답에 「알아서 정한 것」으로 짧게 알린다.
+3. set_plan: 넷이 다 차면 설계표를 잡는다(행 수 = 문항 수, 배점 합 = 총점, 성취기준은 find_standard로 확인한 코드만). 잡았으면 「설계표를 보시고 초안 써 달라고 하시면 써요」로 마무리한다. 이 차례에 초안을 쓰지 않는다.
+4. 선생님이 「초안 써 줘」라고 하면 write_questions. 바로 돌아오니 「쓰기 시작했어요」만 짧게 말하고 끝낸다. 문항 글을 답에 쓰지 않는다.
+5. 코멘트: 선생님이 「코멘트 다 달았어」면 triage_comments, 문항 하나를 고치라면 change_question.
+6. 판은 선생님이 「판 올려」라고 할 때만 bump_version, 두 모델 풀이는 「풀이 검사」라고 할 때만 run_solve_check. 정답 분포는 시킬 때만 rebalance_answers.
+7. 그림은 선생님이 그려 달라고 할 때만 draw_figure(빈 그림 칸에만).
+8. 선생님이 다음에도 지킬 출제 규칙(표기·금지 등)을 말하면 save_rule로 저장할지 묻는다. 저장했다고 말하지 않는다.
+- 도구가 refused·error를 돌려주면 하지 않은 것이다. 그 이유(why)를 그대로 말하고, 했다고 말하지 않는다.`;
+// 작업 종류마다 더하는 규칙(도구 묶음도 다르다 — agentToolsFor).
+const AGENT_MODE_RULES={q:'\n[작업 종류: 문항 하나] 시험지 정보의 문항 수는 1, 설계표는 1행으로 잡는다. 과목·범위만 묻고 나머지(총점은 그 문항 배점)는 알아서 정한다. 설계표가 정해지면 같은 차례에 바로 write_questions를 부른다.',
+  lesson:'\n[작업 종류: 수업 구상] 시험지·설계표·문항을 만들지 않는다(그 도구도 없다). 차시 흐름·활동·발문·학습지 문항 안을 교육과정(find_standard)·자료(find_material) 근거와 함께 글로 정리한다.',
+  chat:'\n[작업 종류: 그냥 대화] 시험지·설계표·문항을 만들지 않는다(그 도구도 없다). 묻는 말에 근거를 들어 답한다.'};
+const AGENT_TALK_TOOLS=['read_exam','read_question','read_comments','find_standard','find_material','ask_teacher','save_rule'];
 const agentClient=createAgentClient({post});const agentEngines=new Map(),agentTurns=new Map();const agentLive={};
 const plainBlocks=q=>(q.blocks||[]).map(b=>b.kind==='figure'?`[${b.label||'그림'}${b.figure?.data?'':' · 비어 있음'}]`:b.kind==='table'?'[표] '+(b.table?.cells||[]).map(r=>r.map(c=>c.value).join(' | ')).join(' / '):b.kind==='bogi'?'〈보기〉 '+(b.lines||[]).map(l=>`${l.label}. ${l.text}`).join(' / '):String(b.text||'')).filter(Boolean);
 // 제안 하나를 말없이 받는다(도구용): 그 제안에 딸린 코멘트만 「결정됨」으로 두고 반영한다. 판은 올리지 않는다(결정 13).
@@ -181,15 +196,50 @@ const agentApi={work:()=>work,X,CIRCLED,permission,plainBlocks,cellLabel:(q,key)
   applyProposal:applyProposalQuiet,findStandards:async opts=>findStandards(await loadCurriculum(),opts),standardLabel,
   // 고친 칸 표시(선생님이 볼 때까지): 시험지 파일의 문항에는 넣지 않고 화면 상태에만 둔다.
   markChanged:(qid,keys)=>{const at=nowIso();work.ui={...(work.ui||{}),aiMarks:[...(work.ui?.aiMarks||[]).filter(m=>!(m.qid===qid&&keys.includes(m.key))),...keys.map(key=>({qid,key,at}))].slice(-200)};},
-  afterChange:({tab:t}={})=>{if(t)autoTab(t);save();render();}};
+  afterChange:({tab:t}={})=>{if(t)autoTab(t);save();render();},
+  // 만드는 도구가 감싸는 지금 엔진 함수들(모두 화살표로 — 아래에서 정의되는 것도 있어 부를 때 찾는다).
+  mode:()=>workMode(),wantsDiscussOnly:t=>wantsDiscussOnly(t),wantsDraft:t=>wantsDraft(t),wantsBump:t=>wantsBump(t),wantsSolve:t=>wantsSolve(t),
+  summarizeRow:r=>summarizeRow(r),applyPlanProposals:list=>applyPlanProposals(list),drafting:()=>drafting,rules:()=>rulesFor(),
+  startDraft:()=>{void draftAll().catch(failMsg);},// 뒤에서 쓴다 — 끝나면 draftAll이 스스로 알린다
+  drawingQ:qid=>drawingQ.has(qid),drawInto:(qid,o)=>agentDrawInto(qid,o),
+  bumpVersion:why=>bumpVersion(why,{solve:false,quiet:true}),
+  // 판에 안 들어간 문항 변경이 정말 있는가: 쌓인 고침이 있거나, 문항 글이 지금 판의 사본과 다를 때만(제안·코멘트만 늘어난 「dirty」는 치지 않음).
+  unversioned:()=>{if(pendingCount())return true;const head=work.versions.find(v=>v.label===work.head);if(!head?.snapshot)return work.questions.length>0;
+    const old=new Map(head.snapshot.questions.map(q=>[q.id,JSON.stringify(stripMeta(q))]));return work.questions.some(q=>old.get(q.id)!==JSON.stringify(stripMeta(q)));},
+  startSolve:v=>{void solveChanged(v).catch(e=>{note('agent-solve-fail',{error:e.message});say('ai',`풀이 검사를 끝내지 못했어요: ${e.message}`,{error:true});});},
+  rebalanceAnswers:()=>rebalanceAnswers(),triageComments:()=>triageComments('')};
+// 빈 그림 칸 하나에 그린다(도구 draw_figure): 제작 명세를 하나 더하고 지금 그림 엔진(drawFigure)으로 그린다. drawFigure는 첫 빈 칸에 넣는다.
+async function agentDrawInto(qid,{kind,description}){const q=work.questions.find(x=>x.id===qid);if(!q)return {ok:false,error:'문항이 없어요'};
+  const slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);if(!slot)return {ok:false,error:'빈 그림 칸이 없어요'};
+  q.figureSpecs ||= [];const i=q.figureSpecs.push({kind,description,mustNot:[],slot:slot.label||'그림',by:'agent'})-1;const n0=log.length;
+  const ok=await drawFigure(qid,i,{bg:true});
+  if(!ok){const f=log.slice(n0).reverse().find(x=>x.kind==='figure-fail');return {ok:false,error:f?.error||''};}
+  work.pendingEdits=[...(work.pendingEdits||[]),{qid,key:'figure',label:(kind==='graph'?'그래프':'그림')+' 넣음',at:nowIso()}];save();return {ok:true,slot:slot.label||'그림'};}
 const TOOL_LABEL={read_exam:['시험지 읽는 중','시험지 읽음'],read_question:a=>[`${a.no}번 문항 읽는 중`,`${a.no}번 문항 읽음`],read_comments:['코멘트 대장 읽는 중','코멘트 대장 읽음'],find_standard:(a,r)=>[`교육과정 찾는 중 · ${String(a.code||a.query||'').slice(0,16)}`,`교육과정 ${r?.results?.length?'찾음 · '+r.results.slice(0,2).map(x=>x.code).join(' '):'못 찾음'}`],find_material:a=>[`자료 찾는 중 · ${String(a.query||'').slice(0,16)}`,`자료 찾음 · ${String(a.query||'').slice(0,16)}`],
-  change_question:(a,r)=>[`${a.no}번 고치는 중`,r?.applied?`${a.no}번 고침`:r?.proposed?`${a.no}번 제안 띄움`:`${a.no}번 고치지 못함`],accept_proposals:['제안 받는 중','제안 받음'],update_comment:['코멘트 대장 고치는 중','코멘트 대장 고침'],ask_teacher:['물을 것 정리 중','선생님께 물음']};
+  change_question:(a,r)=>[`${a.no}번 고치는 중`,r?.applied?`${a.no}번 고침`:r?.proposed?`${a.no}번 제안 띄움`:`${a.no}번 고치지 못함`],accept_proposals:['제안 받는 중','제안 받음'],update_comment:['코멘트 대장 고치는 중','코멘트 대장 고침'],ask_teacher:['물을 것 정리 중','선생님께 물음'],
+  set_info:(a,r)=>['시험지 정보 정하는 중',r?.set?`시험지 정보 정함 · ${r.set.filter(x=>!x.same).length}칸${r.skipped?.length?` · 그대로 둔 칸 ${r.skipped.length}`:''}`:'시험지 정보 못 정함'],
+  set_plan:(a,r)=>['설계표 잡는 중',r?.refused?'설계표 안 받음 · 막는 칸 비어 있음':r?.applied?`설계표 잡음 · ${r.rows}문항${r.storedAsProposal?.length?` · 안 ${r.storedAsProposal.length}칸`:''}`:'설계표 못 잡음'],
+  apply_plan_proposals:(a,r)=>['설계표 안 넣는 중',r?.applied!=null?`설계표 안 넣음 · ${r.applied}칸`:'설계표 안 안 넣음'],
+  write_questions:(a,r)=>['초안 쓰기 시작하는 중',r?.started?`초안 쓰기 시작 · ${r.rows}문항`:'초안 안 씀'],
+  draw_figure:(a,r)=>[`${a.no}번 ${a.kind==='graph'?'그래프':'그림'} 그리는 중`,r?.drawn?`${a.no}번 ${a.kind==='graph'?'그래프':'그림'} 넣음`:`${a.no}번 그림 안 넣음`],
+  bump_version:(a,r)=>['판 올리는 중',r?.bumped?`판 올림 · ${r.version}`:`판 그대로 · ${r?.version||''}`.trim()],
+  run_solve_check:(a,r)=>['풀이 검사 시작하는 중',r?.started?`풀이 검사 시작 · ${r.questions?.length||0}문항`:'풀이 검사 안 함'],
+  rebalance_answers:(a,r)=>['정답 분포 안 만드는 중',r?.proposals?`정답 분포 안 · ${r.proposals.length}문항`:'정답 분포 안 안 만듦'],
+  triage_comments:(a,r)=>['코멘트 읽는 중',r?.comments?`코멘트 읽음 · ${r.comments}개`:'새 코멘트 없음'],
+  save_rule:(a,r)=>['규칙 정리 중',r?.queued?'규칙 저장 물음':'규칙 안 물음']};
 const toolLabel=(t,args,done,result)=>{let l=TOOL_LABEL[t];if(typeof l==='function')l=l(args||{},result);return Array.isArray(l)?l[done?1:0]:t;};
-function agentEngine(){const id=work.projectId;if(!agentEngines.has(id))agentEngines.set(id,createAgentEngine({client:agentClient,conversation:'exam:'+id,tools:createTools(agentApi),toolsVersion:AGENT_TOOLS_VERSION,instructions:AGENT_RULES,thread:work.ui?.agentThread||null,
-  hooks:{onThread:t=>{work.ui={...(work.ui||{}),agentThread:t};save();},onTool:e=>agentLive.onTool?.(e),onToolDone:e=>agentLive.onToolDone?.(e),onDelta:(d,all)=>agentLive.onDelta?.(d,all)}}));return agentEngines.get(id);}
+// 작업 종류마다 도구 묶음: 시험지·문항 하나 = 모두 · 수업 구상·대화 = 읽기·근거·묻기·규칙만(그림만은 지금 figureChat 길).
+const agentToolKind=()=>['lesson','chat'].includes(workMode())?workMode():workMode()==='q'?'q':'exam';
+function agentToolsFor(kind){const all=createTools(agentApi);return ['lesson','chat'].includes(kind)?Object.fromEntries(AGENT_TALK_TOOLS.map(n=>[n,all[n]])):all;}
+// 엔진은 시험지 × 작업 종류마다 하나(도구 묶음이 바뀌면 본체가 새 스레드를 연다). 시험지 종류는 예전 이름·스레드를 그대로 쓴다.
+function agentEngine(){const id=work.projectId,kind=agentToolKind(),key=id+'|'+kind,slot=kind==='exam'?'agentThread':'agentThread:'+kind;
+  if(!agentEngines.has(key))agentEngines.set(key,createAgentEngine({client:agentClient,conversation:kind==='exam'?'exam:'+id:`exam:${id}:${kind}`,tools:agentToolsFor(kind),toolsVersion:`${AGENT_TOOLS_VERSION}-${kind}`,instructions:AGENT_RULES+(AGENT_MODE_RULES[kind]||''),thread:work.ui?.[slot]||null,
+  hooks:{onThread:t=>{work.ui={...(work.ui||{}),[slot]:t};save();},onTool:e=>agentLive.onTool?.(e),onToolDone:e=>agentLive.onToolDone?.(e),onDelta:(d,all)=>agentLive.onDelta?.(d,all)}}));return agentEngines.get(key);}
 // 매 차례 앞에 붙이는 지금 상태(짧게). 자세한 것은 AI가 도구로 읽는다.
-const agentContext=()=>`시험지 「${work.meta.title||'새 시험지'}」 · 문항 ${work.questions.length}개(${X.orderedQuestions(work).map(q=>q.number).join('·')||'없음'}) · 판 ${work.head||'v0.0'} · 판에 안 들어간 고침 ${pendingCount()} · 열린 제안 ${openProposals().length} · 열린 코멘트 ${work.comments.filter(c=>['new','talk','decided'].includes(c.status)).length} · 권한 「${PERMISSION_LABEL[permission()]}」${sub?` · 지금 열린 문항 ${work.questions.find(q=>q.id===sub)?.number}번`:''}`;
-async function agentSend(text){const eng=agentEngine(),turn=newTurnState(text),a=act('생각하는 중…',{onStop:()=>{void eng.interrupt();}});let r=null,err=null;const steps=[];
+const agentContext=()=>`시험지 「${work.meta.title||'새 시험지'}」 · 문항 ${work.questions.length}개(${X.orderedQuestions(work).map(q=>q.number).join('·')||'없음'}) · 판 ${work.head||'v0.0'} · 판에 안 들어간 고침 ${pendingCount()} · 열린 제안 ${openProposals().length} · 열린 코멘트 ${work.comments.filter(c=>['new','talk','decided'].includes(c.status)).length} · 권한 「${PERMISSION_LABEL[permission()]}」${sub?` · 지금 열린 문항 ${work.questions.find(q=>q.id===sub)?.number}번`:''} · 설계표 ${work.plan.length}행(문항 없는 행 ${work.plan.filter(r=>!r.qid).length})${X.missingBlocking(work).length?` · 비어 있는 막는 칸 ${X.missingBlocking(work).map(k=>META_LABEL_H[k]).join('·')}`:''}${drafting?` · 초안 쓰는 중 ${drafting.done.length}/${drafting.rows.length}`:''}`;
+async function agentSend(text){if(!sub&&workMode()==='img'&&!work.questions.length){await figureChat(text);return;}// 그림만: 지금 길 그대로
+  const eng=agentEngine(),turn=newTurnState(text),a=act('생각하는 중…',{onStop:()=>{void eng.interrupt();}});let r=null,err=null;const steps=[];
+  const metaBefore=Object.fromEntries(Object.entries(work.meta).map(([k,v])=>[k,JSON.stringify(v?.value??null)]));
   agentLive.onTool=({tool,args})=>a.set(toolLabel(tool,args)+'…');agentLive.onToolDone=({tool,args,result,ok})=>{steps.push(toolLabel(tool,args,true,result)+(ok||result?.proposed?'':' — 안 됨'));a.set('생각하는 중…');};
   try{r=await eng.send(text,{context:agentContext(),state:turn});for(const x of steps)a.step(x);}
   catch(e){err=e;}
@@ -201,10 +251,17 @@ async function agentSend(text){const eng=agentEngine(),turn=newTurnState(text),a
   if(turn.asks.length)extra.asks=turn.asks;
   if(turn.changes.length){const id=crypto.randomUUID();agentTurns.set(id,turn);extra.undo={id,cells:turn.changes.flatMap(c=>c.cells.map(x=>`${c.no}번 ${x}`)).slice(0,12)};}
   if(turn.proposed.length)extra.art={tab:'sheet',icon:'file',title:`시험지 ${work.head||'v0.0'} · 제안 ${openProposals().length}`,sub:'시험지 위에서 받기·거절'};
+  // 만드는 도구: 알아서 정한 시험지 정보(지금 엔진과 같은 카드) · 판 · 처음 잡은 설계표 카드 · 규칙 저장 물음.
+  const decided=Object.entries(work.meta).filter(([k,x])=>META_LABEL_H[k]&&x&&x.by==='ai'&&x.value!=null&&JSON.stringify(x.value)!==metaBefore[k]).map(([k,x])=>({k:META_LABEL_H[k],v:fmtMeta(x.value)}));if(decided.length)extra.decided=decided;
+  if(turn.bumped){extra.stats=turn.bumped.stats;extra.art={tab:'sheet',icon:'file',title:`시험지 ${turn.bumped.label}`,sub:`바뀐 문항 ${turn.bumped.nos.length}개 · 판 기록에서 두 판 비교`};}
+  if(turn.planFirst&&work.plan.length){const std=[...new Set(work.plan.flatMap(r=>r.standards||[]))].length;extra.art={tab:'plan',icon:'table',title:'설계표',sub:`${work.plan.length}문항 · ${std?`성취기준 ${std}개 · `:''}배점 합 ${work.plan.reduce((n,r)=>n+(Number(r.points)||0),0)}점`};autoTab('plan');}
+  const ruleCards=turn.ruleCards.map(({text,id})=>({text,id}));if(ruleCards.length&&!sub)extra.ruleCards=ruleCards;
   if(r.leak)say('ai',`5E 밖의 동작(${r.leak})이 시작되어 멈췄어요. 다시 말씀해 주세요.`,{error:true});
   else if(r.status==='interrupted')say('ai',(r.text?r.text+'\n\n':'')+'(멈췄어요)',{...extra,noStream:true});
   else if(r.status!=='completed')say('ai',`AI가 끝까지 답하지 못했어요${r.error?': '+r.error:''}. 다시 보내 주세요.`,{error:true,...(extra.undo?{undo:extra.undo}:{})});
   else say('ai',r.text||'(답이 비었어요)',extra);
+  // 문항 대화에서 나온 규칙 카드는 시험지 대화에 띄운다(카드 단추는 시험지 대화의 말만 찾는다).
+  if(ruleCards.length&&sub){const wasSub=sub;sub=null;say('ai',`${work.questions.find(q=>q.id===wasSub)?.number??''}번 문항 대화에서 나온 규칙이에요.`,{ruleCards,noStream:true});sub=wasSub;}
   save();render();}
 // 이번 차례에 바로 고친 것을 한 묶음으로 되돌린다.
 function undoAgentTurn(id){const turn=agentTurns.get(id);if(!turn||!undoTurn(agentApi,turn))return false;for(const m of work.chat)if(m.undo?.id===id)m.undo={...m.undo,undone:true};save();render();note('agent-undo',{cells:turn.changes.length});toast('이번에 고친 것을 되돌렸어요');return true;}
@@ -415,7 +472,7 @@ async function solveChanged(v){const ids=(v.changed||[]).filter(id=>work.questio
   say('ai',`${v.label} 두 모델 풀이(한 회사 두 모델: ${used.join('·')||SOLVERS.map(s=>s.label).join('·')}${used.some(m=>!SOLVERS.some(s=>s.model===m))?' — 기본 둘째 모델이 막혀 대신 푼 모델이 있어요':''}) — 문항 ${ck.length}개 중 통과 ${ck.length-bad.length}${bad.length?` · 확인 필요 ${bad.filter(c=>!waitFig.includes(c)).map(c=>`${work.questions.find(q=>q.id===c.qid)?.number}번(${({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:c.skipped&&/그림 칸/.test(c.skipped)?'그림이 아직 없음':'풀지 못함'})[c.verdict]||c.verdict})`).join(', ')}`:''}${waitFig.length?` · 그림을 기다리는 문항 ${waitFig.length}개`:''}. 고칠지는 말씀해 주시면 정해요.`,{art:{tab:'check',icon:'list',title:`점검 · ${v.label}`,sub:`통과 ${ck.length-bad.length} · 확인 필요 ${bad.filter(c=>!waitFig.includes(c)).length}`}});save();}
 
 // 문항 대화(하위 세션)
-async function subSend(text){const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
+async function subSend(text){if(agentOn()){await agentSend(text);return;}const q=work.questions.find(x=>x.id===sub);if(!q)throw Error('문항이 없어요');
   if(wantsApply(text)){let props=(work.proposals||[]).filter(p=>p.qid===q.id&&['current','agreed'].includes(p.state));
     if(!props.length){const lastAi=[...subThread(q.id)].reverse().find(m=>m.role==='ai'&&!m.error&&m.text);if(!lastAi){say('ai','이 문항에 반영할 안이 없어요. 어떻게 바꿀지 먼저 말씀해 주세요.');return;}
       const pid=await proposalFrom(q,`교사가 바로 앞에서 합의한 안을 그대로 반영하라고 했다(「${text}」). 아래 합의 내용을 문항에 옮길 proposal.changes를 만들어라. 합의에 없는 칸은 건드리지 마.\n[합의한 안]\n${lastAi.text}`,[]);if(!pid){say('ai','합의한 안을 고칠 칸으로 옮기지 못했어요. 바꿀 곳을 한 번 더 짚어 주세요. 바뀐 것은 없어요.',{error:true});return;}props=[work.proposals.find(p=>p.id===pid)];}

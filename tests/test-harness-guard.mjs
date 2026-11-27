@@ -65,3 +65,31 @@ test('선생님 말에서 문항 번호 뽑기', () => {
   assert.deepEqual(teacherIntent('@12번 지목').numbers,[12]);
   assert.deepEqual(teacherIntent('번호 없이 말하기').numbers,[]);
 });
+
+import {isPlaceholder,teacherPlanText,wantsPlanApply,saidByTeacher} from '../assets/harness/guard.js';
+test('만드는 도구: 자리만 채운 값 거르기', () => {
+  for(const v of ['','미정',' 없음 ','unknown',null,undefined,[]])assert.equal(isPlaceholder(v),true,String(v));
+  for(const v of ['물리학',0,16,['운동량'],{상:2}])assert.equal(isPlaceholder(v),false,JSON.stringify(v));
+});
+test('만드는 도구: 선생님이 직접 시킨 설계표 말·설계표 안 받기 말', () => {
+  assert.equal(teacherPlanText('난이도는 상2·중4·하2로'),true);
+  assert.equal(teacherPlanText('8번은 충돌 문항으로'),true);
+  assert.equal(teacherPlanText('난이도는 상2·중4·하2로',{discuss:true}),false);
+  assert.equal(teacherPlanText('좋아'),false);
+  assert.equal(teacherPlanText(''),false);
+  assert.equal(wantsPlanApply('설계표 반영해'),true);
+  assert.equal(wantsPlanApply('추천대로 해 줘'),true);
+  assert.equal(wantsPlanApply('설계표 좋네'),false);
+});
+test('만드는 도구: 선생님이 말한 값인지(낱말·숫자가 말에 있어야)', () => {
+  const t='물리학 운동량과 충격량 단원으로 3문항 시험지 만들자. 총점 10점. 통합과학1, 고1.';
+  assert.equal(saidByTeacher('통합과학1',t),true);
+  assert.equal(saidByTeacher(3,t),true);
+  assert.equal(saidByTeacher(10,t),true);
+  assert.equal(saidByTeacher(['운동량과 충격량'],t),true);
+  assert.equal(saidByTeacher(20,t),false);// 20은 말에 없음(10·1은 있어도)
+  assert.equal(saidByTeacher(1,t),true);// 「고1」의 1
+  assert.equal(saidByTeacher('중간고사',t),false);
+  assert.equal(saidByTeacher({상:1,중:1,하:1},t),true);// 숫자 1이 말에 있음 — 느슨함(낮추는 쪽 판정이라 괜찮음)
+  assert.equal(saidByTeacher('물리학',''),false);
+});

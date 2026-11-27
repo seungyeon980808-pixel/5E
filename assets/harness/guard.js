@@ -84,3 +84,19 @@ export function checkAccept({permission='ask',intent,wantsApply=false,createdThi
   if(!wantsApply)return {ok:false,reason:'선생님이 「반영해」라고 하지 않았어요'};
   return {ok:true};
 }
+
+// ── 만드는 도구용 판정(11-27 저녁). 지금 엔진(app.js absorb·examSend)과 같은 낱말을 쓴다. ──
+// 자리만 채운 값(「미정」 등)은 시험지 정보로 받지 않는다(absorb와 같은 거름).
+const PLACEHOLDER=/^(미지정|미정|없음|모름|알 수 없음|확인 필요|n\/a|unknown|-)$/i;
+export function isPlaceholder(v){return v===''||v==null||(Array.isArray(v)&&!v.length)||(typeof v==='string'&&PLACEHOLDER.test(v.trim()));}
+// 선생님이 직접 시킨 설계표 변경인가(absorb의 teacherPlan과 같은 낱말). 상의만 하자는 말이면 아니다.
+const PLAN_WORDS=/난이도|배점|번은|번을|번 문항|설계|유형|그림|문항|순서|단원|소단원|점/;
+export function teacherPlanText(text,{discuss=false}={}){const t=norm(text);return !!t&&!discuss&&PLAN_WORDS.test(t);}
+// 저장해 둔 설계표 안을 받으라는 말인가(examSend의 planAsk와 같은 낱말).
+export const wantsPlanApply=text=>/설계표.*(반영|적용)|추천대로|그 안대로|제안대로/.test(norm(text));
+// 「선생님이 말한 값」이라는 AI의 말을 믿을지: 값의 낱말(두 글자 이상)이나 숫자가 이번 선생님 말에 실제로 있어야 한다.
+// 없으면 AI가 정한 값(ai)으로 낮춘다 — 낮추면 선생님이 정했거나 본 칸은 덮지 못한다.
+export function saidByTeacher(value,text){const t=norm(text).replace(/\s+/g,'');if(!t)return false;
+  const flat=v=>v==null?[]:Array.isArray(v)?v.flatMap(flat):typeof v==='object'?Object.entries(v).flatMap(([k,x])=>[k,...flat(x)]):[String(v)];
+  const tokens=flat(value).flatMap(s=>String(s).normalize('NFC').split(/[\s,·、/()]+/)).map(s=>s.trim()).filter(Boolean);
+  return tokens.some(s=>/^\d+(\.\d+)?$/.test(s)?new RegExp(`(^|\\D)${s.replace('.','\\.')}(\\D|$)`).test(t):s.length>=2&&(t.includes(s)||(s.length>=3&&t.includes(s.slice(0,2)))));}
