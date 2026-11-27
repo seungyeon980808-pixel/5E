@@ -4,7 +4,8 @@ const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 // 10-16(83201a54)부터 분리 단추는 닫힌 「고급 출력」 안에 있다 — 열고 누른다.
-const openOutputMore = async page => { if (!await page.locator('#ai-image-panel .ai-output-more').evaluate(d => d.open)) await page.locator('#ai-image-panel .ai-output-more > summary').click(); };
+const openOutputMore = async page => { const manualForMore = page.locator('#ai-image-panel [data-result-mode="manual"]'); if (await manualForMore.isVisible().catch(() => false) && await manualForMore.getAttribute('aria-pressed') !== 'true' && await manualForMore.isEnabled()) await manualForMore.click(); // 11-27: 「결과 다듬기」는 직접 편집 칸에 있다
+  if (!await page.locator('#ai-image-panel .ai-output-more').evaluate(d => d.open)) await page.locator('#ai-image-panel .ai-output-more > summary').click(); };
 const root = path.resolve(__dirname, '..');
 const evidence = process.env.SEPARATION_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-latest-fixes-0928/separation-green');
 fs.mkdirSync(evidence, { recursive: true });
