@@ -195,6 +195,15 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     ipcRenderer.on("codex:event", listener);
     return () => ipcRenderer.removeListener("codex:event", listener);
   },
+  // 1.8.0 출제 하네스(실험): AI가 5E 도구를 부르는 엔진의 통로(desktop/harness-agent.cjs).
+  harnessAgent: {
+    call: (payload) => ipcRenderer.invoke("harness-agent:call", payload),
+    onEvent: (callback) => {
+      const listener = (_, value) => callback(value);
+      ipcRenderer.on("harness-agent:event", listener);
+      return () => ipcRenderer.removeListener("harness-agent:event", listener);
+    },
+  },
   onLog: (callback) => {
     const listener = (_, value) => callback(value);
     ipcRenderer.on("codex:log", listener);

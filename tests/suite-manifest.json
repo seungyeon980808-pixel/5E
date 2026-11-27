@@ -1044,6 +1044,12 @@
       "findingIds": [
         "LABEL-UPRIGHT-ITALIC-RULES"
       ]
+    },
+    {
+      "path": "tests/test-harness-model.mjs",
+      "findingIds": [
+        "HARNESS-180-MODEL"
+      ]
     }
   ],
   "browser": [

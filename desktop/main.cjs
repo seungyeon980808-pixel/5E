@@ -2189,6 +2189,20 @@ handleTrustedIpc("codex:interrupt", (_event, payload = {}) => interruptWorkspace
 handleTrustedIpc("codex:login", () => runLogin());
 handleTrustedIpc("codex:login-cancel", () => cancelLogin());
 handleTrustedIpc("codex:logout", () => runLogout());
+// 1.8.0 출제 하네스(실험): AI가 5E 도구를 직접 부르는 엔진의 다리. 하네스 전용 Codex 서버를 따로 띄우며(같은 로그인),
+// 위의 기존 Codex 연결(그림·그래프·문항 엔진)과 서버·코드를 나누어 쓴다 — 화면이 이 통로를 부르지 않으면 아무 일도 하지 않는다.
+const harnessAgent = require("./harness-agent.cjs").createHarnessAgent({
+  invocation: args => codexInvocation(args),
+  log: entry => appendAiTurnLog(entry),
+  cwd: () => path.join(app.getPath("userData"), "harness-agent"),
+  emit: event => {
+    if (!win || win.isDestroyed()) return;
+    const expectedUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
+    if (!isTrustedIpcSender({ sender: win.webContents, senderFrame: win.webContents.mainFrame }, win, expectedUrl)) return;
+    win.webContents.send("harness-agent:event", event);
+  },
+});
+handleTrustedIpc("harness-agent:call", (_event, payload = {}) => harnessAgent.call(payload));
 handleTrustedIpc("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({
     types: ["screen", "window"],
@@ -2276,6 +2290,7 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 app.on("before-quit", stopServer);
+app.on("before-quit", () => harnessAgent.stop());
 app.on('before-quit',()=>{ if (examServerPromise) void examServerPromise.then(host=>host.close()).catch(()=>{}); });
 
 module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest, shortcutModifiersForPlatform, resolveDesktopEntryResource, createDesktopEntryProtocolHandler, resolveSmokeStateModuleUrl };

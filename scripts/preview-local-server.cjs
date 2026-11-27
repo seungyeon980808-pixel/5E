@@ -14,6 +14,20 @@ const codexBridge = process.env.LOCAL_CODEX_BINARY ? require('./local-codex-brid
 const localBridge = process.env.LOCAL_AI_PROVIDER === 'deepseek'
   ? require('./local-deepseek-bridge.cjs').createDeepSeekBridge({apiKey:process.env.DEEPSEEK_API_KEY||'',model:process.env.DEEPSEEK_MODEL||'deepseek-chat',imageBridge:codexBridge})
   : codexBridge;
+// 1.8.0 출제 하네스: AI가 5E 도구를 직접 부르는 엔진(desktop/harness-agent.cjs)을 검사용 웹에서도 쓰게 한다. LOCAL_CODEX_BINARY가 있을 때만.
+// 알림은 서버 메모리에 최근 2000개만 번호를 붙여 두고, 화면이 since 번호로 이어 받는다(오래 기다리기 최대 20초).
+const harnessEvents = [], harnessWaiters = new Set();
+let harnessSeq = 0;
+const harnessAgent = process.env.LOCAL_CODEX_BINARY ? require('../desktop/harness-agent.cjs').createHarnessAgent({
+  invocation: async args => ({ file: process.env.LOCAL_CODEX_BINARY, args }),
+  emit: event => {
+    harnessEvents.push({ seq: ++harnessSeq, event });
+    if (harnessEvents.length > 2000) harnessEvents.splice(0, harnessEvents.length - 2000);
+    for (const wake of [...harnessWaiters]) wake();
+  },
+}) : null;
+const harnessSince = since => ({ events: harnessEvents.filter(row => row.seq > since).map(row => row.event), next: harnessSeq });
+const loopback = req => ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
 const requestedPort = Number(process.env.PORT || 8795);
 let port = requestedPort;
 let origin = `http://127.0.0.1:${port}`;
@@ -80,6 +94,43 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(204); res.end(); }
       catch (error) { fail(400, error.message); }
     });
+    return;
+  }
+  // 하네스 엔진 요청 하나(시작·도구 결과·멈춤 등). 몸통은 createHarnessAgent().call()에 그대로 넘긴다.
+  if (harnessAgent && pathname === '/api/harness-agent') {
+    if (req.method !== 'POST') return fail(405, 'Method rejected');
+    if (!loopback(req) || req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return fail(403, 'Origin rejected');
+    let body = '', size = 0;
+    req.on('data', chunk => { size += chunk.length; if (size > 1000000) { req.destroy(); return; } body += chunk; });
+    req.on('end', async () => {
+      let payload;
+      try { payload = JSON.parse(body || '{}'); } catch { res.writeHead(400, { 'Content-Type':'application/json' }); return res.end(JSON.stringify({ error:'JSON이 올바르지 않습니다.', code:'HARNESS_BAD_REQUEST' })); }
+      try { const result = await harnessAgent.call(payload); res.writeHead(200, { 'Content-Type':'application/json' }); res.end(JSON.stringify(result)); }
+      catch (error) {
+        const code = error?.code || 'HARNESS_FAILED';
+        const status = /^HARNESS_(BAD_|TURN_ACTIVE|NO_SUCH)/.test(code) ? (code === 'HARNESS_TURN_ACTIVE' ? 409 : 400) : 500;
+        res.writeHead(status, { 'Content-Type':'application/json' }); res.end(JSON.stringify({ error:String(error?.message || error), code }));
+      }
+    });
+    return;
+  }
+  // 하네스 알림 받기: since 뒤의 것. 없으면 새 알림이 올 때까지(최대 20초) 기다렸다 답한다.
+  // 같은 출처 GET에는 브라우저가 Origin을 안 붙일 수 있어, Origin은 「있으면 같아야 함」으로 본다(x-5e-request는 필수).
+  if (harnessAgent && pathname === '/api/harness-agent-events') {
+    if (req.method !== 'GET') return fail(405, 'Method rejected');
+    if (!loopback(req) || (req.headers.origin && req.headers.origin !== origin) || req.headers['x-5e-request'] !== '1') return fail(403, 'Origin rejected');
+    const sinceText = new URL(req.url, origin).searchParams.get('since');
+    // since=latest: 지난 알림은 건너뛰고 지금 번호만 바로 알려 준다(화면을 새로 열었을 때 옛 대화 알림을 다시 받지 않게).
+    if (sinceText === 'latest') { res.writeHead(200, { 'Content-Type':'application/json' }); return res.end(JSON.stringify({ events:[], next:harnessSeq })); }
+    const since = Math.max(0, Number(sinceText) || 0);
+    const answer = () => { res.writeHead(200, { 'Content-Type':'application/json' }); res.end(JSON.stringify(harnessSince(since))); };
+    if (harnessSeq > since) return answer();
+    let timer = null;
+    const done = () => { if (!harnessWaiters.delete(wake)) return; clearTimeout(timer); };
+    const wake = () => { done(); answer(); };
+    harnessWaiters.add(wake);
+    timer = setTimeout(wake, 20000);
+    res.on('close', done);
     return;
   }
   if (pathname === '/api/local-ai-config' && req.method === 'GET') {
@@ -174,4 +225,4 @@ server.listen(requestedPort, '127.0.0.1', () => {
   origin = `http://127.0.0.1:${port}`;
   console.log(`Local preview: ${origin}/preview/`);
 });
-for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>{localBridge?.close();server.close();process.exit(0);});
+for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>{localBridge?.close();harnessAgent?.stop();server.close();process.exit(0);});

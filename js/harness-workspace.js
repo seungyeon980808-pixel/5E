@@ -82,10 +82,53 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
       return {text:raw,model:selection.model,ms:Date.now()-t0};
     }catch(error){throw authoringError(error);}finally{if(requestId)controllers.delete(requestId);}
   }
+  // ── 하네스 엔진(AI가 5E 도구를 직접 부름) ── 설치판은 fiveEDesktop.harnessAgent, 검사용 웹은 로컬 서버(/api/harness-agent).
+  // 두 곳 모두 같은 모양 {call(payload), onEvent(cb)→끊기}으로 맞춘다. 대화 이름(conversation)은 하네스 화면이 정한 그대로 넘긴다.
+  let webAgent=null;
+  const agentUnavailable=()=>Object.assign(Error('하네스 AI 엔진을 쓸 수 없는 환경입니다.'),{code:'HARNESS_AGENT_UNAVAILABLE'});
+  function webAgentClient(){
+    const subs=new Set();let since='latest',polling=false,gone=false,readyDone=null;
+    // 첫 번호 맞추기(since=latest)가 끝난 뒤에 요청을 보낸다 — 그 전에 보내면 그 차례의 첫 알림을 건너뛸 수 있다.
+    const ready=new Promise(r=>{readyDone=r;});
+    const dead=status=>status===404||status===405||status===501;
+    const call=async payload=>{
+      if(gone)throw agentUnavailable();
+      if(subs.size)await Promise.race([ready,new Promise(r=>setTimeout(r,3000))]);
+      const res=await fetch('/api/harness-agent',{method:'POST',headers:{'content-type':'application/json','x-5e-request':'1'},body:JSON.stringify(payload)});
+      if(dead(res.status)){gone=true;throw agentUnavailable();}
+      const data=await res.json().catch(()=>null);
+      if(!res.ok)throw Object.assign(Error(data?.error||`하네스 엔진 요청 실패(${res.status})`),{code:data?.code||'HARNESS_HTTP_'+res.status});
+      return data;
+    };
+    // 처음은 since=latest로 지금 번호만 받아 옛 알림을 건너뛴다.
+    // 오래 기다리기 반복: 첫 구독 때 시작, 구독이 없으면 멈춤, 오류면 1초 쉬고 다시.
+    const loop=async()=>{
+      if(polling)return;polling=true;
+      try{
+        while(subs.size&&!gone){
+          try{
+            const res=await fetch('/api/harness-agent-events?since='+since,{headers:{'x-5e-request':'1'}});
+            if(dead(res.status)){gone=true;break;}
+            if(!res.ok)throw Error('events '+res.status);
+            const data=await res.json();
+            if(Number.isFinite(data?.next))since=data.next;readyDone?.();
+            for(const ev of data?.events||[])for(const cb of [...subs]){try{cb(ev);}catch{}}
+          }catch{await new Promise(r=>setTimeout(r,1000));}
+        }
+      }finally{polling=false;}
+    };
+    const onEvent=cb=>{subs.add(cb);void loop();return()=>{subs.delete(cb);};};
+    return {call,onEvent};
+  }
+  const agentBase=()=>{const d=window.fiveEDesktop?.harnessAgent;if(d?.call)return d;return webAgent||=webAgentClient();};
+  let agentUnsub=null;
+  const agentSubscribe=()=>{if(agentUnsub)return;try{agentUnsub=agentBase().onEvent(event=>send({action:'agent-event',event}))||(()=>{});}catch{agentUnsub=null;}};
   win.addEventListener('message',async e=>{
     if(!fromFrame(e))return;const m=e.data;
     if(m.action==='ready'){send({action:'theme',...theme(),desktop:!!window.fiveEDesktop});return;}
     if(m.action==='turn'){try{send({action:'turn-ready',requestId:m.requestId,result:await turn(m)});}catch(error){const n=need(error);send({action:'turn-ready',requestId:m.requestId,error:error.message,cancelled:!!error.cancelled,need:n,opened:n?openConnection():false});}return;}
+    if(m.action==='agent'){agentSubscribe();try{send({action:'agent-ready',requestId:m.requestId,result:await agentBase().call(m.payload)});}
+      catch(error){send({action:'agent-ready',requestId:m.requestId,error:{message:String(error?.message||error),code:error?.code||null}});}return;}
     if(m.action==='author'){try{const h=await authoring();const result=await h.request(m.packet,{requestId:m.requestId,onProgress:p=>send({action:'author-progress',requestId:m.requestId,progress:p})});send({action:'author-ready',requestId:m.requestId,result});}
       catch(error){const n=need(error);send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:n,opened:n?openConnection():false});}return;}
     if(m.action==='evidence'){try{send({action:'evidence-ready',requestId:m.requestId,result:await fetchEvidence(m.request)});}catch(error){send({action:'evidence-ready',requestId:m.requestId,result:{available:false,results:[],warning:error.message}});}return;}

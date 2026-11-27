@@ -11,7 +11,7 @@ const { pathToFileURL } = require('node:url');
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const channels = ['clipboard:read-image', 'codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
   'codex:send', 'codex:interrupt', 'codex:read-image-text', 'codex:login', 'codex:login-cancel', 'codex:logout', 'codex:locate', 'codex:install', 'codex:install-cancel', 'app-update:check', 'app-update:start', 'app-update:install-now', 'app-update:cancel', 'diagnostics:log-error', 'diagnostics:open-log', 'capture:sources', 'local-images:pick-folder', 'window:traffic-lights', 'window:start-expand', 'window:start-shrink',
-  'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence','exam-files:autosave','exam-files:read-latest','exam-files:save','exam-files:open','exam-files:reveal','exam-files:folder','exam-files:open-folder','project:renderer-ready'];
+  'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence','exam-files:autosave','exam-files:read-latest','exam-files:save','exam-files:open','exam-files:reveal','exam-files:folder','exam-files:open-folder','project:renderer-ready','harness-agent:call'];
 const pdfLibraryChannels=['pdf-library:pick-folder','pdf-library:ensure-default-folder','pdf-library:connections','pdf-library:folder-tree','pdf-library:set-folder-selection','pdf-library:disconnect','pdf-library:sync','pdf-library:cancel','pdf-library:list','pdf-library:read','pdf-library:read-image','pdf-library:open-folder','pdf-library:reveal-item','pdf-library:save-index','pdf-library:load-index','pdf-library:index-state','pdf-library:save-index-state','pdf-library:retry-index','pdf-library:list-corrections','pdf-library:save-correction','pdf-library:delete-correction','pdf-library:capabilities','pdf-library:bundled-pack','pdf-library:read-bundled-pack'];
 const auxChannels=['exam:request-edit','exam:get-names','exam:return-source','exam:ack','exam:workspace-snapshot','exam:workspace-restore','exam:project-snapshot-reply','exam:annotations'];
 
@@ -121,6 +121,7 @@ for (const channel of [...channels, ...pdfLibraryChannels]) {
     if(channel==='exam:open-project'){await assert.rejects(async()=>h.call(channel),/프로젝트 파일/);return;}
     if(channel==='exampool:evidence'){await assert.rejects(async()=>h.call(channel),/근거 검색 종류/);return;}// 종류·검색어 없는 요청은 실행하지 않는다
     if(channel==='exam:finish'){await assert.rejects(async()=>h.call(channel),/편집 연결/);return;}
+    if(channel==='harness-agent:call'){await assert.rejects(async()=>h.call(channel),/모르는 요청/);return;}// 1.8.0 하네스 엔진 통로: 내용 없는 요청은 서버를 띄우지 않고 거절한다(동작은 harness-agent.test.cjs 몫)
     if(channel==='codex:read-image-text'){await assert.rejects(async()=>h.call(channel),/잘못된 읽기 요청/);return;}// 11-10: 본문 없는 요청은 네트워크를 쓰지 않고 거절한다
     if(channel==='exam:save-workspace') await h.call('exam:open');
     const result = await h.call(channel);
