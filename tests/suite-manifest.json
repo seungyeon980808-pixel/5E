@@ -1050,6 +1050,18 @@
       "findingIds": [
         "HARNESS-180-MODEL"
       ]
+    },
+    {
+      "path": "tests/test-harness-curriculum.mjs",
+      "findingIds": [
+        "HARNESS-180-CURRICULUM"
+      ]
+    },
+    {
+      "path": "tests/test-harness-guard.mjs",
+      "findingIds": [
+        "HARNESS-180-GUARD"
+      ]
     }
   ],
   "browser": [

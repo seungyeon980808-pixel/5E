@@ -26,7 +26,7 @@ export function createAgentEngine({client,conversation,tools,toolsVersion,instru
   async function runTool(turn,event){const t=tools[event.tool],t0=Date.now(),args=event.arguments&&typeof event.arguments==='object'?event.arguments:{};
     hooks.onTool?.({tool:event.tool,args,callId:event.callId});
     let result,ok=true;
-    try{if(!t)throw Error('모르는 도구');result=await t.run(args,{turn});if(result&&result.error)ok=false;}
+    try{if(!t)throw Error('모르는 도구');result=await t.run(args,{turn:turn.state});if(result&&result.error)ok=false;}
     catch(error){ok=false;result={error:String(error?.message||error).slice(0,500)};}
     // 차례가 이미 끝났으면(멈춤·시간 초과) 늦게 끝난 도구 결과는 돌려보내지 않는다.
     if(active===turn)await reply(event.callId,result??{ok:true},ok);
@@ -40,9 +40,10 @@ export function createAgentEngine({client,conversation,tools,toolsVersion,instru
     if(event.kind==='warning'){hooks.onWarning?.(event.message);return;}
     if(event.kind==='done'){active=null;turn.off();turn.resolve({status:event.status,text:turn.text.trim(),toolLog:turn.toolLog,usage:event.usage||null,ms:event.ms,leak:turn.leak||null,error:event.error||null,code:event.code||null});}}
   // 한 차례 보내기. context = 5E가 넣는 지금 상태 요약(새 스레드·바뀐 것).
-  async function send(text,{context=null,model=null,effort=null}={}){
+  // state = 부르는 쪽의 차례 장부(도구에 그대로 넘긴다).
+  async function send(text,{context=null,model=null,effort=null,state=null}={}){
     if(active)throw Object.assign(Error('아직 일하는 중이에요.'),{code:'HARNESS_TURN_ACTIVE'});
-    const turn={text:'',toolLog:[],turnId:null,leak:null};active=turn;
+    const turn={text:'',toolLog:[],turnId:null,leak:null,state};active=turn;
     const done=new Promise(resolve=>{turn.resolve=resolve;});turn.off=client.listen(conversation,onEvent);
     try{const r=await client.call({action:'start',conversation,text,tools:specs(),toolsVersion,instructions,context,model,effort,...(saved?{threadId:saved.threadId,toolsKey:saved.toolsKey}:{})});
       turn.turnId=r.turnId||null;saved={threadId:r.threadId,toolsKey:r.toolsKey};turn.fresh=!!r.fresh;hooks.onThread?.(saved,r.fresh);}
