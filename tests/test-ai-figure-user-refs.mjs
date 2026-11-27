@@ -207,7 +207,7 @@ test('화면: 교사 그림은 새 엔진으로(표현 참고 경고 건너뜀),
   const panel = readFileSync(new URL('../js/ai-panel.js', import.meta.url), 'utf8');
   assert.match(panel, /if \(roleGroups\.styleReferences\.length && !userRefRoute\?\.use && /u);
   assert.match(panel, /runFigureEngineTurn\(\{ runInput, entered, discussionContext, requestEpoch, options, userRefItems: route\.userRefs \? runInput\.attachments\.slice\(\) : \[\] \}\)/u);
-  assert.match(panel, /runFigureEngine\(\{ ai, request, conversation, models, refIds, signal: abort\.signal, onPhase: enginePhase, userImages, userImageRoles \}\)/u);
-  assert.match(panel, /figureBlankSceneOnlyFlag\(channelStorage\)[\s\S]{0,400}runFigureRedraw\(\{ ai: ai2, previous: outcome\.result, scenes: blankIdx/u);
+  assert.match(panel, /runFigureEngine\(\{ ai, request, labelMode, conversation, models, refIds, signal: abort\.signal, onPhase: enginePhase, userImages, userImageRoles \}\)/u);
+  assert.match(panel, /figureBlankSceneOnlyFlag\(channelStorage\)[\s\S]{0,400}runFigureRedraw\(\{ ai: ai2, labelMode, previous: outcome\.result, scenes: blankIdx/u);
   assert.match(panel, /const conversation = String\(options\.figureConversation \|\| ''\);/u);
 });

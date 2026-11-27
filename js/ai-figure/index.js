@@ -14,6 +14,7 @@ import { grayscaleGeneratedPng, flattenPngOnWhite } from '../ai-grayscale-png.js
 import { AI_ENGINE_FLAG_KEYS, figureEngineFlag, figureImageModelFlag, FIGURE_IMAGE_MODEL_CHOICES } from '../ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { runEdit } from './edit.js';
 import { labelHintsFromRequest } from './labels.js';
+import { BARE_FIGURE_LABEL_NOTE } from './generated-labels.js?v=1.7.0-four-session-integration';
 import { SKETCH_SPEC_PROMPT, sketchSpecText, styleWanted, STYLE_DIRECTIVES, combinedPanelsRequest, SKETCH_MERGED_NOTE, SKETCH_SPEC_SHORT_PROMPT, sketchSpecShortText, EDIT_BOX_NOTE, EDIT_DRIFT_RETRY_NOTE } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
 import { panelSheetRequest, wantsBlackFill } from '../ai-figure-panels.js?v=1.7.0-four-session-integration'; // 1.7.3(E): 여러 장 칸 그림 지시·검은 칠 바람 판정
@@ -165,6 +166,7 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
       }
       if (specText) { if (fix.sketchSpec === 2) drawUsers = []; else drawRole = roleList0.map((r) => (r === 'sketch' ? 'sketchLayout' : r)); }
     }
+    if (fix.editableLabels) raw = false;
     let expanded = null, sceneRequests = [request];
     // GENSPEED(11-20): 기출 검색(분류·고르기 글 AI 두 번)을 구체화와 나란히 시작한다 — 앞에서 차례로 기다리던 7~9초를 줄인다.
     // 첫 장면은 처음 요청으로 고른 기출을 쓰고, 둘째 장면부터는 첫 장면을 그리는 동안 장면 요청으로 미리 검색해 둔다.
@@ -191,7 +193,9 @@ export function createEngine({ ai, fetch: fetchImpl = globalThis.fetch, indexBas
     let first = typeof firstScene === 'string' && firstScene.startsWith('data:image') ? firstScene : null;
     const searchFromExpand = (classifyMode === 'expand' && expanded?.search ? expanded.search : null) || sketchSearch;
     const retrievals = sceneRequests.map((_, i) => (i === 0 ? early : null));
-    if (specText) sceneRequests = sceneRequests.map((s) => s + specText);
+    const drawRequest = (scene, i) => scene + specText
+      + (fix.noLabels || expanded?.sceneLabels?.[i]?.length ? BARE_FIGURE_LABEL_NOTE : '');
+    sceneRequests = sceneRequests.map(drawRequest);
     // 실험(fix.multiCombined): 여러 장면을 한 장에 나란히 그린 뒤 칸별로 잘라 쓴다(그림 한 번·같은 배율). 칸 수가 안 맞으면 보통 길로.
     if (fix.multiCombined && sceneRequests.length >= 2 && sceneRequests.length <= 5 && typeof splitPanels === 'function') {
       const n = sceneRequests.length;

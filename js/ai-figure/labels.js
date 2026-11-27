@@ -40,8 +40,11 @@ function tokensOf(text) {
  * @param {string} text
  * @returns {string[]}
  */
+// 11-25 밤샘 검수: 위치별 코멘트 줄의 머리([선택 버전 …; 이미지ID …])와 좌표 괄호(x=…%, y=…%, …)는 라벨이 아니다 —
+// 그대로 두면 「x」「3.55%」 같은 글이 라벨 후보가 되어 글자 읽기가 엉뚱한 글자를 찾았다.
+const COMMENT_META = /\[(?:원본|선택 버전|참고 이미지|생성 결과)[^\]\n]*\]|\((?:가로 |x=)[^)\n]*%[^)\n]*\)|위치별 코멘트:|이미지 영역 코멘트:/gu;
 export function labelHintsFromRequest(text) {
-  const s = String(text ?? '').normalize('NFC');
+  const s = String(text ?? '').normalize('NFC').replace(COMMENT_META, ' ');
   if (!s.trim()) return [];
   const found = [];
   // 따옴표 글은 먼저 꺼내고 그 자리는 비워 같은 글을 두 번 세지 않게 한다(자리를 지켜 차례는 유지).

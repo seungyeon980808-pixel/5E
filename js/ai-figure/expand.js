@@ -2,15 +2,22 @@
 // 원본 image_generator pipeline/expand.cjs. AI가 답을 못 주거나 JSON이 깨져도 실패로 끝내지 않고 원래 요청 한 장면으로 이어 간다.
 import { expandPrompt, expandPromptWithSearch } from './prompt.js';
 import { tryParseJson } from './retrieve.js';
+import { normalizeGeneratedLabels } from './generated-labels.js?v=1.7.0-four-session-integration';
 
 /** AI 응답 글 → 구체화 결과(장면이 없으면 원래 요청 하나). */
 export function normalizeExpanded(parsed, request) {
   const j = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? { ...parsed } : {};
-  const scenes = Array.isArray(j.scenes) ? j.scenes.map((s) => String(s ?? '').trim()).filter(Boolean) : [];
+  const entries = Array.isArray(j.scenes) ? j.scenes : [];
+  const planned = entries.map(entry => ({
+    draw: (typeof entry === 'string' ? entry : typeof entry?.draw === 'string' ? entry.draw : '').trim(),
+    labels: normalizeGeneratedLabels(entry?.labels),
+  })).filter(entry => entry.draw);
+  const scenes = planned.map(entry => entry.draw);
   return {
     type: typeof j.type === 'string' ? j.type : '',
     graph: j.graph === true,
     scenes: scenes.length ? scenes : [request],
+    ...(planned.some(entry => entry.labels !== null) ? { sceneLabels: planned.map(entry => entry.labels) } : {}),
     keyValues: typeof j.keyValues === 'string' ? j.keyValues : '',
     notes: typeof j.notes === 'string' ? j.notes : '',
   };
@@ -56,6 +63,13 @@ export async function expand({ request, subject = '', context = '', conversation
     const keywords = Array.isArray(parsed.keywords) ? parsed.keywords.map(String).filter(Boolean).slice(0, 8) : [];
     if (types.length || keywords.length) out.search = { subject: typeof parsed.subject === 'string' ? parsed.subject : subject, types, keywords, fromExpand: true };
   }
-  if (out.scenes.length > 1 && wantsSideBySide(request)) return { ...out, scenes: mergeSideBySide(out.scenes, request), merged: true };
+  if (out.scenes.length > 1 && wantsSideBySide(request)) {
+    const rows = ROWS.test(request);
+    const names = (rows ? ROW_NAMES : SIDE_NAMES)[out.scenes.length];
+    const sceneLabels = out.sceneLabels?.every(Array.isArray) ? [out.sceneLabels.flatMap((labels, i) =>
+      labels.map(label => ({ ...label, target: `${names?.[i] || `${i + 1}번째`} 부분의 ${label.target}` }))),
+    ] : undefined;
+    return { ...out, sceneLabels, scenes: mergeSideBySide(out.scenes, request), merged: true };
+  }
   return out;
 }

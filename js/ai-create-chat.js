@@ -85,15 +85,19 @@ export function resultChips(item, { viewing = false, items = [], comparing = fal
   if (comparing && side === 'right') chips.push({ id: 'compare-close', label: '비교 닫기', kind: 'action' });
   const from = ui.from ? items.find(other => other.id === ui.from) : null;
   const fromNo = from ? resultNumber(from, items) : null;
-  if (ui.kind === 'label') {
+  if (ui.kind === 'label' || (item.meta?.figureLabelMode === 'editable' && !canLabel)) {
     chips.push({ id: 'label-toggle', label: labelsOn ? '라벨 끄고 보기' : '라벨 켜고 보기', kind: 'action' });
     chips.push({ id: 'label-edit', label: '라벨 편집', kind: 'action' });
-    if (from) chips.push({ id: 'revert', label: `되돌리기(${fromNo}로)`, kind: 'action', target: from.id });
-    return chips;
+    if (ui.kind === 'label') {
+      if (from) chips.push({ id: 'revert', label: `되돌리기(${fromNo}로)`, kind: 'action', target: from.id });
+      return chips;
+    }
   }
-  if (!comparing && canLabel) chips.push({ id: 'label-restore', label: '확정하고 라벨 살리기', kind: 'action', strong: true });
+  // 11-27: 라벨 살리기는 글자를 그림에 그린 결과(그림 속 글자)에만 — 라벨 없음·편집 라벨 결과에는 살릴 글자가 없다.
+  const embedded = !['editable', 'none'].includes(item.meta?.figureLabelMode);
+  if (!comparing && canLabel && embedded) chips.push({ id: 'label-restore', label: '확정하고 라벨 살리기', kind: 'action', strong: true });
   if (from) chips.push({ id: 'revert', label: `되돌리기(${fromNo}로)`, kind: 'action', target: from.id });
-  else if (!comparing) chips.push({ id: 'drop-labels', label: '라벨 빼기', kind: 'fill', text: '그림 속 라벨 글자를 모두 빼 줘' });
+  else if (!comparing && embedded) chips.push({ id: 'drop-labels', label: '라벨 빼기', kind: 'fill', text: '그림 속 라벨 글자를 모두 빼 줘' });
   chips.push({ id: 'bolder', label: '선 진하게', kind: 'fill', text: '선을 조금 더 진하게 해 줘' });
   if (!from && !comparing) chips.push({ id: 'angle', label: '각도 바꾸기', kind: 'fill', text: '보는 각도를 바꿔 줘: ' });
   chips.push({ id: 'redraw', label: '새로 그리기', kind: 'new' });

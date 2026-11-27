@@ -303,6 +303,7 @@ export function figurePhaseCopy(e = {}) {
     case 'draw': return { title: `그림을 그리고 있습니다${scene}`, detail: '흑백 시험지 선화로 그립니다.' };
     case 'strip': return { title: `그림 안 설명 문장을 지우고 있습니다${scene}`, detail: '그림 속 설명 문장·패널 이름을 찾아 지웁니다.' };
     case 'grayscale': return { title: `흑백으로 정리하고 있습니다${scene}`, detail: '시험지 인쇄용 흑백으로 맞춥니다.' };
+    case 'label-place': return { title: `편집할 라벨 자리를 찾고 있습니다${scene}`, detail: '글자와 지시선의 위치를 그림에서 찾습니다.' };
     // 「이 그림 고치기」(엔진 editFigure, EDIT_PHASES) — 시안 태그 10의 네 단계.
     case 'edit-find': return { title: '고칠 곳을 찾고 있습니다', detail: '앞 그림에서 말한 곳을 찾습니다. 나머지는 그대로 둡니다.' };
     case 'edit-apply': return { title: '그 부분을 고치고 있습니다', detail: '앞 그림을 바탕으로 말한 곳만 고칩니다.' };
@@ -347,7 +348,37 @@ export const loadGraphEngine = () => (graphModule ||= import('./ai-graph/index.j
  * 새 그림 엔진으로 한 벌 만들기. 던지지 않는다(취소만 aborted로 알림).
  * @returns {Promise<{ ok: boolean, aborted: boolean, fresh: { image: string, meta: object }[], result: object|null, errors: object[] }>}
  */
-export async function runFigureEngine({ ai, request, conversation = '', models, previous = null, refIds = [], signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
+/** 11-27 라벨 3칸: 없음(none) · 그림 속 글자(embedded, 기본) · 편집 라벨(editable). */
+export const figureLabelModeOf = value => (value === 'editable' || value === 'none' ? value : 'embedded');
+
+export async function attachGeneratedFigureLabels(fresh, expanded, { ai, models, signal, onPhase = () => {} } = {}) {
+  if (!fresh.length || signal?.aborted) return fresh;
+  const specs = expanded?.sceneLabels;
+  if (specs?.every(labels => Array.isArray(labels) && !labels.length)) return fresh;
+  const { locateGeneratedLabels } = await import('./ai-figure/generated-labels.js?v=1.7.0-four-session-integration');
+  const { createGeneratedImageLabelPlan } = await import('./ai-generated-label-placement.js?v=1.7.0-four-session-integration');
+  return Promise.all(fresh.map(async scene => {
+    const i = scene.meta.sceneIndex;
+    const labels = specs?.[i];
+    if (!Array.isArray(labels)) return { ...scene, meta: { ...scene.meta, figureLabelStatus:'unavailable' } };
+    if (!labels.length) return scene;
+    const meta = { ...scene.meta, figureLabelSpecs: labels };
+    try {
+      if (signal?.aborted) return scene;
+      onPhase({ phase:'label-place', scene:i, total:scene.meta.sceneCount });
+      const located = await locateGeneratedLabels(labels, scene.image, async (text, attachments) => {
+        const value = await ai.readText({ model: models?.text || ENGINE_TEXT_MODEL, text, attachments, signal });
+        return typeof value === 'string' ? value : value?.text;
+      });
+      const labelPlan = await createGeneratedImageLabelPlan(located, scene.image, { signal });
+      return { ...scene, labelPlan, meta: { ...meta, figureLabelStatus:labelPlan ? (located.missing ? 'partial' : 'ready') : 'unavailable' } };
+    } catch {
+      return { ...scene, meta: { ...meta, figureLabelStatus:'unavailable' } };
+    }
+  }));
+}
+
+export async function runFigureEngine({ ai, request, labelMode = 'embedded', conversation = '', models, previous = null, refIds = [], signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
   // 고침 U1: 교사 그림을 첫 첨부로(역할 문장 fix.userRoles), 기출은 화풍 참고 2장.
   const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
   const roles = users.map((_, i) => userImageRoles[i] || 'reference');
@@ -356,6 +387,11 @@ export async function runFigureEngine({ ai, request, conversation = '', models, 
   const flat = figureFlattenWhiteFlag() ? { flattenWhite: true } : {};
   const userOpts = users.length ? { userImages: users, userImageRole: roles, ...(sketchOpts || { fix: { userRoles: true, ...flat }, refCount: USER_REF_KICE_COUNT, raw: true }) } : figureCreateOptions();
   if (users.length) request = userRefRequest(request, conversation);
+  // 11-27 라벨 3칸: 없음은 편집 라벨처럼 글자 없이 그리되 라벨을 올리지 않는다.
+  if (labelMode === 'editable' || labelMode === 'none') {
+    Object.assign(userOpts, { classifyMode:'expand', aiPick:false,
+      fix:{ ...userOpts.fix, editableLabels:true, verify:false, ...(labelMode === 'none' ? { noLabels:true } : {}) } });
+  }
   let result = null;
   try {
     const mod = engine ? null : await loadEngine();
@@ -368,15 +404,16 @@ export async function runFigureEngine({ ai, request, conversation = '', models, 
     if (isAbort(error) || signal?.aborted) return { ok: false, aborted: true, fresh: [], result, errors: [] };
     return { ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'engine', message: String(error?.message || error).slice(0, 300) }] };
   }
-  const fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: { ...figureSceneMeta(result, i, { request, models }), ...(users.length ? { userRefs: { count: users.length, roles: userOpts.userImageRole.slice(), ...(sketchOpts ? { sketchPlan: sketchOpts.fix.sketchPlan } : {}) } } : {}), ...(s.combined ? { combined: true } : {}) } } : null)).filter(Boolean);
-  return { ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
+  let fresh = (result?.scenes || []).map((s, i) => (s?.image && !s.kept ? { image: s.image, meta: { ...figureSceneMeta(result, i, { request, models }), figureLabelMode:labelMode, ...(users.length ? { userRefs: { count: users.length, roles: userOpts.userImageRole.slice(), ...(sketchOpts ? { sketchPlan: sketchOpts.fix.sketchPlan } : {}) } } : {}), ...(s.combined ? { combined: true } : {}) } } : null)).filter(Boolean);
+  if (labelMode === 'editable' && !result?.aborted) fresh = await attachGeneratedFigureLabels(fresh, result?.expanded, { ai, models, signal, onPhase });
+  return { ok: !!result?.ok && !signal?.aborted, aborted: !!result?.aborted || !!signal?.aborted, fresh, result, errors: result?.errors || [] };
 }
 
 /**
  * 고침 E2: 빈 장면만 다시 그리기(구체화·검색 없이 같은 장면 글·같은 참고 기출). 엔진에 redrawScenes가 없으면(옛 판) available:false.
  * fresh에는 다시 그린 장면만 들어간다(meta.sceneIndex로 원래 자리를 찾는다). 던지지 않는다.
  */
-export async function runFigureRedraw({ ai, previous, scenes = [], request = '', models, signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
+export async function runFigureRedraw({ ai, labelMode = 'embedded', previous, scenes = [], request = '', models, signal, onPhase = () => {}, engine = null, loadEngine = loadFigureEngine, userImages = [], userImageRoles = [] } = {}) {
   let result = null;
   const users = Array.isArray(userImages) ? userImages.filter((u) => typeof u === 'string' && u.startsWith('data:image')) : [];
   const flat = figureFlattenWhiteFlag() ? { flattenWhite: true } : {};
@@ -393,8 +430,9 @@ export async function runFigureRedraw({ ai, previous, scenes = [], request = '',
     if (isAbort(error) || signal?.aborted) return { available: true, ok: false, aborted: true, fresh: [], result, errors: [] };
     return { available: true, ok: false, aborted: false, fresh: [], result, errors: [{ scene: null, step: 'redraw', message: String(error?.message || error).slice(0, 300) }] };
   }
-  const fresh = (result?.redrawn || []).map((i) => (result.scenes[i]?.image ? { image: result.scenes[i].image, meta: { ...figureSceneMeta(result, i, { request, models }), blankRedrawn: true } } : null)).filter(Boolean);
-  return { available: true, ok: !!result?.ok, aborted: !!result?.aborted, fresh, result, errors: result?.errors || [] };
+  let fresh = (result?.redrawn || []).map((i) => (result.scenes[i]?.image ? { image: result.scenes[i].image, meta: { ...figureSceneMeta(result, i, { request, models }), figureLabelMode:labelMode, blankRedrawn:true } } : null)).filter(Boolean);
+  if (labelMode === 'editable' && !result?.aborted) fresh = await attachGeneratedFigureLabels(fresh, result?.expanded, { ai, models, signal, onPhase });
+  return { available:true, ok:!!result?.ok && !signal?.aborted, aborted:!!result?.aborted || !!signal?.aborted, fresh, result, errors:result?.errors || [] };
 }
 
 /**
