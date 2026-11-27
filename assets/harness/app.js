@@ -33,8 +33,9 @@ function call(action,payload,{onProgress,group}={}){const requestId=crypto.rando
 // 멈추기(시안7 1번): 그 묶음의 진행 중 요청을 본창에 취소로 알리고, 여기서도 바로 끝낸다.
 function cancelGroup(group){let n=0;for(const [id,p] of pending)if(p.group===group){post({action:'cancel',requestId:id});pending.delete(id);p.reject(Object.assign(Error('멈춤'),{cancelled:true}));n++;}note('stop',{group,n});return n;}
 addEventListener('message',e=>{if(e.source!==window.parent||e.data?.channel!=='5e-harness')return;const m=e.data;
-  if(m.action==='theme'){document.documentElement.dataset.theme=m.theme==='light'?'light':'dark';document.documentElement.dataset.palette=m.palette==='graphite'?'graphite':'classic';if(m.pref)colorPref=m.pref;markTheme();return;}
-  if(m.action==='tool-opened'){document.body.classList.add('tool-on');postSideW();curTool=m.tool||curTool;return;}if(m.action==='tool-back'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));showView(pristine(work)?'home':'work');return;}if(m.action==='tool-closed'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));return;}
+  if(m.action==='theme'){document.documentElement.dataset.theme=m.theme==='light'?'light':'dark';document.documentElement.dataset.palette=m.palette==='graphite'?'graphite':'classic';if(m.pref)colorPref=m.pref;if(m.toolLook)toolLook=m.toolLook;applyToolLook();markTheme();return;}
+  if(m.action==='tool-closed'){document.body.classList.remove('tool-on');applyToolLook();return;}
+  if(m.action==='tool-opened'){document.body.classList.add('tool-on');applyToolLook();postSideW();curTool=m.tool||curTool;return;}if(m.action==='tool-back'){document.body.classList.remove('tool-on');applyToolLook();$$('.side .nav').forEach(n=>n.classList.remove('on'));showView(pristine(work)?'home':'work');return;}if(m.action==='tool-closed'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));return;}
   if(m.action==='evidence-ready'){const p=pending.get(m.requestId);if(p){pending.delete(m.requestId);p.resolve(m.result);}return;}
   if(m.action==='author-progress'){pending.get(m.requestId)?.onProgress?.(m.progress);return;}
   if(m.action==='library-picked'){if(view==='home'&&m.items?.length)showView('work');if(m.error)toast('라이브러리를 열지 못했어요: '+m.error);if(m.items?.length){const got=m.items.filter(x=>/^data:image\//.test(x.data||'')).map(x=>({id:crypto.randomUUID(),name:x.name||'라이브러리 자료',data:x.data,at:nowIso()}));
@@ -157,7 +158,7 @@ async function examSend(text){
   const metaBefore=Object.fromEntries(Object.entries(work.meta).map(([k,v])=>[k,JSON.stringify(v?.value??null)])),planBefore=work.plan.length;
   const shownPlan=(work.planProposals||[]).slice();// 교사가 이미 본 설계표 안만 받을 수 있다(이번 턴에 새로 나온 안은 아직 못 봤음)
   const v=await examTurn(text);
-  if(['lesson','chat'].includes(workMode())){v.plan=null;}
+  if(['lesson','chat'].includes(workMode())){v.plan=null;v.meta={};v.choices=null;}/* 수업 구상·대화에서는 시험지 정보(배점·난이도 등)를 알아서 정하지 않는다 */
   absorb(v,text,{allowDecided:!discuss});
   const decided=Object.entries(work.meta).filter(([k,x])=>META_LABEL_H[k]&&x&&x.by==='ai'&&x.value!=null&&JSON.stringify(x.value)!==metaBefore[k]).map(([k,x])=>({k:META_LABEL_H[k],v:fmtMeta(x.value)}));
   const art=!planBefore&&work.plan.length?{tab:'plan',icon:'table',title:'설계표',sub:`${work.plan.length}문항 · ${[...new Set(work.plan.flatMap(r=>r.standards||[]))].length?`성취기준 ${[...new Set(work.plan.flatMap(r=>r.standards||[]))].length}개 · `:''}배점 합 ${work.plan.reduce((n,r)=>n+(Number(r.points)||0),0)}점`}:null;
@@ -424,7 +425,7 @@ function placePicked(msg,qid){const q=work.questions.find(x=>x.id===qid);if(!q)r
   work.dirty=true;msg.pickDone=`${q.number}번 그림 칸에 넣었어요(${list.length}장). 직접 넣은 그림이라 잠겨 있고, 다음 「판 올리기」 때 판에 들어가요.`;save();render();note('library-place',{no:q.number,n:list.length});}
 let pendingAttach=[];
 function renderThread(){const list=sub?subThread(sub):work.chat;
-  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}${streamAt.has(m)?' streaming':''}"${streamAt.has(m)?` data-st="${i}"`:''}>${logsHtml(m,i)}${String(m.text).split(/\n+/).map(p=>`<p class="tx">${E(p)}</p>`).join('')}${m.img?`<img class="himg" src="${E(m.img)}" data-himg="${i}" alt="그린 그림" title="두 번 누르면 클립보드에 넣고 image에서 고쳐요">`:''}${decHtml(m)}${artHtml(m)}${(m.asks||[]).length?`<div class="ledger"><div class="lh">꼭 정해야 해요</div>${m.asks.map(a=>`<div class="lr"><span class="ln">?</span><span>${E(a)}</span></div>`).join('')}</div>`:''}${choicesHtml(m,i)}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${m.pick?pickHtml(m):''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
+  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}${streamAt.has(m)?' streaming':''}"${streamAt.has(m)?` data-st="${i}"`:''}>${logsHtml(m,i)}${String(m.text).split(/\n+/).map(p=>`<p class="tx">${E(p)}</p>`).join('')}${m.img?`<img class="himg" src="${E(m.img)}" data-himg="${i}" alt="그린 그림" title="두 번 누르면 클립보드에 넣고 image에서 고쳐요">`:''}${decHtml(m)}${artHtml(m)}${askHtml(m,i)}${choicesHtml(m,i)}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${m.pick?pickHtml(m):''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
   for(const el of acts)$('#thread').append(el);$('#scroll').scrollTop=1e7;runStream(list);}
 const ST={new:'새 코멘트',talk:'의논 중',decided:'결정됨',applied:'반영됨',dropped:'안 함'},SC={new:'b-ok',talk:'b-talk',decided:'b-ok',applied:'b-done',dropped:'b-ok'};
 function ledgerHtml(){const list=work.comments.filter(c=>c.status!=='dropped').slice(-20);if(!list.length)return '';return `<div class="ledger"><div class="lh">코멘트 대장 · ${E(work.head||'v0.0')}</div>${list.map(c=>`<div class="lr"><span class="ln">${E(work.questions.find(q=>q.id===c.qid)?.number||'전체')}번</span><span>${E(c.gist||c.text).slice(0,80)}</span><span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>`).join('')}</div>`;}
@@ -501,6 +502,11 @@ function setPanel(open){const w=$('#work');if(!w)return;const isOff=w.classList.
   w.style.transition='none';w.style.gridTemplateColumns=`minmax(0,1fr) ${from}px`;if(open)w.classList.remove('panel-off');
   void w.offsetWidth;w.style.transition='grid-template-columns .4s cubic-bezier(.45,0,.2,1)';w.style.gridTemplateColumns=`minmax(0,1fr) ${target}px`;
   panelAnim=setTimeout(()=>{if(!open)w.classList.add('panel-off');w.style.transition='';w.style.gridTemplateColumns='';},420);}
+// 도구 화면: 하네스 칸을 5E 본체 색·위 막대 높이로(한 몸처럼). 돌아오면 하네스 색으로.
+let toolLook=null;
+function applyToolLook(){const r=document.documentElement,on=document.body.classList.contains('tool-on')&&toolLook;
+  for(const v of Object.keys(toolLook?.vars||{}))on?r.style.setProperty(v,toolLook.vars[v]):r.style.removeProperty(v);
+  on?r.style.setProperty('--hx-barh',(toolLook.barH||57)+'px'):r.style.removeProperty('--hx-barh');}
 function postSideW(){const off=$('#app').classList.contains('side-off');const w=off?(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ds-rail'))||52):224;post({action:'side-width',width:w});}
 function placeSuggs(){for(const sg of $$('#t-sheet .sugg[data-skey]')){const k=sg.dataset.skey;if(!k)continue;const blk=sg.closest('.qblock');const cell=blk?.querySelector(`[data-cell="${CSS.escape(blk.dataset.q+'|'+k)}"]`);if(!cell)continue;const host=cell.closest('.box,.bogi,.choices')||cell.closest('p')||cell;if(blk.contains(host))host.after(sg);}}
 function renderSide(list){sideList=list||[];const box=$('#examList');if(!box)return;const rows=sideList.filter(x=>!x.empty||(work&&x.id===work.projectId&&view==='work'));const now=termOf();
@@ -564,7 +570,7 @@ document.addEventListener('click',async e=>{const t=e.target;if(t.closest?.('.hx
   const nav=t.closest('.side [data-tool]');if(nav){const tl=nav.dataset.tool;if(tl==='lib'){post({action:'library'});return;}curTool=tl;$$('.side .nav').forEach(n=>n.classList.toggle('on',n===nav));post({action:'tool',tool:tl});note('tool',{tool:tl});return;}
   if(t.closest('[data-go="home"]')){post({action:'home'});closeAll();showView('home');return;}
   if(t.closest('[data-go="new"]')){post({action:'home'});closeAll();if(!pristine(work))newWork();showView('home');return;}
-  const op=t.closest('[data-open]');if(op){closeAll();const w=await idbGet('work:'+op.dataset.open);if(w){work=w;work.proposals ||= [];sub=null;compare=null;tab=initialTab(work);post({action:'home'});showView('work');render();}return;}
+  const op=t.closest('[data-open]');if(op){closeAll();const w=await idbGet('work:'+op.dataset.open);if(w){work=w;work.proposals ||= [];sub=null;compare=null;tab=initialTab(work);post({action:'home'});showView('work');render();if(['img','lesson','chat'].includes(workMode()))setPanel(false);else setPanel(true);}return;}
   if(t.closest('#bOpen')){$('#fOpen').click();return;}if(t.closest('#bFolder')){$('#fFolder').click();return;}
   if(t.closest('#bClip')){toggleClip();return;}
   if(t.closest('#bPane')||t.closest('#bClose')){setPanel();$('#work').classList.remove('panel-full');return;}
@@ -697,7 +703,7 @@ function startFromHome(){const v=$('#homeIn').value.trim();if(!v){$('#homeIn').f
   // 시험지가 아닌 일은 인사말·이름을 그 일에 맞추고, 설계표 칸은 닫아 둔다(대화가 넓게)
   if(mk!=='exam'){const g=work.chat[0];if(g?.role==='ai'&&work.chat.length===1)g.text={q:'어떤 문항을 쓸까요? 과목·범위만 알려 주시면 나머지는 알아서 정해 바로 써요.',img:'어떤 그림을 그릴까요? 말한 그대로 그려 대화에 붙이고 클립보드에도 넣어요.',lesson:'어떤 수업을 구상할까요? 단원·차시를 알려 주시면 교육과정 근거로 흐름을 잡아요.',chat:'무엇이든 물어보세요. 교육과정·기출 근거를 찾아 답해요.'}[mk]||g.text;
     if(!work.meta.title||work.meta.title==='새 시험지'){work.meta.title={q:'문항 하나',img:'그림',lesson:'수업 구상',chat:'대화'}[mk];work.meta.titleAuto=false;}}
-  $('#homeIn').value='';showView('work');if(mk==='img'||mk==='lesson'||mk==='chat')setPanel(false);$('#input').value=v;note('home-start',{mode:HMODES[homeMode].k});void send();}
+  $('#homeIn').value='';showView('work');render();if(mk==='img'||mk==='lesson'||mk==='chat')setPanel(false);$('#input').value=v;note('home-start',{mode:HMODES[homeMode].k});void send();}
 $('#homeSend').onclick=startFromHome;
 $('#homeIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();startFromHome();}});
 $('#homeIn').addEventListener('input',()=>{$('#homePh').innerHTML='';});
@@ -705,6 +711,15 @@ $('#fForm').onchange=async()=>{const f=$('#fForm').files[0];$('#fForm').value=''
 
 // ── 고르기 카드(시안 v7 7번) · 작업 기록 ──
 const cleanChoices=list=>(Array.isArray(list)?list:[]).filter(c=>c&&typeof c.ask==='string'&&Array.isArray(c.options)&&c.options.length>=2).slice(0,2).map(c=>({ask:c.ask.slice(0,300),why:String(c.why||'').slice(0,300),options:c.options.slice(0,4).map(o=>typeof o==='string'?{label:o.slice(0,120),desc:''}:{label:String(o?.label||'').slice(0,120),desc:String(o?.desc||'').slice(0,200)}).filter(o=>o.label),recommend:Number.isInteger(c.recommend)?c.recommend:-1})).filter(c=>c.options.length>=2);
+// 11-27: 「꼭 정해야 해요」 질문도 눌러서 고른다. AI가 보기를 주면 그대로, 안 주면 질문 낱말로 흔한 보기를 채운다. 직접 쓰기도 됨.
+const ASK_FALLBACK=[[/과목/,['중학교 과학','통합과학1','통합과학2','물리학','화학','생명과학','지구과학','물리학Ⅰ','화학Ⅰ','생명과학Ⅰ','지구과학Ⅰ']],[/문항\s*수|몇\s*문항/,['5문항','10문항','15문항','20문항','25문항']],[/총점|배점 합|만점/,['50점','100점']],[/학년/,['중1','중2','중3','고1','고2','고3']],[/학기|시험\s*종류|중간|기말/,['1학기 중간고사','1학기 기말고사','2학기 중간고사','2학기 기말고사','단원평가','수행평가']],[/개정|교육과정/,['2022 개정','2015 개정']],[/난이도/,['쉽게','보통','어렵게','하·중·상 고르게']]];
+const askItems=m=>(m.asks||[]).map(a=>{const o=typeof a==='string'?{ask:a}:{ask:String(a.ask||''),options:a.options};if(!o.options?.length)o.options=(ASK_FALLBACK.find(([re])=>re.test(o.ask))||[0,[]])[1];return o;});
+function askHtml(m,i){const items=askItems(m);if(!items.length)return '';const picks=m.askPicked||{};const sent=m.askSent;
+  return `<div class="ledger askb"><div class="lh">꼭 정해야 해요${items.length>1?' · 하나씩 고르면 다 고른 뒤 보내요':''}</div>${items.map((a,k)=>`<div class="lr"><span class="ln">?</span><span>${E(a.ask)}</span></div>${sent&&picks[k]==null?'':`<div class="askopts">${a.options.map((o,j)=>`<button class="askopt${picks[k]===j?' on':''}" data-askpick="${i}|${k}|${j}"${sent?' disabled':''}>${E(o)}</button>`).join('')}${sent?'':`<button class="askopt typed" data-asktype="${i}|${k}">직접 쓰기</button>`}</div>`}`).join('')}</div>`;}
+function pickAsk(i,k,j){const list=sub?subThread(sub):work.chat,m=list[i];if(!m||m.askSent||busy)return;const items=askItems(m);m.askPicked={...(m.askPicked||{}),[k]:j};
+  const text=items.map((a,x)=>m.askPicked[x]!=null?a.options[m.askPicked[x]]:null).filter(Boolean).join(', ');
+  if(items.every((a,x)=>m.askPicked[x]!=null)){m.askSent=true;save();$('#input').value=text;note('ask-pick',{n:items.length});void send();return;}
+  save();renderThread();$('#input').value=text;$('#input').focus();}
 function choicesHtml(m,i){return (m.choices||[]).map((c,k)=>c.picked!=null?`<div class="done"><svg class="i s" style="color:var(--tx3)"><use href="#i-check"/></svg><span class="k">${E(c.ask.slice(0,40))}</span>${E(c.options[c.picked]?.label||c.typed||'')}</div>`:
   `<div class="ask" data-ask="${i}|${k}"><div class="hd"><span class="req">꼭 정해야 해요</span></div><div class="q">${E(c.ask)}${c.why?`<small>${E(c.why)}</small>`:''}</div>${c.options.map((o,j)=>`<button class="opt" data-opt="${i}|${k}|${j}"><span class="n">${j+1}</span><span><b>${E(o.label)}${j===c.recommend?'<span class="rc">추천</span>':''}</b>${o.desc?`<span class="d">${E(o.desc)}</span>`:''}</span></button>`).join('')}<div class="ft">숫자 키로 고르기 · 입력창에 직접 써도 돼요</div></div>`).join('');}
 function pickChoice(i,k,j){const list=sub?subThread(sub):work.chat,m=list[i],c=m?.choices?.[k];if(!c||c.picked!=null||busy)return;c.picked=j;save();$('#input').value=c.options[j].label;note('choice',{j});void send();}
@@ -796,7 +811,7 @@ document.addEventListener('dblclick',e=>{const hi=e.target.closest?.('.himg');if
 let findItems=[],findSel=0;
 async function openFind(){closeAll();let list=[];try{list=((await idbGet('list'))||[]).filter(x=>!x.empty);}catch{}
   const cmd=(label,kbd,run)=>({kind:'기능',label,kbd,run});
-  findItems=[cmd('새 시험지','⌘N',()=>{if(!pristine(work))newWork();showView('home');}),cmd('시험지 열기','⌘O',()=>$('#fOpen').click()),cmd('시험지 파일 저장(.5e)','⌘S',()=>saveFile()),cmd('시험지 공유 파일 저장(.html)','',()=>shareHtml()),
+  findItems=[cmd('새 대화','⌘N',()=>{if(!pristine(work))newWork();showView('home');}),cmd('시험지 열기','⌘O',()=>$('#fOpen').click()),cmd('시험지 파일 저장(.5e)','⌘S',()=>saveFile()),cmd('시험지 공유 파일 저장(.html)','',()=>shareHtml()),
     cmd('image','⌥⌘1',()=>post({action:'tool',tool:'image'})),cmd('exam','⌥⌘2',()=>post({action:'tool',tool:'exam'})),cmd('hwp','⌥⌘3',()=>post({action:'tool',tool:'hwp'})),cmd('라이브러리','⌥⌘4',()=>post({action:'library'})),cmd('클립보드','⇧⌘V',()=>toggleClip(true)),
     cmd('화면 색 바꾸기','⌘⇧L',()=>post({action:'color-mode',mode:'next'})),cmd('설정','⌘,',()=>post({action:'settings'})),cmd('판 기록','',()=>{showView('work');$('#histMenu').hidden=false;drawHist();}),
     ...list.map(x=>({kind:'시험지',label:x.title,sub:`${x.head||'v0.0'} · ${STAGE[x.stage]||''}`,run:()=>$(`#examList [data-open="${CSS.escape(x.id)}"]`)?.click()||openById(x.id)})),
@@ -832,7 +847,7 @@ document.addEventListener('click',async e=>{const t=e.target;if(!t.closest)retur
   if(t.closest('#exPool')){closeAll();await sendToExam();return;}if(t.closest('#exHwp')){closeAll();await sendToExam();setTimeout(()=>post({action:'tool',tool:'hwp'}),1200);toast('시험지를 exam에 넣고 hwp를 열어요 · 불러올 내용 확인 창에서 「적용」',3500);return;}
   if(t.closest('#bHelp')){openMenu('#helpMenu',$('#bHelp'),{right:true});return;}
   if(t.closest('#bFind')){await openFind();return;}
-  if(t.closest('#bToolAsk')){const tl=curTool;post({action:'home'});document.body.classList.remove('tool-on');showView('work');$('#input').value=(tl?'@'+tl+' ':'');$('#input').focus();note('tool-ask',{tool:tl});return;}
+  if(t.closest('#bToolAsk')){const tl=curTool;post({action:'home'});document.body.classList.remove('tool-on');applyToolLook();showView('work');$('#input').value=(tl?'@'+tl+' ':'');$('#input').focus();note('tool-ask',{tool:tl});return;}
   if(t.closest('#bPic')){post({action:'library'});return;}
   const hm=t.closest('[data-hmode]');if(hm){homeMode=+hm.dataset.hmode;drawHomeModes();$('#homeIn').focus();return;}
   const chip=t.closest('[data-fill]');if(chip){if(chip.dataset.hmodeFill!=null){homeMode=+chip.dataset.hmodeFill;drawHomeModes();}$('#homeIn').value=chip.dataset.fill;$('#homePh').innerHTML='';$('#homeIn').focus();return;}
@@ -845,6 +860,8 @@ document.addEventListener('click',async e=>{const t=e.target;if(!t.closest)retur
   if(t.closest('#homePast')){try{localStorage.setItem(PAST_KEY,pastOn()?'0':'1');}catch{}void renderHome();renderChrome();toast(pastOn()?'기출 참고를 켰어요 · 설계·초안 때 기출을 근거로 찾아요':'기출 참고를 껐어요 · 교육과정·자료 폴더만 봐요');return;}
   const appc=t.closest('.appc[data-tool]');if(appc){post({action:'tool',tool:appc.dataset.tool});return;}
   const opt=t.closest('[data-opt]');if(opt){const [i,k,j]=opt.dataset.opt.split('|').map(Number);pickChoice(i,k,j);return;}
+  const ap=t.closest('[data-askpick]');if(ap){const [i,k,j]=ap.dataset.askpick.split('|').map(Number);pickAsk(i,k,j);return;}
+  const at=t.closest('[data-asktype]');if(at){const [i,k]=at.dataset.asktype.split('|').map(Number);const list=sub?subThread(sub):work.chat,m=list[i];const a=askItems(m)[k];const inp=$('#input');inp.value=(inp.value?inp.value+', ':'')+'';inp.placeholder=a?.ask||inp.placeholder;inp.focus();return;}
   const lg=t.closest('[data-log]');if(lg){const p=$(`[data-logp="${lg.dataset.log}"]`);if(p){p.hidden=!p.hidden;lg.querySelector('svg')?.style.setProperty('transform',p.hidden?'':'rotate(90deg)');}return;}
   const acc=t.closest('[data-acc]');if(acc){await acceptProposal(acc.dataset.acc);return;}
   const rej=t.closest('[data-rej]');if(rej){rejectProposal(rej.dataset.rej);return;}

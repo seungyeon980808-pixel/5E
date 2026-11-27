@@ -26,7 +26,7 @@ export function validateExamResponse(v){
   if(!v||typeof v!=='object'||Array.isArray(v))return ['응답이 JSON 객체가 아닙니다.'];
   if(v.format!==undefined&&v.format!==EXAM_FORMAT)err('format이 다릅니다.');
   if(!str(v.reply,6000))err('reply(교사에게 하는 말)가 필요합니다.');
-  if(v.questions!==undefined&&(!Array.isArray(v.questions)||v.questions.length>3||!v.questions.every(x=>str(x,600))))err('questions는 3개 이하.');
+  if(v.questions!==undefined&&(!Array.isArray(v.questions)||v.questions.length>3||!v.questions.every(x=>str(x,600)||(x&&typeof x==='object'&&str(x.ask,600)&&(x.options===undefined||(Array.isArray(x.options)&&x.options.length<=6&&x.options.every(o=>str(o,80))))))))err('questions는 3개 이하.');
   if(v.meta!==undefined&&(typeof v.meta!=='object'||Array.isArray(v.meta)||Object.keys(v.meta).some(k=>!META_KEYS.includes(k))))err('meta 칸 이름을 확인하세요: '+META_KEYS.join(','));
   if(v.metaBy!==undefined&&(typeof v.metaBy!=='object'||Object.values(v.metaBy).some(x=>!['teacher','ai'].includes(x))))err('metaBy는 teacher|ai.');
   if(v.plan!==undefined&&v.plan!==null&&(!Array.isArray(v.plan)||v.plan.length>60||!v.plan.every(r=>r&&Number.isInteger(r.no)&&r.no>0&&(r.status===undefined||STATUS.includes(r.status))&&(r.figure===undefined||FIG.includes(r.figure)))))err('plan 행: no(1부터)·status(set|choosing|redesign|empty)·figure(reuse|convert|new|code|none).');
@@ -43,7 +43,7 @@ export const EXAM_SPEC=`[응답 형식] JSON 객체 하나만 출력한다(설�
 {
  "format":"${EXAM_FORMAT}",
  "reply":"교사에게 하는 말(한국어, 3~6문장). 무엇을 정했고 무엇이 남았는지.",
- "questions":["막는 질문(과목·범위·문항 수·총점) 중 빠진 것만, 최대 3개. 없으면 []"],
+ "questions":[{"ask":"막는 질문(과목·범위·문항 수·총점) 중 빠진 것만, 최대 3개","options":["선생님이 눌러 고를 보기 2~5개 — 그대로 답이 되게 짧고 완결된 말(예: 물리학Ⅰ, 20문항, 100점). 보기를 만들 수 없는 것(범위 등 자유 답)만 options 생략"]}],
  "choices":[{"ask":"교사가 골라야 진행할 수 있는 것 한 문장(예: 11번이 정답 두 개로 읽힘 — 어떻게 할까요?)","why":"고르는 데 필요한 사실 한 문장","options":[{"label":"안(짧게)","desc":"그 안의 결과 한 줄"}],"recommend":0}],
  "meta":{"subject":"","range":"","itemCount":16,"pointsTotal":50,"pointKinds":[2,3,4],"difficulty":{"최상":4},"emphasis":["…"],"grade":"","examName":"","term":"","form":""},
  "metaBy":{"subject":"teacher|ai", ...},  ← 교사가 말한 값은 teacher, 네가 정한 기본값은 ai

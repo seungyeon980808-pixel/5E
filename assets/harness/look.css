@@ -49,7 +49,8 @@
 .pill.on,:root[data-theme] .pill.on{background:var(--ds-soft-bg)!important;color:var(--ds-soft-ink)!important;box-shadow:inset 0 0 0 1px var(--ds-soft-line)!important}
 .composer .send,.send{border-radius:8px!important;background:var(--ds-accent)!important;color:var(--ds-accent-ink)!important;box-shadow:none!important}
 .composer .send:disabled,.send:disabled{opacity:.35}
-.composer{border-radius:20px!important;box-shadow:var(--hx-sh-comp)!important;border:0!important;background:var(--ds-raise)!important}
+.composer .box{border-radius:20px!important;box-shadow:var(--hx-sh-comp)!important;border:0!important;background:var(--ds-raise)!important}
+.composer .box:focus-within{box-shadow:var(--hx-sh-comp),0 0 0 3px var(--ds-soft-bg)!important}
 .ask,.art,.sugg,.dock,.card,.lowc,.ledger{border-radius:12px}
 .art,.ask{box-shadow:var(--hx-sh-card)!important;border:0!important;background:var(--ds-raise)!important}
 .art:hover{background:var(--ds-hover)!important}
@@ -122,3 +123,31 @@
 .htl.appc:hover{background:var(--ds-hover)}
 .htl.appc b{font:italic 700 19px/1.2 var(--ds-font-brand);letter-spacing:-.3px}
 .htl.appc small{margin-top:2px;font-size:11.5px}
+
+/* 도구 화면: 사이드바 위 줄 높이를 5E 본체 위 막대에 맞춤 */
+body.tool-on .srow{height:var(--hx-barh,57px)!important}
+
+/* 꼭 정해야 해요: 눌러 고르는 보기 */
+.askb .askopts{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 10px 30px}
+.askopt{height:30px;padding:0 11px;border-radius:8px;font-size:13px;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line);background:var(--ds-raise)}
+.askopt:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.askopt.on{background:var(--ds-soft-bg);color:var(--ds-soft-ink,var(--ds-ink));box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.askopt.typed{color:var(--ds-ink-3);box-shadow:inset 0 0 0 1px var(--ds-line);border-style:dashed}
+.askopt:disabled{cursor:default;opacity:.6}.askopt.on:disabled{opacity:1}
+
+/* 11-27: 결과물 칸을 좁혀도 깨지지 않게(문항 하나만 볼 때) — 칸 폭 기준으로 줄임 */
+#rp{container-type:inline-size;container-name:rp;min-width:0}
+.psub{min-width:0;overflow:hidden;flex-wrap:nowrap}
+.psub .seg{flex:none}.psub .seg button{white-space:nowrap}
+.phead{min-width:0}.phead #pTitle{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phead .ver,.phead #bExport{flex:none;white-space:nowrap}
+.meta-chips .c,.c{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container rp (max-width:720px){.psub .steps{display:none}}
+@container rp (max-width:560px){
+  #bExport{font-size:0;gap:0;padding:0 8px}#bExport .i{width:15px;height:15px}
+  .psub .seg button{padding:0 9px;font-size:12.5px}
+  .paper2{padding:18px 16px}.paper2 .cols2{column-count:1}.paper2 .cols2 .qblock .pins{right:-10px}
+  .dock{left:12px;right:12px;transform:none;flex-wrap:wrap;justify-content:flex-end;gap:6px;padding:8px}.dock .sep{display:none}
+  .paper2 .ph1{flex-wrap:wrap;gap:4px}
+}
+@container rp (max-width:420px){.psub .seg button{padding:0 7px;font-size:12px}.phead #bHist{display:none}}

@@ -106,7 +106,7 @@
  <aside class="side rel">
   <div class="srow"><span class="mark" data-go="home" title="첫 화면  ⌥⌘0">5E</span><span class="sp"></span><button class="ib" id="bTheme" title="화면 색 바꾸기 — 다크 네이비 · 그래파이트 · 화이트  ⌘⇧L"><svg class="i"><use href="#i-half"/></svg></button><button class="ib" id="bSide" title="사이드바 접기  ⌘\"><svg class="i"><use href="#i-side"/></svg></button></div>
   <div class="sbody">
-   <button class="nav" data-go="new" data-key="home"><svg class="i"><use href="#i-plus"/></svg><span class="lab">새 시험지</span><kbd>⌘N</kbd></button>
+   <button class="nav" data-go="new" data-key="home"><svg class="i"><use href="#i-plus"/></svg><span class="lab">새 대화</span><kbd>⌘N</kbd></button>
    <button class="nav" id="bFind"><svg class="i"><use href="#i-search"/></svg><span class="lab">찾기</span><kbd>⌘K</kbd></button>
    <button class="nav hx-ask" id="bToolAsk" title="대화로 돌아가 이 도구에 시킬 일을 말해요"><svg class="i"><use href="#i-spark"/></svg><span class="lab">5E에 말로 시키기</span></button>
    <div class="grp tools rel">도구</div>
@@ -161,7 +161,7 @@
     <div class="composer"><div class="col"><div class="box"><textarea id="input" rows="2" placeholder="말로 시키기 · @3번처럼 문항 지목 · 고칠 때는 「반영해」라고 말해야 고쳐요"></textarea><div class="tools"><button class="ib" id="bPlus" title="파일 붙이기"><svg class="i"><use href="#i-plus"/></svg></button><button class="pill" id="bAt"><svg class="i s"><use href="#i-at"/></svg>문항</button><button class="pill" id="bPic" title="라이브러리·클립보드에서 그림 붙이기"><svg class="i s"><use href="#i-img"/></svg>그림</button><button class="pill" id="bFolder"><svg class="i s"><use href="#i-folder"/></svg>자료 폴더</button><span class="sp"></span><span class="meta" id="aiMeta">GPT · 두 모델 검토 켬</span><button class="send" id="bSend" title="보내기  ⌘↵"><svg class="i"><use href="#i-up"/></svg></button></div></div><div class="hint">AI가 만든 문항은 풀이 검사를 거쳐도 틀릴 수 있어요. 내보내기 전에 꼭 확인하세요.</div></div></div>
    </div>
    <div class="rp" id="rp"><div class="splitter" id="splitter" title="끌어서 넓이 조절 · 두 번 누르면 처음대로"><span class="w" id="splitW"></span></div>
-    <div class="phead"><span class="t" id="pTitle">새 시험지</span>&nbsp;<button class="ver" id="verBtn">v0.0 <svg class="i s"><use href="#i-chev"/></svg></button><span class="sp" style="flex:1"></span><button class="ib" id="bHist" title="판 기록"><svg class="i"><use href="#i-hist"/></svg></button><button class="btn sm pri" id="bExport"><svg class="i s"><use href="#i-dl"/></svg>한글로 내보내기</button><button class="ib" id="bFull" title="크게 보기  ⌘⇧."><svg class="i"><use href="#i-full"/></svg></button><button class="ib" id="bClose" title="닫기  ⌘."><svg class="i"><use href="#i-x"/></svg></button></div>
+    <div class="phead"><span class="t" id="pTitle">새 시험지</span>&nbsp;<button class="ver" id="verBtn">v0.0 <svg class="i s"><use href="#i-chev"/></svg></button><span class="sp" style="flex:1"></span><button class="ib" id="bHist" title="판 기록"><svg class="i"><use href="#i-hist"/></svg></button><button class="btn sm pri" id="bExport" title="한글로 내보내기"><svg class="i s"><use href="#i-dl"/></svg>한글로 내보내기</button><button class="ib" id="bFull" title="크게 보기  ⌘⇧."><svg class="i"><use href="#i-full"/></svg></button><button class="ib" id="bClose" title="닫기  ⌘."><svg class="i"><use href="#i-x"/></svg></button></div>
     <div class="psub"><div class="seg" id="seg"><button data-tab="plan" class="on">설계표</button><button data-tab="review">문항 검토</button><button data-tab="sheet">시험지</button><button data-tab="check">점검</button></div><div class="steps" id="steps"></div><span class="sp" style="flex:1"></span><span style="font-size:11px;color:var(--ds-ink-3)" id="counts"></span></div>
     <div class="rbody" id="t-plan"></div>
     <div class="rbody" id="t-review" hidden></div>
@@ -192,7 +192,7 @@
 <!-- 도움말 -->
 <div id="helpMenu" class="menu" hidden>
  <div class="lab">단축키</div>
- <div class="mi"><span>새 시험지</span><small>⌘N</small></div><div class="mi"><span>찾기</span><small>⌘K</small></div><div class="mi"><span>시험지 열기 · 저장</span><small>⌘O · ⌘S</small></div>
+ <div class="mi"><span>새 대화</span><small>⌘N</small></div><div class="mi"><span>찾기</span><small>⌘K</small></div><div class="mi"><span>시험지 열기 · 저장</span><small>⌘O · ⌘S</small></div>
  <div class="mi"><span>사이드바 접기</span><small>⌘\</small></div><div class="mi"><span>결과물 칸 · 크게</span><small>⌘. · ⌘⇧.</small></div><div class="mi"><span>첫 화면</span><small>⌥⌘0</small></div>
  <div class="mi"><span>image · exam · hwp · 라이브러리</span><small>⌥⌘1~4</small></div><div class="mi"><span>클립보드</span><small>⇧⌘V</small></div><div class="mi"><span>화면 색 바꾸기</span><small>⌘⇧L</small></div>
  <div class="sepl"></div>

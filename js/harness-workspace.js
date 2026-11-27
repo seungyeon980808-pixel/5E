@@ -29,6 +29,7 @@ html.harness-tool body>.app{margin-left:var(--hx-sw,${SIDE_W}px)!important;width
 html.harness-tool #exampool-sheet-workspace,html.harness-tool #rhwp-exam-workspace{left:var(--hx-sw,${SIDE_W}px)!important;margin-left:0!important;width:calc(100% - var(--hx-sw,${SIDE_W}px))!important}
 #hx-crumb{position:fixed;left:var(--hx-sw,${SIDE_W}px);top:0;width:192px;height:56px;z-index:30005;display:none;align-items:center;gap:6px;padding:0 12px 0 14px;box-sizing:border-box;font:13px/1 var(--ds-font,system-ui);color:var(--ds-ink-2,#aab);border-right:1px solid var(--ds-line,rgba(255,255,255,.08))}
 html.harness-tool #hx-crumb{display:flex}
+html.harness-tool body>.app-footer{margin-left:var(--hx-sw,${SIDE_W}px)!important}
 #hx-crumb button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:3px;min-width:0;border-radius:6px;padding:4px 6px;margin-left:-6px;color:var(--ds-ink-2,#aab)}
 #hx-crumb button:hover{background:var(--ds-hover,rgba(255,255,255,.06));color:var(--ds-ink,#fff)}
 #hx-crumb .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
@@ -43,7 +44,10 @@ html.harness-tool #hx-crumb{display:flex}
   const store={get:k=>{try{return localStorage.getItem(k);}catch{return null;}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v);}catch{}}};
   const mq=win.matchMedia?.('(prefers-color-scheme: dark)');
   const colorPref=()=>store.get(AUTO_KEY)==='1'?'auto':getColorMode(root);
-  const theme=()=>({theme:root.getAttribute('data-theme')||'dark',palette:root.getAttribute('data-palette')||'classic',pref:colorPref()});
+  // 도구 화면에서는 하네스 사이드바가 5E 본체와 한 몸처럼 보여야 한다(11-27 지적: 두께·색이 어긋남) → 본체의 색 토큰과 위 막대 높이를 함께 넘긴다.
+  const TOOL_VARS=['--ds-app','--ds-panel','--ds-bar','--ds-raise','--ds-field','--ds-line','--ds-line-strong','--ds-ink','--ds-ink-2','--ds-ink-3','--ds-hover','--ds-selected','--ds-selected-ink','--ds-selected-strong','--ds-accent','--ds-accent-ink','--ds-soft-bg','--ds-soft-line'];
+  const toolLook=()=>{const cs=getComputedStyle(root);const vars={};for(const v of TOOL_VARS){const x=cs.getPropertyValue(v).trim();if(x)vars[v]=x;}const h=doc.querySelector('.app-shell-header')?.getBoundingClientRect().height;return {vars,barH:h>20?Math.round(h):57};};
+  const theme=()=>({theme:root.getAttribute('data-theme')||'dark',palette:root.getAttribute('data-palette')||'classic',pref:colorPref(),toolLook:toolLook()});
   const applyAuto=()=>{if(store.get(AUTO_KEY)!=='1')return;const dark=store.get(DARK_KEY)||'navy';const want=mq?.matches===false?'white':dark;if(getColorMode(root)!==want)setColorMode(want);else send({action:'theme',...theme()});};
   mq?.addEventListener?.('change',applyAuto);applyAuto();
   const pickColor=mode=>{if(mode==='auto'){store.set(AUTO_KEY,'1');applyAuto();send({action:'theme',...theme()});return;}
@@ -111,6 +115,7 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     if(!['image','exam','hwp'].includes(name))return;tool=name;root.classList.add('harness-tool');paintCrumb();
     if(!already&&name!=='image')win.fiveEAppSwitch?.(name);
     if(name==='image')win.fiveEAppSwitch?.('image');
+    send({action:'theme',...theme()});
     if(!silent)send({action:'tool-opened',tool:name});
     setTimeout(hookFrames,1500);setTimeout(hookFrames,6000);
   }
