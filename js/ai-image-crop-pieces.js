@@ -71,9 +71,11 @@ export function createCropPieces({ panel, getTarget, getPlan, eraser, status, af
     }
   }
   function syncOptions() {
-    options.hidden = !active;
-    for (const b of options.querySelectorAll('[data-ai-crop-shape]')) b.setAttribute('aria-pressed',String(b.dataset.aiCropShape === shape));
-    options.querySelector('[data-ai-crop-apply]').disabled = !pending || splitting;
+    // 같은 값은 다시 쓰지 않는다(11-28 성능 기준: 작업을 바꿀 때마다 패널 동기화가 더 돌았다).
+    if (options.hidden !== !active) options.hidden = !active;
+    for (const b of options.querySelectorAll('[data-ai-crop-shape]')) { const v = String(b.dataset.aiCropShape === shape); if (b.getAttribute('aria-pressed') !== v) b.setAttribute('aria-pressed',v); }
+    const apply = options.querySelector('[data-ai-crop-apply]'), off = !pending || splitting;
+    if (apply.disabled !== off) apply.disabled = off;
   }
   function open() {
     const item = getTarget(); if (!eligible(item)) { status('이미지 수정본을 선택하면 자를 수 있습니다.','warn'); return; }

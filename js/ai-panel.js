@@ -5728,7 +5728,7 @@ ${chatText}` : ''}`;
     newChat.addEventListener('click', () => startNewChat());
     const menus = [[clip, refMenu], [addRef, refMenu], [more, moreMenu]];
     let menuAnchor = null;
-    const closeMenus = () => { for (const [button, menu] of menus) { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); } menuAnchor = null; };
+    const closeMenus = () => { for (const [button, menu] of menus) { if (!menu.hidden) menu.hidden = true; if (button.getAttribute('aria-expanded') !== 'false') button.setAttribute('aria-expanded', 'false'); } menuAnchor = null; };
     const openMenu = (button, menu) => {
       const was = !menu.hidden && menuAnchor === button;
       closeMenus(); if (was) return;
@@ -5945,7 +5945,7 @@ ${chatText}` : ''}`;
     panel.aiWorkbench?.setResultOnly?.(resultOnly);
     // 11-27 사용자: 변환에서도 결과가 있으면 「AI와 대화 / 직접 편집」을 고르고 생성 화면과 같은 직접 편집 도구를 쓴다.
     syncResultWorkspace?.((on || conversionKind === 'image') && Boolean(selectedOutputItem()), busy || panel.dataset.aiSharingMode === 'view', on || conversionKind === 'image');
-    if (!on) { dom.labelOptions.hidden = true; dom.closeMenus(); setCompareNote(null); return; }
+    if (!on) { if (!dom.labelOptions.hidden) dom.labelOptions.hidden = true; dom.closeMenus(); setCompareNote(null); return; }
     ensureVersionDescriber();
     const item = selectedOutputItem();
     // 실행 단추(태그 6·22): 그리는 중 = 멈추기, 결과가 있으면 「이 그림 고치기」, 없으면(또는 「새 대화」 뒤) 「이미지 생성」.
@@ -5953,8 +5953,9 @@ ${chatText}` : ''}`;
     const running = mode === 'stop', editing = mode === 'edit';
     const refs = attachments.map(item => userReferenceRole(item, chatInput?.value || ''));
     const labelRoute = figureRoute({ desktop, storage:channelStorage, hasUserReferences:refs.length > 0, userRoles:refs });
-    if (!running) dom.labelOptions.hidden = editing || !labelRoute.use || panel.dataset.aiSharingMode === 'view';
-    dom.labelOptions.disabled = busy || running;
+    const hideLabelOptions = editing || !labelRoute.use || panel.dataset.aiSharingMode === 'view';
+    if (!running && dom.labelOptions.hidden !== hideLabelOptions) dom.labelOptions.hidden = hideLabelOptions;
+    if (dom.labelOptions.disabled !== (busy || running)) dom.labelOptions.disabled = busy || running;
     // 입력칸 안 A(11-21): 대화 답을 기다릴 때와 그릴 때 멈추기를 나눠 보인다(대화 중 멈추기를 그리기 멈추기로 알고 누르던 일).
     const stopLabel = currentTurnType === 'chat' ? '대화 멈추기' : '그리기 멈추기';
     const label = { stop: stopLabel, edit: '이 그림 고치기', fresh: '새로 그리기', all: '처음부터 다시 그리기', new: '이미지 생성' }[mode];
@@ -9249,7 +9250,7 @@ ${chatText}` : ''}`;
   graphCanvasButton.type = 'button'; graphCanvasButton.dataset.aiGraphCanvas = ''; graphCanvasButton.textContent = '캔버스에 넣기';
   graphCanvasButton.title = '그래프를 편집 가능한 그래프 객체로 캔버스에 바로 넣습니다.';
   try { panel.querySelector('[data-ai-insert-selected]')?.after?.(graphCanvasButton); } catch {}
-  const syncGraphCanvasButton = () => { const item = selectedOutputItem(); graphCanvasButton.hidden = !isGraphWorkflow(conversionKind); graphCanvasButton.disabled = busy || !item?.graphResult; };
+  const syncGraphCanvasButton = () => { const item = selectedOutputItem(); const hide = !isGraphWorkflow(conversionKind), off = busy || !item?.graphResult; if (graphCanvasButton.hidden !== hide) graphCanvasButton.hidden = hide; if (graphCanvasButton.disabled !== off) graphCanvasButton.disabled = off; };
   if (typeof MutationObserver === 'function' && panel.nodeType === 1) {
     new MutationObserver(syncGraphCanvasButton).observe(panel, { attributes: true, attributeFilter: ['data-ai-workflow', 'data-ai-stage'], subtree: false });
     const insertButton = panel.querySelector('[data-ai-insert-selected]'); if (insertButton?.nodeType === 1) new MutationObserver(syncGraphCanvasButton).observe(insertButton, { attributes: true, attributeFilter: ['disabled'] });

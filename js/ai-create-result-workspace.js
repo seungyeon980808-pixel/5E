@@ -65,7 +65,7 @@ export function createResultWorkspace({panel, stopEditing, signal, hasUnsavedEdi
   let layerRowOn = false;
   function syncLayerRow() {
     const on = panel.dataset.aiCreateUi === 'true' || panel.dataset.aiWorkflow === 'image';
-    panel.toggleAttribute('data-ai-layer-row', on);
+    if (panel.hasAttribute('data-ai-layer-row') !== on) panel.toggleAttribute('data-ai-layer-row', on);
     if (on === layerRowOn || !labelView || !layerSeg) return;
     layerRowOn = on;
     if (on) layerSeg.prepend(labelView); else labelViewHome.after(labelView);
@@ -124,16 +124,22 @@ export function createResultWorkspace({panel, stopEditing, signal, hasUnsavedEdi
   const spacer = doc.createElement('div');
   spacer.className = 'ai-result-footer-spacer'; spacer.setAttribute('aria-hidden','true'); spacer.hidden = true;
   sourcePane?.append(spacer);
-  const fitSpacer = () => { spacer.style.height = footer.hidden ? '0px' : `${footer.offsetHeight}px`; };
+  // 높이는 ResizeObserver가 알려 준 값만 쓴다 — 작업을 바꿀 때마다 offsetHeight를 읽으면 배치를 강제로 다시 계산해 느려진다(11-28 성능 기준).
+  let spacerHeight = '';
+  const fitSpacer = entries => {
+    const size = entries?.at(-1)?.borderBoxSize?.[0]?.blockSize;
+    const next = `${Math.round(size ?? (footer.hidden ? 0 : footer.offsetHeight))}px`;
+    if (next !== spacerHeight) spacer.style.height = spacerHeight = next;
+  };
   const footerSize = typeof ResizeObserver === 'function' ? new ResizeObserver(fitSpacer) : null;
   footerSize?.observe(footer);
   signal?.addEventListener('abort',() => footerSize?.disconnect(),{once:true});
   let footerPlaced = false;
   function placeFooter() {
     const want = enabled;
-    footer.hidden = !want;
-    spacer.hidden = !want || panel.dataset.aiCreateUi === 'true';
-    fitSpacer();
+    if (footer.hidden === want) footer.hidden = !want;
+    const hideSpacer = !want || panel.dataset.aiCreateUi === 'true';
+    if (spacer.hidden !== hideSpacer) spacer.hidden = hideSpacer;
     if (want === footerPlaced) return;
     footerPlaced = want;
     for (const {control,home,destination,first} of placements) {
@@ -141,18 +147,23 @@ export function createResultWorkspace({panel, stopEditing, signal, hasUnsavedEdi
       if (want) { if (first) destination.prepend(control); else destination.append(control); }
       else home.after(control);
     }
-    fitSpacer();
+    if (!footerSize) fitSpacer();
   }
   const footerObserver = new MutationObserver(placeFooter);
   footerObserver.observe(panel,{attributes:true,attributeFilter:['data-ai-create-ui']});
   signal?.addEventListener('abort',() => footerObserver.disconnect(),{once:true});
   // show: 결과가 없어도 「AI와 대화 / 직접 편집」은 자리에 두고(11-27 사용자: 없다가 생기지 않게), 직접 편집만 흐리게 한다.
   return function sync(active, locked, show = active) {
-    modes.hidden = !(show || active);
+    // 같은 값은 다시 쓰지 않는다 — 속성을 쓸 때마다 패널을 지켜보는 다른 동기화(설정 단추 등)가 한 번씩 더 돈다(11-28 성능 기준).
+    const set = (node, key, value) => { if (node[key] !== value) node[key] = value; };
+    set(modes,'hidden',!(show || active));
     const manualButton = modes.querySelector('[data-result-mode="manual"]');
-    manualButton.disabled = locked || !active;
-    manualButton.title = active ? '' : '결과가 생기면 직접 고칠 수 있습니다.';
-    if (!active && (show || active)) for (const button of modes.children) button.setAttribute('aria-pressed',String(button.dataset.resultMode === 'chat'));
+    set(manualButton,'disabled',locked || !active);
+    set(manualButton,'title',active ? '' : '결과가 생기면 직접 고칠 수 있습니다.');
+    if (!active && (show || active)) for (const button of modes.children) {
+      const pressed = String(button.dataset.resultMode === 'chat');
+      if (button.getAttribute('aria-pressed') !== pressed) button.setAttribute('aria-pressed',pressed);
+    }
     if (active === enabled) { placeFooter(); return; }
     enabled = active;
     for (const {control,home,destination,first} of placements) {

@@ -78,28 +78,30 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, isSa
   function refresh() {
     // A late worker/preview completion must not remount listeners after dispose.
     if (destroyed) return;
+    // 같은 값은 다시 쓰지 않는다 — 속성을 쓸 때마다 패널을 지켜보는 다른 동기화가 한 번씩 더 돈다(11-28 성능 기준).
+    const put = (node, key, value) => { if (node[key] !== value) node[key] = value; };
     const item = getTarget(), draft = getDraft(item), history = historyFor(item);
     const disabled = isBusy() || !eligible(item) || panel.dataset.aiSharingMode === 'view';
     const historyDisabled = !eligible(item) || panel.dataset.aiSharingMode === 'view' || Boolean(pending) || isSaving();
     if (disabled && active) { active = false; cancel(); panel.dataset.aiLocalEraseActive = 'false'; }
     panel.dataset.aiEditDraft = String(Boolean(draft));
-    if (saveButton) { saveButton.hidden = !draft; saveButton.disabled = disabled || Boolean(pending); }
-    if (discardButton) { discardButton.hidden = !draft && !history?.future.length; discardButton.disabled = disabled || Boolean(pending); }
+    if (saveButton) { put(saveButton,'hidden',!draft); put(saveButton,'disabled',disabled || Boolean(pending)); }
+    if (discardButton) { put(discardButton,'hidden',!draft && !history?.future.length); put(discardButton,'disabled',disabled || Boolean(pending)); }
     const historyControls = panel.querySelector('[data-ai-edit-history]');
-    if (historyControls) historyControls.hidden = !eligible(item);
-    if (undoButton) undoButton.disabled = historyDisabled || !history?.past.length;
-    if (redoButton) redoButton.disabled = historyDisabled || !history?.future.length;
+    if (historyControls) put(historyControls,'hidden',!eligible(item));
+    if (undoButton) put(undoButton,'disabled',historyDisabled || !history?.past.length);
+    if (redoButton) put(redoButton,'disabled',historyDisabled || !history?.future.length);
     if (button) {
       (options || button).toggleAttribute('data-escape-layer', active);
-      button.disabled = disabled || Boolean(pending);
+      put(button,'disabled',disabled || Boolean(pending));
       button.setAttribute('aria-pressed', String(active));
       button.setAttribute('aria-expanded', String(active));
-      button.title = disabled ? '이미지 수정본을 선택하면 사용할 수 있습니다.' : '그림만 지웁니다. 편집을 끝낸 뒤 수정 저장을 누르세요. Esc: 도구 닫기';
+      put(button,'title',disabled ? '이미지 수정본을 선택하면 사용할 수 있습니다.' : '그림만 지웁니다. 편집을 끝낸 뒤 수정 저장을 누르세요. Esc: 도구 닫기');
     }
-    if (options) options.hidden = !active;
+    if (options) put(options,'hidden',!active);
     for (const b of panel.querySelectorAll('[data-ai-erase-mode]')) b.setAttribute('aria-pressed', String(b.dataset.aiEraseMode === mode));
-    if (tipSelect) { tipSelect.value = tip; tipSelect.disabled = mode !== 'brush'; }
-    if (size) { size.disabled = mode !== 'brush'; panel.querySelector('[data-ai-erase-size-value]').textContent = `${size.value} px`; }
+    if (tipSelect) { tipSelect.value = tip; put(tipSelect,'disabled',mode !== 'brush'); }
+    if (size) { put(size,'disabled',mode !== 'brush'); put(panel.querySelector('[data-ai-erase-size-value]'),'textContent',`${size.value} px`); }
     for (const [bound, entry] of bindings) {
       if (!entry.img.isConnected) { entry.dispose(); bindings.delete(bound); }
       else {
