@@ -93,3 +93,30 @@ test('만드는 도구: 선생님이 말한 값인지(낱말·숫자가 말에 �
   assert.equal(saidByTeacher({상:1,중:1,하:1},t),true);// 숫자 1이 말에 있음 — 느슨함(낮추는 쪽 판정이라 괜찮음)
   assert.equal(saidByTeacher('물리학',''),false);
 });
+
+// 11-27 엔진 화면 시안 v1: 고친 칸 「언제」와 새 엔진 답의 간단한 마크다운
+import {relTime,mdLines} from '../assets/harness/guard.js';
+test('고친 칸 표시의 언제: 방금 · n분 전 · n시간 전 · n일 전', () => {
+  const now=Date.parse('2026-11-27T10:00:00Z');
+  assert.equal(relTime('2026-11-27T09:59:40Z',now),'방금');
+  assert.equal(relTime('2026-11-27T09:55:00Z',now),'5분 전');
+  assert.equal(relTime('2026-11-27T07:00:00Z',now),'3시간 전');
+  assert.equal(relTime('2026-11-25T10:00:00Z',now),'2일 전');
+  assert.equal(relTime('엉뚱한 값',now),'방금');
+  assert.equal(relTime('2026-11-27T10:05:00Z',now),'방금');// 시계가 조금 앞서도
+});
+test('새 엔진 답의 마크다운: 굵게·목록·인용·제목만, 먼저 이스케이프', () => {
+  assert.deepEqual(mdLines('**3번** 고쳤어요\n\n- 선지 ②\n> 원문\n### 정리'),[
+    {kind:'p',html:'<b>3번</b> 고쳤어요'},{kind:'li',html:'선지 ②'},{kind:'qt',html:'원문'},{kind:'h',html:'<b>정리</b>'}]);
+  const x=mdLines('<img src=x onerror=alert(1)> **<script>**');
+  assert.equal(x.length,1);assert.ok(!/<img|<script/.test(x[0].html));assert.ok(x[0].html.includes('&lt;img'));
+  assert.equal(mdLines('* 별표 목록')[0].kind,'li');
+  assert.equal(mdLines('**닫히지 않은 굵게')[0].html,'**닫히지 않은 굵게');
+  assert.equal(mdLines('A > B 비교')[0].kind,'p');
+  assert.deepEqual(mdLines('\n\n'),[]);
+});
+import {eulReul} from '../assets/harness/guard.js';
+test('되돌린 칸 말끝 조사(을/를)', () => {
+  assert.equal(eulReul('3번 정답'),'을');assert.equal(eulReul('2번 선지 ②'),'를');assert.equal(eulReul('선지 ①'),'을');
+  assert.equal(eulReul('3번 발문'),'을');assert.equal(eulReul('3번 자료 (가)'),'를');assert.equal(eulReul(''),'을');assert.equal(eulReul('4번 배점 4'),'를');
+});

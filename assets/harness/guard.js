@@ -100,3 +100,25 @@ export function saidByTeacher(value,text){const t=norm(text).replace(/\s+/g,'');
   const flat=v=>v==null?[]:Array.isArray(v)?v.flatMap(flat):typeof v==='object'?Object.entries(v).flatMap(([k,x])=>[k,...flat(x)]):[String(v)];
   const tokens=flat(value).flatMap(s=>String(s).normalize('NFC').split(/[\s,·、/()]+/)).map(s=>s.trim()).filter(Boolean);
   return tokens.some(s=>/^\d+(\.\d+)?$/.test(s)?new RegExp(`(^|\\D)${s.replace('.','\\.')}(\\D|$)`).test(t):s.length>=2&&(t.includes(s)||(s.length>=3&&t.includes(s.slice(0,2)))));}
+
+// ── 새 엔진 화면(11-27 엔진 화면 시안 v1) — 화면 없이 시험할 수 있는 작은 도움 함수 ──
+// 고친 칸 표시의 「언제」: 방금 / n분 전 / n시간 전 / n일 전. 시각을 못 읽으면 「방금」.
+export function relTime(at,now=Date.now()){const t=Date.parse(at);if(!Number.isFinite(t))return '방금';const m=Math.floor(Math.max(0,now-t)/60000);
+  if(m<1)return '방금';if(m<60)return m+'분 전';const h=Math.floor(m/60);if(h<24)return h+'시간 전';return Math.floor(h/24)+'일 전';}
+// 새 엔진 답에 섞여 오는 간단한 마크다운을 줄마다 나눈다. 먼저 모두 이스케이프하고, 굵게(**)만 <b>로 바꾼다.
+//  - 「- 」「* 」「• 」로 시작 → li · 「> 」 → qt · 「### 」 → h(굵게) · 나머지 → p. 빈 줄은 뺀다.
+const ESC={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>ESC[c]);
+export function mdLines(text){const out=[];
+  for(const raw of String(text??'').split(/\n+/)){let s=raw.replace(/\s+$/,''),kind='p';if(!s.trim())continue;
+    if(/^\s*#{1,6}\s+/.test(s)){kind='h';s=s.replace(/^\s*#{1,6}\s+/,'');}
+    else if(/^\s*[-*•]\s+/.test(s)){kind='li';s=s.replace(/^\s*[-*•]\s+/,'');}
+    else if(/^\s*>\s?/.test(s)){kind='qt';s=s.replace(/^\s*>\s?/,'');}
+    let html=esc(s).replace(/\*\*([^*\n]+?)\*\*/g,'<b>$1</b>');
+    if(kind==='h')html='<b>'+html.replace(/<\/?b>/g,'')+'</b>';
+    out.push({kind,html});}
+  return out;}
+// 목적격 조사(을/를): 「선지 ②를」「정답을」처럼 끝 글자로 고른다. 동그라미 숫자·숫자는 읽는 소리로(①일 ②이 …).
+const READ_DIGIT='영일이삼사오육칠팔구';
+export function eulReul(word){const m=String(word??'').match(/[가-힣0-9①-⑨](?=[^가-힣0-9①-⑨]*$)/);let c=m?m[0]:'';const circ='①②③④⑤⑥⑦⑧⑨'.indexOf(c);if(circ>=0)c=READ_DIGIT[circ+1];else if(/\d/.test(c))c=READ_DIGIT[+c];
+  const code=c.charCodeAt(0)-0xAC00;if(code<0||code>11171)return '을';return code%28?'을':'를';}

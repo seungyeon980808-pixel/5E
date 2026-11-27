@@ -151,3 +151,89 @@ body.tool-on .srow{height:var(--hx-barh,57px)!important}
   .paper2 .ph1{flex-wrap:wrap;gap:4px}
 }
 @container rp (max-width:420px){.psub .seg button{padding:0 7px;font-size:12px}.phead #bHist{display:none}}
+
+/* ── 11-27 엔진 화면(시안 ~/Work/2026-11-27_엔진화면-시안/v1.html) — 새 엔진(깃발 agent)일 때만 생기는 것들 ── */
+.i.xs{width:12px;height:12px}
+/* ① 단계 줄: 일하는 동안 한 줄씩 · 끝나면 「N단계 · S초 ›」로 접힘 */
+.hx-steps{margin:0 0 10px;position:relative}
+.hx-stl{display:flex;align-items:center;gap:8px;height:24px;font-size:12.5px;color:var(--ds-ink-3);white-space:nowrap;animation:hxinl .25s ease-out}
+@keyframes hxinl{from{opacity:0;transform:translateY(3px)}}
+.hx-stl .mk{width:14px;height:14px;display:grid;place-items:center;flex:none}
+.hx-stl .dot{width:7px;height:7px;border-radius:50%;background:var(--ds-ink-2);animation:hxpulse 1.2s ease-in-out infinite}
+@keyframes hxpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+.hx-stl .ok{color:var(--ds-ink-3)}
+.hx-stl .tx{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hx-stl.now .tx{color:var(--ds-ink)}
+.hx-stl.stopd .tx{color:var(--ds-ink-2)}
+.hx-stl code{font:12px ui-monospace,Menlo,monospace;color:var(--ds-ink-2);background:var(--ds-hover);padding:0 5px;border-radius:4px}
+.hx-stl .sec{margin-left:auto;font-size:11px;color:var(--ds-ink-3);font-variant-numeric:tabular-nums;flex:none;padding-left:8px}
+.hx-stbar{display:flex;align-items:center;gap:8px;margin-top:6px}
+.hx-stbar[hidden]{display:none}
+.hx-stbar .hint{font-size:11.5px;color:var(--ds-ink-3)}
+.hx-stbar .hx-stopb{height:26px;padding:0 10px;font-size:12.5px;color:var(--ds-ink-2);display:inline-flex;align-items:center;gap:5px;box-shadow:inset 0 0 0 1px var(--ds-line-strong);background:transparent}
+.hx-stbar .hx-stopb:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.alog.hx-stsum{display:inline-flex;align-items:center;gap:6px;height:24px;font-size:12.5px;color:var(--ds-ink-3);border-radius:6px;padding:0 6px;margin:0 0 0 -6px}
+.alog.hx-stsum:hover{background:var(--ds-hover);color:var(--ds-ink-2)}
+.alog.hx-stsum .chev{transition:transform .15s}
+.actlog.hx-stfold{margin:2px 0 4px 3px;padding-left:12px;border-left:1px solid var(--ds-line)}
+.hx-stfold .hx-stl{animation:none}
+/* ⑥ 일하는 중에 받은 말: 단계 줄 사이에 끼우고, 접은 뒤에도 남김 */
+.msg.u.hx-late{flex-direction:column;align-items:flex-end}
+.hx-stlist .msg.u.hx-late{margin:8px 0}
+.msg.a>.msg.u.hx-late{margin:20px 0}
+.msg.a .hx-late p{margin:0;max-width:86%}
+.hx-late .late{display:block;font-size:11px;color:var(--ds-ink-3);margin-top:2px;text-align:right}
+/* ② 새 엔진 답의 간단한 마크다운 */
+.msg.a p.md-li{margin:0 0 4px;padding-left:1.1em;text-indent:-1.1em}
+.msg.a p.md-li::before{content:"•";display:inline-block;width:1.1em;text-indent:0;color:var(--ds-ink-3)}
+.msg.a p.md-qt{border-left:2px solid var(--ds-line-strong);padding-left:10px;color:var(--ds-ink-2)}
+/* ④ 묶음 되돌리기 카드 · 제안만 했을 때의 안내 줄 */
+.hx-batch{display:flex;align-items:center;gap:10px;border-radius:12px;background:var(--ds-raise);box-shadow:var(--hx-sh-card);padding:8px 8px 8px 12px;margin:4px 0 6px;font-size:12.5px}
+.hx-batch .bi{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:var(--ds-soft-bg);color:var(--ds-soft-ink);flex:none}
+.hx-batch .bt{flex:1;min-width:0;color:var(--ds-ink-2);line-height:1.45}
+.hx-batch .bt b{color:var(--ds-ink);font-weight:600;margin-right:4px}
+.hx-batch .bt span{color:var(--ds-ink-3)}
+.hx-batch .hx-undob{height:26px;padding:0 10px;font-size:12.5px;color:var(--ds-ink-2);display:inline-flex;align-items:center;gap:5px;box-shadow:inset 0 0 0 1px var(--ds-line-strong);background:transparent;flex:none}
+.hx-batch .hx-undob:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.hx-batch.undone .bi{background:var(--ds-hover);color:var(--ds-ink-3)}
+.hx-batch.undone .bt b{color:var(--ds-ink-2);font-weight:500}
+.hx-pnote{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border-radius:12px;padding:8px 12px;margin:4px 0 6px;font-size:12.5px;color:var(--ds-ink-2);background:var(--ds-raise);box-shadow:var(--hx-sh-card)}
+.hx-pnote:hover{background:var(--ds-hover)}
+.hx-pnote .i{color:var(--ds-ink-3)}
+/* ③ 권한 고르기(입력칸 아래 줄 · 보내기 왼쪽) */
+.hx-perm{position:relative;flex:none}
+.hx-permb{height:30px;padding:0 8px 0 9px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12.5px;color:var(--ds-ink-2);display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:transparent}
+.hx-permb:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.hx-permb.fast,.hx-permb.fast:hover{background:var(--ds-soft-bg);color:var(--ds-soft-ink);box-shadow:inset 0 0 0 1px var(--ds-soft-line)}
+.hx-permm{position:absolute;right:0;bottom:38px;width:300px;background:var(--ds-raise);border-radius:12px;box-shadow:var(--hx-sh-pop);padding:6px;z-index:30;display:none;text-align:left}
+.hx-perm.open .hx-permm{display:block}
+.hx-permm .lb{font-size:11px;color:var(--ds-ink-3);padding:6px 8px 4px}
+.hx-pm{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;padding:8px;border-radius:8px;background:transparent;color:var(--ds-ink)}
+.hx-pm:hover{background:var(--ds-hover)}
+.hx-pm .pic{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--ds-line);color:var(--ds-ink-2);flex:none}
+.hx-pm b{display:block;font-size:13px;font-weight:600;color:var(--ds-ink)}
+.hx-pm small{display:block;font-size:11.5px;color:var(--ds-ink-3);line-height:1.45;margin-top:1px}
+.hx-pm .ck{margin-left:auto;color:var(--ds-check);visibility:hidden;align-self:center;flex:none}
+.hx-pm.on .ck{visibility:visible}
+.hx-permm .ft{border-top:1px solid var(--ds-line);margin:4px 2px 0;padding:7px 6px 3px;font-size:11px;color:var(--ds-ink-3);line-height:1.5}
+.composer .box.working textarea::placeholder{color:var(--ds-ink-2)}
+/* ⑤ 고친 칸 표시(종이는 어느 화면 색에서나 흰색이라 색을 고정) */
+.aichg{background:rgba(37,99,235,.08)!important;box-shadow:inset 2px 0 0 #2563eb;cursor:pointer;transition:background .5s,box-shadow .5s}
+.seen{transition:background 1.2s,box-shadow 1.2s}
+.aitag{display:inline-block;margin-left:6px;vertical-align:1px;font:500 10.5px/16px var(--ds-font);color:#2563eb;background:#eef3fe;box-shadow:inset 0 0 0 1px #bfd3fb;border-radius:5px;padding:0 6px;white-space:nowrap;text-indent:0;pointer-events:none}
+.choices p>.aitag,.anskey td>.aitag{display:block;width:max-content;margin:1px 0 3px 1.4em}
+.anskey td>.aitag{margin:2px auto 0}
+img.aichg+.aitag,table.aichg+.aitag{display:block;width:max-content;margin:2px 0 6px}
+.sugg.hx-locked .h b{font-weight:600;color:inherit}
+.composer .tools .send{flex:none}
+/* 시험지 위 제안 카드(새 엔진일 때 시안 모양 — 종이 위라 어느 화면 색에서나 같은 색) */
+:root[data-theme] .paper2 .sugg.hx-sg{background:#f7f9ff!important;color:#15171c!important;border:0!important;border-radius:12px;box-shadow:inset 0 0 0 1px #bfd3fb!important;font:12.5px/1.55 var(--ds-font);padding:10px 12px;margin:10px 0 4px}
+:root[data-theme] .sugg.hx-sg .h{font-size:11.5px;color:#5b6170;margin-bottom:6px}
+:root[data-theme] .sugg.hx-sg .h b{color:#15171c}
+:root[data-theme] .sugg.hx-sg .h .i{color:#2563eb}
+:root[data-theme] .sugg.hx-sg .why{color:#5b6170;font-size:11.5px;margin-top:4px}
+:root[data-theme] .sugg.hx-sg .btn{height:28px;color:#15171c!important;box-shadow:inset 0 0 0 1px #d6d8dd!important;background:#fff!important;border:0!important;border-radius:8px}
+:root[data-theme] .sugg.hx-sg .btn:hover{background:#f3f4f6!important}
+:root[data-theme] .sugg.hx-sg .btn.pri{background:#15171c!important;color:#fff!important;box-shadow:none!important}
+:root[data-theme] .sugg.hx-sg .btn.pri:hover{opacity:.88;filter:none}
+.hx-batch.hx-in,.hx-pnote.hx-in,.aitag.hx-in{animation:hxinl .25s ease-out}

@@ -14,7 +14,7 @@ import {peekKind} from './model/file.js';
 import {readFolder,searchFolder,folderPrompt,ocrImages} from './folder.js';
 import {createAgentClient,createAgentEngine} from './agent.js';
 import {createTools,newTurnState,undoTurn} from './tools.js';
-import {PERMISSIONS,PERMISSION_LABEL} from './guard.js';
+import {PERMISSIONS,PERMISSION_LABEL,relTime,mdLines,eulReul} from './guard.js';
 import {loadCurriculum,findStandards,standardLabel} from './curriculum.js';
 import {parseExamResponse,buildExamPrompt,wantsApply,wantsDiscussOnly,wantsDraft,wantsFinal,wantsSolve,parseSolve,buildSolvePrompt,verdict} from './ai.js';
 
@@ -109,11 +109,53 @@ const acts=new Set();
 const doneLogs=[];
 const PAST=[[/맞추는 안 만드는 중/,'맞추는 안 만듦'],[/쓰는 중/,'씀'],[/그리는 중/,'그림'],[/읽는 중/,'읽음'],[/생각하는 중/,'생각함'],[/비교하는 중/,'비교함'],[/만드는 중/,'만듦'],[/옮기는 중/,'옮김'],[/받는 중/,'받음'],[/찾는 중/,'찾음'],[/푸는 중/,'풂']];
 const pastOf=t=>{let x=String(t).replace(/…/g,'').replace(/\s*\(그동안 대화해도 돼요\)/,'');for(const [r,v] of PAST)x=x.replace(r,v);return x.trim();};
-function act(text,{onStop}={}){const t0=Date.now(),steps=[];let last=text;const el=document.createElement('div');el.className='msg a';el.innerHTML=`<div class="act"><span class="dot"></span><span class="at">${E(text)}</span>${onStop?'<button class="btn sm hx-stop" title="다 쓴 것은 남기고 나머지는 멈춰요">멈추기</button>':''}</div>`;
+function act(text,{onStop,stepMode}={}){if(stepMode)return stepAct({onStop});const t0=Date.now(),steps=[];let last=text;const el=document.createElement('div');el.className='msg a';el.innerHTML=`<div class="act"><span class="dot"></span><span class="at">${E(text)}</span>${onStop?'<button class="btn sm hx-stop" title="다 쓴 것은 남기고 나머지는 멈춰요">멈추기</button>':''}</div>`;
   if(onStop)el.querySelector('.hx-stop').onclick=()=>{const b=el.querySelector('.hx-stop');b.disabled=true;b.textContent='멈추는 중…';onStop();};acts.add(el);$('#thread').append(el);$('#scroll').scrollTop=1e7;
   return {set:t=>{last=t;el.querySelector('.at').textContent=t;},step:t=>{steps.push(String(t));},done:()=>{acts.delete(el);el.remove();const sec=Math.round((Date.now()-t0)/1000);if(sec>=2||steps.length)doneLogs.push({title:pastOf(last)+(sec>=2?` · ${sec}초`:''),steps:steps.slice(-10),at:nowIso()});}};}
-async function send(){const ta=$('#input'),text=ta.value.trim();if(!text||busy)return;if(view!=='work')showView('work');if(work.ui?.manual)work.ui.manual=false;/* 결정 V2: 탭을 직접 누르면 그 뒤 자동 넘김을 멈추되, 선생님이 새로 시키면 다시 따라간다 */ta.value='';say('me',text);busy++;$('#bSend').disabled=true;
+// 11-27 엔진 화면 시안 v1 ①②⑥: 새 엔진의 진행 — 도구 한 번이 한 줄(지금 하는 줄은 숨 쉬는 점, 끝난 줄은 ✓와 초),
+// 끝에 「멈추기」와 안내 글. 답 글은 받는 대로 흐르고, 일하는 중에 받은 말은 단계 줄 사이에 끼운다.
+// 끝나면 지금 작업 기록(doneLogs → m.logs → logsHtml)으로 넘겨 「N단계 · S초 ›」 한 줄로 접는다.
+const STD_CODE=/\[?(\d{1,2}[가-힣]{1,6}\d{2}-\d{2})\]?/g;
+const stlText=t=>E(t).replace(STD_CODE,'<code>[$1]</code>');
+const secOf=ms=>(Math.max(0,ms)/1000).toFixed(1)+'초';
+function stlHtml(st,{now=false}={}){return `<div class="hx-stl${now?' now':''}${st.stop?' stopd':''}"><span class="mk">${now?'<span class="dot"></span>':`<svg class="i xs ok"><use href="#i-${st.stop?'stop':'check'}"/></svg>`}</span><span class="tx">${stlText(st.t)}</span><span class="sec">${st.sec||''}</span></div>`;}
+const lateHtml=t=>`<div class="msg u hx-late"><p>${E(t)}</p><span class="late">일하는 중에 받은 말 · 다음 단계 전에 읽어요</span></div>`;
+const mdHtml=text=>mdLines(text).map(l=>`<p class="tx${l.kind==='p'?'':' md-'+l.kind}">${l.html}</p>`).join('');
+let agentRun=null;// 지금 도는 새 엔진 차례의 진행 줄(끼어들기에 씀)
+function stepAct({onStop}={}){const t0=Date.now(),rows=[],late=[];let text='',stopping=false;
+  const el=document.createElement('div');el.className='msg a hx-live';
+  el.innerHTML=`<div class="hx-steps"><div class="hx-stlist"></div><div class="hx-stbar">${onStop?'<button class="btn hx-stopb" title="다 쓴 것은 남기고 나머지는 멈춰요"><svg class="i xs"><use href="#i-stop"/></svg>멈추기</button>':''}<span class="hint">일하는 중에도 말할 수 있어요</span></div></div>`;
+  const list=el.querySelector('.hx-stlist'),bar=el.querySelector('.hx-stbar');
+  if(onStop)el.querySelector('.hx-stopb').onclick=()=>{const b=el.querySelector('.hx-stopb');b.disabled=true;b.lastChild.textContent='멈추는 중…';stopping=true;onStop();};
+  const stick=()=>{const sc=$('#scroll');if(sc&&sc.scrollHeight-sc.scrollTop-sc.clientHeight<120)sc.scrollTop=1e7;};
+  const add=(st,now)=>{const d=document.createElement('div');d.innerHTML=stlHtml(st,{now});const row=d.firstChild;list.append(row);return row;};
+  // 첫 도구 전·도구 사이: 「생각하는 중…」 한 줄(답 글이 흐르기 시작하면 뺀다)
+  let think=null;const thinkOn=()=>{if(think||text||rows.some(r=>!r.done))return;think={t:'생각하는 중…',t0:Date.now()};think.el=add(think,true);};
+  const thinkOff=()=>{if(think){think.el.remove();think=null;}};
+  const tick=setInterval(()=>{for(const r of [...rows.filter(r=>!r.done),...(think?[think]:[])]){const s=r.el.querySelector('.sec');if(s)s.textContent=secOf(Date.now()-r.t0);}},100);
+  thinkOn();acts.add(el);$('#thread').append(el);$('#scroll').scrollTop=1e7;
+  const api={
+    set:()=>{},step:t=>{rows.push({t:String(t),done:true,sec:'',el:add({t:String(t)},false)});},
+    begin:(key,label)=>{thinkOff();const r={key,t:label+'…',t0:Date.now(),done:false};r.el=add(r,true);rows.push(r);bar.hidden=false;stick();},
+    end:(key,label,ms)=>{let r=rows.find(x=>x.key===key&&!x.done);if(!r){r={key,t0:Date.now()-(ms||0)};rows.push(r);r.el=add({t:label},true);}
+      r.done=true;r.t=label;r.sec=secOf(ms??(Date.now()-r.t0));const d=document.createElement('div');d.innerHTML=stlHtml(r);const nu=d.firstChild;r.el.replaceWith(nu);r.el=nu;thinkOn();stick();},
+    late:t=>{late.push(String(t));list.insertAdjacentHTML('beforeend',lateHtml(t));stick();},
+    delta:all=>{text=String(all||'');thinkOff();if(!rows.some(r=>!r.done))bar.hidden=true;for(const p of el.querySelectorAll(':scope>p.tx'))p.remove();
+      el.insertAdjacentHTML('beforeend',mdHtml(text));const last=el.querySelector(':scope>p.tx:last-of-type');if(last){const c=document.createElement('span');c.className='scar';last.append(c);}stick();},
+    get stopping(){return stopping;},
+    done:({stopped=false,changed=false}={})=>{clearInterval(tick);acts.delete(el);el.remove();const sec=Math.max(1,Math.round((Date.now()-t0)/1000));
+      const steps=rows.filter(r=>r.done).map(r=>({t:r.t,sec:r.sec}));const n=steps.length;
+      if(stopped)steps.push({t:changed?'멈춤':'멈춤 · 시험지는 그대로예요',sec:'',stop:true});
+      doneLogs.push({kind:'steps',title:stopped?`${n}단계에서 멈춤 · ${sec}초`:n?`${n}단계 · ${sec}초`:`생각함 · ${sec}초`,steps,late,at:nowIso()});}};
+  return api;}
+async function send(){const ta=$('#input'),text=ta.value.trim();if(!text)return;if(busy){if(!(agentOn()&&agentRun&&agentRun.sub===sub))return;if(await steerAgent(text))return;}if(busy)return;if(view!=='work')showView('work');if(work.ui?.manual)work.ui.manual=false;/* 결정 V2: 탭을 직접 누르면 그 뒤 자동 넘김을 멈추되, 선생님이 새로 시키면 다시 따라간다 */ta.value='';say('me',text);busy++;$('#bSend').disabled=!agentOn();
   try{sub?await subSend(text):await examSend(text);}catch(e){failMsg(e);}finally{busy--;$('#bSend').disabled=false;render();}}
+// 끼어들기(시안 ⑥): 일하는 중이면 그 차례에 말을 더한다(true = 처리 끝). 엔진이 막 끝났으면(false) 끝나기를 잠깐 기다렸다가 새 차례로 보낸다.
+async function steerAgent(text){const ta=$('#input'),run=agentRun;ta.value='';let ok=false;try{ok=await agentEngine().steer(text);}catch(e){note('agent-steer-fail',{error:e.message});}
+  if(ok&&agentRun===run&&run){run.late(text);note('agent-steer',{n:text.length});return true;}
+  for(let i=0;i<100&&busy;i++)await new Promise(r=>setTimeout(r,50));
+  if(busy){ta.value=text;toast('아직 일하는 중이에요 · 조금 뒤 다시 보내 주세요');return true;}
+  ta.value=text;return false;}
 function failMsg(e){note('ai-fail',{error:e.message,need:e.need});const text=e.need==='login'?(e.opened?'GPT 로그인이 필요해요. 연결 화면을 열었어요 — 로그인하면 같은 말을 이어서 보내요. 쓰던 내용은 그대로예요.':'GPT 로그인이 필요해요. 왼쪽 아래 「5E」를 눌러 5E 화면의 AI 연결에서 로그인한 뒤 같은 말을 다시 보내 주세요. 쓰던 내용은 그대로예요.'):e.need==='install'?(e.opened?'이 컴퓨터에 Codex가 없어요. 연결 화면을 열었어요 — 설치하면 같은 말을 이어서 보내요.':'이 컴퓨터에 Codex가 없어 AI를 부르지 못했어요. AI 연결 화면에서 설치한 뒤 다시 보내 주세요.'):e.cancelled?'요청을 취소했어요. 바뀐 것은 없어요.':`AI 답을 받지 못했어요: ${e.message} · 바뀐 것은 없어요. 같은 말을 다시 보내면 이어서 해요.`;say('ai',text,{error:true});}
 
 // 자료 폴더 색인(이 기기에만): 시험지마다 IndexedDB 'folder:<id>'.
@@ -238,26 +280,26 @@ function agentEngine(){const id=work.projectId,kind=agentToolKind(),key=id+'|'+k
 // 매 차례 앞에 붙이는 지금 상태(짧게). 자세한 것은 AI가 도구로 읽는다.
 const agentContext=()=>`시험지 「${work.meta.title||'새 시험지'}」 · 문항 ${work.questions.length}개(${X.orderedQuestions(work).map(q=>q.number).join('·')||'없음'}) · 판 ${work.head||'v0.0'} · 판에 안 들어간 고침 ${pendingCount()} · 열린 제안 ${openProposals().length} · 열린 코멘트 ${work.comments.filter(c=>['new','talk','decided'].includes(c.status)).length} · 권한 「${PERMISSION_LABEL[permission()]}」${sub?` · 지금 열린 문항 ${work.questions.find(q=>q.id===sub)?.number}번`:''} · 설계표 ${work.plan.length}행(문항 없는 행 ${work.plan.filter(r=>!r.qid).length})${X.missingBlocking(work).length?` · 비어 있는 막는 칸 ${X.missingBlocking(work).map(k=>META_LABEL_H[k]).join('·')}`:''}${drafting?` · 초안 쓰는 중 ${drafting.done.length}/${drafting.rows.length}`:''}`;
 async function agentSend(text){if(!sub&&workMode()==='img'&&!work.questions.length){await figureChat(text);return;}// 그림만: 지금 길 그대로
-  const eng=agentEngine(),turn=newTurnState(text),a=act('생각하는 중…',{onStop:()=>{void eng.interrupt();}});let r=null,err=null;const steps=[];
+  const eng=agentEngine(),turn=newTurnState(text),a=act('생각하는 중…',{onStop:()=>{void eng.interrupt();},stepMode:true});a.sub=sub;agentRun=a;renderComposer();let r=null,err=null;
   const metaBefore=Object.fromEntries(Object.entries(work.meta).map(([k,v])=>[k,JSON.stringify(v?.value??null)]));
-  agentLive.onTool=({tool,args})=>a.set(toolLabel(tool,args)+'…');agentLive.onToolDone=({tool,args,result,ok})=>{steps.push(toolLabel(tool,args,true,result)+(ok||result?.proposed?'':' — 안 됨'));a.set('생각하는 중…');};
-  try{r=await eng.send(text,{context:agentContext(),state:turn});for(const x of steps)a.step(x);}
+  agentLive.onTool=({tool,args})=>a.begin(args,toolLabel(tool,args));agentLive.onToolDone=({tool,args,result,ok,ms,late})=>{if(!late)a.end(args,toolLabel(tool,args,true,result)+(ok||result?.proposed?'':' — 안 됨'),ms);};agentLive.onDelta=(d,all)=>a.delta(all);
+  try{r=await eng.send(text,{context:agentContext(),state:turn});}
   catch(e){err=e;}
   // 진행 줄을 먼저 닫아야 작업 기록이 이 답에 붙는다.
-  finally{agentLive.onTool=agentLive.onToolDone=agentLive.onDelta=null;a.done();}
+  finally{agentLive.onTool=agentLive.onToolDone=agentLive.onDelta=null;a.done({stopped:r?.status==='interrupted',changed:turn.changes.length>0});if(agentRun===a)agentRun=null;renderComposer();}
   if(err)throw err;
   note('agent-turn',{status:r.status,tools:r.toolLog.map(t=>t.tool),ms:r.ms,leak:r.leak,applied:turn.applied,proposed:turn.proposed.length,permission:permission()});
-  const extra={model:'5E 도구 엔진',ms:r.ms};
+  const extra={model:'5E 도구 엔진',ms:r.ms,agent:true,noStream:true};
   if(turn.asks.length)extra.asks=turn.asks;
   if(turn.changes.length){const id=crypto.randomUUID();agentTurns.set(id,turn);extra.undo={id,cells:turn.changes.flatMap(c=>c.cells.map(x=>`${c.no}번 ${x}`)).slice(0,12)};}
-  if(turn.proposed.length)extra.art={tab:'sheet',icon:'file',title:`시험지 ${work.head||'v0.0'} · 제안 ${openProposals().length}`,sub:'시험지 위에서 받기·거절'};
+  if(turn.proposed.length)extra.proposed={n:turn.proposed.length,locked:turn.proposed.filter(x=>work.proposals.find(p=>p.id===x.proposalId)?.touchesLock).length};// 시안 ④: 「고친 것 없음 · 제안 n개가 시험지에 있어요」
   // 만드는 도구: 알아서 정한 시험지 정보(지금 엔진과 같은 카드) · 판 · 처음 잡은 설계표 카드 · 규칙 저장 물음.
   const decided=Object.entries(work.meta).filter(([k,x])=>META_LABEL_H[k]&&x&&x.by==='ai'&&x.value!=null&&JSON.stringify(x.value)!==metaBefore[k]).map(([k,x])=>({k:META_LABEL_H[k],v:fmtMeta(x.value)}));if(decided.length)extra.decided=decided;
   if(turn.bumped){extra.stats=turn.bumped.stats;extra.art={tab:'sheet',icon:'file',title:`시험지 ${turn.bumped.label}`,sub:`바뀐 문항 ${turn.bumped.nos.length}개 · 판 기록에서 두 판 비교`};}
   if(turn.planFirst&&work.plan.length){const std=[...new Set(work.plan.flatMap(r=>r.standards||[]))].length;extra.art={tab:'plan',icon:'table',title:'설계표',sub:`${work.plan.length}문항 · ${std?`성취기준 ${std}개 · `:''}배점 합 ${work.plan.reduce((n,r)=>n+(Number(r.points)||0),0)}점`};autoTab('plan');}
   const ruleCards=turn.ruleCards.map(({text,id})=>({text,id}));if(ruleCards.length&&!sub)extra.ruleCards=ruleCards;
   if(r.leak)say('ai',`5E 밖의 동작(${r.leak})이 시작되어 멈췄어요. 다시 말씀해 주세요.`,{error:true});
-  else if(r.status==='interrupted')say('ai',(r.text?r.text+'\n\n':'')+'(멈췄어요)',{...extra,noStream:true});
+  else if(r.status==='interrupted')say('ai',(r.text?r.text+'\n\n':'')+'(멈췄어요)',extra);
   else if(r.status!=='completed')say('ai',`AI가 끝까지 답하지 못했어요${r.error?': '+r.error:''}. 다시 보내 주세요.`,{error:true,...(extra.undo?{undo:extra.undo}:{})});
   else say('ai',r.text||'(답이 비었어요)',extra);
   // 문항 대화에서 나온 규칙 카드는 시험지 대화에 띄운다(카드 단추는 시험지 대화의 말만 찾는다).
@@ -547,7 +589,7 @@ function placePicked(msg,qid){const q=work.questions.find(x=>x.id===qid);if(!q)r
   work.dirty=true;msg.pickDone=`${q.number}번 그림 칸에 넣었어요(${list.length}장). 직접 넣은 그림이라 잠겨 있고, 다음 「판 올리기」 때 판에 들어가요.`;save();render();note('library-place',{no:q.number,n:list.length});}
 let pendingAttach=[];
 function renderThread(){const list=sub?subThread(sub):work.chat;
-  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}${streamAt.has(m)?' streaming':''}"${streamAt.has(m)?` data-st="${i}"`:''}>${logsHtml(m,i)}${String(m.text).split(/\n+/).map(p=>`<p class="tx">${E(p)}</p>`).join('')}${m.img?`<img class="himg" src="${E(m.img)}" data-himg="${i}" alt="그린 그림" title="두 번 누르면 클립보드에 넣고 image에서 고쳐요">`:''}${decHtml(m)}${artHtml(m)}${askHtml(m,i)}${choicesHtml(m,i)}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${m.pick?pickHtml(m):''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
+  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}${streamAt.has(m)?' streaming':''}"${streamAt.has(m)?` data-st="${i}"`:''}>${logsHtml(m,i)}${m.agent?mdHtml(m.text):String(m.text).split(/\n+/).map(p=>`<p class="tx">${E(p)}</p>`).join('')}${undoHtml(m,i)}${m.img?`<img class="himg" src="${E(m.img)}" data-himg="${i}" alt="그린 그림" title="두 번 누르면 클립보드에 넣고 image에서 고쳐요">`:''}${decHtml(m)}${artHtml(m)}${askHtml(m,i)}${choicesHtml(m,i)}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${m.pick?pickHtml(m):''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model&&!m.agent?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
   for(const el of acts)$('#thread').append(el);$('#scroll').scrollTop=1e7;runStream(list);}
 const ST={new:'새 코멘트',talk:'의논 중',decided:'결정됨',applied:'반영됨',dropped:'안 함'},SC={new:'b-ok',talk:'b-talk',decided:'b-ok',applied:'b-done',dropped:'b-ok'};
 function ledgerHtml(){const list=work.comments.filter(c=>c.status!=='dropped').slice(-20);if(!list.length)return '';return `<div class="ledger"><div class="lh">코멘트 대장 · ${E(work.head||'v0.0')}</div>${list.map(c=>`<div class="lr"><span class="ln">${E(work.questions.find(q=>q.id===c.qid)?.number||'전체')}번</span><span>${E(c.gist||c.text).slice(0,80)}</span><span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>`).join('')}</div>`;}
@@ -584,7 +626,7 @@ function renderReview(){if(compare&&renderCompare())return;const qs=X.orderedQue
   const html=qs.map(q=>{const cs=work.comments.filter(c=>c.qid===q.id&&c.status!=='dropped'),props=(work.proposals||[]).filter(p=>p.qid===q.id&&!['applied','rejected'].includes(p.state)),ph=paperHtml(q),missN=(ph.match(/class="edot missing"/g)||[]).length,miss=X.cellKeys(q).some(k=>X.cellEvidence(q,k.key)==='missing'),many=missN>EV_DOTS_MAX&&!evShow.has(q.id);
     const ck=work.checks.filter(c=>c.qid===q.id).at(-1),ex=explanationParts(q);
     return `<section class="qrow" data-q="${E(q.id)}"><div class="qleft kq${many?' dots-off':''}">${ph}</div><div class="qright">
-<div class="qmeta"><span class="qmt">${E(q.number)}번 · ${E(work.plan.find(r=>r.qid===q.id)?.unit||'')} · ${E(work.plan.find(r=>r.qid===q.id)?.difficulty||'')} · ${E(q.points)}점 · 정답 ${q.answer!=null?CIRCLED[q.answer]:'—'}</span><span class="qtags">${(q.locks||[]).length?`<span class="lockn" title="직접 고친 칸은 AI가 덮어쓰지 않아요">직접 고친 칸 ${q.locks.length}</span>`:''}${missN>EV_DOTS_MAX?`<span class="evn${evShow.has(q.id)?' on':''}" data-evn="${E(q.id)}" title="누르면 그 칸들에 점이 켜져요">근거 없는 칸 ${missN}</span>`:miss?'<span class="exdot" title="근거 없는 칸이 있어요"></span>':''}${q.origin?.source?`<span class="srcn" title="보관함(옛 파일)에서 복사해 온 문항 · 원본은 그대로">출처 ${E(String(q.origin.source.file).replace(/\.[^.]+$/,''))} ${E(q.origin.source.no)}번</span>`:''}</span><span class="sp"></span><button class="btn sm" data-sub="${E(q.id)}"><svg class="i s"><use href="#i-msg"/></svg>이 문항 대화</button></div>
+<div class="qmeta"><span class="qmt">${E(q.number)}번 · ${E(work.plan.find(r=>r.qid===q.id)?.unit||'')} · ${E(work.plan.find(r=>r.qid===q.id)?.difficulty||'')} · ${E(q.points)}점 · <span data-ans="${E(q.id)}">정답 ${q.answer!=null?CIRCLED[q.answer]:'—'}</span></span><span class="qtags">${(q.locks||[]).length?`<span class="lockn" title="직접 고친 칸은 AI가 덮어쓰지 않아요">직접 고친 칸 ${q.locks.length}</span>`:''}${missN>EV_DOTS_MAX?`<span class="evn${evShow.has(q.id)?' on':''}" data-evn="${E(q.id)}" title="누르면 그 칸들에 점이 켜져요">근거 없는 칸 ${missN}</span>`:miss?'<span class="exdot" title="근거 없는 칸이 있어요"></span>':''}${q.origin?.source?`<span class="srcn" title="보관함(옛 파일)에서 복사해 온 문항 · 원본은 그대로">출처 ${E(String(q.origin.source.file).replace(/\.[^.]+$/,''))} ${E(q.origin.source.no)}번</span>`:''}</span><span class="sp"></span><button class="btn sm" data-sub="${E(q.id)}"><svg class="i s"><use href="#i-msg"/></svg>이 문항 대화</button></div>
 <div class="qtabs"><button data-pane="ev">근거</button><button data-pane="sol">해설</button><button data-pane="chk">검토</button>${(q.figureSpecs||[]).filter(f=>!f.done).length?'<button data-pane="fig">그림</button>':''}</div>
 <div class="qpane" data-p="ev" hidden>${X.cellKeys(q).map(k=>{const st=X.cellEvidence(q,k.key),list=(q.authoring?.evidence||[]).filter(e=>e.target===k.key);return `<div class="ev${st!=='ok'?' ev-x':''}"><b>${E(k.label)}</b><span>${list.length?list.map(e=>E((e.source?.title||'')+(e.source?.page?` ${e.source.page}쪽`:'')+' · '+e.claim)).join('<br>'):st==='waived'?'근거 없음 — 예외로 진행':'근거 없음'}</span></div>`;}).join('')}</div>
 <div class="qpane" data-p="sol" hidden>${ex.parts.map(p=>`<p><b>${E(p.key)}</b> ${tex(p.text)}${p.ox?` → ${p.ox==='o'?'옳다':'옳지 않다'}`:''}</p>`).join('')||'(해설 없음)'}</div>
@@ -607,7 +649,7 @@ function renderSheet(){if(editing&&editing.el?.closest?.('#t-sheet')&&document.c
 <div class="paper2"><div class="ph1"><span class="l">${E([m.term?.value,m.examName?.value].filter(Boolean).join(' '))}</span><span class="m">${E(m.subject?.value||'')}</span><span class="r">${E(m.grade?.value||'')}</span></div><div class="ph2"></div>
 <div class="cols2">${qs.map(q=>{const props=open.filter(p=>p.qid===q.id),cs=work.comments.filter(c=>c.qid===q.id&&['new','talk','decided'].includes(c.status)),ck=work.checks.filter(c=>c.qid===q.id).at(-1),warn=ck&&['doubt','fail'].includes(ck.verdict);
   return `<div class="kq qblock" data-q="${E(q.id)}">${paperHtml(q,{ins:insMap(q,props),locks:true})}${props.map(p=>suggHtml(q,p,open.indexOf(p)+1,open.length)).join('')}${resolvedHtml(q)}<span class="pins">${cs.length?`<span class="pin" data-pin="${E(q.id)}" title="코멘트 ${cs.length}개 · 누르면 보기">${++pinNo}</span>`:''}${warn?`<span class="pin w" data-pin="${E(q.id)}" title="풀이 검사: ${E(({doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름'})[ck.verdict])}">!</span>`:''}</span></div>`;}).join('')||'<p class="empty-note">문항이 없어요.</p>'}</div></div>
-<div class="anskey"><b>정답표 · ${E(work.head||'v0.0')}</b><table><tr>${qs.map(q=>`<th>${E(q.number)}</th>`).join('')}</tr><tr>${qs.map(q=>`<td>${q.answer!=null?CIRCLED[q.answer]:'서술'}</td>`).join('')}</tr><tr>${qs.map(q=>`<td>${E(q.points)}</td>`).join('')}</tr></table><p class="note2">${E(statsLine(s))}</p></div></div>`;placeSuggs();}
+<div class="anskey"><b>정답표 · ${E(work.head||'v0.0')}</b><table><tr>${qs.map(q=>`<th>${E(q.number)}</th>`).join('')}</tr><tr>${qs.map(q=>`<td data-ans="${E(q.id)}">${q.answer!=null?CIRCLED[q.answer]:'서술'}</td>`).join('')}</tr><tr>${qs.map(q=>`<td>${E(q.points)}</td>`).join('')}</tr></table><p class="note2">${E(statsLine(s))}</p></div></div>`;placeSuggs();}
 const STAGE={design:'설계 중',draft:'쓰는 중',review:'검토 중',typeset:'조판 중',final:'확정'};
 const termOf=t=>{const d=t?new Date(t):new Date(),y=d.getFullYear(),m=d.getMonth()+1;return m>=3&&m<=8?y+'-1':m>=9?y+'-2':(y-1)+'-2';};
 // 시안 v7: 제안 상자는 바뀌는 문단 바로 아래
@@ -643,8 +685,31 @@ function render(){if(!work)return;if(view==='home'&&$('#homeModes')?.children.le
   $$('#seg button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));for(const t of ['plan','review','sheet','check'])$('#t-'+t).hidden=t!==tab;
   const c=X.commentCounts(work);$('#counts').textContent=`코멘트 ${work.comments.length} · 의논 중 ${c.talk||0} · 결정 ${c.decided||0} · 반영 ${c.applied||0}`;
   $('#dock2').hidden=tab!=='review'||!(c.decided||c.talk||c.new);$('#dock2').innerHTML=`<span>새 코멘트 <b>${c.new||0}</b> · 결정된 것 <b>${c.decided||0}</b> · 의논 중 <b>${c.talk||0}</b></span>${c.new?'<button class="btn sm" id="bTriage">코멘트 보내기</button>':''}<button class="btn sm pri" id="bApply"${c.decided?'':' disabled'}>결정된 것만 반영</button>`;
-  $('#input').placeholder=drafting?'쓰는 동안에도 나온 문항에 코멘트·질문할 수 있어요':'말로 시키기 · @3번처럼 문항 지목 · 고칠 때는 「반영해」라고 말해야 고쳐요';
-  if(tab==='plan')renderPlan();else if(tab==='review')renderReview();else if(tab==='check')renderCheck();else renderSheet();renderThread();}
+  renderComposer();
+  if(tab==='plan')renderPlan();else if(tab==='review')renderReview();else if(tab==='check')renderCheck();else renderSheet();paintMarks();renderThread();}
+// 입력칸(시안 ③⑥): 새 엔진일 때만 권한 고르기를 보이고, 일하는 중에는 「일하는 중에도 말할 수 있어요」. 지금 엔진은 예전 그대로.
+function renderComposer(){const ta=$('#input'),on=agentOn(),running=on&&!!agentRun&&agentRun.sub===sub;
+  ta.placeholder=running?'일하는 중에도 말할 수 있어요':drafting?'쓰는 동안에도 나온 문항에 코멘트·질문할 수 있어요':on?'말로 시키기 · @3번처럼 문항 지목':'말로 시키기 · @3번처럼 문항 지목 · 고칠 때는 「반영해」라고 말해야 고쳐요';
+  ta.closest('.box')?.classList.toggle('working',running);if(on&&busy)$('#bSend').disabled=false;
+  const box=$('#permBox');if(!box)return;box.hidden=!on;if(!on){box.classList.remove('open');return;}
+  const v=work?permission():'ask';$('#permT').textContent=PERMISSION_LABEL[v];$('#permIc').innerHTML=`<use href="#i-${v==='direct'?'bolt':'hand'}"/>`;$('#bPerm').classList.toggle('fast',v==='direct');
+  for(const b of box.querySelectorAll('.hx-pm'))b.classList.toggle('on',b.dataset.perm===v);}
+function pickPermission(v){if(!work)return;setPermission(v);$('#permBox')?.classList.remove('open');renderComposer();}
+// 고친 칸 표시(시안 ⑤): work.ui.aiMarks의 칸에 옅은 파랑과 「AI가 고침 · 방금」. 커서를 올리거나 누르면 그 표시를 지운다.
+const markShownAt=new Map();
+function markEls(k){const [qid,key]=[k.slice(0,k.indexOf('|')),k.slice(k.indexOf('|')+1)];const sel=key==='answer'?`[data-ans="${CSS.escape(qid)}"]`:`[data-cell="${CSS.escape(qid+'|'+key)}"]`;
+  return $$(`#t-sheet ${sel},#t-review ${sel}`).filter(el=>!el.classList.contains('q')&&!el.closest('.cmppaper'));}
+function paintMarks(){if(!work||!agentOn())return;const now=Date.now();
+  for(const m of work.ui?.aiMarks||[]){const k=m.qid+'|'+m.key;let shown=false;
+    for(const el of markEls(k)){shown=true;el.classList.add('aichg');el.classList.remove('seen');el.dataset.aimark=k;const tag=`<span class="aitag${markShownAt.has(k)?'':' hx-in'}" data-aitag="${E(k)}">AI가 고침 · ${E(relTime(m.at,now))}</span>`;
+      if(['IMG','TABLE'].includes(el.tagName)){if(!el.nextElementSibling?.matches('.aitag'))el.insertAdjacentHTML('afterend',tag);}else if(!el.querySelector(':scope>.aitag'))el.insertAdjacentHTML('beforeend',tag);}
+    if(shown&&!markShownAt.has(k))markShownAt.set(k,now);}}
+function clearMark(el,{force=false}={}){const k=el.dataset.aimark;if(!k)return;if(!force&&Date.now()-(markShownAt.get(k)||0)<400)return;
+  work.ui={...(work.ui||{}),aiMarks:(work.ui?.aiMarks||[]).filter(m=>m.qid+'|'+m.key!==k)};markShownAt.delete(k);save();note('ai-mark-seen',{key:k.split('|')[1]});
+  for(const x of $$('[data-aimark]').filter(x=>x.dataset.aimark===k)){x.classList.add('seen');x.classList.remove('aichg');delete x.dataset.aimark;}
+  for(const t of $$('.aitag').filter(t=>t.dataset.aitag===k))t.remove();}
+document.addEventListener('pointerover',e=>{const el=e.target.closest?.('.aichg[data-aimark]');if(el)clearMark(el);},true);
+document.addEventListener('pointerdown',e=>{const el=e.target.closest?.('.aichg[data-aimark]');if(el)clearMark(el,{force:true});},true);
 // ── 점검 탭(결정 6 · 시안7 4번): 교과서 대조 · 수준 · 교육과정 · 두 모델 판정 · 종합 · 고친 점. PDF·한글 내보내기는 동결 뒤. ──
 function renderCheck(){const qs=X.orderedQuestions(work);if(!qs.length){$('#t-check').innerHTML='<div class="empty-note">아직 문항이 없어요.</div>';return;}
   const KIND={textbook:'교과서',past:'기출',document:'자료',curriculum:'교육과정'};let cnt={그대로:0,고치면:0,none:0,missing:0};
@@ -663,7 +728,13 @@ function renderCheck(){const qs=X.orderedQuestions(work);if(!qs.length){$('#t-ch
 <div class="cksum">요약: ${qs.length}문항 중 그대로 ${cnt.그대로} · 고치면 ${cnt.고치면}${cnt.none?` · 아직 검사 전 ${cnt.none}`:''} · 근거 없는 칸이 있는 문항 ${cnt.missing} · 줄을 누르면 그 문항 검토로</div></div>`;}
 
 // ── 입력 ──
-$('#bSend').onclick=send;$('#input').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send();}});
+$('#bSend').onclick=send;$('#input').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();send();}
+  else if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&agentOn()&&agentRun&&agentRun.sub===sub){e.preventDefault();send();}// 시안 ⑥: 일하는 중에는 ↵로 끼어들기
+  else if(e.key==='Tab'&&e.shiftKey&&agentOn()&&work){e.preventDefault();pickPermission(permission()==='direct'?'ask':'direct');}});// 시안 ③: ⇧Tab
+$('#bPerm').onclick=e=>{e.stopPropagation();$('#permBox').classList.toggle('open');};
+for(const b of $$('#permBox .hx-pm'))b.onclick=e=>{e.stopPropagation();pickPermission(b.dataset.perm);};
+document.addEventListener('click',e=>{if(!e.target.closest?.('#permBox'))$('#permBox')?.classList.remove('open');});
+document.addEventListener('click',e=>{const u=e.target.closest?.('[data-undo]');if(!u)return;if(!undoAgentTurn(u.dataset.undo))toast('이 묶음은 이제 되돌릴 수 없어요 · 판 기록에서 이전 판으로 돌아갈 수 있어요');});
 $('#seg').onclick=e=>{const b=e.target.closest('button[data-tab]');if(!b)return;tab=b.dataset.tab;work.ui={...(work.ui||{}),tab,manual:true};save();render();};
 document.addEventListener('click',async e=>{const t=e.target;if(t.closest?.('.hx-edit,.eq-help,.eq-back'))return;
   const subB=t.closest('[data-sub]');if(subB){sub=subB.dataset.sub;render();$('#input').focus();return;}
@@ -845,7 +916,15 @@ function pickAsk(i,k,j){const list=sub?subThread(sub):work.chat,m=list[i];if(!m|
 function choicesHtml(m,i){return (m.choices||[]).map((c,k)=>c.picked!=null?`<div class="done"><svg class="i s" style="color:var(--tx3)"><use href="#i-check"/></svg><span class="k">${E(c.ask.slice(0,40))}</span>${E(c.options[c.picked]?.label||c.typed||'')}</div>`:
   `<div class="ask" data-ask="${i}|${k}"><div class="hd"><span class="req">꼭 정해야 해요</span></div><div class="q">${E(c.ask)}${c.why?`<small>${E(c.why)}</small>`:''}</div>${c.options.map((o,j)=>`<button class="opt" data-opt="${i}|${k}|${j}"><span class="n">${j+1}</span><span><b>${E(o.label)}${j===c.recommend?'<span class="rc">추천</span>':''}</b>${o.desc?`<span class="d">${E(o.desc)}</span>`:''}</span></button>`).join('')}<div class="ft">숫자 키로 고르기 · 입력창에 직접 써도 돼요</div></div>`).join('');}
 function pickChoice(i,k,j){const list=sub?subThread(sub):work.chat,m=list[i],c=m?.choices?.[k];if(!c||c.picked!=null||busy)return;c.picked=j;save();$('#input').value=c.options[j].label;note('choice',{j});void send();}
-function logsHtml(m,i){return (m.logs||[]).map((l,j)=>`<button class="alog" data-log="${i}-${j}"><span class="dot"></span>${E(l.title)}${l.steps?.length?'<svg class="i s"><use href="#i-right"/></svg>':''}</button>${l.steps?.length?`<div class="actlog" data-logp="${i}-${j}" hidden>${l.steps.map(x=>`<div>${E(x)}</div>`).join('')}</div>`:''}`).join('');}
+// 시안 ④: 이번 답에서 바로 고친 묶음(되돌리기) · 고친 것 없이 제안만 했을 때의 안내 줄
+// 카드가 나타나는 움직임은 처음 한 번만(대화는 자주 다시 그려져서, 매번 움직이면 깜빡여 보인다)
+const shownCards=new WeakSet();
+function undoHtml(m,i){let h='';const u=m.undo;const nu=shownCards.has(m)?'':' hx-in';if(u||m.proposed)shownCards.add(m);
+  if(u){const where=(u.cells||[]).join(' · ');h+=u.undone?`<div class="hx-batch undone${nu}"><span class="bi"><svg class="i s"><use href="#i-undo"/></svg></span><span class="bt"><b>되돌렸어요</b><span>· ${E(where)}${where?eulReul(where)+' 처음대로':''}</span></span></div>`
+    :`<div class="hx-batch${nu}"><span class="bi"><svg class="i s"><use href="#i-bolt"/></svg></span><span class="bt"><b>이번에 고친 것 ${(u.cells||[]).length}칸</b><span>· ${E(where)}</span></span><button class="btn hx-undob" data-undo="${E(u.id)}"><svg class="i s"><use href="#i-undo"/></svg>되돌리기</button></div>`;}
+  const pr=m.proposed;if(pr?.n)h+=`<button class="hx-pnote${nu}" data-arttab="sheet"><svg class="i s"><use href="#i-${pr.locked?'lock':'hand'}"/></svg><span>${u?'':'고친 것 없음 · '}${pr.locked?`잠긴 칸 제안 ${pr.n}개가`:`제안 ${pr.n}개가`} 시험지에 있어요</span></button>`;
+  return h;}
+function logsHtml(m,i){return (m.logs||[]).map((l,j)=>l.kind==='steps'?`<div class="hx-steps hx-folded"><button class="alog hx-stsum" data-log="${i}-${j}"><svg class="i xs chev"><use href="#i-right"/></svg>${E(l.title)}</button><div class="actlog hx-stfold" data-logp="${i}-${j}" hidden>${(l.steps||[]).map(st=>stlHtml(st)).join('')}</div></div>${(l.late||[]).map(lateHtml).join('')}`:`<button class="alog" data-log="${i}-${j}"><span class="dot"></span>${E(l.title)}${l.steps?.length?'<svg class="i s"><use href="#i-right"/></svg>':''}</button>${l.steps?.length?`<div class="actlog" data-logp="${i}-${j}" hidden>${l.steps.map(x=>`<div>${E(x)}</div>`).join('')}</div>`:''}`).join('');}
 
 // ── 시험지 위 AI 제안(결정 V1: 섞은 안) ──
 const resolved=new Map();// 이번에 받거나 거절한 제안(되돌리기 표시용)
@@ -856,7 +935,8 @@ const isFigChange=(q,c)=>c.path==='block'&&q.blocks.find(b=>b.id===c.id||b.label
 function otherChanges(q,p){return p.changes.map((c,i)=>isFigChange(q,c)?`그림: ${E(String(c.value||'').slice(0,80))}`:c.path==='answer'?`정답 ${Number.isInteger(+p.before?.[i])&&p.before[i]!==''?CIRCLED[+p.before[i]-1]||p.before[i]:'—'} → ${Number.isInteger(+c.value)?CIRCLED[+c.value-1]||c.value:E(c.value)}`:c.path==='points'?`배점 ${E(p.before?.[i]??'')} → ${E(c.value)}점`:['explanation','modelAnswer'].includes(c.path)?'해설 고침':c.path==='table'?'표 고침':c.path==='type'?'문항 유형 바꿈':c.op==='add'?'〈보기〉 줄 더함':!TEXT_PATHS.has(c.path)?E(c.path)+' 고침':'').filter(Boolean);}
 function suggHtml(q,p,i,n){const figOnly=p.changes.length>0&&p.changes.every(c=>isFigChange(q,c));const cm=(p.comments||[]).map(id=>work.comments.find(c=>c.id===id)).filter(Boolean)[0];const others=otherChanges(q,p);
   const firstKey=[...insMap(q,[p]).keys()][0]||'';
-  return `<div class="sugg" data-sugg="${E(p.id)}" data-skey="${E(firstKey)}"><div class="h"><svg class="i s"><use href="#i-spark"/></svg>AI 제안 · ${E(q.number)}번 ${E(String(p.summary||'').slice(0,48))}<span class="sp"></span>${i}/${n}</div>${cm?`<div class="why">코멘트 「${E(String(cm.gist||cm.text).slice(0,90))}」</div>`:''}${others.length?`<div class="why">${others.join(' · ')}</div>`:''}${p.touchesLock?'<div class="why">직접 고친 칸은 건드리지 않아요</div>':''}
+  const lockHead=p.touchesLock&&agentOn();
+  return `<div class="sugg${agentOn()?' hx-sg':''}${lockHead?' hx-locked':''}" data-sugg="${E(p.id)}" data-skey="${E(firstKey)}"><div class="h">${lockHead?`<svg class="i s"><use href="#i-lock"/></svg><b>잠긴 칸이라 제안만 했어요</b> · ${E(q.number)}번`:`<svg class="i s"><use href="#i-spark"/></svg>AI 제안 · ${E(q.number)}번 ${E(String(p.summary||'').slice(0,48))}`}<span class="sp"></span>${i}/${n}</div>${cm?`<div class="why">코멘트 「${E(String(cm.gist||cm.text).slice(0,90))}」</div>`:''}${others.length?`<div class="why">${others.join(' · ')}</div>`:''}${p.touchesLock?'<div class="why">직접 고친 칸은 건드리지 않아요</div>':''}
 ${figOnly?'<div class="why">그림은 글로 바꿀 수 없어요 · image에서 고친 뒤 클립보드 서랍에서 그림 칸으로 끌어 놓으면 이 제안은 끝나요</div>':''}
 <div class="acts">${figOnly?`<button class="btn pri" data-sfig="${E(p.id)}"><svg class="i s"><use href="#i-img"/></svg>image에서 고치기</button>`:`<button class="btn pri" data-acc="${E(p.id)}"><svg class="i s"><use href="#i-check"/></svg>받기</button>`}<button class="btn" data-rej="${E(p.id)}"><svg class="i s"><use href="#i-x"/></svg>거절</button>${figOnly?'':`<button class="btn" style="margin-left:auto" data-sedit="${E(p.id)}">직접 고치기</button>`}</div></div>`;}
 function resolvedHtml(q){return [...resolved.entries()].filter(([,r])=>r.qid===q.id).map(([pid,r])=>`<div class="resolved"><svg class="i s"><use href="#i-${r.kind==='rej'?'x':'check'}"/></svg>${({acc:'받음',rej:'거절함',edit:'직접 고침'})[r.kind]} · ${E(String(r.summary||'').slice(0,40))}${r.kind==='rej'?` <button class="btn sm gh" data-unrej="${E(pid)}">되돌리기</button>`:''}</div>`).join('');}
