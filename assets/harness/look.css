@@ -1,0 +1,124 @@
+/* 11-27 하네스 겉모습(시안 ~/Work/2026-11-27_하네스-첫화면-시안/v3.html)
+   - 색은 셋만: 화이트 = A 순백 회색 · 다크 네이비 = G · 그래파이트 = H (누런 톤 없음)
+   - 단추는 Claude 앱처럼: 알약 대신 둥근 사각(곡률 8) + 얇은 테두리, 주 단추만 진한 채움
+   - 그림자 3단계: 단추·칩(테두리만) / 카드(옅게) / 입력칸(가장 뜸) */
+
+/* ── 색 ── */
+:root[data-theme="light"]{
+  --ds-app:#ffffff;--ds-panel:#f7f7f8;--ds-bar:#ffffff;--ds-raise:#ffffff;--ds-field:#ffffff;
+  --ds-line:#e7e8eb;--ds-line-strong:#d6d8dd;--ds-ink:#15171c;--ds-ink-2:#4b5060;--ds-ink-3:#8a8f9c;
+  --ds-hover:#f3f4f6;--ds-selected:#eceef1;--ds-selected-ink:#15171c;--ds-selected-strong:#e4e6ea;
+  --ds-selected-icon:#15171c;--ds-accent:#15171c;--ds-accent-ink:#ffffff;--ds-bench:#f3f4f6;
+  --ds-soft-bg:#eef3fe;--ds-soft-line:#bfd3fb;--ds-soft-ink:#2563eb;--ds-check:#2563eb;
+  --hx-sh-card:0 0 0 1px #e7e8eb,0 1px 3px rgba(20,22,26,.04);
+  --hx-sh-comp:0 0 0 1px #e7e8eb,0 2px 4px rgba(20,22,26,.03),0 10px 30px rgba(20,22,26,.06);
+  --hx-sh-pop:0 0 0 1px #e1e3e7,0 12px 32px rgba(20,22,26,.12);
+}
+:root[data-theme="dark"][data-palette="classic"]{
+  --ds-app:#0f141c;--ds-panel:#0c1118;--ds-bar:#0f141c;--ds-raise:#161d29;--ds-field:#0c1118;
+  --ds-line:#232c3b;--ds-line-strong:#2c3748;--ds-ink:#e6ebf2;--ds-ink-2:#a9b4c4;--ds-ink-3:#7a8699;
+  --ds-hover:#1b2331;--ds-selected:#1f2938;--ds-selected-ink:#e6ebf2;--ds-selected-strong:#263245;
+  --ds-selected-icon:#e6ebf2;--ds-accent:#e6ebf2;--ds-accent-ink:#0f141c;--ds-bench:#0a0e14;
+  --ds-soft-bg:#152137;--ds-soft-line:#2b4a78;--ds-soft-ink:#6ba4f8;--ds-check:#6ba4f8;
+  --hx-sh-card:0 0 0 1px #232c3b,0 2px 8px rgba(0,0,0,.25);
+  --hx-sh-comp:0 0 0 1px #2c3748,0 10px 30px rgba(0,0,0,.35);
+  --hx-sh-pop:0 0 0 1px #2c3748,0 14px 36px rgba(0,0,0,.5);
+}
+:root[data-theme="dark"]:not([data-palette="classic"]){
+  --ds-app:#161618;--ds-panel:#111113;--ds-bar:#161618;--ds-raise:#1f1f22;--ds-field:#111113;
+  --ds-line:#2b2b30;--ds-line-strong:#36363c;--ds-ink:#ececee;--ds-ink-2:#a8a8b0;--ds-ink-3:#76767f;
+  --ds-hover:#232326;--ds-selected:#28282c;--ds-selected-ink:#ececee;--ds-selected-strong:#303036;
+  --ds-selected-icon:#ececee;--ds-accent:#ececee;--ds-accent-ink:#161618;--ds-bench:#0e0e10;
+  --ds-soft-bg:#1d2534;--ds-soft-line:#34476b;--ds-soft-ink:#8ab4ff;--ds-check:#8ab4ff;
+  --hx-sh-card:0 0 0 1px #2b2b30,0 2px 8px rgba(0,0,0,.25);
+  --hx-sh-comp:0 0 0 1px #36363c,0 10px 30px rgba(0,0,0,.35);
+  --hx-sh-pop:0 0 0 1px #36363c,0 14px 36px rgba(0,0,0,.5);
+}
+:root{--pop-sh:var(--hx-sh-pop)}
+.menu,.pop,.findpop,.drawer{box-shadow:var(--hx-sh-pop)!important}
+
+/* ── 단추: 둥근 사각 + 얇은 테두리(알약 없음) ── */
+.btn,.pill,.chip,.seg2 button,.c,.extitle,.nav,.ib{border-radius:8px!important}
+.btn{box-shadow:inset 0 0 0 1px var(--ds-line)}
+.btn:hover{background:var(--ds-hover)}
+.btn.pri,:root[data-theme] .btn.pri{background:var(--ds-accent)!important;color:var(--ds-accent-ink)!important;box-shadow:none!important}
+.btn.pri:hover{opacity:.88}
+.btn.gh{box-shadow:none}
+.pill{height:30px;padding:0 10px;background:transparent!important;box-shadow:inset 0 0 0 1px var(--ds-line)!important;color:var(--ds-ink-2)!important}
+.pill:hover{background:var(--ds-hover)!important;color:var(--ds-ink)!important}
+.pill.on,:root[data-theme] .pill.on{background:var(--ds-soft-bg)!important;color:var(--ds-soft-ink)!important;box-shadow:inset 0 0 0 1px var(--ds-soft-line)!important}
+.composer .send,.send{border-radius:8px!important;background:var(--ds-accent)!important;color:var(--ds-accent-ink)!important;box-shadow:none!important}
+.composer .send:disabled,.send:disabled{opacity:.35}
+.composer{border-radius:20px!important;box-shadow:var(--hx-sh-comp)!important;border:0!important;background:var(--ds-raise)!important}
+.ask,.art,.sugg,.dock,.card,.lowc,.ledger{border-radius:12px}
+.art,.ask{box-shadow:var(--hx-sh-card)!important;border:0!important;background:var(--ds-raise)!important}
+.art:hover{background:var(--ds-hover)!important}
+.msg.u p{border-radius:12px!important;background:var(--ds-selected)!important;color:var(--ds-ink)!important}
+
+/* ── 첫 화면(시안 v3) ── */
+#vHome .home2{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;padding:0 32px 26px;min-height:0}
+.home2 .hero{width:100%;max-width:760px;margin-top:max(56px,9vh)}
+.home2 h1{margin:0 0 6px;font:600 30px/1.3 var(--ds-font);letter-spacing:-.6px;display:flex;align-items:baseline;gap:12px;justify-content:center;color:var(--ds-ink)}
+.home2 h1 .mk{font:italic 700 38px/1 var(--ds-font-brand);letter-spacing:-.03em}
+.home2 .sub{margin:0 0 22px;text-align:center;color:var(--ds-ink-2);font-size:14px}
+.hmodes{display:flex;gap:8px;justify-content:center;margin:0 0 14px;flex-wrap:wrap}
+.hmode{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:8px;font-size:13px;color:var(--ds-ink-2);background:var(--ds-raise);box-shadow:inset 0 0 0 1px var(--ds-line);transition:background .15s,color .15s}
+.hmode:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.hmode.on{background:var(--ds-selected);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.hmode .i{width:15px;height:15px}
+.hcomp{background:var(--ds-raise);border-radius:20px;box-shadow:var(--hx-sh-comp);padding:16px 16px 12px 20px;transition:box-shadow .2s}
+.hcomp:focus-within{box-shadow:var(--hx-sh-comp),0 0 0 3px var(--ds-soft-bg)}
+.hta{position:relative;min-height:64px}
+.hta textarea{display:block;width:100%;min-height:64px;max-height:220px;font-size:15.5px;line-height:1.55;color:var(--ds-ink);background:transparent;position:relative;z-index:1}
+.hph{position:absolute;inset:0;pointer-events:none;font-size:15.5px;line-height:1.55;color:var(--ds-ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hph .car{display:inline-block;width:1.5px;height:1.05em;background:var(--ds-ink-3);vertical-align:-2px;margin-left:1px;animation:hxblink 1s steps(1) infinite}
+@keyframes hxblink{50%{opacity:0}}
+.hrow{display:flex;align-items:center;gap:6px;margin-top:8px}
+.hrow .refs{display:flex;gap:6px;flex-wrap:wrap}
+.hplus{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line)}
+.hplus:hover{background:var(--ds-hover)}
+.hmodel{font-size:12px;color:var(--ds-ink-3);margin-right:6px;white-space:nowrap}
+.hsend{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:var(--ds-accent);color:var(--ds-accent-ink)}
+.hsend:hover{opacity:.88}
+.hflowlab{display:flex;align-items:center;gap:8px;margin:26px 4px 6px;font-size:12px;color:var(--ds-ink-3)}
+.hflowlab .ln{flex:1;height:1px;background:var(--ds-line)}
+.hflow{position:relative;height:168px;overflow:hidden;-webkit-mask:linear-gradient(transparent,#000 22%,#000 78%,transparent);mask:linear-gradient(transparent,#000 22%,#000 78%,transparent)}
+.hflowin{position:absolute;left:0;right:0;top:0;animation:hxup 40s linear infinite}
+.hflow:hover .hflowin{animation-play-state:paused}
+@keyframes hxup{to{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){.hflowin{animation:none}.hflow{height:auto;-webkit-mask:none;mask:none}}
+.hex{display:flex;align-items:center;gap:12px;width:100%;height:42px;padding:0 12px;border-radius:8px;color:var(--ds-ink-2);font-size:13.5px;text-align:left}
+.hex:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.hex .k{flex:none;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;background:var(--ds-hover);color:var(--ds-ink-2)}
+.hex .k .i{width:13px;height:13px}
+.hex b{flex:none;font-weight:600;color:var(--ds-ink);min-width:112px}
+.hex span.t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hex i{font-style:normal;margin-left:auto;font-size:11.5px;color:var(--ds-ink-3);flex:none;padding-left:8px}
+.hlow{margin-top:auto;padding-top:28px;width:100%;max-width:760px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.hlowc{background:var(--ds-raise);border-radius:12px;box-shadow:var(--hx-sh-card);padding:12px 12px 10px;min-width:0}
+.hlowc h4{margin:0 4px 6px;font-size:12px;font-weight:500;color:var(--ds-ink-3);display:flex}
+.hlowc h4 button{margin-left:auto;color:var(--ds-ink-3);font-size:12px}.hlowc h4 button:hover{color:var(--ds-ink)}
+.hrr{display:flex;align-items:center;gap:10px;width:100%;height:38px;padding:0 8px;border-radius:8px;font-size:13px;text-align:left;min-width:0}
+.hrr:hover{background:var(--ds-hover)}
+.hrr .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.hrr .st{flex:none;font-size:11px;padding:1px 7px;border-radius:6px;background:var(--ds-hover);color:var(--ds-ink-2)}
+.hrr small{margin-left:auto;flex:none;color:var(--ds-ink-3);font-size:11.5px}
+.hempty{font-size:12.5px;color:var(--ds-ink-3);padding:10px 8px}
+.htools{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.htl{border-radius:8px;padding:10px 12px;text-align:left;box-shadow:inset 0 0 0 1px var(--ds-line);transition:background .15s}
+.htl:hover{background:var(--ds-hover);box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.htl b{display:block;font:italic 700 19px/1.2 var(--ds-font-brand);letter-spacing:-.3px;color:var(--ds-ink)}.htl small{color:var(--ds-ink-3);font-size:11.5px}
+.hopen{display:flex;align-items:center;gap:10px;width:100%;height:34px;padding:0 8px;margin-top:6px;border-radius:8px;font-size:13px;color:var(--ds-ink-2)}
+.hopen:hover{background:var(--ds-hover)}.hopen em{font:italic 700 14px var(--ds-font-brand);color:var(--ds-ink)}.hopen kbd{margin-left:auto}
+@media (max-width:900px){.hlow{grid-template-columns:1fr}.hex b{min-width:0}.hex i{display:none}}
+
+/* ── 대화: 받은 글을 주르륵 ── */
+.msg.a.streaming>:not(.tx):not(.alog):not(.actlog){opacity:0}
+.msg.a>*{transition:opacity .3s}
+.msg.a .scar{display:inline-block;width:7px;height:15px;background:var(--ds-ink-2);vertical-align:-2px;margin-left:2px;border-radius:1px;animation:hxblink 1s steps(1) infinite}
+.msg.a .himg{display:block;max-width:420px;width:100%;margin:10px 0 4px;border-radius:12px;background:#fff;box-shadow:var(--hx-sh-card);cursor:zoom-in}
+.wmode{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ds-ink-3);margin-right:4px}
+.htl.appc{padding:10px 12px;background:transparent;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-line)}
+.htl.appc:hover{background:var(--ds-hover)}
+.htl.appc b{font:italic 700 19px/1.2 var(--ds-font-brand);letter-spacing:-.3px}
+.htl.appc small{margin-top:2px;font-size:11.5px}

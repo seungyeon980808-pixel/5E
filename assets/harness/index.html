@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="../../vendor/katex/katex.min.css">
 <link rel="stylesheet" href="harness.css?v=1.8.0-harness">
 <link rel="stylesheet" href="live.css?v=1.8.0-harness">
+<link rel="stylesheet" href="look.css?v=1.8.0-harness">
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute">
@@ -122,37 +123,33 @@
  <div class="main">
   <section id="vHome" class="main" style="flex:1" hidden>
    <div class="head"><span class="sp"></span><button class="ib" id="bHelp" title="도움말 · 단축키"><svg class="i"><use href="#i-book"/></svg></button></div>
-   <div class="home">
-    <h1><span class="mk">5E</span>어떤 시험지를 만들까요?</h1>
-    <p class="sub">말로 시키면 설계표부터 시험지 한 벌까지 만들어 드려요. 고칠 곳은 시험지에 코멘트로.</p>
-    <div class="wrap">
-     <div class="box">
-      <textarea id="homeIn" placeholder="예: 생명과학Ⅰ 1학기 기말 20문항, 범위는 항상성까지" rows="2"></textarea>
-      <div class="tools">
-       <button class="ib" id="homePlus" title="교과서·학습지 폴더 붙이기"><svg class="i"><use href="#i-plus"/></svg></button>
-       <button class="pill" id="homeForm" title="학교 시험지 양식(.hwpx)을 고르면 그 양식으로 조판해요"><svg class="i s"><use href="#i-file"/></svg><span>학교 양식</span></button>
-       <button class="pill on" id="homePast" title="설계·초안 때 평가원·학평 기출을 근거로 찾아 봐요"><svg class="i s"><use href="#i-book"/></svg>기출 참고</button>
+   <div class="home2">
+    <div class="hero">
+     <h1><span class="mk">5E</span>무엇을 만들까요?</h1>
+     <p class="sub">시험지 한 벌부터 문항 하나·그림·수업 구상까지, 말로 시키면 근거를 붙여 만들어 드려요.</p>
+     <div class="hmodes" id="homeModes" role="tablist" aria-label="무엇을 할지"></div>
+     <div class="hcomp">
+      <div class="hta"><textarea id="homeIn" rows="2" aria-label="무엇을 만들지 말하기"></textarea><div class="hph" id="homePh" aria-hidden="true"></div></div>
+      <div class="hrow">
+       <button class="hplus" id="homePlus" title="라이브러리에서 그림·자료 붙이기"><svg class="i"><use href="#i-plus"/></svg></button>
+       <div class="refs" id="homeRefs"></div>
        <span class="sp"></span>
-       <button class="send" id="homeSend" title="시작  ↵"><svg class="i"><use href="#i-up"/></svg></button>
+       <span class="hmodel" id="homeModel">GPT</span>
+       <button class="hsend" id="homeSend" title="시작  ↵"><svg class="i"><use href="#i-up"/></svg></button>
       </div>
      </div>
-     <div class="starters">
-      <button class="chip" data-fill="생명과학Ⅰ 1학기 기말고사 20문항, 범위는 항상성까지">기말고사 한 벌</button>
-      <button class="chip" data-fill="물질과 에너지 단원평가 10문항">단원평가</button>
-      <button class="chip" data-fill="이 기출 문항들을 변형해서 비슷한 난이도로 5문항">기출 변형</button>
-      <button class="chip" data-fill="수업용 학습지 한 장, 개념 정리와 문항 6개">수업 학습지</button>
-      <button class="chip" data-openfile>시험지 불러오기</button>
-     </div>
+     <div class="hflowlab"><span>이렇게 말해 보세요</span><span class="ln"></span><span>누르면 입력칸에 채워져요</span></div>
+     <div class="hflow" id="homeFlow"><div class="hflowin" id="homeFlowIn"></div></div>
     </div>
-    <div class="rec">
-     <div id="recWrap"><h3>이어서 하기</h3><div class="cards" id="recCards"></div></div>
-     <div><h3 style="margin-top:28px">새로 만들기 · 하나만 따로 할 때</h3>
-     <div class="apps3">
-      <button class="appc" data-tool="image"><em>NEW</em><b>image</b><small>새 그림 만들기</small></button>
-      <button class="appc" data-tool="exam"><em>NEW</em><b>exam</b><small>새 시험지 만들기</small></button>
-      <button class="appc" data-tool="hwp"><em>OPEN</em><b>hwp</b><small>한글 파일 열기</small></button>
-     </div>
-     <button class="openrow" id="homeOpen"><b>open</b>다른 파일 열기…<kbd>⌘O</kbd></button>
+    <div class="hlow">
+     <div class="hlowc" id="recWrap"><h4>이어서 하기<button id="homeAll" type="button">모두 보기</button></h4><div id="recCards"></div></div>
+     <div class="hlowc"><h4>하나만 따로 열기</h4>
+      <div class="htools">
+       <button class="htl appc" data-tool="image"><b>image</b><small>새 그림</small></button>
+       <button class="htl appc" data-tool="exam"><b>exam</b><small>새 문항 카드</small></button>
+       <button class="htl appc" data-tool="hwp"><b>hwp</b><small>한글 파일 열기</small></button>
+      </div>
+      <button class="hopen" id="homeOpen"><em>open</em>다른 파일 열기…<kbd>⌘O</kbd></button>
      </div>
     </div>
    </div>

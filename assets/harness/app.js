@@ -37,7 +37,7 @@ addEventListener('message',e=>{if(e.source!==window.parent||e.data?.channel!=='5
   if(m.action==='tool-opened'){document.body.classList.add('tool-on');postSideW();curTool=m.tool||curTool;return;}if(m.action==='tool-back'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));showView(pristine(work)?'home':'work');return;}if(m.action==='tool-closed'){document.body.classList.remove('tool-on');$$('.side .nav').forEach(n=>n.classList.remove('on'));return;}
   if(m.action==='evidence-ready'){const p=pending.get(m.requestId);if(p){pending.delete(m.requestId);p.resolve(m.result);}return;}
   if(m.action==='author-progress'){pending.get(m.requestId)?.onProgress?.(m.progress);return;}
-  if(m.action==='library-picked'){if(m.error)toast('라이브러리를 열지 못했어요: '+m.error);if(m.items?.length){const got=m.items.filter(x=>/^data:image\//.test(x.data||'')).map(x=>({id:crypto.randomUUID(),name:x.name||'라이브러리 자료',data:x.data,at:nowIso()}));
+  if(m.action==='library-picked'){if(view==='home'&&m.items?.length)showView('work');if(m.error)toast('라이브러리를 열지 못했어요: '+m.error);if(m.items?.length){const got=m.items.filter(x=>/^data:image\//.test(x.data||'')).map(x=>({id:crypto.randomUUID(),name:x.name||'라이브러리 자료',data:x.data,at:nowIso()}));
       work.sources.picked=[...(work.sources.picked||[]),...got];const wasSub=sub;sub=null;say('ai',`라이브러리에서 그림 ${got.length}개를 골랐어요. 어디에 넣을까요?`,{pick:got.map(g=>g.id)});sub=wasSub;render();note('library-picked',{n:got.length});}return;}
   const p=pending.get(m.requestId);if(!p)return;pending.delete(m.requestId);
   if(m.error){p.reject(Object.assign(Error(m.error),{need:m.need,cancelled:m.cancelled,opened:m.opened}));return;}p.resolve(m.result);});
@@ -75,7 +75,29 @@ async function openFile(file){const bytes=new Uint8Array(await file.arrayBuffer(
   try{const w=await parseExamsetFile(bytes);work=w;sub=null;tab=initialTab(work);showView('work');save();render();toast('시험지를 열었어요 · '+(work.head||'v0.0'));note('file-open',{head:work.head});}catch(e){toast('열지 못했어요: '+e.message);note('file-open-fail',{error:e.message});}}
 
 // ── 대화 ──
-function say(role,text,extra={}){const m={role,text,at:nowIso(),...extra};if(role==='ai'&&doneLogs.length)m.logs=doneLogs.splice(0);(sub?subThread(sub):work.chat).push(m);save();renderThread();return m;}
+function say(role,text,extra={}){const m={role,text,at:nowIso(),...extra};if(role==='ai'&&!extra.error&&!extra.noStream&&String(text||'').length>1)streamAt.set(m,performance.now());if(extra.model){try{localStorage.setItem('5e.harness.lastModel',String(extra.model));}catch{}}if(role==='ai'&&doneLogs.length)m.logs=doneLogs.splice(0);(sub?subThread(sub):work.chat).push(m);save();renderThread();return m;}
+// 11-27: AI 답을 한 번에 붙이지 않고 주르륵(받은 글을 화면에서 흘려 보임 · 긴 답도 2.2초 안에). 다시 그려도 이어서 흐른다.
+const streamAt=new WeakMap();let streamRaf=0;
+function runStream(list){cancelAnimationFrame(streamRaf);const els=[...document.querySelectorAll('#thread .msg.a[data-st]')];if(!els.length)return;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const tick=()=>{let live=false;const sc=$('#scroll'),atBottom=sc.scrollHeight-sc.scrollTop-sc.clientHeight<80;
+    for(const el of els){const m=list[+el.dataset.st],t0=m&&streamAt.get(m);const paras=[...el.querySelectorAll(':scope>p.tx')];
+      const texts=String(m?.text||'').split(/\n+/),full=texts.join('').length,dur=Math.max(300,Math.min(2200,full*14));
+      const k=t0==null||reduce?full:Math.floor((performance.now()-t0)/dur*full);
+      if(k>=full){if(m)streamAt.delete(m);el.classList.remove('streaming');el.removeAttribute('data-st');paras.forEach((p,j)=>{p.textContent=texts[j]??'';p.hidden=false;});continue;}
+      live=true;let left=k,last=null;paras.forEach((p,j)=>{const t=texts[j]??'',n=Math.max(0,Math.min(t.length,left));left-=t.length;p.textContent=t.slice(0,n);p.hidden=n===0&&j>0;if(n>0||j===0)last=p;});
+      if(last){const c=document.createElement('span');c.className='scar';last.append(c);}}
+    if(atBottom)sc.scrollTop=1e7;if(live)streamRaf=requestAnimationFrame(tick);};tick();}
+// 그림 모드: 설계표·문항 없이 말한 그대로 그림 엔진으로 그려 대화에 붙이고 클립보드에도 넣는다
+async function figureChat(text){const kind=/그래프|좌표|축|함수|[–-]\s*시간|시간\s*[–-]|곡선|눈금/.test(text)?'graph':'figure';const a=act(kind==='graph'?'그래프 그리는 중…':'그림 그리는 중…');
+  try{const r=await call('figure',{qid:'chat-'+work.projectId,kind,description:text,mustNot:[]},{group:'figure'});
+    if(!r?.data)throw Error('그림이 비어 있어요');
+    try{await (await drawerMod()).clipAdd({src:r.data,name:(kind==='graph'?'그래프':'그림')+' · 대화',source:'5E 출제',w:r.width||0,h:r.height||0});}catch{}
+    say('ai',`${kind==='graph'?'그래프':'그림'}을 그렸어요. 클립보드에도 넣어 두었어요. 두 번 누르면 image에서 고칠 수 있고, 바꿀 곳을 말씀하시면 다시 그려요.`,{img:r.data,ms:r.ms||null});note('figure-chat',{kind,ms:r.ms});}
+  catch(e){say('ai',`그리지 못했어요: ${e.message} · 설명을 조금 바꿔 다시 보내 주세요.`,{error:true});note('figure-chat-fail',{error:e.message});}
+  finally{a.done();}}
+const MODE_NOTE={q:'\n\n[작업 종류: 문항 하나. 시험지 정보의 문항 수는 1, 설계표는 1행으로 잡는다. 꼭 필요한 것(과목·범위)만 묻고 나머지는 알아서 정해, 정해지면 바로 쓸 수 있게 한다.]',lesson:'\n\n[작업 종류: 수업 구상. 시험지·설계표·문항을 만들지 않는다(plan:null). reply에 차시 흐름·활동·발문·학습지 문항 안을 교육과정·자료 근거와 함께 정리한다.]',chat:'\n\n[작업 종류: 그냥 대화. 설계표·문항을 만들지 않는다(plan:null). 묻는 말에 근거를 들어 답한다.]'};
+const workMode=()=>work?.ui?.mode||'exam';
 function subThread(qid){const s=work.sessions.find(x=>x.scope==='q:'+qid)||(work.sessions.push({id:crypto.randomUUID(),scope:'q:'+qid,parent:'exam',provider:'codex',startedAt:nowIso(),thread:[]}),work.sessions.at(-1));s.thread ||= [];return s.thread;}
 // 진행 줄: 화면을 다시 그려도 남는다(11-25 완주 2: render가 대화를 다시 그리며 진행 줄을 지워, 초안 16문항·그림 그리는 동안 진행이 안 보였다).
 const acts=new Set();
@@ -106,7 +128,7 @@ function ledgerForPrompt(){return work.comments.filter(c=>['new','talk','decided
 async function planEvidence(text=''){const m=work.meta;
   // 완주 6: 설계표가 생긴 뒤에는 폴더를 다시 찾지 않아 둘째 턴부터 「근거 없음」이라 말했다 → 설계표가 있으면 교사 말로 폴더만 찾는다.
   if(work.plan.length){const fh=await folderHits(text,3);return fh.map(e=>({ref:e.ref,kind:e.kind,title:e.title,page:e.page||null,quote:String(e.quote||'').slice(0,600)}));}const terms=[[].concat(m.range?.value||[]).join(' '),m.subject?.value||'',text].join(' ').split(/[,·:\s]+/).filter(t=>t.length>1&&!/교과서|쪽|\d|하자|해\s?줘|이야|만들|출제|문항|기말|중간|시험|다시|수업|강조|앞쪽|힘|주고|최상|보통|쉬움|^상$|^과목|이름/.test(t)).filter((t,i,a)=>a.indexOf(t)===i).slice(0,6);if(!terms.length)return [];
-  const found=[];for(const kind of pastOn()?['curriculum','past']:['curriculum']){try{const r=await call('evidence',{request:{kind,terms:terms.slice(0,4),sentence:`${m.subject?.value||''} ${terms.join(' ')}`,limit:kind==='past'?6:4}});for(const e of r.results||[])found.push(e);note('plan-evidence',{evKind:kind,available:r.available,n:(r.results||[]).length,warning:r.warning||''});}catch(e){note('plan-evidence-fail',{evKind:kind,error:e.message});}}
+  const found=[];for(const kind of [stdOn()&&'curriculum',pastOn()&&'past'].filter(Boolean)){try{const r=await call('evidence',{request:{kind,terms:terms.slice(0,4),sentence:`${m.subject?.value||''} ${terms.join(' ')}`,limit:kind==='past'?6:4}});for(const e of r.results||[])found.push(e);note('plan-evidence',{evKind:kind,available:r.available,n:(r.results||[]).length,warning:r.warning||''});}catch(e){note('plan-evidence-fail',{evKind:kind,error:e.message});}}
   for(const h of await folderHits([terms.join(' '),text].join(' '),4))found.push(h);
   if(found.length)planSteps.push(`근거 후보 ${found.length}개 — ${[...new Set(found.map(e=>({curriculum:'교육과정',past:'기출',textbook:'교과서',worksheet:'학습지'})[e.kind]||'자료'))].join('·')}`);work.sources.planEvidence=found.map(e=>({ref:e.ref,kind:e.kind,title:e.title,page:e.page||null,quote:String(e.quote||'').slice(0,600)}));return work.sources.planEvidence;}
 const planSteps=[];
@@ -114,7 +136,7 @@ async function examTurn(text){
   planSteps.length=0;const ev=await planEvidence(text);
   const prompt=buildExamPrompt(work,{text,ledger:ledgerForPrompt(),rules:rulesFor()})+(ev.length?`\n\n[근거 검색 결과 · 후보일 뿐, 설계표 basis·standards에 title로만 인용]\n${ev.map(e=>`- ${e.kind} · ${e.title}${e.page?` · ${e.page}쪽`:''}: ${e.quote}`).join('\n')}`:'');const a=act('생각하는 중…');for(const x of planSteps)a.step(x);if(work.questions.length)a.step(`지금 문항 ${work.questions.length}개 글을 함께 봄`);
   // 규칙 시험(rule4): 「초안 써 줘」에 시험지 대화가 1~3번 문항 글을 통째로 답한 뒤 하위 세션이 다시 씀(두 번 듦·글이 달라 헷갈림) → 초안 지시면 답을 짧게.
-  const draftNote=wantsDraft(text)?'\n\n[이번 말은 초안 쓰기 지시다. 문항 글은 문항마다 따로 쓰니 reply에 문항·선지·정답을 쓰지 말고, 초안 전에 정해 둘 것만 1~2문장으로 말한다.]':'';
+  const modeNote=MODE_NOTE[workMode()]||'';const draftNote=modeNote+(wantsDraft(text)?'\n\n[이번 말은 초안 쓰기 지시다. 문항 글은 문항마다 따로 쓰니 reply에 문항·선지·정답을 쓰지 말고, 초안 전에 정해 둘 것만 1~2문장으로 말한다.]':'');
   const attachments=pendingAttach.splice(0);
   try{let r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+draftNote+(attachments.length?`\n\n[교사가 라이브러리에서 고른 그림 ${attachments.length}장을 함께 붙였다: ${attachments.map(a=>a.name).join(', ')}]`:''),...(attachments.length?{attachments}:{})}),parsed=parseExamResponse(r.text);
     if(!parsed.ok){a.set('형식을 고쳐 다시 받는 중…');r=await call('turn',{scope:'exam:'+work.projectId,text:prompt+draftNote+'\n\n[앞 응답 형식 오류 — 고쳐서 JSON만]\n'+parsed.errors.join('\n')});parsed=parseExamResponse(r.text);}
@@ -122,6 +144,7 @@ async function examTurn(text){
   finally{a.done();}
 }
 async function examSend(text){
+  if(workMode()==='img'&&!work.questions.length){await figureChat(text);return;}
   // 1) 「반영해」: 먼저 대장 상태를 교사 말대로 맞춘 뒤(AI는 decided만 표시), 코드가 결정된 것만 반영한다.
   const apply=wantsApply(text),discuss=wantsDiscussOnly(text);
   // 시안7 1번: 초안을 쓰는 동안에도 말할 수 있다. 다만 「반영해」는 쓰기가 끝난 뒤에 처리(쓰는 중인 문항과 섞이지 않게).
@@ -134,6 +157,7 @@ async function examSend(text){
   const metaBefore=Object.fromEntries(Object.entries(work.meta).map(([k,v])=>[k,JSON.stringify(v?.value??null)])),planBefore=work.plan.length;
   const shownPlan=(work.planProposals||[]).slice();// 교사가 이미 본 설계표 안만 받을 수 있다(이번 턴에 새로 나온 안은 아직 못 봤음)
   const v=await examTurn(text);
+  if(['lesson','chat'].includes(workMode())){v.plan=null;}
   absorb(v,text,{allowDecided:!discuss});
   const decided=Object.entries(work.meta).filter(([k,x])=>META_LABEL_H[k]&&x&&x.by==='ai'&&x.value!=null&&JSON.stringify(x.value)!==metaBefore[k]).map(([k,x])=>({k:META_LABEL_H[k],v:fmtMeta(x.value)}));
   const art=!planBefore&&work.plan.length?{tab:'plan',icon:'table',title:'설계표',sub:`${work.plan.length}문항 · ${[...new Set(work.plan.flatMap(r=>r.standards||[]))].length?`성취기준 ${[...new Set(work.plan.flatMap(r=>r.standards||[]))].length}개 · `:''}배점 합 ${work.plan.reduce((n,r)=>n+(Number(r.points)||0),0)}점`}:null;
@@ -144,7 +168,7 @@ async function examSend(text){
   if(apply&&!(planAsk&&!work.comments.some(c=>c.status==='decided'))){await applyNow('교사 지시: '+text.slice(0,80));return;}
   if(wantsBump(text)){bumpVersion('판 올리기');return;}
   if(wantsFinal(text)){declareFinal();return;}
-  if(wantsDraft(text)){void draftAll().catch(failMsg);return;}// 뒤에서 쓴다 — 보내기 칸은 바로 다시 쓸 수 있다
+  if(wantsDraft(text)||(workMode()==='q'&&work.plan.length&&!work.questions.length&&!drafting&&!X.missingBlocking(work).length)){void draftAll().catch(failMsg);return;}// 뒤에서 쓴다 — 보내기 칸은 바로 다시 쓸 수 있다
   if(wantsSolve(text)&&work.questions.length){if(pendingCount()||work.dirty){bumpVersion('풀이 검사 전 판 올리기');return;}const v=work.versions.find(x=>x.label===work.head)||{label:work.head||'v0.0'};await solveChanged({label:v.label,changed:work.items.slice()});return;}
 }
 function absorb(v,text,{allowDecided=true}={}){
@@ -400,8 +424,8 @@ function placePicked(msg,qid){const q=work.questions.find(x=>x.id===qid);if(!q)r
   work.dirty=true;msg.pickDone=`${q.number}번 그림 칸에 넣었어요(${list.length}장). 직접 넣은 그림이라 잠겨 있고, 다음 「판 올리기」 때 판에 들어가요.`;save();render();note('library-place',{no:q.number,n:list.length});}
 let pendingAttach=[];
 function renderThread(){const list=sub?subThread(sub):work.chat;
-  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}">${logsHtml(m,i)}${String(m.text).split(/\n+/).map(p=>`<p>${E(p)}</p>`).join('')}${decHtml(m)}${artHtml(m)}${(m.asks||[]).length?`<div class="ledger"><div class="lh">꼭 정해야 해요</div>${m.asks.map(a=>`<div class="lr"><span class="ln">?</span><span>${E(a)}</span></div>`).join('')}</div>`:''}${choicesHtml(m,i)}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${m.pick?pickHtml(m):''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
-  for(const el of acts)$('#thread').append(el);$('#scroll').scrollTop=1e7;}
+  $('#thread').innerHTML=list.map((m,i)=>m.role==='me'?`<div class="msg u"><p>${E(m.text)}</p></div>`:`<div class="msg a${m.error?' err':''}${streamAt.has(m)?' streaming':''}"${streamAt.has(m)?` data-st="${i}"`:''}>${logsHtml(m,i)}${String(m.text).split(/\n+/).map(p=>`<p class="tx">${E(p)}</p>`).join('')}${m.img?`<img class="himg" src="${E(m.img)}" data-himg="${i}" alt="그린 그림" title="두 번 누르면 클립보드에 넣고 image에서 고쳐요">`:''}${decHtml(m)}${artHtml(m)}${(m.asks||[]).length?`<div class="ledger"><div class="lh">꼭 정해야 해요</div>${m.asks.map(a=>`<div class="lr"><span class="ln">?</span><span>${E(a)}</span></div>`).join('')}</div>`:''}${choicesHtml(m,i)}${m.stats?`<p class="note2">${E(statsLine(m.stats))}</p>`:''}${m.ledger?ledgerHtml():''}${m.pick?pickHtml(m):''}${(m.ruleCards||[]).filter(r=>!r.done).map(r=>`<div class="rulec" data-rule="${E(r.id)}" data-msg="${i}"><svg class="i s"><use href="#i-book"/></svg> 이걸 규칙으로 저장할까요? <b>「${E(r.text)}」</b><span class="sp"></span><button class="btn sm" data-layer="global">전체</button><button class="btn sm" data-layer="subject">과목</button><button class="btn sm" data-layer="exam">이 시험지</button><button class="btn sm gh" data-layer="no">아니요</button></div>`).join('')}${m.model?`<p class="note2">${E(m.model)}${m.ms?` · ${Math.round(m.ms/1000)}초`:''}</p>`:''}</div>`).join('');
+  for(const el of acts)$('#thread').append(el);$('#scroll').scrollTop=1e7;runStream(list);}
 const ST={new:'새 코멘트',talk:'의논 중',decided:'결정됨',applied:'반영됨',dropped:'안 함'},SC={new:'b-ok',talk:'b-talk',decided:'b-ok',applied:'b-done',dropped:'b-ok'};
 function ledgerHtml(){const list=work.comments.filter(c=>c.status!=='dropped').slice(-20);if(!list.length)return '';return `<div class="ledger"><div class="lh">코멘트 대장 · ${E(work.head||'v0.0')}</div>${list.map(c=>`<div class="lr"><span class="ln">${E(work.questions.find(q=>q.id===c.qid)?.number||'전체')}번</span><span>${E(c.gist||c.text).slice(0,80)}</span><span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>`).join('')}</div>`;}
 function renderPlan(){const m=work.meta,chip=(k,label,fmt=v=>v)=>{const x=m[k];if(!x||x.value==null||x.value==='')return `<span class="c miss"><b>${label}</b>아직</span>`;return `<span class="c${x.by==='ai'?' ai':''}"><b>${label}</b>${E(fmt(x.value))}</span>`;};
@@ -484,7 +508,7 @@ function renderSide(list){sideList=list||[];const box=$('#examList');if(!box)ret
   const cur=rows.filter(x=>termOf(x.at)===now),old=rows.filter(x=>termOf(x.at)!==now);
   box.innerHTML=`<div class="grp">이번 학기</div>${cur.slice(0,12).map(btn).join('')||'<div class="side-empty">아직 없어요</div>'}${old.length?`<div class="grp">지난 학기</div>${old.slice(0,8).map(btn).join('')}`:''}`;}
 function showOriginNotices(){for(const n of work.originNotices||[])if(!n.shown){n.shown=true;const wasSub=sub;sub=null;say('ai',`원본 「${n.file}」이 이 시험지로 가져온 뒤에 고쳐졌어요: ${n.nos.map(x=>x+'번').join(', ')}. 이 시험지의 문항은 그대로예요. 원본처럼 바꾸려면 그 문항에서 말해 주세요.`);sub=wasSub;}}
-function render(){if(!work)return;showOriginNotices();const title=work.meta.title||'새 시험지';$('#exTitleT').textContent=title;$('#pTitle').textContent=title;work.ui={...(work.ui||{}),tab};renderChrome();
+function render(){if(!work)return;if(view==='home'&&$('#homeModes')?.children.length)drawHomeModes(false);showOriginNotices();const title=work.meta.title||'새 시험지';$('#exTitleT').textContent=title;$('#pTitle').textContent=title;work.ui={...(work.ui||{}),tab};renderChrome();
   $('#verChat').textContent=work.head||'v0.0';$('#verBtn').firstChild.textContent=(work.head||'v0.0')+' ';
   let pc=$('#pendChip');if(!pc){pc=document.createElement('span');pc.id='pendChip';pc.className='pendchip';pc.title='판 메뉴에서 「판 올리기」 또는 「판 올려」라고 말하기';$('#verBtn').after(pc);}const pn=pendingCount();pc.hidden=!pn;pc.textContent=`판에 안 들어간 고침 ${pn}`;
   $('#crumb').classList.toggle('has-sub',!!sub);if(sub)$('#subName').textContent=(work.questions.find(q=>q.id===sub)?.number||'')+'번 문항';
@@ -639,12 +663,44 @@ function showView(v){view=v;$('#vHome').hidden=v!=='home';$('#work').hidden=v!==
 // ── 첫 화면 ──
 const ago=t=>{const m=Math.round((Date.now()-new Date(t).getTime())/60000);if(m<1)return '방금';if(m<60)return m+'분 전';const h=Math.round(m/60);if(h<24)return h+'시간 전';if(h<48)return '어제';const d=new Date(t);return `${d.getMonth()+1}월 ${d.getDate()}일`;};
 const thumb=n=>{const L=[...Array(Math.max(3,Math.min(5,n||3)))].map((_,i)=>`<i${i%3===1?' class="s"':''}></i>`).join(''),R=[...Array(Math.max(3,Math.min(4,(n||3)-1)))].map((_,i)=>`<i${i%2===0?' class="s"':''}></i>`).join('');return `<div class="thumb"><div>${L}</div><div>${R}</div></div>`;};
+// 11-27 시안 v3: 무엇을 할지(모드) · 입력칸 예시가 써졌다 지워짐 · 참고 단추 · 흐르는 예시 · 아래 카드 두 개
+const STD_KEY='5e.harness.std';
+const stdOn=()=>{try{return localStorage.getItem(STD_KEY)!=='0';}catch{return true;}};
+const HMODES=[
+ {k:'exam',n:'시험지 한 벌',ic:'file',refs:['past','std','fold','form'],ex:['생명과학Ⅰ 1학기 기말 20문항, 범위는 항상성까지','물리학Ⅰ 중간고사 일부 8문항 26점, 그래프 해석 꼭 넣어 줘','중2 전기와 자기 단원평가 10문항, 하 3·중 5·상 2']},
+ {k:'q',n:'문항 하나',ic:'list',refs:['past','std','fold'],ex:['운동량 보존 충돌 문항 하나, 힘–시간 그래프 주고 4점짜리로','ㄱ·ㄴ·ㄷ 합답형으로 세포 분열 문항 하나','기출처럼 별의 물리량 비교 문항 하나, 표 자료로']},
+ {k:'img',n:'그림',ic:'img',refs:['fold'],ex:['포물선 운동 궤적, 최고점과 수평 거리 표시','속력–시간 그래프, 0~6초 등가속도 구간 두 개','회로도: 전지 하나에 저항 두 개 병렬, 스위치 포함']},
+ {k:'lesson',n:'수업 구상',ic:'page',refs:['std','fold'],ex:['중2 전기와 자기 3차시 흐름, 활동 하나 넣어서','뉴턴 운동 법칙 도입 발문 5개와 오개념 짚기','이번 차시 학습지: 개념 정리 반 쪽 + 문항 6개']},
+ {k:'chat',n:'그냥 대화',ic:'msg',refs:['past','std'],ex:['2022 개정에서 운동량 단원 성취기준이 뭐였지?','이 문항 정답률이 낮을 이유가 뭘까?','수행평가 채점 기준표 같이 생각해 보자']}];
+const HREF={past:['homePast','기출 참고','book','설계·초안 때 평가원·학평 기출을 근거로 찾아 봐요'],std:['homeStd','교육과정 참고','table','2022 개정 성취기준 원문을 근거로 붙여요'],fold:['homeFold','교과서·자료','folder','교과서·학습지 폴더를 등록해 근거로 써요'],form:['homeForm','학교 양식','file','학교 시험지 양식(.hwpx)을 고르면 그 양식으로 조판해요']};
+const HFLOW=[['exam','기말고사 한 벌','생명과학Ⅰ 1학기 기말고사 20문항, 범위는 항상성까지'],['q','문항 하나 바로','운동량 보존 충돌 문항 하나, 힘–시간 그래프로 4점'],['img','그림 그리기','포물선 운동 궤적, 최고점과 수평 거리 표시'],['lesson','수업 구상','중2 전기와 자기 3차시 흐름, 활동 하나 넣어서'],['exam','단원평가','물질과 에너지 단원평가 10문항, 하 3·중 5·상 2'],['q','기출 변형','이 기출 문항을 같은 난이도로 변형해 줘'],['lesson','수업 학습지','수업용 학습지 한 장, 개념 정리와 문항 6개'],['img','그래프 정확하게','속력–시간 그래프, 0~6초 등가속도 구간 두 개'],['chat','성취기준 찾기','운동량과 충격량 단원 성취기준 원문 보여 줘'],['exam','양식 맞춰 조판','이 학교 양식으로 중간고사 한 벌, 20문항 100점']];
+let homeMode=0,homeTyper=null;
+const MODE_IDX=k=>Math.max(0,HMODES.findIndex(m=>m.k===k));
+function drawHomeModes(retype=true){const M=HMODES[homeMode];
+  $('#homeModes').innerHTML=HMODES.map((m,i)=>`<button class="hmode${i===homeMode?' on':''}" role="tab" aria-selected="${i===homeMode}" data-hmode="${i}"><svg class="i"><use href="#i-${m.ic}"/></svg>${E(m.n)}</button>`).join('');
+  const f=pristine(work)&&work.meta.form?.by==='teacher'?work.meta.form.value:null,fold=!!work.sources?.folder;
+  const on={past:pastOn(),std:stdOn(),fold,form:!!f};
+  $('#homeRefs').innerHTML=M.refs.map(r=>{const [id,lab,ic,tip]=HREF[r];const text=r==='form'&&f?`양식 · ${String(f).replace(/\.[^.]+$/,'').slice(0,14)}`:r==='fold'&&fold?`자료 · ${String(work.sources.folder.label||'').slice(0,12)}`:lab;return `<button class="pill${on[r]?' on':''}" id="${id}" title="${E(tip)}"><svg class="i s"><use href="#i-${ic}"/></svg><span>${E(text)}</span></button>`;}).join('');
+  if(retype||!homeTyper)typeHome();}
+function typeHome(){clearTimeout(homeTyper);const ph=$('#homePh');if(!ph)return;const exs=HMODES[homeMode].ex;let e=0,c=0,dir=1;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const step=()=>{if(view!=='home'){homeTyper=null;return;}if($('#homeIn').value){ph.innerHTML='';homeTyper=setTimeout(step,500);return;}
+    if(reduce){ph.textContent='예: '+exs[e];e=(e+1)%exs.length;homeTyper=setTimeout(step,4000);return;}
+    const s=exs[e];c+=dir;ph.innerHTML='예: '+E(s.slice(0,c))+'<span class="car"></span>';
+    if(dir>0&&c>=s.length){dir=-1;homeTyper=setTimeout(step,1900);return;}if(dir<0&&c<=0){dir=1;e=(e+1)%exs.length;homeTyper=setTimeout(step,300);return;}homeTyper=setTimeout(step,dir>0?55:16);};step();}
+function drawHomeFlow(){const rows=HFLOW.map(([k,b,t])=>{const i=MODE_IDX(k),m=HMODES[i];return `<button class="hex" data-fill="${E(t)}" data-hmode-fill="${i}"><span class="k"><svg class="i"><use href="#i-${m.ic}"/></svg></span><b>${E(b)}</b><span class="t">「${E(t)}」</span><i>${E(m.n)}</i></button>`;}).join('');$('#homeFlowIn').innerHTML=rows+`<div aria-hidden="true">${rows.replace(/<button /g,'<button tabindex="-1" ')}</div>`;}
 async function renderHome(){let list=[];try{list=(await idbGet('list'))||[];}catch{}const rec=list.filter(x=>!x.empty).slice(0,3);
-  $('#recWrap').hidden=!rec.length;$('#recCards').innerHTML=rec.map(x=>`<button class="card" data-open="${E(x.id)}">${thumb(x.n)}<b>${E(x.title)}</b><small>${E(x.head||'v0.0')} · ${E(STAGE[x.stage]||'')} · ${E(ago(x.at))}</small></button>`).join('');
-  $('#homePast').classList.toggle('on',pastOn());const f=pristine(work)&&work.meta.form?.by==='teacher'?work.meta.form.value:null;$('#homeForm span').textContent=f?`양식 · ${String(f).replace(/\.[^.]+$/,'').slice(0,18)}`:'학교 양식';$('#homeForm').classList.toggle('on',!!f);}
-function startFromHome(){const v=$('#homeIn').value.trim();if(!v){$('#homeIn').focus();return;}if(!pristine(work))newWork();$('#homeIn').value='';showView('work');$('#input').value=v;note('home-start');void send();}
+  $('#recCards').innerHTML=rec.length?rec.map(x=>`<button class="hrr" data-open="${E(x.id)}"><span class="tt">${E(x.title)}</span><span class="st">${E(x.head&&x.head!=='v0.0'?x.head+' · ':'')}${E(STAGE[x.stage]||'')}</span><small>${E(ago(x.at))}</small></button>`).join(''):'<div class="hempty">아직 만든 시험지가 없어요. 위에서 말로 시작해 보세요.</div>';
+  try{const lm=localStorage.getItem('5e.harness.lastModel');$('#homeModel').textContent=lm?lm.replace(/^gpt/i,'GPT'):'GPT';}catch{}
+  if(!$('#homeFlowIn').children.length)drawHomeFlow();drawHomeModes();}
+function startFromHome(){const v=$('#homeIn').value.trim();if(!v){$('#homeIn').focus();return;}if(!pristine(work))newWork();const mk=HMODES[homeMode].k;work.ui={...(work.ui||{}),mode:mk};
+  // 시험지가 아닌 일은 인사말·이름을 그 일에 맞추고, 설계표 칸은 닫아 둔다(대화가 넓게)
+  if(mk!=='exam'){const g=work.chat[0];if(g?.role==='ai'&&work.chat.length===1)g.text={q:'어떤 문항을 쓸까요? 과목·범위만 알려 주시면 나머지는 알아서 정해 바로 써요.',img:'어떤 그림을 그릴까요? 말한 그대로 그려 대화에 붙이고 클립보드에도 넣어요.',lesson:'어떤 수업을 구상할까요? 단원·차시를 알려 주시면 교육과정 근거로 흐름을 잡아요.',chat:'무엇이든 물어보세요. 교육과정·기출 근거를 찾아 답해요.'}[mk]||g.text;
+    if(!work.meta.title||work.meta.title==='새 시험지'){work.meta.title={q:'문항 하나',img:'그림',lesson:'수업 구상',chat:'대화'}[mk];work.meta.titleAuto=false;}}
+  $('#homeIn').value='';showView('work');if(mk==='img'||mk==='lesson'||mk==='chat')setPanel(false);$('#input').value=v;note('home-start',{mode:HMODES[homeMode].k});void send();}
 $('#homeSend').onclick=startFromHome;
 $('#homeIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();startFromHome();}});
+$('#homeIn').addEventListener('input',()=>{$('#homePh').innerHTML='';});
 $('#fForm').onchange=async()=>{const f=$('#fForm').files[0];$('#fForm').value='';if(!f)return;if(view==='home'&&!pristine(work))newWork();X.setMeta(work,'form',f.name,'teacher');try{await idbSet('form:'+work.projectId,new Uint8Array(await f.arrayBuffer()));}catch{}save();render();void renderHome();toast(`학교 양식 「${f.name}」을 이 시험지에 걸었어요 · 조판 때 이 양식으로`);note('form',{name:f.name});};
 
 // ── 고르기 카드(시안 v7 7번) · 작업 기록 ──
@@ -734,7 +790,7 @@ document.addEventListener('drop',async e=>{const id=e.dataTransfer?.getData(CLIP
   b.figure={name:it.name+'.png',data:it.src,...(it.w?{width:it.w,height:it.h}:{})};X.lockCell(q,key);
   for(const p of openProposals().filter(p=>p.qid===q.id&&p.changes.length&&p.changes.every(c=>isFigChange(q,c)&&(c.id===b.id||c.id===b.label)))){p.state='applied';for(const cid of p.comments||[])if(work.comments.some(c=>c.id===cid))X.updateComment(work,cid,{status:'applied'});resolved.set(p.id,{kind:'edit',qid:q.id,summary:p.summary});}work.pendingEdits=[...(work.pendingEdits||[]),{qid:q.id,key,label:'그림 바꿈(클립보드)',at:nowIso()}];work.dirty=true;save();render();void mod.clipConsume(id);
   toast(`${q.number}번 그림을 바꿨어요 · 직접 넣은 그림이라 잠겨 있고, 다음 「판 올리기」 때 판에 들어가요`,3200);note('clip-to-figure',{no:q.number});});
-document.addEventListener('dblclick',e=>{const it=e.target.closest?.('.clipi');if(!it)return;void (async()=>{const mod=await drawerMod(),x=await mod.clipGet(it.dataset.clip);if(!x?.src)return;pendingAttach.push({name:x.name+'.png',data:x.src});render();toast('다음에 보내는 말에 그림을 붙여요');})();});
+document.addEventListener('dblclick',e=>{const hi=e.target.closest?.('.himg');if(hi){void (async()=>{try{await (await drawerMod()).clipAdd({src:hi.src,name:'그림 · 대화',source:'5E 출제',w:hi.naturalWidth,h:hi.naturalHeight});}catch{}post({action:'tool',tool:'image'});toast('클립보드에 넣었어요 · image에서 붙여 고치세요');})();return;}const it=e.target.closest?.('.clipi');if(!it)return;void (async()=>{const mod=await drawerMod(),x=await mod.clipGet(it.dataset.clip);if(!x?.src)return;pendingAttach.push({name:x.name+'.png',data:x.src});render();toast('다음에 보내는 말에 그림을 붙여요');})();});
 
 // ── 찾기(⌘K) ──
 let findItems=[],findSel=0;
@@ -778,9 +834,13 @@ document.addEventListener('click',async e=>{const t=e.target;if(!t.closest)retur
   if(t.closest('#bFind')){await openFind();return;}
   if(t.closest('#bToolAsk')){const tl=curTool;post({action:'home'});document.body.classList.remove('tool-on');showView('work');$('#input').value=(tl?'@'+tl+' ':'');$('#input').focus();note('tool-ask',{tool:tl});return;}
   if(t.closest('#bPic')){post({action:'library'});return;}
-  const chip=t.closest('[data-fill]');if(chip){$('#homeIn').value=chip.dataset.fill;$('#homeIn').focus();return;}
+  const hm=t.closest('[data-hmode]');if(hm){homeMode=+hm.dataset.hmode;drawHomeModes();$('#homeIn').focus();return;}
+  const chip=t.closest('[data-fill]');if(chip){if(chip.dataset.hmodeFill!=null){homeMode=+chip.dataset.hmodeFill;drawHomeModes();}$('#homeIn').value=chip.dataset.fill;$('#homePh').innerHTML='';$('#homeIn').focus();return;}
+  if(t.closest('#homeAll')){openFind();return;}
+  if(t.closest('#homeStd')){try{localStorage.setItem(STD_KEY,stdOn()?'0':'1');}catch{}drawHomeModes();toast(stdOn()?'교육과정 참고를 켰어요 · 성취기준 원문을 근거로 붙여요':'교육과정 참고를 껐어요');return;}
+  if(t.closest('#homeFold')){if(!pristine(work))newWork();$('#fFolder').click();return;}
   if(t.closest('[data-openfile]')||t.closest('#homeOpen')){$('#fOpen').click();return;}
-  if(t.closest('#homePlus')){if(!pristine(work))newWork();$('#fFolder').click();return;}
+  if(t.closest('#homePlus')){post({action:'library'});return;}
   if(t.closest('#homeForm')){$('#fForm').click();return;}
   if(t.closest('#homePast')){try{localStorage.setItem(PAST_KEY,pastOn()?'0':'1');}catch{}void renderHome();renderChrome();toast(pastOn()?'기출 참고를 켰어요 · 설계·초안 때 기출을 근거로 찾아요':'기출 참고를 껐어요 · 교육과정·자료 폴더만 봐요');return;}
   const appc=t.closest('.appc[data-tool]');if(appc){post({action:'tool',tool:appc.dataset.tool});return;}
