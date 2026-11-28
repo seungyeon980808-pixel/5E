@@ -14,6 +14,9 @@ export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑�
 // Roman(= LaTeX 기본 수식체 Computer Modern의 오픈판)을 우선하고, 파일 부재 시 뒤쪽
 // HWP수식/Times로 fallback한다. @font-face 등록은 css/style.css. isEquationFontFamily가
 // 이 값을 그대로 비교하므로, 값만 바꾸면 이탤릭·자간 로직이 자동으로 따라온다.
+// 11-24 확인: 한글(HWP) 수식이 실제로 그리는 글자(HYhwpEQ의 특수 영역 글자)는 Computer Modern 모양이라
+// Latin Modern과 같다. HYhwpEQ의 보통 자리 글자는 바로 선 Times류뿐이라 앞에 두면 기울임이 가짜로 눕고 θ가 빠진다.
+// 그래서 Latin Modern을 맨 앞에 둔다(사용자 확인: 「4m」처럼 숫자 정자·m 기울임 Computer Modern 모양이어야 함).
 export const EQUATION_FONT_FAMILY = '"Latin Modern Roman", "Latin Modern Math", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
 export const EQUATION_FONT_STYLE = "italic";
 export const EQUATION_LETTER_SPACING = "-0.04em";
@@ -24,9 +27,11 @@ export const OBJECT_LABEL_TYPES = ["quantity", "label"];
 // 단일 출처: 수식 글꼴을 그대로 재사용하므로 자동 라벨링과 텍스트 "수식"이 항상 일치한다
 // (숫자 정자화·자간도 isEquationFontFamily 경로로 함께 따라온다).
 export const OBJECT_LABEL_QUANTITY_FONT_FAMILY = EQUATION_FONT_FAMILY;
-// 라벨(물체명·비물리량) 기본 글꼴: 신명중명조 정체. 물리량(수식 글꼴 이탤릭)과 구분.
+// 라벨(물체명·비물리량) 기본 글꼴: 수식과 같은 Latin Modern 정체(A·B·P). 물리량(수식 글꼴 이탤릭)과 구분.
 // 일반 텍스트 도구(돋움)와도 분리 — 객체 라벨 "라벨" 종류 + 텍스트 입력기 "라벨" 옵션 공용.
-export const OBJECT_LABEL_TEXT_FONT_FAMILY = '"신명중명조", "Shin Myeongjo", "SMMyungJo", "Batang", "바탕", serif';
+// 11-24 사용자: 신명중명조는 쓰지 않는다. 영문 이름은 한글 수식과 같은 모양(Latin Modern 정자),
+// 한글이 섞이면 그 글자는 돋움(맥에 없으면 Apple SD Gothic Neo).
+export const OBJECT_LABEL_TEXT_FONT_FAMILY = '"Latin Modern Roman", "Latin Modern Math", "돋움", "Dotum", "Apple SD Gothic Neo", serif';
 
 // 구간 번호(section/region markers)로 쓰인 ASCII I/II/III만 세리프(Times New Roman
 // 정체)로 렌더링한다. 물리량 라벨은 labelType 기반(applyObjectLabelFont)으로 따로

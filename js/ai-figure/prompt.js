@@ -26,7 +26,7 @@ const TYPE_STYLE = [
   [/천체|별|위성|대기·해양|판 구조/u, '천체·지구 모식도는 가는 선과 회색 단계 두세 개로 단순하게, 사진 같은 질감은 쓰지 않는다.'],
 ];
 const TYPO = `글자 규칙(평가원 시험지와 같게):
-- 한글·원문자(㉠㉡)는 굵기가 고른 가는 고딕 계열(중고딕류). 굵고 두꺼운 고딕·손글씨 금지.
+- 한글·원문자(㉠㉡)는 굵기가 고른 가는 고딕 계열(중고딕·돋움류, 획 끝에 부리가 없는 글꼴). 명조(바탕)·붓글씨·굵고 두꺼운 고딕·손글씨 금지 — 일러스트·해부 그림을 그릴 때도 같다.
 - 물체·점·구간 이름(A, B, C, P, Q, ㉠)은 바로 선 글자. (가)(나)(다) 같은 패널·구분 이름은 그림 안에 절대 쓰지 않는다(5E가 그림 밖에 붙인다). 화학식(H₂O, CO₂)은 바로 선 글자와 작은 아래첨자.
 - 정자(바로 선 글자)와 기울임 — 반드시 지킬 것:
   · 값이 정해진 양(숫자+단위)은 숫자·단위 모두 바로 선 글자(Times 계열 정체)이고, 숫자와 단위 사이에 빈칸을 두지 않고 바로 붙여 쓴다: 3m, 60kg, 2s, 10N, 5m/s, 0.1M, 50mL, 1000hPa, 30°, 25°C. 「2 m」「60 kg」처럼 띄어 쓰면 틀린 것이다. 이때 m·s·N 같은 단위는 절대 기울이지 않는다. μ·k·m 같은 단위 앞 글자(5μm, 2km)도 바로 선 글자.
@@ -37,7 +37,7 @@ const TYPO = `글자 규칙(평가원 시험지와 같게):
   · 이온·원소·물질·분자 기호와 약어는 물리량이 아니므로 위·아래첨자까지 모두 바로 선 글자다. 절대 기울이지 않는다: 전자 e⁻, 무기 인산 Pᵢ(P와 첨자 i 모두 바로 선 글자), H⁺, Na⁺, K⁺, Cl⁻, Ca²⁺, O₂, CO₂, H₂O, ATP, ADP, NADH, NADPH, FADH₂, P680, P700, 엽록소 a·엽록소 b의 a·b. P680·P700의 숫자는 아래첨자가 아니라 P와 같은 줄 같은 크기의 바로 선 글자(P700)다.
   · 반응식(2H₂O → 4H⁺ + O₂ + 4e⁻ 등)은 식 전체를 기울이지 않는다. 물질 기호는 바로 선 글자, 화살표·+는 그대로 둔다.
   · 분자 수 계수는 바로 선 숫자로 물질 기호에 붙여 쓴다: 3CO₂, 6NADPH, 2ATP. 「3 CO₂」「6 NADPH」처럼 띄우면 틀린 것이다.
-- 글자는 그림 크기에 비해 작게(시험지 본문 글자와 비슷한 크기), 선과 겹치지 않게.
+- 글자는 그림 크기에 비해 작게(시험지 본문 글자와 비슷한 크기). 실선·점선·지시선·치수선·해칭이 글자를 지나거나 겹치지 않게 글자 둘레를 비운다(점선은 글자 앞에서 끊는다).
 선 규칙: 모든 선은 가늘게(외곽선도 굵지 않게). 굵은 만화 외곽선, 둥근 두꺼운 테두리 금지.`;
 
 // ── v2s: 과목별 화풍 ──
@@ -45,7 +45,7 @@ const SUBJECT_STYLE = {
   물리: `물리 그림 화풍(평가원 역학·전자기 그림):
 - 흑백·회색조만. 물체(상자)는 중간 회색 평면에 가는 검정 윤곽, 빗면·쐐기·큰 면은 연회색 평면에 가는 윤곽, 꼭짓점은 뾰족하게.
 - 바닥(수평면)·천장은 그림 폭 전체의 얇은 연회색 띠와 물체에 닿는 쪽 가는 실선. '수평면' 글자는 띠 오른쪽 끝에 작게.
-- 실·용수철·도선은 가는 선 한 줄. 도르래는 회색 원 안에 작은 축 원. 용수철은 일정한 간격의 가는 지그재그나 코일.
+- 실·용수철·도선은 가는 선 한 줄. 도르래는 회색 원 안에 작은 축 원. 용수철은 평가원 그림처럼 고른 간격으로 감긴 가는 코일(이어진 고리 모양)로 그리고, 톱니 같은 지그재그로 그리지 않는다.
 - 힘 화살표는 가는 검정 선에 작은 삼각 화살촉, 속도 화살표는 회색. 화살촉이 물체 표면에 닿게.
 - 길이 표시는 양쪽 작은 화살표의 가는 치수선과 점선 연장선, 각도는 꼭짓점의 가는 호와 그 안쪽 숫자(30°).
 - 점·물체 이름(A, B, p, q, O)은 바로 선 로마체로 물체 바깥 가까이, 물리량 기호(m, v, F, h, d, θ)는 기울임. 숫자+단위 값(2m, 60kg, 30°)은 숫자·단위 모두 바로 선 글자로 붙여 쓴다(단위 m를 기울이지 않는다).
@@ -60,7 +60,8 @@ const subjectKey = (s) => /물리/u.test(s) ? '물리' : /화학/u.test(s) ? '�
 const TEXT_RULES = `[글자 규칙 — 반드시 지킬 것]
 - 그림 안에는 라벨(기호·이름·값·단위)만 넣는다. 「두 파원의 진폭과 진동수는 같다」「진공에서 빛의 속력은 c」 같은 설명 문장·조건 문장은 그림에 절대 쓰지 않는다(그건 문항 본문에 들어간다).
 - 같은 종류의 물리량이 둘 이상이면 아래첨자로 구별한다: n_유리, n_공기, n_A, m_1, v_A처럼 기울인 기호에 작은 아래첨자(글자는 바로 선 글자).
-- 변수 기호(k, m, v, x, h, θ 등)는 수식 글꼴(Times 계열 명조)의 기울임으로, 손글씨나 고딕체로 쓰지 않는다.
+- 한글 라벨은 모두 부리 없는 가는 고딕으로 쓴다(명조 금지).
+- 영문·그리스 변수 기호(k, m, v, x, h, θ 등)만 수식 글꼴(Times 계열)의 기울임으로 쓰고, 손글씨로 쓰지 않는다. 이 수식 글꼴은 영문·그리스 기호에만 쓰고 한글에는 쓰지 않는다.
 - 분수 값은 가로 분수선으로 쌓아 쓴다(3/2 같은 빗금 금지).
 - 칠은 새까만 검정 대신 회색 음영(연회색·중간 회색·진회색)으로 한다. 가계도의 형질 표현 개체, 강조 물체도 진회색·중간 회색으로 구별한다.`;
 
@@ -70,19 +71,53 @@ export const FIGURE_PROMPT_VERSION = 'v2t';
  * 그리기 지시문(v2t). 원래 사슬과 글자 하나까지 같은 결과를 낸다.
  * @param {{ request: string, refs?: string[], retrieval?: { classify?: { types?: string[], subject?: string } }, subject?: string }} args
  */
-export function buildFigurePrompt({ request, refs = [], retrieval = null, subject = '' } = {}) {
+// 실험(exp/1122-figure-tuning) 선택 옵션 — 모두 기본 꺼짐(기본 글은 글자 하나까지 같음):
+//  fix.sceneRoles: 앞 장면이 첫 첨부일 때 참고 그림 역할 문장을 「둘째부터」로(점검 B-3)
+//  fix.noRefLook: 참고 그림 0장이면 「첨부한 참고 그림은…」 줄을 빼고 평가원 관례 문장으로(B-8)
+//  style: 분류가 고른 화풍(taxonomy styles). '회색조 일러스트'면 「모식도는 연회색 평면만」 줄 대신 일러스트 줄(B-7)
+const KICE_LOOK_NOREF = `대한민국 수능·평가원 모의평가 시험지에 인쇄되는 그림과 구별되지 않게 그린다.
+- 평가원 시험지 그림의 관례(가는 선, 한두 단계 회색 평면, 굵기 고른 가는 고딕 한글, 로마체 영문·숫자·단위, 기울인 물리량 기호)를 따른다.
+- 순수 흰 배경, 컬러 금지(흑백·회색만), 테두리나 제목·설명 문장·워터마크를 넣지 않는다.
+- 시험지에 그대로 붙일 수 있게 그림 둘레 여백은 좁게.`;
+const ILLUST_STYLE = '일러스트 요청: 대상을 실제 모양에 가깝게 가는 펜 선과 회색 음영 두세 단계로 그린다(평가원 회색조 일러스트). 단순 도형으로 줄이지 않되 사진 같은 질감·그라데이션은 쓰지 않는다.';
+//  fix.userRoles + users(교사 첨부 수, 고침 U1): 첨부 순서가 [교사 그림 users장, (앞 장면), 참고 기출]일 때 역할 문장을 그 순서대로 쓴다.
+//    「참고 그림 N장은 모두 실제 평가원 그림이다. 첫 장은 구도…」가 교사 그림을 평가원 그림으로 읽게 하던 모순을 없앤다.
+export function buildFigurePrompt({ request, refs = [], retrieval = null, subject = '', fix = {}, prevScene = false, style = '', users = 0 } = {}) {
+  if (fix.userRoles && users > 0) return buildFigurePromptWithUsers({ request, refs, retrieval, subject, fix, prevScene, style, users });
   const types = (retrieval?.classify?.types || []).join(' ');
-  const styles = TYPE_STYLE.filter(([re]) => re.test(types)).map(([, s]) => '- ' + s);
-  const roles = refs.length ? `참고 그림 ${refs.length}장은 모두 실제 평가원 그림이다. 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.` : '';
+  const wantStyle = style || retrieval?.classify?.style || '';
+  const illust = /일러스트/u.test(wantStyle);
+  let styles = TYPE_STYLE.filter(([re]) => re.test(types)).filter(([re]) => !(illust && String(re) === String(/모식도|회로|도선|광학|파동|궤적/u))).map(([, s]) => '- ' + s);
+  if (illust) styles = styles.concat('- ' + ILLUST_STYLE);
+  const roles = refs.length
+    ? (fix.sceneRoles && prevScene
+      ? `첫 첨부는 같은 문항의 앞 장면(배율·화풍을 맞출 그림)이다. 둘째부터의 참고 그림 ${refs.length}장은 실제 평가원 그림이다 — 그중 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.`
+      : `참고 그림 ${refs.length}장은 모두 실제 평가원 그림이다. 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.`)
+    : '';
+  const look = fix.noRefLook && !refs.length ? KICE_LOOK_NOREF
+    : fix.sceneRoles && prevScene ? KICE_LOOK.replace('- 첨부한 참고 그림은 실제 평가원 시험지 그림이다.', '- 둘째부터의 첨부(참고 그림)는 실제 평가원 시험지 그림이다.') : KICE_LOOK;
   const key = subjectKey(subject || retrieval?.classify?.subject || '');
   const parts = [
-    `${EXAM_STYLE_PROMPT}\n${COMPLETE_RULE}\n\n${KICE_LOOK}`,
+    `${EXAM_STYLE_PROMPT}\n${COMPLETE_RULE}\n\n${look}`,
     `\n\n${TYPO}${styles.length ? '\n그림 종류별 화풍:\n' + styles.join('\n') : ''}${roles ? '\n' + roles : ''}`,
     key ? `\n${SUBJECT_STYLE[key]}` : '',
     `\n${TEXT_RULES}`,
     `\n\n[내용]\n${request}`,
   ];
   return parts.join('');
+}
+
+// 고침 U1: 교사 그림이 첫 첨부일 때의 그리기 지시문. 화풍·글자 규칙은 기본 판과 같고, 첨부 역할 줄과 「첨부한 참고 그림은…」 줄만 다르다.
+function buildFigurePromptWithUsers({ request, refs, retrieval, subject, fix, prevScene, style, users }) {
+  const base = buildFigurePrompt({ request, refs, retrieval, subject, fix: { ...fix, userRoles: false, sceneRoles: false }, prevScene: false, style });
+  const order = [`${users === 1 ? '1번째' : `1~${users}번째`} 첨부 = 교사가 붙인 그림(아래 [교사 그림] 줄의 역할대로 쓴다)`];
+  if (prevScene) order.push(`${users + 1}번째 첨부 = 같은 문항의 앞 장면(배율·화풍을 맞출 그림)`);
+  if (refs.length) order.push(`그 뒤 ${refs.length}장 = 실제 평가원 기출 그림(선 굵기·회색·글자 화풍만 참고하고, 내용·구도는 따르지 않는다)`);
+  const rolesNow = refs.length ? `참고 그림 ${refs.length}장은 모두 실제 평가원 그림이다. 첫 장은 구도·그림 종류를, 나머지는 선·회색·글자 화풍을 주로 참고한다.` : '';
+  let text = rolesNow ? base.replace('\n' + rolesNow, '') : base;
+  if (refs.length) text = text.replace('- 첨부한 참고 그림은 실제 평가원 시험지 그림이다.', '- 교사 그림 뒤에 붙인 참고 그림은 실제 평가원 시험지 그림이다.');
+  else text = text.replace(KICE_LOOK, KICE_LOOK_NOREF);
+  return text.replace('\n' + TEXT_RULES, `\n[첨부 순서] ${order.join(' / ')}.\n${TEXT_RULES}`);
 }
 
 export const SINGLE_SCENE_NOTE = '\n\n[한 장면만] 이 그림에는 위 장면 하나만 그린다(장치·용기·좌표 한 벌). 비교용 두 번째 그림이나 다른 장면을 같이 그리지 않는다.';
@@ -94,7 +129,28 @@ export function sceneRequestText({ request, keyValues = '', fixNote = '' }) {
 }
 
 /** 구체화: 교사의 짧은 요청 → 장면별 구체 요청(JSON). */
-export function expandPrompt({ request, subject = '', context = '', conversation = '', types = [] }) {
+export function expandPrompt({ request, subject = '', context = '', conversation = '', types = [], fix = {} }) {
+  let out = expandPromptBase({ request, subject, context, conversation, types });
+  // 실험(fix.multiConsistency): 여러 장면의 공통 틀·배수 수치를 장면 요청마다 적게 한다. 기본 꺼짐.
+  if (fix.multiConsistency) out = out.replace('\n5. 그래프면', MULTI_CONSISTENCY_RULE.replace('\n7.', '\n4-1.') + '\n5. 그래프면');
+  // 실험(fix.noInventNames): 교사가 말하지 않은 이름(A·B·P…)·설명 글을 구체화가 새로 붙이지 않게. 기본 꺼짐.
+  // fix.noInventNames === 2: 대화에서 교사가 이미 말한 이름은 꼭 살린다(11-23 생성3에서 C2의 대화 속 A·B가 빠짐).
+  if (fix.editableLabels) {
+    out = out.replace('"scenes": ["장면별 구체적 요청"]',
+      '"scenes": [{"draw":"그림 지시","labels":[{"text":"실제 표기","role":"text|name|quantity|coef|unit|chemical","kind":"in|beside|leader|dim|angle","target":"그림에서 찾을 정확한 대상"}]}]');
+    out += `
+[편집 라벨]
+- 장면마다 draw에 구조·개수·위치·방향·값을 지킨다. labels의 글자와 설명 지시선은 draw에 넣지 않는다. 교사가 말한 라벨은 빠짐없이 적는다. 교사가 라벨을 말하지 않았거나 알아서 하라고 했고 그림이 구조·부분 이름을 보여 주는 도식(세포·기관·지층·판 경계·장치 구조 등)이면 주요 부분에 교과서 이름을 labels로 적는다(A·B·㉠ 같은 기호는 새로 만들지 않는다). 교사가 라벨을 빼라거나 「없음」이라고 했으면 labels는 []다. m_B, P′, H₂O, Na⁺ 같은 표기 그대로.
+- 숫자 없는 단독 전하 +/−, 자석 N·S, 단자 +/−, 기구와 축의 눈금·단위·계기 화면은 draw에 위치와 값까지 적는다. 이온식·화학식·숫자가 붙은 전하는 labels로. 이온식을 올릴 원은 비운다.
+- 질량과 이름이 함께 있으면 질량 in(안), 이름 beside(밖). 저항·빈 원형 계기의 글자와 영역 이름은 in. 설명 지시선은 leader. 각도 호는 남기고 글자는 angle.
+- 치수선의 양 끝과 기준 점선을 구체적으로 그린다. 화살촉 사이는 끊김 없이 연결하고 글자만 dim. 닫힌 회로·단락 없음·둥근 용수철·끊기지 않는 파형과 정확한 화살표 방향을 지킨다.`;
+  }
+  if (fix.noLabels) out += `
+[라벨 없음] 교사가 라벨 없이 그림만 원한다. 이름·기호·값 라벨과 설명 지시선을 draw에 넣지 않고 labels는 항상 []다.`;
+  if (fix.noInventNames === 2 || fix.editableLabels) return out.replace('문항에서 물어볼 만한 대상에는 이름(A, B, P, ㉠)을 붙인다.', '교사가 지금 요청이나 앞선 대화에서 말한 이름(A, B, ㉠ 등)·라벨은 하나도 빠짐없이 그 대상에 붙인다(「아까 말한 걸로」 같은 말이면 대화 속 지시를 그대로 따른다). 교사가 말하지 않은 기호 이름(A, B, P, m, ㉠ 등)·설명 글은 새로 붙이지 않는다(장면 요청에도 쓰지 않는다). 다만 교사가 라벨을 말하지 않았거나 알아서 하라고 했고 그림이 구조·부분 이름을 보여 주는 도식(세포·기관·지층·판 경계·장치 구조 등)이면 주요 부분에 교과서 이름 라벨을 붙인다. 교사가 라벨을 빼라거나 「없음」이라고 했으면 라벨을 붙이지 않는다. 교사가 「설명 문장은 넣지 말라」고 하면 용액 이름·농도 같은 글도 그림에 쓰지 않는다.');
+  return fix.noInventNames ? out.replace('문항에서 물어볼 만한 대상에는 이름(A, B, P, ㉠)을 붙인다.', '교사가 말하지 않은 이름(A, B, P, m, ㉠ 등)·라벨·설명 글은 새로 붙이지 않는다(장면 요청에도 쓰지 않는다). 교사가 「설명 문장은 넣지 말라」고 하면 용액 이름·농도 같은 글도 그림에 쓰지 않는다.') : out;
+}
+function expandPromptBase({ request, subject = '', context = '', conversation = '', types = [] }) {
   return `너는 평가원 ${subject || '과학탐구'} 출제 위원의 그림 담당이다. 교사가 짧게 부탁한 그림을, 그림 그리는 AI가 그대로 그릴 수 있는 구체적인 요청으로 바꾼다.
 규칙:
 1. 그림 종류를 먼저 정하고(아래 목록), 그 종류의 평가원 관례대로 배치·시점·라벨을 채운다. 예: 역학 장치는 옆에서 본 단면, 일기도는 등압선 값·전선 기호, 입자 모형은 범례.
@@ -109,7 +165,8 @@ JSON 하나로만: {"type": "목록 중 하나", "graph": true/false, "scenes": 
 }
 
 /** 검색 1단계: 요청 → 과목·그림 종류 후보·검색어(JSON). */
-export function classifyPrompt({ request, types = [] }) {
+export function classifyPrompt({ request, types = [], styles = null }) {
+  if (Array.isArray(styles) && styles.length) return classifyPromptStyled({ request, types, styles });
   return `과학 시험 그림 요청을 읽고 검색 조건을 JSON 하나로만 답한다.
 {"subject": "물리학Ⅰ|물리학Ⅱ|화학Ⅰ|화학Ⅱ|생명과학Ⅰ|생명과학Ⅱ|지구과학Ⅰ|지구과학Ⅱ 중 가장 가까운 하나", "types": [아래 목록에서 가까운 순서로 1~3개], "keywords": [그림에 나올 대상·현상·장치 검색어 5~8개, 한국어 명사]}
 그림 종류 목록: ${types.join(' | ')}
@@ -128,7 +185,7 @@ ${candidates.map((t) => `${t.id} | ${t.subject} | ${t.type} | ${t.style} | ${(t.
 /** 두 후보 중 더 나은 쪽 고르기(JSON). 첨부: 후보 1, 후보 2, 기준 기출 최대 2장. */
 export function pickBetterPrompt({ request }) {
   return `두 그림은 같은 요청으로 AI가 그린 후보다. 뒤의 그림들은 실제 평가원 시험지 그림(기준)이다. 평가원 시험지에 그대로 실릴 만한 쪽을 고른다.
-기준: ① 요청 내용·라벨이 정확하고 과학적으로 틀린 곳이 없을 것 ② 선이 가늘고 고르며, 회색은 균일한 평면, 장식·그라데이션 없음 ③ 글자는 작고 가는 명조체, 이름은 바로 선 글자 ④ 그림 안에 설명 문장이 없을 것 ⑤ 실제 평가원 그림과 구별되지 않을 것.
+기준: ① 요청 내용·라벨이 정확하고 과학적으로 틀린 곳이 없을 것 ② 선이 가늘고 고르며, 회색은 균일한 평면, 장식·그라데이션 없음 ③ 한글은 작고 굵기 고른 가는 고딕 계열(명조 아님), 수식 기호는 Times 기울임, 이름은 바로 선 글자 ④ 그림 안에 설명 문장이 없을 것 ⑤ 실제 평가원 그림과 구별되지 않을 것.
 JSON 하나로만: {"better": 1 또는 2, "why": "한 문장"}
 요청: ${request}`;
 }
@@ -186,3 +243,101 @@ export function editLocalVerifyPrompt({ instruction }) {
 - unwanted: 지시하지 않은 다른 글자·선·도형·화살표가 지워지거나 잘리거나 흐려진 것. 잘라 낸 그림 테두리 밖의 일은 말하지 않는다. 지운 자리의 아주 옅은 얼룩은 넣지 않는다.
 JSON 하나로만: {"done": true/false, "unwanted": ["..."]}`;
 }
+
+/** 실험(B-7 styleScore): 분류에 화풍(style)도 묻는 판. 기본 classifyPrompt는 그대로. */
+export function classifyPromptStyled({ request, types = [], styles = [] }) {
+  return classifyPrompt({ request, types }).replace('{"subject":', `{"style": "${styles.join('|')} 중 요청에 맞는 하나(「모식도」면 단순 도식, 「일러스트」면 회색조 일러스트, 생물 묘사는 펜 선화)", "subject":`);
+}
+/** 실험(B-9 fix.pickGothic): 두 후보 고르기 기준의 글자 규칙을 고딕으로 맞춘 판. */
+export function pickBetterPromptGothic({ request }) {
+  return pickBetterPrompt({ request }); // 1.7.3: 기본 판도 고딕 기준으로 맞춰 같은 글이 됐다(이름은 옛 호출을 위해 남김)
+}
+/** 실험(R6 classifyMode 'expand'): 구체화 JSON에 검색용 subject·types·keywords도 함께 받는 판. */
+export function expandPromptWithSearch(args) {
+  return expandPrompt(args).replace('JSON 하나로만: {"type": "목록 중 하나",', 'JSON 하나로만: {"type": "목록 중 하나", "types": [목록에서 가까운 순서로 1~3개], "subject": "물리학Ⅰ|물리학Ⅱ|화학Ⅰ|화학Ⅱ|생명과학Ⅰ|생명과학Ⅱ|지구과학Ⅰ|지구과학Ⅱ 중 하나", "keywords": [그림에 나올 대상·현상·장치 낱말 3~8개],');
+}
+/** 실험(E1): 고치기 때 원본·영역 표시 그림을 함께 보낼 때 덧붙이는 글. */
+export function editExtraNote({ hasOriginal = false, region = null, hasRegionImage = false } = {}) {
+  const lines = [];
+  if (hasOriginal) lines.push('- 첨부 순서: 첫째 = 지금 그림(바탕, 이것을 고친다), 둘째 = 처음 만든 원본 그림(선 굵기·회색·글자 모양의 기준 — 지금 그림이 원본과 달라진 화풍으로 고치지 않는다).');
+  if (region) lines.push(`- 고칠 영역: 그림의 왼쪽에서 ${Math.round(region[0] * 100)}~${Math.round((region[0] + region[2]) * 100)}%, 위에서 ${Math.round(region[1] * 100)}~${Math.round((region[1] + region[3]) * 100)}% 사각형 안. 이 영역 밖은 한 점도 바꾸지 않는다.`);
+  if (hasRegionImage) lines.push('- 마지막 첨부는 고칠 영역을 사각형으로 표시한 그림이다(표시 사각형 자체는 그리지 않는다).');
+  return lines.length ? '\n[교사가 준 범위]\n' + lines.join('\n') : '';
+}
+
+// ── 실험(생성 2차, exp/1122-figure-fixes) — 모두 선택 옵션, 기본값이면 쓰이지 않는다 ──
+// fix.sketchSpec: 손그림 → 글 명세(물체·개수·상대 위치·라벨·지시선) → 명세대로 새로 그리기(손그림은 배치 안내).
+export const SKETCH_SPEC_PROMPT = ({ request }) => `첨부는 교사가 손으로 대강 그린 과학 그림 밑그림이다. 교사 요청: 「${request}」
+이 밑그림을 평가원 선화로 깨끗이 다시 그릴 수 있게 명세를 JSON으로만 답한다(설명 글 없이):
+{"objects":[{"name":"물체 이름","count":1,"box":[x,y,w,h],"shape":"깨끗한 모양(곧은 벽 원통형 등)"}],
+ "lines":[{"what":"실험대·바닥·실·지시선 아닌 선","kind":"곧은 수평선|곧은 직선|매끈한 곡선|원","from":[x,y],"to":[x,y]}],
+ "labels":[{"text":"글자 그대로","target":"가리키는 대상","at":[x,y],"leader":true}],
+ "relations":["A는 B 위에 놓임 같은 연결·접촉 관계"]}
+규칙: 좌표는 밑그림 틀 기준 0~1(왼쪽 위 0,0). 손 떨림·물결·이중선·울퉁불퉁함은 명세에 넣지 않는다 — 모든 선은 자로 그은 직선·매끈한 곡선·정원으로 적는다. 물체 개수·위치 관계·연결은 밑그림 그대로. 교사 요청에 적힌 라벨은 빠짐없이 넣고, 요청이 「지시선 라벨」이거나 글자가 대상에서 떨어져 있으면 leader true. 밑그림에 없고 요청에도 없는 물체·라벨은 넣지 않는다.`;
+const pct = (v) => Math.round(Math.max(0, Math.min(1, Number(v) || 0)) * 100);
+export function sketchSpecText(spec, { attached = true } = {}) {
+  if (!spec || typeof spec !== 'object') return '';
+  const lines = [];
+  for (const o of Array.isArray(spec.objects) ? spec.objects.slice(0, 16) : []) {
+    const b = Array.isArray(o.box) && o.box.length === 4 ? `, 가로 ${pct(o.box[0])}~${pct(o.box[0] + o.box[2])}% · 세로 ${pct(o.box[1])}~${pct(o.box[1] + o.box[3])}%` : '';
+    lines.push(`- 물체: ${o.name}${o.count > 1 ? ` ${o.count}개` : ''}${o.shape ? `(${o.shape})` : ''}${b}`);
+  }
+  for (const l of Array.isArray(spec.lines) ? spec.lines.slice(0, 12) : []) {
+    const at = Array.isArray(l.from) && Array.isArray(l.to) ? ` (${pct(l.from[0])}%,${pct(l.from[1])}%)→(${pct(l.to[0])}%,${pct(l.to[1])}%)` : '';
+    lines.push(`- 선: ${l.what} — ${l.kind || '곧은 직선'}${at}`);
+  }
+  for (const t of Array.isArray(spec.labels) ? spec.labels.slice(0, 16) : []) {
+    const at = Array.isArray(t.at) ? ` (${pct(t.at[0])}%,${pct(t.at[1])}%)` : '';
+    lines.push(`- 라벨: 「${t.text}」 → ${t.target}${at}${t.leader ? ', 곧은 지시선으로 대상에 잇는다' : ''}`);
+  }
+  for (const r of Array.isArray(spec.relations) ? spec.relations.slice(0, 8) : []) lines.push(`- 관계: ${r}`);
+  if (!lines.length) return '';
+  return `\n\n[밑그림 명세 — 교사 손그림을 읽어 정리한 것, 위치는 그림 틀 기준 %]\n${lines.join('\n')}\n이 명세의 물체 수·위치·관계·라벨을 지키고, 모든 선은 자로 그은 직선·매끈한 곡선·정원으로 새로 그린다.${attached ? ' 첨부 손그림은 배치를 확인하는 안내일 뿐 그 선을 따라 그리지 않는다(손 떨림·물결선·이중선·울퉁불퉁한 테두리 금지).' : ''}`;
+}
+export const SKETCH_LAYOUT_ROLE = '교사가 손으로 그린 배치 안내다. 물체의 위치·크기 비율·라벨 위치만 보고, 선은 따라 그리지 않는다 — [밑그림 명세]대로 자로 그은 직선·매끈한 곡선으로 새로 그린다(손 떨림·물결선·이중선·울퉁불퉁한 테두리를 옮기지 않는다).';
+
+// fix.styleDirective: 교사 말의 화풍(모식도/일러스트)을 그리기 지시문 맨 끝에 못 박는다.
+export function styleWanted(text) {
+  const t = String(text || '');
+  const il = /일러스트|삽화|실제\s*(모습|모양)|사실적|실물처럼|생생하게/u.test(t);
+  const sc = /모식도|도식|단순하게|간단한\s*도형/u.test(t);
+  return il && !sc ? 'illust' : sc && !il ? 'schematic' : null;
+}
+export const STYLE_DIRECTIVES = {
+  illust: '\n\n[화풍 — 교사 지정: 일러스트] 평가원 시험지의 회색조 일러스트로 그린다: 대상의 실제 윤곽·비율(인물의 몸과 옷, 사물·기관의 실제 모양과 두께)은 살리되, 고른 굵기의 가는 선과 연회색·중간 회색 평면 한두 단계로 단순하게 칠한다. 대상을 알아보는 데 필요한 대표 구조(예: 식물 세포의 큰 액포와 엽록체 안 겹친 막, 심장의 판막)는 가는 선으로 넣되, 굵은 해칭·촘촘한 선 음영·점묘·연필 질감·교과서 해부도식 세밀화로 그리지 않고 장식 세부(혈관·근육 결, 표면 질감, 옷 주름, 배경)는 넣지 않는다. 원·사각형만으로 줄인 모식도로 그리지도 않는다. 사진 질감·그라데이션·컬러는 쓰지 않는다. 라벨은 위 글자 규칙대로 부리 없는 가는 고딕.',
+  illustBio: '\n- 생물 일러스트도 평가원 생명과학 그림처럼: 기관·세포의 실제 윤곽과 요청한 구조, 그 대상을 알아보는 대표 구조를 가는 선과 연회색 면으로 보이고, 단면이면 벽 두께를 회색 띠로 보인다. 입체 절개·해칭 음영은 쓰지 않는다.',
+  schematic: '\n\n[화풍 — 교사 지정: 모식도] 대상을 구조와 관계만 보이는 단순한 도형으로 줄인다: 고른 굵기의 가는 선, 평면 연회색 한두 단계, 입체·음영·해칭·질감 없음. 인물이 있으면 윤곽만 있는 단순한 인물(얼굴 표정·옷 주름 없음). 실제 모양을 자세히 묘사하는 일러스트로 그리지 않는다. 라벨은 위 글자 규칙대로 부리 없는 가는 고딕.',
+  expandIllust: '교사가 화풍을 「일러스트」(실제 모양을 살린 평가원 회색조 그림)로 정했다. 장면 요청 첫머리에 「일러스트:」를 적고 모식도·단순 도식으로 바꾸지 않는다. 다만 입체 절개도·세밀한 질감·명암 표현은 적지 않고, 평가원 시험지 그림 수준(가는 선, 연회색 평면)을 지킨다.',
+  expandSchematic: '교사가 화풍을 「모식도」(단순한 선과 평면 도형)로 정했다. 장면 요청 첫머리에 「모식도:」를 적고 실제 모양을 자세히 묘사하지 않는다.',
+};
+export const STYLE_REF_KEEP = { illust: ['회색조 일러스트', '펜 선화·해칭'], schematic: ['단순 도식(선·도형)'] };
+
+// fix.multiConsistency: 여러 장면일 때 장면마다 같은 틀·배율과 바뀌는 양의 수치(장면 1 기준 배수)를 적게 한다.
+export const MULTI_CONSISTENCY_RULE = '\n7. 장면이 둘 이상이면 모든 장면 요청에 같은 「공통 틀」 문장을 똑같이 적는다: 그림 틀 비율, 같은 용기·장치의 크기(예: 실린더 안쪽 높이 6칸, 폭 4칸), 같은 시점·배율. 그리고 장면마다 바뀌는 양을 장면 1 기준 수치로 적는다(예: 「피스톤 아래 기체 높이 = 장면 1의 2배(2칸 → 4칸)」, 「분자 8개 그대로」). 비율·개수는 교사 말 그대로이며, 그림에서 자로 재어 맞는 크기로 쓴다.';
+export const MULTI_PREV_NOTE = '\n\n[장면끼리 수치 맞추기] 첫 첨부 그림(장면 1)과 틀 크기·용기 크기·배율이 같아야 한다. 이번 장면 요청에 적힌 배수(예: 높이 2배)를 장면 1 그림에서 자로 재어 그대로 맞춘다. 개수가 같다고 했으면 하나씩 세어 같게.';
+export function combinedPanelsRequest(scenes) {
+  const n = scenes.length;
+  return `한 장의 가로로 긴 그림에 다음 ${n}개 그림을 왼쪽에서 오른쪽으로 한 줄로 나란히 그린다(나중에 칸별로 잘라 따로 쓴다). 칸 사이는 넓은 흰 여백(그림 폭의 6% 이상)으로 떼고, 칸을 겹치거나 선·화살표·글자가 칸 사이 여백을 건너가지 않게 한다. 칸 테두리·칸 번호·(가)(나) 같은 이름표는 넣지 않는다. 모든 칸은 같은 배율·같은 용기·장치 크기·같은 바닥 높이·선 굵기·글꼴로 그려, 칸끼리 바뀌는 양(부피·높이·개수·모양)이 서로 정확한 비율로 보이게 한다.\n`
+    + scenes.map((s, i) => `${i + 1}번째 칸(왼쪽부터): ${s}`).join('\n');
+}
+
+// ── 실험(생성 3차, exp/1122-figure-fixes) — 모두 선택 옵션, 기본값이면 쓰이지 않는다 ──
+// fix.multiCombined 'layout': 한 장에 나란히 그린 판에서 자른 칸을 배치 안내로 붙여 장면마다 크게 다시 그린다.
+export const PANEL_LAYOUT_ROLE = '같은 문항의 여러 장면을 한 장에 작게 나란히 그린 판에서 이 장면 칸만 잘라 낸 배치 안내다. 이 그림의 틀 비율·물체의 위치·크기 비율·개수·높이(예: 피스톤·액면·용수철 끝의 높이)·라벨 위치를 자로 잰 듯 그대로 지켜, 같은 그림을 더 크고 선명한 평가원 선화로 다시 그린다. 물체를 옮기거나 크기·개수·높이를 바꾸지 않는다(다른 장면과의 비율이 이 그림에 맞춰져 있다). 흐린 선·뭉개진 글자만 깨끗하게 다시 쓴다.';
+// fix.sketchSpec 3(합침): 명세를 따로 뽑지 않고 그리기 지시문에 「먼저 읽고 그대로 다시 그리는」 절차를 넣는다(글 AI 한 번 줄임).
+export const SKETCH_MERGED_NOTE = '\n\n[밑그림 다시 그리기 절차] 그리기 전에 첨부 손그림에서 ① 물체 목록과 개수 ② 각 물체의 위치(틀 기준 가로·세로 비율)와 크기 비율 ③ 접촉·연결 관계 ④ 라벨 글자와 가리키는 대상을 먼저 읽는다. 그 목록을 그대로 지켜 새로 그리되, 손그림의 선은 따라 그리지 않는다: 바닥·실험대·수면은 자로 그은 곧은 수평선 한 줄(물결선·이중선 금지), 원은 매끈한 정원, 용기 벽은 곧은 직선, 곡선은 매끈하게. 라벨은 바로 쓴 고딕 글자(물리량 기호는 기울임)로, 손그림에서 대상과 떨어져 있던 라벨은 곧은 지시선으로 잇는다. 손그림에 없고 요청에도 없는 물체·라벨은 넣지 않는다.';
+// fix.sketchSpec 4(짧은 명세): 좌표 JSON 대신 짧은 글 명세(출력 글자 수를 줄여 글 AI 시간을 줄임).
+export const SKETCH_SPEC_SHORT_PROMPT = ({ request }) => `첨부는 교사가 손으로 대강 그린 과학 그림 밑그림이다. 교사 요청: 「${request}」
+이 밑그림을 깨끗한 평가원 선화로 다시 그릴 수 있게 짧은 명세만 쓴다(12줄 이하, 줄마다 30자 안팎, 다른 말 없이):
+- 물체: 이름·개수·대략 위치(왼쪽/가운데/오른쪽, 위/아래)·크기 비율
+- 관계: 닿음·연결·안에 있음
+- 라벨: 「글자」 → 대상(지시선 있으면 「지시선」)
+손 떨림·물결·이중선은 적지 않는다(모든 선은 곧은 직선·매끈한 곡선·정원). 교사 요청의 라벨은 빠짐없이, 밑그림에 없고 요청에도 없는 것은 넣지 않는다.`;
+export function sketchSpecShortText(text, { attached = true } = {}) {
+  const lines = String(text || '').split('\n').map((s) => s.trim()).filter((s) => s && !/^```/.test(s)).slice(0, 14);
+  if (!lines.length) return '';
+  return `\n\n[밑그림 명세 — 교사 손그림을 읽어 정리한 것]\n${lines.map((s) => (s.startsWith('-') ? s : '- ' + s)).join('\n')}\n이 명세의 물체 수·위치·관계·라벨을 지키고, 모든 선은 자로 그은 직선·매끈한 곡선·정원으로 새로 그린다.${attached ? ' 첨부 손그림은 배치를 확인하는 안내일 뿐 그 선을 따라 그리지 않는다(손 떨림·물결선·이중선·울퉁불퉁한 테두리 금지).' : ''}`;
+}
+// editFigure boxCheck: 영역이 있으면 「상자 안만」을 지시에 붙이고, 영역 밖이 많이 바뀌면 한 번 더(더 적게 바뀐 쪽).
+export const EDIT_BOX_NOTE = ' (표시한 빨간 상자 안만 바꾸고, 상자 밖은 선·글자·회색을 한 점도 바꾸지 않는다)';
+export const EDIT_DRIFT_RETRY_NOTE = ' — 지시한 곳 밖의 선·글자·도형은 첨부 그림과 똑같이 둔다(지난번에 다른 곳까지 바뀜).';

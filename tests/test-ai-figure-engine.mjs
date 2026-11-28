@@ -10,7 +10,7 @@ import {
 } from '../js/ai-figure/index.js';
 import { parseTagLines, HAK_PENALTY } from '../js/ai-figure/retrieve.js';
 import { clearFigureCache, collectReferenceImages, isUsableReferenceImage, MAX_REFERENCE_DATA_URL_CHARS } from '../js/ai-figure/reference-images.js';
-import { PREV_SCENE_NOTE, SINGLE_SCENE_NOTE } from '../js/ai-figure/prompt.js';
+import { PREV_SCENE_NOTE, SINGLE_SCENE_NOTE, STYLE_DIRECTIVES, pickBetterPrompt } from '../js/ai-figure/prompt.js';
 import { EXAM_QUESTION_HOSTS } from '../js/library/image-hosts.js';
 
 const png = (name) => 'data:image/png;base64,' + Buffer.from(name).toString('base64');
@@ -142,6 +142,16 @@ test('앱에 실은 색인(assets/ai-figure): 평가원 9,924 + 학평 10,879, i
 });
 
 // ── 지시문 ──
+test('화풍 지정·후보 고르기 글에 명조·교과서 해부도 지시가 없다(11-23 1.7.3)', () => {
+  // 화풍 「일러스트」 지정이 교과서 해부도식 굵은 해칭·명조 라벨을 부르던 것(사용자 11-23).
+  for (const k of ['illust', 'illustBio', 'schematic', 'expandIllust']) {
+    assert.doesNotMatch(STYLE_DIRECTIVES[k], /해부 그림처럼|짧은 해칭으로|명조체/u, k);
+  }
+  assert.match(STYLE_DIRECTIVES.illust, /부리 없는 가는 고딕/u);
+  assert.doesNotMatch(pickBetterPrompt({ request: 'x' }), /가는 명조체/u);
+  assert.match(pickBetterPrompt({ request: 'x' }), /가는 고딕 계열/u);
+});
+
 test('buildFigurePrompt: v2t 사슬을 펼친 결과가 고정값과 같다', () => {
   const p = buildFigurePrompt({ request: '빗면 위 상자', refs: ['a', 'b', 'c'], retrieval: { classify: { types: ['역학 모식도(물체·빗면·도르래·용수철)', '그래프(선·곡선)'], subject: '물리학Ⅰ' } } });
   // image_generator pipeline/prompts/v2t.cjs build()와 글자 하나까지 같던 값(0869623efdc7dae0)에서
@@ -149,7 +159,14 @@ test('buildFigurePrompt: v2t 사슬을 펼친 결과가 고정값과 같다', ()
   // 11-21(사용자 확정): 정자/기울임 규칙(수치+단위 정자·붙여 씀, 기호만 기울임, 첨자 정자)과 그림 한글 고딕 계열.
   // 11-22: 이온·원소·물질 기호(e⁻, Pᵢ, H⁺, O₂, ATP, P700 …)는 첨자까지 정자 — 생명 20장 시험에서 e⁻ 기울임 3장, Pᵢ 기울임 5장.
   // 11-22(64장 대량 비교): P700 숫자는 같은 줄 정자, 반응식 전체를 기울이지 않음, 분자 수 계수는 붙여 씀(3CO₂).
-  assert.equal(createHash('sha256').update(p).digest('hex').slice(0, 16), 'a51d2376bd0c1e96');
+  // 11-23(1.7.3 글꼴·화풍): 한글 라벨이 명조로 나오던 것 — 「수식 글꼴(Times 계열 명조)…고딕체로 쓰지 않는다」를 영문 기호에만 걸고,
+  //   한글은 부리 없는 가는 고딕을 글자 규칙 끝 줄에 다시 적음. 용수철은 코일(지그재그 금지), 점선·지시선이 글자를 지나지 않게.
+  assert.equal(createHash('sha256').update(p).digest('hex').slice(0, 16), '2417976c5508df21');
+  assert.doesNotMatch(p, /Times 계열 명조/u);
+  assert.doesNotMatch(p, /고딕체로 쓰지 않는다/u);
+  assert.match(p, /한글 라벨은 모두 부리 없는 가는 고딕/u);
+  assert.match(p, /지그재그로 그리지 않는다/u);
+  assert.match(p, /글자를 지나거나 겹치지 않게/u);
   assert.match(p, /전자 e⁻, 무기 인산 Pᵢ\(P와 첨자 i 모두 바로 선 글자\)/u);
   assert.match(p, /빈칸을 두지 않고 바로 붙여 쓴다/u);
   assert.match(p, /초점 F, 고기압 H/u);

@@ -32,8 +32,9 @@ for (const engine of ['chromium', 'webkit']) {
       assert.ok(Math.abs(result.source.width - result.result.width) <= 1, 'Both comparison frames must have the same width: ' + JSON.stringify(result));
       assert.ok(result.picker.x - (result.title.x + result.title.width) < 15, 'revision picker sits immediately beside its heading');
     }
-    await page.click(`${panel} [data-ai-comment-tool="pan"]`);
-    await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-comment-tool="pan"]').getAttribute('aria-pressed') === 'true');
+    // 11-27: 변환도 생성처럼 코멘트 도구는 점·박스만(이동·자유 없음).
+    await page.click(`${panel} [data-ai-comment-tool="point"]`);
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-comment-tool="point"]').getAttribute('aria-pressed') === 'true');
     // 10-22 위 도구 줄: 묶음 4개(보기·확대·주석 도구·코멘트 표시), 확대 묶음은 가운데 선 왼쪽 8px에서 끝, 주석은 오른쪽 끝.
     const toolbar = await page.evaluate(() => {
       const panel = document.querySelector('#ai-image-panel');
@@ -48,7 +49,7 @@ for (const engine of ['chromium', 'webkit']) {
         center: grid.x + grid.width / 2, gridRight: grid.right, headingH: r(heading).height,
         zoomRight: r(heading.querySelector('.ai-pane-zoom .ai-tool-seg')).right, help: r(heading.querySelector('.ai-zoom-help')).right,
         annRight: r(heading.querySelector('.ai-annotation-toolbar')).right, annLeft: r(heading.querySelector('.ai-annotation-toolbar .ai-tool-seg')).left,
-        pressedBg: getComputedStyle(pressed).backgroundColor, onBg: [...heading.querySelectorAll('.ai-tool-seg button[aria-pressed="true"], .ai-compare-controls > button[aria-pressed="true"]')].map(b => getComputedStyle(b).backgroundColor), softColor };
+        pressedBg: getComputedStyle(pressed).backgroundColor, onBg: [...heading.querySelectorAll('.ai-tool-seg button[aria-pressed="true"]:not([data-ai-comment-visibility]), .ai-compare-controls > button[aria-pressed="true"]')].map(b => getComputedStyle(b).backgroundColor), softColor };
     });
     fs.writeFileSync(path.join(evidence, 'toolbar.json'), JSON.stringify(toolbar, null, 2));
     assert.equal(toolbar.frames.length, 4, 'four tool groups: view, zoom, annotation, comment visibility');
@@ -64,12 +65,13 @@ for (const engine of ['chromium', 'webkit']) {
     // 코멘트 표시 단추는 코멘트 도구 줄(.ai-annotation-toolbar)에 한 개 있다.
     assert.equal(await page.locator(`${panel} [data-ai-comment-visibility]`).count(), 1);
     assert.equal(await page.locator(`${panel} .ai-annotation-toolbar [data-ai-comment-visibility]`).count(), 1);
-    // 코멘트 표시는 처음에 꺼져 있다. 단추는 켜고 끄기를 바꾼다.
+    // 코멘트 도구(점)를 고르면 코멘트 층이 켜진다(11-27 위에서 점을 고름). 단추는 켜고 끄기를 바꾼다.
+    assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'true');
+    await page.click(`${panel} [data-ai-comment-visibility]`);
     assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
     await page.click(`${panel} [data-ai-comment-visibility]`);
     assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'true');
     await page.click(`${panel} [data-ai-comment-visibility]`);
-    assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
     // Different aspect ratios share one frame, while each image keeps its own proportions.
     await page.evaluate(() => {
       const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 500;
@@ -153,7 +155,7 @@ for (const engine of ['chromium', 'webkit']) {
       actualUiAction: 'scoped area drag', origin: { x: 60, y: 60 }, extent: { w: 8, h: 8 },
       retiredUiAction: 'selected generated point creation', addedComment, pointApi,
     }, null, 2));
-    await page.click(`${panel} [data-ai-comment-tool="pan"]`);
+    await page.locator(`${panel} [data-ai-comment-tool="pan"]`).dispatchEvent('click'); // 11-27: 이동 단추는 숨겼다 — 코멘트 도구만 끈다
     await page.click(`${panel} [data-ai-zoom-action="in"]`);
     await geometry('linked-zoom');
     assert.equal(await page.evaluate(() => window.__task2.sends.length), 0, 'comparison does not send AI requests');

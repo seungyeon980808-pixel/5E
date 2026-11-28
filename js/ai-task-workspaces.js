@@ -95,6 +95,39 @@ export function recoverTaskWorkspaceSnapshot(value, { dropInvalid = false } = {}
   return recovered;
 }
 
+// 06시 고침(11-23): 작업 공간마다 설치판 codex:event·codex:state에 듣는 함수를 따로 걸어
+// 공간이 5개를 넘으면 ipcRenderer가 MaxListenersExceededWarning(11개)을 냈다. 공간이 지워질 때 잘 풀리므로
+// 새는 것은 아니지만, 같은 base에는 한 번만 걸고 그 안에서 공간별로 나눠 준다(마지막 구독이 풀리면 base에서도 뗌).
+const sharedBridgeHubs = new WeakMap();
+export function sharedBridgeSubscribe(base, method, callback) {
+  let hub = sharedBridgeHubs.get(base);
+  if (!hub) { hub = new Map(); sharedBridgeHubs.set(base, hub); }
+  let entry = hub.get(method);
+  if (!entry) {
+    const callbacks = new Set();
+    entry = { callbacks, off: null };
+    hub.set(method, entry);
+    entry.off = base[method](event => {
+      for (const fn of [...callbacks]) {
+        if (!callbacks.has(fn)) continue;
+        try { fn(event); } catch (error) { if (typeof globalThis.reportError === 'function') globalThis.reportError(error); else console.error(error); }
+      }
+    });
+  }
+  const record = event => callback(event);
+  entry.callbacks.add(record);
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    entry.callbacks.delete(record);
+    if (!entry.callbacks.size && hub.get(method) === entry) {
+      hub.delete(method);
+      if (typeof entry.off === 'function') entry.off();
+    }
+  };
+}
+
 export function createTaskBridge(base, clientScope) {
   if (!base) return undefined;
   const bridge = { ...base };
@@ -104,12 +137,12 @@ export function createTaskBridge(base, clientScope) {
   for (const method of ['onEvent', 'onState', 'onLog']) {
     if (typeof base[method] === 'function') bridge[method] = callback => {
       let active = callback;
-      const unsubscribe = base[method](event => {
-        if ((event.clientScope || '') === clientScope) active?.(event);
+      const unsubscribe = sharedBridgeSubscribe(base, method, event => {
+        if ((event?.clientScope || '') === clientScope) active?.(event);
       });
       return () => {
         active = null;
-        if (typeof unsubscribe === 'function') unsubscribe();
+        unsubscribe();
       };
     };
   }
@@ -420,6 +453,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   }
   let workflowNavigation = Promise.resolve();
   const workflowTargets = new Map();
+  // 11-25 밤샘 검수: 작업 목록에서 고른 작업이 그 탭(생성/변환)으로 돌아올 때 다시 열릴 작업이다 — 예전에는 마지막에 만든 작업이 열렸다.
+  const rememberWorkflowTarget = entry => { const kind = entry?.panel?.dataset.aiWorkflow; if (kind) workflowTargets.set(kind, entry); };
   // 11-07 G2·G4: 「AI 이미지」로 열면 이미지 작업, 「그래프」에서 열면 그래프 작업 — 각 쪽에서 마지막으로 쓴 탭을 기억한다.
   const surfaceKinds = { image: 'image', graph: 'graph' };
   function navigateWorkflow(kind) {
@@ -533,7 +568,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     if (!sourceExists()) return;
     const sequence = reveal ? ++selectionSequence : selectionSequence;
     if (entry.controller.activeTask() === taskId || !entry.controller.snapshotTask) {
-      if (reveal) { activate(entry); entry.controller.selectTask(taskId); saveSelection(); }
+      if (reveal) { activate(entry); entry.controller.selectTask(taskId); saveSelection(); rememberWorkflowTarget(entry); }
       return entry;
     }
     const key = `${entry.scope}:${taskId}`;
@@ -570,7 +605,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     try {
       const target = await pending;
       if (target.disposed || !target.controller.ownsTask(taskId)) return;
-      if (reveal && sequence === selectionSequence) { activate(target); saveSelection(); }
+      if (reveal && sequence === selectionSequence) { activate(target); saveSelection(); rememberWorkflowTarget(target); }
       return target;
     } catch (error) {
       if (!reveal) throw error;

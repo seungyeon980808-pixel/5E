@@ -36,7 +36,8 @@ test('AI labels use the actual labeler tool size and font regardless of source b
         })[0];
         assert.equal(object.fontSize, manual.labelSize);
         assert.equal(object.fontFamily, manual.fontFamily);
-        assert.equal(object.strokeWidth, manual.strokeWidth);
+        // 11-27 사용자: 그림 라벨 지시선은 그림 크기에 맞춰 0.1~0.2mm(캔버스 라벨 도구 0.2mm가 최대).
+        assert.equal(object.strokeWidth, Math.min(manual.strokeWidth, Math.max(.1, Math.round(size * .0012 * 1000) / 1000)));
         assert.deepEqual(object.aiLabelSourceBounds, input.typography.bounds);
       }
     }

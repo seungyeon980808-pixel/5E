@@ -1,6 +1,6 @@
 import { applyLabelTargetPlacement } from './ai-label-target-placement.js?v=1.7.0-four-session-integration';
 import { normalizeLeaderRoutes, mapLeaderRoutes } from './ai-label-leaders.js?v=1.7.0-four-session-integration';
-import { nativePresentationForLabelTypography, LABEL_TYPOGRAPHY_PROMPT, normalizeLabelTypography, positionNativeLabelAtCenter, presentationRoleFor, scriptLabelRuns } from './ai-label-typography.js?v=1.7.0-four-session-integration';
+import { nativeLabelBounds, nativePresentationForLabelTypography, LABEL_TYPOGRAPHY_PROMPT, normalizeLabelTypography, positionNativeLabelAtCenter, presentationRoleFor, scriptLabelRuns } from './ai-label-typography.js?v=1.7.0-four-session-integration';
 import { DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-four-session-integration';
 import { getFormulaScriptSpans, normalizeFormulaScriptStyles } from './formula.js?v=1.7.0-four-session-integration';
 
@@ -255,6 +255,8 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
   if (!image || typeof image.id !== 'string' || !['x', 'y', 'w', 'h'].every(key => Number.isFinite(image[key]))
     || image.w <= 0 || image.h <= 0) throw new TypeError('자동 라벨을 배치할 이미지를 확인할 수 없습니다.');
   if (typeof idFactory !== 'function') throw new TypeError('자동 라벨 식별자 생성기가 필요합니다.');
+  // 11-27 사용자: 지시선이 너무 굵다 — 그림 크기에 맞춰 0.1~0.2mm(그림 높이의 0.12%). 캔버스 기본 0.2mm는 큰 그림에서만.
+  const leaderWidth = Math.round(Math.min(.2, Math.max(.1, image.h * .0012)) * 1000) / 1000;
 
   const sourceGroups = new Map(), nativeGroups = new Map();
   for (const group of relationGroups) {
@@ -266,7 +268,7 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
     }
   }
   const names = new Set(labels.filter(label => label.typography?.role === 'name').map(label => label.text));
-  return labels.filter(label => editableLabelScope(label) === 'general').map((label) => {
+  return labels.filter(label => editableLabelScope(label) === 'general').flatMap((label) => {
     const anchor = worldPoint(image, label.anchor);
     const position = worldPoint(image, label.position);
     const formula = label.contentMode === 'formula';
@@ -291,7 +293,9 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       labelType: typography.role === 'quantity' ? 'quantity' : 'label',
       contentMode: label.contentMode,
       ...(formula ? { source: label.text, rawSource: label.text } : {}),
-      ...nativePresentationForLabelTypography({ role: scriptRuns ? 'text' : presentationRoleFor(typography.role, label.text) }),
+      // 11-25 밤샘 검수: 조각 글꼴(한글·영문·수식)로 그린 라벨도 손으로 켠 기울임은 따른다 — 예전에는 기울임을 켜면 조각 글꼴을 버려 Latin Modern 라벨이 돋움 기울임이 됐다.
+      ...nativePresentationForLabelTypography({ role: scriptRuns ? 'text' : presentationRoleFor(typography.role, label.text),
+        ...(scriptRuns && label.manualStyle && typeof typography.italic === 'boolean' ? { italic: typography.italic } : {}) }),
       ...(!scriptRuns && ['text', 'name', 'symbol'].includes(typography.role) ? { labelFontOverride: true } : {}),
       ...(scriptRuns ? { aiScriptRuns: true } : {}),
       labelTypographyVersion: 1,
@@ -302,7 +306,8 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       textRotation: typography.rotation || 0,
       ...(typography.bounds ? { aiLabelSourceBounds: typography.bounds } : {}),
       strokeLevel: 0,
-      strokeWidth: 0.2,
+      strokeWidth: leaderWidth,
+      ...([0, .34].includes(label.haloRatio) ? { haloRatio: label.haloRatio } : {}),
       locked: false,
       positionLocked: false,
       groupId: nativeGroups.get(label.id) || null,
@@ -348,6 +353,35 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       positionNativeLabelAtCenter(object, position);
       delete object.p1; delete object.p2; delete object.labelSize; delete object.textRotation;
     }
+    if (label.dimension && label.mode !== 'leader') return dimensionObjects(object, label, image, idFactory);
     return object;
   });
+}
+
+// 11-26 길이 표시(시안 v6): 양 끝 점 사이에 캔버스의 「길이 화살표」 선을 긋고, 글자는 가운데에 둔다.
+// 선이 글자보다 넉넉히 길면 글자를 선 가운데에 두고 글자 자리만큼 선을 끊고(dimensionGap), 짧으면 선 바깥 옆으로 비켜 놓는다.
+function dimensionObjects(text, label, image, idFactory) {
+  const leaderWidth = Math.round(Math.min(.2, Math.max(.1, image.h * .0012)) * 1000) / 1000;
+  const a = worldPoint(image, label.dimension.a), b = worldPoint(image, label.dimension.b);
+  const line = { id: idFactory(), type: 'line', p1: a, p2: b, rotation: 0, strokeLevel: 0, strokeWidth: leaderWidth,
+    lineMode: 'lengthArrow', lineStyle: 'solid', arrowVariant: 'right', dimensionVariant: 'basic', arrowHead: 'none',
+    dashLength: 0, dashGap: 0, locked: false, positionLocked: false, groupId: text.groupId || null,
+    aiAutoLabel: true, aiDimensionLine: true, aiParentImageId: text.aiParentImageId,
+    ...(text.aiSourceLabelId ? { aiSourceLabelId: text.aiSourceLabelId } : {}),
+    ...(text.aiTaskId ? { aiTaskId: text.aiTaskId, aiCandidateId: text.aiCandidateId } : {}) };
+  const dx = b.x - a.x, dy = b.y - a.y, length = Math.hypot(dx, dy) || 1, ux = dx / length, uy = dy / length;
+  let box = null; try { box = nativeLabelBounds(text); } catch {}
+  const size = text.fontSize || 3.7, head = size * .9;
+  const projected = box ? Math.abs(ux) * box.w + Math.abs(uy) * box.h : size;
+  if (length >= projected + 2 * head + size * .8) {
+    // 11-26 사용자: 할로 대신 글자 자리만큼 선을 끊는다(바탕이 흰색이 아닐 수 있다). 캔버스 길이 화살표와 같은 그림.
+    line.dimensionGap = projected + size * .5;
+    if (label.haloRatio === undefined) text.haloRatio = 0;
+  } else if (box) {
+    let nx = -uy, ny = ux;
+    if (Math.abs(nx) > Math.abs(ny) ? nx < 0 : ny > 0) { nx = -nx; ny = -ny; }
+    const off = size * .4 + (Math.abs(nx) * box.w + Math.abs(ny) * box.h) / 2;
+    text.x += nx * off; text.y += ny * off;
+  }
+  return [text, line];
 }

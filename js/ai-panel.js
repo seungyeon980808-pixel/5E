@@ -8,6 +8,10 @@ import { EXAM_BRIEF_PROFILE, isExamBrief, prepareExamBriefRunInput, buildExamBri
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
 import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-session-integration';
 import { manualLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
+import { createResultWorkspace } from './ai-create-result-workspace.js?v=1.7.0-four-session-integration';
+import { createEditTools } from './ai-edit-tools.js?v=1.7.0-four-session-integration';
+import { FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir, writeToDir } from './export-dir.js?v=1.7.0-four-session-integration';
+import { createCropPieces } from './ai-image-crop-pieces.js?v=1.7.0-four-session-integration';
 import { createInlineLabelEditor } from './ai-inline-label-editor.js?v=1.7.0-four-session-integration';
 import { visibleImagePng } from './ai-visible-image-output.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry, isQuietLabelReadResult, isQuietSkippedReviewResult } from './ai-result-attention.js?v=1.7.0-four-session-integration';
@@ -23,7 +27,7 @@ import { isHistoricalPngLocalResult, requiresRawImageOutput, canChooseLocalOutpu
 import { initAISettingsPanel, sourceImageKind } from "./ai-settings-panel.js?v=1.7.0-four-session-integration";
 import { detectImageSourceKind, SOURCE_DETECT_MAX_SIDE } from "./ai-source-detect.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
-import { showAlert, showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { showAlert, showConfirm, showPrompt } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.7.0-four-session-integration';
 import { mountRevisionComparison } from './ai-comparison.js?v=1.7.0-four-session-integration';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.7.0-four-session-integration';
@@ -35,7 +39,7 @@ import { aiErrorText, aiErrorCode, codexMissing, reportAiError } from './ai-erro
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-four-session-integration';
 import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
-import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
+import { AI_ENGINE_FLAG_KEYS, figureLocalReplaceFlag, figureBlankSceneOnlyFlag, convertExamSolCircledFlag, convertTextbookEdgeGuideFlag } from './ai-engine-flags.js?v=1.7.0-four-session-integration';
 import { clearTaskWorkspaces, taskHasReviewNotice, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {
   advanceGenerationTiming,
@@ -45,7 +49,7 @@ import {
   startGenerationTiming,
 } from './ai-generation-timing.js?v=1.7.0-four-session-integration';
 import { taskExportSelection } from './ai-task-export.js?v=1.7.0-four-session-integration';
-import { keyLabel, modKey } from './platform.js?v=1.7.0-four-session-integration';
+import { keyLabel, modKey, IS_MAC } from './platform.js?v=1.7.0-four-session-integration';
 import {
   distributeSourcesToTaskTabs,
   groupSourcesInTaskTab,
@@ -65,7 +69,7 @@ import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-fo
 import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, defaultLabelResultFor, labelResultAfterKindChange } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest, AI_RETRY_FALLBACK_MODEL, AI_LABEL_READ_MODEL, labelPlanFromRead, measuredLabelSizes } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
-import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureEdit, figureLabelHints, pickOtherFigureRefs, loadFigureRefImages, figureRefIds, figureRefTags, figureRefLabel, figureRefContextText, wantsFigureRefImages, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
+import { figureRoute, graphRoute, createDesktopEngineAi, engineModels, imageModelOrder, runFigureEngine, runFigureRedraw, attachGeneratedFigureLabels, userReferenceRole, runFigureEdit, figureLabelHints, pickOtherFigureRefs, loadFigureRefImages, figureRefIds, figureRefTags, figureRefLabel, figureRefContextText, wantsFigureRefImages, runGraphPicture, figurePhaseCopy, graphPhaseCopy, runAgainHint } from './ai-engines.js?v=1.7.0-four-session-integration';
 import { advanceStatusRows, settleStatusRows, statusRowText, clockText, resultNumber, resultSubline, resultChips, labelHintsFallback, labelHintPrompt, eraseGlyphsInBoxes } from './ai-create-chat.js?v=1.7.0-four-session-integration';
 import { enterAction, isImeEnter, isBlankInspection, gatherDrawRequest, drawPlanNote, drawPreviewLine, composerHint, looksLikeDrawSummary, drawScope, resetIsLast, resultActionText, RESULT_MARK, RESET_MARK } from './ai-create-flow.js?v=1.7.0-four-session-integration';
 import { installChatWidth } from './ai-chat-width.js?v=1.7.0-four-session-integration';
@@ -600,7 +604,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const markControls = [markArrows, markTrends, markLeaders];
   let compactSettings = null;
   let localEraseController = null;
-  let inlineLabelEditor = null;
+  let inlineLabelEditor = null, editTools = null;
+  let syncResultWorkspace;
   const preserveSourceLabels = panel.querySelector("[data-ai-preserve-source-labels]");
   const imageKindSelect = panel.querySelector('[data-ai-image-kind]');
   const labelResultSelect = panel.querySelector('[data-ai-label-result]');
@@ -674,7 +679,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   if (!resultTools.querySelector('[data-ai-local-erase-options]')) {
     const options=document.createElement('div');options.id='ai-local-erase-options';options.dataset.aiLocalEraseOptions='';options.className='ai-local-erase-options';options.hidden=true;
     options.setAttribute('aria-label','지우개 설정');
-    options.innerHTML=`<div class="ai-erase-modes" role="group" aria-label="지우개 방식"><button type="button" data-ai-erase-mode="brush" aria-pressed="true">문질러 지우기</button><button type="button" data-ai-erase-mode="rect" aria-pressed="false">사각 영역</button></div><label>굵기 <input type="range" min="1" max="80" value="${DEFAULT_ERASE_DIAMETER}" data-ai-erase-size aria-label="지우개 굵기"><output data-ai-erase-size-value>${DEFAULT_ERASE_DIAMETER} px</output></label><label>지운 자리 <select data-ai-erase-background aria-label="지운 자리 배경"><option value="transparent">투명</option><option value="white">흰색</option></select></label><small>그림만 편집합니다. 모두 끝나면 수정 저장을 누르세요. Esc: 도구 닫기</small>`;
+    options.innerHTML=`<div class="ai-erase-modes" role="group" aria-label="지우개 방식"><button type="button" data-ai-erase-mode="brush" aria-pressed="true">문질러 지우기</button><button type="button" data-ai-erase-mode="rect" aria-pressed="false">사각 영역</button><button type="button" data-ai-erase-mode="loop" aria-pressed="false">자유 영역</button></div><label>굵기 <input type="range" min="1" max="80" value="${DEFAULT_ERASE_DIAMETER}" data-ai-erase-size aria-label="지우개 굵기"><output data-ai-erase-size-value>${DEFAULT_ERASE_DIAMETER} px</output></label><label>끝 모양 <select data-ai-erase-tip aria-label="지우개 끝 모양"><option value="round">원</option><option value="square">사각</option></select></label><label>지운 자리 <select data-ai-erase-background aria-label="지운 자리 배경"><option value="white">흰색</option><option value="transparent">투명</option></select></label><small>그림만 편집합니다. 모두 끝나면 수정 저장을 누르세요. Esc: 도구 닫기</small>`;
     resultTools.append(options);
   }
   if (!resultTools.querySelector('[data-ai-edit-save]')) {
@@ -682,13 +687,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const control = document.createElement('button'); control.type = 'button'; control.dataset[key] = '';
       control.className = 'ai-local-edit-action'; control.textContent = text; control.hidden = true;
       resultTools.insertBefore(control, resultTools.querySelector('[data-ai-local-erase]'));
+      if (key === 'aiEditSave') control.title = `수정 저장 (${IS_MAC ? '⌘S' : 'Ctrl+S'})`;
     }
   }
   if (!panel.querySelector('[data-ai-edit-history]')) {
     const history = document.createElement('div'); history.className = 'ai-local-edit-history';
     history.dataset.aiEditHistory = ''; history.hidden = true;
     history.setAttribute('role', 'group'); history.setAttribute('aria-label', '직접 편집 이력');
-    history.innerHTML = '<button type="button" data-ai-edit-undo aria-label="직접 편집 실행 취소" title="실행 취소 (⌘Z / Ctrl+Z)" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h7a6 6 0 0 1 6 6v2"/></svg></button><button type="button" data-ai-edit-redo aria-label="직접 편집 다시 실행" title="다시 실행 (⌘⇧Z / Ctrl+Shift+Z)" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 4 4 4-4 4M17 8h-7a6 6 0 0 0-6 6v2"/></svg></button>';
+    history.innerHTML = '<button type="button" data-ai-edit-undo aria-label="직접 편집 실행 취소" title="실행 취소" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h7a6 6 0 0 1 6 6v2"/></svg></button><button type="button" data-ai-edit-redo aria-label="직접 편집 다시 실행" title="다시 실행" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 4 4 4-4 4M17 8h-7a6 6 0 0 0-6 6v2"/></svg></button>';
+    // 11-25 밤샘 검수: 「⌘Z / Ctrl+Z」를 그대로 적으면 맥 표기 바꾸기가 Ctrl도 ⌘로 바꿔 「⌘Z / ⌘Z」로 보였다 — 지금 플랫폼 하나만 적는다.
+    history.querySelector('[data-ai-edit-undo]').title = `실행 취소 (${IS_MAC ? '⌘Z' : 'Ctrl+Z'})`;
+    history.querySelector('[data-ai-edit-redo]').title = `다시 실행 (${IS_MAC ? '⇧⌘Z' : 'Ctrl+Shift+Z'})`;
     panel.querySelector('.ai-compare-heading > .ai-pane-zoom')?.before(history);
   }
   const scopedPromptRow = panel.querySelector('[data-ai-scoped-prompt-row]');
@@ -1241,6 +1250,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     return `${background} · ${selectedImageOutputOptions.examPalette ? '평가원용 무채색으로 단순화' : '원본 색상 유지'} · ${thickness} · ${separation}`;
   };
   const applySeparationMode = mode => {
+    if (conversionKind === 'image-create') {
+      selectedSeparationMode = AI_SEPARATION_MODES.OFF;
+      singleBackgroundPolicy = 'preserve';
+      selectedImageOutputOptions = { ...selectedImageOutputOptions, backgroundPolicy:'preserve' };
+      selectedAssetGenerationMode = AI_ASSET_GENERATION_MODES.SINGLE;
+      return;
+    }
     const next = transitionSeparationMode({ separationMode: selectedSeparationMode, outputOptions: selectedImageOutputOptions, singleBackgroundPolicy }, mode);
     selectedSeparationMode = next.separationMode;
     if (document.documentElement.dataset.mode !== 'lite') {
@@ -1250,7 +1266,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     selectedImageOutputOptions = next.outputOptions;
     singleBackgroundPolicy = next.singleBackgroundPolicy;
   };
-  const outputChoiceAllowed = (key, value) => canChooseLocalOutput(selectedOutputItem(), key, value, {
+  const outputChoiceAllowed = (key, value) => conversionKind !== 'image-create' && canChooseLocalOutput(selectedOutputItem(), key, value, {
     mode: document.documentElement.dataset.mode, busy,
     readOnly: panel.dataset.aiSharingMode === 'view' || isGraphWorkflow(conversionKind),
     separationMode: selectedSeparationMode,
@@ -1259,7 +1275,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     && !isGraphWorkflow(conversionKind) && (!selectedOutputItem() || isHistoricalPngLocalResult(selectedOutputItem()));
   const syncLegacyResultUi = () => {
     const item = selectedOutputItem();
-    const eligible = isHistoricalPngLocalResult(item) && !isGraphWorkflow(conversionKind)
+    const eligible = conversionKind !== 'image-create' && isHistoricalPngLocalResult(item) && !isGraphWorkflow(conversionKind)
       && panel.dataset.aiSharingMode !== 'view';
     if (legacyResultSettings && legacyResultSettings.hidden !== !eligible) legacyResultSettings.hidden = !eligible;
     panel.dataset.aiLegacyResult = String(eligible);
@@ -1297,7 +1313,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     applySeparationMode(selectedSeparationMode);
     const backgroundLocked = selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
     backgroundLockHint.hidden = !backgroundLocked;
-    if (outputProcessing) outputProcessing.hidden = selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET;
+    if (outputProcessing) outputProcessing.hidden = conversionKind === 'image-create' || selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET;
     if (backgroundPolicySelect) {
       const allWhite = backgroundPolicySelect.querySelector('[data-ai-legacy-all-white]');
       const advanced = isHistoricalPngLocalResult(selectedOutputItem()) && document.documentElement.dataset.mode !== 'lite';
@@ -2167,11 +2183,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     view.hidden = isGraphWorkflow(conversionKind);
     const available = Boolean(hasPreviewLabels(item));
     const included = available && labelPreviewState(item).included !== false;
+    // 11-26 레이어 원칙: 라벨은 그림과 따로인 층. 라벨이 없으면 빈 층(켜짐)으로, 있으면 ON/OFF가 그 층의 보이기다.
+    panel.dataset.aiLabelLayer = !available || included ? 'on' : 'off';
     if (labelToggle) {
       labelToggle.disabled = !available || busy;
       labelToggle.setAttribute('aria-checked', String(included));
       labelToggle.querySelector('[data-ai-label-toggle-state]').textContent = included ? 'ON' : 'OFF';
-      labelToggle.title = available ? '현재 수정본의 편집 라벨을 표시하거나 숨깁니다.' : '이 수정본에는 편집 라벨이 없습니다.';
+      labelToggle.title = available ? '현재 수정본의 편집 라벨을 표시하거나 숨깁니다.' : item ? '이 판에는 편집 라벨이 없습니다.' : '생성 결과가 생기면 켜고 끌 수 있습니다.';
     }
     for (const button of view.querySelectorAll('[data-ai-label-view-mode]')) {
       button.setAttribute('aria-pressed', String((button.dataset.aiLabelViewMode === 'included') === included));
@@ -2234,6 +2252,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (!next) inlineLabelEditor?.close();
     syncEditableLabelPlanButton(item);
     syncLabelViewControls(); syncSelectedOutputActions(); void renderLabelPreview(item);
+    comparison?.update({ revisions: comparisonRevisions() });
     captureActiveTaskTab(); persistTasks();
   });
 
@@ -2489,10 +2508,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           const result = item.graphResult || plan
             ? await visibleImagePng({data:bitmap,plan,artboard:labelOutput?.artboard,isCurrent:() => !busy && isSaveCurrent()}) : bitmap;
           if (busy || !isSaveCurrent()) return;
-          link.href = result;
-          link.download = `${safeName}.png`;
-          link.click();
-          setStatus('현재 보이는 이미지와 라벨을 PNG로 저장했습니다.', 'ok');
+          // 11-26 시안 v6 「PNG 저장 위치」: 폴더를 연결해 두면 그 폴더에 바로 쓴다(안 되면 지금처럼 내려받기).
+          if (FS_DIR_SUPPORTED && currentDirName() && await writeToDir(`${safeName}.png`, await (await fetch(result)).blob())) {
+            setStatus(`「${currentDirName()}」 폴더에 ${safeName}.png로 저장했습니다.`, 'ok');
+          } else {
+            link.href = result;
+            link.download = `${safeName}.png`;
+            link.click();
+            setStatus('현재 보이는 이미지와 라벨을 PNG로 저장했습니다.', 'ok');
+          }
         } catch (error) {
           if (busy || !isSaveCurrent()) return;
           setStatus(`PNG 저장 실패: ${error.message}`, 'error');
@@ -2731,7 +2755,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       panel.dataset.aiHwpInPlace = String(inPlace);
       // D1: 한글에서 연 AI 창은 전환 줄 없이 제목만 — 「AI 이미지 / AI 그래프 · 한글 n번 그림에서 엶」.
       syncSurfaceTitle();
-      if (copy) copy.textContent = inPlace ? '클립보드로 복사' : '이미지 복사';
+      if (copy) copy.textContent = inPlace || conversionKind === 'image-create' ? '클립보드로 복사' : '이미지 복사';
       const examCardTarget = Boolean(hwpInPlaceTargets.get(activeTaskTabId)?.examCard);
       examSend.textContent = inPlace ? (examCardTarget ? '문항 카드에 넣기' : '한글 파일에 넣기') : '한글로 보내기';
       // 11-11 사용자: 결과는 저절로 넣지 않고 확인 뒤 직접 누른다 — 그래서 눌러야 할 단추를 눈에 띄게.
@@ -2914,9 +2938,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       input.placeholder = brief ? '예: 빗면 위에 네모 A, 왼쪽 아래에 각도 θ' : '예: 숫자와 단위를 지우고 평가원식 흑백 선화로 정리해 주세요.';
       input.setAttribute('aria-label', brief ? '물체와 배치 설명' : '이미지 수정 요청');
     }
-    const compact = panel.querySelector('[data-ai-compact-settings]'); if (compact) compact.hidden = graph;
+    const compact = panel.querySelector('[data-ai-compact-settings]'); if (compact) compact.hidden = graph || conversionKind === 'image-create';
     // 11-11: 공통 구조 — 캡션(그림 설정·대화), 라벨 복원 행은 「이미지 생성」에서 숨김, 대화 자리표시 글.
-    const caption = panel.querySelector('[data-ai-conversation-caption]'); if (caption) caption.textContent = graph ? '대화' : '그림 설정';
+    const caption = panel.querySelector('[data-ai-conversation-caption]'); if (caption) caption.textContent = graph || conversionKind === 'image-create' ? '대화' : '그림 설정';
     const labelRow = panel.querySelector('[data-ai-label-row]'); if (labelRow) labelRow.hidden = brief || graph;
     const hasResult = Boolean(selectedOutputItem());
     if (chatInput) chatInput.placeholder = graph ? (graphCreate ? '어떤 그래프가 필요한지 말해 주세요' : '바꿀 조건이 있으면 말해 주세요 (선택)')
@@ -2937,7 +2961,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     setText('[data-ai-reference-empty] > span', creation ? '모양·배치·화풍을 참고합니다. 그대로 베끼지 않고, 오른쪽 설명이 우선합니다.' : '라이브러리에서 고르거나, 이미지를 끌어놓으세요.');
     const refSummary = panel.querySelector('.ai-reference-section > summary')?.firstChild; if (refSummary?.nodeType === 3) refSummary.nodeValue = creation ? `${refName} ` : '원본 이미지 ';
     const addLabel = panel.querySelector('[data-ai-source-menu-trigger] .ds-glyph-plus')?.nextSibling; if (addLabel?.nodeType === 3) addLabel.nodeValue = creation ? ` ${refName} 추가 ` : ' 소스 추가 ';
-    const processing = panel.querySelector('[data-ai-output-processing]'); if (processing) processing.hidden = graph;
+    const processing = panel.querySelector('[data-ai-output-processing]'); if (processing) processing.hidden = graph || conversionKind === 'image-create';
     for (const control of [modelSelect, effortSelect, speedSelect]) if (control?.closest('label')) control.closest('label').hidden = true;
     modelRefreshButton.hidden = false; if (graph && modelWarning) { let message=''; try { resolveAIModelSelection(GRAPH_WORKBENCH_SELECTION,availableModels); } catch(error) { message=modelsLoaded ? `그래프는 Sol 6.1 / medium으로 실행합니다. ${error.message}` : ''; } modelWarning.textContent=message; modelWarning.hidden=!message; }
     const connectionSummary=panel.querySelector('[data-ai-account-tokens]'); if(graph && connectionSummary) connectionSummary.title='편집 그래프: Sol 6.1 / medium 고정';
@@ -4273,6 +4297,11 @@ ${chatText}` : ''}`;
     generatedImages = cachedView?.generatedImages || (tab.generated || []).map(taskItemCopy);
     referenceComposition = normalizeReferenceComposition(tab.referenceComposition, attachments);
     for (const item of generatedImages) {
+      // Older generated results have no record of a label sitting on a dimension line.
+      if (tab.conversionKind === 'image-create' && item.labelPlan?.labels?.some(label => label.haloRatio == null)) {
+        item.labelPlan = { ...item.labelPlan, labels: item.labelPlan.labels.map(label => ({ ...label, haloRatio: label.haloRatio ?? 0 })) };
+        item.finalLabelComposite = null;
+      }
       // Repair earlier saved manual versions that retained a placement digest
       // for the old bitmap. Raw/provider candidates keep their original checks.
       if (item.engine === 'local-erase' && item.labelPlan?.targetPlacement) {
@@ -4594,7 +4623,7 @@ ${chatText}` : ''}`;
         sourceLabelControllers.add(job.labelController); sourceLabelControllers.add(job.rasterController);
         const onPhase = phase => updateBatchCard(job, `${job.name} · ${phase}`);
         const tab = taskTabs.get(job.taskTabId), sourceHash = await imageLabelDigest(job.source.data);
-        const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
+        const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ examSolCircled: convertExamSolCircledFlag(), textbookEdgeGuide: convertTextbookEdgeGuideFlag(), /* 11-23 앱 반영 후보: 변환 우승안(플래그로 끔) */ source: job.source, workflow, request: job.request, observer: job.labelController, raster: job.rasterController, readText: payload => desktop.readImageText(payload),
           selection: { model: job.model, effort: job.effort, serviceTier: job.serviceTier, models: availableModels }, artboard: { ...state.get().artboard }, signal: abort.signal,
           observation: tab?.sourceLabelObservations?.[sourceHash], onObservation: async observation => {
             if (abort.signal.aborted) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
@@ -4851,12 +4880,32 @@ ${chatText}` : ''}`;
   };
 
   const allImages = () => [...attachments, ...generatedImages];
+  // 11-27 사용자: 슬라이더 비교에서 라벨이 안 보였다 — 비교는 그림 층만 넘겼다. 라벨 층이 켜진 결과는 라벨을 얹은 그림(PNG 저장과 같은 합성)으로 보인다.
+  // 합성은 비동기라 처음에는 그림만 넘기고, 다 되면 비교를 새로 고친다. 같은 그림·같은 라벨이면 다시 만들지 않는다.
+  const compareLabeled = new WeakMap();
+  function compareSrc(item, src) {
+    if (item?.kind !== 'generated' || !hasPreviewLabels(item) || labelPreviewState(item).included === false) return src;
+    const plan = effectiveLabelPlan(item), base = localEraseController?.getDraft(item)?.data || src;
+    const cached = compareLabeled.get(item);
+    if (cached && cached.base === base && cached.plan === plan) return cached.data || base;
+    const entry = { base, plan, data: null };
+    compareLabeled.set(item, entry);
+    createEditableLabelComposite({ plan, candidateDataUrl: base, artboard: { ...state.get().artboard }, signal: lifecycle.signal })
+      .then(composite => { entry.data = composite.attachment.data; if (compareLabeled.get(item) === entry) comparison?.update({ revisions: comparisonRevisions() }); })
+      .catch(() => {});
+    return base;
+  }
+  let compareRefresh = 0;
+  panel.addEventListener('5e:ai-edit-draft-change', () => {
+    if (!comparison || compareRefresh) return;
+    compareRefresh = window.requestAnimationFrame(() => { compareRefresh = 0; comparison?.update({ revisions: comparisonRevisions() }); });
+  }, { signal: lifecycle.signal });
   function comparisonRevisions() {
     return allImages().map((item, index) => {
       const src = item.kind === 'generated' ? (item.outputImage?.src || item.data) : item.data;
       // 11-20 GRAPHFIX: 그래프 결과는 원본보다 넓은 출력 틀로 그려진다 — 원본 틀 자리를 함께 넘겨 1:1로 겹친다.
       const sourceFrame = item.graphResult ? workbenchGraphSourceFrame(src) : null;
-      return { id: item.id, label: item.name || `이미지 ${index + 1}`, src, ...(sourceFrame ? { sourceFrame } : {}),
+      return { id: item.id, label: item.name || `이미지 ${index + 1}`, src: compareSrc(item, src), ...(sourceFrame ? { sourceFrame } : {}),
         comments: item.comments, kind: attachments.includes(item) ? 'original' : undefined };
     });
   }
@@ -5457,6 +5506,8 @@ ${chatText}` : ''}`;
     catch { blankPaperSource = null; }
     return blankPaperSource;
   };
+  const GENERATED_LABEL_NOTICE = '그림은 완성됐습니다. 라벨은 직접 넣어 주세요.';
+  let createLabelMode = 'embedded';
   let createComposeMode = 'auto'; // 'auto' = 결과가 있으면 고치기, 'new' = 「새로 그리기」 칩을 눌러 새 그림
   let createDrawScope = 'after-result'; // V5: 'after-result' = 결과 뒤 대화만(기본), 'all' = 「처음부터 다시 그리기」(새 대화 뒤 전체)
   const NEW_CHAT_DIVIDER = '여기부터 새 대화 · 위 대화는 그림에 쓰지 않아요';
@@ -5644,6 +5695,20 @@ ${chatText}` : ''}`;
       + '<button type="button" role="menuitem" data-ai-create-reset>새 대화 <small>대화를 비우고 결과는 남김</small></button>';
     // V5(태그 1·3): 입력칸 밖 「미리 말하는 줄」은 없앴다 — 같은 말은 그리기 단추 설명(title)과 「그릴 내용」 글로.
     dock?.prepend(frame);
+    const labelOptions = document.createElement('fieldset');
+    labelOptions.className = 'ai-create-label-options';
+    labelOptions.hidden = true;
+    labelOptions.innerHTML = `<legend>라벨 방식</legend>
+      <span class="ai-create-label-name" aria-hidden="true">라벨</span>
+      <div class="ai-create-label-choice">
+        <label title="라벨 없이 그림만 그립니다"><input type="radio" name="figure-label-mode-${clientScope || 'main'}" data-ai-figure-label-mode value="none"><span>없음</span></label>
+        <label title="라벨 글자를 그림에 함께 그립니다(기본)"><input type="radio" name="figure-label-mode-${clientScope || 'main'}" data-ai-figure-label-mode value="embedded" checked><span>그림 속 글자</span></label>
+        <label title="그림은 글자 없이 그리고 라벨을 따로 올려 바로 고칠 수 있게 합니다"><input type="radio" name="figure-label-mode-${clientScope || 'main'}" data-ai-figure-label-mode value="editable"><span>편집 라벨</span></label>
+      </div>`;
+    labelOptions.addEventListener('change', event => {
+      // 11-25 밤샘 검수: 단추 이름이 모든 작업 공간에서 같아 새 작업 공간이 생기면 다른 공간의 선택 표시가 풀렸다 — 공간마다 이름을 나눈다.
+      if (event.target.matches('[data-ai-figure-label-mode]')) createLabelMode = event.target.value;
+    });
     composer?.append(clip, hint, more, moreMenu);
     // 「＋ 레퍼런스」(결과 칸 머리줄) — 레퍼런스 0개인 생성 작업에서만(태그 2).
     const addRef = document.createElement('button'); addRef.type = 'button'; addRef.className = 'ai-create-add-ref'; addRef.dataset.aiCreateAddRef = '';
@@ -5653,21 +5718,17 @@ ${chatText}` : ''}`;
     refMenu.innerHTML = `<button type="button" role="menuitem" data-ai-create-ref="library">자료 라이브러리에서 <kbd>${isMacKeys() ? '⇧⌘L' : 'Ctrl+Shift+L'}</kbd></button><button type="button" role="menuitem" data-ai-create-ref="file">파일에서 <kbd>${keyLabel('Ctrl+O')}</kbd></button><button type="button" role="menuitem" data-ai-create-ref="clipboard">클립보드에서 <kbd>${keyLabel('Ctrl+V')}</kbd></button>`;
     panel.querySelector('.ai-workbench')?.append(refMenu);
     // 11-20 사용자 결정: 「참고한 기출 3장」 띠(태그 3)는 뺐다. 엔진은 안에서 계속 참고 그림을 쓴다.
-    // 그림 설정 한 줄 요약(태그 18)
     const caption = panel.querySelector('.ai-conversation-caption');
-    const summary = document.createElement('span'); summary.className = 'ai-settings-oneline'; summary.dataset.aiSettingsOneline = '';
-    const change = document.createElement('button'); change.type = 'button'; change.className = 'ai-settings-change'; change.dataset.aiSettingsChange = '';
-    change.setAttribute('aria-expanded', 'false'); change.textContent = '바꾸기 ▾'; change.title = '배경 제거·객체 분리 설정 열기';
-    caption?.querySelector('strong')?.after(summary, change);
-    // V5(시안 대화창v5 태그 7 · 안 1): 머리줄 「바꾸기 ▾」 옆 「새 대화」 — 대화만 끊고 결과는 남긴다.
     const newChat = document.createElement('button'); newChat.type = 'button'; newChat.className = 'ai-create-newchat'; newChat.dataset.aiCreateNewchat = '';
     newChat.title = '새 대화 · 대화를 끊고 새로 시작합니다(위 대화는 그림에 쓰지 않음, 결과는 그대로)';
     newChat.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8.5v3.5a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 12V4A1.5 1.5 0 0 1 4 2.5h3.5"/><path d="m11.2 2.3 2.5 2.5-5.4 5.4-2.9.4.4-2.9z"/></svg>새 대화';
-    change.after(newChat);
+    caption?.querySelector('strong')?.after(newChat);
+    // 11-27 사용자: 머리줄의 라벨 방식 자리가 어정쩡했다 — 새 그림의 선택이니 입력칸 아래 줄(클립 옆)에 둔다.
+    hint.after(labelOptions);
     newChat.addEventListener('click', () => startNewChat());
     const menus = [[clip, refMenu], [addRef, refMenu], [more, moreMenu]];
     let menuAnchor = null;
-    const closeMenus = () => { for (const [button, menu] of menus) { menu.hidden = true; button.setAttribute('aria-expanded', 'false'); } menuAnchor = null; };
+    const closeMenus = () => { for (const [button, menu] of menus) { if (!menu.hidden) menu.hidden = true; if (button.getAttribute('aria-expanded') !== 'false') button.setAttribute('aria-expanded', 'false'); } menuAnchor = null; };
     const openMenu = (button, menu) => {
       const was = !menu.hidden && menuAnchor === button;
       closeMenus(); if (was) return;
@@ -5706,11 +5767,6 @@ ${chatText}` : ''}`;
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); const anchor = menuAnchor; closeMenus(); anchor?.focus(); }
       if (['ArrowDown', 'ArrowUp'].includes(event.key)) { event.preventDefault(); const items = [...menu.querySelectorAll('button')]; const at = items.indexOf(document.activeElement); items[(at + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus(); }
     });
-    change.addEventListener('click', () => {
-      const open = panel.dataset.aiSettingsOpen !== 'true';
-      panel.dataset.aiSettingsOpen = String(open); change.setAttribute('aria-expanded', String(open));
-      change.textContent = open ? '접기 ▴' : '바꾸기 ▾';
-    });
     // GENSPEED 안 C(태그 6, 11-20 사용자 결정): 「글자 바꾸기 빠르게」 켬/끔 — 바꾸기 ▾ 메뉴 한 줄, 기본 끔, 저장값 5e.aiEngine.figureLocalReplace.
     const fastReplace = panel.querySelector('[data-ai-fast-replace-group]');
     const syncFastReplace = () => {
@@ -5731,7 +5787,7 @@ ${chatText}` : ''}`;
     log.addEventListener('click', onChatClick);
     // V5(태그 4·5): 대화 칸 폭 손잡이(420~820, 저장, 두 번 누르면 처음 폭)
     installChatWidth(panel, { signal: lifecycle.signal });
-    createDom = { frame, clip, hint, more, moreMenu, addRef, refMenu, summary, change, newChat, closeMenus };
+    createDom = { frame, clip, hint, more, moreMenu, labelOptions, addRef, refMenu, newChat, closeMenus };
     return createDom;
   }
 
@@ -5848,12 +5904,17 @@ ${chatText}` : ''}`;
   function ensureVersionDescriber() {
     if (versionDescriberSet || !panel.aiWorkbench?.setVersionDescriber) return;
     versionDescriberSet = true;
+    panel.aiWorkbench.setVersionAction?.((id, action) => void versionAction(id, action));
     panel.aiWorkbench.setVersionDescriber((id) => {
       if (!isFigureCreate()) return null;
       const item = generatedImages.find(candidate => candidate.id === id);
       if (!item) return null;
       const ms = item.meta?.ui?.elapsedMs;
-      return { thumb: item.outputImage?.src || item.data, sub: [resultActionText(item, generatedImages), Number.isFinite(ms) ? clockText(ms) : null].filter(Boolean).join(' · ') };
+      const local = item.engine === 'local-erase';
+      const saved = local && item.updatedAt ? new Date(item.updatedAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:false}) : '';
+      return { thumb: item.outputImage?.src || item.data, local, parentId: local ? item.scopedEditHistory?.[0]?.parentCandidateId || null : null,
+        sub: local ? [saved && `${saved} 저장`, `${item.editCount || 1}번 고침`].filter(Boolean).join(' · ')
+          : [resultActionText(item, generatedImages), Number.isFinite(ms) ? clockText(ms) : null].filter(Boolean).join(' · ') };
     });
   }
   // V5: 지금 그리기 단추가 할 일 — 'stop' | 'edit' | 'new'(이미지 생성) | 'fresh'(▾ 새로 그리기) | 'all'(▾ 처음부터 다시 그리기)
@@ -5882,12 +5943,19 @@ ${chatText}` : ''}`;
     const resultOnly = on && attachments.length === 0;
     panel.dataset.aiResultOnly = String(resultOnly);
     panel.aiWorkbench?.setResultOnly?.(resultOnly);
-    if (!on) { dom.closeMenus(); setCompareNote(null); return; }
+    // 11-27 사용자: 변환에서도 결과가 있으면 「AI와 대화 / 직접 편집」을 고르고 생성 화면과 같은 직접 편집 도구를 쓴다.
+    syncResultWorkspace?.((on || conversionKind === 'image') && Boolean(selectedOutputItem()), busy || panel.dataset.aiSharingMode === 'view', on || conversionKind === 'image');
+    if (!on) { if (!dom.labelOptions.hidden) dom.labelOptions.hidden = true; dom.closeMenus(); setCompareNote(null); return; }
     ensureVersionDescriber();
     const item = selectedOutputItem();
     // 실행 단추(태그 6·22): 그리는 중 = 멈추기, 결과가 있으면 「이 그림 고치기」, 없으면(또는 「새 대화」 뒤) 「이미지 생성」.
     const mode = createDrawMode(item);
     const running = mode === 'stop', editing = mode === 'edit';
+    const refs = attachments.map(item => userReferenceRole(item, chatInput?.value || ''));
+    const labelRoute = figureRoute({ desktop, storage:channelStorage, hasUserReferences:refs.length > 0, userRoles:refs });
+    const hideLabelOptions = editing || !labelRoute.use || panel.dataset.aiSharingMode === 'view';
+    if (!running && dom.labelOptions.hidden !== hideLabelOptions) dom.labelOptions.hidden = hideLabelOptions;
+    if (dom.labelOptions.disabled !== (busy || running)) dom.labelOptions.disabled = busy || running;
     // 입력칸 안 A(11-21): 대화 답을 기다릴 때와 그릴 때 멈추기를 나눠 보인다(대화 중 멈추기를 그리기 멈추기로 알고 누르던 일).
     const stopLabel = currentTurnType === 'chat' ? '대화 멈추기' : '그리기 멈추기';
     const label = { stop: stopLabel, edit: '이 그림 고치기', fresh: '새로 그리기', all: '처음부터 다시 그리기', new: '이미지 생성' }[mode];
@@ -5928,12 +5996,6 @@ ${chatText}` : ''}`;
       : mode === 'all' ? '덧붙일 말을 적고 「처음부터 다시 그리기」 · 비워 두면 대화 전체로 그립니다' : '그림에 대해 AI와 이야기하세요 · 그리기는 「이미지 생성」';
     if (chatInput.placeholder !== placeholder) chatInput.placeholder = placeholder;
     chatInput.disabled = false;
-    // 그림 설정 한 줄(태그 18)
-    const value = key => panel.querySelector(`.ai-compact-settings [data-ai-setting-key="${key}"] .is-on`)?.dataset.aiSettingValue;
-    const background = value('background') === 'connected' ? '배경 제거 켬' : '배경 제거 끔';
-    const objects = value('objects') && value('objects') !== 'off' ? '객체 분리 켬' : '객체 분리 끔';
-    const summary = `${background} · ${objects}`;
-    if (dom.summary.textContent !== summary) dom.summary.textContent = summary;
     // 「＋ 레퍼런스」(태그 2)·결과 칸 왼쪽 이름(태그 24)
     dom.addRef.hidden = !resultOnly || panel.dataset.aiLayout !== 'result' || Boolean(comparison);
     // 비교 안내(태그 23·25): 지금 비교 상태를 한 줄로. 비교가 끝나면 지운다.
@@ -5965,10 +6027,11 @@ ${chatText}` : ''}`;
     return true;
   }
   function startDraw(gathered, { note = true } = {}) {
-    lastDrawRun = { kind: 'new', request: gathered.request, conversation: gathered.conversation, count: gathered.count, summary: gathered.summary || [], after: gathered.after || null, reset: Boolean(gathered.reset), scope: gathered.scope || 'after-result' };
+    const figureLabelMode = gathered.figureLabelMode || createLabelMode;
+    lastDrawRun = { kind:'new', figureLabelMode, request:gathered.request, conversation: gathered.conversation, count: gathered.count, summary: gathered.summary || [], after: gathered.after || null, reset: Boolean(gathered.reset), scope: gathered.scope || 'after-result' };
     // 그리기 시작 때 모은 「그릴 내용」을 대화에 한 번 남긴다(태그 7).
     if (note) addLog(drawPlanNote(gathered));
-    void submit('image', { requestOverride: gathered.request, discussionContextOverride: '', figureConversation: gathered.conversation, figureGathered: lastDrawRun,
+    void submit('image', { requestOverride: gathered.request, discussionContextOverride: '', figureConversation: gathered.conversation, figureGathered: lastDrawRun, figureLabelMode,
       bypassCache: true, silentUserLog: true, createBubbleShown: true });
     captureActiveTaskTab(); persistTasks();
   }
@@ -5986,9 +6049,13 @@ ${chatText}` : ''}`;
     const editing = drawMode === 'edit';
     if (localEraseController?.getDraft(item)) { setStatus('먼저 수정 저장을 눌러 편집을 완료하세요.', 'warn'); return true; }
     if (editing) {
-      if (!text) { setStatus('고칠 곳을 입력칸에 적어 주세요. 예: T는 빼 줘', 'warn'); chatInput.focus(); return true; }
+      // 11-25 밤샘 검수: 입력칸이 비었으면 결과 뒤에 나눈 대화를 고칠 말로 함께 넘긴다(대화에서 정한 θ′ 기준 같은 내용이 빠지지 않게).
+      const talk = text ? null : gatherForDraw('', 'after-result');
+      const talkText = talk?.count ? (talk.conversation || talk.request) : '';
+      if (!text && !talkText && !commentPrompt([item])) { setStatus('고칠 곳을 입력칸이나 그림 코멘트에 적어 주세요.', 'warn'); chatInput.focus(); return true; }
       chatInput.value = ''; input.value = ''; createComposeMode = 'auto'; createDrawScope = 'after-result';
-      startEdit(item, text);
+      if (text || !talkText) startEdit(item, text || '표시한 코멘트대로 고쳐 주세요.');
+      else startEdit(item, `${commentPrompt([item]) ? '표시한 코멘트대로 고쳐 주세요. ' : ''}아래 대화에서 정한 고칠 점을 따른다.\n${talkText}`, { bubble: false });
       return true;
     }
     // V5(태그 16): 결과가 있으면 그 결과 뒤 대화만, 「처음부터 다시 그리기」면 새 대화 뒤 전체.
@@ -6014,7 +6081,12 @@ ${chatText}` : ''}`;
     let payload = null; try { payload = chip.dataset.aiChipPayload ? JSON.parse(chip.dataset.aiChipPayload) : null; } catch { payload = null; }
     if (busy) { setStatus('그리는 중이에요 · 끝난 뒤에 눌러 주세요.', 'warn'); return; }
     switch (chip.dataset.aiChip) {
-      case 'draw-now': createComposeMode = 'new'; createGenerate({ fresh: true }); return;
+      case 'draw-now': {
+        // 11-25 밤샘 검수: 결과가 있어 큰 단추가 「이 그림 고치기」일 때 이 단추만 새로 그려, 고른 결과의 원본과 코멘트가 빠졌다(포물선 결과 5).
+        // 큰 단추와 같게 고른 결과를 고친다. 결과가 없거나 「새로 그리기」를 고른 상태면 예전처럼 새로 그린다.
+        if (createDrawMode(selectedOutputItem()) === 'edit') { createGenerate(); return; }
+        createComposeMode = 'new'; createGenerate({ fresh: true }); return;
+      }
       case 'retry-draw': {
         if (payload?.request) startDraw({ ...payload, users: [] }, { note: false });
         else createGenerate({ fresh: true });
@@ -6104,7 +6176,7 @@ ${chatText}` : ''}`;
       let items = [], readError = null;
       for (let attempt = 1; attempt <= 2 && !items.length; attempt++) {
         try {
-          const read = await desktop.readImageText({ model: AI_LABEL_READ_MODEL, text: `${LABEL_READ_PROMPT}${labelHintPrompt(hints)}`, attachments: [source.data] });
+          const read = await desktop.readImageText({ model: AI_LABEL_READ_MODEL, text: `${LABEL_READ_PROMPT}\n각 항목에 onDimensionLine을 추가한다. 길이 치수선의 두 화살촉 사이 한가운데에 글자가 놓여 선과 겹치거나 글자 자리에서 선이 끊긴 경우만 true다. 치수선 옆에 놓인 글자, 속도, 각도, 일반 라벨은 false다.${labelHintPrompt(hints)}`, attachments: [source.data] });
           if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
           items = parseLabelRead(typeof read === 'string' ? read : String(read?.text ?? ''));
         } catch (error) { if (error?.name === 'AbortError' || !isCurrent()) throw error; readError = error; }
@@ -6177,7 +6249,7 @@ ${chatText}` : ''}`;
       phase('label-place');
       // 라벨 자리는 잉크에 맞춘 상자, 지시선은 지운 선 → (다시 그렸으면) 픽셀에서 찾은 선 → 읽은 끝점 순서.
       items = erasedItems.length === snapped.length ? finalLabelItems(snapped, erasedItems, { redrawn }) : items;
-      let readPlan = labelPlanFromRead(items);
+      let readPlan = labelPlanFromRead(items, { figureRestore: true });
       let sized = null;
       if (readPlan.labels.length) { try { sized = await measuredLabelSizes(source.data, readPlan.labels, abort.signal); } catch (error) { if (error?.name === 'AbortError') throw error; } }
       readPlan = withGlyphLabelSizes(readPlan, items, sized?.sizes); // 잉크에 맞춘 라벨은 잰 글자 크기로(기출 변환과 같은 셈)
@@ -6234,7 +6306,7 @@ ${chatText}` : ''}`;
   async function isBlankFigure(dataUrl) {
     try { return isBlankInspection(await inspectPngDataUrl(dataUrl)); } catch { return false; }
   }
-  async function runFigureEditTurn({ runInput, entered, requestEpoch, options = {} }) {
+  async function runFigureEditTurn({ runInput, entered, requestEpoch, resultComments, options = {} }) {
     const taskId = activeTaskTabId;
     const picked = generatedImages.find(item => item.id === options.figureEdit?.baseId) || selectedOutputItem();
     const relabel = picked?.meta?.ui?.kind === 'label';
@@ -6243,13 +6315,18 @@ ${chatText}` : ''}`;
     if (!base?.data || !instruction) return runFigureEngineTurn({ runInput, entered, discussionContext: '', requestEpoch, options });
     // 원래 요청: 대화를 모아 그린 결과면 모은 요청 + 정리된 구성(CHATFIX), 아니면 앞 그림의 요청.
     const gathered = base.meta?.gathered || null;
+    const editableGeneration = ['editable','none'].includes(base.meta?.figureLabelMode);
+    const annotatedInstruction = instruction + resultComments;
+    const editInstruction = editableGeneration
+      ? `${annotatedInstruction}\n[글자 분리] 새 이름·기호·값 라벨과 설명 지시선을 그림 픽셀로 추가하지 않는다. 기존 눈금, 단자 부호, 각도 호와 치수선은 유지한다.`
+      : annotatedInstruction;
     const originalRequest = [base.meta?.request || conversationMessages.find(message => message.role === 'user')?.text || '',
       gathered?.summary?.length ? `정리된 구성: ${gathered.summary.join(' / ')}` : ''].filter(Boolean).join('\n');
     if (!busy) setBusy(true);
     imageReceived = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER; currentCancelRequested = false;
     currentRunInput = runInput; currentTerminalOutcome = null; currentImageOutputError = null;
     currentTurnCandidate = null; pendingCacheOutput = null; currentTurnDone = false; serverTurnFinished = false;
-    currentRequestSnapshot = { entered, request: instruction, discussionContext: '', annotatedRequest: instruction, renderRequest: instruction, runInput };
+    currentRequestSnapshot = { entered, request: instruction, discussionContext: '', annotatedRequest: annotatedInstruction, renderRequest: editInstruction, runInput };
     providerRequestPersistable = true; persistTasks();
     clearTimeout(requestTimeout); requestTimeout = null;
     const abort = new AbortController(); imageLabelRunAbort = abort;
@@ -6277,13 +6354,13 @@ ${chatText}` : ''}`;
     try {
       await taskPersistence.checkpoint();
       if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
-      outcome = await runFigureEdit({ ai, previousPng: base.data, instruction, originalRequest, previous, models, signal: abort.signal, onPhase: editPhase });
+      outcome = await runFigureEdit({ ai, previousPng: base.data, instruction: editInstruction, originalRequest, previous, models, signal: abort.signal, onPhase: editPhase });
       // CHATFIX(시안 태그 12): 고친 그림이 비었으면 다른 그림 모델로 한 번 더 고친다.
       if (outcome.fresh?.length && isCurrent() && await isBlankFigure(outcome.fresh[0].image)) {
         const other = imageModelOrder(models.image)[1];
         if (isCurrent()) addLog(`고친 그림이 비어 나와 다른 그림 모델(${other})로 한 번 더 고칩니다.`);
         const ai2 = createDesktopEngineAi(desktop, engineRaster, { imageModels: imageModelOrder(other), textModels: [runInput.model, ...imageModelOrder(runInput.model)] });
-        const second = await runFigureEdit({ ai: ai2, previousPng: base.data, instruction, originalRequest, previous, models: { ...models, image: other }, signal: abort.signal, onPhase: editPhase });
+        const second = await runFigureEdit({ ai: ai2, previousPng: base.data, instruction: editInstruction, originalRequest, previous, models: { ...models, image: other }, signal: abort.signal, onPhase: editPhase });
         if (second.aborted) outcome = second;
         else if (second.fresh?.length && !(await isBlankFigure(second.fresh[0].image))) outcome = { ...second, blankRedrawn: true };
         else outcome = { ...second, fresh: [], blankKept: true };
@@ -6325,22 +6402,43 @@ ${chatText}` : ''}`;
       endTurn(); finishStatusBlock({ remove: true });
       advanceGenerationClock('turn-terminal', 'failed'); requestPhase(ai.health?.authRequired ? 'login-wait' : 'failed'); setGenerating(false); setBusy(false);
       if (ai.health?.authRequired) return guideDesktopLogin(() => submit('image', options));
-      // 엔진에 고치기가 없거나(옛 판) 끝내 고치지 못했다 — 앞 그림의 요청과 고칠 말을 함께 넘겨 새로 그린다.
+      // 11-25 밤샘 검수: 고치기가 오류로 끝나면 원본 없이 장면 전체를 새로 그려 「나머지는 그대로」 약속을 어겼다(포물선 사례).
+      // 앞 결과를 그대로 두고, 다시 고칠지·새로 그릴지는 교사가 고르게 한다. 엔진에 고치기가 없는 옛 판만 예전처럼 새로 그린다.
+      if (outcome.available !== false) {
+        const baseName = `생성 결과 ${baseNo}`;
+        const reason = outcome.errors?.[0]?.message ? ` (${String(outcome.errors[0].message).slice(0, 120)})` : '';
+        requestPhase('kept-previous'); setTaskState('completed');
+        addLog(`${baseName}를 고치지 못했어요${reason}. ${baseName}는 그대로예요. 다시 고치거나, 원래 요청과 고칠 말을 합쳐 새로 그릴 수 있어요.`, 'error');
+        addFlowChips([
+          { id: 'retry-edit', label: '한 번 더 고치기', strong: true, payload: { baseId: picked?.id || base.id, instruction } },
+          { id: 'retry-draw', label: '새로 그리기', title: '앞 그림 없이 원래 요청과 고칠 말을 합쳐 새로 그립니다', payload: { request: `${originalRequest}\n\n고칠 점: ${annotatedInstruction}`.trim(), conversation: gathered?.conversation || '', figureLabelMode: base.meta?.figureLabelMode } },
+        ]);
+        setStatus(`고치지 못했습니다 · ${baseName}는 그대로`, 'warn');
+        captureActiveTaskTab(); persistTasks();
+        return;
+      }
+      // 엔진에 고치기가 없다(옛 판) — 앞 그림의 요청과 고칠 말을 함께 넘겨 새로 그린다.
       addLog(outcome.available === false ? '이 판의 그림 엔진에는 「고치기」가 없어 요청과 고칠 말을 합쳐 새로 그립니다.' : `앞 그림을 고치지 못해 요청과 고칠 말을 합쳐 새로 그립니다.${outcome.errors?.[0]?.message ? ` (${String(outcome.errors[0].message).slice(0, 120)})` : ''}`);
-      return submit('image', { requestOverride: `${originalRequest}\n\n고칠 점: ${instruction}`.trim(), discussionContextOverride: '', figureConversation: gathered?.conversation || '', bypassCache: true, silentUserLog: true, createBubbleShown: true });
+      return submit('image', { requestOverride: `${originalRequest}\n\n고칠 점: ${annotatedInstruction}`.trim(), discussionContextOverride: '', figureConversation: gathered?.conversation || '', figureLabelMode: base.meta?.figureLabelMode, bypassCache: true, silentUserLog: true, createBubbleShown: true });
     }
     requestPhase('validating');
     advanceGenerationClock('image-received'); advanceGenerationClock('postprocess-started');
     let item = null;
     try {
-      const fresh = outcome.fresh[0];
-      item = await addPreview(fresh.image, { isCurrent, name: `생성 결과 ${generatedImages.length + 1}` });
+      let fresh = outcome.fresh[0];
+      if (editableGeneration) {
+        const meta = { ...fresh.meta, figureLabelMode:'editable' };
+        [fresh] = await attachGeneratedFigureLabels([{ ...fresh, meta }], { sceneLabels:[base.meta?.figureLabelSpecs || []] },
+          { ai, models, signal:abort.signal, onPhase:editPhase });
+      }
+      item = await addPreview(fresh.image, { isCurrent, labelPlan:fresh.labelPlan, name: `생성 결과 ${generatedImages.length + 1}` });
       if (item) {
         const edit = outcome.result?.edit || fresh.meta.edit || {};
         item.meta = { ...fresh.meta, request: base.meta?.request || originalRequest, ...(gathered ? { gathered } : {}), ...(outcome.blankRedrawn ? { blankRedrawn: true } : {}), refs: base.meta?.refs || fresh.meta.refs || [],
           labelHints: Array.isArray(outcome.result?.labelHints) ? outcome.result.labelHints.slice(0, 60) : (base.meta?.labelHints || []),
           ui: { kind: 'edit', from: base.id, instruction, summary: edit.summary || '', elapsedMs: Date.now() - turnStartedAt } };
         item.engine = 'ai-figure';
+        if (item.labelPlan?.frozen) void renderLabelPreview(item);
       }
     } catch (error) { addLog(`고친 결과 처리 중 오류: ${error?.message || error}`, 'error'); }
     endTurn();
@@ -6357,6 +6455,7 @@ ${chatText}` : ''}`;
     window.dispatchEvent(new CustomEvent('5e:ai-output-success', { detail: { candidateId: item.id } }));
     finishStatusBlock();
     addResultEntry(item);
+    if (['unavailable', 'partial'].includes(item.meta?.figureLabelStatus)) addChatNote(GENERATED_LABEL_NOTICE);
     setTaskState('completed'); requestPhase('completed'); setGenerating(false); setBusy(false);
     setStatus(outcome.result?.edit?.verify && outcome.result.edit.verify.done === false ? '고친 결과 · 말한 곳이 다 바뀌지 않았을 수 있습니다. 비교로 확인하세요.' : '고치기 완료', outcome.result?.edit?.verify?.done === false ? 'warn' : 'ok');
     captureActiveTaskTab(); persistTasks();
@@ -6425,7 +6524,7 @@ ${chatText}` : ''}`;
       const generationSource = workflow.imageKind === 'general' && !options.verifyOnly
         ? await prepareApprovedFirstAttachment({ ...sources[0] }) : undefined;
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
-      const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
+      const result = await executeImageLabelRun({ legacyLabelPipeline: globalThis.__5eLegacyLabelPipeline === true, /* 11-10: 내부 시험용 예전 파이프라인 */ examSolCircled: convertExamSolCircledFlag(), textbookEdgeGuide: convertTextbookEdgeGuideFlag(), /* 11-23 앱 반영 후보: 변환 우승안(플래그로 끔) */ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection, readText: payload => desktop.readImageText(payload), // 11-10: 원본 글자 읽기(라벨 복원)
         generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
         artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation, graphLabels: tab?.graphKeepOriginal ? 'keep' : 'route',
         onObservation: async observation => {
@@ -6713,9 +6812,12 @@ ${chatText}` : ''}`;
 
   // 1.8.0 새 그림 엔진 한 차례(js/ai-engines.js → js/ai-figure). 지금 생성과 같은 자리(결과 카드)에 넣고, 진행은 지금 진행 표시 글만 바꾼다.
   // 실패로 끝나지 않게: 엔진 안 재시도·반대 모델 → 한 장도 못 그리면 옛 생성 길로 이어서. 앞 결과 카드는 지우지 않는다.
-  async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {} }) {
+  async function runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options = {}, userRefItems = [] }) {
     const taskId = activeTaskTabId;
-    const request = [discussionContext, entered].filter(Boolean).join('\n\n');
+    const labelMode = ['editable','none'].includes(options.figureLabelMode || runInput.figureLabelMode) ? (options.figureLabelMode || runInput.figureLabelMode) : 'embedded';
+    // 고침 U1: 교사 그림(레퍼런스·손그림·표현 참고)에 단 메모는 요청 글 뒤에 붙인다(좌표는 그 그림 기준).
+    const userRefNotes = userRefItems.length ? commentPrompt(userRefItems) : '';
+    const request = [discussionContext, entered, userRefNotes ? `교사 그림에 단 메모(좌표는 그 그림 기준 %):\n${userRefNotes}` : ''].filter(Boolean).join('\n\n');
     // CHATFIX: 「이미지 생성」은 지금까지 대화 전체를 구체화에 넘긴다(앞서는 마지막 한 마디만 썼다 — CHATGEN 3절).
     const conversation = String(options.figureConversation || '');
     const gatheredMeta = options.figureGathered ? { request: options.figureGathered.request || request, conversation, count: options.figureGathered.count || 0, summary: options.figureGathered.summary || [] } : null;
@@ -6806,10 +6908,19 @@ ${chatText}` : ''}`;
       if (!(e.phase === 'log' && /기출|참고 그림/.test(String(e.message || '')))) show(figurePhaseCopy(e));
       if (isCurrent() && e.phase) { loading.stage(e.phase); statusPhase(e.phase); }
     };
-    let outcome, refIds = [];
+    let outcome, refIds = [], userImages = [], userImageRoles = [];
     try {
       await taskPersistence.checkpoint();
       if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      // 고침 U1: 교사 그림을 AI 전송용 사본(긴 변 1536)으로 — 엔진이 첫 첨부로 붙인다. 못 바꾼 그림은 빼고 이어 간다(막다른 길 없음).
+      if (userRefItems.length) {
+        const roleText = [conversation, entered].filter(Boolean).join('\n');
+        for (const item of userRefItems) {
+          try { const t = await prepareTransportItem(item); if (t?.data) { userImages.push(t.data); userImageRoles.push(userReferenceRole(item, roleText)); } }
+          catch (error) { addLog(`${item.name || '첨부 그림'}을 AI에 보낼 수 없어 빼고 그립니다: ${error?.message || error}`, 'error'); }
+        }
+        if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
+      }
       // 「다른 기출로 다시 그리기」: 앞서 참고한 기출을 빼고 다시 고른 3장을 넘긴다.
       const otherOf = options.otherRefsOf ? generatedImages.find(item => item.id === options.otherRefsOf) : null;
       if (otherOf?.meta?.refs?.length) {
@@ -6817,7 +6928,7 @@ ${chatText}` : ''}`;
         refIds = await pickOtherFigureRefs({ ai, request, exclude: otherOf.meta.refs, models, signal: abort.signal });
         if (!isCurrent()) throw new DOMException('작업이 취소되었습니다.', 'AbortError');
       }
-      outcome = await runFigureEngine({ ai, request, conversation, models, refIds, signal: abort.signal, onPhase: enginePhase });
+      outcome = await runFigureEngine({ ai, request, labelMode, conversation, models, refIds, signal: abort.signal, onPhase: enginePhase, userImages, userImageRoles });
     } catch (error) {
       outcome = error?.name === 'AbortError' ? { aborted: true, fresh: [], errors: [] } : { aborted: false, fresh: [], errors: [{ message: error?.message || String(error) }] };
     } finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
@@ -6846,9 +6957,17 @@ ${chatText}` : ''}`;
         show(figurePhaseCopy({ phase: 'draw', scene, total }));
         if (isCurrent()) { loading.stage('draw'); statusPhase('draw'); }
       } });
-      let second = null;
+      let second = null, sceneOnly = false;
       imageLabelRunAbort = abort;
-      try { second = await runFigureEngine({ ai: ai2, request, conversation, models: { ...models, image: other }, refIds, signal: abort.signal, onPhase: enginePhase }); }
+      try {
+        // 고침 E2: 빈 장면만 같은 장면 글·같은 참고 기출로 다시(구체화·검색·성한 장면은 다시 그리지 않음). 옛 판 엔진이면 전체 다시.
+        if (figureBlankSceneOnlyFlag(channelStorage) && outcome.result?.scenes?.length) {
+          const blankIdx = freshScenes.map((f, k) => (blankFlags[k] ? f.meta?.sceneIndex : null)).filter(Number.isInteger);
+          const redo = await runFigureRedraw({ ai: ai2, labelMode, previous: outcome.result, scenes: blankIdx, request, models: { ...models, image: other }, signal: abort.signal, onPhase: enginePhase, userImages, userImageRoles });
+          if (redo.available) { second = redo; sceneOnly = true; }
+        }
+        if (!second) second = await runFigureEngine({ ai: ai2, request, labelMode, conversation, models: { ...models, image: other }, refIds, signal: abort.signal, onPhase: enginePhase, userImages, userImageRoles });
+      }
       catch (error) { second = { aborted: error?.name === 'AbortError', fresh: [], errors: [] }; }
       finally { if (imageLabelRunAbort === abort) imageLabelRunAbort = null; }
       if (second?.aborted || !isCurrent()) {
@@ -6861,10 +6980,19 @@ ${chatText}` : ''}`;
       }
       const secondFlags = await Promise.all((second?.fresh || []).map(sceneResult => isBlankFigure(sceneResult.image)));
       const merged = [];
-      const length = Math.max(freshScenes.length, second?.fresh?.length || 0);
-      for (let i = 0; i < length; i++) {
-        if (freshScenes[i] && !blankFlags[i]) merged.push(freshScenes[i]);
-        else if (second?.fresh?.[i] && !secondFlags[i]) { merged.push(second.fresh[i]); blankRedrawn = true; }
+      if (sceneOnly) {
+        // 장면 번호(meta.sceneIndex)로 제자리에 넣는다 — 다시 그린 장면은 첫 실행의 장면 글·기출·앞 장면 그림을 그대로 썼다.
+        for (let k = 0; k < freshScenes.length; k++) {
+          if (!blankFlags[k]) { merged.push(freshScenes[k]); continue; }
+          const at = (second.fresh || []).findIndex(f => f.meta?.sceneIndex === freshScenes[k].meta?.sceneIndex);
+          if (at >= 0 && !secondFlags[at]) { merged.push(second.fresh[at]); blankRedrawn = true; }
+        }
+      } else {
+        const length = Math.max(freshScenes.length, second?.fresh?.length || 0);
+        for (let i = 0; i < length; i++) {
+          if (freshScenes[i] && !blankFlags[i]) merged.push(freshScenes[i]);
+          else if (second?.fresh?.[i] && !secondFlags[i]) { merged.push(second.fresh[i]); blankRedrawn = true; }
+        }
       }
       freshScenes = merged;
     }
@@ -6875,10 +7003,11 @@ ${chatText}` : ''}`;
     try {
       for (const sceneResult of freshScenes) {
         const m = sceneResult.meta;
-        const item = await addPreview(sceneResult.image, { isCurrent, name: m.sceneCount > 1 ? `생성 결과 ${generatedImages.length + 1} · 장면 ${m.sceneIndex + 1}/${m.sceneCount}` : undefined });
+        const item = await addPreview(sceneResult.image, { isCurrent, labelPlan: sceneResult.labelPlan, name: m.sceneCount > 1 ? `생성 결과 ${generatedImages.length + 1} · 장면 ${m.sceneIndex + 1}/${m.sceneCount}` : undefined });
         if (!item) break;
         item.meta = { ...m, ...(gatheredMeta ? { gathered: gatheredMeta } : {}), ...(blankRedrawn ? { blankRedrawn: true } : {}),
           ui: { kind: 'figure', elapsedMs: Date.now() - turnStartedAt, ...(options.otherRefsOf ? { otherRefsOf: options.otherRefsOf } : {}) } }; item.engine = 'ai-figure';
+        if (item.labelPlan?.frozen) void renderLabelPreview(item);
         added.push(item);
       }
     } catch (error) {
@@ -6896,8 +7025,10 @@ ${chatText}` : ''}`;
     // 11-19(시안 태그 13·19): 옛 「이미지가 완성되었습니다. 참고한 기출 그림: …」 글 대신 대화 안 결과 카드.
     finishStatusBlock();
     for (const item of added) addResultEntry(item);
+    const labelFailure = added.some(item => ['unavailable', 'partial'].includes(item.meta?.figureLabelStatus));
+    if (labelFailure) addChatNote(GENERATED_LABEL_NOTICE);
     setTaskState('completed'); requestPhase('completed'); setGenerating(false); setBusy(false);
-    setStatus(sceneErrors.length ? `생성 완료 · 장면 ${sceneErrors.length}개는 그리지 못했습니다. 다시 실행하면 그 장면을 다시 그립니다.` : '생성 완료', sceneErrors.length ? 'warn' : 'ok');
+    setStatus(sceneErrors.length ? `생성 완료 · 장면 ${sceneErrors.length}개는 그리지 못했습니다. 다시 실행하면 그 장면을 다시 그립니다.` : labelFailure ? GENERATED_LABEL_NOTICE : '생성 완료', sceneErrors.length || labelFailure ? 'warn' : 'ok');
     captureActiveTaskTab(); persistTasks();
     try { await taskPersistence.checkpoint(); } catch {}
     return added;
@@ -6929,6 +7060,7 @@ ${chatText}` : ''}`;
       preserveSourceLabels: readPreserveSourceLabels(),
       imageLabelWorkflow: readImageLabelWorkflow(), preciseRestore: preciseRestoreCheckbox?.checked === true,
       examBriefProfile: taskTabs.get(activeTaskTabId)?.examBriefProfile,
+      figureLabelMode: ['editable','none'].includes(options.figureLabelMode) ? options.figureLabelMode : 'embedded',
       generationMode: selectedAssetGenerationMode,
       reviewEnabled: reviewModeCheckbox?.checked !== false,
       ...(modelsLoaded ? modelSelection() : savedModelPreference()),
@@ -7030,13 +7162,19 @@ ${chatText}` : ''}`;
     }
     let roleGroups;
     try { roleGroups=partitionReferenceItems(runInput.attachments); } catch(error) { setStatus('이미지 역할을 확인해 주세요. 원본 또는 표현 참고를 선택하세요.','error'); return; }
-    if (roleGroups.styleReferences.length && (!whiteRun || !roleGroups.inputs.length || runInput.generated.length)) {
+    // 고침 U1: 그림 생성(exam-brief)에서 교사 그림이 새 엔진으로 가면 「표현 참고」도 화풍 참고로 엔진에 넣는다(막다른 경고 없음).
+    // 11-23 앱 반영 후보: 첨부마다 역할(손그림·레퍼런스·표현 참고)을 먼저 정한다 — 기본은 모두 손그림일 때만 새 엔진, 레퍼런스는 옛 길.
+    const userRoleText = [options.figureConversation, entered].filter(Boolean).join('\n');
+    const userRoles = (runInput.attachments || []).map(item => userReferenceRole(item, userRoleText));
+    const userRefRoute = type === 'image' && isExamBrief(runInput) && !batchRun && (runInput.attachments || []).length > 0
+      ? figureRoute({ desktop, storage: channelStorage, hasUserReferences: true, legacy: options.legacyFigure === true, userRoles }) : null;
+    if (roleGroups.styleReferences.length && !userRefRoute?.use && (!whiteRun || !roleGroups.inputs.length || runInput.generated.length)) {
       setStatus('표현 참고는 원본이 있는 새 작업의 첫 PNG 변환과 자동 교정에서만 지원합니다. 추가 수정·대화는 새 작업을 사용하세요.','warn'); return;
     }
     let whiteGenerationNotice = "";
     runInput.structureSpec = null;
     runInput.structureRecord = null;
-    const revisionImage = runInput.generated.find((item) => item.id === runInput.selectedCandidateId) || runInput.generated.at(-1) || null;
+    const revisionImage = runInput.generated.find((item) => item.id === (options.figureEdit?.baseId || runInput.selectedCandidateId)) || runInput.generated.at(-1) || null;
     roleGroups.inputs = orderedInputReferences(roleGroups.inputs, runInput.referenceComposition);
     runInput.sourceReferenceCount = roleGroups.inputs.length;
     const needsReferenceComposite = type === 'image' && roleGroups.inputs.length >= 2;
@@ -7064,9 +7202,9 @@ ${chatText}` : ''}`;
     // 1.8.0(11-19 사용자 결정): 이미지 생성(설명으로 새 그림)은 새 그림 엔진으로 대체 — 구체화→기출 3장 검색→그리기→설명 지우기→흑백.
     // 설치판에서만 돈다(웹은 지금 길). 사용자가 직접 넣은 레퍼런스가 있는 생성과, 엔진이 한 장도 못 그려 넘어온 경우는 옛 길.
     if (type === 'image' && isExamBrief(runInput) && !batchRun) {
-      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true });
-      if (route.use && options.figureEdit) return runFigureEditTurn({ runInput, entered, requestEpoch, options });
-      if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options });
+      const route = figureRoute({ desktop, storage: channelStorage, hasUserReferences: (runInput.attachments || []).length > 0, legacy: options.legacyFigure === true, userRoles });
+      if (route.use && options.figureEdit) return runFigureEditTurn({ runInput, entered, requestEpoch, resultComments: revisionImage ? commentPrompt([revisionImage]) : '', options });
+      if (route.use) return runFigureEngineTurn({ runInput, entered, discussionContext, requestEpoch, options, userRefItems: route.userRefs ? runInput.attachments.slice() : [] });
     }
     if (!busy) setBusy(true);
     imageReceived = false;
@@ -7141,7 +7279,7 @@ ${chatText}` : ''}`;
       setStatus("답변 작성 중…", "busy");
       setGenerating(false);
     }
-    const annotatedRequest = `${request}${requestComments}${revisionImage ? PRESERVE_UNREQUESTED : ""}`;
+    const annotatedRequest = `${request}${requestComments}${revisionImage && !(type === "chat" && isFigureCreate()) ? PRESERVE_UNREQUESTED : ""}`;
     const renderRequest = discussionContext
       ? `지금까지 확정된 대화 내용:\n${discussionContext}\n\n이번 생성 요청:\n${annotatedRequest}`
       : annotatedRequest;
@@ -7373,7 +7511,7 @@ ${chatText}` : ''}`;
         outgoingItems = selectOutgoingImageItems({
           type,
           references: runInput.attachments,
-          generated: runInput.generated,
+          generated: isFigureCreate() ? [] : runInput.generated,
           latestGenerated: revisionImage,
           conversationId,
         });
@@ -7895,7 +8033,7 @@ ${chatText}` : ''}`;
   chatButton.onclick = () => {
     // 11-11: 결과에 표시한 코멘트(박스·점)가 있으면 대화 내용을 영역 수정 요청으로 보낸다. 없으면 Codex 대화로 간다.
     const item = selectedOutputItem();
-    if (item && !item.sceneResult && !isGraphWorkflow(conversionKind) && Array.isArray(item.comments) && item.comments.length) {
+    if (!isFigureCreate() && item && !item.sceneResult && !isGraphWorkflow(conversionKind) && Array.isArray(item.comments) && item.comments.length) {
       const fromChat = composeRequestFromChat();
       if (!fromChat) return;
       // 11-14: 대화 글을 박스 수정에 직접 넘긴다 — 예전엔 대화 칸을 비운 뒤 박스 수정이 빈 대화 칸을 읽어 글이 통째로 빠졌다.
@@ -8735,7 +8873,7 @@ ${chatText}` : ''}`;
     }
   }));
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
-  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,selectedTaskBlocked,isTextCreation:()=>isExamBrief(taskTabs.get(activeTaskTabId)),areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
+  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,selectedTaskBlocked,isTextCreation:()=>isExamBrief(taskTabs.get(activeTaskTabId)),areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();},controlsChanged:()=>{if(panel.dataset.aiCreateUi==='true')scheduleCreateSync();}});
   input.addEventListener('input', () => commentController.refreshControls(), { signal: lifecycle.signal });
   localEraseController = createLocalImageEraseController({ panel, getTarget: () => isGraphWorkflow(conversionKind) ? null : selectedOutputItem(),
     isBusy: () => busy || isLocalSavePending(selectedOutputItem()),
@@ -8756,7 +8894,10 @@ ${chatText}` : ''}`;
       // Edit the unflattened bitmap; label geometry/text belongs to a separate
       // layer and remains reusable. The old QA pass does not verify new bytes.
       const plan = erased.labelPlan || localEditableLabelPlan(parent);
-      const candidate = { id: `generated-${++imageSerial}`, kind: 'generated', name: `직접 수정본 ${generatedImages.length + 1}`,
+      // 11-26 시안(판 목록 8): 손으로 고친 판을 다시 고쳐 저장하면 새 판을 만들지 않고 그 판을 덮어쓴다(짧게 고칠 때마다 판이 쌓였다).
+      // AI 결과에서 처음 저장할 때만 새 「직접 수정본」을 만든다.
+      if (parent.engine === 'local-erase') return overwriteLocalVersion(parent, erased, plan, now, isCurrent);
+      const candidate = { id: `generated-${++imageSerial}`, kind: 'generated', name: `직접 수정본 ${generatedImages.length + 1}`, editCount: 1,
         data: erased.data, postprocessOk: true, createdAt: now, updatedAt: now, engine: 'local-erase',
         sourceReferenceId: parent.sourceReferenceId, sourceReferenceName: parent.sourceReferenceName,
         markPolicy: structuredClone(parent.markPolicy || {}), generationMode: 'single', labelPlan: plan,
@@ -8814,6 +8955,72 @@ ${chatText}` : ''}`;
       if (activeTaskTabId === ownerTaskId && selectedCandidateId === candidate.id) setStatus('수정 저장 완료 · 새 수정본 하나로 보관했습니다. 라벨과 이전 버전은 유지됩니다.', 'ok');
       return candidate;
     } });
+  async function overwriteLocalVersion(item, erased, plan, now, isCurrent) {
+    const ownerTaskId = activeTaskTabId;
+    const before = { data:item.data, labelPlan:item.labelPlan, updatedAt:item.updatedAt, scopedEditHistory:item.scopedEditHistory, editCount:item.editCount };
+    const parentId = item.scopedEditHistory?.[0]?.parentCandidateId || item.id;
+    item.data = erased.data; item.labelPlan = plan; item.updatedAt = now; item.editCount = (item.editCount || 1) + 1;
+    item.scopedEditHistory = [...(item.scopedEditHistory || []), ...erased.operations.map(operation => ({ ...operation,
+      operation: `local-${operation.mode}-erase`, parentCandidateId: parentId, createdAt: now,
+      sourceFrame: { width: erased.width, height: erased.height }, visualReview: 'not-performed', status: 'applied' }))];
+    outputVariantCache.delete(item); latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+    let pendingVersions = pendingLocalSaves.get(ownerTaskId);
+    if (!pendingVersions) pendingLocalSaves.set(ownerTaskId, pendingVersions = new Set());
+    pendingVersions.add(item.id);
+    captureActiveTaskTab(); syncSelectedOutputActions();
+    setStatus('수정본 저장 중 · 같은 판에 덮어씁니다.', 'info');
+    try { await taskPersistence.checkpoint(); }
+    catch (error) {
+      Object.assign(item, before); outputVariantCache.delete(item);
+      captureActiveTaskTab(); try { await taskPersistence.checkpoint(); } catch {}
+      throw new Error(`수정본을 덮어쓰지 못했습니다. 임시 편집을 유지했습니다. ${error.message}`);
+    } finally {
+      pendingVersions.delete(item.id); if (!pendingVersions.size) pendingLocalSaves.delete(ownerTaskId);
+      if (!disposed) syncSelectedOutputActions();
+    }
+    if (item.outputImage) item.outputImage.src = item.data;
+    panel.aiWorkbench?.refreshVersions?.();
+    if (activeTaskTabId === ownerTaskId && isCurrent()) setStatus('수정 저장 완료 · 같은 판에 덮어썼습니다. 따로 남기려면 판 목록 ⋯에서 「복제해서 새 판으로」.', 'ok');
+    return item;
+  }
+  // 11-26 시안(판 목록 8): ⋯ 메뉴 — 이름 바꾸기 · 복제해서 새 판으로 · 지우기(지우기는 카드의 기존 빼기 확인 흐름).
+  async function versionAction(id, action) {
+    const item = generatedImages.find(candidate => candidate.id === id); if (!item || busy) return;
+    if (action === 'rename') {
+      const name = await showPrompt('판 이름을 입력하세요.', { title:'이름 바꾸기', value:item.name, maxLength:40 });
+      if (!name?.trim()) return;
+      item.name = name.trim(); const title = item.card?.querySelector('.ai-image-card-head > :first-child'); if (title && !title.matches('button,select')) title.textContent = item.name;
+      captureActiveTaskTab(); persistTasks(); panel.aiWorkbench?.refreshVersions?.();
+    } else if (action === 'duplicate') {
+      const now = new Date().toISOString();
+      const copy = { ...structuredClone({ ...item, card:undefined, outputImage:undefined }), id:`generated-${++imageSerial}`, name:`${item.name} 사본`, createdAt:now, updatedAt:now, engine:'local-erase', editCount:item.editCount || 1 };
+      delete copy.card; delete copy.outputImage;
+      generatedImages.push(copy); previews.prepend(makeImageCard(copy));
+      selectedCandidateId = copy.id; panel.dataset.aiSelectedCandidateId = copy.id;
+      panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: copy.id } }));
+      captureActiveTaskTab(); persistTasks(); setStatus(`「${copy.name}」을 새 판으로 만들었습니다.`, 'ok');
+    } else if (action === 'delete') {
+      if (!await showConfirm(`‘${item.name}’ 판을 지울까요? 되돌릴 수 없습니다.`, { title:'판 지우기', okText:'지우기', cancelText:'취소' })) return;
+      if (busy || !generatedImages.includes(item)) return;
+      if (automaticSeparationRun?.item === item) abortAutomaticSeparation('result-removed');
+      const parentId = item.scopedEditHistory?.[0]?.parentCandidateId;
+      generatedImages = generatedImages.filter(candidate => candidate !== item);
+      latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+      item.card?.remove(); labelPreviewStates.delete(item); commentController?.reset();
+      // 지운 판을 보고 있었으면 그 판의 AI 결과(없으면 가장 새 판)로 옮겨 보이는 판과 고른 판을 맞춘다.
+      if (selectedCandidateId === item.id) {
+        const next = generatedImages.find(candidate => candidate.id === parentId) || generatedImages.at(-1);
+        selectedCandidateId = next?.id || null;
+        if (next) {
+          panel.dataset.aiSelectedCandidateId = next.id;
+          panel.aiWorkbench?.restoreViewState?.({ ...panel.aiWorkbench?.getViewState?.(), selectedCandidateId: next.id });
+          panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: next.id } }));
+        } else delete panel.dataset.aiSelectedCandidateId;
+      }
+      captureActiveTaskTab(); persistTasks(); syncSelectedOutputActions(); panel.aiWorkbench?.refreshVersions?.();
+      setStatus(`「${item.name}」 판을 지웠습니다.`, 'ok');
+    }
+  }
   inlineLabelEditor = createInlineLabelEditor({ panel, getTarget:selectedOutputItem,
     getPlan:item => localEraseController.getDraft(item)?.labelPlan || manualLabelPlan(item),
     isBusy:() => busy || isLocalSavePending(selectedOutputItem()), artboard:() => ({...state.get().artboard}),
@@ -8888,12 +9095,47 @@ ${chatText}` : ''}`;
   hwpSelected.type = 'button'; hwpSelected.dataset.aiExamSend = '';
   hwpSelected.textContent = '한글로 보내기'; hwpSelected.className = '';
   hwpSelected.title = '현재 이미지와 라벨을 한글 문서의 조판 작업으로 보냅니다.';
-  outputActions?.replaceChildren(panel.querySelector('[data-ai-save-selected]'),copySelected,
+  // 11-26 시안 v6: PNG 저장 옆 ▾ — 저장 위치(폴더) 연결·해제. 폴더 연결을 못 하는 브라우저에서는 숨긴다.
+  // 버튼 목록(.ai-output-actions > button)은 바꾸지 않게 ▾는 span 역할 단추로 둔다.
+  const saveWhere = document.createElement('span'); saveWhere.setAttribute('role','button'); saveWhere.tabIndex = 0; saveWhere.className = 'ai-save-where';
+  saveWhere.dataset.aiSaveWhere = ''; saveWhere.setAttribute('aria-haspopup','menu'); saveWhere.setAttribute('aria-label','PNG 저장 위치');
+  saveWhere.innerHTML = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  saveWhere.hidden = !FS_DIR_SUPPORTED;
+  const saveWhereMenu = document.createElement('div'); saveWhereMenu.className = 'ai-save-where-menu'; saveWhereMenu.setAttribute('role','menu'); saveWhereMenu.hidden = true;
+  const syncSaveWhere = () => {
+    const name = currentDirName();
+    saveWhere.dataset.tip = name ? `PNG 저장 위치: ${name}` : 'PNG 저장 위치: 내려받기 폴더';
+    saveWhereMenu.innerHTML = `<p>${name ? `저장 위치: <b></b>` : '저장 위치: 내려받기 폴더'}</p><button type="button" role="menuitem" data-ai-save-where-pick>${name ? '다른 폴더 고르기…' : '저장 폴더 연결…'}</button>${name ? '<button type="button" role="menuitem" data-ai-save-where-clear>연결 해제(내려받기로)</button>' : ''}`;
+    if (name) saveWhereMenu.querySelector('b').textContent = name;
+  };
+  saveWhere.addEventListener('click', event => { event.stopPropagation(); syncSaveWhere(); saveWhereMenu.hidden = !saveWhereMenu.hidden; }, { signal:lifecycle.signal });
+  saveWhere.addEventListener('keydown', event => { if (['Enter',' '].includes(event.key)) { event.preventDefault(); saveWhere.click(); } }, { signal:lifecycle.signal });
+  saveWhereMenu.addEventListener('click', async event => {
+    if (event.target.closest('[data-ai-save-where-pick]')) { saveWhereMenu.hidden = true; if (await pickDir()) setStatus(`이제 PNG를 「${currentDirName()}」 폴더에 저장합니다.`, 'ok'); syncSaveWhere(); }
+    else if (event.target.closest('[data-ai-save-where-clear]')) { saveWhereMenu.hidden = true; await clearDir(); setStatus('PNG를 내려받기 폴더로 저장합니다.', 'ok'); syncSaveWhere(); }
+  }, { signal:lifecycle.signal });
+  document.addEventListener('pointerdown', event => { if (!saveWhereMenu.hidden && !saveWhereMenu.contains(event.target) && event.target !== saveWhere) saveWhereMenu.hidden = true; }, { capture:true, signal:lifecycle.signal });
+  if (FS_DIR_SUPPORTED) void loadSavedDir().then(syncSaveWhere);
+  outputActions?.replaceChildren(panel.querySelector('[data-ai-save-selected]'),saveWhere,saveWhereMenu,copySelected,
     panel.querySelector('[data-ai-insert-selected]'),hwpSelected);
   const moreOutputs = document.createElement('details'); moreOutputs.className = 'ai-output-more';
   moreOutputs.innerHTML = '<summary>결과 다듬기</summary>';// 11-14(시안 review-1114 2-5): 출력이 아니라 결과를 다듬는 도구들
   moreOutputs.append(editableGroups,separatedRecovery,outputDetails,selectedOutputNote);
   outputActions?.after(moreOutputs);
+  syncResultWorkspace = createResultWorkspace({panel, signal:lifecycle.signal,
+    hasUnsavedEdit:() => Boolean(localEraseController.getDraft(selectedOutputItem())) || isLocalSavePending(selectedOutputItem()),
+    onUnsavedEdit:() => {
+      setStatus(isLocalSavePending(selectedOutputItem()) ? '수정본을 저장하고 있습니다. 저장 완료 후 다시 시도하세요.' : '대화로 넘어가기 전에 수정 저장이나 편집 취소를 누르세요.', 'warn');
+      panel.querySelector('[data-ai-edit-save]')?.focus();
+    },
+    stopEditing:() => {
+    if (inlineLabelEditor.active()) inlineLabelEditor.close();
+    localEraseController.cancel();
+  }});
+  // 11-26 시안 v6: 직접 편집 도구 격자(선택·텍스트·지시선 라벨·길이 표시·지우개·자르기·정렬).
+  const cropPieces = createCropPieces({ panel, getTarget:selectedOutputItem, eraser:localEraseController, status:setStatus, signal:lifecycle.signal,
+    getPlan:item => localEraseController.getDraft(item)?.labelPlan || manualLabelPlan(item), afterSplit:() => editTools?.choose('select') });
+  editTools = createEditTools({ panel, labelEditor:inlineLabelEditor, eraser:localEraseController, crop:cropPieces, signal:lifecycle.signal });
   syncSelectedOutputActions();
 
   function prepareVisibleOutput(item) {
@@ -9008,7 +9250,7 @@ ${chatText}` : ''}`;
   graphCanvasButton.type = 'button'; graphCanvasButton.dataset.aiGraphCanvas = ''; graphCanvasButton.textContent = '캔버스에 넣기';
   graphCanvasButton.title = '그래프를 편집 가능한 그래프 객체로 캔버스에 바로 넣습니다.';
   try { panel.querySelector('[data-ai-insert-selected]')?.after?.(graphCanvasButton); } catch {}
-  const syncGraphCanvasButton = () => { const item = selectedOutputItem(); graphCanvasButton.hidden = !isGraphWorkflow(conversionKind); graphCanvasButton.disabled = busy || !item?.graphResult; };
+  const syncGraphCanvasButton = () => { const item = selectedOutputItem(); const hide = !isGraphWorkflow(conversionKind), off = busy || !item?.graphResult; if (graphCanvasButton.hidden !== hide) graphCanvasButton.hidden = hide; if (graphCanvasButton.disabled !== off) graphCanvasButton.disabled = off; };
   if (typeof MutationObserver === 'function' && panel.nodeType === 1) {
     new MutationObserver(syncGraphCanvasButton).observe(panel, { attributes: true, attributeFilter: ['data-ai-workflow', 'data-ai-stage'], subtree: false });
     const insertButton = panel.querySelector('[data-ai-insert-selected]'); if (insertButton?.nodeType === 1) new MutationObserver(syncGraphCanvasButton).observe(insertButton, { attributes: true, attributeFilter: ['disabled'] });

@@ -373,6 +373,8 @@ async function submitContext(statusPromise) {
     setBusy: (value) => { context.busy = value; sends.push(value); },
     // PATHFIX(11-20): 오류 글 공통 함수(js/ai-error-copy.js)
     aiErrorText: error => String(error?.message || error), aiErrorCode: () => '', reportAiError: () => {}, codexMissing: () => false,
+    // 11-23 앱 반영 후보: 첨부 역할(손그림·레퍼런스)을 길 고르기 전에 정함
+    userReferenceRole: () => 'reference',
   };
   const prefix = sourcePart('  const submit = async (type, options = {}) => {', '    imageReceived = false;');
   vm.runInNewContext(`${prefix}\nreturn {request, taskId:activeTaskTabId, sourceIds:runInput.attachments.map(item=>item.id), reviewEnabled:runInput.reviewEnabled, requestEpoch};\n};\nglobalThis.submit = submit;`, context);
@@ -996,6 +998,8 @@ function fixture() {
     generatedImages: [item], selected: item, insertingOutput: false, batchRun: null, status,
     selectedImageOutputOptions:{}, imageOutputOptionsKey:JSON.stringify,
     selectedOutputItem: () => sandbox.selected,
+    // 11-26 PNG 저장 위치: 폴더 연결이 없는 환경(내려받기 그대로)
+    FS_DIR_SUPPORTED: false, currentDirName: () => '', writeToDir: async () => false,
     panel: { querySelector(selector) { assert.equal(selector, '[data-ai-save-selected]'); return footer; } },
     document: { createElement(tag) {
       assert.equal(tag, 'a');

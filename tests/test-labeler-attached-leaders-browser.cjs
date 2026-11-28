@@ -120,7 +120,7 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
         const bounds = { x: 0, y: 0, w: 100, h: 70 }, state = attachmentQA.state.get();
         const svg = attachmentQA.buildExportSvg(state, bounds);
         const path = svg.querySelector('[data-id="sensor"] [data-label-leader-route]');
-        const { canvas } = await attachmentQA.rasterizeExportCanvas(state, { dpi: 150, bounds });
+        const { canvas } = await attachmentQA.rasterizeExportCanvas(state, { dpi: 600, bounds }); // 11-27 지시선 기본 굵기 0.1~0.2mm: 150dpi에서는 1픽셀이 안 돼 인쇄 해상도로 본다.
         const ctx = canvas.getContext('2d');
         // The sensor line is horizontal and midway between the target and text.
         const cx = Math.round(50 / bounds.w * canvas.width), cy = Math.round(32.9 / bounds.h * canvas.height);

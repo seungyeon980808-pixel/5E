@@ -45,7 +45,9 @@ export function looksLikeDrawSummary(text) {
   if (!t) return false;
   if (/그릴 구성|제작할 구성|구성은 다음|정리하(겠|면|면요|자면)|정리했|정리한 구성|이대로 그리|이미지 생성.{0,6}누르/.test(t)) return true;
   // 목록(줄머리 -, ·, •, 숫자.)이 둘 이상이고 그림 낱말이 있으면 정리로 본다.
-  const items = t.split('\n').filter((line) => /^\s*(?:[-·•*]|\d+[.)])\s+/.test(line)).length;
+  const listed = t.split('\n').filter((line) => /^\s*(?:[-·•*]|\d+[.)])\s+/.test(line)), items = listed.length;
+  // 11-26: 번호 붙은 질문 목록(「…할까요?」)은 정리가 아니라 되묻는 답이다 — 「이대로 그리기」를 붙이지 않는다.
+  if (listed.filter((line) => /[?？]\s*$|까요|나요|인가요/.test(line)).length * 2 >= items && items) return false;
   return items >= 2 && /그림|비커|라벨|장면|배치|표시|구성|모식도/.test(t);
 }
 

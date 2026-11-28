@@ -1,3 +1,4 @@
+import { edgeGuideDataUrl, EDGE_GUIDE_NOTE } from './ai-convert-edge-guide.js?v=1.7.0-four-session-integration';
 import { runConvertCheck, runConvertCheckDual, CONVERT_CHECK_KINDS, CONVERT_CHECK_MODE } from './ai-image-convert-check.js?v=1.7.0-four-session-integration';
 import { buildSourceTracingPrompt, SOURCE_TRACING_CONTRACT_VERSION } from './ai-source-tracing-contract.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow, IMAGE_EMPHASIS_REMOVAL_CONTRACT } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
@@ -46,6 +47,10 @@ export const AI_GENERATION_PRIMARY_MODEL = 'gpt-6-luna';
 export const AI_GENERATION_REGENERATE_MODEL = 'gpt-6.1-sol';
 // 11-10: 두 모델 모두 실패하면 원본 그림을 결과로 돌리고 이 안내를 띄운다(실패 화면 없음).
 export const AI_GENERATION_FAILED_NOTICE = '변환이 잠시 안 되어 원본을 그대로 넣었습니다. 다시 그리기를 눌러 주세요.';
+// 11-23 실험: 기출 Sol 다시 그리기에 붙이는 한 줄 — Sol만 쓰면 원문자(㉠㉡㉢) 빈 동그라미가 남았다(29장 중 7). Luna에 붙이면 확대 원을 통째로 지워 Luna에는 쓰지 않는다.
+export const EXAM_CIRCLED_LETTER_NOTE = '동그라미 문자(㉠·㉡·ⓐ처럼 글자를 감싼 동그라미)는 글자이므로 동그라미까지 지운다. 그 밖의 빈 네모 틀은 남긴다.';
+// 11-23 실험: 글자 옆 화살촉 화살표(「자극」처럼 자리를 가리키는 표시)를 지시선으로 보고 지우는 일(Sol 2/3·Luna 3/3)을 막는 한 줄 — 붙이면 0/2, 지시선 많은 문제 부작용 0/14.
+export const EXAM_ARROWHEAD_KEEP_NOTE = '글자 옆에 있어도 끝에 화살촉이 달린 화살표(자극·빛·힘이 들어가는 자리를 가리키는 표시)는 지시선이 아니므로 같은 자리에 남긴다. 화살촉 없는 가는 선만 지시선으로 보고 지운다.';
 export const redrawPromptFor = imageKind => imageKind === 'exam' ? REDRAW_EXAM_PROMPT : REDRAW_TEXTBOOK_PROMPT;
 // 11-10: 기본 그림 경로에서도 사용자가 고른 「화살표 제거」를 지킨다. 짧은 지시문에는 이 선택이 빠져 있었다(무시되던 결함).
 export const REDRAW_SCIENTIFIC_ARROW_NOTE = '사용자가 화살표 제거를 켰습니다. 이번 작업에서는 과학적 힘·운동·혈류·전류 화살표도 제거하세요. 실제 관·혈관·도선·물체 윤곽·눈금은 보존하세요.';
@@ -58,10 +63,12 @@ export function redrawRequestText({ imageKind, userRequest = '' } = {}) {
 export const AI_LABEL_READ_MODEL = 'gpt-6.1-sol';
 export const AI_LABEL_READ_NOTICE = '라벨 글자를 읽지 못해 그림만 넣었습니다. 라벨은 직접 추가할 수 있습니다.';
 // 11-10: 읽은 글자 → 검수 없이 쓰는 확정 라벨 명세(frozen). 편집 라벨 삽입·미리보기 경로가 그대로 쓴다.
-export function labelPlanFromRead(items) {
+export function labelPlanFromRead(items, { figureRestore = false } = {}) {
   const { labels } = labelReadToEditablePlan(items);
   return freezeLabelPlan({ version: EDITABLE_IMAGE_LABEL_PLAN_VERSION, policyVersion: SOURCE_LABEL_POLICY_VERSION, frozen: true,
-    status: labels.length ? 'ready' : 'empty', labels: labels.map(label => ({ ...label, scope: 'general' })), excludedLabels: [], preservedMarks: [],
+    status: labels.length ? 'ready' : 'empty', labels: labels.map((label, i) => ({ ...label, scope: 'general',
+      // 11-27 사용자: 변환 라벨 복구도 할로는 기본 끔 — 치수선 위 글자만 선을 가리려고 켠다(그림 생성 라벨 살리기와 같게).
+      haloRatio: items[i].onDimensionLine && !items[i].leader ? 0.34 : 0 })), excludedLabels: [], preservedMarks: [],
     uncertainties: [], reviewRequired: false, rejectedCount: 0, relationGroups: [], sourceBindings: [] });
 }
 const clone = value => structuredClone(value);
@@ -396,7 +403,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   bypassCache = false, preciseRestore = false, verifyOnly = false, previousCandidate, localRestore,
   generationInstructions = request, generationSource, backgroundCache, previousCandidates = [], graphLabels = 'route',
   progress = null, onAiFailure = () => {}, onAiRetry = () => {}, retryPolicy = AI_RETRY_POLICY, regenerate = false,
-  readText = null, legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng } = {}) { // 11-10: legacyLabelPipeline=true면 예전 계약 프롬프트·관찰·검수 경로(내부용)
+  readText = null, legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng,
+  textbookEdgeGuide = false, examSolCircled = false } = {}) { // 11-23 실험 선택 옵션(기본 꺼짐): textbookEdgeGuide=교과서 그리기에 원본 윤곽 밑그림 첨부, examSolCircled=기출 다시 그리기를 Sol + 원문자 한 줄로 // 11-10: legacyLabelPipeline=true면 예전 계약 프롬프트·관찰·검수 경로(내부용)
   const started = performance.now();
   const labelSelection = { ...selection, model: 'gpt-6-luna', effort: 'medium' };
   const workflow = normalizeImageLabelWorkflow(rawWorkflow, { requireExplicit: true });
@@ -423,6 +431,9 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   const reviewSkipped = workflow.labelResult === 'remove' && !verifyOnly && !legacyLabelPipeline;
   // 11-10: 사용자가 다시 그리기(새 변형·재생성·정밀 복원)를 요청한 생성은 Sol, 나머지(첫 생성·라벨 켬끔 전환)는 Luna. 라벨 켬끔은 같은 그림을 재사용해야 하므로 이전 결과로 바꾸지 않는다.
   const generationModel = !verifyOnly && (preciseRestore || regenerate === true) ? AI_GENERATION_REGENERATE_MODEL : AI_GENERATION_PRIMARY_MODEL;
+  // 11-23 실험(기본 꺼짐): 기출 다시 그리기를 Sol로 — 밤샘 실험에서 Luna는 글자 옆 선(빛 화살표·확대 잇는 선·치수선)을 함께 지우는 일이 잦았다(처음 보는 문제 24장 중 구조 손실 7 vs Sol 3).
+  const examSol = examSolCircled && examRedraw && !legacyLabelPath;
+  const firstModel = examSol ? AI_GENERATION_REGENERATE_MODEL : generationModel;
   const phase = async (name, action) => {
     cancelled(signal); onPhase(name); if (progress) progress.phase = name; const t = performance.now();
     try { return await action(); }
@@ -448,15 +459,19 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
         sourceSha256: await imageLabelDigest(imageSource.data) };
   // 11-10: 기본 경로는 사용자가 고른 화살표 제거를 요청 본문에 넣는다(예전 계약 경로는 selectedMarkInstructions가 담당).
   const arrowNote = !legacyLabelPath && workflow.scientificArrows === 'remove' ? REDRAW_SCIENTIFIC_ARROW_NOTE : '';
-  let generationPayload, backgroundContract, baseUserRequest = '', convertCheckResult = null;
+  let generationPayload, backgroundContract, baseUserRequest = '', convertCheckResult = null, edgeNote = '';
   if (drawsNew && !verifyOnly) {
     const preciseNote = preciseRestore ? '사용자가 그림 정밀 복원을 선택했습니다. 수정 전 선택 버전에서 요청한 구조 오류만 원본과 대조해 수정합니다.' : '';
-    baseUserRequest = [generationInstructions, arrowNote, preciseNote].filter(Boolean).join('\n\n');
+    const circledNote = examSol ? `${EXAM_CIRCLED_LETTER_NOTE} ${EXAM_ARROWHEAD_KEEP_NOTE}` : '';
+    baseUserRequest = [generationInstructions, arrowNote, preciseNote, circledNote].filter(Boolean).join('\n\n');
     const text = legacyLabelPath
       ? approvedFirstRequestText({ prompt:generationPrompt, instructions: [generationInstructions, selectedMarkInstructions(workflow), examRedraw ? EXAM_REDRAW_INSTRUCTION : '', preciseNote].filter(Boolean).join('\n\n') })
-      : redrawRequestText({ imageKind: workflow.imageKind, userRequest: [generationInstructions, arrowNote, preciseNote].filter(Boolean).join('\n\n') });
-    generationPayload = { ...selection, model: generationModel, effort: 'medium', text,
-      attachments: [{ ...imageSource }, ...(preciseRestore && previousCandidate ? [{ name: '수정 전 선택 버전', data: previousCandidate.data }] : [])] };
+      : redrawRequestText({ imageKind: workflow.imageKind, userRequest: baseUserRequest });
+    // 11-23 실험(기본 꺼짐): 교과서는 원본 윤곽 밑그림을 두 번째 첨부로(못 만들면 없이 진행). 다시 그리기(목록 대조 고침)에도 같이 간다.
+    const edgeGuide = textbookEdgeGuide && workflow.imageKind === 'general' && !legacyLabelPath && !preciseRestore ? await edgeGuideDataUrl(imageSource.data, { signal }) : null;
+    edgeNote = edgeGuide ? EDGE_GUIDE_NOTE : '';
+    generationPayload = { ...selection, model: firstModel, effort: 'medium', text: edgeNote ? `${text}\n\n${edgeNote}` : text,
+      attachments: [{ ...imageSource }, ...(edgeGuide ? [{ name: '원본 윤곽 밑그림', data: edgeGuide }] : []), ...(preciseRestore && previousCandidate ? [{ name: '수정 전 선택 버전', data: previousCandidate.data }] : [])] };
     backgroundContract = await imageLabelBackgroundContract({ payload: generationPayload, sourceSha256, harness: metrics.generationHarness });
     metrics.generationHarness = backgroundContract.harness;
   }
@@ -488,7 +503,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
           cancel: () => raster.cancel?.(), onFailure: onAiFailure, onRetry: onAiRetry,
           run: choice => {
             metrics.attempts.fullGeneration++;
-            return raster.generate({ ...generationPayload, text, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, examRedraw, signal });
+            return raster.generate({ ...generationPayload, text: edgeNote && !text.includes(edgeNote) ? `${text}\n\n${edgeNote}` : text, model: choice.model, effort: choice.effort }, { imageKind: workflow.imageKind, examRedraw, signal });
           } });
         metrics.calls.fullGeneration += result.imageToolCalls;
         const raw = await resolveGeneratedRaster(result.src, { whitePng: true });

@@ -166,3 +166,12 @@ test('makeFigureSet 결과에 labelHints가 실린다', async () => {
   const r = await engineOf(ai).makeFigureSet({ request: '경사각 θ인 빗면 위 물체 A', raw: true });
   assert.deepEqual(r.labelHints, ['θ', 'A']);
 });
+
+test('위치별 코멘트의 좌표·머리 글은 라벨 후보가 아니다(11-25 밤샘 검수)', () => {
+  const ins = '표시한 코멘트대로 고쳐 주세요.\n\n위치별 코멘트:\n'
+    + '[선택 버전 생성 결과 2 · 라벨; 이미지ID generated-2] 박스 1 (x=3.5536458333333334%, y=15.3296875%, w=15.455729166666668%, h=66.578125%): 이 부분에 창문\n'
+    + '[선택 버전 생성 결과 2 · 라벨; 이미지ID generated-2] 박스 2 (x=33.4671875%, y=67.43046875%, w=15.6%, h=18.1%): 점 P에 θ′ 표시';
+  const hints = labelHintsAfterEdit('높이 H인 건물에서 v_0로 2R만큼', ins);
+  assert.deepEqual(hints, ['H', 'v_0', '2R', 'P', 'θ′']);
+  assert.ok(!hints.some((v) => /%|^[xywh]$/.test(v)));
+});

@@ -349,6 +349,12 @@ test('TPK-005: current library and task workspace smoke contract has real contro
           .some((region) => { const bounds = region.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0; });
       }, undefined, { timeout: 2_000 });
       const normalizedRegion = async () => {
+        // 11-27 코멘트 번호 단추: 영역 테두리는 번호를 눌러 내용이 펼쳐져 있을 때만 보인다. 닫혀 있으면(확대 단추를 누른 뒤 등) 번호를 눌러 다시 편다.
+        const shown = () => page.evaluate(() => Array.from(document.querySelectorAll('#ai-image-panel .ai-result-pane .ai-comment-region'))
+          .some((region) => { const bounds = region.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0; }));
+        if (!await shown()) { const marker = panel.locator('.ai-result-pane [data-ai-comment-marker]').first(); await marker.focus(); await marker.press('Enter'); }
+        await page.waitForFunction(() => Array.from(document.querySelectorAll('#ai-image-panel .ai-result-pane .ai-comment-region'))
+          .some((region) => { const bounds = region.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0; }), undefined, { timeout: 2_000 });
         const [regionBox, imageBox] = await Promise.all([
           page.evaluate(() => {
             const region = Array.from(document.querySelectorAll('#ai-image-panel .ai-result-pane .ai-comment-region'))

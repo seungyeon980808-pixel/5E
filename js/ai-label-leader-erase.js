@@ -62,7 +62,7 @@ const median = values => { const v = values.slice().sort((a, b) => a - b); retur
  * 읽은 지시선 하나를 그림에서 찾는다(곧은 선만). 순수 함수.
  * @returns {{ ok: true, start: {x,y}, end: {x,y}, ux, uy, nx, ny, t0, t1, samples: {t,x,y,lo,hi,erase}[], width } | { ok: false, reason: string }}
  */
-export function traceLeaderLine(luma, W, H, item) {
+export function traceLeaderLine(luma, W, H, item, opts = {}) {
   const leader = item?.leader;
   if (!leader) return { ok: false, reason: 'no-leader' };
   const box = { x0: item.x * W, y0: item.y * H, x1: (item.x + item.w) * W, y1: (item.y + item.h) * H };
@@ -134,8 +134,10 @@ export function traceLeaderLine(luma, W, H, item) {
   // LEADERFIX(11-22): 여기부터의 「확실하지 않음」은 지우기만 못 믿는 것이다 — 찾은 선(line: 글자 쪽 끝 → 진한 점이 끝나는 곳)은 돌려줘
   // 다시 그린 그림의 5E 지시선에 쓴다(빗금 속에서 끝나는 선은 처음 닿는 물체 선이 아니라 실제 선 끝이 가리키는 끝).
   const line = { start, end: rawEnd };
-  if (runOfWide(samples.slice(0, edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-text' };
-  if (runOfWide(samples.slice(-edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-target', line };
+  // 실험(11-22 변환 갈래, 선택 옵션): 기출 그림은 화살촉 달린 지시선이 드물다 — opts.allowTextBlob이면 글자 쪽 끝 넓은 띠(글자 획과 붙음)를,
+  // opts.allowTargetBlob이면 가리키는 끝 넓은 띠(굵은 Z선·피스톤 띠 같은 물체)를 화살촉으로 보지 않고 아래 「처음 닿는 물체」 다듬기에 맡긴다. 기본값은 그대로.
+  if (!opts.allowTextBlob && runOfWide(samples.slice(0, edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-text' };
+  if (!opts.allowTargetBlob && runOfWide(samples.slice(-edge)) >= 5) return { ok: false, reason: 'arrow-or-dot-at-target', line };
   // 글자 쪽 끝은 비어 있어야 한다: 끝 너머(글자 상자 밖)에 진한 점이 이어지면 굽은 화살표·다른 획의 일부다
   // (실제 읽기에서 「산소」「NADP⁺」로 가는 굽은 과정 화살표의 곧은 부분을 지시선으로 잡았던 것).
   {
@@ -261,7 +263,7 @@ export function eraseTracedLeader(rgba, W, H, trace) {
  * @returns {{ items: object[], leaders: { text, status: 'erased'|'kept', reason?: string }[], erasedLeaderPixels: number, erasedGlyphPixels: number }}
  *   items: 지운 지시선은 찾은 실제 끝점으로 고친 leader, 확실하지 않은 지시선은 leader: null(원래 선을 그림에 남기고 5E 라벨은 글자만 — 두 줄 방지).
  */
-export function eraseLabelsAndLeaders(rgba, W, H, items = []) {
+export function eraseLabelsAndLeaders(rgba, W, H, items = [], traceOptions = {}) {
   // 투명한 바탕(PNG 알파)은 흰 종이로 편다 — 투명 점은 RGB가 검정이라 채우기가 검정·흰 줄 자국을 남겼다(시험지 그림은 흰 바탕).
   flattenOnWhite(rgba);
   const luma = lumaOf(rgba, W, H);
@@ -270,7 +272,7 @@ export function eraseLabelsAndLeaders(rgba, W, H, items = []) {
   for (const item of items) {
     if (!item?.leader) { out.push({ ...item, leader: null }); continue; }
     let trace;
-    try { trace = traceLeaderLine(luma, W, H, item); } catch { trace = { ok: false, reason: 'error' }; }
+    try { trace = traceLeaderLine(luma, W, H, item, traceOptions); } catch { trace = { ok: false, reason: 'error' }; }
     const clamp = v => Math.min(1, Math.max(0, v));
     if (!trace.ok) {
       leaders.push({ text: item.text, status: 'kept', reason: trace.reason });

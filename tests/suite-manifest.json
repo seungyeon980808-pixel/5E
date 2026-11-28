@@ -962,6 +962,42 @@
       ]
     },
     {
+      "path": "tests/test-ai-figure-edit-merge.mjs",
+      "findingIds": [
+        "FIX1123-FIGURE-EDIT-MERGE-DRIFT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-user-refs.mjs",
+      "findingIds": [
+        "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-candidate-1123.mjs",
+      "findingIds": [
+        "CAND1123-FIGURE-WINNERS-DEFAULT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-panels-1123e.mjs",
+      "findingIds": [
+        "FIX1123-FIGURE-MULTI-PANELS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-sketch-1123.mjs",
+      "findingIds": [
+        "FIG173-B-SKETCH-DETAIL"
+      ]
+    },
+    {
+      "path": "tests/test-ai-task-bridge-listeners-1123.mjs",
+      "findingIds": [
+        "CAND1123-TASK-BRIDGE-LISTENERS"
+      ]
+    },
+    {
       "path": "tests/test-ai-figure-chat-refs.mjs",
       "findingIds": [
         "NIGHT172B-FIGURE-CHAT-REFS"
@@ -2488,6 +2524,18 @@
       "path": "tests/test-ai-generated-label-snap-browser.cjs",
       "findingIds": [
         "LEADERFIX-GENERATED-LABEL-SNAP"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-user-refs-browser.cjs",
+      "findingIds": [
+        "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-candidate-browser.cjs",
+      "findingIds": [
+        "CAND1123-FIGURE-WINNERS-DEFAULT"
       ]
     },
     {

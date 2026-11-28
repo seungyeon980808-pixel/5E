@@ -3,6 +3,18 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {fixture, verifiedPlan, snapshot} = require('./fixtures/ai-image-label-workflow.cjs');
+
+// 11-27: 변환에도 「AI와 대화 / 직접 편집」이 생겨 지우개·라벨 편집 단추가 직접 편집 칸으로 옮겨졌다 — 먼저 직접 편집으로 들어간다.
+async function toolClick(scope, sel) {
+  const b = scope.locator(sel), before = await b.getAttribute('aria-pressed').catch(() => null);
+  const manual = scope.locator('[data-result-mode="manual"]');
+  if (await manual.isVisible().catch(() => false) && await manual.getAttribute('aria-pressed') !== 'true') {
+    await manual.click(); await scope.page().waitForTimeout(400); // 칸 바뀜 애니메이션이 끝난 뒤
+    if (sel.includes('label-edit') && before !== 'true' && await b.getAttribute('aria-pressed') === 'true') return;
+  }
+  if (await b.isVisible()) await b.click(); else await b.dispatchEvent('click');
+}
+
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/local-edit-save');
 fs.mkdirSync(evidence, {recursive:true});
 
@@ -10,7 +22,7 @@ test('eraser hover keeps the latest footprint per paint and cancels queued curso
   const dir=path.join(evidence,'hover-paint');fs.mkdirSync(dir,{recursive:true});
   const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
   const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   const img=panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=await img.boundingBox();
   await page.mouse.move(r.x+r.width*.35,r.y+r.height*.75);
   await panel.locator('.ai-local-erase-cursor').waitFor();
@@ -27,7 +39,7 @@ test('eraser hover keeps the latest footprint per paint and cancels queued curso
   fs.writeFileSync(path.join(dir,'burst.json'),JSON.stringify(result,null,2));
   assert.ok(result.writes<=12,'hover must not rebuild the footprint for every input before the next paint: '+result.writes);
   assert.ok(Math.abs(result.cx-(.25+239/240*.4)*512)<.01,'the footprint follows the last input, not the first');
-  assert.equal(result.cy,288);assert.equal(result.radius,32);
+  assert.equal(result.cy,288);assert.equal(result.radius,12);
   // The next frame must read the live geometry, rather than cache image bounds.
   const zoom=await page.evaluate(async()=>{
     const panel=document.querySelector('#ai-image-panel'),img=panel.querySelector('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=img.getBoundingClientRect();
@@ -50,7 +62,7 @@ test('eraser hover keeps the latest footprint per paint and cancels queued curso
     return panel.querySelectorAll('.ai-local-erase-cursor').length;
   },action);
   for(const action of ['leave','cancel','tool'])assert.equal(await cancelQueued(action),0,'queued footprint is removed on '+action);
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   assert.equal(await cancelQueued('dispose'),0,'queued footprint cannot outlive its workspace');
   assert.deepEqual((await snapshot(page))[0].generated,saved);assert.equal(await page.evaluate(()=>__task2.sends.length),0);assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({engine:process.env.TASK2_ENGINE,result,zoom,cancelled:['leave','cancel','tool','dispose'],savedUnchanged:true,paidAiCalls:0,errors},null,2));
@@ -60,7 +72,7 @@ test('an oversized brush gesture never silently truncates and erases a shortcut 
   const dir=path.join(evidence,'long-gesture');fs.mkdirSync(dir,{recursive:true});
   const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
   const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   const source=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src');
   await page.evaluate(()=>{
     const img=document.querySelector('#ai-image-panel .ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=img.getBoundingClientRect();
@@ -106,7 +118,7 @@ for (const rejected of [false, true]) {
         'try { await previewChanged(item); if(window.__holdLocalPreview) { window.__holdLocalPreview=false; await new Promise((resolve,reject)=>{window.__heldLocalPreview={resolve,reject};}).finally(()=>{window.__heldLocalPreviewSettled=true;}); } }')}));
     }});
     const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;
-    await panel.locator('[data-ai-local-erase]').click();
+    await toolClick(panel,'[data-ai-local-erase]');
     await page.evaluate(()=>{window.__holdLocalPreview=true;});
     const box=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').last().boundingBox();
     await page.mouse.move(box.x+40/512*box.width,box.y+90/384*box.height);await page.mouse.down();
@@ -154,19 +166,22 @@ test('manual edits stay a draft until one save; hover, labels, cancel and task b
   const original=(await snapshot(page))[0].generated[0];
   const image=selectedImage(); await image.waitFor({state:'visible'});
   await page.waitForFunction(()=>document.querySelector('[data-ai-label-toggle]')?.getAttribute('aria-checked')==='true');
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
+  // 11-26: 「지운 자리」 기본값이 흰색이 되었다 — 첫 획은 투명을 골라 두 방식을 모두 확인한다.
+  assert.equal(await panel.locator('[data-ai-erase-background]').inputValue(),'white');
+  await panel.locator('[data-ai-erase-background]').selectOption('transparent');
   const naturalPoint=async ([x,y])=>{const b=await selectedImage().boundingBox();return{x:b.x+x/512*b.width,y:b.y+y/384*b.height};};
   const hover=await naturalPoint([120,100]);await page.mouse.move(hover.x,hover.y);
   const ring=panel.locator('.ai-local-erase-cursor'); await ring.waitFor();
-  assert.equal(await panel.locator('[data-ai-erase-size]').inputValue(),'64','brush starts at 64 source-image pixels');
-  const circle=ring.locator('circle').first();assert.equal(await circle.getAttribute('r'),'32');
+  assert.equal(await panel.locator('[data-ai-erase-size]').inputValue(),'24','brush starts at 24 source-image pixels (시안 v6, 11-25)');
+  const circle=ring.locator('circle').first();assert.equal(await circle.getAttribute('r'),'12');
   const visibleRadius=(await circle.boundingBox()).width;
-  assert.ok(Math.abs(visibleRadius-3-64/512*(await image.boundingBox()).width)<2,'cursor uses image-pixel diameter at the actual zoom: '+JSON.stringify({ring:visibleRadius,image:(await image.boundingBox()).width,overlay:await ring.boundingBox()}));
+  assert.ok(Math.abs(visibleRadius-3-24/512*(await image.boundingBox()).width)<2,'cursor uses image-pixel diameter at the actual zoom: '+JSON.stringify({ring:visibleRadius,image:(await image.boundingBox()).width,overlay:await ring.boundingBox()}));
   assert.deepEqual((await snapshot(page))[0].generated, [original], 'hover changes no saved pixels or revisions');
   await panel.locator('[data-ai-zoom-action="in"]').click();
   const zoomedPoint=await naturalPoint([120,100]);await page.mouse.move(zoomedPoint.x,zoomedPoint.y);
   await ring.waitFor();
-  assert.ok(Math.abs((await circle.boundingBox()).width-3-64/512*(await image.boundingBox()).width)<2,'hover footprint follows the zoomed image');
+  assert.ok(Math.abs((await circle.boundingBox()).width-3-24/512*(await image.boundingBox()).width)<2,'hover footprint follows the zoomed image');
   const stroke=async points=>{
     const screen=[];for(const p of points)screen.push(await naturalPoint(p));
     await page.mouse.move(screen[0].x,screen[0].y);await page.mouse.down();
@@ -234,18 +249,22 @@ test('manual edits stay a draft until one save; hover, labels, cancel and task b
   const pixels=await page.evaluate(async data=>{const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');const p=await decodeScopedPng(Uint8Array.from(atob(data.split(',')[1]),c=>c.charCodeAt(0)));const at=(x,y)=>[...p.data.slice((y*p.width+x)*4,(y*p.width+x)*4+4)];return{erased:at(40,120),white:at(120,330),untouched:at(460,120)};},child.data);
   assert.deepEqual(pixels,{erased:[0,0,0,0],white:[255,255,255,255],untouched:[17,17,17,255]});
   const beforeDiscard=(await snapshot(page))[0].generated;
-  await panel.locator('[data-ai-local-erase]').click();await panel.locator('[data-ai-erase-mode="brush"]').click();
+  await toolClick(panel,'[data-ai-local-erase]');await panel.locator('[data-ai-erase-mode="brush"]').click();
   await stroke([[460,90],[460,170]]);
   await panel.locator('[data-ai-edit-discard]').click();
   await panel.locator('[data-ai-edit-save]').waitFor({state:'hidden'});
   assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),false);assert.deepEqual((await snapshot(page))[0].generated,beforeDiscard);
   assert.equal(await panel.locator('[data-ai-edit-redo]').isDisabled(),true,'discard removes the unsaved history');
   await panel.locator('[data-ai-label-toggle]').click();
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   await stroke([[460,200],[460,280]]);await page.keyboard.press('Escape');
   assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),true,'closing the tool retains completed edits');
   await panel.locator('[data-ai-edit-save]').click();
-  await page.waitForFunction(()=>document.querySelectorAll('#ai-image-panel .ai-generated-card').length===3);
+  // 11-26 시안(판 목록 8): 손으로 고친 판을 다시 저장하면 새 판을 만들지 않고 같은 판에 덮어쓴다.
+  const overwritten=await page.evaluate(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId);
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiEditDraft!=='true'&&!document.querySelector('#ai-image-panel [data-ai-edit-save]:not([hidden])'));
+  assert.equal(await page.evaluate(()=>document.querySelectorAll('#ai-image-panel .ai-generated-card').length),2,'re-saving a hand-edited version overwrites it');
+  assert.equal(await page.evaluate(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId),overwritten);
   assert.equal(await panel.locator('[data-ai-label-toggle]').getAttribute('aria-checked'),'false','label OFF carries to the next saved revision');
   await panel.locator('[data-ai-label-toggle]').click();
   await panel.locator('[data-ai-insert-selected]').click();
@@ -253,7 +272,7 @@ test('manual edits stay a draft until one save; hover, labels, cancel and task b
   const objects=await page.evaluate(()=>window.__candidateQA.state.get().objects);
   assert.ok(objects.some(o=>o.aiAutoLabel && o.text==='전자'),'saved local bitmap still outputs an editable native label');
   assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
-  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:process.env.TASK2_ENGINE||'chromium',savedRevisions:3,gesturesInFirstSave:2,defaultBrushDiameter:64,undoRedo:true,historyScopedToCandidate:true,pixels,editableLabelOutput:true,paidAiCalls:0,errors},null,2));
+  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:process.env.TASK2_ENGINE||'chromium',savedRevisions:2,overwroteLocalVersion:true,gesturesInFirstSave:2,defaultBrushDiameter:24,undoRedo:true,historyScopedToCandidate:true,pixels,editableLabelOutput:true,paidAiCalls:0,errors},null,2));
 });
 
 test('empty margins cancel tools without edits; a new stroke replaces the undone branch', {timeout:90000}, async t => {
@@ -274,7 +293,7 @@ test('empty margins cancel tools without edits; a new stroke replaces the undone
     }
     throw new Error('Fixture needs a visible empty image margin');
   });
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   const margin=await blank();await page.mouse.click(margin.x,margin.y);
   assert.equal(await panel.locator('[data-ai-local-erase]').getAttribute('aria-pressed'),'false');
   assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),false);
@@ -285,12 +304,13 @@ test('empty margins cancel tools without edits; a new stroke replaces the undone
     const r=await image().boundingBox();await page.mouse.click(r.x+x/512*r.width,r.y+y/384*r.height);
     await page.waitForFunction(()=>{const b=document.querySelector('[data-ai-edit-save]');return b&&!b.hidden&&!b.disabled;});
   };
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   await panel.locator('[data-ai-erase-background]').selectOption('white');
   assert.equal(await panel.locator('[data-ai-local-erase]').getAttribute('aria-pressed'),'true','tool settings do not dismiss the tool');
   await stroke(40,120);const first=await image().getAttribute('src');
   for(const width of [1440,1080]) {
     await page.setViewportSize({width,height:1000});
+    await page.waitForTimeout(350); // 11-27: 변환도 칸 너비가 200ms 동안 바뀐다 — 끝난 뒤에 잰다
     await panel.locator('[data-ai-edit-undo]').waitFor({state:'visible'});
     const a=await panel.locator('[data-ai-edit-undo]').boundingBox(),b=await panel.locator('[data-ai-edit-redo]').boundingBox();
     assert.ok(Math.abs(a.y-b.y)<2 && b.x>=a.x+a.width,'history controls remain on one row at width '+width);
@@ -326,7 +346,7 @@ test('empty margins cancel tools without edits; a new stroke replaces the undone
       commit:async()=>{probe.commits++;},status:()=>{}});
     probe.controller=controller;window.__historyProbe=probe;
   });
-  const probe=page.locator('[data-history-probe]');await probe.locator('[data-ai-local-erase]').click();
+  const probe=page.locator('[data-history-probe]');await toolClick(probe,'[data-ai-local-erase]');
   const pb=await probe.locator('img').boundingBox();await page.mouse.click(pb.x+40/512*pb.width,pb.y+120/384*pb.height);
   await page.waitForFunction(()=>{const p=window.__historyProbe;return p.controller.getDraft(p.item)&&!p.root.querySelector('[data-ai-edit-save]').disabled;});
   const busyResult=await page.evaluate(async()=>{
@@ -396,7 +416,7 @@ test('mapped labels survive local saving and legacy manual versions can insert w
   await panel.waitFor({state:'visible'});
   await panel.locator('[data-tab-id="task-0"]').click();
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='selected-0');
-  await panel.locator('[data-ai-local-erase]').click();
+  await toolClick(panel,'[data-ai-local-erase]');
   const box=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').boundingBox();
   await page.mouse.click(box.x+40/512*box.width,box.y+120/384*box.height);
   await page.waitForFunction(()=>{const b=document.querySelector('[data-ai-edit-save]');return b&&!b.hidden&&!b.disabled;});
@@ -424,7 +444,7 @@ for(const rejected of [false,true])test('late eraser preview cannot remount a di
   const body=source.replace('const processor = createImageEraseProcessor(win);','const processor = createImageEraseProcessor(win); panel.__eraseBindingCount=()=>bindings.size;').replace(seam,'try { await previewChanged(item); if(window.__holdLocalPreview) { window.__holdLocalPreview=false; await new Promise((resolve,reject)=>{window.__heldLocalPreview={resolve,reject};}).finally(()=>{window.__heldLocalPreviewSettled=true;}); } }');
   await page.route('**/js/ai-image-local-erase.js*',route=>route.fulfill({contentType:'text/javascript',body}));
  }});
- const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;await panel.locator('[data-ai-local-erase]').click();await page.evaluate(()=>{window.__holdLocalPreview=true;});
+ const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;await toolClick(panel,'[data-ai-local-erase]');await page.evaluate(()=>{window.__holdLocalPreview=true;});
  const box=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').last().boundingBox();
  await page.mouse.move(box.x+40/512*box.width,box.y+90/384*box.height);await page.mouse.down();await page.mouse.move(box.x+40/512*box.width,box.y+180/384*box.height,{steps:5});await page.mouse.up();
  await page.waitForFunction(()=>Boolean(window.__heldLocalPreview));await page.evaluate(async()=>{window.__disposedErasePanel=document.querySelector('#ai-image-panel');await __task2Manager.dispose();});
@@ -434,4 +454,19 @@ for(const rejected of [false,true])test('late eraser preview cannot remount a di
  const settled=await page.evaluate(()=>({bindings:__disposedErasePanel.__eraseBindingCount(),draftAttribute:__disposedErasePanel.dataset.aiEditDraft??null}));
  const generatedAfter=(await snapshot(page))[0].generated;fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({engine,rejected,disposed,settled,savedUnchanged:JSON.stringify(saved)===JSON.stringify(generatedAfter),paidAiCalls:await page.evaluate(()=>__task2.sends.length),errors},null,2));
  assert.deepEqual(disposed,{bindings:0,draftAttribute:null});assert.deepEqual(settled,disposed,'late completion cannot rebind the disposed eraser or resurrect its draft UI');assert.deepEqual(generatedAfter,saved);assert.equal(await page.evaluate(()=>__task2.sends.length),0);assert.deepEqual(errors,[]);
+});
+
+// 11-26 사용자 「지우개를 누르는 순간 지우개 끝과 확대경이 깜빡이며 사라졌다 나타남」: 포인터 잡기를 풀 때의 pointerleave를 무시한다.
+test('a click keeps the eraser footprint and magnifier on screen without moving the mouse',{timeout:90000},async t=>{
+  const dir=path.join(evidence,'click-no-flicker');fs.mkdirSync(dir,{recursive:true});
+  const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
+  const panel=page.locator('#ai-image-panel');
+  await toolClick(panel,'[data-ai-local-erase]');
+  const r=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').boundingBox();
+  await page.mouse.move(r.x+r.width*.4,r.y+r.height*.5);await page.waitForTimeout(300);
+  await page.evaluate(()=>{window.__fr=[];const loop=()=>{const lens=document.getElementById('ai-erase-magnifier');window.__fr.push([!!document.querySelector('#ai-image-panel .ai-local-erase-cursor'),Boolean(lens&&!lens.hidden)]);if(window.__fr.length<90)requestAnimationFrame(loop);};requestAnimationFrame(loop);});
+  await page.mouse.down();await page.mouse.up();await page.waitForTimeout(1500);
+  const frames=await page.evaluate(()=>window.__fr);
+  assert.equal(frames.filter(([cursor,lens])=>!cursor||!lens).length,0,'footprint and magnifier never disappear around a click');
+  assert.deepEqual(errors,[]);
 });

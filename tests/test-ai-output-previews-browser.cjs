@@ -6,7 +6,8 @@ const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/pa
 // 10-22(e704e45e)부터 「좌우·상하·슬라이더 비교」는 「비교 ▾」 메뉴 안에 있다 — 메뉴를 열고 누른다.
 const clickCompare = async (scope, selector = '[data-ai-compare]') => { const menu = scope.locator('.ai-compare-menu').first(); if (await menu.count() && !await menu.evaluate(d => d.open)) await menu.locator('summary').click(); await scope.locator(selector).first().click(); };
 // 10-22(83201a54)부터 「그룹으로 보기·분리 복구·출력 상세·선택 결과 안내」는 닫힌 「고급 출력」(details.ai-output-more) 안에 있다 — 열고 확인·클릭한다.
-const openOutputMore = async page => { const d = page.locator('#ai-image-panel .ai-output-more').first(); if (await d.count() && !await d.evaluate(e => e.open)) await d.locator('summary').click(); };
+const openOutputMore = async page => { const manualForMore = page.locator('#ai-image-panel [data-result-mode="manual"]'); if (await manualForMore.isVisible().catch(() => false) && await manualForMore.getAttribute('aria-pressed') !== 'true' && await manualForMore.isEnabled()) await manualForMore.click(); // 11-27: 「결과 다듬기」는 직접 편집 칸에 있다
+  const d = page.locator('#ai-image-panel .ai-output-more').first(); if (await d.count() && !await d.evaluate(e => e.open)) await d.locator('summary').click(); };
 const root = path.resolve(__dirname, '..');
 const evidenceRoot = process.env.OUTPUT_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-followup-0928/output/green');
 const original = fs.readFileSync(path.join(root, 'tests/test-ai-workspace-lifecycle-browser.cjs'), 'utf8');
@@ -460,7 +461,8 @@ for (const engine of ['chromium', 'webkit']) {
     // 하네스 기록은 짧은 지시문 자체의 해시다(물체별 분리 등 덧붙는 지시는 요청 글에만 붙는다 — off에서는 둘이 같다).
     assert.equal(result.generationHarness.promptSha256, result.shortPromptSha256, 'Recorded harness digest is the current short prompt');
     assert.equal(metrics.generationHarness.promptSha256, result.shortPromptSha256);
-    if (sourceSeparation === 'off') assert.equal(result.textSha256, result.shortPromptSha256, 'Without separation the sent text is exactly the short prompt');
+    // 1.7.3 교과서 변환은 원본 윤곽 밑그림(두 번째 첨부)을 함께 보내고 그 안내 한 문단(EDGE_GUIDE_NOTE)을 뒤에 붙인다.
+    if (sourceSeparation === 'off') assert.ok(result.textSha256 === result.shortPromptSha256 || (result.text.startsWith(result.shortPrompt) && /두 번째 첨부는 첫 번째 원본 그림의 윤곽을 기계로 뽑은 선화/.test(result.text.slice(result.shortPrompt.length))), 'Without separation the sent text is the short prompt (plus only the edge-guide note)');
     assert.doesNotMatch(result.text, /4×4 격자로 배치|아틀라스 배치만 적용/);
     assert.equal(result.attachment.width, 512); assert.equal(result.attachment.height, 384);
     assert.deepEqual(result.attachment,result.reference,'Actual input reference RGBA and dimensions reach the generation payload unchanged');

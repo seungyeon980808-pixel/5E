@@ -159,7 +159,7 @@ test('the label read channel is wired through preload, the preview bridge, the w
 test('label restore is the default and the legacy long prompt is not used by default', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'js/ai-image-label-run.js'), 'utf8');
   assert.match(source, /const legacyLabelPath = workflow\.labelResult === 'restore-editable' && legacyLabelPipeline;/);
-  assert.match(source, /legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng \} = \{\}\)/);
+  assert.match(source, /legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng,?\s*(?:[\w\s=,]*?)\} = \{\}\)/); // 11-23 실험 옵션(textbookEdgeGuide 등)이 뒤에 붙어도 기본은 끔
 });
 
 // 11-11 사용자 결정: 라벨 복원은 기출·교과서 모두 기본 끄기.
