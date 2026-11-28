@@ -560,7 +560,7 @@ async function drawFigure(qid,i,{bg=false}={}){const q=work.questions.find(x=>x.
   try{const r=await call('figure',{qid,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[]},{group:'figure'});
     let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);
     if(!slot){toast('빈 그림 칸이 없어 새 그림 칸을 만들었어요');slot={id:crypto.randomUUID(),parent:null,kind:'figure',label:spec.kind==='graph'?'그래프':'그림',text:'',layout:'세로',figure:null};q.blocks.push(slot);}
-    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms,bg});if(!bg)toast(`${q.number}번 그림을 넣었어요`);return true;}
+    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms,bg,engine:r.engine||null,warning:r.warning||null});if(!bg)toast(`${q.number}번 그림을 넣었어요`);return true;}
   catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;if(!bg)say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();return false;}finally{drawingQ.delete(qid);a.done();if(!bg)busy--;}}
 // v8 초안 단계(「초안 v0.1 · 그림 8장」): 초안 뒤 빈 그림 칸을 뒤에서 차례로 그린다(빈 칸 처음 채우기 — 결정 7). 대화는 막지 않는다. 다 그리면 판을 올리고 그 문항만 다시 푼다.
 async function drawAll(){const jobs=[];for(const q of X.orderedQuestions(work))(q.figureSpecs||[]).forEach((f,i)=>{if(!f.done&&q.blocks.some(b=>b.kind==='figure'&&!b.figure?.data))jobs.push({qid:q.id,i,no:q.number});});if(!jobs.length)return;

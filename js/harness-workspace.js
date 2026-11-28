@@ -59,6 +59,37 @@ html.harness-tool body>.app-footer{margin-left:var(--hx-sw,${SIDE_W}px)!importan
   // 11-25 밤샘: 출제 엔진을 처음 부를 때 인터넷이 끊겨 있으면 「Failed to fetch dynamically imported module …」 영어 원문이 문항 대화에 그대로 떴다.
 const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 다시 요청하세요. 입력한 내용은 그대로입니다.';
   const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):authoringPromise||=import('./exampool-authoring-harness.js?v=1.7.0-four-session-integration').then(x=>x.createAuthoringHarness()).catch(error=>{authoringPromise=null;throw Object.assign(Error(MODULE_FAIL),{cause:error});});
+  // 11-28: 1.7.2 새 그림 엔진(기출 참고 → 구체화 → 그리기 → 검수)·그림 그래프 엔진으로 그린다. 5E_image와 같은 길·같은 깃발(figureRoute·graphRoute)을 따른다.
+  // 설치판이 아니거나 깃발이 꺼져 있거나 새 엔진이 그림을 못 내면 null → 아래 옛 길(exampool-figure-engines)로 그린다.
+  // 여러 장면(엔진이 칸마다 따로 그림)을 한 장으로: 왼쪽부터 같은 배율로 나란히 놓고 칸 아래에 이름을 붙인다(엔진 규칙 — 칸 이름은 5E가 그림 밖에). AI를 쓰지 않는다.
+  async function joinScenes(images,names){const ims=await Promise.all(images.map(async d=>{const i=new Image();i.src=d;await i.decode();return i;}));
+    const h=Math.max(...ims.map(i=>i.naturalHeight)),gap=Math.round(h*0.08),W=ims.reduce((n,i)=>n+i.naturalWidth,0)+gap*(ims.length-1);
+    const fs=Math.max(26,Math.round(h/11)),pad=Math.round(fs*2),c=document.createElement('canvas');c.width=W;c.height=h+pad;const x=c.getContext('2d');
+    x.fillStyle='#fff';x.fillRect(0,0,W,h+pad);x.fillStyle='#111';x.textAlign='center';x.textBaseline='middle';x.font=`${fs}px "함초롬바탕","HCR Batang","AppleMyungjo","Batang",serif`;
+    let left=0;ims.forEach((im,k)=>{x.drawImage(im,left,(h-im.naturalHeight)/2);x.fillText(names[k],left+im.naturalWidth/2,h+pad*0.5);left+=im.naturalWidth+gap;});return c.toDataURL('image/png');}
+  async function figure172(m){const base=window.fiveEDesktop;if(!base)return null;
+    try{const E=await import('./ai-engines.js?v=1.7.0-four-session-integration');const graph=m.kind==='graph';
+      const route=graph?E.graphRoute({desktop:base,picture:m.picture??null}):E.figureRoute({desktop:base});if(!route.use){console.info('[harness] 새 그림 엔진 안 씀',m.kind,route.reason);return null;}
+      const [{createTaskBridge},{createImageLabelRasterController},{parseAiEvent}]=await Promise.all([import('./ai-task-workspaces.js?v=1.7.0-four-session-integration'),import('./ai-image-label-run.js?v=1.7.0-four-session-integration'),import('./ai-events.js?v=1.7.0-four-session-integration')]);
+      const desk=createTaskBridge(base,`harness-${graph?'graph':'figure'}:${String(m.qid||'').slice(0,80)}`),t0=Date.now();
+      const raster=createImageLabelRasterController({transport:{send:p=>desk.send(p),interrupt:b=>desk.interrupt(b)}});
+      const off=desk.onEvent?.(x=>{const ev=parseAiEvent(x);if(ev.kind!=='ignore')raster.handleEvent(ev);});
+      const request=[m.description,(m.mustNot||[]).length?`그리지 말 것: ${m.mustNot.join(', ')}`:''].filter(Boolean).join('\n');
+      const size=data=>new Promise(res=>{const i=new Image();i.onload=()=>res({width:i.naturalWidth,height:i.naturalHeight});i.onerror=()=>res({width:null,height:null});i.src=data;});
+      try{
+        if(graph){const text=E.ENGINE_TEXT_MODEL,ai=E.createDesktopEngineAi(desk,raster,{textModels:[text,...E.imageModelOrder(text)]});
+          const r=await E.runGraphPicture({ai,request,models:{text}});if(!r?.png||r.fallback){console.warn('[harness] 새 그림 엔진 실패 — 그래프 설계를 못 받음',r?.fallback||'',(r?.warnings||[]).join(' / '));return null;}
+          return {data:r.png,...await size(r.png),engine:'ai-graph',ms:Date.now()-t0};}
+        let catalog=null;try{catalog=await desk.models();}catch{}
+        const models=E.engineModels({selected:null,catalog}),ai=E.createDesktopEngineAi(desk,raster,{imageModels:E.imageModelOrder(models.image)});
+        const o=await E.runFigureEngine({ai,request,models});const fresh=(o?.fresh||[]).filter(x=>x?.image);if(!fresh.length)return null;
+        const names=[...new Set(String(m.description||'').match(/\((?:가|나|다|라|마)\)/g)||[])],DEF=['(가)','(나)','(다)','(라)','(마)'];let img=fresh[0].image,warning=null;
+        if(fresh.length>1)img=await joinScenes(fresh.map(x=>x.image),fresh.map((_,k)=>names.length===fresh.length?names[k]:DEF[k]));
+        // 한 장면에 칸 이름이 여럿이면 어디에 붙일지 알 수 없다 — 짐작해 붙이면 틀린 칸에 붙을 수 있어 붙이지 않고 알린다.
+        else if(names.length>=2)warning=`그림에 칸 이름 ${names.join('')}이 없어요(새 그림 엔진은 칸 이름을 그림 안에 쓰지 않음) — 그림에 직접 넣어 주세요`;
+        return {data:img,...await size(img),engine:E.FIGURE_ENGINE_ID,ms:Date.now()-t0,warning,scenes:fresh.length};
+      }finally{off?.();}
+    }catch(error){console.warn('[harness] 새 그림 엔진 실패 — 옛 길로 그립니다',error);return null;}}
   const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1.7.0-four-session-integration').then(x=>x.createFigureEngines()));
   const base=()=>window.fiveEDesktop||window.fiveEWebAI;
   const bridges=new Map(),controllers=new Map();
@@ -133,8 +164,8 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
       catch(error){const n=need(error);send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:n,opened:n?openConnection():false});}return;}
     if(m.action==='evidence'){try{send({action:'evidence-ready',requestId:m.requestId,result:await fetchEvidence(m.request)});}catch(error){send({action:'evidence-ready',requestId:m.requestId,result:{available:false,results:[],warning:error.message}});}return;}
     if(m.action==='cancel'){controllers.get(m.requestId)?.abort();try{(await authoring()).cancel(m.requestId);}catch{}return;}
-    if(m.action==='figure'){try{const en=await engines();const r=m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});
-        send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null}});}
+    if(m.action==='figure'){try{const en=await engines();const r=await figure172(m)||(m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]}));
+        send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null,warning:r.warning||null,scenes:r.scenes||null}});}
       catch(error){send({action:'figure-ready',requestId:m.requestId,error:aiErrorText(error)});}return;}
     if(m.action==='color-mode'){pickColor(m.mode==='next'?(colorPref()==='auto'?'navy':nextColorMode(getColorMode(root))):m.mode);return;}
     // 설정(⌘,)·키보드 단축키: 본창의 원래 창을 그대로 연다(하네스 위로 뜨게 .modal-overlay를 올려 둠).
