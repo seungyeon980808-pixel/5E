@@ -19,6 +19,17 @@ h=re.sub(r'<img(?![^>]*\bloading=)\s',lambda m:'<img loading="lazy" decoding="as
 # 장면이 화면 1.5배 거리 안에 들어오면 그 장면 그림을 모두 바로 받기(잘려 있던 결과 그림도 늦지 않게)
 pf='<script>/* prefetchScene */(function(){if(!("IntersectionObserver" in window))return;var io=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;e.target.querySelectorAll("img[loading=lazy]").forEach(function(i){i.loading="eager"});io.unobserve(e.target)})},{rootMargin:"150% 0px"});function go(){document.querySelectorAll("section[id^=f-S],#studio,#arch,#hx,#download").forEach(function(s){io.observe(s)})}if(document.readyState==="loading")addEventListener("DOMContentLoaded",function(){setTimeout(go,50)});else setTimeout(go,50)})();</script>'
 h=h.replace('</body>',pf+'\n</body>',1)
+# fontfix1126: 휴대폰(안드로이드)에서도 데스크톱과 똑같이 — 맥에만 있는 고딕(-apple-system·Apple SD Gothic Neo·돋움)은 이미 받는 Pretendard로,
+# Georgia·Times New Roman으로 쓴 글씨(5E 로고·영어 제목·그림 라벨 숫자)는 맥 글꼴 모양 그대로 SVG로 그린다(georgia-svg.js, 글자 모양은 georgia_glyphs.py).
+h=re.sub(r"-apple-system\s*,\s*('|\")?SF Pro Text('|\")?\s*,",'"Pretendard Variable",Pretendard,',h)
+h=re.sub(r"(['\"])Apple SD Gothic Neo\1\s*,\s*-apple-system",'"Pretendard Variable",Pretendard',h)
+h=re.sub(r"-apple-system\s*,\s*(['\"])Apple SD Gothic Neo\1",'"Pretendard Variable",Pretendard',h)
+h=re.sub(r"\"돋움\"\s*,\s*Dotum\s*,\s*\"Apple SD Gothic Neo\"",'"Pretendard Variable",Pretendard',h)
+h=re.sub(r"(['\"])Apple SD Gothic Neo\1\s*,\s*var\(--f\)",'var(--f)',h)
+h=h.replace('font:13px -apple-system,','font:13px "Pretendard Variable",Pretendard,')
+h=h.replace('"Apple SD Gothic Neo","Noto Sans KR",','')
+_gs='<script>'+(d/'georgia-glyphs.js').read_text()+'</script><script>'+(d/'georgia-svg.js').read_text()+'</script>'
+_i=h.rindex('</body>');h=h[:_i]+_gs+'\n'+h[_i:]
 (out/'index.html').write_text(h)
 refs=sorted(set(re.findall(r'img/[A-Za-z0-9_./-]+\.(?:png|jpe?g|webp|svg|gif)',h)))
 n=0;miss=[]
