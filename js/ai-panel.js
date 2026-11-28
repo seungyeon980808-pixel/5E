@@ -8,7 +8,7 @@ import { EXAM_BRIEF_PROFILE, isExamBrief, prepareExamBriefRunInput, buildExamBri
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
 import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-session-integration';
 import { manualLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
-import { createResultWorkspace } from './ai-create-result-workspace.js?v=1.7.3-result';
+import { createResultWorkspace } from './ai-create-result-workspace.js?v=1.7.0-four-session-integration';
 import { createEditTools } from './ai-edit-tools.js?v=1.7.0-four-session-integration';
 import { FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir, writeToDir } from './export-dir.js?v=1.7.0-four-session-integration';
 import { createCropPieces } from './ai-image-crop-pieces.js?v=1.7.0-four-session-integration';

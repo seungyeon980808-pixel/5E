@@ -247,6 +247,7 @@ function assertModuleIdentities(runtime, records) {
   assertLoadedRuntime(runtime, urls);
   const byFile = new Map();
   const declaredUrls = new Set();
+  const bundleIdentity = new Map();
   // The network URL omits fragments, and symlink aliases can resolve to a
   // canonical file from outside /js/. Inspect both disk identities and literal
   // imports in observed module bodies to catch those otherwise invisible cases.
@@ -265,6 +266,16 @@ function assertModuleIdentities(runtime, records) {
       const imported = new URL(match[1], url);
       if (imported.pathname.startsWith('/preview/js/')) assert.fail(`Declared preview module duplicate: ${imported.href}`);
       if (!imported.pathname.startsWith('/js/')) continue;
+      // 1.7.2: 그림 엔진(js/ai-figure/)과 로고 윤곽선(js/loading/logo5e.js)은 파일마다 꼬리표가 있거나 없는 주소 하나로만 불린다
+      // (엔진 안쪽 파일은 꼬리표 없이 서로를 부른다). 정체는 「파일마다 주소가 하나」이므로, 한 파일이 두 주소로 불리면 실패다.
+      const engineBundle = imported.pathname.startsWith('/js/ai-figure/') || imported.pathname === '/js/loading/logo5e.js';
+      if (engineBundle) {
+        const first = bundleIdentity.get(imported.pathname) ?? imported.href;
+        bundleIdentity.set(imported.pathname, first);
+        assert.equal(imported.href, first, `Declared canonical module identity: ${imported.href}`);
+        assert.ok(['', runtime.moduleQuery].includes(imported.search), `Declared canonical module identity: ${imported.href}`);
+        continue;
+      }
       assert.equal(imported.href, new URL(imported.pathname + runtime.moduleQuery, runtime.entryUrl).href,
         `Declared canonical module identity: ${imported.href}`);
       assert.equal(imported.pathname, decodeURIComponent(imported.pathname), `Declared encoded module alias: ${imported.href}`);
@@ -280,12 +291,18 @@ function assertModuleIdentities(runtime, records) {
     assert.ok(url.pathname.startsWith('/js/'), `Preview duplicate or module path alias: ${href}`);
     assert.equal(url.pathname, decoded, `Encoded module alias: ${href}`);
     assert.equal(url.pathname, path.posix.normalize(url.pathname), `Module path alias: ${href}`);
-    assert.equal(url.search, runtime.moduleQuery, `Canonical module query identity: ${href}`);
+    const engineBundle = decoded.startsWith('/js/ai-figure/') || decoded === '/js/loading/logo5e.js';
+    if (engineBundle) assert.ok(['', runtime.moduleQuery].includes(url.search), `Canonical module query identity: ${href}`);
+    else assert.equal(url.search, runtime.moduleQuery, `Canonical module query identity: ${href}`);
     assert.equal(url.hash, '', `Module fragment alias: ${href}`);
     if (!byFile.has(decoded)) byFile.set(decoded, new Set());
     byFile.get(decoded).add(href);
   }
-  for (const [file, identities] of byFile) assert.deepEqual([...identities], [new URL(file + runtime.moduleQuery, runtime.entryUrl).href]);
+  for (const [file, identities] of byFile) {
+    // 엔진 묶음은 꼬리표가 없어도 되지만, 한 파일이 두 주소로 실리면 안 된다.
+    if (file.startsWith('/js/ai-figure/') || file === '/js/loading/logo5e.js') assert.equal(identities.size, 1, `Module loaded under two identities: ${[...identities].join(', ')}`);
+    else assert.deepEqual([...identities], [new URL(file + runtime.moduleQuery, runtime.entryUrl).href]);
+  }
   for (const name of requiredModules) assert.ok(byFile.has(`/js/${name}.js`), `Required module never loaded: ${name}`);
   for (const file of ['/js/graph/graph-modal.js', '/js/function-graph/plane-modal.js'])
     assert.ok(byFile.has(file), `Graph stateful module never loaded: ${file}`);
