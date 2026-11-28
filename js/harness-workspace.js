@@ -85,8 +85,7 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
         const o=await E.runFigureEngine({ai,request,models});const fresh=(o?.fresh||[]).filter(x=>x?.image);if(!fresh.length)return null;
         const names=[...new Set(String(m.description||'').match(/\((?:가|나|다|라|마)\)/g)||[])],DEF=['(가)','(나)','(다)','(라)','(마)'];let img=fresh[0].image,warning=null;
         if(fresh.length>1)img=await joinScenes(fresh.map(x=>x.image),fresh.map((_,k)=>names.length===fresh.length?names[k]:DEF[k]));
-        // 한 장면에 칸 이름이 여럿이면 어디에 붙일지 알 수 없다 — 짐작해 붙이면 틀린 칸에 붙을 수 있어 붙이지 않고 알린다.
-        else if(names.length>=2)warning=`그림에 칸 이름 ${names.join('')}이 없어요(새 그림 엔진은 칸 이름을 그림 안에 쓰지 않음) — 그림에 직접 넣어 주세요`;
+        // 한 장면 안의 (가)(나)(다)는 붙이지 않는다 — 칸 이름은 한글 조판에서 쓴다(그림 엔진 규칙과 같음, 결함 아님).
         return {data:img,...await size(img),engine:E.FIGURE_ENGINE_ID,ms:Date.now()-t0,warning,scenes:fresh.length};
       }finally{off?.();}
     }catch(error){console.warn('[harness] 새 그림 엔진 실패 — 옛 길로 그립니다',error);return null;}}
