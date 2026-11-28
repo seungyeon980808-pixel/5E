@@ -68,6 +68,7 @@ function loadKnownFailures(file, manifest) {
   return known;
 }
 
+const SLOW_SUITES = new Set(["tests/test-four-session-integration-browser.cjs"]);
 function suiteTimeout(value) {
   if (value === undefined || value === "") return 0;
   const ms = Number(value);
@@ -152,8 +153,10 @@ async function run() {
       const startedAt = Date.now();
       const knownReason = known.get(entry.path);
       const attempt = () => {
+        // 네 세션 통합 묶음은 시나리오 3개를 두 엔진으로 돌려 느린 GitHub 컴퓨터에서 11~12분 걸린다 — 이 묶음만 제한을 3배로 준다.
+        const suiteTimeoutMs = timeoutMs * (SLOW_SUITES.has(entry.path) ? 3 : 1);
         const result = spawnSync(process.execPath, [entry.path], { cwd: root, stdio: "inherit", env: environment,
-          ...(timeoutMs ? { timeout: timeoutMs, killSignal: "SIGKILL" } : {}) });
+          ...(suiteTimeoutMs ? { timeout: suiteTimeoutMs, killSignal: "SIGKILL" } : {}) });
         const timedOut = result.error?.code === "ETIMEDOUT";
         if (result.error && !timedOut) throw result.error;
         return { result, timedOut, passed: result.status === 0 && !timedOut };

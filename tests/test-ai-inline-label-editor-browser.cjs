@@ -624,7 +624,10 @@ test('several labels: box select, mixed size with Enter, W alignment, bracket ke
   await hit('d').dblclick();
   assert.equal(await page.evaluate(()=>document.activeElement.matches('.ai-label-inplace')),true,'double click edits the wording on the picture');
   const sizeD=await field('size').inputValue();
-  await page.keyboard.press('End');await page.keyboard.type('[w]');
+  // 느린 기계(GitHub)에서는 입력칸이 뜬 직후의 「전체 선택」이 End보다 늦게 와서 첫 글자가 지워졌다('[w]' !== '라[w]').
+  // 입력칸이 자리 잡은 뒤(두 프레임) 커서를 직접 끝에 놓고 친다.
+  await page.locator('.ai-label-inplace').evaluate(async el=>{await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));el.focus();el.setSelectionRange(el.value.length,el.value.length);});
+  await page.keyboard.type('[w]');
   assert.equal(await page.locator('.ai-label-inplace').inputValue(),'라[w]');assert.equal(await field('text').inputValue(),'라[w]','the side field follows live');
   assert.equal(await field('size').inputValue(),sizeD);
   await page.keyboard.press('Escape');
