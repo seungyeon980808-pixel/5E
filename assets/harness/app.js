@@ -95,7 +95,7 @@ function runStream(list){cancelAnimationFrame(streamRaf);const els=[...document.
     if(atBottom)sc.scrollTop=1e7;if(live)streamRaf=requestAnimationFrame(tick);};tick();}
 // 그림 모드: 설계표·문항 없이 말한 그대로 그림 엔진으로 그려 대화에 붙이고 클립보드에도 넣는다
 async function figureChat(text){const kind=/그래프|좌표|축|함수|[–-]\s*시간|시간\s*[–-]|곡선|눈금/.test(text)?'graph':'figure';const a=act(kind==='graph'?'그래프 그리는 중…':'그림 그리는 중…');
-  try{const r=await call('figure',{qid:'chat-'+work.projectId,kind,description:text,mustNot:[]},{group:'figure'});
+  try{const r=await call('figure',{qid:'chat-'+work.projectId,kind,description:text,mustNot:[],graphMode:graphMode()},{group:'figure'});
     if(!r?.data)throw Error('그림이 비어 있어요');
     try{await (await drawerMod()).clipAdd({src:r.data,name:(kind==='graph'?'그래프':'그림')+' · 대화',source:'5E 출제',w:r.width||0,h:r.height||0});}catch{}
     say('ai',`${kind==='graph'?'그래프':'그림'}을 그렸어요. 클립보드에도 넣어 두었어요. 두 번 누르면 image에서 고칠 수 있고, 바꿀 곳을 말씀하시면 다시 그려요.`,{img:r.data,ms:r.ms||null});note('figure-chat',{kind,ms:r.ms});}
@@ -199,6 +199,18 @@ const AGENT_TOOLS_VERSION='a5-1128';
 const PERM_KEY='5e.harness.permission';
 const permission=()=>{const v=work?.ui?.permission||(()=>{try{return localStorage.getItem(PERM_KEY);}catch{return null;}})();return PERMISSIONS.includes(v)?v:'ask';};
 function setPermission(v){if(!PERMISSIONS.includes(v))return;work.ui={...(work.ui||{}),permission:v};try{localStorage.setItem(PERM_KEY,v);}catch{}save();note('permission',{v});}
+// 그래프 두 경로(11-28): picture = 정확한 그림(새 그래프 엔진, PNG·설계값 저장, 못 그리면 객체 그래프로) · object = 고칠 수 있는 그래프(옛 객체 그래프, 5E 그래프 편집기로 고침).
+// 「편집 가능하면서 정확한 그래프」는 나중에 따로 만든다. 기본은 picture. 하네스 안에서만 쓰고 1.7.2 본체의 그래프 깃발은 건드리지 않는다.
+const GRAPH_KEY='5e.harness.graphMode',GRAPH_MODES=['picture','object'],GRAPH_MODE_LABEL={picture:'정확한 그림',object:'고칠 수 있는 그래프'};
+const graphMode=()=>{const v=work?.ui?.graphMode||(()=>{try{return localStorage.getItem(GRAPH_KEY);}catch{return null;}})();return GRAPH_MODES.includes(v)?v:'picture';};
+function setGraphMode(v){if(!GRAPH_MODES.includes(v)||!work)return;work.ui={...(work.ui||{}),graphMode:v};try{localStorage.setItem(GRAPH_KEY,v);}catch{}save();note('graph-mode',{v});}
+// 그린 결과를 문항에 기록한다: 칸 → 그림 연결(authoring.figures, exam의 「그래프 편집」·「다시 만들기」가 읽는 것)과 명세(spec)의 방식.
+// 객체 그래프면 원본(graph)을, 그림 그래프면 설계값(graphPlan)을 남긴다. 옛 연결은 같은 칸 것만 바꾼다.
+function linkFigure(q,slot,spec,r){const a=ensureAuthoring(q),graph=spec.kind==='graph';
+  const link={blockId:slot.id,kind:graph?'graph':'image',description:String(spec.description||'').slice(0,4000),mustNot:spec.mustNot||[],resultHash:null,editable:!!r.graph,engine:r.engine||null,ms:r.ms||null,revision:Number.isInteger(a.revision)?a.revision:0,at:nowIso(),...(r.graph?{graph:r.graph}:{}),...(r.graphPlan?{graphPlan:r.graphPlan}:{})};
+  a.figures=(a.figures||[]).filter(f=>f.blockId!==slot.id);a.figures.push(link);
+  spec.blockId=slot.id;spec.mode=graph?(r.graph?'object':'picture'):null;spec.engine=r.engine||null;
+  if(graph&&r.fellBack)toast(`${q.number}번 그래프는 새 그래프 엔진이 못 그려 「고칠 수 있는 그래프」로 그렸어요`,3200);}
 const AGENT_RULES=`너는 5E(과학 교사용 출제·수업 프로그램) 안에서 일하는 일꾼이다. 한국어로 짧고 정확하게 답한다.
 - 쓸 수 있는 것은 주어진 5E 도구뿐이다. 파일·명령·인터넷은 없다. 없는 것은 없다고 말한다.
 - 답은 보통 글로 쓴다. 마크다운 기호(#, **, >, 표)는 쓰지 않는다. 인용은 「」로, 나열은 줄을 바꿔 「- 」로.
@@ -263,10 +275,10 @@ async function absorbSay(fn,mine){const list=sub?subThread(sub):work.chat,n0=lis
 async function agentDrawInto(qid,{kind,description}){const q=work.questions.find(x=>x.id===qid);if(!q)return {ok:false,error:'문항이 없어요'};
   const pick=pickFigureSlot(q.blocks,kind),slot=pick.slot;if(!slot)return {ok:false,refused:true,error:pick.why};
   q.figureSpecs ||= [];const spec={kind,description,mustNot:[],slot:slot.label||'그림',by:'agent'};q.figureSpecs.push(spec);drawingQ.add(qid);render();
-  try{const r=await call('figure',{qid,kind,description,mustNot:[]},{group:'figure'});
+  try{const r=await call('figure',{qid,kind,description,mustNot:[],graphMode:graphMode()},{group:'figure'});
     if(slot.figure?.data||!q.blocks.includes(slot))return {ok:false,error:'그리는 동안 그 칸이 바뀌었어요(선생님이 넣었거나 지움)'};
-    slot.figure={name:`${kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;
-    work.pendingEdits=[...(work.pendingEdits||[]),{qid,key:'figure',label:(kind==='graph'?'그래프':'그림')+' 넣음',at:nowIso()}];note('figure',{no:q.number,ms:r.ms,agent:true,engine:r.engine||null});
+    slot.figure={name:`${kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;linkFigure(q,slot,spec,r);work.dirty=true;
+    work.pendingEdits=[...(work.pendingEdits||[]),{qid,key:'figure',label:(kind==='graph'?'그래프':'그림')+' 넣음',at:nowIso()}];note('figure',{no:q.number,ms:r.ms,agent:true,engine:r.engine||null,fellBack:r.fellBack||false});
     return {ok:true,slot:slot.label||'그림',engine:r.engine||(kind==='graph'?'코드 그래프':null),ms:r.ms||null};}
   catch(e){note('figure-fail',{no:q.number,error:e.message,agent:true});return {ok:false,error:e.message};}
   finally{drawingQ.delete(qid);save();render();}}
@@ -557,11 +569,24 @@ async function subSend(text){if(agentOn()){await agentSend(text);return;}const q
 // ── 그림(제작 명세 → 기존 그림 엔진). 빈 그림 칸에 넣는 것은 빈 칸 채우기 ──
 const drawingQ=new Set();
 async function drawFigure(qid,i,{bg=false}={}){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec)return false;drawingQ.add(qid);render();if(!bg)busy++;const a=bg?{set(){},done(){}}:act(`${q.number}번 그림 그리는 중…`);
-  try{const r=await call('figure',{qid,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[]},{group:'figure'});
+  try{const r=await call('figure',{qid,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[],graphMode:graphMode()},{group:'figure'});
     let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure?.data);
     if(!slot){toast('빈 그림 칸이 없어 새 그림 칸을 만들었어요');slot={id:crypto.randomUUID(),parent:null,kind:'figure',label:spec.kind==='graph'?'그래프':'그림',text:'',layout:'세로',figure:null};q.blocks.push(slot);}
-    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms,bg,engine:r.engine||null,warning:r.warning||null});if(!bg)toast(`${q.number}번 그림을 넣었어요`);return true;}
+    slot.figure={name:`${spec.kind==='graph'?'그래프':'그림'}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};spec.done=true;linkFigure(q,slot,spec,r);work.dirty=true;save();render();note('figure',{no:q.number,ms:r.ms,bg,engine:r.engine||null,warning:r.warning||null,fellBack:r.fellBack||false});if(!bg)toast(`${q.number}번 그림을 넣었어요`);return true;}
   catch(e){note('figure-fail',{no:q?.number,error:e.message});const wasSub=sub;sub=null;if(!bg)say('ai',`${q?.number}번 ${spec.kind==='graph'?'그래프':'그림'}을 그리지 못했어요: ${e.message} · 문항의 그림 칸은 그대로예요. 「문항 검토」 → ${q?.number}번 「그림」에서 다시 「그리기」를 누르거나, image에서 직접 그려 넣을 수 있어요.`,{error:true});sub=wasSub;render();return false;}finally{drawingQ.delete(qid);a.done();if(!bg)busy--;}}
+// 그래프 하나를 다른 방식으로 다시 그리거나(mode), 객체 그래프를 5E 그래프 편집기로 고친다(edit). 그린 칸(spec.blockId)을 바꾸고 판에 안 들어간 고침으로 남긴다.
+async function regraph(qid,i,{mode=null,edit=false}={}){const q=work.questions.find(x=>x.id===qid),spec=q?.figureSpecs?.[i];if(!spec||spec.kind!=='graph')return false;
+  const slot=q.blocks.find(b=>b.id===spec.blockId&&b.kind==='figure');if(!slot){toast('그 그래프 칸을 찾지 못했어요');return false;}
+  const link=(q.authoring?.figures||[]).find(f=>f.blockId===slot.id);if(edit&&!link?.graph){toast('이 그래프는 그림으로 그려져 편집기로 고칠 수 없어요 · 「고칠 수 있는 그래프로 다시 그리기」를 눌러 주세요',3600);return false;}
+  const before=slot.figure?.data||null;drawingQ.add(qid);render();busy++;const a=edit?{set(){},done(){}}:act(`${q.number}번 그래프를 「${GRAPH_MODE_LABEL[mode]}」으로 다시 그리는 중…`);
+  try{const r=edit?await call('figure-edit-graph',{qid,graph:link.graph},{group:'figure'}):await call('figure',{qid,kind:'graph',description:spec.description,mustNot:spec.mustNot||[],graphMode:mode},{group:'figure'});
+    if(!r?.data)return false;
+    if((slot.figure?.data||null)!==before||!q.blocks.includes(slot)){toast('그리는 동안 그 칸이 바뀌어 넣지 않았어요');return false;}
+    slot.figure={name:'그래프.png',data:r.data,...(r.width?{width:r.width,height:r.height}:{})};linkFigure(q,slot,spec,r);work.dirty=true;
+    work.pendingEdits=[...(work.pendingEdits||[]),{qid,key:'figure',label:edit?'그래프 편집':'그래프 다시 그림',at:nowIso()}];
+    note(edit?'graph-edit':'graph-redraw',{no:q.number,mode,engine:r.engine||null,ms:r.ms||null,fellBack:r.fellBack||false});toast(`${q.number}번 그래프를 ${edit?'고쳤어요':'다시 그렸어요'}`);return true;}
+  catch(e){note('graph-redraw-fail',{no:q.number,error:e.message});toast(`${q.number}번 그래프를 ${edit?'고치지':'다시 그리지'} 못했어요: ${e.message}`,3600);return false;}
+  finally{drawingQ.delete(qid);a.done();busy--;save();render();}}
 // v8 초안 단계(「초안 v0.1 · 그림 8장」): 초안 뒤 빈 그림 칸을 뒤에서 차례로 그린다(빈 칸 처음 채우기 — 결정 7). 대화는 막지 않는다. 다 그리면 판을 올리고 그 문항만 다시 푼다.
 async function drawAll(){const jobs=[];for(const q of X.orderedQuestions(work))(q.figureSpecs||[]).forEach((f,i)=>{if(!f.done&&q.blocks.some(b=>b.kind==='figure'&&!b.figure?.data))jobs.push({qid:q.id,i,no:q.number});});if(!jobs.length)return;
   const queue=[...jobs];let stopF=false;const a=act(`그림 ${jobs.length}장 그리는 중 · 0/${jobs.length} (그동안 대화해도 돼요)`,{onStop:()=>{stopF=true;queue.length=0;cancelGroup('figure');}});let done=0;const ok=[],fail=[];
@@ -649,11 +674,11 @@ function renderReview(){if(compare&&renderCompare())return;const qs=X.orderedQue
     const ck=work.checks.filter(c=>c.qid===q.id).at(-1),ex=explanationParts(q);
     return `<section class="qrow" data-q="${E(q.id)}"><div class="qleft kq${many?' dots-off':''}">${ph}</div><div class="qright">
 <div class="qmeta"><span class="qmt">${E(q.number)}번 · ${E(work.plan.find(r=>r.qid===q.id)?.unit||'')} · ${E(work.plan.find(r=>r.qid===q.id)?.difficulty||'')} · ${E(q.points)}점 · <span data-ans="${E(q.id)}">정답 ${q.answer!=null?CIRCLED[q.answer]:'—'}</span></span><span class="qtags">${(q.locks||[]).length?`<span class="lockn" title="직접 고친 칸은 AI가 덮어쓰지 않아요">직접 고친 칸 ${q.locks.length}</span>`:''}${missN>EV_DOTS_MAX?`<span class="evn${evShow.has(q.id)?' on':''}" data-evn="${E(q.id)}" title="누르면 그 칸들에 점이 켜져요">근거 없는 칸 ${missN}</span>`:miss?'<span class="exdot" title="근거 없는 칸이 있어요"></span>':''}${q.origin?.source?`<span class="srcn" title="보관함(옛 파일)에서 복사해 온 문항 · 원본은 그대로">출처 ${E(String(q.origin.source.file).replace(/\.[^.]+$/,''))} ${E(q.origin.source.no)}번</span>`:''}</span><span class="sp"></span><button class="btn sm" data-sub="${E(q.id)}"><svg class="i s"><use href="#i-msg"/></svg>이 문항 대화</button></div>
-<div class="qtabs"><button data-pane="ev">근거</button><button data-pane="sol">해설</button><button data-pane="chk">검토</button>${(q.figureSpecs||[]).filter(f=>!f.done).length?'<button data-pane="fig">그림</button>':''}</div>
+<div class="qtabs"><button data-pane="ev">근거</button><button data-pane="sol">해설</button><button data-pane="chk">검토</button>${(q.figureSpecs||[]).some(f=>!f.done||(f.kind==='graph'&&f.blockId))?'<button data-pane="fig">그림</button>':''}</div>
 <div class="qpane" data-p="ev" hidden>${X.cellKeys(q).map(k=>{const st=X.cellEvidence(q,k.key),list=(q.authoring?.evidence||[]).filter(e=>e.target===k.key);return `<div class="ev${st!=='ok'?' ev-x':''}"><b>${E(k.label)}</b><span>${list.length?list.map(e=>E((e.source?.title||'')+(e.source?.page?` ${e.source.page}쪽`:'')+' · '+e.claim)).join('<br>'):st==='waived'?'근거 없음 — 예외로 진행':'근거 없음'}</span></div>`;}).join('')}</div>
 <div class="qpane" data-p="sol" hidden>${ex.parts.map(p=>`<p><b>${E(p.key)}</b> ${tex(p.text)}${p.ox?` → ${p.ox==='o'?'옳다':'옳지 않다'}`:''}</p>`).join('')||'(해설 없음)'}</div>
 <div class="qpane" data-p="chk" hidden>${ck?`${ck.runs.map(r=>`<div class="chk-row"><b>${E(r.model)}</b><span>${r.answer?CIRCLED[r.answer-1]:'—'} · ${E(r.note)}</span></div>`).join('')}<p><b>결론</b> ${E(({pass:'두 모델 일치 · 정답과 같음',doubt:'두 모델 답이 갈림',fail:'두 모델 모두 정답과 다름',single:'한 모델만 풂',skipped:'풀지 못함'})[ck.verdict]||ck.verdict)} (${E(ck.version)} · 한 회사 두 모델)</p>`:'아직 풀이 검사 전이에요.'}</div>
-${(q.figureSpecs||[]).length?`<div class="qpane" data-p="fig" hidden>${q.figureSpecs.map((f,i)=>`<p>${f.done?'✓ ':''}${E(f.kind==='graph'?'그래프':'그림')} · ${E(f.description).slice(0,220)} ${f.done?'':`<button class="btn sm" data-draw="${E(q.id)}|${i}">그리기</button>`}</p>`).join('')}</div>`:''}
+${(q.figureSpecs||[]).length?`<div class="qpane" data-p="fig" hidden>${q.figureSpecs.map((f,i)=>`<p>${f.done?'✓ ':''}${E(f.kind==='graph'?'그래프':'그림')}${f.done&&f.kind==='graph'&&f.mode?` (${E(GRAPH_MODE_LABEL[f.mode])})`:''} · ${E(f.description).slice(0,220)} ${!f.done?`<button class="btn sm" data-draw="${E(q.id)}|${i}">그리기</button>`:f.kind==='graph'&&f.blockId?(f.mode==='object'?`<button class="btn sm" data-gedit="${E(q.id)}|${i}">그래프 편집</button> <button class="btn sm" data-regraph="${E(q.id)}|${i}|picture">정확한 그림으로 다시 그리기</button>`:`<button class="btn sm" data-regraph="${E(q.id)}|${i}|object">고칠 수 있는 그래프로 다시 그리기</button>`):''}</p>`).join('')}</div>`:''}
 <div class="cbox2"><div class="ch">문항 전체${cs.length?` · 코멘트 ${cs.length}`:''}<span class="sp"></span></div>
 <div class="clist">${cs.map(c=>`<div class="ci"><div class="ctext">${E(c.text)} <span class="cst ${SC[c.status]}">${ST[c.status]}</span></div>${c.answer?`<div class="cans">${E(c.answer).slice(0,600)}</div>`:''}</div>`).join('')}</div>
 ${props.map(p=>`<div class="prop"><b>지금 → 바꿀 안</b> · ${E(p.summary)}${p.changes.slice(0,6).map((c,i)=>`<div><span class="pb">${E(String(p.before?.[i]??'').slice(0,120))}</span> → <span class="pa">${E(String(c.value??'').slice(0,160))}</span></div>`).join('')}</div>`).join('')}
@@ -715,7 +740,8 @@ function renderComposer(){const ta=$('#input'),on=agentOn(),running=on&&!!agentR
   ta.closest('.box')?.classList.toggle('working',running);if(on&&busy)$('#bSend').disabled=false;
   const box=$('#permBox');if(!box)return;box.hidden=!on;if(!on){box.classList.remove('open');return;}
   const v=work?permission():'ask';$('#permT').textContent=PERMISSION_LABEL[v];$('#permIc').innerHTML=`<use href="#i-${v==='direct'?'bolt':'hand'}"/>`;$('#bPerm').classList.toggle('fast',v==='direct');
-  for(const b of box.querySelectorAll('.hx-pm'))b.classList.toggle('on',b.dataset.perm===v);}
+  for(const b of box.querySelectorAll('.hx-pm[data-perm]'))b.classList.toggle('on',b.dataset.perm===v);
+  const g=work?graphMode():'picture';for(const b of box.querySelectorAll('.hx-pm[data-gmode]'))b.classList.toggle('on',b.dataset.gmode===g);}
 function pickPermission(v){if(!work)return;setPermission(v);$('#permBox')?.classList.remove('open');renderComposer();}
 // 고친 칸 표시(시안 ⑤): work.ui.aiMarks의 칸에 옅은 파랑과 「AI가 고침 · 방금」. 커서를 올리거나 누르면 그 표시를 지운다.
 const markShownAt=new Map();
@@ -754,7 +780,8 @@ $('#bSend').onclick=send;$('#input').addEventListener('keydown',e=>{if(e.key==='
   else if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&agentOn()&&agentRun&&agentRun.sub===sub){e.preventDefault();send();}// 시안 ⑥: 일하는 중에는 ↵로 끼어들기
   else if(e.key==='Tab'&&e.shiftKey&&agentOn()&&work){e.preventDefault();pickPermission(permission()==='direct'?'ask':'direct');}});// 시안 ③: ⇧Tab
 $('#bPerm').onclick=e=>{e.stopPropagation();$('#permBox').classList.toggle('open');};
-for(const b of $$('#permBox .hx-pm'))b.onclick=e=>{e.stopPropagation();pickPermission(b.dataset.perm);};
+for(const b of $$('#permBox .hx-pm[data-perm]'))b.onclick=e=>{e.stopPropagation();pickPermission(b.dataset.perm);};
+for(const b of $$('#permBox .hx-pm[data-gmode]'))b.onclick=e=>{e.stopPropagation();if(!work)return;setGraphMode(b.dataset.gmode);$('#permBox')?.classList.remove('open');renderComposer();toast(`그래프는 이제 「${GRAPH_MODE_LABEL[b.dataset.gmode]}」으로 그려요`);};
 document.addEventListener('click',e=>{if(!e.target.closest?.('#permBox'))$('#permBox')?.classList.remove('open');});
 document.addEventListener('click',e=>{const u=e.target.closest?.('[data-undo]');if(!u)return;if(!agentTurns.get(u.dataset.undo)?.undo){toast('이 묶음은 이제 되돌릴 수 없어요');render();return;}undoAgentTurn(u.dataset.undo);});
 $('#seg').onclick=e=>{const b=e.target.closest('button[data-tab]');if(!b)return;tab=b.dataset.tab;work.ui={...(work.ui||{}),tab,manual:true};save();render();};
@@ -768,6 +795,8 @@ document.addEventListener('click',async e=>{const t=e.target;if(t.closest?.('.hx
   if(t.closest('#bApply')){await applyNow('결정된 것만 반영');render();return;}
   if(t.closest('#bTriage')){busy++;try{await triageComments('');}finally{busy--;render();}return;}
   const draw=t.closest('[data-draw]');if(draw){const [qid,i]=draw.dataset.draw.split('|');await drawFigure(qid,+i);return;}
+  const rg=t.closest('[data-regraph]');if(rg){const [qid,i,mode]=rg.dataset.regraph.split('|');await regraph(qid,+i,{mode});return;}
+  const ge=t.closest('[data-gedit]');if(ge){const [qid,i]=ge.dataset.gedit.split('|');await regraph(qid,+i,{edit:true});return;}
   if(t.closest('#bToExam')){await sendToExam();return;}if(t.closest('#bHwpx')){$('#fHwpx').click();return;}if(t.closest('#bFinal')){declareFinal();return;}if(t.closest('#bSaveFile')){await saveFile();return;}
   if(t.closest('#bExport')){tab='sheet';render();return;}
   if(t.closest('#verBtn')||t.closest('#bHist')||t.closest('#pendChip')){const m=$('#histMenu');m.hidden=!m.hidden;drawHist();return;}
@@ -864,7 +893,7 @@ document.addEventListener('dblclick',e=>{if(!['review','sheet'].includes(tab)||!
 (async()=>{post({action:'ready'});try{const last=await idbGet('last');if(last)work=await idbGet('work:'+last);renderSide((await idbGet('list'))||[]);}catch{}
   if(!work){work=X.newExamset({title:''});X.setMeta(work,'stage','design');work.chat.push({role:'ai',text:'어떤 시험지를 만들까요? 과목·범위·문항 수·총점을 알려 주시면 설계표부터 잡아요. 교과서·학습지가 있으면 「자료 폴더」로 등록해 주세요.',at:nowIso()});}
   work.proposals ||= [];tab=initialTab(work);showView(pristine(work)?'home':'work');render();note('boot',{head:work.head});})();
-window.__harness={bumpVersion,get permission(){return permission();},setPermission,undoAgentTurn,get compare(){return compare;},setCompare:c=>{compare=c;render();},get drafting(){return drafting;},get editing(){return editing;},startEdit,finishEdit,get work(){return work;},get sub(){return sub;},openSub:id=>{sub=id;render();},closeSub:()=>{sub=null;render();},get busy(){return busy;},log,render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};
+window.__harness={bumpVersion,get permission(){return permission();},setPermission,get graphMode(){return graphMode();},setGraphMode,regraph,undoAgentTurn,get compare(){return compare;},setCompare:c=>{compare=c;render();},get drafting(){return drafting;},get editing(){return editing;},startEdit,finishEdit,get work(){return work;},get sub(){return sub;},openSub:id=>{sub=id;render();},closeSub:()=>{sub=null;render();},get busy(){return busy;},log,render,send:t=>{$('#input').value=t;return send();},applyNow,triageComments,draftAll,declareFinal,sendToExam,importHwpx,saveFile,openFile,X};
 
 // ════════ 시안 v7 반영(11-26 오후 · 결정 V1~V6) ════════
 // 첫 화면 · 선생님 메뉴(화면 색·설정) · 시험지 이름 메뉴 · 시험지 위 코멘트·AI 제안(받기·거절·직접 고치기) · 아래 줄 · 지금 단계

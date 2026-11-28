@@ -69,7 +69,9 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
     let left=0;ims.forEach((im,k)=>{x.drawImage(im,left,(h-im.naturalHeight)/2);x.fillText(names[k],left+im.naturalWidth/2,h+pad*0.5);left+=im.naturalWidth+gap;});return c.toDataURL('image/png');}
   async function figure172(m){const base=window.fiveEDesktop;if(!base)return null;
     try{const E=await import('./ai-engines.js?v=1.7.0-four-session-integration');const graph=m.kind==='graph';
-      const route=graph?E.graphRoute({desktop:base,picture:m.picture??null}):E.figureRoute({desktop:base});if(!route.use){console.info('[harness] 새 그림 엔진 안 씀',m.kind,route.reason);return null;}
+      // 11-28 그래프 두 경로: graphMode 'object'(고칠 수 있는 그래프)는 옛 객체 그래프로, 그 밖('picture')은 새 그림 그래프 엔진으로(1.7.2 깃발과 무관, 하네스 안에서만).
+      if(graph&&m.graphMode==='object')return null;
+      const avail=E.engineAvailability(base),route=graph?(avail.available?{use:true}:{use:false,reason:avail.web?'web':'unavailable'}):E.figureRoute({desktop:base});if(!route.use){console.info('[harness] 새 그림 엔진 안 씀',m.kind,route.reason);return null;}
       const [{createTaskBridge},{createImageLabelRasterController},{parseAiEvent}]=await Promise.all([import('./ai-task-workspaces.js?v=1.7.0-four-session-integration'),import('./ai-image-label-run.js?v=1.7.0-four-session-integration'),import('./ai-events.js?v=1.7.0-four-session-integration')]);
       const desk=createTaskBridge(base,`harness-${graph?'graph':'figure'}:${String(m.qid||'').slice(0,80)}`),t0=Date.now();
       const raster=createImageLabelRasterController({transport:{send:p=>desk.send(p),interrupt:b=>desk.interrupt(b)}});
@@ -79,7 +81,8 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
       try{
         if(graph){const text=E.ENGINE_TEXT_MODEL,ai=E.createDesktopEngineAi(desk,raster,{textModels:[text,...E.imageModelOrder(text)]});
           const r=await E.runGraphPicture({ai,request,models:{text}});if(!r?.png||r.fallback){console.warn('[harness] 새 그림 엔진 실패 — 그래프 설계를 못 받음',r?.fallback||'',(r?.warnings||[]).join(' / '));return null;}
-          return {data:r.png,...await size(r.png),engine:'ai-graph',ms:Date.now()-t0};}
+          // 설계값(meta.graphPlan)을 함께 돌려준다 — AI 없이 다시 그릴 수 있게(redrawGraphPicture).
+          return {data:r.png,...await size(r.png),engine:'ai-graph',ms:Date.now()-t0,graphPlan:r.meta?.graphPlan?r.meta:null};}
         let catalog=null;try{catalog=await desk.models();}catch{}
         const models=E.engineModels({selected:null,catalog}),ai=E.createDesktopEngineAi(desk,raster,{imageModels:E.imageModelOrder(models.image)});
         const o=await E.runFigureEngine({ai,request,models});const fresh=(o?.fresh||[]).filter(x=>x?.image);if(!fresh.length)return null;
@@ -163,8 +166,14 @@ const MODULE_FAIL='AI 출제 기능을 불러오지 못했습니다. 인터넷 �
       catch(error){const n=need(error);send({action:'author-ready',requestId:m.requestId,error:error.message||String(error),cancelled:!!error.cancelled,need:n,opened:n?openConnection():false});}return;}
     if(m.action==='evidence'){try{send({action:'evidence-ready',requestId:m.requestId,result:await fetchEvidence(m.request)});}catch(error){send({action:'evidence-ready',requestId:m.requestId,result:{available:false,results:[],warning:error.message}});}return;}
     if(m.action==='cancel'){controllers.get(m.requestId)?.abort();try{(await authoring()).cancel(m.requestId);}catch{}return;}
-    if(m.action==='figure'){try{const en=await engines();const r=await figure172(m)||(m.kind==='graph'?await en.graph({description:m.description,mustNot:m.mustNot||[]}):await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]}));
-        send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null,warning:r.warning||null,scenes:r.scenes||null}});}
+    if(m.action==='figure'){try{const en=await engines();let r=await figure172(m),fellBack=false;
+        if(!r){if(m.kind==='graph'){r=await en.graph({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});fellBack=m.graphMode!=='object';}else r=await en.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[]});}
+        // graph: 옛 객체 그래프의 원본(exam 「그래프 편집」이 쓰는 것) · graphPlan: 새 그림 그래프의 설계값 · fellBack: 그림 그래프를 원했지만 새 엔진이 못 그려 객체 그래프로 그림.
+        send({action:'figure-ready',requestId:m.requestId,result:{data:r.data,width:r.width,height:r.height,engine:r.engine||null,ms:r.ms||null,warning:r.warning||null,scenes:r.scenes||null,graph:r.graph||null,graphPlan:r.graphPlan||null,fellBack}});}
+      catch(error){send({action:'figure-ready',requestId:m.requestId,error:aiErrorText(error)});}return;}
+    // 11-28: 하네스의 객체 그래프를 5E 그래프 편집기로 고친다(exam과 같은 editGraph). 편집기 창은 하네스 위에 뜬다(.modal-overlay). 닫으면 cancelled.
+    if(m.action==='figure-edit-graph'){try{const en=await engines();const r=await en.editGraph(m.graph);
+        send({action:'figure-ready',requestId:m.requestId,...(r?{result:{data:r.data,width:r.width,height:r.height,engine:r.engine||'native-graph',graph:r.graph||null,edited:true}}:{cancelled:true})});}
       catch(error){send({action:'figure-ready',requestId:m.requestId,error:aiErrorText(error)});}return;}
     if(m.action==='color-mode'){pickColor(m.mode==='next'?(colorPref()==='auto'?'navy':nextColorMode(getColorMode(root))):m.mode);return;}
     // 설정(⌘,)·키보드 단축키: 본창의 원래 창을 그대로 연다(하네스 위로 뜨게 .modal-overlay를 올려 둠).
