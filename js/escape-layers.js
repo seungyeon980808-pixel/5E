@@ -77,6 +77,8 @@ export function initEscapeLayers() {
   }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
   window.addEventListener('keydown', event => {
     if (event.key !== 'Escape' || event.isComposing || event.defaultPrevented) return;
+    // 11-25 밤샘 검수: 자기 입력칸의 Esc를 스스로 처리하는 곳(라벨 편집 문구 칸 등)에서는 창을 닫지 않는다 — 입력 중 Esc에 AI 창 전체가 닫혔다.
+    if (event.target?.matches?.('input,textarea,select') && event.target.closest?.('[data-escape-field-scope]')) return;
     const layers = [...document.querySelectorAll(DIALOGS)].filter(visible);
     layers.sort((a, b) => layerRank(a) - layerRank(b));
     const top = layers.at(-1);

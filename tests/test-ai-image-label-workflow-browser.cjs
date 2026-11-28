@@ -83,7 +83,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     // 11-10: 기본 그림 경로는 짧은 기출·교과서 지시문만 보낸다. SOURCE-GRID 계약 문장은 예전 라벨 복원 경로 전용이다.
     {
       const sent = generations(requests)[0];
-      const shortPrompt = imageKind === 'exam' ? /글자·숫자·문자와, 글자를 가리키는 지시선만 지워 줘/ : /첨부한 교과서 그림을 한국 수능\(평가원\) 시험지용 흑백 과학 그림으로 다시 그려 줘/;
+      const shortPrompt = imageKind === 'exam' ? /글자·숫자·문자와, 글자를 가리키는 지시선만 지워 줘/ : /첨부한 교과서 그림을 편집해서 한국 수능\(평가원\) 시험지용 흑백 과학 그림으로 바꿔 줘/;
       assert.match(sent.text,shortPrompt);
       assert.doesNotMatch(sent.text,/SOURCE-GRID-TRACING/);
       const sourceAttachment=await page.evaluate(()=>window.__task2.sends.find(s=>s.payload.purpose==='image').payload.attachments[0]);

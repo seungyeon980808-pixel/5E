@@ -84,3 +84,18 @@ test('different resolutions and divergent aspects uniformly contain instead of s
   assert.deepEqual(g.left, { x: 0, y: 200, width: 800, height: 400 });
   assert.deepEqual(g.right, { x: 200, y: 0, width: 400, height: 800 });
 });
+test('graph output with a wider frame registers its embedded source frame onto the original (11-20 GRAPHFIX)', async () => {
+  const { comparisonGeometry, snapshotComparisonRevisions } = await import(moduleUrl);
+  // 원본 520×360, 그래프 출력은 둘레 라벨 때문에 687×449이고 원본 틀은 그 안 (120,30)에 놓였다.
+  const original = { width: 520, height: 360 }, graph = { width: 687, height: 449, sourceFrame: { x: 120, y: 30, width: 520, height: 360 } };
+  for (const [left, right] of [[original, graph], [graph, original]]) {
+    const g = comparisonGeometry(left, right, { width: 900, height: 600 });
+    const origin = (rect, size) => { const f = size.sourceFrame || { x: 0, y: 0, width: size.width }, k = rect.width / size.width; return [rect.x + f.x * k, rect.y + (f.y || 0) * k, f.width * k]; };
+    const a = origin(g.left, left), b = origin(g.right, right);
+    for (let i = 0; i < 3; i++) assert.ok(Math.abs(a[i] - b[i]) < 1e-9, `source frames coincide (${i}: ${a[i]} vs ${b[i]})`);
+  }
+  const [snap] = snapshotComparisonRevisions([{ id: 'g', label: '그래프', src: 'g.svg', sourceFrame: graph.sourceFrame }]);
+  assert.deepEqual({ ...snap.sourceFrame }, graph.sourceFrame);
+  const [bad] = snapshotComparisonRevisions([{ id: 'g', label: '그래프', src: 'g.svg', sourceFrame: { x: 0, y: 0, width: 0, height: 1 } }]);
+  assert.equal(bad.sourceFrame, undefined, 'invalid frames fall back to the whole image');
+});

@@ -30,7 +30,12 @@ export function snapshotComparisonRevisions(revisions) {
       number: item.comments.indexOf(comment) + 1, type: comment.type === 'area' ? 'area' : 'point',
       x: Number(comment.x), y: Number(comment.y), w: Number(comment.w) || 0, h: Number(comment.h) || 0,
     })));
-    return Object.freeze({ id: item.id, label: item.label, src: item.src, ...size, kind: item.kind === 'original' ? 'original' : 'revision', comments });
+    // 11-20 GRAPHFIX: sourceFrame = 원본 그림이 이 그림 안에서 놓인 자리(px). 그래프 출력은 원본보다 넓은 틀(그래프+라벨+2mm)이라,
+    // 이 자리를 맞춰야 원본과 1:1로 겹친다. 없으면 그림 전체가 원본 틀이다(예전 동작).
+    const sf = item.sourceFrame;
+    const sourceFrame = sf && [sf.x, sf.y, sf.width, sf.height].every(Number.isFinite) && sf.width > 0 && sf.height > 0
+      ? Object.freeze({ x: sf.x, y: sf.y, width: sf.width, height: sf.height }) : null;
+    return Object.freeze({ id: item.id, label: item.label, src: item.src, ...size, ...(sourceFrame ? { sourceFrame } : {}), kind: item.kind === 'original' ? 'original' : 'revision', comments });
   }));
 }
 
@@ -44,6 +49,7 @@ export function comparisonDefaults(revisions, selectedRevisionId) {
 /** Both SVG layers share a camera; each image uniformly contains within the common frame. */
 export function comparisonGeometry(left, right, viewport) {
   dimensions(left); dimensions(right); dimensions(viewport);
+  if (left.sourceFrame || right.sourceFrame) return registeredComparisonGeometry(left, right, viewport);
   const extent = Math.max(left.width, left.height, right.width, right.height);
   const normalize = size => {
     const scale = extent / Math.max(size.width, size.height);
@@ -61,6 +67,26 @@ export function comparisonGeometry(left, right, viewport) {
   };
   return {
     bounds, scale, left: place(left), right: place(right),
+    viewBox: { x: (bounds.width - width) / 2 + (Number.isFinite(viewport.panX) ? viewport.panX : 0), y: (bounds.height - height) / 2 + (Number.isFinite(viewport.panY) ? viewport.panY : 0), width, height },
+  };
+}
+
+// 원본 틀(sourceFrame)끼리 겹치게 놓는다. 틀이 없는 쪽은 그림 전체를 원본 틀로 본다.
+function registeredComparisonGeometry(left, right, viewport) {
+  const frameOf = size => size.sourceFrame || { x: 0, y: 0, width: size.width, height: size.height };
+  const frames = [frameOf(left), frameOf(right)], unit = Math.max(frames[0].width, frames[1].width);
+  const rects = [left, right].map((size, index) => {
+    const f = frames[index], k = unit / f.width;
+    return { x: -f.x * k, y: -f.y * k, width: size.width * k, height: size.height * k };
+  });
+  const x0 = Math.min(...rects.map(r => r.x)), y0 = Math.min(...rects.map(r => r.y));
+  const bounds = { width: Math.max(...rects.map(r => r.x + r.width)) - x0, height: Math.max(...rects.map(r => r.y + r.height)) - y0 };
+  const zoom = Number.isFinite(viewport.zoom) ? clamp(viewport.zoom, 0.25, 8) : 1;
+  const scale = Math.min(viewport.width / bounds.width, viewport.height / bounds.height) * zoom;
+  const width = viewport.width / scale, height = viewport.height / scale;
+  const place = r => ({ x: r.x - x0, y: r.y - y0, width: r.width, height: r.height });
+  return {
+    bounds, scale, left: place(rects[0]), right: place(rects[1]),
     viewBox: { x: (bounds.width - width) / 2 + (Number.isFinite(viewport.panX) ? viewport.panX : 0), y: (bounds.height - height) / 2 + (Number.isFinite(viewport.panY) ? viewport.panY : 0), width, height },
   };
 }
@@ -178,7 +204,10 @@ export function mountRevisionComparison(container, options) {
     zoomValue.textContent = `${Math.round(zoom * 100)}%`;
     zoomOut.disabled = zoom <= 0.25; zoomIn.disabled = zoom >= 8;
     const width = sides[0].pane.clientWidth || 1, height = sides[0].pane.clientHeight || 1;
-    const sizes = sides.map(side => side.size || revisions.find(item => item.id === side.id));
+    const sizes = sides.map(side => {
+      const item = revisions.find(value => value.id === side.id);
+      return side.size ? { ...side.size, ...(item?.sourceFrame ? { sourceFrame: item.sourceFrame } : {}) } : item;
+    });
     const valid = sizes.map(size => size?.width && size?.height ? size : { width: 1, height: 1 });
     geometry = comparisonGeometry(valid[0], valid[1], { width, height, zoom, panX, panY });
     const viewBox = Object.values(geometry.viewBox).join(' ');

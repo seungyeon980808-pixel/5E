@@ -238,6 +238,13 @@ export function getLineDecorationBounds(obj) {
 }
 
 /* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
+// 길이 화살표에서 끊을 길이(선 방향): AI 그림 편집기 라벨처럼 글자가 따로면 dimensionGap을 그대로, 아니면 dimensionLabel 글자 상자를 선 방향으로 잰 폭 + 좌우 여백.
+function lengthArrowGap(obj, sw, ux, uy) {
+  if (Number.isFinite(obj.dimensionGap)) return Math.max(0, obj.dimensionGap);
+  const size = obj.dimensionLabelSize || Math.max(2.5, sw * 8);
+  const { hw, hh } = estimateLabelBlock(obj.dimensionLabel || "d", size, 0);
+  return Math.abs(ux) * hw * 2 + Math.abs(uy) * hh * 2 * 0.8 + size * 0.5;
+}
 function renderLine(obj) {
   const { lineStyle, arrowHead } = resolvedLineStyle(obj);
   const sw = obj.strokeWidth ?? 0.2;
@@ -340,6 +347,16 @@ function renderLine(obj) {
       const sx = lx2 - ux * solidLen, sy = ly2 - uy * solidLen;
       bodyEls = [mkSeg(sx, sy, lx2, ly2, false), mkSeg(lx1, ly1, sx, sy, true)];
     }
+  } else if (lineStyle === "lengthArrow" && L > 0) {
+    // 11-26 사용자: 길이 화살표 글자는 할로(흰 테두리)로 선을 가리지 않고 글자 자리만큼 선을 끊는다 —
+    // 바탕이 회색 면·빗금이어도 깨끗하다. 선이 짧아 글자가 안 들어가면 끊지 않는다.
+    const gap = lengthArrowGap(obj, sw, nx, ny);
+    const segLen = Math.hypot(lx2 - lx1, ly2 - ly1);
+    if (gap > 0 && gap < segLen - sw * 4) {
+      const mx = (obj.p1.x + obj.p2.x) / 2, my = (obj.p1.y + obj.p2.y) / 2, h = gap / 2;
+      bodyEls = [mkSeg(lx1, ly1, mx - nx * h, my - ny * h, true), mkSeg(mx + nx * h, my + ny * h, lx2, ly2, true)];
+      obj = { ...obj, _lengthGapApplied: true };
+    } else bodyEls = [mkSeg(lx1, ly1, lx2, ly2, true)];
   } else {
     bodyEls = [mkSeg(lx1, ly1, lx2, ly2, true)];
   }
@@ -489,7 +506,7 @@ function renderLine(obj) {
     // 함께 씌워, 글자 왼쪽으로 1mm 넘게 흰 영역이 나가 옆 글자를 지웠다(교사 지적).
     // 치수 라벨은 선 위에 얹혀 있다 — 기본 가림으로는 글자 사이로 선이 지나간다.
     // 그래서 이 라벨만 기본값을 DIM_HALO_RATIO 로 둔다(사용자가 지정하면 그 값이 우선).
-    applyGlyphHalo(label, labelSize, obj.haloRatio ?? DIM_HALO_RATIO);
+    applyGlyphHalo(label, labelSize, obj.haloRatio ?? (obj._lengthGapApplied ? 0 : DIM_HALO_RATIO));
     if (obj.labelBg) {
       const ko = makeLabelKnockout([labelText], mx, my + labelSize * LABEL_OPTICAL_CENTER_EM, labelSize, {
         anchor: "middle",
@@ -499,7 +516,8 @@ function renderLine(obj) {
       });
       if (ko) g.appendChild(ko);
     }
-    g.appendChild(label);
+    // AI 그림 편집기의 길이 표시는 글자를 따로 된 편집 라벨로 둔다 — 선 자체의 기본 글자(d)는 그리지 않는다.
+    if (!obj.aiDimensionLine) g.appendChild(label);
   }
 
   return withLineLabel(g, obj);

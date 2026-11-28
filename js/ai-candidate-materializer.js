@@ -82,6 +82,7 @@ export function createCandidateMaterializer(state, services) {
         const imageId = await services.insertImageFromSrc(staging,snapshot.data,{
           preserveBytes:true,centerArtboard:true,aiTaskId:taskId,aiCandidateId:snapshot.id,
           editableLabelPlan:snapshot.labelPlan,sourceMetadata:snapshot.source,
+          ...(snapshot.meta ? {meta:snapshot.meta} : {}), // 1.8.0: 새 엔진 정보(참고 기출·graphPlan)를 캔버스 이미지 객체 meta로
         });
         result = {imageId,ids:draft.objects.map(object => object.id)};
       }

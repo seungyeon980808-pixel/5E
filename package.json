@@ -1,6 +1,6 @@
 {
   "name": "5e-desktop",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "private": true,
   "description": "5E science diagram editor for Windows and macOS with a local Codex image assistant",
   "author": "박승연",
@@ -26,7 +26,7 @@
     "test:web-artifact": "node tests/test-web-publication-browser.cjs"
   },
   "devDependencies": {
-    "electron": "44.4.5",
+    "electron": "44.11.5",
     "electron-builder": "26.15.3",
     "js-yaml": "4.3.2",
     "playwright": "1.62.1",
@@ -46,6 +46,13 @@
       }
     ],
     "artifactName": "5E-${version}-${os}-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "seungyeon980808-pixel",
+        "repo": "5E"
+      }
+    ],
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -62,6 +69,7 @@
       "fonts/**/*",
       "desktop/**/*",
       "tests/fixtures/rights-clear-smoke.png",
+      "docs/credits.html",
       "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md",
       "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md",
       "docs/IMAGE_COMPLEXITY_MODE_SPEC.md",
@@ -107,5 +115,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true
     }
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
   }
 }

@@ -1,6 +1,11 @@
 import {embedEditablePng,readEditablePng} from './editable-png.js?v=1.7.0-four-session-integration';
 import {getContentBounds} from './svg-export.js?v=1.7.0-four-session-integration';
 import {syncAppLock} from './app-lock.js?v=1.7.0-four-session-integration';
+// PATHFIX(11-20): AI 오류를 출제 칸에 영어 원문(「Error invoking remote method …」) 대신 한국어로 보내고, 설치판 오류 기록에 남긴다.
+import {aiErrorText,aiErrorCode,reportAiError} from './ai-error-copy.js?v=1.7.0-four-session-integration';
+const aiFail=(where,error)=>{reportAiError(where,error);return aiErrorText(error);};
+// 11-22: 연결이 필요한 실패(설치 없음 → install, 로그인 없음 → login). 그 밖은 ''.
+const connectionNeed=error=>{const code=aiErrorCode(error);return code==='CODEX_NOT_FOUND'?'install':code==='CODEX_NOT_LOGGED_IN'?'login':'';};
 const copy=v=>structuredClone(v);
 // 설치형(file://)은 출처가 열리지 않아 location.origin으로 보낸 신호가 버려진다 — '*'로 보내고 받을 때는 출제 창에서 왔는지로 가린다.
 const FILE_MODE=location.protocol==='file:',OWN=FILE_MODE?'*':location.origin;
@@ -101,11 +106,12 @@ export function initQuestionSheet(state,services,examWorkspace){
       frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},OWN);},0);
     if(!liteBlocked('5E_exam 문항 카드로 보내기',deliver))deliver();});
   // 11-05 시안 v13: 5E 라이브러리 「문항 카드로 / 시험지에 넣기」(기출 id) — 문항 창을 열고(처음이면 다 읽힐 때까지) 「변형」 줄로 넘긴다.
-  window.addEventListener('5e:exampool-past',e=>{const ids=e.detail?.ids;if(!Array.isArray(ids)||!ids.length||entry.disabled)return;e.detail.accepted=true;
+  // 11-20 「시험지 통째로 변환」: whole(시험 이름·번호순 문항·문항 그림)이 있으면 학평처럼 기출 id가 하나도 없어도 받는다(모두 그림 문항으로).
+  window.addEventListener('5e:exampool-past',e=>{const ids=e.detail?.ids,whole=e.detail?.whole&&Array.isArray(e.detail.whole.rows)&&e.detail.whole.rows.length?e.detail.whole:null;if(!Array.isArray(ids)||(!ids.length&&!whole)||entry.disabled)return;e.detail.accepted=true;
     const deliver=()=>setTimeout(async()=>{open();if(!frame)return;const until=Date.now()+30000;
       while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
-      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam},OWN);},0);
-    if(!liteBlocked(e.detail.toExam?'시험지에 넣기':'5E_exam 문항 카드로 보내기',deliver))deliver();});
+      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-past',ids,toExam:!!e.detail.toExam,...(whole?{whole}:{})},OWN);},0);
+    if(!liteBlocked(whole?'시험지 통째로 변환':e.detail.toExam?'시험지에 넣기':'5E_exam 문항 카드로 보내기',deliver))deliver();});
   // 11-14 시안 review-1114b 2번: 문항 카드 칸에서 연 AI 작업의 상태(도는 중·끝·실패)를 출제 칸에 알려 칸 위에 표시한다.
   // 카드 그림에서 AI 창을 연 원본 그림(라벨 크기를 원본 글자 높이로 맞출 때 씀). 열쇠 = 문항|칸.
   const cardRefs=new Map();window.addEventListener('5e:ai-open-reference',e=>{const c=e.detail?.hwpTarget?.examCard,src=e.detail?.reference?.dataUrl;if(c&&src){cardRefs.set(c.qid+'|'+c.key,src);if(cardRefs.size>40)cardRefs.delete(cardRefs.keys().next().value);}});
@@ -136,14 +142,25 @@ export function initQuestionSheet(state,services,examWorkspace){
   async function detailEdit(m,send){const source=m.figure?.editable?.source;if(!source)throw Error('이 그림에는 5E 원본이 없습니다.');const assetId=m.key.replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,80),linked=state.get().pages.find(p=>p.meta?.exampoolLink?.questionId===m.qid&&p.meta.exampoolLink.assetId===assetId);if(linked)services.switchPage(state,linked.id);else{const page=services.prepareLoadedProject(copy(source)).active;page.id='pool_'+crypto.randomUUID();page.meta={...page.meta,exampoolLink:{questionId:m.qid,assetId}};state.update(v=>v.pages.push(page));services.switchPage(state,page.id);}services.centerView();
         // 편집기에서 수정: 5E 그림 편집기로 넘어가 원본을 고친 뒤, 보낼 영역을 확인하고 '5E_exam에 반영'으로 그 자리에 다시 넣는다.
         await pickFigure(m,send,{bounds:m.figure?.editable?.render?.bounds,apply:'5E_exam에 반영',cancel:'돌아가기'});}
+  // 11-22(결함 10·11): 5E 연결 화면(설치판: 「AI」 연결 정보·설치 안내/GPT 로그인, 웹: 로그인 창)을 연다. 시트는 iframe이라 이 본창에서 이벤트를 보낸다.
+  // qid가 있으면 연결이 갖춰진 뒤 시트에 「같은 요청 다시」를 알린다(resumeAi). 여러 번 불려도 마지막 것만 이어 간다.
+  let resumeSeq=0;
+  function openConnection(qid){const seq=++resumeSeq;
+    const resumeAi=qid?()=>{if(seq!==resumeSeq)return;frame?.contentWindow?.postMessage({channel:'5e-question-sheet',action:'author-resume',qid},OWN);}:null;
+    window.dispatchEvent(new CustomEvent('5e:web-login-request',{detail:resumeAi?{resumeAi}:{}}));}
   window.addEventListener('message',async e=>{
     if((!FILE_MODE&&e.origin!==location.origin)||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},OWN);
     if(m.action==='modal'){document.documentElement.classList.toggle('exampool-modal',!!m.open&&!host.hidden);return;}
     if(m.action==='close'){fadeClose();return;}
     // 출제 대화: 시간이 오래 걸리므로 다른 전송 작업을 막지 않는다. 문항별 작업 범위로 따로 실행한다.
-    if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>send({action:'author-ready',error:error.message||String(error),cancelled:!!error.cancelled}));return;}
-    if(m.action==='login'){window.dispatchEvent(new Event('5e:web-login-request'));return;}
+    // 11-22(결함 10·11): Codex 없음·로그인 없음이면 경고로 끝내지 않고 연결 화면(설치 안내·GPT 로그인)을 바로 열고, 연결되면 같은 요청을 다시 보낸다.
+    if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>{
+      const need=error?.cancelled?'':connectionNeed(error);
+      send({action:'author-ready',error:error?.cancelled?(error.message||String(error)):aiFail('exampool:author',error),cancelled:!!error?.cancelled,need});
+      // 설치판은 연결 화면을 바로 연다. 웹판은 말풍선의 「연결 화면 열기」로 연다(로그인 창이 화면을 덮어 쓰던 카드를 가리지 않게).
+      if(need&&window.fiveEDesktop&&!window.fiveEDesktop.web)openConnection(m.qid);});return;}
+    if(m.action==='login'){openConnection(m.resume?m.qid:null);return;}
     // 11-11 사용자: 문항 카드 그림에서도 한글처럼 바로 AI 이미지 변환으로 — 결과는 「문항 카드에 넣기」로 그 그림 자리에 돌아온다.
     if(m.action==='ai-figure'){const f=m.figure;if(!f?.data){send({error:'변환할 그림이 없습니다.'});return;}
       window.dispatchEvent(new CustomEvent('5e:ai-open-reference',{detail:{reference:{dataUrl:f.data,name:m.label||'그림',sourceKind:'exam-figure'},conversionKind:m.kind==='graph'?'graph':'image',hwpTarget:{examCard:{qid:m.qid,key:m.key},label:m.label||'그림'}}}));return;}
@@ -151,8 +168,8 @@ export function initQuestionSheet(state,services,examWorkspace){
     // 문항의 그림·그래프 만들기·그래프 세부 편집도 오래 걸리므로 전송 잠금 밖에서 실행한다.
     // 5E 라이브러리(공유 폴더·자료팩·기출 PDF)에서 고르기: 문항 창을 잠시 내리고 5E 라이브러리 선택기를 연다.
     if(m.action==='library-pick'){void pickFromLibrary(m,send);return;}
-    if(m.action==='figure-create'){engines().then(e=>m.kind==='graph'?e.graph({qid:m.qid,description:m.description,prior:m.prior?.graph||null}):e.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[],prior:m.prior?.data||null})).then(result=>send({action:'figure-made',result:{kind:m.kind,...result}}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
-    if(m.action==='figure-edit-graph'){engines().then(e=>e.editGraph(m.graph)).then(result=>send({action:'figure-made',result:result?{kind:'graph',edited:true,...result}:null,cancelled:!result}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
+    if(m.action==='figure-create'){engines().then(e=>m.kind==='graph'?e.graph({qid:m.qid,description:m.description,prior:m.prior?.graph||null}):e.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[],prior:m.prior?.data||null})).then(result=>send({action:'figure-made',result:{kind:m.kind,...result}}),error=>send({action:'figure-made',error:aiFail('exampool:figure-create',error)}));return;}
+    if(m.action==='figure-edit-graph'){engines().then(e=>e.editGraph(m.graph)).then(result=>send({action:'figure-made',result:result?{kind:'graph',edited:true,...result}:null,cancelled:!result}),error=>send({action:'figure-made',error:aiFail('exampool:figure-edit-graph',error)}));return;}
     // 11-14(시안 review-1114 1-4·1-5): 카드 칸 그림 편집 — 그래프 객체면 그래프 창, 아니면 5E_hwp와 같은 「그림 편집 중」 창.
     // 11-14 지적 22: 클립보드의 그래프(객체)를 카드 칸에 넣은 뒤 — 그래프 원본을 품은 그림으로 바꿔 돌려준다.
     if(m.action==='ai-job-open'||m.action==='ai-job-send'){const ai=examWorkspace?.getAiPanel?.();
@@ -179,7 +196,7 @@ export function initQuestionSheet(state,services,examWorkspace){
       if(m.action==='pick-figure'){await pickFigure(m,send);return;}
       if(m.action==='read-figure'){const figure=copy(m.figure),bytes=Uint8Array.from(atob(figure.data.split(',')[1]),c=>c.charCodeAt(0)),original=readEditablePng(bytes,services.prepareLoadedProject);if(original)figure.editable={...original,png:figure.data};send({action:'figure-ready',figure});}
       if(m.action==='edit-figure-detail'){await detailEdit(m,send);return;}
-    }catch(error){send({error:error.message});}finally{busy=false;}
+    }catch(error){send({error:aiFail('exampool:'+(m.action||'sheet'),error)});}finally{busy=false;}
   });
   if(new URLSearchParams(location.search).get('sheet')==='1')open();
   // 작업 화면이 뜬 뒤 한가할 때(2초 뒤) 출제 칸을 숨긴 채 미리 불러 둔다 — 처음 exam 전환이 바로 열리게.

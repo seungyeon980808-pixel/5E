@@ -1,0 +1,94 @@
+{
+ "source": "image_generator/cycles/c10/kp1-01/meta.json#A1",
+ "subject": "물리학Ⅰ",
+ "request": "직선 운동하는 A, B의 속도-시간 그래프를 한 좌표에 그려 줘. 가로축은 t(s), 세로축은 v(m/s)로 하고.\nA는 처음 6에서 일정하게 줄어 3초에 0, B는 처음부터 속도 2로 해 주고 두 선 구분되게 해 줘.\n만나는 점은 P로 표시하고 면적 색칠은 빼 줘.",
+ "keyValues": "가로축 t(s), 세로축 v(m/s). A: v=6-2t, 0≤t≤3이며 양 끝점은 (0, 6), (3, 0). B: v=2, 0≤t≤3. 교점 P: (t, v)=(2 s, 2 m/s).",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 3.396,
+  "yMin": 0,
+  "yMax": 6.792,
+  "labelX": "t(s)",
+  "labelY": "v(m/s)",
+  "xTicks": [
+   {
+    "value": 2,
+    "label": "2",
+    "key": false
+   },
+   {
+    "value": 3,
+    "label": "3",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 2,
+    "label": "2",
+    "key": false
+   },
+   {
+    "value": 6,
+    "label": "6",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": "6-2*x",
+    "points": null,
+    "domain": [
+     0,
+     3
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "A",
+    "labelAt": [
+     0.65,
+     5.1
+    ]
+   },
+   {
+    "expr": "2",
+    "points": null,
+    "domain": [
+     0,
+     3
+    ],
+    "dashed": true,
+    "thin": false,
+    "smooth": false,
+    "label": "B",
+    "labelAt": [
+     2.85,
+     2.35
+    ]
+   }
+  ],
+  "marks": [
+   {
+    "x": 2,
+    "y": 2,
+    "name": "P",
+    "style": "filled"
+   }
+  ],
+  "lineLabels": [],
+  "guides": [
+   {
+    "x": 2,
+    "y": 2
+   }
+  ],
+  "notes": "시간과 속도의 기준량을 각각 1 s, 1 m/s로 두고 두 그래프를 0~3초 구간에 표시함."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

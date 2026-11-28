@@ -8,6 +8,15 @@ const preferences = {
   image: { left: true, right: true, drawer: null },
 };
 const layouts = new Set();
+// 11-19(시안 그림생성화면 v4 태그 15·16): AI 작업대의 작업 목록·오른쪽 칸 접힘을 기억한다(5E_hwp 왼쪽 칸처럼).
+const IMAGE_PANEL_STORE = '5e.aiWorkbench.panels.v1';
+try {
+  const saved = JSON.parse(localStorage.getItem(IMAGE_PANEL_STORE) || 'null');
+  if (saved && typeof saved === 'object') for (const side of ['left', 'right']) if (typeof saved[side] === 'boolean') preferences.image[side] = saved[side];
+} catch { /* 저장소가 막혀 있으면 기본(펼침) */ }
+const saveImagePanels = () => { try { localStorage.setItem(IMAGE_PANEL_STORE, JSON.stringify({ left: preferences.image.left, right: preferences.image.right })); } catch { /* 기억만 못 함 */ } };
+const isMacShortcut = () => /mac|iphone|ipad/i.test(navigator.userAgentData?.platform || navigator.platform || '');
+const bothPanelsShortcut = () => (isMacShortcut() ? '⇧⌘\\' : 'Ctrl+Shift+\\');
 const initialized = new WeakSet();
 let serial = 0;
 
@@ -46,7 +55,80 @@ function setAccessibleState(layout, side, expanded) {
   }
   button.setAttribute('aria-expanded', String(expanded));
   button.setAttribute('aria-label', `${name} 패널 ${expanded ? '접기' : '펼치기'}`);
-  button.title = `${name} 패널 ${expanded ? '접기' : '펼치기'}`;
+  // AI 작업대는 편집기처럼 두 칸을 함께 접는 단축키를 단추 설명에 적는다.
+  button.title = `${name} 패널 ${expanded ? '접기' : '펼치기'}${layout.kind === 'image' ? ` (두 칸 함께 ${bothPanelsShortcut()})` : ''}`;
+  if (layout.kind === 'image') placeImageToggles(layout);
+}
+
+// 11-19(시안 v4 태그 15·16): AI 작업대의 접기 단추는 편집기·라이브러리처럼 칸 머리줄 오른쪽 끝(▢)에 둔다.
+//  · 작업 목록: 펼침 = 「작업 목록」 머리줄 오른쪽, 접힘 = 44px 줄(.ai-task-mini) 맨 위.
+//  · 오른쪽 칸: 펼침 = 「그림 설정」 줄 오른쪽 끝, 접힘 = 맨 위 줄(닫기 단추 앞) — 접힌 칸 안에는 둘 수 없다.
+//  · 좁은 화면(서랍)·Lite는 예전 자리.
+function placeImageToggles(layout) {
+  const { root } = layout;
+  const desktop = !narrow.matches && !fixedLite();
+  root.classList.toggle('ai-panel-heads', desktop);
+  const left = layout.left?.button, right = layout.right?.button;
+  const status = root.querySelector('.ai-head-status');
+  const group = root.querySelector('.ai-head .panel-shell-toggles');
+  if (left) {
+    const collapsed = left.getAttribute('aria-expanded') === 'false';
+    const target = !desktop ? group : collapsed ? root.querySelector('[data-ai-task-mini-head]') : root.querySelector('.ai-rail-heading');
+    if (target && left.parentElement !== target) target.append(left);
+  }
+  if (right) {
+    const collapsed = right.getAttribute('aria-expanded') === 'false';
+    const caption = root.querySelector('.ai-conversation-caption');
+    const target = desktop && !collapsed && caption ? caption : status;
+    if (target === status) { if (status && right.parentElement !== status) status.insertBefore(right, status.querySelector('.ai-close')); }
+    else if (right.parentElement !== target) target.append(right);
+  }
+}
+
+// 접힌 작업 목록 = 44px 줄: 맨 위 ▢(펴기), 작업 칸(번호, 진행 중이면 작은 점), ＋(작업 추가). 실제 작업 탭을 그대로 비춘다.
+function mountTaskMini(root) {
+  const workspace = root.querySelector('.ai-workspace');
+  if (!workspace) return;
+  // 복제된 작업 칸 창은 옛 줄을 지우고 새로 단다(관찰자 포함). 옛 줄에 든 접기 단추는 먼저 머리줄로 꺼낸다.
+  const stale = root.querySelector('[data-ai-task-mini]');
+  stale?.querySelectorAll('[data-panel-toggle]').forEach(button => root.querySelector('.ai-rail-heading')?.append(button));
+  stale?.remove();
+  // 머리줄: 「작업 목록」 + ▢. 「N개 선택 · 전체 선택 · 삭제」 줄은 그 아래 둘째 줄로.
+  const heading = root.querySelector('.ai-rail-heading');
+  if (heading && !heading.querySelector('.ai-rail-title')) {
+    const title = document.createElement('span'); title.className = 'ai-rail-title'; title.textContent = '작업 목록'; title.setAttribute('aria-hidden', 'true');
+    heading.append(title);
+    const row = heading.querySelector('.ai-rail-selection-row');
+    if (row) heading.after(row);
+  }
+  const mini = document.createElement('aside');
+  mini.className = 'ai-task-mini'; mini.dataset.aiTaskMini = '';
+  mini.setAttribute('aria-label', '작업 목록(접힘)');
+  const head = document.createElement('div'); head.className = 'ai-task-mini-head'; head.dataset.aiTaskMiniHead = '';
+  const list = document.createElement('div'); list.className = 'ai-task-mini-list'; list.setAttribute('role', 'list');
+  mini.append(head, list); workspace.append(mini);
+  const render = () => {
+    const tabs = [...root.querySelectorAll('[data-ai-tab-list] > .ai-task-tab[data-tab-id]')];
+    const add = root.querySelector('[data-ai-task-add]');
+    const key = JSON.stringify([tabs.map(tab => [tab.dataset.tabId, tab.classList.contains('is-on'), tab.dataset.workState, tab.title]), !!add]);
+    if (list.dataset.renderKey === key) return;
+    list.dataset.renderKey = key;
+    list.replaceChildren(...tabs.map((tab, index) => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'ai-task-mini-tab'; button.setAttribute('role', 'listitem');
+      button.textContent = String(index + 1);
+      button.dataset.aiMiniTabId = tab.dataset.tabId;
+      button.classList.toggle('is-on', tab.classList.contains('is-on'));
+      button.setAttribute('aria-current', String(tab.classList.contains('is-on')));
+      if (tab.dataset.workState === 'busy') { const dot = document.createElement('i'); dot.className = 'ai-task-mini-dot'; dot.setAttribute('aria-hidden', 'true'); button.append(dot); }
+      button.title = tab.title || `작업 ${index + 1}`;
+      button.setAttribute('aria-label', button.title);
+      button.onclick = () => (tab.querySelector('.ai-task-tab-select') || tab).click();
+      return button;
+    }), ...(add ? [Object.assign(document.createElement('button'), { type: 'button', className: 'ai-task-mini-add', textContent: '＋', title: add.title || '새 작업', onclick: () => add.click() })] : []));
+  };
+  render();
+  new MutationObserver(render).observe(workspace.querySelector('.ai-task-rail') || root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'data-work-state', 'title'] });
 }
 
 function moveEditorHeader(root, toolbar) {
@@ -162,7 +244,8 @@ function setup(root, kind) {
     const name = kind === 'editor' ? ['도구', '속성'][index] : ['작업 목록', '수정 설정'][index];
     panel.id = kind === 'editor' ? panel.id : `image-${side}-panel-${++serial}`;
     panel.dataset.layoutPanel = side;
-    const button = toolbar.querySelector(`[data-panel-toggle="${side}"]`)
+    // AI 작업대는 단추를 칸 머리줄로 옮겨 두므로(placeImageToggles) 작업 칸을 복제한 창에서도 창 전체에서 찾는다.
+    const button = (kind === 'image' ? root.querySelector(`[data-panel-toggle="${side}"]`) : toolbar.querySelector(`[data-panel-toggle="${side}"]`))
       || (kind === 'editor' ? document.getElementById(`drawer-${side}-toggle`) : null)
       || document.createElement('button');
     button.type = 'button';
@@ -173,8 +256,8 @@ function setup(root, kind) {
     label.className = 'panel-toggle-label';
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
-    // 11-11: AI 이미지 창의 왼쪽 칸은 항상 펼쳐 둔다. 접기 단추는 숨기고(상태 처리는 그대로 둔다).
-    if (kind === 'image' && side === 'left') button.hidden = true;
+    // 11-19(시안 v4): 11-11 「AI 이미지 창의 왼쪽 칸은 항상 펼쳐 둔다」를 풀었다 — 편집기처럼 머리줄 ▢로 접는다.
+    button.hidden = false;
     const headerStatus = kind === 'image' && side === 'right'
       ? toolbar.querySelector('.ai-head-status') : null;
     if (headerStatus) headerStatus.insertBefore(button, headerStatus.querySelector('.ai-close'));
@@ -223,6 +306,7 @@ function setup(root, kind) {
       } else {
         preference[side] = !preference[side];
         layout[side].motion.setExpanded(preference[side]);
+        if (kind === 'image') saveImagePanels();
       }
       syncPeerLayouts(layout);
     };
@@ -232,8 +316,10 @@ function setup(root, kind) {
   if (kind === 'editor') panels[0].addEventListener('click', event => {
     if (narrow.matches && event.target.closest('[data-tool],[data-symbol],#object-search-trigger')) closeDrawer(layout);
   });
+  if (kind === 'image') mountTaskMini(root);
   layouts.add(layout);
   render(layout);
+  if (kind === 'image') placeImageToggles(layout);
 }
 
 function discover() {
@@ -250,7 +336,27 @@ narrow.addEventListener('change', () => {
   preferences.editor.drawer = null;
   preferences.image.drawer = null;
   refresh();
+  for (const layout of layouts) if (layout.kind === 'image') placeImageToggles(layout);
 });
+// ⇧⌘\(윈도우 Ctrl+Shift+\): AI 작업대가 떠 있으면 편집기처럼 두 칸을 함께 접거나 편다 — 하나라도 펼쳐져 있으면 둘 다 접음.
+// 편집기 쪽 같은 단축키(panel-heads.js)보다 먼저 받아 뒤의 편집기 칸은 건드리지 않는다.
+window.addEventListener('keydown', event => {
+  if (fixedLite() || narrow.matches || event.code !== 'Backslash' || !event.shiftKey || event.altKey) return;
+  if (!(isMacShortcut() ? event.metaKey : event.ctrlKey)) return;
+  const layout = [...layouts].find(item => item.kind === 'image' && item.root.isConnected && !item.root.hidden && !item.root.inert);
+  if (!layout || document.querySelector('dialog[open]')) return;
+  event.preventDefault(); event.stopImmediatePropagation();
+  const preference = preferences.image;
+  const open = ['left', 'right'].filter(side => preference[side]);
+  const expand = !open.length;
+  for (const side of ['left', 'right']) {
+    if (preference[side] === expand) continue;
+    preference[side] = expand;
+    layout[side].motion.setExpanded(expand);
+  }
+  saveImagePanels();
+  syncPeerLayouts(layout);
+}, true);
 window.addEventListener('5e:view-mode-change', refresh);
 window.addEventListener('keydown', event => {
   if (fixedLite()) return;

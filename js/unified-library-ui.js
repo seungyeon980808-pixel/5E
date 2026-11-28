@@ -420,9 +420,16 @@ export function highlightRectsInCrop(highlights, crop) {
 // 「정답 표시」 단추로 끌 수 있다(exam 기출 보기와 같은 값).
 export function loadAnswerKeys() { return loadAnswerBook(); }
 // 선지 낱말(① ㄱ, ③ ㄱ, ㄷ …)에서 정답 번호부터 다음 번호 앞까지를 칠한다. 한 낱말에 선지 여럿이 붙어 있으면 글자 수 비율로 자른다.
+// 11-20: 공유 자료 묶음의 문서 id는 「묶음 이름::원래 id」(pack-identities.js)라 정답표(원래 id → 파일명)에서 못 찾아
+// 평가원 문항 정답 형광이 통째로 안 보였다. 앞의 묶음 이름을 떼고도 찾는다.
+function answerFileName(keys, documentId) {
+  if (typeof documentId !== "string" || !documentId) return null;
+  const separator = documentId.lastIndexOf("::");
+  return keys.documents?.[documentId] || (separator >= 0 ? keys.documents?.[documentId.slice(separator + 2)] : null) || null;
+}
 export function answerHighlights(result, keys) {
   if (!keys || result?.cropType !== "question") return [];
-  const name = keys.documents?.[result.provenance?.documentId] || keys.documents?.[result.documentId];
+  const name = answerFileName(keys, result.provenance?.documentId) || answerFileName(keys, result.documentId);
   const number = result.metadata?.itemNumber;
   const accepted = name ? acceptedAnswers(keys, name, number) : null;
   if (!Array.isArray(accepted) || !accepted.length) return [];
@@ -933,7 +940,7 @@ function buildShell() {
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head unilib-preview-heading"><div class="unilib-preview-heading-main"><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div><button type="button" class="unilib-preview-star" data-unilib-preview-star hidden aria-pressed="false" title="별표 (S)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg><span>별표</span></button><button type="button" class="unilib-answer-toggle" data-unilib-answers hidden aria-pressed="true" title="정답 선지 형광펜 보이기/숨기기 — 화면 표시만">정답</button></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev aria-label="이전 일치" title="이전 일치">‹</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next aria-label="다음 일치" title="다음 일치">›</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-clip disabled title="고른 그림을 5E 클립보드에 넣습니다 — 캔버스·문항 카드·한글에서 ⌘V로 꺼냅니다">클립보드에 넣기</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지/그래프를 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-clip disabled title="고른 그림을 5E 클립보드에 넣습니다 — 캔버스·문항 카드·한글에서 ⌘V로 꺼냅니다">클립보드에 넣기</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 5E_exam 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>5E_exam 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지/그래프</button><button type="button" class="unilib-button unilib-whole" data-unilib-whole hidden title="이 시험지의 모든 문항을 원래 번호 순서대로 5E_exam 새 시험지로 바꿉니다">시험지 통째로 변환</button><div class="unilib-whole-confirm" data-unilib-whole-confirm role="group" aria-label="시험지 통째로 변환 확인" hidden></div></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
@@ -1018,6 +1025,18 @@ export function pastQuestionId(result) {
   if (!match || !/_(06|09|11)$/u.test(match[1])) return null;
   return Number.isInteger(no) && no > 0 ? `${match[1]}_${String(no).padStart(2, "0")}` : null;
 }
+// 11-20 시안 「시험지 통째로 변환」: PDF 이름(「p1_2026_11.pdf」)으로 평가원·학평 시험지인지, 5E_exam에서 쓸 시험 이름을 정한다.
+// 이름은 5E_exam 기출 목록의 문항 제목(「2026학년도 수능 물리학Ⅰ 1번」)에서 번호를 뺀 것과 같다. 시험지가 아니면 null.
+const WHOLE_MONTHS = Object.freeze({ "03": "3월 학평", "04": "4월 학평", "05": "5월 학평", "06": "6월 모평", "07": "7월 학평", "09": "9월 모평", "10": "10월 학평", "11": "수능" });
+export function wholeExamOf(name) {
+  const match = /(?:^|[\\/|:\s])([pcbe][12])_(\d{4})_(\d{2})(?:\.pdf)?$/iu.exec(String(name ?? "").trim());
+  if (!match) return null;
+  const subject = match[1].toLowerCase(), label = WHOLE_MONTHS[match[3]], subjectName = LIBRARY_SUBJECTS.find(([code]) => code === subject)?.[2];
+  if (!label || !subjectName) return null;
+  return Object.freeze({ code: `${subject}_${match[2]}_${match[3]}`, subject, kice: ["06", "09", "11"].includes(match[3]), title: `${match[2]}학년도 ${label} ${subjectName}` });
+}
+// 변환 예상 시간(확인 줄의 「약 n초」): 미리 바꿔 둔 평가원 문항은 문항당 0.5초쯤, 그림으로만 넣으면 문항당 0.2초쯤.
+export const wholeEstimateSeconds = (count, kice) => Math.max(3, Math.round(count * (kice ? 0.5 : 0.2)));
 function paintStar(button, on) {
   button.classList.toggle("is-on", on);
   button.setAttribute("aria-pressed", String(on));
@@ -1472,6 +1491,115 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     if (!request.accepted) { setStatus("5E_exam을 열 수 없습니다.", true); return false; }
     return true;
   };
+  // 11-20 시안 「시험지 통째로 변환」(시험지통째변환/index.html 태그 1·2·6): PDF 보기에서 평가원·학평 시험지 PDF 하나만 열려 있으면
+  // 아래 단추 줄에 「시험지 통째로 변환」 하나. 누르면 그 자리가 한 줄 확인으로 바뀌고, 「변환」은 「시험지에 넣기」와 같은 길
+  // (5e:exampool-past → 5E_exam 「변형」 줄)로 문항을 모두 보낸다 — 새 시험지(시험 이름)에 원래 번호 순서로, 한글로 못 바꾼 문항은
+  // 원본 그림 문항으로. 학평은 5E_exam 기출 목록에 없어 모두 그림 문항으로 넣는다.
+  const wholeButton = overlay.querySelector("[data-unilib-whole]"), wholeConfirm = overlay.querySelector("[data-unilib-whole-confirm]");
+  let wholeTarget = null, wholePending = null, wholeEpoch = 0;
+  const wholeSourceNow = () => {
+    if (bookmarkView || activeTypes.length !== 1 || activeTypes[0] !== "pdf" || enabledSources?.size !== 1) return null;
+    const [id] = enabledSources, source = renderedSourceProvider?.getSources?.().find((item) => item.id === id);
+    if (!source || ["group", "category", "folder"].includes(source.kind)) return null;
+    const exam = wholeExamOf(source.name) ?? wholeExamOf(source.displayName) ?? wholeExamOf(source.title) ?? wholeExamOf(String(id).split("|").find((part) => wholeExamOf(part)) ?? "");
+    return exam ? { ...exam, sourceId: id } : null;
+  };
+  function closeWholeConfirm({ focus = false } = {}) {
+    wholeEpoch += 1; wholePending = null;
+    wholeConfirm.hidden = true; wholeConfirm.replaceChildren();
+    wholeButton.hidden = !wholeTarget; wholeButton.disabled = false;
+    if (focus && !wholeButton.hidden) wholeButton.focus();
+  }
+  function syncWholeButton() {
+    const next = wholeSourceNow();
+    const changed = (next?.sourceId ?? null) !== (wholeTarget?.sourceId ?? null);
+    wholeTarget = next;
+    if (changed || !next) closeWholeConfirm();
+    else if (wholeConfirm.hidden) wholeButton.hidden = false;
+  }
+  // 그 PDF의 문항(번호순). 학평 문항은 처음 찾을 때 그 과목 학평 자료를 불러와야 나온다.
+  async function wholeQuestionsOf(target) {
+    const find = async () => {
+      const activeProvider = await provider();
+      const found = await (activeProvider.searchAsync ?? activeProvider.search).call(activeProvider, { query: "", kinds: ["crop"], sourceIds: [target.sourceId], filters: {}, limit: Number.MAX_SAFE_INTEGER });
+      const byNumber = new Map();
+      for (const result of Array.isArray(found) ? found : []) {
+        const no = Number(result?.metadata?.itemNumber);
+        if (result?.kind === "crop" && result.cropType === "question" && Number.isInteger(no) && no > 0 && !byNumber.has(no)) byNumber.set(no, result);
+      }
+      return { activeProvider, rows: [...byNumber.entries()].sort((a, b) => a[0] - b[0]).map(([no, result]) => ({ no, result })) };
+    };
+    let found = await find();
+    if (!found.rows.length && !target.kice && typeof prepareSearch === "function") {
+      await prepareSearch({ query: "", filters: { exam: "hak", subject: target.subject, subjects: [target.subject] }, questionSearch: true, providedEnabled: true });
+      found = await find();
+    }
+    return found;
+  }
+  // 문항 그림(원본 PDF에서 자른 것)을 미리 만든다 — 학평은 이것이 문항이 되고, 평가원은 한글로 못 바꾼 문항의 대신 그림이 된다.
+  async function wholeImagesOf(activeProvider, rows) {
+    const out = new Array(rows.length).fill("");
+    let next = 0;
+    const work = async () => { while (next < rows.length) { const at = next++;
+      try { const asset = await activeProvider.materialize(rows[at].result, {}); out[at] = asset?.dataUrl || asset?.dataUri || asset?.assets?.[0]?.dataUrl || ""; } catch { out[at] = ""; } } };
+    await Promise.all([work(), work(), work()]);
+    return out;
+  }
+  async function openWholeConfirm() {
+    const target = wholeTarget;
+    if (!target) return;
+    const epoch = ++wholeEpoch;
+    wholeButton.disabled = true;
+    let found;
+    try { found = await wholeQuestionsOf(target); } catch (error) { found = { rows: [] }; setStatus(`시험지 문항을 찾지 못했습니다: ${error instanceof Error ? error.message : error}`, true); }
+    if (epoch !== wholeEpoch || target !== wholeTarget) return;
+    wholeButton.disabled = false;
+    if (!found.rows.length) { setStatus("이 PDF에서 문항을 찾지 못했습니다 · 「PDF에서 자르기」로 필요한 부분을 잘라 쓰세요.", true); return; }
+    const rows = found.rows.map(({ no, result }) => ({ no, id: target.kice ? pastQuestionId(result) : null, name: result.title || `${target.title} ${no}번`, result }));
+    const hanguel = rows.some((row) => row.id);
+    wholePending = { target, rows, images: wholeImagesOf(found.activeProvider, rows), hanguel };
+    const seconds = wholeEstimateSeconds(rows.length, hanguel);
+    const text = document.createElement("div"); text.className = "unilib-whole-text";
+    const line = document.createElement("span"); line.className = "unilib-whole-line";
+    const name = document.createElement("b"); name.textContent = target.title;
+    line.append(name, ` ${rows.length}문항 → ${hanguel ? `5E_exam 새 시험지 · 약 ${seconds}초` : "새 시험지 · 그림으로"}`);
+    text.append(line);
+    if (!hanguel) { const why = document.createElement("small"); why.textContent = "학평은 5E_exam 기출 목록에 없어 한글 문항으로 바꾸지 못합니다"; text.append(why); }
+    const cancel = document.createElement("button"); cancel.type = "button"; cancel.className = "unilib-whole-cancel"; cancel.dataset.unilibWholeCancel = ""; cancel.textContent = "취소"; cancel.title = "취소 (Esc)";
+    const go = document.createElement("button"); go.type = "button"; go.className = "unilib-primary unilib-whole-go"; go.dataset.unilibWholeGo = ""; go.textContent = hanguel ? "변환" : "그림으로 변환"; go.title = `${go.textContent} (Enter)`;
+    wholeConfirm.replaceChildren(text, cancel, go);
+    wholeButton.hidden = true; wholeConfirm.hidden = false;
+    go.focus();
+  }
+  async function runWhole() {
+    const pending = wholePending;
+    if (!pending) return;
+    const go = wholeConfirm.querySelector("[data-unilib-whole-go]");
+    if (go) { go.disabled = true; go.textContent = "준비 중…"; }
+    const epoch = wholeEpoch;
+    const images = await pending.images;
+    if (epoch !== wholeEpoch) return;
+    const whole = { title: pending.target.title, code: pending.target.code, rows: pending.rows.map((row, at) => ({ no: row.no, id: row.id, name: row.name, data: images[at] || "" })) };
+    const request = { ids: whole.rows.map((row) => row.id).filter(Boolean), toExam: true, whole, accepted: false };
+    window.dispatchEvent(new CustomEvent("5e:exampool-past", { detail: request }));
+    if (!request.accepted) { setStatus("5E_exam을 열 수 없습니다.", true); closeWholeConfirm({ focus: true }); return; }
+    closeWholeConfirm();
+    close();
+    setStatus(`5E_exam 새 시험지 「${whole.title}」에 ${whole.rows.length}문항을 담는 중입니다`);
+  }
+  wholeButton.addEventListener("click", () => void openWholeConfirm());
+  wholeConfirm.addEventListener("click", (event) => {
+    if (event.target.closest("[data-unilib-whole-cancel]")) closeWholeConfirm({ focus: true });
+    else if (event.target.closest("[data-unilib-whole-go]:not(:disabled)")) void runWhole();
+  });
+  // Enter = 변환, Esc = 취소(라이브러리 창은 닫지 않는다).
+  window.addEventListener("keydown", (event) => {
+    if (wholeConfirm.hidden || event.isComposing || overlay.hidden || !overlay.isConnected) return;
+    if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); closeWholeConfirm({ focus: true }); }
+    else if (event.key === "Enter" && !event.metaKey && !event.ctrlKey && !event.altKey && wholeConfirm.contains(document.activeElement)) {
+      event.preventDefault(); event.stopImmediatePropagation(); void runWhole();
+    }
+  }, true);
   qPanel.addEventListener("click", async (event) => {
     if (event.target.closest("[data-unilib-unpick]")) { pickedQuestions.clear(); paintPicks(); syncQuestionPanel(); return; }
     const ctxButton = event.target.closest("[data-unilib-ctx]");
@@ -2220,6 +2348,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     scroller.scrollTop = 0;
     root.dataset.activeTab = activeTypes.length === LIBRARY_TYPES.length ? "all" : activeTypes.join("-");
     root.dataset.pdfDisplay = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
+    syncWholeButton();
     const fileListMode = activeTypes.length === 1 && activeTypes[0] === "pdf" && pdfDisplayMode === "file";
     if (fileListMode && visibleResults.length) {
       const head = document.createElement("li");
@@ -2929,6 +3058,7 @@ export function createUnifiedLibraryUi({ getProvider, prepareSearch, insertMater
     invalidateAction();
     cancelPlacementChoice?.();
     cancelSpacePress?.();
+    if (!wholeConfirm.hidden) closeWholeConfirm();
     searchEpoch += 1;
     searchController?.abort();
     searchScheduler.cancel();

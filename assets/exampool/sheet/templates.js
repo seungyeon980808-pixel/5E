@@ -148,7 +148,8 @@ export function adoptBoxMaterial(q){
 // 돌려줌: [{from,to}] 바뀐 이름(글을 바꿨는지는 texts 개수).
 const HANGUL_CAPS=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)','(카)','(타)','(파)','(하)'];
 export function relabelMaterials(q){
-  const m=materialsOf(q);if(!m||m.items.length<2)return {changes:[],texts:0};
+  // 1.7.2(X3): 둘 중 앞 칸을 지워 하나만 남아도 (가)로 — 예전엔 둘 이상일 때만 매겨 남은 칸이 「(나)」로 남았다.
+  const m=materialsOf(q);if(!m||!m.items.length)return {changes:[],texts:0};
   const changes=[];
   m.items.forEach((b,i)=>{const want=HANGUL_CAPS[i];if(!want||!HANGUL_CAPS.includes(b.label)||b.label===want)return;changes.push({from:b.label,to:want,block:b});});
   if(!changes.length)return {changes:[],texts:0};

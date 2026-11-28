@@ -1,0 +1,81 @@
+{
+ "source": "image_generator/cycles/c9/hp1-01/meta.json#A1",
+ "subject": "물리학Ⅰ",
+ "request": "등가속도로 움직이다가 등속 운동하는 물체의 속도 시간 그래프 하나 그려줘.",
+ "keyValues": "가로축 t(s), 세로축 v(m/s), 곡선 이름 A. 시작점은 (0, v₀), 꺾이는 점은 (t₀, v₁)이며 t₀>0, v₁>v₀>0이다. 0≤t≤t₀에서 v=v₀+(v₁-v₀)t/t₀이고, t≥t₀에서 v=v₁이다.",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 4.516,
+  "yMin": 0,
+  "yMax": 3.5,
+  "labelX": "시간",
+  "labelY": "속도",
+  "xTicks": [
+   {
+    "value": 2,
+    "label": "2",
+    "key": false
+   },
+   {
+    "value": 4,
+    "label": "4",
+    "key": false
+   }
+  ],
+  "yTicks": [
+   {
+    "value": 1,
+    "label": "1",
+    "key": false
+   },
+   {
+    "value": 3,
+    "label": "3",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": null,
+    "points": [
+     [
+      0,
+      1
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      4,
+      3
+     ]
+    ],
+    "domain": [
+     0,
+     4
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "",
+    "labelAt": null
+   }
+  ],
+  "marks": [],
+  "lineLabels": [],
+  "guides": [
+   {
+    "x": 2,
+    "y": 3
+   }
+  ],
+  "notes": "초기 속도 1에서 시간 2까지 가속도 1로 운동한 뒤 시간 4까지 속도 3으로 등속 운동한다고 가정함."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

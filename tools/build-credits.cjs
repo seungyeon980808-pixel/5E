@@ -43,6 +43,7 @@ const PAGE = `<!doctype html>
   a{ color:var(--accent); text-decoration:none; }
   a:hover, a:focus-visible{ text-decoration:underline; }
   footer{ margin-top:30px; color:var(--muted); font-size:12.5px; }
+  ul.fonts{ columns:1; }
   @media (max-width:640px){ ul{ columns:1; } }
 </style></head><body><div class="w">
 
@@ -65,6 +66,69 @@ const PAGE = `<!doctype html>
 </div>
 
 {body}
+
+<div class="law" id="software">
+  <h2>함께 들어간 소프트웨어</h2>
+  <p>5E 설치판과 웹판에 함께 들어가는 남의 소프트웨어·글꼴입니다. 각 이용 조건 전문은 앱 안 같은 폴더의 LICENSE 파일에 있습니다.</p>
+  <p><b>KaTeX 0.16.11</b> — 그래프를 그림으로 만들 때 수식 글자를 조판합니다. MIT License,
+  Copyright (c) 2013-2020 Khan Academy and other contributors.
+  <a href="https://github.com/KaTeX/KaTeX" target="_blank" rel="noopener noreferrer">github.com/KaTeX/KaTeX</a>
+  · 전문은 앱 안 <code>vendor/katex/LICENSE</code>.</p>
+  <p><b>Electron 44.11.5</b> — 설치판 실행 틀. MIT License, Copyright (c) Electron contributors · Chromium·Node.js 등 딸린 오픈소스 고지는 설치판 안 <code>LICENSES.chromium.html</code>.
+  <a href="https://github.com/electron/electron" target="_blank" rel="noopener noreferrer">github.com/electron/electron</a></p>
+  <p><b>rhwp 0.8.7 (rhwp-studio·rhwp-editor)</b> — 한글 문서 조판·편집 엔진. MIT License, Copyright (c) 2025-2026 Edward Kim.
+  <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener noreferrer">github.com/edwardkim/rhwp</a>
+  · <code>vendor/rhwp-studio/LICENSE</code>, 함께 든 글꼴은 아래 「함께 들어간 글꼴」.</p>
+  <p><b>PDF.js 6.3.289</b> — PDF 읽기·그리기. Apache License 2.0, Copyright Mozilla Foundation · 딸린 OpenJPEG(BSD-2), JBIG2(PDFium, BSD-3), qcms(MIT), Adobe CMap(BSD-3), Foxit·Liberation 글꼴.
+  <a href="https://github.com/mozilla/pdf.js" target="_blank" rel="noopener noreferrer">github.com/mozilla/pdf.js</a>
+  · <code>vendor/pdfjs/LICENSE</code>와 하위 폴더 LICENSE_* 파일.</p>
+  <p><b>MathLive 0.111.0</b> — 수식 입력. MIT License, Copyright (c) 2017-present Arno Gourdol.
+  <a href="https://github.com/arnog/mathlive" target="_blank" rel="noopener noreferrer">github.com/arnog/mathlive</a>
+  · <code>vendor/mathlive/LICENSE.txt</code>.</p>
+  <p><b>Tesseract.js 7.0.0 · tesseract.js-core 7.0.0</b> — 글자 읽기(OCR). Apache License 2.0 · 영어·한국어 학습 자료(@tesseract.js-data, MIT).
+  <a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener noreferrer">github.com/naptha/tesseract.js</a>
+  · <code>vendor/ocr/LICENSE-tesseract.md</code>, <code>vendor/ocr/LICENSE-tesseract-core</code>.</p>
+  <p><b>OpenCV.js 4.13.0</b> — 그림 변환(내 컴퓨터 안에서만). Apache License 2.0, Copyright OpenCV team.
+  <a href="https://github.com/opencv/opencv" target="_blank" rel="noopener noreferrer">github.com/opencv/opencv</a>
+  · <code>vendor/opencv/LICENSE</code>.</p>
+  <p><b>fflate 0.8.2</b> — ZIP 풀기(HWPX·XLSX). MIT License, Copyright (c) 2020 Arjun Barrett.
+  <a href="https://github.com/101arrowz/fflate" target="_blank" rel="noopener noreferrer">github.com/101arrowz/fflate</a>
+  · <code>vendor/fflate/LICENSE</code>.</p>
+  <p><b>SheetJS Community Edition 0.20.3</b> — 엑셀·한글(CFB) 파일 읽고 쓰기. Apache License 2.0, Copyright (C) 2013-present SheetJS LLC.
+  <a href="https://git.sheetjs.com/sheetjs/sheetjs" target="_blank" rel="noopener noreferrer">git.sheetjs.com/sheetjs/sheetjs</a>
+  · <code>assets/exampool/sheet/vendor/LICENSE-sheetjs.txt</code>.</p>
+  <p><b>JSZip 3.10.1</b> — ZIP 만들기. MIT License(또는 GPLv3 중 고름, 5E는 MIT), Copyright (c) 2009-2016 Stuart Knightley · 딸린 pako(MIT).
+  <a href="https://github.com/Stuk/jszip" target="_blank" rel="noopener noreferrer">github.com/Stuk/jszip</a>
+  · <code>assets/exampool/sheet/vendor/LICENSE-jszip.txt</code>.</p>
+  <p><b>Pretendard</b> — 화면 글꼴. SIL Open Font License 1.1, Copyright (c) 2021 Kil Hyung-jin.
+  <a href="https://github.com/orioncactus/pretendard" target="_blank" rel="noopener noreferrer">github.com/orioncactus/pretendard</a>
+  · <code>fonts/pretendard/LICENSE</code>.</p>
+  <p><b>Latin Modern Roman (LM Roman 10 2.004)</b> — 수식 글꼴. GUST Font License, Copyright 2003, 2009 B. Jackowski and J. M. Nowacki (on behalf of TeX users groups).
+  <a href="https://www.gust.org.pl/projects/e-foundry/latin-modern" target="_blank" rel="noopener noreferrer">gust.org.pl/projects/e-foundry/latin-modern</a>
+  · <code>fonts/LICENSE-LatinModern-GUST.txt</code>(GUST Font License 전문), <code>fonts/LICENSE-LPPL-1.3c.txt</code>.</p>
+  <h2>함께 들어간 글꼴</h2>
+  <p>한글 문서 편집기(rhwp-studio)가 문서를 그릴 때 쓰는 글꼴 29개입니다. 받은 그대로 싣고 따로 팔지 않습니다.
+  파일별 목록(파일 이름·글꼴 안 저작권 문구·이용 조건)은 <code>vendor/rhwp-studio/FONT-NOTICES.md</code>,
+  이용 조건 전문은 <code>vendor/rhwp-studio/font-licenses/</code>(SIL OFL 1.1 전문은 <code>SIL-OFL-1.1.txt</code>)에 있습니다.</p>
+  <ul class=fonts>
+    <li><b>카페24 써라운드 (Cafe24 Ssurround Bold 1.001)</b> — Copyright © Cafe24 Corp.. SIL OFL 1.1 — 카페24 공식 안내서 · <code>vendor/rhwp-studio/font-licenses/Cafe24Ssurround-LICENSE.pdf</code> · <a href="https://fonts.cafe24.com" target="_blank" rel="noopener noreferrer">fonts.cafe24.com</a></li>
+    <li><b>카페24 슈퍼매직 (Cafe24 Supermagic 1.000)</b> — Copyright © Cafe24 Corp.. SIL OFL 1.1 — 카페24 공식 안내서 · <code>vendor/rhwp-studio/font-licenses/Cafe24Supermagic-LICENSE.pdf</code> · <a href="https://fonts.cafe24.com" target="_blank" rel="noopener noreferrer">fonts.cafe24.com</a></li>
+    <li><b>D2Coding 1.3.2</b> — Copyright (c) 2015-2016 NHN Corporation · FONTRIX. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/D2Coding-OFL.txt</code> · <a href="https://github.com/naver/d2codingfont" target="_blank" rel="noopener noreferrer">github.com/naver/d2codingfont</a></li>
+    <li><b>고운바탕 (Gowun Batang 2.000)</b> — Copyright 2021 The Gowun Batang Project Authors. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/GowunBatang-OFL.txt</code> · <a href="https://github.com/yangheeryu/Gowun-Batang" target="_blank" rel="noopener noreferrer">github.com/yangheeryu/Gowun-Batang</a></li>
+    <li><b>고운돋움 (Gowun Dodum 2.000)</b> — Copyright 2021 The Gowun Dodum Project Authors. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/GowunDodum-OFL.txt</code> · <a href="https://github.com/yangheeryu/Gowun-Dodum" target="_blank" rel="noopener noreferrer">github.com/yangheeryu/Gowun-Dodum</a></li>
+    <li><b>해피니스 산스 Regular·Bold·Title·VF (1.000)</b> — Copyright © 2022 THE HYUNDAI · AG Typography Institute. SIL OFL 1.1 — 현대백화점 공식 안내서 · <code>vendor/rhwp-studio/font-licenses/HappinessSans-LICENSE.pdf</code> · <a href="https://thehyundaifont.com" target="_blank" rel="noopener noreferrer">thehyundaifont.com</a></li>
+    <li><b>Latin Modern Math 1.959</b> — Copyright 2012–2014 B. Jackowski, P. Strzelczyk, P. Pianowski (TeX users groups). GUST Font License (LPPL 1.3c) · <code>vendor/rhwp-studio/font-licenses/LatinModernMath-GUST-FONT-LICENSE.txt</code> · <a href="https://www.gust.org.pl/projects/e-foundry/lm-math" target="_blank" rel="noopener noreferrer">www.gust.org.pl/projects/e-foundry/lm-math</a></li>
+    <li><b>나눔고딕 3.020 · 나눔고딕코딩 2.000 · 나눔명조 2.032</b> — Copyright © 2009–2011 NHN Corporation · Sandoll · FONTRIX. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/NanumGothic-OFL.txt</code> · <a href="https://hangeul.naver.com/font" target="_blank" rel="noopener noreferrer">hangeul.naver.com/font</a></li>
+    <li><b>Noto Sans KR 2.004 (Regular·Bold·ExtraLight)</b> — (c) 2014-2021 Adobe. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/NotoSansKR-OFL.txt</code> · <a href="https://fonts.google.com/noto" target="_blank" rel="noopener noreferrer">fonts.google.com/noto</a></li>
+    <li><b>Noto Serif KR 2.003 (Regular·Bold)</b> — (c) 2017-2024 Adobe. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/NotoCJKSerif-OFL.txt</code> · <a href="https://fonts.google.com/noto" target="_blank" rel="noopener noreferrer">fonts.google.com/noto</a></li>
+    <li><b>Pretendard 1.309 (9개 굵기)</b> — Copyright © 2023 Kil Hyung-jin. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/Pretendard-OFL.txt</code> · <a href="https://github.com/orioncactus/pretendard" target="_blank" rel="noopener noreferrer">github.com/orioncactus/pretendard</a></li>
+    <li><b>RHWP Old Hangul</b> (Source Han Serif K 2.003 옛한글 부분 글꼴, rhwp가 이름 바꾼 판) — © 2017-2024 Adobe. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/SourceHanSerifK-OFL.txt</code> · <a href="https://github.com/edwardkim/rhwp" target="_blank" rel="noopener noreferrer">github.com/edwardkim/rhwp</a> · 원본 <a href="https://github.com/adobe-fonts/source-han-serif" target="_blank" rel="noopener noreferrer">github.com/adobe-fonts/source-han-serif</a></li>
+    <li><b>스포카 한 산스 (SpoqaHanSans 1.004)</b> — Copyright 2015 Spoqa. SIL OFL 1.1 · <code>vendor/rhwp-studio/font-licenses/SpoqaHanSans-OFL.txt</code> · <a href="https://github.com/spoqa/spoqa-han-sans" target="_blank" rel="noopener noreferrer">github.com/spoqa/spoqa-han-sans</a></li>
+  </ul>
+  <p>그 밖에 KaTeX·MathLive 수식 글꼴(MIT, Copyright (c) 2013-2020 Khan Academy and other contributors · <code>vendor/katex/LICENSE</code>),
+  PDF.js 표준 글꼴 Liberation Sans 1.07.4(Copyright (c) 2007 Red Hat, Inc. · Liberation Fonts License, GPLv2 + 글꼴 예외 · <code>vendor/pdfjs/standard_fonts/LICENSE_LIBERATION</code>)와
+  Foxit 글꼴(Copyright 2014 PDFium Authors, BSD · <code>LICENSE_FOXIT</code>)이 들어 있습니다.</p>
+</div>
 
 <footer>생성 {date} · <a href="../index.html">5E로 돌아가기</a></footer>
 </div></body></html>`;

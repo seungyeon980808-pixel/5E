@@ -211,3 +211,7 @@
   .rs-sheen, .rs-mark-win { display: none; }
   .br-stack { transform: none !important; }
 }
+
+/* 11-23: 「5E」가 윤곽선(svg)이라 text-shadow 대신 같은 빛을 filter로 */
+.rs-mark-base svg { filter: drop-shadow(0 0 .35em rgba(90, 135, 255, .45)); }
+.rs-mark-glow svg { filter: drop-shadow(0 0 .5em rgba(130, 170, 255, .95)) drop-shadow(0 0 1.2em rgba(110, 155, 255, .5)); }

@@ -22,7 +22,7 @@
   async function keys(which,hold){st.dataset.keys=which;await wait(16);cls('h3-keys-on');await wait(90);cls('h3-keys-down');await wait(hold);cls('h3-keys-down',false);return ()=>cls('h3-keys-on',false)}
 
   let hovering=false,lastTouch=0,ready=false;
-  function toReady(){ready=true;cls('h3-spot-on',false);cls('h3-res-on',false);cls('h3-app');appName.textContent=appName.dataset.app;show('ready');cls('h3-ready')}
+  function toReady(){ready=true;cls('h3-spot-on',false);cls('h3-res-on',false);cls('h3-app');(appName.dataset.app==='5E'?appName.innerHTML='__LOGO5E__':appName.textContent=appName.dataset.app);show('ready');cls('h3-ready')}
 
   async function intro(){
     if(reduce){toReady();return loop()}
@@ -36,7 +36,7 @@
     const offB=await keys('ret',110);cls('h3-enter');await wait(120);offB();
     cls('h3-spot-out');await wait(260);
     cls('h3-spot-on',false);cls('h3-res-on',false);cls('h3-spot-out',false);cls('h3-enter',false);
-    appName.textContent=appName.dataset.app;show('load-1',true);cls('h3-app');
+    (appName.dataset.app==='5E'?appName.innerHTML='__LOGO5E__':appName.textContent=appName.dataset.app);show('load-1',true);cls('h3-app');
     // 준비는 짧게 — 실제 준비 단계 글 두 순간 + 준비 완료
     await wait(800);show('load-2');await wait(850);show('load-done');await wait(600);
     show('ready');ready=true;cls('h3-ready');

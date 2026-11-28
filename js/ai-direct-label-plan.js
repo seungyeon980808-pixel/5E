@@ -47,7 +47,7 @@ export function parseLabelRead(text) {
     const x = clamp01(value.x), y = clamp01(value.y);
     const w = Math.min(clamp01(value.w), 1 - x), h = Math.min(clamp01(value.h), 1 - y);
     if (!(w > 0) || !(h > 0)) continue;
-    items.push({ text: label, kind: value.kind, x, y, w, h, leader: normalizeLeader(value.leader) });
+    items.push({ text: label, kind: value.kind, x, y, w, h, leader: normalizeLeader(value.leader), ...(value.onDimensionLine === true ? { onDimensionLine: true } : {}) });
   }
   return items;
 }

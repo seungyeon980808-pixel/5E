@@ -71,7 +71,7 @@ function seedWorkspaces({count,unlabeled,selectedPartial,precisionMove}) {
     };
   });
 }
-async function fixture(context,count,evidence,{unlabeled=false,selectedPartial=false,precisionMove=false,browserContextOptions={},beforeNavigate}={}) {
+async function fixture(context,count,evidence,{unlabeled=false,selectedPartial=false,precisionMove=false,browserContextOptions={},beforeNavigate,entry='#ai-image-install-open'}={}) {
   const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2'};
   const configured=process.env.RELEASE_URL || process.env.EXAM_URL;
   const server=configured?null:http.createServer((request,response)=>{
@@ -117,7 +117,8 @@ async function fixture(context,count,evidence,{unlabeled=false,selectedPartial=f
   if(beforeNavigate)await beforeNavigate(page);
   await page.goto(entryUrl,{waitUntil:'domcontentloaded',timeout:30000});
   const welcome=page.locator('.tut-welcome-overlay .tut-banner-no');if(await welcome.isVisible())await welcome.click();
-  await page.locator('#ai-image-install-open').click();
+  // 11-19 E10: 11-11 작업대 나눔 뒤 그래프 작업(conversionKind 'graph')은 그래프 입구(#graph-tool-open)로 연다 — entry로 고른다(기본은 이미지 입구).
+  await page.locator(entry).click();
   await page.evaluate(()=>new Promise((resolve,reject)=>{
     const timer=setTimeout(()=>{cleanup();reject(new Error('Seeded source image did not load'));},10000);
     const observer=new MutationObserver(check);
@@ -184,23 +185,34 @@ function jointResponse(text) {
 }
 // 11-10: allowIdle=true면 그림 요청 없이 끝나는 변환(배경 캐시 재사용, 글자 읽기만)도 허용한다.
 // 바쁨 상태가 꺼져 있으면 끝난 것으로 본다(호출자가 결과 항목이 늘었는지 따로 확인한다).
+const waitForBridgePhase=({next,allowDone,allowIdle})=>new Promise((resolve,reject)=>{
+  const panel=document.querySelector('#ai-image-panel');
+  let sawBusy=panel.dataset.aiBusy==='true';
+  const ready=()=>window.__task2.sends.length>next || allowDone && panel.dataset.aiBusy==='false' || allowIdle && panel.dataset.aiBusy==='false';
+  const observer=new MutationObserver(check);
+  const waits=(window.__qaBridgeWaits??=new Set()),entry={resolve,reject,observer,check};waits.add(entry);
+  const timeout=setTimeout(()=>{cleanup();reject(new Error('Bridge phase did not advance (busy='+panel.dataset.aiBusy+', sends='+window.__task2.sends.length+', next='+next+', reads='+(window.__task2.labelReads||0)+')'));},10000);
+  function cleanup(){waits.delete(entry);clearTimeout(timeout);observer.disconnect();window.removeEventListener('qa:bridge-send',check);}
+  function check(){if(panel.dataset.aiBusy==='true')sawBusy=true;if(ready()){cleanup();resolve();}}
+  window.addEventListener('qa:bridge-send',check);
+  observer.observe(panel,{attributes:true,attributeFilter:['data-ai-busy']});
+  check();
+});
 async function finish(page,{sourcePlan=verifiedPlan,startIndex=0,allowIdle=false}={}) {
   let next=startIndex;
   const seen=[];
   // Bridge events and exact busy-state mutations drive each phase, without timing delays.
+  // 11-19 FIN3: 부하 아래 전체 검사에서 Chromium이 이 대기 약속을 「Resulting promise was garbage collected」로 끊은 적이 있다
+  // (제품은 끝까지 감: 진단 busy=false·phase completed). 대기 항목을 window.__qaBridgeWaits에 붙잡아 두고,
+  // 그래도 같은 오류가 나면 같은 조건을 다시 기다린다(조건은 현재 상태만 읽으므로 다시 기다려도 판정이 같다).
+  const waitPhase=async arg=>{
+    for(let attempt=0;;attempt++){
+      try{return await page.evaluate(waitForBridgePhase,arg);}
+      catch(error){if(attempt<2&&/garbage collected/i.test(String(error?.message)))continue;throw error;}
+    }
+  };
   for(let step=0;step<30;step++) {
-    await page.evaluate(({next,allowDone,allowIdle})=>new Promise((resolve,reject)=>{
-      const panel=document.querySelector('#ai-image-panel');
-      let sawBusy=panel.dataset.aiBusy==='true';
-      const ready=()=>window.__task2.sends.length>next || allowDone && panel.dataset.aiBusy==='false' || allowIdle && panel.dataset.aiBusy==='false';
-      const observer=new MutationObserver(check);
-      const timeout=setTimeout(()=>{cleanup();reject(new Error('Bridge phase did not advance (busy='+panel.dataset.aiBusy+', sends='+window.__task2.sends.length+', next='+next+', reads='+(window.__task2.labelReads||0)+')'));},10000);
-      function cleanup(){clearTimeout(timeout);observer.disconnect();window.removeEventListener('qa:bridge-send',check);}
-      function check(){if(panel.dataset.aiBusy==='true')sawBusy=true;if(ready()){cleanup();resolve();}}
-      window.addEventListener('qa:bridge-send',check);
-      observer.observe(panel,{attributes:true,attributeFilter:['data-ai-busy']});
-      check();
-    }),{next,allowDone:next>startIndex,allowIdle});
+    await waitPhase({next,allowDone:next>startIndex,allowIdle});
     const requests=await sends(page);
     if(requests.length===next) break;
     const request=requests[next];seen.push(request);

@@ -138,13 +138,33 @@ export function installInspector(root, { ctx, getBridge, run, studio, onPane }) 
     onPane?.(pane); sync(true);
   }
   // 커서·고른 것에 따라: 그림을 고르면 그림, 표 칸 안이면 표, 아니면 글자(쪽은 손으로 고를 때만 머문다).
+  // 11-20(MISC172): 손으로 고른 칸은 커서가 「다른 것」(다른 그림·다른 표 칸·다른 문단)으로 옮겨 갈 때까지 그대로 둔다.
+  // 예전엔 lastKind가 빈 값으로 시작해, 문서를 연 뒤 처음 0.5초 따라가기가 손으로 고른 「그림」을 「글자」로 덮어썼다
+  // (브라우저 검사 hwp-footer-menu가 cf163ba4에서 다시 누르기로 피하던 것). 이제는 누른 순간의 커서 자리를 적어 두고 그것과 견준다.
+  const cursorAt = () => {
+    const b = getBridge(); if (!b?.input) return null;
+    let kind = 'text', key = '';
+    try {
+      const ref = b.input.cursor?.getSelectedPictureRef?.();
+      if (ref) { kind = 'pic'; key = JSON.stringify(ref); }
+      else {
+        const p = b.input.getCursorPosition?.() || {};
+        if (b.input.cursor?.isInCell?.()) { kind = 'table'; key = [p.sectionIndex, p.parentParaIndex, p.controlIndex, p.cellIndex ?? JSON.stringify(p.cellPath || '')].join('/'); }
+        else key = [p.sectionIndex, p.paragraphIndex ?? p.paraIndex].join('/');
+      }
+    } catch {}
+    return { kind, key: `${kind}:${key}` };
+  };
+  let manualAt = '';
   function follow() {
-    const b = getBridge(); if (!b?.input) return;
-    let kind = 'text';
-    try { if (b.input.cursor?.getSelectedPictureRef?.()) kind = 'pic'; else if (b.input.cursor?.isInCell?.()) kind = 'table'; } catch {}
-    if (kind === lastKind) return; lastKind = kind;
-    if (!auto && pane === 'page' && kind === 'text') return;
-    auto = true; show(kind);
+    const at = cursorAt(); if (!at) return;
+    if (!auto || manualAt) {
+      if (manualAt === '?') { manualAt = at.key; lastKind = at.kind; return; } // 편집기가 준비되기 전에 골랐으면 첫 커서 자리를 기준으로
+      if (at.key === manualAt) return; // 손으로 고른 뒤 커서가 그대로면 손으로 고른 칸을 둔다
+      manualAt = '';
+      if (!auto && pane === 'page' && at.kind === 'text') { lastKind = at.kind; return; } // 쪽은 글 안에서 커서가 움직여도 머문다
+    } else if (at.kind === lastKind) return;
+    lastKind = at.kind; auto = true; show(at.kind);
   }
   const tableAt = b => { const p = b.input.getCursorPosition(); if (!b.input.cursor.isInCell?.()) throw new Error('표 칸 안을 먼저 누르세요.'); if ((p.cellPath?.length || 1) > 1) throw new Error('표 안의 표는 여기서 바꿀 수 없습니다.'); return { sec: p.sectionIndex, para: p.parentParaIndex, ctrl: p.controlIndex, cell: p.cellIndex ?? p.cellPath?.[0]?.cellIndex ?? 0 }; };
   const pictureRef = b => { const ref = b.input.cursor?.getSelectedPictureRef?.(); if (!ref) throw new Error('그림을 먼저 누르세요.'); return ref; };
@@ -275,7 +295,7 @@ export function installInspector(root, { ctx, getBridge, run, studio, onPane }) 
   };
   root.addEventListener('mousedown', e => { if (e.target.closest('button') && !e.target.closest('input,select')) e.preventDefault(); }); // 누를 때 문서 커서를 잃지 않게
   root.addEventListener('click', e => {
-    const tab = e.target.closest('[data-ei-pane]'); if (tab) { auto = tab.dataset.eiPane !== 'page'; show(tab.dataset.eiPane, tab.dataset.eiPane === 'page' ? '쪽 전체 설정(누른 곳과 상관없이)' : ''); return; }
+    const tab = e.target.closest('[data-ei-pane]'); if (tab) { auto = tab.dataset.eiPane !== 'page'; const at = cursorAt(); manualAt = at?.key || '?'; if (at) lastKind = at.kind; show(tab.dataset.eiPane, tab.dataset.eiPane === 'page' ? '쪽 전체 설정(누른 곳과 상관없이)' : ''); return; }
     const step = e.target.closest('[data-ei-step]');
     if (step) { const [key, d] = step.dataset.eiStep.split(':'); void run(async () => { const b = getBridge(); await STEP[key](b, Number(d)); ctx.refocus(); setTimeout(() => sync(), 60); }); return; }
     const act = e.target.closest('[data-ei-act]');
@@ -320,7 +340,7 @@ export function installLeftTools(root, { ctx, run, focusTabs, palette, actions, 
   if (figures) root.querySelector('.el-figs-slot').append(...figures);
   const ACT = {
     new: () => actions.newDocument(),
-    md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => palette?.tool('photo'), clip: () => window.fiveEClipboard?.toggle(), palette: () => {},
+    md: () => palette?.tool('convert'), excel: () => palette?.tool('exam_excel'), form: () => palette?.tool('form_fill'), photo: () => ctx.command('insert:image') /* 11-22: 팔레트 「사진」 창고는 집중 모드에서 안 보여 눌러도 아무 일이 없었다 — 리본 「그림」과 같은 그림 파일 넣기로 */, clip: () => window.fiveEClipboard?.toggle(), palette: () => {},
     fit: () => palette?.tool('spacing_fit'), oneline: () => palette?.tool('spacing_fit'),
     chem: () => ctx.withBridge(b => { const n = applyScienceScripts(b); ctx.message(n ? `첨자 ${n}곳을 입혔습니다(되돌리기 ⌘Z).` : '첨자를 입힐 화학식·단위를 찾지 못했습니다.'); }),
     renum: () => ctx.withBridge(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`)),

@@ -41,6 +41,18 @@ async function readStateStyle(page, selector) {
   });
 }
 
+// 칸 접기·펴기는 패널이 움직이는 동안(is-panel-moving) 단추가 머리줄↔가장자리 줄로 자리를 옮긴다.
+// 느린 CI에서 움직임이 끝나기 전에 누르면 옮겨 가는 단추를 빗맞혀 aria-expanded가 안 바뀐 채 30초를 기다렸다(11-19 CI 152줄).
+// 누르기 전에 패널이 그 상태로 다 멈추고 단추 자리가 두 프레임 그대로인지 기다린다.
+async function drawerSettled(page,side,expanded) {
+  await page.waitForFunction(({side,expanded})=>{
+    const panel=document.getElementById('panel-'+side),button=document.getElementById('drawer-'+side+'-toggle');
+    if(!panel||!button||panel.classList.contains('is-panel-moving')||panel.hidden===expanded)return false;
+    if(button.getAnimations({subtree:false}).some(a=>a.playState==='running'))return false;
+    return new Promise(resolve=>{const a=button.getBoundingClientRect();requestAnimationFrame(()=>requestAnimationFrame(()=>{const b=button.getBoundingClientRect();resolve(a.x===b.x&&a.y===b.y&&b.width>0);}));});
+  },{side,expanded});
+}
+
 async function assertWorkflowState(page,id,open,selected) {
   await page.waitForFunction(({id,open})=>document.getElementById(id)?.dataset.workflowOpen===String(open),{id,open});
   // 11-07: 「그래프」의 aria-expanded는 세 갈래 메뉴(js/graph-entry-menu.js)의 열림이다 — 편집기 열림은 data-workflow-open으로 본다.
@@ -141,6 +153,7 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
     const selector='#drawer-'+side+'-toggle';
     assert.deepEqual(await readStateStyle(page,selector),drawerNeutral);
     assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),drawerNeutral.color,'Open panel uses the panel-head default');
+    await drawerSettled(page,side,true);
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='false',side);
     await page.mouse.move(1000,400);
@@ -148,6 +161,7 @@ for (const engine of [chromium,webkit].filter(e=>!process.env.BROWSER_ENGINE||e.
     // 11-04: 접히면 단추가 칸 머리줄을 떠나 가장자리에 남으므로 아이콘만 또렷하게(--ds-ink) — 면·테두리는 여전히 없다.
     assert.deepEqual(await readStateStyle(page,selector),{background:'rgba(0, 0, 0, 0)',border:'rgba(0, 0, 0, 0)',color:'rgb(230, 237, 243)'});
     assert.equal(await page.locator(selector+' .ds-fillcol').evaluate(el=>getComputedStyle(el).opacity),'0');
+    await drawerSettled(page,side,false);
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='true',side);
     await page.mouse.move(1000,400);

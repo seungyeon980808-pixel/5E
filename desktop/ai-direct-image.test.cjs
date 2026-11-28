@@ -230,3 +230,105 @@ test("main.cjs starts the direct image turn without awaiting the generation and 
   assert.match(main, /\.then\(\s*result => finishDirectImageTurn\(owner/);
   assert.match(main, /status: imageDataUrl \? "completed" : cancelled \? "interrupted" : "failed"/);
 });
+
+// PATHFIX(11-20): 401이면 Codex를 띄워 토큰을 새로 받게 한 뒤 한 번 더 보낸다(그래도 401이면 바로 던진다).
+test("a 401 asks Codex to refresh the login once and retries", async () => {
+  const fetchImpl = fakeFetch([response(401), response(200, imageSse())]);
+  let refreshes = 0;
+  const { client, logs } = clientWith(fetchImpl, { refreshAuth: async () => { refreshes += 1; return true; } });
+  const result = await client.generate({ model: "gpt-6-luna", text: "그려 줘" });
+  assert.equal(result.imageDataUrl, PNG_URL);
+  assert.equal(refreshes, 1);
+  assert.equal(fetchImpl.calls.length, 2);
+  assert.ok(logs.some(entry => entry.event === "direct-auth-refresh" && entry.ok === true));
+});
+test("a failed refresh leaves the DIRECT_AUTH error and does not loop", async () => {
+  const fetchImpl = fakeFetch([response(401)]);
+  let refreshes = 0;
+  const { client } = clientWith(fetchImpl, { refreshAuth: async () => { refreshes += 1; return refreshes === 1; } });
+  await assert.rejects(client.generate({ model: "gpt-6-luna", text: "그려 줘" }), error => error.code === "DIRECT_AUTH");
+  assert.equal(refreshes, 1);
+  assert.equal(fetchImpl.calls.length, 2);
+});
+// 11-20: DIRECT_FAILED가 「완료하지 못했습니다」만 남기던 문제 — 실제 원인·요청 id·모델·걸린 시간을 오류와 기록에 남기고 비밀은 지운다.
+const { redact, failureDetail } = require("./ai-direct-image.cjs");
+const withHeaders = (status, body, headers = {}) => ({ status, text: async () => body, headers: { get: name => headers[name.toLowerCase()] ?? null } });
+
+test("a failed response records the real reason, request id, model and elapsed time without secrets", async () => {
+  const failed = sse([
+    { type: "response.created", response: { id: "resp_123", model: "gpt-image-x" } },
+    { type: "response.output_item.done", item: { type: "image_generation_call", id: "ig_1", status: "failed" } },
+    { type: "response.failed", response: { id: "resp_123", status: "failed", model: "gpt-image-x",
+      error: { code: "server_error", message: "Image generation failed. token secret-token-value Bearer abc.def data:image/png;base64,QUJDREVGR0hJSktMTU5PUFFSU1RVVldY" } } },
+  ]);
+  const fetchImpl = fakeFetch([withHeaders(200, failed, { "x-request-id": "req-abc" })]);
+  const { client, logs } = clientWith(fetchImpl);
+  const error = await client.generate({ model: "gpt-6-luna", text: "x", attachments: [] }).catch(e => e);
+  assert.equal(error.code, "DIRECT_FAILED");
+  assert.match(error.message, /Image generation failed/);
+  assert.match(error.message, /server_error/);
+  assert.equal(error.detail.requestId, "req-abc");
+  assert.equal(error.detail.errorCode, "server_error");
+  assert.equal(error.detail.responseId, "resp_123");
+  assert.equal(error.detail.model, "gpt-image-x");
+  assert.equal(error.detail.requestedModel, "gpt-6-luna");
+  assert.equal(error.detail.imageCallStatus, "failed");
+  assert.equal(typeof error.detail.elapsedMs, "number");
+  const entry = logs.find(item => item.event === "direct-error");
+  assert.equal(entry.code, "DIRECT_FAILED");
+  assert.equal(entry.requestId, "req-abc");
+  assert.equal(entry.errorCode, "server_error");
+  assert.equal(entry.responseId, "resp_123");
+  assert.equal(entry.responseModel, "gpt-image-x");
+  assert.equal(entry.failedEvent, "response.failed");
+  assert.match(entry.reason, /Image generation failed/);
+  const dump = JSON.stringify({ logs, message: error.message, detail: error.detail });
+  assert.doesNotMatch(dump, /secret-token-value/);
+  assert.doesNotMatch(dump, /acct-1/);
+  assert.doesNotMatch(dump, /Bearer abc/);
+  assert.doesNotMatch(dump, /QUJDREVGR0hJSktMTU5PUFFSU1RVVldY/);
+  assert.equal(fetchImpl.calls.length, 1, "실패 이벤트는 다시 보내지 않는다");
+});
+
+test("an 'error' stream event is reported as DIRECT_FAILED with its code and message", async () => {
+  const fetchImpl = fakeFetch([response(200, sse([{ type: "error", code: "rate_limit_exceeded", message: "Too many image requests" }]))]);
+  const { client, logs } = clientWith(fetchImpl);
+  const error = await client.generate({ model: "gpt-6-luna", text: "x", attachments: [] }).catch(e => e);
+  assert.equal(error.code, "DIRECT_FAILED");
+  assert.equal(error.detail.errorCode, "rate_limit_exceeded");
+  assert.match(error.message, /Too many image requests/);
+  assert.equal(logs.find(item => item.event === "direct-error").errorCode, "rate_limit_exceeded");
+});
+
+test("a rejected HTTP request keeps the server's reason and request id", async () => {
+  const body = JSON.stringify({ error: { message: "Unsupported model gpt-6-luna for image tool", type: "invalid_request_error" } });
+  const fetchImpl = fakeFetch([withHeaders(400, body, { "openai-request-id": "req-400" })]);
+  const { client, logs } = clientWith(fetchImpl);
+  const error = await client.generate({ model: "gpt-6-luna", text: "x", attachments: [] }).catch(e => e);
+  assert.equal(error.code, "DIRECT_HTTP");
+  assert.equal(error.status, 400);
+  assert.equal(error.detail.requestId, "req-400");
+  assert.match(error.detail.reason, /Unsupported model/);
+  const entry = logs.find(item => item.event === "direct-error");
+  assert.equal(entry.status, 400);
+  assert.equal(entry.requestId, "req-400");
+  assert.match(entry.reason, /Unsupported model/);
+});
+
+test("an empty result after retries keeps the last stream event for diagnosis", async () => {
+  const fetchImpl = fakeFetch([response(200, sse([{ type: "response.created" }, { type: "response.in_progress" }]))]);
+  const { client, logs } = clientWith(fetchImpl, { retries: 1 });
+  const error = await client.generate({ model: "gpt-6-luna", text: "x", attachments: [] }).catch(e => e);
+  assert.equal(error.code, "DIRECT_EMPTY");
+  assert.equal(error.detail.lastEvent, "response.in_progress");
+  assert.equal(error.detail.attempt, 2);
+  assert.equal(logs.filter(item => item.event === "direct-error").length, 2);
+});
+
+test("redact hides tokens, keys, account ids and image data, and caps length", () => {
+  const text = redact("Bearer abc.def.ghi eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.c2lnbmF0dXJlMTIz sk-abcdefghijklmnop acct-xyz data:image/png;base64,AAAABBBBCCCCDDDDEEEE", ["acct-xyz"]);
+  assert.doesNotMatch(text, /abc\.def|eyJhbGci|sk-abcdef|acct-xyz|AAAABBBB/);
+  assert.equal(redact("x".repeat(1000)).length <= 401, true);
+  assert.equal(redact(null), null);
+  assert.equal(failureDetail([{ type: "response.completed" }]), null);
+});

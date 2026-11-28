@@ -59,7 +59,9 @@ test('5E clipboard: copy/cut/paste, open, big view, insert into image·exam card
     await sheet.click('[data-nav="drawer"]');await sheet.locator('.clp-i',{hasText:'옛 서랍 그림'}).click();
     assert.equal((await sheet.locator('.clp-go').textContent()).trim(),'자료 칸에 넣기');
     await sheet.locator('.clp-go').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile img').length>n,f0);
-    assert.doesNotMatch(await sheet.evaluate(()=>document.querySelector('#status').textContent),/확인하세요/);
+    // 1.7.2(81563d21): 상태 줄은 동작 안내를 2.5초 붙들어, 앞서 연 가져오기 창 안내(「불러올 내용을 확인하세요…」)가 잠깐 남을 수 있다.
+    // 넣기가 「확인하세요」 안내를 새로 띄우지 않는지는 붙들기가 끝난 뒤(최대 4초) 본다.
+    await sheet.waitForFunction(()=>!/확인하세요/.test(document.querySelector('#status').textContent),null,{timeout:4000});
     // 11-14(지적 7, 40c785b4): 넣으면 클립보드는 저절로 닫힌다 — 닫힌 것을 확인한다(닫기 단추는 미끄러져 사라지는 중).
     await sheet.waitForFunction(()=>!document.querySelector('.clp')?.classList.contains('show'));
     // 위 문서에서 ⇧⌘V를 눌러도 5E_exam의 클립보드가 열린다.

@@ -94,3 +94,6 @@
 .ll-grid[data-loading-sheen="off"] > .ll-sheen { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .ll, .ll-bar, .ll-bar-fill { transition: none; } }
 @media (max-width: 760px) { .unilib-header .ll { max-width: 45%; font-size: 10px; gap: 3px; } }
+
+/* 11-23: 「5E」 윤곽선(svg)에 같은 빛 */
+.ll-mark svg { filter: drop-shadow(0 0 .4em rgba(110, 155, 255, .7)); }

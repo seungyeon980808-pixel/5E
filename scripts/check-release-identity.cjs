@@ -39,7 +39,7 @@ function checkReleaseIdentity({ tag = null, sha = null } = {}) {
   assert.equal(metadata.channels.desktop.entry, metadata.candidate.desktopEntry, "desktop entry must match candidate entry");
   assert.equal(pkg.engines?.node, ">=24.21.0 <25", "Node engine must stay on the pinned Node 24 LTS line");
   assert.equal(read(".nvmrc").trim(), "24.21.0", ".nvmrc must pin Node 24.21.0");
-  assert.equal(pkg.devDependencies?.electron, "44.4.5", "Electron must be pinned to 44.4.5");
+  assert.equal(pkg.devDependencies?.electron, "44.11.5", "Electron must be pinned to 44.11.5");
   assert.equal(pkg.devDependencies?.playwright, "1.62.1", "Playwright must be pinned to the audited browser tuple");
   assert.equal(pkg.build?.win?.artifactName, "5E-${version}-windows-${arch}.${ext}");
   assert.equal(pkg.build?.mac?.artifactName, "5E-${version}-macos-${arch}.${ext}");

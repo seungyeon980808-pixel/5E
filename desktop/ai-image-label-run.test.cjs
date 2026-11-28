@@ -333,7 +333,7 @@ test('default redraw prompts are the short approved texts and only the user requ
  assert.equal(texts[0],REDRAW_EXAM_PROMPT);
  assert.equal(texts[1],REDRAW_TEXTBOOK_PROMPT);
  assert.equal(texts[2],REDRAW_TEXTBOOK_PROMPT+'\n\n사용자 요청: 글자 크기를 키워 줘');
- assert.match(REDRAW_TEXTBOOK_PROMPT,/^첨부한 교과서 그림을 한국 수능\(평가원\) 시험지용 흑백 과학 그림으로 다시 그려 줘\./);
+ assert.match(REDRAW_TEXTBOOK_PROMPT,/^첨부한 교과서 그림을 편집해서 한국 수능\(평가원\) 시험지용 흑백 과학 그림으로 바꿔 줘\./);
  for(const text of texts) assert.doesNotMatch(text,/INPUT_SOURCE|스타일 계약|사용자 수정 요청/);
 });
 

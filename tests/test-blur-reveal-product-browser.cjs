@@ -181,16 +181,30 @@ test('product entries and actual request signal mount the approved effect', {tim
  assert.equal(await page.locator('#ai-image-panel .br-layer').count(),3);
  assert.ok(secs(await page.locator('#ai-image-panel .ai-loading-meta').textContent())>=before);
  assert.equal(await page.evaluate(()=>window.__task2.sends.length),1,'navigation never starts another request');
+ // 11-19 E10 다시 씀: 11-09(2d671587) 「AI 변환은 실패로 끝나면 안 된다」 — 오류 한 번으로 「변환하지 못했어요」 화면이 되지 않는다.
+ // 그림 생성은 반대 모델로 자동으로 다시 보내고(js/ai-image-label-run.js AI_RETRY_POLICY), 그동안 불러오기 틀은 그대로 돈다.
+ // 둘 다 실패해도 결과(원본 그림 + 경고 한 줄)를 내므로 실패 화면 대신 끝난 틀을 본다. 「변환하지 못했어요」 화면 자체는 위 첫 검사(createWorkbenchLoading 'failed')가 그대로 본다.
+ const loadingState=()=>page.evaluate(()=>document.querySelector('#ai-image-panel [data-ai-loading-frame]')?.dataset.loadingState||'');
+ const firstModel=await page.evaluate(()=>window.__task2.sends[0].payload.model);
  await page.evaluate(()=>window.__task2.emit(0,'error'));
- await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-loading-frame]').dataset.loadingState==='failed');
- assert.ok((await page.locator('#ai-image-panel .rs-text').textContent()).includes('변환하지 못했어요'));
+ await page.waitForFunction(()=>window.__task2.sends.length>=2,null,{timeout:20000});
+ assert.notEqual(await loadingState(),'failed','one error never shows the failure screen');
+ assert.equal(await page.locator('#ai-image-panel').getAttribute('data-blur-loading'),'true','loading continues through the automatic retry');
+ const retryModel=await page.evaluate(()=>window.__task2.sends[1].payload.model);
+ assert.notEqual(retryModel,firstModel,`the retry switches model (${firstModel} → ${retryModel})`);
+ await page.evaluate(()=>window.__task2.emit(1,'error'));
+ await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.blurLoading!=='true',null,{timeout:20000});
+ assert.notEqual(await loadingState(),'failed','even after every retry the conversion ends with a result, not the failure screen');
+ assert.equal(await page.evaluate(()=>window.__task2.sends.length),2,'generation retries once with the other model, then stops');
+ assert.doesNotMatch(await page.locator('#ai-image-panel .rs-text').textContent().catch(()=>''),/변환하지 못했어요/);
  // Empty graph workbench keeps imports on the original (left) side.
  await openAiWorkflow(page,'graph');
  await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
- const imports=page.locator('#ai-image-panel [data-ai-empty-import]:visible');
+ // 11-19 E10 다시 씀: 7992a89c(11-11 시안 v7)에서 빈 칸 불러오기가 [data-ai-empty-import]에서 「라이브러리에서 불러오기 ＋」(.ai-stage-import)로 바뀌었다.
+ const imports=page.locator('#ai-image-panel .ai-stage-import:visible');
  assert.equal(await imports.count(),1);
  assert.equal(await imports.evaluate(n=>!!n.closest('[data-ai-reference-empty]')),true);
- assert.equal(await page.locator('#ai-image-panel .ai-previews [data-ai-empty-import]').count(),0);
+ assert.equal(await page.locator('#ai-image-panel .ai-previews .ai-stage-import').count(),0);
  assert.equal(await page.locator('#ai-image-panel [data-ai-empty] strong').textContent(),'생성 결과 없음');
  await page.screenshot({path:path.join(evidence,'product-empty-graph.png')});
  const png=await page.evaluate(()=>window.__task2.original.split(',')[1]);
@@ -222,20 +236,25 @@ test('graph workbench cards switch from padding and status icons while requests 
     tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);
    };
   }));
- })});
+ // 11-19 E10: 11-11 작업대 나눔 뒤 그래프 작업은 그래프 입구로 연다(이미지 입구로 열면 그래프 작업이 안 보여 원본이 안 뜸).
+ }),entry:'#graph-tool-open'});
  const panel=page.locator('#ai-image-panel');
+ // 11-19 E10 다시 씀: 그래프 입구로 열면 마지막 그래프 작업이 앞에 온다(옛 검사는 task-0이 앞이라고 보고 nth(1)을 눌렀다) — 지금 고른 칸(A)에서 보내고 다른 칸(B)에서 또 보낸다.
+ const ids=await page.evaluate(()=>({on:document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId,all:[...document.querySelectorAll('#ai-image-panel .ai-task-tab[data-tab-id]')].map(t=>t.dataset.tabId)}));
+ const A=ids.on,B=ids.all.find(id=>id!==A);assert.ok(A&&B,JSON.stringify(ids));
  await panel.locator('[data-ai-send]').click();await page.waitForFunction(()=>__task2.sends.length===1);
- await panel.locator('.ai-task-tab-select').nth(1).click();
- await page.waitForFunction(()=>document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId==='task-1');
+ await panel.locator(`.ai-task-tab[data-tab-id="${B}"] .ai-task-tab-select`).click();
+ await page.waitForFunction(id=>document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId===id,B);
  await panel.locator('[data-ai-send]').click();await page.waitForFunction(()=>__task2.sends.length===2);
+ for(const id of [A,B]) assert.equal(await panel.locator(`.ai-task-tab[data-tab-id="${id}"]`).getAttribute('data-work-state'),'busy');
  const activate=async(id,point)=>{
   const row=panel.locator(`.ai-task-tab[data-tab-id="${id}"]`),box=await row.boundingBox();
   if(point==='padding') await page.mouse.click(box.x+2,box.y+box.height/2);
   else {const status=await row.locator('.ai-task-tab-status').boundingBox();assert.ok(status);await page.mouse.click(status.x+status.width/2,status.y+status.height/2);}
   await page.waitForFunction(id=>document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId===id,id);
  };
- await activate('task-0','padding');await activate('task-1','padding');
- await activate('task-0','status');await activate('task-1','status');
+ await activate(A,'padding');await activate(B,'padding');
+ await activate(A,'status');await activate(B,'status');
  assert.equal(await page.evaluate(()=>__task2.sends.length),2,'switching never starts or cancels another request');
  assert.equal(await panel.getAttribute('data-ai-busy'),'true');
  await page.screenshot({path:path.join(evidence,'graph-card-switch.png')});assert.deepEqual(errors,[]);

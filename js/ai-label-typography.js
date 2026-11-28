@@ -65,7 +65,9 @@ const HANGUL = '가-힣ㄱ-ㅎㅏ-ㅣ㉠-㉻㈀-㈜';
 const HANGUL_CHUNK = new RegExp(`[(\\[〈「]*(?:[A-Za-z]{1,3}(?=[${HANGUL}]))?[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
 // 11-14: 물리량 라벨(「I직」처럼 첨자를 평평하게 읽은 것)은 한글 앞 영어를 한글 조각에 흡수하지 않는다 — I는 기울임 물리량으로 남긴다.
 const HANGUL_ONLY_CHUNK = new RegExp(`[(\\[〈「]*[${HANGUL}]+(?:[\\s·,.~()\\[\\]〈〉]*[${HANGUL}]+)*[\\s)\\]〉」.,·]*`, 'gu');
-const UNIT_AFTER_NUMBER = /^[+−-]?\d[\d.,]*\s*(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|°C?|%|kg)$/u;
+// 11-21 사용자 확정 규칙: 수치+단위는 숫자·단위 모두 정자(5m/s, 9.8m/s², 1g/cm³ 같은 묶음 단위도) — 「5m/s」가 이름 글꼴로 빠지던 것.
+const UNIT_ATOM = '(?:[kmcμnMG]?(?:N|m|g|s|A|V|W|J|Pa|Hz|Ω|K|L|C|T|mol|M)|cm|mm|km|kg|mL|°C?)(?:[²³⁻¹]+)?';
+const UNIT_AFTER_NUMBER = new RegExp(`^[+−-]?\\d[\\d.,]*\\s*(?:${UNIT_ATOM}(?:[/·]${UNIT_ATOM})*|°C?|%)$`, 'u');
 export function scriptLabelRuns(text, role, aiRuns) {
   const source = String(text ?? '');
   if (!source.trim() || /[_^{}\\]/.test(source)) return null; // 수식 문법 라벨은 기존 수식 경로
@@ -89,7 +91,7 @@ export function scriptLabelRuns(text, role, aiRuns) {
     let runRole;
     if (!part.hangul && /^[\u2160-\u217F]+$/u.test(core)) runRole = 'name'; // 로마 숫자(영역 Ⅰ의 Ⅰ)는 이름 — 영어 정체
     else if (part.hangul || !/[A-Za-z0-9α-ωΑ-Ω]/u.test(core)) runRole = 'text';
-    else if (UNIT_AFTER_NUMBER.test(core)) runRole = 'unit';
+    else if (UNIT_AFTER_NUMBER.test(core)) { runRole = 'unit'; part.text = part.text.replace(/(\d)\s+(?=[^\s\d])/u, '$1'); } // 11-21 확정: 숫자와 단위는 붙여 씀(그림이 「2 m」로 그려도 「2m」로 찍는다)
     else if (/^[+−-]?\d[\d.,]*$/.test(core)) runRole = 'number';
     else if ((chem.has('*') || [...chem].some(c => c && core.includes(c))) && LONE_QUANTITY_SYMBOL.test(core)) runRole = 'quantity';
     else if (chem.has('*') || [...chem].some(c => c && core.includes(c))) runRole = 'chemical';

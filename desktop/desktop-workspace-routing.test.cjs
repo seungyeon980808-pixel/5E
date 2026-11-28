@@ -1,6 +1,11 @@
 const test = require('node:test');
 // 11-10: 이 검사는 app-server 경로(에이전트)의 이벤트 순서를 본다. 그림 직접 호출은 끄고 실행한다.
 process.env.FIVE_E_IMAGE_TRANSPORT = 'agent';
+// PATHFIX(11-20): codex 위치는 가짜 실행 파일로 고정한다(이 맥의 실제 codex·PATH와 상관없이).
+{ const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), '5e-routing-codex-')); const fake = path.join(dir, 'codex');
+  fs.writeFileSync(fake, '#!/bin/sh\n'); fs.chmodSync(fake, 0o755); process.env.FIVE_E_CODEX_PATH = fake;
+  process.on('exit', () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch {} }); }
 const assert = require('node:assert/strict');
 const Module = require('node:module');
 const { pathToFileURL } = require('node:url');
@@ -20,6 +25,7 @@ function harness(options = {}) {
     child.stdout = new PassThrough(); child.stderr = new PassThrough();
     child.reply = msg => child.stdout.write(JSON.stringify(msg) + '\n');
     child.kill = () => { child.emit('exit', 0, null); return true; };
+    process.nextTick(() => child.emit('spawn')); // 실제 자식처럼 떴다고 알린다(startServer가 기다림)
     child.stdin = new Writable({write(bytes, encoding, done) {
       const req = JSON.parse(String(bytes)); requests.push(req);
       if (req.method === 'initialize') child.reply({id:req.id,result:{}});

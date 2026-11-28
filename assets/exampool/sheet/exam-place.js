@@ -98,7 +98,7 @@ export function checkMarkup(exam, data, forms, items, st, sheet) {
   // 11-04: 걸린 문항이 많으면 번호 줄이 칸 폭을 다 차지해 이름이 한 글자씩 세로로 깨졌다 — 이름·개수는 윗줄, 번호는 아래에 한 줄 5개씩 단추(누르면 그 문항).
   const rule = (idx, label, okText = '없음', level = 'bd') => { if (!idx.length) return rl('ok', label, okText, null); warn.rule++;
     return `<div class="ex-rlm">${rl(level, label, `${idx.length}개`, null)}<div class="ex-rnums">${idx.map(i => `<button type="button" data-open-card="${E(qs[i].id)}" title="${i + 1}번 문항 카드 열기">${i + 1}번</button>`).join('')}</div></div>`; };
-  const noAns = list(q => objective(q) && !Number.isInteger(q.answer)), noPts = list(q => !(Number(q.points) > 0)), noAsk = list(q => !String(q.ask || '').trim());
+  const noAns = list(q => objective(q) && !Number.isInteger(q.answer)), noPts = list(q => !(Number(q.points) > 0)), noAsk = list(q => !q.figureOnly && !String(q.ask || '').trim());
   const dup = list(q => { const t = (q.choices || []).map(c => String(c.text || '').replace(/\s+/g, '')).filter(Boolean); return new Set(t).size !== t.length; });
   const allowed = new Set(frameOf(exam, forms).pts ? [2, 3] : [2, 3, 4]);
   const badPts = g.points ? list(q => objective(q) && Number(q.points) > 0 && !allowed.has(Number(q.points))) : [];

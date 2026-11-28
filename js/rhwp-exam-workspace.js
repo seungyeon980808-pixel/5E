@@ -1,3 +1,4 @@
+import { logo5eSvg } from './loading/logo5e.js';
 import { applyPictureFit, detectFitMode, nextFitMode, FIT_LABELS } from './rhwp-exam-picture-fit.js?v=1.7.0-four-session-integration';
 import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-four-session-integration';
 import { installExamModes } from './rhwp-exam-modes.js?v=1.7.0-four-session-integration';
@@ -55,7 +56,7 @@ export function initRhwpExamWorkspace(state, services) {
   panel.setAttribute('aria-label', '시험지 작업 공간');
   panel.setAttribute('role', 'dialog');
   panel.innerHTML = `
-    <div class="exam-topbar"><div class="exam-top-cell"><button type="button" class="exam-panel-toggle" data-exam-panel aria-pressed="true" aria-label="왼쪽 칸 접기" title="왼쪽 칸 접기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path class="exam-panel-fill" d="M3.8 4.8h5.2v14.4H3.8z"/><path d="M9 4v16"/></svg></button><span class="exam-brand app-brand" title="5E_hwp · 조판"><b class="app-brand-mark">5E</b><span class="app-brand-name">_hwp</span></span></div><div class="exam-heading"><nav class="app-switch" aria-label="5E 프로그램">${appSwitchHtml('hwp')}</nav>
+    <div class="exam-topbar"><div class="exam-top-cell"><button type="button" class="exam-panel-toggle" data-exam-panel aria-pressed="true" aria-label="왼쪽 칸 접기" title="왼쪽 칸 접기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path class="exam-panel-fill" d="M3.8 4.8h5.2v14.4H3.8z"/><path d="M9 4v16"/></svg></button><span class="exam-brand app-brand" title="5E_hwp · 조판"><b class="app-brand-mark">${logo5eSvg('')}</b><span class="app-brand-name">_hwp</span></span></div><div class="exam-heading"><nav class="app-switch" aria-label="5E 프로그램">${appSwitchHtml('hwp')}</nav>
       <span class="exam-top-sep" aria-hidden="true"></span><button type="button" class="exam-history" data-exam-action="undo" title="되돌리기 (⌘Z)" aria-label="되돌리기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button type="button" class="exam-history" data-exam-action="redo" title="다시 실행 (⇧⌘Z)" aria-label="다시 실행"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button><span class="exam-top-sep" aria-hidden="true"></span>
       <nav class="exam-actions" aria-label="시험지 작업">
         <div class="exam-menu">
@@ -546,22 +547,10 @@ export function initRhwpExamWorkspace(state, services) {
     await preparePlacement(latest);
   }
   function graphSendBounds(planeId) {
+    // 11-20 GRAPHFIX(안 1): 그래프는 어느 출력이든 한 틀 = 그래프 + 모든 라벨 + 2mm(getContentBounds가 그린 글자까지 잰다).
+    // 예전에는 화면 글자 상자(선택 표시·잡기 상자 포함)를 더 합쳐 다른 출력보다 0.2mm쯤 컸다.
     const objects=state.get().objects.filter(object=>object.id===planeId || object.planeId===planeId);
-    let bounds=getContentBounds({...state.get(),objects},{},2);
-    const canvas=document.querySelector('#canvas'),matrix=canvas.getScreenCTM()?.inverse();
-    if (!matrix) return bounds;
-    const nodes=[...canvas.querySelectorAll('#scene [data-id]')];
-    for (const object of objects) {
-      const node=nodes.find(node=>node.dataset.id===object.id);if(!node)continue;
-      // Coordinate-frame boxes omit long axis captions and end labels. Measure
-      // the existing renderer so those glyphs enter the proposed crop as well.
-      const rect=node.getBoundingClientRect();if(!rect.width || !rect.height)continue;
-      const a=new DOMPoint(rect.left,rect.top).matrixTransform(matrix),b=new DOMPoint(rect.right,rect.bottom).matrixTransform(matrix);
-      const x=Math.min(bounds?.x ?? Infinity,a.x-2),y=Math.min(bounds?.y ?? Infinity,a.y-2);
-      const right=Math.max(bounds ? bounds.x+bounds.w : -Infinity,b.x+2),bottom=Math.max(bounds ? bounds.y+bounds.h : -Infinity,b.y+2);
-      bounds={x,y,w:right-x,h:bottom-y};
-    }
-    return bounds;
+    return getContentBounds({...state.get(),objects},{},2);
   }
   async function confirmPlacement() {
     if (!placement) return;

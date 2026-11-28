@@ -1,3 +1,4 @@
+import { createDesktopAccountCard } from './desktop-account-card.js?v=1.7.0-four-session-integration';
 import { DESKTOP_RELEASE_URL } from './ai-install-guide.js?v=1.7.0-four-session-integration';
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 
@@ -287,15 +288,33 @@ export function initDesktopAccountBadge({ openAi }) {
   badge.className = 'topbar-btn web-account-status'; badge.type = 'button'; badge.dataset.state = 'idle';
   badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>AI</span>'; // 11-11 사용자: 위쪽 연결 표시는 「AI」
   host.prepend(badge);
-  const render = loggedIn => {
-    badge.dataset.state = loggedIn ? 'connected' : 'idle';
-    badge.title = loggedIn ? 'AI 연결됨(ChatGPT 계정) · AI 작업대 열기' : 'AI 연결 안 됨 · 눌러서 ChatGPT 계정으로 연결';
-    badge.setAttribute('aria-label', badge.title);
+  // 11-21 시안: 「AI」를 누르면 작업대 대신 그 아래에 연결 관리 카드(계정·한도·로그인·로그아웃·Codex 설치)를 띄운다.
+  badge.setAttribute('aria-haspopup', 'dialog'); badge.setAttribute('aria-expanded', 'false');
+  const render = state => {
+    badge.dataset.state = state;
+    const title = state === 'connected' ? 'AI 연결됨 · 눌러서 연결 관리' : state === 'offline' ? '인터넷 연결 없음 · AI를 쓸 수 없어요' : state === 'missing' ? 'AI 연결 안 됨 · 눌러서 GPT 로그인(처음 한 번 Codex 설치)' : 'AI 연결 안 됨 · 눌러서 GPT 로그인';
+    if (badge.getAttribute('aria-expanded') !== 'true') badge.title = title; // 카드가 열려 있으면 말풍선은 닫힐 때 되살린다
+    badge.setAttribute('aria-label', title);
   };
-  const refresh = async () => { try { render(Boolean((await desktop.status())?.login?.loggedIn)); } catch { render(false); } };
-  badge.addEventListener('click', () => openAi?.());
+  // 11-22: 로그인만 보고 초록이던 것 — 인터넷이 끊겼으면 로그인되어 있어도 회색(오프라인)으로.
+  const stateOf = status => (status?.installed === false || status?.login?.installed === false) ? 'missing' : status?.login?.loggedIn ? (navigator.onLine === false ? 'offline' : 'connected') : 'idle';
+  const refresh = async () => { try { render(stateOf(await desktop.status())); } catch { render('idle'); } };
+  const card = createDesktopAccountCard({ desktop, badge, onAuthChanged: kind => {
+    void refresh();
+    window.dispatchEvent(new CustomEvent('5e:desktop-auth-changed', { detail: { kind } }));
+  } });
+  // 11-21: 연결 안 됨이면 작업대를 열고 바로 GPT 로그인 창(연결 정보)을 띄운다(예전엔 작업대만 열려 로그인할 길이 없었다).
+  const openLogin = resumeAi => {
+    openAi?.();
+    requestAnimationFrame(() => requestAnimationFrame(() => window.dispatchEvent(new CustomEvent('5e:desktop-login-request', { detail: resumeAi ? { resumeAi } : {} }))));
+  };
+  badge.addEventListener('click', () => card.toggle());
+  // exam 카드 등 「로그인」 요청(웹판과 같은 이벤트)을 설치판에서도 받는다 — 로그인 뒤 그 일을 이어 한다.
+  window.addEventListener('5e:web-login-request', event => openLogin(typeof event.detail?.resumeAi === 'function' ? event.detail.resumeAi : null));
   desktop.onState?.(() => void refresh());
   window.addEventListener('focus', () => void refresh());
+  window.addEventListener('online', () => void refresh());
+  window.addEventListener('offline', () => void refresh());
   void refresh();
   return { refresh };
 }

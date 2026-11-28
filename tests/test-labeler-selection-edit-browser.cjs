@@ -25,7 +25,12 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
         page.setDefaultNavigationTimeout(process.env.CI ? 60000 : 30000);
         const errors = []; page.on('pageerror', error => errors.push(error.message));
         await page.addInitScript(() => localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true'));
+        // 앱은 시작이 끝나면(시작 창이 걷히거나 첫 그림 뒤) fitDefault로 화면을 한 번 맞춘다(js/main.js 「5e:start-screen-done」).
+        // 그 전에 아래 load()가 viewBox를 정하면 뒤늦은 맞춤이 덮어써 760폭에서 글자가 화면 밖(x>760)으로 나가 첫 누르기가 빗나갔다
+        // (WebKit에서 가끔, 11-19 FIN2). 맞춤이 끝난 뒤에 고정 자료를 싣는다.
+        await page.addInitScript(() => addEventListener('5e:start-screen-done', () => { window.__fiveEStartDone = true; }));
         await page.goto(preview + '?mode=pro', { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(() => window.__fiveEStartDone === true, null, { timeout: process.env.CI ? 60000 : 30000 });
         await page.evaluate(async () => {
           const v = '?v=1.7.0-four-session-integration';
           const { state, DEFAULT_TEXT_FONT } = await import('/js/state.js' + v);

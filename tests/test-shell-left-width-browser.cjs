@@ -14,21 +14,35 @@ const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/
 process.env.APP_ENTRY = '/';
 
 const near = (a, b, tol = 1.5) => Math.abs(a - b) <= tol;
+// 11-19 FIN3: WebKit은 새로고침으로 끊긴 옛 문서의 blob 요청을 「blob:http://…/<uuid> due to access control checks」 페이지 오류로 올린다
+// (Playwright가 첫 「:」에서 잘라 'ttp://…'로 보임, 11-06부터 가끔·11-10 같은 원리의 글꼴 사례). 새로고침이 진행 중일 때 난
+// 바로 이 모양만 따로 적어 두고, 그 밖의 오류(다른 때·다른 글)는 그대로 실패시킨다.
+const RELOAD_TEARDOWN_BLOB = /^(?:blob:)?h?ttp:\/\/127\.0\.0\.1:\d+\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} due to access control checks\.$/;
 
 h.withServer(async origin => {
   fs.mkdirSync(evidence, { recursive: true });
   for (const [name, engine] of Object.entries({chromium,webkit}).filter(([k])=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE)) {
     const browser = await engine.launch({ headless: true });
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-    const errors = [];
-    page.on('pageerror', error => errors.push(error.message));
+    const errors = [], teardown = [], log = [];
+    let step = 'boot', reloading = 0;
+    page.on('pageerror', error => {
+      log.push({ step, reloading: reloading > 0, message: error.message });
+      if (name === 'webkit' && reloading > 0 && RELOAD_TEARDOWN_BLOB.test(error.message)) teardown.push(error.message);
+      else errors.push(error.message);
+    });
+    const reload = async label => {
+      step = label; reloading++;
+      try { await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page); } finally { reloading--; }
+    };
     try {
-      await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
+      await reload('boot');
       await page.evaluate(() => localStorage.removeItem('5e.shell.leftWidth'));
       const imageLeft = () => page.evaluate(() => document.getElementById('panel-left').getBoundingClientRect().width);
       assert.ok(near(await imageLeft(), 192), `${name}: image left panel starts at 192 (11-04 기본 20% 넓게)`);
 
       // 한글(집중)
+      step = 'hwp';
       await page.locator('.app-switch-image [data-app-switch="hwp"]').evaluate(b => b.click()); // 11-04: 이 단추는 로고 목록으로 옮겨져 숨겨짐
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       if (await page.locator('#rhwp-exam-workspace').getAttribute('data-tool-mode') !== 'focus') await page.locator('[data-exam-mode="focus"]').click();
@@ -68,6 +82,7 @@ h.withServer(async origin => {
       assert.equal(g.common, 2, `${name}: wide panel keeps the two-column common tools`);
 
       // 출제도 320
+      step = 'exam';
       await page.locator('.exam-topbar [data-app-switch="exam"]').evaluate(b => b.click());
       const sheet = await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await sheet.waitForSelector('.side [data-pool="drafting"]', { state: 'attached' });
@@ -79,9 +94,10 @@ h.withServer(async origin => {
       await sheet.locator('.top [data-app-switch="image"]').evaluate(b => b.click());
       await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
       assert.ok(near(await imageLeft(), 320), `${name}: image left panel follows the shared width`);
-      await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
+      await reload('reload-320');
       await page.waitForFunction(() => Math.abs(document.getElementById('panel-left').getBoundingClientRect().width - 320) <= 1.5);
 
+      step = 'grip';
       // 두 번 누르면 160, 키보드 ←/→ 8px
       const imageGrip = page.locator('body > .shell-left-grip:not([hidden])');
       await imageGrip.waitFor({ state: 'visible' });
@@ -95,13 +111,14 @@ h.withServer(async origin => {
 
       // 900 이하: 끈 폭을 쓰지 않음
       await page.evaluate(() => localStorage.setItem('5e.shell.leftWidth', '280'));
-      await h.navigate(page, origin + '/?mode=pro&mobile=0'); await h.ready(page);
+      await reload('reload-narrow'); step = 'narrow';
       await page.setViewportSize({ width: 880, height: 900 });
       await page.waitForTimeout(200);
       assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ds-panel-left').trim()), '160px', `${name}: narrow screens keep 160`);
       assert.equal(await page.locator('.shell-left-grip:visible').count(), 0, `${name}: no grip on narrow screens`);
       await page.evaluate(() => localStorage.removeItem('5e.shell.leftWidth'));
-      assert.deepEqual(errors, [], `${name}: no page errors`);
+      fs.writeFileSync(path.join(evidence, `${name}-page-errors.json`), JSON.stringify({ log, teardown }, null, 2));
+      assert.deepEqual(errors, [], `${name}: no page errors ${JSON.stringify(log)}`);
       console.log(`${name}: shell left width ok`);
     } finally { await browser.close(); }
   }

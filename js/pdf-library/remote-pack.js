@@ -1,5 +1,6 @@
 import { PackValidationError, sha256Hex } from "./pack-store.js?v=1.7.0-four-session-integration";
 import { materializePackDocument, materializePackSearchEntry } from "./pack-identities.js?v=1.7.0-four-session-integration";
+import { SEARCH_INDEX_PARTS_PATH, searchIndexPartPaths } from "./search-index-parts.js?v=1.7.0-four-session-integration";
 
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_JSON_BYTES = 32 * 1024 * 1024;
@@ -168,12 +169,31 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, asse
   const catalog = reuseCatalog ? cached.catalog : json(await readIndex(catalogPath), catalogPath);
   if (!Array.isArray(catalog.documents) || catalog.documents.length !== pack.documentCount) throw new PackValidationError(catalogPath, "document count mismatch");
   let pendingSearch = null;
+  // 11-20: 첫 색인 뒤에 조각 색인(search-index-parts.json → search-index-2.json …)이 있으면 이어 붙인다. 32MiB 한도는 파일마다.
+  const parsedIndex = (bytes, relativePath) => {
+    const searchIndex = json(bytes, relativePath);
+    if (searchIndex.schemaVersion !== "pdf-search-index-v1" || !Array.isArray(searchIndex.entries)) throw new PackValidationError(relativePath, "unsupported search index");
+    return searchIndex;
+  };
+  const readSearchParts = async () => {
+    if (!checksums.files[SEARCH_INDEX_PARTS_PATH]) return [];
+    let partPaths;
+    try { partPaths = searchIndexPartPaths(json(await readIndex(SEARCH_INDEX_PARTS_PATH), SEARCH_INDEX_PARTS_PATH)); }
+    catch (error) { throw error instanceof PackValidationError ? error : new PackValidationError(SEARCH_INDEX_PARTS_PATH, "unsupported search index parts"); }
+    return Promise.all(partPaths.map(async (partPath) => parsedIndex(await readIndex(packPath(partPath, SEARCH_INDEX_PARTS_PATH)), partPath)));
+  };
+  // 조각을 못 받으면(네트워크·해시 불일치) 첫 색인만으로 검색을 켜 두고, 다음 호출 때 조각을 다시 받는다.
   const loadSearchIndex = () => {
-    if (!pendingSearch) pendingSearch = (eagerSearch || readIndex(searchPath)).then((bytes) => {
-      const searchIndex = json(bytes, searchPath);
-      if (searchIndex.schemaVersion !== "pdf-search-index-v1" || !Array.isArray(searchIndex.entries)) throw new PackValidationError(searchPath, "unsupported search index");
-      return Object.freeze({ ...searchIndex, entries: Object.freeze(searchIndex.entries.map((entry) => materializePackSearchEntry(pack.id, entry))) });
-    }).catch((error) => { pendingSearch = null; throw error; });
+    if (!pendingSearch) {
+      let partsFailed = false;
+      const parts = readSearchParts().catch((error) => { partsFailed = true; console.warn("5E 라이브러리: 조각 색인을 받지 못해 첫 색인만 씁니다.", error); return []; });
+      const pending = pendingSearch = Promise.all([eagerSearch || readIndex(searchPath), parts]).then(([bytes, partIndexes]) => {
+        const searchIndex = parsedIndex(bytes, searchPath);
+        const entries = [searchIndex, ...partIndexes].flatMap((index) => index.entries);
+        if (partsFailed && pendingSearch === pending) pendingSearch = null;
+        return Object.freeze({ ...searchIndex, entries: Object.freeze(entries.map((entry) => materializePackSearchEntry(pack.id, entry))) });
+      }).catch((error) => { pendingSearch = null; throw error; });
+    }
     return pendingSearch;
   };
   const documents = Object.freeze(catalog.documents.map((document) => {

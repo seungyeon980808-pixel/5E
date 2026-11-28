@@ -20,6 +20,18 @@ async function installAiMain(page, root, options) {
   await page.route(`**${runtime.moduleBase}main.js*`, route => route.fulfill({contentType:'text/javascript',body:instrumentAiMain(root,options).body}));
 }
 const playwright = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+
+// 11-27: 변환에도 「AI와 대화 / 직접 편집」이 생겨 지우개·라벨 편집 단추가 직접 편집 칸으로 옮겨졌다 — 먼저 직접 편집으로 들어간다.
+async function toolClick(scope, sel) {
+  const b = scope.locator(sel), before = await b.getAttribute('aria-pressed').catch(() => null);
+  const manual = scope.locator('[data-result-mode="manual"]');
+  if (await manual.isVisible().catch(() => false) && await manual.getAttribute('aria-pressed') !== 'true') {
+    await manual.click();
+    if (sel.includes('label-edit') && before !== 'true' && await b.getAttribute('aria-pressed') === 'true') return;
+  }
+  if (await b.isVisible()) await b.click(); else await b.dispatchEvent('click');
+}
+
 const evidence = path.resolve(process.env.EVIDENCE_DIR || path.join(root, '_work/ai-local-tools-qa'));
 const lifecycleSource = fs.readFileSync(path.join(root, 'tests/test-ai-workspace-lifecycle-browser.cjs'), 'utf8');
 const seedStart = lifecycleSource.indexOf('function seedRequestWorkspaces(');
@@ -70,11 +82,17 @@ async function fixture(t, engine) {
   assert.deepEqual(errors, []);
   return {page, errors, origin};
 }
+// 판을 바꾸면 후보 그림(512px PNG)을 새로 해독한다. 느린 CI WebKit에서는 해독이 기본 15초(setDefaultTimeout)를 넘겼다(11-19 CI 74줄).
+// 그림 요소의 해독 약속(img.decode())을 실제 준비 신호로 기다리고, 이 기다림에만 넉넉한 한도를 준다. 조건(고른 판·512px)은 그대로다.
+const IMAGE_READY_TIMEOUT = 60000;
 async function selected(page, id) {
   await page.waitForFunction(id => {
     const panel=document.querySelector('#ai-image-panel'), img=panel?.querySelector('.is-ai-active-candidate .ai-preview-stage > img');
-    return panel?.dataset.aiSelectedCandidateId===id && img?.complete && img.naturalWidth===512;
-  }, id);
+    if (panel?.dataset.aiSelectedCandidateId!==id || !img?.getAttribute('src')) return false;
+    if (img.complete && img.naturalWidth===512) return true;
+    // 아직 해독 중이면 그 약속이 끝날 때까지 기다렸다가 다시 잰다(실패하면 다음 확인에서 다시 본다).
+    return img.decode().then(() => img.isConnected && img.complete && img.naturalWidth===512, () => false);
+  }, id, {timeout:IMAGE_READY_TIMEOUT});
   await page.evaluate(() => new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 }
 async function selectVersion(page, id) {
@@ -111,18 +129,21 @@ async function lasso(page, points, finish=true) {
 for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rectangle, white/transparent, outside start and cancellation`,{timeout:120000},async t=>{
   const {page,errors}=await fixture(t,engine),panel=page.locator(active),erase=panel.locator('[data-ai-local-erase]');
   await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(a=>a.finished)));const before=await snapshot(page),header=(await geometry(page)).header;
-  await erase.click();assert.equal(await panel.locator('button[data-ai-erase-mode=brush]').getAttribute('aria-pressed'),'true');
+  await toolClick(page.locator(active),'[data-ai-local-erase]');assert.equal(await panel.locator('button[data-ai-erase-mode=brush]').getAttribute('aria-pressed'),'true');
   await panel.locator('[data-ai-erase-size]').fill('12');assert.equal(await panel.locator('[data-ai-erase-size-value]').textContent(),'12 px');
+  // 11-26: 「지운 자리」 기본값은 흰색 — 이 시험은 투명부터 본다.
+  assert.equal(await panel.locator('[data-ai-erase-background]').inputValue(),'white');await panel.locator('[data-ai-erase-background]').selectOption('transparent');
   const read=async src=>page.evaluate(async src=>{const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');const d=await decodeScopedPng(new Uint8Array(await(await fetch(src)).arrayBuffer()));return {width:d.width,height:d.height,data:[...d.data]};},src);
   // The eraser now edits a draft first (js/ai-image-local-erase.js); the saved version only appears after the explicit 「수정 저장」.
   // Selecting the saved version closes the eraser tool (5e:ai-candidate-select -> setActive(false), 61bcd508); reopen it before the next stroke/setting.
-  const tool=async()=>{if(await erase.getAttribute('aria-pressed')!=='true')await erase.click();};
+  const tool=async()=>{if(await erase.getAttribute('aria-pressed')!=='true')await toolClick(page.locator(active),'[data-ai-local-erase]');};
   const stroke=async points=>{await tool();const old=await panel.getAttribute('data-ai-selected-candidate-id');await lasso(page,points);
     await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel'),save=p.querySelector('[data-ai-edit-save]');return p.dataset.aiEditDraft==='true'&&!save.hidden&&!save.disabled&&!p.querySelector('.ai-local-erase-overlay');});
     assert.equal(await panel.getAttribute('data-ai-selected-candidate-id'),old,'a draft stroke never creates a saved version by itself');
     await panel.locator('[data-ai-edit-save]').click();
-    await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,old);
-    await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiEditDraft==='false');return(await snapshot(page))[0].generated.at(-1);};
+    // 11-26 시안(판 목록 8): 처음 저장만 새 판, 손으로 고친 판을 다시 저장하면 같은 판에 덮어쓴다.
+    await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel');return p.dataset.aiEditDraft==='false'&&!p.querySelector('[data-ai-edit-save]:not([hidden])');});
+    const saved=await panel.getAttribute('data-ai-selected-candidate-id');return(await snapshot(page))[0].generated.find(item=>item.id===saved);};
   const brush=await stroke([{x:65,y:80},{x:200,y:80},{x:200,y:220},{x:65,y:220},{x:65,y:80}]);
   assert.equal(brush.scopedEditHistory[0].operation,'local-brush-erase');const pixels=await read(brush.data);assert.equal(pixels.data[(150*512+132)*4+3],255,'closed brush loop keeps its center');
   const h=brush.scopedEditHistory[0],original=await read(before[0].generated[0].data);let inside=0;
@@ -133,19 +154,19 @@ for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rect
   assert.equal(inside,h.maskedPixels);assert.deepEqual((await snapshot(page))[1],before[1]);assert.deepEqual((await snapshot(page))[0].generated[0],before[0].generated[0]);
   await tool();await panel.locator('[data-ai-erase-background]').selectOption('white');const white=await stroke([{x:65,y:80},{x:200,y:80}]);const whitePixels=await read(white.data);assert.deepEqual(whitePixels.data.slice((80*512+100)*4,(80*512+100)*4+4),[255,255,255,255]);
   await tool();await panel.locator('button[data-ai-erase-mode=rect]').click();assert.equal(await panel.locator('[data-ai-erase-size]').isDisabled(),true);
-  await panel.locator('[data-ai-erase-background]').selectOption('transparent');const rect=await stroke([{x:300,y:260},{x:245,y:230}]);assert.equal(rect.scopedEditHistory[0].operation,'local-rect-erase');const rectPixels=await read(rect.data);assert.equal(rectPixels.data[(245*512+270)*4+3],0);
+  await panel.locator('[data-ai-erase-background]').selectOption('transparent');const rect=await stroke([{x:300,y:260},{x:245,y:230}]);assert.equal(rect.scopedEditHistory.at(-1).operation,'local-rect-erase');const rectPixels=await read(rect.data);assert.equal(rectPixels.data[(245*512+270)*4+3],0);
   await tool();await panel.locator('button[data-ai-erase-mode=brush]').click();
   // Since 61bcd508 a drag that STARTS outside the picture is ignored (no draft); a drag that starts inside and leaves keeps its outside coordinates unclamped.
   {const box=await page.locator(image).boundingBox(),sx=box.x+100/512*box.width,sy=box.y-18/384*box.height;
     await page.mouse.move(sx,sy);await page.mouse.down();await page.mouse.move(sx,sy+63/384*box.height,{steps:4});await page.mouse.up();
     assert.equal(await panel.getAttribute('data-ai-edit-draft'),'false','a stroke starting outside the image creates no draft');}
-  const outside=await stroke([{x:100,y:20},{x:100,y:-18}]);assert.ok(outside.scopedEditHistory[0].points.at(-1).y<0,'outside coordinates stay outside instead of snapping to an edge');
+  const outside=await stroke([{x:100,y:20},{x:100,y:-18}]);assert.ok(outside.scopedEditHistory.at(-1).points.at(-1).y<0,'outside coordinates stay outside instead of snapping to an edge');
   await tool(); // the previous save closed the eraser; Escape must close only the tool (otherwise it closes the whole workbench)
   const count=(await snapshot(page))[0].generated.length;await lasso(page,[{x:100,y:160},{x:200,y:160}],false);await page.keyboard.press('Escape');await page.mouse.up();assert.equal((await snapshot(page))[0].generated.length,count);assert.equal(await panel.locator('.ai-local-erase-overlay').count(),0);assert.equal(await panel.isVisible(),true);assert.equal(await panel.locator('[data-ai-local-erase-options]').isVisible(),false);
   // saving selects a new version, which replays the pane entrance/modal fade (header scales for ~0.4s); compare only after the header rect stops changing
   for(let prev=null,k=0;k<20;k++){const cur=JSON.stringify((await geometry(page)).header);if(cur===prev)break;prev=cur;await page.waitForTimeout(250);}
   assert.deepEqual((await geometry(page)).header,header,'tool settings never change the image fitting header');assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);assert.deepEqual(errors,[]);
-  await erase.click();await page.screenshot({path:path.join(evidence,engine,'brush-settings.png')});
+  await toolClick(page.locator(active),'[data-ai-local-erase]');await page.screenshot({path:path.join(evidence,engine,'brush-settings.png')});
 });
 
 for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scoped settings and isolated local erasure through real workbench controls`, {timeout:150000}, async t => {
@@ -189,7 +210,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   await page.locator(`${active} [data-tab-id="task-0"] .ai-task-tab-select`).click();await selected(page,'candidate-0');
   const before=await snapshot(page); const comments=before[0].generated[0].comments.length;
   const erase=page.locator(`${active} [data-ai-local-erase]`);
-  await erase.click();assert.equal(await erase.getAttribute('aria-pressed'),'true');await page.locator(`${active} [data-ai-erase-mode=rect]`).click();
+  await toolClick(page.locator(active),'[data-ai-local-erase]');assert.equal(await erase.getAttribute('aria-pressed'),'true');await page.locator(`${active} [data-ai-erase-mode=rect]`).click();
   await lasso(page,[{x:75,y:35},{x:140,y:100}]);
   // Draft first, then the explicit save creates the new version (js/ai-image-local-erase.js).
   await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel'),save=p.querySelector('[data-ai-edit-save]');return p.dataset.aiEditDraft==='true'&&!save.hidden&&!save.disabled&&!p.querySelector('.ai-local-erase-overlay');});
@@ -211,7 +232,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   // Cancel a gesture by changing the selected version. The old captured pointer
   // must not create either an erased version or a request box on release.
   assert.equal(await erase.getAttribute('aria-pressed'),'false','the eraser tool closes once the explicit save selects the new version (61bcd508)');
-  await erase.click();assert.equal(await erase.getAttribute('aria-pressed'),'true');
+  await toolClick(page.locator(active),'[data-ai-local-erase]');assert.equal(await erase.getAttribute('aria-pressed'),'true');
   await lasso(page,[{x:100,y:100},{x:170,y:100},{x:170,y:170}],false);
   await page.evaluate(()=>{const p=document.querySelector('#ai-image-panel');p.dataset.aiSelectedCandidateId='candidate-0';p.aiWorkbench.restoreViewState({...p.aiWorkbench.getViewState(),selectedCandidateId:'candidate-0'});p.dispatchEvent(new CustomEvent('5e:ai-candidate-select',{detail:{candidateId:'candidate-0'}}));});
   await page.mouse.up();await selected(page,'candidate-0');

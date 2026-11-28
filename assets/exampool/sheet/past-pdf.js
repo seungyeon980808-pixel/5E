@@ -6,6 +6,7 @@ import '../convert/es/stream-iterator-polyfill.mjs';
 import {downloadDriveFile,driveLink} from '../convert/es/drive-source.mjs';
 import {norm} from './past-search.js';
 import {loadAnswerBook,acceptedAnswers,CIRCLED} from '../answers/answers.js?v=1107';
+import {tidyQuestionRect} from './past-crop.js';
 
 // pdf.js(약 1MB)는 처음 PDF를 열 때만 받는다 — 출제 칸을 여는 것만으로 받지 않게. 아래 글자 좌표 계산(findMarks·questionRect)은
 // 늘 열린 PDF의 내용으로만 부르므로 그때는 이미 받아 둔 상태다.
@@ -83,8 +84,11 @@ const toUrl=canvas=>new Promise((res,rej)=>canvas.toBlob(b=>b?res(URL.createObje
 
 // 문항 경계(시안 28): 픽셀 추측 대신 PDF 글자 좌표로. 위 = 문항 번호 줄, 아래 = ①~⑤ 선지 줄(없으면 쪽 번호·저작권 줄 위),
 // 좌우 = 그 단에서 글자가 있는 폭(〈보기〉 테두리가 잘리지 않게 오른쪽은 조금 넉넉히). 쪽 번호·저작권·확인 사항은 경계 밖.
-const FOOT=/저작권|확인 사항|^\s*\d+\s*$|^\s*\d+\s*\/\s*\d+\s*$/;
-export function questionRect(content,vp1,box){
+// 11-22: 「확인사항」처럼 붙여 쓴 글자·「*」「※」만 있는 머리 글자도 쪽 아래 상자로 본다(08년 6평 물리Ⅱ 20번은 붙여 씀 — 상자가 문항으로 들어왔다).
+// 돌려주는 사각형에는 덧붙인 값이 있다: foot = 경계 안에 걸린 쪽 아래 글자의 위 끝(없으면 null), textBottom = 문항 글자 줄의 아래 끝,
+// number = 맨 윗줄 맨 왼쪽의 문항 번호(「20.」) 글자 자리 [x0,y0,x1,y1](no를 줬고 찾았을 때만).
+const FOOT=/저작권|확인\s*사항|^\s*[*※]\s*$|^\s*\d+\s*$|^\s*\d+\s*\/\s*\d+\s*$/;
+export function questionRect(content,vp1,box,no=null){
   const [bx0,by0,bx1,by1]=box,lines=[];
   for(const t of content.items){if(!t.str?.trim())continue;const tx=pdfjs.Util.transform(vp1.transform,t.transform),fh=Math.hypot(tx[2],tx[3]),x=tx[4],y=tx[5]-fh;
     if(x<bx0-2||x>bx1||y<by0-4||y>by1)continue;lines.push({s:t.str,x,y,w:t.width,h:fh*1.2});}
@@ -93,7 +97,19 @@ export function questionRect(content,vp1,box){
   const footTop=Math.min(by1,...lines.filter(l=>FOOT.test(l.s)).map(l=>l.y));
   const bottom=ch.length?Math.max(...ch.map(l=>l.y+l.h)):footTop-2;
   const used=body.filter(l=>l.y>=top-1&&l.y<=bottom);if(!used.length||bottom-top<10)return null;
-  return [Math.max(bx0,Math.min(...used.map(l=>l.x))-4),top,Math.min(bx1-4,Math.max(...used.map(l=>l.x+l.w))+14),bottom];
+  const rect=[Math.max(bx0,Math.min(...used.map(l=>l.x))-4),top,Math.min(bx1-4,Math.max(...used.map(l=>l.x+l.w))+14),bottom];
+  const feet=lines.filter(l=>FOOT.test(l.s));rect.foot=feet.length?Math.min(...feet.map(l=>l.y)):null;
+  rect.textBottom=Math.max(...used.map(l=>Math.min(l.y+l.h,bottom)));
+  if(no!=null)rect.number=numberBox(used,top,no);
+  return rect;
+}
+// 문항 번호 글자 자리: 맨 윗줄에서 가장 왼쪽 글자 묶음이 「20.」(또는 「20. 그림은 …」으로 붙어 있으면 그 앞부분)일 때만. 못 찾으면 null(지우지 않음).
+function numberBox(used,top,no){
+  const first=used.filter(l=>l.y<=top+l.h*.5).sort((a,b)=>a.x-b.x)[0];if(!first)return null;
+  const m=/^\s*(\d{1,3})\s*\.?/.exec(first.s);if(!m||Number(m[1])!==Number(no))return null;
+  const chars=[...first.s],widths=chars.map(c=>/\s/u.test(c)?charWidth(' '):charWidth(c)),total=widths.reduce((a,b)=>a+b,0)||1;
+  const part=widths.slice(0,[...m[0].trimEnd()].length).reduce((a,b)=>a+b,0);
+  return [first.x,first.y,first.x+first.w*part/total,first.y+first.h];
 }
 // 11-07 정답 형광펜(문항 보기 화면 표시만): 정답 번호 글자(①~⑤)부터 같은 줄 다음 번호 앞까지. 선지 글자가 여러 조각이어도 줄 단위로 잰다.
 export function answerMarks(content,viewport,rect,accepted){
@@ -117,9 +133,11 @@ export function answerMarks(content,viewport,rect,accepted){
 }
 // 문항 그림(+형광펜). 형광펜을 원하는데 칠할 자리가 없으면 null(카드는 원래 그림을 그대로 쓴다).
 function drawQuestion(item,words,needMarks,opts={}){return withFile(item.publicPath,{},({doc})=>drawQuestionIn(doc,item,words,needMarks,opts));}
-async function drawQuestionIn(doc,item,words,needMarks,{answers=false}={}){
+// bare: 그림 한 장짜리 문항으로 넣을 때(변형 실패·통째 변환) — 그림 속 원본 문항 번호(「20.」)를 지우고 그 왼쪽 빈 칸을 줄인다.
+// 카드 번호는 시험지가 따로 매기므로 번호가 둘(「2.」+「20.」)이 되지 않게.
+async function drawQuestionIn(doc,item,words,needMarks,{answers=false,bare=false}={}){
   const page=await doc.getPage(item.page),scale=3,vp=page.getViewport({scale}),content=await page.getTextContent();
-  const r=questionRect(content,page.getViewport({scale:1}),item.box)||item.box,pad=6,x0=r[0]-pad,y0=r[1]-pad,x1=r[2]+pad,y1=r[3]+pad;
+  const r=questionRect(content,page.getViewport({scale:1}),item.box,bare?item.no:null)||item.box,pad=6,x0=r[0]-pad,y0=r[1]-pad,x1=r[2]+pad,y1=r[3]+pad;
   const marks=words.length?findMarks(content,vp,words).filter(m=>m.x>=x0*scale-2&&m.x+m.w<=x1*scale+2&&m.y>=y0*scale-4&&m.y+m.h<=y1*scale+4):[];
   if(needMarks&&!marks.length)return null;
   const c=document.createElement('canvas');c.width=Math.ceil((x1-x0)*scale);c.height=Math.ceil((y1-y0)*scale);
@@ -128,7 +146,12 @@ async function drawQuestionIn(doc,item,words,needMarks,{answers=false}={}){
   paint(g,marks,x0*scale,y0*scale);
   let answered=0;
   if(answers){const book=await loadAnswerBook(),acc=acceptedAnswers(book,item.pdfFile,item.no);const am=answerMarks(content,vp,[x0,y0,x1,y1],acc);answered=am.length;paint(g,am,x0*scale,y0*scale,'rgba(255,212,0,.42)');}
-  return {url:await toUrl(c),count:marks.length,answered};
+  if(bare&&r.number){const [a,b,e,f]=r.number;g.fillStyle='#fff';g.fillRect((a-x0)*scale-2,(b-y0)*scale-2,(e-a)*scale+4,(f-b)*scale+4);}
+  // 11-22: 아래 「확인 사항」 상자 조각·남는 여백을 픽셀로 덜어 낸다(past-crop.js tidyQuestionRect — 글자 줄은 자르지 않음).
+  const t=r.textBottom!=null?tidyQuestionRect(g.getImageData(0,0,c.width,c.height),{foot:r.foot!=null?(r.foot-y0)*scale:null,keep:(r.textBottom-y0)*scale,reach:16*scale,gap:12*scale,pad:pad*scale,left:bare&&!!r.number}):null;
+  let out=c;
+  if(t&&(t.x>0||t.height<c.height)){out=document.createElement('canvas');out.width=t.width;out.height=t.height;const o=out.getContext('2d');o.fillStyle='#fff';o.fillRect(0,0,t.width,t.height);o.drawImage(c,t.x,0,t.width,t.height,0,0,t.width,t.height);}
+  return {url:await toUrl(out),count:marks.length,answered};
 }
 const qCache=new Map();
 function cached(key,make){
@@ -139,7 +162,7 @@ function cached(key,make){
 }
 export function markedQuestion(item,words){return cached(JSON.stringify([item.id,words]),()=>drawQuestion(item,words,true));}
 // 형광펜 없이 문항만(카드 그림 자르기가 실패했을 때·크게 보기).
-export function croppedQuestion(item,words=[],{answers=false}={}){return cached(JSON.stringify([item.id,words,'q',answers]),()=>drawQuestion(item,words,false,{answers}));}
+export function croppedQuestion(item,words=[],{answers=false,bare=false}={}){return cached(JSON.stringify([item.id,words,'q',answers,bare]),()=>drawQuestion(item,words,false,{answers,bare}));}
 
 // 쪽 한 장(폭 cssWidth에 맞춤, 화면 배율 반영) + 형광펜 + 끌어서 고를 수 있는 글자 층(시안 31).
 // marks: 다시 열 때 칠할 근거 자리 [{x,y,w,h}](쪽 비율 0~1). 돌려주는 sha·fp는 근거에 남길 원본 지문.

@@ -1,0 +1,66 @@
+{
+ "source": "image_generator/cycles/c10/kb2-01/meta.json#A1",
+ "subject": "생명과학Ⅱ",
+ "request": "기질 농도에 따른 효소 반응 속도 그래프 그려 줘. 저해제 없을 때는 A, 경쟁적 저해제 넣었을 때는 B로 해 주고.\n둘 다 최대 속도는 10이고 A가 더 빨리 포화되는 모양이면 돼.\n가로축은 기질 농도, 세로축은 반응 속도로 쓰고 곡선 위 수식은 빼 줘.",
+ "keyValues": "가로축: 기질 농도, 세로축: 반응 속도(단위 미제시). 곡선 이름: A, B. 두 곡선의 공통 시작점: (0, 0). 두 곡선의 공통 최대 속도 및 수평 점근값: 10. 양의 기질 농도에서 A의 반응 속도는 B보다 크며, 두 곡선은 유한한 기질 농도에서 최대 속도에 도달하거나 서로 교차하지 않는다.",
+ "originalCollisions": {
+  "n": 0,
+  "list": []
+ },
+ "plan": {
+  "xMin": 0,
+  "xMax": 21,
+  "yMin": 0,
+  "yMax": 11.32,
+  "labelX": "기질 농도",
+  "labelY": "반응 속도",
+  "xTicks": [],
+  "yTicks": [
+   {
+    "value": 10,
+    "label": "10",
+    "key": false
+   }
+  ],
+  "series": [
+   {
+    "expr": "10*x/(0.6+x)",
+    "points": null,
+    "domain": [
+     0,
+     20
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "A",
+    "labelAt": [
+     15,
+     9.95
+    ]
+   },
+   {
+    "expr": "10*x/(3+x)",
+    "points": null,
+    "domain": [
+     0,
+     20
+    ],
+    "dashed": false,
+    "thin": false,
+    "smooth": false,
+    "label": "B",
+    "labelAt": [
+     16,
+     8.05
+    ]
+   }
+  ],
+  "marks": [],
+  "lineLabels": [],
+  "guides": [],
+  "notes": "최대 반응 속도는 모두 10이며, 무차원 미하엘리스 상수는 A에서 0.6, B에서 3으로 가정함."
+ },
+ "drawKeyValues": "",
+ "note": "drawKeyValues: 원래 그림의 핵심 눈금(key)을 다시 만드는 값. keyValues: 원래 요청의 정확해야 할 값(설계·검사 지시문용)."
+}

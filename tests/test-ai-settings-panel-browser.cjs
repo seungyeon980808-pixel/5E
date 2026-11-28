@@ -167,8 +167,12 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
   const sizes=await page.locator(`${panel} .ai-setting-pair`).evaluateAll(groups => groups.filter(g=>g.getBoundingClientRect().height>0).flatMap(g=>[...g.querySelectorAll('button')].map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height,x:g.getBoundingClientRect().left}))));
   assert.equal(new Set(sizes.map(s=>s.h)).size,1);assert.equal(new Set(sizes.map(s=>s.w)).size,1);assert.equal(new Set(sizes.map(s=>s.x)).size,1);
   assert.equal(await page.locator(`${panel} [data-ai-compact-settings] select:visible`).count(),0);
-  await page.getByRole('button',{name:'보조선 제거 도움말',exact:true}).click();
-  assert.equal(await page.locator('.ai-setting-help-pop').isVisible(),true);assert.match(await page.locator('.ai-setting-help-pop').innerText(),/실제 관·도선·윤곽선/);
+  // 11-19 E10 다시 씀: 「보조선 제거」 줄은 시안 v6(506f30bf)에서 숨겼다(index.html 줄 hidden, 값은 그대로 저장됨).
+  // 도움말 계약(누르면 뜨고 Esc로 닫히며 작업대는 그대로)은 지금 보이는 「배경 제거 도움말」로 확인하고, 숨은 보조선 도움말 글은 그대로 남아 있는지만 본다.
+  assert.equal(await page.getByRole('button',{name:'보조선 제거 도움말',exact:true,includeHidden:true}).isVisible(),false,'guides row stays hidden in the v6 frame');
+  assert.match(await page.getByRole('button',{name:'보조선 제거 도움말',exact:true,includeHidden:true}).getAttribute('data-ai-setting-help'),/실제 관·도선·윤곽선/);
+  await page.getByRole('button',{name:'배경 제거 도움말',exact:true}).click();
+  assert.equal(await page.locator('.ai-setting-help-pop').isVisible(),true);assert.match(await page.locator('.ai-setting-help-pop').innerText(),/흰 배경을 투명하게/);
   await page.screenshot({path:path.join(evidence,'help.png')});
   await page.keyboard.press('Escape');assert.equal(await page.locator('.ai-setting-help-pop').count(),0);assert.equal(await page.locator(panel).isVisible(),true);
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
@@ -214,8 +218,10 @@ test('actual modern controller: policy payloads and exact RAW review/export/nati
   assert.ok(payloads.every(payload=>payload.effort==='medium'&&payload.serviceTier==='priority'),'hidden fixed controls reach every request');
   const beforeCalls=requests.length;
   assert.equal(await page.locator(panel).getAttribute('data-ai-box-edit'),'true');
-  assert.equal(await page.locator(`${panel} [data-ai-compact-settings]`).isVisible(),false,'selected RAW review hides conversion policy controls');
-  assert.equal(await pair(page,'background').getByRole('button',{name:'켜기',exact:true,includeHidden:true}).isVisible(),false);
+  // 11-19 E10 다시 씀: 시안 v6(506f30bf)부터 결과를 보는 동안에도 그림 설정 → 대화 → 독 순서 그대로 설정이 보인다
+  // (css: [data-ai-box-edit="true"] .ai-compact-settings { display:block !important }). 옛 「RAW 검토 중 설정 숨김」 대신, 보이는 설정이 변환 전에 고른 값을 그대로 가리키는지 본다.
+  assert.equal(await page.locator(`${panel} [data-ai-compact-settings]`).isVisible(),true,'v6: settings stay visible above the conversation while reviewing a result');
+  assert.equal(await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).getAttribute('aria-pressed'),'true','visible background control shows the pre-generation value');
   assert.equal(await page.locator(`${panel} [data-ai-background-policy]`).inputValue(),'connected','hidden policy remains the selected pre-generation value');
   // 11-08 사용자 결정: 일반 그림 변환 결과도 고른 배경 처리(여기서는 변환 전에 고른 외부 배경 제거)를 따른다.
   // 저장된 AI 원본(RAW)은 바뀌지 않고, 미리보기·PNG 저장만 처리한 그림을 쓴다.
@@ -294,7 +300,12 @@ test('label restoration button uses Luna image generation and Luna joint verific
   const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence,{beforeNavigate:p=>p.addInitScript(()=>{globalThis.__5eLegacyLabelPipeline=true;})});await fresh(page);
   await pickKind(page,'교과서');
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
-  await pair(page,'verification').getByRole('button',{name:'자동 검수',exact:true}).click();
+  // 11-19 E10 다시 씀: 「라벨 검수」 줄은 c9d1da3f(11-10 검수 없음 기본)에서 숨겼다. 예전 파이프라인 플래그로 검수를 켜는 길은 내부에 남아 있어
+  // 숨은 단추에 같은 클릭을 보낸다(다른 숨은 줄과 같은 방식). 줄이 숨어 있고 기본값이 「초안 먼저」인 것도 확인한다.
+  assert.equal(await page.locator(`${panel} [data-ai-verification-row]`).isVisible(),false,'verification row hidden since c9d1da3f');
+  assert.equal(await page.locator(`${panel} [data-ai-label-verification]`).inputValue(),'draft-first');
+  await pair(page,'verification').getByRole('button',{name:'자동 검수',exact:true,includeHidden:true}).dispatchEvent('click');
+  assert.equal(await page.locator(`${panel} [data-ai-label-verification]`).inputValue(),'full','hidden verification choice still drives the backing select');
   await page.locator(`${panel} [data-ai-send]`).click();await finish(page);
   const row=await active(page),c=row.generated.at(-1);
   assert.ok(c);assert.equal(c.imageLabelWorkflow.labelResult,'restore-editable');assert.equal(c.reviewState,'passed');assert.equal(c.labelPlan.labels[0].text,'전자');

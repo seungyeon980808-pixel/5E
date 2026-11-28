@@ -10,6 +10,9 @@ css=(d/'v7.css').read_text().replace('../img/','img/')+'\n'+(d/'engine-hero.css'
 js=(d/'v7.js').read_text()+'\n'+(d/'engine-hero.js').read_text()+'\n'+realjs+'\n'+(d/'real-player.js').read_text()+'\n'+(d/'engine-s34.js').read_text()+'\n'+(d/'engine-s7.js').read_text()+'\n'+(d/'engine-s12.js').read_text()+'\n'+(d/'focus.js').read_text()+'\n'+(d/'texttab.js').read_text()+'\n'+(d/'opts1120.js').read_text()+'\n'+(d/'download.js').read_text()+'\n'+(d/'arch.js').read_text()+'\n'+(d/'faq.js').read_text()+'\n'+(d/'mkpill.js').read_text()+'\n'+(d/'kbd.js').read_text()+'\n'+(d/'navsync.js').read_text()
 h=h.replace('<link rel="stylesheet" href="v8/v7.css">','<style>\n'+css+'\n</style>')
 h=h.replace('<script src="v8/v7.js"></script>','<script>\n'+js+'\n</script>')
+# 11-23: 작은 「5E」 로고도 윤곽선(js/loading/logo5e.js와 같은 path) — 안드로이드에 Georgia가 없어 모양이 달라졌다
+_lp=(root.parent/'js/loading/logo5e.js').read_text().split("LOGO5E_PATH = '")[1].split("'")[0]
+h=h.replace('__LOGO5E__','<svg class="logo5e" viewBox="11.8 20.9 163.2 104.7" style="display:inline-block;width:1.36em;height:.8725em;vertical-align:-.18em;fill:currentColor;overflow:visible" aria-hidden="true"><path d="'+_lp+'"/></svg>')
 h=h.replace('__MASK__',(d/'mask.txt').read_text().strip()).replace('__HOLE__',(d/'hole.txt').read_text().strip())
 # fontfix1121: 갤럭시(안드로이드)에는 Georgia·Times·애플 글꼴이 없음 → 거의 같은 무료 글꼴을 뒤에 붙여 어느 기기든 같게
 import re as _re

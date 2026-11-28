@@ -44,11 +44,11 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-editor/transport.js", { sha256: "e51f023740d87e3f6ddf8ab0c21675987ac5b1667e36d408b8b08170e2a6158b", bytes: 11089 }],
   ["vendor/rhwp-studio/LICENSE", { sha256: "1c3a7d5643b163a3ead4965e1bea33b832caee5bfca265efe42afcd7bc696b5b", bytes: 1072 }],
   ["vendor/rhwp-studio/LICENSE-FONTS", { sha256: "d28c4c4ba705a6a40ea0f5f950afb9dceca146d94ddf432572190921fecf5d94", bytes: 4686 }],
-  ["vendor/rhwp-studio/assets/canvaskit-renderer-qwNCZ9x6.js", { sha256: "3b7efb4d890bbdc9d59780d43a6041ac37b88d3dbb76682a0c31983c2b2e6788", bytes: 247494 }],
+  ["vendor/rhwp-studio/assets/canvaskit-renderer-qwNCZ9x6.js", { sha256: "ac3866d1becc18f5074c2e3c8a69063096065cf7bab4f74ce84001ab83a1978a", bytes: 247472 }],
   ["vendor/rhwp-studio/assets/index-CJqHfaJX.css", { sha256: "77febd44c7840da15121989e64d344123d5d353b9d7c4ecc66f44ac8d544110e", bytes: 113835 }],
   // 4fabe265(10-13, 편집 중 안 보이는 표 테두리 보이기)로 바뀐 파일의 값.
   // 15a825be(11-05)로 한 번 더 바뀐 값.
-  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "c71f8a1ec4cd972dc20e99631a8702de8292eade252a8b7bcc623b34baaf6836", bytes: 2116396 }],
+  ["vendor/rhwp-studio/assets/index-zNX2Cct6.js", { sha256: "a7d73f4e5194db7bdbe3c61ff73082ae61a4c380bf45c5a49567a3be599f9a75", bytes: 2116341 }],
   ["vendor/rhwp-studio/assets/rhwp_bg-BkVWMBaR.wasm", { sha256: "54cf95014312e605c51b98eb9021247ea79ef2bbd0a7080e11c011d0246e3989", bytes: 11821756 }],
   ["vendor/rhwp-studio/assets/studio-plugin-7wns0tfd.js", { sha256: "3523819ac5b02bf6ae7cbe43d818ac0abaacf2dd09e03594c5b3172ed835e828", bytes: 54381 }],
   ["vendor/rhwp-studio/fonts/Cafe24Ssurround-v2.0.woff2", { sha256: "2d726dbf8863d66e6d5cf56e2532c5d14d8a4b514461b565c513c1da6ae2f41a", bytes: 391868 }],
@@ -78,13 +78,13 @@ const pinnedVendor = new Map([
   ["vendor/rhwp-studio/fonts/Pretendard-Regular.woff2", { sha256: "fad853f7f47c6c8b103171e7193fa095708cdcd70850a71d93aa5379e8a61d63", bytes: 765892 }],
   ["vendor/rhwp-studio/fonts/Pretendard-SemiBold.woff2", { sha256: "c863f76a7de5c1ddc1ed8b2fa794964530774592c4f31407a84e2a2ae93f17f0", bytes: 785856 }],
   ["vendor/rhwp-studio/fonts/Pretendard-Thin.woff2", { sha256: "1539755224a64719d5b18406762c476db74fcc299b9e4641ca1e9812fbc7a09b", bytes: 694804 }],
-  ["vendor/rhwp-studio/fonts/SourceHanSerifK-OldHangul-subset.woff2", { sha256: "9e419cd16df2ea3b220aa7751320d956ac2493440ba412484d98325078f09d43", bytes: 239628 }],
+  ["vendor/rhwp-studio/fonts/RHWPOldHangul-Regular.woff2", { sha256: "1a45a61e9a320c1bc62ca1401f7b23ceffffe8133dc2a9650ad4e12524f8dcab", bytes: 239732 }],
   ["vendor/rhwp-studio/fonts/SpoqaHanSans-Regular.woff2", { sha256: "6568bf80b50c14f2e54f56f2c07e668416f39f880baf5ea2825d315767f98f69", bytes: 275144 }],
   ["vendor/rhwp-studio/images/icon_small_ko.svg", { sha256: "a0ac1200a41b6a75e9afb30cda5bb850276087d45c2f25870605888238ba9b39", bytes: 469618 }],
   ["vendor/rhwp-studio/images/icon_small_ko_dark.svg", { sha256: "9d02ea0b8c1d399a89290d97613759826f19f3e3f392b6d79dcf6109e7e15fa6", bytes: 451775 }],
   ["vendor/rhwp-studio/index.html", { sha256: "5bd733cb7edfa921da36dc7b0a6d68b7c13590d2d57d43ee7aa7821139a24be4", bytes: 86815 }],
   ["vendor/rhwp-studio/locale-init.js", { sha256: "633d47a6a53b2211cf816769f8c084b097c1b60b6ab263803d8610c0531539fa", bytes: 1342 }],
-  ["vendor/rhwp-studio/provenance.json", { sha256: "ccc3694273c2d6c3b11f98fa32e1cd9ef97ad78d831699dca1adfa3831d5e433", bytes: 7510 }],
+  ["vendor/rhwp-studio/provenance.json", { sha256: "50a754191461172a7715c13ba209f2e5e1b5ef698e90a15c46ed04c9003f11f9", bytes: 7671 }],
   ["vendor/rhwp-studio/theme-init.js", { sha256: "5a3afcc0139187bfe509414cd60fde2a0dfea72fd72751c4e6e696cdc0f6c587", bytes: 2783 }],
 ]);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -247,6 +247,7 @@ function assertModuleIdentities(runtime, records) {
   assertLoadedRuntime(runtime, urls);
   const byFile = new Map();
   const declaredUrls = new Set();
+  const bundleIdentity = new Map();
   // The network URL omits fragments, and symlink aliases can resolve to a
   // canonical file from outside /js/. Inspect both disk identities and literal
   // imports in observed module bodies to catch those otherwise invisible cases.
@@ -265,6 +266,16 @@ function assertModuleIdentities(runtime, records) {
       const imported = new URL(match[1], url);
       if (imported.pathname.startsWith('/preview/js/')) assert.fail(`Declared preview module duplicate: ${imported.href}`);
       if (!imported.pathname.startsWith('/js/')) continue;
+      // 1.7.2: 그림 엔진(js/ai-figure/)과 로고 윤곽선(js/loading/logo5e.js)은 파일마다 꼬리표가 있거나 없는 주소 하나로만 불린다
+      // (엔진 안쪽 파일은 꼬리표 없이 서로를 부른다). 정체는 「파일마다 주소가 하나」이므로, 한 파일이 두 주소로 불리면 실패다.
+      const engineBundle = imported.pathname.startsWith('/js/ai-figure/') || imported.pathname === '/js/loading/logo5e.js';
+      if (engineBundle) {
+        const first = bundleIdentity.get(imported.pathname) ?? imported.href;
+        bundleIdentity.set(imported.pathname, first);
+        assert.equal(imported.href, first, `Declared canonical module identity: ${imported.href}`);
+        assert.ok(['', runtime.moduleQuery].includes(imported.search), `Declared canonical module identity: ${imported.href}`);
+        continue;
+      }
       assert.equal(imported.href, new URL(imported.pathname + runtime.moduleQuery, runtime.entryUrl).href,
         `Declared canonical module identity: ${imported.href}`);
       assert.equal(imported.pathname, decodeURIComponent(imported.pathname), `Declared encoded module alias: ${imported.href}`);
@@ -280,12 +291,18 @@ function assertModuleIdentities(runtime, records) {
     assert.ok(url.pathname.startsWith('/js/'), `Preview duplicate or module path alias: ${href}`);
     assert.equal(url.pathname, decoded, `Encoded module alias: ${href}`);
     assert.equal(url.pathname, path.posix.normalize(url.pathname), `Module path alias: ${href}`);
-    assert.equal(url.search, runtime.moduleQuery, `Canonical module query identity: ${href}`);
+    const engineBundle = decoded.startsWith('/js/ai-figure/') || decoded === '/js/loading/logo5e.js';
+    if (engineBundle) assert.ok(['', runtime.moduleQuery].includes(url.search), `Canonical module query identity: ${href}`);
+    else assert.equal(url.search, runtime.moduleQuery, `Canonical module query identity: ${href}`);
     assert.equal(url.hash, '', `Module fragment alias: ${href}`);
     if (!byFile.has(decoded)) byFile.set(decoded, new Set());
     byFile.get(decoded).add(href);
   }
-  for (const [file, identities] of byFile) assert.deepEqual([...identities], [new URL(file + runtime.moduleQuery, runtime.entryUrl).href]);
+  for (const [file, identities] of byFile) {
+    // 엔진 묶음은 꼬리표가 없어도 되지만, 한 파일이 두 주소로 실리면 안 된다.
+    if (file.startsWith('/js/ai-figure/') || file === '/js/loading/logo5e.js') assert.equal(identities.size, 1, `Module loaded under two identities: ${[...identities].join(', ')}`);
+    else assert.deepEqual([...identities], [new URL(file + runtime.moduleQuery, runtime.entryUrl).href]);
+  }
   for (const name of requiredModules) assert.ok(byFile.has(`/js/${name}.js`), `Required module never loaded: ${name}`);
   for (const file of ['/js/graph/graph-modal.js', '/js/function-graph/plane-modal.js'])
     assert.ok(byFile.has(file), `Graph stateful module never loaded: ${file}`);

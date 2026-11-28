@@ -1630,6 +1630,13 @@
   font-weight: 650;
 }
 #ai-image-panel .ai-task-tab-copy .ai-task-tab-time {
+  /* 11-20: 「완료 · 앞 결과를 그대로 두었습니다」처럼 긴 끝 상태도 한 줄로(전체 글은 줄 title에) */
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--text-secondary);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
   font-variant-numeric: tabular-nums;
@@ -2946,7 +2953,9 @@
 #ai-image-panel .is-ai-local-erasing { cursor:crosshair; touch-action:none; }
 #ai-image-panel .is-ai-local-erasing[data-ai-erase-mode="brush"] > img { cursor:none; }
 #ai-image-panel .ai-local-erase-overlay, #ai-image-panel .ai-local-erase-cursor { position:absolute; z-index:8; overflow:hidden; pointer-events:none; }
-#ai-image-panel .ai-local-erase-cursor circle { fill:none; }
+#ai-image-panel .ai-local-erase-cursor :is(circle,rect) { fill:none; }
+/* 11-26: 지울 자리는 테마와 상관없이 캔버스 선택색(#0969da)으로 — 그라파이트 강조색(회색)에서는 거의 안 보였다. 사각 끝 지우개: 문지른 자리를 지우는 모양 그대로 채워 보인다 */
+#ai-image-panel .ai-local-erase-overlay path.ai-erase-square { fill:#0969da; fill-opacity:.4; stroke:none; }
 #ai-image-panel .ai-local-erase-cursor .ai-erase-ring-outer { stroke:#111; stroke-width:3px; }
 #ai-image-panel .ai-local-erase-cursor .ai-erase-ring-inner { stroke:#fff; stroke-width:1px; }
 #ai-image-panel .ai-local-edit-action { flex:none; min-height:24px; padding:3px 6px; border:1px solid var(--border); border-radius:5px; background:var(--bg-input); color:var(--text-primary); font:inherit; font-size:11px; cursor:pointer; }
@@ -2960,8 +2969,8 @@
 #ai-image-panel .ai-local-edit-history button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 #ai-image-panel .ai-local-edit-history svg { display:block; width:18px; height:18px; }
 #ai-image-panel [data-ai-edit-save] { border-color:var(--accent); background:var(--control-selected-bg); }
-#ai-image-panel .ai-local-erase-overlay path { fill:none; stroke:var(--accent); stroke-opacity:.3; stroke-linecap:round; stroke-linejoin:round; }
-#ai-image-panel .ai-local-erase-overlay rect { fill:color-mix(in srgb,var(--accent) 12%,transparent); stroke:var(--accent); stroke-width:1.5px; stroke-dasharray:5 3; }
+#ai-image-panel .ai-local-erase-overlay path { fill:none; stroke:#0969da; stroke-opacity:.4; stroke-linecap:round; stroke-linejoin:round; }
+#ai-image-panel .ai-local-erase-overlay rect, #ai-image-panel .ai-local-erase-overlay path.ai-erase-loop { fill:rgba(9,105,218,.12); stroke:#0969da; stroke-opacity:1; stroke-width:1.5px; stroke-dasharray:5 3; }
 #ai-image-panel .ai-local-erase-options { position:absolute; top:calc(100% + 8px); right:0; width:260px; max-width:calc(100vw - 32px); z-index:20; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg-panel); box-shadow:0 8px 24px #0003; font-size:11px; }
 #ai-image-panel .ai-local-erase-options[hidden] { display:none; }
 #ai-image-panel .ai-erase-modes { display:flex; gap:4px; margin-bottom:8px; }
@@ -2970,6 +2979,9 @@
 #ai-image-panel .ai-local-erase-options label { display:flex; align-items:center; gap:8px; margin:7px 0; }
 #ai-image-panel .ai-local-erase-options input { min-width:0; flex:1; }
 #ai-image-panel .ai-local-erase-options output { min-width:34px; text-align:right; }
+/* 11-25 밤샘 검수: 지우개 확대경 켬/끔 칸 */
+#ai-image-panel .ai-erase-magnifier .crop-magnifier-control { padding:0; gap:6px; justify-content:flex-start; cursor:pointer; }
+#ai-image-panel .ai-erase-magnifier input { flex:none; margin:0; }
 #ai-image-panel .ai-local-erase-options small { display:block; color:var(--text-secondary); font-size:10px; margin-top:8px; }
 #ai-image-panel .ai-scoped-advanced { font-size:11px; color:var(--text-secondary); }
 #ai-image-panel .ai-scoped-advanced > summary { cursor:pointer; padding:3px 0; }
@@ -3042,6 +3054,11 @@
 body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; pointer-events: none; }
 #ai-image-panel { inset: 0 !important; padding: 0; background: var(--bg-app); }
 #ai-image-panel .modal-ai.ai-workbench { width: calc(100vw / var(--ui-zoom, 1)); height: calc(100dvh / var(--ui-zoom, 1)) !important; min-width: 0; border: 0; }
+/* 11-22 사용자(윈도우 설치판 「커서 위치를 가끔 못 알아들음」): 위 inset:0이 윈도우용 top:30px를 덮어 AI 작업대가 창 끌기 띠(30px)·
+   윈도우 창 단추 밑까지 올라가, 맨 윗줄 단추 윗부분 클릭이 창 끌기·최대화로 빠졌다. 윈도우·리눅스에서만 띠 아래로 내린다(맥은 그대로).
+   body 안이라 30px도 화면 크기(--ui-zoom)와 같이 줄고 늘어 띠 높이와 맞는다. */
+.desktop-shell:not(.platform-darwin):not(.is-native-fullscreen) body:not(.exam-editing) #ai-image-panel { top: 30px !important; }
+.desktop-shell:not(.platform-darwin):not(.is-native-fullscreen) body:not(.exam-editing) #ai-image-panel .modal-ai.ai-workbench { height: calc(100dvh / var(--ui-zoom, 1) - 30px) !important; }
 #ai-image-panel .ai-pane-head,
 #ai-image-panel .mode-side-by-side .ai-pane-head { min-height: var(--ai-pane-head-height, 36px); padding: 4px 6px; }
 #ai-image-panel .ai-pane-head-controls { flex-wrap: nowrap; gap: 4px; }
@@ -3140,6 +3157,20 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-label-edit-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
 #ai-image-panel .ai-label-edit-grid > label { display:flex; flex-direction:column; gap:4px; color:var(--text-secondary); font-size:11px; }
 #ai-image-panel .ai-label-edit-wide { grid-column:1/-1; }
+#ai-image-panel .ai-label-edit-panel [hidden] { display:none !important; }
+#ai-image-panel .ai-label-edit-stepped { display:flex; flex-direction:column; gap:4px; min-width:0; color:var(--text-secondary); font-size:11px; }
+#ai-image-panel .ai-label-edit-step { display:flex; align-items:stretch; min-width:0; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); }
+#ai-image-panel .ai-label-edit-panel .ai-label-edit-step input { flex:1; width:0; border:0; border-radius:6px 0 0 6px; appearance:textfield; }
+#ai-image-panel .ai-label-edit-step input::-webkit-inner-spin-button { appearance:none; }
+#ai-image-panel .ai-label-edit-panel .ai-label-edit-step button { flex:0 0 24px; min-height:0; padding:0; border:0; border-left:1px solid var(--border); border-radius:0; color:var(--text-secondary); }
+#ai-image-panel .ai-label-edit-panel .ai-label-edit-step button:last-child { border-radius:0 5px 5px 0; }
+#ai-image-panel .ai-label-edit-panel .ai-label-edit-align { display:inline-flex; align-items:center; gap:4px; }
+#ai-image-panel .ai-label-edit-align svg { width:14px; height:14px; flex:none; fill:none; stroke:currentColor; stroke-width:1.6; }
+#ai-image-panel .ai-label-edit-panel .ai-label-edit-align[aria-disabled="true"] { opacity:.5; cursor:default; }
+#ai-image-panel .ai-label-edit-panel .ai-label-edit-align[aria-disabled="true"]:hover { background:var(--bg-input); }
+#ai-image-panel .ai-label-edit-panel button[aria-pressed="mixed"] { border-style:dashed; border-color:var(--accent); }
+#ai-image-panel .ai-label-edit-count { margin:0 0 8px; color:var(--text-secondary); font-size:11px; }
+#ai-image-panel .ai-label-edit-marquee { fill:color-mix(in srgb,var(--accent) 12%,transparent); stroke:var(--accent); stroke-width:1px; stroke-dasharray:5 4; pointer-events:none; }
 #ai-image-panel .ai-label-edit-detail { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); }
 #ai-image-panel .ai-label-edit-detail > summary { cursor:pointer; color:var(--text-secondary); }
 #ai-image-panel .ai-label-edit-removal { margin-top:12px; justify-content:flex-end; }
@@ -3148,7 +3179,12 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-label-edit-overlay.is-preview-only [data-ai-label-id] { pointer-events:none; }
 #ai-image-panel .ai-label-edit-overlay.is-preview-only :is(.ai-label-edit-hit,.ai-label-edit-handle) { display:none; }
 #ai-image-panel .ai-label-edit-hit { fill:transparent; stroke:transparent; stroke-width:1px; }
-#ai-image-panel .is-selected > .ai-label-edit-hit { stroke:var(--accent); }
+#ai-image-panel .is-selected > .ai-label-edit-hit { stroke:#0969da; stroke-width:1px; } /* 11-26: 캔버스 선택 색(SELECTION_COLOR) */
+#ai-image-panel .is-multi-selected > .ai-label-edit-hit { stroke-dasharray:4 3; }
+/* 11-26 시안 v6 도구: 만드는 중인 지시선·길이 표시 미리보기, 만들기 도구일 때 십자 커서 */
+#ai-image-panel .ai-label-draw-preview { fill:none; stroke:#3479d0; stroke-width:1.8px; stroke-dasharray:6 4; pointer-events:none; }
+#ai-image-panel[data-ai-label-editing="true"]:is([data-ai-label-tool="text"],[data-ai-label-tool="leader"],[data-ai-label-tool="dimension"]) .ai-preview-stage :is(img,svg,[data-ai-label-id]) { cursor:crosshair !important; }
+#ai-image-panel input.ai-label-inplace { position:absolute; z-index:9; box-sizing:border-box; height:24px; margin:0; padding:0 6px; border:1px solid #0969da !important; border-radius:3px; background:#fff !important; color:#111 !important; -webkit-text-fill-color:#111; caret-color:#0969da; opacity:1 !important; outline:none; box-shadow:none; font:13px/22px ui-monospace,SFMono-Regular,Menlo,monospace; } /* 11-26 그림 위 바로 고치기: 라벨 아래 한 줄 입력창(원문이 보이게 고정폭 글꼴) */
 #ai-image-panel .ai-label-edit-handle { fill:var(--bg-panel); stroke:var(--accent); stroke-width:1.5px; cursor:crosshair; }
 #ai-image-panel .ai-label-edit-overlay [data-ai-label-id]:focus-visible { outline:none; }
 #ai-image-panel .ai-label-edit-overlay [data-ai-label-id]:focus-visible > .ai-label-edit-hit { stroke:var(--accent); stroke-width:2px; }
@@ -3165,6 +3201,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-loading-frame[data-loading-state="completed"],
 #ai-image-panel .ai-loading-frame[data-loading-state="failed"] { pointer-events: none; }
 #ai-image-panel[data-blur-loading="true"] .ai-generating { opacity: 0; pointer-events: none; }
+#ai-image-panel[data-loading-pending="true"] .ai-generating { opacity: 0; pointer-events: none; } /* 11-21: 새 로딩 시작 전 옛 상자 비침 막기 */
 #ai-image-panel .ai-loading-frame .br-bar { display: none; }
 #ai-image-panel .ai-loading-picture { position: relative; width: 100%; margin-inline: auto; border-radius: 0; }
 #ai-image-panel .ai-loading-caption { position: absolute; inset: 0; pointer-events: none; }
@@ -3303,7 +3340,7 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-head { padding-left: 0; grid-template-columns: minmax(0, 1fr) auto; min-height: var(--ai-row-h); }
 #ai-image-panel .ai-title-line { position: relative; display: block; height: 100%; min-width: 0; }
 #ai-image-panel .ai-title-line .modal-title,
-#ai-image-panel #ai-image-title { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: var(--ai-rail-w); margin: 0; text-align: center; white-space: nowrap; font-size: 13px; font-weight: 600; }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) { position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: var(--ai-rail-w); margin: 0; text-align: center; white-space: nowrap; font-size: 13px; font-weight: 600; }
 #ai-image-panel .ai-title-line .ai-workflow-switch { position: absolute; left: calc(var(--ai-rail-w) + 12px); top: 50%; transform: translateY(-50%); height: 30px; box-sizing: border-box; }
 #ai-image-panel .ai-workflow-switch button { height: 100%; padding: 0 14px; }
 #ai-image-panel .ai-head-status .ai-source-decision { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); margin-right: 8px; white-space: nowrap; }
@@ -3365,8 +3402,8 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-rail-actions button { border: 0 !important; }
 #ai-image-panel .ai-rail-selection-row { gap: 4px; padding-right: 8px; }
 #ai-image-panel .ai-rail-selection-row output { white-space: nowrap; font-size: 10.5px; }
-#ai-image-panel #ai-image-title.has-drag-handle { left: 0 !important; padding: 0 !important; }
-#ai-image-panel #ai-image-title.has-drag-handle { justify-content: center; }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]).has-drag-handle { left: 0 !important; padding: 0 !important; }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]).has-drag-handle { justify-content: center; }
 #ai-image-panel .ai-title-line .ai-workflow-switch { left: calc(var(--ai-rail-w) + 8px); }
 #ai-image-panel .ai-rail-selection-row { padding: 9px 6px 7px 10px; gap: 2px; }
 #ai-image-panel .ai-rail-actions button { font-size: 10.5px; padding: 2px 2px; }
@@ -3391,11 +3428,11 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 #ai-image-panel .ai-head::after { content: ""; position: absolute; left: var(--ai-rail-w); right: 0; bottom: 0; height: 1px; background: var(--border); pointer-events: none; }
 #ai-image-panel .ai-head > * { position: relative; z-index: 1; }
 #ai-image-panel .ai-title-line .modal-title,
-#ai-image-panel #ai-image-title,
-#ai-image-panel #ai-image-title.has-drag-handle { left: 14px !important; width: calc(var(--ai-rail-w) - 20px) !important; display: flex !important; align-items: center; gap: 8px; justify-content: flex-start !important; text-align: left !important; font-size: 16px !important; font-weight: 700 !important; z-index: 1; }
-#ai-image-panel #ai-image-title .ai-title-icon { display: inline-flex; flex: none; color: var(--text-primary); }
-#ai-image-panel #ai-image-title .ai-title-icon svg { width: 19px; height: 19px; }
-#ai-image-panel #ai-image-title [data-ai-title-text] { overflow: hidden; text-overflow: ellipsis; }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]),
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]).has-drag-handle { left: 14px !important; width: calc(var(--ai-rail-w) - 20px) !important; display: flex !important; align-items: center; gap: 8px; justify-content: flex-start !important; text-align: left !important; font-size: 16px !important; font-weight: 700 !important; z-index: 1; }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) .ai-title-icon { display: inline-flex; flex: none; color: var(--text-primary); }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) .ai-title-icon svg { width: 19px; height: 19px; }
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) [data-ai-title-text] { overflow: hidden; text-overflow: ellipsis; }
 /* 왼쪽 머리 줄: 「이미지 작업대」 글자는 화면에서 빼고(읽기 도구용으로 남김) 선택 줄을 놓는다 */
 #ai-image-panel .ai-rail-heading { justify-content: space-between; padding: 0 6px 0 14px !important; }
 #ai-image-panel .ai-rail-heading > strong { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -3455,13 +3492,47 @@ body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden
 @media (prefers-reduced-motion: reduce) {#ai-image-panel [data-ai-exam-send].is-suggested {animation:none;}}
 
 /* 11-11: 제목 아래 연결 줄(문항 카드·한글 어디에서 열었는지) — 제목은 짧게, 연결은 작은 줄로 */
-#ai-image-panel #ai-image-title {flex-wrap:wrap;row-gap:0;}
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) {flex-wrap:wrap;row-gap:0;}
 /* 11-17(승인 시안 BL4/b17-ai-link-line.html): 한 줄 말줄임 → 두 줄까지 낱말 단위 줄바꿈, 그래도 넘치면 둘째 줄 끝만 말줄임(전체는 제목에 마우스를 올리면 설명으로).
    두 줄일 때만 머리 줄이 한 줄 높이(약 15px)만큼 늘어난다(ai-panel.js syncSurfaceTitle가 data-ai-link-lines="2"를 붙임). 글자 크기·색·위치는 그대로. */
-#ai-image-panel #ai-image-title [data-ai-title-link] {flex-basis:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;margin-top:1px;font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ds-ink-3,#8b949e);white-space:normal;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden;max-width:100%;}
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) [data-ai-title-link] {flex-basis:100%;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;margin-top:1px;font-size:11.5px;font-weight:500;line-height:1.3;color:var(--ds-ink-3,#8b949e);white-space:normal;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden;max-width:100%;}
 #ai-image-panel .ai-head[data-ai-link-lines="2"] {min-height:calc(var(--ai-row-h) + 15px);}
-#ai-image-panel #ai-image-title [data-ai-title-link][hidden] {display:none;}
+#ai-image-panel :is(#ai-image-title,[id^="ai-image-title-"]) [data-ai-title-link][hidden] {display:none;}
 
 /* 11-14(시안 review-1114 5번 G4): 그래프 쪽 전환 줄은 「복원 · 대화로 만들기 · 직접」. 「직접」은 빈 그래프 편집기(전환 탭이 아니라 바로 여는 단추). */
 [data-ai-mode="image"] .ai-workflow-switch [data-ai-graph-direct] { display:none; }
 .ai-workflow-switch [data-ai-graph-direct] { margin-left:4px; box-shadow: inset 1px 0 0 var(--border); border-radius:0 5px 5px 0; }
+
+/* PATHFIX(11-20): Codex 설치 안내(연결 정보 안) — 다른 안내 줄과 같은 글자·색, 명령은 고정폭 */
+.ai-codex-install { display:flex; flex-direction:column; gap:4px; padding:8px 10px; border:1px solid var(--border-strong, var(--border)); border-radius:6px; background:var(--bg-panel); font-size:11px; color:var(--text-primary, inherit); }
+.ai-codex-install[hidden] { display:none; }
+.ai-codex-install strong { font-size:11px; font-weight:600; }
+.ai-codex-install p { margin:0; color:var(--text-secondary); line-height:1.45; }
+.ai-codex-install-cmd { display:flex; gap:6px; align-items:baseline; flex-wrap:wrap; }
+.ai-codex-install-cmd code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:10.5px; padding:1px 5px; border-radius:4px; background:var(--bg-subtle, rgba(127,127,127,.12)); user-select:all; }
+.ai-codex-install-note:empty { display:none; }
+.ai-codex-install-actions { display:flex; gap:6px; margin-top:2px; }
+/* 11-22 시안(설치-업데이트) 5번: 작업대 안 자동 설치 — 설치 안내 칸을 「AI 연결 준비 중」으로 */
+.ai-codex-install[data-mode="auto"] > :not(.ai-codex-auto) { display:none; }
+.ai-codex-auto { display:flex; flex-direction:column; gap:4px; }
+.ai-codex-auto p { margin:0; color:var(--text-secondary, #8b95a5); }
+.ai-codex-steps { display:flex; flex-direction:column; gap:4px; margin:4px 0; color:var(--text-secondary, #8b95a5); }
+.ai-codex-steps > div { display:flex; align-items:center; gap:7px; }
+.ai-codex-steps .done { color:#7ee2a8; }
+.ai-codex-steps .on { color:var(--text-primary, #e6edf3); }
+.ai-codex-steps .on i { display:inline-block; animation:dac-spin .9s linear infinite; }
+.ai-codex-steps i { width:12px; text-align:center; font-style:normal; }
+/* 11-26 시안(생성 화면 정리 6): 코멘트는 평소 주황 번호 단추만, 누르면(선택하면) 영역과 내용이 펼쳐진다. 테마와 상관없이 같은 색. */
+#ai-image-panel .ai-comment-marker {
+  width:auto !important; min-width:20px !important; height:20px !important; min-height:20px !important; padding:0 6px !important;
+  border:0 !important; border-radius:10px !important; background:#e8590c !important; color:#fff !important;
+  font:700 11px/20px -apple-system,"Apple SD Gothic Neo",sans-serif !important;
+  box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.3);
+}
+#ai-image-panel .ai-comment-marker:is(.is-active,[aria-pressed="true"]) { outline:0; box-shadow:0 0 0 2px #fff,0 0 0 4px #e8590c,0 2px 6px rgba(0,0,0,.3); }
+/* 그라파이트 테마의 코멘트 색 덮어쓰기보다 앞서게(테마와 상관없이 주황 단추에 흰 숫자) */
+:root #ai-image-panel#ai-image-panel .ai-comment-marker.ai-comment-marker.ai-comment-marker { background:#e8590c !important; color:#fff !important; border:0 !important; }
+#ai-image-panel .ai-comment-region:not(.ai-comment-drag-preview) { display:none; }
+/* 번호 단추를 눌러 내용이 펼쳐져 있을 때만 그 영역을 보인다 */
+#ai-image-panel:has([data-ai-comment-popover]:not([hidden])) .ai-comment-region.is-active { display:block; border:1.5px dashed #e8590c !important; background:rgba(232,89,12,.07) !important; border-radius:3px; }
+#ai-image-panel .ai-comment-drag-preview { border-color:#e8590c !important; background:rgba(232,89,12,.1) !important; }

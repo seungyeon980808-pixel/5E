@@ -25,16 +25,18 @@ async function loadRun() {
   return context;
 }
 
+const isConvertCheck = payload => /^첨부 그림은 .{1,4} 그림이다|^첫째 그림은/.test(payload?.text || '');
 // 관찰·검수 호출은 이 경로에서 부르면 안 된다(호출되면 실패).
 function fakes({ readText, generate } = {}) {
-  const calls = { generate: [], read: [], observer: 0 };
+  const calls = { generate: [], read: [], check: [], observer: 0 };
   const forbidden = name => async () => { calls.observer++; throw new Error(`${name} must not run`); };
   const options = {
     source: { data: png, name: 'source' }, selection: { model: 'chosen-model', effort: 'high' }, artboard: { w: 100, h: 100 },
     workflow: { imageKind: 'general', labelResult: 'restore-editable' }, queue: false, fallback: false,
     observer: { analyze: forbidden('analyze'), review: forbidden('review'), reviewFinal: forbidden('reviewFinal'), verifyPlacement: forbidden('verifyPlacement'), mapTargets: forbidden('mapTargets'), blankPlan: forbidden('blankPlan') },
     raster: { generate: generate || (async payload => { calls.generate.push(payload); return { src: png, imageToolCalls: 1, rendererPrompt: 'r' }; }) },
-    readText: readText || (async payload => { calls.read.push(payload); return { text: readItems }; }),
+    // 11-21: 변환 목록 대조(ai-image-convert-check.js)도 같은 글 읽기 연결을 쓴다 → 라벨 읽기만 calls.read에 센다.
+    readText: readText || (async payload => { (isConvertCheck(payload) ? calls.check : calls.read).push(payload); return { text: readItems }; }),
   };
   return { calls, options };
 }
@@ -147,7 +149,7 @@ test('the label read channel is wired through preload, the preview bridge, the w
   assert.match(read('js/web-ai-connection.js'), /'bridge-read-text'\]\.includes\(action\)/);
   assert.match(read('js/web-ai-bridge.js'), /readImageText:\s*payload\s*=>\s*request\('bridge-read-text', payload\)/);
   assert.match(read('js/ai-task-workspaces.js'), /'interrupt', 'readImageText'\]/);
-  assert.match(read('desktop/main.cjs'), /createDirectImageClient\(\{ log: entry => appendAiTurnLog\(entry\), timeoutMs: 100_000, retries: 1 \}\)/);
+  assert.match(read('desktop/main.cjs'), /createDirectImageClient\(\{ log: entry => appendAiTurnLog\(entry\), timeoutMs: 100_000, retries: 1, refreshAuth: refreshCodexAuth \}\)/);
   assert.match(read('scripts/local-codex-bridge.cjs'), /createDirectImageClient\(\{log,timeoutMs:100000,retries:1\}\)/);
   assert.match(read('js/state.js'), /EQUATION_FONT_FAMILY = '"Latin Modern Roman", "Latin Modern Math", "HYhwpEQ"/);
   assert.match(read('css/style.css'), /font-family: "Latin Modern Math";\s*src: url\("\.\.\/vendor\/rhwp-studio\/fonts\/LatinModernMath-Regular\.woff2"\)/);
@@ -157,7 +159,7 @@ test('the label read channel is wired through preload, the preview bridge, the w
 test('label restore is the default and the legacy long prompt is not used by default', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'js/ai-image-label-run.js'), 'utf8');
   assert.match(source, /const legacyLabelPath = workflow\.labelResult === 'restore-editable' && legacyLabelPipeline;/);
-  assert.match(source, /legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng \} = \{\}\)/);
+  assert.match(source, /legacyLabelPipeline = false, grayscale = grayscaleGeneratedPng,?\s*(?:[\w\s=,]*?)\} = \{\}\)/); // 11-23 실험 옵션(textbookEdgeGuide 등)이 뒤에 붙어도 기본은 끔
 });
 
 // 11-11 사용자 결정: 라벨 복원은 기출·교과서 모두 기본 끄기.

@@ -1,31 +1,31 @@
 {
   "schemaVersion": 3,
   "candidate": {
-    "version": "1.7.1",
+    "version": "1.7.2",
     "desktopEntry": "index.html",
     "sourceBranch": "main",
-    "tag": "v1.7.1",
+    "tag": "v1.7.2",
     "status": "HOLD"
   },
   "channels": {
     "stableWeb": {
-      "version": "1.7.1",
+      "version": "1.7.2",
       "url": "https://www.5e.ai.kr/",
       "entry": "index.html",
       "pagesBuildType": "workflow",
       "pagesSourceBranch": "main",
-      "tag": "v1.7.1",
+      "tag": "v1.7.2",
       "sourceReceipt": "https://www.5e.ai.kr/js/release-receipt.js"
     },
     "desktop": {
-      "version": "1.7.1",
+      "version": "1.7.2",
       "entry": "index.html",
       "artifacts": [
-        "5E-1.7.1-windows-x64.exe",
-        "5E-1.7.1-macos-x64.dmg",
-        "5E-1.7.1-macos-arm64.dmg",
-        "5E-1.7.1-macos-x64.zip",
-        "5E-1.7.1-macos-arm64.zip"
+        "5E-1.7.2-windows-x64.exe",
+        "5E-1.7.2-macos-x64.dmg",
+        "5E-1.7.2-macos-arm64.dmg",
+        "5E-1.7.2-macos-x64.zip",
+        "5E-1.7.2-macos-arm64.zip"
       ]
     },
     "latestPublishedDesktop": {
@@ -55,7 +55,7 @@
     "preservePreviewSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
     "workflow": ".github/workflows/web-release.yml",
     "requiresSeparateDeploymentApproval": true,
-    "candidateVersion": "1.7.1",
+    "candidateVersion": "1.7.2",
     "preservePaths": [],
     "buildType": "workflow"
   },

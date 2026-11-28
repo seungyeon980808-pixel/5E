@@ -3,6 +3,8 @@ import { LABEL_REVIEW_POLICY } from './ai-image-review.js?v=1.7.0-four-session-i
 import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-four-session-integration';
 import { comparisonGeometry } from './ai-comparison.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
+import { GENERATION_STOPPED, generationFailedText } from './ai-generation-copy.js?v=1.7.0-four-session-integration';
+import { isCreationWorkflow } from './ai-workflow-kinds.js?v=1.7.0-four-session-integration';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",
@@ -198,9 +200,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let generatedSerial = 0;
   let sourceSerial = 0;
   let activeCandidateKey = "";
+  let versionDescriber = null, versionAction = null; // V5: (candidateId, card) => { sub, thumb } | null — 그림 생성 탭 결과 목록의 둘째 줄
   let activeSourceKey = "";
   const paneZoom = { source: 1, result: 1 };
   let userChoseLayout = false;
+  // 11-19(시안 그림생성화면 태그 1·24): 레퍼런스를 넣지 않은 생성 작업은 「결과」만 크게, 좌우 비교의 왼쪽은 「비교 대상」(기본 = 직전 결과).
+  let resultOnly = false;
+  let userPickedSource = false;
   let panelLayoutChanging = false;
 
   const cardTitle = (card, fallback) => cleanText(card.querySelector(".ai-image-card-head strong")?.textContent, fallback);
@@ -345,7 +351,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   function updateResponsiveLayout() {
     if (userChoseLayout) return;
-    setLayout('side-by-side');
+    setLayout(resultOnly ? 'result' : 'side-by-side');
   }
 
   const paneCard = (pane) => pane === "source"
@@ -382,6 +388,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }, { capture: true, signal: lifecycle.signal });
   document.addEventListener('keydown', event => {
     if (panel.hidden || !['source', 'result'].includes(panel.dataset.aiLayout) || event.key !== ' ') return;
+    // 11-26 사용자: 생성은 결과 한 창이 기본 — 스페이스로 레퍼런스와 맞바꾸지 않는다(직접 편집 중 화면이 다른 곳으로 넘어갔다).
+    if (panel.dataset.aiCreateUi === 'true') return;
     if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
     if (event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"]),button:not([data-ai-layout-mode]),[role="button"],summary')) return;
     if (document.querySelector('dialog[open], .modal-overlay:not([hidden]):not(#ai-image-panel)')) return;
@@ -481,6 +489,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   function renderUserStatus(record) {
     if (!reviewSummary) return;
     const state = normalizeReviewState(record?.state);
+    const creating = isCreationWorkflow(panel.dataset.aiWorkflow); // 생성은 원본이 없다 — 「앞 결과는 그대로」
     const labels = {
       idle: activeCandidate() ? "완료됨" : "준비됨",
       generating: "변환 중",
@@ -490,8 +499,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       "first-generated": "완료됨",
       "scoped-applied": "완료됨",
       "needs-attention": "확인이 필요합니다",
-      failed: "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.",
-      cancelled: "중단됨",
+      failed: creating ? generationFailedText() : "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.",
+      cancelled: creating ? GENERATION_STOPPED : "중단됨",
     };
     reviewSummary.dataset.state = state;
     reviewSummary.textContent = labels[state] || labels.idle;
@@ -574,8 +583,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       "first-generated": "첫 PNG 생성 완료",
       "scoped-applied": "부분 수정 적용 완료",
       "needs-attention": "생성됨 · 확인 필요",
-      failed: "작업 실패",
-      cancelled: "작업 취소됨",
+      failed: isCreationWorkflow(panel.dataset.aiWorkflow) ? generationFailedText() : "작업 실패",
+      cancelled: isCreationWorkflow(panel.dataset.aiWorkflow) ? GENERATION_STOPPED : "작업 취소됨",
     };
     resultState.dataset.state = state;
     resultState.textContent = labels[state] || labels.idle;
@@ -589,7 +598,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       const detail = empty.querySelector('span');
       const add = empty.querySelector('[data-ai-add-file]');
       const titleText = '생성 결과 없음';
-      const detailText = '변환하면 결과가 여기에 표시됩니다.';
+      // 11-22: 생성 탭에서도 「변환하면」이라 나오던 것 — 지금 작업 종류(생성/변환)에 맞춘다.
+      const detailText = /create/.test(panel.dataset.aiConversionKind || panel.dataset.conversionKind || '') || panel.dataset.aiCreateUi === 'true' ? '그리면 결과가 여기에 표시됩니다.' : '변환하면 결과가 여기에 표시됩니다.';
       if (title && title.textContent !== titleText) title.textContent = titleText;
       if (detail && detail.textContent !== detailText) detail.textContent = detailText;
       if (add && !add.hidden) add.hidden = true;
@@ -601,6 +611,63 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         : sourceCards().length ? "preparation" : "empty";
   }
 
+  function renderVersionList(cards = generatedCards()) {
+    if (!versionButton || !versionList) return;
+    versionList.replaceChildren();
+    versionButton.disabled = cards.length === 0;
+    versionButton.textContent = cards.length
+      ? cardTitle(activeCandidate(), `생성 결과 ${cards.length}`)
+      : "생성 결과 없음";
+    versionButton.title = versionButton.textContent;
+    let rich = false;
+    // 11-26 시안(판 목록 8): 손으로 고친 판은 그 AI 결과 바로 아래에 묶어 들여 보인다.
+    const details = new Map(cards.map(card => [candidateKey(card), versionDescriber?.(candidateKey(card), card) || null]));
+    const keys = new Set(cards.map(candidateKey));
+    const isChild = card => { const d = details.get(candidateKey(card)); return Boolean(d?.local && d.parentId && keys.has(d.parentId)); };
+    const ordered = [];
+    for (const card of cards) {
+      if (isChild(card)) continue;
+      ordered.push(card);
+      for (const child of cards) if (isChild(child) && details.get(candidateKey(child)).parentId === candidateKey(card)) ordered.push(child);
+    }
+    cards = ordered;
+    cards.forEach((card, index) => {
+      const option = document.createElement("button");
+      const selected = candidateKey(card) === activeCandidateKey;
+      option.type = "button";
+      option.role = "option";
+      option.dataset.aiCandidateOption = candidateKey(card);
+      option.setAttribute("aria-selected", String(selected));
+      option.tabIndex = selected ? 0 : -1;
+      const title = cardTitle(card, `생성 결과 ${cards.length - index}`);
+      // V5(시안 대화창v5 안 A · 태그 10): 그림 생성 탭은 작은 그림 · 이름 · 한 일 · 시각 · ✓(설명은 ai-panel이 준다).
+      const detail = details.get(candidateKey(card));
+      if (detail) {
+        option.className = "ai-version-row" + (isChild(card) ? " is-child" : "");
+        const thumb = document.createElement("img"); thumb.alt = ""; thumb.draggable = false;
+        thumb.src = detail.thumb || card.querySelector(".ai-preview-stage > img")?.src || "";
+        const text = document.createElement("span");
+        const name = document.createElement("b"); name.textContent = title;
+        text.append(name);
+        if (detail.sub) { const sub = document.createElement("small"); sub.textContent = detail.sub; text.append(sub); }
+        option.append(thumb, text);
+        if (selected) { const mark = document.createElement("i"); mark.setAttribute("aria-hidden", "true"); mark.textContent = "✓"; option.append(mark); }
+        if (versionAction) {
+          const more = document.createElement("span"); more.className = "ai-version-more"; more.dataset.aiVersionMore = candidateKey(card);
+          more.setAttribute("role", "button"); more.setAttribute("aria-label", `${title} 메뉴`); more.textContent = "⋯"; option.append(more);
+        }
+        option.setAttribute("aria-label", [title, detail.sub].filter(Boolean).join(" · "));
+        rich = true;
+      } else option.textContent = title;
+      versionList.appendChild(option);
+    });
+    if (rich) {
+      const foot = document.createElement("div"); foot.className = "ai-version-foot"; foot.setAttribute("aria-hidden", "true");
+      foot.textContent = "↑↓ 고르기 · Enter 보기 · 대화의 결과 카드와 같은 목록";
+      versionList.appendChild(foot);
+    }
+  }
+
   function syncCandidates({ preferNewest = false } = {}) {
     const cards = generatedCards();
     const keys = cards.map(candidateKey);
@@ -609,25 +676,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     else if (!keys.includes(activeCandidateKey)) activeCandidateKey = keys[0] || "";
     else if (preferNewest && keys[0]) activeCandidateKey = keys[0];
 
-    if (versionButton && versionList) {
-      versionList.replaceChildren();
-      versionButton.disabled = cards.length === 0;
-      versionButton.textContent = cards.length
-        ? cardTitle(activeCandidate(), `생성 결과 ${cards.length}`)
-        : "생성 결과 없음";
-      versionButton.title = versionButton.textContent;
-      cards.forEach((card, index) => {
-        const option = document.createElement("button");
-        const selected = candidateKey(card) === activeCandidateKey;
-        option.type = "button";
-        option.role = "option";
-        option.dataset.aiCandidateOption = candidateKey(card);
-        option.setAttribute("aria-selected", String(selected));
-        option.tabIndex = selected ? 0 : -1;
-        option.textContent = cardTitle(card, `생성 결과 ${cards.length - index}`);
-        versionList.appendChild(option);
-      });
-    }
+    renderVersionList(cards);
 
     for (const card of cards) {
       card.classList.toggle("is-ai-active-candidate", candidateKey(card) === activeCandidateKey);
@@ -699,6 +748,12 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const results = isCreation() ? generatedCards().filter(card => card.querySelector('.ai-preview-stage > img')?.src) : [];
     const keys = [...(combinedCard ? ['__combined__'] : []), ...cards.map(sourceKey), ...results.map(resultKey)];
     if (!keys.includes(activeSourceKey) || (!wasCombined && combinedCard)) activeSourceKey = keys[0] || '';
+    // 레퍼런스가 없으면 비교 대상은 보는 결과 바로 앞 결과(사용자가 고르기 전까지).
+    if (!cards.length && !combinedCard && results.length > 1 && (!userPickedSource || !keys.includes(activeSourceKey))) {
+      const at = results.findIndex(card => candidateKey(card) === activeCandidateKey);
+      const pick = results[at + 1] || results[at - 1] || results[0];
+      if (pick) activeSourceKey = resultKey(pick);
+    }
     const comparing = prepareCompare();
     combinedCard?.classList.toggle('is-ai-active-source', activeSourceKey === '__combined__');
     compareCard?.classList.toggle('is-ai-active-source', comparing);
@@ -826,6 +881,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   versionButton?.addEventListener("click", () => {
     const opening = versionList.hidden;
+    if (opening && versionDescriber) renderVersionList(); // 결과 이름·한 일이 바뀌었을 수 있다(라벨 살리기 등)
     versionList.hidden = !opening;
     versionButton.setAttribute("aria-expanded", String(opening));
     if (opening) moveVersionFocus("first");
@@ -838,6 +894,25 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     event.preventDefault();
   });
   versionList?.addEventListener("click", (event) => {
+    // 11-26 시안(판 목록 8): ⋯ — 이름 바꾸기 · 복제해서 새 판으로 · 지우기
+    const pick = event.target.closest("[data-ai-version-menu-action]");
+    if (pick) {
+      event.stopPropagation();
+      const id = pick.closest("[data-ai-version-menu]").dataset.aiVersionMenu, action = pick.dataset.aiVersionMenuAction;
+      closeVersionList({ returnFocus: true }); versionAction?.(id, action); return;
+    }
+    const more = event.target.closest("[data-ai-version-more]");
+    if (more) {
+      event.stopPropagation();
+      versionList.querySelector("[data-ai-version-menu]")?.remove();
+      const menu = document.createElement("div"); menu.className = "ai-version-menu"; menu.dataset.aiVersionMenu = more.dataset.aiVersionMore; menu.setAttribute("role", "menu");
+      for (const [action, text] of [["rename", "이름 바꾸기"], ["duplicate", "복제해서 새 판으로"], ["delete", "지우기"]]) {
+        const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "menuitem"); b.dataset.aiVersionMenuAction = action; b.textContent = text; menu.append(b);
+      }
+      more.closest("[data-ai-candidate-option]").after(menu);
+      menu.querySelector("button")?.focus();
+      return;
+    }
     const option = event.target.closest("[data-ai-candidate-option]");
     if (!option) return;
     selectCandidate(option.dataset.aiCandidateOption);
@@ -889,6 +964,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       return;
     }
     activeSourceKey = sourceSelect.value;
+    userPickedSource = true;
     syncSources();
   });
   panel.addEventListener("click", (event) => {
@@ -913,7 +989,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     // Box overlays are view annotations, not candidate changes. Rebuilding the
     // version menu for each marker repaint makes its options impossible to click.
     const overlay = node => node.nodeType === 1 && node.matches('[data-ai-comment-marker], [data-ai-comment-drag-preview]');
-    if (records.every(record => record.target.closest?.('.ai-label-edit-overlay') || record.type === 'childList'
+    // 11-22: 로딩 띠의 글자 바뀜(reveal-status)도 결과 변화가 아니다 — 이것 때문에 판 목록을 다시 그려 키보드 초점이 날아갔다.
+    if (records.every(record => record.target.closest?.('.ai-label-edit-overlay, [data-ai-loading-frame]') || record.type === 'childList'
       && [...record.addedNodes, ...record.removedNodes].length > 0
       && [...record.addedNodes, ...record.removedNodes].every(overlay))) return;
     const nextCount = generatedCards().length;
@@ -929,6 +1006,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     attributes: true,
     attributeFilter: ["data-ai-candidate-id", "data-ai-review-state", "hidden"],
   };
+  // 11-25 밤샘 검수: 새 작업 공간은 생성 화면 표시(data-ai-create-ui)가 붙기 전에 빈 결과 안내를 그려 생성 탭에서도 「변환하면…」이 남았다.
+  const modeObserver = new MutationObserver(() => syncWorkbenchStage());
+  modeObserver.observe(panel, { attributes: true, attributeFilter: ['data-ai-create-ui', 'data-ai-conversion-kind'] });
+  lifecycle.signal.addEventListener('abort', () => modeObserver.disconnect(), { once: true });
   if (previews) cardObserver.observe(previews, cardObserverOptions);
   if (references) cardObserver.observe(references, cardObserverOptions);
 
@@ -965,6 +1046,28 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       delete panel.dataset.aiWorkbenchReady;
       delete panel.aiWorkbench;
     },
+    /** V5: 그림 생성 탭 결과 목록의 둘째 줄(한 일 · 시각)과 작은 그림을 주는 함수. null이면 예전 글자 목록. */
+    setVersionDescriber(fn) { versionDescriber = typeof fn === "function" ? fn : null; renderVersionList(); },
+    setVersionAction(fn) { versionAction = typeof fn === "function" ? fn : null; },
+    refreshVersions() { renderVersionList(); },
+    /** 생성 결과 하나를 보는 결과로 고른다(대화의 결과 카드·되돌리기). */
+    select(candidateId) { if (generatedCards().some(card => candidateKey(card) === candidateId)) { selectCandidate(candidateId); syncSources(); } },
+    /** 좌우 비교 왼쪽(비교 대상)에 결과 하나를 놓는다. */
+    setCompareSource(candidateId) {
+      const card = generatedCards().find(item => candidateKey(item) === candidateId);
+      if (!card) return;
+      activeSourceKey = resultKey(card); userPickedSource = true; syncSources();
+    },
+    compareSourceId() { return activeSourceKey.startsWith('__result__:') ? activeSourceKey.slice('__result__:'.length) : null; },
+    setLayout(mode) { setLayout(mode, true); },
+    /** 결과만 보기(레퍼런스 0개인 생성 작업). 사용자가 보기를 고르기 전까지 「결과」로 둔다. */
+    setResultOnly(on) {
+      const next = Boolean(on);
+      if (next === resultOnly) return;
+      resultOnly = next;
+      userChoseLayout = false; userPickedSource = false;
+      updateResponsiveLayout();
+    },
     getViewState() {
       const sourceCard = activeSource();
       const resultCard = activeCandidate();
@@ -973,6 +1076,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         selectedSourceId: activeSourceKey,
         zoom: { ...paneZoom },
         layout: panel.dataset.aiLayout,
+        // 11-21: 사용자가 직접 고른 보기인지 함께 저장 — 고르지 않은 보기(비교 등)가 다시 들어올 때 살아나지 않게.
+        userChoseLayout,
+        userPickedSource,
         tracking: true,
         scroll: {
           source: { left: sourceCard?.scrollLeft || 0, top: sourceCard?.scrollTop || 0 },
@@ -983,9 +1089,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     restoreViewState(state = {}) {
       state = state && typeof state === "object" ? state : {};
       // Tracking is always enabled, including old workspaces saved with it off.
-      if (state.layout) setLayout(state.layout, true);
+      // 11-21 사용자: 결과를 보고 나갔다 들어오면 고르지도 않은 좌우 비교(왼쪽에 같은 결과)로 바뀌어 있었다.
+      // 「내가 조작하지 않은 것은 변하면 안 된다」 → 사용자가 직접 고른 보기·비교 대상만 되살리고, 나머지는 기본 보기로.
+      if (state.layout && state.userChoseLayout === true) setLayout(state.layout, true);
+      else updateResponsiveLayout();
       if (state.selectedCandidateId) panel.dataset.aiSelectedCandidateId = state.selectedCandidateId;
-      if (state.selectedSourceId) {activeSourceKey = state.selectedSourceId;syncSources();}
+      const savedSource = typeof state.selectedSourceId === 'string' ? state.selectedSourceId : '';
+      if (savedSource && (!savedSource.startsWith('__result__:') || state.userPickedSource === true)) {activeSourceKey = savedSource;userPickedSource = state.userPickedSource === true;syncSources();}
       if (Number.isFinite(state.zoom?.source)) paneZoom.source = state.zoom.source;
       paneZoom.result = paneZoom.source;
       syncCandidates();

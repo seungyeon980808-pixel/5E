@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.7.1-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.7.1">
+  <img src="https://img.shields.io/badge/version-1.7.2-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.7.2">
   <img src="https://img.shields.io/badge/web%20·%20Windows%20·%20Mac-3f3f46?style=flat-square&labelColor=18181b" alt="web, Windows, Mac">
   <img src="https://img.shields.io/github/license/seungyeon980808-pixel/5E?style=flat-square&labelColor=18181b&color=3f3f46" alt="AGPL-3.0">
 </p>
@@ -141,9 +141,9 @@
 | | 파일 |
 |---|---|
 | **웹** | <https://www.5e.ai.kr/> — 설치 없이, 열 때마다 최신판 |
-| Mac · Apple 칩 | `5E-1.7.1-macos-arm64.dmg` |
-| Mac · 인텔 | `5E-1.7.1-macos-x64.dmg` |
-| Windows | `5E-1.7.1-windows-x64.exe` |
+| Mac · Apple 칩 | `5E-1.7.2-macos-arm64.dmg` |
+| Mac · 인텔 | `5E-1.7.2-macos-x64.dmg` |
+| Windows | `5E-1.7.2-windows-x64.exe` |
 
 [최신 릴리스](https://github.com/seungyeon980808-pixel/5E/releases/latest)에서 받습니다. 사과 메뉴 › 「이 Mac에 관하여」에 「칩」이 보이면 Apple 칩, 「프로세서」가 보이면 인텔입니다.
 
@@ -160,7 +160,7 @@
 | 저장 | 「저장(.5e)」 → 내려받기 | 처음 저장할 때 이름 · 자리 고름 |
 | 자동 저장 · 백업 | 브라우저 안 보관함 | + `~/Documents/5E/출제` 자동 저장 · 10분마다 백업 |
 | `.5e` 두 번 눌러 열기 | — | 됨 |
-| 새 버전 | 열 때마다 최신 | 시작 창에 알림 → 직접 받아 설치 |
+| 새 버전 | 열 때마다 최신 | 시작 창 [업데이트] → 다시 시작하면 바뀜(1.7.2부터) |
 
 웹과 설치판, 브라우저마다 저장 공간이 다릅니다. 옮길 때는 `.5e` 파일을 쓰세요.
 </details>
@@ -218,7 +218,7 @@
 
 **문제 신고** — [문제 신고 게시판](https://www.5e.ai.kr/bug/) 또는 [GitHub Issues](https://github.com/seungyeon980808-pixel/5E/issues). 웹/설치판, 브라우저, 무엇을 어떤 순서로 했는지 적어 주시면 빨리 고칩니다.
 
-**문서** — [1.7.1 변경 내용](docs/RELEASE_NOTES_v1.7.1.md) · [1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
+**문서** — [1.7.2 변경 내용](docs/RELEASE_NOTES_v1.7.2.md) · [1.7.1 변경 내용](docs/RELEASE_NOTES_v1.7.1.md) · [1.7.0 변경 내용](docs/RELEASE_NOTES_v1.7.0.md) · [5E_hwp 단축키](docs/HWP_EXAM_SHORTCUTS.md) · [1.6.3 → 1.7.0 자료 호환](docs/DATA_COMPAT_1_6_3_TO_1_7_0.md) · [릴리스 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 
 <details>
 <summary><b>개발</b></summary>
@@ -230,7 +230,7 @@ npm run desktop     # 설치판(Electron)으로 열기
 npm test            # 단위 검사
 ```
 
-Node 24.21 · Electron 44.4.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 [DESIGN.md](DESIGN.md), 개발 기록은 [docs/dev/](docs/dev/README.md), 둘러보기 페이지 원본은 [page-src/](https://github.com/seungyeon980808-pixel/5E/tree/main/page-src)에 있습니다.
+Node 24.21 · Electron 44.11.5 · 한글 조판 엔진 rhwp. 디자인 규칙은 [DESIGN.md](DESIGN.md), 개발 기록은 [docs/dev/](docs/dev/README.md), 둘러보기 페이지 원본은 [page-src/](https://github.com/seungyeon980808-pixel/5E/tree/main/page-src)에 있습니다.
 </details>
 
 5E는 [GNU AGPL v3](LICENSE)로 배포됩니다.

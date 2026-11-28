@@ -7,8 +7,11 @@ import {defaultAIModelSelection} from './ai-model-capabilities.js?v=1.7.0-four-s
 import {parseAiEvent} from './ai-events.js?v=1.7.0-four-session-integration';
 import {graphDescriptionSource,prepareGraphDescriptionPlan} from './graph/description-contract.js?v=1.7.0-four-session-integration';
 import {createGraphReconstructionWorkflow} from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
-import {GRAPH_WORKBENCH_SELECTION,validateWorkbenchGraph,buildWorkbenchGraph,workbenchGraphDataUrl,editWorkbenchGraph} from './graph/workbench-result.js?v=1.7.0-four-session-integration';
+import {GRAPH_WORKBENCH_SELECTION,validateWorkbenchGraph,buildWorkbenchGraph,workbenchGraphRaster,editWorkbenchGraph} from './graph/workbench-result.js?v=1.7.0-four-session-integration';
 import {buildExamBriefPrompt} from './ai-exam-brief.js?v=1.7.0-four-session-integration';
+// PATHFIX(11-20): 모델 목록(=Codex 연결)에서 실패하면 영어 원문 대신 한국어 안내 오류로 바꿔 던진다.
+import {aiErrorText,aiErrorCode} from './ai-error-copy.js?v=1.7.0-four-session-integration';
+const models=async b=>{try{return await b.models();}catch(error){throw Object.assign(Error(aiErrorText(error)),{code:aiErrorCode(error)||error?.code,cause:error});}};
 const IMAGE_TIMEOUT=300000;
 // 그래프 렌더러는 SVG를 준다. 문항 그림 칸·엑셀·한글은 PNG를 쓰므로 인쇄용으로 3배 해상도 PNG로 바꾼다.
 async function svgToPng(svg,width,height,scale=3){const i=new Image();i.src=svg;await i.decode();const c=document.createElement('canvas');c.width=Math.round(width*scale);c.height=Math.round(height*scale);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);return {data:c.toDataURL('image/png'),width:c.width,height:c.height};}
@@ -21,13 +24,14 @@ export function createFigureEngines({base=()=>window.fiveEDesktop||window.fiveEW
     const workflow=createGraphReconstructionWorkflow({transport:{send:p=>b.send(p),interrupt:x=>b.interrupt?.(x)}});
     const off=b.onEvent?.(event=>workflow.handleEvent(event));
     try{
-      const catalog=await b.models(),priorPlan=prior?.plan||null,priorObjects=prior?.objects||null;
+      const catalog=await models(b),priorPlan=prior?.plan||null,priorObjects=prior?.objects||null;
       const source=await graphDescriptionSource(description,priorPlan,priorObjects);
       const restored=await workflow.analyze({source,selection:GRAPH_WORKBENCH_SELECTION,catalog,description,priorPlan,priorObjects});
       if(restored.blocked)throw Error('그래프 검증에 막혔습니다: '+(restored.quality?.issues?.filter(i=>i.severity==='critical').map(i=>i.message).join(' / ')||'확인하지 못한 축 또는 계열이 있습니다.'));
       const result=buildWorkbenchGraph(prepareGraphDescriptionPlan(restored.plan),source,{descriptionLayout:true,priorResult:prior||null,...(prior?{request:description}:{})});
       result.description={request:description,qualitative:restored.plan.coordinateMode==='observed'};
-      const png=await svgToPng(await workbenchGraphDataUrl(result),result.source.width,result.source.height);
+      // 11-20 GRAPHFIX: 원본 그림 크기가 아니라 출력 틀(그래프+라벨+2mm) 크기로 굽는다.
+      const raster=await workbenchGraphRaster(result),png=await svgToPng(raster.data,raster.width,raster.height);
       return {...png,graph:result,engine:'native-graph',model:GRAPH_WORKBENCH_SELECTION.model,ms:Date.now()-t0,issues:(result.quality?.issues||[]).map(i=>i.message).slice(0,8)};
     }finally{off?.();}
   }
@@ -35,11 +39,11 @@ export function createFigureEngines({base=()=>window.fiveEDesktop||window.fiveEW
   function editGraph(result){
     validateWorkbenchGraph(result);
     return new Promise((resolve,reject)=>{let done=false;
-      editWorkbenchGraph(result,{onApply:async edited=>{done=true;try{resolve({...await svgToPng(await workbenchGraphDataUrl(edited),edited.source.width,edited.source.height),graph:edited,engine:'native-graph'});}catch(e){reject(e);}},onClose:()=>{if(!done)resolve(null);}});});
+      editWorkbenchGraph(result,{onApply:async edited=>{done=true;try{const raster=await workbenchGraphRaster(edited);resolve({...await svgToPng(raster.data,raster.width,raster.height),graph:edited,engine:'native-graph'});}catch(e){reject(e);}},onClose:()=>{if(!done)resolve(null);}});});
   }
   // 한 줄 설명 → 시험용 흑백 그림. prior(이전 결과 PNG)가 있으면 그 그림을 고친다.
   async function image({qid,description,mustNot=[],prior=null}){
-    const t0=Date.now(),b=bridge('image',qid),selection=defaultAIModelSelection(await b.models());
+    const t0=Date.now(),b=bridge('image',qid),selection=defaultAIModelSelection(await models(b));
     const request=[description,mustNot.length?`그리지 말 것: ${mustNot.join(', ')}`:''].filter(Boolean).join('\n');
     const text=buildExamBriefPrompt({request,revision:Boolean(prior)});
     const attachments=prior?[{id:'prior',name:'이전 결과.png',data:prior,role:'revision'}]:[];

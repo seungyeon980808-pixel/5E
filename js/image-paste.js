@@ -312,6 +312,7 @@ function insertImageObject(state, src, size, place) {
     cutouts: [],
     ...(place?.aiTaskId ? {aiTaskId:place.aiTaskId,aiCandidateId:place.aiCandidateId} : {}),
     ...(place?.sourceMetadata ? {sourceMetadata:place.sourceMetadata} : {}),
+    ...(place?.meta && typeof place.meta === 'object' && !Array.isArray(place.meta) ? {meta: structuredClone(place.meta)} : {}),
     ...(place?.editableLabelPlan ? {aiEditableLabelPlan: structuredClone(place.editableLabelPlan)} : {}),
   };
   applyLabelPlacementReview(image);

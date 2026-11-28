@@ -612,7 +612,8 @@ function renderCoordplane(obj) {
     let px = pos ? obj.x + pos.fx * obj.w : (auto?.x ?? lx) + (off.dx || 0);
     let py = pos ? obj.y + pos.fy * obj.h : (auto?.y ?? ly) + (off.dy || 0);
     // 11-14 지적 21: 원본에서 잰 자리(분율)에 둔 복원 그래프 축 이름이 여기 그린 눈금 숫자와 겹치면 숫자 바깥으로 비켜 놓는다(크기·글자는 그대로).
-    if (pos && obj.reconstruction && text) {
+    // 11-20 GRAPHFIX: 사용자가 손으로 옮긴 축 이름(pos.manual)은 비키지 않는다 — 끄는 동안 「금지 구역」에 막혀 튀던 원인.
+    if (pos && !pos.manual && obj.reconstruction && text) {
       const vertical = obj.reconstruction?.axes?.[which]?.orientation === 'vertical', s0 = nameSize * koTitle;
       const m = measureGraphLabel(text, EXAM_STYLE.label, true, obj.labelWeight ?? 400, true, {parenthesesAreUnits:false});
       const w = vertical ? s0 * 1.05 : m.w * s0 / EXAM_STYLE.label, h = vertical ? s0 * 1.05 * [...String(text).replace(/\s/g, '')].length : m.h * s0 / EXAM_STYLE.label, gap = s0 * 0.35;

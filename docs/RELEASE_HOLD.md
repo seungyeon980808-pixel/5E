@@ -1,10 +1,10 @@
-# 1.7.1 정식 출시 승인 — 웹·설치판
+# 1.7.2 정식 출시 승인 — 웹·설치판
 
-The 1.7.1 candidate is **CLEARED**.
+The 1.7.2 candidate is **CLEARED**.
 
-2026-11-19 사용자(소유자)가 1.7.1 출시를 승인했습니다(「1.7.1은 출시해버리고」): main 통합·v1.7.1 태그·Windows·Mac 설치 파일을 GitHub 릴리스 에셋으로 게시·정식 도메인(https://www.5e.ai.kr/) 웹 배포. Mac 설치 파일은 번들 전체 임시(ad-hoc) 서명이며 공증은 없습니다. Windows 서명·실기기 검증·서버 인증·실계정 AI 항목(`release-channels.json`의 releaseHolds)은 외부 확인 대기(PENDING_EXTERNAL) 그대로입니다.
+2026-11-23 사용자(소유자)가 1.7.2 출시를 승인했습니다(「일단 배포할 수 있는 작업 다 하고」): main 통합·v1.7.2 태그·Windows·Mac 설치 파일(앱 안 업데이트용 latest.yml·blockmap 포함)을 GitHub 릴리스 에셋으로 게시·정식 도메인(https://www.5e.ai.kr/)과 둘러보기 페이지(/page) 웹 배포. Mac 설치 파일은 번들 전체 임시(ad-hoc) 서명이며 공증은 없습니다. Windows 서명·실기기 검증·서버 인증·실계정 AI 항목(`release-channels.json`의 releaseHolds)은 외부 확인 대기(PENDING_EXTERNAL) 그대로입니다.
 
-검사: 단위 검사 실패 0, GitHub 검사(84042e3e) 전체 화면 227묶음 중 새로 깨진 검사 0 — 남은 실패는 `tests/known-failures.json`에 이유와 함께 적었습니다(15묶음).
+검사: 단위 검사 2,334개 중 실패 0(건너뜀 10), 출시 문서 검사 통과. 브라우저 전체 회귀는 웹 배포 워크플로가 다시 돌립니다.
 
 ## Previous release decision
 

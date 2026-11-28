@@ -229,10 +229,10 @@
 .lp-tools .lp-search{flex:1;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
 .lp-n{flex:none;font-size:var(--cv-text-meta,11px);color:var(--ds-ink-3);white-space:nowrap}
 /* 검색 색인: 검색 칸 안 단어 조각(Enter로 더함, ×로 지움, 최대 3개) — 5e.ai.kr/examlibrary와 같은 모양 */
-.lp-tokens{display:flex;gap:4px;flex:0 1 auto;min-width:0;overflow:hidden}.lp-tokens:empty{display:none}
+.lp-tokens{display:flex;gap:4px;flex:0 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}.lp-tokens::-webkit-scrollbar{display:none}.lp-tokens:empty{display:none} /* 11-22: 칸이 좁으면 조각이 가려지던 것 — 가로로 밀어 보이게(끝 조각으로 맞춤) */
 .lp-search .lp-token{flex:none;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 4px 0 7px;border:0;border-radius:11px;background:var(--ds-raise);box-shadow:inset 0 0 0 1px var(--ds-line-strong);color:var(--ds-ink);font-size:var(--cv-text-small,12.5px);white-space:nowrap;cursor:pointer}
 .lp-search .lp-token span{display:grid;place-items:center;width:16px;height:16px;border-radius:8px;color:var(--ds-ink-3);font-size:12px;line-height:1}.lp-search .lp-token:hover span{color:var(--ds-ink);background:var(--ds-hover)}
-.lp-tools .lp-search input{flex:1 1 24px;min-width:24px}.lp-tools .lp-search .lp-n{flex:none}
+.lp-tools .lp-search input{flex:1 0 64px;min-width:64px}.lp-tools .lp-search .lp-n{flex:none}
 .lp-row>.lp-n{flex:1;overflow:hidden;text-overflow:ellipsis;font-size:var(--cv-text-small,12.5px)}
 .lp-pick{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);cursor:pointer}
 .lp-pick:hover{background:var(--ds-hover);color:var(--ds-ink)}
@@ -257,7 +257,7 @@
 .lp-one .lp-scope:hover{background-color:var(--ds-hover)}
 .lp-one .lp-slot{flex:1;min-width:0;display:flex}
 .lp-one .lp-search{flex:1;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
-.lp-one .lp-search input{flex:1 1 24px;min-width:24px}.lp-one .lp-search .lp-n{flex:none}
+.lp-one .lp-search input{flex:1 0 64px;min-width:64px}.lp-one .lp-search .lp-n{flex:none}
 .lp-one .lp-search .lp-token{height:20px;padding:0 3px 0 7px;gap:4px;font-size:12px;border-radius:10px}
 .lp-adv,.lp-one .lp-refs{flex:none;display:inline-flex;align-items:center;gap:4px;height:30px;margin:0;padding:0 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);font-size:var(--cv-text-small,12.5px);white-space:nowrap;cursor:pointer}
 .lp-adv:hover,.lp-adv[aria-expanded=true],.lp-one .lp-refs:hover{background:var(--ds-hover);color:var(--ds-ink)}
@@ -792,3 +792,18 @@ body.card-locked #card-view .cv-grid textarea,body.card-locked #card-view .cv-gr
 .ajt-menu .ajt-row em{margin-left:auto;font-style:normal;color:#6ba4f8;font-size:12px}
 .ajt-menu .ajt-clear{border:0;background:none;color:var(--ds-ink-3);font:inherit;font-size:12px;padding:6px 10px;text-align:right;cursor:pointer}
 @media (prefers-reduced-motion:reduce){.ajt-dot.busy,.ai-jobs-top .ajt-done.flash{animation:none}}
+/* 11-20 시안 「시험지 통째로 변환」: 결과 한 줄(태그 5) · 그림으로 넣은 줄 표시 · 가운데 진행(태그 3). */
+#job-box .job-sum{display:flex;align-items:center;gap:8px;min-height:36px;padding:4px 4px 4px 12px;border-radius:8px;box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);font-size:13px;color:var(--ds-ink)}
+#job-box .job-sum span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#job-box .job-sum button{height:28px;padding:0 12px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line,#30363d);font:inherit;font-size:12.5px;cursor:pointer;flex:none}
+#job-box .job-sum button:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#job-box .job-list li[data-state=image]>b{color:var(--ds-ink-3);font-weight:400}
+#whole-progress{position:fixed;left:50%;top:50%;z-index:90;transform:translate(-50%,-50%);width:min(384px,calc(100vw - 32px));padding:16px 20px 18px;border-radius:12px;background:var(--ds-panel,#0d1117);color:var(--ds-ink,#e6edf3);box-shadow:var(--ds-shadow-float,0 0 0 1px #30363d,0 12px 32px rgba(0,0,0,.55))}
+#whole-progress .wp-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+#whole-progress .wp-head b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:600}
+#whole-progress .wp-head span{flex:none;font-size:14px;font-weight:600;color:var(--ds-ink-2,#b1bac4);font-variant-numeric:tabular-nums}
+#whole-progress .wp-bar{height:6px;border-radius:3px;background:var(--ds-line,#30363d);overflow:hidden}
+#whole-progress .wp-bar i{display:block;height:100%;border-radius:3px;background:var(--go-line,#6ba4f8);transition:width .25s cubic-bezier(.2,0,0,1)}
+
+/* 11-22: 검색어가 세 개 찼는데 더 치면 칸 테두리로 알린다(안내 글은 입력칸 자리표시에) */
+.lp-search:has(input.lp-full){box-shadow:inset 0 0 0 1px #d29922!important}

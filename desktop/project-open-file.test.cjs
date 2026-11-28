@@ -52,3 +52,41 @@ test('main.cjs 연결: 맥 open-file(뜨기 전)·처음 argv·second-instance�
   await new Promise(r => setTimeout(r, 20));
   assert.equal(sent.length, 3, '다시 읽힌 창은 준비를 다시 알릴 때까지 기다림');
 });
+
+// 1.8.0 X1: 윈도우 경로를 path.win32로 맥에서 확인한다(실제 윈도우 없이).
+test('윈도우 argv(path.win32): 드라이브·역슬래시·공백·긴 한글 이름, 대문자 .5E, 크로뮴 옵션, 대소문자만 다른 중복은 한 번', () => {
+  const win = path.win32;
+  const longKo = 'C:\\Users\\홍길동\\OneDrive\\문서\\5E\\출제\\' + '2026학년도 2학기 기말고사 과학탐구 물리학Ⅰ 서술형 포함 최종본 '.repeat(4).trim() + '.5e';
+  const files = new Set(['C:\\Users\\홍길동\\문서\\시험 1.5e', 'D:\\자료\\중간.5E', longKo, 'C:\\Users\\홍길동\\Desktop\\상대.5e']);
+  const exists = f => [...files].some(x => x.toLowerCase() === f.toLowerCase());
+  const argv = ['C:\\Program Files\\5E\\5E.exe', '--allow-file-access-from-files', '--original-process-start-time=1',
+    'C:\\Users\\홍길동\\문서\\시험 1.5e', 'D:\\자료\\중간.5E', 'd:\\자료\\중간.5e', longKo, '상대.5e', 'C:\\x\\없음.5e', 'C:\\x\\그림.png'];
+  const out = projectPathsFromArgv(argv, { cwd: 'C:\\Users\\홍길동\\Desktop', exists, pathImpl: win });
+  assert.deepEqual(out, ['C:\\Users\\홍길동\\문서\\시험 1.5e', 'D:\\자료\\중간.5E', longKo, 'C:\\Users\\홍길동\\Desktop\\상대.5e']);
+  assert.ok(longKo.length > 150, '긴 경로도 그대로(자르지 않음)');
+});
+
+test('윈도우 이름 보내기(path.win32): 화면에는 파일 이름만, 폴더 경로는 넘기지 않음', async () => {
+  const sent = [];
+  const queue = createProjectOpenQueue({ send: p => sent.push(p), pathImpl: path.win32,
+    statFile: async () => ({ isFile: () => true, size: 1 }), readFile: async () => Buffer.from([7]) });
+  await queue.markReady(); await queue.enqueue('C:\\Users\\홍길동\\문서\\시험 1.5e');
+  assert.equal(sent[0].name, '시험 1.5e'); assert.equal(sent[0].error, undefined);
+  assert.equal(JSON.stringify(sent).includes('홍길동'), false);
+});
+
+test('second-instance 상대 경로는 두 번째 실행의 작업 폴더 기준', async t => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), '5e-open-cwd-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, '상대.5e'), 'x');
+  const app = new EventEmitter(); app.isReady = () => true;
+  const sent = [], webContents = new EventEmitter(); webContents.send = (c, p) => sent.push(p.name);
+  const window = { isDestroyed: () => false, isMinimized: () => false, show() {}, focus() {}, webContents };
+  let ready;
+  const installed = installProjectOpenFile({ app, getWindow: () => window, createWindow() {}, handle: (c, fn) => { if (c === 'project:renderer-ready') ready = fn; }, argv: ['5E'] });
+  ready();
+  app.emit('second-instance', {}, ['5E', '상대.5e'], dir);
+  await until(() => sent.length === 1);
+  assert.deepEqual(sent, ['상대.5e']);
+  assert.equal(installed.queue.size, 0);
+});

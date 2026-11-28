@@ -9,6 +9,12 @@ const fixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/graph-
 const output = process.env.EVIDENCE_DIR || path.join(__dirname, '../.omo/evidence/graph-workbench-stability');
 const base = process.env.PREVIEW_URL || 'http://127.0.0.1:62759/';
 fs.mkdirSync(output, { recursive: true });
+// 「AI 이미지」 입구는 그림을 만들어 넘긴 뒤 창을 비동기로 연다. 누른 뒤 창이 다 열릴 때까지 기다려야
+// 다음 openAiWorkflow가 「닫혀 있음」으로 잘못 읽고 #graph-tool-open을 누르다가, 늦게 열린 이미지 창에 가로막히지 않는다(11-19 CI 214줄).
+async function openImageEntry(page) {
+  await page.locator('#ai-image-install-open').click();
+  await page.waitForFunction(() => { const p = document.querySelector('#ai-image-panel'); return !!p && !p.hidden && !p.inert && p.getClientRects().length > 0; }, undefined, { timeout: 60000 });
+}
 async function setup(browser) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, serviceWorkers: 'block' });
   await context.addInitScript(({ fixture }) => {
@@ -48,7 +54,7 @@ async function setup(browser) {
   const page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   await page.goto(base + '?mode=pro', { waitUntil: 'networkidle' });
-  await page.locator('#ai-image-install-open').click();
+  await openImageEntry(page);
   await openAiWorkflow(page,'graph');
   await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
   const png = await page.evaluate(() => window.__stability.source.split(',')[1]);
@@ -210,7 +216,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       assert.match(await page.locator(ui + '[data-ai-status]').textContent(), /연결/);
       await page.evaluate(() => window.__stability.release(2));
       assert.equal(await count(page), 1);
-      await page.reload({ waitUntil: 'networkidle' }); await page.locator('#ai-image-install-open').click();
+      await page.reload({ waitUntil: 'networkidle' }); await openImageEntry(page);
       await openAiWorkflow(page,'graph'); await complete(page, 1);
       assert.equal(await page.evaluate(() => window.__stability.requests.length), 0);
       const beforeEditTask = (await tabs(page)).find(t => t.generated?.some(c => c.id === baseline.id));

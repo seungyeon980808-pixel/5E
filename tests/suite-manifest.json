@@ -688,6 +688,12 @@
       "path": "tests/test-library-crop-session.mjs"
     },
     {
+      "path": "tests/test-library-answer-highlight.mjs"
+    },
+    {
+      "path": "tests/test-search-index-parts.mjs"
+    },
+    {
       "path": "tests/test-library-import-policy.mjs"
     },
     {
@@ -941,6 +947,138 @@
       "path": "tests/test-typeset-paper-mm.mjs",
       "findingIds": [
         "BL3-B7-PAPER-MM"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-engine.mjs",
+      "findingIds": [
+        "E180-AI-FIGURE-ENGINE"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-edit.mjs",
+      "findingIds": [
+        "GENENG-FIGURE-EDIT-LABEL-HINTS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-edit-merge.mjs",
+      "findingIds": [
+        "FIX1123-FIGURE-EDIT-MERGE-DRIFT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-user-refs.mjs",
+      "findingIds": [
+        "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-candidate-1123.mjs",
+      "findingIds": [
+        "CAND1123-FIGURE-WINNERS-DEFAULT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-panels-1123e.mjs",
+      "findingIds": [
+        "FIX1123-FIGURE-MULTI-PANELS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-sketch-1123.mjs",
+      "findingIds": [
+        "FIG173-B-SKETCH-DETAIL"
+      ]
+    },
+    {
+      "path": "tests/test-ai-task-bridge-listeners-1123.mjs",
+      "findingIds": [
+        "CAND1123-TASK-BRIDGE-LISTENERS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-chat-refs.mjs",
+      "findingIds": [
+        "NIGHT172B-FIGURE-CHAT-REFS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-speed.mjs",
+      "findingIds": [
+        "GENSPEED-FIGURE-SPEED"
+      ]
+    },
+    {
+      "path": "tests/test-ai-create-chat.mjs",
+      "findingIds": [
+        "GENUI-FIGURE-CREATE-SCREEN"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-leader-erase.mjs",
+      "findingIds": [
+        "LEADERFIX-LABEL-RESTORE-LEADER"
+      ]
+    },
+    {
+      "path": "tests/test-ai-generated-label-snap.mjs",
+      "findingIds": [
+        "LEADERFIX-GENERATED-LABEL-SNAP"
+      ]
+    },
+    {
+      "path": "tests/test-ai-create-flow.mjs",
+      "findingIds": [
+        "CHATFIX-CHAT-GENERATE-SPLIT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-graph-engine.mjs",
+      "findingIds": [
+        "AI-GRAPH-PICTURE-ENGINE"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-connect.mjs",
+      "findingIds": [
+        "E180-AI-ENGINES-CONNECT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-lazy-load.mjs",
+      "findingIds": [
+        "X2-180-LAZY-ENGINE-ASSETS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-faults.mjs",
+      "findingIds": [
+        "E180-AI-ENGINES-NEVER-FAIL"
+      ]
+    },
+    {
+      "path": "tests/test-library-whole-exam.mjs",
+      "findingIds": [
+        "LIB-WHOLE-EXAM-NAME"
+      ]
+    },
+    {
+      "path": "tests/test-ai-error-copy.mjs",
+      "findingIds": [
+        "PATHFIX-AI-ERROR-COPY"
+      ]
+    },
+    {
+      "path": "tests/test-ai-interrupt-never-stuck.mjs",
+      "findingIds": [
+        "AI-INTERRUPT-NEVER-STUCK"
+      ]
+    },
+    {
+      "path": "tests/test-label-upright-italic-rules.mjs",
+      "findingIds": [
+        "LABEL-UPRIGHT-ITALIC-RULES"
       ]
     }
   ],
@@ -1908,6 +2046,13 @@
       "reason": "Compares automatic graph export bounds to independently scanned raster pixels for axis labels, rotation, offsets and filled areas; verifies hidden layers, explicit crop and immutable state in root/preview Chromium/WebKit."
     },
     {
+      "path": "tests/test-graph-label-drag-frame-browser.cjs",
+      "findingIds": [
+        "GRAPH-LABEL-DRAG-ONE-FRAME"
+      ],
+      "reason": "Graph editor labels follow the pointer (axis names past tick numbers, ticks under guide lines, labels outside the frame) with a frozen preview, and editor dashed frame, PNG/copy and canvas/HWP use one graph+labels+2 mm frame in Chromium/WebKit."
+    },
+    {
       "path": "tests/test-image-clipboard-order-browser.cjs",
       "findingIds": [
         "SAFARI-CLIPBOARD-STRING-BEFORE-IMAGE-FILE"
@@ -2358,6 +2503,42 @@
       ]
     },
     {
+      "path": "tests/test-ai-generated-label-snap-browser.cjs",
+      "findingIds": [
+        "LEADERFIX-GENERATED-LABEL-SNAP"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-user-refs-browser.cjs",
+      "findingIds": [
+        "FIX1122-FIGURE-USER-REFS-BLANK-SCENE"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-candidate-browser.cjs",
+      "findingIds": [
+        "CAND1123-FIGURE-WINNERS-DEFAULT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-create-ui-browser.cjs",
+      "findingIds": [
+        "GENUI-FIGURE-CREATE-SCREEN"
+      ]
+    },
+    {
+      "path": "tests/test-ai-create-chat-split-browser.cjs",
+      "findingIds": [
+        "CHATFIX-CHAT-GENERATE-SPLIT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-figure-local-edit-browser.cjs",
+      "findingIds": [
+        "GENSPEED-FIGURE-LOCAL-EDIT"
+      ]
+    },
+    {
       "path": "tests/test-shell-left-width-browser.cjs",
       "findingIds": [
         "SHELL-LEFT-WIDTH-SHARED",
@@ -2421,6 +2602,16 @@
       ]
     },
     {
+      "path": "tests/test-memory-feedback-recheck-browser.cjs",
+      "findingIds": [
+        "X3-1114-1-RELABEL-DOWN-TO-ONE",
+        "X3-1114-2-TILE-MENU-NO-OVERLAP",
+        "X3-1114-3-TABLE-GRID-NOT-SLOT-DIALOG",
+        "X3-1114-29-TILE-PICTURE-CONTAIN",
+        "X3-1113-9-BOGI-LETTER-JUDGE"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-171-browser.cjs",
       "findingIds": [
         "BL3-B21-COMBO-FIT",
@@ -2444,6 +2635,50 @@
       "findingIds": [
         "B3"
       ]
+    },
+    {
+      "path": "tests/test-172-start-draw-align-browser.cjs",
+      "findingIds": [
+        "172-START-DRAW-ALIGN"
+      ]
+    },
+    {
+      "path": "tests/test-ai-graph-draw-browser.cjs",
+      "findingIds": [
+        "AI-GRAPH-PICTURE-DRAW"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-connect-browser.cjs",
+      "findingIds": [
+        "E180-AI-ENGINES-CONNECT-BROWSER"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-faults-browser.cjs",
+      "findingIds": [
+        "E180-AI-ENGINES-NEVER-FAIL-BROWSER"
+      ]
+    },
+    {
+      "path": "tests/test-ai-engines-faults-graph-browser.cjs",
+      "findingIds": [
+        "E180-AI-GRAPH-PICTURE-NEVER-FAIL-BROWSER"
+      ]
+    },
+    {
+      "path": "tests/test-library-whole-exam-browser.cjs",
+      "findingIds": [
+        "LIB-WHOLE-EXAM"
+      ],
+      "reason": "시험지 통째로 변환: 평가원 2026 수능 물리학Ⅰ 20문항(이름·1→20 순서·실패 2문항 그림·다시 시도)과 학평 20문항 그림 변환을 실제 공유 자료로 Chromium·WebKit에서 확인한다(인터넷 필요)."
+    },
+    {
+      "path": "tests/test-exampool-variant-image-fallback-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-VARIANT-IMAGE-FALLBACK"
+      ],
+      "reason": "한 문항 변형이 한글로 못 바뀌어 원본 그림 한 장으로 들어갈 때(2008 6월 물리Ⅱ 20번): 원본 번호 지움·아래 확인 사항 상자 조각 없음·카드 이름은 출처. 원본 PDF를 실제 공유 자료에서 받는다(인터넷 필요)."
     }
   ],
   "deferred": [
@@ -2655,6 +2890,13 @@
         "EXAM-SEND-1106-REPRO"
       ],
       "reason": "Repro harness needs a read-only export of a user exam (E1106_JSON/E1106_OUT); skipped without it."
+    },
+    {
+      "path": "tests/test-codex-path-desktop.cjs",
+      "findingIds": [
+        "PATHFIX-CODEX-MINIMAL-PATH"
+      ],
+      "reason": "실제 Electron을 최소 PATH(/usr/bin:/bin:/usr/sbin:/sbin)·임시 프로필로 띄워 codex 찾기를 본다. 첫 검사는 이 맥의 Codex 로그인이 필요(모델 목록만, 그림·글 요청 0). 없는 codex 경우는 로그인 없이 됨. 설치판으로는 FIVE_E_APP_EXECUTABLE."
     }
   ]
 }

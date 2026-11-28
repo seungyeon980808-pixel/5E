@@ -99,7 +99,7 @@ test('numbers, subscript digits and units inside quantity labels stay upright; o
   assert.deepEqual(runs('15h', 'quantity'), [['15', 'number'], ['h', 'quantity']]);
   assert.deepEqual(runs('2d', 'text'), [['2', 'number'], ['d', 'quantity']]);
   assert.deepEqual(runs('ρ₁', 'quantity'), [['ρ', 'quantity'], ['₁', 'number']]);
-  assert.deepEqual(runs('10 cm', 'text'), [['10 cm', 'unit']]);
+  assert.deepEqual(runs('10 cm', 'text'), [['10cm', 'unit']]); // 11-21 확정: 숫자와 단위는 붙여 씀
   assert.deepEqual(runs('NaOH', 'chemical'), [['NaOH', 'chemical']]);
   assert.deepEqual(runs('A: X선', 'text'), [['A:', 'name'], ['X선', 'text']]);
   assert.deepEqual(runs('영역 Ⅰ', 'text'), [['영역', 'text'], ['Ⅰ', 'name']]);

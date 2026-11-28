@@ -222,8 +222,10 @@ test('root real DOM menu-focus scheduler contracts',async t=>{
   });}finally{
     report.server.withServerSettled=true;report.sourcePinsAfter=sourceInventory();
     report.sourcePreserved=JSON.stringify(report.sourcePinsAfter)===JSON.stringify(sourcePins);
-    report.cleanup=report.engines.length===2 && report.engines.every(engine=>engine.closeResolved && engine.disconnected) &&
-      report.cases.length===12 && report.cases.every(row=>row.contextClosed);
+    // BROWSER_ENGINE으로 한 엔진만 돌리면 엔진 1개·경우 6개가 정상이다(실행기가 엔진별로 나눠 돌림).
+    const engineCount=['chromium','webkit'].filter(k=>!process.env.BROWSER_ENGINE||k===process.env.BROWSER_ENGINE).length;
+    report.cleanup=report.engines.length===engineCount && report.engines.every(engine=>engine.closeResolved && engine.disconnected) &&
+      report.cases.length===engineCount*cases.length && report.cases.every(row=>row.contextClosed);
     report.complete=report.cleanup && report.sourcePreserved && report.cases.every(row=>row.passed);
     persist();assert.deepEqual(report.sourcePinsAfter,sourcePins);assert.equal(report.cleanup,true);
   }

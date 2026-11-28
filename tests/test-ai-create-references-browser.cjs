@@ -6,6 +6,7 @@ const { openAiWorkflow } = require('./helpers/graph-entry.cjs');
 // 2) 레퍼런스는 지금 작업에 모이고 최대 4개 — 다섯째는 안내만 하고 넣지 않는다(새 작업도 만들지 않는다).
 // 3) 그래프 생성의 참고 그래프는 복원할 원본이 아니라 모양 참고(STYLE_REFERENCE)로 들어간다.
 // 4) 이미지 변환으로 돌아가면 원래 이름(원본·수정본).
+// 11-19(시안 그림생성화면 v4): 레퍼런스가 0개인 이미지 생성 작업은 결과만 크게(왼쪽은 「비교 대상」), 넣으면 다시 좌우 두 칸.
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
@@ -38,9 +39,21 @@ h.withServer(async origin => {
           roles: [...root.querySelectorAll('.ai-reference-card')].map(c => c.dataset.aiReferenceRole), status: text('[data-ai-status]') };
       }, panel);
       let v = await look();
-      assert.equal(v.left, '레퍼런스'); assert.equal(v.right, '결과');
+      // 11-19(시안 그림생성화면 v4 태그 1·2): 레퍼런스를 넣지 않은 생성 작업은 결과만 크게 — 레퍼런스 칸은 결과 머리줄의 「＋ 레퍼런스」로 접힌다.
+      assert.equal(await page.evaluate(p => document.querySelector(p).dataset.aiResultOnly, panel), 'true', `${name}: no references → result-only view`);
+      assert.equal(await page.evaluate(p => document.querySelector(p).dataset.aiLayout, panel), 'result');
+      assert.ok(await page.locator(`${panel} [data-ai-create-add-ref]`).isVisible(), `${name}: 「＋ 레퍼런스」 in the result header`);
+      assert.equal(v.left, '비교 대상', `${name}: without references the left pane is the comparison target`); assert.equal(v.right, '결과');
       assert.equal(v.viewSource, '레퍼런스'); assert.equal(v.viewResult, '결과');
       assert.match(v.add, /레퍼런스 추가/); assert.match(v.empty, /최대 4개/);
+      // 「＋ 레퍼런스」는 지금의 레퍼런스 추가 메뉴(라이브러리·파일·클립보드)를 연다.
+      await page.locator(`${panel} [data-ai-create-add-ref]`).click();
+      assert.equal(await page.locator(`${panel} .ai-create-ref-menu:not([hidden]) [data-ai-create-ref]`).count(), 3, `${name}: add-reference menu`);
+      await page.keyboard.press('Escape');
+      // 「레퍼런스」 보기로 바꾸면 빈 레퍼런스 칸(불러오기)이 그대로 있다.
+      await page.locator(`${panel} .ai-compare-controls [data-ai-layout-mode="side-by-side"]`).evaluate(b => b.click());
+      await page.waitForFunction(p => document.querySelector(p).dataset.aiLayout === 'side-by-side', panel);
+      v = await look();
       // 11-11(7992a89c, 시안 v7): 빈 칸 불러오기 select는 「라이브러리에서 불러오기」 단추 + 옆 ＋ 메뉴(파일·클립보드)로 바뀌었다.
       assert.equal(await page.locator(`${panel} [data-ai-reference-empty] [data-ai-empty-library]`).count(), 1, `${name}: the empty slot keeps its library import button`);
       assert.equal(await page.locator(`${panel} [data-ai-reference-empty] .ai-stage-import-menu [role="menuitem"]`).count(), 2, `${name}: the empty slot keeps its file/clipboard import menu`);
@@ -53,6 +66,9 @@ h.withServer(async origin => {
       await page.waitForTimeout(300);
       v = await look();
       assert.equal(v.count, '4', `${name}: at most four references`);
+      assert.equal(await page.evaluate(p => document.querySelector(p).dataset.aiResultOnly, panel), 'false', `${name}: references → two panes again`);
+      assert.equal(v.left, '레퍼런스', `${name}: the left pane is the reference pane again`);
+      assert.equal(await page.locator(`${panel} [data-ai-create-add-ref]`).isVisible(), false);
       assert.equal(v.tasks, 1, `${name}: references gather in the current task`);
       assert.match(v.status, /최대 4개/);
       await page.locator(`${panel} [data-ai-source-file]`).setInputFiles(png);

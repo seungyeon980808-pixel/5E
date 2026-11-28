@@ -22,6 +22,8 @@ const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createDirectImageClient } = require("./ai-direct-image.cjs");
 const { snapshotAttachments } = require("./codex-attachment-audit.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
+// PATHFIX(11-20): Finder·Dock 실행(최소 PATH)에서도 codex 절대 경로를 찾는다 — desktop/codex-binary.cjs
+const { createCodexResolver, codexError, classifyCodexSpawnError, CODEX_ERROR_CODES } = require("./codex-binary.cjs");
 const { startExamServer } = require('./exam-server.cjs');
 // 문항 라이브러리 「내 컴퓨터 폴더 연결」(11-04 백업 갈래에서 되살림)
 const { createPdfLibraryService } = require("./pdf-library-service.cjs");
@@ -387,6 +389,8 @@ if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 // 바꿔야 하면 옛 폴더에서 옮기는 처리를 함께 넣는다. 지키는 검사: desktop/user-data-name.test.cjs.
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
+// GENSPEED(11-20): 검사용 프로필로 띄우면 AI 호출 기록(ai-turns.log)도 그 폴더 안 logs에 쓴다(사용자 앱 기록에 줄이 더해지지 않게).
+if (userDataOverride) { try { app.setAppLogsPath(path.join(path.resolve(userDataOverride), "logs")); } catch {} }
 // 11-12: 검사용 프로필로 띄울 때 출제 자동 저장·라이브러리 「내 자료」가 사용자의 실제 문서 폴더에 쓰지 않게 따로 돌린다.
 if (userDataOverride && process.env.FIVE_E_DEV_DOCUMENTS) app.setPath("documents", path.resolve(process.env.FIVE_E_DEV_DOCUMENTS));
 if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
@@ -469,7 +473,20 @@ const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImages = createLocalImageAccess();
 // 11-10: 직접 호출 전송 방식. FIVE_E_IMAGE_TRANSPORT=agent 이면 예전 에이전트 경로만 쓴다.
 // 11-10: 직접 호출 한 번은 100초 안에 끝내고(렌더러 생성 시도 240초 안에 체인이 끝나도록), 재시도는 1번만 한다.
-const directImageClient = createDirectImageClient({ log: entry => appendAiTurnLog(entry), timeoutMs: 100_000, retries: 1 });
+const directImageClient = createDirectImageClient({ log: entry => appendAiTurnLog(entry), timeoutMs: 100_000, retries: 1, refreshAuth: refreshCodexAuth });
+// PATHFIX(11-20): 직접 호출은 auth.json 토큰을 읽기만 한다. codex가 한 번도 안 뜨면(Finder 실행 PATH 문제) 토큰이 만료돼
+// 그림 생성까지 401로 조용히 막혔다 → 401이면 Codex를 띄워 토큰을 새로 받게 하고 한 번 더 보낸다.
+async function refreshCodexAuth() {
+  try {
+    await requireServer();
+    await withTimeout(rpc("account/read", { refreshToken: true }), 20_000, "account/read");
+    appendAiTurnLog({ event: "codex-auth-refresh", ok: true });
+    return true;
+  } catch (error) {
+    appendAiTurnLog({ event: "codex-auth-refresh", ok: false, code: error?.code || null, message: String(error?.message || error).slice(0, 300) });
+    return false;
+  }
+}
 const DIRECT_IMAGE_DEFAULT_MODEL = "gpt-6-luna";
 function directImageEnabled() { return process.env.FIVE_E_IMAGE_TRANSPORT !== "agent"; }
 // 11-10: 그림 요청의 참고 이미지 검사(파일을 쓰지 않는다). 형식·크기는 safeAttachment와 같다.
@@ -525,8 +542,11 @@ function finishDirectImageTurn(owner, { turnId, imageDataUrl, error, attachmentC
   const cancelled = !imageDataUrl && (owner.cancelled || error?.code === "DIRECT_ABORTED");
   const turn = { id: turnId, status: imageDataUrl ? "completed" : cancelled ? "interrupted" : "failed" };
   if (turn.status === "failed") {
-    turn.error = { message: "그림 생성에 실패했습니다. 다른 모델로 다시 시도합니다." };
-    appendAiTurnLog({ event: "direct-failed", scope: owner.scope, turnId, code: error?.code || "DIRECT_UNKNOWN", status: error?.status ?? null });
+    // PATHFIX: 로그인 만료(401·403, 갱신도 실패)는 다른 모델로 다시 해도 소용없다 — 로그인 표식을 붙여 화면이 로그인 안내로 가게.
+    turn.error = { message: error?.code === "DIRECT_AUTH"
+      ? `[${CODEX_ERROR_CODES.NOT_LOGGED_IN}] Codex 로그인이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.`
+      : "그림 생성에 실패했습니다. 다른 모델로 다시 시도합니다." };
+    appendAiTurnLog({ event: "direct-failed", scope: owner.scope, turnId, code: error?.code || "DIRECT_UNKNOWN", status: error?.status ?? null, message: String(error?.message || error || "").slice(0, 300) });
   }
   const messages = [];
   if (imageDataUrl) messages.push({ method: "item/completed", params: { turnId, item: { type: "imageGeneration", status: "completed", imageDataUrl } } });
@@ -590,10 +610,23 @@ function shortcutModifiersForPlatform(platform) {
   return /mac/i.test(String(platform || "")) ? { metaKey: true } : { ctrlKey: true };
 }
 
+// PATHFIX(11-20): AI 쪽 IPC(codex:*, exampool:*)가 거절되면 그 사실을 ai-turns.log에 남긴다 — 예전에는 화면에만 영어 원문이
+// 잠깐 보이고 기록에는 없는 실패가 많았다(모델 목록·계정·로그인·글 읽기).
+function isLoggedIpcChannel(channel) { return ["codex:", "exampool:"].some(prefix => String(channel).startsWith(prefix)); }
 function handleTrustedIpc(channel, handler) {
+  const logged = isLoggedIpcChannel(channel);
   ipcMain.handle(channel, (event, ...args) => {
     assertTrustedSender(event);
-    return handler(event, ...args);
+    if (!logged) return handler(event, ...args);
+    const startedAt = Date.now();
+    const fail = error => {
+      appendAiTurnLog({ event: "ipc-failed", channel, code: error?.code || null, message: String(error?.message || error).slice(0, 300), ms: Date.now() - startedAt });
+      throw error;
+    };
+    try {
+      const value = handler(event, ...args);
+      return value && typeof value.then === "function" ? value.then(result => result, fail) : value;
+    } catch (error) { return fail(error); }
   });
 }
 
@@ -756,9 +789,30 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId, acceptedIn
   sendImageFinalization(completedTurnId, "recovered", { status: "interrupted" });
 }
 
-function codexInvocation(args) {
-  if (process.platform !== "win32") return { file: "codex", args };
-  return { file: process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe", args: ["/d", "/s", "/c", "codex", ...args] };
+// PATHFIX(11-20): 예전에는 PATH의 「codex」 이름만 불러 Finder 실행에서 ENOENT였다. 이제 절대 경로를 찾아 쓰고(못 찾으면
+// spawn 전에 [CODEX_NOT_FOUND]), 자식에게 넓힌 PATH를 넘긴다. 찾은 결과는 사용자 데이터의 codex-path.json에도 남는다.
+const codexBinary = createCodexResolver({
+  settingsFile: () => path.join(app.getPath("userData"), "codex-path.json"),
+  log: entry => appendAiTurnLog(entry),
+});
+function codexInvocation(args) { return codexBinary.invocation(args); }
+// 11-22: Codex가 없으면 묻지 않고 공식 설치 명령으로 설치한다(로그인·AI 기능을 누를 때). 끝나면 다시 찾아 결과를 돌려준다.
+const codexInstaller = require("./codex-install.cjs").createCodexInstaller({ log: entry => appendAiTurnLog(entry) });
+// 실행 파일을 못 찾았거나(ENOENT) 실행이 안 되면 기억을 비우고 한 번 다시 찾는다(앱을 켠 채 설치한 경우).
+async function runCodexOnce(args, options = {}) {
+  for (let attempt = 0; ; attempt += 1) {
+    const launch = await codexInvocation(args);
+    const result = await new Promise(resolve => {
+      try {
+        execFile(launch.file, launch.args, { windowsHide: true, ...launch.options, ...options }, (error, stdout, stderr) =>
+          resolve({ error, stdout: String(stdout || ""), stderr: String(stderr || ""), launch }));
+      } catch (error) { resolve({ error, stdout: "", stderr: "", launch }); }
+    });
+    const missing = Boolean(result.error) && typeof result.error.code !== "number" && !result.error.killed
+      && classifyCodexSpawnError(result.error, result.stderr).code === CODEX_ERROR_CODES.NOT_FOUND;
+    if (missing && attempt === 0) { codexBinary.invalidate(); await codexBinary.resolve({ force: true }); continue; }
+    return result;
+  }
 }
 function send(event, payload, trustedScope, targetScopes) {
   if (!win || win.isDestroyed()) return;
@@ -834,13 +888,22 @@ function handleServerProcessTermination(child, {
   turnPerformance.clear();
   autoFinalizingImageTurns.clear();
   cleanupAllAttachments();
-  const terminalError = error instanceof Error
-    ? error
-    : new Error(failure?.message || `Codex App Server exited (${code ?? signal ?? "unknown"})`);
+  // PATHFIX: 실행 실패(ENOENT 등)·비정상 종료는 코드 붙은 오류로(화면이 한국어 안내로 바꾼다). 멈춤 요청·시간 초과 오류는 그대로.
+  const stderrTail = serverStderrTail.get(child) || "";
+  serverStderrTail.delete(child);
+  let terminalError;
+  if (error instanceof Error) terminalError = state === "missing" || error.code === "ENOENT" ? classifyCodexSpawnError(error, stderrTail) : error;
+  else if (code !== 0 && code != null) {
+    const notFound = classifyCodexSpawnError(new Error(""), stderrTail);
+    terminalError = notFound.code === CODEX_ERROR_CODES.NOT_FOUND ? notFound
+      : codexError(CODEX_ERROR_CODES.EXITED, `AI 연결 프로그램(Codex App Server)이 멈췄습니다(종료 코드 ${code}).${stderrTail ? ` ${stderrTail.slice(-200)}` : ""}`);
+  } else terminalError = new Error(failure?.message || `Codex App Server exited (${code ?? signal ?? "unknown"})`);
+  if (terminalError.code === CODEX_ERROR_CODES.NOT_FOUND) codexBinary.invalidate();
+  appendAiTurnLog({ event: "codex-stopped-detail", code: terminalError.code || null, exitCode: code, signal, message: String(terminalError.message).slice(0, 300), stderr: stderrTail ? stderrTail.slice(-300) : null });
   rejectPending(terminalError);
-  send("codex:state", state === "missing"
-    ? { state: "missing", message: terminalError.message }
-    : { state: "stopped", code, signal }, undefined, affectedScopes);
+  send("codex:state", state === "missing" || terminalError.code === CODEX_ERROR_CODES.NOT_FOUND
+    ? { state: "missing", code: terminalError.code || null, message: terminalError.message }
+    : { state: "stopped", code, signal, errorCode: terminalError.code || null }, undefined, affectedScopes);
 }
 
 function processTurnEvent(msg) {
@@ -877,12 +940,20 @@ function processTurnEvent(msg) {
   }
 }
 
-function startServer() {
-  if (server) return { ok: true, state: "running" };
-  try {
-    const launch = codexInvocation(["app-server", "--stdio"]);
-    server = spawn(launch.file, launch.args, { stdio: ["pipe", "pipe", "pipe"], windowsHide: true });
-    const child = server;
+// PATHFIX(11-20): 예전 startServer는 spawn 오류가 비동기라 늘 {ok:true}(「준비됨」)를 돌려줬다. 이제 codex 경로를 찾고,
+// 실제로 떴는지(spawn) 실패했는지(error)를 기다려 정직하게 돌려준다. 못 찾음·ENOENT는 한 번 다시 찾는다.
+const serverStderrTail = new WeakMap();
+let serverStarting = null;
+function spawnServer(launch) {
+  return new Promise((resolve) => {
+    let child;
+    try {
+      child = spawn(launch.file, launch.args, { stdio: ["pipe", "pipe", "pipe"], windowsHide: true, ...launch.options });
+    } catch (error) {
+      resolve({ ok: false, state: "missing", error });
+      return;
+    }
+    server = child;
     const rl = createInterface({ input: child.stdout });
     rl.on("line", (line) => {
       if (server !== child) return;
@@ -906,18 +977,60 @@ function startServer() {
       processTurnEvent(msg);
     });
     child.stdin.on("error", error => handleServerProcessTermination(child, { state: "stopped", error }));
-    child.stderr.on("data", (b) => send("codex:log", { level: "error", message: String(b).trim() }));
-    child.on("error", (error) => handleServerProcessTermination(child, { state: "missing", error }));
+    child.stderr.on("data", (b) => {
+      const text = String(b);
+      serverStderrTail.set(child, ((serverStderrTail.get(child) || "") + text).slice(-2000));
+      send("codex:log", { level: "error", message: text.trim() });
+    });
+    let settled = false;
+    child.once("spawn", () => {
+      if (settled) return; settled = true;
+      appendAiTurnLog({ event: "codex-started", pid: child.pid, path: launch.resolved?.path || null, via: launch.resolved?.via || null });
+      send("codex:state", { state: "running" });
+      resolve({ ok: true, state: "running" });
+    });
+    child.on("error", (error) => {
+      handleServerProcessTermination(child, { state: "missing", error });
+      if (settled) return; settled = true;
+      resolve({ ok: false, state: "missing", error });
+    });
     child.on("exit", (code, signal) => handleServerProcessTermination(child, { state: "stopped", code, signal }));
-    send("codex:state", { state: "running" });
-    return { ok: true, state: "running" };
-  } catch (error) { return { ok: false, state: "missing", message: error.message }; }
+  });
+}
+function startServer() {
+  if (server) return Promise.resolve({ ok: true, state: "running" });
+  if (serverStarting) return serverStarting;
+  serverStarting = (async () => {
+    for (let attempt = 0; ; attempt += 1) {
+      let launch;
+      try { launch = await codexInvocation(["app-server", "--stdio"]); }
+      catch (error) {
+        appendAiTurnLog({ event: "codex-start-failed", code: error.code || null, message: String(error.message || error).slice(0, 300) });
+        send("codex:state", { state: "missing", code: error.code || null, message: error.message });
+        return { ok: false, state: "missing", code: error.code || CODEX_ERROR_CODES.NOT_FOUND, message: error.message };
+      }
+      const result = await spawnServer(launch);
+      if (result.ok) return result;
+      const coded = classifyCodexSpawnError(result.error);
+      appendAiTurnLog({ event: "codex-start-failed", code: coded.code, attempt: attempt + 1, path: launch.resolved?.path || null, message: String(result.error?.message || result.error).slice(0, 300) });
+      if (coded.code === CODEX_ERROR_CODES.NOT_FOUND && attempt === 0) { codexBinary.invalidate(); await codexBinary.resolve({ force: true }); continue; }
+      return { ok: false, state: "missing", code: coded.code, message: coded.message };
+    }
+  })().finally(() => { serverStarting = null; });
+  return serverStarting;
+}
+// 시작에 실패하면 코드 붙은 오류로 던진다(models·account·send가 쓰는 곳).
+async function requireServer() {
+  const result = await startServer();
+  if (!result.ok) throw codexError(result.code || CODEX_ERROR_CODES.NOT_FOUND, String(result.message || "").replace(/^\[[A-Z_]+\]\s*/, "") || "Codex 프로그램을 실행하지 못했습니다.");
+  await ensureInitialized();
 }
 function stopServer() {
   const child = server;
   if (child) {
     handleServerProcessTermination(child, { state: "stopped", error: new Error("Codex App Server stopped") });
-    child.kill();
+    // PATHFIX: 윈도우에서 cmd를 거쳐 띄운 codex는 child.kill()로 cmd만 죽고 codex가 남았다 — 트리째 끝낸다.
+    void terminateProcessTreeAndWait(child).catch(() => false);
   }
   return { ok: true, state: "stopped" };
 }
@@ -969,18 +1082,84 @@ async function ensureInitialized() {
   }
   await initializingPromise;
 }
-function loginStatus() {
-  const launch = codexInvocation(["login", "status"]);
-  return new Promise((resolve) => execFile(launch.file, launch.args, { windowsHide: true }, (error, stdout, stderr) => resolve({ loggedIn: !error, output: String(stdout || stderr).trim() })));
+// PATHFIX(11-20): 예전에는 ENOENT도 「로그인 안 됨」(loggedIn:false)이 되어 로그인된 사용자를 로그인 화면으로 보냈다.
+// 이제 설치 안 됨(installed:false, loggedIn:null, code)과 로그인 안 됨(installed:true, loggedIn:false)을 나눈다.
+async function loginStatus() {
+  let result;
+  try { result = await runCodexOnce(["login", "status"], { timeout: 15_000 }); }
+  catch (error) {
+    appendAiTurnLog({ event: "codex-status", installed: false, code: error.code || CODEX_ERROR_CODES.NOT_FOUND, message: String(error.message || error).slice(0, 200) });
+    return { installed: false, loggedIn: null, code: error.code || CODEX_ERROR_CODES.NOT_FOUND, message: error.message, output: "" };
+  }
+  const output = String(result.stdout || result.stderr).trim();
+  if (result.error && typeof result.error.code !== "number") {
+    const coded = classifyCodexSpawnError(result.error, result.stderr);
+    appendAiTurnLog({ event: "codex-status", installed: coded.code !== CODEX_ERROR_CODES.NOT_FOUND, code: coded.code, path: result.launch?.resolved?.path || null, message: String(result.error.message || result.error).slice(0, 200) });
+    if (coded.code === CODEX_ERROR_CODES.NOT_FOUND) return { installed: false, loggedIn: null, code: coded.code, message: coded.message, output };
+    return { installed: true, loggedIn: null, code: coded.code, message: coded.message, output };
+  }
+  const loggedIn = !result.error;
+  if (!loggedIn) appendAiTurnLog({ event: "codex-status", installed: true, loggedIn: false, exitCode: result.error.code, output: output.slice(0, 200) });
+  return { installed: true, loggedIn, ...(loggedIn ? {} : { code: CODEX_ERROR_CODES.NOT_LOGGED_IN }), path: result.launch?.resolved?.path || null, output };
+}
+// PATHFIX(11-20): 「ChatGPT 로그인」 단추 — 예전에는 결과를 보지 않고 늘 {ok:true}였다(실행이 안 돼도 120초 헛기다림).
+// 이제 `codex login`이 끝날 때까지 기다려 실제 결과를 돌려준다. 이미 진행 중이면 같은 결과를 기다린다.
+let loginRun = null, loginAbort = null;
+const LOGIN_TIMEOUT_MS = 10 * 60_000;
+function runLogin() {
+  if (loginRun) return loginRun;
+  loginAbort = new AbortController();
+  const abort = loginAbort;
+  loginRun = (async () => {
+    appendAiTurnLog({ event: "codex-login-start" });
+    let result;
+    try { result = await runCodexOnce(["login"], { timeout: LOGIN_TIMEOUT_MS, killSignal: "SIGTERM", signal: abort.signal }); }
+    catch (error) {
+      appendAiTurnLog({ event: "codex-login-failed", code: error.code || CODEX_ERROR_CODES.NOT_FOUND, message: String(error.message || error).slice(0, 300) });
+      return { ok: false, code: error.code || CODEX_ERROR_CODES.NOT_FOUND, message: error.message };
+    }
+    if (!result.error) {
+      appendAiTurnLog({ event: "codex-login-done", ok: true });
+      return { ok: true };
+    }
+    // 11-21: 연결 카드의 「취소」·「브라우저 창 다시 열기」는 기다리던 codex login을 끝낸다.
+    if (abort.signal.aborted) { appendAiTurnLog({ event: "codex-login-cancelled" }); return { ok: false, cancelled: true, code: "CODEX_LOGIN_CANCELLED", message: "로그인을 취소했습니다." }; }
+    let coded;
+    if (result.error.killed) coded = codexError(CODEX_ERROR_CODES.LOGIN_TIMEOUT, "로그인을 10분 안에 마치지 못했습니다.");
+    else if (typeof result.error.code !== "number") coded = classifyCodexSpawnError(result.error, result.stderr);
+    else coded = codexError(CODEX_ERROR_CODES.LOGIN_FAILED, `로그인을 마치지 못했습니다(종료 코드 ${result.error.code}).`);
+    const detail = String(result.stderr || result.stdout || "").trim().slice(-300);
+    appendAiTurnLog({ event: "codex-login-failed", code: coded.code, exitCode: typeof result.error.code === "number" ? result.error.code : null, message: String(result.error.message || "").slice(0, 200), detail });
+    return { ok: false, code: coded.code, message: coded.message, detail };
+  })().finally(() => { loginRun = null; if (loginAbort === abort) loginAbort = null; });
+  return loginRun;
+}
+async function cancelLogin() {
+  const running = loginRun;
+  if (!running || !loginAbort) return { ok: true, running: false };
+  loginAbort.abort();
+  await running.catch(() => null);
+  return { ok: true, running: true };
+}
+// 11-21: 연결 카드의 「로그아웃」 — 이 컴퓨터의 Codex 로그인을 푼다(다른 Codex 프로그램도 같이 풀린다, 화면에서 한 번 확인).
+// 떠 있던 App Server는 옛 계정 상태를 들고 있으므로 끝내고, 다음 요청 때 새로 띄운다.
+async function runLogout() {
+  await cancelLogin();
+  let result;
+  try { result = await runCodexOnce(["logout"], { timeout: 30_000 }); }
+  catch (error) { return { ok: false, code: error.code || CODEX_ERROR_CODES.NOT_FOUND, message: error.message }; }
+  appendAiTurnLog({ event: "codex-logout", ok: !result.error, exitCode: typeof result.error?.code === "number" ? result.error.code : null });
+  if (result.error && typeof result.error.code !== "number") { const coded = classifyCodexSpawnError(result.error, result.stderr); return { ok: false, code: coded.code, message: coded.message }; }
+  stopServer();
+  const after = await loginStatus();
+  return { ok: after.loggedIn === false, login: after };
 }
 async function listModels() {
-  startServer();
-  await ensureInitialized();
+  await requireServer();
   return rpc("model/list", { limit: 100, includeHidden: false });
 }
 async function accountOverview() {
-  startServer();
-  await ensureInitialized();
+  await requireServer();
   const [accountResult, limitsResult, usageResult] = await Promise.allSettled([
     rpc("account/read", { refreshToken: false }),
     rpc("account/rateLimits/read"),
@@ -1099,8 +1278,7 @@ async function sendWorkspaceTurn(payload, owner) {
     if (direct) return direct;
   }
   const outputSchema = validatedSceneOutputSchema(payload.outputSchema, plan.purpose);
-  startServer();
-  await ensureInitialized();
+  await requireServer();
   if (plan.resetChatThread) threadId = null;
 
   let requestThreadId = null;
@@ -1884,7 +2062,53 @@ handleTrustedIpc("clipboard:read-image", async () => {
   return { dataUrl: `data:image/png;base64,${png.toString("base64")}`, width: size.width, height: size.height, sig };
 });
 handleTrustedIpc("exampool:evidence", async (_event, request) => require("./exampool-evidence.cjs").search(request && typeof request === "object" ? request : {}));
-handleTrustedIpc("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
+handleTrustedIpc("codex:status", async () => { const login = await loginStatus(); return { server: !!server, installed: login.installed !== false, login }; });
+// PATHFIX: 「다시 찾기」 — 기억을 비우고 codex를 다시 찾는다(설치한 뒤 앱을 끄지 않고 이어 가기).
+handleTrustedIpc("codex:locate", async () => {
+  codexBinary.invalidate();
+  const found = await codexBinary.resolve({ force: true });
+  return found ? { found: true, path: found.path, via: found.via } : { found: false, code: CODEX_ERROR_CODES.NOT_FOUND };
+});
+// 11-22: Codex 자동 설치 — 이미 있으면 설치하지 않고 바로 알린다. 단계는 codex:install-step으로 보낸다.
+handleTrustedIpc("codex:install", async () => {
+  codexBinary.invalidate();
+  const before = await codexBinary.resolve({ force: true });
+  if (before) return { ok: true, already: true, path: before.path };
+  // 검사 스위치(FIVE_E_CODEX_PATH)로 「없는 codex」를 흉내 낼 때는 이 컴퓨터에 진짜로 설치하지 않는다.
+  if (process.env.FIVE_E_CODEX_PATH) return { ok: false, code: "CODEX_INSTALL_UNSUPPORTED", message: "검사 중에는 Codex를 설치하지 않아요." };
+  const result = await codexInstaller.install({ onStep: info => send("codex:install-step", info) });
+  if (!result.ok) return result;
+  codexBinary.invalidate();
+  const found = await codexBinary.resolve({ force: true });
+  if (!found) return { ok: false, code: "CODEX_INSTALL_NOT_FOUND", message: "설치는 끝났는데 Codex를 찾지 못했어요. 5E를 다시 켜 주세요.", elapsedMs: result.elapsedMs };
+  send("codex:state", { state: "stopped" });
+  return { ok: true, path: found.path, elapsedMs: result.elapsedMs };
+});
+handleTrustedIpc("codex:install-cancel", () => codexInstaller.cancel());
+// 11-22 시안(설치-업데이트): 앱 안 업데이트 — 윈도우는 electron-updater, 맥은 받은 새 5E.app으로 바꿔 넣기(옛 앱은 휴지통).
+// 확인은 창마다 한 번만(GitHub 공개 API 한도 시간당 60회). 상태는 app-update:state로 알린다.
+let appUpdaterInstance = null;
+let appUpdateChecked = null;
+function appUpdater() {
+  if (!appUpdaterInstance) {
+    const { createAppUpdater } = require("./app-updater.cjs");
+    appUpdaterInstance = createAppUpdater({
+      app, shell,
+      log: entry => appendAiTurnLog(typeof entry === "object" && entry ? { event: "app-update", ...entry } : { event: "app-update", message: String(entry).slice(0, 300) }),
+      send: (channel, payload) => { if (win && !win.isDestroyed()) win.webContents.send(channel, payload); },
+    });
+  }
+  return appUpdaterInstance;
+}
+handleTrustedIpc("app-update:check", async () => {
+  const updater = appUpdater();
+  if (!appUpdateChecked) appUpdateChecked = updater.check().finally(() => setTimeout(() => { appUpdateChecked = null; }, 30 * 60_000).unref?.());
+  const result = await appUpdateChecked;
+  return { ...result, ...(["downloading", "verifying", "ready", "opened"].includes(updater.state()?.state) ? { state: updater.state().state } : {}) };
+});
+handleTrustedIpc("app-update:start", () => appUpdater().start());
+handleTrustedIpc("app-update:install-now", () => appUpdater().installNow());
+handleTrustedIpc("app-update:cancel", () => appUpdater().cancel());
 handleTrustedIpc("codex:start", () => startServer());
 handleTrustedIpc('exam:open-project',(_event,bytes)=>{
   if(!(bytes instanceof ArrayBuffer) || bytes.byteLength>128*1024*1024)throw new Error('프로젝트 파일이 올바르지 않습니다.');
@@ -1962,7 +2186,9 @@ handleTrustedIpc("codex:send", (event, payload) => {
   return sendTurn(payload);
 });
 handleTrustedIpc("codex:interrupt", (_event, payload = {}) => interruptWorkspace(payload));
-handleTrustedIpc("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
+handleTrustedIpc("codex:login", () => runLogin());
+handleTrustedIpc("codex:login-cancel", () => cancelLogin());
+handleTrustedIpc("codex:logout", () => runLogout());
 handleTrustedIpc("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({
     types: ["screen", "window"],
@@ -2012,7 +2238,24 @@ handleTrustedIpc("local-images:read", async (event, filePath) => {
 // partition retains its separate loopback server and protocol policy.
 app.on('ready', () => protocol.handle('file', createDesktopEntryProtocolHandler()));
 // 맥 메뉴 막대(앱 메뉴 + 편집 메뉴)는 desktop/app-menu.cjs.
-function installAppMenu() { installDesktopAppMenu({ Menu, app }); }
+function installAppMenu() { installDesktopAppMenu({ Menu, app, onOpenErrorLog: () => { void openAiErrorLog(); } }); }
+// PATHFIX(11-20): AI 오류 기록(ai-turns.log)을 연다. 아직 없으면 빈 기록을 만들어 연다.
+function aiTurnLogPath() { return path.join(app.getPath("logs"), "ai-turns.log"); }
+async function openAiErrorLog() {
+  const file = aiTurnLogPath();
+  try { fs.mkdirSync(path.dirname(file), { recursive: true }); if (!fs.existsSync(file)) fs.writeFileSync(file, ""); } catch {}
+  const problem = await shell.openPath(file).catch(error => String(error?.message || error));
+  if (problem) shell.showItemInFolder(file);
+  return { ok: true, path: file };
+}
+// 화면(렌더러)에서 난 AI 실패도 같은 기록에 남긴다. 글은 짧게 자르고 정해진 칸만 받는다.
+handleTrustedIpc("diagnostics:log-error", (_event, entry = {}) => {
+  const text = value => typeof value === "string" ? value.slice(0, 600) : value == null ? null : String(value).slice(0, 600);
+  if (!entry || typeof entry !== "object") return { ok: false };
+  appendAiTurnLog({ event: "ui-error", where: text(entry.where), code: text(entry.code), message: text(entry.message), detail: text(entry.detail), context: text(entry.context) });
+  return { ok: true };
+});
+handleTrustedIpc("diagnostics:open-log", () => openAiErrorLog());
 // 저장 확인 창은 창에 붙어 뜬다 — 창이 가려졌거나 내려가 있으면 확인 창도 안 보여 앱이 멈춘 것처럼 보였다(11-14). 먼저 창을 앞으로.
 function confirmLeave(target, options) {
   try { if (target.isMinimized()) target.restore(); target.show(); target.focus(); if (process.platform === 'darwin') app.focus({ steal: true }); } catch {}
@@ -2023,6 +2266,8 @@ app.whenReady().then(() => {
   installAppMenu();
   if (process.platform === "darwin" && app.dock) app.dock.setIcon(APP_ICON_PATH);
   createWindow();
+  // PATHFIX: codex 위치를 미리 찾아 둔다(결과는 ai-turns.log에 codex-resolve로 남는다). 첫 AI 요청이 셸 검색 3초를 기다리지 않게.
+  setTimeout(() => { void codexBinary.resolve().catch(() => {}); }, 1500).unref?.();
 });
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();

@@ -6,8 +6,25 @@ import { coveringApp } from '../app-lock.js?v=1.7.0-four-session-integration';
 const COPY = Object.freeze({
   image: { start: '시험지 스타일로 다시 그리고 있어요', slow: '평소보다 조금 더 걸리고 있어요', verySlow: '아직 작업 중이에요 · 원본은 그대로 있어요', done: '시험지 스타일로 바꿨어요', failed: '변환하지 못했어요 · 원본은 그대로예요' },
   graph: { start: '그래프에서 축과 눈금을 읽고 있어요', slow: '조금 더 걸리고 있어요 · 계속 진행 중', done: '이제 직접 고칠 수 있어요', failed: '그래프를 읽지 못했어요 · 원본은 그대로예요' },
-  'graph-create': { start: '설명을 읽고 있어요', slow: '조금 더 걸리고 있어요 · 계속 진행 중', done: '이제 직접 고칠 수 있어요', failed: '그래프를 만들지 못했어요 · 설명을 조금 바꿔 다시 해 보세요' },
+  // 11-19(시안 그림생성화면 태그 7·10·28): 그림 생성·고치기·라벨 살리기도 같은 로딩 창.
+  figure: { start: '그림을 그리고 있어요', slow: '조금 더 걸리고 있어요 · 계속 그리는 중', done: '그림을 다 그렸어요', failed: '그리지 못했어요 · 앞 결과는 그대로예요' },
+  'figure-edit': { start: '앞 그림을 고치고 있어요', slow: '조금 더 걸리고 있어요 · 계속 고치는 중', done: '고쳤어요', failed: '고치지 못했어요 · 앞 그림은 그대로예요' },
+  'label-restore': { start: '글자를 라벨로 바꾸고 있어요', slow: '조금 더 걸리고 있어요 · 계속 진행 중', done: '라벨로 바꿨어요', failed: '라벨을 살리지 못했어요 · 그림은 그대로예요' },
+  'graph-create': { start: '설명을 읽고 있어요', slow: '조금 더 걸리고 있어요 · 계속 진행 중', done: '이제 직접 고칠 수 있어요', failed: '그래프를 만들지 못했어요 · 앞 결과는 그대로예요' },
 });
+// 11-20: 생성(그리기·고치기·라벨 살리기·그래프 만들기)이 못 끝나면 까닭대로 말한다 — 인터넷 끊김·로그인 없음은
+// 「설명을 바꿔 보세요」가 아니다(AI 오류도 생성 문구 「앞 결과는 그대로예요」로 맞춤). 이어서 하는 길(online·로그인 뒤)이 있으면 그렇다고 말한다. AI 오류는 종류별 문구(COPY.failed).
+// 변환(image·graph)은 원본을 다시 그리는 일이라 문구를 그대로 둔다.
+const GENERATION_KINDS = new Set(['figure', 'figure-edit', 'label-restore', 'graph-create']);
+const REASON_COPY = Object.freeze({
+  offline: { resumes: '인터넷이 끊겼어요 · 연결되면 이어서 할게요', stays: '인터넷이 끊겼어요 · 앞 결과는 그대로예요' },
+  login: { resumes: 'AI 로그인이 필요해요 · 로그인하면 이어서 할게요', stays: 'AI 로그인이 필요해요 · 앞 결과는 그대로예요' },
+});
+export function loadingFailedCopy(kind, reason = null, resumes = false) {
+  const copy = COPY[kind] || COPY.image;
+  const byReason = GENERATION_KINDS.has(kind) ? REASON_COPY[reason] : null;
+  return byReason ? byReason[resumes ? 'resumes' : 'stays'] : copy.failed;
+}
 // 실제 작업 신호(phase)를 사용자에게 보이는 4단계로 묶는다. sec는 기록이 없을 때 진행 기준.
 // 칸 폭은 시간 비율이 아니라 고정 비율: 그림 그리기 칸이 너무 길면 답답해 보인다.
 const STAGE_PLANS = Object.freeze({
@@ -31,6 +48,27 @@ const STAGE_PLANS = Object.freeze({
     { short: '그래프 그리기', name: '고칠 수 있는 그래프로 그리고 있어요', sec: 15, phases: [] },
     { short: '검증', name: '모양이 설명과 맞는지 확인하고 있어요', sec: 8, phases: ['validating'] },
   ], { auto: true }),
+  // 새 그림 엔진(js/ai-figure) 단계 신호: index·expand·scene → draw → strip → grayscale·done.
+  figure: [
+    { short: '준비', name: '그릴 준비를 하고 있어요', sec: 20, phases: ['index', 'expand', 'scene'] },
+    { short: '그림 그리기', name: '그림을 그리고 있어요', sec: 60, phases: ['draw'] },
+    { short: '설명 글 지우기', name: '설명 글을 지우고 있어요', sec: 10, phases: ['strip'] },
+    { short: '흑백 정리', name: '흑백으로 정리하고 있어요', sec: 5, phases: ['grayscale', 'done', 'validating'] },
+  ],
+  // 이 그림 고치기(엔진 editFigure EDIT_PHASES).
+  'figure-edit': [
+    { short: '고칠 곳 찾기', name: '고칠 곳을 찾고 있어요', sec: 6, phases: ['edit-find'] },
+    { short: '그 부분 고치기', name: '그 부분을 고치고 있어요', sec: 55, phases: ['edit-apply'] },
+    { short: '나머지 그대로 확인', name: '나머지가 그대로인지 확인하고 있어요', sec: 6, phases: ['edit-verify'] },
+    { short: '마무리', name: '마무리하고 있어요', sec: 4, phases: ['edit-finish', 'validating'] },
+  ],
+  // 확정하고 라벨 살리기: 그림은 다시 그리지 않으므로 둘째 칸은 「글자 지우기」.
+  'label-restore': [
+    { short: '글자 읽기', name: '그림 속 글자를 읽고 있어요', sec: 15, phases: ['label-read'] },
+    { short: '글자 지우기', name: '그림 속 글자를 지우고 있어요', sec: 3, phases: ['label-erase'] },
+    { short: '라벨 자리 맞추기', name: '라벨 자리를 맞추고 있어요', sec: 3, phases: ['label-place'] },
+    { short: '라벨 넣고 확인', name: '라벨을 넣고 확인하고 있어요', sec: 2, phases: ['label-check', 'validating'] },
+  ],
   image: [
     { short: '원본 읽기', name: '원본을 읽고 있어요', sec: 12, phases: ['sourceAnalysis'] },
     { short: '그림 새로 그리기', name: '그림을 새로 그리고 있어요', sec: 50, phases: ['pixelProcessing', 'generation', 'localRestore'] },
@@ -162,17 +200,19 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
   };
   const setPhase = message => {
     if (!active || active.settling || !message) return;
+    // 고정 제목(「생성 결과 1에서 T만 고치고 있어요」)이 있으면 단계가 바뀌어도 제목을 그대로 둔다.
+    if (active.title) { active.message = active.title; if (active.visible) status.set(active.title); return; }
     if (active.plan && !active.plan.some(step => step.name === message) && message !== '조금 더 걸리고 있어요') return;
     active.message = message;
     if (active.visible) status.set(message);
   };
-  const begin = ({ token, source, kind = 'image', model, expectedMs, startedAt = Date.now(), plan: planName = kind === 'image' ? 'image' : null, phased = false }) => {
+  const begin = ({ token, source, kind = 'image', model, expectedMs, startedAt = Date.now(), plan: planName = kind === 'image' ? 'image' : null, phased = false, title = null }) => {
     if (active?.token === token || !source) return;
     reset();
     const copy = COPY[kind] || COPY.image;
     const own = ++epoch;
     const plan = STAGE_PLANS[planName] || null;
-    const run = active = { token, source, copy, kind, model, startedAt, settling: false, message: copy.start, size: [4, 3], plan, planName };
+    const run = active = { token, source, copy, kind, model, startedAt, settling: false, message: title || copy.start, size: [4, 3], plan, planName, title: title || null };
     if (plan) {
       const saved = readStageTimes()[stageKey(run)] || [];
       const history = plan.map((_, i) => median(saved.map(entry => entry[i])));
@@ -181,7 +221,7 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
       // 단계 신호가 없는 일반 생성은 원본 읽기를 생성 요청 안에서 함께 한다.
       run.stage = phased ? 0 : 1; run.stageStartedAt = startedAt;
       if (!phased) run.durations[0] = 0;
-      run.message = plan[run.stage].name;
+      run.message = run.title || plan[run.stage].name;
     }
     meta.textContent = '';
     renderStages(run);
@@ -214,12 +254,13 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
     image.className = 'br-final'; image.style.objectFit = 'contain'; image.style.opacity = '1';
     reveal.stage.append(image);
   };
-  const finish = async ({ token, outcome, result } = {}) => {
+  const finish = async ({ token, outcome, result, reason = null, resumes = false } = {}) => {
     if (!active || active.token !== token || active.settling) return;
     if (outcome === 'cancelled') { reset(); return; }
     const run = active, own = epoch;
     run.settling = true; run.endedAt = Date.now(); clearTimers();
     let failed = outcome === 'failed' || !result;
+    const failedCopy = loadingFailedCopy(run.kind, reason, resumes);
     if (run.plan && !failed) {
       run.durations[run.stage] = run.endedAt - run.stageStartedAt; run.settled = true;
       const all = readStageTimes(), key = stageKey(run);
@@ -231,7 +272,7 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
     if (failed) meta.textContent = '';
     frame.removeAttribute('aria-busy');
     if (!run.visible) status.show(run.message);
-    if (failed) status.fail(run.copy.failed); else status.done(run.copy.done);
+    if (failed) status.fail(failedCopy); else status.done(run.copy.done);
     tick(); layout();
     try {
       if (reveal.state === 'loading') await reveal.complete(failed ? run.source : result);
@@ -244,7 +285,7 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
       if (epoch !== own) return;
       failed = true;
       sharpFallback(run, run.source);
-      frame.dataset.loadingState = 'failed'; status.fail(run.copy.failed); tick();
+      frame.dataset.loadingState = 'failed'; status.fail(failedCopy); tick();
     }
     if (epoch !== own) return;
     if (!failed) {

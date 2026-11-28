@@ -59,9 +59,11 @@ for (const engine of ['chromium', 'webkit']) {
       assert.equal(result.count, 1);
       // 11-10(c9d1da3f): 라벨 끄기(삭제) 경로는 짧은 기출·교과서 프롬프트(+ 「사용자 요청:」)를 보낸다. 계약 프롬프트는 라벨 복원(예전 파이프라인)에서만 쓴다.
       if (labelResult === 'restore-editable') assert.equal(result.actual.text, result.expectedText);
-      else { assert.match(result.actual.text, /^첨부한 교과서 그림을 한국 수능/); assert.match(result.actual.text, /선택한 원본을 변환해 주세요/); }
+      else { assert.match(result.actual.text, /^첨부한 교과서 그림을 편집해서 한국 수능/); assert.match(result.actual.text, /선택한 원본을 변환해 주세요/); }
       assert.equal(result.promptSha256, baseline.promptSha256);
-      assert.deepEqual(result.actual.attachments, [result.expectedInput]);
+      // 1.7.2: 교과서 변환은 원본 윤곽 밑그림(AI 없이 뽑은 선화)을 두 번째 첨부로 같이 보낸다(convertTextbookEdgeGuide 기본 켜짐).
+      assert.deepEqual(result.actual.attachments[0], result.expectedInput);
+      assert.deepEqual(result.actual.attachments.slice(1).map(row => row.name), labelResult === 'restore-editable' ? [] : ['원본 윤곽 밑그림']);
       assert.equal(result.actual.conversationId, null);
       assert.equal(result.actual.resetConversation, false);
       assert.equal(result.actual.ephemeralRender, true);

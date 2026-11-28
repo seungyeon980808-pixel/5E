@@ -12,7 +12,8 @@ const ICON={up:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d=
 
 // 11-12: 문항 이름(q.name)이 있으면 이름 먼저.
 export function questionTitle(q){return String(q.name||'').trim()||q.managementId||`${q.number||'번호 미입력'}번 문항`;}
-export function questionSubtitle(q){return q.unitSmall||q.unitMiddle||q.ask||'발문을 입력하세요';}
+// 11-22: 원본 그림 한 장짜리 문항(figureOnly)은 발문이 비어 있는 게 정상 — 「발문을 입력하세요」 대신 원본 출처(「기출 그림 · …」의 뒷부분)를 보인다.
+export function questionSubtitle(q){return q.unitSmall||q.unitMiddle||q.ask||(q.figureOnly&&String(q.source||'').replace(/^기출 그림 · /,'').trim())||'발문을 입력하세요';}
 
 
 // 카드 미리보기: 학생용 문항 모양(HTML). 같은 내용이면 다시 만들지 않는다.

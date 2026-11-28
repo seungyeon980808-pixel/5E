@@ -1,4 +1,5 @@
 /* Ported from the approved demo. Counts decoded successes and failed requests separately. */
+import { paintLogo5e } from './logo5e.js';
 function el(tag, cls, text) {
   const node = document.createElement(tag); node.className = cls;
   if (text != null) node.textContent = text;
@@ -9,7 +10,7 @@ class LibraryIndicator {
     this.o = { showAfter: 300, minVisible: 600, slowAfter: 4000, ...options };
     this.status = el('span', 'll'); this.status.setAttribute('role', 'status'); this.status.setAttribute('aria-live', 'polite');
     this.text = el('span', 'll-text'); this.count = el('span', 'll-count');
-    this.status.append(el('span', 'll-mark', '5E'), this.text, this.count);
+    this.status.append(paintLogo5e(el('span', 'll-mark', '5E'), ''), this.text, this.count);
     this.o.header.append(this.status);
     this.bar = el('div', 'll-bar'); this.fill = el('div', 'll-bar-fill'); this.bar.append(this.fill);
     this.o.header.insertAdjacentElement('afterend', this.bar);

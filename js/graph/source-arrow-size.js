@@ -2,13 +2,27 @@
 // the shaft is accepted; missing/ambiguous ink leaves the supplied style intact.
 export const SOURCE_ARROW_SIZE_VERSION = 'source-axis-arrow-size-v1';
 
+/** 그래프 출력 SVG(workbenchGraphRaster)에 적힌 원본 틀 자리 {x,y,width,height}(px). 없으면 null. 11-20 GRAPHFIX. */
+export function embeddedGraphSourceFrame(dataUrl) {
+  const match = /^data:image\/svg\+xml;base64,(.*)$/.exec(String(dataUrl || ''));
+  if (!match) return null;
+  let head = '';
+  try { head = atob(match[1].slice(0, 2048)); } catch { return null; }
+  const values = /data-source-frame="([^"]+)"/.exec(head)?.[1]?.split(/\s+/).map(Number);
+  if (!values || values.length !== 4 || !values.every(Number.isFinite) || values[2] <= 0 || values[3] <= 0) return null;
+  return { x: values[0], y: values[1], width: values[2], height: values[3] };
+}
+
 export async function decodeGraphSourceRaster(dataUrl, source) {
   if (typeof Image === 'undefined' || typeof document === 'undefined' || source.width * source.height > 12_000_000) return null;
   try {
     const image = new Image(); image.src = dataUrl; await image.decode();
-    if (image.naturalWidth !== source.width || image.naturalHeight !== source.height) return null;
+    // 그래프 출력은 원본보다 넓은 틀(그래프+라벨+2mm)이다 — 적힌 원본 틀 자리만큼 옮겨 원본 크기로 읽는다.
+    const frame = image.naturalWidth === source.width && image.naturalHeight === source.height ? null : embeddedGraphSourceFrame(dataUrl);
+    if (!frame && (image.naturalWidth !== source.width || image.naturalHeight !== source.height)) return null;
+    if (frame && (frame.width !== source.width || frame.height !== source.height)) return null;
     const canvas = document.createElement('canvas'); canvas.width = source.width; canvas.height = source.height;
-    const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0);
+    const ctx = canvas.getContext('2d'); ctx.drawImage(image, frame ? -frame.x : 0, frame ? -frame.y : 0);
     return { width: canvas.width, height: canvas.height, data: ctx.getImageData(0, 0, canvas.width, canvas.height).data };
   } catch { return null; }
 }

@@ -39,6 +39,7 @@ import { openPdfReferencePicker } from '../pdf-library/reference-picker.js?v=1.7
 import { applyElementGuide, seriesGuideColor, annotationGuideColor } from './element-guide.js?v=1.7.0-four-session-integration';
 import { createTraceEditor } from './trace-overlay.js?v=1.7.0-four-session-integration';
 import { showConfirm } from '../ui-dialogs.js?v=1.7.0-four-session-integration';
+import { getContentBounds } from '../svg-export.js?v=1.7.0-four-session-integration';
 
 let _engineControls = null;
 let _editBaseline = null;
@@ -104,6 +105,18 @@ let _series = [];                 // [{kind:"expr",expr,domain:{min,max}|null,..
 let _sel = -1;                    // 선택 계열 index
 let _previewSvg = null;           // 클릭 좌표 환산용
 let _previewPlane = null;
+// 11-20 GRAPHFIX: 끄는 동안 미리보기 viewBox를 처음 값으로 묶어 둔다(라벨이 틀 밖으로 나가도 배율이 바뀌지 않게). null=묶지 않음.
+let _dragView = null;
+let _exportFrame = null;          // 미리보기 그래프의 출력 틀(그래프+모든 라벨+2mm, 월드 mm). 점선으로 보여 준다.
+// 출력 틀 = 캔버스·한글·PNG가 쓰는 것과 같은 getContentBounds(…,2). 편집기 전용 표시(잡기 상자·점)는 들어가지 않는다.
+const GRAPH_EXPORT_MARGIN = 2;
+function previewExportFrame(plane, series) {
+  try { return getContentBounds({ objects: [plane, ...series], layers: [] }, {}, GRAPH_EXPORT_MARGIN); }
+  catch (_) { return null; }
+}
+let _dragRendered = false;        // 묶인 동안 실제로 다시 그렸는지(그냥 누르기만 했으면 놓을 때 다시 그리지 않는다 — 글자 바로 고치기 유지)
+function beginPreviewDrag() { if (_previewSvg && _dragView === null) { _dragView = _previewSvg.getAttribute('viewBox'); _dragRendered = false; } }
+function endPreviewDrag() { if (_dragView === null) return; const rendered = _dragRendered; _dragView = null; _dragRendered = false; if (rendered) refreshPreview(); }
 let _editingContext = null;
 let _contextApplyOutcome;          // onApply가 돌려준 값(AI 결과 편집기: 캔버스에 넣은 그래프) — 한글에 넣기가 이어 쓴다
 const editorState = () => _editingContext?.state || state;
@@ -364,8 +377,8 @@ function applyLegacyCfg(plane, cfg) {
   plane.labelXOffset = cfg.labelXOffset && Number.isFinite(cfg.labelXOffset.dx) ? { dx: cfg.labelXOffset.dx, dy: cfg.labelXOffset.dy } : { dx: 0, dy: 0 };
   plane.labelYOffset = cfg.labelYOffset && Number.isFinite(cfg.labelYOffset.dx) ? { dx: cfg.labelYOffset.dx, dy: cfg.labelYOffset.dy } : { dx: 0, dy: 0 };
   // 옮긴 축 이름의 박스 기준 절대 분율(요구 2). 없으면 null(축 앵커 사용).
-  plane.labelXPos = cfg.labelXPos && Number.isFinite(cfg.labelXPos.fx) ? { fx: cfg.labelXPos.fx, fy: cfg.labelXPos.fy } : null;
-  plane.labelYPos = cfg.labelYPos && Number.isFinite(cfg.labelYPos.fx) ? { fx: cfg.labelYPos.fx, fy: cfg.labelYPos.fy } : null;
+  plane.labelXPos = cfg.labelXPos && Number.isFinite(cfg.labelXPos.fx) ? { fx: cfg.labelXPos.fx, fy: cfg.labelXPos.fy, ...(cfg.labelXPos.manual ? { manual: true } : {}) } : null;
+  plane.labelYPos = cfg.labelYPos && Number.isFinite(cfg.labelYPos.fx) ? { fx: cfg.labelYPos.fx, fy: cfg.labelYPos.fy, ...(cfg.labelYPos.manual ? { manual: true } : {}) } : null;
   // 눈금 숫자 이동(요구 ②): 숫자별 {dx,dy} 오프셋 배열을 평면에 복사.
   const copyOffs = (arr) => Array.isArray(arr) ? arr.map((o) => (o && (Number.isFinite(o.dx) || Number.isFinite(o.dy))) ? { dx: o.dx || 0, dy: o.dy || 0 } : { dx: 0, dy: 0 }) : [];
   plane.tickOffX = copyOffs(cfg.tickOffX);
@@ -1920,25 +1933,35 @@ function refreshPreview() {
         const start = clientToWorld(e.clientX, e.clientY);
         if (!start) return;
         // 라벨을 '평면 박스 기준 분율'로 저장한다(요구 2): 화살표 여백·범위를 바꿔 축이 움직여도
-        // 라벨은 박스 안 같은 자리에 남는다. 기준 world = 현재 라벨 중심(분율 있으면 그로부터).
+        // 라벨은 박스 안 같은 자리에 남는다.
+        // 11-20 GRAPHFIX(안 A): 손으로 옮긴 축 이름은 manual 표시를 달아 눈금 숫자 비키기에서 뺀다.
+        // 잡는 순간 튀지 않게, 지금 「보이는」 글자 상자 중심(c0)을 기준으로 삼고 분율 기준점과의 차이(k)를 한 번 재서 보정한다.
         const posKey = which === "x" ? "labelXPos" : "labelYPos";
-        const pl = _previewPlane;
-        let baseW;
-        if (_cfg[posKey] && Number.isFinite(_cfg[posKey].fx)) baseW = { x: pl.x + _cfg[posKey].fx * pl.w, y: pl.y + _cfg[posKey].fy * pl.h };
-        else {
-          const b = el.getBoundingClientRect();
-          baseW = clientToWorld(b.x + b.width / 2, b.y + b.height / 2) || start;
-        }
+        const pl = _previewPlane, sel = `[data-axisname="${which}"]`;
+        const centerOf = () => {
+          const node = _previewSvg?.querySelector(sel); if (!node) return null;
+          const b = node.getBoundingClientRect();
+          return clientToWorld(b.x + b.width / 2, b.y + b.height / 2);
+        };
+        const c0 = centerOf() || start;
+        const toPos = (x, y) => ({ fx: (x - pl.x) / pl.w, fy: (y - pl.y) / pl.h, manual: true });
+        beginPreviewDrag();
+        // 끄는 범위 = 지금 보이는 편집 영역(묶어 둔 viewBox). 예전 15mm 한계는 출력 틀을 보여 주므로 풀었다.
+        const view = _dragView ? _dragView.split(/\s+/).map(Number) : null;
+        let k = null;   // 첫 움직임에서 한 번 잰다(누르기만 하면 다시 그리지 않아 글자 바로 고치기가 그대로 열린다)
         const onMove = (ev) => {
           const w = clientToWorld(ev.clientX, ev.clientY);
           if (!w) return;
-          const nx = baseW.x + (w.x - start.x), ny = baseW.y + (w.y - start.y);
-          // 그래프 틀 밖으로는 15mm까지만(10-28): 멀리 끌어 놓으면 그 글자까지 그림 영역에 들어가 카드·시험지에서 그래프가 아주 작아졌다.
-          const AXIS_NAME_REACH = 15, clampF = (v, size) => Math.max(-AXIS_NAME_REACH / size, Math.min(1 + AXIS_NAME_REACH / size, v));
-          _cfg[posKey] = { fx: clampF((nx - pl.x) / pl.w, pl.w), fy: clampF((ny - pl.y) / pl.h, pl.h) };
+          if (!k) {
+            _cfg[posKey] = toPos(c0.x, c0.y); refreshPreview();
+            const c1 = centerOf() || c0; k = { x: c1.x - c0.x, y: c1.y - c0.y };
+          }
+          let cx = c0.x + (w.x - start.x), cy = c0.y + (w.y - start.y);
+          if (view && view.every(Number.isFinite)) { cx = Math.max(view[0], Math.min(view[0] + view[2], cx)); cy = Math.max(view[1], Math.min(view[1] + view[3], cy)); }
+          _cfg[posKey] = toPos(cx - k.x, cy - k.y);
           refreshPreview();
         };
-        const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+        const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); endPreviewDrag(); };
         window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
         if (_tab !== 'coord') setTab('coord');
       });
@@ -1969,7 +1992,8 @@ function refreshPreview() {
           arr[ord] = { dx: (base.dx || 0) + (w.x - start.x), dy: (base.dy || 0) + (w.y - start.y) };
           refreshPreview();
         };
-        const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+        const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); endPreviewDrag(); };
+        beginPreviewDrag();
         window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
         if (_tab !== 'coord') setTab('coord');
       });
@@ -2000,7 +2024,8 @@ function refreshPreview() {
           lg.x = base.x + (m.x - start.x); lg.y = base.y + (m.y - start.y);
           refreshPreview();
         };
-        const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+        beginPreviewDrag();
+        const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); endPreviewDrag(); };
         window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
       });
     });
@@ -2053,7 +2078,8 @@ function refreshPreview() {
         const toMath=(x,y)=>{const w=clientToWorld(x,y);return w?mathFromWorld(p,w.x,w.y):null;};
         const start=toMath(e.clientX,e.clientY);if(!start)return;const base=structuredClone(annotation);let moved=false;
         const onMove=ev=>{const m=toMath(ev.clientX,ev.clientY);if(!m)return;const dx=m.x-start.x,dy=m.y-start.y;moved||=Math.abs(dx)+Math.abs(dy)>1e-7;if(!moved)return;annotation.x=base.x+dx;annotation.y=base.y+dy;if(base.to)annotation.to={x:base.to.x+dx,y:base.to.y+dy};delete annotation.seriesId;delete annotation.pointIndex;delete annotation.curveAnchor;delete annotation.anchorX;refreshPreview();};
-        const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);if(moved)syncTypedAnnotations();};
+        beginPreviewDrag();
+        const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);if(moved)syncTypedAnnotations();endPreviewDrag();};
         window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);
       });
     });
@@ -2088,7 +2114,8 @@ function refreshPreview() {
           }
           refreshPreview();
         };
-        const up = ()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);syncAnnLists();};
+        beginPreviewDrag();
+        const up = ()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);syncAnnLists();endPreviewDrag();};
         window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
       };
       for (const target of hit===el ? [el] : [hit,el]) {
@@ -2112,6 +2139,14 @@ function refreshPreview() {
     }
     decorationLayer.append(node);
   }
+  // 11-20 GRAPHFIX: 보조선·표시 선(및 그 12px 투명 잡기 선)은 라벨 아래층에 둔다 — 2t₀처럼 점선이 닿는 눈금 라벨을 누르면
+  // 점선이 아니라 라벨이 잡혀야 한다. 라벨이 없는 자리에서는 점선이 그대로 잡힌다.
+  const strokeTags = new Set(['line','path','polygon','polyline']);
+  const isStrokeDecoration = node => {
+    const tagged = node.matches?.('[data-graph-annotation-shape],[data-display-kind]') ? node : node.querySelector?.('[data-graph-annotation-shape],[data-display-kind]');
+    return !!tagged && strokeTags.has(tagged.tagName) && !node.querySelector?.('[data-graph-annotation]:not([data-graph-annotation-shape]),[data-tick],[data-axisname],text');
+  };
+  decorationLayer.prepend(...[...decorationLayer.children].filter(isStrokeDecoration));
   svg.append(decorationLayer);
   // Formula groups contain unpainted spaces (subscripts, fractions). The entire
   // visible label box must accept a click or drag in both browser engines.
@@ -2145,15 +2180,30 @@ function refreshPreview() {
   nearExpression.textContent = expressionError ? `${expressionError} · x, 괄호의 짝, 지원 함수 이름과 정의역을 확인하세요.` : '';
   nearExpression.hidden = !expressionError; _els.expr.setAttribute('aria-invalid',String(!!expressionError));
   const bounds = svg.getBBox(), view = svg.viewBox.baseVal;
+  // 11-20 GRAPHFIX(안 1): 출력 틀 = 그래프 + 모든 라벨 + 2mm. PNG·이미지 복사·좌우 비교·캔버스·한글이 모두 이 틀을 쓴다.
+  const frame = previewExportFrame(plane, regionPrep.ok ? regionPrep.list : []) || { x: bounds.x - GRAPH_EXPORT_MARGIN, y: bounds.y - GRAPH_EXPORT_MARGIN, w: bounds.width + 2 * GRAPH_EXPORT_MARGIN, h: bounds.height + 2 * GRAPH_EXPORT_MARGIN };
+  _exportFrame = frame;
   const sizeNote=_overlay.querySelector('#gm-size-advice');
   if(sizeNote){
-    const ab=editorState().get().artboard,fit=bounds.width<=ab.w && bounds.height<=ab.h;
-    const withinGuide=bounds.width<=100 && bounds.height<=100;
-    sizeNote.textContent = `${graphSizeAdvice(plane.w)} 전체 약 ${bounds.width.toFixed(1)} × ${bounds.height.toFixed(1)} mm · ${withinGuide?'100×100 mm 크기 가이드 이내':'100×100 mm 크기 가이드 초과'} · ${fit?'현재 용지 크기 이내':'현재 용지보다 큽니다. 출력 폭이나 용지를 조정하세요'}`;
+    const ab=editorState().get().artboard,fit=frame.w<=ab.w && frame.h<=ab.h;
+    const withinGuide=frame.w<=100 && frame.h<=100;
+    sizeNote.textContent = `${graphSizeAdvice(plane.w)} 전체 약 ${frame.w.toFixed(1)} × ${frame.h.toFixed(1)} mm(점선 안이 출력됩니다) · ${withinGuide?'100×100 mm 크기 가이드 이내':'100×100 mm 크기 가이드 초과'} · ${fit?'현재 용지 크기 이내':'현재 용지보다 큽니다. 출력 폭이나 용지를 조정하세요'}`;
   }
-  const left=Math.min(view.x,bounds.x-2),top=Math.min(view.y,bounds.y-2);
-  const right=Math.max(view.x+view.width,bounds.x+bounds.width+2),bottom=Math.max(view.y+view.height,bounds.y+bounds.height+2);
-  svg.setAttribute('viewBox',`${left} ${top} ${right-left} ${bottom-top}`);
+  if (_dragView !== null) { svg.setAttribute('viewBox', _dragView); _dragRendered = true; }   // 끄는 중: 배율 고정, 놓을 때 한 번 맞춤
+  else {
+    const room = 3;   // 점선 틀이 가장자리에 붙지 않게 둘레 여유(mm)
+    const left=Math.min(view.x,frame.x-room),top=Math.min(view.y,frame.y-room);
+    const right=Math.max(view.x+view.width,frame.x+frame.w+room),bottom=Math.max(view.y+view.height,frame.y+frame.h+room);
+    svg.setAttribute('viewBox',`${left} ${top} ${right-left} ${bottom-top}`);
+  }
+  // 출력 틀 점선(편집기 표시 전용, 결과물에는 안 나감). 클릭을 가로채지 않는다.
+  const frameRect = document.createElementNS(SVG_NS, 'rect');
+  for (const [key,value] of Object.entries({x:frame.x,y:frame.y,width:frame.w,height:frame.h})) frameRect.setAttribute(key,String(value));
+  frameRect.setAttribute('class','gm-export-frame'); frameRect.setAttribute('data-export-frame','');
+  frameRect.setAttribute('fill','none'); frameRect.setAttribute('stroke','var(--text-secondary, #5d6878)'); frameRect.setAttribute('stroke-opacity','0.45');
+  frameRect.setAttribute('stroke-width','1'); frameRect.setAttribute('vector-effect','non-scaling-stroke'); frameRect.setAttribute('stroke-dasharray','4 3');
+  frameRect.setAttribute('pointer-events','none'); frameRect.setAttribute('aria-hidden','true');
+  svg.prepend(frameRect);
   applyElementGuide(svg, { enabled: _elementGuide && _tab === 'annot' && (!_traceController || _traceController.getState().mode === 'graph'), series: _series, annotations: _cfg.graphAnnotations, focusSelector: _guideFocusSelector });
   _traceController?.attachAfterBBox(svg, plane);
   syncDisplayProperties(_overlay);
@@ -3206,7 +3256,8 @@ function graphTextTarget(target) {
   const make = (label, value, tab, write, activate = () => {}) => ({
     element: el, label, value: String(value ?? ''),
     getRect: () => _els.preview.querySelector(selector)?.getBoundingClientRect(),
-    activate: () => { activate(); setTab(tab); },
+    // 11-21: 글자 칸을 연다 = 끌기가 아니다. 끌기 묶음을 먼저 풀어야 놓을 때 endPreviewDrag가 다시 그려 방금 연 칸을 지우지 않는다.
+    activate: () => { _dragView = null; _dragRendered = false; activate(); setTab(tab); },
     save: value => {
       write(value);
       syncCfgControls(); syncAnnLists(); renderChips(); syncSeriesEditor(); refreshPreview();
@@ -4673,7 +4724,7 @@ async function chooseTraceLibrary(trigger) {
 
 // Escape 등으로 모달을 닫을 때 열려 있는 도움말(?) 팝오버가 화면에 남는 버그 수정 — 함께 정리.
 function hide(applied = false) {
-  _inlineText?.cancel(); _draftHistory = null;
+  _inlineText?.cancel(); _draftHistory = null; _dragView = null;
   if(_resumeFromLibrary) { window.removeEventListener('5e:library-closed', _resumeFromLibrary); _resumeFromLibrary=null; }
   _cancelPreviewDrag?.(); _disposeEscape?.(); _disposeEscape = null;
   _engineControls?.cancelRegionDrag();
@@ -4740,8 +4791,8 @@ function loadFromPlane(plane) {
   cfg.labelMovable = true;
   cfg.labelXOffset = plane.labelXOffset && Number.isFinite(plane.labelXOffset.dx) ? { dx: plane.labelXOffset.dx, dy: plane.labelXOffset.dy } : { dx: 0, dy: 0 };
   cfg.labelYOffset = plane.labelYOffset && Number.isFinite(plane.labelYOffset.dx) ? { dx: plane.labelYOffset.dx, dy: plane.labelYOffset.dy } : { dx: 0, dy: 0 };
-  cfg.labelXPos = plane.labelXPos && Number.isFinite(plane.labelXPos.fx) ? { fx: plane.labelXPos.fx, fy: plane.labelXPos.fy } : null;
-  cfg.labelYPos = plane.labelYPos && Number.isFinite(plane.labelYPos.fx) ? { fx: plane.labelYPos.fx, fy: plane.labelYPos.fy } : null;
+  cfg.labelXPos = plane.labelXPos && Number.isFinite(plane.labelXPos.fx) ? { fx: plane.labelXPos.fx, fy: plane.labelXPos.fy, ...(plane.labelXPos.manual ? { manual: true } : {}) } : null;
+  cfg.labelYPos = plane.labelYPos && Number.isFinite(plane.labelYPos.fx) ? { fx: plane.labelYPos.fx, fy: plane.labelYPos.fy, ...(plane.labelYPos.manual ? { manual: true } : {}) } : null;
   // 고급: 화살표 여백·격자 튀어나옴 네 끝 복원. 없으면 현행 기본값.
   cfg.padXPos = Number.isFinite(plane.padXPos) ? plane.padXPos : PAD_X;
   cfg.padXNeg = Number.isFinite(plane.padXNeg) ? plane.padXNeg : PAD_X;
@@ -4858,7 +4909,7 @@ function loadFromPlane(plane) {
 /* ----- PUBLIC: 열기. planeId 없으면 새로 만들기, 있으면 그 그래프를 편집.
  *   startTab: "coord"(기본) | "func" — F 단축키/버튼 진입점이 시작 탭을 지정. 확정: 둘 다 좌표 먼저. ----- */
 export function openGraphModal(planeId = null, startTab = "coord", editingContext = null) {
-  _inlineText?.cancel(); _draftHistory = null;
+  _inlineText?.cancel(); _draftHistory = null; _dragView = null;
   _focusReturn = document.activeElement;
   _editingContext = editingContext;
   if (!_overlay) _overlay = build();

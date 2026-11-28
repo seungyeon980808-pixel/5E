@@ -610,7 +610,7 @@ test('genuine authenticated workbench acceptance (unavailable is blocking)', { t
   for (const key of ['FIVE_E_SMOKE_TEST', 'FIVE_E_SMOKE_IMAGE', 'FIVE_E_SMOKE_IMAGE_TEST']) assert.notEqual(process.env[key], '1', `BLOCKED: ${key} synthetic mode is forbidden`);
   const { _electron } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
   profile = fs.mkdtempSync(path.join(os.tmpdir(), '5e-authenticated-'));
-  app = await _electron.launch({ executablePath: require('electron'), args: [path.join(__dirname, 'authenticated-desktop-observer.cjs')], cwd: root, env: { ...process.env, FIVE_E_DEV_USER_DATA: profile, FIVE_E_SMOKE_USER_DATA: '', AI_WORKBENCH_RECEIPTS: path.join(evidence, 'receipts.jsonl'), PATH: process.env.AI_WORKBENCH_DISCONNECTED === '1' ? profile : `/opt/homebrew/bin:${process.env.PATH}` }, timeout: 30000 });
+  app = await _electron.launch({ executablePath: require('electron'), args: [path.join(__dirname, 'authenticated-desktop-observer.cjs')], cwd: root, env: { ...process.env, FIVE_E_DEV_USER_DATA: profile, FIVE_E_SMOKE_USER_DATA: '', AI_WORKBENCH_RECEIPTS: path.join(evidence, 'receipts.jsonl'), PATH: process.env.AI_WORKBENCH_DISCONNECTED === '1' ? profile : '/usr/bin:/bin:/usr/sbin:/sbin', FIVE_E_CODEX_PATH: process.env.AI_WORKBENCH_DISCONNECTED === '1' ? path.join(profile, 'no-codex') : '' }, timeout: 30000 });
   const windowDeadline = Date.now() + 30000;
   while (!page && Date.now() < windowDeadline) {
     page = app.windows().find(candidate => candidate.url().endsWith('/index.html'));
